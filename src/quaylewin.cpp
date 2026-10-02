@@ -163,6 +163,7 @@ void QuayleWin::on_button_clicked(int button_id) {
 
 // ORIGINAL: 0x004965C0 ?on_key_click@QuayleWin@@QAEHHH@Z 0x004965C0-0x0049660C
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original entry 004965C0; retained seed src/recovered/units/004965c0.cpp", "recovery/tasks/quaylewin-owner-coverage-wave.json", "QuayleWin constructor layout and virtual-slot evidence; fresh isolated build and host controls"], "reason": "Rehome the retained QuayleWin seed into its real GraphicWin owner with typed subobjects; preserve original spans and historical seed obligations."}
+// symbol    ?on_key_click@QuayleWin@@UAEHHH@Z
 int QuayleWin::on_key_click(int, int) {
   if (field_2144_ != -1) {
     field_2144_ = -1;
@@ -378,10 +379,6 @@ void QuayleWin::on_redraw() {
 }
 
 void QuayleWin::vslot_19(int x, int y) { on_left_click(x, y); }
-
-int QuayleWin::on_key_event(int repeat, int key) {
-  return on_key_click(repeat, key);
-}
 
 void QuayleWin::vslot_53(int selection, int unused) {
   on_selected(selection, unused);

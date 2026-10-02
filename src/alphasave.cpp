@@ -88,19 +88,18 @@ int AlphaSave::on_listbox_scroll_delete(Scroll *scroll) {
 }
 
 // ORIGINAL: 0x00407D10 ?on_key_click@AlphaSave@@QAEXHH@Z 0x00407D10-0x00407D62 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00407d10.cpp and original symbol"], "reason": "Existing AlphaSave owner forwards to its typed FileWin subobjects; original symbol and seed establish identity and extent"}
-void AlphaSave::on_key_click(int key, int flags) {
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00407d10.cpp and original symbol", "image:constructor4073F2 installs669EC8; slot25 selects407D10", "image:407D37/407D57 last calls and407D3E/407D5F returns preserve EAX from Win key_down_event/key_click_event"], "reason": "Recover the real AlphaSave key override through typed FileWin subobjects and forward the actual last-call result. The catalogue void spelling is retained as original identity, not the virtual return contract; no arbitrary constant or extra callback slot."}
+// symbol    ?on_key_click@AlphaSave@@UAEHHH@Z
+int AlphaSave::on_key_click(int key, int flags) {
     switch (flags) {
     case 0x21:
     case 0x22:
     case 0x26:
     case 0x28:
-        file_win_.list_box_.key_down_event(flags);
-        break;
+        return file_win_.list_box_.key_down_event(flags);
     default:
         file_win_.edit_box_.key_down_event(flags);
-        file_win_.edit_box_.key_click_event(key, flags);
-        break;
+        return file_win_.edit_box_.key_click_event(key, flags);
     }
 }
 

@@ -24,6 +24,484 @@
 #include "win.h"
 #include "temp.h"
 #include "console.h"
+#include "general.h"  // mem_get for Menu's owned label copies
+
+// Their containing source object/literal identities still need a coordinated
+// ownership decision; don't bind them at fixed addresses.
+
+// Complete source-level transcriptions established so far:
+
+namespace {
+char MenuEntryPadding[] = "  ";
+char MenuComputeLeftSpace[] = " ";
+char MenuComputeRightSpace[] = " ";
+char MenuLeftDownMargin[] = " ";
+char MenuMouseMoveMargin[] = " ";
+char MenuMnemonicMargin[] = " ";
+char MenuRedrawMargin[] = " ";
+}
+
+// Provisional Menu-owned source objects only: the pinned image places both
+// coordinates in zero-initialized data. Their complete native xref census is
+// still needed before declaring these names/ownership final.
+// RECOVERY_OBJECT: v1 0x009B7B80 ?MenuLastMouseY@@3HA
+int MenuLastMouseY;
+// RECOVERY_OBJECT: v1 0x009B7B84 ?MenuLastMouseX@@3HA
+int MenuLastMouseX;
+extern int MenuDefaultColor1;
+extern int MenuDefaultColor2;
+extern int MenuDefaultColor3;
+extern int MenuDefaultSelectionColor;
+extern int MenuDefaultSelectionTextColor;
+
+// Native Menu slot 90, formerly represented by the raw Menu_init facade in
+// stringstruct.cpp. The only status returns are owner-null, missing font,
+// GraphicWin::init failure, or zero after the two virtual tail calls.
+/*
+Purpose: Size and initialise the menu bar window against its owner.
+*/
+// ORIGINAL: 0x005FADD0 ?init@Menu@@QAEHPAUWin@@@Z 0x005FADD0-0x005FAE69
+// RECOVERY_BINDING: v1 {"evidence": ["git:5190d27f:src/stringstruct.cpp:Menu_init", "image:5FAE14..5FAE3F uses parent RECT.left/top/right at13C/140/144, subtracts twice font height from top, and propagates GraphicWin init status", "image:Menu6700B0 slots90/93 and Win slot1; inherited Buffer markup cell+964", "recovery/tasks/popup-font-configuration-owner-closure.json"], "reason": "Recover the genuine virtual Menu initializer through the parent frame, borrowed default font and Buffer base. Retire the raw receiver facade without preserving its incorrectly named bottom coordinate or discarded initialization status; original identity and seed history remain obligations."}
+// symbol    ?init@Menu@@UAEHPAVWin@@@Z
+int Menu::init(Win *owner) {
+    if (owner == 0) return 3;
+
+    field_A28_ = 0;
+    if (MenuDefaultFont == 0) {
+        MenuDefaultFont = FontDefault;
+        if (MenuDefaultFont == 0) return 7;
+    }
+
+    Font *const font = MenuDefaultFont;
+    const RECT &bounds = owner->outer_rect();
+    const int height = font->height_ * 2;
+    const int result = GraphicWin::init(
+        bounds.left, bounds.top - height, bounds.right - bounds.left,
+        height, 0, 0x8020, owner, 0, 0);
+    if (result != 0) return result;
+
+    static_cast<Buffer *>(this)->set_markup_enabled(0);
+    adjust();
+    show(0);
+    return 0;
+}
+
+// ORIGINAL: 0x005FAEF0 ?add_menu@Menu@@QAEHHPADH@Z 0x005FAEF0-0x005FB0FA;0x00662D22-0x00662D37
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/005faef0.cpp", "image:Menu6700B0/AlphaMenu66ED88/PullDown66FF40 constructor-selected primary tables; Buffer secondary subobject+444", "recovery/tasks/popup-font-configuration-owner-closure.json"], "reason": "Recover this complete operation in its genuine Menu/PullDown owner, using native constructor-selected virtual dispatch, real members and shared source-owned dependencies; preserve original identity, retained seed and historical restoration obligations."}
+// symbol    ?add_menu@Menu@@QAEHHPADH@Z
+// TRIED: SEH frame (push -1/push handler/fs:[0]) not reproduced by the plain operator-new + placement-new PullDown construction (same gap as the 0x00428DF0 precedent, which drops it the same way); not chased further. Field layout (entries_[idx].id/text/ mnemonic/flags/pull_down), the ampersand-mnemonic split, and the duplicate-id/table-full/alloc-fail return codes are a faithful transcription off the raw disassembly.
+int Menu::add_menu(int menu_id, char *text, int left_justified) {
+    ++count_;
+    if (count_ > 15) {
+        --count_;
+        return 1;
+    }
+    if (!text || menu_id == -1) return 3;
+
+    int index = 0;
+    while (index < 15 && entries_[index].id != -1) {
+        if (entries_[index].id == menu_id) return 1;
+        ++index;
+    }
+    if (index == 15) return 1;
+
+    MenuEntry &entry = entries_[index];
+    entry.id = menu_id;
+    if (entry.text) free(entry.text);
+    entry.text = static_cast<char *>(mem_get(strlen(text) + 3));
+    if (!entry.text) {
+        --count_;
+        return 4;
+    }
+    entry.text[0] = '\0';
+    entry.mnemonic = 0;
+
+    char *ampersand = strchr(text, '&');
+    if (!ampersand || ampersand[1] == ' ') {
+        strcat(entry.text, text);
+    } else {
+        char *after_ampersand = ampersand + 1;
+        *ampersand = '\0';
+        strcat(entry.text, text);
+        *ampersand = '&';
+        if (after_ampersand[0] != '&')
+            entry.mnemonic = entry.text + strlen(entry.text);
+        strcat(entry.text, after_ampersand);
+    }
+    strcat(entry.text, MenuEntryPadding);
+
+    if (entry.pull_down) delete entry.pull_down;
+    entry.pull_down = new (std::nothrow) PullDown;
+    if (!entry.pull_down) {
+        --count_;
+        return 4;
+    }
+    entry.pull_down->init(this);
+    entry.flags = left_justified ? 5 : 1;
+    compute();
+    return 0;
+}
+
+// ORIGINAL: 0x005FB5A0 ?UNK10@Menu@@QAEHHPAD@Z 0x005FB5A0-0x005FB6FD
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/005fb5a0.cpp", "image:Menu6700B0/AlphaMenu66ED88/PullDown66FF40 constructor-selected primary tables; Buffer secondary subobject+444", "recovery/tasks/popup-font-configuration-owner-closure.json"], "reason": "Recover this complete operation in its genuine Menu/PullDown owner, using native constructor-selected virtual dispatch, real members and shared source-owned dependencies; preserve original identity, retained seed and historical restoration obligations."}
+// symbol    ?UNK10@Menu@@QAEHHPAD@Z
+// TRIED: the vtable call at [vtable]+0x170 (ordinal 92, nullary) has no auto-emitted VCall shim for this address, so a small local shim (VCall92) declares the 93 ordinals it needs by position; a bare __thiscall function-pointer cast is C4234 on VC6. Landed at 0.57 mnemonic similarity - the mnemonic- for-mnemonic transcription of the ampersand/mnemonic-marker string logic is right, register scheduling around the reused ebx/ebp/edi is not.
+int Menu::UNK10(int menu_id, char *text) {
+    if (!text) return 3;
+
+    int index = 0;
+    while (index < 15 && entries_[index].id != -1 &&
+           entries_[index].id != menu_id)
+        ++index;
+    if (index == 15 || entries_[index].id != menu_id) return 11;
+
+    MenuEntry &entry = entries_[index];
+    if (entry.text) free(entry.text);
+    entry.text = static_cast<char *>(mem_get(strlen(text) + 3));
+    if (!entry.text) {
+        --count_;
+        return 4;
+    }
+    entry.text[0] = '\0';
+    entry.mnemonic = 0;
+
+    char *ampersand = strchr(text, '&');
+    if (!ampersand || ampersand[1] == ' ') {
+        strcat(entry.text, text);
+    } else {
+        char *after_ampersand = ampersand + 1;
+        *ampersand = '\0';
+        strcat(entry.text, text);
+
+        *ampersand = '&';
+        if (after_ampersand[0] != '&')
+            entry.mnemonic = entry.text + strlen(entry.text);
+        strcat(entry.text, after_ampersand);
+    }
+    strcat(entry.text, MenuEntryPadding);
+    compute();
+    return 0;
+}
+
+// ORIGINAL: 0x005FB9C0 ?compute@Menu@@QAEXXZ 0x005FB9C0-0x005FBABD
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/005fb9c0.cpp", "image:Menu6700B0/AlphaMenu66ED88/PullDown66FF40 constructor-selected primary tables; Buffer secondary subobject+444", "recovery/tasks/popup-font-configuration-owner-closure.json"], "reason": "Recover this complete operation in its genuine Menu/PullDown owner, using native constructor-selected virtual dispatch, real members and shared source-owned dependencies; preserve original identity, retained seed and historical restoration obligations."}
+// symbol    ?compute@Menu@@UAEXXZ
+// TRIED: `(seed = DAT_9bb484, DAT_9b7b94 = seed, seed != 0)` (single load reused for both the store and the test) instead of a comma expression that rereads the global twice, which forced an extra reload. `reinterpret_cast<Spot*>(self+0xa2c)` kept INLINE at each call site, not hoisted to a named local - hoisting moves the `lea` ahead of the `DAT_9bb484` fallback branch and regresses to MISMATCH #9. Best form lands at MISMATCH #33 (deep past the loop setup); divergence is a 'mov' vs 'test' pairing whose surrounding bytes still match, not a missed field.
+void Menu::compute() {
+    Font *font = MenuDefaultFont;
+    if (!font) {
+        font = FontDefault;
+        MenuDefaultFont = font;
+    }
+    if (!font) return;
+
+    spot_.init(count_);
+    int left_space = pixel_width() - font->width(MenuComputeLeftSpace);
+    int right_space = font->width(MenuComputeRightSpace);
+    const int line_height = font->height_ * 2;
+    for (int i = 0; i < count_; ++i) {
+        MenuEntry &entry = entries_[i];
+        if ((entry.flags & 1) == 0) continue;
+        const int width = font->width(entry.text);
+        if ((entry.flags & 4) == 0) {
+            spot_.add(i, 0, right_space, 0, width, line_height);
+            right_space += width;
+        } else {
+            left_space -= width;
+            spot_.add(i, 0, left_space, 0, width, line_height);
+        }
+    }
+}
+
+// ORIGINAL: 0x005FC5A0 ?adjust@Menu@@QAEXXZ 0x005FC5A0-0x005FC61B BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/005fc5a0.cpp", "image:5FC5E3 virtual resize;5FC5E6/5FC5EC reload font and parent;5FC607/5FC608 move to parent.left,parent.top minus twice reloaded font height", "image:5FC613 invokes Menu compute slot92", "recovery/tasks/popup-font-configuration-owner-closure.json"], "reason": "Recover the genuine Menu adjustment with real virtual resize/compute and post-resize borrowed-owner reloads. Preserve original frame placement, reentrant call order and the historical byte obligation without raw vtable or self-offset shims."}
+// symbol    ?adjust@Menu@@UAEXXZ
+// LEVER: emitter's VCall is always nullary; declared a second, own-named vtable shim (MenuVCall) with slot003 given the real (int,int,int) signature instead of trying to redeclare the fixed one.
+void Menu::adjust() {
+    if (!MenuDefaultFont) {
+        MenuDefaultFont = FontDefault;
+    }
+    if (!MenuDefaultFont) return;
+
+    if (win_parent_) {
+        resize(win_parent_->outer_rect().right - win_parent_->outer_rect().left,
+               MenuDefaultFont->height_ * 2, 0);
+        // Resize is virtual: the original reloads both borrowed owners after it.
+        move(win_parent_->outer_rect().left,
+             win_parent_->outer_rect().top - MenuDefaultFont->height_ * 2);
+    }
+    // Native 0x005FC613 is Menu vtable slot 92 (+0x170), not a function at
+    // an executable address.
+    compute();
+}
+
+// ORIGINAL: 0x005FBC20 ?on_left_down@Menu@@QAEXHH@Z 0x005FBC20-0x005FBDAB
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/005fbc20.cpp", "image:Menu6700B0/AlphaMenu66ED88/PullDown66FF40 constructor-selected primary tables; Buffer secondary subobject+444", "recovery/tasks/popup-font-configuration-owner-closure.json"], "reason": "Recover this complete operation in its genuine Menu/PullDown owner, using native constructor-selected virtual dispatch, real members and shared source-owned dependencies; preserve original identity, retained seed and historical restoration obligations."}
+// symbol    ?on_left_down@Menu@@UAEXHH@Z
+void Menu::on_left_down(int x, int y) {
+    MenuSelection = -1;
+    int new_index = 0;
+    const int hit = spot_.check(x, y, &new_index, 0);
+    int current = static_cast<int>(field_A24_);
+    if (hit == -1) {
+        if (current == -1) return;
+    } else if (current != new_index) {
+        if (current != -1) {
+            PullDown *old_menu = entries_[current].pull_down;
+            old_menu->hide();
+            field_A24_ = 0xFFFFFFFFu;
+            MenuSelection = -1;
+            redraw();
+            flush_input();
+            do_all_tasks(old_menu);
+            do_all_tasks(this);
+        }
+        field_A24_ = static_cast<unsigned int>(new_index);
+        RECT spot_rect;
+        spot_.get_rect_at(new_index, &spot_rect);
+        x = spot_rect.left - text_width(MenuLeftDownMargin);
+        y = -pixel_height();
+        client_to_screen(&x, &y);
+        redraw();
+        MenuPullDownInputOrigin = 0;
+        on_adjust_pulldown_pos(&x, &y); // native Menu slot 94
+        entries_[static_cast<int>(field_A24_)].pull_down->show(x, y, 0);
+        return;
+    } else if (current == -1) {
+        // The native hit can name no menu despite a successful Spot::check.
+        // It joins the common close/hide tail without indexing entries_.
+        if ((field_A28_ & 4) == 0) hide();
+        return;
+    }
+
+    PullDown *old_menu = entries_[current].pull_down;
+    old_menu->hide();
+    field_A24_ = 0xFFFFFFFFu;
+    MenuSelection = -1;
+    redraw();
+    flush_input();
+    do_all_tasks(old_menu);
+    do_all_tasks(this);
+    if ((field_A28_ & 4) == 0) hide();
+}
+
+// ORIGINAL: 0x005FBDB0 ?mouse_move@Menu@@QAEXHH@Z 0x005FBDB0-0x005FBEFD
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/005fbdb0.cpp", "image:Menu6700B0/AlphaMenu66ED88/PullDown66FF40 constructor-selected primary tables; Buffer secondary subobject+444", "recovery/tasks/popup-font-configuration-owner-closure.json"], "reason": "Recover this complete operation in its genuine Menu/PullDown owner, using native constructor-selected virtual dispatch, real members and shared source-owned dependencies; preserve original identity, retained seed and historical restoration obligations."}
+// symbol    ?mouse_move@Menu@@QAEXHH@Z
+void Menu::mouse_move(int x, int y) {
+    if (static_cast<int>(field_A24_) == -1) return;
+    if (MenuLastMouseX == x && MenuLastMouseY == y) return;
+    MenuLastMouseX = x;
+    MenuLastMouseY = y;
+
+    POINT point;
+    point.x = x;
+    point.y = y;
+    ScreenToClient(HandleMain, &point);
+    int new_index = 0;
+    if (spot_.check(point.x, point.y, &new_index, 0) == -1 ||
+        static_cast<int>(field_A24_) == new_index || (field_A28_ & 1) != 0)
+        return;
+
+    entries_[static_cast<int>(field_A24_)].pull_down->hide();
+    field_A24_ = static_cast<unsigned int>(new_index);
+    RECT spot_rect;
+    spot_.get_rect_at(new_index, &spot_rect);
+    point.x = spot_rect.left - text_width(MenuMouseMoveMargin);
+    point.y = -pixel_height();
+    ClientToScreen(HandleMain, &point);
+    redraw();
+    int left = point.x;
+    int top = point.y;
+    on_adjust_pulldown_pos(&left, &top); // native Menu slot 94
+    entries_[static_cast<int>(field_A24_)].pull_down->show(left, top, 0);
+}
+
+// ORIGINAL: 0x005FBF00 ?on_key_click@Menu@@QAEHHH@Z 0x005FBF00-0x005FC21F
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/005fbf00.cpp", "image:Menu6700B0/AlphaMenu66ED88/PullDown66FF40 constructor-selected primary tables; Buffer secondary subobject+444", "recovery/tasks/popup-font-configuration-owner-closure.json"], "reason": "Recover this complete operation in its genuine Menu/PullDown owner, using native constructor-selected virtual dispatch, real members and shared source-owned dependencies; preserve original identity, retained seed and historical restoration obligations."}
+// symbol    ?on_key_click@Menu@@UAEHHH@Z
+// TRIED: MISMATCH #5 (mov vs or) - pure prologue scheduling: the original loads a2 into a register before `or ebp,-1`, ours after. Full control flow transcribed from Ghidra/disasm: entries_ array confirmed at self+0xa44 (mnemonic char* at +0, PullDown* at +4, stride 0x14 - matches the sibling 0x005FBDB0 mouse_move's self+0xa48 pulldown access exactly). slot023 retyped to `int` since its return value is tested.
+int Menu::on_key_click(int, int key) {
+    int selected_menu = static_cast<int>(field_A24_);
+    const int no_menu = -1;
+    if (selected_menu != no_menu && (key & 0xFFFBFFFF) == 0x12) {
+        PullDown *closing = entries_[selected_menu].pull_down;
+        closing->hide();
+        field_A24_ = 0xFFFFFFFFu;
+        MenuSelection = -1;
+        redraw();
+
+        flush_input();
+        do_all_tasks(closing);
+        do_all_tasks(this);
+        return 1;
+    }
+
+    if (selected_menu != no_menu) {
+        if (key == 0x0D) {
+            PullDown *closing = entries_[selected_menu].pull_down;
+            closing->hide();
+            field_A24_ = 0xFFFFFFFFu;
+            MenuSelection = -1;
+            redraw();
+            flush_input();
+            do_all_tasks(closing);
+            do_all_tasks(this);
+            do_all_draws();
+
+            const int item_index = closing->get_selected();
+            if (item_index == -1) return 1;
+            const int item_id = item_index < 0x40
+                ? closing->items_[item_index].id : -1;
+            hide_menus();
+            if ((field_A28_ & 4) == 0) hide();
+            MenuProc callback = proc_;
+            if (!callback) return 1;
+            callback(item_id);
+
+            Win *parent = win_parent_;
+            if (!parent) return 1;
+            Win *target = parent->event_window();
+            if (!target || target->vslot_23()) return 1;
+            target->vslot_07();
+            return 1;
+        }
+        if (key == 0x1B) {
+            PullDown *closing = entries_[selected_menu].pull_down;
+            closing->hide();
+            field_A24_ = 0xFFFFFFFFu;
+            MenuSelection = -1;
+            redraw();
+            flush_input();
+            do_all_tasks(closing);
+            do_all_tasks(this);
+            return 1;
+        }
+        if (key == 0x25 || key == 0x64) {
+            if (selected_menu == 0) selected_menu = count_;
+            --selected_menu;
+        } else if (key == 0x27 || key == 0x66) {
+            if (selected_menu == count_ - 1) selected_menu = 0;
+            else ++selected_menu;
+        } else {
+            goto search_menu_mnemonics;
+        }
+
+        RECT rect;
+        spot_.get_rect_at(selected_menu, &rect);
+        POINT point;
+        point.x = rect.left;
+        point.y = rect.top;
+        ClientToScreen(HandleMain, &point);
+        MenuPullDownInputOrigin = 1;
+        mouse_move(point.x, point.y);
+        return 1;
+    }
+
+search_menu_mnemonics:
+    for (int index = 0; index < count_; ++index) {
+        char *mnemonic = entries_[index].mnemonic;
+        if (!mnemonic) continue;
+        if (*mnemonic != tolower(key) && *mnemonic != toupper(key)) continue;
+
+        if (static_cast<int>(field_A24_) != no_menu) {
+            PullDown *closing = entries_[static_cast<int>(field_A24_)].pull_down;
+            closing->hide();
+            field_A24_ = 0xFFFFFFFFu;
+            MenuSelection = -1;
+            redraw();
+            flush_input();
+            do_all_tasks(closing);
+            do_all_tasks(this);
+        }
+        field_A24_ = static_cast<unsigned int>(index);
+        RECT rect;
+        spot_.get_rect_at(index, &rect);
+        POINT point;
+        point.x = rect.left - text_width(MenuMnemonicMargin);
+        point.y = -pixel_height();
+        ClientToScreen(HandleMain, &point);
+        flush_input();
+        redraw();
+        MenuPullDownInputOrigin = 1;
+        entries_[index].pull_down->show(point.x, point.y, 0);
+        return 1;
+    }
+    return 0;
+}
+
+// ORIGINAL: 0x005FC290 ?on_redraw@Menu@@QAEXXZ 0x005FC290-0x005FC594
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/005fc290.cpp", "image:Menu6700B0/AlphaMenu66ED88/PullDown66FF40 constructor-selected primary tables; Buffer secondary subobject+444", "recovery/tasks/popup-font-configuration-owner-closure.json"], "reason": "Recover this complete operation in its genuine Menu/PullDown owner, using native constructor-selected virtual dispatch, real members and shared source-owned dependencies; preserve original identity, retained seed and historical restoration obligations."}
+// symbol    ?on_redraw@Menu@@UAEXXZ
+void Menu::on_redraw() {
+    Font *font = MenuDefaultFont;
+    if (!font) {
+        font = FontDefault;
+        MenuDefaultFont = font;
+    }
+    if (!font) return;
+
+    // Native entry 5FC2B3 fills the window before measuring the one-space
+    // inset; every later drawing operation is through the real Buffer base.
+    fill(MenuDefaultColor1);
+    const int margin = text_width(MenuRedrawMargin);
+    RECT text_area = clip_rect();
+    text_area.left += margin;
+    text_area.right -= margin;
+    set_font(font, 0, 0, 0);
+
+    for (int index = 0; index < count_; ++index) {
+        MenuEntry &entry = entries_[index];
+        if ((entry.flags & 1) == 0) continue;
+
+        RECT spot_rect;
+        spot_.get_rect_at(index, &spot_rect);
+        RECT row = text_area;
+        if ((entry.flags & 4) != 0) row.right = spot_rect.right;
+        else row.left = spot_rect.left;
+        const bool selected = static_cast<int>(field_A24_) == index;
+        int text_color;
+        if (selected) {
+            text_color = (entry.flags & 2) ? MenuDefaultColor1 : MenuDefaultColor2;
+        } else {
+            text_color = (entry.flags & 2) ? MenuDefaultColor3
+                                           : MenuDefaultSelectionTextColor;
+        }
+        set_text_color(text_color, -1, 1, 1);
+        if (selected) {
+            fill(spot_rect.left, text_area.top, spot_rect.right,
+                 text_area.bottom, MenuDefaultSelectionColor);
+        }
+
+        if (entry.text) {
+            const int text_length = static_cast<int>(strlen(entry.text));
+            const int rendered_width = text_width(entry.text);
+            if ((entry.flags & 4) != 0)
+                write_right_l(entry.text, &row, text_length);
+            else
+                write_l(entry.text, &row, text_length);
+
+            if (entry.mnemonic) {
+                const int underline_bottom = row.bottom;
+                const int underline_height = row.bottom - row.top;
+                const int underline_color = foreground_color();
+                const int leading = font->internal_leading();
+                const int letter_width = text_width(entry.mnemonic, 1);
+                const int rendered_height = text_height();
+                const int underline_y =
+                    underline_bottom - ((underline_height - rendered_height) / 2)
+                    - leading;
+                const int prefix_width = text_width(
+                    entry.text, static_cast<int>(entry.mnemonic - entry.text));
+                const int underline_left = (entry.flags & 4)
+                    ? row.right - rendered_width + prefix_width
+                    : row.left + prefix_width;
+                hline(underline_left, underline_left + letter_width,
+                      underline_y, underline_color);
+            }
+        }
+    }
+}
 
 // RECOVERY_OBJECT: v2 0x00696E3C 0x00696E40 ?MenuSelection@@3HA 0x005FB830
 int MenuSelection = -1;
@@ -235,6 +713,7 @@ int Menu::UNK4(int, int, int) {
 /*
 Purpose: Report the height a menu requests, two lines of its font.
 // ORIGINAL: 0x005FC6A0 ?requested_height@Menu@@QAEHXZ 0x005FC6A0-0x005FC6B4 BYTE_EXACT
+// symbol    ?requested_height@Menu@@UAEHXZ
 // size      20 bytes
 // prototype int (__thiscall ?requested_height@Menu@@QAEHXZ)(Menu* this)
 // callers   0   call targets   0
@@ -1188,6 +1667,7 @@ Purpose: Legacy hook for adjusting a pull-down's position. The original body is
          its arity is unresolved and it stays unrecovered until that is
          settled.
 // ORIGINAL: 0x005FC6C0 ?on_adjust_pulldown_pos@Menu@@QAEXPAH0@Z 0x005FC6C0-0x005FC6C3 BYTE_EXACT
+// symbol    ?on_adjust_pulldown_pos@Menu@@UAEXPAH0@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_adjust_pulldown_pos@Menu@@QAEXPAH0@Z)(Menu* this, int*, int*)
 // callers   0   call targets   0
@@ -1221,6 +1701,7 @@ void Menu::hide_menus() {
 
 // ORIGINAL: 0x005FBAC0 ?on_left_up@Menu@@QAEXHH@Z 0x005FBAC0-0x005FBC1A
 // RECOVERY_BINDING: v1 {"evidence": ["Retained 0x005FBAC0 seed, typed MenuEntry and PullDown item storage, Spot, callback, window parent and task helpers"], "reason": "Home the Menu release and selected-item dispatch in its owner translation unit"}
+// symbol    ?on_left_up@Menu@@UAEXHH@Z
 void Menu::on_left_up(int xCoord, int yCoord) {
     if (field_A24_ == -1) {
         return;
@@ -1268,6 +1749,7 @@ void Menu::on_left_up(int xCoord, int yCoord) {
 
 /*
 // ORIGINAL: 0x005FC680 ?on_mouse_move@Menu@@QAEXHH@Z 0x005FC680-0x005FC692 BYTE_EXACT
+// symbol    ?on_mouse_move@Menu@@UAEXHH@Z
 // size      18 bytes
 // prototype void (__thiscall ?on_mouse_move@Menu@@QAEXHH@Z)(Menu* this, int, int)
 // callers   1   call targets   1

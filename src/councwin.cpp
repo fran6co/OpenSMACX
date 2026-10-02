@@ -953,6 +953,7 @@ void CouncWin::close() {
 
 // ORIGINAL: 0x00426EE0 ?on_mouse_move@CouncWin@@QAEXHH@Z 0x00426EE0-0x00426F78 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/councwin.h CouncWin::spot_, field_A34_, buttons_[6], draw_leader; src/console.h ConsoleGlobal.faction_id_; git:1b3ed0614446d5283fe4cbd2392cbb64b49db601:src/unrecovered/00426ee0.cpp"], "reason": "Update the selected Council leader from a typed Spot hit test and the six-button/font owner state."}
+// symbol    ?on_mouse_move@CouncWin@@UAEXHH@Z
 void CouncWin::on_mouse_move(int x, int y) {
     const int check_result = spot_.check(x, y, &y, 0);
     if (check_result == -1) {
@@ -1167,7 +1168,7 @@ void CouncWin::on_button_clicked(int button_id) {
         break;
 
     case 5:
-        on_key_event(0, 0x0d);
+        on_key_click(0, 0x0d);
         break;
 
     case -2: {
@@ -1882,8 +1883,8 @@ int CouncWin::on_iface_dialog_item_back_draw(GraphicWin *, int, int, RECT *) {
 // Keep it an override of Win's existing event, not an extra virtual slot.
 // ORIGINAL: 0x00425BA0 ?on_key_click@CouncWin@@QAEHHH@Z 0x00425BA0-0x00425D8D
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00425ba0.cpp", "src/win.h", "recovery/tests/test_key_event_hierarchy.py"], "reason": "Recover the complete Council keyboard operation through its existing Win slot25 override, genuine buttons/fonts and Council state. Pinned fronttable66AAE8 slot25 targets425BA0; nonvirtual declaration made the earlier source unreachable by keyboard dispatch. Preserve native vote completion, modal release and redraw/proposal effects."}
-// symbol    ?on_key_event@CouncWin@@UAEHHH@Z
-int CouncWin::on_key_event(int, int key) {
+// symbol    ?on_key_click@CouncWin@@UAEHHH@Z
+int CouncWin::on_key_click(int, int key) {
     if (key != 0x1b && key != 0x0d) return 1;
 
     const int local_faction = ConsoleGlobal.faction_id_;

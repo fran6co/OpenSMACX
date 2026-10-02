@@ -13,7 +13,8 @@ import pytest
 from match_recovery.source import read_file
 
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = (Path(os.environ["OPENSMACX_ROOT"]).resolve() if "OPENSMACX_ROOT" in os.environ
+       else Path(__file__).resolve().parents[2])
 HARNESS_PATH = Path(__file__).with_name("ui_owner_wave_harness.cpp")
 
 
@@ -75,8 +76,8 @@ def test_actual_five_owner_bodies(tmp_path):
 
 
 MUTANTS = [
-    ("spot_mutated_y", "on_mouse_feedback(x, original_y)",
-     "on_mouse_feedback(x, y)", "original feedback coordinate"),
+    ("spot_mutated_y", "on_mouse_move(x, original_y)",
+     "on_mouse_move(x, y)", "original feedback coordinate"),
     ("paid_cost_cached_receiver",
      "gross_upheaval - PlayersData[factionID_].soc_upheaval_cost_paid",
      "gross_upheaval - PlayersData[0].soc_upheaval_cost_paid",

@@ -439,11 +439,6 @@ void FileWin::UNK4() {  // 0x006146A0
     PENDING_BODY(0x006146A0, pending)(this, nullptr);
 }
 
-void Menu::mouse_move(int a1, int a2) {  // 0x005FBDB0
-    typedef void(__fastcall *pending)(Menu *, void *, int, int);
-    PENDING_BODY(0x005FBDB0, pending)(this, nullptr, a1, a2);
-}
-
 // ReportWin::sat_anim (0x0049FE40) WAS HERE: the body is homed into
 // src/reportwin.cpp 2026-09-27 (the sixteen-satellite orbital tick). Its
 // daemon wrapper sat_anim_daemon (leaf_recoveries.cpp) already called it

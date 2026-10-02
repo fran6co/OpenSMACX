@@ -909,6 +909,7 @@ void MapWin::on_left_double_click(int, int) {
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
 // ORIGINAL: 0x0046EFF0 ?on_left_up@MapWin@@QAEXHH@Z 0x0046EFF0-0x0046EFF3 BYTE_EXACT
+// symbol    ?on_left_up@MapWin@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_left_up@MapWin@@QAEXHH@Z)(MapWin* this, int, int)
 // callers   0   call targets   0
@@ -1521,7 +1522,7 @@ void MapWin::draw_map(int draw_type) {
             int mouse_x;
             int mouse_y;
             ConsoleGlobal.get_mouse_pos(&mouse_x, &mouse_y);
-            on_mouse_feedback(mouse_x, mouse_y);
+            on_mouse_move(mouse_x, mouse_y);
         }
         canvas->set_clip(&canvas->rect2_);
     }
@@ -1841,8 +1842,8 @@ int MapWin::on_nc_hittest(int x, int y) {
 // ORIGINAL: 0x0046F000 ?on_mouse_move@MapWin@@QAEXHH@Z 0x0046F000-0x0046F651
 // RECOVERY_BINDING: v1 {"evidence": ["Original46F000..46F651; retired seed git:b55fcf8b:src/unrecovered/0046f000.cpp records this identity and exact span.", "Original517DD3..517E66 permits repeat mode with waypoint count3; endpoint x[5]/y[5] physically alias y[0]/hoverX. The C++ explicitly names those fields rather than overrunning arrays.", "Original46F0E1/46F118 skip directly to CoverWindow update;46F3A2..46F3B0 retains the base-path endpoint quirk;46F5DD tests the shared string address."], "reason": "The original MapWin/PlanWin/Console Win-branch slot17 entries4218B0/48BFA0/51DE70 dispatch this two-coordinate notification. Genuine virtual inheritance owns the receiver adjustment; it is distinct from the four-argument Win mouse router."}
 // TRIED (retired seed git:b55fcf8b:src/unrecovered/0046f000.cpp): 'this' treated as a secondary-base receiver (MapWin front recovered via self - 0x21a6c, verified against field_1EF4C_/field_1EF50_ in the existing MapWin scaffold layout), with the per-unit waypoint loop and vbtable-adjusted set_cursor thunk transcribed mechanically field-offset-by-field-offset against raw disassembly. It compiles and reaches instruction #3 before diverging (prologue register-save order); not chased further given the function's size and fixed-point waypoint bookkeeping in the middle third.
-// symbol    ?on_mouse_feedback@MapWin@@UAEXHH@Z
-void MapWin::on_mouse_feedback(int pixel_x, int pixel_y) {
+// symbol    ?on_mouse_move@MapWin@@UAEXHH@Z
+void MapWin::on_mouse_move(int pixel_x, int pixel_y) {
     if (MapMouseFeedbackBusy != 0 || UnkGlobal0093A934 != 0 ||
         ConsoleControlTurnActive != 0 || MapInputEnabled == 0 ||
         field_1DD78_ != 0) {
@@ -7806,6 +7807,7 @@ abort:
 
 // ORIGINAL: 0x0046ED30 ?on_left_down@MapWin@@QAEXHH@Z 0x0046ED30-0x0046EFE1 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0046ed30.cpp", "Pinned original image review controls route precedence, cursor sprite dispatch, signed zoom, actual API imports and original member/data dependencies. Bounded compile and host controls do not establish game acceptance."], "reason": "Recover the genuine MapWin/Console owner operation using typed members, actual shared storage, virtual base APIs and full original branch evidence; keep seed and historical obligations."}
+// symbol    ?on_left_down@MapWin@@UAEXHH@Z
 void MapWin::on_left_down(int x_coord, int y_coord) {
     if (MapInputEnabled == 0) return;
 
@@ -7827,7 +7829,7 @@ void MapWin::on_left_down(int x_coord, int y_coord) {
         }
         CoverWindow.fill(9);
         CoverWindow.show(0);
-        on_mouse_feedback(x_coord, y_coord);
+        on_mouse_move(x_coord, y_coord);
         return;
     }
 
@@ -7854,7 +7856,7 @@ check_undo:
             WinPointerOwner4 = nullptr;
             WinPointerOwner3 = static_cast<Win *>(this);
         }
-        on_mouse_feedback(x_coord, y_coord);
+        on_mouse_move(x_coord, y_coord);
         return;
     }
 
@@ -7951,7 +7953,7 @@ void __cdecl go_timer(int selection_mode) {
     window->field_1DD84_ =
         (ConsoleGlobal.cursor_active_ == 0 && ConsoleGlobal.field_23D1C_ != 0)
             ? 1U : 0U;
-    window->on_mouse_feedback(mouse_x, mouse_y);
+    window->on_mouse_move(mouse_x, mouse_y);
 }
 
 class VCallI { public:
@@ -8166,7 +8168,7 @@ Status: Complete
 Purpose: Adjust the receiver from MapWin's thunk1 subobject to the one
          MapWin::on_mouse_move expects, then forward unchanged.
 // ORIGINAL: 0x004218B0 ?on_mouse_move@thunk1_MapWin@@QAEXHH@Z 0x004218B0-0x004218B8 FILE BYTE_EXACT
-// symbol    ?on_mouse_feedback@MapWin@@$4PPPPPPPM@A@AEXHH@Z
+// symbol    ?on_mouse_move@MapWin@@$4PPPPPPPM@A@AEXHH@Z
 // size      8 bytes
 // prototype void (__thiscall ?on_mouse_move@thunk1_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
 // callers   0   call targets   0

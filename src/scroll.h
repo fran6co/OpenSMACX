@@ -89,7 +89,7 @@ class Scroll : public ScrollGraphicWin {
   // Input handlers reached by recovered Win and FlatButton dispatch paths.
   void on_mousewheel_down(int delta);
   void on_mousewheel_up(int delta);
-  int on_key_click(int repeat, int key);
+  int on_key_click(int repeat, int key) override;
   void on_button_pressed(int button_id);
   void on_button_clicked(int button_id);
   void on_redraw();

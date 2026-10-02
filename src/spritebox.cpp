@@ -70,8 +70,8 @@ SpriteBox::SpriteBox() {
     field_60_ = 0;
     redraw_callback_ = 0;
     field_68_ = 0;
-    field_6C_ = 0;
-    field_70_ = 0;
+    left_down_callback_ = 0;
+    left_up_callback_ = 0;
     field_74_ = 0;
     field_78_ = 0;
     field_7C_ = 0;
@@ -150,6 +150,7 @@ SpriteBox::~SpriteBox() {
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
 // ORIGINAL: 0x00611040 ?on_mouse_move@SpriteBox@@QAEXHH@Z 0x00611040-0x00611043 BYTE_EXACT
+// symbol    ?on_mouse_move@SpriteBox@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_mouse_move@SpriteBox@@QAEXHH@Z)(SpriteBox* this, int, int)
 // callers   1   call targets   0
@@ -659,8 +660,8 @@ void SpriteBox::close() {
     field_60_ = 0;
     redraw_callback_ = 0;
     field_68_ = 0;
-    field_6C_ = 0;
-    field_70_ = 0;
+    left_down_callback_ = 0;
+    left_up_callback_ = 0;
     field_74_ = 0;
     field_78_ = 0;
     field_7C_ = 0;
@@ -729,6 +730,7 @@ void SpriteBox::on_right_down(int x_coord, int y_coord) {
 Purpose: Same shape as on_right_down above, for the left-button-up spot
          handler at this-0x1c.
 // ORIGINAL: 0x006111A0 ?on_left_up@SpriteBox@@QAEXHH@Z 0x006111A0-0x006111F0 BYTE_EXACT
+// symbol    ?on_left_up@SpriteBox@@UAEXHH@Z
 // size      80 bytes
 // prototype void (__thiscall ?on_left_up@SpriteBox@@QAEXHH@Z)(SpriteBox* this, int xCoord, int yCoord)
 // callers   1   call targets   1
@@ -740,13 +742,10 @@ Return Value: n/a
 Status: Complete
 */
 void SpriteBox::on_left_up(int x_coord, int y_coord) {
-    char *const self = reinterpret_cast<char *>(this);
-    Spot *const spot = reinterpret_cast<Spot *>(self - 0x7c);
-    if (spot->check(x_coord, y_coord, &y_coord, 0) == -1) {
+    if (spots_.check(x_coord, y_coord, &y_coord, 0) == -1) {
         return;
     }
-    typedef int(__cdecl *ClickHandler)(int);
-    ClickHandler const handler = *reinterpret_cast<ClickHandler *>(self - 0x1c);
+    ClickCallback const handler = left_up_callback_;
     if (!handler) {
         return;
     }
@@ -1057,6 +1056,7 @@ Purpose: A left press on a sprite box runs the hit test over its Spot table
          sits 0x7C below `this` and the callback 0x20 below - the Spot is the
          constructor's placement-new at the object's own +0x10.
 // ORIGINAL: 0x00611150 ?on_left_down@SpriteBox@@QAEXHH@Z 0x00611150-0x006111A0 BYTE_EXACT
+// symbol    ?on_left_down@SpriteBox@@UAEXHH@Z
 // size      80 bytes
 // prototype void (__thiscall ?on_left_down@SpriteBox@@QAEXHH@Z)(SpriteBox* this, int xCoord, int yCoord)
 // callers   1   call targets   1
@@ -1074,14 +1074,9 @@ Return Value: n/a
 Status: Complete
 */
 void SpriteBox::on_left_down(int x_coord, int y_coord) {
-    char *self = reinterpret_cast<char *>(this);
-    Spot *spot = reinterpret_cast<Spot *>(self - 0x7c);
-    if (spot->check(x_coord, y_coord, &y_coord, 0) != -1) {
-        typedef int (__cdecl *sprite_box_click)(int);
-        sprite_box_click callback =
-            *reinterpret_cast<sprite_box_click *>(self - 0x20);
-        if (callback != 0) {
-            if (callback(y_coord) != 0) {
+    if (spots_.check(x_coord, y_coord, &y_coord, 0) != -1) {
+        if (left_down_callback_ != 0) {
+            if (left_down_callback_(y_coord) != 0) {
                 PostMessageA(HandleMain, 0x100, 0xd, 0);
             }
         }

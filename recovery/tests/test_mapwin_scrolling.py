@@ -18,7 +18,8 @@ import subprocess
 import pytest
 
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = (Path(os.environ["OPENSMACX_ROOT"]).resolve() if "OPENSMACX_ROOT" in os.environ
+       else Path(__file__).resolve().parents[2])
 
 
 def braced(source, signature):
@@ -54,7 +55,7 @@ def actual_source():
     parts["MAP_FIELDS"] = "\n".join(fields)
     parts["SURFACE_FIELDS"] = "\n".join(re.findall(r"^  (?:Dib dib_|RECT rect2_);", headers["buffer"], re.M))
     parts["FACTION_FIELD"], = re.findall(r"^  int32_t faction_id_;", headers["console"], re.M)
-    for key, method in (("MOUSE_DECL", "on_mouse_feedback"), ("UPDATE_DECL", "on_update")):
+    for key, method in (("MOUSE_DECL", "on_mouse_move"), ("UPDATE_DECL", "on_update")):
         parts[key] = braced(headers["win"], "virtual void " + method + "(")
     parts["MAP_METHODS"] = "\n".join(re.findall(
         r"^  (?:void|int) (?:draw_map|calculate_dimensions|tile_to_pixel|get_alt|gen_map)\([^;{}]*\);",
@@ -122,7 +123,7 @@ MAPWIN_BASES public:
 };
 CONSOLE_BASES public:FACTION_FIELD};
 Console ConsoleGlobal;
-struct Observed:MapWin {void on_mouse_feedback(int,int) override;void on_update() override;} window;
+struct Observed:MapWin {void on_mouse_move(int,int) override;void on_update() override;} window;
 CORNERS
 GLOBALS
 struct Event {char kind;int a,b,c,d,e,f;RECT clip;MapTileDamageRect h,v;};
@@ -187,7 +188,7 @@ void MapWin::gen_map(int faction,int draw_only){
 void Win::get_mouse_pos(int *x,int *y){
     require(this==static_cast<Win*>(static_cast<GraphicWin*>(&ConsoleGlobal)));note('M');*x=123;*y=-45;
 }
-void Observed::on_mouse_feedback(int x,int y){require(this==&window&&x==123&&y==-45);note('S',x,y);
+void Observed::on_mouse_move(int x,int y){require(this==&window&&x==123&&y==-45);note('S',x,y);
     if(scenario==3)rect2_={3,4,77,55};}
 void Observed::on_update(){require(this==&window);note('U');}
 BODY

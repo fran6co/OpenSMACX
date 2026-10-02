@@ -1167,8 +1167,8 @@ void BaseWin::update_drag_cursor(int spot_type, int spot_pos, int x, int y, int 
 
 // ORIGINAL: 0x0041B1F0 ?on_mouse_move@BaseWin@@QAEXHH@Z 0x0041B1F0-0x0041B491
 // RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/recovered/units/0041b1f0.cpp", "source:src/basewin.h", "image:original instruction and dispatch evidence for the BaseWin owner"], "reason": "Recover this original base-window operation through the real BaseWin owner, existing typed members and source-owned shared dependencies; catalogue naming and original intervals remain distinct from current compiler symbols."}
-// symbol    ?on_mouse_feedback@BaseWin@@UAEXHH@Z
-void BaseWin::on_mouse_feedback(int x, int y) {
+// symbol    ?on_mouse_move@BaseWin@@UAEXHH@Z
+void BaseWin::on_mouse_move(int x, int y) {
     if (!is_visible() || (IsMultiplayerNet && NetDaemonNet.lock_state_[0].dword_[3])) return;
     clear_bubble_text();
     clear_bubble_text();
@@ -3392,6 +3392,7 @@ void BaseWin::draw_garrison(int update_mode) {
 }
 
 // ORIGINAL: 0x0041AFD0 ?on_left_up@BaseWin@@QAEXHH@Z 0x0041AFD0-0x0041B10D FILE
+// symbol    ?on_left_up@BaseWin@@UAEXHH@Z
 // size      317 bytes
 // prototype void (__thiscall ?on_left_up@BaseWin@@QAEXHH@Z)(BaseWin* this, int, int)
 // callers   0   call targets   4
@@ -3490,6 +3491,7 @@ void BaseWin::on_left_up(int xCoord, int yCoord) {
 // Fixed-slot bindings carried from 0041b110.cpp
 
 // ORIGINAL: 0x0041B110 ?on_left_down@BaseWin@@QAEXHH@Z 0x0041B110-0x0041B1D9 FILE BYTE_EXACT
+// symbol    ?on_left_down@BaseWin@@UAEXHH@Z
 // LEVER: 2026-09-06, the two moves that took this 57/59 to 59/59. (1) Every
 //        raw offset in the body is a declared member (field_40B44_/48/4C/50/54,
 //        spot2_ at 0x40EC0), and `this` is the front, so the members replaced

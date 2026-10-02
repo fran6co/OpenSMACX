@@ -15,6 +15,7 @@
 #include "font.h"
 #include "vtable_shim.h"
 #include <stdlib.h>
+#include <ctype.h>
 
 // ORIGINAL: 0x005F8970 ?UNK1@PullDown@@QAEXXZ 0x005F8970-0x005F89C8 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/005f8970.cpp", "image:terranx_original.exe:0x005F8970", "Native row flags and old/new redraw asymmetry, callback modes and padding reloads; mnemonic metrics use Font internal_leading at+14. UNK1 resets members after clearing items and closing; outside hover forwards screen coordinates to Menu.", "recovery/tasks/interface-contract-report-closure.json four-method owner closure"], "reason": "Recover the bounded original in its genuine PullDown owner using actual members, owned callbacks and Buffer/GraphicWin behavior. Retain seed and historical obligations; this binding grants no current match or runtime claim."}
@@ -34,6 +35,7 @@ void PullDown::UNK1() {
 
 // ORIGINAL: 0x005FA6B0 ?on_mouse_move@PullDown@@QAEXHH@Z 0x005FA6B0-0x005FA736 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/005fa6b0.cpp", "image:terranx_original.exe:0x005FA6B0", "Native row flags and old/new redraw asymmetry, callback modes and padding reloads; mnemonic metrics use Font internal_leading at+14. UNK1 resets members after clearing items and closing; outside hover forwards screen coordinates to Menu.", "recovery/tasks/interface-contract-report-closure.json four-method owner closure"], "reason": "Recover the bounded original in its genuine PullDown owner using actual members, owned callbacks and Buffer/GraphicWin behavior. Retain seed and historical obligations; this binding grants no current match or runtime claim."}
+// symbol    ?on_mouse_move@PullDown@@UAEXHH@Z
 void PullDown::on_mouse_move(int x, int y) {
   if (in_box(x, y, buffer_working_rect())) {
     mouse_move(x, y);
@@ -46,6 +48,92 @@ void PullDown::on_mouse_move(int x, int y) {
   if (menu_ != 0) {
     client_to_screen(&x, &y);
     menu_->mouse_move(x, y);
+  }
+}
+
+// Native body 0x005F9640, hosted by the PullDown slot-25 override selected in
+// the constructor-installed 0x0066FF40 table. The retained seed mapping is
+// transferred to this real owner by the source writer at coordinator import.
+// ORIGINAL: 0x005F9640 ?on_key_click@PullDown@@QAEHHH@Z 0x005F9640-0x005F9840
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/005f9640.cpp", "image:Menu6700B0/AlphaMenu66ED88/PullDown66FF40 constructor-selected primary tables; Buffer secondary subobject+444", "recovery/tasks/popup-font-configuration-owner-closure.json"], "reason": "Recover this complete operation in its genuine Menu/PullDown owner, using native constructor-selected virtual dispatch, real members and shared source-owned dependencies; preserve original identity, retained seed and historical restoration obligations."}
+// symbol    ?on_key_click@PullDown@@UAEHHH@Z
+int PullDown::on_key_click(int key_input, int key) {
+  const int old_selected = selected_;
+  key &= 0xFFFBFFFF;
+
+  switch (key) {
+  case 0x1B:
+    selected_ = -1;
+    // Native Escape falls through to the same modal-release path as Enter.
+    // fall through
+  case 0x0D:
+    release_modal();
+    return 1;
+
+  case 0x26:
+  case 0x68: {
+    const int next = old_selected > 0 ? old_selected - 1 : item_count_ - 1;
+    selected_ = next;
+    int index = next;
+    if (index < 0) {
+      selected_ = -1;
+    } else {
+      for (;;) {
+        const uint32_t flags = items_[index].flags;
+        if ((flags & 1u) != 0 && (flags & 4u) == 0) {
+          selected_ = index;
+          break;
+        }
+        --index;
+        if (index < 0) {
+          selected_ = -1;
+          break;
+        }
+      }
+    }
+    MenuPullDownInputOrigin = 1;
+    pulldown_update(old_selected, selected_);
+    return 1;
+  }
+
+  case 0x28:
+  case 0x62: {
+    const int count = item_count_;
+    const int next = old_selected == count - 1 ? 0 : old_selected + 1;
+    selected_ = next;
+    int index = next;
+    if (index < count) {
+      for (;;) {
+        const uint32_t flags = items_[index].flags;
+        if ((flags & 1u) != 0 && (flags & 4u) == 0) break;
+        ++index;
+        if (index >= count) break;
+      }
+    }
+    selected_ = index >= count ? -1 : index;
+    MenuPullDownInputOrigin = 1;
+    pulldown_update(old_selected, selected_);
+    return 1;
+  }
+
+  default:
+    for (int index = 0; index < item_count_; ++index) {
+      const uint32_t flags = items_[index].flags;
+      char *mnemonic = items_[index].mnemonic;
+      if ((flags & 1u) == 0 || (flags & 2u) != 0 || mnemonic == 0) continue;
+      const int mnemonic_character = static_cast<signed char>(mnemonic[0]);
+      if (mnemonic_character == tolower(key_input) ||
+          mnemonic_character == toupper(key_input)) {
+        selected_ = index;
+        redraw();
+        release_modal();
+        return 1;
+      }
+    }
+    if (win_parent_ != 0) {
+      win_parent_->on_key_click(key_input, key);
+    }
+    return 0;
   }
 }
 
@@ -1195,7 +1283,7 @@ Status: Complete
 
 
 void PullDown::on_right_down(int x, int y) {
-    vslot_20(x, y);
+    on_left_down(x, y);
 }
 
 // ORIGINAL: 0x005F9570 ?on_right_up@PullDown@@QAEXHH@Z 0x005F9570-0x005F9582 BYTE_EXACT
@@ -1214,7 +1302,7 @@ void PullDown::on_right_down(int x, int y) {
 
 
 void PullDown::on_right_up(int x, int y) {
-    vslot_21(x, y);
+    on_left_up(x, y);
 }
 
 // ORIGINAL: 0x005F9100 ?UNK4@PullDown@@QAEXXZ 0x005F9100-0x005F9165 BYTE_EXACT

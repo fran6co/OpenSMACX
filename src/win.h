@@ -572,15 +572,17 @@ class Win : public AutoSound {
   virtual void on_resize(int, int) {}
   virtual void vslot_14() {}  // 0x00404280
   virtual void vslot_15(int = 0) {}  // 0x00404270
+  // The native tables require the router in slot 16 and the two-argument
+  // callback in slot 17. VC6 reverses declaration order within this overload
+  // group; physical compiler tables verify this order, unlike host mocks.
+  // RECOVERY_SHARED: v1 0x00404260 0x00404263 ?on_mouse_move@Win@@UAEXHH@Z 0x005F6320
+  virtual void on_mouse_move(int, int) {}
+  // The router ignores the callback's EAX result.
   virtual void on_mouse_move(int x, int y, unsigned int keys, int from_parent);  // slot 16  0x005F6320
-  // Slot17 is the two-coordinate notification reached by the four-argument
-  // mouse router above, not another overload of that routing interface.
-  // RECOVERY_SHARED: v1 0x00404260 0x00404263 ?on_mouse_feedback@Win@@UAEXHH@Z 0x005F6320
-  virtual void on_mouse_feedback(int, int) {}
   virtual void on_mouse_leave(int = 0, int = 0) {}  // 0x00404260
   virtual void vslot_19(int = 0, int = 0) {}  // 0x00404260
-  virtual void vslot_20(int = 0, int = 0) {}  // 0x00404260
-  virtual void vslot_21(int = 0, int = 0) {}  // 0x00404260
+  virtual void on_left_down(int = 0, int = 0) {}  // slot 20
+  virtual void on_left_up(int = 0, int = 0) {}  // slot 21
   virtual void vslot_22(int = 0, int = 0) {}  // 0x00404260
   // NO DEFAULT ARGUMENTS. They compiled into `push 0; push 0` at every
   // call, which the image does not emit - measured on 0x005EE750 and
@@ -605,7 +607,7 @@ class Win : public AutoSound {
   virtual int vslot_23() { return 0; }  // 0x00404260
   virtual void vslot_24(int = 0, int = 0) {}  // 0x00404260
   // Existing slot 25: keyboard input dispatched by key_click_event.
-  virtual int on_key_event(int = 0, int = 0) { return 0; }  // 0x00406A80
+  virtual int on_key_click(int = 0, int = 0) { return 0; }  // slot 25
   virtual int vslot_26(int = 0) { return 0; }  // 0x00404250
   virtual int vslot_27(int = 0) { return 0; }  // 0x00404250
   // Slot 28: Win dispatches left double-clicks here (0x005EE570).
@@ -871,6 +873,8 @@ extern HINSTANCE WinInstance;
 // as `WinScreenWidth`.
 extern int WinScreenWidth;
 extern int WinScreenHeight;
+// Shared Menu/PullDown keyboard-origin state at the original 0x009B7B6C.
+extern int MenuPullDownInputOrigin;
 
 // 0x009B7AAC. THE WINDOW BEING TRACKED, not a flag. `window_proc`'s
 // WM_MOUSEMOVE arm is `mov ecx, [0x9b7aac]` / `test ecx, ecx` / `je` /

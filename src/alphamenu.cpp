@@ -58,7 +58,7 @@ AlphaMenu::~AlphaMenu() {}
 // null/error returns in the same order as the original C++ object.
 // ORIGINAL: 0x00402F40 ?init@AlphaMenu@@QAEHPAUWin@@@Z 0x00402F40-0x00403199;0x006505C0-0x006505D5 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["Retained seeds src/unrecovered/00402f40.cpp,004032a0.cpp,00403af0.cpp and src/recovered/units/00403340.cpp,00403680.cpp,00403830.cpp; pinned original callback style27/29, positive hide height, branch-only clip restoration and actual caller dispatch audited by coordinator."], "reason": "Recover AlphaMenu owner behavior through existing Menu/GraphicWin/Buffer inheritance and owned Sprite lifetimes; historical seed identity and extents remain obligations, not measurement claims."}
-// symbol    ?init@AlphaMenu@@QAEHPAVWin@@@Z
+// symbol    ?init@AlphaMenu@@UAEHPAVWin@@@Z
 int AlphaMenu::init(Win *parent) {
   Buffer sheet;
   if (parent == nullptr) return 3;
@@ -89,12 +89,13 @@ int AlphaMenu::init(Win *parent) {
   if (init_result != 0) return init_result;
 
   static_cast<Buffer *>(this)->set_markup_enabled(0);
-  vslot_93();
+  adjust();
   return 0;
 }
 
 // ORIGINAL: 0x004032A0 ?adjust@AlphaMenu@@QAEXXZ 0x004032A0-0x00403335 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["Retained seeds src/unrecovered/00402f40.cpp,004032a0.cpp,00403af0.cpp and src/recovered/units/00403340.cpp,00403680.cpp,00403830.cpp; pinned original callback style27/29, positive hide height, branch-only clip restoration and actual caller dispatch audited by coordinator."], "reason": "Recover AlphaMenu owner behavior through existing Menu/GraphicWin/Buffer inheritance and owned Sprite lifetimes; historical seed identity and extents remain obligations, not measurement claims."}
+// symbol    ?adjust@AlphaMenu@@UAEXXZ
 void AlphaMenu::adjust() {
   const int height = sprites_[0].height() * count_ + sprite1_.height();
   resize(sprite1_.width(), height, 0);
@@ -104,12 +105,41 @@ void AlphaMenu::adjust() {
       - MainInterfaceGlobal.window_bounds_.bottom + WinScreenHeight - height;
   Win::move(x, y);
   redraw();
-  vslot_92();
+  compute();
+}
+
+// ORIGINAL: 0x004031A0 ?compute@AlphaMenu@@QAEXXZ 0x004031A0-0x00403292
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004031a0.cpp", "git:5190d27f:src/leaf_recoveries.cpp:AlphaMenu_compute", "image:AlphaMenu66ED88 slot92 selects4031A0;4031FC/403208 walk bytes at+A40 with14 stride, matching Menu entries+A38 plus flags+8", "recovery/tasks/popup-font-configuration-owner-closure.json"], "reason": "Recover the real AlphaMenu compute override through owned sprites, inherited Spot and MenuEntry flags. The retired raw facade's byte-zero wording described the flags cursor, not the entry base; preserve its seed's frame-layout lesson without retaining raw offsets or a duplicate source identity."}
+// symbol    ?compute@AlphaMenu@@UAEXXZ
+// TRIED: SHAPE_EXACT now - every instruction matches and the only difference left is the FRAME LAYOUT, so these are ruled out for the LAST byte rather than for the shape. All measured: any frameless spelling, since the original keeps ebp; a real object local to force an SEH frame - div 2, this prologue registers no handler at all; declaration order of the locals - all six permutations byte-identical; statement order - 13 of 15 legal orders break the shape and the other 2 give the same slots; extra unreferenced ints or arrays to grow sub esp - reclaimed, frame stays 0x18. VC6 lays locals out by size ASCENDING, ties broken by a fixed intrinsic order top, bottom_end, top_end, i, entry, width that no source edit moved. Aggregates are therefore a real size lever and a 16-byte struct member landed 5 of the 6 slots exactly - but the original wants top_end at ebp-0x10 ABOVE top at ebp-0x18 in a 0x2c frame, which needs top_end allocated FIRST, and that forces size top_end < size top with the three summing to 0x20 and size bottom_end >= 0x10. No integers fit.
+void AlphaMenu::compute() {
+  const int row_height = sprites_[0].height();
+  spot_.init(count_);
+
+  int top = sprite1_.height();
+  const int width = sprites_[0].width();
+  int top_end = top + row_height;
+  int bottom = (count_ - 1) * row_height + top;
+  int bottom_end = bottom + row_height;
+
+  for (int i = 0; i < count_; ++i) {
+    if ((entries_[i].flags & 1) == 0) continue;
+    if (entries_[i].flags & 4) {
+      spot_.add(i, 0, 0, bottom, width, bottom_end - bottom);
+      bottom -= row_height;
+      bottom_end -= row_height;
+    } else {
+      spot_.add(i, 0, 0, top, width, top_end - top);
+      top += row_height;
+      top_end += row_height;
+    }
+  }
 }
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns 0.
 // ORIGINAL: 0x00403610 ?requested_height@AlphaMenu@@QAEHXZ 0x00403610-0x00403613 BYTE_EXACT
+// symbol    ?requested_height@AlphaMenu@@UAEHXZ
 // size      3 bytes
 // prototype int (__thiscall ?requested_height@AlphaMenu@@QAEHXZ)(AlphaMenu* this)
 // callers   0   call targets   0
@@ -125,7 +155,7 @@ int AlphaMenu::requested_height() {
 
 // ORIGINAL: 0x00403620 ?on_adjust_pulldown_pos@AlphaMenu@@QAEXPAHPAH@Z 0x00403620-0x00403677
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned image 0x00403620 reads Menu field_A24_ and SpotInternal[index].rect at stride 0x18; Win outer_rect_ is at 0x13c and caption_height_ at 0x118."], "reason": "Recover AlphaMenu pull-down placement through its inherited Menu, Spot and Win state."}
-// symbol    ?on_adjust_pulldown_pos@AlphaMenu@@QAEXPAH0@Z
+// symbol    ?on_adjust_pulldown_pos@AlphaMenu@@UAEXPAH0@Z
 void AlphaMenu::on_adjust_pulldown_pos(int *x, int *y) {
     if (field_A24_ != -1) {
         RECT spot_rect;
@@ -301,9 +331,9 @@ void AlphaMenu::hide() {
 // Unlike the old seed scaffold, this uses Menu's actual Spot and Win's
 // source-owned capture globals and virtual callbacks.
 // ORIGINAL: 0x00403550 ?on_mouse_move@AlphaMenu@@QAEXHH@Z 0x00403550-0x0040360F
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00403550.cpp"], "reason": "The original menu mouse body updates Menu spot selection and Win pointer capture through the inherited slot-17 callback, whose product spelling is on_mouse_feedback."}
-// symbol    ?on_mouse_feedback@AlphaMenu@@UAEXHH@Z
-void AlphaMenu::on_mouse_feedback(int x, int y) {
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00403550.cpp"], "reason": "The original menu mouse body updates Menu spot selection and Win pointer capture through the inherited slot-17 callback, whose product spelling is on_mouse_move."}
+// symbol    ?on_mouse_move@AlphaMenu@@UAEXHH@Z
+void AlphaMenu::on_mouse_move(int x, int y) {
     if (field_A24_ != -1) {
         Menu::on_mouse_move(x, y);
     } else if (WinPointerOwner3 == 0) {

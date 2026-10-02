@@ -102,6 +102,7 @@ void NewTechWin::on_left_click(int, int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 1.
 // ORIGINAL: 0x00483EA0 ?on_key_click@NewTechWin@@QAEHHH@Z 0x00483EA0-0x00483EA8 BYTE_EXACT
+// symbol    ?on_key_click@NewTechWin@@UAEHHH@Z
 // size      8 bytes
 // prototype int (__thiscall ?on_key_click@NewTechWin@@QAEHHH@Z)(NewTechWin* this, int, int)
 // callers   0   call targets   0

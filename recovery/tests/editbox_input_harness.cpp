@@ -90,27 +90,27 @@ void selection(EditBox &edit, const char *text, int position) {
 int main() {
     EditBox edit;
     reset(edit, "abcd", 2, 2);
-    assert(edit.on_key_event(1, 0) == 0 && redraws == 0);
-    assert(edit.on_key_event('X', 0) == 1);
+    assert(edit.on_key_click(1, 0) == 0 && redraws == 0);
+    assert(edit.on_key_click('X', 0) == 1);
     selection(edit, "abXcd", 3);
     assert(redraws == 1 && widths == 1);
 
     reset(edit, "abcd", 1, 3);
     edit.dib_.bmiHeader.biWidth = 0;
-    edit.on_key_event('X', 0);
+    edit.on_key_click('X', 0);
     selection(edit, "aXd", 2);
     assert(widths == 0); // Nonempty selection must skip text_fits entirely.
     reset(edit, "abcd", 3, 1);
-    edit.on_key_event('Y', 0);
+    edit.on_key_click('Y', 0);
     selection(edit, "aYd", 2);
     assert(widths == 0);
     reset(edit, "abcd", 2, 2);
     edit.dib_.bmiHeader.biWidth = 16;
-    edit.on_key_event('X', 0);
+    edit.on_key_click('X', 0);
     assert(edit.field_B18_ == 2 && widths == 3);
     reset(edit, "abcd", 4, 4);
     edit.field_B14_ = 4;
-    edit.on_key_event('X', 0);
+    edit.on_key_click('X', 0);
     selection(edit, "abcd", 4); assert(beeps == 1 && !redraws);
 
     reset(edit, "abcd", 0, 0);
@@ -171,22 +171,22 @@ int main() {
     assert(edit.text_fits());
 
     reset(edit, "abcd", 4, 4);
-    edit.vslot_20(9, 0);
+    edit.on_left_down(9, 0);
     selection(edit, "abcd", 1);
     assert(WinPointerOwner3 == &edit && redraws == 1);
     shift = 1;
-    edit.vslot_20(17, 0);
+    edit.on_left_down(17, 0);
     assert(edit.field_B40_ == 1 && edit.field_B44_ == 3);
-    edit.on_mouse_feedback(1, 0);
+    edit.on_mouse_move(1, 0);
     assert(edit.field_B44_ == 0);
-    edit.vslot_21(9, 0);
+    edit.on_left_up(9, 0);
     assert(!WinPointerOwner3 && releases == 1 && edit.field_B44_ == 2);
     reset(edit, "abcd", 4, 4);
-    edit.on_mouse_feedback(9, 0); assert(edit.field_B44_ == 4 && redraws == 0);
+    edit.on_mouse_move(9, 0); assert(edit.field_B44_ == 4 && redraws == 0);
     Win owner;
     WinPointerOwner3 = &owner; WinPointerOwner4 = &edit;
-    edit.on_mouse_feedback(9, 0); assert(edit.field_B44_ == 1);
-    edit.vslot_21(9, 0); assert(!WinPointerOwner4);
+    edit.on_mouse_move(9, 0); assert(edit.field_B44_ == 1);
+    edit.on_left_up(9, 0); assert(!WinPointerOwner4);
     edit.field_B48_ = 1;
     edit.on_dialog_focus(0); assert(stops == 1 && edit.field_B48_ == 0);
     edit.on_dialog_focus(1); assert(starts == 1);

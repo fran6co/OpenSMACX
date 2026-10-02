@@ -546,6 +546,7 @@ void BaseButton::set(int value) {
 /*
 Purpose: Legacy stub; the original body returns nothing without reading its
 // ORIGINAL: 0x006077F0 ?on_key_click@BaseButton@@QAEHHH@Z 0x006077F0-0x006077F5 BYTE_EXACT
+// symbol    ?on_key_click@BaseButton@@UAEHHH@Z
 // CORRECTED from ?on_key_click@BaseButton@@QAEXHH@Z
 //   body is `xor eax, eax; ret 8` - it returns zero, and the sibling
 //   class BasePop declares the same handler `int on_key_click(int, int)`
@@ -725,12 +726,12 @@ int BaseButton::UNK1(Font *font, char *name, int id, int x, int y,
 }
 
 // ORIGINAL: 0x00607820 ?on_mouse_leave@BaseButton@@QAEXHH@Z 0x00607820-0x0060784D FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:9db3d883:src/recovered/units/00607820.cpp", "source:src/win.h:WinPointerOwner1/WinPointerOwner2/WinSizingFlag", "source:src/win.h:on_mouse_feedback is slot 17"], "reason": "Dispatch the leave feedback through the real Win virtual when this button is the active pointer owner."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:9db3d883:src/recovered/units/00607820.cpp", "source:src/win.h:WinPointerOwner1/WinPointerOwner2/WinSizingFlag", "source:src/win.h:on_mouse_move is slot 17"], "reason": "Dispatch the leave feedback through the real Win virtual when this button is the active pointer owner."}
 // symbol    ?on_mouse_leave@BaseButton@@UAEXHH@Z
 void BaseButton::on_mouse_leave(int x, int y) {
     Win *active = WinPointerOwner1 ? WinPointerOwner1 : WinPointerOwner2;
     if (active == this && WinSizingFlag == 1) {
-        on_mouse_feedback(x, y);
+        on_mouse_move(x, y);
     }
 }
 
@@ -763,6 +764,7 @@ void BaseButton::on_right_click(int a, int b) {
 // owned by this BaseButton and its real Win parent.
 // ORIGINAL: 0x006075C0 ?on_left_down@BaseButton@@QAEXHH@Z 0x006075C0-0x0060771C FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/006075c0.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x6075c0 complete control/data-access review and src/basebutton.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
+// symbol    ?on_left_down@BaseButton@@UAEXHH@Z
 void BaseButton::on_left_down(int, int) {
     if (WinPointerOwner3 == 0) {
         WinPointerOwner4 = 0;
@@ -806,6 +808,7 @@ void BaseButton::on_left_down(int, int) {
 // timer, matching the order of the image's two capture-slot tests.
 // ORIGINAL: 0x00607720 ?on_left_up@BaseButton@@QAEXHH@Z 0x00607720-0x006077E6 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00607720.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x607720 complete control/data-access review and src/basebutton.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
+// symbol    ?on_left_up@BaseButton@@UAEXHH@Z
 void BaseButton::on_left_up(int, int) {
     if (WinPointerOwner3 == this) {
         WinPointerOwner3 = 0;
@@ -874,6 +877,7 @@ void BaseButton::on_left_click(int, int) {
 // hit test. The hover owners and sizing flag are Win's own published state.
 // ORIGINAL: 0x00607850 ?on_mouse_move@BaseButton@@QAEXHH@Z 0x00607850-0x006079F3 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00607850.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x607850 complete control/data-access review and src/basebutton.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
+// symbol    ?on_mouse_move@BaseButton@@UAEXHH@Z
 void BaseButton::on_mouse_move(int x, int y) {
     RECT area = Buffer::rect2_;
     area.right -= area.left;
@@ -964,6 +968,6 @@ void BaseButton::timer_callback(int stage) {
         time2_.start(reinterpret_cast<void (__cdecl *)(int, int)>(fn_00607b10),
                      2, reinterpret_cast<int>(this), interval, 5);
     } else {
-        vslot_20(0, 0);
+        on_left_down(0, 0);
     }
 }

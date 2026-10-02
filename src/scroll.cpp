@@ -1539,6 +1539,7 @@ Purpose: Drag the thumb or repeat a track-page movement while the scroll owns
          the pointer, then notify its parent of an actual position change.
 // ORIGINAL: 0x00605D90 ?on_mouse_move@Scroll@@QAEXHH@Z 0x00605D90-0x006061DB FILE
 // RECOVERY_BINDING: v1 {"evidence":["source:src/recovered/units/00605d90.cpp","source:src/scroll.h:Scroll","source:src/win.h:WinPointerOwner1","source:src/win.h:WinSizingFlag"],"reason":"Home the drag and held-track behavior on real Scroll/Win members, source-owned pointer state and parent callbacks; remove seed vtable facades and executable-address globals."}
+// symbol    ?on_mouse_move@Scroll@@UAEXHH@Z
 */
 void Scroll::on_mouse_move(int x, int y) {
     Win *const parent = win_parent_;
@@ -1671,7 +1672,8 @@ void Scroll::on_mouse_move(int x, int y) {
 }
 
 // ORIGINAL: 0x006061E0 ?on_left_down@Scroll@@QAEXHH@Z 0x006061E0-0x006062B8 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/006061e0.cpp", "Scroll thumb and range members in src/scroll.h", "Win::on_mouse_feedback and WinPointerOwner3/4 in src/win.h"], "reason": "Recover the Scroll thumb press handler using its typed orientation, thumb geometry, parent callback and capture-owner state."}
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/006061e0.cpp", "Scroll thumb and range members in src/scroll.h", "Win::on_mouse_move and WinPointerOwner3/4 in src/win.h"], "reason": "Recover the Scroll thumb press handler using its typed orientation, thumb geometry, parent callback and capture-owner state."}
+// symbol    ?on_left_down@Scroll@@UAEXHH@Z
 void Scroll::on_left_down(int x, int y) {
     if (win_parent_ == 0) {
         return;
@@ -1680,13 +1682,13 @@ void Scroll::on_left_down(int x, int y) {
         if (x < thumb_rect_.left) {
             field_A44_ = 0xffffffffU;
             field_A38_ = 0;
-            on_mouse_feedback(x, y);
+            on_mouse_move(x, y);
             goto track_scroll;
         }
         if (thumb_rect_.right < x) {
             field_A44_ = 1;
             field_A38_ = 0;
-            on_mouse_feedback(x, y);
+            on_mouse_move(x, y);
             goto track_scroll;
         }
         field_A44_ = 0;
@@ -1701,7 +1703,7 @@ void Scroll::on_left_down(int x, int y) {
             field_A44_ = 1;
         }
         field_A38_ = 0;
-        on_mouse_feedback(x, y);
+        on_mouse_move(x, y);
     }
 
 track_scroll:
@@ -1713,6 +1715,7 @@ track_scroll:
 
 // ORIGINAL: 0x006062C0 ?on_left_up@Scroll@@QAEXHH@Z 0x006062C0-0x00606304 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/006062c0.cpp", "Scroll::win_parent_ and inherited redraw/capture virtuals", "WinPointerOwner3/4 in src/win.h"], "reason": "Recover Scroll thumb release redraw and conditional capture cleanup with typed base and process-owned pointer state; the historical byte-exact seed remains preserved."}
+// symbol    ?on_left_up@Scroll@@UAEXHH@Z
 void Scroll::on_left_up(int, int) {
     if (win_parent_ != 0) {
         redraw();
@@ -1801,6 +1804,7 @@ Purpose: Move a scrollbar to an endpoint with Home/End when horizontal, or
          advance one page with Page Up/Down when vertical; notify its owner.
 // ORIGINAL: 0x00606560 ?on_key_click@Scroll@@QAEHHH@Z 0x00606560-0x006066EC FILE
 // RECOVERY_BINDING: v1 {"evidence":["source:src/unrecovered/00606560.cpp","source:src/scroll.cpp:Scroll::on_mousewheel_up","source:src/listbox.cpp:ListBoxGlobalDDC"],"reason":"Home the key navigation on Scroll's inherited Buffer, range members, real parent dispatch and source-owned notification globals; no vtable stand-ins or fixed executable addresses."}
+// symbol    ?on_key_click@Scroll@@UAEHHH@Z
 // The old seed's spelling diverged at its prologue; this typed owner body is
 // deliberately unclaimed until it is remeasured and restored.
 */

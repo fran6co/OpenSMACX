@@ -372,7 +372,7 @@ Purpose: Report a right press: raise the click guard, forward (a1, a2) through
 Return Value: n/a
 Status: Complete
 DEMOTED from BYTE_EXACT by direction (idiomatic-first): the forward is the
-plain virtual call it always was - win-table slot 20, vslot_20 - dispatched
+plain virtual call it always was - win-table slot 20, on_left_down - dispatched
 on the entered receiver, which already points at the GraphicWin subobject
 whose vftable the old hand walk re-derived through the front. The image
 walks back to the ListBox front and re-walks out to that same table
@@ -382,7 +382,7 @@ identical either way.
 */
 void ListBox::on_right_down(int a1, int a2) {
     ListBoxClickGuard = 1;
-    vslot_20(a1, a2);
+    on_left_down(a1, a2);
     ListBoxClickGuard = 0;
 }
 

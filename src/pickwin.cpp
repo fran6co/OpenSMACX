@@ -141,6 +141,7 @@ void PickWin::close() {
 
 // ORIGINAL: 0x0048A7C0 ?on_key_click@PickWin@@QAEHHH@Z 0x0048A7C0-0x0048A80D FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["The seed uses Win vtable slot 44 for on_button_clicked with 0x103 on Escape and 0x108 on Enter; Escape and other keys clear PickWin field +0x5DA4, while Enter returns before the clear.", "PickWin's class storage declares field_5DA4_ at the measured +0x5DA4 offset, and its inherited on_button_clicked is Win's slot-44 virtual."], "reason": "Home the compact key handler through PickWin's typed field and inherited Win behavior."}
+// symbol    ?on_key_click@PickWin@@UAEHHH@Z
 int PickWin::on_key_click(int, int key) {
     if (key == 0x1B) {
         on_button_clicked(0x103);

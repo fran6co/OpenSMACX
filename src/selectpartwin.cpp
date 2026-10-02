@@ -252,7 +252,7 @@ Purpose: Answer the design-parts list's keyboard navigation: the arrow keys
 
 // ORIGINAL: 0x00433A10 ?on_key_click@SelectPartWin@@QAEHHH@Z 0x00433A10-0x00433CD0 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["The original SelectPartWin vtable at 0x0066B2B8 selects 0x00433A10 at inherited slot 25.", "The pinned key table dispatches Enter, Escape, navigation keys and their numpad equivalents; original seed at git:08336bcc:src/unrecovered/00433a10.cpp."], "reason": "The real SelectPartWin override in slot 25 owns keyboard navigation of its Scroll and selection members."}
-// symbol   ?on_key_event@SelectPartWin@@UAEHHH@Z
+// symbol   ?on_key_click@SelectPartWin@@UAEHHH@Z
 // size      704 bytes
 // prototype int (__thiscall ?on_key_click@SelectPartWin@@QAEHHH@Z)(SelectPartWin* this, int, int)
 // callers   0   call targets   2
@@ -266,7 +266,7 @@ Status: Coverage transcription - unclaimed body; historical seed at
         its two-level jump-table index; the numpad keys share their arrow
         blocks exactly as the image's table cells do.
 */
-int SelectPartWin::on_key_event(int, int key) {
+int SelectPartWin::on_key_click(int, int key) {
     const int first_cached = field_2B60_;
     const int highlight = field_2B80_;
 
@@ -433,13 +433,13 @@ void SelectPartWin::on_redraw() {
 }
 
 // 0x00433820: the catalogue/seed calls this on_mouse_move, while inherited
-// Win slot 17 is still provisionally named on_mouse_feedback. The image's
+// Win slot 17 is still provisionally named on_mouse_move. The image's
 // SelectPartWin vtable selects this body at slot 17. Grid cells are 108x94
 // with a 4px inset.
 // Historical seed: git:08336bcc:src/recovered/units/00433820.cpp (measured MISMATCH).
 // ORIGINAL: 0x00433820 ?on_mouse_feedback@SelectPartWin@@UAEXHH@Z 0x00433820-0x00433934
 // RECOVERY_BINDING: v1 {"evidence": ["Original seed at git:08336bcc:src/recovered/units/00433820.cpp; its original spans and historical obligations are retained.", "SelectPartWin constructor 0x004328B0 establishes GraphicWin, Scroll+0xA14, Caviar+0x2B9C, Buffer+0x406C and Font members+0x45F4/+0x461C."], "reason": "The SelectPartWin primary vtable at 0x0066B2B8 selects this original body in slot 17; the real GraphicWin-derived override retains its provisional inherited name."}
-void SelectPartWin::on_mouse_feedback(int x, int y) {
+void SelectPartWin::on_mouse_move(int x, int y) {
     int old = field_2B80_;
     if (x >= 4 && y >= 4 &&
         x < field_2B6C_ * 108 + 4 && y < field_2B70_ * 94 + 4) {
@@ -469,8 +469,8 @@ void SelectPartWin::on_mouse_feedback(int x, int y) {
 // Historical seed: git:08336bcc:src/unrecovered/00433940.cpp.
 // ORIGINAL: 0x00433940 ?vslot_21@SelectPartWin@@UAEXHH@Z 0x00433940-0x004339BF
 // RECOVERY_BINDING: v1 {"evidence": ["Original seed at git:08336bcc:src/unrecovered/00433940.cpp; its original spans and historical obligations are retained.", "SelectPartWin constructor 0x004328B0 establishes GraphicWin, Scroll+0xA14, Caviar+0x2B9C, Buffer+0x406C and Font members+0x45F4/+0x461C."], "reason": "The SelectPartWin primary vtable at 0x0066B2B8 selects this original body in slot 21; the real GraphicWin-derived override retains its provisional inherited name."}
-void SelectPartWin::vslot_21(int x, int y) {
-    on_mouse_feedback(x, y);
+void SelectPartWin::on_left_up(int x, int y) {
+    on_mouse_move(x, y);
     if (field_4648_ == 0) {
         field_2B80_ = -1;
         if (WinPointerOwner3 == this) {

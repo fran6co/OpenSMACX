@@ -41,6 +41,9 @@ typedef signed char int8;  // a scaffold spelling the artifacts use
 
 // 0x009B6F08 in the image - the buffer Win draws into.
 extern Buffer g_WIN_BUFFER;
+// RECOVERY_OBJECT: v1 0x009B7B6C ?MenuPullDownInputOrigin@@3HA
+// Shared state written by Menu and PullDown keyboard navigation paths.
+int MenuPullDownInputOrigin;
 // `DirectDrawCreate` (DDInit::init) is the one symbol this tree needs out of
 // ddraw.lib; it is on the CMake link line now, where dxguid already was.
 
@@ -3728,7 +3731,7 @@ void Win::on_mouse_move(int x, int y, unsigned int keys, int from_parent) {
         if (fn != 0) {
             fn(x, y);
         }
-        this->on_mouse_feedback(x, y);
+        this->on_mouse_move(x, y);
         Win *const child = val_7_;
         if (child != 0) {
             if (child->vslot_23() == 0) {
@@ -5986,7 +5989,7 @@ int __stdcall Win::adjust_menus(HWND hwnd, void *unused) {
         obj->set_rects();
         Menu *menu = obj->menu_;
         if (menu != 0) {
-            menu->vslot_93();
+            menu->adjust();
         }
     }
     return 1;
@@ -6541,7 +6544,7 @@ void Win::on_l_button_up(int x, int y, unsigned int keys, int dbl) {
                 if (cb != 0) {
                     cb(x, y);
                 }
-                this->vslot_21(x, y);
+                this->on_left_up(x, y);
                 Win *child = reinterpret_cast<Win *>(val_10_);
                 if (child != 0 && child->vslot_23() == 0) {
                     child->vslot_07();
@@ -8090,7 +8093,7 @@ int Win::key_down_event(int key) {
         Win *focus = reinterpret_cast<Win *>(ebx);
 
         if (focus->scroll_vert_ != 0) {
-            if (focus->scroll_vert_->on_key_event(0, key) != 0) {
+            if (focus->scroll_vert_->on_key_click(0, key) != 0) {
                 return 1;
             }
             if ((short)MapVirtualKeyA(key & 0xfff8ffff, 2) == 0) {
@@ -8099,7 +8102,7 @@ int Win::key_down_event(int key) {
             }
         }
         if (focus->scroll_horz_ != 0) {
-            if (focus->scroll_horz_->on_key_event(0, key) != 0) {
+            if (focus->scroll_horz_->on_key_click(0, key) != 0) {
                 return 1;
             }
             if (!clicked && (short)MapVirtualKeyA(key & 0xfff8ffff, 2) == 0) {
@@ -8116,7 +8119,7 @@ int Win::key_down_event(int key) {
     }
 
     if (this->scroll_vert_ != 0) {
-        if (this->scroll_vert_->on_key_event(0, key) != 0) {
+        if (this->scroll_vert_->on_key_click(0, key) != 0) {
             return 1;
         }
         if (!clicked && (short)MapVirtualKeyA(key & 0xfff8ffff, 2) == 0) {
@@ -8125,7 +8128,7 @@ int Win::key_down_event(int key) {
         }
     }
     if (this->scroll_horz_ != 0) {
-        if (this->scroll_horz_->on_key_event(0, key) != 0) {
+        if (this->scroll_horz_->on_key_click(0, key) != 0) {
             return 1;
         }
         if (!clicked && (short)MapVirtualKeyA(key & 0xfff8ffff, 2) == 0) {
@@ -8714,7 +8717,7 @@ void Win::left_down_event(int x, int y, int from_parent) {
     }
 
     if (from_parent == 0) {
-        this->vslot_20(x, y);
+        this->on_left_down(x, y);
         Win *child = reinterpret_cast<Win *>(val_9_);
         if (child != 0) {
             int r = reinterpret_cast<Win *>(child)->vslot_23();
@@ -8794,7 +8797,7 @@ void Win::nonclient_to_client(RECT * rect) {
             rect->top = rect->top + (caption_height_ - border_thickness_);
         }
         if (menu_ != 0) {
-            rect->top = rect->top + menu_->vslot_91();
+            rect->top = rect->top + menu_->requested_height();
         }
     }
 }
@@ -9439,7 +9442,7 @@ void Win::client_to_nonclient(int * points, int * count) {
         *count += caption_height_ - border_thickness_;
     }
     if (menu_ != 0) {
-        *count += menu_->vslot_91();
+        *count += menu_->requested_height();
     }
 }
 
@@ -9511,7 +9514,7 @@ int Win::key_click_event(int key, int flags) {
         result = callback(key, flags);
     }
     void *vtbl2 = *(void **)self;
-    int r2 = this->on_key_event(key, flags);
+    int r2 = this->on_key_click(key, flags);
     Win *child = reinterpret_cast<Win *>(val_14_);
     if (child != 0) {
         void *cvtbl = *(void **)child;
@@ -10215,7 +10218,7 @@ void Win::client_to_nonclient(RECT * rect) {
             rect->top += border_thickness_ - caption_height_;
         }
         if (menu_ != 0) {
-            int adj = menu_->vslot_91();
+            int adj = menu_->requested_height();
             rect->top -= adj;
         }
     }
@@ -10256,7 +10259,7 @@ void Win::nonclient_to_client(int * x, int * y) {
         *y += caption_height_ - border_thickness_;
     }
     if (menu_ != 0) {
-        *y -= menu_->vslot_91();
+        *y -= menu_->requested_height();
     }
 }
 
@@ -11952,7 +11955,7 @@ void Win::dispatch_17(int a, int b, int alternate) {
         if (hook != 0) {
             hook(a, b);
         }
-        on_mouse_feedback(a, b);
+        on_mouse_move(a, b);
         Win *child = reinterpret_cast<Win *>(val_7_);
         if (child != 0) {
             if (child->vslot_23() == 0) {
@@ -12145,7 +12148,7 @@ void Win::dispatch_21(int a, int b, int alternate) {
         if (hook != 0) {
             hook(a, b);
         }
-        vslot_21(a, b);
+        on_left_up(a, b);
         Win *child = reinterpret_cast<Win *>(val_10_);
         if (child != 0) {
             if (child->vslot_23() == 0) {

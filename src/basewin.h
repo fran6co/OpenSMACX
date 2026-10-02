@@ -193,7 +193,7 @@ class BaseWin : public ConstructedGraphicWin, public SubInterface {
   void check_veh(int a1);                               // 0x0041A8B0
   // Primary vtable66A40C+44 selects original41B1F0. Win names this
   // two-coordinate feedback slot separately from its four-argument router.
-  virtual void on_mouse_feedback(int xCoord, int yCoord);  // 0x0041B1F0
+  virtual void on_mouse_move(int xCoord, int yCoord);  // 0x0041B1F0
   void staple_the_bastards();                           // 0x0041B4F0
   void base_editor_fac();                               // 0x0041B790
   void base_editor_proj();                              // 0x0041BBC0

@@ -499,7 +499,7 @@ Status: Complete
 Purpose: Adjust the receiver from MapWin's thunk5 subobject to the one
          MapWin::on_mouse_move expects, then forward unchanged.
 // ORIGINAL: 0x0048BFA0 ?on_mouse_move@thunk5_MapWin@@QAEXHH@Z 0x0048BFA0-0x0048BFAE FILE BYTE_EXACT
-// symbol    ?on_mouse_feedback@MapWin@@$4PPPPPPPM@FOE@AEXHH@Z
+// symbol    ?on_mouse_move@MapWin@@$4PPPPPPPM@FOE@AEXHH@Z
 // size      14 bytes
 // prototype void (__thiscall ?on_mouse_move@thunk5_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
 // callers   0   call targets   0

@@ -1040,6 +1040,7 @@ void DesignWin::on_iface_right_click(int xCoord, int yCoord) {
 
 // ORIGINAL: 0x00437BA0 ?on_mouse_move@DesignWin@@QAEXHH@Z 0x00437BA0-0x00437BD5 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00437ba0.cpp", "DesignWin spot2_ member and Win::clear_bubble_text in src/"], "reason": "Home the direct pointer hover handler through the real DesignWin spot member and Win interface."}
+// symbol    ?on_mouse_move@DesignWin@@UAEXHH@Z
 // size      53 bytes
 // prototype void (__thiscall ?on_mouse_move@DesignWin@@QAEXHH@Z)(DesignWin* this, int xCoord, int yCoord)
 // callers   0   call targets   2
@@ -2134,6 +2135,7 @@ void DesignWin::on_left_click(int xCoord, int yCoord) {
 }
 
 // ORIGINAL: 0x00439A20 ?on_key_click@DesignWin@@QAEHHH@Z 0x00439A20-0x00439B3B FILE
+// symbol    ?on_key_click@DesignWin@@UAEHHH@Z
 // size      283 bytes
 // prototype int (__thiscall ?on_key_click@DesignWin@@QAEHHH@Z)(DesignWin* this, int, int)
 // callers   0   call targets   2

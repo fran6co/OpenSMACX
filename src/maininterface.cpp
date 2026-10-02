@@ -1543,6 +1543,7 @@ void MainInterface::on_right_double_click(int a1, int a2) {
 }
 
 // ORIGINAL: 0x0045C6C0 ?on_left_up@MainInterface@@QAEXHH@Z 0x0045C6C0-0x0045C6F4 FILE BYTE_EXACT
+// symbol    ?on_left_up@MainInterface@@UAEXHH@Z
 // size      52 bytes
 // prototype void (__thiscall ?on_left_up@MainInterface@@QAEXHH@Z)(MainInterface* this, int, int)
 // callers   0   call targets   0
@@ -1764,6 +1765,7 @@ void MainInterface::on_right_click(int a1, int a2) {
 }
 
 // ORIGINAL: 0x0045C780 ?on_left_down@MainInterface@@QAEXHH@Z 0x0045C780-0x0045C7B4 FILE BYTE_EXACT
+// symbol    ?on_left_down@MainInterface@@UAEXHH@Z
 // size      52 bytes
 // prototype void (__thiscall ?on_left_down@MainInterface@@QAEXHH@Z)(MainInterface* this, int, int)
 // callers   0   call targets   0
@@ -2220,6 +2222,7 @@ int MainInterface::on_dialog_item_back_draw(GraphicWin* a1, int a2, int a3, RECT
 
 
 // ORIGINAL: 0x0045C980 ?on_mouse_move@MainInterface@@QAEXHH@Z 0x0045C980-0x0045C9B4 BYTE_EXACT
+// symbol    ?on_mouse_move@MainInterface@@UAEXHH@Z
 // size      52 bytes
 // prototype void (__thiscall ?on_mouse_move@MainInterface@@QAEXHH@Z)(MainInterface* this, int, int)
 // callers   0   call targets   0

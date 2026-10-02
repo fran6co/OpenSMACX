@@ -26,7 +26,7 @@ class Win {
   uint32_t iFlags_;
   int feedback_x_, feedback_y_;
   Win() : iFlags_(0), feedback_x_(-1), feedback_y_(-1) {}
-  virtual void on_mouse_feedback(int x, int y) { feedback_x_=x; feedback_y_=y; event("feedback"); }
+  virtual void on_mouse_move(int x, int y) { feedback_x_=x; feedback_y_=y; event("feedback"); }
   virtual void release_modal() { event("release"); }
 };
 class GraphicWin : public Win, public Buffer {

@@ -564,6 +564,7 @@ void DiploWin::done_deal() {
 
 // Historical TRIED entries below describe the scaffolded seed, not this typed member body.
 // ORIGINAL: 0x00442590 ?on_key_click@DiploWin@@QAEHHH@Z 0x00442590-0x004426ED
+// symbol    ?on_key_click@DiploWin@@UAEHHH@Z
 // TRIED: Seed provenance: 0.74 mnemonic similarity - the edit box's slot-25 vtable call needed a shim in the scaffold; the tree's own Win::vslot_25 declares the same two-int signature, and Win slot 58 is release_modal, so both dispatch through the real declarations here. The private DiploWin state stays raw-offset (0xAB8, the 0xE490 edit text, stringBox_, editBox_).
 // TRIED: DAT_00946a50/DAT_00946a84 are per-faction record fields (stride 1436 = 0x59C) whose address itself is indexed - declared as extern arrays instead of the auto-scaffold's plain const-pointer globals (which would fold the stride multiply away), per the same lever as 0x00423000's g_faction_table. slot 25 on the edit_box_ sub-object takes two ints (a1,a2) - the auto-emitted VCall shim is nullary, so a second small vtable-shim class (VCall25) declares only the 26 ordinals needed with the right signature on the last one; a bare __thiscall function-pointer cast is C4234 on VC6. Landed at 0.74 mnemonic similarity.
 int DiploWin::on_key_click(int repeat, int key) {
@@ -594,7 +595,7 @@ int DiploWin::on_key_click(int repeat, int key) {
         release_modal();
         return 1;
     }
-    editBox_.on_key_event(repeat, key);
+    editBox_.on_key_click(repeat, key);
     return 1;
 }
 

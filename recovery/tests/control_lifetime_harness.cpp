@@ -7,6 +7,13 @@
 typedef unsigned char uint8_t;
 typedef unsigned int uint32_t;
 typedef int int32_t;
+typedef void *HWND;
+class Win;
+class Font;
+struct BoxSpriteParams;
+// VC6 compatibility matches the actual project compiler environment.
+#define override
+#define static_assert(condition, message) typedef char harness_static_assert[(condition) ? 1 : -1]
 int events[64], count, buttons, fail_time, fail_list, fail_close;
 void event(int value) { assert(count < 64); events[count++] = value; }
 struct GraphicWin {
@@ -19,10 +26,10 @@ struct Time {
 };
 // LIVE_EDITBOX_DECL
 void EditBox::on_redraw() {}
-void EditBox::on_mouse_feedback(int, int) {}
-void EditBox::vslot_20(int, int) {}
-void EditBox::vslot_21(int, int) {}
-int EditBox::vslot_25(int, int) { return 0; }
+void EditBox::on_mouse_move(int, int) {}
+void EditBox::on_left_down(int, int) {}
+void EditBox::on_left_up(int, int) {}
+int EditBox::on_key_click(int, int) { return 0; }
 int EditBox::vslot_26(int) { return 0; }
 void EditBox::on_dialog_focus(int) {}
 void EditBox::pass_dialog_focus() {}
@@ -33,6 +40,7 @@ uint32_t EditBoxDefaultB28, EditBoxDefaultB2C, EditBoxDefaultB30 = 1, EditBoxDef
 void EditBox::close() { event(23); }
 struct BaseButton {
     int id;
+    int val_10_, val_11_, val_12_;
     uint32_t field_A14_, field_A18_;
     BaseButton() : id(++buttons) { event(10 + id); }
     virtual ~BaseButton() { event(40 + id); }
@@ -48,7 +56,7 @@ int FlatButtonDefaultsTable[27];
 void FlatButton::close() {
     assert(field_A14_ == 0 && field_A18_ == 0 && field_AB8_ == 0xFFFFFFFFU);
     for (int i = 0; i < 3; ++i) {
-        assert(field_ABC_[i] == 0xFFFFFFFFU && field_AC8_[i] == 0 && field_AD4_[i] == 0);
+        assert(field_ABC_[i] == 0xFFFFFFFFU && border_styles_[i] == 0 && field_AD4_[i] == 0);
     }
     for (int j = 0; j < 27; ++j) assert(config[j] == static_cast<uint32_t>(FlatButtonDefaultsTable[j]));
 }

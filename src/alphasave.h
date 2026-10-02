@@ -28,7 +28,7 @@ class AlphaSave : public GraphicWin {
   void forward_button_click(int button_id);
   int on_listbox_scroll_delete(Scroll *scroll);
   int on_listbox_scroll_create();
-  void on_key_click(int key, int flags);
+  int on_key_click(int key, int flags) override;
   void on_scrolling(int code, int pos);
   void on_scrolled(int code, int pos);
   // The image's Q-spelled functions are nonvirtual; Win::show/hide are

@@ -167,7 +167,7 @@ class MapWin : public virtual GraphicWin {
   // 0x0046F000: map cursor, route preview and hover feedback.
   // Win slot17; the catalogue called this on_mouse_move. Keep it distinct
   // from the inherited four-argument event router at slot16.
-  virtual void on_mouse_feedback(int pixel_x, int pixel_y);
+  virtual void on_mouse_move(int pixel_x, int pixel_y);
   void dest_line(int x1, int y1, int x2, int y2, int prototype,
                  int faction, int triad, int repeat, int pattern_on, int pattern_off,
                  int cover);

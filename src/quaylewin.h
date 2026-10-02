@@ -20,9 +20,8 @@ class QuayleWin : public GraphicWin {
   void on_left_click(int x, int y);
   void on_selected(int selection, int unused);
   void on_button_clicked(int button_id) override;
-  int on_key_click(int repeat, int key);
   virtual void vslot_19(int x, int y) override;
-  int on_key_event(int repeat, int key) override;
+  int on_key_click(int repeat, int key) override;
   virtual void vslot_53(int selection, int unused) override;
 
   void set_chapter(int chapter) { field_2144_ = chapter; }

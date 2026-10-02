@@ -52,6 +52,7 @@ class PullDown : public GraphicWin {
   void hide();
   void UNK1();
   void on_mouse_move(int x, int y);
+  int on_key_click(int key_input, int key) override;
   void mouse_move(int x, int y);
   void pulldown_update(int old_selected, int new_selected);
   int UNK2(int a);
@@ -140,9 +141,6 @@ extern int PullDownDefaultSelectedTextShadow;
 extern int PullDownDefaultDisabledTextColor;
 extern int PullDownDefaultDisabledTextShadow;
 extern int PullDownDefaultBackground;
-
-
-
 
 // The image inlines this scan at every hide_item/show_item/disable_item/
 // enable_item/check_item/uncheck_item call site rather than emitting a

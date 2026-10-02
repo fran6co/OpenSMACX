@@ -1,13 +1,15 @@
 """Host checks that compile and execute selected AlphaMenu production bodies."""
 
 from pathlib import Path
+import os
 import shutil
 import subprocess
 
 import pytest
 
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = (Path(os.environ["OPENSMACX_ROOT"]).resolve() if "OPENSMACX_ROOT" in os.environ
+       else Path(__file__).resolve().parents[2])
 SOURCE = ROOT / "src" / "alphamenu.cpp"
 
 
@@ -64,6 +66,7 @@ def compile_and_run(tmp_path: Path, source: str) -> None:
 def test_adjust_uses_real_sprite_dimensions_and_owned_maininterface_bounds(tmp_path):
     source = SOURCE.read_text()
     adjust = extract_function(source, "void AlphaMenu::adjust()")
+    compute = extract_function(source, "void AlphaMenu::compute()")
     harness = r"""
 #include <cassert>
 struct RECT { int left, top, right, bottom; };
@@ -72,30 +75,45 @@ MainInterface MainInterfaceGlobal = {{0, 11, 0, 19}};
 int WinScreenWidth = 1280;
 int WinScreenHeight = 768;
 struct Sprite { int w, h; int width() const { return w; } int height() const { return h; } };
+struct MenuEntry { unsigned char flags; };
+struct Spot {
+  struct Row { int index, left, top, right, bottom; } rows[8];
+  int used = 0;
+  void init(int) { used = 0; }
+  int add(int index, int, int left, int top, int length, int height) {
+    rows[used++] = {index, left, top, left + length, top + height};
+    return 0;
+  }
+};
 class Win {
  public:
   void resize(int w, int h, int mode) { resized_w = w; resized_h = h; resize_mode = mode; }
   void move(int x, int y) { moved_x = x; moved_y = y; }
   void redraw() { ++redraws; }
-  void vslot_92() { ++slot92; }
   int resized_w = -1, resized_h = -1, resize_mode = -1;
-  int moved_x = -1, moved_y = -1, redraws = 0, slot92 = 0;
+  int moved_x = -1, moved_y = -1, redraws = 0;
 };
 class GraphicWin : public Win {};
 class AlphaMenu : public GraphicWin {
  public:
   void adjust();
+  void compute();
   int count_ = 3;
   Sprite sprites_[3] = {{7, 12}, {8, 13}, {9, 14}};
   Sprite sprite1_ = {31, 5};
+  Spot spot_;
+  MenuEntry entries_[3] = {{1}, {5}, {1}};
 };
-""" + adjust + r"""
+""" + adjust + "\n" + compute + r"""
 int main() {
   AlphaMenu menu;
   menu.adjust();
   assert(menu.resized_w == 31 && menu.resized_h == 41 && menu.resize_mode == 0);
   assert(menu.moved_x == 128 && menu.moved_y == 719);
-  assert(menu.redraws == 1 && menu.slot92 == 1);
+  assert(menu.redraws == 1 && menu.spot_.used == 3);
+  assert(menu.spot_.rows[0].index == 0 && menu.spot_.rows[0].top == 5 && menu.spot_.rows[0].bottom == 17);
+  assert(menu.spot_.rows[1].index == 1 && menu.spot_.rows[1].top == 29 && menu.spot_.rows[1].bottom == 41);
+  assert(menu.spot_.rows[2].index == 2 && menu.spot_.rows[2].top == 17 && menu.spot_.rows[2].bottom == 29);
 
   WinScreenWidth = 800;
   menu.adjust();

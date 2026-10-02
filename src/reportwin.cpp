@@ -786,13 +786,13 @@ void ReportWin::draw_labs() {
 
     // 0x49B178..0x49B1B5 refreshes mouse feedback on the six technology
     // controls after their geometry has settled. The original uses the
-    // inherited Win::get_mouse_pos and virtual on_mouse_feedback methods
+    // inherited Win::get_mouse_pos and virtual on_mouse_move methods
     // (slot 17); these are real FlatButton subobjects, not an address table.
     int mouse_x = 0;
     int mouse_y = 0;
     for (int button = 1; button < 7; ++button) {
         flatButtons1_[button].get_mouse_pos(&mouse_x, &mouse_y);
-        flatButtons1_[button].on_mouse_feedback(mouse_x, mouse_y);
+        flatButtons1_[button].on_mouse_move(mouse_x, mouse_y);
     }
 
     // The native host clears Buffer::field_10_ at GraphicWin+0x454, refreshes
@@ -1108,6 +1108,7 @@ void ReportWin::UNK1(int position, int minimum, int maximum, int page_size) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x004980F0 ?on_mouse_move@ReportWin@@QAEXHH@Z 0x004980F0-0x004980F3 BYTE_EXACT
+// symbol    ?on_mouse_move@ReportWin@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_mouse_move@ReportWin@@QAEXHH@Z)(ReportWin* this, int, int)
 // callers   0   call targets   0
@@ -1803,6 +1804,7 @@ Purpose: The report window's keyboard handler. Always answers 1.
              0x30-0x5A or Escape               - release the modal loop and
                                                  the active interface mode
 // ORIGINAL: 0x00498280 ?on_key_click@ReportWin@@QAEHHH@Z 0x00498280-0x00498691
+// symbol    ?on_key_click@ReportWin@@UAEHHH@Z
 // size      1041 bytes
 // prototype int (__thiscall ?on_key_click@ReportWin@@QAEHHH@Z)(ReportWin* this, int, int)
 // callers   0   call targets   4

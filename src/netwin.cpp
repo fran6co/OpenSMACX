@@ -2467,6 +2467,7 @@ void NetWin::alloc_slots() {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 1.
 // ORIGINAL: 0x0047B750 ?on_key_click@NetWin@@QAEHHH@Z 0x0047B750-0x0047B758 BYTE_EXACT
+// symbol    ?on_key_click@NetWin@@UAEHHH@Z
 // size      8 bytes
 // prototype int (__thiscall ?on_key_click@NetWin@@QAEHHH@Z)(NetWin* this, int, int)
 // callers   0   call targets   0
@@ -2484,6 +2485,7 @@ int NetWin::on_key_click(int, int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x0047F940 ?on_mouse_move@NetWin@@QAEXHH@Z 0x0047F940-0x0047F943 BYTE_EXACT
+// symbol    ?on_mouse_move@NetWin@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_mouse_move@NetWin@@QAEXHH@Z)(NetWin* this, int, int)
 // callers   0   call targets   0

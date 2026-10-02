@@ -353,11 +353,14 @@ void Dialogs::on_right_double_click(int a, int b) {
 }
 
 /*
-Purpose: Forward on left up to the embedded widget, but only when the
-         active dialog is the sprite-box kind (8). `this` arrives at the interface subobject, so
-         the discriminator sits 8 bytes before it and the target is reached by
-         adjusting back 0x8C.
+Purpose: Forward left up to the SpriteBox base only for kind 8. The native
+         612F10 receiver is GraphicWin+188, with kind_ at -8; its call uses
+         the standalone SpriteBox receiver convention at Dialogs+FC.
+         Source uses the genuine shared virtual base and a qualified call:
+         compiler-owned adjustment replaces that synthetic receiver value.
+         The historical byte obligation remains a restoration requirement.
 // ORIGINAL: 0x00612F10 ?on_left_up@Dialogs@@QAEXHH@Z 0x00612F10-0x00612F35 BYTE_EXACT
+// symbol    ?on_left_up@Dialogs@@UAEXHH@Z
 // size      37 bytes
 // prototype void (__thiscall ?on_left_up@Dialogs@@QAEXHH@Z)(Dialogs* this, int xCoord, int yCoord)
 // callers   0   call targets   1
@@ -368,19 +371,16 @@ Return Value: n/a
 Status: Complete
 */
 void Dialogs::on_left_up(int a, int b) {
-    uint8_t *const bytes = reinterpret_cast<uint8_t *>(this);
-    int discriminator;
-    std::memcpy(&discriminator, bytes - 8, sizeof(discriminator));
     // A DEAD TEST FOR KIND 4, and it is in the shipped bytes. Both jumps go
     // to the SAME place - 0x00612F32, past the call - so `cmp eax, 4; je`
     // excludes a kind that `cmp eax, 8; jne` would have excluded anyway.
     // Reproduced because it is three instructions of the original; it
     // changes no behaviour, which is exactly why it survived.
-    if (discriminator == 4) {
+    if (kind_ == 4) {
         return;
     }
-    if (discriminator == 8) {
-        reinterpret_cast<SpriteBox *>(bytes - 0x8C)->on_left_up(a, b);
+    if (kind_ == 8) {
+        sprite_box_view().SpriteBox::on_left_up(a, b);
     }
 }
 
@@ -666,33 +666,35 @@ void *__fastcall dialogs_scalar_dtor_redirect(void *adjusted, void *,
 }
 
 /*
-Purpose: Route a mouse move to whichever control this Dialogs subobject is
-         embedded in - the `kind_` at this-8 says which, and each case steps
-         back to the enclosing control's own base. HOMED from
+Purpose: Route mouse move by the owned kind_ through qualified widget bases.
+         Native 612B80 reads kind_ at GraphicWin receiver-8, then passes
+         standalone receiver values +5C/+48/+74/+FC for kinds16/2/1/8.
+         These are not the shared GraphicWin subobject at Dialogs+188;
+         real base conversions must be compiler-owned, not raw offsets.
+         Preserve the historical byte obligation while restoring the genuine
+         hierarchy. HOMED from
          src/unrecovered/00612b80.cpp on 2026-08-25 to retire its
          pending_bodies forwarder. The artifact's binding at 0x00612BF8 was
          unused scaffold pointing at this function's own end address and
          did not come with it.
 */
 // ORIGINAL: 0x00612B80 ?on_mouse_move@Dialogs@@QAEXHH@Z 0x00612B80-0x00612BF8 FILE BYTE_EXACT
-// symbol    ?on_mouse_move@Dialogs@@QAEXHH@Z
+// symbol    ?on_mouse_move@Dialogs@@UAEXHH@Z
 // size      120 bytes
 // kind      game
 void Dialogs::on_mouse_move(int a1, int a2) {
-    char *self = reinterpret_cast<char *>(this);
-    int type = *(int *)(self - 8);
-    switch (type) {
+    switch (kind_) {
         case 16:
-            ((RadioButton *)(self - 0x12c))->on_mouse_move(a1, a2);
+            radio_button_view().RadioButton::on_mouse_move(a1, a2);
             break;
         case 2:
-            ((ListBox *)(self - 0x140))->on_mouse_move(a1, a2);
+            list_box_view().ListBox::on_mouse_move(a1, a2);
             break;
         case 1:
-            ((CheckBox *)(self - 0x114))->on_mouse_move(a1, a2);
+            check_box_view().CheckBox::on_mouse_move(a1, a2);
             break;
         case 8:
-            ((SpriteBox *)(self - 0x8c))->on_mouse_move(a1, a2);
+            sprite_box_view().SpriteBox::on_mouse_move(a1, a2);
             break;
         default:
             break;
@@ -857,6 +859,7 @@ int Dialogs::calculate_dimensions() {
 // kind_ and lets qualified base calls perform the compiler-known adjustment.
 // ORIGINAL: 0x00612C20 ?on_left_down@Dialogs@@QAEXHH@Z 0x00612C20-0x00612C98
 // RECOVERY_BINDING: v1 {"evidence": ["Retained 0x00612C20 seed; shared virtual Dialog and GraphicWin bases; Dialogs kind_ and named widget base APIs"], "reason": "Home on_left_down as a typed Dialogs kind dispatcher"}
+// symbol    ?on_left_down@Dialogs@@UAEXHH@Z
 void Dialogs::on_left_down(int x, int y) {
     switch (kind_) {
     case 1:

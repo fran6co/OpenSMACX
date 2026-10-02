@@ -39,18 +39,18 @@ class AlphaMenu : public Menu {
   // Member destruction follows the original 0x0051DC10 reverse-lifetime
   // trace: three Sprites, the leading Sprite, Buffer, then Menu.
   ~AlphaMenu();
-  int init(Win *parent);
-  void adjust();
+  int init(Win *parent) override;
+  void adjust() override;
   // Win slot 2 and slot 12, respectively.
   void hide();
   virtual void on_redraw();
   void show();
-  // The image's slot 17 is the 2-argument on_mouse_move overload
-  // (on_mouse_move@AlphaMenu, 0x00403550, unrecovered) - the same
-  // slot-true stub.
-  void on_mouse_feedback(int x, int y);
-  int requested_height();
-  void on_adjust_pulldown_pos(int *x, int *y);
+  // The image's slot 17 is the recovered two-argument on_mouse_move override
+  // (0x00403550); its four-argument router remains inherited at slot 16.
+  void on_mouse_move(int x, int y) override;
+  int requested_height() override;
+  void compute() override;
+  void on_adjust_pulldown_pos(int *x, int *y) override;
   static int __cdecl fill_func(GraphicWin *target, int mode, RECT *clip);
   static int backfill_func(GraphicWin *target);
   // 0x00460DD0 - the catalogue pins the name ?check@MainMenu@@QAEXH@Z on it,

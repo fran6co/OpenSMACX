@@ -1766,6 +1766,7 @@ void TutWin::on_move(int x, int y) {
 
 // ORIGINAL: 0x004BA770 ?on_key_click@TutWin@@QAEHHH@Z 0x004BA770-0x004BA82E BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x004BA770-0x004BA82E; seed:src/unrecovered/004ba770.cpp; source:src/win.h:Win::release_modal,Win::hide,Win::on_update"], "reason": "The tutorial key callback owns its modal dismissal, saved key tuple, and TutWin state reset."}
+// symbol    ?on_key_click@TutWin@@UAEHHH@Z
 int TutWin::on_key_click(int key, int code) {
     if (field_53B8_ != 0) {
         release_modal();

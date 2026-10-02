@@ -1,0 +1,21 @@
+{
+  "event_id": "a8e0e9843c32243dfd9f101fb1dd4f1ff42737cedcf6890d42f5ffdae22cad21",
+  "payload": {
+    "affects": [
+      "entity-04c82398ee7502b43f916b8b4c9d685842fec6cc57f1c91674abe3257dc1bdc4",
+      "entity-074006463e44727330ebd94629cf934d06829fbe4b1fd4d8a009c2a53381414c"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "dialogs-shared-base-receiver-restoration",
+    "evidence": [
+      "Pinned612B80 and612F10 enter GraphicWin+188, kind_+180; callees Radio/List/Check/Sprite use standalone receiver deltas18/48/1C/8C. Current class vbtables/constructor evidence establishes one shared GraphicWin. Fresh59-claim sweep has57pass andthese2misses; fresh application build/link and actual-source dispatch controls verify bounded source behavior, not full structure/runtime or native acceptance. Coordinator-reviewed checkpoint preserves restoration obligations under user structural-migration policy."
+    ],
+    "hypothesis": "The native Dialogs dispatchers pass standalone widget virtual-base receiver values within a shared-base object; genuine qualified C++ calls now read the correct kind_ and navigate actual virtual bases, but two historical byte obligations remain unrestored. Preserve typed source and original claims pending further hierarchy/calling-convention evidence, rather than manufacture receiver pointers.",
+    "kind": "discovery"
+  },
+  "previous_event": "31a9d66b296c6352f930870220cfbee4c29da44de90daab9f23ed46397d099e1",
+  "request_id": "dialogs-shared-base-receiver-restoration",
+  "schema_version": 1,
+  "sequence": 15,
+  "stream": "task:popup-font-configuration-owner-closure"
+}

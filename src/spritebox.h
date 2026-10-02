@@ -165,8 +165,10 @@ class SpriteBox : public virtual GraphicWin, public virtual Dialog {
   DrawCallback redraw_callback_;  // 0x64
   ClickCallback field_68_;  // original item-click callback at 0x68
  private:
-  uint32_t field_6C_;  // 0x6C
-  uint32_t field_70_;  // 0x70
+  // GraphicWin callback receivers are +0x8C; native left handlers read
+  // -0x20 and -0x1C respectively, identifying these complete-object slots.
+  ClickCallback left_down_callback_;  // 0x6C
+  ClickCallback left_up_callback_;  // 0x70
   uint32_t field_74_;  // 0x74
   uint32_t field_78_;  // 0x78
   uint32_t field_7C_;  // 0x7C

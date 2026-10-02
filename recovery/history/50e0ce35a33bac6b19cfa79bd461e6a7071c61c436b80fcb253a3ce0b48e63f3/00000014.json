@@ -1,0 +1,19 @@
+{
+  "event_id": "31a9d66b296c6352f930870220cfbee4c29da44de90daab9f23ed46397d099e1",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_control_lifetimes.py"
+    ],
+    "evidence": [
+      "Fresh native controls expose stale fixture-only field_AC8_ versus current borrowed border_styles_, and missing forward declarations/override compatibility in actual declaration extraction. Authorize bounded test fixture migration preserving offset AC8, three entries, pointer width, lifetime and unwind assertions; no product scope or baseline reset."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "6803a90e5cdd7e238d9703cbeba7bc734f0640ecd64a0539cf8b1588ad1412c9",
+  "request_id": "menu-callback-lifetime-fixture-closure",
+  "schema_version": 1,
+  "sequence": 14,
+  "stream": "task:popup-font-configuration-owner-closure"
+}

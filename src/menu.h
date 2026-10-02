@@ -48,15 +48,13 @@ static_assert(offsetof(MenuEntry, flags) == 0x8,
   */
 class Menu : public GraphicWin {
  public:
-  void on_left_up(int xCoord, int yCoord);
+  void on_left_down(int x, int y) override;
+  void on_left_up(int xCoord, int yCoord) override;
   void UNK1();
   void hide_menus();
-  void on_mouse_move(int a1, int a2);
-  // ?mouse_move@Menu@@QAEXHH@Z (0x005FBDB0, 333 bytes) is unrecovered;
-  // on_mouse_move is an 18-byte tail-forward to it. Declared so that
-  // forward names a real member - it still needs a body before the DLL links.
+  void on_mouse_move(int a1, int a2) override;
+  // The slot-17 callback is an 18-byte forwarder to this owner tracker.
   void mouse_move(int a1, int a2);
-  int requested_height();
   int UNK2(int a);
   int UNK5(int a, int b, int c, int d);
   int UNK11(int menu_id, int item_id);
@@ -76,7 +74,10 @@ class Menu : public GraphicWin {
   // nothing and the deleting destructor needs a `call rel32`.
   ~Menu();
 
-  void on_adjust_pulldown_pos(int *a1, int *a2);
+  int on_key_click(int repeat, int key) override;
+  void on_redraw() override;
+  int add_menu(int menu_id, char *text, int left_justified);
+  int UNK10(int menu_id, char *text);
   void set_menu_proc(MenuProc proc);
   void menu_event(int id);
   int id_to_index(int id);
@@ -111,22 +112,13 @@ class Menu : public GraphicWin {
   MenuEntry entries_[15];
 
  public:
-  // MENU'S OWN VTABLE SLOTS, derived from a dispatch the image spells out.
-  // Win declares 0..87 and GraphicWin appends link and caption hooks
-  // at88 and89, so Menu's first addition is90.
-  // `Win::adjust_menus` (0x005F0540, BYTE_EXACT) calls this object at
-  // `[vtable + 0x174]` = slot 93, which is what fixes the count at four:
-  // three unnamed slots and the one the dispatch proves exists. Naming any
-  // of them is a later measurement; the declaration is what lets the
-  // compiler emit the dispatch instead of a fake-class shim.
-  virtual void vslot_90() {}
-  // RETURNS int: Win's two consumers read its return as the caption-height
-  // adjustment (`*count += menu_->vslot_91()`, `rect->top -= adj` - the old
-  // VCall2/MenuVCall shims spelled the slot int-returning). The body is
-  // unrecovered; the default holds the slot, semantic debt until named.
-  virtual int vslot_91() { return 0; }
-  virtual void vslot_92() {}
-  virtual void vslot_93() {}
+  // Menu's native table begins these owner additions at slot 90; the pinned
+  // primary table confirms the ordered targets for all five methods.
+  virtual int init(Win *owner);
+  virtual int requested_height();
+  virtual void compute();
+  virtual void adjust();
+  virtual void on_adjust_pulldown_pos(int *x, int *y);
 };
 
 static_assert(sizeof(Menu) == 0xB64, "Menu layout must match the legacy ABI");
@@ -146,8 +138,5 @@ extern int MenuDefaultColor3;
 extern int MenuDefaultSelectionColor;
 extern int MenuDefaultSelectionTextColor;
 
-// mouse_move is declared on the class because the recovered on_mouse_move is
-// an 18-byte tail-forward to it, but its 333-byte body is not recovered, so
-// the DLL has nothing to link that call against. It stands in with a forward
-// to the original image until the body lands.
-//   ?mouse_move@Menu@@QAEXHH@Z  0x005FBDB0  public, __thiscall, void(int, int)
+// Menu::mouse_move is the typed target of the slot-17 forwarder and now lives
+// in menu.cpp alongside the owner-specific input state.

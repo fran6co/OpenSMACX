@@ -338,6 +338,7 @@ void ReplayWin::on_right_double_click(int, int) {
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
 // ORIGINAL: 0x005AD3F0 ?on_mouse_move@ReplayWin@@QAEXHH@Z 0x005AD3F0-0x005AD3F3 BYTE_EXACT
+// symbol    ?on_mouse_move@ReplayWin@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_mouse_move@ReplayWin@@QAEXHH@Z)(ReplayWin* this, int, int)
 // callers   0   call targets   0
@@ -368,6 +369,7 @@ void ReplayWin::on_right_down(int, int) {
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
 // ORIGINAL: 0x005AD410 ?on_left_down@ReplayWin@@QAEXHH@Z 0x005AD410-0x005AD413 BYTE_EXACT
+// symbol    ?on_left_down@ReplayWin@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_left_down@ReplayWin@@QAEXHH@Z)(ReplayWin* this, int, int)
 // callers   0   call targets   0
@@ -383,6 +385,7 @@ void ReplayWin::on_left_down(int, int) {
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
 // ORIGINAL: 0x005AD420 ?on_left_up@ReplayWin@@QAEXHH@Z 0x005AD420-0x005AD423 BYTE_EXACT
+// symbol    ?on_left_up@ReplayWin@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_left_up@ReplayWin@@QAEXHH@Z)(ReplayWin* this, int, int)
 // callers   0   call targets   0

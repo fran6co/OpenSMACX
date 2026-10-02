@@ -36,7 +36,7 @@ void SetupWin::on_left_click(int x, int y) {
     // and passes that saved coordinate to the virtual feedback callback.
     const int original_y = y;
     if (spot_.check(x, y, &y, 0) != -1) {
-        on_mouse_feedback(x, original_y);
+        on_mouse_move(x, original_y);
         release_modal();
     }
 }
@@ -182,22 +182,22 @@ int SetupWin::do_menu(Popup *popup, int menu_kind, int flags) {
 
 // ORIGINAL: 0x004AE380 ?on_mouse_move@SetupWin@@QAEHHH@Z 0x004AE380-0x004AE3DA
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004ae380.cpp"], "reason": "Home SetupWin hover selection through typed Spot and selected-item fields"}
-int SetupWin::on_mouse_move(int x, int y) {
+// symbol    ?on_mouse_move@SetupWin@@UAEXHH@Z
+void SetupWin::on_mouse_move(int x, int y) {
     int position;
     const int hit_type = spot_.check(x, y, &position, 0);
     if (hit_type == -1) {
-        return -1;
+        return;
     }
 
     if (position == static_cast<int>(selected_row_)) {
-        return static_cast<int>(selected_row_);
+        return;
     }
 
     draw_item(static_cast<int>(selected_row_), 0);
     selected_row_ = static_cast<uint32_t>(position);
     draw_item(position, 1);
     soft_update();
-    return 0;
 }
 
 // ORIGINAL: 0x004AE4D0 ?draw_item@SetupWin@@QAEHHH@Z 0x004AE4D0-0x004AE757

@@ -86,6 +86,7 @@ void FameWin::close() {
 
 // ORIGINAL: 0x0044A4B0 ?on_key_click@FameWin@@QAEHHH@Z 0x0044A4B0-0x0044A4F3 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0044a4b0.cpp"], "reason": "Product definition uses the typed FameWin ownership model while retaining the historical seed and its recovery obligations."}
+// symbol    ?on_key_click@FameWin@@UAEHHH@Z
 int FameWin::on_key_click(int, int code) {
   if ((code > 0x2F && code < 0x5B) || code == 0x1B || code == 0xD) {
     buffer1_.close();

@@ -99,7 +99,7 @@ def test_flatbutton_constructs_base_once_and_keeps_indexed_runs(control_objects)
         assert ctor.count("??0BaseButton@@QAE@XZ") == 1
         assert "?construct@BaseButton@@QAEPAV1@XZ" not in ctor
         layout = class_layout(obj, "FlatButton")
-        for name, offset in (("field_ABC_", 0xABC), ("field_AC8_", 0xAC8), ("field_AD4_", 0xAD4)):
+        for name, offset in (("field_ABC_", 0xABC), ("border_styles_", 0xAC8), ("field_AD4_", 0xAD4)):
             assert layout["members"][name] == offset
             assert layout["member_types"][name]["count"] == 3
             assert layout["member_types"][name]["size"] == 12

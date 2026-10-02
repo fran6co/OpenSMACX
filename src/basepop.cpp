@@ -1215,6 +1215,7 @@ Purpose: Report whether the popup will accept a key click. Both this and
          clear. The arguments are ignored; the two differ only in how many they
          clean off the stack.
 // ORIGINAL: 0x00604490 ?on_key_click@BasePop@@QAEHHH@Z 0x00604490-0x006044A1 BYTE_EXACT
+// symbol    ?on_key_click@BasePop@@UAEHHH@Z
 // size      17 bytes
 // prototype int (__thiscall ?on_key_click@BasePop@@QAEHHH@Z)(BasePop* this, int, int)
 // callers   0   call targets   0
@@ -3034,6 +3035,7 @@ int BasePop::set_cancel_text(char *text) {
 
 
 // ORIGINAL: 0x00605130 ?on_left_down@BasePop@@QAEXHH@Z 0x00605130-0x00605172 FILE BYTE_EXACT
+// symbol    ?on_left_down@BasePop@@UAEXHH@Z
 // size      66 bytes
 // prototype void (__thiscall ?on_left_down@BasePop@@QAEXHH@Z)(BasePop* this, int xCoord, int yCoord)
 // callers   0   call targets   1

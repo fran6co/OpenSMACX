@@ -199,6 +199,7 @@ void Credits::draw_credits() {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x00428D80 ?on_left_down@Credits@@QAEXHH@Z 0x00428D80-0x00428D83 BYTE_EXACT
+// symbol    ?on_left_down@Credits@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_left_down@Credits@@QAEXHH@Z)(Credits* this, int, int)
 // callers   0   call targets   0
@@ -231,6 +232,7 @@ void Credits::on_right_down(int, int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x00428DA0 ?on_mouse_move@Credits@@QAEXHH@Z 0x00428DA0-0x00428DA3 BYTE_EXACT
+// symbol    ?on_mouse_move@Credits@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_mouse_move@Credits@@QAEXHH@Z)(Credits* this, int, int)
 // callers   0   call targets   0

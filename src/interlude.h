@@ -9,7 +9,7 @@ class Interlude : public GraphicWin {
   void exec(char *section);
   void close();
   virtual void on_redraw();
-  virtual void vslot_20(int x, int y);
+  virtual void on_left_down(int x, int y);
   virtual int vslot_26(int key);
  private:
   // Original construction and redraw access these real embedded subobjects.

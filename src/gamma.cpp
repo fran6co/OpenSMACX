@@ -268,6 +268,7 @@ void Gamma::on_button_clicked(int button_id) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 1.
 // ORIGINAL: 0x005C9410 ?on_key_click@Gamma@@QAEHHH@Z 0x005C9410-0x005C9418 BYTE_EXACT
+// symbol    ?on_key_click@Gamma@@UAEHHH@Z
 // size      8 bytes
 // prototype int (__thiscall ?on_key_click@Gamma@@QAEHHH@Z)(Gamma* this, int, int)
 // callers   0   call targets   0

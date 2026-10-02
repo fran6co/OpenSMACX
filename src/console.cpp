@@ -4870,7 +4870,7 @@ Status: Complete
 Purpose: Adjust the receiver from MapWin's thunk4 subobject to the one
          MapWin::on_mouse_move expects, then forward unchanged.
 // ORIGINAL: 0x0051DE70 ?on_mouse_move@thunk4_MapWin@@QAEXHH@Z 0x0051DE70-0x0051DE7E FILE BYTE_EXACT
-// symbol    ?on_mouse_feedback@MapWin@@$4PPPPPPPM@CDCI@AEXHH@Z
+// symbol    ?on_mouse_move@MapWin@@$4PPPPPPPM@CDCI@AEXHH@Z
 // size      14 bytes
 // prototype void (__thiscall ?on_mouse_move@thunk4_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
 // callers   0   call targets   0
@@ -6810,7 +6810,7 @@ void Console::arty(int vehicle) {
     ConsoleGlobal.cursor_on(10, static_cast<int>(Rules.artillery_max_rng));
     int pixel_x, pixel_y;
     MapWinTable[0]->get_mouse_pos(&pixel_x, &pixel_y);
-    MapWinTable[0]->on_mouse_feedback(pixel_x, pixel_y);
+    MapWinTable[0]->on_mouse_move(pixel_x, pixel_y);
 }
 
 // ORIGINAL: 0x005166D0 ?cursor_key@Console@@QAEXHHH@Z 0x005166D0-0x005168B7

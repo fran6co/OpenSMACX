@@ -378,6 +378,7 @@ void ProdPicker::on_scrolled(int, int position) {
 // virtual override). Its second argument is the key code; the first is unused.
 // ORIGINAL: 0x00494280 ?on_key_click@ProdPicker@@QAEHHH@Z 0x00494280-0x00494545 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00494280.cpp", "Pinned original coordinator review: actual label-pointer dereference, camera word3F48F5C3, static cdecl callback ABI, row-end clamps and modal-parent/button suppression order."], "reason": "Recover ProdPicker owner behavior through existing window bases, owned StringLists/controls and typed Base/Caviar camera state; preserve historical seed identity and extents as restoration obligations, not current match claims."}
+// symbol    ?on_key_click@ProdPicker@@UAEHHH@Z
 int ProdPicker::on_key_click(int repeat, int key) {
     (void)repeat;
     const int oldFirst = field_A77C_;
@@ -1136,6 +1137,7 @@ int ProdPicker::UNK1(int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x00493E90 ?on_mouse_move@ProdPicker@@QAEXHH@Z 0x00493E90-0x00493E93 BYTE_EXACT
+// symbol    ?on_mouse_move@ProdPicker@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_mouse_move@ProdPicker@@QAEXHH@Z)(ProdPicker* this, int, int)
 // callers   0   call targets   0

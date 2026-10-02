@@ -19,7 +19,8 @@ import subprocess
 import pytest
 
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = (Path(os.environ["OPENSMACX_ROOT"]).resolve() if "OPENSMACX_ROOT" in os.environ
+       else Path(__file__).resolve().parents[2])
 
 
 def braced(source, signature):
@@ -59,9 +60,9 @@ def actual_source():
         declaration, = re.findall(r"^  (?:int32_t|uint32_t) " + name + r";", h["console"], re.M)
         members.append(declaration)
     parts["CONSOLE_MEMBERS"] = "\n".join(members)
-    parts["MOUSE_DEFAULT"] = braced(h["win"], "virtual void on_mouse_feedback(")
+    parts["MOUSE_DEFAULT"] = braced(h["win"], "virtual void on_mouse_move(")
     for key, unit, pattern in (
-        ("MAP_METHODS", "mapwin", r"^  (?:virtual )?(?:void|int) (?:on_mouse_feedback|pixel_to_tile|editor|dest_line)\([^;{}]*\);"),
+        ("MAP_METHODS", "mapwin", r"^  (?:virtual )?(?:void|int) (?:on_mouse_move|pixel_to_tile|editor|dest_line)\([^;{}]*\);"),
         ("WIN_METHODS", "win", r"^  (?:static )?int (?:set_cursor\(int name|update_cursor\(Win \*window, int tgl)\);"),
         ("GRAPHIC_METHODS", "graphicwin", r"^  void (?:fill\(int color|soft_update\()\);"),
         ("BUFFER_METHODS", "buffer", r"^  (?:int|void) (?:set_text_color|set_font|text_width|write_l)\([^;{}]*\);"),
@@ -83,7 +84,7 @@ def actual_source():
     parts["HELPERS"] = "\n".join(braced(source, signature) for signature in (
         "int mouse_feedback_signed(", "int mouse_feedback_add(", "int mouse_feedback_sub(", "int mouse_feedback_mul(",
         "void mouse_feedback_store_x(", "void mouse_feedback_store_y("))
-    parts["BODY"] = braced(source, "void MapWin::on_mouse_feedback(")
+    parts["BODY"] = braced(source, "void MapWin::on_mouse_move(")
     return parts
 
 
@@ -139,7 +140,7 @@ int Win::set_cursor(int id){require(this==static_cast<Win*>(static_cast<GraphicW
     if(scenario==1){window.cursor_resource_id_=17;window.cursor_sprite_=&sprite;}return -1;}
 void do_all_non_input(){
     note('N');require(MapMouseFeedbackBusy==1);
-    if(scenario==2){window.on_mouse_feedback(999,999);}
+    if(scenario==2){window.on_mouse_move(999,999);}
     if(scenario==3){window.field_1DE0C_=tile_x;window.feedback_hover_y_=tile_y;}
     if(scenario==4){ConsoleGlobal.selected_vehicle_=1;ConsoleGlobal.field_23D10_=8;}
 }
@@ -207,26 +208,26 @@ void reset(){
 void admission(){
     for(int guard=0;guard<5;++guard){reset();switch(guard){case 0:MapMouseFeedbackBusy=1;break;case 1:UnkGlobal0093A934=1;break;
         case 2:ConsoleControlTurnActive=1;break;case 3:MapInputEnabled=0;break;case 4:window.field_1DD78_=1;break;}
-        window.on_mouse_feedback(25,30);require(seen.empty()&&pixel_calls==0);}
+        window.on_mouse_move(25,30);require(seen.empty()&&pixel_calls==0);}
     for(int invalid=0;invalid<5;++invalid){reset();switch(invalid){case 0:pixel_result=1;break;case 1:tile_y=-1;break;case 2:tile_y=32;break;
-        case 3:tile_x=-1;break;case 4:tile_x=64;break;}window.on_mouse_feedback(25,30);kinds("P");}
-    for(int erase=1;erase<4;++erase){reset();window.field_1DD8C_=erase;window.on_mouse_feedback(25,30);kinds("PE");require(events('E')[0].args==std::vector<int>({12,14,erase==2}));}
-    reset();selected_result=0;window.on_mouse_feedback(25,30);kinds("PS");
+        case 3:tile_x=-1;break;case 4:tile_x=64;break;}window.on_mouse_move(25,30);kinds("P");}
+    for(int erase=1;erase<4;++erase){reset();window.field_1DD8C_=erase;window.on_mouse_move(25,30);kinds("PE");require(events('E')[0].args==std::vector<int>({12,14,erase==2}));}
+    reset();selected_result=0;window.on_mouse_move(25,30);kinds("PS");
     for(int state=0;state<2;++state){reset();scenario=1;selected_result=0;if(state)window.cursor_resource_id_=7;else window.cursor_sprite_=&sprite;
-        window.on_mouse_feedback(25,30);kinds("PSR");require(!window.cursor_sprite_&&window.cursor_resource_id_==0x7f00&&events('R')[0].args[0]==0x7f00);}
-    reset();window.field_1DD80_=0;window.on_mouse_feedback(25,30);kinds("PSZ");require(std::string(StringTemp)=="stale");
-    reset();window.field_1DE0C_=tile_x;window.feedback_hover_y_=tile_y;window.on_mouse_feedback(25,30);kinds("PSNZ");require(MapMouseFeedbackBusy==0);
-    reset();scenario=3;window.on_mouse_feedback(25,30);kinds("PSNZ");require(MapMouseFeedbackBusy==0);
-    reset();scenario=2;window.on_mouse_feedback(25,30);require(pixel_calls==1&&events('N').size()==1&&MapMouseFeedbackBusy==0);
-    reset();window.field_1DE0C_=tile_x;window.on_mouse_feedback(25,30);require(segments.size()==1);
-    reset();window.feedback_hover_y_=tile_y;window.on_mouse_feedback(25,30);require(segments.size()==1);
+        window.on_mouse_move(25,30);kinds("PSR");require(!window.cursor_sprite_&&window.cursor_resource_id_==0x7f00&&events('R')[0].args[0]==0x7f00);}
+    reset();window.field_1DD80_=0;window.on_mouse_move(25,30);kinds("PSZ");require(std::string(StringTemp)=="stale");
+    reset();window.field_1DE0C_=tile_x;window.feedback_hover_y_=tile_y;window.on_mouse_move(25,30);kinds("PSNZ");require(MapMouseFeedbackBusy==0);
+    reset();scenario=3;window.on_mouse_move(25,30);kinds("PSNZ");require(MapMouseFeedbackBusy==0);
+    reset();scenario=2;window.on_mouse_move(25,30);require(pixel_calls==1&&events('N').size()==1&&MapMouseFeedbackBusy==0);
+    reset();window.field_1DE0C_=tile_x;window.on_mouse_move(25,30);require(segments.size()==1);
+    reset();window.feedback_hover_y_=tile_y;window.on_mouse_move(25,30);require(segments.size()==1);
 }
 void route_vectors(){
     // Independently listed original path: start vehicle, count+1 waypoints,
     // and (only repeat with nonzero count) return to the vehicle.
     for(int count=0;count<4;++count)for(int repeat=0;repeat<2;++repeat){reset();Vehs[1].waypoint_count=count;ConsoleGlobal.field_23D10_=repeat?8:0;
         const int points[6][2]={{2,4},{20,21},{22,23},{24,25},{26,27},{2,4}};
-        window.on_mouse_feedback(25,30);const int n=count+1+(repeat&&count);
+        window.on_mouse_move(25,30);const int n=count+1+(repeat&&count);
         require(int(segments.size())==n&&pump_calls==n&&window.feedback_segment_count_==n);
         for(int i=0;i<n;++i){int sx=points[i][0],sy=points[i][1],ex=points[i+1][0],ey=points[i+1][1];
             if(repeat&&i==count){ex=12;ey=14;}
@@ -241,48 +242,48 @@ void route_vectors(){
         require(window.feedback_proto_==3&&window.feedback_triad_==2);
         for(int i=n+1;i<5;++i)require(window.feedback_x_[i]==101+i&&window.feedback_y_[i]==201+i);
     }
-    reset();ConsoleGlobal.field_23D10_=1;Vehs[1].waypoint_count=3;window.on_mouse_feedback(25,30);
+    reset();ConsoleGlobal.field_23D10_=1;Vehs[1].waypoint_count=3;window.on_mouse_move(25,30);
     require(Vehs[1].waypoint_count==0&&segments.size()==1&&segments[0][2]==12&&segments[0][3]==14);
-    reset();ConsoleGlobal.field_23D10_=1;Vehs[1].state=0x02000000;Vehs[1].waypoint_count=3;window.on_mouse_feedback(25,30);
+    reset();ConsoleGlobal.field_23D10_=1;Vehs[1].state=0x02000000;Vehs[1].waypoint_count=3;window.on_mouse_move(25,30);
     require(Vehs[1].waypoint_count==3&&segments.size()==4&&segments[3][2]==12&&segments[3][3]==14);
-    reset();ConsoleGlobal.selected_vehicle_=-1;window.on_mouse_feedback(25,30);
+    reset();ConsoleGlobal.selected_vehicle_=-1;window.on_mouse_move(25,30);
     require(segments.size()==1&&segments[0]==(std::array<int,11>{{6,8,14,202,10,3,2,0,3,5,1}}));
     require(window.feedback_y_[1]==202&&window.feedback_x_[1]==14&&window.feedback_segment_count_==1);
-    reset();scenario=7;ConsoleGlobal.selected_vehicle_=-1;window.on_mouse_feedback(25,30);require(segments[0][0]==-6&&segments[0][1]==-8);
+    reset();scenario=7;ConsoleGlobal.selected_vehicle_=-1;window.on_mouse_move(25,30);require(segments[0][0]==-6&&segments[0][1]==-8);
     reset();ConsoleGlobal.selected_vehicle_=0;Vehs[0].x=-3;Vehs[0].y=-5;Vehs[0].proto_id=3;Vehs[0].waypoint_x[0]=7;Vehs[0].waypoint_y[0]=9;
-    window.on_mouse_feedback(25,30);require(segments[0][0]==-3&&segments[0][1]==-5&&segments[0][2]==7&&segments[0][3]==9);
+    window.on_mouse_move(25,30);require(segments[0][0]==-3&&segments[0][1]==-5&&segments[0][2]==7&&segments[0][3]==9);
 }
 void callback_controls(){
-    reset();scenario=4;ConsoleGlobal.selected_vehicle_=-1;window.on_mouse_feedback(25,30);require(segments[0][4]==3&&segments[0][7]==1);
-    reset();scenario=5;window.on_mouse_feedback(25,30);require(segments[0][0]==-2&&segments[0][4]==4&&segments[0][6]==1);
-    reset();scenario=6;window.on_mouse_feedback(25,30);require(segments.size()==3&&segments[0][0]==-9&&segments[0][1]==-7&&segments[0][2]==31&&segments[0][3]==41);
-    reset();scenario=8;window.on_mouse_feedback(25,30);require(segments[0][4]==11&&segments[0][5]==6&&segments[0][6]==1);
-    reset();scenario=9;Vehs[1].waypoint_count=3;window.on_mouse_feedback(25,30);require(segments.size()==1&&events('L')[0].args[0]==410);
-    reset();scenario=10;Vehs[1].waypoint_count=2;ConsoleGlobal.field_23D10_=8;window.on_mouse_feedback(25,30);
+    reset();scenario=4;ConsoleGlobal.selected_vehicle_=-1;window.on_mouse_move(25,30);require(segments[0][4]==3&&segments[0][7]==1);
+    reset();scenario=5;window.on_mouse_move(25,30);require(segments[0][0]==-2&&segments[0][4]==4&&segments[0][6]==1);
+    reset();scenario=6;window.on_mouse_move(25,30);require(segments.size()==3&&segments[0][0]==-9&&segments[0][1]==-7&&segments[0][2]==31&&segments[0][3]==41);
+    reset();scenario=8;window.on_mouse_move(25,30);require(segments[0][4]==11&&segments[0][5]==6&&segments[0][6]==1);
+    reset();scenario=9;Vehs[1].waypoint_count=3;window.on_mouse_move(25,30);require(segments.size()==1&&events('L')[0].args[0]==410);
+    reset();scenario=10;Vehs[1].waypoint_count=2;ConsoleGlobal.field_23D10_=8;window.on_mouse_move(25,30);
     require(segments.size()==3&&segments[0][7]==1&&segments[1][7]==0&&segments[1][5]==5&&events('L')[0].args[0]==411);
-    reset();scenario=15;Vehs[1].waypoint_count=1;window.on_mouse_feedback(25,30);
+    reset();scenario=15;Vehs[1].waypoint_count=1;window.on_mouse_move(25,30);
     require(segments.size()==2&&segments[1][0]==20&&segments[1][1]==21&&segments[1][2]==22&&segments[1][3]==23);
-    reset();scenario=17;Vehs[1].waypoint_count=1;ConsoleGlobal.field_23D10_=8;window.on_mouse_feedback(25,30);
+    reset();scenario=17;Vehs[1].waypoint_count=1;ConsoleGlobal.field_23D10_=8;window.on_mouse_move(25,30);
     require(segments.size()==2&&segments[1][0]==20&&segments[1][1]==21&&segments[1][2]==2&&segments[1][3]==4);
-    reset();scenario=18;window.field_1DD80_=0;window.on_mouse_feedback(25,30);require(segments.size()==1);
+    reset();scenario=18;window.field_1DD80_=0;window.on_mouse_move(25,30);require(segments.size()==1);
 }
 void text_controls(){
-    reset();window.on_mouse_feedback(25,30);kinds("PSNFUDLOLCQBTWZ");
+    reset();window.on_mouse_move(25,30);kinds("PSNFUDLOLCQBTWZ");
     require(written=="MOVE (12,14): COST = 2 2/3"&&write_x==20&&write_y==40&&write_length==int(written.size()));
     require(events('C')[0].args==std::vector<int>({0x9f,0x41,1,1})&&events('Q')[0].args==std::vector<int>({12,1}));
-    reset();window.field_1DD84_=1;window.on_mouse_feedback(25,30);require(written=="BASE (12,14): COST = 2 2/3");
-    reset();ConsoleGlobal.field_23D10_=8;window.field_1DD84_=1;window.on_mouse_feedback(25,30);require(written=="REPEAT (12,14): COST = 2 2/3");
-    reset();scenario=11;window.on_mouse_feedback(25,30);require(written=="MOVE (12,14): COST = -2 -2/3");
-    reset();scenario=12;window.on_mouse_feedback(25,30);require(written=="MOVE (12,14): COST = 2");
+    reset();window.field_1DD84_=1;window.on_mouse_move(25,30);require(written=="BASE (12,14): COST = 2 2/3");
+    reset();ConsoleGlobal.field_23D10_=8;window.field_1DD84_=1;window.on_mouse_move(25,30);require(written=="REPEAT (12,14): COST = 2 2/3");
+    reset();scenario=11;window.on_mouse_move(25,30);require(written=="MOVE (12,14): COST = -2 -2/3");
+    reset();scenario=12;window.on_mouse_move(25,30);require(written=="MOVE (12,14): COST = 2");
     const int rates[]={1,2,5,100};const char *fractions[]={"8","4","1 3/5","0 8/100"};
-    for(int i=0;i<4;++i){reset();Rules.move_rate_roads=rates[i];window.on_mouse_feedback(25,30);
+    for(int i=0;i<4;++i){reset();Rules.move_rate_roads=rates[i];window.on_mouse_move(25,30);
         require(written==std::string("MOVE (12,14): COST = ")+fractions[i]);}
-    reset();scenario=13;window.on_mouse_feedback(25,30);require(write_x==23&&write_y==100);
-    reset();scenario=14;window.on_mouse_feedback(25,30);require(written.empty()&&write_length==0&&events('W').size()==1);
-    reset();ConsoleGlobal.field_1DDB8_=0x7fffffffU;text_width_result=100000;window.on_mouse_feedback(100000,30);
+    reset();scenario=13;window.on_mouse_move(25,30);require(write_x==23&&write_y==100);
+    reset();scenario=14;window.on_mouse_move(25,30);require(written.empty()&&write_length==0&&events('W').size()==1);
+    reset();ConsoleGlobal.field_1DDB8_=0x7fffffffU;text_width_result=100000;window.on_mouse_move(100000,30);
     // Low32(100000*100000)=1410065408; signed divide by100 truncates.
     require(write_x==-14000654&&write_y==(-2147483647-1)+29);
-    reset();text_width_result=100000;window.on_mouse_feedback(30000,30);require(write_x==12979672);
+    reset();text_width_result=100000;window.on_mouse_move(30000,30);require(write_x==12979672);
 }
 int main(){admission();route_vectors();callback_controls();text_controls();}
 '''

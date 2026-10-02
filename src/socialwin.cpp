@@ -87,6 +87,7 @@ void SocialWin::exit() {
 
 // ORIGINAL: 0x004B1E80 ?on_key_click@SocialWin@@QAEHHH@Z 0x004B1E80-0x004B1EB5 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/004b1e80.cpp", "image:terranx_original.exe:0x004B1E80", "Original instructions establish owner, bounded body and callback/state order; SocialWin reloads faction after social_upheaval and every later stateful call. GraphicWin dispatches through the real Buffer base.", "recovery/tasks/interface-contract-report-closure.json; bounded UI-five scope preserves original baseline"], "reason": "Recover the original in its genuine UI owner using actual members, globals and base/virtual calls. Retain seed evidence and historical obligations; this binding does not grant a current matching or runtime claim."}
+// symbol    ?on_key_click@SocialWin@@UAEHHH@Z
 int SocialWin::on_key_click(int, int key) {
     TutorialWindow.reset();
     switch (key) {
@@ -1954,6 +1955,7 @@ static char *const PlusText = (char *)0x006874AC;
  *          the hover to -2, anything else to the grid index or -1, and a
  *          changed hover repaints the mouseover panel.
 // ORIGINAL: 0x004B1EC0 ?on_mouse_move@SocialWin@@QAEXHH@Z 0x004B1EC0-0x004B1FB2 FILE
+// symbol    ?on_mouse_move@SocialWin@@UAEXHH@Z
 // size      242 bytes
 // prototype void (__thiscall ?on_mouse_move@SocialWin@@QAEXHH@Z)(SocialWin* this, int, int)
 // callers   0   call targets   4

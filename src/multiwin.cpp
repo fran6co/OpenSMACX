@@ -256,6 +256,7 @@ MultiWin::~MultiWin() {}
 // two output arguments. Only type 1 changes the highlighted player.
 // ORIGINAL: 0x00477E70 ?on_mouse_move@MultiWin@@QAEXHH@Z 0x00477E70-0x00477EDB BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/00477e70.cpp; docs/recovery/member-accesses.csv"], "reason": "The original checks the owned Spot for a player hover and redraws when the selected position changes."}
+// symbol    ?on_mouse_move@MultiWin@@UAEXHH@Z
 void MultiWin::on_mouse_move(int x, int y) {
   int position;
   int type;

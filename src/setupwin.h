@@ -43,7 +43,7 @@ class SetupWin : public GraphicWin {
   // int(char*, int), unrecovered. Declared so do_menu, which reaches it with a
   // direct `call rel32`, can name it.
   int do_menu_rightside(char* a1, int a2);
-  int on_mouse_move(int x, int y);
+  void on_mouse_move(int x, int y) override;
   void on_left_click(int x, int y);
   int draw_item(int position, int selected);
   SetupWin() { ; }
