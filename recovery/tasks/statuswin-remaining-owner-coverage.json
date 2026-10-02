@@ -1,0 +1,41 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "e1d762e872b3cb35b7cddcb4b7e43e131828c16b",
+  "editable_files": [
+    "src/statuswin.cpp",
+    "src/statuswin.h",
+    "recovery/tests/test_statuswin_remaining_behavior.py",
+    "recovery/tests/statuswin_remaining_host_control.cpp"
+  ],
+  "evidence": [
+    "Fresh native partition class:StatusWin at e1d762e8 and pinned original01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: arrows4B89C0/4B8BD0 and init4B9FC0 have retained seeds but no product candidate. Existing StatusWin::draw_status4B6570 has an explicit BODY GOES HERE sentinel and is a direct dependency, not working behavior.",
+    "The actual source owns ConsoleStatusWin, typed coordinate/window/font/Spot/Caviar members and direct callees. Retained original seeds establish bounds; cold spans and all historical claims remain intact. Existing other task header/data decisions remain reserved; coordinator integrates serially. No worker may change pending_bodies.cpp, other classes, scope, data ownership, ORIGINAL markers or claims without fresh central permission.",
+    "User prioritizes genuine complete compiling implementations and approves coordinator-reviewed manual integration after actual-source review, native target layout/protected diagnostics, fresh build/link and regression controls. Preserve every discovery and original baseline; no invented storage, fixed address dispatch, copied machine code, automatic acceptance or working-game claim."
+  ],
+  "intent": "Recover the complete supported StatusWin remainder as genuine C++: both arrow navigation methods, initialization and the unfinished HUD renderer through real existing members/data/query owners. Preserve all original mappings, exact obligations and evidence. Request explicit scope for unowned dependencies; no placeholders or partial functions counted as completed recovery.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4950464,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4950992,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4956096,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4941168,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "statuswin-remaining-owner-coverage"
+}
