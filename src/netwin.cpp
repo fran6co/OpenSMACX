@@ -43,6 +43,7 @@
 int __cdecl load_game(int save_slot, int faction_id);
 int __cdecl load_map();
 
+
 // THE SETUP DIALOG, real storage at the image's fixed address - see
 // netwin.h. The image reaches it from an unannotated initialiser at
 // 0x007AFF0 (`mov ecx, 0x80a6f8 / call 0x481c50`); this build runs the same
@@ -86,16 +87,26 @@ char NetWinPasswordPromptInitialText;
 // RECOVERY_OBJECT: v1 0x00811E34 ?NetWinPasswordVerifyInitialText@@3DA
 char NetWinPasswordVerifyInitialText;
 
-// The faction text sections setup_faction_data reads, at their image
-// addresses. They are `char *const` at namespace scope so VC6 folds each one
-// to the immediate the image pushes - a `const char *const` that held the
-// literal instead would materialise a pointer slot and cost the load.
-static char *const NetWinSectionCustomCount = (char *)0x00686908;  // "CUSTOMFACTIONS"
-static char *const NetWinSectionFactions = (char *)0x00686918;     // "FACTIONS"
-static char *const NetWinSectionNewFactions = (char *)0x00686924;  // "NEWFACTIONS"
-static char *const NetWinSectionCustom = (char *)0x00686930;       // "CUSTOMFACTIONS"
-static char *const NetWinPcxSuffix = (char *)0x00686940;           // ".pcx"
-static char *const NetWinDefaultPcx = (char *)0x00686948;          // "faction.pcx"
+// Pinned original faction-section/path strings; real source storage replaces
+// pointers into the old executable. Separate CUSTOMFACTIONS copies stay distinct.
+// Original string start0x00686908; pinned file-backed bytes and terminating NUL verified.
+// RECOVERY_OBJECT: v1 0x00686908 _NetWinSectionCustomCount
+static char NetWinSectionCustomCount[] = "CUSTOMFACTIONS";
+// Original string start0x00686918; pinned file-backed bytes and terminating NUL verified.
+// RECOVERY_OBJECT: v1 0x00686918 _NetWinSectionFactions
+static char NetWinSectionFactions[] = "FACTIONS";
+// Original string start0x00686924; pinned file-backed bytes and terminating NUL verified.
+// RECOVERY_OBJECT: v1 0x00686924 _NetWinSectionNewFactions
+static char NetWinSectionNewFactions[] = "NEWFACTIONS";
+// Original string start0x00686930; pinned file-backed bytes and terminating NUL verified.
+// RECOVERY_OBJECT: v1 0x00686930 _NetWinSectionCustom
+static char NetWinSectionCustom[] = "CUSTOMFACTIONS";
+// Original string start0x00686940; pinned file-backed bytes and terminating NUL verified.
+// RECOVERY_OBJECT: v1 0x00686940 _NetWinPcxSuffix
+static char NetWinPcxSuffix[] = ".pcx";
+// Original string start0x00686948; pinned file-backed bytes and terminating NUL verified.
+// RECOVERY_OBJECT: v1 0x00686948 _NetWinDefaultPcx
+static char NetWinDefaultPcx[] = "faction.pcx";
 // setup_faction_data reads the same 0x00691AFC pointer slot as the rules
 // loader. AlphaxFileID in alpha.cpp owns it; this TU does not own an alias
 // into the old executable's storage.
@@ -2031,52 +2042,224 @@ void NetWin::pick_diff(int slot) {
 // host guard now uses LockEnableMask's live-faction byte. Choice zero still
 // lacks the original session-record population and is explicitly unfinished.
 void NetWin::pick_map() {
-    PopMenu pop_menu;
-    pop_menu.init();
+    PopMenu menu;
+    Buffer faction_art;
+    menu.init();
+    menu.dialogs().item(label_get(0x107C / 4), 0);
+    menu.dialogs().item(label_get(0x0FD8 / 4), 1);
+    menu.dialogs().item(label_get(0x0FDC / 4), 2);
+    menu.dialogs().item(label_get(0x0FE0 / 4), 3);
 
-    pop_menu.dialogs().item(label_get(0x107C / 4), 0);
-    pop_menu.dialogs().item(label_get(0x0FD8 / 4), 1);
-    pop_menu.dialogs().item(label_get(0x0FDC / 4), 2);
-    pop_menu.dialogs().item(label_get(0x0FE0 / 4), 3);
-
-    const int choice = pick_answer(*this, pop_menu);
+    const int choice = pick_answer(*this, menu);
     if (choice < 0) {
         return;
     }
+    {
+        if (choice == 0) {
+            const NetWinFactionRecord *const source_records =
+                static_cast<const NetWinFactionRecord *>(faction_records_copy_);
+            const int record_count = source_records[0].record_count_;
+            const unsigned int record_bytes =
+                static_cast<unsigned int>(record_count) * 399u + 0x194u;
+            memcpy(faction_records_, faction_records_copy_, record_bytes);
 
-    // Choice zero builds and sends the network-host session descriptor. Its
-    // record shape is not established by the typed NetWin session models.
-    if (choice == 0) {
-        // BODY GOES HERE.
-        return;
+            field_7728_ = 0;
+            NetWinSessionOptions.difficulty_ =
+                static_cast<uint8_t>(DefaultPrefs.difficulty);
+            NetWinSessionOptions.rule_bits_a_ = AlphaIniPrefs.rules;
+            NetWinSessionData.state_[0x20] = 0;
+            NetWinSessionOptions.status_ = 0xFF;
+
+            NetDaemonNet.pid_2_idx(NetWinPlayerId);
+            NetWinSessionOptionsPacket options_packet;
+            memset(&options_packet, 0, sizeof(options_packet));
+            options_packet.opcode_ = 0x2F02;
+            options_packet.options_ = NetWinSessionOptions;
+            NetDaemonNet.Net::send(&options_packet, sizeof(options_packet),
+                                   NetWinOtherPlayerId, 1);
+        } else {
+            GameDataLoadRequest = 1;
+            if (choice == 1) {
+                if (load_map() != 0) {
+                    return;
+                }
+            } else if (choice == 2) {
+                if (load_game(1, 0) != 0) {
+                    return;
+                }
+                const int scenario_factions = bit_count(
+                    static_cast<int>((LockEnableMask >> 8) & 0xFEu));
+                if (scenario_factions < NetDaemonNet.player_count_) {
+                    parse_num(scenario_factions, 0);
+                    X_pop("TOOMANYFORSCENARIO", 0);
+                    return;
+                }
+            } else if (choice == 3) {
+                if (load_game(0, 0) != 0) {
+                    return;
+                }
+            } else {
+                return;
+            }
+
+            GameDataLoadRequest = 0;
+            if (field_7728_ != 0) {
+                NetWinFactionRecord *const records =
+                    static_cast<NetWinFactionRecord *>(faction_records_);
+                int faction = 1;
+                for (int player_slot = 1; player_slot < 8;
+                     ++player_slot, ++faction) {
+                    records[faction].owner_ = PlayersData[player_slot].unk_102;
+                }
+
+                NetWinSessionOptions.option_4_ = static_cast<uint8_t>(
+                    MapLongitudeBounds / 2);
+                NetWinSessionOptions.option_5_ =
+                    static_cast<uint8_t>(MapLatitudeBounds);
+                NetWinSessionData.state_[0x20] = 0;
+
+                char *scenario_name = strrchr(
+                    reinterpret_cast<char *>(field_7624_), '\\');
+                if (scenario_name == nullptr) {
+                    scenario_name = reinterpret_cast<char *>(field_7624_);
+                } else {
+                    ++scenario_name;
+                }
+                strcpy(reinterpret_cast<char *>(NetWinScenarioText),
+                       scenario_name);
+            }
+
+            if ((NetTurnFlags & 0x10u) != 0) {
+                NetWinSessionOptions.rule_bits_c_ |= 0x10u;
+            } else {
+                NetWinSessionOptions.rule_bits_c_ &= ~0x10u;
+            }
+            NetWinSessionOptions.difficulty_ =
+                static_cast<uint8_t>(DiffLevelCurrent);
+            NetWinSessionOptions.status_ =
+                static_cast<uint8_t>(LockEnableMask >> 8);
+            NetWinSessionOptions.rule_bits_a_ = GameRules;
+            NetWinSessionOptions.rule_bits_b_ = GameState & 0x01800000u;
+
+            NetDaemonNet.pid_2_idx(NetWinPlayerId);
+            NetWinSessionOptionsPacket options_packet;
+            memset(&options_packet, 0, sizeof(options_packet));
+            options_packet.opcode_ = 0x2F02;
+            options_packet.options_ = NetWinSessionOptions;
+            NetDaemonNet.Net::send(&options_packet, sizeof(options_packet),
+                                   NetWinOtherPlayerId, 1);
+        }
     }
-    if (choice == 1) {
-        if (load_map() != 0) {
-            return;
+
+    if (field_7728_ != 0 && field_7728_ != 1) {
+        NetWinFactionRecord *const records =
+            static_cast<NetWinFactionRecord *>(faction_records_);
+        records[0].record_count_ = 8;
+        records[0].record_type_ = static_cast<uint8_t>(
+            bit_count(static_cast<int>((LockEnableMask >> 8) & 0xFEu)));
+        records[0].active_ = 0;
+
+        for (int player_slot = 1; player_slot < 8; ++player_slot) {
+            NetWinFactionRecord &record = records[player_slot];
+            const Player &player = Players[player_slot];
+            const uint8_t player_bit =
+                static_cast<uint8_t>(1u << player_slot);
+            if ((NetWinSessionOptions.status_ & player_bit) == 0) {
+                record.active_ = 0;
+                continue;
+            }
+
+            record.active_ = 1;
+            record.owner_ = PlayersData[player_slot].unk_102;
+            strcpy(record.filename_, player.filename);
+            strcpy(record.leader_name_, player.name_leader);
+            strcpy(record.formal_faction_name_, player.formal_name_faction);
+            strcpy(record.noun_faction_, player.noun_faction);
+            strcpy(reinterpret_cast<char *>(record.data_after_noun_),
+                   player.adj_name_faction);
+            strcpy(reinterpret_cast<char *>(record.data_after_noun_ + 0x80),
+                   player.title_leader);
+            strcpy(reinterpret_cast<char *>(record.data_after_noun_ + 0x98),
+                   player.adj_leader);
+            records[player_slot + 1].field_2_[0] =
+                static_cast<uint8_t>(player.is_leader_female);
+
+            StringTemp[0] = 0;
+            strcat(StringTemp, record.filename_);
+            strcat(StringTemp, NetWinPcxSuffix);
+            if (faction_art.load_pcx(StringTemp, 0, 0x0A, 0xEC) != 0) {
+                faction_art.load_pcx(NetWinDefaultPcx, 0, 0x0A, 0xEC);
+            }
+            record.color_ =
+                static_cast<uint8_t>(faction_art.get_pixel(4, 0x2F3));
         }
-    } else if (choice == 2) {
-        if (load_game(1, 0) != 0) {
-            return;
-        }
-        // Byte one of the source-owned LockEnableMask is the live-faction
-        // mask. The scenario host path excludes its neutral slot before
-        // comparing available factions with network seats.
-        const int scenario_factions =
-            bit_count(static_cast<int>((LockEnableMask >> 8) & 0xFEu));
-        if (scenario_factions < *NetWinPlayerCount) {
-            parse_num(scenario_factions, 0);
-            X_pop("TOOMANYFORSCENARIO", 0);
-            return;
-        }
-    } else if (choice == 3) {
-        if (load_game(0, 0) != 0) {
-            return;
-        }
+        send_faction_data(-1);
     } else {
-        return;
+        if (faction_records_copy_ != nullptr) {
+            const NetWinFactionRecord *const source_records =
+                static_cast<const NetWinFactionRecord *>(
+                    faction_records_copy_);
+            const unsigned int record_bytes =
+                static_cast<unsigned int>(source_records[0].record_count_) *
+                    399u +
+                0x194u;
+            memcpy(faction_records_, faction_records_copy_, record_bytes);
+            send_faction_data(-1);
+        }
+
+        char *const default_faction_text =
+            StringTable.get(*reinterpret_cast<int *>(
+                Labels.strings_ptr + 0xFE4));
+        for (int player_slot = 1; player_slot < 8; ++player_slot) {
+            NetWinLobbyRow &row = NetWinLobbyRows[player_slot];
+            row.faction_or_color_ = -1;
+            strcpy(row.leader_name_, default_faction_text);
+            strcpy(row.noun_faction_, default_faction_text);
+        }
     }
 
-    pick_send_state();
+    struct PickMapLobbyFullPacket {
+        NetWinLobbyPacketHeader header_;
+        NetWinLobbyRow rows_[7];
+    };
+    struct PickMapLobbyLeavePacket {
+        NetWinLobbyPacketHeader header_;
+        uint8_t trailing_[0x10];
+    };
+    PickMapLobbyFullPacket assigned_packet;
+    memset(&assigned_packet, 0, sizeof(assigned_packet));
+    for (int packet_row = 0; packet_row < 7; ++packet_row) {
+        assigned_packet.rows_[packet_row] = NetWinLobbyRows[packet_row + 1];
+    }
+    if (*NetWinRulesGate != 0) {
+        assigned_packet.header_.opcode_ = 0x04;
+        assigned_packet.header_.flags_ = 0x4F;
+        assigned_packet.header_.slot_ = -1;
+        assigned_packet.header_.field_8_ = 0;
+        NetDaemonNet.Net::send(&assigned_packet, sizeof(assigned_packet), 0, 1);
+    }
+
+    NetWinSessionData.mode_ = static_cast<uint32_t>(field_7728_);
+    NetDaemonNet.pid_2_idx(NetWinPlayerId);
+    struct NetWinSessionPacket {
+        NetWinLobbyPacketHeader header_;
+        NetWinSessionBlock session_;
+    } session_packet;
+    memset(&session_packet, 0, sizeof(session_packet));
+    session_packet.header_.opcode_ = 0x03;
+    session_packet.header_.flags_ = 0x2F;
+    session_packet.session_ = NetWinSessionData;
+    NetDaemonNet.Net::send(&session_packet, sizeof(session_packet),
+                           NetWinOtherPlayerId, 1);
+
+    if (field_7728_ != 0) {
+        PickMapLobbyLeavePacket leave_packet;
+        memset(&leave_packet, 0, sizeof(leave_packet));
+        leave_packet.header_.opcode_ = 0x0E;
+        leave_packet.header_.flags_ = 0x2F;
+        NetDaemonNet.Net::send(&leave_packet, sizeof(leave_packet),
+                               NetWinOtherPlayerId, 1);
+    }
 }
 
 /*

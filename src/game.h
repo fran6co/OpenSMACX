@@ -450,3 +450,6 @@ extern uint8_t GameWireOpaque_94B4D8[0x80];
 
 // Existing application GUID storage, shared with AlphaNet setup.
 extern const GUID LobbyAppGuid;
+
+// Shared native945D78 load-request selector, owned in game.cpp.
+extern int GameDataLoadRequest;

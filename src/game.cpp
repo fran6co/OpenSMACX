@@ -5285,3 +5285,8 @@ void __cdecl mon_secrets_of_tech(int faction_id) {
     if (faction_id == ConsoleGlobal.faction_id_)
         monument(1);
 }
+
+// Shared load request: NetWin47D501/47D79D and58E79B/58E7AD write it;
+// game_data5A7951 reads it under read mode. Broader storage remains unknown.
+// RECOVERY_OBJECT: v1 0x00945D78 ?GameDataLoadRequest@@3HA
+int GameDataLoadRequest;
