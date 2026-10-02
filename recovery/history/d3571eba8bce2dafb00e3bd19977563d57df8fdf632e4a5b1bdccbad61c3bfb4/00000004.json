@@ -1,0 +1,20 @@
+{
+  "event_id": "fb798c762b53b9f3a456e1000be6df65122a6904e92e1aada3c2437b61307c70",
+  "payload": {
+    "affects": [
+      "entity-9927949007a641b7f47a2ce2dcd9bfec6f1651ae8d4a9b3b09f7396a73e362a6"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "workshop-preview-recovery-checkpoint",
+    "evidence": [
+      "Actual source preview uses genuine Buffer secondary-base adjustment, veh_fake/veh_draw, source-owned scale globals, post-fake faction reload and unity scale epilogue. GCC/Clang C++03 ASan/UBSan actual-source controls pass2; journal controls pass19. Fresh full configured compile/link passes; all29 existing DesignWin byte claims remeasure BYTE_EXACT; all2598 claim identities retained. New callback measures MISMATCH122vs117instructions, no claim banked. Source annotation errors empty, same three preexisting source-rule failures and26 preexisting stale references; coordinator-reviewed bounded checkpoint is not whole-game or automatic acceptance. Companion review initially misread sign-bias division and exclusive neighbor endpoints; coordinator disproved those allegations directly with native arithmetic and source declarations, preserving correct implementation. Full workshop remains pending, with ListBox callback return ABI and existing NetMsg fixed-pointer debt explicit."
+    ],
+    "hypothesis": "Real preview callback and distinct workshop scalar owners are implemented; complete workshop remains the explicit placeholder until its corrected draft and callback consumer ABI are reviewed.",
+    "kind": "discovery"
+  },
+  "previous_event": "4e4735c095341a7bb5409cbf3bbec02755da1dce60780f45c11f673853d449ba",
+  "request_id": "workshop-preview-recovery-checkpoint",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:designwin-owner-coverage"
+}

@@ -82,6 +82,15 @@ int DesignConsiderChassis;
 // 0x580F07; both original writes use this independent four-byte scalar.
 // RECOVERY_OBJECT: v2 0x0093FC44 0x0093FC48 ?DesignConsiderReactor@@3HA 0x00580860
 int DesignConsiderReactor;
+// Workshop583FA2 publishes its faction here; preview583DB5/583DC1 reloads
+// it around veh_fake. This is distinct from the preceding reactor scalar.
+// RECOVERY_OBJECT: v2 0x0093FC48 0x0093FC4C ?WorkshopFaction@@3HA 0x00583E30
+int WorkshopFaction;
+// Preview583CD7 and workshop583F9A read this signed zoom, initially -6.
+// Its four-byte initializer is independently backed by the pinned image;
+// the preceding FirstProposedPrototype ends at this address, exclusively.
+// RECOVERY_OBJECT: v2 0x0068F0F4 0x0068F0F8 ?WorkshopPreviewZoom@@3HA 0x00583CD0
+int WorkshopPreviewZoom = -6;
 // RECOVERY_OBJECT: v2 0x0093FC50 0x0093FC54 ?DesignConsiderArmor@@3HA 0x0043E490
 int DesignConsiderArmor;
 // RECOVERY_OBJECT: v2 0x0093FC54 0x0093FC58 ?DesignConsiderOverride@@3HA 0x0043E490
@@ -3788,6 +3797,65 @@ int DesignWin::on_iface_dialog_item_back_draw(GraphicWin *, int, int, RECT *) {
 // RECOVERY_BINDING: v1 {"evidence": ["Retired exact seed git:5da70027:src/recovered/00583cb0.cpp preserves the23byte original wrapper and direct43E9A0 exec call; designwin.cpp owns the actual71F2B0 singleton and corresponding exec identity."], "reason": "Dispatch the two original design arguments through the genuine source-owned TutWinDesWindow singleton and its DesignWin::exec method, not an original-address receiver."}
 void __cdecl design_new_veh(int faction_id, int prototype_id) {
     TutWinDesWindow.exec(faction_id, prototype_id);
+}
+
+static int workshop_signed_bits(unsigned int bits) {
+    return bits <= 0x7fffffffu ? static_cast<int>(bits)
+        : -1 - static_cast<int>(0xffffffffu - bits);
+}
+
+static int workshop_scaled_dimension(int dimension, int numerator,
+                                     int denominator) {
+    const int product = workshop_signed_bits(
+        static_cast<unsigned int>(dimension) *
+        static_cast<unsigned int>(numerator));
+    return product / denominator;
+}
+
+// ORIGINAL: 0x00583CD0 ?hq_list_draw@@YAXPAUGraphicWin@@HHHHH@Z 0x00583CD0-0x00583E2A
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned native583CD0..583E2A: signed scaling and centering, active bit0, shared zoom68F0F4 initial-6 and mutable faction93FC48, fake vehicle5C1D50, obsolete order byte11, Buffer secondary base444, veh_draw5594F0 and unity scale epilogue. Retained src/recovered/units/00583cd0.cpp; recovery/tasks/designwin-owner-coverage.json coupled callback authorization; no original-address aliases."], "reason": "Recover the workshop prototype preview through actual GraphicWin Buffer inheritance, VehPrototype and Veh owners, source-owned zoom/faction storage and sprite scaling. Preserve the seed identity and original span; catalogue struct spelling differs from the actual GraphicWin class symbol. No matching claim is granted."}
+// symbol    ?hq_list_draw@@YAXPAVGraphicWin@@HHHHH@Z
+void __cdecl hq_list_draw(GraphicWin *window, int prototype, int flags,
+                          int x, int y, int height) {
+    const int zoom = WorkshopPreviewZoom;
+    const int override_scale = MapWinCaptionScale;
+    if ((flags & 1) != 0) {
+        const int width = override_scale > 0
+            ? workshop_scaled_dimension(132, override_scale, MapWinCaptionDivisor)
+            : workshop_scaled_dimension(132,
+                workshop_signed_bits(static_cast<unsigned int>(zoom) + 16u), 16);
+        x = workshop_signed_bits(static_cast<unsigned int>(x) +
+                                  static_cast<unsigned int>(width));
+    }
+    if ((VehPrototypes[prototype].flags & 1) == 0) return;
+
+    const int draw_height = override_scale > 0
+        ? workshop_scaled_dimension(75, override_scale, MapWinCaptionDivisor)
+        : workshop_scaled_dimension(75,
+            workshop_signed_bits(static_cast<unsigned int>(zoom) + 16u), 16);
+    const int height_difference = workshop_signed_bits(
+        static_cast<unsigned int>(height) - static_cast<unsigned int>(draw_height));
+    y = workshop_signed_bits(static_cast<unsigned int>(y) +
+                              static_cast<unsigned int>(height_difference / 2));
+    if (override_scale > 0) {
+        SpriteScaleNumerator = override_scale;
+        SpriteScaleDenominator = MapWinCaptionDivisor;
+    } else {
+        SpriteScaleDenominator = 16;
+        SpriteScaleNumerator = workshop_signed_bits(
+            static_cast<unsigned int>(WorkshopPreviewZoom) + 16u);
+    }
+    const int vehicle = veh_fake(prototype, WorkshopFaction);
+    // Reload the faction after veh_fake, matching the native callback.
+    const unsigned int faction_bit = 1u <<
+        (static_cast<unsigned int>(WorkshopFaction) & 31u);
+    if ((VehPrototypes[prototype].obsolete_factions & faction_bit) != 0)
+        Vehs[vehicle].order = 1;
+    veh_draw(window ? static_cast<Buffer *>(window) : 0,
+             vehicle, x, y, zoom, 0x2044, 0);
+    // The original publishes unity, rather than restoring the previous scale.
+    SpriteScaleNumerator = 1;
+    SpriteScaleDenominator = 1;
 }
 
 // Link continuity for the production picker's workshop action. The preserved

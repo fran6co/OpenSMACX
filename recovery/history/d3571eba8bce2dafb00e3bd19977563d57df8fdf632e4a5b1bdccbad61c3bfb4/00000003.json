@@ -1,0 +1,19 @@
+{
+  "event_id": "4e4735c095341a7bb5409cbf3bbec02755da1dce60780f45c11f673853d449ba",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_designwin_preview.py"
+    ],
+    "evidence": [
+      "Actual-source preview controls exercise Buffer receiver adjustment, captured zoom, faction reload after veh_fake, obsolete order marking, negative signed dimensions/centering, positive override, inactive prototype and unity scale reset under GCC/Clang sanitizers. Host controls are bounded behavior evidence, not native ABI or runtime acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "40df84951338931b4507e8ba4b7ff1e42acb0db0043d5ebdb1474900b111d945",
+  "request_id": "workshop-preview-host-controls",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:designwin-owner-coverage"
+}
