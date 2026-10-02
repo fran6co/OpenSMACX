@@ -1,0 +1,23 @@
+{
+  "event_id": "0d1e210753245569be3f4da9321c231dc8f022d81d48f5e862be34d09b6fbf2b",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Native Console menu proposal proves editor_kill_vehicles4E09B0 is a required real Console command, currently seed-only. Retained exact41-byte seed and pinned primary calls identify auto_undo then stack_kill(veh_at(ConsoleGlobal cursor history coordinates)). Admit typed existing-owner method/declaration and source controls, preserve all seeds/claims and original task baseline. Do not substitute editor_clear_vehicles, add executable-address forwarders or demote claims. Source scope remains console.cpp/h and already admitted menu/reset tests; native compile/layout, fresh protected diagnostics, build/link and coordinator review precede integration."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5114288,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "b6fc012f1cb171d37d099038ee2f31ac2141bd280d31688620ccacb3846df0d0",
+  "request_id": "console-editor-kill-command-owner-20261002",
+  "schema_version": 1,
+  "sequence": 31,
+  "stream": "task:console-scenario-owner-wave"
+}
