@@ -1,0 +1,21 @@
+{
+  "event_id": "8483ee022878c51d439a897a3bb3e77aef1b0df09fb65a90556c1957846b7971",
+  "payload": {
+    "affects": [
+      "entity-209eb91d84b897c42c412434bbc72887cbb7e12c9dd3d4d2ad2694ccf14e756f"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "prototype-history-reviewed-typed-checkpoint-20261002",
+    "evidence": [
+      "Independent pinned native/source review confirmed clear57DF00 base94B55D with stores-5..+2, lookup57DFC0 component tuple, and put57DF30 old cursor capture/update before prototype reads. Actual-source GCC/Clang C++03 ASan/UBSan controls pass6, including clear underwrite and cursor damage rejection. Native offsetofPlayerData cursor208C and ProtoBung stride8/componentoffset4 compile; selected Bung initial-storage checks pass both flag sets, but overall data command is UNKNOWN due pre-existing Win-header owner configuration, not a full green check.",
+      "Fresh full application compile/link PASS. Vehicle historical measurements52/54exact: correctedclearSHAPE_EXACT; unrelatedpopp50B970MISMATCH freshly matches committed-baseline COFF bytes and resolved relocation targets. Faction55/55exact. Claim identity check2598claims missing0. Sourceannotationerrors empty with same3pre-existing rule failures. No ORIGINAL claim edited or demoted, no autonomous acceptance report or baseline reset."
+    ],
+    "hypothesis": "Coordinator retains the reviewed typed prototype-history migration: the old historical exact spelling wrote before its owning array, while the typed fields reproduce the original references and stores. Preserve the historical byte claim and its unresolved restoration obligation; current clear matching is SHAPE_EXACT, not accepted byte exactness or game acceptance. The new bounded owner API is a seam for the pending synch recovery, not proof of live network recovery.",
+    "kind": "discovery"
+  },
+  "previous_event": "04df5dd679e882dbc224c30611dd70baf207cfc226657ae174e91b0ae6a92ad5",
+  "request_id": "prototype-history-reviewed-typed-checkpoint-20261002",
+  "schema_version": 1,
+  "sequence": 18,
+  "stream": "task:netdaemon-player-lifecycle-recovery"
+}

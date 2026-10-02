@@ -9188,16 +9188,25 @@ struct ProtoBung {
     uint8_t armor_id;
     uint8_t reactor_id;
 };
-static ProtoBung *const BungList = (ProtoBung *)0x0094B558;
+static_assert(sizeof(ProtoBung) == 8, "Prototype history record stride");
+static_assert(offsetof(ProtoBung, chassis_id) == 4,
+              "Prototype history component offset");
+// Eight faction histories, 64 records each. Initial loaded storage is zero.
+// Native clear57DF00 uses base94B558+5 then stores at -5..+2; the former
+// address alias started five bytes too early and corrupted the preceding data.
+// RECOVERY_OBJECT: v2 0x0094B558 0x0094C558 _BungList 0x0057DF00
+static ProtoBung BungList[8][64];
 
-// 0x0096EA6C - PlayersData[faction] + 0x208C, the write cursor into that
-// faction's 64-entry run: 0x0057DF30 stores `(v + 1) % 64` back into it, and
-// 0x200 is 64 * 8.
-uint32_t *const BungListCursor = (uint32_t *)0x0096EA6C;
-
-// 0x009AB888 - the ability_flags dword each 0x34 VehPrototype record opens
-// with at +0x20, bound as a byte view because 0x0057DF30 walks it by pointer.
-uint8_t *const ProtoAbilityFlags = (uint8_t *)0x009AB888;
+bool veh_bung_copy_chunk(size_t offset, unsigned char *packet, size_t count,
+                         bool packet_to_owner) {
+    const size_t extent = sizeof BungList;
+    if (offset > extent || count > extent - offset) return false;
+    if (count == 0) return true;
+    unsigned char *owner = reinterpret_cast<unsigned char *>(&BungList);
+    if (packet_to_owner) memcpy(owner + offset, packet, count);
+    else memcpy(packet, owner + offset, count);
+    return true;
+}
 
 // The battle-resolution messages. Each is the (label, icon) pair a
 // NetMsgPopup->pop takes: the label is the phrase id key, the icon the small
@@ -9424,8 +9433,8 @@ Status: MISMATCH.
 */
 bool __cdecl is_bunged(int faction_id, int chassis_id, int weapon_id,
                        int armor_id, int ability_flags, int reactor_id) {
-    if ((1 << (faction_id & 0x1f)) & (uint8_t)LockEnableMask) {
-        const ProtoBung *entry = BungList + faction_id * 0x40;
+    if ((1u << (faction_id & 0x1f)) & (uint8_t)LockEnableMask) {
+        const ProtoBung *entry = &BungList[faction_id][0];
         for (int i = 0; i < 0x40; ++i) {
             if (entry->chassis_id == chassis_id && entry->weapon_id == weapon_id &&
                 entry->armor_id == armor_id &&
@@ -9450,23 +9459,22 @@ Purpose: Empty one faction's prototype-design run.
 // calls     (none)
 // HOMED from src/recovered/0057df00.cpp, 2026-09-04 - the first of this
 // file's archive-only claims to move into the build. The scaffold's
-// `entry[-5]` / `entry[-1]` byte arithmetic is a ProtoBung record walked
-// one byte too far in, and the -1 / 0xFF pair is ability_flags = -1 with
-// the four component bytes above it.
+// `entry[-5]` / `entry[-1]` byte arithmetic expects a pointer to the weapon
+// byte (+5), not the record base. Typed members express the actual stores.
 Return Value: n/a
-Status: MISMATCH - the 8-byte stride does not reproduce from a typed
-        ProtoBung walk; the archive's byte-pointer form was measured exact.
+Historical byte claim remains a restoration obligation. The typed owner fixes
+the former reference-target error; a masked-byte match did not detect it.
 */
 void __cdecl clear_bunglist(int faction_id) {
-    uint8_t *entry = reinterpret_cast<uint8_t *>(BungList) + faction_id * 0x200;
+    ProtoBung *entry = &BungList[faction_id][0];
     int count = 0x40;
     do {
-        *reinterpret_cast<int *>(entry - 5) = -1;
-        entry[-1] = 0xff;
-        entry[0] = 0xff;
-        entry[1] = 0xff;
-        entry[2] = 0xff;
-        entry += 8;
+        entry->ability_flags = 0xffffffffu;
+        entry->chassis_id = 0xff;
+        entry->weapon_id = 0xff;
+        entry->armor_id = 0xff;
+        entry->reactor_id = 0xff;
+        ++entry;
     } while (--count);
 }
 
@@ -9490,20 +9498,16 @@ Return Value: n/a
 Status: MISMATCH.
 */
 void __cdecl proto_bung_put(int faction_id, int proto_id) {
-    const int slot = *reinterpret_cast<int *>(
-        reinterpret_cast<uint8_t *>(BungListCursor) + faction_id * 0x20CC);
-    *reinterpret_cast<int *>(reinterpret_cast<uint8_t *>(BungListCursor) +
-                             faction_id * 0x20CC) = (slot + 1) % 64;
-
-    const uint8_t *src = ProtoAbilityFlags + proto_id * 0x34;
-    uint8_t *dst = reinterpret_cast<uint8_t *>(BungList) +
-                   (faction_id * 0x40 + slot) * 8;
-
-    *reinterpret_cast<int32_t *>(dst) = *reinterpret_cast<const int32_t *>(src);
-    dst[4] = src[4];
-    dst[5] = src[5];
-    dst[6] = src[6];
-    dst[7] = src[7];
+    int &cursor = PlayersData[faction_id].prototype_history_cursor;
+    const int slot = cursor;
+    cursor = (slot + 1) % 64;
+    const VehPrototype &proto = VehPrototypes[proto_id];
+    ProtoBung &entry = BungList[faction_id][slot];
+    entry.ability_flags = proto.ability_flags;
+    entry.chassis_id = proto.chassis_id;
+    entry.weapon_id = proto.weapon_id;
+    entry.armor_id = proto.armor_id;
+    entry.reactor_id = proto.reactor_id;
 }
 
 /*

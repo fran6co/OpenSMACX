@@ -518,7 +518,9 @@ struct PlayerData {
     int corner_market_active;
     int unk_101;
     int unk_102;
-    int unk_103;
+    // The 64-entry prototype-history write cursor, used by proto_bung_put.
+    // RECOVERY_MEMBER: v1 PlayerData prototype_history_cursor 0x208C 0x0057DF30
+    int prototype_history_cursor;
     uint32_t flags_ext;
     int unk_105;
     int unk_106;
@@ -556,6 +558,8 @@ static_assert(sizeof(PlayerData) == 0x20CC,
               "PlayerData layout must match the original executable");
 static_assert(offsetof(PlayerData, proto_id_active) == 0x858,
               "Prototype active counts must occupy the native faction member");
+static_assert(offsetof(PlayerData, prototype_history_cursor) == 0x208C,
+              "Prototype history cursor must occupy the native faction member");
 
 struct FactionArt {
     FactionArt();

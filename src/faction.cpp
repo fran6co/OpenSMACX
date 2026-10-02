@@ -5168,7 +5168,7 @@ static void lifecycle_reset_faction(int faction) {
         p.region_total_offensive_vehs[region] = p.region_force_rating[region] = p.unk_77[region] = 0;
     }
     for (int council = 0; council < 11; ++council) p.unk_29[council] = p.unk_30[council] = 0;
-    p.corner_market_turn = p.corner_market_active = p.unk_101 = p.unk_102 = p.unk_103 = 0;
+    p.corner_market_turn = p.corner_market_active = p.unk_101 = p.unk_102 = p.prototype_history_cursor = 0;
     p.flags_ext = p.unk_105 = p.unk_106 = p.unk_107 = p.unk_108 = p.unk_109 = 0;
     p.unk_93 = p.unk_94 = p.unk_95 = p.unk_96 = p.unk_97 = p.tech_achieved = 0;
     p.time_bonus_count = 1;

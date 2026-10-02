@@ -1,0 +1,20 @@
+{
+  "event_id": "04df5dd679e882dbc224c30611dd70baf207cfc226657ae174e91b0ae6a92ad5",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/prototype_history_owner_harness.cpp",
+      "recovery/tests/test_prototype_history_owner.py"
+    ],
+    "evidence": [
+      "Add actual source-extracted host controls for all three typed prototype-history consumers and bounded network owner access, including faction-zero underwrite damage, faction isolation, cursor wrap and wire bounds. Native member/stride assertions remain required; these controls do not grant byte claims or game acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "4da54103c930dfa123226601bac1bb0cee184637d284bce7c2be521964df9f54",
+  "request_id": "prototype-history-actual-source-controls-20261002",
+  "schema_version": 1,
+  "sequence": 17,
+  "stream": "task:netdaemon-player-lifecycle-recovery"
+}
