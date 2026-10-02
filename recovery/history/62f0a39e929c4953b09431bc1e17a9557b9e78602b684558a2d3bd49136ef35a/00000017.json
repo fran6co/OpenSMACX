@@ -1,0 +1,19 @@
+{
+  "event_id": "a916d864d1659ea19d2813a60dfa820442a0c7104b975895be05b9dd41125b39",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_filewin_unk4_full_branches.py"
+    ],
+    "evidence": [
+      "Admit actual-source host controls for complete FileWin6146A0 confirmation path: parent navigation, handled directory, suffix probes and original invalid-handle close, full path/basename production, load-missing error, save-existing acceptance/rejection, illegal-name no-parse path, final conditional close and snapshot focus restoration. Preserve existing FileWin load-contract tests alongside new coverage. This grants only test file scope; preserves original baseline, seeds, byte claims, existing source ownership and pending unapproved260byte boundary. Native target protected/layout checks and application build/link remain required before manual integration; host controls do not prove original ABI or working game."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "7436540c4cbe796cae5962c35b2e6fd342403f850758ef4216e8e320de3bd479",
+  "request_id": "filewin-unk4-complete-branch-controls-20261003",
+  "schema_version": 1,
+  "sequence": 17,
+  "stream": "task:game-save-load-owner-coverage"
+}
