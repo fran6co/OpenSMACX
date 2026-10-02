@@ -199,6 +199,7 @@ class NetDaemon : public AlphaNet {
  public:
   // 0x0052E050, homed from 0052e050.cpp
   void hang_up();
+  void reset(); // original sub_51dd00, same NetDaemon receiver
   // 0x00530360, homed from 00530360.cpp - one pump turn of the daemon.
   void net_tasks();
   // 0x00531700, homed from 00531700.cpp - the "am I already holding it"

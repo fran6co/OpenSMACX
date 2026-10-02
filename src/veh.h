@@ -915,3 +915,6 @@ void __cdecl spot_all(int veh_id, int toggle);
 // Shared signed selection slot, retained across airdrop capture and compaction.
 extern int VehSelectionFollowLimit;
 int __cdecl goody_box(int veh_id, int type);
+
+// Existing original5B9510 implementation removes the stack containing this vehicle.
+void __cdecl stack_kill(int vehicle_id);

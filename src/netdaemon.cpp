@@ -5693,3 +5693,49 @@ void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
         social_set(static_cast<uint32_t>(a2));
     }
 }
+
+// Clear the real daemon lock entries, then close its AlphaNet base.
+// ORIGINAL: 0x0051DD00 sub_51dd00 0x0051DD00-0x0051DDE0 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0051dd00.cpp"], "reason": "Recover typed lock-entry reset, borrowed selection pointer clearing and ordered lock cleanup before qualified AlphaNet close."}
+// symbol    ?reset@NetDaemon@@QAEXXZ
+void NetDaemon::reset() {
+    lock_state_[0].leading_words_[1] = 0;
+    lock_state_[0].leading_words_[2] = 0;
+    lock_state_[0].leading_words_[3] = 0;
+    lock_state_[0].payload_.flags = 0;
+    lock_state_[0].trailing_words_[8] = 0;
+    lock_state_[0].trailing_words_[7] = 0;
+
+    lock_state_[1].leading_words_[1] = 0;
+    lock_state_[1].leading_words_[0] = 0;
+    lock_state_[1].trailing_words_[0] = 0;
+    lock_state_[2].leading_words_[1] = 0;
+    lock_state_[1].trailing_words_[9] = 0;
+    lock_state_[2].leading_words_[0] = 0;
+    lock_state_[2].trailing_words_[5] = 0;
+    lock_state_[2].trailing_words_[4] = 0;
+
+    lock_state_[0].trailing_words_[4] = 0;
+    lock_state_[0].trailing_words_[5] = 0;
+    lock_state_[0].trailing_words_[6] = 0;
+    lock_state_[2].trailing_words_[3] = 0;
+    lock_state_[2].trailing_words_[2] = 0;
+    lock_state_[2].leading_words_[3] = 0;
+    lock_state_[2].leading_words_[2] = 0;
+    lock_state_[2].payload_.flags = 0;
+    lock_state_[0].trailing_words_[0] = 0;
+    lock_state_[0].trailing_words_[1] = 0;
+    lock_state_[2].trailing_words_[8] = 0;
+    lock_state_[2].trailing_words_[7] = 0;
+    lock_state_[0].trailing_words_[2] = 0;
+    lock_state_[0].trailing_words_[3] = 0;
+    lock_state_[2].trailing_words_[6] = 0xFF;
+    lock_state_[1].payload_.vehicle_selection_follow = nullptr;
+
+    for (int i = 1; i <= 8; ++i) {
+        lock_state_[1].trailing_words_[i] = 0;
+    }
+
+    locks_.clear();
+    AlphaNet::close();
+}

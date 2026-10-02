@@ -23,6 +23,10 @@
 // RECOVERY_GENERATED: v1 vtable 0x0066EC18 ? ??_7Console@@6BWin@@@ 0x0050F460
 #include "original_seam.h"
 #include "console.h"
+#include "reportif.h"
+#include "datalink.h"
+#include "worldwin.h"
+#include "multiwin.h"
 #include "dipedit.h"  // editor_diplomacy's stack DipEdit
 #include "game.h"
 #include "base.h"
@@ -10570,4 +10574,449 @@ void Console::end_my_turn() {
     field_23BE4_ = 0;
     field_23BE8_ = 0;
     focus_vehicle_ = current_selection;
+}
+
+// Shared no-map interruption state observed in menu/key input and FLIC timer.
+// Start-only binding: original allocation extent and lifetime remain unverified.
+// RECOVERY_OBJECT: v1 0x0093A944 ?ConsoleNoMapOverrideLatch@@3HA
+int ConsoleNoMapOverrideLatch;
+
+extern int ConsoleNoMapOverrideLatch;
+extern int __cdecl pop_wait();
+
+void Console::reset_turn_view() {
+    ambience(0x1E);
+    cursor_active_ = 0;
+    field_23BF8_ = 1;
+    field_23BFC_ = 1;
+    if (survey_mode_ != 0) {
+        survey_mode_ = 0;
+        MapWinTable[0]->draw_map(1);
+    }
+    ::draw_cursor();
+    ConsoleInfoWin.change(0);
+    ConsoleStatusWin.redraw();
+    MapWinTable[0]->main_caption();
+    alpha_menu_.check(selected_vehicle_);
+}
+
+// ORIGINAL: 0x0051BC70 ?menu_proc@Console@@QAEXH@Z 0x0051BC70-0x0051D23E
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0051bc70.cpp"], "reason": "Recover complete menu dispatch using genuine Console members, typed owners and original command branches."}
+// symbol    ?menu_proc@Console@@QAEXH@Z
+void Console::menu_proc(int command) {
+    if (MapBaseDisplayOverride == 0) {
+        ConsoleNoMapOverrideLatch = 1;
+        return;
+    }
+    if (ExitTurnLoop != 0) return;
+
+    TutWinGlobal->reset();
+    go_reset();
+    field_23D10_ = 0;
+
+    for (size_t slot = 0; slot < MapWinTableSlots; ++slot) {
+        MapWin *const window = MapWinTable[slot];
+        if (window == nullptr || (slot != 0 && window->field_1DD74_ == 0)) {
+            continue;
+        }
+        if (window->cursor_sprite_ != nullptr ||
+            window->cursor_resource_id_ != 0x7F00) {
+            window->set_cursor(0x7F00);
+            window->cursor_resource_id_ = 0x7F00;
+            window->cursor_sprite_ = nullptr;
+        }
+        const uint32_t dirty = window->field_1DD70_ & 0x00C40000u;
+        if (dirty != 0) {
+            window->field_1DD70_ &= ~0x00C40000u;
+            window->draw_map(1);
+        }
+        do_non_input();
+    }
+
+    if (IsMultiplayerNet != 0) {
+        const int command_group = (command >> 8) & 0xFF;
+        if ((ConsoleControlTurnActive != 0 ||
+             NetDaemonNet.lock_state_[2].payload_.flags != 0 ||
+             NetDaemonNet.lock_state_[0].leading_words_[3] != 0) &&
+            command_group != 0 &&
+            command_group != 7 && command_group != 8) {
+            return;
+        }
+        log_say_hex("Menu Event", command, 0, 0);
+    }
+
+    if (ConsoleGlobal.cursor_active_ != 0) {
+        if (edit_lock() != 0) {
+            reset_turn_view();
+            return;
+        }
+        if (selected_vehicle_ < 0 && command != 0x5D) return;
+    }
+
+    if (command > 0x8FF && command < 0x913) {
+        terraform(selected_vehicle_, command - 0x900);
+    }
+
+    if (command > 0x103) {
+        if (command < 0x201) {
+            switch (command) {
+            case 0x105: social_select(ConsoleGlobal.faction_id_); break;
+            case 0x106: {
+                if ((GameRules & 0x200) == 0) break;
+                PlayerData &player = PlayersData[ConsoleGlobal.faction_id_];
+                int &popup_flags = PopupWriteCheckState;
+                popup_flags = (player.ai_growth != 0 ? 1 : 0) |
+                    (player.ai_tech != 0 ? 2 : 0) |
+                    (player.ai_wealth != 0 ? 4 : 0) |
+                    (player.ai_power != 0 ? 8 : 0);
+                if (x_pop_short("TECHRANDOM", 1, 0) >= 0) {
+                    const unsigned char flags =
+                        static_cast<unsigned char>(popup_flags);
+                    player.ai_growth = flags & 1;
+                    player.ai_tech = (flags >> 1) & 1;
+                    player.ai_wealth = (flags >> 2) & 1;
+                    player.ai_power = (flags >> 3) & 1;
+                    synch_ai(ConsoleGlobal.faction_id_);
+                }
+                break;
+            }
+            case 0x107:
+                if ((GameRules & 0x200) == 0) set_tech(ConsoleGlobal.faction_id_);
+                break;
+            case 0x108: help_topic(2, 0); break;
+            case 0x109: report_labs(); break;
+            case 0x10A: report_energy(); break;
+            case 0x10B: report_ops(); break;
+            case 0x10C: report_projects(); break;
+            case 0x10D: report_sat(); break;
+            case 0x10E: report_security(); break;
+            case 0x10F: report_score(0); break;
+            case 0x110: monument(0); break;
+            case 0x111: hall_of_fame(0); break;
+            case 0x113:
+                if (MultiWindowOpen == 0) MultiWindow.show();
+                else MultiWindow.hide();
+                break;
+            case 0x114: corner_the_market(); break;
+            case 0x115: show_scen_objectives(); break;
+            }
+        } else if (command < 0x324) {
+            switch (command) {
+            case 0x200:
+                if (edit_lock() == 0) set_move(0);
+                else NetMsgPopup->pop("PROTECTED", 5000, 0, nullptr);
+                break;
+            case 0x201:
+                if (ConsoleGlobal.cursor_active_ != 0) reset_turn_view();
+                break;
+            case 0x203: case 0x204: case 0x205: case 0x206: case 0x207:
+            case 0x208: zoom(command, 0); break;
+            case 0x209:
+                GameMorePreferences ^= 0x10000;
+                if ((GameMorePreferences & 0x10000) == 0)
+                    alpha_menu_.uncheck_menu_item(2, 0x209);
+                else alpha_menu_.check_menu_item(2, 0x209);
+                AlphaIniPrefs.more_preferences = GameMorePreferences;
+                prefs_save(0); ::draw_map(1); break;
+            case 0x20A: case 0x20B: {
+                const uint32_t bit = command == 0x20A ? 0x100 : 0x200;
+                GamePreferences ^= bit;
+                if ((GamePreferences & bit) == 0)
+                    alpha_menu_.uncheck_menu_item(2, command);
+                else alpha_menu_.check_menu_item(2, command);
+                AlphaIniPrefs.preferences = GamePreferences;
+                prefs_save(0); ::draw_map(1); break;
+            }
+            case 0x20C:
+                MapWinTable[0]->field_1DD70_ ^= 0x40000;
+                ::draw_map(1); break;
+            case 0x20D:
+                StatusFlags = 0;
+                desktop_init(1); break;
+            case 0x20F: survey(); break;
+            case 0x210: {
+                uint32_t prefs = GameMorePreferences;
+                if ((prefs & 0x1000) == 0) {
+                    if ((prefs & 0x2000) == 0) prefs |= 0x2000;
+                    else prefs |= 0x1000;
+                } else prefs &= ~0x3000u;
+                GameMorePreferences = prefs;
+                AlphaIniPrefs.more_preferences = prefs;
+                prefs_save(0); ::draw_map(1); break;
+            }
+            case 0x211: name_landmark(-1, -1); break;
+            case 0x212: erase_landmark(-1, -1); break;
+            case 0x213: go_to(-1, -2, 0); break;
+            case 0x214: {
+                const int index = ConsoleGlobal.cursor_history_index_;
+                MapWinTable[0]->set_center(ConsoleGlobal.cursor_history_x_[index],
+                    ConsoleGlobal.cursor_history_y_[index], 1);
+                break;
+            }
+            case 0x215: {
+                const uint32_t base_flag = MapWinTable[0]->field_1DD70_ & 0x400000;
+                for (size_t slot = 0; slot < MapWinTableSlots; ++slot) {
+                    MapWin *const window = MapWinTable[slot];
+                    if (window == nullptr ||
+                        (slot != 0 && window->field_1DD74_ == 0)) continue;
+                    if (base_flag == 0) {
+                        window->field_1DD70_ |= 0x400000;
+                        window->draw_base_dest(1);
+                    } else {
+                        window->field_1DD70_ &= ~0x400000u;
+                        window->draw_map(1);
+                    }
+                }
+                break;
+            }
+            case 0x216:
+                field_23BF8_ = 0;
+                if (survey_mode_ != 0) { survey_mode_ = 0; MapWinTable[0]->draw_map(1); }
+                MapWinTable[0]->draw_cursor();
+                if (ConsoleGlobal.cursor_active_ != 0) reset_turn_view();
+                if (--cursor_history_index_ < 0) cursor_history_index_ = 0x1F;
+                {
+                    const int history = ConsoleGlobal.cursor_history_index_;
+                    const int x = ConsoleGlobal.cursor_history_x_[history];
+                    const int y = ConsoleGlobal.cursor_history_y_[history];
+                    ConsoleStatusWin.set_loc(x, y);
+                    MapWinTable[0]->focus(x, y);
+                }
+                break;
+            case 0x217: next_cursor(); break;
+            case 0x300: case 0x301: new_base(selected_vehicle_); break;
+            case 0x302: oblit(selected_vehicle_); break;
+            case 0x304: {
+                const Veh &vehicle = Vehs[selected_vehicle_];
+                const VehPrototype &prototype = VehPrototypes[vehicle.proto_id];
+                const bool air_combat =
+                    Chassis[prototype.chassis_id].triad == TRIAD_AIR &&
+                    Weapon[prototype.weapon_id].mode != 0;
+                automate(selected_vehicle_, air_combat ? 0xC : 3);
+                break;
+            }
+            case 0x305: arty(selected_vehicle_); break;
+            case 0x306: automate(selected_vehicle_, 10); break;
+            case 0x307: automate(selected_vehicle_, 0xB); break;
+            case 0x308: convoy(selected_vehicle_); break;
+            case 0x309: case 0x30A: use_ability(selected_vehicle_); break;
+            case 0x310: go_to(selected_vehicle_, -3, 0); break;
+            case 0x311: destroy(selected_vehicle_); break;
+            case 0x312:
+                if (ConsoleGlobal.cursor_active_ == 0)
+                    disband(ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
+                           ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_]);
+                else disband(selected_vehicle_);
+                break;
+            case 0x313:
+                if (edit_lock() == 0)
+                    activate(ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
+                             ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_], 1);
+                else NetMsgPopup->pop("PROTECTED", 5000, 0, nullptr);
+                break;
+            case 0x314: automate(selected_vehicle_, 0); break;
+            case 0x315: hold(selected_vehicle_, 0); break;
+            case 0x316: case 0x317: go_home(selected_vehicle_); break;
+            case 0x318: go_to(selected_vehicle_, 0x18, 0); break;
+            case 0x319: go_to(selected_vehicle_, 0x18, 1); break;
+            case 0x31A: assemble(); break;
+            case 0x31B: explore(selected_vehicle_); break;
+            case 0x31C: wait(selected_vehicle_); break;
+            case 0x31D: unload(selected_vehicle_); break;
+            case 0x31E: upgrade(selected_vehicle_); break;
+            case 0x31F: give_veh(selected_vehicle_); break;
+            case 0x320: designate(selected_vehicle_); break;
+            case 0x321: sentry(selected_vehicle_, 0); break;
+            case 0x322: sentry(selected_vehicle_, 10); break;
+            case 0x323: skip(selected_vehicle_); break;
+            }
+        } else {
+            switch (command) {
+            case 0x324: set_patrol(selected_vehicle_); break;
+            case 0x600: editor_on(); break;
+            case 0x701: help_topic(2, 0); break;
+            case 0x702: help_topic(0, 0); break;
+            case 0x703: help_topic(1, 0); break;
+            case 0x704: help_topic(0xE, 0); break;
+            case 0x705: help_topic(4, 0); break;
+            case 0x706: help_topic(6, 0); break;
+            case 0x707: help_topic(7, 0); break;
+            case 0x708: help_topic(5, 0); break;
+            case 0x709: help_topic(8, 0); break;
+            case 0x70A: help_topic(3, 0); break;
+            case 0x70B: help_topic(10, 0); break;
+            case 0x70C: help_topic(0xB, 0); break;
+            case 0x70D: help_topic(0xC, 0); break;
+            case 0x70E: help_topic(0xF, 0); break;
+            case 0x720: TutWinGlobal->set_tour_stage(0); TutWinGlobal->tour(); break;
+            case 0x721: TutWinGlobal->set_tour_stage(3); TutWinGlobal->tour(); break;
+            case 0x722: TutWinGlobal->set_tour_stage(1); TutWinGlobal->tour(); break;
+            case 0x723: TutWinGlobal->set_tour_stage(5); TutWinGlobal->tour(); break;
+            case 0x724: TutWinGlobal->set_tour_stage(7); TutWinGlobal->tour(); break;
+            case 0x725: TutWinGlobal->set_tour_stage(6); TutWinGlobal->tour(); break;
+            case 0x750: show_credits(); break;
+            case 0x751:
+                parse_says(0, "RELEASE 2.0", -1, -1);
+                parse_says(1, "20-Dec-1999", -1, -1);
+                popp(ScriptPopupFile, "VERSIONCONTROLX",
+                     0, "ac_logo_sm.pcx", 0);
+                break;
+            case 0x800: chat(0); break;
+            case 0x801: X_pop("VOICEOVERDATA", &pop_wait); break;
+            case 0x802: MultiWindow.on_button_clicked(2); break;
+            case 0x803: custom_my_faction(); break;
+            case 0x804: time_controls(); break;
+            case 0x805: zoom_to_upkeep_base(); break;
+            case 0x806: use_time_bonus(); break;
+            case 0x807: case 0x808: end_my_turn(); break;
+            case 0x9F0: road_to(selected_vehicle_, 0x1B); break;
+            case 0x9F1: road_to(selected_vehicle_, 0x1C); break;
+            case 0x9F2: automate(selected_vehicle_, 0); break;
+            case 0x9F3: automate(selected_vehicle_, 1); break;
+            case 0x9F4: automate(selected_vehicle_, 2); break;
+            case 0x9F5: automate(selected_vehicle_, 7); break;
+            case 0x9F6: automate(selected_vehicle_, 6); break;
+            case 0x9F7: automate(selected_vehicle_, 3); break;
+            case 0x9F8: automate(selected_vehicle_, 4); break;
+            case 0x9F9: automate(selected_vehicle_, 5); break;
+            }
+        }
+    } else if (command == 0x103) {
+        design_new_veh(ConsoleGlobal.faction_id_, -1);
+    } else {
+        switch (command) {
+        case 0x51: GameMorePreferences |= 0x200000; alpha_menu_.check(selected_vehicle_); X_pop("MENUDETAIL", 0); break;
+        case 0x52: GameMorePreferences &= ~0x200000u; alpha_menu_.check(selected_vehicle_); X_pop("MENUSIMPLE", 0); break;
+        case 0x53: set_preferences(); break;
+        case 0x54: set_base_preferences(); break;
+        case 0x55: set_adv_preferences(); break;
+        case 0x56: set_auto_preferences(); break;
+        case 0x57: set_audiovisual(); break;
+        case 0x58: set_map_display(); break;
+        case 0x59: save_game(0); break;
+        case 0x5A: load_proc(0, 0); break;
+        case 0x5B: retire_game(); break;
+        case 0x5C: case 0x5D: {
+            if (command == 0x5C && IsMultiplayerNet != 0) break;
+            const char *const confirmation =
+                IsMultiplayerNet == 0 && IsMultiplayerPBEM == 0
+                    ? "REALLYQUIT"
+                    : (bit_count(static_cast<unsigned char>(LockEnableMask)) > 1
+                        ? "REALLYWIMPOUT"
+                        : "REALLYQUIT");
+            if (X_pop(confirmation, 0) != 0) {
+                if (IsMultiplayerPBEM != 0) {
+                    LockEnableMask &= ~(1u << (ConsoleGlobal.faction_id_ & 0x1F));
+                    save_game(0);
+                }
+                if ((GameRules & 0x400) != 0 && IsMultiplayerPBEM == 0) auto_save();
+                if (IsMultiplayerNet != 0) {
+                    NetDaemonNet.hang_up();
+                    NetDaemonNet.reset();
+                    IsMultiplayerNet = 0;
+                }
+                ExitTurnLoop = 1;
+                log_say("Quit***********************************", 0, 0, 0);
+            }
+            if (command == 0x5C && ExitTurnLoop != 0) GameRestartQueued = 1;
+            break;
+        }
+        }
+    }
+
+    if ((GameState & 0x40) == 0) return;
+    if (command > 0xA00) {
+        switch (command) {
+        case 0xA01: editor_load(); return;
+        case 0xA10: editor_paints(0); return;
+        case 0xA11: editor_paints(1); return;
+        case 0xA12: editor_paints(2); return;
+        case 0xA13: editor_paints(3); return;
+        case 0xA14: editor_paints(4); return;
+        case 0xA15: editor_terrain(); return;
+        case 0xA16: editor_paints(5); return;
+        case 0xA17: editor_natural(1); return;
+        case 0xA18: editor_natural(0); return;
+        case 0xA19: editor_minor(); return;
+        case 0xA20: MapWinTable[0]->editor(ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_], ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_], 0); return;
+        case 0xA21: MapWinTable[0]->editor(ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_], ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_], 1); return;
+        case 0xA24: editor_set_brush(); return;
+        case 0xA30: editor_climate(); return;
+        case 0xA31: editor_generate(); return;
+        case 0xA32: editor_fast(); return;
+        case 0xA36: editor_fungus(); return;
+        case 0xA37: editor_rockiness(); return;
+        case 0xA40: editor_randomize(); return;
+        case 0xA41: editor_clear_random(); return;
+        case 0xA48: editor_flat(); return;
+        case 0xA50: editor_clear(); return;
+        case 0xA51: editor_polar(); return;
+        case 0xA52: editor_clear_vehicles(); return;
+        case 0xA53: editor_clear_terrain(); return;
+        case 0xA54: editor_lock2(); return;
+        default: return;
+        }
+    }
+    if (command == 0xA00) { editor_save(); return; }
+
+    switch (command) {
+    case 0x601:
+        GameState ^= 0x80;
+        if ((GameState & 0x80) == 0 || (GameState & 0x40) == 0)
+            MainInterfaceGlobal.flat_button_[2].hide();
+        else
+            MainInterfaceGlobal.flat_button_[2].show(0);
+        ::draw_map(1);
+        WorldClimateWorldWin.GraphicWin::redraw();
+        desktop_update();
+        ConsoleInfoWin.change(0);
+        ConsoleStatusWin.redraw();
+        MapWinTable[0]->main_caption();
+        return;
+    case 0x602: editor_veh(); return;
+    case 0x603: editor_edit_veh(-1); return;
+    case 0x604: tech_advance(ConsoleGlobal.faction_id_); return;
+    case 0x605: editor_tech(); return;
+    case 0x606: editor_view(); return;
+    case 0x607: editor_diff(); return;
+    case 0x608: editor_energy(); return;
+    case 0x609: editor_date(); return;
+    case 0x60A: editor_eliminate(); return;
+    case 0x60B: editor_reload(); return;
+    case 0x60C: editor_kill_vehicles(); return;
+    case 0x60D: show_replay(); return;
+    case 0x60E: show_movies(); return;
+    case 0x60F: editor_reset_tech(); return;
+    case 0x610: editor_reset_faction(); return;
+    case 0x611: editor_diplomacy(); return;
+    case 0x612: editor_personality(); return;
+    case 0x613: editor_strategy(); return;
+    case 0x614: editor_rules(); return;
+    case 0x615: editor_scen_rules(); return;
+    case 0x616: editor_scen_param(); return;
+    case 0x617: editor_scen_victory(); return;
+    case 0x618: editor_undo(); return;
+    case 0x619: editor_redo(); return;
+    case 0x61A: load_proc(1, 0); return;
+    case 0x61B: save_game(1); return;
+    default: return;
+    }
+}
+
+// ORIGINAL: 0x0051D720 ?menu_daemon@Console@@QAAXH@Z 0x0051D720-0x0051D733 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0051d720.cpp"], "reason": "Recover the callback as static cdecl: original forwards to ConsoleGlobal without reading an incoming receiver; retain catalogue identity separately from emitted symbol."}
+// symbol    ?menu_daemon@Console@@SAXH@Z
+void __cdecl Console::menu_daemon(int selection) {
+    ConsoleGlobal.menu_proc(selection);
+}
+
+
+// ORIGINAL: 0x004E09B0 ?editor_kill_vehicles@@QAEXXZ 0x004E09B0-0x004E09D9 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/004e09b0.cpp"], "reason": "Recover editor undo and stack deletion through actual Console cursor history and existing stack_kill owner."}
+// symbol    ?editor_kill_vehicles@Console@@QAEXXZ
+void Console::editor_kill_vehicles() {
+    auto_undo();
+    const int index = ConsoleGlobal.cursor_history_index_;
+    stack_kill(veh_at(ConsoleGlobal.cursor_history_x_[index],
+                      ConsoleGlobal.cursor_history_y_[index]));
 }

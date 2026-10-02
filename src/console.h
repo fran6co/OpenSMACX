@@ -451,6 +451,10 @@ class Console : public MapWin {
   void editor_diplomacy();
   void on_sys_close();
   void menu_update();
+  static void __cdecl menu_daemon(int selection);
+  void menu_proc(int selection);
+  void reset_turn_view();
+  void editor_kill_vehicles();
   void editor_redo();
   void editor_climate();
   // ??0Console@@QAE@H@Z, now spelled as the bare constructor it is - the
