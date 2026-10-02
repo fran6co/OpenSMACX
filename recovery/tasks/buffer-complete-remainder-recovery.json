@@ -1,0 +1,316 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "998ba8a4d070dbacb7e6e24fbb3c8f7f0aee3e4f",
+  "editable_files": [
+    "recovery/tests/test_buffer_draw_siblings.py",
+    "src/buffer.cpp",
+    "src/buffer.h",
+    "src/buffer_special_text.h",
+    "src/field_accessors.cpp",
+    "src/field_accessors.h",
+    "src/leaf_recoveries.cpp",
+    "src/leaf_recoveries.h",
+    "src/pending_bodies.cpp",
+    "src/recovered/005e3730.cpp",
+    "src/recovered/units/005d7170.cpp",
+    "src/recovered/units/005d71a0.cpp",
+    "src/recovered/units/005db400.cpp",
+    "src/recovered/units/005dc2d0.cpp",
+    "src/recovered/units/005dc310.cpp",
+    "src/recovered/units/005de2e0.cpp",
+    "src/recovered/units/005e3770.cpp",
+    "src/socialwin.cpp",
+    "src/sprite.cpp",
+    "src/sprite.h",
+    "src/stringstruct.cpp",
+    "src/unrecovered/005d7a30.cpp",
+    "src/unrecovered/005d7f20.cpp",
+    "src/unrecovered/005d8740.cpp",
+    "src/unrecovered/005d8ee0.cpp",
+    "src/unrecovered/005d90d0.cpp",
+    "src/unrecovered/005d92c0.cpp",
+    "src/unrecovered/005d98f0.cpp",
+    "src/unrecovered/005d9be0.cpp",
+    "src/unrecovered/005d9fb0.cpp",
+    "src/unrecovered/005dab90.cpp",
+    "src/unrecovered/005db040.cpp",
+    "src/unrecovered/005dbd00.cpp",
+    "src/unrecovered/005de4d0.cpp",
+    "src/unrecovered/005dea20.cpp",
+    "src/unrecovered/005deb20.cpp",
+    "src/unrecovered/005defe0.cpp",
+    "src/unrecovered/005e3690.cpp",
+    "src/win.cpp",
+    "src/win.h"
+  ],
+  "evidence": [
+    "Pinned original bodies and private typed projections establish the supported Buffer behavior and callers; /tmp/buffer-owner-scope-proposal.md and /tmp/buffer-owner-prerequisite-scope.md preserve the receiver, stride, field, allocator, protocol and dependency evidence. Bounded original controls are hints for review, not native compilation, exactness, whole-game runtime or acceptance.",
+    "User explicitly approved provisional 1024-byte source storage for shared flying text at 9B33CC. Original character-buffer identity is observed, capacity remains unverified; the next separate mapped global lies 1024 bytes later. Keep the source disclaimer and no exact original data extent claim. Preserve original unbounded copy/append behavior; this does not authorize a clamp or bug fix.",
+    "Admit Win cached RECT at 15C and its existing constructor/init consumers, actual special-text ten-element stride30 record lifecycle, all flying-text/coordinate/width consumers and SocialWin shared literal consumers. Preserve every historical claim; value/type rehomes must be remeasured.",
+    "Pinned CRT table slots 68266C=5D7170 and 682670=5D71D0 establish special text records before the existing shared Sprite. Natural source declaration order must retain that sequence; shared cleanup guard 9B37CC and generated initializer/destructor selection remain explicit obligations. 5D71D0 and 5D71F0 currently have no mapped original identity; their instruction observations are evidence/discoveries, not invented function-boundary bindings or additional subject credit.",
+    "Admit discovered existing 5D8C20 and 5D8D00 as actual Buffer wrappers: receiver offsets 50/54/58/6C/80/84/4A8, Sprite calls and shared Sprite field identity contradict old actor/fixed-alias scaffolds. Review the exact stack arguments and post-call pointer clear before rehoming; no new behavior or coverage claim follows from fixing an existing implementation.",
+    "5D7AE0 borrowed-source +C/+10 behavior draft is retained but nominal producer, lifetime and complete extent remain unknown. It is not admitted as recovered ownership and remains outside this task. No guessed Filemap or NetFifo nominal model.",
+    "Coordinator-reviewed manual integration requires native compile/link, touched claim restoration, layout/reference/caller review and preserved regression controls. No demotion, baseline reset, weakened gate, invented match or automatic/full-game acceptance. Existing historical task grammar refusal remains visible; new task authorization does not repair or waive earlier task history."
+  ],
+  "intent": "Recover the complete supported Buffer remainder as genuine C++, including actual Win RECT, Sprite signatures, shared text state, original allocator/lifecycle ordering and necessary existing consumer corrections. Preserve every mapping, claim and seed discovery; no implementation credit for unresolved image-source ownership or generated-only rehomes.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4911888,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4914016,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4917408,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4918016,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4918608,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6123888,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6123936,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6124048,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6124656,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6126128,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6127392,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6129472,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6130720,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6130944,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6131424,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6131920,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6132416,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6134000,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6134752,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6135728,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6138768,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6139248,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6139968,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6140928,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6141008,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6142720,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6143232,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6144720,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6144784,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6151584,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6151648,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6151920,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6152032,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6152112,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6152656,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6152928,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6152992,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6153424,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6154784,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6155040,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6156256,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6162896,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6174160,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6174192,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6174304,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6174352,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6174512,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6174576,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6179546,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6206416,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6208896,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "buffer-complete-remainder-recovery"
+}
