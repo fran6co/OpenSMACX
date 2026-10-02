@@ -348,17 +348,10 @@ void __fastcall console_init(Console *self, int mode);
 void __fastcall messagewin_init(MessageWin *self);
 void __fastcall datalink_init(Datalink *self);
 
-// The upper-case helper the two boot bodies call through a fixed .rdata slot.
-// 0x0066931C is one entry of a function-pointer table (its neighbours at
-// 0x669310-0x669324 point 0x10 apart into the same code), not an IAT slot, so
-// no direct CharUpper spelling reaches it: the image loads the slot into a
-// callee-saved register and calls it at both caption sites. __stdcall, not
-// __cdecl - the caller's `add esp,4` after the second site covers only
-// set_def_ok_text's argument, so the callee cleans its own.
-typedef void(__stdcall func_string_upper)(char *);
-inline func_string_upper *&string_upper_slot() {
-  return *reinterpret_cast<func_string_upper **>(0x0066931C);
-}
+// The pinned PE import directory identifies original 0x0066931C as the
+// loader-owned USER32 CharUpperA slot. Its initial on-disk word is not
+// a callable private-table target; use the declared Windows API.
+// RECOVERY_IMPORT: v1 __imp__CharUpperA@4 USER32.dll name:CharUpperA
 
 // A flags dword nothing else in the image touches: system_init is its only
 // reader and its only writer, and it clears 0x8C0 - bits 0x40 and 0x800 - out

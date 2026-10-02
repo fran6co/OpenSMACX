@@ -76,7 +76,6 @@ def actual_source():
     parts["ICONS"] = "\n".join(declarations + definitions)
     parts["GAME"] = braced(c["game"], "int __cdecl game_init(")
     parts["GAME_DECL"] = one(r"^int __cdecl game_init\([^;]+;", h["game"])
-    parts["UPPER_TYPE"] = one(r"^typedef void\(__stdcall func_string_upper\)\(char \*\);", h["game"])
     parts["STRINGS_INIT"] = one(r"^  BOOL init\(size_t mem_size\);", h["strings"])
     parts["SETTERS"] = "\n".join(one(r"^  static MEASURED int __cdecl set_def_" + n + r"_text\(LPSTR text\);", h["basepop"]) for n in ("ok", "cancel"))
     declarations = [one(r"^void __cdecl load_sprites\(\);", h["game"])]
@@ -254,7 +253,6 @@ int main(){test_methods();test_redo();test_deletion();}
 GAME = COMMON + r'''
 struct Strings { STRINGS_INIT };
 struct BasePop { SETTERS };
-UPPER_TYPE
 GAME_DECL
 GAME_SERVICES
 GAME_GLOBALS
@@ -263,9 +261,9 @@ int mode_case,label_result,rules_result,clock_calls,upper_calls;bool mutate_serv
 Sprite sentinels[4];Sprite*old_icons[4];
 void icons_unchanged(){require(WinCloseIcon==old_icons[0]&&WinMaximizeIcon==old_icons[1]&&WinRestoreIcon==old_icons[2]&&WinMinimizeIcon==old_icons[3]);}
 void event(const char*s){icons_unchanged();events.push_back(s);}
-void upper_a(char*text);void upper_b(char*text);
-func_string_upper *upper_target;
-func_string_upper *&string_upper_slot(){event("upper_slot");return upper_target;}
+LPSTR upper_a(char*text);LPSTR upper_b(char*text);
+// Mutable procedure double models a loader-owned import, not a private table.
+LPSTR (WINAPI *CharUpperA)(LPSTR);
 DWORD first_clock();DWORD second_clock(){require(false);return 0;}
 DWORD (WINAPI *timeGetTime)()=first_clock;
 DWORD first_clock(){event("clock");require(WorldClimateSkipTerrainClear==1);++clock_calls;
@@ -277,11 +275,11 @@ BOOL Strings::init(size_t size){event("strings");require(this==&StringTable&&siz
 BOOL labels_init(){event("labels");return label_result;}
 LPSTR label_get(int label){event(label==102?"cancel_label":"ok_label");require(label==102||label==101);
     static char cancel[]="cancel",ok[]="ok";return label==102?cancel:ok;}
-void upper_a(char*text){event("upper");require(text==StringTemp);++upper_calls;
-    for(char*p=text;*p;++p)if(*p>='a'&&*p<='z')*p-=32;}
-void upper_b(char*){require(false);}
+LPSTR upper_a(char*text){event("upper");require(text==StringTemp);++upper_calls;
+    for(char*p=text;*p;++p)if(*p>='a'&&*p<='z')*p-=32;return text;}
+LPSTR upper_b(char*text){require(false);return text;}
 int BasePop::set_def_cancel_text(LPSTR text){event("cancel");require(text==StringTemp);
-    require(std::strcmp(text,Language==2?"cancel":"CANCEL")==0);upper_target=upper_b;return 7;}
+    require(std::strcmp(text,Language==2?"cancel":"CANCEL")==0);CharUpperA=upper_b;return 7;}
 int BasePop::set_def_ok_text(LPSTR text){event("ok");require(text==StringTemp&&std::strcmp(text,"OK")==0);return 8;}
 void mutate_icons(int phase){if(!mutate_services)return;
     WinCloseIcon=old_icons[0]=&sentinels[(phase+0)%4];WinMaximizeIcon=old_icons[1]=&sentinels[(phase+1)%4];
@@ -293,13 +291,13 @@ GAME
 void test_game(){for(int mode: {0,1,-2})for(int language: {0,2})for(int label_fail: {0,1})for(int rules_fail: {0,1})for(int mutation: {0,1}){
     mode_case=mode;Language=language;label_result=label_fail;rules_result=rules_fail;mutate_services=mutation;
     for(int repeat=0;repeat<2;++repeat){
-        events.clear();clock_calls=upper_calls=0;timeGetTime=first_clock;upper_target=upper_a;
+        events.clear();clock_calls=upper_calls=0;timeGetTime=first_clock;CharUpperA=upper_a;
         WorldClimateSkipTerrainClear=0;std::strcpy(StringTemp,"old caption");
         WinCloseIcon=old_icons[0]=&sentinels[0];WinMaximizeIcon=old_icons[1]=&sentinels[1];
         WinRestoreIcon=old_icons[2]=&sentinels[2];WinMinimizeIcon=old_icons[3]=&sentinels[3];
         std::vector<std::string>wanted={"clock","srand","clock","random"};
         if(mode==0)wanted.push_back("log");else{wanted.push_back("strings");wanted.push_back("labels");
-            if(!label_fail){wanted.push_back("cancel_label");wanted.push_back("upper_slot");if(language!=2)wanted.push_back("upper");
+            if(!label_fail){wanted.push_back("cancel_label");if(language!=2)wanted.push_back("upper");
                 wanted.push_back("cancel");wanted.push_back("ok_label");wanted.push_back("upper");wanted.push_back("ok");}}
         const bool reaches_rules=mode==0||!label_fail;
         if(reaches_rules){wanted.push_back("load");wanted.push_back("rules");if(!rules_fail)wanted.push_back("timers");}
@@ -388,7 +386,7 @@ DAMAGE = [
     ("game_clock_reloaded", "GAME", [("random_reseed(time_get_time());", "random_reseed(timeGetTime());")]),
     ("game_cancel_uppercase", "GAME", [("Language != 2", "Language == 2")]),
     ("game_ok_uppercase", "GAME", [("string_upper(StringTemp);\n        BasePop::set_def_ok_text", "BasePop::set_def_ok_text")]),
-    ("game_upper_target_reloaded", "GAME", [("string_upper(StringTemp);\n        BasePop::set_def_ok_text", "string_upper_slot()(StringTemp);\n        BasePop::set_def_ok_text")]),
+    ("game_upper_target_reloaded", "GAME", [("string_upper(StringTemp);\n        BasePop::set_def_ok_text", "CharUpperA(StringTemp);\n        BasePop::set_def_ok_text")]),
     ("game_string_failure_exit", "GAME", [("StringTable.init(0xC320);", "if (StringTable.init(0xC320)) return 1;")]),
     ("game_setter_failure_exit", "GAME", [("BasePop::set_def_cancel_text(StringTemp);", "if (BasePop::set_def_cancel_text(StringTemp)) return 1;")]),
 ]

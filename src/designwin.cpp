@@ -3373,7 +3373,7 @@ void DesignWin::draw_flash() {
                 ProtoAbilityIdBase + shown * 0x34);
             strcat(StringTemp, VehPrototypes[ability_id].veh_name);
         }
-        string_upper_slot()(StringTemp);
+        CharUpperA(StringTemp);
 
         canvas->set_text_color(*StackTitleColorMain, *StackTitleColorShadow,
                                1, 1);
@@ -3441,7 +3441,7 @@ void DesignWin::draw_flash() {
                 StringTemp[0] = '\0';
                 strcat(StringTemp, StringTable.get((int)reinterpret_cast<LPSTR *>(
                     Labels.strings_ptr)[0x390]));
-                string_upper_slot()(StringTemp);
+                CharUpperA(StringTemp);
                 canvas->wrap_cent(StringTemp, line_left, line_top,
                                   rc.right - rc.left);
             }

@@ -646,9 +646,8 @@ void SocialWin::bubble_me_elmo2(char *text, int x, int y) {
  * Each is an `int *const` at file scope, which folds to the bare immediate, so
  * a rename moves no byte; the cast to the real type stays at the point of use.
  *
- * StringUpperSlot    0x0066931C - game.h already documents this address as the
- *                    CharUpper entry of a function-pointer table, and names the
- *                    accessor `string_upper_slot()`.
+ * Upper-case operations use the normal CharUpperA import. Original
+ * 0x0066931C is its loader-owned IAT slot, not a private function table.
  * Panel styles now borrow shared mutable InterfaceBoxStyles elements 3/6;
  * their original starts 0x78D5A0/0x78D618 are no longer address aliases.
  * InterfaceBuffer    0x007AEC64, the shared full-screen drawing Buffer. 55
@@ -1009,7 +1008,7 @@ void SocialWin::draw_psych_alloc() {
     strcat(StringTemp, numbuf);
     strcat(StringTemp, reinterpret_cast<char *>(PercentText));
 
-    (*string_upper_slot())(StringTemp);
+    CharUpperA(StringTemp);
 
     buf->set_font(&font1_, 0, 0, 0);
     buf->set_text_color(0x9f, -1, 1, 1);
@@ -1074,7 +1073,7 @@ void SocialWin::draw_economy_alloc() {
     reinterpret_cast<ItoaFn>(_itoa)(remaining * 10, number, 10);
     strcat(StringTemp, number);
     strcat(StringTemp, reinterpret_cast<char *>(PercentText));
-    (*string_upper_slot())(StringTemp);
+    CharUpperA(StringTemp);
 
     buffer->set_font(&font1_, 0, 0, 0);
     buffer->set_text_color(0x9f, -1, 1, 1);
@@ -1124,7 +1123,7 @@ void SocialWin::draw_labs_alloc() {
     reinterpret_cast<ItoaFn>(_itoa)(allocation * 10, number, 10);
     strcat(StringTemp, number);
     strcat(StringTemp, reinterpret_cast<char *>(PercentText));
-    (*string_upper_slot())(StringTemp);
+    CharUpperA(StringTemp);
 
     buffer->set_font(&font1_, 0, 0, 0);
     buffer->set_text_color(0x9f, -1, 1, 1);
@@ -1169,7 +1168,7 @@ void SocialWin::draw_faction_basal() {
     PluralityDefault = player.is_noun_plural;
     StringTemp[0] = '\0';
     strcat(StringTemp, player.noun_faction);
-    (*string_upper_slot())(StringTemp);
+    CharUpperA(StringTemp);
     buffer->set_font(&font1_, 0, 0, 0);
     buffer->set_text_color(0x9f, -1, 1, 1);
     buffer->write_cent_l(StringTemp, &title, strlen(StringTemp));

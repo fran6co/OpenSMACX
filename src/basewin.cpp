@@ -2312,7 +2312,7 @@ void BaseWin::draw_queue(int update_mode) {
     canvas->set_text_color(TextColourTable[82], TextColourTable[83], 1, 1);
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(479));
-    string_upper_slot()(StringTemp);
+    CharUpperA(StringTemp);
     canvas->write_cent_l(StringTemp, &title, strlen(StringTemp));
 
     canvas->set_font(&row_font, nullptr, nullptr, nullptr);
@@ -4364,7 +4364,7 @@ void BaseWin::draw_info(int update_mode) {
         strcat(StringTemp, Players[faction].noun_faction);
         strcat(StringTemp, ")");
     }
-    string_upper_slot()(StringTemp);
+    CharUpperA(StringTemp);
 
     int font_size = 32;
     do {
@@ -4554,7 +4554,7 @@ void BaseWin::draw_commerce(int update_mode) {
         strcat(StringTemp, label_get(1107));
     } else {
         strcat(StringTemp, label_get(313));
-        string_upper_slot()(StringTemp);
+        CharUpperA(StringTemp);
     }
     canvas->write_cent_l(StringTemp, &title, strlen(StringTemp));
 
@@ -4608,7 +4608,7 @@ void BaseWin::draw_commerce(int update_mode) {
             wrote_row = true;
         }
         if (wrote_row) {
-            string_upper_slot()(StringTemp);
+            CharUpperA(StringTemp);
             canvas->write_cent_l(StringTemp, &report, strlen(StringTemp));
         }
     } else {
@@ -4629,7 +4629,7 @@ void BaseWin::draw_commerce(int update_mode) {
             canvas->set_text_color(ChatItemIdTable[partner], -1, 1, 1);
             StringTemp[0] = 0;
             strcat(StringTemp, Players[partner].noun_faction);
-            string_upper_slot()(StringTemp);
+            CharUpperA(StringTemp);
             const int own_sanctions = PlayersData[owner].sanction_turns;
             const int partner_sanctions = PlayersData[partner].sanction_turns;
             if (own_sanctions == 0 && partner_sanctions == 0) {
@@ -4651,7 +4651,7 @@ void BaseWin::draw_commerce(int update_mode) {
                           ? own_sanctions : partner_sanctions, turns, 10);
                 strcat(StringTemp, turns);
                 strcat(StringTemp, ")");
-                string_upper_slot()(StringTemp);
+                CharUpperA(StringTemp);
                 canvas->write_l(StringTemp, report.left + 5, detail_y,
                                 strlen(StringTemp));
             } else {
@@ -4705,7 +4705,7 @@ void BaseWin::draw_nutrients(int update_mode) {
     canvas->set_text_color(TextColourTable[82], TextColourTable[83], 1, 1);
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(520));
-    string_upper_slot()(StringTemp);
+    CharUpperA(StringTemp);
     canvas->write_cent_l(StringTemp, &title, strlen(StringTemp));
 
     RECT content = nutrient_content_rect_;

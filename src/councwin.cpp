@@ -25,7 +25,7 @@
 #include "alpha.h"       // label_get and the source-owned council label table
 #include "base.h"        // GovernorFaction (the elected Planetary Governor)
 #include "faction.h"     // Players, PlayersData, and LockEnableMask
-#include "game.h"        // IsMultiplayerNet and string_upper_slot
+#include "game.h"        // IsMultiplayerNet
 #include "general.h"     // GenderDefault and PluralityDefault
 #include "infowin.h"     // InfoFactionShadowColors
 #include "council.h"
@@ -315,7 +315,7 @@ void CouncWin::draw_info() {
 
     StringTemp[0] = '\0';
     strcat(StringTemp, label_get(0x7c8 / 4));
-    string_upper_slot()(StringTemp);
+    CharUpperA(StringTemp);
     if (StringTemp[0] != '\0') {
         buffer.write_cent_l(StringTemp, &heading, static_cast<int>(strlen(StringTemp)));
     }
@@ -328,7 +328,7 @@ void CouncWin::draw_info() {
     inner.bottom -= 3;
     StringTemp[0] = '\0';
     strcat(StringTemp, StringTable.get(static_cast<int>(reinterpret_cast<intptr_t>(Proposal[proposal].name))));
-    string_upper_slot()(StringTemp);
+    CharUpperA(StringTemp);
     int wrapped_height = buffer.wrap_height(StringTemp, inner.right - inner.left);
     buffer.wrap_cent(StringTemp, &inner);
     inner.top += wrapped_height;
@@ -1091,7 +1091,7 @@ void CouncWin::on_redraw() {
     }
 
     buffer.set_font(&font6_, 0, 0, 0);
-    string_upper_slot()(StringTemp);
+    CharUpperA(StringTemp);
     buffer.wrap_cent(StringTemp, &message_rect);
 }
 
@@ -1751,7 +1751,7 @@ void CouncWin::draw_leader(int factionID) {
                 break;
             }
             }
-            string_upper_slot()(StringTemp);
+            CharUpperA(StringTemp);
             buffer->set_font(&font4_, 0, 0, 0);
             buffer->write_cent_l(StringTemp, &badgeRect,
                                  static_cast<int>(strlen(StringTemp)));
@@ -1772,7 +1772,7 @@ void CouncWin::draw_leader(int factionID) {
             strcat(StringTemp, number);
             strcat(StringTemp, " ");
             strcat(StringTemp, label_get((techId == 1 ? 0x808 : 0x80C) / 4));
-            string_upper_slot()(StringTemp);
+            CharUpperA(StringTemp);
             buffer->set_text_color(0xA0, -1, 1, 1);
             buffer->write_cent_l(StringTemp, &techRect,
                                  static_cast<int>(strlen(StringTemp)));

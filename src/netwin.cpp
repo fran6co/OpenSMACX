@@ -597,6 +597,7 @@ Purpose: Repaint the setup dialog: the guard test, the panel sprites (the
          content groups - draw_custom_rules, draw_player_names, draw_diffs,
          draw_factions, draw_session_info - then soft_update.
 // ORIGINAL: 0x00481AD0 ?on_redraw@NetWin@@QAEXXZ 0x00481AD0-0x00481C50 FILE
+// symbol    ?on_redraw@NetWin@@UAEXXZ
 // size      384 bytes
 // prototype void (__thiscall ?on_redraw@NetWin@@QAEXXZ)(NetWin* this)
 // callers   3   call targets   15
@@ -631,7 +632,7 @@ void NetWin::on_redraw() {
     strcat(StringTemp,
            StringTable.get(*reinterpret_cast<int *>(Labels.strings_ptr
                                                     + 0x3F0)));
-    string_upper_slot()(StringTemp);
+    CharUpperA(StringTemp);
     buffer->set_font(find_font(0xE, 1), 0, 0, 0);
     buffer->set_text_color(0xE1, -1, 1, 1);
     if (StringTemp != 0) {
@@ -732,7 +733,7 @@ void NetWin::draw_session_info() {
     if (*NetWinSessionName != 0) {
         strcat(StringTemp, *NetWinSessionName);
     }
-    string_upper_slot()(StringTemp);
+    CharUpperA(StringTemp);
     buffer->set_font(find_font(0xE, 1), 0, 0, 0);
     buffer->set_text_color(0xE1, -1, 1, 1);
     buffer->set_clip(title_rect);
@@ -1062,7 +1063,7 @@ void NetWin::draw_player_names() {
     strcat(StringTemp,
            StringTable.get(
                *reinterpret_cast<int *>(Labels.strings_ptr + 0x414)));
-    string_upper_slot()(StringTemp);
+    CharUpperA(StringTemp);
     buffer->set_font(find_font(0xE, 1), 0, 0, 0);
     buffer->set_text_color(0xE1, -1, 1, 1);
     if (StringTemp != 0) {
@@ -1218,6 +1219,7 @@ Purpose: Paint the custom-rules panel: the panel and title frames, the
          inverted 0x10 bit) is drawn before the text opens; row 15 draws
          nothing; after row 7 the walk jumps to the second column.
 // ORIGINAL: 0x0047F960 ?draw_custom_rules@NetWin@@QAEXXZ 0x0047F960-0x0047FE2E FILE
+// symbol    ?draw_custom_rules@NetWin@@QAEXXZ
 // size      1230 bytes
 // prototype void (__thiscall ?draw_custom_rules@NetWin@@QAEXXZ)(NetWin* this)
 // callers   1   call targets   15
@@ -1241,7 +1243,7 @@ void NetWin::draw_custom_rules() {
     strcat(StringTemp,
            StringTable.get(
                *reinterpret_cast<int *>(Labels.strings_ptr + 0xF9C)));
-    string_upper_slot()(StringTemp);
+    CharUpperA(StringTemp);
     buffer->set_font(find_font(0xE, 1), 0, 0, 0);
     buffer->set_text_color(0xE1, -1, 1, 1);
     if (StringTemp != 0) {
@@ -2374,7 +2376,7 @@ void NetWin::new_chat(char *message, int slot) {
     char text[0x100];
     text[0] = 0;
     strcat(text, NetDaemonNet.get_player_name(NetWinSlotRecords[slot].id));
-    string_upper_slot()(text);
+    CharUpperA(text);
     strcat(text, ": ");
     strcat(text, " ");
     strcat(text, message);

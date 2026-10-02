@@ -209,7 +209,7 @@ void AlphaSave::save() {
     canvas->set_font(find_font(0xE, 1), 0, 0, 0);
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(674));
-    string_upper_slot()(StringTemp);
+    CharUpperA(StringTemp);
     canvas->write_cent_l(StringTemp, &caption, strlen(StringTemp));
 
     ActiveAlphaSave = this;
@@ -244,7 +244,7 @@ void AlphaSave::load() {
     canvas->set_font(find_font(0xE, 1), 0, 0, 0);
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(673));
-    string_upper_slot()(StringTemp);
+    CharUpperA(StringTemp);
     canvas->write_cent_l(StringTemp, &caption, strlen(StringTemp));
 
     ActiveAlphaSave = this;

@@ -2459,7 +2459,7 @@ int __cdecl system_init() {
     LPSTR *labels = (LPSTR *)Labels.strings_ptr;
     StringTemp[0] = '\0';
     strcat(StringTemp, StringTable.get((int)labels[102]));
-    func_string_upper *string_upper = string_upper_slot();
+    LPSTR (WINAPI *string_upper)(LPSTR) = CharUpperA;
     if (Language != 2) {
         string_upper(StringTemp);
     }
@@ -2556,7 +2556,7 @@ int __cdecl game_init(int mode, int reload) {
         // The same two captions system_init builds, for the same two buttons.
         StringTemp[0] = '\0';
         strcat(StringTemp, label_get(102));
-        func_string_upper *string_upper = string_upper_slot();
+        LPSTR (WINAPI *string_upper)(LPSTR) = CharUpperA;
         if (Language != 2) {
             string_upper(StringTemp);
         }

@@ -427,7 +427,7 @@ void DiploWin::draw_who() {
     RECT area = leader_rect_[0];
     surface->box_sprite(&area, &InterfaceBoxStyles[6]);
     area.left += 3; area.top += 3; area.right -= 3; area.bottom -= 3;
-    string_upper_slot()(StringTemp);
+    CharUpperA(StringTemp);
     surface->write_cent_l(StringTemp, &area, strlen(StringTemp));
     area = portrait_rect_[0];
     surface->box_sprite(&area, &InterfaceBoxStyles[0]);
@@ -456,7 +456,7 @@ void DiploWin::draw_who() {
         surface->set_text_color(ChatItemIdTable[0], ChatShadowColors[0], 1, 1);
     if (state == 6) surface->set_text_color(251, 0, 1, 1);
     if (label >= 0) strcat(StringTemp, label_get(label));
-    string_upper_slot()(StringTemp);
+    CharUpperA(StringTemp);
     surface->map_colors(&area, ShadowColorTable);
     area.top += 3; area.left += 3; area.right -= 3; area.bottom -= 3;
     surface->write_cent_l(StringTemp, &area, strlen(StringTemp));
@@ -481,7 +481,7 @@ void DiploWin::draw_whom() {
     RECT area = leader_rect_[1];
     surface->box_sprite(&area, &InterfaceBoxStyles[6]);
     area.left += 3; area.top += 3; area.right -= 3; area.bottom -= 3;
-    string_upper_slot()(StringTemp);
+    CharUpperA(StringTemp);
     surface->write_cent_l(StringTemp, &area, strlen(StringTemp));
     area = portrait_rect_[1];
     surface->box_sprite(&area, &InterfaceBoxStyles[0]);
@@ -510,7 +510,7 @@ void DiploWin::draw_whom() {
         surface->set_text_color(ChatItemIdTable[0], ChatShadowColors[0], 1, 1);
     if (state == 6) surface->set_text_color(251, 0, 1, 1);
     if (label >= 0) strcat(StringTemp, label_get(label));
-    string_upper_slot()(StringTemp);
+    CharUpperA(StringTemp);
     surface->map_colors(&area, ShadowColorTable);
     area.top += 3; area.left += 3; area.right -= 3; area.bottom -= 3;
     surface->write_cent_l(StringTemp, &area, strlen(StringTemp));
@@ -531,7 +531,7 @@ void DiploWin::new_chat(char *text, int faction_id) {
     PluralityDefault = 0;
     GenderDefault = Players[faction_id].is_leader_female;
     strcat(line, Players[faction_id].name_leader);
-    string_upper_slot()(line);
+    CharUpperA(line);
     strcat(line, ": ");
     strcat(line, " ");
     strcat(line, text);
@@ -582,7 +582,7 @@ int DiploWin::on_key_click(int repeat, int key) {
             PluralityDefault = 0;
             GenderDefault = Players[faction].is_leader_female;
             strcat(line, Players[faction].name_leader);
-            string_upper_slot()(line);
+            CharUpperA(line);
             strcat(line, ": ");
             strcat(line, " ");
             strcat(line, editBox_.text_);

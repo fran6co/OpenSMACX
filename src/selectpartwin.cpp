@@ -700,7 +700,7 @@ int SelectPartWin::draw_chassis(int a1, RECT *a2, int a3) {
     strcat(StringTemp,
            StringTable.get(*reinterpret_cast<const int *>(
                &Chassis[slot].offsv_1_name)));
-    string_upper_slot()(StringTemp);
+    CharUpperA(StringTemp);
     buf->wrap_cent(font1, StringTemp, &temp);
 
     buf->set_text_color(*PartLabelColorB1, *PartLabelColorB2, 1, 1);
@@ -817,7 +817,7 @@ int SelectPartWin::draw_reactor(int a1, RECT *a2, int a3) {
     strcat(StringTemp,
            StringTable.get(*reinterpret_cast<const int *>(
                &Reactor[slot - 1].name)));
-    string_upper_slot()(StringTemp);
+    CharUpperA(StringTemp);
     buf->wrap_cent(StringTemp, &rect1);
 
     buf->set_text_color(*PartLabelColorB1, *PartLabelColorB2, 1, 1);
@@ -969,7 +969,7 @@ int SelectPartWin::draw_armor(int a1, RECT *a2, int a3) {
         strcat(StringTemp,
                StringTable.get(
                    *reinterpret_cast<const int *>(&Armor[slot].name)));
-        string_upper_slot()(StringTemp);
+        CharUpperA(StringTemp);
         buf444->wrap_cent(StringTemp, &rectScratch);
         buf444->set_text_color(*PartLabelColorB1, *PartLabelColorB2, 1, 1);
 
@@ -1142,7 +1142,7 @@ int SelectPartWin::draw_weapon(int a1, RECT *a2, int a3) {
     strcat(StringTemp,
            StringTable.get(*reinterpret_cast<const int *>(&Weapon[idx].name)));
     panel_buf->set_font(font45f4, 0, 0, 0);
-    string_upper_slot()(StringTemp);
+    CharUpperA(StringTemp);
     panel_buf->wrap_cent(StringTemp, &tmp_rect);
     panel_buf->set_text_color(*PartLabelColorB1, *PartLabelColorB2, 1, 1);
 

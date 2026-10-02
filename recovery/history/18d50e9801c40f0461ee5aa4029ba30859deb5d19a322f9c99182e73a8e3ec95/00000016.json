@@ -1,0 +1,27 @@
+{
+  "event_id": "563946a72b1b0b792530b36ed178cd0ff4521641b45bd47d361833b988713766",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/game.cpp",
+      "src/game.h"
+    ],
+    "evidence": [
+      "Fresh VC6 baseline/current overlays show unchanged load_interface source at455610 has a physical scheduling change when obsolete fixed-address header helper is removed. Current callers with the old header reproduce the baseline physical signature exactly, isolating the header effect; there is no new call or inlining in this body.",
+      "Admit this derived affected subject for explicit compiler scheduling and reference review, not a source body rewrite or proof waiver. Retain historical identities and claims. The narrow straight-line metric region changes register scheduling/order of independent global reads; equivalence and full build/link remain verification obligations."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4544016,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "afcb61a41206adfdcf7740513c23b501848708ee9327da725f3c94a3c490e1d6",
+  "request_id": "basewin-charupper-derived-interface-scheduling-2026-10-02",
+  "schema_version": 1,
+  "sequence": 16,
+  "stream": "task:basewin-owner-coverage"
+}
