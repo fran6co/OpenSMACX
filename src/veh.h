@@ -21,6 +21,8 @@
 // Bounded network access to the genuine prototype-history owner in veh.cpp.
 bool veh_bung_copy_chunk(size_t offset, unsigned char *packet, size_t count,
                          bool packet_to_owner);
+// Existing terraform announcement state, also transferred by game sync.
+extern uint32_t TerraformAnnouncedMask[2];
 // Prototype naming is mapped but unfinished; retained seed owns the behavior lead.
 void __cdecl name_proto(char *name, int prototype, int faction, int chassis,
                        int weapon, int armor, int abilities, int reactor);

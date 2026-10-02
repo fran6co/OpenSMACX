@@ -759,6 +759,9 @@ MEASURED inline int __cdecl breed_mod(int base_id, int faction_id) {
 // (base.cpp) is the caller that needs it folded in place instead of calling
 // out to 0x005AC680.
 void __cdecl compute_score(int faction, int *total, int *items, int recursive);
+// Existing score storage in base.cpp, also transferred by game sync.
+extern int TranscendenceScoreBonus;
+extern int TranscendenceScoreWeights[8];
 // Unfinished implementation in base.cpp; retained original seed owns behavior.
 void __cdecl capture_base(int base_id, int faction_id, int mode);
 void __cdecl base_terraform(int force);

@@ -743,6 +743,8 @@ LPCSTR const CursorNextDangerMsg2 = (LPCSTR)0x00939FF0;
 // plain zero/non-zero gate. focus consults it only at 0x00510910, to decide
 // whether an untagged primary window still gets the cursor path.
 extern int ConsoleControlTurnActive;
+// Existing turn-time policy selection in console.cpp, transferred by game sync.
+extern int TimeControlsSelection;
 
 // on_sys_close raises the flag the turn loop watches. The dword at 0x009B2068
 // is game.h's ExitTurnLoop now - a real global, defined in game.cpp when

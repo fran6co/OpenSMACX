@@ -1,0 +1,19 @@
+{
+  "event_id": "91a7aa8a5edd5c24a7de3fa4caa3165a4a69362c1d9c6e8b08f2aea28b83893d",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/console.h"
+    ],
+    "evidence": [
+      "Actual-TU native compilation of the complete sync proposal requires declaration-only exports for already source-owned TerraformAnnouncedMask[2] in veh.cpp,TimeControlsSelection in console.cpp,TranscendenceScoreBonus and Weights[8] in base.cpp. veh.h and base.h are already authorized; add console.h only. No new storage, original identity change, task baseline reset or matching demotion is authorized."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "8483ee022878c51d439a897a3bb3e77aef1b0df09fb65a90556c1957846b7971",
+  "request_id": "synch-shared-owner-header-exports-20261002",
+  "schema_version": 1,
+  "sequence": 19,
+  "stream": "task:netdaemon-player-lifecycle-recovery"
+}
