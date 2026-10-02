@@ -1229,12 +1229,12 @@ void __cdecl action_arty(int veh_id, int x, int y) {
     if (direction < 0) return;
 
     if (IsMultiplayerNet == 0) {
-        NetDaemonNet.lock_state_[1].dword_[3] = 3;
+        NetDaemonNet.lock_state_[1].leading_words_[3] = 3;
         battle_fight(veh_id, direction, 1, 1, nullptr);
         return;
     }
     if (NetDaemonNet.maybe_lock(&veh_id, 0, 0, x, y, 4) != 0) return;
-    NetDaemonNet.lock_state_[1].dword_[3] = 1;
+    NetDaemonNet.lock_state_[1].leading_words_[3] = 1;
     if (battle_fight(veh_id, direction, 1, 1, nullptr) != 0) {
         NetDaemonNet.unlock_veh();
     } else {
@@ -3142,7 +3142,7 @@ extern void __cdecl unspot_stack(int veh_id);
 // ORIGINAL: 0x004CC360 ?action_airdrop@@YAHHHHH@Z 0x004CC360-0x004CD051 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/004cc360.cpp retained signature/extents and complete seed; no historical claim copied", "Coordinator full pinned original instruction decode 004CC360..004CD051, typed source owner fields and corrected original call/branch evidence", "recovery/tests/test_airdrop_network.py actual-body directional treaty and network reentrancy controls; not linked/runtime/game acceptance"], "reason": "Recover complete typed airdrop admission/interception, landing selection, stack movement, capture and post-drop updates. Preserve unsigned damage storage with integer thresholds and directional treaty evidence; referenced unfinished dependencies remain explicit, not game acceptance."}
 int __cdecl action_airdrop(int veh_id, int x, int y, int mode) {
-    NetDaemonNet.lock_state_[1].dword_[3] = mode;
+    NetDaemonNet.lock_state_[1].leading_words_[3] = mode;
 
     Veh &vehicle = Vehs[veh_id];
     const int faction = vehicle.faction_id;
@@ -8739,7 +8739,8 @@ DeletionList VehDeletionList;  // 0x0093E31C
 // re-pointed rather than left dangling. It skips three slots by identity -
 // CursorVehIndex, FocusVehId and VehSelectionFollowLimit - which is how the
 // image says "the ones already handled above".
-int **const VehSelectionFollow = (int **)0x0093E908;
+// The borrowed selection pointer is NetDaemonNet's channel1 payload, not a
+// second global overlapping that daemon-owned word.
 
 // 0x009A64DC. Another vehicle-id slot, and one with its own extra rule: it is
 // also decremented when it EQUALS the deleted id, which the three above do not
@@ -8867,7 +8868,7 @@ void __cdecl veh_kill(int veh_id) {
         --VehSelectionFollowLimit;
     }
     if (IsMultiplayerNet != 0) {
-        int *slot = *VehSelectionFollow;
+        int *slot = NetDaemonNet.vehicle_selection_follow();
         if (slot != 0 && slot != &ConsoleGlobal.selected_vehicle_ && slot != &VehSelectionFollowLimit &&
             slot != &ConsoleGlobal.focus_vehicle_) {
             if (veh_id <= *slot) {
@@ -9963,7 +9964,7 @@ void __cdecl action_go_to(int veh_id) {
     const int net = IsMultiplayerNet;
     const int turn_active = ConsoleControlTurnActive;
     if (net != 0 && turn_active == 0) {
-        *VehSelectionFollow = (int *)&veh_id;
+        NetDaemonNet.set_vehicle_selection_follow(&veh_id);
     }
 
     int move_result;
@@ -10075,7 +10076,7 @@ Status: MISMATCH.
 */
 void __cdecl action_road_to(int veh_id) {
     if (IsMultiplayerNet != 0 && ConsoleControlTurnActive == 0) {
-        *VehSelectionFollow = (int *)&veh_id;
+        NetDaemonNet.set_vehicle_selection_follow(&veh_id);
     }
 
     const unsigned owner = Vehs[veh_id].faction_id;

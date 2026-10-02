@@ -93,7 +93,7 @@ struct BaseWin {
     void gov_on(int flags) { event(GOVERNOR, flags); }
 } TutWinBaseWindow;
 struct Daemon {
-    struct State { unsigned int dword_[15]; } lock_state_[3];
+    struct State { uint32_t leading_words_[4]; union Payload { uint32_t flags; int *vehicle_selection_follow; } payload_; uint32_t trailing_words_[10]; } lock_state_[24];
     int lock_veh(int *id, int target, int a, int b, int c) {
         assert(target == 0 && a == -1 && b == -1 && c == 0);
         event(LOCK, *id); return lock_result;
@@ -204,9 +204,9 @@ int main() {
         for (int block = 0; block < 4; ++block) {
             reset(); selected_action = command; IsMultiplayerNet = 1;
             if (block == 0) ConsoleControlTurnActive = 1;
-            if (block == 1) NetDaemonNet.lock_state_[2].dword_[4] = 1;
-            if (block == 2) NetDaemonNet.lock_state_[0].dword_[3] = 1;
-            if (block == 3) NetDaemonNet.lock_state_[0].dword_[12] = 1 << ConsoleGlobal.faction_id_;
+            if (block == 1) NetDaemonNet.lock_state_[2].payload_.flags = 1;
+            if (block == 2) NetDaemonNet.lock_state_[0].leading_words_[3] = 1;
+            if (block == 3) NetDaemonNet.lock_state_[0].trailing_words_[7] = 1 << ConsoleGlobal.faction_id_;
             click(); assert(!count(SOFT_ZOOM) && count(ACTIVE) == 1);
             IsMultiplayerNet = 0; event_count = 0; click(); assert(count(SOFT_ZOOM) == 1);
         }

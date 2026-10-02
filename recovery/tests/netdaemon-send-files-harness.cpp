@@ -23,7 +23,7 @@ struct AlphaNetProcessSlot {
     uint32_t pid_;
     unsigned char status_bytes_[4];
 };
-struct LockStateEntry { uint32_t dword_[32]; };
+struct LockStateEntry { uint32_t leading_words_[4]; union Payload { uint32_t flags; int *vehicle_selection_follow; } payload_; uint32_t trailing_words_[10]; };
 
 struct PacketCopy {
     unsigned short type;
@@ -113,7 +113,7 @@ public:
         packet.bytes.assign(bytes, bytes + size);
         g_group_packets.push_back(packet); return 1;
     }
-    LockStateEntry lock_state_[4];
+    LockStateEntry lock_state_[24];
     AlphaNetProcessSlot process_slots_[8];
     unsigned long field_760_;
     unsigned long field_764_;
@@ -247,9 +247,9 @@ static void reset_fixture() {
     NetDaemonNet.player_count_ = 1;
     NetDaemonNet.process_slots_[1].status_bytes_[0] = 0;
     NetDaemonNet.process_slots_[1].pid_ = 0x222;
-    NetDaemonNet.lock_state_[0].dword_[1] = 1;
-    NetDaemonNet.lock_state_[2].dword_[14] = 0;
-    NetDaemonNet.lock_state_[3].dword_[0] = 0;
+    NetDaemonNet.lock_state_[0].leading_words_[1] = 1;
+    NetDaemonNet.lock_state_[2].trailing_words_[9] = 0;
+    NetDaemonNet.lock_state_[3].leading_words_[0] = 0;
     NetDaemonFileTransferMode = 1;
     NetDaemonFileTransferAckMask = 0;
     NetDaemonFileTransferPath[0] = 'a'; NetDaemonFileTransferPath[1] = 0;
@@ -266,7 +266,7 @@ static PacketCopy find_message(unsigned short type) {
 static void test_host_send_chunking_and_order() {
     reset_fixture();
     g_test_file_size = 4000;
-    NetDaemonNet.lock_state_[0].dword_[1] = 1;
+    NetDaemonNet.lock_state_[0].leading_words_[1] = 1;
     const int result = NetDaemonNet.send_files();
     if (result != 0 || g_file_open_count != 1 || g_findclose_count != 1) abort();
     if (g_group_members.size() != 1 || g_group_members[0] != 0x222) abort();
@@ -288,7 +288,7 @@ static void test_host_send_chunking_and_order() {
 
 static void test_ack_wait_live_mask_and_status_scan() {
     reset_fixture();
-    NetDaemonNet.lock_state_[0].dword_[1] = 1;
+    NetDaemonNet.lock_state_[0].leading_words_[1] = 1;
     NetDaemonNet.player_count_ = 2;
     NetDaemonNet.process_slots_[2].pid_ = 0x333;
     g_scenario = 4;
@@ -303,7 +303,7 @@ static void test_exact_chunk_boundary_and_escape_cleanup() {
     reset_fixture();
     g_test_file_size = 4000;
     g_compressed_size = 0x800;
-    NetDaemonNet.lock_state_[0].dword_[1] = 1;
+    NetDaemonNet.lock_state_[0].leading_words_[1] = 1;
     if (NetDaemonNet.send_files() != 0) abort();
     if (g_group_packets.size() != 1 || g_group_packets[0].size != 0x820) abort();
     // One draw belongs to the full 0x800-byte send iteration; the staged
@@ -311,16 +311,16 @@ static void test_exact_chunk_boundary_and_escape_cleanup() {
     if (g_draw_count != 4 || g_chunk_draws != 1) abort();
 
     reset_fixture();
-    NetDaemonNet.lock_state_[0].dword_[1] = 1;
+    NetDaemonNet.lock_state_[0].leading_words_[1] = 1;
     g_escape_after = 0;
     if (NetDaemonNet.send_files() != 1) abort();
-    if (!g_group_packets.empty() || NetDaemonNet.lock_state_[2].dword_[14] != 1) abort();
+    if (!g_group_packets.empty() || NetDaemonNet.lock_state_[2].trailing_words_[9] != 1) abort();
     if (strcmp(g_cwd, "C:\\Old") != 0 || NetDaemonFileTransferMode != 0) abort();
 }
 
 static void test_client_escape_and_live_mode_cancel() {
     reset_fixture();
-    NetDaemonNet.lock_state_[0].dword_[1] = 0;
+    NetDaemonNet.lock_state_[0].leading_words_[1] = 0;
     NetDaemonFileTransferMode = 1;
     g_escape_after = 0;
     const int result = NetDaemonNet.send_files();
@@ -329,7 +329,7 @@ static void test_client_escape_and_live_mode_cancel() {
     if (g_alt_path[0] == 0 || strcmp(g_cwd, "C:\\Old") != 0) abort();
 
     reset_fixture();
-    NetDaemonNet.lock_state_[0].dword_[1] = 0;
+    NetDaemonNet.lock_state_[0].leading_words_[1] = 0;
     NetDaemonFileTransferMode = 1;
     g_scenario = 3;
     if (NetDaemonNet.send_files() != 0) abort();

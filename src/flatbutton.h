@@ -66,6 +66,26 @@ class FlatButton : public BaseButton {
     field_AD4_[1] = hover;
     field_AD4_[2] = pressed;
   }
+  // Borrowed slice configuration used by BaseWin init; the remaining
+  // opaque 27-word format retains its independent recovery obligations.
+  void set_slice_colours(int normal, int hover, int pressed) {
+    field_ABC_[0] = static_cast<uint32_t>(normal);
+    field_ABC_[1] = static_cast<uint32_t>(hover);
+    field_ABC_[2] = static_cast<uint32_t>(pressed);
+  }
+  void set_slice_icons(Sprite *left_normal, Sprite *left_hover, Sprite *left_pressed,
+                       Sprite *middle_normal, Sprite *middle_hover, Sprite *middle_pressed,
+                       Sprite *right_normal, Sprite *right_hover, Sprite *right_pressed) {
+    config[12] = reinterpret_cast<uint32_t>(left_normal);
+    config[13] = reinterpret_cast<uint32_t>(left_hover);
+    config[14] = reinterpret_cast<uint32_t>(left_pressed);
+    config[6] = reinterpret_cast<uint32_t>(middle_normal);
+    config[7] = reinterpret_cast<uint32_t>(middle_hover);
+    config[8] = reinterpret_cast<uint32_t>(middle_pressed);
+    config[15] = reinterpret_cast<uint32_t>(right_normal);
+    config[16] = reinterpret_cast<uint32_t>(right_hover);
+    config[17] = reinterpret_cast<uint32_t>(right_pressed);
+  }
   void set_border_styles(BoxSpriteParams *normal, BoxSpriteParams *hover,
                          BoxSpriteParams *pressed) {
     border_styles_[0] = normal;

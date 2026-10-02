@@ -364,20 +364,8 @@ int __cdecl X_pops(char *caption, const char *label, int a3, char *a4, int a5,
 
 
 
-void BaseWin::draw_supported(int a1) {                       // 0x0040C850
-    typedef void(__fastcall *pending)(BaseWin *, void *, int);
-    PENDING_BODY(0x0040C850, pending)(this, nullptr, a1);
-}
 
-void BaseWin::draw_facilities(int a1) {                       // 0x0040FCC0
-    typedef void(__fastcall *pending)(BaseWin *, void *, int);
-    PENDING_BODY(0x0040FCC0, pending)(this, nullptr, a1);
-}
 
-void BaseWin::garrison_click(int vehID, int a2, int right, int is_double) {                       // 0x0040B140
-    typedef void(__fastcall *pending)(BaseWin *, void *, int, int, int, int);
-    PENDING_BODY(0x0040B140, pending)(this, nullptr, vehID, a2, right, is_double);
-}
 
 
 
@@ -480,10 +468,6 @@ void __cdecl alt_set(int x, int y, uint32_t altitude) {  // 0x00591290
     PENDING_BODY(0x00591290, pending)(x, y, altitude);
 }
 
-BaseWin::~BaseWin() {  // ??1BaseWin@@QAE@XZ at 0x00420A70
-    typedef void(__fastcall *pending)(BaseWin *, void *);
-    PENDING_BODY(0x00420A70, pending)(this, nullptr);
-}
 
 DesignWin::~DesignWin() {  // ??1DesignWin@@QAE@XZ at 0x0043ECB0
     typedef void(__fastcall *pending)(DesignWin *, void *);

@@ -150,7 +150,7 @@ void MainInterface::redraw_complete() {
     CharUpperA(text);
     spot_.get_rect(5, 0, &button_rect);
     canvas.set_font(&font1_, 0, 0, 0);
-    const uint32_t ready = NetDaemonNet.lock_state_[0].dword_[12];
+    const uint32_t ready = NetDaemonNet.lock_state_[0].trailing_words_[7];
     if ((GameState & 2) && (!IsMultiplayerNet
         || !(NetTurnFlags & 0x10) || NetTurnFaction == ConsoleGlobal.faction_id_)
         && (ConsoleGlobal.field_23BE4_ || (IsMultiplayerNet && ready != 0xFF && ready != 0))) {
@@ -161,7 +161,7 @@ void MainInterface::redraw_complete() {
         flic2_.decode_stored_frame();
         MainInterfaceEndTurnAnimation = 0;
     }
-    const uint32_t label_ready = NetDaemonNet.lock_state_[0].dword_[12];
+    const uint32_t label_ready = NetDaemonNet.lock_state_[0].trailing_words_[7];
     const int label = !IsMultiplayerNet || !(GameState & 2) || (NetTurnFlags & 0x10)
         || label_ready == 0xFF || !(label_ready & (1u << (ConsoleGlobal.faction_id_ & 31)))
         ? 0x68 / 4 : 0x3FC / 4;

@@ -26,6 +26,7 @@ def live_boom_body():
 
 HARNESS = r'''
 #include <cassert>
+#include <cstdint>
 #include <cstdlib>
 #include <cstring>
 #define __cdecl
@@ -38,7 +39,7 @@ int MapIsFlat,MapLongitude=10,MapLongitudeBounds=20,IsMultiplayerNet;
 int ready=1,target=1,direction=4,lock_result,maybe_result,fight_result;
 int calls,observed_mode,observed_id,opcode,notify,destroyed,unlocked,awaited;
 struct NetDaemon {
- struct {int dword_[4];}lock_state_[2];
+ struct {uint32_t leading_words_[4]; union Payload { uint32_t flags; int *vehicle_selection_follow; } payload_; uint32_t trailing_words_[10];}lock_state_[24];
  int lock_veh(int*id,int mode,int x,int y,int zero){
   assert(mode==4&&x==2&&y==0&&zero==0);*id=3;return lock_result;}
  int maybe_lock(int*id,int a,int b,int x,int y,int mode){
@@ -59,13 +60,13 @@ void message_veh(int op,int id,int dir,int zero){assert(id==3&&dir==4&&zero==0);
 int radius_move(int x,int y,int,int,int range){assert(x==0&&y==0&&range==25);return direction;}
 int battle_fight(int id,int dir,int a,int b,int*p){
  assert(dir==4&&a==1&&b==1&&!p);++calls;observed_id=id;
- observed_mode=NetDaemonNet.lock_state_[1].dword_[3];return fight_result;}
+ observed_mode=NetDaemonNet.lock_state_[1].leading_words_[3];return fight_result;}
 BODY
 void reset(){std::memset(PlayersData,0,sizeof PlayersData);std::memset(Vehs,0,sizeof Vehs);
  Vehs[1].faction_id=1;ready=1;target=1;direction=4;lock_result=maybe_result=fight_result=0;
  MapIsFlat=1;IsMultiplayerNet=0;Rules.artillery_max_rng=2;
  calls=observed_mode=observed_id=opcode=notify=destroyed=unlocked=awaited=0;
- NetDaemonNet.lock_state_[1].dword_[3]=17;}
+ NetDaemonNet.lock_state_[1].leading_words_[3]=17;}
 int main(){
  reset();ready=0;action_arty(0,2,0);assert(notify==1&&calls==0);
  reset();action_arty(0,6,0);assert(notify==2&&calls==0);
@@ -79,7 +80,7 @@ int main(){
  reset();target=-1;IsMultiplayerNet=1;lock_result=1;action_arty(0,2,0);assert(opcode==0&&awaited==0);
  reset();action_arty(0,2,0);assert(calls==1&&observed_mode==3&&observed_id==0);
  reset();IsMultiplayerNet=1;maybe_result=1;action_arty(0,2,0);
- assert(calls==0&&NetDaemonNet.lock_state_[1].dword_[3]==17);
+ assert(calls==0&&NetDaemonNet.lock_state_[1].leading_words_[3]==17);
  reset();IsMultiplayerNet=1;fight_result=1;action_arty(0,2,0);
  assert(calls==1&&observed_mode==1&&observed_id==3&&unlocked==1&&opcode==0&&awaited==0);
  reset();IsMultiplayerNet=1;action_arty(0,2,0);
@@ -102,7 +103,7 @@ def test_artillery_branch_and_network_protocol(tmp_path):
 
 @pytest.mark.parametrize("before,after", [
     ("diplo_treaties[target_faction] & 1U", "diplo_treaties[target_faction] & 2U"),
-    ("dword_[3] = 3;", "dword_[3] = 1;"),
+    ("leading_words_[3] = 3;", "leading_words_[3] = 1;"),
     ("message_veh(0x2402", "message_veh(0x2413"),
 ])
 def test_artillery_damage_is_detected(tmp_path, before, after):

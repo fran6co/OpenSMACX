@@ -70,7 +70,7 @@ struct Spot {
     *out_x_arg = out_x; *out_y_arg = out_y; return result;
   }
 };
-struct LockState { uint32_t dword_[16]; };
+struct LockState { uint32_t leading_words_[4]; union Payload { uint32_t flags; int *vehicle_selection_follow; } payload_; uint32_t trailing_words_[10]; };
 struct NetDaemon { LockState lock_state_[24]; } NetDaemonNet;
 struct { int faction_id_; } ConsoleGlobal;
 struct Player {
@@ -125,7 +125,7 @@ int main() {
   click.spot_.result = 4; click.spot_.out_x = 8; click.spot_.out_y = 3;
   click.on_left_click(20, 30);
   assert(click.spot_.calls == 1 && click.selectedRecord_ == 8 && click.redraws == 1);
-  NetDaemonNet.lock_state_[2].dword_[4] = 1;
+  NetDaemonNet.lock_state_[2].payload_.flags = 1;
   click.on_left_click(20, 30);
   assert(click.spot_.calls == 1 && click.redraws == 1);
 
@@ -209,9 +209,9 @@ def test_famewin_actual_record_and_click_bodies(tmp_path):
 
 def test_famewin_damage_control_detects_click_gate_change(tmp_path):
     left_click = source_body(LEFT_CLICK)
-    before = "NetDaemonNet.lock_state_[2].dword_[4] == 0"
+    before = "NetDaemonNet.lock_state_[2].payload_.flags == 0"
     assert before in left_click
-    mutant = left_click.replace(before, "NetDaemonNet.lock_state_[2].dword_[4] != 0")
+    mutant = left_click.replace(before, "NetDaemonNet.lock_state_[2].payload_.flags != 0")
     run_host_control(
         tmp_path,
         (mutant, source_body(DEMOTE), source_body(ADD_RECORD)),

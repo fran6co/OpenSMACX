@@ -284,6 +284,8 @@ class Console : public MapWin {
   // overload is spelled here.
   void cursor_on(int cursor_shape, int veh_id);
   int selecting(int tile_x, int tile_y);
+  // BaseWin garrison selection writes the established latch at 23BEC.
+  void mark_garrison_selection() { field_23BEC_ = 1; }
   // 0x004D9AD0 ?editor_who@Console@@QAEHHH@Z - which faction/personality the
   // scenario editor is working on. The body uses Popup's typed Dialogs
   // member and default-answer setter rather than private-member offsets.

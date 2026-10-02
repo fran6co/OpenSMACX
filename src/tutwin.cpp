@@ -1438,17 +1438,17 @@ void TutWin::tour1() {
     base_rect(&rect, &x, &y);
     if (tut_win(owner, "TOUR1PSYCHBUTTON", x, y, 0, 2, -1, -1) == 0) return;
 
-    rect.left = TutWinBaseWindow.field_40D4C_;
-    rect.top = TutWinBaseWindow.field_40D50_;
-    rect.right = TutWinBaseWindow.field_40D54_;
-    rect.bottom = TutWinBaseWindow.field_40D58_;
+    rect.left = TutWinBaseWindow.previous_button_rect_.left;
+    rect.top = TutWinBaseWindow.previous_button_rect_.top;
+    rect.right = TutWinBaseWindow.previous_button_rect_.right;
+    rect.bottom = TutWinBaseWindow.previous_button_rect_.bottom;
     rect = (rect);
     iface_rect(&rect, &x, &y);
     if (tut_win(owner, "TOUR1RESOURCEBUTTON", x, y, 0, 2, -1, -1) == 0) return;
-    rect.left = TutWinBaseWindow.field_40D5C_;
-    rect.top = TutWinBaseWindow.field_40D60_;
-    rect.right = TutWinBaseWindow.field_40D64_;
-    rect.bottom = TutWinBaseWindow.field_40D68_;
+    rect.left = TutWinBaseWindow.next_button_rect_.left;
+    rect.top = TutWinBaseWindow.next_button_rect_.top;
+    rect.right = TutWinBaseWindow.next_button_rect_.right;
+    rect.bottom = TutWinBaseWindow.next_button_rect_.bottom;
     rect = (rect);
     iface_rect(&rect, &x, &y);
     if (tut_win(owner, "TOUR1PREV", x, y, 0, 2, -1, -1) == 0) return;

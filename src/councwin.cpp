@@ -274,7 +274,7 @@ void CouncWin::set_vote(int faction_id, int vote) {
     static_cast<GraphicWin *>(this)->redraw();
     if (IsMultiplayerNet == 0) {
         make_resolution(1);
-    } else if (NetDaemonNet.lock_state_[0].dword_[1] != 0 &&
+    } else if (NetDaemonNet.lock_state_[0].leading_words_[1] != 0 &&
                make_resolution(0) != 0) {
         message_data(0x2603, 0, 0, 0, 0, 0);
     }

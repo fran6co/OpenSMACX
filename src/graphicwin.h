@@ -138,6 +138,9 @@ class GraphicWin : public Win, public Buffer {
   // must not be appended here merely to produce matching adjustor thunks.
   // Nonvirtual reusable cleanup. Its artificial integer return and manual
   // owned-buffer deletion still need the separately reviewed void migration.
+  // The original PullDown normal-cancel path reads this inherited word,
+  // not an item before the array. Keep that storage owned by GraphicWin.
+  uint32_t field_A0C_value() const { return field_A0C_; }
   uint32_t close();
   // 0x00589550, a 5-byte `jmp` to GraphicWin::close, homed into general.cpp.
   // A plain member: no virtual, so nothing adjusts the receiver and VC6 can

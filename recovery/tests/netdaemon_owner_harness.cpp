@@ -86,7 +86,7 @@ struct AlphaNet : public Net {
     AlphaNetProcessSlot process_slots_[8];
     AlphaNetLedger ledger_;
 };
-struct LockStateEntry { uint32_t dword_[15]; };
+struct LockStateEntry { uint32_t leading_words_[4]; union Payload { uint32_t flags; int *vehicle_selection_follow; } payload_; uint32_t trailing_words_[10]; };
 
 struct PlayerLock {
     struct Entry { int flag, second, first; };
@@ -217,10 +217,10 @@ static void setup_two_player_delete(NetDaemon &daemon, int lock_phase) {
     daemon.process_slots_[2].identity_ = 2;
     daemon.field_760_ = 10;
     daemon.field_764_ = 10;
-    daemon.lock_state_[0].dword_[5] = lock_phase;
-    daemon.lock_state_[0].dword_[9] = 1u << 2;
-    daemon.lock_state_[1].dword_[5] = 0xFF;
-    daemon.lock_state_[1].dword_[8] = 0x8;
+    daemon.lock_state_[0].trailing_words_[0] = lock_phase;
+    daemon.lock_state_[0].trailing_words_[4] = 1u << 2;
+    daemon.lock_state_[1].trailing_words_[0] = 0xFF;
+    daemon.lock_state_[1].trailing_words_[3] = 0x8;
     NetWinLobbyRows[2].prefix_ = 0x55;
     strcpy(NetWinLobbyRows[2].leader_name_, "old-leader");
     strcpy(NetWinLobbyRows[2].noun_faction_, "old-noun");
@@ -269,7 +269,7 @@ int main(int argc, char **argv) {
         assert(strcmp(NetWinLobbyRows[2].noun_faction_, "label2") == 0);
         assert(label_calls == 2);
         assert(daemon.locks_.records_[2].entries_[0].first == -1);
-        assert(daemon.lock_state_[1].dword_[5] == (0xFF & ~0x8u));
+        assert(daemon.lock_state_[1].trailing_words_[0] == (0xFF & ~0x8u));
         assert(NetWinDialog.redraws == 1);
         assert_before("parse:ED", "fx:21");
         assert_before("fx:21", "parse:departed");
@@ -279,26 +279,26 @@ int main(int argc, char **argv) {
         assert_before("popup:DROPPED", "redraw");
     } else if (strcmp(scenario, "delete_inactive_lock") == 0) {
         setup_two_player_delete(daemon, 2);
-        daemon.lock_state_[0].dword_[1] = 0;
+        daemon.lock_state_[0].leading_words_[1] = 0;
         LockEnableMask = 0x0808; // alive and human faction 3
         daemon.locks_.records_[3].entries_[0].flag = 0;
         clear_trace();
         daemon.on_player_deleted(0, 20);
         assert(daemon.locks_.records_[3].active_ == 0);
         assert(daemon.locks_.records_[3].entries_[0].flag == 0);
-        assert(daemon.lock_state_[0].dword_[5] == 2);
+        assert(daemon.lock_state_[0].trailing_words_[0] == 2);
         assert(NetWinLobbyRows[2].prefix_ == 0x55); // phase 2: no prefix write
         assert(message_calls == 0);
         assert(label_calls == 2);
     } else if (strcmp(scenario, "delete_active_lock") == 0) {
         setup_two_player_delete(daemon, 2);
-        daemon.lock_state_[0].dword_[1] = 0;
+        daemon.lock_state_[0].leading_words_[1] = 0;
         LockEnableMask = 0x0808;
         daemon.locks_.records_[3].entries_[0].flag = 1;
         clear_trace();
         daemon.on_player_deleted(0, 20);
         assert(daemon.locks_.records_[3].active_ == 4);
-        assert(daemon.lock_state_[0].dword_[5] == 2);
+        assert(daemon.lock_state_[0].trailing_words_[0] == 2);
         assert(NetWinLobbyRows[2].prefix_ == 0x55);
         assert(message_calls == 0);
     } else if (strcmp(scenario, "delete_slot8_miss") == 0) {

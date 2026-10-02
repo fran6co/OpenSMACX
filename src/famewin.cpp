@@ -595,10 +595,10 @@ void FameWin::on_redraw() {
 // ORIGINAL: 0x0044A500 ?on_left_click@FameWin@@QAEXHH@Z 0x0044A500-0x0044A563 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0044a500.cpp", "Pinned original owner review: original clip resets and absent-record branches, CharUpperA import, difficulty-label capitalization and exact demote tail copying."], "reason": "Recover FameWin owner behavior through existing GraphicWin/Buffer bases, owned buttons and sprites, and typed HallOfFame/Player records; retain historical seed identity and extents without a measurement claim."}
 void FameWin::on_left_click(int x, int y) {
-  if ((NetDaemonNet.lock_state_[0].dword_[12] &
+  if ((NetDaemonNet.lock_state_[0].trailing_words_[7] &
        (1u << ConsoleGlobal.faction_id_)) == 0 &&
-      NetDaemonNet.lock_state_[2].dword_[4] == 0 &&
-      NetDaemonNet.lock_state_[0].dword_[3] == 0) {
+      NetDaemonNet.lock_state_[2].payload_.flags == 0 &&
+      NetDaemonNet.lock_state_[0].leading_words_[3] == 0) {
     if (spot_.check(x, y, &y, &x) != -1) selectedRecord_ = y;
     redraw();
   }

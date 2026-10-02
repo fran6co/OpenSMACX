@@ -156,10 +156,10 @@ void StatusWin::on_right_click(int x, int y, int) {
     menu.show(x, y, 0);
     int selected = menu.get_selected_id();
     bool network_blocked = IsMultiplayerNet &&
-        (ConsoleControlTurnActive || NetDaemonNet.lock_state_[2].dword_[4]
-         || NetDaemonNet.lock_state_[0].dword_[3]);
+        (ConsoleControlTurnActive || NetDaemonNet.lock_state_[2].payload_.flags
+         || NetDaemonNet.lock_state_[0].leading_words_[3]);
     bool faction_blocked = IsMultiplayerNet &&
-        (NetDaemonNet.lock_state_[0].dword_[12] & (1U << ConsoleGlobal.faction_id_));
+        (NetDaemonNet.lock_state_[0].trailing_words_[7] & (1U << ConsoleGlobal.faction_id_));
 
     switch (selected) {
     case 1:

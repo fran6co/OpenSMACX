@@ -44,14 +44,14 @@ struct FakeNetWin {
     void pick_pass(int pass) { ++pick_calls; picked=pass; }
 } NetWinDialog;
 struct Slot { unsigned char status_bytes_[4]; };
-struct LockWord { uint32_t dword_[16]; };
+struct LockWord { uint32_t leading_words_[4]; union Payload { uint32_t flags; int *vehicle_selection_follow; } payload_; uint32_t trailing_words_[10]; };
 class NetDaemonTransferModalCloseGuard;
 struct NetDaemonNetType {
     uint32_t field_760_;
     int pid_2_idx(uint32_t) { return 3; }
 } NetDaemonNet;
 struct NetDaemon {
-    LockWord lock_state_[4];
+    LockWord lock_state_[24];
     Slot process_slots_[16];
     int send_calls;
     int last_send_len, last_send_target;
@@ -109,7 +109,7 @@ static bool invoke_modal(NetDaemon &daemon, unsigned short type) {
 static void check_modal(unsigned short type, bool is_host) {
     NetDaemon daemon;
     memset(&daemon, 0, sizeof(daemon));
-    daemon.lock_state_[0].dword_[1] = is_host ? 1 : 0;
+    daemon.lock_state_[0].leading_words_[1] = is_host ? 1 : 0;
     reset_trace();
     g_filemap_dtors = 0;
     const bool consumed = invoke_modal(daemon, type);
@@ -151,10 +151,10 @@ int main() {
 
     NetDaemon daemon;
     memset(&daemon, 0, sizeof(daemon));
-    daemon.lock_state_[0].dword_[0] = 9;
+    daemon.lock_state_[0].leading_words_[0] = 9;
     assert(invoke_message(daemon, 0xF09, 0) == true);
     assert(daemon.fixup_calls == 0 && daemon.send_calls == 0);
-    assert(daemon.lock_state_[0].dword_[0] == 9);
+    assert(daemon.lock_state_[0].leading_words_[0] == 9);
 
     MessageFactionData faction_message;
     memset(&faction_message, 0, sizeof(faction_message));

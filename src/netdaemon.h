@@ -21,6 +21,7 @@
 #include "alphanet.h"
 #include "lock.h"        // locks_ - the whole network-lock block
 #include "playerlock.h"  // its records are PlayerLocks
+#include <stddef.h>
 
  /*
   * NetDaemon class
@@ -31,11 +32,11 @@
   * 0x0093CD90 into ecx before calling Net::get - so that global is a
   * rebindable seam here, not the daemon itself.
   *
-  * receive() and unlock_veh() are recovered; the class's own layout past the
-  * AlphaNet base is still not established, so nothing new is modelled and
-  * nothing pins its sizeof. unlock_veh writes six dwords in the un-modelled
-  * tail (0x1B78, 0x1BAC, 0x1BB0, 0x1BC4, 0x1BC8, 0x1BCC) through raw volatile
-  * offsets rather than through invented placeholder fields.
+  * Recovered bodies establish the lock and parallel state tables after the
+  * AlphaNet base. Their channel-dependent payload distinguishes ordinary
+  * flags from a borrowed vehicle-ID pointer; other words retain opaque names
+  * where their meaning is not established. This is not a complete semantic
+  * recovery of the daemon's remaining storage.
   */
   // PUBLIC: access specifiers change nothing about layout, and this
   // tree's bodies reach base methods the image reaches with a direct
@@ -65,8 +66,8 @@ static_assert(sizeof(LockTableEntry) == 0x3C, "lock table stride");
 //   0x1BA0  [1].dword_[14]  the diplomacy-channel flag close_channel clears
 //   0x1B68  [1].dword_[0]   cleared by the constructor
 //   0x1B74  [1].dword_[3]   cleared by the constructor; process_message reads
-//   0x1B78  [1].dword_[4]   THE VEHICLE RECORD - lock_veh stores the unit
-//                           this client holds, unlock_veh clears it
+//   0x1B78  [1].payload_   borrowed int* vehicle-ID slot supplied to lock_veh;
+//                           unlock_veh clears it, not the pointed-to ID
 //   0x1B7C  [1].dword_[5]   the per-faction mask hang_up ANDs against
 //   0x1B80  [1].dword_[6..9] one mask per faction, indexed by faction id
 //   0x1BAC  [2].dword_[2]   \ the four announce-side fields unlock and
@@ -83,8 +84,20 @@ static_assert(sizeof(LockTableEntry) == 0x3C, "lock table stride");
 // the same run through `NetDaemonNet.lock_state_` - it is the 0x0093E8BC run
 // in the image - which is why the struct and the member are public.
 struct LockStateEntry {
-  uint32_t dword_[15];
+  uint32_t leading_words_[4];
+  // Channel0/2 use flags; channel1 borrows a vehicle-ID slot. These are
+  // distinct active union members, not an integer view of a pointer.
+  union Payload {
+    uint32_t flags;
+    int *vehicle_selection_follow;
+  } payload_;
+  uint32_t trailing_words_[10];
 };
+static_assert(sizeof(void *) == 4, "native lock-state pointer width");
+static_assert(offsetof(LockStateEntry, payload_) == 0x10,
+              "lock-state channel payload");
+static_assert(offsetof(LockStateEntry, trailing_words_) == 0x14,
+              "lock-state trailing words");
 static_assert(sizeof(LockStateEntry) == 0x3C, "lock state stride");
 
 class NetDaemonTransferModalCloseGuard;
@@ -155,6 +168,15 @@ class NetDaemon : public AlphaNet {
   int lock_veh(int *veh_id, int target, int payload_1C, int payload_20,
                int payload_18);
   int automated_lock(int *veh_id, int target);
+
+  // Borrowed selection storage already owned by channel1 at this+0x1B78.
+  // Callers retain the original callback/clear ordering and lifetime obligations.
+  void set_vehicle_selection_follow(int *slot) {
+    lock_state_[1].payload_.vehicle_selection_follow = slot;
+  }
+  int *vehicle_selection_follow() const {
+    return lock_state_[1].payload_.vehicle_selection_follow;
+  }
 
  public:
   // 0x005328C0, homed from 005328c0.cpp. faction_id names the event's owner;

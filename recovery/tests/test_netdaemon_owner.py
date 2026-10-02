@@ -154,8 +154,8 @@ def test_actual_netdaemon_and_storage_source(tmp_path, scenario):
 # The slot-8 case seeds the ledger low byte with 3. These controls do not prove
 # arbitrary ledger bytes are valid indices for locks_.records_[player_id].
 @pytest.mark.parametrize("old,new,scenario", [
-    ("if (lock_state_[0].dword_[5] < 2) {\n            removed_row.prefix_",
-     "if (lock_state_[0].dword_[5] <= 2) {\n            removed_row.prefix_", "delete_inactive_lock"),
+    ("if (lock_state_[0].trailing_words_[0] < 2) {\n            removed_row.prefix_",
+     "if (lock_state_[0].trailing_words_[0] <= 2) {\n            removed_row.prefix_", "delete_inactive_lock"),
     ("candidate.active() == 0", "false", "delete_inactive_lock"),
     ("strcpy(removed_row.noun_faction_, label_get(0xFE4 / 4));",
      "strcpy(removed_row.noun_faction_, removed_row.leader_name_);", "delete_found"),

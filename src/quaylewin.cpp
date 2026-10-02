@@ -134,9 +134,9 @@ void QuayleWin::close() {
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original entry 004964D0; retained seed src/recovered/004964d0.cpp", "recovery/tasks/quaylewin-owner-coverage-wave.json", "QuayleWin constructor layout and virtual-slot evidence; fresh isolated build and host controls"], "reason": "Rehome the retained QuayleWin seed into its real GraphicWin owner with typed subobjects; preserve original spans and historical seed obligations."}
 void QuayleWin::on_left_click(int x, int y) {
   const unsigned int faction_bit = 1u << ConsoleGlobal.faction_id_;
-  if ((NetDaemonNet.lock_state_[0].dword_[12] & faction_bit) != 0) return;
-  if (NetDaemonNet.lock_state_[2].dword_[4] != 0) return;
-  if (NetDaemonNet.lock_state_[0].dword_[3] != 0) return;
+  if ((NetDaemonNet.lock_state_[0].trailing_words_[7] & faction_bit) != 0) return;
+  if (NetDaemonNet.lock_state_[2].payload_.flags != 0) return;
+  if (NetDaemonNet.lock_state_[0].leading_words_[3] != 0) return;
   if (spot_.check(x, y, &y, &x) + 1 != 0) field_2144_ = y;
   redraw();
 }

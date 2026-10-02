@@ -25,8 +25,8 @@ struct RECT {};
 int IfaceIdToSlotStorage[30], ActiveIfaceIdStorage;
 int GameState, IsMultiplayerNet, NetTurnFlags, NetTurnFaction;
 int MainInterfaceEndTurnAnimation, MainInterfaceRedrawCount;
-struct Lock { uint32_t dword_[13]; };
-struct Daemon { Lock lock_state_[1]; } NetDaemonNet;
+struct Lock { uint32_t leading_words_[4]; union Payload { uint32_t flags; int *vehicle_selection_follow; } payload_; uint32_t trailing_words_[10]; };
+struct Daemon { Lock lock_state_[24]; } NetDaemonNet;
 struct Console { int faction_id_, field_23BE4_; } ConsoleGlobal;
 int selected_label, rewinds, decodes, updates;
 uint32_t callback_ready;
@@ -43,7 +43,7 @@ struct Flic {
     void rewind() { ++rewinds; }
     void decode_stored_frame() {
         ++decodes;
-        NetDaemonNet.lock_state_[0].dword_[12]=callback_ready;
+        NetDaemonNet.lock_state_[0].trailing_words_[7]=callback_ready;
     }
 };
 struct MainInterface : Buffer {
@@ -74,7 +74,7 @@ int main() {
         NetTurnFlags=simultaneous ? 16 : 0;
         NetTurnFaction=same ? 2 : 3;
         ConsoleGlobal.field_23BE4_=console_ready;
-        NetDaemonNet.lock_state_[0].dword_[12]=readiness[before];
+        NetDaemonNet.lock_state_[0].trailing_words_[7]=readiness[before];
         callback_ready=readiness[after];
         MainInterfaceRedrawCount=0;
         MainInterfaceEndTurnAnimation=-1;
@@ -109,7 +109,7 @@ def test_product_maininterface_redraw_complete(tmp_path, damage):
     mutations = {
         "flag": ("|| !(NetTurnFlags & 0x10)", "|| (NetTurnFlags & 0x10)"),
         "stale_readiness": (
-            "const uint32_t label_ready = NetDaemonNet.lock_state_[0].dword_[12];",
+            "const uint32_t label_ready = NetDaemonNet.lock_state_[0].trailing_words_[7];",
             "const uint32_t label_ready = ready;"),
         "game": ("(GameState & 2) &&", "true &&"),
         "state": ("MainInterfaceEndTurnAnimation = 1;", "MainInterfaceEndTurnAnimation = 0;"),

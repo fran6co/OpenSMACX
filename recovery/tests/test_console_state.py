@@ -60,7 +60,15 @@ def member_declarations():
     return "\n".join(declarations)
 
 
-def harness(bodies):
+def follow_api():
+    source = (ROOT / "src/netdaemon.h").read_text()
+    return "\n".join(braced(source, source.index(signature)) for signature in (
+        "void set_vehicle_selection_follow(int *slot)",
+        "int *vehicle_selection_follow() const",
+    ))
+
+
+def harness(bodies, api=None):
     turn, spying, selection = bodies
     return r'''
         #include <cstdint>
@@ -82,8 +90,11 @@ def harness(bodies):
         int hover, hover_alt, followed_value;
         int *StatusHoverVehId = &hover, *StatusHoverVehIdAlt = &hover_alt;
         int VehSelectionFollowLimit;
-        int *followed;
-        int **VehSelectionFollow = &followed;
+        struct LockStateEntry { uint32_t leading_words_[4]; union Payload { uint32_t flags; int *vehicle_selection_follow; } payload_; uint32_t trailing_words_[10]; };
+        struct NetDaemon {
+            LockStateEntry lock_state_[24]{};
+            ACTUAL_FOLLOW_API
+        } NetDaemonNet;
 
         ACTUAL_TURN
         ACTUAL_SPYING
@@ -146,11 +157,13 @@ def harness(bodies):
                     ConsoleGlobal.field_23BE4_ = 0x87654321;
                     ConsoleGlobal.field_23BE8_ = 0x76543210;
                     hover = 2; hover_alt = 3; VehSelectionFollowLimit = 4; followed_value = 5;
-                    followed = mode == 0 ? nullptr : mode == 1 ? &ConsoleGlobal.selected_vehicle_
+                    int *followed = mode == 0 ? nullptr : mode == 1 ? &ConsoleGlobal.selected_vehicle_
                         : mode == 2 ? &ConsoleGlobal.focus_vehicle_
                         : mode == 3 ? &VehSelectionFollowLimit : &followed_value;
+                    NetDaemonNet.set_vehicle_selection_follow(followed);
                     IsMultiplayerNet = net;
                     update_selection(2);
+                    require(NetDaemonNet.vehicle_selection_follow() == followed);
                     require(ConsoleGlobal.selected_vehicle_ == adjusted(selected, 2));
                     require(ConsoleGlobal.focus_vehicle_ == adjusted(focus, 2));
                     require(hover == -1 && hover_alt == 2 && VehSelectionFollowLimit == 3);
@@ -163,7 +176,7 @@ def harness(bodies):
         }
     '''.replace("MEMBERS", member_declarations()).replace(
         "ACTUAL_TURN", turn).replace("ACTUAL_SPYING", spying).replace(
-        "ACTUAL_SELECTION", selection)
+        "ACTUAL_SELECTION", selection).replace("ACTUAL_FOLLOW_API", follow_api() if api is None else api)
 
 
 def run_source(tmp_path, text, *, host_flags=()):
@@ -180,8 +193,8 @@ def run_source(tmp_path, text, *, host_flags=()):
     return subprocess.run([str(executable)], capture_output=True, text=True, timeout=10)
 
 
-def run_host(tmp_path, bodies):
-    return run_source(tmp_path, harness(bodies))
+def run_host(tmp_path, bodies, api=None):
+    return run_source(tmp_path, harness(bodies, api))
 
 
 def test_status_menu_fixture_uses_actual_handler_and_console_members(tmp_path):
@@ -219,4 +232,15 @@ def test_console_state_damage_is_observed(tmp_path, part, before, after, count):
     assert bodies[part].count(before) == count
     bodies[part] = bodies[part].replace(before, after)
     result = run_host(tmp_path, bodies)
+    assert result.returncode == 42, result.stderr
+
+
+@pytest.mark.parametrize("before,after", [
+    ("payload_.vehicle_selection_follow = slot;", "payload_.vehicle_selection_follow = nullptr;"),
+    ("return lock_state_[1].payload_.vehicle_selection_follow;", "return nullptr;"),
+])
+def test_actual_daemon_follow_api_damage_is_observed(tmp_path, before, after):
+    api = follow_api()
+    assert api.count(before) == 1
+    result = run_host(tmp_path, actual_bodies(), api.replace(before, after))
     assert result.returncode == 42, result.stderr

@@ -4869,7 +4869,7 @@ int __cdecl enemy_veh(int veh_id) {
     }
 
     if (IsMultiplayerNet != 0) {
-        NetDaemonNet.lock_state_[1].dword_[3] = 3;
+        NetDaemonNet.lock_state_[1].leading_words_[3] = 3;
     }
 
     do_all_non_input();

@@ -111,10 +111,10 @@ void ReportWin::on_redraw() {
 
 static bool reportwin_input_blocked() {
     return ConsoleControlTurnActive != 0
-        || (NetDaemonNet.lock_state_[0].dword_[12]
+        || (NetDaemonNet.lock_state_[0].trailing_words_[7]
             & (1u << (ConsoleGlobal.faction_id_ & 31))) != 0
-        || NetDaemonNet.lock_state_[2].dword_[4] != 0
-        || NetDaemonNet.lock_state_[0].dword_[3] != 0;
+        || NetDaemonNet.lock_state_[2].payload_.flags != 0
+        || NetDaemonNet.lock_state_[0].leading_words_[3] != 0;
 }
 
 static bool reportwin_security_filter(int prototype_id, int filter) {

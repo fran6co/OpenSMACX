@@ -30,8 +30,8 @@ class NetMsg { public: void pop(const char *, int, int, const char *); void clos
 extern NetMsg *const NetMsgPopup;
 class NetDaemon {
 public:
-    struct LockWords { uint32_t dword_[15]; };
-    LockWords lock_state_[3];
+    struct LockWords { uint32_t leading_words_[4]; union Payload { uint32_t flags; int *vehicle_selection_follow; } payload_; uint32_t trailing_words_[10]; };
+    LockWords lock_state_[24];
     void send_message(char *message, unsigned long length, int target);
     void synch(int16_t opcode, int a2, int a3, int a4, char *packet,
                int outgoing, int16_t flags);
@@ -274,8 +274,8 @@ static uint32_t u32(const std::vector<unsigned char> &b, size_t at) {
 /* SOURCE EXTRACTS */
 int main() {
     NetDaemon d;
-    d.lock_state_[0].dword_[0] = 0x12345678;
-    d.lock_state_[0].dword_[1] = 1;
+    d.lock_state_[0].leading_words_[0] = 0x12345678;
+    d.lock_state_[0].leading_words_[1] = 1;
 
     // Independent expected-size table from the pinned jump table at
     // 0x53412C. First field is hex opcode (decimal shown by its value), then
@@ -353,27 +353,27 @@ int main() {
     memcpy(&incoming[0] + 0x10, &op, 2); memcpy(&incoming[0] + 0x12, &ix, 2);
     memcpy(&incoming[0] + 4, &sender, 4);
     callback_payload_fill = 0x6D; active_packet_bytes = &incoming[0];
-    d.lock_state_[2].dword_[6] = 0xFF;
+    d.lock_state_[2].trailing_words_[1] = 0xFF;
     d.synch(0x7F, 0x1800, 0, 0, reinterpret_cast<char *>(&incoming[0]), 0, 0);
     assert(display_count == 1 && display_opcode == 0x7F && display_chunk == 1 &&
            display_total == 3);
     assert(copy_in_count == 1 && in_offsets[0] == 0 && in_lengths[0] == 0x800);
-    assert(d.lock_state_[2].dword_[6] == 0xFF);
+    assert(d.lock_state_[2].trailing_words_[1] == 0xFF);
 
     // Incoming final partial chunk commits rule staging exactly once and
     // clears only sender's bit at the final packet boundary.
-    reset(); d.lock_state_[2].dword_[6] = 0xFF;
+    reset(); d.lock_state_[2].trailing_words_[1] = 0xFF;
     incoming.assign(0x24 + 0x120, 0x33); op = 0x8B; ix = 3; sender = 2;
     memcpy(&incoming[0] + 0x10, &op, 2); memcpy(&incoming[0] + 0x12, &ix, 2);
     memcpy(&incoming[0] + 4, &sender, 4);
     d.synch(0x8B, 0, 0, 0, reinterpret_cast<char *>(&incoming[0]), 0, 0);
     assert(copy_in_count == 1 && in_offsets[0] == 0x1800 &&
            in_lengths[0] == 0x120);
-    assert(commit_count == 1 && d.lock_state_[2].dword_[6] == 0xFB);
+    assert(commit_count == 1 && d.lock_state_[2].trailing_words_[1] == 0xFB);
 
     // Destination and transfer length are resolved from the initial signed
     // packet index, while postprocessing re-reads +0x12 after the callback.
-    reset(); d.lock_state_[2].dword_[6] = 0xFF;
+    reset(); d.lock_state_[2].trailing_words_[1] = 0xFF;
     incoming.assign(0x24 + 0x800, 0x44); op = 0x8B; ix = 2; sender = 1;
     memcpy(&incoming[0] + 0x10, &op, 2); memcpy(&incoming[0] + 0x12, &ix, 2);
     memcpy(&incoming[0] + 4, &sender, 4);
@@ -382,11 +382,11 @@ int main() {
     assert(display_chunk == 3 && display_total == 4);
     assert(copy_in_count == 1 && in_offsets[0] == 0x1000 &&
            in_lengths[0] == 0x800);
-    assert(commit_count == 1 && d.lock_state_[2].dword_[6] == 0xFF);
+    assert(commit_count == 1 && d.lock_state_[2].trailing_words_[1] == 0xFF);
 
     // One-chunk opcode 0x11 comparison may suppress copy, but epilogue is kept.
     reset(); Vehs[0].x = 9; Vehs[0].y = 10;
-    NetDaemonNet.lock_state_[0].dword_[1] = 1;
+    NetDaemonNet.lock_state_[0].leading_words_[1] = 1;
     incoming.assign(0x24 + 0x30, 0);
     op = 0x11; ix = 0; memcpy(&incoming[0] + 0x10, &op, 2);
     memcpy(&incoming[0] + 0x12, &ix, 2);
@@ -418,11 +418,11 @@ int main() {
 
     // Typed epilogues use the retained caller IDs and preserve the map-lock gate.
     reset();
-    d.lock_state_[0].dword_[1] = 1;
+    d.lock_state_[0].leading_words_[1] = 1;
     d.synch(0x02, 0, 0, 0, 0, 1, 0x2101);
     assert(map_shutdown_count == 0 && map_init_count == 0 && path_init_count == 0);
     reset();
-    d.lock_state_[0].dword_[1] = 0;
+    d.lock_state_[0].leading_words_[1] = 0;
     d.synch(0x02, 0, 0, 0, 0, 1, 0x2101);
     assert(map_shutdown_count == 1 && map_init_count == 1 && path_init_count == 1);
     reset();
@@ -513,7 +513,7 @@ int main() {
                 ConsoleControlTurnActive = scripted;
                 ConsoleGlobal.faction_id_ = 3;
                 NetTurnFaction = same_faction ? 3 : 4;
-                NetDaemonNet.lock_state_[0].dword_[1] = 1;
+                NetDaemonNet.lock_state_[0].leading_words_[1] = 1;
                 incoming.assign(0x24 + 0x30, 0);
                 op = 0x11; ix = 0;
                 memcpy(&incoming[0] + 0x10, &op, 2);
@@ -559,4 +559,3 @@ int main() {
     puts("synch chunk-core controls passed");
     return 0;
 }
-

@@ -76,14 +76,14 @@ struct Net {
 struct Lock {
     void check_global() { ++CheckCalls; Events.push_back(6); }
 };
-struct State { uint32_t dword_[15]; };
+struct State { uint32_t leading_words_[4]; union Payload { uint32_t flags; int *vehicle_selection_follow; } payload_; uint32_t trailing_words_[10]; };
 struct NetDaemon : Net {
     State lock_state_[24];
     Lock locks_;
     int automated_lock(int *, int);
     int lock_veh(int *id, int target, int a, int b, int c) {
         assert(target == 4 && a == -1 && b == -1 && c == 0);
-        assert(NetBusyCount == 1 && lock_state_[2].dword_[4] == 1);
+        assert(NetBusyCount == 1 && lock_state_[2].payload_.flags == 1);
         ++LockCalls;
         Events.push_back(2);
         if (RewriteId) *id = 1;
@@ -125,13 +125,13 @@ int main() {
     Clock = {100};
     assert(NetDaemonNet.automated_lock(&id, 4) == 3);
     assert(LockCalls == 0 && NetBusyCount == 0);
-    assert(NetDaemonNet.lock_state_[2].dword_[4] == 0);
+    assert(NetDaemonNet.lock_state_[2].payload_.flags == 0);
     reset();
     RewriteId = 1;
     Clock = {100};
     assert(NetDaemonNet.automated_lock(&id, 4) == 0 && id == 1);
     assert(LockCalls == 1 && NetBusyCount == 0 && PopCalls == 0);
-    assert(NetDaemonNet.lock_state_[2].dword_[4] == 0);
+    assert(NetDaemonNet.lock_state_[2].payload_.flags == 0);
     reset();
     id = 0;
     Failures = 1;

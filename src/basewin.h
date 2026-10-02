@@ -57,15 +57,14 @@
   * on_left_up and its siblings, which take the FRONT, are unaffected: their
   * `this` is still the GraphicWin.
   *
-  * The layout is not established. The constructor's own fields begin at 0xA1C,
-  * immediately after the ProdPicker, and where the object ends is unknown, so
-  * nothing pins its sizeof and the fields between are not modelled. The
-  * methods recovered here are bare returns that touch no field, which is why
-  * they can be replaced ahead of that mapping.
+  * The observed target32 extent is 0x47838. ProdPicker begins at 0xA1C;
+  * later fields include the panel rectangles and camera aggregates below.
+  * Remaining opaque storage is not a recovered semantic model. The genuine
+  * destructor follows the declared member/base lifetime order.
   */
 // The 21 (dx, dy) steps of a base's own radius - the 5x5 square minus its
 // four corners - walked in ring order. Read out of the shipped image at
-// 0x0066A1A0 / 0x0066A1F4 with tools/image_data.py; the two tables sit
+// 0x0066A1A0 / 0x0066A1F4; the two tables sit
 // back to back, which is how their 21-entry length is known. BaseWin::UNK1
 // is a reverse lookup: given an index into these, find the matching index
 // in map.h's RadiusOffsetX/RadiusOffsetY.
@@ -135,9 +134,8 @@ class BaseWin : public ConstructedGraphicWin, public SubInterface {
   void click(int a1, int a2, int right, int is_double);
   // 0x004160F0, a pending_bodies forwarder.
   void iface_click(int a1, int a2, int right, int is_double);
-  // 0x0040C850, a pending_bodies forwarder. The int stays scaffold: the body
-  // is not recovered and its only caller reaches it with the literal 1.
-  void draw_supported(int a1);
+  // Original 0x0040C850: select full or deferred panel publication.
+  void draw_supported(int update_mode);
  public:
   // (code, pos), the Win32 WM_VSCROLL shape the image mirrors. Evidence
   // is in the bodies: BaseWin::on_scrolled does `switch (a1)` and then
@@ -210,15 +208,12 @@ class BaseWin : public ConstructedGraphicWin, public SubInterface {
   void update_drag_cursor(int spot_type, int spot_pos, int x, int y, int large);
   void show_panel_help(int x, int y, int label_offset, Win *window);
 
-  // Two siblings the recovered bodies above reach with a direct `call rel32`
-  // - UNK2 calls garrison_click, on_scrolled calls draw_facilities. Both are
-  // unrecovered; pending_bodies.cpp forwards them.
-  // Both unrecovered. None of these parameters is named from evidence:
-  // ida9-functions.csv has 0x0040B140 as `sub_40B140` and 0x0040FCC0 likewise
-  // unnamed, and a prototype records types, never names - so every name below
-  // that is not `aN` should be read as a placeholder, not a finding. See the
-  // note on UNK2's body in basewin.cpp.
-  void garrison_click(int vehID, int a2, int right, int is_double);  // 0x0040B140
+  // UNK2 calls the garrison interaction; on_scrolled repaints facilities.
+  // garrison_click's arguments select a vehicle and screen coordinates, with
+  // the final argument selecting the right-button path (original40B140).
+  void garrison_click(int vehicle_id, int x, int y, int right);  // 0x0040B140
+  void dismiss_garrison_selection();
+  int on_key_click(int repeat, int key) override;  // 0x0041AF50
   void draw_facilities(int a1);                            // 0x0040FCC0
   // 0x0041E560  ?update_gov_buttons@BaseWin@@QAEXXZ - public, __thiscall,
   // void(). Declared ahead of its own homing because on_redraw reaches it, so
@@ -231,9 +226,8 @@ class BaseWin : public ConstructedGraphicWin, public SubInterface {
   void draw_queue(int a1);
   void show(int visible);
   BaseWin();
-  // 0x00420A70 is not recovered: a
-  // pending_bodies forwarder, because an empty inline stub emits
-  // nothing and the deleting destructor needs a `call rel32`.
+  // Original 0x00420A70: genuine member/base teardown is compiler-emitted.
+  // Out of line so deleting-destructor callers retain an ordinary call.
   ~BaseWin();
   void close();
   // THE FOUR UNK METHODS ARE EVIDENCE-FREE, and that is a measured result
@@ -492,44 +486,13 @@ class BaseWin : public ConstructedGraphicWin, public SubInterface {
   uint32_t field_1E634_;  // 0x1E634
   uint32_t field_1E638_;  // 0x1E638
   uint32_t field_1E63C_;  // 0x1E63C
-  uint32_t field_1E640_;  // 0x1E640
-  uint32_t field_1E644_;  // 0x1E644
-  uint32_t field_1E648_;  // 0x1E648
-  uint32_t field_1E64C_;  // 0x1E64C
-  uint32_t field_1E650_;  // 0x1E650
-  uint32_t field_1E654_;  // 0x1E654
-  uint32_t field_1E658_;  // 0x1E658
-  uint32_t field_1E65C_;  // 0x1E65C
-  uint32_t field_1E660_;  // 0x1E660
-  // These three are `float`, and they are the third row of a VOX_Matrix that
-  // begins at 0x1E64C. ?init@BaseWin@@QAEXXZ passes &field_1E64C_ as the
-  // VOX_Matrix* argument of
-  // ?set_camera_direct@Caviar@@QAEXPAUVOX_Vect@@PAUVOX_Matrix@@@Z - 0x0041F40F
-  // `lea eax, [esi + 0x1e64c]` / `push eax`, then 0x0041F43D `call 0x6182a0` -
-  // and VOX_Matrix is `float values[3][3]`, 36 bytes, so the matrix spans
-  // 0x1E64C..0x1E66F and its +0x18/+0x1C/+0x20 are exactly these offsets.
-  // What types them is that init loads all three with a single-precision x87
-  // load, which is not something a `uint32_t` produces: 0x0041F3DC
-  // `fld dword ptr [esi + 0x1e664]` / `fchs` / `fst dword ptr [esi + 0x1e664]`,
-  // and the same negate-in-place at 0x0041F3EA for 0x1E668 and 0x0041F3FB for
-  // 0x1E66C. Each negated value is then multiplied by
-  // *(float *)0x0066AA40 == -10000.0f and stored into the three-float local at
-  // [ebp-0x38] that is set_camera_direct's VOX_Vect* argument, i.e. the camera
-  // position. src/recovered/units/004bf740.cpp
-  // (?compute_camera@@YAXPAUVOX_Vect@@PAUVOX_Matrix@@@Z) already carries the
-  // same idiom on its own VOX_Matrix out-parameter, negating out+0x18,
-  // out+0x1C and out+0x20.
-  // They keep `field_` names on purpose: they are three elements of a matrix,
-  // not an independent triple, so naming them individually would assert a
-  // meaning the arithmetic does not give. Carving 0x1E64C..0x1E66F into one
-  // `VOX_Matrix` member - and 0x1E640..0x1E648, the Euler triple {0, 0,
-  // 0.785f} that the 0x0041F3D7 `call sub_627D00` turns into that matrix, into
-  // one `VOX_Vect` - is the follow-up, not this change.
-  // `float` and `uint32_t` are both 4 bytes and 4-aligned, so no offset moves:
-  // the VC6 probe reports sizeof(BaseWin) == 0x47838 before and after.
-  float field_1E664_;  // 0x1E664
-  float field_1E668_;  // 0x1E668
-  float field_1E66C_;  // 0x1E66C
+  // RECOVERY_MEMBER: v2 BaseWin camera_angles_ VOX_Vect 0x1E640 0x0041E8D0
+  // Original 41F3D7 computes the rotation from an Euler vector; 41F43D
+  // passes the whole matrix to Caviar::set_camera_direct. Its third row
+  // is negated in place at 41F3DC/41F3EA/41F3FB, then scaled by -10000.
+  VOX_Vect camera_angles_;  // 0x1E640
+  // RECOVERY_MEMBER: v2 BaseWin camera_rotation_ VOX_Matrix 0x1E64C 0x0041E8D0
+  VOX_Matrix camera_rotation_;  // 0x1E64C
   uint32_t field_1E670_;  // 0x1E670
   MapWin mapWin_;  // 0x1E674
   uint32_t field_40AF4_;  // 0x40AF4
@@ -573,22 +536,16 @@ class BaseWin : public ConstructedGraphicWin, public SubInterface {
   int32_t field_40B50_;   // 0x40B50
   int32_t field_40B54_;   // 0x40B54
   uint32_t field_40B58_;  // 0x40B58
-  uint32_t field_40B5C_;  // 0x40B5C
-  uint32_t field_40B60_;  // 0x40B60
-  uint32_t field_40B64_;  // 0x40B64
-  uint32_t field_40B68_;  // 0x40B68
-  uint32_t field_40B6C_;  // 0x40B6C
-  uint32_t field_40B70_;  // 0x40B70
-  uint32_t field_40B74_;  // 0x40B74
-  uint32_t field_40B78_;  // 0x40B78
+  // RECOVERY_MEMBER: v2 BaseWin supported_title_rect_ tagRECT 0x40B5C 0x0041E8D0
+  RECT supported_title_rect_;  // 0x40B5C
+  // RECOVERY_MEMBER: v2 BaseWin supported_content_rect_ tagRECT 0x40B6C 0x0041E8D0
+  RECT supported_content_rect_;  // 0x40B6C
   // RECOVERY_MEMBER: v2 BaseWin interface_help_rect_ tagRECT 0x40B7C 0x004160F0
   RECT interface_help_rect_;  // 0x40B7C, iface_click panel help hit-test
   // RECOVERY_MEMBER: v1 BaseWin rect1_ 0x40B8C 0x00408B20
   RECT rect1_;  // 0x40B8C, IDB `rect1`
-  uint32_t field_40B9C_;  // 0x40B9C
-  uint32_t field_40BA0_;  // 0x40BA0
-  uint32_t field_40BA4_;  // 0x40BA4
-  uint32_t field_40BA8_;  // 0x40BA8
+  // RECOVERY_MEMBER: v2 BaseWin facilities_title_rect_ tagRECT 0x40B9C 0x0041E8D0
+  RECT facilities_title_rect_;  // 0x40B9C
   RECT rect2_;  // 0x40BAC, IDB `rect2`
   // RECOVERY_MEMBER: v2 BaseWin facilities_help_rect_ tagRECT 0x40BBC 0x004165D0
   RECT facilities_help_rect_;  // 0x40BBC, click panel help hit-test
@@ -613,14 +570,10 @@ class BaseWin : public ConstructedGraphicWin, public SubInterface {
   // garrison panel's tile and frame. Four dwords at the same offsets, so no
   // member after it moves.
   RECT garrison_rect_;  // 0x40C2C
-  uint32_t field_40C3C_;  // 0x40C3C
-  uint32_t field_40C40_;  // 0x40C40
-  uint32_t field_40C44_;  // 0x40C44
-  uint32_t field_40C48_;  // 0x40C48
-  uint32_t field_40C4C_;  // 0x40C4C
-  uint32_t field_40C50_;  // 0x40C50
-  uint32_t field_40C54_;  // 0x40C54
-  uint32_t field_40C58_;  // 0x40C58
+  // RECOVERY_MEMBER: v2 BaseWin production_content_rect_ tagRECT 0x40C3C 0x0041E8D0
+  RECT production_content_rect_;  // 0x40C3C
+  // RECOVERY_MEMBER: v2 BaseWin production_outer_rect_ tagRECT 0x40C4C 0x0041E8D0
+  RECT production_outer_rect_;  // 0x40C4C
   // The population panel clips, frames, and updates this whole rectangle.
   // RECOVERY_MEMBER: v1 BaseWin population_rect_ 0x40C5C 0x00414B40
   RECT population_rect_;
@@ -642,14 +595,10 @@ class BaseWin : public ConstructedGraphicWin, public SubInterface {
   RECT rect5_;  // 0x40D1C
   RECT rect6_;  // 0x40D2C
   RECT rect7_;  // 0x40D3C
-  uint32_t field_40D4C_;  // 0x40D4C
-  uint32_t field_40D50_;  // 0x40D50
-  uint32_t field_40D54_;  // 0x40D54
-  uint32_t field_40D58_;  // 0x40D58
-  uint32_t field_40D5C_;  // 0x40D5C
-  uint32_t field_40D60_;  // 0x40D60
-  uint32_t field_40D64_;  // 0x40D64
-  uint32_t field_40D68_;  // 0x40D68
+  // RECOVERY_MEMBER: v2 BaseWin previous_button_rect_ tagRECT 0x40D4C 0x0041E8D0
+  RECT previous_button_rect_;  // 0x40D4C
+  // RECOVERY_MEMBER: v2 BaseWin next_button_rect_ tagRECT 0x40D5C 0x0041E8D0
+  RECT next_button_rect_;  // 0x40D5C
   RECT rect14_;  // 0x40D6C
   RECT rect15_;  // 0x40D7C
   RECT rect18_;  // 0x40D8C
@@ -673,10 +622,8 @@ class BaseWin : public ConstructedGraphicWin, public SubInterface {
   RECT rect13_;  // 0x40E3C
   RECT rect16_;  // 0x40E4C
   RECT rect17_;  // 0x40E5C
-  uint32_t field_40E6C_;  // 0x40E6C
-  uint32_t field_40E70_;  // 0x40E70
-  uint32_t field_40E74_;  // 0x40E74
-  uint32_t field_40E78_;  // 0x40E78
+  // RECOVERY_MEMBER: v2 BaseWin queue_button_rect_ tagRECT 0x40E6C 0x0041E8D0
+  RECT queue_button_rect_;  // 0x40E6C
   RECT rect20_;  // 0x40E7C
   // Borrowed by preference and other window controls: TutWinBaseWindow at
   // 6A7628 plus this offset gives 6E84B4. The owner's constructor 408679

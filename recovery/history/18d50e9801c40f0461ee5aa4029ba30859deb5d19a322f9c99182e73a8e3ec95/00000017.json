@@ -1,0 +1,89 @@
+{
+  "event_id": "d14b7b1a8f4850e16c0147849b9ac8c21ffaf4b592c1bf8f3b20fb2afd7bd866",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/basebutton.h",
+      "src/basewin.cpp",
+      "src/basewin.h",
+      "src/console.h",
+      "src/flatbutton.h",
+      "src/graphicwin.h",
+      "src/pending_bodies.cpp",
+      "src/recovered/0041af50.cpp",
+      "src/tutwin.cpp",
+      "src/unrecovered/0040b140.cpp",
+      "src/unrecovered/0040c850.cpp",
+      "src/unrecovered/0040f0f0.cpp",
+      "src/unrecovered/0040fcc0.cpp",
+      "src/unrecovered/00412aa0.cpp",
+      "src/unrecovered/0041e8d0.cpp",
+      "src/unrecovered/00420a70.cpp"
+    ],
+    "evidence": [
+      "Complete eight-body BaseWin owner drafts establish genuine fields, automatic Font/PullDown and existing member/base lifetimes, ordinary virtual callbacks, typed panel rectangles and VOX camera vector/matrix. Preserve complete original primary/EH/cold spans and the exact key seed obligation. Retire only consumed seeds after verified source transfer/build/link, never incomplete discoveries.",
+      "Native41F3D7/41F43D and41F3DC/41F3EA/41F3FB establish the camera aggregates. Native init geometry establishes eight 16-byte rectangle quartets; TutWin tour1 uses every coordinate of both previous/next button quartets. All eight consumer words migrate simultaneously, not just left coordinates. Native target32 layout and impacted compiler outputs remain obligations.",
+      "Narrow owning-class APIs expose BaseButtonA14, FlatButton slice colours/borrowed icons, Console23BEC latch and GraphicWinA0C value without raw self-offset views. Original normal PullDown cancel-1 reads GraphicWinA0C; typed access preserves it without indexing before the item array or adding a behavior-changing clamp.",
+      "Replace the invert count/table fixed-address aliases with genuine bounded source storage and migrate init plus existing load_inverts together. Native table6A7528 reaches separate BaseWin start6A7628 with32-byte rows; count6EEE60 is independent. Pinned literal682824 isINVERTLIST and682830 isBASENAME; native argument order istext_open(BASENAME,INVERTLIST), reversing an existing transcription error. Original unchecked counts/strings and custom-data bounds remain unresolved, not silently clamped.",
+      "draw_supported originalfirst icon_pitch read precedes initialization; preserve the visible original undefined-input obligation pending separate user decision. Original pre-unlock dangling modal borrow and invalid indices/divisions remain explicit. No claims demoted, baseline reset, gates weakened, raw address calls introduced, runtime/full-game acceptance granted, or NetDaemon cross-owner edits authorized by this decision; that prerequisite has separate scope."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4239680,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4245584,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4255984,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4259008,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4270752,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4304720,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4319440,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4328048,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4228112,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4962208,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "563946a72b1b0b792530b36ed178cd0ff4521641b45bd47d361833b988713766",
+  "request_id": "basewin-eight-body-owner-and-real-member-prerequisites-2026-10-02",
+  "schema_version": 1,
+  "sequence": 17,
+  "stream": "task:basewin-owner-coverage"
+}

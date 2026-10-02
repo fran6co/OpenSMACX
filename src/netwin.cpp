@@ -671,7 +671,7 @@ static unsigned int *const NetWinRuleBitsC = &NetWinSessionOptions.rule_bits_c_;
 // by NetDaemon's constructor. The game and stringstruct turn-flow bodies
 // refer to the same storage as TurnsAssigned; it is not a separate global.
 static unsigned int *const NetWinRulesGate =
-    &NetDaemonNet.lock_state_[0].dword_[1];
+    &NetDaemonNet.lock_state_[0].leading_words_[1];
 
 // 0x0078DCA8 - the ready/check panel descriptors the player rows draw their
 // slot state from (element [2*ready] of a 0x28-stride BoxSpriteParams
@@ -2669,7 +2669,7 @@ void NetWin::on_button_clicked(int clicked_id) {
     const int local_slot = NetDaemonNet.pid_2_idx(NetWinPlayerId);
     const int player_count = NetDaemonNet.player_count_;
 
-    if (NetDaemonNet.lock_state_[0].dword_[1] != 0) {
+    if (NetDaemonNet.lock_state_[0].leading_words_[1] != 0) {
         uint8_t &ready = NetWinLobbyRows[local_slot].ready_or_occupied_;
         const int slot_count = player_count + 1;
         int slot = 1;
@@ -2728,7 +2728,7 @@ void NetWin::on_button_clicked(int clicked_id) {
             NetWinLobbyRows[ready_slot].ready_or_occupied_ = 1;
         }
 
-        if (NetDaemonNet.lock_state_[0].dword_[1] == 0) {
+        if (NetDaemonNet.lock_state_[0].leading_words_[1] == 0) {
             return;
         }
         NetWinLobbyFullPacket packet;

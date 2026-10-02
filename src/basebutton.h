@@ -91,6 +91,8 @@ class BaseButton : public GraphicWin {
   // menu is shown/hidden. Keep the legacy word encapsulated in BaseButton.
   void set_pressed_visual(int value) { field_A9C_ = static_cast<uint32_t>(value); }
   int selected_state() const { return static_cast<int>(field_A18_); }
+  // Original BaseWin init41FB4B writes this still-unnamed button state.
+  void set_field_A14(int value) { field_A14_ = static_cast<uint32_t>(value); }
   // The base governor panel clears this auxiliary state when a priority
   // becomes unavailable, then repaints through Win's virtual redraw slot.
   void clear_auxiliary_state_for_disabled_button() {

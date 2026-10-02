@@ -28,7 +28,7 @@ def extract_function(source: str, signature: str) -> str:
 HARNESS = r"""
 #include <cassert>
 #include <cstdint>
-struct LockState { uint32_t dword_[16]; };
+struct LockState { uint32_t leading_words_[4]; union Payload { uint32_t flags; int *vehicle_selection_follow; } payload_; uint32_t trailing_words_[10]; };
 struct NetDaemon { LockState lock_state_[24]; } NetDaemonNet;
 struct { int faction_id_; } ConsoleGlobal;
 struct Spot {
@@ -64,18 +64,18 @@ int main() {
   QuayleWin win{};
   ConsoleGlobal.faction_id_ = 2;
 
-  NetDaemonNet.lock_state_[0].dword_[12] = 1u << 2;
+  NetDaemonNet.lock_state_[0].trailing_words_[7] = 1u << 2;
   win.on_left_click(20, 30);
   assert(win.spot_.checks == 0 && win.redraws == 0);
-  NetDaemonNet.lock_state_[0].dword_[12] = 0;
-  NetDaemonNet.lock_state_[2].dword_[4] = 1;
+  NetDaemonNet.lock_state_[0].trailing_words_[7] = 0;
+  NetDaemonNet.lock_state_[2].payload_.flags = 1;
   win.on_left_click(20, 30);
   assert(win.spot_.checks == 0 && win.redraws == 0);
-  NetDaemonNet.lock_state_[2].dword_[4] = 0;
-  NetDaemonNet.lock_state_[0].dword_[3] = 1;
+  NetDaemonNet.lock_state_[2].payload_.flags = 0;
+  NetDaemonNet.lock_state_[0].leading_words_[3] = 1;
   win.on_left_click(20, 30);
   assert(win.spot_.checks == 0 && win.redraws == 0);
-  NetDaemonNet.lock_state_[0].dword_[3] = 0;
+  NetDaemonNet.lock_state_[0].leading_words_[3] = 0;
 
   win.spot_.result = 0; win.spot_.selected = 7;
   win.on_left_click(20, 30);
