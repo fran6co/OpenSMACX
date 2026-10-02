@@ -1,0 +1,32 @@
+{
+  "event_id": "dc09f4082f2939624e1ff6e27ef3e959f4b30312581dfe93919b68fe1757950f",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/diplowin_exec_host_control.cpp",
+      "recovery/tests/diplowin_exec_host_types.h",
+      "recovery/tests/test_diplowin_exec_behavior.py",
+      "src/buffer.h",
+      "src/game.cpp",
+      "src/game.h",
+      "src/leaf_recoveries.cpp",
+      "src/maininterface.h"
+    ],
+    "evidence": [
+      "Coordinator reviewed seven-file private ownership projection. Native exec443F10 and helper441100 use the actual DiploWin singleton at73ACD8, embedded StringBox/EditBox and normalized64 StringList transcripts at737CD8; constructor/atexit evidence establishes typed lifecycle. Admit only genuine helper migration, observed RECT member regrouping, OfferResetCell count/state/type/value interpretation, narrow Buffer callback/MainInterface rectangle accessors and actual-body host controls. Original baseline and all historical obligations remain immutable. Failed native v1 declarations and independently found reversed random branch remain evidence to fix, not acceptance. Game save/load worker stays private; coordinator serializes shared changes."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4460800,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "72dece213997a3788829f001f6114b43184f8adbac3f20f6da40f848657338b9",
+  "request_id": "diplowin-exec-transcript-owner-closure",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:diplowin-owner-coverage"
+}
