@@ -1,0 +1,38 @@
+{
+  "event_id": "a16628c628c85628b896e69c5559d25f39cfad8682ad12277c68d52feca2b4b2",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/faction.cpp",
+      "src/faction.h",
+      "src/veh.cpp",
+      "src/veh.h"
+    ],
+    "evidence": [
+      "Close synch opcode29 through the existing prototype-history consumers57DF00clear/57DF30put/57DFC0lookup as one shared source owner. Pinned57DF0E uses94B55D then[-5] (recordbase94B558), unlike current wrongalias-relative sourceclear; preserve BYTE_EXACT historical claim and demand fresh restoration/reference checks rather than preserving memory corruption. Typed ProtoBung fields are ability_flags plus chassis/weapon/armor/reactor,64records per8factions,4096serializedbytes. Native cursor96EA6C maps PlayerData+208C; current tail declaration implies unk_103, whose faction.cpp producer also clears it. Admit named member plus native offset assertion and actual array, migrating all three fixed pointer aliases/consumers. Keep immutable baseline and claims; no automatic demotion, matching-regression admission, arbitrary outside-owner edits or acceptance granted."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5758720,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5758768,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5758912,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "f33570812a409c5ca31f86c6734538b6f085f8c361d2f2a677076b5050ef6385",
+  "request_id": "typed-prototype-history-wire-owner",
+  "schema_version": 1,
+  "sequence": 15,
+  "stream": "task:netdaemon-player-lifecycle-recovery"
+}

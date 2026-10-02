@@ -1,0 +1,20 @@
+{
+  "event_id": "f33570812a409c5ca31f86c6734538b6f085f8c361d2f2a677076b5050ef6385",
+  "payload": {
+    "affects": [
+      "entity-d4acf660cee2f15f9b9ff27350b6a73d6df51bbb6cf8a5fd19cccca4ee7d8bde"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "prototype-history-clear-wrong-source-base",
+    "evidence": [
+      "Independently decoded pinned57DF00..57DF2F:57DF0E adds94B55D; firststore57DF15 writes[EAX-5] at94B558. Current src/veh.cpp BungList aliases94B558 but clear_bunglist9461 startsbytepointer atthatbase thenwritesentry[-5], corrupting five precedingbytes. Masked BYTE_EXACT claim must be preserved as historical obligation, not accepted as correct reference behavior. Native57DF30 reads abilityflags9AB888 and components8C..8F, writes actualrecord94B558 +8*(faction*64+cursor), cursor96EA6C equals PlayerData+208C. Coupled real array, cursor member and existing readers/writers need typed migration plus damage controls; no original-address alias or fabricated stage. No C++ fix or new claim is granted by this finding; preserve discovery for explicit central scope and restoration checks."
+    ],
+    "hypothesis": "Migrate the shared prototype-history wire owner to real source storage and fix its existing five-byte-before-array clear; historical masked byte exactness does not prove original relocation targets or safe field access.",
+    "kind": "discovery"
+  },
+  "previous_event": "8b3d350e53446fa288a4cb62a6671d5c6a65209c83da7cc76e1cc0ae68cabe2c",
+  "request_id": "prototype-history-clear-wrong-source-base",
+  "schema_version": 1,
+  "sequence": 14,
+  "stream": "task:netdaemon-player-lifecycle-recovery"
+}
