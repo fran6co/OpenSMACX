@@ -1,0 +1,20 @@
+{
+  "event_id": "8b66d1533563259088be7b9a707146349f96cdbfa1bba81f3d354a1d0d53bf55",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/designwin_workshop_harness.cpp",
+      "recovery/tests/test_designwin_workshop.py"
+    ],
+    "evidence": [
+      "Complete workshop source replacement requires actual-source host controls for mode gate, scan eligibility/ties, typed list and geometry setup, action flags, full list rebuild, rename direction, upgrade scan/order/exhaustion, lock failure and default prototype faction dispatch. Test fixtures mock external owners only; source body is extracted, not duplicated. Native draw callback result ignored at60BCDF..60BCE5 supports local typed adapter without wider ListBox API migration."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "fb798c762b53b9f3a456e1000be6df65122a6904e92e1aada3c2437b61307c70",
+  "request_id": "workshop-modal-host-controls",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:designwin-owner-coverage"
+}

@@ -1,0 +1,20 @@
+{
+  "event_id": "9b93d21529396ebcecc71de207b08011c9044ead72a876b8b85627ad0514e523",
+  "payload": {
+    "affects": [
+      "entity-eb6b1988474f95f02c632f0a2aded1fff3c3ce299c9a0b35f86a09fdf5cc8d27"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "workshop-modal-recovery-checkpoint",
+    "evidence": [
+      "Pinned original mode gate,64-entry automatic selection,128 sorted list rows and ordered0/2/3/4/default branches independently reviewed twice. Actual-source host controls GCC/Clang C++03 ASan/UBSan pass4 plus19journal controls. Native draw_item60BCDF discards callback result at60BCE5, supporting local typed adapter without function-pointer casts or outside-owner ListBox migration. Full fresh configured compile/link passes, all29 existing DesignWin claims remainBYTE_EXACT and all2598 historical identities retained. New workshop measuresMISMATCH515vs778instructions; preview122vs117. No claim banked/demoted, no gate weakened, immutable baseline/seed/spans preserved. Sourceannotation errors empty; same3preexisting rule failures and26stale references remain. Existing NetMsgPopup fixed-address facade and unfinished externalcallee behavior remain unrecovered dependencies. Coordinator-reviewed bounded integration is not automatic, whole-game, linked-preservation or runtime acceptance. Wider callback API cleanup deferred centrally, not encoded as a new original-address alias."
+    ],
+    "hypothesis": "The complete workshop now replaces its owning-TU placeholder, preserving genuine Popup lifetime and native prototype/action behavior; remaining matching and existing callee/NetMsg facade obligations stay explicit.",
+    "kind": "discovery"
+  },
+  "previous_event": "8b66d1533563259088be7b9a707146349f96cdbfa1bba81f3d354a1d0d53bf55",
+  "request_id": "workshop-modal-recovery-checkpoint",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:designwin-owner-coverage"
+}

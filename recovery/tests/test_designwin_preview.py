@@ -74,7 +74,7 @@ def test_actual_preview(compiler, tmp_path):
         pytest.skip(f"host compiler unavailable: {compiler}")
     source = (ROOT / "src/designwin.cpp").read_text()
     start = source.index("static int workshop_signed_bits(")
-    end = source.index("// Link continuity for the production", start)
+    end = source.index("// Workshop list callback compatibility", start)
     actual = source[start:end]
     cpp = tmp_path / "preview.cpp"
     cpp.write_text(HARNESS.replace("// ACTUAL_PREVIEW", actual))
