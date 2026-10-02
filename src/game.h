@@ -154,13 +154,13 @@ void __cdecl mon_tech_discovered(int faction_id, int tech_id);
 void __cdecl mon_secret_project(int faction_id, int project_id);
 void __cdecl mon_built_preserve(int faction_id);
 
-// Four independently cleared words precede each offer cell's unknown payload.
+// Each pairwise offer cell has per-side counts/states and the two eight-entry
+// offer payload arrays; native 0x441250 clears only the first four words.
 struct OfferResetCell {
-    int word_0_;
-    int word_1_;
-    int word_2_;
-    int word_3_;
-    uint8_t opaque_[0x80];
+    int count_[2];       // 0x00, 0x04
+    int state_[2];       // 0x08, 0x0C
+    int type_[2][8];     // 0x10
+    int value_[2][8];    // 0x50
 };
 static_assert(sizeof(OfferResetCell) == 0x90, "offer cell stride");
 extern OfferResetCell OfferResetCells[8][8];

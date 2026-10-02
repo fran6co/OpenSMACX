@@ -127,6 +127,7 @@ class MainInterface : public GraphicWin, public SubInterface {
   Font *primary_font() { return &font1_; }
   FlatButton &flat_button(int index) { return flat_button_[index]; }
   const RECT &main_frame_rect() const { return rect4_; }
+  const RECT &main_layout_rect() const { return rect1_; }
   const RECT &info_frame_rect() const { return info_panel_frame_; }
   const RECT &right_frame_rect() const { return right_frame_rect_; }
   const RECT &lower_frame_rect() const { return lower_frame_rect_; }

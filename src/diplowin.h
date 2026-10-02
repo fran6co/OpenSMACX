@@ -50,6 +50,10 @@ class DiploWin : public GraphicWin, public SubInterface {
   void draw_offers();
   void UNK1();
   void new_chat(char *text, int faction_id);
+  static void __cdecl string_callback(int faction_id, int unused);
+  void exec(int faction_id, int faction_id_with);
+  StringBox &shared_string_box() { return stringBox_; }
+  EditBox &shared_edit_box() { return editBox_; }
 
  public:
   // homed from 00441490.cpp
@@ -370,26 +374,11 @@ class DiploWin : public GraphicWin, public SubInterface {
   uint32_t field_EC8_;  // 0xEC8
   uint32_t field_ECC_;  // 0xECC
   Spot spot_;  // 0xED0
-  uint32_t field_EDC_;  // 0xEDC
-  uint32_t field_EE0_;  // 0xEE0
-  uint32_t field_EE4_;  // 0xEE4
-  uint32_t field_EE8_;  // 0xEE8
-  uint32_t field_EEC_;  // 0xEEC
-  uint32_t field_EF0_;  // 0xEF0
-  uint32_t field_EF4_;  // 0xEF4
-  uint32_t field_EF8_;  // 0xEF8
-  uint32_t field_EFC_;  // 0xEFC
-  uint32_t field_F00_;  // 0xF00
-  uint32_t field_F04_;  // 0xF04
-  uint32_t field_F08_;  // 0xF08
-  uint32_t field_F0C_;  // 0xF0C
-  uint32_t field_F10_;  // 0xF10
-  uint32_t field_F14_;  // 0xF14
-  uint32_t field_F18_;  // 0xF18
-  uint32_t field_F1C_;  // 0xF1C
-  uint32_t field_F20_;  // 0xF20
-  uint32_t field_F24_;  // 0xF24
-  uint32_t field_F28_;  // 0xF28
+  RECT rect_EDC_;  // 0xEDC
+  RECT rect_EEC_;  // 0xEEC
+  RECT rect_EFC_;  // 0xEFC
+  RECT rect_F0C_;  // 0xF0C
+  RECT rect_F1C_;  // 0xF1C
   RECT rect_F2C_;  // 0xF2C
   RECT rect_F3C_;  // 0xF3C
   RECT rect_F4C_;  // 0xF4C
@@ -399,52 +388,14 @@ class DiploWin : public GraphicWin, public SubInterface {
   RECT rect_FAC_;  // 0xFAC
   RECT rect_FBC_;  // 0xFBC
   RECT rect_FCC_;  // 0xFCC
-  uint32_t field_FDC_;  // 0xFDC
-  uint32_t field_FE0_;  // 0xFE0
-  uint32_t field_FE4_;  // 0xFE4
-  uint32_t field_FE8_;  // 0xFE8
-  uint32_t field_FEC_;  // 0xFEC
-  uint32_t field_FF0_;  // 0xFF0
-  uint32_t field_FF4_;  // 0xFF4
-  uint32_t field_FF8_;  // 0xFF8
-  RECT rect_FFC_;  // 0xFFC
-  RECT rect_100C_;  // 0x100C
-  RECT rect_101C_;  // 0x101C
-  uint32_t field_102C_;  // 0x102C
-  uint32_t field_1030_;  // 0x1030
-  uint32_t field_1034_;  // 0x1034
-  uint32_t field_1038_;  // 0x1038
-  uint32_t field_103C_;  // 0x103C
-  uint32_t field_1040_;  // 0x1040
-  uint32_t field_1044_;  // 0x1044
-  uint32_t field_1048_;  // 0x1048
-  uint32_t field_104C_;  // 0x104C
-  uint32_t field_1050_;  // 0x1050
-  uint32_t field_1054_;  // 0x1054
-  uint32_t field_1058_;  // 0x1058
-  uint32_t field_105C_;  // 0x105C
-  uint32_t field_1060_;  // 0x1060
-  uint32_t field_1064_;  // 0x1064
-  uint32_t field_1068_;  // 0x1068
-  uint32_t field_106C_;  // 0x106C
-  uint32_t field_1070_;  // 0x1070
-  uint32_t field_1074_;  // 0x1074
-  uint32_t field_1078_;  // 0x1078
-  uint32_t field_107C_;  // 0x107C
-  uint32_t field_1080_;  // 0x1080
-  uint32_t field_1084_;  // 0x1084
-  uint32_t field_1088_;  // 0x1088
-  uint32_t field_108C_;  // 0x108C
-  uint32_t field_1090_;  // 0x1090
-  uint32_t field_1094_;  // 0x1094
-  uint32_t field_1098_;  // 0x1098
-  uint32_t field_109C_;  // 0x109C
-  uint32_t field_10A0_;  // 0x10A0
-  uint32_t field_10A4_;  // 0x10A4
-  uint32_t field_10A8_;  // 0x10A8
+  RECT button_rects_[13];  // 0xFDC..0x10AB
+
   FlatButton flatButtons_[13];  // 0x10AC
   StringBox stringBox_;  // 0xA388, size == sizeof(StringBox)
   ListBox listBox_;  // 0xCF28
   // The IDB's last member: the class ends where editBox_ ends, 0xE5F0.
   EditBox editBox_;  // 0xDA7C, IDB `editBox`, size == sizeof(EditBox) == 0xB74
 };
+
+extern DiploWin DiploWindow;
+extern StringList DiplomacyTranscriptLists[8][8];

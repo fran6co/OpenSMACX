@@ -178,6 +178,9 @@ void draw_dest_unk1(Buffer *, int, int, int, int, unsigned char *);
 
  public:
   const RECT &current_clip() const { return rect1_; }
+  void set_write_strings_callback(BufferWriteStringsCallback callback) {
+    field_C_ = callback;
+  }
   // The list-box draw callback uses the DIB's live width at Buffer+0x80.
   int pixel_width() const { return dib_.bmiHeader.biWidth; }
   // A top-down DIB stores the visible height as a negative biHeight.
@@ -730,7 +733,7 @@ void draw_dest_unk1(Buffer *, int, int, int, int, unsigned char *);
   friend int __cdecl polygon(Buffer *, Vert *, int, int);
   friend int __cdecl polygon_dest(Buffer *, Vert *, int, unsigned char *);
   friend int __cdecl polygon_gouraud(Buffer *, Vert *, int *);
-  
+
   // DipEdit::init copies `rect2_` out as the starting point for its frame,
   // title field and button strip - a window body reading its own buffer's
   // working rectangle, exactly as Win and Caviar do above.

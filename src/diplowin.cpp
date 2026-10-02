@@ -29,6 +29,8 @@
 
 void __cdecl slide_show(GraphicWin *window, int mode);
 void __cdecl slide_hide(GraphicWin *window, int mode);
+extern int DiploOffersDirty;
+extern "C" void __cdecl sub_441100(int faction_id, int faction_id_with);
 
 // Native redraw passes these distinct addresses as C strings. Both initially
 // contain NUL. Only their first byte is established; producer and full string
@@ -51,6 +53,385 @@ DiploWin::~DiploWin() {}
 // ORIGINAL: 0x00444FC0 ??0DiploWin@@QAE@XZ 0x00444FC0-0x0044507B;0x006549F0-0x00654A47 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original constructor444FC0 establishes GraphicWin+0, SubInterface+A14 and member construction order; secondary table66B5E0 gives nineteen callback slots and adjusted receivers.", "Redraw4436C0, status443C70 and painter443E50 inspected over declared original spans; source rectangle/control owners preserve native offsets. Palette colors reuse TextColourTable[80-2*item]/[81-2*item]. Localized title producer and full extents remain unknown.", "recovery/tasks/interface-contract-report-closure.json; root coordinator owns import and independent compilation; no current byte, structural or runtime acceptance is implied."], "reason": "Recover the genuine DiploWin GraphicWin/SubInterface owner with typed callbacks and automatic base/member lifetimes; retain independent seed history and restoration obligations."}
 DiploWin::DiploWin() {}
+
+// The executable constructs the singleton and all 64 transcript lists with
+// static lifetime; their typed constructors/destructors own their storage.
+// RECOVERY_OBJECT: v1 0x0073ACD8 ?DiploWindow@@3VDiploWin@@A
+// Original static initializer440F00 and teardown440F20 establish lifetime;
+// StringBox745060 and StringList747BD0 are embedded members, not extra globals.
+DiploWin DiploWindow;
+// RECOVERY_OBJECT: v1 0x00737CD8 ?DiplomacyTranscriptLists@@3PAY07VStringList@@A
+// Initializer440F30 constructs 64 StringLists, stride0x30;440F60 destroys them.
+StringList DiplomacyTranscriptLists[8][8];
+
+// 0x00443F10 latches this scalar from zero to one; 0x005290C4 clears it.
+// Its semantic name and broader containing storage remain unresolved.
+// RECOVERY_OBJECT: v1 0x0093A968 ?DiploDefaultFlag93A968@@3HA
+int DiploDefaultFlag93A968;
+
+static RECT inset_rect(RECT value, int left, int top, int right, int bottom) {
+  value.left += left;
+  value.top += top;
+  value.right -= right;
+  value.bottom -= bottom;
+  return value;
+}
+
+
+// 0x004412A0 reads its first stack argument as the faction palette index and
+// writes to the shared DiploWindow StringBox at 0x745060 (DiploWindow+0xA388).
+// ORIGINAL: 0x004412A0 ?string_callback@DiploWin@@QAAXHH@Z 0x004412A0-0x004412D0 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason":"Preserve the historical callback identity and claim while expressing its actual static cdecl receiver-free ABI.","evidence":["source:src/recovered/004412a0.cpp; historical obligation retained unchanged","Native4412A0 reads faction palette index from stack and writes the singleton embedded StringBox745060; candidate COFF emits ?string_callback@DiploWin@@SAXHH@Z."]}
+// symbol    ?string_callback@DiploWin@@SAXHH@Z
+void __cdecl DiploWin::string_callback(int faction_id, int unused) {
+  (void)unused;
+  Buffer &canvas = static_cast<Buffer &>(DiploWindow.stringBox_);
+  canvas.set_text_color(ChatItemIdTable[faction_id],
+                        ChatShadowColors[faction_id], 1, 1);
+}
+
+// ORIGINAL: 0x00443F10 ?exec@DiploWin@@QAEXHH@Z 0x00443F10-0x00444D8B
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00443f10.cpp", "image:terranx_original.exe:443F10-444D8B; callback4412A0 and transcript lifecycle440F30/440F60"], "reason": "Recover the full diplomacy window lifecycle using real base/member controls, singleton transcripts and bilateral offer storage; original catalogue extent retained."}
+void DiploWin::exec(int faction_id, int faction_id_with) {
+  spot_.init(100);
+
+  SubInterface *const interface_entry = static_cast<SubInterface *>(this);
+  field_4_ = 0x0B;
+  InterfaceRegistry[0x0B] = interface_entry;
+
+  faction_id_ = faction_id;
+  faction_id_with_ = faction_id_with;
+
+  // All geometry is stored in same-offset RECT members of this object.
+  const int panel_height = MainInterfaceGlobal.panel_height();
+  const int window_width = 0x340;
+  const int window_height = 0x254 - panel_height;
+  const int window_left = (WinScreenWidth - 0x320) / 2;
+  const int window_top = WinScreenHeight - 0x254;
+
+  // 0x443F82..0x443FF2: outer clip/window geometry, then the 4+3 inset.
+  rect_EDC_.left = 0;
+  rect_EDC_.top = 0;
+  rect_EDC_.right = window_width;
+  rect_EDC_.bottom = window_height;
+  rect_EDC_.left += 0x17;
+  rect_EDC_.right -= 0x17;
+  rect_EDC_.right -= 0x20;
+
+  rect_F4C_ = inset_rect(rect_EDC_, 4, 4, 4, 4);
+  rect_F4C_.left += 3;
+  rect_F4C_.top += 3;
+  rect_F4C_.right -= 3;
+  rect_F4C_.bottom -= 3;
+  // Native overwrites the bottom edge after creating the inset.
+  rect_F4C_.bottom = rect_F4C_.top + 0x14;
+
+  // 0x444024..0x44407F: two equal-width leader panes, including the native
+  // +2-before-SAR and -2/+2 gaps.
+  const int leader_half =
+      (rect_F4C_.right - rect_F4C_.left + 2) / 2;
+  leader_rect_[0].left = rect_F4C_.left;
+  leader_rect_[0].top = rect_F4C_.top + 0x17;
+  leader_rect_[0].right = rect_F4C_.left + leader_half - 2;
+  leader_rect_[0].bottom = rect_F4C_.bottom + 0x17;
+  leader_rect_[1].left = leader_rect_[0].right + 2;
+  leader_rect_[1].top = leader_rect_[0].top;
+  leader_rect_[1].right = rect_F4C_.right;
+  leader_rect_[1].bottom = leader_rect_[0].bottom;
+
+  // 0x4440D2..0x444139: lower row of three controls.  Since the outer width is
+  // the fixed 0x340, the instruction-derived local x edges are invariant.
+  button_rects_[2].left = 0x82;
+  button_rects_[2].top = window_height - 0x2E;
+  button_rects_[2].right = 0x134;
+  button_rects_[2].bottom = window_height - 0x1A;
+  button_rects_[3].left = 0x136;
+  button_rects_[3].top = window_height - 0x2E;
+  button_rects_[3].right = 0x1E8;
+  button_rects_[3].bottom = window_height - 0x1A;
+  button_rects_[4].left = 0x1EA;
+  button_rects_[4].top = window_height - 0x2E;
+  button_rects_[4].right = 0x29C;
+  button_rects_[4].bottom = window_height - 0x1A;
+
+  // 0x444140..0x4442C5: two side-by-side 2x2 groups.  These are individual
+  // RECT slots at 102C..109C, not rectangles inferred from another control.
+  button_rects_[5].left = 0x1E;
+  button_rects_[5].top = window_height - 0x62;
+  button_rects_[5].right = 0xD4;
+  button_rects_[5].bottom = window_height - 0x4E;
+  button_rects_[6].left = 0xD6;
+  button_rects_[6].top = window_height - 0x62;
+  button_rects_[6].right = 0x18C;
+  button_rects_[6].bottom = window_height - 0x4E;
+  button_rects_[7].left = 0x1E;
+  button_rects_[7].top = window_height - 0x4C;
+  button_rects_[7].right = 0xD4;
+  button_rects_[7].bottom = window_height - 0x38;
+  button_rects_[8].left = 0xD6;
+  button_rects_[8].top = window_height - 0x4C;
+  button_rects_[8].right = 0x18C;
+  button_rects_[8].bottom = window_height - 0x38;
+  button_rects_[9].left = 0x194;
+  button_rects_[9].top = window_height - 0x62;
+  button_rects_[9].right = 0x24A;
+  button_rects_[9].bottom = window_height - 0x4E;
+  button_rects_[10].left = 0x24C;
+  button_rects_[10].top = window_height - 0x62;
+  button_rects_[10].right = 0x302;
+  button_rects_[10].bottom = window_height - 0x4E;
+  button_rects_[11].left = 0x194;
+  button_rects_[11].top = window_height - 0x4C;
+  button_rects_[11].right = 0x24A;
+  button_rects_[11].bottom = window_height - 0x38;
+  button_rects_[12].left = 0x24C;
+  button_rects_[12].top = window_height - 0x4C;
+  button_rects_[12].right = 0x302;
+  button_rects_[12].bottom = window_height - 0x38;
+
+  // F9C/FBC title rectangles.  The +8 central separation and the half-width
+  // are direct consequences of the 4440B6..4440E9 / 4442A3..44431B arithmetic.
+  rect_F9C_.left = 0x1E;
+  rect_F9C_.top = window_height - 0x78;
+  rect_F9C_.right = 0x18C;
+  rect_F9C_.bottom = window_height - 0x64;
+  rect_FBC_.left = 0x194;
+  rect_FBC_.top = window_height - 0x78;
+  rect_FBC_.right = 0x302;
+  rect_FBC_.bottom = window_height - 0x64;
+
+  // 0x44432C..0x444421: the accumulator is explicitly zeroed by native code.
+  // Keep the order and margins; UnionRect ignores empty accumulators, so each
+  // group begins at its first valid button rectangle.
+  RECT left_group = {0, 0, 0, 0};
+  UnionRect(&left_group, &left_group, &button_rects_[5]);
+  UnionRect(&left_group, &left_group, &button_rects_[6]);
+  UnionRect(&left_group, &left_group, &button_rects_[7]);
+  UnionRect(&left_group, &left_group, &button_rects_[8]);
+  UnionRect(&rect_FAC_, &left_group, &rect_F9C_);
+  rect_FAC_.left -= 3;
+  rect_FAC_.top -= 3;
+  rect_FAC_.right += 3;
+  rect_FAC_.bottom += 3;
+
+  RECT right_group = {0, 0, 0, 0};
+  UnionRect(&right_group, &right_group, &button_rects_[9]);
+  UnionRect(&right_group, &right_group, &button_rects_[10]);
+  UnionRect(&right_group, &right_group, &button_rects_[11]);
+  UnionRect(&right_group, &right_group, &button_rects_[12]);
+  UnionRect(&rect_FCC_, &right_group, &rect_FBC_);
+  rect_FCC_.left -= 3;
+  rect_FCC_.top -= 3;
+  rect_FCC_.right += 3;
+  rect_FCC_.bottom += 3;
+
+  // 0x4444FB..0x44456F: portrait panes use the just-unioned FAC top, including
+  // its -3 border. Keep the native bottom edge FAC.top-7 rather than
+  // substituting the outer-window bottom.
+  portrait_rect_[0].left = rect_EDC_.left + 7;
+  portrait_rect_[0].top = leader_rect_[0].bottom + 3;
+  portrait_rect_[0].right = leader_rect_[0].right;
+  portrait_rect_[0].bottom = rect_FAC_.top - 7;
+  portrait_rect_[1].left = leader_rect_[0].right + 2;
+  portrait_rect_[1].top = portrait_rect_[0].top;
+  portrait_rect_[1].right = rect_EDC_.right - 7;
+  portrait_rect_[1].bottom = rect_FAC_.top - 7;
+
+  // MainInterface-owned rectangles at 0x444421..0x4444F3.
+  const RECT &main_frame = MainInterfaceGlobal.main_frame_rect();
+  const RECT &right_frame = MainInterfaceGlobal.right_frame_rect();
+  rect_EEC_.left = main_frame.left + 7;
+  rect_EEC_.top = main_frame.top + 7;
+  rect_EEC_.right = main_frame.right - 7;
+  rect_EEC_.bottom = rect_EEC_.top + 0x14;
+  rect_EFC_.left = main_frame.left + 7;
+  rect_EFC_.top = rect_EEC_.bottom + 3;
+  rect_EFC_.right = main_frame.right - 7;
+  rect_EFC_.bottom = main_frame.bottom - 7;
+  rect_F0C_.left = right_frame.left + 7;
+  rect_F0C_.top = right_frame.top + 7;
+  rect_F0C_.right = right_frame.right - 7;
+  rect_F0C_.bottom = rect_F0C_.top + 0x14;
+  rect_F1C_.left = right_frame.left + 7;
+  rect_F1C_.top = rect_F0C_.bottom + 3;
+  rect_F1C_.right = right_frame.right - 7;
+  rect_F1C_.bottom = right_frame.bottom - 7;
+
+  // MainInterface's rect1_ supplies these two bottom-aligned regions.
+  const RECT &main_rect = MainInterfaceGlobal.main_layout_rect();
+  rect_F3C_.left = main_rect.left + 4;
+  rect_F3C_.top = main_rect.top + 4;
+  rect_F3C_.right = main_rect.right - 4;
+  rect_F3C_.bottom = main_rect.bottom - 0x1B;
+  rect_F2C_.left = main_rect.left + 4;
+  rect_F2C_.top = main_rect.bottom - 0x18;
+  rect_F2C_.right = main_rect.right - 4;
+  rect_F2C_.bottom = main_rect.bottom - 4;
+
+  GraphicWin::init(window_left, window_top, window_width, window_height,
+                   0, 0x05000000,
+                   static_cast<GraphicWin *>(&ConsoleGlobal),
+                   0, 0);
+  field_16C_ = 0x1A;
+  fill(9);
+  static_cast<Buffer &>(*this).box_sprite(&rect_F9C_, &InterfaceBoxStyles[9]);
+
+  stringBox_.init(rect_F9C_.left + 3, rect_F3C_.top + 3,
+                  rect_F9C_.right - rect_F9C_.left - 6,
+                  rect_F9C_.bottom - rect_F9C_.top - 6,
+                  static_cast<Win *>(&MainInterfaceGlobal), 0, -1);
+  Buffer &string_canvas = static_cast<Buffer &>(stringBox_);
+  string_canvas.set_write_strings_callback(&DiploWin::string_callback);
+  string_canvas.set_text_color(0xFF, -1, 1, 1);
+
+  editBox_.init(rect_F2C_.left, rect_F2C_.top,
+                rect_F2C_.right - rect_F2C_.left,
+                rect_F2C_.bottom - rect_F2C_.top,
+                static_cast<Win *>(&MainInterfaceGlobal), 0);
+  editBox_.field_B14_ |= 0x01000000;
+  editBox_.field_B1C_ = 9;
+  editBox_.field_B30_ = 0;
+  Buffer &edit_canvas = static_cast<Buffer &>(editBox_);
+  edit_canvas.set_text_color(ChatItemIdTable[faction_id_],
+                             ChatShadowColors[faction_id_], 1, 1);
+  editBox_.field_B20_ = 0x41;
+  editBox_.field_B24_ = ChatItemIdTable[faction_id_];
+  editBox_.field_B14_ = 0x80;
+
+  for (int button_index = 0; button_index != 13; ++button_index) {
+    FlatButton &button = flatButtons_[button_index];
+    const RECT &button_bounds = button_rects_[button_index];
+    const int left = button_bounds.left;
+    const int top = button_bounds.top;
+    const int right = button_bounds.right;
+    const int bottom = button_bounds.bottom;
+    char *name = 0;
+    if (button_index >= 2) {
+      name = label_get(0xDCC / 4 + button_index - 2);
+    }
+    button.init(name, button_index, left, top, right - left, bottom - top,
+                this, 0);
+    button.set_font(find_font(0x0E, 1), 0, 0, 0);
+    button.redraw();
+    button.set_text_color(0x41, -1, 1, 1);
+    button.hide();
+    // InterfaceBoxStyles begins at 0x0078D528 with 0x28-byte elements;
+    // these are the native 0x78D960/0x78D988/0x78D9B0 slots 27..29.
+    button.set_border_styles(&InterfaceBoxStyles[27],
+                             &InterfaceBoxStyles[28],
+                             &InterfaceBoxStyles[29]);
+  }
+
+  stringBox_.clear();
+  editBox_.set_text(0);
+
+  if (IsMultiplayerPBEM != 0) {
+    sub_441100(faction_id_, faction_id_with_);
+    for (int side = 0; side != 2; ++side) {
+      OfferResetCell &cell = OfferResetCells[faction_id_][faction_id_with_];
+      offer_count_[side] = cell.count_[side];
+      (side == 0 ? field_A24_ : field_A28_) = cell.state_[side];
+      for (int item = 0; item != 8; ++item) {
+        offer_type_[side][item] = cell.type_[side][item];
+        offer_value_[side][item] = cell.value_[side][item];
+      }
+    }
+  } else {
+    offer_count_[0] = 0;
+    offer_count_[1] = 0;
+    field_A24_ = 0;
+    field_A28_ = 0;
+  }
+
+  const int player_flags = static_cast<int>(LockEnableMask & 0xFF);
+  CommlinkPending = 1;
+  DiploOffersDirty = 0;
+  if (bit_count(player_flags) == 2)
+    TurnControlDurationMilliseconds *= 2;
+  if (DiploDefaultFlag93A968 == 0)
+    DiploDefaultFlag93A968 = 1;
+
+  if (IsMultiplayerNet == 0 && IsMultiplayerPBEM == 0) {
+    int random_value = rand();
+    if ((random_value & static_cast<int>(0x80000001u)) == 0) {
+      random_value = rand() % 0x59;
+      add_offer(1, 0, random_value);
+      if (rand() % 3 != 0) {
+        random_value = rand() % 0x59;
+        add_offer(1, 0, random_value);
+      }
+    } else {
+      random_value = rand() % 0x32;
+      add_offer(1, 1, (random_value * 5 + 5) * 5);
+    }
+
+    switch (rand() & 0x80000003) {
+      case 0: add_offer(1, 4, 0);
+        // Native switch intentionally falls through to the next offers.
+      case 1: add_offer(1, 3, 0);
+        // Native switch intentionally falls through to the next offer.
+      case 2: add_offer(1, 2, 0); break;
+      default: break;
+    }
+
+    random_value = rand() % 3;
+    if (random_value == 0)
+      field_A28_ = 1;
+    else if (random_value == 1)
+      offer_type_[0][0] = 2;
+  }
+
+  set_modal(0, pop_expire, &MainInterfaceGlobal);
+
+  if (IsMultiplayerPBEM != 0) {
+    StringList &source = DiploWindow.stringBox_.strings();
+    int low_faction = faction_id_;
+    int high_faction = faction_id_with_;
+    if (low_faction > high_faction) {
+      const int temporary = low_faction;
+      low_faction = high_faction;
+      high_faction = temporary;
+    }
+    StringList &destination =
+        DiplomacyTranscriptLists[low_faction][high_faction];
+    const int source_count = source.entry_count_;
+    for (int source_index = source_count - 3;
+         source_index < source_count; ++source_index) {
+      if (source_index < 0)
+        continue;
+      source.seek_pos(source_index);
+      destination.pending_text_ = source.current_text();
+      destination.field_20_ = 0;
+      destination.field_24_ = 0;
+      destination.add(source.current_id());
+    }
+
+    for (int side = 0; side != 2; ++side) {
+      OfferResetCell &cell = OfferResetCells[faction_id_][faction_id_with_];
+      cell.count_[side] = offer_count_[side];
+      cell.state_[side] =
+          side == 0 ? field_A24_ : field_A28_;
+      for (int item = 0; item != 8; ++item) {
+        cell.type_[side][item] = offer_type_[side][item];
+        cell.value_[side][item] = offer_value_[side][item];
+      }
+    }
+  }
+
+  if (DiploOffersDirty != 0
+      && (field_A24_ != 0 || offer_count_[0] > 0))
+    PendingDiplomacyFlags[faction_id_with_][faction_id_] |= 1;
+
+  if (CommlinkPending != 0) {
+    CommlinkPending = 0;
+    message_data(0x1505, faction_id_with_, 0, 0, 0, 0);
+  }
+
+  interface_entry->release_iface_mode();
+  interface_entry->delete_iface_mode();
+  close();
+}
+
 
 // ORIGINAL: 0x004436C0 ?on_redraw@DiploWin@@QAEXXZ 0x004436C0-0x00443C25
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original constructor444FC0 establishes GraphicWin+0, SubInterface+A14 and member construction order; secondary table66B5E0 gives nineteen callback slots and adjusted receivers.", "Redraw4436C0, status443C70 and painter443E50 inspected over declared original spans; source rectangle/control owners preserve native offsets. Palette colors reuse TextColourTable[80-2*item]/[81-2*item]. Localized title producer and full extents remain unknown.", "recovery/tasks/interface-contract-report-closure.json; root coordinator owns import and independent compilation; no current byte, structural or runtime acceptance is implied."], "reason": "Recover the genuine DiploWin GraphicWin/SubInterface owner with typed callbacks and automatic base/member lifetimes; retain independent seed history and restoration obligations."}
@@ -83,8 +464,8 @@ void DiploWin::on_redraw() {
   Buffer &canvas = static_cast<Buffer &>(*this);
   canvas.box_sprite(&area, &InterfaceBoxStyles[3]);
 
-  UnionRect(&area, &rect_FFC_, &rect_100C_);
-  UnionRect(&area, &area, &rect_101C_);
+  UnionRect(&area, &button_rects_[2], &button_rects_[3]);
+  UnionRect(&area, &area, &button_rects_[4]);
   area.right += 3;
   area.left -= 3;
   area.bottom += 3;

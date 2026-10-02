@@ -967,14 +967,14 @@ void __cdecl clear_all_offers() {
         for (int column = 0; column < MaxPlayerNum; ++column) {
             OfferResetCell &flat = OfferResetCells[row][column];
             OfferResetCell &transposed = OfferResetCells[column][row];
-            flat.word_0_ = 0;
-            flat.word_1_ = 0;
-            transposed.word_0_ = 0;
-            transposed.word_1_ = 0;
-            flat.word_2_ = 0;
-            flat.word_3_ = 0;
-            transposed.word_2_ = 0;
-            transposed.word_3_ = 0;
+            flat.count_[0] = 0;
+            flat.count_[1] = 0;
+            transposed.count_[0] = 0;
+            transposed.count_[1] = 0;
+            flat.state_[0] = 0;
+            flat.state_[1] = 0;
+            transposed.state_[0] = 0;
+            transposed.state_[1] = 0;
         }
     }
 }
@@ -1260,7 +1260,7 @@ Purpose: Recompute which faction owns each tile of the map, and rebuild every
 //   territory-distance test is the same comparison with the operands in the other
 //   registers. None of those is reachable from the statement level.
 // size      1074 bytes
-// prototype 
+// prototype
 // callers   11   call targets   7
 // kind      game
 // flags     frame;sp_ready;purged_ok
@@ -1474,7 +1474,7 @@ Purpose: Determine whether the turn currently belongs to another faction in a
          networked game, which is what gates local input.
 // ORIGINAL: 0x0052DC70 ?not_my_turn@@YAHXZ 0x0052DC70-0x0052DC9C BYTE_EXACT
 // size      44 bytes
-// prototype 
+// prototype
 // callers   8   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
@@ -1542,7 +1542,7 @@ void __cdecl planetfall(int faction_id) {
 Purpose: Clear and reset scenario game variables.
 // ORIGINAL: 0x005B38D0 ?clear_scenario@@YAXXZ 0x005B38D0-0x005B3919 BYTE_EXACT
 // size      73 bytes
-// prototype 
+// prototype
 // callers   1   call targets   0
 // kind      game
 // flags     sp_ready;purged_ok
@@ -1585,7 +1585,7 @@ Purpose: Craft game year string. Assume buffer of at least 80. Revisit and conve
 // LEVER (2026-09-03, pair normalisation): plain `strcat`, not `strcat_s` - see
 //   the note on the body. 5 of 20 -> 20 of 20 on that one word.
 // size      52 bytes
-// prototype 
+// prototype
 // callers   19   call targets   2
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
@@ -2887,7 +2887,7 @@ void __cdecl load_vehicles() {
 // ORIGINAL: 0x00524210 ?climactic_changes@@YAXXZ 0x00524210-0x005242C0 FILE
 // working copy - scaffold materialised by --work
 // size      176 bytes
-// prototype 
+// prototype
 // callers   0   call targets   3
 // kind      game
 // flags     hidden;sp_ready;purged_ok
@@ -2931,7 +2931,7 @@ void __cdecl climactic_changes() {
 
 // ORIGINAL: 0x0052A980 sub_52a980 0x0052A980-0x0052A9A5 FILE
 // size      37 bytes
-// prototype 
+// prototype
 // callers   0   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
@@ -3011,7 +3011,7 @@ int __cdecl sub_52a980() {
 // ORIGINAL: 0x0052DB70 sub_52db70 0x0052DB70-0x0052DB9C FILE BYTE_EXACT
 // symbol    ?sub_52db70@@YAHXZ
 // size      44 bytes
-// prototype 
+// prototype
 // callers   0   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
@@ -3111,7 +3111,7 @@ int __cdecl sub_52db70() {
 // TRIED: do-while loop over i=[NetTurnFaction+1, 8) with hi/lo byte reads hoisted before the loop, matching the Ghidra hypothesis closely; diverges at instr #14 (original 'lea' vs rebuilt 'inc'), a register/addressing-mode choice around the `+1`.
 // working copy - scaffold materialised by --work
 // size      120 bytes
-// prototype 
+// prototype
 // callers   2   call targets   1
 // kind      game
 // flags     hidden;sp_ready;purged_ok
@@ -3148,7 +3148,7 @@ int __cdecl next_player_turn() {
 // ORIGINAL: 0x005242C0 sub_5242c0 0x005242C0-0x00524317 BYTE_EXACT
 // symbol    ?sub_5242c0@GraphicWinSub@@QAEXXZ
 // size      87 bytes
-// prototype 
+// prototype
 // callers   0   call targets   2
 // kind      game
 // flags     hidden;sp_ready;purged_ok
@@ -3187,7 +3187,7 @@ void GraphicWinSub::sub_5242c0() {
 // ORIGINAL: 0x00524340 Demo::timer_callback 0x00524340-0x00524363 BYTE_EXACT
 // symbol    _fn_00524340
 // size      35 bytes
-// prototype 
+// prototype
 // callers   0   call targets   0
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
@@ -3277,7 +3277,7 @@ extern "C" char * __cdecl sub_58f4f0(char *a1, int a2, int a3, int a4) {
 // ORIGINAL: 0x0058F700 ?say_fac_special@@YAXPADPADH@Z 0x0058F700-0x0058F80A FILE BYTE_EXACT
 // symbol    ?say_fac_special@@YAXPAD0H@Z
 // size      266 bytes
-// prototype 
+// prototype
 // callers   1   call targets   2
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
@@ -3364,7 +3364,7 @@ void __cdecl say_fac_special(char *a1, char *a2, int a3) {
 // ORIGINAL: 0x0052DB40 sub_52db40 0x0052DB40-0x0052DB67 BYTE_EXACT
 // symbol    ?sub_52db40@@YAXXZ
 // size      39 bytes
-// prototype 
+// prototype
 // callers   0   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
@@ -3394,7 +3394,7 @@ void sub_52db40() {
 // ORIGINAL: 0x00524370 sub_524370 0x00524370-0x00524396 BYTE_EXACT
 // symbol    ?on_key@Widget@@QAEHHH@Z
 // size      38 bytes
-// prototype 
+// prototype
 // callers   0   call targets   0
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
@@ -3438,7 +3438,7 @@ int Widget::on_key(int, int a2) {
 // ORIGINAL: 0x00524320 sub_524320 0x00524320-0x0052433B BYTE_EXACT
 // symbol    ?toggle_and_repaint@Base524320@@QAEHXZ
 // size      27 bytes
-// prototype 
+// prototype
 // callers   0   call targets   0
 // kind      game
 // flags     hidden;sp_ready
@@ -3916,7 +3916,7 @@ extern "C" int __cdecl directplay_install_is_complete() {
 // ORIGINAL: 0x0058FA70 ?get_pacts@@YAPADHH@Z 0x0058FA70-0x0058FAFA
 // working copy - scaffold materialised by --work
 // size      138 bytes
-// prototype 
+// prototype
 // callers   2   call targets   1
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
@@ -5049,7 +5049,6 @@ void __cdecl mon_colony_founded(int faction_id, char *base_name) {
     if (faction_id == ConsoleGlobal.faction_id_)
         monument(1);
 }
-
 // ORIGINAL: 0x00476C90 ?mon_tech_discovered@@YAXHH@Z 0x00476C90-0x00476D93
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original00476C90 and seed git:91b86557299ab66a61f1184540338d569e780e7e:src/recovered/units/00476c90.cpp; record1 at factionstride4F4, year0, payload8, firstownerC, achieved10, firstflag14 and latesttype498 are independently established by native stores.", "The original calls game_year before alien/duplicate guards and includes all eight peer records regardless of peer flags; later qualifying first-achiever ties win."], "reason": "Recover the complete native milestone producer against genuine shared monument records, with typed peer selection and live local notification rather than executable-address table views."}
 void __cdecl mon_tech_discovered(int faction_id, int tech_id) {
