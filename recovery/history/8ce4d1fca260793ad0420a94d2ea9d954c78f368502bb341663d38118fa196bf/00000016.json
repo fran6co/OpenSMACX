@@ -1,0 +1,20 @@
+{
+  "event_id": "4da54103c930dfa123226601bac1bb0cee184637d284bce7c2be521964df9f54",
+  "payload": {
+    "affects": [
+      "entity-c1cd3945e07014201b43f8be16f57b7a5384080ee83399231ba5d49c3c795cb1"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "prototype-history-cursor-native-layout-20261002",
+    "evidence": [
+      "Configured VC6 compiler overlay of actual src/veh.cpp and project header closure compiled static_assert(offsetof(PlayerData, unk_103) == 0x208C) successfully under the existing measurement flag set. Pinned put_bunglist57DF30 cursor uses96EA6C plus faction*20CC; PlayersData base96C9E0 gives member208C. Source faction.cpp5171 initializes this field. Private compiler report /tmp/prototype-history-layout-trial.log is reproducible compile-only evidence, not a byte or acceptance claim."
+    ],
+    "hypothesis": "Native project compilation establishes the prototype-history cursor as PlayerData::unk_103 at offset 0x208C; replace the fixed-address alias with this typed member and preserve its initialization producer and historical restoration obligations.",
+    "kind": "discovery"
+  },
+  "previous_event": "a16628c628c85628b896e69c5559d25f39cfad8682ad12277c68d52feca2b4b2",
+  "request_id": "prototype-history-cursor-native-layout-20261002",
+  "schema_version": 1,
+  "sequence": 16,
+  "stream": "task:netdaemon-player-lifecycle-recovery"
+}
