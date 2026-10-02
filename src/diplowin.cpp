@@ -38,6 +38,14 @@ char DiploLocalizedTradeTitle;
 // RECOVERY_OBJECT: v2 0x007492D8 0x007492D9 ?DiploLocalizedDiplomacyTitle@@3DA 0x004436C0
 char DiploLocalizedDiplomacyTitle;
 
+// DiploWin owns cleanup through its real typed subobjects. Its destructor
+// body has no separate unregister or global-state operation; C++ performs
+// reverse-order member/base destruction after this body.
+// ORIGINAL: 0x00444DB0 ??1DiploWin@@QAE@XZ 0x00444DB0-0x00444FB2;0x00654920-0x006549F0
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00444db0.cpp", "Pinned444DB0 cleanup sequence and654920 unwind funclets; existing typed members match their native receiver offsets and thirteen-element FlatButton array."], "reason": "Recover complete DiploWin destruction through genuine automatic reverse-order member/base lifetimes; pinned teardown contains no additional DiploWin unregister. Replace only executable-address forwarder and preserve seed history, no exactness claim."}
+// symbol ??1DiploWin@@UAE@XZ
+DiploWin::~DiploWin() {}
+
 // Native 0x444FC0 constructs both bases, Spot, thirteen FlatButtons, StringBox,
 // ListBox and EditBox in declaration order. No scalar initialization follows.
 // ORIGINAL: 0x00444FC0 ??0DiploWin@@QAE@XZ 0x00444FC0-0x0044507B;0x006549F0-0x00654A47 BYTE_EXACT

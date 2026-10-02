@@ -462,10 +462,6 @@ DesignWin::~DesignWin() {  // ??1DesignWin@@QAE@XZ at 0x0043ECB0
     PENDING_BODY(0x0043ECB0, pending)(this, nullptr);
 }
 
-DiploWin::~DiploWin() {  // ??1DiploWin@@QAE@XZ at 0x00444DB0
-    typedef void(__fastcall *pending)(DiploWin *, void *);
-    PENDING_BODY(0x00444DB0, pending)(this, nullptr);
-}
 
 // Menu::~Menu (??1Menu@@QAE@XZ at 0x005FAD00) WAS HERE: the body is homed
 // into src/menu.cpp 2026-09-27, mirroring the constructor's entry reset

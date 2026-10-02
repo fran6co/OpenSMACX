@@ -71,9 +71,6 @@ class DiploWin : public GraphicWin, public SubInterface {
   void on_iface_group_clicked(int, int, int) override;
   int on_iface_dialog_back_draw(GraphicWin *) override;
   int on_iface_dialog_item_back_draw(GraphicWin *, int, int, RECT *) override;
-  // 0x00444DB0 is not recovered: a
-  // pending_bodies forwarder, because an empty inline stub emits
-  // nothing and the deleting destructor needs a `call rel32`.
   ~DiploWin();
   void UNK3(int a1);
   void UNK5();
