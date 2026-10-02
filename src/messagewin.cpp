@@ -364,12 +364,12 @@ void MessageWin::clear() {
 // its embedded Buffer is a real C++ base, and the arrow is a real Sprite.
 // ORIGINAL: 0x00471870 ?listbox_draw@MessageWin@@QAAHPAUGraphicWin@@HHHHH@Z 0x00471870-0x004718BF
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/00471870.cpp", "image:0x00471870"], "reason": "The archived callback draws the real interface arrow Sprite into the supplied GraphicWin Buffer and is installed by MessageWin init."}
-// symbol    ?listbox_draw@MessageWin@@SAHPAVGraphicWin@@HHHHH@Z
-int __cdecl MessageWin::listbox_draw(GraphicWin *target, int, int x, int y,
-                                      int row_height, int) {
+// symbol    ?listbox_draw@MessageWin@@SAXPAVGraphicWin@@HHHHH@Z
+void __cdecl MessageWin::listbox_draw(GraphicWin *target, int, int x, int y,
+                                       int row_height, int) {
     Sprite &arrow = g_IFACE_GREEN_RIGHT_ARROW_SPRITE[0];
-    return arrow.draw(static_cast<Buffer *>(target), arrow.transparent_index(),
-                      x + 4, y + (row_height - arrow.height()) / 2, 1, 1);
+    arrow.draw(static_cast<Buffer *>(target), arrow.transparent_index(),
+               x + 4, y + (row_height - arrow.height()) / 2, 1, 1);
 }
 
 // 0x00471F70. The frame record at 0x0078D7F8 is style 18 in the existing

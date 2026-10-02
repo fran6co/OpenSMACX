@@ -21,11 +21,23 @@
 #include "text.h"
 #include "dialog.h"
 #include "basebutton.h"
+#include "basepop.h"
 #include "buffer.h"
 #include "temp.h"  // HandleMain
 
 // RECOVERY_OBJECT: v2 0x009B90AC 0x009B90B0 ?ActiveFileWin@@3PAVFileWin@@A 0x00613D50
 FileWin *ActiveFileWin = 0;
+
+// The native 0x6139B0 init snapshots exactly 0x44 bytes here; the directory
+// body consumes its first DWORD as ListBox attach style flags.
+// RECOVERY_OBJECT: v1 0x009B8FD0 ?FileWinInitSharedParameters@@3UFileWinConstructPrefix@@A
+FileWinConstructPrefix FileWinInitSharedParameters;
+
+// Native init passes the empty string at 0x9B90B0 to CreateWindowExA. The
+// loader-zero byte and its first-byte use are established; no larger capacity
+// or neighboring extent is claimed.
+// RECOVERY_OBJECT: v1 0x009B90B0 ?FileWinListWindowTitle@@3PADA
+char FileWinListWindowTitle[1] = {0};
 
 /*
 Purpose: Append one default extension to FileWin's four-slot extension
@@ -190,8 +202,8 @@ void FileWin::run_file_dialog(bool saving) {
 // symbol    ?populate_directory@FileWin@@QAEHPAD@Z
 // The two DlgDirListA passes fill the temporary Win32 list control, while
 // ListBox owns the displayed entries. The suffix table is FileWin storage.
-// The final attach-versus-refresh decision is approximated by update_changes;
-// retain the seed until its list lifecycle and return path are restored.
+// Native finalization attaches on a missing DIB and refreshes an existing one;
+// successful finalization clears markup state and hides the list.
 int FileWin::populate_directory(char *directory) {
     if (directory == 0) {
         return 0;
@@ -259,7 +271,22 @@ int FileWin::populate_directory(char *directory) {
         }
     }
 
-    return list_box_.update_changes() == 0 ? directory_count : 1;
+    const int attach_or_refresh_result = list_box_.has_dib_bits()
+        ? list_box_.update_changes()
+        : dialog.attach(
+              modal_window_,
+              static_cast<int>(dialog.field_24_),
+              static_cast<int>(dialog.field_28_),
+              FileWinInitSharedParameters.field_00_ != 0
+                  ? FileWinInitSharedParameters.field_00_
+                  : 0x80060);
+    if (attach_or_refresh_result != 0) {
+        return 1;
+    }
+
+    list_box_.set_markup_enabled(0);
+    list_box_.show(0);
+    return directory_count;
 }
 
 // The default file-name suffix appended to field_531_ at construction - REAL
@@ -288,6 +315,76 @@ static const char FileWinSpriteSheet[] = "jackal.pcx";
 static Sprite FileWinSprite0;
 static Sprite FileWinSprite1;
 static Sprite FileWinSprite2;
+
+// ORIGINAL: 0x006139B0 ?init@FileWin@@QAEHPADPAUGraphicWin@@PAUFileWinConstruct@@@Z 0x006139B0-0x00613B97
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/006139b0.cpp", "recovery/tasks/game-save-load-owner-coverage.json"], "reason": "Recover FileWin control initialization through genuine embedded controls, typed caller geometry, shared 17-DWORD parameter prefix and Windows list lifecycle. Retain the historical seed and obligations; no matching or game acceptance claim."}
+// symbol    ?init@FileWin@@QAEHPADPAVGraphicWin@@PAUFileWinConstruct@@@Z
+int FileWin::init(char *, GraphicWin *parent, FileWinConstruct *parameters) {
+  if (parameters == 0 || parent == 0) {
+    return 0x10;
+  }
+
+  memcpy(&FileWinInitSharedParameters, parameters,
+         sizeof(FileWinConstructPrefix));
+
+  modal_window_ = parent;
+  SpriteScaleNumerator = 1;
+  SpriteScaleDenominator = 1;
+
+  int result = prepare_sprites();
+  if (result != 0) {
+    return result;
+  }
+
+  edit_box_bounds_ = parameters->edit_box_bounds_;
+  list_box_bounds_ = parameters->list_box_bounds_;
+
+  result = edit_box_.init(
+      edit_box_bounds_.left, edit_box_bounds_.top,
+      edit_box_bounds_.right - edit_box_bounds_.left,
+      edit_box_bounds_.bottom - edit_box_bounds_.top,
+      static_cast<Win *>(parent), 0);
+  if (result != 0) {
+    return result;
+  }
+  edit_box_.field_B14_ = 0x104;
+  edit_box_.show(0);
+
+  const RECT &button2 = parameters->button2_bounds_;
+  result = flat_button2_.init(
+      BasePopDefaultOkText, -1, button2.left, button2.top,
+      button2.right - button2.left, button2.bottom - button2.top,
+      static_cast<Win *>(parent), 0);
+  if (result != 0) {
+    return result;
+  }
+
+  const RECT &button1 = parameters->button1_bounds_;
+  result = flat_button1_.init(
+      BasePopDefaultCancelText, -2, button1.left, button1.top,
+      button1.right - button1.left, button1.bottom - button1.top,
+      static_cast<Win *>(parent), 0);
+  if (result != 0) {
+    return result;
+  }
+
+  list_box_.close();
+  result = list_box_.Dialog::init(&list_box_bounds_, 0);
+  if (result != 0) {
+    return result;
+  }
+
+  list_box_.field_8_ = 1;
+  static_cast<Dialog &>(list_box_).field_34_ =
+      (FileWinSprite0.width() * 3) / 2;
+  list_box_.set_callbacks(&filebox_draw, 0, 0);
+
+  directory_list_handle_ = CreateWindowExA(
+      0, "LISTBOX", FileWinListWindowTitle, 0x40000040,
+      0, 0, CW_USEDEFAULT, CW_USEDEFAULT, HandleMain,
+      reinterpret_cast<HMENU>(1), WinInstance, 0);
+  return directory_list_handle_ == 0 ? 1 : 0;
+}
 
 // ORIGINAL: 0x00614C50 ?filebox_draw@FileWin@@QAAXPAUGraphicWin@@HHHHH@Z 0x00614C50-0x00614D84 BYTE_EXACT
 // symbol    ?filebox_draw@@YAXPAVGraphicWin@@HHHHH@Z

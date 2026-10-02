@@ -60,8 +60,8 @@ class MessageWin : public Sprite {
   int UNK3(int x, int y, char *text, int unused);
   void clear();
   void init();
-  static int __cdecl listbox_draw(GraphicWin *target, int item_id,
-                                  int x, int y, int row_height, int flags);
+  static void __cdecl listbox_draw(GraphicWin *target, int item_id,
+                                   int x, int y, int row_height, int flags);
   static int __cdecl listbox_fill(GraphicWin *target, int item_id,
                                   int row, RECT *area);
   static int __cdecl listbox_write(GraphicWin *target, int item_id,

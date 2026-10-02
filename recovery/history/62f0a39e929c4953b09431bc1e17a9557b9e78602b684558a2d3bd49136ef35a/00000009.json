@@ -1,0 +1,19 @@
+{
+  "event_id": "64f7c48976caacc666e7c88958873d8b649d0482eab2913dc8ea23d418d98138",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/designwin_workshop_harness.cpp"
+    ],
+    "evidence": [
+      "The admitted native ListBox draw callback return-type repair removes DesignWin compatibility adapter. Existing workshop control still doubles the retired int callback; migrate only that external-service signature/name to the actual void hq_list_draw API, retaining all behavior assertions and sanitizer controls."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "9e11d8845c679554f215cecec8ea9700bda041a11c684b99c1d68cdd23582b4e",
+  "request_id": "filewin-void-callback-workshop-control-20261003",
+  "schema_version": 1,
+  "sequence": 9,
+  "stream": "task:game-save-load-owner-coverage"
+}

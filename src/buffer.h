@@ -257,6 +257,8 @@ void draw_dest_unk1(Buffer *, int, int, int, int, unsigned char *);
 
   void clear_links();
   void set_markup_enabled(int enabled) { markup_enabled_ = enabled; }
+  // FileWin::populate_directory branches on the existing DIB pixel pointer.
+  bool has_dib_bits() const { return dib_bits_ != nullptr; }
   // 0x10, the wrap width every writer measures against: wrap_height and
   // wrap_height_flying seed their running width from it
   // (`field_14_ = field_10_`, src/buffer.cpp), and NetWin::draw_session_info

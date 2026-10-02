@@ -21,6 +21,7 @@
 #include "flatbutton.h"
 #include "editbox.h"
 #include "listbox.h"
+#include "filewin_construct.h"
 
  /*
   * FileWin class
@@ -44,6 +45,7 @@ class FileWin {
   // __cdecl, taking no receiver - and jackal_init_real calls it with no
   // ecx set up, so `Class::method()` is the only legal spelling.
   static int init_class();   // 00614D90
+  int init(char *unused, GraphicWin *parent, FileWinConstruct *parameters);
   void on_double_clicked(int a1);
   void on_button_clicked(int button_id);
   int populate_directory(char *directory);
@@ -92,15 +94,9 @@ class FileWin {
   char extension_filters_[5][5];  // 0x518..0x530
   char directory_[0x107];  // 0x531: bounded path storage
   uint32_t field_638_;  // 0x638
-  Win *modal_window_;  // 0x63C: release_modal target
-  uint32_t field_640_;  // 0x640
-  uint32_t field_644_;  // 0x644
-  uint32_t field_648_;  // 0x648
-  uint32_t field_64C_;  // 0x64C
-  uint32_t field_650_;  // 0x650
-  uint32_t field_654_;  // 0x654
-  uint32_t field_658_;  // 0x658
-  uint32_t field_65C_;  // 0x65C
+  GraphicWin *modal_window_;  // 0x63C: init parent and Dialog attachment target
+  RECT list_box_bounds_;  // 0x640
+  RECT edit_box_bounds_;  // 0x650
   // Four member subobjects, evidenced by the constructor's placement-new
   // sites and the destructor's teardown sequence (0x00611940-family:
   // FlatButton@0x660/0x11AC, EditBox@0x1CF8, ListBox@0x286C - each span

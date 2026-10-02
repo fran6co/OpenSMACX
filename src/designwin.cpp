@@ -3863,16 +3863,6 @@ void __cdecl hq_list_draw(GraphicWin *window, int prototype, int flags,
     SpriteScaleDenominator = 1;
 }
 
-// Workshop list callback compatibility: the existing ListBox API returns int,
-// but its native draw_item call60BCDF discards that value (60BCE5 immediately
-// loads the next callback). Keep the original void preview and use a normal
-// typed adapter, not a function-pointer cast or an executable-address call.
-static int __cdecl workshop_list_draw_adapter(GraphicWin *window, int prototype,
-                                              int flags, int x, int y, int height) {
-    hq_list_draw(window, prototype, flags, x, y, height);
-    return 0;
-}
-
 extern uint32_t UpgradePromptAnswered;
 
 // ORIGINAL: 0x00583E30 ?design_workshop@@YAHHH@Z 0x00583E30-0x00584B4B;0x0065FFD0-0x00660239
@@ -3914,7 +3904,7 @@ int __cdecl design_workshop(int faction_id, int mode) {
         popup.start(PopupStartCaption, "DESIGNSHOP", -1, 0, 2, 0);
         WorkshopFaction = faction_id;
         PopupModalState = 5;
-        popup.dialogs().set_callbacks(&workshop_list_draw_adapter, 0, 0);
+        popup.dialogs().set_callbacks(&hq_list_draw, 0, 0);
 
         const int caption_scale = MapWinCaptionScale;
         const int caption_divisor = MapWinCaptionDivisor;

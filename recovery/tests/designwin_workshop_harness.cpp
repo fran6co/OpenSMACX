@@ -50,10 +50,10 @@ Msg &NetMsgPrimary = netmsg;
 struct DesignWin { int exec(int faction,int proto) { ++tut_calls; tut_last_faction=faction; tut_last_proto=proto; return 17; } } TutWinDesWindow;
 class Dialog { public: unsigned int field_34_,field_48_,field_50_; };
 struct GraphicWin {};
-class Dialogs : public Dialog { public: void set_callbacks(int (*)(GraphicWin*,int,int,int,int,int),int,int) {} int item(char *,int) { return 0; } };
+class Dialogs : public Dialog { public: void set_callbacks(void (*)(GraphicWin*,int,int,int,int,int),int,int) {} int item(char *,int) { return 0; } };
 class BasePop { public: int exec(int,int) { last_action=action_stream.at(stream_pos); return selected_stream.at(stream_pos++); } };
 class Popup : public BasePop { public: Dialogs d; Popup(){} int start(char *,const char *,int,char *,int,void*) { ++start_calls; return 0; } Dialogs &dialogs(){return d;} uint32_t input_poll_state()const{return (uint32_t)last_action;} };
-int __cdecl workshop_list_draw_adapter(GraphicWin *,int,int,int,int,int) { return 0; }
+void __cdecl hq_list_draw(GraphicWin *,int,int,int,int,int) {}
 static int __cdecl upgrade_prototype(int a,int b,int c,int d) { ++upgrade_calls; up_args[0]=a;up_args[1]=b;up_args[2]=c;up_args[3]=d;return 1; }
 
 // ACTUAL_BODY_INSERTION_POINT
