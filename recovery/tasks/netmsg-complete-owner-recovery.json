@@ -1,0 +1,78 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "012fa40b86fe6f2fce571bd1264adf9e4d3a3189",
+  "editable_files": [
+    "recovery/tests/test_netmsg_behavior.py",
+    "src/base.cpp",
+    "src/console.cpp",
+    "src/councwin.cpp",
+    "src/deleting_thunks.cpp",
+    "src/deleting_thunks.h",
+    "src/designwin.cpp",
+    "src/faction.cpp",
+    "src/leaf_recoveries.cpp",
+    "src/map.cpp",
+    "src/mapwin.cpp",
+    "src/netdaemon.cpp",
+    "src/netmsg.cpp",
+    "src/netmsg.h",
+    "src/pending_bodies.cpp",
+    "src/technology.cpp",
+    "src/veh.cpp"
+  ],
+  "evidence": [
+    "Fresh source partition class:NetMsg has nine identities and no existing NetMsg task. Original47A770/47A7A0 constructor controls and47A790/47A7C0 teardown retained in git24472a5a^ establish source-owned Primary805338(4096,8,0) then Secondary7FFF80(-5,40,1), reverse destruction. Native current layout size53B4 and Time538C establish keyboard dependencies, not full original allocation proof. Callback47A800 uses cdecl token46 selection; current scalar aliases and explicit destructor executable forward are not genuine lifecycle. Scope includes full pop47A890 and wrapper50B9E0, destructor47ADA0 and generated destructor observations only where emitted naturally.",
+    "Root alone edits source/Git/tasks and leases compiler resources. Worker remains private proposal-only. Additional product TUs authorize only mechanical migration NetMsgPopup-> to actual NetMsgPrimary. calls, no other behavior, hierarchy or function scope change. pending_bodies.cpp scope only removal of NetMsg destructor/pop forwards after complete real implementation. Narrow typed flags/timer accessors preserve layout and allow full Console keyboard recovery. No fixed addresses, raw self-offsets, manual vtables, copied machine bytes, weakening claims, seed deletion or fabricated runtime acceptance."
+  ],
+  "intent": "Recover the complete NetMsg popup, callback and actual singleton lifecycles as genuine C++; migrate product consumers off executable-address aliases and preserve all original claims and seeds.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4696016,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4696064,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4696160,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4696208,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4697328,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4697456,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4697504,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4698080,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5290464,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "netmsg-complete-owner-recovery"
+}
