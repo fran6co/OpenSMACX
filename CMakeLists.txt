@@ -163,6 +163,7 @@ set(OPENSMACX_SOURCES
     src/map.cpp
     src/mapwin.cpp
     src/basewin.cpp
+    src/video.cpp
     src/datalink.cpp
     src/netwin.cpp
     src/socialwin.cpp
@@ -353,7 +354,7 @@ target_compile_options(OpenSMACX PRIVATE "--repro-root=${CMAKE_CURRENT_SOURCE_DI
 # needs it" - and it belongs here for the same reason that one moved: a link
 # input is the build's business, and a pragma hides it from anyone reading
 # the build.
-target_link_libraries(OpenSMACX PRIVATE zlib user32 gdi32 winmm dxguid ddraw)
+target_link_libraries(OpenSMACX PRIVATE zlib user32 gdi32 winmm dxguid ddraw vfw32)
 
 # `/MAP /MAPINFO:LINES` is the only debug format in this toolchain that gdb can
 # be taught to read. VC6's own three cannot be: the PDB is 2.0 (`JG`, which

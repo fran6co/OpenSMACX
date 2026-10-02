@@ -192,7 +192,6 @@ void *__fastcall adjust_this_social_win(void *self, void *, unsigned int arg0);
 void *__fastcall scalar_delete_tut_win(void *self, void *, unsigned int arg0);
 void *__fastcall adjust_this_tut_win(void *self, void *, unsigned int arg0);
 void *__fastcall scalar_delete_ambience(void *self, void *, unsigned int arg0);
-void *__fastcall scalar_delete_video(void *self, void *, unsigned int arg0);
 void *__fastcall scalar_delete_voice_rx(void *self, void *, unsigned int arg0);
 void *__fastcall scalar_delete_voice_tx(void *self, void *, unsigned int arg0);
 void *__fastcall scalar_delete_dip_edit(void *self, void *, unsigned int arg0);
@@ -232,12 +231,6 @@ void *__fastcall scalar_delete_sub_633160(void *self, void *,
 void *__fastcall adjust_this_sub_633730(void *self, void *, unsigned int arg0);
 void *__fastcall adjust_this_sub_633740(void *self, void *, unsigned int arg0);
 
-// DECLARED, NOT BOUND. These two are the teardowns `??_GVideo` and
-// `sub_633160` call. They are plain functions rather than `??1Class`
-// destructors - which is why `convert_seams --dtors` refused them - but the
-// defect is the same: a pointer-to-member seam emits `call dword ptr [...]`
-// where the image emits `call rel32`, and that one instruction is all those
-// thunks were short. Both end `ret`, not `ret 4`. Forwarded in
-// `pending_bodies.cpp`.
-void __fastcall sub_4c86d0(void *self);
+// Remaining legacy teardown declaration, outside the Video owner. Video's
+// Sound-prefix destruction is now compiler-owned in video.cpp/video.h.
 void __fastcall sub_633010(void *self);

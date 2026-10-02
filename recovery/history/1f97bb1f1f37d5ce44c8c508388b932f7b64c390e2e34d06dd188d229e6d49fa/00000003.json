@@ -1,0 +1,19 @@
+{
+  "event_id": "60fd2fb08fa60891bdd8183468736ce780e24756134f34e8738ec20e39dcae55",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_wave_device_exports.py"
+    ],
+    "evidence": [
+      "Five directly relevant export/lifecycle controls fail compilation because their open-ended loader declaration slice captures newer independent loader wrappers without those wrappers dependencies. Use the existing native original-body extraction route to inject only load_sound_dll; preserve the controls and actual product code, not weaker assertions or invented fixture declarations."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "89596e62fa6189d4318dc4a834c02480e74e4a19d0435316df0dff7fcfcc9500",
+  "request_id": "video-owner-sound-fixture-scope",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:video-complete-owner-recovery"
+}

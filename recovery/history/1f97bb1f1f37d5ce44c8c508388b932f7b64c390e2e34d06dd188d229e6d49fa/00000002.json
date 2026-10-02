@@ -1,0 +1,19 @@
+{
+  "event_id": "89596e62fa6189d4318dc4a834c02480e74e4a19d0435316df0dff7fcfcc9500",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_gate_controls.py"
+    ],
+    "evidence": [
+      "Retiring the Video hypothesis removes the old unobserved-layout damage anchor. Preserve that control using remaining SpriteList field_0_: no actual product consumers and no ordinary SpriteList CodeView layout across148 fresh application objects; keep native forced-witness verification rather than replacing it with an observed Video case."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "cfc885958e75f623acdb4b4c8db57f9d259f141c38dac738c77c5088a51a6cec",
+  "request_id": "video-owner-preserve-unobserved-layout-control",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:video-complete-owner-recovery"
+}

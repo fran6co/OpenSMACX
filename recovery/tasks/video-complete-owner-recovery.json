@@ -1,0 +1,299 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "2efdadeb867d1781d0f199ac84b18abb23eb4346",
+  "editable_files": [
+    "CMakeLists.txt",
+    "src/deleting_thunks.cpp",
+    "src/deleting_thunks.h",
+    "src/field_accessors.cpp",
+    "src/hypothesis_layouts.h",
+    "src/leaf_recoveries.cpp",
+    "src/pending_bodies.cpp",
+    "src/recovered/004c88b0.cpp",
+    "src/recovered/004c88c0.cpp",
+    "src/recovered/004c8930.cpp",
+    "src/recovered/00637300.cpp",
+    "src/recovered/units/004c8890.cpp",
+    "src/recovered/units/004c88e0.cpp",
+    "src/recovered/units/00636400.cpp",
+    "src/recovered/units/006371a0.cpp",
+    "src/recovered/units/00637870.cpp",
+    "src/recovered/units/006378b0.cpp",
+    "src/recovered/units/0063e540.cpp",
+    "src/recovered/units/0063e590.cpp",
+    "src/recovered/units/0063e820.cpp",
+    "src/stringstruct.cpp",
+    "src/unrecovered/004c8620.cpp",
+    "src/unrecovered/004c86d0.cpp",
+    "src/unrecovered/004c87b0.cpp",
+    "src/unrecovered/004c8840.cpp",
+    "src/unrecovered/00636300.cpp",
+    "src/unrecovered/00636530.cpp",
+    "src/unrecovered/00636740.cpp",
+    "src/unrecovered/00636960.cpp",
+    "src/unrecovered/00636fc0.cpp",
+    "src/unrecovered/00637070.cpp",
+    "src/unrecovered/006370e0.cpp",
+    "src/unrecovered/006371d0.cpp",
+    "src/unrecovered/006373a0.cpp",
+    "src/unrecovered/00637530.cpp",
+    "src/unrecovered/00637910.cpp",
+    "src/unrecovered/00637c30.cpp",
+    "src/unrecovered/00637d70.cpp",
+    "src/unrecovered/006381e0.cpp",
+    "src/unrecovered/0063e5e0.cpp",
+    "src/unrecovered/0063e6e0.cpp",
+    "src/video.cpp",
+    "src/video.h"
+  ],
+  "evidence": [
+    "Pinned636400 constructor builds Sound-derived prefix4C8620 at0, Palette54, frame queueA5C and BufferA6C;636530 teardown follows those real lifetimes. 4C9360 scalar deletion owns only the Sound prefix, not the outer Video. Replace flat1038 hypothesis/raw accessors with composition and genuine Sound inheritance, not vtable arrays, copied bytes or fixed-address calls.",
+    "Actual VC6 private complete-tree compilation under both historical flag sets confirms target32 Video extent1038, prefixSound base0/extent54, Palette54, Dib5A0, queueA5C, BufferA6C and borrowed GraphicWin1018/Buffer101C. This is emitted layout/compile evidence, not original matching or runtime acceptance. Native637320 reads window outer RECT13C..148, not a RECT at0.",
+    "Native636960 mmioOpen non-null branch continues setup; null dispatches MMIOINFO.wErrorRet through actual636F9C six-entry jump table. The retained seed reverses success, stream format destinations and audio configuration flag and loses argument ordering/borrowed Buffer receiver. Recover from pinned native instructions and real VC6 MainAVIHeader/AVIStreamHeader/AVIINDEXENTRY/WAVEFORMATEX/ICDECOMPRESSEX SDK types, not those errors.",
+    "Native registry ten pointers9BE640..9BE668 has a count10 error path writing the next codec origin word9BE668. Preserve that observed pointer-object representation through explicit typed storage and target32 width controls unless separately authorized to fix behavior; do not silently clamp. Queue zero-byte branch leaves payload/length uninitialized; preserve that unresolved error obligation, not an unapproved initialization fix.",
+    "Shared406B30 zero,4C93E0 return11 and4C8950 zero retain their canonical source owners/claims and other Sound/Voice callers. New real overrides require shared semantic/table correlations, not duplicate Original owners or new recovery credit. Preserve native prefix current_frame null return-1 and decode_frame_process observable EAX result.",
+    "Existing6365B0 FILE region6365B0..637310 and4C8910 truncated/shared-tail region remain explicit historical mapping debts. Native writer must retain those obligations/provenance rather than silently narrowing or describing the whole broad region as one close body. Source findings and new native extents are separate evidence, never ledger demotion.",
+    "CMake integration adds the owning TU and genuine existing SDK VFW32 import library. Recognized codecs remain external verification dependencies, not copied application recoveries. Before manual checkpoint: review real C++, fresh compile/link, affected historical matching/layout/reference and regression checks, preserve all discoveries and claims. No task selection, build or probe proves autonomous/full-game acceptance."
+  ],
+  "intent": "Recover the complete native Video owner, Sound-derived first member and frame queue as genuine typed C++ in video.cpp/video.h; finish loading, codec setup, playback, seeking, registration and lifecycle together. Rehome existing wrappers/accessors and preserve all original identities, historical claims, cold/EH intervals and lessons. Do not count rehomes/shared contracts as new behavior or claim full-game acceptance.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4221744,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5015072,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5015248,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5015472,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5015616,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5015696,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5015728,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5015744,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5015776,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5015824,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5015856,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5015888,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5018464,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5018592,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6513408,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6513648,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6513664,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6513968,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6514096,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6514496,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6514768,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6514896,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6515040,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6516672,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6516848,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6516960,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6517152,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6517200,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6517504,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6517520,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6517664,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6518064,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6518896,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6518960,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6519056,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6519856,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6520176,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6520976,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6521136,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6521312,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6546720,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6546752,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6546832,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6546912,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6547168,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6547440,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6547488,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "video-complete-owner-recovery"
+}

@@ -184,10 +184,7 @@ void __stdcall VectorCtorIterator(void *array, unsigned int element_size, int co
 // `net_class.cpp` now. The linker is what enforced that - LNK2005, two
 // definitions of one symbol - exactly as the note at the top of this file
 // says it would.
-void __cdecl do_video() {
-    typedef void(__cdecl *pending)();
-    PENDING_BODY(0x00636300, pending)();
-}
+
 
 // ?process_voice@Net@@QAEXXZ at 0x00631A60 and ?check_polling@Net@@QAEXXZ at
 // 0x006320E0 are in src/net_class.cpp now, with bodies - as is drop_player
@@ -233,15 +230,6 @@ void __cdecl consider_designs(uint32_t faction_id) {
 // `Win::~Win` WAS HERE, forwarding to 0x005EBC90. Homed into `win.cpp`
 // 2026-08-29; the linker (LNK2005) enforced it exactly as the note at the
 // top of this file says it would.
-
-// sub_4c86d0 at 0x004C86D0 - the teardown the Video deleting thunks call. See
-// the note in `deleting_thunks.h`. (sub_633010 at 0x00633010, the teardown
-// the 0x633160 deleting thunk calls, WAS HERE and is gone: its body is homed
-// into src/leaf_recoveries.cpp 2026-09-27.)
-void __fastcall sub_4c86d0(void *self) {
-    typedef void(__fastcall *pending)(void *);
-    PENDING_BODY(0x004C86D0, pending)(self);
-}
 
 // ?clear@MapWin@@QAEXH@Z at 0x00462870 - HOMED into src/mapwin.cpp
 // 2026-09-04, so this file no longer carries it. MapWin's own

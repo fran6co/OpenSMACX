@@ -992,25 +992,7 @@ extern "C" int __fastcall sub_5de320(Buffer *self, const char *a1) {
     return *FlyingTextY;
 }
 
-/*
-Purpose: Release the object parked in the receiver's +0x3C slot by
-         dispatching its vtable slot 37 and returning its verdict.
-// ORIGINAL: 0x004C8910 sub_4c8910 0x004C8910-0x004C891F FILE
-// RECOVERY_BINDING: v1 {"evidence": ["Original4C8910..4C891F; retired seed git:b18d3ac8:src/unrecovered/004c8910.cpp records the same identity and spans.", "The body reads one receiver field and makes one indirect dispatch; the slot-37 call passes the object itself as the receiver with no stack arguments, spelled here through a __fastcall function pointer so the object travels in ecx exactly as the original thiscall dispatch does."], "reason": "Coverage transcription of the single-slot release forwarder with the receiver as an explicit first argument; no in-tree class owns the receiver, so the slot stays a documented vtable index."}
-// symbol    @sub_4c8910@4
-// TRIED: the tail-called vtable slot37 matches exactly (mov/test/je/mov/jmp, 5/5 mnemonics), so the divergence is entirely the null branch: the original's `return -1` JUMPS OUT of this function into a shared tail block at 0x4C891F, four bytes past its own 15, and no C++ spelling reaches another function's interior. This body inlines `or eax,-1; ret` instead and is 4 bytes long. Not a lever - it names why the remainder cannot close from here.
-Status: Coverage transcription - unclaimed body
-*/
-extern "C" int __fastcall sub_4c8910(char *self) {
-    void *const target = *reinterpret_cast<void **>(self + 0x3C);
-    if (target != 0) {
-        typedef int (*ReleaseSlot)(void *);
-        ReleaseSlot *const vtable =
-            *reinterpret_cast<ReleaseSlot **>(target);
-        return vtable[37](target);
-    }
-    return -1;
-}
+
 
 /*
 Purpose: Copy one text record's string into fresh storage chosen by the

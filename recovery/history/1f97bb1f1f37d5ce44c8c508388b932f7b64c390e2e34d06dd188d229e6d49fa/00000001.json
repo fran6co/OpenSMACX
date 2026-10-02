@@ -1,0 +1,20 @@
+{
+  "event_id": "cfc885958e75f623acdb4b4c8db57f9d259f141c38dac738c77c5088a51a6cec",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/field_accessors.h",
+      "src/leaf_recoveries.h"
+    ],
+    "evidence": [
+      "The actual complete Video rehome removes obsolete coupled declarations alongside their canonical definitions; no shared owner, original identity, historical obligation or task baseline changes."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "video-owner-coupled-header-declarations",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:video-complete-owner-recovery"
+}

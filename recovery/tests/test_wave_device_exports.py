@@ -72,13 +72,13 @@ def run_device(tmp_path, monkeypatch):
         ("// LIVE_CREATE", "src/wave_device.cpp", 0x4C4ED0),
         ("// LIVE_DELETE", "src/wave_device.cpp", 0x4C4F10),
         ("// LIVE_RELEASE", "src/wave_device.cpp", 0x4C4F80)], declarations=[
+        ("// LIVE_LOADER", "src/sound_loader.cpp", "int __cdecl load_sound_dll()", "// ORIGINAL: 0x004C5F70"),
         ("// LIVE_GROUP_TYPES", "src/wave_device.h", "struct WaveGroupNode {", " /*\n  * Wave_Device class"),
         ("// LIVE_DEVICE_DECLARATION", "src/wave_device.h", "class Wave_Device {", "// THE OBJECT, at 0x0090D978"),
         ("// LIVE_ROLE_TYPES", "src/wave_device.h", "typedef int(__cdecl func_wave_device_factory)", "// The per-group construct/teardown pair"),
         ("// LIVE_SLOT_DISPATCH", "src/original_seam.h", "template <class Fn>\nFn &vtable_slot", "/*\n * The same slot as a POINTER-TO-MEMBER REFERENCE"),
         ("// LIVE_EXPORT_TYPE", "src/sound.h", "typedef void *SoundDllProcsTable[11];", "extern SoundDllProcsTable SoundDllProcs;"),
-        ("// LIVE_EXPORT_STORAGE", "src/sound_loader.cpp", "SoundDllProcsTable SoundDllProcs;", "int __cdecl load_sound_dll()"),
-        ("// LIVE_LOADER", "src/sound_loader.cpp", "int __cdecl load_sound_dll()", "/*\nPurpose: The sound-DLL version complaint box.")])
+        ("// LIVE_EXPORT_STORAGE", "src/sound_loader.cpp", "SoundDllProcsTable SoundDllProcs;", "int __cdecl load_sound_dll()")])
 
 
 def test_actual_lifecycle_observes_loading_rebinding_and_callback_changes(tmp_path, monkeypatch):

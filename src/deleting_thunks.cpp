@@ -1334,29 +1334,7 @@ void *__fastcall scalar_delete_ambience(void *self, void *,
     return self;
 }
 
-/*
-Purpose: The compiler-generated scalar deleting destructor at
-         ??_GVideo@@UAEPAXI@Z: run the complete destructor, then release the
-         storage through the executable's operator delete only when bit 0 of
-         the flags asks.
-// ORIGINAL: 0x004C9360 ??_GVideo@@UAEPAXI@Z 0x004C9360-0x004C9381 BYTE_EXACT
-// symbol    ?scalar_delete_video@@YIPAXPAX0I@Z
-// size      33 bytes
-// prototype void* (__thiscall ??_GVideo@@UAEPAXI@Z)(Video* this, int8)
-// callers   0   call targets   2
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     0x004C86D0 0x0064557F
-Return Value: the object pointer
-Status: Complete
-*/
-void *__fastcall scalar_delete_video(void *self, void *, unsigned int arg0) {
-    sub_4c86d0(self);
-    if (arg0 & 1) {
-        operator delete(self);
-    }
-    return self;
-}
+
 
 /*
 Purpose: The compiler-generated scalar deleting destructor at
