@@ -1,0 +1,64 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "3f2df6224d8701da7e923701c56365402e6901cf",
+  "editable_files": [
+    "src/sprite.cpp",
+    "src/sprite.h",
+    "recovery/tests/test_sprite_scratch_helpers.py",
+    "recovery/tests/sprite_scratch_helpers.cpp",
+    "src/recovered/units/00404860.cpp",
+    "src/recovered/00450de0.cpp",
+    "src/recovered/00450e30.cpp",
+    "src/recovered/00450e80.cpp",
+    "src/recovered/units/00450ed0.cpp",
+    "src/recovered/units/00450f30.cpp",
+    "src/recovered/00450f90.cpp"
+  ],
+  "evidence": [
+    "Native original bodies and current Sprite/Texture/Buffer signatures establish dimensions, palette remap order and result contracts. Existing Buffer g_PCX_PARSE_TEMP_BUFFER1 supplies real storage; GraphicWin public Buffer secondary base supplies draw receiver adjustment, not a raw +0x444 cast.",
+    "Independent source/native-seed review found seven body proposals consistent; actual-source host controls must distinguish secondary-base conversion, null owner, remap order, dimensions and return-versus-void behavior. Native source compilation, target measurement, protected-owner diagnostics, application build/link, claims and references are required.",
+    "All seven seeds retain historical BYTE_EXACT obligations. Only installed recover record can bank a fresh claim; no marker hand edits, claim demotion, task baseline resets or weaker verification are authorized. Native emitted-symbol observations must drive any original PAU versus source PAV naming correction.",
+    "No currently delegated worker edits sprite.cpp or sprite.h: active UI/combat/air-power workers prepare isolated private proposals only. Earlier task file overlap is historical, not worker permission to modify this owner. This bounded coordinator-reviewed manual recovery is not automatic/full-game acceptance or full linked preservation proof."
+  ],
+  "intent": "Recover seven complete Sprite/Texture scratch-buffer helpers through genuine source owners, preserving historical claims and original identity/spans; retire superseded seeds after verification.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4212832,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4525536,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4525616,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4525696,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4525776,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4525872,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4525968,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "sprite-scratch-helper-owner-coverage"
+}

@@ -19,6 +19,8 @@
 #include "original_seam.h"
 #include "sprite.h"
 #include "buffer.h"
+#include "graphicwin.h"
+#include "texture.h"
 // Independent DWORD geometry outputs from load_interface (0x455610).
 // At 455Bxx the original sums frame sprite bounds for the caption/border
 // and subtracts bottom sprite bounds. popups_normal copies these into the
@@ -3237,4 +3239,70 @@ int Sprite::init(char *filename, int width, int height) {
     iWidth_ = width;
     iHeight_ = height;
     return 0;
+}
+
+// ORIGINAL: 0x00404860 ?sprite_draw_func@@YAXPAUSprite@@PAUGraphicWin@@HHH@Z 0x00404860-0x00404896 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:3f2df6224d8701da7e923701c56365402e6901cf:src/recovered/units/00404860.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x404860 complete native body and call ordering.", "source:src/buffer.cpp:g_PCX_PARSE_TEMP_BUFFER1 binds original storage 0x00798668; source:src/graphicwin.h:public Buffer secondary base supplies the original +0x444 draw receiver adjustment."], "reason": "Draw callback using the real GraphicWin Buffer secondary base, Sprite transparency and native coordinate offsets."}
+// symbol    ?sprite_draw_func@@YAXPAVSprite@@PAVGraphicWin@@HHH@Z
+void __cdecl sprite_draw_func(Sprite *sprite, GraphicWin *owner,
+                              int unused, int x, int y) {
+    (void)unused;
+    x -= 5;
+    y -= 6;
+    Buffer *buffer = owner ? static_cast<Buffer *>(owner) : 0;
+    const unsigned char transparent = sprite->transparent_index();
+    sprite->draw(buffer, transparent, x, y, 1, 1);
+}
+
+// ORIGINAL: 0x00450DE0 sub_450de0 0x00450DE0-0x00450E2D BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:3f2df6224d8701da7e923701c56365402e6901cf:src/recovered/00450de0.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x450de0 complete native body and call ordering.", "source:src/buffer.cpp:g_PCX_PARSE_TEMP_BUFFER1 binds original storage 0x00798668; source:src/graphicwin.h:public Buffer secondary base supplies the original +0x444 draw receiver adjustment."], "reason": "Sprite/Texture extraction helper using the real shared PCX scratch Buffer; preserve palette remap order, native dimensions and result contract."}
+extern "C" int __cdecl sub_450de0(Sprite *sprite, int x, int y) {
+    Buffer *buffer = &g_PCX_PARSE_TEMP_BUFFER1;
+    buffer->change_color(0x107, 0x109);
+    buffer->change_color(0x106, 0x109);
+    return sprite->extract(buffer, 0x109, x, y, 100, 50, 0);
+}
+
+// ORIGINAL: 0x00450E30 sub_450e30 0x00450E30-0x00450E7D BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:3f2df6224d8701da7e923701c56365402e6901cf:src/recovered/00450e30.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x450e30 complete native body and call ordering.", "source:src/buffer.cpp:g_PCX_PARSE_TEMP_BUFFER1 binds original storage 0x00798668; source:src/graphicwin.h:public Buffer secondary base supplies the original +0x444 draw receiver adjustment."], "reason": "Sprite/Texture extraction helper using the real shared PCX scratch Buffer; preserve palette remap order, native dimensions and result contract."}
+extern "C" int __cdecl sub_450e30(Sprite *sprite, int x, int y) {
+    Buffer *buffer = &g_PCX_PARSE_TEMP_BUFFER1;
+    buffer->change_color(0x107, 0x109);
+    buffer->change_color(0x106, 0x109);
+    return sprite->extract(buffer, 0x109, x, y, 0x64, 0x3e, 0);
+}
+
+// ORIGINAL: 0x00450E80 sub_450e80 0x00450E80-0x00450ECD BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:3f2df6224d8701da7e923701c56365402e6901cf:src/recovered/00450e80.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x450e80 complete native body and call ordering.", "source:src/buffer.cpp:g_PCX_PARSE_TEMP_BUFFER1 binds original storage 0x00798668; source:src/graphicwin.h:public Buffer secondary base supplies the original +0x444 draw receiver adjustment."], "reason": "Sprite/Texture extraction helper using the real shared PCX scratch Buffer; preserve palette remap order, native dimensions and result contract."}
+extern "C" int __cdecl sub_450e80(Sprite *sprite, int x, int y) {
+    Buffer *buffer = &g_PCX_PARSE_TEMP_BUFFER1;
+    buffer->change_color(0x107, 0x109);
+    buffer->change_color(0x106, 0x109);
+    return sprite->extract(buffer, 0x109, x, y, 0x64, 0x4b, 0);
+}
+
+// ORIGINAL: 0x00450ED0 sub_450ed0 0x00450ED0-0x00450F21 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:3f2df6224d8701da7e923701c56365402e6901cf:src/recovered/units/00450ed0.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x450ed0 complete native body and call ordering.", "source:src/buffer.cpp:g_PCX_PARSE_TEMP_BUFFER1 binds original storage 0x00798668; source:src/graphicwin.h:public Buffer secondary base supplies the original +0x444 draw receiver adjustment."], "reason": "Sprite/Texture extraction helper using the real shared PCX scratch Buffer; preserve palette remap order, native dimensions and result contract."}
+extern "C" int __cdecl sub_450ed0(Sprite *sprite, int x, int y,
+                       int width, int height) {
+    Buffer *buffer = &g_PCX_PARSE_TEMP_BUFFER1;
+    buffer->change_color(0x107, 0x109);
+    buffer->change_color(0x106, 0x109);
+    return sprite->extract(buffer, 0x109, x, y, width, height, 0);
+}
+
+// ORIGINAL: 0x00450F30 sub_450f30 0x00450F30-0x00450F81 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:3f2df6224d8701da7e923701c56365402e6901cf:src/recovered/units/00450f30.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x450f30 complete native body and call ordering.", "source:src/buffer.cpp:g_PCX_PARSE_TEMP_BUFFER1 binds original storage 0x00798668; source:src/graphicwin.h:public Buffer secondary base supplies the original +0x444 draw receiver adjustment."], "reason": "Sprite/Texture extraction helper using the real shared PCX scratch Buffer; preserve palette remap order, native dimensions and result contract."}
+extern "C" void __cdecl sub_450f30(Sprite *sprite, int x, int y,
+                        int width, int height) {
+    Buffer *buffer = &g_PCX_PARSE_TEMP_BUFFER1;
+    buffer->change_color(0x107, 0x109);
+    buffer->change_color(0x106, 0x109);
+    sprite->extract(buffer, 0x109, x, y, width, height, 0);
+}
+
+// ORIGINAL: 0x00450F90 sub_450f90 0x00450F90-0x00450FB0 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:3f2df6224d8701da7e923701c56365402e6901cf:src/recovered/00450f90.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x450f90 complete native body and call ordering.", "source:src/buffer.cpp:g_PCX_PARSE_TEMP_BUFFER1 binds original storage 0x00798668; source:src/graphicwin.h:public Buffer secondary base supplies the original +0x444 draw receiver adjustment."], "reason": "Sprite/Texture extraction helper using the real shared PCX scratch Buffer; preserve palette remap order, native dimensions and result contract."}
+extern "C" int __cdecl sub_450f90(Texture *texture, int x, int y) {
+    return texture->extract(&g_PCX_PARSE_TEMP_BUFFER1, x, y, 0x38, 0x38, 0);
 }

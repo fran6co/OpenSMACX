@@ -20,6 +20,8 @@
 #include "original_seam.h"
 
 class Buffer;  // forward declaration
+class GraphicWin;
+class Texture;
 class CheckBox;  // controls may draw their selected-state sprites
 class RadioButton;  // controls may draw their selected-state sprites
 
@@ -386,3 +388,14 @@ enum { SpriteScalingTableCount = 800 };
 extern int SpriteScalingSteps[SpriteScalingTableCount];   // 0x009B3AD8
 extern int SpriteClippedXSteps[SpriteScalingTableCount];  // 0x009B53EC
 extern int SpriteClippedYSteps[SpriteScalingTableCount];  // 0x009B4760
+
+// Original draw callback and shared PCX scratch-buffer extraction helpers.
+void __cdecl sprite_draw_func(Sprite *sprite, GraphicWin *owner, int unused, int x, int y);
+extern "C" {
+int __cdecl sub_450de0(Sprite *sprite, int x, int y);
+int __cdecl sub_450e30(Sprite *sprite, int x, int y);
+int __cdecl sub_450e80(Sprite *sprite, int x, int y);
+int __cdecl sub_450ed0(Sprite *sprite, int x, int y, int width, int height);
+void __cdecl sub_450f30(Sprite *sprite, int x, int y, int width, int height);
+int __cdecl sub_450f90(Texture *texture, int x, int y);
+}
