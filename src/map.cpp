@@ -35,6 +35,51 @@
 #include "netmsg.h"   // NetMsgPrimary - synch_display posts through it
 #include "mapwin.h"
 #include "worldwin.h"
+#include "xpops.h"
+
+// Shared landmark lookups belong to these source arrays, not the old process.
+// Direction data has 49 independently identified rows of five bytes; keep
+// the following three-byte image gap out of the object. Initializers remain
+// pinned ignored configure-time derivatives, not tracked binary dumps.
+// RECOVERY_OBJECT: v2 0x00685684 0x00685779 ?AltDirectionTable@@3QBEB 0x005927D0
+extern const unsigned char AltDirectionTable[49 * 5] = {
+#include "terrain_alt_direction.inc"
+};
+static_assert(sizeof(AltDirectionTable) == 245, "landmark direction span");
+
+// Both the writable rows and immutable templates have 113-byte accessed
+// source windows. Original upper allocation bounds are unproved; their v1
+// bindings claim starts only. Writable initial windows are loader-zero.
+// RECOVERY_OBJECT: v1 0x007D3B74 ?AltBonusArid@@3PAEA
+unsigned char AltBonusArid[113];
+// RECOVERY_OBJECT: v1 0x0068577C ?AltTemplateArid@@3QBEB
+extern const unsigned char AltTemplateArid[113] = {
+#include "terrain_landmark_arid.inc"
+};
+// RECOVERY_OBJECT: v1 0x007F65D0 ?AltBonusMoist@@3PAEA
+unsigned char AltBonusMoist[113];
+// RECOVERY_OBJECT: v1 0x006857F0 ?AltTemplateMoist@@3QBEB
+extern const unsigned char AltTemplateMoist[113] = {
+#include "terrain_landmark_moist.inc"
+};
+// RECOVERY_OBJECT: v1 0x007F655C ?AltBonusRainy@@3PAEA
+unsigned char AltBonusRainy[113];
+// RECOVERY_OBJECT: v1 0x0068593C ?AltTemplateRainy@@3QBEB
+extern const unsigned char AltTemplateRainy[113] = {
+#include "terrain_landmark_rainy.inc"
+};
+// RECOVERY_OBJECT: v1 0x007D3A78 ?AltBonusFlat@@3PAEA
+unsigned char AltBonusFlat[113];
+// RECOVERY_OBJECT: v1 0x00685864 ?AltTemplateFlat@@3QBEB
+extern const unsigned char AltTemplateFlat[113] = {
+#include "terrain_landmark_flat.inc"
+};
+// RECOVERY_OBJECT: v1 0x007F64E8 ?AltBonusOcean@@3PAEA
+unsigned char AltBonusOcean[113];
+// RECOVERY_OBJECT: v1 0x006859B0 ?AltTemplateOcean@@3QBEB
+extern const unsigned char AltTemplateOcean[113] = {
+#include "terrain_landmark_ocean.inc"
+};
 
 // world_build copies eleven words from AltNaturalDefault to AltNatural.
 // world_rivers selects AltContour by the native altitude band. The three
@@ -6842,11 +6887,6 @@ Purpose: Rebuild the altitude-bonus tables from the landmarks on the map.
 Return Value: n/a
 Status: Complete
 */
-const unsigned char *const AltTemplateArid = (const unsigned char *)0x0068577C;
-const unsigned char *const AltTemplateMoist = (const unsigned char *)0x006857F0;
-const unsigned char *const AltTemplateFlat = (const unsigned char *)0x00685864;
-const unsigned char *const AltTemplateRainy = (const unsigned char *)0x0068593C;
-const unsigned char *const AltTemplateOcean = (const unsigned char *)0x006859B0;
 
 void __cdecl fixup_landmarks() {
     // 113 bytes each: the image inlines every one as `mov ecx, 0x1c / rep
@@ -6863,22 +6903,22 @@ void __cdecl fixup_landmarks() {
             if (tile->bit2 == 0) {
                 continue;
             }
-            int type = tile->bit2 >> 24;
+            // Native5929F3 uses SAR, not an unsigned top-byte extraction.
+            int type = static_cast<int32_t>(tile->bit2) >> 24;
             if (type >= 0) {
                 continue;
             }
             type = -1 - type;
             const unsigned char *digits = AltDirectionTable + type * 5;
-            unsigned char last = 0;
             if (tile->bit2 & BIT2_VOLCANO) {
                 for (int i = 0; i < 5; i++) {
-                    last = digits[i];
-                    AltBonusArid[last] = 0;
+                    AltBonusArid[digits[i]] = 0;
                 }
             }
             if (tile->bit2 & BIT2_CRATER) {
                 for (int i = 0; i < 5; i++) {
-                    AltBonusMoist[digits[i]] = last;
+                    // Native592A1D resets EBX before the crater byte stores.
+                    AltBonusMoist[digits[i]] = 0;
                 }
             }
         }
@@ -8097,5 +8137,224 @@ void __cdecl world_rainfall() {
             }
         }
         do_all_non_input();
+    }
+}
+
+// ORIGINAL: 0x00591290 ?alt_set@@YAXHHH@Z 0x00591290-0x00591894
+// RECOVERY_BINDING: v1 {"evidence": ["git:1fe327399e8313c7d34d3b190f391eeeafdb0c28:src/unrecovered/00591290.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tasks/game-logic-seed-owner-coverage.json"], "reason": "Recover signed altitude changes through real Map/Base/Veh/faction owners, preserving native submersion, facility, compaction and callback paths. Explicit unsigned shift retains x86 low-byte altitude encoding without C++ signed-shift undefined behavior. Historical mappings and seed lessons are retained; no new byte/layout/runtime/linked-preservation claim."}
+// TRIED: no Ghidra hint for this one - straight register-variable/goto transcription from the raw disassembly (44-byte tile struct, 0x833-stride owner tables, round-to-zero /2 idiom, extern lever on the lea-taken 0x00946d54 table). Compiles; diverges at instruction #0 (push vs mov), so the prologue/frame shape itself differs, not yet investigated further.
+void __cdecl alt_set(int x, int y, int altitude) {
+    static char submerged_title[] = "BASESUBMERGED";
+    static char submerged_lost_title[] = "BASESUBMERGED2";
+
+    if (TurnCurrentNum == 0) {
+        return;
+    }
+
+    Map *const tile = map_loc(x, y);
+    const int old_altitude = (tile->climate & 0xE0) >> 5;
+    const int was_water = old_altitude < ALT_SHORE_LINE;
+    const int becomes_water = altitude < ALT_SHORE_LINE;
+
+    if (altitude != old_altitude) {
+        delete_landmark(x, y);
+
+        if (was_water != becomes_water) {
+            tile->bit2 &= 0x7E1377A3u;
+            for (int faction = 0; faction < 7; ++faction) {
+                tile->bit_visible[faction] = tile->bit;
+            }
+
+            if (TurnCurrentNum != 0 &&
+                WorldClimateSkipTerritoryReset == 0 && becomes_water) {
+                const int base_id = base_at(x, y);
+                if (base_id >= 0 &&
+                    !has_fac_built_call(FAC_PRESSURE_DOME, base_id)) {
+                    Base &base = Bases[base_id];
+                    const int faction_id = base.faction_id_current;
+
+                    const int pressure_cost = (rand() % 3) + 2;
+                    const int half_population =
+                        static_cast<int>(base.population_size) / 2;
+                    int population_loss;
+                    if (half_population < pressure_cost ||
+                        pressure_cost > 10) {
+                        population_loss = pressure_cost;
+                    } else if (half_population <= 10) {
+                        population_loss = half_population;
+                    } else {
+                        population_loss = 10;
+                    }
+                    base.population_size = static_cast<int8_t>(
+                        base.population_size - population_loss);
+
+                    set_fac(FAC_PRESSURE_DOME, base_id, 1);
+                    ++MapBaseSubmergedCount[faction_id];
+                    // The native writer sets this neutral PlayerData flag;
+                    // no semantic flag name is established in the owner.
+                    PlayersData[faction_id].flags |= 0x00080000u;
+
+                    if (is_objective(base_id) && base.population_size <= 0) {
+                        base.population_size = 1;
+                    }
+
+                    if (base.population_size <= 0) {
+                        if (PlayersData[faction_id].current_num_bases <= 1) {
+                            base.population_size = 1;
+                            if (VehBattleUnkTgl[0] == 0) {
+                                const int local_faction =
+                                    ConsoleGlobal.faction_id_;
+                                if (faction_id == local_faction) {
+                                    ConsoleGlobal.focus(base.x, base.y,
+                                                        local_faction);
+                                    parse_says(0, base.name_string, -1, -1);
+                                    x_pop_caption_label(submerged_title,
+                                                        "subbase_sm.pcx", 0);
+                                } else if (base.visibility &
+                                           (1u << (local_faction & 0x1F))) {
+                                    ConsoleGlobal.focus(base.x, base.y,
+                                                        local_faction);
+                                    parse_says(0, base.name_string, -1, -1);
+                                    parse_says(1,
+                                        Players[faction_id].adj_name_faction,
+                                        -1, -1);
+                                    x_pop_caption_label(submerged_lost_title,
+                                                        "subbase_sm.pcx", 0);
+                                }
+                            }
+                        } else {
+                            if ((!IsMultiplayerNet ||
+                                 ConsoleControlTurnActive != 0) &&
+                                VehBattleUnkTgl[0] == 0) {
+                                const int local_faction =
+                                    ConsoleGlobal.faction_id_;
+                                if (faction_id == local_faction) {
+                                    ConsoleGlobal.focus(base.x, base.y,
+                                                        local_faction);
+                                    parse_says(0, base.name_string, -1, -1);
+                                    popp(ScriptPopupFile, "BASESUBMERGED1", 0,
+                                         "subbase_sm.pcx", 0);
+                                } else if (base.visibility &
+                                           (1u << (local_faction & 0x1F))) {
+                                    ConsoleGlobal.focus(base.x, base.y,
+                                                        local_faction);
+                                    parse_says(0, base.name_string, -1, -1);
+                                    parse_says(1,
+                                        Players[faction_id].adj_name_faction,
+                                        -1, -1);
+                                    popp(ScriptPopupFile, "BASESUBMERGED3", 0,
+                                         "subbase_sm.pcx", 0);
+                                }
+                            }
+
+                            base_kill(base_id);
+
+                            int vehicle_id = stack_fix(veh_at(x, y));
+                            while (vehicle_id >= 0) {
+                                Veh &vehicle = Vehs[vehicle_id];
+                                int next_vehicle = vehicle.next_veh_id_stack;
+                                const int triad = Chassis[
+                                    VehPrototypes[vehicle.proto_id].chassis_id
+                                ].triad;
+                                if (triad != TRIAD_AIR &&
+                                    (vehicle.flags & 0x20u) == 0 &&
+                                    ((triad == TRIAD_SEA) != becomes_water)) {
+                                    const int vehicle_faction =
+                                        vehicle.faction_id;
+                                    MapBaseIdClosestSubmergedVeh[vehicle_faction] =
+                                        base_find(x, y, vehicle_faction);
+                                    veh_kill(vehicle_id);
+                                    if (next_vehicle > vehicle_id) {
+                                        --next_vehicle;
+                                    }
+                                }
+                                vehicle_id = next_vehicle;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Land emerging from the sea can gain one rocky level; a land tile
+        // that is lowered can lose one. The probability divisors and the
+        // asymmetric altitude bounds follow the two native branches.
+        if (!becomes_water) {
+            const int rockiness = tile->val3 >> 6;
+            if (altitude > old_altitude) {
+                if (rockiness < ROCKINESS_ROCKY &&
+                    rockiness + 1 <= altitude - ALT_SHORE_LINE) {
+                    const int divisor = rockiness + 4;
+                    if (divisor <= 1 || rand() % divisor == 0) {
+                        tile->val3 = static_cast<uint8_t>(
+                            ((rockiness + 1) << 6) | (tile->val3 & 0x3F));
+                        UnkBitfield1 |= 1;
+                    }
+                }
+            } else if (rockiness > ROCKINESS_FLAT &&
+                       rockiness > altitude - ALT_SHORE_LINE) {
+                const int divisor = rockiness + 1;
+                if (divisor > 1 && rand() % divisor != 0) {
+                    tile->val3 = static_cast<uint8_t>(
+                        ((rockiness + 3) << 6) | (tile->val3 & 0x3F));
+                    UnkBitfield1 |= 1;
+                }
+            }
+        }
+    }
+
+    tile->climate = static_cast<uint8_t>((tile->climate & 0x1F) |
+                                         (static_cast<uint32_t>(altitude) << 5));
+    UnkBitfield1 |= 4;
+}
+
+
+// ORIGINAL: 0x005927D0 ?delete_landmark@@YAXHH@Z 0x005927D0-0x00592938
+// RECOVERY_BINDING: v1 {"evidence": ["git:1fe327399e8313c7d34d3b190f391eeeafdb0c28:src/recovered/units/005927d0.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tasks/game-logic-seed-owner-coverage.json"], "reason": "Recover landmark clearing through real Map members, shared source-owned lookup arrays and MapWin callbacks. Preserve the duplicate Flat-table clear, numeric9,999,999 cache sentinel, store-before-clear order and native absence of extra window/bounds guards. Historical mappings and seed lessons are retained; no new byte/layout/runtime/linked-preservation claim."}
+void __cdecl delete_landmark(int x, int y) {
+    Map *tile = map_tiles() + MapLongitude * y + (x >> 1);
+    const uint32_t old_flags = tile->bit2;
+    if (old_flags == 0) {
+        return;
+    }
+
+    tile->bit2 = old_flags & ~0x80u;
+    const int type = static_cast<int32_t>(tile->bit2) >> 24;
+    if (type < 0) {
+        return;
+    }
+
+    const unsigned char *digits = AltDirectionTable + type * 5;
+    if ((old_flags & 0x1u) != 0) {
+        for (int i = 0; i < 5; ++i) AltBonusMoist[digits[i]] = 0;
+    }
+    if ((old_flags & 0x2u) != 0) {
+        for (int i = 0; i < 5; ++i) AltBonusArid[digits[i]] = 0;
+    }
+    if ((old_flags & 0x200u) != 0) {
+        for (int i = 0; i < 5; ++i) AltBonusRainy[digits[i]] = 0;
+    }
+    if ((old_flags & 0x100u) != 0) {
+        for (int i = 0; i < 5; ++i) AltBonusFlat[digits[i]] = 0;
+    }
+    if ((old_flags & 0x800u) != 0) {
+        // The native 0x59288C arm clears the flat table again. Keep this
+        // duplicate rather than assigning a guessed table to the ridge flag.
+        for (int i = 0; i < 5; ++i) AltBonusFlat[digits[i]] = 0;
+    }
+
+    const uint32_t encoded_type =
+        (static_cast<uint32_t>(-1 - type) & 0xffu) << 24;
+    tile->bit2 = (tile->bit2 & 0x00ffffffu) | encoded_type;
+    UnkBitfield1 |= 4u;
+
+    for (size_t slot = 0; slot < MapWinTableSlots; ++slot) {
+        MapWin *window = MapWinTable[slot];
+        if (window->field_1DD74_ != 0) {
+            // Native 0x592915 stores immediate 0x0098967F at +8; this is a
+            // numeric cache sentinel (9,999,999), not a pointer.
+            window->field_8_ = 0x0098967Fu;
+            window->clear_alt(x, y, 1);
+        }
     }
 }

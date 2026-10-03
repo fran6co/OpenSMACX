@@ -294,8 +294,13 @@ def test_landmark_input_and_destination_refusals(tmp_path, hook, damage):
 
 
 def test_configured_terrain_generation_requires_every_bound_table(tmp_path, hook):
-    payload = PAYLOAD + PAIR_PAYLOAD * 3 + bytes(44 * 3)
-    root, original, output = project(tmp_path, data_image(payload))
+    payload = PAYLOAD + PAIR_PAYLOAD * 3 + bytes(44 * 3 + 245 + 113 * 5)
+    raw = bytearray(data_image(payload))
+    raw_size = ((len(payload) + 511) // 512) * 512
+    raw.extend(bytes(512 + raw_size - len(raw)))
+    struct.pack_into('<I', raw, 0x180, raw_size)
+    struct.pack_into('<I', raw, 0x188, raw_size)
+    root, original, output = project(tmp_path, bytes(raw))
     rows = ['struct LandmarkTextureChoice { signed char texture, rotation; };']
     for index, (_, symbol) in enumerate(LANDMARKS):
         start = 0x401000 + 53 + index * 98
@@ -308,11 +313,18 @@ def test_configured_terrain_generation_requires_every_bound_table(tmp_path, hook
         start = 0x401000 + 53 + 3 * 98 + index * 44
         altitude_rows.append(f'// RECOVERY_OBJECT: v2 0x{start:08X} '
                              f'0x{start + 44:08X} {symbol} 0x00401000')
+    start = 0x401000 + 53 + 3 * 98 + 44 * 3
+    altitude_rows.append(f'// RECOVERY_OBJECT: v2 0x{start:08X} '
+                         f'0x{start + 245:08X} ?AltDirectionTable@@3QBEB 0x00401000')
+    for index, symbol in enumerate(hook._LANDMARK_BONUS_TABLES.values()):
+        address = start + 245 + index * 113
+        altitude_rows.append(f'// RECOVERY_OBJECT: v1 0x{address:08X} {symbol}')
     (root / 'src/map.cpp').write_text('\n'.join(altitude_rows) + '\n')
     hook.terrain_initializers(root, original, output.parent)
     assert {path.name for path in output.parent.iterdir()} == {
         'terrain_coast_remap.inc', *(filename for filename, _ in LANDMARKS),
-        *hook._ALTITUDE_TABLES}
+        *hook._ALTITUDE_TABLES, 'terrain_alt_direction.inc',
+        *hook._LANDMARK_BONUS_TABLES}
     source.write_text(source.read_text().replace('_GarlandCraterTable', '_OtherTable'))
     # CMake must refuse even with all seven earlier cache files still present.
     with pytest.raises(ValueError):

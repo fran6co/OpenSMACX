@@ -551,28 +551,15 @@ int __cdecl zoc_move(int x, int y, int faction_id);
 int __cdecl mandate_color(int mandate);
 uint32_t *const MandateColors = (uint32_t *)0x008C6DE4;
 
-// THE ALTITUDE-BONUS TABLES the world-builder and the map renderer share.
-// Bound HERE, in the header, rather than as file-scope statics in mapwin.cpp,
-// because map.cpp needs the same five rows (delete_landmark and fixup_landmarks
-// both zero entries in them) and a namespace-scope `const` has internal
-// linkage: every TU folds its own copy to the immediate, which is what the
-// image's `mov cl, byte ptr [eax + edx + 0x685684]` shows. Same binding, same
-// fold, one place.
-// The five bonus rows are WRITABLE (`unsigned char *`, not pointer-to-const):
-// fixup_landmarks memcpy()s 0x31-byte template runs over them and
-// delete_landmark zeroes entries in them, so the const would be a lie the
-// compiler would enforce at exactly the call sites that matter.
-// 0x00685684 is the direction table (five bytes a direction, the first naming
-// it and the four after it the neighbours it fans out to); 0x00685EA0 and
-// 0x00685EE0 are the two coordinate-stride tables the same walk adds to a
-// tile's x and y as it steps outward. The five bonus rows are the live copies
-// the image copies 0x31-byte templates over (see the 0x0066EF28 note above).
-const unsigned char *const AltDirectionTable = (const unsigned char *)0x00685684;
-unsigned char *const AltBonusArid = (unsigned char *)0x007D3B74;
-unsigned char *const AltBonusMoist = (unsigned char *)0x007F65D0;
-unsigned char *const AltBonusRainy = (unsigned char *)0x007F655C;
-unsigned char *const AltBonusFlat = (unsigned char *)0x007D3A78;
-unsigned char *const AltBonusOcean = (unsigned char *)0x007F64E8;
+// Shared source-owned terrain tables; original starts and evidence live at
+// their definitions in map.cpp. Bonus source windows are 113 bytes, not a
+// claim that the original allocations have exactly those upper bounds.
+extern const unsigned char AltDirectionTable[49 * 5];
+extern unsigned char AltBonusArid[113];
+extern unsigned char AltBonusMoist[113];
+extern unsigned char AltBonusRainy[113];
+extern unsigned char AltBonusFlat[113];
+extern unsigned char AltBonusOcean[113];
 const unsigned char *const AltStepX = (const unsigned char *)0x00685EA0;
 
 MEASURED inline BOOL __cdecl on_map(int x, int y) {
@@ -909,3 +896,6 @@ MEASURED inline void __cdecl map_shutdown() {
     map_tiles() = 0;
     MapAbstract() = 0;
 }
+
+void __cdecl alt_set(int x, int y, int altitude);
+void __cdecl delete_landmark(int x, int y);

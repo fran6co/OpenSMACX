@@ -7,6 +7,7 @@ pointer values or an unpinned fallback, and never retain extracted data here.
 from pathlib import Path
 
 from match_recovery.object_source import read_objects
+from match_recovery.model import Span
 from match_recovery.pe_coff import PeImage
 from match_recovery.source_inventory import image_pin
 from match_recovery.source_replica import artifact_parent
@@ -24,11 +25,20 @@ _ALTITUDE_TABLES = {
     'terrain_altitude_natural.inc': '?AltNatural@@3PAIA',
 }
 
+_LANDMARK_BONUS_TABLES = {
+    'terrain_landmark_arid.inc': '?AltTemplateArid@@3QBEB',
+    'terrain_landmark_moist.inc': '?AltTemplateMoist@@3QBEB',
+    'terrain_landmark_rainy.inc': '?AltTemplateRainy@@3QBEB',
+    'terrain_landmark_flat.inc': '?AltTemplateFlat@@3QBEB',
+    'terrain_landmark_ocean.inc': '?AltTemplateOcean@@3QBEB',
+}
+
 
 def _terrain_initializer(root: Path, original: Path, output: Path, *,
                          output_name: str, unit: str, symbol: str,
                          size: int, signed_pairs: bool = False,
-                         unsigned_words: bool = False) -> None:
+                         unsigned_words: bool = False,
+                         accessed_window: bool = False) -> None:
     if unsigned_words and (signed_pairs or size % 4):
         raise ValueError('altitude initializer requires complete unsigned words')
     root = root.resolve()
@@ -44,18 +54,24 @@ def _terrain_initializer(root: Path, original: Path, output: Path, *,
     pin = image_pin(root)
     binding, = [b for b in read_objects(root, pin)
                 if b.unit == unit and b.symbol == symbol]
-    if binding.span is None or binding.span.end - binding.span.start != size:
+    if binding.span is None and accessed_window:
+        # A reviewed memcpy window is not an original allocation upper bound.
+        # Only the named landmark template hook opts into this start-only view.
+        span = Span(binding.origin.address, binding.origin.address + size)
+    elif binding.span is not None and binding.span.end - binding.span.start == size:
+        span = binding.span
+    else:
         raise ValueError(f'terrain table requires its bounded {size}-byte source interpretation')
     data = original.read_bytes()
     image = PeImage(data, pin)
     # read_initial validates data-section ownership; read independently refuses
     # virtual zero fill. Both must describe the same fully file-backed bytes.
-    values = image.read(binding.span)
+    values = image.read(span)
     if any(flags & 0x20000000 for (region, _, _), flags in
            zip(image.sections, image.section_flags)
-           if region.start <= binding.span.start and binding.span.end <= region.end):
+           if region.start <= span.start and span.end <= region.end):
         raise ValueError('terrain remap cannot use executable storage')
-    if image.read_initial(binding.span) != values or image.absolute_sites(binding.span):
+    if image.read_initial(span) != values or image.absolute_sites(span):
         raise ValueError('terrain remap requires file-backed non-relocated byte data')
     if unsigned_words:
         words = [int.from_bytes(values[i:i + 4], 'little')
@@ -102,6 +118,24 @@ def terrain_initializers(root: Path, original: Path, directory: Path) -> None:
         terrain_landmark_initializer(root, original, directory / filename)
     for filename in _ALTITUDE_TABLES:
         terrain_altitude_initializer(root, original, directory / filename)
+    terrain_direction_initializer(root, original, directory / 'terrain_alt_direction.inc')
+    for filename in _LANDMARK_BONUS_TABLES:
+        terrain_landmark_bonus_initializer(root, original, directory / filename)
+
+
+def terrain_direction_initializer(root: Path, original: Path, output: Path) -> None:
+    _terrain_initializer(root, original, output,
+                         output_name='terrain_alt_direction.inc', unit='src/map.cpp',
+                         symbol='?AltDirectionTable@@3QBEB', size=245)
+
+
+def terrain_landmark_bonus_initializer(root: Path, original: Path, output: Path) -> None:
+    symbol = _LANDMARK_BONUS_TABLES.get(output.name)
+    if symbol is None:
+        raise ValueError('unknown terrain landmark bonus initializer')
+    _terrain_initializer(root, original, output, output_name=output.name,
+                         unit='src/map.cpp', symbol=symbol, size=113,
+                         accessed_window=True)
 
 
 def terrain_altitude_initializer(root: Path, original: Path, output: Path) -> None:
