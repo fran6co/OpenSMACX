@@ -1,0 +1,20 @@
+{
+  "event_id": "808d410528602ad6b97f3f38f98fcfec665dbd00427235426c1e74939026049f",
+  "payload": {
+    "affects": [
+      "entity-da3dc4fa8f106f83c693b9ca531f1471f117e7daa023902924803dd11eb17a0d"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "faction-upkeep-path-destination-interface-20261003",
+    "evidence": [
+      "Fresh prospective faction.cpp VC6 compile fails C2248 on Paths.x_dst_/y_dst_. Existing Path has these private int keys at18/1C; source-owned Paths945B00 owns seed writes945B18/1C=-1. Other Path reset operations have extra behavior; no existing public two-key-only operation."
+    ],
+    "hypothesis": "Real owner compilation shows faction_upkeep directly writes private Path destination keys. Recover the native two-field cache invalidation through a narrow nonvirtual inline Path interface rather than breaking encapsulation or self-offset access.",
+    "kind": "discovery"
+  },
+  "previous_event": "5ff937f24b687554be0a8ce0dbbfefb2b172b27b704d54e0ae2835dde470917b",
+  "request_id": "faction-upkeep-path-destination-interface-20261003",
+  "schema_version": 1,
+  "sequence": 36,
+  "stream": "task:base-colony-economy-coverage-wave"
+}

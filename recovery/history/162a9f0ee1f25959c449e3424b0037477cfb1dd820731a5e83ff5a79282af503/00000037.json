@@ -1,0 +1,19 @@
+{
+  "event_id": "d1f376aee001dddf4fb6c4646b016245f13faf4fddf87b63677b6f143b39d79f",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/path.h"
+    ],
+    "evidence": [
+      "Admit only source-only nonvirtual inline Path::invalidate_destination() that assigns existing x_dst_=-1 then y_dst_=-1, called by full faction_upkeep. No new storage/layout/base/virtual slot, original identity or byte claim; retain all existing Path behavior and obligations. Preserve task baseline, pending riot decision and all source discoveries. Candidate allocator goto fix uses explicit lexical block around severe-police loop, retaining native branch/read/call order. Private new-v2 proposals first; root native verification/review/build-link before publication."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "808d410528602ad6b97f3f38f98fcfec665dbd00427235426c1e74939026049f",
+  "request_id": "admit-faction-upkeep-path-destination-interface-20261003",
+  "schema_version": 1,
+  "sequence": 37,
+  "stream": "task:base-colony-economy-coverage-wave"
+}
