@@ -1088,7 +1088,8 @@ ProdPicker::ProdPicker() {
 }
 
 // ORIGINAL: 0x00421100 ??1ProdPicker@@QAE@XZ 0x00421100-0x00421392;0x00651250-0x00651376
-// RECOVERY_BINDING: v1 {"evidence": ["git:1b3ed0614446d5283fe4cbd2392cbb64b49db601:src/recovered/units/00421100.cpp", "source:src/prodpicker.h"], "reason": "Home the ProdPicker destructor in its real owning TU; typed embedded members own their cleanup after close(), replacing the external hand-offset teardown forwarder."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:1b3ed0614446d5283fe4cbd2392cbb64b49db601:src/recovered/units/00421100.cpp", "source:src/prodpicker.h", "git:c96a47e3f89e8792c8514ac2ca79259ab6f42c3e:src/recovered/units/00421100.cpp", "Historical seed spelling ??1ProdPicker@@QAE@XZ; current source mapping ??1ProdPicker@@QAE@XZ; emitted symbol ??1ProdPicker@@UAE@XZ.", "Historical seed funclet identifies FlatButton destructor0x406880; nine embedded FlatButton members require genuine external destructor/lifetime behavior, not synthesized verification scaffolding. The actual GraphicWin-derived virtual destructor emits UAE rather than the catalogue QAE spelling."], "reason": "Home the ProdPicker destructor in its real owning TU; typed embedded members own their cleanup after close(), replacing the external hand-offset teardown forwarder. Superseded seed retired after owner review; original spans, existing claims and useful seed findings remain in source. This cleanup grants no new match or acceptance claim."}
+// symbol    ??1ProdPicker@@UAE@XZ
 ProdPicker::~ProdPicker() {
     close();
 }

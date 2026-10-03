@@ -2607,7 +2607,9 @@ static unsigned char *const NetPlayerNameRecord =
 
 // Original player insertion is bound by the coordinator's native writer.
 // ORIGINAL: 0x00632CC0 sub_632cc0 0x00632CC0-0x00632DAA
-// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00632cc0.cpp"], "reason": "Typed sixteen-slot player insertion replaces executable-address forwarder; user-approved full-table rejection intentionally differs on invalid input. Seed and historical obligations retained, no exactness claim."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:c96a47e3f89e8792c8514ac2ca79259ab6f42c3e:src/unrecovered/00632cc0.cpp", "git:c96a47e3f89e8792c8514ac2ca79259ab6f42c3e:src/unrecovered/00632cc0.cpp", "Historical seed spelling sub_632cc0; current source mapping sub_632cc0; emitted symbol ?sub_632cc0@Net@@QAEHPADHE@Z."], "reason": "Typed sixteen-slot player insertion replaces executable-address forwarder; user-approved full-table rejection intentionally differs on invalid input. Seed and historical obligations retained, no exactness claim. Superseded seed retired after owner review; original spans, existing claims and useful seed findings remain in source. This cleanup grants no new match or acceptance claim."}
+// TRIED: bare `strcat` intrinsic-expands to strlen(scasb)+memcpy; `#pragma function(strcat)` forces the real call. ecx is `this` (not the stdcall the IDA guess implied) - rewritten as a thiscall member of a throwaway class taking (char*, int, unsigned char), matching the "ret 0xc" 3-stack-arg cleanup. do-while / for over the 16-slot search loop UNROLLS the first iteration (duplicated body) under /O2, which the original does not show; `while(true){...; if(cond) break;}` keeps a single instance matching the original's layout, but still emits `jge` where the original has `jl` at the loop's back edge - flipping the break condition's polarity didn't change it. 84% mnemonic match, single divergence region.
+// symbol    ?sub_632cc0@Net@@QAEHPADHE@Z
 int Net::sub_632cc0(char *text, int id, unsigned char flag) {
     int index = 0;
     while (index < 16 && players_[index].field_0_ != 0) {
