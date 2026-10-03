@@ -20,6 +20,9 @@
 // body      src/caviar.h
 #include "stdafx.h"
 #include "base.h"
+#include "battlewin.h"
+#include "map.h"
+#include "terraforming.h"
 #include "original_seam.h"
 #include "strings.h"  // StringTemp, 0x009B86A0
 #include "statuswin.h"
@@ -39,6 +42,9 @@
 #include "spying_recovery.h"
 #include "tutwin.h"
 #include "veh.h"
+
+// Insert in src/statuswin.cpp after the project headers; palette.cpp owns storage.
+extern int TextColourTable[195];
 
 void __cdecl help_any();
 
@@ -391,13 +397,602 @@ StatusWin ConsoleStatusWin;  // 0x008C5568
 // calls     0x00421B50 0x004632D0 0x004B4CF0 0x004C9B00 0x004E3A50 0x004E6E50 0x004E7310 0x004E7750 0x005594F0 0x0055AF20 0x0055BC00 0x0057D7D0 0x005882F0 0x005919C0 0x00592030 0x005B8C90 0x005B9F20 0x005BFE90 0x005D5930 0x005D8000 0x005DAC70 0x005DACB0 0x005DCEA0 0x005DD020 0x005DD130 0x005DD3B0 0x005DD530 0x005E2DD3 0x005E3203 0x005FA960 0x005FAA90 0x006169A0 0x00619280 0x006453E0 0x00645470 0x0064FC88
 // indirect  0x004B8246 0x004B8254 0x004B8261 0x004B829D 0x004B82AD
 
+// Typed StatusWin::draw_status recovery from the pinned native body.
+// Retained KUNA pseudocode was used only as a control-flow aid; all data and
+// calls below are expressed through current source owners.
 void StatusWin::draw_status(int a1, int a2, int a3, int a4, int a5) {
-    // BODY GOES HERE.
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
+    field_15DC_ = 0;
+    if (a1 >= 0 && a2 >= 0) {
+        g_BattleWin.battle_report(a1, a2, a3, a4, a5);
+        return;
+    }
+    if (IfaceIdToSlotStorage[ActiveIfaceIdStorage] != 0) return;
 
+    for (int type = 0; type < 4; ++type) spot_.kill_type(type);
+    spot_.kill_type(10);
+    spot_.kill_type(11);
+
+    font1_.width(const_cast<char *>("#"));
+    a2 = 1;
+    a3 = font1_.unk_1_ >= 0
+        ? font1_.pixel_height() + font1_.unk_1_ : font1_.line_height();
+    Buffer *const canvas = static_cast<Buffer *>(&MainInterfaceGlobal);
+    canvas->set_font(&font1_, &font3_, &font2_, 0);
+
+    int selected_vehicle = ConsoleGlobal.selected_vehicle_;
+    int selected_base = -1;
+    int base_under_cursor = -1;
+    int tile_x = iTileX_;
+    int tile_y = iTileY_;
+    if (ConsoleGlobal.cursor_active_ != 0 && selected_vehicle >= 0 &&
+        TurnCurrentNum != 0) {
+        tile_x = Vehs[selected_vehicle].x;
+        tile_y = Vehs[selected_vehicle].y;
+        if (tile_x != iTileX_ || tile_y != iTileY_) goto resolve_panel_selection;
+    } else {
+resolve_panel_selection:
+        tile_x = iTileX_;
+        tile_y = iTileY_;
+        selected_vehicle = TurnCurrentNum != 0 ? veh_at(tile_x, tile_y) : -1;
+        base_under_cursor = base_at(tile_x, tile_y);
+        if (selected_vehicle >= 0) {
+            const int original_vehicle = selected_vehicle;
+            int top_vehicle = selected_vehicle;
+            while (Vehs[top_vehicle].prev_veh_id_stack >= 0)
+                top_vehicle = Vehs[top_vehicle].prev_veh_id_stack;
+            const int original_owner = Vehs[original_vehicle].faction_id;
+            const int viewer = ConsoleGlobal.faction_id_;
+            if (original_owner != viewer &&
+                (GameState & STATE_OMNISCIENT_VIEW) == 0) {
+                const Map &tile = MapTiles[tile_y * MapLongitude + (tile_x >> 1)];
+                if ((PlayersData[viewer].flags & 0x200) == 0 &&
+                    (tile.visibility & (1U << (viewer & 31))) == 0) {
+                    selected_vehicle = -1;
+                } else if (base_under_cursor >= 0) {
+                    const Base &base = Bases[base_under_cursor];
+                    bool can_see_base =
+                        (PlayersData[base.faction_id_current]
+                             .diplo_treaties[viewer] & 1) != 0 ||
+                        spying(base.faction_id_current) != 0;
+                    for (int neighbor = 0; !can_see_base && neighbor < 8; ++neighbor) {
+                        const int x = base.x + VehMoveDeltaX[neighbor];
+                        const int y = base.y + VehMoveDeltaY[neighbor];
+                        if (y < 0 || y >= MapLatitudeBounds) continue;
+                        int wrapped_x = x;
+                        if ((MapIsFlat & 1) == 0) {
+                            if (wrapped_x < 0) wrapped_x += MapLongitudeBounds;
+                            else if (wrapped_x >= MapLongitudeBounds)
+                                wrapped_x -= MapLongitudeBounds;
+                        }
+                        if (wrapped_x < 0 || wrapped_x >= MapLongitudeBounds) continue;
+                        const Map &nearby = MapTiles[y * MapLongitude +
+                                                    (wrapped_x >> 1)];
+                        if ((nearby.bit & BIT_VEH_IN_TILE) != 0 &&
+                            ((nearby.val2 & 0x0f) == viewer)) can_see_base = true;
+                    }
+                    if ((base.faction_id_current == viewer ||
+                         (GameState & STATE_OMNISCIENT_VIEW) != 0 ||
+                         (base.visibility & (1U << (viewer & 31))) != 0) &&
+                        can_see_base) {
+                        // Visibility of the base keeps the selected vehicle;
+                        // the city panel selection is resolved from iCityIndex_.
+                    } else {
+                        selected_vehicle = -1;
+                    }
+                } else {
+                    const Veh &stack_top = Vehs[top_vehicle];
+                    if ((stack_top.faction_id == viewer &&
+                         (stack_top.flags & 0x440) != 0x440) ||
+                        (stack_top.visibility & (1U << (viewer & 31))) != 0) {
+                        // The selected stack remains available when its top
+                        // vehicle is visible to the current faction.
+                    } else {
+                        selected_vehicle = -1;
+                    }
+                }
+            }
+        }
+    }
+
+    selected_base = -1;
+    if (iUnitIndex_ >= 0) {
+        const Veh &selected = Vehs[iUnitIndex_];
+        if (selected.x == tile_x && selected.y == tile_y) selected_vehicle = iUnitIndex_;
+    } else if (iCityIndex_ >= 0) {
+        const Base &selected = Bases[iCityIndex_];
+        if (selected.x == tile_x && selected.y == tile_y)
+            selected_base = iCityIndex_;
+    }
+    field_15DC_ = selected_vehicle >= 0;
+    if (selected_base >= 0 && (GameState & STATE_OMNISCIENT_VIEW) == 0) {
+        const Base &base = Bases[selected_base];
+        if (base.faction_id_current != ConsoleGlobal.faction_id_ &&
+            (base.visibility & (1U << (ConsoleGlobal.faction_id_ & 31))) == 0) {
+            selected_base = -1;
+            iCityIndex_ = -1;
+        }
+    }
+
+    RECT work = MainInterfaceGlobal.status_right_rect();
+    canvas->box_sprite(&work, &InterfaceBoxStyles[21]);
+    work.top += 3; work.right -= 3; work.left += 3; work.bottom -= 3;
+    canvas->box_sprite(&work, &InterfaceBoxStyles[18]);
+    work.left += 3; work.right -= 3; work.top += 3; work.bottom -= 3;
+    canvas->set_clip(&work);
+    canvas->set_text_color(TextColourTable[18], TextColourTable[19], 1, 1);
+
+    int text_x = work.left;
+    int text_y = (work.right - work.left) / 2 + 3 + work.top;
+    int map_index = tile_y * MapLongitude + (tile_x >> 1);
+    const int viewer = ConsoleGlobal.faction_id_;
+    const Map &tile = MapTiles[map_index];
+    char number[84];
+    const bool visible = (GameState & STATE_OMNISCIENT_VIEW) != 0 ||
+        (PlayersData[viewer].flags & 0x200) != 0 ||
+        (tile.visibility & (1U << (viewer & 31))) != 0;
+
+    if (visible) {
+        MapWinCaptionScale = (work.right - work.left) - 4;
+        MapWinCaptionDivisor = 100;
+        const int map_faction = (GameState & STATE_OMNISCIENT_VIEW)
+            ? -1 : viewer;
+        gen_terrain_poly(canvas, 0, 0, map_faction, 0, 0x621,
+                         tile_x, tile_y, text_x + 2, work.top + 1);
+        MapWinCaptionScale = -1;
+        MapWinCaptionDivisor = -1;
+
+        int resource_text_y = text_y - 4;
+        if (field_15A8_ != 0) {
+            canvas->set_text_color(TextColourTable[18], TextColourTable[19], 1, 1);
+            const int crop = crop_yield(viewer, -1, tile_x, tile_y, 0);
+            StringTemp[0] = '\0';
+            strcat(StringTemp, StringTable.get(
+                static_cast<int>(reinterpret_cast<intptr_t>(Resource[0].name_plural))));
+            strcat(StringTemp, ": ");
+            strcat(StringTemp, " ");
+            itoa(crop, number, 10);
+            strcat(StringTemp, number);
+            canvas->write_l(StringTemp, text_x, resource_text_y,
+                            strlen(StringTemp));
+            const Map &resource_tile = MapTiles[map_index];
+            const uint32_t resource_flags = resource_tile.bit;
+            const bool crop_bonus_visible =
+                (resource_tile.val3 & 0xc0) <= 0x7f &&
+                (!(resource_flags & BIT_FUNGUS) ||
+                 (resource_tile.climate & 0xe0) <= 0x3f) &&
+                (resource_flags & 0xa000) == 0 &&
+                (crop <= 1 || has_tech(Rules.tech_three_nutrients_sqr, viewer) ||
+                 bonus_at(tile_x, tile_y, 0) == 1 ||
+                 (resource_flags & BIT_CONDENSER) != 0);
+            resource_text_y += a3;
+            if (crop_bonus_visible) {
+                StringTemp[0] = '\0';
+                strcat(StringTemp, "  ");
+                strcat(StringTemp, label_get(0xfc4 / 4));
+                strcat(StringTemp, ": ");
+                strcat(StringTemp, " ");
+                itoa(crop + 1, number, 10);
+                strcat(StringTemp, number);
+                canvas->write_l(StringTemp, text_x, resource_text_y,
+                                strlen(StringTemp));
+            }
+            resource_text_y += a3;
+            const int minerals = mine_yield(viewer, -1, tile_x, tile_y, 0);
+            StringTemp[0] = '\0';
+            strcat(StringTemp, StringTable.get(
+                static_cast<int>(reinterpret_cast<intptr_t>(Resource[1].name_plural))));
+            strcat(StringTemp, ": ");
+            strcat(StringTemp, " ");
+            itoa(minerals, number, 10);
+            strcat(StringTemp, number);
+            canvas->write_l(StringTemp, text_x, resource_text_y,
+                            strlen(StringTemp));
+            const bool mineral_bonus_visible =
+                (resource_flags & 0x1002000) == 0 &&
+                (resource_flags & 0x10) == 0 &&
+                (!(resource_flags & BIT_FUNGUS) ||
+                 (resource_tile.climate & 0xe0) <= 0x3f) &&
+                minerals < mine_yield(viewer, -1, tile_x, tile_y, 1);
+            resource_text_y += a3;
+            if (mineral_bonus_visible) {
+                StringTemp[0] = '\0';
+                strcat(StringTemp, "  ");
+                strcat(StringTemp, label_get(0xfc8 / 4));
+                strcat(StringTemp, ": ");
+                strcat(StringTemp, " ");
+                itoa(mine_yield(viewer, -1, tile_x, tile_y, 1), number, 10);
+                strcat(StringTemp, number);
+                canvas->write_l(StringTemp, text_x, resource_text_y,
+                                strlen(StringTemp));
+            }
+            resource_text_y += a3;
+            const int energy = energy_yield(viewer, -1, tile_x, tile_y, 0);
+            StringTemp[0] = '\0';
+            strcat(StringTemp, StringTable.get(
+                static_cast<int>(reinterpret_cast<intptr_t>(Resource[2].name_plural))));
+            strcat(StringTemp, ": ");
+            strcat(StringTemp, " ");
+            itoa(energy, number, 10);
+            strcat(StringTemp, number);
+            canvas->write_l(StringTemp, text_x, resource_text_y,
+                            strlen(StringTemp));
+            const bool energy_bonus_visible =
+                (resource_flags & 0x1002000) == 0 &&
+                (resource_flags & 0x40) == 0 &&
+                (!(resource_flags & BIT_FUNGUS) ||
+                 (resource_tile.climate & 0xe0) <= 0x3f);
+            resource_text_y += a3;
+            if (energy_bonus_visible) {
+                StringTemp[0] = '\0';
+                strcat(StringTemp, "  ");
+                strcat(StringTemp, label_get(0xfcc / 4));
+                strcat(StringTemp, ": ");
+                strcat(StringTemp, " ");
+                itoa(energy_yield(viewer, -1, tile_x, tile_y, 1), number, 10);
+                strcat(StringTemp, number);
+                canvas->write_l(StringTemp, text_x, resource_text_y,
+                                strlen(StringTemp));
+            }
+            text_y = resource_text_y + a3;
+        }
+    } else {
+        StringTemp[0] = '\0';
+        strcat(StringTemp, label_get(0x300 / 4));
+        canvas->write_cent_l(StringTemp, &work, strlen(StringTemp));
+    }
+
+    if (visible && field_15A8_ == 0) {
+        const int terrain_kind = static_cast<int>(tile.climate >> 5) - 3;
+        if (terrain_kind < 0) {
+            StringTemp[0] = '\0';
+            int water_label = -1;
+            if (terrain_kind == -3) water_label = 0x568;
+            else if (terrain_kind == -2) water_label = 0x304;
+            else if (terrain_kind == -1) water_label = 0x564;
+            if (water_label >= 0) {
+                strcat(StringTemp, label_get(water_label / 4));
+                const int written = canvas->write_l(StringTemp, text_x,
+                                                     text_y - 4,
+                                                     strlen(StringTemp));
+                if (written >= 0) a1 = written;
+                text_y += a3;
+            }
+        }
+
+        StringTemp[0] = '\0';
+        const int elevation = abs(elev_at(tile_x, tile_y));
+        strcat(StringTemp, label_get((terrain_kind < 0 ? 0x30 : 0x2c) / 4));
+        strcat(StringTemp, ": ");
+        itoa(elevation, number, 10);
+        strcat(StringTemp, number);
+        strcat(StringTemp, label_get(0x34 / 4));
+        const int terrain_label_y = text_y;
+        const int terrain_text_width = canvas->write_l(
+            StringTemp, text_x, terrain_label_y, strlen(StringTemp));
+        text_y += a3;
+
+        const int altitude = tile.climate & 0xe0;
+        if (terrain_kind >= 0) {
+            if (ClimateSeaLevelDelta >= 1 &&
+                static_cast<int>(tile.contour) - MapSeaLevel <
+                    static_cast<int>(AltNatural[3]) + ClimateSeaLevelDelta) {
+                StringTemp[0] = '\0';
+                strcat(StringTemp, label_get(0x7fc / 4));
+                canvas->set_text_color(0xf9, -1, 1, 1);
+                canvas->write_l(StringTemp, text_x, text_y, strlen(StringTemp));
+                text_y += a3;
+            }
+        } else if (ClimateSeaLevelDelta <= -1 &&
+                   static_cast<int>(AltNatural[3]) + ClimateSeaLevelDelta <=
+                       static_cast<int>(tile.contour) - MapSeaLevel) {
+            StringTemp[0] = '\0';
+            strcat(StringTemp, label_get(0x7fc / 4));
+            canvas->set_text_color(0xf9, -1, 1, 1);
+            canvas->write_l(StringTemp, text_x, text_y, strlen(StringTemp));
+            text_y += a3;
+        }
+        canvas->set_text_color(TextColourTable[18], TextColourTable[19], 1, 1);
+
+        if (terrain_kind >= 0) {
+            StringTemp[0] = '\0';
+            strcat(StringTemp, label_get((0x164 + (tile.val3 >> 6) * 4) / 4));
+            strcat(StringTemp, BufferJoinSpace);
+            strcat(StringTemp, "&");
+            strcat(StringTemp, BufferJoinSpace);
+            strcat(StringTemp, label_get((0x50 + ((tile.climate & 0x18) >> 3) * 4) / 4));
+            const int altitude_rainfall_width = canvas->write_l(
+                StringTemp, text_x, text_y, strlen(StringTemp));
+            if (terrain_text_width > altitude_rainfall_width)
+                a1 = terrain_text_width;
+            else a1 = altitude_rainfall_width;
+            text_y += a3;
+
+            StringTemp[0] = '\0';
+            if ((tile.bit2 & 0x80000002U) == BIT2_VOLCANO) {
+                strcat(StringTemp, StringTable.get(
+                    static_cast<int>(reinterpret_cast<intptr_t>(Natural[1].name_short))));
+            }
+            if ((tile.bit2 & 0x80000001U) == BIT2_CRATER) {
+                strcat(StringTemp, StringTable.get(
+                    static_cast<int>(reinterpret_cast<intptr_t>(Natural[0].name_short))));
+            }
+            if ((tile.bit2 & 0x80000004U) == BIT2_JUNGLE &&
+                altitude >= 0x60) {
+                strcat(StringTemp, StringTable.get(
+                    static_cast<int>(reinterpret_cast<intptr_t>(Natural[2].name_short))));
+            }
+            if ((tile.bit2 & 0x80000008U) == BIT2_URANIUM) {
+                strcat(StringTemp, StringTable.get(
+                    static_cast<int>(reinterpret_cast<intptr_t>(Natural[3].name_short))));
+            }
+            if ((tile.bit2 & 0x80000040U) == BIT2_DUNES) {
+                strcat(StringTemp, StringTable.get(
+                    static_cast<int>(reinterpret_cast<intptr_t>(Natural[6].name_short))));
+            }
+            if ((tile.bit2 & 0x80000100U) == BIT2_MESA) {
+                strcat(StringTemp, StringTable.get(
+                    static_cast<int>(reinterpret_cast<intptr_t>(Natural[8].name_short))));
+            }
+            if ((tile.bit2 & 0x80000200U) == BIT2_CANYON) {
+                strcat(StringTemp, StringTable.get(
+                    static_cast<int>(reinterpret_cast<intptr_t>(Natural[9].name_short))));
+            }
+            if ((tile.bit2 & 0x80000800U) == BIT2_RIDGE) {
+                strcat(StringTemp, StringTable.get(
+                    static_cast<int>(reinterpret_cast<intptr_t>(Natural[11].name_short))));
+            }
+            if ((tile.bit2 & 0x80002000U) == BIT2_NEXUS) {
+                strcat(StringTemp, StringTable.get(
+                    static_cast<int>(reinterpret_cast<intptr_t>(Natural[13].name_short))));
+            }
+            if (ExpansionEnabled != 0 &&
+                (tile.bit2 & 0x80004000U) == BIT2_UNITY) {
+                strcat(StringTemp, StringTable.get(
+                    static_cast<int>(reinterpret_cast<intptr_t>(Natural[14].name_short))));
+            }
+            if (StringTemp[0] != '\0') {
+                canvas->write_l(StringTemp, text_x, text_y, strlen(StringTemp));
+                text_y += a3;
+            }
+
+            StringTemp[0] = '\0';
+            const bool has_river = (tile.bit & BIT_RIVER) != 0;
+            if (has_river) strcat(StringTemp, label_get(0x3a8 / 4));
+            if ((tile.bit & BIT_FUNGUS) != 0 && altitude >= 0x40) {
+                if (StringTemp[0] != '\0') strcat(StringTemp, ", ");
+                strcat(StringTemp, label_get(0x21c / 4));
+            } else if ((tile.bit & 0x200000) != 0) {
+                if (StringTemp[0] != '\0') strcat(StringTemp, ", ");
+                strcat(StringTemp, label_get(0x48c / 4));
+            }
+            if (StringTemp[0] != '\0') {
+                canvas->write_l(StringTemp, text_x, text_y, strlen(StringTemp));
+                text_y += a3;
+            }
+        } else {
+            StringTemp[0] = '\0';
+            if (ExpansionEnabled != 0 &&
+                (tile.bit2 & 0x80008000U) == BIT2_FOSSIL)
+                strcat(StringTemp, StringTable.get(
+                    static_cast<int>(reinterpret_cast<intptr_t>(Natural[15].name_short))));
+            if ((tile.bit2 & BIT2_FRESH) != 0 && altitude <= 0x5f) {
+                strcat(StringTemp, StringTable.get(
+                    static_cast<int>(reinterpret_cast<intptr_t>(Natural[7].name_short))));
+            }
+            if ((tile.bit2 & 0x80000400U) == BIT2_GEOTHERMAL) {
+                strcat(StringTemp, StringTable.get(
+                    static_cast<int>(reinterpret_cast<intptr_t>(Natural[10].name_short))));
+            }
+            if ((tile.bit & BIT_FUNGUS) != 0 && altitude >= 0x40) {
+                if (StringTemp[0] != '\0') strcat(StringTemp, ", ");
+                strcat(StringTemp, label_get(0x398 / 4));
+            }
+            if (StringTemp[0] != '\0') {
+                canvas->write_l(StringTemp, text_x, text_y, strlen(StringTemp));
+                text_y += a3;
+            }
+        }
+
+        const int bonus = bonus_at(tile_x, tile_y, 0);
+        if (bonus >= 1) {
+            StringTemp[0] = '\0';
+            strcat(StringTemp, label_get((0x16c + bonus * 4) / 4));
+            strcat(StringTemp, " ");
+            strcat(StringTemp, label_get(0x17c / 4));
+            canvas->write_l(StringTemp, text_x, text_y, strlen(StringTemp));
+            text_y += a3;
+        }
+
+        StringTemp[0] = '\0';
+        bool has_terraforming_label = false;
+        for (int terrain = 0; terrain < 0x13; ++terrain) {
+            const uint32_t terrain_bit = Terraforming[terrain].bit;
+            if (terrain_bit == 0 || (tile.bit & terrain_bit) == 0 ||
+                terrain == TERRA_FOREST || terrain == TERRA_REMOVE_FUNGUS ||
+                terrain == TERRA_PLANT_FUNGUS) continue;
+            if (terrain == 0 && (tile.bit & 0x80000)) continue;
+            if (terrain == 5 && (tile.bit & 0x8)) continue;
+            if (has_terraforming_label) strcat(StringTemp, ", ");
+            const LPSTR label = (tile.climate & 0xe0) < 0x60
+                ? Terraforming[terrain].name_sea : Terraforming[terrain].name;
+            strcat(StringTemp,
+                   StringTable.get(static_cast<int>(reinterpret_cast<intptr_t>(label))));
+            has_terraforming_label = true;
+        }
+        if ((tile.bit & BIT_MONOLITH) != 0) {
+            if (has_terraforming_label) strcat(StringTemp, ", ");
+            strcat(StringTemp, label_get(0x238 / 4));
+        }
+        if (StringTemp[0] != '\0') {
+            RECT wrap_rect = work;
+            wrap_rect.top = text_y;
+            text_y = canvas->wrap(StringTemp, &wrap_rect);
+        }
+    }
+
+    if ((GameState & STATE_SCENARIO_EDITOR) != 0 &&
+        (GameState & STATE_DEBUG_MODE) != 0) {
+        StringTemp[0] = '\0';
+        strcat(StringTemp, "(");
+        itoa(static_cast<int>(static_cast<int8_t>(tile.region)), number, 10);
+        strcat(StringTemp, number);
+        strcat(StringTemp, ")");
+        canvas->set_text_color(TextColourTable[18], TextColourTable[19], 1, 1);
+        canvas->write_l(StringTemp, text_x + 2, work.bottom - a3,
+                        strlen(StringTemp));
+    }
+    if (((GameState & STATE_SCENARIO_EDITOR) != 0 &&
+         (GameState & STATE_DEBUG_MODE) != 0) ||
+        text_y < work.bottom - a3) {
+        StringTemp[0] = '\0';
+        strcat(StringTemp, "(");
+        itoa(tile_x, number, 10);
+        strcat(StringTemp, number);
+        strcat(StringTemp, " ");
+        strcat(StringTemp, ", ");
+        itoa(tile_y, number, 10);
+        strcat(StringTemp, number);
+        strcat(StringTemp, ")");
+        canvas->set_text_color(TextColourTable[18], TextColourTable[19], 1, 1);
+        canvas->write_right_l(StringTemp, work.right - 2,
+                              work.bottom - a3, strlen(StringTemp));
+    }
+
+    canvas->restore_clip();
+    RECT status_right = MainInterfaceGlobal.status_right_rect();
+    spot_.add(0, 3, status_right.left, status_right.top,
+              status_right.right - status_right.left,
+              status_right.bottom - status_right.top);
+    MainInterfaceGlobal.soft_update(&status_right);
+
+    field_15C8_ = -1;
+    field_15C4_ = -1;
+    field_15CC_ = selected_vehicle;
+    field_15D0_ = selected_base;
+    draw_active(selected_vehicle, selected_base, 1);
+
+    RECT unit_panel = MainInterfaceGlobal.status_hit_rect();
+    canvas->box_sprite(&unit_panel, &InterfaceBoxStyles[21]);
+    unit_panel.top += 3; unit_panel.right -= 3;
+    unit_panel.bottom -= 3; unit_panel.left += 3;
+    canvas->box_sprite(&unit_panel, &InterfaceBoxStyles[18]);
+    unit_panel.top += 3; unit_panel.right -= 3;
+    unit_panel.bottom -= 3; unit_panel.left += 3;
+    if (TurnCurrentNum == 0) return;
+
+    int base_id = base_at(tile_x, tile_y);
+    if (base_id >= 0 && (GameState & STATE_OMNISCIENT_VIEW) == 0 &&
+        Bases[base_id].faction_id_current != viewer &&
+        (Bases[base_id].visibility & (1U << (viewer & 31))) == 0) base_id = -1;
+    int item_count = base_id >= 0 ? 1 : 0;
+    if (selected_vehicle >= 0) {
+        int top = selected_vehicle;
+        while (Vehs[top].prev_veh_id_stack >= 0)
+            top = Vehs[top].prev_veh_id_stack;
+        for (int unit = top; unit >= 0; unit = Vehs[unit].next_veh_id_stack)
+            ++item_count;
+    }
+    int item_width = (MapWinCaptionScale >= 1
+        ? MapWinCaptionScale * 100 / MapWinCaptionDivisor : 0x32) + 0xb;
+    const int visible_items = (unit_panel.right - unit_panel.left) /
+        (item_width + 5);
+    if (item_count <= visible_items) {
+        MainInterfaceGlobal.flat_button(8).hide();
+        MainInterfaceGlobal.flat_button(9).hide();
+        MainInterfaceGlobal.flat_button(10).hide();
+    } else {
+        const RECT &stack_buttons = MainInterfaceGlobal.stack_button_rect();
+        const RECT &adjacent_right = MainInterfaceGlobal.adjacent_panel_right_rect();
+        item_width = (adjacent_right.left - stack_buttons.right - 2) /
+            visible_items - 5;
+        MainInterfaceGlobal.flat_button(8).show(0);
+        MainInterfaceGlobal.flat_button(10).show(0);
+    }
+
+    const RECT &stack_buttons = MainInterfaceGlobal.stack_button_rect();
+    int row_x = unit_panel.left;
+    if (item_count > visible_items) row_x = stack_buttons.right + 1;
+    const int row_top = unit_panel.top;
+    const int row_bottom = unit_panel.bottom;
+    const int row_step = item_width + 5;
+    int drawn = 0;
+    if (base_id >= 0) {
+        RECT row_clip;
+        row_clip.left = row_x - 2; row_clip.right = row_x + item_width + 2;
+        row_clip.top = row_top - 2; row_clip.bottom = row_bottom + 2;
+        canvas->set_clip(&row_clip);
+        base_draw(canvas, base_id, row_x + 11, row_top - 1, -8, 0x40);
+        base_draw(canvas, base_id, row_x, row_top - 1, 0, 0x1800);
+        spot_.add(base_id, 11, row_x, row_top,
+                  item_width + 5, row_bottom - row_top);
+        if (base_id == selected_base) {
+            RECT outline;
+            outline.left = row_x - 2; outline.right = row_x + item_width + 2;
+            outline.top = row_top - 2; outline.bottom = row_bottom + 2;
+            canvas->box(&outline, 0xae, 0xae);
+        }
+        row_x += row_step;
+        drawn = 1;
+    }
+
+    if (MainInterfaceStatusRedrawFlag == 0 && selected_vehicle > -1) {
+        stack_sort_2(selected_vehicle);
+    }
+    if (selected_vehicle >= 0) {
+        int top = selected_vehicle;
+        while (Vehs[top].prev_veh_id_stack >= 0)
+            top = Vehs[top].prev_veh_id_stack;
+        for (int unit = top; unit >= 0 && drawn < visible_items;
+             unit = Vehs[unit].next_veh_id_stack, ++drawn) {
+            RECT row;
+            row.left = row_x - 2; row.right = row_x + item_width + 2;
+            row.top = row_top - 2; row.bottom = row_bottom + 2;
+            canvas->set_clip(&row);
+            veh_draw(canvas, unit, row_x + 11, row_top - 1, -8, 0x400, 0);
+            veh_draw(canvas, unit, row_x, row_top - 1, 0, 0x1800, 0);
+            canvas->set_font(&font1_, 0, 0, 0);
+            StringTemp[0] = '\0';
+            const Veh &vehicle = Vehs[unit];
+            if (vehicle.order >= 4 && vehicle.order <= 0x17 &&
+                (vehicle.faction_id == viewer ||
+                 (GameState & STATE_OMNISCIENT_VIEW) != 0 ||
+                 (PlayersData[viewer].diplo_treaties[vehicle.faction_id] & 1))) {
+                const int turns = action_terraform(unit, vehicle.order - 4, 0);
+                itoa(turns + 1, number, 10);
+                strcat(StringTemp, number);
+                strcat(StringTemp, BufferJoinSpace);
+                strcat(StringTemp, label_get((turns == 1 ? 0xc0 : 0xc4) / 4));
+                canvas->set_text_color(0xfb, 3, 1, 1);
+            } else {
+                say_stats_3(StringTemp, vehicle.proto_id);
+                if ((vehicle.flags & 0x80) != 0) strcat(StringTemp, "#");
+                if ((GameState & STATE_SCENARIO_EDITOR) != 0 &&
+                    (GameState & STATE_DEBUG_MODE) != 0) {
+                    strcat(StringTemp, " ");
+                    strcat(StringTemp, "(");
+                    itoa(unit, number, 10);
+                    strcat(StringTemp, number);
+                    strcat(StringTemp, ")");
+                }
+                canvas->set_text_color(TextColourTable[20], TextColourTable[21], 1, 1);
+            }
+            canvas->write_cent_l(StringTemp, row_x,
+                                 font1_.descent() - a3 + row_bottom + 3,
+                                 item_width, strlen(StringTemp));
+            if (unit == selected_vehicle && selected_base < 0) {
+                RECT outline = row;
+                canvas->box(&outline, 0xae, 0xae);
+            }
+            spot_.add(unit, 0, row_x, row_top,
+                      item_width + 5, row_bottom - row_top);
+            row_x += row_step;
+        }
+    }
+
+    find_font(0x14, 0);
+    RECT status_hit = MainInterfaceGlobal.status_hit_rect();
+    MainInterfaceGlobal.soft_update(&status_hit);
+    canvas->restore_clip();
 }
 
 // ORIGINAL: 0x004B8830 ?draw@StatusWin@@QAEXHHHHH@Z 0x004B8830-0x004B888A BYTE_EXACT
@@ -1052,4 +1647,141 @@ void StatusWin::UNK3() {
     if (iCityIndex_ >= 0) {
         TutWinBaseWindow.zoom(iCityIndex_, 0);
     }
+}
+
+// Private candidate bodies for the admitted StatusWin owner. This file is a
+// host-test extraction packet, not project source and carries no recovery
+// annotations or historical claims.
+
+// ORIGINAL: 0x004B89C0 ?arrow_left@StatusWin@@QAEXXZ 0x004B89C0-0x004B8BC5
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004b89c0.cpp", "Pinned original01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tests/test_statuswin_remaining_behavior.py"], "reason": "Home the complete typed StatusWin arrow_left operation. Retain the original seed and historical obligations; this product has no new measured claim."}
+void StatusWin::arrow_left() {
+    if (iUnitIndex_ == -1) {
+        return;
+    }
+
+    const int previous = Vehs[iUnitIndex_].prev_veh_id_stack;
+    if (previous >= 0) {
+        iUnitIndex_ = previous;
+    } else {
+        const int base_id = base_at(iTileX_, iTileY_);
+        if (base_id < 0) {
+            return;
+        }
+        iCityIndex_ = base_id;
+        iUnitIndex_ = -1;
+    }
+
+    const int font_height = WinScreenWidth == 0x320 ? 10 : 12;
+    if (font_height != field_15AC_) {
+        field_15AC_ = font_height;
+        font1_.init(DefaultFontFace, font_height, 0);
+        font2_.init(DefaultFontFace, font_height, 2);
+        font3_.init(DefaultFontFace, font_height, 1);
+    }
+    if (WinScreenWidth != 0x320) {
+        font1_.unk_1_ = 4;
+        font2_.unk_1_ = 4;
+        font3_.unk_1_ = 4;
+    }
+
+    draw_status(-1, -1, -1, -1, 0);
+    RECT rect;
+    UnionRect(&rect, &MainInterfaceGlobal.status_hit_rect(),
+              &MainInterfaceGlobal.status_right_rect());
+    UnionRect(&rect, &rect, &MainInterfaceGlobal.status_left_rect());
+    MainInterfaceGlobal.soft_update(&rect);
+}
+
+// ORIGINAL: 0x004B8BD0 ?arrow_right@StatusWin@@QAEXXZ 0x004B8BD0-0x004B8DF0 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004b8bd0.cpp", "Pinned original01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tests/test_statuswin_remaining_behavior.py"], "reason": "Home the complete typed StatusWin arrow_right operation. Retain the original seed and historical obligations; this product has no new measured claim. Historical seed obligation is carried by this product; current restoration is outstanding."}
+void StatusWin::arrow_right() {
+    bool changed = false;
+    if (iCityIndex_ >= 0) {
+        const int vehicle_id = veh_at(iTileX_, iTileY_);
+        if (field_15DC_ != 0 && vehicle_id >= 0) {
+            iCityIndex_ = -1;
+            iUnitIndex_ = vehicle_id;
+            changed = true;
+        }
+    } else if (iUnitIndex_ >= 0) {
+        const int next = Vehs[iUnitIndex_].next_veh_id_stack;
+        if (next >= 0) {
+            iUnitIndex_ = next;
+            changed = true;
+        }
+    }
+    if (!changed) {
+        return;
+    }
+
+    const int font_height = WinScreenWidth == 0x320 ? 10 : 12;
+    if (font_height != field_15AC_) {
+        field_15AC_ = font_height;
+        font1_.init(DefaultFontFace, font_height, 0);
+        font2_.init(DefaultFontFace, font_height, 2);
+        font3_.init(DefaultFontFace, font_height, 1);
+    }
+    if (WinScreenWidth != 0x320) {
+        font1_.unk_1_ = 4;
+        font2_.unk_1_ = 4;
+        font3_.unk_1_ = 4;
+    }
+
+    draw_status(-1, -1, -1, -1, 0);
+    RECT rect;
+    UnionRect(&rect, &MainInterfaceGlobal.status_hit_rect(),
+              &MainInterfaceGlobal.status_right_rect());
+    UnionRect(&rect, &rect, &MainInterfaceGlobal.status_left_rect());
+    MainInterfaceGlobal.soft_update(&rect);
+}
+
+// ORIGINAL: 0x004B9FC0 ?init@StatusWin@@QAEXXZ 0x004B9FC0-0x004BA11E
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004b9fc0.cpp", "Pinned original01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tests/test_statuswin_remaining_behavior.py"], "reason": "Home the complete typed StatusWin init operation. Retain the original seed and historical obligations; this product has no new measured claim."}
+void StatusWin::init() {
+    field_15A8_ = 0;
+    fInOnClick_ = 0;
+    iTileX_ = 0;
+    iTileY_ = 0;
+    iUnitIndex_ = -1;
+    iCityIndex_ = -1;
+    field_15C8_ = -1;
+    field_15C4_ = -1;
+    field_15D0_ = -1;
+    field_15CC_ = -1;
+    field_15AC_ = -1;
+    field_15D4_ = 0;
+
+    if ((StatusFlags & 0x20u) == 0) {
+        StatusFlags |= 0x20u;
+    }
+
+    spot_.init(0x18);
+    caviar_.init();
+    caviar_.set_field_A4(0);
+
+    camera_angles_.values[0] = 0.0f;
+    const uint32_t initial_angle_bits = 0x3F48F5C3u;
+    memcpy(&camera_angles_.values[1], &initial_angle_bits,
+           sizeof(initial_angle_bits));
+    camera_angles_.values[2] = 0.0f;
+
+    caviar_apply_rotation(camera_angles_.values, &camera_rotation_);
+
+    camera_rotation_.values[2][0] = -camera_rotation_.values[2][0];
+    camera_rotation_.values[2][1] = -camera_rotation_.values[2][1];
+    camera_rotation_.values[2][2] = -camera_rotation_.values[2][2];
+    VOX_Vect direction;
+    direction.values[0] = camera_rotation_.values[2][0] * -10000.0f;
+    direction.values[1] = camera_rotation_.values[2][1] * -10000.0f;
+    direction.values[2] = camera_rotation_.values[2][2] * -10000.0f;
+    caviar_.set_camera_direct(&direction, &camera_rotation_);
+    caviar_.set_scaling(0.18f);
+
+    caviar_.light_vector_.values[0] = 0.0f;
+    caviar_.light_vector_.values[1] = 0.0f;
+    caviar_.light_vector_.values[2] = 1.0f;
+    caviar_.shadow_vector_.values[0] = 0.0f;
+    caviar_.shadow_vector_.values[1] = 0.0f;
+    caviar_.shadow_vector_.values[2] = 1.0f;
 }

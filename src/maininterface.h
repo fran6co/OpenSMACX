@@ -289,6 +289,8 @@ class MainInterface : public GraphicWin, public SubInterface {
   // message pane and to the desktop's MessageWin.
   void chat(char *text, int channel);
 
+  const RECT &stack_button_rect() const { return stack_button_rect_; }
+  const RECT &adjacent_panel_right_rect() const { return adjacent_panel_right_rect_; }
   const RECT &status_hit_rect() const { return status_hit_rect_; }
   const RECT &status_left_rect() const { return status_left_rect_; }
   const RECT &status_right_rect() const { return status_right_rect_; }

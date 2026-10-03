@@ -1,0 +1,20 @@
+{
+  "event_id": "f9de189975450df704e332e2000de7149870a49f60ce3ea2a2854e203512f38c",
+  "payload": {
+    "affects": [
+      "entity-53fd1caf1f8f6dfce7afaae7ecdd20a9f0fcf90258e6940ceeb9126c813d472f"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "statuswin-historical-obligation-transfer-20261003",
+    "evidence": [
+      "Native mapping adoption requires existing claimed seed obligations on its product; unclaimed proposal adds one ambiguous_source. Original seed retained unchanged. Frozen v6 native restoration report MISMATCH at0/3 under the two recipes, all28 pre-existing product diagnostics unchanged; full application rebuild/link116steps exit0 and nine actual-source controls pass. Supersede unclaimed proposal only for this historical identity; transfer via native writer is not a newly measured claim grant, no recorder banking, demotion or gate waiver. Keep pending restoration visible against original task baseline; not game/runtime/automatic acceptance."
+    ],
+    "hypothesis": "Carry the existing arrow-right historical seed obligation into its genuine product through the native writer; restoration remains outstanding. Coordinator permits manually reviewed bounded coverage with that explicit restoration limitation, not automatic acceptance.",
+    "kind": "discovery"
+  },
+  "previous_event": "cb953a0e8a6234c9a7b5eb025f2f75e21c96d903bddf149a1e65db4a598ac512",
+  "request_id": "statuswin-historical-obligation-transfer-20261003",
+  "schema_version": 1,
+  "sequence": 12,
+  "stream": "task:statuswin-remaining-owner-coverage"
+}

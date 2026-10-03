@@ -32,7 +32,9 @@
   * only at which constructor ran first and not at whether `this` had been
   * adjusted before it.
   *
-  * The layout is not established and nothing pins its sizeof.
+  * Native compiler evidence preserves sizeof(StatusWin) == 0x15EC and the
+  * mapped camera vector/matrix at +0x1500/+0x150C. Unknown fields remain
+  * explicit; this is not complete behavioral or runtime layout proof.
 */
 class StatusWin {
   // MainInterface redraw completion reads the actual selected tile members.
@@ -43,8 +45,8 @@ class StatusWin {
 
  public:
   void redraw();
-  // 0x004B6570, 8885 bytes - still an original body, a pending_bodies
-  // forwarder. redraw() calls it BY NAME.
+  // 0x004B6570, 8885 original bytes. The typed HUD renderer is owned here;
+  // redraw() and navigation call it by name.
   void draw_status(int a1, int a2, int a3, int a4, int a5);
 
  public:
@@ -94,18 +96,13 @@ class StatusWin {
   // reason - construction here never actually uses `operator new`.
   Caviar caviar_;  // 0x30, sizeof(Caviar)
   uint8_t field_1400_[0x100];  // 0x1400
-  uint32_t field_1500_;  // 0x1500
-  uint32_t field_1504_;  // 0x1504
-  uint32_t field_1508_;  // 0x1508
-  uint8_t field_150C_[0x18];  // 0x150C
-  float field_1524_;  // 0x1524
-  float field_1528_;  // 0x1528
-  float field_152C_;  // 0x152C
+  VOX_Vect camera_angles_;  // 0x1500
+  VOX_Matrix camera_rotation_;  // 0x150C
   Font font1_;  // 0x1530
   Font font2_;  // 0x1558
   Font font3_;  // 0x1580
   uint32_t field_15A8_;  // 0x15A8
-  uint32_t field_15AC_;  // 0x15AC
+  int32_t field_15AC_;  // 0x15AC
   uint8_t field_15B0_[0x4];  // 0x15B0
   int32_t iTileX_;
   int32_t iTileY_;

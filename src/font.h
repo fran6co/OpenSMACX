@@ -89,6 +89,7 @@ class Font {
   }
   LPSTR find_line_break_l(LPSTR input, int *break_len, size_t len);
   bool is_initialized() const { return font_obj_ != NULL; }
+  int descent() const { return descent_; }
   int pixel_height() const { return height_; }
   // InfoWin's panel builder (0x00456300) uses Font+0x0C independently
   // of the adjusted row pitch returned by line_advance().
