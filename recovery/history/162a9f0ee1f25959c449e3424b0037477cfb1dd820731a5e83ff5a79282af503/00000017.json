@@ -1,0 +1,28 @@
+{
+  "event_id": "1b775f8758aeb14b06cc757a6f34790d508dae5ca2299d227541708ec3378825",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_base_colony_production.py",
+      "src/pending_bodies.cpp",
+      "src/veh.cpp",
+      "src/veh.h"
+    ],
+    "evidence": [
+      "Admit complete389instruction veh_init5C03D0..5C08C0 Vehicle owner and removal only of its central PENDING_BODY forwarder, not a placeholder. Existing editable Vehicle APIs/real BaseFindDist/faction/map/prototype owners supply relationships; no speculative fields/globals, raw executable aliases, machine bytes or semantic guards. Preserve all seeds/claims/originaltaskbase; names require measuredlayout/native evidence. Root fullreview, actual-body host controls, both VC6 recipes and protected diagnostics, fresh applicationcompile/link, scoped measurement/claims/references required before manualcommit. This dependency closes behavior for colony production/ecology; no whole-game or automaticacceptance inference."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6030288,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "cc2a6d3e5e8c92731ef704c743ad4aee789d745dae35dc674d145e115dd02a2d",
+  "request_id": "admit-colony-vehicle-creation-dependency-20261003",
+  "schema_version": 1,
+  "sequence": 17,
+  "stream": "task:base-colony-economy-coverage-wave"
+}

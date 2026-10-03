@@ -1,0 +1,21 @@
+{
+  "event_id": "cc2a6d3e5e8c92731ef704c743ad4aee789d745dae35dc674d145e115dd02a2d",
+  "payload": {
+    "affects": [
+      "entity-4c18b5a6716765b7bfcb69f8ca022a20abb0eb4daf79e57b16e7886b29400e0d",
+      "entity-7cf0d7fe9dba6cdda5b084e74756853e723bdb863f6922b760d78e787926f015"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "colony-vehicle-creation-dependency-20261003",
+    "evidence": [
+      "Current src/pending_bodies.cpp defines veh_init by PENDING_BODY5C03D0, not real source behavior. Native base_production4F1097 and base_ecology invoke this owner; archived src/unrecovered/005c03d0.cpp supplies exact5C03D0..5C08C0 mapping. Worker independently pinned/decode389instructions1264bytes endingRET5C08BF; existing typed Vehicle/prototype/faction/map/base APIs available. Distance output90EA04 is existing BaseFindDist, not an unowned new global. Candidate/host/native/link review and bounded separate scope admission remain required; preserve seed/baseline and all claims."
+    ],
+    "hypothesis": "Complete real Vehicle owner veh_init5C03D0 instead of leaving new colony production/ecology calls attached to the old central fixed-address PENDING_BODY forwarder. Retain full original extent and existing Vehicle/faction/prototype/map ownership; recover its behavioral body, not a new link-only stub.",
+    "kind": "discovery"
+  },
+  "previous_event": "dc749c58ebc0ccee8ca1d5382306be8abde4b43f01f0e6183fc1f7e1f9e0793e",
+  "request_id": "colony-vehicle-creation-dependency-20261003",
+  "schema_version": 1,
+  "sequence": 16,
+  "stream": "task:base-colony-economy-coverage-wave"
+}
