@@ -4540,6 +4540,13 @@ int DiploScratchFA2C;
 int DiploScratchFA38;
 // RECOVERY_OBJECT: v1 0x0093FA3C ?DiploScratchFA3C@@3HA
 int DiploScratchFA3C;
+// communicate clears this DWORD at 0x00550080; tech_trade reads it at
+// 0x005414ED and sets it at 0x0054200F. battle_plans reads it at 0x0054B2AA.
+// The initial image word is zero. This neutral scalar models the observed
+// accesses only: original allocation extent, meaning and full producer
+// lifecycle remain unverified. Neighboring bindings do not establish bounds.
+// RECOVERY_OBJECT: v1 0x0093FA48 ?DiploScratchFA48@@3HA
+int DiploScratchFA48;
 // RECOVERY_OBJECT: v1 0x0093FA4C ?DiploScratchFA4C@@3HA
 int DiploScratchFA4C;
 // RECOVERY_OBJECT: v1 0x0093FA50 ?DiploScratchFA50@@3HA
@@ -4562,6 +4569,13 @@ int DiploScratchFA78;
 int DiploScratchFA80;
 // RECOVERY_OBJECT: v1 0x0093FA88 ?DiploScratchFA88@@3HA
 int DiploScratchFA88;
+// communicate clears this separate DWORD at 0x0055003B and writes it at
+// 0x005516C2; propose_pact/propose_treaty read it at 0x00543C01/0x00544EA9.
+// Initial image storage is zero. The provisional scalar/start binding does
+// not prove original allocation extent, semantics or complete lifecycle;
+// do not alias it to the independently accessed neighboring scratch cells.
+// RECOVERY_OBJECT: v1 0x0093FA8C ?DiploScratchFA8C@@3HA
+int DiploScratchFA8C;
 // RECOVERY_OBJECT: v1 0x0093FA90 ?DiploScratchFA90@@3HA
 int DiploScratchFA90;
 // RECOVERY_OBJECT: v1 0x0093FA98 ?DiploScratchFA98@@3HA
