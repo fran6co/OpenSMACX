@@ -1,0 +1,32 @@
+{
+  "event_id": "998250a821dbb0aabf48764e3853c196324b3be2541171112721e3172cc18536",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/popup_hide_owner_control.cpp",
+      "src/recovered/units/0045d970.cpp",
+      "src/unrecovered/0045e540.cpp"
+    ],
+    "evidence": [
+      "Complete the inverse animation ownership group. Pinned slide-hide mode2 selects existing MainInterface Sprite13[0] at7D1750, using bottom_bounds coordinates and info_panel_frame plus100 clip. Add only a narrow no-layout accessor as a preparatory verified step. Full hide bodies must preserve local lifetime, pointer-parameter slot reuse for loop counts, signed division and callback reloads; keep seeds until complete reviewed compiled owners retain all spans/findings. No original baseline reset or automatic acceptance grant."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4577648,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4580672,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "2eb9af1c17ea21dae364c50217f596b859f847fb85f133610506ed61e06f96bb",
+  "request_id": "popup-hide-lifetime-owner-closure",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:popup-animation-owner-closure"
+}

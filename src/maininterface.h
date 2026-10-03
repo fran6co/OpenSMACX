@@ -135,6 +135,9 @@ class MainInterface : public GraphicWin, public SubInterface {
   // Popup 0x406260 reads elements 2/0/1, not three standalone globals.
   Sprite &scroll_frame_sprite(int index) { return sprites1_[index]; }
   Sprite &interface_down_sprite() { return sprites13_[1]; }
+  // slide_hide 0x45DDF3 draws the existing iface_up Sprite at 0x7D1750.
+  // MainInterface::init loads this element beside iface_down, not a new object.
+  Sprite &interface_up_sprite() { return sprites13_[0]; }
   const RECT &rect2() const { return rect2_; }
   const RECT &rect3() const { return rect3_; }
   const RECT &info_frame_rect() const { return info_panel_frame_; }

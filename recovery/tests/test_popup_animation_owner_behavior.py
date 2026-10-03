@@ -50,6 +50,42 @@ def run_control(tmp_path, compiler, source):
     return subprocess.run([str(binary)], capture_output=True)
 
 
+@pytest.mark.parametrize("compiler_name", ["g++", "clang++"])
+@pytest.mark.parametrize("damage", [False, True])
+def test_actual_interface_up_sprite_accessor(tmp_path, compiler_name, damage):
+    compiler = shutil.which(compiler_name)
+    if compiler is None:
+        pytest.skip(compiler_name + " unavailable")
+    header = (ROOT / "src/maininterface.h").read_text()
+    up = _definition(header, "Sprite &interface_up_sprite(")
+    down = _definition(header, "Sprite &interface_down_sprite(")
+    if damage:
+        assert "sprites13_[0]" in up
+        up = up.replace("sprites13_[0]", "sprites13_[1]")
+    fixture = """
+#include <assert.h>
+struct Sprite { int identity; };
+class MainInterface {
+    Sprite sprites13_[2];
+public:
+    MainInterface() { sprites13_[0].identity=17; sprites13_[1].identity=29; }
+    // UP
+    // DOWN
+};
+int main() {
+    MainInterface owner;
+    assert(owner.interface_up_sprite().identity==17);
+    assert(owner.interface_down_sprite().identity==29);
+    assert(&owner.interface_up_sprite()!=&owner.interface_down_sprite());
+}
+""".replace("// UP", up).replace("// DOWN", down)
+    result = run_control(tmp_path, compiler, fixture)
+    if damage:
+        assert result.returncode < 0
+    else:
+        assert result.returncode == 0, result.stderr.decode(errors="replace")
+
+
 @pytest.mark.parametrize("kind", BODIES)
 @pytest.mark.parametrize("compiler_name", ["g++", "clang++"])
 def test_actual_animation_body(tmp_path, kind, compiler_name):
