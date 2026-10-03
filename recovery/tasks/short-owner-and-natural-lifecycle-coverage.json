@@ -1,0 +1,72 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "f178e8db93d1ff7cecb23d6d9be5186c8cfcbf72",
+  "editable_files": [
+    "src/game.cpp",
+    "src/game.h",
+    "src/veh.cpp",
+    "src/veh.h",
+    "src/general.cpp",
+    "src/general.h",
+    "src/win.cpp",
+    "src/win.h",
+    "src/palette.cpp",
+    "src/buffer.cpp",
+    "src/recovered/00444d90.cpp",
+    "src/recovered/0050b8f0.cpp",
+    "src/recovered/005391a0.cpp",
+    "src/recovered/units/005f83b0.cpp",
+    "src/recovered/units/005d7170.cpp",
+    "src/recovered/units/005d71a0.cpp",
+    "src/recovered/units/005eb390.cpp",
+    "recovery/tests/test_short_owner_batch_behavior.py",
+    "recovery/tests/short_owner_batch_control.cpp"
+  ],
+  "evidence": [
+    "Native original spans and complete seeds establish diplo, signed vehicle-stack successor, text-get/parse sequence and conditional Win bubble flip. Existing DiploWindow, Vehs, text buffers, WinBubbleRect and WinBubbleActive are their real source owners; no fabricated class or absolute executable pointer is authorized.",
+    "Existing real BufferSpecialTexts[10] and ScreenBuffer declarations must own their compiler-generated lifecycle code. Fresh release COFF symbol, extent, relocation, constructor/destructor and atexit relationships are required before FILE binding or seed retirement; debug-only helper names are not release evidence. No hand-written constructor loop or destructor wrapper is authorized.",
+    "Unresolved callback classes/table, scale state and graphics PCX/interlace dependencies remain private investigations, not permission to add synthetic owner shapes or guess data extents. No BYTE_EXACT grant/demotion or task baseline reset is authorized.",
+    "Coordinator-reviewed manual integration requires genuine bodies, actual-source behavioral/damage controls, fresh native current/protected diagnostics, application build/link, touched annotation integrity, claim/reference continuity and post-integration rechecks. Linked preservation, full-game structure/runtime and automatic acceptance remain unproven. Parallel workers stay private and cannot edit the shared source or compiler prefix."
+  ],
+  "intent": "Recover seven complete short game/window helpers and natural global lifecycle identities in established C++ owners; preserve all original spans, claims and useful discoveries and retire only complete superseded seeds.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4476304,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5290224,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5476768,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6259632,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6123888,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6123936,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6206352,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "short-owner-and-natural-lifecycle-coverage"
+}
