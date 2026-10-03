@@ -1,0 +1,29 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "8ebd9101e4efe302bbb05d7900e889689c9eab54",
+  "editable_files": [
+    "src/map.cpp",
+    "src/map.h",
+    "src/pending_bodies.cpp",
+    "src/unrecovered/005c4470.cpp",
+    "recovery/tests/test_world_rainfall_behavior.py"
+  ],
+  "evidence": [
+    "Pinned original 005C4470..005C4FC1 fully decoded; the old seed explicitly admits a condensed and uncertain pass-two heuristic and is not an implementation to copy.",
+    "Corrected immutable v2 proposal edbc9936563fd44fa1a2acfaecaa5c2d58f285829a80ad3fea512aba3c36bf09 compiles in the actual map translation unit under both configured VC6 recipes; all 80 protected map diagnostics unchanged. Private evidence is a cache, not acceptance.",
+    "Native 005C4BD4 JL skips adjustment write for cloud cover below one; C++98 GCC/Clang positive and reversed-polarity damage controls pass. Preserve all other original loop, caching and callback behavior; no bug fix or byte-claim grant.",
+    "TerraformTileFaction and TerraformDrownedBaseId already have source-owned veh.cpp definitions. This task consumes declarations only, adds no storage and grants no unrelated owner edits.",
+    "Coordinator-reviewed integration requires actual-source regression tests, build/link, source reference and historical-claim continuity checks; full-game acceptance remains unfinished."
+  ],
+  "intent": "Recover the complete three-pass world rainfall algorithm through existing Map, WorldBuilder, base search and compiler-compatible source APIs; retire its executable-address forwarder and superseded seed after verified integration.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6046832,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "world-rainfall-owner-coverage"
+}
