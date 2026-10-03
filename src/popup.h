@@ -49,6 +49,10 @@ class Popup : public BasePop {
   void on_post_window_init();
 
  public:
+  // Constructor 0x004048D9 installs primary table 0x006695C8; slot1 selects
+  // original 0x00404920 rather than Win::show. This overrides that slot;
+  // qualified Win::show calls inside prevent recursion.
+  void show(int requested_mode);
   // 0x00404A80, homed in popup.cpp.
   void hide();
   void on_redraw();

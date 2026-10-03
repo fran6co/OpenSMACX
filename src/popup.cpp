@@ -2471,3 +2471,53 @@ void __cdecl scroll_show(GraphicWin *window, Scroll *scroll) {
     scroll->move(window->Buffer::pixel_width() - 0x2B, 0x15);
     scroll->show(0);
 }
+
+extern Wave g_MENU_UP_WAVE;
+
+// ORIGINAL: 0x00404920 ?show@Popup@@QAEXH@Z 0x00404920-0x00404A7C BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:0fc167ee:src/recovered/units/00404920.cpp original identity/spans and historical exact obligation", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x404920 branch/call audit including second external_window_ test at0x404A2E", "source:src/basepop.h dialogs_ and external_window_; src/listbox.h capacity; src/maininterface.h panel_height; src/menu.cpp menu-up Wave owner"], "reason": "Restore Popup show behavior through real BasePop state, Dialog virtual base, Scroll member and qualified Win base operations; historical opaque exact scaffolding is not the product owner."}
+// symbol    ?show@Popup@@UAEXH@Z
+void Popup::show(int requested_mode) {
+    if (Win::is_visible()) {
+        return;
+    }
+
+    const int auto_hide_mode = static_cast<int>(field_30AC_) / 10000;
+    if (auto_hide_mode == 1000) {
+        Win::show(requested_mode);
+        return;
+    }
+
+    if (external_window_ == 0) {
+        const int main_visible = MainInterfaceGlobal.Win::is_visible();
+        if (main_visible != 0
+            && (auto_hide_mode == 0 || auto_hide_mode == 5)) {
+            // Native reads the top-down DIB's negative biHeight at this+4C8;
+            // pixel_height() exposes its positive magnitude instead.
+            const int move_y = WinScreenHeight - this->Buffer::pixel_height()
+                - MainInterfaceGlobal.panel_height();
+            const int move_x = (WinScreenWidth - this->Buffer::pixel_width()
+                                + 0x20) / 2;
+            Win::move(move_x, move_y);
+            g_MENU_UP_WAVE.play();
+            slide_show(this, 0);
+
+            if (dialogs_.kind_ == 2
+                && dialogs_.Dialog::item_list_.entry_count_
+                       > dialogs_.ListBox::visible_item_capacity()) {
+                scroll_show(this, &scroll_);
+            }
+
+            Win::show(3);
+            g_MENU_UP_WAVE.fade(0xFA);
+            return;
+        }
+    }
+
+    if (external_window_ != 0 && dialogs_.kind_ == 2
+        && dialogs_.Dialog::item_list_.entry_count_
+               > dialogs_.ListBox::visible_item_capacity()) {
+        scroll_show(this, &scroll_);
+    }
+    Win::show(requested_mode);
+}

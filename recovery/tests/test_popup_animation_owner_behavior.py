@@ -2,6 +2,7 @@
 from pathlib import Path
 import shutil
 import subprocess
+import re
 
 import pytest
 from match_recovery.source import read_file
@@ -11,6 +12,7 @@ ROOT = Path(__file__).resolve().parents[2]
 BODIES = {
     "slide": (0x45D440, "void __cdecl slide_show(", "slide_show_owner_control.cpp"),
     "scroll": (0x45DEA0, "void __cdecl scroll_show(", "scroll_show_owner_control.cpp"),
+    "popup": (0x404920, "void Popup::show(", "popup_animation_owner_control.cpp"),
 }
 
 
@@ -23,6 +25,15 @@ def projected_control(kind, damage=None):
         assert old in body
         body = body.replace(old, new, 1)
     fixture = (Path(__file__).parent / filename).read_text()
+    if kind == "popup":
+        header = (ROOT / "src/buffer.h").read_text()
+        getters = []
+        for name in ("pixel_width", "pixel_height"):
+            matches = re.findall(r"int " + name + r"\(\) const \{[^\n]*\}", header)
+            assert len(matches) == 1
+            getters.append(matches[0])
+        assert fixture.count("// ACTUAL_BUFFER_GETTERS") == 1
+        fixture = fixture.replace("// ACTUAL_BUFFER_GETTERS", "\n".join(getters))
     assert fixture.count("// ACTUAL_SOURCE_BODY") == 1
     return fixture.replace("// ACTUAL_SOURCE_BODY", body)
 
@@ -59,6 +70,11 @@ def test_actual_animation_body(tmp_path, kind, compiler_name):
     ("scroll", "0, panel_bottom + 3, 0, panel_bottom", "0, 0, 0, panel_bottom + 3"),
     ("scroll", "area.top - original_area.top", "original_area.top - area.top"),
     ("scroll", "panel_bottom - 0xA", "panel_bottom - 0xA - PopupScrollVerticalFrameCount"),
+    ("popup", "external_window_ != 0 && dialogs_.kind_ == 2", "dialogs_.kind_ == 2"),
+    ("popup", "Win::show(3)", "Win::show(requested_mode)"),
+    ("popup", "auto_hide_mode == 1000", "auto_hide_mode == 1001"),
+    ("popup", "WinScreenHeight - this->Buffer::pixel_height()", "WinScreenHeight + this->Buffer::pixel_height()"),
+    ("popup", "> dialogs_.ListBox::visible_item_capacity()", ">= dialogs_.ListBox::visible_item_capacity()"),
 ])
 def test_animation_damage_detected(tmp_path, kind, old, new):
     compiler = shutil.which("g++")
