@@ -37,6 +37,9 @@ void MultiWin::UNK2() {
     StatusFlags |= 0x40;
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// Historical seed observations (not fresh measurements or acceptance):
+// TRIED: MISMATCH #5, register-allocation-level divergence early in the function. Ghidra's param_2/param_3 initially looked swapped against a1/a2 (param_2 is actually a1, the player-slot index; param_3 is a2, the itoa'd number) - fixed via cross-check against the raw disassembly's ebp+8/ebp+0xc reads.
 // ORIGINAL: 0x00478630 ?draw_player@MultiWin@@QAEXHHPAURECT@@@Z 0x00478630-0x00478BDB
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00478630.cpp", "src/multiwin.h", "src/faction.h", "src/maininterface.h"], "reason": "The original row painter uses MultiWin's owned Spot, sprite array and first font, typed faction names and treaties, and shared chat colors. Network turn-state suffixes remain pending their global owners."}
 // symbol    ?draw_player@MultiWin@@QAEXHHPAUtagRECT@@@Z

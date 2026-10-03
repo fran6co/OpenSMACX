@@ -103,6 +103,9 @@ Font *BaseDrawFont;
 // The seed's coordinate, sprite, caption, visibility and status branches are
 // expressed through their owning objects below. The original span and seed
 // remain available for compiler and reference comparison.
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// Historical seed observations (not fresh measurements or acceptance):
+// TRIED: full line-by-line translation compiles and matches control flow, call args verified against raw disasm (bitmask/box/fill/draw_dest/ get_zoom/set_font/set_text_color/write_l/width/itoa/strcat all cross-checked); prologue register allocation differs (#0 push/sub).
 // ORIGINAL: 0x0055AF20 ?base_draw@@YAXPAUBuffer@@HHHHH@Z 0x0055AF20-0x0055B739
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0055af20.cpp retains the 2073-byte transcription and original span; the seed's Base, Map, Sprite, FontQueue and Buffer dependencies have typed product owners."], "reason": "Recover the base renderer's distant zoom badge, faction sprite, population caption, visibility check and riot marker through typed objects; compiler and runtime verification remain separate."}
 // symbol    ?base_draw@@YAXPAVBuffer@@HHHHH@Z

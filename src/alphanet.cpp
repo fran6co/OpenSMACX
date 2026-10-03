@@ -29,9 +29,16 @@
 // ORIGINAL: 0x004E2A30 ?create@AlphaNet@@QAEHXZ 0x004E2A30-0x004E2E4B;0x0065C664-0x0065C771 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/004e2a30.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Create flow with typed node/session fields; preserve complete seed EH spans."}
 // symbol    ?create@AlphaNet@@QAEHXZ
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// Historical seed observations (not fresh measurements or acceptance):
+// TRIED: automatic Popup dtor cascade for the SEH frame (LEVER #1); direct pushes for start()/X_pop() arg order re-derived from disasm; join_session/positioning logic transcribed twice (matches two inlined copies in the original). Diverges at instruction #15 (register alloc order for the shared cleanup path), not re-derived further.
 // ORIGINAL: 0x004E2E50 ?join@AlphaNet@@QAEHXZ 0x004E2E50-0x004E31D6;0x0065C771-0x0065C7EC FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/004e2e50.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Session enumeration/cursor/selection flow; negative popup branch bypasses seek in original and reviewed correction."}
 // symbol    ?join@AlphaNet@@QAEHXZ
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// Historical seed observations (not fresh measurements or acceptance):
+// TRIED: outer `if (a1 == 0) { big-init-block } else { field_D8_ |= 1 }` (ghidra's polarity, not the naive `!= 0`) plus a duplicated success-tail (field_48_/4C_ writes + return 0) inside the `if (rc >= 0)` arm rather than one shared tail reached via a unified `if (r2 == 0) return 1;` after the join/create if-else - 0.73 -> 0.98 mnemonic similarity. AlphaNet reaches Net::close()/ init() through reinterpret_cast<Net*>(this) (a zero-offset base).
+// TRIED: one remaining `test/je` original has on the join() path only (create() path just has `test/jne`) that a single shared `if (r2 != 0)` after the join/create if-else does not reproduce; not chased further.
 // ORIGINAL: 0x004E31E0 ?setup@AlphaNet@@QAEHH@Z 0x004E31E0-0x004E32BA FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/004e31e0.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Existing actual LobbyAppGuid689218 and provider selection/setup state."}
 // symbol    ?setup@AlphaNet@@QAEHH@Z

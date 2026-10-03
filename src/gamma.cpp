@@ -371,6 +371,9 @@ PushButton::~PushButton() {
 
 // Reset the base first, then consume the current shared defaults. This is
 // slot90 of the PushButton primary table, not part of its destructor.
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// Historical seed observations (not fresh measurements or acceptance):
+// LEVER: reinterpret_cast<BaseButton*>(this)->close() for the zero-offset base call, then 18 individual field-by-field assignments from the 18 fixed globals (fully unrolled in the original, no rep movsd), matching disasm order exactly.
 // ORIGINAL: 0x0062C030 ?close@PushButton@@QAEXXZ 0x0062C030-0x0062C10C BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original constructor62BF28 stages table670C60, whose slot90 targets complete body62C030..62C10C. GraphicWin ends at slot89; BaseButton introduces virtual void close and this body overrides it.", "Original62C033 calls BaseButton6070C0 directly before eighteen sequential default loads9BC118..9BC160 into existing fieldsAB8..B00. Source uses the existing PushButtonDefaults owner without caching across the base cleanup. Its load_interface producer remains unrecovered; this binding is not a full startup/storage-closure claim.", "Original62C010 destructor only stages tables and delegates to BaseButton destruction; no extra PushButton close belongs in the destructor. Preserve the exact seed identity/obligation while measuring the real void override."], "reason": "Recover the missing PushButton virtual cleanup in its genuine BaseButton hierarchy and owning translation unit."}
 // symbol    ?close@PushButton@@UAEXXZ

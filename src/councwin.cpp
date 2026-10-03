@@ -912,6 +912,9 @@ void CouncWin::init(int proposal, int faction_id) {
     }
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// Historical seed observations (not fresh measurements or acceptance):
+// LEVER: tail call, this reinterpreted as Win* to call is_visible() directly
 // ORIGINAL: 0x00427150 ?hide@CouncWin@@QAEHXZ 0x00427150-0x00427155 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00427150.cpp", "image:terranx_original.exe:0x00427150", "Council interface/window declarations identify embedded fonts/buttons, voting arrays and existing MainInterface/Console owners; original instructions determine call and state order."], "reason": "Original427150 is the Win visibility-query tail jump, not a hide override. Name this ordinary derived visibility query without changing base hide semantics."}
 // symbol    ?council_visible@CouncWin@@QAEHXZ

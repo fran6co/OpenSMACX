@@ -76,6 +76,9 @@ int __cdecl UV2Player::on_key() {
     return 1;
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// Historical seed observations (not fresh measurements or acceptance):
+// LEVER: literal thiscall member with a guarded do/while (a4>0) around the cached timeGetTime slot; nested guarded do/while for the busy-wait.
 // ORIGINAL: 0x004BEDC0 ?UNK1@UV2Player@@QAEHHHHH@Z 0x004BEDC0-0x004BEE5A BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004bedc0.cpp", "image:terranx_original.exe:0x004BEDC0", "4BF3AA/BE reject only zero message results; Return/Escape/Space and either mouse-down set quit8CC250. Timed text disarms Buffer+8, writes individual bytes, reloads delayE64 after each timeGetTime and re-arms the cdecl callback even for nonpositive length.", "recovery/tasks/uv2player-complete-owner-recovery.json; bounded complete-owner scope, preserved historical baseline/claims, no matching or runtime acceptance."], "reason": "Recover the movie input/timed text owner using SDK messages and real Buffer callback, active instance and unsigned delay storage, preserving native input and callback order."}
 // symbol    ?write_timed@UV2Player@@QAEHPADHHH@Z

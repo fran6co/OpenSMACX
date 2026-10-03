@@ -286,6 +286,9 @@ void ProdPicker::on_left_double_click(int x, int y) {
     }
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// Historical seed observations (not fresh measurements or acceptance):
+// TRIED: `switch(a1)` with case 2 falling through to case 7 reproduces the jump-table dispatch; MISMATCH remains in the prologue (push esi/edi ordering around the range check), not the switch body itself.
 // ORIGINAL: 0x004945D0 ?on_button_clicked@ProdPicker@@QAEXH@Z 0x004945D0-0x004946A1
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004945d0.cpp"], "reason": "Recover product-selection button routing against ProdPicker selection and action members, then release modality and hide when the cancel action closes a modal picker."}
 // symbol    ?on_button_clicked@ProdPicker@@UAEXH@Z
@@ -376,6 +379,9 @@ void ProdPicker::on_scrolled(int, int position) {
 
 // The legacy keyboard handler is a direct ProdPicker operation (not a Win
 // virtual override). Its second argument is the key code; the first is unused.
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// Historical seed observations (not fresh measurements or acceptance):
+// TRIED: a straight port of the jump-table switch (12 case labels, two cross-case gotos folded away algebraically once traced by hand) - matches semantics and field offsets (confirmed against param_1[N] * 4 in the Ghidra dump) but the compiler's jump table shape/ordering diverges early; not chased further.
 // ORIGINAL: 0x00494280 ?on_key_click@ProdPicker@@QAEHHH@Z 0x00494280-0x00494545 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00494280.cpp", "Pinned original coordinator review: actual label-pointer dereference, camera word3F48F5C3, static cdecl callback ABI, row-end clamps and modal-parent/button suppression order."], "reason": "Recover ProdPicker owner behavior through existing window bases, owned StringLists/controls and typed Base/Caviar camera state; preserve historical seed identity and extents as restoration obligations, not current match claims."}
 // symbol    ?on_key_click@ProdPicker@@UAEHHH@Z
