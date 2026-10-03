@@ -2504,6 +2504,271 @@ int __cdecl base_lose_minerals(int base_id, int UNUSED(production_id)) {
     return 0;
 }
 
+// ORIGINAL: 0x004F3FE0 ?base_hurry@@YAXXZ 0x004F3FE0-0x004F4826
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/004f3fe0.cpp; recovery/tasks/base-colony-economy-coverage-wave.json; recovery/tests/test_base_colony_economy.py", "Pinned01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf full4F3FE0..4F4826 instruction review and measured VC6 PlayerData/SocialEffect/Base/prototype owners.", "Native4F4365 reads pending.police(+260), not morale;4F4390 biases the wrapped reserve product before SAR2; facilities4/5/33/projects use /50, not /100.", "NativeVoice45F8..464E halves hurry budget;46C4 reads current queue;46D7 preserves explicit zero-factor branch;4702/474C reread lock mask and479D/47CF reread popup faction."], "reason": "Recover complete colony hurry budgets, mineral purchases and project notification using real Base/faction/prototype/facility owners and explicit native 32-bit wrapping. Preserve seed/history and original behavior; no new byte, linked-preservation or runtime acceptance claim."}
+// symbol    ?base_hurry@@YAXXZ
+// TRIED: full register-transliteration from raw disasm (not Ghidra, whose DAT_0090ea30 offsets are all mis-scaled x2 - it typed that global short*, and its 4th arg to at_goal() is wrong too, using DAT_0090ea30[1] where raw disasm shows edi/cost). Division-by-constant idioms (magic-multiply+shift) written as plain C `/` and trusted to re-lower; verified against Ghidra's own reconstructed divisors (10, 25,50,100,250) rather than reverse-engineering each magic constant by hand. Compiles; frameless prologue vs original's framed - not chased given size.
+void __cdecl base_hurry() {
+    Base *current_base = BaseCurrent;
+    const int faction = current_base->faction_id_current;
+    const uint32_t faction_bit = 1u << faction;
+    const bool is_human = (LockEnableMask & faction_bit) != 0;
+
+    if (is_human
+        && ((current_base->governor & GOV_MAY_HURRY_PRODUCTION) == 0
+            || (current_base->governor & GOV_ACTIVE) == 0)) {
+        return;
+    }
+    if (current_base->minerals_accumulated == 0) {
+        return;
+    }
+
+    const int production_id = current_base->queue_production_id[0];
+    const int facility_index = production_id < 0
+        ? base_yield_sub(0, production_id) : 0;
+    int production_cost;
+    if (production_id >= 0) {
+        production_cost = veh_cost(production_id, BaseIDCurrentSelected, nullptr);
+    } else {
+        production_cost = Facility[facility_index].cost;
+    }
+    const int scaled_cost = base_yield_mul(
+        cost_factor(faction, 1, -1), production_cost);
+
+    current_base = BaseCurrent;
+    const Map &base_tile = *map_loc(current_base->x, current_base->y);
+    current_base = BaseCurrent;
+    const int region = base_tile.region;
+    int hurry_amount = 0;
+
+    if (production_id >= 0) {
+        const VehPrototype &prototype = VehPrototypes[production_id];
+        if (prototype.plan == PLAN_COLONIZATION
+            && current_base->population_size < 2) {
+            return;
+        }
+
+        if ((base_tile.bit & BIT_VEH_IN_TILE) != 0
+            && (base_tile.val2 & 0x0Fu) < MaxPlayerNum
+            && (current_base->state & BSTATE_COMBAT_LOSS_LAST_TURN) == 0
+            && !at_goal(faction, 0x10, current_base->x, current_base->y)) {
+            current_base = BaseCurrent;
+            if (production_id >= 0x40
+                && (prototype.flags & PROTO_TYPED_COMPLETE) == 0) {
+                const int denominator = base_yield_mul(
+                    base_yield_add(PlayersData[faction].ai_wealth, 2), 10);
+                hurry_amount = PlayersData[faction].energy_reserves / denominator;
+            } else {
+                const uint8_t plan = prototype.plan;
+                const uint8_t regional_plan =
+                    PlayersData[faction].region_base_plan[region];
+                if (regional_plan == plan
+                    || (plan == PLAN_TERRAFORMING
+                        && regional_plan == PLAN_COLONIZATION)
+                    || (plan == PLAN_COMBAT && regional_plan < PLAN_RECONNAISANCE)) {
+                    const int denominator =
+                        base_yield_sub(base_yield_mul(
+                            base_yield_add(PlayersData[faction].ai_wealth, 2), 25),
+                            base_yield_mul(PlayersData[faction].ai_power, 10));
+                    hurry_amount = PlayersData[faction].energy_reserves / denominator;
+                    if (regional_plan == PLAN_COLONIZATION) {
+                        const int adjusted = base_yield_mul(hurry_amount,
+                            base_yield_add(PlayersData[faction].ai_growth, 5));
+                        hurry_amount = base_yield_add(
+                            adjusted, adjusted < 0 ? 3 : 0) >> 2;
+                        if (PlayersData[faction].energy_reserves > TurnCurrentNum) {
+                            hurry_amount = base_yield_add(hurry_amount, hurry_amount);
+                        }
+                    }
+                }
+            }
+        } else {
+            hurry_amount = PlayersData[faction].energy_reserves / 10;
+        }
+
+        if (planet_buster2(production_id) != 0
+            && PlayersData[faction].planet_busters == 0) {
+            current_base = BaseCurrent;
+            for (int other = 1; other < MaxPlayerNum; ++other) {
+                if (other != faction
+                    && (PlayersData[faction].diplo_treaties[other] & 0x10u) != 0
+                    && PlayersData[other].major_atrocities != 0
+                    && PlayersData[faction].major_atrocities
+                        <= PlayersData[other].major_atrocities) {
+                    hurry_amount = PlayersData[faction].energy_reserves / 10;
+                }
+            }
+        }
+    } else if ((current_base->state & BSTATE_DRONE_RIOTS_ACTIVE) != 0
+               && facility_index != 0) {
+        hurry_amount = PlayersData[faction].energy_reserves
+            / base_yield_mul(base_yield_add(base_yield_add(
+                PlayersData[faction].ai_wealth,
+                PlayersData[faction].ai_power), 1), 5);
+
+        if (current_base->drone_total > current_base->talent_total) {
+            const int selected_base_id = BaseIDCurrentSelected;
+            int offset;
+            int mask;
+            bitmask(FAC_BROOD_PIT, &offset, &mask);
+            current_base = BaseCurrent;
+            const int police_bonus =
+                (Bases[selected_base_id].facilities_built[offset] & mask) != 0
+                    ? 2 : 0;
+            if (base_yield_add(
+                    PlayersData[faction].soc_effect_pending.police, police_bonus) <= -2
+                && facility_index < 0x46) {
+                const int remaining_cost =
+                    base_yield_sub(scaled_cost, current_base->minerals_accumulated);
+                const int human_factor =
+                    (LockEnableMask & faction_bit) != 0 ? 2 : 0;
+                const int available = base_yield_mul(remaining_cost, human_factor);
+                const int reserves = PlayersData[faction].energy_reserves;
+                const int wrapped_three_quarters = base_yield_mul(reserves, 3);
+                const int population_limit = wrapped_three_quarters / 4;
+                if (available >= 0 && population_limit >= 0) {
+                    hurry_amount = available <= population_limit
+                        ? available : population_limit;
+                } else {
+                    hurry_amount = 0;
+                }
+            }
+        }
+    } else if (facility_index == 1) {
+        hurry_amount = PlayersData[faction].energy_reserves / 10;
+    } else if (facility_index == 4 || facility_index == 5) {
+        hurry_amount = PlayersData[faction].energy_reserves / 50;
+        for (int other = 1; other < MaxPlayerNum; ++other) {
+            if (other != faction
+                && (PlayersData[faction].diplo_treaties[other] & 0x40030u) != 0
+                && (PlayersData[other].region_total_bases[other] != 0
+                    || (LockEnableMask & (1u << other)) != 0)) {
+                hurry_amount = PlayersData[faction].energy_reserves / 10;
+            }
+        }
+    } else if (facility_index < 0x46) {
+        if (facility_index == 0x21) {
+            hurry_amount = PlayersData[faction].energy_reserves / 50;
+            if (at_climax(faction) != 0) {
+                hurry_amount = base_yield_add(hurry_amount, hurry_amount);
+            }
+        }
+    } else {
+        hurry_amount = PlayersData[faction].energy_reserves / 50;
+        if (PlayersData[faction].energy_reserves >= 0x7D0) {
+            hurry_amount = base_yield_mul(hurry_amount, 4);
+        }
+        if (facility_index == 0x66) {
+            hurry_amount = base_yield_mul(hurry_amount, 4);
+        }
+    }
+
+    if (PlayersData[faction].energy_reserves >= 0x12C0) {
+        hurry_amount = base_yield_add(hurry_amount,
+            PlayersData[faction].energy_reserves / 25);
+    } else if (PlayersData[faction].energy_reserves > 0xC80) {
+        hurry_amount = base_yield_add(hurry_amount,
+            PlayersData[faction].energy_reserves / 100);
+    } else if (PlayersData[faction].energy_reserves > 0x7D0) {
+        hurry_amount = base_yield_add(hurry_amount,
+            PlayersData[faction].energy_reserves / 250);
+    }
+
+    if (hurry_amount < 0 || PlayersData[faction].energy_reserves < 0) {
+        hurry_amount = 0;
+    } else if (hurry_amount > PlayersData[faction].energy_reserves) {
+        hurry_amount = PlayersData[faction].energy_reserves;
+    }
+
+    current_base = BaseCurrent;
+    int remaining_cost =
+        base_yield_sub(scaled_cost, current_base->minerals_accumulated);
+    if (hurry_amount >= 0 && remaining_cost >= 0) {
+        if (hurry_amount > remaining_cost) {
+            hurry_amount = remaining_cost;
+        }
+        if (hurry_amount != 0) {
+            if (SecretProject.voice_of_planet >= 0) {
+                hurry_amount /= 2;
+            } else {
+                if (strcmp(Players[faction].filename, "MORGAN") == 0) {
+                    hurry_amount = base_yield_mul(hurry_amount, 2) / 3;
+                } else if (strcmp(Players[faction].filename, "PEACE") == 0) {
+                    hurry_amount = base_yield_mul(hurry_amount, 3) / 2;
+                }
+            }
+
+            const int rule_hurry = Players[faction].rule_hurry;
+            if (rule_hurry != 100
+                && hurry_amount < PlayersData[faction].energy_reserves / 10) {
+                hurry_amount = base_yield_mul(hurry_amount, 100) / rule_hurry;
+            }
+
+            current_base = BaseCurrent;
+            remaining_cost =
+                base_yield_sub(scaled_cost, current_base->minerals_accumulated);
+            int turns_factor = base_yield_add(
+                base_yield_mul(remaining_cost, remaining_cost) / 20,
+                base_yield_mul(remaining_cost, 2));
+            current_base = BaseCurrent;
+            if (current_base->queue_production_id[0] <= -0x46) {
+                turns_factor = base_yield_add(turns_factor, turns_factor);
+            }
+            if (SecretProject.voice_of_planet >= 0) {
+                turns_factor = base_yield_add(turns_factor, turns_factor);
+            }
+            int bought_turns = turns_factor != 0
+                ? base_yield_mul(remaining_cost, hurry_amount) / turns_factor
+                : 0;
+            bought_turns = base_yield_mul(bought_turns, 100) / rule_hurry;
+            current_base = BaseCurrent;
+            current_base->minerals_accumulated =
+                base_yield_add(current_base->minerals_accumulated, bought_turns);
+
+            int energy_change;
+            if ((LockEnableMask & faction_bit) != 0) {
+                energy_change = 0;
+            } else {
+                const int ranking = PlayersData[RankingFactionIDUnk1].ranking;
+                const int ranking_factor = base_yield_mul(
+                    base_yield_sub(8, ranking), 10);
+                energy_change = base_yield_mul(
+                    DiffLevelCurrent, hurry_amount) / ranking_factor;
+            }
+            PlayersData[faction].energy_reserves = base_yield_add(
+                PlayersData[faction].energy_reserves,
+                base_yield_sub(energy_change, hurry_amount));
+        }
+    }
+
+    if ((LockEnableMask & faction_bit) != 0
+        || facility_index < FacilitySPStart) {
+        return;
+    }
+    if (base_project(facility_index - FacilitySPStart) != SP_Unbuilt
+        || SunspotDuration > 0
+        || (GameState & STATE_UNK_1) != 0) {
+        return;
+    }
+
+    current_base = BaseCurrent;
+    const int facility_cost = base_yield_mul(
+        cost_factor(current_base->faction_id_current, 1, -1),
+        Facility[facility_index].cost);
+    current_base = BaseCurrent;
+    if (base_yield_add(current_base->mineral_surplus,
+                       current_base->minerals_accumulated) < facility_cost) {
+        return;
+    }
+
+    parse_says(0, Players[current_base->faction_id_current].adj_name_faction,
+               -1, -1);
+    parse_say(1, static_cast<int>(reinterpret_cast<intptr_t>(
+        Facility[facility_index].name)), -1, -1);
+    popp(reinterpret_cast<const char *>(*ClimatePopupTitle), "DONEPROJECT", 0,
+         "secproj_sm.pcx", nullptr);
+}
+
 // ORIGINAL: 0x004F4830 ?base_check_support@@YAXXZ 0x004F4830-0x004F4DBB
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004f4830.cpp", "recovery/tasks/base-colony-economy-coverage-wave.json", "recovery/tests/test_base_colony_economy.py", "Pinned original 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; complete original extent reviewed against native instructions and measured VC6 owner layouts.", "Native facility35 uses selected-base record; riot score reads prototype.cost(+29), not carry_capacity(+28); first distance scan reapplies abs after wrap, second does not."], "reason": "Recover the complete support deficit and pacifism selection through typed Base/Vehicle/faction owners, preserving original AI double-decrement and selected-base facility semantics. Seed retained; no new byte or runtime claim."}
 // symbol    ?base_check_support@@YAXXZ

@@ -774,3 +774,5 @@ MEASURED inline BOOL __cdecl ascending(int UNUSED(faction_id) faction_id) {
 
 void __cdecl base_check_support();
 void __cdecl base_research();
+
+void __cdecl base_hurry();

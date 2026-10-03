@@ -353,6 +353,355 @@ int main() {
 
 """
 
+HURRY = r"""
+#include <cassert>
+#include <cstdint>
+#include <cstring>
+
+#ifndef __cdecl
+#define __cdecl
+#endif
+enum { MaxPlayerNum = 8, FacilitySPStart = 70, SP_Unbuilt = -1 };
+enum { BIT_VEH_IN_TILE = 2 };
+enum { GOV_MAY_HURRY_PRODUCTION = 0x20, GOV_ACTIVE = 0x80000000u };
+enum { BSTATE_COMBAT_LOSS_LAST_TURN = 8, BSTATE_DRONE_RIOTS_ACTIVE = 2 };
+enum { STATE_UNK_1 = 1 };
+enum { PLAN_OFFENSIVE = 0, PLAN_COMBAT = 1, PLAN_DEFENSIVE = 2,
+       PLAN_RECONNAISANCE = 3, PLAN_COLONIZATION = 8,
+       PLAN_TERRAFORMING = 9 };
+enum { PROTO_TYPED_COMPLETE = 4, FAC_BROOD_PIT = 35 };
+struct Base {
+    int16_t x, y;
+    uint8_t faction_id_current;
+    uint32_t state, governor;
+    int minerals_accumulated, queue_production_id[10], mineral_surplus;
+    int population_size;
+    uint8_t facilities_built[12];
+    int drone_total, talent_total, nutrient_surplus;
+};
+struct Map { uint32_t bit; uint8_t val2, region; };
+struct VehPrototype { uint16_t flags; uint8_t plan; };
+struct Player { char filename[24]; char adj_name_faction[128]; int rule_hurry; };
+struct SocialEffect { int economy, efficiency, support, talent, morale, police; };
+struct PlayerData {
+    uint32_t ranking;
+    int major_atrocities, energy_reserves, ai_wealth, ai_power, ai_growth;
+    uint32_t diplo_treaties[8];
+    SocialEffect soc_effect_pending;
+    int planet_busters;
+    uint8_t region_base_plan[128], region_total_bases[128];
+    int tech_accumulated;
+};
+struct RulesFacility { const char *name; int cost; };
+struct Projects { int voice_of_planet; int base[64]; };
+
+Base *BaseCurrent;
+Base Bases[MaxPlayerNum];
+Player Players[MaxPlayerNum];
+PlayerData PlayersData[MaxPlayerNum];
+VehPrototype VehPrototypes[128];
+RulesFacility Facility[134];
+Projects SecretProject;
+uint32_t LockEnableMask;
+uint32_t MapIsFlat = 1, MapLongitude = 32;
+int MapLongitudeBounds = 64, DiffLevelCurrent = 2, TurnCurrentNum = 0;
+int RankingFactionIDUnk1, SunspotDuration;
+uint32_t GameState;
+int BaseIDCurrentSelected;
+Map tile;
+char popup_title[] = "TITLE";
+char *ScriptPopupFile = popup_title;
+char **const ClimatePopupTitle = &ScriptPopupFile;
+Base entry_base, after_veh_cost, after_cost_factor, after_map_loc;
+Base after_at_goal, after_final_cost;
+int at_goal_args[4], at_goal_result;
+int veh_cost_result = 100, cost_factor_calls, cost_factor_args[4];
+int mutate_lock_on_map, parsed_names, parse_say_calls, popup_calls;
+char *last_parsed_name;
+int project_state = SP_Unbuilt;
+
+Map *__cdecl map_loc(int, int) {
+    BaseCurrent = &after_map_loc;
+    if (mutate_lock_on_map) LockEnableMask |= 1u << 2;
+    return &tile;
+}
+int __cdecl veh_cost(int, int, int *) {
+    BaseCurrent = &after_veh_cost;
+    return veh_cost_result;
+}
+int __cdecl cost_factor(int faction, int, int) {
+    if (cost_factor_calls < 4) cost_factor_args[cost_factor_calls] = faction;
+    ++cost_factor_calls;
+    BaseCurrent = cost_factor_calls == 1 ? &after_cost_factor : &after_final_cost;
+    return 1;
+}
+int __cdecl at_goal(int faction, int type, int x, int y) {
+    at_goal_args[0] = faction; at_goal_args[1] = type;
+    at_goal_args[2] = x; at_goal_args[3] = y;
+    BaseCurrent = &after_at_goal;
+    return at_goal_result;
+}
+int __cdecl planet_buster2(int) { return 0; }
+int __cdecl at_climax(int) { return 0; }
+void __cdecl bitmask(int id, int *offset, int *mask) {
+    *offset = id / 8; *mask = 1 << (id % 8);
+}
+int __cdecl base_project(int) { return project_state; }
+int __cdecl parse_says(int, char *name, int, int) {
+    ++parsed_names; last_parsed_name = name; return 0;
+}
+int __cdecl parse_say(int, int, int, int) { ++parse_say_calls; return 0; }
+int __cdecl popp(const char *, const char *, int, const char *, void *) {
+    ++popup_calls; return 0;
+}
+
+HELPERS
+BODY
+
+void clear_globals() {
+    std::memset(Bases, 0, sizeof(Bases));
+    std::memset(Players, 0, sizeof(Players));
+    std::memset(PlayersData, 0, sizeof(PlayersData));
+    std::memset(VehPrototypes, 0, sizeof(VehPrototypes));
+    std::memset(Facility, 0, sizeof(Facility));
+    std::memset(&SecretProject, 0, sizeof(SecretProject));
+    std::memset(&entry_base, 0, sizeof(entry_base));
+    std::memset(&after_veh_cost, 0, sizeof(after_veh_cost));
+    std::memset(&after_cost_factor, 0, sizeof(after_cost_factor));
+    std::memset(&after_map_loc, 0, sizeof(after_map_loc));
+    std::memset(&after_at_goal, 0, sizeof(after_at_goal));
+    std::memset(&after_final_cost, 0, sizeof(after_final_cost));
+    std::memset(&tile, 0, sizeof(tile));
+    LockEnableMask = 0;
+    MapIsFlat = 1; MapLongitude = 32; MapLongitudeBounds = 64;
+    DiffLevelCurrent = 2; TurnCurrentNum = 0; RankingFactionIDUnk1 = 0;
+    SunspotDuration = 0; GameState = 0; BaseIDCurrentSelected = 3;
+    BaseCurrent = nullptr; mutate_lock_on_map = 0; at_goal_result = 0;
+    veh_cost_result = 100; cost_factor_calls = 0;
+    std::memset(cost_factor_args, 0, sizeof(cost_factor_args));
+    parsed_names = 0; parse_say_calls = 0; popup_calls = 0;
+    last_parsed_name = nullptr; project_state = SP_Unbuilt;
+    SecretProject.voice_of_planet = -1;
+}
+
+void prepare_base(int faction, int production_id, int minerals = 20) {
+    entry_base.faction_id_current = static_cast<uint8_t>(faction);
+    entry_base.minerals_accumulated = minerals;
+    entry_base.queue_production_id[0] = production_id;
+    entry_base.x = 10; entry_base.y = 20;
+    after_veh_cost = entry_base;
+    after_cost_factor = entry_base;
+    after_map_loc = entry_base;
+    after_at_goal = entry_base;
+    after_final_cost = entry_base;
+    BaseCurrent = &entry_base;
+    Players[faction].rule_hurry = 100;
+    PlayersData[faction].energy_reserves = 1000;
+    Facility[production_id < 0 ? -production_id : 0].cost = 100;
+}
+
+void callback_rebind_control() {
+    clear_globals();
+    prepare_base(2, 1);
+    SecretProject.voice_of_planet = 0;
+    entry_base.governor = GOV_ACTIVE | GOV_MAY_HURRY_PRODUCTION;
+    after_veh_cost.minerals_accumulated = 20;
+    after_cost_factor.minerals_accumulated = 20;
+    after_map_loc.minerals_accumulated = 20;
+    after_at_goal.minerals_accumulated = 20;
+    LockEnableMask = 1u << 2;
+    PlayersData[2].energy_reserves = 1500;
+    PlayersData[2].region_base_plan[0] = PLAN_OFFENSIVE;
+    PlayersData[2].ai_wealth = 0;
+    PlayersData[2].ai_power = 0;
+    VehPrototypes[1].plan = PLAN_OFFENSIVE;
+    tile.bit = BIT_VEH_IN_TILE; tile.val2 = 2; tile.region = 0;
+    base_hurry();
+    assert(at_goal_args[0] == 2 && at_goal_args[1] == 0x10);
+    assert(at_goal_args[2] == 10 && at_goal_args[3] == 20);
+    assert(entry_base.minerals_accumulated == 20);
+    assert(after_veh_cost.minerals_accumulated == 20);
+    assert(after_cost_factor.minerals_accumulated == 20);
+    assert(after_map_loc.minerals_accumulated == 20);
+    assert(after_at_goal.minerals_accumulated == 21);
+    assert(BaseCurrent == &after_at_goal);
+}
+
+void voice_and_live_lock_controls() {
+    clear_globals();
+    prepare_base(2, 1);
+    after_at_goal = after_map_loc = after_cost_factor = entry_base;
+    SecretProject.voice_of_planet = 0;
+    LockEnableMask = 0;
+    mutate_lock_on_map = 1;
+    PlayersData[2].energy_reserves = 1000;
+    PlayersData[2].ai_wealth = 0;
+    PlayersData[2].ai_power = 0;
+    PlayersData[2].ranking = 0;
+    DiffLevelCurrent = 8;
+    PlayersData[2].region_base_plan[0] = PLAN_OFFENSIVE;
+    VehPrototypes[1].plan = PLAN_OFFENSIVE;
+    tile.bit = BIT_VEH_IN_TILE; tile.val2 = 2; tile.region = 0;
+    base_hurry();
+    assert(PlayersData[2].energy_reserves == 990);
+    assert(after_at_goal.minerals_accumulated == 20);
+
+    clear_globals();
+    prepare_base(2, 1);
+    after_at_goal = after_map_loc = after_cost_factor = entry_base;
+    SecretProject.voice_of_planet = 0;
+    LockEnableMask = 1u << 2;
+    entry_base.governor = GOV_ACTIVE | GOV_MAY_HURRY_PRODUCTION;
+    PlayersData[2].energy_reserves = 1000;
+    PlayersData[2].ai_wealth = 0;
+    PlayersData[2].ai_power = 0;
+    PlayersData[2].region_base_plan[0] = PLAN_OFFENSIVE;
+    VehPrototypes[1].plan = PLAN_OFFENSIVE;
+    tile.bit = BIT_VEH_IN_TILE; tile.val2 = 2; tile.region = 0;
+    base_hurry();
+    assert(PlayersData[2].energy_reserves == 990);
+
+    clear_globals();
+    prepare_base(2, 1);
+    after_at_goal = after_map_loc = after_cost_factor = entry_base;
+    std::strcpy(Players[2].filename, "PEACE");
+    PlayersData[2].energy_reserves = 1000;
+    PlayersData[2].ai_wealth = 0;
+    PlayersData[2].ai_power = 0;
+    PlayersData[2].region_base_plan[0] = PLAN_OFFENSIVE;
+    VehPrototypes[1].plan = PLAN_OFFENSIVE;
+    tile.bit = BIT_VEH_IN_TILE; tile.val2 = 2; tile.region = 0;
+    base_hurry();
+    assert(PlayersData[2].energy_reserves == 970);
+}
+
+void reserve_product_expression_control() {
+    const int samples[] = {-1, -2, -3, -715827883, 715827883,
+                           (-2147483647 - 1)};
+    const int expected[] = {0, -1, -2, 536870911, -536870911, -536870912};
+    for (unsigned i = 0; i < sizeof(samples) / sizeof(samples[0]); ++i) {
+        const int wrapped_product = base_yield_mul(samples[i], 3);
+        assert(wrapped_product / 4 == expected[i]);
+    }
+}
+
+void police_field_control() {
+    clear_globals();
+    prepare_base(2, -0x35);
+    after_map_loc.state = BSTATE_DRONE_RIOTS_ACTIVE;
+    after_map_loc.drone_total = 2;
+    after_map_loc.talent_total = 1;
+    after_map_loc.nutrient_surplus = -1;
+    after_map_loc.queue_production_id[0] = -0x35;
+    after_map_loc.minerals_accumulated = 20;
+    PlayersData[2].energy_reserves = 1000;
+    PlayersData[2].ai_wealth = 0;
+    PlayersData[2].ai_power = 0;
+    PlayersData[2].soc_effect_pending.police = -5;
+    PlayersData[2].soc_effect_pending.morale = 20;
+    BaseCurrent = &entry_base;
+    base_hurry();
+    assert(PlayersData[2].energy_reserves == 1000);
+    assert(after_map_loc.minerals_accumulated == 20);
+}
+
+void facility_divisor_and_zero_turns_factor_controls() {
+    clear_globals();
+    prepare_base(2, -4);
+    after_map_loc.minerals_accumulated = 20;
+    after_map_loc.queue_production_id[0] = -4;
+    PlayersData[2].energy_reserves = 1500;
+    SecretProject.voice_of_planet = -1;
+    base_hurry();
+    assert(after_map_loc.minerals_accumulated == 25);
+
+    clear_globals();
+    prepare_base(2, -0x21);
+    after_map_loc.minerals_accumulated = 20;
+    after_map_loc.queue_production_id[0] = -0x21;
+    PlayersData[2].energy_reserves = 1500;
+    SecretProject.voice_of_planet = -1;
+    base_hurry();
+    assert(after_map_loc.minerals_accumulated == 25);
+
+    clear_globals();
+    prepare_base(2, -4, 1);
+    after_map_loc.minerals_accumulated = 1;
+    after_map_loc.queue_production_id[0] = -4;
+    Facility[4].cost = 43018063;
+    PlayersData[2].energy_reserves = 1500;
+    SecretProject.voice_of_planet = -1;
+    base_hurry();
+    assert(after_map_loc.minerals_accumulated == 1);
+    assert(PlayersData[2].energy_reserves == 1470);
+}
+
+void current_queue_and_popup_faction_controls() {
+    clear_globals();
+    prepare_base(2, -0x46);
+    after_map_loc.minerals_accumulated = 20;
+    after_map_loc.queue_production_id[0] = -4;
+    after_map_loc.faction_id_current = 3;
+    after_final_cost.faction_id_current = 4;
+    after_final_cost.minerals_accumulated = 20;
+    after_final_cost.mineral_surplus = 200;
+    Facility[0x46].cost = 100;
+    std::strcpy(Players[2].adj_name_faction, "entry faction");
+    std::strcpy(Players[3].adj_name_faction, "pre-factor current faction");
+    std::strcpy(Players[4].adj_name_faction, "post-factor current faction");
+    PlayersData[2].energy_reserves = 1500;
+    SecretProject.voice_of_planet = -1;
+    base_hurry();
+    assert(after_map_loc.minerals_accumulated == 25);
+    assert(cost_factor_calls == 2);
+    assert(cost_factor_args[0] == 2 && cost_factor_args[1] == 3);
+    assert(last_parsed_name == Players[4].adj_name_faction);
+    assert(parsed_names == 1 && parse_say_calls == 1 && popup_calls == 1);
+
+    clear_globals();
+    prepare_base(2, -0x46);
+    after_map_loc.minerals_accumulated = 20;
+    after_map_loc.queue_production_id[0] = -0x46;
+    after_map_loc.faction_id_current = 3;
+    after_final_cost.faction_id_current = 4;
+    after_final_cost.minerals_accumulated = 20;
+    after_final_cost.mineral_surplus = 200;
+    Facility[0x46].cost = 100;
+    PlayersData[2].energy_reserves = 1500;
+    SecretProject.voice_of_planet = -1;
+    base_hurry();
+    assert(after_map_loc.minerals_accumulated == 22);
+}
+
+void current_popup_lock_control() {
+    clear_globals();
+    prepare_base(2, -0x46);
+    after_map_loc.minerals_accumulated = 20;
+    after_map_loc.queue_production_id[0] = -0x46;
+    after_map_loc.faction_id_current = 3;
+    after_final_cost.faction_id_current = 4;
+    after_final_cost.minerals_accumulated = 20;
+    after_final_cost.mineral_surplus = 200;
+    Facility[0x46].cost = 100;
+    PlayersData[2].energy_reserves = 1500;
+    mutate_lock_on_map = 1;
+    base_hurry();
+    assert(parsed_names == 0 && popup_calls == 0);
+}
+
+int main() {
+    callback_rebind_control();
+    voice_and_live_lock_controls();
+    reserve_product_expression_control();
+    police_field_control();
+    facility_divisor_and_zero_turns_factor_controls();
+    current_queue_and_popup_faction_controls();
+    current_popup_lock_control();
+    return 0;
+}
+
+"""
+
 def helper(source, name):
     start = source.index(name + "(")
     start = source.rfind("\n", 0, start) + 1
@@ -369,10 +718,11 @@ def helper(source, name):
 
 @pytest.mark.parametrize("compiler", ["g++", "clang++"])
 @pytest.mark.parametrize("unit,address,harness,prefix", [
+    ("base.cpp", 0x4F3FE0, HURRY, "base_yield"),
     ("base.cpp", 0x4F4830, SUPPORT, "base_yield"),
     ("base.cpp", 0x4F4E80, BASE_RESEARCH, "base_yield"),
     ("technology.cpp", 0x5BE940, TECH_RESEARCH, "tech_research"),
-], ids=["support", "base-research", "tech-research"])
+], ids=["hurry", "support", "base-research", "tech-research"])
 def test_actual_colony_support_research(compiler, unit, address, harness, prefix, tmp_path):
     executable = shutil.which(compiler)
     if executable is None:
