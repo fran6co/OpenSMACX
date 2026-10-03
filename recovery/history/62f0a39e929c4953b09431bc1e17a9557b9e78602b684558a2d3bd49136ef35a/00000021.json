@@ -1,0 +1,17 @@
+{
+  "event_id": "6577896340bb83c32f8f0f4a1abbec5a9e0954ced8eeb5b53cb5fe2e65e36838",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "serializer-combat-counter-owners-20261003",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Committedddac910b src/game.cpp owns FactionTurnCombatWins/Losses as eight signed32-bit counters with bounded original mappings93A96C..93A98C/93A98C..93A9AC. Complete native51E3C0/51E480/51E530 resets/display now use real game state and StringList/MessageWin APIs. Canonical combat and WONLOST consumers supply naming evidence; both compiler recipes prove32byte initial storage per counter and preserve50 existing game-TU diagnostics. Source-extracted controls exercise order/hooks/callbackreloads; application build/link passes. This incorporates seq18 naming/storage finding in authorized game-state owner; it does not recover combat/control_turn, resolve CE0 snapshot extent, grant new exact claims or establish full acceptance."
+    ]
+  },
+  "previous_event": "1ceb7c4ae443e0359e6b386ef57349e0295e21b35e25bb4fa87196a62e217cf8",
+  "request_id": "serializer-combat-summary-owner-incorporated-20261003",
+  "schema_version": 1,
+  "sequence": 21,
+  "stream": "task:game-save-load-owner-coverage"
+}

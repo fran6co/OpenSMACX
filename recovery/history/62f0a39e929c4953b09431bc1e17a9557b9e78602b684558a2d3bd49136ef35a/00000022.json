@@ -1,0 +1,17 @@
+{
+  "event_id": "ffa39618f053c4bfb42a371ea801d245377b6762177a161efac08bdea01fb008",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "serializer-distinct-player-count-snapshot-20261003",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Committedddac910b src/game.cpp/h own GameDataPlayerCountSnapshot as an independent signed32-bit save/load word at93F798..93F79C after PendingDiplomacyFlags. Canonical5A9554/958D zero and5A95C3 copy networkplayer_count establish meaning; serializer transfers4bytes. Fresh actual-source compiler objects under both recipes pass native bounded initializer definition/extent/bytes/reference checks and application links. Correct PEvirtualzero-fill evidence is retained in seq20 and privatev2 packet. The distinctscalar finding is incorporated, not the CE0 snapshot-buffer owner/extent problem; no exactfunctionclaim, originaldaemon allocation/lifetime or fullacceptance inferred."
+    ]
+  },
+  "previous_event": "6577896340bb83c32f8f0f4a1abbec5a9e0954ced8eeb5b53cb5fe2e65e36838",
+  "request_id": "serializer-player-count-owner-incorporated-20261003",
+  "schema_version": 1,
+  "sequence": 22,
+  "stream": "task:game-save-load-owner-coverage"
+}
