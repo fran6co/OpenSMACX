@@ -1,0 +1,20 @@
+{
+  "event_id": "639ce6a70d804e5e92c5904511a29212f1440e5371ae71ca7531e0f1e2799023",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/unrecovered/0055b750.cpp",
+      "src/veh.cpp"
+    ],
+    "evidence": [
+      "The compiled real inline Vector destructor is already mapped in veh.cpp and source-owned in vector.h. The duplicate seed retains a thiscall shim lesson absent from the owner. Authorize native-writer lesson transfer, historical provenance update and seed retirement only after fresh exact measurement, build/link and claim/reference continuity; do not change lifetime code or original task baseline."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "2d09a8206c8bfadb206989564c60b2fb055c465b478d22e87c7353a09169cf42",
+  "request_id": "vector-destructor-seed-lesson-retirement",
+  "schema_version": 1,
+  "sequence": 191,
+  "stream": "task:vector-value-semantics"
+}
