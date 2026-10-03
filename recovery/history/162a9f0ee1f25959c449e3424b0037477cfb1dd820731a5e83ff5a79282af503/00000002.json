@@ -1,0 +1,26 @@
+{
+  "event_id": "3b7ba65a09c6addcea409ee094ac99806f7f123660d9756b09df866033e10aec",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/technology.cpp",
+      "src/technology.h"
+    ],
+    "evidence": [
+      "Coordinator admits complete typed tech_research560byte dependency and its declaration to unblock full colony research coverage, retaining canonical seed and historical claims. Root alone shared publication/Git/native checks; worker may prepare private proposal using existing technology APIs and fresh native member evidence. No missing-behavior acceptance, new safety semantics, raw addresses or implicit further scope. Keep discovery pending until actual source incorporation and verification."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6023488,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "38eed7646190857af19a0ffc80c37a2aabbdcabda1e6a2e2d3b690e5b7f80da8",
+  "request_id": "colony-research-owner-admission-20261003",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:base-colony-economy-coverage-wave"
+}

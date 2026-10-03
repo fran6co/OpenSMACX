@@ -1,0 +1,21 @@
+{
+  "event_id": "38eed7646190857af19a0ffc80c37a2aabbdcabda1e6a2e2d3b690e5b7f80da8",
+  "payload": {
+    "affects": [
+      "entity-94d257656ec6232b61628c66e6fe778d7db1b672d1e642020adde70627330122",
+      "entity-d2a39738d37c5d05bed8b6adcd66ce2b897824e00a5ba377ccab1ad436189ed5"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "colony-research-owner-dependency-20261003",
+    "evidence": [
+      "Canonical native4F4E80..4F4FAB second direct call5BE940. Seed src/recovered/units/005be940.cpp binds560byte5BE940..5BEB70 with existing research APIs. Fresh VC6 PlayerData COFF proves research triplet3C8/3CC/3D0; manual worker offset concern was disproved, not a reason for changing faction layout."
+    ],
+    "hypothesis": "base_research calls tech_research at 5BE940, whose full retained seed exists but no product declaration or compiled definition exists; recover the typed technology owner rather than adding an executable-address call.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "colony-research-owner-dependency-20261003",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:base-colony-economy-coverage-wave"
+}
