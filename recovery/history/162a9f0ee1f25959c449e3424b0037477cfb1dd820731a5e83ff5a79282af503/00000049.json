@@ -1,0 +1,20 @@
+{
+  "event_id": "36dbdd60bba8b376ed29cb1100bd7ce3d31fb3462f3a67c0a98f9d8d65e1e4a7",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_enemy_diplomacy_behavior.py",
+      "src/unrecovered/0055f930.cpp"
+    ],
+    "evidence": [
+      "Coordinator admits only durable actual-owner behavior controls and preservation-aware removal of the superseded 55F930..560ACD seed after a complete source binding is reviewed, compiled and linked. Complete native review corrections and frozen candidate c3b39856be0509e93fbdb8ca4a114fda27789b0ea529d0fafdb92424de97f503 are provisional; compilation is not acceptance. Preserve existing identity, extent, seed provenance/history and claims using native source writer; no permission to change baseline, demote claims, drop discoveries or retire an unfinished seed. No added globals/members/functions or implicit behavior changes are authorized."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "133044c7f162c947f16db414f81b0fb41a936dc91b163269095b7f91d8e7cb94",
+  "request_id": "admit-enemy-diplomacy-controls-and-seed-retirement-20261003",
+  "schema_version": 1,
+  "sequence": 49,
+  "stream": "task:base-colony-economy-coverage-wave"
+}
