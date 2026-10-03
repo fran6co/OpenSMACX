@@ -4,6 +4,7 @@
   "editable_files": [
     "src/popup.cpp",
     "src/popup.h",
+    "src/basepop.h",
     "src/xpops.cpp",
     "src/xpops.h",
     "src/messagewin.h",
@@ -20,6 +21,7 @@
     "recovery/tests/test_popup_wrapper_batch_behavior.py"
   ],
   "evidence": [
+    "Coordinator scope expansion: add only the missing caption-and-label zero-default numeric overload to BasePop's existing popup-driver friend list. Original 0x627A90 directly reads the same private fields as the already-friended numeric forms. This is access control only, not a layout change or new body claim; retain the original c4f3e64c task baseline.",
     "Existing independent seed identities establish all nine original spans, including POP3's cold lifetime span; native-writer transfer must preserve every historical claim and useful lesson. No new byte claim or demotion is authorized.",
     "Native POP3 0x40569B/0x4056A0 and StringStruct::next_entry prove that text traversal must consume the live advanced cursor; private packet v1's frozen-tail error is rejected by a distinct multi-entry damage control. Deferred queues are the existing StringList array in messagewin.cpp, not new executable-address aliases.",
     "Actual compiled COFF output must reconcile historical scaffold-only emitted-symbol hints with genuine C++ signatures through the native symbol writer. Unknown or regressed measurements remain restoration obligations; do not erase claims to obtain green checks.",
