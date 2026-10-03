@@ -1,0 +1,57 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "5167ec56aaa9031de73f42c05fbc3bdd0bad0201",
+  "editable_files": [
+    "src/statuswin.cpp",
+    "src/statuswin.h",
+    "src/diplopop.cpp",
+    "src/diplopop.h",
+    "src/netdaemon.cpp",
+    "src/netdaemon.h",
+    "src/general.cpp",
+    "src/general.h",
+    "recovery/tests/short_owner_helpers.cpp",
+    "recovery/tests/test_short_owner_helpers.py",
+    "src/recovered/0050f630.cpp",
+    "src/recovered/00539970.cpp",
+    "src/recovered/00593370.cpp",
+    "src/recovered/00593480.cpp",
+    "src/recovered/00584d30.cpp"
+  ],
+  "evidence": [
+    "Independent private review and pinned full original bodies establish actual ConsoleStatusWin redraw, DiplomacyPopup visibility/draw/rect1 update, NetDaemonNet synch argument tuples and bounded CRT copy. Preserve stdcall callback cleanup and original count-zero underflow; no behavior fix authorized.",
+    "Current owner declarations and global bindings establish typed receivers. Only coordinator edits shared source; parallel workers remain private. Historical task overlaps do not authorize other source edits or baseline resets.",
+    "Preserve original identity, full spans, historical BYTE_EXACT obligations and useful discoveries via native source writer. Actual-source host controls, native compilation/measurement, protected owner diagnostics, build/link and claim/reference continuity precede manual reviewed integration. Missing evidence is not automatic or game acceptance."
+  ],
+  "intent": "Recover five complete short application helpers against actual StatusWin, DiploPop, NetDaemon and CRT owners, retaining all historical obligations and deleting verified superseded seeds.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5305904,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5478768,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5845872,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5846144,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5786928,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "short-typed-owner-helper-coverage"
+}

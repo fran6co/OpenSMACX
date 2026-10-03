@@ -1035,3 +1035,14 @@ void DiploPop::draw_info() {
         right_edge += step;
     }
 }
+
+// ORIGINAL: 0x00539970 sub_539970 0x00539970-0x00539998 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:5167ec56aaa9031de73f42c05fbc3bdd0bad0201:src/recovered/00539970.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x539970 complete original body; independent source-owner review.", "source:src/diplopop.cpp and corresponding header own real receiver/dependencies; count-zero copy underflow is intentionally unchanged."], "reason": "Complete typed application helper; retain original call ordering, argument contract and historical obligation."}
+// symbol    ?sub_539970@@YAXXZ
+void __cdecl sub_539970() {
+    DiploPop &popup = DiplomacyPopup;
+    if (static_cast<Win &>(popup).is_visible()) {
+        popup.draw_info();
+        static_cast<GraphicWin &>(popup).soft_update(&popup.rect1_);
+    }
+}

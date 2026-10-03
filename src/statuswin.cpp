@@ -1790,3 +1790,11 @@ void StatusWin::init() {
     caviar_.shadow_vector_.values[1] = 0.0f;
     caviar_.shadow_vector_.values[2] = 1.0f;
 }
+
+// ORIGINAL: 0x0050F630 sub_50f630 0x0050F630-0x0050F640 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:5167ec56aaa9031de73f42c05fbc3bdd0bad0201:src/recovered/0050f630.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x50f630 complete original body; independent source-owner review.", "source:src/statuswin.cpp and corresponding header own real receiver/dependencies; count-zero copy underflow is intentionally unchanged."], "reason": "Complete typed application helper; retain original call ordering, argument contract and historical obligation."}
+// symbol    ?sub_50f630@@YGXH@Z
+void __stdcall sub_50f630(int unused) {
+    (void)unused;
+    ConsoleStatusWin.redraw();
+}

@@ -473,6 +473,20 @@ NetDaemon::NetDaemon() : AlphaNet() {
     AlphaNet::close();
 }
 
+// ORIGINAL: 0x00593370 sub_593370 0x00593370-0x0059338C BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:5167ec56aaa9031de73f42c05fbc3bdd0bad0201:src/recovered/00593370.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x593370 complete original body; independent source-owner review.", "source:src/netdaemon.cpp and corresponding header own real receiver/dependencies; count-zero copy underflow is intentionally unchanged."], "reason": "Complete typed application helper; retain original call ordering, argument contract and historical obligation."}
+// symbol    ?sub_593370@@YAXXZ
+void __cdecl sub_593370() {
+    NetDaemonNet.synch(1, 0, 0, 0, 0, 1, 0x2101);
+}
+
+// ORIGINAL: 0x00593480 sub_593480 0x00593480-0x005934A2 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:5167ec56aaa9031de73f42c05fbc3bdd0bad0201:src/recovered/00593480.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x593480 complete original body; independent source-owner review.", "source:src/netdaemon.cpp and corresponding header own real receiver/dependencies; count-zero copy underflow is intentionally unchanged."], "reason": "Complete typed application helper; retain original call ordering, argument contract and historical obligation."}
+// symbol    ?sub_593480@@YAXH@Z
+void __cdecl sub_593480(int value) {
+    NetDaemonNet.synch(0x17, value, 0, 0, 0, 1, 0x2101);
+}
+
 // ORIGINAL: 0x0051F2C0 ?wait_2@@YAXXZ 0x0051F2C0-0x0051F2D8 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:bb3b3233842b050fb0840e1cc6c226e8f30f7055:src/recovered/0051f2c0.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tasks/game-logic-seed-owner-coverage.json"], "reason": "netdaemon.cpp / netdaemon.h: use existing NetDaemonNet.net_tasks(), IsMultiplayerNet and wait_task(). Complete reviewed source translation; historical claims remain restoration obligations, not proof of current matching, linked preservation or game acceptance."}
 void __cdecl wait_2() {

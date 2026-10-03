@@ -5077,3 +5077,12 @@ void __cdecl enemy_turn(int faction_id) {
 
     PlayersData[faction_id].flags &= ~PFLAG_UNK_10000;
 }
+
+// ORIGINAL: 0x00584D30 sub_584d30 0x00584D30-0x00584D52 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:5167ec56aaa9031de73f42c05fbc3bdd0bad0201:src/recovered/00584d30.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x584d30 complete original body; independent source-owner review.", "source:src/general.cpp and corresponding header own real receiver/dependencies; count-zero copy underflow is intentionally unchanged."], "reason": "Complete typed application helper; retain original call ordering, argument contract and historical obligation."}
+// symbol    ?sub_584d30@@YAPADPAD0I@Z
+char *__cdecl sub_584d30(char *dest, char *src, unsigned int count) {
+    char *result = strncpy(dest, src, count);
+    dest[count - 1] = 0;
+    return result;
+}
