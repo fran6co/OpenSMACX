@@ -1,0 +1,20 @@
+{
+  "event_id": "964dd635082a77430c1f28cd7d6dd4225f2141fce5270c369cffa08c83eb9d70",
+  "payload": {
+    "affects": [
+      "entity-21a0ac47b9730b4dfb23af579f0ddc1c680ac96d8e9cbb75518f654a9673b062"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "communicate-scratch-start-bindings-20261003",
+    "evidence": [
+      "Pinned native communicate 0x55003B/0x550080; tech_trade 0x5414ED/0x54200F; propose_pact 0x543C01; propose_treaty 0x544EA9; battle_plans 0x54B2AA. Coordinator PeImage.read_initial independently reads zero DWORDs at both starts. User standing instruction admits needed unowned globals; pending discovery retains extent/type/lifetime limitations."
+    ],
+    "hypothesis": "Two separate shared DWORD access starts at 0x93FA48 and 0x93FA8C are required by the full communicate recovery. Pinned instructions clear them at 0x550080/0x55003B and later producers/readers use DWORD operands; both initial image words are zero. Neutral independent int storage with v1 start-only bindings is admissible for recovery, not proof of allocation extent, exact data layout, semantics or completed producer lifecycle. Do not infer bounds from adjacent globals or alias existing scratch cells.",
+    "kind": "discovery"
+  },
+  "previous_event": "80614c95a78cc771b32ebe7d975de5c0ca7fa168c082c84de56bdb719b7298b9",
+  "request_id": "communicate-scratch-start-bindings-20261003",
+  "schema_version": 1,
+  "sequence": 44,
+  "stream": "task:base-colony-economy-coverage-wave"
+}

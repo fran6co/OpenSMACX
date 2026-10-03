@@ -1,0 +1,19 @@
+{
+  "event_id": "17911335781118b6bb514b20990f58d2c236a44aac0b73c17dfa594e7321c244",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/faction.cpp"
+    ],
+    "evidence": [
+      "Coordinator admits two independent neutral int definitions DiploScratchFA48 and DiploScratchFA8C in the already scoped faction owner, using RECOVERY_OBJECT v1 start-only bindings. Original DWORD accesses and pinned initial zero words support the provisional scalar source model. No original extent, semantic name, lifecycle closure, byte claim or data-layout acceptance is granted; discovery communicate-scratch-start-bindings-20261003 remains pending. Consumers must retain native call/write ordering, and missing producer bodies remain recovery obligations."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "964dd635082a77430c1f28cd7d6dd4225f2141fce5270c369cffa08c83eb9d70",
+  "request_id": "admit-communicate-scratch-starts-20261003",
+  "schema_version": 1,
+  "sequence": 45,
+  "stream": "task:base-colony-economy-coverage-wave"
+}
