@@ -144,16 +144,6 @@ extern char PopupStartModMode2[8];     // 0x00682808
 extern char *PopupStartAltFile1;       // 0x00691B20
 extern char *PopupStartAltFile2;       // 0x00691B24
 
-// THREE SCREEN METRICS the popup's list geometry is laid out from, read
-// straight out of the image's data at 0x007CFF88 / 0x007CFF30 / 0x007CFF5C by
-// on_listbox_scroll_create. Nothing in this tree writes them, so their names
-// are their role in that arithmetic - a top inset the row band is inset by and
-// then shifted back down by, a second gap taken out alongside it, and the row
-// height the band is rounded to whole rows of.
-extern int PopupScrollAreaTop;    // 0x007CFF88
-extern int PopupScrollAreaGap;    // 0x007CFF30
-extern int PopupScrollRowHeight;  // 0x007CFF5C
-
 // THE LINK HANDLER'S STRINGS (0x006827B8, 0x006827DC, 0x006827C4) and the
 // pending-link pair (0x007591C8, 0x007592C8). on_link_clicked compares the
 // clicked text against the first, opens the second through the third with

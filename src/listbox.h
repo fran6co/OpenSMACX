@@ -120,6 +120,8 @@ class ListBox : public virtual GraphicWin, public virtual Dialog {
   // AlphaSave's show/hide tests the Win state of this embedded list, reached
   // through ListBox's GraphicWin virtual base in the original image.
   bool has_scroll_flags() const { return (iFlags_ & 0xC) != 0; }
+  // ListBox layout computes this existing capacity as visible rows * columns.
+  int visible_item_capacity() const { return static_cast<int>(field_1C_); }
 
   typedef void (__cdecl *DrawCallback)(GraphicWin *, int, int, int, int, int);
   typedef int (__cdecl *WriteCallback)(GraphicWin *, int, int, RECT *, char *);

@@ -375,11 +375,6 @@ char *PopupStartAltFile2 = PopupAlienOtherScriptName;    // 0x00691B24
 // each TU folds its own copy to the immediate the way theirs do.
 static int *const SpaceText = (int *)0x00682820;
 
-// The list-geometry metrics (popup.h has the role note).
-int PopupScrollAreaTop;    // 0x007CFF88
-int PopupScrollAreaGap;    // 0x007CFF30
-int PopupScrollRowHeight;  // 0x007CFF5C
-
 // 0x006A721C, the modal-popup flag every popup driver parks 6 in while its
 // popup runs and clears the moment exec comes back. See the note in popup.h.
 int PopupModalState;  // 0x006A721C
@@ -1907,9 +1902,9 @@ fallback:
 // against the real Popup/Scroll declarations. The 0x474 rectangle is the
 // popup's own Buffer subobject's rect2_ (0x444 + 0x30) and the 0x4c4 width is
 // the same buffer's DIB header width (0x444 + 0x7c + sizeof(BITMAPINFOHEADER))
-// - reached as qualified base members, no raw offsets. The three 0x7CFF globals are screen
-// metrics no dump in this tree names; popup.cpp names them by their role in
-// this arithmetic.
+// - reached as qualified base members, no raw offsets. The three 0x7CFF
+// geometry reads are MainInterface's sprites1_[2/0/1] height members,
+// initialized by its existing asset loader, not independent zeroed globals.
 // TRIED: taking the rectangle as a `const RECT *const` pointer to
 //   `Buffer::rect2_` - the image walks it through a register (`lea
 //   ecx,[esi+0x474]; mov edx,ecx`) - and copying it into a `RECT` local
@@ -1925,11 +1920,12 @@ int Popup::on_listbox_scroll_create() {
     scroll_normal();
 
     const RECT area = this->Buffer::rect2_;
-    const int inset_top = PopupScrollAreaTop;
-    const int row_height = PopupScrollRowHeight;
-    const int rows = (area.bottom - inset_top - PopupScrollAreaGap
+    const int inset_top = MainInterfaceGlobal.scroll_frame_sprite(2).height();
+    const int row_height = MainInterfaceGlobal.scroll_frame_sprite(1).height();
+    const int gap = MainInterfaceGlobal.scroll_frame_sprite(0).height();
+    const int rows = (area.bottom - inset_top - gap
                       - (area.top + 0xd) - 0x2c) / row_height;
-    const int top = rows * row_height + inset_top + PopupScrollAreaGap - 0xa;
+    const int top = rows * row_height + inset_top + gap - 0xa;
     const int left = this->Buffer::dib_.bmiHeader.biWidth - 0x2b;
 
     scroll_.init(left, 0x15, 0x18, top, this, -1, 1);

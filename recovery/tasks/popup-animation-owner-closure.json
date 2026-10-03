@@ -1,0 +1,51 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "310a597b39ab8bf06e511e4e839ad13257f1394d",
+  "editable_files": [
+    "src/popup.cpp",
+    "src/popup.h",
+    "src/councwin.cpp",
+    "src/maininterface.h",
+    "src/listbox.h",
+    "src/recovered/units/00404920.cpp",
+    "src/recovered/units/0045d440.cpp",
+    "src/unrecovered/0045dea0.cpp",
+    "recovery/tests/test_popup_scroll_member_geometry.py",
+    "recovery/tests/popup_scroll_member_geometry.cpp",
+    "recovery/tests/test_popup_animation_owner_behavior.py",
+    "recovery/tests/popup_animation_owner_control.cpp"
+  ],
+  "evidence": [
+    "Pinned MainInterface receiver7AE820, native constructor45EF10 Sprite[4] start+216F4 stride2C, source-owned Sprite iHeight_ offset1C and native popup406260 reads7CFF88/7CFF30/7CFF5C establish sprites1_[2]/[0]/[1]. Remove three incorrectly duplicated zero-valued globals rather than perpetuate aliases; add narrow zero-layout owner accessors.",
+    "Independent native review identified and corrected arithmetic/stack/copy/resize errors in private drafts. Readonly private controls are not acceptance. Complete animation body call/geometry ledger and actual owner headers remain required before body integration.",
+    "Source first prep checkpoint may expose narrow MainInterface and ListBox accessors and repair existing unclaimed on_listbox_scroll_create geometry; no invented layout fields, unverified capacity or claim demotion. Existing field_1C_ is visible ListBox row*column capacity, not parallel state.",
+    "All original spans, historical BYTE_EXACT show obligation and seed TRIED discoveries remain. Original slide/scroll unwind spans must be transferred and supporting compiler code observed, never silently omit them. Only native recorder grants fresh measured claims.",
+    "Root coordinator alone modifies shared source, Git, compiler epochs; other active UI/combat workers retain private proposals. Native current/protected compilation, relevant source/runtime damage controls, build/link and claim/reference/source continuity precede coordinator-reviewed manual checkpoint. No automatic/full-game acceptance or linked preservation claim; genuine structural migrations retain restoration obligations."
+  ],
+  "intent": "Recover Popup show plus complete slide/scroll helpers with actual MainInterface Sprite/member geometry, real automatic Buffer lifetime, virtual dispatch and distinct animation-word owners; eliminate superseded seeds and executable-address forwarders after reviewed verification.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4213024,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4576320,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4578976,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4219488,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "popup-animation-owner-closure"
+}

@@ -129,6 +129,12 @@ class MainInterface : public GraphicWin, public SubInterface {
   FlatButton &flat_button(int index) { return flat_button_[index]; }
   const RECT &main_frame_rect() const { return rect4_; }
   const RECT &main_layout_rect() const { return rect1_; }
+  const RECT &bottom_bounds() const { return bottom_bounds_; }
+  Sprite &slide_frame_sprite(int index) { return sprites2_[index]; }
+  // Original sprites1_ starts at 0x7CFF14; Sprite height is +0x1C.
+  // Popup 0x406260 reads elements 2/0/1, not three standalone globals.
+  Sprite &scroll_frame_sprite(int index) { return sprites1_[index]; }
+  Sprite &interface_down_sprite() { return sprites13_[1]; }
   const RECT &rect2() const { return rect2_; }
   const RECT &rect3() const { return rect3_; }
   const RECT &info_frame_rect() const { return info_panel_frame_; }
