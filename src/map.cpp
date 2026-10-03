@@ -7191,6 +7191,231 @@ void __cdecl world_rivers() {
     }
 }
 
+// Historical source-seed record retained during owner migration.
+// The dated BLOCKED note below is historical evidence, not current status.
+// BLOCKED (map pass, 2026-09-05): NOT homed - world_build (map.cpp) reaches it
+//   through a pending_bodies.cpp forwarder. Everything this body needs is now
+//   NAMED, which was the only thing missing: Fractal is src/fractal.h
+//   (char grid_[2][19][19], 722 bytes - this body's `sub esp, 0x314` is that
+//   plus its fourteen stack locals), RadiusBaseX/RadiusBaseY are map.h's
+//   tables at 0x0066EF50/0x0066EF74, 0x0066EFE0/0x0066F464 are
+//   RadiusOffsetX[9]/RadiusOffsetY[9], 0x0068FB50 is &AltNatural[1],
+//   0x00945B00 is path.cpp's Paths (Paths.continents() at 0x005C2D0F), and the
+//   WorldBuilder fields at 0x009502F0..0x00950304 are deep_water / shelf /
+//   plains / beach / hills. The rewrite is tree-style only: keep this
+//   artifact's five goto targets distinct - 0x005C2DF6 is "do the level
+//   computation", 0x005C3058 is its band switch, 0x005C30DE is the post-walk
+//   coast clamp, and the two that SETTLE for the tile are 0x005C321F and
+//   0x005C3058's tail - and note that `local_1c` / `local_8` are read before
+//   they are written on the band==2 path (BUG IN THE ORIGINAL, carry-over from
+//   the previous tile; reproduce it, do not fix it).
+
+// ORIGINAL: 0x005C2CB0 ?world_erosion@@YAXXZ 0x005C2CB0-0x005C3299
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: complete original entry 0x005C2CB0 with span 0x005C2CB0-0x005C3299; native disassembly traced across both erosion passes.", "src/fractal.h owns the 722-byte Fractal sampled by the two native calls; src/map.h owns Map, map_tiles, neighbor tables and AltNatural; src/path.h owns Paths.continents; map.cpp includes the genuine WorldBuilder and terrain interfaces.", "Pinned native flow initializes the per-tile intensity at 0x005C2DC1, 0x005C2DCA or 0x005C2DCF before altitude dispatch at 0x005C2DF6, and initializes neighbor counters before their walks at 0x005C2E18, 0x005C2EB1 and 0x005C2F43. The seed's uninitialized/carry warning is historical, not a proved current defect; the owner body follows the pinned initialized paths.", "Pinned branch targets 0x005C30B6/0x005C3221 settle altitude-2 low threshold directly; 0x005C30DE applies the independent altitude-3 neighbor clamp before coast blending."], "reason": "Home the pinned 0x005C2CB0 terrain-erosion body in map.cpp's real Fractal, Map, WorldBuilder, Paths and altitude-table owners while preserving the original image identity and extent."}
+// TRIED: Ghidra-shaped goto/label transcription (verified instruction-by- instruction against the raw disassembly for control flow, push order and branch polarity) compiles and matches through instruction #41; diverges afterward on register-allocation shape (shl vs mov) inside the inner tile loop. Not chased further given the function's size (~500 instructions).
+void __cdecl world_erosion() {
+    Fractal fractal;
+    fractal.init();
+
+    int map_scale = 1;
+    int world_scale = 1;
+    if (MapLandCoverage == 1) {
+        map_scale = quick_root(0xC80);
+        world_scale = quick_root(static_cast<int>(MapArea));
+    }
+
+    int pass;
+    for (pass = 0; pass < 2; ++pass) {
+        if (pass != 0)
+            world_shorelines();
+        Paths.continents();
+
+        int y;
+        for (y = 0; y < MapLatitudeBounds; ++y) {
+            int x = y & 1;
+            for (; x < MapLongitudeBounds; x += 2) {
+                Map *const tile = &map_tiles()[
+                    MapLongitude * y + (x >> 1)];
+                const unsigned contour = tile->contour;
+                const unsigned altitude = tile->climate >> 5;
+                int intensity = fractal.sample(x << 4, y << 4) * 5;
+                const int fine = fractal.sample(x << 7, y << 7);
+                intensity = (intensity + fine * 2) * 7 >> 8;
+                if (intensity < 0)
+                    intensity = 0;
+                else if (intensity > 100)
+                    intensity = 100;
+
+                const bool process = (pass == 0) ? altitude <= 2 : altitude > 2;
+                if (!process)
+                    continue;
+
+                int result = 0;
+                int local_1c;
+                int local_8;
+                int region = -1;
+                int neighbor_index;
+
+                if (altitude == 2 || altitude == 3) {
+                    // Count low-altitude tiles in the four-neighbor ring.
+                    local_8 = 0;
+                    for (neighbor_index = 0; neighbor_index < 8;
+                         ++neighbor_index) {
+                        int nx = x + RadiusBaseX[neighbor_index];
+                        if (!(MapIsFlat & 1)) {
+                            if (nx < 0)
+                                nx += MapLongitudeBounds;
+                            else if (nx >= MapLongitudeBounds)
+                                nx -= MapLongitudeBounds;
+                        }
+                        const int ny = y + RadiusBaseY[neighbor_index];
+                        if (ny >= 0 && ny < MapLatitudeBounds
+                            && nx >= 0 && nx < MapLongitudeBounds) {
+                            const Map *const neighbor = &map_tiles()[
+                                MapLongitude * ny + (nx >> 1)];
+                            if ((neighbor->climate & 0xE0) < 0x41)
+                                ++local_8;
+                        }
+                    }
+
+                    if (altitude != 3) {
+                        local_1c = 0;
+                        region = -1;
+                        for (neighbor_index = 0; neighbor_index < 8;
+                             ++neighbor_index) {
+                            int nx = x + RadiusBaseX[neighbor_index];
+                            if (!(MapIsFlat & 1)) {
+                                if (nx < 0)
+                                    nx += MapLongitudeBounds;
+                                else if (nx >= MapLongitudeBounds)
+                                    nx -= MapLongitudeBounds;
+                            }
+                            const int ny = y + RadiusBaseY[neighbor_index];
+                            if (ny < 0 || ny >= MapLatitudeBounds
+                                || nx < 0 || nx >= MapLongitudeBounds)
+                                continue;
+                            const Map *const neighbor = &map_tiles()[
+                                MapLongitude * ny + (nx >> 1)];
+                            if ((neighbor->climate & 0xE0) <= 0x40)
+                                continue;
+                            const int next_region = neighbor->region;
+                            if (region < 0) {
+                                region = next_region;
+                            } else if (region != next_region) {
+                                if (static_cast<int>(MapArea * 0x32 / 0xC80)
+                                    <= static_cast<int>(Continents[region].tile_count)
+                                     + static_cast<int>(Continents[next_region].tile_count))
+                                    local_1c = 1;
+                                if (Continents[region].tile_count
+                                    < Continents[next_region].tile_count)
+                                    region = next_region;
+                            }
+                        }
+                    } else {
+                        local_1c = 0;
+                        for (neighbor_index = 0; neighbor_index < 16;
+                             ++neighbor_index) {
+                            int nx = x + RadiusOffsetX[9 + neighbor_index];
+                            if (!(MapIsFlat & 1)) {
+                                if (nx < 0)
+                                    nx += MapLongitudeBounds;
+                                else if (nx >= MapLongitudeBounds)
+                                    nx -= MapLongitudeBounds;
+                            }
+                            const int ny = y + RadiusOffsetY[9 + neighbor_index];
+                            if (ny < 0 || ny >= MapLatitudeBounds
+                                || nx < 0 || nx >= MapLongitudeBounds)
+                                continue;
+                            const Map *const neighbor = &map_tiles()[
+                                MapLongitude * ny + (nx >> 1)];
+                            if ((neighbor->climate & 0xE0) <= 0x40)
+                                continue;
+                            const unsigned next_region = neighbor->region;
+                            if (next_region < 0x40
+                                && next_region != tile->region)
+                                ++local_1c;
+                        }
+                    }
+
+                    if (altitude == 2) {
+                        if (local_1c != 0) {
+                            local_8 += 4;
+                            if (local_8 < 0)
+                                local_8 = 0;
+                            else if (local_8 > 8)
+                                local_8 = 8;
+                        }
+                        int adjusted = intensity;
+                        if (intensity < static_cast<int>(contour))
+                            adjusted = static_cast<int>(WorldBuilder.shelf)
+                                     + intensity;
+                        if (adjusted < static_cast<int>(AltNatural[altitude + 1])) {
+                            result = adjusted;
+                            goto settle_tile;
+                        }
+
+                        const int value = (local_8 - 3)
+                            * static_cast<int>(WorldBuilder.shelf);
+                        intensity = -((value + ((value >> 31) & 3)) >> 2);
+                        result = adjusted + intensity;
+                        goto settle_tile;
+                    } else if (local_1c != 0) {
+                        // Native 0x5C30DE applies this carry to altitude 3
+                        // independently of altitude 2's earlier clamp.
+                        local_8 += 4;
+                        if (local_8 < 0)
+                            local_8 = 0;
+                        else if (local_8 > 8)
+                            local_8 = 8;
+                    }
+
+                    result = ((8 - local_8)
+                              * WorldBuilder.plains
+                              * world_scale / (map_scale * 8)) + intensity;
+                    if (result < static_cast<int>(contour)) {
+                        int ocean_coverage = MapOceanCoverage < 1 ? 1
+                            : (MapOceanCoverage > 2 ? 2
+                                : static_cast<int>(MapOceanCoverage));
+                        intensity = (((((static_cast<int>(WorldBuilder.hills)
+                            * static_cast<int>(MapErosiveForces)) / 2)
+                            * (8 - local_8) / (ocean_coverage * 8))
+                            + WorldBuilder.beach) * world_scale) / map_scale;
+                        result += intensity;
+                    } else {
+                        int roughness = local_8 < 0 ? 0
+                            : (local_8 > 8 ? 8 : local_8);
+                        int ocean_coverage = MapOceanCoverage < 1 ? 1
+                            : (MapOceanCoverage > 2 ? 2
+                                : static_cast<int>(MapOceanCoverage));
+                        result = ((result - static_cast<int>(contour))
+                            * (8 - roughness) * static_cast<int>(MapErosiveForces))
+                            / (ocean_coverage * 8) + static_cast<int>(contour);
+                    }
+                } else if (altitude < 2) {
+                    result = intensity - WorldBuilder.deep_water;
+                } else if (altitude == 4) {
+                    if (static_cast<int>(contour) < intensity)
+                        intensity = intensity * 2 - static_cast<int>(contour);
+                    result = intensity
+                        + static_cast<int>(WorldBuilder.hills)
+                          * static_cast<int>(MapErosiveForces)
+                        + WorldBuilder.peaks;
+                } else if (altitude > 4) {
+                    result = static_cast<int>(WorldBuilder.hills)
+                        * static_cast<int>(MapErosiveForces) + intensity;
+                }
+
+settle_tile:
+                result = (result + 1 + static_cast<int>(contour)) / 2;
+                if (MapErosiveForces == 0 && result > 0x4A)
+                    result = 0x4A;
+                alt_put_detail(x, y, result);
+            }
+            do_all_non_input();
+        }
+    }
+}
+
 /*
 Purpose: Build the whole planet: reset the altitude table and the Map* rules
          run, wipe the tiles, raise continents and hills until the land targets

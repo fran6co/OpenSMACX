@@ -1107,14 +1107,6 @@ void __cdecl atrocity(int faction_id, int faction_id_victim, int kind, int unk) 
 //             body homed into src/console.cpp (set_view, BYTE_EXACT)
 
 
-// ?world_erosion@@YAXXZ at 0x005C2CB0 - world_build (map.cpp) calls it between
-// build_hills and the polar-cap pass. Its archived transcription is a
-// goto/label Ghidra shape that has never been rewritten in tree style, so
-// this is the forwarder and not a homed body.
-void __cdecl world_erosion() {
-    typedef void(__cdecl *pending)();
-    PENDING_BODY(0x005C2CB0, pending)();
-}
 
 // ?enemy_move@@YAHH@Z at 0x0056B5B0 - the AI's per-vehicle move driver, the
 // one callee enemy_veh (general.cpp) was homed without. 56 KB of image span,
