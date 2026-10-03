@@ -514,7 +514,7 @@ uint32_t VehBasicBattleMorale[2];  // 0x00912420
 uint32_t VehBattleModCount[2];  // 0x00915614
 BOOL VehBattleUnkTgl[2];  // 0x0091561C
 int VehBattleModifier[8];  // 0x009155F0
-LPSTR VehBattleDisplay[160];  // 0x0090F554
+char VehBattleDisplay[8][80];  // 0x0090F554
 
 // boom temporarily suppresses one vehicle while redrawing the affected tile,
 // then restores -1. This is separate from the Console's selected vehicle.
@@ -3834,14 +3834,8 @@ void __cdecl add_bat(int type, int modifier, LPCSTR display_str) {
     VehBattleModCount[type] = offset + 1;
     int index = type * 4 + offset;
     VehBattleModifier[index] = modifier;
-    // FOLD THE BASE: `VehBattleDisplay` is a real ARRAY now, so its name is
-    // an address, not a value - `&VehBattleDisplay[index * 20]` emits the
-    // image's single `add edx, <base>` (the immediate discounted as a
-    // relocation). The old `LPSTR *const` binding made VC6 read the
-    // pointer's VALUE first (`mov esi, dword ptr [VehBattleDisplay]` then
-    // `add edx, esi`), which is why a literal-initialised local stood in
-    // for it; measured 13/25 through the binding, exact through the literal.
-    strcpy((LPSTR)&VehBattleDisplay[index * 20], display_str);
+    // Native strcpy writes the row itself; no pointer is stored or loaded.
+    strcpy(VehBattleDisplay[index], display_str);
 }
 
 /*

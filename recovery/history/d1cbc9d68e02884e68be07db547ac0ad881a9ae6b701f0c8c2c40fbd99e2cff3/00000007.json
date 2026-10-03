@@ -1,0 +1,20 @@
+{
+  "event_id": "3a191ecd3dc3ad9c04bf96d59f5cd5c7c09f76411e05cfb58b596ac06e4de1f2",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/veh.cpp",
+      "src/veh.h"
+    ],
+    "evidence": [
+      "Admit only correcting existing VehBattleDisplay storage from LPSTR[160] to char[8][80] and its add_bat writer, preserving640byteallocation and eight80byte slots. Existing add_bat proves type*4+offset with offset<4, strcpy into original90F554+index*50; canonical BattleWin422898..4228BA reads rowaddresses side*140+modifier*50, not pointer values. No added bounds guards, duplicate storage, new global extent, historical claim demotion or baseline reset. All other Veh behavior immutable; root native protected diagnostics and fresh app build/link required before integration. Corrected BattleWin uses direct real character row rather than pointer reinterpretation."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "89dadb3629c970775f9204c00e78620d5daebf4fa8574ad63cf979dd212f3472",
+  "request_id": "battle-report-text-storage-scope-20261003",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:statuswin-remaining-owner-coverage"
+}

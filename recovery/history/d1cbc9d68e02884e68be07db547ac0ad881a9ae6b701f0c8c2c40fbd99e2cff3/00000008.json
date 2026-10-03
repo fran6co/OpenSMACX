@@ -1,0 +1,19 @@
+{
+  "event_id": "f835c5f59e4d1ed799b20fad7a5c0d88922cb5787f83c68603b7c8b19bfd0195",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_battle_modifier_text_behavior.py"
+    ],
+    "evidence": [
+      "Admit durable actual-source add_bat controls for the genuine char[8][80] battle display owner. Root private native4objects preserve all108 protected historical diagnostics underbothrecipes; add_bat stays BYTE_EXACT under recipe1, unchanged mismatch underrecipe0. GCC/ClangC++98 controls pass zero modifier, bothsides/fourrows, count/fullcapacity and rowstride640byteextent. No claims demoted, newacceptance or newfunctioncoverage granted; fresh wholeappbuild/link required before committing owner source."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "3a191ecd3dc3ad9c04bf96d59f5cd5c7c09f76411e05cfb58b596ac06e4de1f2",
+  "request_id": "battle-text-owner-controls-20261003",
+  "schema_version": 1,
+  "sequence": 8,
+  "stream": "task:statuswin-remaining-owner-coverage"
+}

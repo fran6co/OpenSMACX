@@ -662,9 +662,9 @@ extern uint32_t VehBattleModCount[2];  // 0x00915614
 extern BOOL VehBattleUnkTgl[2];  // 0x0091561C
 // 2 types x 4 modifier slots (add_bat's `type * 4 + offset`), ends 0x00915610.
 extern int VehBattleModifier[8];  // 0x009155F0
-// 8 slots (type * 4 + offset) of 20 LPSTRs - 80 bytes - each; add_bat strcpy's
-// into slot `index`, battle_compute reads back the same arithmetic.
-extern LPSTR VehBattleDisplay[160];  // 0x0090F554
+// Eight inline character rows, not string pointers: add_bat copies into
+// 90F554 + (type * 4 + offset) * 80; battle_report reads the same row address.
+extern char VehBattleDisplay[8][80];  // 0x0090F554
 extern LPSTR VehBattleDisplayTerrain;
 
 // The original symbols are ?say_morale@@YAXPADHH@Z and
