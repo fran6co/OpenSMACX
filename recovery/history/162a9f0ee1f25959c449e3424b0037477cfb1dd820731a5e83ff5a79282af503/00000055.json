@@ -1,0 +1,20 @@
+{
+  "event_id": "ed096cf6d84c873a86942e522a842b03701fac04766e97fb09501ba91b5cc5dd",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/deletionlist.h",
+      "src/messagewin.h"
+    ],
+    "evidence": [
+      "Coordinator admits reuse of the existing real DeletionList header and declaration of the already-owned MessageWinNetworkMessageCount for net_upkeep integration. Remove the conflicting local class from netdaemon.cpp only after protected native diagnostics are compared. No additional body recovery, scope reset, claim demotion or acceptance permission."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "a53ebb0afd81e567865a1aecd56607b3aeb63ba068bbfac778c22a5c9944c122",
+  "request_id": "admit-net-upkeep-real-deletionlist-interface",
+  "schema_version": 1,
+  "sequence": 55,
+  "stream": "task:base-colony-economy-coverage-wave"
+}

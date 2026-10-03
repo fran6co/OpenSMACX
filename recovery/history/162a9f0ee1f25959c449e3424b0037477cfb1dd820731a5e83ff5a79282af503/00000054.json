@@ -1,0 +1,20 @@
+{
+  "event_id": "a53ebb0afd81e567865a1aecd56607b3aeb63ba068bbfac778c22a5c9944c122",
+  "payload": {
+    "affects": [
+      "entity-c07f1ce86a5f653e22dee09a2df5ee8f3f8ff0ebb4415063e76507b1d408d578"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "net-upkeep-real-deletionlist-interface",
+    "evidence": [
+      "Native private overlay v1: baseline trial 0 compiled; candidate failed with C2011 duplicate DeletionList, undeclared MessageWinNetworkMessageCount and C2360/C2361 case-crossing declarations. Existing source declaration src/deletionlist.h has size 0x5A4 and convert API; src/messagewin.cpp maps the counter at 0x0093E964. No body claim or acceptance inferred."
+    ],
+    "hypothesis": "The net_upkeep native candidate needs the existing real DeletionList API; netdaemon.cpp contains a duplicate raw DeletionList class that conflicts with its source-owned header. The existing MessageWinNetworkMessageCount object also needs a public declaration, and VC6 switch case scope must be corrected without changing behavior.",
+    "kind": "discovery"
+  },
+  "previous_event": "8dd384b8135367544873df32fd043d2e0d805a68b2230d84416125a9149d0c85",
+  "request_id": "net-upkeep-real-deletionlist-interface",
+  "schema_version": 1,
+  "sequence": 54,
+  "stream": "task:base-colony-economy-coverage-wave"
+}
