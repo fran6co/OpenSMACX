@@ -1,0 +1,19 @@
+{
+  "event_id": "a168aeb51d5a56d12657ee6f3c2bb8a84005dba667a3bb4fc64844ff254fe8d3",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_diplomacy_owner_behavior.py"
+    ],
+    "evidence": [
+      "Persist actual-source host controls for the six admitted comm_check/enemies_war/enemies_unpact/enemies_trade_tech/enemies_treaty/encounter bodies. Native review found asymmetric trade sources, repeated has_tech calls, full-width coordinate checks, local-pact parser/message/flag differences and modal callback reload requirements. Compile the extracted product bodies with explicit dependency doubles and deliberate damage controls; no private proposal includes, no ABI, matching, runtime or game acceptance claim. No new function, storage or behavior-change authority."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "88d2d58be3cdb7ac1f3fda0a6a473c91ca853bea8164fb4eefd9b876b6dd085c",
+  "request_id": "admit-diplomacy-actual-owner-behavior-controls",
+  "schema_version": 1,
+  "sequence": 42,
+  "stream": "task:base-colony-economy-coverage-wave"
+}
