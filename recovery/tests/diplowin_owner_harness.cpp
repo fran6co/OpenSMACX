@@ -164,6 +164,9 @@ struct DiploWin : public GraphicWin, public SubInterface {
     int faction_id_;
     int faction_id_with_;
     Spot spot_;
+    RECT portrait_rect_[2], rect_F2C_, rect_F3C_, rect_F4C_, rect_F9C_;
+    RECT rect_FAC_, rect_FBC_, rect_FCC_;
+    RECT button_rects_[13];
 #ifdef DAMAGE_MEMBER_ORDER
     StringBox stringBox_;
     FlatButton flatButtons_[13];
@@ -173,8 +176,6 @@ struct DiploWin : public GraphicWin, public SubInterface {
 #endif
     ListBox listBox_;
     EditBox editBox_;
-    RECT portrait_rect_[2], rect_F2C_, rect_F3C_, rect_F4C_, rect_F9C_;
-    RECT rect_FAC_, rect_FBC_, rect_FCC_, rect_FFC_, rect_100C_, rect_101C_;
     void draw_who() { mark("draw_who"); }
     void draw_whom() { mark("draw_whom"); }
     void draw_offers() { mark("draw_offers"); }
@@ -249,9 +250,9 @@ static void init_geometry(DiploWin &win) {
     win.portrait_rect_[0] = rect(20, 30, 90, 80);
     win.portrait_rect_[1] = rect(100, 30, 170, 80);
     win.rect_F4C_ = rect(30, 50, 160, 72);
-    win.rect_FFC_ = rect(10, 20, 50, 40);
-    win.rect_100C_ = rect(60, 20, 100, 40);
-    win.rect_101C_ = rect(110, 20, 150, 40);
+    win.button_rects_[2] = rect(10, 20, 50, 40);
+    win.button_rects_[3] = rect(60, 20, 100, 40);
+    win.button_rects_[4] = rect(110, 20, 150, 40);
     win.rect_F9C_ = rect(10, 50, 100, 70);
     win.rect_FAC_ = rect(105, 50, 195, 70);
     win.rect_FBC_ = rect(10, 75, 100, 95);
@@ -344,8 +345,9 @@ int main(int argc, char **argv) {
         win.faction_id_ = 1; win.faction_id_with_ = 2;
         win.portrait_rect_[0] = win.portrait_rect_[1] = rect(0, 0, 1, 1);
         win.rect_F4C_ = win.rect_F9C_ = win.rect_FAC_ = win.rect_FBC_ =
-            win.rect_FCC_ = win.rect_FFC_ = win.rect_100C_ = win.rect_101C_ =
-            win.rect_F2C_ = win.rect_F3C_ = rect(0, 0, 1, 1);
+            win.rect_FCC_ = win.button_rects_[2] = win.button_rects_[3] =
+            win.button_rects_[4] = win.rect_F2C_ = win.rect_F3C_ =
+            rect(0, 0, 1, 1);
         Language = 1; MainInterfaceTileFlag = 0;
         DiploLocalizedTradeTitle = 0;
         DiploLocalizedDiplomacyTitle = 0;

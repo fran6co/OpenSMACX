@@ -105,10 +105,24 @@ def test_product_hierarchy_and_member_construction_order():
     header = (ROOT / "src/diplowin.h").read_text()
     assert re.search(r"class DiploWin\s*:\s*public GraphicWin,\s*public SubInterface", header)
     assert "field_A14_" not in header and "field_A18_" not in header
-    declarations = ("Spot spot_;", "FlatButton flatButtons_[13];",
+    declarations = ("Spot spot_;", "RECT button_rects_[13];",
+                    "FlatButton flatButtons_[13];",
                     "StringBox stringBox_;", "ListBox listBox_;", "EditBox editBox_;")
     positions = [header.index(declaration) for declaration in declarations]
     assert positions == sorted(positions)
+    harness = Path(__file__).with_name("diplowin_owner_harness.cpp").read_text()
+    fixture_start = harness.index("struct DiploWin :")
+    fixture_declarations = ("Spot spot_;", "RECT button_rects_[13];",
+                            "ListBox listBox_;", "EditBox editBox_;")
+    fixture_positions = [harness.index(declaration, fixture_start)
+                         for declaration in fixture_declarations]
+    assert fixture_positions == sorted(fixture_positions)
+    damage_start = harness.index("#ifdef DAMAGE_MEMBER_ORDER", fixture_start)
+    damage_else = harness.index("#else", damage_start)
+    damage_end = harness.index("#endif", damage_else)
+    default_member_order = harness[damage_else:damage_end]
+    assert default_member_order.index("FlatButton flatButtons_[13];") < \
+        default_member_order.index("StringBox stringBox_;")
 
 
 def run(tmp_path, product, scenario, flags=()):
