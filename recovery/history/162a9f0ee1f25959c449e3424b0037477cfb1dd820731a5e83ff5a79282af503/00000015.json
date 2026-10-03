@@ -1,0 +1,20 @@
+{
+  "event_id": "dc749c58ebc0ccee8ca1d5382306be8abde4b43f01f0e6183fc1f7e1f9e0793e",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/base.cpp",
+      "src/base.h"
+    ],
+    "evidence": [
+      "Admit only genuine int BaseProductionUnitCreationDisabled bound90EA40..44 in Base owner, declaredbase.h, initialized0 from proven PE virtualtail loader semantics. Used only by scopedbase_production beforeveh_init. Record loadbearing fact/unknown producer in source; no made-up producer, receiver field, alias, address call, acceptance or byteclaim. Require real COFF intdefinition and storageextent under both native recipes, actual-source host skip/non-skip controls, protected diagnostics, fresh applicationcompile/link and rootreview beforeintegration. Existing scope/source obligations/seeds/baseline remain intact."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "f8465450dc30305fa5b93b10cd0d9ebc9b99acf3d39dbd4aa9c8f370145128b6",
+  "request_id": "admit-colony-production-disable-owner-20261003",
+  "schema_version": 1,
+  "sequence": 15,
+  "stream": "task:base-colony-economy-coverage-wave"
+}

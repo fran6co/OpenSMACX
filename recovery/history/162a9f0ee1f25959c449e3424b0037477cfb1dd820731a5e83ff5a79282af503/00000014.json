@@ -1,0 +1,20 @@
+{
+  "event_id": "f8465450dc30305fa5b93b10cd0d9ebc9b99acf3d39dbd4aa9c8f370145128b6",
+  "payload": {
+    "affects": [
+      "entity-4c18b5a6716765b7bfcb69f8ca022a20abb0eb4daf79e57b16e7886b29400e0d"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "colony-production-disable-owner-20261003",
+    "evidence": [
+      "Fresh canonical pinned fullstart4F07E0 decode:4F1078 loads90EA40,4F107D testsnonzero andbranches to ownedPopup cleanup/return instead of5C03D0 veh_init. Current src has no owner; archived004f07e0 contains fixedalias only. Independently pinned PE section682000..9C21F8 rawbackingends6A8000 proves90EA40..44 is loader-zero virtualtail, not imagefilebytes. Kuna matched assembly lists only this direct reference; absence of other direct refs is not proof of no indirect producer. Preserve unknown producer and do not silently infer permanentfalse behavior."
+    ],
+    "hypothesis": "base_production4F1078 reads an unowned four-byte loader-zero global at90EA40 before veh_init. Model a real BaseProductionUnitCreationDisabled int, with only observed disabling semantics; no producer is proven and BaseCurrentStaging is not an evidence-backed name.",
+    "kind": "discovery"
+  },
+  "previous_event": "5b34278f3d1333e40549b8162aa97d1c9bdb7043e05f6a755f578c977f36082a",
+  "request_id": "colony-production-disable-owner-20261003",
+  "schema_version": 1,
+  "sequence": 14,
+  "stream": "task:base-colony-economy-coverage-wave"
+}
