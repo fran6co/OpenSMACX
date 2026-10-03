@@ -61,6 +61,10 @@ static void __cdecl newtech_info(char *text) {
 void __cdecl help_tech_info(void (__cdecl *append)(char *), int technology,
                             int faction, int box_index);
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// Historical seed observations (not fresh measurements or acceptance):
+// TRIED: real `FlatButton flatButtons_[3]`/`StringBox stringBoxes_[4]` array members (the scaffold's own layout) - with no dtor declared on FlatButton/StringBox, MSVC synthesizes its OWN local `??_H@` vector-constructor-iterator COMDAT for the array member init that precedes the body of ANY constructor for that class, which is a SECOND external .text symbol and makes `verify_recovered_function.py`'s `object_code()` raise an uncaught ValueError ("expected one external .text symbol, found 2") instead of reporting NO_COMPILE - crashes --dir and --body scoring outright. Sidestepped the same way the sibling destructor (0x00484810) does: NewTechWin here is its OWN flat class (no real inheritance, byte-array "members"), and every subobject is constructed EXPLICITLY via placement `new` / direct calls, so nothing is ever implicitly member-initialized.
+// TRIED: reproducing the `push -1/push handler/mov fs:[0]` SEH frame and the `ebp-4` progressive construction-state byte - that is MSVC's own codegen for base/member initializer-list unwind, which explicit placement-new statements in an ordinary function body do not trigger; landed without it.
 // ORIGINAL: 0x004849D0 ??0NewTechWin@@QAE@XZ 0x004849D0-0x00484A78;0x006575D0-0x00657626 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/004849d0.cpp retained primary and unwind spans; pinned instructions construct3FlatButtons and4StringBoxes before final StringBox"], "reason": "Ordinary GraphicWin inheritance and embedded FlatButton/ButtonGroup/StringBox members reproduce the original construction graph without duplicate placement construction."}
 NewTechWin::NewTechWin() {

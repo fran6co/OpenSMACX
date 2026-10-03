@@ -8988,6 +8988,7 @@ int Buffer::write_multi_font_raw(char *text, int x, int y) {
     return 3;
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005E3730 sub_5e3730 0x005E3730-0x005E376B BYTE_EXACT
 // symbol    ?write_cent@Buffer@@QAEHPADHHH@Z
 // size      59 bytes
@@ -8998,10 +8999,7 @@ int Buffer::write_multi_font_raw(char *text, int x, int y) {
 // calls     0x005DD020 0x006453E0
 // 0x005E3730  sub_5e3730  ->  _sub_5e3730
 //
-// A byte-exact Mizuchi match that no file in the tree owns yet. NOT in
-// OPENSMACX_SOURCES and not compiled: it is the emitter's verification style,
-// and rewriting it in the tree's own style is a later phase. See README.md
-// beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
+// The retained seed's BufferProxy receiver is now the genuine Buffer owner.
 
 int Buffer::write_cent(char *text, int x, int y, int width) {
     if (text == 0) {
@@ -9326,6 +9324,7 @@ void Buffer::select_text_slot(int requested) {
 
 // ORIGINAL: 0x005DB040 ?write_strings@Buffer@@QAEHPAUStringList@@HHHH@Z 0x005DB040-0x005DB3F6 FILE
 // symbol    ?write_strings@Buffer@@QAEHPAVStringList@@HHHH@Z
+// Deleted seed provenance: git:406fd820:src/recovered/005e3730.cpp
 // TRIED: the scaffold's `extern "C" sub_5eXXXX()` externs implied the wrong conventions for their callers here (nullary cdecl); the disasm's ecx=receiver setup before each call site shows they are thiscall members (sub_5e3630/current_entry family on StringStruct with ecx=a1, sub_5e3650 on Font, sub_5e3660/ 3690/3730/3770 on Buffer with ecx=this) - redeclared as such, since relocations are masked and only the caller-side marshalling bytes are scored. Confirmed against the already- recovered src/recovered/005e3730.cpp and src/recovered/units/005e3770.cpp (both thiscall(Buffer*,...)), and against src/leaf_recoveries.cpp's sub_5e3630/3650/3660 bodies for their real (nullary/one-int) arities. Reaches MISMATCH, 265/318 mnemonics shared (0.836), 956 vs 950 bytes, first divergence at #1 (prologue register order).
 // The final word is flags, not a clipping height: bit1 retains list position.
 // Pixel clipping reads this Buffer's signed native DIB height independently.

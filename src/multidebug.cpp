@@ -157,6 +157,11 @@ void MultiDebug::timer_callback() {
     redraw();
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// Historical seed observations (not fresh measurements or acceptance):
+// _itoa's scaffold declaration above is nullary (a fallback); the real
+// 3-argument call is declared here under a different name. The relocation
+// it needs is masked by the comparison regardless of the symbol it names.
 // ORIGINAL: 0x005C9920 ?on_redraw@MultiDebug@@QAEXXZ 0x005C9920-0x005C9DF9 FILE
 // symbol    ?on_redraw@MultiDebug@@UAEXXZ
 // The original primary table's slot 12 selects this painter. The timer's

@@ -768,6 +768,7 @@ Purpose: Initialise the MIDI from a filename. The name replaces whatever
          same heap and copied in - and the one Midi-own flag byte at 0x54
          is cleared. The second argument is ignored; the status word is
          memset's own answer (the destination pointer).
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004C7C60 ?init@Midi@@QAEHPADK@Z 0x004C7C60-0x004C7CB5 BYTE_EXACT
 // symbol    ?init@Midi@@UAEHPADK@Z
 // size      85 bytes
@@ -824,6 +825,12 @@ Purpose: Remember the MIDI's filename. The previous copy, if any, goes back
          to the game CRT heap first; the new string is measured, allocated
          on that same heap, recorded at 0x4C, and copied in - the field
          already names the block while it is still being filled.
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// Historical seed observations (not fresh measurements or acceptance):
+// The staged preamble's `_strcpy`/`_strlen` decls are stale (arity-less,
+// and `_strlen`/`_strcpy` as C++ names each pick up a SECOND leading
+// underscore from the `extern "C"` __cdecl decoration, landing on
+// `__strlen`/`__strcpy` - not the CRT's real `_strlen`/`_strcpy` symbol).
 // ORIGINAL: 0x004C7CF0 ?set_fname@Midi@@QAEHPBD@Z 0x004C7CF0-0x004C7D42 BYTE_EXACT
 // size      82 bytes
 // prototype int (__thiscall ?set_fname@Midi@@QAEHPBD@Z)(Midi* this, int8*)
@@ -866,6 +873,22 @@ Purpose: Load the MIDI from a caller-supplied filename. With no wrapped
          hook, behind the same guard dword - builds one directly into the
          0x3C field, with the MIDI's own mode 2 (Wave's loaders pass 1);
          the base Sound::load then reads the file.
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// Historical seed observations (not fresh measurements or acceptance):
+// NOT BYTE_EXACT - MISMATCH, closest reached (mnemonic_similarity 0.9275,
+// 32/34 mnemonics in common). The control-flow shape matches the original
+// exactly (same branches, same early return, same shared tail calling
+// Sound::load), and the ONLY divergence is which callee-saved register
+// holds which value: the original assigns esi=this, edi=a1; every source
+// form tried here compiles to edi=this, esi=a1 instead - a straight swap,
+// not a logic difference. Ruled out (all six produced the identical
+// swap): if/else vs. nested-if vs. goto-threaded control flow, naming the
+// Sound* cast in its own local, naming a1 in its own local, and addressing
+// field_3c_ through a named member vs. a raw reinterpret_cast<char*>(this)
+// + 0x3c pointer. This reads as a fixed backend register-allocation
+// preference for this shape (which stack param gets which saved register)
+// rather than anything source-form can steer - the same class of thing the
+// scheduler notes above describe for `lea`/`push` ordering.
 // ORIGINAL: 0x004C7D80 ?load@Midi@@QAEHPBD@Z 0x004C7D80-0x004C7DCD
 // symbol    ?load@Midi@@UAEHPBD@Z
 // size      78 bytes
@@ -919,6 +942,7 @@ Purpose: Load the MIDI from its remembered filename. With no wrapped
          sequencer yet, the guarded creation hook builds one directly
          into the 0x3C field, again with mode 2; the base Sound::load
          then reads the file.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004C7DD0 ?load@Midi@@QAEHXZ 0x004C7DD0-0x004C7E1B BYTE_EXACT
 // symbol    ?load@Midi@@UAEHXZ
 // size      75 bytes
@@ -1080,6 +1104,16 @@ int Midi::set_play_type(unsigned int type) {
 }
 
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// Historical seed observations (not fresh measurements or acceptance):
+// `mov ecx, dword ptr[0x9bc074]`-free entry, but the body reads `[ecx+N]`
+// with no matching stack slot, so ecx is `this`, not a stack argument - the
+// contract's nullary `__cdecl` is wrong. This is a constructor: three
+// vtable installs in sequence, an SEH prologue (`fs:[0]`) with a 0x659f20
+// unwind handler that resets the vtable to the first-phase value, and a
+// span at 0x4c8450/0x659f20/0x659f28 that is PART of this same function
+// (the "spans" list is multi-range). The SEH frame is not modeled here -
+// see TRIED.
 // ORIGINAL: 0x004C75B0 sub_4c75b0 0x004C75B0-0x004C766D;0x004C8450-0x004C8457;0x00659F20-0x00659F32 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:f7bbce35:src/unrecovered/004c75b0.cpp", "src/midi.h", "src/ambience.h"], "reason": "Original Sound-to-Midi constructor staging and byte54 state identify the genuine Midi owner. Historical seed mapping includes the already shared unwind helper; its overlap remains a restoration limitation, not a newly inferred independent function extent."}
 // symbol    ??0Midi@@QAE@XZ

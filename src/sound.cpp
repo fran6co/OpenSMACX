@@ -1012,6 +1012,9 @@ int SoundFadeState::set_fade(unsigned long interval) {
 // 0x004C6120 identify the base table. Its complete original extent remains
 // unclaimed; two observed slots are not a full linked-table proof.
 // RECOVERY_GENERATED: v1 vtable 0x0066E444 ? ??_7SoundFadeState@@6B@ 0x004C6080
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// Historical seed observations (not fresh measurements or acceptance):
+// TRIED: no tier is reachable for ANY body - SHARED_TAIL, the helper at 0x004C8450 (mov [ecx],0x66e444; ret) is COMDAT-folded with another catalogued function, same wall as VoiceRx::VoiceRx() at 0x004C8960. Straight-line field reconstruction below, no attempt at the SEH try/catch unwind frame (bare try/catch with rethrow produced no fs:[0] frame at all under this compiler's flags; the scaffold gives Sound no base class to hang the automatic base/derived vtable-swap unwind on, same as the already-tried ~UV2Player shape).
 // ORIGINAL: 0x004C6080 ??0Sound@@QAE@XZ 0x004C6080-0x004C611A;0x004C8450-0x004C8457;0x00659ED0-0x00659EE2
 Sound::Sound() {
     chain_prev_ = 0;

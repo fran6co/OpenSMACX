@@ -389,6 +389,9 @@ void QuayleWin::vslot_53(int selection, int unused) {
   on_selected(selection, unused);
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// Historical seed observations (not fresh measurements or acceptance):
+// TRIED: MISMATCH #15 add/mov, table-index lea chain differs from the do/while division idiom form used
 // ORIGINAL: 0x00496670 ?quayle@@YAXH@Z 0x00496670-0x0049670F
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original entry 00496670; retained seed src/unrecovered/00496670.cpp", "recovery/tasks/quaylewin-owner-coverage-wave.json", "QuayleWin constructor layout and virtual-slot evidence; fresh isolated build and host controls"], "reason": "Rehome the retained QuayleWin seed into its real GraphicWin owner with typed subobjects; preserve original spans and historical seed obligations."}
 void __cdecl quayle(int faction_id) {
