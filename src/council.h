@@ -61,5 +61,7 @@ extern int CouncilPbemGate;
 extern int CouncilDialogActive;
 extern int CouncilNotifyFormSlots[8];
 extern int CouncilNotifyPluralSlots[8];
+// Deferred network-council message arguments, in original wire order.
+extern int CouncilPendingMessageArgs[3];
 void __cdecl clear_council_notify();
 void __cdecl clear_council_notify(int faction_id);

@@ -46,6 +46,13 @@ int CouncilNotifyFormSlots[8];
 // RECOVERY_OBJECT: v2 0x00703E0C 0x00703E2C ?CouncilNotifyPluralSlots@@3PAHA 0x004243F0
 int CouncilNotifyPluralSlots[8];
 
+// call_council's original multiplayer deferral stores three message arguments
+// here; net_upkeep 5294D3..529536 sends them and resets each to -1. Their
+// initial image bytes are twelve FF bytes. Keep their meanings neutral until
+// the unfinished council producer is recovered, rather than inventing fields.
+// RECOVERY_OBJECT: v1 0x0068BF38 ?CouncilPendingMessageArgs@@3PAHA
+int CouncilPendingMessageArgs[3] = {-1, -1, -1};
+
 // The council dialog remains an explicit dependency of MultiWin's button
 // callback. Its full historical body is retained in the seed, not discarded.
 // ORIGINAL: 0x0052C880 ?call_council@@YAXH@Z 0x0052C880-0x0052DA98;0x0065DB70-0x0065DF45

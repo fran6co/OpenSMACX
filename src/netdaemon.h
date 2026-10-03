@@ -23,6 +23,12 @@
 #include "playerlock.h"  // its records are PlayerLocks
 #include <stddef.h>
 
+// Turn checksum wire records contain 21 signed dwords. The peer slot comes
+// from the message header; its range is not established by this declaration.
+enum { NetTurnChecksumWords = 21, NetTurnChecksumPeerSlots = 8 };
+extern int NetTurnChecksums[NetTurnChecksumWords];
+extern int NetPeerTurnChecksums[NetTurnChecksumPeerSlots][NetTurnChecksumWords];
+
  /*
   * NetDaemon class
   *

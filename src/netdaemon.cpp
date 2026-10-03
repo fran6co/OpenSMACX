@@ -49,6 +49,22 @@
 #include <new>
 #include "replaywin.h"     // ReplayEventBytes: replay recorder's byte length
 
+// do_checksums(4), original 51E760, copies 0x54 bytes from its calculated
+// vector; net_upkeep 5296E6..5296F4 sends the same 21 dwords. The complete
+// original allocation extent is unknown; this is the observed storage window.
+// Initial image storage is zero. The producer remains unfinished.
+// RECOVERY_OBJECT: v1 0x0093A008 ?NetTurnChecksums@@3PAHA
+int NetTurnChecksums[NetTurnChecksumWords];
+
+// Original process_message 53675D..53677C copies 21 payload dwords to the
+// message's faction row. net_upkeep compares rows 1..7 with stride 0x54.
+// Its 93A56C logging cursor is row 1, word 2, not a separate allocation.
+// These zero-initialized rows cover the observed faction domain only; the
+// complete original extent and incoming faction validation remain unproven.
+// The corresponding dispatcher branch remains an unfinished dependency.
+// RECOVERY_OBJECT: v1 0x0093A510 ?NetPeerTurnChecksums@@3PAY0BF@HA
+int NetPeerTurnChecksums[NetTurnChecksumPeerSlots][NetTurnChecksumWords];
+
 // The next dword after IsMultiplayerNet. Every sender in this file
 // increments it around one send_message call, every wait loop increments it
 // for the length of its poll and decrements it on the way out, and
