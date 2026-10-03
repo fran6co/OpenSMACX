@@ -433,7 +433,8 @@ static BoxSpriteParams *reportwin_lab_category_style(int category,
 }
 
 // ORIGINAL: 0x00498B30 ?draw_labs@ReportWin@@QAEXXZ 0x00498B30-0x0049B1DC
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x00498B30-0x0049B1DC", "source:src/unrecovered/00498b30.cpp", "source:src/recovered/units/00430b30.cpp"], "reason": "The ReportWin laboratory page is shared by the ordinary report and Datalink entry renderer. Recover its real Buffer hosts, FlatButton members, technology Sprite array and ReportIf fonts; original chart geometry, status rows and unlock-list scans identify these owners. Retain the historical seed for further matching and runtime verification."}
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x00498B30-0x0049B1DC", "git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00498b30.cpp", "source:src/recovered/units/00430b30.cpp"], "reason": "The ReportWin laboratory page is shared by the ordinary report and Datalink entry renderer. Recover its real Buffer hosts, FlatButton members, technology Sprite array and ReportIf fonts; original chart geometry, status rows and unlock-list scans identify these owners. Retain the historical seed for further matching and runtime verification."}
+// TRIED: full pixel-geometry reconstruction of the lab-tier bar chart (labs_line/FUN_0049b450/vtable-slot draw calls with exact coordinate math across up to 15 rows and 4 switch-selected sprite tables) - this pass preserves top-level branch shape and call order, not the per-row layout arithmetic.
 void ReportWin::draw_labs() {
     const int faction = ReportIfGlobal.report_faction_id_;
     const bool datalink = IfaceIdToSlotStorage[ActiveIfaceIdStorage] == 8;
@@ -1370,7 +1371,8 @@ void ReportWin::draw_projects() {
 Purpose: Draw the energy page's five-panel frame and calculate the faction's
          underlying accounts. Text, row breakdowns and selection are pending.
 // ORIGINAL: 0x0049BCD0 ?draw_energy@ReportWin@@QAEXXZ 0x0049BCD0-0x0049D481 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0049bcd0.cpp", "src/reportwin.h", "src/socialwin.cpp"], "reason": "Recover the energy-page frame and shared accounting through owned ReportWin geometry and the typed energy computation; preserve the remaining row and selection work explicitly."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/0049bcd0.cpp", "src/reportwin.h", "src/socialwin.cpp"], "reason": "Recover the energy-page frame and shared accounting through owned ReportWin geometry and the typed energy computation; preserve the remaining row and selection work explicitly."}
+// TRIED: byte-exact prologue - the six local RECTs the original packs into overlapping/aliased ebp slots (shared fields between the six box_sprite calls) are instead six independent RECT locals here, so the frame layout differs from the first instruction on; 765/1663 mnemonics matched (80% rebuilt/original count), all string-building "report line" blocks, the diplomacy/loan loop, both base-relations branches and the ListBox/Dialog vbtable-relative subobject calls are transcribed field-for- field and call-for-call from the disassembly (cross-checked, not just taken from Ghidra). The two `mov ecx,[x]; mov edx, [ecx+8]; ...` virtual-base lookups are reproduced as raw pointer arithmetic rather than through ListBox's own `dialog_` member, since that field's offset is unverified.
 // size      6065 bytes
 // prototype void (__thiscall ?draw_energy@ReportWin@@QAEXXZ)(ReportWin* this)
 // callers   3   call targets   30
@@ -2037,6 +2039,7 @@ connector and returns; the three middle branches draw the line's right
 half for each matched lab pair member; the common tail draws the line box
 and the arrow head.
 // ORIGINAL: 0x0049B450 ?labs_line@ReportWin@@QAEXHHHHHHH@Z 0x0049B450-0x0049BCC7 FILE
+// TRIED: Ghidra-structure translation fixed to real Sprite::draw()/ Buffer::set_clip()/box_sprite() member calls (Ghidra had flattened the thiscall receiver away on all 6 draw() sites and both callee methods); compiles, MISMATCH #6 (early - likely the local8/table[idx]!=8 selection prologue).
 // size      2167 bytes
 // prototype void (__thiscall ?labs_line@ReportWin@@QAEXHHHHHHH@Z)(ReportWin* this, int, int, int, int, int, int, int)
 // callers   2   call targets   3

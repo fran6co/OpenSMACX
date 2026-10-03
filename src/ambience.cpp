@@ -272,6 +272,7 @@ finish_phase:
 
 // ORIGINAL: 0x004C8530 ?load@Ambience@@QAEHPBD@Z 0x004C8530-0x004C85EF FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:f7bbce35:src/unrecovered/004c8530.cpp", "src/ambience.h", "src/midi.h"], "reason": "Original audio event tables and compiler-call contracts identify this genuine owner operation; compatible historical seeds and matching obligations remain retained, not an acceptance verdict."}
+// TRIED: reused-parameter-slot byte/garbage-upper-bits trick for the sub_4c7cc0 arg (UB, not attempted); passed the plain flag bit instead. Ambience reinterpreted as Sound* for the trailing Sound::load call (single-inheritance-at-0 evidence: ecx=edi unchanged across the call). First divergence #3 mov/push.
 // symbol    ?load@Ambience@@UAEHPBD@Z
 int Ambience::load(const char *filename) {
     char path[256];

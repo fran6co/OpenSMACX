@@ -169,7 +169,8 @@ static void pickwin_init_text_button(FlatButton &button, int id, int label,
 }
 
 // ORIGINAL: 0x004887A0 ?init@PickWin@@QAEXP6AXH@ZHH@Z 0x004887A0-0x0048965F;0x00657F70-0x00657F85
-// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/004887a0.cpp"], "reason": "Recover genuine typed PickWin owner behavior and automatic subobject lifetime from pinned native flow and preserved seed; historical identity and restoration obligations retained, no exactness claim."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/004887a0.cpp"], "reason": "Recover genuine typed PickWin owner behavior and automatic subobject lifetime from pinned native flow and preserved seed; historical identity and restoration obligations retained, no exactness claim."}
+// TRIED: nothing exotic here (no x87, no computed jumps) - transcribed mechanically from the Ghidra pseudocode (which is accurate for this straight-line function) using raw `self+offset` field access and real member calls resolved against pickwin.h field names where they matched. sim 0.65-0.71 across flag sets.
 void PickWin::init(void (__cdecl *callback)(int), int mode, int faction) {
   Buffer source;
 
@@ -419,7 +420,8 @@ void PickWin::init(void (__cdecl *callback)(int), int mode, int faction) {
 }
 
 // ORIGINAL: 0x00489BA0 ?on_button_clicked@PickWin@@QAEXH@Z 0x00489BA0-0x0048A798;0x00657F85-0x006581C9
-// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00489ba0.cpp"], "reason": "Recover genuine typed PickWin owner behavior and automatic subobject lifetime from pinned native flow and preserved seed; historical identity and restoration obligations retained, no exactness claim."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00489ba0.cpp"], "reason": "Recover genuine typed PickWin owner behavior and automatic subobject lifetime from pinned native flow and preserved seed; historical identity and restoration obligations retained, no exactness claim."}
+// TRIED: automatic C++ RAII destruction for Popup/PullDown's ~20 embedded subobjects (Dialogs, EditGroup, SpriteBox, CheckBox, ListBox, Dialog, Sprite, StringStruct x2, FlatButton x2, Heap, nested GraphicWin) - the scaffold's classes represent several of these as raw byte/uint32 padding, so auto-generated dtors would skip real cleanup the original calls explicitly. Used mechanical EBP(x)-buffer-offset transcription (verified against pickwin.h's `Popup popup_` size comment == sizeof(BasePop)+sizeof(Scroll), and cross-checked field offsets against pickwin.h directly) instead, matching each explicit close()/dtor call site.
 // symbol    ?on_button_clicked@PickWin@@UAEXH@Z
 void PickWin::on_button_clicked(int button) {
   // The image constructs the Popup/PullDown frame locals before dispatching

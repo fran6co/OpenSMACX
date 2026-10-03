@@ -66,7 +66,8 @@ static __forceinline void set_scroll_icon_defaults(Sprite *arrows,
 }
 
 // ORIGINAL: 0x00588340 ?scroll_normal@@YAXXZ 0x00588340-0x005883CD BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence":["source:src/unrecovered/00588340.cpp","source:src/sprite.cpp","source:src/scroll.cpp:ScrollCloseDynamicDefaults"],"reason":"Populate the source-owned Scroll defaults from the normal-sized sprite objects and restore the normal thickness; retain the exact historical seed as a restoration obligation."}
+// RECOVERY_BINDING: v1 {"evidence":["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00588340.cpp","source:src/sprite.cpp","source:src/scroll.cpp:ScrollCloseDynamicDefaults"],"reason":"Populate the source-owned Scroll defaults from the normal-sized sprite objects and restore the normal thickness; retain the exact historical seed as a restoration obligation."}
+// LEVER: plain sequential stores of the scaffold's own fixed-address globals (`*g_dst = (int)g_src;`) - no address arithmetic here, so the `static T *const` spelling is exactly right, no `extern` rebind needed.
 void __cdecl scroll_normal() {
     set_scroll_icon_defaults(g_SCROLL_BAR_ARROW_ICON_SPRITES,
                              &g_SCROLL_BAR_FILLER_ICON_SPRITES, 20);

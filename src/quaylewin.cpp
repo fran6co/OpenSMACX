@@ -30,7 +30,8 @@ char QuayleWideCaption[4];
 QuayleWin QuayleWinGlobal;
 
 // ORIGINAL: 0x00496810 ??0QuayleWin@@QAE@XZ 0x00496810-0x004968B4;0x00658CB0-0x00658D08 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned original entry 00496810; retained seed src/unrecovered/00496810.cpp", "recovery/tasks/quaylewin-owner-coverage-wave.json", "QuayleWin constructor layout and virtual-slot evidence; fresh isolated build and host controls"], "reason": "Rehome the retained QuayleWin seed into its real GraphicWin owner with typed subobjects; preserve original spans and historical seed obligations."}
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original entry 00496810; retained seed git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00496810.cpp", "recovery/tasks/quaylewin-owner-coverage-wave.json", "QuayleWin constructor layout and virtual-slot evidence; fresh isolated build and host controls"], "reason": "Rehome the retained QuayleWin seed into its real GraphicWin owner with typed subobjects; preserve original spans and historical seed obligations."}
+// TRIED: same shape as 0x00484AC0 (PickTech's ctor) - placement-new for the 7 subobjects (GraphicWin base, FlatButton x2, Spot, ListBox(1), Buffer x2, in disassembly order) plus the 2 vtable stores reproduce the call sequence but not the opaque scaffold's missing SEH-unwind prologue (see 0x00484AC0's note for why).
 QuayleWin::QuayleWin() {}
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
@@ -40,7 +41,8 @@ QuayleWin::QuayleWin() {}
 QuayleWin::~QuayleWin() {}
 
 // ORIGINAL: 0x004951A0 ?init@QuayleWin@@QAEHXZ 0x004951A0-0x004956C1
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned original entry 004951A0; retained seed src/unrecovered/004951a0.cpp", "recovery/tasks/quaylewin-owner-coverage-wave.json", "QuayleWin constructor layout and virtual-slot evidence; fresh isolated build and host controls"], "reason": "Rehome the retained QuayleWin seed into its real GraphicWin owner with typed subobjects; preserve original spans and historical seed obligations."}
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original entry 004951A0; retained seed git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/004951a0.cpp", "recovery/tasks/quaylewin-owner-coverage-wave.json", "QuayleWin constructor layout and virtual-slot evidence; fresh isolated build and host controls"], "reason": "Rehome the retained QuayleWin seed into its real GraphicWin owner with typed subobjects; preserve original spans and historical seed obligations."}
+// TRIED: field-by-offset access on `char *self`, per the scaffold's own hint, plus GraphicWin::init/Buffer::load_pcx/BaseButton::init argument order re-derived from the disassembly's push order (Ghidra's own decompilation independently agreed on all three). Reaches MISMATCH #1 (`push esi` vs a `mov`, one instruction into the __thiscall prologue's register-save order) - not chased further, a register-allocation detail this pass's budget does not cover.
 int QuayleWin::init() {
   field_A1C_ = 0x320;
   field_A20_ = 0x258;
@@ -180,7 +182,8 @@ int QuayleWin::on_key_click(int, int) {
 }
 
 // ORIGINAL: 0x004956D0 ?on_redraw@QuayleWin@@QAEXXZ 0x004956D0-0x0049649D;0x00658D10-0x00658D4F
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned original entry 004956D0; retained seed src/unrecovered/004956d0.cpp", "recovery/tasks/quaylewin-owner-coverage-wave.json", "QuayleWin constructor layout and virtual-slot evidence; fresh isolated build and host controls"], "reason": "Rehome the retained QuayleWin seed into its real GraphicWin owner with typed subobjects; preserve original spans and historical seed obligations."}
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original entry 004956D0; retained seed git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/004956d0.cpp", "recovery/tasks/quaylewin-owner-coverage-wave.json", "QuayleWin constructor layout and virtual-slot evidence; fresh isolated build and host controls"], "reason": "Rehome the retained QuayleWin seed into its real GraphicWin owner with typed subobjects; preserve original spans and historical seed obligations."}
+// TRIED: local StringStruct/Buffer objects reproduce the ctor/dtor calls but MSVC did not regenerate the original's SEH/EH unwind frame (push -1; push handler; fs:[0] chain) from source-level RAII alone here; body is a faithful, compiling transcription (MISMATCH #0, prologue only) - see call order, field offsets and vtable-adjustor reads below for the parts that are semantically verified against raw disassembly.
 // symbol    ?on_redraw@QuayleWin@@UAEXXZ
 void QuayleWin::on_redraw() {
   Heap *saved_string_owner = StringAllocationHeap;

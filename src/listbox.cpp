@@ -1097,7 +1097,7 @@ Purpose: Add one entry: measure the string at the current width, grow the
          list height, remember the string in the entry table and append the
          id. Returns whatever the entry append reports.
 // ORIGINAL: 0x0060C920 ?item@ListBox@@QAEHPADH@Z 0x0060C920-0x0060C9A9 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0060c920.cpp", "source:src/listbox.h"], "reason": "Map the declared dependency to its seed identity in the owning product TU; the retained seed stays beside the landed transcription."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/0060c920.cpp", "source:src/listbox.h"], "reason": "Map the declared dependency to its seed identity in the owning product TU; the retained seed stays beside the landed transcription."}
 // size      137 bytes
 // prototype int (__thiscall ?item@ListBox@@QAEHPADH@Z)(ListBox* this, int8* lpString, int)
 // calls     0x00401100 0x005DC360

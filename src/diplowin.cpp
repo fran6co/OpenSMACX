@@ -94,7 +94,8 @@ void __cdecl DiploWin::string_callback(int faction_id, int unused) {
 }
 
 // ORIGINAL: 0x00443F10 ?exec@DiploWin@@QAEXHH@Z 0x00443F10-0x00444D8B
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00443f10.cpp", "image:terranx_original.exe:443F10-444D8B; callback4412A0 and transcript lifecycle440F30/440F60"], "reason": "Recover the full diplomacy window lifecycle using real base/member controls, singleton transcripts and bilateral offer storage; original catalogue extent retained."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00443f10.cpp", "image:terranx_original.exe:443F10-444D8B; callback4412A0 and transcript lifecycle440F30/440F60"], "reason": "Recover the full diplomacy window lifecycle using real base/member controls, singleton transcripts and bilateral offer storage; original catalogue extent retained."}
+// TRIED: the ~500-instruction layout-RECT tree (this+0xedc onward, built by repeatedly splitting/insetting a screen rect) is approximated at the right field offsets with plausible rather than register-derived values; likewise the AI offer-table indexing (0x7388d8/0x7388e0/0x7388e8/0x738928, 9-wide rows keyed by ab4/ab8) is a simplified approximation, not the exact addressing. The widget init/call sequence (Spot::init, GraphicWin::init/fill, box_sprite, StringBox::init, EditBox::init, the 13-button BaseButton loop, add_offer/rand dispatch, message_data/iface teardown) is transcribed in order with matching argument counts. MISMATCH #20 (layout block, lea vs sub).
 void DiploWin::exec(int faction_id, int faction_id_with) {
   spot_.init(100);
 

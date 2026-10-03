@@ -123,7 +123,8 @@ void terrain_extract_sprite(Sprite &sprite, int x, int y, int height) {
 }
 
 // ORIGINAL: 0x00451C50 ?load_terrain@@YAXXZ 0x00451C50-0x0045370C;0x006550F9-0x0065513A
-// RECOVERY_BINDING: v1 {"evidence": ["Body451C50..45370C and cleanup6550F9..65513A construct two four-Sprite arrays then a Buffer, with reverse destruction and partial-construction unwind. The unused first array remains real. CRT initializer/exit evidence beside asset definitions determines their counts and extents, not adjacency.", "Original451CD2 sets TextureRasterKey before the first load;452BB7 reinitializes scratch100x62 after TER1.PCX. Both correct retained-seed omissions/order. All service results are ignored; no rollback or early return is invented.", "Five sheets drive163 Texture extracts,101 Sprite extracts and198 repeated recolors. Twelve get_pixel results publish their low bytes immediately into TerrainCoastPalette. Two conversions call the genuine five-argument source-remap Sprite::draw5E9D44, reading its key after scratch init/fill.", "Original452258 reads the bounded53-byte remap input6846F8..68472D. No writer/escape was observed; const is a bounded interpretation. Source owns its mapping and type; CMake materializes only pinned data into ignored build context. No runtime access to the old executable is used.", "Rocky receiver order0,2,1,3; fungus banks15+15; wreck/fossil/nexus/resource/pod permutations follow original calls. Source grouping is not proof of the historical TU or cross-TU CRT order. Buffer::change_color and other existing callees retain separate structural debt. Preserve full seed src/unrecovered/00451c50.cpp; no byte or runtime acceptance is claimed."], "reason": "Recover the complete terrain-sheet loader through genuine Texture, Sprite and Buffer owners, preserving asset ordering, shared palette publication and C++ lifetime."}
+// RECOVERY_BINDING: v1 {"evidence": ["Body451C50..45370C and cleanup6550F9..65513A construct two four-Sprite arrays then a Buffer, with reverse destruction and partial-construction unwind. The unused first array remains real. CRT initializer/exit evidence beside asset definitions determines their counts and extents, not adjacency.", "Original451CD2 sets TextureRasterKey before the first load;452BB7 reinitializes scratch100x62 after TER1.PCX. Both correct retained-seed omissions/order. All service results are ignored; no rollback or early return is invented.", "Five sheets drive163 Texture extracts,101 Sprite extracts and198 repeated recolors. Twelve get_pixel results publish their low bytes immediately into TerrainCoastPalette. Two conversions call the genuine five-argument source-remap Sprite::draw5E9D44, reading its key after scratch init/fill.", "Original452258 reads the bounded53-byte remap input6846F8..68472D. No writer/escape was observed; const is a bounded interpretation. Source owns its mapping and type; CMake materializes only pinned data into ignored build context. No runtime access to the old executable is used.", "Rocky receiver order0,2,1,3; fungus banks15+15; wreck/fossil/nexus/resource/pod permutations follow original calls. Source grouping is not proof of the historical TU or cross-TU CRT order. Buffer::change_color and other existing callees retain separate structural debt. Preserve full seed git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00451c50.cpp; no byte or runtime acceptance is claimed."], "reason": "Recover the complete terrain-sheet loader through genuine Texture, Sprite and Buffer owners, preserving asset ordering, shared palette publication and C++ lifetime."}
+// TRIED: sim 0.94, 1704/1715 mnemonics (99.4%); first divergence is the missing `mov byte ptr[ebp-4],N` SEH local-unwind state byte the compiler writes between constructing locals and the first call - not reproduced since it falls out of the compiler's own bookkeeping for the `Sprite arr1[4]; Sprite arr2[4]; Buffer buf804;` RAII locals (matching the original's `??_L`/`??_M` array-constructor-iterator calls) rather than anything we write by hand. Every Texture::extract/Sprite::extract/ change_color loop (including the two 4x4 grids with the `ebx==3&&esi==3` skip, the register-relative `esi±0x2c` sprite-table walks, and the get_pixel/palette-remap blocks) is transcribed from the disassembly, not approximated.
 void __cdecl load_terrain() {
     // Original constructs both four-Sprite arrays, even though the first
     // array is unused and only the first element of the second is extracted.
@@ -413,6 +414,7 @@ int OceanDetailShade[80] = {
 // unwinding. A valid record with a different step count leaves its offset alone.
 // ORIGINAL: 0x00451030 ?load_voxels@@YAXXZ 0x00451030-0x00451A09;0x00655030-0x00655042
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original133ordered init calls establish model receivers, array indices and filename case. Existing caviar.cpp owners supply the actual objects; no original-address pointer stand-ins.", "Original four temporary records read first-part vectors only when step_count is2; null records zero the output and other counts retain it. Only the first two have explicit close calls; the third is replaced by init and the fourth is destroyed after configuration/table work. Original EH655030 reaches CaviarData destructor456100.", "Original4519BA high multiply0x2AAAAAAB and arithmetic shift2 implement signed divide24. Advancing the numerator24 per row yields24rows numbered0..23; the seed divide3 was incorrect. Light settings are individually converted/stored before in-place normalization."], "reason": "Recover voxel asset loading through genuine model objects, renderer setup, typed record parts and source-owned output tables; retain the temporary model through normal and exceptional scope exit."}
+// TRIED: real `CaviarData scratch;` local (constructor + init()/ close() reused for the four embedded-record loads, real `.record_` member instead of raw ebp-relative offsets), all ~130 CaviarData::init(str) calls generated from the (ecx-target, pushed-string) pairs in the raw disasm, the table-fill loop rewritten as plain `base / 3` (0x2AAAAAAB is the textbook divide-by-3 magic constant, so /O2 should regenerate the same imul/sar/shr sequence); compiles, MISMATCH #2 (this early is almost certainly frame size - not chased further given the ~130-call body).
 void __cdecl load_voxels() {
     CaviarData scratch;
     g_VEHDRAW_CAVIAR.init();
@@ -654,6 +656,8 @@ unsigned char BodyTintColorTables[8][24][256];
 // writable: a changed palette overwrites the mapped cache before closing it.
 // ORIGINAL: 0x00422F20 ?compare_palettes@@YAHXZ 0x00422F20-0x00422FFA;0x00652BD0-0x00652BE2 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original primary and EH spans establish operations, local destruction order, standing receiver and mapped cache branches.", "Original bounded row loops and cache sizes establish array extents; model record palette pointer is independently owned storage, not a record-relative address.", "Original paths and dependency-doubled behavioral tests cover cache reuse and invalidation, tint results, parser sequencing and exceptional cleanup."], "reason": "Recover the palette cache and table producer with real Filemap, Buffer and Palette lifetimes, standing palette and model owners, and typed independently owned remap arrays. Historical seeds remain evidence and restoration obligations, not borrowed product claims."}
+// LEVER: memcmp/memcpy called through a cast function pointer instead of directly - the scaffold's own memcmp() declaration takes no params (it only needs to be an address, not a callable prototype), so redeclaring it is C2011; casting sidesteps that AND stops VC6 inlining the constant-size memcpy as rep movsd, which the original does not do.
+// TRIED: homed into general.cpp (its real TU) 2026-09-03 and measured there - MISMATCH 10/85 against an image of 64, so the homing was reverted and the claim left here. Two independent walls, both from the include context this TU gives the body: (1) `Filemap::close` is the MEASURED in-class definition in filemap.h, so VC6 INLINES it at this site and the body grows 21 instructions of UnmapViewOfFile/CloseHandle chain where the image CALLS 0x006287C0 - the brief's MEASURED-inline ceiling, and the out-of-line forwarder idiom does not fix that one. (2) the four null tests in the body make VC6 keep a zero register: `xor edi,edi` then `cmp esi,edi` against the image's `test esi,esi`, and `mov [ebp-4],edi` against the image's immediate 0. Home it only together with a way to make `close` out-of-line at this site alone.
 // This routine calls CRT memcpy in the original. Keep that call boundary
 // without cast-call scaffolding; restore the TU's intrinsic policy afterward.
 #if defined(_MSC_VER) && _MSC_VER == 1200
@@ -679,6 +683,7 @@ int __cdecl compare_palettes() {
 
 // ORIGINAL: 0x00423570 ?colortables_init@@YAXXZ 0x00423570-0x0042439F;0x00652C0A-0x00652C32
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original primary and EH spans establish operations, local destruction order, standing receiver and mapped cache branches.", "Original bounded row loops and cache sizes establish array extents; model record palette pointer is independently owned storage, not a record-relative address.", "Original paths and dependency-doubled behavioral tests cover cache reuse and invalidation, tint results, parser sequencing and exceptional cleanup."], "reason": "Recover the palette cache and table producer with real Filemap, Buffer and Palette lifetimes, standing palette and model owners, and typed independently owned remap arrays. Historical seeds remain evidence and restoration obligations, not borrowed product claims."}
+// TRIED: full instruction-level transcription of the palette-cache load/rebuild state machine (6 Filemap opens, text_open/ text_get resource loads, memcmp cache validation, the create_table_from_color regenerate loops, two RGB_to_HSV tint passes) using goto-labelled control flow matching the original's jump targets and a raw ebp-relative scratch buffer (FRM macro) for the untyped stack locals; no SEH frame reconstruction attempted (MISMATCH #0, prologue only).
 #if defined(_MSC_VER) && _MSC_VER == 1200
 #pragma intrinsic(memcpy)
 #endif
@@ -2629,6 +2634,7 @@ int __cdecl game_init(int mode, int reload) {
 // RECOVERY_LITERAL: v1 0x00685158 0x00685165 ??_C@_0N@GLFC@oceanoffsets?$AA@ 0x00455400
 // ORIGINAL: 0x00455400 ?load_cycling@@YAXXZ 0x00455400-0x004554C0 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["45540F guards both sections; 455432..45546B read three cycle arguments and call Palette init/start in order; 45547C..4554B9 accept ASCII-digit-led ocean lines with an eighty-entry bound and one trailing read. The retained seed and exact startup table remain available."], "reason": "The original ordered configuration loader owns palette cycle setup and writes the shared eighty-entry ocean shade table consumed by terrain generation."}
+// TRIED: nothing ruled out; landed at MISMATCH #50 (deep, near the second text_open/do-while), for-loop + do-while over text_get/text_item_number, Palette::init_cycle/start_cycle on the fixed g_0094c590 object
 void __cdecl load_cycling() {
     if (text_open("system", "cycling") != 0) {
         return;
@@ -4001,6 +4007,7 @@ char *__cdecl get_pacts(int faction_id, int other_id) {
 
 // ORIGINAL: 0x005B0420 ?balance@@YAXXZ 0x005B0420-0x005B0A2C
 // RECOVERY_BINDING: v1 {"evidence": ["Retained game-setup-owner-wave full body and seed005B0420; independent pinned-span review by report_draw_labs_review; actual-source test_setup_balance_behavior controls. Native faction rule bit0x100 is aquatic; no historical match claim copied."], "reason": "Recover the complete starting-position balance operation with genuine vehicle, faction, continent and map owners, retaining native neighbor scoring, defender gating and the mutable resource-placement bound."}
+// TRIED: array-index form for vehDir/dirScore instead of the original's pointer-walk locals (lea + running ptr in [ebp-0x14]/[ebp-8]); diverges by instruction #3, before the veh_find loop even starts, so this is a stack-layout/register-allocation gap, not a logic one - full instruction-level transcription of both passes (7-direction scoring, deficit-driven placement) landed and is structurally faithful, just not byte-identical.
 void __cdecl balance() {
     int vehicles_by_direction[7];
     for (int direction = 1; direction <= 7; ++direction) {
@@ -4296,6 +4303,7 @@ extern int TutorialFlags2;
 
 // ORIGINAL: 0x005B3920 ?setup_game@@YAXH@Z 0x005B3920-0x005B4201
 // RECOVERY_BINDING: v1 {"evidence": ["Retained setup owner full native seed and independent full-body review; corrected shared social-effect seen state and pre-callback player labels; actual-source setup controls; no historical byte claim copied."], "reason": "Recover complete game setup using actual source-owned reset storage, player construction and diplomacy initialization; preserve native callback order and final time-warp versus balance branch."}
+// TRIED: diverges at #3 (prologue-adjacent instruction scheduling, original 'push' vs rebuilt 'and'); did not chase further. Body is a full structural transcription adapted from Ghidra and cross-checked against raw disassembly for every call's argument order (verified agenda_on/set_treaty/set_agenda push order by hand against the raw bytes - Ghidra had them right), the AI-faction placement loop, the diplomacy name-matching double loop, and the two zero/fill loop families. Fixed two Ghidra-vs-disasm gaps: local_68 is 12 ints (the zeroing loop bound is 0xc), not the 4 Ghidra inferred from the first few accesses, and CharUpperA is an indirect call through the import thunk at 0x66931C, not a direct symbol.
 void __cdecl setup_game(int reload) {
     // This initializer deliberately retains the native order: profile state,
     // transient game state, player construction, then optional diplomacy.
@@ -4582,6 +4590,7 @@ static int time_warp_find_prototype(int faction_id, int plan) {
 }
 // ORIGINAL: 0x005AEDE0 ?time_warp@@YAXXZ 0x005AEDE0-0x005B0412
 // RECOVERY_BINDING: v1 {"evidence": ["Independent pinned full-span review by report_draw_labs_review; retained game-setup-owner-wave full body and actual-source controls for three profiles, land/aquatic sites, path modes and native relocation."], "reason": "Recover complete accelerated-start setup with typed faction, base, prototype, map and Path owners; preserve callback-sensitive region rereads and native facility/path order. External unfinished callees remain explicit."}
+// TRIED: MISMATCH #0 push/sub at prologue; full-body transcription from Ghidra hypothesis, corrected against raw disasm for: has_tech arg counts (Ghidra folded a dangling outer-call push into two call sites), Path::find(8 ints) called through g_00945b00, veh_lift/veh_drop split (veh_lift returns a value the mangled YAX hid; PROPOSAL: veh_lift should be `int veh_lift(int)`), and per-field pointer widths (short/byte) recovered from `movsx word/byte ptr` on every g_0097d0xx/g_009ab8xx/g_0096xxxx access since the scaffold's g_ globals are declared int* uniformly.
 void __cdecl time_warp() {
     const int variation = rand() % 3;
     int scenario_turn;
@@ -5548,7 +5557,7 @@ extern "C" int __cdecl sub_5a6510(int x, int y) {
 }
 
 // ORIGINAL: 0x005A6890 ?game_io@@YAHHPAUFILE@@@Z 0x005A6890-0x005A6AC0
-// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/005a6890.cpp", "recovery/tasks/game-save-load-owner-coverage.json"], "reason": "Recover the six ordered MapWin member transfers through standard buffered or encrypted I/O and shared transaction state, not raw self offsets."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/005a6890.cpp", "recovery/tasks/game-save-load-owner-coverage.json"], "reason": "Recover the six ordered MapWin member transfers through standard buffered or encrypted I/O and shared transaction state, not raw self offsets."}
 // symbol    ?game_io@@YAHPAVMapWin@@PAU_iobuf@@@Z
 // TRIED: divergence at #4 (push edi/esi vs test) is register allocation for a1 not hoisting into a callee-saved reg; a hoisted `base` local and inline `(char*)a1+off` casts compile identically.
 int __cdecl game_io(MapWin *record, FILE *file) {
@@ -5588,7 +5597,7 @@ static int map_data_block(FILE *file, void *buffer, unsigned int size) {
 }
 
 // ORIGINAL: 0x005A9280 ?map_data@@YAHPAUFILE@@HH@Z 0x005A9280-0x005A94ED
-// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/005a9280.cpp", "recovery/tasks/game-save-load-owner-coverage.json"], "reason": "Recover complete map-data transfer including archive-header blocks, legacy version-dependent block length, failure ordering and real map_read/map_write owners."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/005a9280.cpp", "recovery/tasks/game-save-load-owner-coverage.json"], "reason": "Recover complete map-data transfer including archive-header blocks, legacy version-dependent block length, failure ordering and real map_read/map_write owners."}
 // symbol    ?map_data@@YAHPAU_iobuf@@HH@Z
 // TRIED: inline duplication of each read/write block - factored into rw_plain/rw_block helpers instead; DAT_00945d74 is written once (=0) and never again, so the encrypt branch is dead at runtime but still emitted (matches source, not a live check removed); diverges at instr #5
 int __cdecl map_data(FILE *file, int write_mode, int transfer_map_header) {
@@ -5615,7 +5624,7 @@ int __cdecl map_data(FILE *file, int write_mode, int transfer_map_header) {
 }
 
 // ORIGINAL: 0x005A9C10 ?load_map_daemon@@YAHPAD@Z 0x005A9C10-0x005A9DAD
-// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/005a9c10.cpp", "recovery/tasks/game-save-load-owner-coverage.json"], "reason": "Recover extension/header/version validation, map windows and map tiles, contour copy direction and Paths lifecycle through existing genuine owners."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/005a9c10.cpp", "recovery/tasks/game-save-load-owner-coverage.json"], "reason": "Recover extension/header/version validation, map windows and map tiles, contour copy direction and Paths lifecycle through existing genuine owners."}
 // symbol    ?load_map_daemon@@YAHPAD@Z
 // TRIED: extension check, env_open, header_check against the TERRAN/ TERRANMAP string depending on the extension, then (fread reuses the `a1` parameter's own stack slot as scratch, matching the disassembly) a MapWin close sweep, map_data, and the counter table reset/copy. Landed at 0.80 similarity; diverges at #3 on register vs stack scheduling for the extension check.
 int __cdecl load_map_daemon(char *path) {
@@ -5708,7 +5717,7 @@ int __cdecl save_map_daemon(char *path) {
 }
 
 // ORIGINAL: 0x005A9760 ?load_daemon@@YAHPADH@Z 0x005A9760-0x005A9B19
-// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/005a9760.cpp", "recovery/tasks/game-save-load-owner-coverage.json"], "reason": "Recover the complete load orchestration through actual windows, paths, player/base/vehicle state and PBEM/tamper lifecycle. The called game_data serializer remains explicitly unfinished; this is not working-game acceptance."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/005a9760.cpp", "recovery/tasks/game-save-load-owner-coverage.json"], "reason": "Recover the complete load orchestration through actual windows, paths, player/base/vehicle state and PBEM/tamper lifecycle. The called game_data serializer remains explicitly unfinished; this is not working-game acceptance."}
 // symbol    ?load_daemon@@YAHPBDH@Z
 // TRIED: no Ghidra decompilation was provided for this address; transcribed straight from the disassembly. The two `// indirect` sites are vtable slots 1 (takes an int) and 2 (nullary) on the static object at g_007b0cb8, dispatched through VCall as the brief's shim pattern.
 // TRIED: nothing further tried; MISMATCH #0 (push vs sub - a prologue/ stack-layout difference from the local array sizing), similarity 0.73 over 953 bytes. The "copy loop" at 0x5A9A02 is a broadcast of the value at a fixed index into all 0x20 slots of two parallel int arrays (g_009392c0, g_00939340), not a running index as first guessed.
@@ -5882,7 +5891,7 @@ int __cdecl game_data(FILE *, int) {
 }
 
 // ORIGINAL: 0x005AB600 ?load_map@@YAHXZ 0x005AB600-0x005ABB8D;0x006620A7-0x0066221F
-// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/005ab600.cpp", "recovery/tasks/game-save-load-owner-coverage.json", "pinned image sha256:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tests/test_load_map_behavior.py"], "reason": "Recover map loading through AlphaSave's real selected-path return and existing extension, map-daemon, multiplayer, preference, and dialog owners."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/005ab600.cpp", "recovery/tasks/game-save-load-owner-coverage.json", "pinned image sha256:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tests/test_load_map_behavior.py"], "reason": "Recover map loading through AlphaSave's real selected-path return and existing extension, map-daemon, multiplayer, preference, and dialog owners."}
 // TRIED: FileBox/AlphaSave are opaque (no fields) in this scaffold, so their real stack sizes are unknown; used one raw byte buffer + placement-new/reinterpret_cast at the exact ebp-relative offsets from the disasm (incl. the manual vtable pokes before AlphaSave/Scroll/FlatButton close() calls) instead of real SEH locals. Compiles, right call order/addresses/args, sim 0.34-0.50 - the missing SEH frame and giant flat buffer (vs per-object locals) rule out byte-exact; not retried given size (1797 bytes, ~30 embedded objects).
 int __cdecl load_map() {
     FileBox file_box_lifetime;
@@ -5971,7 +5980,7 @@ int GameDataPlayerCountSnapshot;
 extern StringList MessageWinDeferredBaseMessages[MaxPlayerNum];
 
 // ORIGINAL: 0x0051E3C0 ?clear_all_player_messages@@YAXXZ 0x0051E3C0-0x0051E479
-// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0051e3c0.cpp", "Pinned original01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tests/test_player_message_state_behavior.py"], "reason": "Recover the complete player-message clear_all_player_messages operation through existing StringList/MessageWin owners and eight faction combat-summary counters. Preserve deletion hooks, live count reloads, reset/display order and retained original seed; no new measured claim."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/0051e3c0.cpp", "Pinned original01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tests/test_player_message_state_behavior.py"], "reason": "Recover the complete player-message clear_all_player_messages operation through existing StringList/MessageWin owners and eight faction combat-summary counters. Preserve deletion hooks, live count reloads, reset/display order and retained original seed; no new measured claim."}
 // symbol    ?clear_all_player_messages@@YAXXZ
 // TRIED: second slot000 dispatch expects 'lea' for the adjustor-thunk address but every tried spelling (add, swapped operands, fully inlined) still emits 'add'; jl/jb fixed via reinterpret_cast<int> on the loop-bound pointer compare
 void __cdecl clear_all_player_messages() {
@@ -5986,7 +5995,7 @@ void __cdecl clear_all_player_messages() {
 }
 
 // ORIGINAL: 0x0051E480 sub_51e480 0x0051E480-0x0051E523
-// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0051e480.cpp", "Pinned original01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tests/test_player_message_state_behavior.py"], "reason": "Recover the complete player-message clear_player_messages operation through existing StringList/MessageWin owners and eight faction combat-summary counters. Preserve deletion hooks, live count reloads, reset/display order and retained original seed; no new measured claim."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/0051e480.cpp", "Pinned original01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tests/test_player_message_state_behavior.py"], "reason": "Recover the complete player-message clear_player_messages operation through existing StringList/MessageWin owners and eight faction combat-summary counters. Preserve deletion hooks, live count reloads, reset/display order and retained original seed; no new measured claim."}
 // symbol    ?clear_player_messages@@YAXH@Z
 // TRIED: named `adj2` local for the second this-adjusted vtable call (mismatched: original uses `lea` there, not `add`, unlike the first call which does match named). MISMATCH #41 is the sole remaining divergence at 98.5% mnemonic similarity.
 void __cdecl clear_player_messages(int faction) {
@@ -5999,7 +6008,7 @@ void __cdecl clear_player_messages(int faction) {
 }
 
 // ORIGINAL: 0x0051E530 sub_51e530 0x0051E530-0x0051E6ED
-// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0051e530.cpp", "Pinned original01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tests/test_player_message_state_behavior.py"], "reason": "Recover the complete player-message display_player_messages operation through existing StringList/MessageWin owners and eight faction combat-summary counters. Preserve deletion hooks, live count reloads, reset/display order and retained original seed; no new measured claim."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/0051e530.cpp", "Pinned original01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tests/test_player_message_state_behavior.py"], "reason": "Recover the complete player-message display_player_messages operation through existing StringList/MessageWin owners and eight faction combat-summary counters. Preserve deletion hooks, live count reloads, reset/display order and retained original seed; no new measured claim."}
 // symbol    ?display_player_messages@@YAHH@Z
 // TRIED: char* record-base arithmetic (self+0x30*a1 relative to 0x93a7b0) with adjustor-thunk VCall dispatch (slot000/slot001) for the two destroy-list virtual calls; reaches #13
 int __cdecl display_player_messages(int faction) {

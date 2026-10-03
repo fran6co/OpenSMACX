@@ -256,7 +256,8 @@ void *allocate_voice_record(size_t size, Heap *owner) {
 // real StringAllocationBase constructor to capture. Its allocation-failure
 // branch keeps the native partial list mutation; do not roll it back.
 // ORIGINAL: 0x00633180 sub_633180 0x00633180-0x006336C2;0x006637B0-0x0066386E
-// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00633180.cpp"], "reason": "Rehome seed catalogue identity and original extents into compiled owning class; native-emitted symbol is separate and no new byte claim granted."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00633180.cpp"], "reason": "Rehome seed catalogue identity and original extents into compiled owning class; native-emitted symbol is separate and no new byte claim granted."}
+// TRIED: __stdcall(int) free function per the literal contract - ecx is read as an object throughout and only one dword is popped (ret 4), so recast as a __thiscall member (VoiceRxOwner::method) taking the real stack int; body transcribes the two heap/mem_get alloc-retry blocks (0x1c node, 0x60 VoiceRx) and list splice, but does not reproduce the original's SEH prologue (no local objects requiring an unwind frame here).
 // symbol    ?add_player@JackalVoiceRx@@QAEHH@Z
 int JackalVoiceRx::add_player(int player_id) {
     const bool first = count_ == 0;

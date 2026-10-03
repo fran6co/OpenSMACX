@@ -1960,7 +1960,7 @@ void NetWin::pick_player() {
 }
 
 // ORIGINAL: 0x0047C530 ?pick_faction@NetWin@@QAEXH@Z 0x0047C530-0x0047C965;0x006568F9-0x006569C4
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0047c530.cpp:NetWin::pick_faction", "src/netwin.h:NetWinFactionRecord and NetWinLobbyRow", "src/netwin.cpp:NetWin::pick_pass and NetWinLobbySinglePacket"], "reason": "Recover faction selection through the typed faction records, lobby rows, popup dialog and single-row packet."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/recovered/units/0047c530.cpp:NetWin::pick_faction", "src/netwin.h:NetWinFactionRecord and NetWinLobbyRow", "src/netwin.cpp:NetWin::pick_pass and NetWinLobbySinglePacket"], "reason": "Recover faction selection through the typed faction records, lobby rows, popup dialog and single-row packet."}
 void NetWin::pick_faction(int slot) {
     PopMenu pop_menu;
     pop_menu.init();
@@ -2019,7 +2019,7 @@ void NetWin::pick_faction(int slot) {
 }
 
 // ORIGINAL: 0x0047CF40 ?pick_diff@NetWin@@QAEXH@Z 0x0047CF40-0x0047D2F4;0x00656AED-0x00656BC5
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0047cf40.cpp:NetWin::pick_diff", "src/netwin.cpp:pick_global_diff and sibling pickers", "src/netwin.cpp:NetWinLobbySinglePacket and NetWin::on_button_clicked"], "reason": "Recover the per-slot difficulty picker using the established popup objects, difficulty text table, typed lobby row and typed single-row packet."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/recovered/units/0047cf40.cpp:NetWin::pick_diff", "src/netwin.cpp:pick_global_diff and sibling pickers", "src/netwin.cpp:NetWinLobbySinglePacket and NetWin::on_button_clicked"], "reason": "Recover the per-slot difficulty picker using the established popup objects, difficulty text table, typed lobby row and typed single-row packet."}
 void NetWin::pick_diff(int slot) {
     PopMenu pop_menu;
     pop_menu.init();
@@ -2475,7 +2475,7 @@ static void netwin_set_rect(RECT *rect, int left, int top, int right, int bottom
 }
 
 // ORIGINAL: 0x00482490 ?exec@NetWin@@QAEHXZ 0x00482490-0x00482D84
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00482490.cpp; original identity and primary482490..482D84 span retained", "Pinned4824C2 calls402EE0 with483820 for seven17C-byte stack rows; callback stores482A16 and modal setup identify static cdecl receivers", "recovery/tasks/netwin-owner-coverage.json; revisions1-3 authorize coupled ownership and consumer changes; no matching or runtime acceptance implied."], "reason": "Recover the complete lobby window lifecycle with typed setup rectangles, existing controls, stack-local lobby rows and real receiver-free callbacks."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00482490.cpp; original identity and primary482490..482D84 span retained", "Pinned4824C2 calls402EE0 with483820 for seven17C-byte stack rows; callback stores482A16 and modal setup identify static cdecl receivers", "recovery/tasks/netwin-owner-coverage.json; revisions1-3 authorize coupled ownership and consumer changes; no matching or runtime acceptance implied."], "reason": "Recover the complete lobby window lifecycle with typed setup rectangles, existing controls, stack-local lobby rows and real receiver-free callbacks."}
 // TRIED: full transcription treating `self` as `int *` (matches the original's word-indexed field layout exactly); vtable slot057 retyped to (int,int,int) in this file's VCall, verified against raw disasm; UnionRect/CharUpperA reached via the IAT slot pattern. Reaches MISMATCH #6 'xor' vs 'mov' (register allocation), not chased further given size (2292 bytes).
 int NetWin::exec() {
     if (ExitTurnLoop != 0) {
@@ -3015,7 +3015,8 @@ void NetWin::UNK4() {
 // automatic lifetime; the native explicit close calls in the archived seed
 // are not duplicated over the recovered destructor chain.
 // ORIGINAL: 0x0047C970 ?pick_pass@NetWin@@QAEHH@Z 0x0047C970-0x0047CF32;0x006569C4-0x00656AED
-// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0047c970.cpp", "recovery/tasks/netwin-owner-coverage.json"], "reason": "Recover full password dialog using genuine Popup lifecycle, input override text and shared parse output, faction validation and native sixteen-byte-header/full-row wire layout. Only otherwise unspecified outgoing packet bytes are zero-initialized under user approval. No exactness or game acceptance claim."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/0047c970.cpp", "recovery/tasks/netwin-owner-coverage.json"], "reason": "Recover full password dialog using genuine Popup lifecycle, input override text and shared parse output, faction validation and native sixteen-byte-header/full-row wire layout. Only otherwise unspecified outgoing packet bytes are zero-initialized under user approval. No exactness or game acceptance claim."}
+// TRIED: MISMATCH #10 'push' vs 'mov' (framed build). SEH-frame password dialog: local `Popup popup;` is a real automatic object (BasePop fully laid out in the scaffold: embedded FlatButton x2 and Sprite, plus Popup's own `Scroll scroll_` which itself embeds two more FlatButtons at offsets 0xAAC/0x15F8 - matches the trailer thunks in the disassembly exactly), so ctor/dtor calls are emitted by the language rather than hand-modelled. Explicit popup.close()/ popup.scroll_.close() only where the disassembly names them, not at every scope exit. Did not attempt to reproduce the compiler's own SEH funclet layout - accepted as an "omitted as unreachable" divergence per the precedent in dialog.cpp/graphicwin.cpp.
 int NetWin::pick_pass(int payload) {
     Popup popup;
     const bool faction_mode = NetWinSessionData.mode_ == 2 ||

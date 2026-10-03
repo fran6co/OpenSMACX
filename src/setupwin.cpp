@@ -203,7 +203,8 @@ void SetupWin::on_mouse_move(int x, int y) {
 }
 
 // ORIGINAL: 0x004AE4D0 ?draw_item@SetupWin@@QAEHHH@Z 0x004AE4D0-0x004AE757
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004ae4d0.cpp", "source:src/setupwin.h:SetupWin", "source:src/stringstruct.h:StringList", "source:src/game.h:opening_window"], "reason": "Restore the item-row painter, text cursor, and selected overlay through typed SetupWin members and a real StringList; the opening-window producer remains a separate storage migration."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/004ae4d0.cpp", "source:src/setupwin.h:SetupWin", "source:src/stringstruct.h:StringList", "source:src/game.h:opening_window"], "reason": "Restore the item-row painter, text cursor, and selected overlay through typed SetupWin members and a real StringList; the opening-window producer remains a separate storage migration."}
+// TRIED: void return (no eax set anywhere in 647 bytes, so int->void); matches to #29/647 bytes. neg/sbb/and guard for the `this!=0` select before the first copy() call got closest; inlining the set_text_color color ternary into the call vs. a named local made no difference to where it first diverges.
 int SetupWin::draw_item(int position, int selected) {
     if (position >= static_cast<int>(row_count_)) {
         return 0;

@@ -109,7 +109,8 @@ static void report_iface_button(FlatButton &button, RECT &rect, int id,
 }
 
 // ORIGINAL: 0x004A41D0 ?on_status@ReportIf@@QAEXH@Z 0x004A41D0-0x004A5ED2 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/004a41d0.cpp retained original identity, full spans and seed history", "recovery/tasks/interface-contract-report-closure.json authorized coupled owner recovery", "original:0x4a41d0 complete control/data-access audit; ReportIf declarations and genuine ReportWin control storage"], "reason": "Recover ReportIf's status transition through its genuine SubInterface owner and ReportWin's embedded controls, following the retained original behavior. The source's emitted virtual symbol is recorded separately from the historical catalogue spelling."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/004a41d0.cpp retained original identity, full spans and seed history", "recovery/tasks/interface-contract-report-closure.json authorized coupled owner recovery", "original:0x4a41d0 complete control/data-access audit; ReportIf declarations and genuine ReportWin control storage"], "reason": "Recover ReportIf's status transition through its genuine SubInterface owner and ReportWin's embedded controls, following the retained original behavior. The source's emitted virtual symbol is recorded separately from the historical catalogue spelling."}
+// TRIED: full hand transcription from raw disassembly (not Ghidra, whose &DAT_x+idx*N pseudocode over-scales by 4x on 0x96cdac/0x96c9f8 - fixed here against the raw asm multiply chain and byte tests); covers close path (switch+jump table+loops), init path (7-button report loop, 4 button groups, single-column cef..cf8, has_tech/ bitmask channel grid, spying flags, 4-way spy-report geometry, scroll/report/slide tail). First divergence is instruction #3 (prologue 'mov'/'push' scheduling) - approximate throughout, not byte-verified block by block beyond the ones cited above.
 // symbol    ?on_status@ReportIf@@UAEXH@Z
 void ReportIf::on_status(int mode) {
     ReportWin &window = ReportWinGlobal;
@@ -465,7 +466,8 @@ void ReportIf::on_iface_selected(int item, int) {
 }
 
 // ORIGINAL: 0x004A6330 ?on_iface_button_clicked@ReportIf@@QAEXH@Z 0x004A6330-0x004A6D10 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/004a6330.cpp retained original identity, full spans and seed history", "recovery/tasks/interface-contract-report-closure.json authorized coupled owner recovery", "original:0x4a6330 complete control/data-access audit; ReportIf declarations and genuine ReportWin control storage"], "reason": "Recover ReportIf's button callback from the retained seed through its genuine SubInterface owner and ReportWin controls. Its current emitted virtual symbol is recorded separately from the historical catalogue spelling."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/004a6330.cpp retained original identity, full spans and seed history", "recovery/tasks/interface-contract-report-closure.json authorized coupled owner recovery", "original:0x4a6330 complete control/data-access audit; ReportIf declarations and genuine ReportWin control storage"], "reason": "Recover ReportIf's button callback from the retained seed through its genuine SubInterface owner and ReportWin controls. Its current emitted virtual symbol is recorded separately from the historical catalogue spelling."}
+// TRIED: full transcription landed (MISMATCH #3). Used the brief's resolved jump tables directly (three switches, cases 0xcef-0xcf5, 0xcf0-0xcf3, and 2-8) rather than the raw `ja`+`jmp [eax*4+addr]` ranges alone. Caught a real Ghidra error via the raw bytes: every `*(uint*)(DAT_0090ea30+0x1c)` Ghidra prints is actually `[eax+0x38]` in the disassembly (`mov eax,[0x90ea30]; mov ecx,[eax+0x38]`), confirmed at both call sites that touch it. ReportIf/BaseWin/NetDaemon fields are all raw self+offset casts, not src/reportif.h's hypothesised layout, per the brief's warning.
 // symbol    ?on_iface_button_clicked@ReportIf@@UAEXH@Z
 void ReportIf::on_iface_button_clicked(int button) {
     int faction = ConsoleGlobal.faction_id_;
@@ -1181,7 +1183,8 @@ void SubInterface::set_iface_mode() {
 }
 
 // ORIGINAL: 0x0045D380 ?release_iface_mode@SubInterface@@QAEXXZ 0x0045D380-0x0045D43F
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0045d380.cpp", "image:terranx_original.exe:0x0045D380", "source:src/maininterface.h:InterfaceRegistry and mode-stack storage; source:src/multiwin.h:owned Sprite offsets; native callback-sensitive mode reload and downward repeated removal", "recovery/tasks/interface-contract-report-closure.json; owner expansion interface-registry-multiwin-small-20261001"], "reason": "Recover the original in its genuine C++ owner using source-owned interface registry and mode stack, real virtual callbacks, or owned MultiWin sprite geometry. Preserve historical seed obligations; this binding grants no current byte or runtime claim."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/0045d380.cpp", "image:terranx_original.exe:0x0045D380", "source:src/maininterface.h:InterfaceRegistry and mode-stack storage; source:src/multiwin.h:owned Sprite offsets; native callback-sensitive mode reload and downward repeated removal", "recovery/tasks/interface-contract-report-closure.json; owner expansion interface-registry-multiwin-small-20261001"], "reason": "Recover the original in its genuine C++ owner using source-owned interface registry and mode stack, real virtual callbacks, or owned MultiWin sprite geometry. Preserve historical seed obligations; this binding grants no current byte or runtime claim."}
+// TRIED: byte-exact - a stack-search-and-shift over a linear "iface mode" stack (0x7AE778) plus a parallel object table (0x7AE7F0); the found-and-shifted case does not break, it keeps scanning downward exactly like the disassembly, so no attempt used `break`. 59% mnemonic similarity; landed for the control-flow shape (nested for-loops, no early exit) rather than chase the remaining scheduling/frame differences.
 void SubInterface::release_iface_mode() {
     int depth = ActiveIfaceIdStorage;
     if (depth != 0) {
@@ -1672,8 +1675,9 @@ Purpose: Switch report pages using the existing interface and window owners,
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x0045DEA0 0x0045E540 0x004A3D20 0x004A7000 0x004A84A0 0x004A9050 0x004A9F90 0x004AA0B0 0x004AA970 0x004AB550 0x004AB600 0x004ABE70 0x004AC140 0x004C3A40 0x005B9F20 0x005D5890 0x005D5A70 0x00609F20
-Status: Report dispatch and state transition recovered; seven referenced page
-        renderers remain explicit, link-only placeholders.
+Status: Report dispatch and state transition recovered; the referenced page
+        renderers have source-owned implementations below. Matching and game
+        acceptance remain separate obligations.
 */
 void ReportIf::report(int report_id, int faction_id, int selection) {
     const int previous_page = report_page_history_[0];
@@ -1797,7 +1801,8 @@ void ReportIf::report(int report_id, int faction_id, int selection) {
 // These panel renderers belong to report()'s ReportIf owner. The retained
 // seeds provide their original identities and cross-function evidence.
 // ORIGINAL: 0x004A7000 ?draw_labs@ReportIf@@QAEXXZ 0x004A7000-0x004A842F
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004a7000.cpp", "source:src/reportif.h", "source:src/base.h", "source:src/tech.h"], "reason": "Original panel identity and accesses identify ReportIf's laboratory renderer, using its lists and selection state, source-owned base rows and technology records; preserve the seed's row IDs and technology sentinel rather than substitute a different panel."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/004a7000.cpp", "source:src/reportif.h", "source:src/base.h", "source:src/tech.h"], "reason": "Original panel identity and accesses identify ReportIf's laboratory renderer, using its lists and selection state, source-owned base rows and technology records; preserve the seed's row IDs and technology sentinel rather than substitute a different panel."}
+// TRIED: MISMATCH #0, sim ~0.58 (best of /O1 framed). Full structural transcription (all branches, both list modes, all 4 category bars). Approximated: the ListBox virtual-base (GraphicWin) adjustment at self+0xa384/+0x24/+0x28 uses the flattened `virtual_base_` member instead of the runtime vtable+8 lookup the original performs, so that handful of instructions differ in shape though not in intent.
 void ReportIf::draw_labs() {
     Buffer *const buffer = static_cast<Buffer *>(&MainInterfaceGlobal);
     buffer->set_clip(&field_20_);
@@ -1995,7 +2000,8 @@ void ReportIf::draw_labs() {
 }
 
 // ORIGINAL: 0x004A84A0 ?draw_energy@ReportIf@@QAEXXZ 0x004A84A0-0x004A9017
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004a84a0.cpp", "source:src/reportif.h", "image:0x004A84AE-0x004A84BC pushes mode zero then report faction for the cdecl energy_compute call"], "reason": "Original energy-panel identity maps to ReportIf's list, selection, frame and facility rows. The original cdecl push order establishes energy_compute(report_faction_id_, 0), correcting the seed's reversed displayed arguments without changing the calculation owner."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/004a84a0.cpp", "source:src/reportif.h", "image:0x004A84AE-0x004A84BC pushes mode zero then report faction for the cdecl energy_compute call"], "reason": "Original energy-panel identity maps to ReportIf's list, selection, frame and facility rows. The original cdecl push order establishes energy_compute(report_faction_id_, 0), correcting the seed's reversed displayed arguments without changing the calculation owner."}
+// TRIED: raw self+offset transcription with manual ListBox/Dialog virtual-base adjustor arithmetic (vtable[+8]/[+4] thunks) for both energy-facility and support-facility ListBox blocks diverges at instr #8 (mov vs lea); not chased further given the 2935-byte, dual-listbox scope.
 void ReportIf::draw_energy() {
     energy_compute(report_faction_id_, 0);
     Buffer *const buffer = static_cast<Buffer *>(&MainInterfaceGlobal);
@@ -2150,7 +2156,8 @@ void ReportIf::draw_energy() {
 }
 
 // ORIGINAL: 0x004A9050 ?draw_ops@ReportIf@@QAEXXZ 0x004A9050-0x004A9F85
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004a9050.cpp", "source:src/reportif.h", "source:src/veh.h"], "reason": "Original operations-panel identity belongs to ReportIf's selection and list state; original indexed accesses select source-owned vehicle and prototype records, with the same row filtering and interface controls rather than a frame-only substitute."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/004a9050.cpp", "source:src/reportif.h", "source:src/veh.h"], "reason": "Original operations-panel identity belongs to ReportIf's selection and list state; original indexed accesses select source-owned vehicle and prototype records, with the same row filtering and interface controls rather than a frame-only substitute."}
+// TRIED: mechanical transcription of the Ghidra decompilation with fields reached by raw `(char*)this+OFFSET` casts (ReportIf's 165-member header is not pinned against this image, so no named struct is used). All ~26 unresolved-by-name FUN_ calls were re-derived from the disassembly's own `; ?mangled@Class` comments (set_clip/box_sprite/set_font/set_text_color/ write_cent_l on the fixed Buffer at 0x7aec64, close/init/ item/attach/set_selected_id/set_dialog_font/set_dialog_text_ color[23] on the ListBox+Dialog virtual-base pair at this+0xa2d0 via the scaffold's own `dialog_`/adjustor fields, Strings::get on the fixed 0x9b90d8, set_base/base_compute/ say_base/say_year/veh_at/scroll_normal/scroll_small already declared) rather than guessed. The ten `(**(code**)(EXPR+4)) (0)` vtable dispatches were rewritten as `reinterpret_cast<VCall*>(ADDR)->slot001(0)` per the brief's one-level-cast rule, where ADDR is the object whose first 4 bytes equal Ghidra's EXPR (confirmed against the raw `mov eax,[obj]; call [eax+4]` shape at several call sites). Did not chase the prologue-class mismatch (#0, push-vs-sub) given the size of this function.
 void ReportIf::draw_ops() {
     Buffer &canvas = *static_cast<Buffer *>(&MainInterfaceGlobal);
     if (report_page_history_[1] != 4 && report_page_history_[1] != 5) {
@@ -2321,7 +2328,8 @@ void ReportIf::draw_ops() {
 }
 
 // ORIGINAL: 0x004AA0B0 ?draw_projects@ReportIf@@QAEXXZ 0x004AA0B0-0x004AA921;0x00659595-0x006595C9
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004aa0b0.cpp", "source:src/reportif.h", "source:src/base.h", "source:src/stringlist.h"], "reason": "Retained spans identify ReportIf's project renderer and its cleanup code. A real local StringList owns the selected-project description; source-owned project/base records, member rectangles and controls express the original panel relationships. Empty scratch-string starts do not establish their original bounds."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/004aa0b0.cpp", "source:src/reportif.h", "source:src/base.h", "source:src/stringlist.h"], "reason": "Retained spans identify ReportIf's project renderer and its cleanup code. A real local StringList owns the selected-project description; source-owned project/base records, member rectangles and controls express the original panel relationships. Empty scratch-string starts do not establish their original bounds."}
+// TRIED: full transcription landed (MISMATCH #0: original has an SEH frame - push -1/handler/fs:[0] - that this body does not reproduce). A local `StringStruct localList(0);` reproduces the constructor call, but StringStruct has no declared destructor here so no unwind funclet gets generated; the two inlined "walk head_/entry_count_, adjustor-thunk release each entry" blocks are called as `localList.remove_all()` instead of reproduced byte-for-byte. Caught one real Ghidra error: find_font is `int find_font(int,int)` (2 args, per its mangled name @@YAHHH@Z has only two H's after the this-less Y); Ghidra printed it with 3 args by misattributing an outer accumulated push meant for the following set_font call.
 void ReportIf::draw_projects() {
     StringList description;
     if (report_page_history_[1] != 4 && report_page_history_[1] != 5) {
@@ -2455,7 +2463,8 @@ void ReportIf::draw_projects() {
 }
 
 // ORIGINAL: 0x004AA970 ?draw_sat@ReportIf@@QAEXXZ 0x004AA970-0x004AB54B
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004aa970.cpp", "source:src/reportif.h", "source:src/reportwin.h"], "reason": "Retained original identity maps to ReportIf's satellite panel, including its member rectangles and ReportWin help-selection control. Original scratch addresses are empty-string source starts, not writable destination arrays with inferred bounds."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/004aa970.cpp", "source:src/reportif.h", "source:src/reportwin.h"], "reason": "Retained original identity maps to ReportIf's satellite panel, including its member rectangles and ReportWin help-selection control. Original scratch addresses are empty-string source starts, not writable destination arrays with inferred bounds."}
+// TRIED: raw offset casts on `this` (opaque ReportIf class, no fields declared) mirroring the two near-identical D3C-mode/else-mode text panels and the button-creation loop; matches 10 instructions before diverging. The per-faction Players-array index scaling (idx*0x167 for byte-offset 0x304, matching src/faction.h's adj_name_faction) reused from 0x0053D360's introduce().
 void ReportIf::draw_sat() {
     Buffer *const buffer = static_cast<Buffer *>(&MainInterfaceGlobal);
     const bool help = ReportWinGlobal.buttonGroup2_.field_84_ == 0xD3C;
@@ -2625,7 +2634,8 @@ void ReportIf::draw_sat() {
 }
 
 // ORIGINAL: 0x004AB600 ?draw_security@ReportIf@@QAEXXZ 0x004AB600-0x004ABE24
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004ab600.cpp", "source:src/reportif.h", "source:src/spot.h"], "reason": "Retained identity and indexed accesses identify ReportIf's five-category security panel. Its source-owned lists and Spot rows express the original filters, count caps and lost totals; the final frame uses the first panel's bottom edge as in the original, not a geometrically normalized replacement."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/004ab600.cpp", "source:src/reportif.h", "source:src/spot.h"], "reason": "Retained identity and indexed accesses identify ReportIf's five-category security panel. Its source-owned lists and Spot rows express the original filters, count caps and lost totals; the final frame uses the first panel's bottom edge as in the original, not a geometrically normalized replacement."}
+// TRIED: literal register-transliteration (eax/ecx/edx/ebx/edi locals) compiles and is a faithful line-by-line transcription (verified box_sprite/set_font/write_* arg order and the 0x9ab898 flag-byte stride=0x34 against raw disasm, not Ghidra which mis-scaled it to 0x1a); compiler emits a frameless prologue (sub) where original is framed (push ebp/mov ebp,esp) - #0 divergence. Not chased further given size (2084 bytes).
 void ReportIf::draw_security() {
     Buffer *const buffer = static_cast<Buffer *>(&MainInterfaceGlobal);
     buffer->set_clip(&field_20_);
@@ -2756,7 +2766,8 @@ void ReportIf::draw_security() {
 }
 
 // ORIGINAL: 0x004AC140 ?draw_intel@ReportIf@@QAEXXZ 0x004AC140-0x004AC977
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004ac140.cpp", "source:src/reportif.h", "source:src/faction.h", "source:src/tech.h"], "reason": "Retained identity identifies ReportIf's intelligence panel. Original faction-indexed treaty accesses and technology iteration map to source-owned player data and technology records; the informed-view conditions select the same information rather than treating the panel as a link-only placeholder."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/004ac140.cpp", "source:src/reportif.h", "source:src/faction.h", "source:src/tech.h"], "reason": "Retained identity identifies ReportIf's intelligence panel. Original faction-indexed treaty accesses and technology iteration map to source-owned player data and technology records; the informed-view conditions select the same information rather than treating the panel as a link-only placeholder."}
+// TRIED: full field-offset transcription off `self`, with the two embedded ListBox virtual-base dispatches done as explicit two-step vbtable-pointer/displacement reads (not flattened pointer arithmetic) and the vtable slot1 call retyped to take an int; compiles, MISMATCH #3 (early - likely the spy-flag bool-to-int store or the `test ecx,ecx` on a provably-nonzero fixed global getting folded away).
 void ReportIf::draw_intel() {
     Buffer &canvas = static_cast<Buffer &>(MainInterfaceGlobal);
     const int target = report_selection_;

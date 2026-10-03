@@ -214,6 +214,7 @@ Purpose: Construct the SelectPartWin frame: the GraphicWin base, the Scroll
          its Buffer subobject carry.
 
 // ORIGINAL: 0x004328B0 ??0SelectPartWin@@QAE@XZ 0x004328B0-0x00432961;0x00653F10-0x00653F5A FILE BYTE_EXACT
+// TRIED: same shape as 0x00484AC0 (PickTech's ctor) - placement-new for the 6 subobjects (GraphicWin base, Scroll/Caviar/Buffer/Font/Font members) plus the 5 zeroed fields and 2 vtable stores, in disassembly order, reproduce the call sequence but not the opaque scaffold's missing SEH-unwind prologue (see 0x00484AC0's note for why).
 // symbol   ??0SelectPartWin@@QAE@XZ
 // size      251 bytes
 // prototype void (__thiscall ??0SelectPartWin@@QAE@XZ)(SelectPartWin* this)
@@ -227,7 +228,7 @@ Purpose: Construct the SelectPartWin frame: the GraphicWin base, the Scroll
 //           registers no unwinding; real members would).
 Return Value: n/a
 Status: Coverage transcription - unclaimed body, seed
-        src/unrecovered/004328b0.cpp retained.
+        git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/004328b0.cpp retained.
 */
 SelectPartWin::SelectPartWin() {
     field_2B6C_ = 0;

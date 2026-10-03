@@ -1559,7 +1559,7 @@ Purpose: Return 1 immediately for a unity-bonus tile. Otherwise select the
 // calls     0x004E3A50 0x00592030
 Return Value: 1 for the bonus or a qualifying neighbor, 0 otherwise.
 Status: Coverage transcription - unclaimed body. The original mapping and
-        seed evidence remain in src/unrecovered/00565160.cpp without a
+        seed evidence remain in git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00565160.cpp without a
         BYTE_EXACT claim. VehMoveDeltaX/Y provide the scan order, Bases
         provide the x/y/owner triple, PlayersData owns the pact flags, and
         Map owns the climate and fungus bits. The image calls bonus_at out

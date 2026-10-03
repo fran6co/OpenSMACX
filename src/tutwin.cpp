@@ -244,6 +244,7 @@ finish_button:
 
 // ORIGINAL: 0x004BE650 ?tut_map@TutWin@@QAEHPBDHHHPAUSprite@@HHH@Z 0x004BE650-0x004BE7C6 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["seed:src/unrecovered/004be650.cpp", "image:0x004be650; original call/rectangle/lifetime review"], "reason": "Restore the original ownership-group implementation through real tutorial/editor windows, declared members and normal C++ lifecycle; retained seed extents include the associated exception cleanup where present."}
+// TRIED: separate `int x = -1; int y = -1;` locals instead of the original's shared `or eax,0xffffffff` init (#3 mismatch, 'or' vs 'mov'); combined declaration compiled the same way.
 // symbol    ?tut_map@TutWin@@QAEHPBDHHHPAVSprite@@HHH@Z
 int TutWin::tut_map(const char *text, int x_coord, int y_coord, int pixel_x,
                     Sprite *sprite, int forwarded_6, int arrow_x,
@@ -321,6 +322,7 @@ static int tutorial_button_label_index(unsigned int byte_offset) {
 
 // ORIGINAL: 0x004BDFE0 ?tut_win@TutWin@@QAEHPAUGraphicWin@@PBDHHPAUSprite@@HHH@Z 0x004BDFE0-0x004BE643;0x00659CE0-0x00659CF2 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["seed:src/unrecovered/004bdfe0.cpp", "image:0x004bdfe0; original call/rectangle/lifetime review"], "reason": "Restore the original ownership-group implementation through real tutorial/editor windows, declared members and normal C++ lifecycle; retained seed extents include the associated exception cleanup where present."}
+// TRIED: real `Sprite localSprite;` (no explicit ctor/dtor calls, relying on the scaffold's Sprite having no declared destructor so none is emitted, matching the disassembly which never calls ~Sprite on the normal path) plus field-offset writes transcribed instruction-by-instruction (including the cdq/and-7 rounding idioms rewritten as `(val<0)?7:0` bias terms) compiles and reaches instruction #2 before diverging (no SEH try/finally frame is generated without a non-trivial local destructor, and the original's frame protects the Sprite constructor call).
 // symbol    ?tut_win@TutWin@@QAEHPAVGraphicWin@@PBDHHPAVSprite@@HHH@Z
 int TutWin::tut_win(GraphicWin *owner, const char *text, int x, int y,
                     Sprite *picture, int flags, int arrow_x, int arrow_y) {
@@ -494,6 +496,7 @@ int TutWin::tut_win(GraphicWin *owner, const char *text, int x, int y,
 
 // ORIGINAL: 0x004BC6E0 ?tour@TutWin@@QAEXXZ 0x004BC6E0-0x004BDCBE FILE
 // RECOVERY_BINDING: v1 {"evidence": ["seed:src/unrecovered/004bc6e0.cpp", "image:0x004bc6e0; original call/rectangle/lifetime review"], "reason": "Restore the original ownership-group implementation through real tutorial/editor windows, declared members and normal C++ lifecycle; retained seed extents include the associated exception cleanup where present."}
+// TRIED: full structural transcription of both scoring loops and the 10x tut_win/client_to_screen chain (from raw disasm, cross-checked against Ghidra); diverges at instr #33 (push vs mov) - register allocation for the phase-1 direction-search loop, not a logic gap.
 void TutWin::tour() {
     int tour_step = static_cast<int>(field_53C0_);
     int offsets[32];
@@ -1286,6 +1289,7 @@ void TutWin::tour6() {
 
 // ORIGINAL: 0x004BB7A0 ?tour1@TutWin@@QAEXXZ 0x004BB7A0-0x004BC591 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["seed:src/unrecovered/004bb7a0.cpp", "image:0x004bb7a0; original call/rectangle/lifetime review"], "reason": "Restore the original ownership-group implementation through real tutorial/editor windows, declared members and normal C++ lifecycle; retained seed extents include the associated exception cleanup where present."}
+// TRIED: inline-casting the 0x6a7628/0x6c0df4/0x7ae820 receivers at every call site (no cached local pointer) matches from #0; remaining divergence is that /O2 and /O1 both hoist the ebx/edi push for the zoom-search loop into the true prologue, while the original defers it to just inside the `!is_visible()` branch and pops it back out before the giant guard-clause chain. Tried plain casts, reordering locals (count/target/rec/idx) to match register assignment order - none moved the push. Flat guard-clause control flow (if(!x) return;) reproduces the CFG; all ~30 repeated tut_win/iface_rect/base_rect/client_to_screen blocks and the ALLOC/ALLOC2 branch and do_iface/do_base tail are transcribed directly from the disassembly.
 void TutWin::tour1() {
     if (!TutWinBaseWindow.is_visible()) {
         for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {

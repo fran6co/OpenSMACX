@@ -510,7 +510,8 @@ void __cdecl ProdPicker::UNK2(int, ProdPicker *picker) {
 }
 
 // ORIGINAL: 0x00492FA0 ?calculate@ProdPicker@@QAEXXZ 0x00492FA0-0x00493A6D FILE
-// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00492fa0.cpp", "Pinned original coordinator review: actual label-pointer dereference, camera word3F48F5C3, static cdecl callback ABI, row-end clamps and modal-parent/button suppression order."], "reason": "Recover ProdPicker owner behavior through existing window bases, owned StringLists/controls and typed Base/Caviar camera state; preserve historical seed identity and extents as restoration obligations, not current match claims."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00492fa0.cpp", "Pinned original coordinator review: actual label-pointer dereference, camera word3F48F5C3, static cdecl callback ABI, row-end clamps and modal-parent/button suppression order."], "reason": "Recover ProdPicker owner behavior through existing window bases, owned StringLists/controls and typed Base/Caviar camera state; preserve historical seed identity and extents as restoration obligations, not current match claims."}
+// TRIED: void return confirmed (0,1,2,3 are switch-derived flag bits; 9999/999999 are itoa() display clamps, not status codes - the single `ret` has no `mov eax,K` before it, eax at exit is whatever Font::init() last returned). Structural transcription via named ProdPicker::field_XXXX_ members instead of raw pointer casts didn't close the divergence; prologue shape differs (#0 push vs sub) from local layout, not a wrong op.
 void ProdPicker::calculate() {
     bool anyTech = false;
     const int savedFaction = BaseIDCurrentSelected;
@@ -731,7 +732,8 @@ void ProdPicker::calculate() {
 }
 
 // ORIGINAL: 0x00494700 ?exec@ProdPicker@@QAEHPAUBase@@HPAUGraphicWin@@H@Z 0x00494700-0x0049515F;0x00658C1E-0x00658C3E FILE
-// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00494700.cpp", "Pinned original coordinator review: actual label-pointer dereference, camera word3F48F5C3, static cdecl callback ABI, row-end clamps and modal-parent/button suppression order."], "reason": "Recover ProdPicker owner behavior through existing window bases, owned StringLists/controls and typed Base/Caviar camera state; preserve historical seed identity and extents as restoration obligations, not current match claims."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00494700.cpp", "Pinned original coordinator review: actual label-pointer dereference, camera word3F48F5C3, static cdecl callback ABI, row-end clamps and modal-parent/button suppression order."], "reason": "Recover ProdPicker owner behavior through existing window bases, owned StringLists/controls and typed Base/Caviar camera state; preserve historical seed identity and extents as restoration obligations, not current match claims."}
+// TRIED: faithful field/call transcription (two local Buffer RAII objects, real BaseButton/Scroll/Caviar calls) diverges at instr #14 (lea vs xor), early prologue-area register choice; not chased further given the 2687-byte SEH-frame scope.
 // symbol    ?exec@ProdPicker@@QAEHPAUBase@@HPAVGraphicWin@@H@Z
 int ProdPicker::exec(Base *base, int factionId, GraphicWin *owner, int modal) {
     // Both local Buffers are real function-lifetime objects in the image. The

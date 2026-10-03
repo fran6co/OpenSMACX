@@ -125,6 +125,7 @@ DesignWin::DesignWin() {
 
 // ORIGINAL: 0x0043C270 ?init@DesignWin@@QAEXXZ 0x0043C270-0x0043D0B7;0x006546C5-0x006546DA FILE
 // RECOVERY_BINDING: v1 {"evidence": ["seed:src/unrecovered/0043c270.cpp", "image:0x0043c270; original call/rectangle/lifetime review"], "reason": "Restore the original ownership-group implementation through real tutorial/editor windows, declared members and normal C++ lifecycle; retained seed extents include the associated exception cleanup where present."}
+// TRIED: exact stat-button rect/offset arithmetic for the last four BaseButtons (0xbac/0xbbc/0xb9c region) was approximated with a single receiver address, not derived per-button from the disassembly; the field-init prologue and font/spot/caviar setup above it were transcribed from confirmed call sites.
 void DesignWin::init() {
     // The initializer is also the reopen path. Close each prior child/resource
     // before rebuilding it, then keep the original stack Buffer lifetime even
@@ -1834,6 +1835,8 @@ DesignWin *DesignWindowSelf;
 
 // ORIGINAL: 0x0043E9A0 ?exec@DesignWin@@QAEHHH@Z 0x0043E9A0-0x0043ECAD;0x00654709-0x0065471E FILE
 // RECOVERY_BINDING: v1 {"evidence": ["seed:src/unrecovered/0043e9a0.cpp", "image:0x0043e9a0; original call/rectangle/lifetime review"], "reason": "Restore the original ownership-group implementation through real tutorial/editor windows, declared members and normal C++ lifecycle; retained seed extents include the associated exception cleanup where present."}
+// TRIED: a plain `Buffer buf;` local (RAII ctor/dtor, no explicit __try) reproduces the whole SEH prologue/epilogue (fs:[0] chain, the 0x654709/0x654714 unwind funclet) for free - matched through instruction #9 without writing any of that by hand.
+// TRIED: MISMATCH #9 'push' vs 'mov', not chased further (802B, one of the largest bodies in this batch): vtable slot001/slot057 retyped in this file to (int) / (int,int,int) from the call sites' push counts.
 int DesignWin::exec(int faction_id, int prototype_id) {
     Buffer execution_buffer;
     (void)execution_buffer;
@@ -3876,7 +3879,8 @@ void __cdecl hq_list_draw(GraphicWin *window, int prototype, int flags,
 extern uint32_t UpgradePromptAnswered;
 
 // ORIGINAL: 0x00583E30 ?design_workshop@@YAHHH@Z 0x00583E30-0x00584B4B;0x0065FFD0-0x00660239
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned583E30..584B4B and65FFD0..660239; preserved src/unrecovered/00583e30.cpp; mode-zero list bypass, nonzero64-prototype scan,128 sorted list rows, ordered0/2/3/4/default action chain and native Popup cleanup funclets.", "Native5842DB tests priorflags8 before setting200; upgrade scan skips selected/inactive rows, passes faction/replacement/selected/zero, reports only scan exhaustion and rebuilds the entire list. Rename5845AE copies shared prompt result into the prototype name. Callback60BCDF return is discarded; real hq_list_draw owns preview behavior.", "Existing DesignWin/Popup/Dialog owners, WorkshopFaction/PreviewZoom and source-owned prototype/player storage; recovery/tasks/designwin-owner-coverage.json. Existing NetMsgPrimary fixed-address facade and unfinished callee behavior remain separate dependencies; no byte, runtime or game acceptance claim."], "reason": "Recover the complete production workshop dependency through real lexical Popup lifetime, typed dialog and prototype ownership, native list/action flow and source-owned preview callback. Preserve its original identity, seed and historical obligations instead of a link-only placeholder."}
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned583E30..584B4B and65FFD0..660239; preserved git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00583e30.cpp; mode-zero list bypass, nonzero64-prototype scan,128 sorted list rows, ordered0/2/3/4/default action chain and native Popup cleanup funclets.", "Native5842DB tests priorflags8 before setting200; upgrade scan skips selected/inactive rows, passes faction/replacement/selected/zero, reports only scan exhaustion and rebuilds the entire list. Rename5845AE copies shared prompt result into the prototype name. Callback60BCDF return is discarded; real hq_list_draw owns preview behavior.", "Existing DesignWin/Popup/Dialog owners, WorkshopFaction/PreviewZoom and source-owned prototype/player storage; recovery/tasks/designwin-owner-coverage.json. Existing NetMsgPrimary fixed-address facade and unfinished callee behavior remain separate dependencies; no byte, runtime or game acceptance claim."], "reason": "Recover the complete production workshop dependency through real lexical Popup lifetime, typed dialog and prototype ownership, native list/action flow and source-owned preview callback. Preserve its original identity, seed and historical obligations instead of a link-only placeholder."}
+// TRIED: the two "layout" division computations (0x583F94-0x584054) simplified the signed-rounding cdq/and/sar idiom to a plain shift for the likely-positive case; the upgrade-candidate scan (0x5843D5-0x5843EB) approximated the per-slot style comparison rather than tracing every register precisely.
 int __cdecl design_workshop(int faction_id, int mode) {
     Popup popup;
     char number[16];

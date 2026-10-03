@@ -4178,7 +4178,8 @@ void __stdcall sub_5f86a0(int window) {
 // before the WM_USER-and-higher range. The network's 0x402 notification is
 // consumed by its actual owner instead of being sent to a window procedure.
 // ORIGINAL: 0x005FC7F0 ?do_task@@YAHXZ 0x005FC7F0-0x005FC8E8
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/005fc7f0.cpp", "image:terranx_original.exe:0x005FC7F0", "Pinned5FC74A..757 and5FC83A..847 both poll0xF..0xF. Only high-range402 messages route ActiveNet.handle_sys_msg; null network consumes them. do_all_tasks continues until empty and calls do_net after final MsgStatus=0.", "Coordinator-owned core-pump-secret-owner-20261001 scope; preserved original seeds and historical obligations, no matching/runtime claim from binding"], "reason": "Recover the native message pump using SDK MSG/USER32, existing MsgStatus and ActiveNet storage. Preserve paint-first and low/high queue priority, helper order and dedicated network notification dispatch."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/005fc7f0.cpp", "image:terranx_original.exe:0x005FC7F0", "Pinned5FC74A..757 and5FC83A..847 both poll0xF..0xF. Only high-range402 messages route ActiveNet.handle_sys_msg; null network consumes them. do_all_tasks continues until empty and calls do_net after final MsgStatus=0.", "Coordinator-owned core-pump-secret-owner-20261001 scope; preserved original seeds and historical obligations, no matching/runtime claim from binding"], "reason": "Recover the native message pump using SDK MSG/USER32, existing MsgStatus and ActiveNet storage. Preserve paint-first and low/high queue priority, helper order and dedicated network notification dispatch."}
+// TRIED: PeekMessageA/TranslateMessage/DispatchMessageA (loaded as plain function pointers from the IAT slots at 0x669358/0x66935c/ 0x669340, per the emitted globals) read into locals right after the first do_video/do_net/check_net() triple, matching the original's `mov esi,[...]` placement AFTER those three calls rather than before (moving it earlier cost the first 5 instructions). Best reached is 78.3% mnemonic similarity (#5 call vs push): the callee-register-save prologue still spills one extra value this body doesn't, not chased further. `handle_sys_msg` at 0x632db0 is a thiscall `Net` member with `this` read from 0x9be608 right before the call (`mov ecx,[0x9be608]`), not a bare cdecl call.
 int __cdecl do_task() {
     MSG message;
     MsgStatus = 0;
@@ -4215,7 +4216,8 @@ int __cdecl do_task() {
 }
 
 // ORIGINAL: 0x005FC700 ?wait_task@@YAXXZ 0x005FC700-0x005FC7E4
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/005fc700.cpp", "image:terranx_original.exe:0x005FC700", "Pinned5FC74A..757 and5FC83A..847 both poll0xF..0xF. Only high-range402 messages route ActiveNet.handle_sys_msg; null network consumes them. do_all_tasks continues until empty and calls do_net after final MsgStatus=0.", "Coordinator-owned core-pump-secret-owner-20261001 scope; preserved original seeds and historical obligations, no matching/runtime claim from binding"], "reason": "Recover the native message pump using SDK MSG/USER32, existing MsgStatus and ActiveNet storage. Preserve paint-first and low/high queue priority, helper order and dedicated network notification dispatch."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/005fc700.cpp", "image:terranx_original.exe:0x005FC700", "Pinned5FC74A..757 and5FC83A..847 both poll0xF..0xF. Only high-range402 messages route ActiveNet.handle_sys_msg; null network consumes them. do_all_tasks continues until empty and calls do_net after final MsgStatus=0.", "Coordinator-owned core-pump-secret-owner-20261001 scope; preserved original seeds and historical obligations, no matching/runtime claim from binding"], "reason": "Recover the native message pump using SDK MSG/USER32, existing MsgStatus and ActiveNet storage. Preserve paint-first and low/high queue priority, helper order and dedicated network notification dispatch."}
+// TRIED: 260 vs 228 bytes; VC6's /O2 loop rotation duplicates the do_video/check_net/do_net top-of-loop block into a separate call sequence instead of the original's fall-through-then-jmp reuse of one copy. Tried both `for (;;)` and `do {} while(1)` for the poll loop; both rotate the same way.
 void __cdecl wait_task() {
     MSG message;
     MsgStatus = 0;
@@ -4251,7 +4253,9 @@ void __cdecl wait_task() {
 }
 
 // ORIGINAL: 0x005FC8F0 ?do_all_tasks@@YAXXZ 0x005FC8F0-0x005FC9DE
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/005fc8f0.cpp", "image:terranx_original.exe:0x005FC8F0", "Pinned5FC74A..757 and5FC83A..847 both poll0xF..0xF. Only high-range402 messages route ActiveNet.handle_sys_msg; null network consumes them. do_all_tasks continues until empty and calls do_net after final MsgStatus=0.", "Coordinator-owned core-pump-secret-owner-20261001 scope; preserved original seeds and historical obligations, no matching/runtime claim from binding"], "reason": "Recover the native message pump using SDK MSG/USER32, existing MsgStatus and ActiveNet storage. Preserve paint-first and low/high queue priority, helper order and dedicated network notification dispatch."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/005fc8f0.cpp", "image:terranx_original.exe:0x005FC8F0", "Pinned5FC74A..757 and5FC83A..847 both poll0xF..0xF. Only high-range402 messages route ActiveNet.handle_sys_msg; null network consumes them. do_all_tasks continues until empty and calls do_net after final MsgStatus=0.", "Coordinator-owned core-pump-secret-owner-20261001 scope; preserved original seeds and historical obligations, no matching/runtime claim from binding"], "reason": "Recover the native message pump using SDK MSG/USER32, existing MsgStatus and ActiveNet storage. Preserve paint-first and low/high queue priority, helper order and dedicated network notification dispatch."}
+// TRIED: PeekMessageA/TranslateMessage/DispatchMessageA are resolved
+// TRIED: could not reproduce the original's frameless, purely
 void __cdecl do_all_tasks() {
     MSG message;
     for (;;) {
@@ -12284,7 +12288,8 @@ int __cdecl pump_mouse_move_message() {
 }
 
 // ORIGINAL: 0x005FCDF0 sub_5fcdf0 0x005FCDF0-0x005FCEC0 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/005fcdf0.cpp"], "reason": "Recover the complete core message helper using SDK MSG/USER32, original queue ranges and callback ordering; preserve catalogue identity and historical seed obligation."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/005fcdf0.cpp"], "reason": "Recover the complete core message helper using SDK MSG/USER32, original queue ranges and callback ordering; preserve catalogue identity and historical seed obligation."}
+// TRIED: per-call reinterpret_cast<Proc*>(g) load (5 call sites) instead of caching Peek/Translate/Dispatch ptrs in registers once
 // symbol    ?pump_mouse_button_message@@YAHXZ
 int __cdecl pump_mouse_button_message() {
     MSG message;

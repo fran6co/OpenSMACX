@@ -631,7 +631,8 @@ void DiploPop::on_iface_button_clicked(int button_id) {
 // flags     frame;hidden;sp_ready;purged_ok
 // indirect  0x00440643
 // ORIGINAL: 0x00440620 ?on_iface_group_clicked@DiploPop@@QAEXHHH@Z 0x00440620-0x004406CB FILE
-// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00440620.cpp retained original identity and spans", "recovery/tasks/interface-contract-report-closure.json authorized ownership recovery", "original:0x00440620 complete control/member accesses and concrete interface table"], "reason": "Recover the concrete SubInterface owner operation through genuine window members and source-owned globals. Original table/call evidence identifies the callback receiver; the retained compatible seed supplies its complete original intervals, not an executable-address forwarding implementation."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00440620.cpp retained original identity and spans", "recovery/tasks/interface-contract-report-closure.json authorized ownership recovery", "original:0x00440620 complete control/member accesses and concrete interface table"], "reason": "Recover the concrete SubInterface owner operation through genuine window members and source-owned globals. Original table/call evidence identifies the callback receiver; the retained compatible seed supplies its complete original intervals, not an executable-address forwarding implementation."}
+// TRIED: MISMATCH #7 sub/add, virtual-base offset arithmetic form differs
 // symbol    ?on_iface_group_clicked@DiploPop@@UAEXHHH@Z
 void DiploPop::on_iface_group_clicked(int group, int x_coord, int y_coord) {
     int selection = y_coord;
@@ -914,6 +915,7 @@ int DiploPop::on_iface_dialog_item_back_draw(GraphicWin *, int, int, RECT *) {
 
 // ORIGINAL: 0x0043FA90 ?draw_info@DiploPop@@QAEXXZ 0x0043FA90-0x0044007F
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned43FA90..44007F; screenwidth800 portrait branch; Buffer wrap field at receiver454; MainInterface Buffer receiver7AEC64; font2/3 and faction portrait typed layouts. Ranking reads96C9E4 PlayerData+4, not misleading94C9E4 Mood. Repeated spying calls and live local-faction loads preserved; host controls verify drawing phases/treaty priority/call ordering."], "reason": "Recover complete two-panel diplomacy display as a genuine nonvirtual DiploPop member, using actual Buffer bases, embedded fonts/portrait assets and source-owned faction state rather than raw self offsets."}
+// TRIED: transcription mixing Ghidra's control-flow structure with a raw-asm re-derivation of the RECT field-to-stack-slot mapping for the box_sprite/draw_mono/draw calls, since Ghidra's own local_XX names there did not correspond to their literal ebp offsets (proven by cross-checking the Y-formula against the confirmed slot layout: RECT starts at ebp-0x10, not ebp-0x14 as the naming implied) - trusted raw asm for that part, and Ghidra's formulas/call order for the later (mechanical) string-building/wrap/write_l portion. The `Sprite* portrait = g_0078ee74 + leaderIdx*0x65c` stride and its iWidth_/iHeight_/cTransparentIndex_ field reads were confirmed against Sprite's catalogued layout. Reaches MISMATCH #4 ('push' vs 'mov'); did not chase the exact prologue/register-allocation shape further given the function's size.
 void DiploPop::draw_info() {
     Buffer *const canvas = static_cast<Buffer *>(&MainInterfaceGlobal);
     const RECT source = rect1_;

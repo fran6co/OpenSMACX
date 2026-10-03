@@ -1992,7 +1992,8 @@ void BaseWin::production(int a1, int a2) {
 }
 
 // ORIGINAL: 0x00418DF0 ?hurry@BaseWin@@QAEXXZ 0x00418DF0-0x00419A8E;0x0065221C-0x0065249C
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00418df0.cpp", "image:0x00418DF0-0x00419A8E native control-flow and operand review", "source:src/basewin.h", "source:src/base.h"], "reason": "Recover full hurry pricing, dialog, payment, lock and Base update flow through source-owned Base/PlayerData/UI state; retain native signed 32-bit arithmetic and callback-time reloads. Shared energy-mirror producer/consumer bodies remain seed-only, so that object's source binding is not proof of end-to-end energy runtime behavior."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00418df0.cpp", "image:0x00418DF0-0x00419A8E native control-flow and operand review", "source:src/basewin.h", "source:src/base.h"], "reason": "Recover full hurry pricing, dialog, payment, lock and Base update flow through source-owned Base/PlayerData/UI state; retain native signed 32-bit arithmetic and callback-time reloads. Shared energy-mirror producer/consumer bodies remain seed-only, so that object's source binding is not proof of end-to-end energy runtime behavior."}
+// TRIED: `Popup popup;` RAII with raw popup-relative offsets for scroll_/flat_button/dialogs_/spot_/sprite_/heap_ reproduces the close cascades' shape and offsets (cross-checked against the scaffold's independently-derived field layout), but the success-path teardown ends with a manual GraphicWin dtor call rather than suppressing the compiler's own implicit ~Popup() at the closing brace, which the original does not emit on that path; MISMATCH #2.
 void BaseWin::hurry() {
     Popup popup;
     int lock_held = 0;
@@ -2282,8 +2283,9 @@ void BaseWin::next() {
 // Queue mutation and its rendered panel use the same typed Base queue and
 // BaseWin selection state recovered from the original record strides.
 // ORIGINAL: 0x00415080 ?draw_queue@BaseWin@@QAEXH@Z 0x00415080-0x00415724;0x00651B93-0x00651BB0 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00415080.cpp", "src/basewin.h:queue rectangles and font1_", "src/base.h:Base queue and Facility", "src/veh.h:VehPrototypes", "src/alpha.h:Labels and Language", "src/buffer.h:InterfaceBoxStyles", "image:0x00682BAC-0x00682BC0 queue strings"], "reason": "Render the eight queued production rows through owned BaseWin rectangles, game queue and prototype/facility records, shared interface styles and palette. Retain the original seed for byte restoration; the old raw self-offset transcription is not product source."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00415080.cpp", "src/basewin.h:queue rectangles and font1_", "src/base.h:Base queue and Facility", "src/veh.h:VehPrototypes", "src/alpha.h:Labels and Language", "src/buffer.h:InterfaceBoxStyles", "image:0x00682BAC-0x00682BC0 queue strings"], "reason": "Render the eight queued production rows through owned BaseWin rectangles, game queue and prototype/facility records, shared interface styles and palette. Retain the original seed for byte restoration; the old raw self-offset transcription is not product source."}
 // TRIED: the retained instruction-level seed with local Font lifetimes and
+// TRIED: instruction-level transcription with real Font locals (to get the SEH frame/dtor thunks) and byte-offset casts for BaseWin fields; compiles, control flow/offsets/call order match the disasm, sim 0.70 framed build. Extra RECT-copy temporaries (rectA/rectQ/rectR/rectP vs the original's reused stack slots) keep it off byte-exact. Not retried with slot reuse given size (1729 bytes, SEH).
 // raw self offsets scored about 0.70 in a framed build. Its several RECT-copy
 // temporaries blocked byte restoration; this typed body keeps that evidence
 // without treating those stack-slot spellings as the class model.
@@ -4258,7 +4260,8 @@ void BaseWin::on_iface_mouse_leave(int, int) {
 // FlatButtons in this object's established array at 0x13D6C, 0x148B8 and
 // 0x15404; the seed's raw receiver arithmetic is unnecessary.
 // ORIGINAL: 0x0041E790 ?on_redraw@BaseWin@@QAEXXZ 0x0041E790-0x0041E885 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0041e790.cpp", "src/basewin.h"], "reason": "Recover the BaseWin redraw call sequence through its owned FlatButton array, panel methods and source-owned interface mode globals; panel implementations remain independent obligations."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/0041e790.cpp", "src/basewin.h"], "reason": "Recover the BaseWin redraw call sequence through its owned FlatButton array, panel methods and source-owned interface mode globals; panel implementations remain independent obligations."}
+// TRIED: caching `[this+0x40afc]` into one local reused for all three BaseButton::set checks (mnemonic similarity 0.945, 8 edit blocks) vs. re-reading it through a `volatile int *` for each check (0.959, 6 edit blocks) - the original re-reads the field three separate times (0x0041E7B9, 0x0041E7D2, 0x0041E7EC), so the volatile re-read is the more faithful form and scores closer. Neither reached BYTE_EXACT; first divergence is prologue/register scheduling around the button-set sequence.
 // symbol    ?on_redraw@BaseWin@@UAEXXZ
 void BaseWin::on_redraw() {
     if (IfaceIdToSlotStorage[ActiveIfaceIdStorage] != 3) return;
@@ -5686,6 +5689,7 @@ void BaseWin::draw_pop(int update_mode) {
 }
 // ORIGINAL: 0x00410870 ?draw_commerce@BaseWin@@QAEXH@Z 0x00410870-0x00411235;0x00651B22-0x00651B37
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x004108CC-0x00410A95 copies/clips three BaseWin rectangles, initializes a Font, draws the title and sets the report palette", "image:0x00410B3C-0x00410D54 counts the first 70 Base facility bits and 64 SecretProject homes at the current base, weights projects five, then formats the alien score or sanction warning", "image:0x00410D54-0x0041111C selects partner rows and formats receipts, pact/treaty status, unequal exchanges and sanctions from Base/PlayerData fields", "image:0x004111DE-0x00411211 updates the outer rectangle and restores the clip"], "reason": "Recover the commerce panel's alien score and normal-faction partner rows through owned BaseWin rectangles, typed Base/SecretProject/diplomacy state and source-owned commerce ledgers; original compiler/reference/runtime proof remains separate."}
+// TRIED: SEH-framed function with one real local object (`Font font;`, matching the single ??0Font/??1Font pair) reproduced via plain RAII, same as 0x004ADB70. Diverges at #12 (sim 0.53), not chased further given time. The "own faction" index scan, both box_sprite/set_font/ set_text_color RECT setups, and the tail (soft_update vs update on a1, restore clip) are a direct instruction-level transcription off raw disassembly. The per-faction commerce-report loop body (the `slot` loop building relation strings via write_l) and the military-score ELSE branch are adapted from Ghidra with real field offsets and real calls but approximated message-selection logic - not verified call-for-call against raw bytes given the remaining budget.
 void BaseWin::draw_commerce(int update_mode) {
     Buffer *canvas = this;
     RECT saved_clip = canvas->rect1_;
@@ -5840,7 +5844,8 @@ void BaseWin::draw_commerce(int update_mode) {
     canvas->set_clip(&saved_clip);
 }
 // ORIGINAL: 0x00411240 ?draw_nutrients@BaseWin@@QAEXH@Z 0x00411240-0x00411973;0x00651B37-0x00651B4C
-// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00411240.cpp:1912-2151", "src/basewin.h:nutrient rectangles and sprites3_", "src/base.h:Base nutrients_accumulated and nutrient_surplus", "src/base.cpp:BaseIDCurrentSelected and cost_factor", "image:0x00682B20-0x00682B28 nutrient punctuation"], "reason": "Render the growth grid and caption through owned BaseWin rectangles, sprites, current Base and label table. Retain the instruction-level seed for restoration rather than hardcoding its self/global addresses."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00411240.cpp:1912-2151", "src/basewin.h:nutrient rectangles and sprites3_", "src/base.h:Base nutrients_accumulated and nutrient_surplus", "src/base.cpp:BaseIDCurrentSelected and cost_factor", "image:0x00682B20-0x00682B28 nutrient punctuation"], "reason": "Render the growth grid and caption through owned BaseWin rectangles, sprites, current Base and label table. Retain the instruction-level seed for restoration rather than hardcoding its self/global addresses."}
+// TRIED: literal transcription of Ghidra's (clean, non-SEH-mangled) pseudocode, mapping the three unlabelled thiscall calls (0x618EA0/0x618EE0/0x618F40) onto BaseWin's already-declared UNK4/UNK7/UNK6 slots by call-site position and declaring the other dozen FUN_ helpers as plain cdecl free functions (their true receiver/convention was not established) compiles and matches the arithmetic/branch structure, but the original installs a real SEH frame (fs:[0] chain) that this body does not reproduce since nothing here needs unwind-safety in the C++ source; diverges from the framed build around #2.
 void BaseWin::draw_nutrients(int update_mode) {
     Buffer *canvas = this;
     RECT saved_clip = canvas->rect1_;

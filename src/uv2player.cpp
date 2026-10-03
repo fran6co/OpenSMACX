@@ -189,6 +189,7 @@ UV2Player::~UV2Player() {
 
 // ORIGINAL: 0x004BF400 ?close@UV2Player@@QAEXXZ 0x004BF400-0x004BF4A2 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned4BF400..4BF4A2 releases primary Surface2 and Draw2 only; it does not release back buffer or clipper. Clears active8CC254 before COM calls, then applies DirectDraw preference and 800x600/1024x768 restoration.", "Play4BF4B0 creates DirectDraw then queries IID_IDirectDraw2=b3a6f3e0-2b43-11cf-a2de-00aa00b93356 at66FC38; surfaces query IID_IDirectDrawSurface2=57805885-6eec-11cf-9441-a82303c10e27 at66FC28. Pinned SDK DDRAW.H establishes method ABI.", "recovery/tasks/uv2player-complete-owner-recovery.json; retain exact constructor/destructor/timed-writer obligations and source-owned original play mapping. No full structure or runtime acceptance is asserted."], "reason": "Recover movie display teardown with genuine SDK interfaces, source-owned active player, shared preferences/display helpers and native live pointer reloads."}
+// TRIED: COM-style vtable (ecx=vtbl, self pushed explicit, callee-pop) via a raw VFn* vtable array rather than the scaffold's thiscall VCall; set_display_mode called through a differently-named free extern since it is QAA/cdecl-static, not the scaffold's non-static member. MISMATCH #29, well past the vtable teardown into the display-mode branch.
 void UV2Player::close() {
     UV2PlayerActive = nullptr;
     if (direct_draw2_ != nullptr) {
@@ -221,6 +222,7 @@ Purpose: Bring up the movie player's DirectDraw chain: clear and flip the
          clipper, and clear both surfaces through two Blt calls.
 
 // ORIGINAL: 0x004BF4B0 ?play@UV2Player@@QAEHHH@Z 0x004BF4B0-0x004BF6D1 FILE
+// TRIED: plain member access vs a `UV2Player *self = this;` local before the first field_10C_ read - both leave the prologue's `this` spill (`mov [ebp-4],edi`) placed differently than the original (MISMATCH #4 'push' vs 'mov', 84% mnemonic similarity); not chased further. The 21-slot COM vtable dispatch (QueryInterface/ Release/SetCooperativeLevel/SetDisplayMode retry chain/ CreateSurface/GetAttachedSurface/CreateClipper/Blt) and the DDSURFACEDESC/DDBLTFX field offsets are a faithful transcription off the raw disassembly.
 // size      545 bytes
 // prototype int (__thiscall ?play@UV2Player@@QAEHHH@Z)(UV2Player* this, int, int)
 // callers   1   call targets   5
@@ -236,7 +238,7 @@ Purpose: Bring up the movie player's DirectDraw chain: clear and flip the
 Return Value: 0 after surface clearing; 1 for early/attached-surface failure;
               18 for failed display modes or clipper creation.
 Status: Coverage transcription - unclaimed body, seed
-        src/unrecovered/004bf4b0.cpp retained.
+        git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/004bf4b0.cpp retained.
 */
 int UV2Player::play(int width, int height) {
     // Native ESI points to the member slot (+0x10C), not a cached interface.

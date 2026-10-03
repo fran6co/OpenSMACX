@@ -387,6 +387,7 @@ char *FileWin::run_file_dialog(bool saving) {
 }
 
 // ORIGINAL: 0x00614360 ?UNK3@FileWin@@QAEHPAD@Z 0x00614360-0x00614694
+// TRIED: MISMATCH #0 'sub' vs 'push' - original is FPO'd (no ebp frame, ebp free as a GP register); the rebuilt body gets a standard ebp frame instead. Not chased (820B, heaviest Win32-API surface in this batch: GetCurrentDirectoryA/ SetCurrentDirectoryA/DlgDirListA/FindFirstFileA/FindClose/ SendMessageA/GetLastError all called indirectly through the IAT-slot globals, matching the disasm's `call dword ptr [addr]` sites). `edi` = self+0x286c (the embedded ListBox) is constant for the whole function body past its one `lea`; the two vbtable-adjusted calls (remove_all, final slot001) go through a `StringStructThunk`/`VCall` shim built from the raw `*(int*)(*(int*)lb+N)` displacement, not from a modelled virtual-base layout.
 // symbol    ?populate_directory@FileWin@@QAEHPAD@Z
 // The two DlgDirListA passes fill the temporary Win32 list control, while
 // ListBox owns the displayed entries. The suffix table is FileWin storage.

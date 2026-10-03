@@ -488,7 +488,7 @@ extern Sprite g_BATTLE_SPORE_LAUNCHER_SPRITE;
 extern Sprite g_BATTLE_SEALURK_SPRITE;
 
 // ORIGINAL: 0x00421B50 ?battle_report@BattleWin@@QAEXHHHHH@Z 0x00421B50-0x00422BFC;0x00652BA0-0x00652BCB
-// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00421b50.cpp:original hot and cold spans", "pinned terranx_original.exe SHA256:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tests/test_battlewin_battle_report_behavior.py", "recovery/tests/battlewin_battle_report_host_control.cpp"], "reason": "Recover the complete two-vehicle battle report through the real SubInterface owner, embedded Time, local Font lifetimes, MainInterface canvas, typed vehicle rules and inline battle modifier text rows."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00421b50.cpp:original hot and cold spans", "pinned terranx_original.exe SHA256:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tests/test_battlewin_battle_report_behavior.py", "recovery/tests/battlewin_battle_report_host_control.cpp"], "reason": "Recover the complete two-vehicle battle report through the real SubInterface owner, embedded Time, local Font lifetimes, MainInterface canvas, typed vehicle rules and inline battle modifier text rows."}
 // TRIED: real `Font font_c4/font_9c/font_ec;` locals reproduce the 3-Font RAII/SEH shape and the early-return dtor cascade, but the "away from base" separator/style checks and the odds/ wrap text-building tail (0x422781-0x422f00) are approximated rather than a literal per-instruction transcription.
 void BattleWin::battle_report(int first_vehicle_id, int second_vehicle_id,
                               int attack_odds, int defense_odds, int flags) {

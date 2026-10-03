@@ -46,7 +46,8 @@ CouncWin CouncilWindow;
 #include "netmsg.h"      // NetMsgPrimary
 
 // ORIGINAL: 0x00425050 ?on_left_click@CouncWin@@QAEXHH@Z 0x00425050-0x00425B92;0x00652EC7-0x006530F4 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00425050.cpp", "image:terranx_original.exe:0x00425050", "Council interface/window declarations identify embedded fonts/buttons, voting arrays and existing MainInterface/Console owners; original instructions determine call and state order."], "reason": "Recover the original in its genuine UI owner using typed members, real globals and declared operations. Retain seed spans and evidence; no current matching or runtime claim."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00425050.cpp", "image:terranx_original.exe:0x00425050", "Council interface/window declarations identify embedded fonts/buttons, voting arrays and existing MainInterface/Console owners; original instructions determine call and state order."], "reason": "Recover the original in its genuine UI owner using typed members, real globals and declared operations. Retain seed spans and evidence; no current matching or runtime claim."}
+// TRIED: `Popup popup;` RAII local with the council-vote business logic (Spot::check, treaty/pact gate checks, eligible-faction dialog population loop, popup.exec, network vs single-player branches with parse_says/message_data/NetMsg::pop/ buy_council_vote/diplomacy_ends/vtable slot62) converging on draw_leader+ popup.close(); the `0x4253ca` "reuse a2 as menu selection, skip the dialog" edge case was simplified to a direct jump to draw_leader (goto could not reach the shared merge point without crossing a block's initializations). Diverges at instr #10.
 void CouncWin::on_left_click(int x, int y) {
     Popup popup;
     int clicked_faction = 0;
@@ -289,7 +290,8 @@ void CouncWin::set_vote(int faction_id, int vote) {
 }
 
 // ORIGINAL: 0x00426470 ?draw_info@CouncWin@@QAEXXZ 0x00426470-0x00426A95 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00426470.cpp", "image:terranx_original.exe:0x00426470", "Council interface/window declarations identify embedded fonts/buttons, voting arrays and existing MainInterface/Console owners; original instructions determine call and state order."], "reason": "Recover the original in its genuine UI owner using typed members, real globals and declared operations. Retain seed spans and evidence; no current matching or runtime claim."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00426470.cpp", "image:terranx_original.exe:0x00426470", "Council interface/window declarations identify embedded fonts/buttons, voting arrays and existing MainInterface/Console owners; original instructions determine call and state order."], "reason": "Recover the original in its genuine UI owner using typed members, real globals and declared operations. Retain seed spans and evidence; no current matching or runtime claim."}
+// TRIED: field-offset `__thiscall` rewrite (two RECT locals reused positionally across the function, verified push/pop order and branch polarity against the raw disassembly rather than trusting Ghidra's dropped thiscall receivers) compiles and follows the retry-loop/goto-restart structure faithfully, but diverges at instruction #3 (stack-frame shape: an 80-byte itoa scratch buffer vs the original's exact 0x7c-byte frame).
 void CouncWin::draw_info() {
     Buffer &buffer = MainInterfaceGlobal;
     const int proposal = static_cast<int>(field_A1C_);
@@ -432,7 +434,8 @@ void CouncWin::draw_info() {
 }
 
 // ORIGINAL: 0x00424410 ?make_resolution@CouncWin@@QAEHH@Z 0x00424410-0x0042471F FILE
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00424410.cpp", "image:terranx_original.exe:0x00424410", "Council interface/window declarations identify embedded fonts/buttons, voting arrays and existing MainInterface/Console owners; original instructions determine call and state order."], "reason": "Recover the original in its genuine UI owner using typed members, real globals and declared operations. Retain seed spans and evidence; no current matching or runtime claim."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00424410.cpp", "image:terranx_original.exe:0x00424410", "Council interface/window declarations identify embedded fonts/buttons, voting arrays and existing MainInterface/Console owners; original instructions determine call and state order."], "reason": "Recover the original in its genuine UI owner using typed members, real globals and declared operations. Retain seed spans and evidence; no current matching or runtime claim."}
+// TRIED: full Ghidra-faithful translation compiles and matches control flow (do/while record scan, max-index tie-break, vtable slot 001/002/062 calls); diverges at instr #0 (prologue shape), not yet chased further - large function, landed at MISMATCH.
 int CouncWin::make_resolution(int resolve) {
     int vote_total = 0;
     int votes_for = 0;
@@ -545,7 +548,8 @@ static void set_council_rect(RECT &rect, int left, int top, int right,
 }
 
 // ORIGINAL: 0x00427230 ?init@CouncWin@@QAEXHH@Z 0x00427230-0x00428347;0x006530F4-0x00653109 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00427230.cpp", "image:terranx_original.exe:0x00427230", "Council interface/window declarations identify embedded fonts/buttons, voting arrays and existing MainInterface/Console owners; original instructions determine call and state order."], "reason": "Recover the original in its genuine UI owner using typed members, real globals and declared operations. Retain seed spans and evidence; no current matching or runtime claim."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00427230.cpp", "image:terranx_original.exe:0x00427230", "Council interface/window declarations identify embedded fonts/buttons, voting arrays and existing MainInterface/Console owners; original instructions determine call and state order."], "reason": "Recover the original in its genuine UI owner using typed members, real globals and declared operations. Retain seed spans and evidence; no current matching or runtime claim."}
+// TRIED: the AI diplomatic-negotiation body (faction relationship scan, tech-trade proposal, vote-threshold check, roughly 0x4281XX-0x4282E2 in the disassembly) was left as a stub comment rather than transcribed - it needed more raw-asm cross-checking than remaining time allowed. VCall::slot001 and slot057 were retyped in place to take the args this call site passes (int; int,void*,void*) per the emitter's own "retype in place" convention. Everything else (field-init prologue, widget/font/spot setup, vote-table build) is a direct transcription of a clean Ghidra decompile.
 void CouncWin::init(int proposal, int faction_id) {
     Buffer local_buffer;
     for (int i = 0; i < 6; ++i) {
@@ -1103,7 +1107,8 @@ void CouncWin::on_redraw() {
 // Slot 44 of the front vtable - the catalogue's
 // ?on_button_clicked@CouncWin@@QAEXH@Z, 0x00424870, 1983 bytes.
 // ORIGINAL: 0x00424870 ?on_button_clicked@CouncWin@@QAEXH@Z 0x00424870-0x0042502F;0x00652D40-0x00652EC7 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00424870.cpp", "image:terranx_original.exe:0x00424870", "Council interface/window declarations identify embedded fonts/buttons, voting arrays and existing MainInterface/Console owners; original instructions determine call and state order."], "reason": "Recover the original in its genuine UI owner using typed members, real globals and declared operations. Retain seed spans and evidence; no current matching or runtime claim."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00424870.cpp", "image:terranx_original.exe:0x00424870", "Council interface/window declarations identify embedded fonts/buttons, voting arrays and existing MainInterface/Console owners; original instructions determine call and state order."], "reason": "Recover the original in its genuine UI owner using typed members, real globals and declared operations. Retain seed spans and evidence; no current matching or runtime claim."}
+// TRIED: jump table (8 entries at 0x425030) transcribed as a real switch on `a1+2`, matching case targets exactly; the two vtable calls ([this]+0x64 and [this]+0xe8) use original_slot/ORIGINAL rather than a raw __thiscall function-pointer cast (C4234). The ~20-stage widget-teardown cascade (Scroll/2xFlatButton/BasePop/Spot/Dialogs/ Dialog/Sprite closes, twice-inlined in the original for the early-close vs. fallthrough paths) is approximated by a single `popup.close()`; the substantive vote/call-vote/close-decision logic (set_vote, council_get_vote, message_data/NetMsg::pop gating, the eligible-faction Dialogs::item loop, BasePop::exec) is transcribed with real field offsets. Compiles; diverges #10.
 // symbol    ?on_button_clicked@CouncWin@@UAEXH@Z
 void CouncWin::on_button_clicked(int button_id) {
     Popup popup;

@@ -547,10 +547,10 @@ void AlphaMenu::check(int veh_id) {  // 0x00460DD0
 // writer that puts one single-font run on the surface. Called by name from
 // `write_multi_font_raw_l`, which is promoted; a pointer here would cost that
 // body the `E8` it now emits.
-//             body in src/unrecovered/005dbd00.cpp
+//             body in git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/005dbd00.cpp
 // ?write_strings@Buffer@@QAEHPAUStringList@@HHHH@Z at 0x005DB040, a
 // pending_bodies forwarder. The body is 950 bytes and still FILE-only in
-// src/unrecovered/005db040.cpp; BasePop::on_redraw (0x00604AB0) calls it BY
+// git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/005db040.cpp; BasePop::on_redraw (0x00604AB0) calls it BY
 // NAME, so a pointer binding there would cost that body the `E8` it needs.
 
 
@@ -597,7 +597,7 @@ void __cdecl basepop_close_class() {
 
 // 0x005D8EE0, the seven-argument Buffer::draw_dest_source. Caviar::render
 // (homed into src/caviar.cpp the same day) is its first caller in this tree,
-// so this stand-in exists for the link; the body in src/unrecovered/005d8ee0.cpp
+// so this stand-in exists for the link; the body in git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/005d8ee0.cpp
 // is still the only transcription of it. HANDOFF: whoever homes 0x005D8EE0
 // deletes this forwarder with it.
 

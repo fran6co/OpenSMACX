@@ -1021,7 +1021,8 @@ Purpose: Release the loaded MIDI. While the sequencer at 0x3C is still
 //        into the disp32 with no relocation where the image has a HIGHLOW
 //        fixup (see the include note above). Measured 2026-09-18: guard
 //        and hook relocations land at the image's own offsets 31 and 45.
-// PROMOTED from src/unrecovered/004c7e20.cpp (scaffold BYTE_EXACT with
+// LEVER: own vtable shim (not the scaffolded VCall) so slots 5/23 return int; offset 0x40 field reached by pointer arithmetic, masked &=
+// PROMOTED from git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/004c7e20.cpp (scaffold BYTE_EXACT with
 //        the shim tables); this is the body's first product spelling.
 Return Value: the sequencer's unload answer on the busy path, 0 otherwise
 Status: Complete

@@ -32,7 +32,7 @@ static void __fastcall stop_edit_timer(Time *timer) {
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00615E40 ?caret_callback@EditBox@@QAEXH@Z 0x00615E40-0x00615E5F BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned disassembly 0x00615E40 reads its only receiver from [esp+4] and ends with a tail jump through the receiver's redraw slot", "src/unrecovered/00614fe0.cpp passes EditBox this as Time's integer callback payload", "src/editbox.h field_B48_ is the caret visibility state"], "reason": "Treat the timer entry as a free callback taking an EditBox pointer payload, not a member with an invented implicit receiver."}
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned disassembly 0x00615E40 reads its only receiver from [esp+4] and ends with a tail jump through the receiver's redraw slot", "git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00614fe0.cpp passes EditBox this as Time's integer callback payload", "src/editbox.h field_B48_ is the caret visibility state"], "reason": "Treat the timer entry as a free callback taking an EditBox pointer payload, not a member with an invented implicit receiver."}
 // symbol    ?edit_box_caret_callback@@YAXH@Z
 void __cdecl edit_box_caret_callback(int edit_box_address) {
     EditBox *const box = reinterpret_cast<EditBox *>(edit_box_address);
@@ -158,7 +158,8 @@ int EditBox::text_position(int x) {
 // 615F50. Preserve the second mask read, strict width inequality, width read
 // before the text-width call, and padding read after it.
 // ORIGINAL: 0x00615F50 ?text_fits@EditBox@@QAEHXZ 0x00615F50-0x00616029
-// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00615f50.cpp", "Pinned original EditBox table66A038 and direct call/branch evidence"], "reason": "EditBox owns this table override or its direct text helper: pinned primary table66A038 slots12,17,20,21,25,26,51,64 and original direct-call receivers establish ownership. Use existing Win slot signatures without changing their order; text_position returns the EAX index consumed by callers despite the catalogue void label."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00615f50.cpp", "Pinned original EditBox table66A038 and direct call/branch evidence"], "reason": "EditBox owns this table override or its direct text helper: pinned primary table66A038 slots12,17,20,21,25,26,51,64 and original direct-call receivers establish ownership. Use existing Win slot signatures without changing their order; text_position returns the EAX index consumed by callers despite the catalogue void label."}
+// TRIED: plain `strcat(buf, ...)` compiles to an inlined `repne scasb`/copy sequence, not the original's `call _strcat`; `#pragma function(strcat)` restores the call. Landed at 82.4% mnemonic similarity (172 vs 217 bytes): the original duplicates its `text_width` + threshold-compare tail in BOTH branches (masked and unmasked text), but this source's identical trailing 3 statements in each branch let VC6 tail-merge them into one shared block with a `jmp`, which the original does not do even though its two tails are mnemonic-for-mnemonic identical too. Tried: a shared vs per-branch `threshold`/`base` local, folding the compare inline vs a named `threshold` variable - the merge persisted across all of them.
 // symbol    ?text_fits@EditBox@@QAEHXZ
 int EditBox::text_fits() {
     char masked[256];
@@ -509,7 +510,9 @@ int EditBoxTextColor3 = 1;
 int EditBoxTextColor4 = 1;
 
 // ORIGINAL: 0x00614FE0 ?init@EditBox@@QAEHHHHHPAUWin@@H@Z 0x00614FE0-0x00615179
-// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00614fe0.cpp", "EditBox member offsets in src/editbox.h", "Buffer::markup_enabled_ lies at GraphicWin+0x964", "Original image values at 0x006971E8-0x006971F3"], "reason": "Initialize the real editor, base window, text buffer and owned timer; install the free caret callback rather than a synthetic vtable receiver."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00614fe0.cpp", "EditBox member offsets in src/editbox.h", "Buffer::markup_enabled_ lies at GraphicWin+0x964", "Original image values at 0x006971E8-0x006971F3"], "reason": "Initialize the real editor, base window, text buffer and owned timer; install the free caret callback rather than a synthetic vtable receiver."}
+// TRIED: same as 0x005C9860 - the scaffold's GraphicWin::init is stale as `void` (src/graphicwin.cpp's real recovery returns `int`, and this disassembly tests the return value), so a same-layout `GraphicWinInitShim` with the correct `int` return gets the call.
+// TRIED: landed at 0.92 similarity, 410 vs 409 bytes; diverges at #45 where the trailing low-byte or/and-with-1 flag update compiles to a wider `not`/`and` sequence here, and VC6 inlines the `strlen` call as `repne scasb` where the original kept a real `call`. Tried an explicit `unsigned char` low-byte read/write for the flag update instead of a 32-bit read-modify-write; same divergence point.
 // The recovered Win base is declared as a class; VC6 consequently spells its
 // pointer PAVWin rather than the historical PAUWin without changing the ABI.
 // symbol    ?init@EditBox@@QAEHHHHHPAVWin@@H@Z

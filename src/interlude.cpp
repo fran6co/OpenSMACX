@@ -29,7 +29,8 @@ int __cdecl x_pop_caption_label(char *caption, const char *label,
                                 int (__cdecl *callback)());
 
 // ORIGINAL: 0x0045F200 ??0Interlude@@QAE@XZ 0x0045F200-0x0045F2DF;0x00655800-0x00655820 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0045f200.cpp: original identity, complete spans and retained seed history", "source:src/interlude.h: genuine GraphicWin base and embedded member lifetime", "source:recovery/tasks/interlude-lifetime-owner-closure.json: bounded coordinator authorization"], "reason": "Original construction45F200 and its cleanup span establish real GraphicWin base plus RECT A14, StringList A24 and Buffer A54; natural member construction replaces the opaque hypothesis layout."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/0045f200.cpp: original identity, complete spans and retained seed history", "source:src/interlude.h: genuine GraphicWin base and embedded member lifetime", "source:recovery/tasks/interlude-lifetime-owner-closure.json: bounded coordinator authorization"], "reason": "Original construction45F200 and its cleanup span establish real GraphicWin base plus RECT A14, StringList A24 and Buffer A54; natural member construction replaces the opaque hypothesis layout."}
+// TRIED: reproducing the `push -1/push handler/mov fs:[0]` SEH frame and the two unwind funclets (~GraphicWin, and a tail call into sub_406820 on `this+0xa24`) - explicit placement-new / raw pointer-cast statements in an ordinary function body do not make MSVC emit member-initializer-list unwind protection, so this is landed without it (same call as 0x004849D0).
 Interlude::Interlude() {}
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0045F740 ??1Interlude@@QAE@XZ 0x0045F740-0x0045F905;0x00655820-0x00655859
@@ -74,7 +75,8 @@ void Interlude::on_redraw() {
 }
 
 // ORIGINAL: 0x0045F2E0 ?exec@Interlude@@QAEXPAD@Z 0x0045F2E0-0x0045F5C0
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0045f2e0.cpp: original identity, complete spans and retained seed history", "source:src/interlude.h: genuine GraphicWin base and embedded member lifetime", "source:recovery/tasks/interlude-lifetime-owner-closure.json: bounded coordinator authorization"], "reason": "Original45F2E0 configures Interlude art, captions, clip rectangle and modal lifecycle on actual embedded Buffer/StringList members; source-owned borrowed fonts preserve shared producer relationships."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/0045f2e0.cpp: original identity, complete spans and retained seed history", "source:src/interlude.h: genuine GraphicWin base and embedded member lifetime", "source:recovery/tasks/interlude-lifetime-owner-closure.json: bounded coordinator authorization"], "reason": "Original45F2E0 configures Interlude art, captions, clip rectangle and modal lifecycle on actual embedded Buffer/StringList members; source-owned borrowed fonts preserve shared producer relationships."}
+// TRIED: many named C locals (rect, w, qv, qh, str_height, half, i, ...) push the compiler to `sub esp,N` for the frame; original reserves one dword via `push ecx` for the single Buffer* local that survives calls. Structure/order matches Ghidra.
 void Interlude::exec(char *section) {
     close();
     GraphicWin::init(0, 0, WinScreenWidth, WinScreenHeight, 0, 0, 0, 0, 0);
@@ -115,7 +117,8 @@ void Interlude::exec(char *section) {
 }
 
 // ORIGINAL: 0x005230E0 ?interlude@@YAXHPADHH@Z 0x005230E0-0x00523B4E;0x0065D4F0-0x0065D6C8
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/005230e0.cpp: original identity, complete spans and retained seed history", "source:src/interlude.h: genuine GraphicWin base and embedded member lifetime", "source:recovery/tasks/interlude-lifetime-owner-closure.json: bounded coordinator authorization"], "reason": "Original5230E0 owns exactly one real Interlude local and its inline member destruction, not additional fabricated Buffer/StringStruct/RunResult objects; third/fourth arguments and saved-turn calculations follow original behavior."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/005230e0.cpp: original identity, complete spans and retained seed history", "source:src/interlude.h: genuine GraphicWin base and embedded member lifetime", "source:recovery/tasks/interlude-lifetime-owner-closure.json: bounded coordinator authorization"], "reason": "Original5230E0 owns exactly one real Interlude local and its inline member destruction, not additional fabricated Buffer/StringStruct/RunResult objects; third/fourth arguments and saved-turn calculations follow original behavior."}
+// TRIED: heavily SEH-framed function (local Interlude+Buffer+StringStruct objects, __CxxFrameHandler unwind funclets); Ghidra's own pseudocode has unaff_EBX/ESI/DI and garbled puStackY_* return- address literals from the frame, so this is a raw-disasm transcription instead, using RAII (Interlude popup; Buffer buf; StringStruct strObj;) for the destructor cascade rather than hand-written SEH. A `sub_4066c0` thiscall on an untyped 8-byte local is modeled as a throwaway `InterludeRunResult` class. The two faction-scan loops (best commlink / best base) and the StringStruct remove_all/close cleanup are best-effort approximations, not verified bit-for-bit - the two indirect calls through g_0066931c/g_00669344 (CharUpperA/CharLowerA IAT slots) are called directly instead of through the pointer.
 void __cdecl interlude(int id, char *text, int mode, int ending) {
     Interlude popup;
     if (IsMultiplayerNet || DiplomacyActive) return;

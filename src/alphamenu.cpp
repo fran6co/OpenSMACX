@@ -54,7 +54,8 @@ void wait_for_animation_frame(DWORD started) {
 // base in the order observed at 0x0051DC10. Keep this as C++ ownership,
 // not a manual walk over the object bytes.
 // ORIGINAL: 0x0051DC10 ??1AlphaMenu@@QAE@XZ 0x0051DC10-0x0051DC86;0x0065D220-0x0065D24E
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0051dc10.cpp"], "reason": "C++ AlphaMenu owns Menu, Buffer and Sprite members whose reverse lifetime order follows the original destructor and exception-unwind trace."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/0051dc10.cpp"], "reason": "C++ AlphaMenu owns Menu, Buffer and Sprite members whose reverse lifetime order follows the original destructor and exception-unwind trace."}
+// TRIED: computed that AlphaMenu : public Menu (Menu ends at exactly 0xB64, where Buffer buffer_ starts, which ends at exactly 0x10EC, where Sprite sprite_ starts, ending at 0x1118 where Sprite sprites_[3] starts) - a real member layout that would let the SEH prologue emerge automatically, but AlphaMenu is the fixed scaffold class and cannot carry real members here. Explicit dtor calls at the right offsets/order compile and are structurally faithful; the SEH frame (push -1/handler, unwind funclets) is not reproduced - same open item as 0x00629D60 (Flic::Flic) and 0047acf0.cpp.
 // symbol    ??1AlphaMenu@@UAE@XZ
 AlphaMenu::~AlphaMenu() {}
 
@@ -383,7 +384,8 @@ void AlphaMenu::on_mouse_move(int x, int y) {
 // Population uses the existing rules and StringTable owners; x86 pool keys
 // remain the existing pointer-to-int Strings API, not portable pointer proof.
 // ORIGINAL: 0x0045FB20 ?menu_init@MainMenu@@QAEHXZ 0x0045FB20-0x00460DD0
-// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0045fb20.cpp", "image:0x51D922,0x51D996-0x51D99D:Console alpha_menu_ receiver"], "reason": "Pinned Console init receiver+22A2C identifies existing AlphaMenu; catalogue MainMenu identity retained separately from native AlphaMenu symbol. Complete ordered menu population uses source rules and StringTable owners; no byte claim."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/0045fb20.cpp", "image:0x51D922,0x51D996-0x51D99D:Console alpha_menu_ receiver"], "reason": "Pinned Console init receiver+22A2C identifies existing AlphaMenu; catalogue MainMenu identity retained separately from native AlphaMenu symbol. Complete ordered menu population uses source rules and StringTable owners; no byte claim."}
+// TRIED: ~100% of the call structure transcribed 1:1 (all 181 add_menu_item, 41 add_separator, 9 add_menu, 9 hide/disable_menu_item, 9 text_open group opens, the 19-iteration struct-array loop building "id: text" labels via Strings::get+strcat, the trailing conditional hide_menu_item and vtable slot093 dispatch); diverges at prologue (#2 sub vs push) because the local frame layout (the [ebp-8] result slot, the [ebp-4] loop cursor) is not reproduced - returns are done via plain `return N;` instead of a stored local, so stack size/order differs from here on. Not chased further given size.
 // symbol    ?menu_init@AlphaMenu@@QAEHXZ
 int AlphaMenu::menu_init() {
     Menu *const menu = this;

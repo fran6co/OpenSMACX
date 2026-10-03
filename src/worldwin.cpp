@@ -52,7 +52,8 @@ void WorldWin::UNK1() {
 // The original startup path copies the tutorial bounds once, resets the
 // embedded map and passes the same typed rectangle to the Win base init.
 // ORIGINAL: 0x004C49A0 ?init@WorldWin@@QAEXH@Z 0x004C49A0-0x004C4A66
-// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/004c49a0.cpp complete seed; original 0x004C49A0-0x004C4A66 shows tutorial RECT copy, map clear/init, Win::init and virtual show."], "reason": "Home WorldWin startup through owned map, tutorial bounds and Win base; MapWin::init remains an explicit unfinished dependency."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/004c49a0.cpp complete seed; original 0x004C49A0-0x004C4A66 shows tutorial RECT copy, map clear/init, Win::init and virtual show."], "reason": "Home WorldWin startup through owned map, tutorial bounds and Win base; MapWin::init remains an explicit unfinished dependency."}
+// TRIED: custom VCallW(int) shim for slot001 (scaffold's slot001 is nullary); byte-read/dword-write split for g_00939ed8's flag bit. MISMATCH from #4: register push scheduling around the four af51c/af520/af524/af528 locals differs
 void WorldWin::init(int reset_map) {
     if ((StatusFlags & 8) == 0) {
         UNK1();

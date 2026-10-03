@@ -144,7 +144,8 @@ const BasePopTextBlock FxPopupSoundDefaults = {"", -1, 127, 50, 0, 0};
 // Initialize the effect and CPU-voice banks in original call order. Qualified
 // Wave calls were direct in the executable; Effect[4].set_pitch is virtual.
 // ORIGINAL: 0x00445CD0 ?init@FX@@QAEXXZ 0x00445CD0-0x004468E1
-// RECOVERY_BINDING: v1 {"evidence": ["Existing seed src/unrecovered/00445cd0.cpp preserves original span445CD0..4468E1 and is retained as a hint.", "Original instructions store this+28EC=-1, publish callback4456B0, copy70words from683AD8, initialize/group the Effect array and global Wave objects, and reset37words at9BC080. The sole indirect call446034 targets Effect[4] virtual set_pitch at slot38."], "reason": "Initialize the real effect and CPU-voice banks and publish source-owned popup/audio defaults; replaces the executable-address forwarder."}
+// RECOVERY_BINDING: v1 {"evidence": ["Existing seed git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00445cd0.cpp preserves original span445CD0..4468E1 and is retained as a hint.", "Original instructions store this+28EC=-1, publish callback4456B0, copy70words from683AD8, initialize/group the Effect array and global Wave objects, and reset37words at9BC080. The sole indirect call446034 targets Effect[4] virtual set_pitch at slot38."], "reason": "Initialize the real effect and CPU-voice banks and publish source-owned popup/audio defaults; replaces the executable-address forwarder."}
+// TRIED: register-faithful transcription (self=ecx, no ebx-copy) diverges at instr #2 (mov ebx,ecx vs push) - /O2 register allocation differs for this 3089-byte, ~150-call function; not chased further.
 void FX::init() {
     engine_effect_index_ = -1;
     BasePopDefaultField3094 = popup_wave_callback;

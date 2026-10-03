@@ -76,7 +76,7 @@ class ReportWin : public GraphicWin {
   // 0x00496BB0 ?reset@ReportWin@@QAEXXZ resets the report controls, working
   // rectangle and the two report panel frames.
   void reset();
-  // 0x00498B30: referenced by Datalink; full report-page recovery is pending.
+  // 0x00498B30: research-page renderer, implemented in reportwin.cpp.
   void draw_labs();
   void show(int visible);
   void hide();
@@ -92,14 +92,14 @@ class ReportWin : public GraphicWin {
   // dismiss.
   int on_key_click(int key, int code);
   // 0x0049BCD0 ?draw_energy@ReportWin@@QAEXXZ - public, __thiscall,
-  // void(void), unrecovered: the energy panel redraw. on_selected refreshes
+  // void(void): the energy panel redraw. on_selected refreshes
   // it after every topic selection.
   void draw_energy();
   // 0x0049EB10 ?draw_projects@ReportWin@@QAEXXZ - projects-page renderer;
   // on_scrolled/on_scrolling select this page renderer at page 5.
   void draw_projects();
   // 0x0049B450 ?labs_line@ReportWin@@QAEXHHHHHHH@Z - public, __thiscall,
-  // void(int, int, int, int, int, int, int), unrecovered: one lab-connection
+  // void(int, int, int, int, int, int, int): one lab-connection
   // line of the research tree. The third argument is unused by the body
   // (ret 0x20); the last selects the box-style pair.
   void labs_line(int first_id, int second_id, int, int branch_id,

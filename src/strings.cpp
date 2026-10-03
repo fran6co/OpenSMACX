@@ -173,6 +173,8 @@ LPSTR Strings::get(int address) {
 // continuing the destination; that side effect is present in the original.
 // ORIGINAL: 0x00590510 ?say_reactor@@YAXPAXHH@Z 0x00590510-0x005905B5
 // RECOVERY_BINDING: v1 {"evidence": ["original:0x00590510-0x005905B5;seed:src/unrecovered/00590510.cpp;source:src/veh.h:Reactor;source:src/strings.h:StringTable"], "reason": "This free formatter reads the real Reactor record and shared Strings and Labels objects, matching the original name, call ABI, and bounded body."}
+// TRIED: MISMATCH #4 push/mov, local buffer layout differs
+// TRIED: _itoa needs a real signature -> declared as itoa_impl (own name), since the scaffold's nullary _itoa can't be redeclared (C2733)
 void __cdecl say_reactor(void *output, int reactor_id, int with_detail) {
     char *text = static_cast<char *>(output);
     strcat(text, StringTable.get(reinterpret_cast<int>(Reactor[reactor_id].name)));

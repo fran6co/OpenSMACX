@@ -120,7 +120,8 @@ void MultiWin::draw_time(RECT *bounds, int draw_type) {
 }
 
 // ORIGINAL: 0x00479330 ?draw@MultiWin@@QAEXH@Z 0x00479330-0x004798EC
-// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00479330.cpp", "src/multiwin.h", "src/faction.h", "src/spot.h"], "reason": "Move the panel painter from its fixed-address seed onto MultiWin's owned sprites, Spot and GraphicWin buffer; the two separately mapped row painters remain explicit dependencies."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00479330.cpp", "src/multiwin.h", "src/faction.h", "src/spot.h"], "reason": "Move the panel painter from its fixed-address seed onto MultiWin's owned sprites, Spot and GraphicWin buffer; the two separately mapped row painters remain explicit dependencies."}
+// TRIED: raw self+offset field reads (MultiWin left opaque) with reinterpret_cast to Spot/GraphicWin/Buffer sub-objects at their disassembly-derived offsets; diverges at insn #11
 void MultiWin::draw(int draw_type) {
   spot_.kill_type(2);
   spot_.kill_type(0);
@@ -261,7 +262,8 @@ MultiWin::~MultiWin() {}
 // 0x00477E70: Spot::check returns the hovered position and type through its
 // two output arguments. Only type 1 changes the highlighted player.
 // ORIGINAL: 0x00477E70 ?on_mouse_move@MultiWin@@QAEXHH@Z 0x00477E70-0x00477EDB BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/00477e70.cpp; docs/recovery/member-accesses.csv"], "reason": "The original checks the owned Spot for a player hover and redraws when the selected position changes."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/recovered/00477e70.cpp; docs/recovery/member-accesses.csv"], "reason": "The original checks the owned Spot for a player hover and redraws when the selected position changes."}
+// TRIED: Historical exact-seed spelling: Spot::check used the addresses of both incoming stack parameters as its output arguments (lea of ebp+8/ebp+0xc), overwriting them with spot position/type; writing the result != -1 arm first produced the original je branch polarity. The typed source owner uses distinct output locals and a real virtual override; this observation preserves seed restoration evidence, not a current matching claim.
 // symbol    ?on_mouse_move@MultiWin@@UAEXHH@Z
 void MultiWin::on_mouse_move(int x, int y) {
   int position;
