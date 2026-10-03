@@ -1770,7 +1770,7 @@ void __cdecl input_callback() {
 Wave g_PASSOVER_WAVE;  // 0x0074D9D0
 // The button hover hook plays the already-owned pass-over effect.
 // ORIGINAL: 0x004456A0 ?button_hover_callback@@YAXXZ 0x004456A0-0x004456AA FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x00445BB0 Effect initializer publishes 0x004456A0 to hook 0x009B7AA0", "image:0x004456A0-0x004456AA complete MOV receiver 0x0074D9D0 and tail JMP 0x004C6920; NOP padding to independently mapped 0x004456B0", "src/recovered/units/00608500.cpp original FlatButton hover callback consumer", "src/wave.cpp g_PASSOVER_WAVE and Wave::play"], "reason": "Provisional behavior-derived name for the nullary button-hover sound callback installed by Effect initialization and consumed by FlatButton hover; its complete entry tail-calls play on the already-owned pass-over Wave, rather than embedding an executable address."}
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x00445BB0 Effect initializer publishes 0x004456A0 to hook 0x009B7AA0", "image:0x004456A0-0x004456AA complete MOV receiver 0x0074D9D0 and tail JMP 0x004C6920; NOP padding to independently mapped 0x004456B0", "src/flatbutton.cpp original 0x00608500 hover callback consumer; superseded seed retained in git:de91fffe", "src/wave.cpp g_PASSOVER_WAVE and Wave::play"], "reason": "Provisional behavior-derived name for the nullary button-hover sound callback installed by Effect initialization and consumed by FlatButton hover; its complete entry tail-calls play on the already-owned pass-over Wave, rather than embedding an executable address."}
 void __cdecl button_hover_callback() {
     g_PASSOVER_WAVE.Wave::play();
 }

@@ -1,0 +1,20 @@
+{
+  "event_id": "910da99d0a6f9a2eb26cf2be6e53955164fc07b8885a511beb38964e3d794ab0",
+  "payload": {
+    "affects": [
+      "entity-13238990f3e829478928d3125b4d787b93367493f7170e4458a095d4b54c6775"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "hover-consumer-provenance-cleanup",
+    "evidence": [
+      "recover check-references flags src/wave.cpp:1773 referencing deleted src/recovered/units/00608500.cpp; actual consumer now src/flatbutton.cpp."
+    ],
+    "hypothesis": "Deleting the superseded FlatButton seed leaves one live Wave callback binding reference. Update provenance to the genuine FlatButton owner; no Wave behavior, mappings or claims change.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "hover-consumer-provenance-cleanup",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:ui-eight-owner-coverage"
+}

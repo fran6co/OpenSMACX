@@ -1,0 +1,17 @@
+{
+  "event_id": "da1697e3c761943ac7b553c641e99564e04d39eca1a2198bceacd39a1e0ae78c",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "hover-consumer-source-provenance",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/wave.cpp button_hover_callback binding now names src/flatbutton.cpp with historical git:de91fffe seed provenance; the real original608500 consumer is compiled and tested. Reference check passes; no behavior/marker/claim change to Wave."
+    ]
+  },
+  "previous_event": "3791d1585f0469b625b99478e180aad0486538be547b7b745fec33a8734b3fb9",
+  "request_id": "hover-consumer-source-provenance-incorporated",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:ui-eight-owner-coverage"
+}

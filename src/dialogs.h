@@ -41,8 +41,7 @@ class Dialogs : public ListBox,
                 public SpriteBox,
                 public EditGroup {
  public:
-  // 0x00613180, still forwarded: kinds 1-4 reach a Win chosen through the
-  // seed's vbtable walk, not a uniquely named Dialogs Win member.
+  // 0x00613180: kinds1/2/8/16 use shared GraphicWin; kind4 uses EditGroup.
   void pass_dialog_focus();
 
  public:
@@ -51,8 +50,7 @@ class Dialogs : public ListBox,
   int on_scroll_delete(void *scroll);
 
  public:
-  // 0x00613220, still a pending_bodies forwarder: its seed's indirect
-  // slot-8 target has no source-owned typed operation yet.
+  // 0x00613220: kind2/flag40 forwards to the real parent's vslot_08.
   int on_scroll_create();
 
  public:
@@ -71,10 +69,8 @@ class Dialogs : public ListBox,
   // the separate +0x188 GraphicWin receiver adjustment. The source bodies
   // below now express the same case maps from a complete Dialogs object and
   // use its five declared direct bases; no executable or byte-offset view is
-  // used. on_scroll_create remains forwarded because its slot-8 target and
-  // associated state are not identified. pass_dialog_focus also stays
-  // forwarded: kinds 1-4 invoke a vbtable-selected Win, whose owning object
-  // is not proven to be Dialogs' shared GraphicWin base.
+  // used. on_scroll_create and pass_dialog_focus now use the real shared
+  // GraphicWin state and source-owned parent operations in dialogs.cpp.
   void on_mouse_leave(int a1, int a2);
 
  public:

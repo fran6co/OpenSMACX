@@ -363,6 +363,7 @@ class Win : public AutoSound {
   static void release_hdc();
   void client_to_screen(int *x, int *y);
   Win *parent_window() const { return win_parent_; }
+  bool has_dialog_focus_flag() const { return (iFlags_ & 0x1000) != 0; }
   Win *event_window() const { return event_window_; }
   // ?client_to_screen@Win@@QAEXPAURECT@@@Z at 0x005ECFE0 - the RECT
   // overload, distinct from the (int*, int*) one above. Not yet recovered,

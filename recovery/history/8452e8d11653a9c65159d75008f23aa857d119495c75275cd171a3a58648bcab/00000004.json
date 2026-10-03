@@ -1,0 +1,20 @@
+{
+  "event_id": "3791d1585f0469b625b99478e180aad0486538be547b7b745fec33a8734b3fb9",
+  "payload": {
+    "affects": [
+      "entity-13238990ed26b47777867402fff3ea94c981fceab17f7cc4d6d7005caa9ee279"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "hover-consumer-source-provenance",
+    "evidence": [
+      "Fresh source_snapshot identity for original608500; src/wave.cpp callback binding now names src/flatbutton.cpp; check-references has zero missing paths."
+    ],
+    "hypothesis": "Superseded FlatButton seed deletion requires its Wave callback binding to name the genuine source-owned consumer, without changing behavior or claims.",
+    "kind": "discovery"
+  },
+  "previous_event": "3426fc8d623af337bb538c42c2295b0ad97d0ff8631af2bcaca426bd4809558f",
+  "request_id": "hover-consumer-source-provenance",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:ui-eight-owner-coverage"
+}

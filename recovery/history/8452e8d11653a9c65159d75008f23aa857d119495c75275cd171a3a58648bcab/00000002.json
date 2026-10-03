@@ -1,0 +1,19 @@
+{
+  "event_id": "01c05f9bdd89c434ac5e3ce018dd314e6af874eccba1f49b56d704cc9ee5bd46",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/wave.cpp"
+    ],
+    "evidence": [
+      "Coordinator authorizes comment-only update of Wave callback consumer provenance to src/flatbutton.cpp, preserving all actual behavior and historical claims. Discovery hover-consumer-provenance-cleanup retained."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "910da99d0a6f9a2eb26cf2be6e53955164fc07b8885a511beb38964e3d794ab0",
+  "request_id": "hover-consumer-provenance-scope",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:ui-eight-owner-coverage"
+}

@@ -41,6 +41,7 @@ class NewTechWin : public GraphicWin {
   ~NewTechWin();
   virtual int on_link_clicked(int id, char *link);
   void on_left_click(int a1, int a2);
+  void on_group_clicked(int, int);
   int on_key_click(int a, int b);
 
   // Original exec uses these rectangle words and technology/faction IDs.

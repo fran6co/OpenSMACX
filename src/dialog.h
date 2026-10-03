@@ -80,6 +80,7 @@ class Dialog {
   virtual int attach(GraphicWin *a1, int a2, int a3, int a4) { return 0; }
   virtual void on_redraw() { ; }
   void attach_at_stored_position(GraphicWin *window, int flags);
+  void UNK2(int window, int message, int wparam, int lparam);
   // 0x00608F50: reusable, non-virtual reset. The control families call this
   // directly; it clears entries before resetting their heap and settings.
   void close();

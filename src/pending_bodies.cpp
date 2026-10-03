@@ -458,10 +458,6 @@ DesignWin::~DesignWin() {  // ??1DesignWin@@QAE@XZ at 0x0043ECB0
 
 
 
-SetupWin::~SetupWin() {  // ??1SetupWin@@QAE@XZ at 0x004AE790
-    typedef void(__fastcall *pending)(SetupWin *, void *);
-    PENDING_BODY(0x004AE790, pending)(this, nullptr);
-}
 
 SocialWin::~SocialWin() {  // ??1SocialWin@@QAE@XZ at 0x004B3C80
     typedef void(__fastcall *pending)(SocialWin *, void *);
@@ -491,15 +487,7 @@ int Console::on_key_click(int a1, int a2) {  // 0x005178C0
 
 // Console capture release and turn handoff are owned by console.cpp.
 
-int Dialogs::on_scroll_create() {  // 0x00613220
-    typedef int(__fastcall *pending)(Dialogs *, void *);
-    return PENDING_BODY(0x00613220, pending)(this, nullptr);
-}
 
-void Dialogs::pass_dialog_focus() {  // 0x00613180
-    typedef void(__fastcall *pending)(Dialogs *, void *);
-    PENDING_BODY(0x00613180, pending)(this, nullptr);
-}
 
 // ?set_default@EditGroup@@QAEHPADH@Z at 0x006120D0 - WAS HERE and is gone:
 // the body is homed into src/editgroup.cpp 2026-09-27. BasePop::start

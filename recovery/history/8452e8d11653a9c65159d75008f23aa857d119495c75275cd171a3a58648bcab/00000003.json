@@ -1,0 +1,17 @@
+{
+  "event_id": "3426fc8d623af337bb538c42c2295b0ad97d0ff8631af2bcaca426bd4809558f",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "hover-consumer-provenance-cleanup",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "The coordinator supplied a truncated/incorrect entity hash in this discovery; retain it historically as rejected and replace with fresh source-derived FlatButton entity identity. The real provenance cleanup remains applied under the explicit src/wave.cpp scope expansion."
+    ]
+  },
+  "previous_event": "01c05f9bdd89c434ac5e3ce018dd314e6af874eccba1f49b56d704cc9ee5bd46",
+  "request_id": "hover-consumer-provenance-identity-correction",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:ui-eight-owner-coverage"
+}

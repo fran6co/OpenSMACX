@@ -268,3 +268,67 @@ int SetupWin::draw_item(int position, int selected) {
     buffer_.restore_clip();
     return 0;
 }
+
+// ORIGINAL: 0x004AD880 ??0SetupWin@@QAE@XZ 0x004AD880-0x004AD9C0;0x006595D0-0x0065960C
+// RECOVERY_BINDING: v1 {"reason":"Recover the complete body in its genuine C++ owner, with real embedded members, shared virtual bases, lifecycle and parent operations. Compiler-generated overrides/adjustors replace executable-address or vbtable stand-ins; no current matching claim is granted.","evidence":["git:de91fffe:src/recovered/units/004ad880.cpp","image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","recovery/tasks/ui-eight-owner-coverage.json","Original entry 0x004ad880; physical VC6 COFF emitted symbol ??0SetupWin@@QAE@XZ."]}
+SetupWin::SetupWin() {
+    overlay_buffers_[0] = 0;
+    overlay_buffers_[1] = 0;
+    overlay_buffers_[2] = 0;
+    row_count_ = 0;
+    selected_row_ = 0;
+    field_A40_ = reinterpret_cast<uint32_t>(opening_window());
+    menu_popup_ = 0;
+    field_A14_ = WinScreenWidth;
+    field_A18_ = WinScreenHeight;
+}
+
+// ORIGINAL: 0x004AE790 ??1SetupWin@@QAE@XZ 0x004AE790-0x004AE99E;0x006596A0-0x006596F5
+// RECOVERY_BINDING: v1 {"reason":"Recover the complete body in its genuine C++ owner, with real embedded members, shared virtual bases, lifecycle and parent operations. Compiler-generated overrides/adjustors replace executable-address or vbtable stand-ins; no current matching claim is granted.","evidence":["git:de91fffe:src/recovered/units/004ae790.cpp","image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","recovery/tasks/ui-eight-owner-coverage.json","Original entry 0x004ae790; physical VC6 COFF emitted symbol ??1SetupWin@@UAE@XZ."]}
+// symbol    ??1SetupWin@@UAE@XZ
+SetupWin::~SetupWin() {
+    selected_row_ = 0;
+    row_count_ = 0;
+    field_A14_ = 0;
+    field_A18_ = 0;
+    buffer_.close();
+    spot_.shutdown();
+    field_FE0_.remove_all();
+}
+
+// ORIGINAL: 0x004AE3E0 ?on_key_click@SetupWin@@QAEHHH@Z 0x004AE3E0-0x004AE49D
+// RECOVERY_BINDING: v1 {"reason":"Recover the complete body in its genuine C++ owner, with real embedded members, shared virtual bases, lifecycle and parent operations. Compiler-generated overrides/adjustors replace executable-address or vbtable stand-ins; no current matching claim is granted.","evidence":["git:de91fffe:src/unrecovered/004ae3e0.cpp","image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","recovery/tasks/ui-eight-owner-coverage.json","Original entry 0x004ae3e0; physical VC6 COFF emitted symbol ?on_key_click@SetupWin@@UAEHHH@Z."]}
+// symbol    ?on_key_click@SetupWin@@UAEHHH@Z
+int SetupWin::on_key_click(int, int key) {
+    switch (key) {
+    case 0x0d:
+        release_modal();
+        return 1;
+    case 0x1b:
+        selected_row_ = static_cast<uint32_t>(-1);
+        release_modal();
+        return 1;
+    case 0x26: {
+        const int current = static_cast<int>(selected_row_);
+        const int next = current == 0
+            ? static_cast<int>(row_count_) - 1 : current - 1;
+        draw_item(current, 0);
+        selected_row_ = static_cast<uint32_t>(next);
+        draw_item(next, 1);
+        soft_update();
+        return 1;
+    }
+    case 0x28: {
+        const int current = static_cast<int>(selected_row_);
+        const int next = current == static_cast<int>(row_count_) - 1
+            ? 0 : current + 1;
+        draw_item(current, 0);
+        selected_row_ = static_cast<uint32_t>(next);
+        draw_item(next, 1);
+        soft_update();
+        return 1;
+    }
+    default:
+        return 0;
+    }
+}

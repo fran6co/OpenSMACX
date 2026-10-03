@@ -808,6 +808,32 @@ void Dialogs::on_left_click(int a, int b) {
     }
 }
 
+// ORIGINAL: 0x00613180 ?pass_dialog_focus@Dialogs@@QAEXXZ 0x00613180-0x006131F5
+// RECOVERY_BINDING: v1 {"reason":"Recover the complete body in its genuine C++ owner, with real embedded members, shared virtual bases, lifecycle and parent operations. Compiler-generated overrides/adjustors replace executable-address or vbtable stand-ins; no current matching claim is granted.","evidence":["git:de91fffe:src/recovered/units/00613180.cpp","image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","recovery/tasks/ui-eight-owner-coverage.json","Original entry 0x00613180; physical VC6 COFF emitted symbol ?pass_dialog_focus@Dialogs@@UAEXXZ."]}
+// symbol    ?pass_dialog_focus@Dialogs@@UAEXXZ
+void Dialogs::pass_dialog_focus() {
+    switch (kind_) {
+    case 1:
+    case 2:
+    case 8:
+    case 16:
+        GraphicWin::pass_dialog_focus();
+        break;
+    case 4:
+        EditGroup::pass_dialog_focus();
+        break;
+    }
+}
+
+// ORIGINAL: 0x00613220 ?on_scroll_create@Dialogs@@QAEHXZ 0x00613220-0x00613254
+// RECOVERY_BINDING: v1 {"reason":"Recover the complete body in its genuine C++ owner, with real embedded members, shared virtual bases, lifecycle and parent operations. Compiler-generated overrides/adjustors replace executable-address or vbtable stand-ins; no current matching claim is granted.","evidence":["git:de91fffe:src/recovered/units/00613220.cpp","image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","recovery/tasks/ui-eight-owner-coverage.json","Original entry 0x00613220; physical VC6 COFF emitted symbol ?on_scroll_create@Dialogs@@QAEHXZ."]}
+int Dialogs::on_scroll_create() {
+    if (kind_ == 2 && (iFlags_ & 0x40) != 0 && win_parent_ != 0) {
+        return win_parent_->vslot_08();
+    }
+    return 0;
+}
+
 // ORIGINAL: 0x006132A0 ?calculate_dimensions@Dialogs@@QAEHXZ 0x006132A0-0x006132F8 BYTE_EXACT
 // size      88 bytes
 // prototype int (__thiscall ?calculate_dimensions@Dialogs@@QAEHXZ)(Dialogs* this)

@@ -17,6 +17,8 @@
  */
 #include "stdafx.h"
 #include "flatbutton.h"
+#include "win.h"
+extern void __cdecl fn_00607b10(int, BaseButton*);
 
 // The nine-group defaults table read by both the constructor and close():
 // runtime defaults that load_interface (0x00455610) publishes into the
@@ -305,3 +307,44 @@ Status: Complete
 // image's own 11 bytes. A comparison compiles a TRANSLATION UNIT, so the
 // claim has to live where the COMDAT is emitted. The full TRIED evidence
 // that named this move is folded into the marker's new home.
+
+// ORIGINAL: 0x00608500 ?on_mouse_move@FlatButton@@QAEXHH@Z 0x00608500-0x00608657
+// RECOVERY_BINDING: v1 {"reason":"Recover the complete body in its genuine C++ owner, with real embedded members, shared virtual bases, lifecycle and parent operations. Compiler-generated overrides/adjustors replace executable-address or vbtable stand-ins; no current matching claim is granted.","evidence":["git:de91fffe:src/recovered/units/00608500.cpp","image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","recovery/tasks/ui-eight-owner-coverage.json","Original entry 0x00608500; physical VC6 COFF emitted symbol ?on_mouse_move@FlatButton@@UAEXHH@Z."]}
+// symbol    ?on_mouse_move@FlatButton@@UAEXHH@Z
+void FlatButton::on_mouse_move(int x, int y) {
+    if (WinPointerOwner1 == this || WinPointerOwner2 == this) {
+        BaseButton::on_mouse_move(x, y);
+        return;
+    }
+    const RECT &buffer_rect = this->Buffer::rect1_;
+    const RECT hit_rect = {
+        0, 0,
+        buffer_rect.right - buffer_rect.left,
+        buffer_rect.bottom - buffer_rect.top
+    };
+    if (in_box(x, y, &hit_rect) == 0) {
+        if (field_A74_ == 1) {
+            time1_.stop();
+            if (bubble_text_ != 0) Win::clear_bubble_text();
+            field_A74_ = 0;
+            if (win_parent_ != 0) {
+                win_parent_->vslot_40(static_cast<int>(field_A78_), 0);
+            }
+            redraw();
+        }
+    } else if (field_A74_ == 0) {
+        if (WinButtonHoverHook != 0) WinButtonHoverHook();
+        field_A74_ = 1;
+        if (win_parent_ != 0) {
+            win_parent_->vslot_40(static_cast<int>(field_A78_), 1);
+        }
+        if (bubble_text_ != 0) {
+            time1_.init(
+                reinterpret_cast<void (__cdecl *)(int, int)>(&fn_00607b10),
+                0, static_cast<int>(reinterpret_cast<unsigned long>(this)),
+                1000, 5);
+            time1_.pulse();
+        }
+        redraw();
+    }
+}
