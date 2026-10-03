@@ -1,0 +1,28 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "846a0ba2a949fc3692ce8bc7ccb7f5020f9e0d9f",
+  "editable_files": [
+    "src/veh.cpp",
+    "src/veh.h",
+    "src/unrecovered/005678c0.cpp",
+    "recovery/tests/air_power_owner_control.cpp",
+    "recovery/tests/test_air_power_owner_behavior.py"
+  ],
+  "evidence": [
+    "Private full-owner proposal SHA256 7c77154cfe19e4b189cac5017850da7d001176cf53f28d9f64e55ed612fcc544 composes complete range/entry/relocation, missile goals/scoring/route/fallback, ordinary scan/post-loop, on-alert and bombing continuations. Fragments, mocks and earlier stubs are not product behavior.",
+    "Independent review confirmed actual VehPrototype/Base/PlayerData/Map fields and the existing TU-local seven-parameter battle_fight declaration. Original param_2 nullness is stable through ordinary scan before final guard; alleged ordinary clobber was explicitly withdrawn after exact native/seed verification.",
+    "No historical byte grant is authorized. Transfer original identity/full span and all TRIED lessons through the native source writer. Preserve original uninitialized-error behavior unless separately authorized, real callbacks and live reloads; no raw original-address storage, manual vtables or fake dependencies.",
+    "Only root coordinator edits tracked source and compiler epochs; combat/UI workers remain private. Existing historical veh ownership overlaps remain explicit. Compile actual TU, inspect emitted mapping and protected neighboring bodies, durable actual-source controls, full application build/link, claims/references and source integrity precede manual reviewed checkpoint. Full game acceptance and linked preservation are not established."
+  ],
+  "intent": "Recover the entire air_power aircraft/missile target and movement function through typed vehicle/game/map owners; retain all original spans and seed discoveries, retire only after verified complete ownership.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5667008,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "air-power-complete-owner-coverage"
+}
