@@ -776,6 +776,7 @@ Win *WinActiveWindow;     // 0x009B7AC8
 Win *WinBubbleCompanion;   // 0x009B7A4C
 // RECOVERY_OBJECT: v1 0x009B6630 ?WinZOrderArray@@3PAPAVWin@@A
 Win *WinZOrderArray[512];
+// RECOVERY_OBJECT: v1 0x009B6E38 ?WinBubbleRect@@3UtagRECT@@A
 RECT WinBubbleRect;        // 0x009B6E38
 RECT WinScreenClipRect;    // 0x009B74C0
 // restore_flip_sprite passes this complete RECT to UnionRect at 5F17C7
@@ -795,6 +796,7 @@ uint32_t WinStaticDefaults[10] = {  // 0x00696D34, the image's values
 // The original zero-filled extent ends before the caption-pointer owners.
 // RECOVERY_OBJECT: v2 0x009B7AF0 0x009B7B00 ?WinDynamicDefaults@@3UWinDynamicDefaultsTable@@A 0x005EB3D0
 WinDynamicDefaultsTable WinDynamicDefaults;  // 0x009B7AF0
+// RECOVERY_OBJECT: v1 0x009B7A50 ?WinBubbleActive@@3HA
 int WinBubbleActive;       // 0x009B7A50
 // on_char loads this pointer at 5F612F/5F615F; hide independently does
 // so at 5EDDE3/5EDE13. The binding names pointer storage, not its pointee.
@@ -12349,4 +12351,12 @@ void __cdecl pump_all_sound_messages() {
 // symbol    ?do_all_sounds@@YAXXZ
 void __cdecl do_all_sounds() {
     MsgStatus = 0;
+}
+
+// ORIGINAL: 0x005F83B0 sub_5f83b0 0x005F83B0-0x005F83C5 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:f178e8db:src/recovered/units/005f83b0.cpp complete original identity/spans and historical claims/findings.", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x5f83b0 full native body review.", "source:src/win.cpp existing real state owners; no executable-address alias or synthetic receiver."], "reason": "Recover the complete short helper through established source-owned diplomacy, vehicle, text or window state; preserve signed sentinel behavior, original receiver/argument order and conditional callbacks."}
+// symbol    ?flip_active_bubble_text@@YAXXZ
+void __cdecl flip_active_bubble_text() {
+    if (WinBubbleActive != 0)
+        Win::flip(&WinBubbleRect);
 }

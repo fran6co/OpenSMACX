@@ -14749,3 +14749,11 @@ int __cdecl air_power(int a1, int a2, int a3, int *a4, int *a5) {
         a1, a4, a5, live_iVar10, live_iVar11, requested_region,
         a2 != 0, a3 != 0);
 }
+
+// ORIGINAL: 0x0050B8F0 sub_50b8f0 0x0050B8F0-0x0050B90A BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:f178e8db:src/recovered/0050b8f0.cpp complete original identity/spans and historical claims/findings.", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x50b8f0 full native body review.", "source:src/veh.cpp existing real state owners; no executable-address alias or synthetic receiver."], "reason": "Recover the complete short helper through established source-owned diplomacy, vehicle, text or window state; preserve signed sentinel behavior, original receiver/argument order and conditional callbacks."}
+// symbol    ?veh_next_stack_id@@YAHH@Z
+int __cdecl veh_next_stack_id(int veh_id) {
+  if (veh_id < 0) return veh_id;
+  return Vehs[veh_id].next_veh_id_stack;
+}

@@ -935,3 +935,6 @@ int __cdecl interceptor(int faction_id, int opposing_faction, int target_x, int 
 
 // Source-owned monolith repair and morale-upgrade interaction.
 void __cdecl monolith(int vehicle_id);
+
+// Source-owned original helper; identity and behavior evidence are in its TU.
+int __cdecl veh_next_stack_id(int veh_id);

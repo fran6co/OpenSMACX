@@ -1267,3 +1267,6 @@ int __cdecl pump_mouse_button_message();
 int __cdecl pump_sound_message();
 void __cdecl pump_all_sound_messages();
 void __cdecl do_all_sounds();
+
+// Source-owned original helper; identity and behavior evidence are in its TU.
+void __cdecl flip_active_bubble_text();

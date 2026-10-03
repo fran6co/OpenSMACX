@@ -5086,3 +5086,13 @@ char *__cdecl sub_584d30(char *dest, char *src, unsigned int count) {
     dest[count - 1] = 0;
     return result;
 }
+
+// ORIGINAL: 0x005391A0 sub_5391a0 0x005391A0-0x005391C0 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:f178e8db:src/recovered/005391a0.cpp complete original identity/spans and historical claims/findings.", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x5391a0 full native body review.", "source:src/general.cpp existing real state owners; no executable-address alias or synthetic receiver."], "reason": "Recover the complete short helper through established source-owned diplomacy, vehicle, text or window state; preserve signed sentinel behavior, original receiver/argument order and conditional callbacks."}
+// symbol    ?read_and_parse_text_line@@YAXXZ
+void __cdecl read_and_parse_text_line() {
+  text_get();
+  char *input = TextBufferGetPtr;
+  StringTemp[0] = 0;
+  parse_string(input, StringTemp);
+}

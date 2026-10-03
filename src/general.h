@@ -321,3 +321,6 @@ int __cdecl sub_62d160();
 void __cdecl sub_62d1e0(RECT *rect);
 int __cdecl sub_62d2c0();
 void *__fastcall sub_63bb20(void *this_ptr);
+
+// Source-owned original helper; identity and behavior evidence are in its TU.
+void __cdecl read_and_parse_text_line();
