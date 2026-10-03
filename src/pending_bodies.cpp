@@ -644,11 +644,6 @@ void __cdecl basepop_close_class() {
 // ?clear_terrain@MapWin@@QAEXXZ at 0x0046FD90
 
 
-// ?do_checksums@@YAXH@Z at 0x0051E760
-void __cdecl do_checksums(int type) {
-    typedef void(__cdecl *pending)(int);
-    PENDING_BODY(0x0051E760, pending)(type);
-}
 
 // ?world_rivers@@YAXXZ at 0x005C38B0 - HOMED into src/map.cpp 2026-09-05 (see
 // the marker there), so this file no longer carries it.

@@ -30,6 +30,7 @@
 #include "veh.h"
 #include "log.h"
 #include "lock.h"     // map_tile_bytes() - site_at/set_dirty walk its records
+#include "netdaemon.h"
 #include "netmsg.h"   // NetMsgPrimary - synch_display posts through it
 #include "mapwin.h"
 #include "worldwin.h"
@@ -7341,4 +7342,150 @@ void __cdecl world_build() {
         }
         WorldClimateWorldWin.clear_terrain();
     }
+}
+
+extern int BaseAtDebugPopupFlag;
+
+// ORIGINAL: 0x0051E760 ?do_checksums@@YAXH@Z 0x0051E760-0x0051F0A7
+// RECOVERY_BINDING: v1 {"reason":"Recover checksum diagnostics through the real network producer, source-owned 21-word turn checksum storage, typed faction names and original local/shared text buffers. Preserve the original unwritten diagnostic tail; no byte or runtime acceptance claim.","evidence":["original:0x51E760-0x51F0A7; image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","git:b4e2d110:src/unrecovered/0051e760.cpp","Native51E830..51E840 copies21 words; producer appends26 diagnostic words only when BaseAtDebugPopupFlag is nonzero.","Original section and faction header loops mutate StringTemp; the remaining formatted reports use local buffers and _itoa radix10.","recovery/tasks/base-colony-economy-coverage-wave.json; recovery/tests/test_turn_checksums_behavior.py"]}
+// TRIED: literal transcription of the ~25 itoa+strcat+log_say_hex report blocks and 3 walk loops (verified every log_say/log_say_hex call is (msg,value,0,0) with the message text pushed last=1st-param, confirmed against raw disasm push order, not assumed); the switch's dead "cmp esi,4;jne" fallthrough at 0x51E82B is provably unreachable (case4's own short jmp skips over it) and is omitted. Used a file-scope #define REPORT(...)/#undef macro instead of a helper function to stay inside "no helper" while avoiding 25x hand-duplicated blocks. Compiles; first divergence at instr #13 (deeper than most landings this batch), not chased to byte-exact given size (2375 bytes).
+// kind      game
+void __cdecl do_checksums(int type) {
+    if (BaseAtDebugPopupFlag == 0 && type != 4) {
+        return;
+    }
+
+    // NetDaemon::game_checksum writes 21 common values and, when the debug
+    // popup flag is set, appends the diagnostic values through slot 46.
+    // Keep the tail uninitialized when the producer does not write it: the
+    // original type-4 consumer still reads it; no deterministic value is established.
+    int checksums[47];
+    char text[256];
+    char number[50];
+    NetDaemonNet.game_checksum(checksums);
+
+    log_say(" ", 0, 0, 0);
+    if (type <= 4) {
+        switch (type) {
+        case 0:
+            log_say("Checksums at end of turn", TurnCurrentNum, 0, 0);
+            break;
+        case 1:
+            log_say("Checksums at game start", TurnCurrentNum, 0, 0);
+            break;
+        case 2:
+            log_say("Checksums before world regen", TurnCurrentNum, 0, 0);
+            break;
+        case 3:
+            log_say("Checksums after world regen", TurnCurrentNum, 0, 0);
+            break;
+        case 4:
+            log_say("Checksums at beginning of turn", TurnCurrentNum, 0, 0);
+            memcpy(NetTurnChecksums, checksums, 0x54);
+            break;
+        }
+    }
+
+    int common_index;
+    for (common_index = 0; common_index < 5; ++common_index) {
+        const char *label;
+        switch (common_index) {
+        case 0: label = "GAME checksum = "; break;
+        case 1: label = "LEADERS checksum = "; break;
+        case 2: label = "MAP checksum = "; break;
+        case 3: label = "VEHICLES checksum = "; break;
+        default: label = "BASES checksum = "; break;
+        }
+        text[0] = '\0';
+        _itoa(checksums[common_index], number, 10);
+        strcat(text, number);
+        strcat(text, " ");
+        strcat(text, label);
+        log_say_hex(text, checksums[common_index], 0, 0);
+    }
+
+    log_say(" ", 0, 0, 0);
+    int section_index;
+    for (section_index = 0; section_index < 16; ++section_index) {
+        StringTemp[0] = '\0';
+        strcat(StringTemp, "Map SECTION ");
+        _itoa(section_index, number, 10);
+        strcat(StringTemp, number);
+        strcat(StringTemp, " = ");
+
+        text[0] = '\0';
+        _itoa(checksums[section_index + 5], number, 10);
+        strcat(text, number);
+        strcat(text, " ");
+        strcat(text, StringTemp);
+        log_say_hex(text, checksums[section_index + 5], 0, 0);
+    }
+
+    int aggregate_index;
+    for (aggregate_index = 0; aggregate_index < 3; ++aggregate_index) {
+        const char *label;
+        switch (aggregate_index) {
+        case 0: label = "Rules checksum = "; break;
+        case 1: label = "Projects checksum = "; break;
+        default: label = "Tech checksum = "; break;
+        }
+        text[0] = '\0';
+        _itoa(checksums[21 + aggregate_index], number, 10);
+        strcat(text, number);
+        strcat(text, " ");
+        strcat(text, label);
+        log_say_hex(text, checksums[21 + aggregate_index], 0, 0);
+    }
+
+    int player_index;
+    for (player_index = 1; player_index < MaxPlayerNum; ++player_index) {
+        StringTemp[0] = '\0';
+        strcat(StringTemp, Players[player_index].adj_name_faction);
+        strcat(StringTemp, " checksum = ");
+        text[0] = '\0';
+        _itoa(checksums[24 + player_index - 1], number, 10);
+        strcat(text, number);
+        strcat(text, " ");
+        strcat(text, StringTemp);
+        log_say_hex(text, checksums[24 + player_index - 1], 0, 0);
+    }
+
+    int map_report_index;
+    for (map_report_index = 0; map_report_index < 7; ++map_report_index) {
+        const char *label;
+        switch (map_report_index) {
+        case 0: label = "Map climate checksum = "; break;
+        case 1: label = "Map region checksum = "; break;
+        case 2: label = "Map bit checksum = "; break;
+        case 3: label = "Map contour checksum = "; break;
+        case 4: label = "Map terr checksum = "; break;
+        case 5: label = "Map bitwho[0] checksum = "; break;
+        default: label = "Params checksum = "; break;
+        }
+        text[0] = '\0';
+        _itoa(checksums[31 + map_report_index], number, 10);
+        strcat(text, number);
+        strcat(text, " ");
+        strcat(text, label);
+        log_say_hex(text, checksums[31 + map_report_index], 0, 0);
+    }
+
+    int vehicle_faction;
+    for (vehicle_faction = 0; vehicle_faction < MaxPlayerNum; ++vehicle_faction) {
+        StringTemp[0] = '\0';
+        strcat(StringTemp, Players[vehicle_faction].adj_name_faction);
+        strcat(StringTemp, " Vehicles checksum = ");
+        text[0] = '\0';
+        _itoa(checksums[38 + vehicle_faction], number, 10);
+        strcat(text, number);
+        strcat(text, " ");
+        strcat(text, StringTemp);
+        log_say_hex(text, checksums[38 + vehicle_faction], 0, 0);
+    }
+
+    text[0] = '\0';
+    _itoa(checksums[46], number, 10);
+    strcat(text, number);
+    strcat(text, " Bases checksum = ");
+    log_say_hex(text, checksums[46], 0, 0);
 }
