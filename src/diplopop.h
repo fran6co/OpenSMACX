@@ -61,6 +61,9 @@ class DiploPop : public GraphicWin, public SubInterface {
   void hide();
   DiploPop();
   ~DiploPop();
+  void init();
+  void draw_bioscan();
+  void draw_portrait();
   void draw_hq();
   void draw_info();
   void portrait_anim();
@@ -123,39 +126,15 @@ class DiploPop : public GraphicWin, public SubInterface {
   Sprite *portrait_sprite_;   // 0x20BC, borrowed faction artwork
   // Borrowed faction-HQ portrait used by draw_hq; not owned or destroyed.
   Sprite *hq_sprite_;  // 0x20C0
-  uint32_t field_20C4_;  // 0x20C4
-  uint32_t field_20C8_;  // 0x20C8
-  uint32_t field_20CC_;  // 0x20CC
-  uint32_t field_20D0_;  // 0x20D0
-  uint32_t field_20D4_;  // 0x20D4
-  uint32_t field_20D8_;  // 0x20D8
-  uint32_t field_20DC_;  // 0x20DC
-  uint32_t field_20E0_;  // 0x20E0
-  uint32_t field_20E4_;  // 0x20E4
-  uint32_t field_20E8_;  // 0x20E8
-  uint32_t field_20EC_;  // 0x20EC
-  uint32_t field_20F0_;  // 0x20F0
-  RECT rect1_;  // 0x20F4, IDB `rect1`
-  uint32_t field_2104_;  // 0x2104
-  uint32_t field_2108_;  // 0x2108
-  uint32_t field_210C_;  // 0x210C
-  uint32_t field_2110_;  // 0x2110
-  uint32_t field_2114_;  // 0x2114
-  uint32_t field_2118_;  // 0x2118
-  uint32_t field_211C_;  // 0x211C
-  uint32_t field_2120_;  // 0x2120
-  uint32_t field_2124_;  // 0x2124
-  uint32_t field_2128_;  // 0x2128
-  uint32_t field_212C_;  // 0x212C
-  uint32_t field_2130_;  // 0x2130
-  uint32_t field_2134_;  // 0x2134
-  uint32_t field_2138_;  // 0x2138
-  uint32_t field_213C_;  // 0x213C
-  uint32_t field_2140_;  // 0x2140
-  uint32_t field_2144_;  // 0x2144
-  uint32_t field_2148_;  // 0x2148
-  uint32_t field_214C_;  // 0x214C
-  uint32_t field_2150_;  // 0x2150
+  RECT bioscan_title_rect_;  // +0x20C4
+  RECT bioscan_picture_rect_;  // +0x20D4
+  RECT portrait_text_rect_;  // +0x20E4
+  RECT rect1_;  // +0x20F4; native scratch reuses bottom at +0x2100
+  RECT content_rect_;  // +0x2104
+  RECT frame_inset_rect_;  // +0x2114
+  RECT button_left_rect_;  // +0x2124
+  RECT button_right_rect_;  // +0x2134
+  RECT right_panel_button_rect_;  // +0x2144
   uint32_t field_2154_;  // 0x2154
   // Constructor 0x0043F08A..0x0043F0A6 supplies count 3 and stride 0xB4C;
   // destructor 0x00440DBA..0x00440DEF tears down the same complete array.
