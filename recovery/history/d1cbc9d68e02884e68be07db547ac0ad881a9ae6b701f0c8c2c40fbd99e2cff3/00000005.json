@@ -1,0 +1,20 @@
+{
+  "event_id": "727b551af28ed09f24db4b440ac4a4dbff0ad66ef42c5626b20ca181d3326782",
+  "payload": {
+    "affects": [
+      "entity-ae47af1fcb5b969862273098187fda5549d23db6d89ba52f55a4aa81190310b1"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "battle-report-v2-semantic-review-20261003",
+    "evidence": [
+      "Frozen privatev2 manifestac47bff448e027d6495ca37834315fa497c9183257e8d7fa27438e6f1214939a; root reran actual extracted GCC/Clang tests:2passed, insufficient oracle coverage. Canonical objdump421E96 loads Veh proto_id directly then subtracts9 for portrait switch, not chassis_id. Canonical4225AF..4225F5 selects Armor.name or Weapon.name and Strings.get; v2 numeric psi label renders armor branch unreachable. Canonical422898..4228BA forms modifier byte string90F554+side*140+index*50, not loading an LPSTR from the legacy-mistyped source array. Kuna code bytes independently validated against canonical, but C and global strings/types still hypotheses: portrait name top=y+sprite.height+3; stats wrapping halves inset width even narrow; Language/debug punctuation opens with682E9C and closes682E98. Corrected proposal must pin each distinction and test both sides, standard armor path, layout widths and string contents. No new exactness, acceptance, storage extent, task baseline or product source changes."
+    ],
+    "hypothesis": "Private BattleWin v2 passes its host controls but does not preserve several native behaviors; reject integration pending complete corrected translation and distinguishing controls, retaining all source work.",
+    "kind": "discovery"
+  },
+  "previous_event": "54ca517763449422cdb447cd3b4543cfdbc0d5597521bf74273c5d2a260b088f",
+  "request_id": "battle-report-v2-semantic-review-20261003",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:statuswin-remaining-owner-coverage"
+}
