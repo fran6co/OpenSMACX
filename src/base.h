@@ -658,6 +658,9 @@ void __cdecl upgrade_prototypes(int faction_id, int proto_id);
 int __cdecl upgrade_prototype(int faction_id, int proto_id_new, int proto_id_old,
                               int set_flag);
 int __cdecl base_growth();
+void __cdecl base_production();
+extern int BaseProductionZoomRequested;
+extern int BaseProductionUnitCreationDisabled;
 void __cdecl upgrade_any_prototypes(int faction_id);
 int __cdecl value_of_base(int base_id, uint32_t faction_id_req, uint32_t faction_id_res, 
                                     uint32_t overmatch_deg, BOOL tgl);

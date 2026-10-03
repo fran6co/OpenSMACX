@@ -8559,3 +8559,1217 @@ int __cdecl upgrade_prototype(int faction_id, int proto_id_new,
     }
     return 0;
 }
+
+#include "stdafx.h"
+#include "base.h"
+#include "alphamovie.h"
+#include "buffer.h"
+#include "console.h"
+#include "faction.h"
+#include "game.h"
+#include "general.h"
+#include "interlude.h"
+#include "map.h"
+#include "mapwin.h"
+#include "popup.h"
+#include "strings.h"
+#include "temp.h"
+#include "technology.h"
+#include "veh.h"
+#include "wave.h"
+#include "win.h"
+#include "worldwin.h"
+#include <string.h>
+#include <stdlib.h>
+
+extern int BaseProductionZoomRequested;
+extern int BaseProductionUnitCreationDisabled;
+extern uint32_t UpgradePromptAnswered;
+int __cdecl tech_advance(int faction_id);
+void __cdecl mon_prototype_built(int faction_id);
+void __cdecl mon_naval_unit_built(int faction_id);
+void __cdecl mon_air_unit_built(int faction_id);
+void __cdecl mon_native_life_bred(int faction_id);
+void __cdecl mon_first_in_space(int faction_id);
+void __cdecl mon_winning_trans(int faction_id, int counterpart);
+void __cdecl mon_secret_project(int faction_id, int project_id);
+void __cdecl help_project(int project_id);
+void __cdecl set_dirty();
+int __cdecl generators(int faction_id, int *count_out);
+
+namespace {
+
+int base_yield_add(int left, int right);
+int base_yield_mul(int left, int right);
+
+enum ProductionReportResume {
+    PRODUCTION_REPORT_RESUME_274F,
+    PRODUCTION_REPORT_RESUME_276B,
+    PRODUCTION_REPORT_RESUME_2752
+};
+
+int production_abs(int value) {
+    return value < 0 ? -value : value;
+}
+
+int production_project(int item) {
+    return item <= -FacilitySPStart ? -item - FacilitySPStart : -1;
+}
+
+void production_set_project_owner(int project_id, int base_id) {
+    switch (project_id) {
+    case 0: SecretProject.human_genome_project = base_id; break;
+    case 1: SecretProject.command_nexus = base_id; break;
+    case 2: SecretProject.weather_paradigm = base_id; break;
+    case 3: SecretProject.merchant_exchange = base_id; break;
+    case 4: SecretProject.empath_guild = base_id; break;
+    case 5: SecretProject.citizens_defense_force = base_id; break;
+    case 6: SecretProject.virtual_world = base_id; break;
+    case 7: SecretProject.planetary_transit_system = base_id; break;
+    case 8: SecretProject.xenoempathy_dome = base_id; break;
+    case 9: SecretProject.neural_amplifier = base_id; break;
+    case 10: SecretProject.maritime_control_center = base_id; break;
+    case 11: SecretProject.planetary_datalinks = base_id; break;
+    case 12: SecretProject.supercollider = base_id; break;
+    case 13: SecretProject.ascetic_virtues = base_id; break;
+    case 14: SecretProject.longevity_vaccine = base_id; break;
+    case 15: SecretProject.hunter_seeker_algorithm = base_id; break;
+    case 16: SecretProject.pholus_mutagen = base_id; break;
+    case 17: SecretProject.cyborg_factory = base_id; break;
+    case 18: SecretProject.theory_of_everything = base_id; break;
+    case 19: SecretProject.dream_twister = base_id; break;
+    case 20: SecretProject.universal_translator = base_id; break;
+    case 21: SecretProject.network_backbone = base_id; break;
+    case 22: SecretProject.nano_factory = base_id; break;
+    case 23: SecretProject.living_refinery = base_id; break;
+    case 24: SecretProject.cloning_vats = base_id; break;
+    case 25: SecretProject.self_aware_colony = base_id; break;
+    case 26: SecretProject.clinical_immortality = base_id; break;
+    case 27: SecretProject.space_elevator = base_id; break;
+    case 28: SecretProject.singularity_inductor = base_id; break;
+    case 29: SecretProject.bulk_matter_transmitter = base_id; break;
+    case 30: SecretProject.telepathic_matrix = base_id; break;
+    case 31: SecretProject.voice_of_planet = base_id; break;
+    case 32: SecretProject.ascent_to_transcendence = base_id; break;
+    case 33: SecretProject.manifold_harmonics = base_id; break;
+    case 34: SecretProject.nethack_terminus = base_id; break;
+    case 35: SecretProject.cloudbase_academy = base_id; break;
+    case 36: SecretProject.planetary_energy_grid = base_id; break;
+    case 37: SecretProject.user_defined_38 = base_id; break;
+    case 38: SecretProject.user_defined_39 = base_id; break;
+    case 39: SecretProject.user_defined_40 = base_id; break;
+    case 40: SecretProject.user_defined_41 = base_id; break;
+    case 41: SecretProject.user_defined_42 = base_id; break;
+    case 42: SecretProject.user_defined_43 = base_id; break;
+    case 43: SecretProject.user_defined_44 = base_id; break;
+    case 44: SecretProject.user_defined_45 = base_id; break;
+    case 45: SecretProject.user_defined_46 = base_id; break;
+    case 46: SecretProject.user_defined_47 = base_id; break;
+    case 47: SecretProject.user_defined_48 = base_id; break;
+    case 48: SecretProject.user_defined_49 = base_id; break;
+    case 49: SecretProject.user_defined_50 = base_id; break;
+    case 50: SecretProject.user_defined_51 = base_id; break;
+    case 51: SecretProject.user_defined_52 = base_id; break;
+    case 52: SecretProject.user_defined_53 = base_id; break;
+    case 53: SecretProject.user_defined_54 = base_id; break;
+    case 54: SecretProject.user_defined_55 = base_id; break;
+    case 55: SecretProject.user_defined_56 = base_id; break;
+    case 56: SecretProject.user_defined_57 = base_id; break;
+    case 57: SecretProject.user_defined_58 = base_id; break;
+    case 58: SecretProject.user_defined_59 = base_id; break;
+    case 59: SecretProject.user_defined_60 = base_id; break;
+    case 60: SecretProject.user_defined_61 = base_id; break;
+    case 61: SecretProject.user_defined_62 = base_id; break;
+    case 62: SecretProject.user_defined_63 = base_id; break;
+    case 63: SecretProject.user_defined_64 = base_id; break;
+    }
+}
+
+bool production_faction_human(int faction_id) {
+    return (static_cast<unsigned char>(LockEnableMask) & (1u << faction_id)) != 0;
+}
+
+bool production_facility_built(int base_id, int facility_id) {
+    return has_fac_built(facility_id, base_id);
+}
+
+int production_wrapped_subtract(int left, int right) {
+    const uint32_t bits = static_cast<uint32_t>(left)
+                        - static_cast<uint32_t>(right);
+    int result;
+    memcpy(&result, &bits, sizeof(result));
+    return result;
+}
+
+int production_wrapped_add(int left, int right) {
+    const uint32_t bits = static_cast<uint32_t>(left)
+                        + static_cast<uint32_t>(right);
+    int result;
+    memcpy(&result, &bits, sizeof(result));
+    return result;
+}
+
+int production_wrapped_multiply(int left, int right) {
+    const uint32_t bits = static_cast<uint32_t>(left)
+                        * static_cast<uint32_t>(right);
+    int result;
+    memcpy(&result, &bits, sizeof(result));
+    return result;
+}
+
+bool production_colony_abandon_prompt(int owner, int prototype_id) {
+    Base &base = *BaseCurrent;
+    const bool human = production_faction_human(owner);
+    if (!human) {
+        if (DiffLevelCurrent > DLVL_LIBRARIAN) {
+            base.nutrients_accumulated = production_wrapped_add(
+                base.nutrients_accumulated, DiffLevelCurrent - DLVL_TALENT);
+        }
+        return false;
+    }
+
+    const uint32_t governor = base.governor;
+    if (((governor & GOV_MANAGES_PRODUCTION) != 0
+         && (governor & GOV_ACTIVE) != 0)
+        || ((GameState & 1u) != 0 && (GameState & 8u) == 0)) {
+        return false;
+    }
+
+    parse_says(0, base.name_string, -1, -1);
+    parse_says(1, VehPrototypes[prototype_id].veh_name, -1, -1);
+    StringTemp[0] = '\0';
+    strcat(StringTemp, "ABANDONBASE");
+    if (base.nutrient_surplus > 0) {
+        strcat(StringTemp, "1");
+        const int faction_cost = cost_factor(base.faction_id_current, 0,
+                                             BaseIDCurrentSelected);
+        const int population_cost = production_wrapped_multiply(
+            faction_cost, base.population_size + 1);
+        const int remaining_cost = production_wrapped_subtract(
+            population_cost, base.nutrients_accumulated);
+        int turns = remaining_cost / base.nutrient_surplus;
+        if (turns < 0) turns = 0;
+        if (turns > 9999) turns = 9999;
+        parse_num(0, turns);
+    }
+
+    const char *picture = (Players[owner].rule_flags & RFLAG_ALIEN)
+                        ? "alopdir.pcx" : "talent_sm.pcx";
+    const int result = popp(ClimatePopupTitle[0], "ABANDONBASE", 0,
+                            picture, 0);
+    if (IsMultiplayerNet || result < 2) {
+        if (result != 0) BaseProductionZoomRequested = 1;
+        return false;
+    }
+
+    return true;
+}
+
+void production_spend(Base &base, int owner, int cost) {
+    base.minerals_accumulated = production_wrapped_subtract(
+        base.minerals_accumulated, cost);
+    const int exemption = Rules.retool_exemption;
+    const int cap = exemption < base.mineral_surplus
+                  ? exemption : base.mineral_surplus;
+    const unsigned char owner_bit = static_cast<unsigned char>(1u << owner);
+    if ((static_cast<unsigned char>(LockEnableMask) & owner_bit) != 0
+        && base.minerals_accumulated > cap) {
+        base.minerals_accumulated = cap < 0 ? 0 : cap;
+    }
+    base.mineral_surplus_final = base.minerals_accumulated;
+}
+
+void production_refresh_base_if_needed(int selected_base_id) {
+    if (BaseComputedID != selected_base_id) {
+        base_support();
+        base_yield();
+        base_nutrient();
+        base_minerals();
+        base_energy();
+    }
+}
+
+bool production_reveal_faction(int faction_id) {
+    PlayerData &player_data = PlayersData[faction_id];
+    if ((player_data.flags & PFLAG_MAP_REVEALED) != 0) return false;
+
+    const uint8_t faction_mask = static_cast<uint8_t>(1u << faction_id);
+    for (unsigned int tile_index = 0; tile_index < MapArea; ++tile_index) {
+        Map &tile = MapTiles[tile_index];
+        tile.visibility |= faction_mask;
+        if (faction_id != 0) {
+            tile.bit_visible[faction_id - 1] = tile.bit;
+        }
+    }
+    for (int base_index = 0; base_index < BaseCurrentCount; ++base_index) {
+        Base &base = Bases[base_index];
+        base.visibility |= faction_mask;
+        base.faction_pop_size_intel[faction_id] =
+            static_cast<uint8_t>(base.population_size);
+    }
+    player_data.flags |= PFLAG_MAP_REVEALED;
+    return true;
+}
+
+void production_clear_artifact_orders() {
+    BaseCurrent->state &=
+        ~(BSTATE_ARTIFACT_LINKED | BSTATE_ARTIFACT_ALREADY_LINKED);
+    int vehicle_id = stack_fix(veh_at(BaseCurrent->x, BaseCurrent->y));
+    while (vehicle_id >= 0) {
+        Veh &vehicle = Vehs[vehicle_id];
+        if (VehPrototypes[vehicle.proto_id].plan == PLAN_ALIEN_ARTIFACT) {
+            vehicle.order = ORDER_NONE;
+        }
+        vehicle_id = vehicle.next_veh_id_stack;
+    }
+    draw_tile(BaseCurrent->x, BaseCurrent->y, 2);
+}
+
+void production_voice_of_planet_spread() {
+    int faction_already_handled[MaxPlayerNum];
+    for (int faction_index = 0; faction_index < MaxPlayerNum;
+         ++faction_index) {
+        faction_already_handled[faction_index] = !is_alive(faction_index);
+    }
+
+    for (int base_index = 0; base_index < BaseCurrentCount; ++base_index) {
+        const Base &base = Bases[base_index];
+        const int owner = base.faction_id_current;
+        if (faction_already_handled[owner]) continue;
+
+        const Map *base_tile = map_loc(base.x, base.y);
+        if ((base_tile->climate & 0xe0) < 0x60) continue;
+        faction_already_handled[owner] = 1;
+
+        int center_x = 0;
+        int center_y = 0;
+        bool found_center = false;
+        for (int offset_attempt = 0; offset_attempt < 1000;
+             ++offset_attempt) {
+            const int offset_index = rand() % 0x120;
+            center_x = xrange(base.x + RadiusOffsetX[offset_index + 1]);
+            center_y = base.y + RadiusOffsetY[offset_index + 1];
+            if (center_y < 0
+                || center_y >= static_cast<int>(MapLatitudeBounds)) {
+                continue;
+            }
+            const Map *center_tile = map_loc(center_x, center_y);
+            if ((center_tile->bit & BIT_BASE_IN_TILE) != 0
+                && (center_tile->climate & 0x0f) < 8) {
+                continue;
+            }
+            if (whose_territory(owner, center_x, center_y, 0, 0) != owner) {
+                continue;
+            }
+            found_center = true;
+            break;
+        }
+        if (!found_center) continue;
+
+        if (owner == ConsoleGlobal.faction_id_) {
+            ConsoleGlobal.focus(center_x, center_y,
+                                ConsoleGlobal.faction_id_);
+        }
+
+        for (int point_index = 0; point_index < 9; ++point_index) {
+            const int x_coord = xrange(center_x + RadiusOffsetX[point_index]);
+            const int y_coord = center_y + RadiusOffsetY[point_index];
+            if (y_coord < 0
+                || y_coord >= static_cast<int>(MapLatitudeBounds)) {
+                continue;
+            }
+            const Map *tile = map_loc(x_coord, y_coord);
+            if ((tile->bit & BIT_BASE_IN_TILE) != 0
+                && (tile->climate & 0x0f) < 8) {
+                continue;
+            }
+            if (whose_territory(owner, x_coord, y_coord, 0, 0) != owner) {
+                continue;
+            }
+            bit_set_call(x_coord, y_coord, BIT_FUNGUS, TRUE);
+            bit_set_call(x_coord, y_coord, MapTileFlagClearMask, FALSE);
+            synch_bit(x_coord, y_coord, ConsoleGlobal.faction_id_);
+            draw_tile(x_coord, y_coord, 2);
+        }
+    }
+}
+
+int production_vehicle_morale(int selected_base_id, int owner,
+                              int prototype_id, bool new_prototype) {
+    const VehPrototype &prototype = VehPrototypes[prototype_id];
+    int morale;
+    if ((prototype_id == 8 || prototype_id < MaxVehProtoNum)
+        && Weapon[prototype.weapon_id].offense_rating < 0) {
+        morale = 0;
+        if (has_project(SP_XENOEMPATYH_DOME, owner)) ++morale;
+        if (has_project(SP_PHOLUS_MUTAGEN, owner)) ++morale;
+        if (has_project(SP_VOICE_OF_PLANET, owner)) ++morale;
+        if (has_fac(FAC_CENTAURI_PRESERVE, selected_base_id, 0)) ++morale;
+        if (has_fac(FAC_TEMPLE_OF_PLANET, selected_base_id, 0)) ++morale;
+        if (has_fac(FAC_BIOLOGY_LAB, selected_base_id, 0)) ++morale;
+        if (has_fac(FAC_BIOENHANCEMENT_CENTER, selected_base_id, 0)
+            || has_project(SP_CYBORG_FACTORY, owner)) {
+            ++morale;
+        }
+    } else {
+        morale = morale_mod(selected_base_id, owner,
+                            Chassis[prototype.chassis_id].triad);
+        if (prototype.weapon_id == 21) {
+            if (has_fac(FAC_COVERT_OPS_CENTER, selected_base_id, 0)) morale += 2;
+            if (has_project(SP_NETHACK_TERMINUS, owner)) ++morale;
+        }
+        if (has_abil(prototype_id, ABL_TRAINED)) ++morale;
+        if (new_prototype) ++morale;
+    }
+    ++morale;
+    if (morale < MORALE_VERY_GREEN) morale = MORALE_VERY_GREEN;
+    if (morale > MORALE_ELITE) morale = MORALE_ELITE;
+    return morale;
+}
+
+void production_vehicle_notice(int selected_base_id, int owner,
+                              int prototype_id, bool new_prototype,
+                              int queue_result) {
+    Base &base = Bases[selected_base_id];
+    const bool governor_full_auto =
+        (base.governor & 0x80000001u) == 0x80000001u;
+    bool route_to_warning = queue_result == 0 && !governor_full_auto;
+    if (!route_to_warning) {
+        route_to_warning = new_prototype
+            ? (GameWarnings & 4u) != 0
+            : (GameWarnings & 0x20000000u) != 0;
+    }
+
+    int popup_flags = 0;
+    if (route_to_warning && new_prototype && (GameWarnings & 4u) != 0) {
+        const int faction_cost = cost_factor(owner, RSC_MINERALS, -1);
+        const int unit_cost = veh_cost(prototype_id, selected_base_id, 0);
+        parse_num(0, production_wrapped_multiply(faction_cost, unit_cost));
+        StringTemp[0] = '\0';
+        strcat(StringTemp, "PRODUCEPROTO");
+        popup_flags = 4;
+    } else if (route_to_warning && !new_prototype) {
+        const VehPrototype &prototype = VehPrototypes[prototype_id];
+        StringTemp[0] = '\0';
+        strcat(StringTemp, "PRODUCE");
+        popup_flags = prototype.plan < 8 ? 0x400 : 2;
+    } else {
+        StringTemp[0] = '\0';
+        strcat(StringTemp, "PRODUCE");
+        if (queue_result != 0) {
+            parse_num(1, base.queue_size + 1);
+            strcat(StringTemp, "Q");
+        } else if (governor_full_auto) {
+            strcat(StringTemp, "G");
+        }
+    }
+
+    const VehPrototype &prototype = VehPrototypes[prototype_id];
+    const bool alien = (Players[owner].rule_flags & RFLAG_ALIEN) != 0;
+    const int triad = Chassis[prototype.chassis_id].triad;
+    const bool native_life = prototype_id == 15
+        || Weapon[prototype.weapon_id].offense_rating < 0;
+    const char *picture;
+    if (prototype_id >= 64 || native_life) {
+        if (triad == TRIAD_AIR) {
+            picture = "chiron_sm.pcx";
+        } else if (triad == TRIAD_SEA && prototype_id == 14) {
+            picture = "sealrk_sm.pcx";
+        } else if (triad == TRIAD_SEA) {
+            picture = "isle_sm.pcx";
+        } else {
+            picture = "native_sm.pcx";
+        }
+    } else if (triad == TRIAD_AIR) {
+        picture = alien ? "alair_sm.pcx" : "air_sm.pcx";
+    } else if (triad == TRIAD_SEA) {
+        picture = "navun_sm.pcx";
+    } else {
+        picture = alien ? "alunit_sm.pcx" : "unit_sm.pcx";
+    }
+    popb(StringTemp, popup_flags, -1, picture, 0);
+}
+
+int production_report_signed_bits(uint32_t bits) {
+    int value;
+    memcpy(&value, &bits, sizeof(value));
+    return value;
+}
+
+ProductionReportResume production_report_stage(
+    Popup &popup, int owner, int facility_id, int project_id,
+    int queue_result, bool orbital_report) {
+    if (owner != ConsoleGlobal.faction_id_ && facility_id < 40) {
+        return PRODUCTION_REPORT_RESUME_274F;
+    }
+
+    parse_say(1, reinterpret_cast<int>(Facility[facility_id].name), -1, -1);
+    parse_says(2, Players[owner].adj_name_faction, -1, -1);
+    if (owner != ConsoleGlobal.faction_id_) {
+        return PRODUCTION_REPORT_RESUME_276B;
+    }
+
+    if (facility_id == 40) {
+        interlude(0x26, 0, 1, 0);
+        int under_size_generator_count = 0;
+        const int active_generator_count =
+            generators(owner, &under_size_generator_count);
+        parse_num(0, active_generator_count);
+        parse_num(1, under_size_generator_count);
+        parse_num(2, production_report_signed_bits(
+            Rules.subspace_generators_needed));
+        parse_num(3, production_report_signed_bits(
+            Rules.size_base_subspace_gen));
+        parse_says(0, BaseCurrent->name_string, -1, -1);
+        popp(ScriptPopupFile, "GENERATORME", 0, "subgen_sm.pcx", 0);
+        return PRODUCTION_REPORT_RESUME_2752;
+    }
+
+    const bool facility_popup = facility_id < 70
+        && !has_fac_announced(static_cast<uint32_t>(owner),
+                              static_cast<uint32_t>(facility_id))
+        && (GameState & 1u) == 0
+        && (GameWarnings & 1u) != 0;
+    if (facility_popup) {
+        popup.init(0, 0);
+        popup.set_width(500);
+        StringTemp[0] = '\0';
+        if (project_id >= 0) {
+            strcat(StringTemp, "PROJECT");
+            say_num(project_id);
+        } else {
+            strcat(StringTemp, "FAC");
+            say_num(facility_id);
+            set_fac_announced(static_cast<uint32_t>(owner),
+                              static_cast<uint32_t>(facility_id), TRUE);
+        }
+        popup.start(const_cast<char *>("BLURBS"), StringTemp, -1, 0,
+                    0x80, 0);
+        popup.string(const_cast<char *>("^"));
+        popup.string(const_cast<char *>("^------"));
+        popup.string(const_cast<char *>("^"));
+
+        StringTemp[0] = '\0';
+        strcat(StringTemp, "voices\\fac");
+        if (facility_id >= 65 && facility_id <= 69) {
+            say_num(facility_id - 31);
+        } else {
+            say_num(facility_id);
+        }
+        if (facility_id >= 34 && facility_id <= 41) say_num(0);
+        strcat(StringTemp, ".mp3");
+
+        const uint32_t owner_mask = 1u << owner;
+        if ((GameMorePreferences & 0x00400000u) != 0
+            && owner == ConsoleGlobal.faction_id_
+            && (static_cast<uint8_t>(LockEnableMask) & owner_mask) != 0) {
+            g_WAVE_GENERAL.unload();
+            g_WAVE_GENERAL.load(StringTemp);
+            g_WAVE_GENERAL.play();
+        }
+
+        StringTemp[0] = '\0';
+        strcat(StringTemp, "PRODUCEX");
+        if (queue_result != 0) {
+            parse_num(1, production_wrapped_add(
+                production_report_signed_bits(BaseCurrent->queue_size), 1));
+            strcat(StringTemp, "Q");
+        } else if ((BaseCurrent->governor & 1u) != 0
+                   && (BaseCurrent->governor & 0x80000000u) != 0) {
+            strcat(StringTemp, "G");
+        }
+        const char *const image =
+            (Players[owner].rule_flags & RFLAG_ALIEN) != 0
+                ? "alfacblt_sm.pcx" : "facblt_sm.pcx";
+        popb(StringTemp, 1, -1, image, 0);
+
+        if ((GameMorePreferences & 0x00400000u) != 0
+            && (GameWarnings & 0x00020000u) != 0) {
+            g_WAVE_GENERAL.Sound::fade(2000);
+        }
+        return PRODUCTION_REPORT_RESUME_2752;
+    }
+
+    StringTemp[0] = '\0';
+    strcat(StringTemp, "PRODUCE");
+    if (queue_result != 0) {
+        parse_num(1, production_wrapped_add(
+            production_report_signed_bits(BaseCurrent->queue_size), 1));
+        strcat(StringTemp, "Q");
+    } else if ((BaseCurrent->governor & 1u) != 0
+               && (BaseCurrent->governor & 0x80000000u) != 0) {
+        strcat(StringTemp, "G");
+    }
+
+    const char *image;
+    if (orbital_report) {
+        image = "space_sm.pcx";
+    } else if (facility_id >= 70) {
+        image = "secproj_sm.pcx";
+    } else if ((Players[owner].rule_flags & RFLAG_ALIEN) != 0) {
+        image = "alfacblt_sm.pcx";
+    } else {
+        image = "facblt_sm.pcx";
+    }
+    const int show_popup = (GameWarnings & 0x00200000u) != 0 ? 1 : 0;
+    popb(StringTemp, show_popup, -1, image, 0);
+    return PRODUCTION_REPORT_RESUME_2752;
+}
+
+// Corrected continuation for native 0x004F276B..0x004F2A59.
+static void production_report_foreign_stage_v3(
+    Popup &popup, int owner, int facility_id, int project_id,
+    bool orbital_report) {
+    if (project_id >= 0) {
+        parse_says(0, BaseCurrent->name_string, -1, -1);
+        popup.init(0, 0);
+        popup.set_width(600);
+        StringTemp[0] = '\0';
+        strcat(StringTemp, "PROJECT");
+        say_num(project_id);
+        popup.start(const_cast<char *>("BLURBS"), StringTemp, -1, 0,
+                    0x80, 0);
+        if (WinScreenWidth != 800) {
+            popup.string(const_cast<char *>("^"));
+        }
+        popup.string(const_cast<char *>("^------"));
+        popup.string(const_cast<char *>("^"));
+        popup.start(PopupStartCaption, "PRODUCE2", -1, 0, 0x80, 0);
+
+        if ((GameState & 1u) == 0 || (GameState & 8u) != 0) {
+            int width = 0;
+            int height = 0;
+            if (Buffer::get_pcx_dimensions("secproj_sm.pcx", &width,
+                                           &height) == 0
+                && popup.owned_picture().init(
+                       const_cast<char *>("secproj_sm.pcx"), width,
+                       height) == 0) {
+                popup.select_owned_picture();
+            }
+            popup.exec(0, 0);
+        }
+        return;
+    }
+
+    if (facility_id == 40) {
+        if ((GameState & 1u) != 0 && (GameState & 8u) == 0) return;
+        if ((Players[owner].rule_flags & RFLAG_ALIEN) == 0) {
+            interlude(0x26, BaseCurrent->name_string, 1, 0);
+        }
+        int under_size_generator_count = 0;
+        const int active_generator_count =
+            generators(owner, &under_size_generator_count);
+        parse_num(0, active_generator_count);
+        parse_num(1, under_size_generator_count);
+        parse_num(2, production_report_signed_bits(
+                         Rules.subspace_generators_needed));
+        parse_num(3, production_report_signed_bits(
+                         Rules.size_base_subspace_gen));
+        parse_says(0, BaseCurrent->name_string, -1, -1);
+
+        GenderDefault = Players[owner].is_leader_female;
+        PluralityDefault = FALSE;
+        parse_says(1, Players[owner].title_leader, -1, -1);
+        GenderDefault = Players[owner].is_leader_female;
+        PluralityDefault = FALSE;
+        parse_says(2, Players[owner].name_leader, -1, -1);
+        GenderDefault = Players[owner].noun_gender;
+        PluralityDefault = Players[owner].is_noun_plural;
+        parse_says(3, Players[owner].noun_faction, -1, -1);
+        popp(ScriptPopupFile, "GENERATOR", 0, "subgen_sm.pcx", 0);
+        return;
+    }
+
+    parse_says(0, BaseCurrent->name_string, -1, -1);
+    if ((GameState & 1u) == 0 || (GameState & 8u) != 0) {
+        if (orbital_report) {
+            popp(ScriptPopupFile, "PRODUCE3", 0, "space_sm.pcx", 0);
+        } else {
+            popp(ScriptPopupFile, "PRODUCE2", 0, "secproj_sm.pcx", 0);
+        }
+    }
+}
+
+static ProductionReportResume production_report_stage_v3(
+    Popup &popup, int owner, int facility_id, int project_id,
+    int queue_result, bool orbital_report) {
+    const ProductionReportResume continuation = production_report_stage(
+        popup, owner, facility_id, project_id, queue_result, orbital_report);
+    if (continuation == PRODUCTION_REPORT_RESUME_276B) {
+        production_report_foreign_stage_v3(popup, owner, facility_id,
+                                           project_id, orbital_report);
+        return PRODUCTION_REPORT_RESUME_2752;
+    }
+    return continuation;
+}
+
+// Native duplicate project/facility notice branches. A return to the caller
+// lets the one entry-owned Popup unwind through normal C++ lifetime.
+void production_existing_project_notice(int owner, int facility_id,
+                                        int project_id) {
+    const uint32_t governor = BaseCurrent->governor;
+    if (!production_faction_human(owner)
+        || ((governor & GOV_MANAGES_PRODUCTION) != 0
+            && (governor & GOV_ACTIVE) != 0)) {
+        base_reset(BaseIDCurrentSelected, 0);
+        return;
+    }
+    parse_say(1, static_cast<int>(reinterpret_cast<intptr_t>(
+        Facility[facility_id].name)), -1, -1);
+    StringTemp[0] = '\0';
+    strcat(StringTemp, "ALREADYPROJECT");
+    const int completed_at = base_project(project_id);
+    if (completed_at >= 0) {
+        Base &completed = Bases[completed_at];
+        parse_says(2, completed.name_string, -1, -1);
+        const int completed_owner = completed.faction_id_current;
+        PluralityDefault = Players[completed_owner].is_noun_plural;
+        GenderDefault = Players[completed_owner].noun_gender;
+        parse_says(3, Players[completed_owner].noun_faction, -1, -1);
+        strcat(StringTemp, completed_owner == owner ? "1" : "2");
+    } else {
+        strcat(StringTemp, "0");
+    }
+    popb(StringTemp, 0x200, -1, "secproj_sm.pcx", 0);
+}
+
+void production_existing_facility_notice(int owner, int facility_id) {
+    const uint32_t governor = BaseCurrent->governor;
+    if (!production_faction_human(owner)
+        || ((governor & GOV_MANAGES_PRODUCTION) != 0
+            && (governor & GOV_ACTIVE) != 0)) {
+        base_reset(BaseIDCurrentSelected, 0);
+        return;
+    }
+    parse_say(1, static_cast<int>(reinterpret_cast<intptr_t>(
+        Facility[facility_id].name)), -1, -1);
+    const char *const picture =
+        (Players[owner].rule_flags & RFLAG_ALIEN) != 0
+            ? "alfacblt_sm.pcx" : "facblt_sm.pcx";
+    popb("ALREADYFACILITY", 0x200, -1, picture, 0);
+}
+
+
+void production_finish_vehicle(int selected_base_id, int owner,
+                               int prototype_id, bool new_prototype) {
+    Base &base = Bases[selected_base_id];
+    base.state |= BSTATE_PRODUCTION_DONE;
+    base.state &= 0x7fffffffu;
+    if (!production_faction_human(owner)) {
+        base_reset(selected_base_id, 0);
+        BaseCurrent = &Bases[selected_base_id];
+    } else {
+        const int queue_result = base_queue(selected_base_id);
+        BaseCurrent = &Bases[selected_base_id];
+        production_vehicle_notice(selected_base_id, owner, prototype_id,
+                                  new_prototype, queue_result);
+    }
+
+    if (new_prototype) mon_prototype_built(owner);
+    if (IsMultiplayerNet && production_faction_human(owner)) {
+        VehPrototypes[prototype_id].flags |= 0x100u;
+    } else {
+        UpgradePromptAnswered = 0;
+        if (!production_faction_human(owner)
+            || (GameMorePreferences & 0x00100000u) != 0) {
+            for (int prototype_index = 0; prototype_index < 128;
+                 ++prototype_index) {
+                const int candidate_id = prototype_index < 64
+                    ? prototype_index
+                    : prototype_index - 64 + owner * 64;
+                const uint16_t flags = VehPrototypes[candidate_id].flags;
+                if ((flags & 0x105u) == 0x105u) {
+                    upgrade_prototypes(owner, candidate_id);
+                }
+            }
+        }
+    }
+
+    const VehPrototype &prototype = VehPrototypes[prototype_id];
+    if (prototype_id < 64
+        && (prototype_id == 15
+            || Weapon[prototype.weapon_id].offense_rating < 0)) {
+        mon_native_life_bred(owner);
+    }
+    const int triad = Chassis[prototype.chassis_id].triad;
+    if (triad == TRIAD_SEA) mon_naval_unit_built(owner);
+    if (triad == TRIAD_AIR) mon_air_unit_built(owner);
+}
+
+void production_late_reconcile(int production_id, int project_id,
+                               uint32_t faction_mask, int queue_result) {
+    const uint32_t managed_active = GOV_MANAGES_PRODUCTION | GOV_ACTIVE;
+    Base *current = BaseCurrent;
+    const bool human_owner =
+        (static_cast<uint8_t>(LockEnableMask) &
+         static_cast<uint8_t>(faction_mask)) != 0;
+    const bool production_managed =
+        (current->governor & managed_active) == managed_active;
+
+    if (!human_owner || (production_managed && !queue_result)) {
+        base_reset(BaseIDCurrentSelected, 0);
+        current = BaseCurrent;
+    }
+
+    const bool reloaded_production_managed =
+        (current->governor & managed_active) == managed_active;
+    const bool human_owner_now =
+        (static_cast<uint8_t>(LockEnableMask) &
+         static_cast<uint8_t>(faction_mask)) != 0;
+    if (human_owner_now && !reloaded_production_managed &&
+        current->queue_production_id[0] == -production_id &&
+        current->queue_size == 0) {
+        current->queue_production_id[0] = -FAC_STOCKPILE_ENERGY;
+        draw_radius(current->x, current->y, 2, 2);
+    }
+
+    if (project_id < 0) return;
+
+    const int selected_base_id = BaseIDCurrentSelected;
+    for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+        if (base_id == selected_base_id) continue;
+
+        Base &base = Bases[base_id];
+        const uint32_t base_faction_mask = 1u << base.faction_id_current;
+        const bool base_is_human =
+            (static_cast<uint8_t>(LockEnableMask) &
+             static_cast<uint8_t>(base_faction_mask)) != 0;
+        if (base_is_human &&
+            (base.governor & managed_active) != managed_active) {
+            continue;
+        }
+        if (base.queue_production_id[0] != -production_id) continue;
+
+        const int faction = base.faction_id_current;
+        const int base_score = base_yield_add(
+            base.minerals_accumulated,
+            base_yield_mul(base.mineral_surplus, 10));
+        int best_other_base = -1;
+        int best_other_score = base_score;
+        for (int other_id = 0; other_id < BaseCurrentCount; ++other_id) {
+            if (other_id == base_id || other_id == selected_base_id) continue;
+            Base &other = Bases[other_id];
+            if (other.faction_id_current != faction) continue;
+            if (other.queue_production_id[0] == -production_id ||
+                other.queue_production_id[0] > -FacilitySPStart) {
+                continue;
+            }
+
+            const int other_score = base_yield_add(
+                other.minerals_accumulated,
+                base_yield_mul(other.mineral_surplus, 10));
+            if (other_score < best_other_score) {
+                best_other_score = other_score;
+                best_other_base = other_id;
+            }
+        }
+
+        if (best_other_base < 0) {
+            base_reset(base_id, 0);
+        } else {
+            const int displaced = Bases[base_id].queue_production_id[0];
+            Bases[base_id].queue_production_id[0] =
+                Bases[best_other_base].queue_production_id[0];
+            Bases[best_other_base].queue_production_id[0] = displaced;
+        }
+    }
+
+    BaseIDCurrentSelected = selected_base_id;
+    BaseCurrent = &Bases[selected_base_id];
+    if (BaseComputedID != selected_base_id) {
+        BaseComputedID = selected_base_id;
+        base_support();
+        base_yield();
+        base_nutrient();
+        base_minerals();
+        base_energy();
+    }
+}
+
+// Native 0x4F2F61..0x4F33D2 project-event tail. The caller performs the
+// initial project interlude/movie/help actions and Voice of Planet spread.
+bool production_project_events_tail(int owner, int project_id) {
+    if (project_id == SP_VOICE_OF_PLANET) {
+        interlude(13, 0, 1, 0);
+        PluralityDefault = 0;
+        GenderDefault = Players[owner].is_leader_female;
+        parse_says(5, Players[owner].name_leader, -1, -1);
+        CharUpperA(ParseStrBuffer[5].str);
+        interlude(14, 0, 0, 0);
+    }
+
+    mon_secret_project(owner, project_id);
+    if (project_id == SP_ASCENT_TO_TRANSCENDENCE) {
+        mon_winning_trans(owner, -1);
+        if ((GameRules & RULES_VICTORY_COOPERATIVE) != 0) {
+            for (int target = 1; target < MaxPlayerNum; ++target) {
+                if (target == owner) continue;
+                if ((PlayersData[owner].diplo_treaties[target]
+                     & DTREATY_PACT) == 0) {
+                    continue;
+                }
+                const uint32_t recipient_treaties =
+                    PlayersData[target].diplo_treaties[owner];
+                if ((recipient_treaties & DTREATY_HAVE_SURRENDERED) != 0) {
+                    const uint8_t human = factions_status_byte(0);
+                    if ((human & static_cast<uint8_t>(1u << target)) == 0) {
+                        continue;
+                    }
+                }
+                mon_winning_trans(target, owner);
+            }
+        }
+        if (owner == ConsoleGlobal.faction_id_) {
+            interlude(17, 0, 2, 0);
+            EndgameExitReason = 1;
+        } else {
+            EndgameExitReason = 3;
+            PluralityDefault = 0;
+            GenderDefault = Players[owner].is_leader_female;
+            parse_says(5, Players[owner].name_leader, -1, -1);
+            const int year_turn = production_wrapped_add(TurnCurrentNum, 100);
+            parse_num(2, game_year(year_turn));
+            const int century_turn = production_wrapped_add(TurnCurrentNum, 100);
+            parse_num(3, century_turn / 100);
+            if ((Players[owner].rule_flags & RFLAG_ALIEN) != 0) {
+                interlude(27, 0, 4, 0);
+            } else {
+                interlude(18, 0, 3, 0);
+            }
+        }
+        GameState |= 1u;
+        return true;
+    }
+    if (project_id == SP_UNIVERSAL_TRANSLATOR) {
+        tech_advance(owner);
+        tech_advance(owner);
+    } else if (project_id == SP_PLANETARY_TRANS_SYS) {
+        for (int base_index = 0; base_index < BaseCurrentCount; ++base_index) {
+            Base &base = Bases[base_index];
+            if (base.faction_id_current != owner || base.population_size >= 3) {
+                continue;
+            }
+            base.population_size = 3;
+            if (owner == ConsoleGlobal.faction_id_) {
+                draw_tile(base.x, base.y, 2);
+            }
+        }
+    }
+    return false;
+}
+
+
+} // namespace
+
+// ORIGINAL: 0x004F07E0 ?base_production@@YAXXZ 0x004F07E0-0x004F3FD8;0x0065C8A0-0x0065D0D6
+// RECOVERY_BINDING: v1 {"evidence": ["original:0x004F07E0-0x004F3FD8;0x0065C8A0-0x0065D0D6", "git:bb602081:src/unrecovered/004f07e0.cpp", "source:src/base.h", "source:src/faction.h", "source:src/popup.h"], "reason": "Recover the complete colony production operation with real Base, PlayerData, Popup and project lifetimes; helper decomposition preserves redispatch, reporting, unit/facility creation and cleanup paths, including native wrapping arithmetic."}
+void __cdecl base_production() {
+    Popup popup;
+
+    BaseCurrent->state &= ~BSTATE_PRODUCTION_DONE;
+    const int owner = BaseCurrent->faction_id_current;
+    const int base_id = BaseIDCurrentSelected;
+    PlayerData &player_data = PlayersData[owner];
+    const int intake_goal = production_wrapped_add(
+        BaseCurrent->mineral_intake_2,
+        production_wrapped_multiply(2, BaseCurrent->mineral_surplus));
+    if (player_data.unk_28 < intake_goal) player_data.unk_28 = intake_goal;
+
+    // Negative nutrient accumulation takes the owned Popup cleanup return;
+    // the native path does not show a starvation message or alter the base.
+    if (BaseCurrent->nutrients_accumulated < 0) return;
+
+    if (BaseCurrent->mineral_surplus >= 0
+        && BaseCurrent->queue_production_id[0] != -FAC_STOCKPILE_ENERGY
+        && (BaseCurrent->state & BSTATE_DRONE_RIOTS_ACTIVE) == 0) {
+        BaseCurrent->minerals_accumulated = production_wrapped_add(
+            BaseCurrent->minerals_accumulated, BaseCurrent->mineral_surplus);
+    }
+
+    const unsigned char owner_bit = static_cast<unsigned char>(1u << owner);
+    const bool human = (static_cast<unsigned char>(LockEnableMask) & owner_bit)
+                    != 0;
+    const uint32_t base_state_before_reset = BaseCurrent->state;
+    const uint32_t governor_before_reset = BaseCurrent->governor;
+    bool reset_base = true;
+    if (human && ((governor_before_reset & 1u) == 0
+                  || (governor_before_reset & 0x80000000u) == 0
+                  || (base_state_before_reset & 0x80000000u) != 0)) {
+        reset_base = false;
+    } else if ((base_state_before_reset & 8u) == 0) {
+        const Map *base_tile = map_loc(BaseCurrent->x, BaseCurrent->y);
+        if ((base_tile->bit & BIT_VEH_IN_TILE) != 0
+            && (base_tile->val2 & 0x0f) < MaxPlayerNum) {
+            reset_base = false;
+        } else if (human) {
+            reset_base = false;
+        }
+    }
+    if (reset_base) base_reset(base_id, 0);
+    BaseCurrent = &Bases[base_id];
+    int production_id = BaseCurrent->queue_production_id[0];
+    int completed_project_id = -1;
+    int completed_facility_id = -1;
+    int completed_production_cost = 0;
+
+process_production_item:
+    if (production_id == -FAC_STOCKPILE_ENERGY) {
+        // Stockpile reaches the same owned cleanup return without production.
+        return;
+    }
+
+    if (production_id >= 0) {
+        // Vehicle production: the cost, prerequisite, queue accounting,
+        // prototype side effects and all shortage branches are translated
+        // in this proposal's subsequent section.
+        const int faction_id = BaseCurrent->faction_id_current;
+        const int cost = production_wrapped_multiply(
+            cost_factor(faction_id, RSC_MINERALS, -1),
+            veh_cost(production_id, base_id, 0));
+        if (BaseCurrent->minerals_accumulated < cost) {
+            // Native 0x4F0B74..0x4F0BE8 is only the entry-owned Popup
+            // teardown followed by the common return; RAII supplies it.
+            return;
+        }
+        const bool continue_colony =
+            VehPrototypes[production_id].plan != PLAN_COLONIZATION
+            || BaseCurrent->population_size != 1
+            || player_data.diff_level <= DLVL_SPECIALIST
+            || production_colony_abandon_prompt(owner, production_id);
+        if (!continue_colony) {
+            return;
+        }
+        bool new_prototype = false;
+        if (production_id >= 64) {
+            const uint16_t old_prototype_flags =
+                VehPrototypes[production_id].flags;
+            new_prototype = (old_prototype_flags & 4u) == 0;
+            VehPrototypes[production_id].flags =
+                static_cast<uint16_t>(old_prototype_flags | 4u);
+        }
+        if (new_prototype) {
+            const int saved_selected_base = BaseIDCurrentSelected;
+            prune_protos(owner, production_id, 0);
+            BaseIDCurrentSelected = saved_selected_base;
+            BaseCurrent = &Bases[saved_selected_base];
+            production_refresh_base_if_needed(saved_selected_base);
+        }
+        production_spend(*BaseCurrent, faction_id, cost);
+        if (BaseProductionUnitCreationDisabled != 0) {
+            return;
+        }
+        const int vehicle_id = veh_init(production_id, faction_id,
+                                        BaseCurrent->x, BaseCurrent->y);
+        if (vehicle_id < 0) {
+            return;
+        }
+        Veh &vehicle = Vehs[vehicle_id];
+        if (production_faction_human(faction_id)
+            && (BaseCurrent->governor
+                & (GOV_NEW_VEH_FULLY_AUTO | GOV_ACTIVE))
+            == (GOV_NEW_VEH_FULLY_AUTO | GOV_ACTIVE)) {
+            vehicle.state |= VSTATE_UNK_200;
+            vehicle.order_auto_type = 0;
+        }
+        if (VehPrototypes[production_id].plan == PLAN_COLONIZATION) {
+            if ((BaseCurrent->state & 0x02000000u) != 0
+                || Players[faction_id].ai_power == 0
+                || player_data.pop_total > 8) {
+                BaseCurrent->state |= 0x01000000u;
+            }
+            BaseCurrent->state |= 0x02000000u;
+            BaseCurrent->nutrients_accumulated =
+                BaseCurrent->nutrients_accumulated < 0
+                ? 0 : BaseCurrent->nutrients_accumulated;
+            if (BaseCurrent->population_size > 1
+                || (player_data.diff_level > DLVL_SPECIALIST
+                    && !is_objective(base_id))) {
+                --BaseCurrent->population_size;
+            }
+            if (BaseCurrent->population_size <= 0) {
+                vehicle.home_base_id = -1;
+                base_kill(base_id);
+                draw_map(1);
+                eliminate_player(faction_id, 0);
+                return;
+            }
+        }
+        if (production_id == 8 && faction_id == ConsoleGlobal.faction_id_
+            && (GameInterludeFlags & 0x10u) == 0) {
+            interlude(4, BaseCurrent->name_string, 1, 0);
+            vehicle.state |= 0x00800000u;
+        }
+        vehicle.morale = static_cast<uint8_t>(production_vehicle_morale(
+            base_id, faction_id, production_id, new_prototype));
+        vehicle.state |= 0x00002000u;
+        vehicle.flags |= 0x1000u;
+        production_finish_vehicle(base_id, faction_id, production_id,
+                                  new_prototype);
+        return;
+    }
+
+    // Negative queue items are facilities or projects.
+    {
+        const int facility_id = production_abs(production_id);
+        const int project_id = production_project(production_id);
+        const int faction_id = BaseCurrent->faction_id_current;
+        const int production_cost = production_wrapped_multiply(
+            cost_factor(faction_id, RSC_MINERALS, -1),
+            Facility[facility_id].cost);
+        if (project_id >= 0) {
+            if (project_id == SP_ASCENT_TO_TRANSCENDENCE
+                && BaseCurrent->minerals_accumulated >= production_cost
+                && !ascending(owner)) {
+                popb("ASCENTNOTYET", 0x1000, -1, "asctran_sm.pcx", 0);
+                return;
+            }
+            const int existing_project_base = base_project(project_id);
+            if (existing_project_base != -1) {
+                production_existing_project_notice(owner, facility_id,
+                                                   project_id);
+                return;
+            }
+            if (BaseCurrent->minerals_accumulated < production_cost) return;
+            completed_project_id = project_id;
+            completed_production_cost = production_cost;
+        } else if (facility_id < FacilityRepStart) {
+            if (production_facility_built(base_id, facility_id)) {
+                if (!base_queue(BaseIDCurrentSelected)) {
+                    production_existing_facility_notice(owner, facility_id);
+                    return;
+                }
+                BaseCurrent = &Bases[BaseIDCurrentSelected];
+                production_id = BaseCurrent->queue_production_id[0];
+                if (production_id == -FAC_STOCKPILE_ENERGY) return;
+                goto process_production_item;
+            }
+            if (BaseCurrent->minerals_accumulated < production_cost) return;
+            completed_facility_id = facility_id;
+            completed_production_cost = production_cost;
+        } else {
+            // 65..68 are the four orbital facilities; other IDs in this
+            // reserved range are not ordinary facility-build completions.
+            if (facility_id < FacilityRepStart + 4) {
+                if (BaseCurrent->minerals_accumulated < production_cost) {
+                    return;
+                }
+                completed_facility_id = facility_id;
+                completed_production_cost = production_cost;
+            } else {
+                return;
+            }
+        }
+    }
+
+finalize_base_production:
+    // Native 0x4F1FA5..0x4F2244 completes the negative queue item, updates its
+    // typed owner records, and advances the queue before report construction.
+    production_spend(*BaseCurrent, owner, completed_production_cost);
+    BaseCurrent->state |= BSTATE_PRODUCTION_DONE;
+    BaseCurrent->state &= 0x7fffffffu;
+
+    if (completed_project_id >= 0) {
+        production_set_project_owner(completed_project_id, base_id);
+    } else if (completed_facility_id >= 0) {
+        if (completed_facility_id == FAC_HEADQUARTERS) {
+            int offset;
+            int mask;
+            bitmask(FAC_HEADQUARTERS, &offset, &mask);
+            for (int base_index = 0; base_index < BaseCurrentCount;
+                 ++base_index) {
+                Base &other_base = Bases[base_index];
+                if (other_base.faction_id_current == owner) {
+                    other_base.facilities_built[offset] =
+                        static_cast<uint8_t>(
+                            other_base.facilities_built[offset] & ~mask);
+                }
+            }
+        }
+        if (completed_facility_id >= FacilityRepStart
+            && completed_facility_id < FacilityRepStart + 4) {
+            ++PlayersData[owner].satellites_[completed_facility_id
+                                             - FacilityRepStart];
+        } else {
+            set_fac(completed_facility_id, base_id, TRUE);
+        }
+        const bool revealed_map = production_reveal_faction(owner);
+        if (revealed_map && owner == ConsoleGlobal.faction_id_
+            && (GameState & 1u) == 0) {
+            popp(ScriptPopupFile, "SEEMAP", 0, "space_sm.pcx", 0);
+            set_dirty();
+            draw_map(1);
+            WorldClimateWorldWin.GraphicWin::redraw();
+        }
+    }
+    if (completed_facility_id == 8) {
+        production_clear_artifact_orders();
+    }
+
+    const int queue_result = base_queue(BaseIDCurrentSelected);
+    const int completed_item_id = production_abs(production_id);
+    const bool orbital_report = completed_item_id >= 65
+                             && completed_item_id < 69;
+    const ProductionReportResume report_resume = production_report_stage_v3(
+        popup, owner, completed_item_id, completed_project_id,
+        queue_result, orbital_report);
+
+    // The native 274F, 276B, and 2752 paths converge before the monitor
+    // dispatch at 2752; foreign-owner report paths are not monitor skips.
+    (void)report_resume;
+    if (orbital_report) {
+        mon_first_in_space(owner);
+    } else if (completed_item_id < FacilitySPStart) {
+        mon_facility_built(owner, BaseCurrent->name_string);
+    }
+
+    if (completed_facility_id == FAC_CENTAURI_PRESERVE) {
+        mon_built_preserve(owner);
+        if (owner == ConsoleGlobal.faction_id_) {
+            interlude((GameInterludeFlags & 0x20u) ? 9 : 5, 0, 1, 0);
+        }
+    }
+    if (completed_facility_id == 31 || completed_facility_id == 32
+        || completed_facility_id == 13
+        || completed_facility_id == 14) {
+        if (PlayersData[owner].planet_ecology != 0) {
+            PlayersData[owner].planet_ecology = production_wrapped_add(
+                PlayersData[owner].planet_ecology, 1);
+        }
+        PlayersData[owner].flags &= ~0x4000u;
+    }
+
+    if (completed_project_id >= 0) {
+        if (completed_project_id == SP_VOICE_OF_PLANET) {
+            interlude(12, 0, 1, 0);
+        }
+        if ((GamePreferences & PREF_AV_SECRET_PROJECT_MOVIES) != 0
+            && !IsMultiplayerNet) {
+            if (owner == ConsoleGlobal.faction_id_) {
+                amovie_project(completed_project_id);
+            } else if (completed_project_id == SP_ASCENT_TO_TRANSCENDENCE) {
+                amovie_project("theyTranscend");
+            }
+        }
+        if (owner == ConsoleGlobal.faction_id_) {
+            help_project(completed_project_id);
+        }
+        if (completed_project_id == SP_VOICE_OF_PLANET) {
+            production_voice_of_planet_spread();
+        }
+        if (production_project_events_tail(owner, completed_project_id)) {
+            return;
+        }
+    }
+
+    production_late_reconcile(production_id, completed_project_id,
+                              owner_bit, queue_result);
+}
+
+// Production sets this request for the subsequent upkeep zoom. Four-byte
+// loader-zero initial storage; the original identity is not a runtime address.
+// RECOVERY_OBJECT: v2 0x0090E934 0x0090E938 ?BaseProductionZoomRequested@@3HA 0x004F07E0
+int BaseProductionZoomRequested = 0;
+// Nonzero skips unit creation before veh_init. The indirect producer remains
+// unverified; do not infer a permanently false flag from loader-zero storage.
+// RECOVERY_OBJECT: v2 0x0090EA40 0x0090EA44 ?BaseProductionUnitCreationDisabled@@3HA 0x004F07E0
+int BaseProductionUnitCreationDisabled = 0;

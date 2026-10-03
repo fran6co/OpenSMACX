@@ -1,5 +1,6 @@
 """Actual-source colony growth/upgrade controls; mocks are not game runtime proof."""
 from pathlib import Path
+import re
 import shutil
 import subprocess
 
@@ -757,6 +758,601 @@ def test_actual_vehicle_creation(compiler, tmp_path):
         capture_output=True, text=True)
     assert compiled.returncode == 0, compiled.stderr
     subprocess.run([str(binary)], check=True, capture_output=True, text=True)
+
+
+# Production-only behavioral harness copied from private host-v4 controls.
+# Source placeholders are filled from the live, mapped C++ definitions below;
+# no ignored build artifact is read by the committed test.
+# Only base_production, its three arithmetic helpers, and the colony-abandon
+# helper are extracted from actual source. Reporting, vehicle-finish, project
+# event, and other production helpers are doubles; the dependent class shapes
+# are minimal harness mocks, not original ABI/layout or full-path/game proof.
+PRODUCTION_HARNESS = r"""#include <assert.h>
+#include <limits.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+#include <vector>
+
+#define __cdecl
+#define TRUE 1
+#define RSC_MINERALS 1
+#define FAC_STOCKPILE_ENERGY 69
+#define FAC_HEADQUARTERS 1
+#define FAC_CENTAURI_PRESERVE 31
+#define FacilityRepStart 65
+#define FacilitySPStart 70
+#define DLVL_SPECIALIST 1
+#define DLVL_LIBRARIAN 3
+#define DLVL_TALENT 2
+#define MaxPlayerNum 8
+#define MapArea 8
+#define FACILITY_COUNT 134
+#define MaxFacilityNum 134
+#define PLAN_COLONIZATION 8
+#define VSTATE_UNK_200 0x200u
+#define VSTATE_UNK_2000 0x2000u
+#define PREF_AV_SECRET_PROJECT_MOVIES 0x10000000u
+#define GOV_MANAGES_PRODUCTION 0x1u
+#define GOV_NEW_VEH_FULLY_AUTO 0x80u
+#define GOV_ACTIVE 0x80000000u
+#define RFLAG_ALIEN 0x80u
+enum {
+    FAC_ASCENT_TO_TRANSCENDENCE = 102,
+    SP_ASCENT_TO_TRANSCENDENCE = 32,
+    SP_VOICE_OF_PLANET = 31,
+    BSTATE_DRONE_RIOTS_ACTIVE = 0x2,
+    BSTATE_ARTIFACT_LINKED = 0x400,
+    BSTATE_ARTIFACT_ALREADY_LINKED = 0x800,
+    BSTATE_PRODUCTION_DONE = 0x800000,
+    BIT_VEH_IN_TILE = 0x2,
+    PFLAG_MAP_REVEALED = 0x200
+};
+enum ProductionReportResume {
+    PRODUCTION_REPORT_RESUME_274F,
+    PRODUCTION_REPORT_RESUME_276B,
+    PRODUCTION_REPORT_RESUME_2752
+};
+
+typedef char enum_guard_rsc_minerals[(RSC_MINERALS == 1) ? 1 : -1];
+typedef char enum_guard_hq[(FAC_HEADQUARTERS == 1) ? 1 : -1];
+typedef char enum_guard_facility_rep[(FacilityRepStart == 65) ? 1 : -1];
+typedef char enum_guard_project_start[(FacilitySPStart == 70) ? 1 : -1];
+typedef char enum_guard_stockpile[(FAC_STOCKPILE_ENERGY == 69) ? 1 : -1];
+typedef char enum_guard_preserve[(FAC_CENTAURI_PRESERVE == 31) ? 1 : -1];
+typedef char enum_guard_specialist[(DLVL_SPECIALIST == 1) ? 1 : -1];
+typedef char enum_guard_governor_active[(GOV_ACTIVE == 0x80000000u) ? 1 : -1];
+typedef char enum_guard_colonization[(PLAN_COLONIZATION == 8) ? 1 : -1];
+typedef char enum_guard_production_done[(BSTATE_PRODUCTION_DONE == 0x800000) ? 1 : -1];
+typedef char enum_guard_drone_riot[(BSTATE_DRONE_RIOTS_ACTIVE == 0x2) ? 1 : -1];
+typedef char enum_guard_vehicle_tile[(BIT_VEH_IN_TILE == 0x2) ? 1 : -1];
+typedef char enum_guard_map_revealed[(PFLAG_MAP_REVEALED == 0x200) ? 1 : -1];
+typedef char enum_guard_auto_governor[(GOV_NEW_VEH_FULLY_AUTO == 0x80u) ? 1 : -1];
+typedef char enum_guard_colony_defer[(VSTATE_UNK_200 == 0x200u) ? 1 : -1];
+typedef char enum_guard_colony_state[(VSTATE_UNK_2000 == 0x2000u) ? 1 : -1];
+typedef char enum_guard_preferences[(PREF_AV_SECRET_PROJECT_MOVIES == 0x10000000u) ? 1 : -1];
+typedef char enum_guard_facility_count[(FACILITY_COUNT == 134 && MaxFacilityNum == 134) ? 1 : -1];
+typedef char enum_guard_manages_production[(GOV_MANAGES_PRODUCTION == 1u) ? 1 : -1];
+typedef char enum_guard_ascent_facility[(FAC_ASCENT_TO_TRANSCENDENCE == 102) ? 1 : -1];
+typedef char enum_guard_ascent_project[(SP_ASCENT_TO_TRANSCENDENCE == 32) ? 1 : -1];
+typedef char enum_guard_voice_project[(SP_VOICE_OF_PLANET == 31) ? 1 : -1];
+typedef char enum_guard_artifact_linked[(BSTATE_ARTIFACT_LINKED == 0x400) ? 1 : -1];
+typedef char enum_guard_artifact_already_linked[(BSTATE_ARTIFACT_ALREADY_LINKED == 0x800) ? 1 : -1];
+typedef char enum_guard_librarian[(DLVL_LIBRARIAN == 3) ? 1 : -1];
+typedef char enum_guard_talent[(DLVL_TALENT == 2) ? 1 : -1];
+
+struct Base {
+    int16_t x, y;
+    uint8_t faction_id_current, faction_id_former;
+    int8_t population_size;
+    uint8_t pad0[5];
+    uint8_t visibility;
+    uint8_t faction_pop_size_intel[8];
+    char name_string[25];
+    int16_t unk_x, unk_y;
+    uint32_t state, event, governor;
+    int nutrients_accumulated, minerals_accumulated, production_id_last;
+    int eco_damage;
+    uint32_t queue_size;
+    int queue_production_id[10];
+    int resource_sqr_radius, specialist_total, specialist_unk_1;
+    uint32_t spec[2];
+    uint8_t facilities_built[12];
+    int mineral_surplus_final, minerals_accumulated_2;
+    int unk_6, unk_7, unk_8, unk_9;
+    int nutrient_intake_1, mineral_intake_1, energy_intake_1, unused_intake_1;
+    int nutrient_intake_2, mineral_intake_2, energy_intake_2, unused_intake_2;
+    int nutrient_surplus, mineral_surplus, energy_surplus, unused_surplus;
+};
+struct PlayerData {
+    uint32_t flags;
+    int diff_level;
+    int unk_28;
+    int pop_total;
+    int planet_ecology;
+    uint32_t satellites_[4];
+};
+struct Player { int rule_flags; int ai_power; };
+struct RulesType { int retool_exemption; } Rules;
+struct RuleFacility { int cost; } Facility[FACILITY_COUNT];
+struct VehPrototype { char veh_name[32]; int plan; uint16_t flags; } VehPrototypes[128];
+struct Veh {
+    int16_t x, y;
+    uint32_t state;
+    uint16_t flags;
+    int16_t proto_id;
+    uint16_t unk_1;
+    uint8_t faction_id, year_end_lurking, dmg_incurred;
+    int8_t order;
+    uint8_t waypoint_count, patrol_current_point;
+    int16_t waypoint_x[4], waypoint_y[4];
+    uint8_t morale, terraforming_turns, order_auto_type, visibility;
+    uint8_t moves_expended;
+    int8_t facing;
+    uint8_t unk_6, move_to_ai_type, probe_action, probe_sabotage_id;
+    int16_t home_base_id, next_veh_id_stack, prev_veh_id_stack;
+} Vehs[128];
+struct Map {
+    uint8_t climate, contour, val2, region, visibility, val3, unk_1;
+    int8_t territory;
+    uint32_t bit, bit2, bit_visible[7];
+} MapTiles[MapArea];
+struct Console { int faction_id_; } ConsoleGlobal;
+struct GraphicWin { int redraw_calls; void redraw() { ++redraw_calls; } };
+struct ClimateWorldWin : GraphicWin {} WorldClimateWorldWin;
+struct Popup {
+    static int constructors;
+    static int destructors;
+    Popup() { ++constructors; }
+    ~Popup() { ++destructors; }
+    Popup(const Popup &);
+    Popup &operator=(const Popup &);
+};
+int Popup::constructors;
+int Popup::destructors;
+
+Base Bases[16];
+Base *BaseCurrent = &Bases[0];
+PlayerData PlayersData[8];
+Player Players[8];
+int BaseIDCurrentSelected, BaseCurrentCount, BaseComputedID, LockEnableMask;
+int GameState;
+uint32_t GameInterludeFlags, GamePreferences;
+int DiffLevelCurrent, BaseProductionZoomRequested;
+char StringTemp[1024];
+char *ClimatePopupTitle[1];
+int IsMultiplayerNet, BaseProductionUnitCreationDisabled;
+char ScriptPopupFileText[] = "SCRIPT";
+char *ScriptPopupFile = ScriptPopupFileText;
+int production_test_vehicle_cost, production_test_cost_factor;
+int production_test_vehicle_id, production_test_colony_prompt;
+int production_test_objective, production_test_ascending;
+int production_test_project_base, production_test_reveal;
+int production_test_report_result, production_test_first_queue_result;
+int production_test_second_queue_result, production_test_first_queue_replacement;
+int production_test_use_first_queue;
+int base_reset_calls, base_queue_calls, base_support_calls, base_yield_calls;
+int base_nutrient_calls, base_minerals_calls, base_energy_calls;
+int veh_init_calls, production_finish_calls, production_spend_calls;
+int existing_project_notice_calls, existing_facility_notice_calls;
+int set_fac_calls, production_report_calls, production_monitor_calls;
+int preserve_monitor_calls, reveal_calls, popb_calls, popp_calls;
+int dirty_calls, draw_map_calls, eliminated_calls, base_kill_calls;
+int late_reconcile_calls, project_tail_calls, project_owner_calls;
+int last_project_owner_id, last_project_owner_base;
+int last_report_item, last_report_project, last_report_queue;
+int last_report_orbital, last_monitor_owner;
+int last_vehicle_proto, last_vehicle_faction, last_vehicle_x, last_vehicle_y;
+int last_interlude_id;
+int parse_says_calls, parse_num_calls, parsed_num;
+const char *last_popp_label, *last_popb_text, *last_popb_image, *last_popp_image;
+Map MapProbe;
+std::vector<int> call_order;
+
+PRODUCTION_ARITHMETIC_HELPERS
+
+int production_abs(int value) { return value < 0 ? -value : value; }
+int production_project(int item) {
+    return item <= -FacilitySPStart ? -item - FacilitySPStart : -1;
+}
+int cost_factor(int, int, int) { return production_test_cost_factor; }
+int veh_cost(int, int, int) { return production_test_vehicle_cost; }
+bool production_faction_human(int faction);
+void parse_says(int, const char *, int, int) { ++parse_says_calls; }
+void parse_num(int, int value) { ++parse_num_calls; parsed_num = value; }
+int popp(const char *, const char *, int, const char *, int);
+PRODUCTION_COLONY_PROMPT_HELPER
+void prune_protos(int, int, int) { call_order.push_back(11); }
+void production_refresh_base_if_needed(int) { call_order.push_back(12); }
+void production_spend(Base &base, int, int cost) {
+    ++production_spend_calls;
+    base.minerals_accumulated = production_wrapped_subtract(
+        base.minerals_accumulated, cost);
+    base.mineral_surplus_final = base.minerals_accumulated;
+}
+int veh_init(int prototype, int faction, int x, int y) {
+    ++veh_init_calls;
+    last_vehicle_proto = prototype;
+    last_vehicle_faction = faction;
+    last_vehicle_x = x; last_vehicle_y = y;
+    call_order.push_back(20);
+    return production_test_vehicle_id;
+}
+bool production_faction_human(int faction) {
+    return (LockEnableMask & (1u << faction)) != 0;
+}
+bool is_objective(int) { return production_test_objective != 0; }
+void base_kill(int) { ++base_kill_calls; call_order.push_back(30); }
+void draw_map(int) { ++draw_map_calls; call_order.push_back(31); }
+void eliminate_player(int, int) { ++eliminated_calls; call_order.push_back(32); }
+int production_vehicle_morale(int, int, int, bool) { return 4; }
+void production_finish_vehicle(int, int, int, bool) {
+    ++production_finish_calls; call_order.push_back(21);
+}
+bool ascending(int) { return production_test_ascending != 0; }
+int base_project(int) { return production_test_project_base; }
+void production_existing_project_notice(int, int, int) {
+    ++existing_project_notice_calls; call_order.push_back(40);
+}
+bool production_facility_built(int base_id, int facility_id) {
+    const int byte_offset = facility_id >> 3;
+    const uint8_t mask = static_cast<uint8_t>(1u << (facility_id & 7));
+    return (Bases[base_id].facilities_built[byte_offset] & mask) != 0;
+}
+int base_queue(int) {
+    ++base_queue_calls;
+    call_order.push_back(50 + base_queue_calls);
+    if (production_test_use_first_queue && base_queue_calls == 1) {
+        if (production_test_first_queue_replacement != 0) {
+            Bases[BaseIDCurrentSelected].queue_production_id[0] =
+                production_test_first_queue_replacement;
+        }
+        return production_test_first_queue_result;
+    }
+    return production_test_second_queue_result;
+}
+void production_existing_facility_notice(int, int) {
+    ++existing_facility_notice_calls; call_order.push_back(41);
+}
+void bitmask(int facility_id, int *offset, int *mask) {
+    *offset = facility_id >> 3;
+    *mask = 1 << (facility_id & 7);
+}
+void set_fac(int facility_id, int base_id, int) {
+    ++set_fac_calls;
+    int offset, mask;
+    bitmask(facility_id, &offset, &mask);
+    Bases[base_id].facilities_built[offset] = static_cast<uint8_t>(
+        Bases[base_id].facilities_built[offset] | mask);
+    call_order.push_back(60);
+}
+bool production_reveal_faction(int) { ++reveal_calls; return production_test_reveal != 0; }
+void production_clear_artifact_orders() { call_order.push_back(61); }
+ProductionReportResume production_report_stage_v3(
+    Popup &, int owner, int item, int project, int queue_result, bool orbital) {
+    ++production_report_calls;
+    last_monitor_owner = owner;
+    last_report_item = item;
+    last_report_project = project;
+    last_report_queue = queue_result;
+    last_report_orbital = orbital ? 1 : 0;
+    call_order.push_back(70);
+    return static_cast<ProductionReportResume>(production_test_report_result);
+}
+void mon_first_in_space(int) { ++production_monitor_calls; call_order.push_back(71); }
+void mon_facility_built(int, const char *) { ++production_monitor_calls; call_order.push_back(72); }
+void mon_built_preserve(int) { ++preserve_monitor_calls; call_order.push_back(73); }
+void interlude(int id, char *, int, int) { last_interlude_id = id; call_order.push_back(74); }
+int production_project_events_tail(int, int) { ++project_tail_calls; call_order.push_back(80); return 0; }
+void production_voice_of_planet_spread() { call_order.push_back(81); }
+void amovie_project(int) { call_order.push_back(82); }
+void amovie_project(const char *) { call_order.push_back(83); }
+void help_project(int) { call_order.push_back(84); }
+void production_late_reconcile(int, int, unsigned char, int) {
+    ++late_reconcile_calls; call_order.push_back(90);
+}
+void base_reset(int, int) { ++base_reset_calls; call_order.push_back(5); }
+const Map *map_loc(int, int) { return &MapProbe; }
+void popb(const char *text, int, int, const char *image, void *) {
+    ++popb_calls; last_popb_text = text; last_popb_image = image;
+    call_order.push_back(100);
+}
+int popp(const char *, const char *label, int, const char *image, int) {
+    ++popp_calls; last_popp_label = label; last_popp_image = image;
+    call_order.push_back(101); return 0;
+}
+void set_dirty() { ++dirty_calls; call_order.push_back(102); }
+void base_support() { ++base_support_calls; }
+void base_yield() { ++base_yield_calls; }
+void base_nutrient() { ++base_nutrient_calls; }
+void base_minerals() { ++base_minerals_calls; }
+void base_energy() { ++base_energy_calls; }
+void production_set_project_owner(int project_id, int base_id) {
+    ++project_owner_calls; last_project_owner_id = project_id;
+    last_project_owner_base = base_id;
+}
+int stack_fix(int value) { return value; }
+int veh_at(int, int) { return -1; }
+
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-label"
+#endif
+PRODUCTION_BODY
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
+
+static void reset_case() {
+    memset(Bases, 0, sizeof(Bases));
+    memset(PlayersData, 0, sizeof(PlayersData));
+    memset(Players, 0, sizeof(Players));
+    memset(VehPrototypes, 0, sizeof(VehPrototypes));
+    memset(Vehs, 0, sizeof(Vehs));
+    memset(MapTiles, 0, sizeof(MapTiles));
+    memset(Facility, 0, sizeof(Facility));
+    memset(&MapProbe, 0, sizeof(MapProbe));
+    BaseCurrent = &Bases[0]; BaseCurrentCount = 2;
+    BaseIDCurrentSelected = 0; BaseComputedID = -1;
+    Bases[0].faction_id_current = 1; Bases[0].queue_production_id[0] = 3;
+    Bases[0].nutrients_accumulated = 10; Bases[0].minerals_accumulated = 100;
+    Bases[0].population_size = 3; Bases[0].state = 0x80000000u;
+    strcpy(Bases[0].name_string, "Primary"); Bases[0].x = 5; Bases[0].y = 6;
+    Bases[1].faction_id_current = 1; strcpy(Bases[1].name_string, "Other");
+    LockEnableMask = 1 << 1; production_test_vehicle_cost = 20;
+    production_test_cost_factor = 1; production_test_vehicle_id = 0;
+    production_test_colony_prompt = production_test_objective = 0;
+    production_test_ascending = 1; production_test_project_base = -1;
+    production_test_reveal = 0;
+    production_test_report_result = PRODUCTION_REPORT_RESUME_2752;
+    production_test_first_queue_result = production_test_second_queue_result = 0;
+    production_test_first_queue_replacement = production_test_use_first_queue = 0;
+    BaseProductionUnitCreationDisabled = 0; BaseProductionZoomRequested = 0;
+    GameState = 0; DiffLevelCurrent = 0; StringTemp[0] = '\0';
+    parse_says_calls = parse_num_calls = parsed_num = 0;
+    GameInterludeFlags = GamePreferences = 0; IsMultiplayerNet = 0;
+    Rules.retool_exemption = 999; Popup::constructors = Popup::destructors = 0;
+    base_reset_calls = base_queue_calls = base_support_calls = base_yield_calls = 0;
+    base_nutrient_calls = base_minerals_calls = base_energy_calls = 0;
+    veh_init_calls = production_finish_calls = production_spend_calls = 0;
+    existing_project_notice_calls = existing_facility_notice_calls = set_fac_calls = 0;
+    production_report_calls = production_monitor_calls = preserve_monitor_calls = 0;
+    reveal_calls = popb_calls = popp_calls = dirty_calls = draw_map_calls = 0;
+    eliminated_calls = base_kill_calls = late_reconcile_calls = project_tail_calls = 0;
+    project_owner_calls = 0; last_project_owner_id = last_project_owner_base = -1;
+    last_report_item = last_report_project = last_report_queue = -1;
+    last_report_orbital = last_monitor_owner = 0;
+    last_vehicle_proto = last_vehicle_faction = last_vehicle_x = last_vehicle_y = -1;
+    last_interlude_id = -1; last_popp_label = last_popb_text = 0;
+    last_popb_image = last_popp_image = 0; call_order.clear();
+}
+
+static int order_index(int value) {
+    for (size_t i = 0; i < call_order.size(); ++i) {
+        if (call_order[i] == value) return static_cast<int>(i);
+    }
+    return -1;
+}
+static void check_popup_lifetime() {
+    assert(Popup::constructors == 1 && Popup::destructors == 1);
+}
+static void test_unit_paths() {
+    reset_case();
+    Bases[0].queue_production_id[0] = 3;
+    base_production();
+    check_popup_lifetime();
+    assert(veh_init_calls == 1 && production_finish_calls == 1);
+    assert(last_vehicle_proto == 3 && last_vehicle_faction == 1);
+    assert(last_vehicle_x == 5 && last_vehicle_y == 6);
+    assert(Vehs[0].morale == 4 && (Vehs[0].state & VSTATE_UNK_2000) != 0);
+    assert((Vehs[0].flags & 0x1000u) != 0);
+    assert(production_spend_calls == 1 && Bases[0].minerals_accumulated == 80);
+    assert(order_index(20) >= 0 && order_index(21) > order_index(20));
+
+    reset_case();
+    Bases[0].queue_production_id[0] = 3;
+    Bases[0].minerals_accumulated = 1;
+    base_production();
+    check_popup_lifetime();
+    assert(veh_init_calls == 0 && production_spend_calls == 0);
+
+    reset_case();
+    Bases[0].queue_production_id[0] = 3;
+    BaseProductionUnitCreationDisabled = 1;
+    base_production();
+    check_popup_lifetime();
+    assert(production_spend_calls == 1 && veh_init_calls == 0);
+}
+static void test_wrapped_overflow_helpers() {
+    reset_case();
+    LockEnableMask = 1 << 1;
+    DiffLevelCurrent = INT_MAX;
+    Bases[0].nutrients_accumulated = INT_MAX;
+    assert(!production_colony_abandon_prompt(2, 3));
+    assert(Bases[0].nutrients_accumulated == -4);
+
+    reset_case();
+    Bases[0].queue_production_id[0] = -32;
+    Facility[32].cost = 20;
+    PlayersData[1].planet_ecology = INT_MAX;
+    base_production();
+    check_popup_lifetime();
+    assert(PlayersData[1].planet_ecology == INT_MIN);
+}
+static void test_stockpile_and_native_bitmap_hq() {
+    reset_case();
+    Bases[0].queue_production_id[0] = -FAC_STOCKPILE_ENERGY;
+    Bases[0].mineral_surplus = 9;
+    const int before_minerals = Bases[0].minerals_accumulated;
+    base_production();
+    check_popup_lifetime();
+    assert(Bases[0].minerals_accumulated == before_minerals);
+    assert(production_report_calls == 0 && production_spend_calls == 0);
+
+    reset_case();
+    Bases[0].queue_production_id[0] = -FAC_HEADQUARTERS;
+    Facility[FAC_HEADQUARTERS].cost = 20;
+    Bases[1].facilities_built[0] = static_cast<uint8_t>(1u << FAC_HEADQUARTERS);
+    base_production();
+    check_popup_lifetime();
+    assert(Bases[1].facilities_built[0] == 0);
+    assert((Bases[0].facilities_built[0]
+            & static_cast<uint8_t>(1u << FAC_HEADQUARTERS)) != 0);
+    assert(set_fac_calls == 1 && production_report_calls == 1);
+}
+static void test_orbital_project_and_duplicate() {
+    reset_case();
+    Bases[0].queue_production_id[0] = -65;
+    Facility[65].cost = 20;
+    base_production();
+    check_popup_lifetime();
+    assert(PlayersData[1].satellites_[0] == 1);
+    assert(set_fac_calls == 0 && production_report_calls == 1);
+    assert(last_report_orbital == 1 && production_monitor_calls == 1);
+
+    reset_case();
+    Bases[0].queue_production_id[0] = -72;
+    Facility[72].cost = 20;
+    base_production();
+    check_popup_lifetime();
+    assert(project_owner_calls == 1 && last_project_owner_id == 2);
+    assert(last_project_owner_base == 0);
+    assert(last_report_project == 2 && last_report_item == 72);
+    assert(project_tail_calls == 1 && late_reconcile_calls == 1);
+    assert(order_index(70) < order_index(80) && order_index(80) < order_index(90));
+
+    reset_case();
+    Bases[0].queue_production_id[0] = -72;
+    Facility[72].cost = 20;
+    production_test_project_base = 4;
+    base_production();
+    check_popup_lifetime();
+    assert(existing_project_notice_calls == 1);
+    assert(production_spend_calls == 0 && production_report_calls == 0);
+}
+static void test_queue_redispatch() {
+    reset_case();
+    Bases[0].queue_production_id[0] = -42;
+    Bases[0].facilities_built[42 >> 3] = static_cast<uint8_t>(1u << (42 & 7));
+    Facility[42].cost = 20;
+    Facility[43].cost = 25;
+    production_test_use_first_queue = 1;
+    production_test_first_queue_result = 1;
+    production_test_first_queue_replacement = -43;
+    production_test_second_queue_result = 2;
+    base_production();
+    check_popup_lifetime();
+    assert(base_queue_calls == 2);
+    assert((Bases[0].facilities_built[43 >> 3]
+            & static_cast<uint8_t>(1u << (43 & 7))) != 0);
+    assert(last_report_item == 43 && last_report_queue == 2);
+    assert(existing_facility_notice_calls == 0);
+}
+int main() {
+    test_wrapped_overflow_helpers();
+    test_unit_paths();
+    test_stockpile_and_native_bitmap_hq();
+    test_orbital_project_and_duplicate();
+    test_queue_redispatch();
+    puts("actual base_production body corrected-mock controls: PASS");
+    return 0;
+}
+"""
+
+
+def _assert_production_harness_constants():
+    headers = {
+        "alpha.h": ("PREF_AV_SECRET_PROJECT_MOVIES", "0x10000000"),
+        "base.h": (
+            ("FAC_HEADQUARTERS", "1"),
+            ("FAC_CENTAURI_PRESERVE", "31"),
+            ("FAC_STOCKPILE_ENERGY", "69"),
+            ("SP_VOICE_OF_PLANET", "31"),
+            ("SP_ASCENT_TO_TRANSCENDENCE", "32"),
+            ("BSTATE_DRONE_RIOTS_ACTIVE", "0x2"),
+            ("BSTATE_ARTIFACT_LINKED", "0x400"),
+            ("BSTATE_ARTIFACT_ALREADY_LINKED", "0x800"),
+            ("BSTATE_PRODUCTION_DONE", "0x800000"),
+            ("GOV_MANAGES_PRODUCTION", "0x1"),
+            ("GOV_NEW_VEH_FULLY_AUTO", "0x80"),
+            ("GOV_ACTIVE", "0x80000000"),
+            ("MaxFacilityNum", "134"),
+            ("FacilitySPStart", "70"),
+            ("FacilityRepStart", "65"),
+        ),
+        "faction.h": (
+            ("RFLAG_ALIEN", "0x80"),
+            ("PFLAG_MAP_REVEALED", "0x200"),
+            ("MaxPlayerNum", "8"),
+        ),
+        "game.h": (
+            ("DLVL_SPECIALIST", "1"),
+            ("DLVL_TALENT", "2"),
+            ("DLVL_LIBRARIAN", "3"),
+        ),
+        "map.h": (("RSC_MINERALS", "1"), ("BIT_VEH_IN_TILE", "0x2")),
+        "veh.h": (
+            ("PLAN_COLONIZATION", "8"),
+            ("VSTATE_UNK_200", "0x200"),
+            ("VSTATE_UNK_2000", "0x2000"),
+            ("MaxAbilityNum", "29"),
+        ),
+    }
+    for filename, entries in headers.items():
+        if isinstance(entries[0], str):
+            entries = (entries,)
+        text = (ROOT / "src" / filename).read_text()
+        for name, value in entries:
+            assert re.search(r"\b" + re.escape(name) + r"\s*=\s*"
+                             + re.escape(value) + r"\s*[,;]", text), (
+                "host-v4 constant diverges from src/" + filename + ": " + name)
+    # FACILITY_COUNT is only a mock array-size alias; the native declaration is
+    # MaxFacilityNum and the C++ scaffold retains a compile-time equality guard.
+    assert "#define FACILITY_COUNT 134" in PRODUCTION_HARNESS
+    assert "enum_guard_facility_count[(FACILITY_COUNT == 134 && MaxFacilityNum == 134)" in PRODUCTION_HARNESS
+
+
+@pytest.mark.parametrize("compiler", ["g++", "clang++"])
+def test_actual_source_complete_base_production(compiler, tmp_path):
+    executable = shutil.which(compiler)
+    if executable is None:
+        pytest.skip(compiler + " unavailable")
+    _assert_production_harness_constants()
+
+    source_path = ROOT / "src/base.cpp"
+    source = source_path.read_text()
+    records = [record for record in read_file(source_path)
+               if record.address == 0x4F07E0]
+    assert len(records) == 1 and not records[0].extract_error
+    body = records[0].region
+    assert "void __cdecl base_production()" in body
+    assert "BODY GOES HERE" not in body and "PENDING_BODY" not in body
+
+    arithmetic = "\n".join(helper(source, name) for name in (
+        "production_wrapped_subtract",
+        "production_wrapped_add",
+        "production_wrapped_multiply",
+    ))
+    colony_prompt = helper(source, "production_colony_abandon_prompt")
+    control = PRODUCTION_HARNESS.replace("PRODUCTION_ARITHMETIC_HELPERS", arithmetic)
+    control = control.replace("PRODUCTION_COLONY_PROMPT_HELPER", colony_prompt)
+    control = control.replace("PRODUCTION_BODY", body)
+    for marker in ("PRODUCTION_ARITHMETIC_HELPERS",
+                   "PRODUCTION_COLONY_PROMPT_HELPER", "PRODUCTION_BODY"):
+        assert marker not in control
+
+    control_path = tmp_path / "base_production_actual.cpp"
+    control_path.write_text(control)
+    binary = tmp_path / "base_production_actual"
+    compiled = subprocess.run(
+        [executable, "-std=c++98", "-Wall", "-Wextra", "-Werror",
+         "-fsanitize=undefined", "-fno-sanitize-recover=all",
+         str(control_path), "-o", str(binary)],
+        capture_output=True, text=True)
+    assert compiled.returncode == 0, compiled.stdout + compiled.stderr
+    ran = subprocess.run([str(binary)], capture_output=True, text=True, timeout=15)
+    assert ran.returncode == 0, ran.stdout + ran.stderr
+    assert "actual base_production body corrected-mock controls: PASS" in ran.stdout
 
 ECOLOGY_HARNESS = r"""
 #include <cassert>
