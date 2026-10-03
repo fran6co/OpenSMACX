@@ -1,0 +1,43 @@
+{
+  "event_id": "5ff937f24b687554be0a8ce0dbbfefb2b172b27b704d54e0ae2835dde470917b",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/recovered/units/0055c430.cpp",
+      "src/recovered/units/0055c840.cpp",
+      "src/recovered/units/0055ce20.cpp",
+      "src/unrecovered/0054ffd0.cpp"
+    ],
+    "evidence": [
+      "Admit complete genuine typed behavior of all four identities in existing faction owner scope; communicate includes full hot35248? catalogue35269bytes plus21byte cold cleanup span, genuine lifetime and all greeting/topic/menu/patience paths, no compressed approximation. Root independent review and serial verification/publication of private proposals; parallel assignments separate original bodies, shared source mutations root only. Guard seed removals preserving all claims/findings. No additional storage/member/function/behavior authority; report further dependencies. Original baseline/history/claims/pending riot decision unchanged. Build/link/scoped diagnostics/actual-body controls required; no automatic/game acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5570512,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5620784,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5621824,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5623328,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "8762aa9fe941b546f66e7620a876ed913f794d8ca873395427e63b9cc5af3340",
+  "request_id": "admit-faction-full-diplomacy-closure-20261003",
+  "schema_version": 1,
+  "sequence": 35,
+  "stream": "task:base-colony-economy-coverage-wave"
+}

@@ -1,0 +1,23 @@
+{
+  "event_id": "8762aa9fe941b546f66e7620a876ed913f794d8ca873395427e63b9cc5af3340",
+  "payload": {
+    "affects": [
+      "entity-1f9cd7210ae39d1e9f88a471acb224dc1c51b2254c0f882878b03dde93a23bbe",
+      "entity-21a0ac47b9730b4dfb23af579f0ddc1c680ac96d8e9cbb75518f654a9673b062",
+      "entity-554283d4de71e519aa5a594d152c38faf906d4906fa3c1cd718d87e8399bf3ed",
+      "entity-88dd5464593edad0af17de9a150cb928dc8b3b5b4b5c7c1aa31757fc45472e81"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "faction-full-diplomacy-closure-20261003",
+    "evidence": [
+      "Worker comprehensive root compile_commands plus actual native COFF definitions audit excludes recovered/unrecovered seeds: communicate54FFD0, comm_check55C430, enemies_war55C840 and enemies_unpact55CE20 have no compiled behavior owners. Root inventory verifies all names/fullspans including communicate cold65FF4F..65FF64. Its seed explicitly approximates greetings and patience nesting and is not faithful recovery."
+    ],
+    "hypothesis": "Physical compiled-callee audit exposes four remaining seed-only behavior owners required by the full faction diplomacy graph, including the complete interactive communicate owner.",
+    "kind": "discovery"
+  },
+  "previous_event": "a2fa39efdd498c29d7c2848019e8c8e163032a722b727c153f11f60a0e3f0dcf",
+  "request_id": "faction-full-diplomacy-closure-20261003",
+  "schema_version": 1,
+  "sequence": 34,
+  "stream": "task:base-colony-economy-coverage-wave"
+}
