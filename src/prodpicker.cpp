@@ -493,6 +493,7 @@ update_scroll:
 
 // This helper's second parameter is the target picker. The receiver is not
 // used by the original operation; the supplied picker owns both mutations.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004946D0 ?UNK2@ProdPicker@@QAAXHPAUProdPicker@@@Z 0x004946D0-0x004946F7 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/004946d0.cpp", "Pinned original coordinator review: actual label-pointer dereference, camera word3F48F5C3, static cdecl callback ABI, row-end clamps and modal-parent/button suppression order."], "reason": "Recover ProdPicker owner behavior through existing window bases, owned StringLists/controls and typed Base/Caviar camera state; preserve historical seed identity and extents as restoration obligations, not current match claims."}
 // symbol    ?UNK2@ProdPicker@@SAXHPAV1@@Z

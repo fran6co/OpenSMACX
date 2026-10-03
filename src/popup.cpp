@@ -35,6 +35,7 @@
 #include "alpha.h"
 #include "xpops.h"
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0048C320 ?popt@@YAHPADPBDHPADH@Z 0x0048C320-0x0048C353 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/0048c320.cpp", "image:terranx_original.exe:0x0048C320"], "reason": "Recover tutorial popup configuration around the existing X_pop builder, restoring normal configuration after capturing the int result. Original call order establishes ownership and corrects a stale pointer-return declaration."}
 // symbol    ?popt@@YAHPADPBDH0H@Z

@@ -1005,6 +1005,7 @@ void ReportIf::close_energy() {
 // The constructor owns this ListBox and these FlatButtons as members;
 // the retained close_labs seed closes/hides those same
 // objects in this order. Slot 2 is the inherited Win::hide virtual.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004A8470 ?close_labs@ReportIf@@QAEXXZ 0x004A8470-0x004A849E BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/004a8470.cpp", "source:src/reportif.h", "source:src/flatbutton.h", "source:src/listbox.h"], "reason": "Close the ReportIf lab list and hide its two placement-constructed FlatButtons through their typed Win virtual method."}
 void ReportIf::close_labs() {
@@ -1016,6 +1017,7 @@ void ReportIf::close_labs() {
 // The three FlatButtons are genuine ReportIf members. The seed
 // calls Win slot 2 on them in this order; keep the original object identities
 // while using the source-owned virtual method instead of a vtable shim.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004ABE30 ?close_security@ReportIf@@QAEXXZ 0x004ABE30-0x004ABE62 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/004abe30.cpp", "source:src/reportif.h", "source:src/flatbutton.h", "source:src/win.h"], "reason": "Hide the three ReportIf security FlatButtons through Win slot 2 in retained-seed order."}
 void ReportIf::close_security() {

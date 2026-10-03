@@ -272,6 +272,7 @@ void MultiWin::on_mouse_move(int x, int y) {
 }
 
 // 0x00477EE0 and 0x004798F0: Win callbacks selected by MultiWin's table.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00477EE0 ?on_mouse_leave@MultiWin@@QAEXHH@Z 0x00477EE0-0x00477EFE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/00477ee0.cpp; docs/recovery/member-accesses.csv"], "reason": "The original resets the hovered player position and redraws on mouse leave."}
 // symbol    ?on_mouse_leave@MultiWin@@UAEXHH@Z
@@ -282,6 +283,7 @@ void MultiWin::on_mouse_leave(int, int) {
   }
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004798F0 ?on_redraw@MultiWin@@QAEXXZ 0x004798F0-0x004798F8 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/004798f0.cpp; src/win.h"], "reason": "The original Win redraw callback forwards the zero draw mode to MultiWin draw."}
 // symbol    ?on_redraw@MultiWin@@UAEXXZ
@@ -289,6 +291,7 @@ void MultiWin::on_redraw() { draw(0); }
 
 // 0x00477F00. The chat branch is restored; the council dialog remains an
 // explicitly unfinished, separately mapped dependency.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00477F00 ?on_button_clicked@MultiWin@@QAEXH@Z 0x00477F00-0x00477F30 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/00477f00.cpp", "src/console.cpp", "src/council.cpp", "src/win.h"], "reason": "The original button callback branches on chat and council button IDs. The typed override now preserves both calls; the separately mapped council dialog remains explicitly unfinished."}
 // symbol    ?on_button_clicked@MultiWin@@UAEXH@Z

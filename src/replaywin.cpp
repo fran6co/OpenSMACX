@@ -107,6 +107,7 @@ void ReplayWin::init() {
     timer_.release_modal();
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005AD9A0 ?close@ReplayWin@@QAEXXZ 0x005AD9A0-0x005AD9E0 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/005ad9a0.cpp retains the original exact close seed", "src/replaywin.h owns the GraphicWin base and embedded MapWin", "src/mapwin.cpp MapWin::close releases owned_ and clears it"], "reason": "Close both real window subobjects through their owners, then preserve the original post-close safety check on the typed map cache pointer."}
 // symbol    ?close@ReplayWin@@QAEXXZ

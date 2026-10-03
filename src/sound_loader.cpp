@@ -141,6 +141,7 @@ int __cdecl load_sound_dll() {
     return 0;
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004C5F70 ?unload_sound_dll@@YAXXZ 0x004C5F70-0x004C5FA5 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["docs/recovery/derived-prototypes.csv:941; src/recovered/004c5f70.cpp; src/sound_loader.cpp:SoundDllModule/SoundDllProcs ownership"], "reason": "Typed owner body unloads the already owned SoundDllModule, clears the release guard, and clears the eleven-slot export table; original derived prototype and matching recovered seed establish void __cdecl signature and span."}
 void __cdecl unload_sound_dll() {
@@ -188,6 +189,7 @@ extern "C" int __cdecl sub_4c6000(void **device_slot, const char *filename,
 
 // The seed preserves the callback's EAX return. Existing Wave/Midi release
 // callers use the same slot as void(void*) and intentionally ignore EAX.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004C6030 sub_4c6030 0x004C6030-0x004C6052 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/004c6030.cpp; original image disassembly 0x004C6030-0x004C6052; src/wave.h:func_wave_device_release/WaveDeviceReleaseSlot; src/midi.cpp:978-979"], "reason": "The original wrapper tests the wave release guard, pushes one 32-bit argument, calls slot 1, explicitly cleans four stack bytes, and returns callback EAX. This is int cdecl(void*); existing Wave/Midi uses the same cell as void(void*) and ignores EAX, so the distinct typed view preserves one shared cell and caller ABI."}
 extern "C" int __cdecl sub_4c6030(void *device) {

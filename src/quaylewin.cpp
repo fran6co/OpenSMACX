@@ -122,6 +122,7 @@ int QuayleWin::init() {
   return 0;
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004964A0 ?close@QuayleWin@@QAEXXZ 0x004964A0-0x004964C1 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original entry 004964A0; retained seed src/recovered/004964a0.cpp", "recovery/tasks/quaylewin-owner-coverage-wave.json", "QuayleWin constructor layout and virtual-slot evidence; fresh isolated build and host controls"], "reason": "Rehome the retained QuayleWin seed into its real GraphicWin owner with typed subobjects; preserve original spans and historical seed obligations."}
 void QuayleWin::close() {
@@ -130,6 +131,7 @@ void QuayleWin::close() {
   GraphicWin::close();
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004964D0 ?on_left_click@QuayleWin@@QAEXHH@Z 0x004964D0-0x00496533 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original entry 004964D0; retained seed src/recovered/004964d0.cpp", "recovery/tasks/quaylewin-owner-coverage-wave.json", "QuayleWin constructor layout and virtual-slot evidence; fresh isolated build and host controls"], "reason": "Rehome the retained QuayleWin seed into its real GraphicWin owner with typed subobjects; preserve original spans and historical seed obligations."}
 void QuayleWin::on_left_click(int x, int y) {

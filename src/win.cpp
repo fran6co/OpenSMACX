@@ -4377,6 +4377,7 @@ void __cdecl do_all_mouse() {
     do_net();
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005FD1C0 ?flush_keyboard@@YAXXZ 0x005FD1C0-0x005FD21A BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/005fd1c0.cpp", "image:terranx_original.exe:0x005FD1C0"], "reason": "Win input-pump owner uses SDK message dispatch and real pointer-owner storage; original control flow and seed establish this entry and extent."}
 void __cdecl flush_keyboard() {
@@ -12331,6 +12332,7 @@ void __cdecl pump_all_sound_messages() {
 }
 
 // Historical catalogue name: this entry only clears the message status.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005FD360 ?do_all_sounds@@YAXXZ 0x005FD360-0x005FD36B BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/005fd360.cpp"], "reason": "Recover the complete core message helper using SDK MSG/USER32, original queue ranges and callback ordering; preserve catalogue identity and historical seed obligation."}
 // symbol    ?do_all_sounds@@YAXXZ

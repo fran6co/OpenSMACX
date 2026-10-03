@@ -2888,6 +2888,7 @@ Purpose: The chat list's string callback: the message list repaints one line's
          is this dialog's own stringBox_ address, so the branch survives as
          the neg/sbb/and form the image emits - and the paint target sits
          0x1184 bytes into the dialog.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004832D0 ?string_callback@NetWin@@QAAXHH@Z 0x004832D0-0x00483302 FILE BYTE_EXACT
 // symbol    ?string_callback@NetWin@@SAXHH@Z
 // size      50 bytes

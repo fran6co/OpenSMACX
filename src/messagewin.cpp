@@ -374,6 +374,7 @@ void __cdecl MessageWin::listbox_draw(GraphicWin *target, int, int x, int y,
 
 // 0x00471F70. The frame record at 0x0078D7F8 is style 18 in the existing
 // InterfaceBoxStyles table, and GraphicWin owns the buffer and working rect.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00471F70 ?listbox_fill@MessageWin@@QAAHPAUGraphicWin@@HHPAURECT@@@Z 0x00471F70-0x00471FC2 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/00471f70.cpp", "image:0x00471F70"], "reason": "The archived callback fills the supplied GraphicWin and draws InterfaceBoxStyles entry 18 into its Buffer."}
 // symbol    ?listbox_fill@MessageWin@@SAHPAVGraphicWin@@HHPAUtagRECT@@@Z

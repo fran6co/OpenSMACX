@@ -50,6 +50,7 @@ static int CurrentTechnologyBoxIndex = -1;
 // RECOVERY_OBJECT: v2 0x00811E40 0x00822604 ?NewTechWindow@@3VNewTechWin@@A 0x004849D0
 NewTechWin NewTechWindow;
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00483920 ?info@NewTechWin@@QAAXPAD@Z 0x00483920-0x00483950 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original callback reads686964 and addresses811E40+2DA4+index*2BA0; exec484434 publishes the index before help dispatch"], "reason": "Genuine cdecl callback appends text to the current embedded technology box in the source-owned NewTech singleton."}
 // symbol    ?newtech_info@@YAXPAD@Z

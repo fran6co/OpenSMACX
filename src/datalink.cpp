@@ -3122,6 +3122,7 @@ Popup *TechnologyHelpPopup;
 void __cdecl help_tech_info(void (__cdecl *emit)(char *), int technology,
                             int faction, int link_mode);
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0044C7D0 ?help_info_pop@@YAXPAD@Z 0x0044C7D0-0x0044C7E4 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned44C7D0..44C7E4 loads7591B0 and calls601980; src/recovered/0044c7d0.cpp preserves the historical exact candidate and original identity."], "reason": "Plain cdecl text callback loads the shared typed Popup receiver and invokes its inherited BasePop::string method. No runtime executable address, manual vtable or invented null guard."}
 void __cdecl help_info_pop(char *text) {

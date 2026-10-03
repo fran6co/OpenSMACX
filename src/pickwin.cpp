@@ -670,6 +670,7 @@ PickWin::~PickWin() {
 // RECOVERY_OBJECT: v1 0x00822718 ?PickWinGlobal@@3VPickWin@@A
 PickWin PickWinGlobal;
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00488780 ?list_was_dblclicked@@YAXH@Z 0x00488780-0x0048879D BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/00488780.cpp"], "reason": "Recover genuine typed PickWin owner behavior and automatic subobject lifetime from pinned native flow and preserved seed; historical identity and restoration obligations retained, no exactness claim."}
 void __cdecl list_was_dblclicked(int faction_id) {

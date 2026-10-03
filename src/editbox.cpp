@@ -40,6 +40,7 @@ void __cdecl edit_box_caret_callback(int edit_box_address) {
 }
 
 // 615DF0. Calls slot 62 virtually, not slot 12 directly.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00615DF0 ?on_dialog_focus@EditBox@@QAEXH@Z 0x00615DF0-0x00615E31 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/00615df0.cpp", "Pinned original EditBox table66A038 and direct call/branch evidence"], "reason": "EditBox owns this table override or its direct text helper: pinned primary table66A038 slots12,17,20,21,25,26,51,64 and original direct-call receivers establish ownership. Use existing Win slot signatures without changing their order; text_position returns the EAX index consumed by callers despite the catalogue void label."}
 // symbol    ?on_dialog_focus@EditBox@@UAEXH@Z
@@ -70,6 +71,7 @@ void EditBox::on_left_down(int x, int) {
 }
 
 // 615EC0. Keep the virtual release hook before clearing the second owner.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00615EC0 ?on_left_up@EditBox@@QAEXHH@Z 0x00615EC0-0x00615F0D BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/00615ec0.cpp", "Pinned original EditBox table66A038 and direct call/branch evidence"], "reason": "EditBox owns this table override or its direct text helper: pinned primary table66A038 slots12,17,20,21,25,26,51,64 and original direct-call receivers establish ownership. Use existing Win slot signatures without changing their order; text_position returns the EAX index consumed by callers despite the catalogue void label."}
 // symbol    ?on_left_up@EditBox@@UAEXHH@Z

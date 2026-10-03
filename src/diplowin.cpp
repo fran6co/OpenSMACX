@@ -80,6 +80,7 @@ static RECT inset_rect(RECT value, int left, int top, int right, int bottom) {
 
 // 0x004412A0 reads its first stack argument as the faction palette index and
 // writes to the shared DiploWindow StringBox at 0x745060 (DiploWindow+0xA388).
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004412A0 ?string_callback@DiploWin@@QAAXHH@Z 0x004412A0-0x004412D0 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"Preserve the historical callback identity and claim while expressing its actual static cdecl receiver-free ABI.","evidence":["source:src/recovered/004412a0.cpp; historical obligation retained unchanged","Native4412A0 reads faction palette index from stack and writes the singleton embedded StringBox745060; candidate COFF emits ?string_callback@DiploWin@@SAXHH@Z."]}
 // symbol    ?string_callback@DiploWin@@SAXHH@Z

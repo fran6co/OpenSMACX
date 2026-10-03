@@ -76,6 +76,7 @@ FameWin::FameWin() {}
 // symbol    ??1FameWin@@UAE@XZ
 FameWin::~FameWin() {}
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00448D60 ?close@FameWin@@QAEXXZ 0x00448D60-0x00448D81 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/00448d60.cpp"], "reason": "Product definition uses the typed FameWin ownership model while retaining the historical seed and its recovery obligations."}
 void FameWin::close() {
