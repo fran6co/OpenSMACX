@@ -65,6 +65,7 @@ static_assert(sizeof(SoundFadeState) == 0x3C, "Sound fade prefix extent");
 // below remain recovery obligations, not an opaque substitute for that table.
 // RECOVERY_BASE: v1 Sound SoundFadeState 0x00 0x004C6080
 class Sound : public SoundFadeState {
+  friend int __cdecl release_sound();
   // Both consumers rethread these common links in the original: Wave's
   // destruction and Wave_Device::select (0x004C5030). Friendship is this
   // reconstruction's access policy, not an inferred original access label.
@@ -211,3 +212,5 @@ int __cdecl get_sound_version();
 // memory-indirect `call dword ptr [slot]` the image makes; casting the
 // slot's VALUE materialises a register first, and reinterpret_cast from
 // void** to F** is C2440.
+
+int __cdecl release_sound();

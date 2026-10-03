@@ -8747,6 +8747,34 @@ static int battle_plans_selected_region_distance_result(
     return 0;
 }
 
+// ORIGINAL: 0x0051F200 ?wait_loop@@YAXXZ 0x0051F200-0x0051F2BF
+// RECOVERY_BINDING: v1 {"evidence": ["git:bb3b3233842b050fb0840e1cc6c226e8f30f7055:src/unrecovered/0051f200.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tasks/game-logic-seed-owner-coverage.json"], "reason": "faction.cpp / existing faction.h declaration: typed diplomacy-state loop; reloads ConsoleGlobal.faction_id_ at each loop head and after log_say/open_channel callbacks, and rereads the human-status byte each iteration, matching pinned 0x51F200 instructions. Uses existing NetDaemonNet, Console state, LockEnableMask human-status byte, FactionDiplomacyFlags, log_say and communicate. Complete reviewed source translation; historical claims remain restoration obligations, not proof of current matching, linked preservation or game acceptance."}
+void __cdecl wait_loop() {
+    if (IsMultiplayerNet != 0) {
+        NetDaemonNet.net_tasks();
+        int faction = ConsoleGlobal.faction_id_;
+        if (UnkGlobal0093A934 == 0 && ConsoleControlTurnActive == 0 &&
+            (ConsoleFactionsWaitingMask & (1u << faction)) == 0) {
+            for (int other = 1; other < MaxPlayerNum; ++other) {
+                faction = ConsoleGlobal.faction_id_;
+                if (other != faction &&
+                    (factions_status_byte(0) &
+                     static_cast<uint8_t>(1u << other)) == 0 &&
+                    FactionDiplomacyFlags[other] != 0) {
+                    log_say("Initiating diplomatic channel", faction, other, 0);
+                    const int open_faction = ConsoleGlobal.faction_id_;
+                    if (NetDaemonNet.open_channel(open_faction, other) == 0) {
+                        communicate(ConsoleGlobal.faction_id_, other, 0);
+                    }
+                }
+            }
+        }
+    } else {
+        wait_task();
+    }
+}
+
+
 static void battle_plans_apply_selected_target(int faction_id,
                                                   int selected_base_id) {
     PlayerData &planner = PlayersData[faction_id];

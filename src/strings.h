@@ -106,3 +106,5 @@ static_assert(sizeof(Strings) == 0x18, "Strings layout must match the legacy ABI
 // barely change: `->` becomes `.`, and the two callers passing the table as a
 // `Strings *` argument pass `&StringTable`.
 extern Strings StringTable;  // 0x009B90D8
+
+void __cdecl space();

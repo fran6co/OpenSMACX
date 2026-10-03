@@ -253,3 +253,39 @@ extern "C" void __cdecl sound_version_warning(const char *text, const char *capt
         popup.exec(0, 0);
     }
 }
+
+// ORIGINAL: 0x004C5D90 ?release_sound@@YAHXZ 0x004C5D90-0x004C5E42 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:bb3b3233842b050fb0840e1cc6c226e8f30f7055:src/unrecovered/004c5d90.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tasks/game-logic-seed-owner-coverage.json"], "reason": "sound_loader.cpp; sound.h adds only a friend declaration for existing protected Sound::device_/fname_ and the free-function prototype. Calls the current SoundDllProcs entries, Sound::detach, existing device release methods and unload_sound_dll. Complete reviewed source translation; historical claims remain restoration obligations, not proof of current matching, linked preservation or game acceptance."}
+int __cdecl release_sound() {
+    if (WaveDeviceReleaseGuard == 0) {
+        return 1;
+    }
+
+    // Ordinal 4 of the existing SoundDllProcs table is called with no stack
+    // arguments by the original. Its higher-level export role is unknown.
+    typedef void(__cdecl *SoundNullaryCallback)();
+    reinterpret_cast<SoundNullaryCallback>(SoundDllProcs[3])();
+
+    while (SoundChainHead != 0) {
+        Sound *sound = SoundChainHead;
+        void *device = sound->device_;
+        if (device != 0) {
+            if (WaveDeviceReleaseGuard != 0) {
+                reinterpret_cast<func_sound_dll_release_result>(
+                    SoundDllProcs[1])(device);
+            }
+            sound->device_ = 0;
+        }
+        if (sound->fname_ != 0) {
+            ::operator delete(sound->fname_);
+            sound->fname_ = 0;
+        }
+        sound->detach();
+    }
+
+    MidiDeviceGlobal->release();
+    WaveDeviceGlobal.release();
+    WaveInDeviceGlobal->release();
+    unload_sound_dll();
+    return 0;
+}

@@ -494,3 +494,5 @@ void __cdecl random_events(int mode);
 
 // Source-owned end-turn aircraft attrition.
 void __cdecl mash_planes();
+
+void __cdecl set_tamper();

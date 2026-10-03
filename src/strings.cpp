@@ -342,3 +342,9 @@ void __cdecl say_techs(void *output, int tech_id, int with_detail) {
 // calls     (none)
 // notes     Staged hybrid export redirect calls the source-owned destructor
 */
+
+// ORIGINAL: 0x005A58B0 ?space@@YAXXZ 0x005A58B0-0x005A58C3 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:bb3b3233842b050fb0840e1cc6c226e8f30f7055:src/recovered/units/005a58b0.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tasks/game-logic-seed-owner-coverage.json"], "reason": "strings.cpp / strings.h: append one ordinary space to the existing StringTemp via strcat. Complete reviewed source translation; historical claims remain restoration obligations, not proof of current matching, linked preservation or game acceptance."}
+void __cdecl space() {
+    strcat(StringTemp, " ");
+}

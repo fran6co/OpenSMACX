@@ -473,6 +473,17 @@ NetDaemon::NetDaemon() : AlphaNet() {
     AlphaNet::close();
 }
 
+// ORIGINAL: 0x0051F2C0 ?wait_2@@YAXXZ 0x0051F2C0-0x0051F2D8 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:bb3b3233842b050fb0840e1cc6c226e8f30f7055:src/recovered/0051f2c0.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tasks/game-logic-seed-owner-coverage.json"], "reason": "netdaemon.cpp / netdaemon.h: use existing NetDaemonNet.net_tasks(), IsMultiplayerNet and wait_task(). Complete reviewed source translation; historical claims remain restoration obligations, not proof of current matching, linked preservation or game acceptance."}
+void __cdecl wait_2() {
+    if (IsMultiplayerNet != 0) {
+        NetDaemonNet.net_tasks();
+    } else {
+        wait_task();
+    }
+}
+
+
 /*
 Purpose: Tear down a network daemon through its lock members and the
          AlphaNet/Net destructor chain.

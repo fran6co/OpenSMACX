@@ -21,6 +21,7 @@
 #include "xpops.h"  // X_pop
 #include "popup.h"  // Existing POP2 owner interface.
 #include "game.h"
+#include "sound.h"
 #include "netmsg.h"
 #include "alpha.h"
 #include "base.h"
@@ -613,6 +614,37 @@ void __cdecl load_voxels() {
         }
     }
 }
+
+// ORIGINAL: 0x0058F250 ?system_close@@YAXXZ 0x0058F250-0x0058F2E6
+// RECOVERY_BINDING: v1 {"evidence": ["git:bb3b3233842b050fb0840e1cc6c226e8f30f7055:src/unrecovered/0058f250.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tasks/game-logic-seed-owner-coverage.json"], "reason": "game.cpp replacing its pending forwarder. Uses existing BasePopDefaultField322C, ConsoleGlobal, opening_window accessor, typed Win::show, typed process windows, Paths, map_shutdown and MapWinTable. It shows then clears opening/secondary-window slots; it does not delete MapWins or call close_opening. Complete reviewed source translation; historical claims remain restoration obligations, not proof of current matching, linked preservation or game acceptance."}
+void __cdecl system_close() {
+    release_sound();
+
+    // This caller does not use close_opening(): it publishes the Console's
+    // Win base as the BasePop default, shows the current opening window with
+    // native argument 1, then drops the slot without deleting the object.
+    BasePopDefaultField322C = static_cast<Win *>(&ConsoleGlobal);
+    GraphicWin *opening = opening_window();
+    if (opening != 0) {
+        opening->show(1);
+        opening_window() = 0;
+    }
+
+    TutWinDesWindow.close();
+    WinBubbleWindow.close();
+    ConsoleGlobal.close();
+    Paths.shutdown();
+    map_shutdown();
+
+    for (size_t slot = 1; slot < MapWinTableSlots; ++slot) {
+        MapWin *window = MapWinTable[slot];
+        if (window != 0) {
+            window->show(1);
+            MapWinTable[slot] = 0;
+        }
+    }
+}
+
 
 char PronounBuffer[256];  // 0x00945838 - see game.h for the naming evidence
 
@@ -5507,7 +5539,6 @@ void __cdecl check_tamper() {
     }
 }
 
-
 struct MapDataTransferHeader {
     char opaque_before_format_[0x380];
     int format_version_;
@@ -6923,5 +6954,22 @@ void __cdecl mash_planes() {
             veh.terraforming_turns = 0;
             draw_tile(veh.x, veh.y, 2);
         }
+    }
+}
+
+// ORIGINAL: 0x0051E090 ?set_tamper@@YAXXZ 0x0051E090-0x0051E102 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:bb3b3233842b050fb0840e1cc6c226e8f30f7055:src/recovered/units/0051e090.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tasks/game-logic-seed-owner-coverage.json"], "reason": "game.cpp beside its already-owned TamperWrite* strings, cursor and 50-record array; uses direct Windows registry APIs. Complete reviewed source translation; historical claims remain restoration obligations, not proof of current matching, linked preservation or game acceptance."}
+void __cdecl set_tamper() {
+    HKEY key;
+    const LONG status = RegCreateKeyExA(
+        HKEY_LOCAL_MACHINE, TamperWriteApplicationKey, 0, TamperWriteClass, 0,
+        0xF003F, 0, &key, 0);
+    if (status == ERROR_SUCCESS) {
+        RegSetValueExA(key, TamperWriteValueMVM, 0, REG_BINARY,
+                       reinterpret_cast<const BYTE *>(&TamperRegistryCursor), 4);
+        RegSetValueExA(key, TamperWriteValueMVB, 0, REG_BINARY,
+                       reinterpret_cast<const BYTE *>(TamperRegistryRecords),
+                       0x4B0);
+        RegCloseKey(key);
     }
 }

@@ -730,11 +730,7 @@ void __cdecl net_control_turn() {
 // and ?game_close@@YAXH@Z at 0x0058F430 - homed into game.cpp on 2026-08-29,
 // so the forwarders that stood here are gone.
 
-// ?system_close@@YAXXZ at 0x0058F250
-void __cdecl system_close() {
-    typedef void(__cdecl *pending)();
-    PENDING_BODY(0x0058F250, pending)();
-}
+
 
 // ?amovie_project@@YAXPAD@Z at 0x00403BE0 - homed into alphamovie.cpp on
 // 2026-08-29, so the forwarder that stood here is gone.
@@ -1013,10 +1009,7 @@ int __cdecl veh_pick(int a1, const char *label, int a3) {
 
 
 
-void __cdecl wait_loop() {
-    typedef void(__cdecl *pending)();
-    PENDING_BODY(0x0051F200, pending)();
-}
+
 
 
 

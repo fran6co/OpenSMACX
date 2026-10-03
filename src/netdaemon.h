@@ -356,3 +356,5 @@ void __cdecl synch_obs(int id);
 void __cdecl synch_diplo(int a, int b);
 void __cdecl synch_template(int id);
 void __cdecl synch_radius(int id);
+
+void __cdecl wait_2();
