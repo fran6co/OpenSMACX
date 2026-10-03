@@ -1,0 +1,28 @@
+{
+  "event_id": "175803a2bff43d58b4e75f6cc65ce59fb5e3db87f0130ce866cde8c1384121e5",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "docs/DECOMP_MAP.md",
+      "packages/match-recovery/src/match_recovery/object_writer.py",
+      "packages/match-recovery/tests/test_object_writer.py",
+      "recovery/terrain_data.py",
+      "recovery/tests/altitude_owners/alt_set.cpp",
+      "recovery/tests/altitude_owners/control.cpp",
+      "recovery/tests/test_altitude_owner_behavior.py",
+      "recovery/tests/test_terrain_data.py"
+    ],
+    "evidence": [
+      "Coordinator authorizes the demonstrated missing pure object-annotation writer and reviewed terrain table ownership closure for already authorized alt_set/delete_landmark. Preserve all existing task baselines and claims; no automatic acceptance, new claims or original allocation assertions.",
+      "Own direction lookup245bytes, five loader-zero writable bonus arrays with113-byte source usable spans, and five existing template113-byte accessed windows in map.cpp. Direction lookup independently bounded49rows; bonus and template original upper allocation extents remain unknown using v1 start-only mappings. Pinned byte derivatives stay in ignored configure-time includes, never tracked byte dumps or fixed executable pointer aliases. Extend existing terrain initializer hook narrowly for these reviewed owners; initializer generation is not original-bound proof.",
+      "Keep genuine Map/MapWin/Base/Veh references and native duplicate-flat-table clear, signed altitude ABI, integer cache sentinel, callback order and preserved dependencies. Independent actual-body controls, native symbol/reference observations, compile/link and claim continuity required before seed retirement; all unresolved evidence stays explicit."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "da64fd033588511ef59a9e1b7e12138d9db16e680cb6425ddbf836ea4725afab",
+  "request_id": "terrain-table-source-closure-20261003",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:game-logic-seed-owner-coverage"
+}
