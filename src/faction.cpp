@@ -25,6 +25,7 @@
 #include "alpha.h"
 #include "base.h"
 #include "council.h"
+#include "path.h"
 #include "councwin.h"
 #include "popup.h"
 #include "dialogs.h"
@@ -8907,4 +8908,313 @@ void __cdecl battle_plans(int faction_a, int faction_b) {
     }
 
     PlanWindow.close();
+}
+
+static int production_wrap_add(int left, int right) {
+    return (int32_t)((uint32_t)left + (uint32_t)right);
+}
+
+static int production_wrap_subtract(int left, int right) {
+    return (int32_t)((uint32_t)left - (uint32_t)right);
+}
+
+static int production_wrap_double(int value) {
+    return (int32_t)((uint32_t)value * 2u);
+}
+
+// ORIGINAL: 0x00526E70 ?production_phase@@YAXH@Z 0x00526E70-0x00527285
+// RECOVERY_BINDING: v1 {"evidence":["original:0x00526E70-0x00527285:the full pinned function span is the production-phase body","original:0x00526F0E:the first indexed rule-flags access uses the actor faction id","original:0x00526F43:loan credit is written to the partner PlayerData energy_reserves field","source:src/faction.h:Players, PlayersData, Player.rule_flags, PlayerData.loan_balance, loan_payment, sanction_turns, energy_reserves","source:src/base.h:Base ownership and the declared base-upkeep interface","source:src/technology.h:technology effects and technology progression owners"],"reason":"Recover the production-phase identity in faction.cpp using the existing Player/PlayerData, Base and technology owners while retaining the pinned actor/partner commerce roles and native callback order."}
+void __cdecl production_phase(int faction_id) {
+    // Native literal identities remain ordinary C++ literals: "Freebie Advance" is 0x68B9D8..0x68B9E8; the paired faction sanction popup keys/assets are documented at their native call sites below.
+
+    PlayerData &faction_data = PlayersData[faction_id];
+
+    faction_data.unk_28 = 0;
+    faction_data.unk_13 = 0;
+    faction_data.maint_cost_total = 0;
+    faction_data.turn_commerce_income = 0;
+
+    tech_effects(faction_id);
+
+    int other_faction = 1;
+    while (other_faction < MaxPlayerNum) {
+        if (other_faction != faction_id &&
+            is_alive((uint32_t)other_faction) && is_alive((uint32_t)faction_id)) {
+            PlayerData &other_data = PlayersData[other_faction];
+            const int pair_payment = faction_data.loan_payment[other_faction];
+            // Native slot starts at PlayersData[1].energy_reserves; slot[-0x58]
+            // is that partner's sanction_turns, not Goals[57].
+            if (faction_data.loan_balance[other_faction] != 0 &&
+                other_data.sanction_turns == 0) {
+                if ((faction_data.diplo_treaties[other_faction] & DTREATY_VENDETTA) == 0) {
+                    int give = pair_payment;
+                    if (faction_data.energy_reserves <= pair_payment) {
+                        give = faction_data.energy_reserves;
+                    }
+
+                    // Native EDI points to partner PlayerData.energy_reserves.
+                    other_data.energy_reserves = production_wrap_add(
+                        other_data.energy_reserves, give);
+                    faction_data.loan_balance[other_faction] =
+                        production_wrap_subtract(
+                            faction_data.loan_balance[other_faction], give);
+                    faction_data.energy_reserves = production_wrap_subtract(
+                        faction_data.energy_reserves, give);
+                    if (give < pair_payment) {
+                        faction_data.loan_balance[other_faction] =
+                            production_wrap_add(
+                                faction_data.loan_balance[other_faction],
+                                production_wrap_subtract(pair_payment, give));
+                    }
+                } else {
+                    faction_data.loan_balance[other_faction] =
+                        production_wrap_add(
+                            pair_payment, faction_data.loan_balance[other_faction]);
+                }
+            }
+        }
+        ++other_faction;
+    }
+
+    faction_data.flags &= ~PFLAG_SELF_AWARE_COLONY_LOST_MAINT;
+    CurrentFactionEnergyReserves = faction_data.energy_reserves;
+
+    int *clear_word = faction_data.unk_46;
+    int clear_count = 9;
+    do {
+        *clear_word = 0;
+        ++clear_word;
+        --clear_count;
+    } while (clear_count != 0);
+
+    int row = 0;
+    do {
+        faction_data.unk_38[row] = 0;
+        int column = 0;
+        do {
+            faction_data.unk_39[row][column] = 0;
+            ++column;
+        } while (column < 9);
+        ++row;
+    } while (row < 8);
+
+    faction_data.unk_47 = 0;
+    faction_data.unk_48 = 0;
+    faction_data.unk_49 = 0;
+    faction_data.nutrient_surplus_total = 0;
+    faction_data.labs_total = 0;
+
+    int base_id = 0;
+    if (BaseCurrentCount > 0) {
+        do {
+            if (Bases[base_id].faction_id_current == faction_id) {
+                if (base_upkeep(base_id) != 0) {
+                    --base_id;
+                }
+                do_all_non_input();
+            }
+            ++base_id;
+        } while (base_id < BaseCurrentCount);
+    }
+
+    if (!is_human((uint32_t)faction_id) && DiffLevelCurrent > 3) {
+        int trade = faction_data.maint_cost_total;
+        if (trade != 0) {
+            int credit;
+            int adjusted_trade;
+            if (DiffLevelCurrent == 4) {
+                credit = trade / 3;
+                faction_data.energy_reserves = production_wrap_add(
+                    faction_data.energy_reserves, credit);
+                trade = faction_data.maint_cost_total;
+                adjusted_trade = trade / 3 + (trade >> 31);
+            } else {
+                const int doubled_trade = production_wrap_double(trade);
+                credit = doubled_trade / 3;
+                faction_data.energy_reserves = production_wrap_add(
+                    faction_data.energy_reserves, credit);
+                trade = faction_data.maint_cost_total;
+                const int adjusted_double = production_wrap_double(trade);
+                adjusted_trade = adjusted_double / 3 + (adjusted_double >> 31);
+            }
+            faction_data.maint_cost_total = production_wrap_subtract(
+                trade, production_wrap_subtract(adjusted_trade, adjusted_trade >> 31));
+        }
+    }
+
+    Player &faction = Players[faction_id];
+    if ((faction.rule_flags & RFLAG_INTEREST) != 0) {
+        if (faction.rule_interest == 0) {
+            int current_base = 0;
+            if (BaseCurrentCount > 0) {
+                do {
+                    if (Bases[current_base].faction_id_current == faction_id) {
+                        faction_data.energy_reserves = production_wrap_add(
+                            faction_data.energy_reserves, 1);
+                        faction_data.unk_13 = production_wrap_add(
+                            faction_data.unk_13, 1);
+                    }
+                    ++current_base;
+                } while (current_base < BaseCurrentCount);
+            }
+        } else {
+            const int interest_product = (int32_t)(
+                (uint32_t)faction.rule_interest *
+                (uint32_t)faction_data.energy_reserves);
+            faction_data.energy_reserves = production_wrap_add(
+                interest_product / 100, faction_data.energy_reserves);
+        }
+    }
+
+    faction_data.unk_18 = faction_data.unk_13;
+    faction_data.unk_17 = production_wrap_add(
+        production_wrap_subtract(faction_data.turn_commerce_income,
+                                    faction_data.maint_cost_total),
+        faction_data.unk_13);
+
+    if (TurnCurrentNum == 1) {
+        TechAchievedGate = 1;
+        int advance = 0;
+        if (faction.rule_tech_selected > 0) {
+            do {
+                log_say("Freebie Advance", faction.name_leader, faction_id, 0, 0);
+                tech_advance(faction_id);
+                ++advance;
+            } while (advance < faction.rule_tech_selected);
+        }
+        TechAchievedGate = 0;
+    }
+
+    if (((GameState & 1) == 0 || (GameState & 8) != 0) &&
+        faction_data.sanction_turns != 0) {
+        const int remaining = faction_data.sanction_turns - 1;
+        faction_data.sanction_turns = remaining;
+        if (remaining == 0 && faction_id == ConsoleGlobal.faction_id_) {
+            if ((faction.rule_flags & RFLAG_ALIEN) != 0) {
+                popp("SCRIPT", "SANCTIONSENDALIEN", 0, "Alopdir.pcx", 0);
+                return;
+            }
+            popp("SCRIPT", "SANCTIONSEND", 0, "council_sm.pcx", 0);
+        }
+    }
+}
+// Original: 0x00527290..0x005275AC, ?faction_upkeep@@YAXH@Z.
+
+static int upkeep_wrap_add(int left, int right) {
+    return (int32_t)((uint32_t)left + (uint32_t)right);
+}
+
+static int upkeep_wrap_subtract(int left, int right) {
+    return (int32_t)((uint32_t)left - (uint32_t)right);
+}
+
+// ORIGINAL: 0x00527290 ?faction_upkeep@@YAXH@Z 0x00527290-0x005275AC
+// RECOVERY_BINDING: v1 {"evidence":["original:0x00527290-0x005275AC:the full pinned function span is faction upkeep","original:0x0052756D-0x00527581:the final call_council gate tests the HUMAN mask and calls for nonhuman factions","original:0x00527506-0x0052750B:the two Path destination words are reset independently at function exit","source:src/faction.h:Players and PlayersData own faction state and turn bookkeeping","source:src/path.h:Path owns x_dst_ and y_dst_ and the candidate uses its reset operation","source:src/council.h:can_call_council and call_council are the canonical council interfaces"],"reason":"Recover faction upkeep in its faction owner with the native nonhuman council gate, fresh callback state, and Path-owned destination reset."}
+// TRIED: literal asm-mirrored translation compiles and matches through instr #41 (of ~230); diverges at #42 (shl vs and, likely the corner_market/has_tech gated block's field-offset codegen) - not chased further, landed at MISMATCH.
+void __cdecl faction_upkeep(int faction_id) {
+    // Native literal identities remain ordinary C++ literals: "SANCTIONSENDALIEN" 0x68B9F4..0x68BA06, "council_sm.pcx" 0x68BA08..0x68BA17, "SANCTIONSEND" 0x68BA18..0x68BA25, "econwin_sm.pcx" 0x68BA28..0x68BA37, "CORNERWARNING" 0x68BA38..0x68BA46, and "COUNCILOPEN" 0x68BA58..0x68BA64.
+
+    PlayerData &faction_data = PlayersData[faction_id];
+    Player &faction = Players[faction_id];
+
+    UnkGlobal0093A934 = 1;
+    social_upkeep(faction_id);
+    do_all_non_input();
+    repair_phase(faction_id);
+    do_all_non_input();
+    production_phase(faction_id);
+    do_all_non_input();
+
+    if ((GameState & STATE_UNK_1) == 0 || (GameState & STATE_UNK_8) != 0) {
+        allocate_energy(faction_id);
+        do_all_non_input();
+        enemy_diplomacy(faction_id);
+        do_all_non_input();
+        enemy_strategy(faction_id);
+        do_all_non_input();
+        social_ai(faction_id, -1, -1, -1, -1, 0);
+        do_all_non_input();
+
+        if (!is_human((uint32_t)faction_id)) {
+            const int amount = corner_market(faction_id);
+            if (amount < faction_data.energy_reserves &&
+                has_tech_call(Rules.tech_economic_victory, faction_id) &&
+                (GameRules & RULES_VICTORY_ECONOMIC) != 0) {
+                faction_data.corner_market_turn = upkeep_wrap_add(
+                    TurnCurrentNum, (int)Rules.turns_corner_gbl_energy_mrkt);
+                faction_data.corner_market_active = corner_market(faction_id);
+                faction_data.energy_reserves = upkeep_wrap_subtract(
+                    faction_data.energy_reserves, corner_market(faction_id));
+
+                GenderDefault = faction.is_leader_female;
+                PluralityDefault = 0;
+                parse_says(0, faction.title_leader, -1, -1);
+
+                GenderDefault = faction.is_leader_female;
+                PluralityDefault = 0;
+                parse_says(1, faction.name_leader, -1, -1);
+
+                GenderDefault = faction.noun_gender;
+                PluralityDefault = faction.is_noun_plural;
+                parse_says(2, faction.noun_faction, -1, -1);
+                parse_says(3, faction.adj_name_faction, -1, -1);
+
+                parse_num(0, (int)game_year(faction_data.corner_market_turn));
+                popp("SCRIPT", "CORNERWARNING", 0, "econwin_sm.pcx", 0);
+            }
+        }
+    }
+
+    int base_id = 0;
+    if (BaseCurrentCount > 0) {
+        int remaining_bases = BaseCurrentCount;
+        do {
+            if (Bases[base_id].faction_id_current == faction_id) {
+                Bases[base_id].state &= ~(BSTATE_PRODUCTION_HURRIED |
+                                          BSTATE_DRONE_RIOTS_ACTIVE);
+            }
+            ++base_id;
+            --remaining_bases;
+        } while (remaining_bases != 0);
+    }
+
+    const int hurry_cost = faction_data.hurry_cost_total;
+    faction_data.energy_reserves = upkeep_wrap_subtract(
+        faction_data.energy_reserves, hurry_cost);
+    faction_data.hurry_cost_total = 0;
+    if (faction_data.energy_reserves < 0) {
+        faction_data.energy_reserves = 0;
+    }
+
+    if (faction_data.current_num_bases == 0 &&
+        faction_data.proto_id_active[0] == 0 &&
+        faction_data.proto_id_active[21] == 0) {
+        eliminate_player(faction_id, 0);
+    }
+
+    UnkGlobal0093A934 = 0;
+    Paths.clear_destination();
+
+    if ((GameState & STATE_UNK_1) == 0 || (GameState & STATE_UNK_8) != 0) {
+        if (faction_id == ConsoleGlobal.faction_id_ &&
+            (GameState & (STATE_DISPLAYED_COUNCIL_AVAIL_MSG |
+                          STATE_COUNCIL_HAS_CONVENED)) == 0) {
+            const int council_available = can_call_council(faction_id, 0);
+            if (council_available != 0 && (GameState & STATE_UNK_1) == 0) {
+                GameState |= STATE_DISPLAYED_COUNCIL_AVAIL_MSG;
+                popp("SCRIPT", "COUNCILOPEN", 0, "council_sm.pcx", 0);
+            }
+        }
+        // The native test is the HUMAN bit, not is_alive(). Re-read after the
+        // council-availability callback rather than caching prior faction state.
+        if (!is_human((uint32_t)faction_id)) {
+            call_council(faction_id);
+        }
+    }
+
+    if (IsMultiplayerNet == 0 &&
+        (GamePreferences & PREF_BSC_AUTOSAVE_EACH_TURN) != 0 &&
+        faction_id == ConsoleGlobal.faction_id_) {
+        auto_save();
+    }
 }

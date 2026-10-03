@@ -9776,3 +9776,672 @@ int BaseProductionZoomRequested = 0;
 // unverified; do not infer a permanently false flag from loader-zero storage.
 // RECOVERY_OBJECT: v2 0x0090EA40 0x0090EA44 ?BaseProductionUnitCreationDisabled@@3HA 0x004F07E0
 int BaseProductionUnitCreationDisabled = 0;
+
+static int base_upkeep_wrap_signed_bits(uint32_t bits) {
+    return bits <= 0x7FFFFFFFu ? static_cast<int>(bits)
+        : -1 - static_cast<int>(0xFFFFFFFFu - bits);
+}
+
+static int base_upkeep_wrap_add(int left, int right) {
+    return base_upkeep_wrap_signed_bits(static_cast<uint32_t>(left) +
+                                      static_cast<uint32_t>(right));
+}
+
+// ORIGINAL: 0x004F79C0 ?base_upkeep@@YAHH@Z 0x004F79C0-0x004F7FDA
+// RECOVERY_BINDING: v1 {"evidence":["original:0x004F79C0-0x004F7FDA:pinned Base upkeep span","original:0x004F7D9E,0x004F7DDC,0x004F7E1D:BaseCurrent is reloaded at the native parser/climate callback boundaries","original:0x004F7BF6-0x004F7C01:actor and partner rule-flags use distinct faction indexes","source:src/base.h:Base, Bases, BaseCurrent, and the canonical Base-upkeep call surface","source:src/faction.h:Player and PlayerData arrays distinguish actor, partner, loans, energy and sanctions"],"reason":"Recover Base upkeep with native callback reloads and independently indexed actor/partner commerce state through the existing Base, Player and PlayerData owners."}
+// TRIED: faithful port using the real Base struct (src/base.h offsets, cross-checked field-by-field against the disassembly: state@0x30, minerals_accumulated@0x40, production_id_last@0x44, resource_sqr_radius @0x78, minerals_accumulated_2@0x9C, economy_total@0x100, name_string@ 0x13, assimilation/nerve_staple/faction fields@4-8) plus raw pointer arithmetic for the five 0x59c-stride and 0x20cc-stride per-faction tables (946f58/9474f4/946d34/946d4c/946d50 and 96e35c/96cdbc/96d1d4/ 96cc00/96caa0/96cce8/96eb6c). Compiles and matches through instr #4 (prologue); diverges at #5 on register-save ordering, driven by local variable count/order. Not chased further; 1562-byte function with many distinct call sites.
+int __cdecl base_upkeep(int base_id) {
+    // Native event/log text remains inline: "al_col_sm.pcx" 0x689EA4..0x689EB2, "RENAMEBASE" 0x689EB4..0x689EBF and 0x689ED0..0x689EDB, "colfoun_sm.pcx" 0x689EC0..0x689ECF, "UPKEEP zoom-to-base" 0x689EDC..0x689EF0, and "FINISHED zoom-to-base" 0x689EF0..0x689F06.
+
+    BaseIDCurrentSelected = base_id;
+    BaseComputedID = base_id;
+    BaseCurrent = &Bases[base_id];
+    const int faction_id = BaseCurrent->faction_id_current;
+    BaseProductionZoomRequested = 0;
+    UnkGlobal0093A934 = 0;
+
+    BaseCurrent->state &= 0xDFFFFDFFu;
+    base_support();
+    base_yield();
+    base_nutrient();
+    base_minerals();
+    base_energy();
+    base_production();
+    base_hurry();
+
+    BaseCurrent->minerals_accumulated_2 = BaseCurrent->minerals_accumulated;
+    BaseCurrent->production_id_last = BaseCurrent->queue_production_id[0];
+    if (base_growth() != 0) return 1;
+    if (TurnCurrentNum > 1) base_check_support();
+
+    BaseUpkeepStage = 1;
+    BaseComputedID = BaseIDCurrentSelected;
+    base_support();
+    base_yield();
+    base_nutrient();
+    base_minerals();
+    base_energy();
+
+    Base &stage_one_base = *BaseCurrent;
+    const int tile_index = static_cast<int>(stage_one_base.y) *
+        static_cast<int>(MapLongitude) + (static_cast<int>(stage_one_base.x) >> 1);
+    const uint8_t resource_class = PlayersData[faction_id].unk_83[
+        MapTiles[tile_index].region];
+    const int tile_weight = resource_class == 7 &&
+        PlayersData[faction_id].soc_effect_base.talent < 1
+        ? 4 : (resource_class != 2) + 1;
+    PlayersData[faction_id].unk_47 = base_upkeep_wrap_add(
+        PlayersData[faction_id].unk_47,
+        bit_count(stage_one_base.resource_sqr_radius) * tile_weight);
+
+    BaseUpkeepStage = 2;
+    if (TurnCurrentNum > 1) {
+        base_drones();
+        base_doctors();
+        if (BaseCurrent->faction_id_current != faction_id) return 1;
+        base_energy_costs();
+        if (TurnCurrentNum > 5 || IsMultiplayerNet != 0 ||
+            (GamePreferences & 0x20u) == 0) {
+            base_research();
+        }
+    }
+
+    BaseIDCurrentSelected = base_id;
+    BaseCurrent = &Bases[base_id];
+    if (BaseComputedID != base_id) {
+        BaseComputedID = base_id;
+        base_support();
+        base_yield();
+        base_nutrient();
+        base_minerals();
+        base_energy();
+    }
+    base_ecology();
+    PlayersData[faction_id].energy_reserves = base_upkeep_wrap_add(
+        PlayersData[faction_id].energy_reserves, BaseCurrent->economy_total);
+
+    // The first flag read is indexed by ESI=faction_id (the actor). The
+    // independent EAX pointer walk begins at Players[1].rule_flags and is
+    // partner-indexed by the original loop. Keep both role tests separate.
+    for (int other_faction = 1; other_faction < MaxPlayerNum; ++other_faction) {
+        const int actor_rule_flags = Players[faction_id].rule_flags;
+        const int partner_rule_flags = Players[other_faction].rule_flags;
+        if (other_faction == faction_id ||
+            (actor_rule_flags & 0x80) != 0 ||
+            (partner_rule_flags & 0x80) != 0) {
+            continue;
+        }
+        int commerce = 0;
+        if (PlayersData[faction_id].sanction_turns == 0 &&
+            PlayersData[other_faction].sanction_turns == 0) {
+            commerce = BaseCommerceReceipts[other_faction - 1];
+        }
+        PlayersData[faction_id].turn_commerce_income = base_upkeep_wrap_add(
+            PlayersData[faction_id].turn_commerce_income, commerce);
+    }
+
+    if ((Players[faction_id].rule_flags & 0x80) != 0) {
+        int count = 0;
+        for (int facility_id = 0; facility_id < 0x46; ++facility_id) {
+            if ((BaseCurrent->facilities_built[facility_id >> 3] &
+                 static_cast<uint8_t>(1u << (facility_id & 7))) != 0) {
+                ++count;
+            }
+        }
+        for (int project = 0; project < MaxSecretProjectNum; ++project) {
+            if (base_project(project) == base_id) count += 5;
+        }
+        int alien_commerce = count / 2;
+        if (PlayersData[faction_id].sanction_turns != 0) alien_commerce = 0;
+        PlayersData[faction_id].turn_commerce_income = base_upkeep_wrap_add(
+            PlayersData[faction_id].turn_commerce_income, alien_commerce);
+    }
+
+    if (TurnCurrentNum > 1) base_maint();
+    base_terraform(0);
+    if ((BaseCurrent->state & 0x10000u) != 0 && (rand() % 3) == 0 &&
+        (GameState & STATE_UNK_1) == 0) {
+        // Keep each native BaseCurrent reload across its callback boundary.
+        // 0x4F7D69 supplies focus coordinates; 0x4F7D86 reloads for draw_tiles.
+        const int focus_x = BaseCurrent->x;
+        const int focus_y = BaseCurrent->y;
+        const Base &owner_before_focus = Bases[BaseIDCurrentSelected];
+        const uint32_t local_faction_bit = 1u << (ConsoleGlobal.faction_id_ & 0x1F);
+        if (owner_before_focus.faction_id_current == ConsoleGlobal.faction_id_ ||
+            (owner_before_focus.visibility & local_faction_bit) != 0) {
+            if (ConsoleGlobal.focus(focus_x, focus_y,
+                                    ConsoleGlobal.faction_id_) == 0) {
+                draw_tiles(BaseCurrent->x, BaseCurrent->y, 2);
+            }
+        }
+        // 0x4F7D9E reloads after focus/draw callbacks before this phrase.
+        parse_says(1, BaseCurrent->name_string, -1, -1);
+        GenderDefault = Players[faction_id].noun_gender;
+        PluralityDefault = Players[faction_id].is_noun_plural;
+        parse_says(0, Players[faction_id].noun_faction, -1, -1);
+        // 0x4F7DDC reloads after parse_says(0); use that same live Base for
+        // the climate tile and name_base's name pointer.
+        Base &climate_base = *BaseCurrent;
+        const int event_tile = static_cast<int>(climate_base.y) *
+            static_cast<int>(MapLongitude) + (static_cast<int>(climate_base.x) >> 1);
+        const int final_name = (MapTiles[event_tile].climate & 0xE0) < 0x60;
+        name_base(faction_id, climate_base.name_string, 1, final_name);
+        // 0x4F7E1D reloads after name_base before parsing the renamed phrase.
+        parse_says(2, BaseCurrent->name_string, -1, -1);
+        const int local_faction = ConsoleGlobal.faction_id_;
+        const Base &visible_base = Bases[BaseIDCurrentSelected];
+        const uint32_t visible_faction_bit = 1u << (local_faction & 0x1F);
+        if (visible_base.faction_id_current == local_faction ||
+            (visible_base.visibility & visible_faction_bit) != 0) {
+            draw_map(1);
+            if ((Players[faction_id].rule_flags & 0x80) == 0) {
+                popp("SCRIPT", "RENAMEBASE", 0,
+                     "colfoun_sm.pcx", 0);
+            } else {
+                popp("SCRIPT", "RENAMEBASE", 0,
+                     "al_col_sm.pcx", 0);
+            }
+        }
+        BaseCurrent->state &= ~0x10000u;
+        BaseCurrent->state |= 0x80u;
+    }
+
+    BaseComputedID = -1;
+    if (BaseIDCurrentSelected == TutWinBaseWindow.focused_base_id()) {
+        TutWinBaseWindow.on_redraw();
+    }
+    if (BaseProductionZoomRequested != 0) {
+        const uint32_t preferences = GamePreferences;
+        if ((preferences & 1u) == 0 || (preferences & 8u) != 0) {
+            log_say("UPKEEP zoom-to-base", base_id, 0, 0);
+            TutWinBaseWindow.zoom(base_id, 1);
+            log_say("FINISHED zoom-to-base", base_id, 0, 0);
+        }
+    }
+
+    BaseUpkeepStage = 0;
+    if (BaseCurrent->assimilation_turns_left != 0) {
+        --BaseCurrent->assimilation_turns_left;
+        if (BaseCurrent->faction_id_former == BaseCurrent->faction_id_current &&
+            BaseCurrent->assimilation_turns_left != 0) {
+            --BaseCurrent->assimilation_turns_left;
+        }
+        if (BaseCurrent->assimilation_turns_left == 0) {
+            BaseCurrent->faction_id_former = BaseCurrent->faction_id_current;
+        }
+    }
+    if (BaseCurrent->nerve_staple_turns_left != 0) --BaseCurrent->nerve_staple_turns_left;
+    BaseCurrent->state &= 0xFFDFFFF7u;
+    if (((base_id + TurnCurrentNum) & 7) == 0) BaseCurrent->state &= 0xFFEFFFFFu;
+    return 0;
+}
+// Native 0x009A658C is SecretProject.telepathic_matrix (SP_TELEPATHIC_MATRIX).
+// The native call enters the mapped drone_riot body below.
+
+// ORIGINAL: 0x004F5CE0 ?base_drones@@YAXXZ 0x004F5CE0-0x004F5F25
+// RECOVERY_BINDING: v1 {"evidence":["original:0x004F5CE0-0x004F5F25:pinned base drone/riot lifecycle body","original:0x009A658C:SecretProject index 30 owns the telepathic-matrix faction id","source:src/alpha.h:SecretProject and SP_TELEPATHIC_MATRIX provide the typed project owner","source:src/base.h:BaseCurrent and Base-owned drone, talent, governor and state members","source:src/faction.h:Players owns faction rule_flags; LockEnableMask owns human-faction bits"],"reason":"Recover base drone state transitions using the existing Base, SecretProject, Player, and lock owners; retain native callback reloads and the separate drone-riot call."}
+void __cdecl base_drones() {
+    // Native popup literals remain ordinary C++ literals: "Alopdir.pcx" occurs at 0x689C78..0x689C84, 0x689CAC..0x689CB8, 0x689CE8..0x689CF4 and 0x689D04..0x689D10; the "GOLDENAGE", "GOLDENAGEOVER", "DRONERIOTSOVER" and "DRONERIOTSOVER2" keys and "talent_sm.pcx" have separate pinned call-site extents.
+
+    Base *base = BaseCurrent;
+    int faction_id = base->faction_id_current;
+    const int drones = base->drone_total;
+
+    if (drones == 0 && base->population_size > 2 &&
+        base->talent_total >= (base->population_size + 1) / 2) {
+        if ((base->state & BSTATE_GOLDEN_AGE_ACTIVE) == 0) {
+            if ((Players[faction_id].rule_flags & RFLAG_ALIEN) == 0) {
+                popb("GOLDENAGE", 0x20, -1,
+                     "talent_sm.pcx", 0);
+            } else {
+                popb("GOLDENAGE", 0x20, -1,
+                     "Alopdir.pcx", 0);
+            }
+            base = BaseCurrent;
+        }
+        base->state |= BSTATE_GOLDEN_AGE_ACTIVE;
+    } else if ((base->state & BSTATE_GOLDEN_AGE_ACTIVE) != 0) {
+        base->state &= ~BSTATE_GOLDEN_AGE_ACTIVE;
+        base = BaseCurrent;
+        if (base->drone_total <= base->talent_total) {
+            faction_id = base->faction_id_current;
+            if ((Players[faction_id].rule_flags & RFLAG_ALIEN) == 0) {
+                popb("GOLDENAGEOVER", 0x40, -1,
+                     "talent_sm.pcx", 0);
+            } else {
+                popb("GOLDENAGEOVER", 0x40, -1,
+                     "Alopdir.pcx", 0);
+            }
+            base = BaseCurrent;
+        }
+    }
+
+    if (base->drone_total > base->talent_total) {
+        int exempt = 0;
+        const int exemption_faction = SecretProject.telepathic_matrix;
+        if (exemption_faction >= 0 &&
+            Bases[exemption_faction].faction_id_current == base->faction_id_current) {
+            exempt = 1;
+        }
+        if (!exempt && base->nerve_staple_turns_left == 0) {
+            drone_riot();
+            return;
+        }
+    }
+
+    if ((base->state & BSTATE_DRONE_RIOTS_ACTIVE) != 0) {
+        base->state &= ~BSTATE_DRONE_RIOTS_ACTIVE;
+        base = BaseCurrent;
+        if ((base->state & BSTATE_GOLDEN_AGE_ACTIVE) == 0) {
+            faction_id = base->faction_id_current;
+            const uint32_t governor = base->governor;
+            const bool manages_citizens =
+                (governor & GOV_MANAGES_CITIZENS_SPECS) != 0;
+            const bool governor_active = (governor & GOV_ACTIVE) != 0;
+            const bool alien =
+                (Players[faction_id].rule_flags & RFLAG_ALIEN) != 0;
+
+            if (alien) {
+                if (!manages_citizens || !governor_active) {
+                    popb("DRONERIOTSOVER", 0x33, 0x10,
+                         "Alopdir.pcx", 0);
+                } else {
+                    popb("DRONERIOTSOVER2", 0x33, 0,
+                         "Alopdir.pcx", 0);
+                }
+            } else if (!manages_citizens || !governor_active) {
+                popb("DRONERIOTSOVER", 0x33, 0x10,
+                     "talent_sm.pcx", 0);
+            } else {
+                popb("DRONERIOTSOVER2", 0x33, 0,
+                     "talent_sm.pcx", 0);
+            }
+            base = BaseCurrent;
+        }
+
+        faction_id = base->faction_id_current;
+        if ((LockEnableMask & (1u << faction_id)) == 0) {
+            base_reset(BaseIDCurrentSelected, 0);
+            base = BaseCurrent;
+        }
+        draw_tile(base->x, base->y, 2);
+    }
+}
+
+// Facility indexing follows Base.facilities_built byte and bit indices.
+
+static unsigned char faction_bit(int faction_id) {
+    return static_cast<unsigned char>(1u << (faction_id & 7));
+}
+
+static void drone_riot_reassign_vehicles_on_tile(int x, int y, int actor,
+                                                 int target, int &moved) {
+    for (int vehicle_id = VehCurrentCount - 1;
+         vehicle_id >= 0; --vehicle_id) {
+        if (vehicle_id >= VehCurrentCount) continue;
+        Veh &vehicle = Vehs[vehicle_id];
+        if (vehicle.x != x || vehicle.y != y) continue;
+        if (vehicle.faction_id == target) {
+            vehicle.state &= ~VSTATE_UNK_40000;
+            continue;
+        }
+        if (vehicle.faction_id != actor || moved >= 0x24) continue;
+
+        vehicle.faction_id = static_cast<uint8_t>(target);
+        int prototype_id = vehicle.proto_id;
+        --PlayersData[actor].proto_id_active[prototype_id];
+        if (prototype_id > 0x40) {
+            const VehPrototype &prototype = VehPrototypes[prototype_id];
+            const int replacement = propose_proto(
+                target, prototype.chassis_id, prototype.weapon_id,
+                prototype.armor_id, static_cast<int>(prototype.ability_flags),
+                prototype.reactor_id, -2,
+                const_cast<char *>(prototype.veh_name));
+            if (replacement >= 0) {
+                vehicle.proto_id = static_cast<int16_t>(replacement);
+                prototype_id = replacement;
+            }
+        }
+        // The native word store at Veh+0x24 covers these two adjacent bytes.
+        vehicle.morale = static_cast<uint8_t>(TurnCurrentNum);
+        vehicle.terraforming_turns = static_cast<uint8_t>(
+            static_cast<unsigned int>(TurnCurrentNum) >> 8);
+        ++PlayersData[target].proto_id_active[prototype_id];
+        owner_set(vehicle.x, vehicle.y, target);
+        if (Chassis[VehPrototypes[prototype_id].chassis_id].range != 0)
+            vehicle.terraforming_turns = 0;
+        if (vehicle.order != ORDER_HOLD) vehicle.order = ORDER_NONE;
+        vehicle.state &= static_cast<uint32_t>(0xfcffbdffu);
+        ++moved;
+    }
+}
+
+// ORIGINAL: 0x004F4FB0 ?drone_riot@@YAXXZ 0x004F4FB0-0x004F5CD6
+// RECOVERY_BINDING: v1 {"evidence":["original:0x004F4FB0-0x004F5CD6:pinned drone-riot span and direct callers","original:0x0090EA30:BaseCurrent receiver; pinned offsets correlate to src/base.h Base fields","original:0x004F4FB0-0x004F5CD6:the receiver member displacements correlate with the typed Base fields","source:src/base.h:Base and BaseCurrent own callback-sensitive base state","source:src/veh.h:Veh and VehPrototype own vehicle transfer records and prototype data","source:src/map.h:Map, bit_set and visibility synchronization own tile state"],"reason":"Recover drone riot through current Base, Faction, Vehicle, Facility, and Map owners while preserving native callback reloads, candidate/radius ordering, and literal call-site distinctions."}
+// TRIED: the first ~180 bytes (unrest flag check, draw_tile, the four popb dialog variants) are transcribed and argument-order checked directly against the raw disassembly. Past that, Ghidra typed `DAT_0090ea30` (BaseCurrent) as `short*`, so every offset it prints is HALF the real byte offset - doubled here and cross-checked against src/base.h's `Base` (0x38 governor, 0x4C queue_size, 0x50 queue_production_id, 0x7C specialist_total match exactly). Eight callees (owner_set/kill/best-target-transfer helpers at 0x46B1F0, 0x46B190, 0x580860, 0x591B10, 0x591C10, 0x5ADE80, 0x5B57D0, 0x5C0B00) have no catalogued name or signature in this scaffold and are called with no arguments; the base_energy/minerals/nutrient/support/yield call order is a guess. The nearest-rival-faction base-transfer arithmetic (distance metric, unit disband loop) follows Ghidra's shape but is not verified instruction-for-instruction.
+void __cdecl drone_riot() {
+    // Native popup literals remain ordinary C++ literals: "ALdrone_sm.pcx" 0x689B9C..0x689BAB, 0x689BD4..0x689BE3 and 0x689C24..0x689C33; "DRONERIOTS2" 0x689BAC..0x689BB8 and 0x689BC8..0x689BD4; "drone_sm.pcx" 0x689BB8..0x689BC5, 0x689BF0..0x689BFD and 0x689C40..0x689C4D; "DRONERIOTS" 0x689BE4..0x689BEF and 0x689C00..0x689C0B; the distinct "DRONERIOT", "baseobl_sm.pcx" and "DRONEREVOLT" extents remain distinct call-site literals.
+
+    Base *base = BaseCurrent;
+    const int faction_id = base->faction_id_current;
+    // Native computes (~state >> 1) & 1: true means the old unrest bit was
+    // clear, despite the misleading local name in the retained scaffold.
+    const bool unrest_flag_was_clear =
+        (base->state & BSTATE_DRONE_RIOTS_ACTIVE) == 0;
+    base->state |= BSTATE_DRONE_RIOTS_ACTIVE;
+
+    if (unrest_flag_was_clear) {
+        draw_tile(base->x, base->y, 2);
+        // Native re-reads BaseCurrent after the draw callback.
+        base = BaseCurrent;
+        if ((base->governor & 0x40u) != 0 &&
+            (base->governor & 0x80000000u) != 0) {
+            if (!is_alien_faction(faction_id)) {
+                popb("DRONERIOTS2", 0, 0x11, "drone_sm.pcx", 0);
+            } else {
+                popb("DRONERIOTS2", 0, 0x11, "ALdrone_sm.pcx", 0);
+            }
+            goto after_popup;
+        }
+    }
+
+    {
+        const bool governor_allows = unrest_flag_was_clear &&
+            (base->governor & 0x40u) != 0 &&
+            (base->governor & 0x80000000u) != 0;
+        if (is_alien_faction(faction_id)) {
+            popb("DRONERIOTS", governor_allows ? 0 : 8, 0x11,
+                 "ALdrone_sm.pcx", 0);
+        } else {
+            popb("DRONERIOTS", governor_allows ? 0 : 8, 0x11,
+                 "drone_sm.pcx", 0);
+        }
+    }
+
+after_popup:
+    // Popup callbacks may replace/reselect the current base; the native body
+    // explicitly reloads the selected Base pointer here.
+    base = BaseCurrent;
+    if ((base->state & BSTATE_DRONE_RIOTS_ACTIVE) == 0) return;
+
+    if (unrest_flag_was_clear) {
+        if ((LockEnableMask & faction_bit(faction_id)) != 0) return;
+        base_reset(BaseIDCurrentSelected, 0);
+        return;
+    }
+
+    const int base_id = BaseIDCurrentSelected;
+    int offset = 0;
+    int mask = 0;
+    bitmask(0x23, &offset, &mask);
+    int riot_total = PlayersData[faction_id].soc_effect_pending.police + 7;
+    if ((Bases[base_id].facilities_built[offset] & mask) != 0) riot_total += 2;
+    if (riot_total != 1 && riot_total - 1 >= 0 &&
+        rand() % riot_total != 0) return;
+
+    bitmask(1, &offset, &mask);
+    if (PlayersData[faction_id].current_num_bases > 1) {
+        base = BaseCurrent;
+        if (base->assimilation_turns_left < 0x2d) {
+            if (base->population_size < 4 && rand() % 3 != 0) return;
+
+            int total_weight = base->population_size -
+                PlayersData[faction_id].ranking -
+                PlayersData[faction_id].diff_level + 0x14;
+            int tries = 0;
+            bool converted = false;
+            do {
+                const int spec_type = rand() % 0x46;
+                bool blocked = false;
+                const Player &player = Players[faction_id];
+                for (int k = 0; k < player.faction_bonus_count; ++k) {
+                    const int bonus_id = player.faction_bonus_id[k];
+                    const int bonus_value = player.faction_bonus_val1[k];
+                    if (bonus_id == 2 ||
+                        (bonus_id == 12 && has_tech_call(
+                            Facility[bonus_value].preq_tech, faction_id))) {
+                        if (spec_type == bonus_value) {
+                            blocked = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (spec_type > 1 && spec_type < 0x41) {
+                    bitmask(spec_type, &offset, &mask);
+                    base = BaseCurrent;
+                    if ((base->facilities_built[offset] & mask) != 0 && !blocked) {
+                        if (tries <= total_weight) {
+                            bitmask(spec_type, &offset, &mask);
+                            base = BaseCurrent;
+                            base->facilities_built[offset] &=
+                                static_cast<uint8_t>(~mask);
+                            parse_say(1, static_cast<int>(reinterpret_cast<intptr_t>(
+                                Facility[spec_type].name)), -1, -1);
+                            if (!is_alien_faction(faction_id)) {
+                                popb("DRONERIOT", 8, -1,
+                                     "drone_sm.pcx", 0);
+                            } else {
+                                popb("DRONERIOT", 8, -1,
+                                     "ALdrone_sm.pcx", 0);
+                            }
+                            converted = true;
+                            return;
+                        }
+                        break;
+                    }
+                }
+                ++tries;
+            } while (tries <= total_weight);
+            (void)converted;
+
+            bitmask(0x23, &offset, &mask);
+            base = BaseCurrent;
+            const bool has_pressure = (base->facilities_built[offset] & mask) != 0;
+            const int severity = PlayersData[faction_id].soc_effect_pending.police +
+                                 (has_pressure ? 2 : 0);
+            if (severity < -2 && !is_alien_faction(faction_id) &&
+                (LockEnableMask & faction_bit(faction_id)) != 0) {
+                int best_faction = -1;
+                const int former_faction = static_cast<int8_t>(
+                    BaseCurrent->faction_id_former);
+                if (former_faction != faction_id) {
+                    best_faction = former_faction;
+                }
+                int best_score = 0x270f;
+                if (former_faction == faction_id) {
+                    for (int rival_base = 0; rival_base < BaseCurrentCount; ++rival_base) {
+                        if (Bases[rival_base].faction_id_current == faction_id) continue;
+                        int dx = abs(static_cast<int>(Bases[rival_base].x) - BaseCurrent->x);
+                        if ((MapIsFlat & 1) == 0 && static_cast<int>(MapLongitude) < dx)
+                            dx = static_cast<int>(MapLongitudeBounds) - dx;
+                        const int dy = abs(static_cast<int>(Bases[rival_base].y) - BaseCurrent->y);
+                        const int high = dx > dy ? dx : dy;
+                        const int low = dx < dy ? dx : dy;
+                        int score = high - (((dx + dy) / 2 - low + 1) / 2);
+                        const int relation = PlayersData[faction_id].diplo_treaties[
+                            Bases[rival_base].faction_id_current];
+                        if ((relation & DTREATY_PACT) != 0) score *= 2;
+                        if ((relation & DTREATY_TREATY) != 0)
+                            score = (3 * score) / 2;
+                        if ((relation & DTREATY_TRUCE) != 0) score /= 2;
+                        if (score < best_score) {
+                            best_score = score;
+                            best_faction = Bases[rival_base].faction_id_current;
+                        }
+                    }
+                }
+
+                {
+                    // Native 0x004F5553..0x004F565C builds seven per-player
+                    // weights from faction bonus id 13. The probability of
+                    // retaining the nearest-base fallback is the product of
+                    // (1 - weight/100); otherwise a time-derived weighted
+                    // draw replaces it. Keep the signed divisions/modulo and
+                    // the live timeGetTime sample used by the native code.
+                    int target_weight[7];
+                    int total_target_weight = 0;
+                    double fallback_probability = 1.0;
+                    for (int candidate_player_id = 1; candidate_player_id < MaxPlayerNum; ++candidate_player_id) {
+                        int weight = 0;
+                        const Player &candidate = Players[candidate_player_id];
+                        for (int k = 0; k < candidate.faction_bonus_count; ++k) {
+                            if (candidate.faction_bonus_id[k] == 13) {
+                                weight = candidate.faction_bonus_val1[k];
+                                if (weight < 0) weight = 0;
+                                if (weight > 100) weight = 100;
+                                total_target_weight += weight;
+                            }
+                        }
+                        target_weight[candidate_player_id - 1] = weight;
+                        fallback_probability *= 1.0 - weight * 0.01;
+                    }
+                    const int tick = static_cast<int>(timeGetTime());
+                    const int fallback_cutoff =
+                        static_cast<int>(fallback_probability * 100.0);
+                    // Native skips weighted selection only when cutoff is
+                    // strictly below the time residue; equality draws.
+                    if (fallback_cutoff >= tick % 100) {
+                        int draw = (tick / 100) % total_target_weight;
+                        for (int i = 0; i < 7; ++i) {
+                            if (draw < target_weight[i]) {
+                                best_faction = i + 1;
+                                break;
+                            }
+                            draw -= target_weight[i];
+                        }
+                    }
+                    if (best_faction <= 0) return;
+                    const unsigned char human_mask =
+                        static_cast<unsigned char>(LockEnableMask);
+                    if ((human_mask & faction_bit(faction_id)) == 0 ||
+                        (human_mask & faction_bit(best_faction)) == 0 ||
+                        is_alien_faction(best_faction)) return;
+
+                    const int old_x = BaseCurrent->x;
+                    const int old_y = BaseCurrent->y;
+                    BaseCurrent->faction_id_current =
+                        static_cast<uint8_t>(best_faction);
+                    for (int attacker_player_id = 1; attacker_player_id < MaxPlayerNum; ++attacker_player_id) {
+                        if (PlayersData[attacker_player_id].base_id_atk_target == base_id)
+                            PlayersData[attacker_player_id].base_id_atk_target = -1;
+                    }
+                    BaseCurrent->assimilation_turns_left =
+                        BaseCurrent->faction_id_former != best_faction ? 0x32 : 0;
+                    BaseCurrent->minerals_accumulated_2 = 0;
+                    BaseCurrent->minerals_accumulated = 0;
+                    BaseCurrent->production_id_last = -69;
+                    const int queue_last = static_cast<int>(BaseCurrent->queue_size);
+                    if (queue_last >= 0) {
+                        for (int q = 0; q <= queue_last; ++q) {
+                            const int production = BaseCurrent->queue_production_id[q];
+                            if (production >= 0)
+                                --PlayersData[faction_id].proto_id_active[production];
+                        }
+                    }
+                    BaseCurrent->queue_size = 0;
+                    BaseCurrent->queue_production_id[0] = -69;
+                    --PlayersData[faction_id].current_num_bases;
+                    ++PlayersData[best_faction].current_num_bases;
+                    PlayersData[best_faction].last_turn_new_base = TurnCurrentNum;
+                    replay_base(1, old_x, old_y, best_faction);
+
+                    // Native reuses the selected Base pointer after replay
+                    // callbacks and copies Governor from the strongest
+                    // base of a different owner (worked bit 1 doubles size).
+                    int best_governor_base = -1;
+                    int best_population_weight = 0;
+                    for (int rival_base = 0;
+                         rival_base < BaseCurrentCount; ++rival_base) {
+                        if (Bases[rival_base].faction_id_current == faction_id) continue;
+                        int population_weight = Bases[rival_base].population_size;
+                        bitmask_call(1, &offset, &mask);
+                        if ((Bases[rival_base].facilities_built[offset] & mask) != 0)
+                            population_weight *= 2;
+                        if (population_weight > best_population_weight) {
+                            best_population_weight = population_weight;
+                            best_governor_base = rival_base;
+                        }
+                    }
+                    if (best_governor_base >= 0)
+                        BaseCurrent->governor = Bases[best_governor_base].governor;
+                    BaseCurrent->state &= static_cast<uint32_t>(0xffdef7b1u);
+
+                    // Native visits every valid tile in the 21-entry base
+                    // radius and walks the live vehicle array for each tile.
+                    int transferred_vehicle_count = 0;
+                    for (int radius = 0; radius < 21; ++radius) {
+                        int x = old_x + RadiusOffsetX[radius];
+                        int y = old_y + RadiusOffsetY[radius];
+                        if ((MapIsFlat & 1) == 0) {
+                            if (x < 0) x += MapLongitudeBounds;
+                            else if (MapLongitudeBounds <= x) x -= MapLongitudeBounds;
+                        }
+                        if (y >= 0 && y < MapLatitudeBounds &&
+                            x >= 0 && x < MapLongitudeBounds) {
+                            using_set(x, y, best_faction);
+                            map_loc(x, y)->visibility |= faction_bit(best_faction);
+                            drone_riot_reassign_vehicles_on_tile(
+                                x, y, faction_id, best_faction,
+                                transferred_vehicle_count);
+                        }
+                    }
+                    spot_base(BaseIDCurrentSelected, best_faction);
+                    reset_territory();
+
+                    for (int vehicle_id = VehCurrentCount - 1;
+                         vehicle_id >= 0; --vehicle_id) {
+                        if (vehicle_id >= VehCurrentCount) continue;
+                        Veh &vehicle = Vehs[vehicle_id];
+                        if (vehicle.faction_id == faction_id &&
+                            vehicle.home_base_id == BaseIDCurrentSelected)
+                            kill(vehicle_id);
+                    }
+
+                    for (int bonus_player_id = faction_id;
+                         bonus_player_id < MaxPlayerNum; ++bonus_player_id) {
+                        const Player &player = Players[bonus_player_id];
+                        for (int k = 0; k < player.faction_bonus_count; ++k) {
+                            const int bonus_id = player.faction_bonus_id[k];
+                            const int bonus_value = player.faction_bonus_val1[k];
+                            if (bonus_id == 2 ||
+                                (bonus_id == 12 && has_tech_call(
+                                    Facility[bonus_value].preq_tech, faction_id))) {
+                                int facility_id = bonus_value;
+                                if (facility_id < 1) facility_id = 1;
+                                if (facility_id > 0x45) facility_id = 0x45;
+                                bitmask_call(facility_id, &offset, &mask);
+                                Bases[BaseIDCurrentSelected].facilities_built[offset] |=
+                                    static_cast<uint8_t>(mask);
+                            }
+                        }
+                    }
+                    owner_set(old_x, old_y, best_faction);
+                    BaseComputedID = BaseIDCurrentSelected;
+                    base_nutrient();
+                    base_minerals();
+                    base_energy();
+                    base_support();
+                    base_yield();
+
+                    const int reloaded_base_owner =
+                        Bases[BaseIDCurrentSelected].faction_id_current;
+                    const int console_faction = ConsoleGlobal.faction_id_;
+                    if (faction_id == console_faction ||
+                        best_faction == console_faction ||
+                        reloaded_base_owner == console_faction ||
+                        (Bases[BaseIDCurrentSelected].visibility &
+                         faction_bit(console_faction)) != 0) {
+                        MapWinTable[0]->set_center(old_x, old_y, 1);
+                        draw_map(1);
+                        parse_says(0, BaseCurrent->name_string, -1, -1);
+                        parse_says(2, Players[best_faction].adj_name_faction, -1, -1);
+                        if ((GameState & 1) == 0 || (GameState & 8) != 0)
+                            popp("SCRIPT", "DRONEREVOLT", 0,
+                                 "baseobl_sm.pcx", 0);
+                    }
+                }
+            }
+        }
+    }
+}

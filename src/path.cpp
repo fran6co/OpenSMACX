@@ -85,8 +85,7 @@ Status: Complete
 */
 void Path::init() {
     shutdown();
-    x_dst_ = -1;
-    y_dst_ = -1;
+    clear_destination();
     map_table_ = (int *)mem_get(MapArea * 4);
     x_table_ = (int16_t *)mem_get(MapArea * 2);
     y_table_ = (int16_t *)mem_get(MapArea * 2);
@@ -980,8 +979,7 @@ int Path::move(int veh_id, int faction_id) {
     int veh_faction_id = Vehs[veh_id].faction_id;
     uint32_t flags = 0xC0;
     if (veh_faction_id != faction_id_) {
-        x_dst_ = -1;
-        y_dst_ = -1;
+        clear_destination();
         faction_id_ = veh_faction_id;
     }
     int veh_x = Vehs[veh_id].x;
@@ -1571,8 +1569,7 @@ void Path::continents() {
 BOOL Path::sensors(int faction_id, int *x_sensor, int *y_sensor) {
     BOOL has_sensor = true;
     ZeroMemory(map_table_, MapArea * 4);
-    x_dst_ = -1;
-    y_dst_ = -1;
+    clear_destination();
     int x_search = *x_sensor;
     int y_search = *y_sensor;
     int search = 9999;

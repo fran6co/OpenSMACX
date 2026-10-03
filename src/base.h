@@ -622,6 +622,9 @@ int __cdecl mine_yield(int faction_id, int base_id, int x, int y,
                                  BOOL assume_improved);
 int __cdecl energy_yield(int faction_id, int base_id, int x, int y,
                                    BOOL assume_improved);
+int __cdecl base_upkeep(int base_id);
+void __cdecl base_drones();
+void __cdecl drone_riot();
 void __cdecl base_support();
 void __cdecl base_yield();
 void __cdecl base_nutrient();

@@ -52,6 +52,7 @@ extern RulesProposal Proposal[MaxProposalNum];  // 0x009A6828, 0xc stride
 
 int __cdecl council_votes(int faction_id);
 int __cdecl council_get_vote(int faction_id, int proposal, int target_faction);
+int __cdecl can_call_council(int faction_id, int announce);
 void __cdecl call_council(int faction_id);
 BOOL __cdecl eligible(int faction_id);
 void __cdecl council_action(int proposal, int faction_id);

@@ -926,6 +926,8 @@ void __cdecl see_map_check();
 void __cdecl compute_faction_modifiers(int faction_id);
 void __cdecl social_calc(SocialCategory *category, SocialEffect *effect, 
                                    int faction_id, BOOL toggle, BOOL is_quick_calc);
+void __cdecl production_phase(int faction_id);
+void __cdecl faction_upkeep(int faction_id);
 void __cdecl social_upkeep(int faction_id);
 BOOL __cdecl society_avail(int soc_category, int soc_model, int faction_id);
 void __cdecl social_ai(int faction_id, int growth_val, int tech_val, int wealth_val,

@@ -27,6 +27,7 @@ class Path {
   MEASURED ~Path() { shutdown(); } // 0059A320
 
   void init();
+  void clear_destination() { x_dst_ = -1; y_dst_ = -1; }
   // IN-CLASS so `~Path` inlines it, which is what the image does.
   MEASURED void shutdown() {     // 0059A2D0
     if (map_table_) {
