@@ -1,0 +1,21 @@
+{
+  "event_id": "0bcdd30053aba04b692d17bf8ae7902fa17ecff8868a255ab409435813134221",
+  "payload": {
+    "affects": [
+      "entity-6291e665c91bc3699e346c5d238d6d31deacc692614e2b3ac7e11d58dd44b9ed",
+      "entity-d2a39738d37c5d05bed8b6adcd66ce2b897824e00a5ba377ccab1ad436189ed5"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "colony-tech-advance-phase-reference-20261003",
+    "evidence": [
+      "Fresh canonical01901cbf native5BE580 CMP [945F48],1 and5BEB3A same cell. src/leaf_recoveries.cpp10204/10242 define and consume old executable address; only one usage found. Existing task admissions7/8 grant real TurnUpkeepPhase but explicitly exclude changing this protected callee. Research private probe compiles both flags with existing tech_advance declaration and preserves22technology diagnostics, not application reference/runtime acceptance."
+    ],
+    "hypothesis": "The admitted tech_research body needs the real TurnUpkeepPhase945F48 owner. Its compiled callee tech_advance5BE530 still reads static TurnPhaseSlot fixed945F48 in leaf_recoveries.cpp, so leaving that alias disconnects the current application callee from the new source-owned global despite historical byte-exactness. Redirect that one existing callee phase binding and expose its typed declaration, retaining all original claims and other leaf work.",
+    "kind": "discovery"
+  },
+  "previous_event": "e6c3050a4699b74cdbb85009f6a109775dc0b807b2e4ac5fe29b0b6fd3fd966e",
+  "request_id": "colony-tech-advance-phase-reference-20261003",
+  "schema_version": 1,
+  "sequence": 9,
+  "stream": "task:base-colony-economy-coverage-wave"
+}

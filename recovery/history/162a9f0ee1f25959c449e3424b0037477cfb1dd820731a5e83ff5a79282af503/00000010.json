@@ -1,0 +1,25 @@
+{
+  "event_id": "2b65fefd1762d30a77b60dd5a46dc5031f2120bf5aff119e8a61b93da86746e2",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/leaf_recoveries.cpp"
+    ],
+    "evidence": [
+      "Coordinator narrowly admits redirecting the single existing TurnPhaseSlot use in tech_advance5BE530 to real TurnUpkeepPhase and removing the now-unused absolute alias, plus typed tech_advance declaration in already admitted technology.h. No other leaf bodies or raw aliases, function relocation, baseline reset, claim demotion, behavior hardening or acceptance are authorized. Preserve BYTE_EXACT obligation and remeasure under both recipes; preserve any justified source repair on regression for reviewed restoration. Require current application build/link and claim continuity before integration. Original phase-owner discovery and this callee-reference finding remain pending until verified incorporation."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6022448,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "0bcdd30053aba04b692d17bf8ae7902fa17ecff8868a255ab409435813134221",
+  "request_id": "colony-tech-advance-phase-reference-admission-20261003",
+  "schema_version": 1,
+  "sequence": 10,
+  "stream": "task:base-colony-economy-coverage-wave"
+}
