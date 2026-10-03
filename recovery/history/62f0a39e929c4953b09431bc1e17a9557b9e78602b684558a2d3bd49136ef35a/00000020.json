@@ -1,0 +1,20 @@
+{
+  "event_id": "1ceb7c4ae443e0359e6b386ef57349e0295e21b35e25bb4fa87196a62e217cf8",
+  "payload": {
+    "affects": [
+      "entity-219cd0e2899423dd0c9bdcd0718b1406f9eccf7f28df77221b51278212dbc055"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "serializer-distinct-player-count-snapshot-20261003",
+    "evidence": [
+      "Canonical save_daemon5A9554/5A958D zero93F798,5A95C3 copies NetDaemon player_count_; game_data5A6D22..5A6D51 transfers exactly4bytes. Existing PendingDiplomacyFlags93F698..93F798 excludes this cell. Native PeImage independently verifies data virtualspan682000..9C21F8 (raw26000), so this cell and daemon/snapshot are zero-fill-backed, not an unsectioned gap as earlier packet mistakenly inferred. Four-byte owner publication still needs both compiler/storage checks and fresh application build/link; no broader daemon extent, lifetime/union assertion, snapshot overlap resolution, fresh byte claim or acceptance."
+    ],
+    "hypothesis": "93F798 is a distinct four-byte serialized copy of the network player count, owned by save/load state rather than PendingDiplomacyFlags or a guessed NetDaemon tail. Admit GameDataPlayerCountSnapshot in existing game.cpp/h scope; the CE0 snapshot region remains unresolved.",
+    "kind": "discovery"
+  },
+  "previous_event": "7c80d085a4fb97539474bf57f6127b12e38b3b464ab1ad0b9fdbd1cfc5e50541",
+  "request_id": "serializer-distinct-player-count-snapshot-20261003",
+  "schema_version": 1,
+  "sequence": 20,
+  "stream": "task:game-save-load-owner-coverage"
+}

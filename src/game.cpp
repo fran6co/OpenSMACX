@@ -5933,3 +5933,74 @@ int __cdecl load_map() {
     }
     return result;
 }
+
+// Combat updates50A4A7/50A4B5 and50AF1B/50AF2D index these eight words.
+// Turn display527CEE/527D0F passes them to WONLOST; reset51E3C0 clears all.
+// RECOVERY_OBJECT: v2 0x0093A96C 0x0093A98C ?FactionTurnCombatWins@@3PAHA 0x0051E3C0
+int FactionTurnCombatWins[MaxPlayerNum];
+// RECOVERY_OBJECT: v2 0x0093A98C 0x0093A9AC ?FactionTurnCombatLosses@@3PAHA 0x0051E3C0
+int FactionTurnCombatLosses[MaxPlayerNum];
+
+// save_daemon clears this word on its rules/PBEM paths, or copies NetDaemon's
+// player count on its network path before game_data transfers its four bytes.
+// It begins after PendingDiplomacyFlags, not inside that matrix or NetDaemon.
+// RECOVERY_OBJECT: v2 0x0093F798 0x0093F79C ?GameDataPlayerCountSnapshot@@3HA 0x005A94F0
+int GameDataPlayerCountSnapshot;
+
+// Existing storage belongs to MessageWin's deferred-message owner.
+extern StringList MessageWinDeferredBaseMessages[MaxPlayerNum];
+
+// ORIGINAL: 0x0051E3C0 ?clear_all_player_messages@@YAXXZ 0x0051E3C0-0x0051E479
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0051e3c0.cpp", "Pinned original01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tests/test_player_message_state_behavior.py"], "reason": "Recover the complete player-message clear_all_player_messages operation through existing StringList/MessageWin owners and eight faction combat-summary counters. Preserve deletion hooks, live count reloads, reset/display order and retained original seed; no new measured claim."}
+// symbol    ?clear_all_player_messages@@YAXXZ
+// TRIED: second slot000 dispatch expects 'lea' for the adjustor-thunk address but every tried spelling (add, swapped operands, fully inlined) still emits 'add'; jl/jb fixed via reinterpret_cast<int> on the loop-bound pointer compare
+void __cdecl clear_all_player_messages() {
+    for (int faction = 0; faction < MaxPlayerNum; ++faction) {
+        FactionTurnCombatLosses[faction] = 0;
+        FactionTurnCombatWins[faction] = 0;
+        StringList &messages = MessageWinDeferredBaseMessages[faction];
+        messages.remove_all();
+        messages.current_position_ = 0;
+        messages.allocator_ = 0;
+    }
+}
+
+// ORIGINAL: 0x0051E480 sub_51e480 0x0051E480-0x0051E523
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0051e480.cpp", "Pinned original01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tests/test_player_message_state_behavior.py"], "reason": "Recover the complete player-message clear_player_messages operation through existing StringList/MessageWin owners and eight faction combat-summary counters. Preserve deletion hooks, live count reloads, reset/display order and retained original seed; no new measured claim."}
+// symbol    ?clear_player_messages@@YAXH@Z
+// TRIED: named `adj2` local for the second this-adjusted vtable call (mismatched: original uses `lea` there, not `add`, unlike the first call which does match named). MISMATCH #41 is the sole remaining divergence at 98.5% mnemonic similarity.
+void __cdecl clear_player_messages(int faction) {
+    StringList &messages = MessageWinDeferredBaseMessages[faction];
+    messages.remove_all();
+    messages.current_position_ = 0;
+    messages.allocator_ = 0;
+    FactionTurnCombatLosses[faction] = 0;
+    FactionTurnCombatWins[faction] = 0;
+}
+
+// ORIGINAL: 0x0051E530 sub_51e530 0x0051E530-0x0051E6ED
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0051e530.cpp", "Pinned original01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tests/test_player_message_state_behavior.py"], "reason": "Recover the complete player-message display_player_messages operation through existing StringList/MessageWin owners and eight faction combat-summary counters. Preserve deletion hooks, live count reloads, reset/display order and retained original seed; no new measured claim."}
+// symbol    ?display_player_messages@@YAHH@Z
+// TRIED: char* record-base arithmetic (self+0x30*a1 relative to 0x93a7b0) with adjustor-thunk VCall dispatch (slot000/slot001) for the two destroy-list virtual calls; reaches #13
+int __cdecl display_player_messages(int faction) {
+    InterfaceMessageWin.clear();
+    StringList &messages = MessageWinDeferredBaseMessages[faction];
+    for (int index = 0; index < messages.entry_count_; ++index) {
+        messages.seek_pos(index);
+        ++MessageWinMessageCount;
+        const int id = messages.head_ != 0 ? messages.current_->id : 0;
+        char *text = messages.head_ != 0 ? messages.current_->payload->text : 0;
+        InterfaceMessageWin.listBox_.item(text, id | 0x40000000);
+        InterfaceMessageWin.listBox_.set_selected_pos(-1, 1);
+    }
+    const int displayed_count = messages.entry_count_;
+    if (displayed_count != 0) {
+        InterfaceMessageWin.listBox_.update_changes();
+    }
+    messages.remove_all();
+    messages.current_position_ = 0;
+    messages.allocator_ = 0;
+    FactionTurnCombatLosses[faction] = 0;
+    FactionTurnCombatWins[faction] = 0;
+    return displayed_count;
+}

@@ -182,6 +182,13 @@ extern int TamperRegistryCursor;
 void __cdecl clear_monuments();
 void __cdecl clear_all_offers();
 void __cdecl clear_tamper();
+// Eight faction combat-summary counters serialized independently of messages.
+extern int FactionTurnCombatWins[8];
+extern int FactionTurnCombatLosses[8];
+extern int GameDataPlayerCountSnapshot;
+void __cdecl clear_all_player_messages();
+void __cdecl clear_player_messages(int faction);
+int __cdecl display_player_messages(int faction);
 
 extern uint32_t GameMorePreferences;
 extern uint32_t GameWarnings; // used for setting pop notifications
