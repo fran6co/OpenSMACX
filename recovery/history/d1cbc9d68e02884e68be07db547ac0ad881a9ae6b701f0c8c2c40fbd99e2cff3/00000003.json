@@ -1,0 +1,20 @@
+{
+  "event_id": "20641f5aa081f6cc42a630654271d62c725b4eb4a70673d1b367054a32717557",
+  "payload": {
+    "affects": [
+      "entity-69d908c54936afd7a09eab303f23ba8ea5a09de2f6528a72534c2e281e6bdd9b"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "statuswin-shared-rules-and-text-palette-owners-20261003",
+    "evidence": [
+      "src/alpha.cpp defines RulesNatural Natural[MaxNaturalNum] at94ADE0; src/map.h defines two4bytefields name/name_short, stride8,count16. Thus94ADE4..94AE5C are existing Natural rowfields, including [0].name_short and [15].name_short, with multiple existing MainInterface/InfoWin/Console/map consumers passing their integer bits to StringTable.get. Current LPSTR declaration is not proof of true pointer semantics; original loader must be checked before broad type migration. src/palette.cpp2172..2182 owns TextColourTable195 at8C6B5C..8C6E68; init_text_colors samples text.pcx and publishes slots. 8C6BA4/A8 are existingindices18/19, not unowned words or adjacency-based InfoTextColors expansion. Kuna named export has fullsub_4b6570 pseudocode; root independently verified all8885exportASMbytes4B6570..4B8825 againstpinned01901... with0missing/0different, codeSHA99176605adb0a9eea953b5d69bf48ba86f3afc72d1547945e10500b0bd9e45cd. Fullinputimage differs, so decompiler C/strings/types remain hypotheses. No automatic acceptance, new exact claims, new source storage or expanded editing permission granted by discovery."
+    ],
+    "hypothesis": "HUD label/color reads belong to existing shared source tables, not new neutral scalar globals: Natural[16] at94ADE0 and TextColourTable[195] at8C6B5C. Preserve the RulesNatural LPSTR-vs-string-ID type inconsistency as an explicit structural follow-up requiring producer proof, rather than inventing alternative storage or silently ignoring it. Reuse the source owners during complete renderer recovery.",
+    "kind": "discovery"
+  },
+  "previous_event": "e8d91efb32f98e0c82562a8bfabf7971325d45a9bf2df96fd3585c75b9fa44d6",
+  "request_id": "statuswin-shared-rules-and-text-palette-owners-20261003",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:statuswin-remaining-owner-coverage"
+}

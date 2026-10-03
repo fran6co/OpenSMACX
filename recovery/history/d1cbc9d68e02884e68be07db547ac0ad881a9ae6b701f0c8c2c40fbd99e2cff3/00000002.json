@@ -1,0 +1,28 @@
+{
+  "event_id": "e8d91efb32f98e0c82562a8bfabf7971325d45a9bf2df96fd3585c75b9fa44d6",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/battlewin_battle_report_host_control.cpp",
+      "recovery/tests/test_battlewin_battle_report_behavior.py",
+      "src/battlewin.cpp",
+      "src/battlewin.h"
+    ],
+    "evidence": [
+      "Pinned draw_status4B6597 fast path forwards five original integer arguments to thiscall BattleWin::battle_report421B50 with real BattleWindow receiver6EEED8. That callee is still seed-only, spans421B50..422BFC and652BA0..652BCB; admit complete genuine BattleWin member/header and actual-source host controls, not a renderer proxy or placeholder. Root verified every4268+43 exported Kuna ASM byte equals canonical01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; pseudocode remains hint with independent data/CFG/type verification required. Borrow existing SubInterface/Time/RECT, MainInterface Buffer/fonts/buttons, sprites, gameplay and string-table owners; no fabricated arrays, vtable dispatch or executable-address aliases. Preserve original taskbaselinee1d762e8, all claims/seeds/discoveries; central compiler/layout/protecteddiagnostic and full app build/link required before coordinator manual integration. Root alone edits Git/shared source and integrates classes serially."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4332368,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "168e3639797496f1df4e35c3089e587bf1c0925b5fa43de9820519e81f995dea",
+  "request_id": "statuswin-battle-report-owner-closure-20261003",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:statuswin-remaining-owner-coverage"
+}
