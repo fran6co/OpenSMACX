@@ -1,0 +1,17 @@
+{
+  "event_id": "058b898a9eecdd9ffaed71c8e67fac50a3ea8b14f4684b256f87d05f191f7d71",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "battle-report-v2-semantic-review-20261003",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Masterf130ad39 src/battlewin.cpp nowownscomplete421B50 hot+cold identity via native sourcewriter; actualsource has proto-ID portrait switch with canonical15fungal/19spore, pre-portraitFont14, namesbelowdrawy+spriteheight, insethalfwidths, Weapon/Armor Strings.get branches, exactsavedfaction say_morale arguments and directcharrows fromsrc/veh.h. Versioned extractedbody GCCClang controls exercise distinctions. Root4nativeVC6objects preserve34historicaldiagnostics andBattleWinlayout; freshwholeappbuild/linkPASS; claims2614missing0/sourceannotationsclean; mapping126preexistingunchanged. This incorporates semanticreviewfindings in genuine source, not newexactbodyclaim, linkedpreservation or fullgame/autonomousacceptance. All priorproposals/discoveries/baselines preserved."
+    ]
+  },
+  "previous_event": "61e65e4c602888e5ccb5ca821bcd7c8b0d0a29fb164a589b2d64ac36da7cc974",
+  "request_id": "battle-report-reviewed-source-incorporation-20261003",
+  "schema_version": 1,
+  "sequence": 10,
+  "stream": "task:statuswin-remaining-owner-coverage"
+}
