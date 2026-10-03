@@ -1,0 +1,17 @@
+{
+  "event_id": "d9f28cb2edb5000ce431e7652d2d7ff6b0afe3a329ecdb2cfe867d2ed1f7b6f3",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "colony-production-zoom-latch-20261003",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Reject only the incorrect affected-entity association in original event. Complete storage/producer/consumer finding is preserved, corrected and still PENDING in colony-production-zoom-latch-correct-entities-20261003 (revision5); no behavior/evidence/source work discarded and no incorporated claim. Specific scope admissionrevision4 remains unchanged. Installed Origin computes producer4F07E0 entity4c18b5a... and consumer4F79C0 entity5c40dbc..."
+    ]
+  },
+  "previous_event": "b70990f99a267fecf5f934fc644d07c7d3d1ded161c1ca6daf20099c9abbf0f2",
+  "request_id": "colony-production-zoom-latch-association-correction-20261003",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:base-colony-economy-coverage-wave"
+}

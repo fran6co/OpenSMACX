@@ -1,0 +1,21 @@
+{
+  "event_id": "b70990f99a267fecf5f934fc644d07c7d3d1ded161c1ca6daf20099c9abbf0f2",
+  "payload": {
+    "affects": [
+      "entity-4c18b5a6716765b7bfcb69f8ca022a20abb0eb4daf79e57b16e7886b29400e0d",
+      "entity-5c40dbc4ec1f58f56ac39602af8992b82d961d42d750dd17f4bef79bff937eca"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "colony-production-zoom-latch-correct-entities-20261003",
+    "evidence": [
+      "Fresh installed Origin(pin,pe:va,address).entity_id proves these exact identities; earlier event colony-production-zoom-latch-20261003 incorrectly associated d6c7432... rather than producer/consumer. Canonical4F0F03 stores1,4F79F2 clears,4F7EFB gateszoom. PeImage.read_initial(Span(90E934,90E938))=00000000. Keep pending until shared source incorporation; scope admissionrevision4 remains specific to this sameglobal."
+    ],
+    "hypothesis": "Correct the producer and consumer entity association of the previously preserved90E934 production zoom latch finding: producer4F07E0 base_production, consumer4F79C0 base_upkeep. Prior affected entity was selected incorrectly; body and storage evidence unchanged.",
+    "kind": "discovery"
+  },
+  "previous_event": "e686652796a0225dce43660526adabb11a29ca5516311db119fc94e7fe957afa",
+  "request_id": "colony-production-zoom-latch-correct-entities-20261003",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:base-colony-economy-coverage-wave"
+}
