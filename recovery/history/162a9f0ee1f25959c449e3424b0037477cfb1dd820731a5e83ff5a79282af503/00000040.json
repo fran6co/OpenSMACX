@@ -1,0 +1,19 @@
+{
+  "event_id": "02fe0586f40d2ba06e3d4abfa6cc8ee25a8b0a6211bbb3237f9301a3e1be03bf",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_allocate_energy_behavior.py"
+    ],
+    "evidence": [
+      "Persist actual-source allocator controls and deliberate psych-formula/low-byte corruptions found in independent review. Tests extract only allocate_energy from its real faction.cpp owner and compile typed host doubles under GCC/Clang C++98. Synthetic extended host rows distinguish byte width without asserting valid game faction8 or target ABI. No new function scope or compiler policy."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "5acb5dae67289b3600a749af1c66e1e4bf0fa60b15f9759832905c671f9920f4",
+  "request_id": "admit-allocator-behavior-controls",
+  "schema_version": 1,
+  "sequence": 40,
+  "stream": "task:base-colony-economy-coverage-wave"
+}
