@@ -1,0 +1,19 @@
+{
+  "event_id": "07510c50189174ec01064d3276475b72b41cbc8a8543c66f8dd3b5843536ac35",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_diplomacy_producers_behavior.py"
+    ],
+    "evidence": [
+      "Admit durable actual-owner host regression controls for the four already scoped diplomacy producer bodies. Tests must extract src/faction.cpp definitions; compiler overlay v4 compiled both recipes and preserved all110 historical diagnostic pairs, but neither controls nor publication establish automatic/game acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "da68cc265982ff25b4b521e86804db29703ac5c2c0ac0bd86bc6b645b73ffcd0",
+  "request_id": "diplomacy-producer-behavior-controls-20261003",
+  "schema_version": 1,
+  "sequence": 47,
+  "stream": "task:base-colony-economy-coverage-wave"
+}
