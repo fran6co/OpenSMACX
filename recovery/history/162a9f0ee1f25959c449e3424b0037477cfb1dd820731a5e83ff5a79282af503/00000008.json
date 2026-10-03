@@ -1,0 +1,20 @@
+{
+  "event_id": "e6c3050a4699b74cdbb85009f6a109775dc0b807b2e4ac5fe29b0b6fd3fd966e",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/game.cpp",
+      "src/game.h"
+    ],
+    "evidence": [
+      "Coordinator explicitly admits one real int TurnUpkeepPhase at945F48..945F4C, loader-zero initial value, game.cpp storage and game.h declaration used by admitted tech_research. Require fresh compiler object evidence and original binding through installed publication. This admission does not authorize editing existing protected tech_advance/leaf or other game bodies, rawpointer aliases, new behavior, demotion or acceptance. Discovery remains pending until verified source incorporation."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "412c795bc54b708cbe7ec45c011413f1247ff460acd2486ac54f8a5db370fe75",
+  "request_id": "colony-turn-phase-owner-admission-20261003",
+  "schema_version": 1,
+  "sequence": 8,
+  "stream": "task:base-colony-economy-coverage-wave"
+}

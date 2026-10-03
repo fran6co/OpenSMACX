@@ -1,0 +1,20 @@
+{
+  "event_id": "412c795bc54b708cbe7ec45c011413f1247ff460acd2486ac54f8a5db370fe75",
+  "payload": {
+    "affects": [
+      "entity-d2a39738d37c5d05bed8b6adcd66ce2b897824e00a5ba377ccab1ad436189ed5"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "colony-turn-phase-owner-20261003",
+    "evidence": [
+      "Pinned native5290D0 writesphase1,5292BD writes2,529406 writesESI;5BEB3A readsphase==1. Address945F48..4C lies in PE virtual tail beyond raw data (sectionstart6823936 rawsize155648), loader-zero initial storage rather than file-backed bytes. Existing leaf TurnPhaseSlot rawalias and retired seeds are evidence only, not a proper source-owned object. No new behavior or outside-function edits granted."
+    ],
+    "hypothesis": "tech_research reads the shared turn-upkeep phase at945F48; replace its raw executable pointer with a genuine game-owned TurnUpkeepPhase dword. Existing ControlTurnPhase9B2070 is unrelated. Retain old leaf/seeds as independent unfinished ownership work.",
+    "kind": "discovery"
+  },
+  "previous_event": "d9f28cb2edb5000ce431e7652d2d7ff6b0afe3a329ecdb2cfe867d2ed1f7b6f3",
+  "request_id": "colony-turn-phase-owner-20261003",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:base-colony-economy-coverage-wave"
+}
