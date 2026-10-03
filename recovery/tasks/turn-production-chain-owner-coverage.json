@@ -1,0 +1,72 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "d23ebbbf3e92bc020edd30d8187a3f0879255022",
+  "editable_files": [
+    "src/base.cpp",
+    "src/base.h",
+    "src/faction.cpp",
+    "src/faction.h",
+    "src/council.h",
+    "src/path.cpp",
+    "src/path.h",
+    "src/recovered/units/00526e70.cpp",
+    "src/unrecovered/00527290.cpp",
+    "src/unrecovered/004f79c0.cpp",
+    "src/recovered/units/004f5ce0.cpp",
+    "src/unrecovered/004f4fb0.cpp",
+    "recovery/tests/test_turn_production_chain_behavior.py"
+  ],
+  "evidence": [
+    "The five pre-existing seed identities retain their complete original spans and parsed historical lessons through the native source writer; no claim is granted or demoted. Path init/move/sensors are explicitly in scope for a shared inline clear_destination reset, preserving existing field layout and historical claims.",
+    "Independent source review of the frozen product bodies found no additional concrete discrepancy in inspected native branches, signed arithmetic or callback reloads. The zero-total-weight drone selection edge remains original behavior, not an authorized bug fix.",
+    "Sixteen frozen host controls pass. Completed native-overlay-v4 compiled all 86 affected translation units under both configured recipes, with 3210 unchanged measurable protected comparisons and ten unmeasurable comparison rows (twenty side observations) for five existing symbol mappings. The unmeasurable rows do not establish preservation or automatic acceptance. All ten new-body diagnostics are measurable misses with no prior byte or semantic claim; source publication still requires fresh actual-source checks and build/link.",
+    "Canonical signed-int faction and Base APIs, council availability declaration and Path reset avoid TU-local shadow declarations. Existing typed Base/Player/PlayerData/Map/Vehicle/Facility owners and lexical Popup lifetime replace seed raw offsets and literal aliases.",
+    "Source admission requires completed relevant native diagnostics, actual-source behavior/damage controls, build/link, claim continuity and reference checks, with fresh checks after integration. The user permits coordinator-reviewed manual recovery integration, not fabricated native automatic acceptance; strict linked preservation, original literal allocation, runtime and game acceptance remain unproven."
+  ],
+  "intent": "Recover five complete production/faction/Base upkeep bodies in genuine owners, with a shared Path destination reset; preserve identities, historical lessons and existing claims, and retire superseded seeds only after coordinator-reviewed verification.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5402224,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5403280,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5208512,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5201120,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5197744,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5874208,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5880848,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5885088,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "turn-production-chain-owner-coverage"
+}
