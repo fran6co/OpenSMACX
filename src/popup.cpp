@@ -31,6 +31,8 @@
 #include "mapwin.h"     // MainInterfaceGlobal - the iface window at 0x007AE820
 #include "messagewin.h" // InterfaceMessageWin - the desktop window at 0x007F67F8
 #include "base.h"       // BaseIDCurrentSelected - the base the exec result goes to
+#include "lock.h"
+#include "map.h"
 #include "veh.h"
 #include "alpha.h"
 #include "xpops.h"
@@ -2053,4 +2055,139 @@ int Popup::set_picture(Sprite *picture, int mode, char *text) {
         set_caller_picture(0);
     }
     return dialogs().sprite(picture, text, mode);
+}
+
+// ORIGINAL: 0x0050B8D0 ?POP3@@YAXPBDHHH@Z 0x0050B8D0-0x0050B8EF BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["original:terranx_original.exe:0x0050B8D0-0x0050B8EF", "source:src/popup.cpp:typed owner", "source:src/popup.h:POP3 overload declarations", "original:0x004055A0 full POP3 target", "seed:retained original source identity 0x0050B8D0"], "reason": "The short POP3 entry is a typed overload that delegates its original arguments to the full POP3 owner."}
+// symbol    ?POP3@@YAXPBDHHH@Z
+void __cdecl POP3(const char *section, int mode, int x, int y) {
+    POP3(section, static_cast<const char *>(0), mode, x, y);
+}
+
+// ORIGINAL: 0x004055A0 ?POP3@@YAXPBDPBDHHH@Z 0x004055A0-0x00405910;0x00650839-0x006508CD
+// RECOVERY_BINDING: v1 {"evidence": ["original:terranx_original.exe:0x004055A0-0x00405910", "original:terranx_original.exe:0x00650839-0x006508CD", "source:src/popup.cpp:typed owner", "source:src/popup.h:Popup lifecycle", "source:src/basepop.h:unit_ids_ StringList member", "source:src/stringstruct.h:StringList cursor and payload API", "source:src/messagewin.cpp:MessageWinDeferredBaseMessages owner", "source:src/map.h:map bounds", "seed:retained original source identity 0x004055A0"], "reason": "The full POP3 operation belongs to the real Popup entry lifetime; it builds the unit-history text from the owned StringList, then routes to the existing interface message or typed per-faction PBEM queue."}
+// symbol    ?POP3@@YAXPBD0HHH@Z
+void __cdecl POP3(const char *section, const char *unused, int recipient,
+                  int x, int y) {
+    (void)unused;
+    Popup popup;
+    popup.start(PopupStartCaption, section, -1, 0, 0, 0);
+
+    StringList &history = popup.unit_ids_;
+    const int history_count = history.entry_count_;
+    StringTemp[0] = 0;
+    history.seek_pos(-1);
+    for (int history_index = 0; history_index < history_count;
+         ++history_index) {
+        if (history_index != 0) {
+            strcat(StringTemp, " ");
+        }
+        StringStructPayload *const history_payload = history.next_entry();
+        char *const history_text = history_payload != 0
+            ? history_payload->text : 0;
+        strcat(StringTemp, history_text);
+    }
+
+    if (IsMultiplayerPBEM == 0) {
+        MainInterfaceGlobal.set_message(StringTemp, 0x5F, 0, 1, 1);
+    } else if (recipient < 1) {
+        for (int faction = 1; faction < 8; ++faction) {
+            const unsigned int faction_mask = 1u << faction;
+            const int alive = (LockEnableMask & (faction_mask << 8)) != 0;
+            const int human = (LockEnableMask & faction_mask) != 0;
+            if (alive && human && y >= 0 && y < MapLatitudeBounds &&
+                x >= 0 && x < MapLongitudeBounds) {
+                StringList &pending = MessageWinDeferredBaseMessages[faction];
+                pending.pending_text_ = StringTemp;
+                pending.field_20_ = 0;
+                pending.field_24_ = 0;
+                pending.add((MapLongitudeBounds * y + x) | 0x80000000);
+            }
+        }
+    } else if (y >= 0 && y < MapLatitudeBounds && x >= 0 &&
+               x < MapLongitudeBounds) {
+        StringList &pending = MessageWinDeferredBaseMessages[recipient];
+        pending.pending_text_ = StringTemp;
+        pending.field_20_ = 0;
+        pending.field_24_ = 0;
+        pending.add((MapLongitudeBounds * y + x) | 0x80000000);
+    }
+}
+
+// ORIGINAL: 0x00627190 ?pop@@YAHPADPADPADHP6AHXZ@Z 0x00627190-0x006271CA BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["original:terranx_original.exe:0x00627190-0x006271CA", "source:src/popup.cpp:typed owner", "source:src/popup.h:nine-argument pops core", "source:src/popup.cpp:existing popup implementation", "seed:retained original source identity 0x00627190"], "reason": "The pop convenience wrapper preserves the original null-text result and forwards strlen plus the native default sprite and flags to the real popup builder."}
+// symbol    ?pop@@YAHPAD00HP6AHXZ@Z
+int __cdecl pop(char *caption, char *label, char *text, int value,
+                int (__cdecl *callback)()) {
+    if (text == 0) {
+        return -1;
+    }
+    const int text_length = static_cast<int>(std::strlen(text));
+    return pops(caption, label, text_length, text, value, 0, 1, 1,
+                callback);
+}
+
+// ORIGINAL: 0x00627440 ?pops@@YAHPADPADPADHPAUSprite@@P6AHXZ@Z 0x00627440-0x0062747D BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["original:terranx_original.exe:0x00627440-0x0062747D", "source:src/popup.cpp:typed owner", "source:src/popup.h:nine-argument pops core", "source:src/popup.cpp:existing popup implementation", "seed:retained original source identity 0x00627440"], "reason": "The sprite-bearing text overload preserves the null-text return and forwards its measured length with the original default flag pair."}
+// symbol    ?pops@@YAHPAD00HPAVSprite@@P6AHXZ@Z
+int __cdecl pops(char *caption, char *label, char *text, int value,
+                 Sprite *sprite, int (__cdecl *callback)()) {
+    if (text == 0) {
+        return -1;
+    }
+    const int text_length = static_cast<int>(std::strlen(text));
+    return pops(caption, label, text_length, text, value, sprite, 1, 1,
+                callback);
+}
+
+// This overload calls the CRT length routine in the original, rather than
+// expanding the compiler intrinsic. Keep the ordinary C API spelling.
+#pragma function(strlen)
+
+// ORIGINAL: 0x00627480 ?pops@@YAHPADPADPADHPAUSprite@@HHP6AHXZ@Z 0x00627480-0x006274C3 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["original:terranx_original.exe:0x00627480-0x006274C3", "source:src/popup.cpp:typed owner", "source:src/popup.h:nine-argument pops core", "source:src/popup.cpp:existing popup implementation", "seed:retained original source identity 0x00627480"], "reason": "The sprite-and-flags text overload forwards the measured text length and both caller flags without changing callback or sprite ownership."}
+// symbol    ?pops@@YAHPAD00HPAVSprite@@HHP6AHXZ@Z
+int __cdecl pops(char *caption, char *label, char *text, int value,
+                 Sprite *sprite, int flag_a, int flag_b,
+                 int (__cdecl *callback)()) {
+    if (text == 0) {
+        return -1;
+    }
+    return pops(caption, label, static_cast<int>(std::strlen(text)), text, value, sprite,
+                flag_a, flag_b, callback);
+}
+
+// The original numeric prompt calls strcat out of line; retain the ordinary
+// CRT API and its call rather than VC6's intrinsic expansion.
+#pragma function(strcat)
+
+// ORIGINAL: 0x00627A90 ?pop_ask_number@@YAHPADPADP6AHXZ@Z 0x00627A90-0x00627B58 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["original:terranx_original.exe:0x00627A90-0x00627B58", "source:src/basepop.h:BasePop hierarchy and popup instance slots", "source:src/popup.cpp:existing numeric popup lifecycle", "seed:retained original source identity 0x00627A90"], "reason": "Recover the complete zero-default numeric prompt through the real BasePop owner, preserving window selection, startup failure, callback execution, conditional redraw, parsed result and close order."}
+// symbol    ?pop_ask_number@@YAHPAD0P6AHXZ@Z
+int __cdecl pop_ask_number(char *caption, char *label,
+                           int (__cdecl *callback)()) {
+    char number_text[80];
+    const BOOL winVisible = PopupInstanceSlotA->is_visible();
+    Win *win = PopupInstanceSlotB;
+    if (!winVisible) {
+        win = PopupInstanceSlotA;
+    }
+    BasePop *pop = static_cast<BasePop *>(win);
+
+    StringTemp[0] = 0;
+    _itoa(0, number_text, 10);
+    strcat(StringTemp, number_text);
+
+    if (pop->start(caption, label, 9, StringTemp, 0x44, 0)) {
+        return -1;
+    }
+    pop->write_check(PopupWriteCheckState);
+    int execResult = pop->exec(0, callback);
+    if (pop->external_window_ == 0) {
+        do_all_draws();
+    }
+    ConsoleGroupAction = pop->field_3100_;
+    ParseNumTable[0] = atoi(ParseStrBuffer[0].str);
+    pop->close();
+    return execResult;
 }

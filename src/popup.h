@@ -309,3 +309,17 @@ int __cdecl popp(const char *caption, const char *label, int flags,
                  const char *picture, int (__cdecl *callback)());
 void __cdecl veh_sprite_draw(Sprite *sprite, GraphicWin *owner, int vehicle,
                             int x, int y);
+
+/* Original popup convenience overloads recovered in popup.cpp. */
+void __cdecl POP3(const char *section, int mode, int x, int y);
+void __cdecl POP3(const char *section, const char *unused, int recipient,
+                  int x, int y);
+int __cdecl pop(char *caption, char *label, char *text, int value,
+                int (__cdecl *callback)());
+int __cdecl pops(char *caption, char *label, char *text, int value,
+                 Sprite *sprite, int (__cdecl *callback)());
+int __cdecl pops(char *caption, char *label, char *text, int value,
+                 Sprite *sprite, int flag_a, int flag_b,
+                 int (__cdecl *callback)());
+int __cdecl pop_ask_number(char *caption, char *label,
+                           int (__cdecl *callback)());

@@ -336,15 +336,7 @@ int __cdecl battle_fight(int veh_id, int dir, int x, int y, int src_mode,
 // `pops()` still calls it BY NAME, so the call site keeps the image's
 // `call rel32`.
 
-// ?X_pops@@... at 0x005BF930 and ?X_pop@@... at 0x005BF480 - the two full
-// builders every xpops wrapper funnels into.
-int __cdecl X_pops(char *caption, const char *label, int a3, char *a4, int a5,
-                   Sprite *sprite, int a7, int a8, int (__cdecl *callback)()) {
-    typedef int(__cdecl *pending)(char *, const char *, int, char *, int,
-                                  Sprite *, int, int, int (__cdecl *)());
-    return PENDING_BODY(0x005BF930, pending)(caption, label, a3, a4, a5,
-                                             sprite, a7, a8, callback);
-}
+// X_pops (0x005BF930) is recovered in xpops.cpp.
 
 
 

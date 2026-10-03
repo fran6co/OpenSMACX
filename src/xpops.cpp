@@ -778,3 +778,73 @@ int __cdecl X_pop_ask_number(char *caption, const char *label, int value,
 
     return pop_ask_number(caption, section, value, callback);
 }
+
+// ORIGINAL: 0x005BFB10 ?X_pop_ask@@YAHPBDHP6AHXZH@Z 0x005BFB10-0x005BFB34 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["original:terranx_original.exe:0x005BFB10-0x005BFB34", "source:src/xpops.cpp:typed owner", "source:src/xpops.h:X_pop_ask overload family", "source:src/popup.cpp:PopupStartCaption and pop_ask_number owner", "seed:retained original source identity 0x005BFB10"], "reason": "The short X_pop_ask overload supplies the shared popup caption and forwards the original callback and flags to the existing text-dialog core."}
+int __cdecl X_pop_ask(const char *label, int value,
+                      int (__cdecl *callback)(), int flags) {
+    return X_pop_ask(PopupStartCaption, label, value,
+                     static_cast<char *>(0), callback, flags);
+}
+
+// The original text wrapper calls strlen out of line. Use the real CRT API,
+// with VC6's explicit function selection rather than a scaffold alias.
+#pragma function(strlen)
+
+// ORIGINAL: 0x005BFB80 ?X_pop_ask@@YAHPBDPADP6AHXZH@Z 0x005BFB80-0x005BFBC0 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["original:terranx_original.exe:0x005BFB80-0x005BFBC0", "source:src/xpops.cpp:typed owner", "source:src/xpops.h:X_pop_ask overload family", "source:src/popup.cpp:existing text-dialog core", "seed:retained original source identity 0x005BFB80"], "reason": "The text-bearing X_pop_ask overload preserves its null-text return and derives length with the existing C string API before forwarding."}
+int __cdecl X_pop_ask(const char *label, char *text,
+                      int (__cdecl *callback)(), int flags) {
+    if (text == 0) {
+        return -1;
+    }
+    return X_pop_ask(PopupStartCaption, label, static_cast<int>(std::strlen(text)), text,
+                     callback, flags);
+}
+
+// ORIGINAL: 0x005BF930 ?X_pops@@YAHPADPBDHPADHPAUSprite@@HHP6AHXZ@Z 0x005BF930-0x005BFAA2
+// RECOVERY_BINDING: v1 {"evidence": ["original:terranx_original.exe:0x005BF930-0x005BFAA2", "source:src/xpops.cpp:typed owner", "source:src/xpops.cpp:XPopModCheck literals/accessors and related routed overloads", "source:src/xpops.h:X_pops family", "source:src/popup.h:shared pops core", "seed:retained original source identity 0x005BF930"], "reason": "The full X_pops router belongs in xpops.cpp with its existing typed faction, caption/file literals, expansion flag, and shared popup core; it replaces only the pending executable forwarder."}
+// symbol    ?X_pops@@YAHPADPBDH0HPAVSprite@@HHP6AHXZ@Z
+// TRIED: precomputing the magic-string deref into a named local before the strcmp calls (#2 mismatch, 'mov' vs 'push'); same codegen.
+int __cdecl X_pops(char *caption, const char *label, int text_length,
+                   char *text, int value, Sprite *sprite, int flag_a,
+                   int flag_b, int (__cdecl *callback)()) {
+    char *const mutable_label = const_cast<char *>(label);
+    if (std::strcmp(caption, XPopModCheckString1()) != 0 &&
+        std::strcmp(caption, XPopModCheckString2Text) != 0) {
+        return pops(caption, mutable_label, text_length, text, value,
+                    sprite, flag_a, flag_b, callback);
+    }
+
+    if ((Players[ConsoleGlobal.faction_id_].rule_flags & RFLAG_ALIEN) != 0) {
+        if (ExpansionEnabled != 0) {
+            FILE *const file = fopen(XPopModCheckFile1Text,
+                                          XPopModCheckMode1Text);
+            if (file != 0) {
+                fclose(file);
+                const int result = pops(
+                    const_cast<char *>(XPopModCheckCaption1()), mutable_label,
+                    text_length, text, value, sprite, flag_a, flag_b, callback);
+                if (result != -1) {
+                    return result;
+                }
+            }
+        }
+    } else if (ExpansionEnabled != 0 && PopupDialogFactionID > 0 &&
+               PopupDialogFactionID < 8 &&
+               (Players[PopupDialogFactionID].rule_flags & RFLAG_ALIEN) != 0) {
+        FILE *const file = fopen(XPopModCheckFile2Text,
+                                      XPopModCheckMode2Text);
+        if (file != 0) {
+            fclose(file);
+            const int result = pops(
+                const_cast<char *>(XPopModCheckCaption2()), mutable_label,
+                text_length, text, value, sprite, flag_a, flag_b, callback);
+            if (result != -1) {
+                return result;
+            }
+        }
+    }
+    return pops(caption, mutable_label, text_length, text, value,
+                sprite, flag_a, flag_b, callback);
+}

@@ -95,3 +95,5 @@ extern MessageWin InterfaceMessageWin;
 // The image's message counter at 0x009393D0. Its owner is the desktop message
 // pane; the archive seeds for add_base, add_message, clear and init all use it.
 extern int MessageWinMessageCount;
+
+extern StringList MessageWinDeferredBaseMessages[8];
