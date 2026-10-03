@@ -1,0 +1,79 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "c4f3e64c763f19f484672235efe914f85f058cf1",
+  "editable_files": [
+    "src/popup.cpp",
+    "src/popup.h",
+    "src/xpops.cpp",
+    "src/xpops.h",
+    "src/messagewin.h",
+    "src/pending_bodies.cpp",
+    "src/recovered/units/004055a0.cpp",
+    "src/recovered/units/0050b8d0.cpp",
+    "src/recovered/units/005bfb10.cpp",
+    "src/recovered/units/005bfb80.cpp",
+    "src/unrecovered/005bf930.cpp",
+    "src/recovered/00627190.cpp",
+    "src/recovered/00627440.cpp",
+    "src/recovered/00627480.cpp",
+    "src/unrecovered/00627a90.cpp",
+    "recovery/tests/test_popup_wrapper_batch_behavior.py"
+  ],
+  "evidence": [
+    "Existing independent seed identities establish all nine original spans, including POP3's cold lifetime span; native-writer transfer must preserve every historical claim and useful lesson. No new byte claim or demotion is authorized.",
+    "Native POP3 0x40569B/0x4056A0 and StringStruct::next_entry prove that text traversal must consume the live advanced cursor; private packet v1's frozen-tail error is rejected by a distinct multi-entry damage control. Deferred queues are the existing StringList array in messagewin.cpp, not new executable-address aliases.",
+    "Actual compiled COFF output must reconcile historical scaffold-only emitted-symbol hints with genuine C++ signatures through the native symbol writer. Unknown or regressed measurements remain restoration obligations; do not erase claims to obtain green checks.",
+    "The coordinator reviews actual source, native caller/branch evidence, new/moved and protected bodies, application build/link and actual-source regression controls before manual integration. This task is not automatic, structural/runtime or full-game acceptance. No edits to other popup ownership groups are authorized."
+  ],
+  "intent": "Recover the nine-function popup/X-popup overload family in real owners, preserve historical claims and discoveries, remove the superseded X_pops executable forwarder and verified seed duplicates.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4216224,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5290192,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6028048,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6028160,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6027568,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6451600,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6452288,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6452352,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6453904,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "popup-wrapper-owner-coverage"
+}
