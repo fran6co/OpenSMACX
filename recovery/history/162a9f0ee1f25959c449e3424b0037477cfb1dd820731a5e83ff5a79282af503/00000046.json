@@ -1,0 +1,43 @@
+{
+  "event_id": "da68cc265982ff25b4b521e86804db29703ac5c2c0ac0bd86bc6b645b73ffcd0",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/recovered/units/0053a230.cpp",
+      "src/recovered/units/0053caf0.cpp",
+      "src/recovered/units/0053ce10.cpp",
+      "src/recovered/units/0053d160.cpp"
+    ],
+    "evidence": [
+      "Complete source-owner recovery of mention_prototypes, pact_of_brotherhood, make_treaty and pledge_truce. These four mapped seed-only functions are direct prerequisites of the already authorized complete communicate recovery. Full typed bodies, pinned native branch/call ordering and historical identities/notes must be preserved; superseded seeds may be removed only after verified source ownership and build/link. Private parallel worker produces bounded candidates and controls; coordinator alone publishes source/Git. No approval to insert fixed-address calls, compress behavior, demote claims or fabricate game acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5481008,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5491440,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5492240,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5493088,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "17911335781118b6bb514b20990f58d2c236a44aac0b73c17dfa594e7321c244",
+  "request_id": "diplomacy-producer-helpers-coverage-20261003",
+  "schema_version": 1,
+  "sequence": 46,
+  "stream": "task:base-colony-economy-coverage-wave"
+}
