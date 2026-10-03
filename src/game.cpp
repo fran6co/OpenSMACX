@@ -68,8 +68,24 @@
 #include "replaywin.h"
 #include "technology.h"
 #include "path.h"
+#include "alphasave.h"
+#include "netwin.h"
 
 extern int __cdecl def_caption_draw(GraphicWin *, char *, Buffer *);
+
+// RECOVERY_OBJECT: v1 0x006846B0 ?InterfaceStandardPopupBoxStyle@@3UBoxSpriteParams@@A
+BoxSpriteParams InterfaceStandardPopupBoxStyle = {
+    &g_IFACE_STD_POPUPS_TOP_LEFT_SPRITE,
+    &g_IFACE_STD_POPUPS_TOP_RIGHT_SPRITE,
+    &g_IFACE_STD_POPUPS_BOT_LEFT_SPRITE,
+    &g_IFACE_STD_POPUPS_BOT_RIGHT_SPRITE,
+    &g_IFACE_STD_POPUPS_TOP_MID_SPRITE,
+    &g_IFACE_STD_POPUPS_BOT_MID_SPRITE,
+    &g_IFACE_STD_POPUPS_MID_LEFT_SPRITE,
+    &g_IFACE_STD_POPUPS_MID_RIGHT_SPRITE,
+    &g_IFACE_STD_POPUPS_MIDDLE_BUFFER,
+    7
+};
 
 // The rainfall loader publishes three rows of four colors, one byte after
 // each get_pixel. The coast renderer consumes row 1 forward or backward.
@@ -5843,4 +5859,77 @@ void __cdecl save_map() {
 int __cdecl game_data(FILE *, int) {
     // BODY GOES HERE.
     return 0;
+}
+
+// ORIGINAL: 0x005AB600 ?load_map@@YAHXZ 0x005AB600-0x005ABB8D;0x006620A7-0x0066221F
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/005ab600.cpp", "recovery/tasks/game-save-load-owner-coverage.json", "pinned image sha256:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tests/test_load_map_behavior.py"], "reason": "Recover map loading through AlphaSave's real selected-path return and existing extension, map-daemon, multiplayer, preference, and dialog owners."}
+// TRIED: FileBox/AlphaSave are opaque (no fields) in this scaffold, so their real stack sizes are unknown; used one raw byte buffer + placement-new/reinterpret_cast at the exact ebp-relative offsets from the disasm (incl. the manual vtable pokes before AlphaSave/Scroll/FlatButton close() calls) instead of real SEH locals. Compiles, right call order/addresses/args, sim 0.34-0.50 - the missing SEH frame and giant flat buffer (vs per-object locals) rule out byte-exact; not retried given size (1797 bytes, ~30 embedded objects).
+int __cdecl load_map() {
+    FileBox file_box_lifetime;
+    AlphaSave dialog;
+    dialog.init();
+
+    char scenario_filter[16] = ".";
+    strcat(scenario_filter, ScenarioFileExtension);
+    dialog.add_default_extension(scenario_filter);
+    char save_filter[16] = ".";
+    strcat(save_filter, SaveGameFileExtension);
+    dialog.add_default_extension(save_filter);
+
+    char initial_pattern[260] = "maps\\*.";
+    strcat(initial_pattern, ScenarioFileExtension);
+    LPSTR preference_name = prefs_get("Latest Map", initial_pattern, 0xFF);
+    char default_name[264];
+    strncpy(default_name, preference_name, 0xFF);
+    if (strlen(default_name) == 0) strcpy(default_name, initial_pattern);
+    dialog.set_default_filename(default_name);
+
+    char *selected = dialog.load();
+    do_all_draws();
+    if (selected == 0) return 1;
+
+    char selected_path[260];
+    strcpy(selected_path, selected);
+    char preference_value[260];
+    strcpy(preference_value, selected);
+    char *dot = strchr(preference_value, '.');
+    if (dot != 0) *dot = '\0';
+    prefs_put("Latest Map", preference_value);
+
+    const int result = load_map_daemon(selected_path);
+    if (IsMultiplayerNet != 0) {
+        if (result == 0) {
+            NetWinDialog.field_7624_[0] = '\0';
+            strcat(reinterpret_cast<char *>(NetWinDialog.field_7624_),
+                   preference_value);
+            NetWinDialog.field_7728_ = 1;
+        } else {
+            parse_says(0, selected_path, -1, -1);
+            parse_num(0, result);
+            StringTemp[0] = '\0';
+            strcat(StringTemp, "LOAD");
+            switch (result) {
+            case 1: strcat(StringTemp, "NONE"); break;
+            case 2: strcat(StringTemp, "NOT"); break;
+            case 3: strcat(StringTemp, "OLD"); break;
+            default: strcat(StringTemp, "ERROR"); break;
+            }
+            X_pop(StringTemp, 0);
+            do_all_draws();
+        }
+    } else if (result != 0) {
+        parse_says(0, selected_path, -1, -1);
+        parse_num(0, result);
+        StringTemp[0] = '\0';
+        strcat(StringTemp, "LOAD");
+        switch (result) {
+        case 1: strcat(StringTemp, "NONE"); break;
+        case 2: strcat(StringTemp, "NOT"); break;
+        case 3: strcat(StringTemp, "OLD"); break;
+        default: strcat(StringTemp, "ERROR"); break;
+        }
+        X_pop(StringTemp, 0);
+        do_all_draws();
+    }
+    return result;
 }

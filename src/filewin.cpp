@@ -23,6 +23,8 @@
 #include "basebutton.h"
 #include "basepop.h"
 #include "buffer.h"
+#include "general.h"
+#include "popup.h"
 #include "temp.h"  // HandleMain
 
 // RECOVERY_OBJECT: v2 0x009B90AC 0x009B90B0 ?ActiveFileWin@@3PAVFileWin@@A 0x00613D50
@@ -72,6 +74,50 @@ int FileWin::add_def_ext(char *extension) {
     return 0;
 }
 
+// ORIGINAL: 0x006141C0 ?set_def_name@FileWin@@QAEHPAD@Z 0x006141C0-0x006142C9
+// RECOVERY_BINDING: v1 {"evidence": ["src/leaf_recoveries.cpp", "recovery/tasks/game-save-load-owner-coverage.json", "pinned image sha256:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tests/test_filewin_default_name_behavior.py"], "reason": "Home the default-name split to the actual FileWin buffers and preserve null, overlength, root, drive, and original boundary behavior."}
+// TRIED: plain strlen/strcat declarations get inlined by /O2, which the original does not do at this call site; the function-pointer cast idiom forces a real call and got the prologue and the backslash-search loop byte-exact. Still MISMATCH on the drive-letter append block's fall-through layout.
+int FileWin::set_def_name(char *name) {
+    if (name == 0) {
+        file_name_[0] = '\0';
+        return 0;
+    }
+    if (strlen(name) > 0x104) return 3;
+
+    char working[0x104];
+    working[0] = '\0';
+    strcat(working, name);
+    char *scan = working + strlen(working);
+    char *tail;
+    char *head;
+    while (scan != working) {
+        if (*scan == '\\') {
+            if (scan == working) break;
+            tail = scan + 1;
+            *scan = '\0';
+            head = working;
+            goto have_name;
+        }
+        --scan;
+    }
+    tail = scan;
+    head = 0;
+
+have_name:
+    file_name_[0] = '\0';
+    strcat(file_name_, tail);
+    if (head != 0) {
+        if (head[1] == ':') strcat(head, "\\");
+        if (strlen(head) <= 0x104) {
+            directory_[0] = '\0';
+            strcat(directory_, head);
+        }
+        return 0;
+    }
+    directory_[0] = '\0';
+    return 0;
+}
+
 // The modal Win's focus-list nodes carry a window pointer at +4 and a next
 // pointer at +0xC. WinNodeList owns the sequence and cursor; this view only
 // describes a node encountered by the file-dialog callback.
@@ -116,6 +162,142 @@ void FileWin::on_button_clicked(int button_id) {
         SetCurrentDirectoryA("..");
         populate_directory(".");
     }
+}
+
+// Confirmation builds the full selected path and its basename in FileWin
+// storage, then releases or refocuses the modal owner through its real controls.
+// Focus is captured before changing the editor selection.
+// ORIGINAL: 0x006146A0 ?UNK4@FileWin@@QAEXXZ 0x006146A0-0x00614B59
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/006146a0.cpp", "recovery/tasks/game-save-load-owner-coverage.json", "pinned image sha256:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tests/test_filewin_unk4_full_branches.py", "recovery/tests/test_filewin_load_contract_behavior.py"], "reason": "Recover the complete FileWin confirmation path through its real selected-path buffers, EditBox/ListBox, modal owner, and focus-list lifecycle."}
+void FileWin::UNK4() {
+    Win *entry_focus = 0;
+    if (modal_window_->list_.count_ != 0) {
+        FileWinFocusNode *const node =
+            static_cast<FileWinFocusNode *>(modal_window_->list_.current_);
+        entry_focus = node->window;
+    }
+
+    edit_box_.select_all_text();
+    edit_box_.redraw();
+    purge_spaces(edit_box_.text_);
+
+    char name_buffer[260];
+    WIN32_FIND_DATAA selected_file;
+    HANDLE selected_handle = INVALID_HANDLE_VALUE;
+    bool selected_exists = false;
+    name_buffer[0] = 0;
+    strcat(name_buffer, edit_box_.text_);
+
+    int status;
+    if (strcmp(edit_box_.text_, "..") == 0) {
+        status = 2;
+    } else {
+        char *const suffix = strrchr(name_buffer, '.');
+        status = 0;
+        if (suffix != name_buffer && extension_count_ > 0) {
+            for (int extension_index = 0;
+                 extension_index < extension_count_; ++extension_index) {
+                if (suffix == 0) {
+                    char *const appended_suffix = strrchr(name_buffer, '.');
+                    if (appended_suffix != 0) *appended_suffix = 0;
+                    strcat(name_buffer, extension_filters_[extension_index]);
+                }
+
+                WIN32_FIND_DATAA found;
+                const HANDLE handle = FindFirstFileA(name_buffer, &found);
+                if (handle != INVALID_HANDLE_VALUE) {
+                    status = 1;
+                    FindClose(handle);
+                    break;
+                }
+                FindClose(handle);
+            }
+        }
+    }
+
+    if (status == 0) {
+        if (populate_directory(edit_box_.text_) != 0) goto restore_dialog_focus;
+    } else if (status != 1) {
+        if (status == 2) {
+            name_buffer[0] = 0;
+            strcat(name_buffer, "..");
+            populate_directory(name_buffer);
+        }
+        goto restore_dialog_focus;
+    }
+
+    selected_path_[0] = 0;
+    selected_basename_[0] = 0;
+    if (strchr(name_buffer, '\\') == 0) {
+        GetCurrentDirectoryA(0x104, selected_path_);
+        const size_t directory_length = strlen(selected_path_);
+        if (name_buffer[0] != '\\' &&
+            selected_path_[directory_length - 1] != '\\') {
+            strcat(selected_path_, "\\");
+        }
+        strcat(selected_path_, name_buffer);
+        strcat(selected_basename_, name_buffer);
+    } else {
+        if (name_buffer[1] != ':') {
+            GetCurrentDirectoryA(0x104, selected_path_);
+            if (name_buffer[0] != '\\') strcat(selected_path_, "\\");
+        }
+        strcat(selected_path_, name_buffer);
+        char *const last_separator = strrchr(selected_path_, '\\');
+        strcat(selected_basename_, last_separator + 1);
+    }
+
+    selected_handle = FindFirstFileA(name_buffer, &selected_file);
+    selected_exists = selected_handle != INVALID_HANDLE_VALUE;
+    if (selected_exists) FindClose(selected_handle);
+
+    if (field_638_ == 0xC8) {
+        if (selected_exists) {
+            modal_window_->release_modal();
+        } else {
+            parse_says(0, name_buffer, -1, -1);
+            char message[260];
+            message[0] = 0;
+            strcat(message, current_directory_);
+            strcat(message, "\\");
+            strcat(message, "jackal");
+            char load_label[] = "FILEWIN_LOAD";
+            pop_caption_title(message, load_label, 0x200000, 0);
+        }
+    } else if (field_638_ == 0x64) {
+        if (selected_exists) {
+            parse_says(0, name_buffer, -1, -1);
+            char message[260];
+            message[0] = 0;
+            strcat(message, current_directory_);
+            strcat(message, "\\");
+            strcat(message, "jackal");
+            char save_exists_label[] = "FILEWIN_SAVEEXISTS";
+            if (pop_caption_title(message, save_exists_label, 0x200040, 0) != 0)
+                goto restore_dialog_focus;
+        } else {
+            const char invalid_filename_chars[] = "\\\"/[]:;=";
+            const size_t valid_prefix =
+                strcspn(selected_basename_, invalid_filename_chars);
+            if (valid_prefix != strlen(selected_basename_)) {
+                char message[260];
+                message[0] = 0;
+                strcat(message, current_directory_);
+                strcat(message, "\\");
+                strcat(message, "jackal");
+                char illegal_char_label[] = "FILEWIN_ILLEGALCHAR";
+                pop_caption_title(message, illegal_char_label, 0x200040, 0);
+                goto restore_dialog_focus;
+            }
+        }
+        modal_window_->release_modal();
+    }
+
+restore_dialog_focus:
+    modal_window_->set_dialog_focus(
+        entry_focus == static_cast<Win *>(&edit_box_)
+            ? static_cast<Win *>(&edit_box_)
+            : static_cast<Win *>(&list_box_));
 }
 
 // ORIGINAL: 0x00613D50 ?save@FileWin@@QAEXXZ 0x00613D50-0x00613F5C

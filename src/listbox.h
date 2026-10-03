@@ -132,6 +132,7 @@ class ListBox : public virtual GraphicWin, public virtual Dialog {
     write_callback_ = write;
     fill_callback_ = fill;
   }
+  void set_draw_callback(DrawCallback draw) { draw_callback_ = draw; }
   void set_message_initial_state() {
     field_10_ = 0;
     field_14_ = static_cast<uint32_t>(-1);

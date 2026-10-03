@@ -410,11 +410,6 @@ void Datalink::exec(unsigned int topic, int index) {  // 0x00429180
 // calls it BY NAME.
 
 
-void FileWin::UNK4() {  // 0x006146A0
-    typedef void(__fastcall *pending)(FileWin *, void *);
-    PENDING_BODY(0x006146A0, pending)(this, nullptr);
-}
-
 // ReportWin::sat_anim (0x0049FE40) WAS HERE: the body is homed into
 // src/reportwin.cpp 2026-09-27 (the sixteen-satellite orbital tick). Its
 // daemon wrapper sat_anim_daemon (leaf_recoveries.cpp) already called it
@@ -1031,15 +1026,6 @@ int __cdecl load_game(int a1, int a2) {
     typedef int(__cdecl *pending)(int, int);
     return PENDING_BODY(0x005AAAB0, pending)(a1, a2);
 }
-
-int __cdecl load_map() {
-    typedef int(__cdecl *pending)();
-    return PENDING_BODY(0x005AB600, pending)();
-}
-
-
-
-
 
 int __cdecl size_of_planet(int a1) {
     typedef int(__cdecl *pending)(int);

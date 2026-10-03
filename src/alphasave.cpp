@@ -15,6 +15,11 @@
 #include "game.h"
 #include "netdaemon.h"
 #include "strings.h"
+#include "maininterface.h"
+#include "palette.h"
+
+extern int TextColourTable[195];
+extern BoxSpriteParams InterfaceStandardPopupBoxStyle;
 
 // Image references from AlphaSave::show/save/load store this, hide clears it,
 // and filebox_draw tests it. The storage is distinct from ConsoleGlobal.
@@ -46,6 +51,111 @@ void __cdecl scroll_show(GraphicWin *window, Scroll *scroll);
 void __cdecl scroll_normal();
 void __cdecl slide_show(GraphicWin *window, int mode);
 void __cdecl slide_hide(GraphicWin *window, int mode);
+
+static void alpha_save_store_rect(RECT &rect, int left, int top,
+                                  int right, int bottom) {
+    rect.left = left;
+    rect.top = top;
+    rect.right = right;
+    rect.bottom = bottom;
+}
+
+// Modal geometry uses the 18-DWORD FileWinConstruct input; FileWin snapshots
+// its 17-DWORD prefix. The dialog borrows the interface fonts and popup style
+// while owning the controls initialized below.
+// ORIGINAL: 0x00407410 ?init@AlphaSave@@QAEXXZ 0x00407410-0x00407906;0x00650C60-0x00650C75
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00407410.cpp", "recovery/tasks/game-save-load-owner-coverage.json", "pinned image sha256:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tests/test_alphasave_init_behavior.py", "recovery/tests/test_standard_popup_style_behavior.py"], "reason": "Recover AlphaSave modal initialization through its embedded FileWin, exact admitted FileWinConstruct geometry, current typed fonts, and existing popup-style owners."}
+void AlphaSave::init() {
+    Buffer scratch;
+    const int visible = ConsoleGlobal.is_visible();
+    const int compact = visible ? 0 : 1;
+    const int inset = visible ? 0x17 : 0;
+
+    const int center_delta = WinScreenWidth - 0x13C;
+    const int half_delta = center_delta / 2;
+    const int x = half_delta - inset;
+    const int y = WinScreenHeight - MainInterfaceGlobal.panel_height()
+        - (compact + 0x1A) - 0x177;
+    const int width = visible ? 0x18A : 0x14E;
+    const int height = visible ? 0x191 : 0x189;
+    Win *parent = visible ? static_cast<Win *>(&ConsoleGlobal) : 0;
+
+    GraphicWin::init(x, y, width, height, 0, 0x1001000, parent, 0, 0);
+    GraphicWin::fill(9);
+
+    RECT frame = *buffer_working_rect();
+    if (visible) {
+        frame.left += 0x17;
+        frame.right -= 0x37;
+        frame.bottom += 0x0A;
+        box_sprite(&frame, &InterfaceBoxStyles[9]);
+    } else {
+        box_sprite(&frame, &InterfaceStandardPopupBoxStyle);
+        frame.left += 9;
+        frame.top += 9;
+        frame.right -= 9;
+        frame.bottom -= 9;
+    }
+    frame.right -= 3;
+    frame.left += 3;
+    frame.bottom -= 3;
+    frame.top += 3;
+    box_sprite(&frame, &InterfaceBoxStyles[0]);
+
+    FileWinConstruct layout;
+    layout.field_00_ = visible ? 0 : 0x80020;
+    if (visible) {
+        alpha_save_store_rect(layout.list_box_bounds_, inset + 5, compact + 0x20,
+                              inset + 0x136, compact + 0x140);
+        alpha_save_store_rect(layout.edit_box_bounds_, inset + 8, compact + 0x142,
+                              inset + 0x134, compact + 0x156);
+        alpha_save_store_rect(layout.button2_bounds_, inset + 10, compact + 0x15C,
+                              inset + 0x99, compact + 0x172);
+        alpha_save_store_rect(layout.button1_bounds_, inset + 0xA2,
+                              compact + 0x15C, inset + 0x132, compact + 0x172);
+    } else {
+        alpha_save_store_rect(layout.list_box_bounds_, 0x0E, compact + 0x29,
+                              0x13F, compact + 0x149);
+        alpha_save_store_rect(layout.edit_box_bounds_, 0x11, compact + 0x14B,
+                              0x13D, compact + 0x15F);
+        alpha_save_store_rect(layout.button2_bounds_, 0x13, compact + 0x165,
+                              0xA2, compact + 0x17B);
+        alpha_save_store_rect(layout.button1_bounds_, 0xAB, compact + 0x165,
+                              0x13B, compact + 0x17B);
+    }
+    layout.field_44_ = inset + 8;
+    file_win_.init(0, this, &layout);
+
+    Dialog &list_dialog = file_win_.list_box_;
+    list_dialog.set_dialog_font(MainInterfaceGlobal.secondary_font(), 0, 0);
+    list_dialog.set_dialog_text_color(TextColourTable[0], TextColourTable[1], 1, 1);
+    file_win_.list_box_.set_report_text_color(TextColourTable[2]);
+    file_win_.list_box_.reset_report_selection();
+    file_win_.list_box_.set_draw_callback(alpha_save_filebox_draw);
+    list_dialog.field_48_ = 0x16;
+    list_dialog.field_4C_ = 1;
+    list_dialog.field_B4_ = 0;
+    list_dialog.field_20_ &= ~4u;
+    list_dialog.on_redraw();
+
+    EditBox &edit = file_win_.edit_box_;
+    edit.set_font(MainInterfaceGlobal.secondary_font(), 0, 0, 0);
+    edit.field_B1C_ = TextColourTable[10];
+    edit.set_text_color(TextColourTable[4], TextColourTable[5], 1, 1);
+    edit.field_B20_ = TextColourTable[6];
+    edit.field_B24_ = TextColourTable[8];
+    edit.field_B28_ = TextColourTable[8];
+    edit.field_B2C_ = TextColourTable[8];
+    edit.on_dialog_focus(1);
+    edit.redraw();
+
+    file_win_.flat_button2_.set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
+    file_win_.flat_button2_.redraw();
+    file_win_.flat_button2_.redraw();
+    file_win_.flat_button1_.set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
+    file_win_.flat_button1_.redraw();
+    file_win_.flat_button1_.redraw();
+}
 
 // ORIGINAL: 0x00407350 ??0AlphaSave@@QAE@XZ 0x00407350-0x00407410;0x00650BF0-0x00650C60
 AlphaSave::AlphaSave() {
@@ -261,4 +371,8 @@ char *AlphaSave::load() {
 
 int AlphaSave::add_default_extension(char *extension) {
     return file_win_.add_def_ext(extension);
+}
+
+int AlphaSave::set_default_filename(char *name) {
+    return file_win_.set_def_name(name);
 }

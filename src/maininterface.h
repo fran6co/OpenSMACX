@@ -125,6 +125,7 @@ class MainInterface : public GraphicWin, public SubInterface {
   // The shared UI font at global 0x007CFE8C is this object's font1_ at
   // +0x2166C. ReplayWin's title and other windows borrow it, not own it.
   Font *primary_font() { return &font1_; }
+  Font *secondary_font() { return &font2_; }
   FlatButton &flat_button(int index) { return flat_button_[index]; }
   const RECT &main_frame_rect() const { return rect4_; }
   const RECT &main_layout_rect() const { return rect1_; }

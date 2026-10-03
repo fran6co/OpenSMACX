@@ -38,6 +38,8 @@ class AlphaSave : public GraphicWin {
   void on_selected(int selection_id);
   void save();
   char *load();
+  void init();
+  int set_default_filename(char *name);
   int add_default_extension(char *extension);
 
  private:
