@@ -92,6 +92,9 @@ template<class T> inline T *allocate_list_node(StringStruct *list, T *) {
 // Append before the circular head. Preserve the original partial mutations on
 // allocation failure and ignore the insertion hook's return value: neither
 // rollback nor propagating that value is part of 0x00401100's behavior.
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// Historical seed observations (not fresh measurements or acceptance):
+// TRIED: alloc_entry_node/alloc_id_node/report_fatal helper functions factoring the repeated Heap::get-or-mem_get pattern; introduces real CALLs the inlined original does not have, diverges at insn #4
 // ORIGINAL: 0x00401100 ?add@StringStruct@@QAEHH@Z 0x00401100-0x00401513
 // RECOVERY_BINDING: v1 {"evidence": ["Original 401100 selects explicit allocator then inherited allocation owner then mem_get, constructs entry size1C and payload size18 with distinct virtual-base tables. Native construction replaces seed vptr writes; source class names remain interpretations.", "Original 4013B1 publishes the entry allocation into the old tail next link before the null test; 4012D2/4014DC publish null payloads before returning4. Insertion hook result is ignored; count and position update only after it returns. Same-span legacy seed retained."], "reason": "Recover circular-list insertion with real node construction and the original partial updates on allocation failure."}
 int StringStruct::add(int id) {

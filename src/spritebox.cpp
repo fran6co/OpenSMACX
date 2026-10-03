@@ -378,6 +378,9 @@ void SpriteBox::on_dialog_focus(int a1) {
     redraw();
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// Historical seed observations (not fresh measurements or acceptance):
+// TRIED: no Ghidra hypothesis was provided for this address; body is a direct register-to-variable transcription of the disassembly (no vtable shim - all callees are direct calls; `T[1]`/`T[2]` model a per-class layout-offset table read through ebx= this-0xaa4). Compiles and matches through instr #1; diverges at #2 (push vs mov, prologue-adjacent). Landed at MISMATCH.
 // ORIGINAL: 0x00610540 ?attach@SpriteBox@@QAEHPAUGraphicWin@@HHH@Z 0x00610540-0x006108D5 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00610540.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x610540 complete control/data-access review and src/spritebox.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
 // symbol    ?attach@SpriteBox@@UAEHPAVGraphicWin@@HHH@Z
@@ -580,6 +583,9 @@ void SpriteBox::draw_item(int position) {
     }
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// Historical seed observations (not fresh measurements or acceptance):
+// TRIED: `this` is offset by TWO different constants for two different base sub-objects (this-0x7c for Spot::check, this-0x8c for the SpriteBox proper, whose field_0_ IS *(this-0x8c)); modelled with raw char*-adjusted casts rather than real inheritance. `a2` is an in/out param aliased via `&a2` into check(). Gets to instruction 25 of ~90 before diverging on push/mov ordering around the `push ebp; push esi` callee-save point.
 // ORIGINAL: 0x00611060 ?on_left_click@SpriteBox@@QAEXHH@Z 0x00611060-0x0061114A FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00611060.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x611060 complete control/data-access review and src/spritebox.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
 void SpriteBox::on_left_click(int x, int y) {

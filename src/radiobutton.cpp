@@ -157,6 +157,9 @@ uint32_t RadioButton::close() {
 // Seed identity: ?draw_item@RadioButton@@QAEXHH@Z at 0x0060D750.
 // The state argument selects the checked/unchecked sprite and also controls
 // the focus rectangle, as shown by the original post-draw branch.
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// Historical seed observations (not fresh measurements or acceptance):
+// TRIED: full register-level transliteration (RD macro + eax/ebx/ecx/edx/edi/ebp locals, goto for shared tails); compiles and matches control flow through the vbtable-offset chases, StringStruct/Dialog/Buffer/Sprite/Win member calls, but MISMATCH #5 (prologue register order) not chased further.
 // ORIGINAL: 0x0060D750 ?draw_item@RadioButton@@QAEXHH@Z 0x0060D750-0x0060DE08
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0060d750.cpp:1 maps ?draw_item@RadioButton@@QAEXHH@Z to 0x0060D750–0x0060DE08. The supplied record identifies it as an existing scoped legacy_seed.", "src/radiobutton.cpp:159–280 contains the unannotated RadioButton::draw_item(int position, int state) definition using actual GraphicWin/Dialog bases, item-list members and Buffer/Sprite calls. Lines 237–242 require both sprite pointers and select checked_sprite_ for nonzero state, unchecked_sprite_ otherwise.", "Fresh original-image SHA-256 matches pinned 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf. Original 0x0060DAE8 and 0x0060DAF3 load this+8 and this+4; 0x0060DAFE reads [esp+0x3C], the second explicit argument after 0x24 locals and four saved registers. The nonzero branch draws this+8 and the zero branch draws this+4, consistent with src/radiobutton.h:89–92.", "Fresh source SHA-256 and definition line were obtained read-only. RadioButton is included in this finding and task scope, and src/radiobutton.cpp is editable under the supplied authorization. Native binding publication, discovery reassessment and compiler verification remain outstanding; no code is accepted."], "reason": "Bind the existing scoped RadioButton seed to its unannotated product definition under explicit seed_bindings delegation. The signature and state-dependent Sprite member selection have original evidence. Preserve seed spans/history, task baseline and pending discovery; binding does not establish correctness or acceptance."}
 void RadioButton::draw_item(int position, int state) {
@@ -300,6 +303,9 @@ void RadioButton::draw_item(int position, int state) {
 // 0x0060D380. The dialog list cursor is intentionally advanced in place, as
 // in the original: each entry caches the number of wrapped text lines in its
 // payload while the row/column dimensions are calculated.
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// Historical seed observations (not fresh measurements or acceptance):
+// TRIED: full Ghidra-derived arithmetic transliteration (vtbl[1]/vtbl[2] base offsets, Buffer receiver fixed up) compiles and matches logic; MISMATCH #1 is prologue register-save order, not chased.
 // ORIGINAL: 0x0060D380 ?calculate_dimensions@RadioButton@@QAEHXZ 0x0060D380-0x0060D745 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0060d380.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x60d380 complete control/data-access review and src/radiobutton.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
 int RadioButton::calculate_dimensions() {
@@ -399,6 +405,9 @@ int RadioButton::calculate_dimensions() {
     return 0;
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// Historical seed observations (not fresh measurements or acceptance):
+// TRIED: none confirmed byte-exact; MISMATCH #26 'push' vs 'mov', same vtable-array-double-read shape as the sibling CheckBox::attach (0x0060E800). GraphicWin::init's scaffold return type is void (the mangled name spells X), so the caller cannot propagate its failure code the way the CheckBox::attach byte pattern implies it should - RadioButton::attach DOES check calculate_dimensions()'s return here, unlike CheckBox's.
 // ORIGINAL: 0x0060D1F0 ?attach@RadioButton@@QAEHPAUGraphicWin@@HHH@Z 0x0060D1F0-0x0060D377 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0060d1f0.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x60d1f0 complete control/data-access review and src/radiobutton.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
 // symbol    ?attach@RadioButton@@UAEHPAVGraphicWin@@HHH@Z
@@ -420,6 +429,16 @@ int RadioButton::attach(GraphicWin *parent, int x, int y, int flags) {
     return 0;
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// Historical seed observations (not fresh measurements or acceptance):
+// TRIED: 200 vs 222 bytes; the many named int locals (offsets, args) push an extra callee-saved register before the first field read, where the original moves `this` into edi first. Did not try collapsing to fewer locals given budget.
+// `[edi-0x18]` at entry (edi=ecx=`this`) is a virtual-base recovery: this
+// class is entered with `this` already adjusted, and `this-0x18` is the
+// real object start whose OWN vtable+4 gives a further byte offset used
+// to reach members past that. The pattern repeats at vtbl+8 for a second
+// virtual base. slot010 needs its own shim (int argument, int return);
+// the emitted VCall's slots are void().
+// Deleted seed provenance: git:26e5eed1:src/unrecovered/0060e220.cpp
 // ORIGINAL: 0x0060E220 ?on_redraw@RadioButton@@QAEXXZ 0x0060E220-0x0060E2FE FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0060e220.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x60e220 complete control/data-access review and src/radiobutton.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
 // symbol    ?on_redraw@RadioButton@@UAEXXZ

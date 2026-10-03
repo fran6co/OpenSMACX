@@ -807,6 +807,13 @@ void BaseButton::on_left_down(int, int) {
 
 // 0x00607720. Complete the capture release before servicing the long-click
 // timer, matching the order of the image's two capture-slot tests.
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// Historical seed observations (not fresh measurements or acceptance):
+// TRIED: extra VC24/VC43 shims for the two non-void vtable slots (23 returns int, 42 takes int); IAT-style function pointers for timeGetTime/Sleep instead of named imports. First divergence #43 test/push.
+// Slot 23 returns int (used as a boolean); slot 42 takes one int. The
+// scaffold's VCall types every slot void(), so a second/third shim
+// with the real trailing signature is needed for these two calls.
+// Deleted seed provenance: git:26e5eed1:src/unrecovered/00607720.cpp
 // ORIGINAL: 0x00607720 ?on_left_up@BaseButton@@QAEXHH@Z 0x00607720-0x006077E6 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00607720.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x607720 complete control/data-access review and src/basebutton.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
 // symbol    ?on_left_up@BaseButton@@UAEXHH@Z
@@ -841,6 +848,9 @@ void BaseButton::on_left_up(int, int) {
 
 // 0x00607A20. The group owns the optional radio-style click policy; ordinary
 // parents receive their existing Win callback and per-button callback.
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// Historical seed observations (not fresh measurements or acceptance):
+// TRIED: caching *(self+0xc4) into one local instead of re-reading it at each of the two use sites moved `push edi` out of place. A member-pointer union shim per call site (void/int-return/int-arg) reproduces direct `call [reg+disp]` for the void and arg slots; the int-returning slot (0x5c) still gets an extra `mov eax,[...]` before `call eax` instead of a direct `call [eax+0x5c]`, and the target==-1/-2 short-circuit collapses the original's per-branch duplicated `test/je` into one shared test. 2 edits, 63/65 shared.
 // ORIGINAL: 0x00607A20 ?on_left_click@BaseButton@@QAEXHH@Z 0x00607A20-0x00607AF3 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00607a20.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x607a20 complete control/data-access review and src/basebutton.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
 void BaseButton::on_left_click(int, int) {
@@ -945,6 +955,9 @@ void __cdecl fn_00607b10(int a1, BaseButton* button) {
 // The first timer stage shows the button's bubble at its screen position;
 // the second schedules the repeating stage. Other ticks use Win's actual
 // virtual callback rather than a synthetic slot-table shim.
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// Historical seed observations (not fresh measurements or acceptance):
+// TRIED: reading the 4 rect fields through a `RECT*` base pointer, and through 4 plain named int locals (Ghidra's own local_10/local_c/local_8/ local_4 shape) - neither recovers the original's single `lea`-then-4-reads codegen; /O2 keeps re-deriving `[esi+0x13c+k]` per read either way. Not reproduced; everything else (branch shape, vtable shim at +0x50, Time start/stop calls) matches.
 // ORIGINAL: 0x00607B30 ?timer_callback@BaseButton@@QAEXH@Z 0x00607B30-0x00607C29
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00607b30.cpp;src/basebutton.h:Time members;image:0x00607B30-0x00607C29"], "reason": "The BaseButton timer stage owns bubble positioning, repeat scheduling, and its inherited Win callback; the former pending forwarder has been replaced by typed state and calls."}
 void BaseButton::timer_callback(int stage) {

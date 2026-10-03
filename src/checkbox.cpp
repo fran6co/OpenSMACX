@@ -316,6 +316,15 @@ void CheckBox::draw_item(int position, int state, int) {
 // 0x0060ED10. Preserve the circular list cursor updates, bitmap-derived
 // default cell dimensions, and fixed/automatic geometry branches of the
 // original dialog control.
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// Historical seed observations (not fresh measurements or acceptance):
+// TRIED: MISMATCH #101 push/xor - three min/max ternaries rewritten as if/else (operand order matching the original's cmp/jcc) moved the divergence from #78 to #101; further tweaks to the text_height() ternary and the max_width loop's > vs >= made no further difference.
+// Virtual-base offsets are read from the vbtable at runtime rather than
+// hardcoded, matching the same pattern confirmed on EditGroup::calculate_dimensions
+// (0x00612150): vbtable[1] (byte offset 4) is the GraphicWin base offset,
+// vbtable[2] (byte offset 8) is the Dialog base offset, and a Buffer member
+// sits at GraphicWin_base + 0x444.
+// Deleted seed provenance: git:26e5eed1:src/unrecovered/0060ed10.cpp
 // ORIGINAL: 0x0060ED10 ?calculate_dimensions@CheckBox@@QAEHXZ 0x0060ED10-0x0060F02B FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0060ed10.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x60ed10 complete control/data-access review and src/checkbox.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
 int CheckBox::calculate_dimensions() {
@@ -393,6 +402,9 @@ int CheckBox::calculate_dimensions() {
     return 0;
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// Historical seed observations (not fresh measurements or acceptance):
+// TRIED: nothing confirmed byte-exact; MISMATCH #3 'push' vs 'mov' - the vtable-array double-reads (edx/ecx caching across the 0xa34/0x1c constants) get register-allocated differently than the original's edi-kept-live scheme.
 // ORIGINAL: 0x0060E800 ?attach@CheckBox@@QAEHPAUGraphicWin@@HHH@Z 0x0060E800-0x0060E97F FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0060e800.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x60e800 complete control/data-access review and src/checkbox.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
 // symbol    ?attach@CheckBox@@UAEHPAVGraphicWin@@HHH@Z
@@ -413,6 +425,9 @@ int CheckBox::attach(GraphicWin *parent, int x, int y, int flags) {
     return 0;
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// Historical seed observations (not fresh measurements or acceptance):
+// TRIED: reusing one `char *b = self - 0x1c` for both the vtable-slot lookup and the null-check-then-adjust pattern collapses two distinct registers (edi and ebp in the original, which hold the same VALUE but are never merged) into one - the original keeps a separate register alive purely for the "cast-to-virtual-base" null check, this candidate CSEs it away. 69/84 mnemonics match, no stack spill (ternary over if/else avoided the local-int spill an earlier if/else form produced).
 // ORIGINAL: 0x0060FAB0 ?on_redraw@CheckBox@@QAEXXZ 0x0060FAB0-0x0060FB8D FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0060fab0.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x60fab0 complete control/data-access review and src/checkbox.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
 // symbol    ?on_redraw@CheckBox@@UAEXXZ

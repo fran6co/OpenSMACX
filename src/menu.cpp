@@ -86,6 +86,7 @@ int Menu::init(Win *owner) {
     return 0;
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005FAEF0 ?add_menu@Menu@@QAEHHPADH@Z 0x005FAEF0-0x005FB0FA;0x00662D22-0x00662D37
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/005faef0.cpp", "image:Menu6700B0/AlphaMenu66ED88/PullDown66FF40 constructor-selected primary tables; Buffer secondary subobject+444", "recovery/tasks/popup-font-configuration-owner-closure.json"], "reason": "Recover this complete operation in its genuine Menu/PullDown owner, using native constructor-selected virtual dispatch, real members and shared source-owned dependencies; preserve original identity, retained seed and historical restoration obligations."}
 // symbol    ?add_menu@Menu@@QAEHHPADH@Z
@@ -142,6 +143,7 @@ int Menu::add_menu(int menu_id, char *text, int left_justified) {
     return 0;
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005FB5A0 ?UNK10@Menu@@QAEHHPAD@Z 0x005FB5A0-0x005FB6FD
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/005fb5a0.cpp", "image:Menu6700B0/AlphaMenu66ED88/PullDown66FF40 constructor-selected primary tables; Buffer secondary subobject+444", "recovery/tasks/popup-font-configuration-owner-closure.json"], "reason": "Recover this complete operation in its genuine Menu/PullDown owner, using native constructor-selected virtual dispatch, real members and shared source-owned dependencies; preserve original identity, retained seed and historical restoration obligations."}
 // symbol    ?UNK10@Menu@@QAEHHPAD@Z
@@ -183,6 +185,7 @@ int Menu::UNK10(int menu_id, char *text) {
     return 0;
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005FB9C0 ?compute@Menu@@QAEXXZ 0x005FB9C0-0x005FBABD
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/005fb9c0.cpp", "image:Menu6700B0/AlphaMenu66ED88/PullDown66FF40 constructor-selected primary tables; Buffer secondary subobject+444", "recovery/tasks/popup-font-configuration-owner-closure.json"], "reason": "Recover this complete operation in its genuine Menu/PullDown owner, using native constructor-selected virtual dispatch, real members and shared source-owned dependencies; preserve original identity, retained seed and historical restoration obligations."}
 // symbol    ?compute@Menu@@UAEXXZ
@@ -213,6 +216,7 @@ void Menu::compute() {
     }
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005FC5A0 ?adjust@Menu@@QAEXXZ 0x005FC5A0-0x005FC61B BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/005fc5a0.cpp", "image:5FC5E3 virtual resize;5FC5E6/5FC5EC reload font and parent;5FC607/5FC608 move to parent.left,parent.top minus twice reloaded font height", "image:5FC613 invokes Menu compute slot92", "recovery/tasks/popup-font-configuration-owner-closure.json"], "reason": "Recover the genuine Menu adjustment with real virtual resize/compute and post-resize borrowed-owner reloads. Preserve original frame placement, reentrant call order and the historical byte obligation without raw vtable or self-offset shims."}
 // symbol    ?adjust@Menu@@UAEXXZ
@@ -319,6 +323,7 @@ void Menu::mouse_move(int x, int y) {
     entries_[static_cast<int>(field_A24_)].pull_down->show(left, top, 0);
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005FBF00 ?on_key_click@Menu@@QAEHHH@Z 0x005FBF00-0x005FC21F
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/005fbf00.cpp", "image:Menu6700B0/AlphaMenu66ED88/PullDown66FF40 constructor-selected primary tables; Buffer secondary subobject+444", "recovery/tasks/popup-font-configuration-owner-closure.json"], "reason": "Recover this complete operation in its genuine Menu/PullDown owner, using native constructor-selected virtual dispatch, real members and shared source-owned dependencies; preserve original identity, retained seed and historical restoration obligations."}
 // symbol    ?on_key_click@Menu@@UAEHHH@Z
