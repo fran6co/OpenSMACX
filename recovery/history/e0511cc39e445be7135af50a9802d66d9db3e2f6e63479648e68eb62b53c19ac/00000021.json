@@ -1,0 +1,28 @@
+{
+  "event_id": "af444984b8125fb3b007dec07b4bea47de215e2de651b11663debf2909924cb9",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_mapwin_base_objectives.py",
+      "recovery/tests/test_mapwin_focus.py",
+      "src/console.cpp",
+      "src/console.h"
+    ],
+    "evidence": [
+      "Admit coupled selected5107E0 int-return API and only its MapWin click caller/order, native writer emitted-symbol fact after actual compiler evidence. Existing task MapWin focus/draw_base_names subjects admit original-derived OR boundary predicate and foreign/unspied objective-only label path46837E..45D; authorize actual-source controls for these bodies. Preserve old catalogue/original identity/seed/history/base, all existing claims and discoveries; native compilation/protected diagnostics, host controls and fresh application link required for manual integration. No automatic/game acceptance or fabricated exactness."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5310432,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "ec8fc611f03096ff42937eccfe592ce4008d4bf8f03048eedb5fd3e50463d87c",
+  "request_id": "mapwin-coupled-review-fixes-20261003",
+  "schema_version": 1,
+  "sequence": 21,
+  "stream": "task:mapwin-owner-coverage-wave"
+}

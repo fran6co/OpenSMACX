@@ -1,0 +1,21 @@
+{
+  "event_id": "ec8fc611f03096ff42937eccfe592ce4008d4bf8f03048eedb5fd3e50463d87c",
+  "payload": {
+    "affects": [
+      "entity-336e00903bce61448619ab3c1bc81a4d44c04cbb4a5f2cf0fb124fc6ce322402",
+      "entity-78e238f0d37cc17881a871931929e3ce7f4de32c7d2340cd2a355dda86609444"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "mapwin-selected-mode-return-20261003",
+    "evidence": [
+      "Pinned5107E4 loads field23D10 intoEAX/localfc,5107EF zero branch returns0; active path510881 reloads saved mode beforeloop/return510898. Native46D742 captures sprite5 aftergo_reset50EF50/keycalls,46D758 calls selected5107E0 andstoresEAX atD75F, thenD7E1..D80C gates (button nonzero ORturnactive) AND(sprite1 ORsprite9 ORreturnedmode). Current source drops return and calls edit_lock4E1F40 instead. Preserve pending discovery for coupled source/type/symbol/caller correction; no byte-exact claim."
+    ],
+    "hypothesis": "Console::selected5107E0 returns prior cursor mode in EAX, despite void catalogue and current API; MapWin::click must preserve its native post-go_reset/key-query return capture and mutually ordered button/turn/sprite gates, not substitute editor lock or pre-reset mode.",
+    "kind": "discovery"
+  },
+  "previous_event": "1454b6bdb82ce5cc769e7f57880ecc3c6bbbe149fd66e3138c26b740de7d5cc1",
+  "request_id": "mapwin-selected-mode-return-20261003",
+  "schema_version": 1,
+  "sequence": 20,
+  "stream": "task:mapwin-owner-coverage-wave"
+}
