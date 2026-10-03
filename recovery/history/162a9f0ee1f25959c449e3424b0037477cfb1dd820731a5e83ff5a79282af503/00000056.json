@@ -1,0 +1,20 @@
+{
+  "event_id": "5665741416f9da544ff4218cdfc7d6e34af7442f82f8a7198bbe8027e49a7cd2",
+  "payload": {
+    "affects": [
+      "entity-21a0ac47b9730b4dfb23af579f0ddc1c680ac96d8e9cbb75518f654a9673b062"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "communicate-remaining-scratch-owners",
+    "evidence": [
+      "Pinned original SHA256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; true-entry 54FFD0 full-span decode observes DWORD clear at 55778C, set1 at 55782E, read at 55792C for 93F7B4; DWORD write12 at 5586E5 for 93FA34. PeImage.read_initial returns zero DWORDs at both starts; current seed raw aliases are not product owners. No original capacity or lifetime inferred."
+    ],
+    "hypothesis": "Communicate accesses two unmapped shared DWORD storage starts at 0x0093F7B4 and 0x0093FA34. Neutral source-owned scratch cells are needed; semantic meaning and full original allocations remain unverified.",
+    "kind": "discovery"
+  },
+  "previous_event": "ed096cf6d84c873a86942e522a842b03701fac04766e97fb09501ba91b5cc5dd",
+  "request_id": "communicate-remaining-scratch-owners",
+  "schema_version": 1,
+  "sequence": 56,
+  "stream": "task:base-colony-economy-coverage-wave"
+}
