@@ -1,0 +1,23 @@
+{
+  "event_id": "52232551153b079e3112f85fb49d7a6d0c84ab396e704809d6a627e064fa8be7",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Independent terrain review exposed an existing fixup_landmarks body defect: unsigned bit2 shift bypasses every encoded negative landmark. Pinned5929F3 SAR EAX,24 and5929F6 JNS prove signed extraction;592A1D XOR EBX,EBX followed by592A36 storesBL proves crater bonus is zero, not last direction digit. Authorize restoring those original behaviors in the shared owner and add distinguishing actual-source tests. No original behavior change, baseline reset or claim change is authorized. Earlier terrain-two-native-v1 observes the unfixed intermediate source only and must not be reused as final verification."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5843264,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "175803a2bff43d58b4e75f6cc65ce59fb5e3db87f0130ce866cde8c1384121e5",
+  "request_id": "terrain-fixup-signed-native-restoration-20261003",
+  "schema_version": 1,
+  "sequence": 8,
+  "stream": "task:game-logic-seed-owner-coverage"
+}
