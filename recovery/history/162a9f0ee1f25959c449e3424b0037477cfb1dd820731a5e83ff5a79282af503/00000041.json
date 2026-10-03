@@ -1,0 +1,19 @@
+{
+  "event_id": "88d2d58be3cdb7ac1f3fda0a6a473c91ca853bea8164fb4eefd9b876b6dd085c",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_popup_picture_behavior.py"
+    ],
+    "evidence": [
+      "Persist actual Popup::set_picture owner-body controls, forwarding-versus-stored-member and branch-polarity damage cases. Extract the current source implementation; explicit host doubles test ordering and arguments, not target class ABI or whole UI acceptance. No new function or storage scope."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "02fe0586f40d2ba06e3d4abfa6cc8ee25a8b0a6211bbb3237f9301a3e1be03bf",
+  "request_id": "admit-popup-picture-actual-body-controls",
+  "schema_version": 1,
+  "sequence": 41,
+  "stream": "task:base-colony-economy-coverage-wave"
+}
