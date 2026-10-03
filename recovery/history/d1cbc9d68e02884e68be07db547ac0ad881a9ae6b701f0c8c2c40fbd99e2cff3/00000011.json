@@ -1,0 +1,19 @@
+{
+  "event_id": "cb953a0e8a6234c9a7b5eb025f2f75e21c96d903bddf149a1e65db4a598ac512",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/statuswin_full_host_control.cpp"
+    ],
+    "evidence": [
+      "Admit actual-source HUD host fixture beside authorized three-method controls. Frozen HUDv6 manifest49ab1d62f0d7e5054ca4b5ab17c44dd2e710ca105e50df10869af9a71c16707e; four native objects under both recipes and 28 protected diagnostics unchanged, layout15EC unchanged. Keep all seeds and historical obligations, including arrow-right restoration mismatch. New product binding remains unclaimed: the retained exact seed is not a fresh claim grant. Coordinator-reviewed coverage integration must pass actual-source controls, native source/claim checks and application build/link; neither scoped compilation nor host tests establish runtime or automatic acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "058b898a9eecdd9ffaed71c8e67fac50a3ea8b14f4684b256f87d05f191f7d71",
+  "request_id": "statuswin-durable-full-control-20261003",
+  "schema_version": 1,
+  "sequence": 11,
+  "stream": "task:statuswin-remaining-owner-coverage"
+}
