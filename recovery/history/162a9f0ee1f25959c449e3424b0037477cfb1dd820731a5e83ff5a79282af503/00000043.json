@@ -1,0 +1,20 @@
+{
+  "event_id": "80614c95a78cc771b32ebe7d975de5c0ca7fa168c082c84de56bdb719b7298b9",
+  "payload": {
+    "affects": [
+      "entity-21a0ac47b9730b4dfb23af579f0ddc1c680ac96d8e9cbb75518f654a9673b062"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "diplomacy-communicate-link-continuity-20261003",
+    "evidence": [
+      "Pinned comm_check55C430..55C726 direct call54FFD0; source seed src/unrecovered/0054ffd0.cpp complete original mapping54FFD0..558980 and65FF4F..65FF64, retained approximation history. Six-helper actual-owner private control v2 compiles both flag sets with an empty dependency and retains110 protected diagnostics; this does not prove dependency behavior. User expressly permits mapped BODY GOES HERE empty owner bodies to maintain linking. Task35 complete-body intent remains unchanged; temporary continuity is not its fulfillment."
+    ],
+    "hypothesis": "The complete comm_check owner calls communicate, whose complete 35269-byte hot/cold behavior is still being recovered. Coordinator authorizes only an explicitly unfinished empty mapped communicate definition for build/link continuity under the user standing permission; retain the complete seed and historical notes, preserve the original identity and both spans, and do not count it as implemented, matching, dependency closure or accepted behavior. The full communicate recovery and this finding remain pending.",
+    "kind": "discovery"
+  },
+  "previous_event": "a168aeb51d5a56d12657ee6f3c2bb8a84005dba667a3bb4fc64844ff254fe8d3",
+  "request_id": "diplomacy-communicate-link-continuity-20261003",
+  "schema_version": 1,
+  "sequence": 43,
+  "stream": "task:base-colony-economy-coverage-wave"
+}
