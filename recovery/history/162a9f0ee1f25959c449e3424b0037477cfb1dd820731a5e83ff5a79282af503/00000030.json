@@ -1,0 +1,21 @@
+{
+  "event_id": "3c4178e1d839c7d78f2b4863df74f2bc8eb87c48cb31e0f2a27618d248046aac",
+  "payload": {
+    "affects": [
+      "entity-30ac5135599c64e487883946325b14707efc1c9958d6cd657306e010044ebb21",
+      "entity-a625c98407870f6d1c34d5fff9b802c4ca581da6474d5b1f849498e33e13fc9b"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "faction-diplomacy-missing-callees-20261003",
+    "evidence": [
+      "Root source inventory confirms complete mapped spans 55D430..55D753 and55E370..55EB7A only in unrecovered seeds; worker pinned original call analysis identifies live dependencies, and encounter seed also calls enemies_trade_tech. Source presence is not compiled closure."
+    ],
+    "hypothesis": "Full enemy_diplomacy recovery has live dependencies enemies_trade_tech and encounter; these are mapped seed-only identities with no compiled source definitions. Complete typed recovery is required rather than fixed-address calls or approximation.",
+    "kind": "discovery"
+  },
+  "previous_event": "7147df1a256dee92543e63cef7a84ff94152b245191eafed8efacbdbe3a753b1",
+  "request_id": "faction-diplomacy-missing-callees-20261003",
+  "schema_version": 1,
+  "sequence": 30,
+  "stream": "task:base-colony-economy-coverage-wave"
+}

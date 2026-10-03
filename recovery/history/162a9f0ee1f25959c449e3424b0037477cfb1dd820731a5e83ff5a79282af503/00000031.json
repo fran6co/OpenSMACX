@@ -1,0 +1,31 @@
+{
+  "event_id": "efa9615e5455139b5490594c72d1eb91fdc2f8c3c0428925eff1a7115a141d2c",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/unrecovered/0055d430.cpp",
+      "src/unrecovered/0055e370.cpp"
+    ],
+    "evidence": [
+      "Admit complete genuine typed implementation of both original identities in existing faction owner files and guarded removal of superseded seeds after preserving all claims/findings. Private worker proposals; root serial verification/publication. Preserve task baseline, full spans, pending behavior decisions and historical obligations. No additional storage/member/function authority or deliberate behavior changes; report new dependencies. Build/link, native scoped diagnostics and actual-body controls required; not automatic or game acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5624880,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5628784,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "3c4178e1d839c7d78f2b4863df74f2bc8eb87c48cb31e0f2a27618d248046aac",
+  "request_id": "admit-faction-diplomacy-missing-callees-20261003",
+  "schema_version": 1,
+  "sequence": 31,
+  "stream": "task:base-colony-economy-coverage-wave"
+}
