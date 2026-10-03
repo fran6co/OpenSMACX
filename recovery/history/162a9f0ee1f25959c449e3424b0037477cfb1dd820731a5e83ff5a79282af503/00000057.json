@@ -1,0 +1,20 @@
+{
+  "event_id": "2a24e6d9a00de4ac19ef36af1c764ef7edad689c986e0c8579f4b748b2a22e1a",
+  "payload": {
+    "affects": [
+      "entity-71185b3e007ff73e0f9e8999ba645fc3bdd4699f39557488771410a95b294cf3"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "do-checksums-owner-body",
+    "evidence": [
+      "Frozen v2 fragment d42b5a4838b73bc8efe0395b4fa4cee4279898af31ed7f6eb6d63b2b5c04cc50 compiled as private map.cpp overlay under both historical flag sets; 80 protected diagnostics unchanged. GCC/Clang controls cover initialized prefix, all47 debug logs and observable scratch, with damaged copy controls. Candidate remains byte MISMATCH; no automatic acceptance or zero-tail behavior fix admitted."
+    ],
+    "hypothesis": "Replace the do_checksums fixed-address forwarder with the complete typed source owner in map.cpp, preserving the original shared StringTemp writes, local report formatting, 21-word network copy and existing uninitialized diagnostic tail behavior.",
+    "kind": "discovery"
+  },
+  "previous_event": "5665741416f9da544ff4218cdfc7d6e34af7442f82f8a7198bbe8027e49a7cd2",
+  "request_id": "do-checksums-owner-body",
+  "schema_version": 1,
+  "sequence": 57,
+  "stream": "task:base-colony-economy-coverage-wave"
+}

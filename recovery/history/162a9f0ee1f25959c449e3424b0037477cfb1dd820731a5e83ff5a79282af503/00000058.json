@@ -1,0 +1,26 @@
+{
+  "event_id": "07c8f17e83099dc59d7ab5ad1d60487094de78f154884d8105cdc89bf1fdedb5",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_turn_checksums_behavior.py",
+      "src/map.cpp"
+    ],
+    "evidence": [
+      "Admit complete do_checksums owner migration and durable actual-source controls; retain original identity/spans/seed discoveries and claims, remove superseded forwarder and seed only after verified owner replacement and build/link. Existing map.h declaration unchanged. No debug-tail bug fix or game acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5367648,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "2a24e6d9a00de4ac19ef36af1c764ef7edad689c986e0c8579f4b748b2a22e1a",
+  "request_id": "admit-do-checksums-owner-body",
+  "schema_version": 1,
+  "sequence": 58,
+  "stream": "task:base-colony-economy-coverage-wave"
+}
