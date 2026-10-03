@@ -1,0 +1,76 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "38f8d17b37ecfeff1e513f664305d224f3718136",
+  "editable_files": [
+    "src/base.cpp",
+    "src/base.h",
+    "src/veh.cpp",
+    "src/veh.h",
+    "src/pending_bodies.cpp",
+    "recovery/tests/test_base_colony_economy.py",
+    "recovery/tests/test_base_colony_ecology.py",
+    "recovery/tests/test_base_colony_production.py"
+  ],
+  "evidence": [
+    "Current source/seed inventory and independent owner triage identify ten absent ordinary product bodies: base_growth4EF1C0,upgrade_prototype4EFE80,base_production4F07E0,base_hurry4F3FE0,base_check_support4F4830,base_research4F4E80,drone_riot4F4FB0,base_drones4F5CE0,base_ecology4F67F0,base_upkeep4F79C0. Existing Base/PlayerData/Vehicle/Map/technology declarations are inputs, not proof of every field interpretation. Archived transcripts are hints; inspect complete canonical pinned instruction paths.",
+    "Retained base-closure WIP is preserved unchanged and separately audited against current master base_init/base_kill/base_change. These ten original identities do not overlap that lifecycle task; source-TU overlap requires coordinator-only integration, never replay old full files or reset old baselines. Existing vehicle-special/artillery WIP also stays untouched. upgrade_prototype first-argument semantics must be checked against existing four-argument callers, not guessed from pending placeholder names.",
+    "Workers prepare private isolated immutable fragments/proposals and actual-body host controls; no shared/Git/native-compiler writes. The coordinator alone composes source mappings through installed match_recovery.source, acquires compiler leases, verifies both historical recipes/protected diagnostics/layout/reference evidence and fresh application build/link, commits reviewed steps and rechecks. No new CLI/project tool, executable-address calls/data aliases, manual vtables, asm/copied bytes, stand-ins, fabricated coverage or automatic acceptance.",
+    "Scope covers only the ten bodies, proven owner/API declarations and removal of their existing central forwarders. Additional functions, globals or class members require explicit discovery/scope expansion before shared edits. Preserve all seeds and claims; only installed recorder banks fresh measured claims. Missing linked/structural/runtime evidence remains unknown. Previously declined base_energy alien-path initialization is not authorized here; no implicit new bounds, initialization or error-path behavior changes. New unimplemented dependencies may get explicit original-mapped owning-TU BODY GOES HERE continuity bodies only after separate admission, never replacing recovered behavior."
+  ],
+  "intent": "Recover the complete ten-function colony economy and prototype-upgrade family as genuine compiling source-owned C++, preserving original behavior, seeds, historical claims and cross-owner discoveries; prioritize full behavior coverage before byte spelling iteration.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5173696,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5176960,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5179360,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5193696,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5195824,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5197440,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5197744,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5201120,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5203952,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5208512,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "base-colony-economy-coverage-wave"
+}
