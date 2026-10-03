@@ -485,3 +485,9 @@ extern const char *ScenarioFileExtension;  // distinct pointer cell at 0x00691B3
 // Scenario placement and Unity events are genuine game.cpp owners.
 void __cdecl scenario_setup();
 int __cdecl do_unity_crash(int x, int y, int faction_id);
+
+// Source-owned native-life and turn-flow routines; random_events remains unfinished.
+void __cdecl alien_start();
+void __cdecl alien_fauna();
+void __cdecl turn_upkeep();
+void __cdecl random_events(int mode);

@@ -19,6 +19,7 @@
 #include <mmsystem.h>
 #include "temp.h"
 #include "xpops.h"  // X_pop
+#include "popup.h"  // Existing POP2 owner interface.
 #include "game.h"
 #include "netmsg.h"
 #include "alpha.h"
@@ -6225,4 +6226,623 @@ void __cdecl scenario_setup() {
         veh_drop(vehicle_id, x, y);
         if (counter > 9999) veh_kill(vehicle_id);
     }
+}
+
+// ORIGINAL: 0x00588F90 ?alien_start@@YAXXZ 0x00588F90-0x0058917C
+// RECOVERY_BINDING: v1 {"evidence": ["git:99d6e72bcd5ae3be3566222736528cb0dc57935c:src/recovered/units/00588f90.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tasks/game-logic-seed-owner-coverage.json; preserve original extents and historical seed lessons. Ordinary owned literals have pinned content provenance, not exact original data-allocation claims."], "reason": "Recover first-turn alien faction suppression through real Player filename/rules, lock masks, descending Base/Veh lifetimes and faction records."}
+void __cdecl alien_start() {
+    static const char alien_filename_a[] = "FUNGBOY";
+    static const char alien_filename_b[] = "FUNGBOY";
+
+    if (TurnCurrentNum != 0 || ExpansionEnabled == 0) {
+        return;
+    }
+
+    const int local_faction = ConsoleGlobal.faction_id_;
+    if ((Players[local_faction].rule_flags & RFLAG_ALIEN) != 0) {
+        return;
+    }
+
+    StringTemp[0] = 0;
+    strcat(StringTemp, Players[local_faction].filename);
+    CharUpperA(StringTemp);
+    if (strcmp(StringTemp, alien_filename_a) == 0) {
+        return;
+    }
+
+    for (int faction_id = 1; faction_id < MaxPlayerNum; ++faction_id) {
+        const uint32_t faction_bit = 1U << faction_id;
+        if ((LockEnableMask & faction_bit) != 0 || IsMultiplayerPBEM != 0 ||
+            IsMultiplayerNet != 0) {
+            continue;
+        }
+
+        StringTemp[0] = 0;
+        strcat(StringTemp, Players[faction_id].filename);
+        CharUpperA(StringTemp);
+        if ((Players[faction_id].rule_flags & RFLAG_ALIEN) == 0 &&
+            strcmp(StringTemp, alien_filename_b) != 0) {
+            continue;
+        }
+
+        LockEnableMask &= ~faction_bit;
+        // The original separately clears byte +1, the alive-faction mask.
+        LockEnableMask &= ~(faction_bit << 8);
+
+        for (int base_id = BaseCurrentCount - 1; base_id >= 0; --base_id) {
+            if (Bases[base_id].faction_id_current == faction_id) {
+                base_kill(base_id);
+            }
+        }
+
+        // veh_kill compacts the vehicle table; the original checks the live
+        // count before dereferencing each descending id.
+        for (int veh_id = VehCurrentCount - 1; veh_id >= 0; --veh_id) {
+            if (veh_id < VehCurrentCount &&
+                Vehs[veh_id].faction_id == faction_id) {
+                veh_kill(veh_id);
+            }
+        }
+
+        PlayersData[faction_id].current_num_bases = 0;
+        PlayersData[faction_id].flags = 0xFFFFFFFFU;
+        PlayersData[faction_id].diff_level = -1;
+    }
+}
+
+
+static int alien_random_x() {
+    if (MapLongitudeBounds <= 1) return 0;
+    return rand() % MapLongitudeBounds;
+}
+
+static int alien_random_y() {
+    if (MapLatitudeBounds <= 1) return 0;
+    return rand() % MapLatitudeBounds;
+}
+
+static int alien_normalize_x(int x) {
+    if ((MapIsFlat & 1) == 0) {
+        if (x < 0) x += MapLongitudeBounds;
+        else if (x >= MapLongitudeBounds) x -= MapLongitudeBounds;
+    }
+    return x;
+}
+
+static int alien_signed_wrap(uint32_t value) {
+    if (value <= 0x7fffffffu) return static_cast<int>(value);
+    return -1 - static_cast<int>(~value);
+}
+
+static bool alien_local_vehicle_visible(int vehicle_id, int faction) {
+    const Veh &vehicle = Vehs[vehicle_id];
+    if (vehicle.faction_id == faction && (vehicle.flags & 0x440) != 0x440) {
+        return true;
+    }
+    return (vehicle.visibility & (1u << faction)) != 0;
+}
+
+static bool alien_tile_vehicle_visible(int vehicle_id, int faction) {
+    return alien_local_vehicle_visible(vehicle_id, faction);
+}
+
+
+// ORIGINAL: 0x00522180 ?alien_fauna@@YAXXZ 0x00522180-0x00522EFC
+// RECOVERY_BINDING: v1 {"evidence": ["git:99d6e72bcd5ae3be3566222736528cb0dc57935c:src/unrecovered/00522180.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tasks/game-logic-seed-owner-coverage.json; preserve original extents and historical seed lessons. Ordinary owned literals have pinned content provenance, not exact original data-allocation claims."], "reason": "Recover native-life spread and spawning through real Map/PlayerData/Base/Veh/UI owners. Preserve native-life versus difficulty operands and the complementary signed JL/JGE pair with one saved wrapped limit; the original reproduction tail is unreachable by that pair. Do not invent guards or entry edges. No matching or game acceptance claim."}
+// TRIED: near-literal transcription of Ghidra (reliable here, no unaff_* registers, all callees are free functions except MapWin::focus and NetMsg::pop, whose `this` (g_007d3c3c, g_00805338) came from raw disasm since Ghidra drops it); the CONCAT31(...)&0xffffffdf idiom simplified to (uVar13|uVar14)& 0xffffffdf since uVar14's low byte is always 0. Diverges at insn #3 (xor vs mov), likely register-zeroing choice.
+void __cdecl alien_fauna() {
+    bool final_spore_launcher_spawned = false;
+    int spread_rounds = static_cast<int>(MapArea) /
+        (((TurnCurrentNum + ((TurnCurrentNum >> 31) & 3)) >> 2) + 0x20);
+
+    for (int attempt = 0; attempt < spread_rounds; ++attempt) {
+        const int raw_x = alien_random_x();
+        const int y = alien_random_y();
+        const int x = ((y & 1) - (raw_x & 1)) + raw_x;
+        if (y < 0 || y >= MapLatitudeBounds || x < 0 || x >= MapLongitudeBounds) {
+            continue;
+        }
+
+        Map &origin = *map_loc(x, y);
+        const bool land = (origin.climate & 0xe0) < 0x60;
+        const uint32_t spread_bit = land ? 0x8000u : 0x200000u;
+        if ((origin.bit & spread_bit) == 0) continue;
+
+        int best_x = -1;
+        int best_y = -1;
+        int best_score = 0;
+        for (int direction = 0; direction < 8; ++direction) {
+            const int candidate_x = alien_normalize_x(x + RadiusBaseX[direction]);
+            const int candidate_y = y + RadiusBaseY[direction];
+            if (candidate_y < 0 || candidate_y >= MapLatitudeBounds ||
+                candidate_x < 0 || candidate_x >= MapLongitudeBounds) {
+                continue;
+            }
+            const Map &candidate = *map_loc(candidate_x, candidate_y);
+            const uint8_t climate = candidate.climate;
+            const int altitude = climate >> 5;
+            if (((climate & 0xe0) < 0x60) != land || altitude <= 1 ||
+                (altitude >= 5 && (climate & 0x18) == 0)) {
+                continue;
+            }
+            if ((candidate.bit2 & 0x80000002u) == 2 ||
+                (candidate.bit2 & 0x80000040u) == 0x40) {
+                continue;
+            }
+            const int score = (3 - ((climate >> 3) & 3)) * 4 -
+                              (candidate.val3 >> 6);
+            if ((candidate.val3 & 0xc0) <= 0x40 &&
+                (candidate.bit & 0x208051u) == 0 && score > best_score) {
+                best_x = candidate_x;
+                best_y = candidate_y;
+                best_score = score;
+            }
+        }
+
+        if (best_x >= 0) {
+            Map &spread = *map_loc(best_x, best_y);
+            if ((spread.bit & spread_bit) == 0) {
+                spread.bit = (spread.bit | spread_bit) & ~0x20u;
+                const int local_faction = ConsoleGlobal.faction_id_;
+                for (int faction = 1; faction < MaxPlayerNum; ++faction) {
+                    const bool omniscient = (PlayersData[faction].flags & 0x200) != 0;
+                    const bool origin_visible =
+                        (origin.visibility & (1u << faction)) != 0;
+                    if (!omniscient && !origin_visible) continue;
+                    if ((origin.bit_visible[faction - 1] & spread_bit) == 0) continue;
+                    spread.bit_visible[faction - 1] =
+                        (spread.bit_visible[faction - 1] | spread_bit) & ~0x20u;
+                    if (faction != local_faction) continue;
+
+                    const int base_id = base_find(x, y, -1, -1, -1,
+                                                  local_faction);
+                    if (base_id < 0 ||
+                        Bases[base_id].faction_id_current != local_faction ||
+                        (BaseFindDist > 3 &&
+                         whose_territory(local_faction, x, y, 0, 0) != local_faction)) {
+                        draw_tiles(x, y, 2);
+                    } else {
+                        if (MapWinTable[0]->focus(x, y) == 0) draw_tiles(x, y, 2);
+                        parse_says(0, Bases[base_id].name_string, -1, -1);
+                        if (land) POP2("KELPGROWS", "kelp_sm.pcx", -1);
+                        else POP2("FORESTGROWS", "forest_sm.pcx", -1);
+                    }
+                }
+            }
+        }
+    }
+
+    if ((GameRules & 0x200000u) != 0) return;
+    const uint32_t early_limit_bits =
+        ((3u - MapNativeLifeForms) * 10u -
+         static_cast<uint32_t>(DiffLevelCurrent)) * 2u;
+    const int early_limit = alien_signed_wrap(early_limit_bits);
+    const bool very_early = TurnCurrentNum < early_limit;
+    if (SecretProject.voice_of_planet != -1 || VehCurrentCount > 0x6ff) return;
+
+    const uint32_t transport_period_bits =
+        (5u - MapNativeLifeForms) * 2u;
+    const int transport_period = alien_signed_wrap(transport_period_bits);
+    if (TurnCurrentNum % transport_period == 0) {
+        int x = 0;
+        int y = 0;
+        int region = 0;
+        int tries = 0;
+        bool found = false;
+        // The native counter advances after each location is read and jumps
+        // before testing location 1000. It consumes 1000 samples but can
+        // accept only one of the first 999.
+        for (;;) {
+            x = alien_random_x();
+            y = alien_random_y();
+            const int odd_x = ((y & 1) - (x & 1)) + x;
+            Map &tile = *map_loc(odd_x, y);
+            region = tile.region;
+            const int altitude = tile.climate & 0xe0;
+            ++tries;
+            if (tries >= 1000) break;
+            if ((tile.bit & 0x20) != 0 && altitude >= 0x40 &&
+                altitude <= 0x5f && (tile.bit & 3) == 0 &&
+                (tile.val2 & 0x0f) >= 8 &&
+                (region & 0x3f) != 0x3f && (region & 0x3f) != 0 &&
+                Continents[region].open_terrain >= 0x32) {
+                x = odd_x;
+                found = true;
+                break;
+            }
+        }
+
+        if (found) {
+            const uint32_t cargo_denominator_bits =
+                ((8u - MapNativeLifeForms) * 4u -
+                 static_cast<uint32_t>(DiffLevelCurrent)) * 4u;
+            const int cargo_denominator =
+                alien_signed_wrap(cargo_denominator_bits);
+            const uint32_t cargo_numerator_bits =
+                (((GameState & 0x100000u) != 0) ? 2u : 1u) *
+                static_cast<uint32_t>(TurnCurrentNum);
+            const int cargo_numerator = alien_signed_wrap(cargo_numerator_bits);
+            const int cargo_quotient = cargo_numerator / cargo_denominator;
+            int cargo_count = alien_signed_wrap(
+                static_cast<uint32_t>(cargo_quotient) +
+                MapNativeLifeForms + 1u);
+            if (very_early) cargo_count = 1;
+            if (!ExpansionEnabled || (timeGetTime() & 1) == 0) {
+                const int sea_unit = veh_init(9, 0, x, y);
+                if (sea_unit >= 0) {
+                    const int cargo = veh_cargo(sea_unit);
+                    if (cargo <= cargo_count) cargo_count = cargo;
+                    while (cargo_count > 0) {
+                        const int prototype = (rand() % 5 == 0 && ExpansionEnabled)
+                            ? 15 : 8;
+                        // The native call is sleep(veh_init(...)); it neither
+                        // promotes these mindworms nor checks the returned id.
+                        sleep(veh_init(prototype, 0, x, y));
+                        --cargo_count;
+                    }
+                    veh_promote(sea_unit);
+                    if (GameTechAchieved[TECH_CENTPSI] != 0 ||
+                        GameTechAchieved[TECH_QUANTUM] != 0) {
+                        veh_init(10, 0, x, y);
+                    }
+                }
+            } else {
+                const int sea_unit = veh_init(14, 0, x, y);
+                if (sea_unit >= 0) {
+                    veh_promote(sea_unit);
+                    if (GameTechAchieved[TECH_CENTPSI] != 0 ||
+                        GameTechAchieved[TECH_QUANTUM] != 0) {
+                        veh_init(10, 0, x, y);
+                    }
+                }
+            }
+        }
+    }
+
+    int local_life_attempt = 0;
+    int last_x = 0;
+    int last_y = 0;
+    int last_region = 0;
+    int last_base = -1;
+    for (;;) {
+        int x = alien_random_x();
+        const int y = alien_random_y();
+        x = ((y & 1) - (x & 1)) + x;
+        last_x = x;
+        last_y = y;
+        if (x >= 0 && x < MapLongitudeBounds && y >= 0 && y < MapLatitudeBounds) {
+            Map &tile = *map_loc(x, y);
+            const int altitude = tile.climate & 0xe0;
+            if (altitude >= 0x60 && (tile.bit & 0x20) != 0 &&
+                (altitude & 0xe0) >= 0x40) {
+                last_region = tile.region;
+                if ((last_region & 0x3f) != 0x3f && (last_region & 0x3f) != 0 &&
+                    ((tile.bit & 1) == 0 || (tile.val2 & 0x0f) >= 8)) {
+                    last_base = base_find(x, y, -1, last_region, -1, -1);
+                    if ((tile.bit & 2) != 0) {
+                        const int faction = tile.val2 & 0x0f;
+                        if (faction < MaxPlayerNum) {
+                            if (faction != 0 &&
+                                (last_base < 0 || BaseFindDist > 2)) {
+                                for (int direction = 0; direction < 16; ++direction) {
+                                    const int nx = alien_normalize_x(
+                                        x + RadiusOffsetX[9 + direction]);
+                                    const int ny = y + RadiusOffsetY[9 + direction];
+                                    if (nx < 0 || nx >= MapLongitudeBounds ||
+                                        ny < 0 || ny >= MapLatitudeBounds) continue;
+                                    Map &neighbor = *map_loc(nx, ny);
+                                    if ((neighbor.climate & 0xe0) < 0x60 ||
+                                        (PlayersData[faction].flags & 0x200) != 0 ||
+                                        (neighbor.visibility & (1u << faction)) != 0 ||
+                                        ((neighbor.bit & 3) != 0 &&
+                                         (neighbor.val2 & 0x0f) < MaxPlayerNum) ||
+                                        zoc_any(nx, ny, 0) != 0) continue;
+                                    const int prototype = (rand() % 5 == 0 && ExpansionEnabled)
+                                        ? 15 : 8;
+                                    const int spawned = veh_init(prototype, 0, nx, ny);
+                                    if (spawned >= 0 &&
+                                        alien_tile_vehicle_visible(spawned,
+                                                                   ConsoleGlobal.faction_id_)) {
+                                        draw_tile(nx, ny, 2);
+                                    }
+                                    break;
+                                }
+                            }
+                            // The native faction nibble is 0..7 here, so its
+                            // signed jump is always taken; retain that skip of
+                            // the following goody branch.
+                            goto alien_sample_complete;
+                        }
+                    }
+
+                    if (BaseFindDist > 1 && BaseFindDist < 6 &&
+                        (tile.bit & 0x20) != 0 && altitude >= 0x40 &&
+                        goody_at(x, y) == 0) {
+                        const int prototype = (rand() % 5 == 0 && ExpansionEnabled)
+                            ? 15 : 8;
+                        const int spawned = veh_init(prototype, 0, x, y);
+                        if (spawned >= 0 &&
+                            alien_tile_vehicle_visible(spawned,
+                                                       ConsoleGlobal.faction_id_)) {
+                            draw_tile(x, y, 2);
+                        }
+                    }
+                }
+            }
+        }
+
+alien_sample_complete:
+        ++local_life_attempt;
+        const uint32_t native_limit_bits = MapNativeLifeForms * 2u + 2u;
+        const int native_limit = alien_signed_wrap(native_limit_bits);
+        // Native JL returns to the sampler when count is below the limit.
+        if (local_life_attempt < native_limit) continue;
+        // The native JGE immediately after JL uses the same saved limit and
+        // exits before the following population block. Preserve that block's
+        // proven-unreachable placement without inventing a path into it.
+        if (local_life_attempt >= native_limit) return;
+        {
+                int spawn_count;
+                if (very_early) {
+                    spawn_count = 1;
+                } else {
+                    if (GameTechAchieved[TECH_CENTPSI] != 0 ||
+                        GameTechAchieved[TECH_QUANTUM] != 0) {
+                        veh_init(10, 0, last_x, last_y);
+                    }
+                    const int population = last_base >= 0
+                        ? Bases[last_base].population_size : 0;
+                    const uint32_t spawn_count_bits =
+                        static_cast<uint32_t>(population) *
+                        (((GameState & 0x100000u) != 0) + 1u) *
+                        (MapNativeLifeForms + 1u) + 3u;
+                    spawn_count = alien_signed_wrap(spawn_count_bits);
+                    spawn_count = (spawn_count + ((spawn_count >> 31) & 3)) >> 2;
+                }
+
+                int direction = 0x15;
+                bool base_notice_sent = false;
+                for (int count = 0; count < spawn_count; ++count) {
+                    int nx;
+                    int ny;
+                    Map *neighbor;
+                    do {
+                        do {
+                            direction = (direction + 1) % 0x15;
+                            nx = alien_normalize_x(x + RadiusOffsetX[direction]);
+                            ny = y + RadiusOffsetY[direction];
+                        } while (nx < 0 || nx >= MapLongitudeBounds ||
+                                 ny < 0 || ny >= MapLatitudeBounds);
+                        neighbor = map_loc(nx, ny);
+                    } while ((neighbor->bit & 0x20) == 0 ||
+                             (neighbor->climate & 0xe0) < 0x40 ||
+                             neighbor->region != last_region ||
+                             ((neighbor->bit & 3) != 0 &&
+                              (neighbor->val2 & 0x0f) < MaxPlayerNum &&
+                              (neighbor->val2 & 0x0f) != 0));
+
+                    const int prototype = (rand() % 5 == 0 && ExpansionEnabled)
+                        ? 15 : 8;
+                    const int spawned = veh_init(prototype, 0, nx, ny);
+                    if (prototype == 15) final_spore_launcher_spawned = true;
+                    const bool visible = alien_tile_vehicle_visible(
+                        spawned, ConsoleGlobal.faction_id_);
+                    if (visible) draw_tile(nx, ny, 2);
+
+                    if (!base_notice_sent && last_base >= 0 &&
+                        Bases[last_base].faction_id_current ==
+                            ConsoleGlobal.faction_id_ &&
+                        (((PlayersData[ConsoleGlobal.faction_id_].flags & 0x200) != 0) ||
+                         ((map_loc(nx, ny)->visibility &
+                           (1u << ConsoleGlobal.faction_id_)) != 0)) && visible) {
+                        base_notice_sent = true;
+                        parse_says(0, Bases[last_base].name_string, -1, -1);
+                        NetMsgPrimary.pop("XMINDWORMS", -0x1388, 0,
+                            final_spore_launcher_spawned ? "sporlnch_sm.pcx" :
+                                                          "mindworm_sm.pcx");
+                    }
+                }
+            }
+        return;
+    }
+}
+
+
+// ORIGINAL: 0x005258C0 ?turn_upkeep@@YAXXZ 0x005258C0-0x0052602D
+// RECOVERY_BINDING: v1 {"evidence": ["git:99d6e72bcd5ae3be3566222736528cb0dc57935c:src/unrecovered/005258c0.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tasks/game-logic-seed-owner-coverage.json; preserve original extents and historical seed lessons. Ordinary owned literals have pinned content provenance, not exact original data-allocation claims."], "reason": "Recover end-turn aircraft attrition, climate, native-life/alien arrival, caretaker diplomacy and ordered alien-pair stores through genuine owners. Random-events remains an explicitly unfinished separate dependency; build continuity is not game behavior acceptance."}
+// TRIED: transcribed directly from Ghidra's decompile (already correct, self-consistent short*/uint* pointer arithmetic throughout), fixing only DAT_/FUN_ names against the catalogue (all ~25 callees were already declared with matching signatures) and CharUpperA (undeclared IAT slot at 0x66931C, called through a typed function-pointer global). MapWin::main_caption()'s receiver is `*g_007d3c3c`, confirmed against src/console.cpp's own use of the same slot. Framed build compiles and matches through instr #3 (mov vs push), sim 0.75 - not chased further, very large orchestration function, landed for coverage.
+void __cdecl turn_upkeep() {
+    int vehicle_id = VehCurrentCount - 1;
+    while (vehicle_id >= 0) {
+        Veh &vehicle = Vehs[vehicle_id];
+        const VehPrototype &prototype = VehPrototypes[vehicle.proto_id];
+        const RulesChassis &chassis = Chassis[prototype.chassis_id];
+        if (chassis.speed == 2 && chassis.triad != 0) {
+            const unsigned int available = static_cast<unsigned int>(speed(vehicle_id, 0));
+            const int remaining = static_cast<int>(available) - vehicle.moves_expended;
+            if (remaining >= 0 &&
+                (remaining > 999 || available != vehicle.moves_expended)) {
+                const int tile_index = static_cast<int>(MapLongitude) * vehicle.y +
+                                       (vehicle.x >> 1);
+                const Map &tile = MapTiles[tile_index];
+                if (((tile.bit & BIT_BASE_IN_TILE) == 0 ||
+                     (tile.val2 & 0x0f) > 7) &&
+                    (tile.bit & 0x00040000) == 0 &&
+                    stack_check(vehicle_id, 6, 0x80, -1, -1) == 0) {
+                    if (vehicle.terraforming_turns < chassis.triad - 1) {
+                        ++vehicle.terraforming_turns;
+                        return;
+                    }
+
+                    vehicle.state |= 4;
+                    if (chassis.triad == 1 && prototype.chassis_id == 6) {
+                        const uint8_t old_damage = vehicle.dmg_incurred;
+                        const unsigned int added = static_cast<uint8_t>(
+                            static_cast<int8_t>(prototype.reactor_id) * 3);
+                        vehicle.dmg_incurred = static_cast<uint8_t>(old_damage + added);
+                    } else {
+                        int maximum = prototype.plan == 12
+                            ? 1 : range(prototype.reactor_id, 1, 100) * 10;
+                        int damage = maximum - vehicle.dmg_incurred;
+                        if (damage < 0) damage = 0;
+                        else if (damage > 9999) damage = 9999;
+                        vehicle.dmg_incurred = static_cast<uint8_t>(
+                            vehicle.dmg_incurred + static_cast<uint8_t>(damage));
+                    }
+                    const int maximum = prototype.plan == 12
+                        ? 1 : range(prototype.reactor_id, 1, 100) * 10;
+                    const int durability = maximum - vehicle.dmg_incurred;
+                    if (durability < 0 || (durability < 10000 && durability < 1)) {
+                        kill(vehicle_id);
+                    }
+                }
+            }
+        }
+        --vehicle_id;
+    }
+
+    VehTerraformStingLatch = 0;
+    rankings(1);
+    ++TurnCurrentNum;
+    MissionYearCurrent = game_year(TurnCurrentNum);
+    MapWinTable[0]->main_caption();
+
+    if (ClimateSeaLevelDelta != 0) {
+        ClimateRiseAccum += ClimateRiseStep;
+        if (ClimateRiseLimit <= ClimateRiseAccum) {
+            ClimateRiseAccum -= ClimateRiseLimit;
+            int step;
+            if (ClimateSeaLevelDelta > 0) {
+                step = 1;
+            } else {
+                step = -1;
+            }
+            ClimateSeaLevelDelta -= step;
+            MapSeaLevel += step;
+            world_climate();
+            draw_map(1);
+            if (step < 1) {
+                popp(*ClimatePopupTitle, "SEAFALLING", 0, "seafal_sm.pcx", 0);
+            } else {
+                popp(*ClimatePopupTitle, "SEARISING", 0, "searis_sm.pcx", 0);
+            }
+        }
+    }
+
+    alien_fauna();
+    do_fungal_towers();
+
+    bool announced_native_faction = false;
+    if (TurnCurrentNum == 4) {
+        const unsigned int masked = static_cast<unsigned int>(rand()) & 0x80000003u;
+        bool starts = masked == 0;
+        if (static_cast<int>(masked) < 0) {
+            starts = (((masked - 1u) | 0xfffffffcu) == 0xffffffffu);
+        }
+        if (starts) goto initialize_factions;
+    } else if (TurnCurrentNum == 5) {
+        if (rand() % 3 == 0) goto initialize_factions;
+    } else if (TurnCurrentNum == 6) {
+        const unsigned int masked = static_cast<unsigned int>(rand()) & 0x80000001u;
+        bool starts = masked == 0;
+        if (static_cast<int>(masked) < 0) {
+            starts = (((masked - 1u) | 0xfffffffeu) == 0xffffffffu);
+        }
+        if (starts) goto initialize_factions;
+    } else if (TurnCurrentNum >= 7) {
+initialize_factions:
+        for (int faction = 1; faction < MaxPlayerNum; ++faction) {
+            Player &player = Players[faction];
+            PlayerData &data = PlayersData[faction];
+            StringTemp[0] = 0;
+            strcat(StringTemp, player.filename);
+            CharUpperA(StringTemp);
+            const bool alien = (player.rule_flags & RFLAG_ALIEN) != 0;
+            if ((alien || strcmp(StringTemp, "FUNGBOY") == 0) &&
+                data.current_num_bases == 0 &&
+                (data.flags | 0x200u) == 0xffffffffu &&
+                data.diff_level == -1) {
+                const unsigned int bit = 1u << faction;
+                uint8_t *const lock_bytes = reinterpret_cast<uint8_t *>(&LockEnableMask);
+                if ((lock_bytes[0] & bit) == 0 && (lock_bytes[1] & bit) == 0) {
+                    if (alien) announced_native_faction = true;
+                    lock_bytes[1] |= static_cast<uint8_t>(bit);
+                    setup_player(faction, -0x11a, 0);
+                }
+            }
+        }
+        if (announced_native_faction) {
+            popp(*ClimatePopupTitle, "ALIENSARRIVE", 0, "al_land_sm.pcx", 0);
+            interlude(0x15, 0, 1, 0);
+        }
+    }
+
+    int caretaker = 0;
+    for (int faction = 1; faction < MaxPlayerNum; ++faction) {
+        StringTemp[0] = 0;
+        strcat(StringTemp, Players[faction].filename);
+        CharUpperA(StringTemp);
+        if (strcmp(StringTemp, "CARETAKE") == 0) caretaker = faction;
+    }
+    if (caretaker != 0 && BaseCurrentCount > 0) {
+        for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+            const int owner = Bases[base_id].faction_id_current;
+            if (Bases[base_id].production_id_last == -0x66 &&
+                (PlayersData[caretaker].diplo_treaties[owner] & 0x10) == 0) {
+                if ((PlayersData[caretaker].diplo_treaties[owner] & 1) != 0) {
+                    pact_ends(owner, caretaker);
+                }
+                treaty_on(caretaker, owner, 0x18);
+                set_treaty(caretaker, owner, 0x40, 1);
+                PlayersData[caretaker].diplo_spoke[owner] = TurnCurrentNum;
+                if (owner == ConsoleGlobal.faction_id_) {
+                    x_pops_short("NOTRANSCEND", 0x100000,
+                           FactionDiplomacyPortraits[caretaker], pop_wait);
+                }
+            }
+        }
+    }
+
+    for (int first = 1; first < MaxPlayerNum; ++first) {
+        if ((Players[first].rule_flags & RFLAG_ALIEN) == 0) continue;
+        for (int second = 1; second < MaxPlayerNum; ++second) {
+            if (first == second ||
+                (Players[second].rule_flags & RFLAG_ALIEN) == 0) continue;
+            set_treaty(second, first, 0xc80c0c38, 1);
+            set_agenda(second, first, 0x2c2d, 1);
+            PlayersData[second].diplo_spoke[first] = TurnCurrentNum;
+        }
+    }
+
+    random_events(0);
+    if (TurnCurrentNum == 0x4b &&
+        has_tech(Facility[FAC_BIOLOGY_LAB].preq_tech,
+                 ConsoleGlobal.faction_id_)) {
+        interlude(1, 0, 1, 0);
+    }
+
+    const int has_ascended = ascending(ConsoleGlobal.faction_id_);
+    const int ascendant_faction = ConsoleGlobal.faction_id_;
+    if (has_ascended != 0 &&
+        (PlayersData[ConsoleGlobal.faction_id_].flags & 0x2000) == 0) {
+        const int faction = ascendant_faction;
+        PlayersData[faction].flags |= 0x2000;
+        GenderDefault = 0;
+        PluralityDefault = Players[faction].is_leader_female;
+        parse_says(0, Players[faction].title_leader, -1, -1);
+        GenderDefault = 0;
+        PluralityDefault = Players[faction].is_leader_female;
+        parse_says(1, Players[faction].name_leader, -1, -1);
+        popp(*ClimatePopupTitle, "ASCENT", 0, "asctran_sm.pcx", 0);
+    }
+    if ((TurnCurrentNum & 3) == 1) reset_territory();
+    do_all_non_input();
+}
+
+
+// ORIGINAL: 0x0051F2E0 ?random_events@@YAXH@Z 0x0051F2E0-0x0052211D
+// RECOVERY_BINDING: v1 {"evidence": ["git:99d6e72bcd5ae3be3566222736528cb0dc57935c:src/unrecovered/0051f2e0.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tasks/game-logic-seed-owner-coverage.json; preserve original extents and historical seed lessons. Ordinary owned literals have pinned content provenance, not exact original data-allocation claims."], "reason": "Link-continuity home only for the original random-events dispatcher referenced by turn_upkeep. Its complete behavior remains in the retained seed and is not recovered, exact or accepted."}
+// TRIED: mechanical register/stack-slot goto transliteration (260 labels, 39 independent per-case epilogues auto-detected from the pop/pop/ pop/mov-esp-ebp/pop/ret shape, a 22-case switch off 0x0097D044, two thiscall-via-fixed-ecx targets on Console/MapWin, one indirect GetKeyState call through g_00669330): compiles, MISMATCH sim 0.32 on /O2 /Oy- framed, divergence at instruction #33. Large negative 32-bit immediates (e.g. 0xfffffc18) need an explicit (int) cast before a signed compare, or MSVC types the literal unsigned and turns jge into jae - fixed once, may still be lurking elsewhere unverified.
+void __cdecl random_events(int mode) {
+    // BODY GOES HERE.
 }

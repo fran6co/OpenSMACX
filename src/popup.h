@@ -323,3 +323,6 @@ int __cdecl pops(char *caption, char *label, char *text, int value,
                  int (__cdecl *callback)());
 int __cdecl pop_ask_number(char *caption, char *label,
                            int (__cdecl *callback)());
+
+// Existing source owner: leaf_recoveries.cpp, original 0x00405140.
+int __cdecl POP2(const char *caption, const char *image, int base_id);

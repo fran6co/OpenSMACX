@@ -1,0 +1,24 @@
+{
+  "event_id": "820804116ae697f163d6e8433ae94ef81f4474188f2f3e5d3bc8c0c70268333b",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/vehicle_gameplay_six/alien_start.cpp",
+      "recovery/tests/vehicle_gameplay_six/combat.cpp",
+      "recovery/tests/vehicle_gameplay_six/fauna.cpp",
+      "recovery/tests/vehicle_gameplay_six/fixture.h",
+      "recovery/tests/vehicle_gameplay_six/passengers.cpp",
+      "recovery/tests/vehicle_gameplay_six/upkeep.cpp"
+    ],
+    "evidence": [
+      "Authorize these exact host-fixture inputs for six actual product-body controls. Tests extract current source definitions and use explicit mocked service owners; no ABI/native/runtime acceptance is implied. Include failure witnesses for state-mask and native-life operand corrections."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "11449044d5622c2bbe6d66d305416b6206b53dce9b7de4df5c95d4a54ecb5922",
+  "request_id": "vehicle-six-actual-body-fixture-files-20261003",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:game-logic-seed-owner-coverage"
+}

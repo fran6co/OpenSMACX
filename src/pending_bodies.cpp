@@ -286,24 +286,9 @@ uint32_t __cdecl message_data(int a1, int a2, int a3, int a4, int a5, int a6) {
 //             world_rocky in src/map.cpp - the forwarders are gone rather
 //             than duplicated beside the real definitions.
 
-// THE PENDING_BODY CEILING: 252 -> 253, this batch. Three forwarders added -
-// battle_kill (0x00505D80), battle_fight's seven-parameter overload
-// (0x00506AF0) and the add_deletion below - and two retired, veh_kill
-// (0x005C08C0) and veh_ready (0x005C1B70), whose bodies the P2 veh homing
-// moved into src/veh.cpp. All three new targets are FILE-tier in the archives
-// (no claim, so address_index's archive-only floor stays at 0); tools/
-// address_index.py --check reports 0 landmines.
-// ?battle_kill@@YAHHPAHPAHPAHHH@Z at 0x00505D80, 938 bytes, FILE-tier in
-// src/unrecovered/00505d80.cpp. battle_kill_chaff (veh.cpp) is its one caller
-// this batch reached; the declaration is local to veh.cpp, so retiring this
-// forwarder when the body is homed cannot strand a stale one.
-int __cdecl battle_kill(int cur, int *attacker_out, int *defender_out,
-                        int *odds_out, int killer_id, int credit_faction) {
-    typedef int(__cdecl *pending)(int, int *, int *, int *, int, int);
-    return PENDING_BODY(0x00505D80, pending)(cur, attacker_out, defender_out,
-                                             odds_out, killer_id,
-                                             credit_faction);
-}
+// battle_kill (0x00505D80), veh_kill and veh_ready are implemented by
+// genuine veh.cpp owners; their former image forwarders are removed.
+// battle_fight's seven-parameter overload and add_deletion remain unfinished.
 
 // The seven-parameter ?battle_fight@@YAHHHHHHPAH@Z at 0x00506AF0, 19,875
 // bytes - the largest body in the veh family - still FILE-tier in

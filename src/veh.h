@@ -23,6 +23,7 @@ bool veh_bung_copy_chunk(size_t offset, unsigned char *packet, size_t count,
                          bool packet_to_owner);
 // Existing terraform announcement state, also transferred by game sync.
 extern uint32_t TerraformAnnouncedMask[2];
+extern uint32_t VehTerraformStingLatch;
 // Prototype naming is mapped but unfinished; retained seed owns the behavior lead.
 void __cdecl name_proto(char *name, int prototype, int faction, int chassis,
                        int weapon, int armor, int abilities, int reactor);
@@ -923,3 +924,8 @@ void __cdecl stack_kill(int vehicle_id);
 // Vehicle removal and artifact study are real veh.cpp owners.
 void __cdecl veh_kill(int veh_id);
 int __cdecl study_artifact(int veh_id);
+
+// Native vehicle lifecycle/selection owners recovered in veh.cpp.
+void __cdecl kill(int vehicle_id);
+void __cdecl assemble_passengers(int base_id, int mode, int priority);
+int __cdecl interceptor(int faction_id, int opposing_faction, int target_x, int target_y);
