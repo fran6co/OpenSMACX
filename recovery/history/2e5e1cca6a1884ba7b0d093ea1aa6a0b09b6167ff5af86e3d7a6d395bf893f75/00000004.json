@@ -1,0 +1,51 @@
+{
+  "event_id": "b2bffc3e20227e1ee060d45080dd3ca3240e1b74f9e80782e323a82a00800d0d",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/air_monolith_landmark/delete_landmark.cpp",
+      "recovery/tests/air_monolith_landmark/mash_planes.cpp",
+      "recovery/tests/air_monolith_landmark/monolith.cpp",
+      "recovery/tests/test_air_monolith_landmark_behavior.py",
+      "src/game.cpp",
+      "src/game.h",
+      "src/map.cpp",
+      "src/map.h",
+      "src/recovered/units/00529c00.cpp",
+      "src/recovered/units/005927d0.cpp",
+      "src/temp.h",
+      "src/unrecovered/0057a050.cpp",
+      "src/veh.cpp",
+      "src/veh.h"
+    ],
+    "evidence": [
+      "Coordinator authorizes complete mash_planes, monolith and delete_landmark source recovery and exact affected shared interfaces; existing alt_set scope remains. Preserve original task baseline and all mappings, historical claims and useful findings. Root integrates serially after actual-body controls, real application compile/link and relevant continuity/reference/matching diagnostics. No incomplete fragment or image forwarder is a completed implementation.",
+      "Pinned aircraft operand audit corrects Veh+0x28 moves_expended, +0x10 dmg_incurred and +0x25 terraforming_turns; VehPrototype+0x2A is plan, and RulesChassis+0x4A is range. Preserve independent post-callback prototype reads. Pinned monolith entry excludes prototype IDs16-18, its0x100 bit belongs to Veh.state, and per-faction map permission reads bit_visible[faction-1]. Correct these in private candidates and distinguish them with failure controls before publication.",
+      "Landmark closure requires genuine shared bonus-array storage and direction-table provenance/bounds, not newly introduced fixed executable pointers. Existing mapped Map/MapWin owners and sentinel store-before-clear_alt order remain. Do not assert original full object extents from minimum access/copy bounds alone; unknown initialization/layout remains an explicit obligation. Native object annotations require fresh compiler symbols and package writer publication.",
+      "Manual reviewed integration does not establish full linked preservation, structure/runtime or game acceptance. No new byte claims, claim demotions, automatic publication, fabricated proofs or gate weakening are authorized. Keep every unresolved dependency seed and structural discovery until fully retained by verified source owners."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5413888,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5742672,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5842896,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "820804116ae697f163d6e8433ae94ef81f4474188f2f3e5d3bc8c0c70268333b",
+  "request_id": "native-air-monolith-landmark-owners-20261003",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:game-logic-seed-owner-coverage"
+}
