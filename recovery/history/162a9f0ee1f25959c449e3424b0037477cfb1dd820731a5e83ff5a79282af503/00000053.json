@@ -1,0 +1,20 @@
+{
+  "event_id": "8dd384b8135367544873df32fd043d2e0d805a68b2230d84416125a9149d0c85",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/council.cpp",
+      "src/council.h"
+    ],
+    "evidence": [
+      "Coordinator admits genuine shared storage definitions required by net_upkeep, not fixed-address aliases: signed current checksum vector NetTurnChecksums[21] at93A008 and peer rows NetPeerTurnChecksums[8][21] at93A510 in netdaemon owner, plus CouncilPendingMessageArgs[3] initialized {-1,-1,-1} at68BF38 in council owner. Root pinned native5296E6..5296F4 transfers21 words;53675D..53677C writes message payload+10 to21-element row indexed by message+4;529734..529B8C compares seven peer rows. Cursor93A56C is peer[1][2], not independent storage. PeImage.read_initial verifies zero current84 bytes/peer672 bytes and FF council12 bytes. Use start-only object bindings and document observed windows, not original complete allocation extents or runtime readiness; incoming sender range remains unproven, no automatic bounds behavior change admitted. Existing missing do_checksums/call_council producers remain obligations. No claim, baseline reset, forwarder recovery or unrelated owner edits authorized."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "7b7cac3de421a46883e994f71dc3fa8681bc17a00b0a3309e455f977d367a5cb",
+  "request_id": "admit-net-upkeep-shared-storage",
+  "schema_version": 1,
+  "sequence": 53,
+  "stream": "task:base-colony-economy-coverage-wave"
+}
