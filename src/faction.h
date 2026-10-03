@@ -1092,3 +1092,5 @@ extern int DiplomacyMapTransferChanged;
 extern int DiplomacyProposalMode;
 void __cdecl intervention(int target_faction, int attacker_faction);
 int __cdecl pact_withdraw(int faction_id, int partner_id);
+
+void __cdecl allocate_energy(int faction_id);

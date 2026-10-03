@@ -6750,3 +6750,187 @@ int __cdecl pact_withdraw(int faction_id, int faction_id_with) {
     }
     return lifted_count;
 }
+
+// ORIGINAL: 0x005267B0 ?allocate_energy@@YAXH@Z 0x005267B0-0x00526E63
+// RECOVERY_BINDING: v1 {"evidence": ["original:0x005267B0-0x00526E63", "git:38853a3f:src/unrecovered/005267b0.cpp", "source:src/faction.h", "source:src/base.h", "source:src/veh.h"], "reason": "Recover the complete faction energy allocation operation through real PlayerData, Base, Console and VehPrototype owners. Preserve the original first scan of global BaseCurrent without selecting each base, the later severe-police selection/recompute sequence, signed allocation arithmetic and callback order; historical spelling notes are not fresh measurements."}
+// TRIED: direct register-mirroring transcription (eax/ebx/.../var_4/var_c/var_10 locals) compiles and matches control flow/offsets faithfully but the extra scratch locals (vs the original's 6-int 0x18 frame) shift register allocation from instr #4; sim 0.68 framed. Not retried with fewer locals given size (1715 bytes).
+void __cdecl allocate_energy(int faction_id) {
+    PlayerData &faction = PlayersData[faction_id];
+    const unsigned int faction_bit = 1u << (faction_id & 31);
+
+    // Human-only emergency notification path, intentionally distinct from
+    // the social-allocation rebalance below.
+    if ((factions_status_byte(0) & faction_bit) != 0) {
+        if (faction.diff_level <= 1 || faction_id != ConsoleGlobal.faction_id_
+            || faction.pop_total <= 1 || faction.energy_reserves >= 100)
+            return;
+        if (diplo_mul(faction.energy_reserves, 10)
+            >= diplo_mul(CurrentFactionEnergyReserves, 10))
+            return;
+        const int unassigned = 10 - faction.se_alloc_psych - faction.se_alloc_labs;
+        if (unassigned < 5) {
+            if (popp(ScriptPopupFile, "INFRASTRUCTURE", 0, "genwarning_sm.pcx", nullptr) == 0)
+                return;
+            social_select(faction_id);
+            return;
+        }
+        if (!has_tech(VehPrototypes[1].preq_tech, faction_id)) return;
+        if (TurnCurrentNum % 5 != 0) return;
+        popp(ScriptPopupFile, "INFRASTRUCTURE2", 0, "genwarning_sm.pcx", nullptr);
+        return;
+    }
+
+    const int desired_total = 10 - faction.se_alloc_psych - faction.se_alloc_labs;
+    const int police = faction.soc_effect_pending.police;
+    int max_psych;
+    if (police < -2) max_psych = 4;
+    else if (police == -2) max_psych = 2;
+    else if (police <= 1) max_psych = 1;
+    else max_psych = 0;
+
+    int &psych = faction.se_alloc_psych;
+    int skip_increase = 1;
+    const int first_pass_base_count = BaseCurrentCount;
+    for (int base_id = 0; base_id < first_pass_base_count; ++base_id) {
+        if (Bases[base_id].faction_id_current == faction_id) {
+            if ((BaseCurrent->state & 2u) != 0) goto increase_psych;
+            if (BaseCurrent->specialist_total > BaseCurrent->specialist_unk_1)
+                skip_increase = 0;
+        }
+    }
+    if (skip_increase == 0) {
+        const int min_psych = max_psych / 2;
+        if (psych > min_psych) --psych;
+        goto psych_rebalance_done;
+    }
+
+increase_psych:
+    if (psych >= max_psych) goto psych_rebalance_done;
+    ++psych;
+    if (psych >= max_psych) goto psych_rebalance_done;
+    if (police >= -2) goto psych_rebalance_done;
+
+    // Under severe police effects the native path recomputes each owned base
+    // before checking its current talent/drone totals and its riot bit.
+    {
+        for (int base_id2 = 0; base_id2 < BaseCurrentCount; ++base_id2) {
+            if (Bases[base_id2].faction_id_current == faction_id) {
+                set_base(base_id2);
+                base_compute(1);
+                if (BaseCurrent->talent_total < BaseCurrent->drone_total
+                    && (BaseCurrent->state & 2u) != 0) {
+                    ++psych;
+                    if (psych >= max_psych) break;
+                }
+            }
+        }
+    }
+
+psych_rebalance_done:
+    const int min_psych = police >= -1 ? 0 : 2;
+    if (psych < min_psych) psych = min_psych;
+    else if (psych > 4) psych = 4;
+    if (has_project(SP_TELEPATHIC_MATRIX, faction_id)) psych = 0;
+    faction.se_alloc_psych = psych;
+
+    int initial_labs = diplo_sub(
+        diplo_sub(faction.ai_tech, faction.ai_power), faction.se_alloc_psych);
+    initial_labs = diplo_add(initial_labs, 11) / 2;
+    initial_labs = diplo_sub(initial_labs, faction.ai_wealth);
+    faction.se_alloc_labs = initial_labs;
+    int &labs = faction.se_alloc_labs;
+    if (diplo_mul(
+            diplo_add(
+                diplo_sub(diplo_sub(faction.ai_tech, faction.ai_power),
+                               faction.ai_wealth), 3), 25) > TurnCurrentNum)
+        ++labs;
+
+    const int research_denominator = diplo_add(
+        diplo_add(faction.ai_power, faction.ai_wealth), 1);
+    const int tech_cost = diplo_add(
+        diplo_mul(Players[faction_id].rule_techcost, research_denominator),
+        TurnCurrentNum);
+    labs = diplo_add(labs, faction.energy_reserves / diplo_mul(tech_cost, 2));
+
+    int region_id = 1;
+    while (region_id < 0x80) {
+        if (faction.region_total_bases[region_id] != 0) {
+            if (faction.region_base_plan[region_id] == 2) {
+                --labs;
+                break;
+            }
+            if (faction.region_base_plan[region_id] == 0
+                && (faction.ai_power != 0 || faction.ai_wealth != 0))
+                --labs;
+        }
+        ++region_id;
+    }
+    if (faction.ai_tech != 0 && faction.ai_power == 0 && faction.ai_wealth == 0
+        && region_id >= 0x80)
+        ++labs;
+
+    if (desired_total != 0) {
+        const int free_slots = 10 - labs - psych;
+        if (free_slots >= desired_total) {
+            int base_value = 0;
+            for (int base_id3 = 0; base_id3 < BaseCurrentCount; ++base_id3) {
+                if (Bases[base_id3].faction_id_current == faction_id) {
+                    base_value = diplo_add(base_value, Bases[base_id3].unk_10);
+                    for (int facility_id = 0; facility_id < 0x46; ++facility_id) {
+                        if (facility_id < 0x41
+                            && has_fac_built(facility_id, base_id3))
+                            base_value = diplo_sub(
+                                base_value, fac_maint(facility_id, faction_id));
+                    }
+                }
+            }
+            const int expected_value = diplo_mul(
+                diplo_mul(
+                    diplo_sub(diplo_add(
+                        diplo_mul(faction.ai_wealth, 2), 4), faction.ai_tech),
+                    faction.pop_total), 1) / 4;
+            if (base_value > expected_value) {
+                while (10 - labs - psych >= desired_total) ++labs;
+            } else if (base_value < expected_value / 2) {
+                --labs;
+            }
+        }
+    }
+
+    if (faction.tech_id_researching == 0x58) --labs;
+    const int max_by_psych = 10 - psych;
+    const int energy_cap = energy_limit(faction_id);
+    if (labs < 0 || energy_cap < 0) labs = 0;
+    else if (labs > energy_cap) labs = energy_cap;
+    if (labs > max_by_psych) labs = max_by_psych;
+    faction.se_alloc_labs = labs;
+
+    int remaining = 10 - psych - labs;
+    const int second_cap = energy_limit(faction_id);
+    if (remaining > second_cap) {
+        do {
+            ++labs;
+            faction.se_alloc_labs = labs;
+            remaining = 10 - psych - labs;
+        } while (remaining > energy_limit(faction_id));
+    }
+
+    int efficiency = faction.soc_effect_temp.efficiency;
+    if (efficiency < 0) efficiency = 0;
+    else if (efficiency > 0x63) efficiency = 0x63;
+    int population_adjustment = 3 - faction.pop_total;
+    if (population_adjustment < 0) population_adjustment = 0;
+    else if (population_adjustment > 3) population_adjustment = 3;
+    const int threshold = population_adjustment + efficiency + 1;
+    if (labs < 0) labs = 0;
+    else if (labs > 10) labs = 10;
+    faction.se_alloc_labs = labs;
+    while (labs > threshold - psych - labs + 10) {
+        --labs;
+        faction.se_alloc_labs = labs;
+    }
+    while (10 - labs - psych > labs + threshold) {
+        ++labs;
+        faction.se_alloc_labs = labs;
+    }
+}
