@@ -625,6 +625,9 @@ extern VehPrototype VehPrototypes[MaxVehProtoNum];  // 0x009AB868, 0x34 stride
 // bounds the table - 2049 * 0x34 ends at 0x0096C85C, the largest slot count
 // that fits before it.
 extern Veh Vehs[2049];  // 0x00952828, 0x34 stride
+// Original sprite-picker item hooks, owned by leaf_recoveries.cpp.
+int __cdecl veh_sprite_click(int veh_id);
+int __cdecl veh_sprite_double_click(int veh_id);
 // THE EIGHT COMPASS DELTAS, indexed by the direction argument the cursor-key
 // and move-order paths pass: veh.cpp defines both runs, and Console::move_cursor
 // adds VehMoveDeltaX[direction] to the cursor's own x (and the Y twin to its y)

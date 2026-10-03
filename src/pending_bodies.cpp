@@ -975,20 +975,12 @@ int __cdecl size_of_planet(int a1) {
     return PENDING_BODY(0x0058CED0, pending)(a1);
 }
 
-int __cdecl supply_options(int a1, int a2) {
-    typedef int(__cdecl *pending)(int, int);
-    return PENDING_BODY(0x00593A00, pending)(a1, a2);
-}
 
 void __cdecl time_controls_dialog(Popup *popup) {
     typedef void(__cdecl *pending)(Popup *);
     PENDING_BODY(0x00589330, pending)(popup);
 }
 
-int __cdecl veh_pick(int a1, const char *label, int a3) {
-    typedef int(__cdecl *pending)(int, const char *, int);
-    return PENDING_BODY(0x0048D0D0, pending)(a1, label, a3);
-}
 
 // ?world_build@@YAXXZ at 0x005C86E0 - HOMED into src/map.cpp 2026-09-05 (see
 // the marker there), so this file no longer carries it.

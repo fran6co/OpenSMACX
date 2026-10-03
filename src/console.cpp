@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include "text.h" // TextBufferGetPtr is reloaded after parser callbacks.
 #include "alphamovie.h"
 
 // Console constructor-installed Win branch: capture4, resize13, mouse17, update63.
@@ -1044,10 +1045,10 @@ void __cdecl save_map();                                  // 0x005ABB90 ?save_ma
 // the tree names either, so the forward declaration leaves them unnamed.
 void __cdecl set_dirty();                                 // 0x00592A80 ?set_dirty@@YAXXZ
 int __cdecl size_of_planet(int planet_size);                       // 0x0058CED0 ?size_of_planet@@YAHH@Z
-int __cdecl supply_options(int base_id, int flags);               // 0x00593A00 ?supply_options@@YAHHH@Z
+int __cdecl supply_options(int veh_id, int base_id);               // 0x00593A00 ?supply_options@@YAHHH@Z
 void __cdecl time_controls_dialog(Popup *popup);          // 0x00589330 ?time_controls_dialog@@YAXPAUPopup@@@Z
 void __cdecl veh_kill(int veh_id);                        // 0x005C08C0 ?veh_kill@@YAXH@Z
-int __cdecl veh_pick(int faction_id, const char *label, int flags);  // 0x0048D0D0 ?veh_pick@@YAHHPBDH@Z
+int __cdecl veh_pick(int veh_id, const char *label, int flags);  // 0x0048D0D0 ?veh_pick@@YAHHPBDH@Z
 void __cdecl world_build();                               // 0x005C86E0 ?world_build@@YAXXZ
 void __cdecl world_fungus();                              // 0x005C3440 ?world_fungus@@YAXXZ
 int __cdecl veh_selectable(int veh_id);                       // 0x005C1A20 ?veh_selectable@@YAHH@Z
@@ -11151,4 +11152,250 @@ void Console::set_screen_geometry() {
     ConsoleMenuBounds.right = IfaceScreenWidth;
     ConsoleMenuBounds.bottom = height;
     StatusFlags |= 1u;
+}
+
+// ORIGINAL: 0x0048D0D0 ?veh_pick@@YAHHPBDH@Z 0x0048D0D0-0x0048D4EA;0x006585CB-0x006586B3
+// RECOVERY_BINDING: v1 {"evidence": ["image:terranx_original.exe:0x48d0d0 hot and cold spans; private full-body native-order review and actual-source callback/lifetime controls.", "git:decce96da7981b60ac91563a8323362cdab2e250:src/unrecovered/0048d0d0.cpp", "source:src/basepop.h:typed SpriteBox click callback at BasePop+3160; native CodeView and producer/consumer evidence."], "reason": "Recover the complete picker/supply operation through genuine Popup, Sprite, Veh, Base and network owners; preserve full original spans and seed findings without a new matching claim."}
+// TRIED: declaring BOTH `Popup();` (matched: this disassembly calls Popup's own ctor at 0x4048a0, not BasePop+Scroll separately) AND `~Popup();` (declaration only, no body) on the Popup class lets `Popup pop;` be a real local without the compiler synthesising-and-EMITTING its own ~Popup() - the destructor declaration alone suppresses synthesis, so scope-exit just calls the external symbol once. This compiles clean (unlike 0x00405140, which hit the one-external-symbol error from an implicit ~Popup()). The extensive widget teardown after the `if (a3 != 0)` branch (FlatButton/BaseButton/Dialogs/Dialog/ Spot/Heap) is called through small raw-byte-buffer casts rather than real locals, since those types have no declared constructors in this scaffold and a real local would risk the same implicit-synthesis problem. Reaches MISMATCH #11 ('push' vs 'lea'); did not chase the exact field-store sequence (callback pointers, vtable resets) further.
+int __cdecl veh_pick(int veh_id, const char *label, int flags) {
+    // Native constructs Popup first at 0x48D0FB, then Sprite at 0x48D108.
+    Popup popup;
+    Sprite sprite;
+    sprite.create_blank(0x64, 0x4B, WinFillColour);
+    const int popup_flags = (flags != 0 ? 0x40 : 0) | 0x800;
+    popup.start(PopupStartCaption, label, -1, 0, popup_flags, 0);
+
+    int listed_count = 0;
+    int listed_vehicle = veh_id;
+    if (listed_vehicle >= 0) {
+        int previous_vehicle = Vehs[listed_vehicle].prev_veh_id_stack;
+        while (previous_vehicle >= 0) {
+            listed_vehicle = previous_vehicle;
+            previous_vehicle = Vehs[listed_vehicle].prev_veh_id_stack;
+        }
+
+        if (listed_vehicle >= 0) {
+            do {
+                say_morale(listed_vehicle, 0);
+                StringTemp[0] = '\0';
+                ::strcat(StringTemp, " ");
+                const int prototype = Vehs[listed_vehicle].proto_id;
+                ::strcat(StringTemp, VehPrototypes[prototype].veh_name);
+                popup.dialogs().SpriteBox::sprite(
+                    &sprite, StringTemp, listed_vehicle);
+
+                // Native fetches the next stack link after the sprite call.
+                const int next_vehicle = Vehs[listed_vehicle].next_veh_id_stack;
+                ++listed_count;
+                listed_vehicle = next_vehicle;
+            } while (listed_vehicle >= 0);
+        }
+    }
+
+    if (listed_count == 0) {
+        // Native empty path closes the independent Sprite before Popup.
+        sprite.close();
+        popup.close();
+        return -1;
+    }
+
+    popup.set_redraw_callback(veh_sprite_draw);
+    popup.dialogs().SpriteBox::set_redraw_callback(veh_sprite_draw);
+    popup.set_sprite_click_callback(veh_sprite_click);
+    popup.set_sprite_double_click_callback(veh_sprite_double_click);
+
+    PopupModalState = 6;
+    const int result = popup.exec(0, 0);
+    PopupModalState = 0;
+
+    // Native successful path closes Popup before the local Sprite.
+    popup.close();
+    sprite.close();
+    return result;
+}
+
+
+static int supply_wrap_add(int left, int right) {
+    return static_cast<int>(static_cast<uint32_t>(left) +
+                            static_cast<uint32_t>(right));
+}
+static int supply_wrap_sub(int left, int right) {
+    return static_cast<int>(static_cast<uint32_t>(left) -
+                            static_cast<uint32_t>(right));
+}
+static int supply_wrap_mul(int left, int right) {
+    return static_cast<int>(static_cast<uint32_t>(left) *
+                            static_cast<uint32_t>(right));
+}
+
+
+// ORIGINAL: 0x00593A00 ?supply_options@@YAHHH@Z 0x00593A00-0x005947BF;0x00660BF0-0x00660F47
+// RECOVERY_BINDING: v1 {"evidence": ["image:terranx_original.exe:0x593a00 hot and cold spans; private full-body native-order review and actual-source callback/lifetime controls.", "git:decce96da7981b60ac91563a8323362cdab2e250:src/unrecovered/00593a00.cpp", "source:src/basepop.h:typed SpriteBox click callback at BasePop+3160; native CodeView and producer/consumer evidence."], "reason": "Recover the complete picker/supply operation through genuine Popup, Sprite, Veh, Base and network owners; preserve full original spans and seed findings without a new matching claim."}
+// TRIED: same Popup-teardown-cascade shape as PickWin/battle_plans, but this one calls Dialogs' REAL destructor (`??1Dialogs@@QAE@XZ`) rather than the vtable-patch-then-close() dance those two used - simpler here, used directly. The final "apply the action" branch (0x5942C1 onward: which of two near-identical full teardowns fires) is approximated as always taking the first (`chosen2==1`) branch - the exact value tracked through BasePop::exec's result wasn't re-derived in the time available. sim 0.34-0.59 across flag sets.
+int __cdecl supply_options(int veh_id, int base_id) {
+    Popup popup;
+    Veh &vehicle = Vehs[veh_id];
+    const int owner = vehicle.faction_id;
+
+    if ((static_cast<uint32_t>(LockEnableMask) & (1u << owner)) == 0) {
+        return 0;
+    }
+    const int order = vehicle.order;
+    if (order == ORDER_ROAD_TO || order == ORDER_MAGTUBE_TO ||
+        order == ORDER_MOVE || (vehicle.state & 0x4000u) != 0) {
+        return 0;
+    }
+    if (order == ORDER_MOVE_TO) {
+        int dx = abs(static_cast<int>(vehicle.x) -
+                     static_cast<int>(vehicle.waypoint_x[0]));
+        if ((MapIsFlat & 1) == 0 && dx > static_cast<int>(MapLongitude))
+            dx = static_cast<int>(MapLongitudeBounds) - dx;
+        const int dy = abs(static_cast<int>(vehicle.y) -
+                           static_cast<int>(vehicle.waypoint_y[0]));
+        if (((dx + dy) & ~1) > 2) {
+            return 0;
+        }
+    }
+
+    const int base_owner = Bases[base_id].faction_id_current;
+    if (owner != base_owner &&
+        (PlayersData[owner].diplo_treaties[base_owner] & 1u) == 0) {
+        return 0;
+    }
+
+    parse_says(1, VehPrototypes[vehicle.proto_id].veh_name, -1, -1);
+    parse_says(2, Bases[base_id].name_string, -1, -1);
+    const int queued_item = Bases[base_id].queue_production_id[0];
+    int queued_cost;
+    if (queued_item < 0) {
+        const int facility_id = -queued_item;
+        const int factor = cost_factor(owner, 1, -1);
+        queued_cost = supply_wrap_mul(factor, Facility[facility_id].cost);
+    } else {
+        const int production_cost = veh_cost(queued_item, base_id, 0);
+        const int factor = cost_factor(owner, 1, -1);
+        queued_cost = supply_wrap_mul(production_cost, factor);
+    }
+    parse_num(0, Bases[base_id].minerals_accumulated);
+    parse_num(1, queued_cost);
+    popup.start(PopupStartCaption, "SUPPLYUNIT", -1, 0, 0, 0);
+
+    const bool alien = (Players[owner].rule_flags & 0x80u) != 0;
+    const char *picture_name = alien ? "al_col_sm.pcx" : "colfoun_sm.pcx";
+    int picture_width = 0, picture_height = 0;
+    if (Buffer::get_pcx_dimensions(picture_name, &picture_width,
+                                   &picture_height) == 0) {
+        if (popup.owned_picture().init(const_cast<char *>(picture_name),
+                                      picture_width, picture_height) == 0) {
+            popup.set_caller_picture(&popup.owned_picture());
+        }
+    }
+    if (X_text_open(ClimatePopupTitle[0], "SUPPLYMENU") != 0) {
+        return 0;
+    }
+
+    text_get();
+    StringTemp[0] = '\0';
+    parse_string(TextBufferGetPtr, StringTemp);
+    popup.dialogs().item(StringTemp, 0);
+    int item_count = 1;
+
+    text_get();
+    const int live_queue_item = Bases[base_id].queue_production_id[0];
+    if (live_queue_item <= -70) {
+        const int facility_id = -live_queue_item;
+        const int facility_factor = cost_factor(owner, 1, -1);
+        const int facility_scaled_cost = supply_wrap_mul(
+            facility_factor, Facility[facility_id].cost);
+        queued_cost = facility_scaled_cost;
+        parse_say(0, reinterpret_cast<int>(Facility[facility_id].name), -1, -1);
+        parse_string(TextBufferGetPtr, StringTemp);
+        popup.dialogs().item(StringTemp, item_count);
+        ++item_count;
+    }
+
+    text_get();
+    const int live_production = Bases[base_id].queue_production_id[0];
+    if (live_production >= 0) {
+        const int production_cost = veh_cost(live_production, base_id, 0);
+        const int production_factor = cost_factor(owner, 1, -1);
+        queued_cost = supply_wrap_mul(production_cost, production_factor);
+    }
+    if (live_production >= 64 &&
+        (VehPrototypes[live_production].flags & 4u) == 0) {
+        parse_says(0, VehPrototypes[live_production].veh_name, -1, -1);
+        parse_string(TextBufferGetPtr, StringTemp);
+        popup.dialogs().item(StringTemp, 1);
+        ++item_count;
+    }
+    if (convoy(veh_id, base_id) != 0) {
+        item_count += 3;
+        for (int convoy_line = 2; convoy_line <= 4; ++convoy_line) {
+            text_get();
+            parse_string(TextBufferGetPtr, StringTemp);
+            popup.dialogs().item(StringTemp, convoy_line);
+        }
+    }
+    if (item_count <= 1) {
+        return 0;
+    }
+
+    uint32_t &supply_action_flags = NetDaemonNet.lock_state_[1].leading_words_[3];
+    int action;
+    if (owner == ConsoleGlobal.faction_id_ && (supply_action_flags & 1u) != 0) {
+        const int selected_action = popup.exec(0, 0);
+        if (selected_action == 0) {
+            return 0;
+        }
+        vehicle.probe_action = static_cast<uint8_t>(selected_action);
+        action = selected_action;
+    } else {
+        action = vehicle.probe_action;
+    }
+
+    const uint32_t action_flags = supply_action_flags;
+    // Native 0x5941DC / 0x5941E5 takes the simple return only for bit0 set,
+    // bit1 clear. All other combinations continue at 0x5942C1 action dispatch.
+    if ((action_flags & 1u) != 0 && (action_flags & 2u) == 0) {
+        return 1;
+    }
+
+    if (action == 1) {
+        const int factor = cost_factor(owner, 1, -1);
+        const int action_cost = supply_wrap_mul(
+            factor, VehPrototypes[vehicle.proto_id].cost);
+        const int new_minerals = supply_wrap_add(
+            Bases[base_id].minerals_accumulated, action_cost);
+        Bases[base_id].minerals_accumulated = new_minerals;
+        Bases[base_id].mineral_surplus_final = new_minerals;
+        Bases[base_id].production_id_last =
+            Bases[base_id].queue_production_id[0];
+        synch_base(base_id);
+
+        int amount_needed = supply_wrap_sub(
+            queued_cost, Bases[base_id].minerals_accumulated);
+        if (amount_needed < 0) amount_needed = 0;
+        else if (amount_needed > 9999) amount_needed = 9999;
+        if (owner == ConsoleGlobal.faction_id_) {
+            parse_num(0, amount_needed);
+            NetMsgPrimary.pop("SUPPLYASSIGN", 5000, 0, 0);
+        }
+        if (IsMultiplayerNet != 0) {
+            message_veh(0x2407, veh_id, 1, 0);
+            NetDaemonNet.await_exec(1);
+        } else {
+            kill(veh_id);
+        }
+        // Native 0x5943C0 closes Popup; 0x594508 closes its picture later.
+        popup.close();
+        popup.owned_picture().close();
+        return 1;
+    }
+
+    vehicle.order = ORDER_CONVOY;
+    vehicle.probe_sabotage_id = static_cast<uint8_t>(action - 2);
+    // Native 0x594592 closes Popup before 0x5946C4 closes its picture.
+    popup.close();
+    popup.owned_picture().close();
+    return 0;
 }

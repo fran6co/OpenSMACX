@@ -2100,7 +2100,7 @@ BasePop::BasePop() {
     string_color_hyper_b_ = static_cast<int>(BasePopDefaultStringColors[1][3]);
     string_color_hyperc_ = static_cast<int>(BasePopDefaultStringColors[2][3]);
     string_color_hyper_d_ = static_cast<int>(BasePopDefaultStringColors[3][3]);
-    field_3160_ = 0;
+    sprite_click_callback_ = 0;
     sprite_double_click_callback_ = 0;
     redraw_callback_ = 0;
     button_font1_ = BasePopDefaultButtonFonts[0];
@@ -2316,7 +2316,7 @@ void BasePop::close() {
     *(int *)(self + 0x313c) = BasePopDefaultStringColors[1][3];
     *(int *)(self + 0x314c) = BasePopDefaultStringColors[2][3];
     *(int *)(self + 0x315c) = BasePopDefaultStringColors[3][3];
-    *(int *)(self + 0x3160) = 0;
+    sprite_click_callback_ = 0;
     *(int *)(self + 0x3164) = 0;
     *(int *)(self + 0x3168) = 0;
     *(Font **)(self + 0x316c) = BasePopDefaultButtonFonts[0];
@@ -3832,7 +3832,7 @@ int BasePop::calculate_dimensions() {
         }
         break;
       case 9:
-        dialog_cfg[0x2b] = field_3160_;                            // 0x22a8
+        dialogs_.SpriteBox::field_68_ = sprite_click_callback_;   // 0x22a8
         dialogs_.SpriteBox::double_click_callback_ = sprite_double_click_callback_;
         dialogs_.SpriteBox::set_redraw_callback(redraw_callback_);
         dialog_cfg[0x19] = field_3108_;                            // 0x2260

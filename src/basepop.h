@@ -509,6 +509,12 @@ class BasePop : public GraphicWin {
   bool picture_enabled() const { return dialogs_.SpriteBox::list_.entry_count_ != 0; }
   void set_caller_picture(Sprite *picture) { caller_sprite_ = picture; }
   void set_redraw_callback(SpriteBox::DrawCallback callback) { redraw_callback_ = callback; }
+  void set_sprite_click_callback(SpriteBox::ClickCallback callback) {
+    sprite_click_callback_ = callback;
+  }
+  void set_sprite_double_click_callback(SpriteBox::ClickCallback callback) {
+    sprite_double_click_callback_ = callback;
+  }
   // Modal editor pickers set their default answer after start configures
   // the popup. This is the value word at original +0xA44.
   void set_value(int value) { value_ = value; }
@@ -596,8 +602,10 @@ class BasePop : public GraphicWin {
   int string_color_2d_;        // 0x3154 = StringColors[3][1]
   int string_color_3d_;        // 0x3158 = StringColors[3][2]
   int string_color_hyper_d_;   // 0x315c = StringColors[3][3]
-  // The first configuration word still needs its reader recovered.
-  uint32_t field_3160_;  // 0x3160
+  // veh_pick installs an int(int) cdecl item callback here; dimensions
+  // transfers it to SpriteBox+0x68, whose left handler consumes its result.
+  // RECOVERY_MEMBER: v1 BasePop sprite_click_callback_ 0x3160 0x0048D0D0
+  SpriteBox::ClickCallback sprite_click_callback_;  // 0x3160
   // calculate_dimensions installs this into the embedded SpriteBox's
   // double-click callback; that handler tests its int return value.
   // RECOVERY_MEMBER: v1 BasePop sprite_double_click_callback_ 0x3164 0x00603800
