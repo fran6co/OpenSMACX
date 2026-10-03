@@ -1,0 +1,30 @@
+{
+  "event_id": "ec8b214a55c416ddc433e5099dd60b716bd352889bb8a101c70da1cb1556ace2",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/random_events",
+      "recovery/tests/test_random_events_behavior.py",
+      "src/game.cpp",
+      "src/unrecovered/0051f2e0.cpp"
+    ],
+    "evidence": [
+      "Complete typed owner recovery of random_events: all 22 switch cases, common selection/timer/RNG/notification paths and callback-sensitive live state reads; original game-logic task baseline remains unchanged.",
+      "Durable host controls must extract actual src/game.cpp helpers and entry, not ignored private implementations; both native flag sets and full application link are separately checked. Original identity/full span/TRIED, historical claims and useful seed discoveries remain obligations. Retire seed only after complete source owner and tests are reviewed.",
+      "Coordinator-reviewed manual checkpoint only. New body currently measures MISMATCH in both flag sets; 52 protected game.cpp claim rows retain code/masks/call symbols, while generated relocation metadata and unclaimed scheduling changes are explicit diagnostics, not complete linked preservation or game acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5370592,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "52232551153b079e3112f85fb49d7a6d0c84ab396e704809d6a627e064fa8be7",
+  "request_id": "random-events-complete-owner-controls-20261003",
+  "schema_version": 1,
+  "sequence": 9,
+  "stream": "task:game-logic-seed-owner-coverage"
+}

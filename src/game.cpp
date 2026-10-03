@@ -6871,11 +6871,1919 @@ initialize_factions:
 }
 
 
+// Random-event case services use the real source-owned state and UI objects.
+/*
+ * Case 6 uses source-owned Base/Facility/SecretProject/Console operations.
+ */
+#ifndef RANDOM_EVENTS_CASE6_HPP
+#define RANDOM_EVENTS_CASE6_HPP
+
+namespace random_events_cases {
+
+enum Case6Notice {
+    CASE6_NEARBY_BASES_AFFECTED,
+    CASE6_PROJECT_LOCAL,
+    CASE6_PROJECT_PBEM,
+    CASE6_FACILITY_LOCAL,
+    CASE6_FACILITY_PBEM
+};
+
+template <class State, class Services>
+inline void case6(State &state, Services &services, int faction_id,
+                  int selected_base_id, int base_roll) {
+    const int facility_gate_a = 17;
+    const int facility_gate_b = 18;
+    const int project_slots[3] = { 0, 14, 26 };
+    const int project_facilities[3] = { 70, 84, 96 };
+
+    // Native tests the selected base's built-facility bits before project and
+    // ranking checks. The 0x11/0x12 inputs are facility IDs, not event masks.
+    if (services.base_has_facility(selected_base_id, facility_gate_a) ||
+        services.base_has_facility(selected_base_id, facility_gate_b)) {
+        const int has_gate_b = services.base_has_facility(
+            selected_base_id, facility_gate_b);
+        const int facility = has_gate_b ? 28 : 27;
+        services.parse_facility_say(facility, -1);
+        if (faction_id == state.local_faction()) {
+            services.focus(services.base_x(selected_base_id),
+                           services.base_y(selected_base_id),
+                           state.local_faction());
+            services.notify(CASE6_FACILITY_LOCAL, base_roll);
+        } else if (state.multiplayer_pbem()) {
+            services.notify(CASE6_FACILITY_PBEM, base_roll);
+        }
+        return;
+    }
+
+    int matched_project_slot = -1;
+    for (int slot = 0; slot < 3; ++slot) {
+        const int owner_base = services.secret_project_owner(project_slots[slot]);
+        if (owner_base >= 0 && services.base_faction(owner_base) == faction_id) {
+            matched_project_slot = slot;
+            break;
+        }
+    }
+    if (matched_project_slot >= 0) {
+        services.parse_facility_say(project_facilities[matched_project_slot], -1);
+        if (faction_id == state.local_faction()) {
+            services.focus(services.base_x(selected_base_id),
+                           services.base_y(selected_base_id),
+                           state.local_faction());
+            services.notify(CASE6_PROJECT_LOCAL, base_roll);
+        } else if (state.multiplayer_pbem()) {
+            services.notify(CASE6_PROJECT_PBEM, base_roll);
+        }
+        return;
+    }
+
+    const int required_ranking = state.turn_current_num() >= 150 ? 5 : 4;
+    if (services.faction_ranking(faction_id) < required_ranking) return;
+
+    const int population = services.base_population(selected_base_id);
+    const int upper_bound = (population + 1) / 2;
+    (void)services.parse_num(1, upper_bound);
+
+    bool visible = faction_id == state.local_faction();
+    if (!visible) {
+        const unsigned int local_mask =
+            static_cast<unsigned int>(1u << state.local_faction());
+        visible = (services.base_visibility(selected_base_id) & local_mask) != 0;
+    }
+    if (visible) {
+        services.focus(services.base_x(selected_base_id),
+                       services.base_y(selected_base_id),
+                       state.local_faction());
+    }
+
+    const int longitude_bounds = state.longitude_bounds();
+    const int longitude_half = state.longitude_half();
+    const bool flat = (state.map_is_flat() & 1) != 0;
+    const int base_count = state.base_count();
+    for (int candidate_id = 0; candidate_id < base_count; ++candidate_id) {
+        const int selected_x = services.base_x(selected_base_id);
+        const int selected_y = services.base_y(selected_base_id);
+        const int candidate_x = services.base_x(candidate_id);
+        const int candidate_y = services.base_y(candidate_id);
+        int dx = candidate_x - selected_x;
+        if (dx < 0) dx = -dx;
+        if (!flat && dx > longitude_half) dx = longitude_bounds - dx;
+        int dy = candidate_y - selected_y;
+        if (dy < 0) dy = -dy;
+        if (((dx + dy) >> 1) > upper_bound) continue;
+
+        if (services.base_has_facility(candidate_id, facility_gate_a) ||
+            services.base_has_facility(candidate_id, facility_gate_b)) continue;
+
+        const int candidate_faction = services.base_faction(candidate_id);
+        bool project_protected = false;
+        for (int slot = 0; slot < 3; ++slot) {
+            const int owner_base =
+                services.secret_project_owner(project_slots[slot]);
+            if (owner_base >= 0 &&
+                services.base_faction(owner_base) == candidate_faction) {
+                project_protected = true;
+                break;
+            }
+        }
+        if (project_protected) continue;
+
+        const int old_population = services.base_population(candidate_id);
+        services.set_base_population(candidate_id, (old_population + 1) / 2);
+        services.draw_base(candidate_id);
+        if (candidate_faction == state.local_faction()) {
+            services.focus(candidate_x, candidate_y, state.local_faction());
+            visible = true;
+        } else if (state.multiplayer_pbem()) {
+            visible = true;
+        }
+    }
+
+    if (visible) services.notify(CASE6_NEARBY_BASES_AFFECTED, 0);
+}
+
+} // namespace random_events_cases
+
+#endif
+
+/*
+ * Typed translation of the shared random_events cases 7/8 body: tile
+ * selection, resource mutation, UI animation, parser and popup paths.
+ *
+ * State contract:
+ *   int multiplayer_event_guard() const; // original [0x93A95C]
+ *   int base_x() const, base_y() const, faction_id() const;
+ *   int longitude_bounds() const, latitude_bounds() const;
+ *   int map_is_flat() const;      // only low bit controls horizontal wrapping
+ *   unsigned int player_data_flags() const; // PlayerData.flags
+ *   int turn_current_num() const, console_faction_id() const;
+ * Services contract:
+ *   int random(int low, int high);
+ *   int bonus_at(int x, int y, int unused);
+ *   unsigned int visibility(int x, int y); // Map::visibility byte at +4
+ *   unsigned char climate(int x, int y);    // Map::climate
+ *   int whose_territory(int faction_id, int x, int y, int *base_id,
+ *                       int ignore_comm);
+ *
+ * The caller supplies the already source-owned RadiusOffsetX/Y tables. The
+ * first nine cells are the original one-base radius, not directions. State
+ * getters intentionally reread their source owners at native load points;
+ * callbacks and map/UI operations occur between those reads.
+ */
+#ifndef RANDOM_EVENTS_CASES_7_8_POSITION_HPP
+#define RANDOM_EVENTS_CASES_7_8_POSITION_HPP
+
+namespace random_events_cases {
+
+struct PositionSelection {
+    bool valid;
+    bool found_nearby_bonus;
+    int offset_index;
+    int x;
+    int y;
+};
+
+enum Case78Outcome {
+    CASE78_NO_OUTCOME = 0,
+    CASE78_NEARBY_BONUS_REMOVED = 1,
+    CASE78_FALLBACK_BONUS_SET = 2
+};
+
+struct Case78Result {
+    Case78Outcome outcome;
+    int resource_index;
+    const char *popup_image_key;
+    bool parsed_resource_say;
+    bool popup_emitted;
+};
+
+static inline bool event_position_in_bounds(int x, int y,
+                                             int longitude_bounds,
+                                             int latitude_bounds) {
+    return y >= 0 && y < latitude_bounds && x >= 0 && x < longitude_bounds;
+}
+
+static inline int event_position_wrap_x(int x, int longitude_bounds,
+                                        int map_is_flat) {
+    // Native tests only bit zero. It performs at most one correction, rather
+    // than modulo normalization.
+    if ((map_is_flat & 1) == 0) {
+        if (x < 0) {
+            x += longitude_bounds;
+        } else if (x >= longitude_bounds) {
+            x -= longitude_bounds;
+        }
+    }
+    return x;
+}
+
+template <class State, class Services>
+inline PositionSelection select_case_7_8_position(
+    State &state, Services &services,
+    const int *radius_offset_x, const int *radius_offset_y) {
+    PositionSelection result;
+    result.valid = false;
+    result.found_nearby_bonus = false;
+    result.offset_index = -1;
+    result.x = 0;
+    result.y = 0;
+
+    // LAB_0051FFB1 returns before consuming RNG when this guard is nonzero.
+    if (state.multiplayer_event_guard() != 0) return result;
+
+    const int fallback_offset = services.random(0, 20) + 1;
+    int selected_offset = fallback_offset;
+
+    for (int offset = 0; offset < 9; ++offset) {
+        const int longitude_bounds = state.longitude_bounds();
+        int x = state.base_x() + radius_offset_x[offset];
+        x = event_position_wrap_x(x, longitude_bounds, state.map_is_flat());
+        const int y = state.base_y() + radius_offset_y[offset];
+        if (!event_position_in_bounds(x, y, longitude_bounds,
+                                      state.latitude_bounds())) {
+            continue;
+        }
+
+        // This call precedes the faction visibility test in the native body.
+        if (services.bonus_at(x, y, 0) == 0) continue;
+
+        if ((state.player_data_flags() & 0x200u) == 0) {
+            const unsigned int faction_mask =
+                static_cast<unsigned int>(1u << state.faction_id());
+            if ((services.visibility(x, y) & faction_mask) == 0) continue;
+        }
+
+        if ((services.climate(x, y) & 0xE0u) >= 0x60u) {
+            const int owner = services.whose_territory(
+                state.faction_id(), x, y, 0, 0);
+            if (owner >= 0 && owner != state.faction_id()) continue;
+        }
+
+        selected_offset = offset;
+        result.found_nearby_bonus = true;
+        break;
+    }
+
+    // Native recomputes the chosen coordinate from the base; it does not
+    // retain the scan's x/y temporaries. Fallback offsets may be 1..21.
+    const int longitude_bounds = state.longitude_bounds();
+    int x = state.base_x() + radius_offset_x[selected_offset];
+    x = event_position_wrap_x(x, longitude_bounds, state.map_is_flat());
+    const int y = state.base_y() + radius_offset_y[selected_offset];
+    if (!event_position_in_bounds(x, y, longitude_bounds,
+                                  state.latitude_bounds())) {
+        return result;
+    }
+
+    if ((state.player_data_flags() & 0x200u) == 0) {
+        const unsigned int faction_mask =
+            static_cast<unsigned int>(1u << state.faction_id());
+        if ((services.visibility(x, y) & faction_mask) == 0) return result;
+    }
+
+    if ((services.climate(x, y) & 0xE0u) >= 0x60u) {
+        const int owner = services.whose_territory(
+            state.faction_id(), x, y, 0, 0);
+        if (owner >= 0 && owner != state.faction_id()) return result;
+    }
+
+    result.valid = true;
+    result.offset_index = selected_offset;
+    result.x = x;
+    result.y = y;
+    return result;
+}
+
+/*
+ * State additions for this bounded outcome helper are the live getters
+ * turn_current_num() and console_faction_id().
+ * Services additions:
+ *   void bit_set(int x, int y, unsigned int mask, int enabled);
+ *   void synch_bit(int x, int y, int faction_id);
+ *   void draw_tile(int x, int y, int mode);
+ *   void center_map(int x, int y, int animate);
+ *   int poll_key(int key); // native caller tests the returned AH byte
+ *   int is_multiplayer_net();
+ *   void wait(int milliseconds);
+ *   void parse_resource_say(int resource_index); // exact native table lookup
+ *   void popup(const char *caption_key, const char *image_key, int argument);
+ *
+ * The popup keys are the exact NUL-terminated strings used by the native
+ * calls. For this path EDI is the Resource index: zero selects the nutrient
+ * image family, while every nonzero value selects the mineral family.
+ */
+template <class State, class Services>
+inline Case78Result apply_case_7_8_outcome(
+    State &state, Services &services, const PositionSelection &selection) {
+    Case78Result result;
+    result.outcome = CASE78_NO_OUTCOME;
+    result.resource_index = -1;
+    result.popup_image_key = 0;
+    result.parsed_resource_say = false;
+    result.popup_emitted = false;
+    if (!selection.valid) return result;
+
+    const int x = selection.x;
+    const int y = selection.y;
+    const int faction = state.faction_id();
+    const unsigned int resource_bit = 0x400u;
+
+    if (selection.found_nearby_bonus) {
+        if (services.bonus_at(x, y, 0) != 0) {
+            if (state.turn_current_num() < 75) return result;
+
+            // The native calls bonus_at again to choose the parse_say table
+            // entry, before clearing the bit and invoking map callbacks.
+            const int bonus_id = services.bonus_at(x, y, 0) - 1;
+            services.parse_resource_say(bonus_id);
+            result.parsed_resource_say = true;
+            result.resource_index = bonus_id;
+
+            services.bit_set(x, y, resource_bit, 0);
+            services.synch_bit(x, y, faction);
+            services.draw_tile(x, y, 2);
+            if (services.bonus_at(x, y, 0) != 0) return result;
+            if (faction != state.console_faction_id()) return result;
+
+            result.outcome = CASE78_NEARBY_BONUS_REMOVED;
+            services.center_map(x, y, 1);
+            const int initial_key = services.poll_key(0x10);
+            if (((initial_key >> 8) & 0xFF) == 0) {
+                for (int i = 0; i < 10; ++i) {
+                    services.bit_set(x, y, resource_bit, 1);
+                    services.synch_bit(x, y, faction);
+                    services.draw_tile(x, y, 2);
+                    if (((services.poll_key(0x10) >> 8) & 0xFF) == 0
+                        && services.is_multiplayer_net() == 0) {
+                        services.wait(0x14);
+                    }
+
+                    services.bit_set(x, y, resource_bit, 0);
+                    services.synch_bit(x, y, faction);
+                    services.draw_tile(x, y, 2);
+                    if (((services.poll_key(0x10) >> 8) & 0xFF) == 0
+                        && services.is_multiplayer_net() == 0) {
+                        services.wait(0x14);
+                    }
+                }
+                if (((services.poll_key(0x10) >> 8) & 0xFF) == 0
+                    && services.is_multiplayer_net() == 0) {
+                    services.wait(0x64);
+                }
+            }
+
+            const bool ocean =
+                (services.climate(x, y) & 0xE0u) < 0x60u;
+            result.popup_image_key =
+                (bonus_id == 0)
+                    ? (ocean ? "rdneuw_sm.pcx" : "rdneul_sm.pcx")
+                    : (ocean ? "rdminw_sm.pcx" : "rdminl_sm.pcx");
+            services.popup("NEWRESOURCE", result.popup_image_key, -1);
+            result.popup_emitted = true;
+            return result;
+        }
+        // Callback-sensitive case: a candidate may cease to have a bonus
+        // between selection and this test. Native then uses the set-bit path.
+    }
+
+    result.outcome = CASE78_FALLBACK_BONUS_SET;
+    services.bit_set(x, y, resource_bit, 1);
+    services.synch_bit(x, y, faction);
+    services.draw_tile(x, y, 2);
+    const int bonus_id = services.bonus_at(x, y, 0) - 1;
+    if (bonus_id < 0) return result;
+    result.resource_index = bonus_id;
+    if (faction != state.console_faction_id()) return result;
+
+    services.center_map(x, y, 1);
+    const int initial_key = services.poll_key(0x10);
+    if (((initial_key >> 8) & 0xFF) == 0) {
+        for (int i = 0; i < 10; ++i) {
+            services.bit_set(x, y, resource_bit, 0);
+            services.synch_bit(x, y, faction);
+            services.draw_tile(x, y, 2);
+            if (((services.poll_key(0x10) >> 8) & 0xFF) == 0
+                && services.is_multiplayer_net() == 0) {
+                services.wait(0x14);
+            }
+
+            services.bit_set(x, y, resource_bit, 1);
+            services.synch_bit(x, y, faction);
+            services.draw_tile(x, y, 2);
+            if (((services.poll_key(0x10) >> 8) & 0xFF) == 0
+                && services.is_multiplayer_net() == 0) {
+                services.wait(0x14);
+            }
+        }
+        if (((services.poll_key(0x10) >> 8) & 0xFF) == 0
+            && services.is_multiplayer_net() == 0) {
+            services.wait(0x64);
+        }
+    }
+
+    services.parse_resource_say(bonus_id);
+    result.parsed_resource_say = true;
+    const bool ocean = (services.climate(x, y) & 0xE0u) < 0x60u;
+    result.popup_image_key =
+        (bonus_id == 0)
+            ? (ocean ? "rdneuw_sm.pcx" : "rdneul_sm.pcx")
+            : (ocean ? "rdminw_sm.pcx" : "rdminl_sm.pcx");
+    services.popup("NEWRESOURCE", result.popup_image_key, -1);
+    result.popup_emitted = true;
+    return result;
+}
+
+} // namespace random_events_cases
+
+#endif
+
+/*
+ * Cases 9-11 use a notification enum resolved by their native service adapter.
+ * State members refer to the product-owned globals/PlayerData.
+ */
+#ifndef RANDOM_EVENTS_CASES_9_11_HPP
+#define RANDOM_EVENTS_CASES_9_11_HPP
+
+namespace random_events_cases {
+
+enum Notification {
+    CASE9_STATE_CHANGED = 9,
+    CASE9_STATE_UNCHANGED = 90,
+    CASE10_STATE_CLEARED = 10,
+    CASE11_DURATION_SET = 11
+};
+
+/*
+ * State view contract:
+ *   int &energy_event_state;
+ *   int &sunspot_duration;
+ *   int turn_current_num; // snapshot taken before entering the case
+ *   int player_count;
+ *   PlayerRecord *players;
+ * where PlayerRecord is the project's typed PlayerData (or the host fixture
+ * record) and its satellites_[4] layout is already verified.
+ *
+ * Service contract:
+ *   int random(int low, int high);
+ *   void notify(int notification, int argument);
+ *   int parse_num(int low, int high);
+ */
+
+template <class State, class Services>
+inline void case9(State &state, Services &services) {
+    if (state.energy_event_state != 0) return;
+    if (services.random(0, 5) != 0) return;
+
+    bool changed = false;
+    // Native walks factions 1..7, not the neutral/player-0 record.
+    for (int faction = 1; faction < state.player_count; ++faction) {
+        if (state.players[faction].satellites_[2] != 0
+            || state.players[faction].satellites_[3] != 0) {
+            state.players[faction].satellites_[2] = 0;
+            state.players[faction].satellites_[3] = 0;
+            changed = true;
+        }
+    }
+
+    state.energy_event_state = 1;
+    services.notify(changed ? CASE9_STATE_CHANGED : CASE9_STATE_UNCHANGED, -1);
+}
+
+template <class State, class Services>
+inline void case10(State &state, Services &services) {
+    if (services.random(0, 5) != 0) return;
+
+    bool changed = false;
+    // Native walks the same seven playable PlayerData records.
+    for (int faction = 1; faction < state.player_count; ++faction) {
+        if (state.players[faction].satellites_[1] != 0) {
+            state.players[faction].satellites_[1] = 0;
+            changed = true;
+        }
+    }
+
+    // The native state latch is set even when there was nothing to clear.
+    state.energy_event_state = 1;
+    if (changed) services.notify(CASE10_STATE_CLEARED, -1);
+}
+
+template <class State, class Services>
+inline void case11(State &state, Services &services) {
+    const int turn = state.turn_current_num;
+    if (turn < 50) return;
+    if (state.sunspot_duration > -40) return;
+
+    if (state.sunspot_duration > -80 && turn >= 80
+        && services.random(0, 3) != 0) {
+        return;
+    }
+
+    // Preserve native order: select and store duration, parse the number,
+    // then notify. The parser callback may mutate game/UI state.
+    state.sunspot_duration = services.random(0, 11) + 10;
+    (void)services.parse_num(0, 20);
+    services.notify(CASE11_DURATION_SET, -1);
+}
+
+} // namespace random_events_cases
+
+#endif
+
+/*
+ * Source-owner bindings for the random_events case helpers.
+ */
+struct RandomEventsNativePlayerView {
+    PlayerData &operator[](int faction_id) { return PlayersData[faction_id]; }
+};
+
+struct RandomEventsNativeState9_11 {
+    int &energy_event_state;
+    int &sunspot_duration;
+    const int turn_current_num;
+    const int player_count;
+    RandomEventsNativePlayerView players;
+
+    RandomEventsNativeState9_11()
+        : energy_event_state(GlobalEnergyEventState),
+          sunspot_duration(SunspotDuration),
+          turn_current_num(TurnCurrentNum),
+          player_count(MaxPlayerNum), players() {}
+};
+
+struct RandomEventsNativeServices9_11 {
+    int random(int low, int high) { return ::random(low, high); }
+    int parse_num(int low, int high) { return ::parse_num(low, high); }
+
+    void notify(int notification, int argument) {
+        (void)argument;
+        switch (notification) {
+        case random_events_cases::CASE9_STATE_CHANGED:
+            (void)POP2("SOLARSTORM", "sun_sm.pcx", -1);
+            break;
+        case random_events_cases::CASE9_STATE_UNCHANGED:
+            (void)POP2("SOLARFLARE", "heat_sm.pcx", -1);
+            break;
+        case random_events_cases::CASE10_STATE_CLEARED:
+            (void)POP2("ASTEROID", "astm_sm.pcx", -1);
+            break;
+        case random_events_cases::CASE11_DURATION_SET:
+            (void)POP2("SUNSPOTS", "solar_sm.pcx", -1);
+            break;
+        default:
+            break;
+        }
+    }
+};
+
+static void random_events_native_cases_9_11(int event_kind) {
+    RandomEventsNativeState9_11 state;
+    RandomEventsNativeServices9_11 services;
+    switch (event_kind) {
+    case 9: random_events_cases::case9(state, services); break;
+    case 10: random_events_cases::case10(state, services); break;
+    case 11: random_events_cases::case11(state, services); break;
+    default: break;
+    }
+}
+
+/* Position and mutation calls for cases 7/8 use the actual map/game owners.
+ * The native 0x94615C + bonus_id*8 load is Resource[bonus_id].name_plural,
+ * whose typed table starts at 0x946158; it is not RulesBonusName/Facility.
+ */
+struct RandomEventsNativePositionServices {
+    int random(int low, int high) { return ::random(low, high); }
+    int bonus_at(int x, int y, int unused) {
+        return ::bonus_at(x, y, unused);
+    }
+    unsigned int visibility(int x, int y) {
+        return map_loc(x, y)->visibility;
+    }
+    unsigned char climate(int x, int y) {
+        return map_loc(x, y)->climate;
+    }
+    int whose_territory(int faction_id, int x, int y,
+                        int *base_id, int ignore_comm) {
+        return ::whose_territory(faction_id, x, y, base_id, ignore_comm);
+    }
+    void bit_set(int x, int y, unsigned int mask, int enabled) {
+        ::bit_set(x, y, (int)mask, enabled);
+    }
+    void synch_bit(int x, int y, int faction_id) {
+        ::synch_bit(x, y, faction_id);
+    }
+    void draw_tile(int x, int y, int mode) { ::draw_tile(x, y, mode); }
+    void center_map(int x, int y, int animate) {
+        console_map_win()->set_center(x, y, animate);
+    }
+    int poll_key(int key) { return GetAsyncKeyState(key); }
+    int is_multiplayer_net() { return IsMultiplayerNet; }
+    void wait(int milliseconds) { ::clock_wait(milliseconds); }
+    void parse_resource_say(int resource_id) {
+        (void)::parse_say(1,
+            static_cast<int>(reinterpret_cast<intptr_t>(
+                Resource[resource_id].name_plural)),
+            -1, -1);
+    }
+    void popup(const char *caption_key, const char *image_key, int argument) {
+        (void)POP2(caption_key, image_key, argument);
+    }
+};
+
+struct RandomEventsNativeCase6State {
+    int turn_current_num() const { return TurnCurrentNum; }
+    int local_faction() const { return ConsoleGlobal.faction_id_; }
+    int multiplayer_pbem() const { return IsMultiplayerPBEM != 0; }
+    int longitude_bounds() const { return (int)MapLongitudeBounds; }
+    int longitude_half() const { return (int)MapLongitude; }
+    int map_is_flat() const { return MapIsFlat; }
+    int base_count() const { return BaseCurrentCount; }
+};
+
+struct RandomEventsNativeCase6Services {
+    bool base_has_facility(int base_id, int facility_id) const {
+        return has_fac_built(facility_id, base_id);
+    }
+    int secret_project_owner(int project_slot) const {
+        return base_project(project_slot);
+    }
+    int base_faction(int base_id) const {
+        return Bases[base_id].faction_id_current;
+    }
+    int faction_ranking(int faction_id) const {
+        return PlayersData[faction_id].ranking;
+    }
+    int base_population(int base_id) const {
+        return Bases[base_id].population_size;
+    }
+    int base_visibility(int base_id) const { return Bases[base_id].visibility; }
+    int base_x(int base_id) const { return Bases[base_id].x; }
+    int base_y(int base_id) const { return Bases[base_id].y; }
+    int parse_num(int low, int high) { return ::parse_num(low, high); }
+    void parse_facility_say(int facility_id, int gender) {
+        (void)::parse_say(1,
+            static_cast<int>(reinterpret_cast<intptr_t>(
+                Facility[facility_id].name)),
+            gender, -1);
+    }
+    void focus(int x, int y, int faction_id) {
+        (void)ConsoleGlobal.focus(x, y, faction_id);
+    }
+    void set_base_population(int base_id, int value) {
+        Bases[base_id].population_size = (int8_t)value;
+    }
+    void draw_base(int base_id) {
+        ::draw_tile(Bases[base_id].x, Bases[base_id].y, 2);
+    }
+    void notify(int notification, int argument) {
+        switch (notification) {
+        case random_events_cases::CASE6_NEARBY_BASES_AFFECTED:
+            (void)POP2("PROMETHEUS0", "biohazd_sm.pcx", argument);
+            break;
+        case random_events_cases::CASE6_PROJECT_LOCAL:
+        case random_events_cases::CASE6_PROJECT_PBEM:
+            (void)POP2("PROMETHEUS2", "biohazd_sm.pcx", argument);
+            break;
+        case random_events_cases::CASE6_FACILITY_LOCAL:
+        case random_events_cases::CASE6_FACILITY_PBEM:
+            (void)POP2("PROMETHEUS1", "biohazd_sm.pcx", argument);
+            break;
+        default:
+            break;
+        }
+    }
+};
+
+// The entry helper performs the native common setup, chooses a
+// valid event kind/base, and pass its captured faction/base/random-roll values.
+// Strings below are the pinned literal bytes at original 0x68B0F4..0x68B180.
+static void random_events_cases_0_5(int event_kind, int faction_id,
+                                    int base_id, int base_roll) {
+    Base &base = Bases[base_id];
+
+    switch (event_kind) {
+    case 0:
+        // Native 51F5FB..51F6C0: the event is always allowed for a different
+        // top-ranked faction. For that faction, easy humans suppress the
+        // random gate; all other cases draw once and proceed only on zero.
+        if (FactionRankings[7] == static_cast<unsigned int>(faction_id) &&
+            ((static_cast<uint8_t>(LockEnableMask) &
+              static_cast<uint8_t>(1u << faction_id)) == 0 ||
+             PlayersData[faction_id].diff_level > 1) &&
+            random(0, 4) != 0) {
+            break;
+        }
+        base.event |= BEVENT_BUMPER;
+        strcat(StringTemp, "BUMPER");
+        if (strlen(StringTemp) == 0) break;
+        if (base.event & 0x7E00u) base.random_event_turns = 10;
+        if (faction_id != ConsoleGlobal.faction_id_ && !IsMultiplayerPBEM)
+            break;
+        POP2(StringTemp, "bump_sm.pcx", base_roll);
+        return;
+
+    case 1: { // Native 51F6C0..51F7A2.
+        // The native comparison reads PlayerData.ranking (+4), not
+        // diff_level (+8): require ranking >= 4 before turn 150 and >= 5
+        // beginning at turn 150.
+        const int required_rank =
+            (TurnCurrentNum >= 150) ? 5 : 4;
+        if (static_cast<int>(PlayersData[faction_id].ranking) <
+            required_rank) break;
+        base.event |= BEVENT_FAMINE;
+        strcat(StringTemp, "FAMINE");
+        if (strlen(StringTemp) == 0) break;
+        if (base.event & 0x7E00u) base.random_event_turns = 10;
+        if (faction_id != ConsoleGlobal.faction_id_ && !IsMultiplayerPBEM)
+            break;
+        if (Players[faction_id].rule_flags & 0x80)
+            POP2(StringTemp, "al_starv_sm.pcx", base_roll);
+        else
+            POP2(StringTemp, "starv_sm.pcx", base_roll);
+        return;
+    }
+
+    case 2: // Native 51F7A2..51F867.
+        if (FactionRankings[7] == static_cast<unsigned int>(faction_id) &&
+            ((static_cast<uint8_t>(LockEnableMask) &
+              static_cast<uint8_t>(1u << faction_id)) == 0 ||
+             PlayersData[faction_id].diff_level > 1) &&
+            random(0, 4) != 0) {
+            break;
+        }
+        base.event |= BEVENT_INDUSTRY;
+        strcat(StringTemp, "INDUSTRY");
+        if (strlen(StringTemp) == 0) break;
+        if (base.event & 0x7E00u) base.random_event_turns = 10;
+        if (faction_id != ConsoleGlobal.faction_id_ && !IsMultiplayerPBEM)
+            break;
+        POP2(StringTemp, "indbm_sm.pcx", base_roll);
+        return;
+
+    case 3: { // Native 51F867..51F917.
+        const int required_rank =
+            (TurnCurrentNum >= 150) ? 5 : 4;
+        if (static_cast<int>(PlayersData[faction_id].ranking) <
+            required_rank) break;
+        base.event |= BEVENT_BUST;
+        strcat(StringTemp, "BUST");
+        if (strlen(StringTemp) == 0) break;
+        if (base.event & 0x7E00u) base.random_event_turns = 10;
+        if (faction_id != ConsoleGlobal.faction_id_ && !IsMultiplayerPBEM)
+            break;
+        POP2(StringTemp, "genwarning_sm.pcx", base_roll);
+        return;
+    }
+
+    case 4: // Native 51F917..51F9DC.
+        if (FactionRankings[7] == static_cast<unsigned int>(faction_id) &&
+            ((static_cast<uint8_t>(LockEnableMask) &
+              static_cast<uint8_t>(1u << faction_id)) == 0 ||
+             PlayersData[faction_id].diff_level > 1) &&
+            random(0, 4) != 0) {
+            break;
+        }
+        base.event |= BEVENT_HEAT_WAVE;
+        strcat(StringTemp, "HEATWAVE");
+        if (strlen(StringTemp) == 0) break;
+        if (base.event & 0x7E00u) base.random_event_turns = 10;
+        if (faction_id != ConsoleGlobal.faction_id_ && !IsMultiplayerPBEM)
+            break;
+        POP2(StringTemp, "heat_sm.pcx", base_roll);
+        return;
+
+    case 5: { // Native 51F9DC..51FA8C.
+        const int required_rank =
+            (TurnCurrentNum >= 150) ? 5 : 4;
+        if (static_cast<int>(PlayersData[faction_id].ranking) <
+            required_rank) break;
+        base.event |= BEVENT_CLOUD_COVER;
+        strcat(StringTemp, "CLOUDCOVER");
+        if (strlen(StringTemp) == 0) break;
+        if (base.event & 0x7E00u) base.random_event_turns = 10;
+        if (faction_id != ConsoleGlobal.faction_id_ && !IsMultiplayerPBEM)
+            break;
+        POP2(StringTemp, "cloud_sm.pcx", base_roll);
+        return;
+    }
+
+    default:
+        break;
+    }
+}
+
+// Switch-body implementation for random_events cases 12 and 13. The common
+// entry has already captured the selected faction/base, base coordinates and
+// base-roll value before the parser callback. Those snapshots are intentional:
+// the native event body uses the saved coordinates after parse_says.
+static void random_events_cases_12_13(int event_kind, int faction_id,
+                                      int base_id, int base_roll,
+                                      int base_x, int base_y) {
+    switch (event_kind) {
+    case 12: {
+        // Native 52067D..52079F. The high-reserve branch is strictly >1000.
+        // Human control is read from byte zero of LockEnableMask, not the full
+        // dword; reserves >2000 take the inflation path regardless.
+        const int reserves = PlayersData[faction_id].energy_reserves;
+        if (reserves > 1000) {
+            const unsigned char human_bits =
+                static_cast<unsigned char>(LockEnableMask);
+            if ((human_bits & static_cast<unsigned char>(1u << faction_id)) == 0 &&
+                reserves <= 2000) break;
+
+            const int new_reserves =
+                (reserves + ((reserves < 0) ? 3 : 0)) >> 2;
+            PlayersData[faction_id].energy_reserves = new_reserves;
+            if (faction_id == ConsoleGlobal.faction_id_) {
+                parse_num(0, new_reserves);
+                ConsoleGlobal.update_data(0);
+                POP2("INFLATION", "markbm_sm.pcx", -1);
+                return;
+            }
+            if (IsMultiplayerPBEM) {
+                parse_num(0, new_reserves);
+                POP2("INFLATION", "markbm_sm.pcx", -1 - faction_id);
+                return;
+            }
+        } else if (PlayersData[faction_id].ranking <= 4 && reserves <= 500) {
+            const int new_reserves = reserves * 2;
+            PlayersData[faction_id].energy_reserves = new_reserves;
+            if (faction_id == ConsoleGlobal.faction_id_) {
+                parse_num(0, new_reserves);
+                ConsoleGlobal.update_data(0);
+                POP2("ENERGYBOOM", "markbm_sm.pcx", -1);
+                return;
+            }
+        }
+        break;
+    }
+
+    case 13: {
+        // Native 52079F..520A37. The selected faction's ranking gates the
+        // event; it is not its difficulty. Keep the native one-wrap rule for
+        // round maps rather than using a general modulo operation.
+        if (TurnCurrentNum < 75) break;
+        const int required_ranking = (TurnCurrentNum >= 150) ? 5 : 4;
+        if (PlayersData[faction_id].ranking < required_ranking) break;
+
+        int event_visible = 0;
+        for (int radius_index = 0; radius_index < 21; ++radius_index) {
+            int x = base_x + RadiusOffsetX[radius_index];
+            const int y = base_y + RadiusOffsetY[radius_index];
+            if ((MapIsFlat & 1) == 0) {
+                if (x < 0) x += MapLongitudeBounds;
+                else if (x >= MapLongitudeBounds) x -= MapLongitudeBounds;
+            }
+            if (y < 0 || y >= MapLatitudeBounds ||
+                x < 0 || x >= MapLongitudeBounds) continue;
+
+            Map &tile = map_tiles()[y * static_cast<int>(MapLongitude) + (x >> 1)];
+            if ((tile.bit & BIT_SOLAR_TIDAL) == 0) continue;
+            const unsigned char faction_bit =
+                static_cast<unsigned char>(1u << faction_id);
+            if ((PlayersData[faction_id].flags & 0x200) == 0 &&
+                (tile.visibility & faction_bit) == 0) continue;
+
+            const int territory = whose_territory(faction_id, x, y, 0, 0);
+            if (territory >= 0 && territory != faction_id) continue;
+            if ((tile.climate & 0xE0) < 0x60) continue;
+
+            if (IsMultiplayerPBEM) {
+                event_visible = 1;
+            } else {
+                const unsigned char local_bit = static_cast<unsigned char>(
+                    1u << ConsoleGlobal.faction_id_);
+                if (faction_id == ConsoleGlobal.faction_id_ ||
+                    Bases[base_id].visibility & local_bit) {
+                    if (!event_visible) {
+                        ConsoleGlobal.focus(base_x, base_y,
+                                            ConsoleGlobal.faction_id_);
+                        if ((GetAsyncKeyState(VK_SHIFT) & 0xFF00) == 0 &&
+                            !IsMultiplayerNet) {
+                            clock_wait(200);
+                        }
+                    }
+                    event_visible |= (faction_id == ConsoleGlobal.faction_id_) + 1;
+                }
+            }
+
+            bit_set(x, y, BIT_SOLAR_TIDAL, 0);
+            synch_bit(x, y, faction_id);
+            for (int visible_faction = 1; visible_faction < 8;
+                 ++visible_faction) {
+                tile.bit_visible[visible_faction - 1] &=
+                    ~static_cast<uint32_t>(BIT_SOLAR_TIDAL);
+            }
+            if (event_visible) {
+                draw_tile(x, y, 2);
+                if ((GetAsyncKeyState(VK_SHIFT) & 0xFF00) == 0 &&
+                    !IsMultiplayerNet && !IsMultiplayerPBEM) {
+                    clock_wait(50);
+                }
+            }
+        }
+        if (event_visible) {
+            POP2("HAIL", "hail_sm.pcx", base_roll);
+            return;
+        }
+        break;
+    }
+
+    default:
+        break;
+    }
+}
+
+// Switch-body implementation for random_events cases 15 and 16. The common
+// entry supplies snapshots captured before parser callbacks.
+static uint32_t &random_events_blight_cache_word(Map &tile, int faction_id) {
+    switch (faction_id) {
+    case 0: return tile.bit2;
+    case 1: return tile.bit_visible[0];
+    case 2: return tile.bit_visible[1];
+    case 3: return tile.bit_visible[2];
+    case 4: return tile.bit_visible[3];
+    case 5: return tile.bit_visible[4];
+    case 6: return tile.bit_visible[5];
+    default: return tile.bit_visible[6];
+    }
+}
+
+static void random_events_cases_15_16(int event_kind, int faction_id,
+                                      int selected_base_id, int base_roll,
+                                      int base_x, int base_y) {
+    switch (event_kind) {
+    case 15: {
+        if (IsMultiplayerPBEM || TurnCurrentNum < 75) break;
+        // Native uses a signed JL on this dword despite current_num_bases
+        // being represented unsigned in PlayerData.
+        if (static_cast<int>(PlayersData[faction_id].current_num_bases) < 8 ||
+            (GameState & 0x10u) != 0 || near_landmark(base_x, base_y)) break;
+
+        const int initial_local_faction = ConsoleGlobal.faction_id_;
+        const unsigned char local_bit = static_cast<unsigned char>(
+            1u << initial_local_faction);
+        const bool local_map_visible =
+            (PlayersData[initial_local_faction].flags & 0x200u) != 0 ||
+            (map_tiles()[base_y * static_cast<int>(MapLongitude) +
+                         (base_x >> 1)].visibility & local_bit) != 0;
+
+        // Native's preflight examines 49 entries. Every tile in the first 25
+        // must be land; the outer 24 may contain at most five water tiles.
+        const int preflight_longitude = MapLongitudeBounds;
+        const bool preflight_flat = (MapIsFlat & 1) != 0;
+        int outer_water_count = 0;
+        bool suitable_crater_site = true;
+        for (int radius_index = 0; radius_index < 49; ++radius_index) {
+            int x = base_x + RadiusOffsetX[radius_index];
+            const int y = base_y + RadiusOffsetY[radius_index];
+            if (!preflight_flat) {
+                if (x < 0) x += preflight_longitude;
+                else if (x >= preflight_longitude) x -= preflight_longitude;
+            }
+            if (y < 0 || y >= MapLatitudeBounds || x < 0 ||
+                x >= preflight_longitude) continue;
+            const Map &tile = map_tiles()[y * static_cast<int>(MapLongitude) +
+                                          (x >> 1)];
+            if ((tile.climate & 0xE0) >= 0x60) continue;
+            if (radius_index < 25) {
+                suitable_crater_site = false;
+                break;
+            }
+            ++outer_water_count;
+            if (outer_water_count > 5) {
+                suitable_crater_site = false;
+                break;
+            }
+        }
+        if (!suitable_crater_site ||
+            static_cast<int>(PlayersData[faction_id].current_num_bases) < 7)
+            break;
+
+        int event_seen = local_map_visible ? 1 : 0;
+        for (int scan_index = 0; scan_index < 49; ++scan_index) {
+            int x = base_x + RadiusOffsetX[scan_index];
+            const int y = base_y + RadiusOffsetY[scan_index];
+            if ((MapIsFlat & 1) == 0) {
+                const int longitude = MapLongitudeBounds;
+                if (x < 0) x += longitude;
+                else if (x >= longitude) x -= longitude;
+            }
+            if (y < 0 || y >= MapLatitudeBounds || x < 0 ||
+                x >= MapLongitudeBounds) continue;
+
+            bit_set(x, y, 0x81E8887C, 0);
+            synch_bit(x, y, ConsoleGlobal.faction_id_);
+
+            const int affected_base_id = base_at(x, y);
+            if (affected_base_id >= 0) {
+                if (Bases[affected_base_id].faction_id_current ==
+                        ConsoleGlobal.faction_id_ &&
+                    Bases[selected_base_id].faction_id_current !=
+                        ConsoleGlobal.faction_id_) {
+                    event_seen = 1;
+                    parse_says(0, Bases[affected_base_id].name_string, -1, -1);
+                }
+                base_kill(affected_base_id);
+            }
+
+            // The native vehicle scan follows base_at for every in-bounds
+            // radius cell, removing every matching record. It sets the event
+            // flag before removal only for a locally owned vehicle.
+            for (int vehicle_id = VehCurrentCount - 1;
+                 vehicle_id >= 0; --vehicle_id) {
+                if (Vehs[vehicle_id].x != x || Vehs[vehicle_id].y != y)
+                    continue;
+                if (Vehs[vehicle_id].faction_id == ConsoleGlobal.faction_id_)
+                    event_seen = 1;
+                veh_kill(vehicle_id);
+            }
+        }
+
+        world_crater(base_x, base_y);
+        world_climate();
+        if (!event_seen || ConsoleGlobal.focus(base_x, base_y,
+                                               ConsoleGlobal.faction_id_) == 0)
+            draw_map(1);
+        DustCloudDuration = 10;
+        popp(*ClimatePopupTitle, "EATTHIS", 0, "astp_sm.pcx", 0);
+        return;
+    }
+
+    case 16: {
+        if (!has_tech(Facility[FAC_BIOLOGY_LAB].preq_tech, faction_id)) break;
+        const bool has_biology_lab = has_fac_built(FAC_BIOLOGY_LAB,
+                                                   selected_base_id);
+        if (!has_biology_lab) {
+            const int required_ranking = (TurnCurrentNum >= 150) ? 5 : 4;
+            if (PlayersData[faction_id].ranking < required_ranking) break;
+        }
+
+        bool processed_first_tile = false;
+        bool changed_any_tile = false;
+        for (int radius_index = 0; radius_index < 21; ++radius_index) {
+            int x = base_x + RadiusOffsetX[radius_index];
+            const int y = base_y + RadiusOffsetY[radius_index];
+            if ((MapIsFlat & 1) == 0) {
+                const int longitude = MapLongitudeBounds;
+                if (x < 0) x += longitude;
+                else if (x >= longitude) x -= longitude;
+            }
+            if (y < 0 || y >= MapLatitudeBounds || x < 0 ||
+                x >= MapLongitudeBounds) continue;
+
+            Map &tile = map_tiles()[y * static_cast<int>(MapLongitude) +
+                                    (x >> 1)];
+            if ((tile.climate & 0xE0) < 0x60 ||
+                (tile.bit & 0x208000u) == 0) continue;
+            const unsigned char faction_bit = static_cast<unsigned char>(
+                1u << faction_id);
+            if ((PlayersData[faction_id].flags & 0x200u) == 0 &&
+                (tile.visibility & faction_bit) == 0) continue;
+            const int territory = whose_territory(faction_id, x, y, 0, 0);
+            if (territory >= 0 && territory != faction_id) continue;
+
+            if (!has_biology_lab && !processed_first_tile) {
+                ConsoleGlobal.focus(base_x, base_y,
+                                    ConsoleGlobal.faction_id_);
+                if ((GetAsyncKeyState(VK_SHIFT) & 0xFF00) == 0 &&
+                    !IsMultiplayerNet) clock_wait(200);
+            }
+            bit_set(x, y, 0x288000, 0);
+            synch_bit(x, y, faction_id);
+            // Native recomputes this same address on each pass: bit2 is the
+            // first word at +0xC, followed by bit_visible[0..6], and the
+            // local faction selects one word from that eight-word span.
+            // Its seven iterations repeat the same read/clear (no index is
+            // advanced between iterations), so preserve that exact behavior.
+            for (int clear_pass = 0; clear_pass < 7; ++clear_pass) {
+                uint32_t &cache_word = random_events_blight_cache_word(
+                    tile, ConsoleGlobal.faction_id_);
+                if (cache_word & 0x288000u) cache_word &= ~0x288000u;
+            }
+            draw_tile(x, y, 2);
+            if ((GetAsyncKeyState(VK_SHIFT) & 0xFF00) == 0 &&
+                !IsMultiplayerNet) clock_wait(50);
+            changed_any_tile = true;
+            processed_first_tile = true;
+        }
+
+        if (!changed_any_tile) break;
+        if (faction_id != 0) {
+            Bases[selected_base_id].event |= 0x200u;
+            Bases[selected_base_id].random_event_turns = 10;
+        }
+        if (faction_id == ConsoleGlobal.faction_id_) {
+            if (ConsoleGlobal.focus(Bases[selected_base_id].x,
+                                    Bases[selected_base_id].y, faction_id) == 0) {
+                draw_radius(Bases[selected_base_id].x,
+                            Bases[selected_base_id].y, 2, 2);
+            }
+        } else if (!IsMultiplayerPBEM) {
+            break;
+        }
+        if (has_biology_lab)
+            POP2("BLIGHT1", "markbm_sm.pcx", base_roll);
+        else
+            POP2("BLIGHT", "markbm_sm.pcx", base_roll);
+        return;
+    }
+
+    default:
+        break;
+    }
+}
+
+/* Typed switch-body proposal for random_events cases 17 and 18.
+ * The owner supplies the chosen event/faction/base and the coordinates read
+ * from that base before the parser callbacks. No original claim is made. */
+static int random_events_ceil_quarter(int value) {
+    if (value >= 0) return value / 4;
+    const unsigned int magnitude =
+        0u - static_cast<unsigned int>(value);
+    return -static_cast<int>(magnitude / 4u);
+}
+
+static void random_events_cases_17_18(int event_kind, int faction_id,
+                                      int selected_base_id, int base_roll,
+                                      int base_x_snapshot,
+                                      int base_y_snapshot) {
+    switch (event_kind) {
+    case 17: {
+        if (!has_tech(Facility[FAC_ENERGY_BANK].preq_tech, faction_id)) break;
+
+        const bool has_energy_bank =
+            has_fac_built(FAC_ENERGY_BANK, selected_base_id);
+        if (!has_energy_bank) {
+            const int minimum_ranking = (TurnCurrentNum >= 150) ? 5 : 4;
+            if (static_cast<int>(PlayersData[faction_id].ranking) <
+                minimum_ranking) break;
+        }
+
+        bool event_found = false;
+        for (int radius_index = 0; radius_index < 21; ++radius_index) {
+            int x = base_x_snapshot + RadiusOffsetX[radius_index];
+            const int y = base_y_snapshot + RadiusOffsetY[radius_index];
+            if ((MapIsFlat & 1) == 0) {
+                if (x < 0) x += MapLongitudeBounds;
+                else if (x >= MapLongitudeBounds) x -= MapLongitudeBounds;
+            }
+            if (y < 0 || y >= MapLatitudeBounds || x < 0 ||
+                x >= MapLongitudeBounds) continue;
+
+            Map &tile = map_tiles()[MapLongitude * y + (x >> 1)];
+            if ((tile.climate & 0xE0) < 0x60 || (tile.bit & 0x10u) == 0)
+                continue;
+
+            const unsigned char faction_bit =
+                static_cast<unsigned char>(1u << faction_id);
+            if ((PlayersData[faction_id].flags & 0x200u) == 0 &&
+                (tile.visibility & faction_bit) == 0) continue;
+
+            const int territory = whose_territory(faction_id, x, y, 0, 0);
+            if (territory >= 0 && territory != faction_id) continue;
+
+            // An Energy Bank converts the qualifying site into a local
+            // energy-surge event: the native branch sets only the found flag
+            // here and skips the terrain/visibility mutation and animation.
+            if (has_energy_bank) {
+                event_found = true;
+                continue;
+            }
+
+            if (faction_id == ConsoleGlobal.faction_id_ && !event_found) {
+                ConsoleGlobal.focus(base_x_snapshot, base_y_snapshot,
+                                    ConsoleGlobal.faction_id_);
+                if ((GetAsyncKeyState(VK_SHIFT) & 0xFF00) == 0 &&
+                    !IsMultiplayerNet) clock_wait(200);
+            }
+
+            bit_set(x, y, 0x10, 0);
+            synch_bit(x, y, faction_id);
+            for (int visible_faction = 0; visible_faction < 7;
+                 ++visible_faction) {
+                if (tile.bit_visible[visible_faction] & 0x10u)
+                    tile.bit_visible[visible_faction] &= ~0x10u;
+            }
+            draw_tile(x, y, 2);
+            if ((GetAsyncKeyState(VK_SHIFT) & 0xFF00) == 0 &&
+                !IsMultiplayerNet) clock_wait(50);
+            event_found = true;
+        }
+
+        if (!event_found) break;
+        if (has_energy_bank) PlayersData[faction_id].energy_reserves += 50;
+
+        if (faction_id == ConsoleGlobal.faction_id_) {
+            const int base_x = Bases[selected_base_id].x;
+            const int base_y = Bases[selected_base_id].y;
+            if (ConsoleGlobal.focus(base_x, base_y, faction_id) == 0) {
+                draw_radius(base_x, base_y, 2, 2);
+            }
+        }
+        // The native path reloads the local faction after focus; focus may
+        // run callbacks that change the active view faction.
+        if (faction_id != ConsoleGlobal.faction_id_ && !IsMultiplayerPBEM) {
+            break;
+        }
+
+        if (has_energy_bank)
+            POP2("SURGE1", "markbm_sm.pcx", base_roll);
+        else
+            POP2("SURGE", "markbm_sm.pcx", base_roll);
+        return;
+    }
+
+    case 18: {
+        if (!has_tech(Facility[FAC_NETWORK_NODE].preq_tech, faction_id)) break;
+
+        const int research_rate = tech_rate(faction_id);
+        const int minimum_progress = random_events_ceil_quarter(research_rate);
+        if (PlayersData[faction_id].tech_accumulated < minimum_progress) break;
+
+        if (has_fac_built(FAC_NETWORK_NODE, selected_base_id)) {
+            PlayersData[faction_id].tech_accumulated = research_rate;
+            if (faction_id == ConsoleGlobal.faction_id_) {
+                ConsoleGlobal.focus(Bases[selected_base_id].x,
+                                    Bases[selected_base_id].y,
+                                    faction_id);
+            }
+            if (faction_id != ConsoleGlobal.faction_id_ && !IsMultiplayerPBEM) {
+                break;
+            }
+            POP2("NETBONUS", "markbm_sm.pcx", base_roll);
+            return;
+        }
+
+        const int minimum_ranking = (TurnCurrentNum >= 150) ? 5 : 4;
+        if (static_cast<int>(PlayersData[faction_id].ranking) <
+            minimum_ranking) break;
+
+        PlayersData[faction_id].tech_accumulated = 0;
+        PlayersData[faction_id].net_random_event = 0;
+        if (faction_id == ConsoleGlobal.faction_id_) {
+            ConsoleGlobal.focus(Bases[selected_base_id].x,
+                                Bases[selected_base_id].y,
+                                faction_id);
+        }
+        if (faction_id != ConsoleGlobal.faction_id_ && !IsMultiplayerPBEM) {
+            break;
+        }
+        POP2("NETCRASH", "netcr_sm.pcx", base_roll);
+        return;
+    }
+
+    default:
+        break;
+    }
+}
+
+// Translation of random_events switch cases 19, 20 and 21.
+// The common caller supplies the selected base owner and the coordinates
+// captured before parse_num/parse_says. Keep base_roll in the interface used
+// by the adjacent case fragments; these three native cases use the selected
+// base id for their popup payload instead.
+static void random_events_cases_19_21(int event_kind, int faction_id,
+                                      int selected_base_id, int base_roll,
+                                      int base_x_snapshot, int base_y_snapshot) {
+    (void)base_roll;
+    switch (event_kind) {
+    case 19: {
+        if (!has_tech(Facility[FAC_CHILDREN_CRECHE].preq_tech, faction_id))
+            break;
+
+        const bool has_creche = has_fac_built_call(FAC_CHILDREN_CRECHE,
+                                                   selected_base_id) != 0;
+        if (has_creche) {
+            int population_increments = 0;
+            if (Bases[selected_base_id].nutrient_surplus <= 0) break;
+            for (;;) {
+                ++population_increments;
+                if (population_increments >= 3) break;
+                ++Bases[selected_base_id].population_size;
+                set_base(selected_base_id);
+                base_compute(1);
+                if (Bases[selected_base_id].nutrient_surplus <= 0) break;
+            }
+            if (population_increments == 0) break;
+
+            if (faction_id == ConsoleGlobal.faction_id_) {
+                const int focus_x = Bases[selected_base_id].x;
+                const int focus_y = Bases[selected_base_id].y;
+                if (ConsoleGlobal.focus(focus_x, focus_y, faction_id) == 0)
+                    draw_tile(focus_x, focus_y, 2);
+            }
+            if (faction_id != ConsoleGlobal.faction_id_ &&
+                IsMultiplayerPBEM == 0) break;
+
+            if ((Players[faction_id].rule_flags & RFLAG_ALIEN) != 0)
+                POP2("CRECHE1", "al_pop_sm.pcx", selected_base_id);
+            else
+                POP2("CRECHE1", "pop_sm.pcx", selected_base_id);
+            return;
+        }
+
+        const int required_ranking = 4 + (TurnCurrentNum >= 150 ? 1 : 0);
+        if (PlayersData[faction_id].ranking < required_ranking) break;
+        if (Bases[selected_base_id].assimilation_turns_left != 0) break;
+        Bases[selected_base_id].assimilation_turns_left = 5;
+
+        if (faction_id == ConsoleGlobal.faction_id_) {
+            const int focus_x = Bases[selected_base_id].x;
+            const int focus_y = Bases[selected_base_id].y;
+            ConsoleGlobal.focus(focus_x, focus_y, faction_id);
+        }
+        if (faction_id != ConsoleGlobal.faction_id_ &&
+            IsMultiplayerPBEM == 0) break;
+
+        if ((Players[faction_id].rule_flags & RFLAG_ALIEN) != 0)
+            POP2("CRECHE", "al_pop_sm.pcx", selected_base_id);
+        else
+            POP2("CRECHE", "pop_sm.pcx", selected_base_id);
+        return;
+    }
+
+    case 20: {
+        if (IsMultiplayerPBEM != 0 || TurnCurrentNum < 75) break;
+        const int required_ranking = 4 + (TurnCurrentNum >= 150 ? 1 : 0);
+        if (PlayersData[faction_id].ranking < required_ranking) break;
+
+        bool changed_for_local_view = false;
+        for (int radius_index = 0; radius_index < 21; ++radius_index) {
+            int x = base_x_snapshot + RadiusOffsetX[radius_index];
+            const int y = base_y_snapshot + RadiusOffsetY[radius_index];
+            if ((MapIsFlat & 1) == 0) {
+                if (x < 0) x += MapLongitudeBounds;
+                else if (x >= MapLongitudeBounds) x -= MapLongitudeBounds;
+            }
+            if (y < 0 || y >= MapLatitudeBounds || x < 0 ||
+                x >= MapLongitudeBounds) continue;
+
+            const int tile_index = static_cast<int>(MapLongitude) * y + (x >> 1);
+            Map &tile = map_tiles()[tile_index];
+            // Both tests are present in the pinned body, on the same tile and
+            // on opposite sides of whose_territory. Preserve the native
+            // land-then-ocean predicate rather than repairing the apparent
+            // contradiction.
+            if ((tile.climate & 0xE0) >= 0x60) continue;
+            if ((tile.bit & BIT_FARM) == 0) continue;
+            if ((PlayersData[faction_id].flags & 0x200u) == 0 &&
+                (tile.visibility & static_cast<uint8_t>(1u << (faction_id & 31))) == 0)
+                continue;
+            const int territory = whose_territory(faction_id, x, y, 0, 0);
+            if (territory >= 0 && territory != faction_id) continue;
+            if ((map_tiles()[tile_index].climate & 0xE0) < 0x60) continue;
+
+            const int local_faction = ConsoleGlobal.faction_id_;
+            if (faction_id == local_faction ||
+                Bases[selected_base_id].faction_id_current == local_faction ||
+                (Bases[selected_base_id].visibility &
+                 static_cast<uint8_t>(1u << (local_faction & 31))) != 0) {
+                if (!changed_for_local_view) {
+                    ConsoleGlobal.focus(base_x_snapshot, base_y_snapshot, local_faction);
+                    const unsigned short shift_state = static_cast<unsigned short>(
+                        GetAsyncKeyState(VK_SHIFT));
+                    if ((shift_state & 0xFF00u) == 0 && IsMultiplayerNet == 0)
+                        clock_wait(200);
+                    changed_for_local_view = true;
+                }
+            }
+
+            bit_set_call(x, y, BIT_FARM, 0);
+            synch_bit(x, y, faction_id);
+            // Native increments an address cursor but never uses it: seven
+            // writes target this same Map.bit2 word at +0x0C.
+            for (int clear_pass = 1; clear_pass < 8; ++clear_pass)
+                map_tiles()[tile_index].bit2 &= ~BIT_FARM;
+
+            if (changed_for_local_view) {
+                draw_tile(x, y, 2);
+                const unsigned short shift_state = static_cast<unsigned short>(
+                    GetAsyncKeyState(VK_SHIFT));
+                if ((shift_state & 0xFF00u) == 0 && IsMultiplayerNet == 0)
+                    clock_wait(50);
+            }
+        }
+
+        if (!changed_for_local_view) break;
+        parse_says(0, Bases[selected_base_id].name_string, -1, -1);
+        if (faction_id == ConsoleGlobal.faction_id_)
+            POP2("KELPWIPE", 0, selected_base_id);
+        else
+            POP2("KELPWIPE", 0, -1);
+        return;
+    }
+
+    case 21: {
+        if (IsMultiplayerPBEM != 0 || TurnCurrentNum < 75) break;
+        const int required_ranking = 4 + (TurnCurrentNum >= 150 ? 1 : 0);
+        if (PlayersData[faction_id].ranking < required_ranking) break;
+
+        bool changed_for_local_view = false;
+        for (int radius_index = 0; radius_index < 21; ++radius_index) {
+            int x = base_x_snapshot + RadiusOffsetX[radius_index];
+            const int y = base_y_snapshot + RadiusOffsetY[radius_index];
+            if ((MapIsFlat & 1) == 0) {
+                if (x < 0) x += MapLongitudeBounds;
+                else if (x >= MapLongitudeBounds) x -= MapLongitudeBounds;
+            }
+            if (y < 0 || y >= MapLatitudeBounds || x < 0 ||
+                x >= MapLongitudeBounds) continue;
+
+            const int tile_index = static_cast<int>(MapLongitude) * y + (x >> 1);
+            Map &tile = map_tiles()[tile_index];
+            // Preserve both native comparisons even though they oppose each
+            // other for an unchanged Map record.
+            if ((tile.climate & 0xE0) >= 0x60) continue;
+            if ((tile.bit & BIT_MINE) == 0) continue;
+            if ((PlayersData[faction_id].flags & 0x200u) == 0 &&
+                (tile.visibility & static_cast<uint8_t>(1u << (faction_id & 31))) == 0)
+                continue;
+            const int territory = whose_territory(faction_id, x, y, 0, 0);
+            if (territory >= 0 && territory != faction_id) continue;
+            if ((map_tiles()[tile_index].climate & 0xE0) < 0x60) continue;
+
+            const int local_faction = ConsoleGlobal.faction_id_;
+            if (faction_id == local_faction ||
+                Bases[selected_base_id].faction_id_current == local_faction ||
+                (Bases[selected_base_id].visibility &
+                 static_cast<uint8_t>(1u << (local_faction & 31))) != 0) {
+                if (!changed_for_local_view) {
+                    ConsoleGlobal.focus(base_x_snapshot, base_y_snapshot, local_faction);
+                    const unsigned short shift_state = static_cast<unsigned short>(
+                        GetAsyncKeyState(VK_SHIFT));
+                    if ((shift_state & 0xFF00u) == 0 && IsMultiplayerNet == 0)
+                        clock_wait(200);
+                    changed_for_local_view = true;
+                }
+            }
+
+            bit_set_call(x, y, BIT_MINE, 0);
+            synch_bit(x, y, faction_id);
+            // The native cursor arithmetic again writes the same bit2 word
+            // seven times; it does not advance through faction visibility.
+            for (int clear_pass = 1; clear_pass < 8; ++clear_pass)
+                map_tiles()[tile_index].bit2 &= ~BIT_MINE;
+
+            if (changed_for_local_view) {
+                draw_tile(x, y, 2);
+                const unsigned short shift_state = static_cast<unsigned short>(
+                    GetAsyncKeyState(VK_SHIFT));
+                if ((shift_state & 0xFF00u) == 0 && IsMultiplayerNet == 0)
+                    clock_wait(50);
+            }
+        }
+
+        if (!changed_for_local_view) break;
+        parse_says(0, Bases[selected_base_id].name_string, -1, -1);
+        const int popup_base_id = faction_id == ConsoleGlobal.faction_id_
+            ? selected_base_id : -1;
+        POP2("PLATFORMWIPE", 0, popup_base_id);
+        return;
+    }
+
+    default:
+        break;
+    }
+}
+
+// Switch-body implementation for retained random_events case 14 (0x00520A37
+// through the case-15 entry at 0x00520ED4). Ops exposes real typed game owners
+// and thin lifecycle/UI calls; host controls invoke this exact body.
+template <class Ops>
+static void random_events_case14(Ops &ops, int faction_id,
+                                 int initially_selected_base_id) {
+    if (ops.is_multiplayer_pbem() != 0 || ops.turn_current_num() < 0x4B)
+        return;
+
+    PlayerData &event_player = ops.player_data(faction_id);
+    if (event_player.current_num_bases < 8) return;
+    if ((ops.random_event_flags() & 0x10u) != 0) return;
+
+    const int event_x = static_cast<int>(ops.mount_planet_x());
+    const int event_y = static_cast<int>(ops.mount_planet_y());
+    if (event_y < 0 || event_y >= ops.map_latitude_bounds()) return;
+    if (event_x < 0 || event_x >= ops.map_longitude_bounds()) return;
+
+    // The event center must be a live volcano, not the marked/dormant variant.
+    Map &center = ops.map_tile(event_x, event_y);
+    if ((center.bit2 & (BIT2_UNK_80000000 | BIT2_VOLCANO)) != BIT2_VOLCANO)
+        return;
+
+    const Base &selected_base = ops.base(initially_selected_base_id);
+    int dx = static_cast<int>(selected_base.x) - event_x;
+    if (dx < 0) dx = -dx;
+    if ((ops.map_is_flat() & 1u) == 0 && dx > ops.map_longitude())
+        dx = ops.map_longitude_bounds() - dx;
+    const int dy = static_cast<int>(selected_base.y) - event_y;
+    int near_distance = dx + ((dy < 0) ? -dy : dy);
+    near_distance &= ~1;
+    if (near_distance > 0xA) return;
+
+    const uint32_t event_faction_bit = 1u << (faction_id & 31);
+    if ((event_player.flags & PFLAG_MAP_REVEALED) == 0 &&
+        (center.visibility & event_faction_bit) == 0) return;
+    if (event_player.ranking < 6) return;
+
+    const int local_faction = ops.local_faction();
+    const uint32_t local_faction_bit = 1u << (local_faction & 31);
+    bool effects_are_visible =
+        (ops.player_data(local_faction).flags & PFLAG_MAP_REVEALED) != 0 ||
+        (center.visibility & local_faction_bit) != 0;
+
+    // Native increments the offset byte by four through 0x140 inclusive,
+    // addressing the existing RadiusOffset tables at indices 0..80.
+    int base_reference_for_news = initially_selected_base_id;
+    for (int offset_bytes = 0; offset_bytes < 0x144; offset_bytes += 4) {
+        const int radius_index = offset_bytes >> 2;
+        int x = event_x + ops.radius_offset_x(radius_index);
+        const int y = event_y + ops.radius_offset_y(radius_index);
+
+        if ((ops.map_is_flat() & 1u) == 0) {
+            if (x < 0) x += ops.map_longitude_bounds();
+            else if (x >= ops.map_longitude_bounds())
+                x -= ops.map_longitude_bounds();
+        }
+        if (y < 0 || y >= ops.map_latitude_bounds() ||
+            x < 0 || x >= ops.map_longitude_bounds()) continue;
+
+        ops.bit_set(x, y, static_cast<int>(0x81E8887Cu), false);
+        ops.synch_bit(x, y, local_faction);
+        ops.rocky_set(x, y, ROCKINESS_ROCKY);
+
+        Map &tile = ops.map_tile(x, y);
+        const bool is_live_volcano =
+            (tile.bit2 & (BIT2_UNK_80000000 | BIT2_VOLCANO)) == BIT2_VOLCANO;
+        if (is_live_volcano) {
+            for (int veh_id = ops.vehicle_count() - 1; veh_id >= 0; --veh_id) {
+                const Veh &veh = ops.vehicle(veh_id);
+                if (veh.x == x && veh.y == y) ops.kill_vehicle(veh_id);
+            }
+        } else {
+            for (int veh_id = ops.vehicle_count() - 1; veh_id >= 0; --veh_id) {
+                Veh &veh = ops.vehicle(veh_id);
+                if (veh.x != x || veh.y != y) continue;
+
+                const VehPrototype &prototype = ops.prototype(veh.proto_id);
+                int incoming_damage;
+                if (prototype.plan == 0xC) {
+                    incoming_damage = 1;
+                } else {
+                    int reactor = prototype.reactor_id;
+                    if (reactor < 1) reactor = 1;
+                    else if (reactor > 100) reactor = 100;
+                    incoming_damage = reactor * 10;
+                }
+                int remaining_damage = incoming_damage - veh.dmg_incurred;
+                if (remaining_damage < 0) remaining_damage = 0;
+                else if (remaining_damage > 0x270F) remaining_damage = 0x270F;
+                const int half_damage =
+                    (remaining_damage + ((remaining_damage < 0) ? 1 : 0)) >> 1;
+                const int new_damage = static_cast<int>(veh.dmg_incurred) +
+                                       half_damage;
+                veh.dmg_incurred = static_cast<uint8_t>(new_damage);
+            }
+        }
+
+        const int affected_base_id = ops.base_at(x, y);
+        if (affected_base_id < 0) continue;
+        Base &affected_base = ops.base(affected_base_id);
+
+        if (affected_base.faction_id_current == local_faction &&
+            ops.base(base_reference_for_news).faction_id_current != local_faction) {
+            // Base::name_string begins at +0x13, exactly the native pointer
+            // [Base + 0x53] relative to the 0x97D040 array. parse_says may
+            // alter shared parser state.
+            ops.parse_base_name_suffix(affected_base.name_string);
+            base_reference_for_news = affected_base_id;
+            effects_are_visible = true;
+        }
+
+        if (offset_bytes < 0x24 && !ops.is_objective_base(affected_base_id)) {
+            ops.kill_base(affected_base_id);
+            continue;
+        }
+
+        const int old_population = affected_base.population_size;
+        int new_population;
+        if (offset_bytes < 0x64) {
+            int value = old_population + 3;
+            if (value < 0) value += 3;
+            new_population = value >> 2;
+        } else if (offset_bytes < 0xC4) {
+            int value = old_population + 1;
+            if (value < 0) ++value;
+            new_population = value >> 1;
+        } else {
+            int value = (old_population + 1) * 3;
+            if (value < 0) value += 3;
+            new_population = value >> 2;
+        }
+        affected_base.population_size = static_cast<int8_t>(
+            static_cast<uint8_t>(new_population));
+    }
+
+    if (effects_are_visible) {
+        if (!ops.focus(event_x, event_y, local_faction)) ops.draw_map(1);
+    }
+    ops.set_dust_cloud_duration(10);
+    ops.popp_big_fat_volcano();
+}
+
+// Production-side Ops binding for random_events_case14.inc. This uses the
+// existing project owners and lifecycle functions; the host fixture supplies a
+// separate Ops with identical member semantics.
+struct RandomEventsCase14NativeOps {
+    int is_multiplayer_pbem() const { return IsMultiplayerPBEM; }
+    int turn_current_num() const { return TurnCurrentNum; }
+    PlayerData &player_data(int faction_id) { return PlayersData[faction_id]; }
+    uint32_t random_event_flags() const { return GameState; }
+    uint32_t mount_planet_x() const { return MountPlanetX; }
+    uint32_t mount_planet_y() const { return MountPlanetY; }
+    int map_latitude_bounds() const { return MapLatitudeBounds; }
+    int map_longitude_bounds() const { return MapLongitudeBounds; }
+    int map_longitude() const { return MapLongitude; }
+    int map_is_flat() const { return MapIsFlat; }
+    Map &map_tile(int x, int y) { return *map_loc(x, y); }
+    Base &base(int base_id) { return Bases[base_id]; }
+    int local_faction() const { return ConsoleGlobal.faction_id_; }
+    int radius_offset_x(int index) const { return RadiusOffsetX[index]; }
+    int radius_offset_y(int index) const { return RadiusOffsetY[index]; }
+    int vehicle_count() const { return VehCurrentCount; }
+    Veh &vehicle(int veh_id) { return Vehs[veh_id]; }
+    const VehPrototype &prototype(int proto_id) const { return VehPrototypes[proto_id]; }
+    void bit_set(int x, int y, int mask, bool set) { ::bit_set(x, y, mask, set); }
+    void synch_bit(int x, int y, int faction_id) { ::synch_bit(x, y, faction_id); }
+    void rocky_set(int x, int y, int value) { ::rocky_set(x, y, value); }
+    void kill_vehicle(int veh_id) { ::veh_kill(veh_id); }
+    int base_at(int x, int y) const { return ::base_at(x, y); }
+    void parse_base_name_suffix(const char *name) { ::parse_says(0, name, -1, -1); }
+    bool is_objective_base(int base_id) const { return ::is_objective(base_id) != 0; }
+    void kill_base(int base_id) { ::base_kill(base_id); }
+    bool focus(int x, int y, int faction_id) {
+        return ConsoleGlobal.focus(x, y, faction_id) != 0;
+    }
+    void draw_map(int mode) { ::draw_map(mode); }
+    void set_dust_cloud_duration(int value) { DustCloudDuration = value; }
+    void popp_big_fat_volcano() {
+        ::popp(*ClimatePopupTitle, "BIGFATVOLCANO", 0, "volc_sm.pcx", 0);
+    }
+};
+
+/*
+ * Entry preparation: `true` means a valid event and selected base are ready
+ * for the case switch; `false` is an original early-return/no-event path.
+ */
+struct RandomEventsDispatchInput {
+    int event_kind;
+    int faction_id;
+    int selected_base_id;
+    int base_roll;
+    int base_x_snapshot;
+    int base_y_snapshot;
+};
+
+static bool random_events_entry_prepare(int mode,
+                                        RandomEventsDispatchInput &dispatch) {
+    if (mode == 0) {
+        // Preserve the original byte-level state transition: when bit 1 is
+        // present the complete word is cleared before bit zero is examined.
+        if ((GlobalEnergyEventState & 2) != 0)
+            GlobalEnergyEventState = 0;
+        if ((GlobalEnergyEventState & 1) != 0)
+            GlobalEnergyEventState = 2;
+
+        int sunspot_duration = SunspotDuration;
+        if (sunspot_duration < -1000) sunspot_duration = -1000;
+        SunspotDuration = --sunspot_duration;
+        if (sunspot_duration == 0)
+            (void)POP2("NOMORESPOTS", "space_sm.pcx", -1);
+
+        // The native nested scan uses PlayerData[row].diplo_treaties[column],
+        // visits both faction axes 1..7, and reloads the byte mask only after
+        // a set_treaty callback. Keep that callback-visible re-read order.
+        unsigned char lock_bits = static_cast<unsigned char>(LockEnableMask);
+        for (int column = 1; column < 8; ++column) {
+            if ((lock_bits & static_cast<unsigned char>(1u << column)) == 0)
+                continue;
+            for (int row = 1; row < 8; ++row) {
+                if ((lock_bits & static_cast<unsigned char>(1u << row)) != 0)
+                    continue;
+                if ((PlayersData[row].diplo_treaties[column] & 0x30u) != 0)
+                    continue;
+                set_treaty(row, column, 0xC00, 0);
+                lock_bits = static_cast<unsigned char>(LockEnableMask);
+            }
+        }
+
+        int dust_duration = DustCloudDuration;
+        if (dust_duration < 0) {
+            DustCloudDuration = 0;
+        } else if (dust_duration > 0) {
+            DustCloudDuration = --dust_duration;
+            if (dust_duration == 0)
+                (void)POP2("NOMOREDUST", "stars_sm.pcx", -1);
+        }
+
+        const int base_count_for_timers = BaseCurrentCount;
+        for (int base_id = 0; base_id < base_count_for_timers; ++base_id) {
+            Base &base = Bases[base_id];
+            if ((base.event & 0x7E00u) == 0) continue;
+            if (base.random_event_turns >= 0)
+                --base.random_event_turns;
+            if (base.random_event_turns == 0)
+                base.event &= 0xFFFF81FFu;
+        }
+
+        if ((GameState & 0x100000u) != 0) {
+            const int anniversary = static_cast<int>(game_year(TurnCurrentNum))
+                                    - 0x8A2;
+            if (anniversary % 0x50 == 0) {
+                GameState &= ~0x100000u;
+                (void)POP2("PERIHELIONENDS", "heat_sm.pcx", -1);
+                return false;
+            }
+        }
+    }
+
+    // The only continuing paths from the annual check have TurnCurrentNum in
+    // EAX: the non-anniversary mode-zero path explicitly reloads it at
+    // 0x51F4D1, while all other paths arrive with the initial load intact.
+    const int current_turn = TurnCurrentNum;
+    if (current_turn > 50 && mode == 0) {
+        const int anniversary = static_cast<int>(game_year(current_turn))
+                                - 0x88E;
+        if (anniversary % 0x50 == 0) {
+            GameState |= 0x100000u;
+            (void)POP2("PERIHELION", "heat_sm.pcx", -1);
+            return false;
+        }
+    }
+
+    if ((GameRules & 0x8000u) != 0) return false;
+    const int turn_threshold = 0x4B - 10 * DiffLevelCurrent;
+    if (current_turn < turn_threshold) return false;
+
+    if (mode == 0) {
+        // Native uses EAX=TurnCurrentNum on every path which reaches this
+        // reseed, not game_year(TurnCurrentNum).
+        const unsigned int seed = static_cast<unsigned int>(MapRandSeed) +
+            13u * static_cast<unsigned int>(current_turn);
+        random_reseed(static_cast<int>(seed));
+    }
+
+    int random_upper_bound = BaseCurrentCount;
+    if (random_upper_bound <= 100) random_upper_bound = 100;
+    const int base_roll = random(0, random_upper_bound);
+    if (base_roll >= BaseCurrentCount) return false;
+
+    Base &selected_base = Bases[base_roll];
+    if (selected_base.population_size <= 3) return false;
+    const int faction_id = selected_base.faction_id_current;
+    if (static_cast<int>(PlayersData[faction_id].current_num_bases) <= 1)
+        return false;
+    if ((selected_base.event & 0x7E00u) != 0) return false;
+
+    const int event_kind = random(0, 0x16);
+    const int base_x_snapshot = selected_base.x;
+    const int base_y_snapshot = selected_base.y;
+
+    // These callbacks occur after every dispatch snapshot in the native body.
+    (void)parse_num(0, 10);
+    (void)parse_says(0, selected_base.name_string, -1, -1);
+    StringTemp[0] = '\0';
+    if (static_cast<unsigned int>(event_kind) > 0x15u) return false;
+
+    dispatch.event_kind = event_kind;
+    dispatch.faction_id = faction_id;
+    dispatch.selected_base_id = base_roll;
+    dispatch.base_roll = base_roll;
+    dispatch.base_x_snapshot = base_x_snapshot;
+    dispatch.base_y_snapshot = base_y_snapshot;
+    return true;
+}
+
+/* Shared switch table for the source-shaped random_events dispatcher.
+ * The entry helper has already filtered event kinds above 21. */
+template <class Cases>
+static void random_events_dispatch_cases(
+    const RandomEventsDispatchInput &input, Cases &cases) {
+    switch (input.event_kind) {
+    case 0: case 1: case 2: case 3: case 4: case 5:
+        cases.cases_0_5(input);
+        return;
+    case 6:
+        cases.case6(input);
+        return;
+    case 7: case 8:
+        cases.cases_7_8(input);
+        return;
+    case 9: case 10: case 11:
+        cases.cases_9_11(input);
+        return;
+    case 12: case 13:
+        cases.cases_12_13(input);
+        return;
+    case 14:
+        cases.case14(input);
+        return;
+    case 15: case 16:
+        cases.cases_15_16(input);
+        return;
+    case 17: case 18:
+        cases.cases_17_18(input);
+        return;
+    case 19: case 20: case 21:
+        cases.cases_19_21(input);
+        return;
+    }
+}
+
+struct RandomEventsNativeCase78State {
+    int selected_base_id;
+    int event_faction_id;
+
+    int multiplayer_event_guard() const { return IsMultiplayerPBEM; }
+    int base_x() const { return Bases[selected_base_id].x; }
+    int base_y() const { return Bases[selected_base_id].y; }
+    int faction_id() const { return event_faction_id; }
+    int longitude_bounds() const { return MapLongitudeBounds; }
+    int latitude_bounds() const { return MapLatitudeBounds; }
+    int map_is_flat() const { return MapIsFlat; }
+    unsigned int player_data_flags() const {
+        return PlayersData[event_faction_id].flags;
+    }
+    int turn_current_num() const { return TurnCurrentNum; }
+    int console_faction_id() const { return ConsoleGlobal.faction_id_; }
+};
+
+static void random_events_native_cases_7_8(
+    const RandomEventsDispatchInput &input) {
+    RandomEventsNativeCase78State state;
+    state.selected_base_id = input.selected_base_id;
+    state.event_faction_id = input.faction_id;
+    // Unlike cases 12/13, 15/16, 17, 20 and 21, the native 7/8 body reloads
+    // selected-base coordinates after parser callbacks and on each loop pass.
+    // The dynamic accessors above preserve those subsequent source-owner reads.
+
+    RandomEventsNativePositionServices services;
+    const random_events_cases::PositionSelection position =
+        random_events_cases::select_case_7_8_position(
+            state, services, RadiusOffsetX, RadiusOffsetY);
+    (void)random_events_cases::apply_case_7_8_outcome(
+        state, services, position);
+}
+
+struct RandomEventsNativeCases {
+    void cases_0_5(const RandomEventsDispatchInput &input) {
+        random_events_cases_0_5(input.event_kind, input.faction_id,
+                                input.selected_base_id, input.base_roll);
+    }
+    void case6(const RandomEventsDispatchInput &input) {
+        RandomEventsNativeCase6State state;
+        RandomEventsNativeCase6Services services;
+        random_events_cases::case6(state, services, input.faction_id,
+                                   input.selected_base_id, input.base_roll);
+    }
+    void cases_7_8(const RandomEventsDispatchInput &input) {
+        random_events_native_cases_7_8(input);
+    }
+    void cases_9_11(const RandomEventsDispatchInput &input) {
+        random_events_native_cases_9_11(input.event_kind);
+    }
+    void cases_12_13(const RandomEventsDispatchInput &input) {
+        random_events_cases_12_13(
+            input.event_kind, input.faction_id, input.selected_base_id,
+            input.base_roll, input.base_x_snapshot, input.base_y_snapshot);
+    }
+    void case14(const RandomEventsDispatchInput &input) {
+        RandomEventsCase14NativeOps ops;
+        random_events_case14(ops, input.faction_id, input.selected_base_id);
+    }
+    void cases_15_16(const RandomEventsDispatchInput &input) {
+        random_events_cases_15_16(
+            input.event_kind, input.faction_id, input.selected_base_id,
+            input.base_roll, input.base_x_snapshot, input.base_y_snapshot);
+    }
+    void cases_17_18(const RandomEventsDispatchInput &input) {
+        random_events_cases_17_18(
+            input.event_kind, input.faction_id, input.selected_base_id,
+            input.base_roll, input.base_x_snapshot, input.base_y_snapshot);
+    }
+    void cases_19_21(const RandomEventsDispatchInput &input) {
+        random_events_cases_19_21(
+            input.event_kind, input.faction_id, input.selected_base_id,
+            input.base_roll, input.base_x_snapshot, input.base_y_snapshot);
+    }
+};
+
+
 // ORIGINAL: 0x0051F2E0 ?random_events@@YAXH@Z 0x0051F2E0-0x0052211D
-// RECOVERY_BINDING: v1 {"evidence": ["git:99d6e72bcd5ae3be3566222736528cb0dc57935c:src/unrecovered/0051f2e0.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tasks/game-logic-seed-owner-coverage.json; preserve original extents and historical seed lessons. Ordinary owned literals have pinned content provenance, not exact original data-allocation claims."], "reason": "Link-continuity home only for the original random-events dispatcher referenced by turn_upkeep. Its complete behavior remains in the retained seed and is not recovered, exact or accepted."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:99d6e72bcd5ae3be3566222736528cb0dc57935c:src/unrecovered/0051f2e0.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tasks/game-logic-seed-owner-coverage.json; preserve original extents and historical seed lessons. Ordinary owned literals have pinned content provenance, not exact original data-allocation claims.", "pinned native CFG 0x0051F2E0-0x0052211D, switch table 0x0097D044; event kinds 0-21, common selection and early returns retained.", "Native 0x0051F5A2-0x0051F5FC captures selected base coordinates before parser callbacks. Cases 7/8 reread coordinates; case 19 uses live base coordinates; cases 17/20/21 retain the captured coordinates. Contradictory case-20/21 climate tests remain in source rather than being optimized away as assumed dead behavior."], "reason": "Typed random-events dispatcher and all 22 native cases, called by turn_upkeep. Base selection captures faction and coordinates before parser callbacks; later case-specific live reads remain live. Original map/UI, lifecycle and notification services are supplied by their genuine source owners."}
 // TRIED: mechanical register/stack-slot goto transliteration (260 labels, 39 independent per-case epilogues auto-detected from the pop/pop/ pop/mov-esp-ebp/pop/ret shape, a 22-case switch off 0x0097D044, two thiscall-via-fixed-ecx targets on Console/MapWin, one indirect GetKeyState call through g_00669330): compiles, MISMATCH sim 0.32 on /O2 /Oy- framed, divergence at instruction #33. Large negative 32-bit immediates (e.g. 0xfffffc18) need an explicit (int) cast before a signed compare, or MSVC types the literal unsigned and turns jge into jae - fixed once, may still be lurking elsewhere unverified.
 void __cdecl random_events(int mode) {
-    // BODY GOES HERE.
+    RandomEventsDispatchInput input;
+    if (!random_events_entry_prepare(mode, input)) return;
+    RandomEventsNativeCases cases;
+    random_events_dispatch_cases(input, cases);
 }
 
 // ORIGINAL: 0x00529C00 ?mash_planes@@YAXXZ 0x00529C00-0x00529E67
