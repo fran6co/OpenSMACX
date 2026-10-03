@@ -2504,6 +2504,439 @@ int __cdecl base_lose_minerals(int base_id, int UNUSED(production_id)) {
     return 0;
 }
 
+
+// POP2 has an owning implementation in leaf_recoveries.cpp; the public
+// xpops header currently omits its declaration.
+int __cdecl POP2(const char *caption, const char *image, int base_id);
+
+static int ecology_wrap_int(uint32_t bits) {
+    if (bits <= 0x7FFFFFFFu) return static_cast<int>(bits);
+    return -1 - static_cast<int>(~bits);
+}
+
+static int ecology_wrapped_add(int left, int right) {
+    return ecology_wrap_int(static_cast<uint32_t>(left) + static_cast<uint32_t>(right));
+}
+
+static int ecology_wrapped_shift_two(int value) {
+    return ecology_wrap_int(static_cast<uint32_t>(value) << 2);
+}
+
+static int ecology_wrapped_double(int value) {
+    return ecology_wrap_int(static_cast<uint32_t>(value) * 2u);
+}
+
+static int ecology_wrapped_multiply(int left, int right) {
+    return ecology_wrap_int(static_cast<uint32_t>(left) * static_cast<uint32_t>(right));
+}
+
+static int ecology_native_abs(int value) {
+    return value < 0 ? ecology_wrap_int(0u - static_cast<uint32_t>(value)) : value;
+}
+
+static int ecology_wrapped_neg_sub(int value, int subtract) {
+    return ecology_wrap_int(0u - static_cast<uint32_t>(value) - static_cast<uint32_t>(subtract));
+}
+
+// ORIGINAL: 0x004F67F0 ?base_ecology@@YAXXZ 0x004F67F0-0x004F79B3
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/004f67f0.cpp; recovery/tasks/base-colony-economy-coverage-wave.json; recovery/tests/test_base_colony_production.py", "Pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf, full original span 4F67F0..4F79B3.", "Native 4F6C73 reads faction difficulty, not ranking; 4F739B reads population total and 4F73B9 independently reloads ecology.", "Native callbacks are followed by live ecology reloads at 4F6E94/4F6EC2 (including the current viewer), 4F7024, 4F70C7, 4F715B, 4F73B9, 4F74A2/4F7512, 4F75B8 and 4F76EE; signed 32-bit climate arithmetic retains native wrapping.", "Native reuses the spread cursor for the 19-row terraforming scan; preserve that original cursor behavior rather than silently changing the event."], "reason": "Recover the complete ecology event owner using real Base, faction, map, terraforming, Vehicle and climate storage. Retain original seed and obligations; this is no new byte or game acceptance claim."}
+// symbol    ?base_ecology@@YAXXZ
+// TRIED: heavily time-boxed given batch budget - only the leading probability gate (faction-table accumulator update, a rand()%100 roll against a base-stat threshold, and the two disabling-flag checks) is transcribed; the ecology event itself, most of the function, is a deliberate stub. MISMATCH #0, prologue only.
+void __cdecl base_ecology() {
+    Base *base = BaseCurrent;
+    const int faction = base->faction_id_current;
+    PlayerData &player = PlayersData[faction];
+
+    int ecology_divisor = ecology_wrap_int(
+        4u - static_cast<uint32_t>(player.soc_effect_pending.planet));
+    if (ecology_divisor < 1) ecology_divisor = 1;
+    else if (ecology_divisor > 99) ecology_divisor = 99;
+    player.unk_49 = ecology_wrapped_add(player.unk_49,
+        ecology_wrapped_shift_two(base->eco_damage) / ecology_divisor);
+
+    const int game_state = GameState;
+    const int damage_divisor = (game_state & 0x100000) != 0 ? 2 : 1;
+    if (rand() % 100 >= base->eco_damage / damage_divisor
+        || (GameRules & 0x200000) != 0
+        || ((game_state & 1) != 0 && (game_state & 8) == 0)) {
+        return;
+    }
+
+    int best_roll = 0;
+    int best_radius_index = -1;
+    const int base_x = base->x;
+    const int base_y = base->y;
+    // The native radius cursor starts at index 1 in the shared 289-entry
+    // radius table and processes 1..48 inclusive.
+    for (int search_radius_index = 1; search_radius_index <= 48; ++search_radius_index) {
+        int x = base_x + RadiusOffsetX[search_radius_index];
+        if ((MapIsFlat & 1) == 0) {
+            if (x < 0) x += MapLongitudeBounds;
+            else if (x >= MapLongitudeBounds) x -= MapLongitudeBounds;
+        }
+        const int y = base_y + RadiusOffsetY[search_radius_index];
+        if (y < 0 || y >= MapLatitudeBounds || x < 0 || x >= MapLongitudeBounds) continue;
+
+        Map *tile = map_loc(x, y);
+        if (((tile->bit & BIT_FUNGUS) != 0 && (tile->climate & 0xE0) > 0x3F)
+            || ((tile->bit & BIT_BASE_IN_TILE) != 0 && (tile->val2 & 0x0F) < 8)) {
+            continue;
+        }
+
+        int probability = 0;
+        if (search_radius_index > 24 && best_roll != 0) continue;
+        bool nearest_base_is_current = false;
+        if (search_radius_index > 24) {
+            int nearest_id = -1;
+            int nearest_distance = 9999;
+            for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+                const Base &candidate = Bases[base_id];
+                int dx = abs(x - candidate.x);
+                if ((MapIsFlat & 1) == 0 && dx > static_cast<int>(MapLongitude))
+                    dx = MapLongitudeBounds - dx;
+                const int distance = vector_dist(dx, abs(y - candidate.y));
+                if (distance <= nearest_distance) {
+                    nearest_distance = distance;
+                    nearest_id = base_id;
+                }
+            }
+            if (nearest_id >= 0) BaseFindDist = nearest_distance;
+            nearest_base_is_current = nearest_id == BaseIDCurrentSelected;
+            if (nearest_base_is_current) probability = 1;
+        }
+        if (search_radius_index <= 24 || nearest_base_is_current) {
+            for (int diagonal = 0; diagonal < 4; ++diagonal) {
+                int nx = x + RiverStepX[diagonal];
+                if ((MapIsFlat & 1) == 0) {
+                    if (nx < 0) nx += MapLongitudeBounds;
+                    else if (nx >= MapLongitudeBounds) nx -= MapLongitudeBounds;
+                }
+                const int ny = y + RiverStepY[diagonal];
+                if (ny < 0 || ny >= MapLatitudeBounds || nx < 0 || nx >= MapLongitudeBounds)
+                    continue;
+                const Map *neighbor = map_loc(nx, ny);
+                if ((neighbor->bit & BIT_FUNGUS) != 0
+                    && (neighbor->climate & 0xE0) >= ALT_BIT_OCEAN_SHELF) {
+                    probability += 2;
+                }
+            }
+            if (probability != 0) {
+                if (probability >= 2) {
+                    probability += bit_count(static_cast<int>(tile->bit & MapTileFlagClearMask));
+                    if (search_radius_index <= 8) ++probability;
+                }
+                if ((tile->climate & 0xE0) <= 0x5F) probability = (probability + 1) / 2;
+                probability *= 10;
+                probability = probability != 1 && probability > 0
+                    ? rand() % probability : 0;
+                if (best_roll < probability) {
+                    best_roll = probability;
+                    best_radius_index = search_radius_index;
+                }
+            }
+        }
+    }
+    if (best_radius_index < 0) return;
+
+    const int event_count = ecology_wrapped_add(player.planet_ecology, 1);
+    player.planet_ecology = event_count;
+    int event_x = base_x + RadiusOffsetX[best_radius_index];
+    if ((MapIsFlat & 1) == 0) {
+        if (event_x < 0) event_x += MapLongitudeBounds;
+        else if (event_x >= MapLongitudeBounds) event_x -= MapLongitudeBounds;
+    }
+    const int event_y = base_y + RadiusOffsetY[best_radius_index];
+    int spread_count = 1;
+    if ((map_loc(event_x, event_y)->climate & 0xE0) <= 0x5F && event_count >= 4) {
+        const int difficulty_adjustment = (event_count + (event_count >> 31 & 7)) >> 3;
+        const int chance = ecology_wrapped_neg_sub(player.diff_level, difficulty_adjustment);
+        const int spread_denominator = ecology_wrapped_add(chance, 10);
+        if (spread_denominator <= 1 || rand() % spread_denominator == 0) spread_count = 9;
+    }
+
+    int report_terraform = -1;
+    bool changed_visible_tile = false;
+    int spread_index = 0;
+    while (spread_index < spread_count) {
+        int x = event_x + RadiusOffsetX[spread_index];
+        if ((MapIsFlat & 1) == 0) {
+            if (x < 0) x += MapLongitudeBounds;
+            else if (x >= MapLongitudeBounds) x -= MapLongitudeBounds;
+        }
+        const int y = event_y + RadiusOffsetY[spread_index];
+        {
+        if (y < 0 || y >= MapLatitudeBounds || x < 0 || x >= MapLongitudeBounds) goto next_spread_tile;
+        if (spread_index != 0 && (map_loc(x, y)->climate & 0xE0) > 0x5F) goto next_spread_tile;
+
+        Map *tile = map_loc(x, y);
+        if (((tile->bit & BIT_FUNGUS) != 0 && (tile->climate & 0xE0) > 0x3F)
+            || ((tile->bit & BIT_BASE_IN_TILE) != 0 && (tile->val2 & 0x0F) < 8)
+            || ((tile->bit2 & 0x80000002u) == 2)) goto next_spread_tile;
+
+        if (report_terraform < 0) {
+            // Native reuses the spread-index local as the Terraforming cursor;
+            // after this 19-row scan the resumed spread loop observes that
+            // cursor value rather than its previous one.
+            spread_index = 0;
+            do {
+                if ((tile->bit & Terraforming[spread_index].bit & MapTileFlagClearMask) != 0)
+                    report_terraform = spread_index;
+                ++spread_index;
+            } while (spread_index < 19);
+        }
+        bit_set(x, y, BIT_FUNGUS, 1);
+        bit_set(x, y, MapTileFlagClearMask, 0);
+        if ((tile->climate & 0xE0) <= 0x3F) world_alt_set(x, y, ALT_OCEAN_SHELF, 0);
+
+        const int current_viewer = ConsoleGlobal.faction_id_;
+        const bool known = (PlayersData[current_viewer].flags & 0x200u) != 0
+            || (tile->visibility & (1u << (current_viewer & 31))) != 0
+            || (GameState & 0x80) != 0;
+        if (!known) goto next_spread_tile;
+        changed_visible_tile = true;
+        if (faction == current_viewer) {
+            ConsoleGlobal.focus(x, y, current_viewer);
+            if (PlayersData[faction].planet_ecology < 2) interlude(3, nullptr, 1, 0);
+            boom(x, y, 0x80);
+        }
+        // focus() may change the active viewer; native reloads the viewer
+        // global after the callback before synchronizing this tile.
+        synch_bit(x, y, ConsoleGlobal.faction_id_);
+        draw_tile(x, y, 2);
+        }
+
+next_spread_tile:
+        ++spread_index;
+    }
+
+    if (changed_visible_tile) {
+        const short shift_state = GetAsyncKeyState(0x10);
+        if ((shift_state & static_cast<short>(0xFF00)) == 0 && IsMultiplayerNet == 0)
+            clock_wait(20);
+        const Map *event_tile = map_loc(event_x, event_y);
+        const int current_viewer = ConsoleGlobal.faction_id_;
+        const int occupier = (event_tile->bit & BIT_VEH_IN_TILE) != 0
+            ? (event_tile->val2 & 0x0F) : -1;
+        if (faction == current_viewer || occupier == current_viewer) {
+            MapWinTable[MapWinSelectedSlot]->set_center(event_x, event_y, 1);
+            ConsoleGlobal.focus(event_x, event_y, faction);
+            parse_says(0, BaseCurrent->name_string, -1, -1);
+            if (report_terraform >= 0 && faction == current_viewer) {
+                const char *improvement_name =
+                    (map_loc(event_x, event_y)->climate & 0xE0) < 0x60
+                        ? Terraforming[report_terraform].name_sea
+                        : Terraforming[report_terraform].name;
+                parse_say(1, static_cast<int>(reinterpret_cast<intptr_t>(improvement_name)), -1, -1);
+                POP2("FUNGUSGROWS2", "fung_sm.pcx", BaseIDCurrentSelected);
+            } else {
+                POP2("FUNGUSGROWS", "fung_sm.pcx", -1);
+            }
+        }
+        if (faction == ConsoleGlobal.faction_id_
+            && PlayersData[faction].planet_ecology >= 2)
+            interlude(5, BaseCurrent->name_string, 1, 0);
+    }
+
+    if (!is_human(faction)) {
+        int chance = rand() & 0x80000001;
+        if ((chance == 0 || static_cast<uint32_t>(chance) == 0x80000000u) && DiffLevelCurrent >= 1
+            && rand() % (DiffLevelCurrent + 1) != 0) {
+            --player.planet_ecology;
+            return;
+        }
+    }
+    if ((player.flags & 0x4000) != 0) {
+        player.flags &= ~0x4000u;
+        return;
+    }
+
+    if (PlayersData[faction].planet_ecology < 7) return;
+    if (base_project(SP_VOICE_OF_PLANET) != SP_Unbuilt) return;
+    {
+        if (faction == ConsoleGlobal.faction_id_) interlude(8, nullptr, 1, 0);
+        const int event_roll = rand() & 0x80000003;
+        if ((event_roll == 0 || static_cast<uint32_t>(event_roll) == 0x80000000u) && ExpansionEnabled
+            && (map_loc(event_x, event_y)->climate & 0xE0) >= 0x60) {
+            veh_init(0x13, 0, event_x, event_y);
+        }
+        int created = 0;
+        int spawn_gate_count = 0;
+        int spawn_index = 0;
+        while (true) {
+            // Native reloads planet_ecology at the shared loop head on every
+            // pass, after callbacks/vehicle creation from the previous pass.
+            const int live_spawn_ecology = PlayersData[faction].planet_ecology;
+            const int live_spawn_limit = live_spawn_ecology < 9 ? live_spawn_ecology : 9;
+            if (spawn_index >= live_spawn_limit) break;
+            int x = event_x + RadiusOffsetX[spawn_index];
+            if ((MapIsFlat & 1) == 0) {
+                if (x < 0) x += MapLongitudeBounds;
+                else if (x >= MapLongitudeBounds) x -= MapLongitudeBounds;
+            }
+            const int y = event_y + RadiusOffsetY[spawn_index];
+            if (x >= 0 && x < MapLongitudeBounds && y >= 0 && y < MapLatitudeBounds) {
+                Map *tile = map_loc(x, y);
+                if ((tile->bit & BIT_FUNGUS) != 0 && (tile->climate & 0xE0) >= 0x40) {
+                    int nearest_id = -1;
+                    int nearest_distance = 9999;
+                    for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+                        const Base &candidate = Bases[base_id];
+                        int dx = abs(x - candidate.x);
+                        if ((MapIsFlat & 1) == 0 && dx > static_cast<int>(MapLongitude))
+                            dx = MapLongitudeBounds - dx;
+                        const int distance = vector_dist(dx, abs(y - candidate.y));
+                        if (distance <= nearest_distance) {
+                            nearest_distance = distance;
+                            nearest_id = base_id;
+                        }
+                    }
+                    if (nearest_id >= 0) {
+                        BaseFindDist = nearest_distance;
+                        const uint8_t occupier = tile->val2 & 0x0F;
+                        const bool no_foreign_occupier =
+                            ((tile->bit & BIT_VEH_IN_TILE) == 0 || occupier >= 8 || occupier == 0)
+                            && ((tile->bit & BIT_BASE_IN_TILE) == 0 || occupier >= 8 || occupier == 0);
+                        if (Bases[nearest_id].faction_id_current == faction && no_foreign_occupier) {
+                            int unit_kind;
+                            if (tile->region >= 0x40) {
+                                unit_kind = (spawn_gate_count % 3 != 0) ? 9 : 10;
+                            } else {
+                                unit_kind = PlayersData[faction].region_total_bases[tile->region] != 0
+                                    ? 8 : 10;
+                            }
+                            bool create = unit_kind == 8;
+                            if (!create) {
+                                ++spawn_gate_count;
+                                create = spawn_gate_count
+                                        < ecology_wrapped_double(PlayersData[faction].pop_total) / 3
+                                    && spawn_gate_count < PlayersData[faction].planet_ecology / 3;
+                            }
+                            if (create) {
+                                if (unit_kind == 8 && rand() % 5 == 0 && ExpansionEnabled)
+                                    unit_kind = 15;
+                                const int unit_id = veh_init(unit_kind, 0, x, y);
+                                if (unit_id >= 0)
+                                    Vehs[unit_id].order_auto_type = static_cast<uint8_t>(faction);
+                                draw_tile(x, y, 2);
+                                ++created;
+                            }
+                        }
+                    }
+                }
+            }
+            ++spawn_index;
+        }
+
+        Map *center_tile = map_loc(event_x, event_y);
+        const int center_occupier = center_tile->val2 & 0x0F;
+        if (((center_tile->bit & (BIT_BASE_IN_TILE | BIT_VEH_IN_TILE)) == 0
+             || center_occupier >= 8 || center_occupier == 0)) {
+            const int region = center_tile->region;
+            int unit_kind = 10;
+            if (player.region_total_bases[region] != 0)
+                unit_kind = (region >= 0x40) + 8;
+            while (created < PlayersData[faction].planet_ecology / 3
+                && created < BaseCurrent->population_size) {
+                if (unit_kind == 8 && rand() % 5 == 0 && ExpansionEnabled)
+                    unit_kind = 15;
+                veh_init(unit_kind, 0, event_x, event_y);
+                ++created;
+                if (unit_kind == 15) unit_kind = 8;
+            }
+        }
+    }
+
+    if (((LockEnableMask & (1u << (faction & 31))) != 0) || DiffLevelCurrent >= 4) {
+        EcologyEventAccumulator = ecology_wrapped_add(EcologyEventAccumulator, 1);
+        int warming = MapSeaLevel;
+        if (warming < 0) warming = 0;
+        else if (warming > 100) warming = 100;
+        const int raw_sea_level_rises = ecology_wrap_int(WorldBuilder.sea_level_rises);
+        int rise = raw_sea_level_rises;
+        if (rise < 1) rise = 1;
+        else if (rise >= 100) rise = 99;
+        const int warming_product = ecology_wrap_int(
+            static_cast<uint32_t>(Rules.freq_global_warming_num)
+            * static_cast<uint32_t>(EcologyEventAccumulator));
+        const int warming_denominator =
+            ecology_wrap_int(static_cast<uint32_t>(Rules.freq_global_warming_denom));
+        if ((warming * 3) / rise + 6 <= warming_product / warming_denominator) {
+            EcologyEventAccumulator = 0;
+            int increase = PlayersData[faction].planet_ecology / 6 - 1;
+            if (increase < 1) increase = 1;
+            else if (increase >= 4) increase = 3;
+            MapSeaLevelCouncil = ecology_wrapped_add(MapSeaLevelCouncil, increase);
+            ClimateRiseLimit = 20;
+            const int sea_level_product = ecology_wrapped_multiply(
+                raw_sea_level_rises, increase);
+            ClimateSeaLevelDelta = ecology_wrapped_add(
+                ClimateSeaLevelDelta, sea_level_product / 3);
+            ClimateRiseStep = ecology_native_abs(ClimateSeaLevelDelta);
+            ClimateRiseAccum = 0;
+            parse_num(0, 20);
+            const int absolute_delta = ecology_native_abs(ClimateSeaLevelDelta);
+            const int scaled_delta = ecology_wrapped_multiply(absolute_delta, 1000);
+            parse_num(1, scaled_delta / 15);
+            if (faction != ConsoleGlobal.faction_id_) {
+                GenderDefault = Players[faction].noun_gender;
+                PluralityDefault = Players[faction].is_noun_plural;
+                parse_says(0, Players[faction].noun_faction, -1, -1);
+                popp(*ClimatePopupTitle, "TRIGGERWARMING2", 0, "searis_sm.pcx", nullptr);
+                return;
+            }
+            popp(*ClimatePopupTitle, "TRIGGERWARMING", 0, "searis_sm.pcx", nullptr);
+            return;
+        }
+    }
+
+    if (PlayersData[faction].planet_ecology < 10 || (GameState & 0x20000) != 0) return;
+    const int volcano_x_roll = MapLongitudeBounds > 1 ? rand() % MapLongitudeBounds : 0;
+    const int volcano_y = MapLatitudeBounds > 1 ? rand() % MapLatitudeBounds : 0;
+    int even_x = volcano_x_roll;
+    if ((even_x & 1) != 0) --even_x;
+    if ((volcano_y & 1) != 0) ++even_x;
+    if (even_x < 0 || even_x >= MapLongitudeBounds || volcano_y < 0
+        || volcano_y >= MapLatitudeBounds) return;
+    const Map *volcano_tile = map_loc(even_x, volcano_y);
+    if ((volcano_tile->climate & 0xE0) > 0x5F) return;
+    int occupied_neighbor = 0;
+    for (int volcano_radius_index = 0; volcano_radius_index < 49; ++volcano_radius_index) {
+        int x = even_x + RadiusOffsetX[volcano_radius_index];
+        if ((MapIsFlat & 1) == 0) {
+            if (x < 0) x += MapLongitudeBounds;
+            else if (x >= MapLongitudeBounds) x -= MapLongitudeBounds;
+        }
+        const int y = volcano_y + RadiusOffsetY[volcano_radius_index];
+        if (x < 0 || x >= MapLongitudeBounds || y < 0 || y >= MapLatitudeBounds) continue;
+        const Map *nearby = map_loc(x, y);
+        if ((nearby->bit & (BIT_BASE_IN_TILE | BIT_VEH_IN_TILE)) != 0
+            && (nearby->val2 & 0x0F) <= 7) {
+            occupied_neighbor = 1;
+            break;
+        }
+    }
+    if (occupied_neighbor) return;
+    if ((PlayersData[ConsoleGlobal.faction_id_].flags & 0x200u) != 0
+        || (volcano_tile->visibility & (1u << (ConsoleGlobal.faction_id_ & 31))) != 0) {
+        ConsoleGlobal.focus(even_x, volcano_y, ConsoleGlobal.faction_id_);
+    }
+    GameState |= 0x20000;
+    world_volcano(even_x, volcano_y, 1);
+    world_climate();
+    draw_map(1);
+    clock_wait(1000);
+    GenderDefault = Players[ConsoleGlobal.faction_id_].is_leader_female;
+    PluralityDefault = 0;
+    parse_says(0, Players[ConsoleGlobal.faction_id_].title_leader, -1, -1);
+    GenderDefault = Players[ConsoleGlobal.faction_id_].is_leader_female;
+    PluralityDefault = 0;
+    parse_says(1, Players[ConsoleGlobal.faction_id_].name_leader, -1, -1);
+    if ((PlayersData[ConsoleGlobal.faction_id_].flags & 0x200u) != 0
+        || (map_loc(even_x, volcano_y)->visibility & (1u << (ConsoleGlobal.faction_id_ & 31))) != 0) {
+        popp(*ClimatePopupTitle, "VOLCANO", 0, "volc_sm.pcx", nullptr);
+    }
+}
+
 // ORIGINAL: 0x004F3FE0 ?base_hurry@@YAXXZ 0x004F3FE0-0x004F4826
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/004f3fe0.cpp; recovery/tasks/base-colony-economy-coverage-wave.json; recovery/tests/test_base_colony_economy.py", "Pinned01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf full4F3FE0..4F4826 instruction review and measured VC6 PlayerData/SocialEffect/Base/prototype owners.", "Native4F4365 reads pending.police(+260), not morale;4F4390 biases the wrapped reserve product before SAR2; facilities4/5/33/projects use /50, not /100.", "NativeVoice45F8..464E halves hurry budget;46C4 reads current queue;46D7 preserves explicit zero-factor branch;4702/474C reread lock mask and479D/47CF reread popup faction."], "reason": "Recover complete colony hurry budgets, mineral purchases and project notification using real Base/faction/prototype/facility owners and explicit native 32-bit wrapping. Preserve seed/history and original behavior; no new byte, linked-preservation or runtime acceptance claim."}
 // symbol    ?base_hurry@@YAXXZ

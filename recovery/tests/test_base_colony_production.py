@@ -757,3 +757,398 @@ def test_actual_vehicle_creation(compiler, tmp_path):
         capture_output=True, text=True)
     assert compiled.returncode == 0, compiled.stderr
     subprocess.run([str(binary)], check=True, capture_output=True, text=True)
+
+ECOLOGY_HARNESS = r"""
+#include <cassert>
+#include <stdio.h>
+#include <stdint.h>
+#include <cstring>
+#include <algorithm>
+#include <string>
+#include <vector>
+#define __cdecl
+#ifndef nullptr
+#define nullptr 0
+#endif
+enum { BIT_FUNGUS=0x20, BIT_BASE_IN_TILE=1, BIT_VEH_IN_TILE=2,
+       PFLAG_MAP_REVEALED=0x200, ALT_OCEAN_SHELF=2, ALT_BIT_OCEAN_SHELF=0x40,
+       SP_VOICE_OF_PLANET=31, SP_Unbuilt=-1 };
+struct SocialEffect { int planet; };
+struct PlayerData {
+    uint32_t flags;
+    int ranking;
+    int diff_level;
+    uint32_t diplo_treaties[8];
+    SocialEffect soc_effect_pending;
+    int unk_49;
+    int pop_total;
+    int planet_ecology;
+    int region_total_bases[128];
+};
+struct Base {
+    int x, y;
+    uint8_t faction_id_current, faction_id_former, population_size;
+    uint8_t padding[3];
+    uint32_t bit_state;
+    uint32_t event;
+    uint32_t governor;
+    int nutrient1, mineral1, production_last, eco_damage;
+    uint32_t queue_size;
+    int queue[10];
+    int resource_sqr_radius, specialist_total, specialist_extra, spec[2];
+    uint8_t facilities[12];
+    int tail[23];
+    char name_string[25];
+};
+struct Map { uint8_t climate, contour, val2, region, visibility, val3, unk; int8_t territory; uint32_t bit, bit2; uint32_t visible[7]; };
+struct Player { int is_leader_female; char filename[24], search_key[24], name_leader[24], title_leader[24]; char adj_leader[128], adj_insult_leader[128], adj_faction[128], adj_insult_faction[128]; uint8_t pad[128]; char noun_faction[24]; int noun_gender, is_noun_plural; char adj_name_faction[128], formal_name_faction[40]; char insult_leader[24], desc_name_faction[24], assistant_name[24], scientist_name[24], assistant_city[24]; uint8_t pad2[176]; int rule_flags; };
+struct RulesTerraforming { const char *name; const char *name_sea; int preq_tech, preq_tech_sea; uint32_t bit, incompatible; int rate; const char *shortcuts; };
+struct WorldRules { uint32_t sea_level_rises; };
+struct BasicRules { uint32_t freq_global_warming_num, freq_global_warming_denom; };
+struct Console { int faction_id_; int focus(int,int,int); };
+struct Window { int set_center(int,int,int); };
+Base Bases[16], *BaseCurrent;
+Player Players[8]; PlayerData PlayersData[8]; Map Tiles[128];
+RulesTerraforming Terraforming[20]; WorldRules WorldBuilder; BasicRules Rules;
+Console ConsoleGlobal; Window MainMap; Window *MapWinTable[8];
+uint32_t GameState, GameRules, LockEnableMask, MapTileFlagClearMask;
+int BaseIDCurrentSelected, BaseCurrentCount, BaseFindDist, MapLongitudeBounds, MapLatitudeBounds, MapSeaLevel, TurnCurrentNum, DiffLevelCurrent, IsMultiplayerNet;
+int MapSeaLevelCouncil;
+int MapWinSelectedSlot=0;
+uint32_t MapLongitude; int MapIsFlat, ExpansionEnabled;
+int EcologyEventAccumulator, ClimateRiseStep, ClimateRiseLimit, ClimateRiseAccum, ClimateSeaLevelDelta;
+int GenderDefault, PluralityDefault; int ParseNum[2];
+char climate_title[]="CLIMATE"; char *ClimatePopupTitle[1]={climate_title};
+int VehCurrentCount;
+struct Vehicle { uint8_t faction_id; uint8_t pad[25]; uint8_t order_auto_type; } Vehs[32];
+int radius_x[289], radius_y[289];
+const int *RadiusOffsetX = radius_x, *RadiusOffsetY = radius_y;
+int RiverStepX[4] = {1, 1, -1, -1}, RiverStepY[4] = {-1, 1, 1, -1};
+std::vector<std::string> calls;
+std::vector<int> vehicle_kinds;
+std::vector<int> interlude_ids;
+std::vector<int> sync_viewers;
+int random_value = 1;
+int focus_ecology_mutation = -1;
+int focus_viewer_mutation = -1;
+int interlude_8_ecology_mutation = -1;
+int report_ecology_mutation = -1;
+int spore_vehicle_ecology_mutation = -1;
+int rand_calls = 0;
+int rand_calls_at_report = -1;
+int test_rand() { calls.push_back("rand"); ++rand_calls; return random_value; }
+#define rand test_rand
+Map *map_loc(int x, int y) { return &Tiles[y * MapLongitude + (x >> 1)]; }
+int bit_count(int value) { return __builtin_popcount(static_cast<unsigned>(value)); }
+int vector_dist(int x, int y) { const int hi=x>y?x:y, lo=x<y?x:y; return hi-((hi+lo)/2-lo+1)/2; }
+void bitmask(int value, int *byte, int *bit) { *byte=value/8; *bit=1<<(value%8); }
+void bit_set(int x,int y,int bit,int set) { Map *t=map_loc(x,y); if(set)t->bit|=bit;else t->bit&=~static_cast<uint32_t>(bit); calls.push_back("bit_set"); }
+void world_alt_set(int x,int y,int,int) { (void)x;(void)y; calls.push_back("alt"); }
+void synch_bit(int,int,int viewer) { calls.push_back("sync"); sync_viewers.push_back(viewer); }
+void draw_tile(int,int,int) { calls.push_back("draw_tile"); }
+void draw_map(int) { calls.push_back("draw_map"); }
+void world_climate() { calls.push_back("world_climate"); }
+void world_volcano(int,int,int) { calls.push_back("world_volcano"); }
+void interlude(int event, char *, int, int) {
+    calls.push_back("interlude"); interlude_ids.push_back(event);
+    if(event==8 && interlude_8_ecology_mutation>=0) {
+        PlayersData[BaseCurrent->faction_id_current].planet_ecology=interlude_8_ecology_mutation;
+        interlude_8_ecology_mutation=-1;
+    }
+}
+int boom(int,int,int) { calls.push_back("boom"); return 0; }
+void clock_wait(int n) { calls.push_back(std::string("wait:")+char('0'+(n==20?2:1))); }
+int parse_say(int,int,int,int) { calls.push_back("parse_say"); return 0; }
+int parse_says(int,char *,int,int) { calls.push_back("parse_says"); return 0; }
+int popp(char *,const char *,int,const char *,int(__cdecl *)()) { calls.push_back("popp"); return 0; }
+int POP2(const char *,const char *,int) {
+    calls.push_back("POP2");
+    if(report_ecology_mutation>=0) {
+        PlayersData[BaseCurrent->faction_id_current].planet_ecology=report_ecology_mutation;
+        rand_calls_at_report=rand_calls;
+        report_ecology_mutation=-1;
+    }
+    return 0;
+}
+int parse_num(int slot,int value) { ParseNum[slot]=value; calls.push_back("parse_num"); return value; }
+int veh_init(int kind,int,int,int) {
+    calls.push_back(std::string("veh:")+char('0'+kind%10)); vehicle_kinds.push_back(kind);
+    if(kind!=19 && spore_vehicle_ecology_mutation>=0) {
+        PlayersData[BaseCurrent->faction_id_current].planet_ecology=spore_vehicle_ecology_mutation;
+        spore_vehicle_ecology_mutation=-1;
+    }
+    return VehCurrentCount++;
+}
+int GetAsyncKeyState(int) { calls.push_back("shift"); return 0; }
+int base_project(int project) { assert(project==31); calls.push_back("project"); return -1; }
+int Console::focus(int,int,int faction) {
+    calls.push_back("focus");
+    if(focus_ecology_mutation>=0) {
+        PlayersData[faction].planet_ecology=focus_ecology_mutation;
+        focus_ecology_mutation=-1;
+    }
+    if(focus_viewer_mutation>=0) {
+        ConsoleGlobal.faction_id_=focus_viewer_mutation;
+        focus_viewer_mutation=-1;
+    }
+    return 0;
+}
+int Window::set_center(int,int,int) { calls.push_back("center"); return 0; }
+int is_human(uint32_t faction) { return (LockEnableMask & (1u<<faction)) != 0; }
+int is_alive(uint32_t faction) { return (LockEnableMask & (1u<<(8+faction))) != 0; }
+
+HELPERS
+BODY
+
+static void reset_case() {
+    std::memset(Bases,0,sizeof(Bases)); std::memset(Players,0,sizeof(Players));
+    std::memset(PlayersData,0,sizeof(PlayersData)); std::memset(Tiles,0,sizeof(Tiles));
+    std::memset(radius_x,0,sizeof(radius_x)); std::memset(radius_y,0,sizeof(radius_y));
+    std::memset(&WorldBuilder,0,sizeof(WorldBuilder)); std::memset(&Rules,0,sizeof(Rules));
+    BaseCurrent=&Bases[0]; BaseCurrent->faction_id_current=1; BaseCurrent->x=2; BaseCurrent->y=2;
+    BaseCurrent->eco_damage=120; BaseCurrent->name_string[0]='B'; BaseCurrent->name_string[1]=0;
+    BaseIDCurrentSelected=0; BaseCurrentCount=1; BaseFindDist=0; MapLongitudeBounds=8; MapLatitudeBounds=8; MapLongitude=4; MapIsFlat=1;
+    GameState=0; GameRules=0; LockEnableMask=1u<<1; TurnCurrentNum=5; DiffLevelCurrent=0; IsMultiplayerNet=0; ExpansionEnabled=0;
+    MapTileFlagClearMask=4; MapSeaLevel=0; EcologyEventAccumulator=0; ClimateRiseStep=0; ClimateRiseLimit=0; ClimateRiseAccum=0; ClimateSeaLevelDelta=0;
+    PlayersData[1].ranking=1; PlayersData[1].region_total_bases[0]=1; ConsoleGlobal.faction_id_=1;
+    Rules.freq_global_warming_num=1; Rules.freq_global_warming_denom=1; WorldBuilder.sea_level_rises=1; MapSeaLevelCouncil=0;
+    Terraforming[5].bit=4; Terraforming[5].name="ROAD"; MapWinTable[0]=&MainMap;
+    VehCurrentCount=0; random_value=1; calls.clear(); vehicle_kinds.clear(); interlude_ids.clear(); sync_viewers.clear();
+    focus_ecology_mutation=-1; focus_viewer_mutation=-1; interlude_8_ecology_mutation=-1;
+    report_ecology_mutation=-1; spore_vehicle_ecology_mutation=-1;
+    rand_calls=0; rand_calls_at_report=-1;
+}
+
+static void setup_visible_event(int initial_ecology) {
+    reset_case();
+    PlayersData[1].planet_ecology=initial_ecology;
+    Map *center=map_loc(2,2); center->climate=0x80; center->bit=4; center->visibility=2;
+    map_loc(3,1)->climate=0x80; map_loc(3,1)->bit=BIT_FUNGUS;
+}
+
+int main() {
+    reset_case();
+    // The selected tile is clear, adjacent fungus makes the native candidate
+    // weight nonzero, and a worked improvement tests the owned Terraforming
+    // table/clear-mask path.
+    Map *center=map_loc(2,2); center->climate=0x80; center->bit=4; center->visibility=2;
+    map_loc(3,1)->climate=0x80; map_loc(3,1)->bit=BIT_FUNGUS;
+    base_ecology();
+    fprintf(stderr,"unk=%d count=%d calls=%u bit=%u\n",PlayersData[1].unk_49,PlayersData[1].planet_ecology,(unsigned)calls.size(),(unsigned)center->bit);
+    assert(PlayersData[1].unk_49==120);
+    assert(PlayersData[1].planet_ecology==1);
+    assert((center->bit & BIT_FUNGUS)!=0 && (center->bit & 4)==0);
+    assert(calls.front()=="rand");
+    assert(std::find(calls.begin(),calls.end(),"sync")!=calls.end());
+    assert(std::find(calls.begin(),calls.end(),"draw_tile")!=calls.end());
+
+    reset_case(); BaseCurrent->eco_damage=0;
+    base_ecology();
+    assert(PlayersData[1].unk_49==0 && PlayersData[1].planet_ecology==0);
+    assert(calls.size()==1 && calls[0]=="rand");
+
+    reset_case(); GameRules=0x200000;
+    base_ecology();
+    assert(PlayersData[1].unk_49==120 && PlayersData[1].planet_ecology==0);
+    assert(calls.size()==1 && calls[0]=="rand");
+
+    reset_case();
+    PlayersData[1].planet_ecology=2;
+    PlayersData[1].diff_level=1;
+    PlayersData[1].ranking=100;
+    Map *threshold_center=map_loc(2,2);
+    threshold_center->climate=0x40; threshold_center->bit=4; threshold_center->visibility=2;
+    map_loc(3,1)->climate=0x80; map_loc(3,1)->bit=BIT_FUNGUS;
+    base_ecology();
+    const int before_threshold_rand_count=static_cast<int>(
+        std::count(calls.begin(),calls.end(),"rand"));
+    assert(PlayersData[1].planet_ecology==3);
+
+    reset_case();
+    PlayersData[1].planet_ecology=3;
+    PlayersData[1].diff_level=1;
+    PlayersData[1].ranking=100;
+    threshold_center=map_loc(2,2);
+    threshold_center->climate=0x40; threshold_center->bit=4; threshold_center->visibility=2;
+    map_loc(3,1)->climate=0x80; map_loc(3,1)->bit=BIT_FUNGUS;
+    base_ecology();
+    assert(PlayersData[1].planet_ecology==4);
+    assert(static_cast<int>(std::count(calls.begin(),calls.end(),"rand"))
+        == before_threshold_rand_count+1);
+
+    reset_case();
+    BaseCurrent->population_size=8;
+    PlayersData[1].planet_ecology=17;
+    PlayersData[1].pop_total=30;
+    radius_x[1]=1; radius_y[1]=0;
+    Map *event_tile=map_loc(3,2);
+    event_tile->climate=0x80; event_tile->visibility=2; event_tile->region=0;
+    map_loc(3,1)->climate=0x80; map_loc(3,1)->bit=BIT_FUNGUS;
+    map_loc(4,1)->climate=0x80; map_loc(4,1)->bit=BIT_FUNGUS;
+    Map *sea_tile=map_loc(4,2);
+    sea_tile->climate=0x80; sea_tile->bit=BIT_FUNGUS; sea_tile->region=0x40;
+    PlayersData[1].region_total_bases[0]=1;
+    base_ecology();
+    assert(PlayersData[1].planet_ecology==18);
+    assert(vehicle_kinds.size()>=2);
+    assert(vehicle_kinds[0]==8); // a land-region spore precedes the sea-region pick
+    assert(vehicle_kinds[1]==10); // triad uses non-worm gate count, still zero here
+
+    // focus() is an intervening callback before the native ecology < 2 test.
+    // Mutating 1 -> 2 must suppress interlude(3) and enable the later >=2 path.
+    setup_visible_event(0);
+    focus_ecology_mutation=2;
+    base_ecology();
+    assert(std::find(interlude_ids.begin(),interlude_ids.end(),3)==interlude_ids.end());
+    assert(std::find(interlude_ids.begin(),interlude_ids.end(),5)!=interlude_ids.end());
+
+    // Native reloads the viewer after focus(). A callback that switches 1 -> 2
+    // must pass viewer 2 to synch_bit, not the entry viewer cached before focus.
+    setup_visible_event(0);
+    focus_viewer_mutation=2;
+    base_ecology();
+    assert(!sync_viewers.empty() && sync_viewers.front()==2);
+
+    // The report popup can change planet_ecology after the initial increment;
+    // the subsequent native seven-event admission rereads that live value.
+    setup_visible_event(8);
+    report_ecology_mutation=6;
+    base_ecology();
+    assert(rand_calls_at_report>=0 && PlayersData[1].planet_ecology==6);
+    assert(std::find(interlude_ids.begin(),interlude_ids.end(),8)==interlude_ids.end());
+    assert(std::find(calls.begin(),calls.end(),"project")==calls.end());
+
+    // The native <7 admission occurs before interlude(8), then the repeated
+    // spawn-loop head observes the callback's 7 -> 9 mutation.
+    setup_visible_event(6);
+    PlayersData[1].pop_total=100;
+    PlayersData[1].region_total_bases[0]=1;
+    interlude_8_ecology_mutation=9;
+    base_ecology();
+    assert(std::find(interlude_ids.begin(),interlude_ids.end(),8)!=interlude_ids.end());
+    assert(PlayersData[1].planet_ecology==9);
+    assert(vehicle_kinds.size()==9);
+
+    // Spawn callbacks can lower the live event count.  The outer spawn cursor
+    // and each quota comparison must use the updated PlayerData member.
+    reset_case();
+    BaseCurrent->population_size=8;
+    PlayersData[1].planet_ecology=9;
+    PlayersData[1].pop_total=30;
+    radius_x[1]=1; radius_y[1]=0;
+    Map *spawn_event=map_loc(3,2);
+    spawn_event->climate=0x80; spawn_event->visibility=2; spawn_event->region=0;
+    map_loc(3,1)->climate=0x80; map_loc(3,1)->bit=BIT_FUNGUS;
+    map_loc(4,1)->climate=0x80; map_loc(4,1)->bit=BIT_FUNGUS;
+    Map *spawn_sea=map_loc(4,2);
+    spawn_sea->climate=0x80; spawn_sea->bit=BIT_FUNGUS; spawn_sea->region=0x40;
+    PlayersData[1].region_total_bases[0]=0;
+    spore_vehicle_ecology_mutation=3;
+    base_ecology();
+    assert(PlayersData[1].planet_ecology==3);
+    assert(vehicle_kinds.size()==1);
+
+    // Native `SHL pop_total,1` wraps the 32-bit value before signed division.
+    reset_case();
+    BaseCurrent->population_size=0;
+    PlayersData[1].planet_ecology=9;
+    PlayersData[1].pop_total=0x40000000;
+    radius_x[1]=1; radius_y[1]=0;
+    spawn_event=map_loc(3,2);
+    spawn_event->climate=0x80; spawn_event->visibility=2; spawn_event->region=0;
+    map_loc(3,1)->climate=0x80; map_loc(3,1)->bit=BIT_FUNGUS;
+    PlayersData[1].region_total_bases[0]=0;
+    base_ecology();
+    assert(vehicle_kinds.empty());
+
+    // A report callback lowering ecology 10 -> 9 must block the final volcano
+    // roll; after the report only the ordinary pre-spawn random roll is consumed.
+    setup_visible_event(9);
+    PlayersData[1].region_total_bases[0]=0;
+    PlayersData[1].pop_total=0;
+    BaseCurrent->population_size=0;
+    Rules.freq_global_warming_num=0;
+    report_ecology_mutation=9;
+    base_ecology();
+    assert(rand_calls_at_report>=0 && PlayersData[1].planet_ecology==9);
+    assert(rand_calls-rand_calls_at_report==1);
+
+    // Rules counters are UINT32 storage, but native IMUL/IDIV uses signed
+    // 32-bit bit patterns. A high-bit product must therefore compare negative.
+    setup_visible_event(12);
+    PlayersData[1].pop_total=0; PlayersData[1].region_total_bases[0]=0;
+    BaseCurrent->population_size=0;
+    Rules.freq_global_warming_num=0x80000000u;
+    Rules.freq_global_warming_denom=1u;
+    EcologyEventAccumulator=2;
+    base_ecology();
+    assert(EcologyEventAccumulator==3);
+    assert(MapSeaLevelCouncil==0 && ClimateRiseLimit==0);
+
+    // A negative signed denominator and negative product yield +10 natively;
+    // unsigned C++ division would instead produce zero and miss warming.
+    setup_visible_event(12);
+    PlayersData[1].pop_total=0; PlayersData[1].region_total_bases[0]=0;
+    BaseCurrent->population_size=0;
+    Rules.freq_global_warming_num=0xFFFFFFFFu;
+    Rules.freq_global_warming_denom=0xFFFFFFFEu;
+    EcologyEventAccumulator=19;
+    base_ecology();
+    assert(EcologyEventAccumulator==0);
+    assert(ClimateRiseLimit==20 && MapSeaLevelCouncil==1);
+
+    // The native accumulator increment wraps at 32 bits rather than relying
+    // on C++ signed-overflow behavior.
+    setup_visible_event(12);
+    PlayersData[1].pop_total=0; PlayersData[1].region_total_bases[0]=0;
+    BaseCurrent->population_size=0;
+    Rules.freq_global_warming_num=0u;
+    Rules.freq_global_warming_denom=1u;
+    EcologyEventAccumulator=0x7FFFFFFF;
+    base_ecology();
+    assert(EcologyEventAccumulator==static_cast<int32_t>(0x80000000u));
+    assert(ClimateRiseLimit==0);
+
+    // Council, raw rise multiplication, delta addition, wrapped absolute
+    // value, and the later x1000 scaling all exercise native 32-bit arithmetic.
+    setup_visible_event(23);
+    PlayersData[1].pop_total=0; PlayersData[1].region_total_bases[0]=0;
+    BaseCurrent->population_size=0;
+    Rules.freq_global_warming_num=6u;
+    Rules.freq_global_warming_denom=1u;
+    WorldBuilder.sea_level_rises=0x7FFFFFFFu;
+    EcologyEventAccumulator=0;
+    MapSeaLevelCouncil=0x7FFFFFFE;
+    ClimateSeaLevelDelta=2000000000;
+    base_ecology();
+    assert(EcologyEventAccumulator==0);
+    assert(MapSeaLevelCouncil==static_cast<int32_t>(0x80000001u));
+    assert(ClimateSeaLevelDelta==-1579139415);
+    assert(ClimateRiseStep==1579139415);
+    assert(ClimateRiseLimit==20 && ClimateRiseAccum==0);
+    assert(ParseNum[0]==20 && ParseNum[1]==-93903328);
+}
+
+"""
+
+@pytest.mark.parametrize("compiler", ["g++", "clang++"])
+def test_actual_colony_ecology(compiler, tmp_path):
+    executable = shutil.which(compiler)
+    if executable is None:
+        pytest.skip(compiler + " unavailable")
+    path = ROOT / "src/base.cpp"
+    source = path.read_text()
+    records = [r for r in read_file(path) if r.address == 0x4F67F0]
+    assert len(records) == 1 and not records[0].extract_error
+    assert "BODY GOES HERE" not in records[0].region
+    assert "PENDING_BODY" not in records[0].region
+    helpers = "\n".join(helper(source, name) for name in ('ecology_wrap_int', 'ecology_wrapped_add', 'ecology_wrapped_shift_two', 'ecology_wrapped_double', 'ecology_wrapped_multiply', 'ecology_native_abs', 'ecology_wrapped_neg_sub'))
+    control = ECOLOGY_HARNESS.replace("HELPERS", helpers).replace("BODY", records[0].region)
+    control_path = tmp_path / "control.cpp"
+    control_path.write_text(control)
+    binary = tmp_path / "control"
+    compiled = subprocess.run([executable, "-std=c++98", "-O2", "-Wall", "-Wextra", "-Werror",
+        "-fsanitize=undefined", "-fno-sanitize-recover=all", str(control_path), "-o", str(binary)],
+        capture_output=True, text=True)
+    assert compiled.returncode == 0, compiled.stderr
+    subprocess.run([str(binary)], check=True, capture_output=True, text=True)

@@ -776,3 +776,5 @@ void __cdecl base_check_support();
 void __cdecl base_research();
 
 void __cdecl base_hurry();
+
+void __cdecl base_ecology();
