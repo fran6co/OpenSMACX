@@ -3136,6 +3136,8 @@ void __cdecl help_tech_info(Popup *popup, int technology, int faction) {
     help_tech_info(help_info_pop, technology, faction, -1);
 }
 
+// The superseded seed was deleted; its original mapping and exact obligation
+// are owned here. The seed path below is historical provenance in Git.
 // ORIGINAL: 0x0044C9E0 ?help_project@@YAXH@Z 0x0044C9E0-0x0044C9F8 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/0044c9e0.cpp; recovery/tasks/base-colony-economy-coverage-wave.json; recovery/tests/test_project_help.py", "Pinned01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf full24-byte body44C9E0..44C9F8 loads receiver703EA0 and calls429180 with topic11 and project+70.", "DatalinkMain is the source-owned singleton at703EA0; exec(unsigned int,int) owns the referenced behavior."], "reason": "Rehome historical project-help seed through the real DatalinkMain singleton and typed exec call, preserving its existing byte obligation. No fixed executable receiver, new placeholder or claim demotion."}
 void __cdecl help_project(int project_id) {
