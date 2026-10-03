@@ -1,0 +1,55 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "c6a525de27e0c97f0064aadc1c15fecde0e75147",
+  "editable_files": [
+    "src/planwin.cpp",
+    "src/planwin.h",
+    "src/faction.cpp",
+    "src/faction.h",
+    "src/pending_bodies.cpp",
+    "src/unrecovered/0048bab0.cpp",
+    "src/recovered/units/0054b140.cpp",
+    "src/recovered/0054dc90.cpp",
+    "src/recovered/units/0048af30.cpp",
+    "src/unrecovered/0054b1c0.cpp",
+    "recovery/tests/test_planwin_battle_owner_behavior.py"
+  ],
+  "evidence": [
+    "Pinned native spans and existing source records for draw_line_base48BAB0, battle_routine54B140, C-linkage sub_54dc90, on_redraw48AF30 and battle_plans54B1C0 including its cold cleanup span. Complete records and useful lessons must transfer through the native source writer.",
+    "Reviewed frozen PlanWin v4 and battle_plans v2 use real inheritance, owned line records, canonical attack_from, typed faction/base/map/vehicle data and automatic Popup lifetime. Native54B39D checks plan_b, not attack_b; v1 is rejected history. Win virtual override requires the measured UA emitted symbol via write_symbol, retaining the original catalogued QA identity.",
+    "Fresh private native overlay v3 against c6a525de compiles both destination TUs under both configured recipes and preserves all124 protected diagnostics. battle_routine is exact in recipe1; sub_54dc90 remains a measured miss with its historical exact obligation retained. Old sub_54dc90 and battle_plans donor scaffolds are unmeasurable under configured donor compilation, not accepted or historical original-TU proof.",
+    "Admit neutral separate faction DWORD starts93F7BC/93F810 and direct mutable label starts68DD20/34/44/54/60/6C/78/84 only with independently pinned bytes and source object bindings. Minimal null-terminated label capacity is not an original array-bound claim; do not infer extents from adjacency or introduce guessed aliases.",
+    "Product bodies, clean helper names, object bindings and durable actual-source behavior/damage controls require fresh actual-source compilation, build/link, claims/references and relevant regressions before manual integration. Preserve both historical exact claims; no demotion or new claim granted. Delete seeds only after complete identity/lesson continuity. This decision does not establish strict reference, linked outside-scope, runtime or full-game acceptance."
+  ],
+  "intent": "Recover complete PlanWin drawing/callback and battle-planning bodies in genuine source owners, preserving original identities and restoration obligations, replacing only their superseded pending forwarder and seeds after actual-source verification.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4766384,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5550400,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5561488,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4763440,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5550528,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "planwin-battle-owner-coverage"
+}
