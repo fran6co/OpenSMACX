@@ -1,0 +1,20 @@
+{
+  "event_id": "4a50455f8e535ad76c50fb516f21f6eee6c5e55ac926f866c7cadb84b267a9e8",
+  "payload": {
+    "affects": [
+      "entity-da3dc4fa8f106f83c693b9ca531f1471f117e7daa023902924803dd11eb17a0d"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "faction-council-human-mask-native-correction",
+    "evidence": [
+      "Root full native527290..5275AC decode:52756D constructs factionbit;527576 loads byte9A64E8;52757C testsbit;52757E JNE skips527581 call52C880. Alive domain is byte9A64E9, not read here. Worker instructed to freeze correctedv2 and discriminate human/AI independentlyofalive. Historical baseline/claims preserved; no behavior fix or acceptance."
+    ],
+    "hypothesis": "Private faction_upkeep v1 incorrectly gates call_council on alive status. Original gates it on absence from the low-byte human mask after can_call_council and callbacks; preserve the nonhuman condition rather than invent a liveness guard.",
+    "kind": "discovery"
+  },
+  "previous_event": "c53880197ca559963ce8cd9359ae402b73bd40fe99e335e3e93a6e553905940a",
+  "request_id": "faction-council-human-mask-native-correction",
+  "schema_version": 1,
+  "sequence": 62,
+  "stream": "task:base-colony-economy-coverage-wave"
+}

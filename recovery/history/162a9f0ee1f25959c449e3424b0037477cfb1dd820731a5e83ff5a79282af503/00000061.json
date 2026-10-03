@@ -1,0 +1,20 @@
+{
+  "event_id": "c53880197ca559963ce8cd9359ae402b73bd40fe99e335e3e93a6e553905940a",
+  "payload": {
+    "affects": [
+      "entity-d4662a79d7b9d1cd234ea21ea0026657d4002e95a4d8252ec8a789a916d74cff"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "production-loan-fields-native-correction",
+    "evidence": [
+      "Root true-entry native526E70..527285 decode:526EB8 EDI=96ECCC;526F0E readsEDI-160;526F43..47 adds chosen loan payment toEDI. PlayerData[1] begins96EAAC, so offsetsC0/220 are sanction_turns/energy_reserves. Current faction.h fields and existing PlayerData20CC extent support ownership. Private v1 native compilation proves syntax and unchanged outside-body diagnostics, not these erroneous semantics; require corrected v2 plus discriminating tests before source publication."
+    ],
+    "hypothesis": "Withdraw the private production-phase packed Goal interpretation: partner pointer96ECCC denotes energy_reserves, and its minus160 operand denotes sanction_turns. Credit partner energy and gate payments on sanctions, not unrelated goal/site records.",
+    "kind": "discovery"
+  },
+  "previous_event": "f529bed2fd568eda311c4a18fd3fd8fba4b76410e9077c33136f2f5ac8f7ef22",
+  "request_id": "production-loan-fields-native-correction",
+  "schema_version": 1,
+  "sequence": 61,
+  "stream": "task:base-colony-economy-coverage-wave"
+}
