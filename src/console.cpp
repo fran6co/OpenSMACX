@@ -4235,6 +4235,7 @@ void Console::toggle_base_grid() {
 // BLOCKED (2026-09-03, P1 calibration) on a mapwin.h declaration this TU does
 // not own: 0x0046B1F0 is ?set_center@MapWin@@QAEXHHH@Z, undeclared. It needs
 // `void set_center(int, int, int);` on MapWin and a pending_bodies forwarder
+// Deleted seed provenance: git:9f6ee90ae7baa6354fcca006def5561fb956792b:src/recovered/units/0046b1f0.cpp
 // (the body itself is src/recovered/units/0046b1f0.cpp, unclaimed, 275
 // bytes). Everything the body reads is already bound here: ConsoleGlobal.cursor_history_index_ /
 // ConsoleGlobal.cursor_history_x_ / ConsoleGlobal.cursor_history_y_ in console.h and the accessor console_map_win()

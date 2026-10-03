@@ -45,6 +45,7 @@ static void buffer_pattern_pixel(unsigned char *pixel, int first, int second,
 
 // ORIGINAL: 0x005E09D0 ?line@Buffer@@QAEXHHHHHHHHH@Z 0x005E09D0-0x005E10BA
 // RECOVERY_BINDING: v1 {"evidence": ["Original4672C0 calls5E09D0 with nine stack arguments; the original ends with ret24 and belongs to Buffer.", "Original5E09D0 uses half-open clipping, inclusive endpoints and strict-positive DDA steps, preserving clipped-entry pattern phase and original failed-acquisition/modulo error paths."], "reason": "Recover the nine-argument patterned Buffer line as a genuine member, distinct from the five-argument solid overload."}
+// Deleted seed provenance: git:25c0645e742c23f149e0895c391a9ba79ad744cb:src/unrecovered/005e09d0.cpp
 // SUPERSEDED_BINDING_HISTORY: v1 {"evidence": ["Original4672C0 calls5E09D0; src/unrecovered/005e09d0.cpp retains its original span and seed.", "The original void catalogue and ignored-result call sites support the declaration; BODY GOES HERE does not implement pattern rendering."], "reason": "The non-cover direct route renderer references this nine-argument patterned Buffer line, distinct from the recovered five-argument solid overload. Its owning-TU placeholder is explicitly unfinished and only preserves linking."}
 void Buffer::line(int x1, int y1, int x2, int y2, int first_color,
                   int second_color, int pattern_on, int pattern_off, int phase) {

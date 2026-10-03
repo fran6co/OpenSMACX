@@ -996,6 +996,7 @@ void ReportWin::reset() {
 }
 
 // ORIGINAL: 0x004A5F00 ?show@ReportWin@@QAEXH@Z 0x004A5F00-0x004A5F16 BYTE_EXACT
+// Deleted seed provenance: git:c2e28f62c941b2012636504516275bc26988ee80:src/recovered/004a5f00.cpp
 // RECOVERY_BINDING: v1 {"reason":"Home the existing ReportWin show identity in its class owner, retaining its measured byte-exact claim.","evidence":["src/recovered/004a5f00.cpp records the original 0x004A5F00-0x004A5F16 body and BYTE_EXACT claim.","ReportWin derives from Win and ReportIfGlobal owns the interface-mode transitions used by the seed."]}
 // symbol    ?show@ReportWin@@UAEXH@Z
 /*
@@ -1010,6 +1011,7 @@ void ReportWin::show(int) {
 }
 
 // ORIGINAL: 0x004A5F20 ?hide@ReportWin@@QAEXXZ 0x004A5F20-0x004A5F34 BYTE_EXACT
+// Deleted seed provenance: git:c2e28f62c941b2012636504516275bc26988ee80:src/recovered/units/004a5f20.cpp
 // RECOVERY_BINDING: v1 {"reason":"Home the existing ReportWin hide identity in its class owner, retaining its measured byte-exact claim.","evidence":["src/recovered/units/004a5f20.cpp records the original 0x004A5F20-0x004A5F34 body and BYTE_EXACT claim.","ReportWin derives from Win and ReportIfGlobal owns the interface-mode transitions used by the seed."]}
 // symbol    ?hide@ReportWin@@UAEXXZ
 void ReportWin::hide() {
@@ -1019,6 +1021,7 @@ void ReportWin::hide() {
 }
 
 // ORIGINAL: 0x00497A60 ?on_left_double_click@ReportWin@@QAEXHH@Z 0x00497A60-0x00497AB2 BYTE_EXACT
+// Deleted seed provenance: git:c2e28f62c941b2012636504516275bc26988ee80:src/recovered/units/00497a60.cpp
 // RECOVERY_BINDING: v1 {"reason":"Home ReportWin's existing double-click handler against its declared Spot member and the verified base-window object.","evidence":["src/recovered/units/00497a60.cpp records the original 0x00497A60-0x00497AB2 method and BYTE_EXACT claim.","src/reportwin.h places spot_ at 0x5994; src/tutwin.h binds TutWinBaseWindow at the seed's 0x006A7628 zoom receiver."]}
 // symbol    ?on_left_double_click@ReportWin@@UAEXHH@Z
 /*
@@ -1039,6 +1042,7 @@ void ReportWin::on_left_double_click(int x, int y) {
 }
 
 // ORIGINAL: 0x00498180 ?on_scrolled@ReportWin@@QAEXHH@Z 0x00498180-0x004981D8
+// Deleted seed provenance: git:c2e28f62c941b2012636504516275bc26988ee80:src/recovered/units/00498180.cpp
 // RECOVERY_BINDING: v1 {"reason":"Home the ReportWin scrollbar callback using its declared position member and inherited redraw virtual.","evidence":["src/recovered/units/00498180.cpp records the original 0x00498180-0x004981D8 handler and page dispatch.","src/reportwin.h places field_C0FC_ at 0xC0FC; src/graphicwin.h identifies redraw as Win slot 62."]}
 /*
 Purpose: Track the report scrollbar's committed position and repaint the
@@ -1066,6 +1070,7 @@ void ReportWin::on_scrolled(int, int pos) {
 }
 
 // ORIGINAL: 0x00498200 ?on_scrolling@ReportWin@@QAEXHH@Z 0x00498200-0x00498258
+// Deleted seed provenance: git:c2e28f62c941b2012636504516275bc26988ee80:src/recovered/units/00498200.cpp
 // RECOVERY_BINDING: v1 {"reason":"Home the ReportWin scroll-in-progress callback using the same source-owned position and redraw behavior.","evidence":["src/recovered/units/00498200.cpp records the original 0x00498200-0x00498258 handler and page dispatch.","src/reportwin.h places field_C0FC_ at 0xC0FC; src/graphicwin.h identifies redraw as Win slot 62."]}
 void ReportWin::on_scrolling(int, int pos) {
     field_C0FC_ = pos;
@@ -1088,6 +1093,7 @@ void ReportWin::on_scrolling(int, int pos) {
 }
 
 // ORIGINAL: 0x00498110 ?UNK1@ReportWin@@QAEXHHHH@Z 0x00498110-0x00498174
+// Deleted seed provenance: git:c2e28f62c941b2012636504516275bc26988ee80:src/recovered/units/00498110.cpp
 // RECOVERY_BINDING: v1 {"reason":"Home ReportWin's range callback and type its embedded Scroll storage while preserving the constructor's explicit placement order.","evidence":["src/recovered/units/00498110.cpp records the original 0x00498110-0x00498174 method and its position/range/paging updates.","src/reportwin.h places Scroll at 0xC10C; src/scroll.h places paging_ at Scroll+0xA40, which is the seed's 0xCB4C write."]}
 /*
 Purpose: Store the active position and range, update the embedded Scroll's
@@ -1160,6 +1166,7 @@ Status: Complete
 */
 
 // ORIGINAL: 0x0049EB10 ?draw_projects@ReportWin@@QAEXXZ 0x0049EB10-0x0049F343
+// Deleted seed provenance: git:c2e28f62c941b2012636504516275bc26988ee80:src/unrecovered/0049eb10.cpp
 // RECOVERY_BINDING: v1 {"reason":"Recover the projects page through owned ReportWin rectangles, spots and scroll state, preserving queued/completed rendering and the destroyed-owner byte alias through its real PlayerData member.","evidence":["image:terranx_original.exe:0x0049EB10-0x0049F343", "src/unrecovered/0049eb10.cpp:retained seed and trial history", "Original97CDDC=PlayersData96C9E0+7*20CC+goals19FC+70*10+base_idC; the native unsigned-byte read determines the destroyed-project faction without dereferencing Bases[-2]."]}
 // TRIED: full transcription (call-argument order verified against raw disasm for add/box_sprite/draw_mono/write_l/write_cent_l/ set_text_color/Strings::get, all matched Ghidra) reaches MISMATCH #3 'mov' vs 'push' - a prologue-level register/stack allocation divergence, not a logic error; not chased further given function size (2099 bytes, nested loops with gotos).
 void ReportWin::draw_projects() {

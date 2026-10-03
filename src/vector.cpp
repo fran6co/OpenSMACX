@@ -90,6 +90,7 @@ Vector Vector::cross(Vector &right) {
 // in x87 registers, rounding the sum for sqrt's double argument and the
 // resulting components for their float storage.
 // ORIGINAL: 0x00634520 ?normalize@Vector@@QAE?AV1@XZ 0x00634520-0x006345DD
+// Deleted seed provenance: git:b18d3ac864e30cf0876946b9d54717a3d999c691:src/unrecovered/00634520.cpp
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original0x00634531-0x00634567 computes (x*x+y*y)+z*z with no intermediate float stores, passes a double to sqrt0x00646544, and0x0063456F-0x0063457D tests x87 C3 so equal and unordered lengths copy the input. The other path has no zero guard, multiplies x/y/z by the reciprocal and rounds each result to float. Both returns supply the result pointer in EAX. Complete span agrees with src/unrecovered/00634520.cpp; its synthetic output-parameter body is seed evidence only."], "reason": "The original computes a separate normalized three-float Vector using sqrt and a reciprocal, never mutating its receiver. Normalize is an operation-derived name, not an original debug symbol; the stack result pointer and ret4 indicate a hidden class-value result."}
 Vector Vector::normalize() {
     // Original 0x00634531 loads z, y, x before accumulating the squared length.

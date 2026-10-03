@@ -53,6 +53,7 @@ MultiDebug::MultiDebug() {
 }
 
 // ORIGINAL: 0x005C9E00 ??1MultiDebug@@QAE@XZ 0x005C9E00-0x005C9E77;0x00662AD0-0x00662AF0 FILE BYTE_EXACT
+// Deleted seed provenance: git:117282ee0186f316fd18d2d25f9ae0223c8186ae:src/unrecovered/005c9e00.cpp
 // RECOVERY_BINDING: v1 {"reason":"The retained destructor seed identifies the complete MultiDebug teardown and its Font/GraphicWin cleanup funclets; the declared members own these lifetimes.","evidence":["src/unrecovered/005c9e00.cpp","original:0x005C9E3C clears net_ before Time, Font and GraphicWin teardown","original:0x00662AD0-0x00662AF0 contains the base and font cleanup funclets"]}
 // symbol    ??1MultiDebug@@UAE@XZ
 // The complete destructor clears the session before Time, Font and GraphicWin

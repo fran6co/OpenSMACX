@@ -181,6 +181,7 @@ int EditBox::text_fits() {
 
 // 615630. No invented bounds clamp: preserve the original selection cases.
 // ORIGINAL: 0x00615630 ?on_key_click@EditBox@@QAEHHH@Z 0x00615630-0x00615839
+// Deleted seed provenance: git:25c0645e742c23f149e0895c391a9ba79ad744cb:src/unrecovered/00615630.cpp
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00615630.cpp", "Pinned original EditBox table66A038 and direct call/branch evidence"], "reason": "EditBox owns this table override or its direct text helper: pinned primary table66A038 slots12,17,20,21,25,26,51,64 and original direct-call receivers establish ownership. Use existing Win slot signatures without changing their order; text_position returns the EAX index consumed by callers despite the catalogue void label."}
 // symbol    ?on_key_click@EditBox@@UAEHHH@Z
 int EditBox::on_key_click(int character, int) {
@@ -234,6 +235,7 @@ int EditBox::on_key_click(int character, int) {
 // Key modifiers are encoded in the upper word; the low word selects the
 // original Home/End, arrow, Backspace and Delete branches.
 // ORIGINAL: 0x00615840 ?on_key_down@EditBox@@QAEHH@Z 0x00615840-0x00615D73
+// Deleted seed provenance: git:25c0645e742c23f149e0895c391a9ba79ad744cb:src/unrecovered/00615840.cpp
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00615840.cpp", "Pinned original EditBox table66A038 and direct call/branch evidence"], "reason": "EditBox owns this table override or its direct text helper: pinned primary table66A038 slots12,17,20,21,25,26,51,64 and original direct-call receivers establish ownership. Use existing Win slot signatures without changing their order; text_position returns the EAX index consumed by callers despite the catalogue void label."}
 // symbol    ?vslot_26@EditBox@@UAEHH@Z
 int EditBox::vslot_26(int key_value) {
@@ -603,6 +605,7 @@ EditBox::EditBox() {
 }
 
 // ORIGINAL: 0x00408010 ??1EditBox@@QAE@XZ 0x00408010-0x00408077;0x00650CF0-0x00650D10 BYTE_EXACT
+// Deleted seed provenance: git:117282ee0186f316fd18d2d25f9ae0223c8186ae:src/unrecovered/00408010.cpp
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00408010.cpp", "Original constructor/destructor direct-call receivers and unwind stages"], "reason": "408010 closes EditBox then destroys its Time member and nonvirtual GraphicWin base; normal and unwind paths agree."}
 // symbol    ??1EditBox@@UAE@XZ
 EditBox::~EditBox() {
