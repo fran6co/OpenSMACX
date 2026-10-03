@@ -1097,6 +1097,10 @@ void __cdecl allocate_energy(int faction_id);
 
 // Original diplomacy owners; communicate remains explicitly unfinished.
 void __cdecl communicate(int faction_id, int faction_id_with, int mode);
+void __cdecl mention_prototypes(int faction_id, int faction_id_with);
+void __cdecl pact_of_brotherhood(int faction_id, int faction_id_with);
+void __cdecl make_treaty(int faction_id, int faction_id_with);
+void __cdecl pledge_truce(int faction_id, int faction_id_with, int show_dialogue);
 void __cdecl comm_check(int faction_id, int faction_id_with);
 void __cdecl enemies_war(int faction_id, int faction_id_with);
 void __cdecl enemies_unpact(int faction_id, int faction_id_with);

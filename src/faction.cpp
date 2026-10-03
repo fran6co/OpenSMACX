@@ -7779,3 +7779,264 @@ void __cdecl encounter(int faction_id, int faction_id_with, int x, int y,
     }
     enemies_war(faction_id, faction_id_with);
 }
+
+// ORIGINAL: 0x0053A230 ?mention_prototypes@@YAXHH@Z 0x0053A230-0x0053A496
+// RECOVERY_BINDING: v1 {"reason":"The complete original diplomacy producer uses the existing faction, prototype, parser and network owners; the global cdecl interface and bounded span retain the seed identity.","evidence":["original:0x53a230","git:46625ff3:src/recovered/units/0053a230.cpp"]}
+// kind      game
+void __cdecl mention_prototypes(int faction_id, int faction_id_with) {
+    PopupDialogFactionID = faction_id_with;
+    // Native 0x53A23E..0x53A249 rejects an unset proposed prototype before
+    // it enters wants_to_speak; that callback may itself change the selected
+    // prototype, so the value used below is deliberately re-read afterwards.
+    if (BestProtoToMention < 0) return;
+    if (!wants_to_speak(faction_id, faction_id_with)) return;
+
+    const int first_proto = faction_id_with * MaxVehProtoFactionNum;
+    for (int i = 0; i < MaxVehProtoFactionNum; ++i) {
+        VehPrototypes[first_proto + i].flags |= PROTO_UNK_10;
+    }
+
+    const int selected_proto = BestProtoToMention;
+    parse_says(0, VehPrototypes[selected_proto].veh_name, -1, -1);
+
+    StringTemp[0] = 0;
+    say_stats_2(StringTemp, selected_proto);
+    parse_says(1, StringTemp, -1, -1);
+
+    VehPrototypes[selected_proto].flags |= PROTO_UNK_10;
+    StringTemp[0] = 0;
+    strcat(StringTemp, "PROTO");
+
+    if (PlayersData[faction_id].diplo_treaties[faction_id_with] & DTREATY_PACT) {
+        VehPrototypes[selected_proto].flags |= PROTO_UNK_20;
+        strcat(StringTemp, "PACT");
+        return;
+    }
+
+    strcat(StringTemp, "RIVAL");
+    if (!x_pops_short(StringTemp, 0x100000,
+                      FactionDiplomacyPortraits[faction_id_with], pop_wait)) {
+        BestProtoForTrade = -1;
+        BestProtoToMention = -1;
+        return;
+    }
+
+    for (int proto_id = 0; proto_id < MaxVehProtoFactionNum; ++proto_id) {
+        const int faction_proto =
+            faction_id * MaxVehProtoFactionNum + proto_id;
+        const int faction_proto_code = faction_proto + 0x61;
+        if (wants_prototype(faction_proto, faction_id_with)) {
+            if (IsMultiplayerNet == 0) {
+                tech_achieved(faction_id_with, faction_proto_code,
+                              faction_id, 0);
+            } else {
+                log_say("Sending TECH", faction_id_with,
+                        faction_proto_code, faction_id);
+                message_data(0x244B, 0, faction_id_with,
+                             faction_proto_code, faction_id, 0);
+                NetDaemonNet.await_diplo(0x44B);
+            }
+        }
+        VehPrototypes[faction_proto].flags |= PROTO_UNK_20;
+
+        const int other_proto =
+            faction_id_with * MaxVehProtoFactionNum + proto_id;
+        const int other_proto_code = other_proto + 0x61;
+        if (wants_prototype(other_proto, faction_id)) {
+            if (IsMultiplayerNet == 0) {
+                tech_achieved(faction_id, other_proto_code,
+                              faction_id_with, 0);
+            } else {
+                log_say("Sending TECH", faction_id,
+                        other_proto_code, faction_id_with);
+                message_data(0x244B, 0, faction_id,
+                             other_proto_code, faction_id_with, 0);
+                NetDaemonNet.await_diplo(0x44B);
+            }
+        }
+        VehPrototypes[other_proto].flags |= PROTO_UNK_20;
+    }
+
+    BestProtoForTrade = -1;
+    BestProtoToMention = -1;
+}
+
+// ORIGINAL: 0x0053CAF0 ?pact_of_brotherhood@@YAXHH@Z 0x0053CAF0-0x0053CE05
+// RECOVERY_BINDING: v1 {"reason":"The complete original diplomacy producer uses the existing faction, prototype, parser and network owners; the global cdecl interface and bounded span retain the seed identity.","evidence":["original:0x53caf0","git:46625ff3:src/recovered/units/0053caf0.cpp"]}
+// kind      game
+void __cdecl pact_of_brotherhood(int faction_id, int faction_id_with) {
+    PopupDialogFactionID = faction_id_with;
+    if (IsMultiplayerNet != 0) {
+        log_say("Sending TREATY ON", faction_id_with, faction_id,
+                0x01000001);
+        message_data(0x2441, 0, faction_id_with, faction_id,
+                     0x01000001, 0);
+    } else {
+        treaty_on(faction_id_with, faction_id, 0x01000001);
+    }
+
+    PlayersData[faction_id_with].diplo_patience[faction_id] = 0;
+    PlayersData[faction_id].diplo_spoke[faction_id_with] = TurnCurrentNum;
+    diplomacy_check(faction_id, faction_id_with, 0);
+    DiploScratchFA70 = 0;
+    ++PlayersData[faction_id].global_reputation;
+    ++PlayersData[faction_id_with].global_reputation;
+    diplomacy_caption(faction_id, faction_id_with);
+
+    PluralityDefault = 0;
+    GenderDefault = Players[faction_id_with].is_leader_female;
+    parse_says(0, Players[faction_id_with].title_leader, -1, -1);
+    GenderDefault = Players[faction_id_with].is_leader_female;
+    PluralityDefault = 0;
+    parse_says(1, Players[faction_id_with].name_leader, -1, -1);
+    GenderDefault = Players[faction_id_with].noun_gender;
+    PluralityDefault = Players[faction_id_with].is_noun_plural;
+    parse_says(2, Players[faction_id_with].noun_faction, -1, -1);
+    parse_says(3, get_pact(faction_id), -1, -1);
+    parse_says(4, get_phrase(faction_id, 0), -1, -1);
+    parse_says(5, get_phrase(faction_id_with, 0), -1, -1);
+
+    x_pops_short("MAKEPACT", 0x100000,
+                 FactionDiplomacyPortraits[faction_id_with], pop_wait);
+    if (IsMultiplayerNet != 0) {
+        log_say("Sending TRADE MAPS", faction_id, faction_id_with, 0);
+        message_data(0x2448, 0, faction_id, faction_id_with, 0, 0);
+        NetDaemonNet.await_diplo(0x448);
+    } else {
+        trade_maps(faction_id, faction_id_with);
+    }
+
+    parse_says(0, get_pact(faction_id), -1, -1);
+    x_pops_short("HERESTHEMAP", 0x100000,
+                 FactionDiplomacyPortraits[faction_id_with], pop_wait);
+    scan_prototypes(faction_id, faction_id_with);
+    mention_prototypes(faction_id, faction_id_with);
+
+    if (DiffLevelCurrent > 1 && tut_check2(0x1000) == 0) return;
+    if (IsMultiplayerNet == 0) {
+        GenderDefault = Players[faction_id_with].noun_gender;
+        PluralityDefault = Players[faction_id_with].is_noun_plural;
+        parse_says(0, Players[faction_id_with].noun_faction, -1, -1);
+        GenderDefault = Players[faction_id_with].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(1, Players[faction_id_with].title_leader, -1, -1);
+        GenderDefault = Players[faction_id_with].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(2, Players[faction_id_with].name_leader, -1, -1);
+        parse_says(3, Players[faction_id_with].adj_name_faction, -1, -1);
+        x_pop_caption_label(PopupStartCaption, "PACT", nullptr);
+    }
+}
+
+// ORIGINAL: 0x0053CE10 ?make_treaty@@YAXHH@Z 0x0053CE10-0x0053D158
+// RECOVERY_BINDING: v1 {"reason":"The complete original diplomacy producer uses the existing faction, prototype, parser and network owners; the global cdecl interface and bounded span retain the seed identity.","evidence":["original:0x53ce10","git:46625ff3:src/recovered/units/0053ce10.cpp"]}
+// kind      game
+void __cdecl make_treaty(int faction_id, int faction_id_with) {
+    PopupDialogFactionID = faction_id_with;
+    if (IsMultiplayerNet != 0) {
+        log_say("Sending TREATY ON", faction_id_with, faction_id,
+                0x01000202);
+        message_data(0x2441, 0, faction_id_with, faction_id,
+                     0x01000202, 0);
+        NetDaemonNet.await_diplo(0x441);
+    } else {
+        treaty_on(faction_id_with, faction_id, 0x01000202);
+    }
+
+    PlayersData[faction_id_with].diplo_patience[faction_id] = 0;
+    PlayersData[faction_id].diplo_spoke[faction_id_with] = TurnCurrentNum;
+    diplomacy_check(faction_id, faction_id_with, 0);
+    ++PlayersData[faction_id].global_reputation;
+    ++PlayersData[faction_id_with].global_reputation;
+    diplomacy_caption(faction_id, faction_id_with);
+
+    PluralityDefault = 0;
+    GenderDefault = Players[faction_id].is_leader_female;
+    parse_says(0, Players[faction_id].title_leader, -1, -1);
+    GenderDefault = Players[faction_id].is_leader_female;
+    PluralityDefault = 0;
+    parse_says(1, Players[faction_id].name_leader, -1, -1);
+    GenderDefault = Players[faction_id].noun_gender;
+    PluralityDefault = Players[faction_id].is_noun_plural;
+    parse_says(2, Players[faction_id].noun_faction, -1, -1);
+
+    PluralityDefault = 0;
+    GenderDefault = Players[faction_id_with].is_leader_female;
+    parse_says(3, Players[faction_id_with].title_leader, -1, -1);
+    GenderDefault = Players[faction_id_with].is_leader_female;
+    PluralityDefault = 0;
+    parse_says(4, Players[faction_id_with].name_leader, -1, -1);
+    GenderDefault = Players[faction_id_with].noun_gender;
+    PluralityDefault = Players[faction_id_with].is_noun_plural;
+    parse_says(5, Players[faction_id_with].noun_faction, -1, -1);
+
+    parse_says(6, get_noun_phrase(faction_id, 9), -1, -1);
+    parse_says(7, get_noun_phrase(faction_id_with, 9), -1, -1);
+
+    StringTemp[0] = 0;
+    strcat(StringTemp, "MAKETREATY");
+    char number[16];
+    _itoa(static_cast<int>(random(0, 2)), number, 10);
+    strcat(StringTemp, number);
+    x_pops_short(StringTemp, 0x100000,
+                 FactionDiplomacyPortraits[faction_id_with], pop_wait);
+
+    if (DiffLevelCurrent <= 1 || tut_check2(0x800) != 0) {
+        if (IsMultiplayerNet == 0) {
+            GenderDefault = Players[faction_id_with].noun_gender;
+            PluralityDefault = Players[faction_id_with].is_noun_plural;
+            parse_says(0, Players[faction_id_with].noun_faction, -1, -1);
+            x_pop_caption_label(PopupStartCaption, "COMMERCE", nullptr);
+        }
+    }
+
+    if (territory(faction_id_with, faction_id, 2, nullptr, nullptr) != 0) {
+        GenderDefault = Players[faction_id_with].noun_gender;
+        PluralityDefault = Players[faction_id_with].is_noun_plural;
+        parse_says(0, Players[faction_id_with].noun_faction, -1, -1);
+        parse_says(1, Players[faction_id_with].adj_name_faction, -1, -1);
+        NetMsgPrimary.pop("TIMETOLEAVE", 5000, 0, nullptr);
+    }
+}
+
+// ORIGINAL: 0x0053D160 ?pledge_truce@@YAXHHH@Z 0x0053D160-0x0053D351
+// RECOVERY_BINDING: v1 {"reason":"The complete original diplomacy producer uses the existing faction, prototype, parser and network owners; the global cdecl interface and bounded span retain the seed identity.","evidence":["original:0x53d160","git:46625ff3:src/recovered/units/0053d160.cpp"]}
+// kind      game
+void __cdecl pledge_truce(int faction_id, int faction_id_with,
+                          int show_dialogue) {
+    PopupDialogFactionID = faction_id_with;
+    if (IsMultiplayerNet != 0) {
+        log_say("Sending TREATY ON", faction_id_with, faction_id, 0x204);
+        message_data(0x2441, 0, faction_id_with, faction_id, 0x204, 0);
+    } else {
+        treaty_on(faction_id_with, faction_id, 0x204);
+    }
+
+    PlayersData[faction_id].diplo_spoke[faction_id_with] = TurnCurrentNum;
+    diplomacy_check(faction_id, faction_id_with, 0);
+    ++PlayersData[faction_id].global_reputation;
+    ++PlayersData[faction_id_with].global_reputation;
+    if (show_dialogue == 0) return;
+
+    diplomacy_caption(faction_id, faction_id_with);
+    PluralityDefault = 0;
+    GenderDefault = Players[faction_id].is_leader_female;
+    parse_says(0, Players[faction_id].title_leader, -1, -1);
+    GenderDefault = Players[faction_id].is_leader_female;
+    PluralityDefault = 0;
+    parse_says(1, Players[faction_id].name_leader, -1, -1);
+    GenderDefault = Players[faction_id].noun_gender;
+    PluralityDefault = Players[faction_id].is_noun_plural;
+    parse_says(2, Players[faction_id].noun_faction, -1, -1);
+    PluralityDefault = 0;
+    GenderDefault = Players[faction_id_with].is_leader_female;
+    parse_says(3, Players[faction_id_with].title_leader, -1, -1);
+    GenderDefault = Players[faction_id_with].is_leader_female;
+    PluralityDefault = 0;
+    parse_says(4, Players[faction_id_with].name_leader, -1, -1);
+    GenderDefault = Players[faction_id_with].noun_gender;
+    PluralityDefault = Players[faction_id_with].is_noun_plural;
+    parse_says(5, Players[faction_id_with].noun_faction, -1, -1);
+    x_pops_short("MAKETRUCE", 0x100000,
+                 FactionDiplomacyPortraits[faction_id_with], pop_wait);
+}
