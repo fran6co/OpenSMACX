@@ -1,0 +1,28 @@
+{
+  "event_id": "da64fd033588511ef59a9e1b7e12138d9db16e680cb6425ddbf836ea4725afab",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Correct two private manifest decimal transcription errors: release_sound is4C5D90..4C5E42, system_close is58F250..58F2E6 per the existing source seeds and pinned instructions. Earlier added4C6590/591250 addresses are NOT authorized for recovery edits by this batch; use seed mappings as authoritative, not private manifest spans. Preserve prior task history/baseline and all discoveries."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5004688,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5829200,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "d8b14998caee89507d36ccc3189fc15e17e31df7c58cf8e3604767415ff2dfc0",
+  "request_id": "runtime-service-pinned-address-correction-20261003",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:game-logic-seed-owner-coverage"
+}
