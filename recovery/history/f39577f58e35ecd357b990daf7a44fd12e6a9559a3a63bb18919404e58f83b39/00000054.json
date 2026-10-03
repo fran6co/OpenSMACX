@@ -1,0 +1,40 @@
+{
+  "event_id": "159153fe6ee5d14c17d83bbdd027e68e6fb54bf00fc747ec46aeba7b3c8c220a",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_diplopop_seed_batch_behavior.py",
+      "src/recovered/units/0043f5f0.cpp",
+      "src/recovered/units/0043f790.cpp",
+      "src/unrecovered/00440700.cpp"
+    ],
+    "evidence": [
+      "Coordinator authorizes complete DiploPop init, draw_bioscan and draw_portrait with same-size named RECT storage and existing MainInterface accessors. Frozen v5 inputs match current source hashes after game7; preserve original task baseline and all claims/discoveries.",
+      "Recover true Flic RAII and typed MainInterface/GraphicWin/Buffer hierarchy. Verify actual-source controls, native layout/protected code, build/link and claim/seed continuity before retiring superseded seeds. The old task baseline Voice annotation prevents native task context; it remains an explicit historical unknown, not reset or acceptance.",
+      "Manual coordinator review only; no byte claim grants/demotions, linked preservation or game acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4458240,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4453872,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4454288,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "612eba2702e36d8488b7f78bed9a78e86e33f2993c535050f5cc373756507149",
+  "request_id": "diplopop-complete-three-body-20261003",
+  "schema_version": 1,
+  "sequence": 54,
+  "stream": "task:interface-contract-report-closure"
+}
