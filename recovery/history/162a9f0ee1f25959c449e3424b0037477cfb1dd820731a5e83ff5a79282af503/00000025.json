@@ -1,0 +1,17 @@
+{
+  "event_id": "0648d38ea6057c60bdbd78a2f489f33fc4cd9fc95bcdb75dbbc701e9e10cb339",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "colony-project-help-dependency-20261003",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/datalink.cpp/h now own real help_project44C9E0..44C9F8 through DatalinkMain.exec(11,project+70). Installed source writer preserves existing historical seed mapping/claim; configured recorder freshly returnsBYTE_EXACT/pass afterpreparation. PrivateandfinalannotatedsourcebothVC6recipes preserve110protectedDatalinkdiagnosticrows, targetexactflagset1. Actual-source GCC/Clang C++98WerrorUBSan tests verify all37supportedIDs;20focusedcolony/dependencytests pass. Fresh16-stepapplicationbuild/link passes. Claims2616/sourceannotations5504 reflect addedcompiledcopy ofexistinghistoricalidentity; missing0, same26reference/126mappingbaselinefindings. Seed/originaltaskbaseline preserved; dependencyintegration is not strictlinkedpreservation,runtime/game or automaticacceptance."
+    ]
+  },
+  "previous_event": "2608f5c864104091b3244e284a859fddb8102472c6781010495ea9777c2b4851",
+  "request_id": "colony-project-help-incorporated-20261003",
+  "schema_version": 1,
+  "sequence": 25,
+  "stream": "task:base-colony-economy-coverage-wave"
+}

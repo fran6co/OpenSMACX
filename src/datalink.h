@@ -323,6 +323,7 @@ extern Datalink DatalinkMain;  // 0x00703EA0
 void __cdecl help_create_link(char *out, char *label, char *id);
 
 void __cdecl help_tech(int id);
+void __cdecl help_project(int project_id);
 
 MEASURED inline void __cdecl help_weapon(int id) {
     DatalinkMain.exec(0x6, id);
