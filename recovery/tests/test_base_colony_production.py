@@ -368,3 +368,392 @@ def test_actual_colony_growth_upgrade(compiler, address, harness, tmp_path):
                                str(control_path), "-o", str(binary)], capture_output=True, text=True)
     assert compiled.returncode == 0, compiled.stderr
     subprocess.run([str(binary)], check=True, capture_output=True, text=True)
+
+VEH_INIT_HARNESS = r"""
+// Expanded host-only controls; includes immutable veh-init-private-v2.inc.
+// These local structs are test doubles, not ABI/layout evidence.
+#include <assert.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define __cdecl
+
+typedef const char *LPCSTR;
+typedef int BOOL;
+
+enum {
+    PLAN_INFO_WARFARE = 11,
+    PLAN_ALIEN_ARTIFACT = 12,
+    VFLAG_IS_OBJECTIVE = 0x20,
+    VSTATE_UNK_20000 = 0x20000,
+    VSTATE_UNK_40000 = 0x40000,
+    DTREATY_VENDETTA = 0x10,
+};
+
+struct PlayerData {
+    uint32_t diplo_treaties[8];
+    int x_target, y_target;
+    int total_mil_veh;
+    uint8_t proto_id_active[512];
+    int unk_70, unk_71, unk_72;
+    uint8_t region_total_bases[128];
+    uint8_t region_base_plan[128];
+};
+struct VehPrototype {
+    uint8_t chassis_id, weapon_id, armor_id, plan;
+};
+struct Veh {
+    int16_t x, y;
+    uint32_t state;
+    uint16_t flags;
+    int16_t proto_id;
+    uint8_t faction_id;
+    int16_t home_base_id;
+};
+struct RulesChassis { uint8_t triad; };
+struct Base { uint8_t faction_id_current; };
+struct Map { uint8_t climate, region; };
+
+static PlayerData PlayersData[8];
+static VehPrototype VehPrototypes[512];
+static Veh Vehs[2049];
+static RulesChassis Chassis[19];
+static Base Bases[128];
+static Map MapStorage[128];
+static Map *MapTiles = MapStorage;
+static int VehCurrentCount;
+static int GameState;
+static int BaseIDCurrentSelected;
+static int BaseComputedID;
+static int BaseFindDist;
+static uint32_t MapLongitude;
+static int MapLongitudeBounds;
+static int MapIsFlat;
+static int base_find_result;
+static int six_arg_base_find_calls;
+static int clear_calls, drop_calls, spot_calls;
+static int weapon_calls, armor_calls, ability_calls;
+static int weapon_result, armor_result, ability_result, six_arg_distance;
+static int six_arg_faction, six_arg_region;
+static int random_result;
+
+static int test_rand() { return random_result; }
+#define rand test_rand
+
+static Map *map_tiles() { return MapTiles; }
+static void log_say(LPCSTR, int, int, int) {}
+static void veh_clear(int vehicle_id, int prototype, int faction) {
+    ++clear_calls;
+    memset(&Vehs[vehicle_id], 0, sizeof(Vehs[vehicle_id]));
+    Vehs[vehicle_id].proto_id = static_cast<int16_t>(prototype);
+    Vehs[vehicle_id].faction_id = static_cast<uint8_t>(faction);
+    Vehs[vehicle_id].home_base_id = -1;
+}
+static int base_find(int, int) { return base_find_result; }
+static int base_find(int, int, int faction, int region, int, int) {
+    ++six_arg_base_find_calls;
+    six_arg_faction = faction;
+    six_arg_region = region;
+    BaseFindDist = six_arg_distance;
+    return -1;
+}
+static int veh_drop(int vehicle_id, int x, int y) {
+    ++drop_calls;
+    Vehs[vehicle_id].x = static_cast<int16_t>(x);
+    Vehs[vehicle_id].y = static_cast<int16_t>(y);
+    return vehicle_id;
+}
+static void spot_all(int, int) { ++spot_calls; }
+static int bit_count(int bits) {
+    uint32_t value = static_cast<uint32_t>(bits);
+    int count = 0;
+    while (value) {
+        count += static_cast<int>(value & 1);
+        value >>= 1;
+    }
+    return count;
+}
+static int weap_strat(int, int) { ++weapon_calls; return weapon_result; }
+static int arm_strat(int, int) { ++armor_calls; return armor_result; }
+static BOOL has_abil(int, int) { ++ability_calls; return ability_result; }
+
+HELPERS
+BODY
+
+static void reset_controls() {
+    memset(PlayersData, 0, sizeof(PlayersData));
+    memset(VehPrototypes, 0, sizeof(VehPrototypes));
+    memset(Vehs, 0, sizeof(Vehs));
+    memset(Chassis, 0, sizeof(Chassis));
+    memset(Bases, 0, sizeof(Bases));
+    memset(MapStorage, 0, sizeof(MapStorage));
+    VehCurrentCount = 0;
+    GameState = 0;
+    BaseIDCurrentSelected = -1;
+    BaseComputedID = -1;
+    BaseFindDist = 0;
+    MapLongitude = 4;
+    MapLongitudeBounds = 8;
+    MapIsFlat = 1;
+    base_find_result = -1;
+    six_arg_base_find_calls = 0;
+    clear_calls = drop_calls = spot_calls = 0;
+    weapon_calls = armor_calls = ability_calls = 0;
+    weapon_result = armor_result = ability_result = 0;
+    six_arg_distance = 0;
+    six_arg_faction = six_arg_region = -1;
+    random_result = 0;
+}
+
+int main() {
+    reset_controls();
+    VehCurrentCount = 2048;
+    assert(veh_init(0, 0, 0, 0) == -1);
+    assert(VehCurrentCount == 2048 && clear_calls == 0 && drop_calls == 0);
+
+    reset_controls();
+    VehPrototypes[3].plan = 1;
+    PlayersData[0].x_target = -1;
+    base_find_result = 0;
+    Bases[0].faction_id_current = 0;
+    BaseIDCurrentSelected = 9;
+    BaseComputedID = 0;
+    assert(veh_init(3, 0, 2, 1) == 0);
+    assert(VehCurrentCount == 1 && PlayersData[0].total_mil_veh == 1);
+    assert(PlayersData[0].proto_id_active[3] == 1);
+    assert(Vehs[0].home_base_id == 0 && BaseComputedID == -1);
+    assert(BaseIDCurrentSelected == 9);
+    assert(drop_calls == 1 && spot_calls == 1);
+
+    reset_controls();
+    VehPrototypes[4].plan = PLAN_ALIEN_ARTIFACT;
+    PlayersData[0].x_target = -1;
+    GameState = 0x40000;
+    base_find_result = 0;
+    Bases[0].faction_id_current = 0;
+    assert(veh_init(4, 0, 2, 1) == 0);
+    assert((Vehs[0].flags & VFLAG_IS_OBJECTIVE) != 0);
+    assert(Vehs[0].home_base_id == -1);
+    assert(PlayersData[0].total_mil_veh == 0);
+
+    reset_controls();
+    VehPrototypes[5].plan = PLAN_INFO_WARFARE;
+    VehPrototypes[5].chassis_id = 2;
+    PlayersData[0].x_target = 0;
+    PlayersData[0].y_target = 0;
+    PlayersData[0].region_total_bases[1] = 3;
+    MapStorage[5].climate = 0x60;
+    MapStorage[5].region = 1;
+    MapStorage[0].region = 1;
+    Chassis[2].triad = 0;
+    assert(veh_init(5, 0, 2, 1) == 0);
+    assert(PlayersData[0].unk_71 == 1 && PlayersData[0].unk_72 == 2);
+    assert((Vehs[0].state & VSTATE_UNK_40000) != 0);
+    assert(weapon_calls == 1 && armor_calls == 1 && ability_calls == 1);
+
+    reset_controls();
+    VehPrototypes[6].plan = 0;
+    PlayersData[0].x_target = 0;
+    PlayersData[0].y_target = 0;
+    PlayersData[0].diplo_treaties[1] = DTREATY_VENDETTA;
+    PlayersData[0].region_total_bases[1] = 2;
+    MapStorage[6].climate = 0x60;
+    MapStorage[6].region = 1;
+    MapStorage[0].region = 1;
+    six_arg_distance = 0;
+    assert(veh_init(6, 0, 4, 1) == 0);
+    assert(six_arg_base_find_calls == 1);
+    assert(weapon_calls == 0 && armor_calls == 0 && ability_calls == 0);
+
+    reset_controls();
+    VehPrototypes[7].plan = 0;
+    PlayersData[0].x_target = 0;
+    PlayersData[0].y_target = 0;
+    PlayersData[0].region_total_bases[1] = 3;
+    PlayersData[0].region_base_plan[1] = 7;
+    PlayersData[0].unk_70 = -2097152;
+    MapStorage[5].climate = 0x60;
+    MapStorage[5].region = 1;
+    MapStorage[0].region = 1;
+    Chassis[0].triad = 0;
+    assert(veh_init(7, 0, 2, 1) == 0);
+    assert(PlayersData[0].unk_71 == 0 && PlayersData[0].unk_72 == 0);
+    assert(weapon_calls == 0 && armor_calls == 0 && ability_calls == 0);
+
+    reset_controls();
+    VehPrototypes[8].plan = PLAN_INFO_WARFARE;
+    PlayersData[0].x_target = 0;
+    PlayersData[0].y_target = 0;
+    PlayersData[0].region_total_bases[1] = 3;
+    PlayersData[0].unk_71 = 1;
+    PlayersData[0].unk_72 = 2;
+    MapStorage[5].climate = 0x60;
+    MapStorage[5].region = 1;
+    MapStorage[0].region = 1;
+    Chassis[0].triad = 0;
+    assert(veh_init(8, 0, 2, 1) == 0);
+    assert(PlayersData[0].unk_71 == 1 && PlayersData[0].unk_72 == 2);
+    assert(Vehs[0].state == 0);
+
+    reset_controls();
+    VehPrototypes[9].plan = 0;
+    PlayersData[0].x_target = -1;
+    base_find_result = 0;
+    Bases[0].faction_id_current = 1;
+    assert(veh_init(9, 0, 2, 1) == 0);
+    assert(Vehs[0].home_base_id == -1);
+
+    reset_controls();
+    VehPrototypes[10].plan = 0;
+    PlayersData[0].x_target = 0;
+    PlayersData[0].y_target = 0;
+    PlayersData[0].region_total_bases[1] = 3;
+    MapStorage[5].climate = 0x20;
+    MapStorage[5].region = 1;
+    MapStorage[0].region = 1;
+    assert(veh_init(10, 0, 2, 1) == 0);
+    assert(weapon_calls == 0 && ability_calls == 0);
+
+    reset_controls();
+    VehPrototypes[11].plan = 0;
+    PlayersData[0].x_target = 0;
+    PlayersData[0].y_target = 0;
+    PlayersData[0].region_total_bases[1] = 3;
+    MapStorage[5].climate = 0x60;
+    MapStorage[5].region = 1;
+    MapStorage[0].region = 2;
+    assert(veh_init(11, 0, 2, 1) == 0);
+    assert(weapon_calls == 0 && ability_calls == 0);
+
+    reset_controls();
+    VehPrototypes[12].plan = 0;
+    PlayersData[0].x_target = 0;
+    PlayersData[0].y_target = 0;
+    PlayersData[0].region_total_bases[1] = 3;
+    MapStorage[5].climate = 0x60;
+    MapStorage[5].region = 1;
+    MapStorage[0].region = 1;
+    Chassis[0].triad = 1;
+    assert(veh_init(12, 0, 2, 1) == 0);
+    assert(ability_calls == 0 && PlayersData[0].unk_71 == 0);
+
+    reset_controls();
+    VehPrototypes[13].plan = 0;
+    PlayersData[0].x_target = 0;
+    PlayersData[0].y_target = 0;
+    PlayersData[0].region_total_bases[1] = 3;
+    MapStorage[5].climate = 0x60;
+    MapStorage[5].region = 1;
+    MapStorage[0].region = 1;
+    ability_result = 1;
+    assert(veh_init(13, 0, 2, 1) == 0);
+    assert(ability_calls == 1 && PlayersData[0].unk_71 == 0);
+
+    reset_controls();
+    VehPrototypes[14].plan = 0;
+    PlayersData[0].x_target = 0;
+    PlayersData[0].y_target = 0;
+    PlayersData[0].region_total_bases[1] = 3;
+    PlayersData[0].unk_72 = 1;
+    MapStorage[5].climate = 0x60;
+    MapStorage[5].region = 1;
+    MapStorage[0].region = 1;
+    weapon_result = 1;
+    armor_result = 2;
+    assert(veh_init(14, 0, 2, 1) == 0);
+    assert(PlayersData[0].unk_71 == 0 && Vehs[0].state == 0);
+
+    reset_controls();
+    VehPrototypes[15].plan = 0;
+    PlayersData[0].x_target = 0;
+    PlayersData[0].y_target = 0;
+    PlayersData[0].region_total_bases[1] = 3;
+    PlayersData[0].region_base_plan[1] = 7;
+    MapStorage[5].climate = 0x60;
+    MapStorage[5].region = 1;
+    MapStorage[0].region = 1;
+    weapon_result = 1;
+    armor_result = 2;
+    assert(veh_init(15, 0, 2, 1) == 0);
+    assert(PlayersData[0].unk_71 == 0 && Vehs[0].state == 0);
+
+    reset_controls();
+    VehPrototypes[16].plan = 0;
+    PlayersData[0].x_target = 0;
+    PlayersData[0].y_target = 0;
+    PlayersData[0].region_total_bases[1] = 3;
+    MapStorage[5].climate = 0x60;
+    MapStorage[5].region = 1;
+    MapStorage[0].region = 1;
+    random_result = 0;
+    assert(veh_init(16, 0, 2, 1) == 0);
+    assert((Vehs[0].state & VSTATE_UNK_20000) != 0);
+    assert(PlayersData[0].unk_71 == 0);
+
+    reset_controls();
+    VehPrototypes[17].plan = 0;
+    PlayersData[0].x_target = 0;
+    PlayersData[0].y_target = 0;
+    PlayersData[0].region_total_bases[1] = 3;
+    MapStorage[5].climate = 0x60;
+    MapStorage[5].region = 1;
+    MapStorage[0].region = 1;
+    random_result = 1;
+    assert(veh_init(17, 0, 2, 1) == 0);
+    assert((Vehs[0].state & VSTATE_UNK_40000) != 0);
+    assert((Vehs[0].state & VSTATE_UNK_20000) == 0);
+    assert(PlayersData[0].unk_71 == 1);
+
+    reset_controls();
+    VehPrototypes[18].plan = 0;
+    PlayersData[0].x_target = -1;
+    PlayersData[0].total_mil_veh = INT32_MAX;
+    PlayersData[0].proto_id_active[18] = 255;
+    assert(veh_init(18, 0, 2, 1) == 0);
+    assert(PlayersData[0].total_mil_veh == INT32_MIN);
+    assert(PlayersData[0].proto_id_active[18] == 0);
+
+    reset_controls();
+    VehPrototypes[19].plan = 0;
+    PlayersData[0].x_target = 0;
+    PlayersData[0].y_target = 0;
+    PlayersData[0].diplo_treaties[1] = DTREATY_VENDETTA;
+    PlayersData[0].diplo_treaties[2] = DTREATY_VENDETTA;
+    PlayersData[0].region_total_bases[1] = 2;
+    PlayersData[1].region_total_bases[1] = 9;
+    PlayersData[2].region_total_bases[1] = 8;
+    MapStorage[5].climate = 0x60;
+    MapStorage[5].region = 1;
+    MapStorage[0].region = 1;
+    six_arg_distance = 0;
+    assert(veh_init(19, 0, 2, 1) == 0);
+    assert(six_arg_base_find_calls == 1);
+    assert(six_arg_faction == 1 && six_arg_region == 1);
+    return 0;
+}
+
+"""
+
+@pytest.mark.parametrize("compiler", ["g++", "clang++"])
+def test_actual_vehicle_creation(compiler, tmp_path):
+    executable = shutil.which(compiler)
+    if executable is None:
+        pytest.skip(compiler + " unavailable")
+    path = ROOT / "src/veh.cpp"
+    source = path.read_text()
+    records = [r for r in read_file(path) if r.address == 0x5C03D0]
+    assert len(records) == 1 and not records[0].extract_error
+    assert "BODY GOES HERE" not in records[0].region
+    assert "PENDING_BODY" not in records[0].region
+    helpers = "\n".join(helper(source, name) for name in
+        ("veh_init_i32", "veh_init_add32", "veh_init_sub32", "veh_init_sar32", "veh_init_abs32"))
+    control = VEH_INIT_HARNESS.replace("HELPERS", helpers).replace("BODY", records[0].region)
+    control_path = tmp_path / "control.cpp"
+    control_path.write_text(control)
+    binary = tmp_path / "control"
+    compiled = subprocess.run([executable, "-std=c++11", "-O2", "-Wall", "-Wextra", "-Werror",
+        "-fsanitize=undefined", "-fno-sanitize-recover=all", str(control_path), "-o", str(binary)],
+        capture_output=True, text=True)
+    assert compiled.returncode == 0, compiled.stderr
+    subprocess.run([str(binary)], check=True, capture_output=True, text=True)

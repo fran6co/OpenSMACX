@@ -1,0 +1,17 @@
+{
+  "event_id": "c2cdba6a9e8c325329a1fcfa28fc434c3636fea42098cb38da9e01f4395835d5",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "colony-vehicle-creation-dependency-20261003",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/veh.cpp now owns complete veh_init5C03D0..5C08C0 real typed creation/home-base/region-allocation behavior; only its old PENDING_BODY forwarder was removed from src/pending_bodies.cpp. Original seed, task baseline and all2615 claims remain. Root full389instruction review corrected BaseComputedID, signed threshold minimum and already-reserved probe return; actual-source GCC/Clang UBSan controls cover these and capacity/ownership/climate/region/triad/ability/defense/offense/wrap/enemy branches. Both fresh VC6 recipes preserve all108 protected body diagnostics before and after annotation; application compiles/links and96focused controls pass. New body measures MISMATCH and gains no exactness claim. Baseline26 reference findings and126 mapping ambiguities remain unchanged; this bounded coordinator-reviewed source integration is not linked-preservation, structural/runtime, automatic or game acceptance."
+    ]
+  },
+  "previous_event": "96be1166deb6fe49c73f268200d84d9bd38661640cb2bed2df54199243cd0ec4",
+  "request_id": "colony-vehicle-creation-incorporated-20261003",
+  "schema_version": 1,
+  "sequence": 19,
+  "stream": "task:base-colony-economy-coverage-wave"
+}

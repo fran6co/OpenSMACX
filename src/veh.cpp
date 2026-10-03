@@ -12489,3 +12489,179 @@ void __cdecl prune_protos(int faction_id, int prototype_id, int options) {
     }
 
 }
+
+
+static int veh_init_i32(uint32_t bits) {
+    if (bits <= 0x7FFFFFFFu) return static_cast<int>(bits);
+    return -1 - static_cast<int>(~bits);
+}
+
+static int veh_init_add32(int left, int right) {
+    return veh_init_i32(static_cast<uint32_t>(left) +
+                        static_cast<uint32_t>(right));
+}
+
+static int veh_init_sub32(int left, int right) {
+    return veh_init_i32(static_cast<uint32_t>(left) -
+                        static_cast<uint32_t>(right));
+}
+
+static int veh_init_sar32(int value, unsigned int count) {
+    const uint32_t bits = static_cast<uint32_t>(value);
+    if (value >= 0) return static_cast<int>(bits >> count);
+    return veh_init_i32(~((~bits) >> count));
+}
+
+static int veh_init_abs32(int value) {
+    return value < 0
+        ? veh_init_i32(0u - static_cast<uint32_t>(value))
+        : value;
+}
+
+// ORIGINAL: 0x005C03D0 ?veh_init@@YAHHHHH@Z 0x005C03D0-0x005C08C0
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/005c03d0.cpp; recovery/tasks/base-colony-economy-coverage-wave.json; recovery/tests/test_base_colony_production.py", "Pinned01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf full389instructions5C03D0..5C08C0.", "Native5C04C6/5C04D0 invalidate BaseComputedID, not BaseIDCurrentSelected;5C05D6 scores the current faction region count, not the rival count.", "Native5C06E8 uses signed minimum after wrapped threshold doubling/division;5C07B0 immediately returns when the probe-allocation bit is already set."], "reason": "Recover complete typed Vehicle creation, home-base assignment and target-region allocation, replacing only its executable-address forwarder. Preserve original seed and historical obligations; no new byte, linked-preservation or runtime acceptance claim."}
+// symbol    ?veh_init@@YAHHHHH@Z
+// TRIED: direct Ghidra transcription with own extern DAT_ table arrays (byte/dword typed per bracket-index width) instead of the given g_ address pointers; diverges at insn #5, plausibly register-allocation shape of the ~200-line body
+int __cdecl veh_init(int prototype, int faction, int x, int y) {
+    const int vehicle_id = VehCurrentCount;
+    if (vehicle_id > 0x7FF) return -1;
+    VehCurrentCount = vehicle_id + 1;
+
+    log_say("Adding Vehicle (v,who,v2)", vehicle_id, faction, prototype);
+
+    if (VehPrototypes[prototype].plan < 8) {
+        PlayersData[faction].total_mil_veh =
+            veh_init_add32(PlayersData[faction].total_mil_veh, 1);
+    }
+    PlayersData[faction].proto_id_active[prototype] = static_cast<uint8_t>(
+        PlayersData[faction].proto_id_active[prototype] + 1);
+
+    veh_clear(vehicle_id, prototype, faction);
+    const int base_id = base_find(x, y);
+    if (VehPrototypes[prototype].plan == PLAN_ALIEN_ARTIFACT) {
+        if (GameState & 0x40000) {
+            Vehs[vehicle_id].flags |= VFLAG_IS_OBJECTIVE;
+        }
+    } else if (base_id >= 0 &&
+               Bases[base_id].faction_id_current == faction) {
+        Vehs[vehicle_id].home_base_id = static_cast<int16_t>(base_id);
+        if (BaseComputedID == base_id) BaseComputedID = -1;
+    }
+
+    veh_drop(vehicle_id, x, y);
+    spot_all(vehicle_id, 1);
+
+    if (PlayersData[faction].x_target < 0) return vehicle_id;
+
+    const Map *tile = map_tiles() + (x >> 1) + y * MapLongitude;
+    if ((tile->climate & 0xE0) <= 0x5F) return vehicle_id;
+
+    const int initialized_prototype = Vehs[vehicle_id].proto_id;
+    const int initialized_plan = VehPrototypes[initialized_prototype].plan;
+    if (initialized_plan >= 3 && initialized_plan != 11) return vehicle_id;
+
+    const uint8_t region = tile->region;
+    if (map_tiles()[PlayersData[faction].y_target * MapLongitude +
+                    (PlayersData[faction].x_target >> 1)].region != region) {
+        return vehicle_id;
+    }
+
+    int other_faction = -1;
+    uint8_t largest_region_base_count = 0;
+    for (unsigned int candidate_faction = 1; candidate_faction < 8;
+         ++candidate_faction) {
+        if (candidate_faction != static_cast<unsigned int>(faction) &&
+            (PlayersData[faction].diplo_treaties[candidate_faction] &
+             DTREATY_VENDETTA) &&
+            largest_region_base_count <
+                PlayersData[faction].region_total_bases[region]) {
+            other_faction = static_cast<int>(candidate_faction);
+            largest_region_base_count =
+                PlayersData[faction].region_total_bases[region];
+        }
+    }
+
+    if (other_faction >= 0) {
+        base_find(x, y, other_faction, region, -1, -1);
+        int dx = veh_init_abs32(veh_init_sub32(
+            x, PlayersData[faction].x_target));
+        if (!(MapIsFlat & 1) && static_cast<int>(MapLongitude) < dx) {
+            dx = veh_init_sub32(static_cast<int>(MapLongitudeBounds), dx);
+        }
+        const int dy = veh_init_abs32(veh_init_sub32(
+            y, PlayersData[faction].y_target));
+        const int abs_dx = veh_init_abs32(dx);
+        const int abs_dy = veh_init_abs32(dy);
+        const int maximum = abs_dx <= abs_dy ? abs_dy : abs_dx;
+        const int minimum = abs_dy <= abs_dx ? abs_dy : abs_dx;
+        const int half_sum = veh_init_sar32(
+            veh_init_add32(abs_dx, abs_dy), 1);
+        const int correction = veh_init_sar32(
+            veh_init_add32(veh_init_sub32(half_sum, minimum), 1), 1);
+        const int hex_distance = veh_init_sub32(maximum, correction);
+        if (BaseFindDist < hex_distance) return vehicle_id;
+    }
+
+    int spread_limit =
+        (static_cast<uint32_t>(PlayersData[faction].region_total_bases[region])
+         << 1) / 3;
+    if (spread_limit < 3) spread_limit = 3;
+    else if (spread_limit > 8) spread_limit = 8;
+
+    if (PlayersData[faction].region_base_plan[region] == 7) {
+        const int doubled_threshold = veh_init_add32(
+            PlayersData[faction].unk_70, PlayersData[faction].unk_70);
+        const uint32_t correction =
+            static_cast<uint32_t>(veh_init_sar32(doubled_threshold, 31)) &
+            0x3FFFFF;
+        const int faction_limit = veh_init_sar32(
+            veh_init_add32(doubled_threshold, static_cast<int>(correction)), 22);
+        if (faction_limit <= spread_limit) spread_limit = faction_limit;
+    }
+
+    const int bit_count_value = bit_count(PlayersData[faction].unk_72);
+    if (veh_init_sub32(PlayersData[faction].unk_71, bit_count_value) <
+        static_cast<int>(spread_limit)) {
+        const int weapon_value = weap_strat(
+            VehPrototypes[Vehs[vehicle_id].proto_id].weapon_id, faction);
+        const int armor_value = arm_strat(
+            VehPrototypes[Vehs[vehicle_id].proto_id].armor_id, faction);
+        const int chassis_id =
+            VehPrototypes[Vehs[vehicle_id].proto_id].chassis_id;
+        if (Chassis[chassis_id].triad == 0 &&
+            !has_abil(Vehs[vehicle_id].proto_id, 0x10)) {
+            if (VehPrototypes[Vehs[vehicle_id].proto_id].plan ==
+                PLAN_INFO_WARFARE) {
+                if (PlayersData[faction].unk_72 & 2) return vehicle_id;
+                PlayersData[faction].unk_71 =
+                    veh_init_add32(PlayersData[faction].unk_71, 1);
+                PlayersData[faction].unk_72 |= 2;
+                Vehs[vehicle_id].state |= VSTATE_UNK_40000;
+                return vehicle_id;
+            } else if (weapon_value < armor_value) {
+                if (PlayersData[faction].unk_72 & 1) return vehicle_id;
+                if (PlayersData[faction].region_base_plan[region] == 7) {
+                    return vehicle_id;
+                }
+            } else if (PlayersData[faction].region_base_plan[region] != 7) {
+                uint32_t random_limit =
+                    (static_cast<uint32_t>(
+                         PlayersData[faction].region_total_bases[region]) << 1) /
+                    3;
+                if (random_limit < 3) random_limit = 3;
+                else if (random_limit > 8) random_limit = 8;
+                if (rand() % static_cast<int>(random_limit + 2) == 0) {
+                    Vehs[vehicle_id].state |= VSTATE_UNK_20000;
+                    return vehicle_id;
+                }
+            }
+
+            PlayersData[faction].unk_71 =
+                veh_init_add32(PlayersData[faction].unk_71, 1);
+            Vehs[vehicle_id].state |= VSTATE_UNK_40000;
+            if (weapon_value < armor_value) PlayersData[faction].unk_72 |= 1;
+        }
+    }
+
+    return vehicle_id;
+}

@@ -1128,16 +1128,6 @@ void __cdecl atrocity(int faction_id, int faction_id_victim, int kind, int unk) 
 //             body homed into src/console.cpp (set_view, BYTE_EXACT)
 
 
-// ?veh_init@@YAHHHHH@Z at 0x005C03D0 - world_fungus (map.cpp) is its only
-// caller in the product, seeding a fungus vehicle on the tiles it just
-// painted. Archived transcription still measures NOT_MATCHING, so this is
-// the forwarder and not a homed body.
-int __cdecl veh_init(int unit_type, int faction_id, int x_coord, int y_coord) {
-    typedef int(__cdecl *pending)(int, int, int, int);
-    return PENDING_BODY(0x005C03D0, pending)(unit_type, faction_id, x_coord,
-                                             y_coord);
-}
-
 // ?world_erosion@@YAXXZ at 0x005C2CB0 - world_build (map.cpp) calls it between
 // build_hills and the polar-cap pass. Its archived transcription is a
 // goto/label Ghidra shape that has never been rewritten in tree style, so
