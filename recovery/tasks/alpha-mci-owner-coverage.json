@@ -1,0 +1,33 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "3b3ca8e605a9ef10e7faabc886a22458d5cf0f0b",
+  "editable_files": [
+    "src/alphamovie.cpp",
+    "src/alphamovie.h",
+    "src/recovered/00404200.cpp",
+    "src/recovered/units/006002f0.cpp",
+    "recovery/tests/test_alpha_mci_owner_behavior.py"
+  ],
+  "evidence": [
+    "Pinned original404200 tail-dispatches primary Win virtual slot58; release_modal is the actual inherited virtual. No fabricated vtable or machine-code thunk.",
+    "Original6002F0 reads the device low word, sends MCI_STATUS/MCI_STATUS_ITEM with item2, ignores MCIERROR and returns dwReturn. Real SDK MCI_DGV_STATUS_PARMS has the matching x86 six-word local layout.",
+    "Private actual-owner overlay preserves all26 historical owner diagnostics across two recipes. A typed unsigned-short device load restores the original instruction form in recipe0; both recipes must be freshly verified before checkpoint.",
+    "Preserve both complete original identities/spans/claims and seed findings via native source writer. Coordinator manual integration requires actual-source behavior/damage controls, owner/native diagnostics, application build/link and claim/reference continuity. No automatic acceptance, linked outside-scope preservation or game runtime claim."
+  ],
+  "intent": "Recover the inherited AlphaMovie virtual dispatch and MCIVideo status query in their genuine alphamovie owner using Win hierarchy and the SDK digital-video status parameter type. Preserve both historical byte obligations and delete only superseded seeds after verified owner build/link and restoration checks.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4211200,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6292208,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "alpha-mci-owner-coverage"
+}
