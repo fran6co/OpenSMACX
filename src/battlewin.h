@@ -63,6 +63,8 @@ class BattleWin : public SubInterface {
 
   void on_status(int mode);
   void clear();
+  void battle_report(int first_vehicle_id, int second_vehicle_id,
+                     int attack_odds, int defense_odds, int flags);
   void pulse_timer();
   void stop_timer();
   void on_iface_left_click(int, int);
@@ -133,3 +135,6 @@ class BattleWin : public SubInterface {
 
 static_assert(sizeof(BattleWin) == 0xA0,
               "BattleWin layout must match the original executable");
+
+// Source-owned battle interface used by StatusWin's combat-report fast path.
+extern BattleWin g_BattleWin;

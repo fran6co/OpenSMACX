@@ -1,0 +1,19 @@
+{
+  "event_id": "61e65e4c602888e5ccb5ca821bcd7c8b0d0a29fb164a589b2d64ac36da7cc974",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/battlewin_battle_report_host_types.h"
+    ],
+    "evidence": [
+      "Admit durable host type fixture used by authorized BattleWin actual-source controls alongside alreadyadmitted test and harness. Corrected immutablev4 manifest4792f73ecc11ca590730c4b3d0ea32fdd26600544af63cc788729e77be22e972; root native4objects compilebothrecipes, all34protectedhistoricaldiagnosticsunchanged, BattleWinlayoutA0unchanged. GCCClangcontrols2pass. Rootmanualbodyreview covers portraitjumptable/geometry/fontorder, insetwidths, savedfactionarguments and genuinecharrows. No newbyteexactclaim or fullacceptance; fresh integratedappbuild/link andclaim/sourcechecks required."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "f835c5f59e4d1ed799b20fad7a5c0d88922cb5787f83c68603b7c8b19bfd0195",
+  "request_id": "battle-report-durable-controls-20261003",
+  "schema_version": 1,
+  "sequence": 9,
+  "stream": "task:statuswin-remaining-owner-coverage"
+}
