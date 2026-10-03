@@ -1113,8 +1113,8 @@ int MapWin::focus(int x_coord, int y_coord) {
         if (x & 1) --x;
         if (y_coord & 1) ++x;
         if (!flat) {
-            if (x <= mapwin_dest_add(left, step) &&
-                x < mapwin_dest_sub(right, step)) {
+            if (x <= mapwin_dest_add(left, step) ||
+                x >= mapwin_dest_sub(right, step)) {
                 moved = 1;
             }
         }
@@ -2080,7 +2080,7 @@ void MapWin::draw_vehicles(int tile_x, int tile_y, int pixel_x, int pixel_y,
     }
     if ((window_flags & 0x01000000U) != 0 ||
         (window_flags & 0x802000C0U) == 0 ||
-        (window_flags & 0x00100000U) != 0) {
+        (window_flags & 0x00001000U) != 0) {
         return;
     }
 
@@ -5758,13 +5758,15 @@ void MapWin::click(int pixel_x, int pixel_y, int button) {
         if (MapEditorPaintId == 0 || MapEditorPaintId == 2 ||
             MapEditorPaintId == 0x12) {
             world_climate();
-        }
-        for (size_t slot = 0; slot < MapWinTableSlots; ++slot) {
-            MapWin *const window = MapWinTable[slot];
-            if (window != nullptr &&
-                (slot == 0 || window->field_1DD74_ != 0)) {
-                window->draw_map(1);
+            for (size_t slot = 0; slot < MapWinTableSlots; ++slot) {
+                MapWin *const window = MapWinTable[slot];
+                if (window != nullptr &&
+                    (slot == 0 || window->field_1DD74_ != 0)) {
+                    window->draw_map(1);
+                }
             }
+        } else {
+            ::draw_map(1);
         }
         return;
     }
