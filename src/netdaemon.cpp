@@ -5313,7 +5313,7 @@ static void synch_notify_or_queue() {
 }
 
 // Native USER32 import directory independently identifies slot0x00669330.
-// RECOVERY_IMPORT: v1 __imp__GetAsyncKeyState@4 USER32.dll name:GetAsyncKeyState
+// GetAsyncKeyState's shared import identity is declared in src/editbox.cpp.
 static void synch_debug_popup() {
     if (BaseAtDebugPopupFlag) {
         X_pop("VEHSYNCH", 0);
