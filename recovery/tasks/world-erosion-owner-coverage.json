@@ -1,0 +1,28 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "f67c3a4b1c45749440a5116d4a8b2cf441209847",
+  "editable_files": [
+    "src/map.cpp",
+    "src/pending_bodies.cpp",
+    "src/unrecovered/005c2cb0.cpp",
+    "recovery/tests/test_world_erosion_owner_behavior.py"
+  ],
+  "evidence": [
+    "Pinned original identity world_erosion5C2CB0..5C3299, including all1513 bytes. Existing map.h declares the API and map.cpp world_build calls it between hill generation and polar caps.",
+    "Corrected frozen v2 uses genuine Fractal lifetime, Paths.continents, typed Map row stride, terrain/radius tables and row-progress callbacks. It preserves the native two-pass partition and all altitude bands.",
+    "Independent pinned review establishes5C30B6 JL5C3221 direct blend below altitude2 threshold, without executing5C321F addition or altitude3 coast formula;5C30DE separately applies altitude3 boundary-marker neighbor clamp. Frozen v1 remains ignored history and is not admitted.",
+    "Private corrected v2 compiles under both native recipes and preserves all80 protected map diagnostics. GCC/Clang candidate behavior/damage controls pass; actual-source controls and application build/link still required. No byte claim or game acceptance granted.",
+    "Transfer existing complete FILE record to BODY through native source writer, preserving original spans, claim state and TRIED lesson. Retain useful dated BLOCKED discoveries and explicitly distinguish disputed historical seed assertions from current native evidence. Delete seed only after identity/lesson continuity, actual-source compilation, references and claims pass."
+  ],
+  "intent": "Recover the complete terrain erosion pass using existing Map, Fractal, Path and worldbuilder owners, removing its pending executable-address forwarder and retiring only its fully superseded seed after actual source tests and application compile/link.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6040752,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "world-erosion-owner-coverage"
+}
