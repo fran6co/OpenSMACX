@@ -1094,3 +1094,12 @@ void __cdecl intervention(int target_faction, int attacker_faction);
 int __cdecl pact_withdraw(int faction_id, int partner_id);
 
 void __cdecl allocate_energy(int faction_id);
+
+// Original diplomacy owners; communicate remains explicitly unfinished.
+void __cdecl communicate(int faction_id, int faction_id_with, int mode);
+void __cdecl comm_check(int faction_id, int faction_id_with);
+void __cdecl enemies_war(int faction_id, int faction_id_with);
+void __cdecl enemies_unpact(int faction_id, int faction_id_with);
+void __cdecl enemies_trade_tech(int faction_id, int faction_id_with);
+void __cdecl enemies_treaty(int faction_id, int faction_id_with, int check_technology);
+void __cdecl encounter(int faction_id, int faction_id_with, int x, int y, int event_flag_a, int event_flag_b);
