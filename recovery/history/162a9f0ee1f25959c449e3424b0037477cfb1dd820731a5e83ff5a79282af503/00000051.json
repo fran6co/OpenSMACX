@@ -1,0 +1,20 @@
+{
+  "event_id": "4c70807a9f57a3b9f457dc6528ef1a35df3116eba79230b423ba3db746ddee08",
+  "payload": {
+    "affects": [
+      "entity-c07f1ce86a5f653e22dee09a2df5ee8f3f8ff0ebb4415063e76507b1d408d578"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "net-upkeep-storage-interior-ownership-confirmed",
+    "evidence": [
+      "Root verified pinned SHA256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf with native PeImage and true-entry Listing:529455 starts prototype cursor/64 index,5294C8 bounds it at9B2098;529734 initializes 21,52973B initializes93A56C,52978D compares peer base93A510 indexed by row*21+item;529B7A adds84 and529B81 compares93A7B8. Existing VehPrototypes object9AB868 and measured VehPrototype size34/flags30. Literal68BF38..44 is twelve FF bytes;5294D3..529536 consumes/resets council packet arguments. No extra checksum cursor object, behavior changes, extent claim or byte claim admitted."
+    ],
+    "hypothesis": "Independent pinned decoding resolves two apparent storage dependencies without new address aliases: the prototype cursor at 0x9AC598 denotes VehPrototypes[64].flags (+0x30), and checksum logging cursor 0x93A56C denotes element 2 of faction row 1 in a single 21-dword-stride peer checksum aggregate rooted at 0x93A510. It is not a separate global. Retain current checksum buffer and council-message argument ownership as pending.",
+    "kind": "discovery"
+  },
+  "previous_event": "3edc82e8d650fcba70c9d63ae44c7ae2873aef60bf23b09ad1b939d58908fceb",
+  "request_id": "net-upkeep-storage-interior-ownership-confirmed",
+  "schema_version": 1,
+  "sequence": 51,
+  "stream": "task:base-colony-economy-coverage-wave"
+}

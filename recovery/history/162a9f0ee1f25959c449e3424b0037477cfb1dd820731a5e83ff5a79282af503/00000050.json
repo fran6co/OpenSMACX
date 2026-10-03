@@ -1,0 +1,22 @@
+{
+  "event_id": "3edc82e8d650fcba70c9d63ae44c7ae2873aef60bf23b09ad1b939d58908fceb",
+  "payload": {
+    "affects": [
+      "entity-71185b3e007ff73e0f9e8999ba645fc3bdd4699f39557488771410a95b294cf3",
+      "entity-c07f1ce86a5f653e22dee09a2df5ee8f3f8ff0ebb4415063e76507b1d408d578",
+      "entity-da3dc4fa8f106f83c693b9ca531f1471f117e7daa023902924803dd11eb17a0d"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "net-upkeep-turn-and-storage-dependencies",
+    "evidence": [
+      "Pinned image SHA256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; native net_upkeep 0x5290A0..0x529BE2 direct calls and 21-dword checksum accesses at 0x93A008, peer stride 84 at 0x93A510 with cursor 0x93A56C/end 0x93A7B8; writable 0x68BF38..0x68BF44 initially twelve FF bytes; retained seeds src/unrecovered/005290a0.cpp and src/unrecovered/00527290.cpp; current src/pending_bodies.cpp forwarders and src/map.h do_checksums declaration. Storage ownership/extents and native signed ABI require independent validation before admission."
+    ],
+    "hypothesis": "Full net_upkeep recovery requires source-owned faction_upkeep (0x527290..0x5275AC), absent from the built source, plus bounded checksum/current-peer storage and three writable message arguments. Preserve these as dependencies, not fixed-address aliases or recovered coverage. Existing consider_designs/save_daemon/do_checksums forwarders remain unfinished and have separate ABI/behavior obligations.",
+    "kind": "discovery"
+  },
+  "previous_event": "36dbdd60bba8b376ed29cb1100bd7ce3d31fb3462f3a67c0a98f9d8d65e1e4a7",
+  "request_id": "net-upkeep-turn-and-storage-dependencies",
+  "schema_version": 1,
+  "sequence": 50,
+  "stream": "task:base-colony-economy-coverage-wave"
+}

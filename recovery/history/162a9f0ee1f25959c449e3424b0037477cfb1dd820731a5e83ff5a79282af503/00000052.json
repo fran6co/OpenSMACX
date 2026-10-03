@@ -1,0 +1,26 @@
+{
+  "event_id": "7b7cac3de421a46883e994f71dc3fa8681bc17a00b0a3309e455f977d367a5cb",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_orbital_attack_parser.py",
+      "src/veh.cpp"
+    ],
+    "evidence": [
+      "Coordinator admits only discovery orbital-attack-parser-adjective-20261003: correct action_sat_attack parser slot7 from Player.formal_name_faction(+384) to existing Player.adj_name_faction(+304), as proved by pinned4CF606/4CF613 and fresh compiler layout. Add durable actual-source behavior control; preserve original mappings and all historical obligations, compile/link and verify protected diagnostic continuity before checkpoint. No new members/globals, scope beyond this parser correction, automatic demotion, baseline reset or byte claims authorized."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5043328,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "4c70807a9f57a3b9f457dc6528ef1a35df3116eba79230b423ba3db746ddee08",
+  "request_id": "admit-orbital-parser-correction",
+  "schema_version": 1,
+  "sequence": 52,
+  "stream": "task:base-colony-economy-coverage-wave"
+}
