@@ -862,6 +862,19 @@ owners, or two markers for the same entity in one file need reconciliation. The 
 rejects claims shadowed by configured forwarder macros; nonliteral addresses stay
 unknown. Actual emitted ownership and included-source coverage remain separate.
 
+The coordinator removes superseded files from `src/recovered/` and
+`src/unrecovered/` after the real compiled owner retains their original identity,
+complete spans, historical byte/semantic obligations and useful unique findings.
+Review raw seed comments as well as parsed lessons before deletion. Transfer
+load-bearing discoveries to source and non-derivable decisions to task history;
+old scaffold bodies and obsolete run notes need not remain in the checkout.
+Keep unfinished seeds, conflicting mappings and evidence not yet migrated.
+Placeholders and executable-address forwarders do not qualify as replacements.
+Check historical identity continuity, affected tests, build/link and references
+after cleanup. Mark deleted seed references as historical provenance, retained in
+Git; do not leave instructions requiring the removed file. Removing duplicate
+annotations can reduce record counts without changing implementation coverage.
+
 The gate's compiler-work ratchet is the native `uv run recover audits check
 compiler-work` command. Its report identifies exact, grown and slack ceilings.
 Apply justified downward `lowerings` to `recovery/audits.json` in the same commit;

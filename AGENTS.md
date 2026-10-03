@@ -238,8 +238,12 @@ central seed binding but stopped with preserved, unaccepted discoveries.
 - Integrated recovery steps must compile and link. For a newly referenced,
   unimplemented function, an explicitly unfinished empty body is allowed in
   its owning TU: keep its original mapping and the `// BODY GOES HERE.` sentinel.
-  Preserve seeds and all historical claims; never replace recovered behavior
-  with a placeholder. Build continuity is not behavioral or recovery acceptance.
+  Preserve all historical claims and unmigrated seed findings; never replace
+  recovered behavior with a placeholder. Delete superseded seed files once the
+  compiled owner retains their complete identity/spans, claims and useful
+  discoveries. Verify claim continuity and references after cleanup; Git keeps
+  historical provenance. Unfinished bodies/forwarders are not replacements.
+  Build continuity is not behavioral or recovery acceptance.
 - Keep proprietary bytes and derivatives in ignored `.opensmacx/` or `build/`.
   Retain dependency licenses/provenance; recognized libraries are verification
   dependencies, not application-function recovery targets.

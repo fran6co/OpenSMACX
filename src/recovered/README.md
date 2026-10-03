@@ -1,47 +1,19 @@
-# Matched bodies that no file owns yet
+# Remaining recovery seeds
 
-One file per function, named for its address, holding a body Mizuchi proved
-byte-exact against the pinned original.
+This directory and `src/unrecovered/` contain historical recovery inputs, not
+application build inputs. Their names do not establish current correctness or
+ownership. Some seeds contain historical matching obligations; their raw-address
+or opaque-layout scaffolding must not become the application implementation.
 
-## Why they are here
+Recover genuine C++ in its owning translation unit using the installed
+`match_recovery` workflow described in `recovery/WORKFLOW.md`.
 
-`docs/recovery/functions.csv` gives these functions no `source_locations`:
-nothing in the tree owns them, so there is no catalogued span to splice and no
-file to append to. Choosing one - a file, a position, an include set, a place
-in the class - is a recovery decision, and `tools/mizuchi_writeback.py` does
-not make it. Before this directory existed the consequence was that the body
-was thrown away: the ledger recorded BYTE_EXACT and the text stayed in
-gitignored `build/byte-match/`, so a `git clean` undid a day of proving.
+Delete a superseded seed after checking that the compiled owner preserves its
+original identity, complete spans, historical claims and useful discoveries.
+Transfer unique findings before deletion; Git retains the old source provenance.
+An empty body, executable-address forwarder or incomplete translation is not a
+replacement. Keep seeds that still contain unfinished or unmigrated work.
 
-They live under `src/` because they are source, not documentation. They live
-in their own directory because they are not yet PRODUCT source.
-
-## What they are NOT
-
-**Compiled.** `CMakeLists.txt` names every file in `OPENSMACX_SOURCES` by
-hand - there is no glob over `src/` - and none of these are in it. Nothing
-here reaches the build.
-
-**Written in the tree's style.** These are what `tools/emit_translation_unit.py`
-emits for verification: opaque class shells, globals bound to fixed addresses,
-fields reached by offset cast. `AGENTS.md` keeps that out of `src/` on purpose,
-because recovered code there is written to BEHAVE - rebindable seams, documented
-offsets, an EH frame decision. A file here compiles against generated
-scaffolding, not against the project's headers, and would not compile if you
-added it to the build.
-
-Rewriting one in the tree's own style, with a leaf test, is the per-recovery
-loop in `AGENTS.md`. This directory is what that work starts from, not a
-substitute for it.
-
-## Keeping them honest
-
-`tools/decomp_status.py` measures every file here as part of the source map
-(each carries its `ORIGINAL: 0x...` marker since the 2026-08-09 migration;
-`tools/annotation_scan.py` is the reader), and
-the retired `byte_match_fanout` --collect` still re-verifies the fan-out work
-area the same way. A body that stops verifying because the scaffolding
-changed shows up as a ledger regression rather than as a stale file nobody
-reads. The precedence rule when a proved body and a preserved unit both
-annotate one address: the proved body owns it, the unit is the record of a
-measurement.
+Use `uv run recover inventory` for current coverage and
+`uv run recover check-claims --summary` for historical identity continuity.
+Neither source presence nor claim continuity proves behavioral acceptance.
