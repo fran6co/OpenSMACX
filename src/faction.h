@@ -431,12 +431,12 @@ struct PlayerData {
     int council_call_turn;
     int unk_29[11]; // used by council code related to buying votes; vote id?
     int unk_30[11]; // used by council code related to buying votes; factionID
-    uint8_t facility_announced[4]; // bitfield - used to determine one time play of fac audio blurb
-    int unk_32;
-    char unk_33;
-    char unk_34;
-    char unk_35;
-    char unk_36;
+    // RECOVERY_MEMBER: v1 PlayerData facility_announced 0x458 0x004E4900
+    // has_fac_announced accepts facility IDs through70; bitmask indexes
+    // id/8. setup_player5B154B..155C independently clears exactly9 bytes.
+    // The next3 bytes are not cleared there; their meaning remains unknown.
+    uint8_t facility_announced[9];
+    uint8_t announcement_reserved[3];
     int planet_ecology;
     int base_id_atk_target; // Battle planning of base to attack, -1 if not set
     int unk_37;
@@ -556,6 +556,10 @@ struct PlayerData {
 // scaffolding may use.
 static_assert(sizeof(PlayerData) == 0x20CC,
               "PlayerData layout must match the original executable");
+static_assert(offsetof(PlayerData, facility_announced) == 0x458,
+              "Facility announcement bitmap must occupy the native member");
+static_assert(offsetof(PlayerData, planet_ecology) == 0x464,
+              "Announcement ownership must not move following ecology state");
 static_assert(offsetof(PlayerData, proto_id_active) == 0x858,
               "Prototype active counts must occupy the native faction member");
 static_assert(offsetof(PlayerData, prototype_history_cursor) == 0x208C,

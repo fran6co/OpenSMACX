@@ -1,0 +1,17 @@
+{
+  "event_id": "2183f3849d8f9e27de41a0d8a8e7899cbaff6d9b3d1ba86ba51247963320d2f3",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "colony-facility-announcement-extent-20261003",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/faction.h now owns facility_announced[9] at458 and three preserved unclassified bytes at461, with planet_ecology464 and total20CC unchanged; src/faction.cpp clears exactly9 announcement bytes. Actual-source GCC/Clang C++98 Werror/UBSan controls cover all8 factions and IDs0..70 plus following-byte preservation. Both fresh VC6 recipes for Base and Faction physically confirm layout and preserve all148 protected body diagnostics; both announcement helpers remain BYTE_EXACT underflagset1. Application87-step build/link succeeds;100 focused tests pass;2615 claims/missing0 and preexisting26 reference/126 mapping findings unchanged. Original seeds, task baseline, historical claims and all discoveries retained. This reviewed structural fix is not strict linked preservation, runtime/game or automatic acceptance."
+    ]
+  },
+  "previous_event": "22dfad42eb05ff9bd5063673db90daa4930a49b39c068c45a5b14b1128cf2771",
+  "request_id": "colony-facility-announcement-incorporated-20261003",
+  "schema_version": 1,
+  "sequence": 22,
+  "stream": "task:base-colony-economy-coverage-wave"
+}

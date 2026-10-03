@@ -1,0 +1,20 @@
+{
+  "event_id": "6eb65a9c9d8452f18eaa851e5db629e68533ac5bb98048287e8bc88991d2c43e",
+  "payload": {
+    "affects": [
+      "entity-4c18b5a6716765b7bfcb69f8ca022a20abb0eb4daf79e57b16e7886b29400e0d"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "colony-facility-announcement-extent-20261003",
+    "evidence": [
+      "Pinned native has_fac_announced4E4900 accepts IDs through70 and bitmask50BA00 computes id/8; production4F2350/2456 accesses bitmap for IDs41..69. setup_player5B154B/1553/155C independently clears exactly9 bytes at96CE38..96CE40, leaving following3 bytes unchanged. Fresh VC6 CodeView baseline-0.obj pins PlayerData+458 current4-byte array, old unk_32+45C, unk_33+460, planet_ecology+464 and20CC total. Existing source initialization is already same9-byte clear across incorrectly split members. Root found no other compiled accesses to the removed unknown names."
+    ],
+    "hypothesis": "PlayerData announcement bitmap is nine bytes at +458, not four bytes followed by unrelated integer/character members; preserve three unclassified following bytes before planet_ecology+464.",
+    "kind": "discovery"
+  },
+  "previous_event": "c2cdba6a9e8c325329a1fcfa28fc434c3636fea42098cb38da9e01f4395835d5",
+  "request_id": "colony-facility-announcement-extent-20261003",
+  "schema_version": 1,
+  "sequence": 20,
+  "stream": "task:base-colony-economy-coverage-wave"
+}

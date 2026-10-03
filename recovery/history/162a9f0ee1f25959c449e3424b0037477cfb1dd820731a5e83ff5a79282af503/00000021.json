@@ -1,0 +1,21 @@
+{
+  "event_id": "22dfad42eb05ff9bd5063673db90daa4930a49b39c068c45a5b14b1128cf2771",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_facility_announcements.py",
+      "src/faction.cpp",
+      "src/faction.h"
+    ],
+    "evidence": [
+      "Coordinator admits only the +458 nine-byte facility announcement member and three preserved unclassified bytes, corresponding setup_player reset spelling and actual-source host controls. Preserve PlayerData20CC size, all later offsets, original source mappings/seeds/claims and original task baseline. Existing announcement helpers remain unchanged and must be freshly remeasured; verify native layout, protected diagnostic continuity and application compile/link before integration. This fixes source ownership of valid IDs, not an original behavior change or a full acceptance claim."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "6eb65a9c9d8452f18eaa851e5db629e68533ac5bb98048287e8bc88991d2c43e",
+  "request_id": "colony-facility-announcement-layout-admission-20261003",
+  "schema_version": 1,
+  "sequence": 21,
+  "stream": "task:base-colony-economy-coverage-wave"
+}

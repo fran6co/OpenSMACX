@@ -5248,8 +5248,7 @@ int __cdecl setup_player(int faction, int conqueror, int retry) {
         // The original clears22 words and then one byte, leaving the last
         // three bytes of this92-byte field unchanged.
         for (int source = 0; source < 89; ++source) p.tech_trade_source[source] = 0;
-        for (int announced = 0; announced < 4; ++announced) p.facility_announced[announced] = 0;
-        p.unk_32 = p.unk_33 = 0;
+        for (int announced = 0; announced < 9; ++announced) p.facility_announced[announced] = 0;
         for (int satellite = 0; satellite < 4; ++satellite) p.satellites_[satellite] = 0;
         p.theory_of_everything = p.tech_ranking = p.sat_odp_deployed = 0;
         p.tech_id_researching = -1;
