@@ -1,0 +1,21 @@
+{
+  "event_id": "133044c7f162c947f16db414f81b0fb41a936dc91b163269095b7f91d8e7cb94",
+  "payload": {
+    "affects": [
+      "entity-04db7ed5ce8eb02ed7aa3e148631e3cdf61f5e2adb97d42883843002450aca8d",
+      "entity-33b71d6a1a60c2bf332e8acb9657826ef75c8293016d7839a7e41a347af0c728"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "orbital-attack-parser-adjective-20261003",
+    "evidence": [
+      "Root decoded full pinned4CF480..4CF73E:4CF606 LEA row+946D54,4CF613 parse_says slot7. Fresh VC6 class_layout Player places adj_name_faction304 and formal_name_faction384. Live veh.cpp currently passes formal_name_faction. Only base_id load4CF63A is dominated by type==4 at4CF635..638; all other argument forwarding inspected. Source body text and compiler layout alone are not game/acceptance proof."
+    ],
+    "hypothesis": "The already recovered orbital attack callee parses the wrong peer faction member in slot7: source uses formal_name_faction(+384), while the complete original body computes Player row plus946D54 (base946A50 +304), which is adj_name_faction. Preserve this outside-owner correction for scoped vehicle-owner integration; do not hide it to protect coverage or local diagnostics. The original consumes base_id only on successful type4 attacks; non-base satellite attacks do not observe that argument.",
+    "kind": "discovery"
+  },
+  "previous_event": "07510c50189174ec01064d3276475b72b41cbc8a8543c66f8dd3b5843536ac35",
+  "request_id": "orbital-attack-parser-adjective-20261003",
+  "schema_version": 1,
+  "sequence": 48,
+  "stream": "task:base-colony-economy-coverage-wave"
+}
