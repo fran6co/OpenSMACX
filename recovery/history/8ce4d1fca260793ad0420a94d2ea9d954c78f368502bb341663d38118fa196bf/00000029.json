@@ -1,0 +1,20 @@
+{
+  "event_id": "bcdbe0f28cf9db10c2a0578d39994ff267ccf2554e75aec08527387065e470e4",
+  "payload": {
+    "affects": [
+      "entity-8c0a687c73b8d9f9ebb476a721a593943020873048ff8a9c8e9c074d88fb96a3"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "explicit-message-transport-result-20261003",
+    "evidence": [
+      "Pinned native 0x532943/0x53294E and five Net::send calls terminating through unchanged EAX; straight-line message_data 0x592EE0..0x592F4C has a balanced cdecl return followed by four alignment NOPs, with calls to timeGetTime and 0x532940. Private configured-compiler controls are ignored at build/recovery/message-residue-interface-control-v2; they are diagnostics only, not live-source acceptance. Coordinator retains the pending interpretation for typed owner recovery and independent review."
+    ],
+    "hypothesis": "The retained message_data forwarder rationale confuses an unexpressed return-register value with an inexpressible C++ result. Native send_message returns the loaded zero transport flag when networking is disabled and the integer Net::send result on every enabled exit. Native message_data retains that result across the final NetBusyCount decrement. Recover an explicit typed result chain rather than preserve an original-address call; retain original void catalogue interpretation as historical evidence and preserve all existing restoration obligations. The currently unmapped message_data identity needs guarded source binding before scoped owner publication.",
+    "kind": "discovery"
+  },
+  "previous_event": "f43790bb447eff5315ce36ff86513b2a5b9fbc251766c057f7fa7700c226513d",
+  "request_id": "explicit-message-transport-result-20261003",
+  "schema_version": 1,
+  "sequence": 29,
+  "stream": "task:netdaemon-player-lifecycle-recovery"
+}
