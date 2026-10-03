@@ -1,0 +1,25 @@
+{
+  "event_id": "a2fa39efdd498c29d7c2848019e8c8e163032a722b727c153f11f60a0e3f0dcf",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/unrecovered/0055d760.cpp"
+    ],
+    "evidence": [
+      "Admit full3088-byte enemies_treaty genuine typed behavior in existing faction.cpp/h scope and guarded redundant seed removal after all claims/findings preserved. Private worker proposals only; root serial build/link/scoped diagnostics/actual-body controls and manual review before publication. Preserve baseline/full spans/history/pending riot decision. No additional storage/member/function/behavior authority; report dependencies. No stand-ins/address aliases or automatic/game acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5625696,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "3237dbf9b38802828de41fdaaa4c1321303b5f45bab2c884fc64c5225d038b56",
+  "request_id": "admit-faction-encounter-treaty-dependency-20261003",
+  "schema_version": 1,
+  "sequence": 33,
+  "stream": "task:base-colony-economy-coverage-wave"
+}

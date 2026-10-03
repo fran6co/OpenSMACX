@@ -1,0 +1,20 @@
+{
+  "event_id": "3237dbf9b38802828de41fdaaa4c1321303b5f45bab2c884fc64c5225d038b56",
+  "payload": {
+    "affects": [
+      "entity-59d6c2e91b85654b0f4f979499b728716c453eeff580f90ae64be5bbb4443de3"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "faction-encounter-treaty-dependency-20261003",
+    "evidence": [
+      "Pinned native encounter call55D760; root inventory confirms only unrecovered seed55D760..55E370,3088bytes, no compiled faction implementation or declaration. Retain unique parse_says four-argument and shared-tail seed findings."
+    ],
+    "hypothesis": "Admitted encounter directly calls seed-only enemies_treaty; its complete diplomacy behavior must be recovered in the faction owner to close the genuine implementation graph.",
+    "kind": "discovery"
+  },
+  "previous_event": "efa9615e5455139b5490594c72d1eb91fdc2f8c3c0428925eff1a7115a141d2c",
+  "request_id": "faction-encounter-treaty-dependency-20261003",
+  "schema_version": 1,
+  "sequence": 32,
+  "stream": "task:base-colony-economy-coverage-wave"
+}
