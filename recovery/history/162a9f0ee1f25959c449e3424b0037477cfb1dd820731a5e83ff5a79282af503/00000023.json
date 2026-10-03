@@ -1,0 +1,21 @@
+{
+  "event_id": "9b600e6800f3d50733b42d92e3aaa5f02cb287cc872d887e7009d8132dfc8a69",
+  "payload": {
+    "affects": [
+      "entity-4c18b5a6716765b7bfcb69f8ca022a20abb0eb4daf79e57b16e7886b29400e0d",
+      "entity-99c879a333a793feb3611eb8a497000588a2b7e18cb9eac3d247b4b14fdd6d28"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "colony-project-help-dependency-20261003",
+    "evidence": [
+      "Hash-frozen production interim af6b30b2af413f5b2ef36ec553d37d5f6420ac64c49b6ff1d6ce6b17a8afc56c compiles underVC6flagset1; newCOFFundefinedsymbols comparison with fresh applicationMAP finds help_project missing, allothernewcalltargets present exceptalreadyadmittedzoom/disableglobals. Existing src/recovered/0044c9e0.cpp historicalBYTE_EXACT24-byte seed calls originalDatalink703EA0.exec(11,project+70); real DatalinkMain owns that singleton in datalink.cpp/header. Preserve historicalclaim and seed, use typedrealowner and freshly verify rather than emptybody or originaladdressforwarder."
+    ],
+    "hypothesis": "Production project completion directly requires the genuine help_project44C9E0 Datalink owner wrapper; its recovered exact seed is not compiled, so composition cannot link without rehoming it.",
+    "kind": "discovery"
+  },
+  "previous_event": "2183f3849d8f9e27de41a0d8a8e7899cbaff6d9b3d1ba86ba51247963320d2f3",
+  "request_id": "colony-project-help-dependency-20261003",
+  "schema_version": 1,
+  "sequence": 23,
+  "stream": "task:base-colony-economy-coverage-wave"
+}

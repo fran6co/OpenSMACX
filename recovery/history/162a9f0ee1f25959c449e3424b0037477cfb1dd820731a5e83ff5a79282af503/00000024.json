@@ -1,0 +1,27 @@
+{
+  "event_id": "2608f5c864104091b3244e284a859fddb8102472c6781010495ea9777c2b4851",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_project_help.py",
+      "src/datalink.cpp",
+      "src/datalink.h"
+    ],
+    "evidence": [
+      "Coordinator admits only genuine help_project44C9E0..44C9F8 wrapper in Datalink owner, public declaration and actual-source hostcontrols. Preserve recovered exactseed, source originalidentity/spans/symbol and allhistoricalclaims; noemptybody or fixedaddress. Inspect fullpinned24-byte nativebody, freshbothrecipeVC6comparison andprotectedDatalinkdiagnosticcontinuity, thenapplicationbuild/link beforeintegration. Existing originaltaskbaseline retained; thisdependencyadmission is notacceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4508128,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "9b600e6800f3d50733b42d92e3aaa5f02cb287cc872d887e7009d8132dfc8a69",
+  "request_id": "colony-project-help-owner-admission-20261003",
+  "schema_version": 1,
+  "sequence": 24,
+  "stream": "task:base-colony-economy-coverage-wave"
+}
