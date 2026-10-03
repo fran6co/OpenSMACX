@@ -1,0 +1,17 @@
+{
+  "event_id": "ec384fe9819f77652a88b0d96f740a72d7ebb3628c05e579ce2d9db28d2cbee0",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "mapwin-selected-mode-return-20261003",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Current committed typed Console::selected returns entry mode with native-writer actual QAEHXZ emitted fact; MapWin click snapshots original sprite ordering and uses return for genuine gates/dispatch. Eight fresh objects build/recovery/mapwin-selected-native-probe-v1/report.json verify bothrecipes/symbols and unchangedclasslayouts,168 available historicaldiagnostics unchanged,two preexistingunknown retained. Fresh application build/link /tmp/mapwin-selected-application-build-v1.log terminal0;23 actualsource host controls pass. No new BYTE_EXACT or fullacceptance; source and historical identity/caller preserved."
+    ]
+  },
+  "previous_event": "06f29c86335a00417a15da95636d6fc5e0b8ce8b5a76a1197cda14b1b7cd1362",
+  "request_id": "mapwin-selected-mode-incorporated-20261003",
+  "schema_version": 1,
+  "sequence": 25,
+  "stream": "task:mapwin-owner-coverage-wave"
+}
