@@ -14,9 +14,27 @@ BODIES = {
     "scroll": (0x45DEA0, "void __cdecl scroll_show(", "scroll_show_owner_control.cpp"),
     "popup": (0x404920, "void Popup::show(", "popup_animation_owner_control.cpp"),
 }
+HIDE_BODIES = {
+    "hide_slide": (0x45D970, "void __cdecl slide_hide("),
+    "hide_scroll": (0x45E540, "void __cdecl scroll_hide("),
+}
 
 
 def projected_control(kind, damage=None):
+    if kind in HIDE_BODIES:
+        bodies = []
+        rows = read_file(ROOT / "src/popup.cpp")
+        for name, (address, signature) in HIDE_BODIES.items():
+            row = next(row for row in rows if row.address == address)
+            body = _definition(row.region, signature)
+            if damage is not None and kind == name:
+                old, new = damage
+                assert old in body
+                body = body.replace(old, new, 1)
+            bodies.append(body)
+        fixture = (Path(__file__).parent / "popup_hide_owner_control.cpp").read_text()
+        assert fixture.count("// ACTUAL_SOURCE_BODIES") == 1
+        return fixture.replace("// ACTUAL_SOURCE_BODIES", "\n\n".join(bodies))
     address, signature, filename = BODIES[kind]
     record = next(row for row in read_file(ROOT / "src/popup.cpp") if row.address == address)
     body = _definition(record.region, signature)
@@ -86,7 +104,7 @@ int main() {
         assert result.returncode == 0, result.stderr.decode(errors="replace")
 
 
-@pytest.mark.parametrize("kind", BODIES)
+@pytest.mark.parametrize("kind", [*BODIES, *HIDE_BODIES])
 @pytest.mark.parametrize("compiler_name", ["g++", "clang++"])
 def test_actual_animation_body(tmp_path, kind, compiler_name):
     compiler = shutil.which(compiler_name)
@@ -111,6 +129,16 @@ def test_actual_animation_body(tmp_path, kind, compiler_name):
     ("popup", "auto_hide_mode == 1000", "auto_hide_mode == 1001"),
     ("popup", "WinScreenHeight - this->Buffer::pixel_height()", "WinScreenHeight + this->Buffer::pixel_height()"),
     ("popup", "> dialogs_.ListBox::visible_item_capacity()", ">= dialogs_.ListBox::visible_item_capacity()"),
+    ("hide_slide", "frame < frame_divisor", "frame < mode"),
+    ("hide_slide", "window_frame.fill(WinFillColour);", "/* missing frame fill */"),
+    ("hide_slide", "area.left + window_frame.pixel_width()", "area.right"),
+    ("hide_slide", "MapMouseFeedbackBusy != 0 || ConsoleControlTurnActive != 0", "false"),
+    ("hide_slide", "delay = delay / 2", "delay = static_cast<DWORD>(delay) / 2"),
+    ("hide_scroll", "area.left = right_edge_x;", "/* missing narrow clip */"),
+    ("hide_scroll", "area.left - screen_left, area.top - screen_top", "0, 0"),
+    ("hide_scroll", "0, 0, area.left, screen_top", "0, 0, screen_left, screen_top"),
+    ("hide_scroll", "frame_x -= PopupScrollHorizontalStep", "frame_x -= horizontal_step"),
+    ("hide_scroll", "if (enter_vertical_close)\n        window->Buffer::set_clip", "if (PopupScrollVerticalFrameCount > 1)\n        window->Buffer::set_clip"),
 ])
 def test_animation_damage_detected(tmp_path, kind, old, new):
     compiler = shutil.which("g++")

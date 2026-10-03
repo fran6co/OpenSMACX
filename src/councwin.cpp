@@ -990,11 +990,7 @@ void CouncWin::on_mouse_move(int x, int y) {
     draw_leader(y);
 }
 
-// Two of on_status's callees are still original bodies the tree has not homed
-// (0x0045D440 / 0x0045D970, both archive copies in src/recovered/units, which
-// the build does not compile). They are cdecl free functions the image reaches
-// with a plain `call rel32`, so they are declared here and defined as
-// forwarders at the foot of this file.
+// on_status calls Popup's source-owned cdecl slide-animation helpers.
 void __cdecl slide_show(GraphicWin *window, int mode);   // 0x0045D440
 void __cdecl slide_hide(GraphicWin *window, int mode);   // 0x0045D970
 
@@ -1324,15 +1320,10 @@ void CouncWin::on_status(int mode) {
     }
 }
 
-// slide_show is owned by popup.cpp. The remaining slide_hide helper
-// is still an explicitly unfinished original-address forwarder.
+// The complete slide helpers are owned by popup.cpp.
 
 
-void __cdecl slide_hide(GraphicWin *window, int mode) {
-    typedef void(__cdecl *pending)(GraphicWin *, int);
-    reinterpret_cast<pending>(static_cast<unsigned long>(0x0045D970))(window,
-                                                                     mode);
-}
+
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
