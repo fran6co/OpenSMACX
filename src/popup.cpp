@@ -2039,3 +2039,18 @@ void __cdecl pop_close() {
     static_cast<BasePop *>(PopupInstanceSlotA)->close();
     static_cast<BasePop *>(PopupInstanceSlotB)->close();
 }
+
+// ORIGINAL: 0x00559000 sub_559000 0x00559000-0x0055903A BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["original:0x0055468E-0x005546A5:shared-Popup-receiver", "original:0x00559000-0x0055903A", "source:src/basepop.h:caller_sprite_,dialogs_", "git:b94da21d:src/recovered/units/00559000.cpp"], "reason": "The original communicate caller uses the same local Popup receiver for start and this member. Existing BasePop caller_sprite_ and owned Dialogs/SpriteBox state explain the observed member accesses. Clear only the stored caller picture when the list is nonempty; always forward the incoming picture to SpriteBox::sprite. The behavior-derived method name is provisional; the original name remains unknown."}
+// symbol    ?set_picture@Popup@@QAEHPAVSprite@@HPAD@Z
+// Provisional behavior-derived name; original method name is unknown.
+// Historical seed evidence: direct ECX-relative field accesses identify a
+// thiscall receiver, despite the old scaffold's initial free-stdcall guess.
+int Popup::set_picture(Sprite *picture, int mode, char *text) {
+    if (!picture_enabled()) {
+        set_caller_picture(picture);
+    } else {
+        set_caller_picture(0);
+    }
+    return dialogs().sprite(picture, text, mode);
+}
