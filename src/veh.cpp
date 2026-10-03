@@ -10971,7 +10971,8 @@ void __cdecl action_sat_attack(int attacker, int target, int type, int base_id) 
         PluralityDefault = Players[target].is_noun_plural;
         parse_says(5, Players[target].noun_faction, -1, -1);
         parse_say(6, reinterpret_cast<int>(Facility[type == 4 ? 41 : 65 + type].name), -1, -1);
-        parse_says(7, Players[target].formal_name_faction, -1, -1);
+        // Native 4CF606 selects Player + 0x304, the faction adjective.
+        parse_says(7, Players[target].adj_name_faction, -1, -1);
     }
 
     // Original CRT rand, signed idiv remainder, exactly once after parsing.
