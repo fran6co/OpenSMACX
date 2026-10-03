@@ -1,0 +1,35 @@
+{
+  "event_id": "7c80d085a4fb97539474bf57f6127b12e38b3b464ab1ad0b9fdbd1cfc5e50541",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_player_message_state_behavior.py"
+    ],
+    "evidence": [
+      "Admit complete related game-state/message clear and display family51E3C0/51E480/51E530 with evidence-based faction combat summaries93A96C/93A98C in already authorized game.cpp/h. Native reset traverses eight StringList records30stride at93A7B0, confirms eight dwords per counter. Combat50A494/50AF13 and WONLOST display527CEE independently establish win/loss semantics; seq18 records provenance. Use existing real StringList::remove_all, public cursor/allocator fields, InterfaceMessageWin/listBox; retain hook/lifetime and count-reload behavior. No StringStruct, MessageWin, faction or general veh edits; only extern declaration of existing message storage and owned game-state counters. Native source writer preserves all seeds/original identities and historical claims; no new byte claim. Actual-source host controls, both native recipe probes/protected continuity and application build/link required. Snapshot union/extent remains unresolved and untouched."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5366720,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5366912,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5367088,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "3591f100220b9bb9261c7be9332f407bf1d8fb76f67e1947390084f3ff4afdbe",
+  "request_id": "serializer-faction-message-reset-family-20261003",
+  "schema_version": 1,
+  "sequence": 19,
+  "stream": "task:game-save-load-owner-coverage"
+}
