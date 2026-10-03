@@ -281,6 +281,8 @@ extern GraphicWin CoverWindow;  // 0x00937118
 // reads it to size the desktop before the turn runs, and scenario.cpp gates
 // the end-turn path on it. Formerly scenario.cpp's raw ControlTurnPhaseAddress.
 extern int ControlTurnPhase;  // 0x009B2070
+// Research/upkeep phase: distinct from the UI/control-turn phase above.
+extern int TurnUpkeepPhase;  // 0x00945F48
 // The open savegame's file name, copied into SaveNameBuffer and handed to
 // filefind_set_alternate when the loop reloads. Bounds unknown, like
 // CommandLineText - the next referenced dword in, 0x0093AA10, only caps it.

@@ -2037,6 +2037,12 @@ char ScriptPopupFileText[] = "SCRIPT";
 // RECOVERY_OBJECT: v1 0x00691B0C ?ScriptPopupFile@@3PADA
 char *ScriptPopupFile = ScriptPopupFileText;
 int ControlTurnPhase;   // 0x009B2070
+// net_upkeep5290D0/5292BD publish phases1/2; tech_advance5BE580 and
+// tech_research5BEB3A read this distinct shared dword. Original virtual-tail
+// storage is loader-zero; fresh compiler objects establish one int owner.
+// Remaining net_upkeep recovery must publish to this owner, not an old address.
+// RECOVERY_OBJECT: v2 0x00945F48 0x00945F4C ?TurnUpkeepPhase@@3HA 0x005BE940
+int TurnUpkeepPhase = 0;
 char SaveGameFileName[0x104];  // 0x0093AA0C
 char SaveNameBuffer[0x104];    // 0x009B2078
 

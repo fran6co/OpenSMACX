@@ -771,3 +771,6 @@ int __cdecl base_connect(int priority);
 MEASURED inline BOOL __cdecl ascending(int UNUSED(faction_id) faction_id) {
     return base_project(SP_VOICE_OF_PLANET) != SP_Unbuilt;
 }
+
+void __cdecl base_check_support();
+void __cdecl base_research();

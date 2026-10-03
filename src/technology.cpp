@@ -1714,3 +1714,118 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
 
     desktop_update();
 }
+
+static int tech_research_signed_bits(uint32_t value) {
+    return value <= 0x7FFFFFFFu ? static_cast<int>(value)
+        : -1 - static_cast<int>(0xFFFFFFFFu - value);
+}
+static int tech_research_add(int left, int right) {
+    return tech_research_signed_bits(static_cast<uint32_t>(left)
+        + static_cast<uint32_t>(right));
+}
+static int tech_research_mul(int left, int right) {
+    return tech_research_signed_bits(static_cast<uint32_t>(left)
+        * static_cast<uint32_t>(right));
+}
+
+// ORIGINAL: 0x005BE940 ?tech_research@@YAXHH@Z 0x005BE940-0x005BEB70
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/005be940.cpp", "recovery/tasks/base-colony-economy-coverage-wave.json", "recovery/tests/test_base_colony_economy.py", "Pinned original 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; complete original extent reviewed against native instructions and measured VC6 owner layouts.", "Original5BE940..5BEB70 uses Facility33/102 prerequisites, low-byte LockEnableMask, tech_cost=-1 before recomputation, and shared945F48 phase distinct from9B2070 UI phase."], "reason": "Recover complete research accumulation, climactic prerequisite decisions, advances and selection through real faction/technology storage and shared TurnUpkeepPhase. Preserve native byte-width human mask, callback-owned selection and wrap. Seed retained; no new byte or runtime claim."}
+// symbol    ?tech_research@@YAXHH@Z
+void __cdecl tech_research(int faction, int points) {
+    if (points <= 0) {
+        return;
+    }
+
+    const uint32_t faction_mask = 1u << (faction & 31);
+    bool double_points = false;
+    if ((static_cast<uint8_t>(LockEnableMask) & faction_mask) == 0
+        && climactic_battle() != 0) {
+        double_points = true;
+        if (faction > 0) {
+            int tech_id = Facility[33].preq_tech;
+            if (tech_id != -1) {
+                if (tech_id < 0 || tech_id >= 0x58) {
+                    goto double_research;
+                }
+                const int first_preq = Technology[tech_id].preq_tech_1;
+                const int second_preq = Technology[tech_id].preq_tech_2;
+                if (first_preq < -1
+                    || !(second_preq >= -1 || first_preq == -1)
+                    || (GameTechAchieved[tech_id] & faction_mask) == 0) {
+                    goto double_research;
+                }
+            }
+
+            tech_id = Facility[102].preq_tech;
+            if (tech_id == -1) {
+                double_points = false;
+                goto after_research_multiplier;
+            }
+            if (tech_id < 0 || tech_id >= 0x58) {
+                goto double_research;
+            }
+            {
+                const int first_preq = Technology[tech_id].preq_tech_1;
+                const int second_preq = Technology[tech_id].preq_tech_2;
+                if (first_preq < -1
+                    || !(second_preq >= -1 || first_preq == -1)) {
+                    goto double_research;
+                }
+                if ((GameTechAchieved[tech_id] & faction_mask) != 0) {
+                    double_points = false;
+                    goto after_research_multiplier;
+                }
+            }
+        }
+    }
+
+double_research:
+    if (double_points) {
+        points = tech_research_mul(points, 2);
+    }
+
+after_research_multiplier:
+    PlayerData &player = PlayersData[faction];
+    player.tech_accumulated = tech_research_add(player.tech_accumulated, points);
+    if (IsMultiplayerNet == 0 && player.tech_id_researching < 0) {
+        goto after_advance;
+    }
+
+    {
+        const int research_rate = tech_rate(faction);
+        if (player.tech_id_researching >= 0x59) {
+            player.tech_accumulated =
+                tech_research_add(player.tech_accumulated, points);
+        }
+        if (player.tech_accumulated >= research_rate) {
+            log_say("Researched Advance", Players[faction].name_leader,
+                    faction, 0, 0);
+            const int advance = tech_advance(faction);
+            if (advance >= 0) {
+                mon_tech_discovered(faction, advance);
+            }
+            player.tech_accumulated = 0;
+            player.tech_cost = -1;
+            player.tech_cost = tech_rate(faction);
+        }
+
+        if ((player.flags & 0x40u) != 0) {
+            log_say("Secret Advance", Players[faction].name_leader,
+                    faction, 0, 0);
+            player.flags &= ~0x40u;
+            const int advance = tech_advance(faction);
+            if (advance >= 0) {
+                mon_tech_discovered(faction, advance);
+            }
+        }
+    }
+
+after_advance:
+    if (player.tech_accumulated >= 0 && player.tech_id_researching < 0
+        && TurnUpkeepPhase != 1
+        && ((static_cast<uint8_t>(LockEnableMask) & faction_mask) == 0
+            || faction == ConsoleGlobal.faction_id_
+            || IsMultiplayerPBEM == 0)) {
+        player.tech_id_researching = tech_selection(faction);
+    }
+}

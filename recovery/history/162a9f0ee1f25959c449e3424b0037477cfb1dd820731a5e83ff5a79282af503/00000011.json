@@ -1,0 +1,17 @@
+{
+  "event_id": "88740056768f78f93ed5c7653769f0327a30e81e5b724fd4f8e45e8b33c68819",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "colony-research-owner-dependency-20261003",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/base.cpp now owns complete mapped base_research4F4E80 and calls declared real tech_research5BE940 in src/technology.cpp. Original seeds/spans are retained. Actual-source GCC/Clang UBSan controls and application build/link pass; fresh native source measurements report both bodies implemented but matching misses. This incorporates the typed owner dependency only, not byte or runtime acceptance."
+    ]
+  },
+  "previous_event": "2b65fefd1762d30a77b60dd5a46dc5031f2120bf5aff119e8a61b93da86746e2",
+  "request_id": "colony-research-owner-incorporated-20261003",
+  "schema_version": 1,
+  "sequence": 11,
+  "stream": "task:base-colony-economy-coverage-wave"
+}

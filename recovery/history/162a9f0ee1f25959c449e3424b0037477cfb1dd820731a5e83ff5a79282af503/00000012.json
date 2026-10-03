@@ -1,0 +1,17 @@
+{
+  "event_id": "2e7e42938eed2d0d2cf7191712ad5101e63715fcbbc4ff91a327923e2b1f2a89",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "colony-turn-phase-owner-20261003",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/game.cpp owns bounded loader-zero TurnUpkeepPhase945F48..945F4C with source annotation and src/game.h declaration; src/technology.cpp tech_research reads it instead of a fixed executable pointer. Fresh native game objects observe the real zero-initialized dword under both flag sets; current application builds/links. net_upkeep producer recovery remains unfinished and explicit in source. This incorporates the admitted storage and reader interpretation, not complete phase runtime or game acceptance."
+    ]
+  },
+  "previous_event": "88740056768f78f93ed5c7653769f0327a30e81e5b724fd4f8e45e8b33c68819",
+  "request_id": "colony-turn-phase-owner-incorporated-20261003",
+  "schema_version": 1,
+  "sequence": 12,
+  "stream": "task:base-colony-economy-coverage-wave"
+}

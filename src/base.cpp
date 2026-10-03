@@ -2504,6 +2504,219 @@ int __cdecl base_lose_minerals(int base_id, int UNUSED(production_id)) {
     return 0;
 }
 
+// ORIGINAL: 0x004F4830 ?base_check_support@@YAXXZ 0x004F4830-0x004F4DBB
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004f4830.cpp", "recovery/tasks/base-colony-economy-coverage-wave.json", "recovery/tests/test_base_colony_economy.py", "Pinned original 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; complete original extent reviewed against native instructions and measured VC6 owner layouts.", "Native facility35 uses selected-base record; riot score reads prototype.cost(+29), not carry_capacity(+28); first distance scan reapplies abs after wrap, second does not."], "reason": "Recover the complete support deficit and pacifism selection through typed Base/Vehicle/faction owners, preserving original AI double-decrement and selected-base facility semantics. Seed retained; no new byte or runtime claim."}
+// symbol    ?base_check_support@@YAXXZ
+void __cdecl base_check_support() {
+    const unsigned faction_bit = 1u << BaseCurrent->faction_id_current;
+    const unsigned faction = BaseCurrent->faction_id_current;
+
+    while (BaseCurrent->mineral_intake_2 < (int)BaseCurrentForcesMaintCost) {
+        int selected_vehicle = -1;
+        int selected_score = -1;
+
+        for (int vehicle_id = 0; vehicle_id < VehCurrentCount; ++vehicle_id) {
+            const Veh &vehicle = Vehs[vehicle_id];
+            if (vehicle.faction_id != faction
+                || vehicle.home_base_id != BaseIDCurrentSelected) {
+                continue;
+            }
+
+            const VehPrototype &prototype = VehPrototypes[vehicle.proto_id];
+            if (prototype.plan == PLAN_SUPPLY_CONVOY) {
+                if (vehicle.order == ORDER_CONVOY
+                    && vehicle.order_auto_type == ORDERA_TERRA_AUTO_ROAD) {
+                    const Map *tile = map_loc(vehicle.x, vehicle.y);
+                    if (selected_score < 99999
+                        && (tile->bit & BIT_BASE_IN_TILE) != 0
+                        && (tile->val2 & 0x0Fu) < MaxPlayerNum) {
+                        selected_vehicle = vehicle_id;
+                        selected_score = 99999;
+                    }
+                }
+            } else if ((vehicle.state & VSTATE_REQUIRES_SUPPORT) != 0
+                       && prototype.plan < 10) {
+                int dx = abs((int)vehicle.x - (int)BaseCurrent->x);
+                if ((MapIsFlat & 1) == 0 && (int)MapLongitude < dx) {
+                    dx = base_yield_sub(MapLongitudeBounds, dx);
+                }
+                dx = abs(dx);
+                const int dy = abs((int)vehicle.y - (int)BaseCurrent->y);
+                const int greater = dx > dy ? dx : dy;
+                const int lesser = dx > dy ? dy : dx;
+                const int distance = greater
+                    - (((dx + dy) / 2 - lesser + 1) / 2);
+                if (selected_score < distance) {
+                    selected_vehicle = vehicle_id;
+                    selected_score = distance;
+                }
+            }
+        }
+
+        if (selected_vehicle < 0) {
+            break;
+        }
+
+        Veh &vehicle = Vehs[selected_vehicle];
+        const int prototype_id = vehicle.proto_id;
+        const int plan = VehPrototypes[prototype_id].plan;
+        if (plan == PLAN_SUPPLY_CONVOY) {
+            vehicle.order = ORDER_NONE;
+            --BaseCurrentForcesMaintCost;
+            continue;
+        }
+
+        if ((LockEnableMask & faction_bit) == 0) {
+            if (plan == PLAN_COLONIZATION) {
+                vehicle.state &= ~VSTATE_REQUIRES_SUPPORT;
+                if (!has_abil(prototype_id, ABL_CLEAN_REACTOR)) {
+                    const int support = PlayersData[faction].soc_effect_pending.support;
+                    BaseCurrentForcesMaintCost -= support < -3 ? 2 : 1;
+                }
+            }
+        } else {
+            parse_says(1, VehPrototypes[prototype_id].veh_name, -1, -1);
+            popb("NOSUPPORT", 0x8000, 0xD, "genwarning_sm.pcx", nullptr);
+        }
+
+        if (has_abil(prototype_id, ABL_CLEAN_REACTOR)) {
+            break;
+        }
+
+        const int support = PlayersData[faction].soc_effect_pending.support;
+        BaseCurrentForcesMaintCost -= support < -3 ? 2 : 1;
+        kill(selected_vehicle);
+    }
+
+    const bool is_human = (LockEnableMask & faction_bit) != 0;
+    const uint32_t governor = BaseCurrent->governor;
+    const bool state_allows_riot_check = !is_human
+        || ((governor & GOV_MANAGES_CITIZENS_SPECS) != 0
+            && (governor & GOV_ACTIVE) != 0);
+
+    if (!state_allows_riot_check
+        || (BaseCurrent->state & BSTATE_DRONE_RIOTS_ACTIVE) == 0) {
+        return;
+    }
+
+    int morale_bonus_offset;
+    int morale_bonus_mask;
+    bitmask(0x23, &morale_bonus_offset, &morale_bonus_mask);
+    const int morale_bonus =
+        (Bases[BaseIDCurrentSelected].facilities_built[morale_bonus_offset]
+         & morale_bonus_mask) != 0 ? 2 : 0;
+    const int morale = PlayersData[faction].soc_effect_pending.morale;
+    if (base_yield_add(morale, morale_bonus) >= -2
+        || (BaseCurrent->drone_total <= BaseCurrent->talent_total
+            && BaseCurrent->nutrient_surplus >= 0)) {
+        return;
+    }
+
+    int selected_score = -1;
+    int selected_vehicle = -1;
+    const int riot_probability = PlayersData[faction].ai_fight;
+    for (int vehicle_id = 0; vehicle_id < VehCurrentCount; ++vehicle_id) {
+        const Veh &vehicle = Vehs[vehicle_id];
+        if (vehicle.faction_id != faction
+            || vehicle.home_base_id != BaseIDCurrentSelected
+            || (vehicle.state & VSTATE_PACIFISM_DRONE) == 0) {
+            continue;
+        }
+
+        if (is_human
+            && ((vehicle.state & VSTATE_UNK_200) == 0
+                || (vehicle.state & 0x01000200u) == 0x01000200u
+                || ((vehicle.state & 0x02000200u) == 0x02000200u
+                    && vehicle.waypoint_count > vehicle.patrol_current_point)
+                || vehicle.order_auto_type == ORDERA_BOMBING_RUN
+                || vehicle.order_auto_type == ORDERA_ON_ALERT
+                || vehicle.order_auto_type != 0)) {
+            continue;
+        }
+
+        const int random_divisor = base_yield_add(riot_probability, 2);
+        if (base_yield_sub(random_divisor, 1) > 0
+            && rand() % random_divisor != 0) {
+            continue;
+        }
+
+        int dx = abs((int)vehicle.x - (int)BaseCurrent->x);
+        if ((MapIsFlat & 1) == 0 && (int)MapLongitude < dx) {
+            dx = base_yield_sub(MapLongitudeBounds, dx);
+        }
+        const int dy = abs((int)vehicle.y - (int)BaseCurrent->y);
+        int range = VehPrototypes[vehicle.proto_id].cost;
+        if (range < 1) range = 1;
+        else if (range > 99) range = 99;
+
+        int score = base_yield_mul(base_yield_add(dx, dy) / 2, 100) / range;
+        const int plan = VehPrototypes[vehicle.proto_id].plan;
+        if (plan == PLAN_DEFENSIVE) {
+            score = base_yield_add(score, score);
+        } else if (plan == PLAN_COMBAT) {
+            score /= 2;
+        }
+
+        if (selected_score < score) {
+            selected_score = score;
+            selected_vehicle = vehicle_id;
+        }
+    }
+
+    if (selected_vehicle >= 0) {
+        kill(selected_vehicle);
+        BaseCurrent->state &= ~BSTATE_DRONE_RIOTS_ACTIVE;
+    }
+}
+
+// ORIGINAL: 0x004F4E80 ?base_research@@YAXXZ 0x004F4E80-0x004F4FAB
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004f4e80.cpp", "recovery/tasks/base-colony-economy-coverage-wave.json", "recovery/tests/test_base_colony_economy.py", "Pinned original 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; complete original extent reviewed against native instructions and measured VC6 owner layouts.", "Original4F4E80..4F4FAB reads Base.labs_total(+108), PlayerData.soc_effect_pending.research and net_random_event; faction-indexed Base bitset and signed remainder are intentional retained behavior."], "reason": "Recover the complete base laboratory contribution, scenario/early-turn gates and signed fractional research dispatch with native 32-bit wrap. Preserve original Bases[faction_id] facility lookup rather than silently correcting its behavior. Seed retained; no matching or game claim."}
+// symbol    ?base_research@@YAXXZ
+void __cdecl base_research() {
+    if ((GameRules & RULES_SCN_NO_TECH_ADVANCES) != 0) {
+        return;
+    }
+
+    Base *base = BaseCurrent;
+    const int faction_id = base->faction_id_current;
+    const int research_bonus = base->labs_total;
+    int mask_offset;
+    int mask;
+    int points = research_bonus;
+    bitmask(0x17, &mask_offset, &mask);
+
+    if ((Bases[faction_id].facilities_built[mask_offset] & mask) != 0) {
+        points = research_bonus / 2;
+    }
+    PlayerData &player = PlayersData[faction_id];
+    if (TurnCurrentNum < base_yield_mul(-5, player.soc_effect_pending.research)) {
+        points = 0;
+    }
+    if (TurnCurrentNum < 5 && player.diff_level < 2) {
+        points = 0;
+    }
+
+    player.labs_total = base_yield_add(player.labs_total, points);
+
+    int research_rate = player.soc_effect_pending.research;
+    if (research_rate < -5) {
+        research_rate = -5;
+    } else if (research_rate > 5) {
+        research_rate = 5;
+    }
+
+    int scaled = base_yield_mul(
+        base_yield_mul(base_yield_add(research_rate, 10), points), 10);
+    const int remainder = base_yield_add(player.net_random_event, scaled % 100);
+    player.net_random_event = remainder;
+    if (remainder > 99) {
+        scaled = base_yield_add(scaled, 100);
+        player.net_random_event = base_yield_sub(remainder, 100);
+    }
+
+    tech_research(faction_id, scaled / 100);
+}
+
 /*
 Purpose: Set or unset the specified base's facility.
 // ORIGINAL: 0x004E48B0 ?set_fac@@YAXHHH@Z 0x004E48B0-0x004E48FA BYTE_EXACT

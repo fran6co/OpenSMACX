@@ -1,0 +1,17 @@
+{
+  "event_id": "5b34278f3d1333e40549b8162aa97d1c9bdb7043e05f6a755f578c977f36082a",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "colony-tech-advance-phase-reference-20261003",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/leaf_recoveries.cpp tech_advance now reads the same source-owned TurnUpkeepPhase as tech_research; the single obsolete TurnPhaseSlot address alias is removed. src/technology.h exposes the existing real callee. Current native measurement confirms retained tech_advance BYTE_EXACT with Oy-; final-source paired native diagnostics are unchanged under both recipes. All2615 historical claims remain,92focused controls and application build/link pass. No other leaf bodies, claims or baselines changed; no strict linked/runtime/game acceptance."
+    ]
+  },
+  "previous_event": "2e7e42938eed2d0d2cf7191712ad5101e63715fcbbc4ff91a327923e2b1f2a89",
+  "request_id": "colony-tech-advance-phase-reference-incorporated-20261003",
+  "schema_version": 1,
+  "sequence": 13,
+  "stream": "task:base-colony-economy-coverage-wave"
+}

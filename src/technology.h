@@ -306,3 +306,7 @@ BOOL __cdecl has_tech_call(int tech_id, int faction_id);
 
 // Owns an automatic PickTech window; historical signature is mutable char*.
 int __cdecl tech_pick(int faction, int mode, int count, char *section);
+
+// Source-owned research accumulation and its existing advancement callee.
+void __cdecl tech_research(int faction, int points);
+int __cdecl tech_advance(int faction);
