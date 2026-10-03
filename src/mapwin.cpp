@@ -5146,6 +5146,22 @@ void MapWin::draw_base_names() {
                                 font_a_.line_advance(),
                             strlen(detail));
                     }
+                } else {
+                    const bool objective = is_objective(base_id) != 0;
+                    if (objective && (GameRules & 0x20000000U) == 0) {
+                        LPSTR objective_name = label_get(898);
+                        if (objective_name) {
+                            char detail[256];
+                            detail[0] = '\0';
+                            strcat(detail, objective_name);
+                            CharUpperA(detail);
+                            canvas->write_cent_l(detail,
+                                pixel_x + field_1DDBC_,
+                                pixel_y + (field_1DDC8_ * 7) / 2 +
+                                    font_a_.line_advance(),
+                                strlen(detail));
+                        }
+                    }
                 }
             }
         }
