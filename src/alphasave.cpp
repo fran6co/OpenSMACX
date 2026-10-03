@@ -199,8 +199,8 @@ int AlphaSave::on_listbox_scroll_delete(Scroll *scroll) {
 }
 
 // ORIGINAL: 0x00407D10 ?on_key_click@AlphaSave@@QAEXHH@Z 0x00407D10-0x00407D62 BYTE_EXACT
-// Deleted seed provenance: git:8ca8dfc2805ade42b1dc4a8885fcfaaf955e75c7:src/recovered/units/00407d10.cpp
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00407d10.cpp and original symbol", "image:constructor4073F2 installs669EC8; slot25 selects407D10", "image:407D37/407D57 last calls and407D3E/407D5F returns preserve EAX from Win key_down_event/key_click_event"], "reason": "Recover the real AlphaSave key override through typed FileWin subobjects and forward the actual last-call result. The catalogue void spelling is retained as original identity, not the virtual return contract; no arbitrary constant or extra callback slot."}
+// Deleted seed provenance: git:8ca8dfc2805ade42b1dc4a8885fcfaaf955e75c7:src/recovered/units/00407d10.cpp
 // symbol    ?on_key_click@AlphaSave@@UAEHHH@Z
 int AlphaSave::on_key_click(int key, int flags) {
     switch (flags) {
@@ -216,24 +216,24 @@ int AlphaSave::on_key_click(int key, int flags) {
 }
 
 // ORIGINAL: 0x004080E0 ?on_scrolling@AlphaSave@@QAEXHH@Z 0x004080E0-0x0040810C BYTE_EXACT
-// Deleted seed provenance: git:8ca8dfc2805ade42b1dc4a8885fcfaaf955e75c7:src/recovered/units/004080e0.cpp
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004080e0.cpp and original symbol"], "reason": "Existing AlphaSave owner forwards to its typed FileWin subobjects; original symbol and seed establish identity and extent"}
+// Deleted seed provenance: git:8ca8dfc2805ade42b1dc4a8885fcfaaf955e75c7:src/recovered/units/004080e0.cpp
 void AlphaSave::on_scrolling(int code, int pos) {
     // The embedded ListBox dispatches this notification through its Win base.
     file_win_.list_box_.vslot_48(code, pos);
 }
 
 // ORIGINAL: 0x00408110 ?on_scrolled@AlphaSave@@QAEXHH@Z 0x00408110-0x0040813C BYTE_EXACT
-// Deleted seed provenance: git:8ca8dfc2805ade42b1dc4a8885fcfaaf955e75c7:src/recovered/units/00408110.cpp
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00408110.cpp and original symbol"], "reason": "Existing AlphaSave owner forwards to its typed FileWin subobjects; original symbol and seed establish identity and extent"}
+// Deleted seed provenance: git:8ca8dfc2805ade42b1dc4a8885fcfaaf955e75c7:src/recovered/units/00408110.cpp
 void AlphaSave::on_scrolled(int code, int pos) {
     // This is the next Win virtual notification, not ListBox's direct handler.
     file_win_.list_box_.vslot_49(code, pos);
 }
 
 // ORIGINAL: 0x00407E80 ?on_listbox_scroll_create@AlphaSave@@QAEHXZ 0x00407E80-0x00407ECA BYTE_EXACT
-// Deleted seed provenance: git:8ca8dfc2805ade42b1dc4a8885fcfaaf955e75c7:src/recovered/units/00407e80.cpp
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00407e80.cpp;src/popup.cpp:Popup::on_listbox_scroll_create;src/alphasave.h:scroll_"], "reason": "AlphaSave owns the Scroll at 0x3DD8; original call sequence matches the typed Popup scroll-create pattern and seed evidence"}
+// Deleted seed provenance: git:8ca8dfc2805ade42b1dc4a8885fcfaaf955e75c7:src/recovered/units/00407e80.cpp
 int AlphaSave::on_listbox_scroll_create() {
     scroll_normal();
     scroll_.init(0x147, 0x15, 0x18, 0xd8, this, -1, 1);
