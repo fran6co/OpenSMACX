@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "task_id": "game-logic-seed-owner-coverage",
+  "target": "opensmacx",
+  "author": "framework-coordinator",
+  "base_revision": "47647a37056cfb1117166c428908ce33e91edc1d",
+  "intent": "Recover seven complete technology/social/vehicle and withdrawal-diplomacy bodies in their typed owners; retain all identities and useful seed lessons, remove superseded seeds and the social_set forwarder after reviewed verification.",
+  "editable_files": [
+    "recovery/tests/test_game_logic_seed_batch_behavior.py",
+    "src/base.h",
+    "src/faction.cpp",
+    "src/faction.h",
+    "src/pending_bodies.cpp",
+    "src/recovered/units/00522f00.cpp",
+    "src/recovered/units/00545d60.cpp",
+    "src/recovered/units/005b4600.cpp",
+    "src/socialwin.cpp",
+    "src/temp.h",
+    "src/unrecovered/0050c340.cpp",
+    "src/unrecovered/0053e4c0.cpp",
+    "src/unrecovered/00549270.cpp",
+    "src/unrecovered/005589e0.cpp",
+    "src/veh.cpp",
+    "src/veh.h"
+  ],
+  "subjects": [
+    {
+      "address": 5292864,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5981696,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5528928,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5498048,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5605856,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5542512,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5385984,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "evidence": [
+    "Existing seven seed mappings establish original identities and spans; native writer transfers source bindings and all useful historical lessons. No new byte claim or demotion is authorized.",
+    "Independent review checked original branch/callback/argument order. Correct both diplomacy timestamps to TurnCurrentNum (0x9A64D4), not GameRules, and preserve x86 friction wrapping through existing diplo_add. The native territory-positive join intentionally performs both directional withdrawals; do not remove it as a supposed duplicate.",
+    "Projected actual-source C++98/UBSan controls exercise role orientation, callback order, both timestamp branches with distinct GameRules/TurnCurrentNum values, INT_MAX wrap, accepted/declined territory and shared subsystem APIs. They do not prove native ABI/layout or game acceptance.",
+    "Canonical signed social_set signature and existing Base/Player/PlayerData/Vehicle/Map/NetDaemon owners replace scaffolding and literal executable aliases. Newly declared bases_reset already has a real implementation in its existing source owner.",
+    "Manual coordinator-reviewed integration requires actual-source controls, relevant native protected-code diagnostics, application compile/link, identity/lesson/claim continuity and live-reference checks, with post-integration checks. Linked preservation and structure/runtime/game acceptance remain unproven; no task baseline resets or weakened gates are authorized."
+  ]
+}
