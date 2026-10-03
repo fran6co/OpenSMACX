@@ -1,0 +1,20 @@
+{
+  "event_id": "96be1166deb6fe49c73f268200d84d9bd38661640cb2bed2df54199243cd0ec4",
+  "payload": {
+    "affects": [
+      "entity-3e8762df19b9c00db821c42065555f03e074886932ea9a8010729f02925cfd88"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "colony-revolt-weight-initialization-decision-20261003",
+    "evidence": [
+      "Root and independentworker fullstart pinned decode:5574 initializesEBP-3C only; factions1..7 weightsatEBP-58..40 assignedonlyonfirstbonus13(55A8); absentweightsremainindeterminate.55CD probabilityreadsall7 slots;5602 multipliesby canonical100.0;560A ftol;5613/5633 use signedtick100quotient/remainder andIDIV total. No nativezero-totalguard. Userasyncquestion submitted to authorize absentweight=-1 and nearest-rival fallback for no positive total; no approval received yet. Immutableprivatev3 retains original uninitializedslots, bothVC6 recipes compile with38protecteddiagnostics unchanged; that is not runtime proof or behavior-change permission. Sourcepublication mustkeep limitation and allclaims/baselines, without implicitguard."
+    ],
+    "hypothesis": "drone_riot rival selection reads uninitialized per-faction local weights and may divide by a zero total. Deterministic initialization and nearest-rival fallback would be deliberate bug fixes, not original-behavior or matching recovery. Preserve native behavior evidence and await the explicit user decision before introducing that changed path.",
+    "kind": "discovery"
+  },
+  "previous_event": "1b775f8758aeb14b06cc757a6f34790d508dae5ca2299d227541708ec3378825",
+  "request_id": "colony-revolt-weight-initialization-decision-20261003",
+  "schema_version": 1,
+  "sequence": 18,
+  "stream": "task:base-colony-economy-coverage-wave"
+}
