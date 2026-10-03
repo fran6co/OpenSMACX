@@ -188,6 +188,9 @@ int TutWin::reset() {
     return 0;
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// Historical seed observations (not fresh measurements or acceptance):
+// TRIED: `extern int g_009a64bc_rmw;` for the trailing `or [addr],esi` (RMW on a fixed global) turned the const-pointer's load/or/store into a single `or`, reaching MNEMONIC_ONLY (61/61 mnemonics match); the one remaining divergence is register choice in the tail, where the original reuses esi for child2 and ours picks another.
 // ORIGINAL: 0x004BDCC0 ?on_button_clicked@TutWin@@QAEXH@Z 0x004BDCC0-0x004BDDA2 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["seed:src/unrecovered/004bdcc0.cpp", "image:0x004bdcc0; original call/rectangle/lifetime review"], "reason": "Restore the original ownership-group implementation through real tutorial/editor windows, declared members and normal C++ lifecycle; retained seed extents include the associated exception cleanup where present."}
 // symbol    ?on_button_clicked@TutWin@@UAEXH@Z

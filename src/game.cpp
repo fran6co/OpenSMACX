@@ -1064,6 +1064,9 @@ int PopupThemeColorB4 = 0x94; // 0x0068A5B4, tenth independent palette cell
 // Original455610..455E41. The explicit mode argument is unused. All service
 // results are ignored in the original; failed loads still proceed through
 // extraction/publication. The existing asset objects own their allocations.
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// Historical seed observations (not fresh measurements or acceptance):
+// TRIED: full transcription landed (MISMATCH #0, prologue push/sub divergence - likely stack-frame shape from the local NCSprites-array/struct layout differing from the original's). Verified every extract()/change_color() argument order and the `this` receiver for the two loop-driven extract() sequences against raw bytes, since Ghidra silently drops the implicit `this` on every extract() call in its pseudocode.
 // ORIGINAL: 0x00455610 ?load_interface@@YAXH@Z 0x00455610-0x00455E41
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00455610.cpp: retained original spans and seed history", "source:recovery/tasks/popup-font-configuration-owner-closure.json: coordinator-authorized ownership scope", "manual: independent frozen C++ review of original callback, font style order, palette, geometry and sprite assignments", "compiler:build/recovery/popup-font-physical-emission.json;build/recovery/interface-producer-physical.json: actual emitted symbols in both historical flag sets"], "reason": "Original-backed real font/default producer and consumer closure through source-owned storage and C++ classes; preserves seed extents and historical matching obligations without granting a new claim."}
 // symbol    ?load_interface@@YAXH@Z
