@@ -213,10 +213,9 @@ void __cdecl blink_timer(int a1) {
     PENDING_BODY(0x0050EA40, pending)(a1);
 }
 
-void __cdecl social_set(uint32_t faction_id) {
-    typedef void(__cdecl *pending)(uint32_t);
-    PENDING_BODY(0x005B4600, pending)(faction_id);
-}
+// social_set's 0x005B4600 forwarder was retired when the complete
+// typed body moved to faction.cpp; the seed identity/history remains
+// adjacent to that owner through its native source annotation.
 
 void __cdecl consider_designs(uint32_t faction_id) {
     typedef void(__cdecl *pending)(uint32_t);

@@ -772,6 +772,7 @@ extern int TranscendenceScoreWeights[8];
 // Unfinished implementation in base.cpp; retained original seed owns behavior.
 void __cdecl capture_base(int base_id, int faction_id, int mode);
 void __cdecl base_terraform(int force);
+void __cdecl bases_reset(int region_id, int faction_id, int skip_occupied);
 int __cdecl base_connect(int priority);
 
 MEASURED inline BOOL __cdecl ascending(int UNUSED(faction_id) faction_id) {

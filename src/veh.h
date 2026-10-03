@@ -677,6 +677,7 @@ int __cdecl drop_range(int faction_id);
 int __cdecl defense_value(int faction_id, int x, int y, int veh_id_def,
                                     int veh_id_atk);
 uint32_t __cdecl morale_alien(int veh_id, int faction_id_vs_native);
+void __cdecl do_fungal_towers();
 // ?psi_factor@@YAHHHHH@Z - the faction id is `int`, as the definition has it.
 int __cdecl psi_factor(int combat_ratio, int faction_id, BOOL is_attack,
                                  BOOL is_fungal_twr);

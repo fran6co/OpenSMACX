@@ -36,7 +36,6 @@ extern const char BufferJoinSpace[];
 #include "netdaemon.h"
 #include "popup.h"
 
-void __cdecl social_set(uint32_t faction_id);
 extern int BreakthroughTurnsGlobal;
 extern int NetIncomeGlobal;
 
@@ -1334,7 +1333,6 @@ void SocialWin::draw_presets() {
 // owners are outside this file's scope, and the link still needs the names.
 // Retire each the moment its seed is homed.
 void __cdecl energy_compute(int faction_id, int mode);   // 0x00445130
-void __cdecl social_set(uint32_t faction_id);             // 0x005B4790
 void __cdecl slide_show(GraphicWin *window, int mode);   // 0x0045D440
 void __cdecl slide_hide(GraphicWin *window, int mode);   // 0x0045D970
 void __cdecl do_all_draws();                             // 0x005FCBB0, in temp.cpp
@@ -3073,5 +3071,5 @@ void __cdecl social_select(int faction_id) {
     TutWinSocWindow.close();
     synch_soc(selected_faction);
     if (IsMultiplayerNet == 0)
-        social_set(static_cast<uint32_t>(selected_faction));
+        social_set(selected_faction);
 }

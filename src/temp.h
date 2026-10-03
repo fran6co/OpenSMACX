@@ -235,5 +235,4 @@ void __cdecl wave_it(int a1);
 void __cdecl fixup_landmarks();
 void __cdecl mapwin_terrain_fixup();
 void __cdecl world_rainfall();
-void __cdecl social_set(uint32_t faction_id);
 void __cdecl consider_designs(uint32_t faction_id);

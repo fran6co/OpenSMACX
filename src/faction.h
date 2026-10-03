@@ -929,6 +929,7 @@ void __cdecl social_calc(SocialCategory *category, SocialEffect *effect,
 void __cdecl production_phase(int faction_id);
 void __cdecl faction_upkeep(int faction_id);
 void __cdecl social_upkeep(int faction_id);
+void __cdecl social_set(int faction_id);
 BOOL __cdecl society_avail(int soc_category, int soc_model, int faction_id);
 void __cdecl social_ai(int faction_id, int growth_val, int tech_val, int wealth_val,
                                  int power_val, SocialCategory *output);
@@ -993,9 +994,15 @@ int __cdecl contiguous(int faction_id, int faction_id_with, int region, int mode
 // Cross-TU trade/diplomacy helpers. technology.cpp owns tech_achieved;
 // the remaining unfinished helpers retain their pending_bodies definitions.
 void __cdecl trade_maps(int faction_id, int faction_id_with);
+int __cdecl steal_tech(int faction_id, int faction_id_with, int acquisition_mode);
+void __cdecl propose_trade_maps(int faction_id, int faction_id_with);
+void __cdecl demands_withdrawal(int faction_id, int faction_id_with);
+int __cdecl commlink_attempter(int faction_id, int contact_flags);
+int __cdecl demand_withdrawal(int faction_id, int against_id);
 void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
                            int give_freebie);
 int __cdecl do_withdrawal(int faction_id, int faction_id_with);
+int __cdecl dont_withdrawal(int faction_id, int against_id);
 void __cdecl give_a_base(int faction_id, int faction_id_with);
 void __cdecl double_cross(int faction_id, int faction_id_with,
                           int victim);

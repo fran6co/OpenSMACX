@@ -47,6 +47,7 @@
 #include "strings.h"
 #include "xpops.h"
 #include "diplopop.h"
+#include "diplowin.h"
 #include "infowin.h"
 #include "reportif.h"
 #include "random.h"
@@ -9217,4 +9218,385 @@ void __cdecl faction_upkeep(int faction_id) {
         faction_id == ConsoleGlobal.faction_id_) {
         auto_save();
     }
+}
+// ORIGINAL: 0x0050C340 ?steal_tech@@YAHHHH@Z 0x0050C340-0x0050C4AF
+// RECOVERY_BINDING: v1 {"evidence":["Pinned native instructions at 0x0050C340..0x0050C4AF: local acquisition, multiplayer return, notification and base-reset branches.","source:src/faction.h Player/PlayerData and canonical technology/network APIs; source:src/base.h Base reset API."],"reason":"Recover the complete technology acquisition path in the faction owner using real player, technology, network and base-reset APIs; retain seed lessons and original span without claiming a current byte match."}
+// TRIED: writing the tech-flag bit test with an intermediate `and` result (rather than folding into the `if`'s condition) adds an extra `mov`; a ternary for the message-name select lowers to `neg/sbb/and` instead of the original's `mov`/`test`/`je` overwrite. Landed body: 0.976 mnemonic similarity, first divergence at #17 (one extra `mov`, one `lea` vs `add` in the tech-preference-table address computation), not chased further.
+int __cdecl steal_tech(int faction_id, int faction_id_with,
+                       int acquisition_mode) {
+    if (faction_id == 0 || faction_id_with == 0) {
+        return 0;
+    }
+
+    if (IsMultiplayerNet != 0 &&
+        (LockEnableMask & (1 << faction_id)) != 0 &&
+        faction_id != ConsoleGlobal.faction_id_) {
+        return 0;
+    }
+
+    char *const topic = acquisition_mode != 0
+        ? const_cast<char *>
+            ("STEALTECH")
+        : const_cast<char *>
+            ("ACQUIRETECH");
+    int cost = tech_pick(faction_id, 0, faction_id_with, topic);
+    if (cost < 0) {
+        cost = 9999;
+    }
+
+    if (IsMultiplayerNet != 0 &&
+        faction_id == ConsoleGlobal.faction_id_) {
+        message_data(0x244C, 0, faction_id, cost, faction_id_with, 0);
+        return cost == 9999;
+    }
+
+    if (faction_id_with == ConsoleGlobal.faction_id_ && cost != 9999) {
+        GenderDefault = Players[faction_id].noun_gender;
+        PluralityDefault = Players[faction_id].is_noun_plural;
+        parse_says(0, Players[faction_id].noun_faction, -1, -1);
+        StringTemp[0] = '\0';
+        say_tech(StringTemp, cost, 0);
+        parse_says(1, StringTemp, -1, -1);
+        NetMsgPrimary.pop("STOLETECH", 5000, 0, NULL);
+    }
+
+    tech_achieved(faction_id, cost, faction_id_with, 0);
+
+    if ((LockEnableMask & (1 << faction_id)) == 0 && cost != 9999) {
+        bases_reset(-1, faction_id, 0);
+    }
+    return cost == 9999;
+}
+// ORIGINAL: 0x005B4600 ?social_set@@YAXH@Z 0x005B4600-0x005B4721
+// RECOVERY_BINDING: v1 {"evidence":["Pinned native instructions at 0x005B4600..0x005B4721: pre/post cost factors, pending social calculation, owned-base accumulator scaling and active-window redraw.","source:src/faction.h PlayerData social members; source:src/base.h Base accumulator members."],"reason":"Home social adoption in the faction owner with the original signed-int API and typed pending effect/base accumulators; preserve the FILE seed identity and avoid a forwarder or exactness claim."}
+void __cdecl social_set(int faction_id) {
+    const int nutrient_cost_before = cost_factor(faction_id, 0, -1);
+    const int mineral_cost_before = cost_factor(faction_id, 1, -1);
+
+    PlayerData &player = PlayersData[faction_id];
+    social_calc(&player.soc_category_pending, &player.soc_effect_pending,
+                faction_id, 0, 0);
+
+    const int nutrient_cost_after = cost_factor(faction_id, 0, -1);
+    const int mineral_cost_after = cost_factor(faction_id, 1, -1);
+
+    for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+        Base &base = Bases[base_id];
+        if (base.faction_id_current != faction_id) {
+            continue;
+        }
+
+        if (nutrient_cost_after != nutrient_cost_before) {
+            base.nutrients_accumulated =
+                (nutrient_cost_before / 2 +
+                 base.nutrients_accumulated * nutrient_cost_after) /
+                nutrient_cost_before;
+        }
+        if (mineral_cost_after != mineral_cost_before) {
+            base.minerals_accumulated =
+                (mineral_cost_before / 2 +
+                 base.minerals_accumulated * mineral_cost_after) /
+                mineral_cost_before;
+            base.minerals_accumulated_2 = base.minerals_accumulated;
+        }
+
+        if (IsMultiplayerNet == 0 &&
+            (LockEnableMask & (1u << faction_id)) != 0) {
+            set_base(base_id);
+            base_compute(1);
+        }
+    }
+
+    if (faction_id == ConsoleGlobal.faction_id_) {
+        TutWinBaseWindow.redraw();
+    }
+}
+// ORIGINAL: 0x00545D60 ?propose_trade_maps@@YAXHH@Z 0x00545D60-0x00545E80
+// RECOVERY_BINDING: v1 {"evidence":["Pinned native instructions at 0x00545D60..0x00545E80 distinguish actor treaty lookup, target patience-byte update and local/network map-transfer paths.","source:src/faction.h PlayerData treaty/patience arrays and typed diplomacy/map APIs."],"reason":"Recover the trade-map proposal in faction.cpp using the actor treaty row, target-owned patience and existing transfer APIs; preserve original role orientation and source-owned string literal behavior."}
+void __cdecl propose_trade_maps(int faction_id, int faction_id_with) {
+    PopupDialogFactionID = faction_id_with;
+
+    const int has_prior_map_trade =
+        (PlayersData[faction_id].diplo_treaties[faction_id_with] & 1) != 0;
+    if ((!has_prior_map_trade && DiploFriction > 0) ||
+        DiploFriction > 4) {
+        GenderDefault = Players[faction_id_with].noun_gender;
+        PluralityDefault = Players[faction_id_with].is_noun_plural;
+        parse_says(0, Players[faction_id_with].noun_faction, -1, -1);
+        x_pops_short("REJMAPS", 0x100000,
+                     FactionDiplomacyPortraits[faction_id_with], pop_wait);
+        return;
+    }
+
+    x_pops_short("TRADEMAPS", 0x100000,
+                 FactionDiplomacyPortraits[faction_id_with], pop_wait);
+
+    // Native performs an unsigned byte increment at PlayerData + 0xB8.
+    // diplo_patience is the source-owned byte array at that displacement.
+    PlayersData[faction_id_with].diplo_patience[faction_id] =
+        static_cast<char>(static_cast<unsigned char>(
+            PlayersData[faction_id_with].diplo_patience[faction_id]) + 2u);
+
+    if (IsMultiplayerNet != 0) {
+        log_say("Sending TRADE MAPS", faction_id, faction_id_with, 0);
+        message_data(0x2448, 0, faction_id, faction_id_with, 0, 0);
+        NetDaemonNet.await_diplo(0x448);
+        DiplomacyMapTransferChanged = 1;
+        return;
+    }
+
+    trade_maps(faction_id, faction_id_with);
+    DiplomacyMapTransferChanged = 1;
+    return;
+}
+// ORIGINAL: 0x0053E4C0 ?demands_withdrawal@@YAXHH@Z 0x0053E4C0-0x0053E5B6
+// RECOVERY_BINDING: v1 {"evidence":["Pinned native instructions at 0x0053E4C0..0x0053E5B6: commlink callback precedes multiplayer human gate, demand result and perihelion dialogue.","source:src/faction.h and source:src/netdaemon.h typed dependency declarations."],"reason":"Recover the withdrawal-demand caller with the original callback/gate order and typed result topics; retain the original extent while its two callees are recovered as complete neighboring bodies."}
+// TRIED: `(byte)(1 << (a2 & 0x1f))` (explicit mask before the shift, mnemonic similarity 0.896, 8 edit blocks - the mask compiles to a spurious `and` the original does not have, since `shl` already masks its count to 5 bits at the hardware level) vs. plain `(byte)(1 << a2)` (0.945, 2 edit blocks). Also: if/else-if chain over the 0/1/2 result vs. `switch` - the original lowers the three-way dispatch as a decrement chain (`sub eax,0 / je / dec / je / dec / jne`), which only the `switch` form reproduces. Landed the switch form. Neither reached BYTE_EXACT; first remaining divergence is at the record-base multiply by 0x59c (#35, `shl` vs `mov`).
+void __cdecl demands_withdrawal(int faction_id, int faction_id_with) {
+    PopupDialogFactionID = faction_id_with;
+    if (commlink_attempter(faction_id, faction_id_with) != 0) {
+        return;
+    }
+    if (IsMultiplayerNet != 0 &&
+        (LockEnableMask & (1u << faction_id_with)) != 0) {
+        return;
+    }
+
+    const int response = demand_withdrawal(faction_id, faction_id_with);
+    if (SunspotDuration <= 0) {
+        return;
+    }
+
+    GenderDefault = Players[faction_id_with].noun_gender;
+    PluralityDefault = Players[faction_id_with].is_noun_plural;
+    parse_says(0, Players[faction_id_with].noun_faction, -1, -1);
+
+    switch (response) {
+    case 0:
+        NetMsgPrimary.pop("WITHSUNYES", 5000, 0, 0);
+        break;
+    case 1:
+        NetMsgPrimary.pop("WITHSUNNO", 5000, 0, 0);
+        break;
+    case 2:
+        NetMsgPrimary.pop("WITHSUNWAR", 5000, 0, 0);
+        break;
+    default:
+        break;
+    }
+}
+// ORIGINAL: 0x005589E0 ?commlink_attempter@@YAHHH@Z 0x005589E0-0x00558C55
+// RECOVERY_BINDING: v1 {"evidence":["Pinned native instructions at 0x005589E0..0x00558C55: vendetta parser fields, key-state route, network waiting mask, CommlinkPending/CommlinkFaction selection and final channel-2 latch.","source:src/netdaemon.h CommlinkFaction/CommlinkPending and NetDaemonNet.lock_state_[2].payload_.flags; source:src/diplowin.h DiploWindow."],"reason":"Recover the complete commlink response gate in faction.cpp through typed player, daemon, console and DiploWindow owners; keep selected-faction reloads after parser callbacks and preserve the original seed history."}
+// TRIED: straightforward translation matches from instr #3 on (prologue push/frame-pointer order); did not chase further given the three parse_says(chan, ptr, -1, -1) call sites and the shared 9bbfec/9bbff0 globals already reproduce the control flow.
+int __cdecl commlink_attempter(int faction_id, int contact_flags) {
+    PopupDialogFactionID = contact_flags;
+    if ((contact_flags & DTREATY_VENDETTA) != 0) {
+        const int other = contact_flags & ~DTREATY_VENDETTA;
+        GenderDefault = Players[other].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(0, Players[other].title_leader, -1, -1);
+        GenderDefault = Players[other].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(1, Players[other].name_leader, -1, -1);
+        GenderDefault = Players[other].noun_gender;
+        PluralityDefault = Players[other].is_noun_plural;
+        parse_says(2, Players[other].noun_faction, -1, -1);
+        NetMsgPrimary.pop(
+            (LockEnableMask & (1u << ((other + 8) & 31))) != 0
+                ? "NOTMETYET" : "ERADICATED",
+            5000, 0, NULL);
+        return 1;
+    }
+
+    if (((GetAsyncKeyState(VK_CONTROL) & 0xFF00) != 0 ||
+         (GetAsyncKeyState(VK_SHIFT) & 0xFF00) != 0) &&
+        (GameState & STATE_DEBUG_MODE) != 0) {
+        DiploWindow.exec(faction_id, contact_flags);
+        return 0;
+    }
+
+    const int local_faction = ConsoleGlobal.faction_id_;
+    if (IsMultiplayerNet != 0 && (NetTurnFlags & 0x10u) == 0 &&
+        (ConsoleFactionsWaitingMask & (1u << (local_faction & 31))) != 0) {
+        NetMsgPrimary.pop("ALREADYDONE", 5000, 0, NULL);
+        return 1;
+    }
+
+    if (CommlinkPending != 0) {
+        GenderDefault = Players[CommlinkFaction].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(0, Players[CommlinkFaction].title_leader, -1, -1);
+        GenderDefault = Players[CommlinkFaction].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(1, Players[CommlinkFaction].name_leader, -1, -1);
+        const int response = X_pop("DIPLOALREADY", NULL);
+        if (response == 0) return 1;
+        message_data(0x1505, CommlinkFaction, 0, 0, 0, 0);
+        DiploWindow.close();
+        if (response > 1) return 1;
+    }
+
+    if (IsMultiplayerNet != 0 &&
+        (ConsoleControlTurnActive != 0 ||
+         NetDaemonNet.lock_state_[2].payload_.flags != 0))
+        return 1;
+    return 0;
+}
+// ORIGINAL: 0x00549270 ?demand_withdrawal@@YAHHH@Z 0x00549270-0x00549923
+// RECOVERY_BINDING: v1 {"evidence":["Pinned native instructions at 0x00549270..0x00549923: both directional treaty-table walks, diplo_spoke writes, friction gates, popup returns, territory and withdrawal calls.","source:src/faction.h PlayerData/diplomacy scratch storage and typed diplomacy APIs; source:src/game.h GameRules/SunspotDuration.","Pinned native 0x0054935B/0x00549363 and 0x0054958C/0x0054959B load 0x9A64D4 (TurnCurrentNum) before both diplo_spoke timestamp stores.","Pinned native 0x005495F1 increments DiploFriction; use the existing faction.cpp diplo_add helper for native signed 32-bit wrap without C++ signed-overflow UB.","Pinned native 0x005496C6..0x00549709 confirms accepted territory routes perform the reversed callback then converge through the ordinary withdrawal path; declined popup uses only the ordinary path."],"reason":"Recover the complete withdrawal response in the faction owner with direction-correct typed status storage, original callback ordering, and native signed wrap/clamp behavior; preserve seed history without asserting byte or game acceptance. Both diplo_spoke timestamps use live TurnCurrentNum, and friction increments use diplo_add for native wrap. Accepted territory response intentionally performs reversed then ordinary withdrawals; rejection performs only the ordinary withdrawal."}
+// TRIED: MISMATCH #4 'push' vs 'mov' (framed build). Full 1715-byte transcription of the treaty-offer/double-cross/territory-demand/ withdrawal state machine faithfully following the disassembly's argument orders (several calls swap (a1,a2) vs (a2,a1) between branches - transcribed as observed, not assumed symmetric). Register-scheduling divergence only; did not chase further.
+int __cdecl demand_withdrawal(int faction_id, int against_id) {
+    PopupDialogFactionID = against_id;
+    diplomacy_caption(faction_id, against_id);
+
+    uint32_t &offer_flags = PlayersData[against_id].diplo_treaties[faction_id];
+    if ((offer_flags & 0x200u) == 0 && (offer_flags & 1u) == 0 &&
+        (DiploScratchFA70 != 0 || DiploScratchFAA0 != 0 ||
+         (DiploFriction > (DiploScratchFA68 != 0 ? 5 : 15) &&
+          DiploScratchFA98 == 0))) {
+        if (IsMultiplayerNet != 0) {
+            log_say("Sending TREATY ON", against_id, faction_id, 0x10);
+            message_data(0x2441, 0, against_id, faction_id, 0x10, 0);
+            NetDaemonNet.await_diplo(0x441);
+        } else {
+            treaty_on(against_id, faction_id, DTREATY_VENDETTA);
+        }
+
+        PlayersData[faction_id].diplo_spoke[against_id] = TurnCurrentNum;
+        if (SunspotDuration > 0) return 2;
+
+        diplomacy_caption(faction_id, against_id);
+        GenderDefault = Players[faction_id].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(0, Players[faction_id].title_leader, -1, -1);
+        GenderDefault = Players[faction_id].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(1, Players[faction_id].name_leader, -1, -1);
+        StringTemp[0] = '\0';
+        strcat(StringTemp, "NEVER");
+        x_pops_short(StringTemp, 0x100000,
+                     FactionDiplomacyPortraits[against_id], pop_wait);
+        return 2;
+    }
+
+    uint32_t &response_flags = PlayersData[faction_id].diplo_treaties[against_id];
+    if ((response_flags & 1u) == 0) {
+        const int withdrawal_target = dont_withdrawal(faction_id, against_id);
+        if (withdrawal_target != 0 && (response_flags & 2u) != 0) {
+            if (IsMultiplayerNet != 0) {
+                log_say("Sending DOUBLE CROSS", against_id, faction_id, -1);
+                message_data(0x2440, 0, against_id, faction_id, -1, 0);
+                NetDaemonNet.await_diplo(0x440);
+            } else {
+                double_cross(against_id, faction_id, -1);
+            }
+            if (SunspotDuration > 0) return 2;
+
+            GenderDefault = Players[faction_id].is_leader_female;
+            PluralityDefault = 0;
+            parse_says(0, Players[faction_id].title_leader, -1, -1);
+            GenderDefault = Players[faction_id].is_leader_female;
+            PluralityDefault = 0;
+            parse_says(1, Players[faction_id].name_leader, -1, -1);
+            GenderDefault = Players[withdrawal_target].is_leader_female;
+            PluralityDefault = 0;
+            parse_says(2, Players[withdrawal_target].title_leader, -1, -1);
+            GenderDefault = Players[withdrawal_target].is_leader_female;
+            PluralityDefault = 0;
+            parse_says(3, Players[withdrawal_target].name_leader, -1, -1);
+            x_pops_short("RUNNINGDOG", 0x100000,
+                         FactionDiplomacyPortraits[against_id], pop_wait);
+            DiploScratchFA70 = 0;
+            PlayersData[faction_id].diplo_spoke[against_id] = TurnCurrentNum;
+            return 2;
+        }
+    }
+
+    const int friction_snapshot = DiploScratchFA98;
+    int territory_notice = 0;
+    if ((response_flags & 2u) == 0) {
+        int &rejection_count = PlayersData[against_id].diplo_spoke[faction_id];
+        int next_rejection = diplo_add(rejection_count, 1);
+        if (next_rejection < 0) next_rejection = 0;
+        else if (next_rejection > 0x14) next_rejection = 0x14;
+        rejection_count = next_rejection;
+
+        if (DiploFrictionFactionID == static_cast<uint32_t>(against_id) &&
+            DiploFrictionFactionIDWith == static_cast<uint32_t>(faction_id))
+            DiploFriction = diplo_add(DiploFriction, 1);
+
+        if ((offer_flags & 0x20u) != 0 || DiploScratchFA70 != 0 ||
+            DiploScratchFAA0 != 0 ||
+            diplo_add(friction_snapshot, 3) < DiploScratchFA78 ||
+            (DiploScratchFA68 != 0 && friction_snapshot == 0)) {
+            if (SunspotDuration <= 0) {
+                GenderDefault = Players[faction_id].is_leader_female;
+                PluralityDefault = 0;
+                parse_says(0, Players[faction_id].title_leader, -1, -1);
+                GenderDefault = Players[faction_id].is_leader_female;
+                PluralityDefault = 0;
+                parse_says(1, Players[faction_id].name_leader, -1, -1);
+                x_pops_short("NOWAYJOSE", 0x100000,
+                             FactionDiplomacyPortraits[against_id], pop_wait);
+            }
+            return 1;
+        }
+
+        if (territory(against_id, faction_id, 0, NULL, NULL) != 0) {
+            if (SunspotDuration > 0) return 1;
+            territory_notice = 1;
+            GenderDefault = Players[faction_id].is_leader_female;
+            PluralityDefault = 0;
+            parse_says(0, Players[faction_id].title_leader, -1, -1);
+            const int accepted = x_pops_short("TURNABOUT", 0x100000,
+                                              FactionDiplomacyPortraits[against_id],
+                                              pop_wait);
+            if (accepted != 0) {
+                if (IsMultiplayerNet != 0) {
+                    log_say("Sending WITHDRAWAL", against_id, faction_id, 0);
+                    message_data(0x244a, 0, against_id, faction_id, 0, 0);
+                } else {
+                    do_withdrawal(against_id, faction_id);
+                }
+            }
+        }
+    }
+
+    int result;
+    if (IsMultiplayerNet != 0) {
+        log_say("Sending WITHDRAWAL", faction_id, against_id, 0);
+        message_data(0x244a, 0, faction_id, against_id, 0, 0);
+        NetDaemonNet.await_diplo(0x44a);
+        result = 1;
+    } else {
+        result = do_withdrawal(faction_id, against_id);
+    }
+
+    if (territory_notice == 0 && SunspotDuration <= 0) {
+        GenderDefault = Players[faction_id].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(0, Players[faction_id].name_leader, -1, -1);
+        parse_says(1, Players[faction_id].adj_leader, -1, -1);
+        if (result != 0) {
+            const uint32_t final_flags =
+                PlayersData[faction_id].diplo_treaties[against_id];
+            if ((final_flags & 1u) != 0) {
+                parse_says(2, get_pact(faction_id), -1, -1);
+                x_pops_short("WITHDRAWPACT", 0x100000,
+                             FactionDiplomacyPortraits[against_id], pop_wait);
+                return 0;
+            }
+            if ((final_flags & 2u) != 0) {
+                x_pops_short("WITHDRAWTRUCE", 0x100000,
+                             FactionDiplomacyPortraits[against_id], pop_wait);
+                return 0;
+            }
+            x_pops_short("WITHDRAW", 0x100000,
+                         FactionDiplomacyPortraits[against_id], pop_wait);
+            return 0;
+        }
+        x_pops_short("NOWITHDRAW", 0x100000,
+                     FactionDiplomacyPortraits[against_id], pop_wait);
+    }
+    return 0;
 }

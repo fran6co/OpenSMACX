@@ -3410,6 +3410,64 @@ int __cdecl action_airdrop(int veh_id, int x, int y, int mode) {
     }
     return 1;
 }
+// ORIGINAL: 0x00522F00 ?do_fungal_towers@@YAXXZ 0x00522F00-0x005230DD
+// RECOVERY_BINDING: v1 {"evidence":["Pinned native instructions at 0x00522F00..0x005230DD: descending vehicle traversal, random spread checks, radius offsets, per-faction synchronization and 0x0028805C clear mask.","source:src/veh.h Veh/Vehs and source:src/map.h map, bit, synchronization and radius owners."],"reason":"Recover fungal tower spread and local clearing in the vehicle owner through real vehicle/map state and synchronization calls; preserve original random order and seed identity, without claiming matching or runtime acceptance."}
+void __cdecl do_fungal_towers() {
+    for (int vehicle_id = VehCurrentCount - 1;
+         vehicle_id >= 0; --vehicle_id) {
+        Veh &vehicle = Vehs[vehicle_id];
+        if (vehicle.proto_id != BSC_FUNGAL_TOWER) {
+            continue;
+        }
+
+        vehicle.state |= VSTATE_UNK_4;
+        const int x = vehicle.x;
+        const int y = vehicle.y;
+
+        if (rand() % 5 == 0) {
+            const int direction = rand() % 8;
+            int spread_x = x + RadiusOffsetX[direction + 1];
+            if ((MapIsFlat & 1) == 0) {
+                if (spread_x < 0) {
+                    spread_x += MapLongitudeBounds;
+                } else if (spread_x >= MapLongitudeBounds) {
+                    spread_x -= MapLongitudeBounds;
+                }
+            }
+            const int spread_y = y + RadiusOffsetY[direction + 1];
+
+            if (spread_y >= 0 && spread_y < MapLatitudeBounds &&
+                spread_x >= 0 && spread_x < MapLongitudeBounds) {
+                bit_set(spread_x, spread_y, BIT_FUNGUS, 1);
+                // This native mask is 0x0028805C, distinct from the nearby
+                // MapTileFlagClearMask data value (0x00288050).
+                bit_set(spread_x, spread_y, 0x0028805C, 0);
+                synch_bit(spread_x, spread_y, 1);
+                synch_bit(spread_x, spread_y, 2);
+                synch_bit(spread_x, spread_y, 3);
+                synch_bit(spread_x, spread_y, 4);
+                synch_bit(spread_x, spread_y, 5);
+                synch_bit(spread_x, spread_y, 6);
+                synch_bit(spread_x, spread_y, 7);
+                draw_tile(spread_x, spread_y, 2);
+            }
+        }
+
+        bit_set(x, y, BIT_FUNGUS, 1);
+        bit_set(x, y, 0x0028805C, 0);
+        synch_bit(x, y, 1);
+        synch_bit(x, y, 2);
+        synch_bit(x, y, 3);
+        synch_bit(x, y, 4);
+        synch_bit(x, y, 5);
+        synch_bit(x, y, 6);
+        synch_bit(x, y, 7);
+        draw_tile(x, y, 2);
+
+        vehicle.morale = static_cast<uint8_t>(morale_alien(vehicle_id, 0));
+        spot_all(vehicle_id, 1);
+    }
+}
 
 /*
 Purpose: Check whether the specified prototype is a planet buster.
