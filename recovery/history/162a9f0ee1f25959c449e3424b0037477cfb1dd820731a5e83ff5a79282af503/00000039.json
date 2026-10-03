@@ -1,0 +1,27 @@
+{
+  "event_id": "5acb5dae67289b3600a749af1c66e1e4bf0fa60b15f9759832905c671f9920f4",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/popup.cpp",
+      "src/popup.h",
+      "src/recovered/units/00559000.cpp"
+    ],
+    "evidence": [
+      "Admit only the full mapped559000 Popup source member using existing owned BasePop/Dialogs/SpriteBox state. Name Popup::set_picture(Sprite*,int,char*) provisionally from behavior; actual native symbol must be observed, not guessed. Preserve exact restoration obligation and retain seed until source/claim reconciliation. No new storage, slots or callee body; existing SpriteBox::sprite unfinished dependency stays explicit. Communicate owner work remains separate."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5607424,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "50654bfd60516028f1b39c0a84cf8f07db56d21eef78ecedd93bb8e8fc7a67f2",
+  "request_id": "admit-popup-picture-owner-559000",
+  "schema_version": 1,
+  "sequence": 39,
+  "stream": "task:base-colony-economy-coverage-wave"
+}

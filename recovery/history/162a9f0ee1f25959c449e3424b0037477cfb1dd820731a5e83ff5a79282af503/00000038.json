@@ -1,0 +1,20 @@
+{
+  "event_id": "50654bfd60516028f1b39c0a84cf8f07db56d21eef78ecedd93bb8e8fc7a67f2",
+  "payload": {
+    "affects": [
+      "entity-36aaf4b8892d90554805fe6b2df2c53c735b82961a7c127d5869a87bffd7d8ec"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "popup-picture-owner-559000",
+    "evidence": [
+      "Pinned communicate55468E Popup::start and5546A5 call559000 share ECX=EBP-5534. BasePop caller_sprite2144, dialogs21D0, Dialogs SpriteBox+70 =>2240, list entry_count+34=>2274. Existing BasePop picture_enabled/set_caller_picture/dialogs and SpriteBox::sprite express complete58-byte operation. Preserve historical exact seed identity/spans; method name is behavior-derived, no original name claim. No layout/storage/virtual-slot change."
+    ],
+    "hypothesis": "The retained 559000 shell is a genuine Popup picture operation, not a free function or manual-offset proxy.",
+    "kind": "discovery"
+  },
+  "previous_event": "d1f376aee001dddf4fb6c4646b016245f13faf4fddf87b63677b6f143b39d79f",
+  "request_id": "popup-picture-owner-559000",
+  "schema_version": 1,
+  "sequence": 38,
+  "stream": "task:base-colony-economy-coverage-wave"
+}
