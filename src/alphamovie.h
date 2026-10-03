@@ -31,6 +31,7 @@ class MCIVideo {
   int load(char *movie_path, Win *target_window, int x, int y);
   void play();  // ?play@MCIVideo@@QAEXXZ  0x006001E0
   void stop();  // ?stop@MCIVideo@@QAEXXZ  0x00600270
+  int status();  // 0x006002F0
   // 0x00600330, homed into general.cpp: copies the posted frame into the
   // window's own device context. No catalogue name - `blit_frame` is the
   // tree's, recorded on the body's `symbol` fact.
@@ -106,6 +107,7 @@ class AlphaMovie : public GraphicWin {
   // the compiler then destroys the embedded MCIVideo and base naturally.
   ~AlphaMovie();
   void UNK7();
+  void UNK1();
   int UNK2(int a1, int a2, int a3);
   int UNK4(int a1, int a2, int a3, int a4);
   int UNK3(int a1);

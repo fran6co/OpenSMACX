@@ -646,3 +646,21 @@ void __cdecl amovie_project(char *movie) {
     }
 
 }
+
+// ORIGINAL: 0x00404200 ?UNK1@AlphaMovie@@QAEXXZ 0x00404200-0x00404208 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence":["Pinned native 0x00404200 body loads the primary Win vptr and tail-dispatches slot 58 with the unchanged receiver.","src/alphamovie.h declares AlphaMovie : public GraphicWin; src/graphicwin.h and src/win.h establish the unadjusted GraphicWin/Win receiver and typed virtual release_modal slot 58.","The transferred seed's kind='game' is catalogue-only metadata; the native source writer does not invent a BODY kind marker."],"reason":"Home the original virtual dispatch in AlphaMovie as a typed inherited call, preserving dynamic dispatch and the original receiver hierarchy."}
+void AlphaMovie::UNK1() {
+    release_modal();
+}
+
+// ORIGINAL: 0x006002F0 ?status@MCIVideo@@QAEHXZ 0x006002F0-0x0060031F BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence":["Pinned native 0x006002F0 reserves a 0x18-byte MCI_DGV_STATUS_PARMS local, stores 2 at local +8, loads the low word of MCIVideo+4 for the API device id, calls MCI_STATUS with MCI_STATUS_ITEM, then returns local +4.","src/alphamovie.h declares source-owned uint32_t mciId_ at +0x4; src/alphamovie.cpp includes the Windows SDK digitalv.h definition whose x86 MCI_DGV_STATUS_PARMS has dwReturn at +4 and dwItem at +8.","The transferred seed's kind='game' is catalogue-only metadata; the native source writer does not invent a BODY kind marker."],"reason":"Use the genuine SDK status structure and typed source member, preserving the observed low-word conversion, item, command flags, and return value."}
+int MCIVideo::status() {
+    MCI_DGV_STATUS_PARMS params;
+    params.dwItem = 2;
+    const MCIDEVICEID device_id = static_cast<unsigned short>(mciId_);
+    mciSendCommandA(device_id, MCI_STATUS,
+                    MCI_STATUS_ITEM,
+                    reinterpret_cast<DWORD_PTR>(&params));
+    return static_cast<int>(params.dwReturn);
+}
