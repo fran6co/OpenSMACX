@@ -1,0 +1,61 @@
+{
+  "event_id": "3bc75ced951f1005eeb514b8227b0d7068b76b7e56360c71127795867b405f3a",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_vehicle_gameplay_five_behavior.py",
+      "recovery/tests/vehicle_gameplay_five_host",
+      "src/game.cpp",
+      "src/game.h",
+      "src/map.cpp",
+      "src/map.h",
+      "src/pending_bodies.cpp",
+      "src/recovered/units/00564b90.cpp",
+      "src/recovered/units/00588f90.cpp",
+      "src/temp.h",
+      "src/unrecovered/00505d80.cpp",
+      "src/unrecovered/00506650.cpp",
+      "src/unrecovered/00591290.cpp",
+      "src/veh.cpp",
+      "src/veh.h"
+    ],
+    "evidence": [
+      "Coordinator authorizes full alien_start, assemble_passengers, alt_set, battle_kill and interceptor in genuine existing game/map/vehicle source owners, with exact original spans and all historical claims/findings preserved. Retire only replaced executable forwarders and complete superseded seeds after build/link and relevant verification. Existing task baseline stays unchanged.",
+      "Private complete candidates reviewed against pinned original and current typed owners. Use corrected battle_kill state mask and current PlayerData/RulesChassis members; repair alt_set signed altitude interface to original signed prototype. Owned ordinary literals are allowed with original provenance, without asserting exact data layout. No new byte claim, automatic publication, linked preservation or game acceptance is authorized.",
+      "Fauna and turn_upkeep candidates remain separate pending discovered native-life/difficulty binding and CFG corrections; no incomplete helper is counted as full recovery. Worker source proposals remain private; root alone publishes source annotations through native writer and integrates verified changes."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5803920,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5655440,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5837456,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5266816,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5269072,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "vehicle-gameplay-five-full-owners-20261003",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:game-logic-seed-owner-coverage"
+}

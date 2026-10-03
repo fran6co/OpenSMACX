@@ -1,0 +1,40 @@
+{
+  "event_id": "11449044d5622c2bbe6d66d305416b6206b53dce9b7de4df5c95d4a54ecb5922",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_vehicle_gameplay_six_behavior.py",
+      "src/popup.h",
+      "src/unrecovered/0051f2e0.cpp",
+      "src/unrecovered/00522180.cpp",
+      "src/unrecovered/005258c0.cpp"
+    ],
+    "evidence": [
+      "Coordinator authorizes six complete typed bodies, incorporating pinned corrections to fauna global operands and saved signed JL/JGE limit. Original task baseline remains unchanged. Alt_set stays retained pending delete_landmark owner/interface resolution.",
+      "Random-events gains only a mapped unfinished empty body in game.cpp to preserve linking of the completed turn flow. Keep its original seed; do not count it as implemented recovery or acceptance. Add shared declarations for existing kill/POP2 owners; no duplicate definitions, claim grants or image forwards."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5382528,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5396672,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5370592,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "3bc75ced951f1005eeb514b8227b0d7068b76b7e56360c71127795867b405f3a",
+  "request_id": "native-life-six-owner-integration-20261003",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:game-logic-seed-owner-coverage"
+}
