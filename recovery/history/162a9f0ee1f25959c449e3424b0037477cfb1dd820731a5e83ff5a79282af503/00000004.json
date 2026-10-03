@@ -1,0 +1,20 @@
+{
+  "event_id": "e686652796a0225dce43660526adabb11a29ca5516311db119fc94e7fe957afa",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/base.cpp",
+      "src/base.h"
+    ],
+    "evidence": [
+      "Explicit coordinator admission of BaseProductionZoomRequested real int initial storage at90E934..90E938 and declaration, for current colony production/upkeep bodies; require canonical initial bytes and fresh compiler-backed object evidence at shared publication. This is specific new global authorization, no aliases, no unrelated ownership, no changed behavior, and discovery stays pending until incorporated. Other task baselines/claims stay intact."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "01b25fef72a5480cd3755ce2beb1383db85955fc82fa7832b274de6e8a44fe8d",
+  "request_id": "colony-production-zoom-latch-admission-20261003",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:base-colony-economy-coverage-wave"
+}

@@ -1,0 +1,20 @@
+{
+  "event_id": "01b25fef72a5480cd3755ce2beb1383db85955fc82fa7832b274de6e8a44fe8d",
+  "payload": {
+    "affects": [
+      "entity-d6c7432a2e52ea6a68b8b8e68aa23e5e62c4828fd1b60527bd067452d16efe7b"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "colony-production-zoom-latch-20261003",
+    "evidence": [
+      "Canonical4F79F2 clearsDWORD90E934;4F0EDE..4F0F03 tests popup result and stores1;4F7EFB..4F7F41 gates log_say and TutWinBaseWindow.zoom. Adjacent source-bound BasePsychDrones ends90E934, BasePopulationUnassigned begins90E938. Name remains behavioral/provisional, not whole game or matching proof."
+    ],
+    "hypothesis": "A source-owned production popup acceptance latch at90E934 is cleared by base_upkeep, set by nonzero production popup result4F0F03, and read to open BaseWin zoom after upkeep. Recover real int storage rather than raw address.",
+    "kind": "discovery"
+  },
+  "previous_event": "3b7ba65a09c6addcea409ee094ac99806f7f123660d9756b09df866033e10aec",
+  "request_id": "colony-production-zoom-latch-20261003",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:base-colony-economy-coverage-wave"
+}
