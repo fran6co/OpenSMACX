@@ -200,10 +200,6 @@ void __stdcall VectorCtorIterator(void *array, unsigned int element_size, int co
 // more for each of three fixed-address windows.
 
 
-void __cdecl world_rainfall() {
-    typedef void(__cdecl *pending)();
-    PENDING_BODY(0x005C4470, pending)();
-}
 
 // Four Time callbacks `temp.h` bound as pointers - start_timers (time.cpp)
 // calls each by name now, reaching the image's `push 0x...` immediate
