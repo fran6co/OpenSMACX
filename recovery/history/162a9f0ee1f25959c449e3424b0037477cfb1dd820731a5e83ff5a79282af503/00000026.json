@@ -1,0 +1,21 @@
+{
+  "event_id": "2730ed9e0dac3f9494d120a24a92d0cec5222c151923b4fd5230eb7e9500d885",
+  "payload": {
+    "affects": [
+      "entity-d4662a79d7b9d1cd234ea21ea0026657d4002e95a4d8252ec8a789a916d74cff",
+      "entity-da3dc4fa8f106f83c693b9ca531f1471f117e7daa023902924803dd11eb17a0d"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "colony-turn-caller-closure-20261003",
+    "evidence": [
+      "Canonical seed production_phase526E70..527285 invokes base_upkeep across TU; faction_upkeep527290..5275AC invokes production_phase. Current native source inventory has no compiling owner for either. Root production205beb38 is fully source-owned and links; isolated worker dependency audit identifies this call-path closure. Scope expansion must precede source publication and missing members/storage need further explicit evidence/admission."
+    ],
+    "hypothesis": "The complete colony bodies are called by seed-only production_phase526E70 and faction_upkeep527290; recover their typed faction turn orchestration rather than leaving the recovered upkeep chain disconnected. Preserve pending riot behavior decision and all original identities and claims.",
+    "kind": "discovery"
+  },
+  "previous_event": "0648d38ea6057c60bdbd78a2f489f33fc4cd9fc95bcdb75dbbc701e9e10cb339",
+  "request_id": "colony-turn-caller-closure-20261003",
+  "schema_version": 1,
+  "sequence": 26,
+  "stream": "task:base-colony-economy-coverage-wave"
+}

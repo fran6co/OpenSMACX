@@ -1,0 +1,34 @@
+{
+  "event_id": "03a42d4f99232e61344717fa8ec34d4c4d6b9ac15612f8161e19bf97607cdaa3",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_base_colony_production.py",
+      "src/faction.cpp",
+      "src/faction.h",
+      "src/game.cpp",
+      "src/game.h"
+    ],
+    "evidence": [
+      "Coordinator admits only the two complete source-mapped faction turn orchestration identities production_phase526E70 and faction_upkeep527290, using current real Base and PlayerData owners/callees. Worker may prepare private complete bodies and actual-source host controls; root owns shared/native/Git integration. No implicit additional functions, globals, class members, new behavior, weakened claims or task-baseline reset. Riot initialization/fallback decision remains pending. Preserve original seed evidence until verified owner recovery; compile/link plus bounded controls are not full game acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5402224,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5403280,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "2730ed9e0dac3f9494d120a24a92d0cec5222c151923b4fd5230eb7e9500d885",
+  "request_id": "admit-colony-turn-caller-closure-20261003",
+  "schema_version": 1,
+  "sequence": 27,
+  "stream": "task:base-colony-economy-coverage-wave"
+}
