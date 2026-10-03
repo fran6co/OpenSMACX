@@ -1,0 +1,39 @@
+{
+  "event_id": "f529bed2fd568eda311c4a18fd3fd8fba4b76410e9077c33136f2f5ac8f7ef22",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_base_upkeep_behavior.py",
+      "recovery/tests/test_production_upkeep_behavior.py",
+      "src/base.cpp",
+      "src/base.h",
+      "src/path.h"
+    ],
+    "evidence": [
+      "Admit real three-function turn chain, Path::clear_destination member using existing fields and can_call_council declaration in already-owned council.h. Callback order/live state, packed Goal arithmetic and native strings need actual-source controls and native review. No placeholders, baseline reset, automatic demotion, original behavior fixes or acceptance grants. Remove seeds only once compiled owner retains full evidence and build/link/claimcontinuity verified."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5403280,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5402224,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5208512,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "7101b75f1e35481a951b5db1384a367ad78de31f1b96b55f57287ceef060043b",
+  "request_id": "admit-complete-production-chain-owners",
+  "schema_version": 1,
+  "sequence": 60,
+  "stream": "task:base-colony-economy-coverage-wave"
+}

@@ -1,0 +1,22 @@
+{
+  "event_id": "7101b75f1e35481a951b5db1384a367ad78de31f1b96b55f57287ceef060043b",
+  "payload": {
+    "affects": [
+      "entity-5c40dbc4ec1f58f56ac39602af8992b82d961d42d750dd17f4bef79bff937eca",
+      "entity-d4662a79d7b9d1cd234ea21ea0026657d4002e95a4d8252ec8a789a916d74cff",
+      "entity-da3dc4fa8f106f83c693b9ca531f1471f117e7daa023902924803dd11eb17a0d"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "complete-production-chain-owners",
+    "evidence": [
+      "Native private faction overlay-v2 compiles both historicalflagsets/protected110 diagnostics unchanged; candidates MISMATCH, not claimed. Root original4F7BF6..4F7C0B independently corrects commerce actor vs partner flag predicates. Existing Path x_dst_/y_dst_ fields correspond to clear at global945B18/1C; existing can_call_council52C670 leaf has real int(int,int)body. Preserve original task baseline, identities, seed findings and existing claims."
+    ],
+    "hypothesis": "Full network-turn recovery requires genuine faction_upkeep and production_phase owners in faction.cpp plus base_upkeep in base.cpp. Native faction overlay compiles both recipes with a real Path destination reset and can_call_council declaration; missing base owner must be recovered rather than linked via fixed address.",
+    "kind": "discovery"
+  },
+  "previous_event": "07c8f17e83099dc59d7ab5ad1d60487094de78f154884d8105cdc89bf1fdedb5",
+  "request_id": "complete-production-chain-owners",
+  "schema_version": 1,
+  "sequence": 59,
+  "stream": "task:base-colony-economy-coverage-wave"
+}
