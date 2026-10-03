@@ -1,0 +1,20 @@
+{
+  "event_id": "54ca517763449422cdb447cd3b4543cfdbc0d5597521bf74273c5d2a260b088f",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/font.h",
+      "src/maininterface.h"
+    ],
+    "evidence": [
+      "Authorize narrow inline const getters of MainInterface stack_button_rect_ and adjacent_panel_right_rect_, and Font descent_ only. HUD native reads7AF2D4=MainInterfaceGlobal+AB4 stack_button_rect_.right and7AF2EC=+ACC adjacent_panel_right_rect_.left; current named source rectangles already exist. StatusWin+154C=font1_+1C Font descent_, current declared member at1C. Reuse real members; no layout/storage/lifecycle changes, raw offsets, new original identity or matching claim. Preserve task baseline and all existing claims. Root must verify native offsets and protected compilation before source integration."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "20641f5aa081f6cc42a630654271d62c725b4eb4a70673d1b367054a32717557",
+  "request_id": "statuswin-native-member-accessors-20261003",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:statuswin-remaining-owner-coverage"
+}
