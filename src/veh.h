@@ -918,3 +918,7 @@ int __cdecl goody_box(int veh_id, int type);
 
 // Existing original5B9510 implementation removes the stack containing this vehicle.
 void __cdecl stack_kill(int vehicle_id);
+
+// Vehicle removal and artifact study are real veh.cpp owners.
+void __cdecl veh_kill(int veh_id);
+int __cdecl study_artifact(int veh_id);

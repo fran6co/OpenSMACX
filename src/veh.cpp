@@ -12677,3 +12677,81 @@ int __cdecl veh_init(int prototype, int faction, int x, int y) {
 
     return vehicle_id;
 }
+
+// ORIGINAL: 0x0057CFA0 ?study_artifact@@YAHH@Z 0x0057CFA0-0x0057D1E8
+// RECOVERY_BINDING: v1 {"reason":"Consume the actual vehicle after snapshotting its location/faction, preserve the translator-base bypass and artifact link state, then choose eligible technology through genuine faction/Technology owners. No byte/reference or runtime claim is granted.","evidence":["git:0de05de6:src/unrecovered/0057cfa0.cpp","image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","recovery/tasks/scenario-artifact-unity-owner-coverage.json","Original full span and native physical COFF emitted symbol ?study_artifact@@YAHH@Z; existing source owns all referenced storage and services."]}
+// TRIED: direct pointer-cast field reads/multiply-based offsets instead of the lea-chain scaling; diverges at instr #3 (prologue push/save order)
+int __cdecl study_artifact(int veh_id) {
+    char message[80];
+    message[0] = 0;
+    strcat(message, "ARTIFACTTECH");
+
+    Veh &vehicle = Vehs[veh_id];
+    const int tile_x = vehicle.x;
+    const int tile_y = vehicle.y;
+    const int faction_id = vehicle.faction_id;
+    const int base_id = base_at(tile_x, tile_y);
+    if (base_id != SecretProject.universal_translator && base_id >= 0) {
+        Base &base = Bases[base_id];
+        if ((base.state & BSTATE_ARTIFACT_LINKED) != 0) {
+            if ((base.state & BSTATE_ARTIFACT_ALREADY_LINKED) == 0
+                && faction_id == ConsoleGlobal.faction_id_) {
+                parse_says(0, base.name_string, -1, -1);
+                NetMsgPrimary.pop("ALREADYARTIFACT", -5000, 0,
+                                  "art_dis_sm.pcx");
+                base.state |= BSTATE_ARTIFACT_ALREADY_LINKED;
+            }
+            return 0;
+        }
+    }
+
+    veh_kill(veh_id);
+    draw_tile(tile_x, tile_y, 2);
+
+    if (faction_id == ConsoleGlobal.faction_id_) {
+        g_FX.play(0x23);
+        popp(*ClimatePopupTitle, message, 0, "art_dis_sm.pcx", 0);
+    }
+
+    PlayerData &faction_data = PlayersData[faction_id];
+    if ((faction_data.flags & 0x10) != 0) {
+        faction_data.flags |= 0x4;
+    } else {
+        faction_data.flags |= 0x10;
+    }
+
+    if (base_id >= 0) {
+        Bases[base_id].state |= BSTATE_ARTIFACT_LINKED;
+    }
+
+    int best_score = -1;
+    int best_tech = -1;
+    for (int tech_id = 0; tech_id < MaxTechnologyNum; ++tech_id) {
+        if (!has_tech(tech_id, faction_id)
+            && tech_avail(tech_id, faction_id)) {
+            const int prereq_1 = Technology[tech_id].preq_tech_1;
+            const int prereq_2 = Technology[tech_id].preq_tech_2;
+            const BOOL has_prereq_1 = has_tech(prereq_1, faction_id);
+            const BOOL has_prereq_2 = has_tech(prereq_2, faction_id);
+            if (has_prereq_1 || has_prereq_2) {
+                int weight = 8;
+                if (!has_prereq_1 || !has_prereq_2) {
+                    if (!valid_tech_leap(tech_id, faction_id)) {
+                        continue;
+                    }
+                    weight = (11 - faction_data.ranking) * 2;
+                }
+                const int roll = (weight > 1) ? rand() % weight : 0;
+                if (best_score < roll) {
+                    best_tech = tech_id;
+                    best_score = roll;
+                }
+            }
+        }
+    }
+
+    if (best_tech >= 0) {
+        tech_achieved(faction_id, best_tech, 0, 0);
+    }
+    return 1;
+}

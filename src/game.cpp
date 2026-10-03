@@ -20,6 +20,7 @@
 #include "temp.h"
 #include "xpops.h"  // X_pop
 #include "game.h"
+#include "netmsg.h"
 #include "alpha.h"
 #include "base.h"
 #include "basepop.h"  // BasePopDefaultField322C
@@ -6022,4 +6023,197 @@ int __cdecl display_player_messages(int faction) {
     FactionTurnCombatLosses[faction] = 0;
     FactionTurnCombatWins[faction] = 0;
     return displayed_count;
+}
+
+// ORIGINAL: 0x005BED20 ?do_unity_crash@@YAHHHH@Z 0x005BED20-0x005BEFDF
+// RECOVERY_BINDING: v1 {"reason":"Recover Map bit2 event dispatch, spawn/morale and turn-based energy awards, and the live Base table radar scan with real UI/audio objects. The seed note calling this a unit scan is historical; the original stride134 and nativeBase count prove Bases. No byte/reference or runtime claim is granted.","evidence":["git:0de05de6:src/unrecovered/005bed20.cpp","image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","recovery/tasks/scenario-artifact-unity-owner-coverage.json","Original full span and native physical COFF emitted symbol ?do_unity_crash@@YAHHHH@Z; existing source owns all referenced storage and services."]}
+// TRIED: real signature per the mangled name (int __cdecl(int,int,int)). `rec = *(base + idx*0x2c + 0xc)` gates a `switch` on `rec>>0x18` in [0,0x13]; cases 0/8 play a sound + NetMsg::pop + veh_init a unit and flag it; case 10 bumps a per-faction bonus table and calls InfoWin::on_redraw; case 0x13 walks every unit calling bitmask/strcmp/ spot_loc, then draw_map + GraphicWin::redraw. FX/NetMsg/InfoWin/ GraphicWin receivers are fixed-address global object instances (plain loads, e.g. `mov ecx,0x749cf8; call FX::play`), and the CharUpperA call is through a fixed IAT slot (g_0066931c) cast to a function pointer, same idiom as the change_color-style calls elsewhere in this tree. Compiles, all call sites/argument orders verified against the disassembly by hand. Diverges at instruction #2: original keeps a lean `push ebp; mov ebp,esp` frame with no up-front `sub esp`, rebuilt's larger set of top-level locals (idx/base/rec/caseVal) makes the compiler reserve stack space immediately - frame layout, not source form; not chased further given the function's size.
+int __cdecl do_unity_crash(int x, int y, int faction_id) {
+    const int tile_index = static_cast<int>(MapLongitude) * y + (x >> 1);
+    const uint32_t event = MapTiles[tile_index].bit2;
+    if ((event & 0x80004000u) != 0x4000u) {
+        return 0;
+    }
+
+    const int event_kind = static_cast<int>(event) >> 24;
+    if (static_cast<unsigned int>(event_kind) > 0x13u) {
+        return 0;
+    }
+
+    switch (event_kind) {
+    case 0:
+    case 8: {
+        const int prototype = (event_kind == 8) ? 0x0C : 0x14;
+        if (faction_id == ConsoleGlobal.faction_id_) {
+            g_FX.play(0x16);
+            NetMsgPrimary.pop(event_kind == 8 ? "UNITYCHOPPER" : "UNITYMINER",
+                              -5000, 0, "unitfound_sm.pcx");
+            g_FX.fade(0x16);
+        }
+        const int vehicle_id = veh_init(prototype, faction_id, x, y);
+        Vehs[vehicle_id].morale = 2;
+        return 1;
+    }
+    case 10: {
+        const int bonus = (TurnCurrentNum >= 0x32) ? 300 : 150;
+        PlayersData[faction_id].energy_reserves += bonus;
+        parse_num(0, bonus);
+        ConsoleInfoWin.on_redraw();
+        if (faction_id != ConsoleGlobal.faction_id_) {
+            return 1;
+        }
+        g_FX.play(0x16);
+        NetMsgPrimary.pop("UNITYENGINE", -5000, 0, "foundeng_sm.pcx");
+        g_FX.fade(0x16);
+        return 1;
+    }
+    case 0x13: {
+        int base_count = BaseCurrentCount;
+        int base_id = 0;
+        while (base_id < base_count) {
+            StringTemp[0] = 0;
+            const int base_faction = Bases[base_id].faction_id_current;
+            strcat(StringTemp, Players[base_faction].filename);
+            CharUpperA(StringTemp);
+
+            int facilities_offset;
+            int facilities_mask;
+            bitmask(1, &facilities_offset, &facilities_mask);
+            const unsigned char facility_flags =
+                Bases[base_id].facilities_built[facilities_offset];
+            if ((facility_flags & facilities_mask) != 0
+                && (Players[base_faction].rule_flags & RFLAG_ALIEN) == 0
+                && strcmp(StringTemp, "FUNGBOY") != 0) {
+                spot_loc(Bases[base_id].x, Bases[base_id].y, faction_id);
+            }
+            base_count = BaseCurrentCount;
+            ++base_id;
+        }
+
+        if (faction_id != ConsoleGlobal.faction_id_) {
+            return 1;
+        }
+        draw_map(1);
+        UnkBitfield1 |= 4;
+        WorldClimateWorldWin.GraphicWin::redraw();
+        g_FX.play(0x16);
+        NetMsgPrimary.pop("UNITYRADAR", -5000, 0, "foundradar_sm.pcx");
+        g_FX.fade(0x16);
+        return 1;
+    }
+    default:
+        return 0;
+    }
+}
+
+// ORIGINAL: 0x005B0A30 ?scenario_setup@@YAXXZ 0x005B0A30-0x005B0D69
+// RECOVERY_BINDING: v1 {"reason":"Recover complete descending vehicle-placement retries with real prototypes/chassis/Map records, native odd-y x adjustment and failed-placement deletion. Original68FAF0 is MapLongitude for tile-row stride and wrap threshold, not full MapLongitudeBounds; air-only placement does not form a terrain pointer. No byte/reference or runtime claim is granted.","evidence":["git:0de05de6:src/unrecovered/005b0a30.cpp","image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","recovery/tasks/scenario-artifact-unity-owner-coverage.json","Original full span and native physical COFF emitted symbol ?scenario_setup@@YAXXZ; existing source owns all referenced storage and services."]}
+// TRIED: literal asm-mirrored translation (nested short-circuit accept flags for zone/tile/veh-stack checks, best-distance search loop) compiles and matches through instr #4; diverges at #5 (test vs mov, prologue-adjacent) - landed at MISMATCH.
+void __cdecl scenario_setup() {
+    for (int vehicle_id = VehCurrentCount - 1; vehicle_id >= 0; --vehicle_id) {
+        Veh &vehicle = Vehs[vehicle_id];
+        const unsigned short start_flags = VFLAG_START_RAND_LOCATION |
+                                           VFLAG_START_RAND_MONOLITH |
+                                           VFLAG_START_RAND_FUNGUS;
+        if ((vehicle.flags & start_flags) == 0) continue;
+
+        veh_lift(vehicle_id);
+        int counter = 0;
+        int x = 0;
+        int y = 0;
+        do {
+            const int flat = MapIsFlat & 1;
+            const int x_range = MapLongitudeBounds - flat * 4;
+            const int random_x = x_range > 1 ? rand() % x_range : 0;
+            x = random_x + flat * 2;
+
+            const int y_range = MapLatitudeBounds - 4;
+            const int random_y = MapLatitudeBounds > 5
+                ? rand() % y_range : 0;
+            y = random_y + 2;
+
+            if ((x & 1) != 0) --x;
+            // Preserve the original store: odd y increments x, not y.
+            if ((y & 1) != 0) ++x;
+
+            const int chassis_id = VehPrototypes[vehicle.proto_id].chassis_id;
+            const int triad = Chassis[chassis_id].triad;
+            Map *tile = 0;
+
+            bool accept;
+            if (triad == TRIAD_AIR) {
+                accept = true;
+            } else {
+                tile = MapTiles + MapLongitude * y + (x >> 1);
+                const bool low_altitude = (tile->climate & 0xE0) < 0x60;
+                const bool is_sea = triad == TRIAD_SEA;
+                if (low_altitude == is_sea || counter > 0x26DD) {
+                    accept = true;
+                } else {
+                    accept = false;
+                }
+            }
+
+            if (accept && (vehicle.flags & VFLAG_START_RAND_MONOLITH) != 0) {
+                if (tile == 0) {
+                    tile = MapTiles + MapLongitude * y + (x >> 1);
+                }
+                accept = (tile->bit & BIT_MONOLITH) != 0 || counter > 0x26AB;
+            }
+
+            if (accept && (vehicle.flags & VFLAG_START_RAND_FUNGUS) != 0) {
+                if (tile == 0) {
+                    tile = MapTiles + MapLongitude * y + (x >> 1);
+                }
+                accept = ((tile->bit & BIT_FUNGUS) != 0 &&
+                          (tile->climate & 0xE0) >= 0x40) ||
+                         counter > 0x26AB;
+            }
+
+            if (accept) {
+                const int occupying_vehicle = veh_at(x, y);
+                if (occupying_vehicle < 0) {
+                    accept = true;
+                } else if (Vehs[occupying_vehicle].faction_id ==
+                           vehicle.faction_id) {
+                    const int stack_count =
+                        stack_check(occupying_vehicle, 1, -1, -1, -1);
+                    accept = (stack_count + 10) * 500 <= counter;
+                } else {
+                    accept = false;
+                }
+            }
+
+            if (accept) {
+                int best_distance = 9999;
+                if (VehCurrentCount > 0) {
+                    for (int other_id = 0; other_id < VehCurrentCount;
+                         ++other_id) {
+                        if (vehicle_id != other_id) {
+                            int dx = abs(x - Vehs[other_id].x);
+                            if ((MapIsFlat & 1) == 0 && dx > MapLongitude) {
+                                dx = MapLongitudeBounds - dx;
+                            }
+                            const int dy = abs(y - Vehs[other_id].y);
+                            const int distance = (dy + dx) >> 1;
+                            if (distance < best_distance) {
+                                best_distance = distance;
+                            }
+                        }
+                    }
+                }
+
+                base_find(x, y);
+                if (BaseFindDist <= best_distance) {
+                    best_distance = BaseFindDist;
+                }
+                if ((0x20 - best_distance) * 100 <= counter) break;
+            }
+
+            ++counter;
+        } while (counter < 10000);
+
+        veh_drop(vehicle_id, x, y);
+        if (counter > 9999) veh_kill(vehicle_id);
+    }
 }

@@ -1,0 +1,17 @@
+{
+  "event_id": "1455ab67d348dca7642e5a566e2115ef3a33cbc63694b9e8590c8841d469516c",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "setup-game-fixture-storage",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Actual setup_game regression fixture now models source-owned256-byte LegacyGameSaveName and asserts original byte-zero reset without erasing byte1. All25 focused game/vehicle regressions pass; product setup_game implementation remains unchanged."
+    ]
+  },
+  "previous_event": "f7ee8c96ef186ba3e84bc8687b6af1e646bcd07b9f2b8de0ebf6c6e607745943",
+  "request_id": "setup-game-fixture-incorporated",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:scenario-artifact-unity-owner-coverage"
+}

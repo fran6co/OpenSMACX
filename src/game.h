@@ -481,3 +481,7 @@ extern char SaveGameFileExtensionText[4];  // pointee starts at 0x00691BEC
 extern const char *SaveGameFileExtension;  // pointer cell at 0x00691B34
 extern char ScenarioFileExtensionText[3];  // three-byte SC view at 0x00691BF0
 extern const char *ScenarioFileExtension;  // distinct pointer cell at 0x00691B3C
+
+// Scenario placement and Unity events are genuine game.cpp owners.
+void __cdecl scenario_setup();
+int __cdecl do_unity_crash(int x, int y, int faction_id);

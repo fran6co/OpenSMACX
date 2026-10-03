@@ -1,0 +1,20 @@
+{
+  "event_id": "c18abe3d74eb57939f0e463fda37b0a1d205c7516e2b8c2b363906a10f8fece1",
+  "payload": {
+    "affects": [
+      "entity-bbb2ca0c78b874a8daf2238a56e561c1ede7f879d35b39931301d2cb5e7a8871"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "setup-game-fixture-storage",
+    "evidence": [
+      "Focused regression run fails at undeclared LegacyGameSaveName; actual src/game.h declares256-byte array and game.cpp owns9A66C9..9A67C9. Baseline/current setup_game region equality checked directly."
+    ],
+    "hypothesis": "Related actual-source setup_game regression control fails because its mock omits existing LegacyGameSaveName256 storage. The setup_game C++ region is byte-for-byte unchanged from task baseline; repair the stale test fixture, not game behavior.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "setup-game-fixture-storage",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:scenario-artifact-unity-owner-coverage"
+}

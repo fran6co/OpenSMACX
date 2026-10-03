@@ -1,0 +1,19 @@
+{
+  "event_id": "f7ee8c96ef186ba3e84bc8687b6af1e646bcd07b9f2b8de0ebf6c6e607745943",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_setup_game_behavior.py"
+    ],
+    "evidence": [
+      "Coordinator admits test-only missing mock storage and reset assertion. No change to setup_game implementation, address, claims or scope; source/header remains authoritative."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "c18abe3d74eb57939f0e463fda37b0a1d205c7516e2b8c2b363906a10f8fece1",
+  "request_id": "setup-game-fixture-scope",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:scenario-artifact-unity-owner-coverage"
+}

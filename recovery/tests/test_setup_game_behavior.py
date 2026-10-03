@@ -65,6 +65,7 @@ int TutorialFlags, TutorialFlags2, TutWinFlags9A64BC;
 int CouncilResolutionCount[11], CouncilLastResolutionTurn[11], ReplayEventBytes;
 int TectonicDetonationCount[8];
 uint8_t GameTechAchieved[89];
+char LegacyGameSaveName[256]; // source-owned game.h storage, not a new game object
 uint32_t TerraformAnnouncedMask[2];
 uint32_t PendingDiplomacyFlags[8][8];
 int IsMultiplayerNet;
@@ -154,6 +155,7 @@ char *CharUpperA(char *text) {
 }
 BODY
 int main() {
+  LegacyGameSaveName[0]='X'; LegacyGameSaveName[1]='Y';
   GameTechAchieved[88]=0xA5; GameRules=0xFFFFFFFFu; GameState=0xFFFFFFFFu;
   DiffLevelCurrent=0; IsMultiplayerNet=1; LockEnableMask=0x05u;
   BaseCurrentCount=11; GameRestartQueued=0;
@@ -177,6 +179,7 @@ int main() {
   for (int i=0;i<8000;++i) FactionRankingHistory[i]=9;
   for (int i=0;i<8;++i) TectonicDetonationCount[i]=10+i;
   setup_game(1);
+  assert(LegacyGameSaveName[0]==0 && LegacyGameSaveName[1]=='Y');
   assert(GameTechAchieved[88]==0 && GameRules==(0xFFFFFFFFu & ~0x20u));
   assert(ObjectiveAchievePts==0 && ObjectiveReqVictory==9999 &&
          ObjectivesSuddenDeathVictory==9999 && VictoryAchieveBonusPts==0);
