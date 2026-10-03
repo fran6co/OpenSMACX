@@ -1324,13 +1324,9 @@ void CouncWin::on_status(int mode) {
     }
 }
 
-// The two slide helpers, still original bodies. See the declarations at the
-// top of the file.
-void __cdecl slide_show(GraphicWin *window, int mode) {
-    typedef void(__cdecl *pending)(GraphicWin *, int);
-    reinterpret_cast<pending>(static_cast<unsigned long>(0x0045D440))(window,
-                                                                     mode);
-}
+// slide_show is owned by popup.cpp. The remaining slide_hide helper
+// is still an explicitly unfinished original-address forwarder.
+
 
 void __cdecl slide_hide(GraphicWin *window, int mode) {
     typedef void(__cdecl *pending)(GraphicWin *, int);

@@ -1327,11 +1327,10 @@ void SocialWin::draw_presets() {
     do_sound();
 }
 
-// Unrecovered callees the new bodies reach. Both stay forwarders: the
-// originals are seed-only (git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00445130.cpp,
-// src/recovered/units/0045d440.cpp, src/recovered/units/0045d970.cpp), their
-// owners are outside this file's scope, and the link still needs the names.
-// Retire each the moment its seed is homed.
+// Callees owned outside this TU. slide_show now has its full C++ body in
+// popup.cpp. The remaining original-address helpers retain their seed
+// findings until complete compiled owners replace them; these are only
+// declarations, not additional function definitions.
 void __cdecl energy_compute(int faction_id, int mode);   // 0x00445130
 void __cdecl slide_show(GraphicWin *window, int mode);   // 0x0045D440
 void __cdecl slide_hide(GraphicWin *window, int mode);   // 0x0045D970

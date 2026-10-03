@@ -1,0 +1,19 @@
+{
+  "event_id": "2eb9af1c17ea21dae364c50217f596b859f847fb85f133610506ed61e06f96bb",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/socialwin.cpp"
+    ],
+    "evidence": [
+      "Native check-references identified socialwin.cpp:1332 as the single stale live seed path after transferring slide_show into popup.cpp. Authorize only its explanatory source comment update; retain all executable code, subjects and original task baseline."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "ad30247ad661b7203fa0fc993ebda8967b180f94d2137b31ddc82f8fbe1979a3",
+  "request_id": "popup-animation-retired-seed-reference",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:popup-animation-owner-closure"
+}

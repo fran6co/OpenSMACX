@@ -1,0 +1,20 @@
+{
+  "event_id": "ad30247ad661b7203fa0fc993ebda8967b180f94d2137b31ddc82f8fbe1979a3",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/scroll_show_owner_control.cpp",
+      "recovery/tests/slide_show_owner_control.cpp"
+    ],
+    "evidence": [
+      "Two independently audited animation bodies require separate actual-source fixtures with conflicting mock globals; authorize only durable host controls and retain task baseline and all existing historical obligations."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "popup-animation-two-host-fixtures",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:popup-animation-owner-closure"
+}
