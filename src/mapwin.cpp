@@ -5738,14 +5738,11 @@ void MapWin::click(int pixel_x, int pixel_y, int button) {
     ConsoleGlobal.survey_mode_ = 0;
     TutWinBaseWindow.cancel_zoom_wait();
 
-    const int cursor_mode = ConsoleGlobal.field_23D10_;
     const bool cursor_sprite_1 = cursor_sprite_ == &g_CURSOR_SPRITES[1];
-    const bool cursor_sprite_5 = cursor_sprite_ == &g_CURSOR_SPRITES[5];
     const bool cursor_sprite_9 = cursor_sprite_ == &g_CURSOR_SPRITES[9];
     const int editor_tool = field_1DE24_;
     const int editor_mode = field_1DD84_;
     go_reset();
-    ConsoleGlobal.selected();
 
     bool control_down = (GetAsyncKeyState(VK_CONTROL) & 0x8000) != 0;
     if ((GameState & STATE_SCENARIO_EDITOR) != 0 &&
@@ -5754,8 +5751,10 @@ void MapWin::click(int pixel_x, int pixel_y, int button) {
         control_down = !control_down;
     }
 
-    if (ConsoleGlobal.edit_lock() != 0 && cursor_sprite_5) return;
-    if (button == 0 && ConsoleControlTurnActive != 0 &&
+    const bool cursor_sprite_5 = cursor_sprite_ == &g_CURSOR_SPRITES[5];
+    const int cursor_mode = ConsoleGlobal.selected();
+    if (cursor_sprite_5 && cursor_mode != 0) return;
+    if ((button != 0 || ConsoleControlTurnActive != 0) &&
         (cursor_sprite_1 || cursor_sprite_9 || cursor_mode != 0)) {
         return;
     }

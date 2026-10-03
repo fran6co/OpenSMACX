@@ -2971,6 +2971,7 @@ void Console::cursor_on(int cursor_shape) {
 }
 
 // ORIGINAL: 0x005107E0 ?selected@Console@@QAEXXZ 0x005107E0-0x00510899 FILE
+// symbol    ?selected@Console@@QAEHXZ
 // TRIED: manual vbase-adjust pointer arith for Win::set_cursor `this` (obj + *(int*)(*(int*)obj+4)); #0 push/mov is frame-setup register order, not a logic mismatch
 // working copy - scaffold materialised by --work
 // size      185 bytes
@@ -2980,8 +2981,11 @@ void Console::cursor_on(int cursor_shape) {
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x0046A550 0x005EC7C0 0x005FCA30
 
-void Console::selected() {
-    if (field_23D10_ != 0) {
+// The catalogue's void return is wrong: 0x005107E4 saves the entry mode,
+// 0x00510881 restores it to EAX after callbacks, and MapWin::click consumes it.
+int Console::selected() {
+    const int selected_mode = static_cast<int>(field_23D10_);
+    if (selected_mode != 0) {
         field_23D10_ = 0;
         for (int slot = 0; slot < static_cast<int>(MapWinTableSlots); ++slot) {
             MapWin *const window = MapWinTable[slot];
@@ -3003,6 +3007,7 @@ void Console::selected() {
             }
         }
     }
+    return selected_mode;
 }
 
 // ORIGINAL: 0x00515EF0 ?toggle_patrol@Console@@QAEXXZ 0x00515EF0-0x00515F70 FILE

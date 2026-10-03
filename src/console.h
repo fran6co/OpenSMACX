@@ -272,7 +272,7 @@ class Console : public MapWin {
 
  public:
   // homed from 005107e0.cpp
-  void selected();
+  int selected();
 
  public:
   // 0x00510400 ?cursor_on@Console@@QAEXH@Z, homed from 00510400.cpp - one

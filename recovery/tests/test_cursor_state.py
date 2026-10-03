@@ -38,7 +38,7 @@ def actual_source():
         declaration,=re.findall(r"^  uint32_t "+name+r";",console,re.M);console_fields.append(declaration)
     bound,=re.findall(r"^static const size_t MapWinTableSlots = \d+;",map_header,re.M)
     bodies="\n".join(braced(cpp,signature) for signature in
-        ("void Console::cursor_on(int cursor_shape)","void Console::cursor_on(int cursor_shape, int veh_id)","void Console::cursor_off()","void Console::selected()"))
+        ("void Console::cursor_on(int cursor_shape)","void Console::cursor_on(int cursor_shape, int veh_id)","void Console::cursor_off()","int Console::selected()"))
     return "\n".join(fields),"\n".join(console_fields),bound,bodies
 
 
@@ -60,7 +60,7 @@ struct MapWin:virtual GraphicWin {
 };
 struct Console {
     ACTUAL_CONSOLE_FIELDS
-    void cursor_on(int);void cursor_on(int,int);void cursor_off();void selected();
+    void cursor_on(int);void cursor_on(int,int);void cursor_off();int selected();
 } console;
 ACTUAL_BOUND
 MapWin *MapWinTable[MapWinTableSlots];MapWin windows[10];
@@ -114,32 +114,32 @@ void on_controls(){
         require(seen.size()==2);expect(0,'S',0);expect(1,'P',-1);
     }
 }
-void run_off(bool selected){expected_mode=0;if(selected)console.selected();else console.cursor_off();}
+int run_off(bool selected,uint32_t mode){console.field_23D10_=mode;expected_mode=0;if(selected)return console.selected();console.cursor_off();return -1;}
 void off_controls(){
     for(int selected=0;selected<2;++selected){
-        reset();run_off(selected);require(seen.empty() && console.field_23D10_==0);
+        reset();require(run_off(selected,0)==(selected?0:-1));require(seen.empty() && console.field_23D10_==0);
         reset();MapWinTable[0]=&windows[0];MapWinTable[1]=&windows[1];MapWinTable[2]=&windows[2];MapWinTable[7]=&windows[7];
         windows[0].cursor_sprite_=&g_CURSOR_SPRITES[4];windows[0].field_1DD70_=0xffffffffu;
         windows[1].cursor_sprite_=&g_CURSOR_SPRITES[4];windows[1].field_1DD70_=0xffffffffu;
         windows[2].field_1DD74_=windows[7].field_1DD74_=1;windows[2].field_1DD70_=0xc40021;
         windows[7].cursor_resource_id_=123;
-        run_off(selected);require(seen.size()==7);
+        require(run_off(selected,7)==(selected?7:-1));require(seen.size()==7);
         expect(0,'R',0);expect(1,'D',0);expect(2,'P',-1);expect(3,'D',2);expect(4,'P',-1);expect(5,'R',7);expect(6,'P',-1);
         require(windows[0].field_1DD70_==0xff3bffffu && windows[2].field_1DD70_==0x21);
         require(windows[0].cursor_sprite_==nullptr && windows[7].cursor_resource_id_==0x7f00);
         require(windows[1].cursor_sprite_==&g_CURSOR_SPRITES[4] && windows[1].field_1DD70_==0xffffffffu);
         reset();MapWinTable[0]=&windows[0];windows[0].cursor_sprite_=&g_CURSOR_SPRITES[4];windows[0].field_1DD70_=0xc40033;
         windows[9].cursor_sprite_=&g_CURSOR_SPRITES[2];windows[9].cursor_resource_id_=99;windows[9].field_1DD70_=0xc40011;replace_slot=0;
-        run_off(selected);require(seen.size()==3);expect(0,'R',0);expect(1,'D',9);expect(2,'P',-1);
+        require(run_off(selected,7)==(selected?7:-1));require(seen.size()==3);expect(0,'R',0);expect(1,'D',9);expect(2,'P',-1);
         require(windows[0].cursor_sprite_==nullptr && windows[0].cursor_resource_id_==0x7f00 && windows[0].field_1DD70_==0xc40033);
         require(windows[9].cursor_sprite_==&g_CURSOR_SPRITES[2] && windows[9].cursor_resource_id_==99 && windows[9].field_1DD70_==0x11);
         reset();MapWinTable[0]=&windows[0];MapWinTable[1]=&windows[1];activate_on_pump=1;
-        run_off(selected);require(seen.size()==2);expect(0,'P',-1);expect(1,'P',-1);
+        require(run_off(selected,7)==(selected?7:-1));require(seen.size()==2);expect(0,'P',-1);expect(1,'P',-1);
         reset();MapWinTable[0]=&windows[0];MapWinTable[1]=&windows[1];windows[1].field_1DD74_=1;change_mode_on_pump=77;
-        run_off(selected);require(seen.size()==2 && console.field_23D10_==77);
+        require(run_off(selected,7)==(selected?7:-1));require(seen.size()==2 && console.field_23D10_==77);
     }
     reset();MapWinTable[0]=&windows[0];windows[0].cursor_sprite_=&g_CURSOR_SPRITES[4];console.field_23D10_=0;
-    console.selected();require(seen.empty() && windows[0].cursor_sprite_==&g_CURSOR_SPRITES[4]);
+    console.field_23D10_=0;require(console.selected()==0);require(seen.empty() && windows[0].cursor_sprite_==&g_CURSOR_SPRITES[4]);
 }
 int main(){on_controls();off_controls();}
 '''
@@ -168,7 +168,7 @@ MUTANTS=[
     ("flags-live-slot","const uint32_t flags = MapWinTable[slot]->field_1DD70_;","const uint32_t flags = window->field_1DD70_;"),
     ("draw-live-slot","MapWinTable[slot]->draw_map(1);","window->draw_map(1);"),
     ("flag-clear-mask","flags & 0xff3bffff","flags & 0xfffbffff"),
-    ("selected-zero-noop","if (field_23D10_ != 0)","if (true)"),
+    ("selected-zero-noop","if (selected_mode != 0)","if (true)"),
     ("hotspot-axis","CursorHotspotX[cursor_shape], CursorHotspotY[cursor_shape]","CursorHotspotY[cursor_shape], CursorHotspotX[cursor_shape]"),
     ("message-pump","do_non_input();",""),
     ("redundant-sprite-set","if (window->cursor_sprite_ != sprite)","if (true)"),
