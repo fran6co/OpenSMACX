@@ -63,6 +63,7 @@ static void alpha_save_store_rect(RECT &rect, int left, int top,
 // Modal geometry uses the 18-DWORD FileWinConstruct input; FileWin snapshots
 // its 17-DWORD prefix. The dialog borrows the interface fonts and popup style
 // while owning the controls initialized below.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00407410 ?init@AlphaSave@@QAEXXZ 0x00407410-0x00407906;0x00650C60-0x00650C75
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00407410.cpp", "recovery/tasks/game-save-load-owner-coverage.json", "pinned image sha256:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tests/test_alphasave_init_behavior.py", "recovery/tests/test_standard_popup_style_behavior.py"], "reason": "Recover AlphaSave modal initialization through its embedded FileWin, exact admitted FileWinConstruct geometry, current typed fonts, and existing popup-style owners."}
 void AlphaSave::init() {

@@ -47,6 +47,7 @@ char ReplayLocalizedPrefix[8];
 // RECOVERY_OBJECT: v2 0x00945DFC 0x00945E00 ?ReplayLocalizedTitle@@3PADA 0x005AD720
 char ReplayLocalizedTitle[4];
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005AD720 ?init@ReplayWin@@QAEXXZ 0x005AD720-0x005AD99A
 // RECOVERY_BINDING: v1 {"evidence": ["git:c4098269:src/recovered/units/005ad720.cpp", "src/replaywin.h owns GraphicWin, MapWin, FlatButton and Time at the original offsets", "src/console.h ConsoleGlobal cursor history occupies 0x009392B8/0x009392C0/0x00939340"], "reason": "Initialize the real replay window and its owned controls, using Console cursor history and typed shared styles instead of fixed addresses and vtable arithmetic; retain the seed for byte restoration."}
 // symbol    ?init@ReplayWin@@QAEXXZ
@@ -126,6 +127,7 @@ void ReplayWin::close() {
 static const char ReplaySaveName[] = "Alpha Centauri Autosave 1";
 static const char ReplaySaveFile[] = "Alpha Centauri Autosave 1.SAV";
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005ADBF0 ?show_replay@@YAXXZ 0x005ADBF0-0x005ADE7B;0x004210D0-0x004210E7;0x00662240-0x00662355
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/005adbf0.cpp retains the SHARED_TAIL seed and construction sequence", "image strings at 0x00691408 and 0x00691424 name the save and reload paths", "src/map.cpp owns WorldClimateSkipTerrainClear at 0x0068F21C", "src/game.cpp owns GameState at 0x009A64C0", "src/replaywin.h models the GraphicWin, MapWin, FlatButton and Time subobjects"], "reason": "Run the replay through a real local ReplayWin lifetime and typed game/climate state instead of a manually patched vtable and fixed executable addresses; retain the seed's unmodeled temporary objects as restoration work."}
 // symbol    ?show_replay@@YAXXZ
@@ -144,6 +146,7 @@ void __cdecl show_replay() {
     WorldClimateSkipTerrainClear = 0;
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005ADF10 ??1ReplayWin@@QAE@XZ 0x005ADF10-0x005AE0A8;0x004210D0-0x004210E7;0x00662360-0x0066244C
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x005ADBF0 constructs GraphicWin, MapWin, FlatButton and Time at offsets 0, 0x2320, 0x247A0 and 0x252EC", "image:0x005ADF32 destructs Time at 0x252EC before FlatButton at 0x247A0", "git:d7a40721:src/recovered/units/005adf10.cpp", "src/replaywin.h declares all three complete subobjects"], "reason": "Let C++ destroy ReplayWin's real members in reverse construction order instead of forwarding the complete destructor to original image code."}
 // symbol    ??1ReplayWin@@UAE@XZ
@@ -221,6 +224,7 @@ void ReplayWin::remove_base_site(int x, int y, int) {
     }
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005AD9E0 ?timer_callback@ReplayWin@@QAEXXZ 0x005AD9E0-0x005ADBCC
 // RECOVERY_BINDING: v1 {"evidence": ["git:7f24e1c4:src/recovered/units/005ad9e0.cpp", "image:0x005AD9E0-0x005ADBCC", "src/replaywin.h replay_turn_, event_offset_, year_label_ and base_sites_", "src/win.h release_modal slot58 and redraw slot62"], "reason": "Consume typed replay events and update the ReplayWin-owned site table; replace the original-image forwarder without raw self-offsets or vtable shims. The retained seed remains a restoration input, not a product body."}
 void ReplayWin::timer_callback() {
@@ -268,6 +272,7 @@ void ReplayWin::timer_callback() {
     replay_turn_ = next_turn;
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005ADE80 ?replay_base@@YAXHHHH@Z 0x005ADE80-0x005ADF03
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original 0x005ADE80-0x005ADF03 logs Replay Base and Replay Base Info, packs four arguments and TurnCurrentNum into eight bytes at 0x00950324 plus the byte counter at 0x009469F8, then adds eight", "src/unrecovered/005b3920.cpp clears 0x800 dwords of that buffer; ReplayWin timer_callback reads the same eight-byte records"], "reason": "Own replay-event storage and byte-length accounting in the replay subsystem, replacing fixed-address writes with a typed event record."}
 void __cdecl replay_base(int type, int x, int y, int faction_id) {
@@ -283,6 +288,7 @@ void __cdecl replay_base(int type, int x, int y, int faction_id) {
     ReplayEventBytes += sizeof(ReplayEventRecord);
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005AD560 ?make_bases@ReplayWin@@QAEXXZ 0x005AD560-0x005AD607
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original 0x005AD560-0x005AD607 clears Map::bit bit zero over MapArea, then walks 512 twelve-byte records at ReplayWin+0xA20", "The original writes Bases with 0x134 stride, storing x/y/faction/population before bit_set, owner_set and reset_territory; src/unrecovered/005ad560.cpp preserves the seed"], "reason": "Rebuild bases from typed replay-owned records into the real Base array and map, without self-offset arithmetic or fixed executable addresses."}
 void ReplayWin::make_bases() {

@@ -31,6 +31,7 @@ int __cdecl x_pop_caption_label(char *caption, const char *label,
 // ORIGINAL: 0x0045F200 ??0Interlude@@QAE@XZ 0x0045F200-0x0045F2DF;0x00655800-0x00655820 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0045f200.cpp: original identity, complete spans and retained seed history", "source:src/interlude.h: genuine GraphicWin base and embedded member lifetime", "source:recovery/tasks/interlude-lifetime-owner-closure.json: bounded coordinator authorization"], "reason": "Original construction45F200 and its cleanup span establish real GraphicWin base plus RECT A14, StringList A24 and Buffer A54; natural member construction replaces the opaque hypothesis layout."}
 Interlude::Interlude() {}
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0045F740 ??1Interlude@@QAE@XZ 0x0045F740-0x0045F905;0x00655820-0x00655859
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0045f740.cpp: original identity, complete spans and retained seed history", "source:src/interlude.h: genuine GraphicWin base and embedded member lifetime", "source:recovery/tasks/interlude-lifetime-owner-closure.json: bounded coordinator authorization"], "reason": "Original destructor45F740 and cold cleanup establish real member/base teardown; declare genuine virtual lifecycle so compiler owns deleting destructors and receiver adjustments."}
 // symbol    ??1Interlude@@UAE@XZ

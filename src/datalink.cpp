@@ -1455,6 +1455,7 @@ void Datalink::on_iface_button_toggled(int, int) {
 // The image routes this callback through DatalinkIface slot 16. The compiler
 // adjusts the secondary-base receiver back to Datalink; the seed's +0xEC14
 // ListBox access from that receiver is the owned listBox_ at +0xF628.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00432210 ?on_iface_group_clicked@Datalink@@QAEXHHH@Z 0x00432210-0x0043228B BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00432210.cpp preserves the 123-byte BYTE_EXACT historical callback; image:0x0066AF30 slot 16 points to 0x00432210; source:src/datalink.h models DatalinkIface at +0xA14 and ListBox at +0xF628"], "reason": "Restore the category-click path through the real Datalink owner and ListBox member, with the compiler's secondary-base adjustment rather than seed pointer arithmetic."}
 // symbol    ?on_iface_group_clicked@Datalink@@UAEXHHH@Z
@@ -1758,6 +1759,7 @@ void Datalink::UNK2(char *text, int *category, int *entry) {
 /*
 Purpose: Format a category and entry suffix as the decimal Datalink id.
          This is the inverse of parse_id's quotient/remainder split.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0042A080 ?construct_id@Datalink@@QAEXPADIH@Z 0x0042A080-0x0042A0AD BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0042a080.cpp preserves the 45-byte one-call seed and original span", "source:src/datalink.cpp parse_id divides the same combined id by 10000", "source:src/leaf_recoveries.cpp help builders call the declared Datalink member"], "reason": "The original Datalink member formats category*10000 plus entry into its caller-provided buffer; the former leaf-TU link-only body is replaced in the owning product TU."}
 // symbol    ?construct_id@Datalink@@QAEXPADHH@Z
@@ -1773,6 +1775,7 @@ void Datalink::construct_id(char *out, int category, int suffix) {
 Purpose: Append one clickable cross-reference to a caller-owned help buffer.
          The original strings at 0x00683544/40/3C are "$LINK<", "=" and
          ">", respectively; the caller supplies visible text and its id.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0044CB80 ?help_create_link@@YAXPAD00@Z 0x0044CB80-0x0044CBC2 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x0068353C-0x0068354A contains the original markup strings >, = and $LINK<", "source:src/recovered/units/0044cb80.cpp preserves five strcat calls and the original 0x0044CB80 span", "source:src/leaf_recoveries.cpp help builders call this free helper"], "reason": "Home the Datalink-family link formatter as ordinary C++ markup construction in the product TU, replacing the empty leaf placeholder while retaining the original identity."}
 // size      66 bytes
@@ -2994,6 +2997,7 @@ void Datalink::set_index(int index, int) {
 /*
 Purpose: Restore the interface and Datalink surface clips, repaint the
          interface background, then draw the selected Datalink entry.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00431E70 ?on_redraw@Datalink@@QAEXXZ 0x00431E70-0x00431EA6 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x00431E70-0x00431EA6 calls Buffer::set_clip twice, MainInterface::restore_back and Datalink::draw_entry", "image:0x007AEC64 is the Buffer base of MainInterfaceGlobal at 0x007AE820+0x444; 0x007AEC94 is its rect2_ at +0x474", "source:src/recovered/units/00431e70.cpp preserves the byte-exact historical unit"], "reason": "Use the existing MainInterface object and real Buffer bases instead of fixed executable addresses and a raw Datalink offset."}
 // symbol    ?on_redraw@Datalink@@UAEXXZ
@@ -3129,6 +3133,7 @@ void __cdecl help_info_pop(char *text) {
     TechnologyHelpPopup->string(text);
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0044C7F0 ?help_tech_info@@YAXPAUPopup@@HH@Z 0x0044C7F0-0x0044C814 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned44C7F0..44C814 stores Popup pointer7591B0 and calls44B9E0 with callback44C7D0 and lastarg-1; original exact seed retained in src/recovered/units/0044c7f0.cpp."], "reason": "Popup-specific overload publishes the actual receiver to shared callback storage before synchronously invoking the existing four-argument technology text builder, with the original negative link selector."}
 // symbol    ?help_tech_info@@YAXPAVPopup@@HH@Z

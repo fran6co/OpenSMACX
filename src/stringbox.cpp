@@ -96,6 +96,7 @@ void StringBox::close() {
 
 // Reinitialization closes the old window/list/scroll before installing a new
 // GraphicWin surface. An optional caller list is borrowed, not copied.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x006292D0 ?init@StringBox@@QAEXHHHHPAUWin@@PAUStringList@@H@Z 0x006292D0-0x00629486
 // RECOVERY_BINDING: v1 {"evidence": ["original:0x006292D0-0x00629486;seed:src/recovered/units/006292d0.cpp;source:src/stringbox.h;source:src/stringstruct.h;source:src/scroll.h"], "reason": "Reinitialize GraphicWin, StringList and embedded Scroll through their real owned subobjects."}
 // symbol    ?init@StringBox@@QAEXHHHHPAVWin@@PAVStringList@@H@Z
@@ -124,6 +125,7 @@ void StringBox::init(int x, int y, int width, int height, Win *parent,
 
 // Refit the selected list to the visible row budget and keep the embedded
 // scrollbar's range, paging and cursor synchronized with the measured text.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00629490 ?add_fixup@StringBox@@QAEXXZ 0x00629490-0x00629703
 // RECOVERY_BINDING: v1 {"evidence": ["original:0x00629490-0x00629703;seed:src/recovered/units/00629490.cpp;source:src/stringbox.h;source:src/stringstruct.h;source:src/scroll.h"], "reason": "Fit the selected StringList to the visible text area and synchronize the embedded Scroll state."}
 void StringBox::add_fixup() {
@@ -210,6 +212,7 @@ void StringBox::clear() {
     }
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00629B70 ?on_redraw@StringBox@@QAEXXZ 0x00629B70-0x00629D1C
 // RECOVERY_BINDING: v1 {"evidence": ["original:0x00629B70-0x00629D1C;seed:src/recovered/units/00629b70.cpp;source:src/stringbox.h;source:src/stringstruct.h;source:src/scroll.h"], "reason": "Render the selected StringList through inherited Buffer and GraphicWin drawing methods."}
 // symbol    ?on_redraw@StringBox@@UAEXXZ
@@ -272,6 +275,7 @@ void StringBox::on_redraw() {
 
 // The member and base destructors follow this body implicitly, in reverse
 // construction order: StringList, Scroll, then GraphicWin.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004325C0 ??1StringBox@@QAE@XZ 0x004325C0-0x00432713;0x006533B0-0x0065341D
 // RECOVERY_BINDING: v1 {"evidence": ["original:0x004325C0-0x00432713;0x006533B0-0x0065341D;seed:src/recovered/units/004325c0.cpp;source:src/stringbox.h;source:src/stringstruct.h;source:src/scroll.h"], "reason": "Run StringBox cleanup then let C++ destroy its StringList, Scroll and GraphicWin subobjects in lifetime order."}
 // symbol    ??1StringBox@@UAE@XZ
@@ -281,6 +285,7 @@ StringBox::~StringBox() {
 
 // Remove the first list entry with this ID, retaining the original cursor
 // position side effect and then re-fitting the visible rows.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x006298B0 ?UNK1@StringBox@@QAEXH@Z 0x006298B0-0x0062997B
 // RECOVERY_BINDING: v1 {"evidence": ["git:93d09e9c95484465004f450350b6cffe1e09f40e:src/unrecovered/006298b0.cpp", "src/stringbox.h", "src/stringstruct.h", "src/recovered/units/00629490.cpp"], "reason": "Remove the first StringList entry with the requested ID, preserve its cursor effects, and re-fit visible rows."}
 void StringBox::UNK1(int id) {
@@ -313,6 +318,7 @@ void StringBox::UNK1(int id) {
 // Preserve the seed's inverted/wrapping predicate exactly: retain an ID only
 // when ID < first_bound && ID > second_bound. Remove all others while the
 // cursor and changing count follow the original list walk.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00629980 ?UNK2@StringBox@@QAEXHH@Z 0x00629980-0x00629A63 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:93d09e9c95484465004f450350b6cffe1e09f40e:src/unrecovered/00629980.cpp", "src/stringbox.h", "src/stringstruct.h", "src/recovered/units/00629490.cpp"], "reason": "Retain IDs in the original descending-bound interval and remove other entries, preserving the changing-count list walk."}
 void StringBox::UNK2(int first_bound, int second_bound) {
@@ -341,6 +347,7 @@ void StringBox::UNK2(int first_bound, int second_bound) {
 
 // Drop IDs at or below count; higher IDs are rebased by count. Only a
 // removal changes the scrollbar fit, matching the original operation.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00629A70 ?clip_ids@StringBox@@QAEXK@Z 0x00629A70-0x00629B69
 // RECOVERY_BINDING: v1 {"evidence": ["git:93d09e9c95484465004f450350b6cffe1e09f40e:src/unrecovered/00629a70.cpp", "src/stringbox.h", "src/stringstruct.h", "src/recovered/units/00629490.cpp"], "reason": "Remove list IDs at or below the clipping count and rebase larger IDs while preserving list cursor and fit behavior."}
 void StringBox::clip_ids(unsigned long count) {

@@ -1190,6 +1190,7 @@ int VehDrawSelection689F2C = -1;
 // Artillery command: source-owned vehicle/rules/treaty state and actual
 // network lock protocol. The empty-target destruction dependency below
 // remains explicitly unfinished; build continuity does not prove that path.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004CD090 ?action_arty@@YAXHHH@Z 0x004CD090-0x004CD2ED
 // RECOVERY_BINDING: v1 {"evidence": ["Original4CD090..4CD2ED: readiness and wrapped-distance gates; stack/treaty protection; Rules.artillery_max_rng indexes existing RadiusRange; mode3 offline versus mode1 network locking and message dispatch.", "Retained src/recovered/units/004cd090.cpp is evidence, not the source owner. Fresh original disassembly confirms imports and call order; no new byte or game-acceptance claim."], "reason": "Recover the artillery command through genuine vehicle, faction, rules and network owners; destruction of an empty target remains an unfinished dependency."}
 void __cdecl action_arty(int veh_id, int x, int y) {
@@ -2409,6 +2410,7 @@ static void vehdraw_finish_frame(Buffer *buffer, int veh_id, int x, int y, int f
     }
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004BFC70 ?vehdraw_turn@@YAXPAUBuffer@@HHHH@Z 0x004BFC70-0x004BFDFA
 // RECOVERY_BINDING: v1 {"evidence": ["Original selects scale, rotates scene from frame/turn increment, computes caption-centred coordinates, resets and assembles the actual vehicle, renders, then reloads its prototype for transparent-armor overlay or buffer clearing.", "Original mapped extent is preserved from the existing unclaimed seed and checked against the pinned executable; catalogue return/type names remain provenance until observed compiler-symbol facts are published."], "reason": "Recover a vehicle turn frame through the real renderer and shared turn state."}
 // symbol    ?vehdraw_turn@@YAXPAVBuffer@@HHHH@Z
@@ -2545,6 +2547,7 @@ void __cdecl vehdraw_scoot_start(int veh_id, int direction, int steps, int flags
     VehDrawScootNormalMid = midpoint;
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004C0F50 ?vehdraw_scoot@@YAXPAUBuffer@@HHHH@Z 0x004C0F50-0x004C1296
 // RECOVERY_BINDING: v1 {"evidence": ["Original chooses first or second normal increment at a strict greater-than half-frame boundary, snapshots light, computes camera and shadow, sets scaling both before and after camera publication, assembles vehicle, increments animation, renders, and reloads armor state.", "Original mapped extent is preserved from the existing unclaimed seed and checked against the pinned executable; catalogue return/type names remain provenance until observed compiler-symbol facts are published."], "reason": "Recover an interpolated vehicle movement frame using real camera, normal, shadow and renderer ownership."}
 // symbol    ?vehdraw_scoot@@YAXPAVBuffer@@HHHH@Z
@@ -2592,6 +2595,7 @@ void __cdecl vehdraw_scoot(Buffer *buffer, int x, int y, int frame, int zoom) {
     vehdraw_finish_frame(buffer, veh_id, x, y, 0);
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004C12A0 ?vehdraw_draw@@YAXPAUBuffer@@HHHHHH@Z 0x004C12A0-0x004C1732
 // RECOVERY_BINDING: v1 {"evidence": ["Original null-buffer return precedes work; optional stack selection and temporary coordinate override choose the vehicle/location. Terrain uses the actual map pointer slot and base7 VOX_Vect facet arrays. Vehicle assembly precedes scene rotation; render flags derive bit13 and transparent armor uses the corresponding overlay flags.", "Original mapped extent is preserved from the existing unclaimed seed and checked against the pinned executable; catalogue return/type names remain provenance until observed compiler-symbol facts are published."], "reason": "Recover ordinary vehicle voxel drawing through real terrain and model owners."}
 // symbol    ?vehdraw_draw@@YAXPAVBuffer@@HHHHHH@Z
@@ -2733,6 +2737,7 @@ int __cdecl vehdraw_turn_start(int veh_id, int direction, int speed, int flags) 
 // The original calls the CRT atan entry after storing a double argument;
 // the compiler's default fpatan intrinsic bypasses that rounding boundary.
 #pragma function(atan)
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004BF740 ?compute_camera@@YAXPAUVOX_Vect@@PAUVOX_Matrix@@@Z 0x004BF740-0x004BF8C1
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original control flow and original seed extent; observed VC6 external symbol. Tests exercise actual bodies, call/publication order, unordered/zero camera branches and complete facet tables at both established baselines.", "Camera publishes its first Euler triple before the second rotation; original CRT atan calls round their quotient to double. Facet initialization snapshots ConsoleGlobal inherited MapWin field at1DD6C, established by receiver-relative MapWin initialization; four independent 2401-element tables replace cross-object pointer arithmetic."], "reason": "Vehicle rendering setup with real VOX types, source-owned tables and actual Console terrain-height state."}
 void __cdecl compute_camera(VOX_Vect *normal, VOX_Matrix *matrix) {
@@ -2775,6 +2780,7 @@ void __cdecl compute_camera(VOX_Vect *normal, VOX_Matrix *matrix) {
 }
 #pragma intrinsic(atan)
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004C1B10 ?vehdraw_compute_facet_normals@@YAXXZ 0x004C1B10-0x004C1CF7
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original control flow and original seed extent; observed VC6 external symbol. Tests exercise actual bodies, call/publication order, unordered/zero camera branches and complete facet tables at both established baselines.", "Camera publishes its first Euler triple before the second rotation; original CRT atan calls round their quotient to double. Facet initialization snapshots ConsoleGlobal inherited MapWin field at1DD6C, established by receiver-relative MapWin initialization; four independent 2401-element tables replace cross-object pointer arithmetic."], "reason": "Vehicle rendering setup with real VOX types, source-owned tables and actual Console terrain-height state."}
 void __cdecl vehdraw_compute_facet_normals() {
@@ -11010,6 +11016,7 @@ int __cdecl goody_box(int veh_id, int type) {
 
 // Coupled transfer/terrain actions and their still-unfinished prototype dependencies.
 // Partial dependencies retain explicit BODY GOES HERE sentinels and seed obligations.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004CEDE0 ?action_give@@YAXHH@Z 0x004CEDE0-0x004CF379
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned entry 004CEDE0; retained seed src/recovered/units/004cede0.cpp", "recovery/tasks/vehicle-special-actions-coverage.json; native scope expansion preserves task baseline", "Native4CE326/4CE7F0 kill precedes announcement; fungal EBX retains initial combat faction while later slot reads observe compacted storage;580B51/580BF7 are mask immediates, not globals."], "reason": "Typed transfer or terrain action preserves native parser, kill, interception and post-call vehicle-slot read order; retained seed remains evidence, not executable backing."}
 void __cdecl action_give(int vehicle_id, int faction_id) {
@@ -11167,6 +11174,7 @@ void __cdecl action_give(int vehicle_id, int faction_id) {
     }
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004CE210 ?action_tectonic@@YAXHHH@Z 0x004CE210-0x004CE6A1
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned entry 004CE210; retained seed src/recovered/units/004ce210.cpp", "recovery/tasks/vehicle-special-actions-coverage.json; native scope expansion preserves task baseline", "Native4CE326/4CE7F0 kill precedes announcement; fungal EBX retains initial combat faction while later slot reads observe compacted storage;580B51/580BF7 are mask immediates, not globals."], "reason": "Typed transfer or terrain action preserves native parser, kill, interception and post-call vehicle-slot read order; retained seed remains evidence, not executable backing."}
 void __cdecl action_tectonic(int vehicle_id, int x, int y) {
@@ -11909,6 +11917,7 @@ int __cdecl propose_proto(int faction_id, int chassis_id, int weapon_id,
     return best_prototype;
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0057F1D0 ?retire_proto@@YAXHH@Z 0x0057F1D0-0x0057F4B0
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned57F1D0..57F4B0: category snapshot after proto_bung_put;57F28D current-count guard;57F2B3/2C7 live full mask;57F3BA post-stack prototype reload;57F410 predefined branch bypasses active-bit clearing.", "Native57F434..47F inclusive queue walk, first-slot -69 and nonfirst shift/decrement; descending kill path preserves compacted storage. Existing typed owners in veh/base/faction/net headers.", "recovery/tasks/vehicle-special-actions-coverage.json central reviewed recovery; retained src/recovered/units/0057f1d0.cpp and immutable baseline."], "reason": "Recover complete prototype retirement with native descending-compaction traversal, live visibility mask, base/stack fallback, current prototype mineral refund and inclusive queue cleanup. Preserve source identity, full seed and original spans; this is not matching or runtime acceptance."}
 void __cdecl retire_proto(int prototype_id, int faction_id) {

@@ -1780,6 +1780,7 @@ static void finish_production_success(BaseWin &window, int a1, int a2,
 }
 
 // Production selection uses the real picker, queue, retool dialog and UI owners.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00417040 ?production@BaseWin@@QAEXHH@Z 0x00417040-0x00418DBD;0x00651BB0-0x0065221C
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00417040.cpp", "image:0x00417040-0x00418DBD and companion cleanup0x00651BB0-0x0065221C", "image:0x00418DC0 seven action targets and0x00418DDC four retool targets", "source:src/basewin.h;src/prodpicker.h;src/base.h;src/veh.h"], "reason": "Recover production selection through genuine Popup/GraphicWin lifetimes, embedded ProdPicker action state, typed production queues and vehicle prototypes. Preserve callback-time live state, cancellation, visibility accounting and signed arithmetic. The workshop action reaches an explicitly unfinished owning design_workshop dependency, so this implementation is not complete gameplay or matching acceptance."}
 void BaseWin::production(int a1, int a2) {
@@ -2200,6 +2201,7 @@ void BaseWin::recompute(int) {
 // The image walks Bases by the 0x134-byte Base record and compares names
 // case-insensitively.  The first qualifying name in the requested direction
 // wins; the second comparison supplies the wrap-around candidate.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0041A010 ?prev@BaseWin@@QAEXXZ 0x0041A010-0x0041A15D
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0041a010.cpp;source:src/base.h;image:0x0041A010-0x0041A15D"], "reason": "Recover previous base selection through the actual Base array, selected-base member, faction context and case-insensitive name order."}
 void BaseWin::prev() {
@@ -2238,6 +2240,7 @@ void BaseWin::prev() {
     zoom(selected, 0);
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0041A160 ?next@BaseWin@@QAEXXZ 0x0041A160-0x0041A2AD
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0041a160.cpp;source:src/base.h;image:0x0041A160-0x0041A2AD"], "reason": "Recover next base selection through the actual Base array, selected-base member, faction context and case-insensitive name order."}
 void BaseWin::next() {
@@ -2575,6 +2578,7 @@ void BaseWin::soft_zoom(int base_id) {
     zoom(base_id, 0);
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0041A920 ?zoom@BaseWin@@QAEXHH@Z 0x0041A920-0x0041AE40
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0041a920.cpp", "image:0x0041A920-0x0041AE40 sets base focus, recomputes, refreshes the interface, then waits on zoom_wait_pending_", "source:src/basewin.h:BaseWin::zoom_wait_pending_", "source:src/worldwin.cpp:WorldWin::click cancels the same zoom wait"], "reason": "Recover the base selection and display lifecycle through owned objects and typed state. The tutorial-message branches in the retained seed are still pending; preserve that seed and do not claim a byte match."}
 void BaseWin::zoom(int base_id, int wait) {
@@ -4282,6 +4286,7 @@ void BaseWin::on_redraw() {
 
 // The redraw callback reaches these separately owned panels. Their historical
 // seed bodies are retained; these link-only bodies do not pretend to paint.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0041E560 ?update_gov_buttons@BaseWin@@QAEXXZ 0x0041E560-0x0041E788
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0041e560.cpp", "src/basewin.h", "src/base.h", "src/faction.h", "src/basebutton.h"], "reason": "Recover governor-priority button state through BaseCurrent, typed PlayerData AI preferences, the BaseWin FlatButton array and BaseButton's owned auxiliary state. The retained seed remains the measurement reference."}
 // The seed's four 0x0096CDC0..0x0096CDCC indexed words are
@@ -5281,6 +5286,7 @@ LAB_00414178:
   buffer->set_clip(&saved_clip);
   return;
 }
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00415B20 ?draw_info@BaseWin@@QAEXH@Z 0x00415B20-0x00415DCE
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00415b20.cpp", "src/basewin.h", "src/base.h", "src/faction.h", "src/maininterface.h", "src/buffer.h"], "reason": "Recover the base title panel through owned BaseWin rectangles and Sprite dimensions, MainInterface's Buffer and shared frame styles, and typed Base/Player name and grammar fields. The seed retains compiler/reference evidence."}
 void BaseWin::draw_info(int update_mode) {
@@ -5340,6 +5346,7 @@ void BaseWin::draw_info(int update_mode) {
     }
     screen->set_clip(&previous_clip);
 }
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00415730 ?draw_misc@BaseWin@@QAEXH@Z 0x00415730-0x00415B15
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00415730.cpp", "src/basewin.h", "src/alpha.h", "src/faction.h", "src/base.h", "src/palette.cpp", "src/font.h"], "reason": "Recover the miscellaneous base panel through its owned rectangle, label and string table, live Base and PlayerData fields, font line advance, and shared palette rather than executable addresses and raw self-offsets. The retained seed remains for byte restoration."}
 void BaseWin::draw_misc(int update_mode) {
@@ -5609,6 +5616,7 @@ void BaseWin::draw_farm(int update_mode) {
     else update(&rect1_, 0);
     canvas->set_clip(&saved_clip);
 }
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00414B40 ?draw_pop@BaseWin@@QAEXH@Z 0x00414B40-0x00415078;0x00651B76-0x00651B93
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00414b40.cpp", "image:0x00414C58-0x00414CA3 population spacing uses panel width minus height", "image:0x00414CB4-0x00414CDD expansion and alien rule select alien sprites", "src/sprite.cpp", "src/base.h", "src/faction.h", "src/basewin.h"], "reason": "Draw the current base's citizen and specialist row through owned BaseWin panel and Spot members, typed Base mood/specialist fields, and the four real large-sprite arrays. The retained seed reverses the alien branch and mistranscribes the spacing; the pinned instructions resolve both."}
 void BaseWin::draw_pop(int update_mode) {

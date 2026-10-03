@@ -43,6 +43,7 @@ char DiploLocalizedDiplomacyTitle;
 // DiploWin owns cleanup through its real typed subobjects. Its destructor
 // body has no separate unregister or global-state operation; C++ performs
 // reverse-order member/base destruction after this body.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00444DB0 ??1DiploWin@@QAE@XZ 0x00444DB0-0x00444FB2;0x00654920-0x006549F0
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00444db0.cpp", "Pinned444DB0 cleanup sequence and654920 unwind funclets; existing typed members match their native receiver offsets and thirteen-element FlatButton array."], "reason": "Recover complete DiploWin destruction through genuine automatic reverse-order member/base lifetimes; pinned teardown contains no additional DiploWin unregister. Replace only executable-address forwarder and preserve seed history, no exactness claim."}
 // symbol ??1DiploWin@@UAE@XZ
@@ -50,6 +51,7 @@ DiploWin::~DiploWin() {}
 
 // Native 0x444FC0 constructs both bases, Spot, thirteen FlatButtons, StringBox,
 // ListBox and EditBox in declaration order. No scalar initialization follows.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00444FC0 ??0DiploWin@@QAE@XZ 0x00444FC0-0x0044507B;0x006549F0-0x00654A47 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original constructor444FC0 establishes GraphicWin+0, SubInterface+A14 and member construction order; secondary table66B5E0 gives nineteen callback slots and adjusted receivers.", "Redraw4436C0, status443C70 and painter443E50 inspected over declared original spans; source rectangle/control owners preserve native offsets. Palette colors reuse TextColourTable[80-2*item]/[81-2*item]. Localized title producer and full extents remain unknown.", "recovery/tasks/interface-contract-report-closure.json; root coordinator owns import and independent compilation; no current byte, structural or runtime acceptance is implied."], "reason": "Recover the genuine DiploWin GraphicWin/SubInterface owner with typed callbacks and automatic base/member lifetimes; retain independent seed history and restoration obligations."}
 DiploWin::DiploWin() {}
@@ -434,6 +436,7 @@ void DiploWin::exec(int faction_id, int faction_id_with) {
 }
 
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004436C0 ?on_redraw@DiploWin@@QAEXXZ 0x004436C0-0x00443C25
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original constructor444FC0 establishes GraphicWin+0, SubInterface+A14 and member construction order; secondary table66B5E0 gives nineteen callback slots and adjusted receivers.", "Redraw4436C0, status443C70 and painter443E50 inspected over declared original spans; source rectangle/control owners preserve native offsets. Palette colors reuse TextColourTable[80-2*item]/[81-2*item]. Localized title producer and full extents remain unknown.", "recovery/tasks/interface-contract-report-closure.json; root coordinator owns import and independent compilation; no current byte, structural or runtime acceptance is implied."], "reason": "Recover the genuine DiploWin GraphicWin/SubInterface owner with typed callbacks and automatic base/member lifetimes; retain independent seed history and restoration obligations."}
 // symbol ?on_redraw@DiploWin@@UAEXXZ

@@ -33,6 +33,7 @@ void __cdecl report_intel(int selection);
 void __cdecl slide_show(GraphicWin *window, int mode);
 void __cdecl slide_hide(GraphicWin *window, int mode);
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0043F2B0 ?start@DiploPop@@QAEXH@Z 0x0043F2B0-0x0043F5B5 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0043f2b0.cpp", "image:terranx_original.exe:0x0043F2B0", "source:docs/recovery/subobject-sites.csv:MainInterface22DFC"], "reason": "Recover the genuine diplomacy popup startup using embedded Flic/Time members, borrowed faction Sprite objects and MainInterface sprite11. Native same-faction fast path, FLIC failure/fallback and stored-frame update remain distinct."}
 void DiploPop::start(int faction_id) {
@@ -118,6 +119,7 @@ DiploPop DiplomacyPopup;
 // RECOVERY_OBJECT: v1 0x00737CD0 ?DiploCallbackState737CD0@@3HA
 int DiploCallbackState737CD0;
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0043EFF0 ??0DiploPop@@QAE@XZ 0x0043EFF0-0x0043F0EA;0x00654880-0x006548F4
 // RECOVERY_BINDING: v1 {"evidence": ["Original43EFF0..43F0EA and unwind654880..6548F4 construct GraphicWin, the secondary interface base, three Fonts, two Times atA98/AC0, Flics atAE8/15CC and three FlatButtons at2158 with strideB4C. All compiler-generated unwind targets belong to those real lifetimes.", "43F0C8/43F0D2 set counterpart factionA94=-1 and field2154=1 only after all members.43F30D publishes the faction argument intoA94. The old field20AC was inside the second Flic, not an additional scalar. Original CRT43EFC0 constructs733990 and registers its destructor wrapper43EFE0."], "reason": "Recover the complete diplomacy-popup construction through real C++ bases and embedded member lifetimes."}
 DiploPop::DiploPop() {
@@ -127,6 +129,7 @@ DiploPop::DiploPop() {
     field_2154_ = 1;
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00440D50 ??1DiploPop@@QAE@XZ 0x00440D50-0x00440EB8;0x006547B0-0x00654871
 // RECOVERY_BINDING: v1 {"evidence": ["Original440D50..440EB8 and unwind6547B0..654871 restore the class tables, perform the same two Time stops, virtual hide and direct GraphicWin close as close(), then resetA94/20B0/2154. Normal C++ destructor dispatch supplies those table transitions; no table stores are handwritten.", "440DEB onward destroys FlatButton[3] in reverse, then Flic2/Flic1 including their Palette/Buffer members, Time2/Time1, Font3/Font2/Font1, and GraphicWin. The complete unwind path preserves the same partially live subobjects. Existing downstream lifecycle and renderer limitations are not waived."], "reason": "Recover complete diplomacy-popup destruction through close followed by automatic reverse member and base destruction."}
 // symbol    ??1DiploPop@@UAE@XZ
@@ -351,6 +354,7 @@ void DiploPop::on_status(int mode) {
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // indirect  0x00440582
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00440550 ?on_iface_button_clicked@DiploPop@@QAEXH@Z 0x00440550-0x00440604 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00440550.cpp retained original identity and spans", "recovery/tasks/interface-contract-report-closure.json authorized ownership recovery", "original:0x00440550 complete control/member accesses and concrete interface table"], "reason": "Recover the concrete SubInterface owner operation through genuine window members and source-owned globals. Original table/call evidence identifies the callback receiver; the retained compatible seed supplies its complete original intervals, not an executable-address forwarding implementation."}
 // symbol    ?on_iface_button_clicked@DiploPop@@UAEXH@Z
@@ -411,6 +415,7 @@ void DiploPop::on_iface_group_clicked(int group, int x_coord, int y_coord) {
     draw_hq();
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00440080 ?draw_hq@DiploPop@@QAEXXZ 0x00440080-0x00440291 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00440080.cpp retained original identity and spans", "recovery/tasks/interface-contract-report-closure.json authorized ownership recovery", "original:0x00440080 complete control/member accesses and concrete interface table"], "reason": "Recover the concrete SubInterface owner operation through genuine window members and source-owned globals. Original table/call evidence identifies the callback receiver; the retained compatible seed supplies its complete original intervals, not an executable-address forwarding implementation."}
 void DiploPop::draw_hq() {

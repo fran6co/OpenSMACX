@@ -37,6 +37,7 @@
 #include <mmsystem.h>
 #include <digitalv.h>
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00403BA0 ?amovie_project@@YAXH@Z 0x00403BA0-0x00403BDF BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Native403BA3..3BD4 opens MOVLIST/PROJECTS, consumes one row plus positive project_id rows, then dispatches text_item to the real char* movie overload403BE0; initial literals682754/682748 verified in pinned image.", "src/recovered/units/00403ba0.cpp", "Root-only console-movie-wrapper-20261001 central dependency closure; immutable task baseline preserved."], "reason": "Recover complete source-owned movie selection and project-index wrapper with proper Popup lifetime, typed facilities, actual text parsing and existing movie playback. Retain exact seed identities and all original spans; no match or acceptance claim is granted by this binding."}
 void __cdecl amovie_project(int project_id) {
@@ -494,6 +495,7 @@ void AlphaMovie::close() {
 
 
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005FFDB0 ?close@MCIVideo@@QAEXXZ 0x005FFDB0-0x005FFE3D
 // RECOVERY_BINDING: v1 {"evidence": ["git:b55fcf8bd32d532e5050a5aaadf011bcff4394b5:src/unrecovered/005ffdb0.cpp", "source:src/alphamovie.h:MCIVideo", "original:0x005FFDB0"], "reason": "Recover the MCI device shutdown and handle reset on its owning MCIVideo member using the pinned call sequence and existing typed state."}
 // Stop and close the MCI device, clear the window/player state, and restore

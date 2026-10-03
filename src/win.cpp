@@ -4326,6 +4326,7 @@ void __cdecl do_all_chars() {
     do_net();
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005FCF90 ?do_char@@YAXXZ 0x005FCF90-0x005FCFDD BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/005fcf90.cpp", "image:terranx_original.exe:0x005FCF90"], "reason": "Win input-pump owner uses SDK message dispatch and real pointer-owner storage; original control flow and seed establish this entry and extent."}
 // symbol    ?do_char@@YAHXZ
@@ -4341,6 +4342,7 @@ int __cdecl do_char() {
     return 1;
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005FD050 ?do_mouse@@YAXXZ 0x005FD050-0x005FD09D BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/005fd050.cpp", "image:terranx_original.exe:0x005FD050"], "reason": "Win input-pump owner uses SDK message dispatch and real pointer-owner storage; original control flow and seed establish this entry and extent."}
 // symbol    ?do_mouse@@YAHXZ
@@ -4357,6 +4359,7 @@ int __cdecl do_mouse() {
     return 1;
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005FD0A0 ?do_all_mouse@@YAXXZ 0x005FD0A0-0x005FD115 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/005fd0a0.cpp", "image:terranx_original.exe:0x005FD0A0"], "reason": "Win input-pump owner uses SDK message dispatch and real pointer-owner storage; original control flow and seed establish this entry and extent."}
 void __cdecl do_all_mouse() {
@@ -4390,6 +4393,7 @@ void __cdecl flush_keyboard() {
     check_net();
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005FD220 ?flush_mouse@@YAXXZ 0x005FD220-0x005FD27A BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/005fd220.cpp", "image:terranx_original.exe:0x005FD220"], "reason": "Win input-pump owner uses SDK message dispatch and real pointer-owner storage; original control flow and seed establish this entry and extent."}
 void __cdecl flush_mouse() {
@@ -12306,6 +12310,7 @@ int __cdecl pump_mouse_button_message() {
     return 1;
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005FD2C0 sub_5fd2c0 0x005FD2C0-0x005FD308 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/005fd2c0.cpp"], "reason": "Recover the complete core message helper using SDK MSG/USER32, original queue ranges and callback ordering; preserve catalogue identity and historical seed obligation."}
 // symbol    ?pump_sound_message@@YAHXZ
@@ -12319,6 +12324,7 @@ int __cdecl pump_sound_message() {
     return 1;
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005FD310 sub_5fd310 0x005FD310-0x005FD35D
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/005fd310.cpp"], "reason": "Recover the complete core message helper using SDK MSG/USER32, original queue ranges and callback ordering; preserve catalogue identity and historical seed obligation."}
 // symbol    ?pump_all_sound_messages@@YAXXZ

@@ -100,6 +100,7 @@ int mapwin_dest_mul(int left, int right);
 
 // The active map bounds, panel layouts, faction caption records and tutorial
 // base rectangle all have source-owned receivers below.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00470A90 ?init@MapWin@@QAEXHH@Z 0x00470A90-0x00470EC2
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00470a90.cpp retains the complete 1074-byte seed; mode zero uses MapWin_UNK5 panels and Players records, mode two uses BaseWin::rect1_, and mode three selects label 0x204.", "src/recovered/units/00588aa0.cpp stores find_font(10, 1) at the original display-font slot."], "reason": "Home the map modes through typed source owners; resolve the font through its real lookup while its startup cache remains unowned."}
 void MapWin::init(int mode, int update) {
@@ -195,6 +196,7 @@ void MapWin::init(int mode, int update) {
     }
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00470920 ?init@MapWin@@QAEXPAURECT@@PADH@Z 0x00470920-0x00470A90
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00470920.cpp; original calls clear, cache setup and GraphicWin::init(RECT*) for the PlanWin, secondary MapWin slot, WorldWin and ordinary receivers.", "Original 0x004709EB identifies the complete PlanWin at 0x00834D70 and 0x004709F3 tests DiplomacyPopup; 0x005D50A0 supplies null-RECT behavior."], "reason": "Home receiver selection through real PlanWin, popup, interface and WorldWin owners and the original GraphicWin rectangle overload."}
 // symbol    ?init@MapWin@@QAEXPAUtagRECT@@PADH@Z
@@ -716,6 +718,7 @@ void MapWin::close() {
 // The primary console occupies slot zero and is closed by its own owner.
 // Shutdown closes only populated secondary windows, then the separately
 // constructed farm window, whose owned buffer is released by MapWin::close.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004710E0 ?mapwin_system_shutdown@@YAXXZ 0x004710E0-0x0047115F
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/004710e0.cpp retains the original loop over MapWinTable at 0x007D3C3C..0x007D3C5C and the final receiver at 0x007D4060", "src/mapwin.cpp binds those receivers as MapWinTable and FarmMapWindow; MapWin::close releases owned_ before GraphicWin::close"], "reason": "Replace the executable forwarder with typed shutdown of active secondary map windows and the independent farm window; preserve the seed for restoration measurement."}
 void __cdecl mapwin_system_shutdown() {
@@ -728,6 +731,7 @@ void __cdecl mapwin_system_shutdown() {
     FarmMapWindow.close();
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00471030 ?mapwin_system_init@@YAXH@Z 0x00471030-0x004710DF
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original 0x00471030-0x004710DF fills 0x007D3C60..0x007D4060, calls compute_lighting_table, clears/reinitializes eight MapWinTable slots, then initializes the FarmMapWindow cache", "src/unrecovered/00471030.cpp retains the seed; src/mapwin.cpp owns the table, FarmMapWindow and each called method"], "reason": "Recover map-window system startup with typed slot and storage ownership; leave the startup-word table's wider meaning open until consumers are identified."}
 void __cdecl mapwin_system_init(int reset_windows) {
@@ -809,6 +813,7 @@ void MapWin::on_sys_close() {
 
 // Original0x0046F8C0 resets the side panels before dispatching one of the four
 // map-window buttons. The fourth button toggles the custom world-scale label.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0046F8C0 ?on_button_clicked@MapWin@@QAEXH@Z 0x0046F8C0-0x0046F9E6 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0046f8c0.cpp", "Pinned original image review controls route precedence, cursor sprite dispatch, signed zoom, actual API imports and original member/data dependencies. Bounded compile and host controls do not establish game acceptance."], "reason": "Recover the genuine MapWin/Console owner operation using typed members, actual shared storage, virtual base APIs and full original branch evidence; keep seed and historical obligations."}
 // symbol    ?on_button_clicked@MapWin@@UAEXH@Z
@@ -1147,6 +1152,7 @@ int MapWin::focus(int x_coord, int y_coord) {
     return moved;
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0046B1F0 ?set_center@MapWin@@QAEXHHH@Z 0x0046B1F0-0x0046B303
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0046b1f0.cpp and original 0x0046B1F0-0x0046B303; Vehs+0xE is faction_id."], "reason": "Home map recentering with real receiver fields, destination vehicle state and redraw."}
 void MapWin::set_center(int x, int y, int draw_type) {
@@ -1195,6 +1201,7 @@ void MapWin::set_center(int x, int y, int draw_type) {
 
 // The binder recorded the formerly unfinished state; the tile walker is now
 // source-owned. base_draw remains the explicit unfinished rendering callee.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00469B40 ?gen_bases_only@MapWin@@QAEXXZ 0x00469B40-0x00469C9F
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00469b40.cpp retains the complete tile-walk seed; MapWin fields at 0x1DDA4..0x1DDD8 and map_loc determine the source-owned traversal."], "reason": "Home the base-only tile traversal reached by WorldWin redraw; base_draw remains an explicitly unfinished rendering dependency."}
 void MapWin::gen_bases_only() {
@@ -1230,6 +1237,7 @@ void MapWin::gen_bases_only() {
     }
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00467190 ?draw_bases@MapWin@@QAEXHHHHH@Z 0x00467190-0x004672B8
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00467190.cpp complete 296-byte seed; pinned original 0x00467190-0x004672B8; BaseWin+0x40B0C owns focused base id."], "reason": "Home map base-overlay eligibility and typed Base/Map visibility checks; base_draw remains explicitly unfinished."}
 void MapWin::draw_bases(int tile_x, int tile_y, int pixel_x, int pixel_y,
@@ -2068,6 +2076,7 @@ int __cdecl gen_window_terrain(MapWin *window, int zoom, int faction,
                             x, y, pixel_x, pixel_y);
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00466CA0 ?draw_vehicles@MapWin@@QAEXHHHHH@Z 0x00466CA0-0x0046718F FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00466ca0.cpp", "Pinned original image review controls route precedence, cursor sprite dispatch, signed zoom, actual API imports and original member/data dependencies. Bounded compile and host controls do not establish game acceptance."], "reason": "Recover the genuine MapWin/Console owner operation using typed members, actual shared storage, virtual base APIs and full original branch evidence; keep seed and historical obligations."}
 void MapWin::draw_vehicles(int tile_x, int tile_y, int pixel_x, int pixel_y,
@@ -5625,6 +5634,7 @@ void MapWin::right_menu(int tile_x, int tile_y, int screen_x, int screen_y) {
 
 // Original0x00469720 labels the eight neighboring tiles around the current
 // console cursor using the original keypad order and this window's map scale.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00469720 ?draw_legend@MapWin@@QAEXXZ 0x00469720-0x004698C8;0x00655932-0x00655944 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00469720.cpp", "Pinned original image review controls route precedence, cursor sprite dispatch, signed zoom, actual API imports and original member/data dependencies. Bounded compile and host controls do not establish game acceptance."], "reason": "Recover the genuine MapWin/Console owner operation using typed members, actual shared storage, virtual base APIs and full original branch evidence; keep seed and historical obligations."}
 void MapWin::draw_legend() {
@@ -5665,6 +5675,7 @@ void MapWin::draw_legend() {
 // Original0x004698D0 draws the seven-by-seven diplomacy key to the right of
 // the map. The row and column indices both omit faction zero, the native-life
 // record, exactly as the original table bounds do.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004698D0 ?draw_wars@MapWin@@QAEXXZ 0x004698D0-0x00469B32 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004698d0.cpp", "Pinned original image review controls route precedence, cursor sprite dispatch, signed zoom, actual API imports and original member/data dependencies. Bounded compile and host controls do not establish game acceptance."], "reason": "Recover the genuine MapWin/Console owner operation using typed members, actual shared storage, virtual base APIs and full original branch evidence; keep seed and historical obligations."}
 void MapWin::draw_wars() {
@@ -6020,6 +6031,7 @@ void MapWin::click(int pixel_x, int pixel_y, int button) {
 // Original0x00467970 paints visible base destinations and the local faction's
 // vehicle waypoint/transport routes over the map. Both record families are
 // owned arrays in base.h and veh.h; no archive-shaped mirror is needed.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00467970 ?draw_base_dest@MapWin@@QAEXH@Z 0x00467970-0x00467DD9 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00467970.cpp", "Pinned original image review controls route precedence, cursor sprite dispatch, signed zoom, actual API imports and original member/data dependencies. Bounded compile and host controls do not establish game acceptance."], "reason": "Recover the genuine MapWin/Console owner operation using typed members, actual shared storage, virtual base APIs and full original branch evidence; keep seed and historical obligations."}
 void MapWin::draw_base_dest(int draw_type) {
@@ -7822,6 +7834,7 @@ abort:
     get_key_state(0x11);
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0046ED30 ?on_left_down@MapWin@@QAEXHH@Z 0x0046ED30-0x0046EFE1 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0046ed30.cpp", "Pinned original image review controls route precedence, cursor sprite dispatch, signed zoom, actual API imports and original member/data dependencies. Bounded compile and host controls do not establish game acceptance."], "reason": "Recover the genuine MapWin/Console owner operation using typed members, actual shared storage, virtual base APIs and full original branch evidence; keep seed and historical obligations."}
 // symbol    ?on_left_down@MapWin@@UAEXHH@Z
@@ -7908,6 +7921,7 @@ after_undo:
     GoTimer.start(go_timer, 3, timer_parameter, 5);
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0050F170 ?go_timer@@YAXH@Z 0x0050F170-0x0050F3C4 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0050f170.cpp", "Pinned original image review controls route precedence, cursor sprite dispatch, signed zoom, actual API imports and original member/data dependencies. Bounded compile and host controls do not establish game acceptance."], "reason": "Recover the genuine MapWin/Console owner operation using typed members, actual shared storage, virtual base APIs and full original branch evidence; keep seed and historical obligations."}
 void __cdecl go_timer(int selection_mode) {

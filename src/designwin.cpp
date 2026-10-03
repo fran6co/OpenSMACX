@@ -1512,6 +1512,7 @@ void DesignWin::construct_chassis() {
 // RECOVERY_OBJECT: v1 0x00733974 ?DesignAutoBuildActive@@3HA
 int DesignAutoBuildActive = 0;
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0043BF50 ?construct_vehicle@DesignWin@@QAEXXZ 0x0043BF50-0x0043C062 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0043bf50.cpp; src/designwin.h:DesignWin prototype and Caviar members; src/veh.h:RulesArmor and vehdraw_construct_*"], "reason": "Rebuild all component preview objects from the selected DesignWin state, using the typed armor table and existing vehicle-render helpers."}
 void DesignWin::construct_vehicle() {
@@ -2328,6 +2329,7 @@ void DesignWin::check_abil() {
     }
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00439D30 ?suggest_abil@DesignWin@@QAEXH@Z 0x00439D30-0x00439EA3 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00439d30.cpp", "src/veh.h:RulesAbility and abil_index", "src/faction.h:Player faction bonus members", "src/game.h:GamePreferences", "src/alpha.h:Rules.tech_two_spec_abilities", "src/console.h:ConsoleGlobal.faction_id_"], "reason": "Suggest a valid researched ability through the real design selection and faction bonus records, retaining the original seed's anomalous bonus scan as a restoration obligation."}
 void DesignWin::suggest_abil(int ability) {
@@ -2367,6 +2369,7 @@ void DesignWin::suggest_abil(int ability) {
     }
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00434BC0 ?draw_chassis@DesignWin@@QAEXH@Z 0x00434BC0-0x00434F36
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00434bc0.cpp", "docs/recovery/member-accesses.csv"], "reason": "Partial typed recovery draws the chassis panel caption, selected chassis name and model preview; the seed retains unresolved specification text and palette behavior."}
 void DesignWin::draw_chassis(int redraw) {
@@ -2424,6 +2427,7 @@ void DesignWin::draw_chassis(int redraw) {
     }
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00434F40 ?draw_weapon@DesignWin@@QAEXH@Z 0x00434F40-0x004353FF
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00434f40.cpp", "docs/recovery/member-accesses.csv"], "reason": "Partial typed recovery draws the weapon panel caption, selected weapon name and model preview; the seed retains unresolved class, range and ammunition text and palette behavior."}
 void DesignWin::draw_weapon(int redraw) {
@@ -2478,6 +2482,7 @@ void DesignWin::draw_weapon(int redraw) {
     // several separate rules tables not yet owned by this source group.
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00435400 ?draw_armor@DesignWin@@QAEXH@Z 0x00435400-0x00435800
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00435400.cpp", "src/caviar.h:Caviar::render_multi_table_dest", "src/game.h:ArmorTransparentColorTables", "docs/recovery/member-accesses.csv"], "reason": "Draw the selected armor preview, including the special transparent armor render path; the seed retains unresolved armor detail text and palette behavior."}
 void DesignWin::draw_armor(int redraw) {
@@ -2520,6 +2525,7 @@ void DesignWin::draw_armor(int redraw) {
     // rating table not yet owned here.
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00435800 ?draw_reactor@DesignWin@@QAEXH@Z 0x00435800-0x00435B29
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00435800.cpp", "docs/recovery/member-accesses.csv"], "reason": "Partial typed recovery draws the reactor panel caption, selected reactor name and model preview; the seed retains unresolved ability-aware description, numeric detail and palette behavior."}
 void DesignWin::draw_reactor(int redraw) {
@@ -2565,6 +2571,7 @@ void DesignWin::draw_reactor(int redraw) {
     // numeric detail use separate label/stat resources not yet owned here.
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00435B30 ?draw_special_1@DesignWin@@QAEXH@Z 0x00435B30-0x00435DD1 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00435b30.cpp", "RulesAbility and StringTable in src/veh.h and src/strings.h", "DesignWin::protoAbilityID1_ and panel/font members in src/designwin.h"], "reason": "Draw the first selected special ability through the typed ability record and the existing DesignWin panel, font and selection state."}
 void DesignWin::draw_special_1(int redraw) {
@@ -2612,6 +2619,7 @@ void DesignWin::draw_special_1(int redraw) {
     }
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00435DE0 ?draw_special_2@DesignWin@@QAEXH@Z 0x00435DE0-0x00436081 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00435de0.cpp", "RulesAbility and StringTable in src/veh.h and src/strings.h", "DesignWin::protoAbilityID2_ and panel/font members in src/designwin.h"], "reason": "Draw the second selected special ability through the typed ability record and the existing DesignWin panel, font and selection state."}
 void DesignWin::draw_special_2(int redraw) {
@@ -2666,6 +2674,7 @@ void DesignWin::draw_vehicle(int redraw) {
     // BODY GOES HERE.
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004346A0 ?draw_info@DesignWin@@QAEXXZ 0x004346A0-0x00434BB4;0x00653FFE-0x00654010 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004346a0.cpp"], "reason": "Link-continuity placeholder only; retain the seed until this original body is migrated."}
 void DesignWin::draw_info() {
@@ -3817,6 +3826,7 @@ static int workshop_scaled_dimension(int dimension, int numerator,
     return product / denominator;
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00583CD0 ?hq_list_draw@@YAXPAUGraphicWin@@HHHHH@Z 0x00583CD0-0x00583E2A
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned native583CD0..583E2A: signed scaling and centering, active bit0, shared zoom68F0F4 initial-6 and mutable faction93FC48, fake vehicle5C1D50, obsolete order byte11, Buffer secondary base444, veh_draw5594F0 and unity scale epilogue. Retained src/recovered/units/00583cd0.cpp; recovery/tasks/designwin-owner-coverage.json coupled callback authorization; no original-address aliases."], "reason": "Recover the workshop prototype preview through actual GraphicWin Buffer inheritance, VehPrototype and Veh owners, source-owned zoom/faction storage and sprite scaling. Preserve the seed identity and original span; catalogue struct spelling differs from the actual GraphicWin class symbol. No matching claim is granted."}
 // symbol    ?hq_list_draw@@YAXPAVGraphicWin@@HHHHH@Z

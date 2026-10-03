@@ -29,6 +29,7 @@ const double GammaByteScale = 235.99;
 const float GammaSliderScale = 100.0f;
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005C8E60 ?exec@Gamma@@QAEXPAUPalette@@MH@Z 0x005C8E60-0x005C9325
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/005c8e60.cpp records the control setup and modal call sequence", "src/gamma.h identifies five consecutive RECTs and the Palette/Scroll/EditBox/PushButton members", "Pinned disassembly 0x005C8F89 and 0x005C9119 shows the accept button uses the RECT at +0xA44, correcting the seed's +0xA34", "At 0x005C8ECC/0x005C8ED1 VC6 overwrites the former argument slots with WinScreenHeight/Width before GraphicWin::init reloads them at 0x005C903B; the call does not pass a Palette pointer as a dimension", "WinScreenWidth/Height and BasePopDefaultOkText/CancelText are existing source-bound globals", "Original format/font bytes at 0x00691E74 read Arial"], "reason": "Run Gamma's palette apply-only or modal editor flow using real controls, owned rectangles and their member APIs rather than raw receiver offsets and vtable arrays."}
 // symbol    ?exec@Gamma@@QAENPAVPalette@@MH@Z
@@ -197,6 +198,7 @@ void Gamma::on_redraw() {
     GraphicWin::soft_update();
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005C9330 ?close@Gamma@@QAEXXZ 0x005C9330-0x005C938B BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/005c9330.cpp records the cleanup order", "src/gamma.h owns the Palette, Scroll, EditBox and two PushButton subobjects at the measured offsets", "PushButton::close is the virtual slot 90 selected by the original"], "reason": "Close Gamma's real owned controls and base window rather than dispatching through fabricated vtable arrays and raw offsets."}
 // symbol    ?close@Gamma@@QAEXXZ
@@ -210,6 +212,7 @@ void Gamma::close() {
     GraphicWin::close();
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005C95E0 ?adjust_pal@Gamma@@QAEXN@Z 0x005C95E0-0x005C97B1
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/005c95e0.cpp walks the target Palette from entry 10 through 245", "src/recovered/units/005c8e60.cpp stores the Palette* argument at Gamma+0xA64", "src/palette.h places PALETTEENTRY records at the start of Palette and exposes reseed/set"], "reason": "Apply gamma to the target palette's RGB entries as typed palette data, then publish its new seed and colours."}
 // symbol    ?adjust_pal@Gamma@@QAEXN@Z
@@ -242,6 +245,7 @@ void Gamma::adjust_pal(double gamma) {
     target->set();
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00456110 ??1Gamma@@QAE@XZ 0x00456110-0x00456275;0x00655190-0x00655240
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00456110.cpp shows a Gamma::close call followed by reverse subobject teardown", "src/gamma.h declares the real member order and GraphicWin base", "C++ destruction emits subobject and EH cleanup without writing historical vtable addresses"], "reason": "Use compiler-owned lifetime for Gamma's embedded controls and base, preserving the explicit dialog close before automatic destruction."}
 // symbol    ??1Gamma@@UAE@XZ
@@ -249,6 +253,7 @@ Gamma::~Gamma() {
     close();
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005C93C0 ?on_button_clicked@Gamma@@QAEXH@Z 0x005C93C0-0x005C9406
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/005c93c0.cpp separates button -1 scroll acceptance from button -2 initial-gamma restoration", "src/gamma.h identifies gamma_, initialGamma_ and the embedded Scroll", "Win slot 58 is release_modal, the original indirect target"], "reason": "Apply or cancel the gamma adjustment and close the modal dialog through its real virtual method."}
 // symbol    ?on_button_clicked@Gamma@@UAEXH@Z

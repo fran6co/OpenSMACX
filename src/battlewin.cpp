@@ -24,6 +24,7 @@
 #include "console.h"   // ConsoleGlobal, the object at 0x009156B0
 #include "mapwin.h"    // MainInterfaceGlobal, the object at 0x007AE820
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00422C50 ?clear@BattleWin@@QAEXXZ 0x00422C50-0x00422CB5 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:terranx_original.exe:0x422C50-0x422CB5;src/recovered/units/00422c50.cpp:historical exact seed;src/battlewin.h:four contiguous native RECT arguments at30/40/50/60"], "reason": "Recover the original four-rectangle clear operation through the genuine BattleWin rectangle members and shared MainInterfaceGlobal canvas; preserve source and seed obligations."}
 void BattleWin::clear() {

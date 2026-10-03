@@ -167,6 +167,7 @@ void FileWin::on_button_clicked(int button_id) {
 // Confirmation builds the full selected path and its basename in FileWin
 // storage, then releases or refocuses the modal owner through its real controls.
 // Focus is captured before changing the editor selection.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x006146A0 ?UNK4@FileWin@@QAEXXZ 0x006146A0-0x00614B59
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/006146a0.cpp", "recovery/tasks/game-save-load-owner-coverage.json", "pinned image sha256:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tests/test_filewin_unk4_full_branches.py", "recovery/tests/test_filewin_load_contract_behavior.py"], "reason": "Recover the complete FileWin confirmation path through its real selected-path buffers, EditBox/ListBox, modal owner, and focus-list lifecycle."}
 void FileWin::UNK4() {
@@ -503,6 +504,7 @@ static Sprite FileWinSprite0;
 static Sprite FileWinSprite1;
 static Sprite FileWinSprite2;
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x006139B0 ?init@FileWin@@QAEHPADPAUGraphicWin@@PAUFileWinConstruct@@@Z 0x006139B0-0x00613B97
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/006139b0.cpp", "recovery/tasks/game-save-load-owner-coverage.json"], "reason": "Recover FileWin control initialization through genuine embedded controls, typed caller geometry, shared 17-DWORD parameter prefix and Windows list lifecycle. Retain the historical seed and obligations; no matching or game acceptance claim."}
 // symbol    ?init@FileWin@@QAEHPADPAVGraphicWin@@PAUFileWinConstruct@@@Z

@@ -66,6 +66,7 @@ void __cdecl help_tech_info(void (__cdecl *append)(char *), int technology,
 NewTechWin::NewTechWin() {
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00484810 ??1NewTechWin@@QAE@XZ 0x00484810-0x004849CD;0x00657510-0x006575C9
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00484810.cpp preserved lifecycle and unwind spans; real embedded arrays own destruction"], "reason": "Ordinary C++ reverse member/base destruction replaces the original-address pending forwarder; compiler owns unwind support."}
 // symbol    ??1NewTechWin@@UAE@XZ

@@ -30,6 +30,7 @@ static void __fastcall stop_edit_timer(Time *timer) {
     timer->stop();
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00615E40 ?caret_callback@EditBox@@QAEXH@Z 0x00615E40-0x00615E5F BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned disassembly 0x00615E40 reads its only receiver from [esp+4] and ends with a tail jump through the receiver's redraw slot", "src/unrecovered/00614fe0.cpp passes EditBox this as Time's integer callback payload", "src/editbox.h field_B48_ is the caret visibility state"], "reason": "Treat the timer entry as a free callback taking an EditBox pointer payload, not a member with an invented implicit receiver."}
 // symbol    ?edit_box_caret_callback@@YAXH@Z
@@ -55,6 +56,7 @@ void EditBox::on_dialog_focus(int focused) {
 }
 
 // 615E60. Genuine owner globals already live in win.cpp.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00615E60 ?on_left_down@EditBox@@QAEXHH@Z 0x00615E60-0x00615EB5 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00615e60.cpp", "Pinned original EditBox table66A038 and direct call/branch evidence"], "reason": "EditBox owns this table override or its direct text helper: pinned primary table66A038 slots12,17,20,21,25,26,51,64 and original direct-call receivers establish ownership. Use existing Win slot signatures without changing their order; text_position returns the EAX index consumed by callers despite the catalogue void label."}
 // symbol    ?on_left_down@EditBox@@UAEXHH@Z
@@ -88,6 +90,7 @@ void EditBox::on_left_up(int x, int) {
 }
 
 // 615F10. This is the TWO-argument slot 17, not slot 16's mouse router.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00615F10 ?on_mouse_move@EditBox@@QAEXHH@Z 0x00615F10-0x00615F4E BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/00615f10.cpp", "Pinned original EditBox table66A038 and direct call/branch evidence"], "reason": "EditBox owns this table override or its direct text helper: pinned primary table66A038 slots12,17,20,21,25,26,51,64 and original direct-call receivers establish ownership. Use existing Win slot signatures without changing their order; text_position returns the EAX index consumed by callers despite the catalogue void label."}
 // symbol    ?on_mouse_move@EditBox@@UAEXHH@Z
@@ -100,6 +103,7 @@ void EditBox::on_mouse_move(int x, int) {
 }
 
 // 616140. Qualified base calls are required: ordinary virtual calls recurse.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00616140 ?pass_dialog_focus@EditBox@@QAEXXZ 0x00616140-0x00616196
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00616140.cpp", "Pinned original EditBox table66A038 and direct call/branch evidence"], "reason": "EditBox owns this table override or its direct text helper: pinned primary table66A038 slots12,17,20,21,25,26,51,64 and original direct-call receivers establish ownership. Use existing Win slot signatures without changing their order; text_position returns the EAX index consumed by callers despite the catalogue void label."}
 // symbol    ?pass_dialog_focus@EditBox@@UAEXXZ
@@ -120,6 +124,7 @@ void EditBox::pass_dialog_focus() {
 
 // 616030. Empty selected text returns zero, NOT the current scroll position.
 // The last comparison is against B44, not the x argument or string length.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00616030 ?text_position@EditBox@@QAEXH@Z 0x00616030-0x00616135
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00616030.cpp", "Pinned original EditBox table66A038 and direct call/branch evidence"], "reason": "EditBox owns this table override or its direct text helper: pinned primary table66A038 slots12,17,20,21,25,26,51,64 and original direct-call receivers establish ownership. Use existing Win slot signatures without changing their order; text_position returns the EAX index consumed by callers despite the catalogue void label."}
 // symbol    ?text_position@EditBox@@QAEHH@Z
@@ -357,6 +362,7 @@ int EditBox::vslot_26(int key_value) {
 // 615270. Do not cache the mask flag across drawing calls; original reloads
 // it at each branch. Rendering is intentionally inherited virtual redraw(),
 // whose eventual slot-12 callback reaches this handler.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00615270 ?on_redraw@EditBox@@QAEXXZ 0x00615270-0x00615627
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00615270.cpp", "Pinned original EditBox table66A038 and direct call/branch evidence"], "reason": "EditBox owns this table override or its direct text helper: pinned primary table66A038 slots12,17,20,21,25,26,51,64 and original direct-call receivers establish ownership. Use existing Win slot signatures without changing their order; text_position returns the EAX index consumed by callers despite the catalogue void label."}
 // symbol    ?on_redraw@EditBox@@UAEXXZ
@@ -546,6 +552,7 @@ int EditBox::init(int x, int y, int width, int height, Win *parent,
     return 0;
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00615180 ?UNK1@EditBox@@QAEHPAUFont@@HHHPAUWin@@@Z 0x00615180-0x006151D6 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00615180.cpp records six stack arguments and a font-height call", "GraphicWin's Buffer base begins at EditBox+0x444", "EditBox::init at 0x00614FE0 consumes the derived height"], "reason": "Initialize the real Buffer font and use its measured line height to size the edit box; retain the sixth ABI argument although the original body does not read it."}
 // The historical label omits the sixth stack argument; the source symbol

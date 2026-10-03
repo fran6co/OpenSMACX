@@ -29,6 +29,7 @@
 // RECOVERY_OBJECT: v1 0x008A6268 ?SetupMenuFileScratch@@3PADA
 char SetupMenuFileScratch[1024];
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004AE340 ?on_left_click@SetupWin@@QAEXHH@Z 0x004AE340-0x004AE380
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004ae340.cpp", "image:terranx_original.exe:0x004AE340", "Native4AE349/4AE368 preserves original y in EDI across Spot output mutation; feedback receives incoming coordinate.", "recovery/tasks/interface-contract-report-closure.json; bounded UI-five scope preserves original baseline"], "reason": "Recover the original in its genuine UI owner using actual members, globals and base/virtual calls. Retain seed evidence and historical obligations; this binding does not grant a current matching or runtime claim."}
 void SetupWin::on_left_click(int x, int y) {
@@ -163,6 +164,7 @@ int SetupWin::do_menu(char* a1, int a2, int a3) {
     }
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004ADB20 ?do_menu@SetupWin@@QAEHPAUPopup@@HH@Z 0x004ADB20-0x004ADB66 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/004adb20.cpp; image:0x004ADB20-0x004ADB66; source:src/setupwin.h:SetupWin"], "reason": "Original method stores the incoming Popup at receiver+0x1014, dispatches menu kind 1 through do_menu_rightside with the original process-wide filename scratch address, then clears the non-owning popup member on both paths."}
 // symbol    ?do_menu@SetupWin@@QAEHPAVPopup@@HH@Z

@@ -86,6 +86,7 @@ void SocialWin::exit() {
     release_modal();
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004B1E80 ?on_key_click@SocialWin@@QAEHHH@Z 0x004B1E80-0x004B1EB5 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/004b1e80.cpp", "image:terranx_original.exe:0x004B1E80", "Original instructions establish owner, bounded body and callback/state order; SocialWin reloads faction after social_upheaval and every later stateful call. GraphicWin dispatches through the real Buffer base.", "recovery/tasks/interface-contract-report-closure.json; bounded UI-five scope preserves original baseline"], "reason": "Recover the original in its genuine UI owner using actual members, globals and base/virtual calls. Retain seed evidence and historical obligations; this binding does not grant a current matching or runtime claim."}
 // symbol    ?on_key_click@SocialWin@@UAEHHH@Z
@@ -102,6 +103,7 @@ int SocialWin::on_key_click(int, int key) {
     return 1;
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004B1E00 ?on_button_clicked@SocialWin@@QAEXH@Z 0x004B1E00-0x004B1E49
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004b1e00.cpp", "image:terranx_original.exe:0x004B1E00", "Original instructions establish owner, bounded body and callback/state order; SocialWin reloads faction after social_upheaval and every later stateful call. GraphicWin dispatches through the real Buffer base.", "recovery/tasks/interface-contract-report-closure.json; bounded UI-five scope preserves original baseline"], "reason": "Recover the original in its genuine UI owner using actual members, globals and base/virtual calls. Retain seed evidence and historical obligations; this binding does not grant a current matching or runtime claim."}
 // symbol    ?on_button_clicked@SocialWin@@UAEXH@Z
@@ -246,6 +248,7 @@ void SocialWin::on_iface_left_click(int, int) {
     TutorialWindow.reset();
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004B2220 ?on_iface_right_click@SocialWin@@QAEXHH@Z 0x004B2220-0x004B23FA
 // RECOVERY_BINDING: v1 {"evidence": ["Original4B2220..4B23FA first resets TutorialWindow then tests interface-relative1E84C/1E85C/1E86C/1E83C, which are complete-object rectangles1F260/1F270/1F280/1F250. Labels.strings_ptr offsetsD24/D28/D2C/D1C select labels841/842/843/839; first match wins.", "Original4B2256/59 swaps argument stack contents before passing their reversed slot addresses to MainInterfaceGlobal.client_to_screen; this preserves logical x/y rather than the swapped coordinates in the seed. Every matching path constructs a degenerate screen rectangle and calls set_bubble_text on7AE820; no match only dismisses the tutorial."], "reason": "Recover social-panel tooltip selection with genuine rectangle members, label storage and the main-interface window receiver."}
 // symbol    ?on_iface_right_click@SocialWin@@UAEXHH@Z
@@ -450,6 +453,7 @@ Status: Complete
 void SocialWin::on_iface_group_clicked(int, int, int) {
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004B2470 ?on_iface_button_clicked@SocialWin@@QAEXH@Z 0x004B2470-0x004B264E FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004b2470.cpp retained original identity and spans", "recovery/tasks/interface-contract-report-closure.json authorized ownership recovery", "original:0x004B2470 complete control/member accesses and concrete interface table"], "reason": "Recover the concrete SubInterface owner operation through genuine window members and source-owned globals. Original table/call evidence identifies the callback receiver; the retained compatible seed supplies its complete original intervals, not an executable-address forwarding implementation."}
 // symbol    ?on_iface_button_clicked@SocialWin@@UAEXH@Z

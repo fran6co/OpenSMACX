@@ -1653,6 +1653,7 @@ void StatusWin::UNK3() {
 // host-test extraction packet, not project source and carries no recovery
 // annotations or historical claims.
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004B89C0 ?arrow_left@StatusWin@@QAEXXZ 0x004B89C0-0x004B8BC5
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004b89c0.cpp", "Pinned original01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tests/test_statuswin_remaining_behavior.py"], "reason": "Home the complete typed StatusWin arrow_left operation. Retain the original seed and historical obligations; this product has no new measured claim."}
 void StatusWin::arrow_left() {
@@ -1693,6 +1694,7 @@ void StatusWin::arrow_left() {
     MainInterfaceGlobal.soft_update(&rect);
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004B8BD0 ?arrow_right@StatusWin@@QAEXXZ 0x004B8BD0-0x004B8DF0 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004b8bd0.cpp", "Pinned original01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tests/test_statuswin_remaining_behavior.py"], "reason": "Home the complete typed StatusWin arrow_right operation. Retain the original seed and historical obligations; this product has no new measured claim. Historical seed obligation is carried by this product; current restoration is outstanding."}
 void StatusWin::arrow_right() {
@@ -1736,6 +1738,7 @@ void StatusWin::arrow_right() {
     MainInterfaceGlobal.soft_update(&rect);
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004B9FC0 ?init@StatusWin@@QAEXXZ 0x004B9FC0-0x004BA11E
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004b9fc0.cpp", "Pinned original01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tests/test_statuswin_remaining_behavior.py"], "reason": "Home the complete typed StatusWin init operation. Retain the original seed and historical obligations; this product has no new measured claim."}
 void StatusWin::init() {

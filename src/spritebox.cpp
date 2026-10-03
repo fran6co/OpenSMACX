@@ -503,6 +503,7 @@ int SpriteBox::calculate_dimensions() {
     return 0;
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00610C50 ?draw_item@SpriteBox@@QAEXH@Z 0x00610C50-0x0061103B FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00610c50.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x610c50 complete control/data-access review and src/spritebox.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
 void SpriteBox::draw_item(int position) {
@@ -645,6 +646,7 @@ int SpriteBox::on_key_down(int key) {
     return 1;
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00610280 ?close@SpriteBox@@QAEXXZ 0x00610280-0x00610416 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00610280.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x610280 complete control/data-access review and src/spritebox.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
 // symbol    ?close@SpriteBox@@QAEXXZ

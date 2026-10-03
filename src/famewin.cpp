@@ -67,10 +67,12 @@ FameWin g_FAMEWIN;
 // C++ member lifetime follows the constructor and destructor traces: the
 // GraphicWin base is first/last; the typed members follow their declaration
 // order. This body is intentionally empty so the compiler owns that work.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0044B200 ??0FameWin@@QAE@XZ 0x0044B200-0x0044B2F3;0x00654E00-0x00654E8E BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0044b200.cpp"], "reason": "Typed C++ member lifetime follows the original constructor call sequence; the seed remains the historical body interpretation."}
 FameWin::FameWin() {}
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0044B100 ??1FameWin@@QAE@XZ 0x0044B100-0x0044B1FF;0x00654D60-0x00654DF6
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0044b100.cpp"], "reason": "Product definition uses the typed FameWin ownership model while retaining the historical seed and its recovery obligations."}
 // symbol    ??1FameWin@@UAE@XZ
@@ -85,6 +87,7 @@ void FameWin::close() {
   GraphicWin::close();
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0044A4B0 ?on_key_click@FameWin@@QAEHHH@Z 0x0044A4B0-0x0044A4F3 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0044a4b0.cpp"], "reason": "Product definition uses the typed FameWin ownership model while retaining the historical seed and its recovery obligations."}
 // symbol    ?on_key_click@FameWin@@UAEHHH@Z
@@ -259,6 +262,7 @@ int FameWin::init() {
   return result;
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0044A640 ?on_group_clicked@FameWin@@QAEXHHH@Z 0x0044A640-0x0044A655 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/0044a640.cpp"], "reason": "Product definition uses the typed FameWin ownership model while retaining the historical seed and its recovery obligations."}
 void FameWin::on_group_clicked(int, int, int) {
@@ -292,6 +296,7 @@ static void famewin_write_wrapped(Buffer *canvas, int x, int y, int width) {
   canvas->wrap_cent(StringTemp, x, y, width);
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0044A570 ?on_button_clicked@FameWin@@QAEXH@Z 0x0044A570-0x0044A640
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0044a570.cpp"], "reason": "Product definition uses the typed FameWin ownership model while retaining the historical seed and its recovery obligations."}
 // symbol    ?on_button_clicked@FameWin@@UAEXH@Z
@@ -605,6 +610,7 @@ void FameWin::on_left_click(int x, int y) {
   }
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0044AC10 ?demote@FameWin@@QAEXH@Z 0x0044AC10-0x0044AE42;0x00654EBA-0x00654ECF FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0044ac10.cpp", "Pinned original owner review: original clip resets and absent-record branches, CharUpperA import, difficulty-label capitalization and exact demote tail copying."], "reason": "Recover FameWin owner behavior through existing GraphicWin/Buffer bases, owned buttons and sprites, and typed HallOfFame/Player records; retain historical seed identity and extents without a measurement claim."}
 void FameWin::demote(int rank) {

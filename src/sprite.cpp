@@ -2709,6 +2709,7 @@ int Sprite::draw_multi_table_dest(Buffer *buffer, int a, int b, int c, int x,
 // literal pooling; this does not assert a historical TU boundary.
 // Populate the existing resource/control icon objects from three shared
 // sheets. Startup through load_sprites remains a separate recovery dependency.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004547E0 ?load_icons@@YAXXZ 0x004547E0-0x00454D0C
 // RECOVERY_BINDING: v1 {"evidence": ["Full original4547E0..454D0C and retained seed src/recovered/units/004547e0.cpp establish the single no-argument loader, three sheet loads, recolor pairs before every extraction, all receivers/rectangles and unconditional terminal close.", "All service results are ignored. Original454B04 resets the arrow-column coordinate to104 before filler extraction. Menu and checkbox receivers belong to existing arrays, including checkbox element1 rather than separate75AF94 storage.", "Original per-asset CRT constructors/teardowns independently establish element counts and44-byte stride. Existing load_sprites startup and raw caption-icon publisher are separate unfinished ownership dependencies, not proof supplied by this binding."], "reason": "Complete original icon-sheet loader uses the existing shared PCX Buffer and thirteen existing Sprite groups. Recover ordinary C++ object/array accesses without original-address aliases or replacement assets."}
 void __cdecl load_icons() {

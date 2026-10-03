@@ -870,6 +870,7 @@ void __fastcall global_arith_0048d810_redirect(void *, void *) {
 }
 
 // Original final initializer in the pinned geometry family.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0048D820 sub_48d820 0x0048D820-0x0048D83E FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original CRT table entry selects 0048D820, whose typed arithmetic and output store were independently decoded from the pinned executable.", "recovery/tasks/prefwin-geometry-initializers.json", "src/global_arith.h"], "reason": "Recover the missing scalar initializer in the ordered PrefWin geometry startup family through genuine source-owned integer storage; retain the compatible historical exact seed and complete original span."}
 // symbol    _sub_48d820

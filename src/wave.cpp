@@ -1759,6 +1759,7 @@ void __cdecl ok_callback() {
 }
 
 // The window procedure's callback delegates to the active faction ambience.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004457C0 ?input_callback@@YAXXZ 0x004457C0-0x004457D3 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/004457c0.cpp original identity and complete 19-byte span", "image:0x004457C0-0x004457D3 null-test and virtual tail jump at offset 0x13C", "src/ambience.cpp FactionMusic at 0x0074DAA0; src/ambience.h FactionAmbience event slots75-89"], "reason": "Original nullary window-message callback consults the source-owned faction music pointer and tail-dispatches its genuine general event at virtual slot79; the compatible exact seed remains historical evidence, not current source acceptance."}
 void __cdecl input_callback() {

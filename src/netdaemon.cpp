@@ -5695,6 +5695,7 @@ void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
 }
 
 // Clear the real daemon lock entries, then close its AlphaNet base.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0051DD00 sub_51dd00 0x0051DD00-0x0051DDE0 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0051dd00.cpp"], "reason": "Recover typed lock-entry reset, borrowed selection pointer clearing and ordered lock cleanup before qualified AlphaNet close."}
 // symbol    ?reset@NetDaemon@@QAEXXZ

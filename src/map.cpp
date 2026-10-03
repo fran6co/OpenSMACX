@@ -6760,6 +6760,7 @@ void __cdecl proto_sort(int faction_id) {
 
 // Order design choices by availability and obsolete status. Original IDs stay
 // in the output table; the added status bands are sorting keys only.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005A63D0 ?proto_sort_2@@YAXH@Z 0x005A63D0-0x005A650B
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x005A63D0-0x005A650B", "source:src/recovered/units/005a63d0.cpp", "source:src/faction.h:PlayerData.proto_id_active"], "reason": "Recover design-choice ordering with typed prototype, weapon and faction state and source-owned shared output; original IDs remain separate from status ranking keys."}
 void __cdecl proto_sort_2(int faction_id) {

@@ -195,6 +195,7 @@ int VoiceRx::get_buffer_size() {
 
 // It forwards the device's slot 37 result verbatim, or zero when no device
 // exists; this is the operation Net's receive worker uses as its level.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004C9390 sub_4c9390 0x004C9390-0x004C93A2 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/004c9390.cpp"], "reason": "Rehome seed catalogue identity and original extents into compiled owning class; native-emitted symbol is separate and no new byte claim granted."}
 // symbol    ?get_nbuffers@VoiceRx@@UAEHXZ

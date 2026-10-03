@@ -53,6 +53,7 @@ UV2Player::UV2Player() {
 // RECOVERY_OBJECT: v2 0x008CC250 0x008CC254 ?UV2PlayerQuitRequested@@3HA 0x004BF390
 int UV2PlayerQuitRequested;
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004BF390 ?on_key@UV2Player@@QAAHXZ 0x004BF390-0x004BF3FE
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004bf390.cpp", "image:terranx_original.exe:0x004BF390", "4BF3AA/BE reject only zero message results; Return/Escape/Space and either mouse-down set quit8CC250. Timed text disarms Buffer+8, writes individual bytes, reloads delayE64 after each timeGetTime and re-arms the cdecl callback even for nonpositive length.", "recovery/tasks/uv2player-complete-owner-recovery.json; bounded complete-owner scope, preserved historical baseline/claims, no matching or runtime acceptance."], "reason": "Recover the movie input/timed text owner using SDK messages and real Buffer callback, active instance and unsigned delay storage, preserving native input and callback order."}
 // symbol    ?on_key@UV2Player@@SAHXZ

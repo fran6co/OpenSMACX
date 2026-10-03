@@ -42,6 +42,7 @@ TutWin TutorialWindow;
 #include "alpha.h"      // Labels and the typed tutorial-label table
 
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004BDF20 ?terrain_draw@TutWin@@QAAXPAUSprite@@PAUGraphicWin@@HHH@Z 0x004BDF20-0x004BDF66 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x004BDF20-0x004BDF66; seed:src/recovered/004bdf20.cpp; source:src/mapwin.h:gen_terrain_poly; source:src/tutwin.h:TutorialWindow"], "reason": "The draw callback takes no receiver and reads the singleton tutorial tile state while invoking the typed terrain renderer."}
 // symbol    ?tut_terrain_draw@@YAXPAVSprite@@PAVGraphicWin@@HHH@Z
@@ -53,6 +54,7 @@ void __cdecl tut_terrain_draw(Sprite *, GraphicWin *window, int,
                      pixel_x, pixel_y);
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004BDF70 ?veh_draw@TutWin@@QAAXPAUSprite@@PAUGraphicWin@@HHH@Z 0x004BDF70-0x004BDFA0 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x004BDF70-0x004BDFA0; seed:src/recovered/004bdf70.cpp; source:src/veh.h:veh_draw; source:src/graphicwin.h:Buffer base"], "reason": "The tutorial vehicle draw callback has no receiver and forwards a typed GraphicWin canvas to the recovered renderer."}
 // symbol    ?tut_veh_draw@@YAXPAVSprite@@PAVGraphicWin@@HHH@Z
@@ -1067,6 +1069,7 @@ tour_cleanup:
     field_53B4_ = 0;
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004BAF20 ?tour7@TutWin@@QAEXXZ 0x004BAF20-0x004BB373 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["seed:src/recovered/units/004baf20.cpp", "image:0x004baf20; original call/rectangle/lifetime review"], "reason": "Restore the original ownership-group implementation through real tutorial/editor windows, declared members and normal C++ lifecycle; retained seed extents include the associated exception cleanup where present."}
 void TutWin::tour7() {
@@ -1148,6 +1151,7 @@ tour7_cleanup:
     }
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004BB380 ?tour5@TutWin@@QAEXXZ 0x004BB380-0x004BB791 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["seed:src/recovered/units/004bb380.cpp", "image:0x004bb380; original call/rectangle/lifetime review"], "reason": "Restore the original ownership-group implementation through real tutorial/editor windows, declared members and normal C++ lifecycle; retained seed extents include the associated exception cleanup where present."}
 void TutWin::tour5() {
@@ -1224,6 +1228,7 @@ tour5_cleanup:
     }
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004BAA70 ?tour6@TutWin@@QAEXXZ 0x004BAA70-0x004BAF12 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["seed:src/recovered/units/004baa70.cpp", "image:0x004baa70; original call/rectangle/lifetime review"], "reason": "Restore the original ownership-group implementation through real tutorial/editor windows, declared members and normal C++ lifecycle; retained seed extents include the associated exception cleanup where present."}
 void TutWin::tour6() {
@@ -1764,6 +1769,7 @@ void TutWin::on_move(int x, int y) {
     }
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004BA770 ?on_key_click@TutWin@@QAEHHH@Z 0x004BA770-0x004BA82E BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x004BA770-0x004BA82E; seed:src/unrecovered/004ba770.cpp; source:src/win.h:Win::release_modal,Win::hide,Win::on_update"], "reason": "The tutorial key callback owns its modal dismissal, saved key tuple, and TutWin state reset."}
 // symbol    ?on_key_click@TutWin@@UAEHHH@Z
@@ -1850,11 +1856,13 @@ TutWin::TutWin() {
 // GraphicWin bases. TutWin owns no non-trivial member after Popup, so letting
 // the declared C++ hierarchy run its normal reverse-lifetime chain preserves
 // that ordering without replaying subobject offsets or vptr stores.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004BE7D0 ??1TutWin@@QAE@XZ 0x004BE7D0-0x004BE9EE;0x00659BF0-0x00659CD7 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["seed:src/recovered/units/004be7d0.cpp", "image:0x004be7d0; original call/rectangle/lifetime review"], "reason": "Restore the original ownership-group implementation through real tutorial/editor windows, declared members and normal C++ lifecycle; retained seed extents include the associated exception cleanup where present."}
 // symbol    ??1TutWin@@UAE@XZ
 TutWin::~TutWin() {}
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004BDFA0 ?base_draw@TutWin@@QAAXPAUSprite@@PAUGraphicWin@@HHH@Z 0x004BDFA0-0x004BDFDD FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["seed:src/recovered/units/004bdfa0.cpp", "image:0x004bdfa0; original call/rectangle/lifetime review"], "reason": "Restore the original ownership-group implementation through real tutorial/editor windows, declared members and normal C++ lifecycle; retained seed extents include the associated exception cleanup where present."}
 // symbol    ?base_draw@TutWin@@SAXPAVSprite@@PAVGraphicWin@@HHH@Z

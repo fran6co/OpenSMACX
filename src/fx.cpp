@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004482D0 ??0Effect@@QAE@XZ 0x004482D0-0x004482E2 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original FX construction at0x004482A0 passes0x004482D0 as its per-element constructor for97elements of0x6Cbytes.", "Existing seedsrc/recovered/units/004482d0.cpp identifies span0x004482D0-0x004482E2; original instructions call Wave::Wave at0x004C66E0 then store the Effect virtual table at0x0066B7A4."], "reason": "Implicit Effect constructor emitted for the real FX Effect array; Wave base construction and derived virtual-table installation are compiler-owned."}
 #include "fx.h"
@@ -349,6 +350,7 @@ void FX::play(int effect) {
     effects_[effect].play();
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00446960 ?play@FX@@QAEXHHH@Z 0x00446960-0x004469F9 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:f7bbce35:src/unrecovered/00446960.cpp", "src/ambience.h", "src/midi.h", "src/fx.h"], "reason": "Original constructor staging, actual event tables and compiler-call contracts identify the genuine audio owner operation; compatible historical seed spans and claims remain available for restoration, not an acceptance verdict."}
 void FX::play(int effect, int, int) {
@@ -368,6 +370,7 @@ void FX::play(int effect, int, int) {
 
 // Every branch retains its original probe effect even when it differs from
 // the effect played. These are real bank elements, not independent globals.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00446D10 ?ambience_veh@@YAXH@Z 0x00446D10-0x004471EE FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:f7bbce35:src/recovered/units/00446d10.cpp", "src/ambience.h", "src/midi.h", "src/fx.h"], "reason": "Original constructor staging, actual event tables and compiler-call contracts identify the genuine audio owner operation; compatible historical seed spans and claims remain available for restoration, not an acceptance verdict."}
 void __cdecl ambience_veh(int vehicle) {

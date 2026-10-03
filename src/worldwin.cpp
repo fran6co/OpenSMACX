@@ -41,6 +41,7 @@ RECT WorldMapBounds;
 
 int __cdecl pop_expire();
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004C3A70 ?UNK1@WorldWin@@QAEXXZ 0x004C3A70-0x004C3AA9
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004c3a70.cpp and original disassembly 0x004C3A70-0x004C3AA9; MainInterfaceGlobal + 0xCFC is 0x007AF51C."], "reason": "Move the existing seed into the WorldWin owner using the MainInterface tutorial RECT and active map bounds, preserving the status bit operation."}
 void WorldWin::UNK1() {
@@ -71,6 +72,7 @@ void WorldWin::init(int reset_map) {
     show(0);
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004C3AB0 ?right_menu@WorldWin@@QAEXHH@Z 0x004C3AB0-0x004C3D0C;0x00659E80-0x00659E95
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004c3ab0.cpp and original 0x004C3AB0 disassembly; PullDown::get_selected_id owns 0xA20 item indexing."], "reason": "Home the retained world context menu over PullDown and owned map windows, preserving the EH cleanup span."}
 void WorldWin::right_menu(int x, int y) {
@@ -117,6 +119,7 @@ void WorldWin::right_menu(int x, int y) {
     }
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004C3D40 ?click@WorldWin@@QAEXHHHH@Z 0x004C3D40-0x004C3E48
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004c3d40.cpp; original disassembly 0x004C3D40-0x004C3E48; BaseWin+0x40B28 is 0x006E8150."], "reason": "Home the shared world click handler using owned tutorial state and map windows."}
 void WorldWin::click(int x, int y, int button, int is_double) {
@@ -170,6 +173,7 @@ void __cdecl clear_dirty();
 // receiver in ECX and subtracts 0x444 before forwarding to a ret4 destructor.
 // WEEE denotes adjustor{1092}; this is not a static operator delete overload.
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004C3950 ?set_detail_map@WorldWin@@QAEXXZ 0x004C3950-0x004C398A BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original0x004C3950 writes1 to receiver+0x239CC;0x004C395A-0x004C3966 calls ButtonGroup::set(1007,0) on0x7CD12C, equal to MainInterfaceGlobal0x7AE820 plus its constructor-established group-array offset0x1E878 plus one0x94-byte element.0x004C396B-0x004C397D calls Win slot1 through MapWinTable[1] with its real virtual-base adjustment.0x004C3980-0x004C3985 directly tail-calls Win::hide on WorldClimateWorldWin0x8E9F60, not on this. Complete span agrees with src/recovered/units/004c3950.cpp."], "reason": "Recover the complete WorldWin detail-map operation using actual owned members, genuine virtual dispatch and the distinct global climate-window receiver; replace the seed-only raw-offset and fake-vtable model without deleting the seed or its historical obligation."}
 void WorldWin::set_detail_map() {
@@ -520,6 +524,7 @@ void WorldWin::draw_viewport_outline() {
     Buffer::vline(line_right, line_top, line_bottom - 1, 0xFB);
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004C4630 ?draw_box@WorldWin@@QAEXXZ 0x004C4630-0x004C47E7
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004c4630.cpp; original 0x0093347C is ConsoleGlobal / MapWinTable[0] plus member offset 0x1DDCC."], "reason": "Home the selection outline over the primary MapWin member state and Buffer drawing."}
 void WorldWin::draw_box() {
@@ -565,6 +570,7 @@ void WorldWin::draw_box() {
 
 // The redraw rebuilds the owned MapWin and buffers according to field_239BC_.
 // All receiver offsets in the original are these declared subobjects.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004C3EC0 ?on_redraw@WorldWin@@QAEXXZ 0x004C3EC0-0x004C4227
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original 0x004C3EC0-0x004C4227 disassembly via recover inspect; src/recovered/units/004c3ec0.cpp seed has no implementation."], "reason": "Recover WorldWin redraw control flow through owned MapWin and Buffer subobjects while recording base-only overlay as an unfinished dependency."}
 // symbol    ?on_redraw@WorldWin@@UAEXXZ

@@ -476,6 +476,7 @@ Status: Coverage transcription - unclaimed body (the preserved seed keeps its
 */
 // Native 0x004834E0: explicit resource and control shutdown precedes normal
 // compiler-owned teardown of the typed members and ConstructedGraphicWin.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004834E0 ??1NetWin@@QAE@XZ 0x004834E0-0x004837B4;0x00656650-0x0065673F
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004834e0.cpp", "recovery/tasks/netwin-owner-coverage.json"], "reason": "Recover true destructor with typed automatic member and base teardown, retaining observed explicit frees, state resets and close calls. Native baseline/candidate controls and complete isolated application compile/link passed; no matching or game acceptance claim."}
 // symbol    ??1NetWin@@UAE@XZ
@@ -637,6 +638,7 @@ void NetWin::config_players() {
 }
 
 // Private recovered body for the native 0x00482D90 roster finalizer.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00482D90 ?prepare_game@NetWin@@QAEXXZ 0x00482D90-0x0048318E;0x006574FE-0x00657510
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00482d90.cpp", "recovery/tasks/netwin-owner-coverage.json"], "reason": "Recover complete lobby game preparation through real faction records, AlphaNet process-slot ownership, player data and Random lifecycle. Native low-five-bit shifts, signed difficulty and copied status extent preserved; seed and historical obligations retained."}
 void NetWin::prepare_game() {

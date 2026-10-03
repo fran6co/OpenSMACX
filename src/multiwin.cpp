@@ -19,6 +19,7 @@
 static_assert(offsetof(PlayerData, time_bonus_count) == 0x2054,
               "MultiWin time-bonus source offset");
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00479900 ?UNK2@MultiWin@@QAEXXZ 0x00479900-0x00479964 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00479900.cpp", "image:terranx_original.exe:0x00479900", "source:src/maininterface.h:InterfaceRegistry and mode-stack storage; source:src/multiwin.h:owned Sprite offsets; native callback-sensitive mode reload and downward repeated removal", "recovery/tasks/interface-contract-report-closure.json; owner expansion interface-registry-multiwin-small-20261001"], "reason": "Recover the original in its genuine C++ owner using source-owned interface registry and mode stack, real virtual callbacks, or owned MultiWin sprite geometry. Preserve historical seed obligations; this binding grants no current byte or runtime claim."}
 void MultiWin::UNK2() {
@@ -244,9 +245,11 @@ int MultiWindowRedrawSuppressed;
 // 0x0047A590 and 0x0047A430. The compiler owns construction, exception
 // cleanup and reverse destruction of the subobjects declared in multiwin.h.
 // Historical mapped seed units remain under src/recovered/units/.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0047A590 ??0MultiWin@@QAE@XZ 0x0047A590-0x0047A6B9;0x00656310-0x006563DE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0047a590.cpp; docs/recovery/subobject-sites.csv; src/multiwin.h"], "reason": "The original constructor builds a GraphicWin front and the owned Buffer, Sprite, FlatButton, Font and Spot subobjects in the observed order."}
 MultiWin::MultiWin() {}
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0047A430 ??1MultiWin@@QAE@XZ 0x0047A430-0x0047A58A;0x00656230-0x0065630E
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0047a430.cpp; docs/recovery/subobject-sites.csv; src/multiwin.h"], "reason": "The original destructor tears down the Spot, Fonts, FlatButtons, Sprites, Buffer and GraphicWin front in reverse ownership order."}
 // symbol    ??1MultiWin@@UAE@XZ
@@ -304,6 +307,7 @@ void MultiWin::on_button_clicked(int button_id) {
 
 // 0x00479970. The panel is redrawn into its owned buffer and optionally
 // slides upward over the screen before Win publishes it in solo play.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00479970 ?show@MultiWin@@QAEXXZ 0x00479970-0x00479BF1;0x006563F5-0x0065640A
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00479970.cpp; src/multiwin.h; src/faction.h; src/console.h; src/wave.cpp"], "reason": "The original show uses MultiWin's owned controls and GraphicWin buffer, the local Console faction, Player rule flags, process window animation state, and the source-owned wave, screen, visibility and frame-delay objects."}
 void MultiWin::show() {
@@ -361,6 +365,7 @@ void MultiWin::show() {
 
 // 0x00479C00. The Win slot-2 override hides the multi-player panel, restores
 // its background and runs the original optional slide-out animation.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00479C00 ?hide@MultiWin@@QAEXXZ 0x00479C00-0x00479F8E;0x0065640A-0x0065641F
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00479c00.cpp; src/win.h; src/buffer.h; src/wave.cpp"], "reason": "The original panel teardown uses its real GraphicWin Buffer extent, owned animation buffer and sprites, typed console/screen globals, and Win/GraphicWin callbacks. The retained seed preserves the historical byte obligation until remeasurement."}
 // symbol    ?hide@MultiWin@@UAEXXZ

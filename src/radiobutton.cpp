@@ -441,6 +441,7 @@ void RadioButton::on_redraw() {
     soft_update();
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0060DE10 ?on_left_down@RadioButton@@QAEXHH@Z 0x0060DE10-0x0060E01B FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0060de10.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x60de10 complete control/data-access review and src/radiobutton.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
 // symbol    ?on_left_down@RadioButton@@UAEXHH@Z
@@ -487,6 +488,7 @@ void RadioButton::on_left_down(int x, int y) {
     }
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0060E320 ?on_mouse_move@RadioButton@@QAEXHH@Z 0x0060E320-0x0060E494 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0060e320.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x60e320 complete control/data-access review and src/radiobutton.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
 // symbol    ?on_mouse_move@RadioButton@@UAEXHH@Z

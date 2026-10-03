@@ -56,6 +56,7 @@ int MessageWinTextBackground = 0x91;
 // 0x004718C0. PullDown::get_selected returns a slot; the image reads that
 // slot's action ID, whose bits mean navigate (1) and remove (2). The three
 // menu labels are Labels words 0x44C..0x44E.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004718C0 ?on_selected@MessageWin@@QAEXHH@Z 0x004718C0-0x00471D36;0x00655F60-0x00655F75
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004718c0.cpp", "image:0x004718C0"], "reason": "The archived selection handler owns the three-action PullDown, map/base navigation and embedded ListBox row removal."}
 void MessageWin::on_selected(int code, int) {
@@ -160,6 +161,7 @@ void MessageWin::remove_selected_message() {
 // through its vbtable. That base and its StringList are real C++ objects now.
 // The archived seed remains as historical evidence; this product body has a
 // native binding and currently measures a mismatch.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00471530 ?add_message@MessageWin@@QAEXPADH@Z 0x00471530-0x00471794
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00471530.cpp", "image:0x00471530"], "reason": "The product MessageWin append method implements the archived ListBox and virtual Dialog list walk on the real embedded members."}
 void MessageWin::add_message(char *text, int item_id) {
@@ -289,6 +291,7 @@ void MessageWin::UNK4(int) {
 
 // 0x004713B0 is now source-owned here; the archived seed remains historical
 // evidence and Popup::on_exec reaches this typed member by name.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004713B0 ?add_base@MessageWin@@QAEXHPADPAUSprite@@@Z 0x004713B0-0x00471461 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004713b0.cpp", "source:src/popup.cpp", "image:0x004713B0-0x00471461"], "reason": "The existing MessageWin product method replaces the archived fixed-address forwarder; the original call and seed identify the MessageWin receiver, base ID, text, and unused Sprite pointer."}
 // symbol    ?add_base@MessageWin@@QAEXHPADPAVSprite@@@Z
@@ -320,6 +323,7 @@ void MessageWin::add_base(int base_id, char *text, Sprite *source) {
 
 // 0x00471470, archived in src/recovered/units/00471470.cpp. The original
 // ignores the first and last arguments and appends a 0x20000000-tagged row.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00471470 ?UNK2@MessageWin@@QAEHHPADH@Z 0x00471470-0x004714C2 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00471470.cpp", "image:0x00471470"], "reason": "The archived receiver and list insertion call chain identify this MessageWin variant; its first and last arguments are unused in the seed."}
 int MessageWin::UNK2(int, char *text, int) {
@@ -403,6 +407,7 @@ int __cdecl MessageWin::listbox_write(GraphicWin *target, int item_id, int,
 // 0x00471D50. The embedded controls and the desktop are typed objects here.
 // The archived seed remains as historical evidence; this product body has a
 // native binding and currently measures a mismatch.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00471D50 ?init@MessageWin@@QAEXXZ 0x00471D50-0x00471F66;0x00655F75-0x00655F8A
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00471d50.cpp", "image:0x00471D50"], "reason": "The archived constructor-stage method initializes MessageWin font, pane bounds, embedded ListBox Dialog and callback slots."}
 void MessageWin::init() {

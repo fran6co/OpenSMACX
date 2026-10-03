@@ -154,6 +154,7 @@ char *EditGroup::get_text(int index) {
     return nullptr;
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00612080 ?append_text@EditGroup@@QAEXPADH@Z 0x00612080-0x006120AA BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00612080.cpp retains the exact seed", "src/editgroup.h boxes_[10] are EditBox owners at offset 0x4", "src/editbox.h EditBox::text_ starts at offset 0xA14"], "reason": "Copy the selected editor's text through its real EditBox member instead of indexing receiver bytes."}
 // symbol    ?append_text@EditGroup@@QAEXPADH@Z
@@ -600,6 +601,7 @@ int EditGroup::attach(GraphicWin *parent, int x, int y, int flags) {
     return 0;
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00612450 ?on_redraw@EditGroup@@QAEXXZ 0x00612450-0x00612669 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00612450.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x612450 complete control/data-access review and src/editgroup.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
 // symbol    ?on_redraw@EditGroup@@UAEXXZ
@@ -644,6 +646,7 @@ void EditGroup::on_redraw() {
     soft_update();
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x006126C0 ?pass_dialog_focus@EditGroup@@QAEXXZ 0x006126C0-0x006126F8 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/006126c0.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x6126c0 complete control/data-access review and src/editgroup.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
 // symbol    ?pass_dialog_focus@EditGroup@@UAEXXZ

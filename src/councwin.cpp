@@ -234,6 +234,7 @@ vote_selection_ready:
     popup.close();
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00424720 ?set_vote@CouncWin@@QAEXHH@Z 0x00424720-0x0042486C FILE
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00424720.cpp", "image:terranx_original.exe:0x00424720", "Council interface/window declarations identify embedded fonts/buttons, voting arrays and existing MainInterface/Console owners; original instructions determine call and state order."], "reason": "Recover the original in its genuine UI owner using typed members, real globals and declared operations. Retain seed spans and evidence; no current matching or runtime claim."}
 void CouncWin::set_vote(int faction_id, int vote) {
@@ -999,6 +1000,7 @@ void __cdecl slide_hide(GraphicWin *window, int mode);   // 0x0045D970
 // ?on_redraw@CouncWin@@QAEXXZ, 0x00426AA0. on_status reaches it
 // with `mov edx,[ecx-0xa14] / call [edx+0x30]`, a live dispatch through the
 // front's own table, so the entry has to be CouncWin's.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00426AA0 ?on_redraw@CouncWin@@QAEXXZ 0x00426AA0-0x00426EA1 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00426aa0.cpp", "image:terranx_original.exe:0x00426AA0", "Council interface/window declarations identify embedded fonts/buttons, voting arrays and existing MainInterface/Console owners; original instructions determine call and state order."], "reason": "Recover the original in its genuine UI owner using typed members, real globals and declared operations. Retain seed spans and evidence; no current matching or runtime claim."}
 // symbol    ?on_redraw@CouncWin@@UAEXXZ
@@ -1881,6 +1883,7 @@ int CouncWin::on_iface_dialog_item_back_draw(GraphicWin *, int, int, RECT *) {
 
 // The native front-table slot 25 selects the Council keyboard handler.
 // Keep it an override of Win's existing event, not an extra virtual slot.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00425BA0 ?on_key_click@CouncWin@@QAEHHH@Z 0x00425BA0-0x00425D8D
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00425ba0.cpp", "src/win.h", "recovery/tests/test_key_event_hierarchy.py"], "reason": "Recover the complete Council keyboard operation through its existing Win slot25 override, genuine buttons/fonts and Council state. Pinned fronttable66AAE8 slot25 targets425BA0; nonvirtual declaration made the earlier source unreachable by keyboard dispatch. Preserve native vote completion, modal release and redraw/proposal effects."}
 // symbol    ?on_key_click@CouncWin@@UAEHHH@Z

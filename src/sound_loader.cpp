@@ -154,6 +154,7 @@ void __cdecl unload_sound_dll() {
     memset(SoundDllProcs, 0, sizeof(SoundDllProcsTable));
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004C5FB0 ?init_sound_timer@@YAHKK@Z 0x004C5FB0-0x004C5FD6 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["docs/recovery/derived-prototypes.csv:942; src/recovered/004c5fb0.cpp; src/sound_loader.cpp:SoundDllProcs[2] call sites"], "reason": "Typed owner forwards the two uint32 timer arguments to sound export-table index 2 and preserves the absent-module return 4. Derived prototype and seed establish int cdecl (unsigned int, unsigned int)."}
 int __cdecl init_sound_timer(unsigned long timer, unsigned long resolution) {
@@ -164,6 +165,7 @@ int __cdecl init_sound_timer(unsigned long timer, unsigned long resolution) {
         timer, resolution);
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004C5FE0 ?get_sound_version@@YAHXZ 0x004C5FE0-0x004C5FF2 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["docs/recovery/derived-prototypes.csv:943; src/recovered/004c5fe0.cpp; src/sound_loader.cpp:SoundDllProcs[10] version probe"], "reason": "Typed owner checks the existing loader module and dispatches the already-owned ordinal 11/version slot, returning zero when unavailable. Original prototype and seed establish int cdecl ()."}
 int __cdecl get_sound_version() {
@@ -177,6 +179,7 @@ int __cdecl get_sound_version() {
 // Ordinal 1 is the device-creation callback already typed by
 // WaveDeviceCreateSlot and its Wave/Midi call sites. The image gates this
 // wrapper on the same release guard as other sound-device callbacks.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004C6000 sub_4c6000 0x004C6000-0x004C602A BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/004c6000.cpp; docs/recovery/ghidra-functions.csv:1214; src/wave.h:WaveDeviceCreateSlot; src/wave.cpp/src/midi.cpp slot-0 calls"], "reason": "Image wrapper gates ordinal 1 on the existing wave-device release guard and forwards its three stack arguments to the already typed slot-0 device-create callback; stack cleanup matches cdecl. The same signature is exercised by Midi/Wave call sites."}
 extern "C" int __cdecl sub_4c6000(void **device_slot, const char *filename,
@@ -200,6 +203,7 @@ extern "C" int __cdecl sub_4c6030(void *device) {
         &SoundDllProcs[1]))(device);
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004C6060 sub_4c6060 0x004C6060-0x004C6071 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/004c6060.cpp; docs/recovery/agent-structure-observations.csv:42; src/sound_loader.cpp:SoundDllProcs ownership"], "reason": "Typed source zeros the eleven loader-owned export words, matching the seed block clear. Original seed has a zero-argument return; conservative neutral cdecl void spelling preserves observed no-argument use."}
 extern "C" void __cdecl sub_4c6060() {

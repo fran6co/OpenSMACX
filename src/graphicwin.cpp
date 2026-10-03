@@ -75,6 +75,7 @@ uint32_t GraphicWinFieldA0CDefault;  // 0x009B33C0
 // RECOVERY_OBJECT: v1 0x009B3394 ?GraphicWinInitDefaults@@3UGraphicWinFrameDefaults@@A
 GraphicWinFrameDefaults GraphicWinInitDefaults;
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005D5500 ?load_pcx@GraphicWin@@QAEHPADPAUPalette@@HH@Z 0x005D5500-0x005D5536 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/005d5500.cpp", "image:terranx_original.exe:0x005D5500", "Original instructions establish owner, bounded body and callback/state order; SocialWin reloads faction after social_upheaval and every later stateful call. GraphicWin dispatches through the real Buffer base.", "recovery/tasks/interface-contract-report-closure.json; bounded UI-five scope preserves original baseline"], "reason": "Recover the original in its genuine UI owner using actual members, globals and base/virtual calls. Retain seed evidence and historical obligations; this binding does not grant a current matching or runtime claim."}
 // symbol    ?load_pcx@GraphicWin@@QAEHPADPAVPalette@@HH@Z
@@ -652,6 +653,7 @@ void GraphicWin::soft_update(RECT *area) {
     InvalidateRect(HandleMain, &local, FALSE);
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005D5720 ?soft_update@GraphicWin@@QAEXHHHH@Z 0x005D5720-0x005D588C
 // RECOVERY_BINDING: v1 {"evidence":["source:src/recovered/units/005d5720.cpp","source:src/graphicwin.cpp:GraphicWin::soft_update"],"reason":"Own the four-coordinate invalidation path required by SetupWin and other window painters; clip against the client rectangle, translate to screen, and invalidate without erasing."}
 void GraphicWin::soft_update(int x, int y, int width, int height) {
@@ -1159,6 +1161,7 @@ static int frame_dimension_sum(int first, int second) {
                           + static_cast<unsigned int>(second));
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005D7030 ?compute_min_size@GraphicWin@@QAEXXZ 0x005D7030-0x005D7140
 // RECOVERY_BINDING: v1 {"evidence": ["Complete original5D7030..5D7140 has no callees. Flag0x10 selects caption or noncaption top corners; bottom corners are shared. Every selected pointer must exist before either previous minimum changes.", "OriginalSprite displayed width18/height1C accesses and signed greater-than branches establish independent horizontal and vertical corner-sum maxima. Preserve low32-bit addition before signed comparison, real Sprite accessors and existing Win minimum members. Seed Buffer receiver casts are incorrect; remove the product pending forwarder without changing the historical unclaimed identity."], "reason": "Recover genuine GraphicWin frame behavior required by the interface asset loader, retaining its original seed identity."}
 // symbol    ?compute_min_size@GraphicWin@@QAEXXZ

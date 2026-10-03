@@ -762,6 +762,7 @@ void BaseButton::on_right_click(int a, int b) {
 // 0x006075C0. The two process-wide pointer cells implement Win's existing
 // mouse capture protocol. The button state, timer and notifications remain
 // owned by this BaseButton and its real Win parent.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x006075C0 ?on_left_down@BaseButton@@QAEXHH@Z 0x006075C0-0x0060771C FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/006075c0.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x6075c0 complete control/data-access review and src/basebutton.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
 // symbol    ?on_left_down@BaseButton@@UAEXHH@Z
@@ -875,6 +876,7 @@ void BaseButton::on_left_click(int, int) {
 
 // 0x00607850. Buffer::rect2_ is the client rectangle used by the original
 // hit test. The hover owners and sizing flag are Win's own published state.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00607850 ?on_mouse_move@BaseButton@@QAEXHH@Z 0x00607850-0x006079F3 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00607850.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x607850 complete control/data-access review and src/basebutton.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
 // symbol    ?on_mouse_move@BaseButton@@UAEXHH@Z

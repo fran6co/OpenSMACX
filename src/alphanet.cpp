@@ -7,15 +7,19 @@
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  */
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00401C80 SessionStruct::SessionStruct 0x00401C80-0x00401CD8 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00401c80.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Session base tables669408/669404 and five cleared circular-list fields."}
 // symbol    ??0AlphaNetStringStruct@@QAE@XZ
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00402B40 SessionStruct::dt 0x00402B40-0x00402BA6 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00402b40.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Receiver-1C, stages session-base669408/669404, clear402970, owner publication then bit1/free."}
 // symbol    ??_GAlphaNetStringStruct@@UAEPAXI@Z
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004E2400 sub_4e2400 0x004E2400-0x004E2444 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004e2400.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Writes selected bytes at90E8E0..EB, leaving unwritten bytes intact."}
 // symbol    ?reset_net_session_options@@YAXXZ
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004E2460 sub_4e2460 0x004E2460-0x004E248F FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004e2460.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Eight rows, stride17C at90DB98; selected byte/DWORD stores only."}
 // symbol    ?reset_net_lobby_rows@@YAXXZ
@@ -269,6 +273,7 @@ AlphaNet::AlphaNet() {
 
 // The original closes transport before destroying Heap, ledger, then Net.
 // The members/base own those lifetimes; NetDaemon must not repeat them.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00538B60 ??1AlphaNet@@QAE@XZ 0x00538B60-0x00538D0E;0x004E3710-0x004E372B;0x0065DF70-0x0065E005
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00538b60.cpp: existing identity and complete recorded spans", "Original AlphaNet destruction closes transport, then destroys Heap at +0x148C and ledger at +0x144C before Net; normal members now own this chain."], "reason": "Adopt the retained destructor seed identity for the real AlphaNet owner. Existing shared cleanup spans are preserved, not newly inferred or claimed exact; the native one-entry/new-binding route deliberately does not infer overlapping ownership."}
 AlphaNet::~AlphaNet() {

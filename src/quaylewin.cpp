@@ -33,6 +33,7 @@ QuayleWin QuayleWinGlobal;
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original entry 00496810; retained seed src/unrecovered/00496810.cpp", "recovery/tasks/quaylewin-owner-coverage-wave.json", "QuayleWin constructor layout and virtual-slot evidence; fresh isolated build and host controls"], "reason": "Rehome the retained QuayleWin seed into its real GraphicWin owner with typed subobjects; preserve original spans and historical seed obligations."}
 QuayleWin::QuayleWin() {}
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00496710 ??1QuayleWin@@QAE@XZ 0x00496710-0x00496801;0x00658C40-0x00658CA8
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original entry 00496710; retained seed src/recovered/units/00496710.cpp", "recovery/tasks/quaylewin-owner-coverage-wave.json", "QuayleWin constructor layout and virtual-slot evidence; fresh isolated build and host controls"], "reason": "Rehome the retained QuayleWin seed into its real GraphicWin owner with typed subobjects; preserve original spans and historical seed obligations."}
 // symbol    ??1QuayleWin@@UAE@XZ
@@ -143,6 +144,7 @@ void QuayleWin::on_left_click(int x, int y) {
   redraw();
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00496540 ?on_selected@QuayleWin@@QAEXHH@Z 0x00496540-0x00496558 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original entry 00496540; retained seed src/recovered/00496540.cpp", "recovery/tasks/quaylewin-owner-coverage-wave.json", "QuayleWin constructor layout and virtual-slot evidence; fresh isolated build and host controls"], "reason": "Rehome the retained QuayleWin seed into its real GraphicWin owner with typed subobjects; preserve original spans and historical seed obligations."}
 void QuayleWin::on_selected(int selection, int) {
@@ -163,6 +165,7 @@ void QuayleWin::on_button_clicked(int button_id) {
   close();
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004965C0 ?on_key_click@QuayleWin@@QAEHHH@Z 0x004965C0-0x0049660C
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original entry 004965C0; retained seed src/recovered/units/004965c0.cpp", "recovery/tasks/quaylewin-owner-coverage-wave.json", "QuayleWin constructor layout and virtual-slot evidence; fresh isolated build and host controls"], "reason": "Rehome the retained QuayleWin seed into its real GraphicWin owner with typed subobjects; preserve original spans and historical seed obligations."}
 // symbol    ?on_key_click@QuayleWin@@UAEHHH@Z

@@ -521,10 +521,12 @@ char *__cdecl get_insult_leader(int faction_id) {
 // Construction455F10 and destruction456010 enumerate the same37 Sprite
 // members, including cleanup on partial construction. Real member lifetime
 // supplies those operations and unwind actions exactly once.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00455F10 ??0FactionArt@@QAE@XZ 0x00455F10-0x0045600B;0x00654ED0-0x00654F71 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Retained seed src/recovered/units/00455f10.cpp supplies the original identity and both main/cleanup spans; complete original audit confirms the same member groups and their forward/reverse order.", "Original constructor455F10 and destructor456010 cover24 base Sprites,2 council logos,six individual Sprites,3 small report logos,2 report logos; current FactionArt declaration owns those objects with0x65C total extent.", "Original CRT6820B4 selects44CC50, which constructs8 elements at78E978 and registers44CC80 for reverse teardown. The compiled lifecycle is observed, but this binding is not a byte, exception-equivalence or linked-startup claim."], "reason": "Original FactionArt member construction/destruction has no additional application statements. Genuine C++ members own normal and partial-construction cleanup; the empty user body is not an unfinished placeholder."}
 FactionArt::FactionArt() {}
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00456010 ??1FactionArt@@QAE@XZ 0x00456010-0x004560FC;0x00654F80-0x00655021 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Retained seed src/recovered/units/00456010.cpp supplies the original identity and both main/cleanup spans; complete original audit confirms the same member groups and their forward/reverse order.", "Original constructor455F10 and destructor456010 cover24 base Sprites,2 council logos,six individual Sprites,3 small report logos,2 report logos; current FactionArt declaration owns those objects with0x65C total extent.", "Original CRT6820B4 selects44CC50, which constructs8 elements at78E978 and registers44CC80 for reverse teardown. The compiled lifecycle is observed, but this binding is not a byte, exception-equivalence or linked-startup claim."], "reason": "Original FactionArt member construction/destruction has no additional application statements. Genuine C++ members own normal and partial-construction cleanup; the empty user body is not an unfinished placeholder."}
 FactionArt::~FactionArt() {}
@@ -4603,6 +4605,7 @@ int DiploScratchFAA4;
 
 // Rank four technology offers and two incoming requests. Project-linked
 // requests keep their native discount and suppress the secondary project bid.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0053E800 ?tech_analysis@@YAXHH@Z 0x0053E800-0x0053EB42
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0053e800.cpp", "src/base.h", "recovery/tests/test_tech_analysis_behavior.py"], "reason": "Complete technology trade ranking producer in the faction owner using genuine Player, PlayerData, Base and Facility storage, shared ranked result cells and existing project lookup. Native64project loop uses Facility stride30 and first prerequisite Facility70, correcting retained scaffold0C stride."}
 void __cdecl tech_analysis(int faction_id, int faction_id_with) {
@@ -5798,6 +5801,7 @@ eliminated:
 // Aggression tests the target faction's treaty with the acting faction, not
 // the reverse entry. double_cross remains an unfinished dependency; this
 // caller preserves its original call and the unconditional treaty update.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0050C2E0 ?act_of_aggression@@YAHHH@Z 0x0050C2E0-0x0050C332 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0050c2e0.cpp retained signature/extents and complete seed; no historical claim copied", "Coordinator full pinned original instruction decode 0050C2E0..0050C332, typed source owner fields and corrected original call/branch evidence", "recovery/tests/test_airdrop_network.py actual-body directional treaty and network reentrancy controls; not linked/runtime/game acceptance"], "reason": "Test target-faction treaty entry for acting faction, conditionally invoke double_cross then unconditionally treaty_on. Existing double_cross remains unfinished; original-direction lookup and service order retained."}
 int __cdecl act_of_aggression(int faction_id, int target_faction_id) {
@@ -5810,6 +5814,7 @@ int __cdecl act_of_aggression(int faction_id, int target_faction_id) {
     return result;
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0053E470 ?diplomacy_ends@@YAXHH@Z 0x0053E470-0x0053E4BC BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned native53E470..53E4BC: four state clears, DiploPop.stop receiver733990, synch_diplo arguments, NetDaemon.close_channel receiver93CD90, then Y/X reset.", "src/diplopop.cpp DiplomacyPopup; src/netdaemon.cpp NetDaemonNet; native53DCE0 contact-result and bounded focus uses. Initial states zero, X/Y -1.", "Root-only console-real-diplomacy-end-20261001 scope decision; preserved src/recovered/units/0053e470.cpp and unresolved settlement contact discovery."], "reason": "Recover complete diplomacy teardown in its genuine faction owner with independent owned state and coordinate storage, real popup lifecycle and network APIs. Retain the exact seed obligation and all original spans; this binding grants no match or acceptance claim."}
 void __cdecl diplomacy_ends(int faction_id, int faction_id_with) {
@@ -5824,6 +5829,7 @@ void __cdecl diplomacy_ends(int faction_id, int faction_id_with) {
     DiploFocusX = -1;
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005399A0 ?diplomacy_caption@@YAXHH@Z 0x005399A0-0x00539B6B
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned5399A0..539B6B; existing inactive diplomacy-presentation task evidence retained; counterpart Player noun fields and PlayerData20CC treaty strides independently decoded; literal68D594 is the bounded separator. Host source-body controls cover mood thresholds, bidirectional pact/surrender and post-parse visibility."], "reason": "Recover complete diplomacy caption in its faction owner with genuine treaty/noun/mood/scratch data and the actual visible-popup draw operation. Preserve native friction clamp, label predicate, parse defaults and redraw ordering."}
 void __cdecl diplomacy_caption(int faction_id, int faction_id_with) {
@@ -6115,6 +6121,7 @@ int DiplomacyMapTransferChanged;
 // proposal_menu54DCF0 clears/stores it; native gift path reads mode3.
 // RECOVERY_OBJECT: v2 0x0093FAB0 0x0093FAB4 ?DiplomacyProposalMode@@3HA 0x0054DCF0
 int DiplomacyProposalMode;
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00543A20 ?trade_maps@@YAXHH@Z 0x00543A20-0x00543BC0
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00543a20.cpp retains original identity/spans and contradictory scaffold history.", "Pinned full-span review and genuine Player/PlayerData/Base/Veh/Map declarations own the field interpretation; Popup uses the real C++ lifecycle.", "Related intervention50BA50/pact_withdraw53C370 bodies own the coupled helper behavior. Shared proposal cell93FAB0 and map outcome93FAD8 have native producer/consumer evidence; seed-only workflow producers remain explicit obligations."], "reason": "Recover this original diplomacy identity in its genuine faction owner, preserving typed game records, shared-state lifetimes and every seed obligation. This binding is not a byte or runtime claim."}
 void __cdecl trade_maps(int faction_id, int other_faction_id) {
@@ -6250,6 +6257,7 @@ int __cdecl do_withdrawal(int faction_id, int other_faction_id) {
     return result;
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0054CF40 ?give_a_base@@YAXHH@Z 0x0054CF40-0x0054D410
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0054cf40.cpp retains original identity/spans and contradictory scaffold history.", "Pinned full-span review and genuine Player/PlayerData/Base/Veh/Map declarations own the field interpretation; Popup uses the real C++ lifecycle.", "Related intervention50BA50/pact_withdraw53C370 bodies own the coupled helper behavior. Shared proposal cell93FAB0 and map outcome93FAD8 have native producer/consumer evidence; seed-only workflow producers remain explicit obligations."], "reason": "Recover this original diplomacy identity in its genuine faction owner, preserving typed game records, shared-state lifetimes and every seed obligation. This binding is not a byte or runtime claim."}
 void __cdecl give_a_base(int base_id, int new_owner) {
@@ -6543,6 +6551,7 @@ void __cdecl double_cross(int faction_id, int partner_id, int victim_id) {
     }
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0053C650 ?pact_ends@@YAXHH@Z 0x0053C650-0x0053CAE6;0x0065E470-0x0065E53A
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0053c650.cpp retains original identity/spans and contradictory scaffold history.", "Pinned full-span review and genuine Player/PlayerData/Base/Veh/Map declarations own the field interpretation; Popup uses the real C++ lifecycle.", "Related intervention50BA50/pact_withdraw53C370 bodies own the coupled helper behavior. Shared proposal cell93FAB0 and map outcome93FAD8 have native producer/consumer evidence; seed-only workflow producers remain explicit obligations."], "reason": "Recover this original diplomacy identity in its genuine faction owner, preserving typed game records, shared-state lifetimes and every seed obligation. This binding is not a byte or runtime claim."}
 void __cdecl pact_ends(int faction_id, int partner_id) {
@@ -6603,6 +6612,7 @@ void __cdecl pact_ends(int faction_id, int partner_id) {
     popup.exec(0, nullptr);
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0050BA50 ?intervention@@YAXHH@Z 0x0050BA50-0x0050BCB6
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0050ba50.cpp retains original identity/spans and contradictory scaffold history.", "Pinned full-span review and genuine Player/PlayerData/Base/Veh/Map declarations own the field interpretation; Popup uses the real C++ lifecycle.", "Related intervention50BA50/pact_withdraw53C370 bodies own the coupled helper behavior. Shared proposal cell93FAB0 and map outcome93FAD8 have native producer/consumer evidence; seed-only workflow producers remain explicit obligations."], "reason": "Recover this original diplomacy identity in its genuine faction owner, preserving typed game records, shared-state lifetimes and every seed obligation. This binding is not a byte or runtime claim."}
 void __cdecl intervention(int target_faction, int actor_faction) {

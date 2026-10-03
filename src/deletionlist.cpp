@@ -74,6 +74,7 @@ int DeletionList::find_free_slot() {
 
 /*
 Purpose: Find the occupied deletion record for an owner, or return -1.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0052DD10 ?UNK2@DeletionList@@QAEHH@Z 0x0052DD10-0x0052DD4B FILE
 // RECOVERY_BINDING: v1 {"reason":"The seed's unnamed member scans occupied 0x3C-byte records and compares the owner word at +4 with its argument.","evidence":["Original 0x0052DD10-0x0052DD4B scans 24 entries, tests the 0x009A64E8 acknowledgement mask, compares +4 with its argument and returns -1 on exhaustion.","src/recovered/units/0052dd10.cpp retains the earlier candidate and its failed standalone compilation evidence."]}
 // symbol    ?find_owner_slot@DeletionList@@QAEHH@Z
@@ -92,6 +93,7 @@ int DeletionList::find_owner_slot(int owner) {
 /*
 Purpose: Mark a faction's acknowledgement for an owner's pending deletions;
          free the record once every active faction has acknowledged it.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0052DD50 ?ack@DeletionList@@QAEXHH@Z 0x0052DD50-0x0052DDB5 FILE
 // RECOVERY_BINDING: v1 {"reason":"The owner/mask search and flag update in the seed are one acknowledgement operation over the typed deletion records.","evidence":["Original 0x0052DD50-0x0052DDB5 scans 24 records, compares owner at +4, sets a faction bit in byte zero and writes 0xFF when active bits are complete.","src/recovered/units/0052dd50.cpp preserves the earlier candidate; src/lock.cpp owns the active-faction mask at 0x009A64E8."]}
 */

@@ -2373,6 +2373,7 @@ int Buffer::text_width(LPSTR text) {
 // write (5E18B9, 5E18E4, 5E193C). Preserve this original boundary quirk.
 // As with the buffer's other pixel operations, the recovered geometry
 // contract requires representable coordinate/error arithmetic and addresses.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005E15F0 ?line@Buffer@@QAEXHHHHH@Z 0x005E15F0-0x005E1A7F FILE
 // RECOVERY_BINDING: v1 {"evidence": ["5E15FE..5E160A inspect Buffer storage; 5E1629/5E164A call its axis primitives; 5E1A7C returns0x14. The scoped source preserves the original error accumulator, lock lifetime and descending-bottom clipping quirk."], "reason": "The five-integer void drawing member uses Buffer storage and clip fields; its original thiscall entry and vertical/horizontal callees establish the owning class and signature."}
 void Buffer::line(int x1, int y1, int x2, int y2, int color) {
@@ -6710,6 +6711,7 @@ int Buffer::change_color(int a1, int a2, int a3, int a4, int a5, int a6) {
 // does not release; this includes successful locks that return null pixels.
 // Geometry differences fit signed integers. Numeric address arithmetic
 // preserves native pointer-width wrap and the original zero-address check.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005DA330 ?map_colors@Buffer@@QAEHHHHHPAE@Z 0x005DA330-0x005DA4C1 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["5DA330..5DA4C1 has five explicit stack arguments;5DA39B snapshots stride-width before Lock,5DA41A computes first pixel using post-Lock pitch,5DA455..45A translates live indexed bytes, and only completed painting reaches5DA46D release. Failure returns7 without release; null table returns16."], "reason": "The coordinate colour remapper owns Buffer pixel acquisition and release; it reads the supplied translation table live for each byte in the exclusive clipped rectangle."}
 int Buffer::map_colors(int left, int top, int right, int bottom,

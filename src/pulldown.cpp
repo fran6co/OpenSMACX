@@ -17,6 +17,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005F8970 ?UNK1@PullDown@@QAEXXZ 0x005F8970-0x005F89C8 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/005f8970.cpp", "image:terranx_original.exe:0x005F8970", "Native row flags and old/new redraw asymmetry, callback modes and padding reloads; mnemonic metrics use Font internal_leading at+14. UNK1 resets members after clearing items and closing; outside hover forwards screen coordinates to Menu.", "recovery/tasks/interface-contract-report-closure.json four-method owner closure"], "reason": "Recover the bounded original in its genuine PullDown owner using actual members, owned callbacks and Buffer/GraphicWin behavior. Retain seed and historical obligations; this binding grants no current match or runtime claim."}
 void PullDown::UNK1() {
@@ -33,6 +34,7 @@ void PullDown::UNK1() {
   field_F3C_ = PullDownFieldF3CDefault;
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005FA6B0 ?on_mouse_move@PullDown@@QAEXHH@Z 0x005FA6B0-0x005FA736 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/005fa6b0.cpp", "image:terranx_original.exe:0x005FA6B0", "Native row flags and old/new redraw asymmetry, callback modes and padding reloads; mnemonic metrics use Font internal_leading at+14. UNK1 resets members after clearing items and closing; outside hover forwards screen coordinates to Menu.", "recovery/tasks/interface-contract-report-closure.json four-method owner closure"], "reason": "Recover the bounded original in its genuine PullDown owner using actual members, owned callbacks and Buffer/GraphicWin behavior. Retain seed and historical obligations; this binding grants no current match or runtime claim."}
 // symbol    ?on_mouse_move@PullDown@@UAEXHH@Z
@@ -54,6 +56,7 @@ void PullDown::on_mouse_move(int x, int y) {
 // Native body 0x005F9640, hosted by the PullDown slot-25 override selected in
 // the constructor-installed 0x0066FF40 table. The retained seed mapping is
 // transferred to this real owner by the source writer at coordinator import.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005F9640 ?on_key_click@PullDown@@QAEHHH@Z 0x005F9640-0x005F9840
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/005f9640.cpp", "image:Menu6700B0/AlphaMenu66ED88/PullDown66FF40 constructor-selected primary tables; Buffer secondary subobject+444", "recovery/tasks/popup-font-configuration-owner-closure.json"], "reason": "Recover this complete operation in its genuine Menu/PullDown owner, using native constructor-selected virtual dispatch, real members and shared source-owned dependencies; preserve original identity, retained seed and historical restoration obligations."}
 // symbol    ?on_key_click@PullDown@@UAEHHH@Z

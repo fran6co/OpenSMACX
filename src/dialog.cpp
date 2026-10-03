@@ -784,6 +784,7 @@ Dialog::Dialog() {
 // Reset a live dialog, keeping its list and heap objects alive for reuse.
 // Entry hooks run before releasing their backing heap. Empty-head cleanup
 // still resets position but deliberately does not clear current_ or count.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00608F50 ?close@Dialog@@QAEXXZ 0x00608F50-0x00609143
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original608F50-609143 clears entries using the current list hooks, unconditionally resets position, calls5D4580 at608FDB, then writes heap_ptr/default/font/color fields and field1C=-1 at60913C. current_ is not cleared. Retained seed preserves extent but explicit member destruction is not used in the live C++ reset.", "Existing DialogDefaults and DialogDefaultFonts own the original settings; list removal and allocator-aware node destruction are recovered in stringstruct.cpp. Heap::reset has a separate source shared-code interpretation for the original5D4580 cleanup entry. No byte or full-lifetime acceptance is claimed."], "reason": "Recover reusable dialog cleanup through real list members and a non-destructive heap reset, preserving original cleanup-before-defaults order."}
 void Dialog::close() {

@@ -536,6 +536,7 @@ build_list:
 }
 
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00489B20 ?on_group_clicked@PickWin@@QAEXHHH@Z 0x00489B20-0x00489B94 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00489b20.cpp"], "reason": "Recover genuine typed PickWin owner behavior and automatic subobject lifetime from pinned native flow and preserved seed; historical identity and restoration obligations retained, no exactness claim."}
 void PickWin::on_group_clicked(int a1, int, int mode) {
@@ -552,6 +553,7 @@ void PickWin::on_group_clicked(int a1, int, int mode) {
   redraw();
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0048A840 ?on_dialog_item_back_draw@PickWin@@QAEHPAUGraphicWin@@HHPAURECT@@@Z 0x0048A840-0x0048A8D3 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0048a840.cpp"], "reason": "Recover genuine typed PickWin owner behavior and automatic subobject lifetime from pinned native flow and preserved seed; historical identity and restoration obligations retained, no exactness claim."}
 // symbol    ?on_dialog_item_back_draw@PickWin@@QAEHPAVGraphicWin@@HHPAUtagRECT@@@Z
@@ -570,6 +572,7 @@ int PickWin::on_dialog_item_back_draw(GraphicWin *window, int, int index,
   return 1;
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00489660 ?on_redraw@PickWin@@QAEXXZ 0x00489660-0x00489AF7
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00489660.cpp"], "reason": "Recover genuine typed PickWin owner behavior and automatic subobject lifetime from pinned native flow and preserved seed; historical identity and restoration obligations retained, no exactness claim."}
 // symbol    ?on_redraw@PickWin@@UAEXXZ
@@ -653,6 +656,7 @@ void PickWin::on_redraw() {
 }
 
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0048A8E0 ??1PickWin@@QAE@XZ 0x0048A8E0-0x0048AC09;0x00657C70-0x00657E2F
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0048a8e0.cpp"], "reason": "Recover genuine typed PickWin owner behavior and automatic subobject lifetime from pinned native flow and preserved seed; historical identity and restoration obligations retained, no exactness claim."}
 // symbol    ??1PickWin@@UAE@XZ

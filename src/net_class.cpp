@@ -15,6 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00401660 ??0ServiceStruct@@QAE@H@Z 0x00401660-0x004016B8 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00401660.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Original provider base tables6693D4/6693D0 and five cleared receiver fields; legacy ServiceStruct catalogue name is not payload ownership."}
 // symbol    ??0ServiceProviderList@@QAE@XZ
@@ -24,21 +25,27 @@
 // ORIGINAL: 0x00401760 ?add@ServiceStruct@@QAEHH@Z 0x00401760-0x00401B73 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00401760.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Original allocates entry1C/payload20 and invokes provider hook."}
 // symbol    ?add@ServiceProviderList@@QAEHH@Z
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00402350 sub_402350 0x00402350-0x0040239B FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00402350.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Receiver-24, calls4023A0, publishes owner, tests deletion bit1 and conditionally frees complete receiver."}
 // symbol    ??_GNetUnk72C@@UAEPAXI@Z
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004023A0 sub_4023a0 0x004023A0-0x004024F8;0x00650580-0x00650595 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004023a0.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Receiver-24, stages nested-derived66941C/669418, runs removal walk then base6693F4/6693F0; primary plus650580 EH span."}
 // symbol    ??1NetUnk72C@@UAE@XZ
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00402A60 ServiceStruct::dt 0x00402A60-0x00402AC6 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00402a60.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Receiver-1C, stages provider-base tables, clear402970, zero cursor, owner publication then bit1/free."}
 // symbol    ??_GServiceProviderList@@UAEPAXI@Z
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00402AD0 sub_402ad0 0x00402AD0-0x00402B36 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00402ad0.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Receiver-1C, stages nested-base6693F4/6693F0, clear402970, owner publication then bit1/free."}
 // symbol    ??_GNetTextListBase@@UAEPAXI@Z
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00402CC0 sub_402cc0 0x00402CC0-0x00402D0B FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00402cc0.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Receiver-58 then calls402DD0; node owner publication then bit1/free. This anchors402DD0 to outer NetAllocationNode, not nested NetUnk72C."}
 // symbol    ??_GNetAllocationNode@@UAEPAXI@Z
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00402D80 sub_402d80 0x00402D80-0x00402DC2 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00402d80.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Provider add401760 installs payload table6693E4, whose scalar slot points402D80; receiver-18 and saved-owner publication/free. Not unseen NetTextPayload nominal proof."}
 // symbol    ??_GServiceStruct@@UAEPAXI@Z
@@ -60,6 +67,7 @@
 // ORIGINAL: 0x005D4CC0 sub_5d4cc0 0x005D4CC0-0x005D4CE7 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/005d4cc0.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Nested list slot1 cleanup at observed payload+4; original factory/complete extent unknown, retain exact seed."}
 // symbol    ?on_remove@NetUnk72C@@UAEXPAVNetTextPayload@@@Z
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00630C30 sub_630c30 0x00630C30-0x00630C7C FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00630c30.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "SDK session descriptor fields populate ledger borrowed fields and call401D80; synchronous borrow target."}
 // symbol    ?enumerate_session_callback@@YGHPBUDPSESSIONDESC2@@PAKKPAX@Z
@@ -102,6 +110,7 @@ extern "C" void __fastcall sub_62d5f0(void *self, void *unused);
 static const GUID NetLobbyAppGuid = {
     0x02D1B480, 0xD680, 0x11D0, {0x82, 0x1E, 0x44, 0x45, 0x53, 0x54, 0x00, 0x00}};
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x006339E0 ??1NetFifo@@QAE@XZ 0x006339E0-0x00633A42
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/006339e0.cpp", "image:0x006339E0-0x00633A42", "src/net_class.h: Net::netfifo_ members at +0xE8, +0x10C and +0x130"], "reason": "Bind the existing queue-destructor forwarder to its retained original seed identity before typed ownership recovery. Original calls and the 0x24 embedded queue layout identify this destructor; this binding does not implement or verify it."}
 NetFifo::~NetFifo() {
@@ -2639,6 +2648,7 @@ static_assert(sizeof(NetPacketEnvelope) == 8, "DirectPlay packet header extent")
 static_assert(sizeof(MMIOINFO) == 0x48, "voice packet MMIOINFO extent");
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x006327E0 ?internal_receive@Net@@QAAHPAUNetThreadInfo@@@Z 0x006327E0-0x00632CB3
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/006327e0.cpp"], "reason": "Rehome original explicit record-argument receive routine as typed NetThreadInfo method; receiver ABI intentionally refactored, not an exact ABI claim."}
 // symbol    ?internal_receive@NetThreadInfo@@QAEHXZ

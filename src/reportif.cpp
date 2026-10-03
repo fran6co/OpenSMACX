@@ -315,6 +315,7 @@ void ReportIf::on_status(int mode) {
     }
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004A3460 ?init@ReportIf@@QAEXXZ 0x004A3460-0x004A3927;0x00659580-0x00659595 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004a3460.cpp retained original identity, full spans and seed history", "recovery/tasks/interface-contract-report-closure.json authorized coupled owner recovery", "original:0x4a3460 complete control/data-access audit; ReportIf declarations and genuine ReportWin control storage"], "reason": "Recover ReportIf initialization from the retained original behavior and the genuine ReportWin control storage; its non-virtual source identity remains distinct from ReportIf's historical virtual callbacks."}
 void ReportIf::init() {
@@ -392,6 +393,7 @@ void ReportIf::init() {
     ReportWinGlobal.init();
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004A6050 ?on_iface_selected@ReportIf@@QAEXHH@Z 0x004A6050-0x004A62F3 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004a6050.cpp retained original identity, full spans and seed history", "recovery/tasks/interface-contract-report-closure.json authorized coupled owner recovery", "original:0x4a6050 complete control/data-access audit; ReportIf declarations and genuine ReportWin control storage"], "reason": "Recover ReportIf's selection callback from the retained seed through its genuine SubInterface owner and ReportWin controls. Its current emitted virtual symbol is recorded separately from the historical catalogue spelling."}
 // symbol    ?on_iface_selected@ReportIf@@UAEXHH@Z
@@ -594,6 +596,7 @@ void ReportIf::on_iface_button_clicked(int button) {
     }
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004A6D70 ?on_iface_group_clicked@ReportIf@@QAEXHHH@Z 0x004A6D70-0x004A6FD7 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004a6d70.cpp retained original identity, full spans and seed history", "recovery/tasks/interface-contract-report-closure.json authorized coupled owner recovery", "original:0x4a6d70 complete control/data-access audit; ReportIf declarations and genuine ReportWin control storage"], "reason": "Recover ReportIf's group callback from the retained seed through its genuine SubInterface owner and ReportWin controls. Its current emitted virtual symbol is recorded separately from the historical catalogue spelling."}
 // symbol    ?on_iface_group_clicked@ReportIf@@UAEXHHH@Z
@@ -1063,6 +1066,7 @@ void ReportIf::close_ops() {
 // Animation storage is the ReportIf sprite run; the destination is the
 // Buffer base of the global WorldClimateWorldWin. Its timeout lives in the
 // genuine ReportWin-owned Time member.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004A4060 ?bl_anim@ReportIf@@QAEXXZ 0x004A4060-0x004A4191
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004a4060.cpp", "source:src/reportif.h", "source:src/worldwin.h", "source:src/reportwin.h", "source:src/sprite.h"], "reason": "Advance ReportIf animation with the declared sprite run and coordinate state, drawing to the WorldClimateWorldWin Buffer base and stopping the ReportWin-owned Time at terminal frame 10."}
 void ReportIf::bl_anim() {
@@ -1138,6 +1142,7 @@ void ReportIf::done() {
 
 // SubInterface lifecycle methods share this TU with their ReportIf callers.
 // Keep out-of-line calls: ReportIf::done retains its historical call boundary.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0045D2E0 ?delete_iface_mode@SubInterface@@QAEXXZ 0x0045D2E0-0x0045D303 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/0045d2e0.cpp", "image:terranx_original.exe:0x0045D2E0", "source:src/maininterface.h:InterfaceRegistry and mode-stack storage; source:src/multiwin.h:owned Sprite offsets; native callback-sensitive mode reload and downward repeated removal", "recovery/tasks/interface-contract-report-closure.json; owner expansion interface-registry-multiwin-small-20261001"], "reason": "Recover the original in its genuine C++ owner using source-owned interface registry and mode stack, real virtual callbacks, or owned MultiWin sprite geometry. Preserve historical seed obligations; this binding grants no current byte or runtime claim."}
 void SubInterface::delete_iface_mode() {
@@ -1149,6 +1154,7 @@ void SubInterface::delete_iface_mode() {
     }
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0045D310 ?set_iface_mode@SubInterface@@QAEXXZ 0x0045D310-0x0045D37D
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0045d310.cpp", "image:terranx_original.exe:0x0045D310", "source:src/maininterface.h:InterfaceRegistry and mode-stack storage; source:src/multiwin.h:owned Sprite offsets; native callback-sensitive mode reload and downward repeated removal", "recovery/tasks/interface-contract-report-closure.json; owner expansion interface-registry-multiwin-small-20261001"], "reason": "Recover the original in its genuine C++ owner using source-owned interface registry and mode stack, real virtual callbacks, or owned MultiWin sprite geometry. Preserve historical seed obligations; this binding grants no current byte or runtime claim."}
 void SubInterface::set_iface_mode() {
@@ -1434,6 +1440,7 @@ int __cdecl pop_wait();
 // The eight menu commands all use the same already-owned report window and
 // interface mode. Retained seeds at 0x004AC9A0..0x004ACC29 establish each
 // category value and the modal-versus-direct branch.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004AC9A0 ?report_labs@@YAXXZ 0x004AC9A0-0x004AC9EC
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004ac9a0.cpp", "source:src/reportif.cpp", "source:src/reportif.h", "source:src/reportwin.h"], "reason": "The retained report_labs seed identifies this free report command and its original extent. Category 2 selects the existing ReportIf state; the original modal call resolves to ReportWinGlobal set_modal and the direct branch to ReportIf report."}
 void __cdecl report_labs() {
@@ -1446,6 +1453,7 @@ void __cdecl report_labs() {
     }
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004AC9F0 ?report_energy@@YAXXZ 0x004AC9F0-0x004ACA3C
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004ac9f0.cpp", "source:src/reportif.cpp", "source:src/reportif.h", "source:src/reportwin.h"], "reason": "The retained report_energy seed identifies this free report command and its original extent. Category 3 selects the existing ReportIf state; the original modal call resolves to ReportWinGlobal set_modal and the direct branch to ReportIf report."}
 void __cdecl report_energy() {
@@ -1458,6 +1466,7 @@ void __cdecl report_energy() {
     }
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004ACA40 ?report_ops@@YAXXZ 0x004ACA40-0x004ACA8C
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004aca40.cpp", "source:src/reportif.cpp", "source:src/reportif.h", "source:src/reportwin.h"], "reason": "The retained report_ops seed identifies this free report command and its original extent. Category 4 selects the existing ReportIf state; the original modal call resolves to ReportWinGlobal set_modal and the direct branch to ReportIf report."}
 void __cdecl report_ops() {
@@ -1482,6 +1491,7 @@ void __cdecl report_projects() {
     }
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004ACAE0 ?report_sat@@YAXXZ 0x004ACAE0-0x004ACB2C
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004acae0.cpp", "source:src/reportif.cpp", "source:src/reportif.h", "source:src/reportwin.h"], "reason": "The retained report_sat seed identifies this free report command and its original extent. Category 6 selects the existing ReportIf state; the original modal call resolves to ReportWinGlobal set_modal and the direct branch to ReportIf report."}
 void __cdecl report_sat() {
@@ -1494,6 +1504,7 @@ void __cdecl report_sat() {
     }
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004ACB30 ?report_security@@YAXXZ 0x004ACB30-0x004ACB7C
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004acb30.cpp", "source:src/reportif.cpp", "source:src/reportif.h", "source:src/reportwin.h"], "reason": "The retained report_security seed identifies this free report command and its original extent. Category 7 selects the existing ReportIf state; the original modal call resolves to ReportWinGlobal set_modal and the direct branch to ReportIf report."}
 void __cdecl report_security() {
@@ -1506,6 +1517,7 @@ void __cdecl report_security() {
     }
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004ACB80 ?report_score@@YAXH@Z 0x004ACB80-0x004ACBCC
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004acb80.cpp", "source:src/reportif.cpp", "source:src/reportif.h", "source:src/reportwin.h"], "reason": "The retained report_score seed identifies this free report command and its original extent. Category 8 selects the existing ReportIf state; the original modal call resolves to ReportWinGlobal set_modal and the direct branch to ReportIf report."}
 void __cdecl report_score(int) {
@@ -1518,6 +1530,7 @@ void __cdecl report_score(int) {
     }
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004ACBD0 ?report_intel@@YAXH@Z 0x004ACBD0-0x004ACC29
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004acbd0.cpp", "source:src/reportif.cpp", "source:src/reportif.h", "source:src/reportwin.h"], "reason": "The retained report_intel seed identifies this free report command and its original extent. Category 0 selects the existing ReportIf state; the original modal call resolves to ReportWinGlobal set_modal and the direct branch to ReportIf report."}
 void __cdecl report_intel(int selection) {

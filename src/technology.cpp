@@ -48,6 +48,7 @@ void __cdecl set_dirty();
 extern char *TutorialPopupCaption;
 extern int FirstProposedPrototype;
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005BADC0 ?tech_secret@@YAXHH@Z 0x005BADC0-0x005BAE54 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/005badc0.cpp", "image:terranx_original.exe:0x005BADC0", "Pinned5BADDE parser0 then5BADFF parser1; literal6916F0 THESECRET, loaded Technology+4 name pointer and Player+304 adjective; live ConsoleGlobal local faction read follows caption append.", "Coordinator-owned core-pump-secret-owner-20261001 scope; preserved original seeds and historical obligations, no matching/runtime claim from binding"], "reason": "Technology announcement uses loader-owned Technology.name and Player faction adjective; preserves parser order and native local/remote caption suffix."}
 void __cdecl tech_secret(int tech_id, int faction_id) {
@@ -1728,6 +1729,7 @@ static int tech_research_mul(int left, int right) {
         * static_cast<uint32_t>(right));
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005BE940 ?tech_research@@YAXHH@Z 0x005BE940-0x005BEB70
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/005be940.cpp", "recovery/tasks/base-colony-economy-coverage-wave.json", "recovery/tests/test_base_colony_economy.py", "Pinned original 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; complete original extent reviewed against native instructions and measured VC6 owner layouts.", "Original5BE940..5BEB70 uses Facility33/102 prerequisites, low-byte LockEnableMask, tech_cost=-1 before recomputation, and shared945F48 phase distinct from9B2070 UI phase."], "reason": "Recover complete research accumulation, climactic prerequisite decisions, advances and selection through real faction/technology storage and shared TurnUpkeepPhase. Preserve native byte-width human mask, callback-owned selection and wrap. Seed retained; no new byte or runtime claim."}
 // symbol    ?tech_research@@YAXHH@Z

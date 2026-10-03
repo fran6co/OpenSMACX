@@ -154,6 +154,7 @@ bool NetMsg::is_active() const {
     return field_5384_ != 0;
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0047ADA0 ??1NetMsg@@QAE@XZ 0x0047ADA0-0x0047AFD2;0x00656460-0x0065654F
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0047ada0.cpp"], "reason": "Complete genuine NetMsg owner implementation replaces executable aliases/forwarders; original seed establishes catalogue identity and spans, native emitted symbols are separately recorded. Full private application compile/link and both native flag sets checked; preserve seed and historical claims, no exactness granted by binding."}
 // symbol    ??1NetMsg@@UAE@XZ
@@ -162,6 +163,7 @@ NetMsg::~NetMsg() {
     // then normal C++ member/base teardown handles Scroll and BasePop.
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0047A890 ?pop@NetMsg@@QAEXPBDHHPBD@Z 0x0047A890-0x0047ACE3;0x00656550-0x0065664C
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0047a890.cpp"], "reason": "Complete genuine NetMsg owner implementation replaces executable aliases/forwarders; original seed establishes catalogue identity and spans, native emitted symbols are separately recorded. Full private application compile/link and both native flag sets checked; preserve seed and historical claims, no exactness granted by binding."}
 // symbol    ?pop@NetMsg@@QAEXPBDHH0@Z

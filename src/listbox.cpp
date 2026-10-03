@@ -270,6 +270,7 @@ uint32_t ListBox::close() {
 
 // Original 609DB0 conditionally constructs GraphicWin and Dialog using the
 // compiler's most-derived flag, then initializes the ListBox-owned fields.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00609DB0 ??0ListBox@@QAE@H@Z 0x00609DB0-0x00609EB7;0x00662EF0-0x00662F14 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00609db0.cpp", "Original constructor/destructor direct-call receivers and unwind stages"], "reason": "609DB0 calls GraphicWin and Dialog constructors only for the hidden most-derived ABI flag, then stores own defaults. Genuine virtual bases synthesize this flag; it is not an explicit int source parameter."}
 // symbol    ??0ListBox@@QAE@XZ
@@ -406,6 +407,7 @@ void ListBox::on_mouse_leave(int a1, int a2) {
 // GraphicWin base's Win::win_parent_ receives slots 54/53, then its numbered
 // AutoSound window at +0x90 receives slots 23/7. These typed owners and
 // receiver slots follow the seed's vbtable walk and callsites.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0060A020 ?set_selected_pos@ListBox@@QAEXHH@Z 0x0060A020-0x0060A1DD
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0060a020.cpp", "source:src/listbox.h", "source:src/dialog.h", "source:src/win.h", "source:src/autosound.h"], "reason": "Recover ListBox selection, viewport and notify-gated item callbacks through its typed Dialog, GraphicWin and Win owners. The retained seed's vbtable walk resolves to Win::win_parent_ and its AutoSound val_36_ window; preserve the original seed and historical claim."}
 void ListBox::set_selected_pos(int position, int notify) {
@@ -1052,6 +1054,7 @@ Purpose: Run the double-click notification: remember the hovered window,
          selected entry's notification chain (slots 56 and 55 of the target
          window, then the child object's 23/7 pair) - and raise the click
          guard's counter value through it.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0060C710 ?on_left_double_click@ListBox@@QAEXHH@Z 0x0060C710-0x0060C7BB
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0060c710.cpp", "source:src/listbox.h", "source:src/autosound.h", "source:src/win.h"], "reason": "Recover ListBox double-click callbacks through typed GraphicWin, Dialog and the Win windows at AutoSound offsets 0x7c and 0x94, following the retained seed's virtual-base adjustments and slot calls."}
 // symbol    ?on_left_double_click@ListBox@@UAEXHH@Z
@@ -1287,7 +1290,7 @@ static int listbox_key_dispatch_arm(int key) {
     return table_index < 4 ? table_index : 4;
 }
 
-// Instruction/caller provenance retained in
+// Instruction/caller provenance retained in Git history of the deleted seed
 // src/recovered/units/0060aa60.cpp (span 0x0060AA60..0x0060AF84): publish the
 // parent as the callback receiver, hit-test the clicked row, update selected
 // entry callbacks and redraw. In multi-select mode payload field_8_ records
@@ -1295,6 +1298,7 @@ static int listbox_key_dispatch_arm(int key) {
 // previous-to-click interval, with the original -1 anchor wrapping through
 // the tail before row zero; without Shift, only the clicked row changes,
 // and Control toggles that row off if it was already selected.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0060AA60 ?on_left_down@ListBox@@QAEXHH@Z 0x0060AA60-0x0060AF84
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0060aa60.cpp"], "reason": "Rehome seed catalogue identity and original extents into compiled owning class; native-emitted symbol is separate and no new byte claim granted."}
 // symbol    ?on_left_down@ListBox@@UAEXHH@Z
@@ -1345,6 +1349,7 @@ void ListBox::on_left_down(int x, int y) {
 // row metrics as the click handler, then updates Dialog::field_F0_ and redraws
 // the changed hover state. The source-owned position helper keeps the cursor
 // and row payload access on StringList's declared API.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0060CBC0 ?on_mouse_move@ListBox@@QAEXHH@Z 0x0060CBC0-0x0060CE0B
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0060cbc0.cpp"], "reason": "Rehome seed catalogue identity and original extents into compiled owning class; native-emitted symbol is separate and no new byte claim granted."}
 // symbol    ?on_mouse_move@ListBox@@UAEXHH@Z
@@ -1377,6 +1382,7 @@ void ListBox::on_mouse_move(int x, int y) {
 // 0x0060AF90's table at 0x60B4EC maps VK_LEFT/UP/RIGHT/DOWN to four
 // layout-sensitive arms and all remaining keys to MapVirtualKey typeahead.
 // Dialogs::on_key_down routes kind 2 here.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0060AF90 ?on_key_down@ListBox@@QAEXH@Z 0x0060AF90-0x0060B4D5
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0060af90.cpp"], "reason": "Rehome seed catalogue identity and original extents into compiled owning class; native-emitted symbol is separate and no new byte claim granted."}
 void ListBox::on_key_down(int key) {
@@ -1429,6 +1435,7 @@ void ListBox::on_key_down(int key) {
 // direct callers in the image and calls only Buffer::set_clip/Buffer::copy.
 // Directions 0..3 shift the list surface one row or column while preserving
 // the surrounding working rectangle; the next redraw repaints exposed rows.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0060C1E0 ?UNK1@ListBox@@QAEXH@Z 0x0060C1E0-0x0060C33F
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0060c1e0.cpp"], "reason": "Rehome seed catalogue identity and original extents into compiled owning class; native-emitted symbol is separate and no new byte claim granted."}
 void ListBox::UNK1(int direction) {
@@ -1452,6 +1459,7 @@ void ListBox::UNK1(int direction) {
 // The Dialog virtual entry at 0x0060C350 first rejects an empty StringList,
 // then clips, honors optional list/parent paint callbacks, copies or fills the
 // backing surface, draws nested border edges, and paints visible entries.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0060C350 ?on_redraw@ListBox@@QAEXXZ 0x0060C350-0x0060C5C4
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0060c350.cpp"], "reason": "Rehome seed catalogue identity and original extents into compiled owning class; native-emitted symbol is separate and no new byte claim granted."}
 // symbol    ?on_redraw@ListBox@@UAEXXZ

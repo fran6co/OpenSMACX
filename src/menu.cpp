@@ -235,6 +235,7 @@ void Menu::adjust() {
     compute();
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005FBC20 ?on_left_down@Menu@@QAEXHH@Z 0x005FBC20-0x005FBDAB
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/005fbc20.cpp", "image:Menu6700B0/AlphaMenu66ED88/PullDown66FF40 constructor-selected primary tables; Buffer secondary subobject+444", "recovery/tasks/popup-font-configuration-owner-closure.json"], "reason": "Recover this complete operation in its genuine Menu/PullDown owner, using native constructor-selected virtual dispatch, real members and shared source-owned dependencies; preserve original identity, retained seed and historical restoration obligations."}
 // symbol    ?on_left_down@Menu@@UAEXHH@Z
@@ -285,6 +286,7 @@ void Menu::on_left_down(int x, int y) {
     if ((field_A28_ & 4) == 0) hide();
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005FBDB0 ?mouse_move@Menu@@QAEXHH@Z 0x005FBDB0-0x005FBEFD
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/005fbdb0.cpp", "image:Menu6700B0/AlphaMenu66ED88/PullDown66FF40 constructor-selected primary tables; Buffer secondary subobject+444", "recovery/tasks/popup-font-configuration-owner-closure.json"], "reason": "Recover this complete operation in its genuine Menu/PullDown owner, using native constructor-selected virtual dispatch, real members and shared source-owned dependencies; preserve original identity, retained seed and historical restoration obligations."}
 // symbol    ?mouse_move@Menu@@QAEXHH@Z
@@ -430,6 +432,7 @@ search_menu_mnemonics:
     return 0;
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005FC290 ?on_redraw@Menu@@QAEXXZ 0x005FC290-0x005FC594
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/005fc290.cpp", "image:Menu6700B0/AlphaMenu66ED88/PullDown66FF40 constructor-selected primary tables; Buffer secondary subobject+444", "recovery/tasks/popup-font-configuration-owner-closure.json"], "reason": "Recover this complete operation in its genuine Menu/PullDown owner, using native constructor-selected virtual dispatch, real members and shared source-owned dependencies; preserve original identity, retained seed and historical restoration obligations."}
 // symbol    ?on_redraw@Menu@@UAEXXZ
@@ -518,6 +521,7 @@ int MenuDefaultSelectionColor;       // 0x009B7B8C
 // RECOVERY_OBJECT: v1 0x009B7B90 ?MenuDefaultSelectionTextColor@@3HA
 int MenuDefaultSelectionTextColor;   // 0x009B7B90
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005FAEE0 ?set_def_font@Menu@@QAAXPAUFont@@@Z 0x005FAEE0-0x005FAEEE;0x005F0520-0x005F0535 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/005faee0.cpp: retained original spans and seed history", "source:recovery/tasks/popup-font-configuration-owner-closure.json: coordinator-authorized ownership scope", "manual: independent frozen C++ review of original callback, font style order, palette, geometry and sprite assignments", "compiler:build/recovery/popup-font-physical-emission.json;build/recovery/interface-producer-physical.json: actual emitted symbols in both historical flag sets"], "reason": "Original-backed real font/default producer and consumer closure through source-owned storage and C++ classes; preserves seed extents and historical matching obligations without granting a new claim."}
 // symbol    ?set_def_font@Menu@@SAXPAVFont@@@Z
@@ -627,6 +631,7 @@ void Menu::set_menu_proc(MenuProc proc) {
 // The retained 0x005FAE70 seed clears the menu's entry run without tearing
 // down its GraphicWin base. Menu::~Menu has the same entry ownership pattern;
 // keep this operation limited to the exact Menu fields the seed resets.
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005FAE70 ?UNK1@Menu@@QAEXXZ 0x005FAE70-0x005FAED8
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/005fae70.cpp", "source:src/menu.h", "source:src/menu.cpp"], "reason": "Clear Menu-owned entry text, IDs, flags, mnemonics and PullDowns, then reset only the Menu scalar state that the retained seed clears; keep the GraphicWin base alive."}
 void Menu::UNK1() {

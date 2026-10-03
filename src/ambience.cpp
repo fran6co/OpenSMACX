@@ -31,6 +31,7 @@ FactionAmbience *FactionMusic = nullptr;
 // RECOVERY_OBJECT: v1 0x00683BF4 ?LastAmbienceVehicle@@3HA
 int LastAmbienceVehicle = -1;
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004457E0 ?load_music@@YAXH@Z 0x004457E0-0x00445BA4;0x00654CF0-0x00654D52 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:f7bbce35:src/recovered/units/004457e0.cpp", "src/ambience.h", "src/midi.h", "src/fx.h"], "reason": "Original constructor staging, actual event tables and compiler-call contracts identify the genuine audio owner operation; compatible historical seed spans and claims remain available for restoration, not an acceptance verdict."}
 void __cdecl load_music(int faction_id) {
