@@ -1,0 +1,20 @@
+{
+  "event_id": "1454b6bdb82ce5cc769e7f57880ecc3c6bbbe149fd66e3138c26b740de7d5cc1",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_mapwin_click_branches.py",
+      "recovery/tests/test_mapwin_vehicle_draw_gate.py"
+    ],
+    "evidence": [
+      "Canonical native review identifies editor click 46D975 free draw branch jumping past the member redraw loop at46D97F, and draw_vehicles466CEE AH10 mask0x1000 rather than current0x100000. Authorize actual-source host discrimination controls for these existing owned bodies, preserve original seeds/claims/discoveries/baseline, require native protected diagnostics and fresh build/link; no new byte-exact or game acceptance claim."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "e3fbee0124117fb3e4db5ce15ee315d951d646c60074e3356d788c06f00c3c71",
+  "request_id": "mapwin-review-controls-20261003",
+  "schema_version": 1,
+  "sequence": 19,
+  "stream": "task:mapwin-owner-coverage-wave"
+}
