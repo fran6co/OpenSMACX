@@ -84,7 +84,9 @@ def test_complete_destructor_is_generated_and_destroys_virtual_base(objects):
 @pytest.mark.parametrize("unit,owner", [
     ("src/stringstruct.cpp", "StringAllocationBase"),
     ("src/stringstruct.cpp", "StringStruct"),
-    ("src/stringstruct.cpp", "StringList"),
+    # Real Dialog construction emits this deleting entry; the allocation
+    # base TU need not emit every derived class's generated destructor.
+    ("src/dialog.cpp", "StringList"),
     ("src/net_class.cpp", "NetAllocationNode"),
     ("src/net_class.cpp", "NetUnk72C"),
     ("src/net_class.cpp", "JackalVoiceRx"),

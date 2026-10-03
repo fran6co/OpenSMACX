@@ -416,9 +416,9 @@ void SelectPartWin::vslot_49(int a1, int a2) {
 // 0x0043EE10 destructor seed: reset and close the enclosing GraphicWin and
 // owned Buffer, then let C++ destroy Font, Buffer, Caviar, Scroll and the base
 // in reverse construction order. The compiler owns both vptrs and EH unwind.
-// Source seed: src/recovered/units/0043ee10.cpp (measured MISMATCH).
+// Source seed: git:293937ab6f3be75999e0c0a4c9c110c02930624c:src/recovered/units/0043ee10.cpp (measured MISMATCH).
 // ORIGINAL: 0x0043EE10 ??1SelectPartWin@@UAE@XZ 0x0043EE10-0x0043EF6A;0x00654720-0x006547AC
-// RECOVERY_BINDING: v1 {"evidence": ["Original seed src/recovered/units/0043ee10.cpp; its original spans and historical obligations are retained.", "SelectPartWin constructor 0x004328B0 establishes GraphicWin, Scroll+0xA14, Caviar+0x2B9C, Buffer+0x406C and Font members+0x45F4/+0x461C."], "reason": "The original complete destructor resets/closes the GraphicWin and embedded Buffer before reverse member destruction. The real SelectPartWin destructor owns that lifecycle."}
+// RECOVERY_BINDING: v1 {"evidence": ["Original seed git:293937ab6f3be75999e0c0a4c9c110c02930624c:src/recovered/units/0043ee10.cpp; its original spans and historical obligations are retained.", "SelectPartWin constructor 0x004328B0 establishes GraphicWin, Scroll+0xA14, Caviar+0x2B9C, Buffer+0x406C and Font members+0x45F4/+0x461C.", "The historical QAE destructor spelling is superseded by UAE from the actual GraphicWin-derived virtual destructor; automatic reverse member/base teardown remains owned by SelectPartWin.", "git:293937ab6f3be75999e0c0a4c9c110c02930624c:src/recovered/units/0043ee10.cpp", "Historical seed spelling ??1SelectPartWin@@QAE@XZ; current source mapping ??1SelectPartWin@@UAE@XZ; emitted symbol ??1SelectPartWin@@UAE@XZ."], "reason": "The original complete destructor resets/closes the GraphicWin and embedded Buffer before reverse member destruction. The real SelectPartWin destructor owns that lifecycle. Superseded seed retired after owner review; original spans, existing claims and useful seed findings remain in source. This cleanup grants no new match or acceptance claim."}
 SelectPartWin::~SelectPartWin() {
     close();
 }
