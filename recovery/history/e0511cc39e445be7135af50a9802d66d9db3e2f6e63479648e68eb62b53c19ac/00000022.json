@@ -1,0 +1,20 @@
+{
+  "event_id": "45d606f231da74528d8b59b3e214421b55e37d2ea4fb8522592fb1490b3e572e",
+  "payload": {
+    "affects": [
+      "entity-138141dc77919e1825e3921f3d3829efe5582c0d0af3fdb4b84101d9deb4b6fc"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "mapwin-left-down-initialized-coordinate-deviation-20261003",
+    "evidence": [
+      "Independent full native review46EEF3..46EF58 proves cursor-active/no0x40000 path bypasses pixel_to_tile and reads previously unwritten stacklocals at46EF52. Current source initializes tile_x/y zero. Private independent report /tmp/mapwin-independent-review-v1.md SHA d4ddefc01271a238e24720be5665a608835b7706c6c8e23f187d5f7793bca849; user decision requested, not yet received. Preserve source and original evidence without claiming resolution or reproducing uninitialized reads by default."
+    ],
+    "hypothesis": "Current left-down body initializes tile coordinates to zero while original active-cursor/no-editor-conversion path consumes uninitialized locals; existing source behavior differs and needs explicit behavior disposition, not an original-fidelity claim.",
+    "kind": "discovery"
+  },
+  "previous_event": "af444984b8125fb3b007dec07b4bea47de215e2de651b11663debf2909924cb9",
+  "request_id": "mapwin-left-down-initialized-coordinate-deviation-20261003",
+  "schema_version": 1,
+  "sequence": 22,
+  "stream": "task:mapwin-owner-coverage-wave"
+}

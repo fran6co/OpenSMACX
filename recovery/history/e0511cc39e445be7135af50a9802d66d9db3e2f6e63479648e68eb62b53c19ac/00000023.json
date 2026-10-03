@@ -1,0 +1,20 @@
+{
+  "event_id": "787c021faee31623c75fac4390c461463771f5e885bd9ae3eb0a34aaa9693eca",
+  "payload": {
+    "affects": [
+      "entity-13d9d167a54f174c9d78067add169b6d6dd4282388d2e9ea10e60a075046a330"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "mapwin-right-menu-defensive-bound-deviation-20261003",
+    "evidence": [
+      "Independent original entry-to-return review46C0D0, current mapwin.cpp5351..5352 and5364..5370, native direct indexed loads without those upper-bound branches. Private review SHA d4ddefc01271a238e24720be5665a608835b7706c6c8e23f187d5f7793bca849. Ordinary valid indices unaffected; no broad user approval for these guards, no automatic resolution, no change to source or historical obligations yet."
+    ],
+    "hypothesis": "Current right_menu includes extra selected-vehicle/prototype/chassis/weapon bounds guards without corresponding original native branches; malformed-state behavior intentionally or accidentally differs and needs a documented disposition rather than a fidelity assertion.",
+    "kind": "discovery"
+  },
+  "previous_event": "45d606f231da74528d8b59b3e214421b55e37d2ea4fb8522592fb1490b3e572e",
+  "request_id": "mapwin-right-menu-defensive-bound-deviation-20261003",
+  "schema_version": 1,
+  "sequence": 23,
+  "stream": "task:mapwin-owner-coverage-wave"
+}
