@@ -1,0 +1,20 @@
+{
+  "event_id": "89dadb3629c970775f9204c00e78620d5daebf4fa8574ad63cf979dd212f3472",
+  "payload": {
+    "affects": [
+      "entity-69d908c54936afd7a09eab303f23ba8ea5a09de2f6528a72534c2e281e6bdd9b"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "statuswin-natural-pointer-producer-20261003",
+    "evidence": [
+      "src/alpha.cpp1746/1747 assigns text_item_string() to Natural[i].name/name_short; src/text.h245 returns strings->put(text_item_source(text)). Canonical5FD6D0..5FD731 parses item then calls616970 at5FD72C. Canonical616970..61699A computes strlen+1, callsHeap.get5D4680, strcpy645460 into returned pointer, and returns that same pointer. Canonical6169A0..6169B8 compares argument against heapbase[ecx+4] and heapend=base+[ecx+C], returning the argument pointer or null/base, not indexing or adding an ID. Existing RulesNatural LPSTR fields are consistent with producer/consumer. Sequence3 concern remains historical; no int field migration is justified by observed casts. Preserve genuine source owner and narrow ABI compatibility conversions during HUD recovery, no raw executable storage or exactness claim."
+    ],
+    "hypothesis": "Producer evidence supersedes the tentative Natural string-ID interpretation: its LPSTR fields are live allocated string pointers, and Strings.get takes their integer bits to validate them against heap bounds, not to index a string-ID table.",
+    "kind": "discovery"
+  },
+  "previous_event": "727b551af28ed09f24db4b440ac4a4dbff0ad66ef42c5626b20ca181d3326782",
+  "request_id": "statuswin-natural-pointer-producer-20261003",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:statuswin-remaining-owner-coverage"
+}
