@@ -1,0 +1,69 @@
+{
+  "event_id": "d8b14998caee89507d36ccc3189fc15e17e31df7c58cf8e3604767415ff2dfc0",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/runtime_services/control.cpp",
+      "recovery/tests/test_runtime_services_behavior.py",
+      "src/faction.cpp",
+      "src/game.cpp",
+      "src/game.h",
+      "src/netdaemon.cpp",
+      "src/netdaemon.h",
+      "src/pending_bodies.cpp",
+      "src/recovered/0051f2c0.cpp",
+      "src/recovered/units/0051e090.cpp",
+      "src/recovered/units/005a58b0.cpp",
+      "src/sound.h",
+      "src/sound_loader.cpp",
+      "src/strings.cpp",
+      "src/strings.h",
+      "src/unrecovered/004c5d90.cpp",
+      "src/unrecovered/0051f200.cpp",
+      "src/unrecovered/0058f250.cpp"
+    ],
+    "evidence": [
+      "Coordinator authorizes six complete runtime/service source owners: space, wait_2, wait_loop, set_tamper, release_sound and system_close. Preserve the existing task baseline, all original identities/spans, historical byte claims and useful seed findings. Retire only superseded seeds and pending image forwarders after native build/link and relevant checks.",
+      "Independent review of frozen runtime-service-batch-v1 found no concrete blocker. Preserve live wait_loop faction/human-mask reloads around callbacks; audio DLL slot3 remains a neutral nullary function of unknown export meaning. Genuine Sound access uses friendship without new storage, dynamic detach, existing typed devices and operator delete. Shutdown shows then clears window slots without deletion and leaves MapWinTable slot0 intact.",
+      "Actual-source GCC/Clang controls, scoped native matching, claim continuity and references plus application build/link are required for manual integration. Matching regressions retain historical restoration obligations; no new claims, demotions, gate weakening, automatic publication, linked preservation or game acceptance are authorized."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5920944,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5370560,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5370368,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5365904,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5006736,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5837392,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "b2bffc3e20227e1ee060d45080dd3ca3240e1b74f9e80782e323a82a00800d0d",
+  "request_id": "runtime-service-six-owners-20261003",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:game-logic-seed-owner-coverage"
+}
