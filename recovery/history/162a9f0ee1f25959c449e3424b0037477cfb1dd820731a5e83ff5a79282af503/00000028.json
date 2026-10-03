@@ -1,0 +1,24 @@
+{
+  "event_id": "e05a930d65b59f24d08ff805ae68801bd4319888ddcd0fb41988c00d285c9aa9",
+  "payload": {
+    "affects": [
+      "entity-04db7ed5ce8eb02ed7aa3e148631e3cdf61f5e2adb97d42883843002450aca8d",
+      "entity-05e035b79bdfb2d5839294afbbc37bcc1af043ed49638bc7657bca8300f75caa",
+      "entity-100edd3e7bccfbbe3c5de7aa4b727a161bddd9397e9a2c01bf20570a18bbe5a4",
+      "entity-c07f1ce86a5f653e22dee09a2df5ee8f3f8ff0ebb4415063e76507b1d408d578",
+      "entity-e93b450e5f1722bb2f5ccf623695e0addc2ebf7fbef7b01e1663f89e4fd5e90b"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "colony-full-turn-dependencies-20261003",
+    "evidence": [
+      "Direct seed faction_upkeep527290 calls allocate_energy5267B0, enemy_diplomacy55F930 and enemy_strategy561080; production_phase itself does not call allocate_energy. Original mapped spans exist; faction_strategy.cpp is explicitly unfinished. Independent worker caller inspection found control_turn5275B0 and net_upkeep5290A0 invoke faction_upkeep. Recover real typed state and exact full behavior; preserve uncertain seed findings and request any further dependency or member admission before edits."
+    ],
+    "hypothesis": "Complete faction turn orchestration requires allocate_energy, enemy_diplomacy and enemy_strategy below the recovered phase, plus control_turn and net_upkeep callers above it. Existing enemy_strategy and control_turn placeholders are link continuity, not recovered behavior. Retained enemy_diplomacy seed explicitly approximates inner arithmetic and must be corrected against full pinned instructions, not promoted as faithful.",
+    "kind": "discovery"
+  },
+  "previous_event": "03a42d4f99232e61344717fa8ec34d4c4d6b9ac15612f8161e19bf97607cdaa3",
+  "request_id": "colony-full-turn-dependencies-20261003",
+  "schema_version": 1,
+  "sequence": 28,
+  "stream": "task:base-colony-economy-coverage-wave"
+}

@@ -1,0 +1,53 @@
+{
+  "event_id": "7147df1a256dee92543e63cef7a84ff94152b245191eafed8efacbdbe3a753b1",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_faction_turn_recovery.py",
+      "src/faction.cpp",
+      "src/faction.h",
+      "src/faction_strategy.cpp",
+      "src/game.cpp",
+      "src/game.h",
+      "src/netdaemon.cpp",
+      "src/netdaemon.h",
+      "src/pending_bodies.cpp"
+    ],
+    "evidence": [
+      "Coordinator admits the five complete original turn-chain identities identified by direct caller/callee evidence, alongside the existing two phase bodies. Private parallel proposals only; root publishes serial verified source steps. Target genuine complete behavior, not approximated compressed seeds or newly invented stand-ins. Preserve original baselines, histories, claims and pending riot behavior decision; no authority for added functions/storage/members or changed behavior. All dependencies and current typed owners must be independently audited; build/link, protected claim diagnostics and actual-body controls required before reviewed integration, not automatic/full game acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5400496,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5634352,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5640320,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5404080,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5410976,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "e05a930d65b59f24d08ff805ae68801bd4319888ddcd0fb41988c00d285c9aa9",
+  "request_id": "admit-colony-full-turn-dependencies-20261003",
+  "schema_version": 1,
+  "sequence": 29,
+  "stream": "task:base-colony-economy-coverage-wave"
+}
