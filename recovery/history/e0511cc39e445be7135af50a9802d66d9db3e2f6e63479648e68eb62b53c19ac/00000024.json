@@ -1,0 +1,21 @@
+{
+  "event_id": "06f29c86335a00417a15da95636d6fc5e0b8ce8b5a76a1197cda14b1b7cd1362",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_console_selected_return_behavior.py",
+      "recovery/tests/test_cursor_state.py",
+      "recovery/tests/test_mapwin_click_gate.py"
+    ],
+    "evidence": [
+      "Native paired private compilation observes actual int symbol selected@Console QAEHXZ replacing oldvoid QAEXXZ in bothrecipes, not unchangedmangling; rootnativewriter willpublish onlyafterCOFF proof. Admit actual-source paired clickgate/selectedreturn controls and adapt existingcursorstate fixture to int API with returnchecks; no new scope beyond alreadyadmitted5107E0/click. Preserve headerlayout, seeds, historicalclaims and originalbaseline; private v3 incorrectmetadata/weak timingfixture retained, corrected NEW tests needed. Fresh application build/link and originalidentity continuity mandatory; no automatic/game acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "787c021faee31623c75fac4390c461463771f5e885bd9ae3eb0a34aaa9693eca",
+  "request_id": "mapwin-selected-live-controls-20261003",
+  "schema_version": 1,
+  "sequence": 24,
+  "stream": "task:mapwin-owner-coverage-wave"
+}
