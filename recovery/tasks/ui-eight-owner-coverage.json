@@ -1,0 +1,81 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "de91fffebfd37fa0d939638aa66403606c122288",
+  "editable_files": [
+    "src/setupwin.cpp",
+    "src/setupwin.h",
+    "src/dialog.cpp",
+    "src/dialog.h",
+    "src/dialogs.cpp",
+    "src/dialogs.h",
+    "src/win.h",
+    "src/newtechwin.cpp",
+    "src/newtechwin.h",
+    "src/flatbutton.cpp",
+    "src/flatbutton.h",
+    "src/pending_bodies.cpp",
+    "src/recovered/units/004ad880.cpp",
+    "src/recovered/units/004ae790.cpp",
+    "src/recovered/units/00609bf0.cpp",
+    "src/recovered/units/00613180.cpp",
+    "src/recovered/units/00613220.cpp",
+    "src/unrecovered/004ae3e0.cpp",
+    "src/unrecovered/00483eb0.cpp",
+    "src/recovered/units/00608500.cpp",
+    "recovery/tests/test_ui_owner_behavior.py"
+  ],
+  "evidence": [
+    "Pinned original spans and seed identity/history retained through native source writer; these eight seeds have no historical byte/semantic claims. Existing retained tasks/checkouts are not reset or discarded.",
+    "Private packet df4778a1eeb1ad0552a96b36aa1463b594433e07b1bfa43db1e4a61004d7af1a compiles all five genuine UI owners under both configured VC6 recipes. Eighty protected owner diagnostics unchanged; this is not shared-header outside-scope or link proof.",
+    "Fresh candidate physical CodeView shows embedded StringList at FE0, item_texts pointer at1010, buffer2 at1118, SetupWin size16A0. Replace exactly twelve raw words with the real48-byte member; ordinary compiler construction/destruction owns lifetime.",
+    "Physical COFF confirms virtual emitted symbols for SetupWin destructor/on_key_click, Dialogs pass_dialog_focus and FlatButton on_mouse_move. Use native write_symbol facts rather than manual adjustor code.",
+    "Use actual-source self-contained GCC/Clang behavioral and damage controls; require actual application build/link, claim continuity, references and relevant protected matching checks before coordinator-reviewed integration. No new byte claim or full-game acceptance is granted.",
+    "PrevWndFunc and fn_00607b10 already have source definitions; changes add declarations only, not storage or placeholder implementations."
+  ],
+  "intent": "Recover eight complete UI bodies in their genuine owners, including SetupWin embedded StringList lifetime and native virtual overrides; retire only superseded seeds and executable-address forwarders after build/link and regression verification.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4905088,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4908944,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6331376,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6369664,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6369824,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4908000,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4734640,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6325504,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "ui-eight-owner-coverage"
+}
