@@ -1155,17 +1155,3 @@ int __cdecl enemy_move(int veh_id) {
     typedef int(__cdecl *pending)(int);
     return PENDING_BODY(0x0056B5B0, pending)(veh_id);
 }
-
-// ?upgrade_prototype@@YAHHHHH@Z at 0x004EFE80 - the single-prototype upgrade
-// worker, still unrecovered. Its only homed caller is base.cpp's
-// upgrade_prototypes (0x004F0460), which the image calls with FOUR pushes
-// (`add esp, 0x10` at 0x004F0620) against a five-H symbol, so the shipped
-// image's own fifth parameter is read off the caller's stack. Reproduced as
-// four: a fifth declared parameter no caller passes would be a modelled
-// argument the image never sends. See base.cpp's note at the call site.
-int __cdecl upgrade_prototype(int base_id, int faction_id, int proto_id,
-                              int set_flag) {
-    typedef int(__cdecl *pending)(int, int, int, int);
-    return PENDING_BODY(0x004EFE80, pending)(base_id, faction_id, proto_id,
-                                             set_flag);
-}

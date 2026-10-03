@@ -7247,3 +7247,399 @@ void __cdecl base_terraform(int force_improve) {
     // computes 25 or 50 on either outcome and branches directly to the epilogue,
     // so that scan has no reachable effects in the pinned executable.
 }
+
+// ORIGINAL: 0x004EF1C0 ?base_growth@@YAHXZ 0x004EF1C0-0x004EFB4E
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/004ef1c0.cpp", "recovery/tasks/base-colony-economy-coverage-wave.json", "Pinned original01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; complete original function extent reviewed against native instructions and VC6 CodeView owners.", "recovery/tests/test_base_colony_production.py", "Native4EF3CE/4EF50E selects BaseIDCurrentSelected for has_fac, contradicting the retained TRIED owner-byte hypothesis. 9A6548 is SecretProject.ascetic_virtues(+34), not network_backbone; 97D046 is population_size(+6)."], "reason": "Recover starvation, population growth/limits and nutrient warnings through real Base/faction/facility/project/vehicle owners. Preserve callback reloads and native signed-byte population behavior; seeds remain, no matching or runtime claim."}
+// symbol    ?base_growth@@YAHXZ
+// TRIED: DAT_0090ea30 is Ghidra-typed `short*` throughout, so every `DAT_0090ea30[N]`/`DAT_0090ea30+N` is byte offset N*2 off the Base* (confirmed against raw disasm: index 0x1e/0x68 -> bytes 0x3c/0xd0, index 3 -> byte 6, the growth-stage counter); two has_fac() calls use the local `owner` byte, not DAT_00689370, per raw push order (Ghidra swapped these). Compiles; diverges at #3 (prologue field-read order).
+int __cdecl base_growth() {
+    const int x = BaseCurrent->x;
+    const int y = BaseCurrent->y;
+    const int owner = BaseCurrent->faction_id_current;
+
+    if (BaseCurrent->nutrients_accumulated < 0) {
+        if ((GameState & 1) == 0 || (GameState & 8) != 0) {
+            if (BaseCurrentConvoyFrom[0] != 0 && VehCurrentCount > 0) {
+                for (int vehicle_id = 0; vehicle_id < VehCurrentCount; ++vehicle_id) {
+                    Veh &vehicle = Vehs[vehicle_id];
+                    if (vehicle.home_base_id == BaseIDCurrentSelected
+                        && VehPrototypes[vehicle.proto_id].plan == 0xA
+                        && vehicle.order == 3
+                        && vehicle.order_auto_type == 0) {
+                        const int tile_index = vehicle.y * static_cast<int>(MapLongitude)
+                            + (vehicle.x >> 1);
+                        Map *tile = &MapTiles[tile_index];
+                        if ((tile->bit & 1) != 0 && (tile->val2 & 0xF) < 8) {
+                            vehicle.order = 0;
+                        }
+                    }
+                }
+            }
+
+            const bool alien = (Players[owner].rule_flags & RFLAG_ALIEN) != 0;
+            popb("STARVE", 0x4000, 0xE,
+                 alien ? "al_starv_sm.pcx" : "starv_sm.pcx", 0);
+            if (is_objective(BaseIDCurrentSelected) == 0 || BaseCurrent->population_size > 1) {
+                BaseCurrent->population_size = static_cast<int8_t>(static_cast<uint8_t>(
+                    static_cast<int>(BaseCurrent->population_size) - 1));
+                if (BaseCurrent->population_size < 1) {
+                    base_kill(BaseIDCurrentSelected);
+                    draw_map(1);
+                    eliminate_player(owner, 0);
+                    return 1;
+                }
+            }
+        }
+        BaseCurrent->nutrients_accumulated = BaseCurrent->nutrient_surplus;
+        draw_tile(x, y, 2);
+        return 0;
+    }
+
+    int growth = cost_factor(owner, 0, BaseIDCurrentSelected);
+    growth = base_yield_mul(growth,
+        base_yield_add(static_cast<int>(BaseCurrent->population_size), 1));
+    const int faction = BaseIDCurrentSelected;
+
+    if (((SecretProject.cloning_vats >= 0
+          && Bases[SecretProject.cloning_vats].faction_id_current == owner)
+         || BaseCurrentGrowthRate > 5)
+        && Rules.nutrient_req_citizen != 0
+        && static_cast<int>(Rules.nutrient_req_citizen) <= BaseCurrent->nutrient_surplus) {
+        const bool same = SecretProject.ascetic_virtues >= 0
+            && Bases[SecretProject.ascetic_virtues].faction_id_current
+                == Bases[faction].faction_id_current;
+        const int margin = same ? 2 : 0;
+        const int total_population =
+            Players[Bases[faction].faction_id_current].rule_population;
+        if (((Bases[faction].population_size - margin)
+                 + total_population
+                 < static_cast<int>(Rules.pop_limit_sans_hab_complex)
+             || has_fac(0x18, faction, 0) != 0)
+            && ((Bases[faction].population_size - margin) + total_population
+                 < static_cast<int>(Rules.pop_limit_sans_hab_dome)
+                || has_fac(0x19, faction, 0) != 0)) {
+            if (BaseCurrent->population_size < 0x7F) {
+                BaseCurrent->population_size = static_cast<int8_t>(
+                    static_cast<uint8_t>(static_cast<int>(BaseCurrent->population_size) + 1));
+            }
+            BaseComputedID = BaseIDCurrentSelected;
+            base_support();
+            base_yield();
+            base_nutrient();
+            base_minerals();
+            base_energy();
+            draw_tile(x, y, 2);
+            if (BaseCurrent->nutrients_accumulated <= growth) return 0;
+            BaseCurrent->nutrients_accumulated = growth;
+            return 0;
+        }
+    }
+
+    if (growth <= BaseCurrent->nutrients_accumulated) {
+        if (BaseCurrentGrowthRate < -2) {
+            BaseCurrent->nutrients_accumulated = growth;
+            return 0;
+        }
+        const bool same = SecretProject.ascetic_virtues >= 0
+            && Bases[SecretProject.ascetic_virtues].faction_id_current
+                == Bases[faction].faction_id_current;
+        const int margin = same ? 2 : 0;
+        const int total_population =
+            Players[Bases[faction].faction_id_current].rule_population;
+        int limit_reason;
+        if ((Bases[faction].population_size - margin) + total_population
+                < static_cast<int>(Rules.pop_limit_sans_hab_complex)
+            || has_fac(0x18, faction, 0) != 0) {
+            if ((Bases[faction].population_size - margin) + total_population
+                    < static_cast<int>(Rules.pop_limit_sans_hab_dome)
+                || has_fac(0x19, faction, 0) != 0) {
+                BaseCurrent->nutrients_accumulated = 0;
+                BaseCurrent->population_size = static_cast<int8_t>(
+                    static_cast<uint8_t>(static_cast<int>(BaseCurrent->population_size) + 1));
+                BaseComputedID = BaseIDCurrentSelected;
+                base_support();
+                base_yield();
+                base_nutrient();
+                base_minerals();
+                base_energy();
+                draw_tile(x, y, 2);
+                goto after_growth;
+            }
+            limit_reason = 0x19;
+        } else {
+            limit_reason = 0x18;
+        }
+        growth = cost_factor(BaseCurrent->faction_id_current, 0,
+                             BaseIDCurrentSelected);
+        BaseCurrent->nutrients_accumulated = base_yield_mul(growth,
+            base_yield_add(static_cast<int>(BaseCurrent->population_size), 1)) / 2;
+        parse_say(1, static_cast<int>(reinterpret_cast<uintptr_t>(
+            Facility[limit_reason].name)), -1, -1);
+        if ((Players[owner].rule_flags & RFLAG_ALIEN) == 0) {
+            popb("POPULATIONLIMIT", 0x800, 0x10, "pop_sm.pcx", 0);
+        } else {
+            popb("POPULATIONLIMIT", 0x800, 0x10, "al_pop_sm.pcx", 0);
+        }
+    }
+
+after_growth:
+    BaseCurrent->nutrients_accumulated = base_yield_add(
+        BaseCurrent->nutrients_accumulated, BaseCurrent->nutrient_surplus);
+    {
+        const int threshold = BaseCurrent->nutrient_surplus;
+        if (threshold < 0
+            && base_yield_sub(BaseCurrent->nutrients_accumulated, threshold) >= 0
+            && base_yield_add(base_yield_add(threshold,
+                BaseCurrent->nutrients_accumulated), base_yield_mul(threshold, 4)) < 0
+            && (BaseCurrent->governor & 0x80000040u) != 0x80000040u) {
+            int adjacent = 0;
+            int bad_farms = 0;
+            for (int direction = 1; direction < 0x15; ++direction) {
+                int nx = x + RadiusOffsetX[direction];
+                if ((MapIsFlat & 1) == 0) {
+                    if (nx < 0) nx += MapLongitudeBounds;
+                    else if (nx >= MapLongitudeBounds) nx -= MapLongitudeBounds;
+                }
+                const int ny = y + RadiusOffsetY[direction];
+                if (ny < 0 || ny >= MapLatitudeBounds
+                    || nx < 0 || nx >= MapLongitudeBounds) continue;
+                Map &tile = MapTiles[(nx >> 1) + ny * MapLongitude];
+                if ((tile.climate & 0xE0) < 0x60) {
+                    if ((BaseCurrent->resource_sqr_radius & (1u << (direction & 0x1F))) != 0
+                        && (tile.bit & 0x8000) == 0) ++bad_farms;
+                    continue;
+                }
+                const uint32_t flags = tile.bit;
+                if ((flags & 0x8000) != 0) continue;
+                bool skip = false;
+                if ((flags & 0x200000) != 0) {
+                    int byte_offset;
+                    int bit_mask;
+                    bitmask(0xD, &byte_offset, &bit_mask);
+                    if ((Bases[BaseIDCurrentSelected].facilities_built[byte_offset]
+                         & static_cast<uint8_t>(bit_mask)) != 0) skip = true;
+                }
+                if (skip) continue;
+                const uint8_t climate = tile.climate;
+                const uint8_t rainfall = static_cast<uint8_t>(climate >> 3);
+                const uint8_t rainfall_class = rainfall & 3;
+                if ((flags & 0x20) == 0 || (climate & 0xE0) < 0x40
+                    || PlayersData[owner].tech_fungus_nutrient < 2) {
+                    const bool worked = (BaseCurrent->resource_sqr_radius
+                        & (1u << (direction & 0x1F))) != 0;
+                    if (!worked) {
+                        if ((flags & 0x8000) == 0) {
+                            const bool count = rainfall_class == 1
+                                || has_tech(Rules.tech_three_nutrients_sqr, owner) != 0;
+                            if (count) ++adjacent;
+                        }
+                    } else if (((flags & 0x20) != 0 && (climate & 0xE0) > 0x3F)
+                               || (flags & 0x200000) != 0
+                               || (tile.val3 & 0xC0) == 0x80
+                               || rainfall_class == 0) {
+                        ++bad_farms;
+                    } else if ((flags & 0x8000) == 0) {
+                        const bool count = rainfall_class == 1
+                            || has_tech(Rules.tech_three_nutrients_sqr, owner) != 0;
+                        if (count) ++adjacent;
+                    }
+                }
+            }
+
+            const bool alien = (Players[owner].rule_flags & RFLAG_ALIEN) != 0;
+            if (alien) {
+                if (adjacent != 0
+                    && has_tech(VehPrototypes[1].preq_tech, owner) != 0) {
+                    if (PlayersData[owner].proto_id_active[1] != 0) {
+                    popb("LOWNUTRIENTFARMS", 0, -1, "al_starv_sm.pcx", 0);
+                } else {
+                    popb("LOWNUTRIENTFORMERS", 0, -1, "al_starv_sm.pcx", 0);
+                    }
+                    return 0;
+                }
+                if (BaseCurrent->specialist_total < 2
+                    && (BaseCurrent->specialist_total == 0 || BaseCurrent->population_size > 2)) {
+                    popb("LOWNUTRIENT", 0x80, 0x10,
+                         "al_starv_sm.pcx", 0);
+                    return 0;
+                }
+                if (BasePsychDrones[0] != 0) {
+                    popb("LOWNUTRIENTSPEC1", 0, -1, "al_starv_sm.pcx", 0);
+                    return 0;
+                }
+                popb("LOWNUTRIENTSPEC2", 0, -1, "al_starv_sm.pcx", 0);
+                return 0;
+            }
+            if (adjacent != 0
+                && has_tech(VehPrototypes[1].preq_tech, owner) != 0) {
+                if (PlayersData[owner].proto_id_active[1] != 0) {
+                    popb("LOWNUTRIENTFARMS", 0, -1, "starv_sm.pcx", 0);
+                } else {
+                    popb("LOWNUTRIENTFORMERS", 0, -1, "starv_sm.pcx", 0);
+                }
+                return 0;
+            }
+            if (BaseCurrent->specialist_total < 2
+                && (BaseCurrent->specialist_total == 0 || BaseCurrent->population_size > 2)) {
+                popb("LOWNUTRIENT", 0x80, 0x10, "starv_sm.pcx", 0);
+                return 0;
+            }
+            if (BasePsychDrones[0] != 0) {
+                popb("LOWNUTRIENTSPEC1", 0, -1, "starv_sm.pcx", 0);
+                return 0;
+            }
+            popb("LOWNUTRIENTSPEC2", 0, -1, "starv_sm.pcx", 0);
+            (void)bad_farms;
+        }
+    }
+    return 0;
+}
+
+static int upgrade_arithmetic_shift_three(int value) {
+    return value >= 0 ? value / 8 : -1 - ((-1 - value) / 8);
+}
+
+// ORIGINAL: 0x004EFE80 ?upgrade_prototype@@YAHHHHH@Z 0x004EFE80-0x004F045B
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/004efe80.cpp", "recovery/tasks/base-colony-economy-coverage-wave.json", "Pinned original01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; complete original function extent reviewed against native instructions and VC6 CodeView owners.", "recovery/tests/test_base_colony_production.py", "Native4EFE8E..94 rejects statebit1 set with bit8 clear; 4F03A8/4F0414 choose UPGRADEPROTOCOST2 when prototypeflag4 is clear. Ability iterator9AB540 reads abbreviation(+8)."], "reason": "Recover complete prototype-upgrade decision, naming/prompt and network dispatch through typed owners. Four arguments follow the native caller and body; five H tokens include the int return. Replace central executable-address forwarder, preserve seed and historical obligations, no new byte claim."}
+// symbol    ?upgrade_prototype@@YAHHHHH@Z
+// TRIED: near-verbatim transcription of the (clean) Ghidra output, substituting catalogued globals/callees; the leading `if (cost==0) { if(a4!=0) return 0; if(!bit) return 0; }` three-branch guard was collapsed via De Morgan into one `if (!(cost != 0 || (a4 == 0 && bit))) return 0;` - logically equivalent (confirmed against raw asm) but restructures the control flow, so it does not reproduce the original's branch-by-branch codegen. The four `popp(...)` calls needed the 2nd/4th arguments swapped from Ghidra's printed order (confirmed via push-order tracing: 1st param dereferences g_00691b0c rather than using the address itself). Reaches MISMATCH #10 ('je' vs 'jne'); did not chase the exact branch-for-branch shape further.
+int __cdecl upgrade_prototype(int faction_id, int proto_id_new,
+                                 int proto_id_old, int set_flag) {
+    const uint32_t faction_bit = 1u << (faction_id & 0x1f);
+    if ((GameState & 1) != 0 && (GameState & 8) == 0) return 0;
+
+    const int cost = base_yield_mul(base_yield_mul(
+        upgrade_cost(faction_id, proto_id_new, proto_id_old),
+        PlayersData[faction_id].proto_id_active[proto_id_old]), 10);
+    if (cost == 0 && !(set_flag == 0 && (LockEnableMask & faction_bit) != 0)) {
+        return 0;
+    }
+
+    if ((LockEnableMask & faction_bit) == 0) {
+        const int ranking_factor = 8 - PlayersData[RankingFactionIDUnk1].ranking;
+        const int energy = PlayersData[faction_id].energy_reserves;
+        int minerals = (base_yield_mul(DiffLevelCurrent, cost) / 10)
+            / ranking_factor;
+        if (PlayersData[RankingFactionIDUnk2].energy_reserves < energy) {
+            if (energy > 999) minerals /= 2;
+            if (energy > 1999) minerals = 0;
+        }
+        const int discount = base_yield_add(base_yield_mul(
+            base_yield_add(base_yield_add(
+                VehPrototypes[proto_id_new].plan == 2 ? 1 : 0,
+                PlayersData[faction_id].ai_power),
+                PlayersData[faction_id].ai_tech), 2), 1);
+        const int discount_energy = base_yield_mul(discount, energy);
+        const int threshold = upgrade_arithmetic_shift_three(base_yield_add(
+            discount_energy, discount_energy < 0 ? 7 : 0));
+        if (base_yield_sub(cost, minerals) <= threshold) {
+            if ((LockEnableMask & faction_bit) == 0 || !IsMultiplayerNet) {
+                do_upgrade(faction_id, proto_id_new, proto_id_old);
+            } else {
+                message_data(0x2411, 0, faction_id, proto_id_new,
+                             proto_id_old, 0);
+                int result = NetDaemonNet.receive();
+                if (result != 0) {
+                    do {
+                        result = NetDaemonNet.receive();
+                    } while (result != 0);
+                    return 1;
+                }
+            }
+            return 1;
+        }
+    } else if (faction_id == ConsoleGlobal.faction_id_) {
+        if (cost != 0) {
+            StringTemp[0] = '\0';
+            strcat(StringTemp, VehPrototypes[proto_id_old].veh_name);
+            strcat(StringTemp, " ");
+            strcat(StringTemp, "(");
+            say_stats_2(StringTemp, proto_id_old);
+            if (VehPrototypes[proto_id_old].ability_flags != 0) {
+                strcat(StringTemp, " ");
+                for (int i = 0; i < MaxAbilityNum; ++i) {
+                    if (has_abil(proto_id_old, 1 << (i & 0x1f)) != 0) {
+                        strcat(StringTemp, StringTable.get(static_cast<int>(
+                            reinterpret_cast<uintptr_t>(Ability[i].abbreviation))));
+                    }
+                }
+            }
+            strcat(StringTemp, ")");
+            parse_says(0, StringTemp, -1, -1);
+
+            StringTemp[0] = '\0';
+            strcat(StringTemp, VehPrototypes[proto_id_new].veh_name);
+            strcat(StringTemp, " ");
+            strcat(StringTemp, "(");
+            say_stats_2(StringTemp, proto_id_new);
+            if (VehPrototypes[proto_id_new].ability_flags != 0) {
+                strcat(StringTemp, " ");
+                for (int i = 0; i < MaxAbilityNum; ++i) {
+                    if (has_abil(proto_id_new, 1 << (i & 0x1f)) != 0) {
+                        strcat(StringTemp, StringTable.get(static_cast<int>(
+                            reinterpret_cast<uintptr_t>(Ability[i].abbreviation))));
+                    }
+                }
+            }
+            strcat(StringTemp, ")");
+            parse_says(1, StringTemp, -1, -1);
+
+            parse_num(0, cost);
+            parse_num(1, PlayersData[faction_id].energy_reserves);
+            parse_num(2, PlayersData[faction_id].proto_id_active[proto_id_old]);
+            const bool flag_four_clear =
+                (VehPrototypes[proto_id_new].flags & 4) == 0;
+            const int energy = PlayersData[faction_id].energy_reserves;
+            if (base_yield_sub(cost, energy) != 0 && energy <= cost) {
+                if ((Players[faction_id].rule_flags & RFLAG_ALIEN) == 0) {
+                    if (set_flag != 0 && (GameWarnings & 4) == 0) return 0;
+                    const int triad = Chassis[VehPrototypes[proto_id_new].chassis_id].triad;
+                    const char *picture = triad == 2 ? "air_sm.pcx"
+                        : triad == 1 ? "navun_sm.pcx" : "unit_sm.pcx";
+                    popp(ScriptPopupFile,
+                         flag_four_clear ? "UPGRADEPROTOCOST2" : "UPGRADEPROTOCOST",
+                         0, picture, 0);
+                    return 0;
+                }
+                if (set_flag != 0 && (GameWarnings & 4) == 0) return 0;
+                const int triad = Chassis[VehPrototypes[proto_id_new].chassis_id].triad;
+                const char *picture = triad == 2 ? "alair_sm.pcx"
+                    : triad == 1 ? "navun_sm.pcx" : "alunit_sm.pcx";
+                popp(ScriptPopupFile,
+                     flag_four_clear ? "UPGRADEPROTOCOST2" : "UPGRADEPROTOCOST",
+                     0, picture, 0);
+                return 0;
+            }
+
+            if (UpgradePromptAnswered == 0) {
+                const int triad = Chassis[VehPrototypes[proto_id_new].chassis_id].triad;
+                const bool alien = (Players[faction_id].rule_flags & RFLAG_ALIEN) != 0;
+                const char *picture = alien
+                    ? (triad == 2 ? "alair_sm.pcx"
+                        : triad == 1 ? "navun_sm.pcx" : "alunit_sm.pcx")
+                    : (triad == 2 ? "air_sm.pcx"
+                        : triad == 1 ? "navun_sm.pcx" : "unit_sm.pcx");
+                const char *label = flag_four_clear
+                    ? "UPGRADEPROTO2" : "UPGRADEPROTO";
+                const int result = popp(ScriptPopupFile, label, 0, picture, 0);
+                if (result == 0) return 0;
+                if (result > 1) UpgradePromptAnswered = 1;
+            }
+        }
+        if ((LockEnableMask & faction_bit) == 0 || !IsMultiplayerNet) {
+            do_upgrade(faction_id, proto_id_new, proto_id_old);
+        } else {
+            message_data(0x2411, 0, faction_id, proto_id_new,
+                         proto_id_old, 0);
+            int result = NetDaemonNet.receive();
+            if (result != 0) {
+                do {
+                    result = NetDaemonNet.receive();
+                } while (result != 0);
+                return 1;
+            }
+        }
+        return 1;
+    }
+    return 0;
+}
