@@ -1,0 +1,20 @@
+{
+  "event_id": "3591f100220b9bb9261c7be9332f407bf1d8fb76f67e1947390084f3ff4afdbe",
+  "payload": {
+    "affects": [
+      "entity-219cd0e2899423dd0c9bdcd0718b1406f9eccf7f28df77221b51278212dbc055"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "serializer-combat-counter-owners-20261003",
+    "evidence": [
+      "Canonical51E3D7/51E3DF zero both faction-indexed dwordarrays during eightStringList clearing:ESI93A7B8 advances30 until93A938, counterindex advances4, proving eight entries; serializer separately transfers each20bytes. Canonical50A494 onward and50AF13 failurebranch update opposing factions counters following combat result, also updating PlayerData combat history. Canonical527CEE reads firstcounter and527D02..D04 passes it to parse_num slot0;527D0F..D19 passes second toslot1;527D2A selectsWONLOST label at68BA98. Pinned data68BA98 contains WONLOST. Shared-reset/message adjacency doesnotestablish MessageWin semanticownership. Proposed FactionTurnCombatWins/Losses require fresh source-scope/storage publication and actualnativebindings; this discovery introduces no globals, allocation/exactdata claims, changed behavior, taskbaseline or acceptance."
+    ],
+    "hypothesis": "The serializer arrays93A96C/93A98C are faction combat win/loss summary counters, not StringList metadata or generic message arguments. Use evidence-based combat ownership/names when centrally admitting storage.",
+    "kind": "discovery"
+  },
+  "previous_event": "a916d864d1659ea19d2813a60dfa820442a0c7104b975895be05b9dd41125b39",
+  "request_id": "serializer-combat-counter-owners-20261003",
+  "schema_version": 1,
+  "sequence": 18,
+  "stream": "task:game-save-load-owner-coverage"
+}
