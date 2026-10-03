@@ -1074,6 +1074,20 @@ MEASURED inline LPSTR __cdecl get_noun(int faction_id) {
 int __cdecl setup_player(int faction_id, int conqueror, int retry);
 int __cdecl eliminate_player(int faction_id, int conqueror);
 void __cdecl buy_council_vote(int, int, int, int);
+
+// Battle-planning state and labels shared with PlanWin.
+extern int PlanBattleFactionA;
+extern int PlanBattleFactionB;
+extern char BattlePlansNoActionLabel[];
+extern char BattlePlansMapSharingLabel[];
+extern char BattlePlansInvalidPlanLabel[];
+extern char BattlePlansLabel[];
+extern char BattlePlanLabel[];
+extern char BattlePlansRegionRejectedLabel[];
+extern char BattlePlansDistanceRejectedLabel[];
+extern char BattlePlansSelectionLabel[];
+void __cdecl battle_plans(int faction_a, int faction_b);
+
 // Shared ranked technology IDs written by tech_analysis and read/reset by
 // diplomacy and Council vote purchases.
 extern int DiploScratchFAA8, DiploScratchFA18, DiploScratchFA1C, DiploScratchFA28;

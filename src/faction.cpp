@@ -41,6 +41,7 @@
 #include "console.h"  // ConsoleGlobal, which net_energy refreshes
 #include "socialwin.h"
 #include "mapwin.h"
+#include "planwin.h"
 #include "alphamovie.h"
 #include "strings.h"
 #include "xpops.h"
@@ -4534,6 +4535,35 @@ int DiploScratchF7FC;
 int DiploScratchF808;
 // RECOVERY_OBJECT: v1 0x0093FA24 ?DiploScratchFA24@@3HA
 int DiploScratchFA24;
+
+// Neutral cells written by battle_plans and read by battle_routine. The
+// pinned initial DWORDs are zero; names are source roles, not recovered
+// original COFF symbols.
+// RECOVERY_OBJECT: v1 0x0093F7BC ?PlanBattleFactionA@@3HA
+int PlanBattleFactionA;
+// RECOVERY_OBJECT: v1 0x0093F810 ?PlanBattleFactionB@@3HA
+int PlanBattleFactionB;
+
+// Mutable label storage. Pinned data proves each start and literal bytes;
+// v1 object bindings intentionally make no original-extent claim. Each unsized
+// definition below uses only minimal null-terminated source storage.
+// RECOVERY_OBJECT: v1 0x0068DD20 ?BattlePlansNoActionLabel@@3PADA
+char BattlePlansNoActionLabel[] = "NEVERBATTLEPLANS";
+// RECOVERY_OBJECT: v1 0x0068DD34 ?BattlePlansMapSharingLabel@@3PADA
+char BattlePlansMapSharingLabel[] = "MAPBATTLEPLANS";
+// RECOVERY_OBJECT: v1 0x0068DD44 ?BattlePlansInvalidPlanLabel@@3PADA
+char BattlePlansInvalidPlanLabel[] = "NOBATTLEPLANS";
+// RECOVERY_OBJECT: v1 0x0068DD54 ?BattlePlansLabel@@3PADA
+char BattlePlansLabel[] = "BATTLEPLANS";
+// RECOVERY_OBJECT: v1 0x0068DD60 ?BattlePlanLabel@@3PADA
+char BattlePlanLabel[] = "BATTLEPLAN";
+// RECOVERY_OBJECT: v1 0x0068DD6C ?BattlePlansRegionRejectedLabel@@3PADA
+char BattlePlansRegionRejectedLabel[] = "BATTLENO";
+// RECOVERY_OBJECT: v1 0x0068DD78 ?BattlePlansDistanceRejectedLabel@@3PADA
+char BattlePlansDistanceRejectedLabel[] = "BATTLENO";
+// RECOVERY_OBJECT: v1 0x0068DD84 ?BattlePlansSelectionLabel@@3PADA
+char BattlePlansSelectionLabel[] = "BATTLEYES";
+
 // RECOVERY_OBJECT: v1 0x0093FA2C ?DiploScratchFA2C@@3HA
 int DiploScratchFA2C;
 // RECOVERY_OBJECT: v1 0x0093FA38 ?DiploScratchFA38@@3HA
@@ -8678,4 +8708,203 @@ void __cdecl enemy_diplomacy(int faction_id) {
     }
 
     enemy_diplomacy_satellite_attacks(faction_id, last_territory_base_id);
+}
+
+static int battle_plans_selected_region_distance_result(
+    int faction_id, const Base &selected_base, const Base &plan_base) {
+    const int selected_region =
+        map_loc(selected_base.x, selected_base.y)->region;
+    const PlayerData &planner = PlayersData[faction_id];
+
+    if (selected_region >= MaxRegionLandNum
+        || planner.region_total_bases[selected_region] == 0) {
+        int region;
+        for (region = 0; region < MaxRegionLandNum; ++region) {
+            if (region != 0 && region != MaxRegionLandNum - 1
+                && planner.region_total_bases[region] != 0
+                && planner.region_base_plan[region] == PLAN_NAVAL_TRANSPORT) {
+                return 1;
+            }
+        }
+    }
+
+    base_find(selected_base.x, selected_base.y, faction_id);
+    const int selected_distance = BaseFindDist;
+    base_find(plan_base.x, plan_base.y, faction_id);
+    if (BaseFindDist < selected_distance * 2) {
+        return 2;
+    }
+    return 0;
+}
+
+static void battle_plans_apply_selected_target(int faction_id,
+                                                  int selected_base_id) {
+    PlayerData &planner = PlayersData[faction_id];
+    const Base &selected_base = Bases[selected_base_id];
+    planner.base_id_atk_target = selected_base_id;
+    if (planner.x_target < 0) {
+        return;
+    }
+
+    const Map &planned_tile = *map_loc(planner.x_target, planner.y_target);
+    const Map &selected_tile = *map_loc(selected_base.x, selected_base.y);
+    if (planned_tile.climate == selected_tile.climate) {
+        return;
+    }
+
+    int vehicle_id;
+    for (vehicle_id = 0; vehicle_id < VehCurrentCount; ++vehicle_id) {
+        Veh &vehicle = Vehs[vehicle_id];
+        if (vehicle.faction_id == faction_id
+            && (vehicle.state & VSTATE_UNK_40000) != 0) {
+            vehicle.state &= ~(VSTATE_UNK_20000 | VSTATE_UNK_40000);
+        }
+    }
+    planner.y_target = -1;
+    planner.x_target = -1;
+    planner.unk_72 = 0;
+    planner.unk_71 = 0;
+}
+
+// ORIGINAL: 0x0054B1C0 ?battle_plans@@YAXHH@Z 0x0054B1C0-0x0054BEBE;0x0065F662-0x0065F8FC
+// RECOVERY_BINDING: v1 {"evidence": ["image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x0054B1C0:0054B1C0-0054BEBE,0065F662-0065F8FC", "source:src/planwin.h:PlanWin and genuine MapWin/GraphicWin interfaces", "source:src/faction.h:PlayerData, battle faction state and label declarations", "recovery/tasks/planwin-battle-owner-coverage.json"], "reason": "Use the pinned native body with the real typed owner and preserve the seed's original identity and history."}
+// TRIED: same Popup-teardown-cascade shape as PickWin (mechanical EBP(x) buffer transcription, reused from that pattern). The post-BasePop::exec block (0x54B978-0x54BA25, writing g_0096cdd0/cdd4/da54/da58) is OMITTED - falls straight to the close@PlanWin cascade instead of computing those derived fields, since the base_find/tile-ownership arithmetic there wasn't independently re-verified in the time available. sim 0.18-0.61 across flag sets.
+void __cdecl battle_plans(int faction_a, int faction_b) {
+    Popup popup;
+
+    PopupDialogFactionID = faction_b;
+    PlanBattleFactionA = faction_a;
+    PlanBattleFactionB = faction_b;
+
+    const int plan_a = suggest_plan(faction_a, faction_b);
+    const int plan_b = suggest_plan(faction_b, faction_a);
+    const int attack_a = attack_from(plan_a, faction_a);
+    const int attack_b = attack_from(plan_b, faction_b);
+
+    if ((PlayersData[faction_a].diplo_treaties[faction_b] & 1u) == 0) {
+        if ((PlayersData[faction_b].diplo_treaties[faction_a] & 0x8020u) != 0
+            || DiploScratchFA2C != 0 || DiploFriction > 0x11
+            || DiploScratchFA60 != 0) {
+            x_pops_short(BattlePlansNoActionLabel, 0x100000,
+                         FactionDiplomacyPortraits[faction_b], pop_wait);
+            return;
+        }
+
+        if (DiploScratchFA48 == 0
+            && x_pops_short(BattlePlansMapSharingLabel, 0x100000,
+                            FactionDiplomacyPortraits[faction_b], pop_wait)
+                   == 0) {
+            return;
+        }
+
+        if (IsMultiplayerNet == 0) {
+            trade_maps(faction_a, faction_b);
+        } else {
+            log_say(DiploLabelSendingTRADEMAPS, faction_a, faction_b, 0);
+            message_data(0x2448, 0, faction_a, faction_b, 0, 0);
+            NetDaemonNet.await_diplo(0x448);
+        }
+    }
+
+    // The native gate checks both suggested plans, not the attack_from result.
+    if (plan_a < 0 || plan_b < 0) {
+        x_pops_short(BattlePlansInvalidPlanLabel, 0x100000,
+                     FactionDiplomacyPortraits[faction_b], pop_wait);
+        return;
+    }
+
+    PlanWindow.init(0);
+    PlanWindow.find_view(Bases[plan_a].x, Bases[plan_a].y,
+                         Bases[plan_b].x, Bases[plan_b].y,
+                         Bases[attack_a].x, Bases[attack_a].y,
+                         Bases[attack_b].x, Bases[attack_b].y);
+    PlanWindow.back_redraw();
+    PlanWindow.add_line(attack_a, plan_a,
+                        InfoFactionTextColors[faction_a]);
+    PlanWindow.add_line(attack_b, plan_b,
+                        InfoFactionTextColors[faction_b]);
+    PlanWindow.show(0);
+
+    PlayersData[faction_b].base_id_atk_target = plan_b;
+    parse_says(0, Bases[plan_b].name_string, -1, -1);
+    parse_says(1, Bases[plan_a].name_string, -1, -1);
+
+    if (x_pops_short(BattlePlansLabel, 0x100000,
+                     FactionDiplomacyPortraits[faction_a], pop_wait) != 0) {
+        PluralityDefault = 0;
+        GenderDefault = Players[faction_a].is_leader_female;
+        parse_says(0, Players[faction_a].title_leader, -1, -1);
+        GenderDefault = Players[faction_a].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(1, Players[faction_a].name_leader, -1, -1);
+
+        popup.start(PopupStartCaption, BattlePlanLabel, -1, 0,
+                    0x100042, 0);
+        popup.dialogs().sprite(FactionDiplomacyPortraits[faction_a], 0,
+                               faction_b);
+
+        int first_candidate_added = 0;
+        int base_id;
+        for (base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+            Base &candidate = Bases[base_id];
+            const int owner = candidate.faction_id_current;
+            if (owner != faction_a && owner != faction_b
+                && (PlayersData[faction_a].diplo_treaties[owner] & 0x10u) != 0
+                && (PlayersData[owner].diplo_treaties[faction_b] & 0x10u) != 0
+                && ((candidate.visibility & (1u << faction_a)) != 0
+                    || (candidate.visibility & (1u << faction_b)) != 0)) {
+                popup.dialogs().item(candidate.name_string, base_id);
+
+                if (first_candidate_added == 0) {
+                    const int candidate_attack_a =
+                        attack_from(base_id, PlanBattleFactionA);
+                    const int candidate_attack_b =
+                        attack_from(base_id, PlanBattleFactionB);
+                    PlanWindow.clear_lines();
+                    PlanWindow.add_line(candidate_attack_a, base_id,
+                        InfoFactionTextColors[PlanBattleFactionA]);
+                    PlanWindow.add_line(candidate_attack_b, base_id,
+                        InfoFactionTextColors[PlanBattleFactionB]);
+                    PlanWindow.on_redraw();
+                    first_candidate_added = 1;
+                }
+            }
+        }
+
+        if (first_candidate_added != 0) {
+            const int selected_base_id = popup.exec(0, pop_wait);
+            if (selected_base_id >= 0) {
+                const Base &selected_base = Bases[selected_base_id];
+                parse_says(0, selected_base.name_string, -1, -1);
+
+                if (selected_base.faction_id_current != faction_b
+                    && (selected_base.visibility
+                        & (1u << faction_b)) == 0) {
+                    spot_loc(selected_base.x, selected_base.y, faction_b);
+                }
+
+                const int gate_result =
+                    battle_plans_selected_region_distance_result(
+                        faction_b, selected_base, Bases[plan_a]);
+                if (gate_result == 1) {
+                    x_pops_short(BattlePlansRegionRejectedLabel, 0x100000,
+                                 FactionDiplomacyPortraits[faction_b],
+                                 pop_wait);
+                } else if (gate_result == 2) {
+                    x_pops_short(BattlePlansDistanceRejectedLabel,
+                                 0x100000,
+                                 FactionDiplomacyPortraits[faction_b],
+                                 pop_wait);
+                } else {
+                    x_pops_short(BattlePlansSelectionLabel, 0x100000,
+                                 FactionDiplomacyPortraits[faction_b],
+                                 pop_wait);
+                    battle_plans_apply_selected_target(faction_b,
+                                                          selected_base_id);
+                }
+            }
+        }
+    }
+
+    PlanWindow.close();
 }

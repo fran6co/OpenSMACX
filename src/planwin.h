@@ -100,6 +100,7 @@ class PlanWin : public MapWin {
   void clear_lines();
   void add_line(int x1, int y1, int x2, int y2, int color);
   void add_line(int base_id1, int base_id2, int color);
+  void draw_line_base(int base_id1, int base_id2, int color);
   void draw_line(int tile_x1, int tile_y1, int tile_x2, int tile_y2,
                  int color);
   void back_redraw();
@@ -143,3 +144,6 @@ static_assert(sizeof(PlanWin) == 0x22A64, "PlanWin layout must match terranx.exe
 // The CRT constructs the complete PlanWin front at 0x00834D70; its
 // GraphicWin virtual base then begins at 0x00856DC0.
 extern PlanWin PlanWindow;
+
+void __cdecl battle_routine(int base_id);
+extern "C" void __cdecl sub_54dc90(int base_id);

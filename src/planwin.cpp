@@ -22,6 +22,10 @@
 // RECOVERY_GENERATED: v1 vtable 0x0066D2AC ? ??_7PlanWin@@6BWin@@@ 0x0048BCD0
 #include "original_seam.h"
 #include "planwin.h"
+#include "faction.h"
+#include "console.h"
+#include "veh.h"
+#include "infowin.h"
 #include "mapwin.h"
 #include "map.h"
 #include "base.h"
@@ -275,6 +279,165 @@ Purpose: Clear the plan window's line count.
 Return Value: n/a
 Status: Complete
 */
+
+
+// ORIGINAL: 0x0048BAB0 ?draw_line_base@PlanWin@@QAEXHHH@Z 0x0048BAB0-0x0048BB72
+// RECOVERY_BINDING: v1 {"evidence": ["image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x0048BAB0:0048BAB0-0048BB72", "source:src/planwin.h:PlanWin and genuine MapWin/GraphicWin interfaces", "source:src/faction.h:PlayerData, battle faction state and label declarations", "recovery/tasks/planwin-battle-owner-coverage.json"], "reason": "Use the pinned native body with the real typed owner and preserve the seed's original identity and history."}
+// TRIED: extern short table array for the runtime-indexed 0x97d040 lookup (lever: address does index arithmetic); vbase-adjustor read from vtbl+4 for the Buffer receiver. MISMATCH from #14: the a1*0x9a index multiply lowers via a different lea/shl chain than the original's
+void PlanWin::draw_line_base(int base_id1, int base_id2, int color) {
+    const Base &first = Bases[base_id1];
+    const Base &second = Bases[base_id2];
+    int pixel_x1;
+    int pixel_y1;
+    int pixel_x2;
+    int pixel_y2;
+    tile_to_pixel(first.x, first.y, &pixel_x1, &pixel_y1);
+    tile_to_pixel(second.x, second.y, &pixel_x2, &pixel_y2);
+
+    pixel_x1 += field_1DDBC_;
+    pixel_y1 += field_1DDC0_;
+    pixel_x2 += field_1DDBC_;
+    pixel_y2 += field_1DDC0_;
+
+    GraphicWin *const graphics = static_cast<GraphicWin *>(this);
+    Buffer *const drawing_buffer = static_cast<Buffer *>(graphics);
+    drawing_buffer->line(pixel_x1, pixel_y1, pixel_x2, pixel_y2, 0, color,
+                         4, 4, PlanLineCounter);
+}
+
+// ORIGINAL: 0x0054B140 ?battle_routine@@YAXH@Z 0x0054B140-0x0054B1B6 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x0054B140:0054B140-0054B1B6", "source:src/planwin.h:PlanWin and genuine MapWin/GraphicWin interfaces", "source:src/faction.h:PlayerData, battle faction state and label declarations", "recovery/tasks/planwin-battle-owner-coverage.json"], "reason": "Use the pinned native body with the real typed owner and preserve the seed's original identity and history."}
+void __cdecl battle_routine(int base_id) {
+    const int first_attack = attack_from(base_id, PlanBattleFactionA);
+    const int second_attack = attack_from(base_id, PlanBattleFactionB);
+
+    PlanWindow.clear_lines();
+    PlanWindow.add_line(first_attack, base_id,
+                        InfoFactionTextColors[PlanBattleFactionA]);
+    PlanWindow.add_line(second_attack, base_id,
+                        InfoFactionTextColors[PlanBattleFactionB]);
+    PlanWindow.on_redraw();
+}
+
+// ORIGINAL: 0x0054DC90 sub_54dc90 0x0054DC90-0x0054DCE4 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x0054DC90:0054DC90-0054DCE4", "source:src/planwin.h:PlanWin and genuine MapWin/GraphicWin interfaces", "source:src/faction.h:PlayerData, battle faction state and label declarations", "recovery/tasks/planwin-battle-owner-coverage.json"], "reason": "Use the pinned native body with the real typed owner and preserve the seed's original identity and history."}
+extern "C" void __cdecl sub_54dc90(int base_id) {
+    const Base &base = Bases[base_id];
+    PlanWindow.clear_lines();
+    PlanWindow.monocenter(base.x, base.y, 0);
+    PlanWindow.add_line(base_id, base_id, 0);
+    PlanWindow.on_redraw();
+}
+
+static bool planwin_base_known_to_faction(const Base &base, int faction) {
+    if (GameState & STATE_OMNISCIENT_VIEW) return true;
+    if ((PlayersData[faction].flags & PFLAG_MAP_REVEALED) == 0) {
+        const int tile_index = base.y * static_cast<int>(MapLongitude)
+                             + base.x / 2;
+        if ((MapTiles[tile_index].visibility & (1U << (faction & 31))) == 0)
+            return false;
+    }
+    return base.faction_id_current == faction
+        || (base.visibility & (1U << (faction & 31))) != 0;
+}
+
+static bool planwin_tile_has_known_base(int x, int y, int faction) {
+    int base_index;
+    for (base_index = 0; base_index < BaseCurrentCount; ++base_index) {
+        const Base &base = Bases[base_index];
+        if (planwin_base_known_to_faction(base, faction)
+            && base.x == x && base.y == y) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// ORIGINAL: 0x0048AF30 ?on_redraw@PlanWin@@QAEXXZ 0x0048AF30-0x0048B3B7
+// RECOVERY_BINDING: v1 {"evidence": ["image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x0048AF30:0048AF30-0048B3B7", "source:src/planwin.h:PlanWin and genuine MapWin/GraphicWin interfaces", "source:src/faction.h:PlayerData, battle faction state and label declarations", "recovery/tasks/planwin-battle-owner-coverage.json"], "reason": "Use the pinned native body with the real typed owner and preserve the seed's original identity and history."}
+// symbol    ?on_redraw@PlanWin@@UAEXXZ
+void PlanWin::on_redraw() {
+    if (field_21A68_ == 0) return;
+
+    // Native entry receives the GraphicWin virtual-base address. This true
+    // override relies on the measured VC6 member-reference fold; it performs
+    // no explicit receiver arithmetic.
+    GraphicWin *const surface = static_cast<GraphicWin *>(this);
+    Buffer *const surface_buffer = static_cast<Buffer *>(surface);
+    buffer_.copy(surface_buffer, 0, 0, surface->dib_.bmiHeader.biWidth,
+                 -surface->dib_.bmiHeader.biHeight);
+
+    const int faction = ConsoleGlobal.faction_id_;
+    int base_draw_index;
+    for (base_draw_index = 0; base_draw_index < BaseCurrentCount;
+         ++base_draw_index) {
+        const Base &base = Bases[base_draw_index];
+        if (!planwin_base_known_to_faction(base, faction)) continue;
+
+        bool intersects_plan_line = false;
+        if (field_21A6C_ != 0) {
+            int base_line_index;
+            for (base_line_index = 0; base_line_index < line_count_;
+                 ++base_line_index) {
+                const PlanLineRecord &record = line_records_[base_line_index];
+                if ((base.x == record.x1 && base.y == record.y1)
+                    || (base.x == record.x2 && base.y == record.y2)) {
+                    intersects_plan_line = true;
+                }
+            }
+        }
+
+        int pixel_x, pixel_y;
+        tile_to_pixel(base.x, base.y, &pixel_x, &pixel_y);
+        const int flags = 0x100
+            | ((field_21A6C_ != 0 && intersects_plan_line) ? 0x200 : 0);
+        base_draw(surface_buffer, base_draw_index, pixel_x,
+                  pixel_y - field_1DDC0_, field_1DD98_, flags);
+    }
+
+    int vehicle_line_index;
+    for (vehicle_line_index = 0; vehicle_line_index < line_count_;
+         ++vehicle_line_index) {
+        const PlanLineRecord &record = line_records_[vehicle_line_index];
+        const int endpoints[2][2] = {
+            {record.x2, record.y2}, {record.x1, record.y1}
+        };
+        int endpoint_index;
+        for (endpoint_index = 0; endpoint_index < 2; ++endpoint_index) {
+            const int endpoint_x = endpoints[endpoint_index][0];
+            const int endpoint_y = endpoints[endpoint_index][1];
+            if (planwin_tile_has_known_base(endpoint_x, endpoint_y, faction))
+                continue;
+
+            int pixel_x, pixel_y;
+            tile_to_pixel(endpoint_x, endpoint_y, &pixel_x, &pixel_y);
+            pixel_y -= field_1DDC0_;
+            const int vehicle_id = veh_fake(2, faction);
+            const int flags = 0x100 | (field_21A6C_ ? 0x200 : 0);
+            veh_draw(surface_buffer, vehicle_id, pixel_x, pixel_y,
+                     field_1DD98_, flags, 1);
+        }
+    }
+
+    int pattern_line_index;
+    for (pattern_line_index = 0; pattern_line_index < line_count_;
+         ++pattern_line_index) {
+        const PlanLineRecord &record = line_records_[pattern_line_index];
+        int x1, y1, x2, y2;
+        tile_to_pixel(record.x1, record.y1, &x1, &y1);
+        tile_to_pixel(record.x2, record.y2, &x2, &y2);
+        x1 += field_1DDBC_;
+        y1 += field_1DDC0_;
+        x2 += field_1DDBC_;
+        y2 += field_1DDC0_;
+        surface_buffer->line(x1, y1, x2, y2, 0,
+                             line_colors_[pattern_line_index],
+                             4, 4, PlanLineCounter);
+    }
+
+    // Native indirect call is Win slot 63, named on_update() in GraphicWin.
+    surface->on_update();
+}
 
 // ORIGINAL: 0x0048AE40 ?add_line@PlanWin@@QAEXHHHHH@Z 0x0048AE40-0x0048AE90 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["The original accepts four signed coordinates and one color, storing the coordinates at +0x2200C + count*0x10 and the color at +0x21FFC + count*4.", "PlanWin's line_count_, line_colors_, and line_records_ declarations occupy those measured offsets and preserve the 0x50-byte derived tail."], "reason": "Home the coordinate-based plan-line insertion through typed PlanWin line storage."}

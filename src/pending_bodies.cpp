@@ -525,10 +525,6 @@ void MapWin::gen_overlays(int x, int y) {
     PENDING_BODY(0x004688E0, pending)(this, nullptr, x, y);
 }
 
-void PlanWin::on_redraw() {  // 0x0048AF30
-    typedef void(__fastcall *pending)(PlanWin *, void *);
-    PENDING_BODY(0x0048AF30, pending)(this, nullptr);
-}
 
 
 
