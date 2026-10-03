@@ -54,6 +54,16 @@ measurement. The installed `recover check-data` computes compiler extents, initi
 bytes and relocation-target agreement; missing bounds stay unknown. The active
 workflow explains history/review preservation and lifetime limitations.
 
+`match_recovery.object_writer.write_object_bytes` is the pure, add-only writer
+for these object bindings. Supply the complete current `parse_objects` snapshot
+and reviewed `ObjectBinding` additions; their one-based lines anchor insertion
+before current source lines (or one past the last line). It preserves original
+source bytes, checks owner/image identity and conflicts, and reparses the result.
+It refuses unsupported lexical forms and insertion inside block comments.
+It performs no file IO or publication and does not infer symbols, allocation
+bounds, initializers, acceptance or recovery permission. Compiler evidence and
+coordinator-authorized publication remain separate requirements.
+
 ## TU-private literal bindings
 
 `// RECOVERY_LITERAL: v1 <start> <exclusive-end> <emitted-symbol> <evidence-address>`
