@@ -1,0 +1,42 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "0de05de6e649fb176b2e8fc6f1212462b5e19c63",
+  "editable_files": [
+    "src/game.cpp",
+    "src/game.h",
+    "src/veh.cpp",
+    "src/veh.h",
+    "src/unrecovered/005b0a30.cpp",
+    "src/unrecovered/0057cfa0.cpp",
+    "src/unrecovered/005bed20.cpp",
+    "recovery/tests/test_game_owner_batch_behavior.py"
+  ],
+  "evidence": [
+    "Pinned full original spans: scenario_setup5B0A30..5B0D69, study_artifact57CFA0..57D1E8, do_unity_crash5BED20..5BEFDF. These three seeds have no byte/semantic claims; retain mappings and useful seed lessons through native writer.",
+    "Artifact and Unity immutable proposals compile in actual veh/game owners under both configured VC6 recipes;158 protected diagnostics unchanged. Private compiler results do not establish linked preservation or game acceptance.",
+    "Scenario original5B0B0F/5B0B89/5B0BC1 load68FAF0 MapLongitude as tile-row stride;5B0C8B compares wrapped dx against the same cached half-width, then subtracts from949870 MapLongitudeBounds. Correct the prior proposal and preserve odd-y x increment, retry limits and callbacks.",
+    "Artifact universal translator is SecretProject member+50 at9A6564; faction flags/ranking, Base state and vehicle destruction use existing genuine owners. Unity bonus threshold is existing TurnCurrentNum9A64D4; bit2 belongs to Map+0C. No fixed-address aliases, new storage, placeholders or deliberate bug fixes.",
+    "Coordinator-reviewed integration requires readable actual-source GCC/Clang behavior/damage controls, native scoped diagnostic continuity, application build/link, claim identities and references. Preserve other retained task baselines/workspaces. No byte claim, full gate or automatic/full-game acceptance granted."
+  ],
+  "intent": "Recover complete scenario vehicle placement, artifact technology study and Unity event processing in genuine game/vehicle owners, preserving original branches and data ownership; delete only superseded seeds after verified build/link and controls.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5966384,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5754784,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6024480,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "scenario-artifact-unity-owner-coverage"
+}
