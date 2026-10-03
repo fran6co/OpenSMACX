@@ -1,0 +1,58 @@
+{
+  "event_id": "1af9da67241aa4088b45595cdd9ba87eb24f827042074f51434f3378e19cf56b",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/gameplay_picker_supply/supply_options.cpp",
+      "recovery/tests/gameplay_picker_supply/veh_pick.cpp",
+      "recovery/tests/test_gameplay_picker_supply.py",
+      "src/basepop.cpp",
+      "src/basepop.h",
+      "src/console.cpp",
+      "src/console.h",
+      "src/pending_bodies.cpp",
+      "src/unrecovered/0048d0d0.cpp",
+      "src/unrecovered/00593a00.cpp",
+      "src/veh.h"
+    ],
+    "evidence": [
+      "Coordinator admits complete veh_pick and supply_options owner recovery with pinned full hot/cold spans, typed Popup/BasePop/Sprite/NetDaemon/Base/Veh services and source-owned callback storage. Current console.cpp callers establish integration host; shared popup ownership closure remains under its original task baseline, never reset.",
+      "Pinned picker writes a cdecl int(int) callback into BasePop+3160, calculate_dimensions603800 transfers it to SpriteBox item-click+68, and native on_left_down611150 calls it. Current native CodeView independently shows Dialogs SpriteBox base+70 and field+68 = Dialogs+D8, equal ListBox field2C plus2B DWORDs. Authorize typed BasePop member/setters and direct typed SpriteBox assignment, replacing the corresponding integer-slot spelling and clear, without changing layout or behavior.",
+      "Retain all source claims and useful findings. Actual-body callback/lifetime damage controls, native matching/layout/symbol observations, outside-function diagnostics, application build/link, claim continuity and references are required for manual review/integration; retire seeds only after complete owner verification. No new exact claims, demotions, gate weakening, full linked preservation or game acceptance.",
+      "Native task context currently refuses malformed historical Voice member annotation from before its scalar-offset correction; do not reset baselines or hide historical obligations. This explicit coordinator scope journal is not automatic acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4772048,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5847552,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6293600,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6295296,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6305792,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "e5e0b32adc140897a867ac38be8624ff4af4dfd5939275da2984c750b144f5c8",
+  "request_id": "picker-supply-typed-callback-closure-20261003",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:popup-vehicle-owner-closure"
+}
