@@ -491,3 +491,6 @@ void __cdecl alien_start();
 void __cdecl alien_fauna();
 void __cdecl turn_upkeep();
 void __cdecl random_events(int mode);
+
+// Source-owned end-turn aircraft attrition.
+void __cdecl mash_planes();

@@ -3415,6 +3415,157 @@ int __cdecl action_airdrop(int veh_id, int x, int y, int mode) {
     return 1;
 }
 
+// ORIGINAL: 0x0057A050 ?monolith@@YAXH@Z 0x0057A050-0x0057A659
+// RECOVERY_BINDING: v1 {"evidence": ["git:8b0da75894c71ec098213e7e12cc29fb1dfc01f3:src/unrecovered/0057a050.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tasks/game-logic-seed-owner-coverage.json; complete typed owner migration, preserve original spans and seed lessons. Literal content provenance does not assert original allocation or game acceptance."], "reason": "Native monolith lifecycle: exclude prototype IDs16-18, use Veh.state monolith-upgraded bit0x100 and per-faction Map.bit_visible rows. Preserve live console/prototype reads after callbacks and clamp stored morale to6 independently of morale helper output."}
+// TRIED: faithful port of Ghidra's structure using real Veh field offsets (x/y/state/proto_id/faction_id/dmg_incurred/order/waypoint/morale from src/veh.h) as typed globals; matches through instr #10 (address calc). Diverges at #11: original re-reads proto_id with plain 16-bit `mov ax` at the first use and a separate `movsx` at each later use, never caching the sign-extended value; my single `short sVar1` local gets sign-extended once at declaration instead. Not chased further.
+void __cdecl monolith(int veh_id) {
+    Veh &veh = Vehs[veh_id];
+    const int x = veh.x;
+    const int y = veh.y;
+    const int faction = veh.faction_id;
+    const int initial_proto_id = veh.proto_id;
+    if (initial_proto_id == 0x10 || initial_proto_id == 0x11 || initial_proto_id == 0x12) return;
+    const int weapon_id = VehPrototypes[initial_proto_id].weapon_id;
+
+    if (faction == ConsoleGlobal.faction_id_ && IsMultiplayerNet == 0) {
+        if (veh.order == 0x18 && veh.waypoint_x[0] == x && veh.waypoint_y[0] == y)
+            veh.order = 0;
+        if (veh.order != 0) return;
+    }
+
+    const bool weapon_has_offense = Weapon[weapon_id].offense_rating != 0;
+    if (!weapon_has_offense) {
+        if (veh.dmg_incurred == 0) {
+            if ((veh.state & VSTATE_MONOLITH_UPGRADED) == 0) {
+                veh.state |= VSTATE_MONOLITH_UPGRADED;
+                if (faction == ConsoleGlobal.faction_id_ &&
+                    (GameMorePreferences & 0x800u) == 0 && IsMultiplayerNet == 0) {
+                    NetMsgPrimary.pop("SEEMONOLITH", -5000, 0, "monolith_sm.pcx");
+                    GameState |= 4u;
+                }
+            }
+        } else {
+            veh.dmg_incurred = 0;
+            veh_skip(veh_id);
+            draw_tile(x, y, 2);
+            if (faction == ConsoleGlobal.faction_id_) {
+                NetMsgPrimary.pop("MONOLITHHEAL", 5000, 0, "monolith_sm.pcx");
+                GameState |= 4u;
+            }
+        }
+        return;
+    }
+
+    for (int site_faction = 1; site_faction < 8; ++site_faction)
+        del_site(site_faction, 0, x, y, 0);
+
+    if ((factions_status_byte(0) &
+         static_cast<uint8_t>(1u << (static_cast<unsigned>(faction) & 31u))) == 0) {
+        bool add_monolith_sites = (veh.state & VSTATE_MONOLITH_UPGRADED) != 0;
+        if (!add_monolith_sites) {
+            add_monolith_sites = morale_veh(veh_id, 1, 0) > 5;
+            if (!add_monolith_sites) add_monolith_sites = veh.morale > 5;
+            if (!add_monolith_sites) {
+                // Native reloads Veh.proto_id after the preceding helper
+                // calls before this Weapon lookup (0x57A35B..0x57A37A).
+                const int live_proto_id = Vehs[veh_id].proto_id;
+                const int live_weapon_id = VehPrototypes[live_proto_id].weapon_id;
+                add_monolith_sites = Weapon[live_weapon_id].offense_rating == 0;
+            }
+        }
+        if (add_monolith_sites) {
+            if (veh.dmg_incurred != 0) {
+                veh.dmg_incurred = 0;
+                veh_skip(veh_id);
+                draw_tile(x, y, 2);
+            }
+            for (int site_id = 1; site_id < 8; ++site_id)
+                if ((map_loc(x, y)->bit_visible[site_id - 1] & 0x2000u) != 0)
+                    add_site(site_id, 0, 2, x, y);
+            return;
+        }
+    } else if (IsMultiplayerNet == 0 && (GameMorePreferences & 0x800u) == 0) {
+        g_FX.play(6);
+        const int choice = popp(*ClimatePopupTitle, "MONOLITH", 0,
+                                "monolith_sm.pcx", 0);
+        g_FX.stop(6);
+        if (choice == 2) {
+            GameMorePreferences |= 0x800u;
+            prefs_save(0);
+        } else if (choice == 0) {
+            for (int site_id = 1; site_id < 8; ++site_id)
+                if ((map_loc(x, y)->bit_visible[site_id - 1] & 0x2000u) != 0)
+                    add_site(site_id, 0, 2, x, y);
+            return;
+        }
+    }
+
+    if (veh.dmg_incurred != 0) {
+        veh.dmg_incurred = 0;
+        veh_skip(veh_id);
+        draw_tile(x, y, 2);
+        if ((veh.state & VSTATE_MONOLITH_UPGRADED) != 0 ||
+            morale_veh(veh_id, 1, 0) > 5) {
+            if (faction != ConsoleGlobal.faction_id_) return;
+            if ((GameMorePreferences & 0x800u) == 0)
+                NetMsgPrimary.pop("MONOLITHHEAL", -5000, 0, "monolith_sm.pcx");
+            else
+                NetMsgPrimary.pop("MONOLITHHEAL", 5000, 0, "monolith_sm.pcx");
+            GameState |= 4u;
+            return;
+        }
+    }
+
+    if ((veh.state & VSTATE_MONOLITH_UPGRADED) == 0 &&
+        morale_veh(veh_id, 1, 0) < 6) {
+        unsigned int random_result = static_cast<unsigned int>(rand()) & 0x8000001Fu;
+        if ((random_result & 0x80000000u) != 0)
+            random_result = ((random_result - 1u) | 0xFFFFFFE0u) + 1u;
+        if ((map_loc(x, y)->bit & 0x02000000u) == 0 || TurnCurrentNum < 100) {
+            random_result = 1;
+            bit_set(x, y, 0x02000000, 1);
+        }
+        veh.state |= VSTATE_MONOLITH_UPGRADED;
+        unsigned int next_morale = static_cast<unsigned int>(veh.morale) + 1u;
+        if (next_morale > 6u) next_morale = 6u;
+        veh.morale = static_cast<uint8_t>(next_morale);
+        veh_skip(veh_id);
+        StringTemp[0] = '\0';
+        say_morale(veh_id, 0);
+        parse_says(0, StringTemp, -1, -1);
+        CharLowerA(ParseStrBuffer[0].str);
+        if (random_result == 0) {
+            bit_set(x, y, 0x2000, 0);
+            synch_bit(x, y, faction);
+        } else {
+            for (int site_id = 1; site_id < 8; ++site_id)
+                if ((map_loc(x, y)->bit_visible[site_id - 1] & 0x2000u) != 0)
+                    add_site(site_id, 0, 2, x, y);
+        }
+        draw_tile(x, y, 2);
+        if (faction == ConsoleGlobal.faction_id_) {
+            g_FX.play(0x22);
+            StringTemp[0] = '\0';
+            strcat(StringTemp, "GOODY1");
+            char decimal[0x50];
+            _itoa(random_result != 0, decimal, 10);
+            strcat(StringTemp, decimal);
+            if ((GameMorePreferences & 0x800u) == 0)
+                NetMsgPrimary.pop(StringTemp, -5000, 0, "monolith_sm.pcx");
+            else
+                NetMsgPrimary.pop(StringTemp, 5000, 0, "monolith_sm.pcx");
+            GameState |= 4u;
+        }
+    } else if (faction == ConsoleGlobal.faction_id_) {
+        if ((GameMorePreferences & 0x800u) != 0) {
+            NetMsgPrimary.pop("MONOLITHNO", 5000, 0, "monolith_sm.pcx");
+            return;
+        }
+        NetMsgPrimary.pop("MONOLITHNO", -5000, 0, "monolith_sm.pcx");
+    }
+}
+
+
 // ORIGINAL: 0x00564B90 ?assemble_passengers@@YAXHHH@Z 0x00564B90-0x00564D90
 // RECOVERY_BINDING: v1 {"evidence": ["git:99d6e72bcd5ae3be3566222736528cb0dc57935c:src/recovered/units/00564b90.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tasks/game-logic-seed-owner-coverage.json; preserve original extents and historical seed lessons. Ordinary owned literals have pinned content provenance, not exact original data-allocation claims."], "reason": "Recover full passenger-goal orchestration with real region_total_bases and unk_77 arrays, vendetta/contiguity tests and colony/defend/attack/scout goal order."}
 void __cdecl assemble_passengers(int base_id, int mode, int priority) {

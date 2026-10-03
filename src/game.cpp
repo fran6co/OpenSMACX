@@ -6846,3 +6846,82 @@ initialize_factions:
 void __cdecl random_events(int mode) {
     // BODY GOES HERE.
 }
+
+// ORIGINAL: 0x00529C00 ?mash_planes@@YAXXZ 0x00529C00-0x00529E67
+// RECOVERY_BINDING: v1 {"evidence": ["git:8b0da75894c71ec098213e7e12cc29fb1dfc01f3:src/recovered/units/00529c00.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tasks/game-logic-seed-owner-coverage.json; complete typed owner migration, preserve original spans and seed lessons. Literal content provenance does not assert original allocation or game acceptance."], "reason": "Native aircraft attrition: vehicle movement spent at+0x28 controls eligibility; damage at+0x10 accumulates reactor-derived attrition; terraforming turns at+0x25 clears on survival. Prototype+0x2A is plan, chassis+0x4A is range; preserve post-focus/boom prototype reads."}
+void __cdecl mash_planes() {
+    for (int veh_id = VehCurrentCount - 1; veh_id >= 0; --veh_id) {
+        Veh &veh = Vehs[veh_id];
+        const int initial_proto_id = veh.proto_id;
+        const int initial_chassis_id = VehPrototypes[initial_proto_id].chassis_id;
+        const RulesChassis &initial_chassis = Chassis[initial_chassis_id];
+        if (initial_chassis.triad != TRIAD_AIR || initial_chassis.range == 0) {
+            continue;
+        }
+
+        const int remaining_speed = speed(veh_id, false) - veh.moves_expended;
+        if (remaining_speed <= 0) {
+            continue;
+        }
+
+        Map *const tile = map_loc(veh.x, veh.y);
+        if ((tile->bit & BIT_BASE_IN_TILE) != 0 && (tile->val2 & 0x0F) < 8) {
+            continue;
+        }
+        if ((tile->bit & 0x00040000u) != 0 ||
+            stack_check(veh_id, 6, 0x80, -1, -1) != 0) {
+            continue;
+        }
+
+        const int viewer = ConsoleGlobal.faction_id_;
+        bool focused = false;
+        if (veh.faction_id == viewer ||
+            (veh.visibility & static_cast<uint8_t>(1u << (viewer & 31))) != 0) {
+            ConsoleGlobal.focus(veh.x, veh.y, veh.faction_id);
+            focused = true;
+        }
+        veh.state |= 0x4;
+        if (focused) {
+            boom(veh.x, veh.y, 0x80);
+        }
+
+        // Native 0x529D43 begins a fresh prototype lookup after both possible
+        // callbacks. They may replace the selected vehicle's design.
+        const int growth_proto_id = Vehs[veh_id].proto_id;
+        const int growth_chassis_id = VehPrototypes[growth_proto_id].chassis_id;
+        const RulesChassis &growth_chassis = Chassis[growth_chassis_id];
+        uint8_t point_delta;
+        if (growth_chassis.range == 1 && growth_chassis_id == 6) {
+            point_delta = static_cast<uint8_t>(
+                VehPrototypes[growth_proto_id].reactor_id * 3u);
+        } else {
+            int target = VehPrototypes[growth_proto_id].plan == PLAN_ALIEN_ARTIFACT
+                ? 1 : static_cast<int>(VehPrototypes[growth_proto_id].reactor_id);
+            if (target < 1) target = 1;
+            else if (target > 100) target = 100;
+            if (VehPrototypes[growth_proto_id].plan != PLAN_ALIEN_ARTIFACT) target *= 10;
+            int increase = target - veh.dmg_incurred;
+            if (increase < 0) increase = 0;
+            else if (increase > 9999) increase = 9999;
+            point_delta = static_cast<uint8_t>(increase);
+        }
+        veh.dmg_incurred = static_cast<uint8_t>(veh.dmg_incurred + point_delta);
+
+        // The terminal check has another native prototype reload at 0x529DD9.
+        const int terminal_proto_id = Vehs[veh_id].proto_id;
+        int threshold = 1;
+        if (VehPrototypes[terminal_proto_id].plan != PLAN_ALIEN_ARTIFACT) {
+            threshold = static_cast<int>(VehPrototypes[terminal_proto_id].reactor_id);
+            if (threshold < 1) threshold = 1;
+            else if (threshold > 100) threshold = 100;
+            threshold *= 10;
+        }
+        const int remaining = threshold - veh.dmg_incurred;
+        if (remaining <= 0) {
+            kill(veh_id);
+        } else {
+            veh.terraforming_turns = 0;
+            draw_tile(veh.x, veh.y, 2);
+        }
+    }
+}

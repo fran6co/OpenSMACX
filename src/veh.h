@@ -929,3 +929,6 @@ int __cdecl study_artifact(int veh_id);
 void __cdecl kill(int vehicle_id);
 void __cdecl assemble_passengers(int base_id, int mode, int priority);
 int __cdecl interceptor(int faction_id, int opposing_faction, int target_x, int target_y);
+
+// Source-owned monolith repair and morale-upgrade interaction.
+void __cdecl monolith(int vehicle_id);
