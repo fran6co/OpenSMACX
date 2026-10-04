@@ -1,0 +1,54 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "cfdfc571c4a5f9c86f8f2b5971a81846df4cbedf",
+  "editable_files": [
+    "recovery/tests/test_texheap_owner.py",
+    "recovery/tests/texheap_owner_control.cpp",
+    "src/field_accessors.cpp",
+    "src/field_accessors.h",
+    "src/heap.h",
+    "src/recovered/00634fc0.cpp",
+    "src/sprite.cpp",
+    "src/sprite.h",
+    "src/unrecovered/00635050.cpp"
+  ],
+  "evidence": [
+    "Native634FB0zeroesfourwords;634FC0calls635050andreturnsthis;635050allocates64KiBarena,Heappointertableand20byteHeaprecords; existing635370/6353C0/634FE0 establish shared fields and shutdown. Original countzero overwrites firstHeap and failure cleanup reads untouched malloc slots; do not silently fix. Heap::~ freesownedbase so borrowed metadata must not invoke it. Require scoped byte/reference/layout and build/link controls; no full-game acceptance."
+  ],
+  "intent": "Recover the complete TexHeap arena/table initializer and receiver-return wrapper as genuine typed C++; migrate the existing constructor from field-accessor scaffolding, repair the shared pointer layout, and preserve historical obligations and native allocation omissions.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6508464,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6508480,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6508512,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6508624,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6509424,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6509504,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "texheap-owner"
+}
