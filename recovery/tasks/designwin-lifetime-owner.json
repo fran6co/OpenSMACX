@@ -1,0 +1,26 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "d63448ecfdca2b719bc25deb5e775f106ba5fc60",
+  "editable_files": [
+    "src/designwin.cpp",
+    "src/designwin.h",
+    "src/pending_bodies.cpp",
+    "src/recovered/units/0043ecb0.cpp"
+  ],
+  "evidence": [
+    "Pinned43ECB0..43EDA6 invokes DesignWin::close before reverse destruction of fonts3/2/1, Buffer, Caviar, Time, Spots2/1,25 FlatButtons and GraphicWin. Original653E70..653F0D contains corresponding EH cleanup funclets and handler, not a second manually authored body.",
+    "Actual DesignWin declaration is GraphicWin,SubInterface with member offsets14590/14568/14540/13C6C/1279C/12774/12764/12758/CEC; SubInterface implicit destructor is trivial. Genuine C++ destructor body close() delegates vptr/EH and subobject destruction to the compiler, never manual calls/offsets/vtable arrays. Existing GraphicWin lifetime remains source-owned.",
+    "Require actual project build/link, physical destructor symbol and native both-span measurement, historical identity continuity, references and touched source integrity compared with known baseline failures. Mock lifecycle controls with invented virtual bases or member implementations are rejected. No new byte claim or whole-game acceptance is authorized; preserve unresolved native/EH matching if measured miss. Retire seed only after complete identity/spans/claims and useful discoveries are retained."
+  ],
+  "intent": "Recover DesignWin destruction as genuine C++ body plus automatic member/base and exception-unwind lifetimes, replacing the pending executable forwarder while retaining both original spans and useful seed findings.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4451504,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "designwin-lifetime-owner"
+}
