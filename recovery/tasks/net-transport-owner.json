@@ -1,0 +1,36 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "a31acc59e2b1bb130718b96f8b405c79bcaafb7a",
+  "editable_files": [
+    "src/net_class.cpp",
+    "src/net_class.h",
+    "src/pending_bodies.cpp",
+    "src/unrecovered/0062f8a0.cpp",
+    "src/unrecovered/00630080.cpp",
+    "recovery/tests/test_net_transport.py",
+    "recovery/tests/net_transport_control.cpp"
+  ],
+  "evidence": [
+    "Pinned original spans62F8A0..63007F and630080..630978 plus current src/net_class.h establish existing Net ownership and four/five thiscall argument interfaces. Parameter spelling may clarify payload size, target, packet type and flags without changing ABI or call semantics. Existing seed FILE mappings and TRIED findings must transfer through the installed source writer.",
+    "Native62F9E6..62F9EF selects the all-peer broadcast branch62FCCE when target is zero; nonzero target is compared directly to player IDs at62FA0D. The selected-peer timeout and all-peer timeout list must not be swapped. Current private v2 draft and its host tests contain that error and are not an integration basis.",
+    "Original sender state uses sixteen real0x58 NetPlayer rows, acknowledgement at+8, retry tick at+C, live player ID and callback reads, FIFO queue ownership and SDK Send with data_size+C allocation/payload at+8. Retain native packet padding behavior; neither earlier NetWin packet initialization nor send_group repair grants a new blanket behavior change here.",
+    "Preserve timer unsigned wraparound, native RTT grouping, live wait interval reload at630275, retry growth and timeout/cancel choices, dialog/resource order and single deallocation. ESP-relative operands must account for intervening pushes; equal literal locations alone do not prove equal strings. Any actual behavior repair requires separate user authority, not inference from a host fixture.",
+    "Coordinator-reviewed manual publication only after independent full original/source review, actual-source C++98 controls with distinguishing negative mutants, application compile/link, touched protected matching, claim identity continuity and relevant source/reference checks. No BYTE_EXACT grant, historical demotion, compiler flag change, task baseline reset, framework bypass or full-game acceptance. Unavailable structure/runtime/linked preservation remains unknown."
+  ],
+  "intent": "Recover the complete Net targeted and broadcast sender bodies using genuine NetPlayer, FIFO, event, allocator, SDK DirectPlay and source-owned string state; replace their pending forwarders and retire both seeds only after complete reviewed implementation. Preserve all original identities, extents and useful seed findings.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6486176,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6488192,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "net-transport-owner"
+}
