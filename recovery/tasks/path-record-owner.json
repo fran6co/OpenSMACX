@@ -1,0 +1,49 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "a8f1055796233893bc68e125221cb90fdf003e5e",
+  "editable_files": [
+    "src/stringstruct.cpp",
+    "src/stringstruct.h",
+    "src/recovered/004c8150.cpp",
+    "src/recovered/004c8190.cpp",
+    "src/recovered/004c83a0.cpp",
+    "recovery/tests/test_path_record.py",
+    "recovery/tests/path_record_control.cpp"
+  ],
+  "evidence": [
+    "Native4C8150 initializes0x28-byte footprint, returningthis with observed four-byte clear at4.4C8190 releases1C and24 without clearing pointers or freeing20.4C81C0/8290 replace directory/path strings and call the same receiver;4C83A0 replaces24 or nulls it. Actual decoded spans, not embedded source_region seeds, are authoritative; saved independent audit confirms these operations.",
+    "Original uses backslash separators only,256-byte local buffers and unchecked empty-directory/null-input and allocation-failure CRT paths. The class owns evidenced pointer members at1C/20/24. Earlier field roles beyond actual stores remain unknown; nearby4C8350 is readonly context, not an authorized extra mapping or demonstrated shared owner.",
+    "Require native mapping/claim continuity, three historical byte obligations,12existing StringStruct/NameTable baseline-current comparisons, native member offsets and real build/link. Host controls cover actual source branches, buffer values and deliberate mutation refusal. Remove only fully transferred seeds. No automatic/game/runtime acceptance claim."
+  ],
+  "intent": "Recover five related path/name record operations through genuine members and direct same-owner calls; three seed-only identities become compiling owners and two existing offset-based bodies become typed. Names are provisional, constructor/destructor identity remains unproved. Preserve original release omissions and dangling values; no silent lifecycle or error-path fixes.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5013840,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5013904,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5013952,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5014160,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5014432,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "path-record-owner"
+}
