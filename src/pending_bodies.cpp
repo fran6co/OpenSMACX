@@ -417,10 +417,7 @@ int __cdecl popb(LPCSTR a1, int a2, int a3, LPCSTR a4, Sprite * a5) {  // 0x0048
 
 
 
-DesignWin::~DesignWin() {  // ??1DesignWin@@QAE@XZ at 0x0043ECB0
-    typedef void(__fastcall *pending)(DesignWin *, void *);
-    PENDING_BODY(0x0043ECB0, pending)(this, nullptr);
-}
+// DesignWin destruction is source-owned in designwin.cpp; no image forwarder.
 
 
 // Menu::~Menu (??1Menu@@QAE@XZ at 0x005FAD00) WAS HERE: the body is homed

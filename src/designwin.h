@@ -113,9 +113,7 @@ class DesignWin : public GraphicWin, public SubInterface {
   void on_right_click(int x, int y);
   void on_redraw();
   void select_name();
-  // 0x0043ECB0 is not recovered: a
-  // pending_bodies forwarder, because an empty inline stub emits
-  // nothing and the deleting destructor needs a `call rel32`.
+  // Source-owned body closes the window; C++ owns member/base teardown.
   ~DesignWin();
   void UNK1();
   void on_iface_left_down(int, int);

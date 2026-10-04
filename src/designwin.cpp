@@ -4047,3 +4047,10 @@ int __cdecl design_workshop(int faction_id, int mode) {
         return TutWinDesWindow.exec(faction_id, selected);
     }
 }
+
+// ORIGINAL: 0x0043ECB0 ??1DesignWin@@QAE@XZ 0x0043ECB0-0x0043EDA6;0x00653E70-0x00653F0D
+// RECOVERY_BINDING: v1 {"evidence": ["task:designwin-lifetime-owner", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:43ECB0..43EDA6;653E70..653F0D", "actual source:designwin.h member/base declarations; reverse fonts3/2/1,Buffer,Caviar,Time,Spots2/1,FlatButtons25,GraphicWin;SubInterface destructor trivial.", "historical seed:src/recovered/units/0043ecb0.cpp; complete identity/spans/status and useful findings retained; retirement requires native verification."], "reason": "Recover normal and exception-unwind destruction through genuine DesignWin members and bases. Body invokes close(); the compiler owns reverse subobject destruction, EH cleanup and vptr transitions. Original unclaimed seed measured mismatch at instruction10; no matching claim is granted."}
+// symbol    ??1DesignWin@@UAE@XZ
+DesignWin::~DesignWin() {
+    close();
+}
