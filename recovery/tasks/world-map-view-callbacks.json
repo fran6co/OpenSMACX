@@ -1,0 +1,33 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "a103fa2bc51a279da371985a8ad4616b20ae3454",
+  "editable_files": [
+    "src/worldwin.cpp",
+    "src/worldwin.h",
+    "src/recovered/004c38e0.cpp",
+    "src/recovered/004c3910.cpp",
+    "recovery/tests/test_world_map_view_callbacks.py",
+    "recovery/tests/world_map_view_callbacks_harness.cpp"
+  ],
+  "evidence": [
+    "Pinned spans4C38E0..4C3910 and4C3910..4C3941 fully decode97bytes; source-owned button_group1 corresponds7CD12C, MapWinTable1 is7D3C40, global WorldClimateWorldWin is8E9F60. Native shows MapWin virtual Win show/hide then direct Win hide/show on the climate window.",
+    "No receiver or detail_map_selected_ store in either original callback; WorldWin set_detail_map/set_world_map perform additional stores and must not substitute for these separate global view operations. Role-based source names remain provisional, no original canonical name is rewritten.",
+    "Root coordinator reviewed manual recovery only: require complete bodies, compile/link, actual-source host/native operand controls, historical claim measurement/continuity and reference checks. No automatic/game acceptance, baseline reset, demotion, behavioral bug fix or fake compiler-helper body authorized."
+  ],
+  "intent": "Recover the two complete global map-view callbacks through genuine existing MainInterface, MapWin and WorldWin owners, preserving all original identities and historical claims.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4995296,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4995344,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "world-map-view-callbacks"
+}
