@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "task_id": "propose-pact-owner",
+  "target": "opensmacx",
+  "author": "framework-coordinator",
+  "base_revision": "38f8f5868d266906cebdb1b8201d1df0e7e217bd",
+  "subjects": [{"address": 5520320, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"}],
+  "editable_files": [
+    "src/faction.cpp", "src/faction.h", "src/game.h",
+    "src/unrecovered/00543bc0.cpp",
+    "recovery/tests/test_propose_pact.py", "recovery/tests/propose_pact_control.cpp"
+  ],
+  "intent": "Complete the preserved propose_pact recovery in its faction owner, including initial eligibility, original branch labels, typed faction records, gift arithmetic, callback liveness, help and network treaty sequencing. Preserve the seed identity and all useful historical findings; remove the seed only after complete source transfer, controls, build/link and protected-claim review.",
+  "evidence": [
+    "Pinned543BC0..544E36 native disassembly independently contradicts seed approximations: missing initial score normalization543F74..544015, wrong array columns, refusal labels, cap operands and repeated adjustment, exceptional cap replacement, tapered relationship update and help/network argument ordering.",
+    "Use genuine PlayerData fields with stride20CC. Global93F7D0 needs a source-owned signed DWORD with provisional use-site name and verified image initialization, not another executable-address dereference. Existing two-argument get_pacts58FA70 requires its actual declaration in game.h; retain the distinct one-argument overload58FA20.",
+    "Historical seed claims/discoveries travel through native source writer. GCC/Clang actual-source branch, callback, argument-order and compiled damage controls, application compile/link, 55 protected faction byte obligations compared with fresh pre-change measurements, claim continuity and references are required. No new byte claim or automatic/full-game acceptance is authorized."
+  ]
+}
