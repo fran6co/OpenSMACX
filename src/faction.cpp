@@ -565,8 +565,11 @@ Sprite *FactionBaseSprites[MaxPlayerNum][2][4][3];
 
 uint32_t RankingFactionIDUnk1;  // 0x009A650C
 uint32_t RankingFactionIDUnk2;  // 0x009A6510
+// RECOVERY_OBJECT: v1 0x0093FA74 ?DiploFriction@@3HA
 int DiploFriction;  // 0x0093FA74 // not always bounded, should it be 0-20?
+// RECOVERY_OBJECT: v1 0x0093FABC ?DiploFrictionFactionIDWith@@3IA
 uint32_t DiploFrictionFactionIDWith;  // 0x0093FABC
+// RECOVERY_OBJECT: v1 0x0093FAC0 ?DiploFrictionFactionID@@3IA
 uint32_t DiploFrictionFactionID;  // 0x0093FAC0
 // Both are outputs of scan_prototypes() and both hold a prototype id or -1.
 // buy_tech (0x005401A0) reads the first, lazily recomputing it with
@@ -8922,6 +8925,333 @@ static int battle_plans_selected_region_distance_result(
         return 2;
     }
     return 0;
+}
+
+// ORIGINAL: 0x00547C10 ?make_gift@@YAXHH@Z 0x00547C10-0x00548DC8;0x0065F4C4-0x0065F662
+// RECOVERY_BINDING: v1 {"evidence": ["task:diplomacy-actions-owner-coverage", "Pinned original547C10-548DC8 and cleanup65F4C4-65F662", "historical seed:src/unrecovered/00547c10.cpp", "Native547CDC-547D39 single divide-by-two and /25 menu recurrence;547EF1-547F58 raw-selection transfer;547F6B-547FE7 friction buckets;548972 live mode read;548AE8 post-modal tech read;54845F/548C52 differing treaty directions;5485D9 literal BASEGIFT result."], "reason": "Recover all energy, selected/all-technology and base gift paths with one genuine lexical Popup and existing faction/global ownership. Preserve raw selected energy separately from generosity scoring, native nonlinear friction buckets, directed treaty/counter/patience updates and local response-key lifetime. Remove the register-machine object shim, not historical obligations."}
+// symbol    ?make_gift@@YAXHH@Z
+// TRIED: literal register-machine transliteration (pseudo-regs eax..edi, a raw 0x5440-byte buffer for the Popup/BasePop/Scroll object standing in for real ebp-relative locals, goto per basic block). Popup/BasePop/Scroll/FlatButton/ Dialogs/Dialog/Spot/Sprite/Heap/StringStruct lifecycle calls (ctor, start, exec, close, item, sprite, dtors) go through original_method<> on that buffer instead of real typed C++ locals, so no SEH frame or manual vtable re-stamp before each close()/dtor call is modeled - those writes are compiler-generated partial-construction unwind bookkeeping with no observable effect once the real ctor already ran. cdq/sub/sar divide-by- 2/3/4/6/10 idioms folded to `/N`; the negative-magic-constant /5 idiom (0x99999999) folded to `-(x/5)`. Covers the full control-flow graph and every external/method call in original order (4899 rebuilt vs 4536 original bytes); divergence is from the object-model/frame shape, not from missing branches or wrong call order.
+void __cdecl make_gift(int giver, int receiver) {
+    Popup popup;
+    const int mode = DiplomacyProposalMode;
+    PopupDialogFactionID = receiver;
+    if (mode == 4 || mode == 7) {
+        tech_analysis(giver, receiver);
+        if (DiploScratchFAA8 < 0) {
+            GenderDefault = Players[receiver].noun_gender;
+            PluralityDefault = Players[receiver].is_noun_plural;
+            parse_says(1, Players[receiver].noun_faction, -1, -1);
+            x_pops_short("REJTECHNOTHING", 0x100000,
+                         FactionDiplomacyPortraits[receiver], pop_wait);
+            return;
+        }
+
+        int gift_value = 0;
+        if (DiplomacyProposalMode == 7) {
+            for (int tech = 0; tech < 0x59; ++tech) {
+                if (has_tech(tech, giver) && !has_tech(tech, receiver)) {
+                    gift_value = diplo_add(gift_value, tech_val(tech, receiver, 1));
+                    if (IsMultiplayerNet != 0) {
+                        log_say("Sending TECH", receiver, tech, giver);
+                        message_data(0x244b, 0, receiver, tech, giver, 0);
+                        NetDaemonNet.await_diplo(0x44b);
+                    } else {
+                        tech_achieved(receiver, tech, giver, 0);
+                    }
+                }
+            }
+        } else {
+            StringTemp[0] = 0;
+            say_tech(StringTemp, DiploScratchFAA8, 1);
+            parse_says(0, StringTemp, -1, -1);
+            parse_says(2, get_noun_phrase(receiver, 9), -1, -1);
+
+            int response;
+            if (DiploScratchFA18 >= 0) {
+                StringTemp[0] = 0;
+                say_tech(StringTemp, DiploScratchFA18, 1);
+                parse_says(1, StringTemp, -1, -1);
+                response = x_pops_short("OFFERTECH2", 0x100000,
+                                        FactionDiplomacyPortraits[receiver], pop_wait);
+            } else {
+                response = x_pops_short("OFFERTECH", 0x100000,
+                                        FactionDiplomacyPortraits[receiver], pop_wait);
+            }
+            if (response == 0) return;
+
+            const int selected = (response == 1) ? DiploScratchFAA8
+                                                  : DiploScratchFA18;
+            gift_value = tech_val(selected, receiver, 1);
+            if (IsMultiplayerNet != 0) {
+                log_say("Sending TECH", receiver, selected, giver);
+                message_data(0x244b, 0, receiver, selected, giver, 0);
+                NetDaemonNet.await_diplo(0x44b);
+            } else {
+                tech_achieved(receiver, selected, giver, 0);
+            }
+        }
+
+        const char *recipient_key = Players[receiver].search_key;
+        if (strcmp(recipient_key, "UNIV") == 0 ||
+            strcmp(recipient_key, "SPARTANS") == 0) gift_value = diplo_mul(gift_value, 2);
+        if (strcmp(recipient_key, "BELIEVE") == 0) gift_value /= 2;
+
+        const int friction_after_gift = diplo_clamp(
+            diplo_sub(static_cast<int>(PlayersData[receiver].diplo_friction[giver]),
+                      gift_value), 0, 20);
+        PlayersData[receiver].diplo_friction[giver] =
+            static_cast<uint32_t>(friction_after_gift);
+        if (DiploFrictionFactionID == static_cast<uint32_t>(receiver) &&
+            DiploFrictionFactionIDWith == static_cast<uint32_t>(giver))
+            DiploFriction = diplo_sub(DiploFriction, gift_value);
+
+        char popup_label[80];
+        popup_label[0] = 0;
+        strcat(popup_label, "GAVETECH");
+        if (gift_value >= 0x10) {
+            if ((PlayersData[receiver].diplo_treaties[giver] & 0x60u) != 0 &&
+                DiploFriction != 0)
+                strcat(popup_label, "2");
+            else
+                strcat(popup_label, "1");
+
+            if (IsMultiplayerNet != 0) {
+                log_say("Sending TREATY OFF", receiver, giver, 0x60);
+                message_data(0x2442, 0, receiver, giver, 0x60, 0);
+                NetDaemonNet.await_diplo(0x442);
+            } else {
+                treaty_off(receiver, giver, 0x60);
+            }
+        }
+
+        int &counter = PlayersData[giver].diplo_unk1[receiver];
+        const int counter_limit = PlayersData[giver].integrity_blemishes;
+        if (gift_value >= 0x10) {
+            if (counter < counter_limit) counter = diplo_add(counter, 1);
+            if (counter < counter_limit || great_satan(giver, 0) != 0 ||
+                IsMultiplayerNet != 0)
+                counter = diplo_add(counter, 1);
+        } else if (counter == 0 &&
+                   (counter < counter_limit || great_satan(giver, 0) != 0 ||
+                    IsMultiplayerNet != 0)) {
+            counter = diplo_add(counter, 1);
+        }
+
+        diplomacy_caption(giver, receiver);
+        x_pops_short(popup_label, 0x100000,
+                     FactionDiplomacyPortraits[receiver], pop_wait);
+        char &patience = PlayersData[receiver].diplo_patience[giver];
+        patience = static_cast<char>(static_cast<unsigned char>(patience) + 0xFEu);
+        return;
+    }
+
+    if (mode == 5) {
+        popup.start(PopupStartCaption, "OFFERENERGY", -1, nullptr, 0x100000);
+        popup.set_caller_picture(popup.picture_enabled()
+            ? nullptr : FactionDiplomacyPortraits[receiver]);
+        popup.dialogs().sprite(FactionDiplomacyPortraits[receiver], nullptr, 0);
+
+        int offered_energy = diplo_mul(PlayersData[giver].energy_reserves, 2);
+        for (;;) {
+            offered_energy = diplo_mul((offered_energy / 2) / 25, 25);
+            StringTemp[0] = 0;
+            char amount_text[12];
+            _itoa(offered_energy, amount_text, 10);
+            strcat(StringTemp, amount_text);
+            popup.dialogs().item(StringTemp, offered_energy);
+            if (offered_energy == 0) break;
+        }
+
+        const int selection = popup.exec(0, pop_wait); // callback is 0x5398E0
+        if (selection == 0) return;
+
+        int amount = selection;
+        const char *const search_key = Players[giver].search_key;
+        if (strcmp(search_key, "MORGAN") == 0 ||
+            strcmp(search_key, "SPARTANS") == 0) {
+            amount = diplo_mul(amount, 2);
+        }
+        if (strcmp(search_key, "SPARTANS") == 0) amount /= 2;
+
+        const int receiver_energy = PlayersData[receiver].energy_reserves;
+        const int giver_energy = PlayersData[giver].energy_reserves;
+        const int favored =
+            amount >= receiver_energy / 2 &&
+            amount >= giver_energy / 3 &&
+            amount >= diplo_mul(TurnCurrentNum, 2);
+        const int strong_offer =
+            amount >= receiver_energy / 4 && amount >= 25 &&
+            amount >= giver_energy / 6 && amount >= TurnCurrentNum;
+
+        if (IsMultiplayerNet != 0) {
+            log_say("Sending ENERGY", giver, receiver, diplo_sub(0, selection));
+            message_data(0x2447, 0, giver, diplo_sub(0, selection), receiver, selection);
+            NetDaemonNet.await_diplo(0x447);
+        } else {
+            if (giver != 0) PlayersData[giver].energy_reserves = diplo_sub(PlayersData[giver].energy_reserves, selection);
+            if (receiver != 0) PlayersData[receiver].energy_reserves = diplo_add(PlayersData[receiver].energy_reserves, selection);
+            ConsoleGlobal.update_data(1);
+        }
+
+        ConsoleInfoWin.set_redraw_phase(0);
+        ConsoleGlobal.update_data(0);
+
+        int remaining_fifths = amount / 5;
+        int bucket = 10;
+        int divisor = 2;
+        int accumulated = 0;
+        while (remaining_fifths > 0) {
+            const int part = remaining_fifths < bucket ? remaining_fifths : bucket;
+            accumulated = diplo_add(accumulated, part / divisor);
+            remaining_fifths -= bucket;
+            bucket = 20;
+            ++divisor;
+        }
+        const int fifth = diplo_sub(0, diplo_add(accumulated, 4)) / 5;
+        const int friction_delta = diplo_mul(fifth, 3) / 2;
+        int friction = diplo_add(PlayersData[receiver].diplo_friction[giver], friction_delta);
+        if (friction < 0) friction = 0;
+        if (friction > 20) friction = 20;
+        PlayersData[receiver].diplo_friction[giver] = static_cast<uint32_t>(friction);
+        if (DiploFrictionFactionID == receiver &&
+            DiploFrictionFactionIDWith == giver) {
+            DiploFriction = diplo_add(DiploFriction, friction_delta);
+        }
+
+        StringTemp[0] = 0;
+        strcat(StringTemp, "GAVEENERGY");
+        if (favored) {
+            const int treaty60 = PlayersData[receiver].diplo_treaties[giver] & 0x60;
+            const int is_great_satan = treaty60 == 0 ? great_satan(giver, 0) : 1;
+            strcat(StringTemp, treaty60 == 0 && is_great_satan == 0 ? "1" : "2");
+            if (IsMultiplayerNet != 0) {
+                log_say("Sending TREATY OFF", giver, receiver, 0x60);
+                message_data(0x2442, 0, giver, receiver, 0x60, 0);
+                NetDaemonNet.await_diplo(0x442);
+            } else {
+                treaty_off(giver, receiver, 0x60);
+            }
+            int &counter = PlayersData[giver].diplo_unk1[receiver];
+            const int limit = PlayersData[giver].integrity_blemishes;
+            if (counter < limit) counter = diplo_add(counter, 1);
+        }
+
+        if (favored || (strong_offer && PlayersData[giver].diplo_unk1[receiver] == 0)) {
+            int &counter = PlayersData[giver].diplo_unk1[receiver];
+            const int limit = PlayersData[giver].integrity_blemishes;
+            if (counter < limit || great_satan(giver, 0) != 0 || IsMultiplayerNet != 0)
+                counter = diplo_add(counter, 1);
+        }
+
+        diplomacy_caption(giver, receiver);
+        PluralityDefault = 0;
+        GenderDefault = Players[giver].is_leader_female;
+        parse_says(0, Players[giver].title_leader, -1, -1);
+        GenderDefault = Players[giver].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(1, Players[giver].name_leader, -1, -1);
+        x_pops_short(StringTemp, 0x100000,
+                     FactionDiplomacyPortraits[receiver], pop_wait);
+
+        const int patience_delta = 0xFE - favored;
+        PlayersData[receiver].diplo_patience[giver] = static_cast<char>(
+            static_cast<unsigned char>(PlayersData[receiver].diplo_patience[giver]) +
+            patience_delta);
+        return;
+    }
+
+    if (mode == 8) {
+        const int base_value = value_of_base(
+            DiploScratchFA30, receiver, giver, DiploScratchFA98,
+            (DiploScratchFA68 != 0 || DiploScratchFAA0 != 0));
+
+        const int friction_delta =
+            diplo_sub(0, diplo_mul(base_value, 3)) / 2;
+        int friction = diplo_add(
+            static_cast<int>(PlayersData[receiver].diplo_friction[giver]),
+            friction_delta);
+        if (friction < 0) friction = 0;
+        if (friction > 20) friction = 20;
+        PlayersData[receiver].diplo_friction[giver] =
+            static_cast<uint32_t>(friction);
+        if (DiploFrictionFactionID == static_cast<uint32_t>(receiver) &&
+            DiploFrictionFactionIDWith == static_cast<uint32_t>(giver)) {
+            DiploFriction = diplo_add(DiploFriction, friction_delta);
+        }
+
+        int favored_value = base_value;
+        if (strcmp(Players[giver].search_key, "SPARTANS") == 0)
+            favored_value = diplo_mul(favored_value, 2);
+
+        int favored =
+            favored_value >= static_cast<int>(PlayersData[receiver].energy_reserves) / 2 &&
+            favored_value >= static_cast<int>(PlayersData[giver].energy_reserves) / 3 &&
+            favored_value >= diplo_mul(TurnCurrentNum, 2);
+        if (strcmp(Players[giver].filename, "BELIEVE") == 0)
+            favored = 1;
+
+        log_say("Getting DIPLOMATIC LOCK", 0, 0, 0);
+        timeGetTime();
+        if (ExitTurnLoop == 0) {
+            for (;;) {
+                if (NetDaemonNet.add_global() == 0) break;
+                check_spock();
+                timeGetTime();
+                if (ExitTurnLoop != 0) break;
+            }
+        }
+
+        diplomacy_caption(giver, receiver);
+        // The image builds a suffixed local key, but the final popup uses
+        // the unsuffixed BASEGIFT literal rather than this local buffer.
+        char gift_result_key[80];
+        gift_result_key[0] = 0;
+        strcat(gift_result_key, "BASEGIFT");
+        if (favored) {
+            const bool existing_pact_or_treaty =
+                (PlayersData[receiver].diplo_treaties[giver] & 0x60u) != 0;
+            const char *suffix = (existing_pact_or_treaty ||
+                                  great_satan(giver, 0) != 0) ? "2" : "1";
+            strcat(gift_result_key, suffix);
+
+            if (IsMultiplayerNet != 0) {
+                log_say("Sending TREATY OFF", giver, receiver, 0x60);
+                message_data(0x2442, 0, giver, receiver, 0x60, 0);
+            } else {
+                treaty_off(giver, receiver, 0x60);
+            }
+            int &gift_counter = PlayersData[giver].diplo_unk1[receiver];
+            if (gift_counter < PlayersData[giver].integrity_blemishes)
+                gift_counter = diplo_add(gift_counter, 1);
+        }
+
+        int &gift_counter = PlayersData[giver].diplo_unk1[receiver];
+        if (gift_counter < PlayersData[giver].integrity_blemishes ||
+            great_satan(giver, 0) != 0 || IsMultiplayerNet != 0) {
+            gift_counter = diplo_add(gift_counter, 1);
+        }
+
+        PluralityDefault = 0;
+        GenderDefault = Players[giver].is_leader_female;
+        parse_says(0, Players[giver].title_leader, -1, -1);
+
+        if (IsMultiplayerNet != 0) {
+            log_say("Sending CEDE BASE", DiploScratchFA30, receiver, 0);
+            message_data(0x2449, 0, DiploScratchFA30, receiver, 0, 0);
+            NetDaemonNet.await_diplo(0x449);
+        } else {
+            give_a_base(DiploScratchFA30, receiver);
+        }
+
+        log_say("Releasing DIPLOMATIC LOCK", 0, 0, 0);
+        NetDaemonNet.unlock();
+        char &patience = PlayersData[receiver].diplo_patience[giver];
+        patience = static_cast<char>(static_cast<unsigned char>(patience) + 0xFE - favored);
+        x_pops_short("BASEGIFT", 0x100000,
+                     FactionDiplomacyPortraits[receiver], pop_wait);
+        return;
+    }
+
 }
 
 // ORIGINAL: 0x0054D410 ?base_swap@@YAXHH@Z 0x0054D410-0x0054DC8C

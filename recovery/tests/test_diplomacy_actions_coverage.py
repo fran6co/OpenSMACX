@@ -1,8 +1,130 @@
-"""Actual recovered menu body with service doubles, not GUI/game acceptance."""
+"""Actual diplomacy bodies with service doubles, not GUI/game acceptance."""
 import shutil
 import subprocess
 import pytest
 from recovery.tests.test_pact_ascent import ROOT, definition
+
+
+@pytest.mark.parametrize('compiler_name', ['g++', 'clang++'])
+def test_actual_make_gift(tmp_path, compiler_name):
+    compiler = shutil.which(compiler_name)
+    if not compiler:
+        pytest.skip(compiler_name + ' unavailable')
+    source = (ROOT / 'src/faction.cpp').read_text()
+    body = definition(source, r'void __cdecl make_gift\([^)]*\)')
+    helpers = '\n'.join(definition(source, r'static int ' + name + r'\([^)]*\)(?=\s*\{)')
+                        for name in ('diplo_add', 'diplo_sub', 'diplo_mul', 'diplo_clamp'))
+    fixture = r'''
+#include <cassert>
+#include <cstdio>
+#include <cstring>
+#define __cdecl
+typedef unsigned int uint32_t;
+struct Sprite {} portraits[8]; Sprite *FactionDiplomacyPortraits[8];
+struct Player { int is_leader_female,noun_gender,is_noun_plural;
+ char name_leader[24],title_leader[24],noun_faction[24],filename[24],search_key[24]; } Players[8];
+struct Data { int energy_reserves,integrity_blemishes,diplo_unk1[8];
+ unsigned diplo_treaties[8],diplo_friction[8]; char diplo_patience[8]; } PlayersData[8];
+int DiplomacyProposalMode,PopupDialogFactionID,DiploScratchFAA8,DiploScratchFA18;
+int DiploScratchFA30,DiploScratchFA98,DiploScratchFA68,DiploScratchFAA0;
+unsigned DiploFrictionFactionID,DiploFrictionFactionIDWith;
+int DiploFriction,GenderDefault,PluralityDefault,TurnCurrentNum,ExitTurnLoop,IsMultiplayerNet;
+char StringTemp[128],PopupStartCaption[80];
+int selection,response,destructors,items[20],item_count,redraws,awaits,last_await,picture_calls;
+int techs[90],tech_count,base_count,satan,base_value,mutate_mode,mutate_choice,transfer_amount;
+char notice[80];
+int pop_wait() { return 0; }
+struct Dialogs {
+ void sprite(Sprite *s,char *t,int n) { assert(s==FactionDiplomacyPortraits[2] && !t && !n); }
+ void item(char *s,int n) { assert(item_count<20 && s[0]); items[item_count++]=n; }
+};
+struct Popup {
+ Dialogs menu; ~Popup() { ++destructors; }
+ void start(char *s,const char *key,int n,char *t,int flags,int z=0) { assert(s==PopupStartCaption && !std::strcmp(key,"OFFERENERGY") && n==-1 && !t && flags==0x100000 && !z); }
+ bool picture_enabled() { return false; }
+ void set_caller_picture(Sprite *s) { assert(s==FactionDiplomacyPortraits[2]); ++picture_calls; }
+ Dialogs &dialogs() { return menu; }
+ int exec(int n,int(*cb)()) { assert(!n && cb==pop_wait); return selection; }
+};
+char *_itoa(int n,char *d,int base) { assert(base==10); std::sprintf(d,"%d",n); return d; }
+void diplomacy_caption(int a,int b) { assert(a==1 && b==2); }
+int parse_says(int n,char *s,int a,int b) { assert(a==-1 && b==-1 && n>=0 && n<=2 && s); return 0; }
+int x_pops_short(const char *s,int flags,Sprite *p,int(*cb)()) {
+ assert(flags==0x100000 && p==FactionDiplomacyPortraits[2] && cb==pop_wait); std::strcpy(notice,s);
+ if(mutate_choice && (!std::strcmp(s,"OFFERTECH") || !std::strcmp(s,"OFFERTECH2"))) DiploScratchFAA8=5;
+ return response;
+}
+struct Console { void update_data(int n) { redraws+=n ? 1 : 10; } } ConsoleGlobal;
+struct Info { void set_redraw_phase(int n) { assert(!n); } } ConsoleInfoWin;
+int great_satan(int a,int z) { assert(a==1 && !z); return satan; }
+void treaty_off(int a,int b,int flags) { assert((a==1 && b==2)||(a==2 && b==1)); assert(flags==0x60); }
+void log_say(const char *s,int a,int b,int c) { assert(s && a>=0 && b>=0); }
+void message_data(int op,int z,int a,int b,int c,int d) {
+ assert(!z);
+ if(op==0x2447) { assert(a==1 && c==2 && b==-selection && d==selection); transfer_amount=d; }
+ else if(op==0x244b) { assert(a==2 && c==1 && !d); techs[tech_count++]=b; }
+ else if(op==0x2449) { assert(a==DiploScratchFA30 && b==2 && !c && !d); ++base_count; }
+ else assert(op==0x2442 && c==0x60 && !d);
+}
+struct Net { int add_global() { return 0; } void unlock() {} void await_diplo(int op) { ++awaits; last_await=op; } } NetDaemonNet;
+unsigned timeGetTime() { return 0; }
+void check_spock() { assert(false); }
+void tech_analysis(int a,int b) { assert(a==1 && b==2); if(mutate_mode) DiplomacyProposalMode=7; }
+int has_tech(int tech,int owner) { return owner==1 && (tech==3 || tech==5); }
+int tech_val(int tech,int owner,int simple) { assert(owner==2 && simple==1); return tech==3 ? 10 : 20; }
+void tech_achieved(int owner,int tech,int giver,int z) { assert(owner==2 && giver==1 && !z); techs[tech_count++]=tech; }
+void say_tech(char *s,int tech,int cat) { assert(s==StringTemp && !s[0] && cat==1); std::strcpy(s,"technology"); }
+char *get_noun_phrase(int owner,int n) { assert(owner==2 && n==9); static char phrase[]="phrase"; return phrase; }
+int value_of_base(int base,int req,int res,int counter,int contact) { assert(base==DiploScratchFA30 && req==2 && res==1); return base_value; }
+void give_a_base(int base,int owner) { assert(base==DiploScratchFA30 && owner==2); ++base_count; }
+@@BODY@@
+void reset(int mode) {
+ std::memset(Players,0,sizeof(Players)); std::memset(PlayersData,0,sizeof(PlayersData));
+ for(int i=0;i<8;++i) FactionDiplomacyPortraits[i]=&portraits[i];
+ DiplomacyProposalMode=mode; DiploScratchFAA8=3; DiploScratchFA18=-1;
+ DiploScratchFA30=DiploScratchFA98=DiploScratchFA68=DiploScratchFAA0=0;
+ selection=50; response=1; destructors=item_count=redraws=awaits=tech_count=base_count=satan=mutate_mode=mutate_choice=transfer_amount=picture_calls=0;
+ DiploFrictionFactionID=2; DiploFrictionFactionIDWith=1; DiploFriction=10;
+ PlayersData[2].diplo_friction[1]=10; PlayersData[1].energy_reserves=100; PlayersData[2].energy_reserves=0;
+ TurnCurrentNum=1; ExitTurnLoop=IsMultiplayerNet=0; base_value=40;
+ PlayersData[1].integrity_blemishes=3; PlayersData[2].diplo_patience[1]=5; notice[0]=0;
+}
+void run() { const int mode=DiplomacyProposalMode; make_gift(1,2); assert(destructors==1 && PopupDialogFactionID==2 && picture_calls==(mode==5 ? 1 : 0)); }
+int main() {
+ reset(1); run(); assert(!notice[0] && !item_count);
+ reset(5); selection=0; run(); assert(item_count==4 && items[0]==100 && items[1]==50 && items[2]==25 && items[3]==0 && !redraws);
+ reset(5); std::strcpy(Players[1].search_key,"MORGAN"); run(); assert(PlayersData[1].energy_reserves==50 && PlayersData[2].energy_reserves==50 && redraws==11 && PlayersData[2].diplo_friction[1]==7 && DiploFriction==7 && !std::strcmp(notice,"GAVEENERGY1") && PlayersData[2].diplo_patience[1]==2 && PlayersData[1].diplo_unk1[2]==2);
+ reset(5); IsMultiplayerNet=1; std::strcpy(Players[1].search_key,"MORGAN"); run(); assert(transfer_amount==50 && redraws==10 && PlayersData[1].energy_reserves==100 && awaits==2);
+ reset(4); DiploScratchFAA8=-1; run(); assert(!std::strcmp(notice,"REJTECHNOTHING") && !tech_count);
+ reset(4); response=0; run(); assert(!tech_count);
+ reset(4); mutate_choice=1; run(); assert(tech_count==1 && techs[0]==5 && !std::strcmp(notice,"GAVETECH1") && PlayersData[2].diplo_patience[1]==3);
+ reset(4); DiploScratchFA18=5; response=2; IsMultiplayerNet=1; run(); assert(tech_count==1 && techs[0]==5 && awaits==2);
+ reset(4); mutate_mode=1; run(); assert(tech_count==2 && techs[0]==3 && techs[1]==5);
+ reset(7); std::strcpy(Players[2].search_key,"BELIEVE"); run(); assert(tech_count==2 && PlayersData[2].diplo_friction[1]==0 && DiploFriction==-5 && !std::strcmp(notice,"GAVETECH"));
+ reset(8); run(); assert(base_count==1 && !std::strcmp(notice,"BASEGIFT") && PlayersData[2].diplo_patience[1]==2 && PlayersData[1].diplo_unk1[2]==2);
+ reset(8); base_value=0; run(); assert(base_count==1 && PlayersData[1].diplo_unk1[2]==1 && PlayersData[2].diplo_patience[1]==3);
+ reset(8); IsMultiplayerNet=1; run(); assert(base_count==1 && awaits==1 && last_await==0x449);
+}
+'''
+    variants = {'actual': body}
+    for name, old, new in (
+        ('wrong_menu', '(offered_energy / 2) / 25', '(offered_energy / 4) / 25'),
+        ('wrong_money', 'diplo_sub(PlayersData[giver].energy_reserves, selection)', 'diplo_sub(PlayersData[giver].energy_reserves, amount)'),
+        ('wrong_bucket', 'amount / 5', 'amount / 10'),
+        ('wrong_live_mode', 'if (DiplomacyProposalMode == 7)', 'if (mode == 7)'),
+        ('wrong_recipient_modifier', 'strcmp(recipient_key, "BELIEVE")', 'strcmp(recipient_key, "SPARTANS")'),
+    ):
+        assert old in body
+        variants[name] = body.replace(old, new)
+    for name, candidate in variants.items():
+        cpp, binary = tmp_path / (name + '.cpp'), tmp_path / name
+        cpp.write_text(fixture.replace('@@BODY@@', helpers + '\n' + candidate))
+        build = subprocess.run([compiler, '-std=c++98', '-fsanitize=undefined',
+                                '-fno-sanitize-recover=all', str(cpp), '-o', str(binary)],
+                               capture_output=True, text=True, timeout=45)
+        assert build.returncode == 0, build.stderr
+        result = subprocess.run([str(binary)], capture_output=True, timeout=15)
+        assert (result.returncode == 0) == (name == 'actual'), (name, result.stderr)
 
 
 @pytest.mark.parametrize('compiler_name', ['g++', 'clang++'])
