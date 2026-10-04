@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "task_id": "vehicle-visibility-owner",
+  "author": "framework-coordinator",
+  "target": "opensmacx",
+  "base_revision": "07522c5bb42f2d1c267e3e52e6566397610dd87c",
+  "editable_files": ["src/veh.cpp", "src/unrecovered/005b6260.cpp", "recovery/tests/test_spot_all.py", "recovery/tests/spot_all_control.cpp", "recovery/tests/spot_all_control.h"],
+  "subjects": [{"address": 5988960, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"}],
+  "intent": "Replace the spot_all link-continuity placeholder and mechanical seed with complete source-owned sensing, terrain memory, contact history, wake policy, goals and presentation behavior through real vehicle, faction, base, map and climate-window owners.",
+  "evidence": [
+    "Pinned whole span5B6260..5B8AE2; native v8 private candidate7708a0f01552b136133d0f5ba1c2ff0c3c68357b0b1586e8a2e334ee7c3545ee compiles in actual veh.cpp at07522c5b, object9fc9261714f57ff0f765443156c50e1ba03ef120ede375348aa40d29f6a97664. Compilation alone is not behavior or acceptance.",
+    "Independent pinned review: own Base70F5 skips only Base history before common tile/stack73E1; center7858 uses contact visibility while expanded824E uses selected-source visibility. Target fallback76FB..7707 is contactLow || !sourceLow; selected-source7A69..7A7B uses sourceLow || !contactLow || triad2. Source/contact lock-bit and callback routes remain distinct.",
+    "Root caught and corrected presentation owner: native8A43 loads8E9F60,8A48 calls GraphicWin::redraw5D5A70; WorldClimateWorldWin is the real WorldWin at that address. No MapWinTable[0] receiver, null guard or on_redraw substitution. Terrain-memory and Base dirtiness use faction flags PFLAG_MAP_REVEALED separately from optical-path treaty gates.",
+    "Preserve full original identity/spans and all parsed seed findings through native source writer. Retire seed only after complete-body integration, actual-source host/damage controls, application compile/link, protected veh claims compared with explicit inherited failures, source integrity, claim continuity and reference checks. No new byte claim, automatic acceptance, strict relocation, linked preservation, full runtime or game proof authorized."
+  ]
+}
