@@ -1,5 +1,11 @@
 #include "stdafx.h"
 #include "multiwin.h"
+
+#include "netdaemon.h"
+#include "netmsg.h"
+#include "pulldown.h"
+#include "infowin.h"
+#include "reportif.h"
 #include "game.h"
 #include "console.h"
 #include "faction.h"
@@ -441,4 +447,245 @@ void MultiWin::hide() {
     on_update();
   }
   buffer_.close();
+}
+
+// Separate contact/display faction bits; provisional descriptive name.
+// Native click writers and535xxx/537xxx readers prove a DWORD, not its full lifecycle.
+// RECOVERY_OBJECT: v2 0x007FFF74 0x007FFF78 ?MultiWindowContactStatusMask@@3HA 0x00477F30
+int MultiWindowContactStatusMask;
+
+// ORIGINAL: 0x00477F30 ?on_left_click@MultiWin@@QAEXHH@Z 0x00477F30-0x00478148
+// RECOVERY_BINDING: v1 {"evidence": ["task:multiwin-contact-owner", "historical seed:src/recovered/units/00477f30.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:complete original mapped span and native call/branch order", "native:478500 subtracts item ID1; jump-table indices7..10 select items8renounce,9withdrawal,10contact,11chat; withdrawal arguments local then clicked", "source:existing typed subobjects, faction/player/parser/network and separate bounded contact-state storage; automatic PullDown/Buffer lifetime"], "reason": "Recover the complete original in its genuine MultiWin or diplomacy C++ owner, retaining identity, auxiliary spans and historical seed findings; no current match or runtime claim."}
+void MultiWin::on_left_click(int x, int y) {
+    ConsoleInfoWin.reset();
+    ConsoleStatusWin.reset();
+
+    int faction = -1;
+    int kind = -1;
+    if (spot_.check(x, y, &faction, &kind) < 0) return;
+
+    if (!is_alive(static_cast<uint32_t>(faction))) {
+        GenderDefault = Players[faction].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(0, Players[faction].title_leader, -1, -1);
+        GenderDefault = Players[faction].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(1, Players[faction].name_leader, -1, -1);
+        GenderDefault = Players[faction].noun_gender;
+        PluralityDefault = Players[faction].is_noun_plural;
+        parse_says(2, Players[faction].noun_faction, -1, -1);
+        NetMsgPrimary.pop("ELIMINATED", 5000, 0, 0);
+        return;
+    }
+
+    if (kind == 1) commlink_attempt(faction);
+    if (!IsMultiplayerNet) return;
+
+    if (kind == 2) {
+        ConsoleInfoWin.reset();
+        ConsoleStatusWin.reset();
+        if (faction == 0) {
+            ConsoleGlobal.time_controls();
+            return;
+        }
+        if (faction == 3) {
+            ConsoleGlobal.use_time_bonus();
+            return;
+        }
+    } else if (kind == 0) {
+        const uint32_t bit = 1u << faction;
+        if (MultiWindowContactStatusMask & bit) {
+            MultiWindowContactStatusMask &= ~bit;
+            NetDaemonNet.lock_state_[2].trailing_words_[6] |= bit;
+            draw(0);
+            return;
+        }
+        if (NetDaemonNet.lock_state_[2].trailing_words_[6] & bit) {
+            NetDaemonNet.lock_state_[2].trailing_words_[6] &= ~bit;
+            draw(0);
+            return;
+        }
+        MultiWindowContactStatusMask |= bit;
+        draw(0);
+    }
+}
+
+// ORIGINAL: 0x00478150 ?on_right_click@MultiWin@@QAEXHH@Z 0x00478150-0x004785FA;0x006563E0-0x006563F5
+// RECOVERY_BINDING: v1 {"evidence": ["task:multiwin-contact-owner", "historical seed:src/recovered/units/00478150.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:complete original mapped span and native call/branch order", "native:478500 subtracts item ID1; jump-table indices7..10 select items8renounce,9withdrawal,10contact,11chat; withdrawal arguments local then clicked", "source:existing typed subobjects, faction/player/parser/network and separate bounded contact-state storage; automatic PullDown/Buffer lifetime"], "reason": "Recover the complete original in its genuine MultiWin or diplomacy C++ owner, retaining identity, auxiliary spans and historical seed findings; no current match or runtime claim."}
+void MultiWin::on_right_click(int x, int y) {
+    PullDown menu;
+    int faction = -1;
+    int kind = -1;
+    if (spot_.check(x, y, &faction, &kind) < 0 || faction < 0 || kind != 1)
+        return;
+
+    Win::client_to_screen(&x, &y);
+    menu.init(0);
+
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0x9F0 / 4));
+    strcat(StringTemp, " ");
+    strcat(StringTemp, Players[faction].title_leader);
+    strcat(StringTemp, " ");
+    strcat(StringTemp, Players[faction].name_leader);
+    menu.add_item(1, StringTemp);
+    menu.add_item(2, label_get(0x9F4 / 4));
+
+    const unsigned int treaties =
+        PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[faction];
+    if (treaties & 7) {
+        menu.add_separator(0x63);
+        if (treaties & 1)
+            menu.add_item(8, label_get(0xE20 / 4));
+        else
+            menu.add_item(9, label_get(0xE24 / 4));
+    }
+
+    menu.add_separator(0x63);
+    menu.add_item(3, label_get(0x9F8 / 4));
+    if (IsMultiplayerNet) {
+        menu.add_separator(0x63);
+        menu.add_item(0xA, label_get(0x9FC / 4));
+        menu.add_item(0xB, label_get(0xA00 / 4));
+    }
+
+    menu.show(x, y, pop_expire);
+    if (GameState & 0x800) return;
+
+    const int selected = menu.get_selected();
+    if (selected >= 0x40) return;
+    const int action = menu.item_id(selected);
+    if (action < 0) return;
+
+    if (!is_alive(static_cast<uint32_t>(faction))) {
+        GenderDefault = Players[faction].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(0, Players[faction].title_leader, -1, -1);
+        GenderDefault = Players[faction].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(1, Players[faction].name_leader, -1, -1);
+        GenderDefault = Players[faction].noun_gender;
+        PluralityDefault = Players[faction].is_noun_plural;
+        parse_says(2, Players[faction].noun_faction, -1, -1);
+        NetMsgPrimary.pop("ELIMINATED", 5000, 0, 0);
+        return;
+    }
+
+    switch (action) {
+    case 1:
+        commlink_attempt(faction);
+        break;
+    case 2:
+        report_intel(faction);
+        break;
+    case 3:
+        call_council(ConsoleGlobal.faction_id_);
+        break;
+    case 8:
+        renounce_pact(ConsoleGlobal.faction_id_, faction);
+        break;
+    case 9:
+        demands_withdrawal(ConsoleGlobal.faction_id_, faction);
+        break;
+    case 10: {
+        const unsigned int bit = 1u << faction;
+        if (MultiWindowContactStatusMask & bit) {
+            MultiWindowContactStatusMask &= ~bit;
+            NetDaemonNet.lock_state_[2].trailing_words_[6] |= bit;
+            draw(0);
+        } else if (NetDaemonNet.lock_state_[2].trailing_words_[6] & bit) {
+            NetDaemonNet.lock_state_[2].trailing_words_[6] &= ~bit;
+            draw(0);
+        } else {
+            MultiWindowContactStatusMask |= bit;
+            draw(0);
+        }
+        break;
+    }
+    case 11:
+        ConsoleGlobal.chat(faction);
+        break;
+    default:
+        break;
+    }
+}
+
+// ORIGINAL: 0x00479F90 ?init@MultiWin@@QAEXXZ 0x00479F90-0x0047A429;0x0065641F-0x00656434
+// RECOVERY_BINDING: v1 {"evidence": ["task:multiwin-contact-owner", "historical seed:src/recovered/units/00479f90.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:complete original mapped span and native call/branch order", "native:478500 subtracts item ID1; jump-table indices7..10 select items8renounce,9withdrawal,10contact,11chat; withdrawal arguments local then clicked", "source:existing typed subobjects, faction/player/parser/network and separate bounded contact-state storage; automatic PullDown/Buffer lifetime"], "reason": "Recover the complete original in its genuine MultiWin or diplomacy C++ owner, retaining identity, auxiliary spans and historical seed findings; no current match or runtime claim."}
+void MultiWin::init() {
+    Buffer bitmap;
+    field_A4C_ = 0;
+    field_A50_ = 0;
+    field_A48_ = 0;
+
+    font1_.init(DefaultFontFace, 10, 0);
+    font2_.init(DefaultFontFace, 14, 1);
+    spot_.init(16);
+    bitmap.load_pcx("multi.pcx", 0, 10, 0xEC);
+
+    sprite3_.extract(&bitmap, WinFillColour, 1, 1, 0x8A, 6, 0);
+    sprite4_.extract(&bitmap, WinFillColour, 1, 8, 0x8A, 0x1C, 0);
+    sprite5_.extract(&bitmap, WinFillColour, 1, 0x25, 0x8A, 0x12, 0);
+    sprite7_.extract(&bitmap, WinFillColour, 1, 0x38, 0x8A, 0x18, 0);
+    sprite6_.extract(&bitmap, WinFillColour, 1, 0x51, 0x8A, 0x12, 0);
+
+    for (int i = 0; i < 3; ++i) {
+        const int y = 1 + i * 0x0F + (i == 1 ? 0x1E : 0);
+        sprites2_[i].extract(&bitmap, WinFillColour, 0x106, y, 0x0E, 0x0E, 0);
+    }
+    for (int sprite_index = 0; sprite_index < 3; ++sprite_index) {
+        sprites1_[sprite_index].extract(&bitmap, WinFillColour, 0x8C,
+                            1 + sprite_index * 0x13, 0x79, 0x12, 0);
+    }
+
+    int height = sprite5_.height() * 7 + sprite7_.height() + sprite3_.height();
+    if (IsMultiplayerNet) {
+        height += 0x0E + sprite7_.height() + sprite4_.height();
+    }
+    RECT bounds = {0, 0, 0x8A, height};
+    StatusFlags |= 0x40;
+    GraphicWin::init(&bounds, 0, 0x01000000, &MainInterfaceGlobal, 0, 0);
+    GraphicWin::fill(9);
+
+    const int button_height = sprites1_[0].height();
+    int top = height - (sprite7_.height() + button_height) / 2;
+    if (IsMultiplayerNet) {
+        flat_button2_.init(label_get(0x110), 0, 10, top,
+                           sprites1_[0].width(), button_height,
+                           static_cast<Win *>(this), 0);
+        flat_button2_.vslot_59();
+        flat_button2_.set_report_icons(&sprites1_[0], &sprites1_[1], &sprites1_[2]);
+        flat_button2_.set_slice_colours(0x65, 0x41, 0x41);
+        flat_button2_.redraw();
+        top -= sprite7_.height();
+    }
+    top -= sprite5_.height();
+
+    const int faction = ConsoleGlobal.faction_id_;
+    if (!ExpansionEnabled || !(Players[faction].rule_flags & RFLAG_ALIEN)) {
+        flat_button1_.init(label_get(0x1FA), 1, 10, top,
+                           sprites1_[0].width(), button_height,
+                           static_cast<Win *>(this), 0);
+        flat_button1_.vslot_59();
+        flat_button1_.set_report_icons(&sprites1_[0], &sprites1_[1], &sprites1_[2]);
+        flat_button1_.set_slice_colours(0x65, 0x41, 0x41);
+        flat_button1_.redraw();
+    }
+
+    int move_x;
+    int move_y;
+    if (WinScreenWidth == 800) {
+        move_y = dib_.bmiHeader.biHeight + 0x166;
+        move_x = 800 - dib_.bmiHeader.biWidth;
+    } else {
+        move_y = dib_.bmiHeader.biHeight - 0xFF + WinScreenHeight;
+        move_x = (WinScreenWidth + 0x400) / 2 - dib_.bmiHeader.biWidth;
+    }
+    Win::move(move_x, move_y);
+    field_A24_ = 0;
+    if (IsMultiplayerNet) Win::show(0);
+
+    g_MULTIWIN_WAVE.init(const_cast<char *>("fx\\mmenu.wav"), 4);
+    g_MULTIWIN_WAVE.set_pan(0x20);
+    g_MULTIWIN_WAVE.set_volume(0x28);
 }

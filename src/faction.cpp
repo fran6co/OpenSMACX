@@ -8747,6 +8747,166 @@ static int battle_plans_selected_region_distance_result(
     return 0;
 }
 
+// ORIGINAL: 0x00558C60 ?commlink_attempt@@YAXH@Z 0x00558C60-0x00558FB4
+// RECOVERY_BINDING: v1 {"evidence": ["task:multiwin-contact-owner", "historical seed:src/recovered/units/00558c60.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:complete original mapped span and native call/branch order", "native:478500 subtracts item ID1; jump-table indices7..10 select items8renounce,9withdrawal,10contact,11chat; withdrawal arguments local then clicked", "source:existing typed subobjects, faction/player/parser/network and separate bounded contact-state storage; automatic PullDown/Buffer lifetime"], "reason": "Recover the complete original in its genuine MultiWin or diplomacy C++ owner, retaining identity, auxiliary spans and historical seed findings; no current match or runtime claim."}
+void __cdecl commlink_attempt(int target_faction) {
+    const int local_faction = ConsoleGlobal.faction_id_;
+    if (local_faction == target_faction) return;
+
+    const uint32_t alive_mask = (LockEnableMask >> 8) & 0xFFu;
+    const uint32_t target_bit =
+        1u << (static_cast<uint32_t>(target_faction) & 31u);
+    if ((alive_mask & target_bit) == 0) return;
+
+    if (SunspotDuration > 0) {
+        NetMsgPrimary.pop("SUNSPOTSNO", 5000, 0, NULL);
+        return;
+    }
+
+    const int local_alien =
+        (Players[local_faction].rule_flags & RFLAG_ALIEN) != 0;
+    const int target_alien =
+        (Players[target_faction].rule_flags & RFLAG_ALIEN) != 0;
+    if (local_alien && target_alien) {
+        GenderDefault = Players[local_faction].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(1, Players[local_faction].title_leader, -1, -1);
+        GenderDefault = Players[local_faction].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(3, Players[local_faction].name_leader, -1, -1);
+        x_pops_minimal("ALIENHATRED2", FactionDiplomacyPortraits[target_faction],
+                       pop_wait);
+        return;
+    }
+
+    if (local_alien &&
+        !has_tech(0x4E, target_faction) && !has_tech(4, local_faction)) {
+        NetMsgPrimary.pop("WENEEDHUMANPSYCH", -5000, 0, "Alopdir.pcx");
+        return;
+    }
+
+    if (target_alien &&
+        !has_tech(0x4E, local_faction) && !has_tech(4, target_faction)) {
+        NetMsgPrimary.pop("WENEEDALIENPSYCH", -5000, 0, "talent_sm.pcx");
+        return;
+    }
+
+    if (commlink_attempter(local_faction, target_faction) != 0) return;
+
+    if (IsMultiplayerNet != 0) {
+        if ((LockEnableMask & target_bit) != 0) {
+            CommlinkPending = 1;
+            CommlinkFaction = target_faction;
+            message_data(0x1501, target_faction, local_faction, target_faction,
+                         0, 0);
+            GenderDefault = Players[target_faction].is_leader_female;
+            PluralityDefault = 0;
+            parse_says(0, Players[target_faction].title_leader, -1, -1);
+            GenderDefault = Players[target_faction].is_leader_female;
+            PluralityDefault = 0;
+            parse_says(1, Players[target_faction].name_leader, -1, -1);
+            parse_num(0, target_faction);
+            NetMsgPrimary.pop("DIPLOCOMM", 5000, 0, NULL);
+            return;
+        }
+
+        log_say(const_cast<char *>("Commlink open channel"),
+                local_faction, target_faction, 0);
+        if (NetDaemonNet.open_channel(local_faction, target_faction) != 0) {
+            GenderDefault = Players[target_faction].is_leader_female;
+            PluralityDefault = 0;
+            parse_says(0, Players[target_faction].title_leader, -1, -1);
+            GenderDefault = Players[target_faction].is_leader_female;
+            PluralityDefault = 0;
+            parse_says(1, Players[target_faction].name_leader, -1, -1);
+            NetMsgPrimary.pop("NOCHANNEL", 5000, 0, NULL);
+            return;
+        }
+    }
+
+    if (IsMultiplayerPBEM != 0 && (LockEnableMask & target_bit) != 0) {
+        diplo(local_faction, target_faction);
+        return;
+    }
+
+    communicate(local_faction, target_faction, 1);
+    if (IsMultiplayerNet == 0) {
+        treaty_on(local_faction, target_faction, 0x88000008);
+        return;
+    }
+
+    log_say(DiploLabelSendingTREATYON, local_faction, target_faction,
+            0x88000008);
+    message_data(0x2441, 0, local_faction, target_faction, 0x88000008, 0);
+    NetDaemonNet.await_diplo(0x441);
+}
+
+// ORIGINAL: 0x0053E5C0 ?renounce_pact@@YAXHH@Z 0x0053E5C0-0x0053E7F8
+// RECOVERY_BINDING: v1 {"evidence": ["task:multiwin-contact-owner", "historical seed:src/recovered/units/0053e5c0.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:complete original mapped span and native call/branch order", "native:478500 subtracts item ID1; jump-table indices7..10 select items8renounce,9withdrawal,10contact,11chat; withdrawal arguments local then clicked", "source:existing typed subobjects, faction/player/parser/network and separate bounded contact-state storage; automatic PullDown/Buffer lifetime"], "reason": "Recover the complete original in its genuine MultiWin or diplomacy C++ owner, retaining identity, auxiliary spans and historical seed findings; no current match or runtime claim."}
+void __cdecl renounce_pact(int faction_id, int faction_id_with) {
+    PopupDialogFactionID = faction_id_with;
+    if (commlink_attempter(faction_id, faction_id_with) != 0) return;
+
+    log_say(DiploLabelGettingDIPLOMATICLOCK, 0, 0, 0);
+    uint32_t timeout_start = timeGetTime();
+    int timeout_iterations = 0;
+    while (ExitTurnLoop == 0 && NetDaemonNet.add_global() != 0) {
+        check_spock();
+        const uint32_t now = timeGetTime();
+        const uint32_t elapsed = now - timeout_start;
+        int iteration_expired = 0;
+        if (elapsed < 10000u) {
+            timeout_iterations = diplo_add(timeout_iterations, 1);
+            iteration_expired = timeout_iterations >= 10000;
+        }
+        if (elapsed >= 10000u || iteration_expired) {
+            if (X_pop(DiploLabelNEEDGLOBAL, NULL) != 0) return;
+            timeout_start = timeGetTime();
+            timeout_iterations = 0;
+        }
+    }
+
+    PlayersData[faction_id].integrity_blemishes =
+        diplo_add(PlayersData[faction_id].integrity_blemishes, 1);
+
+    if (IsMultiplayerNet == 0) {
+        treaty_off(faction_id_with, faction_id, 1);
+    } else {
+        log_say(DiploLabelSendingTREATYOFF, faction_id_with, faction_id, 1);
+        message_data(0x2442, 0, faction_id_with, faction_id, 1, 0);
+        NetDaemonNet.await_diplo(0x442);
+    }
+
+    if (SunspotDuration <= 0 && !is_human(static_cast<uint32_t>(faction_id_with))) {
+        diplomacy_check(faction_id, faction_id_with, 0);
+        diplomacy_caption(faction_id, faction_id_with);
+
+        parse_says(0, get_pact(faction_id), -1, -1);
+
+        GenderDefault = Players[faction_id].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(1, Players[faction_id].title_leader, -1, -1);
+
+        GenderDefault = Players[faction_id].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(2, Players[faction_id].name_leader, -1, -1);
+
+        x_pops_minimal("BROKEPACT", FactionDiplomacyPortraits[faction_id_with],
+                       pop_wait);
+    }
+
+    if (IsMultiplayerNet == 0) {
+        pact_ends(faction_id, faction_id_with);
+    } else {
+        log_say(DiploLabelSendingPACTENDS, 0, 0, 0);
+        message_data(0x244D, 0, faction_id, faction_id_with, 0, 0);
+        NetDaemonNet.await_diplo(0x44D);
+    }
+
+    log_say(DiploLabelReleasingDIPLOMATICLOCK, 0, 0, 0);
+    NetDaemonNet.unlock();
+}
+
 // ORIGINAL: 0x0055D190 ?pact_treaty@@YAXHH@Z 0x0055D190-0x0055D293
 // RECOVERY_BINDING: v1 {"evidence": ["task:pact-ascent-owner", "pinned:0x0055D190 original complete span; Player59C fields and real NetMsgPrimary/ConsoleGlobal owners.", "pinned:68E62C PACTTREATY, ASCENT and asctran_sm.pcx text inputs; source literals, never original-image calls.", "pinned:525F08..52600E same turn_upkeep ascent path; plural0, leader gender and console-faction reload after parser; bit2000 unnamed, not PFLAG_MAP_REVEALED200.", "historical seed:src/recovered/units/0055d190.cpp complete mapping/findings retained.", "recovery/tests/test_pact_ascent.py actual-source callback/damage controls, not native layout or runtime acceptance."], "reason": "Recover the complete announcement/turn-flow function using real source-owned players, console, parser state and callbacks. Retain original identity/spans and seed findings; live faction reloads and grammar come from full pinned instructions. No byte or game acceptance claim."}
 void __cdecl pact_treaty(int faction_id, int faction_id_with) {
