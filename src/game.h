@@ -514,3 +514,5 @@ int __cdecl load_map_daemon(char *filename);
 int __cdecl load_map();
 int __cdecl load_game(int save_slot, int faction_id);
 void __cdecl show_credits();
+
+char *__cdecl get_pacts(int faction_id, int other_id);

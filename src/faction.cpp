@@ -52,6 +52,7 @@
 #include "reportif.h"
 #include "random.h"
 #include "replaywin.h"
+#include "datalink.h"
 
 void __cdecl draw_tile_fixup(int x, int y, int wider_radius, int redraw_flags);
 void __cdecl mon_killed_faction(int faction, int killed_faction);
@@ -8745,6 +8746,537 @@ static int battle_plans_selected_region_distance_result(
         return 2;
     }
     return 0;
+}
+
+// Provisional pact workflow gate; pinned signed-DWORD reads at544C7A..544C8E.
+// RECOVERY_OBJECT: v1 0x0093F7D0 ?DiplomacyProposalGateCount@@3HA
+int DiplomacyProposalGateCount = 0;
+
+static int propose_pact_signed_bits(uint32_t bits) {
+    return bits <= 0x7fffffffU ? static_cast<int>(bits) : -1 - static_cast<int>(~bits);
+}
+static int propose_pact_rank(int faction) {
+    return propose_pact_signed_bits(PlayersData[faction].ranking);
+}
+static bool propose_pact_ahead_refusal(int mode, int offer_tech, int energy,
+                                       int &cap, int turn) {
+    int doubled_cap = diplo_mul(cap, 2);
+    int five_turns = diplo_mul(turn, 5);
+    int comparison = doubled_cap > five_turns ? doubled_cap : five_turns;
+    int reserve_threshold = diplo_mul(comparison / 100, 50);
+    cap = reserve_threshold;
+    if (energy < reserve_threshold) {
+        return mode == 5 || offer_tech < 0;
+    }
+    return offer_tech < 0 && mode == 4;
+}
+
+// ORIGINAL: 0x00543BC0 ?propose_pact@@YAHHH@Z 0x00543BC0-0x00544E36
+// RECOVERY_BINDING: v1 {"evidence": ["task:propose-pact-owner", "Pinned543BC0..544E36: initial eligibility normalization, signed ranking/current base counts, ordinary array columns, cap staging and repeated adjustment, live callbacks, native popup labels and ordered network/help paths.", "Native93F7D0 is a signed four-byte workflow gate; source uses a provisional role name and pinned initial zero, with no claim of semantic completeness for its other producers."], "reason": "Recover the complete faction-owned pact proposal using genuine faction records, parser state, typed services and source-owned gate storage. Retained TRIED text describes the superseded seed approximation, not this implementation. No byte or game acceptance claim."}
+// TRIED: no Popup/SEH here (free AI-heuristic function, not a UI handler) - the difficulty is a long chain of inc/dec on a score accumulator plus several reciprocal-multiplication constant-divide idioms, transcribed with plain `/` and `%` (semantically equivalent, not byte-identical). Two known simplifications, both commented in place: (1) the original unconditionally zeroes its score accumulator midway through (0x544408 `mov [ebp+0xc],ecx`) before re-deriving a fresh propose/decline decision from separate flags - this body keeps accumulating instead of discarding, to keep the later score-gated branches meaningful; (2) the "generosity cap" energy-gift arithmetic in the L54436D block approximates the original's fixed-point chain rather than reproducing it exactly. sim 0.28-0.58 across flag sets.
+int __cdecl propose_pact(int myFac, int otherFac) {
+
+    int score;
+    {
+        int t = DiploScratchFA54;
+        int base = diplo_add(DiploScratchF7E0, t);
+        PopupDialogFactionID = otherFac;
+        score = t != 0 ? diplo_add(base, 1) : base;
+    }
+    int threshold = DiploScratchF7E8 != 0 ? DiploScratchF7E8 : DiploScratchFA8C;
+    bool techGapFlag = false; // [ebp-0x14]
+
+    int designated = RankingFactionIDUnk1;
+    if (IsMultiplayerNet != 0) {
+        int desigTarget = RankingFactionIDUnk2;
+        if (myFac == designated) {
+            if (propose_pact_rank(desigTarget) < 6 ||
+                diplo_mul(2, FactionRankingsUnk[myFac]) >
+                    diplo_mul(3, FactionRankingsUnk[desigTarget])) {
+                score = diplo_add(score, 1);
+            }
+        }
+        if (myFac == desigTarget) {
+            if (propose_pact_rank(myFac) < 6 ||
+                diplo_mul(2, FactionRankingsUnk[FactionRankings[7]]) >
+                    diplo_mul(3, FactionRankingsUnk[myFac])) {
+                score = diplo_sub(score, 1);
+            }
+        }
+    }
+
+    {
+        unsigned int flags = GameRules;
+        if ((flags & 0x40) != 0 && myFac == designated) score = diplo_add(score, 1);
+        // Native tests CH bit 0x10 while EAX still contains flags & 0x40.
+        if ((flags & 0x1000) != 0 && (flags & 0x40) == 0) score = diplo_sub(score, 1);
+    }
+
+    // Native 0x543CCD tests the source faction's PlayerData.flags field.
+    if ((PlayersData[otherFac].flags & 0x400000u) != 0) {
+        score = diplo_sub(score, 1);
+    }
+
+    if (propose_pact_rank(myFac) >= 6 && DiploScratchF7F0 == 0 &&
+        propose_pact_rank(otherFac) >= (propose_pact_rank(myFac) == 7 ? 5 : 6)) {
+        score = diplo_add(score, 1);
+        {
+            int thresh = (IsMultiplayerNet != 0) ? 50 : 100;
+            if (TurnCurrentNum >= thresh) score = diplo_add(score, 1);
+        }
+        if (DiploScratchF7FC != 0) score = diplo_add(score, 1);
+    } else if (propose_pact_rank(myFac) >= 6 && propose_pact_rank(otherFac) >= 4 && TurnCurrentNum >= 0x32 &&
+        DiploScratchF7F0 == 0) {
+        if (DiploScratchF7FC != 0) {
+            score = diplo_add(score, 2);
+        } else if (DiploScratchFA54 == 0) {
+            score = diplo_sub(score, 1);
+        }
+    } else if (DiploScratchF7FC != 0) {
+        score = diplo_add(score, 1);
+    }
+    if (threshold != 0) {
+        score = diplo_sub(score, 1);
+        if (great_satan(threshold, 0) != 0) score = diplo_sub(score, 1);
+        if (propose_pact_rank(threshold) > propose_pact_rank(otherFac)) score = diplo_sub(score, 1);
+    if ((PlayersData[otherFac].diplo_treaties[threshold] & 0x8000) != 0) {
+        int techGapOther = PlayersData[otherFac].mil_strength_1;
+        int techGapThreshold = PlayersData[threshold].mil_strength_1;
+        if (techGapOther < techGapThreshold) {
+            techGapFlag = true;
+            int mid = diplo_add(techGapOther / 2, techGapThreshold);
+            score = diplo_sub(score, mid / diplo_add(techGapOther, 1));
+        }
+    }
+    }
+
+    if (DiploFriction >= 10 && DiplomacyProposalMode != 3) {
+        score = diplo_add(score, diplo_sub(DiploFriction, 10));
+    }
+
+    if (PlayersData[myFac].global_reputation >= 2) {
+        if (DiploScratchFA78 == 0) score = diplo_sub(score, 1);
+    } else {
+        score = diplo_add(score, 1);
+    }
+
+    {
+        int myBases = propose_pact_signed_bits(PlayersData[myFac].current_num_bases);
+        int otherBases = propose_pact_signed_bits(PlayersData[otherFac].current_num_bases);
+        if (otherBases < diplo_add(myBases, 1)) score = diplo_add(score, 1);
+        if (otherBases > myBases) score = diplo_sub(score, 1);
+    }
+
+    if (IsMultiplayerNet == 0 &&
+        strcmp("HIVE", Players[otherFac].name_leader) == 0) {
+        score = diplo_sub(score, 1);
+    }
+
+    if (DiploScratchFA98 != 0) score = diplo_sub(score, 1);
+    if (DiploScratchFA68 != 0) score = diplo_add(score, 1);
+    if (DiploScratchFA3C != 0) score = diplo_add(score, 1);
+
+    if (propose_pact_rank(otherFac) > propose_pact_rank(myFac)) {
+        if (propose_pact_rank(otherFac) == 7) score = diplo_add(score, 2);
+        if (propose_pact_rank(otherFac) == 6) score = diplo_add(score, 1);
+        if (propose_pact_rank(myFac) <= 4) score = diplo_sub(score, 1);
+    } else {
+        if (propose_pact_rank(myFac) == 7) score = diplo_add(score, DiploScratchFA54);
+        if (diplo_sub(propose_pact_rank(myFac), propose_pact_rank(otherFac)) >= 3) score = diplo_sub(score, 1);
+        if (great_satan(myFac, 0) != 0) score = diplo_add(score, 1);
+    }
+
+    bool wantHelp = false; // [ebp-0x18]-style flag, set by several checks below
+    if (propose_pact_rank(myFac) <= 5 && propose_pact_rank(otherFac) <= 5) {
+        score = diplo_sub(score, 1);
+    }
+    {
+        const int difficulty = PlayersData[myFac].diff_level;
+        const int limit = (difficulty != 0 ? 0 : 2) + ((GameRules >> 12) & 1) +
+                          (techGapFlag ? 2 : 0) + 2;
+        const bool eligible = !(DiploScratchFA9C <= score && difficulty != 0) &&
+            (static_cast<uint32_t>(PlayersData[myFac].diplo_agenda[otherFac]) & 0x2000) == 0 &&
+            DiploScratchFA78 <= limit &&
+            (PlayersData[otherFac].diplo_treaties[myFac] & 0x20) == 0 &&
+            DiploScratchFA70 == 0;
+        score = eligible ? 1 : 0;
+    }
+    bool immediateAccept = false; // native local [ebp-0x10]
+    bool acceptedOffer = false;   // native local [ebp-0x1c]
+    diplomacy_caption(myFac, otherFac);
+    parse_says(0, get_pact(myFac), -1, -1);
+    {
+        PluralityDefault = 0;
+        GenderDefault = Players[myFac].is_leader_female;
+        parse_says(1, Players[myFac].title_leader, -1, -1);
+        GenderDefault = Players[myFac].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(2, Players[myFac].name_leader, -1, -1);
+    }
+
+    if (DiplomacyProposalMode == 3) {
+        if (DiploScratchFA24 != 0) {
+            if (IsMultiplayerNet != 0) {
+                log_say("Sending SET TREATY", otherFac, myFac, 0x2000000);
+                message_data(0x2443, 0, otherFac, myFac, 0x2000000, 1);
+            } else {
+                set_treaty(otherFac, myFac, 0x2000000, 1);
+            }
+            pact_of_brotherhood(myFac, otherFac);
+            return 1;
+        }
+    }
+    if (DiplomacyProposalMode != 3 && score != 0) {
+        goto consider_gift;
+    }
+
+    {
+    const int refusalFA78 = DiploScratchFA78;
+    const int refusalFA2C = DiploScratchFA2C;
+    if ((refusalFA78 > 2 || refusalFA2C != 0) &&
+        (DiploScratchFA98 != 0 || DiploFriction <= 2) &&
+        (static_cast<unsigned int>(static_cast<int>(PlayersData[otherFac].diplo_treaties[myFac])) &
+         0x20) == 0) {
+        x_pops_short("REJPACTMEEK", 0x100000, FactionDiplomacyPortraits[otherFac],
+               pop_wait);
+        return 1;
+    }
+
+    if (DiplomacyProposalMode == 3) return 0;
+
+    if ((PlayersData[otherFac].diplo_treaties[myFac] & 0x20) != 0 ||
+        refusalFA78 > 2 || refusalFA2C != 0) {
+        parse_says(3, get_phrase(myFac, 5), -1, -1);
+        x_pops_short("REJPACTHATE", 0x100000, FactionDiplomacyPortraits[otherFac], pop_wait);
+        PlayersData[otherFac].diplo_patience[myFac] =
+            static_cast<char>(static_cast<unsigned char>(PlayersData[otherFac].diplo_patience[myFac]) + 1);
+        return 1;
+    }
+
+    if (great_satan(myFac, 0) == 0 && DiploScratchFA3C == 0) {
+        if (propose_pact_rank(otherFac) <= propose_pact_rank(myFac) && DiploFriction <= 10) {
+            parse_says(3, get_noun_phrase(otherFac, 9), -1, -1);
+            x_pops_short("REJPACT", 0x100000, FactionDiplomacyPortraits[otherFac],
+                   pop_wait);
+            return 1;
+        }
+        parse_says(3, get_noun_phrase(otherFac, 9), -1, -1);
+        x_pops_short("REJPACTPOWER", 0x100000, FactionDiplomacyPortraits[otherFac],
+               pop_wait);
+        return 1;
+    }
+    {
+        parse_says(3, get_phrase(myFac, 3), -1, -1);
+        StringTemp[0] = 0;
+        strcat(StringTemp, "REJPACTAHEAD");
+        unsigned int r = random(0, 2);
+        char buf[0x20];
+        _itoa(r, buf, 10);
+        strcat(StringTemp, buf);
+        x_pops_short(StringTemp, 0x100000, FactionDiplomacyPortraits[otherFac],
+               pop_wait);
+        return 1;
+    }
+
+    }
+consider_gift:
+    // "great pact" path (score confirmed nonzero above): offer either a tech
+    // trade or an energy gift depending on the computed generosity `cap`,
+    // then settle the pact. Keep native signed-DWORD wrapping before each
+    // divide and preserve its staged truncation order.
+    {
+        int energySnapshot = PlayersData[myFac].energy_reserves;
+        const int savedOtherBases = propose_pact_signed_bits(PlayersData[otherFac].current_num_bases);
+        int cap_numerator_delta = diplo_add(
+            diplo_sub(propose_pact_signed_bits(PlayersData[myFac].current_num_bases),
+                      savedOtherBases),
+            DiploScratchFA78);
+        int cap_numerator = diplo_add(energySnapshot,
+                                     diplo_mul(50, cap_numerator_delta));
+        cap_numerator = diplo_mul(cap_numerator, PlayersData[otherFac].mil_strength_1);
+        int cap_denominator = diplo_add(
+            diplo_add(PlayersData[otherFac].mil_strength_1,
+                      PlayersData[myFac].mil_strength_1), 1);
+        int cap = diplo_mul(cap_numerator / cap_denominator / 100, 50);
+        if (DiplomacyProposalMode != 5 && cap != 0) {
+            while (cap > energySnapshot) {
+                cap = diplo_sub(cap, 50);
+                if (cap < 0) { cap = 0; break; }
+                if (cap > 0x1869f) cap = 0x1869f;
+                if (cap == 0) break;
+            }
+        }
+
+        // Native 0x544408 clears the caller-slot score only after computing
+        // and adjusting the cap, then derives the fresh 0/1 decision.
+        score = 0;
+        wantHelp = false;
+        if (!techGapFlag &&
+            (DiploFriction > 10 ||
+             (DiploFriction > 4 &&
+              propose_pact_signed_bits(PlayersData[myFac].current_num_bases) >= savedOtherBases) ||
+             (DiploScratchFA78 != 0 &&
+              DiploScratchFA78 >
+                  diplo_sub(savedOtherBases,
+                            propose_pact_signed_bits(PlayersData[myFac].current_num_bases))))) {
+            score = 1;
+        }
+        if (DiplomacyProposalMode == 4 || DiplomacyProposalMode == 5) wantHelp = true;
+        if (DiplomacyProposalMode == 2) {
+            if (!techGapFlag && DiploScratchF7E8 == 0 &&
+                (DiploScratchFAA8 >= 0 || cap != 0)) {
+                wantHelp = true;
+            }
+            if (DiploScratchFAA8 < 0 && cap == 0) score = 0;
+        }
+
+        if (great_satan(myFac, 0) != 0) goto consider_ahead_refusal;
+        if (DiploScratchFA54 > 1) goto consider_ahead_refusal;
+        if (IsMultiplayerNet != 0 && static_cast<uint32_t>(myFac) == RankingFactionIDUnk1 &&
+            (DiploScratchFA54 != 0 ||
+             propose_pact_rank(otherFac) > propose_pact_rank(RankingFactionIDUnk2))) {
+            goto consider_ahead_refusal;
+        }
+
+        DiploScratchFA18 = -1;
+
+        // Native 0x544521..0x544668 gates the technology proposal against
+        // the greater of twice the adjusted gift and five current turns.
+        // Its reciprocal multiply is signed division by 100, then a wrapped
+        // multiply by 50. Preserve its no-dialog early exit before either
+        // the tech or energy offer can invoke a callback.
+    consider_technology:
+        // Exceptional route rejoins at 544521, AFTER ordinary FA18 clearing.
+        if (score == 0 && !wantHelp) goto request_help;
+        if (DiploScratchFAA8 >= 0 &&
+            strcmp("BELIEVE", Players[otherFac].name_leader) != 0 &&
+            (strcmp("MORGAN", Players[otherFac].name_leader) != 0 || cap == 0 ||
+             PlayersData[myFac].energy_reserves < cap) &&
+            (DiplomacyProposalMode == 4 || (DiplomacyProposalMode == 1 && DiploFriction < 4) || DiplomacyProposalMode == 2)) {
+        if (DiplomacyProposalMode == 4 || DiplomacyProposalMode == 2 ||
+            (DiplomacyProposalMode == 1 && DiploFriction < 4)) {
+            immediateAccept = true;
+        }
+        request_technology:
+            {
+                GenderDefault = Players[otherFac].is_leader_female;
+                PluralityDefault = 0;
+                parse_says(1, Players[otherFac].title_leader, -1, -1);
+                StringTemp[0] = 0;
+                say_tech(StringTemp, DiploScratchFAA8, 1);
+                parse_says(2, StringTemp, -1, -1);
+                parse_says(3, get_noun_phrase(otherFac, 9), -1, -1);
+
+                if (DiploScratchFA18 >= 0) {
+                    StringTemp[0] = 0;
+                    say_tech(StringTemp, DiploScratchFA18, 1);
+                }
+                StringTemp[0] = 0;
+                strcat(StringTemp, "GIMMETECH");
+                int pick = (DiploScratchFA18 >= 0) ? 2 : (int)random(0, 2);
+                char buf[0x20];
+                _itoa(pick, buf, 10);
+                strcat(StringTemp, buf);
+
+                int result = x_pops_short(StringTemp, 0x100000,
+                                     FactionDiplomacyPortraits[otherFac],
+                                     pop_wait);
+                if (result > 1) {
+                    help_topic(0xe, DiploScratchFAA8);
+                    goto request_technology;
+                }
+                if (result != 0) {
+                    acceptedOffer = true;
+                    // Native snapshots FAA8 before logging or applying it.
+                    const int acceptedTech = DiploScratchFAA8;
+                    if (IsMultiplayerNet != 0) {
+                        log_say("Sending TECH", otherFac, acceptedTech, myFac);
+                        message_data(0x244b, 0, otherFac, acceptedTech, myFac, 0);
+                        NetDaemonNet.await_diplo(0x44b);
+                    } else {
+                        tech_achieved(otherFac, acceptedTech, myFac, 0);
+                    }
+                    if (DiploScratchFA18 >= 0) {
+                        int t2 = DiploScratchFA18;
+                        if (IsMultiplayerNet != 0) {
+                            log_say("Sending TECH", otherFac, t2, myFac);
+                            message_data(0x244b, 0, otherFac, t2, myFac, 0);
+                            NetDaemonNet.await_diplo(0x44b);
+                        } else {
+                            tech_achieved(otherFac, t2, myFac, 0);
+                        }
+                    }
+                    int value = tech_val(DiploScratchFAA8, otherFac, 1);
+                    int delta = diplo_sub(0, value / 2);
+                    int newVal = diplo_add(
+                        propose_pact_signed_bits(PlayersData[otherFac].diplo_friction[myFac]), delta);
+                    if (newVal < 0) newVal = 0;
+                    if (newVal > 0x14) newVal = 0x14;
+                    PlayersData[otherFac].diplo_friction[myFac] = static_cast<uint32_t>(newVal);
+                    if (DiploFrictionFactionID == static_cast<uint32_t>(otherFac) &&
+                        DiploFrictionFactionIDWith == static_cast<uint32_t>(myFac)) {
+                        DiploFriction = diplo_add(DiploFriction, delta);
+                    }
+                    diplomacy_caption(myFac, otherFac);
+                    DiploScratchFA18 = -1;
+                    DiploScratchFAA8 = -1;
+                }
+            }
+        }
+
+        goto consider_energy;
+
+    consider_ahead_refusal:
+        if (propose_pact_ahead_refusal(
+                DiplomacyProposalMode, DiploScratchFA18,
+                PlayersData[myFac].energy_reserves, cap, TurnCurrentNum)) {
+            parse_says(3, get_noun_phrase(otherFac, 9), -1, -1);
+            x_pops_short("REJPACT", 0x100000,
+                         FactionDiplomacyPortraits[otherFac], pop_wait);
+            return 1;
+        }
+        goto consider_technology;
+
+    consider_energy:
+        if ((score != 0 || wantHelp) && cap != 0 && PlayersData[myFac].energy_reserves >= cap &&
+            !immediateAccept &&
+            strcmp("PEACE", Players[otherFac].name_leader) != 0 &&
+            (DiplomacyProposalMode == 5 || (DiplomacyProposalMode == 1 && DiploFriction < 4) || DiplomacyProposalMode == 2)) {
+            immediateAccept = true;
+            parse_num(cap, 0);
+            {
+                GenderDefault = Players[otherFac].is_leader_female;
+                PluralityDefault = 0;
+                parse_says(1, Players[otherFac].title_leader, -1, -1);
+            }
+            StringTemp[0] = 0;
+            strcat(StringTemp, "GIMMEENERGY");
+            {
+                unsigned int r = random(0, 2);
+                char buf[0x20];
+                _itoa(r, buf, 10);
+                strcat(StringTemp, buf);
+            }
+            int result = x_pops_short(StringTemp, 0x100000,
+                                 FactionDiplomacyPortraits[otherFac],
+                                 pop_wait);
+            if (result != 0) {
+                acceptedOffer = true;
+                if (IsMultiplayerNet != 0) {
+                    log_say("Sending ENERGY", myFac, otherFac, -cap);
+                    message_data(0x2447, 0, myFac, diplo_sub(0, cap), otherFac, cap);
+                    NetDaemonNet.await_diplo(0x447);
+                } else {
+                    if (myFac != 0) PlayersData[myFac].energy_reserves = diplo_sub(PlayersData[myFac].energy_reserves, cap);
+                    if (otherFac != 0) PlayersData[otherFac].energy_reserves = diplo_add(PlayersData[otherFac].energy_reserves, cap);
+                    ConsoleGlobal.update_data(1);
+                }
+                int remaining = cap / 5;
+                int sum = 0;
+                int chunk = 10;
+                int divisor = 2;
+                while (remaining > 0) {
+                    sum = diplo_add(sum, (remaining < chunk ? remaining : chunk) / divisor);
+                    remaining = diplo_sub(remaining, chunk);
+                    chunk = 20;
+                    divisor = diplo_add(divisor, 1);
+                }
+                int delta2 = diplo_sub(0, diplo_add(sum, 4) / 5);
+                wantHelp = false;
+                int adj = diplo_add(propose_pact_signed_bits(PlayersData[otherFac].diplo_friction[myFac]), delta2);
+                if (adj < 0) adj = 0;
+                if (adj > 0x14) adj = 0x14;
+                PlayersData[otherFac].diplo_friction[myFac] = static_cast<uint32_t>(adj);
+                if (DiploFrictionFactionID == static_cast<uint32_t>(otherFac) &&
+                    DiploFrictionFactionIDWith == static_cast<uint32_t>(myFac)) {
+                    DiploFriction = diplo_add(DiploFriction, delta2);
+                }
+                ConsoleInfoWin.set_redraw_phase(0);
+                ConsoleGlobal.update_data(0);
+                diplomacy_caption(myFac, otherFac);
+            }
+        }
+
+        if (score != 0 || immediateAccept) {
+            if (acceptedOffer) goto request_help;
+            if (immediateAccept) {
+                x_pops_short("REJPACTNOBRIBE", 0x100000,
+                             FactionDiplomacyPortraits[otherFac], pop_wait);
+                return 1;
+            }
+            if (DiplomacyProposalMode == 3) return 0;
+            x_pops_short("REJPACTBADBRIBE", 0x100000,
+                         FactionDiplomacyPortraits[otherFac], pop_wait);
+            return 1;
+        }
+
+    request_help:
+        if (threshold != 0 && DiploScratchFA8C == 0) {
+            GenderDefault = Players[myFac].is_leader_female;
+            PluralityDefault = 0;
+            parse_says(5, Players[myFac].title_leader, -1, -1);
+            {
+                GenderDefault = Players[threshold].noun_gender;
+                PluralityDefault = Players[threshold].is_noun_plural;
+                parse_says(6, Players[threshold].noun_faction, -1, -1);
+            }
+            int result = x_pops_short("GIMMEHELP", 0x100000,
+                                 FactionDiplomacyPortraits[otherFac],
+                                 pop_wait);
+            if (result == 0) {
+                if (!techGapFlag &&
+                    (FactionRankings[7] != static_cast<uint32_t>(myFac) || DiplomacyProposalGateCount < 0) &&
+                    DiploScratchFA78 <= 2 && DiplomacyProposalGateCount <= 0) goto complete_pact;
+                PlayersData[otherFac].diplo_patience[myFac] =
+                    static_cast<char>(static_cast<unsigned char>(PlayersData[otherFac].diplo_patience[myFac]) + 1);
+                if (acceptedOffer) goto complete_pact;
+
+                parse_says(2, get_pacts(myFac, otherFac), -1, -1);
+                x_pops_short("REJPACTNOHELP", 0x100000,
+                       FactionDiplomacyPortraits[otherFac],
+                       pop_wait);
+                return 1;
+            }
+
+            log_say("Getting DIPLOMATIC LOCK", 0, 0, 0);
+            {
+                DWORD (WINAPI *const read_clock)() = timeGetTime;
+                read_clock();
+                while (ExitTurnLoop == 0 && NetDaemonNet.add_global() != 0) {
+                    check_spock();
+                    read_clock();
+                }
+            }
+
+            if (IsMultiplayerNet != 0) {
+                log_say("Sending DOUBLE CROSS", myFac, threshold, otherFac);
+                message_data(0x2440, 0, myFac, threshold, otherFac, 0);
+            } else {
+                double_cross(myFac, threshold, otherFac);
+            }
+            if (IsMultiplayerNet != 0) {
+                log_say("Sending TREATY OFF", myFac, otherFac, 0x800000);
+                message_data(0x2442, 0, myFac, otherFac, 0x800000, 0);
+            } else {
+                treaty_off(myFac, otherFac, 0x800000);
+            }
+            if (IsMultiplayerNet != 0) {
+                log_say("Sending SET TREATY", otherFac, threshold, 0x40);
+                message_data(0x2443, 0, otherFac, threshold, 0x40, 1);
+                NetDaemonNet.await_diplo(0x443);
+            } else {
+                set_treaty(otherFac, threshold, 0x40, 1);
+            }
+            log_say("Releasing DIPLOMATIC LOCK", 0, 0, 0);
+            NetDaemonNet.unlock();
+            DiploScratchF7E8 = 0;
+            DiploScratchFA4C = 0;
+        }
+
+    complete_pact:
+        pact_of_brotherhood(myFac, otherFac);
+        return 1;
+    }
 }
 
 // ORIGINAL: 0x00558C60 ?commlink_attempt@@YAXH@Z 0x00558C60-0x00558FB4

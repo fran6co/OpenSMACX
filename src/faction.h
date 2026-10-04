@@ -1140,3 +1140,5 @@ void __cdecl pact_treaty(int faction_id, int faction_id_with);
 // Original channel-opening and directed pact-renunciation owners.
 void __cdecl commlink_attempt(int target_faction);
 void __cdecl renounce_pact(int faction_id, int faction_id_with);
+
+int __cdecl propose_pact(int faction_id, int faction_id_with);
