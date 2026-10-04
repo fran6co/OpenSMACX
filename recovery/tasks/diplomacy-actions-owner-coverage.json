@@ -1,0 +1,87 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "46156cbc9f9e135e521779a6c78dd2b5f3042be9",
+  "editable_files": [
+    "src/faction.cpp",
+    "src/faction.h",
+    "src/unrecovered/005401a0.cpp",
+    "src/unrecovered/00540630.cpp",
+    "src/unrecovered/00541100.cpp",
+    "src/unrecovered/00544e40.cpp",
+    "src/unrecovered/00547c10.cpp",
+    "src/unrecovered/00549930.cpp",
+    "src/unrecovered/0054bec0.cpp",
+    "src/unrecovered/0054c560.cpp",
+    "src/unrecovered/0054d410.cpp",
+    "src/unrecovered/0054dcf0.cpp",
+    "src/unrecovered/0054f420.cpp",
+    "recovery/tests/test_diplomacy_actions_coverage.py"
+  ],
+  "evidence": [
+    "Current source and seed inventory identifies eleven ordinary game-function identities without product mappings. They form the existing faction diplomacy action/proposal flow; span and catalogue identity come from native source records, not adjacency alone.",
+    "Seed TRIED findings record approximate rejection/scoring logic, missing helper signatures and manual Popup/SpriteBox scratch lifetimes. Preserve those findings and resolve arguments/branches against pinned original instructions; do not promote seed lexical IMPLEMENTED state to behavior proof.",
+    "User decision2026-10-04 authorizes coverage-first matching regressions. Genuine typed state, class lifetimes and callable implementations must still build/link. All original claims/spans/discoveries survive seed transfer; never bank byte claims from approximation or remove seeds before complete obligation transfer. No automatic/full-game acceptance asserted.",
+    "Three read-only proposal agents analyze disjoint function subsets in ignored caches; coordinator alone edits product source and task scope. Other-owner dependencies require explicit follow-up scope, not new raw aliases or invented helpers. Communicate54FFD0 and placeholder propose_attack545E80 remain distinct pending owners, not completed work."
+  ],
+  "intent": "Recover eleven coupled trade, treaty, gift, conflict and proposal functions as genuine faction diplomacy C++ with real modal lifetimes and typed shared state; prioritize compiling coverage over byte matching, retain all original obligations and uncertain seed discoveries.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5505440,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5506608,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5509376,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5525056,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5536784,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5544240,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5553856,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5555552,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5559312,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5561584,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5567520,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "diplomacy-actions-owner-coverage"
+}
