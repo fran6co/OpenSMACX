@@ -1,0 +1,56 @@
+{
+  "event_id": "2d8234d7858b812e4a4343bbeb5eb957ce18a4509134254ec3c89b30b9531733",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/basepop.cpp",
+      "src/win.h"
+    ],
+    "evidence": [
+      "Pinned constructor-installed Popup6695C8 slots90-96 include dimensions404B10 and background405C80 at669730/669748; BasePop6698D4 has corresponding callbacks603800,404280,404280,404280,406B20,406840,406B30. Genuine BasePop virtual declarations in native order and typed dispatch in exec/dimensions/redraw are required; catalogueQAE names do not prove nonvirtualness. Preserve all existing bodies and claims, obtain emitted symbols from fresh COFF, and review regression/build/link before checkpoint."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6301184,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6305792,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6310576,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4214512,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4214816,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4214864,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4217104,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "popup-real-virtual-callbacks-20261004",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:popup-dimensions-background-owner"
+}
