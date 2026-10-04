@@ -422,3 +422,39 @@ struct NameTable {
 
 static_assert(sizeof(NameTableEntry) == 0x110, "Original name entry footprint");
 static_assert(sizeof(NameTable) == 0x218, "Original name table footprint");
+
+// Provisional path-string owner, distinct from NameTable and StringStruct.
+// Native lifetime callers remain unproved; initialize/close are explicit
+// operations, and close deliberately does not reclaim directory storage.
+struct PathRecord {
+    // 0x004C8150 initializes this layout and returns this. The available
+    // caller evidence does not establish constructor-only use.
+    PathRecord *initialize();
+    void close();
+    void set_directory(char *directory);
+    void set_path(char *path);
+    void set_name(char *name);
+
+    // RECOVERY_MEMBER: v1 PathRecord unknown_00_ 0x0 0x004C8150
+    int unknown_00_;
+    // RECOVERY_MEMBER: v1 PathRecord unknown_04_ 0x4 0x004C8150
+    unsigned int unknown_04_;
+    // RECOVERY_MEMBER: v1 PathRecord unknown_08_ 0x8 0x004C8150
+    int unknown_08_;
+    // RECOVERY_MEMBER: v1 PathRecord unknown_0C_ 0xC 0x004C8150
+    int unknown_0C_;
+    // RECOVERY_MEMBER: v1 PathRecord unknown_10_ 0x10 0x004C8150
+    int unknown_10_;
+    // RECOVERY_MEMBER: v1 PathRecord unknown_14_ 0x14 0x004C8150
+    int unknown_14_;
+    // RECOVERY_MEMBER: v1 PathRecord unknown_18_ 0x18 0x004C8150
+    int unknown_18_;
+    // RECOVERY_MEMBER: v1 PathRecord path_ 0x1C 0x004C8290
+    char *path_;
+    // RECOVERY_MEMBER: v1 PathRecord directory_ 0x20 0x004C81C0
+    char *directory_;
+    // RECOVERY_MEMBER: v1 PathRecord name_ 0x24 0x004C83A0
+    char *name_;
+};
+
+static_assert(sizeof(PathRecord) == 0x28, "Original path record footprint");

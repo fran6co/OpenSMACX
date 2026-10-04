@@ -558,88 +558,7 @@ extern "C" void __cdecl sub_4d5f70(int parallel_base, int *values, int count) {
     } while (swapped != 0);
 }
 
-/*
-Purpose: Install a search path's plain half: release the previous string,
-         then store a fresh copy of the given path (or, when one is already
-         present in the directory half, that directory with the argument's
-         basename appended).
-// ORIGINAL: 0x004C8290 sub_4c8290 0x004C8290-0x004C8348 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["Original4C8290..4C8348; retired seed git:b18d3ac8:src/unrecovered/004c8290.cpp records the same identity and spans.", "The receiver's two heap strings live at +0x1C/+0x20 exactly as the sibling installer 0x004C81C0 reads them; the callees are the CRT strcpy/strcat/strlen/strrchr plus operator new/delete, all spelled here as genuine C++ expressions."], "reason": "Coverage transcription of the path-half installer with the thiscall receiver spelled as an explicit first argument; no in-tree class owns the receiver yet, so the two string slots stay documented offsets."}
-// symbol    @sub_4c8290@8
-Status: Coverage transcription - unclaimed body
-*/
-extern "C" void __fastcall sub_4c8290(char *self, char *path) {
-    char **plain = reinterpret_cast<char **>(self + 0x1C);
-    if (*plain != 0) {
-        ::operator delete(*plain);
-    }
-    *plain = 0;
 
-    if (path != 0) {
-        char buf[256];
-        char *const directory = *reinterpret_cast<char **>(self + 0x20);
-        if (directory != 0) {
-            strcpy(buf, directory);
-            char *slash = strrchr(path, '\\');
-            if (slash != 0) {
-                strcat(buf, slash + 1);
-            } else {
-                strcat(buf, path);
-            }
-        } else {
-            strcpy(buf, path);
-        }
-        const unsigned int len = strlen(buf);
-        char *fresh = static_cast<char *>(::operator new(len + 1));
-        *plain = fresh;
-        strcpy(fresh, buf);
-    }
-}
-
-/*
-Purpose: Install a search path's directory half: release the previous
-         directory string, store the given directory with a trailing
-         separator, and when a plain-half string already exists rebuild it
-         under the new directory through sub_4c8290.
-// ORIGINAL: 0x004C81C0 sub_4c81c0 0x004C81C0-0x004C8286 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["Original4C81C0..4C8286; retired seed git:b18d3ac8:src/unrecovered/004c81c0.cpp records the same identity and spans.", "The receiver is the same +0x1C/+0x20 two-string object sub_4c8290 installs into; the original dispatches to 0x004C8290 on its own receiver, spelled here as the direct same-TU call, and the callees are CRT strlen/strcpy/strcat plus operator new/delete."], "reason": "Coverage transcription of the directory-half installer with the receiver as an explicit first argument."}
-// symbol    @sub_4c81c0@8
-Status: Coverage transcription - unclaimed body
-*/
-extern "C" void __fastcall sub_4c81c0(char *self, char *directory) {
-    char **slot = reinterpret_cast<char **>(self + 0x20);
-    if (*slot != 0) {
-        ::operator delete(*slot);
-    }
-    *slot = 0;
-
-    char buf[256];
-    unsigned int len = strlen(directory);
-    strcpy(buf, directory);
-    if (buf[len - 1] != '\\') {
-        buf[len] = '\\';
-        buf[len + 1] = 0;
-        ++len;
-    }
-    ++len;
-    *slot = static_cast<char *>(::operator new(len));
-    strcpy(*slot, buf);
-
-    char **plain = reinterpret_cast<char **>(self + 0x1C);
-    if (*plain != 0) {
-        const unsigned int plain_len = strlen(*plain);
-        char *cursor = *plain + plain_len;
-        char *scan = cursor;
-        while (scan != *plain) {
-            if (*(scan - 1) == '\\') {
-                break;
-            }
-            --scan;
-        }
-        strcat(buf, scan);
-        sub_4c8290(self, buf);
-    }
-}
 
 
 
@@ -1883,5 +1802,119 @@ void NameTable::rewrite_directory(char *directory) {
             }
         }
         ++slot;
+    }
+}
+
+// ORIGINAL: 0x004C8150 sub_4c8150 0x004C8150-0x004C8188 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["task:path-record-owner", "Pinned4C8150 initializes0x28 bytes;4C8190 frees1C/24 without clearing or freeing20;4C81C0 calls4C8290 on its receiver;4C8290/83A0 replace owned path/name strings.", "historical source:src/recovered/004c8150.cpp"], "reason": "Recover demonstrated path/directory/name pointer operations as genuine members under a provisional record name; initializer/close identity does not prove a constructor/destructor or historical TU. Preserve original storage and cleanup omissions."}
+// symbol    ?initialize@PathRecord@@QAEPAU1@XZ
+PathRecord *PathRecord::initialize() {
+    // Native 0x004C815D clears four bytes beginning at +4.
+    memset(&unknown_04_, 0, sizeof(unknown_04_));
+    unknown_00_ = 0;
+    unknown_08_ = 0;
+    unknown_0C_ = 0;
+    unknown_10_ = 0;
+    unknown_14_ = 0;
+    path_ = 0;
+    directory_ = 0;
+    name_ = 0;
+    unknown_18_ = 0xfa;
+    return this;
+}
+
+// ORIGINAL: 0x004C8190 sub_4c8190 0x004C8190-0x004C81B5 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["task:path-record-owner", "Pinned4C8150 initializes0x28 bytes;4C8190 frees1C/24 without clearing or freeing20;4C81C0 calls4C8290 on its receiver;4C8290/83A0 replace owned path/name strings.", "historical source:src/recovered/004c8190.cpp"], "reason": "Recover demonstrated path/directory/name pointer operations as genuine members under a provisional record name; initializer/close identity does not prove a constructor/destructor or historical TU. Preserve original storage and cleanup omissions."}
+// symbol    ?close@PathRecord@@QAEXXZ
+// Original close leaves the directory allocation and both freed pointer
+// values intact. Do not turn this operation into an inferred RAII destructor.
+void PathRecord::close() {
+    if (path_ != 0) {
+        ::operator delete(path_);
+    }
+    if (name_ != 0) {
+        ::operator delete(name_);
+    }
+}
+
+// ORIGINAL: 0x004C81C0 sub_4c81c0 0x004C81C0-0x004C8286
+// RECOVERY_BINDING: v1 {"evidence": ["task:path-record-owner", "Pinned4C8150 initializes0x28 bytes;4C8190 frees1C/24 without clearing or freeing20;4C81C0 calls4C8290 on its receiver;4C8290/83A0 replace owned path/name strings.", "historical source:src/stringstruct.cpp"], "reason": "Recover demonstrated path/directory/name pointer operations as genuine members under a provisional record name; initializer/close identity does not prove a constructor/destructor or historical TU. Preserve original storage and cleanup omissions."}
+// symbol    ?set_directory@PathRecord@@QAEXPAD@Z
+void PathRecord::set_directory(char *directory) {
+    if (directory_ != 0) {
+        ::operator delete(directory_);
+    }
+    directory_ = 0;
+
+    char buffer[256];
+    unsigned int length = strlen(directory);
+    strcpy(buffer, directory);
+    if (buffer[length - 1] != '\\') {
+        buffer[length] = '\\';
+        buffer[length + 1] = 0;
+        ++length;
+    }
+    ++length;
+    directory_ = static_cast<char *>(::operator new(length));
+    strcpy(directory_, buffer);
+
+    if (path_ != 0) {
+        const unsigned int path_length = strlen(path_);
+        char *cursor = path_ + path_length;
+        char *scan = cursor;
+        while (scan != path_) {
+            if (*(scan - 1) == '\\') {
+                break;
+            }
+            --scan;
+        }
+        strcat(buffer, scan);
+        set_path(buffer);
+    }
+}
+
+// ORIGINAL: 0x004C8290 sub_4c8290 0x004C8290-0x004C8348
+// RECOVERY_BINDING: v1 {"evidence": ["task:path-record-owner", "Pinned4C8150 initializes0x28 bytes;4C8190 frees1C/24 without clearing or freeing20;4C81C0 calls4C8290 on its receiver;4C8290/83A0 replace owned path/name strings.", "historical source:src/stringstruct.cpp"], "reason": "Recover demonstrated path/directory/name pointer operations as genuine members under a provisional record name; initializer/close identity does not prove a constructor/destructor or historical TU. Preserve original storage and cleanup omissions."}
+// symbol    ?set_path@PathRecord@@QAEXPAD@Z
+void PathRecord::set_path(char *path) {
+    if (path_ != 0) {
+        ::operator delete(path_);
+    }
+    path_ = 0;
+
+    if (path != 0) {
+        char buffer[256];
+        if (directory_ != 0) {
+            strcpy(buffer, directory_);
+            char *slash = strrchr(path, '\\');
+            if (slash != 0) {
+                strcat(buffer, slash + 1);
+            } else {
+                strcat(buffer, path);
+            }
+        } else {
+            strcpy(buffer, path);
+        }
+        const unsigned int length = strlen(buffer);
+        char *fresh = static_cast<char *>(::operator new(length + 1));
+        path_ = fresh;
+        strcpy(fresh, buffer);
+    }
+}
+
+// ORIGINAL: 0x004C83A0 sub_4c83a0 0x004C83A0-0x004C83EB BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["task:path-record-owner", "Pinned4C8150 initializes0x28 bytes;4C8190 frees1C/24 without clearing or freeing20;4C81C0 calls4C8290 on its receiver;4C8290/83A0 replace owned path/name strings.", "historical source:src/recovered/004c83a0.cpp"], "reason": "Recover demonstrated path/directory/name pointer operations as genuine members under a provisional record name; initializer/close identity does not prove a constructor/destructor or historical TU. Preserve original storage and cleanup omissions."}
+// symbol    ?set_name@PathRecord@@QAEXPAD@Z
+void PathRecord::set_name(char *name) {
+    if (name_ != 0) {
+        ::operator delete(name_);
+    }
+    if (name != 0) {
+        const unsigned int length = strlen(name) + 1;
+        void *fresh = ::operator new(length);
+        name_ = static_cast<char *>(fresh);
+        strcpy(name_, name);
+    } else {
+        name_ = 0;
     }
 }
