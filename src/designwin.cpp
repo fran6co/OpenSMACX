@@ -2430,59 +2430,133 @@ void DesignWin::draw_chassis(int redraw) {
     }
 }
 
+// Palette storage is owned by palette.cpp; VW00 is owned by caviar.cpp.
+extern int TextColourTable[195];
+
+// Preserve the original 32-bit coordinate arithmetic without signed overflow.
+static int designwin_panel_signed(uint32_t bits) {
+    return bits <= 0x7FFFFFFFu ? static_cast<int>(bits)
+        : -1 - static_cast<int>(~bits);
+}
+
+static int designwin_panel_add(int left, int right) {
+    return designwin_panel_signed(static_cast<uint32_t>(left) +
+                                  static_cast<uint32_t>(right));
+}
+
+static int designwin_panel_subtract(int left, int right) {
+    return designwin_panel_signed(static_cast<uint32_t>(left) -
+                                  static_cast<uint32_t>(right));
+}
+
+static int designwin_panel_font_height(int extra, int line_height, int height) {
+    return extra < 0 ? line_height : designwin_panel_add(height, extra);
+}
+
+static void designwin_panel_append_number(char *output, int value) {
+    char digits[32];
+    _itoa(value, digits, 10);
+    strcat(output, digits);
+}
+
+static void designwin_panel_append_label(char *output, int label_id) {
+    char *text = label_get(label_id / 4);
+    strcat(output, text);
+}
+
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00434F40 ?draw_weapon@DesignWin@@QAEXH@Z 0x00434F40-0x004353FF
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00434f40.cpp", "docs/recovery/member-accesses.csv"], "reason": "Partial typed recovery draws the weapon panel caption, selected weapon name and model preview; the seed retains unresolved class, range and ammunition text and palette behavior."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:09f23e99:src/designwin.cpp preserves the original identity and historical seed provenance", "Pinned434F40..4353FF reads real DesignWin panel/font/selection members, VW00 at7871C0 and TextColourTable swatches156..161", "src/caviar.cpp:g_VW00_CAVIARDATA and src/palette.cpp:textcolor_init own model and palette storage"], "reason": "Render the weapon heading, model, localized name and offense/cost detail through genuine source-owned objects; preserve live callback reads and original 32-bit coordinate arithmetic."}
 void DesignWin::draw_weapon(int redraw) {
     (void)redraw;
-    Buffer *canvas = static_cast<Buffer *>(this);
-    RECT preview = weapon_panel_rect_;
-    canvas->set_clip(&preview);
-    buffer_.copy(canvas, &preview);
+    Buffer *const canvas = static_cast<Buffer *>(this);
+    RECT area = weapon_panel_rect_;
+    canvas->set_clip(&area);
+    buffer_.copy(canvas, &area);
 
-    const int weapon = static_cast<int>(protoWeaponType_);
-    const int title_height = font2_.unk_1_ < 0
-        ? font2_.line_height_ : font2_.height_ + font2_.unk_1_;
-    RECT title = preview;
-    title.bottom = title.top + title_height;
-    canvas->set_text_color(0xE0, -1, 1, 1);
-    char *name = label_get((Weapon[weapon].offense_rating == 0
-                                ? 0x200 : 0x204) / 4);
-    if (name != 0) {
-        canvas->write_cent_l(&font2_, name, &title,
-                             static_cast<int>(strlen(name)));
-    }
+    const int title_height = designwin_panel_font_height(
+        font2_.unk_1_, font2_.line_height_, font2_.height_);
+    RECT title = area;
+    title.bottom = designwin_panel_add(title.top, title_height);
+    StringTemp[0] = '\0';
+    designwin_panel_append_label(StringTemp,
+        Weapon[protoWeaponType_].offense_rating == 0 ? 0x200 : 0x204);
+    CharUpperA(StringTemp);
+    canvas->set_text_color(TextColourTable[156], TextColourTable[157], 1, 1);
+    canvas->write_cent_l(&font2_, StringTemp, &title,
+                         static_cast<int>(strlen(StringTemp)));
 
-    RECT name_area = preview;
-    name_area.top += title_height;
-    name_area.bottom = name_area.top + font1_.height_;
-    if (weapon != 0 && Weapon[weapon].name != 0) {
-        char *weapon_name = StringTable.get(
-            reinterpret_cast<int>(Weapon[weapon].name));
-        if (weapon_name != 0) {
-            canvas->write_cent_l(&font1_, weapon_name, &name_area,
-                                 static_cast<int>(strlen(weapon_name)));
-        }
-    }
-
-    preview.top += title_height + font1_.height_;
-    preview.bottom -= static_cast<int>(font1_.height_) * 2 + 5;
-    if (weapon == 0) {
-        CaviarData empty_weapon;
-        caviar_.add_object(&empty_weapon, 0);
+    const int name_top = designwin_panel_subtract(
+        designwin_panel_subtract(area.bottom,
+            designwin_panel_add(font1_.height_, font1_.height_)), 5);
+    caviar_.reset_objects();
+    const int weapon_id = static_cast<int>(protoWeaponType_);
+    if (weapon_id == 0) {
+        caviar_.add_object(&g_VW00_CAVIARDATA, 0);
         caviar_.set_scaling(0.15f);
     } else {
-        vehdraw_construct_weapon(static_cast<int>(factionID_),
-                                 static_cast<int>(protoChassisType_), weapon,
+        const int chassis_id = weapon_id == 0x15 &&
+                               DesignAutoBuildActive == 0
+            ? -1 : static_cast<int>(protoChassisType_);
+        vehdraw_construct_weapon(static_cast<int>(factionID_), chassis_id,
+                                 weapon_id,
                                  &caviar_);
-        const uint8_t rarity = Weapon[weapon].mode;
-        caviar_.set_scaling(rarity < 3 ? 0.15f : (rarity == 9 ? 0.06f : 0.08f));
+        const int mode = Weapon[protoWeaponType_].mode;
+        caviar_.set_scaling(mode < 3 ? 0.15f
+            : (mode == 9 ? 0.06f : 0.08f));
     }
+    const int center_x = designwin_panel_add(weapon_panel_rect_.left, weapon_panel_rect_.right) / 2;
+    const int center_y = designwin_panel_add(weapon_panel_rect_.top, weapon_panel_rect_.bottom) / 2;
     caviar_.set_scene_rotation(0.5323889f, 0.0f, 0.0f);
-    caviar_.render(canvas, (preview.left + preview.right) / 2,
-                   (preview.top + preview.bottom) / 2, 6);
-    // BODY GOES HERE. The seed's weapon class/range/ammunition detail uses
-    // several separate rules tables not yet owned by this source group.
+    caviar_.render(canvas, center_x, center_y, 6);
+
+    canvas->set_font(&font1_, 0, 0, 0);
+    RECT name_line = area;
+    name_line.top = name_top;
+    name_line.bottom = designwin_panel_add(name_line.top, font1_.height_);
+    canvas->set_text_color(TextColourTable[158], TextColourTable[159], 1, 1);
+    StringTemp[0] = '\0';
+    strcat(StringTemp, StringTable.get(static_cast<int>(
+        reinterpret_cast<unsigned long>(Weapon[protoWeaponType_].name))));
+    CharUpperA(StringTemp);
+    if (font1_.width(StringTemp) > designwin_panel_subtract(area.right, area.left)) {
+        const int wrap_height = designwin_panel_font_height(
+            font1_.unk_1_, font1_.line_height_, font1_.height_);
+        name_line.top = designwin_panel_subtract(name_line.top, wrap_height);
+        name_line.bottom = designwin_panel_subtract(name_line.bottom, wrap_height);
+        canvas->wrap_cent(StringTemp, &name_line);
+        const int restored_height = designwin_panel_font_height(
+            font1_.unk_1_, font1_.line_height_, font1_.height_);
+        name_line.top = designwin_panel_add(name_line.top, restored_height);
+        name_line.bottom = designwin_panel_add(name_line.bottom, restored_height);
+    } else {
+        canvas->write_cent_l(StringTemp, &name_line,
+                             static_cast<int>(strlen(StringTemp)));
+    }
+
+    RECT detail = name_line;
+    const int advance = designwin_panel_add(font1_.height_, 3);
+    detail.top = designwin_panel_add(detail.top, advance);
+    detail.bottom = designwin_panel_add(detail.bottom, advance);
+    canvas->set_text_color(TextColourTable[160], TextColourTable[161], 1, 1);
+    StringTemp[0] = '\0';
+    if (Weapon[protoWeaponType_].mode < 3) {
+        designwin_panel_append_label(StringTemp, 0x204);
+        strcat(StringTemp, " ");
+        const int offense = Weapon[protoWeaponType_].offense_rating;
+        if (offense < 0)
+            designwin_panel_append_label(StringTemp, 0x310);
+        else if (offense < 0x63)
+            designwin_panel_append_number(StringTemp, offense);
+        else
+            strcat(StringTemp, "*");
+    } else {
+        designwin_panel_append_label(StringTemp, 0x200);
+        strcat(StringTemp, " ");
+        designwin_panel_append_number(StringTemp, Weapon[protoWeaponType_].cost);
+    }
+    canvas->write_cent_l(StringTemp, &detail,
+                         static_cast<int>(strlen(StringTemp)));
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
