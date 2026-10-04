@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "task_id": "datalink-interface-callback-owner",
+  "target": "opensmacx",
+  "author": "framework-coordinator",
+  "base_revision": "48cc730657d09efa6b48d6d0b6fd70538ccc2934",
+  "subjects": [
+    {"address": 4508480, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"},
+    {"address": 4922224, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"}
+  ],
+  "editable_files": ["src/datalink.cpp", "src/datalink.h", "src/maininterface.cpp", "src/maininterface.h", "src/recovered/0044cb40.cpp", "src/recovered/004b1b70.cpp", "recovery/tests/test_datalink_interface_callbacks.py"],
+  "intent": "Replace two exact but uncompiled fixed-address UI seeds with genuine typed helpers and owned selection state. Preserve canonical identities, spans, historical claims and useful findings through native source writer; delete seeds only after verified transfer.",
+  "evidence": [
+    "Pinned44CB40..44CB56 implements signed selected-index update with negative input preserving state at7591AC; queue590DC0 is a known consumer. Use a provisional role name with pinned zero DWORD initialization, not an asserted canonical semantic name or data-layout claim.",
+    "Pinned4B1B70..4B1BB2 has three stdcall stack arguments and explicit MainInterfaceGlobal7AE820 receiver. Actual Win client_to_screen5ED240 and set_bubble_text5F83D0 members establish its coordinate conversion and point RECT. Historical SocialWin label does not establish an implicit receiver.",
+    "Require both-flag native strict bytes/references, actual-source host controls, application build/link, claim continuity, reference checks and comparison against fresh protected58 Datalink and39 MainInterface obligations. Inherited Datalink mismatches431E70/42BCC0 must not be relabeled or demoted. No full-game or automatic acceptance authorized."
+  ]
+}
