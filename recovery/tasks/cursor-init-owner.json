@@ -1,0 +1,52 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "9c1f9031848f083971b1724377ac3b8102921483",
+  "editable_files": [
+    "src/cursor.cpp",
+    "src/cursor.h",
+    "src/sprite.h",
+    "src/buffer.h",
+    "src/unrecovered/0063b2e0.cpp",
+    "recovery/tests/test_cursor_init_owner.py",
+    "recovery/tests/cursor_init_owner_control.cpp"
+  ],
+  "evidence": [
+    "Pinned63B2E0..63B8CA and663910..66393E establish int status results, two automatic Buffers, distinct mono/color DIB headers, palette ownership and native GDI cleanup order. Use actual typed Palette/Buffer/Sprite and Win32 APIs, no raw executable calls or copied code.",
+    "Native63B6EF..63B6F6 reads the live color Buffer DIB width and negative height after callbacks; the private candidate's global-dimension BitBlt is not a valid integration basis. Correct it to existing Buffer pixel_width/pixel_height getters and exercise callback mutation.",
+    "Native publishes CreateIconIndirect result at Cursor+0 and owned Sprite pointer at+4, with caller hotspot coordinates at+8/+C. Destructor63B8D0 confirms ownership and cleanup. Named HCURSOR/Sprite*/int members remain four Win32 dwords; do not change existing constructor route in this step.",
+    "Scoped friend class Cursor access in Buffer and Sprite admits only observed DIB palette and sprite pixels/dimensions/transparency reads; no field offsets, library flags or existing claims may be weakened. int init(Sprite*,int,int) needs explicit emitted-symbol evidence while the canonical historical identity remains unchanged.",
+    "Native failure paths leak mono resources after second-DC/second-DIB failure; preserve rather than infer approval for cleanup changes. Separate color BITMAPINFO header has no proved256-entry local palette tail. Sprite construction/copy publication and exceptional cleanup must retain native ordering with genuine C++ lifetime.",
+    "Coordinator-reviewed manual integration only; actual-source host controls are bounded interactions, not native or game proof. Measure protected Cursor bodies, preserve all2512 claim identities and useful seed findings; no new byte claim or full/autonomous acceptance."
+  ],
+  "intent": "Recover complete Cursor initialization in its genuine class; name and type handle, owned Sprite and hotspot members without changing their Win32 layout. Retain native failure effects and complete original spans/history; remove the seed only after actual-source controls, compiler/link and protected claims pass.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6533840,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6533856,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6535376,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6535440,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6535472,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "cursor-init-owner"
+}
