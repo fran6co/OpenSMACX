@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "task_id": "battle-fight-owner",
+  "author": "framework-coordinator",
+  "target": "opensmacx",
+  "base_revision": "19c16dbbcca61910dddbf564068647587c5f0f20",
+  "editable_files": [
+    "src/veh.cpp",
+    "src/veh.h",
+    "src/statuswin.h",
+    "src/pending_bodies.cpp",
+    "src/unrecovered/00506af0.cpp",
+    "recovery/tests/test_battle_fight.py"
+  ],
+  "subjects": [
+    {
+      "address": 5270256,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5260496,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "intent": "Recover the whole seven-parameter combat resolver in its genuine vehicle owner and remove its executable forwarder; retain all original identities/spans and seed discoveries, with actual-source controls and build/link-safe reviewed integration.",
+  "evidence": [
+    "Pinned whole resolver506AF0..50B893; frozen full candidatev5 2b2f4a91149020e31b46d5e8dae9d6f7b894f55b64872cb9c17b09e619c9f804 and its recursively hashed36-file closure compile privately against current master19c16dbb. Fresh native objecta8493d13c18193ad69083b147eb76c418cc6399fd854896737f7eecc6e829ae5. This is compiler evidence, not branch/game acceptance.",
+    "Existing source owns shoot, planet_busting, major_atrocity, spot_all, goody_box and map-window draw_tile_fixup APIs. Use genuine typed state and automatic object lifetime; no private build-fragment dependencies, executable calls, vtable stand-ins, copied machine code or raw absolute storage aliases in product.",
+    "IsMultiplayerPBEM already owns93A95C in game.cpp/h; no extra object permitted. Narrow StatusWin setter may write existing field15D4 without altering layout. best_defender original mapped identityYAH and signed vehicle-id/sentinel semantics support reviewing the unsigned return declaration; retain identity and use native symbol writer if emitted symbol changes.",
+    "Prior bounded pipeline controls cover planet early return, artillery routing, stack-air exception and corrected nativeAAE0..AB18 predecessor walk; durable controls must extract actual installed source and detect targeted damage. Provisional0xA0 scratch storage was previously user approved as an unverified capacity, not exact data layout.",
+    "Independent whole control-flow/callback/lifetime review remains required before integration. Preserve all seed findings through native source writer; delete seed only after complete genuine replacement, references and claim continuity checks. Retain five-parameter wrapper; remove only seven-parameter pending forwarder after linking actual owner.",
+    "Coordinator-reviewed rough implementation coverage only; require actual compile/link, protected claims with inherited misses explicit, touched source integrity and host controls. No new byte/semantic claim, behavior sanitization, automatic/game acceptance or strict linked/reference/runtime proof granted. Untested combat combinations and byte restoration remain explicit."
+  ]
+}
