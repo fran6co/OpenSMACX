@@ -6,6 +6,146 @@ from recovery.tests.test_pact_ascent import ROOT, definition
 
 
 @pytest.mark.parametrize('compiler_name', ['g++', 'clang++'])
+def test_actual_threaten(tmp_path, compiler_name):
+    compiler = shutil.which(compiler_name)
+    if not compiler:
+        pytest.skip(compiler_name + ' unavailable')
+    source = (ROOT / 'src/faction.cpp').read_text()
+    body = definition(source, r'void __cdecl threaten\([^)]*\)')
+    helpers = '\n'.join(definition(source, r'static int ' + name + r'\([^)]*\)(?=\s*\{)')
+                        for name in ('diplo_add', 'diplo_sub', 'diplo_mul'))
+    fixture = r'''
+#include <cassert>
+#include <cstdio>
+#include <cstring>
+#define __cdecl
+typedef unsigned int uint32_t; typedef unsigned char uint8_t;
+struct Sprite {} portraits[8]; Sprite *FactionDiplomacyPortraits[8];
+struct Player { int is_leader_female,noun_gender,is_noun_plural;
+ char name_leader[24],title_leader[24],noun_faction[24],adj_name_faction[24]; } Players[8];
+struct Data { uint32_t ranking,diplo_treaties[8],diplo_friction[8],diplo_agenda[8];
+ int diplo_spoke[8],tech_ranking,tech_commerce_bonus,ai_fight,ai_tech,ai_power,ai_wealth;
+ int energy_reserves,current_num_bases,mil_strength_1,best_weapon_value,integrity_blemishes;
+ char diplo_patience[8]; unsigned char region_total_bases[128]; } PlayersData[8];
+struct Base { short x,y; unsigned char faction_id_former; char name_string[24]; } Bases[1];
+struct Tile { unsigned char region; } MapTiles[1]; unsigned MapLongitude=1;
+int PopupDialogFactionID,DiploScratchFA70,DiploScratchFA98,DiploScratchFA34,DiploScratchF7E4;
+int DiploScratchFA5C,DiploScratchF800,DiploScratchFA7C,DiploScratchFA68,DiploScratchFAA0;
+int DiploScratchFA3C,DiploScratchFA50,DiploFriction,IsMultiplayerNet,TurnCurrentNum;
+unsigned DiploFrictionFactionID,DiploFrictionFactionIDWith;
+int GenderDefault,PluralityDefault,ExitTurnLoop; char StringTemp[128],notice[128];
+int treaty_calls,treaty_a,treaty_b,treaty_bits,packets,packet_op,payload[4],await_op;
+int tech_calls,technology,redraws,base_calls,set_calls,pact_calls,cross_calls,locks,unlocks;
+int base_value,wants,mutate;
+int pop_wait() {return 0;}
+void tech_analysis(int a,int b) {assert(a==1&&b==2);}
+void diplomacy_caption(int a,int b) {assert(a==1&&b==2);}
+int parse_says(int slot,char *s,int a,int b) {
+ assert(slot>=0&&slot<=3&&s&&a==-1&&b==-1);
+ if(DiploScratchFA34==13) assert(s==Players[DiploScratchFA5C].adj_name_faction);
+ return 0;
+}
+void parse_num(int slot,int) {assert(!slot);}
+char *get_noun_phrase(int who,int kind) {assert(who==1&&kind==8);return Players[1].noun_faction;}
+char *get_pact(int who) {assert(who==1);return Players[1].noun_faction;}
+int random(int a,int b) {assert(!a&&b==2);return 1;}
+char *_itoa(int n,char *s,int base) {assert(base==10);std::sprintf(s,"%d",n);return s;}
+int x_pops_short(const char *key,int flags,Sprite *p,int(*cb)()) {
+ assert(flags==0x100000&&p==FactionDiplomacyPortraits[2]&&cb==pop_wait);std::strcpy(notice,key);
+ if(mutate&&!std::strcmp(key,"EXTORTCOMMLINK")) DiploScratchFA5C=4;
+ return 1;
+}
+void log_say(const char *s,int,int,int) {assert(s);}
+void message_data(int op,int z,int a,int b,int c,int d) {
+ assert(!z);++packets;packet_op=op;payload[0]=a;payload[1]=b;payload[2]=c;payload[3]=d;
+}
+struct Net {void await_diplo(int op) {await_op=op;}int add_global(){++locks;return 0;}void unlock(){++unlocks;}} NetDaemonNet;
+struct Console {void update_data(int n) {redraws+=n?1:10;}} ConsoleGlobal;
+struct Info {void set_redraw_phase(int n) {assert(!n);}} ConsoleInfoWin;
+void treaty_on(int a,int b,int bits) {++treaty_calls;treaty_a=a;treaty_b=b;treaty_bits=bits;}
+void tech_achieved(int a,int tech,int b,int z) {assert(a==1&&b==2&&!z);++tech_calls;technology=tech;}
+void say_tech(char *s,int tech,int kind) {assert(!*s&&tech==DiploScratchF800&&kind==1);std::strcpy(s,"tech");}
+int wants_to_attack(int a,int b,int z) {assert((a==2&&b==3)||(a==3&&b==2));assert(!z);return wants;}
+void double_cross(int a,int b,int c) {assert(a==2&&b==3&&c==1);++cross_calls;}
+void agenda_on(int a,int b,int bits) {assert(a==1&&b==2&&bits==0x1000);}
+int value_of_base(int base,int a,int b,int rating,int) {assert(!base&&a==2&&b==1&&rating==DiploScratchFA98);return base_value;}
+void give_a_base(int base,int owner) {assert(!base&&owner==1);++base_calls;}
+void set_treaty(int a,int b,int bits,int on) {assert(a==2&&b==1&&bits==0x20&&on==1);++set_calls;}
+void pact_ends(int a,int b) {assert(a==1&&b==2);++pact_calls;}
+unsigned long timeGetTime() {return 0;}void check_spock(){}
+@@BODY@@
+void reset() {
+ std::memset(Players,0,sizeof(Players));std::memset(PlayersData,0,sizeof(PlayersData));
+ std::memset(Bases,0,sizeof(Bases));MapTiles[0].region=1;
+ for(int i=0;i<8;++i) FactionDiplomacyPortraits[i]=&portraits[i];
+ DiploScratchFA70=DiploScratchFA98=DiploScratchFA34=DiploScratchF7E4=0;
+ DiploScratchFA5C=3;DiploScratchF800=-1;DiploScratchFA7C=0;
+ DiploScratchFA68=DiploScratchFAA0=DiploScratchFA3C=DiploScratchFA50=0;
+ DiploFriction=IsMultiplayerNet=GenderDefault=PluralityDefault=ExitTurnLoop=0;TurnCurrentNum=16;
+ DiploFrictionFactionID=2;DiploFrictionFactionIDWith=1;
+ PlayersData[1].energy_reserves=10;PlayersData[2].energy_reserves=100;
+ PlayersData[1].mil_strength_1=100;PlayersData[2].mil_strength_1=100;
+ treaty_calls=treaty_a=treaty_b=treaty_bits=packets=packet_op=await_op=0;
+ tech_calls=technology=redraws=base_calls=set_calls=pact_calls=cross_calls=locks=unlocks=mutate=0;
+ base_value=5;wants=1;notice[0]=0;
+}
+int main() {
+ reset();threaten(1,2);assert(!std::strcmp(notice,"IGNORE")&&PlayersData[2].diplo_friction[1]==2&&DiploFriction==2);
+ reset();DiploScratchFA70=1;threaten(1,2);assert(treaty_a==2&&treaty_b==1&&treaty_bits==16);
+ assert(PlayersData[1].diplo_spoke[2]==16&&!std::strcmp(notice,"PROVOKED1"));
+ reset();DiploScratchFA34=6;DiploScratchFA98=2;threaten(1,2);
+ assert(PlayersData[1].energy_reserves==60&&PlayersData[2].energy_reserves==50&&treaty_bits==4);
+ reset();DiploScratchFA34=6;DiploScratchFA98=2;PlayersData[1].diplo_treaties[2]=2;IsMultiplayerNet=1;threaten(1,2);
+ assert(packet_op==0x2447&&payload[0]==1&&payload[1]==50&&payload[2]==2&&payload[3]==-50&&await_op==0x447);
+ reset();DiploScratchFA34=6;PlayersData[1].diplo_treaties[2]=1;PlayersData[1].ranking=2;PlayersData[2].ranking=6;
+ PlayersData[2].tech_ranking=20;PlayersData[1].tech_ranking=4;
+ PlayersData[1].tech_commerce_bonus=1;PlayersData[2].tech_commerce_bonus=4;PlayersData[2].ai_fight=1;
+ PlayersData[2].diplo_friction[1]=99;threaten(1,2);assert(DiploScratchFA98==14&&PlayersData[1].energy_reserves==110);
+ reset();DiploScratchFA34=4;DiploScratchFA98=1;DiploScratchF800=8;threaten(1,2);
+ assert(tech_calls==1&&technology==8&&DiploScratchF800==-1);
+ reset();DiploScratchFA34=13;DiploScratchFA98=1;mutate=1;threaten(1,2);assert(technology==93&&tech_calls==1);
+ reset();DiploScratchFA34=9;DiploScratchFA98=1;threaten(1,2);
+ assert(base_calls==1&&set_calls==1&&locks==1&&unlocks==1&&treaty_bits==4);
+ reset();DiploScratchFA34=9;DiploScratchFA98=1;PlayersData[2].diplo_treaties[1]=1;
+ threaten(1,2);assert(!base_calls&&!std::strcmp(notice,"BASENOCEDE"));
+ reset();DiploScratchFA34=9;DiploScratchFA98=1;PlayersData[2].diplo_treaties[1]=0x2000001;
+ PlayersData[2].current_num_bases=10;PlayersData[1].diplo_agenda[2]=0x1000;Bases[0].faction_id_former=3;
+ PlayersData[1].region_total_bases[1]=1;PlayersData[2].region_total_bases[1]=3;
+ threaten(1,2);assert(!base_calls&&!std::strcmp(notice,"BASENOCEDE"));
+ reset();DiploScratchFA34=9;DiploScratchFA98=1;PlayersData[2].diplo_treaties[1]=0x2000001;
+ PlayersData[2].current_num_bases=10;PlayersData[1].diplo_agenda[2]=0x1000;Bases[0].faction_id_former=3;
+ PlayersData[1].region_total_bases[1]=4;PlayersData[2].region_total_bases[1]=3;
+ threaten(1,2);assert(base_calls==1&&!set_calls);
+ reset();DiploScratchFA34=8;PlayersData[1].diplo_treaties[2]=1;PlayersData[1].diplo_treaties[3]=16;
+ threaten(1,2);assert(cross_calls==1&&!std::strcmp(notice,"WARPACT"));
+ reset();PlayersData[2].diplo_treaties[1]=1;threaten(1,2);assert(!std::strcmp(notice,"FEND"));
+ reset();PlayersData[2].diplo_treaties[1]=1;DiploScratchFA68=1;PlayersData[1].ranking=6;
+ threaten(1,2);assert(pact_calls==1&&locks==1&&unlocks==1&&!std::strcmp(notice,"FEND"));
+}
+'''
+    variants = {'actual': body}
+    for name, old, new in (
+        ('wrong_score_owner', 'const int actor_rank = static_cast<int>(PlayersData[faction_id].ranking)',
+         'const int actor_rank = static_cast<int>(PlayersData[other_faction_id].diplo_friction[faction_id])'),
+        ('wrong_region_index', 'region_total_bases[region]',
+         'region_total_bases[region / 2]'),
+        ('stale_commlink', 'const int technology = diplo_add(DiploScratchFA5C, 0x59)',
+         'const int technology = diplo_add(3, 0x59)'),
+    ):
+        assert old in body
+        variants[name] = body.replace(old, new)
+    for name, candidate in variants.items():
+        cpp, binary = tmp_path / (name + '.cpp'), tmp_path / name
+        cpp.write_text(fixture.replace('@@BODY@@', helpers + '\n' + candidate))
+        result = subprocess.run([compiler, '-std=c++98', '-fsanitize=undefined',
+                                 '-fno-sanitize-recover=all', str(cpp), '-o', str(binary)],
+                                capture_output=True, text=True, timeout=45)
+        assert result.returncode == 0, result.stderr
+        result = subprocess.run([str(binary)], capture_output=True, timeout=15)
+        assert (result.returncode == 0) == (name == 'actual'), (name, result.stderr)
+
+
+@pytest.mark.parametrize('compiler_name', ['g++', 'clang++'])
 def test_actual_propose_treaty(tmp_path, compiler_name):
     compiler = shutil.which(compiler_name)
     if not compiler:

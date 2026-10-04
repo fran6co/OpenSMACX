@@ -1160,3 +1160,6 @@ int __cdecl buy_tech(int faction_id, int other_faction_id, int action,
 int __cdecl energy_trade(int faction, int other);
 
 int __cdecl propose_treaty(int actor, int other);
+
+extern int DiploScratchFA34;
+void __cdecl threaten(int faction_id, int other_faction_id);
