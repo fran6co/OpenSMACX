@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "task_id": "planet-strike-owner",
+  "author": "framework-coordinator",
+  "target": "opensmacx",
+  "base_revision": "7bbd8127e87f8c4d3a7e1b49a149e87b26d2529f",
+  "editable_files": ["src/veh.cpp", "src/veh.h", "src/unrecovered/00500560.cpp", "src/unrecovered/00500b60.cpp", "recovery/tests/test_planet_strike.py", "recovery/tests/planet_strike_control.cpp"],
+  "subjects": [
+    {"address": 5244256, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"},
+    {"address": 5245792, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"}
+  ],
+  "intent": "Recover complete shoot and planet_busting behavior through real vehicle, faction, base, console, effect and shared map-table owners; retire their scaffolds after evidence transfer, closing the original strike dependency of battle_fight.",
+  "evidence": [
+    "Pinned complete spans shoot500560..500B51 and planet_busting500B60..5010BB. Actual Players/PlayersData satellites and directed treaties, Bases, Vehs/VehPrototypes, ConsoleGlobal, FXeffect59 and existing TerraformDrownedBaseId replace raw executable storage and virtual tables. Shared RadiusRange/RadiusOffsetX/Y now have bounded source-owned map.cpp storage.",
+    "Frozen shoot_v2 ca6b0ef270f3d03affa20ae7e4f40c446a5c061b7f0e1358cd5c1e35bca9c6e0 and planet ff95f1fd569cbdd3ada8c7b5473a7d50beb62285ec1a9126f3337245758f1b7c compile together in actual current veh.cpp private replica, object340219372693cf380beb4d9582b7d116b66f7458467aec1910e1aa3ca9688e70. This establishes compilation only, not native matching, link, runtime or acceptance.",
+    "Native shoot6B7 rereads total inventory after random bonus calls;7C2 rereads after flechette callbacks; bonus success jumps to report without decrement. Preserve explicit wrapping dword counters/signed subtraction and prompt/report order. Native planetE16/E29 uses attacker-row/defender-column PACT; subsequent territory callback still runs after interception, then kill/draw precede interception return. Warning coordinates/sound are selected after four parses but before popup500D0C.",
+    "Planet successful terminal EAX is unspecified in the native listing and the original observed battle_fight caller discards it. Retain catalog int API and document source completion return0 without claiming original zero or byte equivalence; meaningful interception return is retained. No new claim, blanket behavior sanitization or full-game acceptance authorized.",
+    "Native source writer preserves complete original identities, spans and seed findings before removal. Require actual-source extracted GCC/Clang C++98 callback/damage controls, application compile/link, protected veh masked-byte comparison against baseline with inherited failures explicit, touched source integrity, claim continuity and references. Independent strict reference/layout/runtime/linked preservation gaps remain visible."
+  ]
+}
