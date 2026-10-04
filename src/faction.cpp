@@ -6232,6 +6232,80 @@ void __cdecl trade_maps(int faction_id, int other_faction_id) {
     }
 }
 
+// Native54C560 reads each independent DWORD after text callbacks. Initial
+// image words are zero; semantics and complete producer coverage stay open.
+// Start-only bindings do not assert complete original allocation extents.
+// RECOVERY_OBJECT: v1 0x0093F7DC ?DiploScratchF7DC@@3HA
+int DiploScratchF7DC;
+// RECOVERY_OBJECT: v1 0x0093FA94 ?DiploScratchFA94@@3HA
+int DiploScratchFA94;
+// RECOVERY_OBJECT: v1 0x0093FAD0 ?DiploScratchFAD0@@3HA
+int DiploScratchFAD0;
+// RECOVERY_OBJECT: v1 0x0093FAD4 ?DiploScratchFAD4@@3HA
+int DiploScratchFAD4;
+// Original54DD57 resets this selector;54E3F9/54E6FD store modal faction
+// choices, subsequently used to select Player records and by buy_tech mode13.
+// Initial image word is zero; other producer coverage remains unfinished.
+// RECOVERY_OBJECT: v1 0x0093FA5C ?DiploScratchFA5C@@3HA
+int DiploScratchFA5C;
+
+namespace {
+// Every source line is consumed even when its menu item is suppressed.
+void read_diplomacy_menu_line() {
+    text_get();
+    StringTemp[0] = 0;
+    parse_string(TextBufferGetPtr, StringTemp);
+}
+}
+
+// ORIGINAL: 0x0054C560 ?diplomacy_menu@@YAHHH@Z 0x0054C560-0x0054CB46;0x0065FA01-0x0065FAE9
+// RECOVERY_BINDING: v1 {"evidence": ["task:diplomacy-actions-owner-coverage", "Pinned original54C560-54CB46 and cleanup65FA01-65FAE9", "historical seed:src/unrecovered/0054c560.cpp", "Native54C60D five-argument start;54C612-54C631 caller-picture selection;54C6AF-54C922 ordered reads/gates/exec; original DIPLO/DIPLOMENU literals."], "reason": "Recover all nine original menu-line reads and conditional entries with genuine lexical Popup lifetime and embedded Dialogs/SpriteBox ownership. Native portrait-selection store omitted by seed is restored. Shared scratch cells remain provisional independent globals; original constructor/cleanup supports lifecycle, not a byte or game acceptance claim."}
+// symbol    ?diplomacy_menu@@YAHHH@Z
+// TRIED: MISMATCH #16 'push' vs 'xor' (framed build, sim 0.78). SEH dialog builder: `Popup popup;` real automatic object using confirmed named members (scroll_, scroll_.flat_button_left_/right_, spot_, sprite_, dialogs_ cast to Dialogs*) plus popup-base-relative reinterpret_casts for the remaining teardown targets whose exact field identity in BasePop I could not confirm (two StringStruct- like locals torn down via the ORIGINAL()/original_method(0x4066C0) thiscall shim, matching Dialog::destroy()'s close_with_tables precedent; two more FlatButtons; one Heap). Offsets computed as (0x5388 - ebp-relative magnitude) from the disassembly's own `lea ecx,[ebp-N]` targets, not guessed. STRUCTURE (BasePop, confirmed against 0047C970's identical layout): flat_button1_/flat_button2_, sprite_, spot_, and dialogs_[0xC94] are real named members; Popup adds `Scroll scroll_` at offset 0x3230, and Scroll's own flat_button_left_/ right_ sit at 0xAAC/0x15F8 within it - all match the trailer thunks (`add ecx,0xaac`/`0x15f8`) in both this function and 0047C970 byte-for-byte.
+int __cdecl diplomacy_menu(int faction_id, int faction_id_with) {
+    Popup popup;
+    PopupDialogFactionID = faction_id_with;
+    PluralityDefault = 0;
+    GenderDefault = Players[faction_id].is_leader_female;
+    parse_says(0, Players[faction_id].name_leader, -1, -1);
+    parse_says(1, get_pact_hood(faction_id, faction_id_with), -1, -1);
+    diplomacy_caption(faction_id, faction_id_with);
+
+    popup.start(PopupStartCaption, "DIPLO", -1, nullptr, 0x100000);
+    popup.set_caller_picture(popup.picture_enabled()
+        ? nullptr : FactionDiplomacyPortraits[faction_id_with]);
+    popup.dialogs().sprite(FactionDiplomacyPortraits[faction_id_with], nullptr, 0);
+    if (X_text_open(ScriptPopupFile, "DIPLOMENU") != 0) return 0;
+
+    read_diplomacy_menu_line();
+    popup.dialogs().item(StringTemp, 0);
+    read_diplomacy_menu_line();
+    if (DiploScratchFAD0 != 0) popup.dialogs().item(StringTemp, 1);
+    read_diplomacy_menu_line();
+    if (DiploScratchFAD4 == 0) popup.dialogs().item(StringTemp, 2);
+    read_diplomacy_menu_line();
+    if (DiploScratchFAD4 != 0) popup.dialogs().item(StringTemp, 2);
+    read_diplomacy_menu_line();
+    if (IsMultiplayerNet == 0 && DiploScratchFA94 > 0)
+        popup.dialogs().item(StringTemp, 5);
+    read_diplomacy_menu_line();
+    if (IsMultiplayerNet == 0 && DiploScratchF7DC > 0)
+        popup.dialogs().item(StringTemp, 6);
+    read_diplomacy_menu_line();
+    if (can_call_council(faction_id, 0) != 0 &&
+        (Players[faction_id].rule_flags & 0x80) == 0 &&
+        (Players[faction_id_with].rule_flags & 0x80) == 0)
+        popup.dialogs().item(StringTemp, 7);
+    read_diplomacy_menu_line();
+    if ((PlayersData[faction_id_with].diplo_treaties[faction_id] & 1) != 0)
+        popup.dialogs().item(StringTemp, 3);
+    read_diplomacy_menu_line();
+    if ((PlayersData[faction_id].diplo_treaties[faction_id_with] & 7) != 0)
+        popup.dialogs().item(StringTemp, 4);
+    text_close();
+    return popup.exec(0, pop_wait);
+}
+
 // ORIGINAL: 0x00548F80 ?do_withdrawal@@YAHHH@Z 0x00548F80-0x00549264
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00548f80.cpp retains original identity/spans and contradictory scaffold history.", "Pinned full-span review and genuine Player/PlayerData/Base/Veh/Map declarations own the field interpretation; Popup uses the real C++ lifecycle.", "Related intervention50BA50/pact_withdraw53C370 bodies own the coupled helper behavior. Shared proposal cell93FAB0 and map outcome93FAD8 have native producer/consumer evidence; seed-only workflow producers remain explicit obligations."], "reason": "Recover this original diplomacy identity in its genuine faction owner, preserving typed game records, shared-state lifetimes and every seed obligation. This binding is not a byte or runtime claim."}
 // TRIED: MISMATCH #6 'push' vs 'mov'. Tried both `if (n>0){...}` and the inverted `if (n<=0) return 0;` early-out for the outer guard; neither reproduces the original's push-esi-before-branch / xor+cmp zero-reuse pattern. veh_lift/veh_drop's second push (used as the leftover eax arg to the paired veh_drop call) is reproduced by calling veh_lift(i); veh_drop(i, x, y) as two independent statements rather than chaining a return value, since veh_lift is declared void in this unit.

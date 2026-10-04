@@ -1142,3 +1142,10 @@ void __cdecl commlink_attempt(int target_faction);
 void __cdecl renounce_pact(int faction_id, int faction_id_with);
 
 int __cdecl propose_pact(int faction_id, int faction_id_with);
+
+// Shared workflow cells observed independently by the diplomacy menus.
+// Neutral names retain uncertainty about their complete producer lifecycle.
+extern int DiploScratchF7DC, DiploScratchFA94;
+extern int DiploScratchFAD0, DiploScratchFAD4;
+extern int DiploScratchFA5C;
+int __cdecl diplomacy_menu(int faction_id, int faction_id_with);
