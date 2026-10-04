@@ -377,7 +377,8 @@ int Flic::init(Buffer *buffer, char *file_name, int x, int y,
 Purpose: Decode the next frame of the open animation onto the destination
          buffer at (x, y), wrapping to the loop point once the final frame
          has played.
-// ORIGINAL: 0x0062A070 ?decode_frame@Flic@@QAEHHH@Z 0x0062A070-0x0062A11D FILE
+// ORIGINAL: 0x0062A070 ?decode_frame@Flic@@QAEHHH@Z 0x0062A070-0x0062A11D FILE BYTE_EXACT
+// LEVER: fseek needs a real signature -> declared as fseek_impl (own name), since the scaffold's nullary fseek can't be redeclared (C2733)
 // size      173 bytes
 // prototype int (__thiscall ?decode_frame@Flic@@QAEHHH@Z)(Flic* this, int, int)
 // callers   11   call targets   4
@@ -469,7 +470,8 @@ Purpose: Step over the next frame without decoding it - seek past the
          current frame chunk, or jump back to the loop point after the
          final frame. The wrap branch deliberately leaves the frame
          counter alone: the original returns without resetting it.
-// ORIGINAL: 0x0062A210 ?UNK2@Flic@@QAEHXZ 0x0062A210-0x0062A27B FILE
+// ORIGINAL: 0x0062A210 ?UNK2@Flic@@QAEHXZ 0x0062A210-0x0062A27B FILE BYTE_EXACT
+// LEVER: fseek scaffolds nullary (not in declfix CRT_SIGNATURES); take &fseek and cast to the real function-pointer type instead of redeclaring
 // size      107 bytes
 // prototype int (__thiscall ?UNK2@Flic@@QAEHXZ)(Flic* this)
 // callers   0   call targets   1
@@ -495,7 +497,7 @@ int Flic::UNK2() {
 /*
 Purpose: Seek back to the first frame of the animation and restart the
          frame counter.
-// ORIGINAL: 0x0062A280 ?rewind@Flic@@QAEHXZ 0x0062A280-0x0062A2B9 FILE
+// ORIGINAL: 0x0062A280 ?rewind@Flic@@QAEHXZ 0x0062A280-0x0062A2B9 FILE BYTE_EXACT
 // size      57 bytes
 // prototype int (__thiscall ?rewind@Flic@@QAEHXZ)(Flic* this)
 // callers   3   call targets   1
@@ -1624,7 +1626,7 @@ void Flic::decode_fli_copy_trans() {
 Purpose: Copy the rectangle the animation occupies on the destination
          buffer back into the embedded scratch buffer - the counterpart
          of the transparent-mode restore the black-chunk decoder performs.
-// ORIGINAL: 0x0062B780 ?UNK9@Flic@@QAEXXZ 0x0062B780-0x0062B7BF FILE
+// ORIGINAL: 0x0062B780 ?UNK9@Flic@@QAEXXZ 0x0062B780-0x0062B7BF FILE BYTE_EXACT
 // size      63 bytes
 // prototype void (__thiscall ?UNK9@Flic@@QAEXXZ)(Flic* this)
 // callers   0   call targets   1
@@ -1642,7 +1644,6 @@ void Flic::UNK9() {
                           field_5A0_);
     }
 }
-
 
 
 
