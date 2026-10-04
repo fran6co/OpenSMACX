@@ -10,7 +10,12 @@ ROOT = Path(__file__).resolve().parents[2]
 SUBJECTS = ((0x5F1230, 'LRESULT', 'window_pos_changing'),
             (0x5F1280, 'LRESULT', 'window_pos_changed'),
             (0x5F12E0, 'void', 'window_sized'),
-            (0x5F1310, 'void', 'window_nonclient_sized'))
+            (0x5F1310, 'void', 'window_nonclient_sized'),
+            (0x5D6350, 'void', 'forward_size'),
+            (0x5D6380, 'void', 'forward_mouse_move'),
+            (0x5D63B0, 'int', 'forward_set_cursor'),
+            (0x5F12B0, 'void', 'window_moved'),
+            (0x5F13B0, 'int', 'window_nc_paint'))
 
 def projected(damage=None):
     rows = read_file(ROOT / 'src/win.cpp')
@@ -39,6 +44,12 @@ def test_actual_owner_adapters(tmp_path, name):
     ('window_data = owner->on_window_pos_changed', 'window_data = 1 + owner->on_window_pos_changed'),
     ('owner->on_size(flags, width, height)', 'owner->on_size(flags, height, width)'),
     ('owner->on_size_nc(flags, width, height)', 'owner->on_size(flags, width, height)'),
+    ('owner->on_mouse_move(x, y, keys, 0)', 'owner->on_mouse_move(x, y, 0, keys)'),
+    ('owner->on_move(x, y)', 'owner->on_move(y, x)'),
+    ('owner->on_set_cursor(cursor, hit, message)', 'owner->on_set_cursor(cursor, message, hit)'),
+    ('RECT painted = paint.rcPaint;', 'RECT painted = paint.rcPaint; painted.left = 0;'),
+    ('owner->on_nc_paint(&painted, -1)', '(void)painted; owner->on_nc_paint(&paint.rcPaint, -1)'),
+    ('result = EndPaint(hwnd, &paint);', 'EndPaint(hwnd, &paint); result = 0;'),
 ])
 def test_adapter_damage_detected(tmp_path, old, new):
     compiler = shutil.which('g++')

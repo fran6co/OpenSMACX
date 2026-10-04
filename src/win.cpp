@@ -12420,3 +12420,77 @@ void __cdecl win_window_nonclient_sized(HWND hwnd,
         owner->on_size_nc(flags, width, height);
     }
 }
+
+// Superseded seed deleted; binding references retain historical provenance.
+// ORIGINAL: 0x005D6350 sub_5d6350 0x005D6350-0x005D637B BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["task:win-message-adapter-owner-extension original identity/spans, claims and useful findings retained from src/recovered/005d6350.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x5d6350 full native body and API/vcall sequence.", "source:src/win.h actual slots16,70,71,74,85; original helper names and caller/registration routes remain unknown."], "reason": "Recover the complete Win userdata adapter with existing typed virtual methods and Windows APIs; preserve native payload ordering, null guards and paint lifetime. Anonymous generated seed return declarations are not evidence of an original integer contract for void callbacks."}
+// symbol    ?win_forward_size@@YAXPAUHWND__@@IHH@Z
+// kind      game
+void __cdecl win_forward_size(HWND hwnd, unsigned int flags, int width, int height) {
+    Win *const owner = reinterpret_cast<Win *>(
+        GetWindowLongA(hwnd, GWL_USERDATA));
+    if (owner != 0) {
+        owner->on_size(flags, width, height);
+    }
+}
+
+// Superseded seed deleted; binding references retain historical provenance.
+// ORIGINAL: 0x005D6380 sub_5d6380 0x005D6380-0x005D63AA BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["task:win-message-adapter-owner-extension original identity/spans, claims and useful findings retained from src/recovered/units/005d6380.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x5d6380 full native body and API/vcall sequence.", "source:src/win.h actual slots16,70,71,74,85; original helper names and caller/registration routes remain unknown."], "reason": "Recover the complete Win userdata adapter with existing typed virtual methods and Windows APIs; preserve native payload ordering, null guards and paint lifetime. Anonymous generated seed return declarations are not evidence of an original integer contract for void callbacks."}
+// symbol    ?win_forward_mouse_move@@YAXPAUHWND__@@HHI@Z
+// kind      game
+void __cdecl win_forward_mouse_move(HWND hwnd, int x, int y, unsigned int keys) {
+    Win *const owner = reinterpret_cast<Win *>(GetWindowLongA(hwnd, GWL_USERDATA));
+    if (owner != 0) {
+        owner->on_mouse_move(x, y, keys, 0);
+    }
+}
+
+// Superseded seed deleted; binding references retain historical provenance.
+// ORIGINAL: 0x005D63B0 sub_5d63b0 0x005D63B0-0x005D63DE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["task:win-message-adapter-owner-extension original identity/spans, claims and useful findings retained from src/recovered/units/005d63b0.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x5d63b0 full native body and API/vcall sequence.", "source:src/win.h actual slots16,70,71,74,85; original helper names and caller/registration routes remain unknown."], "reason": "Recover the complete Win userdata adapter with existing typed virtual methods and Windows APIs; preserve native payload ordering, null guards and paint lifetime. Anonymous generated seed return declarations are not evidence of an original integer contract for void callbacks."}
+// symbol    ?win_forward_set_cursor@@YAHPAUHWND__@@PAXII@Z
+// kind      game
+int __cdecl win_forward_set_cursor(HWND hwnd, void *cursor, unsigned int hit,
+                       unsigned int message) {
+    Win *const owner = reinterpret_cast<Win *>(
+        GetWindowLongA(hwnd, GWL_USERDATA));
+    if (owner != 0) {
+        return owner->on_set_cursor(cursor, hit, message);
+    }
+    return 0;
+}
+
+// Superseded seed deleted; binding references retain historical provenance.
+// ORIGINAL: 0x005F12B0 sub_5f12b0 0x005F12B0-0x005F12D6 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["task:win-message-adapter-owner-extension original identity/spans, claims and useful findings retained from src/recovered/005f12b0.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x5f12b0 full native body and API/vcall sequence.", "source:src/win.h actual slots16,70,71,74,85; original helper names and caller/registration routes remain unknown."], "reason": "Recover the complete Win userdata adapter with existing typed virtual methods and Windows APIs; preserve native payload ordering, null guards and paint lifetime. Anonymous generated seed return declarations are not evidence of an original integer contract for void callbacks."}
+// symbol    ?win_window_moved@@YAXPAUHWND__@@HH@Z
+// kind      game
+void __cdecl win_window_moved(HWND hwnd, int x, int y) {
+    Win *const owner = reinterpret_cast<Win *>(
+        GetWindowLongA(hwnd, GWL_USERDATA));
+    if (owner != 0) {
+        owner->on_move(x, y);
+    }
+}
+
+// Superseded seed deleted; binding references retain historical provenance.
+// ORIGINAL: 0x005F13B0 sub_5f13b0 0x005F13B0-0x005F141B
+// RECOVERY_BINDING: v1 {"evidence": ["task:win-message-adapter-owner-extension original identity/spans, claims and useful findings retained from src/unrecovered/005f13b0.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x5f13b0 full native body and API/vcall sequence.", "source:src/win.h actual slots16,70,71,74,85; original helper names and caller/registration routes remain unknown."], "reason": "Recover the complete Win userdata adapter with existing typed virtual methods and Windows APIs; preserve native payload ordering, null guards and paint lifetime. Anonymous generated seed return declarations are not evidence of an original integer contract for void callbacks."}
+// symbol    ?win_window_nc_paint@@YAHPAUHWND__@@@Z
+// kind      game
+// TRIED: zero-arg contract (disasm reads one stack arg -> HWND); reusing the auto-generated nullary `VCall::slot074` (own `PaintVCall` class instead, real signature). Register allocation in the prologue still MISMATCHes.
+int __cdecl win_window_nc_paint(HWND hwnd) {
+  int result = 0;
+  Win *const owner = reinterpret_cast<Win *>(
+      GetWindowLongA(hwnd, GWL_USERDATA));
+  if (owner != 0) {
+    PAINTSTRUCT paint;
+    if (BeginPaint(hwnd, &paint) != 0) {
+      RECT painted = paint.rcPaint;
+      owner->on_nc_paint(&painted, -1);
+      result = EndPaint(hwnd, &paint);
+    }
+  }
+  return result;
+}
