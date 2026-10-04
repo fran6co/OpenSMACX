@@ -1,0 +1,27 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "90647e9f7ac717eb4b0dcb428efb9861b4b3cb76",
+  "editable_files": [
+    "src/faction.cpp",
+    "src/faction.h",
+    "src/unrecovered/0055f450.cpp",
+    "recovery/tests/test_major_atrocity.py"
+  ],
+  "evidence": [
+    "Pinned terranx_original.exe SHA256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; complete original55F450..55F76A marks victim relation, checks CouncilResolutionCount slots8/9, updates acting faction integrity/atrocity counters and notifies living nonhuman other factions.",
+    "Source PlayerData20CC and Player59C layouts establish directed treaties/agendas, integrity124, major_atrocities1D8, parser name/title/noun and grammar fields. Original9A6638/9A663C are CouncilResolutionCount[8]/[9], not CouncilLastResolutionTurn. Preserve native32-bit wrapping and signed clamp6..99.",
+    "Frozen major_atrocity_v2.inc SHA2563b05e448bc039d4b42e116722da3629f95978aeab34c90f5dc2c3d49a6e7a3a7 compiles in actual faction TU private replica. Replace two existing executable-pointer label aliases with bounded-original-verified literals MAJORATROCITY and council_sm.pcx; both are read-only text inputs, not invented objects.",
+    "Require actual source-extracted host controls and damage cases, application compile/link, touched/protected historical byte checks, identity continuity and references. Preserve seed identity/span/claims/useful TRIED findings through the native source writer before retirement. No new byte claim or full-game acceptance authorized. Existing framework and whole-project failures remain explicit."
+  ],
+  "intent": "Recover major_atrocity as genuine directed diplomacy and faction state in its owning TU, closing a real dependency of planet_busting and battle_fight without original-image callbacks or fixed-address labels.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5633104,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "major-atrocity-owner"
+}
