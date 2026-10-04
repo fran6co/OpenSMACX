@@ -12360,3 +12360,63 @@ void __cdecl flip_active_bubble_text() {
     if (WinBubbleActive != 0)
         Win::flip(&WinBubbleRect);
 }
+
+// Superseded seed deleted; binding references below retain historical provenance.
+// ORIGINAL: 0x005F1230 sub_5f1230 0x005F1230-0x005F127F BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x5f1230 complete native body and Windows import dispatch.", "source:src/win.h typed Win slots68,69,71,72; callback registration and original helper names remain unknown.", "task:win-message-adapter-owner-batch original identity, complete spans and historical claims retained from src/recovered/units/005f1230.cpp"], "reason": "Recover the complete window adapter using Windows userdata and the existing typed Win virtual method; preserve null-owner, main-window and callback-result paths."}
+// symbol    ?win_window_pos_changing@@YAJPAUHWND__@@J@Z
+// kind      game
+LRESULT __cdecl win_window_pos_changing(HWND hwnd, LPARAM parameter) {
+    Win *const owner = reinterpret_cast<Win *>(
+        GetWindowLongA(hwnd, GWL_USERDATA));
+    if (owner != 0) {
+        if (HandleMain == hwnd) {
+            return DefWindowProcA(hwnd, 0x46, 0, parameter);
+        }
+        return owner->on_window_pos_changing(reinterpret_cast<WINDOWPOS *>(parameter));
+    }
+    return DefWindowProcA(hwnd, 0x46, 0, parameter);
+}
+
+// Superseded seed deleted; binding references below retain historical provenance.
+// ORIGINAL: 0x005F1280 sub_5f1280 0x005F1280-0x005F12A1 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x5f1280 complete native body and Windows import dispatch.", "source:src/win.h typed Win slots68,69,71,72; callback registration and original helper names remain unknown.", "task:win-message-adapter-owner-batch original identity, complete spans and historical claims retained from src/recovered/units/005f1280.cpp"], "reason": "Recover the complete window adapter using Windows userdata and the existing typed Win virtual method; preserve null-owner, main-window and callback-result paths."}
+// symbol    ?win_window_pos_changed@@YAJPAUHWND__@@J@Z
+// kind      game
+LRESULT __cdecl win_window_pos_changed(HWND hwnd, LPARAM parameter) {
+    LRESULT window_data = GetWindowLongA(hwnd, GWL_USERDATA);
+    if (window_data != 0) {
+        Win *const owner = reinterpret_cast<Win *>(window_data);
+        window_data = owner->on_window_pos_changed(reinterpret_cast<WINDOWPOS *>(parameter));
+    }
+    return window_data;
+}
+
+// Superseded seed deleted; binding references below retain historical provenance.
+// ORIGINAL: 0x005F12E0 sub_5f12e0 0x005F12E0-0x005F130B BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x5f12e0 complete native body and Windows import dispatch.", "source:src/win.h typed Win slots68,69,71,72; callback registration and original helper names remain unknown.", "task:win-message-adapter-owner-batch original identity, complete spans and historical claims retained from src/recovered/units/005f12e0.cpp"], "reason": "Recover the complete window adapter using Windows userdata and the existing typed Win virtual method; preserve null-owner, main-window and callback-result paths."}
+// symbol    ?win_window_sized@@YAXPAUHWND__@@IHH@Z
+// kind      game
+void __cdecl win_window_sized(HWND hwnd, unsigned int flags,
+                                    int width, int height) {
+    Win *const owner = reinterpret_cast<Win *>(
+        GetWindowLongA(hwnd, GWL_USERDATA));
+    if (owner != 0) {
+        owner->on_size(flags, width, height);
+    }
+}
+
+// Superseded seed deleted; binding references below retain historical provenance.
+// ORIGINAL: 0x005F1310 sub_5f1310 0x005F1310-0x005F133B BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x5f1310 complete native body and Windows import dispatch.", "source:src/win.h typed Win slots68,69,71,72; callback registration and original helper names remain unknown.", "task:win-message-adapter-owner-batch original identity, complete spans and historical claims retained from src/recovered/units/005f1310.cpp"], "reason": "Recover the complete window adapter using Windows userdata and the existing typed Win virtual method; preserve null-owner, main-window and callback-result paths."}
+// symbol    ?win_window_nonclient_sized@@YAXPAUHWND__@@IHH@Z
+// kind      game
+void __cdecl win_window_nonclient_sized(HWND hwnd,
+                                               unsigned int flags,
+                                               int width, int height) {
+    Win *const owner = reinterpret_cast<Win *>(
+        GetWindowLongA(hwnd, GWL_USERDATA));
+    if (owner != 0) {
+        owner->on_size_nc(flags, width, height);
+    }
+}

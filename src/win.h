@@ -1270,3 +1270,9 @@ void __cdecl do_all_sounds();
 
 // Source-owned original helper; identity and behavior evidence are in its TU.
 void __cdecl flip_active_bubble_text();
+
+// Original window message adapters; source-owned mappings and evidence in win.cpp.
+LRESULT __cdecl win_window_pos_changing(HWND hwnd, LPARAM parameter);
+LRESULT __cdecl win_window_pos_changed(HWND hwnd, LPARAM parameter);
+void __cdecl win_window_sized(HWND hwnd, unsigned int flags, int width, int height);
+void __cdecl win_window_nonclient_sized(HWND hwnd, unsigned int flags, int width, int height);
