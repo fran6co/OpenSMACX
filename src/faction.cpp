@@ -11543,3 +11543,384 @@ int __cdecl energy_trade(int faction, int other) {
     x_pops_short(StringTemp, 0x100000, FactionDiplomacyPortraits[other], pop_wait);
     return 0;
 }
+
+// ORIGINAL: 0x00544E40 ?propose_treaty@@YAHHH@Z 0x00544E40-0x00545D55
+// RECOVERY_BINDING: v1 {"evidence": ["task:diplomacy-actions-owner-coverage", "Pinned544E40-545D55 full decoded original instructions and independently read dialogue keys68D998-68DA50", "Native Player59C and PlayerData20CC field layout;545759 technology transfer;54593E energy transfer;545B58 nohelp CFG;545CD0 actor/other settlement", "historical seed:src/unrecovered/00544e40.cpp"], "reason": "Recover faction treaty negotiation with typed diplomacy ownership: directed relationship gates, staged score arithmetic, technology and energy prompts, help retry, network and local transfer paths, military-partner help and final treaty settlement. Preserve historical findings and obligations; coverage-first source is not an exact or game-acceptance claim."}
+// symbol    ?propose_treaty@@YAHHH@Z
+// TRIED: the acceptance-scoring block (percentage math against tech_val/relationship tables using reciprocal-multiply constants for `/100`-style division, several hundred instructions) is approximated with a smaller set of named boolean gates feeding the same dialogue/X_pops/log_say/message_data/treaty_off/double_cross/ make_treaty calls, not the per-register arithmetic or exact nesting - the branch order genuinely differs from the disassembly (val_8 is actually tested AFTER the opening-dialogue X_pops loop, not before it). The early gate (strcmp vs the AI-type name, the two "pact already blocked" table checks using the 2099-stride index) and the final treaty_off/double_cross/make_treaty tail are transcribed in call order. MISMATCH #5 (prologue-adjacent, mov vs push).
+int __cdecl propose_treaty(int actor, int other)
+{
+    PopupDialogFactionID = other;
+    int bias = DiplomacyProposalGateCount < 0 ? 1 : 0;
+    if (strcmp(Players[other].filename, "GAIANS") == 0 &&
+        DiplomacyProposalGateCount < 0) ++bias;
+    const int partner_id = DiploScratchF7E8 != 0 ? DiploScratchF7E8 : DiploScratchFA8C;
+    const int partner_threat = partner_id != 0 &&
+        (PlayersData[other].diplo_treaties[partner_id] & 0x8000u) != 0 &&
+        PlayersData[partner_id].mil_strength_1 > PlayersData[other].mil_strength_1 &&
+        (PlayersData[other].diplo_agenda[actor] & 0x800u) == 0;
+    const int eligible = DiplomacyProposalMode == 2 || DiplomacyProposalMode == 4 ||
+        DiplomacyProposalMode == 5 || DiplomacyProposalMode == 8;
+    if (DiploScratchFA3C == 0 && DiploScratchF7FC == 0 &&
+        static_cast<int>(PlayersData[other].ranking) <= 4 &&
+        static_cast<int>(PlayersData[actor].ranking) >= 5 && DiploScratchFA54 == 0)
+        ++bias;
+    int accepted = 0;
+    const int commerce_gap = diplo_sub(PlayersData[other].tech_commerce_bonus,
+                                     PlayersData[actor].tech_commerce_bonus);
+    if (DiploFriction <= diplo_add(15, eligible ? diplo_add(bias, 2) : 0) &&
+        (PlayersData[other].diplo_agenda[actor] & 0x400u) == 0 &&
+        ((PlayersData[other].diplo_treaties[actor] & 0x20u) == 0 ||
+         (DiploScratchFA78 <= 6 && DiploScratchFA78 <=
+          diplo_add(diplo_sub(diplo_add(commerce_gap, eligible ? 2 : 0),
+                              DiplomacyProposalGateCount), 2)))) {
+        if (partner_threat) {
+            accepted = 1;
+        } else if (DiploScratchFA3C == 0 &&
+            DiploScratchFA78 <= diplo_sub(diplo_add(diplo_add(bias, 5), eligible ? 2 : 0),
+                                        diplo_clamp(PlayersData[actor].diff_level, 0, 2)) &&
+            DiploScratchFA2C <= diplo_add(diplo_add(diplo_add(bias, 4), eligible ? 1 : 0),
+                                        DiplomacyProposalMode == 3 ? 2 : 0) &&
+            (DiploFriction <= diplo_add(10 + 5 * eligible, diplo_mul(bias, 3)) ||
+             DiplomacyProposalMode == 3)) {
+            accepted = 1;
+        }
+    }
+    if ((PlayersData[other].flags & 0x400000u) != 0 &&
+        (PlayersData[other].diplo_treaties[actor] & 0x20u) == 0) accepted = 1;
+    if ((PlayersData[actor].diplo_agenda[other] & 0x2000u) != 0) accepted = 0;
+
+    PluralityDefault = 0;
+    GenderDefault = Players[actor].is_leader_female;
+    parse_says(0, Players[actor].name_leader, -1, -1);
+    PluralityDefault = 0;
+    GenderDefault = Players[actor].is_leader_female;
+    parse_says(1, Players[actor].title_leader, -1, -1);
+    GenderDefault = Players[actor].noun_gender;
+    PluralityDefault = Players[actor].is_noun_plural;
+    parse_says(2, Players[actor].noun_faction, -1, -1);
+    parse_says(3, Players[actor].adj_name_faction, -1, -1);
+    if (!accepted) {
+        const int rejection_score = DiploScratchFA78;
+        if (rejection_score > 4 && (DiploScratchFA98 != 0 || DiploFriction <= 2) &&
+            (PlayersData[other].diplo_treaties[actor] & 0x20u) == 0) {
+            x_pops_short("REJTREATYMEEK", 0x100000, FactionDiplomacyPortraits[other], pop_wait);
+            return 1;
+        }
+        if (DiplomacyProposalMode == 3) return 0;
+        if ((PlayersData[other].diplo_treaties[actor] & 0x20u) != 0 || rejection_score > 4) {
+            PluralityDefault = 0;
+            GenderDefault = Players[actor].is_leader_female;
+            parse_says(4, Players[actor].insult_leader, -1, -1);
+            x_pops_short("REJTREATYHATE", 0x100000, FactionDiplomacyPortraits[other], pop_wait);
+        } else if (DiploScratchFA3C != 0) {
+            parse_says(4, get_noun_phrase(other, 9), -1, -1);
+            parse_says(5, get_phrase(actor, 3), -1, -1);
+            x_pops_short("REJTREATYAHEAD", 0x100000, FactionDiplomacyPortraits[other], pop_wait);
+        } else {
+            x_pops_short("REJTREATY", 0x100000, FactionDiplomacyPortraits[other], pop_wait);
+        }
+        return 1;
+    }
+
+
+    const int actor_energy = PlayersData[actor].energy_reserves;
+    const int actor_strength = PlayersData[actor].mil_strength_1;
+    const int other_strength = PlayersData[other].mil_strength_1;
+    const int weighted_energy = diplo_mul(
+        diplo_add(actor_energy, DiploScratchFA78), other_strength)
+        / diplo_add(diplo_add(actor_strength, other_strength), 1);
+    int treaty_score = diplo_mul(weighted_energy / 100, 50);
+
+    if ((PlayersData[other].diplo_treaties[actor] & 0x20u) == 0) {
+        const int commerce_gap = diplo_clamp(diplo_sub(
+            PlayersData[other].tech_commerce_bonus,
+            PlayersData[actor].tech_commerce_bonus), 0, 99);
+        treaty_score = diplo_sub(treaty_score, diplo_mul(commerce_gap, 50));
+    }
+
+    if (strcmp(Players[other].filename, "MORGAN") == 0 &&
+        treaty_score > PlayersData[actor].energy_reserves) {
+        if (DiploScratchFAA8 < 0) {
+            treaty_score = PlayersData[actor].energy_reserves;
+        } else {
+            const int reserve_before_valuation = PlayersData[actor].energy_reserves;
+            const int tech_value = tech_val(DiploScratchFAA8, actor, 1);
+            const int selected_tech_value = diplo_mul(tech_value, diplo_add(TurnCurrentNum, 7) / 8);
+            if (reserve_before_valuation >= selected_tech_value) treaty_score = reserve_before_valuation;
+        }
+    }
+
+    if (DiplomacyProposalMode != 5 && treaty_score > PlayersData[actor].energy_reserves) {
+        const int excess = diplo_sub(treaty_score, PlayersData[actor].energy_reserves);
+        const uint32_t excess_plus_49 = static_cast<uint32_t>(excess) + 49u;
+        const int rounded_hundreds = static_cast<int>(excess_plus_49 / 100u);
+        treaty_score = diplo_sub(treaty_score, diplo_mul(rounded_hundreds, 50));
+    }
+    if (treaty_score < 50) treaty_score = 0;
+
+    int should_offer_technology = 0;
+    int mode_allows_technology_offer = 0;
+    int technology_offer_made = 0;
+    int offer_energy_temporary = 0;
+
+    if (partner_threat == 0 &&
+        DiploFriction > diplo_add(diplo_mul(bias, 2), 10) &&
+        PlayersData[actor].tech_commerce_bonus >=
+            PlayersData[other].tech_commerce_bonus) {
+        should_offer_technology = 1;
+    }
+    if (DiploFriction > 15 ||
+        (PlayersData[other].diplo_treaties[actor] & 0x20u) != 0) {
+        should_offer_technology = 1;
+    } else {
+        const int commerce_gap = diplo_clamp(diplo_sub(
+            PlayersData[other].tech_commerce_bonus,
+            PlayersData[actor].tech_commerce_bonus), 0, 99);
+        if (DiploScratchFA78 > diplo_add(commerce_gap, 2))
+            should_offer_technology = 1;
+    }
+
+    switch (DiplomacyProposalMode) {
+    case 5:
+    case 4:
+        mode_allows_technology_offer = 1;
+        break;
+    case 2:
+    case 3:
+        should_offer_technology = 0;
+        if (DiplomacyProposalMode == 2)
+            mode_allows_technology_offer = 1;
+        break;
+    default:
+        break;
+    }
+
+    if ((should_offer_technology || mode_allows_technology_offer) &&
+        DiploScratchFAA8 >= 0 &&
+        strcmp(Players[other].filename, "BELIEVE") != 0) {
+        bool skip_for_morgan_value = false;
+        if (strcmp(Players[other].filename, "MORGAN") == 0 && treaty_score != 0 &&
+            PlayersData[actor].energy_reserves >= treaty_score) {
+            const int offer_value = diplo_mul(
+                tech_val(DiploScratchFAA8, actor, 1), 100);
+            if (treaty_score >= offer_value) skip_for_morgan_value = true;
+        }
+
+        const bool standard_offer_mode =
+            DiplomacyProposalMode == 4 || DiplomacyProposalMode == 2 ||
+            (DiplomacyProposalMode == 1 && DiploFriction < 10);
+        if (standard_offer_mode && !skip_for_morgan_value) {
+            int response;
+            char prompt_suffix[16];
+            for (;;) {
+                GenderDefault = Players[actor].is_leader_female;
+                PluralityDefault = 0;
+                parse_says(1, Players[actor].title_leader, -1, -1);
+                StringTemp[0] = '\0';
+                say_tech(StringTemp, DiploScratchFAA8, 1);
+                parse_says(2, StringTemp, -1, -1);
+                parse_says(3, get_noun_phrase(other, 9), -1, -1);
+                strcpy(StringTemp, "GIMMETECH");
+                _itoa(random(0, 2), prompt_suffix, 10);
+                strcat(StringTemp, prompt_suffix);
+
+                technology_offer_made = 1;
+                response = x_pops_short(
+                    StringTemp, 0x100000, FactionDiplomacyPortraits[other], pop_wait);
+                if (response <= 1) break;
+                help_topic(14, DiploScratchFAA8);
+            }
+
+            if (response == 0) {
+                accepted = 0;
+            } else {
+                offer_energy_temporary = 1;
+                if (IsMultiplayerNet != 0) {
+                    log_say(DiploLabelSendingTECH, other, DiploScratchFAA8, actor);
+                    message_data(0x244b, 0, other, DiploScratchFAA8, actor, 0);
+                    NetDaemonNet.await_diplo(0x44b);
+                } else {
+                    tech_achieved(other, DiploScratchFAA8, actor, 0);
+                }
+
+                int half_tech_value = tech_val(DiploScratchFAA8, actor, 1);
+                half_tech_value /= 2;
+                PlayersData[other].diplo_friction[actor] = diplo_clamp(
+                    diplo_sub(PlayersData[other].diplo_friction[actor],
+                              half_tech_value), 0, 20);
+                if (DiploFrictionFactionID == static_cast<uint32_t>(other) &&
+                    DiploFrictionFactionIDWith == static_cast<uint32_t>(actor)) {
+                    DiploFriction = diplo_sub(DiploFriction, half_tech_value);
+                }
+                diplomacy_caption(actor, other);
+                DiploScratchFAA8 = DiploScratchFA18;
+                DiploScratchFA18 = -1;
+            }
+        }
+    }
+
+
+
+    if ((should_offer_technology != 0 || mode_allows_technology_offer != 0) &&
+        treaty_score != 0 &&
+        PlayersData[actor].energy_reserves >= treaty_score &&
+        technology_offer_made == 0 &&
+        strcmp(Players[other].filename, "PEACE") != 0 &&
+        (DiplomacyProposalMode == 5 || DiplomacyProposalMode == 2 ||
+         (DiplomacyProposalMode == 1 && DiploFriction < 10))) {
+        technology_offer_made = 1;
+        parse_num(0, treaty_score);
+        PluralityDefault = 0;
+        GenderDefault = Players[other].is_leader_female;
+        parse_says(1, Players[other].title_leader, -1, -1);
+
+        StringTemp[0] = 0;
+        strcat(StringTemp, "GIMMEENERGY");
+        char energy_offer_suffix[16];
+        _itoa(static_cast<int>(random(0, 2)), energy_offer_suffix, 10);
+        strcat(StringTemp, energy_offer_suffix);
+
+        const int energy_popup_result = x_pops_short(
+            StringTemp, 0x100000, FactionDiplomacyPortraits[other], pop_wait);
+        if (energy_popup_result == 0) {
+            if (DiplomacyProposalMode == 1) return 0;
+            x_pops_short("REJTREATYBADBRIBE", 0x100000, FactionDiplomacyPortraits[other], pop_wait);
+            return 1;
+        }
+        if (energy_popup_result != 0) {
+            offer_energy_temporary = 1;
+            const int energy_debit = diplo_sub(0, treaty_score);
+            if (IsMultiplayerNet != 0) {
+                log_say("Sending ENERGY", actor, other, energy_debit);
+                message_data(0x2447, 0, actor, energy_debit, other, treaty_score);
+                NetDaemonNet.await_diplo(0x447);
+            } else {
+                if (actor != 0) {
+                    PlayersData[actor].energy_reserves = diplo_add(
+                        PlayersData[actor].energy_reserves, energy_debit);
+                }
+                if (other != 0) {
+                    PlayersData[other].energy_reserves = diplo_add(
+                        PlayersData[other].energy_reserves, treaty_score);
+                }
+                ConsoleGlobal.update_data(1);
+            }
+
+            int remaining = treaty_score / 10;
+            int divisor = 2;
+            int chunk_limit = 10;
+            int friction_units = 0;
+            while (remaining > 0) {
+                const int chunk = remaining < chunk_limit ? remaining : chunk_limit;
+                friction_units = diplo_add(friction_units, chunk / divisor);
+                remaining = diplo_sub(remaining, chunk_limit);
+                chunk_limit = 20;
+                divisor = diplo_add(divisor, 1);
+            }
+            const int friction_delta = diplo_sub(
+                0, diplo_add(friction_units, 4) / 5);
+            const int other_friction = static_cast<int>(
+                PlayersData[other].diplo_friction[actor]);
+            PlayersData[other].diplo_friction[actor] = static_cast<uint32_t>(
+                diplo_clamp(diplo_add(other_friction, friction_delta), 0, 20));
+
+            if (DiploFrictionFactionID == static_cast<uint32_t>(other) &&
+                DiploFrictionFactionIDWith == static_cast<uint32_t>(actor)) {
+                DiploFriction = diplo_add(DiploFriction, friction_delta);
+            }
+            diplomacy_caption(actor, other);
+            ConsoleInfoWin.set_redraw_phase(0);
+            ConsoleGlobal.update_data(0);
+        }
+    }
+
+
+
+    if (accepted != 0) {
+        if (should_offer_technology != 0 && technology_offer_made == 0) {
+            if (DiplomacyProposalMode == 1) {
+                return 0;
+            }
+            x_pops_short("REJTREATYBADBRIBE", 0x100000,
+                         FactionDiplomacyPortraits[other], pop_wait);
+            return 1;
+        }
+
+        if ((DiplomacyProposalMode == 4 || DiplomacyProposalMode == 5) &&
+            offer_energy_temporary != 0) {
+            DiploScratchF7E8 = 0;
+        }
+
+        if (partner_id != 0 && DiploScratchFA8C == 0) {
+            GenderDefault = Players[actor].is_leader_female;
+            PluralityDefault = 0;
+            parse_says(5, Players[actor].title_leader, -1, -1);
+
+            GenderDefault = Players[partner_id].noun_gender;
+            PluralityDefault = Players[partner_id].is_noun_plural;
+            parse_says(6, Players[partner_id].noun_faction, -1, -1);
+
+            const int help_response = x_pops_short(
+                "GIMMEHELP", 0x100000, FactionDiplomacyPortraits[other], pop_wait);
+            const bool force_no_help_refusal = partner_threat != 0 ||
+                actor == static_cast<int>(FactionRankings[7]) ||
+                DiploScratchFA78 > 3 || DiplomacyProposalMode == 1;
+            if (help_response == 0 && force_no_help_refusal &&
+                offer_energy_temporary == 0 &&
+                strcmp(Players[other].filename, "GAIANS") != 0) {
+                x_pops_short("REJTREATYNOHELP", 0x100000,
+                             FactionDiplomacyPortraits[other], pop_wait);
+
+                char &patience = PlayersData[other].diplo_patience[actor];
+                patience = static_cast<char>(static_cast<unsigned char>(patience) + 1u);
+                return 1;
+            }
+            if (help_response != 0) {
+                log_say(DiploLabelGettingDIPLOMATICLOCK, 0, 0, 0);
+                timeGetTime();
+                while (ExitTurnLoop == 0 && NetDaemonNet.add_global() != 0) {
+                    check_spock();
+                    timeGetTime();
+                }
+
+                if (IsMultiplayerNet == 0) {
+                    treaty_off(actor, other, 0x800000);
+                } else {
+                    log_say(DiploLabelSendingTREATYOFF, actor, other, 0x800000);
+                    message_data(0x2442, 0, actor, other, 0x800000, 0);
+                }
+
+                if (IsMultiplayerNet != 0) {
+                    log_say(DiploLabelSendingDOUBLECROSS, actor, partner_id, other);
+                    message_data(0x2440, 0, actor, partner_id, other, 0);
+                    NetDaemonNet.await_diplo(0x440);
+                } else {
+                    double_cross(actor, partner_id, other);
+                }
+
+                log_say(DiploLabelReleasingDIPLOMATICLOCK, 0, 0, 0);
+                NetDaemonNet.unlock();
+                DiploScratchF7E8 = 0;
+                DiploScratchFA4C = 0;
+            }
+        }
+
+        make_treaty(actor, other);
+        return 1;
+    }
+
+    if (technology_offer_made != 0) {
+        x_pops_short("REJTREATYNOBRIBE", 0x100000,
+                     FactionDiplomacyPortraits[other], pop_wait);
+        return 1;
+    }
+
+    if (DiplomacyProposalMode == 1) {
+        return 0;
+    }
+
+    x_pops_short("REJTREATYBADBRIBE", 0x100000,
+                 FactionDiplomacyPortraits[other], pop_wait);
+    return 1;
+}

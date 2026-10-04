@@ -1158,3 +1158,5 @@ int __cdecl buy_tech(int faction_id, int other_faction_id, int action,
                      int is_commlink, int mode);
 
 int __cdecl energy_trade(int faction, int other);
+
+int __cdecl propose_treaty(int actor, int other);
