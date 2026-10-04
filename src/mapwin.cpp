@@ -8217,3 +8217,9 @@ Purpose: Adjust the receiver from MapWin's thunk1 subobject to the one
 Return Value: n/a
 Status: Complete
 */
+
+// The C++ compiler owns the scalar deleting destructor below. Do not
+// add a hand-written deleting wrapper or explicit destructor cascade.
+// Current source ownership is not original TU or COMDAT-selection proof.
+// ORIGINAL: 0x00421830 ??_GMapWin@@UAEPAXI@Z 0x00421830-0x00421866 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["historical seed:src/recovered/units/00421830.cpp", "task:window-generated-deletion-owners", "Pinned entry receives the MapWin virtual GraphicWin subobject at complete-object+0x21A6C; own-part destructor, virtual-base destructor and conditional delete are separate native stages.", "Fresh emitted code and receiver/target controls remain required. Duplicate COMDAT emission does not establish historical translation-unit placement or retained link selection."], "reason": "The existing real class lifetime generates this deleting entry; bind compiler-owned code rather than transcribing receiver arithmetic or invoking member/base destructors twice."}

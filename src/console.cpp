@@ -11398,3 +11398,9 @@ int __cdecl supply_options(int veh_id, int base_id) {
     popup.owned_picture().close();
     return 0;
 }
+
+// The C++ compiler owns the scalar deleting destructor below. Do not
+// add a hand-written deleting wrapper or explicit destructor cascade.
+// Current source ownership is not original TU or COMDAT-selection proof.
+// ORIGINAL: 0x0051DDF0 ??_GConsole@@UAEPAXI@Z 0x0051DDF0-0x0051DE26 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["historical seed:src/recovered/0051ddf0.cpp", "task:window-generated-deletion-owners", "Pinned entry receives the Console virtual GraphicWin subobject at complete-object+0x23D94; own-part destructor, virtual-base destructor and conditional delete are separate native stages.", "Fresh emitted code and receiver/target controls remain required. Duplicate COMDAT emission does not establish historical translation-unit placement or retained link selection."], "reason": "The existing real class lifetime generates this deleting entry; bind compiler-owned code rather than transcribing receiver arithmetic or invoking member/base destructors twice."}
