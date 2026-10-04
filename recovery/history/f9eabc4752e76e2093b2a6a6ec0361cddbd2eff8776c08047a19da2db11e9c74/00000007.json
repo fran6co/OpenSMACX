@@ -1,0 +1,20 @@
+{
+  "event_id": "ded406ca09e7d22e2a35d1312134d285aa2ceeefafdbbee05bf0976302563650",
+  "payload": {
+    "affects": [
+      "entity-394ad3b30849977175e8ec8753bc6e2c0cd51b9d06028033e3047a4afdadc6e9"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "tech-trade-separate-state",
+    "evidence": [
+      "Pinned native541158 clears93F7C4 and543094 writes1. Existing bounded DiploScratchF7C0 ends93F7C4; two independent reads of current source find no product binding for newstart. Coordinator authorizes only this same-owner storage definition for the admitted trade reconstruction."
+    ],
+    "hypothesis": "The native tech_trade stores to separate dword93F7C4, outside the existing F7C0 object. Authorize a neutral four-byte source-owned int in the already editable faction.cpp TU, no invented semantic meaning or alias of neighboring state. Preserve distinct object identity and later lifecycle obligations.",
+    "kind": "discovery"
+  },
+  "previous_event": "259661fc29e8a4391815ba9d89e7f408f15fa8fcd6d1ebebae3bee9cbc135ad0",
+  "request_id": "tech-trade-separate-state",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:diplomacy-actions-owner-coverage"
+}

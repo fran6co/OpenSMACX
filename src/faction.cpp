@@ -4634,6 +4634,11 @@ int DiploScratchFA1C;
 int DiploScratchFA28;
 // RECOVERY_OBJECT: v2 0x0093F7C0 0x0093F7C4 ?DiploScratchF7C0@@3HA 0x0053E800
 int DiploScratchF7C0;
+// tech_trade clears this distinct dword at 0x00541158 and sets it at
+// 0x00543094. It is not part of F7C0, whose original extent ends here.
+// Keep a neutral name until its full producer/consumer role is established.
+// RECOVERY_OBJECT: v2 0x0093F7C4 0x0093F7C8 ?DiploScratchF7C4@@3HA 0x00541100
+int DiploScratchF7C4;
 // RECOVERY_OBJECT: v2 0x0093F7EC 0x0093F7F0 ?DiploScratchF7EC@@3HA 0x0053E800
 int DiploScratchF7EC;
 // RECOVERY_OBJECT: v2 0x0093F7F4 0x0093F7F8 ?DiploScratchF7F4@@3HA 0x0053E800

@@ -1,0 +1,17 @@
+{
+  "event_id": "5e2bc10493c5f6ff1f5fcd34ffdc60f0dab2e3a28c854d655beb856239b9413f",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "tech-trade-separate-state",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "faction.cpp now defines separate neutral DiploScratchF7C4 with bounded source object annotation93F7C4-93F7C8 and native541100 evidence. Fresh isolated VC6 application build/link passes; physical faction.cpp.obj contains exactly one public definition for its symbol. Native stores establish four-byte access, not complete lifecycle or current game acceptance; no neighboring storage was widened or aliased."
+    ]
+  },
+  "previous_event": "ded406ca09e7d22e2a35d1312134d285aa2ceeefafdbbee05bf0976302563650",
+  "request_id": "bind-tech-trade-separate-state",
+  "schema_version": 1,
+  "sequence": 8,
+  "stream": "task:diplomacy-actions-owner-coverage"
+}
