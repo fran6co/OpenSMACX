@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "task_id": "short-network-popup-owner",
+  "author": "framework-coordinator",
+  "target": "opensmacx",
+  "base_revision": "df27847736ef34b8c145bd5e4b78e5918f924ba9",
+  "editable_files": [
+    "src/netdaemon.cpp",
+    "src/netdaemon.h",
+    "src/popup.cpp",
+    "src/popup.h",
+    "src/recovered/00592de0.cpp",
+    "src/recovered/0051dcc0.cpp",
+    "recovery/tests/test_short_network_popup.py"
+  ],
+  "subjects": [
+    {
+      "address": 5844448,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5364928,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "intent": "Replace two standalone byte-exact scaffolds with genuine source-owned counted network send and popup checkbox bit helpers, preserving original identities/spans, original C ABI semantics and historical byte obligations.",
+  "evidence": [
+    "Whole pinned592DE0..592E0E increments NetBusyCount then calls existing NetDaemonNet.send_message and decrements; source owner netdaemon.cpp. Complete51DCC0..51DCF6 reads[ebp+C]enabled and[ebp+8]bit index, SHL CL then updates existing PopupWriteCheckState; plain RET proves ordinary cdecl, not ECX parameter/member ABI.",
+    "Source names netdaemon_send_message_counted and popup_set_write_check_bit are provisional descriptive names, not original debug names. Preserve old catalogue identities and update emitted-symbol facts with native compiler evidence through write_symbol. No synthetic class, fixed-address storage or executable trampoline permitted.",
+    "Existing byte claims on both donor seeds must transfer via native source writer and remain exact before reviewed publication. Run actual-source host behavior/damage controls, native measurement, build/link, protected owner regression, reference/claim continuity and touched annotation checks. Do not remove seeds until complete matching source owners retain all parsed findings.",
+    "Native input shift behavior masks count to five bits; use defined unsigned operations preserving negative/large indices, not arbitrary bounds checks. Counted send does not introduce exception-safe decrement not present in native behavior. No new globals or caller changes required.",
+    "Coordinator-reviewed integration only; no claim demotion, unmeasured new claim, automatic/game acceptance or strict linked/reference proof authorized. Task-context global member validation remains inherited unavailable, not green."
+  ]
+}
