@@ -12871,3 +12871,639 @@ return_selection:
     DiplomacyProposalMode = 1;
     return DiploScratchFA34;
 }
+
+// ORIGINAL: 0x00545E80 ?propose_attack@@YAHHH@Z 0x00545E80-0x00547C08;0x0065F1B4-0x0065F4C4
+// RECOVERY_BINDING: v1 {"evidence": ["task:diplomacy-actions-owner-coverage", "Pinned545E80-547C08 body and65F1B4-65F4C4 cleanup", "Native546B5E jumps546B9C: PEACE cutoffs reuse updated total; 5466BE offline547397 vs network54739F", "Native54755C outcome actor-to-target;5475A4 friction target-to-actor;54741D setter other-to-actor", "Fresh COFF Player59C andPlayerData20CC; pair members12C/14C; region_total_bases117C", "historical seed:src/unrecovered/00545e80.cpp"], "reason": "Recover the complete incitement negotiation in its faction owner with a lexical Popup, typed regional and diplomatic state, technology and credit offers, and original lock/transfer/treaty/result ordering. Preserve original primary and generated cleanup spans and seed identity. This is compiling recovery, not byte matching or game acceptance."}
+// symbol    ?propose_attack@@YAHHH@Z
+int __cdecl propose_attack(int actor, int other) {
+// Native EBP-0x540C is the real automatic Popup local. Its constructor and
+// destructor stay in this lexical scope across every early return.
+Popup popup;
+
+// Native 545E80 captures the target that the caller already selected in
+// DiploScratchFA5C. There is no target-selection menu in propose_attack.
+const int actor_faction_id = actor;
+const int other_faction_id = other;
+const int target = DiploScratchFA5C;
+const int selected_target_faction_id = target;
+PopupDialogFactionID = other_faction_id;
+
+// At 545EE0 the directed row is PlayersData[other][selected target]. A
+// pre-existing vendetta against that target takes the early refusal branch
+// at 545EF0..545F97. The native code parses the selected target's leader
+// fields, then displays its refusal popup with the other faction's portrait.
+const uint32_t other_to_target_treaty =
+    PlayersData[other_faction_id]
+        .diplo_treaties[selected_target_faction_id];
+const int other_to_target_pact_bit =
+    static_cast<int>(other_to_target_treaty & DTREATY_PACT);
+if ((other_to_target_treaty & DTREATY_VENDETTA) != 0) {
+    GenderDefault = Players[selected_target_faction_id].is_leader_female;
+    PluralityDefault = 0;
+    parse_says(0, Players[selected_target_faction_id].title_leader, -1, -1);
+    GenderDefault = Players[selected_target_faction_id].is_leader_female;
+    PluralityDefault = 0;
+    parse_says(1, Players[selected_target_faction_id].name_leader, -1, -1);
+    x_pops_short("REJWARALREADY", 0x100000,
+                 FactionDiplomacyPortraits[other_faction_id], pop_wait);
+    // The lexical Popup/helper objects run the same original cleanup order.
+    return 0;
+}
+
+// The next refusal is bypassed if the other faction already has a commlink
+// to the selected target. Otherwise native calls contiguous(other, target,
+// region 0, mode 1), then checks the other-to-actor pact bit.
+int target_is_contiguous = 1;
+if ((other_to_target_treaty & DTREATY_COMMLINK) == 0) {
+    target_is_contiguous =
+        contiguous(other_faction_id, selected_target_faction_id, 0, 1);
+}
+const int other_has_actor_pact =
+    (PlayersData[other_faction_id]
+         .diplo_treaties[actor_faction_id] & DTREATY_PACT) != 0;
+if ((other_to_target_treaty & DTREATY_COMMLINK) == 0 &&
+    target_is_contiguous == 0 &&
+    !other_has_actor_pact) {
+    // Native 545FD1..546079 parses only the actor's leader title and the
+    // selected target's adj_name_faction, then displays REJWARFAR.
+    GenderDefault = Players[actor_faction_id].is_leader_female;
+    PluralityDefault = 0;
+    parse_says(0, Players[actor_faction_id].title_leader, -1, -1);
+    parse_says(2, Players[selected_target_faction_id].adj_name_faction,
+               -1, -1);
+    x_pops_short("REJWARFAR", 0x100000,
+                 FactionDiplomacyPortraits[other_faction_id], pop_wait);
+    return 0;
+}
+
+// Native 54607E..5460D8 assigns a policy class by scanning region IDs 1..127.
+// Its byte reads are PlayerData::region_total_bases at +0x117C (not the force
+// rating array at +0x127C). The shipped scan checks whether both factions
+// have at least one base in any same region.
+int policy_class = 0;
+if ((other_to_target_treaty & DTREATY_COMMLINK) == 0 &&
+    target_is_contiguous == 0 && other_has_actor_pact) {
+    policy_class = 2;
+    for (int region = 1; region < 128; ++region) {
+        if ((region & 0x3f) == 0 || (region & 0x3f) == 0x3f) continue;
+        if (PlayersData[other_faction_id].region_total_bases[region] != 0 &&
+            PlayersData[selected_target_faction_id]
+                .region_total_bases[region] != 0) {
+            policy_class = 1;
+            break;
+        }
+    }
+}
+
+// Native score, policy, and immediate WARPACT branch (5460DF..546635).
+// diplo_* uses unsigned operations then converts to int, preserving the
+// native signed-32 wrap without signed-overflow undefined behavior.
+int proposal_attack_score = diplo_sub(
+    DiploScratchFA78,
+    PlayersData[selected_target_faction_id].integrity_blemishes);
+proposal_attack_score = diplo_mul(
+    proposal_attack_score, TurnCurrentNum / 10);
+proposal_attack_score = diplo_add(
+    proposal_attack_score,
+    diplo_mul(PlayersData[selected_target_faction_id].mil_strength_1, 5));
+proposal_attack_score = diplo_mul(
+    proposal_attack_score,
+    diplo_sub(2, PlayersData[other_faction_id].ai_fight));
+
+const int target_rank =
+    static_cast<int>(PlayersData[selected_target_faction_id].ranking);
+const int other_rank =
+    static_cast<int>(PlayersData[other_faction_id].ranking);
+const int actor_rank = static_cast<int>(PlayersData[actor_faction_id].ranking);
+if (target_rank > other_rank && target_rank > actor_rank &&
+    DiploScratchF7FC == 0 && (actor_rank >= 4 || target_rank >= 4)) {
+    proposal_attack_score /= 2;
+}
+
+if (selected_target_faction_id == static_cast<int>(FactionRankings[7])) {
+    const int target_power =
+        static_cast<int>(FactionRankingsUnk[selected_target_faction_id]);
+    const int next_ranked_faction = static_cast<int>(FactionRankings[6]);
+    const int next_ranked_power =
+        static_cast<int>(FactionRankingsUnk[next_ranked_faction]);
+    if (target_power >= diplo_mul(next_ranked_power, 2)) {
+        proposal_attack_score /= 4;
+    } else if (great_satan(selected_target_faction_id, 0) != 0) {
+        proposal_attack_score /= 3;
+    } else if (diplo_mul(next_ranked_power, 3) <=
+               diplo_mul(target_power, 2)) {
+        proposal_attack_score /= 2;
+    }
+}
+
+if ((PlayersData[other_faction_id].flags & 0x00400000u) != 0)
+    proposal_attack_score /= 2;
+
+const int other_to_target_pact = other_to_target_pact_bit != 0;
+const uint32_t other_to_actor_treaty =
+    PlayersData[other_faction_id].diplo_treaties[actor_faction_id];
+const int other_to_actor_vendetta_bit =
+    static_cast<int>(other_to_actor_treaty & DTREATY_VENDETTA);
+if (other_to_target_pact) {
+    proposal_attack_score = diplo_mul(
+        proposal_attack_score,
+        diplo_sub(3, PlayersData[other_faction_id].ai_fight));
+    if (actor_rank >= 6 && target_rank >= 5 && DiploScratchF7F0 == 0 &&
+        other_rank <= 4 && TurnCurrentNum >= 50 &&
+        (DiploScratchFA54 != 0 ||
+         PlayersData[actor_faction_id].integrity_blemishes > 2)) {
+        proposal_attack_score = diplo_add(
+            proposal_attack_score, proposal_attack_score);
+    }
+} else if ((other_to_actor_treaty & DTREATY_PACT) != 0) {
+    proposal_attack_score /= 2;
+}
+
+const uint32_t actor_to_target_treaty =
+    PlayersData[actor_faction_id].diplo_treaties[selected_target_faction_id];
+const uint32_t target_to_actor_treaty =
+    PlayersData[selected_target_faction_id].diplo_treaties[actor_faction_id];
+if (PlayersData[selected_target_faction_id].integrity_blemishes >
+    PlayersData[actor_faction_id].integrity_blemishes) {
+    proposal_attack_score /= 2;
+    if ((actor_to_target_treaty & DTREATY_WANT_REVENGE) != 0 &&
+        (other_to_actor_treaty & DTREATY_WANT_REVENGE) == 0 &&
+        (target_to_actor_treaty & DTREATY_WANT_REVENGE) == 0) {
+        proposal_attack_score /= 2;
+    }
+}
+
+if (DiploScratchFA3C != 0)
+    proposal_attack_score = diplo_add(
+        proposal_attack_score, proposal_attack_score);
+if ((other_to_actor_treaty &
+     (DTREATY_PACT | DTREATY_HAVE_SURRENDERED)) ==
+    (DTREATY_PACT | DTREATY_HAVE_SURRENDERED)) {
+    proposal_attack_score /= 2;
+}
+
+// Native 5463A8 reads the byte at 0x009A64E8, i.e. LockEnableMask byte 0
+// (the existing human-faction mask), then tests the selected target bit.
+const uint32_t human_factions = LockEnableMask & 0xFFu;
+const uint32_t target_faction_bit =
+    1u << (selected_target_faction_id & 0x1f);
+if ((actor_to_target_treaty & DTREATY_VENDETTA) == 0 &&
+    (human_factions & target_faction_bit) == 0) {
+    proposal_attack_score = diplo_add(
+        proposal_attack_score, proposal_attack_score / 2);
+}
+
+if (target_rank >= 6 && other_rank >= 6) proposal_attack_score /= 2;
+
+// For a pairwise field indexed by the PlayerData stride, use the declared
+// members directly. Native compares the target row's diplo_unk1/diplo_wrongs
+// at this point; the target's difference plus one scales the current score.
+const int target_trade_favor =
+    PlayersData[selected_target_faction_id].diplo_unk1[other_faction_id];
+const int target_trade_wrong =
+    PlayersData[selected_target_faction_id].diplo_wrongs[other_faction_id];
+if (target_trade_favor > target_trade_wrong) {
+    const int target_favor_delta =
+        diplo_add(diplo_sub(target_trade_favor, target_trade_wrong), 1);
+    proposal_attack_score = diplo_mul(proposal_attack_score,
+                                      target_favor_delta);
+}
+
+const int score_after_class = diplo_mul(
+    diplo_sub(4, policy_class), proposal_attack_score) / 4;
+const int proposal_attack_threshold = diplo_mul(
+    diplo_add(score_after_class, 24) / 100, 25);
+
+const uint32_t target_to_other_treaty =
+    PlayersData[selected_target_faction_id]
+        .diplo_treaties[other_faction_id];
+const int proposal_mode = DiplomacyProposalMode;
+const int proposal_attack_special_gate =
+    (target_to_other_treaty & DTREATY_PACT) != 0 &&
+    (proposal_mode == 1 || proposal_mode == 3) &&
+    (actor_to_target_treaty & DTREATY_VENDETTA) != 0 &&
+    !other_to_target_pact;
+
+int proposal_attack_must_double_cross = 0;
+if (proposal_attack_special_gate) {
+    const int other_wants_attack = wants_to_attack(
+        other_faction_id, selected_target_faction_id, 0);
+    if (other_wants_attack != 0) {
+        proposal_attack_must_double_cross = 1;
+    } else if (wants_to_attack(selected_target_faction_id,
+                               other_faction_id, 0) != 0) {
+        proposal_attack_must_double_cross = 1;
+    } else {
+        const uint32_t actor_to_target_after_policy =
+            PlayersData[actor_faction_id]
+                .diplo_treaties[selected_target_faction_id];
+        const int target_rank_after_policy = static_cast<int>(
+            PlayersData[selected_target_faction_id].ranking);
+        const int actor_rank_after_policy = static_cast<int>(
+            PlayersData[actor_faction_id].ranking);
+        const int actor_to_target_asks_for_revenge =
+            (actor_to_target_after_policy & DTREATY_WANT_REVENGE) != 0;
+        if (target_rank_after_policy > actor_rank_after_policy &&
+            (!actor_to_target_asks_for_revenge ||
+             target_rank_after_policy > other_rank)) {
+            proposal_attack_must_double_cross = 1;
+        }
+    }
+}
+
+if (proposal_attack_must_double_cross) {
+    GenderDefault = Players[selected_target_faction_id].is_leader_female;
+    PluralityDefault = 0;
+    parse_says(0, Players[selected_target_faction_id].title_leader, -1, -1);
+    GenderDefault = Players[selected_target_faction_id].is_leader_female;
+    PluralityDefault = 0;
+    parse_says(1, Players[selected_target_faction_id].name_leader, -1, -1);
+    GenderDefault = Players[selected_target_faction_id].noun_gender;
+    PluralityDefault = Players[selected_target_faction_id].is_noun_plural;
+    parse_says(2, Players[selected_target_faction_id].noun_faction, -1, -1);
+    parse_says(3, get_pact(actor_faction_id), -1, -1);
+    x_pops_short("WARPACT", 0x100000,
+                 FactionDiplomacyPortraits[other_faction_id], pop_wait);
+    if (IsMultiplayerNet != 0) {
+        log_say("Sending DOUBLE CROSS", actor_faction_id,
+                selected_target_faction_id, other_faction_id);
+        message_data(0x2440, 0, other_faction_id,
+                     selected_target_faction_id, actor_faction_id, 0);
+        NetDaemonNet.await_diplo(0x440);
+    } else {
+        double_cross(other_faction_id, selected_target_faction_id,
+                     actor_faction_id);
+    }
+    return 0;
+}
+
+// This threshold is consumed by the common diplomacy-policy body from
+// 546640. Its EBP frame reuses [ebp-0x14], which has already changed from the
+// temporary other-row base index used earlier in this function.
+const int proposal_attack_policy_threshold = proposal_attack_threshold;
+
+const int attack_cached_mode = DiplomacyProposalMode;
+const uint32_t attack_cached_other_actor_treaty =
+    PlayersData[other].diplo_treaties[actor];
+
+// Native 546640-5466E6 requires both the pair's pact bit and
+// HAVE_SURRENDERED, and only enters the diplomatic-lock transaction for
+// proposal modes 1 and 3. Keep this cached native condition intact while the
+// network loop calls helpers that may update diplomacy state.
+if ((attack_cached_other_actor_treaty & DTREATY_PACT) != 0 &&
+    (attack_cached_other_actor_treaty & DTREATY_HAVE_SURRENDERED) != 0 &&
+    (attack_cached_mode == 3 || attack_cached_mode == 1)) {
+attack_retry:
+    log_say("Getting DIPLOMATIC LOCK", 0, 0, 0);
+    timeGetTime();
+    while (ExitTurnLoop == 0 && NetDaemonNet.add_global() != 0) {
+        check_spock();
+        timeGetTime();
+    }
+
+    if (IsMultiplayerNet != 0) {
+        log_say("Sending TREATY ON", other, target, 0x80000018);
+        message_data(0x2441, 0, other, target, 0x80000018, 0);
+        // The native network edge skips the offline treaty_on call at 547397.
+        goto attack_accept_treaty_network;
+    }
+    goto attack_accept_treaty;
+}
+
+// The first refusal family is selected by the directed other->actor treaty
+// word. WANT_REVENGE and FA78 are tested in their original order. The mode-3
+// cleanup edge has no direct presentation call in this range; retain its
+// zero-return transition rather than substituting a guessed popup.
+if ((attack_cached_other_actor_treaty & DTREATY_PACT) == 0) {
+    if ((attack_cached_other_actor_treaty & DTREATY_WANT_REVENGE) != 0 ||
+        DiploScratchFA78 > 5) {
+        if (attack_cached_mode == 3) {
+            goto attack_return_zero;
+        }
+        GenderDefault = Players[actor].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(0, Players[actor].title_leader, -1, -1);
+        GenderDefault = Players[actor].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(1, Players[actor].name_leader, -1, -1);
+        GenderDefault = Players[target].noun_gender;
+        PluralityDefault = Players[target].is_noun_plural;
+        parse_says(2, Players[target].noun_faction, -1, -1);
+        x_pops_short("REJWARTRUST", 0x100000,
+                     FactionDiplomacyPortraits[other], pop_wait);
+        goto attack_return_zero;
+    }
+}
+
+// Modes 1 and 3 alone apply the paired wants_to_attack policy. Preserve its
+// call order and the later directed actor->target vendetta test: either the
+// first call or the full second-call condition enters the shared trade/offer
+// block at 546A20.
+if (attack_cached_mode == 1 || attack_cached_mode == 3) {
+    if (wants_to_attack(other, target, 0) != 0)
+        goto attack_trade_offer;
+
+    if ((attack_cached_other_actor_treaty & DTREATY_PACT) != 0 ||
+        DiploScratchFA98 != 0) {
+        if (wants_to_attack(target, other, 0) != 0 &&
+            (PlayersData[actor].diplo_treaties[target] &
+             DTREATY_VENDETTA) != 0) {
+            goto attack_trade_offer;
+        }
+    }
+
+    // Unlike the earlier EDX-based mode gates, 54689E reloads the global after
+    // both wants_to_attack calls. Preserve that fresh observation.
+    if (DiplomacyProposalMode == 3) goto attack_return_zero;
+
+    GenderDefault = Players[actor].is_leader_female;
+    PluralityDefault = 0;
+    parse_says(0, Players[actor].title_leader, -1, -1);
+    x_pops_short("REJWARNOBRIBE", 0x100000,
+                 FactionDiplomacyPortraits[other], pop_wait);
+    goto attack_return_zero;
+}
+
+goto attack_trade_offer;
+
+// Technology and credit offers (native 546A20-547397).
+attack_trade_offer:
+{
+    int transaction_accepted = 0;
+    int offer_shown = 0;
+    const int price = proposal_attack_policy_threshold;
+    int technology_value = 0;
+    if (DiploScratchFAA8 >= 0) {
+        const int value = tech_val(DiploScratchFAA8, other, 1);
+        technology_value = diplo_mul(value, diplo_add(TurnCurrentNum, 7) / 8);
+    }
+    int first_value = technology_value;
+    if (DiploScratchFA18 >= 0) {
+        const int value = tech_val(DiploScratchFA18, other, 1);
+        technology_value = diplo_add(technology_value,
+            diplo_mul(value, diplo_add(TurnCurrentNum, 7) / 8));
+    }
+    int second_value = technology_value;
+    if (DiploScratchFA1C >= 0) {
+        const int value = tech_val(DiploScratchFA1C, other, 1);
+        technology_value = diplo_add(technology_value,
+            diplo_mul(value, diplo_add(TurnCurrentNum, 7) / 8));
+    }
+    int third_value = technology_value;
+    if (DiploScratchFA28 >= 0) {
+        const int value = tech_val(DiploScratchFA28, other, 1);
+        technology_value = diplo_add(technology_value,
+            diplo_mul(value, diplo_add(TurnCurrentNum, 7) / 8));
+    }
+    if (strcmp(Players[other].filename, "UNIV") == 0) {
+        technology_value = diplo_mul(technology_value, 2);
+        first_value = diplo_mul(first_value, 2);
+        second_value = diplo_mul(second_value, 2);
+        third_value = diplo_mul(third_value, 2);
+    } else if (strcmp(Players[other].filename, "PEACE") == 0) {
+        technology_value = diplo_mul(technology_value, 3) / 2;
+        // Original 546B50 reuses the UPDATED total for all three cutoffs.
+        first_value = second_value = third_value =
+            diplo_mul(technology_value, 3) / 2;
+    } else if (strcmp(Players[other].filename, "MORGAN") == 0) {
+        technology_value /= 2;
+        first_value /= 2;
+        second_value /= 2;
+        third_value /= 2;
+    }
+    const int cutoff = diplo_mul(price, 4) / 3;
+    if (third_value >= cutoff) DiploScratchFA28 = -1;
+    if (second_value >= cutoff) DiploScratchFA1C = -1;
+    if (first_value >= cutoff) DiploScratchFA18 = -1;
+
+    if (DiploScratchFAA8 >= 0 &&
+        strcmp(Players[other].filename, "BELIEVE") != 0 &&
+        technology_value >= price &&
+        (DiplomacyProposalMode == 4 ||
+         (DiplomacyProposalMode == 2 &&
+          (PlayersData[other].energy_reserves > PlayersData[actor].energy_reserves ||
+           technology_value >= diplo_mul(price, 3) / 2)))) {
+        GenderDefault = Players[target].noun_gender;
+        PluralityDefault = Players[target].is_noun_plural;
+        parse_says(0, Players[target].noun_faction, -1, -1);
+        GenderDefault = Players[target].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(1, Players[target].title_leader, -1, -1);
+        GenderDefault = Players[target].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(2, Players[target].name_leader, -1, -1);
+        StringTemp[0] = '\0';
+        say_tech(StringTemp, DiploScratchFAA8, 1);
+        parse_says(3, StringTemp, -1, -1);
+        if (DiploScratchFA18 >= 0) {
+            StringTemp[0] = '\0';
+            say_tech(StringTemp, DiploScratchFA18, 1);
+            parse_says(4, StringTemp, -1, -1);
+        }
+        if (DiploScratchFA1C >= 0) {
+            StringTemp[0] = '\0';
+            say_tech(StringTemp, DiploScratchFA1C, 1);
+            parse_says(8, StringTemp, -1, -1);
+        }
+        if (DiploScratchFA28 >= 0) {
+            StringTemp[0] = '\0';
+            say_tech(StringTemp, DiploScratchFA28, 1);
+            parse_says(9, StringTemp, -1, -1);
+        }
+        GenderDefault = Players[other].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(5, Players[other].title_leader, -1, -1);
+        parse_says(6, Players[target].adj_name_faction, -1, -1);
+        StringTemp[0] = '\0';
+        strcat(StringTemp, "MAYBEWARTECH");
+        if ((PlayersData[other].diplo_treaties[target] & DTREATY_PACT) != 0)
+            strcat(StringTemp, "PACT");
+        else if (policy_class != 0) strcat(StringTemp, "FAR");
+        if (DiploScratchFA28 >= 0) strcat(StringTemp, "4");
+        else if (DiploScratchFA1C >= 0) strcat(StringTemp, "3");
+        else if (DiploScratchFA18 >= 0) strcat(StringTemp, "2");
+        offer_shown = 1;
+        if (x_pops_short(StringTemp, 0x100000,
+                         FactionDiplomacyPortraits[other], pop_wait) != 0) {
+            transaction_accepted = 1;
+            // Read each selector after preceding transfers/acknowledgements.
+            for (int selection = 0; selection < 4; ++selection) {
+                const int tech = selection == 0 ? DiploScratchFA28
+                    : selection == 1 ? DiploScratchFA1C
+                    : selection == 2 ? DiploScratchFA18 : DiploScratchFAA8;
+                if (selection != 3 && tech < 0) continue;
+                if (IsMultiplayerNet != 0) {
+                    log_say("Sending TECH", other, tech, actor);
+                    message_data(0x244b, 0, other, tech, actor, 0);
+                    NetDaemonNet.await_diplo(0x44b);
+                } else {
+                    tech_achieved(other, tech, actor, 0);
+                }
+            }
+            DiploScratchFA28 = DiploScratchFA1C =
+                DiploScratchFA18 = DiploScratchFAA8 = -1;
+        }
+    } else if (strcmp(Players[other].filename, "PEACE") != 0 &&
+               (DiplomacyProposalMode == 2 || DiplomacyProposalMode == 5)) {
+        GenderDefault = Players[target].noun_gender;
+        PluralityDefault = Players[target].is_noun_plural;
+        parse_says(0, Players[target].noun_faction, -1, -1);
+        parse_says(1, get_pact(target), -1, -1);
+        parse_says(2, Players[target].adj_insult_faction, -1, -1);
+        parse_num(0, price);
+        parse_says(6, Players[target].adj_name_faction, -1, -1);
+        StringTemp[0] = '\0';
+        strcat(StringTemp, "MAYBEWARENERGY");
+        if ((PlayersData[other].diplo_treaties[target] & DTREATY_PACT) != 0)
+            strcat(StringTemp, "PACT");
+        else if (policy_class != 0) strcat(StringTemp, "FAR");
+        popup.start(PopupStartCaption, StringTemp, -1, nullptr, 0x100000, 0);
+        if (PlayersData[actor].energy_reserves >= price)
+            popup.start(PopupStartCaption, "MAYBEWARPRICE", -1, nullptr,
+                        0x100080, 0);
+        popup.set_caller_picture(popup.picture_enabled() ? nullptr :
+                                 FactionDiplomacyPortraits[other]);
+        popup.dialogs().sprite(FactionDiplomacyPortraits[other], nullptr, 0);
+        offer_shown = 1;
+        if (popup.exec(0, pop_wait) > 0) {
+            const int amount = diplo_sub(0, price);
+            if (IsMultiplayerNet != 0) {
+                log_say("Sending ENERGY", actor, other, amount);
+                message_data(0x2447, 0, actor, amount, other, price);
+                NetDaemonNet.await_diplo(0x447);
+            } else {
+                if (actor != 0) PlayersData[actor].energy_reserves =
+                    diplo_add(PlayersData[actor].energy_reserves, amount);
+                if (other != 0) PlayersData[other].energy_reserves =
+                    diplo_add(PlayersData[other].energy_reserves, price);
+                ConsoleGlobal.update_data(1);
+            }
+            transaction_accepted = 1;
+        }
+    }
+    ConsoleInfoWin.set_redraw_phase(0);
+    ConsoleGlobal.update_data(0);
+    if (transaction_accepted != 0) goto attack_retry;
+    if (offer_shown == 0) {
+        GenderDefault = Players[target].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(0, Players[target].title_leader, -1, -1);
+        GenderDefault = Players[target].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(1, Players[target].name_leader, -1, -1);
+        parse_says(2, get_him_her(target, 0), -1, -1);
+        x_pops_short("REJWAR", 0x100000,
+                     FactionDiplomacyPortraits[other], pop_wait);
+    }
+    goto attack_return_zero;
+}
+
+// The offline edge applies the staged status locally. The multiplayer sibling
+// already sent 0x2441 with (other, target, 0x80000018, 0) and branches directly
+// to attack_accept_treaty_network, bypassing this call.
+attack_accept_treaty:
+treaty_on(other, target, 0x80000018);
+
+attack_accept_treaty_network:
+{
+// Native 0x54739F-0x547423 performs two fresh IsMultiplayerNet reads. The
+// existing wrappers preserve each exact log/message/local operation; neither
+// waits for an acknowledgement.
+net_set_treaty(other, target, 0x40, 1, 0);
+net_set_treaty(other, actor, 0x80, 1, 0);
+
+// 0x547426-0x54755C prepares localized result feedback for the same target.
+// Native Players rows have a 0x59C stride; these reads resolve to the named
+// Player members below. The parser's default grammar is explicitly updated in
+// the same sequence as the native stores to 0x9BBFEC/0x9BBFF0.
+GenderDefault = Players[target].is_leader_female;
+PluralityDefault = 0;
+parse_says(0, Players[target].title_leader, -1, -1);
+GenderDefault = Players[target].is_leader_female;
+PluralityDefault = 0;
+parse_says(1, Players[target].name_leader, -1, -1);
+GenderDefault = Players[target].noun_gender;
+PluralityDefault = Players[target].is_noun_plural;
+parse_says(2, Players[target].noun_faction, -1, -1);
+parse_says(3, Players[target].adj_insult_faction, -1, -1);
+parse_says(4, get_phrase(target, 5), -1, -1);
+
+// Build "INCITED" plus the native random suffix in StringTemp. _itoa's
+// measured cdecl operands are (value, buffer, 10); StringTemp is source-owned.
+char incited_number[32];
+StringTemp[0] = '\0';
+strcat(StringTemp, "INCITED");
+_itoa(random(0, 2), incited_number, 10);
+strcat(StringTemp, incited_number);
+x_pops_short(StringTemp, 0x100000, FactionDiplomacyPortraits[other], pop_wait);
+parse_says(3, get_pacts(target), -1, -1);
+parse_says(4, Players[target].adj_name_faction, -1, -1);
+
+// The directed actor->target treaty word gates the two possible outcomes.
+// A pact-end branch wins if present; otherwise an existing treaty bit can
+// trigger the reciprocal treaty update. Both are additionally gated by the
+// actor's current difficulty and a fresh random(0, 2) result of zero.
+const uint32_t actor_to_target =
+    PlayersData[actor].diplo_treaties[target];
+if ((actor_to_target & 1U) != 0) {
+    // When the pact bit is present, native jumps to the common end on either
+    // failed gate; it does not fall through to the treaty-bit test.
+    if (PlayersData[actor].diff_level > 1 && random(0, 2) == 0) {
+        if (IsMultiplayerNet == 0) {
+            // Native PlayerData::diplo_friction is an integer pair matrix;
+            // clamp the increment to [0,20], then update the live friction
+            // prompt only when its selectors still name (target, actor).
+            int friction = diplo_add(
+                static_cast<int>(PlayersData[target].diplo_friction[actor]), 4);
+            if (friction < 0) friction = 0;
+            if (friction > 0x14) friction = 0x14;
+            PlayersData[target].diplo_friction[actor] =
+                static_cast<uint32_t>(friction);
+            if (DiploFrictionFactionID == static_cast<uint32_t>(target) &&
+                DiploFrictionFactionIDWith == static_cast<uint32_t>(actor)) {
+                DiploFriction = diplo_add(DiploFriction, 4);
+            }
+        }
+
+        X_pop("INCITEDPACT", pop_wait);
+        // net_pact_ends reproduces the native live mode read, logging, 0x244D
+        // payload, 0x44D wait, or local pact_ends(actor,target) call.
+        net_pact_ends(actor, target, 1);
+    }
+} else if ((actor_to_target & 2U) != 0 &&
+           PlayersData[actor].diff_level > 1 && random(0, 2) == 0) {
+    if (IsMultiplayerNet == 0) {
+        int friction = diplo_add(
+            static_cast<int>(PlayersData[target].diplo_friction[actor]), 4);
+        if (friction < 0) friction = 0;
+        if (friction > 0x14) friction = 0x14;
+        PlayersData[target].diplo_friction[actor] =
+            static_cast<uint32_t>(friction);
+        if (DiploFrictionFactionID == static_cast<uint32_t>(target) &&
+            DiploFrictionFactionIDWith == static_cast<uint32_t>(actor)) {
+            DiploFriction = diplo_add(DiploFriction, 4);
+        }
+    }
+
+    X_pop("INCITEDTREATY", pop_wait);
+    // The local 0x10 path calls treaty_on(actor,target,0x10); multiplayer
+    // sends its distinct 0x2441 packet. The reciprocal 0x20 remains a setter.
+    if (IsMultiplayerNet != 0) {
+        log_say(DiploLabelSendingTREATYON, actor, target, 0x10);
+        message_data(0x2441, 0, actor, target, 0x10, 0);
+    } else {
+        treaty_on(actor, target, 0x10);
+    }
+    net_set_treaty(target, actor, 0x20, 1, 1);
+}
+
+// Every path converges on the native diplomatic-lock release. This is the
+// owning NetDaemon operation, not a raw receiver or a destructor call.
+log_say(DiploLabelReleasingDIPLOMATICLOCK, 0, 0, 0);
+NetDaemonNet.unlock();
+return 1;
+}
+
+attack_return_zero:
+    return 0;
+}
