@@ -1,0 +1,41 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "0d5742e531e99640067811dbf1634c7a8f290334",
+  "editable_files": [
+    "src/faction.cpp",
+    "src/faction.h",
+    "src/game.cpp",
+    "src/game.h",
+    "src/recovered/units/0055d190.cpp",
+    "src/recovered/units/00523b50.cpp",
+    "recovery/tests/test_pact_ascent.py",
+    "recovery/tests/pact_ascent_control.cpp"
+  ],
+  "evidence": [
+    "Pinned image01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: pact_treaty55D190..55D293 uses actual Player59C title/name/noun fields, parser grammar and pronoun callback before NetMsgPrimary PACTTREATY5000 popup. Text68E62C verified PACTTREATY; remove unused fixed-address alias rather than create a new executable reference.",
+    "Standalone ascent523B50..523C58 and same-owner turn_upkeep5258C0..52602D branch525F08..52600E have the same complete year75 Biology Lab/interlude/ascending/one-shot2000/title/name/ASCENT popup sequence. Bit2000 is not PFLAG_MAP_REVEALED200. Native plural0/leader gender stores and live Console faction reload after title parser contradict the existing inline source; correct only this proven path, not unrelated turn flow.",
+    "Freeze reviewed drafts ascent2ce9ded3d8d9b1de1a9c3cf64f7ad9b8a083309901439d67dbcb8212c11e890b and pactadb9a1498be809739faaff5975bac02426be6175f81860d36ea34237ff414382. Native source writer preserves complete seed identities/spans/status/useful discoveries before seed retirement. No new byte claim or full-game acceptance.",
+    "Require actual-source host/damage controls including has_tech/ascending/parser callbacks changing Console faction, actual application build/link, protected game/faction byte checks with inherited failures reported, claim continuity, references and annotation integrity. Keep structural/native runtime limitations explicit."
+  ],
+  "intent": "Recover pact_treaty and ascent as genuine source-owned announcement/turn-flow functions, and correct the independently pinned existing turn_upkeep ascent grammar/liveness path without discarding historical evidence.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5624208,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5389136,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5396672,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "pact-ascent-owner"
+}
