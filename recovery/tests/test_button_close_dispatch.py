@@ -137,6 +137,7 @@ using LPSTR=char*;using LPCSTR=const char*;using LPVOID=void*;
 struct Menu {};struct BorderSizing {};struct ButtonGroup {};
 struct Font {bool ready;bool is_initialized(){return ready;}};
 struct Sprite { SPRITE };
+struct BoxSpriteParams { int tag; };
 void require_at(bool good,int line){if(!good){std::fprintf(stderr,"assertion line %d\n",line);std::_Exit(108);}}
 #define require(x) require_at((x),__LINE__)
 std::string events;std::function<void(char)> hook;bool observing=false;
@@ -147,10 +148,12 @@ struct Time {int id;Time():id(++next_time){}void close();
 DECLARATIONS
 OWNERS
 uint32_t *const BaseButtonDefaultTextColors=DialogDefaults+5;
-int flat_defaults[27];int *const FlatButtonDefaultsTable=flat_defaults;
+Sprite flat_default_sprites[81];
+Sprite *flat_defaults[27];Sprite **const FlatButtonDefaultsTable=flat_defaults;
 BaseButton *active;Font fonts[6]={{true},{true},{true},{true},{false},{true}};
 void Time::close(){require(!observing||this==&active->time1_);event('T');}
 Win parent;ButtonGroup group;Sprite sprite{31,-17};
+BoxSpriteParams border_styles[3];
 int graphic_status=0,expected_style=0;bool allocation_fails=false;
 int expected_width=19,expected_height=-13;std::vector<void*> frees;
 char *last_allocation=nullptr;
@@ -191,7 +194,7 @@ template<class T>struct Probe:T{
 };
 void defaults(){
     for(int i=0;i<37;++i)DialogDefaults[i]=1000+i*17;
-    for(int i=0;i<27;++i)flat_defaults[i]=2000+i*29;
+    for(int i=0;i<27;++i)flat_defaults[i]=&flat_default_sprites[i];
     for(int i=0;i<18;++i)PushButtonDefaults[i]=3000+i*31;
     BaseButtonA94Default=401;BaseButtonA98Default=402;
     BaseButtonDefaultFonts[0]=&fonts[0];BaseButtonDefaultFonts[1]=&fonts[1];BaseButtonDefaultFonts[2]=&fonts[2];
@@ -217,12 +220,12 @@ void base_cleared(BaseButton&b){
     require(!b.name_&&!b.bubble_text_&&!b.group_);
 }
 void flat_poison(FlatButton&f){poison(f);f.field_AB8_=88;
-    for(int i=0;i<3;++i){f.field_ABC_[i]=91+i;f.field_AC8_[i]=101+i;f.field_AD4_[i]=&sprite;}
-    for(int i=0;i<27;++i)f.config[i]=501+i;
+    for(int i=0;i<3;++i){f.field_ABC_[i]=91+i;f.border_styles_[i]=&border_styles[i];f.field_AD4_[i]=&sprite;}
+    for(int i=0;i<27;++i)f.config[i]=&flat_default_sprites[27+i];
 }
 void flat_cleared(FlatButton&f){base_cleared(f);require(f.field_A14_==0&&f.field_A18_==0&&f.field_AB8_==0xffffffffU);
-    for(int i=0;i<3;++i)require(f.field_ABC_[i]==0xffffffffU&&f.field_AC8_[i]==0&&f.field_AD4_[i]==nullptr);
-    for(int i=0;i<27;++i)require(f.config[i]==static_cast<uint32_t>(flat_defaults[i]));
+    for(int i=0;i<3;++i)require(f.field_ABC_[i]==0xffffffffU&&f.border_styles_[i]==0&&f.field_AD4_[i]==nullptr);
+    for(int i=0;i<27;++i)require(f.config[i]==flat_defaults[i]);
 }
 void push_poison(PushButton&p){poison(p);PUSH_SEED}
 std::vector<uint32_t> push_values(PushButton&p){return {PUSH_VALUES};}
@@ -246,8 +249,8 @@ void closes(){
     defaults();flat_poison(f);begin(f);
     hook=[&](char k){if(k=='T'){require(f.field_A14_==51&&f.field_A18_==52&&f.field_AB8_==88);}
         if(k=='G'){require(f.field_A14_==0&&f.field_A18_==0&&f.field_AB8_==0xffffffffU);
-            require(f.config[0]==501&&f.field_AD4_[0]==&sprite);
-            for(int i=0;i<27;++i)flat_defaults[i]=4000+i*7;}};
+            require(f.config[0]==&flat_default_sprites[27]&&f.field_AD4_[0]==&sprite);
+            for(int i=0;i<27;++i)flat_defaults[i]=&flat_default_sprites[54+i];}};
     static_cast<BaseButton*>(&f)->close();require(events=="QTG");flat_cleared(f);
     events.clear();hook=nullptr;f.FlatButton::close();require(events=="TG");end();
     defaults();poison(image);image.sprite_=&sprite;begin(image);
@@ -375,7 +378,7 @@ DAMAGE = [
     ('flatbutton_close', 'column < 3', 'column < 2'),
     ('flatbutton_close', 'group < 9', 'group < 8'),
     ('flatbutton_close', 'field_AD4_[column] = nullptr;', ''),
-    ('flatbutton_close', 'field_AC8_[column] = 0;', ''),
+    ('flatbutton_close', 'border_styles_[column] = 0;', ''),
     ('imagebutton_close', 'sprite_ = 0;', ''),
     ('imagebutton_close', 'BaseButton::close();', 'GraphicWin::close();'),
     ('imagebutton_close', 'BaseButton::close();', 'BaseButton::close(); sprite_ = nullptr;'),

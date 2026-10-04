@@ -16,11 +16,12 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
-// Original9B8E44: the constructor and close read nine three-word groups.
-extern uint32_t FlatButtonDefaultsTable[27];
 #include "basebutton.h"
 
 class Sprite;
+// Nine groups of three borrowed sprite pointers, read by the redraw method.
+extern Sprite *FlatButtonDefaultsTable[27];
+static_assert(sizeof(Sprite *) == 4, "FlatButton sprite table requires x86 pointers");
 
  /*
   * FlatButton class
@@ -46,6 +47,7 @@ class FlatButton : public BaseButton {
   // Constructor607CFB installs669754: slot90 selects607DA0.
   virtual void close();
   FlatButton *destroy();
+  void on_redraw() override;
   void on_mouse_move(int, int);
   // ReportIf::report writes the per-page state at FlatButton+0xAB8 before
   // redrawing its seven category controls (original 0x004A3950).
@@ -67,8 +69,7 @@ class FlatButton : public BaseButton {
     field_AD4_[1] = hover;
     field_AD4_[2] = pressed;
   }
-  // Borrowed slice configuration used by BaseWin init; the remaining
-  // opaque 27-word format retains its independent recovery obligations.
+  // Borrowed slice configuration used by BaseWin init and the redraw method.
   void set_slice_colours(int normal, int hover, int pressed) {
     field_ABC_[0] = static_cast<uint32_t>(normal);
     field_ABC_[1] = static_cast<uint32_t>(hover);
@@ -77,15 +78,15 @@ class FlatButton : public BaseButton {
   void set_slice_icons(Sprite *left_normal, Sprite *left_hover, Sprite *left_pressed,
                        Sprite *middle_normal, Sprite *middle_hover, Sprite *middle_pressed,
                        Sprite *right_normal, Sprite *right_hover, Sprite *right_pressed) {
-    config[12] = reinterpret_cast<uint32_t>(left_normal);
-    config[13] = reinterpret_cast<uint32_t>(left_hover);
-    config[14] = reinterpret_cast<uint32_t>(left_pressed);
-    config[6] = reinterpret_cast<uint32_t>(middle_normal);
-    config[7] = reinterpret_cast<uint32_t>(middle_hover);
-    config[8] = reinterpret_cast<uint32_t>(middle_pressed);
-    config[15] = reinterpret_cast<uint32_t>(right_normal);
-    config[16] = reinterpret_cast<uint32_t>(right_hover);
-    config[17] = reinterpret_cast<uint32_t>(right_pressed);
+    config[12] = left_normal;
+    config[13] = left_hover;
+    config[14] = left_pressed;
+    config[6] = middle_normal;
+    config[7] = middle_hover;
+    config[8] = middle_pressed;
+    config[15] = right_normal;
+    config[16] = right_hover;
+    config[17] = right_pressed;
   }
   void set_border_styles(BoxSpriteParams *normal, BoxSpriteParams *hover,
                          BoxSpriteParams *pressed) {
@@ -103,16 +104,10 @@ class FlatButton : public BaseButton {
   // constructor/close clear them without destroying the sprites.
   Sprite *field_AD4_[3];
  public:
-  // THE 27 CONFIG DWORDS AT 0xAE0..0xB48, PUBLIC so BasePop::exec's
-  // apply_button_config can name the array instead of walking the object
-  // address. BasePop::default_block_ is the same nine-rows-of-three table and
-  // exec copies all 27 into each of its three button sites; FlatButton::close
-  // and the constructor walk the same run from the defaults table. Typed as
-  // one flat array - nothing in the tree reads back an individual row, and the
-  // Sprite* typing four of these words used to carry came from their offsets
-  // rather than from any access the image makes. The members keep their
-  // offsets (0xAE0 through 0xB48 inclusive); only the spelling moved.
-  uint32_t config[27];  // 0xAE0
+  // Nine borrowed sprite groups, each with three state columns. The complete
+  // redraw null-tests/dereferences all27slots; defaults and BasePop copy the
+  // same indices. The pointer table occupies0x6C bytes with unchanged offsets.
+  Sprite *config[27];  // 0xAE0..0xB48
 };
 
 static_assert(sizeof(FlatButton) == 0xB4C,

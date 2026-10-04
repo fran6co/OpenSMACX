@@ -62,6 +62,7 @@ class PullDown : public GraphicWin {
   PullDown();
   void init(Menu *menu = 0);
   ~PullDown();
+  void on_redraw() override;
   int show(int x, int y, int (*poll)());
 
   int hide_item(int id);

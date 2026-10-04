@@ -672,13 +672,10 @@ class BasePop : public GraphicWin {
   uint32_t field_31AC_;  // 0x31ac = Field31A0[3] = 2
   uint32_t field_31B0_;  // 0x31b0 = BasePopDefaultField31B0[0]
   uint32_t field_31B4_;  // 0x31b4 = BasePopDefaultField31B0[1]
-  // THE 27 DWORDS COPIED FROM BasePopDefaultBlock31B8 at 0x31B8, ONE writer
-  // and ONE shape: the ctor's copy loop walks 0x9b8d10 + 4*column + 0xC*row
-  // into 0x31b8 + 4*column + 0xC*row - the SAME index both sides, nine rows
-  // of three dwords, 0x6C bytes ending at ok_text_. Typed 2026-09-04; the 27
-  // offset names it replaces are this array. Read back by nothing in the tree
-  // yet, so the rows stay flat rather than pretending to a [9][3] meaning.
-  uint32_t default_block_[27];  // 0x31B8
+  // Nine groups of three borrowed Sprite pointers. Constructor/close copy
+  // matching slots from the defaults; apply_button_config publishes all27
+  // slots to FlatButton, whose redraw supplies the pointer consumers.
+  Sprite *default_block_[27];  // 0x31B8..0x3224
   LPSTR ok_text_;
   LPSTR cancel_text_;
   // THE FALLBACK PARENT WINDOW. Zeroed by the ctor and republished from
@@ -751,7 +748,7 @@ static_assert(sizeof(BasePop) == 0x3230,
 // fonts at 0x009B8DA8; the image stores straight into them.
 extern Font *BasePopDefaultStringFonts[4];  // 0x009B8D98
 extern Font *BasePopDefaultButtonFonts[3];  // 0x009B8DA8
-extern uint32_t BasePopDefaultBlock31B8[27];
+extern Sprite *BasePopDefaultBlock31B8[27];
 extern uint32_t BasePopDefaultField21C0[2];
 extern uint32_t BasePopDefaultField3104[3];
 extern uint32_t BasePopDefaultField31A0[4];

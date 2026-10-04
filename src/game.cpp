@@ -1158,15 +1158,15 @@ void __cdecl load_interface(int mode) {
     GraphicWin::load_all_nc_sprites_from_defs();
 
     // These are borrowed entries into the existing 27-Sprite button sheet.
-    BasePopDefaultBlock31B8[12] = reinterpret_cast<uint32_t>(&g_BASEWIN_SPRITES[18]);
-    BasePopDefaultBlock31B8[13] = reinterpret_cast<uint32_t>(&g_BASEWIN_SPRITES[21]);
-    BasePopDefaultBlock31B8[14] = reinterpret_cast<uint32_t>(&g_BASEWIN_SPRITES[24]);
-    BasePopDefaultBlock31B8[15] = reinterpret_cast<uint32_t>(&g_BASEWIN_SPRITES[20]);
-    BasePopDefaultBlock31B8[16] = reinterpret_cast<uint32_t>(&g_BASEWIN_SPRITES[23]);
-    BasePopDefaultBlock31B8[17] = reinterpret_cast<uint32_t>(&g_BASEWIN_SPRITES[26]);
-    BasePopDefaultBlock31B8[6] = reinterpret_cast<uint32_t>(&g_BASEWIN_SPRITES[19]);
-    BasePopDefaultBlock31B8[7] = reinterpret_cast<uint32_t>(&g_BASEWIN_SPRITES[22]);
-    BasePopDefaultBlock31B8[8] = reinterpret_cast<uint32_t>(&g_BASEWIN_SPRITES[25]);
+    BasePopDefaultBlock31B8[12] = &g_BASEWIN_SPRITES[18];
+    BasePopDefaultBlock31B8[13] = &g_BASEWIN_SPRITES[21];
+    BasePopDefaultBlock31B8[14] = &g_BASEWIN_SPRITES[24];
+    BasePopDefaultBlock31B8[15] = &g_BASEWIN_SPRITES[20];
+    BasePopDefaultBlock31B8[16] = &g_BASEWIN_SPRITES[23];
+    BasePopDefaultBlock31B8[17] = &g_BASEWIN_SPRITES[26];
+    BasePopDefaultBlock31B8[6] = &g_BASEWIN_SPRITES[19];
+    BasePopDefaultBlock31B8[7] = &g_BASEWIN_SPRITES[22];
+    BasePopDefaultBlock31B8[8] = &g_BASEWIN_SPRITES[25];
     PushButtonDefaults[4] = reinterpret_cast<uint32_t>(&g_BASEWIN_SPRITES[18]);
     PushButtonDefaults[13] = reinterpret_cast<uint32_t>(&g_BASEWIN_SPRITES[24]);
     PushButtonDefaults[2] = reinterpret_cast<uint32_t>(&g_BASEWIN_SPRITES[19]);
@@ -1175,13 +1175,13 @@ void __cdecl load_interface(int mode) {
     PushButtonDefaults[14] = reinterpret_cast<uint32_t>(&g_BASEWIN_SPRITES[26]);
     const int push_zero_slots[12] = {6,15,7,16,3,12,0,9,1,10,8,17};
     for (int slot = 0; slot < 12; ++slot) PushButtonDefaults[push_zero_slots[slot]] = 0;
-    FlatButtonDefaultsTable[12] = reinterpret_cast<uint32_t>(&g_BASEWIN_SPRITES[18]);
-    FlatButtonDefaultsTable[13] = reinterpret_cast<uint32_t>(&g_BASEWIN_SPRITES[21]);
-    FlatButtonDefaultsTable[14] = reinterpret_cast<uint32_t>(&g_BASEWIN_SPRITES[24]);
-    FlatButtonDefaultsTable[6] = reinterpret_cast<uint32_t>(&g_BASEWIN_SPRITES[19]);
-    FlatButtonDefaultsTable[17] = reinterpret_cast<uint32_t>(&g_BASEWIN_SPRITES[26]);
-    FlatButtonDefaultsTable[8] = reinterpret_cast<uint32_t>(&g_BASEWIN_SPRITES[25]);
-    FlatButtonDefaultsTable[15] = reinterpret_cast<uint32_t>(&g_BASEWIN_SPRITES[20]);
+    FlatButtonDefaultsTable[12] = &g_BASEWIN_SPRITES[18];
+    FlatButtonDefaultsTable[13] = &g_BASEWIN_SPRITES[21];
+    FlatButtonDefaultsTable[14] = &g_BASEWIN_SPRITES[24];
+    FlatButtonDefaultsTable[6] = &g_BASEWIN_SPRITES[19];
+    FlatButtonDefaultsTable[17] = &g_BASEWIN_SPRITES[26];
+    FlatButtonDefaultsTable[8] = &g_BASEWIN_SPRITES[25];
+    FlatButtonDefaultsTable[15] = &g_BASEWIN_SPRITES[20];
 
     InterfaceAltCaptionHeight = g_UNUSED_SPRITE_VAR29.source_height() + g_UNUSED_SPRITE_VAR29.top_offset();
     InterfaceAltBorderThickness = g_UNUSED_SPRITE_VAR27.source_width() + g_UNUSED_SPRITE_VAR27.left_offset();
@@ -1196,8 +1196,8 @@ void __cdecl load_interface(int mode) {
     InterfaceThirdBottomBorderThickness = g_UNUSED_SPRITE_VAR04.height() - g_UNUSED_SPRITE_VAR04.top_offset();
     InterfaceFourthBorderThickness = g_UNUSED_SPRITE_VAR16.source_width() + g_UNUSED_SPRITE_VAR16.left_offset();
     InterfaceFourthBottomBorderThickness = g_UNUSED_SPRITE_VAR13.height() - g_UNUSED_SPRITE_VAR13.top_offset();
-    FlatButtonDefaultsTable[7] = reinterpret_cast<uint32_t>(&g_BASEWIN_SPRITES[22]);
-    FlatButtonDefaultsTable[16] = reinterpret_cast<uint32_t>(&g_BASEWIN_SPRITES[23]);
+    FlatButtonDefaultsTable[7] = &g_BASEWIN_SPRITES[22];
+    FlatButtonDefaultsTable[16] = &g_BASEWIN_SPRITES[23];
     const int flat_zero_slots[18] = {18,19,20,21,22,23,9,10,11,0,1,2,3,4,5,24,25,26};
     for (int zero = 0; zero < 18; ++zero) FlatButtonDefaultsTable[flat_zero_slots[zero]] = 0;
     InterfaceDefaultMetric = 45;

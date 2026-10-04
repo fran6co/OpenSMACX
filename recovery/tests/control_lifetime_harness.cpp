@@ -8,6 +8,8 @@ typedef unsigned char uint8_t;
 typedef unsigned int uint32_t;
 typedef int int32_t;
 typedef void *HWND;
+struct RECT { int left, top, right, bottom; };
+struct FileWinConstruct;
 class Win;
 class Font;
 struct BoxSpriteParams;
@@ -17,6 +19,7 @@ struct BoxSpriteParams;
 int events[64], count, buttons, fail_time, fail_list, fail_close;
 void event(int value) { assert(count < 64); events[count++] = value; }
 struct GraphicWin {
+    unsigned iFlags_;
     GraphicWin() { event(21); }
     virtual ~GraphicWin() { event(25); }
 };
@@ -48,18 +51,21 @@ struct BaseButton {
     BaseButton *construct() { return new(this) BaseButton; }
 };
 void BaseButton::close() { assert(false); }
-class Sprite;
+class Sprite { public: int id; };
 #define MEASURED
 // LIVE_FLATBUTTON_DECL
-int FlatButtonDefaultsTable[27];
+Sprite default_sprites[27];
+Sprite *FlatButtonDefaultsTable[27];
 // LIVE_FLATBUTTON_CTOR
 void FlatButton::close() {
     assert(field_A14_ == 0 && field_A18_ == 0 && field_AB8_ == 0xFFFFFFFFU);
     for (int i = 0; i < 3; ++i) {
         assert(field_ABC_[i] == 0xFFFFFFFFU && border_styles_[i] == 0 && field_AD4_[i] == 0);
     }
-    for (int j = 0; j < 27; ++j) assert(config[j] == static_cast<uint32_t>(FlatButtonDefaultsTable[j]));
+    for (int j = 0; j < 27; ++j) assert(config[j] == FlatButtonDefaultsTable[j]);
 }
+// Rendering is an explicit boundary double in this lifetime-only fixture.
+void FlatButton::on_redraw() {}
 struct ListBox {
     ListBox() { event(30); if (fail_list) throw 30; }
     ~ListBox() { event(31); }
@@ -75,7 +81,7 @@ void expect(const int *values, int size) {
     count = buttons = 0;
 }
 int main() {
-    for (int i = 0; i < 27; ++i) FlatButtonDefaultsTable[i] = 1000 + i;
+    for (int i = 0; i < 27; ++i) FlatButtonDefaultsTable[i] = &default_sprites[i];
     const int normal[] = {11, 12, 21, 22, 30, 50, 31, 23, 24, 25, 42, 41};
     { FileWin win; }
     expect(normal, 12);

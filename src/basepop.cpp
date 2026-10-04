@@ -1954,8 +1954,9 @@ void BasePop::set_def_external_window(GraphicWin *external_window, int loc_x,
 }
 
 // The 27 dwords the ctor transposes into +0x31b8..+0x3223.
-// RECOVERY_OBJECT: v1 0x009B8D10 ?BasePopDefaultBlock31B8@@3PAIA
-uint32_t BasePopDefaultBlock31B8[27];  // 0x009B8D10
+// Historical integer-array symbol: ?BasePopDefaultBlock31B8@@3PAIA; redraw proves borrowed Sprite pointers.
+// RECOVERY_OBJECT: v1 0x009B8D10 ?BasePopDefaultBlock31B8@@3PAPAVSprite@@A
+Sprite *BasePopDefaultBlock31B8[27];  // 0x009B8D10
 
 // Copied to +0x21b0/+0x21b4/+0x21bc/+0x21b8, in this table's order.
 // popups_normal seeds 0x1a/0x3a/0x32/3 here at run time.
@@ -2004,7 +2005,7 @@ BasePop::BasePop() {
         // one turn per column. The earlier spelling here walked row*3+column
         // against column*8+row over eight rows: twenty-four of the twenty-
         // seven slots, scrambled, and the last one never written.
-        uint32_t *dst = default_block_;
+        Sprite **dst = default_block_;
         int column = 0;
         do {
             dst[0] = BasePopDefaultBlock31B8[column];
@@ -2189,16 +2190,14 @@ void BasePop::close() {
 
     *(void **)(self + 0xa3c) = this;
 
-    for (i = 0, off = 0x31c4; i < 0xc; i += 4, off += 4) {
-        *(int *)(self + off - 0xc) = BasePopDefaultBlock31B8[i / 4];
-        *(int *)(self + off) = BasePopDefaultBlock31B8[i / 4 + 2];
-        *(int *)(self + off + 0xc) = BasePopDefaultBlock31B8[i / 4 + 5];
-        *(int *)(self + off + 0x18) = BasePopDefaultBlock31B8[i / 4 + 8];
-        *(int *)(self + off + 0x24) = BasePopDefaultBlock31B8[i / 4 + 11];
-        *(int *)(self + off + 0x30) = BasePopDefaultBlock31B8[i / 4 + 14];
-        *(int *)(self + off + 0x3c) = BasePopDefaultBlock31B8[i / 4 + 17];
-        *(int *)(self + off + 0x48) = BasePopDefaultBlock31B8[i / 4 + 20];
-        *(int *)(self + off + 0x54) = BasePopDefaultBlock31B8[i / 4 + 23];
+    // Native600F83 increments its byte index before the later eight loads.
+    // All nine rows therefore copy the same source/destination column;
+    // interpreting those later loads before the increment shifted rows by one.
+    for (int column = 0; column < 3; ++column) {
+        for (int group = 0; group < 9; ++group) {
+            default_block_[group * 3 + column] =
+                BasePopDefaultBlock31B8[group * 3 + column];
+        }
     }
 
     ((ListBox *)(self + 0x21d0))->close();
