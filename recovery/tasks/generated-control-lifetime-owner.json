@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "task_id": "generated-control-lifetime-owner",
+  "author": "framework-coordinator",
+  "target": "opensmacx",
+  "base_revision": "726bf3dc31384b5551c64ee5783bb3cc5d4e2183",
+  "editable_files": [
+    "src/editgroup.cpp",
+    "src/editgroup.h",
+    "src/listbox.cpp",
+    "src/checkbox.cpp",
+    "src/deleting_thunks.cpp",
+    "src/deleting_thunks.h",
+    "src/unrecovered/00612710.cpp",
+    "src/unrecovered/0060ce40.cpp",
+    "src/unrecovered/0060d010.cpp",
+    "src/unrecovered/0060d030.cpp",
+    "src/unrecovered/0060fd80.cpp",
+    "src/unrecovered/0060feb0.cpp",
+    "src/unrecovered/0060fed0.cpp",
+    "recovery/tests/test_control_lifetime.py",
+    "recovery/tests/control_lifetime_control.cpp"
+  ],
+  "subjects": [
+    {
+      "address": 6363680,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6366976,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6366992,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6344256,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6344720,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6344752,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6356352,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6356656,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6356688,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "intent": "Recover genuine Dialog-control destruction and compiler-owned deleting/receiver-adjustment entries, preserving complete original spans and historical findings. Replace raw-offset EditGroup lifecycle code and its executable deleting-target seam; retire seeds only after their complete behavior has an implemented owner.",
+  "evidence": [
+    "Pinned612710..6127AA reinstalls EditGroup stage, callsclose611A90, destroys Dialog608E10 then GraphicWin5D4DD0, conditionally deallocates on flagbit0, returns complete object. Existing virtual base order GraphicWin then Dialog supports genuine reverse destruction. Existing implicit EditGroup destructor skips close, while destruct() manually subtracts8C; neither implements this lifetime.",
+    "Authorize explicit EditGroup destructor with close() and natural virtual-base teardown, retaining the611A20 basic-destructor identity and all prior TRIED history via native source writer. Separate current emitted symbols from historical names. Removing obsolete destruct declaration is allowed only after caller search; Dialogs still has an outside-owner original-address basic-destructor seam, preserved as discovery, not resolved by this task.",
+    "612700 is EditGroup GraphicWin-base destructor adjustment into612710. Current handwritten fastcall adjust_this_sub_612700 and Sub00612710Target can be removed only after the genuine compiler emits the corresponding adjustment and physical deleting symbol, and searches prove no ordinary source callers. Transfer complete existing identities/spans/history through installed source writer, not new overlapping bind or manual marker editing.",
+    "ListBox60CE40/60D010/60D030 share60CE50..CECF; CheckBox60FD80/60FEB0/60FED0 share60FD90..FE40. Physical original tables and current generated COFF adjustments establish class correspondence but not shared-tail behavior. Require independent full shared-body review before transfer/seed retirement. Genuine existing destructors and bases must implement the complete approximate lifecycle; preserve all full secondary spans without granting byte claims.",
+    "SpriteBox6117D0 is outside this decision: its destructor has explicitly missing element cleanup. Do not retire or count it merely because adjustment bytes match.",
+    "Manual coordinator publication requires actual application compile/link, actual-source C++ lifetime controls and rejected mutants, protected EditGroup/ListBox/CheckBox and touched thunk matching checks, original claim/reference continuity and native annotation checks. No automatic acceptance, demotion, baseline reset, flag change, handwritten compiler thunks or new unmeasured claims. Unsupported strict linked/structure/runtime evidence remains unknown."
+  ]
+}
