@@ -3556,3 +3556,585 @@ void cleanup_failed_net_construction(void *memory) {
     }
     // Native 402320 leaves the handoff untouched when memory is null.
 }
+
+// ORIGINAL: 0x0062F8A0 ?send_packet_type@Net@@QAEHPAXHKHH@Z 0x0062F8A0-0x0063007F
+// RECOVERY_BINDING: v1 {"evidence": ["task:net-transport-owner", "pinned:terranx_original.exe:0062F8A0 complete direct/reliable targeted/broadcast control flow", "source:src/net_class.h:NetPlayer acknowledgement +8 and RTT +C; existing FIFO and thread event owners", "historical seed:src/unrecovered/0062f8a0.cpp"], "reason": "Recover the complete sender through genuine Net peer state, queues, event handles, SDK DirectPlay and allocator ownership; preserve native timeout error behavior and all original seed obligations without a new byte claim."}
+// TRIED: MISMATCH #0 'sub' vs 'push' (prologue diverges; best sim 0.44). Net::send_packet_type - reliable-UDP-style send with per-peer RTT tracking, retry, and a "who's stalling" prompt on timeout. Used the scaffold's own COM-style dispatch hint for slot 26 (the DirectPlay Send call pushes the interface as an explicit arg rather than passing it in ecx) - declared a local function- pointer typedef under a name that does NOT collide with the scaffold's own nullary `ComSlot026`, since redeclaring that symbol with a different signature is a hard conflict, not an override. Hoisted `buf`, `allocSize` and `ackFlag` to function scope: MSVC 6 (C2362) refuses a `goto` that skips a later local's initializer even when the type is POD, and this control flow's early special-case return has to jump past the buffer-allocation block entirely.
+int Net::send_packet_type(void *data, int data_size, unsigned long target,
+                          int packet_type, int flags) {
+    int index;
+    HANDLE wait_handles[2];
+    wait_handles[0] = thread_info_.events_[0];
+    wait_handles[1] = thread_info_.events_[1];
+
+    if (NetDirectPlay == 0 || data_size < 0 ||
+        data_size > static_cast<int>(field_6E4_)) {
+        return 0;
+    }
+    check_polling();
+
+    const uint16_t type = static_cast<uint16_t>(packet_type);
+    const unsigned int ack_requested = static_cast<unsigned int>(flags);
+    // The queue predicate consumes the original 32-bit argument. Only the
+    // wire header is narrowed to WORD below.
+    if ((packet_type & 0xFFF0) == 0 && (ack_requested & 4U) != 0) {
+        if (target == field_760_) {
+            queue_10c_.add(data, static_cast<unsigned long>(data_size),
+                           field_760_, 0, 0xFFFFFFFFUL);
+            return static_cast<int>(field_E4_);
+        }
+        if (target == 0) {
+            queue_10c_.add(data, static_cast<unsigned long>(data_size),
+                           field_760_, 0, 0xFFFFFFFFUL);
+            if (static_cast<int>(field_6DC_) < 2)
+                return static_cast<int>(field_E4_);
+        }
+    }
+
+    const int allocation_size = data_size + 0x0C;
+    unsigned char *const packet =
+        static_cast<unsigned char *>(mem_get(allocation_size));
+    if (packet == 0) return 0;
+
+    const unsigned int reliable = ack_requested & 1U;
+    const uint32_t sequence = reliable != 0 ? ++field_E4_ : 0;
+    memcpy(packet, &type, sizeof(type));
+    memcpy(packet + 4, &sequence, sizeof(sequence));
+    if (data != 0) memcpy(packet + 8, data, static_cast<size_t>(data_size));
+
+    if (reliable == 0 || (voice_flags_D8_ & 0x10000000U) != 0) {
+        if (NetDirectPlay == 0 ||
+            NetDirectPlay->Send(field_760_, static_cast<DPID>(target),
+                                reliable, packet,
+                                static_cast<DWORD>(allocation_size)) != DP_OK) {
+            free(packet);
+            return 0;
+        }
+        free(packet);
+        return static_cast<int>(field_E4_);
+    }
+
+    const uint16_t reliable_type = static_cast<uint16_t>(type | 4U);
+    memcpy(packet, &reliable_type, sizeof(reliable_type));
+
+    if (target == 0) {
+        int waiting[16];
+        unsigned int retry_delay[16];
+        DWORD sent_at[16];
+        unsigned int wait_timeout = 0xFFFFFFFFU;
+        int any_waiting = 0;
+        for (index = 0; index < 16; ++index) {
+            NetPlayer &peer = players_[index];
+            if (peer.field_0_ == 0 || peer.field_0_ == field_760_ ||
+                (((peer.flags_14_ & 2U) == 0) && (type & 0x10U) == 0)) {
+                peer.field_8_ = 0;
+                waiting[index] = 0;
+                continue;
+            }
+            peer.field_8_ = 1;
+            waiting[index] = 1;
+            retry_delay[index] = peer.field_C_;
+            if (retry_delay[index] < wait_timeout) {
+                wait_timeout = retry_delay[index];
+            }
+            any_waiting = 1;
+        }
+
+        while (any_waiting != 0) {
+            if (NetDirectPlay == 0) {
+                free(packet);
+                return 0;
+            }
+            const DWORD first_tick = timeGetTime();
+            for (index = 0; index < 16; ++index) sent_at[index] = first_tick;
+            if (NetDirectPlay->Send(field_760_, 0, 0, packet,
+                                    static_cast<DWORD>(allocation_size)) != DP_OK) {
+                MessageBoxA(0, "Oh no!! Send failed!",
+                            "Message from the Net Underworld", 0);
+                free(packet);
+                return 0;
+            }
+
+            const DWORD interval_start = timeGetTime();
+            DWORD elapsed = timeGetTime() - interval_start;
+            while (elapsed < 20000U) {
+                ResetEvent(thread_info_.events_[1]);
+                ResetEvent(thread_info_.events_[0]);
+                const DWORD waited = WaitForMultipleObjects(
+                    2, wait_handles, FALSE, wait_timeout);
+                if (waited == WAIT_OBJECT_0 + 1) handle_sys_msg();
+
+                const DWORD now = timeGetTime();
+                int still_waiting = 0;
+                for (index = 0; index < 16; ++index) {
+                    if (waiting[index] == 0) continue;
+                    NetPlayer &peer = players_[index];
+                    if (peer.field_0_ == 0) {
+                        waiting[index] = 0;
+                    } else if (peer.field_8_ == 0) {
+                        const DWORD ack_tick = timeGetTime();
+                        waiting[index] = 0;
+                        peer.field_C_ = (ack_tick + 0x14U +
+                            (peer.field_C_ - sent_at[index])) >> 1;
+                    } else {
+                        if (retry_delay[index] < now - sent_at[index]) {
+                            retry_delay[index] = (retry_delay[index] * 3U) >> 1;
+                            if (NetDirectPlay == 0) {
+                                free(packet);
+                                return 0;
+                            }
+                            sent_at[index] = timeGetTime();
+                            const DPID peer_id = static_cast<DPID>(peer.field_0_);
+                            if (NetDirectPlay->Send(field_760_, peer_id, 0,
+                                    packet, static_cast<DWORD>(allocation_size))
+                                != DP_OK) {
+                                MessageBoxA(0, "Oh no!! Send failed!",
+                                            "Message from the Net Underworld", 0);
+                                free(packet);
+                                return 0;
+                            }
+                        }
+                        still_waiting = 1;
+                    }
+                }
+                if (still_waiting == 0) {
+                    free(packet);
+                    return static_cast<int>(field_E4_);
+                }
+                elapsed = timeGetTime() - interval_start;
+            }
+
+            StringTemp[0] = 0;
+            int first_name = 1;
+            for (index = 0; index < 16; ++index) {
+                if (players_[index].field_8_ == 0) continue;
+                int name_index = 0;
+                while (name_index < 16 &&
+                       players_[name_index].field_0_ != players_[index].field_0_) {
+                    ++name_index;
+                }
+                // Preserve the original null source on a failed peer lookup.
+                const char *const peer_name = name_index == 16
+                    ? 0 : players_[name_index].name_and_tail_;
+                strcat(StringTemp, peer_name);
+                if (!first_name) {
+                    strcat(StringTemp, ", ");
+                    strcat(StringTemp, " ");
+                }
+                first_name = 0;
+            }
+            strcat(StringTemp, ".");
+            parse_says(0, StringTemp, -1, -1);
+            const int choice = pop_caption(const_cast<char *>("jackal"),
+                const_cast<char *>("NET_SENDTIMEDOUT"), 0);
+            if (choice != 0) {
+                if (choice == 1) close();
+                else if (choice == 2) ExitTurnLoop = 1;
+                free(packet);
+                return 0;
+            }
+            any_waiting = 0;
+            for (index = 0; index < 16; ++index) {
+                if (waiting[index] != 0) any_waiting = 1;
+            }
+        }
+        free(packet);
+        return static_cast<int>(field_E4_);
+    }
+
+    int selected = -1;
+    unsigned int retry_delay = 0xFFFFFFFFU;
+    for (index = 0; index < 16; ++index) {
+        NetPlayer &peer = players_[index];
+        if (peer.field_0_ == target &&
+            ((peer.flags_14_ & 2U) != 0 || (type & 0x10U) != 0)) {
+            selected = index;
+            retry_delay = peer.field_C_;
+            peer.field_8_ = 1;
+        } else {
+            peer.field_8_ = 0;
+        }
+    }
+    if (selected < 0) {
+        free(packet);
+        return static_cast<int>(field_E4_);
+    }
+
+    DWORD sent_at = timeGetTime();
+    if (NetDirectPlay == 0 || NetDirectPlay->Send(field_760_,
+            static_cast<DPID>(target), 0, packet,
+            static_cast<DWORD>(allocation_size)) != DP_OK) {
+        MessageBoxA(0, "Oh no!! Send failed!",
+                            "Message from the Net Underworld", 0);
+        free(packet);
+        return 0;
+    }
+    for (;;) {
+        // The native outer retry pass reloads the live peer +0xC wait value.
+        const unsigned int wait_timeout = players_[selected].field_C_;
+        const DWORD interval_start = timeGetTime();
+        DWORD elapsed = timeGetTime() - interval_start;
+        while (elapsed < 20000U) {
+            ResetEvent(thread_info_.events_[1]);
+            ResetEvent(thread_info_.events_[0]);
+            const DWORD waited = WaitForMultipleObjects(
+                2, wait_handles, FALSE, wait_timeout);
+            if (waited == WAIT_OBJECT_0 + 1) handle_sys_msg();
+
+            NetPlayer &peer = players_[selected];
+            if (peer.field_0_ == 0 || peer.field_8_ == 0) {
+                const DWORD ack_tick = timeGetTime();
+                peer.field_C_ = (ack_tick + 0x14U +
+                                 (peer.field_C_ - sent_at)) >> 1;
+                free(packet);
+                return static_cast<int>(field_E4_);
+            }
+            const DWORD now = timeGetTime();
+            if (retry_delay < now - sent_at) {
+                retry_delay = (retry_delay * 3U) >> 1;
+                if (NetDirectPlay == 0) {
+                    free(packet);
+                    return 0;
+                }
+                sent_at = timeGetTime();
+                const DPID live_peer = static_cast<DPID>(peer.field_0_);
+                if (NetDirectPlay->Send(field_760_, live_peer, 0, packet,
+                        static_cast<DWORD>(allocation_size)) != DP_OK) {
+                    MessageBoxA(0, "Oh no!! Send failed!",
+                                "Message from the Net Underworld", 0);
+                    free(packet);
+                    return 0;
+                }
+            }
+            elapsed = timeGetTime() - interval_start;
+        }
+
+        StringTemp[0] = 0;
+        int name_index = 0;
+        while (name_index < 16 &&
+               players_[name_index].field_0_ != players_[selected].field_0_) {
+            ++name_index;
+        }
+        // Preserve the original null source on a failed peer lookup.
+        const char *const peer_name = name_index == 16
+            ? 0 : players_[name_index].name_and_tail_;
+        strcat(StringTemp, peer_name);
+        strcat(StringTemp, ".");
+        parse_says(0, StringTemp, -1, -1);
+        const int choice = pop_caption(const_cast<char *>("jackal"),
+            const_cast<char *>("NET_SENDTIMEDOUT"), 0);
+        if (choice != 0) {
+            if (choice == 1) close();
+            else if (choice == 2) ExitTurnLoop = 1;
+            free(packet);
+            return 0;
+        }
+        sent_at = timeGetTime();
+        if (NetDirectPlay == 0 || NetDirectPlay->Send(field_760_,
+                static_cast<DPID>(target), 0, packet,
+                static_cast<DWORD>(allocation_size)) != DP_OK) {
+            MessageBoxA(0, "Oh no!! Send failed after many tries!",
+                        "Message from the Net Underworld", 0);
+            free(packet);
+            return 0;
+        }
+    }
+}
+
+
+// ORIGINAL: 0x00630080 ?send@Net@@QAEHPAXHKH@Z 0x00630080-0x00630978
+// RECOVERY_BINDING: v1 {"evidence": ["task:net-transport-owner", "pinned:terranx_original.exe:00630080 complete direct/reliable targeted/broadcast control flow", "source:src/net_class.h:NetPlayer acknowledgement +8 and RTT +C; existing FIFO and thread event owners", "historical seed:src/unrecovered/00630080.cpp"], "reason": "Recover the complete sender through genuine Net peer state, queues, event handles, SDK DirectPlay and allocator ownership; preserve native timeout error behavior and all original seed obligations without a new byte claim."}
+// TRIED: Ghidra-structure translation with the parameter mapping re-derived from raw ESP tracking (Ghidra's param_2..5 are thiscall's stack args a1..a4, one off from its own printed __thiscall param_1), COM-style vtable slot 26 dispatch retyped to 6 args per the scaffold's ComSlot026 note, and Net::close/check_polling/handle_sys_msg and NetFifo::add receivers fixed (Ghidra flattened those away too); compiles, MISMATCH #3 (early - likely the this->ebp store-back-for-stashed-handles at the very top).
+int Net::send(void *data, int data_size, unsigned long target, int flags) {
+    int index;
+    // Native snapshots the wait array at function entry.
+    HANDLE wait_handles[2];
+    wait_handles[0] = thread_info_.events_[0];
+    wait_handles[1] = thread_info_.events_[1];
+    if (data == 0 || NetDirectPlay == 0) {
+        MessageBoxA(0, "Oh no! NULL pointer!!", "Net::send", 0);
+        return 0;
+    }
+    if (data_size < 1 || data_size > static_cast<int>(field_6E4_)) {
+        MessageBoxA(0, "Oh no! data_size is weird!", "Net::send", 0);
+        return 0;
+    }
+    check_polling();
+
+    if ((voice_flags_D8_ & 1U) != 0 ||
+        (static_cast<unsigned int>(flags) & 4U) != 0) {
+        if (target == field_760_) {
+            queue_10c_.add(data, static_cast<unsigned long>(data_size),
+                           field_760_, 0, 0xFFFFFFFFUL);
+            return static_cast<int>(field_E4_);
+        }
+        if (target == 0) {
+            queue_10c_.add(data, static_cast<unsigned long>(data_size),
+                           field_760_, 0, 0xFFFFFFFFUL);
+            if (static_cast<int>(field_6DC_) < 2)
+                return static_cast<int>(field_E4_);
+        }
+    }
+
+    const int allocation_size = data_size + 0x0C;
+    unsigned char *const packet =
+        static_cast<unsigned char *>(mem_get(allocation_size));
+    if (packet == 0) return 0;
+    const unsigned int reliable = static_cast<unsigned int>(flags) & 1U;
+    const uint32_t sequence = reliable != 0 ? ++field_E4_ : 0;
+    memcpy(packet + 4, &sequence, sizeof(sequence));
+    memcpy(packet + 8, data, static_cast<size_t>(data_size));
+
+    if (reliable == 0 || (voice_flags_D8_ & 0x10000000U) != 0) {
+        const uint16_t packet_type = 1;
+        memcpy(packet, &packet_type, sizeof(packet_type));
+        if (NetDirectPlay == 0) {
+            free(packet);
+            return 0;
+        }
+        if (NetDirectPlay->Send(field_760_, static_cast<DPID>(target),
+                                reliable, packet,
+                                static_cast<DWORD>(allocation_size)) != DP_OK) {
+            MessageBoxA(0, "Oh no!! Send failed!",
+                        "Message from the Net Underworld", 0);
+            free(packet);
+            return 0;
+        }
+        free(packet);
+        return static_cast<int>(field_E4_);
+    }
+
+    const uint16_t packet_type = 4;
+    memcpy(packet, &packet_type, sizeof(packet_type));
+
+    if (target == 0) {
+        int active[16];
+        unsigned int retry_delay[16];
+        unsigned int retry_epoch[16];
+        unsigned int wait_timeout = 0xFFFFFFFFU;
+        int any_active = 0;
+
+        for (index = 0; index < 16; ++index) {
+            NetPlayer &peer = players_[index];
+            if (peer.field_0_ == 0 || peer.field_0_ == field_760_ ||
+                (peer.flags_14_ & 2U) == 0) {
+                peer.field_8_ = 0;
+                active[index] = 0;
+            } else {
+                peer.field_8_ = 1;
+                active[index] = 1;
+                retry_delay[index] = peer.field_C_;
+                if (retry_delay[index] < wait_timeout)
+                    wait_timeout = retry_delay[index];
+                any_active = 1;
+            }
+        }
+
+        while (any_active != 0) {
+            if (NetDirectPlay == 0) {
+                free(packet);
+                return 0;
+            }
+            const DWORD first_tick = timeGetTime();
+            for (index = 0; index < 16; ++index) {
+                // Native initializes all sixteen deadline words from one
+                // sampled tick, including inactive rows.
+                retry_epoch[index] = first_tick;
+            }
+            if (NetDirectPlay->Send(field_760_, 0, 0, packet,
+                                    static_cast<DWORD>(allocation_size)) != DP_OK) {
+                MessageBoxA(0, "Oh no!! Send failed!",
+                            "Message from the Net Underworld", 0);
+                free(packet);
+                return 0;
+            }
+
+            const DWORD interval_start = timeGetTime();
+            DWORD elapsed = timeGetTime() - interval_start;
+            int any_pending = 0;
+            while (elapsed < 20000U) {
+                ResetEvent(thread_info_.events_[1]);
+                ResetEvent(thread_info_.events_[0]);
+                const DWORD waited = WaitForMultipleObjects(
+                    2, wait_handles, FALSE, wait_timeout);
+                if (waited == WAIT_OBJECT_0 + 1) handle_sys_msg();
+
+                const DWORD now = timeGetTime();
+                any_pending = 0;
+                for (index = 0; index < 16; ++index) {
+                    if (active[index] == 0) continue;
+                    NetPlayer &peer = players_[index];
+                    if (peer.field_0_ == 0) {
+                        active[index] = 0;
+                    } else if (peer.field_8_ == 0) {
+                        const DWORD ack_tick = timeGetTime();
+                        active[index] = 0;
+                        peer.field_C_ = (ack_tick + 0x14U +
+                            (peer.field_C_ - retry_epoch[index])) >> 1;
+                    } else {
+                        if (retry_delay[index] < now - retry_epoch[index]) {
+                            retry_delay[index] = (retry_delay[index] * 3U) >> 1;
+                            if (NetDirectPlay == 0) {
+                                free(packet);
+                                return 0;
+                            }
+                            retry_epoch[index] = timeGetTime();
+                            const DPID peer_id = static_cast<DPID>(peer.field_0_);
+                            if (NetDirectPlay->Send(field_760_, peer_id, 0,
+                                    packet, static_cast<DWORD>(allocation_size))
+                                != DP_OK) {
+                                MessageBoxA(0, "Oh no!! Send failed!",
+                                            "Message from the Net Underworld", 0);
+                                free(packet);
+                                return 0;
+                            }
+                        }
+                        any_pending = 1;
+                    }
+                }
+                if (any_pending == 0) break;
+                elapsed = timeGetTime() - interval_start;
+            }
+            if (any_pending == 0) {
+                free(packet);
+                return static_cast<int>(field_E4_);
+            }
+
+            StringTemp[0] = 0;
+            int first_name = 1;
+            for (index = 0; index < 16; ++index) {
+                if (players_[index].field_8_ == 0) continue;
+                int name_index = 0;
+                while (name_index < 16 &&
+                       players_[name_index].field_0_ != players_[index].field_0_) {
+                    ++name_index;
+                }
+                // Preserve the original null source on a failed peer lookup.
+                const char *const peer_name = name_index == 16
+                    ? 0 : players_[name_index].name_and_tail_;
+                strcat(StringTemp, peer_name);
+                if (!first_name) {
+                    strcat(StringTemp, ", ");
+                    strcat(StringTemp, " ");
+                }
+                first_name = 0;
+            }
+            strcat(StringTemp, ".");
+            parse_says(0, StringTemp, -1, -1);
+            const int choice = pop_caption(const_cast<char *>("jackal"),
+                const_cast<char *>("NET_SENDTIMEDOUT"), 0);
+            if (choice != 0) {
+                if (choice == 1) close();
+                else if (choice == 2) ExitTurnLoop = 1;
+                free(packet);
+                return 0;
+            }
+            any_active = 0;
+            for (index = 0; index < 16; ++index) {
+                if (active[index] != 0) any_active = 1;
+            }
+        }
+        free(packet);
+        return static_cast<int>(field_E4_);
+    }
+
+    int selected = -1;
+    unsigned int selected_rtt = 0;
+    for (index = 0; index < 16; ++index) {
+        NetPlayer &peer = players_[index];
+        if (peer.field_0_ == static_cast<uint32_t>(target) &&
+            (peer.flags_14_ & 2U) != 0) {
+            selected = index;
+            selected_rtt = peer.field_C_;
+            peer.field_8_ = 1;
+        } else {
+            peer.field_8_ = 0;
+        }
+    }
+    if (selected < 0) {
+        free(packet);
+        return static_cast<int>(field_E4_);
+    }
+
+    unsigned int wait_timeout = selected_rtt;
+    unsigned int retry_epoch = timeGetTime();
+    if (NetDirectPlay == 0 || NetDirectPlay->Send(field_760_,
+            static_cast<DPID>(target), 0, packet,
+            static_cast<DWORD>(allocation_size)) != DP_OK) {
+        MessageBoxA(0, "Oh no!! Send failed!",
+                    "Message from the Net Underworld", 0);
+        free(packet);
+        return 0;
+    }
+    for (;;) {
+        // Native reloads the current selected peer RTT before each outer
+        // wait interval, including after a timeout prompt and resend.
+        wait_timeout = players_[selected].field_C_;
+        const DWORD interval_start = timeGetTime();
+        DWORD elapsed = timeGetTime() - interval_start;
+        while (elapsed < 20000U) {
+            ResetEvent(thread_info_.events_[1]);
+            ResetEvent(thread_info_.events_[0]);
+            const DWORD waited = WaitForMultipleObjects(
+                2, wait_handles, FALSE, wait_timeout);
+            if (waited == WAIT_OBJECT_0 + 1) handle_sys_msg();
+
+            NetPlayer &peer = players_[selected];
+            if (peer.field_8_ == 0 || peer.field_0_ == 0) {
+                const DWORD ack_tick = timeGetTime();
+                peer.field_C_ = (ack_tick + 0x14U +
+                    (peer.field_C_ - retry_epoch)) >> 1;
+                free(packet);
+                return static_cast<int>(field_E4_);
+            }
+            const DWORD now = timeGetTime();
+            if (selected_rtt < now - retry_epoch) {
+                selected_rtt = (selected_rtt * 3U) >> 1;
+                if (NetDirectPlay == 0) {
+                    free(packet);
+                    return 0;
+                }
+                retry_epoch = timeGetTime();
+                const DPID live_peer = static_cast<DPID>(peer.field_0_);
+                if (NetDirectPlay->Send(field_760_, live_peer, 0, packet,
+                        static_cast<DWORD>(allocation_size)) != DP_OK) {
+                    MessageBoxA(0, "Oh no!! Send failed!",
+                                "Message from the Net Underworld", 0);
+                    free(packet);
+                    return 0;
+                }
+            }
+            elapsed = timeGetTime() - interval_start;
+        }
+
+        StringTemp[0] = 0;
+        int name_index = 0;
+        while (name_index < 16 && players_[name_index].field_0_ !=
+               players_[selected].field_0_) {
+            ++name_index;
+        }
+        // Preserve the original null source on a failed peer lookup.
+        const char *const peer_name = name_index == 16
+            ? 0 : players_[name_index].name_and_tail_;
+        strcat(StringTemp, peer_name);
+        strcat(StringTemp, ".");
+        parse_says(0, StringTemp, -1, -1);
+        const int choice = pop_caption(const_cast<char *>("jackal"),
+            const_cast<char *>("NET_SENDTIMEDOUT"), 0);
+        if (choice != 0) {
+            if (choice == 1) close();
+            else if (choice == 2) ExitTurnLoop = 1;
+            free(packet);
+            return 0;
+        }
+        retry_epoch = timeGetTime();
+        if (NetDirectPlay == 0 || NetDirectPlay->Send(field_760_,
+                static_cast<DPID>(target), 0, packet,
+                static_cast<DWORD>(allocation_size)) != DP_OK) {
+            MessageBoxA(0, "Oh no!! Send failed!",
+                        "Message from the Net Underworld", 0);
+            free(packet);
+            return 0;
+        }
+    }
+}

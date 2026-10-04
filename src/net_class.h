@@ -382,12 +382,9 @@ class Net {
   // ?stop_voice@Net@@QAEXXZ at 0x0062DFC0. PROMOTED out of
   // src/recovered/units/0062dfc0.cpp; its pending_bodies forwarder is gone.
   void stop_voice();
-  // 0x0062F8A0, still unrecovered - a 2015-byte reliable-UDP-style sender
-  // with per-peer RTT tracking. `stop_voice` calls it; the declaration lets
-  // its pending_bodies forwarder carry the receiver, so the call site keeps
-  // the image's own `E8`.
-  int send_packet_type(void *data, int mode, unsigned long who, int size,
-                       int flags);
+  // 0x0062F8A0: typed packet sender owns reliable peer tracking in net_class.cpp.
+  int send_packet_type(void *data, int data_size, unsigned long target,
+                       int packet_type, int flags);
   // 0x0062F390, still unrecovered (1293 bytes). process_voice routes a voice
   // packet here instead of send_packet_type whenever field_54_ is set, and it
   // calls close/check_polling like the rest of the session paths, so it is a
@@ -443,10 +440,8 @@ class Net {
   // 0x006309C0, homed into net_class.cpp: the sibling sender on the second
   // reader of the same queue.
   int sub_6309c0(int first, int second);
-  // 0x00630080, archived in 00630080.cpp (2232 bytes). send_message hands it
-  // every packet it builds, so the receiver has to be real for that call to
-  // keep the image's `E8`.
-  int send(void *data, int mode, unsigned long who, int size);
+  // 0x00630080: typed payload sender owns queueing and peer retries.
+  int send(void *data, int data_size, unsigned long target, int flags);
   // 0x00630C80. The DirectPlay player-callback body: appends one NetPlayer
   // record through the write seam below NetGetScratch and answers 1.
   int enum_players(unsigned long player_id, unsigned long, const DPNAME *name,

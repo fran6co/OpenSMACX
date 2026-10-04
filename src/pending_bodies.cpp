@@ -737,18 +737,6 @@ int UV2Player::exec(char *movie_file, int width, int height, int flags) {
 // unrecovered; check_for_lobby hands the lobby's session to it.
 
 
-// ?send@Net@@QAEHPAXHKH@Z at 0x00630080 - 2232 bytes of DirectPlay send with
-// per-peer RTT bookkeeping, still archived (00630080.cpp, FILE-only: no claim
-// to landmine). Its receiver has to be real here because
-// NetDaemon::send_message, homed into netdaemon.cpp, calls it for every
-// packet it builds, and a `T *const` receiver binding would cost that call
-// site the image's `E8`.
-int Net::send(void *data, int mode, unsigned long who, int size) {
-    typedef int(__fastcall *pending)(Net *, void *, void *, int, unsigned long,
-                                     int);
-    return PENDING_BODY(0x00630080, pending)(this, nullptr, data, mode, who,
-                                             size);
-}
 
 // ??0BasePop@@QAE@XZ at 0x00600860 - homed into basepop.cpp on 2026-08-29
 // (a real field-store constructor, not a forwarder), so the definition that
@@ -890,17 +878,6 @@ Status: Complete
 
 
 
-// ?send_packet_type@Net@@QAEHPAXHKHH@Z at 0x0062F8A0 - still unrecovered
-// (a 2015-byte sender). Net::start_voice and Net::stop_voice, promoted into
-// src/net_class.cpp, are gone from here; stop_voice tails into this member,
-// and the forwarder keeps that call site's `E8`.
-int Net::send_packet_type(void *data, int mode, unsigned long who, int size,
-                          int flags) {
-    typedef int(__fastcall *pending)(Net *, void *, void *, int, unsigned long,
-                                     int, int);
-    return PENDING_BODY(0x0062F8A0, pending)(this, nullptr, data, mode, who,
-                                             size, flags);
-}
 
 
 int Win::sub_63c7c0() {
