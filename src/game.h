@@ -181,7 +181,9 @@ extern TamperRecord TamperRegistryRecords[50];
 extern int TamperRegistryCursor;
 void __cdecl clear_monuments();
 void __cdecl clear_all_offers();
+void __cdecl clear_offer_pair(int faction_a, int faction_b);
 void __cdecl clear_tamper();
+void __cdecl clear_tamper_registry();
 // Eight faction combat-summary counters serialized independently of messages.
 extern int FactionTurnCombatWins[8];
 extern int FactionTurnCombatLosses[8];

@@ -8996,3 +8996,33 @@ int __cdecl init_opening(const char *filename) {
     BasePopDefaultField322C = static_cast<Win *>(OpeningWindow);
     return 0;
 }
+
+// ORIGINAL: 0x004411F0 sub_4411f0 0x004411F0-0x00441241 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["task:typed-offer-tamper-reset-owners", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x4411f0", "historical seed:src/recovered/units/004411f0.cpp; identity/spans/claims and useful discoveries retained; seed retirement requires fresh verification."], "reason": "Reset the two directed offer cells through the existing typed owner, preserving interleaved count/state write order and payload. Original has two stack ints, no receiver and no meaningful return; caller reachability remains unknown. Seed spelling lesson: full symmetric index expressions preserve native register allocation better than hoisted temporary indices; evidence is not a requirement to use fixed addresses."}
+// symbol    ?clear_offer_pair@@YAXHH@Z
+void __cdecl clear_offer_pair(int faction_a, int faction_b) {
+    OfferResetCells[faction_a][faction_b].count_[0] = 0;
+    OfferResetCells[faction_a][faction_b].count_[1] = 0;
+    OfferResetCells[faction_b][faction_a].count_[0] = 0;
+    OfferResetCells[faction_b][faction_a].count_[1] = 0;
+    OfferResetCells[faction_a][faction_b].state_[0] = 0;
+    OfferResetCells[faction_a][faction_b].state_[1] = 0;
+    OfferResetCells[faction_b][faction_a].state_[0] = 0;
+    OfferResetCells[faction_b][faction_a].state_[1] = 0;
+}
+
+// ORIGINAL: 0x0051DFD0 sub_51dfd0 0x0051DFD0-0x0051DFF9
+// RECOVERY_BINDING: v1 {"evidence": ["task:typed-offer-tamper-reset-owners", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x51dfd0", "historical seed:src/recovered/units/0051dfd0.cpp; identity/spans/claims and useful discoveries retained; seed retirement requires fresh verification."], "reason": "Reset the existing fifty-record registry and cursor with native field order 0,4,8,10,C,14. Native interior cursor begins at record+4 and terminates at93A514; the touched storage ends93A510, not93A514. Neutral fields and unknown reachability remain explicit; no larger allocation or game semantics are inferred."}
+// symbol    ?clear_tamper_registry@@YAXXZ
+void __cdecl clear_tamper_registry() {
+    TamperRegistryCursor = 0;
+    for (int index = 0; index < 50; ++index) {
+        TamperRecord &record = TamperRegistryRecords[index];
+        record.field_0_ = 0;
+        record.field_4_ = 0;
+        record.field_8_ = 0;
+        record.count_ = 0;
+        record.field_C_ = 0;
+        record.field_14_ = 0;
+    }
+}
