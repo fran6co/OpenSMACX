@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "task_id": "design-info-owner",
+  "author": "framework-coordinator",
+  "target": "opensmacx",
+  "base_revision": "b4e023e46561fc76072f652f7ef2c30e18248c55",
+  "editable_files": ["src/designwin.cpp", "recovery/tests/test_design_info.py", "recovery/tests/design_info_control.cpp"],
+  "subjects": [{"address": 4408992, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"}],
+  "intent": "Recover DesignWin information-panel rendering and prototype selection through genuine members, MainInterface Buffer inheritance and automatic Font lifetime, replacing its remaining empty source owner.",
+  "evidence": [
+    "Pinned spans4346A0..434BB4 and653FFE..654010, preserved current FILE mapping and historical seed provenance git:bb602081^:src/recovered/units/004346a0.cpp. Candidate956247f83c950f655da1228d342af6c9c6332650ae3868fe21df84f92600f7fa compiled in actual DesignWin TU atb4e023e4, object07ab8367d3cba40fb5fb3be1993858dafda3b37d2c87b24f078c89646e13c399; compilation is not behavior or matching proof.",
+    "MainInterfaceGlobal selects its genuine Buffer base at original7AEC64; InterfaceBoxStyles[3]/[0] match78D5A0/78D528. Automatic Font matches normal destruction and supplemental EH cleanup; no raw self offsets, copied executable calls or invented virtual table.",
+    "Review replacement-loop native joins348C1..34A2C before final integration; preserve later-wins stores, inactive redirects and live selected category. Pinned fallback literals space/parentheses/hash and imported CharUpperA, typed active/queue arrays and real label_get API. Host source-extraction tests must cover rendering order, labels, scan continuation and Font unwinding with compiled/run damage controls.",
+    "Require application compile/link, protected DesignWin claims, touched source integrity comparison against inherited findings, claim continuity and references. No new claim, weakening historical obligation, automatic acceptance, strict reference/link/runtime or full-game proof authorized."
+  ]
+}
