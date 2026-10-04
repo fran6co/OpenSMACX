@@ -74,7 +74,9 @@ class SetupWin : public GraphicWin {
   int overlay_x_[3];            // 0xA28..0xA34
   // RECOVERY_MEMBER: v1 SetupWin overlay_y_ 0xA34 0x004AE4D0
   int overlay_y_[3];            // 0xA34..0xA40
-  uint32_t field_A40_;  // 0xA40
+  // RECOVERY_MEMBER: v2 SetupWin opening_window_snapshot_ GraphicWin* 0xA40 0x004AD880
+  // Constructor snapshot; draw_item independently reads the live shared slot.
+  GraphicWin *opening_window_snapshot_;  // 0xA40
   Buffer buffer_;  // 0xA44
   // RECOVERY_MEMBER: v1 SetupWin row_count_ 0xFCC 0x004AE4D0
   uint32_t row_count_;  // 0xFCC

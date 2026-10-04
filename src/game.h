@@ -410,16 +410,14 @@ class GraphicWin;
 // Declared 256 wide as a bound - nothing in the image says how long it is.
 extern char PronounBuffer[256];
 
-// The opening-window slot at 0x00945824. The desktop bring-up at 0x00589B60
-// allocates 0xA14 bytes and constructs a GraphicWin there (ctor 0x005D4CF0);
-// close_opening dispatches its virtual deleting destructor with flag one and
-// then clears the slot. SetupWin's constructor (0x004AD985) copies the pointer
-// into its own field +0xa40 for as long as the window lives. This accessor
-// still names original storage; its producer and all lifetime consumers must
-// be migrated together to a source-owned GraphicWin pointer.
+// Source-owned opening-window pointer, bound to original945824 in game.cpp.
+// SetupWin keeps its own pointer snapshot; this accessor refers to the live
+// shared slot for callback-sensitive consumers and lifetime operations.
+extern GraphicWin *OpeningWindow;
 inline GraphicWin *&opening_window() {
-  return *reinterpret_cast<GraphicWin **>(0x00945824);
+  return OpeningWindow;
 }
+int __cdecl init_opening(const char *filename);
 
 MEASURED inline BOOL __cdecl not_my_turn() {
     // Both guards return before the comparison, so a non-net game and a net

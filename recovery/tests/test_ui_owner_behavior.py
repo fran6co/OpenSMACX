@@ -163,8 +163,9 @@ enum Event { graphic_ctor=1, buffer_ctor, spot_ctor, list_ctor, buffer_close,
 std::vector<Event> events;
 int count(Event e) { int n=0; for (std::size_t i=0;i<events.size();++i) if(events[i]==e) ++n; return n; }
 int HandleMain=1, pending_owner=7, list_captured=0, WinScreenWidth=1024, WinScreenHeight=768;
-uintptr_t opening_window() { return 9; }
-uint32_t host_narrow_handle(uintptr_t value) { return static_cast<uint32_t>(value); }
+struct GraphicWin;
+GraphicWin *opening_slot = reinterpret_cast<GraphicWin *>(9);
+GraphicWin *opening_window() { return opening_slot; }
 struct Win {
   bool suppress; int redraws;
   Win() : suppress(false), redraws(0) {}
@@ -190,7 +191,7 @@ struct StringList : StringStruct {
 };
 struct SetupWin : GraphicWin {
   uint32_t overlay_buffers_[3]; int row_count_, selected_row_, field_A14_, field_A18_;
-  uint32_t field_A40_, menu_popup_; Buffer buffer_; Spot spot_; StringList field_FE0_;
+  GraphicWin *opening_window_snapshot_; uint32_t menu_popup_; Buffer buffer_; Spot spot_; StringList field_FE0_;
   SetupWin(); ~SetupWin();
 };
 typedef void *HWND; typedef intptr_t LONG_PTR; typedef unsigned int UINT;
@@ -213,7 +214,10 @@ struct Dialog { void UNK2(int window, int message, int wparam, int lparam); };
 int main() {
   { SetupWin w; assert(w.overlay_buffers_[0]==0 && w.overlay_buffers_[1]==0 && w.overlay_buffers_[2]==0);
     assert(w.row_count_==0 && w.selected_row_==0 && w.field_A14_==1024 && w.field_A18_==768);
-    assert(w.field_A40_==9 && w.menu_popup_==0 && list_captured==7 && pending_owner==0); }
+    assert(w.opening_window_snapshot_==opening_slot && w.menu_popup_==0 && list_captured==7 && pending_owner==0);
+    GraphicWin *snapshot = opening_slot;
+    opening_slot = reinterpret_cast<GraphicWin *>(10);
+    assert(w.opening_window_snapshot_==snapshot); }
   assert(count(list_remove)==2); // explicit cleanup plus derived member cleanup
   assert(count(stringstruct_cleanup)==1 && pending_owner==7);
   assert(events[events.size()-1]==graphic_dtor && events[events.size()-2]==buffer_dtor);
@@ -369,14 +373,6 @@ def _fixture_source(name: str, bodies: dict[str, str], mutant=None) -> str:
             before, after = mutant[1], mutant[2]
             assert before in body, (body_name, before)
             body = body.replace(before, after, 1)
-        if body_name == "setup_ctor":
-            # x86 stores an HWND-sized result into a measured 32-bit word.
-            # LP64 host cannot compile pointer-to-uint32 reinterpret_cast;
-            # preserve the 32-bit value through this one explicit ABI adapter.
-            body = body.replace(
-                "reinterpret_cast<uint32_t>(opening_window())",
-                "host_narrow_handle(opening_window())",
-            )
         assert marker in source
         source = source.replace(marker, body, 1)
     return source

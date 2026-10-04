@@ -278,7 +278,7 @@ SetupWin::SetupWin() {
     overlay_buffers_[2] = 0;
     row_count_ = 0;
     selected_row_ = 0;
-    field_A40_ = reinterpret_cast<uint32_t>(opening_window());
+    opening_window_snapshot_ = opening_window();
     menu_popup_ = 0;
     field_A14_ = WinScreenWidth;
     field_A18_ = WinScreenHeight;

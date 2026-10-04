@@ -76,6 +76,13 @@
 
 extern int __cdecl def_caption_draw(GraphicWin *, char *, Buffer *);
 
+// Shared opening-window owner. The pinned PE places this four-byte pointer
+// in the zero-filled .data virtual tail; init_opening publishes the complete
+// GraphicWin pointer. All compiled consumers use this source storage.
+// RECOVERY_OBJECT: v2 0x00945824 0x00945828 ?OpeningWindow@@3PAVGraphicWin@@A 0x00589B60
+GraphicWin *OpeningWindow = 0;
+
+
 // RECOVERY_OBJECT: v1 0x006846B0 ?InterfaceStandardPopupBoxStyle@@3UBoxSpriteParams@@A
 BoxSpriteParams InterfaceStandardPopupBoxStyle = {
     &g_IFACE_STD_POPUPS_TOP_LEFT_SPRITE,
@@ -8937,4 +8944,55 @@ void __cdecl mon_enemy_destroyed(int faction_id, int target_faction) {
     if (faction_id == ConsoleGlobal.faction_id_) {
         monument(1);
     }
+}
+
+// ORIGINAL: 0x00589B60 ?init_opening@@YAHPBD@Z 0x00589B60-0x00589D29;0x0066026A-0x0066028A
+// RECOVERY_BINDING: v1 {"evidence": ["task:opening-window-lifetime-owner", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:589B60..589D29;66026A..66028A", "source:src/unrecovered/00589b60.cpp complete original identity/spans and seed lessons retained; Buffer::pixel_height already negates the top-down DIB height."], "reason": "Recover opening-window construction, loading, presentation and popup-parent publication through genuine GraphicWin and Buffer lifetimes. Each callback-sensitive shared-slot reload is independent; no added null guard or failure-path behavior change."}
+int __cdecl init_opening(const char *filename) {
+    if (OpeningWindow == 0) {
+        GraphicWin *const window = new GraphicWin();
+        OpeningWindow = window;
+        if (window == 0) {
+            return 4;
+        }
+
+        const int result = window->init(0, 0, WinScreenWidth, WinScreenHeight,
+                                        0, 0x400000, 0, 0,
+                                        0);
+        if (result != 0) {
+            close_opening();
+            return result;
+        }
+    }
+
+    OpeningWindow->fill(0);
+    {
+        Buffer local_buffer;
+        if (OpeningWindow != 0) {
+            local_buffer.load_pcx(filename, 0, 10, 0xEC);
+
+            // Native reload after load_pcx supplies the copy destination and
+            // its metrics. The null arm only nulls the copy destination; the
+            // following metrics reads are unconditional in the original.
+            GraphicWin *const copy_window = OpeningWindow;
+            Buffer *const destination =
+                copy_window == 0 ? 0
+                                       : static_cast<Buffer *>(copy_window);
+            const int target_width = copy_window->pixel_width();
+            const int target_height = copy_window->pixel_height();
+            local_buffer.copy(destination, 0, 0, local_buffer.pixel_width(),
+                              local_buffer.pixel_height(), 0, 0, target_width,
+                              target_height);
+
+            // The native body reloads the slot after copy, independently of
+            // the receiver used above, before virtual on_update dispatch.
+            OpeningWindow->on_update();
+        }
+    } // Buffer's natural destructor runs before palette realization.
+
+    g_PALETTE1.set();
+    OpeningWindow->show(0);
+    do_all_draws();
+    BasePopDefaultField322C = static_cast<Win *>(OpeningWindow);
+    return 0;
 }
