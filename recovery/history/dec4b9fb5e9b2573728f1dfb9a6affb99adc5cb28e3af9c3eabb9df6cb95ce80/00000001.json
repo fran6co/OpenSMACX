@@ -1,0 +1,19 @@
+{
+  "event_id": "983f2b3128089c6a300fb37068c3533d3392d2111ece56e5e77fd3faa6418dea",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/recovered/005d6350.cpp"
+    ],
+    "evidence": [
+      "Configured source inventory places original5D6350 seed at src/recovered/005d6350.cpp, not units/; authorize that exact existing seed for guarded retirement, retaining original subjects and baseline."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "correct-size-adapter-seed-path",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:win-message-adapter-owner-extension"
+}
