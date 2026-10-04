@@ -1,0 +1,27 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "6675dae83d52f962a9d9c7eec892eebdf8607c13",
+  "editable_files": [
+    "src/game.cpp",
+    "src/game.h",
+    "src/recovered/units/00477210.cpp",
+    "recovery/tests/test_monument_enemy_owner_behavior.py",
+    "recovery/tests/monument_enemy_owner_control.cpp"
+  ],
+  "evidence": [
+    "Pinned complete body 477210..477320 uses Players alien rule bit, FactionMonuments record6 and latest_type, calls game_year before guards, counts all eight peers and selects the last achieved peer with nonzero first flag. When prior achievements exist but no first flag, fallback is target_faction, not source faction.",
+    "Typed source owners already bind complete faction strides and record offsets. Battle_fight native call at 50B1B4 establishes this helper dependency; mapped caller search remains incomplete and has unrelated undecoded spans.",
+    "Coordinator-reviewed integration requires actual-owner host witnesses, fresh native matching/recording, build/link and claim/reference/source-integrity checks. Full linked preservation, autonomous/game/structure/runtime acceptance remains unproven; no demotion or fabricated claim."
+  ],
+  "intent": "Recover complete mon_enemy_destroyed against genuine shared monument records and player/console owners, preserving native first-achiever selection, fallback, notification and historical identity/claim. Retire only the measured superseded seed.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4682256,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "monument-enemy-destroyed-owner"
+}
