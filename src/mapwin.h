@@ -599,6 +599,13 @@ int __cdecl gen_terrain_poly(Buffer *buffer, MapWin *window, int a3,
 extern Vert MapCornerCopy[4];
 extern Vert MapCornerScratch[4];
 
+// Existing source-owned redraw implementations; callers use these APIs rather
+// than private forward declarations or executable-address seams.
+void __cdecl draw_tile_fixup(int x_coord, int y_coord, int wider_radius,
+                            int redraw_flags);
+void __cdecl draw_tile_fixup(int x_coord, int y_coord, int second_x_coord,
+                            int second_y_coord, int wider_radius, int redraw_flags);
+
 MEASURED inline void __cdecl draw_tile(int x_coord, int y_coord, int draw_type) {
     for (size_t slot = 0; slot < MapWinTableSlots; ++slot) {
         // Re-read every iteration, as `mov ecx, dword ptr [esi]` at 0x0046AF51

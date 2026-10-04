@@ -12529,15 +12529,1060 @@ void __cdecl spot_all(int source_vehicle_id, int toggle) {
 }
 
 
-// Unfinished dependency of the airdrop recovery. Preserve the complete seed
-// in src/unrecovered/0057a660.cpp. Zero is only an explicit placeholder result,
-// not evidence for the original encounter behavior.
-// ORIGINAL: 0x0057A660 ?goody_box@@YAHHH@Z 0x0057A660-0x0057CDE6
-// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0057a660.cpp retained original signature and extent; full seed preserved", "Coordinator user authorizes explicit unfinished empty bodies for new referenced functions, never replacement of recovered behavior"], "reason": "Explicit unfinished owning-TU link-continuity dependency for full action_airdrop authoring; BODY GOES HERE preserves unknown behavior and is not a recovery or matching claim."}
-int __cdecl goody_box(int veh_id, int type) {
-    // BODY GOES HERE.
-    return 0; // PLACEHOLDER: explicit link continuity, encounter result unrecovered.
+namespace goody_box_detail {
+
+static Map *tile_at(int x, int y) {
+    return &MapTiles[MapLongitude * y + (x >> 1)];
 }
+
+static int wrap_x(int x) {
+    if (!(MapIsFlat & 1)) {
+        if (x < 0) x += MapLongitudeBounds;
+        else if (x >= MapLongitudeBounds) x -= MapLongitudeBounds;
+    }
+    return x;
+}
+
+static int on_map(int x, int y) {
+    return x >= 0 && x < MapLongitudeBounds
+        && y >= 0 && y < MapLatitudeBounds;
+}
+
+// Convert 32-bit two's-complement bits without implementation-defined casts.
+static int signed_from_bits(uint32_t bits) {
+    if (bits <= 0x7FFFFFFFu) return (int)bits;
+    return -1 - (int)(~bits);
+}
+
+// Native CDQ/SUB/SAR: negative inputs add one before arithmetic shift, so
+// this is truncation toward zero (not floor division).
+static int native_half(int value) {
+    const uint32_t bits = (uint32_t)value;
+    const uint32_t corrected = bits - (value < 0 ? 0xFFFFFFFFu : 0u);
+    return signed_from_bits((corrected >> 1)
+        | (corrected & 0x80000000u));
+}
+
+// Native add wraps to32 bits before signed normalized remainder by8.
+// Negative remainder is not repaired into a positive array index: the
+// original's invalid negative-turn/table cases remain unverified obligations.
+static int rotated_spawn_index(int location, int turn) {
+    return signed_from_bits((uint32_t)location + (uint32_t)turn) % 8;
+}
+
+static int native_threshold_passes(int event_id, uint32_t game_state,
+                                   int owned_distance, int terrain_factor,
+                                   int native_lifeforms) {
+    const uint32_t game_factor = ((game_state & 0x00100000u) != 0) + 1u;
+    const uint32_t lhs = game_factor * (uint32_t)owned_distance;
+    const uint32_t population = 4u - (uint32_t)native_lifeforms;
+    const uint32_t rhs = (uint32_t)(event_id - 13) * (uint32_t)terrain_factor
+                       + population * 2u;
+    return signed_from_bits(lhs) >= signed_from_bits(rhs);
+}
+
+static void redraw_world() {
+    world_climate();
+    draw_map(1);
+}
+
+static int reveal_nearby_terrain(int x, int y, int faction_id,
+                                 int native_terrain, int local) {
+    const int source_region = tile_at(x, y)->region;
+    for (int radius = 0; radius < 121; ++radius) {
+        int tx = x + RadiusOffsetX[radius];
+        if (!(MapIsFlat & 1)) {
+            if (tx < 0) tx += MapLongitudeBounds;
+            else if (tx >= MapLongitudeBounds) tx -= MapLongitudeBounds;
+        }
+        const int ty = y + RadiusOffsetY[radius];
+        if (!on_map(tx, ty)) continue;
+        if (native_terrain) {
+            Map *nearby_tile = tile_at(tx, ty);
+            if ((nearby_tile->climate & 0xE0) >= 0x60) continue;
+            if (nearby_tile->region != source_region) continue;
+        }
+        spot_loc(tx, ty, faction_id);
+    }
+    if (local) {
+        g_FX.play(0x16);
+        NetMsgPrimary.pop(native_terrain ? "GOODYSONAR" : "GOODYVIEW",
+                          5000, 0,
+                          native_terrain ? "supply_sm.pcx" : 0);
+        g_FX.fade(0x16);
+    }
+    draw_map(1);
+    return 0;
+}
+
+static int relocation_random_below(int bound) {
+    if (bound != 1 && bound > 1) return rand() % bound;
+    return 0;
+}
+
+static uint32_t normalized_crt_mask_draw() {
+    uint32_t value = (uint32_t)rand() & 0x80000001u;
+    if (value & 0x80000000u)
+        value = (value & 1u) ? 0xFFFFFFFFu : 0;
+    return value;
+}
+
+static uint32_t normalized_crt_mask_3_draw() {
+    uint32_t value = (uint32_t)rand() & 0x80000003u;
+    if (value & 0x80000000u)
+        value = ((value - 1u) | 0xFFFFFFFCu) + 1u;
+    return value;
+}
+
+static int reroll_event(int y, int &attempt, int &event_id) {
+    // Native draws %14 before checking the retry limit, increments attempt
+    // zero to one, and promotes attempt two to three before boundary draws.
+    event_id = rand() % 14;
+    if (attempt) {
+        if (attempt >= 3) return 0;
+        if (attempt == 2) attempt = 3;
+    } else {
+        attempt = 1;
+    }
+    if ((y == 0 || y == MapLatitudeBounds - 1) && rand() % 3 == 0)
+        event_id = 12;
+    if (rand() % 100 == 0) event_id = 18;
+    return 1;
+}
+
+static int relocate_vehicle(int veh_id, int x, int y, int faction_id,
+                            int native_terrain, int local) {
+    const int proto_id = Vehs[veh_id].proto_id;
+    const int plan = VehPrototypes[proto_id].plan;
+    const int chassis_id = VehPrototypes[proto_id].chassis_id;
+    int radius_limit;
+    if (Chassis[chassis_id].triad == 0 && plan != 8) {
+        radius_limit = (plan != 9 ? 0x10 : 0) + 8;
+    } else {
+        const uint32_t coin = goody_box_detail::normalized_crt_mask_draw();
+        if (coin == 0) return 0;
+        radius_limit = 8;
+    }
+
+    const int source_region = tile_at(x, y)->region;
+    int attempts = 0;
+    int target_x = 0;
+    int target_y = 0;
+    for (;;) {
+        int raw_x = relocation_random_below(MapLongitudeBounds);
+        const int raw_y = relocation_random_below(MapLatitudeBounds);
+        int adjusted_x = raw_x;
+        if (raw_x & 1) adjusted_x = raw_x - 1;
+        if (raw_y & 1) adjusted_x += 1;
+        target_x = adjusted_x;
+        target_y = raw_y;
+        ++attempts;
+        if (attempts >= 1000) return 0;
+
+        if (!on_map(target_x, target_y)) continue;
+        Map *target = tile_at(target_x, target_y);
+        if (((target->climate & 0xE0) < 0x60) != native_terrain) continue;
+        if (target->region != source_region) continue;
+        if ((target->bit & 3u) != 0 && (target->val3 & 0x0F) < 8) continue;
+        if (zoc_any(target_x, target_y, faction_id) != 0) continue;
+        if (PlayersData[faction_id].flags & 0x200u) continue;
+        if (target->visibility & (1u << (faction_id & 0x1F))) continue;
+
+        int x_distance = abs(x - target_x);
+        if (!(MapIsFlat & 1) && MapLongitude < x_distance)
+            x_distance = MapLongitude - x_distance;
+        const int manhattan_distance = abs(y - target_y) + x_distance;
+        // Native first rejects a close site using the even-rounded full
+        // Manhattan sum, then independently halves that sum for radius.
+        if ((manhattan_distance & ~1) <= 8) continue;
+        const int distance = manhattan_distance >> 1;
+        if (distance <= radius_limit) break;
+    }
+
+    if (local) {
+        NetMsgPrimary.pop(native_terrain ? "GOODYWAVE" : "GOODYGATE",
+                          -5000, 0, native_terrain ? "stars_sm.pcx" : 0);
+    }
+    Vehs[veh_id].moves_expended = 0;
+    Vehs[veh_id].order = 0;
+    Vehs[veh_id].state &= 0xFCFFFDFFu;
+    const int moved_stack = stack_veh(veh_id, 1);
+    stack_put(moved_stack, target_x, target_y);
+    if (Vehs[veh_id].faction_id != ConsoleGlobal.faction_id_) {
+        draw_tile(x, y, 2);
+    } else {
+        draw_tile_fixup(x, y, has_abil(proto_id, 2), 2);
+    }
+    if (local) {
+        ConsoleGlobal.focus(target_x, target_y, faction_id);
+        MapWinTable[0]->redraw();
+    }
+    spot_all(veh_id, 1);
+    return 1;
+}
+
+static int local_player(int faction_id) {
+    return ConsoleGlobal.faction_id_ == faction_id;
+}
+
+static void notify_energy(int faction_id, int amount, int native_side, int local) {
+    PlayersData[faction_id].energy_reserves += amount;
+    if (local) {
+        parse_num(0, amount);
+        g_FX.play(0x16);
+        NetMsgPrimary.pop(native_side ? "GOODYHYDROGEN" : "GOODYURANIUM",
+                          -5000, 0,
+                          native_side ? "supply_sm.pcx" : 0);
+        g_FX.fade(0x16);
+        ConsoleInfoWin.on_redraw();
+    }
+}
+
+static int give_random_technology(int faction_id, int notify, int forced,
+                                  int native_terrain) {
+    const int start = rand();
+    for (int count = 0; count < 89; ++count) {
+        const int tech_id = (start % 89 + count) % 89;
+        if (has_tech(tech_id, faction_id)) continue;
+        if (!tech_avail(tech_id, faction_id)) continue;
+        if (tech_is_preq(tech_id, 0x30, 9999)
+            && !GameTechAchieved[TECH_BRAIN])
+            continue;
+        const RulesTechnology &definition = Technology[tech_id];
+        int terminal_prerequisites = 0;
+        const int prerequisites[2] = { definition.preq_tech_1,
+                                        definition.preq_tech_2 };
+        for (int slot = 0; slot < 2; ++slot) {
+            const int parent = prerequisites[slot];
+            if (parent == -1) ++terminal_prerequisites;
+            else if (parent >= 0
+                     && Technology[parent].preq_tech_1 == -1
+                     && Technology[parent].preq_tech_2 == -1) {
+                ++terminal_prerequisites;
+                break;
+            }
+        }
+        if (terminal_prerequisites < 2) continue;
+        if (tech_id == 0x4E || tech_id == 0x4F || tech_id == 0x51
+            || tech_id == 0x52 || tech_id == 0x53) continue;
+        if (!forced) ++PlayersData[faction_id].tech_achieved;
+        if (notify) {
+            clear();
+            says("GOODYDATA");
+            if (IsMultiplayerNet) {
+                says("1");
+                parse_say(0,
+                    (int)(long)Technology[tech_id].name, -1, -1);
+            }
+            NetMsgPrimary.pop(StringTemp,
+                              native_terrain ? 5000 : -5000, 0,
+                              "supply_sm.pcx");
+        }
+        tech_achieved(faction_id, tech_id, -1, 0);
+        // tech_achieved owns its normal count increment. Native forced gifts
+        // cancel that increment after the callback, while unforced gifts keep
+        // it in addition to the pre-callback count recorded above.
+        if (forced) --PlayersData[faction_id].tech_achieved;
+        return tech_id;
+    }
+    return -1;
+}
+
+} // namespace goody_box_detail
+
+
+// ORIGINAL: 0x0057A660 ?goody_box@@YAHHH@Z 0x0057A660-0x0057CDE6
+// RECOVERY_BINDING: v1 {"evidence": ["task:goody-box-owner", "pinned:57A660..57CDE6 whole dispatcher; original two-int ABI, unused second parameter and seed findings preserved.", "pinned:A8D2 live vehicle x/y retry reload; spawned vehicle prototype/chassis triad read after veh_init; separate event9 and cases12..17 radius paths.", "pinned:B4D8..B874 relocation stack_veh/stack_put/render/focus/spot_all order;CC16..CDE6 retry/resource/overflow gates;A9A1 GameRules reload.", "source:existing Veh/PlayerData/Base/Map/technology declarations and bounded shared radius arrays; map-window public draw_tile_fixup APIs own original render calls.", "historical seed:src/unrecovered/0057a660.cpp mapping and parsed dispatch findings retained."], "reason": "Recover the complete original pod outcome dispatcher through source-owned vehicle, faction, base, technology and map state; retain original identity/spans and historical seed findings, without executable calls or raw storage aliases."}
+// DEFERRED: structurally the most promising remaining shape in this batch, not yet landed. Frame is only 0x34 bytes (plain locals, no embedded C++ objects), and the function is a dispatcher: a 26-entry jump table at 0x0057A9BF (targets listed in this file's own brief, already resolved from the image - cases 12-17 share one target 0x0057C5C8, and two more small tables at 0x0057C451/0x0057C531 handle an 8-way and 4-way sub-dispatch off the tail of that). That makes this closer to "26 mostly-independent small case bodies" than one tangled 10KB function - each case is a self-contained goody-box outcome (energy, new tech, new unit, mines, artifact, ...), calling _rand(29x)/?pop@NetMsg@@(25x, the popup message)/ ?bit_set@@(15x, faction tech/facility grant)/?veh_init@@(9x, spawn a unit)/?parse_says@@/?play@FX@@/?draw_tile@@/?base_find@@ - none of which chain into the register-computed multi-field arithmetic that made the two smaller functions in this batch unsafe to rush. Still 3172 instructions / 1243 Ghidra lines total, too much for this pass in the time remaining.
+int __cdecl goody_box(int veh_id, int type) {
+    (void)type; // Native has no read of [ebp+0x0C].
+    int x = Vehs[veh_id].x;
+    int y = Vehs[veh_id].y;
+    const int faction_id = Vehs[veh_id].faction_id;
+    const int native_terrain = (goody_box_detail::tile_at(x, y)->climate & 0xE0) < 0x60;
+
+    // Native order: crash guard returns before counters or seeded RNG mutation.
+    if (do_unity_crash(x, y, faction_id)) return 0;
+    const int local = goody_box_detail::local_player(faction_id);
+
+    PlayerData &faction = PlayersData[faction_id];
+    ++faction.unk_94; // original 0x96EA20; setup_player clears the DWORD.
+    if (IsMultiplayerNet) my_srand((int)StartingMissionYear + faction.unk_94 * 0x25);
+    if (faction.soc_effect_pending.research * -5 <= TurnCurrentNum
+        && !(GameRules & 0x04000000u))
+        ++faction.tech_accumulated;
+
+    const int base_id = base_find(x, y);
+    Map *tile = goody_box_detail::tile_at(x, y);
+    int forced = 0;
+    int event_id = 0;
+    int attempt = 0;
+    if ((tile->bit & 0x0C000000u)
+        && (faction.current_num_bases == 0
+            || (base_id >= 0 && Bases[base_id].faction_id_current == faction_id))) {
+        event_id = 10 - ((tile->bit & 0x04000000u) != 0);
+        forced = 1;
+        bit_set(x, y, 0x0C000000, FALSE);
+    } else if (BaseFindDist <= 2 && base_id >= 0
+               && Bases[base_id].faction_id_current != faction_id) {
+        event_id = 0x10;
+        forced = 1;
+    } else if (((tile->bit & 0x20u)
+                && (tile->climate & 0xE0u) >= 0x40u)
+               || native_terrain) {
+        // Native enters its shared reroll block here: %14, optional edge %3,
+        // then %100. These draws precede the event loop's chassis test.
+        // Native retry target 57A8D2 reloads the vehicle coordinates before
+        // its first random draw. The entry terrain classification above stays
+        // captured, but subsequent map lookups use the reloaded coordinates.
+        x = Vehs[veh_id].x;
+        y = Vehs[veh_id].y;
+        tile = goody_box_detail::tile_at(x, y);
+        if (!goody_box_detail::reroll_event(y, attempt, event_id))
+            return 0;
+    } else {
+        int chance = (BaseFindDist <= 0x0C
+                      || !faction.region_total_bases[tile->region])
+                   ? 0x28 : 0x14;
+        const int plan = VehPrototypes[Vehs[veh_id].proto_id].plan;
+        if ((plan == 9 && (BaseFindDist < 0x0C || TurnCurrentNum < 0x28))
+            || plan == 8) chance += 10;
+        if (chance > 1) event_id = rand() % chance;
+    }
+
+    while (attempt <= 3) {
+        if (VehPrototypes[Vehs[veh_id].proto_id].plan == 12
+            && rand() % 3 == 0
+            && !(Vehs[veh_id].flags & 0x20u))
+            event_id = 9999;
+dispatch_event:
+        switch (event_id) {
+        case 0: { // credits
+            const int threshold = native_terrain ? 0x64 : 0x32;
+            const int base_amount = TurnCurrentNum >= threshold ? 0x32 : 0x19;
+            const int amount = (rand() % (native_terrain ? 4 : 3) + 1)
+                             * base_amount;
+            goody_box_detail::notify_energy(faction_id, amount,
+                                               native_terrain, local);
+            return 0;
+        }
+        case 1: { // remove fungus and update the climate
+            if (!native_terrain && !(tile->bit & 0x80u)) {
+                int offset = 0;
+                for (; offset < 9; ++offset) {
+                    int nx = x + RadiusOffsetX[offset];
+                    if (!(MapIsFlat & 1)) {
+                        if (nx < 0) nx += MapLongitudeBounds;
+                        else if (nx >= MapLongitudeBounds) nx -= MapLongitudeBounds;
+                    }
+                    const int ny = y + RadiusOffsetY[offset];
+                    if (goody_box_detail::on_map(nx, ny)) {
+                        const Map *nearby_tile = goody_box_detail::tile_at(nx, ny);
+                        if ((nearby_tile->bit & 0x80u)
+                            || ((nearby_tile->climate & 0xE0u) < 0x60u))
+                            break;
+                    }
+                }
+                if (offset == 9) {
+                    if (local) {
+                        g_FX.play(0x26);
+                        NetMsgPrimary.pop("GOODYRIVER", 5000, 0,
+                                          "supply_sm.pcx");
+                    }
+                    bit_set(x, y, 0x100, TRUE);
+                    goody_box_detail::redraw_world();
+                    return 0;
+                }
+            }
+            break;
+        }
+        case 2: {
+            // Native sonar walks 121 entries from the radius-offset table. Water-origin
+            // pods constrain the pass to the same water region; land-origin
+            // pods reveal every valid tile in that native table walk.
+            if (native_terrain || (tile->climate & 0xE0) >= 0xA0)
+                return goody_box_detail::reveal_nearby_terrain(
+                    x, y, faction_id, native_terrain, local);
+            if (TurnCurrentNum >= 0x32) break;
+            event_id = 8;
+            goto dispatch_event; // Native shared dispatch skips the chassis reroll.
+        }
+        case 3: { // tectonic shift
+            const int original_change_count = faction.unk_96;
+            const uint32_t doubled_changes =
+                (uint32_t)original_change_count * 2u;
+            const int32_t tectonic_denominator =
+                (int32_t)(doubled_changes + 2u);
+            const int32_t denominator_minus_one =
+                (int32_t)(doubled_changes + 1u);
+            const int eligible_by_preference =
+                !(GameRules & 0x01000000u) || DiffLevelCurrent >= 2;
+            if (eligible_by_preference && (tile->climate & 0xE0) <= 0x80
+                && faction.current_num_bases >= 2 && !native_terrain
+                && !IsMultiplayerNet
+                && (tectonic_denominator == 1
+                    || denominator_minus_one <= -1
+                    || rand() % tectonic_denominator == 0)) {
+                ++faction.unk_96;
+                g_FX.play(8);
+                world_raise_alt(x, y);
+                world_raise_alt(x, y);
+                for (int radius = 0; radius < 25; ++radius) {
+                    const int nx = goody_box_detail::wrap_x(x + RadiusOffsetX[radius]);
+                    const int ny = y + RadiusOffsetY[radius];
+                    if (!goody_box_detail::on_map(nx, ny)) continue;
+                    Map *nearby_tile = goody_box_detail::tile_at(nx, ny);
+                    if (nearby_tile->bit & 4u) {
+                        if (rand() % 3 == 0) {
+                            bit_set(nx, ny, 4, FALSE);
+                            synch_bit(nx, ny, faction_id);
+                        }
+                    }
+                    if (radius <= 8) rocky_set(nx, ny, minerals_at(nx, ny));
+                }
+                goody_box_detail::redraw_world();
+                if (local) {
+                    NetMsgPrimary.pop("GOODYQUAKE", -5000, 0, "quake_sm.pcx");
+                    if (tut_check(0x800))
+                        TutWinGlobal->tut_map("TERRAFORM", x, y, -1,
+                                              0, 0, -1, -1);
+                }
+                return 0;
+            }
+            break;
+        }
+        case 4: {
+            const int plan = VehPrototypes[Vehs[veh_id].proto_id].plan;
+            if (native_terrain || !(GameState & 0x00100000u)) {
+                if (IsMultiplayerNet || plan == 12
+                    || ((GameRules & 0x01000000u) && DiffLevelCurrent <= 1))
+                    break;
+                if (TurnCurrentNum >= 0x19
+                    && (TurnCurrentNum >= 0x32 || DiffLevelCurrent >= 2)) {
+                    if (goody_box_detail::relocate_vehicle(
+                            veh_id, x, y, faction_id, native_terrain, local))
+                        return 0;
+                    break;
+                }
+                event_id = 8;
+                goto dispatch_event;
+            }
+            event_id = 7;
+            goto dispatch_event;
+        }
+        case 5: {
+            if ((GameState & 0x00100000u) && !native_terrain) {
+                event_id = 7;
+                goto dispatch_event;
+            }
+            const int owned_base_id = base_find(x, y, faction_id);
+            if (!IsMultiplayerNet && owned_base_id >= 0) {
+                const int production = (int)Bases[owned_base_id].queue_size;
+                if (production >= -0x45) {
+                    int production_cost;
+                    if (production >= 0) {
+                        if (VehPrototypes[production].plan == 8
+                            && Bases[owned_base_id].faction_id_current == 1)
+                            break;
+                        production_cost = veh_cost(production, owned_base_id, 0);
+                        parse_says(0, VehPrototypes[production].veh_name,
+                                   -1, -1);
+                    } else {
+                        const int facility_id = -production;
+                        production_cost = Facility[facility_id].cost;
+                        parse_say(0, (int)(long)Facility[facility_id].name,
+                                  -1, -1);
+                    }
+                    const uint32_t adjusted_bits =
+                        (uint32_t)cost_factor(faction_id, 1, -1)
+                        * (uint32_t)production_cost;
+                    const int adjusted_cost = (int32_t)adjusted_bits;
+                    const uint32_t three_quarters = adjusted_bits * 3u;
+                    const uint32_t sign_adjust =
+                        (three_quarters & 0x80000000u) ? 3u : 0u;
+                    const int minimum_progress = (int32_t)
+                        (three_quarters + sign_adjust) >> 2;
+                    if (Bases[owned_base_id].minerals_accumulated
+                        < minimum_progress) {
+                        Bases[owned_base_id].minerals_accumulated = adjusted_cost;
+                        if (local) {
+                            parse_says(1, Bases[owned_base_id].name_string,
+                                       -1, -1);
+                            NetMsgPrimary.pop("GOODYBUILD", -5000, 0,
+                                              "indbm_sm.pcx");
+                        }
+                        return 0;
+                    }
+                }
+            }
+            if (native_terrain || (GameRules & 0x00040000u)) break;
+
+            uint32_t supported = faction.proto_id_active[7];
+            for (int base = 0; base < BaseCurrentCount; ++base) {
+                if (Bases[base].faction_id_current == faction_id
+                    && (Bases[base].state & 0x400u))
+                    ++supported;
+            }
+            if (faction.current_num_bases <= (int)supported
+                && !(GameState & 0x00040000u))
+                break;
+            event_id = 6;
+            goto dispatch_event;
+        }
+        case 6: {
+            if (GameRules & 0x00040000u) break;
+            if (attempt <= 1 || event_id != 6) {
+                if (native_terrain
+                    && stack_check(veh_id, 8, -1, -1, -1) <= 0)
+                    break;
+                int share_artifact =
+                    !IsMultiplayerNet || (GameState & 0x00040000u);
+                if (!share_artifact) {
+                    share_artifact = 1;
+                    for (int other = 1; other < 8; ++other) {
+                        if (other == faction_id) continue;
+                        if (!(LockEnableMask & (1u << other))) continue;
+                        if (PlayersData[other].unk_95 < faction.unk_95) {
+                            share_artifact = 0;
+                            break;
+                        }
+                    }
+                }
+                if (share_artifact) {
+                    ++faction.unk_95;
+                    const int plan = VehPrototypes[Vehs[veh_id].proto_id].plan;
+                    if (plan != 12) {
+                        const int new_vehicle = veh_init(7, faction_id, x, y);
+                        if (new_vehicle < 0) return 0;
+                        veh_skip(new_vehicle);
+                        draw_tile(x, y, 2);
+                        if (local) {
+                            NetMsgPrimary.pop("GOODYARTIFACT", -5000, 0,
+                                              "art_dis_sm.pcx");
+                            g_FX.fade(0x1B);
+                        }
+                        return 0;
+                    }
+                    break;
+                }
+                break; // one allied owner is ahead in the native counter test.
+            }
+            event_id = 5;
+            goto dispatch_event;
+        }
+        case 7: {
+            if ((GameRules & 0x00200000u)
+                || ((GameRules & 0x01000000u) && DiffLevelCurrent <= 1)
+                || attempt > 1)
+                break;
+            if (native_terrain) {
+                event_id = 8;
+                goto dispatch_event;
+            }
+            base_find(x, y);
+            if (BaseFindDist < 3) break;
+            if (IsMultiplayerNet && faction_id == RankingFactionIDUnk2
+                && !goody_box_detail::normalized_crt_mask_draw())
+                break;
+            int tower_roll = goody_box_detail::normalized_crt_mask_draw();
+            int may_make_tower = tower_roll != 0 && ExpansionEnabled;
+            int made_tower = 0;
+            if (local) {
+                g_FX.play(9);
+                NetMsgPrimary.pop("GOODYFUNGUS", -5000, 0, "fung_sm.pcx");
+            }
+            site_radius(x, y, 0);
+            for (int radius = 0; radius < 9; ++radius) {
+                const int nx = goody_box_detail::wrap_x(x + RadiusOffsetX[radius]);
+                const int ny = y + RadiusOffsetY[radius];
+                if (!goody_box_detail::on_map(nx, ny)) continue;
+                Map *nearby_tile = goody_box_detail::tile_at(nx, ny);
+                if ((nearby_tile->climate & 0xE0u) >= 0x40u) {
+                    bit_set(nx, ny, 0x20, TRUE);
+                    bit_set(nx, ny, 0x0028805C, FALSE);
+                    synch_bit(nx, ny, faction_id);
+                    if (!made_tower && may_make_tower) {
+                        if (goody_box_detail::normalized_crt_mask_draw()) {
+                            const int occupancy = nearby_tile->bit & 3u;
+                            if ((!occupancy || (nearby_tile->val3 & 0x0F) >= 8)
+                                && ExpansionEnabled
+                                && (nearby_tile->climate & 0xE0u) >= 0x60u) {
+                                veh_init(0x13, 0, nx, ny);
+                                may_make_tower = 0;
+                                made_tower = 1;
+                            }
+                        }
+                    }
+                    draw_tile(nx, ny, 2);
+                }
+            }
+            return 0;
+        }
+        case 8: // monolith
+            if (!(GameRules & 0x00020000u) && !bonus_at(x, y, 0)
+                && !native_terrain) {
+                site_radius(x, y, 0);
+                bit_set(x, y, 0x2000, TRUE);
+                bit_set(x, y, 0x20, FALSE);
+                synch_bit(x, y, faction_id);
+                draw_tiles(x, y, 2);
+                monolith(veh_id);
+                return 0;
+            }
+            break;
+        case 9: { // native lifeforms
+            if ((NetTurnFlags & 1u)
+                || GameTechAchieved[TECH_ORBITAL]
+                || (native_terrain
+                    && stack_check(veh_id, 8, -1, -1, -1) <= 0))
+                break;
+            int proto_id = 11;
+            if (GameTechAchieved[TECH_FOSSIL]
+                && rand() % 3 == 0
+                && !faction.proto_id_active[12]) {
+                base_find(x, y, faction_id);
+                if (BaseFindDist <= speed_proto(12) * 3)
+                    proto_id = 12;
+            }
+
+            int spawn_x = x;
+            int spawn_y = y;
+            const int active_native = faction.proto_id_active[13];
+            int location_chance = active_native + 3;
+            if (Chassis[tile->region].speed <= 0x32)
+                location_chance = active_native + 2;
+            if (active_native <= 1
+                && (location_chance == 1 || location_chance <= 0
+                    || rand() % location_chance == 0)) {
+                if (native_terrain) {
+                    proto_id = 13;
+                } else {
+                    int found = 0;
+                    for (int radius = 0; radius < 8; ++radius) {
+                        const int index = radius;
+                        const int nx = goody_box_detail::wrap_x(
+                            x + RadiusBaseX[index]);
+                        const int ny = y + RadiusBaseY[index];
+                        if (!goody_box_detail::on_map(nx, ny)) continue;
+                        Map *nearby_tile = goody_box_detail::tile_at(nx, ny);
+                        if ((nearby_tile->climate & 0xE0u) <= 0x5Fu
+                            && Chassis[nearby_tile->region].speed >= 0x50) {
+                            spawn_x = nx;
+                            spawn_y = ny;
+                            proto_id = 13;
+                            found = 1;
+                            break;
+                        }
+                    }
+                    (void)found;
+                }
+            }
+
+            const int native_total = faction.proto_id_active[11]
+                                   + faction.proto_id_active[12]
+                                   + faction.proto_id_active[13];
+            if (faction.proto_id_active[proto_id]
+                && !(native_total <= ((int)faction.current_num_bases + 1) / 2
+                     && faction.proto_id_active[proto_id] < 2)) {
+                const uint32_t variant =
+                    goody_box_detail::normalized_crt_mask_draw();
+                event_id = (int)(variant + 12u);
+                goto dispatch_event;
+            }
+            if (proto_id == 11 && rand() % 5 == 0 && ExpansionEnabled) {
+                int alien_tech = 0;
+                for (int other = 1; other < 8; ++other) {
+                    if (has_tech(0x52, other) && alien_tech < 1)
+                        alien_tech = 1;
+                    if (has_tech(0x53, other)) alien_tech = 2;
+                }
+                proto_id = alien_tech >= 2 ? 18 : (alien_tech ? 17 : 16);
+            }
+            const int new_vehicle = veh_init(proto_id, faction_id,
+                                             spawn_x, spawn_y);
+            if (new_vehicle < 0) break;
+            if (forced || TurnCurrentNum <= 0x31)
+                Vehs[new_vehicle].home_base_id = -1;
+            const uint16_t native_order_bits =
+                proto_id == 16 ? 2u : proto_id == 17 ? 4u
+                : proto_id == 18 ? 6u : 2u;
+            Vehs[new_vehicle].morale = (uint8_t)native_order_bits;
+            if (native_terrain
+                && !Chassis[VehPrototypes[
+                    Vehs[new_vehicle].proto_id].chassis_id].triad)
+                sleep(new_vehicle);
+            if (local) {
+                parse_says(0, VehPrototypes[proto_id].veh_name, -1, -1);
+                const int alien_proto =
+                    proto_id == 16 || proto_id == 17 || proto_id == 18;
+                NetMsgPrimary.pop(alien_proto ? "OGREPOD" : "GOODYPOD",
+                    native_terrain ? 5000 : -5000, 0,
+                    alien_proto ? "ogre_sm.pcx" : "supply_sm.pcx");
+            }
+            return 0;
+        }
+        case 10: // treaty gift
+            if (NetTurnFlags & 2u) break;
+            {
+                const uint32_t gift_roll =
+                    goody_box_detail::normalized_crt_mask_3_draw();
+                if (gift_roll == 0) {
+                  const int other = rand() % 7 + 1;
+                  const uint32_t other_bit = 1u << other;
+                  const uint32_t live_players = (LockEnableMask >> 8) & 0xFFu;
+                  const uint32_t human_players = LockEnableMask & 0xFFu;
+                  const int disallowed_human_pair =
+                      !(human_players & (1u << faction_id))
+                      || (human_players & other_bit);
+                  if (other != faction_id
+                    && (live_players & other_bit)
+                    && !disallowed_human_pair
+                    && !(Players[other].rule_flags & 0x80u)
+                    && !(PlayersData[faction_id].diplo_treaties[other] & 8u)) {
+                      treaty_on(faction_id, other, 8);
+                      if (local) {
+                          GenderDefault = Players[other].is_leader_female;
+                          PluralityDefault = 0;
+                          parse_says(0, Players[other].title_leader,
+                                     -1, -1);
+                          GenderDefault = Players[other].is_leader_female;
+                          PluralityDefault = 0;
+                          parse_says(1, Players[other].name_leader,
+                                     -1, -1);
+                          GenderDefault = Players[other].noun_gender;
+                          PluralityDefault = Players[other].is_noun_plural;
+                          parse_says(2, Players[other].noun_faction,
+                                     -1, -1);
+                      NetMsgPrimary.pop("GOODYCOMM",
+                          native_terrain ? 5000 : -5000, 0,
+                              native_terrain ? "supply_sm.pcx" : 0);
+                      }
+                      return 0;
+                  }
+                }
+            }
+            if (GameRules & 0x04000000u) break;
+            if (IsMultiplayerNet && !forced) {
+                int behind_peer = 0;
+                for (int other = 1; other < 8; ++other) {
+                    const uint32_t bit = 1u << other;
+                    if (other == faction_id || !(LockEnableMask & bit))
+                        continue;
+                    const PlayerData &peer = PlayersData[other];
+                    if (peer.unk_97 + 1 < faction.unk_97
+                        && (peer.ranking < faction.ranking
+                            || peer.tech_ranking < faction.tech_ranking)) {
+                        behind_peer = 1;
+                        break;
+                    }
+                }
+                if (behind_peer) break;
+            }
+                if (goody_box_detail::give_random_technology(
+                        faction_id, local, forced, native_terrain) >= 0)
+                return 0;
+            break;
+        case 11: { // fungus/altitude terrain conversion
+            if (tile->region == 0 || tile->region == 0x3F
+                || (!native_terrain && (tile->val3 & 0xC0u) > 0x40u))
+                break;
+            if ((tile->climate & 0xE0u) <= 0x3Fu) {
+                event_id = 12;
+                goto dispatch_event;
+            }
+            int32_t conversion = 0;
+            if (!native_terrain) {
+                base_find(x, y);
+                if (BaseFindDist < 3) break;
+                conversion = (int32_t)
+                    goody_box_detail::normalized_crt_mask_3_draw();
+            }
+            site_radius(x, y, 0);
+            int converted = 0;
+            for (int radius = 0; radius < 9; ++radius) {
+                if (radius != 0
+                    && rand() % (conversion > 1 ? 2 : 3) == 0)
+                    continue;
+                const int nx = goody_box_detail::wrap_x(
+                    x + RadiusOffsetX[radius]);
+                const int ny = y + RadiusOffsetY[radius];
+                if (!goody_box_detail::on_map(nx, ny)) continue;
+                Map *nearby_tile = goody_box_detail::tile_at(nx, ny);
+                if ((nearby_tile->bit & 0x00100000u) && radius != 0) continue;
+                if (native_terrain) {
+                    if ((nearby_tile->climate & 0xE0u) > 0x5Fu) continue;
+                    if ((nearby_tile->climate & 0xE0u) <= 0x3Fu) {
+                        if (radius != 0) continue;
+                        alt_set_both(nx, ny, 2);
+                    }
+                } else {
+                    if ((nearby_tile->climate & 0xE0u) < 0x60u) continue;
+                    if ((nearby_tile->val3 & 0xC0u) > 0x40u && conversion < 2)
+                        continue;
+                    if (!(nearby_tile->val3 & 0xC0u) && conversion == 2) continue;
+                }
+                bit_set(nx, ny, 0x00288070, FALSE);
+                if (native_terrain) bit_set(nx, ny, 0x8000, TRUE);
+                else if (conversion == 0) {
+                    bit_set(nx, ny, 0x200000, TRUE);
+                    bit_set(nx, ny, 0x8050, FALSE);
+                } else if (conversion == 1) {
+                    bit_set(nx, ny, 0x8000, TRUE);
+                    bit_set(nx, ny, 0x200000, FALSE);
+                } else if (conversion == 2) {
+                    bit_set(nx, ny, 0x14, TRUE);
+                    bit_set(nx, ny, 0x200040, FALSE);
+                } else if (conversion == 3) {
+                    bit_set(nx, ny, 0x40, TRUE);
+                    bit_set(nx, ny, 0x200010, FALSE);
+                } else continue;
+                synch_bit(nx, ny, faction_id);
+                draw_tile(nx, ny, 2);
+                ++converted;
+            }
+            if (converted && local) {
+                const char *message = native_terrain ? "GOODYKELP"
+                    : conversion == 0 ? "GOODYFOREST"
+                    : conversion == 1 ? "GOODYFARM"
+                    : conversion == 2 ? "GOODYMINE" : "GOODYSOLAR";
+                const char *icon = native_terrain ? "kelp_sm.pcx"
+                    : conversion <= 1 ? "forgr_sm.pcx" : "supply_sm.pcx";
+                NetMsgPrimary.pop(message, -5000, 0, icon);
+            }
+            if (converted) return 0;
+            break;
+        }
+        case 12: case 13: case 14: case 15: case 16: case 17: {
+            if ((GameRules & 0x00200000u)
+                || ((GameRules & 0x01000000u) && DiffLevelCurrent <= 1))
+                break;
+            base_find(x, y, faction_id);
+            const int owned_base_distance = BaseFindDist;
+            base_find(x, y);
+            if (BaseFindDist <= 1) break;
+            if (event_id >= 14) {
+                const int terrain_factor =
+                    (tile->bit & 0x20u) && (tile->climate & 0xE0u) >= 0x40u
+                    ? 2 : 4;
+                if (!goody_box_detail::native_threshold_passes(
+                        event_id, GameState, owned_base_distance,
+                        terrain_factor, (int)MapNativeLifeForms))
+                    break;
+            }
+            if (IsMultiplayerNet && faction_id == RankingFactionIDUnk2
+                && !goody_box_detail::normalized_crt_mask_draw())
+                break;
+            if (native_terrain && event_id > 12
+                + ((GameState & 0x00100000u) != 0))
+                break;
+
+            if (native_terrain)
+                Vehs[veh_id].order_auto_type = (uint8_t)
+                    (Vehs[veh_id].order_auto_type + Rules.move_rate_roads);
+
+            int created_units = 0;
+            int created_mind_worm = 0;
+            int location = 0;
+            while (location < 8) {
+                // Native57C6F5..57C7A1 performs no per-location RNG
+                // rejection; event11's separate conversion loop owns that draw.
+                const int radius = goody_box_detail::rotated_spawn_index(
+                    location, TurnCurrentNum);
+                const int nx = goody_box_detail::wrap_x(
+                    x + RadiusBaseX[radius]);
+                const int ny = y + RadiusBaseY[radius];
+                if (goody_box_detail::on_map(nx, ny)) {
+                    Map *nearby_tile = goody_box_detail::tile_at(nx, ny);
+                    const int climate_matches =
+                        ((nearby_tile->climate & 0xE0u) < 0x60u)
+                            == native_terrain;
+                    const int unoccupied = !(nearby_tile->bit & 3u)
+                                        || (nearby_tile->val2 & 0x0Fu) >= 8;
+                    if (climate_matches && unoccupied) {
+                        if (native_terrain) {
+                            const int worm = veh_init(9, 0, nx, ny);
+                            if (worm >= 0) {
+                                ++created_units;
+                                Vehs[worm].visibility |= nearby_tile->visibility;
+                                int cargo_count = (int32_t)(
+                                    goody_box_detail::normalized_crt_mask_draw()
+                                    + 1u);
+                                const int cargo_limit = veh_cargo(worm);
+                                if (cargo_count >= cargo_limit)
+                                    cargo_count = veh_cargo(worm);
+                                else
+                                    cargo_count = (int32_t)cargo_count;
+                                for (int cargo = 0; cargo < cargo_count; ++cargo) {
+                                    if (rand() % 5 || !ExpansionEnabled) {
+                                        veh_init(8, 0, nx, ny);
+                                    } else {
+                                        veh_init(15, 0, nx, ny);
+                                        created_mind_worm = 1;
+                                    }
+                                }
+                                // Native success flows directly to its own
+                                // cargo/notification tail, not the nonnative stepper.
+                                break;
+                            }
+                        } else {
+                            base_find(nx, ny);
+                            if (BaseFindDist >= 2) {
+                                const int proto =
+                                    (rand() % 5 || !ExpansionEnabled) ? 8 : 15;
+                                const int created = veh_init(proto, 0, nx, ny);
+                                if (proto == 15) created_mind_worm = 1;
+                                if (created >= 0) {
+                                    ++created_units;
+                                    Vehs[created].visibility |= nearby_tile->visibility;
+                                    draw_tile(nx, ny, 2);
+                                    const int state_limit =
+                                        (int)(((GameState & 0x00100000u)
+                                              | 0x00C00000u) >> 20);
+                                    if (state_limit < event_id
+                                        || TurnCurrentNum < 0x0F
+                                        || BaseFindDist <= 3)
+                                        location = 8;
+                                }
+                            }
+                        }
+                    }
+                }
+                if (location >= 8) break;
+                if (created_units) {
+                    int step = 5 - goody_box_detail::native_half(
+                        (int)faction.current_num_bases);
+                    if (step < 1) step = 1;
+                    if (step >= 5) step = 4;
+                    location += step;
+                } else {
+                    ++location;
+                }
+                if (created_units && location >= 8) break;
+            }
+            if (created_units) {
+                if (local) {
+                    g_FX.play(0x11);
+                    const char *message = native_terrain ? "GOODYISLE"
+                                                        : "GOODYWORMS";
+                    const char *icon = native_terrain ? "isle_sm.pcx"
+                        : (created_mind_worm ? "sporlnch_sm.pcx"
+                                             : "mindworm_sm.pcx");
+                    NetMsgPrimary.pop(message, -5000, 0, icon);
+                    g_FX.fade(0x11);
+                }
+                return 0;
+            }
+            break;
+        }
+        case 18: { // duplicate a vehicle after native/peer eligibility checks
+            if (native_terrain) {
+                uint32_t native_roll = (uint32_t)rand() & 0x80000003u;
+                int eligible = native_roll == 0;
+                if ((int32_t)native_roll <= -1)
+                    eligible = (((native_roll - 1u) | 0xFFFFFFFCu)
+                                == 0xFFFFFFFFu);
+                if (!eligible) break;
+            } else if (!Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id]
+                            .offense_rating) {
+                break;
+            }
+            if (VehPrototypes[Vehs[veh_id].proto_id].plan == 12)
+                break;
+
+            int peer_can_receive = !IsMultiplayerNet;
+            if (IsMultiplayerNet) {
+                int peer_ahead = 0;
+                peer_can_receive = 1;
+                for (int other = 1; other < 8; ++other) {
+                    const uint32_t bit = 1u << other;
+                    if (other == faction_id
+                        || !(LockEnableMask & (bit << 8))
+                        || !(LockEnableMask & bit))
+                        continue;
+                    const int peer_total = PlayersData[other].total_mil_veh;
+                    if (native_terrain) {
+                        if (faction.unk_70 <= PlayersData[other].unk_70)
+                            peer_ahead = 1;
+                    } else if (faction.total_mil_veh <= peer_total) {
+                        peer_ahead = 1;
+                    }
+                    if (peer_total < goody_box_detail::native_half(
+                            (int)faction.total_mil_veh)) {
+                        peer_can_receive = 0;
+                        break;
+                    }
+                }
+                if (!peer_ahead) peer_can_receive = 0;
+            }
+            if (!peer_can_receive) break;
+
+            const int clone = veh_init(Vehs[veh_id].proto_id,
+                                       Vehs[veh_id].faction_id, x, y);
+            if (clone < 0) break;
+            Vehs[clone].home_base_id = -1;
+            Vehs[clone].morale = Vehs[veh_id].morale;
+            Vehs[clone].dmg_incurred = Vehs[veh_id].dmg_incurred;
+            parse_says(0, VehPrototypes[Vehs[veh_id].proto_id].veh_name,
+                       -1, -1);
+            if (local)
+                NetMsgPrimary.pop("GOODYCLONE", -5000, 0, "clone_sm.pcx");
+            return 0;
+        }
+        case 9999: // Unity crash cleanup reached only after the entry guard
+            if (local)
+                NetMsgPrimary.pop(native_terrain ? "GOODYWHIRLPOOL"
+                                                 : "GOODYVANISH",
+                                  5000, 0, 0);
+            kill(veh_id);
+            return 1;
+        default:
+            break;
+        }
+
+        // Unknown/high event ids enter the native overflow arm, whose retry
+        // counter guard precedes site-claim side effects.
+        if (event_id > 18) {
+            if (attempt >= 2) return 0;
+
+            // Only native overflow/default event ids reach this narrow
+            // site-claim path. Ordinary failed cases reroll directly.
+            const int fallback_allowed =
+                ((!native_terrain || (tile->climate & 0xE0u) >= 0x40u)
+                 && (!(tile->bit & 0x20u) || (tile->climate & 0xE0u) <= 0x3Fu)
+                 && y >= 2 && y < MapLatitudeBounds - 2
+                 && !(GameRules & 0x00010000u));
+            if (fallback_allowed) {
+                bit_set(x, y, 0x400, TRUE);
+                const int existing_bonus = bonus_at(x, y, 0);
+                site_radius(x, y, 0);
+                if (local && existing_bonus) {
+                    if (existing_bonus == 1) wave_it(0x28);
+                    else if (existing_bonus == 2) wave_it(0x2A);
+                    else if (existing_bonus == 3) {
+                        ambience(0xD2);
+                        wave_it(0x29);
+                    }
+                    parse_say(0, existing_bonus, -1, -1);
+                    NetMsgPrimary.pop("GOODYRESOURCE", 5000, 0,
+                                      "supply_sm.pcx");
+                }
+                draw_tile(x, y, 2);
+                if (rand() % 3 == 0) return 0;
+                if (attempt != 0) return 0;
+                attempt = 2;
+            }
+        }
+        // Match the common native retry target, including calls that follow a
+        // failed arm which may have changed the source unit's live location.
+        x = Vehs[veh_id].x;
+        y = Vehs[veh_id].y;
+        tile = goody_box_detail::tile_at(x, y);
+        if (!goody_box_detail::reroll_event(y, attempt, event_id))
+            return 0;
+    }
+    return 0;
+}
+
 
 
 // Coupled transfer/terrain actions and their still-unfinished prototype dependencies.
