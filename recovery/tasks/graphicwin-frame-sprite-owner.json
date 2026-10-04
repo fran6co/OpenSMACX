@@ -1,0 +1,27 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "f58a06412ef34b055976bfc1cf05a9129b1910f7",
+  "editable_files": [
+    "src/graphicwin.cpp",
+    "src/graphicwin.h",
+    "src/unrecovered/005d68c0.cpp",
+    "recovery/tests/test_graphic_frame_sprite_owner_behavior.py",
+    "recovery/tests/graphic_frame_sprite_owner_control.cpp"
+  ],
+  "evidence": [
+    "Pinned full386-byte body5D68C0..5D6A42 stores eleven input slots to existing GraphicWin frame fields before minimum guards. Caption bit10 selects caption/noncaption top corners, shared bottom corners remain required; signed jg preserves first only when strictly greater, and minimum writes are ordered width then height.",
+    "Actual NCSprites input offsets0..28, GraphicWin fields9CC..9F4, Win iFlags98 and minima134/138, and Sprite width18/height1C are already source-owned. compute_min_size5D7030 independently corroborates corner selection and wrap-before-signed comparison. Semantic method name apply_frame_sprites is provisional, not an original debug symbol.",
+    "Coordinator reviewed recovery requires actual-source host controls, native measurement, build/link, historical identity continuity, source integrity and references. No exact claim is inherited by this seed; mismatch alone is not a reason to preserve raw self-offset code or an obsolete seed. No full linked-preservation/structure/runtime/game acceptance is established."
+  ],
+  "intent": "Recover the complete GraphicWin instance frame-sprite setter using existing NCSprites, Sprite and Win members; preserve all input publication, caption selection, null guards and native low32-bit signed corner-sum behavior; retire its unclaimed superseded seed.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6121664,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "graphicwin-frame-sprite-owner"
+}
