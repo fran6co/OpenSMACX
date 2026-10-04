@@ -1,0 +1,61 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "bd035bc2fc1d1e608b65c1e332e542f559e0c90e",
+  "editable_files": [
+    "src/stringstruct.cpp",
+    "src/stringstruct.h",
+    "src/recovered/004c7270.cpp",
+    "src/recovered/units/004c72a0.cpp",
+    "src/recovered/004c7380.cpp",
+    "src/recovered/004c74b0.cpp",
+    "src/recovered/units/004c74b0.cpp",
+    "recovery/tests/test_name_table.py",
+    "recovery/tests/name_table_control.cpp"
+  ],
+  "evidence": [
+    "Native4C7270/72A0 initialize the entry/table footprints;4C7300/7380 remove inclusive ranges;4C73C0 clones0x110 bytes and maps one entry across each slot;4C74B0 owns a heap string at200;4C74F0 rewrites names at0C. Typed declarations express these demonstrated accesses without old receiver offsets. Current source has no active calls to the old fastcall wrappers; new member ABI follows original ECX receiver and stack arguments.",
+    "Retained audited candidate and source seeds are hints; coordinator independently inspected4C73C0 and preserves original endpoint/skip/allocation behavior. The directory routine null-test of address(entry)+0C does not establish a nullable field: name is inline104-byte storage. Use its genuine member; invalid fabricated near-wrap object pointers are not a defined C++ domain, and no extra raw self-offset helper is authorized.",
+    "Four historical exact seed obligations must be remeasured before removal. Eight existing stringstruct obligations need fresh baseline/current comparison, plus real build/link, native entry/table layout and actual-source host behavior/damage controls. Matching regressions need separate explicit coordinator review; no automatic demotion or full-game acceptance."
+  ],
+  "intent": "Recover the provisional typed 128-slot name/range table and0x110-byte entry as one owner family, transferring four seed-only identities and improving three existing raw-offset bodies. Keep initializer interpretation explicitly provisional; no unproved virtual hierarchy, constructor ABI or automatic destruction. Preserve unsigned inclusive ranges, unusual replacement-scan skip and unconditional allocation-failure copy paths. Delete only fully transferred seeds.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5010032,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5010080,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5010176,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5010304,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5010368,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5010608,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5010672,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "name-table-owner"
+}
