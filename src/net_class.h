@@ -559,7 +559,8 @@ class Net {
   // zeroes both. AlphaNet owns the following player count and record array.
  protected:
   // NetDaemon's player callbacks compare this inherited host ID directly.
-  uint32_t field_760_;       // 0x760
+  // CreatePlayer writes this member directly; subsequent callbacks observe it.
+  DPID field_760_;           // 0x760
   // Read by NetDaemon::send_message (netdaemon.cpp) as the substitution for
   // an out-of-range target, so it is reachable from the derived class rather
   // than a this-pun over the offset.

@@ -3205,9 +3205,8 @@ int Net::join_session(NetAllocationNode *session, char *player_name,
     // the evidenced Net+4 record passed to the worker.
     _beginthread(&net_receive_thread, 0, &thread_info_);
 
-    DPID player_id = 0;
     if (NetDirectPlay->CreatePlayer(
-            &player_id, &player_descriptor, thread_info_.events_[2],
+            &field_760_, &player_descriptor, thread_info_.events_[2],
             &player_data, 1, 0)
         != DP_OK) {
         return 0;
@@ -3215,7 +3214,11 @@ int Net::join_session(NetAllocationNode *session, char *player_name,
 
     const DWORD host_flag = voice_flags_D8_ & 0x10000;
     if (host_flag != 0) {
-        field_764_ = player_id;
+        field_764_ = field_760_;
+    }
+    // The SDK callback can change the process-wide interface. The native
+    // host descriptor update tests the live pointer after CreatePlayer.
+    if (NetDirectPlay != 0 && host_flag != 0) {
         DWORD live_size = 0;
         NetDirectPlay->GetSessionDesc(0, &live_size);
         DPSESSIONDESC2 *live = static_cast<DPSESSIONDESC2 *>(
@@ -3228,8 +3231,8 @@ int Net::join_session(NetAllocationNode *session, char *player_name,
         }
     }
 
-    if (player_id == field_764_) {
-        sub_632cc0(player_name, player_id,
+    if (field_760_ == field_764_) {
+        sub_632cc0(player_name, static_cast<int>(field_760_),
                    static_cast<unsigned char>(player_data & 0xFF));
     }
 
@@ -3278,7 +3281,7 @@ int Net::join_session(NetAllocationNode *session, char *player_name,
             return 0;
         }
     }
-    return static_cast<int>(player_id);
+    return static_cast<int>(field_760_);
 }
 
 void *NetAllocationNode::operator new(size_t size, Heap *owner) throw() {
