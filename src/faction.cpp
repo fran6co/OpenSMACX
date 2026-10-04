@@ -8747,6 +8747,113 @@ static int battle_plans_selected_region_distance_result(
     return 0;
 }
 
+static inline int major_atrocity_add_wrapped32(int value, int amount) {
+    uint32_t bits;
+    memcpy(&bits, &value, sizeof bits);
+    bits += static_cast<uint32_t>(amount);
+    memcpy(&value, &bits, sizeof value);
+    return value;
+}
+
+// ORIGINAL: 0x0055F450 ?major_atrocity@@YAXHH@Z 0x0055F450-0x0055F76A
+// RECOVERY_BINDING: v1 {"evidence": ["task:major-atrocity-owner", "pinned:55F450..55F76A; Council count9A6638/9A663C slots8/9, PlayerData20CC integrity124 and atrocity1D8, Player59C name/title/noun grammar fields.", "pinned:68E780 MAJORATROCITY and68E790 council_sm.pcx bounded original strings; source-owned read-only text inputs.", "historical seed:src/unrecovered/0055f450.cpp; original identity/span and prior literal-transcription mismatch finding retained.", "recovery/tests/test_major_atrocity.py actual-source host/damage controls; not linked runtime acceptance."], "reason": "Recover directed diplomacy consequences and living nonhuman faction reporting with real Player/PlayerData storage; preserve modulo32 counter updates and signed integrity clamp, parser grammar and callback order. Replace executable-pointer label aliases by original-verified source literals. No byte or game acceptance claim."}
+// TRIED: literal asm-mirrored translation (byte-offset arithmetic on fixed globals, parse_says/pact_ends/treaty_on call order) compiles and matches through instr #4; diverges at #5 (push vs mov) - not chased further, landed at MISMATCH.
+void __cdecl major_atrocity(int faction_id, int victim_id) {
+    if (victim_id >= 0) {
+        PlayersData[victim_id].diplo_treaties[faction_id] |= 0xC0020;
+        PlayersData[victim_id].diplo_agenda[faction_id] |= 4;
+    }
+
+    if (CouncilResolutionCount[PROP_REPEAL_UN_CHARTER] >
+        CouncilResolutionCount[PROP_REINSTATE_UN_CHARTER]) {
+        return;
+    }
+
+    if (victim_id < 0) {
+        PlayersData[faction_id].integrity_blemishes =
+            major_atrocity_add_wrapped32(
+                PlayersData[faction_id].integrity_blemishes, 2);
+    } else if ((PlayersData[faction_id].diplo_treaties[victim_id] &
+                0x80000u) == 0) {
+        int blemishes = major_atrocity_add_wrapped32(
+            PlayersData[faction_id].integrity_blemishes, 2);
+        if (blemishes < 6) {
+            PlayersData[faction_id].integrity_blemishes = 6;
+        } else if (blemishes > 0x63) {
+            PlayersData[faction_id].integrity_blemishes = 0x63;
+        } else {
+            PlayersData[faction_id].integrity_blemishes = blemishes;
+        }
+    }
+
+    PlayersData[faction_id].major_atrocities =
+        major_atrocity_add_wrapped32(
+            PlayersData[faction_id].major_atrocities, 1);
+
+    for (int other_id = 1; other_id < MaxPlayerNum; ++other_id) {
+        if (other_id == faction_id || other_id == victim_id) {
+            continue;
+        }
+
+        const uint8_t faction_bit =
+            static_cast<uint8_t>(1u << (other_id & 0x1f));
+        const uint8_t human_mask = static_cast<uint8_t>(LockEnableMask);
+        const uint8_t alive_mask =
+            static_cast<uint8_t>(LockEnableMask >> 8);
+        if ((faction_bit & human_mask) != 0 ||
+            (faction_bit & alive_mask) == 0) {
+            continue;
+        }
+
+        // 55F58E..55F5A7 tests the actor row; 55F5CF..55F5DC updates
+        // the reverse row. 55F5E1 sets reverse mercy, while 55F5ED writes
+        // the actor's contact turn after treaty callbacks, not the reverse.
+        const uint32_t actor_relation =
+            PlayersData[faction_id].diplo_treaties[other_id];
+        if ((actor_relation & 0x10u) != 0) {
+            continue;
+        }
+        if ((actor_relation & 1u) != 0) {
+            pact_ends(faction_id, other_id);
+        }
+        treaty_on(other_id, faction_id, 0x18);
+        PlayersData[other_id].diplo_treaties[faction_id] |= 0x40u;
+        PlayersData[other_id].diplo_merc[faction_id] = 50;
+        PlayersData[faction_id].diplo_spoke[other_id] = TurnCurrentNum;
+
+        GenderDefault = Players[other_id].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(0, Players[other_id].title_leader, -1, -1);
+
+        GenderDefault = Players[other_id].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(1, Players[other_id].name_leader, -1, -1);
+
+        GenderDefault = Players[other_id].noun_gender;
+        PluralityDefault = Players[other_id].is_noun_plural;
+        parse_says(2, Players[other_id].noun_faction, -1, -1);
+
+        GenderDefault = Players[faction_id].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(3, Players[faction_id].title_leader, -1, -1);
+
+        GenderDefault = Players[faction_id].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(4, Players[faction_id].name_leader, -1, -1);
+
+        GenderDefault = Players[faction_id].noun_gender;
+        PluralityDefault = Players[faction_id].is_noun_plural;
+        parse_says(5, Players[faction_id].noun_faction, -1, -1);
+
+        StringTemp[0] = '\0';
+        strcat(StringTemp, DiploLabelMAJORATROCITY);
+        char faction_text[80];
+        _itoa(faction_id != ConsoleGlobal.faction_id_, faction_text, 10);
+        strcat(StringTemp, faction_text);
+        popp(*ClimatePopupTitle, StringTemp, 0, DiploLabelCouncilSmPcx, 0);
+    }
+}
+
 // ORIGINAL: 0x0051F200 ?wait_loop@@YAXXZ 0x0051F200-0x0051F2BF
 // RECOVERY_BINDING: v1 {"evidence": ["git:bb3b3233842b050fb0840e1cc6c226e8f30f7055:src/unrecovered/0051f200.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tasks/game-logic-seed-owner-coverage.json"], "reason": "faction.cpp / existing faction.h declaration: typed diplomacy-state loop; reloads ConsoleGlobal.faction_id_ at each loop head and after log_say/open_channel callbacks, and rereads the human-status byte each iteration, matching pinned 0x51F200 instructions. Uses existing NetDaemonNet, Console state, LockEnableMask human-status byte, FactionDiplomacyFlags, log_say and communicate. Complete reviewed source translation; historical claims remain restoration obligations, not proof of current matching, linked preservation or game acceptance."}
 void __cdecl wait_loop() {

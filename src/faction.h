@@ -835,8 +835,8 @@ char *const DiploLabelATROCIOUSITY = (char *)0x0068E75C;  // "ATROCIOUSITY"
 char *const DiploLabelATROCITY = (char *)0x0068E76C;  // "ATROCITY"
 char *const DiploLabel2_778 = (char *)0x0068E778;  // "2"
 char *const DiploLabel1_77C = (char *)0x0068E77C;  // "1"
-char *const DiploLabelMAJORATROCITY = (char *)0x0068E780;  // "MAJORATROCITY"
-char *const DiploLabelCouncilSmPcx = (char *)0x0068E790;  // "council_sm.pcx"
+char *const DiploLabelMAJORATROCITY = "MAJORATROCITY";  // "MAJORATROCITY"
+char *const DiploLabelCouncilSmPcx = "council_sm.pcx";  // "council_sm.pcx"
 char *const DiploLabelBreakSmPcx = (char *)0x0068E7A0;  // "break_sm.pcx"
 char *const DiploLabelBREAKINGPACT = (char *)0x0068E7B0;  // "BREAKINGPACT"
 char *const DiploLabelBreakSmPcx_7C0 = (char *)0x0068E7C0;  // "break_sm.pcx"
@@ -1131,3 +1131,6 @@ void __cdecl enemies_unpact(int faction_id, int faction_id_with);
 void __cdecl enemies_trade_tech(int faction_id, int faction_id_with);
 void __cdecl enemies_treaty(int faction_id, int faction_id_with, int check_technology);
 void __cdecl encounter(int faction_id, int faction_id_with, int x, int y, int event_flag_a, int event_flag_b);
+
+// Directed diplomacy consequences of an original major atrocity.
+void __cdecl major_atrocity(int faction_id, int victim_id);
