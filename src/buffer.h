@@ -131,6 +131,14 @@ static_assert(sizeof(BoxSpriteParams) == 0x28,
 
 extern BoxSpriteParams InterfaceBoxStyles[51];
 
+// Observed input prefix at 5D7AE0: data +0x0C, size +0x10 on the original
+// 32-bit ABI. Producer, full allocation and original type name remain unknown.
+struct PcxInputView {
+  unsigned char prefix_00_0b[0x0C];
+  BYTE *data_;
+  DWORD size_;
+};
+
 class Buffer {
  public:
 // Descriptive utility names express observed roles where original symbol
@@ -139,7 +147,8 @@ int draw_unk2(Buffer *, int, int, int, int, int, int);
 int draw(Buffer *, int, int, int, int, int, unsigned char *);
 int draw_dest_unk2(Buffer *, int, int, int, int, int, unsigned char *);
 // Names provisional; no direct original symbol names recovered for utilities.
-static int __stdcall probe_image_file(const char *, Palette *, int, int);
+int probe_image_file(const char *, Palette *, int, int);
+int load_pcx_from_source(PcxInputView *, Palette *, int, int);
 static int __stdcall probe_pcx(const char *, Palette *, int, int);
 int copy_scaled(Buffer *, RECT *, RECT *);
 int copy_scaled_to_window(Win *, RECT *, RECT *);

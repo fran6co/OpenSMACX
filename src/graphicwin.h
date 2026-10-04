@@ -94,6 +94,10 @@ typedef void(__cdecl func_graphic_win_paint_hook)();
 // accessibility affects no offset, so the layout is untouched.
 class GraphicWin : public Win, public Buffer {
  public:
+  int probe_image_file(const char *, Palette *, int, int);
+  int load_pcx_from_source(PcxInputView *, Palette *, int, int);
+  int resize_screen_and_sync_palette();
+
   int load_pcx(char *path, Palette *palette, int flags, int transparency);
   // Recompute frame minima only when all four selected corner sprites exist.
   void compute_min_size();

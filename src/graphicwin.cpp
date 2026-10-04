@@ -1342,3 +1342,33 @@ void GraphicWin::apply_frame_sprites(const NCSprites *sprites) {
     }
     field_138_ = height;
 }
+
+// ORIGINAL: 0x005D54A0 sub_5d54a0 0x005D54A0-0x005D54C2 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["task:graphicwin-buffer-input-owner", "pinned:5D54A0/5D54D0 adjust GraphicWin receiver to Buffer at +444; 5D7AE0 forwards unchanged receiver to load_pcx.", "pinned:5D5590 virtual Win resize slot3, failure return, then move and Buffer palette synchronization in that order.", "pinned:5D7AE0 input fields +C/+10 only; PcxInputView is an accessed-prefix description, not a proven complete allocation or original name.", "historical seed:src/recovered/005d54a0.cpp; original mappings and parsed findings preserved."], "reason": "Rehome the original operation into genuine GraphicWin/Buffer inheritance and methods, preserving historical identity, spans, claims and findings."}
+// symbol    ?probe_image_file@GraphicWin@@QAEHPBDPAVPalette@@HH@Z
+int GraphicWin::probe_image_file(const char *filename, Palette *palette,
+                                 int color_base, int color_count) {
+  return Buffer::probe_image_file(filename, palette, color_base, color_count);
+}
+
+// ORIGINAL: 0x005D54D0 sub_5d54d0 0x005D54D0-0x005D54F2 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["task:graphicwin-buffer-input-owner", "pinned:5D54A0/5D54D0 adjust GraphicWin receiver to Buffer at +444; 5D7AE0 forwards unchanged receiver to load_pcx.", "pinned:5D5590 virtual Win resize slot3, failure return, then move and Buffer palette synchronization in that order.", "pinned:5D7AE0 input fields +C/+10 only; PcxInputView is an accessed-prefix description, not a proven complete allocation or original name.", "historical seed:src/recovered/005d54d0.cpp; original mappings and parsed findings preserved."], "reason": "Rehome the original operation into genuine GraphicWin/Buffer inheritance and methods, preserving historical identity, spans, claims and findings."}
+// symbol    ?load_pcx_from_source@GraphicWin@@QAEHPAUPcxInputView@@PAVPalette@@HH@Z
+int GraphicWin::load_pcx_from_source(PcxInputView *source, Palette *palette,
+                                     int color_base, int color_count) {
+  return Buffer::load_pcx_from_source(source, palette, color_base,
+                                      color_count);
+}
+
+// ORIGINAL: 0x005D5590 sub_5d5590 0x005D5590-0x005D55CC BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["task:graphicwin-buffer-input-owner", "pinned:5D54A0/5D54D0 adjust GraphicWin receiver to Buffer at +444; 5D7AE0 forwards unchanged receiver to load_pcx.", "pinned:5D5590 virtual Win resize slot3, failure return, then move and Buffer palette synchronization in that order.", "pinned:5D7AE0 input fields +C/+10 only; PcxInputView is an accessed-prefix description, not a proven complete allocation or original name.", "historical seed:src/recovered/005d5590.cpp; original mappings and parsed findings preserved."], "reason": "Rehome the original operation into genuine GraphicWin/Buffer inheritance and methods, preserving historical identity, spans, claims and findings."}
+// symbol    ?resize_screen_and_sync_palette@GraphicWin@@QAEHXZ
+int GraphicWin::resize_screen_and_sync_palette() {
+  const int result = resize(WinScreenWidth, WinScreenHeight, 0);
+  if (result != 0) {
+    return result;
+  }
+  Win::move(0, 0);
+  Buffer::sync_to_palette(PaletteActive);
+  return 0;
+}

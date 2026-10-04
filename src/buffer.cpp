@@ -8272,11 +8272,11 @@ int Buffer::draw_dest_unk2(Buffer *destination, int transparent, int x, int y,
 }
 
 // ORIGINAL: 0x005D7A30 sub_5d7a30 0x005D7A30-0x005D7ADA;0x00662B80-0x00662B92 FILE
-// symbol    ?probe_image_file@Buffer@@SGHPBDPAVPalette@@HH@Z
+// symbol    ?probe_image_file@Buffer@@QAEHPBDPAVPalette@@HH@Z
 // TRIED: plain local `Filemap fm;` with early returns (no SEH prologue at all, 90 vs 170 B). Wrapping in try{}catch(...){throw;} recovers most of the /GX frame shape (179 vs 170 B) but still diverges at #1 push/mov - same wall as 0x004C4BF0's WorldWin ctor.
 // Provisional name, original receiver unused. Ret10 and the actual first
 // argument filename prove four stack arguments; remaining args are unused.
-int __stdcall Buffer::probe_image_file(const char *filename, Palette *, int, int) {
+int Buffer::probe_image_file(const char *filename, Palette *, int, int) {
     Filemap file;
     if (filename == 0) return 3;
     if (file.open_read(filename, FALSE) == 0) return 6;
@@ -9984,4 +9984,19 @@ int Buffer::write_cent_l(LPSTR text, RECT *rect) {
         return 0;
     }
     return write_cent_l(text, rect, static_cast<int>(strlen(text)));
+}
+
+// ORIGINAL: 0x005D7AE0 sub_5d7ae0 0x005D7AE0-0x005D7B1D BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["task:graphicwin-buffer-input-owner", "pinned:5D54A0/5D54D0 adjust GraphicWin receiver to Buffer at +444; 5D7AE0 forwards unchanged receiver to load_pcx.", "pinned:5D5590 virtual Win resize slot3, failure return, then move and Buffer palette synchronization in that order.", "pinned:5D7AE0 input fields +C/+10 only; PcxInputView is an accessed-prefix description, not a proven complete allocation or original name.", "historical seed:src/recovered/005d7ae0.cpp; original mappings and parsed findings preserved."], "reason": "Rehome the original operation into genuine GraphicWin/Buffer inheritance and methods, preserving historical identity, spans, claims and findings."}
+// symbol    ?load_pcx_from_source@Buffer@@QAEHPAUPcxInputView@@PAVPalette@@HH@Z
+int Buffer::load_pcx_from_source(PcxInputView *source, Palette *palette,
+                                 int color_base, int color_count) {
+  if (source == 0) {
+    return 3;
+  }
+  if (source->data_ == 0) {
+    return 7;
+  }
+  return load_pcx(source->data_, source->size_, palette, color_base,
+                  color_count);
 }
