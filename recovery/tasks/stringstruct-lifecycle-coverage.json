@@ -1,0 +1,32 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "53a4a1cfce3fcc4aa5ac60d0f8fed64df08d729b",
+  "editable_files": [
+    "src/stringstruct.cpp",
+    "src/stringstruct.h",
+    "src/recovered/00401000.cpp",
+    "src/recovered/units/004029f0.cpp",
+    "recovery/tests/test_stringstruct_lifecycle_coverage.py"
+  ],
+  "evidence": [
+    "Pinned original401000 stages real virtual-base tables and captures the Heap handoff on the compiler-supplied most-derived flag, then clears five list fields. The explicit-int seed is an ABI interpretation, not a source parameter.",
+    "Pinned original4029F0 adjusts the allocation-base receiver, tears down the list and conditionally releases owner-null storage. Fresh physical compiler evidence already emits ??_GStringStruct@@UAEPAXI@Z from the real virtual destructor and class-specific deletion policy, with measured extent regression.",
+    "User decision2026-10-04 prioritizes coverage and authorizes temporary matching regressions; retain historical identities/claims and build/link continuity. No automatic or full-game acceptance. Existing constructor semantics are moved unchanged; affected callers retain genuine C++ construction."
+  ],
+  "intent": "Recover the original standalone StringStruct constructor and scalar deleting entry with genuine virtual-base lifetime; retire their raw/assembly seeds, preserving historical matching obligations despite authorized coverage-first regressions.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4198400,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4205040,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "stringstruct-lifecycle-coverage"
+}
