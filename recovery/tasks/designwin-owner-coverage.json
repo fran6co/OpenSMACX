@@ -3,10 +3,13 @@
   "base_revision": "5be1d0e9645b091bae16e52037787c268b28cc68",
   "editable_files": [
     "src/designwin.cpp",
-    "src/designwin.h"
+    "src/designwin.h",
+    "recovery/tests/test_design_weapon.py",
+    "recovery/tests/design_weapon_control.cpp"
   ],
   "evidence": [
-    "Coordinator-reviewed parallel coverage wave following InfoWin checkpoint 5be1d0e9; live source and original mappings reviewed, DesignWin seeds are hints."
+    "Coordinator-reviewed parallel coverage wave following InfoWin checkpoint 5be1d0e9; live source and original mappings reviewed, DesignWin seeds are hints.",
+    "Weapon-panel continuation against pinned434F40..4353FF: real existing VW00 model storage, TextColourTable swatches, live rule selection after callbacks, full localized offense/cost detail and native text geometry/order. Add actual-source C++98 behavior/mutation controls without resetting this task baseline. Historical seed was already removed; preserve its current original mapping and Git provenance. Require fresh protected measurements, build/link and claim/reference continuity; no new byte claim or full-game acceptance."
   ],
   "intent": "Recover remaining DesignWin behavior in coherent batches using typed owner members, callbacks, shared globals and lifecycle; preserve seeds and historical obligations while prioritizing compiling implementations.",
   "schema_version": 1,
