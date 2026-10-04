@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "task_id": "rectangle-owner-overloads",
+  "target": "opensmacx",
+  "author": "framework-coordinator",
+  "base_revision": "55d5be8a68d77ed39683eacf02304ed69d004d10",
+  "intent": "Recover two short rectangle convenience methods in their genuine Spot and Buffer owners, preserving original catalog identities, spans and historical byte obligations despite contradicted MultiWin class labels.",
+  "editable_files": [
+    "src/spot.cpp",
+    "src/buffer.cpp",
+    "src/buffer.h",
+    "src/recovered/0047a6f0.cpp",
+    "src/recovered/units/0047a720.cpp",
+    "recovery/tests/test_rectangle_owner_overloads.py",
+    "recovery/tests/rectangle_owner_overloads_control.cpp"
+  ],
+  "subjects": [
+    {"address": 4695792, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"},
+    {"address": 4695840, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"}
+  ],
+  "evidence": [
+    "Pinned complete47A6F0..47A71E expands RECT into left/top/right-left/bottom-top and calls Spot::add5FA960 with unchanged receiver. Existing unmapped Spot::add(int,int,RECT*) already has this genuine behavior. multiwin.h independently documents that the old MultiWin attribution is unsupported.",
+    "Pinned complete47A720..47A752 returns0 for null text; otherwise strlen6453E0 followed by Buffer::write_cent_l5DD130 passes the preserved Buffer receiver, text, RECT and computed length. No added RECT guard is authorized; class and existing callee are source-owned.",
+    "Observe actual COFF symbols, measure both original extents and affected protected obligations, require actual-source behavioral controls, build/link, claim continuity, references and touched annotation integrity. Retire seeds only after identity/spans/claims and useful discoveries are fully retained. Scoped coordinator review is not full linked-preservation, structure/runtime or game acceptance."
+  ]
+}
