@@ -305,10 +305,7 @@ static_assert(sizeof(Datalink) == 0x1B394,
               "Datalink layout must match the original executable");
 
 
-// Datalink::exec (thiscall, `void exec(unsigned int topic, int index)`) is not
-// yet source-owned; every help_* forwarder below dispatches through it
-// against the Datalink singleton, so the exec entry point remains a seam here
-// rather than a baked-in literal.
+// Datalink::exec owns its modal operation in datalink.cpp.
 
 // THE SINGLETON the forwarders dispatch against - REAL STORAGE now, defined
 // in datalink.cpp at 0x00703EA0's place in the image. It was

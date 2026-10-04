@@ -340,10 +340,6 @@ int __cdecl battle_fight(int veh_id, int dir, int x, int y, int src_mode,
 // ButtonGroup::button_click (0x0062B8A0) WAS HERE and is gone: the body is
 // homed into src/leaf_recoveries.cpp 2026-09-27.
 
-void Datalink::exec(unsigned int topic, int index) {  // 0x00429180
-    typedef void(__fastcall *pending)(Datalink *, void *, unsigned int, int);
-    PENDING_BODY(0x00429180, pending)(this, nullptr, topic, index);
-}
 
 // ?tile_mask@Buffer@@QAEHPAVBuffer@@HHHHHHH@Z (0x005DA6C0) - homed into
 // src/buffer.cpp, along with both `tile` overloads (0x005DA860/0x005DA9F0)

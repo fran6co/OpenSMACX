@@ -3149,3 +3149,41 @@ void __cdecl help_tech_info(Popup *popup, int technology, int faction) {
 void __cdecl help_project(int project_id) {
     DatalinkMain.exec(0xB, project_id + 0x46);
 }
+
+// ORIGINAL: 0x00429180 ?exec@Datalink@@QAEXIH@Z 0x00429180-0x004292FC
+// RECOVERY_BINDING: v1 {"evidence": ["task:datalink-owner-coverage", "pinned:terranx_original.exe:429180..4292FC complete geometry, saved-state, list redraw, modal and restoration sequence", "source:src/reportwin.h:ReportWinGlobal shared_research_focus owns885F30; src/reportif.h existing category/faction fields", "historical seed:src/recovered/units/00429180.cpp"], "reason": "Recover the complete modal Datalink operation through its existing class, embedded text/list controls and real shared ReportWin/ReportIf state; preserve the original identity and seed findings without a new byte claim."}
+void Datalink::exec(unsigned int topic, int index) {
+    if (WinScreenWidth == 0x320) {
+        const int left = static_cast<int>(field_10394_);
+        const int top = static_cast<int>(field_10398_);
+        const int right = static_cast<int>(field_1039C_);
+        const int bottom = static_cast<int>(field_103A0_);
+        const int x = left + 3 + FactionsArt[1].datalink.width() + 5;
+        const int y = top + 3;
+        const int width = right - 3 - x;
+        const int height = bottom - 6 - y;
+
+        stringBox_.init(x, y, width, height, static_cast<Win *>(this),
+                        0, -1);
+        stringBox_.set_font(0, &secondary_body_font_, 0, &link_font_);
+        stringBox_.set_text_color(0x98, -1, 1, 1);
+        stringBox_.set_text_color2(0x96, -1, 1, 1);
+        stringBox_.set_text_color_hyper(0x96, -1, 1, 1);
+    }
+
+    field_A1C_ = static_cast<uint32_t>(ReportWinGlobal.shared_research_focus());
+    field_A20_ = ReportIfGlobal.field_8_;
+    field_A24_ = static_cast<uint32_t>(ReportIfGlobal.report_faction_id_);
+    ReportIfGlobal.report_faction_id_ = ConsoleGlobal.faction_id_;
+
+    set_cat(topic, 1);
+    history_[0] = index;
+    listBox_.set_selected_id(field_29DC_ * 10000 + index);
+    repaint_slot();
+    set_modal(1, pop_wait, &MainInterfaceGlobal);
+
+    ReportWinGlobal.shared_research_focus() = static_cast<int32_t>(field_A1C_);
+    ReportIfGlobal.field_8_ = field_A20_;
+    ReportIfGlobal.report_faction_id_ = static_cast<int32_t>(field_A24_);
+    SubInterface::release_iface_mode();
+}

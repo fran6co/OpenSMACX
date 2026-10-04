@@ -50,6 +50,8 @@ class ReportIf : public SubInterface {
   // Native MonuWin reads the owned font/fullscreen configuration.
   friend class MonuWin;
   friend class ReportWin;
+  // Datalink::exec temporarily borrows/restores the report faction.
+  friend class Datalink;
   friend class FameWin;
   friend class QuayleWin;
  public:
