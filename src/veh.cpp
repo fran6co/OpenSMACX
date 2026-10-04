@@ -11476,13 +11476,1058 @@ void __cdecl action_sat_attack(int attacker, int target, int type, int base_id) 
         ReportIfGlobal.on_redraw();
 }
 
-// Unfinished dependency of the airdrop recovery. Preserve the complete seed
-// in src/unrecovered/005b6260.cpp; no visibility behavior is recovered here.
-// ORIGINAL: 0x005B6260 ?spot_all@@YAXHH@Z 0x005B6260-0x005B8AE2
-// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/005b6260.cpp retained original signature and extent; full seed preserved", "Coordinator user authorizes explicit unfinished empty bodies for new referenced functions, never replacement of recovered behavior"], "reason": "Explicit unfinished owning-TU link-continuity dependency for full action_airdrop authoring; BODY GOES HERE preserves unknown behavior and is not a recovery or matching claim."}
-void __cdecl spot_all(int veh_id, int toggle) {
-    // BODY GOES HERE.
+struct SpotAllSourceContext {
+    int faction_id;
+    int prototype_id;
+    int vehicle_triad;
+    int x;
+    int y;
+    unsigned char faction_mask;
+    int special_terrain_mode;
+    int source_controls_sensor_radius;
+    int offset_limit;
+    int visibility_offset_limit;
+    int effective_toggle;
+    int early_radius_tier;
+    int source_low_terrain;
+    int neutral_event_flag_a;
+    int neutral_event_flag_b;
+};
+
+static void mark_stack_seen_by_faction(int stack_vehicle_id, int faction_id);
+static void clear_spotted_stack_wake_state(int vehicle_id);
+static void clear_spotted_vehicle_wake_state(int vehicle_id);
+static void refresh_non_source_stack_owners(
+    const SpotAllSourceContext &source, int source_vehicle_id);
+static void apply_spotted_location_effects(
+    const SpotAllSourceContext &source, int spotted_vehicle_id,
+    int faction_id, int allow_wake_stack,
+    int clear_wake_state, int fallback_wake_cleanup, int x, int y);
+
+static void add_attack_and_defend_sensor_goals(int faction_id, int x, int y) {
+    add_goal(faction_id, AI_GOAL_ATTACK, 2, x, y, -1);
+    add_goal(faction_id, AI_GOAL_DEFEND, 1, x, y, -1);
 }
+
+static void add_sensor_priority_goal(int faction_id, int priority,
+                                     int x, int y) {
+    add_goal(faction_id, AI_GOAL_UNK_1, priority, x, y, -1);
+}
+
+static void add_sensor_faction_goal(int faction_id, int selected_faction_id,
+                                    int x, int y) {
+    const int priority = (selected_faction_id == 0) ? 1 : 3;
+    add_goal(faction_id, AI_GOAL_ATTACK, priority, x, y, -1);
+}
+
+static void add_sensor_facility_goals(int faction_id, int x, int y) {
+    add_goal(faction_id, AI_GOAL_ATTACK, 2, x, y, -1);
+    add_goal(faction_id, AI_GOAL_DEFEND, 1, x, y, -1);
+    add_goal(faction_id, AI_GOAL_SCOUT, 1, x, y, -1);
+}
+
+static int may_mark_spot_all_map_dirty(
+    const SpotAllSourceContext &source) {
+    return source.faction_id == ConsoleGlobal.faction_id_ &&
+           (GameState & STATE_OMNISCIENT_VIEW) == 0 &&
+           (PlayersData[source.faction_id].flags & PFLAG_MAP_REVEALED) == 0;
+}
+
+static void wake_contact_sensor_stack(const SpotAllSourceContext &source,
+                                      int allow_wake, int sensor_faction,
+                                      int stack_id) {
+    if (!allow_wake || stack_id < 0 || source.special_terrain_mode != 0)
+        return;
+    const int top_vehicle_id = veh_top(stack_id);
+    if (top_vehicle_id < 0) return;
+    const Veh &sensor_vehicle = Vehs[top_vehicle_id];
+    if (!has_abil(sensor_vehicle.proto_id, 2)) return;
+
+    const int triad = get_proto_triad(sensor_vehicle.proto_id);
+    if (triad != 2 &&
+        source.source_low_terrain != (triad == 1)) return;
+    if (sensor_faction < 0 || sensor_faction >= 8 ||
+        (PlayersData[source.faction_id]
+             .diplo_treaties[sensor_faction] & 1u) != 0) {
+        return;
+    }
+    wake_stack(stack_id);
+}
+
+static int may_query_wake_policy(const SpotAllSourceContext &source,
+                                 int source_vehicle_id,
+                                 int sensor_faction,
+                                 int detected_low_terrain) {
+    if (source_vehicle_id < 0 || sensor_faction < 0 ||
+        sensor_faction >= 8) return 0;
+    const uint32_t sensor_bit = (uint32_t)(1u << sensor_faction);
+    return (LockEnableMask & sensor_bit) != 0 &&
+           source.source_low_terrain == detected_low_terrain;
+}
+
+static int should_use_target_stack_wake_fallback(
+    const SpotAllSourceContext &source, int source_vehicle_id,
+    int contact_faction, int detected_low_terrain) {
+    if (source_vehicle_id < 0 || contact_faction < 0 || contact_faction >= 8)
+        return 0;
+    const uint32_t lock_bit = (uint32_t)(1u << contact_faction);
+    if ((LockEnableMask & lock_bit) != 0) return 0;
+    const uint32_t pair_flags = PlayersData[source.faction_id]
+                                    .diplo_treaties[contact_faction];
+    return (pair_flags & 7u) == 0 &&
+           (detected_low_terrain != 0 || source.source_low_terrain == 0);
+}
+
+static int should_use_source_vehicle_wake_fallback(
+    const SpotAllSourceContext &source, int source_vehicle_id,
+    int contact_faction, int detected_low_terrain) {
+    if (source_vehicle_id < 0 || contact_faction < 0 || contact_faction >= 8)
+        return 0;
+    const uint32_t source_bit = (uint32_t)(1u << source.faction_id);
+    if ((LockEnableMask & source_bit) != 0) return 0;
+    const uint32_t pair_flags = PlayersData[source.faction_id]
+                                    .diplo_treaties[contact_faction];
+    return (pair_flags & 7u) == 0 &&
+           (source.source_low_terrain != 0 || detected_low_terrain == 0 ||
+            source.vehicle_triad == 2);
+}
+
+static int may_query_sensor_owner_wake_policy(
+    const SpotAllSourceContext &source, int source_vehicle_id,
+    int contact_faction, int detected_prototype,
+    int detected_low_terrain) {
+    (void)detected_prototype;
+    if (source_vehicle_id < 0 || contact_faction < 0 || contact_faction >= 8)
+        return 0;
+    const uint32_t source_bit = (uint32_t)(1u << source.faction_id);
+    return (LockEnableMask & source_bit) != 0 &&
+           (source.source_low_terrain == detected_low_terrain ||
+            source.vehicle_triad == 2);
+}
+
+static int should_skip_contact_history_for_target_stack(
+    const SpotAllSourceContext &source, int stack_id, int detected_faction) {
+    if (source.source_controls_sensor_radius != 0 || stack_id < 0 ||
+        detected_faction < 0 || detected_faction >= 8) {
+        return 0;
+    }
+    const Veh &target = Vehs[stack_id];
+    int native_stack_exception = has_abil(target.proto_id, 0x40) ||
+                                 has_abil(target.proto_id, 4) ||
+                                 (target.flags & 0x400u) != 0;
+    if (!native_stack_exception && on_map(target.x, target.y)) {
+        const Map *tile = map_loc(target.x, target.y);
+        native_stack_exception = (tile->bit & 0x20u) != 0 &&
+                                 (tile->climate & 0xE0u) >= 0x40u &&
+                                 target.proto_id != 0x13;
+    }
+    if (!native_stack_exception ||
+        stack_check(stack_id, 1, -1, -1, -1) != 1) {
+        return 0;
+    }
+    return (PlayersData[source.faction_id]
+                .diplo_treaties[detected_faction] & 8u) != 0;
+}
+
+static void clear_matching_sensor_target(
+    const SpotAllSourceContext &source, int sensor_faction,
+    int sensor_x, int sensor_y) {
+    if (sensor_faction < 0 || sensor_faction >= 8 ||
+        source.vehicle_triad != 0) {
+        return;
+    }
+    const Map *sensor_tile = map_loc(sensor_x, sensor_y);
+    const Map *source_tile = map_loc(source.x, source.y);
+    if (source_tile->region != sensor_tile->region) {
+        return;
+    }
+    PlayerData &sensor_player = PlayersData[sensor_faction];
+    if (sensor_player.x_target != sensor_x ||
+        sensor_player.y_target != sensor_y) {
+        return;
+    }
+    sensor_player.x_target = -1;
+    sensor_player.y_target = -1;
+    const int stack_id = veh_at(sensor_x, sensor_y);
+    for (int member_id = stack_id; member_id >= 0;
+         member_id = Vehs[member_id].next_veh_id_stack) {
+        Veh &member = Vehs[member_id];
+        if ((member.state & 0x40000u) != 0)
+            member.state |= 0x60000u;
+    }
+}
+
+static int collect_neutral_event_classification(
+    SpotAllSourceContext &source, int sensor_faction,
+    int detected_base_id, int detected_prototype,
+    int contact_low_terrain) {
+    if (source.source_low_terrain != contact_low_terrain) {
+        if (detected_base_id < 0 || source.source_low_terrain != 0) {
+            if (sensor_faction >= 0 && sensor_faction < 8 &&
+                (PlayersData[source.faction_id]
+                     .diplo_treaties[sensor_faction] & 8u) != 0) {
+                return 0;
+            }
+        }
+    }
+
+    if (detected_prototype == 0x13) {
+        source.neutral_event_flag_a = 1;
+        return 1;
+    }
+    if (detected_prototype < 0 || detected_prototype >= 0x40) return 1;
+    const int weapon_id = VehPrototypes[detected_prototype].weapon_id;
+    if (detected_prototype == 0x0F ||
+        (weapon_id >= 0 && weapon_id < 26 &&
+         Weapon[weapon_id].offense_rating < 0)) {
+        source.neutral_event_flag_b = 1;
+    }
+    return 1;
+}
+
+static void record_foreign_base_encounter_fact(
+    const SpotAllSourceContext &source, const Base &base,
+    int *encounter_mask) {
+    if (encounter_mask == 0 ||
+        base.faction_id_current == source.faction_id ||
+        base.faction_id_current >= 8) {
+        return;
+    }
+    const int chassis_id = VehPrototypes[source.prototype_id].chassis_id;
+    if (source.vehicle_triad == 2 &&
+        Chassis[chassis_id].range != 0) {
+        return;
+    }
+    const int direct_base_path = source.source_low_terrain == 0 &&
+                                 source.special_terrain_mode == 0;
+    const int treaty_path_allowed =
+        (PlayersData[source.faction_id]
+             .diplo_treaties[base.faction_id_current] & 8u) == 0;
+    if (direct_base_path || treaty_path_allowed) {
+        *encounter_mask |= 1 << base.faction_id_current;
+    }
+}
+
+static void reveal_source_to_contact_vehicle_owner(
+    const SpotAllSourceContext &source, int source_vehicle_id,
+    int vehicle_faction) {
+    if (source_vehicle_id < 0 || vehicle_faction < 0 || vehicle_faction >= 8)
+        return;
+    if (on_map(source.x, source.y))
+        spot_tile(source.x, source.y, vehicle_faction);
+    mark_stack_seen_by_faction(source_vehicle_id, vehicle_faction);
+}
+
+// Exact reduction of the two tier-setting arms at 0x5B68D7..0x5B6951.
+// The native byte selects these arms when the outer tile's 0x200000 bit
+// agrees with var_30; the selected index contributes tier 1, 2, or 3.
+static void retain_outer_scan_radius_tier(int &radius_tier,
+                                          int outer_radius_index,
+                                          int tile_bit_200000,
+                                          int inner_match_var_30) {
+    if ((tile_bit_200000 != 0) != (inner_match_var_30 != 0)) return;
+    const int candidate_tier = outer_radius_index < 9 ? 1
+        : (outer_radius_index < 25 ? 2 : 3);
+    if (radius_tier <= candidate_tier) radius_tier = candidate_tier;
+}
+
+static SpotAllSourceContext inspect_spot_all_source(int source_vehicle_id,
+                                                    int toggle) {
+    const Veh &source = Vehs[source_vehicle_id];
+    SpotAllSourceContext context;
+    context.faction_id = source.faction_id;
+    context.prototype_id = source.proto_id;
+    context.vehicle_triad = get_proto_triad(source.proto_id);
+    context.x = source.x;
+    context.y = source.y;
+    context.faction_mask = (unsigned char)(1u << context.faction_id);
+
+    // Offline play forces the reveal toggle before scan policy is selected.
+    if (!IsMultiplayerNet) {
+        toggle = 1;
+    }
+    context.effective_toggle = toggle;
+    context.early_radius_tier = 0;
+    context.source_low_terrain = 0;
+    context.neutral_event_flag_a = 0;
+    context.neutral_event_flag_b = 0;
+    if (on_map(context.x, context.y)) {
+        context.source_low_terrain =
+            (map_loc(context.x, context.y)->climate & 0xE0u) < 0x60u;
+    }
+
+    if (has_abil(context.prototype_id, 0x40) ||
+        has_abil(context.prototype_id, 4) || (source.flags & 0x400u) != 0) {
+        context.special_terrain_mode = 1;
+    } else {
+        context.special_terrain_mode = 0;
+        if (on_map(context.x, context.y)) {
+            const Map *tile = map_loc(context.x, context.y);
+            if ((tile->bit & 0x20u) != 0 &&
+                (tile->climate & 0xE0u) >= 0x40u &&
+                context.prototype_id != 0x13) {
+                context.special_terrain_mode = 2;
+            }
+        }
+    }
+
+    context.source_controls_sensor_radius = 0;
+    if (has_abil(context.prototype_id, 2)) {
+        context.source_controls_sensor_radius = 1;
+    } else if (is_sensor(context.x, context.y) &&
+               whose_territory(context.faction_id, context.x, context.y, 0, 0) ==
+                   context.faction_id) {
+        context.source_controls_sensor_radius = 1;
+    }
+    context.offset_limit = 25 + (context.source_controls_sensor_radius ? 24 : 0);
+    context.visibility_offset_limit =
+        9 + (context.source_controls_sensor_radius ? 16 : 0);
+    return context;
+}
+
+static int has_nearby_sensor_base_facility(
+    const SpotAllSourceContext &source, int sensor_x, int sensor_y) {
+    int facility_offset;
+    int facility_mask;
+    bitmask(0x29, &facility_offset, &facility_mask);
+    const int sensor_owner = map_loc(sensor_x, sensor_y)->territory;
+    if (sensor_owner == source.faction_id) return 1;
+    // The native search resolves the nearest Base to the selected vehicle's
+    // saved location, then checks the original's 0/2 coordinate pattern.
+    // It is not a lookup around the current outer-radius tile.
+    const int base_id = base_find(source.x, source.y);
+    if (base_id < 0) return 0;
+
+    int delta_x = source.x - Bases[base_id].x;
+    if (delta_x < 0) delta_x = -delta_x;
+    if (!(MapIsFlat & 1) && delta_x > MapLongitude)
+        delta_x = MapLongitudeBounds - delta_x;
+    if (delta_x != 0 && delta_x != 2) return 0;
+
+    int delta_y = source.y - Bases[base_id].y;
+    if (delta_y < 0) delta_y = -delta_y;
+    if (delta_y != 0 && delta_y != 2) return 0;
+    return (Bases[base_id].facilities_built[facility_offset] &
+            facility_mask) != 0;
+}
+
+static int has_matching_faction_sensor_vehicle(
+    const SpotAllSourceContext &source, int x, int y,
+    int terrain_center_x, int terrain_center_y) {
+    const int vehicle_id = veh_at(x, y);
+    if (vehicle_id < 0) return 0;
+    const int top_vehicle_id = veh_top(vehicle_id);
+    if (top_vehicle_id < 0) return 0;
+    const Map *center_tile = map_loc(terrain_center_x, terrain_center_y);
+    const int low_terrain = (center_tile->climate & 0xE0u) < 0x60u;
+    for (int member_id = top_vehicle_id; member_id >= 0;
+         member_id = Vehs[member_id].next_veh_id_stack) {
+        const Veh &member = Vehs[member_id];
+        if (member.faction_id != source.faction_id ||
+            !has_abil(member.proto_id, 2)) {
+            continue;
+        }
+        const int prototype_category = get_proto_triad(member.proto_id);
+        if (prototype_category == 2 ||
+            ((prototype_category == 1) == low_terrain)) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static int has_faction_vehicle_at(const SpotAllSourceContext &source,
+                                  int x, int y) {
+    const int vehicle_id = veh_at(x, y);
+    if (vehicle_id < 0) return 0;
+    const int top_vehicle_id = veh_top(vehicle_id);
+    for (int member_id = top_vehicle_id; member_id >= 0;
+         member_id = Vehs[member_id].next_veh_id_stack) {
+        if (Vehs[member_id].faction_id == source.faction_id) return 1;
+    }
+    return 0;
+}
+
+static int find_inner_sensor_match(const SpotAllSourceContext &source,
+                                   int center_x, int center_y) {
+    for (int inner_index = 0; inner_index < 25; ++inner_index) {
+        int x = center_x + RadiusOffsetX[inner_index];
+        const int y = center_y + RadiusOffsetY[inner_index];
+        if (!(MapIsFlat & 1)) {
+            if (x < 0) x += MapLongitudeBounds;
+            else if (x >= MapLongitudeBounds) x -= MapLongitudeBounds;
+        }
+        if (!on_map(x, y)) continue;
+        const Map *tile = map_loc(x, y);
+        int tile_owner = -1;
+        if ((tile->bit & 3u) != 0 && (tile->val2 & 0x0Fu) < 8)
+            tile_owner = tile->val2 & 0x0Fu;
+        if (inner_index < 9) {
+            if (tile_owner == source.faction_id) return 1;
+            const int treaty_vehicle_path = tile_owner >= 0 &&
+                (PlayersData[source.faction_id]
+                     .diplo_treaties[tile_owner] & 1u) != 0;
+            if (treaty_vehicle_path && has_faction_vehicle_at(source, x, y)) {
+                return 1;
+            }
+        }
+        if (is_sensor(x, y) &&
+            has_nearby_sensor_base_facility(source, x, y)) {
+            return 1;
+        }
+        const int reverse_treaty_sensor_path = tile_owner >= 0 &&
+            (tile->bit & 2u) != 0 &&
+            (PlayersData[tile_owner].diplo_treaties[source.faction_id] &
+             1u) != 0;
+        if (reverse_treaty_sensor_path &&
+            has_matching_faction_sensor_vehicle(source, x, y,
+                                                center_x, center_y)) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+// Source-shaped reconstruction of 0x5B641F..0x5B6963. Outer bounds,
+// wrap/validity, the nested 25-cell owner/diplomacy/stack probes, sensor/base
+// facility matching, and marker-equality tier reduction are controlled by the
+// private host fixtures. This pass only computes the radius tier.
+static int scan_optical_location_radius(SpotAllSourceContext &source) {
+    if ((GameMorePreferences & 1u) == 0 ||
+        source.faction_id != ConsoleGlobal.faction_id_ ||
+        (GameState & STATE_OMNISCIENT_VIEW) != 0) {
+        return 0;
+    }
+
+    const int inner_scan_start = source.source_controls_sensor_radius ? 25 : 9;
+    for (int offset = 0; offset < source.offset_limit; ++offset) {
+        int x = source.x + RadiusOffsetX[offset];
+        const int y = source.y + RadiusOffsetY[offset];
+        if (!(MapIsFlat & 1)) {
+            if (x < 0) x += MapLongitudeBounds;
+            else if (x >= MapLongitudeBounds) x -= MapLongitudeBounds;
+        }
+        if (y < 0 || y >= MapLatitudeBounds || x < 0 ||
+            x >= MapLongitudeBounds) {
+            continue;
+        }
+
+        Map *tile = map_loc(x, y);
+        // For the inner base-radius indices, the seed jumps directly to
+        // LAB_005B68A6, where var_30 becomes 1. Expanded indices always run
+        // the nested walk first; the outer 0x200000 marker gates only whether
+        // that result participates in the tier reducer.
+        int inner_match = 1;
+        if (offset < inner_scan_start) {
+            inner_match = 1;
+        } else {
+            inner_match = find_inner_sensor_match(source, x, y);
+        }
+        retain_outer_scan_radius_tier(source.early_radius_tier, offset,
+            (tile->bit2 & 0x200000u) != 0, inner_match);
+
+        // The pinned pass changes no map or Veh state here; the inner probes
+        // contribute only to the local tier decision above.
+    }
+    return 0;
+}
+
+// Complementary terrain-intel/visibility bookkeeping pass (0x5B6963..AED).
+// Unlike the optical pass it runs for every selected faction; only the local,
+// previously unseen map-dirty hint is faction/UI gated.
+static int scan_terrain_visibility_radius(SpotAllSourceContext &source) {
+    int qualifying_terrain_tiles = 0;
+    for (int offset = 0; offset < source.visibility_offset_limit; ++offset) {
+        int x = source.x + RadiusOffsetX[offset];
+        const int y = source.y + RadiusOffsetY[offset];
+        if (!(MapIsFlat & 1)) {
+            if (x < 0) x += MapLongitudeBounds;
+            else if (x >= MapLongitudeBounds) x -= MapLongitudeBounds;
+        }
+        if (y < 0 || y >= MapLatitudeBounds || x < 0 ||
+            x >= MapLongitudeBounds) {
+            continue;
+        }
+        Map *tile = map_loc(x, y);
+        if ((tile->bit2 & 0x80002000u) == 0x2000u) {
+            ++qualifying_terrain_tiles;
+        }
+        if (offset >= 9 && source.vehicle_triad != 2) {
+            const int is_low_terrain = (tile->climate & 0xE0u) < 0x60u;
+            if (is_low_terrain != (source.vehicle_triad == 1)) {
+                continue;
+            }
+        }
+        if (source.faction_id == ConsoleGlobal.faction_id_ &&
+            (GameState & STATE_OMNISCIENT_VIEW) == 0 &&
+            (PlayersData[source.faction_id].flags &
+             PFLAG_MAP_REVEALED) == 0) {
+            const int unseen = (tile->visibility & source.faction_mask) == 0;
+            const uint32_t remembered_bits = source.faction_id != 0
+                ? tile->bit_visible[source.faction_id - 1] : tile->bit2;
+            const int memory_changed =
+                ((remembered_bits ^ tile->bit) & 0xFFFFFFFCu) != 0;
+            if (unseen) {
+                tile->bit2 |= 0x400000u;
+                UnkBitfield1 |= 1u;
+            }
+            const int minimum_tier = (offset >= 9) ? 3 : 2;
+            if ((unseen || memory_changed) &&
+                source.early_radius_tier <= minimum_tier) {
+                source.early_radius_tier = minimum_tier;
+            }
+        }
+        if (source.faction_id != 0) {
+            tile->bit_visible[source.faction_id - 1] = tile->bit;
+        }
+        tile->visibility |= source.faction_mask;
+    }
+    return qualifying_terrain_tiles;
+}
+
+static int count_hidden_neighbor_tiles(int x, int y, int faction_mask) {
+    int hidden_count = 0;
+    for (int direction = 0; direction < 8; ++direction) {
+        int neighbor_x = x + VehMoveDeltaX[direction];
+        const int neighbor_y = y + VehMoveDeltaY[direction];
+        if (!(MapIsFlat & 1)) {
+            if (neighbor_x < 0) neighbor_x += MapLongitudeBounds;
+            else if (neighbor_x >= MapLongitudeBounds)
+                neighbor_x -= MapLongitudeBounds;
+        }
+        if (!on_map(neighbor_x, neighbor_y)) {
+            continue;
+        }
+        if ((map_loc(neighbor_x, neighbor_y)->visibility & faction_mask) == 0) {
+            hidden_count += (VehMoveDeltaX[direction] == 0 ||
+                            VehMoveDeltaY[direction] == 0) ? 2 : 1;
+        }
+    }
+    return hidden_count;
+}
+
+static int perimeter_hidden_neighbor_limit(
+    const SpotAllSourceContext &source, const Map &tile) {
+    if (source.source_controls_sensor_radius != 0 ||
+        (tile.climate & 0xE0u) < 0x60u) {
+        return 4;
+    }
+    return 6;
+}
+
+static void set_perimeter_tile_visibility(
+    const SpotAllSourceContext &source, int x, int y) {
+    Map *tile = map_loc(x, y);
+    const unsigned char faction_mask = source.faction_mask;
+    const int unseen = (tile->visibility & faction_mask) == 0;
+    if (may_mark_spot_all_map_dirty(source) && unseen) {
+        tile->bit2 |= 0x400000u;
+        UnkBitfield1 |= 1u;
+    }
+    if (source.faction_id != 0)
+        tile->bit_visible[source.faction_id - 1] = tile->bit;
+    tile->visibility |= faction_mask;
+
+    const int base_id = base_at(x, y);
+    if (base_id < 0) return;
+
+    Base &base = Bases[base_id];
+    base.visibility |= faction_mask;
+    base.faction_pop_size_intel[source.faction_id] =
+        (uint8_t)base.population_size;
+    if (!on_map(base.x, base.y)) return;
+
+    Map *base_tile = map_loc(base.x, base.y);
+    if (may_mark_spot_all_map_dirty(source) &&
+        (base_tile->visibility & faction_mask) == 0 &&
+        (GameState & STATE_OMNISCIENT_VIEW) == 0) {
+        base_tile->bit2 |= 0x400000u;
+        UnkBitfield1 |= 1u;
+    }
+    if (source.faction_id != 0)
+        base_tile->bit_visible[source.faction_id - 1] = base_tile->bit;
+    base_tile->visibility |= faction_mask;
+    synch_bit(base.x, base.y, source.faction_id);
+}
+
+// The native contact bodies inline Base history rather than calling
+// spot_base(). Keep the same typed Base/Map effects while retaining the
+// contact path's treaty-sensitive dirty-map gate.
+static void reveal_contact_base_history(
+    const SpotAllSourceContext &source, int base_id) {
+    if (base_id < 0) return;
+    Base &base = Bases[base_id];
+    base.visibility |= source.faction_mask;
+    base.faction_pop_size_intel[source.faction_id] =
+        (uint8_t)base.population_size;
+    if (!on_map(base.x, base.y)) return;
+
+    Map *tile = map_loc(base.x, base.y);
+    if (source.faction_id == ConsoleGlobal.faction_id_ &&
+        (GameState & STATE_OMNISCIENT_VIEW) == 0 &&
+        (tile->visibility & source.faction_mask) == 0 &&
+        (PlayersData[source.faction_id].flags & PFLAG_MAP_REVEALED) == 0) {
+        tile->bit2 |= 0x400000u;
+        UnkBitfield1 |= 1u;
+    }
+    tile->visibility |= source.faction_mask;
+    synch_bit(base.x, base.y, source.faction_id);
+}
+
+// Adjacent-tile coverage pass (0x5B6AED..6DED). The source image walks the
+// outer ring and the eight movement-neighbor offsets, accepting a tile only
+// below the terrain-dependent hidden-neighbor threshold.
+static int scan_adjacent_sensor_perimeter(SpotAllSourceContext &source) {
+    int revealed_locations = 0;
+    for (int offset = source.visibility_offset_limit;
+         offset < source.offset_limit; ++offset) {
+        int x = source.x + RadiusOffsetX[offset];
+        const int y = source.y + RadiusOffsetY[offset];
+        if (!(MapIsFlat & 1)) {
+            if (x < 0) x += MapLongitudeBounds;
+            else if (x >= MapLongitudeBounds) x -= MapLongitudeBounds;
+        }
+        if (!on_map(x, y)) {
+            continue;
+        }
+        Map *tile = map_loc(x, y);
+        // The native branch at 0x5B6BA0 skips neighbor counting, visibility,
+        // base history, and radius-tier mutations when this faction already
+        // sees the perimeter tile.
+        if ((tile->visibility & source.faction_mask) != 0) continue;
+        const int maximum_hidden_neighbors =
+            perimeter_hidden_neighbor_limit(source, *tile);
+        if (count_hidden_neighbor_tiles(x, y, source.faction_mask) >=
+            maximum_hidden_neighbors) {
+            continue;
+        }
+        set_perimeter_tile_visibility(source, x, y);
+        ++revealed_locations;
+        // Native 0x5B6DC4 raises the perimeter tier only after this unseen
+        // tile passed the neighbor limit and completed its visibility path.
+        const int minimum_tier =
+            2 + (source.source_controls_sensor_radius != 0);
+        if (source.early_radius_tier <= minimum_tier)
+            source.early_radius_tier = minimum_tier;
+    }
+    return revealed_locations;
+}
+
+// Strategic sensor-contact pass (seed 0x5B6EE9..0x5B89FA). It first scans
+// offsets [0,9), then explicitly resets the index to 9 and scans [9,25).
+// This is always the 25-tile tactical radius; the 25/49 outer sensor-radius
+// bound belongs to earlier passes and must not extend this loop.
+static int scan_enemy_sensor_contacts(SpotAllSourceContext &source,
+                                      int source_vehicle_id,
+                                      int allow_ai_goals,
+                                      int begin_offset,
+                                      int end_offset,
+                                      int *encounter_mask) {
+    int contacts = 0;
+    for (int offset = begin_offset; offset < end_offset; ++offset) {
+        int x = source.x + RadiusOffsetX[offset];
+        const int y = source.y + RadiusOffsetY[offset];
+        if (!(MapIsFlat & 1)) {
+            if (x < 0) x += MapLongitudeBounds;
+            else if (x >= MapLongitudeBounds) x -= MapLongitudeBounds;
+        }
+        if (!on_map(x, y) || !is_sensor(x, y)) {
+            continue;
+        }
+        const Map *sensor_tile = map_loc(x, y);
+        const int sensor_faction = sensor_tile->territory;
+        const int contact_low_terrain =
+            (sensor_tile->climate & 0xE0u) < 0x60u;
+        if (sensor_faction <= 0 || sensor_faction == source.faction_id ||
+            source.special_terrain_mode == 1) {
+            continue;
+        }
+        if ((sensor_tile->bit & 1u) != 0 &&
+            (sensor_tile->val2 & 0x0Fu) < 8) {
+            continue;
+        }
+        // The enemy sensor reveals the selected vehicle's location and stack
+        // to the sensor owner. Tile/base discovery is handled by spot_tile;
+        // stack visibility and cloak/lurker cleanup use the real Veh owner.
+        if (source_vehicle_id >= 0 &&
+            on_map(source.x, source.y)) {
+            // Native 0x5B7E91 makes the selected vehicle's tile visible,
+            // then 0x5B7EAA walks the selected stack's vehicle-history
+            // records. It does not call spot_loc (which would also expose a
+            // base at this coordinate through a different owner path).
+            spot_tile(source.x, source.y, sensor_faction);
+            mark_stack_seen_by_faction(source_vehicle_id, sensor_faction);
+        }
+
+        if (allow_ai_goals &&
+            (PlayersData[source.faction_id].diplo_treaties[sensor_faction] &
+             7u) == 0) {
+            if (source.special_terrain_mode == 0) {
+                add_attack_and_defend_sensor_goals(sensor_faction, x, y);
+            } else {
+                add_sensor_priority_goal(sensor_faction, 2, x, y);
+            }
+        }
+
+        // A sensor location may itself be a base or a stacked force. Those
+        // identities have their own intel owners; do not reduce the sighting
+        // to a map-tile visibility bit.
+        if (offset != 0) {
+            const int detected_base_id = base_at(x, y);
+            // A source-owned Base suppresses only foreign-Base history. The
+            // native shared continuation still processes a co-located stack;
+            // the later stack-owner branch has its own short-circuit.
+            if (detected_base_id >= 0 &&
+                Bases[detected_base_id].faction_id_current !=
+                    source.faction_id) {
+                Base &base = Bases[detected_base_id];
+                if (begin_offset < 9)
+                    record_foreign_base_encounter_fact(source, base,
+                                                       encounter_mask);
+                if (source.faction_id == ConsoleGlobal.faction_id_ &&
+                    (GameState & STATE_OMNISCIENT_VIEW) == 0) {
+                    const int had_base_memory =
+                        (base.visibility & source.faction_mask) != 0;
+                    const int changed_population =
+                        base.faction_pop_size_intel[source.faction_id] !=
+                        (uint8_t)base.population_size;
+                    if (begin_offset < 9) {
+                        // The center-ring native body uses the 2/1 tiers.
+                        if (!had_base_memory && source.early_radius_tier <= 2)
+                            source.early_radius_tier = 2;
+                        else if (had_base_memory && changed_population &&
+                                 source.early_radius_tier <= 1)
+                            source.early_radius_tier = 1;
+                    } else if (source.source_controls_sensor_radius != 0 &&
+                               (source.special_terrain_mode == 2 ||
+                                contact_low_terrain ==
+                                    (source.vehicle_triad == 1))) {
+                        // The expanded-ring duplicate uses the 3/2 tiers.
+                        if (!had_base_memory && source.early_radius_tier <= 3)
+                            source.early_radius_tier = 3;
+                        else if (had_base_memory && changed_population &&
+                                 source.early_radius_tier <= 2)
+                            source.early_radius_tier = 2;
+                    }
+                }
+                reveal_contact_base_history(source, detected_base_id);
+            }
+            const int detected_stack_id = stack_fix(veh_at(x, y));
+            if (detected_stack_id >= 0 &&
+                detected_stack_id != source_vehicle_id &&
+                Vehs[detected_stack_id].faction_id != source.faction_id) {
+                const int detected_faction =
+                    Vehs[detected_stack_id].faction_id;
+                // With no base at the contact, expose the selected vehicle's
+                // saved tile and stack history to the detected unit owner.
+                if (detected_base_id < 0)
+                    reveal_source_to_contact_vehicle_owner(
+                        source, source_vehicle_id, detected_faction);
+
+                const uint32_t pair_flags = PlayersData[source.faction_id]
+                                                .diplo_treaties[detected_faction];
+                int clear_target_stack_wake = 0;
+                if (begin_offset < 9) {
+                    if (allow_ai_goals)
+                        wake_stack(detected_stack_id);
+                    if ((pair_flags & 1u) == 0 && allow_ai_goals &&
+                        may_query_wake_policy(source, source_vehicle_id,
+                                              detected_faction,
+                                              contact_low_terrain)) {
+                        clear_target_stack_wake = want_to_wake(
+                            source.faction_id, detected_stack_id,
+                            source_vehicle_id) != 0;
+                    } else if (allow_ai_goals &&
+                        should_use_target_stack_wake_fallback(
+                            source, source_vehicle_id, detected_faction,
+                            contact_low_terrain)) {
+                        clear_target_stack_wake = 1;
+                    }
+                }
+                // This first wake policy mutates the contacted stack before
+                // its later Vehicle-history and event-classification paths.
+                if (clear_target_stack_wake)
+                    clear_spotted_stack_wake_state(detected_stack_id);
+                if (begin_offset < 9 &&
+                    should_skip_contact_history_for_target_stack(
+                        source, detected_stack_id, detected_faction)) {
+                    ++contacts;
+                    continue;
+                }
+                if (begin_offset < 9 && detected_base_id < 0 &&
+                    source.faction_id == ConsoleGlobal.faction_id_ &&
+                    (GameState & STATE_OMNISCIENT_VIEW) == 0 &&
+                    (Vehs[detected_stack_id].visibility &
+                     source.faction_mask) == 0 &&
+                    source.early_radius_tier <= 1) {
+                    // Native 0x5B7843..7871: with no base record at this
+                    // contact, an unseen selected-faction vehicle raises the
+                    // UI radius tier to one before later unit-history paths.
+                    source.early_radius_tier = 1;
+                }
+                const Veh &detected = Vehs[detected_stack_id];
+                if (!has_abil(detected.proto_id, 0x40) &&
+                    !has_abil(detected.proto_id, 4) &&
+                    (detected.flags & 0x400u) == 0 &&
+                    on_map(detected.x, detected.y)) {
+                    const Map *detected_tile = map_loc(detected.x,
+                                                       detected.y);
+                    const int exceptional_highland_unit =
+                        (detected_tile->bit & 0x20u) != 0 &&
+                        (detected_tile->climate & 0xE0u) >= 0x40u &&
+                        detected.proto_id != 0x13;
+                    if (begin_offset >= 9 && !exceptional_highland_unit &&
+                        source.faction_id == ConsoleGlobal.faction_id_ &&
+                        (GameState & STATE_OMNISCIENT_VIEW) == 0 &&
+                        (Vehs[source_vehicle_id].visibility &
+                         source.faction_mask) == 0 &&
+                        source.early_radius_tier <= 2) {
+                        // Native 0x5B81EB..8268 tests the selected source
+                        // Vehicle's remembered-visibility byte here (unlike
+                        // the center-ring arm, which tests detected history).
+                        source.early_radius_tier = 2;
+                    }
+                }
+                int clear_source_vehicle_wake = 0;
+                if (begin_offset < 9) {
+                    if (allow_ai_goals &&
+                        may_query_sensor_owner_wake_policy(
+                            source, source_vehicle_id, detected_faction,
+                            Vehs[detected_stack_id].proto_id,
+                            contact_low_terrain)) {
+                        clear_source_vehicle_wake = want_to_wake(
+                            detected_faction, source_vehicle_id,
+                            detected_stack_id) != 0;
+                    } else if (allow_ai_goals &&
+                        should_use_source_vehicle_wake_fallback(
+                            source, source_vehicle_id, detected_faction,
+                            contact_low_terrain)) {
+                        clear_source_vehicle_wake = 1;
+                    }
+                }
+                if (clear_source_vehicle_wake)
+                    clear_spotted_vehicle_wake_state(source_vehicle_id);
+                if (allow_ai_goals &&
+                    (PlayersData[source.faction_id].diplo_treaties[
+                         detected_faction] & 7u) == 0) {
+                    const int goal_type = has_abil(
+                        Vehs[detected_stack_id].proto_id, 0x44) ? 1 : 2;
+                    add_sensor_priority_goal(source.faction_id, goal_type,
+                                             x, y);
+                    add_sensor_faction_goal(source.faction_id,
+                                            source.faction_id, x, y);
+                }
+                if (begin_offset < 9 && (pair_flags & 7u) == 0) {
+                    const int priority = source.faction_id == 0 ? 1 : 2;
+                    add_goal(source.faction_id, AI_GOAL_ATTACK, priority,
+                             x, y, -1);
+                }
+                if (begin_offset < 9 &&
+                    VehPrototypes[source.prototype_id].plan >= 8 &&
+                    (PlayersData[source.faction_id]
+                         .diplo_treaties[detected_faction] & 1u) == 0 &&
+                    whose_territory(detected_faction, x, y, 0, 0) ==
+                        detected_faction &&
+                    VehPrototypes[Vehs[detected_stack_id].proto_id].plan >= 8) {
+                    // This first-body arm has a PACT-only test; it does not
+                    // inherit the preceding optional-goal low-three-bit gate.
+                    add_goal(detected_faction, AI_GOAL_DEFEND, 2, x, y, -1);
+                    add_goal(detected_faction, AI_GOAL_ATTACK, 1, x, y, -1);
+                    add_goal(detected_faction, AI_GOAL_SCOUT, 1, x, y, -1);
+                }
+                apply_spotted_location_effects(
+                    source, detected_stack_id, source.faction_id,
+                    0, 0, 0, x, y);
+                if (begin_offset >= 9)
+                    wake_contact_sensor_stack(source, allow_ai_goals,
+                                              detected_faction,
+                                              detected_stack_id);
+                if (begin_offset < 9) {
+                    const int detected_prototype =
+                        Vehs[detected_stack_id].proto_id;
+                    const int event_path_qualified =
+                        collect_neutral_event_classification(
+                        source, sensor_faction, detected_base_id,
+                        detected_prototype, contact_low_terrain);
+                    if (encounter_mask != 0 && event_path_qualified)
+                        *encounter_mask |= 1 << detected_faction;
+                }
+            }
+            // Native 0x5B8923 target cleanup follows the contact's base and
+            // vehicle-history updates, not the initial sensor reveal.
+            if (begin_offset >= 9)
+                clear_matching_sensor_target(source, sensor_faction, x, y);
+            if (begin_offset >= 9 &&
+                VehPrototypes[source.prototype_id].plan == 0x0B &&
+                (PlayersData[source.faction_id]
+                     .diplo_treaties[sensor_faction] & 1u) == 0) {
+                // The final tuple follows target cleanup and belongs to the
+                // selected source plan and sensor faction, not the detected
+                // vehicle stack.
+                add_sensor_facility_goals(sensor_faction,
+                                          source.x, source.y);
+            }
+        }
+
+        ++contacts;
+    }
+    return contacts;
+}
+
+static void mark_stack_seen_by_faction(int stack_vehicle_id, int faction_id) {
+    // spot_all has its own stack walk in the seed: tile reveal is a separate
+    // preceding/following operation, so this walk changes only vehicle intel.
+    const int top_vehicle_id = veh_top(stack_vehicle_id);
+    if (top_vehicle_id < 0) return;
+    const uint8_t faction_mask = (uint8_t)(1u << faction_id);
+    for (int member_id = top_vehicle_id; member_id >= 0;
+         member_id = Vehs[member_id].next_veh_id_stack) {
+        Veh &member = Vehs[member_id];
+        member.visibility |= faction_mask;
+        if (faction_id != 0)
+            member.flags &= (uint16_t)~(VFLAG_LURKER | VFLAG_INVISIBLE);
+    }
+}
+
+static void refresh_non_source_stack_owners(
+    const SpotAllSourceContext &source, int source_vehicle_id) {
+    const int top_vehicle_id = veh_top(source_vehicle_id);
+    if (top_vehicle_id < 0) return;
+    const Veh &top_vehicle = Vehs[top_vehicle_id];
+    const int top_owner = top_vehicle.faction_id;
+    if (top_owner == source.faction_id) return;
+    if (on_map(top_vehicle.x, top_vehicle.y))
+        spot_tile(top_vehicle.x, top_vehicle.y, top_owner);
+    mark_stack_seen_by_faction(top_vehicle_id, top_owner);
+}
+
+static void clear_spotted_vehicle_wake_state(int vehicle_id) {
+    Veh &vehicle = Vehs[vehicle_id];
+    if ((vehicle.state & 0x02000200u) == 0x02000200u &&
+        vehicle.patrol_current_point < vehicle.waypoint_count) {
+        vehicle.state &= ~0x02000200u;
+    }
+    if ((vehicle.state & 0x01000200u) == 0x01000200u) {
+        vehicle.state &= ~0x01000200u;
+    }
+    vehicle.state &= ~0x00004000u;
+    if (vehicle.order == 0x18) vehicle.order = 0;
+}
+
+static void clear_spotted_stack_wake_state(int vehicle_id) {
+    const int top_vehicle_id = veh_top(vehicle_id);
+    for (int member_id = top_vehicle_id; member_id >= 0;
+         member_id = Vehs[member_id].next_veh_id_stack) {
+        clear_spotted_vehicle_wake_state(member_id);
+    }
+}
+
+// A single detected location's effects, in the order seen in the image:
+// reveal the spotted stack, optionally wake it, then make the tile visible.
+// The caller still owns the five sensing passes and encounter/goal routing.
+static void apply_spotted_location_effects(
+    const SpotAllSourceContext &source, int spotted_vehicle_id,
+    int faction_id, int allow_wake_stack,
+    int clear_wake_state, int fallback_wake_cleanup, int x, int y) {
+    (void)source;
+    (void)allow_wake_stack;
+    // The target contact path edits its vehicle history independently of the
+    // base-memory branch, then marks the map tile for the sensor faction.
+    // This is the want_to_wake cleanup branch. The seed's separate wake_stack
+    // callback is gated by contact-sensor classification and diplomacy later
+    // in the same contact path; it is not unconditional here.
+    if (spotted_vehicle_id >= 0 &&
+        (clear_wake_state || fallback_wake_cleanup)) {
+        clear_spotted_stack_wake_state(spotted_vehicle_id);
+    }
+
+    spot_tile(x, y, faction_id);
+    mark_stack_seen_by_faction(spotted_vehicle_id, faction_id);
+}
+
+// The final notification path is separate from sensing: the first encounter
+// uses the neutral faction slot and carries the selected base/tile context;
+// remaining factions are visited in ascending id order only when their bit
+// was accumulated by the sensing passes and the caller requested wakeups.
+static void report_spot_encounters(int source_faction_id,
+                                   int encounter_mask,
+                                   int include_other_factions,
+                                   int source_x,
+                                   int source_y,
+                                   int neutral_event_flag_a,
+                                   int neutral_event_flag_b) {
+    if ((encounter_mask & 1) != 0) {
+        encounter(source_faction_id, 0, source_x, source_y,
+                  neutral_event_flag_a, neutral_event_flag_b);
+    }
+    if (source_faction_id == 0 || !include_other_factions) {
+        return;
+    }
+    for (int faction_id = 1; faction_id < 8; ++faction_id) {
+        if (faction_id != source_faction_id &&
+            (encounter_mask & (1 << faction_id)) != 0) {
+            encounter(source_faction_id, faction_id, source_x, source_y,
+                      0, 0);
+        }
+    }
+}
+
+
+// ORIGINAL: 0x005B6260 ?spot_all@@YAXHH@Z 0x005B6260-0x005B8AE2
+// RECOVERY_BINDING: v1 {"evidence": ["task:vehicle-visibility-owner", "pinned:5B6260..5B8AE2 complete sensing, terrain memory, contact/wake/goals and presentation span; original prototype and seed findings preserved.", "pinned:70F5 own Base joins common73E1 tile/stack path;7858 contact visibility differs from824E selected-source visibility.", "pinned:76FB..7707 target fallback contactLow || !sourceLow;7A69..7A7B source fallback sourceLow || !contactLow || triad2; distinct lock/callback routes.", "pinned:8A43 fixed WorldClimateWorldWin receiver8E9F60 and8A48 direct GraphicWin::redraw5D5A70 before interlude/encounters; source:worldwin.h owns the receiver.", "historical seed:src/unrecovered/005b6260.cpp native mapping and unsuccessful mechanical transliteration retained as source evidence."], "reason": "Recover the complete original visibility operation with genuine vehicle, faction, base, map and climate-window owners; retain original identity/spans and seed findings without image calls or raw self-offset models."}
+// TRIED: mechanical register/stack-slot goto transliteration (234 labels, 5638-line body): compiles, MISMATCH sim up to 0.73 on /O2 frameless. Not restructured into idiomatic control flow - next pass should re-derive loop/if shape per block before chasing byte-exactness.
+void __cdecl spot_all(int source_vehicle_id, int toggle) {
+    SpotAllSourceContext source =
+        inspect_spot_all_source(source_vehicle_id, toggle);
+    int encounter_mask = 0;
+
+    // The source's faction-zero cleanup is the byte AND at 0x5B640E. It
+    // applies to the selected Veh only and is distinct from the later stack
+    // walks which expose a stack to a sensor owner.
+    if (source.faction_id == 0 && on_map(source.x, source.y)) {
+        Vehs[source_vehicle_id].visibility &=
+            map_loc(source.x, source.y)->visibility;
+    }
+
+    (void)scan_optical_location_radius(source);
+    const int terrain_visibility_count = scan_terrain_visibility_radius(source);
+    (void)scan_adjacent_sensor_perimeter(source);
+    // 0x5B6DED refreshes only stack members whose owner differs from the
+    // selected vehicle's faction, through each member's existing owners.
+    refresh_non_source_stack_owners(source, source_vehicle_id);
+
+    (void)scan_enemy_sensor_contacts(source, source_vehicle_id,
+                                     source.effective_toggle, 0, 9,
+                                     &encounter_mask);
+    (void)scan_enemy_sensor_contacts(source, source_vehicle_id,
+                                     source.effective_toggle, 9, 25,
+                                     &encounter_mask);
+
+    // 0x5B8A00 onward presents the radius/interlude first and publishes
+    // encounters only after that presentation path has returned.
+    if (TurnCurrentNum != 0) {
+        const int radius_indicator = source.early_radius_tier;
+        draw_radius(source.x, source.y,
+                    source.faction_id == ConsoleGlobal.faction_id_
+                        ? radius_indicator : 0,
+                    2);
+        if (source.faction_id == ConsoleGlobal.faction_id_ &&
+            radius_indicator != 0) {
+            WorldClimateWorldWin.GraphicWin::redraw();
+        }
+        if (terrain_visibility_count > 8 &&
+            source.faction_id == ConsoleGlobal.faction_id_ &&
+            (Players[source.faction_id].rule_flags & 0x80u) != 0) {
+            interlude(0x29, 0, 1, 0);
+        }
+
+        report_spot_encounters(source.faction_id, encounter_mask,
+                               source.effective_toggle, source.x, source.y,
+                               source.neutral_event_flag_a,
+                               source.neutral_event_flag_b);
+    }
+}
+
 
 // Unfinished dependency of the airdrop recovery. Preserve the complete seed
 // in src/unrecovered/0057a660.cpp. Zero is only an explicit placeholder result,
