@@ -22,6 +22,18 @@
   * Heap class: Handles managing or allocating memory.
   */
 class Heap {
+  friend struct TexHeap;
+  // TexHeap635050 constructs descriptors over borrowed arena regions.
+  // Unlike init(), this never allocates/reallocates the region; bit 0 makes
+  // get() return null instead of growing it. TexHeap releases descriptor
+  // storage without invoking the owning destructor, which would free base_.
+  Heap(void *region, size_t size) {
+    err_flags_ = 1;
+    base_ = region;
+    current_ = region;
+    base_size_ = size;
+    free_size_ = size;
+  }
  public:
   // OUT OF LINE, and that is what `Strings` needs: its own constructor
   // opens `push esi; mov esi, ecx; call ?0Heap`, a real call to the base.

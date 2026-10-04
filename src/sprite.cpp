@@ -1679,6 +1679,7 @@ int Sprite::init_class() {
 Purpose: Take `size` bytes of sheet memory: walk the heap's block table and
          allocate from the first block whose free tail is large enough.
 // ORIGINAL: 0x006353C0 ?get_mem@TexHeap@@QAEHH@Z 0x006353C0-0x00635402 FILE SEMANTIC
+// symbol    ?get_mem@TexHeap@@QAEPAXH@Z
 // TRIED 2026-09-03, two batches of four: count declared before index, both
 //   for-loop forms (initialiser inside the `for`, index declared outside it),
 //   a named `Heap *block` local instead of the double `blocks[index]` access,
@@ -1708,15 +1709,15 @@ measured MNEMONIC_ONLY against the opaque scaffold and carried no claim. The
 `Heap::get` (0x005D4680). `Sprite::extract` below is the one caller, and it
 only reaches here when a caller passed a heap at all.
 */
-int TexHeap::get_mem(int size) {
-    if (basePtr_ != 0) {
+void *TexHeap::get_mem(int size) {
+    if (base_ != 0) {
         int index = 0;
         int count = static_cast<int>(count_) + 1;
         if (count > 0) {
-            Heap **blocks = reinterpret_cast<Heap **>(currentPtr_);
+            Heap **blocks = blocks_;
             while (index < count) {
                 if (static_cast<int>(blocks[index]->free_size_) >= size) {
-                    return reinterpret_cast<int>(blocks[index]->get(size));
+                    return blocks[index]->get(size);
                 }
                 ++index;
             }
@@ -1733,7 +1734,7 @@ Purpose: Hand out the first sheet-heap block whose free tail fits `size` and
          caller - it takes the returned block as a borrowed texture rather
          than allocating fresh pixels.
 // ORIGINAL: 0x00635370 ?get_tex_mem@TexHeap@@QAEHH@Z 0x00635370-0x006353BD
-// symbol    ?get_tex_mem@TexHeap@@QAEHH@Z
+// symbol    ?get_tex_mem@TexHeap@@QAEPAXH@Z
 // size      77 bytes
 // prototype int (__thiscall ?get_tex_mem@TexHeap@@QAEHH@Z)(TexHeap* this, int)
 // callers   1   call targets   1
@@ -1748,17 +1749,17 @@ Purpose: Hand out the first sheet-heap block whose free tail fits `size` and
 //   members rather than raw offsets; the frame shape is unchanged by that.
 Status: Promoted from src/recovered/units/00635370.cpp.
 */
-int TexHeap::get_tex_mem(int size) {
-    if (basePtr_ != 0) {
+void *TexHeap::get_tex_mem(int size) {
+    if (base_ != 0) {
         int index = 0;
         int count = static_cast<int>(count_) + 1;
         if (count > 0) {
-            Heap **blocks = reinterpret_cast<Heap **>(currentPtr_);
+            Heap **blocks = blocks_;
             do {
                 Heap *block = blocks[index];
-                if ((reinterpret_cast<uint32_t>(block->current_) & 0xffff) == 0 &&
+                if ((reinterpret_cast<uintptr_t>(block->current_) & 0xffff) == 0 &&
                     static_cast<int>(block->free_size_) >= size) {
-                    return reinterpret_cast<int>(block->get(size));
+                    return block->get(size);
                 }
                 ++index;
             } while (index < count);
@@ -2603,29 +2604,29 @@ Sprite g_CURSOR_SPRITES[12];  // 0x0093AA70, 0x2c stride
 
 
 void TexHeap::shutdown() {
-    if (basePtr_ != 0) {
-        free(reinterpret_cast<void *>(basePtr_));
-        basePtr_ = 0;
+    if (base_ != 0) {
+        free(base_);
+        base_ = 0;
     }
 
-    if (currentPtr_ != 0) {
+    if (blocks_ != 0) {
         // The image re-reads count_ for the loop test at every iteration, so
         // the bound stays an expression over the field rather than a local.
         for (int index = 0; index < static_cast<int>(count_) + 1; ++index) {
-            Heap *block = reinterpret_cast<Heap **>(currentPtr_)[index];
+            Heap *block = blocks_[index];
             if (block != 0) {
                 free(block);
-                reinterpret_cast<Heap **>(currentPtr_)[index] = 0;
+                blocks_[index] = 0;
             }
         }
-        if (currentPtr_ != 0) {
-            free(reinterpret_cast<void *>(currentPtr_));
+        if (blocks_ != 0) {
+            free(blocks_);
         }
-        currentPtr_ = 0;
+        blocks_ = 0;
     }
 
     count_ = 0;
-    baseSize_ = 0;
+    capacity_ = 0;
 }
 
 /*
@@ -3305,4 +3306,111 @@ extern "C" void __cdecl sub_450f30(Sprite *sprite, int x, int y,
 // RECOVERY_BINDING: v1 {"evidence": ["git:3f2df6224d8701da7e923701c56365402e6901cf:src/recovered/00450f90.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x450f90 complete native body and call ordering.", "source:src/buffer.cpp:g_PCX_PARSE_TEMP_BUFFER1 binds original storage 0x00798668; source:src/graphicwin.h:public Buffer secondary base supplies the original +0x444 draw receiver adjustment."], "reason": "Sprite/Texture extraction helper using the real shared PCX scratch Buffer; preserve palette remap order, native dimensions and result contract."}
 extern "C" int __cdecl sub_450f90(Texture *texture, int x, int y) {
     return texture->extract(&g_PCX_PARSE_TEMP_BUFFER1, x, y, 0x38, 0x38, 0);
+}
+
+// Heap metadata borrows the arena. Freeing its storage ends that lifetime;
+// invoking Heap::~Heap here would incorrectly free each interior region.
+void TexHeap::release_allocations() {
+    if (base_ != 0) {
+        free(base_);
+        base_ = 0;
+    }
+
+    if (blocks_ != 0) {
+        // The image re-reads count_ for the loop test at every iteration, so
+        // the bound stays an expression over the field rather than a local.
+        for (int index = 0; index < static_cast<int>(count_) + 1; ++index) {
+            Heap *block = blocks_[index];
+            if (block != 0) {
+                free(block);
+                blocks_[index] = 0;
+            }
+        }
+        if (blocks_ != 0) {
+            free(blocks_);
+        }
+        blocks_ = 0;
+    }
+
+}
+
+// ORIGINAL: 0x00634FB0 ??0TexHeap@@QAE@XZ 0x00634FB0-0x00634FC0 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["task:texheap-owner", "Native634FB0fourwordinitialization;634FC0ignores635050statusandreturnsthis;635050arena/table/20byteHeapallocations;635370/6353C0/634FE0sharedmemberconsumers.", "historical source:src/field_accessors.cpp"], "reason": "Recover source-owned typed arena and Heap-pointer table, genuine constructor and borrowed-region Heap lifetimes; initializer returns the native receiver. Preserve allocation order and native omissions, without invented global ownership."}
+// symbol    ??0TexHeap@@QAE@XZ
+TexHeap::TexHeap() {
+    base_ = 0;
+    blocks_ = 0;
+    count_ = 0;
+    capacity_ = 0;
+}
+
+// ORIGINAL: 0x00634FC0 ?UNK1@TexHeap@@QAEHH@Z 0x00634FC0-0x00634FD3 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["task:texheap-owner", "Native634FB0fourwordinitialization;634FC0ignores635050statusandreturnsthis;635050arena/table/20byteHeapallocations;635370/6353C0/634FE0sharedmemberconsumers.", "historical source:src/recovered/00634fc0.cpp"], "reason": "Recover source-owned typed arena and Heap-pointer table, genuine constructor and borrowed-region Heap lifetimes; initializer returns the native receiver. Preserve allocation order and native omissions, without invented global ownership."}
+// symbol    ?initialize@TexHeap@@QAEPAU1@H@Z
+TexHeap *TexHeap::initialize(int count) {
+    configure(count);
+    return this;
+}
+
+// ORIGINAL: 0x00635050 ?UNK2@TexHeap@@QAEHH@Z 0x00635050-0x00635370
+// RECOVERY_BINDING: v1 {"evidence": ["task:texheap-owner", "Native634FB0fourwordinitialization;634FC0ignores635050statusandreturnsthis;635050arena/table/20byteHeapallocations;635370/6353C0/634FE0sharedmemberconsumers.", "historical source:src/unrecovered/00635050.cpp"], "reason": "Recover source-owned typed arena and Heap-pointer table, genuine constructor and borrowed-region Heap lifetimes; initializer returns the native receiver. Preserve allocation order and native omissions, without invented global ownership."}
+// symbol    ?configure@TexHeap@@QAEHH@Z
+// TRIED: MISMATCH #3 mov/push - the four-register prologue (ebx/ebp/esi/edi) the original uses for this heavily-inlined free/loop/alloc body is not reproduced by writing the four inlined cleanup sites as a shared macro; register pressure differs from the start.
+int TexHeap::configure(int count) {
+    release_allocations();
+    count_ = static_cast<uint32_t>(count);
+    const uint32_t entries = count_ + 1u;
+    capacity_ = entries << 16;
+    base_ = static_cast<unsigned char *>(mem_get(capacity_));
+    if (base_ == 0) {
+        return 4;
+    }
+    blocks_ = static_cast<Heap **>(mem_get(entries * sizeof(*blocks_)));
+    if (blocks_ == 0) {
+        if (base_ != 0) {
+            free(base_);
+        }
+        base_ = 0;
+        return 4;
+    }
+
+    void *storage = mem_get(sizeof(Heap));
+    blocks_[0] = static_cast<Heap *>(storage);
+    if (storage == 0) {
+        shutdown();
+        return 4;
+    }
+    // Actual address alignment, not an executable address or self offset.
+    const uintptr_t arena = reinterpret_cast<uintptr_t>(base_);
+    uintptr_t cursor = (arena & ~static_cast<uintptr_t>(0xffff)) + 0x10000;
+    blocks_[0] = new (storage) Heap(base_, static_cast<size_t>(cursor - arena));
+
+    int index = 1;
+    if (count > 1) {
+        do {
+            storage = mem_get(sizeof(Heap));
+            blocks_[index] = static_cast<Heap *>(storage);
+            if (storage == 0) {
+                shutdown();
+                return 4;
+            }
+            blocks_[index] = new (storage) Heap(
+                reinterpret_cast<unsigned char *>(cursor), 0xffff);
+            cursor += 0x10000;
+            ++index;
+        } while (index < count);
+    }
+
+    storage = mem_get(sizeof(Heap));
+    blocks_[count_] = static_cast<Heap *>(storage);
+    if (storage == 0) {
+        shutdown();
+        return 4;
+    }
+    // With count==0 the original overwrites (and leaks) descriptor zero.
+    // Preserve that omission; the normal caller domain is not yet proved.
+    blocks_[count_] = new (storage) Heap(
+        reinterpret_cast<unsigned char *>(cursor),
+        static_cast<size_t>(arena + capacity_ - cursor));
+    return 0;
 }

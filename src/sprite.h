@@ -25,25 +25,36 @@ class Texture;
 class CheckBox;  // controls may draw their selected-state sprites
 class RadioButton;  // controls may draw their selected-state sprites
 
-// THE SHEET HEAP. 0x10 bytes, four uint32 members, the IDB's layout. It used
-// to be declared beside its only members in sprite.cpp; the header is where a
-// class belongs, and Sprite::extract takes a TexHeap* as its last argument.
-// The blocks it hands out are Heap objects - get_mem walks the block table and
-// takes the first block whose free tail fits.
+class Heap;
+
+// One arena split into 64-KiB-bounded borrowed Heap regions. Native635050
+// allocates the pointer table separately; +8 is not a payload cursor.
 struct TexHeap {
-    uint32_t basePtr_;     // 0x0
-    uint32_t baseSize_;    // 0x4
-    uint32_t currentPtr_;  // 0x8
-    uint32_t count_;       // 0xC
-    int get_mem(int size);
+    // RECOVERY_MEMBER: v1 TexHeap base_ 0x0 0x00635050
+    unsigned char *base_;
+    // RECOVERY_MEMBER: v1 TexHeap capacity_ 0x4 0x00635050
+    uint32_t capacity_;
+    // Native indexed loads dereference a table of Heap pointers; the
+    // current annotation grammar measures the offset, not double pointers.
+    // RECOVERY_MEMBER: v1 TexHeap blocks_ 0x8 0x00635050
+    Heap **blocks_;
+    // RECOVERY_MEMBER: v1 TexHeap count_ 0xC 0x00635050
+    uint32_t count_;
+    TexHeap();
+    TexHeap *initialize(int count);
+    int configure(int count);
+    void *get_mem(int size);
     // THE SECOND BLOCK-TABLE WALK, 0x00635370, and the one Texture::extract
     // asks for. Identical head and stride to get_mem above, one extra test in
     // the filter: a block only qualifies when the low half of its `current_`
     // cursor is clear as well as its free tail fitting the request.
-    int get_tex_mem(int size);
+    void *get_tex_mem(int size);
     void shutdown();
-    int UNK1(int size);
+ private:
+    void release_allocations();
 };
+
+static_assert(sizeof(TexHeap) == 0x10, "Original sheet heap footprint");
 
  /*
   * Sprite class
