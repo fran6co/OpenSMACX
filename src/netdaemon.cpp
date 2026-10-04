@@ -70,6 +70,7 @@ int NetPeerTurnChecksums[NetTurnChecksumPeerSlots][NetTurnChecksumWords];
 // for the length of its poll and decrements it on the way out, and
 // MultiWin::draw_time (0x00478BE0) declines to draw the turn clock unless it
 // is zero - so it counts the network exchanges currently in flight.
+// RECOVERY_OBJECT: v2 0x0093F664 0x0093F668 ?NetBusyCount@@3HA 0x00592DE0
 int NetBusyCount;  // 0x0093F664
 // Original 0x0093A960 accumulates the wait durations returned by the daemon's
 // map-order callbacks. Other writers/extent are not yet assigned to an owner.
@@ -471,6 +472,17 @@ NetDaemon::NetDaemon() : AlphaNet() {
 
     locks_.clear();
     AlphaNet::close();
+}
+
+// ORIGINAL: 0x00592DE0 sub_592de0 0x00592DE0-0x00592E0E BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["task:short-network-popup-owner", "historical seed:src/recovered/00592de0.cpp", "pinned:592DE0 increment/send/decrement;51DCC0 two stack arguments and masked x86 SHL count with set/clear behavior", "source:existing NetBusyCount, NetDaemonNet.send_message and PopupWriteCheckState; no new storage or executable calls"], "reason": "Recover the original helper in its existing typed storage owner, preserving historical identity, complete span and byte obligation; descriptive source name is not original debug evidence."}
+// symbol    ?netdaemon_send_message_counted@@YAXPADKH@Z
+void __cdecl netdaemon_send_message_counted(char *message,
+                                          unsigned long length,
+                                          int target) {
+    ++NetBusyCount;
+    NetDaemonNet.send_message(message, length, target);
+    --NetBusyCount;
 }
 
 // ORIGINAL: 0x00593370 sub_593370 0x00593370-0x0059338C BYTE_EXACT
@@ -4847,9 +4859,7 @@ bool opcode0_copy_chunk(size_t chunk_offset, uint8_t *chunk, size_t count,
     if (chunk_offset > 0x398 || count > 0x398 - chunk_offset) return false;
     if (!wire0_range_is_owned(chunk_offset, count)) return false;
     size_t copied = 0;
-#define COPY0(offset, object) \
-    copied += copy_member_bytes(chunk_offset, chunk, count, offset, object, \
-                                packet_to_owner)
+#define COPY0(offset, object) copied += copy_member_bytes(chunk_offset, chunk, count, offset, object, packet_to_owner)
 
     // game.cpp/game.h objects. The four-byte and three-byte opaque objects
     // below are retained independent arrays, not padding or a packed block.
@@ -5051,11 +5061,8 @@ bool copy_nonrule_chunk(int16_t opcode, int a2, int a3, int a4,
     if (offset > payload_size || count > payload_size - offset) return false;
     if (count == 0) return true;
     size_t copied = 0;
-#define COPY_AT(wire, object) \
-    copied += member_copy(offset, packet, count, wire, object, packet_to_owner)
-#define COPY_BYTES(wire, pointer, bytes) \
-    copied += overlap_copy(offset, packet, count, wire, \
-        reinterpret_cast<unsigned char *>(pointer), bytes, packet_to_owner)
+#define COPY_AT(wire, object) copied += member_copy(offset, packet, count, wire, object, packet_to_owner)
+#define COPY_BYTES(wire, pointer, bytes) copied += overlap_copy(offset, packet, count, wire, reinterpret_cast<unsigned char *>(pointer), bytes, packet_to_owner)
 
     switch (opcode) {
     case 0x00: // decimal 0: one interval serialized from separately owned Game globals

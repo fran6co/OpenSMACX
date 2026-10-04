@@ -320,3 +320,6 @@ int __cdecl pop_ask_number(char *caption, char *label,
 
 // Existing source owner: leaf_recoveries.cpp, original 0x00405140.
 int __cdecl POP2(const char *caption, const char *image, int base_id);
+
+// Source-owned original helper; descriptive name, not original debug spelling.
+void __cdecl popup_set_write_check_bit(int bit_index, int enabled);

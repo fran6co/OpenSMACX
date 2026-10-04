@@ -2767,3 +2767,18 @@ void __cdecl scroll_hide(GraphicWin *window, Scroll *scroll) {
     window->Buffer::set_clip(&original_buffer_clip);
     scroll->hide();
 }
+
+// ORIGINAL: 0x0051DCC0 sub_51dcc0 0x0051DCC0-0x0051DCF6 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["task:short-network-popup-owner", "historical seed:src/recovered/0051dcc0.cpp", "pinned:592DE0 increment/send/decrement;51DCC0 two stack arguments and masked x86 SHL count with set/clear behavior", "source:existing NetBusyCount, NetDaemonNet.send_message and PopupWriteCheckState; no new storage or executable calls"], "reason": "Recover the original helper in its existing typed storage owner, preserving historical identity, complete span and byte obligation; descriptive source name is not original debug evidence."}
+// symbol    ?popup_set_write_check_bit@@YAXHH@Z
+void __cdecl popup_set_write_check_bit(int bit_index, int enabled) {
+    if (enabled != 0) {
+        const unsigned int mask = 1U << (static_cast<unsigned int>(bit_index) & 31U);
+        PopupWriteCheckState |= static_cast<int>(mask);
+    } else {
+        int value = PopupWriteCheckState;
+        const unsigned int clear_mask = 1U << (static_cast<unsigned int>(bit_index) & 31U);
+        value &= ~static_cast<int>(clear_mask);
+        PopupWriteCheckState = value;
+    }
+}

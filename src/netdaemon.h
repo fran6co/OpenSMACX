@@ -358,3 +358,6 @@ void __cdecl synch_template(int id);
 void __cdecl synch_radius(int id);
 
 void __cdecl wait_2();
+
+// Source-owned original helper; descriptive name, not original debug spelling.
+void __cdecl netdaemon_send_message_counted(char *message, unsigned long length, int target);
