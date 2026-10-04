@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "task_id": "shared-radius-map-owner",
+  "author": "framework-coordinator",
+  "target": "opensmacx",
+  "base_revision": "f7cdb5fd369a84ab4993ee1a64e3eafbe03084e7",
+  "intent": "Give the originally shared radius offsets and ring-limit tables genuine single map.cpp storage and bounded source mappings, closing a real dependency of the strike/combat owner recovery without private per-TU copies.",
+  "editable_files": ["src/map.h", "src/map.cpp"],
+  "subjects": [
+    {"address": 6040752, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"},
+    {"address": 4652160, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"}
+  ],
+  "evidence": [
+    "Pinned image: RadiusOffsetX66EFBC..66F440 and RadiusOffsetY66F440..66F8C4 are parallel 289 signed-dword arrays; RadiusRange66F8C4..66F8E8 contains nine cardinalities1,9,25,49,81,121,169,225,289. Existing source initializers independently match all pinned bytes. World erosion5C2CB0 and MapWin::UNK646FC80 provide original consumer anchors; bounds and symbols are source evidence, not byte claims.",
+    "Private paired actual-compiler probe at source baseline f7cdb5fd compiles both configured flag sets across all17 direct compiled consumers before/after external linkage migration. Preserve all baseline exact claims and report inherited failures/unknowns; emitted map.cpp external symbols ?RadiusRange@@3QBHB/?RadiusOffsetX@@3QBHB/?RadiusOffsetY@@3QBHB have exact initial storage. This probe is not strict reference or outside-scope linked preservation proof.",
+    "Move initializers verbatim into map.cpp after includes, retaining compiler visibility for same-owner consumers, and declare explicit-size extern const arrays in map.h. Add bounded object annotations with native object_writer; preserve all historical function identities, claims and discoveries. No new function/data acceptance claim or weakened gate.",
+    "Require actual application build/link, native scoped check-data for all three symbols, claim continuity, references and touched source annotation integrity before manual checkpoint. A new compiler-owned object layout does not establish original TU grouping, full-game runtime or automatic acceptance."
+  ]
+}
