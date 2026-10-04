@@ -1,0 +1,44 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "1b629fb32d578355b054b9ab982bb2a763ed9e48",
+  "editable_files": [
+    "src/popup.cpp",
+    "src/popup.h",
+    "src/basepop.h",
+    "src/dialog.h",
+    "src/dialogs.h",
+    "src/listbox.h",
+    "src/spritebox.h",
+    "src/editgroup.h",
+    "src/diplopop.h",
+    "src/maininterface.h",
+    "src/palette.h",
+    "src/unrecovered/00404b10.cpp",
+    "src/unrecovered/00405c80.cpp",
+    "recovery/tests/test_popup_dimensions_background.py",
+    "recovery/tests/popup_dimensions_background_harness.cpp"
+  ],
+  "evidence": [
+    "Pinned original spans404B10-404EEF and405C80-406251 fully decode; source-hierarchy Popup/BasePop/Dialogs/Dialog/widgets owns observed subobjects. Catalogued names do not independently prove virtualness; inspect callers and native tables before declaring overrides.",
+    "Native global733990 is existing DiplomacyPopup, not MainInterfaceGlobal. InterfaceBoxStyles and InterfaceStandardPopupBoxStyle, TextColourTable195 and primary_font accessor own the shared operands. Existing Sprite callback404860 is sprite_draw_func; redraw_callback_ is the actual source BasePop3168 member.",
+    "Root coordinates shared Popup headers and Git/source/compiler epochs; retained animation/font/vehicle checkouts are not active writers. Workers only produce ignored drafts/evidence and host controls. Header scope permits narrow declarations and zero-layout friendship, not invented fields, new aliases, or unrelated behavior changes.",
+    "Preserve all original identities/spans, claims and useful seed TRIED findings; delete seeds only after genuine complete compiled owners, build/link and relevant regression checks. User permits temporary matching regressions, not unapproved behavioral bug fixes: uninitialized RECT path remains explicit until reviewed.",
+    "Coordinator-reviewed coverage checkpoint only, not automatic/full-project acceptance; source scopes and discoveries remain non-derivable versioned decisions. Baseline remains fixed; no native refusal or obligation is waived."
+  ],
+  "intent": "Recover complete Popup dimensions and background drawing using genuine existing bases, widgets, source-owned interface/diplomacy objects and callback, preserving seed identities and discoveries.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4213520,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4217984,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "popup-dimensions-background-owner"
+}
