@@ -1,0 +1,20 @@
+{
+  "event_id": "47eae9e141c0f116f6af490bdf3cd817d105769796ff4c47377edfd9e076991d",
+  "payload": {
+    "affects": [
+      "entity-b0bed06c1bdd36df303aeb8ad4bed015bc8e7237fa2ed4bc36f969eceeb9af5f"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "proposal-attack-callee",
+    "evidence": [
+      "Pinned make_a_proposal54F420 calls545E80; src/unrecovered/00545e80.cpp has original body and cleanup spans with BODY GOES HERE sentinel. User authorizes coverage-first structural work and preservation of all unfinished work."
+    ],
+    "hypothesis": "The recovered make_a_proposal dispatch calls original propose_attack545E80. It exists only as an empty historical seed, not a compiled implementation. Extend the same faction diplomacy ownership group to reconstruct it as typed C++ before removing its seed; no placeholder counts as recovered behavior.",
+    "kind": "discovery"
+  },
+  "previous_event": "b0fbcb26f4cb4944b2b20338746c07aa13adb41db859ec44feb54fa373ad59a4",
+  "request_id": "proposal-attack-callee",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:diplomacy-actions-owner-coverage"
+}

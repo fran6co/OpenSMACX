@@ -1,0 +1,25 @@
+{
+  "event_id": "259661fc29e8a4391815ba9d89e7f408f15fa8fcd6d1ebebae3bee9cbc135ad0",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/unrecovered/00545e80.cpp"
+    ],
+    "evidence": [
+      "Coordinator explicitly admits the demonstrated original propose_attack callee in the existing faction.cpp/faction.h owner, preserving task baseline and source obligations. Recover full body/lifetime; retain seed until meaningful compiling owner and historical findings transfer. No authority for other owners or game acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5529216,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "47eae9e141c0f116f6af490bdf3cd817d105769796ff4c47377edfd9e076991d",
+  "request_id": "admit-proposal-attack",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:diplomacy-actions-owner-coverage"
+}
