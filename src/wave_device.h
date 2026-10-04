@@ -45,12 +45,18 @@ struct WaveGroupList {
 
 // One 24-byte group record; the device holds sixteen of them from 0x24.
 struct WaveControlGroup {
+  // RECOVERY_MEMBER: v1 WaveControlGroup enabled 0x0 0x004C5490
   uint8_t enabled;        // +0x00, zero means the group is disabled
   uint8_t pad[3];
+  // RECOVERY_MEMBER: v1 WaveControlGroup volume 0x4 0x004C5490
   uint32_t volume;        // +0x04, the scale Wave::set_volume folds in
+  // RECOVERY_MEMBER: v3 WaveControlGroup head WaveGroupNode* 0x8 0x004C5B80
   WaveGroupNode *head;    // +0x08
+  // RECOVERY_MEMBER: v3 WaveControlGroup tail WaveGroupNode* 0xC 0x004C5B80
   WaveGroupNode *tail;    // +0x0C, updated only when the last node leaves
+  // RECOVERY_MEMBER: v3 WaveControlGroup cursor WaveGroupNode* 0x10 0x004C5490
   WaveGroupNode *cursor;  // +0x10, the node after the last removal, or null
+  // RECOVERY_MEMBER: v1 WaveControlGroup count 0x14 0x004C5B80
   uint32_t count;         // +0x14
 };
 
@@ -127,6 +133,9 @@ class Wave_Device {
   uint32_t field_18_;
   uint32_t field_1C_;
   uint32_t field_20_;        // 0x20, zeroed at construction
+  // Original4C4DD0 passes this+24, stride24 and count16 to the CRT
+  // constructor iterator. Extent is independent of today's C++ sizeof.
+  // RECOVERY_MEMBER: v4 Wave_Device groups_ WaveControlGroup[16] 0x24 0x180 0x004C4DD0
   WaveControlGroup groups_[16];  // 0x24..0x1A3
 };
 

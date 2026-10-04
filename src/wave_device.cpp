@@ -1534,8 +1534,9 @@ void __fastcall WaveControlGroupOriginalDtor(void *self) {
 }
 
 /*
-Purpose: Construct one control group: the list fields - head, tail, cursor,
-         count - zero out; the enabled byte and volume are left untouched.
+Purpose: Initialize one control group: clear head, tail, cursor and count,
+         then set full volume and enable the group. Native4C54A0/4C54A7
+         establish the last two stores; the old mapped wrapper omitted them.
 // ORIGINAL: 0x004C5490 ??0WaveControlGroup@@QAE@XZ 0x004C5490-0x004C54AB
 // symbol    ?wave_control_group_ctor_redirect@@YIXPAUWaveControlGroup@@PAX@Z
 // size      27 bytes
@@ -1554,6 +1555,8 @@ void __fastcall wave_control_group_ctor_redirect(WaveControlGroup *self,
     self->tail = nullptr;
     self->cursor = nullptr;
     self->count = 0;
+    self->volume = 0x7f;
+    self->enabled = 1;
 }
 
 /*
