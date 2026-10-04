@@ -559,162 +559,6 @@ extern "C" void __cdecl sub_4d5f70(int parallel_base, int *values, int count) {
 }
 
 /*
-Purpose: Release every bucket allocation recorded in a 0x80-slot pointer
-         table plus its overflow slot, clearing the table as it goes.
-// ORIGINAL: 0x004C7300 sub_4c7300 0x004C7300-0x004C7373 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["Original4C7300..4C7373; retired seed git:b18d3ac8:src/unrecovered/004c7300.cpp records the same identity and spans with the fastcall-receiver TRIED note kept below.", "The sole call target 0x0064557F is the CRT operator delete, spelled here as the genuine deletion expression; each populated slot stores a record whose first two words are a successor index and a start index, exactly as the seed walked them."], "reason": "Coverage transcription of the bucket-table teardown with the receiver as an explicit table pointer; no bucket record type exists in-tree, so the index walks stay spelled by word offsets."}
-// symbol    @sub_4c7300@4
-// TRIED: scaffold had 0 params/cdecl; disassembly reads ecx with no stack access -> changed to `__fastcall sub_4c7300(int param_1)`. Redeclared the callee fn_0064557f (operator delete@0x64557f) to take `void *` instead of the scaffold's 0-arg stub. for-loop over the outer bucket scan diverges at instr #24 ('mov' vs rebuilt 'sub').
-Status: Coverage transcription - unclaimed body
-*/
-extern "C" int __fastcall sub_4c7300(int table) {
-    for (int i = 0; i < 0x80; i = i + 1) {
-        int *bucket = *reinterpret_cast<int **>(table + i * 4);
-        if (bucket != 0) {
-            i = *bucket;
-            int *record = *reinterpret_cast<int **>(table + i * 4);
-            unsigned int start = static_cast<unsigned int>(record[1]);
-            unsigned int end = static_cast<unsigned int>(record[0]) + 1;
-            int *slot = reinterpret_cast<int *>(table + start * 4);
-            ::operator delete(reinterpret_cast<void *>(*slot));
-            if (start < end) {
-                unsigned int count = end - start;
-                while (count != 0) {
-                    *slot = 0;
-                    slot = slot + 1;
-                    count = count - 1;
-                }
-            }
-        }
-    }
-    if (*reinterpret_cast<int *>(table + 0x200) != 0) {
-        ::operator delete(
-            reinterpret_cast<void *>(*reinterpret_cast<int *>(table + 0x200)));
-        *reinterpret_cast<int *>(table + 0x200) = 0;
-    }
-    return 0;
-}
-
-/*
-Purpose: Install one name record across a pointer table's index range,
-         cloning the record first and freeing every record the range
-         displaces.
-
-         The record carries two index words, one status word and a
-         0x104-byte name buffer; the clone keeps the name and status and
-         rebuilds the index words from the installed range.
-// ORIGINAL: 0x004C73C0 sub_4c73c0 0x004C73C0-0x004C74A4 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["Original4C73C0..4C74A4; retired seed git:b18d3ac8:src/unrecovered/004c73c0.cpp records the same identity and spans, including the unconditional-strcpy TRIED note kept below.", "The call targets are the CRT operator new(0x110)/operator delete/strcpy/memset the seed measured; the record shape (three words plus a 0x104 name buffer) is the seed's own measured layout, spelled here as a local POD so the allocation and copies are genuine C++."], "reason": "Coverage transcription of the table installer with the thiscall receiver spelled as an explicit first argument; the original receiver is a raw int table, so no class stand-in is introduced."}
-// symbol    @sub_4c73c0@8
-// TRIED: this is a __thiscall member whose `this` (ecx) is a raw `int *` array (indexed `param_1[uVar6]`, no fixed-offset fields), and param_2 is `Entry*` (3 uints + a 0x104-byte name buffer = 0x110 bytes, matching the `operator new(0x110)` allocation size exactly - `local_8` and `param_2` share this same layout). operator new/delete (mangled ??2@.../??3@...) reached via differently-named externs `op_new`/`op_delete` with the real signatures, since the scaffold's fn_0064557f/fn_0064558a are nullary and the call targets are masked from comparison anyway. strcpy is called UNCONDITIONALLY on `local_8->name` even on the `operator new` failure path (ghidra confirms this, not an artifact) - preserved as-is rather than "fixed".
-Status: Coverage transcription - unclaimed body
-*/
-namespace {
-// The installed record's measured shape: two index words, one status word
-// and the 0x104-byte name buffer. 0x110 bytes total.
-struct NameTableEntry {
-    unsigned int first_index_;
-    unsigned int last_index_;
-    unsigned int status_;
-    char name_[0x104];
-};
-}
-
-extern "C" void __fastcall sub_4c73c0(int *table, void *entry_raw) {
-    NameTableEntry *const entry = static_cast<NameTableEntry *>(entry_raw);
-    const unsigned int new_last = entry->last_index_;
-    const unsigned int new_first = entry->first_index_;
-
-    // The original clones unconditionally, and its strcpy runs even when
-    // operator new returned null - preserved exactly as measured.
-    NameTableEntry *clone = new NameTableEntry;
-    if (clone != 0) {
-        memset(clone->name_, 0, 0x104);
-        clone->last_index_ = 0;
-        clone->first_index_ = 0;
-        clone->status_ = 1;
-    }
-
-    strcpy(clone->name_, entry->name_);
-
-    if (clone->first_index_ < new_last) {
-        clone->first_index_ = new_last;
-    }
-    clone->last_index_ = new_last;
-    if (new_first < new_last) {
-        clone->last_index_ = new_first;
-    }
-    clone->first_index_ = new_first;
-    clone->status_ = entry->status_;
-
-    unsigned int slot = new_last;
-    if (new_last <= new_first) {
-        do {
-            int *record = reinterpret_cast<int *>(table[slot]);
-            if (record != 0) {
-                unsigned int freed = static_cast<unsigned int>(record[1]);
-                slot = static_cast<unsigned int>(record[0]) + 1;
-                delete reinterpret_cast<NameTableEntry *>(table[freed]);
-                if (freed < slot) {
-                    int *clear = table + freed;
-                    for (int remaining = slot - freed; remaining != 0;
-                         remaining--) {
-                        *clear = 0;
-                        clear++;
-                    }
-                }
-            }
-            slot = slot + 1;
-        } while (slot <= new_first);
-
-        if (new_last <= new_first) {
-            int *install = table + new_last;
-            for (int remaining = (new_first - new_last) + 1; remaining != 0;
-                 remaining--) {
-                *install = reinterpret_cast<int>(clone);
-                install++;
-            }
-        }
-    }
-}
-
-/*
-Purpose: Rewrite every filename recorded in a 0x80-slot table to live under a
-         directory: append the directory (with a trailing separator added
-         when missing) to each entry's basename.
-// ORIGINAL: 0x004C74F0 sub_4c74f0 0x004C74F0-0x004C75A0 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["Original4C74F0..4C75A0; retired seed git:b18d3ac8:src/unrecovered/004c74f0.cpp records the same identity and spans with the thiscall-receiver TRIED note kept below.", "The callees are the CRT strcpy/strcat/strlen/strrchr the seed measured; each table slot holds a record whose name string starts 0xC bytes in, exactly as the seed walked it."], "reason": "Coverage transcription of the directory rewriter with the receiver spelled as an explicit first argument over the slot table."}
-// symbol    @sub_4c74f0@8
-// TRIED: [ecx+N] reads with no matching stack slot -> a __thiscall receiver (Obj4c74f0), not the given __stdcall(int). 0.89 mnemonic sim; first divergence is prologue register/stack-slot allocation for the `this`/`a1` locals, not chased further.
-Status: Coverage transcription - unclaimed body
-*/
-extern "C" void __fastcall sub_4c74f0(char **table, char *directory) {
-    char dir_buf[0x100];
-    strcpy(dir_buf, directory);
-    const unsigned int len = strlen(dir_buf);
-    if (dir_buf[len - 1] != '\\') {
-        dir_buf[len] = '\\';
-        dir_buf[len + 1] = 0;
-    }
-
-    for (int i = 0x80; i != 0; --i) {
-        char *entry = *table;
-        if (entry != 0) {
-            char *name = entry + 0xC;
-            if (name != 0) {
-                char rewritten[0x100];
-                strcpy(rewritten, dir_buf);
-                char *slash = strrchr(name, '\\');
-                char *basename = (slash != 0) ? slash + 1 : name;
-                strcat(rewritten, basename);
-                strcpy(name, rewritten);
-            }
-        }
-        table = table + 1;
-    }
-}
-
-/*
 Purpose: Install a search path's plain half: release the previous string,
          then store a fresh copy of the given path (or, when one is already
          present in the directory half, that directory with the argument's
@@ -1857,5 +1701,187 @@ extern "C" void __fastcall FlatButton_on_mouse_leave(BaseButton *self, void *,
         NullSlotShim redraw;
         redraw.raw = (*reinterpret_cast<void ***>(self))[62];
         (reinterpret_cast<NullSlotObj *>(self)->*redraw.fn)();
+    }
+}
+
+// These original initializers call CRT functions rather than intrinsic copies.
+#pragma function(memset, strlen, strcpy)
+
+// ORIGINAL: 0x004C7270 sub_4c7270 0x004C7270-0x004C729E BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["task:name-table-owner", "Original4C7270/72A0 initialization,4C7300/7380 inclusive cleanup,4C73C0 cloned0x110-byte records,4C74B0 heap string at200 and4C74F0 inline names at0C.", "historical source:src/recovered/004c7270.cpp"], "reason": "Recover demonstrated inline range/name record and128-slot table accesses as genuine members under provisional ownership names; initializer-versus-constructor identity and historical TU are unproved. Preserve original obligations and seed discoveries."}
+// symbol    ?initialize@NameTableEntry@@QAEPAU1@XZ
+NameTableEntry *NameTableEntry::initialize() {
+    memset(name_, 0, 0x104);
+    low_index_ = 0;
+    high_index_ = 0;
+    status_ = 1;
+    return this;
+}
+
+// ORIGINAL: 0x004C72A0 sub_4c72a0 0x004C72A0-0x004C72F5 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["task:name-table-owner", "Original4C7270/72A0 initialization,4C7300/7380 inclusive cleanup,4C73C0 cloned0x110-byte records,4C74B0 heap string at200 and4C74F0 inline names at0C.", "historical source:src/recovered/units/004c72a0.cpp"], "reason": "Recover demonstrated inline range/name record and128-slot table accesses as genuine members under provisional ownership names; initializer-versus-constructor identity and historical TU are unproved. Preserve original obligations and seed discoveries."}
+// symbol    ?initialize@NameTable@@QAEPAU1@XZ
+NameTable *NameTable::initialize() {
+    memset(&flags_, 0, 4);
+    flags_ = (flags_ & ~4u) | 2u;
+    unknown_208_ = 0;
+    unknown_20c_ = 0;
+    name_ = 0;
+    unknown_210_ = 0;
+    unknown_214_ = 0xFA;
+    memset(slots_, 0, sizeof(slots_));
+    return this;
+}
+
+// ORIGINAL: 0x004C7300 sub_4c7300 0x004C7300-0x004C7373
+// RECOVERY_BINDING: v1 {"evidence": ["task:name-table-owner", "Original4C7270/72A0 initialization,4C7300/7380 inclusive cleanup,4C73C0 cloned0x110-byte records,4C74B0 heap string at200 and4C74F0 inline names at0C.", "historical source:src/stringstruct.cpp"], "reason": "Recover demonstrated inline range/name record and128-slot table accesses as genuine members under provisional ownership names; initializer-versus-constructor identity and historical TU are unproved. Preserve original obligations and seed discoveries."}
+// symbol    ?clear@NameTable@@QAEHXZ
+// TRIED: scaffold had 0 params/cdecl; disassembly reads ecx with no stack access -> changed to `__fastcall sub_4c7300(int param_1)`. Redeclared the callee fn_0064557f (operator delete@0x64557f) to take `void *` instead of the scaffold's 0-arg stub. for-loop over the outer bucket scan diverges at instr #24 ('mov' vs rebuilt 'sub').
+int NameTable::clear() {
+    unsigned int slot_index = 0;
+    while (slot_index < 0x80) {
+        NameTableEntry *entry = slots_[slot_index];
+        if (entry != 0) {
+            // Each installed range points at the same entry. Its +0 word is
+            // the high bound; use that slot to reacquire its range metadata.
+            slot_index = entry->high_index_;
+            NameTableEntry *record = slots_[slot_index];
+            const unsigned int low = record->low_index_;
+            const unsigned int end = record->high_index_ + 1;
+            delete slots_[low];
+            if (low < end) {
+                unsigned int count = end - low;
+                NameTableEntry **slot = slots_ + low;
+                while (count != 0) {
+                    *slot = 0;
+                    ++slot;
+                    --count;
+                }
+            }
+        }
+        ++slot_index;
+    }
+    if (name_ != 0) {
+        ::operator delete(name_);
+        name_ = 0;
+    }
+    return 0;
+}
+
+// ORIGINAL: 0x004C7380 sub_4c7380 0x004C7380-0x004C73B3 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["task:name-table-owner", "Original4C7270/72A0 initialization,4C7300/7380 inclusive cleanup,4C73C0 cloned0x110-byte records,4C74B0 heap string at200 and4C74F0 inline names at0C.", "historical source:src/recovered/004c7380.cpp"], "reason": "Recover demonstrated inline range/name record and128-slot table accesses as genuine members under provisional ownership names; initializer-versus-constructor identity and historical TU are unproved. Preserve original obligations and seed discoveries."}
+// symbol    ?remove_range@NameTable@@QAEIPBUNameTableEntry@@@Z
+unsigned int NameTable::remove_range(const NameTableEntry *range) {
+    unsigned int index = range->low_index_;
+    unsigned int end = range->high_index_;
+    void *victim = slots_[index];
+    ++end;
+    ::operator delete(victim);
+    if (index < end) {
+        for (unsigned int i = index; i < end; ++i) {
+            slots_[i] = 0;
+        }
+    }
+    return end;
+}
+
+// ORIGINAL: 0x004C73C0 sub_4c73c0 0x004C73C0-0x004C74A4
+// RECOVERY_BINDING: v1 {"evidence": ["task:name-table-owner", "Original4C7270/72A0 initialization,4C7300/7380 inclusive cleanup,4C73C0 cloned0x110-byte records,4C74B0 heap string at200 and4C74F0 inline names at0C.", "historical source:src/stringstruct.cpp"], "reason": "Recover demonstrated inline range/name record and128-slot table accesses as genuine members under provisional ownership names; initializer-versus-constructor identity and historical TU are unproved. Preserve original obligations and seed discoveries."}
+// symbol    ?install@NameTable@@QAEXPBUNameTableEntry@@@Z
+// TRIED: this is a __thiscall member whose `this` (ecx) is a raw `int *` array (indexed `param_1[uVar6]`, no fixed-offset fields), and param_2 is `Entry*` (3 uints + a 0x104-byte name buffer = 0x110 bytes, matching the `operator new(0x110)` allocation size exactly - `local_8` and `param_2` share this same layout). operator new/delete (mangled ??2@.../??3@...) reached via differently-named externs `op_new`/`op_delete` with the real signatures, since the scaffold's fn_0064557f/fn_0064558a are nullary and the call targets are masked from comparison anyway. strcpy is called UNCONDITIONALLY on `local_8->name` even on the `operator new` failure path (ghidra confirms this, not an artifact) - preserved as-is rather than "fixed".
+void NameTable::install(const NameTableEntry *entry) {
+    const unsigned int high = entry->high_index_;
+    const unsigned int low = entry->low_index_;
+    NameTableEntry *clone = new NameTableEntry;
+    if (clone != 0) {
+        clone->initialize();
+    }
+
+    // Deliberately unconditional, including the original allocation-failure
+    // path where clone is null.
+    strcpy(clone->name_, entry->name_);
+
+    if (clone->high_index_ < low) {
+        clone->high_index_ = low;
+    }
+    clone->low_index_ = low;
+    if (high < low) {
+        clone->low_index_ = high;
+    }
+    clone->high_index_ = high;
+    clone->status_ = entry->status_;
+
+    unsigned int slot_index = low;
+    if (low <= high) {
+        do {
+            NameTableEntry *record = slots_[slot_index];
+            if (record != 0) {
+                const unsigned int freed_low = record->low_index_;
+                slot_index = record->high_index_ + 1;
+                delete slots_[freed_low];
+                if (freed_low < slot_index) {
+                    NameTableEntry **slot = slots_ + freed_low;
+                    unsigned int count = slot_index - freed_low;
+                    while (count != 0) {
+                        *slot = 0;
+                        ++slot;
+                        --count;
+                    }
+                }
+            }
+            ++slot_index;
+        } while (slot_index <= high);
+
+        NameTableEntry **slot = slots_ + low;
+        unsigned int count = high - low + 1;
+        while (count != 0) {
+            *slot = clone;
+            ++slot;
+            --count;
+        }
+    }
+}
+
+// ORIGINAL: 0x004C74B0 sub_4c74b0 0x004C74B0-0x004C74F0 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["task:name-table-owner", "Original4C7270/72A0 initialization,4C7300/7380 inclusive cleanup,4C73C0 cloned0x110-byte records,4C74B0 heap string at200 and4C74F0 inline names at0C.", "historical source:src/recovered/004c74b0.cpp"], "reason": "Recover demonstrated inline range/name record and128-slot table accesses as genuine members under provisional ownership names; initializer-versus-constructor identity and historical TU are unproved. Preserve original obligations and seed discoveries."}
+// symbol    ?set_name@NameTable@@QAEXPAD@Z
+void NameTable::set_name(char *name) {
+    if (name_ != 0) {
+        ::operator delete(name_);
+    }
+    name_ = static_cast<char *>(::operator new(strlen(name) + 1));
+    strcpy(name_, name);
+}
+
+// ORIGINAL: 0x004C74F0 sub_4c74f0 0x004C74F0-0x004C75A0
+// RECOVERY_BINDING: v1 {"evidence": ["task:name-table-owner", "Original4C7270/72A0 initialization,4C7300/7380 inclusive cleanup,4C73C0 cloned0x110-byte records,4C74B0 heap string at200 and4C74F0 inline names at0C.", "historical source:src/stringstruct.cpp"], "reason": "Recover demonstrated inline range/name record and128-slot table accesses as genuine members under provisional ownership names; initializer-versus-constructor identity and historical TU are unproved. Preserve original obligations and seed discoveries."}
+// symbol    ?rewrite_directory@NameTable@@QAEXPAD@Z
+// TRIED: [ecx+N] reads with no matching stack slot -> a __thiscall receiver (Obj4c74f0), not the given __stdcall(int). 0.89 mnemonic sim; first divergence is prologue register/stack-slot allocation for the `this`/`a1` locals, not chased further.
+void NameTable::rewrite_directory(char *directory) {
+    char dir_buf[0x100];
+    strcpy(dir_buf, directory);
+    const unsigned int length = strlen(dir_buf);
+    if (dir_buf[length - 1] != '\\') {
+        dir_buf[length] = '\\';
+        dir_buf[length + 1] = 0;
+    }
+
+    NameTableEntry **slot = slots_;
+    for (int remaining = 0x80; remaining != 0; --remaining) {
+        NameTableEntry *entry = *slot;
+        if (entry != 0) {
+            // The original forms (entry + 0xC) as a runtime pointer and
+            // tests it, even though ordinary valid records make it non-null.
+            char *name = entry->name_;
+            if (name != 0) {
+                char rewritten[0x100];
+                strcpy(rewritten, dir_buf);
+                char *slash = strrchr(name, '\\');
+                char *basename = (slash != 0) ? slash + 1 : name;
+                strcat(rewritten, basename);
+                strcpy(name, rewritten);
+            }
+        }
+        ++slot;
     }
 }
