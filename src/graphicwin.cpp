@@ -1294,3 +1294,51 @@ Status: Complete
 void GraphicWin::on_update() {
     update(0);
 }
+
+// Superseded seed deleted; binding references retain historical provenance.
+// ORIGINAL: 0x005D68C0 sub_5d68c0 0x005D68C0-0x005D6A42
+// RECOVERY_BINDING: v1 {"evidence": ["task:graphicwin-frame-sprite-owner original identity/spans and all seed lessons retained from src/unrecovered/005d68c0.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:5D68C0..5D6A42 complete native stores, guards and signed jg/equality joins.", "source:src/graphicwin.h existing NCSprites and frame fields; Sprite width18/height1C and Win minima134/138; compute_min_size5D7030 corroborates selection and wrap semantics."], "reason": "Recover complete instance frame-sprite publication in genuine GraphicWin with existing NCSprites, Sprite accessors and Win minimum members. apply_frame_sprites is a provisional semantic name; preserve source input order, caption-bit selection, null guards and low32-bit sums before signed comparison."}
+// symbol    ?apply_frame_sprites@GraphicWin@@QAEXPBUNCSprites@@@Z
+// kind      game
+// TRIED: none confirmed byte-exact; MISMATCH #44 'mov' vs 'jmp' - the IDA-guessed __stdcall(int) contradicts pervasive [ecx+N] reads with no matching stack slot, so this landed as a __thiscall member of a synthetic owner class instead (PROPOSAL below).
+// TRIED: flipping the `(flags & 0x10) == 0` polarity to `!= 0` and swapping which field group goes in which arm moved the first divergence from #31 to #44 (similarity 0.70 -> 0.83).
+void GraphicWin::apply_frame_sprites(const NCSprites *sprites) {
+    if (sprites == 0) {
+        return;
+    }
+    frame_top_left_ = sprites->top_left;
+    frame_top_right_ = sprites->top_right;
+    frame_bottom_left_ = sprites->bottom_left;
+    frame_bottom_right_ = sprites->bottom_right;
+    frame_top_ = sprites->top;
+    frame_left_ = sprites->left;
+    frame_right_ = sprites->right;
+    frame_bottom_ = sprites->bottom;
+    frame_noncaption_left_ = sprites->noncaption_left;
+    frame_noncaption_right_ = sprites->noncaption_right;
+    frame_noncaption_middle_ = sprites->noncaption_middle;
+
+    Sprite *const top_left = (iFlags_ & 0x10) ? frame_top_left_ : frame_noncaption_left_;
+    Sprite *const top_right = (iFlags_ & 0x10) ? frame_top_right_ : frame_noncaption_right_;
+    Sprite *const bottom_left = frame_bottom_left_;
+    Sprite *const bottom_right = frame_bottom_right_;
+    if (!top_left || !top_right || !bottom_left || !bottom_right) {
+        return;
+    }
+
+    int width = frame_dimension_sum(top_left->width(), top_right->width());
+    field_134_ = width;
+    const int bottom_width = frame_dimension_sum(bottom_right->width(), bottom_left->width());
+    if (width <= bottom_width) {
+        width = bottom_width;
+    }
+    field_134_ = width;
+
+    int height = frame_dimension_sum(top_left->height(), bottom_left->height());
+    field_138_ = height;
+    const int right_height = frame_dimension_sum(bottom_right->height(), top_right->height());
+    if (height <= right_height) {
+        height = right_height;
+    }
+    field_138_ = height;
+}

@@ -97,6 +97,8 @@ class GraphicWin : public Win, public Buffer {
   int load_pcx(char *path, Palette *palette, int flags, int transparency);
   // Recompute frame minima only when all four selected corner sprites exist.
   void compute_min_size();
+  // Install instance frame assets, then recompute available corner minima.
+  void apply_frame_sprites(const NCSprites *sprites);
   // load_interface455C73 changes this one corner before recomputing minima.
   void set_frame_top_right(Sprite *sprite) { frame_top_right_ = sprite; }
 
