@@ -23,6 +23,11 @@
 #include <io.h>        // _read/_write/_lseek/_tell - the vx_* IO shims
 #include <new>
 
+// Original readonly IEEE754 scalar is0xC61C4000 (-10000.0f), with no relocation.
+// Datalink and SelectPartWin both multiply their camera vectors by this storage.
+// RECOVERY_OBJECT: v2 0x0066AA40 0x0066AA44 ?CaviarCameraDistance@@3MB 0x00429300
+const float CaviarCameraDistance = -10000.0f;
+
 namespace {
 
 // /O2 implies /Oi, and /Oi expands `memset` into the `rep stosd` form at

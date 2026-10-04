@@ -116,6 +116,7 @@
 class ListBox : public virtual GraphicWin, public virtual Dialog {
   friend class QuayleWin;
   friend class FileWin;
+  friend class Datalink;
  public:
   // AlphaSave's show/hide tests the Win state of this embedded list, reached
   // through ListBox's GraphicWin virtual base in the original image.

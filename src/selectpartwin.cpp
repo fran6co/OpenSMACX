@@ -12,13 +12,12 @@
 #include <cstring>
 
 // These image-owned tables and callbacks have not yet been given C++ data
-// owners. Their use here is limited to the picker background, camera scale,
+// owners. Their use here is limited to the picker background,
 // renderer origin, and modal pump protocol established by the retained exec
 // seed at 0x00433F70.
 static Sprite *const SelectPartTile = (Sprite *)0x006B33F8;
 static const unsigned char *const SelectPartTileColour =
     (const unsigned char *)0x006B3400;
-static float *const SelectPartCameraScale = (float *)0x0066AA40;
 static VOX_Vect *const SelectPartCameraOrigin = (VOX_Vect *)0x00687AD8;
 static int (*const SelectPartModalPump)() =
     (int (*)())0x005398E0;
@@ -61,7 +60,7 @@ int SelectPartWin::exec(int x, int y, int value0, int kind, int selected,
     VOX_Vect camera;
     for (int axis = 0; axis < 3; ++axis) {
         camera.values[axis] = -rotation.values[2][axis] *
-                              *SelectPartCameraScale;
+                              CaviarCameraDistance;
     }
     caviar_.set_camera_direct(&camera, &rotation);
     union { uint32_t bits; float value; } scene_angle;

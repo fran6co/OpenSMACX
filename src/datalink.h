@@ -268,24 +268,10 @@ class Datalink : public GraphicWin, public SubInterface {
   uint32_t field_103E8_;  // 0x103E8
   uint32_t field_103EC_;  // 0x103EC
   uint32_t field_103F0_;  // 0x103F0
-  uint8_t field_103F4_[0x70];  // 0x103F4
-  uint32_t field_10464_;  // 0x10464
-  uint32_t field_10468_;  // 0x10468
-  uint32_t field_1046C_;  // 0x1046C
-  uint32_t field_10470_;  // 0x10470
-  uint32_t field_10474_;  // 0x10474
-  uint32_t field_10478_;  // 0x10478
-  uint32_t field_1047C_;  // 0x1047C
-  uint32_t field_10480_;  // 0x10480
-  uint8_t field_10484_[0x70];  // 0x10484
-  uint32_t field_104F4_;  // 0x104F4
-  uint32_t field_104F8_;  // 0x104F8
-  uint32_t field_104FC_;  // 0x104FC
-  uint32_t field_10500_;  // 0x10500
-  uint32_t field_10504_;  // 0x10504
-  uint32_t field_10508_;  // 0x10508
-  uint32_t field_1050C_;  // 0x1050C
-  uint32_t field_10510_;  // 0x10510
+  // Init writes eight backwards rows, nine forwards rows, then overwrites
+  // row16 and fills row17 for the two special buttons. Other controls use0..15.
+  // RECOVERY_MEMBER: v4 Datalink topic_button_bounds_ tagRECT[18] 0x103F4 0x120 0x00429300
+  RECT topic_button_bounds_[18];  // 0x103F4..0x10514
   // RECOVERY_MEMBER: v2 Datalink concept_box_ StringBox 0x10514 0x0042C438
   StringBox concept_box_;  // 0x10514
   // RECOVERY_MEMBER: v2 Datalink blurb_box_ StringBox 0x130B4 0x0042BEC0

@@ -13,6 +13,9 @@
 // renderer's own Buffer-taking members declared below.
 class Buffer;
 
+// Shared renderer camera scale, independently read from original readonly data.
+extern const float CaviarCameraDistance;
+
 struct VOX_Vect {
   float values[3];
 };
