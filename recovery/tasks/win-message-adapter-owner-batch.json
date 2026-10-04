@@ -1,0 +1,45 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "74d6a8e2f7f2d008bb2754283e421e4843079ce2",
+  "editable_files": [
+    "src/win.cpp",
+    "src/win.h",
+    "src/recovered/units/005f1230.cpp",
+    "src/recovered/units/005f1280.cpp",
+    "src/recovered/units/005f12e0.cpp",
+    "src/recovered/units/005f1310.cpp",
+    "recovery/tests/test_win_adapter_owner_behavior.py",
+    "recovery/tests/win_adapter_owner_control.cpp"
+  ],
+  "evidence": [
+    "Pinned native complete spans: 5F1230..5F127F,5F1280..5F12A1,5F12E0..5F130B,5F1310..5F133B. GetWindowLongA retrieves Win userdata; virtual slots68,69,71,72 match existing typed declarations. Position-changing fallback preserves main-window/null-owner DefWindowProcA WM_WINDOWPOSCHANGING payload.",
+    "The separate moved adapter5F12B0 is deliberately excluded: its incidental EAX return contract is unresolved. Absence of mapped callers or embedded absolute pointers does not prove callbacks unreachable.",
+    "Coordinator-reviewed integration requires actual-body controls, native measurement, application build/link, source/reference and historical identity continuity checks. No full linked preservation, game acceptance or original runtime equivalence is claimed. No automatic demotion or weakened gate."
+  ],
+  "intent": "Recover four complete native window adapters through existing typed Win virtual methods and Windows APIs; preserve original identity, spans, claims and discoveries, and retire seeds only after fresh measurement and build/link.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6230576,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6230656,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6230752,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6230800,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "win-message-adapter-owner-batch"
+}
