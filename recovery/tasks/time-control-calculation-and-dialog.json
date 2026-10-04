@@ -1,0 +1,39 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "338b9b3aa89f6bb2ea3a94ef46c0ff17e6bee61c",
+  "editable_files": [
+    "src/game.cpp",
+    "src/game.h",
+    "src/popup.cpp",
+    "src/popup.h",
+    "src/console.cpp",
+    "src/netwin.cpp",
+    "src/pending_bodies.cpp",
+    "src/recovered/units/00523c60.cpp",
+    "src/recovered/units/00589330.cpp",
+    "recovery/tests/test_time_controls.py",
+    "recovery/tests/time_controls_harness.cpp"
+  ],
+  "evidence": [
+    "Pinned original spans523C60..523DC9 and589330..58954A; complete native instructions reviewed against typed source TimeControl, PlayersData, Vehs, Popup dialogs and label_get.",
+    "Vehicle scan starts at Vehs[0].state95282C; faction bonuses2054 update before active mask filtering. 93E968 is NetDaemonNet.lock_state_[2].trailing_words_[8], not adjacent message count93E964. Native redundant state mask retained.",
+    "Dialog formats turn, base and unit (not event), six rows and exact original punctuation/call order. PopMenu publicly derives Popup; source-owned direct call replaces NetWin fixed-address forwarder and pending_bodies duplicate.",
+    "Manual coordinator-reviewed integration authorized by user: complete bodies, actual-source behavior/damage controls, compile/link, relevant scoped checks and identity continuity. No new byte claim, demotion, task baseline reset, intentional behavior change or full acceptance claim."
+  ],
+  "intent": "Recover the complete turn-duration calculation and time-control popup rows in genuine source owners, replacing both pending dialog routes and retaining seed history.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5389408,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5804848,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "time-control-calculation-and-dialog"
+}
