@@ -11325,3 +11325,221 @@ int __cdecl buy_tech(int faction_id, int other_faction_id, int action,
     diplomacy_caption(faction_id, other_faction_id);
     return 1;
 }
+
+// ORIGINAL: 0x00540630 ?energy_trade@@YAHHH@Z 0x00540630-0x005410F3
+// RECOVERY_BINDING: v1 {"evidence": ["task:diplomacy-actions-owner-coverage", "Pinned540630-5410F3 full decoded instructions and verified literal keys68D74C-68D7CC", "Native54067D other-to-actor pact row;5406F1 tech_ranking35C;540D81/540D93 commerce304;54093B/54094A scaled3/4;540F15 wrapped signed product divided100;54106D storesperiodcount", "historical seed:src/unrecovered/00540630.cpp", "User2026-10-04 coverage-first regression approval; bounded89-byte GameTechAchieved leavesF800=-1 reachable fromindependent outgoingFAA8 selection"], "reason": "Recover complete faction freebie, energy-for-technology and loan flows through existing typed faction/global owners and real popup/parser/network services. Preserve directed treaty rows, technology versus commerce ranking, wrapped signed valuation, live modal selections, network transfer order and the native period-count loan field. The selected-technology bitmap lookup uses the documented coverage-first divisor1 safety fallback outside its proven bounds; no byte or game acceptance claim."}
+// symbol    ?energy_trade@@YAHHH@Z
+// TRIED: full goto/label transcription mirroring Ghidra's control flow 1:1 (verified array strides/index scaling against raw disasm at the entry points); diverges at insn #11, near the DAT_0093fab0 tech-stage dispatch (call vs mov) - likely bVar2 computed via a branchy compare sequence in the original rather than a plain OR.
+int __cdecl energy_trade(int faction, int other) {
+    PopupDialogFactionID = other;
+    tech_analysis(faction, other);
+    const int mode = DiplomacyProposalMode;
+    const bool offer_technology = mode == 4 || mode == 2;
+    char number[80];
+
+    if ((PlayersData[other].diplo_treaties[faction] & 1u) != 0 && mode != 6
+        && static_cast<int>(PlayersData[other].ranking)
+            > diplo_add(static_cast<int>(PlayersData[faction].ranking), 1)
+        && PlayersData[other].energy_reserves
+            > diplo_mul(PlayersData[faction].energy_reserves, 2)
+        && PlayersData[other].tech_ranking > PlayersData[faction].tech_ranking
+        && PlayersData[other].energy_reserves > diplo_mul(TurnCurrentNum, 4)
+        && PlayersData[other].diplo_patience[faction] < 2
+        && (DiploScratchFAA8 < 0 || mode == 1)) {
+        int amount = diplo_clamp(PlayersData[other].energy_reserves / 8, 1, 500);
+        amount = diplo_mul(diplo_add(amount, 24) / 25, 25);
+        // Native540777..54077B chooses the larger value, even when this
+        // gives away the entire reserve. Do not silently reverse that test.
+        if (amount < PlayersData[other].energy_reserves)
+            amount = PlayersData[other].energy_reserves;
+        const int debit = diplo_sub(0, amount);
+        if (IsMultiplayerNet) {
+            log_say("Sending ENERGY", other, faction, debit);
+            message_data(0x2447, 0, other, debit, faction, amount);
+            NetDaemonNet.await_diplo(0x447);
+        } else {
+            if (other) PlayersData[other].energy_reserves =
+                diplo_add(PlayersData[other].energy_reserves, debit);
+            if (faction) PlayersData[faction].energy_reserves =
+                diplo_add(PlayersData[faction].energy_reserves, amount);
+            ConsoleGlobal.update_data(1);
+        }
+        PlayersData[other].diplo_patience[faction] = static_cast<char>(
+            static_cast<unsigned char>(PlayersData[other].diplo_patience[faction]) + 2u);
+        strcpy(StringTemp, "ENERGYFREEBIE");
+        _itoa(random(0, 2), number, 10);
+        strcat(StringTemp, number);
+        x_pops_short(StringTemp, 0x100000, FactionDiplomacyPortraits[other], pop_wait);
+        return 0;
+    }
+
+    const bool loan_mode = mode == 6 || mode == 1 || (mode == 2 && DiploScratchFAA8 < 0);
+    if (!loan_mode && offer_technology) {
+        GenderDefault = Players[faction].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(0, Players[faction].title_leader, -1, -1);
+        GenderDefault = Players[faction].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(1, Players[faction].name_leader, -1, -1);
+        if (DiploScratchFAA8 < 0 || !strcmp(Players[other].filename, "BELIEVE")) {
+            x_pops_short("REJSELLNONE", 0x100000, FactionDiplomacyPortraits[other], pop_wait);
+            return 0;
+        }
+        const char *other_filename = Players[other].filename;
+        int scale = diplo_mul(diplo_add(TurnCurrentNum, 7) / 8, 32);
+        if (great_satan(faction, 0)) scale = diplo_mul(scale, 3) / 4;
+        // Use the same provisional divisor1 safety policy as buy_tech for
+        // a selected ID outside the independently bounded ownership bitmap.
+        // tech_analysis can leave F800=-1 while outgoing FAA8 is valid.
+        int divisor = 1;
+        if (DiploScratchF800 >= 0 && DiploScratchF800 < 89)
+            divisor = diplo_clamp(bit_count(GameTechAchieved[DiploScratchF800]) - 1, 1, 99);
+        scale /= divisor;
+        int amount = diplo_mul(tech_val(DiploScratchFAA8, other, 1), scale) / 32;
+        int second_value = 0;
+        if (DiploScratchFA18 >= 0)
+            second_value = diplo_mul(tech_val(DiploScratchFA18, other, 1), scale) / 32;
+        const int available = PlayersData[other].energy_reserves / 2;
+        if (amount < 0 || available < 0) amount = 0;
+        else if (available < amount) amount = available;
+        amount = diplo_mul(amount / 25, 25);
+        if (amount < 25) amount = 25;
+        if (second_value < 25) second_value = 25;
+        if (!amount) {
+            x_pops_short("REJSELLAFFORD", 0x100000, FactionDiplomacyPortraits[other], pop_wait);
+            return 0;
+        }
+        int answer;
+        for (;;) {
+            StringTemp[0] = 0;
+            say_tech(StringTemp, DiploScratchFAA8, 1);
+            parse_says(0, StringTemp, -1, -1);
+            if (DiploScratchFA18 >= 0) {
+                StringTemp[0] = 0;
+                say_tech(StringTemp, DiploScratchFA18, 1);
+                parse_says(1, StringTemp, -1, -1);
+            }
+            parse_num(0, amount);
+            strcpy(StringTemp, "ENERGYTECH");
+            if (DiploScratchFA18 >= 0) strcat(StringTemp, "2");
+            else {
+                _itoa(random(0, 2), number, 10);
+                strcat(StringTemp, number);
+            }
+            answer = x_pops_short(StringTemp, 0x100000, FactionDiplomacyPortraits[other], pop_wait);
+            if (!answer) return 0;
+            if ((answer == 2 && DiploScratchFA18 < 0) || answer == 3) {
+                help_topic(14, DiploScratchFAA8);
+                continue;
+            }
+            break;
+        }
+        int tech;
+        if (answer == 2) {
+            if (!strcmp(other_filename, "HIVE")
+                || (amount < second_value && strcmp(other_filename, "UNIV"))) {
+                x_pops_short("REJSELLSECOND", 0x100000, FactionDiplomacyPortraits[other], pop_wait);
+                return 0;
+            }
+            x_pops_short("SELLSECOND", 0x100000, FactionDiplomacyPortraits[other], pop_wait);
+            tech = DiploScratchFA18;
+        } else tech = DiploScratchFAA8;
+        if (IsMultiplayerNet) {
+            log_say("Sending TECH", other, tech, faction);
+            message_data(0x244B, 0, other, tech, faction, 0);
+        } else tech_achieved(other, tech, faction, 0);
+        if (answer != 2) DiploScratchFAA8 = DiploScratchFA18;
+        DiploScratchFA18 = -1;
+        const int debit = diplo_sub(0, amount);
+        if (IsMultiplayerNet) {
+            log_say("Sending ENERGY", other, faction, debit);
+            message_data(0x2447, 0, other, debit, faction, amount);
+            NetDaemonNet.await_diplo(0x447);
+        } else {
+            if (other) PlayersData[other].energy_reserves =
+                diplo_add(PlayersData[other].energy_reserves, debit);
+            if (faction) PlayersData[faction].energy_reserves =
+                diplo_add(PlayersData[faction].energy_reserves, amount);
+            ConsoleGlobal.update_data(1);
+        }
+        ConsoleInfoWin.set_redraw_phase(0);
+        ConsoleGlobal.update_data(0);
+        return 1;
+    }
+
+    if (loan_mode) {
+        int principal;
+        const int reserve = PlayersData[other].energy_reserves;
+        if (PlayersData[other].tech_commerce_bonus < PlayersData[faction].tech_commerce_bonus)
+            principal = reserve / 4;
+        else if (PlayersData[other].tech_commerce_bonus == PlayersData[faction].tech_commerce_bonus)
+            principal = reserve / 3;
+        else principal = reserve / 2;
+        if (reserve < PlayersData[faction].energy_reserves && strcmp(Players[other].filename, "MORGAN"))
+            principal = 0;
+        if (PlayersData[faction].loan_balance[other] || PlayersData[other].loan_balance[faction])
+            principal = 0;
+        const uint32_t other_treaty = PlayersData[other].diplo_treaties[faction];
+        if ((other_treaty & 0x30u) || !(other_treaty & 2u) || principal < 10)
+            principal = 0;
+        int surcharge = diplo_mul(diplo_add(diplo_add(DiploScratchFA78, 10),
+            diplo_mul(diplo_sub(PlayersData[other].tech_commerce_bonus,
+                              PlayersData[faction].tech_commerce_bonus), 2)), 5);
+        if (PlayersData[faction].diplo_treaties[other] & 1u) {
+            surcharge = diplo_sub(surcharge, 10);
+            if (static_cast<int>(PlayersData[other].ranking) > static_cast<int>(PlayersData[faction].ranking))
+                surcharge = diplo_sub(surcharge, 10);
+        }
+        if (surcharge < 0) surcharge = 0;
+        int payment = diplo_mul(diplo_sub(10, DiploScratchFA78), 10);
+        if (payment < 20) payment = 20;
+        if (principal) {
+            const int total = diplo_mul(diplo_add(surcharge, 100), principal) / 100;
+            if (payment < 10 || total < 10) payment = 10;
+            else if (total < payment) payment = total;
+            const int periods = diplo_add(diplo_sub(total, 1), payment) / payment;
+            const int balance = diplo_mul(periods, payment);
+            parse_num(0, principal);
+            parse_num(1, periods);
+            parse_num(2, payment);
+            GenderDefault = Players[faction].is_leader_female;
+            PluralityDefault = 0;
+            parse_says(0, Players[faction].title_leader, -1, -1);
+            GenderDefault = Players[faction].is_leader_female;
+            PluralityDefault = 0;
+            parse_says(1, Players[faction].name_leader, -1, -1);
+            strcpy(StringTemp, "ENERGYLOAN");
+            _itoa((periods != 1) + 1, number, 10);
+            strcat(StringTemp, number);
+            if (!x_pops_short(StringTemp, 0x100000, FactionDiplomacyPortraits[other], pop_wait))
+                return 0;
+            if (IsMultiplayerNet) {
+                log_say("Sending LOAN", faction, other, balance);
+                message_data(0x244E, 0, faction, other, balance, periods);
+            } else {
+                PlayersData[faction].loan_balance[other] = balance;
+                // Native541067..54106D stores the rounded balance and the
+                // period count, not the per-period amount displayed in slot2.
+                PlayersData[faction].loan_payment[other] = periods;
+            }
+            const int debit = diplo_sub(0, principal);
+            if (IsMultiplayerNet) {
+                log_say("Sending ENERGY", other, faction, debit);
+                message_data(0x2447, 0, other, debit, faction, principal);
+                NetDaemonNet.await_diplo(0x447);
+            } else {
+                if (other) PlayersData[other].energy_reserves =
+                    diplo_add(PlayersData[other].energy_reserves, debit);
+                if (faction) PlayersData[faction].energy_reserves =
+                    diplo_add(PlayersData[faction].energy_reserves, principal);
+                ConsoleGlobal.update_data(1);
+            }
+            return 1;
+        }
+    }
+    strcpy(StringTemp, "REJENERGY");
+    _itoa(random(0, 2), number, 10);
+    strcat(StringTemp, number);
+    x_pops_short(StringTemp, 0x100000, FactionDiplomacyPortraits[other], pop_wait);
+    return 0;
+}

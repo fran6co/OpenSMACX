@@ -1156,3 +1156,5 @@ void __cdecl make_gift(int giver, int receiver);
 
 int __cdecl buy_tech(int faction_id, int other_faction_id, int action,
                      int is_commlink, int mode);
+
+int __cdecl energy_trade(int faction, int other);

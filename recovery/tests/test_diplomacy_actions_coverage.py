@@ -587,3 +587,122 @@ int main() {
         assert build.returncode==0,build.stderr
         run=subprocess.run([str(binary)],capture_output=True,text=True,timeout=10)
         assert (run.returncode==0)==(name=='actual'),name+run.stderr
+
+@pytest.mark.parametrize('compiler_name', ['g++', 'clang++'])
+def test_actual_energy_trade(tmp_path, compiler_name):
+    compiler = shutil.which(compiler_name)
+    if not compiler:
+        pytest.skip(compiler_name + ' unavailable')
+    source = (ROOT / 'src/faction.cpp').read_text()
+    body = definition(source, r'int __cdecl energy_trade\([^)]*\)')
+    helpers = '\n'.join(definition(source, r'static int ' + name + r'\([^)]*\)(?=\s*\{)')
+                        for name in ('diplo_add', 'diplo_sub', 'diplo_mul', 'diplo_clamp'))
+    fixture = r"""
+#include <cassert>
+#include <cstdio>
+#include <cstring>
+#define __cdecl
+typedef unsigned int uint32_t;
+struct Sprite {} portraits[8]; Sprite *FactionDiplomacyPortraits[8];
+struct Player { int is_leader_female; char title_leader[24],name_leader[24],filename[24]; } Players[8];
+struct Data { uint32_t diplo_treaties[8],ranking; int energy_reserves,tech_ranking,tech_commerce_bonus;
+ char diplo_patience[8]; int loan_balance[8],loan_payment[8]; } PlayersData[8];
+int PopupDialogFactionID,DiplomacyProposalMode,DiploScratchFAA8,DiploScratchFA18;
+int DiploScratchF800,DiploScratchFA78,TurnCurrentNum,IsMultiplayerNet,GenderDefault,PluralityDefault;
+unsigned char GameTechAchieved[89]; char StringTemp[128],key[128];
+int responses[8],response_count,pops,helps,first_value,second_value,satan;
+int money_messages,tech_messages,loan_messages,tech_calls,awaits,redraws,nums[3],mutate;
+int purchased,loan_balance,loan_periods,transferred;
+int pop_wait() { return 0; }
+void tech_analysis(int a,int b) { assert(a==1 && b==2); }
+int bit_count(unsigned n) { int r=0; while(n) { r+=n&1; n>>=1; } return r; }
+int great_satan(int a,int z) { assert(a==1 && !z); return satan; }
+int tech_val(int t,int owner,int simple) { assert(owner==2 && simple==1); return t==3?first_value:second_value; }
+void say_tech(char *s,int t,int cat) { assert(s==StringTemp && !*s && cat==1); std::sprintf(s,"tech%d",t); }
+int parse_says(int n,char *s,int a,int b) { assert(n>=0 && n<2 && s && a==-1 && b==-1); return 0; }
+void parse_num(int n,int v) { assert(n>=0 && n<3); nums[n]=v; }
+int random(int a,int b) { assert(!a && b==2); return 1; }
+char *_itoa(int n,char *s,int base) { assert(base==10); std::sprintf(s,"%d",n); return s; }
+void help_topic(int cat,int tech) { assert(cat==14 && tech==3); ++helps; }
+int x_pops_short(const char *s,int flags,Sprite *p,int(*cb)()) {
+ assert(flags==0x100000 && p==FactionDiplomacyPortraits[2] && cb==pop_wait);
+ std::strcpy(key,s); assert(pops<8); int result=responses[pops++];
+ if(mutate && !std::strcmp(s,"SELLSECOND")) { DiploScratchFA18=6; IsMultiplayerNet=1; }
+ return result;
+}
+void log_say(const char *s,int a,int b,int c) { assert(s && a>=0 && b>=0); }
+void message_data(int op,int z,int a,int b,int c,int d) {
+ assert(!z);
+ if(op==0x2447) { assert(a==2 && c==1 && b==-d); ++money_messages; transferred=d; }
+ else if(op==0x244b) { assert(a==2 && c==1 && !d); ++tech_messages; purchased=b; }
+ else { assert(op==0x244e && a==1 && b==2); ++loan_messages; loan_balance=c; loan_periods=d; }
+}
+struct Net { void await_diplo(int op) { assert(op==0x447); ++awaits; } } NetDaemonNet;
+struct Info { void set_redraw_phase(int n) { assert(!n); } } ConsoleInfoWin;
+struct Console { void update_data(int n) { redraws+=n?1:10; } } ConsoleGlobal;
+void tech_achieved(int a,int t,int b,int z) { assert(a==2 && b==1 && !z); ++tech_calls; purchased=t; }
+@@BODY@@
+void reset(int mode=4) {
+ std::memset(Players,0,sizeof(Players)); std::memset(PlayersData,0,sizeof(PlayersData));
+ std::memset(GameTechAchieved,0,sizeof(GameTechAchieved));
+ for(int i=0;i<8;++i) { FactionDiplomacyPortraits[i]=&portraits[i]; responses[i]=1; }
+ DiplomacyProposalMode=mode; DiploScratchFAA8=3; DiploScratchFA18=5; DiploScratchF800=-1;
+ DiploScratchFA78=2; TurnCurrentNum=8; IsMultiplayerNet=0;
+ response_count=pops=helps=satan=money_messages=tech_messages=loan_messages=tech_calls=awaits=redraws=mutate=0;
+ first_value=300; second_value=200; purchased=-1; transferred=loan_balance=loan_periods=0;
+ PlayersData[1].energy_reserves=100; PlayersData[2].energy_reserves=500;
+ std::strcpy(Players[2].filename,"OTHER"); key[0]=0;
+}
+int run() { return energy_trade(1,2); }
+int main() {
+ reset(3); assert(!run() && !tech_calls && !std::strcmp(key,"REJENERGY1"));
+ reset(1); PlayersData[2].diplo_treaties[1]=1; PlayersData[2].ranking=3; PlayersData[1].ranking=1; PlayersData[2].tech_ranking=10;
+ assert(!run() && PlayersData[1].energy_reserves==600 && PlayersData[2].energy_reserves==0 && PlayersData[2].diplo_patience[1]==2 && !std::strcmp(key,"ENERGYFREEBIE1"));
+ reset(1); PlayersData[1].diplo_treaties[2]=1; PlayersData[2].ranking=3; PlayersData[2].tech_ranking=10;
+ assert(!run() && PlayersData[1].energy_reserves==100 && !std::strcmp(key,"REJENERGY1"));
+ reset(); assert(run() && purchased==3 && tech_calls==1 && nums[0]==250 && PlayersData[1].energy_reserves==350 && PlayersData[2].energy_reserves==250 && DiploScratchFAA8==5 && DiploScratchFA18==-1 && redraws==11);
+ reset(); DiploScratchFA18=-1; assert(run() && !std::strcmp(key,"ENERGYTECH1"));
+ reset(); first_value=120; second_value=80; satan=1; assert(run() && nums[0]==75);
+ reset(); responses[0]=3; assert(run() && helps==1 && pops==2);
+ reset(); responses[0]=0; assert(!run() && !tech_calls && !redraws);
+ reset(); std::strcpy(Players[2].filename,"BELIEVE"); assert(!run() && !std::strcmp(key,"REJSELLNONE"));
+ reset(); std::strcpy(Players[2].filename,"HIVE"); responses[0]=2; assert(!run() && !tech_calls && !std::strcmp(key,"REJSELLSECOND"));
+ reset(); first_value=80; responses[0]=2; assert(!run() && !std::strcmp(key,"REJSELLSECOND"));
+ reset(); first_value=80; std::strcpy(Players[2].filename,"UNIV"); responses[0]=2; mutate=1;
+ assert(run() && purchased==6 && !tech_calls && tech_messages==1 && money_messages==1 && transferred==75 && awaits==1 && DiploScratchFAA8==3);
+ reset(); IsMultiplayerNet=1; assert(run() && tech_messages==1 && money_messages==1 && awaits==1 && !tech_calls && redraws==10);
+ reset(6); PlayersData[2].energy_reserves=600; PlayersData[2].diplo_treaties[1]=2;
+ assert(run() && nums[0]==200 && nums[1]==4 && nums[2]==80 && PlayersData[1].loan_balance[2]==320 && PlayersData[1].loan_payment[2]==4 && PlayersData[1].energy_reserves==300 && PlayersData[2].energy_reserves==400 && !std::strcmp(key,"ENERGYLOAN2"));
+ reset(6); PlayersData[2].energy_reserves=600; PlayersData[2].diplo_treaties[1]=2; IsMultiplayerNet=1;
+ assert(run() && loan_balance==320 && loan_periods==4 && transferred==200 && loan_messages==1 && money_messages==1 && awaits==1);
+ reset(6); PlayersData[1].energy_reserves=1000; PlayersData[2].diplo_treaties[1]=2;
+ assert(!run() && !std::strcmp(key,"REJENERGY1"));
+ reset(6); PlayersData[1].energy_reserves=1000; PlayersData[2].diplo_treaties[1]=2; std::strcpy(Players[2].filename,"MORGAN");
+ assert(run() && PlayersData[1].energy_reserves==1166);
+ reset(6); PlayersData[2].diplo_treaties[1]=2; PlayersData[1].loan_balance[2]=1; assert(!run());
+ reset(6); PlayersData[2].energy_reserves=600; PlayersData[2].diplo_treaties[1]=2; PlayersData[2].tech_commerce_bonus=1;
+ assert(run() && nums[0]==300 && nums[1]==7 && nums[2]==80 && PlayersData[1].loan_balance[2]==560 && PlayersData[1].loan_payment[2]==7);
+ reset(6); PlayersData[2].energy_reserves=60000000; PlayersData[2].diplo_treaties[1]=2;
+ assert(run() && nums[0]==20000000 && nums[1]==-1094966 && nums[2]==10 && PlayersData[1].loan_balance[2]==-10949660 && PlayersData[1].loan_payment[2]==-1094966);
+}
+"""
+    variants = {'actual': body}
+    for name, old, new in (
+        ('wrong_freebie_row', 'PlayersData[other].diplo_treaties[faction] & 1u', 'PlayersData[faction].diplo_treaties[other] & 1u'),
+        ('wrong_sale_scale', 'diplo_mul(scale, 3) / 4', 'diplo_mul(scale, 3) / 32'),
+        ('wrong_loan_field', 'loan_payment[other] = periods', 'loan_payment[other] = payment'),
+        ('unsafe_bitmap', 'DiploScratchF800 >= 0 && DiploScratchF800 < 89', 'DiploScratchF800 < 89'),
+        ('unsigned_repayment', 'diplo_mul(diplo_add(surcharge, 100), principal) / 100',
+         'static_cast<int>(static_cast<uint32_t>(diplo_mul(diplo_add(surcharge, 100), principal)) / 100u)'),
+    ):
+        assert old in body
+        variants[name] = body.replace(old, new)
+    for name, candidate in variants.items():
+        cpp, binary = tmp_path / (name + '.cpp'), tmp_path / name
+        cpp.write_text(fixture.replace('@@BODY@@', helpers + '\n' + candidate))
+        build = subprocess.run([compiler, '-std=c++98', '-fsanitize=undefined',
+                                '-fno-sanitize-recover=all', str(cpp), '-o', str(binary)],
+                               capture_output=True, text=True, timeout=45)
+        assert build.returncode == 0, build.stderr
+        result = subprocess.run([str(binary)], capture_output=True, timeout=15)
+        assert (result.returncode == 0) == (name == 'actual'), (name, result.stderr)
