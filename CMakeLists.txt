@@ -155,6 +155,7 @@ set(OPENSMACX_SOURCES
     src/flic.cpp
     src/font.cpp
     src/game.cpp
+    src/newgame.cpp
     src/general.cpp
     src/graphicwin.cpp
     src/heap.cpp

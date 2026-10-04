@@ -597,11 +597,8 @@ void __cdecl basepop_close_class() {
 // ?world_rivers@@YAXXZ at 0x005C38B0 - HOMED into src/map.cpp 2026-09-05 (see
 // the marker there), so this file no longer carries it.
 
-// ?custom_planet@@YAHHH@Z at 0x0058C2A0 - body in src/unrecovered/0058c2a0.cpp
-int __cdecl custom_planet(int a, int b) {
-    typedef int(__cdecl *pending)(int, int);
-    return PENDING_BODY(0x0058C2A0, pending)(a, b);
-}
+// custom_planet58C2A0 has its complete source owner in newgame.cpp.
+// Complete body is source-owned in newgame.cpp.
 
 // load_faction_art at 0x00453710 - body in src/unrecovered/00453710.cpp.
 // Was a temp.h function POINTER (`func5 *const load_faction_art`); see the
@@ -690,10 +687,7 @@ void __fastcall datalink_init(Datalink *self) {
 // 2026-08-29, beside desktop_close / close_opening / game_close.
 
 // ?top_menu@@YAHH@Z at 0x0058E360
-int __cdecl top_menu(int mode) {
-    typedef int(__cdecl *pending)(int);
-    return PENDING_BODY(0x0058E360, pending)(mode);
-}
+// Complete body is source-owned in newgame.cpp.
 
 // ?desktop_init@@YAHH@Z at 0x0058EE60
 int __cdecl desktop_init(int fresh) {
@@ -702,10 +696,7 @@ int __cdecl desktop_init(int fresh) {
 }
 
 // ?multiplayer_init@@YAHH@Z at 0x0058DB30
-int __cdecl multiplayer_init(int mode) {
-    typedef int(__cdecl *pending)(int);
-    return PENDING_BODY(0x0058DB30, pending)(mode);
-}
+// Complete body is source-owned in newgame.cpp.
 
 // ?control_turn@@YAXXZ at 0x005275B0
 void __cdecl control_turn() {
@@ -967,10 +958,7 @@ int __cdecl load_game(int a1, int a2) {
     return PENDING_BODY(0x005AAAB0, pending)(a1, a2);
 }
 
-int __cdecl size_of_planet(int a1) {
-    typedef int(__cdecl *pending)(int);
-    return PENDING_BODY(0x0058CED0, pending)(a1);
-}
+// Complete body is source-owned in newgame.cpp.
 
 
 void __cdecl time_controls_dialog(Popup *popup) {

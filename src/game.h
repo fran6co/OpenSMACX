@@ -301,10 +301,9 @@ extern char SaveNameBuffer[0x104];  // 0x009B2078
 // game.cpp.
 extern MultiWin MultiWindow;  // 0x007FD648
 
-// The main loop's callees. Each is still an original body reached through a
-// pending_bodies.cpp forwarder; declaring them here is what lets
-// control_game emit the image's `call rel32` to any symbol. Arities are the
-// mangled names' and the call sites' - the bodies name nothing yet.
+// The main loop's callees, shared by recovered source owners and explicitly
+// unfinished dependencies. Source mappings and bodies define current status;
+// these declarations express the application interfaces, not recovery claims.
 int __cdecl system_init();
 int __cdecl game_init(int mode, int reload);
 int __cdecl game_reload(int mode, int reload);
@@ -504,3 +503,14 @@ void __cdecl mon_enemy_destroyed(int faction_id, int target_faction);
 
 // Original endgame announcement, with live Console faction reads.
 void __cdecl ascent();
+
+// Source-owned new-game/menu family and session lifecycle flag.
+extern int GameSessionActive;
+int __cdecl map_menu(int quick_start);
+int __cdecl size_of_planet(int mode);
+int __cdecl config_game(int mode);
+int __cdecl change_opening(char *filename);
+int __cdecl load_map_daemon(char *filename);
+int __cdecl load_map();
+int __cdecl load_game(int save_slot, int faction_id);
+void __cdecl show_credits();

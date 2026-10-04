@@ -339,6 +339,8 @@ struct ServiceList : public ServiceProviderList {
 
 class AlphaNetLedger;
 class Net {
+  // Original multiplayer startup changes this owner's existing voice flags.
+  friend int __cdecl multiplayer_init(int);
   friend class AlphaNet;
   friend struct NetThreadInfo;
   // Original MultiDebug paint 0x005C9920 displays these session/player fields.

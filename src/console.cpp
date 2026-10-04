@@ -2667,8 +2667,8 @@ static int *const EditorBrushButtonGroupSelection = (int *)0x007CD2D8;
 // THE GAME-IN-PROGRESS FLAG at 0x009B2074, between game.h's ControlTurnPhase
 // (0x009B2070) and SaveNameBuffer (0x009B2078). load_proc reopens a running
 // game through game_reload when it is set and re-initialises the desktop when
-// it is clear. No tree binding owns it yet.
-static int *const GameSessionActive = (int *)0x009B2074;
+// it is clear. The object is source-owned in game.cpp.
+// Source-owned session flag is declared in game.h.
 
 // break_treaty (0x0055F770) and action_destroy (0x004CAA50) are still
 // original and have no pending_bodies forwarder yet, so destroy reaches them
@@ -5087,7 +5087,7 @@ void Console::load_proc(int save_slot, int faction_id) {
     if (load_game(save_slot, faction_id) != 0) {
         return;
     }
-    if (*GameSessionActive == 0) {
+    if (GameSessionActive == 0) {
         desktop_init(0);
     } else if (game_reload(1, 0) != 0) {
         exit(3);

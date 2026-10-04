@@ -9058,3 +9058,7 @@ void __cdecl ascent() {
 
     popp(*ClimatePopupTitle, "ASCENT", 0, "asctran_sm.pcx", 0);
 }
+
+// Session lifecycle flag read by Console::load_proc and the new-game menu.
+// RECOVERY_OBJECT: v2 0x009B2074 0x009B2078 ?GameSessionActive@@3HA 0x0058E360
+int GameSessionActive;
