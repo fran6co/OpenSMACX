@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "task_id": "datalink-selection-queue-owner",
+  "target": "opensmacx",
+  "author": "framework-coordinator",
+  "base_revision": "490e6c44a7487819924128add66f1818c0fec253",
+  "subjects": [
+    {"address": 5833984, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"},
+    {"address": 5836048, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"},
+    {"address": 5836096, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"},
+    {"address": 5836128, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"},
+    {"address": 5836144, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"},
+    {"address": 5836224, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"},
+    {"address": 5835152, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"}
+  ],
+  "editable_files": ["src/datalink.cpp", "src/datalink.h", "src/strings.h", "src/map.cpp", "src/field_accessors.cpp", "src/field_accessors.h", "src/recovered/00590d10.cpp", "src/recovered/00590d40.cpp", "src/recovered/00590d70.cpp", "src/unrecovered/00590500.cpp", "src/unrecovered/00590dc0.cpp", "recovery/tests/test_datalink_selection_queue.py", "recovery/tests/datalink_selection_queue_control.cpp"],
+  "intent": "Recover the genuine four-byte Datalink selection record, 128-record queue and typed callback-table lifecycle; replace raw offsets and fake virtual dispatch with members and inherited Win::set_modal. Normalize actual say_project output interface to its canonical void* signature. Preserve seed discoveries and historical claims; remove only fully transferred seeds/accessor.",
+  "evidence": [
+    "Pinned590D10/D40 read record category/value at2/3;590D70 appends short+two bytes at count*4, count at200, limit128.590D60 clears count.590DC0 matches signed short, mutates category5/value>=70 to category10/value-70, reloads count after callbacks, selects first match and invokes actual DatalinkMain init/show/Win modal slot57. Queue is not a Datalink subobject; names and current family home are provisional, not historical-TU claims.",
+    "590500 wrapper loads ECX945A60 and jumps590C20. Constructor initializes callback pairs1..10; native PE virtual-zero-fill proves pair0 null before CRT. Relocated initializer pointer at682650 independently references590500. Use genuine static callback object/constructor, not manually constructed CRT/vtables or fixed address pointers.11 entries is the observed minimum, not a verified original total capacity; higher categories remain unverified, no new bounds check or exact extent/data claim authorized.",
+    "say_project590990 canonical PAX signature contradicts current PAD emission; normalize to void* with a typed local char* and remeasure protected map bodies. Preserve complete combined initializer identity/spans despite unproven fresh matching of the compiler-generated wrapper. Require actual-source behavior/damage controls, build/link, four historical method claims, protected59 Datalink/40 map/28 accessor comparisons, references and all claim identities. No new byte claim, automatic or full-game acceptance."
+  ]
+}
