@@ -22,7 +22,13 @@ struct DesignWin;
 static DesignWin *active_window;
 static int selection_after_constructor;
 static int selection_during_detail_label;
+static int armor_selection_after_constructor;
+static int reactor_selection_after_constructor;
+static int reactor_selection_after_prefix;
+static int font_after_wrap;
+static float last_rotation;
 static void mutate_detail_selection(int);
+static void mutate_wrap_font();
 struct Console { int faction_id_; };
 static Console ConsoleGlobal;
 static int DesignAutoBuildActive;
@@ -81,6 +87,10 @@ static void reset_observations() {
     last_component_faction = last_component_chassis = last_component_weapon = -1;
     mutate_weapon_mode_in_constructor = 0;
     selection_after_constructor = selection_during_detail_label = 0;
+    armor_selection_after_constructor = reactor_selection_after_constructor = 0;
+    reactor_selection_after_prefix = 0;
+    font_after_wrap = 0;
+    last_rotation = 0;
     last_model_definition = 0;
     mutate_armor_after_constructor = mutate_palette_in_constructor = 0;
     last_text[0] = all_text[0] = scratch[0] = label_text[0] = event_log[0] = '\0';
@@ -147,6 +157,7 @@ struct Buffer {
         last_wrap_rect = *area;
         ++last_wrapped;
         record_text(text);
+        mutate_wrap_font();
         return area->top + ((int)strlen(text) / 12 + 1) * 12;
     }
     int wrap_height(char *text, int) {
@@ -158,7 +169,7 @@ struct Caviar {
     void add_object(CaviarData *definition, int) { last_model_definition = definition; }
     void reset_objects() { note_event('R'); }
     void set_scaling(float value) { last_scale = (int)(value * 1000.0f + 0.5f); }
-    void set_scene_rotation(float, float, float) {}
+    void set_scene_rotation(float rotation, float, float) { last_rotation = rotation; }
     void render(Buffer *, int x, int y, int) {
         note_event('V');
         ++render_calls; last_render_kind = 1; last_render_x = x; last_render_y = y;
@@ -196,7 +207,17 @@ static RulesArmor Armor[14];
 static RulesReactor Reactor[4];
 static RulesChassis Chassis[64];
 static VehPrototype VehPrototypes[512];
+static void mutate_wrap_font() {
+    if (font_after_wrap) {
+        active_window->font1_.height_ = font_after_wrap;
+        active_window->font1_.line_height_ = font_after_wrap;
+    }
+}
 static void mutate_detail_selection(int id) {
+    if (reactor_selection_after_prefix && id == 0x584 / 4) {
+        active_window->protoReactorType_ = reactor_selection_after_prefix;
+        reactor_selection_after_prefix = 0;
+    }
     if (selection_during_detail_label && color_calls == 3 && id == 0x204 / 4) {
         active_window->protoWeaponType_ = selection_during_detail_label;
         selection_during_detail_label = 0;
@@ -237,6 +258,8 @@ static int vehdraw_construct_armor(int faction, int chassis, int weapon, int arm
     note_event('c'); ++armor_construct_calls; last_armor = armor;
     last_component_faction = faction; last_component_chassis = chassis;
     last_component_weapon = weapon;
+    if (armor_selection_after_constructor)
+        active_window->protoArmorType_ = armor_selection_after_constructor;
     if (mutate_armor_after_constructor) {
         Armor[armor].mode = 3;
         Armor[armor].defense_rating = 77;
@@ -248,6 +271,8 @@ static int vehdraw_construct_reactor(int faction, int chassis, int weapon, int r
     note_event('c'); ++reactor_construct_calls; last_reactor = reactor; last_ability = (int)abilities;
     last_component_faction = faction; last_component_chassis = chassis;
     last_component_weapon = weapon;
+    if (reactor_selection_after_constructor)
+        active_window->protoReactorType_ = reactor_selection_after_constructor;
     if (mutate_palette_in_constructor) TextColourTable[160] = 4343;
     return 0;
 }
@@ -298,6 +323,10 @@ static void initialize(DesignWin &window) {
     Armor[0].name = "none"; Armor[0].defense_rating = 0; Armor[0].padding1 = 0;
     Armor[5].name = "silksteel"; Armor[5].defense_rating = 3;
     Armor[5].mode = 1; Armor[5].padding1 = 1;
+    Reactor[0].name = "fission reactor";
+    Reactor[1].name = "fusion reactor";
+    Reactor[2].name = "quantum reactor";
+    Reactor[3].name = "singularity reactor";
 }
 
 int main() {
@@ -306,6 +335,7 @@ int main() {
     window.draw_weapon(0);
     require(strcmp(all_text, "WEAPON-LABEL-B|LASER|weapon-label-b 4") == 0);
     require(last_scale == 150 && last_render_x == 50 && last_render_y == 50);
+    require(last_rotation == 0.5233333706855774f);
     require(last_write_rect.top == 88 && last_write_rect.bottom == 98);
     require(color_calls == 3 && color_first[0] == 1156 &&
             color_first[1] == 1158 && color_first[2] == 1160);
@@ -364,5 +394,48 @@ int main() {
     initialize(window); Weapon[2].mode = 3; Weapon[2].cost = 255;
     window.draw_weapon(0);
     require(last_scale == 80 && strcmp(last_text, "weapon-label-a 255") == 0);
+    initialize(window); window.draw_armor(0);
+    require(last_armor == 5 && multi_render_calls == 1 && render_calls == 0);
+    require(last_render_y == 44 && last_component_faction == 7);
+    require(strcmp(last_text, "defense 3") == 0);
+    require(last_rotation == 0.5233333706855774f);
+    initialize(window); Armor[5].defense_rating = -128;
+    window.draw_armor(0);
+    require(strcmp(last_text, "defense label") == 0);
+    initialize(window); Armor[5].mode = 255;
+    window.draw_armor(0);
+    require(written_calls == 2 && color_calls == 3);
+    initialize(window); window.protoArmorType_ = 0;
+    window.draw_armor(0);
+    require(armor_construct_calls == 0 && render_calls == 0 && multi_render_calls == 0);
+    require(strstr(all_text, "NONE") != 0);
+    initialize(window); window.protoArmorType_ = 4;
+    Armor[4].name = "ceramic"; Armor[4].mode = 1; Armor[4].defense_rating = 2;
+    armor_selection_after_constructor = 5;
+    window.draw_armor(0);
+    require(last_armor == 4 && multi_render_calls == 1);
+    require(strstr(all_text, "SILKSTEEL") != 0);
+    require(strcmp(last_text, "defense 3") == 0);
+
+    initialize(window); window.draw_reactor(0);
+    require(last_reactor == 2 && last_ability == 0x8000 && last_component_faction == 7);
+    require(last_scale == 200 && last_render_y == 37);
+    require(strstr(all_text, "PLANET-BUSTER FUSION REACTOR") != 0);
+    require(strcmp(last_text, "label 2") == 0);
+    require(last_write_rect.top == 97 && last_write_rect.bottom == 107);
+    initialize(window); reactor_selection_after_constructor = 3;
+    window.draw_reactor(0);
+    require(last_reactor == 2 && strcmp(last_text, "label 3") == 0);
+    initialize(window); reactor_selection_after_prefix = 3;
+    window.draw_reactor(0);
+    require(last_reactor == 3 && strstr(all_text, "QUANTUM REACTOR") != 0);
+    require(strcmp(last_text, "label 3") == 0);
+    initialize(window); window.protoReactorType_ = 4; window.protoAbilityFlags_ = 0;
+    window.draw_reactor(0);
+    require(strstr(all_text, "SINGULARITY REACTOR") != 0);
+    require(strstr(all_text, "PLANET-BUSTER") == 0);
+    initialize(window); font_after_wrap = 20;
+    window.draw_reactor(0);
+    require(last_write_rect.bottom - last_write_rect.top == 20);
     return 0;
 }

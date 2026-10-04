@@ -17,15 +17,16 @@ def actual_control():
              "designwin_panel_append_number", "designwin_panel_append_label"]
     blocks = [definition(source, r"static (?:int|void) " + name + r"\(")
               for name in names]
-    blocks.append(definition(source, re.escape("void DesignWin::draw_weapon(")))
-    fixture = Path(__file__).with_name("design_weapon_control.cpp").read_text()
+    for name in ("weapon", "armor", "reactor"):
+        blocks.append(definition(source, re.escape("void DesignWin::draw_" + name + "(")))
+    fixture = Path(__file__).with_name("design_panels_control.cpp").read_text()
     token = "// @@ACTUAL_DESIGN_WEAPON@@"
     assert fixture.count(token) == 1
     return fixture.replace(token, "\n\n".join(blocks))
 
 
 @pytest.mark.parametrize("compiler_name", ["g++", "clang++"])
-def test_actual_weapon_panel_and_damage(compiler_name):
+def test_actual_component_panels_and_damage(compiler_name):
     compiler = shutil.which(compiler_name)
     if compiler is None:
         pytest.skip("host compiler unavailable")
@@ -46,6 +47,16 @@ def test_actual_weapon_panel_and_damage(compiler_name):
                                        "? 0 : static_cast<int>(protoChassisType_);", 1),
         "uppercase_detail": actual.replace("canvas->write_cent_l(StringTemp, &detail,",
                                           "CharUpperA(StringTemp); canvas->write_cent_l(StringTemp, &detail,", 1),
+        "armor_cached_render": actual.replace("if (protoArmorType_ == 5)", "if (false)", 1),
+        "armor_unsigned_defense": actual.replace("const int defense = Armor[protoArmorType_].defense_rating;",
+                                                "const int defense = static_cast<unsigned char>(Armor[protoArmorType_].defense_rating);", 1),
+        "reactor_wrong_index": actual.replace("Reactor[protoReactorType_ - 1].name", "Reactor[protoReactorType_].name", 1),
+        "reactor_no_ability": actual.replace("if ((protoAbilityFlags_ & 0x8000u) != 0)", "if (false)", 1),
+        "reactor_wrong_rating_top": actual.replace("area.top = canvas->wrap_cent(StringTemp, &area);",
+                                                   "area.top = canvas->wrap_cent(StringTemp, &area) + font1_.height_;", 1),
+        "reactor_fixed_selection": actual.replace("static_cast<int>(protoReactorType_), protoAbilityFlags_,",
+                                                  "2, protoAbilityFlags_,", 1),
+        "wrong_rotation": actual.replace("0.5233333706855774f, 0.0f, 0.0f", "0.5323889f, 0.0f, 0.0f", 1),
     }
     with tempfile.TemporaryDirectory(prefix="design-weapon-actual-") as temporary:
         directory = Path(temporary)

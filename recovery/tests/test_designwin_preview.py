@@ -5,6 +5,7 @@ import shutil
 import subprocess
 
 import pytest
+from recovery.tests.test_pact_ascent import definition
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -73,9 +74,10 @@ def test_actual_preview(compiler, tmp_path):
     if executable is None:
         pytest.skip(f"host compiler unavailable: {compiler}")
     source = (ROOT / "src/designwin.cpp").read_text()
-    start = source.index("static int workshop_signed_bits(")
-    end = source.index("// Workshop list callback compatibility", start)
-    actual = source[start:end]
+    actual = "\n".join(definition(source, signature) for signature in (
+        r"static int workshop_signed_bits\(",
+        r"static int workshop_scaled_dimension\(",
+        r"void __cdecl hq_list_draw\("))
     cpp = tmp_path / "preview.cpp"
     cpp.write_text(HARNESS.replace("// ACTUAL_PREVIEW", actual))
     binary = tmp_path / "preview"

@@ -2507,7 +2507,7 @@ void DesignWin::draw_weapon(int redraw) {
     }
     const int center_x = designwin_panel_add(weapon_panel_rect_.left, weapon_panel_rect_.right) / 2;
     const int center_y = designwin_panel_add(weapon_panel_rect_.top, weapon_panel_rect_.bottom) / 2;
-    caviar_.set_scene_rotation(0.5323889f, 0.0f, 0.0f);
+    caviar_.set_scene_rotation(0.5233333706855774f, 0.0f, 0.0f);
     caviar_.render(canvas, center_x, center_y, 6);
 
     canvas->set_font(&font1_, 0, 0, 0);
@@ -2561,91 +2561,146 @@ void DesignWin::draw_weapon(int redraw) {
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00435400 ?draw_armor@DesignWin@@QAEXH@Z 0x00435400-0x00435800
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00435400.cpp", "src/caviar.h:Caviar::render_multi_table_dest", "src/game.h:ArmorTransparentColorTables", "docs/recovery/member-accesses.csv"], "reason": "Draw the selected armor preview, including the special transparent armor render path; the seed retains unresolved armor detail text and palette behavior."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:fd72c001:src/designwin.cpp preserves original identity and historical seed provenance", "Pinned435400..435800 reads live armor selection, signed defense at rule+8 and unsigned mode at+9", "src/caviar.h:Caviar::render_multi_table_dest and src/game.h:ArmorTransparentColorTables"], "reason": "Render the armor heading, transparent or ordinary preview, localized name and conditional defense detail through genuine source objects; preserve callback reads and native text geometry."}
 void DesignWin::draw_armor(int redraw) {
     (void)redraw;
-    Buffer *canvas = static_cast<Buffer *>(this);
-    RECT preview = armor_panel_rect_;
-    canvas->set_clip(&preview);
-    buffer_.copy(canvas, &preview);
+    Buffer *const canvas = static_cast<Buffer *>(this);
+    RECT area = armor_panel_rect_;
+    canvas->set_clip(&area);
+    buffer_.copy(canvas, &area);
 
-    const int title_height = font2_.unk_1_ < 0
-        ? font2_.line_height_ : font2_.height_ + font2_.unk_1_;
-    RECT title = preview;
-    title.bottom = title.top + title_height;
-    char *caption = label_get(0x1F8 / 4);
-    canvas->set_text_color(0xE0, -1, 1, 1);
-    canvas->write_cent_l(&font2_, caption, &title,
-                         static_cast<int>(strlen(caption)));
+    RECT title = area;
+    title.bottom = designwin_panel_add(title.top, designwin_panel_font_height(
+        font2_.unk_1_, font2_.line_height_, font2_.height_));
+    area.top = title.bottom;
+    StringTemp[0] = '\0';
+    designwin_panel_append_label(StringTemp, 0x1F8);
+    CharUpperA(StringTemp);
+    canvas->set_text_color(TextColourTable[156], TextColourTable[157], 1, 1);
+    canvas->write_cent_l(&font2_, StringTemp, &title,
+                         static_cast<int>(strlen(StringTemp)));
 
-    const int armor = static_cast<int>(protoArmorType_);
-    if (armor != 0) {
-        preview.top += title_height;
-        preview.bottom -= static_cast<int>(font1_.height_) * 2 + 5;
+    area.bottom = designwin_panel_subtract(designwin_panel_subtract(
+        area.bottom, designwin_panel_add(font1_.height_, font1_.height_)), 5);
+    if (protoArmorType_ != 0) {
         caviar_.reset_objects();
-        vehdraw_construct_armor(static_cast<int>(factionID_),
-                                static_cast<int>(protoChassisType_),
-                                static_cast<int>(protoWeaponType_), armor, 1,
-                                &caviar_);
+        vehdraw_construct_armor(ConsoleGlobal.faction_id_,
+            static_cast<int>(protoChassisType_),
+            static_cast<int>(protoWeaponType_),
+            static_cast<int>(protoArmorType_), 1, &caviar_);
         caviar_.set_scaling(0.07f);
-        caviar_.set_scene_rotation(0.5233333706855774f, 0, 0);
-        const int centre_x = (preview.left + preview.right) / 2;
-        const int centre_y = (preview.top + preview.bottom) / 2;
-        if (armor == 5) {
-            caviar_.render_multi_table_dest(canvas, centre_x, centre_y, 24,
+        caviar_.set_scene_rotation(0.5233333706855774f, 0.0f, 0.0f);
+        const int center_x = designwin_panel_add(area.left, area.right) / 2;
+        const int center_y = designwin_panel_add(area.top, area.bottom) / 2;
+        if (protoArmorType_ == 5) {
+            caviar_.render_multi_table_dest(canvas, center_x, center_y, 24,
                 reinterpret_cast<unsigned char *>(&ArmorTransparentColorTables), 6);
         } else {
-            caviar_.render(canvas, centre_x, centre_y, 6);
+            caviar_.render(canvas, center_x, center_y, 6);
         }
     }
-    // BODY GOES HERE. The seed's armor detail uses a separate translated
-    // rating table not yet owned here.
+
+    canvas->set_font(&font1_, 0, 0, 0);
+    area.top = area.bottom;
+    area.bottom = designwin_panel_add(area.top, font1_.height_);
+    canvas->set_text_color(TextColourTable[158], TextColourTable[159], 1, 1);
+    StringTemp[0] = '\0';
+    if (protoArmorType_ == 0)
+        designwin_panel_append_label(StringTemp, 0x64);
+    else
+        strcat(StringTemp, StringTable.get(static_cast<int>(
+            reinterpret_cast<unsigned long>(Armor[protoArmorType_].name))));
+    CharUpperA(StringTemp);
+    if (font1_.width(StringTemp) > designwin_panel_subtract(area.right, area.left)) {
+        const int advance = designwin_panel_font_height(
+            font1_.unk_1_, font1_.line_height_, font1_.height_);
+        area.top = designwin_panel_subtract(area.top, advance);
+        area.bottom = designwin_panel_subtract(area.bottom, advance);
+        canvas->wrap_cent(StringTemp, &area);
+        const int restored_advance = designwin_panel_font_height(
+            font1_.unk_1_, font1_.line_height_, font1_.height_);
+        area.top = designwin_panel_add(area.top, restored_advance);
+        area.bottom = designwin_panel_add(area.bottom, restored_advance);
+    } else {
+        canvas->write_cent_l(StringTemp, &area,
+                             static_cast<int>(strlen(StringTemp)));
+    }
+
+    const int advance = designwin_panel_add(font1_.height_, 3);
+    area.top = designwin_panel_add(area.top, advance);
+    area.bottom = designwin_panel_add(area.bottom, advance);
+    canvas->set_text_color(TextColourTable[160], TextColourTable[161], 1, 1);
+    if (Armor[protoArmorType_].mode < 3) {
+        StringTemp[0] = '\0';
+        designwin_panel_append_label(StringTemp, 0xA6C);
+        strcat(StringTemp, " ");
+        const int defense = Armor[protoArmorType_].defense_rating;
+        if (defense < 0)
+            designwin_panel_append_label(StringTemp, 0x310);
+        else
+            designwin_panel_append_number(StringTemp, defense);
+        canvas->write_cent_l(StringTemp, &area,
+                             static_cast<int>(strlen(StringTemp)));
+    }
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00435800 ?draw_reactor@DesignWin@@QAEXH@Z 0x00435800-0x00435B29
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00435800.cpp", "docs/recovery/member-accesses.csv"], "reason": "Partial typed recovery draws the reactor panel caption, selected reactor name and model preview; the seed retains unresolved ability-aware description, numeric detail and palette behavior."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:fd72c001:src/designwin.cpp preserves original identity and historical seed provenance", "Pinned435800..435B29 uses1-based reactor selection, ability bit8000 and wrap_cent return as numeric-row top", "src/alpha.cpp reactor loader and src/veh.h:RulesReactor establish interned name pointers and12-byte records"], "reason": "Render the reactor heading, ability-prefixed description, model and live numeric selection through genuine source objects; retain native font reads and wrap-return geometry."}
 void DesignWin::draw_reactor(int redraw) {
     (void)redraw;
-    Buffer *canvas = static_cast<Buffer *>(this);
-    RECT preview = reactor_panel_rect_;
-    canvas->set_clip(&preview);
-    buffer_.copy(canvas, &preview);
+    Buffer *const canvas = static_cast<Buffer *>(this);
+    RECT area = reactor_panel_rect_;
+    canvas->set_clip(&area);
+    buffer_.copy(canvas, &area);
 
-    const int title_height = font2_.unk_1_ < 0
-        ? font2_.line_height_ : font2_.height_ + font2_.unk_1_;
-    RECT title = preview;
-    title.bottom = title.top + title_height;
-    char *caption = label_get(0x13C / 4);
-    canvas->set_text_color(0xE0, -1, 1, 1);
-    canvas->write_cent_l(&font2_, caption, &title,
-                         static_cast<int>(strlen(caption)));
+    RECT title = area;
+    title.bottom = designwin_panel_add(title.top, designwin_panel_font_height(
+        font2_.unk_1_, font2_.line_height_, font2_.height_));
+    area.top = title.bottom;
+    StringTemp[0] = '\0';
+    designwin_panel_append_label(StringTemp, 0x13C);
+    CharUpperA(StringTemp);
+    canvas->set_text_color(TextColourTable[156], TextColourTable[157], 1, 1);
+    canvas->write_cent_l(&font2_, StringTemp, &title,
+                         static_cast<int>(strlen(StringTemp)));
 
-    const int reactor = static_cast<int>(protoReactorType_);
-    if (reactor >= 0 && reactor < MaxReactorNum) {
-        char *name = StringTable.get(
-            reinterpret_cast<int>(Reactor[reactor].name));
-        RECT name_area = preview;
-        name_area.top += title_height;
-        name_area.bottom = name_area.top + font1_.height_;
-        if (name != 0) {
-            canvas->write_cent_l(&font1_, name, &name_area,
-                                 static_cast<int>(strlen(name)));
-        }
-
-        preview.top += title_height + font1_.height_;
-        preview.bottom -= static_cast<int>(font1_.height_) * 2 + 5;
-        vehdraw_construct_reactor(static_cast<int>(factionID_),
-                                  static_cast<int>(protoChassisType_),
-                                  static_cast<int>(protoWeaponType_), reactor,
-                                  protoAbilityFlags_, &caviar_);
-        caviar_.set_scaling(0.2f);
-        caviar_.set_scene_rotation(0.5233333706855774f, 0, 0);
-        caviar_.render(canvas, (preview.left + preview.right) / 2,
-                       (preview.top + preview.bottom) / 2, 6);
+    canvas->set_font(&font1_, 0, 0, 0);
+    StringTemp[0] = '\0';
+    if ((protoAbilityFlags_ & 0x8000u) != 0) {
+        designwin_panel_append_label(StringTemp, 0x584);
+        strcat(StringTemp, " ");
     }
-    // BODY GOES HERE. The seed's ability-aware reactor description and
-    // numeric detail use separate label/stat resources not yet owned here.
+    strcat(StringTemp, StringTable.get(static_cast<int>(
+        reinterpret_cast<unsigned long>(Reactor[protoReactorType_ - 1].name))));
+    CharUpperA(StringTemp);
+    const int description_height = canvas->wrap_height(
+        StringTemp, designwin_panel_subtract(area.right, area.left));
+    area.bottom = designwin_panel_subtract(designwin_panel_subtract(
+        designwin_panel_subtract(area.bottom, 5), description_height), font1_.height_);
+
+    caviar_.reset_objects();
+    vehdraw_construct_reactor(ConsoleGlobal.faction_id_,
+        static_cast<int>(protoChassisType_),
+        static_cast<int>(protoWeaponType_),
+        static_cast<int>(protoReactorType_), protoAbilityFlags_, &caviar_);
+    caviar_.set_scaling(0.2f);
+    caviar_.set_scene_rotation(0.5233333706855774f, 0.0f, 0.0f);
+    caviar_.render(canvas, designwin_panel_add(area.left, area.right) / 2,
+                   designwin_panel_add(area.top, area.bottom) / 2, 6);
+
+    area.top = area.bottom;
+    area.bottom = designwin_panel_add(area.top, font1_.height_);
+    canvas->set_text_color(TextColourTable[158], TextColourTable[159], 1, 1);
+    area.top = canvas->wrap_cent(StringTemp, &area);
+    area.bottom = designwin_panel_add(area.top, font1_.height_);
+    canvas->set_text_color(TextColourTable[160], TextColourTable[161], 1, 1);
+    StringTemp[0] = '\0';
+    designwin_panel_append_label(StringTemp, 0x1E4);
+    strcat(StringTemp, " ");
+    designwin_panel_append_number(StringTemp, static_cast<int>(protoReactorType_));
+    canvas->write_cent_l(StringTemp, &area,
+                         static_cast<int>(strlen(StringTemp)));
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
