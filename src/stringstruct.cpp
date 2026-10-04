@@ -50,6 +50,9 @@
 // point. A header-inline empty destructor is provably nothrow, and VC6 then
 // sheds the /GX unwind states from the construction chain that
 // StringBox::StringBox's frame carries.
+// ORIGINAL: 0x00402310 sub_402310 0x00402310-0x0040231F BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["task:allocation-base-destructor-owner", "Original 0x00402310..0x0040231F reads the captured Heap at this+4, stages allocation-base table 0x006693AC and publishes owner 0x009B3374; StringAllocationBase and StringAllocationHeap own these relationships.", "historical seed:src/recovered/00402310.cpp"], "reason": "The retained synthetic owner-publication seed is the existing genuine allocation-base destructor. Real member/global and compiler-owned destructor table stage replace fixed executable addresses; retain original identity and historical exact obligation."}
+// symbol    ??1StringAllocationBase@@UAE@XZ
 StringAllocationBase::~StringAllocationBase() {
     StringAllocationHeap = allocation_owner_;
 }
