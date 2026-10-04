@@ -453,3 +453,5 @@ extern MainInterface MainInterfaceGlobal;
 // Other windows ask this owner rather than duplicating its provisional
 // fixed-address bindings.
 bool __cdecl active_interface_slot_occupied();
+
+void __stdcall main_interface_bubble_callback(char *text, int x, int y);

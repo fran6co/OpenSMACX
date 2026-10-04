@@ -3200,3 +3200,18 @@ void __cdecl discard_technology_help_text(char *) {
 void __cdecl technology_help_without_output(int, int technology, int faction) {
     help_tech_info(discard_technology_help_text, technology, faction, -1);
 }
+
+// Provisional selected-entry state; pinned7591AC initially contains zero.
+// RECOVERY_OBJECT: v1 0x007591AC ?DatalinkEntrySelection@@3HA
+int DatalinkEntrySelection = 0;
+
+// ORIGINAL: 0x0044CB40 sub_44cb40 0x0044CB40-0x0044CB56 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["task:datalink-interface-callback-owner", "Pinned44CB40..44CB56 updates the signed index at7591AC, preserving its value for negative input. Queue590DC0 uses the selected matching entry. Name is provisional use-site evidence, not recovered canonical name.", "historical seed:src/recovered/0044cb40.cpp"], "reason": "Recover typed UI helper in its genuine source owner, retaining original identity, spans and historical obligations; remove superseded fixed-address seed."}
+// symbol    ?datalink_entry_selection@@YAHH@Z
+int __cdecl datalink_entry_selection(int selected_index) {
+    if (selected_index < 0) {
+        selected_index = DatalinkEntrySelection;
+    }
+    DatalinkEntrySelection = selected_index;
+    return selected_index;
+}

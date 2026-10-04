@@ -363,3 +363,5 @@ class Popup;
 void __cdecl help_tech_info(Popup *popup, int technology, int faction);
 
 void __cdecl technology_help_without_output(int unused, int technology, int faction);
+
+int __cdecl datalink_entry_selection(int selected_index);

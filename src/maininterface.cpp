@@ -2615,3 +2615,16 @@ int MainInterface::on_iface_dialog_item_back_draw(GraphicWin *, int, int,
                                                    RECT *) {
     return 0;
 }
+
+// ORIGINAL: 0x004B1B70 ?bubble_me_elmo2@SocialWin@@QAGXPADHH@Z 0x004B1B70-0x004B1BB2 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["task:datalink-interface-callback-owner", "Pinned4B1B70..4B1BB2 is a three-argument stdcall callback using explicit MainInterfaceGlobal7AE820 and its primary Win base. Historical SocialWin label remains canonical identity but does not imply a receiver. Converts coordinates before passing a point RECT to Win5F83D0.", "historical seed:src/recovered/004b1b70.cpp"], "reason": "Recover typed UI helper in its genuine source owner, retaining original identity, spans and historical obligations; remove superseded fixed-address seed."}
+// symbol    ?main_interface_bubble_callback@@YGXPADHH@Z
+void __stdcall main_interface_bubble_callback(char *text, int x, int y) {
+    MainInterfaceGlobal.client_to_screen(&x, &y);
+    RECT rectangle;
+    rectangle.left = x;
+    rectangle.top = y;
+    rectangle.right = x;
+    rectangle.bottom = y;
+    MainInterfaceGlobal.Win::set_bubble_text(text, &rectangle);
+}
