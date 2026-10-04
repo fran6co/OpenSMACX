@@ -1,0 +1,33 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "efd6348524a02843f41d7dd853bc37893594d4e6",
+  "editable_files": [
+    "src/alphamovie.cpp",
+    "src/alphamovie.h",
+    "src/recovered/005ffe40.cpp",
+    "src/recovered/units/005ffe80.cpp",
+    "recovery/tests/test_mci_message_owner_behavior.py",
+    "recovery/tests/mci_message_owner_control.cpp"
+  ],
+  "evidence": [
+    "Pinned complete spans 5FFE40..5FFE78 and 5FFE80..5FFEBD forward DefWindowProcA through the existing MciVideoCallbackWindow at 9B8194. Full disassembly establishes key forwarding gate, low-word unsigned payload packing, nonzero double-click selection and API result propagation.",
+    "Generated seed signatures are not original debug-symbol evidence. Catalog-neutral names remain provisional; the first HWND is unused, and original callers/registration remain unresolved. No hierarchy or complete runtime acceptance is inferred from these helpers.",
+    "Coordinator-reviewed integration requires fresh native measurement/recording, actual owner-body host controls, build/link, source integrity, references and historical claim continuity. No claim demotion or waived full-game acceptance."
+  ],
+  "intent": "Recover the two complete MCI message helpers using the source-owned callback HWND and SDK APIs, preserve complete original identities and historical claims, and retire superseded seeds after verification.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6291008,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6291072,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "mci-message-helper-owner"
+}
