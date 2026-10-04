@@ -444,6 +444,7 @@ void draw_dest_unk1(Buffer *, int, int, int, int, unsigned char *);
   int write_l(LPSTR text, RECT *rect, int len);
   int write_cent_l(LPSTR text, int x_coord, int y_coord, int width, int len);
   int write_cent_l(LPSTR text, RECT *rect, int len);
+  int write_cent_l(LPSTR text, RECT *rect);
   void close();
   // Surface setup and image blits. Declared so the recovered window
   // initialization bodies (Win::init_class and the per-control init_class
