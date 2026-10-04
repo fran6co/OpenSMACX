@@ -109,4 +109,9 @@ extern RECT WorldMapBounds;  // 0x00939F08; copied from MainInterface.
 // four-byte object immediately after, not an alias of, MapInputEnabled.
 extern int WorldWinRebuildBusy;  // 0x0090D93C
 
+// Global view callbacks 4C38E0/4C3910. Unlike the corresponding WorldWin
+// setters, these change presentation only, not detail_map_selected_.
+void __cdecl show_detail_map_view();
+void __cdecl show_world_map_view();
+
 // WorldWin's shared click handler is not recovered.

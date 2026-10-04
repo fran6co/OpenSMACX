@@ -687,3 +687,21 @@ void WorldWin::refresh_world_map(int resize_buffers) {
     clear_dirty();
     WorldWinRebuildBusy = 0;
 }
+
+// ORIGINAL: 0x004C38E0 sub_4c38e0 0x004C38E0-0x004C3910 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["task:world-map-view-callbacks", "Pinned original004c38e0; ButtonGroup7CD12C = MainInterface7AE820 +1E878 +94; MapWinTable[1]=7D3C40; global WorldWin8E9F60", "historical seed:src/recovered/004c38e0.cpp"], "reason": "Recover the complete global map-view operation through actual source-owned button group and windows. This callback does not change WorldWin selection state; preserve the historical byte obligation independently of current matching."}
+// symbol    ?show_detail_map_view@@YAXXZ
+void __cdecl show_detail_map_view() {
+    MainInterfaceGlobal.button_group(1).set(1007, 0);
+    MapWinTable[1]->show(0);
+    WorldClimateWorldWin.Win::hide();
+}
+
+// ORIGINAL: 0x004C3910 sub_4c3910 0x004C3910-0x004C3941 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["task:world-map-view-callbacks", "Pinned original004c3910; ButtonGroup7CD12C = MainInterface7AE820 +1E878 +94; MapWinTable[1]=7D3C40; global WorldWin8E9F60", "historical seed:src/recovered/004c3910.cpp"], "reason": "Recover the complete global map-view operation through actual source-owned button group and windows. This callback does not change WorldWin selection state; preserve the historical byte obligation independently of current matching."}
+// symbol    ?show_world_map_view@@YAXXZ
+void __cdecl show_world_map_view() {
+    MainInterfaceGlobal.button_group(1).set(1006, 0);
+    MapWinTable[1]->hide();
+    WorldClimateWorldWin.Win::show(0);
+}
