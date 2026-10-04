@@ -664,3 +664,36 @@ int MCIVideo::status() {
                     reinterpret_cast<DWORD_PTR>(&params));
     return static_cast<int>(params.dwReturn);
 }
+
+// Superseded seed deleted; binding references retain historical provenance.
+// ORIGINAL: 0x005FFE40 sub_5ffe40 0x005FFE40-0x005FFE78 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["task:mci-message-helper-owner original identity/spans and historical claims retained from src/recovered/005ffe40.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x5ffe40 complete native body; bare RET and observed EAX forwarding.", "source:src/alphamovie.cpp MciVideoCallbackWindow 9B8194 set by MCIVideo::load, distinct from ActiveVideoPlayer 9B8190."], "reason": "Recover the complete MCI message helper with the existing callback HWND and actual SDK import. Unsigned low-word packing preserves native bit patterns without signed-shift undefined behavior. Names and unused first-argument interpretation remain provisional; original callers/registration are unresolved."}
+// symbol    ?sub_5ffe40@@YAJPAUHWND__@@IHHH@Z
+// kind      game
+LRESULT __cdecl sub_5ffe40(HWND, WPARAM virtual_key, int forward_event,
+                          int low_payload, int high_payload) {
+    LRESULT result = forward_event;
+    if (forward_event != 0) {
+        const uint32_t packed =
+            (static_cast<uint32_t>(static_cast<uint16_t>(high_payload)) << 16)
+            | static_cast<uint32_t>(static_cast<uint16_t>(low_payload));
+        result = DefWindowProcA(MciVideoCallbackWindow, WM_KEYDOWN, virtual_key,
+                                static_cast<LPARAM>(packed));
+    }
+    return result;
+}
+
+// Superseded seed deleted; binding references retain historical provenance.
+// ORIGINAL: 0x005FFE80 sub_5ffe80 0x005FFE80-0x005FFEBD BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["task:mci-message-helper-owner original identity/spans and historical claims retained from src/recovered/units/005ffe80.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x5ffe80 complete native body; bare RET and observed EAX forwarding.", "source:src/alphamovie.cpp MciVideoCallbackWindow 9B8194 set by MCIVideo::load, distinct from ActiveVideoPlayer 9B8190."], "reason": "Recover the complete MCI message helper with the existing callback HWND and actual SDK import. Unsigned low-word packing preserves native bit patterns without signed-shift undefined behavior. Names and unused first-argument interpretation remain provisional; original callers/registration are unresolved."}
+// symbol    ?sub_5ffe80@@YAJPAUHWND__@@HHHI@Z
+// kind      game
+LRESULT __cdecl sub_5ffe80(HWND, int double_click, int x, int y,
+                           WPARAM keys) {
+    const uint32_t packed =
+        (static_cast<uint32_t>(static_cast<uint16_t>(y)) << 16)
+        | static_cast<uint32_t>(static_cast<uint16_t>(x));
+    const UINT message = (double_click != 0 ? WM_LBUTTONDBLCLK - WM_LBUTTONDOWN : 0) + WM_LBUTTONDOWN;
+    return DefWindowProcA(MciVideoCallbackWindow, message, keys,
+                          static_cast<LPARAM>(packed));
+}

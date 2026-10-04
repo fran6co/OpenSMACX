@@ -131,3 +131,7 @@ class AlphaMovie : public GraphicWin {
 
 void __cdecl amovie_project(char *movie);
 void __cdecl amovie_project(int project_id);
+
+// MCI message helper names are catalog-neutral; original registration is unresolved.
+LRESULT __cdecl sub_5ffe40(HWND, WPARAM virtual_key, int forward_event, int low_payload, int high_payload);
+LRESULT __cdecl sub_5ffe80(HWND, int double_click, int x, int y, WPARAM keys);
