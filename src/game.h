@@ -499,3 +499,5 @@ void __cdecl set_tamper();
 
 // Source-owned original helper; identity and behavior evidence are in its TU.
 void __cdecl diplo(int faction_id, int faction_id_with);
+
+void __cdecl mon_enemy_destroyed(int faction_id, int target_faction);

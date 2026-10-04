@@ -1,0 +1,21 @@
+{
+  "event_id": "894ce2f4a5ba120be4641a5f2d884ef09678d624ee8c9264ad695a722c51bee8",
+  "payload": {
+    "affects": [
+      "entity-234b1751278503e273547f7a6bb03601da998235e1206135cef6e0c8901232bf",
+      "entity-2d50387d1605fa5a5d5afdeb093079691ffbe2ccbc7bad5beddf10eacc25fd96"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "monument-year-call-restoration",
+    "evidence": [
+      "Pinned47721C calls5C89A0. Current game.h438 defines MEASURED inline game_year; native measure first divergence4 shows StartingMissionYear/TurnCurrentNum addition instead of the original call and reports MISMATCH. Typed complete producer passes14 actual-body host controls and application build/link. Coordinator explicitly permits this bounded temporary matching regression for a manually reviewed source-coverage checkpoint, not restoration/automatic/full acceptance. Keep the claimed original seed and all identity/spans/claims as unresolved evidence; no seed deletion, new claim, demotion or game_year edits are authorized here."
+    ],
+    "hypothesis": "The original monument producer calls game_year out of line, whereas the current shared header definition is inlined into the typed body. Restore genuine call-site/compiler ownership without artificial forwarding shims, weakening the historical obligation or reverting typed monument records.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "monument-year-call-restoration",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:monument-enemy-destroyed-owner"
+}

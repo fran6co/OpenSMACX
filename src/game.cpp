@@ -8889,3 +8889,52 @@ void __cdecl set_tamper() {
 void __cdecl diplo(int faction_id, int faction_id_with) {
   DiploWindow.exec(faction_id, faction_id_with);
 }
+
+// ORIGINAL: 0x00477210 ?mon_enemy_destroyed@@YAXHH@Z 0x00477210-0x00477320 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["task:monument-enemy-destroyed-owner original identity, spans and historical claim retained from src/recovered/units/00477210.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:477210..477320 complete body; record6 stores at 94CB58/60/64/68/6C, latest_type at 94CEA0 and notification after updates.", "source:src/game.h MonumentRecord stride38, MonumentFaction stride4F4 and source bindings; game_year before all guards; Players rule_flags bit80 is alien, not unrelated game state."], "reason": "Recover complete enemy-destruction milestone with genuine FactionMonuments, Players and live ConsoleGlobal ownership. Preserve target-faction fallback when prior achievements lack a first flag; later qualifying peer ties win."}
+// symbol    ?mon_enemy_destroyed@@YAXHH@Z
+// kind      game
+void __cdecl mon_enemy_destroyed(int faction_id, int target_faction) {
+    const int year = static_cast<int>(game_year(TurnCurrentNum));
+    MonumentFaction &faction = FactionMonuments[faction_id];
+    MonumentRecord &record = faction.records_[6];
+
+    if ((Players[faction_id].rule_flags & RFLAG_ALIEN) != 0 ||
+        record.achieved_ != 0 || target_faction == 0) {
+        return;
+    }
+
+    record.word_14_ = 0;
+    for (int other = 0; other < 8; ++other) {
+        if (other != faction_id &&
+            FactionMonuments[other].records_[6].achieved_ != 0) {
+            ++record.word_14_;
+        }
+    }
+
+    int owner_faction;
+    if (record.word_14_ != 0) {
+        record.word_14_ = 0;
+        owner_faction = target_faction;
+        for (int other = 0; other < 8; ++other) {
+            const MonumentRecord &other_record =
+                FactionMonuments[other].records_[6];
+            if (other != faction_id && other_record.achieved_ != 0 &&
+                other_record.word_14_ != 0) {
+                owner_faction = other;
+            }
+        }
+    } else {
+        record.word_14_ = 1;
+        owner_faction = faction_id;
+    }
+
+    record.achieved_ = 1;
+    record.year_ = year;
+    record.owner_faction_ = owner_faction;
+    record.word_8_ = target_faction;
+    faction.latest_type_ = 6;
+    if (faction_id == ConsoleGlobal.faction_id_) {
+        monument(1);
+    }
+}
