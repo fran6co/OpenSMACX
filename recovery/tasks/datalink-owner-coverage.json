@@ -8,14 +8,18 @@
     "src/reportwin.h",
     "src/buffer.h",
     "src/pending_bodies.cpp",
-    "src/leaf_recoveries.cpp"
+    "src/leaf_recoveries.cpp",
+    "src/recovered/units/00429180.cpp",
+    "recovery/tests/test_datalink_exec.py",
+    "recovery/tests/datalink_exec_control.cpp"
   ],
   "evidence": [
       "Live partition identifies 23 seed-only Datalink identities, including related topic drawers; coordinator selects this independent owner for parallel recovery coverage.",
       "Coordinator authorizes narrow shared-header additions for StringBox::strings, Buffer::clip_rect and ReportWin::draw_labs, discovered by original-backed Datalink topic recovery. Preserve the original task baseline and all mapped renderer obligations; the coordinator owns the corresponding shared definitions and integration.",
       "Fresh destination linking identifies an obsolete unannotated Datalink::draw_entry original-address forwarder in pending_bodies.cpp. Coordinator authorizes removing only that replaced forwarder; the actual owner retains its original identity, spans and preserved seed provenance.",
       "Coupled topic lifetime review establishes Flic, Caviar, eighteen FlatButtons and eleven Fonts in the original constructor/destructor. Coordinator authorizes native homing of both Datalink lifecycle bodies and removal of only the replaced unannotated destructor forwarder from pending_bodies.cpp; preserve original task baseline, spans, claims and seed lessons.",
-      "The existing Datalink::on_status body in leaf_recoveries.cpp accesses the eighteen topic buttons by walking separate scalar members. Coordinator authorizes replacing only those two starts with the evidence-backed real topic_buttons_ array, updating its adjacent array explanation and binding its physically observed virtual symbol ?on_status@Datalink@@UAEXH@Z for fresh measurement; all unrelated leaf owners and historical mappings remain untouched."
+      "The existing Datalink::on_status body in leaf_recoveries.cpp accesses the eighteen topic buttons by walking separate scalar members. Coordinator authorizes replacing only those two starts with the evidence-backed real topic_buttons_ array, updating its adjacent array explanation and binding its physically observed virtual symbol ?on_status@Datalink@@UAEXH@Z for fresh measurement; all unrelated leaf owners and historical mappings remain untouched.",
+      "2026-10-04 coordinator continuation of existing exec429180 subject, preserving the task baseline: original42922F..292EB saves/restores885F30 through ReportWinGlobal.field_FAB8_ and its existing shared_research_focus accessor;885F40 is ReportIfGlobal.field_8_;8A4160 is its report faction. Do not add duplicate storage. Native429180..292FC establishes800-width StringBox geometry/font setup, set_cat before live history/category/list selection, embedded ListBox redraw, modal callback/owner, restoration from live Datalink saved members and SubInterface release. Authorize native source-writer transfer of complete existing seed identity/spans/history to src/datalink.cpp, deletion of only superseded exec forwarder/seed, stale exec-seam prose cleanup and actual-source host tests. Require compile/link, protected Datalink matching, claim/reference continuity and full original-body review before manual publication; no new byte claim or full-game acceptance."
   ],
   "intent": "Recover Datalink topic rendering and dialog behavior in a coherent compiling batch, using typed owners and evidence-backed shared objects while preserving original identities and historical obligations.",
   "schema_version": 1,
