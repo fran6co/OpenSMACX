@@ -1,0 +1,43 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "bdea5a7c3ef3a13ff6d099a5c6a7bcb82fc80332",
+  "editable_files": [
+    "src/datalink.cpp",
+    "src/datalink.h",
+    "src/sound.cpp",
+    "src/sound.h",
+    "src/nullsub_thunks.cpp",
+    "src/nullsub_thunks.h",
+    "src/recovered/004c83f0.cpp",
+    "src/recovered/units/0044c830.cpp",
+    "recovery/tests/test_ui_sound_helpers.py",
+    "recovery/tests/ui_sound_helpers_control.cpp"
+  ],
+  "evidence": [
+    "Pinned44C830..44C84C passes stack arguments2/3, selector-1 and no-output cdecl callback44C820 to existing help_tech_info44B9E0. Current nullsub callback has unrelated fastcall(void*,void*) ABI; source scan finds only its declaration/definition, allowing genuine callback rehoming without a compatibility shim.",
+    "Pinned4C83F0..4C840F loads actual SoundChainHead90DB20 and invokes virtual slot5, reloading the global after each call and returning11. Existing Sound layout declares unload at slot5; SoundChainHead is already independently bound source-owned storage.",
+    "Retained build/recovery/ui-helper-owner-batch-oct4 contains full drafts and host controls; they are hints, not native proof. Use datalink.cpp rather than adding new leaf_recoveries dependencies. No new storage/class guesses, placeholders, vtable arrays or fixed runtime addresses.",
+    "Coordinator-reviewed integration requires build/link, fresh protected measurements, seed identity/span/claim/lesson transfer, actual-source mutation controls, reference and claim continuity. No new claim, automatic acceptance or game acceptance; preserve structural work if a byte mismatch needs further reviewed restoration."
+  ],
+  "intent": "Recover the technology-help discard callback/wrapper and active-sound-chain unload loop into their actual Datalink/Sound owners; remove fixed executable callback addresses and fake VCall models while preserving all original identities and historical obligations.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4507680,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4507696,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5014512,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "typed-ui-sound-helper-owner"
+}
