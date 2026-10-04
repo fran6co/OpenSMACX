@@ -12413,3 +12413,456 @@ tail:
     message_data(0x2441, 0, other_faction_id, faction_id, 4, 0);
     NetDaemonNet.await_diplo(0x441);
 }
+
+// ORIGINAL: 0x0054DCF0 ?proposal_menu@@YAHHH@Z 0x0054DCF0-0x0054F412;0x0065FAE9-0x0065FD5F
+// RECOVERY_BINDING: v1 {"evidence": ["task:diplomacy-actions-owner-coverage", "Pinned54DCF0-54F412 body and65FAE9-65FD5F generated cleanup; native modal keys and selection CFG", "Native54E25F proposalFA34;54EE5D counterofferFAB0;54E419 loopindex8=>other.agenda0;54E9A8/54EFB9 ListBox selection callback54B140", "Fresh COFF Base.visibility0A,facilities8C; Player59C;PlayerData20CC; existing Popup/Dialogs/PlanWin owners", "historical seed:src/unrecovered/0054dcf0.cpp"], "reason": "Recover the complete staged faction proposal and counteroffer menus with a real lexical Popup, typed faction/base/project filters, shared original proposal and counteroffer selectors, PlanWin base previews and ListBox selection notifications. Preserve original loop-index reuse through the declared agenda word rather than an out-of-bounds treaty array view. Preserve both original body and generated cleanup spans and seed findings; compiling coverage is not byte-exact or game acceptance."}
+// symbol    ?proposal_menu@@YAHHH@Z
+// TRIED: byte-exact prologue global-write order (a64cc load/cmp interleaved between fa30/fa7c/f7cc/fab0/fa34/fa5c in the original, sequential here); the six-panel Popup/Dialogs dispatch, item()/exec() gating and faction-loop strides are transcribed from raw disasm + the (uncorrupted for this function) Ghidra hypothesis cross-checked against it - diverges first at #11, in the prologue.
+int __cdecl proposal_menu(int faction_id, int faction_id_with) {
+    Popup popup;
+
+    DiploScratchFA30 = -1;
+    DiploScratchFA7C = -1;
+    PopupDialogFactionID = faction_id_with;
+    DiplomacyProposalMode = 0;
+    DiploScratchFA34 = 0;
+    DiploScratchFA5C = 0;
+
+    int bases_without_facility = 0;
+    if (BaseCurrentCount > 0) {
+        for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+            Base &base = Bases[base_id];
+            if (base.faction_id_current == faction_id_with &&
+                (base.faction_id_current == faction_id ||
+                 (base.visibility & (1 << (faction_id & 0x1f))) != 0)) {
+                int facility_byte = 0;
+                int facility_bit = 0;
+                bitmask(1, &facility_byte, &facility_bit);
+                if ((base.facilities_built[facility_byte] & facility_bit) == 0)
+                    ++bases_without_facility;
+            }
+        }
+    }
+
+    int eligible_other_factions = 0;
+    for (int candidate = 1; candidate < MaxPlayerNum; ++candidate) {
+        const unsigned char alive_mask =
+            static_cast<unsigned char>((LockEnableMask >> 8) & 0xff);
+        if ((alive_mask & (1 << (candidate & 0x1f))) != 0 &&
+            candidate != faction_id && candidate != faction_id_with) {
+            const uint32_t candidate_treaty =
+                PlayersData[candidate].diplo_treaties[faction_id];
+            if ((candidate_treaty & 8u) == 0 &&
+                (SecretProject.empath_guild < 0 ||
+                 Bases[SecretProject.empath_guild].faction_id_current ==
+                     faction_id)) {
+                ++eligible_other_factions;
+            }
+        }
+    }
+
+    parse_num(0, PlayersData[faction_id].loan_balance[faction_id_with]);
+    diplomacy_caption(faction_id, faction_id_with);
+
+    popup.start(PopupStartCaption, "PROPOSAL", -1, nullptr, 0x100000, 0);
+    popup.set_caller_picture(popup.picture_enabled()
+        ? nullptr : FactionDiplomacyPortraits[faction_id_with]);
+    popup.dialogs().sprite(FactionDiplomacyPortraits[faction_id_with],
+                           nullptr, 0);
+    if (X_text_open(ScriptPopupFile, "PROPOSALMENU") != 0) return 0;
+
+    text_get();
+    StringTemp[0] = 0;
+    parse_string(TextBufferGetPtr, StringTemp);
+    popup.dialogs().item(StringTemp, 0);
+
+    text_get();
+    StringTemp[0] = 0;
+    parse_string(TextBufferGetPtr, StringTemp);
+    popup.dialogs().item(StringTemp, 1);
+
+    text_get();
+    StringTemp[0] = 0;
+    parse_string(TextBufferGetPtr, StringTemp);
+    if ((PlayersData[faction_id].diplo_treaties[faction_id_with] & 2u) != 0 &&
+        (PlayersData[faction_id].diplo_treaties[faction_id_with] & 1u) == 0)
+        popup.dialogs().item(StringTemp, 2);
+
+    text_get();
+    StringTemp[0] = 0;
+    parse_string(TextBufferGetPtr, StringTemp);
+    if ((PlayersData[faction_id].diplo_treaties[faction_id_with] & 2u) == 0)
+        popup.dialogs().item(StringTemp, 3);
+
+    text_get();
+    StringTemp[0] = 0;
+    parse_string(TextBufferGetPtr, StringTemp);
+    if ((GameRules & 0x02000000u) == 0)
+        popup.dialogs().item(StringTemp, 4);
+
+    text_get();
+    StringTemp[0] = 0;
+    parse_string(TextBufferGetPtr, StringTemp);
+
+    text_get();
+    StringTemp[0] = 0;
+    parse_string(TextBufferGetPtr, StringTemp);
+    if (bases_without_facility != 0)
+        popup.dialogs().item(StringTemp, 13);
+
+    text_get();
+    StringTemp[0] = 0;
+    parse_string(TextBufferGetPtr, StringTemp);
+    popup.dialogs().item(StringTemp, 6);
+
+    text_get();
+    StringTemp[0] = 0;
+    parse_string(TextBufferGetPtr, StringTemp);
+    const int offered_value =
+        PlayersData[faction_id].loan_balance[faction_id_with];
+    if (offered_value != 0 &&
+        offered_value <= PlayersData[faction_id].energy_reserves)
+        popup.dialogs().item(StringTemp, 11);
+
+    text_get();
+    StringTemp[0] = 0;
+    parse_string(TextBufferGetPtr, StringTemp);
+
+    text_get();
+    StringTemp[0] = 0;
+    parse_string(TextBufferGetPtr, StringTemp);
+    if (PlayersData[faction_id_with].current_num_bases != 0)
+        popup.dialogs().item(StringTemp, 8);
+
+    text_get();
+    StringTemp[0] = 0;
+    parse_string(TextBufferGetPtr, StringTemp);
+    if (PlayersData[faction_id].current_num_bases > 1 &&
+        eligible_other_factions != 0 && IsMultiplayerNet == 0)
+        popup.dialogs().item(StringTemp, 9);
+
+    DiploScratchFA34 = popup.exec(0, pop_wait);
+
+    if (DiploScratchFA34 == 8) {
+        popup.start(PopupStartCaption, "PROPOSEATTACK", -1, nullptr,
+                    0x100040, 0);
+        popup.set_caller_picture(popup.picture_enabled()
+            ? nullptr : FactionDiplomacyPortraits[faction_id_with]);
+        popup.dialogs().sprite(FactionDiplomacyPortraits[faction_id_with],
+                               nullptr, 0);
+
+        if (X_text_open(ScriptPopupFile, "ATTACKSTRING") == 0) {
+            text_get();
+            for (int candidate = 1; candidate < MaxPlayerNum; ++candidate) {
+                const unsigned char alive_mask =
+                    static_cast<unsigned char>((LockEnableMask >> 8) & 0xff);
+                const uint32_t target_flags =
+                    PlayersData[faction_id].diplo_treaties[candidate];
+                const bool candidate_is_alive =
+                    (alive_mask & (1 << (candidate & 0x1f))) != 0;
+                const bool target_is_human =
+                    (LockEnableMask & (1u << (candidate & 0x1f))) != 0;
+                if (candidate_is_alive && candidate != faction_id &&
+                    candidate != faction_id_with &&
+                    ((target_flags & 8u) != 0 || target_is_human)) {
+                    GenderDefault = Players[candidate].is_leader_female;
+                    PluralityDefault = 0;
+                    parse_says(0, Players[candidate].title_leader, -1, -1);
+                    GenderDefault = Players[candidate].is_leader_female;
+                    PluralityDefault = 0;
+                    parse_says(1, Players[candidate].name_leader, -1, -1);
+                    GenderDefault = Players[candidate].noun_gender;
+                    PluralityDefault = Players[candidate].is_noun_plural;
+                    parse_says(2, Players[candidate].noun_faction, -1, -1);
+                    StringTemp[0] = 0;
+                    parse_string(TextBufferGetPtr, StringTemp);
+                    popup.dialogs().item(StringTemp, candidate);
+                }
+            }
+
+            DiploScratchFA5C = popup.exec(0, pop_wait);
+            if (DiploScratchFA5C >= 0) {
+                // The original reuses the completed loop index8 here, reading
+                // other.treaties[8], which is this declared agenda word.
+                if ((PlayersData[faction_id_with].diplo_agenda[0] & 0x10u) != 0) {
+                    const int target = DiploScratchFA5C;
+                    GenderDefault = Players[target].is_leader_female;
+                    PluralityDefault = 0;
+                    parse_says(0, Players[target].title_leader, -1, -1);
+                    GenderDefault = Players[target].is_leader_female;
+                    PluralityDefault = 0;
+                    parse_says(1, Players[target].name_leader, -1, -1);
+                    x_pops_short("REJWARALREADY", 0x100000,
+                                 FactionDiplomacyPortraits[faction_id_with],
+                                 pop_wait);
+                    DiploScratchFA34 = 0;
+                    goto return_selection;
+                }
+            } else {
+                DiploScratchFA34 = 0;
+                goto return_selection;
+            }
+        } else {
+            DiploScratchFA34 = 0;
+            goto return_selection;
+        }
+    } else if (DiploScratchFA34 == 13) {
+        popup.start(PopupStartCaption, "PROPOSECOMMLINK", -1, nullptr,
+                    0x100040, 0);
+        popup.set_caller_picture(popup.picture_enabled()
+            ? nullptr : FactionDiplomacyPortraits[faction_id_with]);
+        popup.dialogs().sprite(FactionDiplomacyPortraits[faction_id_with],
+                               nullptr, 0);
+
+        if (X_text_open(ScriptPopupFile, "ATTACKSTRING") != 0) {
+            DiploScratchFA34 = 0;
+            goto return_selection;
+        }
+
+        text_get();
+        for (int candidate = 1; candidate < MaxPlayerNum; ++candidate) {
+            const unsigned char alive_mask =
+                static_cast<unsigned char>((LockEnableMask >> 8) & 0xff);
+            const uint32_t target_flags =
+                PlayersData[faction_id].diplo_treaties[candidate];
+            const bool candidate_is_alive =
+                (alive_mask & (1 << (candidate & 0x1f))) != 0;
+            if (candidate_is_alive && candidate != faction_id &&
+                candidate != faction_id_with && (target_flags & 8u) == 0 &&
+                (SecretProject.empath_guild < 0 ||
+                 Bases[SecretProject.empath_guild].faction_id_current !=
+                     faction_id_with)) {
+                GenderDefault = Players[candidate].is_leader_female;
+                PluralityDefault = 0;
+                parse_says(0, Players[candidate].title_leader, -1, -1);
+                GenderDefault = Players[candidate].is_leader_female;
+                PluralityDefault = 0;
+                parse_says(1, Players[candidate].name_leader, -1, -1);
+                GenderDefault = Players[candidate].noun_gender;
+                PluralityDefault = Players[candidate].is_noun_plural;
+                parse_says(2, Players[candidate].noun_faction, -1, -1);
+                StringTemp[0] = 0;
+                parse_string(TextBufferGetPtr, StringTemp);
+                popup.dialogs().item(StringTemp, candidate);
+            }
+        }
+
+        DiploScratchFA5C = popup.exec(0, pop_wait);
+        if (DiploScratchFA5C < 0) {
+            DiploScratchFA34 = 0;
+            goto return_selection;
+        }
+
+        const uint32_t target_flags =
+            PlayersData[faction_id_with]
+                .diplo_treaties[DiploScratchFA5C];
+        if ((target_flags & 8u) == 0 &&
+            (SecretProject.empath_guild < 0 ||
+             Bases[SecretProject.empath_guild].faction_id_current !=
+                 faction_id_with)) {
+            const int target = DiploScratchFA5C;
+            GenderDefault = Players[target].is_leader_female;
+            PluralityDefault = 0;
+            parse_says(0, Players[target].title_leader, -1, -1);
+            GenderDefault = Players[target].is_leader_female;
+            PluralityDefault = 0;
+            parse_says(1, Players[target].name_leader, -1, -1);
+            GenderDefault = Players[target].noun_gender;
+            PluralityDefault = Players[target].is_noun_plural;
+            parse_says(2, Players[target].noun_faction, -1, -1);
+            DiploScratchFA34 = 0;
+            x_pops_minimal("NOCOMMLINK",
+                           FactionDiplomacyPortraits[faction_id_with], pop_wait);
+        }
+    } else if (DiploScratchFA34 == 9) {
+        PlanWindow.init(nullptr);
+        PlanWindow.back_redraw();
+        popup.start(PopupStartCaption, "PROPOSEBASE", -1, nullptr,
+                    0x100040, 0);
+        popup.set_caller_picture(popup.picture_enabled()
+            ? nullptr : FactionDiplomacyPortraits[faction_id_with]);
+        popup.dialogs().sprite(FactionDiplomacyPortraits[faction_id_with],
+                               nullptr, 0);
+
+        bool has_base = false;
+        int item_id = 0;
+        if (BaseCurrentCount > 0) {
+            for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+                Base &base = Bases[base_id];
+                if (base.faction_id_current == faction_id_with) {
+                    int facility_byte = 0;
+                    int facility_bit = 0;
+                    bitmask(1, &facility_byte, &facility_bit);
+                    if ((base.facilities_built[facility_byte] & facility_bit) ==
+                        0) {
+                        StringTemp[0] = 0;
+                        say_base(StringTemp, item_id);
+                        popup.dialogs().item(StringTemp, item_id);
+                        if (!has_base) {
+                            has_base = true;
+                            PlanWindow.clear_lines();
+                            PlanWindow.monocenter(base.x, base.y, 0);
+                            PlanWindow.add_line(base_id, base_id, 0);
+                            PlanWindow.on_redraw();
+                        }
+                    }
+                }
+                ++item_id;
+            }
+        }
+
+        if (!has_base) {
+            DiploScratchFA7C = -1;
+            DiploScratchFA34 = 0;
+        } else {
+            PlanWindow.show(0);
+            popup.dialogs().ListBox::set_selection_callback(battle_routine);
+            DiploScratchFA7C = popup.exec(0, pop_wait);
+            if (DiploScratchFA7C < 0) DiploScratchFA34 = 0;
+        }
+        PlanWindow.close();
+    }
+
+    if (DiploScratchFA34 != 0 && DiploScratchFA34 != 7 &&
+        DiploScratchFA34 != 10 && DiploScratchFA34 != 11 &&
+        DiploScratchFA34 != 5 && DiploScratchFA34 != 12) {
+        GenderDefault = Players[faction_id_with].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(0, Players[faction_id_with].title_leader, -1, -1);
+        GenderDefault = Players[faction_id_with].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(1, Players[faction_id_with].name_leader, -1, -1);
+        parse_says(2, get_pact_hood(faction_id, faction_id_with), -1, -1);
+        diplomacy_caption(faction_id, faction_id_with);
+        StringTemp[0] = 0;
+        strcat(StringTemp, "COUNTER");
+        char counter_text[16];
+        _itoa(DiploScratchFA34 == 1, counter_text, 10);
+        strcat(StringTemp, counter_text);
+
+        popup.start(PopupStartCaption, StringTemp, -1, nullptr,
+                    0x100000, 0);
+        popup.set_caller_picture(popup.picture_enabled()
+            ? nullptr : FactionDiplomacyPortraits[faction_id_with]);
+        popup.dialogs().sprite(FactionDiplomacyPortraits[faction_id_with],
+                               nullptr, 0);
+        if (X_text_open(ScriptPopupFile, "COUNTERMENU") != 0) return 0;
+
+        text_get();
+        StringTemp[0] = 0;
+        parse_string(TextBufferGetPtr, StringTemp);
+        popup.dialogs().item(StringTemp, 0);
+
+        text_get();
+        StringTemp[0] = 0;
+        parse_string(TextBufferGetPtr, StringTemp);
+        if (DiploScratchFA34 == 6)
+            popup.dialogs().item(StringTemp, 6);
+
+        text_get();
+        StringTemp[0] = 0;
+        parse_string(TextBufferGetPtr, StringTemp);
+        if (DiploScratchFA34 != 1)
+            popup.dialogs().item(StringTemp, 1);
+
+        text_get();
+        StringTemp[0] = 0;
+        parse_string(TextBufferGetPtr, StringTemp);
+        if (DiploScratchFA34 != 1)
+            popup.dialogs().item(StringTemp, 2);
+
+        text_get();
+        StringTemp[0] = 0;
+        parse_string(TextBufferGetPtr, StringTemp);
+        if (DiploScratchFA34 != 1 &&
+            (PlayersData[faction_id].diplo_treaties[faction_id_with] & 1u) ==
+                0)
+            popup.dialogs().item(StringTemp, 3);
+
+        text_get();
+        StringTemp[0] = 0;
+        parse_string(TextBufferGetPtr, StringTemp);
+        if (DiploScratchFA34 != 1 &&
+            (PlayersData[faction_id].diplo_treaties[faction_id_with] & 1u) !=
+                0)
+            popup.dialogs().item(StringTemp, 3);
+
+        text_get();
+        StringTemp[0] = 0;
+        parse_string(TextBufferGetPtr, StringTemp);
+        if ((GameRules & 0x02000000u) == 0)
+            popup.dialogs().item(StringTemp, 4);
+
+        text_get();
+        StringTemp[0] = 0;
+        parse_string(TextBufferGetPtr, StringTemp);
+        if (DiploScratchFA34 == 1)
+            popup.dialogs().item(StringTemp, 7);
+
+        text_get();
+        StringTemp[0] = 0;
+        parse_string(TextBufferGetPtr, StringTemp);
+        if (DiploScratchFA34 != 6)
+            popup.dialogs().item(StringTemp, 5);
+
+        text_get();
+        StringTemp[0] = 0;
+        parse_string(TextBufferGetPtr, StringTemp);
+        if (PlayersData[faction_id].current_num_bases > 1 &&
+            IsMultiplayerNet == 0 &&
+            (DiploScratchFA34 == 9 || DiploScratchFA34 == 1))
+            popup.dialogs().item(StringTemp, 8);
+
+        DiplomacyProposalMode = popup.exec(0, pop_wait);
+        if (DiplomacyProposalMode == 8) {
+            PlanWindow.init(nullptr);
+            PlanWindow.back_redraw();
+            popup.start(PopupStartCaption, "COUNTERBASE", -1, nullptr,
+                        0x100040, 0);
+            popup.set_caller_picture(popup.picture_enabled()
+                ? nullptr : FactionDiplomacyPortraits[faction_id_with]);
+            popup.dialogs().sprite(FactionDiplomacyPortraits[faction_id_with],
+                                   nullptr, 0);
+
+            bool has_counter_base = false;
+            int counter_item_id = 0;
+            if (BaseCurrentCount > 0) {
+                for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+                    Base &base = Bases[base_id];
+                    if (base.faction_id_current == faction_id) {
+                        int facility_byte = 0;
+                        int facility_bit = 0;
+                        bitmask(1, &facility_byte, &facility_bit);
+                        if ((base.facilities_built[facility_byte] &
+                             facility_bit) == 0) {
+                            StringTemp[0] = 0;
+                            say_base(StringTemp, counter_item_id);
+                            popup.dialogs().item(StringTemp, counter_item_id);
+                            if (!has_counter_base) {
+                                has_counter_base = true;
+                                PlanWindow.clear_lines();
+                                PlanWindow.monocenter(base.x, base.y, 0);
+                                PlanWindow.add_line(base_id, base_id, 0);
+                                PlanWindow.on_redraw();
+                            }
+                        }
+                    }
+                    ++counter_item_id;
+                }
+            }
+
+            PlanWindow.show(0);
+            popup.dialogs().ListBox::set_selection_callback(battle_routine);
+            DiploScratchFA30 = popup.exec(0, pop_wait);
+            if (DiploScratchFA30 < 0) DiploScratchFA34 = 0;
+            PlanWindow.close();
+        }
+
+        if (DiplomacyProposalMode == 0) DiploScratchFA34 = 0;
+        return DiploScratchFA34;
+    }
+
+return_selection:
+    DiplomacyProposalMode = 1;
+    return DiploScratchFA34;
+}

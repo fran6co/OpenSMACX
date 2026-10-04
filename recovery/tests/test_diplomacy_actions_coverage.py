@@ -6,6 +6,122 @@ from recovery.tests.test_pact_ascent import ROOT, definition
 
 
 @pytest.mark.parametrize('compiler_name', ['g++', 'clang++'])
+def test_actual_proposal_menu(tmp_path, compiler_name):
+    compiler = shutil.which(compiler_name)
+    if not compiler:
+        pytest.skip(compiler_name + ' unavailable')
+    body = definition((ROOT / 'src/faction.cpp').read_text(),
+                      r'int __cdecl proposal_menu\([^)]*\)')
+    fixture = r'''
+#include <cassert>
+#include <cstdio>
+#include <cstring>
+#define __cdecl
+#define nullptr 0
+typedef unsigned int uint32_t;
+const int MaxPlayerNum=8;
+struct Sprite {} portraits[8];Sprite *FactionDiplomacyPortraits[8];
+struct Player {int is_leader_female,noun_gender,is_noun_plural;
+ char title_leader[24],name_leader[24],noun_faction[24];} Players[8];
+struct Data {uint32_t diplo_treaties[8],diplo_agenda[8],current_num_bases;
+ int loan_balance[8],energy_reserves;} PlayersData[8];
+struct Base {int faction_id_current;unsigned char visibility,facilities_built[16];short x,y;} Bases[3];
+struct Projects {int empath_guild;} SecretProject;
+int BaseCurrentCount,DiploScratchFA30,DiploScratchFA7C,PopupDialogFactionID;
+int DiplomacyProposalMode,DiploScratchFA34,DiploScratchFA5C;
+unsigned LockEnableMask,GameRules;int IsMultiplayerNet,GenderDefault,PluralityDefault;
+char StringTemp[128],PopupStartCaption[128],ScriptPopupFile[128],TextBufferGetPtr[128];
+int answers[8],starts,execs,destructors,callbacks,shows,closes,lines,base_named;
+int item_ids[8][20],item_count[8],text_lines;char keys[8][80],notice[80],fail_key[80];
+int pop_wait(){return 0;}void battle_routine(int){}
+void bitmask(int n,int *offset,int *mask){assert(n==1);*offset=0;*mask=2;}
+void parse_num(int slot,int amount){assert(!slot&&amount==PlayersData[1].loan_balance[2]);}
+void diplomacy_caption(int a,int b){assert(a==1&&b==2);}
+int parse_says(int slot,char *s,int a,int b){assert(slot>=0&&slot<=2&&s&&a==-1&&b==-1);return 0;}
+char *get_pact_hood(int a,int b){assert(a==1&&b==2);return Players[1].noun_faction;}
+int X_text_open(char *,const char *key){return std::strcmp(fail_key,key)==0?1:0;}
+void text_get(){++text_lines;std::strcpy(TextBufferGetPtr,"line");}
+void parse_string(char *s,char *out){assert(s==TextBufferGetPtr&&out==StringTemp&&!*out);std::strcpy(out,s);}
+char *_itoa(int n,char *out,int base){assert(base==10);std::sprintf(out,"%d",n);return out;}
+void say_base(char *s,int base){assert(s==StringTemp&&!*s&&base>=0&&base<BaseCurrentCount);base_named=base;std::strcpy(s,"base");}
+struct ListBox {void set_selection_callback(void(*cb)(int)){assert(cb==battle_routine);++callbacks;}};
+struct Dialogs:ListBox {int stage;
+ void sprite(Sprite *s,char *text,int n){assert(s==FactionDiplomacyPortraits[2]&&!text&&!n);}
+ void item(char *s,int id){assert(s==StringTemp&&*s&&item_count[stage]<20);item_ids[stage][item_count[stage]++]=id;}
+};
+struct Popup {Dialogs d;Popup(){d.stage=0;}~Popup(){++destructors;}
+ int start(char *s,const char *key,int n,char *text,int flags,int owner){assert(s==PopupStartCaption&&n==-1&&!text&&!owner&&(flags==0x100000||flags==0x100040));
+ assert(starts<8);d.stage=starts;std::strcpy(keys[starts++],key);return 0;}
+ bool picture_enabled(){return false;}void set_caller_picture(Sprite *s){assert(s==FactionDiplomacyPortraits[2]);}
+ Dialogs &dialogs(){return d;}int exec(int n,int(*cb)()){assert(!n&&cb==pop_wait&&execs<8);return answers[execs++];}
+};
+struct Plan {void init(char *s){assert(!s);}void back_redraw(){}void clear_lines(){}
+ void monocenter(int,int,int n){assert(!n);}void add_line(int a,int b,int c){assert(a==b&&!c);++lines;}
+ void on_redraw(){}void show(int n){assert(!n);++shows;}void close(){++closes;}} PlanWindow;
+int x_pops_short(const char *key,int flags,Sprite *s,int(*cb)()){assert(flags==0x100000&&s==FactionDiplomacyPortraits[2]&&cb==pop_wait);std::strcpy(notice,key);return 0;}
+int x_pops_minimal(const char *key,Sprite *s,int(*cb)()){assert(s==FactionDiplomacyPortraits[2]&&cb==pop_wait);std::strcpy(notice,key);return 0;}
+@@BODY@@
+void reset(){
+ std::memset(Players,0,sizeof(Players));std::memset(PlayersData,0,sizeof(PlayersData));std::memset(Bases,0,sizeof(Bases));
+ for(int i=0;i<8;++i){FactionDiplomacyPortraits[i]=&portraits[i];answers[i]=-1;}
+ BaseCurrentCount=3;Bases[0].faction_id_current=2;Bases[0].visibility=2;
+ Bases[1].faction_id_current=1;Bases[2].faction_id_current=1;
+ PlayersData[1].current_num_bases=2;PlayersData[2].current_num_bases=1;
+ LockEnableMask=0xfe00;GameRules=0;IsMultiplayerNet=0;SecretProject.empath_guild=-1;
+ DiploScratchFA30=DiploScratchFA7C=99;DiplomacyProposalMode=DiploScratchFA34=DiploScratchFA5C=99;
+ starts=execs=destructors=callbacks=shows=closes=lines=text_lines=0;base_named=-1;
+ std::memset(item_count,0,sizeof(item_count));notice[0]=fail_key[0]=0;
+}
+bool has(int stage,int id){for(int i=0;i<item_count[stage];++i)if(item_ids[stage][i]==id)return true;return false;}
+int main(){
+ reset();answers[0]=7;assert(proposal_menu(1,2)==7&&DiploScratchFA34==7&&DiplomacyProposalMode==1&&destructors==1);
+ assert(PopupDialogFactionID==2&&has(0,13)&&has(0,8)&&has(0,9)&&!has(0,2)&&has(0,3));
+ reset();answers[0]=2;answers[1]=4;assert(proposal_menu(1,2)==2&&DiplomacyProposalMode==4&&execs==2);
+ assert(!std::strcmp(keys[1],"COUNTER0")&&has(1,1)&&has(1,2)&&has(1,3));
+ reset();answers[0]=2;answers[1]=0;assert(proposal_menu(1,2)==0&&DiplomacyProposalMode==0);
+ reset();answers[0]=1;answers[1]=7;assert(proposal_menu(1,2)==1&&DiplomacyProposalMode==7&&!std::strcmp(keys[1],"COUNTER1"));
+ assert(!has(1,1)&&!has(1,2)&&has(1,7));
+ reset();std::strcpy(fail_key,"PROPOSALMENU");assert(proposal_menu(1,2)==0&&destructors==1&&!execs);
+ reset();answers[0]=8;answers[1]=-1;assert(proposal_menu(1,2)==0&&DiplomacyProposalMode==1&&execs==2);
+ reset();answers[0]=8;answers[1]=3;answers[2]=4;PlayersData[1].diplo_treaties[3]=8;
+ assert(proposal_menu(1,2)==8&&DiploScratchFA5C==3&&DiplomacyProposalMode==4&&has(1,3));
+ reset();answers[0]=8;answers[1]=3;PlayersData[2].diplo_agenda[0]=16;
+ assert(proposal_menu(1,2)==0&&!std::strcmp(notice,"REJWARALREADY")&&DiplomacyProposalMode==1);
+ reset();answers[0]=13;answers[1]=3;assert(proposal_menu(1,2)==0&&!std::strcmp(notice,"NOCOMMLINK")&&DiplomacyProposalMode==1);
+ reset();answers[0]=13;answers[1]=3;answers[2]=4;PlayersData[2].diplo_treaties[3]=8;
+ assert(proposal_menu(1,2)==13&&DiplomacyProposalMode==4&&has(1,3));
+ reset();answers[0]=9;answers[1]=0;answers[2]=8;answers[3]=2;
+ assert(proposal_menu(1,2)==9&&DiploScratchFA7C==0&&DiploScratchFA30==2&&DiplomacyProposalMode==8);
+ assert(callbacks==2&&shows==2&&closes==2&&has(1,0)&&has(3,1)&&has(3,2));
+ reset();answers[0]=9;answers[1]=0;answers[2]=8;answers[3]=-1;Bases[1].facilities_built[0]=2;Bases[2].facilities_built[0]=2;
+ assert(proposal_menu(1,2)==0&&execs==4&&shows==2&&closes==2&&!item_count[3]&&callbacks==2);
+ reset();answers[0]=9;Bases[0].facilities_built[0]=2;assert(proposal_menu(1,2)==0&&DiploScratchFA7C==-1&&closes==1);
+ reset();answers[0]=7;Bases[0].visibility=0;assert(proposal_menu(1,2)==7&&!has(0,13));
+}
+'''
+    variants = {'actual': body}
+    for name, old, new in (
+        ('wrong_proposal_cell', 'DiploScratchFA34 = popup.exec(0, pop_wait)',
+         'DiplomacyProposalMode = popup.exec(0, pop_wait)'),
+        ('missing_selection_notification', 'set_selection_callback(battle_routine)',
+         'set_selection_callback(0)'),
+        ('wrong_attack_relation', 'PlayersData[faction_id_with].diplo_agenda[0]',
+         'PlayersData[DiploScratchFA5C].diplo_treaties[faction_id_with]'),
+    ):
+        assert old in body
+        variants[name] = body.replace(old, new)
+    for name, candidate in variants.items():
+        cpp, binary = tmp_path / (name + '.cpp'), tmp_path / name
+        cpp.write_text(fixture.replace('@@BODY@@', candidate))
+        result = subprocess.run([compiler, '-std=c++98', '-fsanitize=undefined',
+                                 '-fno-sanitize-recover=all', str(cpp), '-o', str(binary)],
+                                capture_output=True, text=True, timeout=45)
+        assert result.returncode == 0, result.stderr
+        result = subprocess.run([str(binary)], capture_output=True, timeout=15)
+        assert (result.returncode == 0) == (name == 'actual'), (name, result.stderr)
+
+
+@pytest.mark.parametrize('compiler_name', ['g++', 'clang++'])
 def test_actual_threaten(tmp_path, compiler_name):
     compiler = shutil.which(compiler_name)
     if not compiler:

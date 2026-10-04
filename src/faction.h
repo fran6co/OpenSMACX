@@ -1163,3 +1163,5 @@ int __cdecl propose_treaty(int actor, int other);
 
 extern int DiploScratchFA34;
 void __cdecl threaten(int faction_id, int other_faction_id);
+
+int __cdecl proposal_menu(int faction_id, int faction_id_with);
