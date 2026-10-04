@@ -1,0 +1,20 @@
+{
+  "event_id": "0359e2e5b802550dea77f2c970a7be1adb7750c9d89f8935a328d435e960fee2",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_uv2player_postplay.py",
+      "recovery/tests/uv2player_postplay_harness.cpp"
+    ],
+    "evidence": [
+      "Native4BEF00 and659D00 show Font[3], genuine StringList and outer allocation-base lifetime, borrowed DirectDraw inputs, parsed rectangle, timed callback and unsigned elapsed wait. Add actual-source host damage controls without changing original task baseline or acceptance requirements."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "116334d899a993e7f5dac6238a0c19eae150c7df1b32fa44a3a77d877842e6dd",
+  "request_id": "uv2-postplay-controls-20261004",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:uv2player-complete-owner-recovery"
+}

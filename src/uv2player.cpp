@@ -22,6 +22,11 @@
 #include "palette.h"
 #include "temp.h"
 #include "win.h"
+#include "text.h"
+#include "stringstruct.h"
+
+// Shared help-file pointer; its storage is owned by datalink.cpp.
+extern char *DatalinkHelpFile;
 
 /*
 Purpose: Construct the Buffer subobject, then clear one field.
@@ -311,4 +316,98 @@ int UV2Player::play(int width, int height) {
     primary_surface_->Blt(nullptr, nullptr, nullptr,
                           DDBLT_WAIT | DDBLT_COLORFILL, &effects);
     return 0;
+}
+
+// ORIGINAL: 0x004BEF00 ?UNK3@UV2Player@@QAEXXZ 0x004BEF00-0x004BF380;0x00659D00-0x00659D55
+// RECOVERY_BINDING: v1 {"evidence": ["task:uv2player-complete-owner-recovery", "Pinned4BEF00-4BF380 and659D00-659D55; exec4BED47 calls this only when quit8CC250 is clear", "4BEF42-4BEF71 captures allocation owner before StringList construction; native cleanup restores it after derived/base list teardown", "4BF07B-4BF0AE parses left,top,width,height;4BF1C8-4BF20F centers text vertically with signed division", "4BF11D-4BF147 borrows primary surface and clipper via stack ExtDirectDraw;4BF1F0/4BF21A install/clear cdecl writer callback", "Literal687AC0 is movlist; help pointer691B00 is source-owned DatalinkHelpFile", "historical seed:src/recovered/units/004bef00.cpp"], "reason": "Recover the post-play MOVLIST presentation as a real UV2Player member, using Font array lifetime, genuine StringList and outer allocation-base lifetime, source-owned help-file storage and Buffer callback. Preserve original main and cleanup spans; no matching or game acceptance claim is granted."}
+// symbol    ?show_post_movie_text@UV2Player@@QAEXXZ
+void UV2Player::show_post_movie_text() {
+    Font fonts[3];
+    char font_names[3][0x80];
+    int font_styles[3];
+    int font_heights[3];
+    int color_first[3];
+    int color_second[3];
+    int color_third[3];
+    int color_fourth[3];
+
+    StringAllocationBase allocator_scope;
+    StringList help_lines;
+
+    if (text_open("movlist", movie_name_) == 0) {
+        for (int index = 0; index < 3; ++index) {
+            font_names[index][0] = '\0';
+            text_get();
+            strcat(font_names[index], text_item());
+
+            font_styles[index] = text_item_number();
+            font_heights[index] = text_item_number();
+
+            text_get();
+            color_first[index] = text_item_number() + 0xA;
+            color_second[index] = text_item_number() + 0xA;
+            color_third[index] = text_item_number();
+            color_fourth[index] = text_item_number();
+
+            // The original pushes style, then height, then the font-name
+            // pointer. Font::init takes (name, height, style).
+            fonts[index].init(font_names[index], font_heights[index],
+                              font_styles[index]);
+        }
+
+        text_get();
+        const int left = text_item_number();
+        const int top = text_item_number();
+        const int right = text_item_number() + left;
+        const int bottom = text_item_number() + top;
+
+        text_get();
+        write_delay_ = text_item_number();
+        const int timeout = text_item_number();
+
+        text_get();
+        LPSTR help_line = text_get();
+
+        help_lines.remove_all();
+        while (help_line != 0 && help_line[0] != '\0') {
+            if (help_line[0] == '@') {
+                help_lines.load(DatalinkHelpFile, help_line + 1, 0, 0);
+            } else {
+                help_lines.add_special(help_line);
+            }
+            help_line = text_get();
+        }
+        text_close();
+
+        ExtDirectDraw display;
+        // DirectDrawSurface2 extends DirectDrawSurface in the SDK; Buffer's
+        // borrowed surface API consumes the shared interface prefix.
+        display.surface = reinterpret_cast<IDirectDrawSurface *>(primary_surface_);
+        display.clipper = clipper_;
+        buffer_.init(0x280, 0x1E0, 4, &display);
+        buffer_.set_font(&fonts[0], &fonts[1], &fonts[2], &fonts[0]);
+        buffer_.set_text_color(color_first[0], color_second[0],
+                               color_third[0], color_fourth[0]);
+        buffer_.set_text_color2(color_first[1], color_second[1],
+                                color_third[1], color_fourth[1]);
+        buffer_.set_text_color3(color_first[2], color_second[2],
+                                color_third[2], color_fourth[2]);
+        buffer_.set_text_color_hyper(color_first[0], color_second[0],
+                                     color_third[0], color_fourth[0]);
+
+        const int width = right - left;
+        const int drawn_height = buffer_.write_strings_height(&help_lines,
+                                                               width, 0);
+        const int y = top + (bottom - drawn_height - top) / 2;
+
+        buffer_.set_write_raw_callback(&uv2_player_writer_redirect);
+        buffer_.write_strings(&help_lines, left, y, width, 0);
+        buffer_.set_write_raw_callback(0);
+
+        const DWORD start = timeGetTime();
+        DWORD now = timeGetTime();
+        while (now - start < static_cast<DWORD>(timeout)) {
+            now = timeGetTime();
+        }
+    }
 }

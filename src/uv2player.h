@@ -35,74 +35,13 @@ class UV2Player {
   int UNK4();
   static int __cdecl on_key();
   int write_timed(LPSTR text, int x, int y, int length);
+  // Post-play MOVLIST text; exec invokes it only when playback was not quit.
+  void show_post_movie_text();
 
-  // Unclassified prefix storage retained without inventing field meanings.
-
-  uint32_t field_0_;  // 0x0
-  uint32_t field_4_;  // 0x4
-  uint32_t field_8_;  // 0x8
-  uint32_t field_C_;  // 0xC
-  uint32_t field_10_;  // 0x10
-  uint32_t field_14_;  // 0x14
-  uint32_t field_18_;  // 0x18
-  uint32_t field_1C_;  // 0x1C
-  uint32_t field_20_;  // 0x20
-  uint32_t field_24_;  // 0x24
-  uint32_t field_28_;  // 0x28
-  uint32_t field_2C_;  // 0x2C
-  uint32_t field_30_;  // 0x30
-  uint32_t field_34_;  // 0x34
-  uint32_t field_38_;  // 0x38
-  uint32_t field_3C_;  // 0x3C
-  uint32_t field_40_;  // 0x40
-  uint32_t field_44_;  // 0x44
-  uint32_t field_48_;  // 0x48
-  uint32_t field_4C_;  // 0x4C
-  uint32_t field_50_;  // 0x50
-  uint32_t field_54_;  // 0x54
-  uint32_t field_58_;  // 0x58
-  uint32_t field_5C_;  // 0x5C
-  uint32_t field_60_;  // 0x60
-  uint32_t field_64_;  // 0x64
-  uint32_t field_68_;  // 0x68
-  uint32_t field_6C_;  // 0x6C
-  uint32_t field_70_;  // 0x70
-  uint32_t field_74_;  // 0x74
-  uint32_t field_78_;  // 0x78
-  uint32_t field_7C_;  // 0x7C
-  uint32_t field_80_;  // 0x80
-  uint32_t field_84_;  // 0x84
-  uint32_t field_88_;  // 0x88
-  uint32_t field_8C_;  // 0x8C
-  uint32_t field_90_;  // 0x90
-  uint32_t field_94_;  // 0x94
-  uint32_t field_98_;  // 0x98
-  uint32_t field_9C_;  // 0x9C
-  uint32_t field_A0_;  // 0xA0
-  uint32_t field_A4_;  // 0xA4
-  uint32_t field_A8_;  // 0xA8
-  uint32_t field_AC_;  // 0xAC
-  uint32_t field_B0_;  // 0xB0
-  uint32_t field_B4_;  // 0xB4
-  uint32_t field_B8_;  // 0xB8
-  uint32_t field_BC_;  // 0xBC
-  uint32_t field_C0_;  // 0xC0
-  uint32_t field_C4_;  // 0xC4
-  uint32_t field_C8_;  // 0xC8
-  uint32_t field_CC_;  // 0xCC
-  uint32_t field_D0_;  // 0xD0
-  uint32_t field_D4_;  // 0xD4
-  uint32_t field_D8_;  // 0xD8
-  uint32_t field_DC_;  // 0xDC
-  uint32_t field_E0_;  // 0xE0
-  uint32_t field_E4_;  // 0xE4
-  uint32_t field_E8_;  // 0xE8
-  uint32_t field_EC_;  // 0xEC
-  uint32_t field_F0_;  // 0xF0
-  uint32_t field_F4_;  // 0xF4
-  uint32_t field_F8_;  // 0xF8
-  uint32_t field_FC_;  // 0xFC
-  uint32_t field_100_;  // 0x100
+  // exec writes the uppercased extension-free movie name here; UNK3 uses
+  // it as the text section key. The next independently used field is +104.
+  // RECOVERY_MEMBER: v1 UV2Player movie_name_ 0x0 0x004BEA50
+  char movie_name_[0x104];  // 0x000..0x104
   uint32_t field_104_;  // 0x104
   IDirectDraw *direct_draw_;  // 0x108
   IDirectDraw2 *direct_draw2_;  // 0x10C
