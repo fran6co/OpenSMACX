@@ -812,7 +812,6 @@ char *const DiploLabelENEMYWAR = (char *)0x0068E5E0;  // "ENEMYWAR"
 char *const DiploLabelPACTUNPACT = (char *)0x0068E604;  // "PACTUNPACT"
 char *const DiploLabelENEMYPACTENDS = (char *)0x0068E610;  // "ENEMYPACTENDS"
 char *const DiploLabelPACTTRUCE = (char *)0x0068E620;  // "PACTTRUCE"
-char *const DiploLabelPACTTREATY = (char *)0x0068E62C;  // "PACTTREATY"
 char *const DiploLabelTEAM = (char *)0x0068E638;  // "TEAM"
 char *const DiploLabelENEMYTRUCE = (char *)0x0068E668;  // "ENEMYTRUCE"
 char *const DiploLabelENEMYTREATY = (char *)0x0068E674;  // "ENEMYTREATY"
@@ -1134,3 +1133,6 @@ void __cdecl encounter(int faction_id, int faction_id_with, int x, int y, int ev
 
 // Directed diplomacy consequences of an original major atrocity.
 void __cdecl major_atrocity(int faction_id, int victim_id);
+
+// Original ordered pact announcement through the real NetMsg owner.
+void __cdecl pact_treaty(int faction_id, int faction_id_with);

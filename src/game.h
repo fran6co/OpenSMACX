@@ -501,3 +501,6 @@ void __cdecl set_tamper();
 void __cdecl diplo(int faction_id, int faction_id_with);
 
 void __cdecl mon_enemy_destroyed(int faction_id, int target_faction);
+
+// Original endgame announcement, with live Console faction reads.
+void __cdecl ascent();

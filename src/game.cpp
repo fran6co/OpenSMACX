@@ -6865,12 +6865,13 @@ initialize_factions:
         (PlayersData[ConsoleGlobal.faction_id_].flags & 0x2000) == 0) {
         const int faction = ascendant_faction;
         PlayersData[faction].flags |= 0x2000;
-        GenderDefault = 0;
-        PluralityDefault = Players[faction].is_leader_female;
+        PluralityDefault = 0;
+        GenderDefault = Players[faction].is_leader_female;
         parse_says(0, Players[faction].title_leader, -1, -1);
-        GenderDefault = 0;
-        PluralityDefault = Players[faction].is_leader_female;
-        parse_says(1, Players[faction].name_leader, -1, -1);
+        const int faction_for_name = ConsoleGlobal.faction_id_;
+        PluralityDefault = 0;
+        GenderDefault = Players[faction_for_name].is_leader_female;
+        parse_says(1, Players[faction_for_name].name_leader, -1, -1);
         popp(*ClimatePopupTitle, "ASCENT", 0, "asctran_sm.pcx", 0);
     }
     if ((TurnCurrentNum & 3) == 1) reset_territory();
@@ -9025,4 +9026,35 @@ void __cdecl clear_tamper_registry() {
         record.field_C_ = 0;
         record.field_14_ = 0;
     }
+}
+
+// ORIGINAL: 0x00523B50 ?ascent@@YAXXZ 0x00523B50-0x00523C58
+// RECOVERY_BINDING: v1 {"evidence": ["task:pact-ascent-owner", "pinned:0x00523B50 original complete span; Player59C fields and real NetMsgPrimary/ConsoleGlobal owners.", "pinned:68E62C PACTTREATY, ASCENT and asctran_sm.pcx text inputs; source literals, never original-image calls.", "pinned:525F08..52600E same turn_upkeep ascent path; plural0, leader gender and console-faction reload after parser; bit2000 unnamed, not PFLAG_MAP_REVEALED200.", "historical seed:src/recovered/units/00523b50.cpp complete mapping/findings retained.", "recovery/tests/test_pact_ascent.py actual-source callback/damage controls, not native layout or runtime acceptance."], "reason": "Recover the complete announcement/turn-flow function using real source-owned players, console, parser state and callbacks. Retain original identity/spans and seed findings; live faction reloads and grammar come from full pinned instructions. No byte or game acceptance claim."}
+void __cdecl ascent() {
+    if (TurnCurrentNum == 0x4b &&
+        has_tech(Facility[FAC_BIOLOGY_LAB].preq_tech,
+                 ConsoleGlobal.faction_id_)) {
+        interlude(1, 0, 1, 0);
+    }
+
+    if (!ascending(ConsoleGlobal.faction_id_)) {
+        return;
+    }
+
+    const int faction_for_flag_and_title = ConsoleGlobal.faction_id_;
+    if ((PlayersData[faction_for_flag_and_title].flags & 0x2000) != 0) {
+        return;
+    }
+    PlayersData[faction_for_flag_and_title].flags |= 0x2000;
+
+    PluralityDefault = 0;
+    GenderDefault = Players[faction_for_flag_and_title].is_leader_female;
+    parse_says(0, Players[faction_for_flag_and_title].title_leader, -1, -1);
+
+    const int faction_for_name = ConsoleGlobal.faction_id_;
+    PluralityDefault = 0;
+    GenderDefault = Players[faction_for_name].is_leader_female;
+    parse_says(1, Players[faction_for_name].name_leader, -1, -1);
+
+    popp(*ClimatePopupTitle, "ASCENT", 0, "asctran_sm.pcx", 0);
 }

@@ -8747,6 +8747,30 @@ static int battle_plans_selected_region_distance_result(
     return 0;
 }
 
+// ORIGINAL: 0x0055D190 ?pact_treaty@@YAXHH@Z 0x0055D190-0x0055D293
+// RECOVERY_BINDING: v1 {"evidence": ["task:pact-ascent-owner", "pinned:0x0055D190 original complete span; Player59C fields and real NetMsgPrimary/ConsoleGlobal owners.", "pinned:68E62C PACTTREATY, ASCENT and asctran_sm.pcx text inputs; source literals, never original-image calls.", "pinned:525F08..52600E same turn_upkeep ascent path; plural0, leader gender and console-faction reload after parser; bit2000 unnamed, not PFLAG_MAP_REVEALED200.", "historical seed:src/recovered/units/0055d190.cpp complete mapping/findings retained.", "recovery/tests/test_pact_ascent.py actual-source callback/damage controls, not native layout or runtime acceptance."], "reason": "Recover the complete announcement/turn-flow function using real source-owned players, console, parser state and callbacks. Retain original identity/spans and seed findings; live faction reloads and grammar come from full pinned instructions. No byte or game acceptance claim."}
+void __cdecl pact_treaty(int faction_id, int faction_id_with) {
+    PluralityDefault = 0;
+    GenderDefault = Players[faction_id].is_leader_female;
+    parse_says(0, Players[faction_id].title_leader, -1, -1);
+
+    GenderDefault = Players[faction_id].is_leader_female;
+    PluralityDefault = 0;
+    parse_says(1, Players[faction_id].name_leader, -1, -1);
+
+    GenderDefault = Players[faction_id].noun_gender;
+    PluralityDefault = Players[faction_id].is_noun_plural;
+    parse_says(2, Players[faction_id].noun_faction, -1, -1);
+
+    parse_says(3, get_he_she(faction_id, 0), -1, -1);
+
+    GenderDefault = Players[faction_id_with].noun_gender;
+    PluralityDefault = Players[faction_id_with].is_noun_plural;
+    parse_says(4, Players[faction_id_with].noun_faction, -1, -1);
+
+    NetMsgPrimary.pop("PACTTREATY", 5000, 0, 0);
+}
+
 static inline int major_atrocity_add_wrapped32(int value, int amount) {
     uint32_t bits;
     memcpy(&bits, &value, sizeof bits);
