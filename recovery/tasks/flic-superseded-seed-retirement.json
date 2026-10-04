@@ -1,0 +1,42 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "61177fd29bccb10bdb8e3e0e06eb11e8cb3350e9",
+  "editable_files": [
+    "src/flic.cpp",
+    "src/unrecovered/0062a070.cpp",
+    "src/unrecovered/0062a210.cpp",
+    "src/recovered/units/0062a280.cpp",
+    "src/recovered/units/0062b780.cpp"
+  ],
+  "evidence": [
+    "Existing real Flic decode_frame, UNK2, rewind and UNK9 definitions retain native guards, frame transitions, file seek/read ordering and real Buffer copy/get_data dependencies. No placeholder, raw executable alias or hand-coded machine body replaces these seeds.",
+    "Fresh installed recover measure of all four subjects in src/flic.cpp against the pinned original passes historical masked-byte comparison. Only installed recover record may bank measured claims; source writer carries seed findings without demotion or marker hand edits.",
+    "Coordinator-reviewed cleanup requires complete identity/span and useful finding continuity, application build/link, source integrity, reference and claim checks and post-integration checks. This does not establish linked preservation, structural/runtime or game acceptance. Other pending seeds and task baselines remain intact."
+  ],
+  "intent": "Retire four superseded Flic seeds after preserving complete original identities, spans, measured historical claims and useful fseek findings in existing genuine Flic owner definitions.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6463600,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6464016,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6464128,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6469504,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "flic-superseded-seed-retirement"
+}
