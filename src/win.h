@@ -1173,6 +1173,11 @@ extern RECT DirectDrawClipRect;        // 0x009BC2D0
 // `Unlock(LPVOID)` - one pointer argument, matching the single value
 // pushed beside the receiver.
 class DDInit { public:
+  DDInit();
+  ~DDInit();
+  // Native6354F0 retains ECX while forwarding depth to init(0,0,depth,1).
+  // Descriptive name; the old free-stdcall seed lost the receiver contract.
+  int init_default_mode(int depth);
   int init(int width, int height, int depth, int tgl);
 
   // 0x00635870, 1691 bytes - a `switch` over ~99 `DDERR_*` codes that turns
@@ -1202,16 +1207,28 @@ class DDInit { public:
   // member is at 0 - and field_8_, two members later, states its own offset.
   // Annotating hwnd_ at 0x0 is only correct if the walk lands field_8_ on
   // 0x8, which it does.
+  // RECOVERY_MEMBER: v1 DDInit hwnd_ 0x0 0x006354D0
   HWND hwnd_;  // 0x0
+  // RECOVERY_MEMBER: v1 DDInit surf_ 0x4 0x006354D0
   IDirectDraw *surf_;
+  // RECOVERY_MEMBER: v1 DDInit field_8_ 0x8 0x006354D0
   uint32_t field_8_;
+  // RECOVERY_MEMBER: v1 DDInit locked_surface_ 0xC 0x006354D0
   IDirectDrawSurface *locked_surface_;
+  // RECOVERY_MEMBER: v1 DDInit locked_bits_ 0x10 0x006354D0
   LPVOID locked_bits_;
   // 0x14. The stride `lock_surface` caches out of the descriptor's lPitch,
   // beside the bits pointer it caches in `locked_bits_`. `lock_surface` is
   // the only writer and nothing in the recovered tree reads it, which is why
   // the five-field survey above missed it - 0x006357D0 is what proves it.
+  // RECOVERY_MEMBER: v1 DDInit pitch_ 0x14 0x006357D0
   int pitch_;
+  // Native6354D0 clears these distinct words after skipping pitch at +14.
+  // Their roles and the complete object's upper bound remain unverified.
+  // RECOVERY_MEMBER: v1 DDInit unknown_18_ 0x18 0x006354D0
+  uint32_t unknown_18_;
+  // RECOVERY_MEMBER: v1 DDInit unknown_1C_ 0x1C 0x006354D0
+  uint32_t unknown_1C_;
 };
 
 // The object itself at 0x009BE618, not a pointer to one.

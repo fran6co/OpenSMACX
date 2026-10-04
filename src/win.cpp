@@ -784,6 +784,43 @@ RECT WinScreenClipRect;    // 0x009B74C0
 // RECOVERY_OBJECT: v2 0x009B6EE8 0x009B6EF8 ?WinDirtyRect@@3UtagRECT@@A 0x005F1750
 RECT WinDirtyRect;
 Win *WinDefaultFocus;      // 0x009B7AEC
+// Native6354D0 leaves pitch untouched, including on nonstatic objects.
+// The global instance is separately zero-initialized by C++ static storage.
+// ORIGINAL: 0x006354D0 sub_6354d0 0x006354D0-0x006354E9 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["task:ddinit-global-lifetime", "Pinned native original0x6354d0", "historical source:src/field_accessors.cpp", "Fresh COFF symbols and helper references in both configured flag sets."], "reason": "Original6354D0 initializes seven receiver words and returns this; true constructor preserves untouched pitch at14. Unknown18/1C roles and complete size remain unproved."}
+// symbol    ??0DDInit@@QAE@XZ
+DDInit::DDInit() {
+    hwnd_ = 0;
+    surf_ = 0;
+    field_8_ = 0;
+    locked_surface_ = 0;
+    locked_bits_ = 0;
+    unknown_18_ = 0;
+    unknown_1C_ = 0;
+}
+
+DDInit::~DDInit() {
+    // Original635450 uses the same cleanup order as635750, including its
+    // omission of secondary-surface Release. No manual atexit registration:
+    // the compiler owns global startup and exactly one automatic teardown.
+    teardown();
+}
+
+// ORIGINAL: 0x006354F0 sub_6354f0 0x006354F0-0x00635503 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["task:ddinit-global-lifetime", "Pinned native original0x6354f0", "historical source:src/recovered/006354f0.cpp", "Fresh COFF symbols and helper references in both configured flag sets."], "reason": "Original6354F0 leaves ECX intact, passes0/0/depth/1 to mapped DDInit::init and returns ret4. Receiver-preserving member replaces contradictory free-stdcall seed. Name is descriptive."}
+// symbol    ?init_default_mode@DDInit@@QAEHH@Z
+int DDInit::init_default_mode(int depth) {
+    return init(0, 0, depth, 1);
+}
+
+// ORIGINAL: 0x00635410 sub_635410 0x00635410-0x00635441 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["task:ddinit-global-lifetime", "Pinned native original0x635410", "historical source:src/recovered/units/00635410.cpp", "Fresh COFF symbols and helper references in both configured flag sets."], "reason": "Original635410 clears seven words of global9BE618 and registers635450. Current compiler-owned global initializer is independently observed _$E21 with startup and registration helpers _$E18/_$E20. Preserve historical single-body claim; helper splitting remains restoration work, not a pass."}
+// symbol    _$E21
+// ORIGINAL: 0x00635450 sub_635450 0x00635450-0x006354CA FILE
+// RECOVERY_BINDING: v1 {"evidence": ["task:ddinit-global-lifetime", "Pinned native original0x635450", "historical source:src/unrecovered/00635450.cpp", "Fresh COFF symbols and helper references in both configured flag sets."], "reason": "Original635450 cleanup belongs to global DDInit lifetime. Current compiler-owned exit _$E19 dispatches genuine destructor and teardown; original direct inline cleanup not presently reproduced. Seed stdcall-virtual-call insight is retained; named SDK COM methods supply that ABI. No new claim."}
+// symbol    _$E19
+// TRIED: falling off the end without a return (C4716, error under the scoring flags); "return 0" adds an extra "xor eax,eax" the original's bare "pop esi; ret" tail does not have (#36). Modelled the 3 vtable dispatches as raw __stdcall function pointers (COM-style, this pushed as an explicit arg) rather than the VCall thiscall shim, since the disassembly pushes "this" onto the stack instead of loading it into ecx.
+// RECOVERY_OBJECT: v1 0x009BE618 ?WinDisplayInit@@3VDDInit@@A
 DDInit WinDisplayInit;     // 0x009BE618
 Win *WinFocusStack[4];     // 0x009B7A1C
 char WinKeyRing[10];       // 0x009B7B48
