@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "task_id": "goody-box-owner",
+  "author": "framework-coordinator",
+  "target": "opensmacx",
+  "base_revision": "c47bf8dd516b5fc48d1d02fb53f800670f78a92b",
+  "editable_files": ["src/veh.cpp", "src/mapwin.h", "src/unrecovered/0057a660.cpp", "recovery/tests/test_goody_box.py", "recovery/tests/goody_box_control.cpp"],
+  "subjects": [{"address": 5744224, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"}],
+  "intent": "Replace the goody_box link-continuity placeholder and mechanical seed with whole source-owned pod outcome dispatch, live vehicle mutation, relocation, faction/technology/resource behavior and ordered notifications.",
+  "evidence": [
+    "Pinned whole span57A660..57CDE6; frozen candidatev24 c1551d18dcc4c0b6bd2d91b03991526dc20ad3cb728d9b72ef28e737846ed500 compiled in actual veh.cpp atc47bf8dd, objectfb813553bc62918ae8071533bf3692be5aa37a3684228d73eda56a1b0ea085b7. Product helper namespace will be goody_box_detail; this is an internal descriptive spelling, not recovered original symbols.",
+    "Native shared retryA8D2 reloads live source x/y before reroll; post-veh_init spawn reads actual returned prototype/chassis triad, morale and live turn/home-base gates. Event9 uses fixed eight radius offsets; cases12..17 have separate spawn loops, not case11 conversion behavior. Existing typed faction, base, vehicle and shared map arrays supply storage without executable addresses.",
+    "Independent pinned relocationB4D8..B874 review confirms stack_veh then stack_put and source rendering/focus/spot_all order. OverflowCC16..CDE6 review confirms signed retry guard, separate9999 path, climate/fungus/y/GameRules gate, bit_set/bonus_at/site_radius/popup/draw/rand order. GameRules loadA9A1 supports theCCB7 rule test. These are bounded native reviews, not dynamic coverage of every callback/dispatch join.",
+    "Preserve full original mapping and all parsed seed findings using native writer; retire seed only after actual-source controls/damage controls, build/link, protected veh claims with inherited failures explicit, touched integrity, reference and claim continuity checks. Publish existing four/six-argument draw_tile_fixup declarations in its map-window public interface rather than leaving a private ad hoc forward declaration.",
+    "Coordinator-reviewed rough whole-body coverage only. Arm-local callback semantics/field interpretations still require restoration review. No new byte or semantic claim, behavior sanitization, automatic acceptance, strict linked/reference/runtime or full-game proof authorized."
+  ]
+}
