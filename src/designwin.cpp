@@ -2678,11 +2678,160 @@ void DesignWin::draw_vehicle(int redraw) {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004346A0 ?draw_info@DesignWin@@QAEXXZ 0x004346A0-0x00434BB4;0x00653FFE-0x00654010 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004346a0.cpp"], "reason": "Link-continuity placeholder only; retain the seed until this original body is migrated."}
+// ORIGINAL: 0x004346A0 ?draw_info@DesignWin@@QAEXXZ 0x004346A0-0x00434BB4;0x00653FFE-0x00654010
+// RECOVERY_BINDING: v1 {"evidence": ["task:design-info-owner", "pinned:4346A0..434BB4 primary body and653FFE..654010 Font cleanup/EH span; real stack Font owns normal and exceptional cleanup.", "pinned:MainInterfaceGlobal Buffer receiver7AEC64; actual inheritance selects +444; InterfaceBoxStyles[3]/[0] at78D5A0/78D528.", "pinned:replacement loop348C1..34A2C retains later-wins selected-ID stores and current-category rereads; typed PlayerData active/queue arrays.", "pinned:fallback literals682820/682E9C/68354C/682E98 and USER32 CharUpperA; historical seed git:bb602081^:src/recovered/units/004346a0.cpp."], "reason": "Recover the information-panel renderer and selection scan through genuine DesignWin members, MainInterface Buffer inheritance, typed prototype/faction arrays and automatic Font lifetime; preserve original primary and compiler cleanup spans."}
 void DesignWin::draw_info() {
-    // BODY GOES HERE.
+    Font font;
+    Buffer &canvas = static_cast<Buffer &>(MainInterfaceGlobal);
+
+    RECT source = info_panel_rect_;
+    RECT panel = source;
+    canvas.set_clip(&panel);
+    font.init(DefaultFontFace, 0x12, 1);
+
+    canvas.box_sprite(&panel, &InterfaceBoxStyles[3]);
+    panel.left += 3;
+    panel.top += 3;
+    panel.right -= 3;
+    panel.bottom -= 3;
+    canvas.box_sprite(&panel, &InterfaceBoxStyles[0]);
+    panel.left += 3;
+    panel.top += 3;
+    panel.right -= 3;
+    panel.bottom -= 3;
+
+    canvas.set_text_color(0xE0, -1, 1, 1);
+    canvas.set_font(&font, 0, 0, 0);
+
+    RECT text = panel;
+    text.bottom = text.top + font.line_advance();
+
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0xE4C / 4));
+    const int length = static_cast<int>(strlen(StringTemp));
+    canvas.write_cent_l(StringTemp, &text, length);
+
+    StringTemp[0] = 0;
+    const int faction = static_cast<int>(factionID_);
+    const int selected = protoID_ <= 0x7FFFFFFFu
+        ? static_cast<int>(protoID_)
+        : -1 - static_cast<int>(~protoID_);
+    const uint32_t faction_bit = 1u << (faction & 0x1F);
+    int selected_label_offset = 0xE54 / 4;
+    bool use_fallback = false;
+
+    // Native uses a signed <64 gate, so a negative selection also reaches
+    // this lookup. Its preceding storage has no proven source object model;
+    // preserve the branch, not a silent clamp, and leave that invalid-input
+    // behavior unverified rather than claiming the lookup is source-safe.
+    if (selected < 0x40) {
+        const VehPrototype &selected_prototype = VehPrototypes[selected];
+        const bool selected_matches =
+            protoChassisType_ == selected_prototype.chassis_id
+            && protoWeaponType_ == selected_prototype.weapon_id
+            && protoArmorType_ == selected_prototype.armor_id
+            && protoReactorType_ == selected_prototype.reactor_id
+            && protoAbilityFlags_ == selected_prototype.ability_flags;
+        selected_label_offset = selected_matches
+            ? 0xE44 / 4 : 0xE54 / 4;
+    } else {
+        const VehPrototype &selected_prototype = VehPrototypes[selected];
+        if ((selected_prototype.flags & PROTO_ACTIVE) == 0) {
+            use_fallback = true;
+        } else if ((selected_prototype.obsolete_factions & faction_bit) != 0) {
+            use_fallback = true;
+        } else {
+            const bool selected_matches =
+                protoChassisType_ == selected_prototype.chassis_id
+                && protoWeaponType_ == selected_prototype.weapon_id
+                && protoArmorType_ == selected_prototype.armor_id
+                && protoReactorType_ == selected_prototype.reactor_id
+                && protoAbilityFlags_ == selected_prototype.ability_flags;
+            if (selected_matches) {
+                selected_label_offset = 0xE50 / 4;
+            } else {
+                bool found_replacement = false;
+                bool inactive_slot_redirect = false;
+                const int first = faction * 0x40;
+                for (int index = 0; index < 0x40; ++index) {
+                    const int candidate_id = first + index;
+                    const VehPrototype &candidate = VehPrototypes[candidate_id];
+                    if ((candidate.flags & PROTO_ACTIVE) == 0) {
+                        protoID_ = static_cast<uint32_t>(candidate_id);
+                        inactive_slot_redirect = true;
+                        break;
+                    }
+                    if ((candidate.obsolete_factions & faction_bit) == 0)
+                        continue;
+
+                    const int current_selected = protoID_ <= 0x7FFFFFFFu
+                        ? static_cast<int>(protoID_)
+                        : -1 - static_cast<int>(~protoID_);
+                    const int current_category =
+                        VehPrototypes[current_selected].unk_1;
+                    uint8_t active_count =
+                        PlayersData[faction].proto_id_active[candidate_id];
+                    if (candidate.unk_1 != current_category && active_count != 0)
+                        continue;
+
+                    active_count =
+                        PlayersData[faction].proto_id_active[candidate_id];
+                    if (active_count != 0) continue;
+                    const uint8_t queued_count =
+                        PlayersData[faction].proto_id_queue[candidate_id];
+                    if (queued_count == active_count) {
+                        // The original continues scanning after this store; a
+                        // later eligible zero/zero slot may overwrite protoID_.
+                        protoID_ = static_cast<uint32_t>(candidate_id);
+                        found_replacement = true;
+                        continue;
+                    }
+                    if (active_count != 0 || found_replacement) continue;
+                    if (candidate.unk_1 != current_category) continue;
+                    protoID_ = static_cast<uint32_t>(candidate_id);
+                    found_replacement = true;
+                }
+                if (found_replacement || inactive_slot_redirect)
+                    selected_label_offset = 0xE54 / 4;
+                else
+                    selected_label_offset = 0xC38 / 4;
+            }
+        }
+    }
+
+    if (use_fallback) {
+        strcat(StringTemp, label_get(0xC34 / 4));
+        strcat(StringTemp, " ");
+        strcat(StringTemp, "(");
+        strcat(StringTemp, label_get(0xE48 / 4));
+        strcat(StringTemp, " #");
+
+        uint32_t masked_id = protoID_ & 0x8000003Fu;
+        if (masked_id & 0x80000000u)
+            masked_id = ((masked_id - 1u) | 0xFFFFFFC0u) + 1u;
+        const int display_id = masked_id <= 0x7FFFFFFFu
+            ? static_cast<int>(masked_id)
+            : -1 - static_cast<int>(~masked_id);
+        char number[80];
+        _itoa(display_id + 1, number, 10);
+        strcat(StringTemp, number);
+        strcat(StringTemp, ")");
+        CharUpperA(StringTemp);
+    } else {
+        strcat(StringTemp, label_get(selected_label_offset));
+    }
+
+    const int wrapped_height =
+        canvas.wrap_height(StringTemp, text.right - text.left);
+    const int vertical_shift = (panel.bottom - panel.top) - wrapped_height;
+    text.top += vertical_shift;
+    text.bottom += vertical_shift;
+    canvas.wrap_cent(StringTemp, &text);
+
+    MainInterfaceGlobal.soft_update(&source);
+    canvas.set_clip(const_cast<RECT *>(&canvas.current_clip()));
 }
+
 
 // ORIGINAL: 0x00439F20 ?select_chassis@DesignWin@@QAEXXZ 0x00439F20-0x0043A300;0x006541FC-0x00654281
 // RECOVERY_BINDING: v1 {"evidence": ["git:caf4963a:src/recovered/units/00439f20.cpp", "RulesChassis in src/veh.h", "DesignWin component members in src/designwin.h", "SelectPartWin::exec in src/selectpartwin.cpp"], "reason": "Open the chassis picker, translate its eligible-row result into the chassis table, preserve chassis-dependent weapon and ability constraints, and redraw the design preview."}
