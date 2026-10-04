@@ -4,15 +4,16 @@
   "editable_files": [
     "src/designwin.cpp",
     "src/designwin.h",
-    "recovery/tests/test_design_weapon.py",
-    "recovery/tests/design_weapon_control.cpp",
     "recovery/tests/test_design_panels.py",
-    "recovery/tests/design_panels_control.cpp"
+    "recovery/tests/design_panels_control.cpp",
+    "recovery/tests/test_designwin_preview.py",
+    "recovery/tests/test_designwin_workshop.py"
   ],
   "evidence": [
     "Coordinator-reviewed parallel coverage wave following InfoWin checkpoint 5be1d0e9; live source and original mappings reviewed, DesignWin seeds are hints.",
     "Weapon-panel continuation against pinned434F40..4353FF: real existing VW00 model storage, TextColourTable swatches, live rule selection after callbacks, full localized offense/cost detail and native text geometry/order. Add actual-source C++98 behavior/mutation controls without resetting this task baseline. Historical seed was already removed; preserve its current original mapping and Git provenance. Require fresh protected measurements, build/link and claim/reference continuity; no new byte claim or full-game acceptance.",
-    "Complete armor/reactor panels from pinned435400..435800 and435800..435B29 with live selections/font reads, unsigned mode and signed defense,1-based reactor records and native wrap-return geometry. Consolidate weapon controls into panel controls and correct shared native rotation3F05F92D. Preserve all original mappings and the unchanged task baseline; previously removed seeds stay historical Git provenance."
+    "Complete armor/reactor panels from pinned435400..435800 and435800..435B29 with live selections/font reads, unsigned mode and signed defense,1-based reactor records and native wrap-return geometry. Consolidate weapon controls into panel controls and correct shared native rotation3F05F92D. Preserve all original mappings and the unchanged task baseline; previously removed seeds stay historical Git provenance.",
+    "Repair demonstrated inherited related-test extraction failures: preview searches a retired prose anchor and workshop slices unrelated DesignWin destruction into its host harness. Select the actual bounded function definitions using the existing balanced-brace extractor; do not alter product workshop behavior or weaken assertions/sanitizers."
   ],
   "intent": "Recover remaining DesignWin behavior in coherent batches using typed owner members, callbacks, shared globals and lifecycle; preserve seeds and historical obligations while prioritizing compiling implementations.",
   "schema_version": 1,
