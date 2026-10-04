@@ -68,6 +68,7 @@ class DiploWin : public GraphicWin, public SubInterface {
   void show(int visible);
   DiploWin();
   void on_redraw() override;
+  void on_button_clicked(int button_id) override;
   void on_status(int mode) override;
   void on_iface_scrolled(int, int) override;
   void on_iface_scrolling(int, int) override;

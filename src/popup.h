@@ -58,6 +58,8 @@ class Popup : public BasePop {
   // 0x00404A80, homed in popup.cpp.
   void hide();
   void on_redraw();
+  void vslot_48(int first, int second) override;
+  void vslot_49(int first, int second) override;
   virtual void on_adjust_button_placement(int *x, int *y, int *unused);
   int on_listbox_scroll_delete(Scroll *scroll);
 
@@ -328,3 +330,7 @@ void __cdecl popup_set_write_check_bit(int bit_index, int enabled);
 
 // Fill an existing popup with all six original time-control rows.
 void __cdecl time_controls_dialog(Popup *popup);
+
+// Provisional behavior names; original helper identities remain source mapped.
+void __cdecl popup_pending_link_dialog(const char *label);
+int __cdecl popup_faction_datalinks(int faction_id);
