@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "task_id": "opening-window-lifetime-owner",
+  "target": "opensmacx",
+  "author": "framework-coordinator",
+  "base_revision": "261ffcf47faec0a425ae172a1540440dd093bdbc",
+  "intent": "Recover init_opening and migrate its shared GraphicWin pointer to genuine source-owned storage together with all compiled lifetime consumers; preserve distinct callback-sensitive reloads, constructor unwinding, local Buffer lifetime, close deletion and system_close non-deleting behavior.",
+  "editable_files": [
+    "src/game.cpp",
+    "src/game.h",
+    "src/setupwin.cpp",
+    "src/setupwin.h",
+    "src/unrecovered/00589b60.cpp",
+    "recovery/tests/test_init_opening_owner_behavior.py",
+    "recovery/tests/init_opening_owner_control.cpp",
+    "recovery/tests/test_ui_owner_behavior.py"
+  ],
+  "subjects": [
+    {"address": 5806944, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"},
+    {"address": 5806640, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"},
+    {"address": 5806880, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"},
+    {"address": 5829200, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"},
+    {"address": 4905088, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"},
+    {"address": 4908240, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"}
+  ],
+  "evidence": [
+    "Pinned complete init_opening primary589B60..589D29 and secondary66026A..66028A: genuine GraphicWin allocation0xA14/constructor, nine-argument initialization, publication before failure tests, and stack Buffer cleanup before palette realization. Existing seed is unclaimed and must retain complete identity/spans and useful lessons until superseded.",
+    "Shared pointer945824 is produced by init_opening; compiled game.cpp change_opening/close_opening/system_close and SetupWin constructor/draw_item consume the existing opening_window accessor. Source-owned storage must replace its executable-address reinterpret_cast; SetupWin'sA40 snapshot is a distinct copied pointer, not a live alias.",
+    "Fresh complete decode corrects private v2:589C90 only null-adjusts secondary-base conversion, not a copy guard;589CD0 reloads pointer after copy before update. Later589CFA show and589D0C BasePop publication independently reload after callbacks. No new safety behavior is authorized.",
+    "Coordinator-reviewed integration requires actual-source host controls with discriminating reload/lifetime witnesses, fresh native measurement of affected historical obligations, build/link, claim continuity, annotation integrity and references before and after integration. Preserve regressions and discoveries; no automatic full-game acceptance or new exact claim is implied."
+  ]
+}
