@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "task_id": "graphicwin-buffer-input-owner",
+  "author": "framework-coordinator",
+  "target": "opensmacx",
+  "base_revision": "5582eeb1e42884564d8049ce16e44b90759089ec",
+  "editable_files": ["src/buffer.cpp", "src/buffer.h", "src/graphicwin.cpp", "src/graphicwin.h", "src/recovered/005d54a0.cpp", "src/recovered/005d54d0.cpp", "src/recovered/005d5590.cpp", "src/recovered/005d7ae0.cpp", "recovery/tests/test_graphicwin_buffer_input.py", "recovery/tests/graphicwin_buffer_input_control.cpp"],
+  "subjects": [
+    {"address": 6116512, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"},
+    {"address": 6116560, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"},
+    {"address": 6116752, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"},
+    {"address": 6126304, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"},
+    {"address": 6126128, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"}
+  ],
+  "intent": "Recover GraphicWin image-input forwarding and resize/palette synchronization through its genuine Buffer base, including the Buffer PCX input-prefix method and evidence-backed instance calling convention correction.",
+  "evidence": [
+    "Private candidate338f8de6494bc598a67ab19222da981881c37848137d3bc34c991998cdb16979 compiled in actual product TUs under both flag sets. All four seed obligations are masked BYTE_EXACT under trial0; secondary-trial misses are not demotions. Private report build/recovery/graphicwin-buffer-product-native-v2/report.json is diagnostic, not acceptance.",
+    "GraphicWin native5D54A0/5D54D0 add444 before calling Buffer5D7A30/5D7AE0. Buffer5D7A30 uses no ECX but the original caller passes a Buffer receiver: ordinary instance method is the explicit interpretation, not a recovered original spelling. Buffer5D7AE0 forwards ECX unchanged into load_pcx; nullable input has observed data+C and length+10. Full producer type/allocation remains unknown.",
+    "Preserve original identities, spans, historical BYTE_EXACT obligations and useful seed findings through the native writer; retire seeds only after actual owner measurement and build/link, protected neighboring claims, claim continuity, reference and touched-integrity checks. Permanent actual-source GCC/Clang controls cover error returns, argument forwarding, virtual resize and callback order with five rejected mutations.",
+    "Coordinator-reviewed integration only; masked legacy equality does not prove relocation targets, linked preservation, class lifetime, complete input layout, runtime or game acceptance. No automatic acceptance report or new unrelated scope authorized."
+  ]
+}
