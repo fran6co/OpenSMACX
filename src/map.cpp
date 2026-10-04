@@ -6572,7 +6572,7 @@ Purpose: Write a secret project's name, and its cost bracket when asked.
 // TRIED: (as 00590990.cpp) the artifact's `strcat(StringTemp, ...)`,
 //        i.e. no append of StringTemp to the output - it is what the image
 //        does, and it is kept here.
-// symbol    ?say_project@@YAXPADHH@Z
+// symbol    ?say_project@@YAXPAXHH@Z
 // TRIED: 32/40. Everything left is evaluation order around the first
 //        `StringTable.get`: the image hoists the receiver
 //        (`mov ecx, 0x9b90d8`) to the top of the body, before the
@@ -6587,7 +6587,8 @@ Status: Complete
 */
 RulesFacility *const SecretProjectRules = (RulesFacility *)0x009A5888;
 
-void __cdecl say_project(LPSTR output, int project_id, BOOL with_cost) {
+void __cdecl say_project(void *text, int project_id, int with_cost) {
+    char *output = static_cast<char *>(text);
     strcat(output, StringTable.get((int)SecretProjectRules[project_id].name));
     if (with_cost != 0) {
         strcat(output, " ");

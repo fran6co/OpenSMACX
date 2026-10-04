@@ -365,3 +365,52 @@ void __cdecl help_tech_info(Popup *popup, int technology, int faction);
 void __cdecl technology_help_without_output(int unused, int technology, int faction);
 
 int __cdecl datalink_entry_selection(int selected_index);
+
+// Provisional names for the original selection records, queue and callback
+// table. These are distinct from the Datalink UI object; current source home
+// describes ownership/use, not a recovered historical translation unit.
+struct DatalinkSelectionEntry {
+  // RECOVERY_MEMBER: v1 DatalinkSelectionEntry entry_id 0x0 0x00590D70
+  short entry_id;
+  // RECOVERY_MEMBER: v1 DatalinkSelectionEntry category 0x2 0x00590D10
+  unsigned char category;
+  // RECOVERY_MEMBER: v1 DatalinkSelectionEntry value 0x3 0x00590D40
+  unsigned char value;
+
+  void show_help() const;
+  void append_text(char *output, int extra) const;
+};
+
+class DatalinkSelectionQueue {
+ public:
+  // No queue constructor is evidenced. 0x590D60 is the explicit reset path;
+  // concrete storage/initial lifetime remain unresolved.
+  void clear();
+  void append(short entry_id, unsigned char category, unsigned char value);
+  void dispatch_matching(int entry_id);
+
+ private:
+  // RECOVERY_MEMBER: v4 DatalinkSelectionQueue entries_ DatalinkSelectionEntry[128] 0x0 0x200 0x00590D70
+  DatalinkSelectionEntry entries_[128];
+  // RECOVERY_MEMBER: v1 DatalinkSelectionQueue count_ 0x200 0x00590D60
+  int count_;
+};
+
+typedef void (__cdecl *DatalinkHelpCallback)(int);
+typedef void (__cdecl *DatalinkTextCallback)(void *, int, int);
+
+struct DatalinkEntryCallbacks {
+  DatalinkHelpCallback help;
+  DatalinkTextCallback append_text;
+};
+
+// Candidate lower-bound model: the native constructor writes through entry 10.
+// The exact declared array bound still needs ownership/layout evidence.
+class DatalinkEntryCallbackTable {
+ public:
+  DatalinkEntryCallbackTable();
+
+  DatalinkEntryCallbacks entries[11];
+};
+
+extern DatalinkEntryCallbackTable DatalinkEntryCallbackTableGlobal;

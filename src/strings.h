@@ -41,6 +41,11 @@ void __cdecl say_weapon(void *output, int weapon_id, int with_detail);
 void __cdecl say_armor(void *output, int armor_id, int with_detail);
 void __cdecl say_chassis(void *output, int chassis_id, int with_detail);
 void __cdecl say_techs(void *output, int tech_id, int with_detail);
+void __cdecl say_facility(void *output, int index, int detail);
+void __cdecl say_ability(void *output, int index, int detail);
+void __cdecl say_society(void *output, int index, int detail);
+void __cdecl say_vehicles(void *output, int index, int detail);
+void __cdecl say_project(void *output, int index, int detail);
 
 // APPEND A DECIMAL NUMBER TO StringTemp, and IN THE HEADER because the
 // image has it BOTH WAYS: a standalone body at 0x0050B8A0 with three

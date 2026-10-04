@@ -2087,7 +2087,7 @@ Purpose: Refresh all fifteen categories at once - the "ALL" entry of the
 
          The image's call order is not sorted: terraform comes seventh and
          facility ninth, and that order is what this body keeps.
-// ORIGINAL: 0x0042A4F0 ?set_cat_all@Datalink@@QAEXXZ 0x0042A4F0-0x0042A621 FILE BYTE_EXACT
+// ORIGINAL: 0x0042A4F0 ?set_cat_all@Datalink@@QAEXXZ 0x0042A4F0-0x0042A621 BYTE_EXACT
 // size      305 bytes
 // prototype void (__thiscall ?set_cat_all@Datalink@@QAEXXZ)(Datalink* this)
 // callers   1   call targets   15
@@ -2138,7 +2138,7 @@ Purpose: List the built unit designs, ids 30000 upward.
          Prototype 4 is skipped outright - it is the placeholder slot - and
          the walk stops after a hundred prototypes regardless of how many the
          rules file defines.
-// ORIGINAL: 0x0042A630 ?set_cat_unit@Datalink@@QAEXXZ 0x0042A630-0x0042A78E FILE BYTE_EXACT
+// ORIGINAL: 0x0042A630 ?set_cat_unit@Datalink@@QAEXXZ 0x0042A630-0x0042A78E BYTE_EXACT
 // size      350 bytes
 // prototype void (__thiscall ?set_cat_unit@Datalink@@QAEXXZ)(Datalink* this)
 // callers   1   call targets   5
@@ -2188,7 +2188,7 @@ Purpose: List the chassis, ids 40000 upward.
 
          The preq test reads the LAST word of the 0x90 record, which is where
          veh.h puts preq_tech.
-// ORIGINAL: 0x0042A790 ?set_cat_chassis@Datalink@@QAEXXZ 0x0042A790-0x0042A8FA FILE BYTE_EXACT
+// ORIGINAL: 0x0042A790 ?set_cat_chassis@Datalink@@QAEXXZ 0x0042A790-0x0042A8FA BYTE_EXACT
 // size      356 bytes
 // prototype void (__thiscall ?set_cat_chassis@Datalink@@QAEXXZ)(Datalink* this)
 // callers   1   call targets   5
@@ -2239,7 +2239,7 @@ Purpose: List the reactors, ids 50001 upward - the table starts at id 1, not
          The walk runs five records against a four-entry array: the fifth is
          the zero record past the end, whose name id 0 makes it an empty line.
          That is the original's own bound, reproduced here on purpose.
-// ORIGINAL: 0x0042A900 ?set_cat_reactor@Datalink@@QAEXXZ 0x0042A900-0x0042AA5A FILE BYTE_EXACT
+// ORIGINAL: 0x0042A900 ?set_cat_reactor@Datalink@@QAEXXZ 0x0042A900-0x0042AA5A BYTE_EXACT
 // size      346 bytes
 // prototype void (__thiscall ?set_cat_reactor@Datalink@@QAEXXZ)(Datalink* this)
 // callers   1   call targets   5
@@ -2287,7 +2287,7 @@ void Datalink::set_cat_reactor() {
 
 /*
 Purpose: List the weapons, ids 60000 upward.
-// ORIGINAL: 0x0042AA60 ?set_cat_weapon@Datalink@@QAEXXZ 0x0042AA60-0x0042ABBC FILE BYTE_EXACT
+// ORIGINAL: 0x0042AA60 ?set_cat_weapon@Datalink@@QAEXXZ 0x0042AA60-0x0042ABBC BYTE_EXACT
 // size      346 bytes
 // prototype void (__thiscall ?set_cat_weapon@Datalink@@QAEXXZ)(Datalink* this)
 // callers   1   call targets   5
@@ -2333,7 +2333,7 @@ void Datalink::set_cat_weapon() {
 
 /*
 Purpose: List the armour, ids 70000 upward.
-// ORIGINAL: 0x0042ABC0 ?set_cat_defense@Datalink@@QAEXXZ 0x0042ABC0-0x0042AD1C FILE BYTE_EXACT
+// ORIGINAL: 0x0042ABC0 ?set_cat_defense@Datalink@@QAEXXZ 0x0042ABC0-0x0042AD1C BYTE_EXACT
 // size      346 bytes
 // prototype void (__thiscall ?set_cat_defense@Datalink@@QAEXXZ)(Datalink* this)
 // callers   1   call targets   5
@@ -2379,7 +2379,7 @@ void Datalink::set_cat_defense() {
 
 /*
 Purpose: List the abilities, ids 80000 upward.
-// ORIGINAL: 0x0042AD20 ?set_cat_ability@Datalink@@QAEXXZ 0x0042AD20-0x0042AE7C FILE BYTE_EXACT
+// ORIGINAL: 0x0042AD20 ?set_cat_ability@Datalink@@QAEXXZ 0x0042AD20-0x0042AE7C BYTE_EXACT
 // size      346 bytes
 // prototype void (__thiscall ?set_cat_ability@Datalink@@QAEXXZ)(Datalink* this)
 // callers   1   call targets   5
@@ -2430,7 +2430,7 @@ Purpose: List the facilities, ids 100001 upward - the table's slot 0 is the
 
          The preq word is at +0x14, the fifth dword, which is where base.h
          puts preq_tech.
-// ORIGINAL: 0x0042AE80 ?set_cat_facility@Datalink@@QAEXXZ 0x0042AE80-0x0042AFDC FILE BYTE_EXACT
+// ORIGINAL: 0x0042AE80 ?set_cat_facility@Datalink@@QAEXXZ 0x0042AE80-0x0042AFDC BYTE_EXACT
 // size      345 bytes
 // prototype void (__thiscall ?set_cat_facility@Datalink@@QAEXXZ)(Datalink* this)
 // callers   1   call targets   5
@@ -3214,4 +3214,118 @@ int __cdecl datalink_entry_selection(int selected_index) {
     }
     DatalinkEntrySelection = selected_index;
     return selected_index;
+}
+
+// Native startup wrapper590500 constructs this table at945A60.
+// Eleven entries is the minimum observed initialized region, not an exact
+// original-capacity claim; higher category indices remain unverified.
+// RECOVERY_OBJECT: v1 0x00945A60 ?DatalinkEntryCallbackTableGlobal@@3VDatalinkEntryCallbackTable@@A
+DatalinkEntryCallbackTable DatalinkEntryCallbackTableGlobal;
+
+// ORIGINAL: 0x00590D10 sub_590d10 0x00590D10-0x00590D3D BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["task:datalink-selection-queue-owner", "Pinned queue/record operations share four-byte records and count at0x200; typed callbacks dispatch on category/value. Constructor owns minimum11-entry callback table, with zero-filled pair0 and CRT registration; exact total capacity and original TU remain unknown.", "historical seed:src/recovered/00590d10.cpp"], "reason": "Recover genuine selection record/queue and callback lifecycle using provisional behavior names in its current Datalink family home; retain all original obligations and seed lessons."}
+// symbol    ?append_text@DatalinkSelectionEntry@@QBEXPADH@Z
+void DatalinkSelectionEntry::append_text(char *output, int extra) const {
+  const DatalinkEntryCallbacks &callbacks =
+      DatalinkEntryCallbackTableGlobal.entries[category];
+  if (callbacks.append_text != 0) {
+    callbacks.append_text(output, value, extra);
+  }
+}
+
+// ORIGINAL: 0x00590D40 sub_590d40 0x00590D40-0x00590D5C BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["task:datalink-selection-queue-owner", "Pinned queue/record operations share four-byte records and count at0x200; typed callbacks dispatch on category/value. Constructor owns minimum11-entry callback table, with zero-filled pair0 and CRT registration; exact total capacity and original TU remain unknown.", "historical seed:src/recovered/00590d40.cpp"], "reason": "Recover genuine selection record/queue and callback lifecycle using provisional behavior names in its current Datalink family home; retain all original obligations and seed lessons."}
+// symbol    ?show_help@DatalinkSelectionEntry@@QBEXXZ
+void DatalinkSelectionEntry::show_help() const {
+  const DatalinkEntryCallbacks &callbacks =
+      DatalinkEntryCallbackTableGlobal.entries[category];
+  if (callbacks.help != 0) {
+    callbacks.help(value);
+  }
+}
+
+// ORIGINAL: 0x00590D60 sub_590d60 0x00590D60-0x00590D6B BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["task:datalink-selection-queue-owner", "Pinned queue/record operations share four-byte records and count at0x200; typed callbacks dispatch on category/value. Constructor owns minimum11-entry callback table, with zero-filled pair0 and CRT registration; exact total capacity and original TU remain unknown.", "historical seed:src/field_accessors.cpp"], "reason": "Recover genuine selection record/queue and callback lifecycle using provisional behavior names in its current Datalink family home; retain all original obligations and seed lessons."}
+// symbol    ?clear@DatalinkSelectionQueue@@QAEXXZ
+void DatalinkSelectionQueue::clear() {
+  count_ = 0;
+}
+
+// ORIGINAL: 0x00590D70 sub_590d70 0x00590D70-0x00590DB3 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["task:datalink-selection-queue-owner", "Pinned queue/record operations share four-byte records and count at0x200; typed callbacks dispatch on category/value. Constructor owns minimum11-entry callback table, with zero-filled pair0 and CRT registration; exact total capacity and original TU remain unknown.", "historical seed:src/recovered/00590d70.cpp"], "reason": "Recover genuine selection record/queue and callback lifecycle using provisional behavior names in its current Datalink family home; retain all original obligations and seed lessons."}
+// symbol    ?append@DatalinkSelectionQueue@@QAEXFEE@Z
+void DatalinkSelectionQueue::append(short entry_id, unsigned char category,
+                                    unsigned char value) {
+  if (count_ < 0x80) {
+    entries_[count_].entry_id = entry_id;
+    entries_[count_].category = category;
+    entries_[count_].value = value;
+    ++count_;
+  }
+}
+
+// ORIGINAL: 0x00590DC0 sub_590dc0 0x00590DC0-0x00590E90
+// RECOVERY_BINDING: v1 {"evidence": ["task:datalink-selection-queue-owner", "Pinned queue/record operations share four-byte records and count at0x200; typed callbacks dispatch on category/value. Constructor owns minimum11-entry callback table, with zero-filled pair0 and CRT registration; exact total capacity and original TU remain unknown.", "historical seed:src/unrecovered/00590dc0.cpp"], "reason": "Recover genuine selection record/queue and callback lifecycle using provisional behavior names in its current Datalink family home; retain all original obligations and seed lessons."}
+// symbol    ?dispatch_matching@DatalinkSelectionQueue@@QAEXH@Z
+// TRIED: `if (count > 0)` reads as `cmp;jle` here, not the original's `test;jle`; tried elsewhere didn't move it. Indexed struct field access (`g_945a60[i].fn`) collapses lea+mov into one mov; original keeps them split (address-of first).
+void DatalinkSelectionQueue::dispatch_matching(int entry_id) {
+  DatalinkMain.init();
+
+  int matched_count = 0;
+  int first_match_index;
+  for (int index = 0; index < count_; ++index) {
+    DatalinkSelectionEntry &entry = entries_[index];
+    if (entry.entry_id == entry_id) {
+      if (matched_count == 0) {
+        first_match_index = index;
+      }
+      ++matched_count;
+      StringTemp[0] = 0;
+
+      if (entry.category == 5 && entry.value >= 0x46) {
+        entry.category = 10;
+        entry.value = static_cast<unsigned char>(entry.value + 0xBA);
+      }
+      entry.append_text(StringTemp, 1);
+    }
+  }
+
+  if (matched_count != 0) {
+    datalink_entry_selection(first_match_index);
+    DatalinkMain.show(0);
+    DatalinkMain.set_modal(0, pop_wait, 0);
+  }
+}
+
+// ORIGINAL: 0x00590500 sub_590500 0x00590500-0x0059050A;0x00590C20-0x00590CAF
+// RECOVERY_BINDING: v1 {"evidence": ["task:datalink-selection-queue-owner", "Pinned queue/record operations share four-byte records and count at0x200; typed callbacks dispatch on category/value. Constructor owns minimum11-entry callback table, with zero-filled pair0 and CRT registration; exact total capacity and original TU remain unknown. Combined historical spans retain both CRT wrapper590500 and constructor590C20; emitted constructor alone is not proof of the generated wrapper matching.", "historical seed:src/unrecovered/00590500.cpp"], "reason": "Recover genuine selection record/queue and callback lifecycle using provisional behavior names in its current Datalink family home; retain all original obligations and seed lessons."}
+// symbol    ??0DatalinkEntryCallbackTable@@QAE@XZ
+DatalinkEntryCallbackTable::DatalinkEntryCallbackTable() {
+  entries[1].help = 0;
+  entries[1].append_text = say_reactor;
+  entries[2].help = help_weapon;
+  entries[2].append_text = say_weapon;
+  entries[3].help = help_armor;
+  entries[3].append_text = say_armor;
+  entries[4].help = help_chassis;
+  entries[4].append_text = say_chassis;
+  entries[5].help = help_facility;
+  entries[5].append_text = say_facility;
+  entries[6].help = help_social;
+  entries[6].append_text = say_society;
+  entries[7].help = help_abil;
+  entries[7].append_text = say_ability;
+  entries[8].help = help_tech;
+  entries[8].append_text = say_techs;
+  entries[9].help = help_veh;
+  entries[9].append_text = say_vehicles;
+  entries[10].help = help_project;
+  entries[10].append_text = say_project;
+}
+
+// ORIGINAL: 0x00429300 ?init@Datalink@@QAEXXZ 0x00429300-0x0042A012;0x00653579-0x0065358E
+// RECOVERY_BINDING: v1 {"evidence": ["task:datalink-selection-queue-owner", "First link exposed undefined Datalink::init; old free pending wrapper has no implementation. New queue and game callers use the actual class interface.", "retained seed:src/unrecovered/00429300.cpp"], "reason": "Owning-TU unfinished member for build continuity only. Preserve initializer seed and discoveries; empty body is not recovered behavior or acceptance."}
+// TRIED: huge UI-construction initializer (fonts, rects, a 16-entry facility-button loop at self+0x2a3c stride 0xb4c, 3 more BaseButtons, 4 StringBoxes) mostly transcribed from Ghidra (reliable for the field writes) plus raw-disasm-derived `this` pointers for every dropped-this call (Buffer at self+0x444, Caviar at self+0x150c, per-Font self+offset table, ListBox/ Dialog at self+0xf628 through a virtual-base-offset chase). The two uncatalogued quaternion helpers (sub_627d00/sub_6280e0) and the two extra StringBox instances' rect math are best-effort approximations, not individually verified against raw bytes.
+void Datalink::init() {
+    // BODY GOES HERE.
 }

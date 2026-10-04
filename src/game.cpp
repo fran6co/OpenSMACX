@@ -2577,7 +2577,7 @@ int __cdecl system_init() {
     WinBubbleWindow.init(&NetDaemonNet, console_window, ShadowColorTable);
 
     messagewin_init(reinterpret_cast<MessageWin *>(0x007F67F8));
-    datalink_init(&DatalinkMain);
+    DatalinkMain.init();
     bung_momma();
     return 0;
 }

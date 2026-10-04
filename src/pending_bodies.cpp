@@ -673,11 +673,6 @@ void __fastcall messagewin_init(MessageWin *self) {
     PENDING_BODY(0x00471D50, pending)(self);
 }
 
-// ?init@Datalink@@QAEXXZ at 0x00429300
-void __fastcall datalink_init(Datalink *self) {
-    typedef void(__fastcall *pending)(Datalink *);
-    PENDING_BODY(0x00429300, pending)(self);
-}
 
 // ?game_reload@@YAHHH@Z at 0x0058F450 WAS HERE. Homed into game.cpp
 // 2026-08-29, beside desktop_close / close_opening / game_close.
