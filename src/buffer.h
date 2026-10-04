@@ -735,6 +735,8 @@ void draw_dest_unk1(Buffer *, int, int, int, int, unsigned char *);
   // compile-time only, so no offset and no emitted byte moves.
   friend class Caviar;
   // Sprite rasterization uses the destination's clip and acquired pixel data.
+  // Cursor initialization borrows the color DIB palette.
+  friend class Cursor;
   friend class Sprite;
   // Texture::draw_trans reads the destination stride at 0x0061A2BB and
   // rect1_ at 0x0061A2DA..0x0061A2F9. Its get_data call at 0x0061A253

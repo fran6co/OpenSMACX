@@ -169,6 +169,8 @@ class Sprite {
       int *source_skip, int *destination_count, int *source_count);
  private:
   friend int __cdecl veh_draw(Buffer *, int, int, int, int, int, int);
+  // Cursor initialization reads pixels, dimensions and transparency.
+  friend class Cursor;
   friend class CheckBox;
   friend class RadioButton;
   // `Win::flip` draws the overlay sprite and takes its frame index from

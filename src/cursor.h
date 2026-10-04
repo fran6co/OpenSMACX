@@ -24,9 +24,11 @@
   * dwords and returns, which is what the storage below models; whether
   * anything uninitialised follows is not established.
   *
-  * The methods recovered here are bare returns or a bare constant, touching
-  * no field, which is why they can be replaced ahead of that mapping.
+  * Initialization owns the Windows cursor and its copied Sprite. The
+  * construction clears all four fields before the object owns resources.
   */
+class Sprite;
+
 class Cursor {
  public:
   // `static`, because the image's name ends in `QAA` - a public member
@@ -37,19 +39,16 @@ class Cursor {
   // and jackal_init_real tests the result before continuing. Same family
   // as the four void-over-`xor eax, eax` names corrected before it.
   static int init_cursor_class();
-  Cursor() { ; }
+  Cursor();
+  int init(Sprite *sprite, int hotspot_x, int hotspot_y);
   ~Cursor();                         // 0063B8D0
-  // Spelled as a method rather than a real constructor, as Ambience's is:
-  // the inline `Cursor() { ; }` above is relied on elsewhere and giving
-  // the class a real one would silently change every use of it.
-  void construct();
   static void close_cursor_class();
 
  private:
-  uint32_t field_0_;  // 0x0000
-  uint32_t field_4_;
-  uint32_t field_8_;
-  uint32_t field_C_;
+  HCURSOR cursor_handle_;  // 0x0000: CreateIconIndirect / DestroyCursor
+  Sprite *owned_sprite_;  // 0x0004: constructed Sprite, closed and deleted
+  int hotspot_x_;         // 0x0008: original caller coordinate
+  int hotspot_y_;         // 0x000C: original caller coordinate
 };
 
 
