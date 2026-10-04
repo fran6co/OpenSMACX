@@ -3116,3 +3116,46 @@ int Popup::on_draw_background() {
   drawing_buffer->box_sprite(&outer, &InterfaceBoxStyles[3]);
   return external_window_ == 0;
 }
+
+// ORIGINAL: 0x00589330 ?time_controls_dialog@@YAXPAUPopup@@@Z 0x00589330-0x0058954A
+// RECOVERY_BINDING: v1 {"evidence": ["task:time-control-calculation-and-dialog", "historical seed:src/recovered/units/00589330.cpp", "Pinned original native instructions and existing typed source layout; seed aliases independently reconciled."], "reason": "Recover all six original time-control rows through Popup-owned Dialogs, StringTable and existing label_get; preserve numeric field order and punctuation."}
+// symbol    ?time_controls_dialog@@YAXPAVPopup@@@Z
+void __cdecl time_controls_dialog(Popup *popup) {
+    popup->start(PopupStartCaption, "TIMECONTROLS", -1, nullptr, 0x40, nullptr);
+    for (int index = 0; index < MaxTimeControlNum; ++index) {
+        StringTemp[0] = '\0';
+        strcat(StringTemp, StringTable.get(
+            reinterpret_cast<int>(TimeControl[index].name)));
+        strcat(StringTemp, "|");
+        strcat(StringTemp, "(");
+
+        if (index != 0) {
+            char turn_text[80];
+            char base_text[80];
+            char unit_text[80];
+            _itoa(TimeControl[index].turn, turn_text, 10);
+            strcat(StringTemp, turn_text);
+            strcat(StringTemp, " ");
+            strcat(StringTemp, label_get(0x468 / 4));
+            strcat(StringTemp, " ");
+            strcat(StringTemp, label_get(0x1094 / 4));
+            strcat(StringTemp, " ");
+
+            _itoa(TimeControl[index].base, base_text, 10);
+            strcat(StringTemp, base_text);
+            strcat(StringTemp, " ");
+            strcat(StringTemp, label_get(0x46C / 4));
+            strcat(StringTemp, " + ");
+
+            _itoa(TimeControl[index].unit, unit_text, 10);
+            strcat(StringTemp, unit_text);
+            strcat(StringTemp, " ");
+            strcat(StringTemp, label_get(0x470 / 4));
+        } else {
+            strcat(StringTemp, label_get(0x474 / 4));
+        }
+
+        strcat(StringTemp, ")");
+        popup->dialogs().item(StringTemp, index);
+    }
+}

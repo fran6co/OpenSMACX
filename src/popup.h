@@ -325,3 +325,6 @@ int __cdecl POP2(const char *caption, const char *image, int base_id);
 
 // Source-owned original helper; descriptive name, not original debug spelling.
 void __cdecl popup_set_write_check_bit(int bit_index, int enabled);
+
+// Fill an existing popup with all six original time-control rows.
+void __cdecl time_controls_dialog(Popup *popup);

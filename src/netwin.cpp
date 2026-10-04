@@ -1747,15 +1747,6 @@ static int __cdecl pick_daemon_callback() {
     return NetWinDialog.modal_callback_daemon();
 }
 
-// 0x00589330, unrecovered: fills a popup with the time-control list (the
-// TimeControl entries' names off the rules text). Still its own preserved
-// seed, so this file carries the forwarder shape the other unrecovered
-// callees use.
-static void sub_589330(void *popup) {
-    typedef void(__cdecl *pending)(void *);
-    reinterpret_cast<pending>(static_cast<unsigned long>(0x00589330))(popup);
-}
-
 // The single-row picker packet shares the lobby button handler's wire header.
 struct NetWinLobbyPacketHeader {
     uint8_t opcode_;
@@ -2753,8 +2744,8 @@ void NetWin::pick_global_diff() {
 }
 
 /*
-Purpose: The time-control picker: the popup is filled by the unrecovered
-         list builder at 0x589330 (the TimeControl names), then the same
+Purpose: The time-control picker: the popup is filled by the source-owned
+         time-control list builder, then the same
          modal walk; the ninth slot's time byte stores the answer.
 // ORIGINAL: 0x0047E640 ?pick_time@NetWin@@QAEXXZ 0x0047E640-0x0047E924;0x00656F4D-0x00657025 FILE
 // size      956 bytes
@@ -2771,7 +2762,7 @@ void NetWin::pick_time() {
     PopMenu pop_menu;
     PullDown pull_down;
     pop_menu.init();
-    sub_589330(&pop_menu);
+    time_controls_dialog(&pop_menu);
     int answer = pick_answer(*this, pop_menu);
     if (answer >= 0) {
         NetWinSessionOptions.time_control_ =

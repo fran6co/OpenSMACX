@@ -9062,3 +9062,63 @@ void __cdecl ascent() {
 // Session lifecycle flag read by Console::load_proc and the new-game menu.
 // RECOVERY_OBJECT: v2 0x009B2074 0x009B2078 ?GameSessionActive@@3HA 0x0058E360
 int GameSessionActive;
+
+// ORIGINAL: 0x00523C60 ?set_time_controls@@YAXXZ 0x00523C60-0x00523DC9
+// RECOVERY_BINDING: v1 {"evidence": ["task:time-control-calculation-and-dialog", "historical seed:src/recovered/units/00523c60.cpp", "Pinned original native instructions and existing typed source layout; seed aliases independently reconciled."], "reason": "Recover complete turn-duration calculation through typed rules, faction and vehicle records and actual NetDaemon state; preserve the native bonus-update order and state predicates."}
+void __cdecl set_time_controls() {
+    RulesTimeControl &control = TimeControl[TimeControlsSelection];
+    const unsigned int active_mask = LockEnableMask & 0xFF;
+    int active_factions = 0;
+    int eligible_vehicle_support = 0;
+    int weighted_base_count = 0;
+    int seconds = control.turn;
+
+    for (int faction_id = 1; faction_id < MaxPlayerNum; ++faction_id) {
+        PlayerData &faction = PlayersData[faction_id];
+
+        if (ConsoleControlTurnActive != 0 && ControlTurnPhase == 0 &&
+            control.refresh != 0 && TurnCurrentNum % control.refresh == 0) {
+            int next_bonus = faction.time_bonus_count + 1;
+            if (next_bonus >= control.accumulated) {
+                next_bonus = control.accumulated;
+            }
+            faction.time_bonus_count = next_bonus;
+        }
+
+        if ((active_mask & (1u << faction_id)) == 0) {
+            continue;
+        }
+
+        weighted_base_count += control.base *
+            static_cast<int>(faction.current_num_bases);
+        ++active_factions;
+
+        for (int vehicle_id = 0; vehicle_id < VehCurrentCount; ++vehicle_id) {
+            const Veh &vehicle = Vehs[vehicle_id];
+            if (vehicle.faction_id != faction_id ||
+                vehicle.order == 1 || vehicle.order == 2) {
+                continue;
+            }
+            if ((vehicle.state & 0x200u) != 0 ||
+                (vehicle.state & 0x01000200u) == 0x01000200u ||
+                (vehicle.state & 0x4000u) != 0) {
+                continue;
+            }
+            eligible_vehicle_support += control.unit;
+        }
+    }
+
+    if (active_factions != 0) {
+        const int candidate =
+            (eligible_vehicle_support + weighted_base_count) / active_factions +
+            control.event * static_cast<int>(
+                NetDaemonNet.lock_state_[2].trailing_words_[8]);
+        if (seconds <= candidate) {
+            seconds = candidate;
+        }
+    }
+    if (TurnCurrentNum < 6) {
+        seconds *= 2;
+    }
+    TurnControlDurationMilliseconds = seconds * 1000;
+}

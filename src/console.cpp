@@ -1046,7 +1046,6 @@ void __cdecl save_map();                                  // 0x005ABB90 ?save_ma
 void __cdecl set_dirty();                                 // 0x00592A80 ?set_dirty@@YAXXZ
 int __cdecl size_of_planet(int planet_size);                       // 0x0058CED0 ?size_of_planet@@YAHH@Z
 int __cdecl supply_options(int veh_id, int base_id);               // 0x00593A00 ?supply_options@@YAHHH@Z
-void __cdecl time_controls_dialog(Popup *popup);          // 0x00589330 ?time_controls_dialog@@YAXPAUPopup@@@Z
 void __cdecl veh_kill(int veh_id);                        // 0x005C08C0 ?veh_kill@@YAXH@Z
 int __cdecl veh_pick(int veh_id, const char *label, int flags);  // 0x0048D0D0 ?veh_pick@@YAHHPBDH@Z
 void __cdecl world_build();                               // 0x005C86E0 ?world_build@@YAXXZ

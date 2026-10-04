@@ -488,6 +488,8 @@ int __cdecl do_unity_crash(int x, int y, int faction_id);
 void __cdecl alien_start();
 void __cdecl alien_fauna();
 void __cdecl turn_upkeep();
+// Original turn-duration calculation over selected time-control rules.
+void __cdecl set_time_controls();
 void __cdecl random_events(int mode);
 
 // Source-owned end-turn aircraft attrition.

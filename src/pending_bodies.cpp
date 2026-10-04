@@ -929,10 +929,6 @@ int __cdecl load_game(int a1, int a2) {
 // Complete body is source-owned in newgame.cpp.
 
 
-void __cdecl time_controls_dialog(Popup *popup) {
-    typedef void(__cdecl *pending)(Popup *);
-    PENDING_BODY(0x00589330, pending)(popup);
-}
 
 
 // ?world_build@@YAXXZ at 0x005C86E0 - HOMED into src/map.cpp 2026-09-05 (see
