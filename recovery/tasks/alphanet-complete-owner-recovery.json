@@ -5,6 +5,9 @@
     "recovery/tests/alphanet_ledger_harness.cpp",
     "recovery/tests/test_application_link_recovery.py",
     "recovery/tests/test_multidebug_lifetime.py",
+    "recovery/tests/test_net_session_receive_host.py",
+    "recovery/tests/test_net_join_live_id.py",
+    "recovery/tests/net_join_live_id_control.cpp",
     "recovery/tests/test_stringlist_recovery.py",
     "src/alphanet.cpp",
     "src/alphanet.h",
@@ -59,7 +62,8 @@
     "Original setup4E3225 passes existing game.cpp LobbyAppGuid689218; export that existing object narrowly through game.h, preserve its control_game consumer and do not substitute equal-byte distinct NetLobbyAppGuid697548 or allocate another copy.",
     "DPLAY.H SDK callbacks and original argument/descriptor accesses support typed synchronous provider/session enumeration, unsigned GUID ordering and actual NetAllocationNode pointer APIs. Keep original allocation failure publication, callback re-reads and null-lobby reuse behavior.",
     "NetTextPayload/Entry observed roles do not prove unseen factory nominal types or complete extents. Preserve those discoveries. Net transport init/close/join_session remains separately unfinished; changing a declaration or keeping a build seam does not recover its behavior.",
-    "Coordinator-reviewed manual integration only after fresh native compile/link, protected restoration, reference/layout/caller review and relevant regressions. No demotions, baseline resets, gate waivers, new unmeasured byte claims or automatic/game acceptance."
+    "Coordinator-reviewed manual integration only after fresh native compile/link, protected restoration, reference/layout/caller review and relevant regressions. No demotions, baseline resets, gate waivers, new unmeasured byte claims or automatic/game acceptance.",
+    "2026-10-04 coordinator continuation of the existing join_session62E540 subject, not a baseline reset: complete its source binding and review its full existing typed body against the pinned executable before removing src/unrecovered/0062e540.cpp. Native62E82A..847 passes Net+760 itself as CreatePlayer output;62E861..864 copies its live value to host ID;62E8CA..ED rereads it for the self-player callback;62EA50 snapshots the live value before Font destruction. Replace the incorrect stack-local output, retaining actual member ownership and callback-visible changes. Permit a narrowly evidenced DPID type for the existing player-ID member with unchanged 32-bit layout; do not add duplicate storage. Actual-source host controls must distinguish member address identity and live reads from a stale local, and preserve error/timeout/lifetime behavior. This extends verification files only; other Net transport subjects still require separate admission."
   ],
   "intent": "Recover the AlphaNet session/provider ownership group, its real nested list/lifecycle and typed callbacks/APIs as genuine C++; preserve source identities, all shared/cold spans, claims and seed lessons. Existing owner rehomes and compiler-generated bindings are not newly handwritten behavior. Preserve the committed Voice recovery and unresolved transport/nominal discoveries.",
   "schema_version": 1,
