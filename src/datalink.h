@@ -361,3 +361,5 @@ MEASURED inline void __cdecl help_topic(unsigned int topic, int index) {
 class Popup;
 // Original 0x0044C7F0: collect the ordinary help-text callback into a Popup.
 void __cdecl help_tech_info(Popup *popup, int technology, int faction);
+
+void __cdecl technology_help_without_output(int unused, int technology, int faction);

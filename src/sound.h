@@ -214,3 +214,5 @@ int __cdecl get_sound_version();
 // void** to F** is C2440.
 
 int __cdecl release_sound();
+
+int __cdecl unload_active_sound_chain();

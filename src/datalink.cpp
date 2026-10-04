@@ -3187,3 +3187,16 @@ void Datalink::exec(unsigned int topic, int index) {
     ReportIfGlobal.report_faction_id_ = static_cast<int32_t>(field_A24_);
     SubInterface::release_iface_mode();
 }
+
+// ORIGINAL: 0x0044C820 nullsub_3 0x0044C820-0x0044C821 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["task:typed-ui-sound-helper-owner", "Pinned44C820 is a one-byte return used by44C830 as the cdecl void(char*) technology-text callback. Source scan finds no consumers of the former unrelated fastcall shim.", "historical seed:src/nullsub_thunks.cpp"], "reason": "Rehome genuine typed helper into its existing source owner, preserving original spans, historical claims and useful discoveries. No fixed executable address or manual virtual-call model."}
+// symbol    ?discard_technology_help_text@@YAXPAD@Z
+void __cdecl discard_technology_help_text(char *) {
+}
+
+// ORIGINAL: 0x0044C830 sub_44c830 0x0044C830-0x0044C84C BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["task:typed-ui-sound-helper-owner", "Pinned44C830..44C84C passes arguments2/3, selector-1 and actual callback44C820 to existing typed technology-text builder44B9E0; first argument is unused.", "historical seed:src/recovered/units/0044c830.cpp"], "reason": "Rehome genuine typed helper into its existing source owner, preserving original spans, historical claims and useful discoveries. No fixed executable address or manual virtual-call model."}
+// symbol    ?technology_help_without_output@@YAXHHH@Z
+void __cdecl technology_help_without_output(int, int technology, int faction) {
+    help_tech_info(discard_technology_help_text, technology, faction, -1);
+}

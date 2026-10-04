@@ -99,22 +99,7 @@ int __fastcall nullsub_00406b30_redirect(void *, void *) {
     return 0;
 }
 
-/*
-Purpose: nullsub_3 - a do-nothing leaf. The whole body is a return
-         popping 0 bytes.
-// ORIGINAL: 0x0044C820 nullsub_3 0x0044C820-0x0044C821 BYTE_EXACT
-// symbol    ?nullsub_0044c820_redirect@@YIXPAX0@Z
-// size      1 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall nullsub_0044c820_redirect(void *, void *) {
-}
+
 
 /*
 Purpose: nullsub_191 - a do-nothing leaf. The whole body is a return

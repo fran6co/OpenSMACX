@@ -40,7 +40,6 @@
 
 int __fastcall nullsub_00406a80_redirect(void *self, void *, int, int);
 int __fastcall nullsub_00406b30_redirect(void *self, void *);
-void __fastcall nullsub_0044c820_redirect(void *self, void *);
 void __fastcall nullsub_0044c850_redirect(void *self, void *);
 void __fastcall nullsub_0044c8a0_redirect(void *self, void *);
 void __fastcall nullsub_0044c8b0_redirect(void *self, void *);
