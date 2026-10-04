@@ -14332,3 +14332,228 @@ int __cdecl tech_trade(int actor, int partner, int request_mode, int action,
         return native_result;
     }
 }
+
+// ORIGINAL: 0x0054F420 ?make_a_proposal@@YAXHHH@Z 0x0054F420-0x0054FFAB;0x0065FD5F-0x0065FF4F
+// RECOVERY_BINDING: v1 {"evidence": ["task:diplomacy-actions-owner-coverage", "Pinned54F420-54FFAB and65FD5F-65FF4F; entryFAB0 counteroffer selector andFA34 proposal identity", "Native54F95F rereads multiplayer mode after repayment callback;54F9B6 rereads live Council selector", "Physical54FFAC nine-entry jump table establishes Council cases1-9;54FBEC vote count=-1-reply", "Native54FCDF governor default usesPopup.set_value; no raw modal storage or manual destruction", "historical seed:src/unrecovered/0054f420.cpp"], "reason": "Recover the proposal dispatcher, repayment and Council dialogs in their faction owner using a lexical Popup, source-owned selectors and directed loan/player state. Preserve original primary and generated cleanup spans and all seed findings; no byte or game acceptance claim is granted."}
+// symbol    ?make_a_proposal@@YAXHHH@Z
+// TRIED: no real SEH frame (raw scratch buffer + manual destructor calls instead of automatic-local RAII); sub_4066c0 called with no receiver since its declared prototype is a 0-arg extern "C" and changing it would break linkage to the real symbol; the case-0xb dialog-item text building (parse_says/ Strings::get/strcat chains) and the eligibility gate per faction index were transcribed at reduced fidelity given the size of this function relative to the batch budget.
+void __cdecl make_a_proposal(int faction_id, int other_faction_id,
+                             int selection_ready) {
+    Popup popup;
+
+    PopupDialogFactionID = other_faction_id;
+    DiploScratchFAD0 = 0;
+
+    if (selection_ready == 0 && proposal_menu(faction_id, other_faction_id) == 0) {
+        return;
+    }
+
+    const int counteroffer_mode = DiplomacyProposalMode;
+    const bool coercion_mode = counteroffer_mode == 3;
+    DiploScratchFAD4 = 1;
+    const int proposal_kind = DiploScratchFA34;
+
+    if (proposal_kind == 2) {
+        if (propose_pact(faction_id, other_faction_id) == 0 && coercion_mode) {
+            threaten(faction_id, other_faction_id);
+        }
+        return;
+    }
+    if (proposal_kind == 3) {
+        if (propose_treaty(faction_id, other_faction_id) == 0 && coercion_mode) {
+            threaten(faction_id, other_faction_id);
+        }
+        return;
+    }
+    if (proposal_kind == 7) {
+        const uint32_t actor_treaty =
+            PlayersData[faction_id].diplo_treaties[other_faction_id];
+        const bool refusal =
+            (((actor_treaty & DTREATY_PACT) == 0) && DiploFriction > 0) ||
+            DiploFriction > 4;
+        if (refusal) {
+            parse_says(0, Players[other_faction_id].adj_name_faction, -1, -1);
+            x_pops_short("REJMAPS", 0x100000,
+                         FactionDiplomacyPortraits[other_faction_id],
+                         pop_wait);
+        } else {
+            x_pops_short("TRADEMAPS", 0x100000,
+                         FactionDiplomacyPortraits[other_faction_id],
+                         pop_wait);
+            PlayersData[other_faction_id].diplo_patience[faction_id] += 2;
+            net_maps(faction_id, other_faction_id, 1);
+            DiplomacyMapTransferChanged = 1;
+        }
+        return;
+    }
+    if (proposal_kind == 10) return;
+
+    if (proposal_kind == 8) {
+        const uint32_t target_treaty =
+            PlayersData[other_faction_id].diplo_treaties[faction_id];
+        if ((target_treaty & (DTREATY_PACT | DTREATY_HAVE_SURRENDERED)) ==
+            (DTREATY_PACT | DTREATY_HAVE_SURRENDERED)) {
+            propose_attack(faction_id, other_faction_id);
+            return;
+        }
+    }
+
+    if (coercion_mode) {
+        threaten(faction_id, other_faction_id);
+        return;
+    }
+    if (proposal_kind == 8) {
+        propose_attack(faction_id, other_faction_id);
+        return;
+    }
+    if (proposal_kind == 9) {
+        base_swap(faction_id, other_faction_id);
+        return;
+    }
+    if (proposal_kind == 4 || proposal_kind == 5 || proposal_kind == 13) {
+        DiploScratchFAD0 = tech_trade(faction_id, other_faction_id, 0,
+                                      counteroffer_mode, proposal_kind);
+        return;
+    }
+    if (proposal_kind == 6) {
+        DiploScratchFAD0 = energy_trade(faction_id, other_faction_id);
+        return;
+    }
+    if (proposal_kind == 1) {
+        make_gift(faction_id, other_faction_id);
+        return;
+    }
+    if (proposal_kind == 11) {
+        // Return the outstanding loan. Native builds the speaker text from
+        // the actor's title/name before touching balances.
+        GenderDefault = Players[faction_id].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(0, Players[faction_id].title_leader, -1, -1);
+        GenderDefault = Players[faction_id].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(1, Players[faction_id].name_leader, -1, -1);
+
+        const int amount = PlayersData[faction_id].loan_balance[other_faction_id];
+        if (IsMultiplayerNet != 0) {
+            log_say("Sending ENERGY", faction_id, other_faction_id,
+                    diplo_sub(0, amount));
+            message_data(0x2447, 0, faction_id, diplo_sub(0, amount), other_faction_id,
+                         amount);
+            NetDaemonNet.await_diplo(0x447);
+        } else {
+            if (faction_id != 0) {
+                PlayersData[faction_id].energy_reserves = diplo_sub(
+                    PlayersData[faction_id].energy_reserves, amount);
+            }
+            if (other_faction_id != 0) {
+                PlayersData[other_faction_id].energy_reserves = diplo_add(
+                    PlayersData[other_faction_id].energy_reserves, amount);
+            }
+            ConsoleGlobal.update_data(1);
+        }
+
+        if (IsMultiplayerNet != 0) {
+            log_say("Sending LOAN", faction_id, other_faction_id, 0);
+            message_data(0x244e, 0, faction_id, other_faction_id, 0, 0);
+        } else {
+            PlayersData[faction_id].loan_balance[other_faction_id] = 0;
+            PlayersData[faction_id].loan_payment[other_faction_id] = 0;
+        }
+
+        x_pops_short("REPAIDLOAN", 0x100000,
+                     FactionDiplomacyPortraits[other_faction_id], pop_wait);
+        // The modal can change this independent selector. Native falls into
+        // the Council path only when its live value is now 12.
+        if (DiploScratchFA34 != 12) return;
+    }
+
+    if (DiploScratchFA34 == 12) {
+        // Native Council jump-table cases 1..9 map to these source-owned
+        // proposal records and resolution counters.
+        popup.start(PopupStartCaption, "COUNCILMATTER", -1, 0,
+                    0x100040, 0);
+        popup.set_caller_picture(popup.picture_enabled()
+            ? 0 : FactionDiplomacyPortraits[other_faction_id]);
+        popup.dialogs().sprite(FactionDiplomacyPortraits[other_faction_id],
+                               0, 0);
+
+        for (int proposal = 0; proposal < MaxProposalNum; ++proposal) {
+            const bool proposal_has_technology =
+                has_tech(Proposal[proposal].preq_tech, faction_id) ||
+                (GameState & 0x1080) == 0x1080;
+            bool available = proposal_has_technology;
+            if (available && proposal == 1) {
+                available = (GameState & 1) == 0 &&
+                    CouncilResolutionCount[1] == 0 &&
+                    (GameRules & 8) != 0 && eligible(faction_id);
+            } else if (available && (proposal == 2 || proposal == 5)) {
+                available = CouncilResolutionCount[proposal] == 0;
+            } else if (available && proposal == 3) {
+                available = CouncilResolutionCount[3] <= CouncilResolutionCount[4];
+            } else if (available && proposal == 4) {
+                available = CouncilResolutionCount[4] != CouncilResolutionCount[3];
+            } else if (available && proposal == 6) {
+                available = CouncilResolutionCount[5] != 0;
+            } else if (available && proposal == 8) {
+                available = CouncilResolutionCount[8] <= CouncilResolutionCount[9];
+            } else if (available && proposal == 9) {
+                available = CouncilResolutionCount[9] < CouncilResolutionCount[8];
+            }
+            if (available) {
+                StringTemp[0] = '\0';
+                strcat(StringTemp, StringTable.get(
+                    static_cast<int>(reinterpret_cast<intptr_t>(
+                        Proposal[proposal].name))));
+                strcat(StringTemp, "|");
+                strcat(StringTemp, StringTable.get(
+                    static_cast<int>(reinterpret_cast<intptr_t>(
+                        Proposal[proposal].description))));
+                popup.dialogs().item(StringTemp, proposal);
+            }
+        }
+
+        const int first_choice = popup.exec(0, pop_wait);
+        if (first_choice < 0) return;
+        if (first_choice != 0) {
+            const int reply = x_pops_short("COUNCILVOTE", 0x100000,
+                         FactionDiplomacyPortraits[other_faction_id],
+                         pop_wait);
+            const int vote_count = diplo_sub(-1, reply);
+            if (vote_count != 0) {
+                buy_council_vote(faction_id, other_faction_id, first_choice,
+                                 vote_count);
+            }
+            return;
+        }
+
+        popup.start(PopupStartCaption, "COUNCILVOTEGOV", -1, 0,
+                    0x100000, 0);
+        popup.set_caller_picture(popup.picture_enabled()
+            ? 0 : FactionDiplomacyPortraits[other_faction_id]);
+        popup.dialogs().sprite(FactionDiplomacyPortraits[other_faction_id],
+                               0, 0);
+        for (int candidate = 1; candidate < MaxPlayerNum; ++candidate) {
+            if ((factions_status_byte(1) & (1u << candidate)) != 0 &&
+                eligible(candidate)) {
+                StringTemp[0] = '\0';
+                GenderDefault = Players[candidate].is_leader_female;
+                PluralityDefault = 0;
+                strcat(StringTemp, Players[candidate].title_leader);
+                strcat(StringTemp, "|");
+                GenderDefault = Players[candidate].is_leader_female;
+                PluralityDefault = 0;
+                strcat(StringTemp, Players[candidate].name_leader);
+                popup.dialogs().item(StringTemp, candidate);
+                if (candidate == faction_id) {
+                    popup.set_value(candidate);
+                }
+            }
+        }
+        const int governor_choice = popup.exec(0, pop_wait);
+        if (governor_choice >= 0) {
+            buy_council_vote(faction_id, other_faction_id, 0,
+                             governor_choice);
+        }
+        return;
+    }
+}

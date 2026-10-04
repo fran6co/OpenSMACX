@@ -620,6 +620,306 @@ int main() {
         assert (result.returncode == 0) == (name == 'actual'), (name, result.stderr)
 
 
+_MAKE_PROPOSAL_FIXTURE = r'''#include <cassert>
+#include <cstdio>
+#include <cstring>
+#define __cdecl
+#define nullptr 0
+typedef unsigned int uint32_t;
+int diplo_add(int a,int b){return (int)((unsigned)a+(unsigned)b);}
+int diplo_sub(int a,int b){return (int)((unsigned)a-(unsigned)b);}
+typedef unsigned long intptr_t;
+const int MaxPlayerNum = 8;
+const int MaxProposalNum = 11;
+const uint32_t DTREATY_PACT = 1u;
+const uint32_t DTREATY_HAVE_SURRENDERED = 0x02000000u;
+struct Sprite {} portraits[8]; Sprite *FactionDiplomacyPortraits[8];
+struct Player { int is_leader_female; char title_leader[24], name_leader[24],
+    adj_name_faction[24]; } Players[8];
+struct Data { uint32_t diplo_treaties[8], diplo_agenda[8]; int loan_balance[8],
+    loan_payment[8], energy_reserves; char diplo_patience[8]; } PlayersData[8];
+struct ProposalRecord { int preq_tech; const char *name, *description; };
+ProposalRecord Proposal[MaxProposalNum];
+int CouncilResolutionCount[10];
+int PopupDialogFactionID, DiplomacyProposalMode, DiploScratchFA34,
+    DiploScratchFAD0, DiploScratchFAD4, DiploScratchFA5C, DiploScratchFA7C;
+int GenderDefault, PluralityDefault, IsMultiplayerNet, DiploFriction;
+int GameState, GameRules, DiplomacyMapTransferChanged;
+int BaseCurrentCount, LockEnableMask;
+char StringTemp[256], PopupStartCaption[64];
+const char *DiploLabelSendingENERGY = "energy";
+int proposal_menu_result, menu_calls, popup_constructs, popup_destroys;
+int pact_calls, treaty_calls, attack_calls, energy_calls, tech_calls, threat_calls;
+int gift_calls, swap_calls, vote_calls, map_calls, map_order, modal_order;
+int council_execs, council_reply, council_choice, governor_exec, governor_choice, governor_item_count;
+int first_choice, reply_value, eligible_mask, proposal_set_value, proposal_selected_id;
+int value_arg, item_ids[32], item_count, dialog_stage, popup_exec_answer[4];
+int net_mutation, await_mutation, update_calls, update_mutation, sent_messages[8];
+int message_count, awaits, local_map, popup_reply_calls, callback_count;
+int event_counter, map_popup_event, map_transfer_event, update_event;
+int fail_map_refusal, log_count, parse_count;
+char last_popup[64];
+int pop_wait() { return 0; }
+int proposal_menu(int actor, int other) {
+    assert(actor == 1 && other == 2); ++menu_calls; return proposal_menu_result;
+}
+int propose_pact(int a, int b) { assert(a==1&&b==2); ++pact_calls; return 0; }
+int propose_treaty(int a, int b) { assert(a==1&&b==2); ++treaty_calls; return 0; }
+int propose_attack(int a, int b) { assert(a==1&&b==2); ++attack_calls; return 0; }
+int energy_trade(int a, int b) { assert(a==1&&b==2); ++energy_calls; return 6; }
+int tech_trade(int a,int b,int energy,int mode,int kind) {
+    assert(a==1&&b==2&&energy==0&&kind==4); value_arg=mode; ++tech_calls; return 9;
+}
+void threaten(int a,int b) { assert(a==1&&b==2); ++threat_calls; DiplomacyProposalMode=99; }
+void make_gift(int a,int b) { assert(a==1&&b==2); ++gift_calls; }
+void base_swap(int a,int b) { assert(a==1&&b==2); ++swap_calls; }
+void buy_council_vote(int a,int b,int choice,int count) {
+    assert(a==1&&b==2); ++vote_calls; council_choice=choice; value_arg=count;
+}
+int has_tech(int,int faction) { assert(faction>=0&&faction<8); return 1; }
+int eligible(int faction) { return faction>=0&&faction<8 && (eligible_mask&(1<<faction)); }
+unsigned int factions_status_byte(int n) { assert(n==1); return 0xff; }
+int parse_says(int slot,char *s,int a,int b) {
+    assert(slot>=0&&slot<=1&&s&&a==-1&&b==-1); ++parse_count; return 0;
+}
+void log_say(const char *s,int,int,int) { assert(s); ++log_count; }
+void message_data(int op,int z,int a,int b,int c,int d) {
+    assert(!z); sent_messages[message_count++]=op;
+    if (op==0x2447) { assert(a==1&&b==-40&&c==2&&d==40); }
+    else if (op==0x244e) { assert(a==1&&b==2&&!c&&!d); }
+    else assert(false);
+}
+struct Net { void await_diplo(int op) { assert(op==0x447); ++awaits;
+    if(await_mutation) IsMultiplayerNet=0; } } NetDaemonNet;
+struct Console { void update_data(int n) { assert(n==1); ++update_calls;
+    update_event=++event_counter; if(update_mutation) IsMultiplayerNet=1; }
+} ConsoleGlobal;
+int net_maps(int a,int b,int mode) {
+    assert(a==1&&b==2&&mode==1); ++map_calls; map_transfer_event=++event_counter;
+    if(local_map) ++PlayersData[2].energy_reserves;
+    return 0;
+}
+int x_pops_short(const char *key,int flags,Sprite *sprite,int(*cb)()) {
+    assert(key&&sprite==FactionDiplomacyPortraits[2]&&cb==pop_wait);
+    std::strncpy(last_popup,key,sizeof(last_popup)-1); last_popup[sizeof(last_popup)-1]=0;
+    if(!std::strcmp(key,"TRADEMAPS")) { map_popup_event=++event_counter; }
+    if(!std::strcmp(key,"COUNCILVOTE")) { ++popup_reply_calls; return reply_value; }
+    if(!std::strcmp(key,"REPAIDLOAN") && modal_order) DiploScratchFA34=modal_order;
+    if(!std::strcmp(key,"REJMAPS")) assert(flags==0x100000);
+    return 0;
+}
+int x_pops_minimal(const char *,Sprite *,int(*)()) { return 0; }
+char *get_pact_hood(int,int) { return Players[1].adj_name_faction; }
+struct StringTableType { const char *get(int) { return "label"; } } StringTable;
+struct Dialogs {
+    void sprite(Sprite *s,char *text,int n) { assert(s==FactionDiplomacyPortraits[2]&&!text&&!n); }
+    void item(char *,int id) {
+        if(dialog_stage==1) { assert(item_count<32); item_ids[item_count++]=id; }
+        else if(dialog_stage==2) { ++governor_item_count; }
+    }
+    void set_value(int id) { ++proposal_set_value; value_arg=id; }
+    void set_selected_id(int id) { ++proposal_selected_id; value_arg=id; }
+};
+struct Popup {
+    Dialogs dlg; int start(const char *,const char *key,int,char *,int,int) {
+        if(!std::strcmp(key,"COUNCILMATTER")) dialog_stage=1;
+        else if(!std::strcmp(key,"COUNCILVOTEGOV")) dialog_stage=2;
+        return 0;
+    }
+    Popup() { ++popup_constructs; } ~Popup() { ++popup_destroys; }
+    bool picture_enabled() { return false; }
+    void set_caller_picture(Sprite *s) { assert(s==FactionDiplomacyPortraits[2]); }
+    void set_value(int id) { ++proposal_set_value; value_arg=id; }
+    void set_selected_id(int id) { ++proposal_selected_id; value_arg=id; }
+    Dialogs &dialogs() { return dlg; }
+    int exec(int n,int(*cb)()) {
+        assert(n==0&&cb==pop_wait);
+        if(dialog_stage==1) { ++council_execs; return first_choice; }
+        if(dialog_stage==2) { ++governor_exec; return governor_choice; }
+        return -1;
+    }
+};
+// @@BODY@@
+void reset() {
+    std::memset(Players,0,sizeof(Players)); std::memset(PlayersData,0,sizeof(PlayersData));
+    std::memset(Proposal,0,sizeof(Proposal)); std::memset(CouncilResolutionCount,0,sizeof(CouncilResolutionCount));
+    std::memset(sent_messages,0,sizeof(sent_messages));
+    for(int i=0;i<8;++i) FactionDiplomacyPortraits[i]=&portraits[i];
+    std::strcpy(Players[1].title_leader,"Leader"); std::strcpy(Players[1].name_leader,"Name");
+    PlayersData[1].loan_balance[2]=40; PlayersData[1].loan_payment[2]=4;
+    for(int i=0;i<MaxProposalNum;++i) { Proposal[i].preq_tech=0; Proposal[i].name="n"; Proposal[i].description="d"; }
+    PopupDialogFactionID=DiplomacyProposalMode=DiploScratchFA34=0;
+    DiploScratchFAD0=DiploScratchFAD4=DiploScratchFA5C=DiploScratchFA7C=0;
+    GenderDefault=PluralityDefault=IsMultiplayerNet=DiploFriction=0;
+    GameState=0; GameRules=8; DiplomacyMapTransferChanged=0;
+    proposal_menu_result=menu_calls=popup_constructs=popup_destroys=0;
+    pact_calls=treaty_calls=attack_calls=energy_calls=tech_calls=threat_calls=0;
+    gift_calls=swap_calls=vote_calls=map_calls=map_order=modal_order=0;
+    council_execs=council_reply=council_choice=governor_exec=governor_choice=governor_item_count=0;
+    first_choice=reply_value=eligible_mask=proposal_set_value=proposal_selected_id=0;
+    value_arg=item_count=dialog_stage=0; std::memset(item_ids,0,sizeof(item_ids));
+    update_calls=update_mutation=await_mutation=net_mutation=0;
+    message_count=awaits=local_map=popup_reply_calls=callback_count=0;
+    event_counter=map_popup_event=map_transfer_event=update_event=0;
+    fail_map_refusal=log_count=parse_count=0; last_popup[0]=0;
+}
+bool has_item(int id) { for(int i=0;i<item_count;++i) if(item_ids[i]==id)return true; return false; }
+int main() {
+    // Menu cancellation returns with the local Popup still destructed exactly once.
+    reset(); proposal_menu_result=0; make_a_proposal(1,2,0);
+    assert(menu_calls==1&&popup_constructs==1&&popup_destroys==1&&PopupDialogFactionID==2);
+    assert(!pact_calls&&!threat_calls&&!vote_calls);
+
+    // The saved counteroffer mode drives downstream dispatch even if threat changes the global.
+    reset(); DiplomacyProposalMode=2; DiploScratchFA34=2; make_a_proposal(1,2,1);
+    assert(pact_calls==1&&threat_calls==0&&popup_destroys==1);
+    reset(); DiplomacyProposalMode=3; DiploScratchFA34=2; make_a_proposal(1,2,1);
+    assert(pact_calls==1&&threat_calls==1&&DiplomacyProposalMode==99);
+    reset(); DiplomacyProposalMode=4; DiploScratchFA34=4; make_a_proposal(1,2,1);
+    assert(tech_calls==1&&value_arg==4&&DiploScratchFAD0==9);
+    reset(); DiplomacyProposalMode=4; DiploScratchFA34=6; make_a_proposal(1,2,1);
+    assert(energy_calls==1&&DiploScratchFAD0==6);
+    reset(); DiplomacyProposalMode=4; DiploScratchFA34=1; make_a_proposal(1,2,1);
+    assert(gift_calls==1);
+    reset(); DiplomacyProposalMode=4; DiploScratchFA34=3; make_a_proposal(1,2,1);
+    assert(treaty_calls==1&&threat_calls==0);
+    reset(); DiplomacyProposalMode=3; DiploScratchFA34=3; make_a_proposal(1,2,1);
+    assert(treaty_calls==1&&threat_calls==1);
+    reset(); DiplomacyProposalMode=3; DiploScratchFA34=8;
+    PlayersData[2].diplo_treaties[1]=DTREATY_PACT|DTREATY_HAVE_SURRENDERED;
+    make_a_proposal(1,2,1); assert(attack_calls==1&&!threat_calls);
+    reset(); DiplomacyProposalMode=3; DiploScratchFA34=8; make_a_proposal(1,2,1);
+    assert(!attack_calls&&threat_calls==1);
+    reset(); DiplomacyProposalMode=4; DiploScratchFA34=9; make_a_proposal(1,2,1);
+    assert(swap_calls==1);
+
+    // Map refusal has no transfer or patience effect; success displays first, then transfers.
+    reset(); DiploScratchFA34=7; DiploFriction=1; make_a_proposal(1,2,1);
+    assert(!map_calls&&!PlayersData[2].diplo_patience[1]&&!DiplomacyMapTransferChanged);
+    assert(!std::strcmp(last_popup,"REJMAPS"));
+    reset(); DiploScratchFA34=7; PlayersData[1].diplo_treaties[2]=DTREATY_PACT;
+    make_a_proposal(1,2,1);
+    assert(map_calls==1&&map_popup_event>0&&map_popup_event<map_transfer_event);
+    assert(PlayersData[2].diplo_patience[1]==2&&DiplomacyMapTransferChanged==1);
+
+    // Local repayment redraw can switch networking on before the second live check.
+    reset(); DiploScratchFA34=11; update_mutation=1; make_a_proposal(1,2,1);
+    assert(update_calls==1&&message_count==1&&sent_messages[0]==0x244e);
+    assert(PlayersData[1].energy_reserves==-40&&PlayersData[2].energy_reserves==40);
+    assert(PlayersData[1].loan_balance[2]==40&&PlayersData[1].loan_payment[2]==4);
+    assert(!std::strcmp(last_popup,"REPAIDLOAN"));
+    // A network await may switch networking off before the second live check.
+    reset(); DiploScratchFA34=11; IsMultiplayerNet=1; await_mutation=1; make_a_proposal(1,2,1);
+    assert(awaits==1&&message_count==1&&sent_messages[0]==0x2447);
+    assert(PlayersData[1].loan_balance[2]==0&&PlayersData[1].loan_payment[2]==0);
+    reset(); DiploScratchFA34=11; modal_order=12; first_choice=-1; make_a_proposal(1,2,1);
+    assert(council_execs==1&&proposal_set_value==0);
+    reset(); DiploScratchFA34=11; make_a_proposal(1,2,1);
+    assert(!council_execs);
+
+    // Council case ids retain their recovered predicates (1..9 jump-table order).
+    // Addresses: FA82, FA6E, FADA, FAF0, FA6E, FB03, FB0C, FAAD, FAC4.
+    reset(); eligible_mask=1<<1; GameRules=9; GameState=0;
+    CouncilResolutionCount[1]=CouncilResolutionCount[2]=CouncilResolutionCount[5]=0;
+    CouncilResolutionCount[3]=CouncilResolutionCount[4]=0;
+    CouncilResolutionCount[8]=CouncilResolutionCount[9]=0;
+    first_choice=-1; DiploScratchFA34=12; make_a_proposal(1,2,1);
+    assert(has_item(1)&&has_item(2)&&has_item(3)&&!has_item(4)&&has_item(5));
+    assert(!has_item(6)&&has_item(7)&&has_item(8)&&!has_item(9));
+    reset(); eligible_mask=1<<1; GameRules=8; GameState=1; DiploScratchFA34=12;
+    make_a_proposal(1,2,1); assert(!has_item(1));
+    reset(); eligible_mask=1<<1; GameRules=0; GameState=0; DiploScratchFA34=12;
+    first_choice=-1; make_a_proposal(1,2,1); assert(!has_item(1));
+    reset(); eligible_mask=1<<1; GameRules=9; GameState=0;
+    CouncilResolutionCount[1]=CouncilResolutionCount[2]=0;
+    CouncilResolutionCount[3]=2; CouncilResolutionCount[4]=1;
+    CouncilResolutionCount[5]=1; CouncilResolutionCount[8]=2; CouncilResolutionCount[9]=1;
+    DiploScratchFA34=12; make_a_proposal(1,2,1);
+    assert(!has_item(3)&&has_item(4)&&!has_item(5)&&has_item(6));
+    assert(!has_item(8)&&has_item(9));
+
+    // Confirmation reply 0 yields vote_count -1; zero result suppresses purchase.
+    reset(); DiploScratchFA34=12; first_choice=3; reply_value=0;
+    make_a_proposal(1,2,1); assert(vote_calls==1&&council_choice==3&&value_arg==-1);
+    reset(); DiploScratchFA34=12; first_choice=3; reply_value=-1;
+    make_a_proposal(1,2,1); assert(vote_calls==0&&popup_reply_calls==1);
+
+    // Governor's selected faction is a default value, not a selected id.
+    reset(); DiploScratchFA34=12; first_choice=0; eligible_mask=(1<<1)|(1<<2);
+    governor_choice=-1; make_a_proposal(1,2,1);
+    assert(proposal_set_value==1&&proposal_selected_id==0&&governor_exec==1);
+    assert(!vote_calls&&value_arg==1&&governor_item_count==2);
+    reset(); DiploScratchFA34=12; first_choice=0; eligible_mask=(1<<1)|(1<<2);
+    governor_choice=2; make_a_proposal(1,2,1);
+    assert(vote_calls==1&&council_choice==0&&value_arg==2);
+    return 0;
+}
+'''
+
+
+def _run_make_proposal_controls():
+    body = definition((ROOT / 'src/faction.cpp').read_text(), r"void\s+__cdecl\s+make_a_proposal\s*\(")
+    assert "proposal_menu" in body and "buy_council_vote" in body
+    mutations = {
+        "network_timing": body.replace(
+            'if (IsMultiplayerNet != 0) {\n            log_say("Sending LOAN"',
+            'if (IsMultiplayerNet != 0 || awaits != 0) {\n            log_say("Sending LOAN"'),
+        "missing_repayment_modal": body.replace(
+            'x_pops_short("REPAIDLOAN", 0x100000,\n'
+            '                     FactionDiplomacyPortraits[other_faction_id], pop_wait);',
+            '(void)0;'),
+        "game_state_predicate": body.replace('(GameState & 1)', '(GameRules & 1)'),
+        "governor_default_field": body.replace('popup.set_value(candidate)',
+                                                'popup.set_selected_id(candidate)'),
+        "lost_pact_friction_guard": body.replace(
+            '(((actor_treaty & DTREATY_PACT) == 0) && DiploFriction > 0) ||',
+            'false ||'),
+        "lost_council_rule_guard": body.replace('(GameRules & 8) != 0', 'true'),
+    }
+    assert all(mutated != body for mutated in mutations.values()), "mutation anchor drift"
+    failures = []
+    for compiler_name in ("g++", "clang++"):
+        compiler = shutil.which(compiler_name)
+        if not compiler:
+            print("SKIP", compiler_name, "not installed")
+            continue
+        with tempfile.TemporaryDirectory(prefix="proposal-behavior-", dir=None) as temp:
+            scratch = Path(temp)
+            candidates = {"actual": body}
+            candidates.update(mutations)
+            for name, candidate in candidates.items():
+                cpp, binary = scratch / (name + ".cpp"), scratch / name
+                cpp.write_text(_MAKE_PROPOSAL_FIXTURE.replace("// @@BODY@@", candidate, 1))
+                built = subprocess.run(
+                    [compiler, "-std=c++98", "-pedantic-errors", "-Wall", "-Wextra",
+                     "-Wno-unused-parameter", "-fsanitize=undefined",
+                     "-fno-sanitize-recover=all", str(cpp), "-o", str(binary)],
+                    capture_output=True, text=True, timeout=45)
+                if built.returncode:
+                    failures.append(compiler_name + "/" + name + " compile:\n" +
+                                    built.stdout + built.stderr)
+                    continue
+                result = subprocess.run([str(binary)], capture_output=True,
+                                        text=True, timeout=15)
+                expected_pass = name == "actual"
+                if (result.returncode == 0) != expected_pass:
+                    failures.append(compiler_name + "/" + name + " unexpected result:\n" +
+                                    result.stdout + result.stderr)
+            if not failures:
+                print("PASS", compiler_name,
+                      "actual body and", len(mutations), "detected behavior mutations")
+    if failures:
+        raise SystemExit("\n".join(failures))
+    if not any(shutil.which(c) for c in ("g++", "clang++")):
+        raise SystemExit("No local GCC or Clang compiler is available")
+    print("Controls cover a C++98 fixture only; no native/game acceptance is implied.")
+
+
+
+def test_actual_make_a_proposal_controls():
+    _run_make_proposal_controls()
+
+
 _tech_modal_fixture = r'''#include <cassert>
 #include <cstring>
 #include <stdint.h>
