@@ -1,0 +1,23 @@
+{
+  "event_id": "17725ba00572ffc5319f9f96b12f186c8b7cad29034293556fa7b7209a994079",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Include the existing value_of_base identity for the declaration-only discovery. Its body in src/base.cpp remains outside editable files and untouched; authorization is only signed ABI reconciliation in already admitted src/base.h."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5557072,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "6f6125957c957de4c8bd3e055691dd626b8d2fed3f181a92c4ffd05e743b6d49",
+  "request_id": "base-value-header-identity",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:diplomacy-actions-owner-coverage"
+}

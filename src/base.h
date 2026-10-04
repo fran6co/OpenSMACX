@@ -665,8 +665,8 @@ void __cdecl base_production();
 extern int BaseProductionZoomRequested;
 extern int BaseProductionUnitCreationDisabled;
 void __cdecl upgrade_any_prototypes(int faction_id);
-int __cdecl value_of_base(int base_id, uint32_t faction_id_req, uint32_t faction_id_res, 
-                                    uint32_t overmatch_deg, BOOL tgl);
+int __cdecl value_of_base(int base_id, int faction_id_req, int faction_id_res,
+                         int overmatch_deg, BOOL tgl);
 int __cdecl garrison_check(int base_id);
 // ?get_rating@@YAHHH@Z - a faction's score weight from its difficulty level.
 int __cdecl get_rating(int faction_id, int arg2);

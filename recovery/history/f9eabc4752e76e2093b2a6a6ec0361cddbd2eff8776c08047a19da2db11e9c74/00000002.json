@@ -1,0 +1,19 @@
+{
+  "event_id": "6f6125957c957de4c8bd3e055691dd626b8d2fed3f181a92c4ffd05e743b6d49",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/base.h"
+    ],
+    "evidence": [
+      "Coordinator authorizes only correcting the existing value_of_base declaration to its actual signed definition/original symbol, no new function body or baseline reset. Resolve discovery base-value-header-abi, a demonstrated coverage integration linker blocker."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "8bbcc25a2fc8d370111a03a6e2650b26d4500d60972d17567efc151ebe8697b9",
+  "request_id": "base-value-header-scope",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:diplomacy-actions-owner-coverage"
+}

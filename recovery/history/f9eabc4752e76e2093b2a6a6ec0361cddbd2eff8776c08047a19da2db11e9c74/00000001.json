@@ -1,0 +1,20 @@
+{
+  "event_id": "8bbcc25a2fc8d370111a03a6e2650b26d4500d60972d17567efc151ebe8697b9",
+  "payload": {
+    "affects": [
+      "entity-9a62a9ed0876d16a1439d70544a490f873478ef144e4c784305dd9601548e36a"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "base-value-header-abi",
+    "evidence": [
+      "src/base.cpp:5736 actual definition; src/base.h:668 stale declaration; isolated build linker missing ?value_of_base@@YAHHIIIH@Z while source mapping is ?value_of_base@@YAHHHHHH@Z. User authorizes coverage-first manual recovery and build continuity."
+    ],
+    "hypothesis": "Existing value_of_base definition and original mapping have five signed parameters; base.h incorrectly declares three as unsigned, causing the new base_swap caller to link against an undefined overload. Correct only the declaration, preserving the implementation and original obligations.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "base-value-header-abi",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:diplomacy-actions-owner-coverage"
+}

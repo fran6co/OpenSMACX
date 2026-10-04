@@ -1,0 +1,17 @@
+{
+  "event_id": "b0fbcb26f4cb4944b2b20338746c07aa13adb41db859ec44feb54fa373ad59a4",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "base-value-header-abi",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/base.h declaration now agrees with the existing source-owned signed value_of_base ABI in src/base.cpp. Fresh isolated full build/link passed, with the existing implementation untouched."
+    ]
+  },
+  "previous_event": "17725ba00572ffc5319f9f96b12f186c8b7cad29034293556fa7b7209a994079",
+  "request_id": "base-value-header-resolved",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:diplomacy-actions-owner-coverage"
+}
