@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "task_id": "multiwin-contact-owner",
+  "author": "framework-coordinator",
+  "target": "opensmacx",
+  "base_revision": "fb21af7688879a7e8e88d10fc748f796027c36d5",
+  "editable_files": [
+    "src/multiwin.cpp",
+    "src/multiwin.h",
+    "src/faction.cpp",
+    "src/faction.h",
+    "src/recovered/units/00477f30.cpp",
+    "src/recovered/units/00478150.cpp",
+    "src/recovered/units/00479f90.cpp",
+    "src/recovered/units/00558c60.cpp",
+    "src/recovered/units/0053e5c0.cpp",
+    "recovery/tests/test_multiwin_contact.py"
+  ],
+  "subjects": [
+    {
+      "address": 4685616,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4686160,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4693904,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5606496,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5498304,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "intent": "Recover the complete MultiWin click/initialization family and genuine commlink_attempt/renounce_pact dependencies in real C++ owners; transfer identities, auxiliary spans, claims and useful seed discoveries before retiring superseded seeds.",
+  "evidence": [
+    "Full pinned MultiWin spans477F30..478148,478150..4785FA plus6563E0..6563F5,479F90..47A429 plus65641F..656434. Combinedv3 b15fa7e68765adb7635ebe1f42824abddbbae3fc24104a7621bff633b29c0a23 compiles against actual currentMultiWin TU. Whole commlink558C60..558FB4 and renounce53E5C0..53E7F8 bodies also compile in actual faction.cpp; private nativev3 report pins baselinefb21af76 and both object hashes. V4 commlink removes byte-pointer field access through defined alive-byte extraction without a behavior fix.",
+    "Admit bounded separate4-byte source storage7FFF74..7FFF78 for MultiWindowContactStatusMask with provisional name: native click reads/writes4780CE..47813A/478567..4785C4 and other53535D/5355CD..D5/537996 users prove scalar contact/display bits, not adjacent redraw flag7FFF70. Existing NetDaemonNet.lock_state_[2].trailing_words_[6] owns93E960; existing IsMultiplayerPBEM owns93A95C. Do not create duplicate globals.",
+    "Use existing PullDown automatic lifetime, MultiWin owned sprites/fonts/spot/buffer/wave, faction/player/parser/net globals and real report_intel/council/chat methods. Original commlink_attempt is not commlink_attempter; original renounce_pact is not pact_treaty. Genuine dependencies must link, not gain stubs or aliases.",
+    "Complete native branch/callback/lifetime review and self-contained actual-source controls required before reviewed publication. Preserve unsigned timer wrap, live multiplayer rechecks, parser gender reloads, native upper-bound-only menu behavior and existing invalid-domain obligations; no silent behavior sanitization authorized.",
+    "Transfer annotations through native source writer and check full identity/spans plus all parsed findings; all five seed claims currently unclaimed. Delete seeds only after build/link and relevant claim/reference/integrity regression checks. Preserve protected current source obligations with inherited failures explicit. Native task context currently blocked by inherited setupwin.h:77 member-expectation validation, not waived or represented as pass.",
+    "Coordinator-reviewed rough source coverage, no new historical claim or full-game/autonomous/strict linked/reference/runtime acceptance granted. Original TU ownership, every popup callback combination and exact restoration remain unproved."
+  ]
+}
