@@ -1,0 +1,38 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "4e9b5d1b3d4fc87e8a3d616e3936f6deaf2c061f",
+  "editable_files": [
+    "src/mapwin.cpp",
+    "src/planwin.cpp",
+    "src/console.cpp",
+    "src/recovered/units/00421830.cpp",
+    "src/recovered/0048bf20.cpp",
+    "src/recovered/0051ddf0.cpp",
+    "recovery/tests/test_window_generated_deletion_owners.py"
+  ],
+  "evidence": [
+    "Exact named generated definitions exist in current owner COFF; native spans and existing destructors/bases remain required evidence. Duplicate COMDAT emission does not establish original TU or retained selection. Independent receiver/lifetime review required before seed retirement.",
+    "User prioritizes compiling coverage and authorizes manually reviewed matching regressions with complete identity/spans/claims/discoveries retained. Require fresh both-profile emission/target/layout controls, compiler-only baseline/current code/reference equality, full build/link and historical claim continuity. No new byte claims or automatic/full-game acceptance."
+  ],
+  "intent": "Bind three compiler-generated scalar deleting entries to their genuine existing window class lifetimes, without hand-written wrappers or runtime behavior changes.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4331568,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4767520,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5365232,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "window-generated-deletion-owners"
+}
