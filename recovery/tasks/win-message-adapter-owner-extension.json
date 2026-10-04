@@ -1,0 +1,51 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "6a750b048414e31f5aad6a04346579be13f5cd88",
+  "editable_files": [
+    "src/win.cpp",
+    "src/win.h",
+    "src/recovered/units/005d6350.cpp",
+    "src/recovered/units/005d6380.cpp",
+    "src/recovered/units/005d63b0.cpp",
+    "src/recovered/005f12b0.cpp",
+    "src/unrecovered/005f13b0.cpp",
+    "recovery/tests/test_win_adapter_owner_behavior.py",
+    "recovery/tests/win_adapter_owner_control.cpp"
+  ],
+  "evidence": [
+    "Original full bodies retrieve Win via GWL_USERDATA and invoke established slots16,70,71,74,85. 5D6380 native push order passes x,y,incoming keys,0; no swapped flags. 5F13B0 copies rcPaint, invokes on_nc_paint with -1, then returns EndPaint result on success.",
+    "Anonymous helper signatures in old generated scaffolds are not original compiler-symbol evidence. Typed void adapters follow real void Win methods; incidental EAX is not given an invented integer meaning. Callers/registration and original helper names remain unknown; fresh exact machine measurements are required before retiring claimed seeds.",
+    "Coordinator-reviewed checkpoint requires actual owner-body host controls, fresh native measurements/recording, build/link, source integrity/references and historical identity continuity. No demotion, baseline reset, waived full gate or full game/structure/runtime acceptance."
+  ],
+  "intent": "Recover five complete Windows userdata adapters through real Win methods, preserving keys/parent ordering, paint lifetime/return, original identities and historical claims; retire only measured superseded seeds.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6120272,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6120320,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6120368,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6230704,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6230960,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "win-message-adapter-owner-extension"
+}
