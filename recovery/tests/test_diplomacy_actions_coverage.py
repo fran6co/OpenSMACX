@@ -1,8 +1,130 @@
 """Actual diplomacy bodies with service doubles, not GUI/game acceptance."""
 import shutil
 import subprocess
+import sys
+import tempfile
+from pathlib import Path
 import pytest
 from recovery.tests.test_pact_ascent import ROOT, definition
+
+
+@pytest.mark.parametrize('compiler_name', ['g++', 'clang++'])
+def test_actual_tech_trade_gate_and_owner(tmp_path, compiler_name):
+    compiler = shutil.which(compiler_name)
+    if not compiler:
+        pytest.skip(compiler_name + ' unavailable')
+    source = (ROOT / 'src/faction.cpp').read_text()
+    enum_start = source.index('enum TechTradeTailEntry {')
+    enum_end = source.index('};', enum_start) + 2
+    gate = source[enum_start:enum_end] + '\n' + definition(
+        source, r'static TechTradeTailEntry\s+tech_trade_ui_gate\s*\(')
+    fixture = r'''
+#include <cassert>
+#include <cstring>
+#define __cdecl
+typedef unsigned int uint32_t;
+struct Data {
+ unsigned diplo_treaties[8],traded_maps,flags,current_num_bases,ranking;
+ int diplo_agenda[8],ai_power,ai_tech,ai_fight,tech_ranking,integrity_blemishes;
+} PlayersData[8];
+struct Base {int faction_id_current;unsigned visibility;} Bases[8];
+unsigned GameRules,RankingFactionIDUnk1,RankingFactionIDUnk2;
+int FactionRankings[8],FactionRankingsUnk[8],BaseCurrentCount;
+int DiploScratchFAA8,DiploScratchF800,DiploScratchFA48,DiploScratchFA3C;
+int DiploScratchF7F0,DiploFriction,IsMultiplayerNet,willing,parsed,wants;
+int diplo_add(int a,int b){return (int)((unsigned)a+(unsigned)b);}
+int diplo_sub(int a,int b){return (int)((unsigned)a-(unsigned)b);}
+int diplo_mul(int a,int b){return (int)((unsigned)a*(unsigned)b);}
+int wants_to_speak(int a,int b){assert(a==1&&b==2);++wants;return willing;}
+void tech_trade_parse_initial_offer_lines(){++parsed;}
+// @@GATE@@
+void reset(){
+ std::memset(PlayersData,0,sizeof(PlayersData));std::memset(Bases,0,sizeof(Bases));
+ std::memset(FactionRankings,0,sizeof(FactionRankings));
+ std::memset(FactionRankingsUnk,0,sizeof(FactionRankingsUnk));
+ DiploScratchFAA8=10;DiploScratchF800=20;DiploScratchFA48=DiploScratchFA3C=0;
+ DiploFriction=IsMultiplayerNet=GameRules=DiploScratchF7F0=0;
+ RankingFactionIDUnk1=RankingFactionIDUnk2=0;BaseCurrentCount=0;
+ willing=1;parsed=wants=0;
+}
+int route(int context=0,int action=4){return (int)tech_trade_ui_gate(1,2,0,action,context);}
+void controls(){
+ reset();assert(route()==-1&&wants==1&&!parsed);
+ reset();willing=0;assert(route()==TECH_TRADE_TAIL_NO_SPEAK_542E07&&wants==1);
+ reset();assert(route(13)==TECH_TRADE_TAIL_COMMLINK_TECH_542E80&&parsed==1&&wants==1);
+ reset();PlayersData[2].diplo_treaties[1]=1;
+ assert(route(13)==TECH_TRADE_TAIL_COMMLINK_FREE_54295F&&!wants&&!parsed);
+ reset();PlayersData[2].diplo_treaties[1]=0x02000001;
+ assert(route()==TECH_TRADE_TAIL_TECH_SLAVE_542A78&&!wants);
+ reset();PlayersData[2].flags=0x02000001;assert(route()==-1);
+ reset();PlayersData[2].diplo_treaties[1]=0x20;
+ assert(route()==TECH_TRADE_TAIL_BUY_RESULT_5437B7&&!wants);
+ reset();PlayersData[2].diplo_agenda[1]=0x200;
+ assert(route()==TECH_TRADE_TAIL_BUY_RESULT_5437B7);
+ reset();PlayersData[2].diplo_agenda[0]=0x200;assert(route()==-1);
+ reset();PlayersData[1].integrity_blemishes=4;
+ assert(route()==TECH_TRADE_TAIL_BUY_RESULT_5437B7);
+ reset();PlayersData[2].integrity_blemishes=4;assert(route()==-1);
+ reset();IsMultiplayerNet=1;PlayersData[1].diplo_agenda[2]=0x100;
+ assert(route()==TECH_TRADE_TAIL_BUY_RESULT_5437B7);
+ reset();IsMultiplayerNet=1;PlayersData[1].diplo_agenda[0]=0x100;assert(route()==-1);
+ reset();DiploScratchF800=-1;PlayersData[1].flags=0x200;
+ assert(route()==TECH_TRADE_TAIL_BUY_RESULT_5437B7);
+ reset();DiploScratchF800=-1;PlayersData[2].flags=0x200;assert(route()==-1);
+ reset();DiploScratchFAA8=-1;PlayersData[2].diplo_treaties[1]=1;
+ PlayersData[1].ranking=1;PlayersData[2].ranking=2;PlayersData[2].tech_ranking=10;
+ assert(route()==TECH_TRADE_TAIL_TECH_FREEBIE_542BE7);
+ reset();DiploScratchFAA8=-1;PlayersData[2].diplo_treaties[1]=1;
+ PlayersData[1].ranking=1;PlayersData[2].ranking=2;PlayersData[2].tech_ranking=10;
+ IsMultiplayerNet=1;RankingFactionIDUnk1=1;
+ assert(route()==TECH_TRADE_TAIL_BUY_RESULT_5437B7);
+ reset();DiploScratchFAA8=-1;DiploScratchF800=-1;PlayersData[1].current_num_bases=1;
+ assert(route()==-1&&DiploScratchFAA8==9999);
+ reset();DiploScratchFAA8=-1;DiploScratchF800=-1;PlayersData[2].traded_maps=2;
+ PlayersData[1].current_num_bases=1;
+ assert(route()==TECH_TRADE_TAIL_BUY_RESULT_5437B7&&DiploScratchFAA8==-1);
+}
+struct Popup{~Popup();};
+enum TechTradePolicyRoute{TECH_TRADE_POLICY_REJECT_542097,
+ TECH_TRADE_POLICY_REJECT_54222B,TECH_TRADE_POLICY_READY_FOR_OFFERS};
+struct TechTradePolicyDecision{TechTradePolicyRoute route;};
+int prefixes,phases,destructions,first_flags[4],policy_mode;
+TechTradePolicyDecision tech_trade_policy_prefix(Popup&,int,int,int,int,int,bool first){
+ first_flags[prefixes++]=first;TechTradePolicyDecision p;
+ p.route=policy_mode?TECH_TRADE_POLICY_REJECT_542097:TECH_TRADE_POLICY_READY_FOR_OFFERS;return p;
+}
+void tech_trade_handle_pre_offer_rejection(Popup&,TechTradePolicyDecision,int,int,int,int,int){assert(false);}
+TechTradeTailEntry tech_trade_ui_phase(Popup&,int,int,int,int,int){
+ return ++phases==1?(TechTradeTailEntry)-1:TECH_TRADE_TAIL_SUCCESS_5433A0;
+}
+int tech_trade_run_tail(TechTradeTailEntry t,int,int,int,int,int){assert(t==TECH_TRADE_TAIL_SUCCESS_5433A0);return 1;}
+Popup::~Popup(){++destructions;}
+// @@OWNER@@
+int main(){
+ controls();assert(tech_trade(1,2,0,4,0)==1);
+ assert(prefixes==2&&phases==2&&first_flags[0]&&!first_flags[1]&&destructions==1);
+ policy_mode=1;assert(tech_trade(1,2,0,4,0)==0&&destructions==2);
+}
+'''
+    owner = definition(source, r'int __cdecl tech_trade\s*\(')
+    variants = {'actual': gate}
+    for name, old, new in (
+        ('wrong_agenda_cell', 'diplo_agenda[actor]', 'diplo_agenda[0]'),
+        ('wrong_blemish_owner', 'PlayersData[actor].integrity_blemishes',
+         'PlayersData[partner].integrity_blemishes'),
+        ('missing_mode_parser', 'tech_trade_parse_initial_offer_lines();', ''),
+    ):
+        assert old in gate
+        variants[name] = gate.replace(old, new)
+    for name, actual in variants.items():
+        cpp, binary = tmp_path / (name + '.cpp'), tmp_path / name
+        cpp.write_text(fixture.replace('// @@GATE@@', actual).replace('// @@OWNER@@', owner))
+        built = subprocess.run([compiler, '-std=c++98', '-pedantic-errors',
+                                '-fsanitize=undefined', '-fno-sanitize-recover=all',
+                                str(cpp), '-o', str(binary)], capture_output=True, text=True)
+        assert built.returncode == 0, built.stderr
+        ran = subprocess.run([str(binary)], capture_output=True, text=True)
+        assert (ran.returncode == 0) == (name == 'actual'), ran.stderr
 
 
 @pytest.mark.parametrize('compiler_name', ['g++', 'clang++'])
@@ -496,6 +618,607 @@ int main() {
         assert build.returncode == 0, build.stderr
         result = subprocess.run([str(binary)], capture_output=True, timeout=15)
         assert (result.returncode == 0) == (name == 'actual'), (name, result.stderr)
+
+
+_tech_modal_fixture = r'''#include <cassert>
+#include <cstring>
+#include <stdint.h>
+#define FALSE 0
+#define TRUE 1
+typedef unsigned int uint32_t;
+typedef int BOOL;
+
+struct Player { char filename[32]; } Players[8];
+struct PlayerData {
+    uint32_t diplo_treaties[8];
+    uint32_t diplo_friction[8];
+    int tech_ranking;
+} PlayersData[8];
+
+int DiploScratchF814, DiploScratchFAA8, DiploScratchF800;
+int DiploScratchFA18, DiploScratchF80C, DiploScratchFA44;
+int DiploScratchFA48, DiploScratchFA60;
+uint32_t RankingFactionIDUnk1;
+int IsMultiplayerNet, DiploFriction;
+uint32_t DiploFrictionFactionIDWith, DiploFrictionFactionID;
+int GenderDefault, PluralityDefault;
+char StringTemp[256];
+struct Sprite {};
+Sprite *FactionDiplomacyPortraits[8];
+int pop_result, help_calls, help_id, help_topic_id;
+int tech_value[100], tech_val_calls;
+int transfer_count, transferred_sender[8], transferred_tech[8];
+int transferred_receiver[8], mutate_f800_on_first_transfer;
+int agenda_count, agenda_actor[4], agenda_partner[4], agenda_mask[4];
+int treaty_count, treaty_actor[4], treaty_partner[4], treaty_mask[4];
+
+const char *DiploLabelSendingTECH = "Sending TECH";
+const char *DiploLabelSendingTREATYON = "Sending TREATYON";
+const char *DiploLabelSendingAGENDAON = "Sending AGENDAON";
+
+int diplo_add(int left, int right) {
+    return static_cast<int>(static_cast<uint32_t>(left) +
+                            static_cast<uint32_t>(right));
+}
+int diplo_sub(int left, int right) {
+    return static_cast<int>(static_cast<uint32_t>(left) -
+                            static_cast<uint32_t>(right));
+}
+void swap(int *left, int *right) {
+    const int temporary = *left;
+    *left = *right;
+    *right = temporary;
+}
+int tech_val(int technology, int, int) {
+    ++tech_val_calls;
+    return technology >= 0 && technology < 100 ? tech_value[technology]
+                                               : technology;
+}
+void say_tech(char *, int, int) {}
+int parse_says(int, const char *, int, int) { return 0; }
+void help_topic(unsigned int topic, int technology) {
+    ++help_calls; help_id = static_cast<int>(topic); help_topic_id = technology;
+}
+int x_pops_short(const char *, int, Sprite *, int (*)()) { return pop_result; }
+int pop_wait() { return 0; }
+int great_satan(int, int) { return 0; }
+
+void log_say(const char *, int, int, int) {}
+int message_data(int, int, int, int, int, int) { return 0; }
+void treaty_on(int actor, int partner, int mask) {
+    treaty_actor[treaty_count] = actor;
+    treaty_partner[treaty_count] = partner;
+    treaty_mask[treaty_count++] = mask;
+}
+void agenda_on(int actor, int partner, int mask) {
+    agenda_actor[agenda_count] = actor;
+    agenda_partner[agenda_count] = partner;
+    agenda_mask[agenda_count++] = mask;
+}
+void tech_achieved(int sender, int technology, int receiver, int) {
+    transferred_sender[transfer_count] = sender;
+    transferred_tech[transfer_count] = technology;
+    transferred_receiver[transfer_count] = receiver;
+    ++transfer_count;
+    if (mutate_f800_on_first_transfer && transfer_count == 1)
+        DiploScratchF800 = 37;
+}
+struct NetDaemonStub { void await_diplo(int) {} } NetDaemonNet;
+
+// @@CANDIDATE@@
+
+void reset_fixture() {
+    std::memset(Players, 0, sizeof(Players));
+    std::memset(PlayersData, 0, sizeof(PlayersData));
+    std::memset(tech_value, 0, sizeof(tech_value));
+    DiploScratchF814 = DiploScratchFAA8 = DiploScratchF800 = -1;
+    DiploScratchFA18 = DiploScratchF80C = DiploScratchFA44 = -1;
+    DiploScratchFA48 = DiploScratchFA60 = 0;
+    RankingFactionIDUnk1 = 0; IsMultiplayerNet = 0; DiploFriction = 0;
+    DiploFrictionFactionIDWith = DiploFrictionFactionID = 0;
+    GenderDefault = PluralityDefault = 0; StringTemp[0] = '\0';
+    pop_result = 1; help_calls = help_id = help_topic_id = 0;
+    tech_val_calls = transfer_count = mutate_f800_on_first_transfer = 0;
+    agenda_count = treaty_count = 0;
+    for (int i = 0; i < 8; ++i) {
+        transferred_sender[i] = transferred_tech[i] = -1;
+        transferred_receiver[i] = -1;
+        agenda_actor[i < 4 ? i : 3] = 0;
+        agenda_partner[i < 4 ? i : 3] = 0;
+        agenda_mask[i < 4 ? i : 3] = 0;
+        treaty_actor[i < 4 ? i : 3] = 0;
+        treaty_partner[i < 4 ? i : 3] = 0;
+        treaty_mask[i < 4 ? i : 3] = 0;
+    }
+}
+
+int main() {
+    // Result 1 preserves the initial signed F814/4 share, including negative
+    // truncation toward zero as emitted by the native add/sign-correct/shift.
+    reset_fixture();
+    DiploScratchF814 = -5;
+    TechTradeDialogStep result1 =
+        tech_trade_handle_dialog_result(1, 1, 2, 0);
+    assert(!result1.rebuild_dialog && result1.friction_eighths == -1);
+
+    // Result 4 swaps the selectors first, then uses the live F814/8 share.
+    reset_fixture();
+    DiploScratchF814 = 13;
+    DiploScratchF800 = 10; DiploScratchF80C = 20;
+    DiploScratchFA18 = 0;
+    PlayersData[2].diplo_treaties[1] = 1;
+    TechTradeDialogStep result4 =
+        tech_trade_handle_dialog_result(4, 1, 2, 0);
+    assert(DiploScratchF800 == 20 && DiploScratchF80C == 10);
+    assert(result4.friction_eighths == 1);
+
+    // Result 2 swaps FAA8/FA18 before taking the live FA44/8 share.
+    reset_fixture();
+    std::strcpy(Players[2].filename, "OTHER");
+    DiploScratchFAA8 = 10; DiploScratchFA18 = 20;
+    DiploScratchFA44 = -9;
+    TechTradeDialogStep result2 =
+        tech_trade_handle_dialog_result(2, 1, 2, 0);
+    assert(DiploScratchFAA8 == 20 && DiploScratchFA18 == 10);
+    assert(result2.friction_eighths == -1);
+
+    // Agenda always uses partner->actor; treaty is request-mode-only and has
+    // that same direction. The friction IDs are partner in FAC0, actor in FABC.
+    reset_fixture();
+    DiploScratchFAA8 = 11; DiploScratchF800 = 22; DiploScratchFA18 = 33;
+    PlayersData[2].diplo_friction[1] = 10;
+    DiploFriction = 8;
+    DiploFrictionFactionID = 2;
+    DiploFrictionFactionIDWith = 1;
+    mutate_f800_on_first_transfer = 1;
+    TechTradeTailEntry request0 =
+        tech_trade_commit_dialog_state(1, 2, 0, 2);
+    assert(request0 == TECH_TRADE_TAIL_SUCCESS_5433A0);
+    assert(treaty_count == 0);
+    assert(agenda_count == 1 && agenda_actor[0] == 2 &&
+           agenda_partner[0] == 1 && agenda_mask[0] == 0x180);
+    assert(transfer_count == 2);
+    assert(transferred_sender[0] == 2 && transferred_tech[0] == 11 &&
+           transferred_receiver[0] == 1);
+    assert(transferred_sender[1] == 1 && transferred_tech[1] == 37 &&
+           transferred_receiver[1] == 2);
+    assert(PlayersData[2].diplo_friction[1] == 8 && DiploFriction == 6);
+    assert(DiploScratchFAA8 == 33 && DiploScratchFA18 == -1 &&
+           DiploScratchFA60 == 0);
+
+    // Request mode adds exactly the reversed treaty callback, while agenda
+    // still occurs in the local callback path.
+    reset_fixture();
+    DiploScratchFAA8 = 4; DiploScratchF800 = 5;
+    IsMultiplayerNet = 0;
+    TechTradeTailEntry request1 =
+        tech_trade_commit_dialog_state(1, 2, 1, 0);
+    assert(static_cast<int>(request1) == -1);
+    assert(treaty_count == 1 && treaty_actor[0] == 2 &&
+           treaty_partner[0] == 1 && treaty_mask[0] == 0x1000000);
+    assert(agenda_count == 1 && agenda_actor[0] == 2 &&
+           agenda_partner[0] == 1 && agenda_mask[0] == 0x180);
+    return 0;
+}
+'''
+
+
+def _tech_modal_named_struct(source, marker):
+    start = source.index(marker)
+    brace = source.index("{", start)
+    depth = 0
+    for position in range(brace, len(source)):
+        if source[position] == "{":
+            depth += 1
+        elif source[position] == "}":
+            depth -= 1
+            if depth == 0:
+                return source[start:position + 1]
+    raise ValueError("unclosed definition: " + marker)
+
+
+def _tech_modal_candidate_text(source):
+    enum = _tech_modal_named_struct(source, "enum TechTradeTailEntry")
+    struct = _tech_modal_named_struct(source, "struct TechTradeDialogStep")
+    functions = (
+        r"static int\s+tech_trade_signed_shift_divide\s*\(",
+        r"static TechTradeDialogStep\s+tech_trade_handle_dialog_result\s*\(",
+        r"static TechTradeTailEntry\s+tech_trade_commit_dialog_state\s*\(",
+    )
+    return enum + ";\n" + struct + ";\n" + "\n".join(
+        definition(source, pattern) for pattern in functions)
+
+
+def _run_tech_modal_controls():
+    source = (ROOT / 'src/faction.cpp').read_text()
+    actual = _tech_modal_candidate_text(source)
+    required = (
+        "tech_trade_signed_shift_divide(\n        DiploScratchF814, 3, 2)",
+        "tech_trade_signed_shift_divide(\n            DiploScratchF814, 7, 3)",
+        "tech_trade_signed_shift_divide(\n            DiploScratchFA44, 7, 3)",
+        "selected = DiploScratchF800",
+        "treaty_on(partner, actor, 0x1000000)",
+        "agenda_on(partner, actor, 0x180)",
+        "DiploFrictionFactionID == static_cast<uint32_t>(partner)",
+        "DiploFrictionFactionIDWith == static_cast<uint32_t>(actor)",
+    )
+    for anchor in required:
+        assert anchor in actual, "native control anchor drift: " + anchor
+
+    mutations = {
+        "wrong_result4_divisor": actual.replace(
+            "DiploScratchF814, 7, 3", "DiploScratchF814, 3, 2", 1),
+        "wrong_treaty_direction": actual.replace(
+            "treaty_on(partner, actor, 0x1000000)",
+            "treaty_on(actor, partner, 0x1000000)", 1),
+        "conditional_agenda": actual.replace(
+            "agenda_on(partner, actor, 0x180);",
+            "if (request_mode != 0) agenda_on(partner, actor, 0x180);", 1),
+        "cached_first_offer": actual.replace(
+            "selected = DiploScratchF800;", "selected = DiploScratchFAA8;", 1),
+    }
+    for name, mutated in mutations.items():
+        assert mutated != actual, "mutation anchor drift: " + name
+
+    failures = []
+    ran = 0
+    for compiler_name in ("g++", "clang++"):
+        compiler = shutil.which(compiler_name)
+        if not compiler:
+            print("SKIP", compiler_name, "not installed")
+            continue
+        ran += 1
+        with tempfile.TemporaryDirectory(
+                prefix="tech-ui-",
+                dir=None) as temp:
+            scratch = Path(temp)
+            candidates = {"actual": actual}
+            candidates.update(mutations)
+            for name, candidate in candidates.items():
+                cpp, binary = scratch / (name + ".cpp"), scratch / name
+                cpp.write_text(_tech_modal_fixture.replace("// @@CANDIDATE@@", candidate, 1))
+                compiled = subprocess.run(
+                    [compiler, "-std=c++98", "-pedantic-errors", "-Wall", "-Wextra",
+                     "-Wno-unused-parameter", "-fsanitize=undefined",
+                     "-fno-sanitize-recover=all", str(cpp), "-o", str(binary)],
+                    capture_output=True, text=True, timeout=45)
+                if compiled.returncode:
+                    failures.append(compiler_name + "/" + name + " compile:\n" +
+                                    compiled.stdout + compiled.stderr)
+                    continue
+                result = subprocess.run([str(binary)], capture_output=True,
+                                        text=True, timeout=15)
+                if name == "actual":
+                    if result.returncode:
+                        failures.append(compiler_name + "/actual controls:\n" +
+                                        result.stdout + result.stderr)
+                elif result.returncode == 0:
+                    failures.append(compiler_name + "/" + name +
+                                    " mutation unexpectedly passed")
+
+    if failures:
+        print("\n".join(failures), file=sys.stderr)
+        return 1
+    if not ran:
+        print("No host C++98 compiler available; fixture not run.",
+              file=sys.stderr)
+        return 3
+    print("Actual modal/commit definitions passed C++98 host controls.")
+    return 0
+
+
+
+def test_actual_tech_trade_modal_controls():
+    assert _run_tech_modal_controls() == 0
+
+_tech_policy_fixture = r'''#include <cassert>
+#include <cstdio>
+#include <cstring>
+#include <stdint.h>
+#define __cdecl
+typedef unsigned int uint32_t;
+struct Player {
+    char filename[32], search_key[32], title_leader[24], name_leader[24];
+    char insult_leader[24], adj_insult_faction[24];
+    char assistant_city[24];
+    int is_leader_female, rule_techcost;
+} Players[8];
+struct PlayerData { uint32_t diplo_treaties[8], ranking, flags; int tech_ranking; };
+const uint32_t PFLAG_COOP_WITH_HUMAN = 0x00400000u;
+PlayerData PlayersData[8];
+struct ReactorRecord { int preq_tech; } Reactor[2];
+uint32_t FactionRankingsUnk[8];
+int RankingFactionIDUnk2;
+int PopupDialogFactionID, DiploScratchF7C4, DiploScratchF800;
+int DiploScratchFA5C, DiploScratchFA2C, DiploScratchFA60, DiploScratchFA6C;
+int DiploFriction, IsMultiplayerNet, GameRules, GenderDefault, PluralityDefault;
+char DiploLabelUNIV_7DC[] = "UNIV";
+char DiploLabelHIVE_808[] = "HIVE";
+char DiploLabelREJTECHHATE[] = "REJTECHHATE";
+int SatanResult, tech_available[8][128], close_calls, popup_calls;
+int tech_analysis_event, caption_event, sequence, rejection_calls;
+int parse_channels[32], parse_count, parse_num_calls, popup_short_calls;
+const char *parse_values[32];
+int parse_num_result, buy_tech_result;
+char StringTemp[256];
+struct FacilityRecord { char name[24]; } Facility[128];
+struct Sprite {} sprites[8];
+Sprite *FactionDiplomacyPortraits[8];
+const char *DiploLabelREJTECHFEAR="REJTECHFEAR";
+const char *DiploLabelREJTECHFEAR_7FC="REJTECHFEARALT";
+const char *DiploLabelREJTECHADVANCED="REJTECHADVANCED";
+const char *DiploLabelREJTECHPROJ="REJTECHPROJ";
+int pop_wait(){return 0;}
+int parse_says(int channel, const char *value, int, int) {
+    assert(parse_count<32);parse_channels[parse_count]=channel;
+    parse_values[parse_count++]=value;return 0;
+}
+char *get_phrase(int faction, int phrase){assert(faction==1&&phrase==3);return Players[faction].assistant_city;}
+int parse_num(int channel, int arg){assert(arg==0);++parse_num_calls;return parse_num_result;}
+char *_itoa(int value,char *buffer,int radix){assert(radix==10);std::sprintf(buffer,"%d",value);return buffer;}
+int x_pops_short(const char *text,int flags,Sprite *sprite,int(*callback)()) {
+    assert(flags==0x100000&&callback==pop_wait&&sprite==FactionDiplomacyPortraits[2]);
+    assert(text&&std::strlen(text)<sizeof(StringTemp));++popup_short_calls;
+    std::strcpy(StringTemp,text);return 0;
+}
+int buy_tech(int actor,int partner,int action,int mode,int context) {
+    assert(actor==1&&partner==2&&action>=0&&mode==1&&(context==0||context==13));
+    return buy_tech_result;
+}
+int diplo_add(int a,int b){return (int)((uint32_t)a+(uint32_t)b);}
+int diplo_sub(int a,int b){return (int)((uint32_t)a-(uint32_t)b);}
+int diplo_mul(int a,int b){return (int)((uint32_t)a*(uint32_t)b);}
+struct Popup { void close(); };
+int has_tech(int tech, int faction);
+int great_satan(int faction, int unused);
+void tech_analysis(int actor, int partner);
+void diplomacy_caption(int actor, int partner);
+// @@CANDIDATE@@
+int has_tech(int tech, int faction) {
+    assert(faction >= 0 && faction < 8 && tech >= 0 && tech < 128);
+    return tech_available[faction][tech];
+}
+int great_satan(int faction, int unused) {
+    assert(faction == 1 && unused == 0); return SatanResult;
+}
+void tech_analysis(int actor, int partner) {
+    assert(actor == 1 && partner == 2); tech_analysis_event = ++sequence;
+}
+void diplomacy_caption(int actor, int partner) {
+    assert(actor == 1 && partner == 2); caption_event = ++sequence;
+}
+void Popup::close() { ++close_calls; }
+void reset() {
+    std::memset(Players, 0, sizeof(Players));
+    std::memset(PlayersData, 0, sizeof(PlayersData));
+    std::memset(Reactor, 0, sizeof(Reactor));
+    std::memset(FactionRankingsUnk, 0, sizeof(FactionRankingsUnk));
+    for (int f=0; f<8; ++f) for (int t=0; t<128; ++t) tech_available[f][t]=1;
+    Players[2].rule_techcost = 100;
+    RankingFactionIDUnk2=2;
+    PopupDialogFactionID=DiploScratchF7C4=DiploScratchF800=0;
+    DiploScratchFA5C=0; DiploScratchFA2C=0; DiploScratchFA60=0;
+    DiploScratchFA6C=-1; DiploFriction=0; IsMultiplayerNet=0; GameRules=0;
+    GenderDefault=PluralityDefault=0; SatanResult=0;
+    close_calls=popup_calls=tech_analysis_event=caption_event=sequence=0;
+    rejection_calls=0;
+    parse_count=parse_num_calls=popup_short_calls=0;
+    parse_num_result=0;buy_tech_result=0;StringTemp[0]='\0';
+    std::memset(parse_channels,0,sizeof(parse_channels));
+    std::memset(parse_values,0,sizeof(parse_values));
+    for(int i=0;i<8;++i)FactionDiplomacyPortraits[i]=&sprites[i];
+}
+void assert_contact(TechTradeContactResult expected) {
+    assert(tech_trade_contact_policy(1,2)==expected);
+}
+int main() {
+    // Actor-row commlink bypass is checked before reverse-row vetoes.
+    reset(); PlayersData[1].diplo_treaties[2]=1;
+    PlayersData[2].diplo_treaties[1]=0x8020; DiploScratchFA2C=1;
+    DiploFriction=18; DiploScratchFA60=1; std::strcpy(Players[2].filename,"OTHER");
+    assert_contact(TECH_TRADE_CONTACT_ALLOWED);
+
+    // Each reverse-row veto is independent; the threshold is strictly > 17.
+    reset(); PlayersData[2].diplo_treaties[1]=0x20;
+    assert_contact(TECH_TRADE_CONTACT_REJECTED);
+    reset(); PlayersData[2].diplo_treaties[1]=0x8000;
+    assert_contact(TECH_TRADE_CONTACT_REJECTED);
+    reset(); DiploScratchFA2C=1; assert_contact(TECH_TRADE_CONTACT_REJECTED);
+    reset(); DiploFriction=18; assert_contact(TECH_TRADE_CONTACT_REJECTED);
+    reset(); DiploFriction=17; assert_contact(TECH_TRADE_CONTACT_ALLOWED);
+
+    // FA60 zero falls through; when nonzero, only partner filename controls
+    // the UNIV exception. search_key intentionally disagrees in both cases.
+    reset(); DiploScratchFA60=0; std::strcpy(Players[2].filename,"OTHER");
+    std::strcpy(Players[2].search_key,"UNIV");
+    assert_contact(TECH_TRADE_CONTACT_ALLOWED);
+    reset(); DiploScratchFA60=1; std::strcpy(Players[2].filename,"UNIV");
+    std::strcpy(Players[2].search_key,"OTHER");
+    assert_contact(TECH_TRADE_CONTACT_ALLOWED);
+    reset(); DiploScratchFA60=1; std::strcpy(Players[2].filename,"OTHER");
+    std::strcpy(Players[2].search_key,"UNIV");
+    assert_contact(TECH_TRADE_CONTACT_REJECTED);
+
+    // Entry order and context-13 state capture; lexical Popup destruction
+    // remains with the owner, so the policy helper does not call close().
+    reset(); Popup popup; DiploScratchFA5C=7;
+    TechTradePolicyDecision allowed = tech_trade_policy_prefix(popup,1,2,1,4,13,true);
+    assert(PopupDialogFactionID==2&&DiploScratchF7C4==0&&DiploScratchF800==0x60);
+    assert(tech_analysis_event==1&&caption_event==2&&close_calls==0);
+    assert(allowed.route==TECH_TRADE_POLICY_READY_FOR_OFFERS&&allowed.special_action);
+    reset(); Popup rejected_popup; DiploScratchFA60=1;
+    std::strcpy(Players[2].filename,"OTHER");
+    TechTradePolicyDecision rejected = tech_trade_policy_prefix(rejected_popup,1,2,1,1,0,true);
+    assert(rejected.route==TECH_TRADE_POLICY_REJECT_542097&&close_calls==0);
+    assert(rejection_calls==0&&PopupDialogFactionID==2);
+
+    // Rejection presentation uses assistant_city on parser channel 2, then
+    // the completed text is passed directly to the short-popup boundary.
+    reset();std::strcpy(Players[1].assistant_city,"Assistant City");
+    parse_num_result=7;tech_trade_show_contact_rejection(1,2,0);
+    assert(parse_count==5&&parse_channels[0]==0&&parse_channels[1]==1&&
+           parse_channels[2]==2&&parse_channels[3]==3&&parse_channels[4]==4);
+    assert(parse_values[2]==Players[1].assistant_city&&parse_num_calls==1);
+    assert(popup_short_calls==1&&!std::strcmp(StringTemp,"REJTECHHATE7"));
+    reset();tech_trade_show_contact_rejection(1,2,13);
+    assert(parse_num_calls==0&&popup_short_calls==1&&
+           !std::strcmp(StringTemp,"REJTECHHATE0"));
+
+    // Pre-offer friction threshold and rank/power exits use isolated predicates.
+    reset(); SatanResult=1; DiploFriction=3;
+    TechTradePolicyDecision d=tech_trade_pre_offer_policy(1,2,0,1,0,false);
+    assert(d.route==TECH_TRADE_POLICY_READY_FOR_OFFERS);
+    reset(); SatanResult=1; DiploFriction=4;
+    d=tech_trade_pre_offer_policy(1,2,0,1,0,false);
+    assert(d.route==TECH_TRADE_POLICY_REJECT_54222B);
+    reset(); SatanResult=1; IsMultiplayerNet=1; PlayersData[1].ranking=7;
+    d=tech_trade_pre_offer_policy(1,2,0,1,0,false);
+    assert(d.route==TECH_TRADE_POLICY_REJECT_5423D8);
+    reset(); IsMultiplayerNet=1; PlayersData[1].ranking=7;
+    FactionRankingsUnk[1]=5; FactionRankingsUnk[2]=3;
+    PlayersData[1].tech_ranking=5; PlayersData[2].tech_ranking=3;
+    d=tech_trade_pre_offer_policy(1,2,0,1,0,false);
+    assert(d.route==TECH_TRADE_POLICY_REJECT_5423D8);
+
+    // HIVE adjusts the special threshold from partner.filename (not search_key).
+    reset(); PlayersData[1].tech_ranking=0; PlayersData[2].tech_ranking=1;
+    DiploFriction=6; std::strcpy(Players[2].filename,"HIVE");
+    std::strcpy(Players[2].search_key,"OTHER");
+    d=tech_trade_pre_offer_policy(1,2,0,1,0,false);
+    assert(d.route==TECH_TRADE_POLICY_REJECT_5425BF);
+    reset(); PlayersData[1].tech_ranking=0; PlayersData[2].tech_ranking=1;
+    DiploFriction=6; std::strcpy(Players[2].filename,"OTHER");
+    std::strcpy(Players[2].search_key,"HIVE");
+    d=tech_trade_pre_offer_policy(1,2,0,1,0,false);
+    assert(d.route==TECH_TRADE_POLICY_READY_FOR_OFFERS);
+    reset(); PlayersData[1].tech_ranking=0; PlayersData[2].tech_ranking=1;
+    PlayersData[2].diplo_treaties[1]=2; DiploFriction=8;
+    std::strcpy(Players[2].filename,"HIVE");
+    d=tech_trade_pre_offer_policy(1,2,0,1,0,false);
+    assert(d.route==TECH_TRADE_POLICY_READY_FOR_OFFERS);
+    DiploFriction=9;
+    d=tech_trade_pre_offer_policy(1,2,0,1,0,false);
+    assert(d.route==TECH_TRADE_POLICY_REJECT_5425BF);
+
+    // Human-cooperation flags suppress the otherwise active rejection checks.
+    reset(); SatanResult=1; DiploFriction=4;
+    PlayersData[2].flags=PFLAG_COOP_WITH_HUMAN;
+    d=tech_trade_pre_offer_policy(1,2,0,1,0,false);
+    assert(d.route==TECH_TRADE_POLICY_READY_FOR_OFFERS);
+
+    // Ranked prerequisite refusal and the partner self-row bypass.
+    reset(); Reactor[0].preq_tech=7; tech_available[2][7]=1; tech_available[1][7]=0;
+    PlayersData[1].tech_ranking=PlayersData[2].tech_ranking=4;
+    d=tech_trade_pre_offer_policy(1,2,1,1,0,false);
+    assert(d.route==TECH_TRADE_POLICY_REJECT_542585&&d.partner_has_missing_prerequisite);
+    reset(); Reactor[0].preq_tech=7; tech_available[2][7]=1; tech_available[1][7]=0;
+    PlayersData[2].diplo_treaties[1]=0x02000001u;
+    PlayersData[1].tech_ranking=PlayersData[2].tech_ranking=4;
+    d=tech_trade_pre_offer_policy(1,2,1,1,0,false);
+    assert(d.route==TECH_TRADE_POLICY_READY_FOR_OFFERS&&!d.partner_has_missing_prerequisite);
+
+    // Project slot refusal is suppressed only for native context 13.
+    reset(); DiploScratchFA6C=0;
+    d=tech_trade_pre_offer_policy(1,2,0,1,0,false);
+    assert(d.route==TECH_TRADE_POLICY_REJECT_5427FA);
+    reset(); DiploScratchFA6C=0;
+    d=tech_trade_pre_offer_policy(1,2,0,1,13,false);
+    assert(d.route==TECH_TRADE_POLICY_READY_FOR_OFFERS);
+    return 0;
+}
+'''
+
+
+def _tech_policy_candidate_text(source):
+    marker = "static TechTradeContactResult tech_trade_contact_policy"
+    header_end = source.index(marker)
+    header = source[source.index('enum TechTradeContactResult {'):header_end]
+    signatures = (
+        r"static TechTradeContactResult\s+tech_trade_contact_policy\s*\(",
+        r"static void\s+tech_trade_show_contact_rejection\s*\(",
+        r"static TechTradePolicyDecision\s+tech_trade_pre_offer_policy\s*\(",
+        r"static TechTradePolicyDecision\s+tech_trade_policy_prefix\s*\(",
+    )
+    bodies = [definition(source, signature) for signature in signatures]
+    return header + "\n".join(bodies)
+
+
+def _run_tech_policy_controls():
+    source = (ROOT / 'src/faction.cpp').read_text()
+    actual = _tech_policy_candidate_text(source)
+    contact = definition(source, r"static TechTradeContactResult\s+tech_trade_contact_policy\s*\(")
+    prefix = definition(source, r"static TechTradePolicyDecision\s+tech_trade_policy_prefix\s*\(")
+    mutations = {
+        "wrong_identity_field": actual.replace("Players[partner].filename",
+                                                "Players[partner].search_key", 1),
+        "wrong_FA60_polarity": actual.replace("DiploScratchFA60 != 0",
+                                               "DiploScratchFA60 == 0", 1),
+        "wrong_treaty_row": actual.replace(
+            "PlayersData[partner].diplo_treaties[actor]",
+            "PlayersData[actor].diplo_treaties[partner]", 1),
+        "inclusive_friction_boundary": actual.replace("DiploFriction > 0x11",
+                                                       "DiploFriction >= 0x11", 1),
+        "cxx11_aggregate_return": actual.replace(
+            "TechTradePolicyDecision decision = {\n"
+            "            TECH_TRADE_POLICY_REJECT_542097, false, special_action};\n"
+            "        return decision;",
+            "return {TECH_TRADE_POLICY_REJECT_542097, false, special_action};", 1),
+    }
+    assert contact in actual and prefix in actual
+    for name, mutated in mutations.items():
+        assert mutated != actual, "mutation anchor drift: " + name
+
+    failures = []
+    ran = 0
+    for compiler_name in ("g++", "clang++"):
+        compiler = shutil.which(compiler_name)
+        if not compiler:
+            print("SKIP", compiler_name, "not installed")
+            continue
+        ran += 1
+        with tempfile.TemporaryDirectory(prefix="tech-policy-", dir=None) as temp:
+            scratch = Path(temp)
+            candidates = {"actual": actual}
+            candidates.update(mutations)
+            for name, candidate in candidates.items():
+                cpp, binary = scratch / (name + ".cpp"), scratch / name
+                cpp.write_text(_tech_policy_fixture.replace("// @@CANDIDATE@@", candidate, 1))
+                compiled = subprocess.run(
+                    [compiler, "-std=c++98", "-pedantic-errors", "-Wall", "-Wextra",
+                     "-Wno-unused-parameter",
+                     "-fsanitize=undefined", "-fno-sanitize-recover=all",
+                     str(cpp), "-o", str(binary)],
+                    capture_output=True, text=True, timeout=45)
+                if name == "cxx11_aggregate_return":
+                    if compiled.returncode == 0:
+                        failures.append(compiler_name + "/" + name +
+                                        " unexpectedly compiled in C++98")
+                    continue
+                if compiled.returncode:
+                    failures.append(compiler_name + "/" + name + " compile:\n" +
+                                    compiled.stdout + compiled.stderr)
+                    continue
+                result = subprocess.run([str(binary)], capture_output=True,
+                                        text=True, timeout=15)
+                expected_pass = name == "actual"
+                if (result.returncode == 0) != expected_pass:
+                    failures.append(compiler_name + "/" + name + " unexpected result:\n" +
+                                    result.stdout + result.stderr)
+            if not failures:
+                print("PASS", compiler_name,
+                      "actual extracted helpers and four detected behavior mutations; C++11 return rejected")
+    if ran == 0:
+        raise SystemExit("No local GCC or Clang compiler is available")
+    if failures:
+        raise SystemExit("\n".join(failures))
+    print("C++98 fake-boundary controls only; native inspection is evidence input, not acceptance.")
+    return 0
+
+
+
+def test_actual_tech_trade_policy_controls():
+    assert _run_tech_policy_controls() == 0
+
 
 
 @pytest.mark.parametrize('compiler_name', ['g++', 'clang++'])

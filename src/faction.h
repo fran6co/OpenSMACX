@@ -1167,3 +1167,5 @@ void __cdecl threaten(int faction_id, int other_faction_id);
 int __cdecl proposal_menu(int faction_id, int faction_id_with);
 
 int __cdecl propose_attack(int actor, int other);
+
+int __cdecl tech_trade(int actor, int partner, int request_mode, int action, int context);

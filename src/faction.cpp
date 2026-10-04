@@ -13507,3 +13507,828 @@ return 1;
 attack_return_zero:
     return 0;
 }
+
+
+enum TechTradeContactResult {
+    TECH_TRADE_CONTACT_ALLOWED,
+    TECH_TRADE_CONTACT_REJECTED
+};
+
+enum TechTradePolicyRoute {
+    TECH_TRADE_POLICY_REJECT_542097,
+    TECH_TRADE_POLICY_REJECT_54222B,
+    TECH_TRADE_POLICY_REJECT_5423D8,
+    TECH_TRADE_POLICY_REJECT_542585,
+    TECH_TRADE_POLICY_REJECT_5425BF,
+    TECH_TRADE_POLICY_REJECT_5427FA,
+    TECH_TRADE_POLICY_READY_FOR_OFFERS
+};
+
+struct TechTradePolicyDecision {
+    TechTradePolicyRoute route;
+    bool partner_has_missing_prerequisite;
+    bool special_action;
+};
+static TechTradeContactResult tech_trade_contact_policy(
+    int actor, int partner) {
+    const uint32_t actor_to_partner =
+        PlayersData[actor].diplo_treaties[partner];
+    if ((actor_to_partner & 1u) != 0) {
+        return TECH_TRADE_CONTACT_ALLOWED;
+    }
+
+    const uint32_t partner_to_actor =
+        PlayersData[partner].diplo_treaties[actor];
+    const bool blocked = (partner_to_actor & 0x8020u) != 0 ||
+        DiploScratchFA2C != 0 || DiploFriction > 0x11;
+    const bool missing_universal_identity = DiploScratchFA60 != 0 &&
+        strcmp(Players[partner].filename, "UNIV") != 0;
+    if (blocked || missing_universal_identity) {
+        return TECH_TRADE_CONTACT_REJECTED;
+    }
+    return TECH_TRADE_CONTACT_ALLOWED;
+}
+static void tech_trade_show_contact_rejection(int actor, int partner,
+                                              int context) {
+    GenderDefault = Players[actor].is_leader_female;
+    PluralityDefault = 0;
+    parse_says(0, Players[actor].title_leader, -1, -1);
+    GenderDefault = Players[actor].is_leader_female;
+    PluralityDefault = 0;
+    parse_says(1, Players[actor].name_leader, -1, -1);
+    GenderDefault = Players[actor].is_leader_female;
+    PluralityDefault = 0;
+    parse_says(2, Players[actor].assistant_city, -1, -1);
+    parse_says(3, Players[actor].adj_insult_faction, -1, -1);
+    parse_says(4, get_phrase(actor, 3), -1, -1);
+
+    StringTemp[0] = '\0';
+    strcat(StringTemp, "REJTECHHATE");
+    const int displayed_number = context == 13 ? 0 : parse_num(3, 0);
+    char number_text[16];
+    _itoa(displayed_number, number_text, 10);
+    strcat(StringTemp, number_text);
+    x_pops_short(StringTemp, 0x100000,
+                 FactionDiplomacyPortraits[partner], pop_wait);
+}
+static TechTradePolicyDecision tech_trade_pre_offer_policy(
+    int actor, int partner, int request_mode, int action, int context,
+    bool special_action) {
+    TechTradePolicyDecision decision = {
+        TECH_TRADE_POLICY_READY_FOR_OFFERS, false, special_action};
+    const uint32_t partner_to_actor =
+        PlayersData[partner].diplo_treaties[actor];
+    if ((partner_to_actor & 0x02000001u) != 0x02000001u) {
+        for (int reactor = 0; reactor < 2; ++reactor) {
+            const int prerequisite = Reactor[reactor].preq_tech;
+            if (has_tech(prerequisite, partner) &&
+                !has_tech(prerequisite, actor)) {
+                decision.partner_has_missing_prerequisite = true;
+            }
+        }
+
+        const uint32_t actor_to_partner =
+            PlayersData[actor].diplo_treaties[partner];
+        if ((actor_to_partner & 1u) == 0 &&
+            (PlayersData[partner].flags & PFLAG_COOP_WITH_HUMAN) == 0 &&
+            great_satan(actor, 0)) {
+            const int partner_tech_cost_delta =
+                diplo_sub(Players[partner].rule_techcost, 100);
+            const int cost_rank = partner_tech_cost_delta > 0 ? 1
+                : partner_tech_cost_delta == 0 ? 0 : -1;
+            const int threshold = diplo_add(
+                (partner_to_actor & 2u) != 0 ? 3 : 0,
+                diplo_mul(2, diplo_sub(2, cost_rank)));
+            if (DiploFriction >= threshold) {
+                decision.route = TECH_TRADE_POLICY_REJECT_54222B;
+                return decision;
+            }
+        }
+
+        if ((IsMultiplayerNet != 0 || (GameRules & 0x40) != 0) &&
+            static_cast<int>(PlayersData[actor].ranking) == 7 &&
+            (actor_to_partner & 1u) == 0 &&
+            (PlayersData[partner].flags & PFLAG_COOP_WITH_HUMAN) == 0) {
+            if (great_satan(actor, 0)) {
+                decision.route = TECH_TRADE_POLICY_REJECT_5423D8;
+                return decision;
+            }
+            const int actor_power =
+                static_cast<int>(FactionRankingsUnk[actor]);
+            const int current_power = static_cast<int>(
+                FactionRankingsUnk[RankingFactionIDUnk2]);
+            if (diplo_mul(actor_power, 3) > diplo_mul(current_power, 4) &&
+                diplo_mul(PlayersData[actor].tech_ranking, 3) >
+                    diplo_mul(PlayersData[RankingFactionIDUnk2].tech_ranking,
+                              4)) {
+                decision.route = TECH_TRADE_POLICY_REJECT_5423D8;
+                return decision;
+            }
+        }
+
+        const int partner_tech_rank = PlayersData[partner].tech_ranking;
+        const int actor_tech_rank = PlayersData[actor].tech_ranking;
+        if (partner_tech_rank > actor_tech_rank ||
+            decision.partner_has_missing_prerequisite) {
+            if (request_mode != 0) {
+                decision.route = TECH_TRADE_POLICY_REJECT_542585;
+                return decision;
+            }
+
+            const bool is_hive =
+                strcmp(Players[partner].filename, "HIVE") == 0;
+            const int special_threshold = diplo_sub(
+                diplo_add((partner_to_actor & 2u) != 0 ? 3 : 0,
+                    decision.partner_has_missing_prerequisite ? 3 : 9),
+                is_hive ? 3 : 0);
+            if (DiploFriction >= special_threshold &&
+                       (actor_to_partner & 1u) == 0 &&
+                       (PlayersData[partner].flags &
+                        PFLAG_COOP_WITH_HUMAN) == 0) {
+                decision.route = TECH_TRADE_POLICY_REJECT_5425BF;
+                return decision;
+            }
+        }
+    }
+
+    if (DiploScratchFA6C != -1 && context != 13) {
+        decision.route = TECH_TRADE_POLICY_REJECT_5427FA;
+        return decision;
+    }
+    (void)action;
+    return decision;
+}
+static void tech_trade_handle_pre_offer_rejection(
+    Popup &popup, TechTradePolicyDecision decision, int actor, int partner,
+    int request_mode, int action, int context) {
+    (void)popup; // Preserved in the contract; lexical scope owns teardown.
+    if (decision.route == TECH_TRADE_POLICY_REJECT_542585) {
+        return;
+    }
+
+    if (decision.route == TECH_TRADE_POLICY_REJECT_54222B ||
+        decision.route == TECH_TRADE_POLICY_REJECT_5423D8) {
+        if (request_mode == 0 &&
+            buy_tech(actor, partner, action, 1, context) == 0) {
+            GenderDefault = Players[actor].is_leader_female;
+            PluralityDefault = 0;
+            parse_says(0, Players[actor].title_leader, -1, -1);
+            parse_says(1, Players[actor].name_leader, -1, -1);
+            parse_says(2, get_phrase(actor, 3), -1, -1);
+            StringTemp[0] = '\0';
+            strcat(StringTemp, decision.route ==
+                TECH_TRADE_POLICY_REJECT_54222B
+                    ? "REJTECHFEAR" : "REJTECHFEAR");
+            const int displayed_number = context == 13 ? 0 : parse_num(2, 0);
+            char number_text[16];
+            _itoa(displayed_number, number_text, 10);
+            strcat(StringTemp, number_text);
+            x_pops_short(StringTemp, 0x100000,
+                         FactionDiplomacyPortraits[partner], pop_wait);
+        }
+        return;
+    }
+
+    if (decision.route == TECH_TRADE_POLICY_REJECT_5425BF) {
+        if (!decision.partner_has_missing_prerequisite && request_mode == 0 &&
+            buy_tech(actor, partner, action, 1, context) != 0) {
+            return;
+        }
+
+        if (action == 5 && context != 13) {
+            GenderDefault = Players[actor].is_leader_female;
+            PluralityDefault = 0;
+            parse_says(0, Players[actor].title_leader, -1, -1);
+            parse_says(1, Players[actor].name_leader, -1, -1);
+            parse_says(2, get_phrase(actor, 3), -1, -1);
+            x_pops_short("REJTECHFEAR1", 0x100000,
+                         FactionDiplomacyPortraits[partner], pop_wait);
+        } else if (decision.special_action) {
+            parse_says(0, Players[actor].adj_insult_faction, -1, -1);
+            StringTemp[0] = '\0';
+            strcat(StringTemp, "REJTECHADVANCED");
+            const int displayed_number =
+                decision.partner_has_missing_prerequisite ? 2 : parse_num(3, 0);
+            char number_text[16];
+            _itoa(displayed_number, number_text, 10);
+            strcat(StringTemp, number_text);
+            x_pops_short(StringTemp, 0x100000,
+                         FactionDiplomacyPortraits[partner], pop_wait);
+        }
+        return;
+    }
+
+    if (decision.route == TECH_TRADE_POLICY_REJECT_5427FA) {
+        if (request_mode == 0) {
+            const int project = DiploScratchFA6C;
+            const int facility_id = project < 0 ? diplo_sub(0x44, project)
+                                                 : diplo_add(project, 0x46);
+            parse_says(0, Facility[facility_id].name, -1, -1);
+            GenderDefault = Players[actor].is_leader_female;
+            PluralityDefault = 0;
+            parse_says(1, Players[actor].title_leader, -1, -1);
+            parse_says(2, Players[actor].name_leader, -1, -1);
+            StringTemp[0] = '\0';
+            strcat(StringTemp, "REJTECHPROJ");
+            const int displayed_number = project < 0 ? parse_num(3, 0) : 2;
+            char number_text[16];
+            _itoa(displayed_number, number_text, 10);
+            strcat(StringTemp, number_text);
+            x_pops_short(StringTemp, 0x100000,
+                         FactionDiplomacyPortraits[partner], pop_wait);
+        }
+        return;
+    }
+}
+static TechTradePolicyDecision tech_trade_policy_prefix(
+    Popup &popup, int actor, int partner, int request_mode, int action,
+    int context, bool first_entry) {
+    (void)popup; // Popup destruction is lexical and closes exactly once.
+    const bool special_action = action == 4 || action == 2;
+    if (first_entry) {
+        PopupDialogFactionID = partner;
+        DiploScratchF7C4 = 0;
+    }
+    tech_analysis(actor, partner);
+    if (context == 13) {
+        DiploScratchF800 = diplo_add(DiploScratchFA5C, 0x59);
+    }
+    diplomacy_caption(actor, partner);
+
+    if (tech_trade_contact_policy(actor, partner) ==
+        TECH_TRADE_CONTACT_REJECTED) {
+        if (request_mode == 0) {
+            tech_trade_show_contact_rejection(actor, partner, context);
+        }
+        TechTradePolicyDecision decision = {
+            TECH_TRADE_POLICY_REJECT_542097, false, special_action};
+        return decision;
+    }
+    return tech_trade_pre_offer_policy(actor, partner, request_mode, action,
+                                       context, special_action);
+}
+static int tech_trade_show_later_response(int actor, int partner, int mode) {
+    StringTemp[0] = '\0';
+    if (mode == 0xD) {
+        strcat(StringTemp, "REJCOMMLINK");
+    } else {
+        strcat(StringTemp, "REJTECHLATER");
+        int response = static_cast<int>(random(0, 3));
+        if ((PlayersData[partner].diplo_treaties[actor] & 3u) != 0) {
+            if (DiploScratchFAA8 < 0) {
+                response = 4;
+            } else if (DiploScratchF800 < 0) {
+                response = 3;
+            }
+        }
+        char digits[16];
+        _itoa(response, digits, 10);
+        strcat(StringTemp, digits);
+    }
+    return x_pops_short(StringTemp, 0x100000,
+                        FactionDiplomacyPortraits[partner], pop_wait);
+}
+enum TechTradeTailEntry {
+    TECH_TRADE_TAIL_CONTINUE = -1,
+    TECH_TRADE_TAIL_COMMLINK_FREE_54295F,
+    TECH_TRADE_TAIL_TECH_SLAVE_542A78,
+    TECH_TRADE_TAIL_TECH_FREEBIE_542BE7,
+    TECH_TRADE_TAIL_NO_SPEAK_542E07,
+    TECH_TRADE_TAIL_COMMLINK_TECH_542E80,
+    TECH_TRADE_TAIL_BUY_RESULT_5437B7,
+    TECH_TRADE_TAIL_ACCEPT_543094,
+    TECH_TRADE_TAIL_REJECT_SECOND_543169,
+    TECH_TRADE_TAIL_SUCCESS_5433A0
+};
+static void tech_trade_dispatch_technology(int recipient, int technology,
+                                           int source) {
+    if (IsMultiplayerNet != 0) {
+        log_say("Sending TECH", recipient, technology, source);
+        message_data(0x244B, 0, recipient, technology, source, 0);
+        NetDaemonNet.await_diplo(0x44B);
+    } else {
+        tech_achieved(recipient, technology, source, 0);
+    }
+}
+static void tech_trade_update_partner_patience(int actor, int partner) {
+    const uint32_t treaty = PlayersData[partner].diplo_treaties[actor];
+    int patience;
+    if ((treaty & 0x10u) != 0) {
+        patience = 1;
+    } else if ((treaty & 1u) != 0) {
+        patience = (treaty & 0x02000000u) != 0 ? 500 : 6;
+    } else {
+        const int rounded_eighths = diplo_add(DiploFriction, 3) / 8;
+        patience = diplo_add(
+            diplo_sub((treaty & 2u) != 0 ? 1 : 0, rounded_eighths), 3);
+    }
+    PlayersData[partner].diplo_patience[actor] =
+        static_cast<char>(patience);
+}
+
+static void tech_trade_send_live_request(int actor, int partner) {
+    const int technology = DiploScratchF800;
+    tech_trade_dispatch_technology(actor, technology, partner);
+    DiploScratchF800 = -1;
+}
+static int tech_trade_run_tail(TechTradeTailEntry entry, int actor,
+                               int partner, int request_mode, int action,
+                               int context) {
+    switch (entry) {
+    case TECH_TRADE_TAIL_COMMLINK_FREE_54295F:
+        if (!wants_to_speak(actor, partner)) return 0;
+        parse_says(0, Players[DiploScratchFA5C].adj_name_faction, -1, -1);
+        x_pops_minimal("COMMLINKFREE",
+                       FactionDiplomacyPortraits[partner], pop_wait);
+        tech_trade_send_live_request(actor, partner);
+        return 0;
+
+    case TECH_TRADE_TAIL_TECH_SLAVE_542A78:
+        if (!wants_to_speak(actor, partner)) return 0;
+        StringTemp[0] = '\0';
+        say_tech(StringTemp, DiploScratchF800, 1);
+        parse_says(0, StringTemp, -1, -1);
+        x_pops_short("TECHSLAVE", 0x100000,
+                     FactionDiplomacyPortraits[partner], pop_wait);
+        tech_trade_send_live_request(actor, partner);
+        return 0;
+
+    case TECH_TRADE_TAIL_TECH_FREEBIE_542BE7:
+        if (!wants_to_speak(actor, partner)) return 0;
+        StringTemp[0] = '\0';
+        say_tech(StringTemp, DiploScratchF800, 1);
+        parse_says(0, StringTemp, -1, -1);
+        x_pops_short("TECHFREEBIE", 0x100000,
+                     FactionDiplomacyPortraits[partner], pop_wait);
+        tech_trade_send_live_request(actor, partner);
+        tech_trade_update_partner_patience(actor, partner);
+        return 0;
+
+    case TECH_TRADE_TAIL_NO_SPEAK_542E07:
+        return 0;
+
+    case TECH_TRADE_TAIL_COMMLINK_TECH_542E80:
+        parse_says(2, Players[DiploScratchFA5C].adj_name_faction, -1, -1);
+        if (x_pops_minimal("COMMLINKTECH",
+                           FactionDiplomacyPortraits[partner], pop_wait) == 0) {
+            return 0;
+        }
+        tech_trade_dispatch_technology(partner, DiploScratchFAA8, actor);
+        tech_trade_dispatch_technology(actor, DiploScratchF800, partner);
+        DiploScratchF800 = -1;
+        DiploScratchFAA8 = DiploScratchFA18;
+        DiploScratchFA18 = -1;
+        return 1;
+
+    case TECH_TRADE_TAIL_BUY_RESULT_5437B7:
+        if (request_mode != 0) return 0;
+        if (buy_tech(actor, partner, action, 0, context) != 0) return 0;
+        tech_trade_show_later_response(actor, partner, context);
+        return 0;
+
+    case TECH_TRADE_TAIL_ACCEPT_543094:
+        DiploScratchF7C4 = 1;
+        return 0;
+
+    case TECH_TRADE_TAIL_REJECT_SECOND_543169:
+        x_pops_short("REJTECHSECOND", 0x100000,
+                     FactionDiplomacyPortraits[partner], pop_wait);
+        PlayersData[partner].diplo_patience[actor] = static_cast<char>(
+            static_cast<unsigned char>(
+                PlayersData[partner].diplo_patience[actor]) + 1u);
+        return 0;
+
+    case TECH_TRADE_TAIL_SUCCESS_5433A0:
+        return 1;
+    }
+    return -1;
+}
+static void tech_trade_parse_initial_offer_lines() {
+    if (DiploScratchFAA8 != 0x270F) {
+        StringTemp[0] = '\0';
+        say_tech(StringTemp, DiploScratchFAA8, TRUE);
+        parse_says(0, StringTemp, -1, -1);
+    }
+    if (DiploScratchF800 >= 0) {
+        StringTemp[0] = '\0';
+        say_tech(StringTemp, DiploScratchF800, TRUE);
+        parse_says(1, StringTemp, -1, -1);
+    }
+}
+
+static int tech_trade_offer_dialog(Popup &popup, int faction_id,
+                                   int other_faction_id, int context) {
+    tech_trade_parse_initial_offer_lines();
+    if (context != 0xD && DiploScratchFA18 >= 0) {
+        StringTemp[0] = '\0';
+        say_tech(StringTemp, DiploScratchFA18, TRUE);
+        parse_says(2, StringTemp, -1, -1);
+    }
+
+    GenderDefault = Players[faction_id].is_leader_female;
+    PluralityDefault = FALSE;
+    parse_says(3, Players[faction_id].title_leader, -1, -1);
+    GenderDefault = Players[faction_id].is_leader_female;
+    parse_says(4, Players[faction_id].name_leader, -1, -1);
+    parse_says(5, get_noun_phrase(faction_id, 9), -1, -1);
+    parse_says(6, get_noun_phrase(other_faction_id, 9), -1, -1);
+    GenderDefault = Players[other_faction_id].is_leader_female;
+    PluralityDefault = FALSE;
+    parse_says(8, Players[other_faction_id].name_leader, -1, -1);
+    parse_says(9, get_noun_phrase(other_faction_id, 7), -1, -1);
+
+    StringTemp[0] = '\0';
+    strcat(StringTemp, "TRADETECH");
+    if (DiploScratchFAA8 == 0x270F) {
+        const int suffix = DiploScratchF800 < 0 ? 5 : 4;
+        char digits[16];
+        _itoa(suffix, digits, 10);
+        strcat(StringTemp, digits);
+    } else if (DiploScratchF800 < 0) {
+        char digits[16];
+        _itoa(3, digits, 10);
+        strcat(StringTemp, digits);
+    } else {
+        const int suffix = parse_num(0, 3);
+        char digits[16];
+        _itoa(suffix, digits, 10);
+        strcat(StringTemp, digits);
+    }
+
+    popup.start(PopupStartCaption, StringTemp, -1, 0, 0x100000, 0);
+    popup.set_caller_picture(popup.picture_enabled()
+        ? 0 : FactionDiplomacyPortraits[other_faction_id]);
+    popup.dialogs().sprite(FactionDiplomacyPortraits[other_faction_id],
+                           0, 0);
+    if (X_text_open(ScriptPopupFile, "TRADETECHOPT") == 0) {
+        text_get();
+        if (DiploScratchF80C >= 0 &&
+            DiploScratchF80C != DiploScratchF800) {
+            StringTemp[0] = '\0';
+            say_tech(StringTemp, DiploScratchF80C, TRUE);
+            parse_says(9, StringTemp, -1, -1);
+            parse_string(TextBufferGetPtr, StringTemp);
+            popup.dialogs().item(StringTemp, 4);
+        }
+        text_get();
+        if (DiploScratchFA18 >= 0 &&
+            DiploScratchFA18 != DiploScratchFAA8) {
+            StringTemp[0] = '\0';
+            parse_string(TextBufferGetPtr, StringTemp);
+            popup.dialogs().item(StringTemp, 2);
+        }
+        text_get();
+        popup.dialogs().item(TextBufferGetPtr, 3);
+    }
+    return popup.exec(0, pop_wait);
+}
+static TechTradeTailEntry tech_trade_commit_dialog_state(
+    int actor, int partner, int request_mode, int friction_eighths) {
+    const int friction_delta = diplo_sub(0, friction_eighths);
+
+    if (request_mode != 0) {
+        if (IsMultiplayerNet != 0) {
+            log_say("Sending TREATY ON", partner, actor, 0x1000000);
+            message_data(0x2441, 0, partner, actor, 0x1000000, 0);
+        } else {
+            treaty_on(partner, actor, 0x1000000);
+        }
+    }
+    if (IsMultiplayerNet != 0) {
+        log_say("Sending AGENDA ON", partner, actor, 0x180);
+        message_data(0x2444, 0, partner, actor, 0x180, 0);
+    } else {
+        agenda_on(partner, actor, 0x180);
+    }
+
+    if (DiploScratchF800 < 0) DiploScratchF800 = 0x270F;
+    int selected = DiploScratchFAA8;
+    if (IsMultiplayerNet != 0) {
+        log_say("Sending TECH", partner, selected, actor);
+        message_data(0x244B, 0, partner, selected, actor, 0);
+        NetDaemonNet.await_diplo(0x44B);
+    } else {
+        tech_achieved(partner, selected, actor, 0);
+    }
+
+    selected = DiploScratchF800;
+    if (IsMultiplayerNet != 0) {
+        log_say("Sending TECH", actor, selected, partner);
+        message_data(0x244B, 0, actor, selected, partner, 0);
+        NetDaemonNet.await_diplo(0x44B);
+    } else {
+        tech_achieved(actor, selected, partner, 0);
+    }
+
+    if (DiploScratchFAA8 == 0x270F || DiploScratchF800 == 0x270F)
+        DiploScratchFA48 = 1;
+    DiploScratchFAA8 = DiploScratchFA18;
+    DiploScratchFA18 = -1;
+
+    uint32_t &partner_friction = PlayersData[partner].diplo_friction[actor];
+    int next_friction = diplo_add(static_cast<int>(partner_friction),
+                                  friction_delta);
+    if (next_friction < 0) next_friction = 0;
+    else if (next_friction > 20) next_friction = 20;
+    partner_friction = static_cast<uint32_t>(next_friction);
+
+    if (DiploFrictionFactionID == static_cast<uint32_t>(partner) &&
+        DiploFrictionFactionIDWith == static_cast<uint32_t>(actor))
+        DiploFriction = diplo_add(DiploFriction, friction_delta);
+    DiploScratchFA60 = 0;
+    return request_mode == 0 ? TECH_TRADE_TAIL_SUCCESS_5433A0
+        : static_cast<TechTradeTailEntry>(-1);
+}
+
+struct TechTradeDialogStep {
+    bool rebuild_dialog;
+    TechTradeTailEntry tail;
+    int friction_eighths;
+
+    TechTradeDialogStep(bool rebuild, TechTradeTailEntry route,
+                        int friction)
+        : rebuild_dialog(rebuild), tail(route), friction_eighths(friction) {}
+};
+
+static int tech_trade_signed_shift_divide(int value, int correction_mask,
+                                          int shift) {
+    const int correction = (value >> 31) & correction_mask;
+    return diplo_add(value, correction) >> shift;
+}
+
+static TechTradeDialogStep tech_trade_handle_dialog_result(
+    int dialog_result, int actor, int partner, int context) {
+    int friction_eighths = tech_trade_signed_shift_divide(
+        DiploScratchF814, 3, 2);
+    if (dialog_result == 0)
+        return TechTradeDialogStep(false, TECH_TRADE_TAIL_ACCEPT_543094,
+                                  friction_eighths);
+
+    if (dialog_result == 3) {
+        const int help_technology = DiploScratchFAA8 == 0x270F
+            ? DiploScratchF800 : DiploScratchFAA8;
+        help_topic(0xE, help_technology);
+        return TechTradeDialogStep(true,
+            static_cast<TechTradeTailEntry>(-1), friction_eighths);
+    }
+
+    if (dialog_result == 4) {
+        bool reject_for_tech_value = false;
+        if ((PlayersData[partner].diplo_treaties[actor] & 1u) == 0 &&
+            DiploScratchFA18 < 0) {
+            const int alternative = DiploScratchF80C;
+            const int alternative_value =
+                tech_val(alternative, partner, FALSE);
+            const int requested = DiploScratchFAA8;
+            const int requested_value =
+                tech_val(requested, partner, FALSE);
+            reject_for_tech_value = alternative_value > requested_value;
+        }
+        if (reject_for_tech_value) {
+            if (DiploScratchF800 >= 0) {
+                StringTemp[0] = '\0';
+                say_tech(StringTemp, DiploScratchF800, TRUE);
+                parse_says(0, StringTemp, -1, -1);
+            }
+            x_pops_short("REJTECHINSTEAD", 0x100000,
+                         FactionDiplomacyPortraits[partner], pop_wait);
+            DiploScratchF80C = -1;
+            return TechTradeDialogStep(true,
+                static_cast<TechTradeTailEntry>(-1), friction_eighths);
+        }
+        swap(&DiploScratchF800, &DiploScratchF80C);
+        friction_eighths = tech_trade_signed_shift_divide(
+            DiploScratchF814, 7, 3);
+    } else if (dialog_result == 2) {
+        const uint32_t partner_treaty =
+            PlayersData[partner].diplo_treaties[actor];
+        const bool special_partner_state =
+            (partner_treaty & 1u) != 0 &&
+            (partner_treaty & 0x02000000u) != 0;
+        if (!special_partner_state) {
+            if (strcmp(Players[partner].filename, "HIVE") == 0 ||
+                (IsMultiplayerNet != 0 &&
+                 RankingFactionIDUnk1 == static_cast<uint32_t>(actor))) {
+                return TechTradeDialogStep(false,
+                    TECH_TRADE_TAIL_REJECT_SECOND_543169, friction_eighths);
+            }
+            if (strcmp(Players[partner].filename, "UNIV") != 0 &&
+                (great_satan(actor, 0) != 0 ||
+                 PlayersData[partner].tech_ranking >
+                     PlayersData[actor].tech_ranking))
+                return TechTradeDialogStep(false,
+                    TECH_TRADE_TAIL_REJECT_SECOND_543169, friction_eighths);
+        }
+        swap(&DiploScratchFAA8, &DiploScratchFA18);
+        friction_eighths = tech_trade_signed_shift_divide(
+            DiploScratchFA44, 7, 3);
+    }
+
+    (void)context;
+    return TechTradeDialogStep(false,
+        static_cast<TechTradeTailEntry>(-1), friction_eighths);
+}
+static TechTradeTailEntry tech_trade_ui_gate(int faction_id,
+                                              int other_faction_id,
+                                              int request_mode, int action,
+                                              int context) {
+    const int actor = faction_id;
+    const int partner = other_faction_id;
+
+    if (DiploScratchFAA8 < 0 && context != 5 && context != 0xD &&
+        (PlayersData[partner].traded_maps & (1u << actor)) == 0 &&
+        DiploScratchFA48 == 0 &&
+        (PlayersData[actor].diplo_treaties[partner] & 1u) == 0 &&
+        (PlayersData[partner].flags & 0x200u) == 0) {
+        int seen_partner_bases = 0;
+        for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+            const Base &base = Bases[base_id];
+            if (base.faction_id_current == actor &&
+                (base.faction_id_current == partner ||
+                 (base.visibility & (1u << partner)) != 0)) {
+                ++seen_partner_bases;
+            }
+        }
+
+        bool enough_base_coverage = false;
+        if ((GameRules & 0x100u) != 0) {
+            enough_base_coverage = seen_partner_bases == 0;
+        } else {
+            const int threshold = diplo_add(
+                static_cast<int>(PlayersData[actor].current_num_bases), 1) / 2;
+            enough_base_coverage = seen_partner_bases < threshold;
+        }
+        if (enough_base_coverage && DiploFriction <= 7)
+            DiploScratchFAA8 = 0x270F;
+    }
+
+    const uint32_t partner_to_actor =
+        PlayersData[partner].diplo_treaties[actor];
+    if (context == 0xD && (partner_to_actor & 1u) != 0)
+        return TECH_TRADE_TAIL_COMMLINK_FREE_54295F;
+
+    if (DiploScratchF800 >= 0 && context != 0xD &&
+        (partner_to_actor & 1u) != 0 &&
+        (partner_to_actor & 0x02000000u) != 0)
+        return TECH_TRADE_TAIL_TECH_SLAVE_542A78;
+
+    if (DiploScratchFAA8 < 0 && DiploScratchF800 >= 0 &&
+        context != 5 && context != 0xD && (partner_to_actor & 1u) != 0 &&
+        DiploFriction < 10 &&
+        ((IsMultiplayerNet == 0 && (GameRules & 0x40u) == 0) ||
+         RankingFactionIDUnk1 != static_cast<uint32_t>(actor)) &&
+        DiploScratchFA3C == 0) {
+        const int actor_rank = static_cast<int>(PlayersData[actor].ranking);
+        const int partner_rank = static_cast<int>(PlayersData[partner].ranking);
+        if (partner_rank > actor_rank ||
+            (actor_rank >= 6 && partner_rank >= 3)) {
+            int rank_delta = diplo_sub(actor_rank, partner_rank);
+            rank_delta = diplo_sub(rank_delta, rank_delta >> 31);
+            const int rank_half = rank_delta >> 1;
+            int pressure = diplo_add(4, diplo_mul(
+                2, static_cast<int>(PlayersData[partner].ai_power)));
+            pressure = diplo_add(pressure, rank_half);
+            pressure = diplo_sub(pressure,
+                static_cast<int>(PlayersData[partner].ai_tech));
+            pressure = diplo_add(pressure, PlayersData[partner].ai_fight);
+            pressure = diplo_add(pressure, PlayersData[actor].tech_ranking);
+            if (PlayersData[partner].tech_ranking > pressure)
+                return TECH_TRADE_TAIL_TECH_FREEBIE_542BE7;
+        }
+    }
+
+    int partner_seen_bases = 0;
+    for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+        const Base &base = Bases[base_id];
+        if (base.faction_id_current == partner &&
+            (base.faction_id_current == actor ||
+             (base.visibility & (1u << actor)) != 0)) {
+            ++partner_seen_bases;
+        }
+    }
+
+    const bool wants_more_tech = action == 4 || action == 2;
+    if (DiploScratchFAA8 < 0 || !wants_more_tech || DiploScratchFA3C != 0)
+        return TECH_TRADE_TAIL_BUY_RESULT_5437B7;
+
+    if (IsMultiplayerNet != 0) {
+        const int actor_agenda = PlayersData[actor].diplo_agenda[partner];
+        if ((actor_agenda & 0x80) != 0 &&
+            RankingFactionIDUnk1 == static_cast<uint32_t>(actor) &&
+            (PlayersData[actor].diplo_treaties[partner] & 1u) == 0) {
+            const int ranker = static_cast<int>(RankingFactionIDUnk2);
+            const int ranker_power = static_cast<int>(FactionRankingsUnk[ranker]);
+            if (static_cast<int>(PlayersData[ranker].ranking) < 5 ||
+                diplo_mul(static_cast<int>(FactionRankingsUnk[actor]), 2) >
+                    diplo_mul(ranker_power, 3))
+                return TECH_TRADE_TAIL_BUY_RESULT_5437B7;
+        }
+        if ((actor_agenda & 0x100) != 0 &&
+            (RankingFactionIDUnk2 != static_cast<uint32_t>(actor) ||
+             (static_cast<int>(PlayersData[actor].ranking) >= 6 &&
+              DiploScratchF7F0 == 0)))
+            return TECH_TRADE_TAIL_BUY_RESULT_5437B7;
+    }
+
+    const int partner_agenda = PlayersData[partner].diplo_agenda[actor];
+    if ((partner_to_actor & 0x20u) != 0 ||
+        (partner_agenda & 0x200) != 0 ||
+        PlayersData[actor].integrity_blemishes > 3)
+        return TECH_TRADE_TAIL_BUY_RESULT_5437B7;
+
+    if ((GameRules & 0x40u) != 0) {
+        const int actor_agenda = PlayersData[actor].diplo_agenda[partner];
+        if ((actor_agenda & 0x80) != 0 &&
+            RankingFactionIDUnk1 == static_cast<uint32_t>(actor) &&
+            (PlayersData[actor].diplo_treaties[partner] & 1u) == 0 &&
+            diplo_mul(static_cast<int>(FactionRankingsUnk[FactionRankings[7]]),
+                      3) >
+                diplo_mul(static_cast<int>(FactionRankingsUnk[FactionRankings[6]]),
+                          4))
+            return TECH_TRADE_TAIL_BUY_RESULT_5437B7;
+        if ((actor_agenda & 0x100) != 0 &&
+            (PlayersData[actor].diplo_treaties[partner] & 1u) == 0 &&
+            static_cast<int>(PlayersData[actor].ranking) >= 6 &&
+            DiploScratchF7F0 == 0)
+            return TECH_TRADE_TAIL_BUY_RESULT_5437B7;
+    }
+
+    if (DiploScratchF800 < 0) {
+        if (DiploScratchFA48 != 0 ||
+            (PlayersData[actor].diplo_treaties[partner] & 1u) != 0 ||
+            (PlayersData[actor].flags & 0x200u) != 0)
+            return TECH_TRADE_TAIL_BUY_RESULT_5437B7;
+
+        if ((PlayersData[actor].traded_maps & (1u << partner)) != 0) {
+            const int partner_bases =
+                static_cast<int>(PlayersData[partner].current_num_bases);
+            const int threshold = (GameRules & 0x100u) != 0
+                ? diplo_add(partner_bases, 3) / 4
+                : diplo_add(partner_bases, 1) / 2;
+            if (partner_seen_bases >= threshold)
+                return TECH_TRADE_TAIL_BUY_RESULT_5437B7;
+        }
+    }
+
+    if (!wants_to_speak(actor, partner))
+        return TECH_TRADE_TAIL_NO_SPEAK_542E07;
+    if (context == 0xD) {
+        tech_trade_parse_initial_offer_lines();
+        return TECH_TRADE_TAIL_COMMLINK_TECH_542E80;
+    }
+    (void)request_mode;
+    return static_cast<TechTradeTailEntry>(-1);
+}
+static TechTradeTailEntry tech_trade_ui_phase(
+    Popup &popup, int actor, int partner, int request_mode, int action,
+    int context) {
+    TechTradeTailEntry route = tech_trade_ui_gate(
+        actor, partner, request_mode, action, context);
+    if (static_cast<int>(route) != -1) return route;
+
+    for (;;) {
+        const int dialog_result =
+            tech_trade_offer_dialog(popup, actor, partner, context);
+        const TechTradeDialogStep decision = tech_trade_handle_dialog_result(
+            dialog_result, actor, partner, context);
+        if (static_cast<int>(decision.tail) != -1) return decision.tail;
+        if (decision.rebuild_dialog) continue;
+
+        route = tech_trade_commit_dialog_state(actor, partner, request_mode,
+                                                decision.friction_eighths);
+        return route;
+    }
+}
+
+// ORIGINAL: 0x00541100 ?tech_trade@@YAHHHHHH@Z 0x00541100-0x00543A20;0x0065EB33-0x0065F1B4
+// RECOVERY_BINDING: v1 {"evidence": ["task:diplomacy-actions-owner-coverage", "Pinned541100-543A20 and65EB33-65F1B4; native54119D/54122E establish directed pair cells", "Native541D18 quarter;541DE2 incoming eighth;541EA9 alternate eighth;541EFF unconditional partner-to-actor agenda", "Native542066 friction selector pair;542F3A accepted commlink return1;543094 cancellation state", "historical seed:src/unrecovered/00541100.cpp"], "reason": "Recover the full technology/commlink negotiation in its faction owner with a lexical Popup, directed player treaty/agenda/friction members, live offer selectors and original modal retry/transaction/result ordering. Preserve primary and cleanup spans and seed findings; no byte matching or game acceptance is asserted."}
+// symbol    ?tech_trade@@YAHHHHHH@Z
+// TRIED: full nested AI-mood reject condition tree (>10 inlined "trade rejected" popups, each with its own message id/number) was factored into one tech_trade_reject() helper covering the first few reject reasons only; the 4-slot trade loop's own per-slot popup/negotiation sequence (FUN_0053dce0 gating, per-partner commlink offers) is approximated, not reproduced.
+
+int __cdecl tech_trade(int actor, int partner, int request_mode, int action,
+                       int context) {
+    Popup popup;
+    bool first_entry = true;
+
+    for (;;) {
+        const TechTradePolicyDecision policy = tech_trade_policy_prefix(
+            popup, actor, partner, request_mode, action, context,
+            first_entry);
+        first_entry = false;
+        if (policy.route == TECH_TRADE_POLICY_REJECT_542097)
+            return 0;
+        if (policy.route != TECH_TRADE_POLICY_READY_FOR_OFFERS) {
+            tech_trade_handle_pre_offer_rejection(
+                popup, policy, actor, partner, request_mode, action, context);
+            return 0;
+        }
+
+        const TechTradeTailEntry tail = tech_trade_ui_phase(
+            popup, actor, partner, request_mode, action, context);
+        if (static_cast<int>(tail) == -1)
+            continue;
+        const int native_result = tech_trade_run_tail(
+            tail, actor, partner, request_mode, action, context);
+        return native_result;
+    }
+}
