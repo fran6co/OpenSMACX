@@ -14757,3 +14757,321 @@ int __cdecl veh_next_stack_id(int veh_id) {
   if (veh_id < 0) return veh_id;
   return Vehs[veh_id].next_veh_id_stack;
 }
+
+static int shoot_signed_bits(unsigned int bits) {
+    return bits <= 0x7fffffffu ? static_cast<int>(bits)
+        : -1 - static_cast<int>(0xffffffffu - bits);
+}
+
+static int shoot_wrapped_subtract(int left, int right) {
+    return shoot_signed_bits(static_cast<unsigned int>(left) -
+                             static_cast<unsigned int>(right));
+}
+
+// ORIGINAL: 0x00500560 ?shoot@@YAHHHHH@Z 0x00500560-0x00500B51
+// RECOVERY_BINDING: v1 {"evidence": ["task:planet-strike-owner", "pinned:0x00500560 complete native span; real Veh, PlayerData, Base and Console declarations establish accessed storage.", "pinned:shoot6B7/7C2 live satellite inventory reloads; bonus success bypasses decrement; dword counter/subtraction wrapping retained.", "pinned:planetE16/E29 attacker-row PACT; territory callback follows radius interception; kill/draw precede intercept return; warning coordinates precede popupD0C.", "source:map.cpp bounded shared radius tables and veh.cpp TerraformDrownedBaseId; effect59 is the typed FX child observed by the native wait.", "historical seed:src/unrecovered/00500560.cpp original mapping and useful findings retained."], "reason": "Recover the complete original strike operation through genuine vehicle, faction, base, console, effect and shared map-table owners; preserve original identity/spans and seed findings without executable storage or calls."}
+// TRIED: structural transcription (two proximity scan loops with early-exit gotos, extern lever on the three lea-taken-as-pointer table bases 0097d053/00946d34/00946d54) compiles and matches to instr #6 (prologue: original zeroes edi with `xor`, rebuilt uses `mov`).
+int __cdecl shoot(int atk_factionID, int def_factionID, int xDest, int yDest) {
+    int adjacent_flechette = 0;
+    for (int i = 0; i < 25 && !adjacent_flechette; ++i) {
+        int x = xDest + RadiusOffsetX[i];
+        if (!(MapIsFlat & 1)) {
+            if (x < 0) x += MapLongitudeBounds;
+            else if (x >= MapLongitudeBounds) x -= MapLongitudeBounds;
+        }
+        const int y = yDest + RadiusOffsetY[i];
+        if (y < 0 || y >= MapLatitudeBounds || x < 0 || x >= MapLongitudeBounds)
+            continue;
+        const int base_id = base_at(x, y);
+        if (base_id >= 0 && Bases[base_id].faction_id_current != atk_factionID &&
+            has_fac_built(FAC_FLECHETTE_DEFENSE_SYS, base_id))
+            adjacent_flechette = 1;
+    }
+
+    const int deployed_at_start = shoot_signed_bits(
+        PlayersData[def_factionID].satellites_[3]);
+    if (deployed_at_start == 0 && !adjacent_flechette)
+        return 0;
+
+    int bonus_hit = 0;
+    const int bonus_rounds = shoot_wrapped_subtract(
+        deployed_at_start,
+        shoot_signed_bits(PlayersData[def_factionID].sat_odp_deployed));
+    if (bonus_rounds > 0) {
+        for (int i = 0; i < bonus_rounds; ++i) {
+            ++PlayersData[def_factionID].sat_odp_deployed;
+            if (rand() % 100 > 0x31) {
+                bonus_hit = 1;
+                break;
+            }
+        }
+    }
+
+    int shots_left = shoot_wrapped_subtract(
+        shoot_signed_bits(PlayersData[def_factionID].satellites_[3]),
+        shoot_signed_bits(PlayersData[def_factionID].sat_odp_deployed));
+    if (shots_left < 0) shots_left = 0;
+    else if (shots_left > 9999) shots_left = 9999;
+
+    const char *message_icon = 0;
+    const char *message_label = 0;
+    if (!bonus_hit) {
+        for (int i = 0; i < 25; ++i) {
+            int x = xDest + RadiusOffsetX[i];
+            if (!(MapIsFlat & 1)) {
+                if (x < 0) x += MapLongitudeBounds;
+                else if (x >= MapLongitudeBounds) x -= MapLongitudeBounds;
+            }
+            const int y = yDest + RadiusOffsetY[i];
+            if (y < 0 || y >= MapLatitudeBounds || x < 0 || x >= MapLongitudeBounds)
+                continue;
+            const int base_id = base_at(x, y);
+            if (base_id < 0 || Bases[base_id].faction_id_current == atk_factionID ||
+                !has_fac_built(FAC_FLECHETTE_DEFENSE_SYS, base_id))
+                continue;
+            if (rand() % 100 >= 0x32)
+                continue;
+
+            parse_says(0, Bases[base_id].name_string, -1, -1);
+            if (def_factionID == ConsoleGlobal.faction_id_) {
+                parse_says(1, Players[atk_factionID].adj_name_faction, -1, -1);
+                message_icon = "space_sm.pcx";
+                message_label = "WESHOTIT2";
+            } else {
+                if (atk_factionID != ConsoleGlobal.faction_id_)
+                    return 1;
+                parse_says(1, Players[Bases[base_id].faction_id_current].adj_name_faction,
+                           -1, -1);
+                message_icon = "space_sm.pcx";
+                message_label = "THEYSHOTIT2";
+            }
+            goto show_message;
+        }
+    }
+
+    if (bonus_hit)
+        goto report_hit;
+
+    // Native rereads the live inventory at 0x5007bf after the Flechette scan.
+    if (PlayersData[def_factionID].satellites_[3] == 0)
+        goto no_ammunition;
+
+    if (!IsMultiplayerNet &&
+        (LockEnableMask & (1u << (def_factionID & 0x1f))) != 0) {
+        if (def_factionID == ConsoleGlobal.faction_id_) {
+            parse_num(0, PlayersData[def_factionID].satellites_[3]);
+            const int base_id = base_find(xDest, yDest);
+            parse_says(0, Bases[base_id].name_string, -1, -1);
+            parse_says(1, Players[atk_factionID].adj_name_faction, -1, -1);
+            if (popp(ScriptPopupFile, "BUSTERSAC", 0, "space_sm.pcx", 0) != 0)
+                goto shot_declined;
+        } else if (atk_factionID == ConsoleGlobal.faction_id_) {
+            GenderDefault = Players[def_factionID].noun_gender;
+            PluralityDefault = Players[def_factionID].is_noun_plural;
+            parse_says(0, Players[def_factionID].noun_faction, -1, -1);
+            popp(ScriptPopupFile, "THEYMUSTSAC", 0, "space_sm.pcx", 0);
+        }
+    } else {
+        if (def_factionID != ConsoleGlobal.faction_id_) {
+            if (atk_factionID == ConsoleGlobal.faction_id_) {
+                GenderDefault = Players[def_factionID].noun_gender;
+                PluralityDefault = Players[def_factionID].is_noun_plural;
+                parse_says(0, Players[def_factionID].noun_faction, -1, -1);
+                popp(ScriptPopupFile, "THEYMUSTSAC", 0, "space_sm.pcx", 0);
+            }
+        } else {
+            popp(ScriptPopupFile, "WEMUSTSAC", 0, "space_sm.pcx", 0);
+            goto expend_shot;
+        }
+    }
+
+expend_shot:
+    --PlayersData[def_factionID].satellites_[3];
+    if (shoot_wrapped_subtract(
+            shoot_signed_bits(PlayersData[def_factionID].satellites_[3]),
+            shoot_signed_bits(PlayersData[def_factionID].sat_odp_deployed)) < 0)
+        PlayersData[def_factionID].sat_odp_deployed =
+            PlayersData[def_factionID].satellites_[3];
+
+report_hit:
+    {
+        const int faction_base = base_find(xDest, yDest, def_factionID);
+        const int base_id = faction_base < 0 ? base_find(xDest, yDest) : faction_base;
+        parse_says(0, Bases[base_id].name_string, -1, -1);
+        parse_num(0, PlayersData[def_factionID].satellites_[3]);
+        parse_num(1, shots_left);
+        if (def_factionID == ConsoleGlobal.faction_id_) {
+            parse_says(1, Players[atk_factionID].adj_name_faction, -1, -1);
+            message_icon = "space_sm.pcx";
+            message_label = "WESHOTIT";
+        } else {
+            if (atk_factionID != ConsoleGlobal.faction_id_)
+                return 1;
+            parse_says(1, Players[def_factionID].adj_name_faction, -1, -1);
+            message_icon = "space_sm.pcx";
+            message_label = "THEYSHOTIT";
+        }
+    }
+show_message:
+    popp(ScriptPopupFile, message_label, 0, message_icon, 0);
+    return 1;
+
+shot_declined:
+    if (adjacent_flechette) {
+        if (def_factionID == ConsoleGlobal.faction_id_) {
+            parse_says(1, Players[atk_factionID].adj_name_faction, -1, -1);
+            popp(ScriptPopupFile, "WEFAILEDFLECHETTE", 0, "space_sm.pcx", 0);
+        } else if (atk_factionID == ConsoleGlobal.faction_id_) {
+            parse_says(1, Players[def_factionID].adj_name_faction, -1, -1);
+            popp(ScriptPopupFile, "THEYFAILEDFLECHETTE", 0, "space_sm.pcx", 0);
+        }
+    }
+    return 0;
+
+no_ammunition:
+    if (adjacent_flechette) {
+        if (def_factionID == ConsoleGlobal.faction_id_) {
+            parse_says(1, Players[atk_factionID].adj_name_faction, -1, -1);
+            popp(ScriptPopupFile, "WEFAILEDFLECHETTE", 0, "space_sm.pcx", 0);
+        } else if (atk_factionID == ConsoleGlobal.faction_id_) {
+            parse_says(1, Players[def_factionID].adj_name_faction, -1, -1);
+            popp(ScriptPopupFile, "THEYFAILEDFLECHETTE", 0, "space_sm.pcx", 0);
+        }
+    }
+    return 0;
+}
+
+// ORIGINAL: 0x00500B60 ?planet_busting@@YAHHHH@Z 0x00500B60-0x005010BB
+// RECOVERY_BINDING: v1 {"evidence": ["task:planet-strike-owner", "pinned:0x00500B60 complete native span; real Veh, PlayerData, Base and Console declarations establish accessed storage.", "pinned:shoot6B7/7C2 live satellite inventory reloads; bonus success bypasses decrement; dword counter/subtraction wrapping retained.", "pinned:planetE16/E29 attacker-row PACT; territory callback follows radius interception; kill/draw precede intercept return; warning coordinates precede popupD0C.", "source:map.cpp bounded shared radius tables and veh.cpp TerraformDrownedBaseId; effect59 is the typed FX child observed by the native wait.", "historical seed:src/unrecovered/00500b60.cpp original mapping and useful findings retained."], "reason": "Recover the complete original strike operation through genuine vehicle, faction, base, console, effect and shared map-table owners; preserve original identity/spans and seed findings without executable storage or calls."}
+int __cdecl planet_busting(int veh_id, int x, int y) {
+    const Veh &weapon_vehicle = Vehs[veh_id];
+    const int faction = weapon_vehicle.faction_id;
+    ConsoleGlobal.focus(x, y, faction);
+
+    const int proto_id = weapon_vehicle.proto_id;
+    const VehPrototype &weapon_prototype = VehPrototypes[proto_id];
+    const int bust_level =
+        weapon_prototype.plan == PLAN_PLANET_BUSTER
+            ? weapon_prototype.reactor_id : 0;
+    // Native indexes the parallel pattern-count table at 0x66F8C4. Its
+    // values are the radius cardinalities 1,9,25,... used by RadiusOffsetX/Y.
+    const int weapon_count = RadiusRange[bust_level];
+
+    const int nearest_base = base_find(x, y);
+    if (faction != ConsoleGlobal.faction_id_ && nearest_base >= 0) {
+        GenderDefault = Players[faction].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(0, Players[faction].title_leader, -1, -1);
+        GenderDefault = Players[faction].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(1, Players[faction].name_leader, -1, -1);
+        GenderDefault = Players[faction].noun_gender;
+        PluralityDefault = Players[faction].is_noun_plural;
+        parse_says(2, Players[faction].noun_faction, -1, -1);
+        parse_says(3, Bases[nearest_base].name_string, -1, -1);
+
+        const int dx = abs(Bases[nearest_base].x - x);
+        const int wrapped_dx = (!(MapIsFlat & 1) && dx > static_cast<int>(MapLongitude))
+            ? MapLongitudeBounds - dx : dx;
+        const int dy = abs(Bases[nearest_base].y - y);
+        const char *const sound = (((dy + wrapped_dx) >> 1) <= bust_level)
+            ? "baseobl_sm.pcx" : "astp_sm.pcx";
+        popp(ScriptPopupFile, "PLANETBUSTER", 0, sound, 0);
+    }
+
+    int notified[MaxPlayerNum] = {0};
+    int intercepted = 0;
+    for (int offset = 0; offset < weapon_count; ++offset) {
+        int blast_x = x + RadiusOffsetX[offset];
+        if (!(MapIsFlat & 1)) {
+            if (blast_x < 0) blast_x += MapLongitudeBounds;
+            else if (blast_x >= MapLongitudeBounds) blast_x -= MapLongitudeBounds;
+        }
+        const int blast_y = y + RadiusOffsetY[offset];
+        if (!on_map(blast_x, blast_y)) continue;
+
+        const int base_id = base_at(blast_x, blast_y);
+        if (base_id >= 0) {
+            const int defender = Bases[base_id].faction_id_current;
+            if (faction != defender && !notified[defender]) {
+                intercepted = shoot(faction, defender, blast_x, blast_y);
+                if (intercepted != 0) break;
+                notified[defender] = 1;
+            }
+            continue;
+        }
+
+        const int stack_id = stack_fix(veh_at(blast_x, blast_y));
+        if (stack_id < 0) continue;
+        const int defender = Vehs[stack_id].faction_id;
+        if (faction != defender &&
+            (PlayersData[faction].diplo_treaties[defender] & 1) == 0 &&
+            !notified[defender]) {
+            intercepted = shoot(faction, defender, x, y);
+            if (intercepted != 0) break;
+            notified[defender] = 1;
+        }
+    }
+
+    const int territory_owner = whose_territory(faction, x, y, 0, 0);
+    if (territory_owner >= 0 && territory_owner != faction &&
+        !notified[territory_owner]) {
+        intercepted = shoot(faction, territory_owner, x, y);
+    }
+
+    kill(veh_id);
+    draw_radius(x, y, 0, 2);
+    if (intercepted != 0) return intercepted;
+
+    VehBattleUnkTgl[0] = 1;
+    int blame_base = -1;
+    int blame_vehicle = -1;
+    for (int lower = 0; lower < bust_level; ++lower) {
+        world_lower_alt(x, y);
+    }
+    world_climate();
+    TerraformDrownedBaseId = -1;
+    g_FX.play(0x3b);
+    BoomAnimationLevel = bust_level;
+    boom(x, y, 0x20);
+
+    for (int offset2 = 0; offset2 < weapon_count; ++offset2) {
+        int blast_x = x + RadiusOffsetX[offset2];
+        if (!(MapIsFlat & 1)) {
+            if (blast_x < 0) blast_x += MapLongitudeBounds;
+            else if (blast_x >= MapLongitudeBounds) blast_x -= MapLongitudeBounds;
+        }
+        const int blast_y = y + RadiusOffsetY[offset2];
+        if (!on_map(blast_x, blast_y)) continue;
+
+        const int base_id = base_at(blast_x, blast_y);
+        if (base_id >= 0) {
+            const int defender = Bases[base_id].faction_id_current;
+            if (blame_base < 0 && defender != faction) blame_base = defender;
+            base_kill(base_id);
+        }
+        const int stack_id = stack_fix(veh_at(blast_x, blast_y));
+        if (stack_id >= 0) {
+            const int defender = Vehs[stack_id].faction_id;
+            if (blame_vehicle < 0 && defender != faction) {
+                blame_vehicle = defender;
+            }
+            stack_kill(stack_id);
+        }
+    }
+
+    VehBattleUnkTgl[0] = 0;
+    if (blame_base < 0) blame_base = blame_vehicle;
+    draw_map(0);
+    boom(x, y, 0x40);
+    while (g_FX.effect(59).is_playing() != 0) {
+        do_task();
+    }
+    g_FX.play(0x3c);
+    boom(x, y, 0x11);
+    boom(x, y, 0x12);
+    major_atrocity(faction, blame_base);
+    // Original successful terminal EAX is unspecified; its observed caller
+    // discards it. This is a source completion value, not an exact-return claim.
+    return 0;
+}

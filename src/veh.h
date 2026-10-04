@@ -24,6 +24,10 @@ bool veh_bung_copy_chunk(size_t offset, unsigned char *packet, size_t count,
 // Existing terraform announcement state, also transferred by game sync.
 extern uint32_t TerraformAnnouncedMask[2];
 extern uint32_t VehTerraformStingLatch;
+// Source-owned drowned-base announcement state used by planet strikes.
+extern int TerraformDrownedBaseId;
+int __cdecl shoot(int attacker_faction, int defender_faction, int x, int y);
+int __cdecl planet_busting(int vehicle_id, int x, int y);
 // Prototype naming is mapped but unfinished; retained seed owns the behavior lead.
 void __cdecl name_proto(char *name, int prototype, int faction, int chassis,
                        int weapon, int armor, int abilities, int reactor);
