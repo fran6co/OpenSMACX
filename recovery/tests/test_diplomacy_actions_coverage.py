@@ -6,6 +6,106 @@ from recovery.tests.test_pact_ascent import ROOT, definition
 
 
 @pytest.mark.parametrize('compiler_name', ['g++', 'clang++'])
+def test_actual_buy_tech(tmp_path, compiler_name):
+    compiler = shutil.which(compiler_name)
+    if not compiler:
+        pytest.skip(compiler_name + ' unavailable')
+    source = (ROOT / 'src/faction.cpp').read_text()
+    body = definition(source, r'int __cdecl buy_tech\([^)]*\)')
+    helpers = '\n'.join(definition(source, r'static int ' + name + r'\([^)]*\)(?=\s*\{)')
+                        for name in ('diplo_add', 'diplo_sub', 'diplo_mul'))
+    fixture = r'''
+#include <cassert>
+#include <cstdio>
+#include <cstring>
+#define __cdecl
+typedef unsigned int uint32_t;
+struct Sprite {} portraits[8]; Sprite *FactionDiplomacyPortraits[8];
+struct Player { char filename[24],adj_name_faction[24]; } Players[8];
+struct Data { uint32_t diplo_treaties[8],ranking; int tech_ranking,energy_reserves; } PlayersData[8];
+int PopupDialogFactionID,BestProtoForTrade,DiploScratchF800,DiploScratchFAA8;
+int DiploScratchFA3C,DiploScratchFA5C,TurnCurrentNum,IsMultiplayerNet;
+unsigned char GameTechAchieved[89]; char StringTemp[128],key[128];
+int scans,scan_result,unit_value,satan,popup_answer,pops,randoms,price;
+int money_messages,tech_messages,tech_calls,purchased,awaits,redraws,mutate;
+int pop_wait() { return 0; }
+void scan_prototypes(int a,int b) { assert(a==1 && b==2); ++scans; BestProtoForTrade=scan_result; }
+int tech_val(int t,int b,int simple) { assert(t==DiploScratchF800 && b==2 && simple==1); return unit_value; }
+int great_satan(int a,int z) { assert(a==1 && !z); return satan; }
+int bit_count(unsigned n) { int result=0; while(n) { result+=n&1; n>>=1; } return result; }
+void say_tech(char *s,int t,int cat) { assert(s==StringTemp && !*s && t==DiploScratchF800 && cat==1); std::strcpy(s,"technology"); }
+int parse_says(int n,char *s,int a,int b) { assert(!n && s && a==-1 && b==-1); return 0; }
+void parse_num(int n,int v) { assert(!n); price=v; }
+int random(int a,int b) { assert(!a && b==2); ++randoms; return 1; }
+char *_itoa(int n,char *s,int base) { assert(base==10); std::sprintf(s,"%d",n); return s; }
+int x_pops_short(const char *s,int flags,Sprite *p,int(*cb)()) {
+ assert(flags==0x100000 && p==FactionDiplomacyPortraits[2] && cb==pop_wait);
+ std::strcpy(key,s); ++pops; return popup_answer;
+}
+void log_say(const char *s,int a,int b,int c) { assert(s && a==1 && (b==2 || b==DiploScratchF800)); }
+void message_data(int op,int z,int a,int b,int c,int d) {
+ assert(!z && a==1 && c==2);
+ if(op==0x2447) { assert(b==-price && d==price); ++money_messages; if(mutate) { IsMultiplayerNet=0; DiploScratchF800=6; } }
+ else { assert(op==0x244b && b==DiploScratchF800 && !d); ++tech_messages; purchased=b; }
+}
+struct Net { void await_diplo(int op) { assert(op==0x44b); ++awaits; } } NetDaemonNet;
+struct Info { void set_redraw_phase(int n) { assert(!n); } } ConsoleInfoWin;
+struct Console { void update_data(int n) { redraws+=n?1:10; if(n && mutate) { IsMultiplayerNet=1; DiploScratchF800=7; } } } ConsoleGlobal;
+void tech_achieved(int a,int t,int b,int z) { assert(a==1 && b==2 && !z); ++tech_calls; purchased=t; }
+void diplomacy_caption(int a,int b) { assert(a==1 && b==2); }
+@@BODY@@
+void reset() {
+ std::memset(Players,0,sizeof(Players)); std::memset(PlayersData,0,sizeof(PlayersData));
+ std::memset(GameTechAchieved,0,sizeof(GameTechAchieved));
+ for(int i=0;i<8;++i) FactionDiplomacyPortraits[i]=&portraits[i];
+ BestProtoForTrade=-1; scan_result=0; DiploScratchF800=3; DiploScratchFAA8=-1;
+ DiploScratchFA3C=0; DiploScratchFA5C=4; TurnCurrentNum=8; IsMultiplayerNet=0;
+ scans=satan=pops=randoms=price=money_messages=tech_messages=tech_calls=awaits=redraws=mutate=0;
+ unit_value=401; popup_answer=1; PlayersData[1].energy_reserves=10000; key[0]=0; purchased=-1;
+ std::strcpy(Players[2].filename,"OTHER");
+}
+int run(int mode=4,int action=0,int contact=0) { return buy_tech(1,2,action,contact,mode); }
+int main() {
+ reset(); DiploScratchF800=-1; assert(!run() && !pops);
+ reset(); std::strcpy(Players[2].filename,"UNIV"); DiploScratchFAA8=4; assert(!run() && !pops);
+ reset(); assert(!run(4,1) && !pops);
+ reset(); scan_result=-1; assert(!run(5) && scans==1 && !pops);
+ reset(); assert(run() && price==425 && tech_calls==1 && purchased==3 && PlayersData[1].energy_reserves==9575 && PlayersData[2].energy_reserves==425 && redraws==11 && !std::strcmp(key,"BUYTECH1"));
+ reset(); GameTechAchieved[3]=15; assert(run() && price==150);
+ reset(); PlayersData[1].diplo_treaties[2]=1; PlayersData[1].ranking=1; PlayersData[2].ranking=2; PlayersData[2].tech_ranking=9; assert(run() && price==125);
+ reset(); unit_value=999; PlayersData[1].diplo_treaties[2]=1; PlayersData[1].ranking=1; PlayersData[2].ranking=2; PlayersData[2].tech_ranking=9; assert(run() && price==250);
+ reset(); PlayersData[1].energy_reserves=0; assert(!run() && !pops);
+ reset(); PlayersData[1].energy_reserves=0; assert(run(4,5) && !tech_calls && !std::strcmp(key,"BUYTECHHIGH1"));
+ reset(); PlayersData[1].energy_reserves=0; assert(run(5) && scans==1 && DiploScratchF800==97 && !tech_calls && !std::strcmp(key,"BUYPROTOHIGH0"));
+ reset(); assert(run(5) && scans==1 && purchased==97 && BestProtoForTrade==-1 && !randoms && price==425);
+ reset(); DiploScratchF800=96; unit_value=25; assert(run(13) && price==50 && !randoms && !std::strcmp(key,"BUYCOMMLINK0"));
+ reset(); popup_answer=0; assert(run() && !tech_calls && !redraws);
+ reset(); IsMultiplayerNet=1; assert(run() && money_messages==1 && tech_messages==1 && awaits==1 && !tech_calls && redraws==10);
+ reset(); IsMultiplayerNet=1; mutate=1; assert(run() && money_messages==1 && !tech_messages && tech_calls==1 && purchased==6 && !awaits);
+ reset(); mutate=1; assert(run() && !money_messages && tech_messages==1 && purchased==7 && awaits==1);
+}
+'''
+    variants = {'actual': body}
+    for name, old, new in (
+        ('wrong_discount', 'value /= 4;', 'value = diplo_add(value, 3) / 4;'),
+        ('unsafe_pseudo_lookup', 'DiploScratchF800 < 89', 'DiploScratchF800 < 700'),
+        ('wrong_tech_receiver', 'tech_achieved(faction_id, purchased_tech, other_faction_id, 0)',
+         'tech_achieved(other_faction_id, purchased_tech, faction_id, 0)'),
+    ):
+        assert old in body
+        variants[name] = body.replace(old, new)
+    for name, candidate in variants.items():
+        cpp, binary = tmp_path / (name + '.cpp'), tmp_path / name
+        cpp.write_text(fixture.replace('@@BODY@@', helpers + '\n' + candidate))
+        build = subprocess.run([compiler, '-std=c++98', '-fsanitize=undefined',
+                                '-fno-sanitize-recover=all', str(cpp), '-o', str(binary)],
+                               capture_output=True, text=True, timeout=45)
+        assert build.returncode == 0, build.stderr
+        result = subprocess.run([str(binary)], capture_output=True, timeout=15)
+        assert (result.returncode == 0) == (name == 'actual'), (name, result.stderr)
+
+
+@pytest.mark.parametrize('compiler_name', ['g++', 'clang++'])
 def test_actual_make_gift(tmp_path, compiler_name):
     compiler = shutil.which(compiler_name)
     if not compiler:

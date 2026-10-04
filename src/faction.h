@@ -1153,3 +1153,6 @@ void __cdecl call_off_vendetta(int faction_id, int faction_id_with);
 extern int DiploScratchFA30, DiploScratchFA7C;
 void __cdecl base_swap(int faction_id_res, int faction_id_req);
 void __cdecl make_gift(int giver, int receiver);
+
+int __cdecl buy_tech(int faction_id, int other_faction_id, int action,
+                     int is_commlink, int mode);

@@ -11200,3 +11200,128 @@ int __cdecl demand_withdrawal(int faction_id, int against_id) {
     }
     return 0;
 }
+
+// ORIGINAL: 0x005401A0 ?buy_tech@@YAHHHHHH@Z 0x005401A0-0x00540626
+// RECOVERY_BINDING: v1 {"evidence": ["task:diplomacy-actions-owner-coverage", "Pinned5401A0-540626 complete native instructions;540322/540328 tech_ranking35C;540335-54033B truncating divide4;54059C reloads multiplayer and selected tech after money callback", "Pinned5402A0 reads beyond independently bounded GameTechAchieved9A6670-9A66C9 for pseudo IDs; user2026-10-04 approves coverage-first regressions", "historical seed:src/unrecovered/005401a0.cpp"], "reason": "Recover technology, prototype and commlink purchase as genuine faction C++ with typed faction/global storage and source-owned literal keys. Preserve native ordinary pricing, signed technology-rank discounts, live post-callback transfer state and network argument direction. Pseudo-tech bitmap reads use a documented provisional divisor1 under the user coverage-first regression approval; this is not original behavior or an exactness claim."}
+// symbol    ?buy_tech@@YAHHHHHH@Z
+// TRIED: direct transcription of the Ghidra decompile (tech-cost computation, string message build via say_tech/parse_says/ parse_num/strcat, X_pops purchase gate, energy/tech transfer with Console/NetDaemon dispatch); diverges at insn #5 in the prologue register-save order, not in control flow
+int __cdecl buy_tech(int faction_id, int other_faction_id, int action,
+                     int is_commlink, int mode) {
+    PopupDialogFactionID = other_faction_id;
+
+    if (mode == 5) {
+        if (BestProtoForTrade < 0) {
+            scan_prototypes(faction_id, other_faction_id);
+            if (BestProtoForTrade < 0) return 0;
+        }
+        DiploScratchF800 = diplo_add(BestProtoForTrade, 0x61);
+    } else if (mode != 0xD) {
+        if (DiploScratchF800 < 0) return 0;
+        if (strcmp(Players[other_faction_id].filename, "UNIV") == 0 &&
+            DiploScratchFAA8 >= 0) return 0;
+    }
+
+    if (action == 1) return 0;
+
+    int value = tech_val(DiploScratchF800, other_faction_id, 1);
+    int rounded_turn = diplo_add(TurnCurrentNum, 7);
+    const int research_scale = diplo_add(
+        rounded_turn, (rounded_turn >> 31) & 7) >> 3;
+    value = diplo_mul(value, research_scale);
+    if (great_satan(faction_id, 0)) value = diplo_mul(value, 2);
+    if (DiploScratchFA3C != 0) value = diplo_mul(value, 2);
+    if (is_commlink != 0) value = diplo_mul(value, 3) / 2;
+
+    // Coverage-first safety decision: pseudo-tech IDs are not members of the
+    // independently bounded 89-byte ownership bitmap. The original reads
+    // unrelated adjacent globals here. Use divisor1 provisionally for those
+    // items; ordinary technology pricing keeps the original population rule.
+    int divisor = 1;
+    if (DiploScratchF800 >= 0 && DiploScratchF800 < 89) {
+        divisor = bit_count(GameTechAchieved[DiploScratchF800]) - 1;
+    }
+    if (divisor < 1) divisor = 1;
+    if (divisor > 999) divisor = 999;
+    value /= divisor;
+
+    const uint32_t treaty = PlayersData[faction_id].diplo_treaties[other_faction_id];
+    if ((treaty & 1) != 0 &&
+        static_cast<int>(PlayersData[faction_id].ranking) < static_cast<int>(PlayersData[other_faction_id].ranking)) {
+        const int actor_research = PlayersData[faction_id].tech_ranking;
+        const int partner_research = PlayersData[other_faction_id].tech_ranking;
+        if (diplo_add(actor_research, 8) < partner_research) {
+            value /= 4;
+        } else if (actor_research < partner_research) {
+            value /= 2;
+        }
+    }
+
+    int cost = diplo_mul(diplo_add(value, 0x19) / 0x19, 0x19);
+    if (mode != 0xD && cost < 100) cost = 100;
+    if (PlayersData[faction_id].energy_reserves < cost &&
+        action != 5 && mode != 5) return 0;
+
+    StringTemp[0] = '\0';
+    say_tech(StringTemp, DiploScratchF800, 1);
+    parse_says(0, StringTemp, -1, -1);
+    parse_num(0, cost);
+    StringTemp[0] = '\0';
+    strcat(StringTemp, "BUY");
+    if (mode == 5) {
+        strcat(StringTemp, "PROTO");
+    } else if (mode == 0xD) {
+        strcat(StringTemp, "COMMLINK");
+        parse_says(0, Players[DiploScratchFA5C].adj_name_faction, -1, -1);
+    } else {
+        strcat(StringTemp, "TECH");
+    }
+
+    if (PlayersData[faction_id].energy_reserves < cost) {
+        strcat(StringTemp, "HIGH");
+        const int prompt = (mode == 5 || mode == 0xD) ? 0 : random(0, 2);
+        char prompt_number[16];
+        _itoa(prompt, prompt_number, 10);
+        strcat(StringTemp, prompt_number);
+        x_pops_short(StringTemp, 0x100000,
+                     FactionDiplomacyPortraits[other_faction_id], pop_wait);
+        return 1;
+    }
+
+    const int prompt = (mode == 5 || mode == 0xD) ? 0 : random(0, 2);
+    char prompt_number[16];
+    _itoa(prompt, prompt_number, 10);
+    strcat(StringTemp, prompt_number);
+    const int answer = x_pops_short(
+        StringTemp, 0x100000, FactionDiplomacyPortraits[other_faction_id], pop_wait);
+    if (answer != 1) return 1;
+
+    const int debit = diplo_sub(0, cost);
+    if (IsMultiplayerNet != 0) {
+        log_say("Sending ENERGY", faction_id, other_faction_id, debit);
+        message_data(0x2447, 0, faction_id, debit, other_faction_id, cost);
+    } else {
+        if (faction_id != 0) {
+            PlayersData[faction_id].energy_reserves =
+                diplo_add(PlayersData[faction_id].energy_reserves, debit);
+        }
+        if (other_faction_id != 0) {
+            PlayersData[other_faction_id].energy_reserves =
+                diplo_add(PlayersData[other_faction_id].energy_reserves, cost);
+        }
+        ConsoleGlobal.update_data(1);
+    }
+    const int purchased_tech = DiploScratchF800;
+    if (IsMultiplayerNet != 0) {
+        log_say("Sending TECH", faction_id, purchased_tech, other_faction_id);
+        message_data(0x244B, 0, faction_id, purchased_tech, other_faction_id, 0);
+        NetDaemonNet.await_diplo(0x44B);
+    } else {
+        tech_achieved(faction_id, purchased_tech, other_faction_id, 0);
+    }
+
+    if (mode == 5) BestProtoForTrade = -1;
+    ConsoleInfoWin.set_redraw_phase(0);
+    ConsoleGlobal.update_data(0);
+    diplomacy_caption(faction_id, other_faction_id);
+    return 1;
+}
