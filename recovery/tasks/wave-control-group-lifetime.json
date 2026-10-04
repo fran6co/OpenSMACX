@@ -1,0 +1,30 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "036881241c04b6b858224c23529009d324a839cf",
+  "editable_files": [
+    "recovery/tests/test_wave_control_group_lifetime.py",
+    "recovery/tests/wave_control_group_lifetime_control.cpp",
+    "src/wave_device.cpp",
+    "src/wave_device.h"
+  ],
+  "evidence": [
+    "Native4C5490zeroeshead/tail/cursor/count then setsvolume127andenabled1; currentmappedredirectomitslasttwo stores. Native4C5B80head-drainsnodes through delete, stopsafternullwave andneverclearscursor. Wave_Device4C4DD0/4C4E60useCRTiterators withstride24,count16andcoldunwindspans; ordinaryC++memberarray must own lifecycle. Full devicebasecontracts stillunresolved independently; do not infer them from this task. Require native39WaveDeviceclaimcontinuity, source/membercontrols and build/link; no fullgame acceptance.",
+    "Dependency: original Wave_Device destroys groups before wrapped-device release. A nontrivial member array alone would destroy after the present derived destructor body, reversing that order. Genuine conversion requires the shared device base destructor to own the later release; do not invent a guard member, manually destroy then implicitly destroy again, or infer missing virtual contracts. First reviewed checkpoint restores missing constructor stores only; task lifecycle conversion remains unfinished."
+  ],
+  "intent": "Recover genuine WaveControlGroup constructor/destructor and automatic sixteen-element Wave_Device member-array lifecycle; remove handwritten vector lifecycle wrappers, preserve original null-wave early stop and cursor omission.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5002384,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5004160,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "wave-control-group-lifetime"
+}
