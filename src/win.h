@@ -84,6 +84,8 @@ class Win : public AutoSound {
   friend class FileWin;
   // Credits configures its embedded GraphicWin's multi-table draw path.
   friend class Credits;
+  // Popup configures the style of its embedded Dialogs' shared Win base.
+  friend class Popup;
   // Reaches Win's fields directly: the byte-exact body for 0x005F5080
   // is a free function (both member spellings were measured and
   // refuted), and it reads `iFlags_` the way the image does.

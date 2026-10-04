@@ -348,7 +348,24 @@ class BasePop : public GraphicWin {
   void set_width(int width);
   // 0x00603800, homed from 00603800.cpp beside its marker. Lays the popup's
   // text out and hands the result to Dialogs::calculate_dimensions twice.
-  int calculate_dimensions();
+  // Original primary table 0x6698D4 extends GraphicWin slots 0..89 with
+  // these seven callbacks, in this order. Popup table 0x6695C8 overrides
+  // slots 90 and 92..96; exec/layout/redraw dispatch through this hierarchy.
+  virtual int calculate_dimensions();
+  // Provisional role names for the shared defaults; their native table
+  // entries and call sites establish the signatures, not catalogue names.
+  // RECOVERY_SHARED: v1 0x00404280 0x00404281 ?on_pre_window_init@BasePop@@UAEXXZ 0x00602600
+  virtual void on_pre_window_init() {}
+  // RECOVERY_SHARED: v1 0x00404280 0x00404281 ?on_post_window_init@BasePop@@UAEXXZ 0x00602600
+  virtual void on_post_window_init() {}
+  // RECOVERY_SHARED: v1 0x00404280 0x00404281 ?on_adjust_button_width@BasePop@@UAEXXZ 0x00603800
+  virtual void on_adjust_button_width() {}
+  // RECOVERY_SHARED: v1 0x00406B20 0x00406B23 ?on_adjust_button_placement@BasePop@@UAEXPAH00@Z 0x00602600
+  virtual void on_adjust_button_placement(int *, int *, int *) {}
+  // RECOVERY_SHARED: v1 0x00406840 0x00406846 ?on_exec@BasePop@@UAEHXZ 0x00602600
+  virtual int on_exec() { return 1; }
+  // RECOVERY_SHARED: v1 0x00406B30 0x00406B33 ?on_draw_background@BasePop@@UAEHXZ 0x00604AB0
+  virtual int on_draw_background() { return 0; }
   // Native487DFD reads Popup+0xA48: its script-owned caption text.
   const char *caption_text() const { return owned_text_; }
   void write_check(long value);

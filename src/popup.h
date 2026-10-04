@@ -38,7 +38,9 @@
 class Popup : public BasePop {
  public:
   // homed from 00405910.cpp
-  int on_exec();
+  virtual int on_exec();
+  virtual int calculate_dimensions();
+  virtual int on_draw_background();
 
  public:
   // homed from 00406260.cpp
@@ -46,7 +48,7 @@ class Popup : public BasePop {
 
  public:
   // homed from 00404ef0.cpp
-  void on_post_window_init();
+  virtual void on_post_window_init();
 
  public:
   // Constructor 0x004048D9 installs primary table 0x006695C8; slot1 selects
@@ -56,7 +58,7 @@ class Popup : public BasePop {
   // 0x00404A80, homed in popup.cpp.
   void hide();
   void on_redraw();
-  void on_adjust_button_placement(int *x, int *y, int *unused);
+  virtual void on_adjust_button_placement(int *x, int *y, int *unused);
   int on_listbox_scroll_delete(Scroll *scroll);
 
  public:
@@ -76,7 +78,7 @@ class Popup : public BasePop {
   void close();
   // Provisional name for original 0x00559000; no added virtual slot.
   int set_picture(Sprite *picture, int mode, char *text);
-  void on_adjust_button_width();
+  virtual void on_adjust_button_width();
   // Six-argument start returns the text-load result, retrying the original
   // file if the alien-script redirect fails.
   int start(char *a1, const char *a2, int a3, char *a4, int a5,

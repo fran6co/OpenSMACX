@@ -766,16 +766,7 @@ Purpose: Run the popup modally: size and position it, lay out its two caption
 //        measured MISMATCH at instruction 0 for the reason above, so the
 //        in-class form wins on call fidelity alone.
 */
-typedef int (__fastcall *func_basepop_slot095)(void *);
-typedef int (__fastcall *func_basepop_exec_slot090)(void *);
-typedef void (__fastcall *func_basepop_slot091)(void *);
-typedef void (__fastcall *func_basepop_slot092)(void *);
 typedef void (__fastcall *func_basepop_slot062)(void *);
-// SLOT 0x178, the row-origin triple. Win declares slots 0..87 only, so this
-// one has no name to call; the __stdcall spelling keeps the receiver as the
-// first stack argument and the call operand in the slot, which is the same
-// shape Net::delete_group (0x0062EDD0) is claimed BYTE_EXACT with.
-typedef void (__stdcall *func_basepop_slot094)(void *, int *, int *, int *);
 
 // THE FLAT BUTTON'S OWN SLOT 1, called with 0 after each button is configured
 // (0x00602F9A, 0x00603331, 0x00603677). The VCall1 shape already in this file.
@@ -791,7 +782,7 @@ int BasePop::exec(int flags, int (__cdecl *callback)()) {
 
     // THE MAY-SHOW GATE. BasePop's own slot is `mov eax, 1 / ret`, so a plain
     // popup always passes and only a derived family can refuse.
-    if (vtable_slot<func_basepop_slot095>(this, 0x17c)(this) == 0) {
+    if (on_exec() == 0) {
         return -1;
     }
 
@@ -840,7 +831,7 @@ int BasePop::exec(int flags, int (__cdecl *callback)()) {
     }
 
     // Size it. A nonzero answer is exec's own answer.
-    if (vtable_slot<func_basepop_exec_slot090>(this, 0x168)(this) != 0) {
+    if (calculate_dimensions() != 0) {
         return 0;
     }
 
@@ -876,7 +867,7 @@ int BasePop::exec(int flags, int (__cdecl *callback)()) {
 
     // The 0x800 bit is exec's own, added at the call and not before.
     if (owner_window_ == this) {
-        vtable_slot<func_basepop_slot091>(this, 0x16c)(this);
+        on_pre_window_init();
 
         // THE BORDER, in the window's own three thicknesses. See the HANDOFF
         // on win.h: BorderSizing is twelve bytes, and this local is what
@@ -906,7 +897,7 @@ int BasePop::exec(int flags, int (__cdecl *callback)()) {
             set_caption(owned_text_);
         }
 
-        vtable_slot<func_basepop_slot092>(this, 0x170)(this);
+        on_post_window_init();
     }
 
     // THE POPUP'S POSITION, one arm per owner. owner_window_ == this means
@@ -998,8 +989,7 @@ int BasePop::exec(int flags, int (__cdecl *callback)()) {
     int row = static_cast<int>(field_30C0_) - static_cast<int>(field_30EC_) -
               static_cast<int>(field_30E0_) - static_cast<int>(field_30D0_);
     int row_style = 0;
-    vtable_method<func_basepop_slot094>(this, 0x178)(this, &origin, &row,
-                                                     &row_style);
+    on_adjust_button_placement(&origin, &row, &row_style);
 
     // THE ROW PITCH, in the three shapes the image spells it.
     const int pitch = static_cast<int>(field_30E4_) +
@@ -3257,6 +3247,7 @@ int BasePop::UNK2() {
 }
 
 // ORIGINAL: 0x00603800 ?calculate_dimensions@BasePop@@QAEHXZ 0x00603800-0x006042D2 FILE
+// symbol    ?calculate_dimensions@BasePop@@UAEHXZ
 // size      2770 bytes
 // prototype int (__thiscall ?calculate_dimensions@BasePop@@QAEHXZ)(BasePop* this)
 // callers   1   call targets   16
@@ -3661,8 +3652,6 @@ int BasePop::start(char *text_file, const char *text_label, int value,
 }
 
 
-typedef void(__fastcall *func_basepop_slot093)(void *);
-
 int BasePop::calculate_dimensions() {
     // THE OWNER'S SURFACE, for every text call below. GraphicWin's Buffer
     // base sits 0x444 in, behind its Win base; calling the inherited method
@@ -3947,7 +3936,7 @@ int BasePop::calculate_dimensions() {
     }
 
     // Slot 0x174 - the popup's own layout hook, run after the dialog settles.
-    vtable_slot<func_basepop_slot093>(this, 0x174)(this);
+    on_adjust_button_width();
 
     if ((field_30A8_ & 0x100) != 0) {
         field_30D0_ = 0;
@@ -4056,8 +4045,6 @@ int BasePop::calculate_dimensions() {
 //        Every other instruction shape agrees. This is the receiver-spill
 //        wall the brief documents, hit on the stack-slot count rather than on
 //        a callee-saved push.
-typedef int(__fastcall *func_basepop_slot096)(void *);
-
 void BasePop::on_redraw() {
     // THE INHERITED-MEMBER SPELLING, and it is load-bearing. GraphicWin's
     // Buffer base sits 0x444 in, behind its Win base; calling the inherited
@@ -4080,7 +4067,7 @@ void BasePop::on_redraw() {
 
     if (owner_window_ == this) {
         move(field_30B4_, field_30B8_);
-        if (vtable_slot<func_basepop_slot096>(this, 0x180)(this) == 0) {
+        if (on_draw_background() == 0) {
             // The background: tile the popup's own picture when there is one
             // and the popup is drawing into itself, otherwise a flat fill.
             if (field_2148_ != 0 && external_window_ == 0) {
@@ -4104,7 +4091,7 @@ void BasePop::on_redraw() {
                 -((field_214C_->iHeight_ + dib_.bmiHeader.biHeight) / 2), 1, 1);
         }
     } else {
-        vtable_slot<func_basepop_slot096>(this, 0x180)(this);
+        on_draw_background();
         right += field_30B4_;
         bottom += field_30B8_;
     }

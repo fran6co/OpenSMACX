@@ -1,0 +1,20 @@
+{
+  "event_id": "d9fb5b483b276fc8439d2aaae39b1703947e661c3a100fe28b4c355662d937c1",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/popup_background_fixture.cpp",
+      "recovery/tests/test_popup_background_host_controls.py"
+    ],
+    "evidence": [
+      "Actual-source C++98 tracing controls for full Popup background body: valid no-dialog anchored path, diplomacy final Buffer receiver, style/palette and final border mutations; host projection is bounded behavior evidence, not runtime or full acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "2d8234d7858b812e4a4343bbeb5eb957ce18a4509134254ec3c89b30b9531733",
+  "request_id": "popup-background-host-controls-20261004",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:popup-dimensions-background-owner"
+}
