@@ -6,7 +6,11 @@
     "src/stringstruct.h",
     "src/recovered/00401000.cpp",
     "src/recovered/units/004029f0.cpp",
-    "recovery/tests/test_stringstruct_lifecycle_coverage.py"
+    "recovery/tests/test_stringstruct_lifecycle_coverage.py",
+    "recovery/tests/test_stringlist_recovery.py",
+    "recovery/tests/stringlist_hooks_harness.cpp",
+    "recovery/tests/stringlist_lifetime_harness.cpp",
+    "recovery/tests/stringlist_construction_harness.cpp"
   ],
   "evidence": [
     "Pinned original401000 stages real virtual-base tables and captures the Heap handoff on the compiler-supplied most-derived flag, then clears five list fields. The explicit-int seed is an ABI interpretation, not a source parameter.",

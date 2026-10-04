@@ -38,6 +38,7 @@ StringAllocationBase::~StringAllocationBase() { StringAllocationHeap = allocatio
 // LIVE_ENTRY
 // LIVE_LIST_BASE
 // LIVE_LIST
+// LIVE_CONSTRUCTOR
 // Full outer destruction remains a separate recovery obligation.
 StringStruct::~StringStruct() {}
 StringList::~StringList() {}

@@ -13,6 +13,9 @@
 // RECOVERY_BINDING: v1 {"evidence": ["Original table installed by 401100 construction dispatches deletion through StringStructEntry allocation base at +0x14. This original body publishes saved Heap owner, conditionally frees the complete allocation and clears owner on deleting paths. Same-span seed retired; the complete original identity and spans remain on this compiled owner.", "Original construction at 401100 and typed deletion at 402970 establish the owning node lifecycle. The canonical source host is stringstruct.cpp; the compiler owns the virtual-base adjustment and deleting-flag entry.", "git:293937ab6f3be75999e0c0a4c9c110c02930624c:src/recovered/units/00402c20.cpp", "Historical seed spelling sub_402c20; current source mapping ??_GStringStructEntry@@UAEPAXI@Z; emitted symbol ??_GStringStructEntry@@UAEPAXI@Z."], "reason": "Map the compiler-generated scalar deleting destructor emitted by actual list-node construction, not a handwritten wrapper. Superseded seed retired after owner review; original spans, existing claims and useful seed findings remain in source. This cleanup grants no new match or acceptance claim."}
 // ORIGINAL: 0x00402C70 ??_GStringStructPayload@@UAEPAXI@Z 0x00402C70-0x00402CB2 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["Original table installed by 401100 construction dispatches deletion through StringStructPayload allocation base at +0x10. This original body publishes saved Heap owner, conditionally frees the complete allocation and clears owner on deleting paths. Same-span seed retired; the complete original identity and spans remain on this compiled owner.", "Original construction at 401100 and typed deletion at 402970 establish the owning node lifecycle. The canonical source host is stringstruct.cpp; the compiler owns the virtual-base adjustment and deleting-flag entry.", "git:293937ab6f3be75999e0c0a4c9c110c02930624c:src/recovered/units/00402c70.cpp", "Historical seed spelling sub_402c70; current source mapping ??_GStringStructPayload@@UAEPAXI@Z; emitted symbol ??_GStringStructPayload@@UAEPAXI@Z."], "reason": "Map the compiler-generated scalar deleting destructor emitted by actual list-node construction, not a handwritten wrapper. Superseded seed retired after owner review; original spans, existing claims and useful seed findings remain in source. This cleanup grants no new match or acceptance claim."}
+// ORIGINAL: 0x004029F0 ??1StringStruct@@QAE@H@Z 0x004029F0-0x00402A56 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["task:stringstruct-lifecycle-coverage", "Pinned original0x4029f0", "historical seed:src/recovered/units/004029f0.cpp", "Real virtual-base construction and physical compiler-generated lifecycle symbols."], "reason": "Original allocation-base receiver adjustment, list teardown and owner-aware conditional deallocation belong to the real compiler-generated scalar deleting destructor. Source virtual inheritance, destructor and inherited operator delete supply lifetime; catalogue destructor spelling remains historical. No handwritten adjustment or assembly."}
+// symbol    ??_GStringStruct@@UAEPAXI@Z
 #include "stringstruct.h"
 #include "spritebox.h"
 #include "net_class.h"
@@ -55,6 +58,17 @@
 // symbol    ??1StringAllocationBase@@UAE@XZ
 StringAllocationBase::~StringAllocationBase() {
     StringAllocationHeap = allocation_owner_;
+}
+
+// ORIGINAL: 0x00401000 ??0StringStruct@@QAE@H@Z 0x00401000-0x00401058 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["task:stringstruct-lifecycle-coverage", "Pinned original0x401000", "historical seed:src/recovered/00401000.cpp", "Real virtual-base construction and physical compiler-generated lifecycle symbols."], "reason": "Original constructor initializes five list fields after genuine virtual-base owner capture and table staging. The seed explicit integer is the compiler-supplied most-derived flag, not a source parameter. Real out-of-line constructor owns this entry; retain historical matching obligation."}
+// symbol    ??0StringStruct@@QAE@XZ
+StringStruct::StringStruct() {
+    head_ = 0;
+    current_ = 0;
+    entry_count_ = 0;
+    current_position_ = 0;
+    allocator_ = 0;
 }
 
 // The original primary table uses these shared defaults. Hook names describe

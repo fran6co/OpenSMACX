@@ -52,6 +52,7 @@ void operator delete(void *memory) { release(memory); }
 #undef free
 // LIVE_LIST_BASE
 // LIVE_LIST
+// LIVE_CONSTRUCTOR
 // LIVE_CLEANUP_HELPER
 int StringStruct::on_insert(StringStructPayload *) { return 0; }
 void StringStruct::on_remove(StringStructPayload *) {}

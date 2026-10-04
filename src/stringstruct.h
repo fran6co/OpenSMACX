@@ -58,11 +58,13 @@ struct StringStructEntry;
  *   0x30  size - consecutive StringLists are 0x30 apart at 0x0048CD01 and at
  *         the inlined destructors 0x00406540 / 0x00406585
  *
- * CONSTRUCTION is entirely the compiler's, and it is what StringBox::StringBox
- * inlines: vbtable, then StringAllocationBase's vtable and owner capture (its
- * inline constructor body), then StringStruct's vtable stage and field
- * zeroing (its inline constructor body), then StringList's own vtable stage -
- * the image's exact store order, with no call anywhere.
+ * Original StringBox construction inlines this chain: vbtable, then
+ * StringAllocationBase's vtable and owner capture, StringStruct's table stage
+ * and field zeroing, then StringList's own stage. Current construction is
+ * genuine C++ with a standalone StringStruct constructor in stringstruct.cpp;
+ * recovering its original entry also means callers may now emit a call rather
+ * than this original inline sequence. Matching restoration must retain the
+ * genuine virtual-base ownership, not reinstall tables manually.
  */
 
 // The eight-byte allocation-tracking virtual base the vbtables name: one
@@ -87,8 +89,8 @@ class StringAllocationBase {
   // construction chain: the image's inlined StringList block captures the
   // pending-allocation owner between the virtual base's vtable store and
   // StringStruct's stage - which is exactly where the base's own constructor
-  // body lands. The address is terranx.exe's data, unmapped in a standalone
-  // build; the same raw spelling StringBox::add uses.
+  // body lands. StringAllocationHeap is source-owned storage, not an original
+  // executable address or a pointer into the old image.
   // THE ALLOCATOR HAND-OFF. The allocation wrapper publishes the Heap into
   // the global slot (image 0x009B3374) and the base constructor running
   // right after captures it - "who allocated me" - then clears the slot.
@@ -198,14 +200,10 @@ class StringStruct : public virtual StringAllocationBase {
   virtual void on_remove(StringStructPayload *payload);
   // Zeroes the five list fields, which the implicit construction chain
   // therefore emits between StringStruct's vtable stage and StringList's - the
-  // image's order. Inline for the same reason the capture is.
-  StringStruct() {
-    head_ = 0;
-    current_ = 0;
-    entry_count_ = 0;
-    current_position_ = 0;
-    allocator_ = 0;
-  }
+  // image's order. The standalone original401000 entry is source-owned in
+  // stringstruct.cpp; the virtual-base initialization flag is compiler-owned,
+  // not an explicit source integer parameter.
+  StringStruct();
   // The compiler stages the base tables before this cleanup. StringList's
   // destructor owns the earlier derived stage, where its text-removal hook
   // must still be active. These are real C++ destructor transitions, not

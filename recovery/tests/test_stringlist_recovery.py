@@ -50,9 +50,12 @@ def test_hooks_use_payload_fields_and_keep_list_layout(objects):
 
 
 def test_real_tables_dispatch_to_both_typed_hooks(objects):
-    for obj in objects["src/dialog.cpp"]:
-        for owner, name in (("StringStruct", "??_7StringStruct@@6B0@@"),
-                            ("StringList", "??_7StringList@@6BStringStruct@@@")):
+    # Standalone base construction now owns its emission in stringstruct.cpp;
+    # callers need not emit a duplicate base table to reference that constructor.
+    for unit, owner, name in (
+            ("src/stringstruct.cpp", "StringStruct", "??_7StringStruct@@6B0@@"),
+            ("src/dialog.cpp", "StringList", "??_7StringList@@6BStringStruct@@@")):
+        for obj in objects[unit]:
             table, = (symbol for symbol in obj.symbols.values() if symbol.name == name and symbol.section > 0)
             section = obj.sections[table.section - 1]
             # The neighboring BasePop secondary table independently bounds
@@ -134,7 +137,9 @@ def test_live_hooks_preserve_null_failure_and_heap_ownership(tmp_path, monkeypat
         ("// LIVE_PAYLOAD", "src/stringstruct.h", "class StringStructPayload :", "static_assert(sizeof(StringStructPayload)"),
         ("// LIVE_ENTRY", "src/stringstruct.h", "struct StringStructEntry :", "static_assert(sizeof(StringStructEntry)"),
         ("// LIVE_LIST_BASE", "src/stringstruct.h", "class StringStruct :", "static_assert(sizeof(StringStruct)"),
-        ("// LIVE_LIST", "src/stringstruct.h", "class StringList :", "static_assert(sizeof(StringList)")])
+        ("// LIVE_LIST", "src/stringstruct.h", "class StringList :", "static_assert(sizeof(StringList)"),
+        ("// LIVE_CONSTRUCTOR", "src/stringstruct.cpp", "StringStruct::StringStruct() {",
+         "// The original primary table uses these shared defaults.")])
 
 
 def test_actual_node_lifetime_uses_complete_allocations_and_heap_ownership(tmp_path, monkeypatch):
@@ -144,6 +149,8 @@ def test_actual_node_lifetime_uses_complete_allocations_and_heap_ownership(tmp_p
         ("// LIVE_ALLOCATION_BASE", "src/stringstruct.h", "class StringAllocationBase {",
          "// REAL VIRTUAL INHERITANCE, like StringStructPayload"),
         ("// LIVE_OWNER_PUBLICATION", "src/stringstruct.cpp", "StringAllocationBase::~StringAllocationBase() {",
+         "// ORIGINAL: 0x00401000"),
+        ("// LIVE_CONSTRUCTOR", "src/stringstruct.cpp", "StringStruct::StringStruct() {",
          "// The original primary table uses these shared defaults."),
         ("// LIVE_PAYLOAD", "src/stringstruct.h", "class StringStructPayload :", "static_assert(sizeof(StringStructPayload)"),
         ("// LIVE_ENTRY", "src/stringstruct.h", "struct StringStructEntry :", "static_assert(sizeof(StringStructEntry)"),
@@ -166,6 +173,8 @@ def test_actual_construction_preserves_allocator_and_partial_failure_contracts(t
         ("// LIVE_ALLOCATION_BASE", "src/stringstruct.h", "class StringAllocationBase {",
          "// REAL VIRTUAL INHERITANCE, like StringStructPayload"),
         ("// LIVE_OWNER_PUBLICATION", "src/stringstruct.cpp", "StringAllocationBase::~StringAllocationBase() {",
+         "// ORIGINAL: 0x00401000"),
+        ("// LIVE_CONSTRUCTOR", "src/stringstruct.cpp", "StringStruct::StringStruct() {",
          "// The original primary table uses these shared defaults."),
         ("// LIVE_PAYLOAD", "src/stringstruct.h", "class StringStructPayload :", "static_assert(sizeof(StringStructPayload)"),
         ("// LIVE_ENTRY", "src/stringstruct.h", "struct StringStructEntry :", "static_assert(sizeof(StringStructEntry)"),

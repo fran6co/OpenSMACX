@@ -60,6 +60,7 @@ void test_exit(int code) { assert(code == 3 && notices == 1); throw code; }
 // LIVE_ENTRY
 #undef free
 // LIVE_LIST_BASE
+// LIVE_CONSTRUCTOR
 // LIVE_CLEANUP_HELPER
 int StringStruct::on_insert(StringStructPayload *) { return 0; }
 void StringStruct::on_remove(StringStructPayload *) {}
