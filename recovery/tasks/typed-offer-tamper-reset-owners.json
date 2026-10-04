@@ -1,0 +1,33 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "7dd1bad1166b859b056f5b6f6593b490c761730b",
+  "editable_files": [
+    "src/game.cpp",
+    "src/game.h",
+    "src/recovered/units/004411f0.cpp",
+    "src/recovered/units/0051dfd0.cpp",
+    "recovery/tests/test_typed_reset_owners_behavior.py",
+    "recovery/tests/typed_reset_owners_control.cpp"
+  ],
+  "evidence": [
+    "Pinned4411F0..441241 takes two stack int arguments, cdecl, no authored receiver or return value. It writes the four count/state words in existing OfferResetCells[a][b] and transpose in the observed interleaved order, preserving payload. Existing OfferResetCell90stride and bound64-cell owner establish storage; no new bounds behavior or caller rerouting is authorized.",
+    "Pinned51DFD0..51DFF9 first zeros source-owned TamperRegistryCursor then50 existing six-dword TamperRecord entries in order0,4,8,10,C,14. Native cursor starts93A064 and termination93A514 is recordbase+4, not an extra storage word; touched storage is93A060..93A510. Neutral field names retained; no semantic rename or larger layout claim authorized.",
+    "No mapped direct caller was found for either original. Observe actual emitted COFF symbols, native measurements, actual-source GCC/Clang controls with whole-object footprint/order damage cases, build/link, touched annotation integrity, references and all historical claim continuity. Seed retirement requires complete identity/spans/claims/useful discoveries in compiled owners. Preserve any justified matching regression for coordinator review rather than demotion. This is not reachability, strict linked preservation or full-game acceptance."
+  ],
+  "intent": "Recover complete symmetric offer-pair and fifty-record tamper reset bodies through existing genuine typed global owners, preserving all historical identities and claims and retiring seeds only after fresh verification.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4461040,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5365712,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "typed-offer-tamper-reset-owners"
+}
