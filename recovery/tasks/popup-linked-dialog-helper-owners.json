@@ -1,0 +1,45 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "f2f34916a97d461e90fb6f435bb1650daed75cda",
+  "editable_files": [
+    "src/popup.cpp",
+    "src/popup.h",
+    "src/recovered/units/00406b70.cpp",
+    "src/recovered/units/00406ba0.cpp",
+    "src/recovered/units/0044cbd0.cpp",
+    "src/recovered/0044ca90.cpp",
+    "recovery/tests/test_popup_linked_helpers.py",
+    "recovery/tests/popup_linked_helpers_harness.cpp"
+  ],
+  "evidence": [
+    "Pinned spans406B70..406B9C,406BA0..406BCC,44CBD0..44CC18,44CA90..44CABA and Popup6695C8 primary slots48/49. Actual Dialogs member and shared GraphicWin base express adjusted dispatch without table arrays/fixed targets.",
+    "Existing Popup::on_link_clicked produces PopupPendingLink and flag.44CBD0 clears flag before each two-argument X_pop, consumes newly published links.44CA90 reads Players[faction].filename and DATALINKS literal68469C through existing caption-label wrapper5BF330. Names are provisional behavioral roles, not established original symbols/callers. Other table occurrences remain cross-owner discoveries.",
+    "Preserve every original span/identity/claim/lesson through native source writer; remove only fully superseded seeds. User permits matching regressions for compiling coverage; require actual-source positive/mutation and native receiver/layout/slot checks, build/link and claim continuity. No automatic/game acceptance; no claim demotion."
+  ],
+  "intent": "Recover two Popup dialog-slot forwarding methods and the pending-link and faction-datalinks helpers in the real popup owner, retaining original unknown helper identities and historical claims.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4221808,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4221856,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4508624,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4508304,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "popup-linked-dialog-helper-owners"
+}

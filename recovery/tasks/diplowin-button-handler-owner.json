@@ -1,0 +1,27 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "f2f34916a97d461e90fb6f435bb1650daed75cda",
+  "editable_files": [
+    "src/diplowin.cpp",
+    "src/diplowin.h",
+    "src/unrecovered/004415c0.cpp",
+    "recovery/tests/test_diplo_button_owner.py",
+    "recovery/tests/diplo_button_owner_harness.cpp"
+  ],
+  "evidence": [
+    "Pinned complete code and unwind spans4415C0..4424C6 and654A50..654CEA. Primary Win button slot44 and button+2 guarded fifteen-entry switch establish owner/dispatch; retain current SubInterface separately.",
+    "Native re-review corrected button3 final rand%3 A28/offer_type[0][0] writes and second redraw; button7 relationships use local/counterpart rows against candidate. Preserve original opposite gender/plural assignments, all native cases and existing original mappings/seed lessons.",
+    "User prioritizes compiling coverage and permits temporary matching regressions. Root reviews and owns tracked edits/Git/leased compiler; require actual-source positive/mutation tests, native layout/dispatch/lifetime observations, full build/link, claim continuity and relevant regression checks. No automatic/full-game acceptance or new byte claim."
+  ],
+  "intent": "Recover the complete diplomacy button handler in its genuine virtual owner with a real automatic Popup lifetime and typed faction/offer/message dependencies.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4462016,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "diplowin-button-handler-owner"
+}
