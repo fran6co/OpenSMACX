@@ -1,0 +1,49 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "0bf73b462122ca15ef86a300275b9a487750cc00",
+  "editable_files": [
+    "src/pulldown.h",
+    "src/pulldown.cpp",
+    "src/flatbutton.h",
+    "src/flatbutton.cpp",
+    "src/basepop.h",
+    "src/basepop.cpp",
+    "src/game.cpp",
+    "src/recovered/units/005f98b0.cpp",
+    "src/unrecovered/00607e50.cpp",
+    "recovery/tests/test_renderer_owners.py",
+    "recovery/tests/renderer_owners_harness.cpp",
+    "recovery/tests/test_renderer_pointer_flow.py",
+    "recovery/tests/renderer_pointer_flow_harness.cpp",
+    "recovery/tests/test_button_close_dispatch.py",
+    "recovery/tests/control_lifetime_harness.cpp"
+  ],
+  "evidence": [
+    "Original complete spans5F98B0..5F9CFF and607E50..6084F9; current class-owned item/callback/font/Buffer fields and nine groups of three null-tested/dereferenced Sprite consumers establish genuine class methods and borrowed pointer configuration.",
+    "Interface producer455610 stores nine g_BASEWIN_SPRITES addresses into both27word defaults. FlatButton ctor/close, BasePop ctor and inline27stores propagate allslots. Type allfourarrays as Sprite*[27], preserving x86 widths and existingflat indexing; no scalar/pointer round trips, flags or storage offsets changed.",
+    "Native600F83 first reads column then incrementsEAX4 before eight following loads. Existing BasePop::close indexes +2,+5..+23 omit that increment; correct same-slot source indices are +3,+6..+24. Repair that scoped table copy with typed members, not unrelated remaining BasePop behavior.",
+    "Emitted globals change decorated types when integer arrays become Sprite pointer arrays. Reconcile current object bindings through native object reader/writer after fresh physical COFF evidence; preserve original address/unit and existing unbounded status, retain old symbol interpretation in source/history. Do not invent allocation bounds, stamps or byte claims.",
+    "User authorizes temporary matching regressions and coordinator-reviewed coverage integration. Require complete bodies, compiled layout/dispatch observations, actual-source host/mutation controls, build/link, historical claim continuity and relevant checks. Retain all discoveries/claims/baselines; no automatic or game acceptance asserted. Root owns all tracked edits, Git and leased compiler epochs."
+  ],
+  "intent": "Recover complete PullDown and FlatButton redraw methods with genuine virtual dispatch, and repair the coupled 27-slot borrowed Sprite pointer flow through defaults, BasePop and interface initialization.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6265008,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6323792,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6295296,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "pulldown-flatbutton-renderer-and-sprite-ownership"
+}
