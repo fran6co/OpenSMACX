@@ -1,0 +1,26 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "3797537ac1b3a344ad9ce228ac8c4c951725dc8d",
+  "editable_files": [
+    "src/stringstruct.cpp",
+    "src/recovered/00402310.cpp",
+    "recovery/tests/test_allocation_base_owner_mapping.py"
+  ],
+  "evidence": [
+    "Pinned402310..40231F reads saved owner atthis+4, reinstalls original allocation-base table6693AC and publishes captured Heap to9B3374. Existing StringAllocationBase in stringstruct.h owns that real hierarchy/member and its existing destructor publishes StringAllocationHeap; no new storage or handwritten table needed.",
+    "Fresh read-only configured VC6 COMDAT probe under both flag sets finds existing ??1StringAllocationBase@@UAE@XZ BYTE_EXACT4/4 against seed402310. Root must freshly check table/owner relocation targets before integration; probe is not a claim grant or linked-game acceptance.",
+    "Related StringList generated scalar entry406670 is still mismatched and is NOT authorized for seed removal here. Preserve that draft and remaining generated-body restoration work; no automatic regression waiver.",
+    "Use native writer to rehome original identity/spans/claim/lessons beside actual destructor and explicit emitted-symbol evidence. Require build/link, scoped exact/reference checks, original claim continuity and regressions. Coordinator-reviewed bounded integration only; no new claims, baseline reset or full-game acceptance."
+  ],
+  "intent": "Bind the retained402310 allocation-owner publication destructor to the existing genuine StringAllocationBase destructor and retire its synthetic fixed-address seed, preserving all original obligations.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4203280,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "allocation-base-destructor-owner"
+}
