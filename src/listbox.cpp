@@ -15,6 +15,19 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
+// ORIGINAL: 0x0060CE40 sub_60ce40 0x0060CE40-0x0060CE48;0x0060CE50-0x0060CECF FILE
+// RECOVERY_BINDING: v1 {"evidence": ["task:generated-control-lifetime-owner", "historical seed:src/unrecovered/0060ce40.cpp", "pinned:terranx_original.exe:original vtables and complete deletion/control flow; virtual-base Dialog then GraphicWin destruction and conditional allocation release", "source:src/listbox.cpp:genuine destructor and actual compiler-generated COFF entry; no handwritten thunk or executable-address forwarding"], "reason": "Genuine virtual-base hierarchy and complete destruction own this compiler-generated entry; preserve the full original shared deleting-body spans and seed findings. Approximate source coverage only, not verified byte or reference identity."}
+// symbol    ??_EListBox@@$4PPPPPPPM@A@AEPAXI@Z
+
+// ORIGINAL: 0x0060D010 sub_60d010 0x0060D010-0x0060D021;0x0060CE50-0x0060CECF FILE
+// RECOVERY_BINDING: v1 {"evidence": ["task:generated-control-lifetime-owner", "historical seed:src/unrecovered/0060d010.cpp", "pinned:terranx_original.exe:original vtables and complete deletion/control flow; virtual-base Dialog then GraphicWin destruction and conditional allocation release", "source:src/listbox.cpp:genuine destructor and actual compiler-generated COFF entry; no handwritten thunk or executable-address forwarding"], "reason": "Genuine virtual-base hierarchy and complete destruction own this compiler-generated entry; preserve the full original shared deleting-body spans and seed findings. Approximate source coverage only, not verified byte or reference identity."}
+// symbol    ??_EListBox@@$4PPPPPLLI@EEE@AEPAXI@Z
+
+// ORIGINAL: 0x0060D030 sub_60d030 0x0060D030-0x0060D03E;0x0060CE50-0x0060CECF FILE
+// RECOVERY_BINDING: v1 {"evidence": ["task:generated-control-lifetime-owner", "historical seed:src/unrecovered/0060d030.cpp", "pinned:terranx_original.exe:original vtables and complete deletion/control flow; virtual-base Dialog then GraphicWin destruction and conditional allocation release", "source:src/listbox.cpp:genuine destructor and actual compiler-generated COFF entry; no handwritten thunk or executable-address forwarding"], "reason": "Genuine virtual-base hierarchy and complete destruction own this compiler-generated entry; preserve the full original shared deleting-body spans and seed findings. Approximate source coverage only, not verified byte or reference identity."}
+// symbol    ??_EListBox@@$4PPPPPPPM@KBI@AEPAXI@Z
+// TRIED: full reproduction as a single function - the scaffold's "spans" field folds this vtordisp thunk together with the shared ListBox scalar-deleting-destructor body at 0x60CE50, which is compiler-synthesised for multiple/virtual inheritance and not directly expressible from source without the full outer class hierarchy. Landed the 10-byte thunk (adjust `this` by *(this-4) and a fixed 0xA18, forward to the shared body) as a plain call, not a tail-jmp; scored SHARED_TAIL (COMDAT-folded span, no per-function verdict).
+
 #include "stdafx.h"
 #include "original_seam.h"
 #include "listbox.h"

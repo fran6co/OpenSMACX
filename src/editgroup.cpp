@@ -15,6 +15,14 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
+// ORIGINAL: 0x00612700 sub_612700 0x00612700-0x00612708 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["task:generated-control-lifetime-owner", "historical seed:src/deleting_thunks.cpp", "pinned:terranx_original.exe:original vtables and complete deletion/control flow; virtual-base Dialog then GraphicWin destruction and conditional allocation release", "source:src/editgroup.cpp:genuine destructor and actual compiler-generated COFF entry; no handwritten thunk or executable-address forwarding"], "reason": "Genuine virtual-base hierarchy and complete destruction own this compiler-generated entry; preserve the full original shared deleting-body spans and seed findings. Approximate source coverage only, not verified byte or reference identity."}
+// symbol    ??_EEditGroup@@$4PPPPPPPM@A@AEPAXI@Z
+
+// ORIGINAL: 0x00612710 sub_612710 0x00612710-0x006127AA FILE
+// RECOVERY_BINDING: v1 {"evidence": ["task:generated-control-lifetime-owner", "historical seed:src/unrecovered/00612710.cpp", "pinned:terranx_original.exe:original vtables and complete deletion/control flow; virtual-base Dialog then GraphicWin destruction and conditional allocation release", "source:src/editgroup.cpp:genuine destructor and actual compiler-generated COFF entry; no handwritten thunk or executable-address forwarding"], "reason": "Genuine virtual-base hierarchy and complete destruction own this compiler-generated entry; preserve the full original shared deleting-body spans and seed findings. Approximate source coverage only, not verified byte or reference identity."}
+// symbol    ??_GEditGroup@@UAEPAXI@Z
+
 #include "stdafx.h"
 #include "original_seam.h"
 #include "editgroup.h"
@@ -79,14 +87,15 @@ EditGroup::EditGroup() {
 }
 
 /*
-Purpose: Tear down an EditGroup: reinstall the base subobjects' own
-         vtable/vtordisp values, then close the object through its own
-         `close()`.
+Purpose: Close the EditGroup stage. Genuine C++ destruction owns the stage
+         transitions, followed by Dialog and GraphicWin virtual-base teardown
+         for a complete object. Historical helper experiments below predate
+         the recovered lifetime; they do not require raw receiver adjustment.
 // ORIGINAL: 0x00611A20 ??1EditGroup@@QAE@XZ 0x00611A20-0x00611A88
 // TRIED: TWO changes, measured separately. (1) A real `~EditGroup()` has to destroy `virtual_base_` and `dialog_`, which under /GX is an SEH frame plus a thirty-instruction member-teardown tail - 67 compiled instructions against the image's 23, agreeing 0. The image reinstalls the base vtables and calls `close()` and destroys nothing, so this is a METHOD; spelling it `destruct()` drops the frame and the tail and lands exactly 23. (2) With that done the only remaining difference was register allocation, and a NAMED `base` local was causing it: `char *const base = self - 0x8C;` gets EAX and costs a `mov ecx, eax` before the call, 3 of 23. Writing `self - 0x8C` at each use lets VC6 common it into ECX - where the thiscall receiver has to be anyway - and spill `this` to EAX, which is the image's opening `mov eax, ecx`. 23 of 23, BYTE_EXACT.
 // TRIED: naming the local and calling through `self - 0x8C` anyway (3/23), a typed `EditGroup *const base_object` (3/23), an explicitly qualified `->EditGroup::close()` (3/23), and deriving `self` from `base` rather than the other way round, which loses four instructions outright (0 of 23, 19 compiled).
 // TRIED: `record` DROPPED the line above the first time it was written. Re-recording a body whose tier changes rewrites its annotation and keeps only the LEVER. Re-added after the claim was banked.
-// symbol    ?destruct@EditGroup@@QAEXXZ
+// symbol    ??1EditGroup@@UAE@XZ
 // size      104 bytes
 // prototype void (__thiscall ??1EditGroup@@QAE@XZ)(EditGroup* this)
 // callers   20   call targets   1
@@ -101,18 +110,8 @@ Purpose: Tear down an EditGroup: reinstall the base subobjects' own
 Return Value: n/a
 Status: Complete
 */
-void EditGroup::destruct() {
-    // Strip-all direction: the image's five derived-stage re-stores here -
-    // the whole content this BYTE_EXACT claim used to bank - are gone, as in
-    // CheckBox and RadioButton. What remains is the close() dispatch the
-    // image ends with.
-    char *const self = reinterpret_cast<char *>(this);
-
-    // NO `base` LOCAL. Naming `self - 0x8C` pins it to EAX and forces a
-    // `mov ecx, eax` before the call; letting VC6 common the subexpression
-    // itself puts it in ECX, where the receiver already has to be, and moves
-    // `this` to EAX - the image's own `mov eax, ecx` opening.
-    reinterpret_cast<EditGroup *>(self - 0x8C)->close();
+EditGroup::~EditGroup() {
+    close();
 }
 
 /*

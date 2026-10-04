@@ -15,6 +15,21 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
+// ORIGINAL: 0x0060FD80 sub_60fd80 0x0060FD80-0x0060FD88;0x0060FD90-0x0060FE40 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["task:generated-control-lifetime-owner", "historical seed:src/unrecovered/0060fd80.cpp", "pinned:terranx_original.exe:original vtables and complete deletion/control flow; virtual-base Dialog then GraphicWin destruction and conditional allocation release", "source:src/checkbox.cpp:genuine destructor and actual compiler-generated COFF entry; no handwritten thunk or executable-address forwarding"], "reason": "Genuine virtual-base hierarchy and complete destruction own this compiler-generated entry; preserve the full original shared deleting-body spans and seed findings. Approximate source coverage only, not verified byte or reference identity."}
+// symbol    ??_ECheckBox@@$4PPPPPPPM@A@AEPAXI@Z
+// TRIED: signature nullary -> thiscall member(unsigned int flag), returning void*; evidence: ecx read at entry with no stack access, `ret 4` pops one stack dword, `mov eax,ebx` before ret. Body is a scalar deleting destructor for a class with two virtual bases (Dialog, GraphicWin); the leading `sub ecx,[ecx-4]; jmp` is a vtordisp adjustor thunk with no C++ source spelling attempted here, so offsets into the vbase are read via the vbtable at runtime (matching the disassembly) rather than modeled with real virtual inheritance. Shares its tail with 0x0060FED0 (same body, folded).
+
+// ORIGINAL: 0x0060FEB0 sub_60feb0 0x0060FEB0-0x0060FEC1;0x0060FD90-0x0060FE40 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["task:generated-control-lifetime-owner", "historical seed:src/unrecovered/0060feb0.cpp", "pinned:terranx_original.exe:original vtables and complete deletion/control flow; virtual-base Dialog then GraphicWin destruction and conditional allocation release", "source:src/checkbox.cpp:genuine destructor and actual compiler-generated COFF entry; no handwritten thunk or executable-address forwarding"], "reason": "Genuine virtual-base hierarchy and complete destruction own this compiler-generated entry; preserve the full original shared deleting-body spans and seed findings. Approximate source coverage only, not verified byte or reference identity."}
+// symbol    ??_ECheckBox@@$4PPPPPLLI@EEE@AEPAXI@Z
+// TRIED: known-wall shape (two-span function: adjustor thunk + shared scalar-deleting-dtor body reached via jmp; no C++ source naturally splits into two spans or reproduces the fs:[0] frame). Own __thiscall Obj_60feb0::handler(uint) does the vbase subtraction, the vtable-relocation writes, close()/dtor() calls with the exact `base+off4`/`base+off8` `this` derived from the asm, and the conditional operator delete(base); compiles, MISMATCH at #0 (whole-function register/frame order)
+
+// ORIGINAL: 0x0060FED0 sub_60fed0 0x0060FED0-0x0060FEDE;0x0060FD90-0x0060FE40 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["task:generated-control-lifetime-owner", "historical seed:src/unrecovered/0060fed0.cpp", "pinned:terranx_original.exe:original vtables and complete deletion/control flow; virtual-base Dialog then GraphicWin destruction and conditional allocation release", "source:src/checkbox.cpp:genuine destructor and actual compiler-generated COFF entry; no handwritten thunk or executable-address forwarding"], "reason": "Genuine virtual-base hierarchy and complete destruction own this compiler-generated entry; preserve the full original shared deleting-body spans and seed findings. Approximate source coverage only, not verified byte or reference identity."}
+// symbol    ??_ECheckBox@@$4PPPPPPPM@KBI@AEPAXI@Z
+// TRIED: signature stdcall(int) -> thiscall member(unsigned int flag), returning void*; same body as 0x0060FD80 (this thunk only differs in the leading adjustor, `sub ecx,[ecx-4]; sub ecx,0xa18` vs `sub ecx,[ecx-4]`), which is why it is COMDAT-folded with it. Vtordisp thunk not modeled; see 0x0060FD80 for the reasoning.
+
 #include "stdafx.h"
 #include "original_seam.h"
 #include "checkbox.h"

@@ -53,10 +53,9 @@ class EditGroup : public virtual GraphicWin, public virtual Dialog {
  public:
   // The int in the catalogue is the compiler's hidden most-derived flag.
   EditGroup();
-  // Unfinished lifetime reconstruction at611A20. This legacy helper and
-  // its raw receiver adjustment are not a substitute for a genuine C++
-  // destructor. Complete/base destruction entries still need recovery.
-  void destruct();
+  // The compiler emits the basic, complete and deleting variants. Original
+  // 611A20 closes the derived stage; 612710 then destroys both virtual bases.
+  virtual ~EditGroup();
   // 0x00611A90, homed in editgroup.cpp; delete/free semantics remain there.
   void close();
   void set_text_limits(int limit);

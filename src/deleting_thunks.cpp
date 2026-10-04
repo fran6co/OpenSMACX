@@ -107,35 +107,21 @@
 #include "net_class.h"
 
 /*
-Verification note: the generated leaf suite proves that each scalar deleting
-body runs its destructor exactly once on the receiver it was given, releases
-the storage on bit 0 of the flags and on nothing else, and returns the
-object; and that each receiver fixup subtracts the amount recorded for it
-before forwarding its argument and its result untouched. It does NOT
-independently confirm that those amounts are what the original subtracted,
-because the suite's expectation comes from the same decoding the bodies do.
-What pins the model is the acceptance check in
-tools/generate_deleting_thunks.py: a row is emitted only when its bytes match
-one of the templates exactly under two independent decoders, and only when
-the popped byte count agrees between the thunk and what it calls.
+These adapters are transitional source owners, not a replacement for genuine
+C++ lifetime reconstruction. Move each original identity and its full spans
+to the owning class when its complete destruction is implemented and the
+compiler emits the corresponding entry. Preserve historical claims and
+findings during that migration.
 
-Fourteen bodies are outside the leaf suite's reach and are covered only by
-the batch gate: the nine whose destructor is already source-owned, and the
-five fixups that forward into them. Driving those from a leaf fixture would
-run a real destructor over a synthetic object.
-
-The check that would close the remaining gap is a differential oracle running
-each original thunk against its recovered twin inside the hybrid process with
-the destructor patched to record its receiver. That is not built here.
+A fixture which derives receiver adjustments from the same decoding as its
+candidate cannot independently establish those adjustments. Byte matching,
+host lifecycle projections and original ABI/reference evidence are distinct
+checks; none alone establishes complete game acceptance.
 */
 
-// Each seam defaults to the original body the thunk
-// reached; the hybrid redirects it to a recovered one at run
-// time, and the leaf suite rebinds it to a recorder.
+// Remaining executable-address targets are unfinished ownership seams.
 func_deleting_dtor PopupDtorTarget =
     original_method<func_deleting_dtor>(0x00406C00);
-func_deleting_forward Sub00612710Target =
-    original_method<func_deleting_forward>(0x00612710);
 func_deleting_forward Sub006336D0Target =
     original_method<func_deleting_forward>(0x006336D0);
 
@@ -1573,27 +1559,7 @@ void *__fastcall scalar_delete_base_button(void *self, void *,
     return self;
 }
 
-/*
-Purpose: Step the receiver back by the vtordisp stored ahead of it to the one
-         sub_612710 expects, then forward unchanged.
-// ORIGINAL: 0x00612700 sub_612700 0x00612700-0x00612708
-// symbol    ?adjust_this_sub_612700@@YIPAXPAX0I@Z
-// size      8 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the forwarded call's
-Status: Complete
-*/
-void *__fastcall adjust_this_sub_612700(void *self, void *,
-                                        unsigned int arg0) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    return (ORIGINAL(object - vtordisp)->*Sub00612710Target)(arg0);
-}
+// EditGroup deletion and receiver adjustment are compiler-owned in editgroup.cpp.
 
 /*
 Purpose: The compiler-generated scalar deleting destructor at
