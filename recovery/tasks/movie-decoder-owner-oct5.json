@@ -1,0 +1,195 @@
+{
+  "schema_version": 1,
+  "task_id": "movie-decoder-owner-oct5",
+  "target": "opensmacx",
+  "author": "framework-coordinator",
+  "intent": "Recover the complete composed media decoder, frame/Huffman/IDCT interfaces and caller closure in genuine compiled C++ owners. Preserve original leaks and register-flow findings, old identities/spans and all historical claims. Normalize nonstandard register-only interfaces for semantic coverage; do not invent original storage upper bounds or byte/game acceptance.",
+  "base_revision": "6b49617dfb584b9d86bd027025d7eb2235925d94",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6080832
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6083504
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6084432
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6084816
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6084992
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6085168
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6088796
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6089225
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6089490
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6090013
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6090368
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6090634
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6091088
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6092231
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6092882
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6093549
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6095564
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6097579
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6098306
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6099576
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6100070
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6100564
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6101058
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6101552
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6106736
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6108592
+    }
+  ],
+  "editable_files": [
+    "CMakeLists.txt",
+    "recovery/terrain_data.py",
+    "recovery/tests/movie_decoder_frame_test.cpp",
+    "recovery/tests/movie_decoder_host.cpp",
+    "recovery/tests/movie_decoder_huffman_host.cpp",
+    "recovery/tests/test_movie_decoder_bridge_source.py",
+    "recovery/tests/test_movie_decoder_frame_mutants.py",
+    "recovery/tests/test_movie_decoder_huffman_source.py",
+    "recovery/tests/test_movie_decoder_idct_source.py",
+    "recovery/tests/test_movie_decoder_integration.py",
+    "recovery/tests/test_movie_decoder_preparation_hook.py",
+    "recovery/tests/test_movie_decoder_six_block_math_source.py",
+    "recovery/tests/test_movie_decoder_transform_reader_source.py",
+    "recovery/tests/test_movie_media_case3_dispatch_source.py",
+    "recovery/tests/test_movie_media_last_six_bodies.py",
+    "src/general.cpp",
+    "src/general.h",
+    "src/leaf_recoveries.cpp",
+    "src/movie_decoder_frame.cpp",
+    "src/movie_decoder_frame.h",
+    "src/movie_decoder_huffman.cpp",
+    "src/movie_decoder_huffman.h",
+    "src/movie_decoder_idct.cpp",
+    "src/movie_decoder_idct.h",
+    "src/movie_decoder_owner.h",
+    "src/movie_decoder_records.h",
+    "src/movie_media.cpp",
+    "src/movie_media.h",
+    "src/movie_media_decoder.cpp",
+    "src/unrecovered/005cd750.cpp",
+    "src/unrecovered/005cd8d0.cpp",
+    "src/unrecovered/005cd980.cpp",
+    "src/unrecovered/005cda30.cpp",
+    "src/unrecovered/005ce85c.cpp",
+    "src/unrecovered/005cea09.cpp",
+    "src/unrecovered/005cf5c7.cpp",
+    "src/unrecovered/005cf852.cpp",
+    "src/unrecovered/005cfaed.cpp",
+    "src/unrecovered/005d02cc.cpp",
+    "src/unrecovered/005d0aab.cpp",
+    "src/unrecovered/005d1278.cpp",
+    "src/unrecovered/005d1466.cpp",
+    "src/unrecovered/005d1654.cpp",
+    "src/unrecovered/005d1842.cpp",
+    "src/unrecovered/005d1a30.cpp",
+    "src/unrecovered/005d2e70.cpp",
+    "src/unrecovered/005d35b0.cpp"
+  ],
+  "evidence": [
+    "Coordinator-authorized full media-owner migration includes the composed six-block caller, row converters, frame/Huffman/IDCT interfaces and shared storage. Keep the existing mapped 5CEB12 helper as the sixteen-call 5CEA09 dependency rather than duplicate its algorithm.",
+    "Six mapped storage starts with separately reviewed minimum access windows; no original object upper-bound claims. Pinned BSS process window is zero initially and has no file backing.",
+    "Preserve advanced runtime bit cursor, distinct frame/transform bit states, aligned scratch, three immediate separate calloc publications and native leak behavior.",
+    "Original custom ESI/EDI/EBP/EAX interfaces normalized into typed source calls. Full native application link, fresh symbol facts, claim/reference continuity and source tests required before manual coordinator integration. x87 extended-intermediate equivalence and runtime playback remain unproven."
+  ]
+}

@@ -3,6 +3,7 @@
 // do not establish recovered codec behavior or working playback.
 #include "stdafx.h"
 #include "movie_media.h"
+#include "movie_decoder_owner.h"
 #include "general.h"
 #include "leaf_recoveries.h"
 
@@ -509,7 +510,6 @@ extern "C" int __fastcall sub_5cc860(IDirectDraw2 *provider,
   return 0;
 }
 
-extern "C" void __fastcall sub_5cd750(MediaRuntime *, unsigned int *);
 int __fastcall sub_5cdad0(int *, int *, int, int, int);
 void __cdecl sub_5cd3b0(char, char, char, char, char, char,
                         int *, unsigned int);
@@ -522,9 +522,9 @@ extern "C" void __fastcall sub_5cd980(MediaRuntime *, unsigned char *,
                                       unsigned char *, int, unsigned int);
 extern "C" void __fastcall sub_5cda30(MediaRuntime *, unsigned char *,
                                       unsigned char *, int, unsigned int);
-int __cdecl sub_5cfaed(unsigned char *, int, int);
+void __cdecl sub_5cfaed(unsigned char *, BYTE *, int);
 void __cdecl sub_5d02cc(unsigned char *, void *, int);
-int __fastcall sub_5d35b0(int *, int, int, int, int);
+int __fastcall sub_5d35b0(MediaRuntime *, const BYTE *, BYTE *, DWORD, int);
 extern "C" void __fastcall sub_5d3f50(int *);
 
 // Native 16-bit block writer. Its scale/bank reads are views into the color
@@ -618,8 +618,7 @@ extern "C" int __fastcall sub_5cc940(MediaRuntime *runtime,
                                      MediaQueueRecord *record) {
   // The historical case-3 placeholder note above is superseded by the
   // explicit 3/6/12-byte short-run paths and >12-byte dispatch below.
-  // The raw-output callees 5CFAED/5D02CC are still unfinished sentinels;
-  // likewise 5D35B0 for record kinds 5..7. Playback is not complete.
+  // 5D35B0 and its separate downstream renderer remain unfinished.
   MediaDescriptor &d = *runtime->descriptor;
   BYTE *packet = record->payload;
   const DWORD record_kind = record->field_0c;
@@ -627,7 +626,7 @@ extern "C" int __fastcall sub_5cc940(MediaRuntime *runtime,
 
   switch (record_kind) {
   case 1:
-    sub_5cd750(runtime, (unsigned int *)packet);
+    sub_5cd750(runtime, packet);
     break;
   case 3:
     d.output_width_64 = (DWORD)(LONG)media_read_signed_word(packet + 0);
@@ -799,12 +798,10 @@ extern "C" int __fastcall sub_5cc940(MediaRuntime *runtime,
       for (DWORD block_x = 0; block_x < d.output_width_64; block_x += 16) {
         const unsigned int run_bytes = *compressed++;
         if (run_bytes > 12) {
-          if (four_byte_pixels)
-            sub_5cfaed((unsigned char *)compressed, (int)output_block,
-                       (int)block_pitch);
-          else
-            sub_5d02cc((unsigned char *)compressed, output_block,
-                       (int)block_pitch);
+          // The pinned >12 branch has one direct edge, to 5D02CC, regardless
+          // of the output-format flag used for block stepping below.
+          sub_5d02cc((unsigned char *)compressed, output_block,
+                     (int)block_pitch);
         } else if (run_bytes == 3) {
           if (four_byte_pixels)
             sub_5cd3b0((char)compressed[0], (char)compressed[0],
@@ -847,7 +844,7 @@ extern "C" int __fastcall sub_5cc940(MediaRuntime *runtime,
     break;
   }
   case 4:
-    sub_5cd2d0((DWORD *)&runtime->unresolved_original_storage_3f8_607[0],
+    sub_5cd2d0(runtime->decoder_context_3f8.block_transform_weights,
                (int)runtime->record_scale_byte_048);
     if (runtime->queue_record_kind == 1) {
       if ((d.flags & 0x40) == 0 && d.pixel_format.total_component_bits < 0x11) {
@@ -880,9 +877,8 @@ extern "C" int __fastcall sub_5cc940(MediaRuntime *runtime,
         runtime->output_rect_left_14 *
             (((d.flags & 0x40) == 0 &&
               d.pixel_format.total_component_bits <= 0x10) ? 2 : 4);
-    sub_5d35b0((int *)runtime, (int)compressed, (int)destination,
-               (int)output_pitch,
-               (int)runtime->selected_record_kind_39c);
+    sub_5d35b0(runtime, compressed, destination, output_pitch,
+               runtime->selected_record_kind_39c);
     break;
   }
   }
@@ -2313,58 +2309,190 @@ release_playback:
 }
 
 // ORIGINAL: 0x005CD750 sub_5cd750 0x005CD750-0x005CD8C5
+// TRIED: `extern "C" int __cdecl sub_5cd750()` fallback head; the entry `mov esi,ecx / mov [ebp-4],edx` with no stack reads is __fastcall(int*, uint*), so the signature was changed.
 // symbol    @sub_5cd750@8
 // kind      game
-// TRIED: `extern "C" int __cdecl sub_5cd750()` fallback head; the entry `mov esi,ecx / mov [ebp-4],edx` with no stack reads is __fastcall(int*, uint*), so the signature was changed.
-extern "C" void __fastcall sub_5cd750(MediaRuntime *, unsigned int *) {
-    // BODY GOES HERE.
+extern "C" void __fastcall sub_5cd750(MediaRuntime *runtime,
+                                      BYTE *packet) {
+  MediaDescriptor &descriptor = *runtime->descriptor;
+  DWORD word;
+
+  // The native loads are unaligned dwords followed by SHR 16.  Preserve the
+  // complete access widths while expressing them without unaligned aliasing.
+  memcpy(&word, packet - 2, sizeof(word));
+  descriptor.output_width_64 = word >> 16;
+  memcpy(&word, packet, sizeof(word));
+  descriptor.output_height_60 = word >> 16;
+  memcpy(&word, packet + 2, sizeof(word));
+  runtime->unresolved_word_618 = word >> 16;
+  memcpy(&word, packet + 4, sizeof(word));
+  runtime->unresolved_word_61c = word >> 16;
+
+  DWORD row = 0;
+  if (runtime->unresolved_word_61c != 0) {
+    const BYTE *sample = packet + 13;
+    DWORD palette_index = 0;
+    while (row < runtime->unresolved_word_61c) {
+      const DWORD scale = descriptor.setup_value_78;
+      const DWORD first = (DWORD)sample[-1] * scale;
+      const DWORD second = (DWORD)sample[0] * scale;
+      const DWORD third = (DWORD)sample[1] * scale;
+
+      // Keep the original unsigned constant-divide source expression.  The
+      // pinned VC6 lowering is MUL by 0x51EB851F followed by SHR 5.
+      DWORD first_percent = first / 100;
+      DWORD second_percent = second / 100;
+      DWORD third_percent = third / 100;
+      if (first_percent > 0xff) first_percent = 0xff;
+      if (second_percent > 0xff) second_percent = 0xff;
+      if (third_percent > 0xff) third_percent = 0xff;
+
+      descriptor.palette_rgb_triplets_b0[palette_index] = (BYTE)first_percent;
+      descriptor.palette_rgb_triplets_b0[palette_index + 1] = (BYTE)second_percent;
+      descriptor.palette_rgb_triplets_b0[palette_index + 2] = (BYTE)third_percent;
+      ++row;
+      palette_index += 3;
+      sample += 3;
+    }
+  }
 }
 
 // ORIGINAL: 0x005CD8D0 sub_5cd8d0 0x005CD8D0-0x005CD97B
+// TRIED: the given `__stdcall(int,int,int)` head - disasm reads edx with no prior init (a real 2nd register param) and `push ecx` at entry is pure stack reservation, not `this` preservation; rewrote as `__fastcall(int*,int,int,int,uint)` matching Ghidra's 5-param read, with differently-named cdecl externs for the two nullary-scaffolded callees. MISMATCH #4 push/mov, prologue register shape only.
 // symbol    @sub_5cd8d0@20
 // kind      game
-// TRIED: the given `__stdcall(int,int,int)` head - disasm reads edx with no prior init (a real 2nd register param) and `push ecx` at entry is pure stack reservation, not `this` preservation; rewrote as `__fastcall(int*,int,int,int,uint)` matching Ghidra's 5-param read, with differently-named cdecl externs for the two nullary-scaffolded callees. MISMATCH #4 push/mov, prologue register shape only.
-extern "C" void __fastcall sub_5cd8d0(MediaRuntime *, BYTE *, BYTE *, int, unsigned int) {
-    // BODY GOES HERE.
+extern "C" void __fastcall sub_5cd8d0(MediaRuntime *runtime,
+                                      BYTE *compressed, BYTE *destination,
+                                      int unused, unsigned int pitch) {
+  // The second fastcall argument arrives in EDX and is retained in +5F8.
+  // The unused fourth logical argument remains present for the native stack
+  // cleanup and is deliberately not repurposed.
+  MediaDescriptor &descriptor = *runtime->descriptor;
+  runtime->decoder_context_3f8.predictor_500 = 0;
+  runtime->decoder_context_3f8.predictor_4fc = 0;
+  runtime->decoder_context_3f8.predictor_4f8 = 0;
+  runtime->decoder_context_3f8.compressed_input_200 = compressed;
+  runtime->decoder_context_3f8.bit_position_204 = 0;
+  (void)unused;
+  DWORD block_y = 0;
+  DWORD row_step = (pitch >> 1) << 5;
+  BYTE *row_destination = destination;
+  while (block_y < descriptor.output_height_60) {
+    DWORD block_x = 0;
+    BYTE *block_destination = row_destination;
+    while (block_x < descriptor.output_width_64) {
+      if (runtime->record_option_040 != 0) {
+        sub_5d1466(block_destination, (int)pitch,
+                   &runtime->decoder_context_3f8);
+      } else {
+        sub_5d1842(block_destination, (int)pitch,
+                   &runtime->decoder_context_3f8);
+      }
+      block_x += 0x10;
+      block_destination += 0x20;
+    }
+    row_destination += row_step;
+    block_y += 0x10;
+  }
 }
 
 // ORIGINAL: 0x005CD980 sub_5cd980 0x005CD980-0x005CDA2C
 // symbol    @sub_5cd980@20
 // kind      game
-extern "C" void __fastcall sub_5cd980(MediaRuntime *, BYTE *, BYTE *, int, unsigned int) {
-    // BODY GOES HERE.
+extern "C" void __fastcall sub_5cd980(MediaRuntime *runtime,
+                                      BYTE *compressed, BYTE *destination,
+                                      int unused, unsigned int pitch) {
+  MediaDescriptor &descriptor = *runtime->descriptor;
+  runtime->decoder_context_3f8.predictor_500 = 0;
+  runtime->decoder_context_3f8.predictor_4fc = 0;
+  runtime->decoder_context_3f8.predictor_4f8 = 0;
+  runtime->decoder_context_3f8.compressed_input_200 = compressed;
+  runtime->decoder_context_3f8.bit_position_204 = 0;
+  (void)unused;
+  DWORD block_y = 0;
+  DWORD row_step = (pitch >> 2) << 6;
+  BYTE *row_destination = destination;
+  while (block_y < descriptor.output_height_60) {
+    DWORD block_x = 0;
+    BYTE *block_destination = row_destination;
+    while (block_x < descriptor.output_width_64) {
+      if (runtime->record_option_040 != 0) {
+        sub_5d1654(block_destination, (int)pitch,
+                   &runtime->decoder_context_3f8);
+      } else {
+        sub_5d1a30(block_destination, (int)pitch,
+                   &runtime->decoder_context_3f8);
+      }
+      block_x += 0x10;
+      block_destination += 0x40;
+    }
+    row_destination += row_step;
+    block_y += 0x10;
+  }
 }
 
 // ORIGINAL: 0x005CDA30 sub_5cda30 0x005CDA30-0x005CDAC4
+// TRIED: nothing forced the `push ecx`-as-spill-slot / `pop ecx` prologue trick the original uses for one local; plain locals compile 6 bytes shorter (142 vs 148), diverging early
 // symbol    @sub_5cda30@20
 // kind      game
-// TRIED: nothing forced the `push ecx`-as-spill-slot / `pop ecx` prologue trick the original uses for one local; plain locals compile 6 bytes shorter (142 vs 148), diverging early
-extern "C" void __fastcall sub_5cda30(MediaRuntime *, BYTE *, BYTE *, int, unsigned int) {
-    // BODY GOES HERE.
+extern "C" void __fastcall sub_5cda30(MediaRuntime *runtime,
+                                      BYTE *compressed, BYTE *destination,
+                                      int unused, unsigned int pitch) {
+  MediaDescriptor &descriptor = *runtime->descriptor;
+  runtime->decoder_context_3f8.compressed_input_200 = compressed;
+  runtime->decoder_context_3f8.bit_position_204 = 0;
+  runtime->decoder_context_3f8.predictor_500 = 0;
+  runtime->decoder_context_3f8.predictor_4fc = 0;
+  runtime->decoder_context_3f8.predictor_4f8 = 0;
+  (void)unused;
+  DWORD block_y = 0;
+  DWORD row_step = (pitch >> 1) << 5;
+  BYTE *row_destination = destination;
+  while (block_y < descriptor.output_height_60) {
+    DWORD block_x = 0;
+    BYTE *block_destination = row_destination;
+    while (block_x < descriptor.output_width_64) {
+      sub_5d1278(block_destination, (int)pitch,
+                 &runtime->decoder_context_3f8);
+      block_x += 0x10;
+      block_destination += 0x20;
+    }
+    row_destination += row_step;
+    block_y += 0x10;
+  }
 }
 
 // ORIGINAL: 0x005CFAED sub_5cfaed 0x005CFAED-0x005D02CC
-// symbol    ?sub_5cfaed@@YAHPAEHH@Z
-// kind      game
 // TRIED: signature changed to (unsigned char *, int, int) - the disasm reads 3 stack args ([esp+0x38] at entry, [esp+0x20]/[esp+0x24] after the scratch frame is released), not the 0-arg contract. The body is a mechanically-generated 1:1 transcription (script-derived from the raw disassembly, not hand-typed, to avoid transcription error over ~150 near-identical calls): 6x (sub_5cf150(); 8x sub_5d29e1; 8x sub_5d2b20) then 16x OutputPixelRow with an `edi` accumulator stepped by param3. sub_5d29e1/sub_5d2b20/OutputPixelRow all pass their SECOND (and for OutputPixelRow, first/third) operand through ESI/EDI/EBX with NO stack push at those call sites - a register convention this rewrite cannot reproduce without inline asm (banned), so it passes the same values as ordinary arguments instead. Low similarity (sim ~0.1-0.3 across all four builds) is a direct, expected consequence of that convention mismatch, not a structural error - every call target, argument value and order is transcribed 1:1 from the disassembly. Landed for coverage; TRIED as byte-exact without __asm.
-int __cdecl sub_5cfaed(BYTE *, int, int) {
-    // BODY GOES HERE.
-    return 0; // PLACEHOLDER: link continuity only, seed behavior retained.
+// symbol    ?sub_5cfaed@@YAXPAE0H@Z
+// kind      game
+void __cdecl sub_5cfaed(BYTE *compressed, BYTE *destination,
+                        int row_pitch_bytes) {
+  MediaTransformBitState &reader =
+      movie_media_conversion_tables.transform_bit_state;
+  reader.cursor = compressed + 1;
+  reader.accumulator = *compressed;
+  reader.available_bits = 8;
+
+  for (int phase = 0; phase != 6; ++phase)
+    movie_media_transform_block_pair(phase);
+  movie_media_write_macroblock_rows(destination, row_pitch_bytes, 0);
 }
 
 // ORIGINAL: 0x005D02CC sub_5d02cc 0x005D02CC-0x005D0AAB
+// TRIED: the callees use a custom register convention (row/block ptr in esi, the single stack arg written once to a fixed [esp] slot instead of pushed per call; OutputPixelRow16 takes esi/ebx/edi with no stack args at all) that no standard C++ calling convention expresses without __asm. Landed all 96 sub_5d29e1/sub_5d2b20 calls plus the 16 OutputPixelRow16 calls with the right addresses/order as plain cdecl(void*,void*[,void*]) - compiles, right call graph, but sim only ~0.12 since every call site's instruction shape differs. Signature changed to (unsigned char*, void*, int) from the disasm's 3-arg use (a1=byte* string, a2=dest, a3=row stride). Not retried given the convention mismatch is structural, not a wording issue.
 // symbol    ?sub_5d02cc@@YAXPAEPAXH@Z
 // kind      game
-// TRIED: the callees use a custom register convention (row/block ptr in esi, the single stack arg written once to a fixed [esp] slot instead of pushed per call; OutputPixelRow16 takes esi/ebx/edi with no stack args at all) that no standard C++ calling convention expresses without __asm. Landed all 96 sub_5d29e1/sub_5d2b20 calls plus the 16 OutputPixelRow16 calls with the right addresses/order as plain cdecl(void*,void*[,void*]) - compiles, right call graph, but sim only ~0.12 since every call site's instruction shape differs. Signature changed to (unsigned char*, void*, int) from the disasm's 3-arg use (a1=byte* string, a2=dest, a3=row stride). Not retried given the convention mismatch is structural, not a wording issue.
-void __cdecl sub_5d02cc(BYTE *, void *, int) {
-    // BODY GOES HERE.
-}
+void __cdecl sub_5d02cc(BYTE *compressed, void *destination,
+                        int row_pitch_bytes) {
+  MediaTransformBitState &reader =
+      movie_media_conversion_tables.transform_bit_state;
+  reader.cursor = compressed + 1;
+  reader.accumulator = *compressed;
+  reader.available_bits = 8;
 
-// ORIGINAL: 0x005D35B0 sub_5d35b0 0x005D35B0-0x005D3980
-// symbol    ?sub_5d35b0@@YIHPAHHHHH@Z
-// kind      game
-// TRIED: __fastcall(param_1,param_2) + 3 stack args (IDA's 3-arg __stdcall guess missed the two register params); the imul/shl/shr/adc fixed-point-multiply idiom is written as `__int64` products (VC6 keyword, not the forbidden `long long`) rather than replicating the exact carry sequence. MISMATCH #7, not chased.
-int __fastcall sub_5d35b0(int *, int, int, int, int) {
-    // BODY GOES HERE.
-    return 0; // PLACEHOLDER: link continuity only, seed behavior retained.
+  for (int phase = 0; phase != 6; ++phase)
+    movie_media_transform_block_pair(phase);
+  movie_media_write_macroblock_rows(
+      reinterpret_cast<unsigned char *>(destination), row_pitch_bytes, 1);
 }

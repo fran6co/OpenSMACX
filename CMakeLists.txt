@@ -173,6 +173,10 @@ set(OPENSMACX_SOURCES
     src/diplowin.cpp
     src/alphamovie.cpp
     src/movie_media.cpp
+    src/movie_media_decoder.cpp
+    src/movie_decoder_frame.cpp
+    src/movie_decoder_huffman.cpp
+    src/movie_decoder_idct.cpp
     src/checkbutton.cpp
     src/cursor.cpp
     src/imagebutton.cpp
@@ -322,7 +326,7 @@ endif()
 set(OPENSMACX_TERRAIN_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/build/recovery/preparation/terrain-data")
 execute_process(
     COMMAND "${OPENSMACX_UV_EXECUTABLE}" run --project "${CMAKE_CURRENT_SOURCE_DIR}" python -c
-        "import sys; from pathlib import Path; from runpy import run_path; run_path(sys.argv[1])['terrain_initializers'](Path(sys.argv[2]), Path(sys.argv[3]), Path(sys.argv[4]))"
+        "import sys; from pathlib import Path; from runpy import run_path; run_path(sys.argv[1])['project_initializers'](Path(sys.argv[2]), Path(sys.argv[3]), Path(sys.argv[4]))"
         "${CMAKE_CURRENT_SOURCE_DIR}/recovery/terrain_data.py" "${CMAKE_CURRENT_SOURCE_DIR}"
         "${OPENSMACX_ORIGINAL_IMAGE}" "${OPENSMACX_TERRAIN_DIRECTORY}"
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
@@ -334,6 +338,7 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     "${OPENSMACX_ORIGINAL_IMAGE}" "${CMAKE_CURRENT_SOURCE_DIR}/src/IMAGE_PIN"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/game.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/src/mapwin.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/map.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/movie_media_decoder.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/recovery/terrain_data.py")
 target_include_directories(OpenSMACX PRIVATE "${OPENSMACX_TERRAIN_DIRECTORY}")
 

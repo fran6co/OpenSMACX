@@ -3858,30 +3858,6 @@ static int *const IntersectRectProc = (int *)0x00669338;
 // (Flip), which is the primary surface's role in a flip chain.
 static int *const DirectDrawPrimarySurface = (int *)0x009BC4A4;
 
-// ORIGINAL: 0x005D0D82 sub_5d0d82 0x005D0D82-0x005D1278 FILE
-// symbol    ?sub_5d0d82@@YAHXZ
-// size      1270 bytes
-// prototype
-// callers   1   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x005D29E1 0x005D2C0A
-// TRIED: judged on its own disassembly (a prior batch-10 note on this file was removed as recorded-on-a-placeholder; this supersedes it with fresh evidence). This is genuinely register-passing on BOTH sides - entry and its two callees - not just parameter count: - entry: `push ecx; push edx; sub esp,0x300` then the body reads `esi` (`mov edx,[esi]` at 0x5D0D8C, later `unaff_ESI[idx]`), `edi` (`unaff_EDI>>5` / `unaff_EDI&0x1f` as a bitstream bit-cursor from the first instruction that touches it, 0x5D0DB4), `ebp` (`[ebp+(edi>>5)*4]` at 0x5D0DBB, a bitstream data base) and `eax` (`imul edx` at 0x5D0D91 multiplies THE INCOMING eax, never loaded from anywhere) - Ghidra's own decompile names all four unaff_EBP/unaff_ESI/unaff_EDI/in_EAX, i.e. its dataflow analysis independently found no definition for them inside this function either. ecx/edx ARE ordinary __fastcall params (pushed to [esp] then reloaded near the tail at 0x5D10D8/0x5D1196), so the two-argument part alone would be expressible - it is the extra four registers that are not. - callees: the eight `call 0x5d29e1` sites (0x5D1057..0x5D10D3) and eight `call 0x5d2c0a` sites (0x5D10E6..0x5D117E) each set up ONLY `esi`/`edi` immediately before the call (`lea esi,[esp+N]; lea edi,[esp+M]; call`) - no ecx/edx/stack push at all. No MSVC convention (cdecl/stdcall/fastcall/thiscall) passes arguments in esi/edi, so even a correct internal transcription of sub_5d0d82 could not legally CALL its own two helpers from standard C++. This is two independent, compounding blockers (the entry contract and the call sites inside it), and both require `__asm`/`_emit` to express, which the rules bar outright regardless of effort spent. Left the compiling placeholder in place (MISMATCH #0, same divergence point any body would hit given the prologue itself can't match) rather than writing an untestable ~150-line transcription whose only achievable tier is identical to what is already there.
-//
-// TABLES this body reads, recorded here because the placeholder does not
-// reference them and so carries no binding (naming them would bind names to
-// nothing): 0x009C9698 a Huffman escape length/value table indexed by a
-// 15-bit code >> 0xd; 0x009C95AC a small index-remap table indexed by a
-// decoded code length, feeding the weight array; plus six short lookup
-// tables selected by leading-zero-count-style range checks
-// (0x800/0x400/0x200/0x100/0x80/0x40/0x20). The whole function is a
-// Huffman/range-coded bitstream decoder over a 64-entry int weight table -
-// the DCT-coefficient stage of the movie codec, to judge by the table shapes
-// and the 64-int output.
-int __cdecl sub_5d0d82() {
-    return 0;
-}
-
 // ORIGINAL: 0x005D3DF0 sub_5d3df0 0x005D3DF0-0x005D3F48 FILE
 // symbol    ?sub_5d3df0@@YIHPAHH@Z
 // size      344 bytes
@@ -4592,9 +4568,6 @@ void __cdecl sub_5d1b88(unsigned int *outp, int *srcESI, int *srcEDI) {
     }
 }
 
-// Fixed-slot bindings carried from 005d2536.cpp
-static char *const MovieCoeffPackTable = (char *)0x009C672C;
-
 // ORIGINAL: 0x005D2536 sub_5d2536 0x005D2536-0x005D271D FILE
 // symbol    ?sub_5d2536@@YAXPAH00@Z
 // TRIED: homed into general.cpp (its real TU) 2026-09-03 and reverted for one reason:
@@ -4626,23 +4599,26 @@ static char *const MovieCoeffPackTable = (char *)0x009C672C;
 // context from the first token rather than behind a file read. This
 // emitter computes declarations; it does not carry lessons.
 
+static DWORD movie_coefficient_pack_word(int index) {
+    DWORD value;
+    const BYTE *owner = reinterpret_cast<const BYTE *>(
+        &movie_media_conversion_tables);
+    const DWORD byte_offset = 0x90c + (DWORD)index * 8;
+    memcpy(&value, owner + byte_offset, sizeof(value));
+    return value;
+}
+
 void __cdecl sub_5d2536(int *coeff_a, int *coeff_b, int *out_words) {
-    out_words[0] = ((*(int *)(MovieCoeffPackTable + coeff_a[0x40] * 8) << 8 | *(int *)(MovieCoeffPackTable + coeff_b[1] * 8)) << 0x10)
-           | (*(int *)(MovieCoeffPackTable + coeff_a[0] * 8) << 8 | *(int *)(MovieCoeffPackTable + coeff_b[0] * 8));
-    out_words[1] = ((*(int *)(MovieCoeffPackTable + coeff_a[0x41] * 8) << 8 | *(int *)(MovieCoeffPackTable + coeff_b[3] * 8)) << 0x10)
-           | (*(int *)(MovieCoeffPackTable + coeff_a[1] * 8) << 8 | *(int *)(MovieCoeffPackTable + coeff_b[2] * 8));
-    out_words[2] = ((*(int *)(MovieCoeffPackTable + coeff_a[0x42] * 8) << 8 | *(int *)(MovieCoeffPackTable + coeff_b[5] * 8)) << 0x10)
-           | (*(int *)(MovieCoeffPackTable + coeff_a[2] * 8) << 8 | *(int *)(MovieCoeffPackTable + coeff_b[4] * 8));
-    out_words[3] = ((*(int *)(MovieCoeffPackTable + coeff_a[0x43] * 8) << 8 | *(int *)(MovieCoeffPackTable + coeff_b[7] * 8)) << 0x10)
-           | (*(int *)(MovieCoeffPackTable + coeff_a[3] * 8) << 8 | *(int *)(MovieCoeffPackTable + coeff_b[6] * 8));
-    out_words[4] = ((*(int *)(MovieCoeffPackTable + coeff_a[0x44] * 8) << 8 | *(int *)(MovieCoeffPackTable + coeff_b[9] * 8)) << 0x10)
-           | (*(int *)(MovieCoeffPackTable + coeff_a[4] * 8) << 8 | *(int *)(MovieCoeffPackTable + coeff_b[8] * 8));
-    out_words[5] = ((*(int *)(MovieCoeffPackTable + coeff_a[0x45] * 8) << 8 | *(int *)(MovieCoeffPackTable + coeff_b[0xb] * 8)) << 0x10)
-           | (*(int *)(MovieCoeffPackTable + coeff_a[5] * 8) << 8 | *(int *)(MovieCoeffPackTable + coeff_b[0xa] * 8));
-    out_words[6] = ((*(int *)(MovieCoeffPackTable + coeff_a[0x46] * 8) << 8 | *(int *)(MovieCoeffPackTable + coeff_b[0xd] * 8)) << 0x10)
-           | (*(int *)(MovieCoeffPackTable + coeff_a[6] * 8) << 8 | *(int *)(MovieCoeffPackTable + coeff_b[0xc] * 8));
-    out_words[7] = ((*(int *)(MovieCoeffPackTable + coeff_a[0x47] * 8) << 8 | *(int *)(MovieCoeffPackTable + coeff_b[0xf] * 8)) << 0x10)
-           | (*(int *)(MovieCoeffPackTable + coeff_a[7] * 8) << 8 | *(int *)(MovieCoeffPackTable + coeff_b[0xe] * 8));
+    for (int index = 0; index != 8; ++index) {
+        const DWORD upper_left = movie_coefficient_pack_word(coeff_a[0x40 + index]);
+        const DWORD upper_right = movie_coefficient_pack_word(coeff_b[1 + index * 2]);
+        const DWORD lower_left = movie_coefficient_pack_word(coeff_a[index]);
+        const DWORD lower_right = movie_coefficient_pack_word(coeff_b[index * 2]);
+        const DWORD upper = (upper_left << 8) | upper_right;
+        const DWORD lower = (lower_left << 8) | lower_right;
+        const DWORD result = (upper << 16) | lower;
+        memcpy(&out_words[index], &result, sizeof(result));
+    }
 }
 
 // Fixed-slot bindings carried from 0062d1e0.cpp

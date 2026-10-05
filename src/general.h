@@ -293,37 +293,45 @@ void __cdecl sub_5cee80(int *src);
 int __cdecl enemy_veh(int faction);
 void __cdecl enemy_turn(int faction);
 int __cdecl enemy_move(int veh_id);
-int __cdecl alien_move(int veh_id);
-int __cdecl enemy_planet_buster(int veh_id);
 // netdaemon.h owns synch_veh and veh.cpp defines action without declaring it;
 // this TU cannot include netdaemon.h (see general.cpp), so both are restated
 // here. Repeating a free-function declaration is legal, unlike a class's.
 void __cdecl synch_veh(int veh_id);
 int __cdecl action(int veh_id);
-void __cdecl sub_5cef8a(int, int);
+void __cdecl sub_5cef8a(unsigned char *row_base, int stride_arg);
 int __cdecl sub_5cf150();
 void __cdecl sub_5cf2f0(const unsigned int *bit_buffer, unsigned int bit_pos,
                         char *out_struct);
 void __cdecl OutputPixelRow(int *pEdi, unsigned int *pEsi, unsigned int *pEbx);
 void __cdecl OutputPixelRow16(short *pEdi, unsigned int *pEsi,
                               unsigned int *pEbx);
-int __cdecl sub_5cfaed(unsigned char *param1, int param2, int param3);
+int __cdecl sub_5ceb12(const unsigned char *srcA,
+                       const unsigned char *srcB, unsigned int *dst);
+void __cdecl sub_5cfaed(unsigned char *compressed, unsigned char *destination,
+                        int row_pitch_bytes);
 void __cdecl sub_5d02cc(unsigned char *, void *, int);
-int __cdecl sub_5d0aab();
-int __cdecl sub_5d0d82();
-int __cdecl sub_5d1278(int, int, int *);
-int __cdecl sub_5d1466(int baseY, int stride, void *ctx);
-int __cdecl sub_5d1654(int baseY, int stride, void *ctx);
-int __cdecl sub_5d1842(int baseY, int stride, void *ctx);
-int __cdecl sub_5d1a30(int, int, int);
+struct MediaRuntime;
+struct MediaDecoderContext;
+void __cdecl sub_5d0aab(MediaDecoderContext *context, unsigned int *scratch_words);
+void __cdecl sub_5d0d82(MediaDecoderContext *context, unsigned int predictor_value,
+                        unsigned char *destination, int row_pitch_bytes);
+void __cdecl sub_5d1278(unsigned char *base, int stride, MediaDecoderContext *context);
+void __cdecl sub_5d1466(unsigned char *base, int stride, MediaDecoderContext *context);
+void __cdecl sub_5d1654(unsigned char *base, int stride, MediaDecoderContext *context);
+void __cdecl sub_5d1842(unsigned char *base, int stride, MediaDecoderContext *context);
+void __cdecl sub_5d1a30(unsigned char *base, int stride, MediaDecoderContext *context);
 void __cdecl sub_5d1b88(unsigned int *outp, int *srcESI, int *srcEDI);
 void __cdecl sub_5d2037(int *data, int *tables, unsigned int *out);
-void __cdecl sub_5d2536(int *edi, int *esi, int *ebp);
+void __cdecl sub_5d2536(int *coeff_a, int *coeff_b, int *out_words);
 int __cdecl sub_5d2761(unsigned int *src, unsigned int *dst, int count);
 int __cdecl sub_5d2834(unsigned int *param_1, int *param_2, int param_3);
 int __cdecl sub_5d2901(int *param_1, int *param_2, int *param_3, int param_4);
-void __fastcall sub_5d2e70(int, int, int);
-int __fastcall sub_5d35b0(int *, int, int, int, int);
+void __fastcall sub_5d2e70(unsigned char *coefficient_block,
+                           unsigned char *temporary_block, int row_width);
+int __fastcall sub_5d35b0(MediaRuntime *runtime,
+                          const unsigned char *compressed,
+                          unsigned char *destination,
+                          unsigned int output_pitch, int record_kind);
 int __fastcall sub_5d3980(int *param_1, unsigned int *param_2);
 int __fastcall sub_5d3df0(int *, int);
 void __fastcall sub_5d4020(void *thisPtr, unsigned char *dest,

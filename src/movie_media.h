@@ -14,9 +14,15 @@ struct MediaQueueRecord;
 // Verified storage chain produced by the media color setup and consumed by
 // movie conversion routines in general.cpp. The coefficient subviews are
 // aliases into the second halves of the 512-entry contribution arrays.
+struct MediaTransformBitState {
+  const BYTE *cursor;                                // 9C5920
+  LONG available_bits;                               // 9C5924
+  DWORD accumulator;                                 // 9C5928
+};
+
 struct MediaConversionTableStorage {
   DWORD block_scale_entries[64];                    // 9C5820..9C591F; decoder scale table
-  BYTE unresolved_original_storage_5920_592B[0x0c]; // 9C5920..9C592B
+  MediaTransformBitState transform_bit_state;        // 9C5920..9C592B
   DWORD packed_component_words[3 * 128];             // 9C592C..9C5F2B
   struct {
     DWORD words[1024];                               // 9C5F2C..9C6F2B
@@ -119,6 +125,22 @@ struct MediaQueueRecord {
   DWORD field_0c; // +0c; ring-specific kind/snapshot role
 };
 
+// Native 5D0AAB/5D0D82 share this exact context from ESI: 64 weight DWORDs,
+// three delta predictors, unresolved bytes through context+1FF, then input
+// and bit cursor at +200/+204. The decoder calls receive this subobject, not
+// the MediaRuntime base.
+struct MediaDecoderContext {
+  DWORD block_transform_weights[64];       // +000..0FF
+  DWORD predictor_4f8;                     // +100
+  DWORD predictor_4fc;                     // +104
+  DWORD predictor_500;                     // +108
+  BYTE unresolved_original_storage_10c_1ff[0xf4]; // +10C..1FF
+  const BYTE *compressed_input_200;         // +200
+  DWORD bit_position_204;                   // +204
+};
+typedef char media_decoder_context_extent_check[
+    sizeof(MediaDecoderContext) == 0x208 ? 1 : -1];
+
 struct MediaRuntime {
   // Original-mapped family bodies proposed for this owner.
   static int __fastcall initialize_stream(LPSTR filename,
@@ -203,10 +225,14 @@ struct MediaRuntime {
   DWORD decoder_state_3ec;                       // +3ec; 5CE6E3 input/output
   DWORD decoder_state_3f0;                       // +3f0; 5CE6E3 input/output
   DWORD decoder_state_3f4;                       // +3f4; 5CE6E3 input/output
-  BYTE unresolved_original_storage_3f8_607[0x210];// +3f8..+607
+  MediaDecoderContext decoder_context_3f8;       // +3f8..+5ff
+  BYTE unresolved_original_storage_600_607[8];   // +600..+607
   DWORD start_ticks;                              // +608
   DWORD end_ticks;                                // +60c
-  BYTE unresolved_original_storage_610_637[0x28];// +610..+637
+  BYTE unresolved_original_storage_610_617[8];    // +610..+617
+  DWORD unresolved_word_618;                     // +618; native store/read
+  DWORD unresolved_word_61c;                     // +61c; native store/loop bound
+  BYTE unresolved_original_storage_620_637[0x18];// +620..+637
   BYTE *owned_heap_638;                           // +638; freed with free
   BYTE *owned_heap_63c;                           // +63c; freed with free
   BYTE *owned_heap_640;                           // +640; freed with free
@@ -214,7 +240,9 @@ struct MediaRuntime {
   BYTE *owned_heap_648;                           // +648; freed with free
   BYTE *owned_heap_64c;                           // +64c; freed with free
   BYTE *owned_heap_650;                           // +650; freed with free
-  BYTE unresolved_original_storage_654_65f[0x0c];// +654..+65f
+  BYTE *decoder_coefficient_plane_654;            // +654, allocator result
+  BYTE *decoder_temporary_plane_a_658;            // +658, allocator result
+  BYTE *decoder_temporary_plane_b_65c;            // +65c, allocator result
 };
 
 typedef char media_descriptor_extent_check[
@@ -227,6 +255,10 @@ typedef char media_conversion_remap_offset_check[
     offsetof(MediaConversionTableStorage, remap_or_lookup_storage) == 0x70c ? 1 : -1];
 typedef char media_conversion_byte3_offset_check[
     offsetof(MediaConversionTableStorage, contribution_byte3) == 0x170c ? 1 : -1];
+typedef char media_conversion_transform_reader_offset_check[
+    offsetof(MediaConversionTableStorage, transform_bit_state) == 0x100 ? 1 : -1];
+typedef char media_transform_bit_state_extent_check[
+    sizeof(MediaTransformBitState) == 0x0c ? 1 : -1];
 typedef char media_conversion_byte1_offset_check[
     offsetof(MediaConversionTableStorage, contribution_byte1) == 0x1f0c ? 1 : -1];
 typedef char media_conversion_byte0_offset_check[
@@ -239,6 +271,22 @@ typedef char media_conversion_blend_low_offset_check[
     offsetof(MediaConversionTableStorage, blend_low) == 0x37ec ? 1 : -1];
 typedef char media_runtime_extent_check[
     sizeof(MediaRuntime) == 0x660 ? 1 : -1];
+typedef char media_runtime_decoder_state_offsets_check[
+    offsetof(MediaRuntime, decoder_context_3f8) == 0x3f8 &&
+    offsetof(MediaRuntime, decoder_context_3f8) +
+            offsetof(MediaDecoderContext, predictor_4f8) == 0x4f8 &&
+    offsetof(MediaRuntime, decoder_context_3f8) +
+            offsetof(MediaDecoderContext, predictor_4fc) == 0x4fc &&
+    offsetof(MediaRuntime, decoder_context_3f8) +
+            offsetof(MediaDecoderContext, predictor_500) == 0x500 &&
+    offsetof(MediaRuntime, decoder_context_3f8) +
+            offsetof(MediaDecoderContext, compressed_input_200) == 0x5f8 &&
+    offsetof(MediaRuntime, decoder_context_3f8) +
+            offsetof(MediaDecoderContext, bit_position_204) == 0x5fc &&
+            offsetof(MediaRuntime, unresolved_word_618) == 0x618 &&
+            offsetof(MediaRuntime, unresolved_word_61c) == 0x61c
+        ? 1
+        : -1];
 typedef char media_record_extent_check[
     sizeof(MediaQueueRecord) == 0x10 ? 1 : -1];
 

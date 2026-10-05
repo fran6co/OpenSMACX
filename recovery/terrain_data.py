@@ -13,6 +13,25 @@ from match_recovery.source_inventory import image_pin
 from match_recovery.source_replica import artifact_parent
 
 
+_MOVIE_DECODER_DATA = (
+    ('movie_decoder_static.inc', 0x00695B58, 0x00696A3C, 'words',
+     'accessed_window'),
+    ('movie_decoder_workspace.inc', 0x009C5000, 0x009C581C, 'words',
+     'accessed_window'),
+    # This selected initializer/access window begins at a source-owned v1
+    # start-only binding. 325 DWORDs reach the highest proven access; that
+    # does not establish the original object's allocation upper bound.
+    ('movie_decoder_constants.inc', 0x009C9594, 0x009C9AA8, 'words',
+     'accessed_window'),
+    ('movie_decoder_tables.inc', 0x009C314C, 0x009C4658, 'words',
+     'accessed_window'),
+    ('movie_decoder_process.inc', 0x009B2D64, 0x009B3370, 'zero',
+     'accessed_window'),
+    ('movie_decoder_idct_storage.inc', 0x009C3000, 0x009C314C, 'words',
+     'accessed_window'),
+)
+
+
 _LANDMARK_TABLES = {
     'terrain_mount_planet.inc': '_MountPlanetTable',
     'terrain_sunny_mesa.inc': '_SunnyMesaTable',
@@ -121,6 +140,88 @@ def terrain_initializers(root: Path, original: Path, directory: Path) -> None:
     terrain_direction_initializer(root, original, directory / 'terrain_alt_direction.inc')
     for filename in _LANDMARK_BONUS_TABLES:
         terrain_landmark_bonus_initializer(root, original, directory / filename)
+
+
+def movie_decoder_initializers(root: Path, original: Path,
+                               directory: Path) -> None:
+    """Project selected decoder access windows into the ignored cache.
+
+    Each new decoder storage owner is anchored by a v1 start-only mapping. Its
+    reviewed initializer window is selected separately and is not an
+    original-object layout or native data-acceptance result.
+    """
+    root = root.resolve()
+    original = original.resolve(strict=True)
+    directory = directory.absolute()
+    if (directory.resolve() != directory or directory.name != 'terrain-data'
+            or not directory.is_relative_to(root / 'build')):
+        raise ValueError('decoder derivatives must remain in ignored build context')
+    if any(path.is_symlink() for path in (directory, *directory.parents)
+           if path.is_relative_to(root)):
+        raise ValueError('decoder derivative directory cannot use aliases')
+
+    pin = image_pin(root)
+    original_bytes = original.read_bytes()
+    image = PeImage(original_bytes, pin)
+    objects = read_objects(root, pin)
+    for entry in _MOVIE_DECODER_DATA:
+        if len(entry) == 5 and entry[4] == 'accessed_window':
+            filename, start, end, representation, _ = entry
+            accessed_window = True
+        else:
+            raise ValueError('invalid decoder initializer selection policy')
+        span = Span(start, end)
+        if accessed_window:
+            # The native mapping anchors the source-owned storage start only.
+            # Select this reviewed window from accesses, never from a claimed
+            # original object extent.
+            bindings = [obj for obj in objects
+                        if obj.unit == 'src/movie_media_decoder.cpp'
+                        and obj.origin.address == start and obj.span is None]
+        else:
+            bindings = [obj for obj in objects
+                        if obj.unit == 'src/movie_media_decoder.cpp'
+                        and obj.span == span]
+        if len(bindings) != 1:
+            expectation = 'one v1 start-only source binding' if accessed_window \
+                else 'one exact source-owned object'
+            raise ValueError(f'{filename} requires {expectation}')
+        initial = image.read_initial(span)
+        if image.absolute_sites(span):
+            raise ValueError(f'{filename} must be initialized reloc-free image data')
+        if representation == 'zero':
+            # Zero-initialized storage can live in a PE BSS section and thus
+            # have no unique file-backed representation. Its pinned initial
+            # bytes are still reviewable through read_initial; do not demand
+            # PeImage.read() for this representation.
+            if any(initial):
+                raise ValueError(f'{filename} must be zero-initialized source storage')
+            continue
+        raw = image.read(span)
+        if initial != raw:
+            raise ValueError(f'{filename} must be initialized reloc-free image data')
+        if len(raw) % 4:
+            raise ValueError(f'{filename} must contain whole DWORDs')
+        words = [int.from_bytes(raw[i:i + 4], 'little')
+                 for i in range(0, len(raw), 4)]
+        text = ('// Generated from pinned, source-owned data; do not edit.\n' +
+                '\n'.join(', '.join(f'0x{word:08x}u'
+                                      for word in words[i:i + 8]) + ','
+                          for i in range(0, len(words), 8)) + '\n')
+        artifact_parent(root, directory.relative_to(root).as_posix(),
+                        excluded_roots=('src', 'recovery', 'cmake'))
+        output = directory / filename
+        if output.exists() and (not output.is_file() or output.stat().st_nlink != 1):
+            raise ValueError('decoder generated include must be an unlinked regular file')
+        if not output.exists() or output.read_text() != text:
+            output.write_text(text)
+    if original.read_bytes() != original_bytes or image_pin(root) != pin:
+        raise ValueError('decoder initializer inputs changed during generation')
+
+
+def project_initializers(root: Path, original: Path, directory: Path) -> None:
+    terrain_initializers(root, original, directory)
+    movie_decoder_initializers(root, original, directory)
 
 
 def terrain_direction_initializer(root: Path, original: Path, output: Path) -> None:
