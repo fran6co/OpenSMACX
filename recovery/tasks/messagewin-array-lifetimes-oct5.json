@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "task_id": "messagewin-array-lifetimes-oct5",
+  "target": "opensmacx",
+  "author": "framework-coordinator",
+  "base_revision": "9203a1cb6d256f6b33dd55a8d4ac395fa90a6b02",
+  "intent": "Transport two complete MessageWin deferred StringList array lifecycle identities into their real generated source owner and remove superseded fixed-address seeds. NewTech guarded teardown remains unresolved and its seed is retained.",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5365632
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5365680
+    }
+  ],
+  "files": [
+    "src/messagewin.cpp",
+    "recovery/tests/test_messagewin_newtech_startup_arrays.py",
+    "src/recovered/units/0051df80.cpp",
+    "src/recovered/units/0051dfb0.cpp"
+  ],
+  "evidence": [
+    "Coordinator-reviewed manual integration and structural matching regressions authorized; preserve historical obligations, not a fresh claim.",
+    "Physical VC6 composerE26 reaches array constructorE23 and registrationE25; E24 reaches complete StringList reverse vector teardown.",
+    "Require fresh full compile/link, source-driven host controls, claim/reference continuity and scoped baseline comparison. No whole-game or linked preservation acceptance."
+  ]
+}

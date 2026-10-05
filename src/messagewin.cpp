@@ -442,3 +442,19 @@ void MessageWin::init() {
     dialog.attach(&MainInterfaceGlobal, bounds_.left, bounds_.top, 0x1000000);
     MessageWinMessageCount = 0;
 }
+
+// Real MessageWinDeferredBaseMessages array lifecycle, compiler-generated.
+/*
+// ORIGINAL: 0x0051DF80 sub_51df80 0x0051DF80-0x0051DFA4 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["git:9203a1cb6d256f6b33dd55a8d4ac395fa90a6b02:src/recovered/units/0051df80.cpp", "image:0x51df80", "source:src/messagewin.cpp"], "reason": "The native eight-StringList array at93A7B0 has30-byte stride, constructor4450B0 and complete teardown406820. The real typed MessageWinDeferredBaseMessages owns forward construction with atexit registration and reverse derived/base destruction. Preserve original identity, complete spans and historical claims; generated delegation is current lowering, not exact layout or linked-selection proof."}
+// symbol    _$E26
+*/
+// Historical seed finding: The standalone initializer scaffold was reported measured exact in prose, but had no formal byte claim; do not grant one from that report.
+
+// Real MessageWinDeferredBaseMessages array lifecycle, compiler-generated.
+/*
+// ORIGINAL: 0x0051DFB0 sub_51dfb0 0x0051DFB0-0x0051DFC4 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:9203a1cb6d256f6b33dd55a8d4ac395fa90a6b02:src/recovered/units/0051dfb0.cpp", "image:0x51dfb0", "source:src/messagewin.cpp"], "reason": "The native eight-StringList array at93A7B0 has30-byte stride, constructor4450B0 and complete teardown406820. The real typed MessageWinDeferredBaseMessages owns forward construction with atexit registration and reverse derived/base destruction. Preserve original identity, complete spans and historical claims; generated delegation is current lowering, not exact layout or linked-selection proof."}
+// symbol    _$E24
+*/
+// Historical seed finding: The old free __thiscall callback prototype failed VC6 C4234; opaque callback pointers were a scaffold workaround. Real class-array destruction supplies the typed compiler helper.
