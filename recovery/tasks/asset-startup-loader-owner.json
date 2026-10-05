@@ -1,0 +1,40 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "97ad25151bb1c72962e41f711299c54a7912ed9d",
+  "editable_files": [
+    "src/palette.cpp",
+    "src/sprite.cpp",
+    "src/game.cpp",
+    "src/pending_bodies.cpp",
+    "src/recovered/units/00451a10.cpp",
+    "src/recovered/units/00454d10.cpp",
+    "src/recovered/units/00455eb0.cpp",
+    "recovery/tests/test_loaders_behavior.py"
+  ],
+  "evidence": [
+    "Complete ignored loader_bodies_draft.cpp and loader-wave-proposal.md; independent pinned review verifies 229 actual Sprite init receivers, remapped filenames/dimensions,192 FactionArt pointers and Buffer/Gamma lifetime/query/palette ordering.",
+    "Retain discoveries in historical task journals7f55ff69/e77bebe/2192f473; loaders do not prove asset contents, device paths, borrowed-pointer consumer lifetimes or working game.",
+    "User authorizes coverage-first coordinator-reviewed integration with preserved claims/discoveries; native build/link, scoped matching, metadata and source-driven host damage controls required."
+  ],
+  "intent": "Recover complete palette/miscellaneous/sprite startup through actual constructed owners, retaining original main/cold spans and loader discoveries; remove superseded seeds and address forwarders after verification.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4528656,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4541712,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4546224,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "asset-startup-loader-owner"
+}
