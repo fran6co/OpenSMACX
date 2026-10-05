@@ -134,7 +134,7 @@ static const char ReplaySaveFile[] = "Alpha Centauri Autosave 1.SAV";
 void __cdecl show_replay() {
     ReplayWin replay;
     WorldClimateSkipTerrainClear = 2;
-    save_daemon(ReplaySaveName);
+    save_daemon(const_cast<char *>(ReplaySaveName));
     GameState |= 0x80;
 
     replay.init();

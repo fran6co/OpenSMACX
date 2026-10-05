@@ -391,10 +391,6 @@ int __cdecl battle_fight(int veh_id, int dir, int x, int y, int src_mode,
 
 // ?init@BasePop@@QAEHHJ@Z at 0x006015B0 is HOMED into src/basepop.cpp.
 
-uint32_t __cdecl save_daemon(LPCSTR save_path) {  // 0x005A94F0
-    typedef uint32_t(__cdecl *pending)(LPCSTR);
-    return PENDING_BODY(0x005A94F0, pending)(save_path);
-}
 
 
 

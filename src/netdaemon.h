@@ -86,7 +86,10 @@ static_assert(sizeof(LockTableEntry) == 0x3C, "lock table stride");
 //   0x1BD0  [2].dword_[11]  the ctor sets this one to 0xFF, the only byte it
 //                           does not zero
 //
-// Entries 3..23 are reached by no recovered body. The console's bodies read
+// Entry3 aliases the file-index pointer and persistent save view below.
+// The constructor also clears leading word0 in entries4..23, partially
+// initializing that overlapping view; do not add whole-snapshot initialization.
+// The console's bodies read
 // the same run through `NetDaemonNet.lock_state_` - it is the 0x0093E8BC run
 // in the image - which is why the struct and the member are public.
 struct LockStateEntry {
@@ -106,6 +109,55 @@ static_assert(offsetof(LockStateEntry, trailing_words_) == 0x14,
               "lock-state trailing words");
 static_assert(sizeof(LockStateEntry) == 0x3C, "lock state stride");
 
+// Persistent save/restore storage view beginning eight bytes into state entry 3.
+// The native secondary initializer writes the same five leading bytes as an
+// AlphaNet process record at 0x93E99C + n*0x19C; save_daemon copies the eight
+// complete live records over this view, and game_data transfers the same
+// 0xCE0-byte interval. This POD view has no snapshot constructor/destructor.
+struct NetDaemonSaveProcessSlot {
+  char name_[0x20];
+  uint32_t pid_;
+  int8_t identity_;
+  uint8_t field_25_;
+  uint8_t field_26_;
+  int8_t field_27_;
+  uint8_t status_bytes_[0x174];
+};
+static_assert(offsetof(NetDaemonSaveProcessSlot, pid_) ==
+                  offsetof(AlphaNetProcessSlot, pid_),
+              "saved process-slot PID matches live layout");
+static_assert(offsetof(NetDaemonSaveProcessSlot, identity_) == 0x24,
+              "saved process-slot identity offset");
+static_assert(offsetof(NetDaemonSaveProcessSlot, identity_) ==
+                  offsetof(AlphaNetProcessSlot, identity_),
+              "saved process-slot identity matches live layout");
+static_assert(offsetof(NetDaemonSaveProcessSlot, status_bytes_) == 0x28,
+              "saved process-slot status offset");
+static_assert(offsetof(NetDaemonSaveProcessSlot, status_bytes_) ==
+                  offsetof(AlphaNetProcessSlot, status_bytes_),
+              "saved process-slot status matches live layout");
+static_assert(sizeof(NetDaemonSaveProcessSlot) == 0x19C,
+              "saved process-slot stride");
+static_assert(sizeof(NetDaemonSaveProcessSlot) == sizeof(AlphaNetProcessSlot),
+              "saved process-slot matches live stride");
+static_assert(sizeof(NetDaemonSaveProcessSlot) * 8 == 0xCE0,
+              "saved process-slot table extent");
+
+// At NetDaemon+0x1B2C: three complete LockStateEntries, the file-index pointer
+// word at +0x1BE0, the following opaque dword, then the 8-record save view at
+// +0x1BE8. This remains an overlapping storage view, not a disjoint object.
+struct NetDaemonSaveStorageView {
+  LockStateEntry lock_prefix_[3];
+  void *file_index_records_;
+  uint32_t field_1BE4_;
+  NetDaemonSaveProcessSlot process_slots_[8];
+};
+static_assert(offsetof(NetDaemonSaveStorageView, file_index_records_) == 0xB4,
+              "snapshot overlay file-index pointer offset");
+static_assert(offsetof(NetDaemonSaveStorageView, process_slots_) == 0xBC,
+              "snapshot overlay process slots offset");
+static_assert(sizeof(NetDaemonSaveStorageView) == 0xD9C,
+              "snapshot overlay extent from lock-state start");
 class NetDaemonTransferModalCloseGuard;
 class Filemap;
 
@@ -270,13 +322,18 @@ class NetDaemon : public AlphaNet {
   // THE LOCK-TABLE STATE - the array AFTER lock_table_ (24 * 0x3C = 0x5A0
   // bytes later), which is why the ctor's merged loop writes [entry+0x5A0]
   // alongside [entry] and [entry+8] with one pointer. Entries e0..e2
-  // carry the named dwords the constructor clears; e3..e23 are unreached by
-  // any recovered body - the per-entry map is on LockStateEntry above.
-  // Spans 0x1B2C..0x20CC, which is the image's 0x0093E8BC..0x009C0BFC run.
-  LockStateEntry lock_state_[24];  // 0x1B2C
+  // carry the named dwords; e3 aliases the file-index pointer and save
+  // view, while e4..e23 retain the constructor's partial alias clears.
+  // Lock-state view spans0x1B2C..0x20CC / image93E8BC..93EE5C.
+  // The overlapping save view extends through+0x28C8 / image93F658.
+  union {
+    LockStateEntry lock_state_[24];  // 0x1B2C; native lock-state view
+    NetDaemonSaveStorageView save_storage_;  // overlaps from lock_state_[3]+8
+  };
 
-  // Storage the image proves is here: its own methods reach 0x1BDC.
-  // Extent only - this class carries no size assertion, and the bound is a floor.
+  // Observed storage reaches+0x28C8 through the persistent save table.
+  // Extent only: this is not proof of complete original sizeof or union intent.
+  // Separate NetPlayerDropped93F65C and network flags93F660 remain globals.
 };
 
 // Net::get and NetDaemon::process_message are not recovered yet; the Net the

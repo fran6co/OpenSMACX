@@ -53,11 +53,11 @@ typedef void *func9(void);
 // calls BY NAME; a pointer is only right for a genuine indirection.
 typedef BOOL func11(int, int, int);
 typedef uint32_t func15(LPCSTR);
-// 0x005A94F0, a pending_bodies forwarder.
+// 0x005A94F0, recovered in game.cpp with the original mutable-pointer ABI.
 // A SAVE PATH, from the callers: general.cpp passes
 // "saves\\auto\\Alpha Centauri Autosave 1", and scenario.cpp passes
 // State.save_path to the load side.
-uint32_t __cdecl save_daemon(LPCSTR save_path);
+int __cdecl save_daemon(char *save_path);
 typedef int func16(LPCSTR, int);
 // 0x005A9760, recovered in game.cpp.
 int __cdecl load_daemon(LPCSTR save_path, int linearize_contours);

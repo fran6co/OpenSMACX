@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "task_id": "save-daemon-owner-oct5",
+  "target": "opensmacx",
+  "author": "framework-coordinator",
+  "base_revision": "bcd1dd555eaeb189f64bcfcf6980cbe672210029",
+  "intent": "Complete save_daemon through real game and overlapping NetDaemon storage owners, preserving original behavior, constructor alias effects and historical identities. No guessed whole class size, new claim or automatic acceptance.",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5936368
+    }
+  ],
+  "files": [
+    "recovery/tests/save_daemon_host.cpp",
+    "recovery/tests/test_save_daemon_actual_source.py",
+    "src/game.cpp",
+    "src/general.cpp",
+    "src/netdaemon.cpp",
+    "src/netdaemon.h",
+    "src/pending_bodies.cpp",
+    "src/replaywin.cpp",
+    "src/temp.h",
+    "src/unrecovered/005a94f0.cpp"
+  ],
+  "evidence": [
+    "Pinned full467-byte operation and independent read-only review establish side-effect/error/status ordering.",
+    "NetDaemon+1BE0 aliases the existing file-index pointer; snapshot+1BE8 spans eight19C-byte records. Constructor partial writes and sub_52db40 remain separate lifecycle obligations.",
+    "Standing coordinator authorization admits justified structural matching regressions without demotion; build/link and relevant actual-source/identity/reference checks required. Linked/runtime/full-game acceptance remains unproven."
+  ]
+}

@@ -3613,15 +3613,11 @@ static_assert(sizeof(void *) == sizeof(uint32_t),
               "the native transfer pointer word is 32-bit");
 
 static NetDaemonFileIndexRecord *netdaemon_file_index_records() {
-    void *storage = 0;
-    memcpy(&storage, &NetDaemonNet.lock_state_[3].leading_words_[0], sizeof storage);
-    return static_cast<NetDaemonFileIndexRecord *>(storage);
+    return static_cast<NetDaemonFileIndexRecord *>(NetDaemonNet.save_storage_.file_index_records_);
 }
 
-static void netdaemon_set_file_index_records(
-    NetDaemonFileIndexRecord *records) {
-    void *storage = records;
-    memcpy(&NetDaemonNet.lock_state_[3].leading_words_[0], &storage, sizeof storage);
+static void netdaemon_set_file_index_records(NetDaemonFileIndexRecord *records) {
+    NetDaemonNet.save_storage_.file_index_records_ = records;
 }
 // RECOVERY_OBJECT: v1 0x0093F79C ?NetDaemonFileTransferMode@@3HA
 int NetDaemonFileTransferMode;
