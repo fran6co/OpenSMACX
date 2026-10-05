@@ -9,7 +9,7 @@
     {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 5662736},
     {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 5679264}
   ],
-  "editable_files": ["src/veh.cpp", "src/general.h", "src/enemy_pb_policy.h", "src/unrecovered/00566810.cpp", "src/unrecovered/0056a8a0.cpp", "recovery/tests/test_alien_buster_product_source.py", "recovery/tests/fixtures/alien_buster"],
+  "editable_files": ["src/veh.cpp", "src/general.h", "src/enemy_pb_policy.h", "src/unrecovered/00566810.cpp", "src/unrecovered/0056a8a0.cpp", "recovery/tests/test_alien_buster_product_source.py", "recovery/tests/fixtures/alien_buster/alien_host.cpp", "recovery/tests/fixtures/alien_buster/buster_host.cpp", "recovery/tests/fixtures/alien_buster/alien_host_fixture.h", "recovery/tests/fixtures/alien_buster/enemy_pb_host_fixture.h"],
   "evidence": [
     "Pinned full alien566810..5678B9 and buster56A8A0..56B31A identities. Neither seed carries a historical byte or semantic claim; preserve both TRIED discoveries via native source writer.",
     "Fresh full private native source-tree preflight passes both definitions under current project flags. Independent raw review corrected empty-center/protected-city breaks, deferred uninitialized launch scratch reads and post-radius orbital scoring.",
