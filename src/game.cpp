@@ -2570,7 +2570,7 @@ int __cdecl system_init() {
     MapWinTable[0] = &ConsoleGlobal;
 
     MainInterfaceGlobal.init(0);
-    battlewin_init(static_cast<BattleWin *>(sub_interface_global()));
+    g_BattleWin.init();
     ConsoleGlobal.init(0);
 
     // The language performs the Console-to-Win virtual-base conversion.

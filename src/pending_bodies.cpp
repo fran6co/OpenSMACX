@@ -632,11 +632,7 @@ void __cdecl bung_momma() {
     PENDING_BODY(0x004595C0, pending)();
 }
 
-// ?init@BattleWin@@QAEXXZ at 0x004219E0
-void __fastcall battlewin_init(BattleWin *self) {
-    typedef void(__fastcall *pending)(BattleWin *);
-    PENDING_BODY(0x004219E0, pending)(self);
-}
+
 
 
 

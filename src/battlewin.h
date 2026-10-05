@@ -63,6 +63,7 @@ class BattleWin : public SubInterface {
 
   void on_status(int mode);
   void clear();
+  void init();
   void battle_report(int first_vehicle_id, int second_vehicle_id,
                      int attack_odds, int defense_odds, int flags);
   void pulse_timer();
@@ -119,18 +120,16 @@ class BattleWin : public SubInterface {
   // clear() passes these four consecutive rectangles to the shared canvas.
   // RECOVERY_MEMBER: v1 BattleWin battle_rects_ 0x30 0x00422C50
   RECT battle_rects_[4];
-  uint32_t field_70_;  // 0x70
-  uint32_t field_74_;  // 0x74
-  uint32_t field_78_;  // 0x78
-  uint32_t field_7C_;  // 0x7C
+  // Native init copies one complete RECT from MainInterface at this offset.
+  // RECOVERY_MEMBER: v1 BattleWin field_70_ 0x70 0x004219E0
+  RECT field_70_;  // 0x70
   uint32_t field_80_;  // 0x80
   uint32_t field_84_;  // 0x84
   uint32_t field_88_;  // 0x88
   uint32_t field_8C_;  // 0x8C
-  uint32_t field_90_;  // 0x90
-  uint32_t field_94_;  // 0x94
-  uint32_t field_98_;  // 0x98
-  uint32_t field_9C_;  // 0x9C
+  // Native init copies one complete RECT from MainInterface at this offset.
+  // RECOVERY_MEMBER: v1 BattleWin field_90_ 0x90 0x004219E0
+  RECT field_90_;  // 0x90
 };
 
 static_assert(sizeof(BattleWin) == 0xA0,

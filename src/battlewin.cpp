@@ -414,6 +414,60 @@ void BattleWin::pulse_timer() {
                 0, 0x1388, 5);
 }
 
+// Source-owned receiver slot; original complete allocation/lifetime unverified.
+// RECOVERY_OBJECT: v1 0x007AE818 ?BattleWinInitReceiver@@3PAVBattleWin@@A
+BattleWin *BattleWinInitReceiver = nullptr;
+
+// Superseded seed deleted; the seed path below is historical Git provenance.
+// ORIGINAL: 0x004219E0 ?init@BattleWin@@QAEXXZ 0x004219E0-0x00421B1F
+// RECOVERY_BINDING: v1 {"evidence": ["pinned image 4219E0..421B1F complete instructions", "historical seed src/recovered/units/004219e0.cpp", "full owner/game/pending native overlay compiles; observed current symbols", "7AE818 zero initial DWORD; original full allocation/lifetime unverified"], "reason": "Complete genuine BattleWin initialization: source-owned singleton receiver, typed member rectangles, automatic Buffer lifetime and independent receiver slot; no executable-address dispatch."}
+// kind      game
+// symbol    ?init@BattleWin@@QAEXXZ
+void BattleWin::init() {
+    // The original constructs and tears down this temporary Buffer even though
+    // it does not use it. Keep that lifetime visible to C++ and to unwind.
+    Buffer scratch;
+
+    const RECT &layout = MainInterfaceGlobal.main_layout_rect();
+    const RECT &frame = MainInterfaceGlobal.main_frame_rect();
+
+    field_70_ = frame;
+    field_90_ = layout;
+
+    const int left1 = layout.left + 4;
+    const int top1 = layout.top + 4;
+    const int right1 = (layout.right - left1 - 1) / 2 - 3 + left1;
+    const int bottom1 = layout.bottom - 4;
+    battle_rects_[0].left = left1;
+    battle_rects_[0].top = top1;
+    battle_rects_[0].right = right1;
+    battle_rects_[0].bottom = bottom1;
+
+    const int delta1 = right1 - left1 + 3;
+    battle_rects_[1].left = left1 + delta1;
+    battle_rects_[1].top = top1;
+    battle_rects_[1].right = right1 + delta1;
+    battle_rects_[1].bottom = bottom1;
+
+    const int left2 = frame.left + 4;
+    const int top2 = frame.top + 4;
+    const int right2 = (frame.right - left2 - 1) / 2 - 3 + left2;
+    const int bottom2 = frame.bottom - 4;
+    battle_rects_[2].left = left2;
+    battle_rects_[2].top = top2;
+    battle_rects_[2].right = right2;
+    battle_rects_[2].bottom = bottom2;
+
+    field_4_ = 10;
+
+    battle_rects_[3].left = right2 + 3;
+    battle_rects_[3].top = top2;
+    battle_rects_[3].right = frame.right - 4;
+    battle_rects_[3].bottom = bottom2;
+
+    BattleWinInitReceiver = this;
+}
+
 // ORIGINAL: 0x00421B40 ?stop_timer@BattleWin@@QAEXXZ 0x00421B40-0x00421B48 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["The image's 0x00421B40 adds eight to the receiver and tail-jumps to Time::stop.", "BattleWin's constructor and destructor establish a real Time member at +8."], "reason": "Home the timer stop through BattleWin's typed Time member."}
 void BattleWin::stop_timer() {
