@@ -757,6 +757,11 @@ class Win : public AutoSound {
   // callers clean it up. There is no hidden receiver (unlike the child lift).
   static void __cdecl bring_parent_to_top(Win * window);
   void draw_rect_border(int x1, int y1, int x2, int y2, HGDIOBJ pen1, HGDIOBJ pen2, int unused7);
+  // Provisional descriptive names; native receiver/argument evidence is retained in the TU.
+  void draw_rect_edges(RECT *rect, HGDIOBJ light_pen, HGDIOBJ dark_pen, int unused);
+  void fill_palette_color_rect(int x, int y, int width, int height, int palette_index, int unused);
+  void copy_edges_to_buffer(Buffer *target, int x, int y);
+  void copy_border_buffers_to_window(Win *target, RECT *clip, int mode);
   void remove_child(Win *child);
   void set_caption_height(int height);
   void update_back_to_window(Buffer * buffer);

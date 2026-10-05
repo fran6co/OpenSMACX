@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "task_id": "win-composition-owner-oct5",
+  "target": "opensmacx",
+  "author": "framework-coordinator",
+  "base_revision": "f2a0fa1952cef53f4a2c6a5e60a8bea9bff9c3aa",
+  "intent": "Recover four complete Win GDI/frame composition operations with real Buffer/GraphicWin/Palette owners; remove four superseded seeds and stale wheel-up placeholder commentary after verifying its existing complete implementation.",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6223424
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6224800
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6240192
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6241152
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6260192
+    }
+  ],
+  "files": [
+    "src/win.cpp",
+    "src/win.h",
+    "src/graphicwin.h",
+    "src/unrecovered/005ef640.cpp",
+    "src/unrecovered/005efba0.cpp",
+    "src/unrecovered/005f37c0.cpp",
+    "src/unrecovered/005f3b80.cpp",
+    "recovery/tests/test_win_composition_actual_source.py",
+    "recovery/tests/test_win_mousewheel_up_actual_source.py"
+  ],
+  "evidence": [
+    "Standing user permission for coordinator-reviewed compiling semantic recovery and temporary matching regressions, preserve original defects and historical obligations.",
+    "Native ECX receiver and ret stack pops establish genuine Win member operations; exact original names and return consumers remain unverified.",
+    "5F3B80 current-surface pass uses this inherited Buffer as source for target edge copies, including buffer4 at5F4A22; its final optional screen copy5F4A95 targets distinct owned_buffer_+A08, not inherited+444.",
+    "Preserve native null-brush HDC leak and unchecked palette index; no behavioral safety improvement.",
+    "Require fresh compile/link, actual-source host controls, continuity/source/reference checks and scoped native observations; no strict linked/full-game acceptance.",
+    "Pinned5F3B5E and5F48ED/4956/49B9/4A1C/4A8F use current Win own GraphicWin Buffer base after getter predicate, not the returned object; deterministic distinct-getter controls cover both operations."
+  ]
+}

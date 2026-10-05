@@ -125,6 +125,8 @@ class GraphicWin : public Win, public Buffer {
   // One override serves Win slot 61 and Buffer slot 1. The secondary-base
   // entry adjusts Buffer's receiver back to this GraphicWin automatically.
   virtual GraphicWin *get_graphic_win();
+  // Distinct allocated screen buffer; the inherited Buffer remains a separate source.
+  Buffer *owned_buffer() const { return owned_buffer_; }
   virtual int resize(int width, int height, int client_size);
   virtual int on_set_cursor(void *window, unsigned int hit, unsigned int message);
   virtual void on_size(unsigned int flags, int width, int height);

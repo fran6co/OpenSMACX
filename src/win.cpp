@@ -6126,16 +6126,8 @@ void Win::set_bottom_border_thickness(int thickness) {
 // calls     0x00606440
 // 0x005F85E0  ?on_mousewheel_up@Win@@QAEXH@Z  ->  ?on_mousewheel_up@Win@@QAEXH@Z
 //
-// A byte-exact Mizuchi match that no file in the tree owns yet. NOT in
-// OPENSMACX_SOURCES and not compiled: it is the emitter's verification style,
-// and rewriting it in the tree's own style is a later phase. See README.md
-// beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
+// Each nullable scrollbar receives the original delta, vertical first.
 void Win::on_mousewheel_up(int delta) {
-    // BODY GOES HERE.
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = val_9_;
     Scroll *first = scroll_vert_;
     if (first != 0) {
         first->on_mousewheel_up(delta);
@@ -12585,4 +12577,340 @@ int __cdecl win_window_nc_paint(HWND hwnd) {
     }
   }
   return result;
+}
+
+// Superseded seed removed; complete operation now belongs to Win.
+// ORIGINAL: 0x005EF640 sub_5ef640 0x005EF640-0x005EF946 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["git:f2a0fa1952cef53f4a2c6a5e60a8bea9bff9c3aa:src/unrecovered/005ef640.cpp", "pinned:terranx_original:0x5ef640", "source:src/win.h", "source:src/graphicwin.h"], "reason": "Native Win receiver and four popped arguments, top/light bottom/dark left/light right/dark HDC acquisition order. Source names are descriptive, not recovered historical spellings. Preserve all original spans and historical findings; no new matching or full acceptance claim."}
+// symbol    ?draw_rect_edges@Win@@QAEXPAUtagRECT@@PAX1H@Z
+void Win::draw_rect_edges(RECT *rect, HGDIOBJ light_pen, HGDIOBJ dark_pen,
+                          int unused) {
+    HDC hdc = Win::get_hdc();
+    if (hdc != 0) {
+        sync_palette();
+        HGDIOBJ previous = SelectObject(hdc, light_pen);
+        MoveToEx(hdc, rect->left + 1, rect->top, 0);
+        LineTo(hdc, rect->right + 1, rect->top);
+        SelectObject(hdc, previous);
+        Win::release_hdc();
+    }
+
+    hdc = Win::get_hdc();
+    if (hdc != 0) {
+        sync_palette();
+        HGDIOBJ previous = SelectObject(hdc, dark_pen);
+        MoveToEx(hdc, rect->left, rect->bottom, 0);
+        LineTo(hdc, rect->right, rect->bottom);
+        SelectObject(hdc, previous);
+        Win::release_hdc();
+    }
+
+    hdc = Win::get_hdc();
+    if (hdc != 0) {
+        sync_palette();
+        HGDIOBJ previous = SelectObject(hdc, light_pen);
+        MoveToEx(hdc, rect->left, rect->top, 0);
+        LineTo(hdc, rect->left, rect->bottom);
+        SelectObject(hdc, previous);
+        Win::release_hdc();
+    }
+
+    hdc = Win::get_hdc();
+    if (hdc != 0) {
+        sync_palette();
+        HGDIOBJ previous = SelectObject(hdc, dark_pen);
+        MoveToEx(hdc, rect->right, rect->top + 1, 0);
+        LineTo(hdc, rect->right, rect->bottom + 1);
+        SelectObject(hdc, previous);
+        Win::release_hdc();
+    }
+}
+
+// Superseded seed removed; complete operation now belongs to Win.
+// ORIGINAL: 0x005EFBA0 sub_5efba0 0x005EFBA0-0x005EFCF5 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["git:f2a0fa1952cef53f4a2c6a5e60a8bea9bff9c3aa:src/unrecovered/005efba0.cpp", "pinned:terranx_original:0x5efba0", "source:src/win.h", "source:src/graphicwin.h"], "reason": "Native Win receiver and six popped arguments, palette RGB fill and preserved HDC lease leak when brush creation fails. Source names are descriptive, not recovered historical spellings. Preserve all original spans and historical findings; no new matching or full acceptance claim."}
+// symbol    ?fill_palette_color_rect@Win@@QAEXHHHHHH@Z
+// TRIED: `ecx` used as `this` before any stack read proves __thiscall, not the IDA-guessed __stdcall(int x6); modelled as a member of a local class per the 0x004C8290 idiom. The two indirect calls through DAT_009BC498's vtable pass the interface object as an EXPLICIT stack arg (not via ecx), so they are __stdcall function pointers, not VCall thiscall slots. First divergence #5 je/jne.
+void Win::fill_palette_color_rect(int x, int y, int width, int height,
+                                  int palette_index, int unused) {
+    HDC hdc = Win::get_hdc();
+    if (hdc == 0) {
+        return;
+    }
+
+    sync_palette();
+    const PALETTEENTRY &entry = PaletteActive->entries()[palette_index];
+    HBRUSH brush = CreateSolidBrush(
+        RGB(entry.peRed, entry.peGreen, entry.peBlue));
+    if (brush == 0) {
+        // Native 0x005EFBA0 returns here without dropping its HDC reference.
+        return;
+    }
+
+    RECT rect;
+    rect.left = x;
+    rect.top = y;
+    rect.right = x + width;
+    rect.bottom = y + height;
+    FillRect(hdc, &rect, brush);
+    DeleteObject(brush);
+    Win::release_hdc();
+}
+
+// Superseded seed removed; complete operation now belongs to Win.
+// ORIGINAL: 0x005F37C0 sub_5f37c0 0x005F37C0-0x005F3B73 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["git:f2a0fa1952cef53f4a2c6a5e60a8bea9bff9c3aa:src/unrecovered/005f37c0.cpp", "pinned:terranx_original:0x5f37c0", "source:src/win.h", "source:src/graphicwin.h"], "reason": "Native Win receiver and Buffer/x/y inputs, top-down DIB damage and source-relative to destination-relative copy geometry. Source names are descriptive, not recovered historical spellings. Preserve all original spans and historical findings; no new matching or full acceptance claim."}
+// symbol    ?copy_edges_to_buffer@Win@@QAEXPAVBuffer@@HH@Z
+// TRIED: signature is __thiscall(int,int,int) returning void, not the brief's __stdcall(int,int,int) - ecx used as `this` throughout, ret 0xc pops 3 stack args. Ghidra's pseudocode (IsRectEmpty/ IntersectRect/copy over 4 edge buffers + a GetWindowRect case) checked against the raw disassembly's ESP-relative RECT layout and used as the translation basis (sim 0.75 at /O2 no-Oy-). slot061 retyped `int` (thiscall, nullary, tested against 0). First divergence at #12 is prologue register scheduling, not chased further. Not byte-exact.
+void Win::copy_edges_to_buffer(Buffer *target, int x, int y) {
+    if (target == 0) {
+        return;
+    }
+
+    RECT damage;
+    RECT source_rect;
+    RECT intersection;
+    damage.top = y;
+    damage.bottom = y - target->dib_.bmiHeader.biHeight;
+    damage.right = target->dib_.bmiHeader.biWidth + x;
+    damage.left = x;
+    if (IsRectEmpty(&damage)) {
+        return;
+    }
+
+    if ((iSomeFlag_ & 2) != 0) {
+        const int left = client_rect_.left;
+        const int top = client_rect_.top;
+        const int right = client_rect_.right;
+        const int bottom = client_rect_.bottom;
+        Buffer *edge = buffer1_;
+        source_rect.left = edge->rect2_.left + left;
+        source_rect.right = edge->rect2_.right + left;
+        source_rect.bottom = edge->rect2_.bottom + top;
+        source_rect.top = edge->rect2_.top + top;
+        if (IntersectRect(&intersection, &source_rect, &damage)) {
+            edge->copy(target, intersection.left - source_rect.left,
+                       intersection.top - source_rect.top,
+                       intersection.left - damage.left,
+                       intersection.top - damage.top,
+                       intersection.right - intersection.left,
+                       intersection.bottom - intersection.top);
+        }
+
+        edge = buffer3_;
+        const int bottom_base = top - buffer1_->dib_.bmiHeader.biHeight;
+        source_rect.left = edge->rect2_.left + left;
+        source_rect.bottom = edge->rect2_.bottom + bottom_base;
+        source_rect.right = edge->rect2_.right + left;
+        source_rect.top = edge->rect2_.top + bottom_base;
+        if (IntersectRect(&intersection, &source_rect, &damage)) {
+            edge->copy(target, intersection.left - source_rect.left,
+                       intersection.top - source_rect.top,
+                       intersection.left - damage.left,
+                       intersection.top - damage.top,
+                       intersection.right - intersection.left,
+                       intersection.bottom - intersection.top);
+        }
+
+        edge = buffer4_;
+        const int right_top = edge->dib_.bmiHeader.biHeight + bottom;
+        source_rect.right = edge->rect2_.right + left;
+        source_rect.bottom = edge->rect2_.bottom + right_top;
+        source_rect.left = edge->rect2_.left + left;
+        source_rect.top = edge->rect2_.top + right_top;
+        if (IntersectRect(&intersection, &source_rect, &damage)) {
+            edge->copy(target, intersection.left - source_rect.left,
+                       intersection.top - source_rect.top,
+                       intersection.left - damage.left,
+                       intersection.top - damage.top,
+                       intersection.right - intersection.left,
+                       intersection.bottom - intersection.top);
+        }
+
+        edge = buffer2_;
+        const int left_top = top - buffer1_->dib_.bmiHeader.biHeight;
+        const int left_edge = right - edge->dib_.bmiHeader.biWidth;
+        source_rect.right = left_edge + edge->rect2_.right;
+        source_rect.left = left_edge + edge->rect2_.left;
+        source_rect.bottom = left_top + edge->rect2_.bottom;
+        source_rect.top = left_top + edge->rect2_.top;
+        if (IntersectRect(&intersection, &source_rect, &damage)) {
+            edge->copy(target, intersection.left - source_rect.left,
+                       intersection.top - source_rect.top,
+                       intersection.left - damage.left,
+                       intersection.top - damage.top,
+                       intersection.right - intersection.left,
+                       intersection.bottom - intersection.top);
+        }
+    }
+
+    GraphicWin *graphic = get_graphic_win();
+    if (graphic != 0) {
+        GetWindowRect(HandleMain, &source_rect);
+        if (IntersectRect(&intersection, &source_rect, &damage)) {
+            // The getter is a predicate here; native reads this object's Buffer base.
+        static_cast<GraphicWin *>(this)->Buffer::copy(
+                target, intersection.left - source_rect.left,
+                intersection.top - source_rect.top,
+                intersection.left - damage.left,
+                intersection.top - damage.top,
+                intersection.right - intersection.left,
+                intersection.bottom - intersection.top);
+        }
+    }
+}
+
+// Superseded seed removed; complete operation now belongs to Win.
+// ORIGINAL: 0x005F3B80 sub_5f3b80 0x005F3B80-0x005F4AA7 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["git:f2a0fa1952cef53f4a2c6a5e60a8bea9bff9c3aa:src/unrecovered/005f3b80.cpp", "pinned:terranx_original:0x5f3b80", "source:src/win.h", "source:src/graphicwin.h"], "reason": "Native current Win source and target Win receiver distinction, chained edge rectangles, clip/mode gates and distinct inherited versus allocated GraphicWin buffers. Source names are descriptive, not recovered historical spellings. Preserve all original spans and historical findings; no new matching or full acceptance claim."}
+// symbol    ?copy_border_buffers_to_window@Win@@QAEXPAV1@PAUtagRECT@@H@Z
+// TRIED: IDA's `__stdcall(int,RECT*,int)` guess with no receiver - ecx is dereferenced immediately with no matching stack slot, so this is a __thiscall member (class EdgeWin here) over IDA's 3 args. The screen-relative pass's destination buffer (5th TRY5 call) isn't resolved past this point in the disassembly given; reused the top-edge buffer field there as the least-wrong guess. sim 0.56-0.74 across flag sets.
+void Win::copy_border_buffers_to_window(Win *target, RECT *clip, int mode) {
+    if (target == 0 || (target->iSomeFlag_ & 2) == 0 ||
+        (target->iFlags_ & 0x10000000) == 0) {
+        return;
+    }
+
+    if (clip != 0) {
+        mode = -1;
+    }
+    RECT screen_rect;
+    if (clip != 0 && IsRectEmpty(clip)) {
+        return;
+    }
+
+    const int target_left = target->client_rect_.left;
+    const int target_top = target->client_rect_.top;
+    RECT top_rect;
+    RECT bottom_rect;
+    RECT right_rect;
+    RECT left_rect;
+    Buffer *target_edge = target->buffer1_;
+    top_rect.left = target_edge->rect2_.left + target_left;
+    top_rect.right = target_edge->rect2_.right + target_left;
+    top_rect.top = target_edge->rect2_.top + target_top;
+    top_rect.bottom = target_edge->rect2_.bottom + target_top;
+
+    target_edge = target->buffer3_;
+    bottom_rect.left = target_edge->rect2_.left + target_left;
+    bottom_rect.right = target_edge->rect2_.right + target_left;
+    bottom_rect.top = target_edge->rect2_.top + top_rect.bottom;
+    bottom_rect.bottom = target_edge->rect2_.bottom + top_rect.bottom;
+
+    target_edge = target->buffer4_;
+    right_rect.left = target_edge->rect2_.left + target_left;
+    right_rect.right = target_edge->rect2_.right + target_left;
+    right_rect.top = target_edge->rect2_.top + bottom_rect.bottom;
+    right_rect.bottom = target_edge->rect2_.bottom + bottom_rect.bottom;
+
+    target_edge = target->buffer2_;
+    const int left_right_base =
+        (target_edge->rect2_.left - target_edge->rect2_.right) + top_rect.right;
+    left_rect.left = target_edge->rect2_.left + left_right_base;
+    left_rect.right = target_edge->rect2_.right + left_right_base;
+    left_rect.bottom = target_edge->rect2_.bottom + top_rect.bottom;
+    left_rect.top = target_edge->rect2_.top + top_rect.bottom;
+
+    GraphicWin *target_graphic = target->get_graphic_win();
+    if (target_graphic != 0 &&
+        (target->iFlags_ & 0x40000000) != 0) {
+        GetWindowRect(HandleMain, &screen_rect);
+    }
+
+#define COPY_EDGE_TO_TARGET(destination, edge_rect)                              \
+    do {                                                                         \
+        RECT clipped = edge_rect;                                                \
+        RECT hit;                                                                \
+        if (clip == 0 || IntersectRect(&clipped, &edge_rect, clip) != 0) {       \
+            if (IntersectRect(&hit, &clipped, &top_rect) != 0 &&                 \
+                (mode == -1 || mode == 0)) {                                     \
+                (destination)->copy(target->buffer1_,                            \
+                    hit.left - clipped.left, hit.top - clipped.top,              \
+                    hit.left - top_rect.left, hit.top - top_rect.top,            \
+                    hit.right - hit.left, hit.bottom - hit.top);                 \
+            }                                                                    \
+            if (IntersectRect(&hit, &clipped, &bottom_rect) != 0 &&              \
+                (mode == -1 || mode == 3)) {                                     \
+                (destination)->copy(target->buffer3_,                            \
+                    hit.left - clipped.left, hit.top - clipped.top,              \
+                    hit.left - bottom_rect.left, hit.top - bottom_rect.top,      \
+                    hit.right - hit.left, hit.bottom - hit.top);                 \
+            }                                                                    \
+            if (IntersectRect(&hit, &clipped, &left_rect) != 0 &&                \
+                (mode == -1 || mode == 1)) {                                     \
+                (destination)->copy(target->buffer2_,                            \
+                    hit.left - clipped.left, hit.top - clipped.top,              \
+                    hit.left - left_rect.left, hit.top - left_rect.top,          \
+                    hit.right - hit.left, hit.bottom - hit.top);                 \
+            }                                                                    \
+            if (IntersectRect(&hit, &clipped, &right_rect) != 0 &&               \
+                (mode == -1 || mode == 2)) {                                     \
+                (destination)->copy(target->buffer4_,                            \
+                    hit.left - clipped.left, hit.top - clipped.top,              \
+                    hit.left - right_rect.left, hit.top - right_rect.top,        \
+                    hit.right - hit.left, hit.bottom - hit.top);                 \
+            }                                                                    \
+            if (target_graphic != 0 && mode == -1 &&                            \
+                (target->iFlags_ & 0x40000000) != 0 &&                           \
+                IntersectRect(&hit, &clipped, &screen_rect) != 0) {              \
+                (destination)->copy(target_graphic->owned_buffer(),               \
+                    hit.left - clipped.left, hit.top - clipped.top,              \
+                    hit.left - screen_rect.left, hit.top - screen_rect.top,      \
+                    hit.right - hit.left, hit.bottom - hit.top);                 \
+            }                                                                    \
+        }                                                                        \
+    } while (0)
+
+    if ((iSomeFlag_ & 2) != 0) {
+        const int left = client_rect_.left;
+        const int top = client_rect_.top;
+        const int right = client_rect_.right;
+        const int bottom = client_rect_.bottom;
+        RECT edge_rect;
+        Buffer *destination = buffer1_;
+        target_edge = buffer1_;
+        edge_rect.left = target_edge->rect2_.left + left;
+        edge_rect.right = target_edge->rect2_.right + left;
+        edge_rect.top = target_edge->rect2_.top + top;
+        edge_rect.bottom = target_edge->rect2_.bottom + top;
+        COPY_EDGE_TO_TARGET(destination, edge_rect);
+
+        destination = buffer3_;
+        target_edge = buffer1_;
+        const int bottom_base = top - target_edge->dib_.bmiHeader.biHeight;
+        target_edge = buffer3_;
+        edge_rect.left = target_edge->rect2_.left + left;
+        edge_rect.right = target_edge->rect2_.right + left;
+        edge_rect.top = target_edge->rect2_.top + bottom_base;
+        edge_rect.bottom = target_edge->rect2_.bottom + bottom_base;
+        COPY_EDGE_TO_TARGET(destination, edge_rect);
+
+        destination = buffer4_;
+        target_edge = buffer4_;
+        const int right_base = target_edge->dib_.bmiHeader.biHeight + bottom;
+        edge_rect.left = target_edge->rect2_.left + left;
+        edge_rect.right = target_edge->rect2_.right + left;
+        edge_rect.top = target_edge->rect2_.top + right_base;
+        edge_rect.bottom = target_edge->rect2_.bottom + right_base;
+        COPY_EDGE_TO_TARGET(destination, edge_rect);
+
+        destination = buffer2_;
+        target_edge = buffer1_;
+        const int left_bottom_base = top - target_edge->dib_.bmiHeader.biHeight;
+        target_edge = buffer2_;
+        const int left_base = right - target_edge->dib_.bmiHeader.biWidth;
+        edge_rect.left = target_edge->rect2_.left + left_base;
+        edge_rect.right = target_edge->rect2_.right + left_base;
+        edge_rect.top = target_edge->rect2_.top + left_bottom_base;
+        edge_rect.bottom = target_edge->rect2_.bottom + left_bottom_base;
+        COPY_EDGE_TO_TARGET(destination, edge_rect);
+    }
+
+    GraphicWin *graphic = get_graphic_win();
+    if (graphic != 0) {
+        GetWindowRect(HandleMain, &screen_rect);
+        // Native uses this+Buffer-base, independently of the getter result.
+        COPY_EDGE_TO_TARGET(static_cast<Buffer *>(static_cast<GraphicWin *>(this)), screen_rect);
+    }
+#undef COPY_EDGE_TO_TARGET
 }
