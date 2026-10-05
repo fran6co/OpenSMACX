@@ -361,6 +361,7 @@ void ReplayWin::on_mouse_move(int, int) {
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
 // ORIGINAL: 0x005AD400 ?on_right_down@ReplayWin@@QAEXHH@Z 0x005AD400-0x005AD403 BYTE_EXACT
+// symbol    ?on_right_down@ReplayWin@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_right_down@ReplayWin@@QAEXHH@Z)(ReplayWin* this, int, int)
 // callers   0   call targets   0

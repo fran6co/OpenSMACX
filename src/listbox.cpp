@@ -29,6 +29,7 @@
 // TRIED: full reproduction as a single function - the scaffold's "spans" field folds this vtordisp thunk together with the shared ListBox scalar-deleting-destructor body at 0x60CE50, which is compiler-synthesised for multiple/virtual inheritance and not directly expressible from source without the full outer class hierarchy. Landed the 10-byte thunk (adjust `this` by *(this-4) and a fixed 0xA18, forward to the shared body) as a plain call, not a tail-jmp; scored SHARED_TAIL (COMDAT-folded span, no per-function verdict).
 
 #include "stdafx.h"
+#include "sound.h"
 #include "original_seam.h"
 #include "listbox.h"
 #include "vtable_shim.h"
@@ -484,8 +485,8 @@ void ListBox::set_selected_pos(int position, int notify) {
             parent = static_cast<GraphicWin *>(this)->parent_window();
             if (parent != 0) {
                 Win *child = parent->legacy_window_36();
-                if (child != 0 && child->vslot_23() == 0) {
-                    child->vslot_07();
+                if (child != 0 && reinterpret_cast<Sound *>(child)->is_playing() == 0) {
+                    reinterpret_cast<Sound *>(child)->play();
                 }
             }
         }
@@ -504,6 +505,7 @@ Purpose: Report a right press: raise the click guard, forward (a1, a2) through
 Purpose: Report a right press: raise the click guard, forward (a1, a2) through
          GraphicWin vtable slot 20, drop the guard.
 // ORIGINAL: 0x0060AA20 ?on_right_down@ListBox@@QAEXHH@Z 0x0060AA20-0x0060AA52
+// symbol    ?on_right_down@ListBox@@UAEXHH@Z
 // TRIED 2026-09-03: re-dumped the divergence. The 3 instructions the image
 // has and this tree does not are entirely the entered-receiver walk
 // (`mov eax,[ecx-0x48]` / `mov eax,[edx+ecx-0x48]` / `lea ecx,[edx+ecx-0x48]`
@@ -1099,8 +1101,8 @@ void ListBox::on_left_double_click(int, int) {
     target = graphic->legacy_window_31();
     Win *child = target->legacy_window_37();
     if (child != 0) {
-        if (child->vslot_23() == 0) {
-            child->vslot_07();
+        if (reinterpret_cast<Sound *>(child)->is_playing() == 0) {
+            reinterpret_cast<Sound *>(child)->play();
         }
     }
 }

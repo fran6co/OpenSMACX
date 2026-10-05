@@ -7732,6 +7732,7 @@ class Slot17Shim { public:
 };
 
 // ORIGINAL: 0x0046EC10 ?on_right_down@MapWin@@QAEXHH@Z 0x0046EC10-0x0046ED21 FILE
+// symbol    ?on_right_down@MapWin@@UAEXHH@Z
 // size      273 bytes
 // prototype void (__thiscall ?on_right_down@MapWin@@QAEXHH@Z)(MapWin* this, int, int)
 // callers   0   call targets   1

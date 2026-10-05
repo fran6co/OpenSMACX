@@ -1839,6 +1839,7 @@ void MainInterface::on_left_down(int a1, int a2) {
 }
 
 // ORIGINAL: 0x0045C7C0 ?on_right_down@MainInterface@@QAEXHH@Z 0x0045C7C0-0x0045C7F4 FILE BYTE_EXACT
+// symbol    ?on_right_down@MainInterface@@UAEXHH@Z
 // size      52 bytes
 // prototype void (__thiscall ?on_right_down@MainInterface@@QAEXHH@Z)(MainInterface* this, int, int)
 // callers   0   call targets   0

@@ -18,6 +18,7 @@
 #pragma once
 
 class Win;  // the window this record is embedded at offset 0 of
+class Sound;
 
  /*
   * AutoSound - the PROCESS SETTINGS RECORD, embedded at offset 0 of every
@@ -119,8 +120,8 @@ class AutoSound {
   int val_9_;
   int val_10_;
   int val_11_;
-  int val_12_;
-  int val_13_;
+  void *val_12_;
+  void *val_13_;
   int val_14_;
   int val_15_;
   int val_16_;
@@ -133,8 +134,8 @@ class AutoSound {
   int val_21_;
   int val_22_;
   int val_23_;
-  int val_24_;
-  int val_25_;
+  void *val_24_;
+  void *val_25_;
   int val_26_;
   int val_27_;
   Win *val_28_;

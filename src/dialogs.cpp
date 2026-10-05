@@ -310,6 +310,7 @@ Purpose: Forward on right down to the embedded widget, but only when the
          the discriminator sits 8 bytes before it and the target is reached by
          adjusting back 0x8C.
 // ORIGINAL: 0x00612ED0 ?on_right_down@Dialogs@@QAEXHH@Z 0x00612ED0-0x00612EEE BYTE_EXACT
+// symbol    ?on_right_down@Dialogs@@UAEXHH@Z
 // size      30 bytes
 // prototype void (__thiscall ?on_right_down@Dialogs@@QAEXHH@Z)(Dialogs* this, int xCoord, int yCoord)
 // callers   0   call targets   1

@@ -61,7 +61,7 @@ class FlatButton : public BaseButton {
     static_assert(sizeof(Sprite *) == sizeof(int), "legacy icon slots are 32-bit");
     val_10_ = reinterpret_cast<int>(normal);
     val_11_ = reinterpret_cast<int>(hover);
-    val_12_ = reinterpret_cast<int>(pressed);
+    val_12_ = reinterpret_cast<void *>(pressed);
   }
   // ReportIf uses this real borrowed-sprite run, not AutoSound settings.
   void set_report_icons(Sprite *normal, Sprite *hover, Sprite *pressed) {

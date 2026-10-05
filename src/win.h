@@ -211,7 +211,7 @@ class Win : public AutoSound {
 
   // 0x005EE460, homed into win.cpp 2026-09-06. Publishes `this` as
   // WinCallbackWindow, runs the field_404_ hook, raises slot 14, then offers
-  // the window at val_6_ the slot 23 / slot 7 pair.
+  // the contextual Sound receiver at val_6_ its status/play pair.
   void publish_callback_window();
 
   // 0x005EE4D0, homed into win.cpp 2026-09-06. The shared dispatcher shape -
@@ -235,6 +235,9 @@ class Win : public AutoSound {
   // (field_420_ hook, children val_11_ / val_23_).
   void dispatch_21(int a, int b, int alternate);
   void dispatch_22(int a, int b, int alternate);
+  // Seed identities 0x5EE950/0x5EE9F0; these source labels are provisional.
+  void dispatch_23(int x, int y, int alternate);
+  void dispatch_24(int x, int y, int alternate);
 
   friend class Scroll;
   // Control attachment reads the parent window's original flag word.
@@ -591,27 +594,14 @@ class Win : public AutoSound {
   virtual void on_left_down(int = 0, int = 0) {}  // slot 20
   virtual void on_left_up(int = 0, int = 0) {}  // slot 21
   virtual void vslot_22(int = 0, int = 0) {}  // 0x00404260
-  // NO DEFAULT ARGUMENTS. They compiled into `push 0; push 0` at every
-  // call, which the image does not emit - measured on 0x005EE750 and
-  // 0x005F6320. Twenty-one call sites pass nothing; the one that passed
-  // two was the outlier.
-  //
-  // THE ARITY IS NOT SETTLED, and the default body is the evidence against
-  // this nullary spelling: 0x005EE950 (sub_5ee950, `this` reads iFlags_ and
-  // iSomeFlag_ exactly as key_click_event does, so it IS a Win) calls
-  // [vtable+0x5c] = this slot with TWO pushes and no `add esp, 8` before its
-  // own `ret 0xc`, so its callee cleans 8 bytes - `ret 8`. The shared body
-  // the table holds here, 0x00404260, IS `c2 08 00` = `ret 8`, which a
-  // nullary `int ()` cannot produce (a nullary returning 0 is
-  // `xor eax,eax / ret`, and no such COMDAT exists in this run). Yet
-  // 0x005EE750's `call [edx+0x5c]` at 0x005EE7C3 pushes NOTHING and tests
-  // EAX afterwards - a nullary int, on objects whose table is also a Win's.
-  // Both cannot be one virtual. The two sites dispatch objects of different
-  // most-derived types whose tables agree to offset 0x5c and diverge in what
-  // sits there, and modelling that needs the dispatching types separated
-  // first, not a signature edited here - redeclaring this one 2-arg puts
-  // `push 0; push 0` back at 21 byte-exact sites.
-  virtual int vslot_23() { return 0; }  // 0x00404260
+  // Receiver distinction: Win table66FDD0 slot23 consumes (x,y), with
+  // shared default404260 ret8. The nullary/tested-EAX calls in5EE750 and
+  // other dispatchers target Sound children (table66E3C0), not Win.
+  // Historical nullary-Win inference was disproved by this receiver closure;
+  // adding default coordinates to Sound calls would incorrectly emit pushes.
+  // Win's primary slot 23 consumes two coordinates (the byte-backed target
+  // at 0x00404260 is ret 8); Sound has a separate nullary slot 23 contract.
+  virtual void on_right_down(int x, int y) { (void)x; (void)y; }
   virtual void vslot_24(int = 0, int = 0) {}  // 0x00404260
   // Existing slot 25: keyboard input dispatched by key_click_event.
   virtual int on_key_click(int = 0, int = 0) { return 0; }  // slot 25

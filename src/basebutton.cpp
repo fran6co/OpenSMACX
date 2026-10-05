@@ -23,6 +23,7 @@
 #include "dialog.h"
 #include "buttongroup.h"
 #include "wave.h"
+#include "sound.h"
 
 // The zero-init .bss slots BaseButton's setup reads its field defaults from
 // (0x009B8E2C/0x009B8E30), rebindable like CheckBoxDefault1/2.
@@ -777,7 +778,7 @@ void BaseButton::on_left_down(int, int) {
     if (field_A9C_ == 0) {
         field_A9C_ = 1;
         Win *const owner = parent->legacy_window_30();
-        if (owner != 0 && owner->vslot_23() == 0) owner->vslot_07();
+        if (owner != 0 && reinterpret_cast<Sound *>(owner)->is_playing() == 0) reinterpret_cast<Sound *>(owner)->play();
         parent->vslot_43(static_cast<int>(field_A78_));
         redraw();
         if (field_A44_ != 0xFFFFFFFFU) {
@@ -791,8 +792,8 @@ void BaseButton::on_left_down(int, int) {
     WinCallbackWindow = parent;
     if (field_AAC_ == 0) {
         Win *const owner = parent->legacy_window_28();
-        if (owner != 0 && owner->vslot_23() == 0) {
-            owner->vslot_07();
+        if (owner != 0 && reinterpret_cast<Sound *>(owner)->is_playing() == 0) {
+            reinterpret_cast<Sound *>(owner)->play();
         }
         const int accepted = parent->vslot_41(static_cast<int>(field_A78_));
         if (accepted != 0 && field_A44_ != 0xFFFFFFFFU) {
@@ -838,8 +839,8 @@ void BaseButton::on_left_up(int, int) {
     if (field_A9C_ == 1) {
         field_A9C_ = 0;
         Win *const owner = parent->legacy_window_29();
-        if (owner != 0 && owner->vslot_23() == 0) {
-            owner->vslot_07();
+        if (owner != 0 && reinterpret_cast<Sound *>(owner)->is_playing() == 0) {
+            reinterpret_cast<Sound *>(owner)->play();
         }
         parent->vslot_42(static_cast<int>(field_A78_));
         redraw();
@@ -872,8 +873,8 @@ void BaseButton::on_left_click(int, int) {
             if (WinCancelHook != 0) WinCancelHook();
         }
         Win *const owner = parent->legacy_window_31();
-        if (owner != 0 && owner->vslot_23() == 0) {
-            owner->vslot_07();
+        if (owner != 0 && reinterpret_cast<Sound *>(owner)->is_playing() == 0) {
+            reinterpret_cast<Sound *>(owner)->play();
         }
         if (group_ == 0 || group_->button_click(id) != 0) {
             parent->on_button_clicked(id);
@@ -910,7 +911,7 @@ void BaseButton::on_mouse_move(int x, int y) {
         time1_.stop();
         field_A9C_ = 0;
         Win *const owner = win_parent_->legacy_window_29();
-        if (owner != 0 && owner->vslot_23() == 0) owner->vslot_07();
+        if (owner != 0 && reinterpret_cast<Sound *>(owner)->is_playing() == 0) reinterpret_cast<Sound *>(owner)->play();
         win_parent_->vslot_42(static_cast<int>(field_A78_));
         on_update();
         return;
@@ -923,7 +924,7 @@ void BaseButton::on_mouse_move(int x, int y) {
             }
             field_A9C_ = 1;
             Win *const owner = win_parent_->legacy_window_30();
-            if (owner != 0 && owner->vslot_23() == 0) owner->vslot_07();
+            if (owner != 0 && reinterpret_cast<Sound *>(owner)->is_playing() == 0) reinterpret_cast<Sound *>(owner)->play();
             win_parent_->vslot_43(static_cast<int>(field_A78_));
             on_update();
         } else if (get_lbutton_state() != 0) {

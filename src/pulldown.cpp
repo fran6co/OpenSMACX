@@ -1272,6 +1272,7 @@ Status: Complete
 */
 
 // ORIGINAL: 0x005F9460 ?on_right_down@PullDown@@QAEXHH@Z 0x005F9460-0x005F9472 BYTE_EXACT
+// symbol    ?on_right_down@PullDown@@UAEXHH@Z
 // size      18 bytes
 // prototype void (__thiscall ?on_right_down@PullDown@@QAEXHH@Z)(PullDown* this, int, int)
 // callers   0   call targets   0

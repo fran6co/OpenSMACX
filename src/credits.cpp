@@ -216,6 +216,7 @@ void Credits::on_left_down(int, int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x00428D90 ?on_right_down@Credits@@QAEXHH@Z 0x00428D90-0x00428D93 BYTE_EXACT
+// symbol    ?on_right_down@Credits@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_right_down@Credits@@QAEXHH@Z)(Credits* this, int, int)
 // callers   0   call targets   0

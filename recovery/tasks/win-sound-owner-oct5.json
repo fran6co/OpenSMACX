@@ -1,0 +1,87 @@
+{
+  "schema_version": 1,
+  "task_id": "win-sound-owner-oct5",
+  "target": "opensmacx",
+  "author": "framework-coordinator",
+  "base_revision": "215c2e515022cafd8e44ccc77cd636a2b9b954e1",
+  "intent": "Complete both Win coordinate dispatchers and genuine Win-versus-Sound virtual receiver closure. Preserve shared neutral Sprite/Sound pointer slots, native layout, historical claims and discoveries; no original class/lifetime inference or acceptance grant from slot coincidence.",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4361616
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4573120
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4647952
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5952512
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6220112
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6220272
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6263904
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6335008
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6361664
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6368976
+    }
+  ],
+  "files": [
+    "recovery/tests/test_win_sound_product_source.py",
+    "src/autosound.cpp",
+    "src/autosound.h",
+    "src/basebutton.cpp",
+    "src/credits.cpp",
+    "src/dialogs.cpp",
+    "src/flatbutton.h",
+    "src/listbox.cpp",
+    "src/maininterface.cpp",
+    "src/mapwin.cpp",
+    "src/menu.cpp",
+    "src/pulldown.cpp",
+    "src/replaywin.cpp",
+    "src/scroll.cpp",
+    "src/spritebox.cpp",
+    "src/unrecovered/005ee950.cpp",
+    "src/unrecovered/005ee9f0.cpp",
+    "src/win.cpp",
+    "src/win.h"
+  ],
+  "evidence": [
+    "Win primary23 has two-coordinate void contract; nullary tested status/play belongs to distinct Sound table. Keep callback/null/polarity/order and original error behavior.",
+    "FlatButton disproves global Sound member typing: four AutoSound slots retain neutral pointer storage and contextual receiver views.",
+    "Compiler evidence makes eight existing on_right_down implementations genuine virtual overrides; transport current emitted UAEX symbols without changing original QAEX identities/spans/claims.",
+    "Preserve historical obligations and structural discoveries through coordinator-reviewed temporary matching regressions if necessary; do not demote, weaken gates or invent runtime acceptance. Native build/link, scoped measurements and actual-source controls required."
+  ]
+}

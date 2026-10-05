@@ -34,6 +34,7 @@ typedef signed char int8;  // a scaffold spelling the artifacts use
 #include "temp.h"
 #include "dialog.h"
 #include "sounddevice.h"
+#include "sound.h"
 #include "menu.h"
 #include "popup.h"   // pop_caption_title, for DDInit::report_error
 #include "basepop.h"  // Win::set_bubble_text's popup interfaces
@@ -3773,16 +3774,16 @@ void Win::on_mouse_move(int x, int y, unsigned int keys, int from_parent) {
         this->on_mouse_move(x, y);
         Win *const child = val_7_;
         if (child != 0) {
-            if (child->vslot_23() == 0) {
-                child->vslot_07();
+            if (reinterpret_cast<Sound *>(child)->is_playing() == 0) {
+                reinterpret_cast<Sound *>(child)->play();
             }
         }
     } else {
         this->vslot_31(x, y);
         Win *const child = val_19_;
         if (child != 0) {
-            if (child->vslot_23() == 0) {
-                child->vslot_07();
+            if (reinterpret_cast<Sound *>(child)->is_playing() == 0) {
+                reinterpret_cast<Sound *>(child)->play();
             }
         }
     }
@@ -4207,8 +4208,8 @@ Purpose: Close one window through its vtable, but only when it reports it
 void __stdcall sub_5f86a0(int window) {
     Win *const self = reinterpret_cast<Win *>(window);
     if (self != 0) {
-        if (self->vslot_23() == 0) {
-            self->vslot_07();
+        if (reinterpret_cast<Sound *>(self)->is_playing() == 0) {
+            reinterpret_cast<Sound *>(self)->play();
         }
     }
 }
@@ -5827,25 +5828,7 @@ typedef int (__stdcall *ComSlot17)(void *self, HDC *out);
 // The HDC acquire/release pair, recovered from the artifact that defined
 // it: the bodies that paint non-client areas all use it, and a macro
 // does not travel with a function body.
-#define ACQUIRE_HDC(haveHdcVar) \
-    do { \
-        if (WinHdcRefCount == 0) { \
-            if (DirectDrawSurface != 0) { \
-                ComSlot17 fn = (ComSlot17)(*reinterpret_cast<void ***>(DirectDrawSurface))[0x11]; \
-                fn(DirectDrawSurface, &WinSharedHdc); \
-            } else { \
-                WinSharedHdc =  \
-                    GetDC(HandleMain); \
-            } \
-            (haveHdcVar) = (WinSharedHdc != 0); \
-            if (haveHdcVar) { \
-                WinHdcRefCount = 1; \
-            } \
-        } else { \
-            ++WinHdcRefCount; \
-            (haveHdcVar) = (WinSharedHdc != 0); \
-        } \
-    } while (0)
+#define ACQUIRE_HDC(haveHdcVar)      do {          if (WinHdcRefCount == 0) {              if (DirectDrawSurface != 0) {                  ComSlot17 fn = (ComSlot17)(*reinterpret_cast<void ***>(DirectDrawSurface))[0x11];                  fn(DirectDrawSurface, &WinSharedHdc);              } else {                  WinSharedHdc =                       GetDC(HandleMain);              }              (haveHdcVar) = (WinSharedHdc != 0);              if (haveHdcVar) {                  WinHdcRefCount = 1;              }          } else {              ++WinHdcRefCount;              (haveHdcVar) = (WinSharedHdc != 0);          }      } while (0)
 
 // Helpers the flip/restore body needs, recovered from the artifact that
 // defined them - a static function and a macro do not travel with a
@@ -6441,8 +6424,8 @@ skip_all:
     {
         Win *other = val_4_;
         if (other != 0) {
-            if (other->vslot_23() == 0) {
-                other->vslot_07();
+            if (reinterpret_cast<Sound *>(other)->is_playing() == 0) {
+                reinterpret_cast<Sound *>(other)->play();
             }
         }
     }
@@ -6521,8 +6504,8 @@ void Win::on_l_button_down(long double_click, int x, int y, unsigned int, int fr
             this->vslot_38(x, y);
             related = val_26_;
         }
-        if (related != 0 && reinterpret_cast<Win *>(related)->vslot_23() == 0) {
-            reinterpret_cast<Win *>(related)->vslot_07();
+        if (related != 0 && reinterpret_cast<Sound *>(related)->is_playing() == 0) {
+            reinterpret_cast<Sound *>(related)->play();
         }
     }
 
@@ -6565,14 +6548,14 @@ void Win::on_l_button_up(int x, int y, unsigned int keys, int dbl) {
                 }
                 this->on_left_click_event(x, y);
                 Win *child = reinterpret_cast<Win *>(flags_);
-                if (child != 0 && child->vslot_23() == 0) {
-                    child->vslot_07();
+                if (child != 0 && reinterpret_cast<Sound *>(child)->is_playing() == 0) {
+                    reinterpret_cast<Sound *>(child)->play();
                 }
             } else {
                 this->vslot_32(x, y);
                 Win *child = reinterpret_cast<Win *>(val_20_);
-                if (child != 0 && child->vslot_23() == 0) {
-                    child->vslot_07();
+                if (child != 0 && reinterpret_cast<Sound *>(child)->is_playing() == 0) {
+                    reinterpret_cast<Sound *>(child)->play();
                 }
             }
         }
@@ -6594,14 +6577,14 @@ void Win::on_l_button_up(int x, int y, unsigned int keys, int dbl) {
                 }
                 this->on_left_up(x, y);
                 Win *child = reinterpret_cast<Win *>(val_10_);
-                if (child != 0 && child->vslot_23() == 0) {
-                    child->vslot_07();
+                if (child != 0 && reinterpret_cast<Sound *>(child)->is_playing() == 0) {
+                    reinterpret_cast<Sound *>(child)->play();
                 }
             } else {
                 this->vslot_34(x, y);
                 Win *child = reinterpret_cast<Win *>(val_22_);
-                if (child != 0 && child->vslot_23() == 0) {
-                    child->vslot_07();
+                if (child != 0 && reinterpret_cast<Sound *>(child)->is_playing() == 0) {
+                    reinterpret_cast<Sound *>(child)->play();
                 }
             }
         }
@@ -7604,8 +7587,8 @@ void Win::on_r_button_up(int x, int y, unsigned int keys, int dbl) {
                         this->vslot_35(x, y);
                         related = val_23_;
                     }
-                    if (related != 0 && reinterpret_cast<Win *>(related)->vslot_23() == 0) {
-                        reinterpret_cast<Win *>(related)->vslot_07();
+                    if (related != 0 && reinterpret_cast<Sound *>(related)->is_playing() == 0) {
+                        reinterpret_cast<Sound *>(related)->play();
                     }
                 }
             }
@@ -7614,7 +7597,7 @@ void Win::on_r_button_up(int x, int y, unsigned int keys, int dbl) {
 
     if ((iFlags_ & 0x200000) == 0 &&
         (iSomeFlag_ & 8) == 0) {
-        int32_t related2;
+    Sound *related2;
         if (dbl == 0) {
             WinCallbackWindow = this;
             int32_t fp = field_428_;
@@ -7622,13 +7605,13 @@ void Win::on_r_button_up(int x, int y, unsigned int keys, int dbl) {
                 reinterpret_cast<void(__cdecl *)(int, int)>(fp)(x, y);
             }
             this->vslot_24(x, y);
-            related2 = val_13_;
+            related2 = reinterpret_cast<Sound *>(val_13_);
         } else {
             this->vslot_37(x, y);
-            related2 = val_25_;
+            related2 = reinterpret_cast<Sound *>(val_25_);
         }
-        if (related2 != 0 && reinterpret_cast<Win *>(related2)->vslot_23() == 0) {
-            reinterpret_cast<Win *>(related2)->vslot_07();
+        if (related2 != 0 && related2->is_playing() == 0) {
+            related2->play();
         }
     }
 }
@@ -7865,8 +7848,8 @@ void Win::show(int visible) {
 
         Win *obj2 = reinterpret_cast<Win *>(val_3_);
         if (obj2 != 0) {
-            if (obj2->vslot_23() == 0) {
-                obj2->vslot_07();
+            if (reinterpret_cast<Sound *>(obj2)->is_playing() == 0) {
+                reinterpret_cast<Sound *>(obj2)->play();
             }
         }
     }
@@ -8115,8 +8098,8 @@ int Win::key_up_event(int key) {
     result += this->vslot_27(key);
     Win *child = reinterpret_cast<Win *>(val_16_);
     if (child != 0) {
-        if (child->vslot_23() == 0) {
-            child->vslot_07();
+        if (reinterpret_cast<Sound *>(child)->is_playing() == 0) {
+            reinterpret_cast<Sound *>(child)->play();
         }
     }
     return result;
@@ -8199,8 +8182,8 @@ int Win::key_down_event(int key) {
 
     Win *child = reinterpret_cast<Win *>(val_15_);
     if (child != 0) {
-        if (child->vslot_23() == 0) {
-            child->vslot_07();
+        if (reinterpret_cast<Sound *>(child)->is_playing() == 0) {
+            reinterpret_cast<Sound *>(child)->play();
         }
     }
     return ebx + r2;
@@ -8767,18 +8750,18 @@ void Win::left_down_event(int x, int y, int from_parent) {
         this->on_left_down(x, y);
         Win *child = reinterpret_cast<Win *>(val_9_);
         if (child != 0) {
-            int r = reinterpret_cast<Win *>(child)->vslot_23();
+            int r = reinterpret_cast<Sound *>(child)->is_playing();
             if (r == 0) {
-                reinterpret_cast<Win *>(child)->vslot_07();
+                reinterpret_cast<Sound *>(child)->play();
             }
         }
     } else {
         this->vslot_33(x, y);
         Win *child = reinterpret_cast<Win *>(val_21_);
         if (child != 0) {
-            int r = reinterpret_cast<Win *>(child)->vslot_23();
+            int r = reinterpret_cast<Sound *>(child)->is_playing();
             if (r == 0) {
-                reinterpret_cast<Win *>(child)->vslot_07();
+                reinterpret_cast<Sound *>(child)->play();
             }
         }
     }
@@ -9195,8 +9178,8 @@ void Win::on_char(char param2, int param3) {
                 InvalidateRect(HandleMain, 0, 0);
 
                 Win *w = debug_window.val_4_;
-                if (w != 0 && w->vslot_23() == 0) {
-                    w->vslot_07();
+                if (w != 0 && reinterpret_cast<Sound *>(w)->is_playing() == 0) {
+                    reinterpret_cast<Sound *>(w)->play();
                 }
             }
         }
@@ -9564,9 +9547,9 @@ int Win::key_click_event(int key, int flags) {
     Win *child = reinterpret_cast<Win *>(val_14_);
     if (child != 0) {
         void *cvtbl = *(void **)child;
-        if (reinterpret_cast<Win *>(child)->vslot_23() == 0) {
+        if (reinterpret_cast<Sound *>(child)->is_playing() == 0) {
             void *cvtbl2 = *(void **)child;
-            reinterpret_cast<Win *>(child)->vslot_07();
+            reinterpret_cast<Sound *>(child)->play();
         }
     }
     return result + r2;
@@ -10172,10 +10155,10 @@ void Win::on_key(unsigned int key, long flags, int repeat, unsigned int scan) {
         if (next == 0) {
             return;
         }
-        if (next->vslot_23() != 0) {
+        if (reinterpret_cast<Sound *>(next)->is_playing() != 0) {
             return;
         }
-        next->vslot_07();
+        reinterpret_cast<Sound *>(next)->play();
         return;
     }
 
@@ -10232,8 +10215,8 @@ int __cdecl Win::OnSysCommand(HWND hwnd, unsigned int command, int x,
     Win *child = *reinterpret_cast<Win **>(
         reinterpret_cast<char *>(self) + 0x18);
     if (child != 0) {
-        if (child->vslot_23() == 0) {
-            child->vslot_07();
+        if (reinterpret_cast<Sound *>(child)->is_playing() == 0) {
+            reinterpret_cast<Sound *>(child)->play();
         }
     }
     return 0;
@@ -10438,18 +10421,18 @@ void Win::on_r_button_down(long flags, int x, int y, unsigned int keys, int dbl)
             this->vslot_29(x, y);
             Win *child = reinterpret_cast<Win *>(val_18_);
             if (child != 0) {
-                int r = child->vslot_23();
+                int r = reinterpret_cast<Sound *>(child)->is_playing();
                 if (r == 0) {
-                    child->vslot_07();
+                    reinterpret_cast<Sound *>(child)->play();
                 }
             }
         } else {
             this->vslot_39(x, y);
             Win *child = reinterpret_cast<Win *>(val_27_);
             if (child != 0) {
-                int r = child->vslot_23();
+                int r = reinterpret_cast<Sound *>(child)->is_playing();
                 if (r == 0) {
-                    child->vslot_07();
+                    reinterpret_cast<Sound *>(child)->play();
                 }
             }
         }
@@ -10463,21 +10446,21 @@ void Win::on_r_button_down(long flags, int x, int y, unsigned int keys, int dbl)
             if (fn != 0) {
                 fn(x, y);
             }
-            this->vslot_23();
-            Win *child = reinterpret_cast<Win *>(val_12_);
+            this->on_right_down(x, y);
+            Sound *child = reinterpret_cast<Sound *>(val_12_);
             if (child != 0) {
-                int r = child->vslot_23();
+                int r = child->is_playing();
                 if (r == 0) {
-                    child->vslot_07();
+                    child->play();
                 }
             }
         } else {
             this->vslot_36(x, y);
-            Win *child = reinterpret_cast<Win *>(val_24_);
+            Sound *child = reinterpret_cast<Sound *>(val_24_);
             if (child != 0) {
-                int r = child->vslot_23();
+                int r = child->is_playing();
                 if (r == 0) {
-                    child->vslot_07();
+                    child->play();
                 }
             }
         }
@@ -11954,8 +11937,8 @@ void Win::send_to_window(int value, int which) {
 // indirect  0x005EE473 0x005EE479 0x005EE487 0x005EE492
 // NAMED from the body: it publishes `this` as WinCallbackWindow, runs the
 // field_404_ hook when one is installed, raises its own slot 14, and then
-// walks the window at val_6_ offering it the same slot 23 / slot 7 pair the
-// other dispatchers here offer their child.
+// offers the contextual Sound at val_6_ the status/play pair also used
+// for Sound receivers in the other dispatchers. Installation remains unknown.
 void Win::publish_callback_window() {
     WinCallbackWindow = this;
     typedef void(__cdecl * NullaryCb)();
@@ -11966,8 +11949,8 @@ void Win::publish_callback_window() {
     vslot_14();
     Win *second = reinterpret_cast<Win *>(val_6_);
     if (second != 0) {
-        if (second->vslot_23() == 0) {
-            second->vslot_07();
+        if (reinterpret_cast<Sound *>(second)->is_playing() == 0) {
+            reinterpret_cast<Sound *>(second)->play();
         }
     }
 }
@@ -12003,16 +11986,16 @@ void Win::dispatch_17(int a, int b, int alternate) {
         on_mouse_move(a, b);
         Win *child = reinterpret_cast<Win *>(val_7_);
         if (child != 0) {
-            if (child->vslot_23() == 0) {
-                child->vslot_07();
+            if (reinterpret_cast<Sound *>(child)->is_playing() == 0) {
+                reinterpret_cast<Sound *>(child)->play();
             }
         }
     } else {
         vslot_31(a, b);
         Win *child = reinterpret_cast<Win *>(val_19_);
         if (child != 0) {
-            if (child->vslot_23() == 0) {
-                child->vslot_07();
+            if (reinterpret_cast<Sound *>(child)->is_playing() == 0) {
+                reinterpret_cast<Sound *>(child)->play();
             }
         }
     }
@@ -12049,16 +12032,16 @@ void Win::dispatch_28(int a, int b, int alternate) {
         on_left_double_click(a, b);
         Win *child = reinterpret_cast<Win *>(val_17_);
         if (child != 0) {
-            if (child->vslot_23() == 0) {
-                child->vslot_07();
+            if (reinterpret_cast<Sound *>(child)->is_playing() == 0) {
+                reinterpret_cast<Sound *>(child)->play();
             }
         }
     } else {
         vslot_38(a, b);
         Win *child = reinterpret_cast<Win *>(val_26_);
         if (child != 0) {
-            if (child->vslot_23() == 0) {
-                child->vslot_07();
+            if (reinterpret_cast<Sound *>(child)->is_playing() == 0) {
+                reinterpret_cast<Sound *>(child)->play();
             }
         }
     }
@@ -12076,6 +12059,8 @@ void Win::dispatch_28(int a, int b, int alternate) {
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     (none)
+// Receiver correction: the retained VCall2 lesson describes the child
+// Sound status result; Win self events are coordinate-taking void calls.
 // NAMED from its slot: the dispatcher family again, slot 29 (0x74) with slot
 // 39 (0x9c) as the alternate arm, the hook at field_410_, the children off
 // val_18_ (0x48) and val_27_ (0x6c).
@@ -12096,16 +12081,16 @@ void Win::dispatch_29(int a, int b, int alternate) {
         vslot_29(a, b);
         Win *child = reinterpret_cast<Win *>(val_18_);
         if (child != 0) {
-            if (child->vslot_23() == 0) {
-                child->vslot_07();
+            if (reinterpret_cast<Sound *>(child)->is_playing() == 0) {
+                reinterpret_cast<Sound *>(child)->play();
             }
         }
     } else {
         vslot_39(a, b);
         Win *child = reinterpret_cast<Win *>(val_27_);
         if (child != 0) {
-            if (child->vslot_23() == 0) {
-                child->vslot_07();
+            if (reinterpret_cast<Sound *>(child)->is_playing() == 0) {
+                reinterpret_cast<Sound *>(child)->play();
             }
         }
     }
@@ -12123,6 +12108,8 @@ void Win::dispatch_29(int a, int b, int alternate) {
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// Receiver correction: the retained VCall2 lesson describes the child
+// Sound status result; Win self events are coordinate-taking void calls.
 // NAMED from its slot: the dispatcher family again, slot 19 (0x4c) with slot
 // 32 (0x80) as the alternate arm, the hook at field_414_, the children off
 // AutoSound+0x20 and val_20_ (0x50).
@@ -12150,16 +12137,16 @@ void Win::dispatch_19(int a, int b, int alternate) {
         on_left_click_event(a, b);
         Win *child = reinterpret_cast<Win *>(flags_);
         if (child != 0) {
-            if (child->vslot_23() == 0) {
-                child->vslot_07();
+            if (reinterpret_cast<Sound *>(child)->is_playing() == 0) {
+                reinterpret_cast<Sound *>(child)->play();
             }
         }
     } else {
         vslot_32(a, b);
         Win *child = reinterpret_cast<Win *>(val_20_);
         if (child != 0) {
-            if (child->vslot_23() == 0) {
-                child->vslot_07();
+            if (reinterpret_cast<Sound *>(child)->is_playing() == 0) {
+                reinterpret_cast<Sound *>(child)->play();
             }
         }
     }
@@ -12196,16 +12183,16 @@ void Win::dispatch_21(int a, int b, int alternate) {
         on_left_up(a, b);
         Win *child = reinterpret_cast<Win *>(val_10_);
         if (child != 0) {
-            if (child->vslot_23() == 0) {
-                child->vslot_07();
+            if (reinterpret_cast<Sound *>(child)->is_playing() == 0) {
+                reinterpret_cast<Sound *>(child)->play();
             }
         }
     } else {
         vslot_34(a, b);
         Win *child = reinterpret_cast<Win *>(val_22_);
         if (child != 0) {
-            if (child->vslot_23() == 0) {
-                child->vslot_07();
+            if (reinterpret_cast<Sound *>(child)->is_playing() == 0) {
+                reinterpret_cast<Sound *>(child)->play();
             }
         }
     }
@@ -12243,17 +12230,84 @@ void Win::dispatch_22(int a, int b, int alternate) {
         vslot_22(a, b);
         Win *child = reinterpret_cast<Win *>(val_11_);
         if (child != 0) {
-            if (child->vslot_23() == 0) {
-                child->vslot_07();
+            if (reinterpret_cast<Sound *>(child)->is_playing() == 0) {
+                reinterpret_cast<Sound *>(child)->play();
             }
         }
     } else {
         vslot_35(a, b);
         Win *child = reinterpret_cast<Win *>(val_23_);
         if (child != 0) {
-            if (child->vslot_23() == 0) {
-                child->vslot_07();
+            if (reinterpret_cast<Sound *>(child)->is_playing() == 0) {
+                reinterpret_cast<Sound *>(child)->play();
             }
+        }
+    }
+}
+
+// Original source names are not established; these labels identify the
+// primary Win slots used by the recovered seed bodies.
+// ORIGINAL: 0x005EE950 sub_5ee950 0x005EE950-0x005EE9EE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:215c2e515022cafd8e44ccc77cd636a2b9b954e1:src/unrecovered/005ee950.cpp: original identity, complete span and historical receiver findings", "Win primary table66FDD0 slot23 selects404260 ret8; Sound table66E3C0 slots23/7 select4C64C0/4C6480", "src/flatbutton.h: val_12 also stores the borrowed pressed Sprite pointer", "recovery/tasks/win-sound-owner-oct5.json", "recovery/tests/test_win_sound_product_source.py"], "reason": "Recover complete Win coordinate dispatcher through its real primary/alternate virtual events and contextual Sound status/play receiver. Settings words are neutral pointer storage because FlatButton borrows one for a Sprite; concrete installed sound lifetime remains unresolved."}
+// symbol    ?dispatch_23@Win@@QAEXHHH@Z
+// LEVER: [ecx+N] reads with no stack `this` -> a __thiscall receiver class (Recv5ee950), not the given __stdcall free function. Two shims: VCallSelf (slot023/036 take (int,int) on `this`) and VCallChild (slot023 returns int(), slot007 void()) on the 0x30/0x60 children - same slot index, different vtables, so one shim could not serve both.
+void Win::dispatch_23(int x, int y, int alternate) {
+    if ((iFlags_ & 0x200000U) != 0) {
+        return;
+    }
+    if ((iSomeFlag_ & 8U) != 0) {
+        return;
+    }
+
+    if (alternate == 0) {
+        WinCallbackWindow = this;
+        typedef void(__cdecl *MouseCallback)(int, int);
+        MouseCallback callback = reinterpret_cast<MouseCallback>(field_424_);
+        if (callback != 0) {
+            callback(x, y);
+        }
+        on_right_down(x, y);
+        Sound *child = reinterpret_cast<Sound *>(val_12_);
+        if (child != 0 && child->is_playing() == 0) {
+            child->play();
+        }
+    } else {
+        vslot_36(x, y);
+        Sound *child = reinterpret_cast<Sound *>(val_24_);
+        if (child != 0 && child->is_playing() == 0) {
+            child->play();
+        }
+    }
+}
+
+// ORIGINAL: 0x005EE9F0 sub_5ee9f0 0x005EE9F0-0x005EEA8E
+// RECOVERY_BINDING: v1 {"evidence": ["git:215c2e515022cafd8e44ccc77cd636a2b9b954e1:src/unrecovered/005ee9f0.cpp: original identity, complete span and historical receiver findings", "Win primary table66FDD0 slot23 selects404260 ret8; Sound table66E3C0 slots23/7 select4C64C0/4C6480", "src/flatbutton.h: val_12 also stores the borrowed pressed Sprite pointer", "recovery/tasks/win-sound-owner-oct5.json", "recovery/tests/test_win_sound_product_source.py"], "reason": "Recover complete Win coordinate dispatcher through its real primary/alternate virtual events and contextual Sound status/play receiver. Settings words are neutral pointer storage because FlatButton borrows one for a Sprite; concrete installed sound lifetime remains unresolved."}
+// symbol    ?dispatch_24@Win@@QAEXHHH@Z
+void Win::dispatch_24(int x, int y, int alternate) {
+    if ((iFlags_ & 0x200000U) != 0) {
+        return;
+    }
+    if ((iSomeFlag_ & 8U) != 0) {
+        return;
+    }
+
+    if (alternate == 0) {
+        WinCallbackWindow = this;
+        typedef void(__cdecl *MouseCallback)(int, int);
+        MouseCallback callback = reinterpret_cast<MouseCallback>(field_428_);
+        if (callback != 0) {
+            callback(x, y);
+        }
+        vslot_24(x, y);
+        Sound *child = reinterpret_cast<Sound *>(val_13_);
+        if (child != 0 && child->is_playing() == 0) {
+            child->play();
+        }
+    } else {
+        vslot_37(x, y);
+        Sound *child = reinterpret_cast<Sound *>(val_25_);
+        if (child != 0 && child->is_playing() == 0) {
+            child->play();
         }
     }
 }

@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include "sound.h"
 #include "wave.h"
 #include "original_seam.h"
 #include "menu.h"
@@ -369,8 +370,8 @@ int Menu::on_key_click(int, int key) {
             Win *parent = win_parent_;
             if (!parent) return 1;
             Win *target = parent->event_window();
-            if (!target || target->vslot_23()) return 1;
-            target->vslot_07();
+            if (!target || reinterpret_cast<Sound *>(target)->is_playing()) return 1;
+            reinterpret_cast<Sound *>(target)->play();
             return 1;
         }
         if (key == 0x1B) {
@@ -554,7 +555,7 @@ void Menu::menu_event(int id) {
         proc_(id);
         if (win_parent_) {
             Win *target = win_parent_->event_window();
-            if (target && !target->vslot_23()) target->vslot_07();
+            if (target && !reinterpret_cast<Sound *>(target)->is_playing()) reinterpret_cast<Sound *>(target)->play();
         }
     }
 }
@@ -1751,8 +1752,8 @@ void Menu::on_left_up(int xCoord, int yCoord) {
         return;
     }
     Win *target = win_parent_->event_window();
-    if (target != 0 && !target->vslot_23()) {
-        target->vslot_07();
+    if (target != 0 && !reinterpret_cast<Sound *>(target)->is_playing()) {
+        reinterpret_cast<Sound *>(target)->play();
     }
 }
 

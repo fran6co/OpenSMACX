@@ -709,6 +709,7 @@ Purpose: Check the click against the widget's spots; if one is hit and its
          registered handler accepts it, notify the main window with a
          synthetic Return keypress.
 // ORIGINAL: 0x00611240 ?on_right_down@SpriteBox@@QAEXHH@Z 0x00611240-0x00611290 BYTE_EXACT
+// symbol    ?on_right_down@SpriteBox@@UAEXHH@Z
 // size      80 bytes
 // prototype void (__thiscall ?on_right_down@SpriteBox@@QAEXHH@Z)(SpriteBox* this, int xCoord, int yCoord)
 // callers   1   call targets   1
