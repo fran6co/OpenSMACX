@@ -2974,14 +2974,14 @@ void Net::handle_sys_msg() {
 
 
 /*
-Purpose: The sprite-heap node's constructor-side list hook the 0x1c nodes
-         run at +0x2c: initialises the node's list block. Its body has no
-         product home yet (retained in src/recovered/units/00401b80.cpp),
-         so the two allocation paths above link through here.
+Purpose: Construct the node's list block through its real C++ owner.
+         The shared allocation virtual base captures the original heap owner;
+         this constructor clears the five list words.
 // ORIGINAL: 0x00401B80 sub_401b80 0x00401B80-0x00401BD8 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["git:2f89503ec251ffc8b9ff894998c01944c173a4fb:src/recovered/units/00401b80.cpp"], "reason": "Retain the genuine source constructor, including natural inherited and virtual-base lifetime; superseded assembly scaffold is historical evidence, not another implementation."}
 // symbol    ??0NetTextListBase@@QAE@XZ
 // size      88 bytes
-Status: Continuity placeholder - real body pending, artifact retained.
+Constructor implemented through the declared C++ base/member lifecycle; matching remains independently measurable.
 */
 NetTextListBase::NetTextListBase() {
     head_ = 0;
@@ -3418,13 +3418,14 @@ BOOL __stdcall enumerate_session_callback(LPCDPSESSIONDESC2 descriptor,
 }
 
 /*
-Purpose: The 0x60 sprite-heap node's constructor-side list hook, taking the
-         caller's flag. No product home yet (retained in
-         src/recovered/units/00402d10.cpp).
+Purpose: Construct the derived node list through its real base lifecycle.
+         The inherited list constructor clears its five words; the derived
+         source-text and field_20_ words remain uninitialized.
 // ORIGINAL: 0x00402D10 sub_402d10 0x00402D10-0x00402D7C FILE
+// RECOVERY_BINDING: v1 {"evidence": ["git:2f89503ec251ffc8b9ff894998c01944c173a4fb:src/recovered/units/00402d10.cpp"], "reason": "Retain the genuine source constructor, including natural inherited and virtual-base lifetime; superseded assembly scaffold is historical evidence, not another implementation."}
 // symbol    ??0NetUnk72C@@QAE@XZ
 // size      108 bytes
-Status: Continuity placeholder - real body pending, artifact retained.
+Constructor implemented through the declared C++ base/member lifecycle; matching remains independently measurable.
 */
 NetUnk72C::NetUnk72C() {
     // Source text and field_20_ remain uninitialized, as in 402D10.
