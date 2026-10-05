@@ -15,9 +15,16 @@ supersedes earlier prospective bug-fix permissions, including the alien-movement
 current-tile fallback; retain those proposals separately rather than publishing
 them as the faithful implementation.
 
-Continue parallel full-owner recovery toward compiling source coverage as an
-intermediate checkpoint. A compiling body or a temporary matching regression is
-not completion of the first milestone. Recover the original branch ordering,
+The immediate working priority is **complete compiling function coverage**, using
+large parallel full-owner batches and semantically faithful implementations.
+Do not postpone a function or spend extended iterations seeking byte equality
+when a complete equivalent body can be integrated now. Take inexpensive exact
+matches when available, preserve historical obligations and structural findings,
+and defer prolonged spelling/layout restoration until coverage is complete.
+Build/link, source identity continuity and relevant behavioral checks still apply;
+neither placeholders nor forwarding into the old executable count as recovery.
+A compiling body or a temporary matching regression is not completion of the
+eventual byte-exact milestone. Recover the original branch ordering,
 error paths, initialization, arithmetic, storage and lifetime effects, including
 defects. Do not silently add bounds checks, initialize formerly uninitialized
 values, fix leaks or substitute safe fallback behavior. A correction of a

@@ -7,9 +7,13 @@ references. Do not preserve those defects to protect a local similarity score.
 
 First milestone: complete byte-exact source recovery, bug for bug with the pinned
 original. Bug fixes and improvements come afterward; this supersedes earlier
-prospective fix approvals. Compiling coverage remains an intermediate step, not
-milestone completion. See `recovery/WORKFLOW.md`, "Milestone order". Preserve
-original quirks and evidence; do not silently normalize unsafe/error paths.
+prospective fix approvals. The immediate priority is complete compiling function
+coverage through large parallel, semantically faithful recovery batches. Do not
+delay a complete implementation for extended byte-matching iterations. Exactness
+is welcome when readily achieved; preserve historical claims and restoration
+obligations for the subsequent matching pass. Coverage is not final milestone
+completion. See `recovery/WORKFLOW.md`, "Milestone order". Preserve original
+quirks and evidence; do not silently normalize unsafe/error paths.
 
 ## Read next
 

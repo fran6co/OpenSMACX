@@ -10,6 +10,10 @@ The first user milestone is complete byte-exact source recovery, bug for bug
 with the original; intentional bug fixes and improvements follow afterward.
 Compiling coverage is intermediate progress, not that milestone. The controlling
 ordering and evidence requirements are in `WORKFLOW.md`, "Milestone order".
+Coverage is the immediate priority: integrate complete compiling semantic
+equivalents in large parallel batches without prolonged byte-matching searches.
+Retain historical claims and restoration obligations for the later matching pass;
+do not introduce deliberate bug fixes during coverage recovery.
 
 The terrain loader and renderer need one palette-index table and three signed
 landmark receiver/rotation tables from the pinned original. CMake materializes
