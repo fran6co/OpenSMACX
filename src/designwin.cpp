@@ -42,6 +42,11 @@
 #include "xpops.h"      // x_pop_caption_label
 #include "console.h"    // ConsoleGlobal.faction_id_ is the local faction
 
+void __cdecl clear_bunglist(int faction);
+int __cdecl diplo_lock(int patience);
+void __cdecl diplo_unlock();
+extern uint32_t UpgradePromptAnswered; // base.cpp owns original90EA3C
+
 int __cdecl abil_cond(int ability_id, int chassis_id, int weapon_id,
                      int armor_id);  // 0x00584B50, implemented in leaf_recoveries.cpp
 
@@ -871,14 +876,443 @@ void DesignWin::on_iface_group_clicked(int, int, int) {
 
 // ---- the interface table's own slots -------------------------------------
 
-// Slot 44 of the front vtable - the catalogue's
-// ?on_button_clicked@DesignWin@@QAEXH@Z, 0x00438460, 4481 bytes (plus the cold
-// tail at 0x00654010), unrecovered. vslot_13 and on_iface_button_pressed both
-// reach it through a live dispatch, so the entry has to be DesignWin's.
+// Real slot44 workshop handler; compiler owns the local Popup lifetime.
+// ORIGINAL: 0x00438460 ?on_button_clicked@DesignWin@@QAEXH@Z 0x00438460-0x004395E1;0x00654010-0x006541FC
+// RECOVERY_BINDING: v1 {"evidence": ["historical seed:src/unrecovered/00438460.cpp", "task:designwin-button-owner", "Front virtual slot44 dispatches here; real Players/PlayersData, VehPrototypes, Weapon/Armor, design-selection globals and NetDaemon own referenced state. Retire, upgrade and component branches retain native order; helper design selection remains unfinished."], "reason": "Recover the complete DesignWin button operation using actual C++ owners and automatic Popup lifetime. Original main/cold spans and seed lessons remain restoration evidence, not game acceptance."}
+// symbol    ?on_button_clicked@DesignWin@@UAEXH@Z
+// TRIED: fresh-temporary destructor sequencing for the Popup/Scroll/ BasePop/Dialogs teardown tail (same technique as Console::editor_diff, 0x004DD6F0) instead of hand-replaying the SEH funclet's exact interleave - compiles, MISMATCH #10 push/mov, sim ~0.59 on the framed row.
 void DesignWin::on_button_clicked(int button_id) {
-    typedef void(__fastcall *pending)(DesignWin *, void *, int);
-    reinterpret_cast<pending>(static_cast<unsigned long>(0x00438460))(
-        this, nullptr, button_id);
+    Popup popup;
+    TutWinGlobal->reset();
+
+    if (button_id == -2 || button_id == 8) {
+        field_CDC_ = 0;
+        release_modal();
+        g_FX.fade(0x18);
+        return;
+    }
+
+    if (button_id == -1 || button_id == 4) {
+        g_FX.fade(0x18);
+        field_CDC_ = design_it();
+        if (field_CDC_ != 0) {
+            release_modal();
+        }
+        return;
+    }
+
+    if (button_id == 0x17 || button_id == 0x18) {
+        if (ProtoSortCount > 0) {
+            if (button_id == 0x17) {
+                --field_CE4_;
+                if (field_CE4_ < 0) {
+                    field_CE4_ = ProtoSortCount;
+                }
+            } else {
+                ++field_CE4_;
+                if (field_CE4_ == ProtoSortCount) {
+                    field_CE4_ = 0;
+                }
+            }
+        }
+        redraw();
+        return;
+    }
+
+    if (button_id == 1) {
+        field_CDC_ = design_it();
+        setup_veh(static_cast<int>(protoID_), 0);
+        proto_sort_2(static_cast<int>(factionID_));
+        const int visible_count = ProtoSortCount;
+        if (visible_count > 0) {
+            for (int walk = 0; walk < visible_count; ++walk) {
+                const int slot = (static_cast<int>(field_CE4_) + walk)
+                    % visible_count;
+                if (ProtoSortIds[slot] == static_cast<int>(protoID_)) {
+                    field_CE4_ = (slot + visible_count - 5) % visible_count;
+                    break;
+                }
+            }
+        }
+        redraw();
+        return;
+    }
+
+    if (button_id == 0) {
+        const int faction = static_cast<int>(factionID_);
+        const int prototype_id = static_cast<int>(protoID_);
+        const VehPrototype &prototype = VehPrototypes[prototype_id];
+
+        parse_says(0, prototype.veh_name, -1, -1);
+        const int active_count =
+            PlayersData[faction].proto_id_active[prototype_id];
+        const bool alien_rules = (Players[faction].rule_flags & 0x80) != 0;
+        if (active_count != 0) {
+            parse_num(0, active_count);
+        }
+
+        const int answer = alien_rules
+            ? (active_count != 0
+                ? popp(*ClimatePopupTitle, "RETIRETYPE", 0,
+                       "alunit_sm.pcx", pop_wait)
+                : popp(*ClimatePopupTitle, "RETIRETYPE2", 0,
+                       "alunit_sm.pcx", pop_wait))
+            : (active_count != 0
+                ? popp(*ClimatePopupTitle, "RETIRETYPE", 0,
+                       "unit_sm.pcx", pop_wait)
+                : popp(*ClimatePopupTitle, "RETIRETYPE2", 0,
+                       "unit_sm.pcx", pop_wait));
+        if (answer == 0) {
+            return;
+        }
+
+        if (!IsMultiplayerNet) {
+            retire_proto(prototype_id, faction);
+        } else {
+            if (diplo_lock(0x19) != 0) {
+                return;
+            }
+            message_data(0x2415, 0, prototype_id, faction, 0, 0);
+            NetDaemonNet.await_exec(0);
+            diplo_unlock();
+        }
+
+        setup_veh(prototype_id, 0);
+        proto_sort_2(faction);
+        const int count = ProtoSortCount;
+        if (count > 0) {
+            for (int walk = 0; walk < count; ++walk) {
+                const int slot = (static_cast<int>(field_CE4_) + walk) % count;
+                if (ProtoSortIds[slot] == prototype_id) {
+                    field_CE4_ = (slot + count - 5) % count;
+                    break;
+                }
+            }
+        }
+        redraw();
+        return;
+    }
+
+    if (button_id == 2) {
+        if ((GameState & 0x40) == 0) {
+            return;
+        }
+        field_CDC_ = design_it();
+        setup_veh(static_cast<int>(protoID_), 0);
+        proto_sort_2(static_cast<int>(factionID_));
+        if (ProtoSortCount > 0) {
+            for (int walk = 0; walk < ProtoSortCount; ++walk) {
+                const int slot = (static_cast<int>(field_CE4_) + walk)
+                    % ProtoSortCount;
+                if (ProtoSortIds[slot] == static_cast<int>(protoID_)) {
+                    field_CE4_ = (slot + ProtoSortCount - 5) % ProtoSortCount;
+                    break;
+                }
+            }
+        }
+        VehPrototypes[protoID_].flags ^= 4;
+        redraw();
+        return;
+    }
+
+    if (button_id == 3) {
+        if ((GameState & 0x40) == 0) {
+            return;
+        }
+        const bool alien_rules =
+            (Players[static_cast<int>(factionID_)].rule_flags & 0x80) != 0;
+        const int answer = alien_rules
+            ? popp(*ClimatePopupTitle, "RETIREALL", 0,
+                   "alunit_sm.pcx", 0)
+            : popp(*ClimatePopupTitle, "RETIREALL", 0,
+                   "unit_sm.pcx", 0);
+        if (answer == 0) {
+            return;
+        }
+        for (int faction = 1; faction < MaxPlayerNum; ++faction) {
+            if (answer < 2 && faction != static_cast<int>(factionID_)) {
+                continue;
+            }
+            // Native4386EF shifts by the current loop faction, not the editor.
+            const uint8_t faction_mask = static_cast<uint8_t>(1u << faction);
+            for (int slot = 0; slot < MaxVehProtoFactionNum; ++slot) {
+                VehPrototypes[slot].obsolete_factions &=
+                    static_cast<uint8_t>(~faction_mask);
+                VehPrototypes[faction * MaxVehProtoFactionNum + slot].flags &=
+                    static_cast<uint16_t>(~1u);
+            }
+            clear_bunglist(faction);
+        }
+
+        setup_veh(0, 0);
+        proto_sort_2(static_cast<int>(factionID_));
+        if (ProtoSortCount > 0) {
+            for (int walk = 0; walk < ProtoSortCount; ++walk) {
+                const int slot = (static_cast<int>(field_CE4_) + walk)
+                    % ProtoSortCount;
+                if (ProtoSortIds[slot] != 0) {
+                    field_CE4_ = (slot + ProtoSortCount - 5) % ProtoSortCount;
+                    break;
+                }
+            }
+        }
+        redraw();
+        return;
+    }
+
+    if (button_id == 5) {
+        select_name();
+        return;
+    }
+
+    if (button_id == 6) {
+        const int faction = static_cast<int>(factionID_);
+        const int prototype_id = static_cast<int>(protoID_);
+        const uint8_t faction_mask = static_cast<uint8_t>(1u << faction);
+        VehPrototype &prototype = VehPrototypes[prototype_id];
+        if ((prototype.obsolete_factions & faction_mask) != 0) {
+            if ((prototype.flags & 8) != 0) {
+                prototype.flags |= 0x200;
+            }
+            prototype.flags |= 8;
+        } else {
+            prototype.flags &= static_cast<uint16_t>(0xFDF7);
+        }
+        prototype.obsolete_factions ^= faction_mask;
+        synch_obs(prototype_id);
+
+        proto_sort_2(faction);
+        const int count = ProtoSortCount;
+        if (count > 0) {
+            for (int walk = 0; walk < count; ++walk) {
+                const int slot = (static_cast<int>(field_CE4_) + walk) % count;
+                if (ProtoSortIds[slot] == prototype_id) {
+                    const int next = (slot + 1) % count;
+                    protoID_ = static_cast<uint32_t>(ProtoSortIds[next]);
+                    break;
+                }
+            }
+        }
+        setup_veh(static_cast<int>(protoID_), 0);
+        proto_sort_2(faction);
+        const int sorted_count = ProtoSortCount;
+        if (sorted_count > 0) {
+            for (int walk = 0; walk < sorted_count; ++walk) {
+                const int slot = (static_cast<int>(field_CE4_) + walk)
+                    % sorted_count;
+                if (ProtoSortIds[slot] == static_cast<int>(protoID_)) {
+                    const int new_top = (slot + sorted_count - 5) % sorted_count;
+                    if (new_top != static_cast<int>(field_CE4_)) {
+                        field_CE4_ = new_top;
+                        draw_stack();
+                    }
+                    break;
+                }
+            }
+        }
+        redraw();
+        return;
+    }
+
+    if (button_id == 7) {
+        const int faction = static_cast<int>(factionID_);
+        const int old_prototype_id = static_cast<int>(protoID_);
+        if (NetDaemonNet.lock(2, -1, -1, 0, -1, -1) != 0) {
+            return;
+        }
+
+        UpgradePromptAnswered = 0;
+        StringTemp[0] = '\0';
+        ::strcat(StringTemp, VehPrototypes[old_prototype_id].veh_name);
+        parse_says(0, StringTemp, -1, -1);
+        popup.start(PopupStartCaption, "WHICHUPGRADE2", -1, nullptr,
+                    0x40, nullptr);
+
+        int match_count = 0;
+        int selected_prototype = -1;
+        const int faction_base = faction * MaxVehProtoFactionNum;
+        const VehPrototype &old_prototype = VehPrototypes[old_prototype_id];
+        for (int slot = 0; slot < MaxVehProtoFactionNum; ++slot) {
+            const int candidate_id = faction_base + slot;
+            const VehPrototype &candidate = VehPrototypes[candidate_id];
+            if (candidate_id == old_prototype_id) {
+                continue;
+            }
+            if ((candidate.flags & 1) == 0) {
+                continue;
+            }
+            if ((candidate.obsolete_factions & (1u << faction)) != 0) {
+                continue;
+            }
+            if (candidate.chassis_id != old_prototype.chassis_id) {
+                continue;
+            }
+            if (((candidate.ability_flags ^ old_prototype.ability_flags)
+                 & 0x8000) != 0) {
+                continue;
+            }
+
+            if (candidate.plan != old_prototype.plan) {
+                if (candidate.plan > 3 || old_prototype.plan > 3) {
+                    continue;
+                }
+            }
+
+            const int old_weapon_rating =
+                Weapon[old_prototype.weapon_id].offense_rating;
+            const int candidate_weapon_rating =
+                Weapon[candidate.weapon_id].offense_rating;
+            if (old_weapon_rating != 0) {
+                if (old_weapon_rating > candidate_weapon_rating) {
+                    continue;
+                }
+            } else if (candidate.weapon_id != 0) {
+                continue;
+            }
+
+            const int old_armor_rating =
+                Armor[old_prototype.armor_id].defense_rating;
+            const int candidate_armor_rating =
+                Armor[candidate.armor_id].defense_rating;
+            // Native438C70 skips rejection when old defense <= candidate.
+            if (old_armor_rating > candidate_armor_rating) {
+                if (candidate_armor_rating == 1) {
+                    continue;
+                }
+                if (old_weapon_rating != 0 &&
+                    candidate_weapon_rating <= old_weapon_rating) {
+                    continue;
+                }
+            }
+
+            ++match_count;
+            StringTemp[0] = '\0';
+            ::strcat(StringTemp, candidate.veh_name);
+            ::strcat(StringTemp, " |");
+            say_stats_3(StringTemp, candidate_id);
+            if ((candidate.flags & 4) == 0 && (old_prototype.flags & 4) != 0) {
+                ::strcat(StringTemp, " *");
+            }
+            popup.item(StringTemp, candidate_id);
+            selected_prototype = candidate_id;
+        }
+        NetDaemonNet.unlock();
+
+        if (match_count == 0) {
+            if ((Players[faction].rule_flags & 0x80) != 0) {
+                popp(*ClimatePopupTitle, "NOUPGRADE", 0, "alunit_sm.pcx",
+                     pop_wait);
+            } else {
+                popp(*ClimatePopupTitle, "NOUPGRADE", 0, "unit_sm.pcx",
+                     pop_wait);
+            }
+            return;
+        }
+        if (match_count > 1) {
+            selected_prototype = popup.exec(0, pop_wait);
+        }
+        if (selected_prototype < 0) {
+            return;
+        }
+
+        const bool has_local_units =
+            PlayersData[faction].proto_id_active[selected_prototype] != 0;
+        const int upgraded = upgrade_prototype(
+            faction, selected_prototype, old_prototype_id, 0);
+        if (upgraded != 0) {
+            protoID_ = static_cast<uint32_t>(selected_prototype);
+            setup_veh(selected_prototype, 0);
+            proto_sort_2(faction);
+            const int sorted_count = ProtoSortCount;
+            if (sorted_count > 0) {
+                for (int walk = 0; walk < sorted_count; ++walk) {
+                    const int slot = (static_cast<int>(field_CE4_) + walk)
+                        % sorted_count;
+                    if (ProtoSortIds[slot] == selected_prototype) {
+                        const int new_top = (slot + sorted_count - 5)
+                            % sorted_count;
+                        if (new_top != static_cast<int>(field_CE4_)) {
+                            field_CE4_ = new_top;
+                            draw_stack();
+                        }
+                        break;
+                    }
+                }
+            }
+            redraw();
+        }
+
+        if (has_local_units) {
+            if ((Players[faction].rule_flags & 0x80) != 0) {
+                popp(*ClimatePopupTitle, "YESUPGRADE", 0, "alunit_sm.pcx",
+                     pop_wait);
+            } else {
+                popp(*ClimatePopupTitle, "YESUPGRADE", 0, "unit_sm.pcx",
+                     pop_wait);
+            }
+        }
+        return;
+    }
+
+    int selected_component = -1;
+    switch (button_id) {
+        case 9: selected_component = 2; break;
+        case 10: selected_component = 3; break;
+        case 11: selected_component = 1; break;
+        case 12: selected_component = 4; break;
+        case 13: selected_component = 0x0A; break;
+        case 14: selected_component = 6; break;
+        case 15: selected_component = 7; break;
+        case 16: selected_component = 8; break;
+        case 17: selected_component = 9; break;
+        case 18: selected_component = 0x11; break;
+        case 19: selected_component = 0x0D; break;
+        case 20: selected_component = 0x0E; break;
+        case 21: selected_component = 0x0B; break;
+        case 22: selected_component = 0x0C; break;
+        default: break;
+    }
+
+    DesignConsiderOverride = 1;
+    DesignConsiderPrototype = selected_component;
+    DesignConsiderWeapon = static_cast<int>(protoWeaponType_);
+    DesignConsiderArmor = static_cast<int>(protoArmorType_);
+    DesignConsiderChassis = static_cast<int>(protoChassisType_);
+    DesignConsiderAbilities = protoAbilityFlags_;
+    DesignConsiderReactor = static_cast<int>(protoReactorType_);
+    consider_designs(factionID_);
+
+    protoWeaponType_ = static_cast<uint32_t>(DesignConsiderWeapon);
+    protoArmorType_ = static_cast<uint32_t>(DesignConsiderArmor);
+    protoAbilityFlags_ = DesignConsiderAbilities;
+    protoChassisType_ = static_cast<uint32_t>(DesignConsiderChassis);
+    protoReactorType_ = static_cast<uint32_t>(DesignConsiderReactor);
+    protoAbilityID1_ = static_cast<uint32_t>(-1);
+    protoAbilityID2_ = static_cast<uint32_t>(-1);
+    for (int ability = 0; ability < MaxAbilityNum; ++ability) {
+        if ((protoAbilityFlags_ & (1u << ability)) == 0) {
+            continue;
+        }
+        if (static_cast<int>(protoAbilityID1_) < 0) {
+            protoAbilityID1_ = static_cast<uint32_t>(ability);
+        } else if (static_cast<int>(protoAbilityID2_) < 0) {
+            protoAbilityID2_ = static_cast<uint32_t>(ability);
+        }
+    }
+
+    if (DesignConsiderOverride <= 1) {
+        if ((Players[static_cast<int>(factionID_)].rule_flags & 0x80) != 0) {
+            popp(*ClimatePopupTitle, "NOPRESET", 0, "alunit_sm.pcx", pop_wait);
+        } else {
+            popp(*ClimatePopupTitle, "NOPRESET", 0, "unit_sm.pcx", pop_wait);
+        }
+        g_FX.play(0x27);
+    } else {
+        g_FX.play(0x2B);
+    }
+    DesignConsiderOverride = 0;
+    on_redraw();
+    on_update();
 }
 
 /*
@@ -3751,7 +4185,7 @@ Purpose: The unit-special ability picker both select_special_N thunks tail
          store the pick into the prototype's two ability slots, rebuild the
          ability flag word, and repaint the panels.
 
-// ORIGINAL: 0x0043AC70 ?select_special@DesignWin@@QAEXH@Z 0x0043AC70-0x0043BDE9;0x00654410-0x00654416,0x0065441E-0x00654437,0x00654439-0x006544C5 FILE
+// ORIGINAL: 0x0043AC70 ?select_special@DesignWin@@QAEXH@Z 0x0043AC70-0x0043BDE9;0x00654410-0x00654416
 // size      5166 bytes
 // prototype void (__thiscall ?select_special@DesignWin@@QAEXH@Z)(DesignWin* this, int)
 // callers   3   call targets   34

@@ -150,7 +150,7 @@ class DesignWin : public GraphicWin, public SubInterface {
 
   // Slot 44 of the front vtable (0x66B148) - the catalogue's
   // ?on_button_clicked@DesignWin@@QAEXH@Z, 0x00438460, 4481 bytes,
-  // unrecovered. Both on_iface_button_clicked and on_iface_button_pressed dispatch to it
+  // Recovered in designwin.cpp. Both interface button callbacks dispatch to it
   // with a live `call dword ptr [eax + 0xb0]`, so the entry has to be
   // DesignWin's and not Win's shared no-op.
   void on_button_clicked(int button_id);
