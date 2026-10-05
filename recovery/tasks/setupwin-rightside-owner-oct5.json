@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "task_id": "setupwin-rightside-owner-oct5",
+  "target": "opensmacx",
+  "author": "framework-coordinator",
+  "intent": "Recover the complete SetupWin right-side menu through its genuine GraphicWin/Win/Buffer members and Popup/Dialog/StringList APIs. Preserve native error-path and cleanup ordering, including text_get dereference ordering, explicit Flic closes and normal automatic lifetimes. Move the entire original identity and both spans into its compiling owner and retire the superseded seed after relevant checks. This is intermediate faithful recovery, not a deliberate bug fix, a new historical byte claim or full milestone acceptance.",
+  "base_revision": "7295bbfa3a12e21f0ac9932b19078d5496e396a5",
+  "subjects": [{"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 4905840}],
+  "editable_files": ["src/setupwin.cpp", "src/pending_bodies.cpp", "src/basepop.h", "src/unrecovered/004adb70.cpp", "recovery/tests/test_setupwin_rightside_actual_source.py", "recovery/tests/setupwin_rightside_harness.cpp"],
+  "evidence": [
+    "Complete seed identity 4ADB70..4AE336 plus original EH span65960C..659697. Native-selected row lives at SetupWin+FD0, not Buffer+0; actual current members, signed DIB-height copies and Popup position-to-ID mapping are retained.",
+    "Full private three-file overlay compiles both SetupWin and pending_bodies under the configured target compiler. Actual emitted symbol ?do_menu_rightside@SetupWin@@QAEHPADH@Z is observed; distinct loop-variable names preserve behavior under VC6 for-init scoping.",
+    "Candidate host controls pass Popup selection and normal text-file paths plus four discriminating mutants. Permanent tests will extract only the real mapped product definition; original spans/claims, fresh full application build/link, references and affected historical byte obligations remain verification requirements."
+  ]
+}
