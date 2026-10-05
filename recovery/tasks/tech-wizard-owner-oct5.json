@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "task_id": "tech-wizard-owner-oct5",
+  "target": "opensmacx",
+  "author": "framework-coordinator",
+  "base_revision": "69661fb56345ed724164131f9f77ae08f16929d5",
+  "editable_files": [
+    "src/stringstruct.cpp",
+    "src/stringstruct.h",
+    "src/unrecovered/005bde20.cpp",
+    "recovery/tests/tech_wizard_unk1_host_control.cpp",
+    "recovery/tests/test_tech_wizard_unk1_product.py"
+  ],
+  "evidence": [
+    "Pinned original 0x005BDE20-0x005BE0F8 body and complete retained seed history.",
+    "Technology table 0x0094F358, stride 0x2C; growth/tech/wealth fields at +0x14/+0x18/+0x1C.",
+    "Popup member equations: caller_sprite_ +0x2144; Dialogs +0x21D0; SpriteBox +0x2240; SpriteList entry_count +0x2274.",
+    "WIZARD pointer cell 0x00691B18 -> text 0x00691B94; neighboring TutorialPopupCaption remains independently owned.",
+    "Source caller search reports zero direct mapped callers but does not prove absence of indirect callers or exact original parameter spelling."
+  ],
+  "intent": "Recover the complete 0x005BDE20 technology-wizard helper using existing Popup, Technology, Sprite and string owners. Preserve the five-argument cdecl stack shape provisionally without claiming direct caller proof; retain exact negative guards, random/forced roll, table fallback, tie-break ordering and UI calls without inventing a return-value contract. Move all seed identity, FILE span, formal TRIED text, call inventory and useful manual disassembly findings into the compiled owner before retiring the seed. Root records fresh compiler/source facts for the provisional WIZARD pointer/text objects after native compilation. Host controls are not native acceptance or game acceptance.",
+  "subjects": [
+    {
+      "address": 6020640,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ]
+}

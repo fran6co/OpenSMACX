@@ -19,6 +19,10 @@
 #include "stringstruct.h"
 #include "spritebox.h"
 #include "net_class.h"
+#include "technology.h"
+#include "random.h"
+#include "popup.h"
+#include "strings.h"
 
 #include <cstring>
 #include <new>
@@ -955,6 +959,110 @@ extern "C" void __cdecl tech_wizard_unk2(int canvas, int index, int odd,
         SpriteScaleNumerator = 1;
         SpriteScaleDenominator = 1;
     }
+}
+
+// Original pointer cell 0x00691B18 selects the WIZARD text at 0x00691B94.
+// Keep that pointer/text relationship in source-owned storage. Names are
+// descriptive; bindings establish starts, not enclosing allocation bounds.
+// RECOVERY_OBJECT: v1 0x00691B94 ?TechWizardPopupFileText@@3PADA
+char TechWizardPopupFileText[7] = "WIZARD";
+// RECOVERY_OBJECT: v1 0x00691B18 ?TechWizardPopupFile@@3PADA
+char *TechWizardPopupFile = TechWizardPopupFileText;
+
+// The seed scaffold says int 0; the negative edge only restores
+// registers and the normal edge leaves Popup::exec immediately before
+// RET. Keep that interpretation as seed history,
+// but do not promise a return value without a caller/result consumer.
+// ORIGINAL: 0x005BDE20 tech_wizard_unk1 0x005BDE20-0x005BE0F8 FILE
+// RECOVERY_BINDING: v1 {"evidence":["task:tech-wizard-owner-oct5","Original 0x005BDE20-0x005BE0F8, 728-byte FILE body; complete original seed header/TRIED/call inventory retained beside this definition.","Pinned raw flow 0x5BDE20..0x5BE0F7: two negative guards; original popup stack arguments; technology lookup and icon calls; normal tail calls second Popup::exec before register/frame restore and RET.","Technology table 0x94F358 stride 0x2C; lookup fields growth +0x14, tech +0x18, wealth +0x1C. Native strict ranking: result1 when growth<wealth && wealth>tech; result0 when growth>wealth && growth>tech; else result2, after sum/equal-ID result9 path.","Popup receiver member evidence: caller_sprite_ +0x2144; Dialogs +0x21D0; SpriteBox +0x2240; SpriteList entry_count +0x2274.","Native pointer cell 0x691B18 selects WIZARD text at 0x691B94; neighboring TUTOR caption uses a distinct cell/text owner.","Seed catalog lists zero direct callers; mapped caller search does not establish absence of indirect callers. Five-argument cdecl stack shape and typed Popup* source parameters are provisional; no return-value contract is asserted."],"reason":"Recover the complete helper through existing typed source owners, preserving the pinned branches, calls, side-effect order and original historical evidence. The source home is a technology-helper grouping, not a claimed historical translation-unit boundary. No new match, direct-caller, or game-acceptance claim."}
+// symbol    _tech_wizard_unk1
+// TRIED: `void` return instead of `int 0`; splitting the two negative-parameter guards into separate `if`s instead of `||` - neither moved the divergence, which sits at #4 (`mov ebx,[ebp+0x10]` vs a hoisted `xor ebx,ebx`), already before the first call; likely register allocation pressure from the many later 0-argument pushes, not the guard shape. Control flow, field offsets (field_2144_, dialogs_+0x2274/+0x2240) and the lookupA/2+lookupB+lookupMid tie-break were hand-traced from the raw disasm, not Ghidra's decompile.
+// size      728 bytes
+// prototype
+// callers   0   call targets   8
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00406380 0x005B9C40 0x00602600 0x006108E0 0x00625810 0x00625EC0 0x00645470 0x0064FC88
+extern "C" void __cdecl tech_wizard_unk1(Popup *first_popup,
+                                          Popup *second_popup,
+                                          int first_tech, int second_tech,
+                                          int force_roll) {
+    if (first_tech < 0 || second_tech < 0) {
+        return;
+    }
+
+    char number[0x50];
+
+    StringTemp[0] = '\0';
+    say_tech(StringTemp, first_tech, 0);
+    parse_says(0, StringTemp, -1, -1);
+
+    StringTemp[0] = '\0';
+    say_tech(StringTemp, second_tech, 0);
+    parse_says(1, StringTemp, -1, -1);
+
+    int lookup_a = 1;
+    int lookup_mid = 1;
+    int lookup_b = 1;
+    if (second_tech < MaxTechnologyNum) {
+        lookup_a = Technology[second_tech].tech_value;
+        lookup_mid = Technology[second_tech].wealth_value;
+        lookup_b = Technology[second_tech].growth_value;
+    }
+
+    first_popup->start(TechWizardPopupFile, "TECHMIL", -1, 0, 0x100, 0);
+
+    if (first_tech < MaxTechnologyNum) {
+        Sprite *const icon = &g_TECH_ICON_SPRITES[first_tech];
+        if (first_popup->dialogs().SpriteBox::list_.entry_count_ == 0)
+            first_popup->set_caller_picture(icon);
+        else
+            first_popup->set_caller_picture(0);
+        first_popup->dialogs().sprite(icon, 0, 0);
+    }
+
+    StringTemp[0] = '\0';
+    strcat(StringTemp, "MIL");
+    const int roll = force_roll != 0 ? 3 : static_cast<int>(random(0, 3));
+    _itoa(roll, number, 10);
+    strcat(StringTemp, number);
+    first_popup->start(TechWizardPopupFile, StringTemp, -1, 0, 0x80, 0);
+    first_popup->exec(0, 0);
+
+    second_popup->start(TechWizardPopupFile, "TECHINF", -1, 0, 0x100, 0);
+
+    if (second_tech < MaxTechnologyNum) {
+        Sprite *const icon = &g_TECH_ICON_SPRITES[second_tech];
+        if (second_popup->dialogs().SpriteBox::list_.entry_count_ == 0)
+            second_popup->set_caller_picture(icon);
+        else
+            second_popup->set_caller_picture(0);
+        second_popup->dialogs().sprite(icon, 0, 0);
+    }
+
+    StringTemp[0] = '\0';
+    strcat(StringTemp, "INF");
+
+    int result;
+    if (lookup_a / 2 + lookup_b + lookup_mid < 1 ||
+        second_tech == first_tech) {
+        result = 9;
+    } else if (force_roll == 0) {
+        if (lookup_b < lookup_mid && lookup_a < lookup_mid) {
+            result = 1;
+        } else if (lookup_mid < lookup_b && lookup_a < lookup_b) {
+            result = 0;
+        } else {
+            result = 2;
+        }
+    } else {
+        result = 3;
+    }
+
+    _itoa(result, number, 10);
+    strcat(StringTemp, number);
+    second_popup->start(TechWizardPopupFile, StringTemp, -1, 0, 0x80, 0);
+    second_popup->exec(0, 0);
 }
 
 // ---------------------------------------------------------------------------

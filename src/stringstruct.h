@@ -21,6 +21,7 @@ class StringStructPayload;
 class ListPayloadBase;
 struct StringStructEntry;
 struct SpriteStruct;
+class Popup;
 
 
 // The hand-staged close chain is gone: the four staged table constants, the
@@ -475,3 +476,9 @@ struct PathRecord {
 };
 
 static_assert(sizeof(PathRecord) == 0x28, "Original path record footprint");
+
+// Native entry 0x005BDE20 has five stack arguments and uses two Popup
+// receivers. No direct source caller is currently proven; this typed
+// declaration records the proposed source API without claiming caller ABI
+// provenance beyond the pinned argument count/convention.
+extern "C" void __cdecl tech_wizard_unk1(Popup *, Popup *, int, int, int);
