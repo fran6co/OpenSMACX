@@ -3142,7 +3142,6 @@ int __cdecl drop_range(int faction_id) {
 // their remaining recovery/reference obligations are not waived by this caller.
 extern int __cdecl break_treaty(int faction_id, int other_faction_id, int treaty);
 extern int __cdecl act_of_aggression(int faction_id, int target_faction_id);
-extern void __cdecl capture_base(int faction_id, int base_owner, int mode);
 extern void __cdecl spot_all(int veh_id, int mode);
 extern int __cdecl goody_box(int veh_id, int goody_id);
 extern void __cdecl clock_wait(int milliseconds);

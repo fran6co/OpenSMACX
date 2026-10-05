@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "task_id": "capture-base-owner-oct5",
+  "target": "opensmacx",
+  "author": "framework-coordinator",
+  "base_revision": "2fc3037a00903d280c784474ddfabc9116bba83e",
+  "intent": "Complete faithful base-capture implementation and existing airdrop caller contract; retain original bugs, full identities/spans and seed findings. No exact or runtime acceptance grant.",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5293328
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5030752
+    }
+  ],
+  "files": [
+    "recovery/tests/capture_base_host.cpp",
+    "recovery/tests/capture_base_host.hpp",
+    "recovery/tests/test_capture_base_source.py",
+    "src/base.cpp",
+    "src/unrecovered/0050c510.cpp",
+    "src/veh.cpp"
+  ],
+  "evidence": [
+    "Existing Base/PlayerData/Facility/SecretProject/Map/Vehicle owners provide the full capture dependency closure; no new original data identities.",
+    "Project name window is Facility[70..133], not an out-of-bounds stand-in; base_project uses facility id minus 70.",
+    "Preserve original error paths, callback reloads, population, energy, ownership and project updates; native compile/link and actual-source controls required for coordinator integration."
+  ]
+}

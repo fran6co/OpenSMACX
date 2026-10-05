@@ -44,9 +44,9 @@
 #include "tutwin.h"
 #include "path.h"
 #include "terraforming.h"
+#include "interlude.h"
+#include "worldwin.h"
 
-void __cdecl kill(int vehicle_id);
-void __cdecl interlude(int id, char *text, int mode, int flag);
 
 // The UI, network and AI callers share the same base-domain operation.
 // ORIGINAL: 0x004CA7F0 ?action_staple@@YAXH@Z 0x004CA7F0-0x004CAA4B
@@ -7142,13 +7142,675 @@ void __cdecl compute_score(int faction, int *total, int *items, int recursive) {
         PlayersData[faction].unk_107 = score_word_mul(*total, 2);
 }
 
-// Unfinished dependency of the airdrop recovery. The complete original seed
-// remains in src/unrecovered/0050c510.cpp; this body provides link continuity
-// only and must not be counted as recovered capture behavior.
+// Base capture owns faction transfer, project notices and territorial updates.
 // ORIGINAL: 0x0050C510 ?capture_base@@YAXHHH@Z 0x0050C510-0x0050DD8F
-// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0050c510.cpp retained original signature and extent; full seed preserved", "Coordinator user authorizes explicit unfinished empty bodies for new referenced functions, never replacement of recovered behavior"], "reason": "Explicit unfinished owning-TU link-continuity dependency for full action_airdrop authoring; BODY GOES HERE preserves unknown behavior and is not a recovery or matching claim."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:2fc3037a00903d280c784474ddfabc9116bba83e:src/unrecovered/0050c510.cpp: complete original identity, span and seed transcription", "src/base.h: canonical capture_base(base_id, faction_id, mode) caller contract", "Facility[70..133] owns project names; SecretProject/base_project owns the separate project base ids", "recovery/tasks/capture-base-owner-oct5.json", "recovery/tests/test_capture_base_source.py"], "reason": "Recover complete base capture through existing Base, PlayerData, Facility, SecretProject, Map, Vehicle, Console and network owners; preserve original callback ordering, arithmetic and error paths. Historical span and findings remain obligations, not a matching or runtime claim."}
+// TRIED: full struct-based transcription (Base@0x97D040, PlayerData@0x96C9E0, Player@0x946A50, Map@0x94A30C, Veh@0x952828, RulesFacility@0x9A4B68, all cross-checked against base.h/faction.h/map.h/veh.h offsets and static_asserts) diverges at instruction #3 (prologue reg-save/stack layout order) - not yet matched at the frame-shape level.
 void __cdecl capture_base(int base_id, int faction_id, int mode) {
-    // BODY GOES HERE.
+    unsigned char bVar11;
+    char cVar2, cVar4;
+    int iVar5, iVar8, iVar10, iVar15, iVar17;
+    unsigned int uVar13, uVar14;
+    int uVar7, uVar20, uVar21;
+    char *pcVar18;
+    char *pcVar19;
+    char *hqName;
+    char *hqDirectionName;
+    char local_174[256];
+    char local_74[32];
+    unsigned int local_5c;
+    int local_58;
+    int local_54;
+    int local_50;
+    unsigned int local_4c;
+    int local_48;
+    unsigned int local_44;
+    int local_40;
+    unsigned int local_3c;
+    int local_38;
+    int local_34;
+    int local_30;
+    unsigned int local_2c;
+    int local_28;
+    int local_1c;
+    unsigned int local_18;
+    int local_14;
+    unsigned int local_10;
+    unsigned int local_8;
+    int wipeOut;
+    int j, k, otherIdx, techIdx, fc, dirOff, i, f;
+    int found;
+    int idxTmp, maskTmp;
+    int cnt3, popFactor, techVal;
+    int doSkip;
+    unsigned int owner2;
+    int tileIdx, protoBase;
+    Map *tile;
+    int bestBase;
+
+    log_say("Capture Base", Bases[base_id].name_string, base_id, faction_id, 0);
+    local_8 = (unsigned int)(unsigned char)Bases[base_id].faction_id_current;
+    local_1c = (int)Bases[base_id].y;
+    local_3c = (unsigned int)(Bases[base_id].faction_id_former == (unsigned char)faction_id);
+    local_28 = (int)Bases[base_id].x;
+    local_44 = (unsigned int)MapTiles[(MapLongitude) * local_1c + (local_28 >> 1)].region;
+    local_4c = (unsigned int)faction_id * 2099u;
+    cVar4 = Bases[base_id].population_size;
+    local_48 = (int)((local_4c + local_8) * 4u);
+    PlayersData[faction_id].diplo_unk4[local_8] = PlayersData[faction_id].diplo_unk4[local_8] + cVar4 * 2;
+    PlayersData[faction_id].diplo_unk3[local_8] = PlayersData[faction_id].diplo_unk3[local_8] + cVar4 * 2;
+    strcpy(local_74, Bases[base_id].name_string);
+    treaty_off(faction_id, (int)local_8, 0x40);
+    bVar11 = (unsigned char)faction_id;
+    local_5c = 1u << (bVar11 & 0x1f);
+    if (((local_5c & LockEnableMask & 0xff) != 0) ||
+        ((LockEnableMask & 0xff & (1u << (local_8 & 0x1f))) != 0)) {
+        treaty_on(faction_id, (int)local_8, 0x2000);
+    }
+
+    uVar14 = local_8;
+    for (uVar13 = 1; (int)uVar13 < 8; uVar13++) {
+        if (uVar13 != (unsigned int)faction_id && uVar13 != uVar14 &&
+            (PlayersData[uVar14].diplo_treaties[uVar13] & 1) != 0 &&
+            (PlayersData[uVar13].diplo_treaties[faction_id] & 0x10) == 0) {
+            treaty_on((int)uVar14, (int)uVar13, 0x2000);
+            uVar14 = local_8;
+        }
+    }
+
+    if (faction_id == ConsoleGlobal.faction_id_) {
+        iVar5 = Bases[base_id].queue_production_id[0];
+        if (iVar5 < -0x45) {
+            if (iVar5 < 0) iVar5 = -iVar5;
+            if (base_project(iVar5 - FAC_HUMAN_GENOME_PROJ) == -1) {
+                found = 0;
+                if (BaseCurrentCount > 0) {
+                    for (otherIdx = 0; otherIdx < BaseCurrentCount; otherIdx++) {
+                        if (otherIdx != base_id &&
+                            Bases[otherIdx].faction_id_current == uVar14 &&
+                            Bases[otherIdx].queue_production_id[0] == Bases[base_id].queue_production_id[0]) {
+                            local_18 = (unsigned int)Bases[otherIdx].queue_production_id[0];
+                            parse_says(0, Players[uVar14].adj_name_faction, -1, -1);
+                            parse_say(1, (int)Facility[(int)local_18].name, -1, -1);
+                            popp(ScriptPopupFile, "SURVIVEPROJECT", 0, "secproj_sm.pcx", 0);
+                            uVar14 = local_8;
+                            found = 1;
+                            break;
+                        }
+                    }
+                }
+                if (!found) {
+                    PluralityDefault = 0;
+                    GenderDefault = Players[uVar14].is_leader_female;
+                    parse_says(0, Players[uVar14].title_leader, -1, -1);
+                    GenderDefault = Players[uVar14].is_leader_female;
+                    PluralityDefault = 0;
+                    parse_says(1, Players[uVar14].name_leader, -1, -1);
+                    GenderDefault = Players[uVar14].noun_gender;
+                    PluralityDefault = Players[uVar14].is_noun_plural;
+                    parse_says(2, Players[uVar14].noun_faction, -1, -1);
+                    iVar5 = Bases[base_id].queue_production_id[0];
+                    if (iVar5 < 0) iVar5 = -iVar5;
+                    parse_say(3, (int)Facility[iVar5].name, -1, -1);
+                    popp(ScriptPopupFile, "HALTPROJECT", 0, "secproj_sm.pcx", 0);
+                    iVar5 = Bases[base_id].queue_production_id[0];
+                    if (iVar5 < 0) iVar5 = -iVar5;
+                    bitmask(iVar5 - 0x46, &local_54, &local_58);
+                    PlayersData[local_8].secret_project_intel[local_54] &= ~(unsigned int)local_58;
+                    uVar14 = local_8;
+                }
+            }
+        }
+    }
+
+    if (faction_id == ConsoleGlobal.faction_id_ || uVar14 == (unsigned int)ConsoleGlobal.faction_id_) {
+        for (int project_record_id = 0; project_record_id < 64; ++project_record_id) {
+            if (base_project(project_record_id) == base_id) {
+                parse_say(0, reinterpret_cast<int>(Facility[70 + project_record_id].name), -1, -1);
+                if (faction_id == ConsoleGlobal.faction_id_) {
+                    pcVar19 = "secproj_sm.pcx";
+                    pcVar18 = "SEIZEPROJECT";
+                } else {
+                    pcVar19 = "secproj_sm.pcx";
+                    pcVar18 = "LOSEPROJECT";
+                }
+                popp(ScriptPopupFile, pcVar18, 0, pcVar19, 0);
+            }
+        }
+    }
+
+    if (PlayersData[local_8].energy_reserves < 1) {
+        local_40 = 0;
+    } else {
+        local_40 = (Bases[base_id].population_size * PlayersData[local_8].energy_reserves) /
+                   (PlayersData[local_8].pop_total + 1);
+    }
+
+    bitmask(1, &idxTmp, &maskTmp);
+    local_10 = (unsigned int)((Bases[base_id].facilities_built[idxTmp] & maskTmp) != 0);
+    if (local_10 != 0 && 999 < PlayersData[local_8].energy_reserves) {
+        local_34 = 9999;
+        local_38 = -1;
+        if (BaseCurrentCount > 0) {
+            for (local_14 = 0; local_14 < BaseCurrentCount; local_14++) {
+                if (local_14 != base_id && Bases[local_14].faction_id_current == (unsigned char)local_8) {
+                    int aBase, bBase, hi, lo;
+                    local_30 = Bases[local_14].y;
+                    uVar14 = (unsigned int)(unsigned short)Bases[local_14].x;
+                    local_50 = 1;
+                    local_2c = (unsigned int)MapTiles[(MapLongitude) * local_30 + ((int)uVar14 >> 1)].region;
+                    local_10 = uVar14;
+                    if (BaseCurrentCount > 0) {
+                        for (j = 0; j < BaseCurrentCount; j++) {
+                            if (j != local_14 && j != base_id &&
+                                Bases[j].faction_id_current == (unsigned char)local_8) {
+                                iVar15 = abs((int)uVar14 - (int)Bases[j].x);
+                                if ((MapIsFlat & 1) == 0 && MapLongitude < iVar15) {
+                                    iVar15 = MapLongitudeBounds - iVar15;
+                                }
+                                iVar8 = abs(local_30 - (int)Bases[j].y);
+                                aBase = abs(iVar15);
+                                bBase = abs(iVar8);
+                                hi = (aBase > bBase) ? aBase : bBase;
+                                lo = (aBase < bBase) ? aBase : bBase;
+                                iVar15 = hi - (((aBase + bBase >> 1) - lo) + 1 >> 1);
+                                tile = &MapTiles[(MapLongitude) * (int)Bases[j].y + ((int)Bases[j].x >> 1)];
+                                if ((unsigned int)tile->region != local_2c) {
+                                    iVar15 = iVar15 * 2;
+                                }
+                                local_50 = local_50 + iVar15;
+                                uVar14 = local_10;
+                            }
+                        }
+                    }
+                    iVar8 = (local_50 << 8) /
+                            (int)((unsigned int)PlayersData[local_8].region_total_bases[local_2c] +
+                                  (int)Bases[local_14].population_size * 2);
+                    if (iVar8 < local_34) {
+                        local_38 = local_14;
+                        local_34 = iVar8;
+                    }
+                }
+            }
+            if (0 < local_38) {
+                parse_says(0, local_74, -1, -1);
+                parse_says(1, Bases[local_38].name_string, -1, -1);
+                if (IsMultiplayerNet != 0 || local_8 != (unsigned int)ConsoleGlobal.faction_id_ ||
+                    X_pop("ESCAPE", 0) != 0) {
+                    uVar14 = local_8;
+                    PlayersData[local_8].energy_reserves -= 1000;
+                    set_fac(1, local_38, 1);
+                    set_fac(1, base_id, 0);
+                    if (uVar14 == (unsigned int)ConsoleGlobal.faction_id_) {
+                        if (IsMultiplayerNet != 0) {
+                            pcVar18 = "ESCAPED2";
+                            NetMsgPrimary.pop(pcVar18, 5000, 0, 0);
+                        }
+                    } else {
+                        GenderDefault = Players[uVar14].noun_gender;
+                        PluralityDefault = Players[uVar14].is_noun_plural;
+                        parse_says(2, Players[uVar14].noun_faction, -1, -1);
+                        pcVar18 = "ESCAPED";
+                        NetMsgPrimary.pop(pcVar18, 5000, 0, 0);
+                    }
+                    if ((LockEnableMask & (1u << (uVar14 & 0x1f))) == 0) {
+                        base_reset(local_38, 0);
+                    }
+                }
+            }
+        }
+    }
+
+    bitmask(1, &idxTmp, &maskTmp);
+    uVar14 = local_8;
+    local_10 = (unsigned int)((Bases[base_id].facilities_built[idxTmp] & maskTmp) != 0);
+    if (local_10 != 0 && TurnCurrentNum < PlayersData[local_8].corner_market_turn &&
+        0 < PlayersData[local_8].corner_market_active) {
+        PlayersData[local_8].energy_reserves += PlayersData[local_8].corner_market_active;
+        uVar13 = (unsigned int)ConsoleGlobal.faction_id_;
+        local_40 = local_40 + PlayersData[local_8].corner_market_active / 2;
+        PlayersData[local_8].corner_market_active = 0;
+        PlayersData[local_8].corner_market_turn = 0;
+        if (local_8 == uVar13) {
+            popp(ScriptPopupFile, "CORNERFOILED", 0, "econwin_sm.pcx", 0);
+        } else {
+            parse_says(0, Players[local_8].adj_name_faction, -1, -1);
+            popp(ScriptPopupFile, "CORNERTHEMFOILED", 0, "econwin_sm.pcx", 0);
+        }
+    }
+
+    PlayersData[faction_id].energy_reserves += local_40;
+    {
+        int newVal = PlayersData[uVar14].energy_reserves - local_40;
+        if (newVal < 0) newVal = 0;
+        else if (9999999 < newVal) newVal = 9999999;
+        PlayersData[uVar14].energy_reserves = newVal;
+    }
+
+    wipeOut = 0;
+    if (mode == 0 && local_3c == 0 &&
+        (Bases[base_id].state & 0x40000) == 0 &&
+        is_objective(base_id) == 0 &&
+        (Bases[base_id].population_size > 1 ||
+         (LockEnableMask & Bases[base_id].visibility) != 0 ||
+         IsMultiplayerNet != 0)) {
+        cVar4 = Bases[base_id].population_size - 1;
+        Bases[base_id].population_size = cVar4;
+        wipeOut = (cVar4 == 0);
+    }
+
+    if (wipeOut) {
+        base_kill(base_id);
+        draw_map(1);
+        base_id = -1;
+    } else if (base_id >= 0) {
+        Bases[base_id].faction_id_current = bVar11;
+        for (f = 1; f < 8; f++) {
+            if (PlayersData[f].base_id_atk_target == base_id) PlayersData[f].base_id_atk_target = -1;
+        }
+        Bases[base_id].nerve_staple_turns_left = 0;
+        if (Bases[base_id].faction_id_former == (unsigned char)faction_id) {
+            Bases[base_id].assimilation_turns_left = 0;
+        } else {
+            Bases[base_id].faction_id_former = (unsigned char)uVar14;
+            Bases[base_id].assimilation_turns_left = 0x32;
+        }
+        PlayersData[faction_id].last_turn_new_base = TurnCurrentNum;
+        PlayersData[uVar14].current_num_bases -= 1;
+        PlayersData[faction_id].current_num_bases += 1;
+        replay_base(1, local_28, local_1c, faction_id);
+        Bases[base_id].minerals_accumulated = 0;
+        Bases[base_id].unk_6 = 0;
+        if ((int)Bases[base_id].queue_size >= 0) {
+            int *item = &Bases[base_id].queue_production_id[0];
+            int cnt = (int)Bases[base_id].queue_size + 1;
+            do {
+                if (*item >= 0) {
+                    PlayersData[uVar14].proto_id_queue[*item] -= 1;
+                }
+                item++;
+                cnt--;
+            } while (cnt != 0);
+        }
+        Bases[base_id].queue_size = 0;
+        Bases[base_id].production_id_last = -69;
+        Bases[base_id].queue_production_id[0] = -69;
+
+        local_34 = 0;
+        local_38 = -1;
+        if (BaseCurrentCount > 0) {
+            for (j = 0; j < BaseCurrentCount; j++) {
+                if (j != base_id && Bases[j].faction_id_current == (unsigned char)faction_id) {
+                    int val = (int)Bases[j].population_size;
+                    bitmask(1, &idxTmp, &maskTmp);
+                    if ((Bases[j].facilities_built[idxTmp] & maskTmp) != 0) val = val * 2;
+                    if (local_34 < val) { local_38 = j; local_34 = val; }
+                }
+            }
+            if (local_38 >= 0) {
+                Bases[base_id].governor = Bases[local_38].governor;
+            }
+        }
+
+        Bases[base_id].state &= 0xffdef7b1u;
+
+        if (mode == 0 && local_3c == 0) {
+            for (k = 1; k < 0x46; k++) {
+                if (k != 0x1a && (rand() % 3) == 0) {
+                    set_fac(k, base_id, 0);
+                }
+            }
+        }
+        set_fac(1, base_id, 0);
+        if (local_3c == 0) {
+            set_fac(6, base_id, 0);
+            set_fac(3, base_id, 0);
+        }
+
+        {
+            int mapW = MapLongitudeBounds;
+            for (dirOff = 0; dirOff < 0x54; dirOff += 4) {
+                int dx = RadiusOffsetX[dirOff / 4];
+                int tx = dx + local_28;
+                int dy, ty;
+                if ((MapIsFlat & 1) == 0) {
+                    if (tx < 0) tx += mapW;
+                    else if (mapW <= tx) tx -= mapW;
+                }
+                dy = RadiusOffsetY[dirOff / 4];
+                ty = dy + local_1c;
+                if (ty >= 0 && ty < MapLatitudeBounds && tx >= 0 && tx < mapW) {
+                    using_set(tx, ty, faction_id);
+                    tile = &MapTiles[(MapLongitude) * ty + (tx >> 1)];
+                    tile->visibility = (unsigned char)(tile->visibility | (1u << (bVar11 & 0x1f)));
+                    synch_bit(tx, ty, faction_id);
+                    iVar5 = veh_at(tx, ty);
+                    mapW = MapLongitudeBounds;
+                    if (iVar5 >= 0 && Vehs[iVar5].faction_id == (unsigned char)faction_id) {
+                        while (iVar5 >= 0) {
+                            Vehs[iVar5].state &= 0xfffbffffu;
+                            iVar5 = Vehs[iVar5].next_veh_id_stack;
+                            mapW = MapLongitudeBounds;
+                        }
+                    }
+                }
+            }
+        }
+
+        spot_base(base_id, (int)local_8);
+        reset_territory();
+        for (i = VehCurrentCount - 1; i >= 0; i--) {
+            if (i < VehCurrentCount && Vehs[i].faction_id == (unsigned char)local_8 &&
+                Vehs[i].home_base_id == base_id) {
+                int vy, dx8, dy8, killIt;
+                Bases[base_id].faction_id_current = 0xff;
+                iVar5 = base_find(local_28, local_1c, (int)local_8);
+                Bases[base_id].faction_id_current = bVar11;
+                killIt = 1;
+                if (iVar5 >= 0) {
+                    vy = Vehs[i].y;
+                    dx8 = abs(local_28 - Vehs[i].x);
+                    if ((MapIsFlat & 1) == 0 && MapLongitude < dx8) {
+                        dx8 = MapLongitudeBounds - dx8;
+                    }
+                    dy8 = abs(local_1c - vy);
+                    if (((dx8 + dy8) & 0xfffffffe) != 0) {
+                        Vehs[i].home_base_id = (short)iVar5;
+                        killIt = 0;
+                    }
+                }
+                if (killIt) {
+                    kill(i);
+                }
+            }
+        }
+
+        for (fc = 0; fc < 2; fc++) {
+            int fid = (fc == 0) ? faction_id : (int)local_8;
+            int cnt2 = Players[fid].faction_bonus_count;
+            for (k = 0; k < cnt2; k++) {
+                if (Players[fid].faction_bonus_id[k] == 2 ||
+                    (Players[fid].faction_bonus_id[k] == 0xc &&
+                     has_tech(Facility[Players[fid].faction_bonus_val1[k]].preq_tech, faction_id) != 0)) {
+                    int fv = Players[fid].faction_bonus_val1[k];
+                    if (fv < 1) fv = 1;
+                    else if (fv > 0x45) fv = 0x45;
+                    set_fac(fv, BaseIDCurrentSelected, 1);
+                }
+            }
+        }
+        base_first(base_id);
+    }
+
+    iVar5 = local_1c;
+    iVar15 = local_28;
+    owner_set(local_28, local_1c, faction_id);
+    draw_map(1);
+    UnkBitfield1 |= 2;
+    WorldClimateWorldWin.redraw();
+
+    GenderDefault = Players[faction_id].noun_gender;
+    PluralityDefault = Players[faction_id].is_noun_plural;
+    parse_says(0, Players[faction_id].noun_faction, -1, -1);
+    parse_says(1, local_74, -1, -1);
+    GenderDefault = Players[local_8].noun_gender;
+    PluralityDefault = Players[local_8].is_noun_plural;
+    parse_says(2, Players[local_8].noun_faction, -1, -1);
+    parse_num(0, local_40);
+    local_174[0] = 0;
+    pcVar18 = "LIBERATE";
+    if (local_3c == 0) pcVar18 = "SEIZE";
+    strcat(local_174, pcVar18);
+    strcat(local_174, "BASE");
+
+    local_10 = 1u << (local_8 & 0x1f);
+    if ((LockEnableMask & 0xff & local_10) != 0 &&
+        (local_5c & LockEnableMask & 0xff) == 0 &&
+        base_id >= 0 &&
+        (Bases[base_id].state & 0x80) == 0 && local_3c == 0) {
+        Bases[base_id].state |= 0x10000;
+    }
+
+    if (faction_id == ConsoleGlobal.faction_id_ || local_8 == (unsigned int)ConsoleGlobal.faction_id_) {
+        iVar10 = ConsoleGlobal.focus(iVar15, iVar5, ConsoleGlobal.faction_id_);
+        if (iVar10 == 0) {
+            draw_tile_fixup(iVar15, iVar5, 1, 2);
+        }
+        ConsoleGlobal.update_data(0);
+        pcVar18 = "liberate_sm.pcx";
+        if (faction_id != ConsoleGlobal.faction_id_) pcVar18 = "seized_sm.pcx";
+        popp(ScriptPopupFile, local_174, 0, pcVar18, 0);
+        ambience(0xd5);
+    } else {
+        draw_tile_fixup(iVar15, iVar5, 1, 2);
+        if ((PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[faction_id] & 1) == 0 &&
+            ((PlayersData[faction_id].diplo_treaties[ConsoleGlobal.faction_id_] & 0x80) == 0 ||
+             (PlayersData[faction_id].diplo_treaties[local_8] & 0x40) == 0)) {
+            if ((PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[local_8] & 1) == 0 &&
+                ((PlayersData[local_8].diplo_treaties[ConsoleGlobal.faction_id_] & 0x80) == 0 ||
+                 (PlayersData[local_8].diplo_treaties[faction_id] & 0x40) == 0)) {
+                int notSpying = 0;
+                iVar15 = spying(faction_id);
+                if (iVar15 == 0) {
+                    iVar15 = spying((int)local_8);
+                    if (iVar15 == 0) notSpying = 1;
+                }
+                if (!notSpying) {
+                    strcat(local_174, "4");
+                    pcVar18 = "seized_sm.pcx";
+                    popp(ScriptPopupFile, local_174, 0, pcVar18, 0);
+                }
+            } else {
+                strcat(local_174, "3");
+                pcVar18 = "seized_sm.pcx";
+                popp(ScriptPopupFile, local_174, 0, pcVar18, 0);
+            }
+        } else {
+            strcat(local_174, "2");
+            pcVar18 = "liberate_sm.pcx";
+            popp(ScriptPopupFile, local_174, 0, pcVar18, 0);
+        }
+    }
+
+    if (((Players[local_8].rule_flags ^ Players[faction_id].rule_flags) & 0x80) != 0 && base_id >= 0 &&
+        Bases[base_id].population_size >= 2) {
+        PluralityDefault = Players[faction_id].is_noun_plural;
+        GenderDefault = Players[faction_id].noun_gender;
+        uVar14 = (unsigned int)(Bases[base_id].population_size / 2);
+        local_18 = uVar14;
+        parse_says(0, Players[faction_id].noun_faction, -1, -1);
+        parse_says(1, local_74, -1, -1);
+        parse_num(0, (int)uVar14);
+        Bases[base_id].population_size = 1;
+        draw_tile((int)Bases[base_id].x, (int)Bases[base_id].y, 2);
+
+        if ((Players[faction_id].rule_flags & 0x80) == 0) {
+            if (faction_id == ConsoleGlobal.faction_id_) {
+                if (uVar14 == 1) {
+                    pcVar19 = "alienref_sm.pcx"; pcVar18 = "HOMELESSONE";
+                    popp(ScriptPopupFile, pcVar18, 0, pcVar19, 0);
+                } else if (uVar14 != 0) {
+                    pcVar19 = "alienref_sm.pcx"; pcVar18 = "HOMELESS";
+                    popp(ScriptPopupFile, pcVar18, 0, pcVar19, 0);
+                }
+                interlude(0x19, Bases[base_id].name_string, 1, 0);
+            }
+            if (local_8 == (unsigned int)ConsoleGlobal.faction_id_) {
+                if (uVar14 == 1) {
+                    pcVar19 = "alienref_sm.pcx"; pcVar18 = "HOMELESSONE";
+                    popp(ScriptPopupFile, pcVar18, 0, pcVar19, 0);
+                } else if (uVar14 != 0) {
+                    pcVar19 = "alienref_sm.pcx"; pcVar18 = "HOMELESS";
+                    popp(ScriptPopupFile, pcVar18, 0, pcVar19, 0);
+                }
+            }
+            mode = 1;
+            iVar5 = MapLongitudeBounds;
+        } else {
+            if (faction_id == ConsoleGlobal.faction_id_) {
+                if (uVar14 == 1) {
+                    pcVar19 = "humanref_sm.pcx"; pcVar18 = "HOMELESSONE";
+                    popp(ScriptPopupFile, pcVar18, 0, pcVar19, 0);
+                } else if (uVar14 != 0) {
+                    pcVar19 = "humanref_sm.pcx"; pcVar18 = "HOMELESS";
+                    popp(ScriptPopupFile, pcVar18, 0, pcVar19, 0);
+                }
+                interlude(0x25, Bases[base_id].name_string, 1, 0);
+            }
+            if (local_8 == (unsigned int)ConsoleGlobal.faction_id_) {
+                if (uVar14 == 1) {
+                    pcVar19 = "humanref_sm.pcx"; pcVar18 = "HOMELESSONE";
+                    popp(ScriptPopupFile, pcVar18, 0, pcVar19, 0);
+                } else if (uVar14 != 0) {
+                    pcVar19 = "humanref_sm.pcx"; pcVar18 = "HOMELESS";
+                    popp(ScriptPopupFile, pcVar18, 0, pcVar19, 0);
+                }
+                interlude(0x18, Bases[base_id].name_string, 1, 0);
+            }
+            mode = 1;
+            iVar5 = MapLongitudeBounds;
+        }
+
+        do {
+            iVar10 = mode;
+            if (mode < 9) {
+                uVar14 = (unsigned int)rand();
+                uVar14 = uVar14 & 0x80000007u;
+                if ((int)uVar14 < 0) {
+                    uVar14 = (uVar14 - 1) | 0xfffffff8u;
+                    uVar14 = uVar14 + 1;
+                }
+                iVar10 = (int)uVar14 + 1;
+                iVar5 = MapLongitudeBounds;
+            }
+            iVar15 = RadiusOffsetX[iVar10] + (int)Bases[base_id].x;
+            if ((MapIsFlat & 1) == 0) {
+                if (iVar15 < 0) iVar15 += iVar5;
+                else if (iVar5 <= iVar15) iVar15 -= iVar5;
+            }
+            iVar10 = RadiusOffsetY[iVar10] + (int)Bases[base_id].y;
+            if (-1 < iVar10 && iVar10 < MapLatitudeBounds && -1 < iVar15 && iVar15 < iVar5) {
+                tileIdx = (MapLongitude) * iVar10 + (iVar15 >> 1);
+                tile = &MapTiles[tileIdx];
+                doSkip = 0;
+                if ((tile->bit & 3) != 0 && (unsigned int)(tile->val2 & 0xf) < 8) {
+                    if ((tile->bit & 3) == 0 || (owner2 = (unsigned int)(tile->val2 & 0xf), owner2 > 7)) {
+                        owner2 = 0xffffffff;
+                    }
+                    iVar5 = MapLongitudeBounds;
+                    if (owner2 != local_8) {
+                        doSkip = 1;
+                    }
+                }
+                if (!doSkip) {
+                    protoBase = ((tile->climate & 0xe0) < 0x60) ? 0x15 : 0;
+                    veh_init(protoBase, (int)local_8, iVar15, iVar10);
+                    draw_tile(iVar15, iVar10, 2);
+                    local_18 = local_18 - 1;
+                    iVar5 = MapLongitudeBounds;
+                    if (local_18 == 0) break;
+                }
+            }
+            mode = mode + 1;
+        } while (mode < 0x15);
+    }
+
+    uVar14 = local_8;
+    if ((GameRules & 0x4000) == 0 && (Players[faction_id].rule_flags & 0x10) == 0) {
+        cnt3 = 0;
+        for (techIdx = 0; techIdx < 0x59; techIdx++) {
+            if (has_tech(techIdx, (int)local_8) != 0 && has_tech(techIdx, faction_id) == 0) {
+                cnt3 = cnt3 + 1;
+            }
+        }
+        if (base_id < 0) popFactor = 1;
+        else popFactor = (int)Bases[base_id].population_size + 1;
+        techVal = (PlayersData[faction_id].tech_ranking + 3) * cnt3 * popFactor;
+        PlayersData[faction_id].tech_accumulated += (techVal + ((techVal >> 0x1f) & 7)) >> 3;
+    } else {
+        steal_tech(faction_id, (int)local_8, 1);
+        if (base_id >= 0 && SecretProject.universal_translator == base_id) {
+            steal_tech(faction_id, (int)uVar14, 1);
+        }
+    }
+
+    if (((unsigned char)local_10 & (unsigned char)LockEnableMask) == 0) {
+        bases_reset((int)local_8, (int)local_44, 0);
+    }
+    mon_conquer_base(faction_id, local_74);
+
+    if (faction_id == ConsoleGlobal.faction_id_ && base_id >= 0 &&
+        (Bases[base_id].state & 0x40000) != 0 &&
+        (GamePreferences & 0x40000) == 0 && IsMultiplayerNet == 0) {
+        parse_says(6, Players[ConsoleGlobal.faction_id_].assistant_city, -1, -1);
+        hqName = Bases[base_id].name_string;
+        parse_says(5, hqName, -1, -1);
+        parse_says(7, Players[local_8].adj_name_faction, -1, -1);
+        cVar4 = 0;
+        if (BaseCurrentCount > 0) {
+            bestBase = -1;
+            for (iVar15 = 0; iVar15 < BaseCurrentCount; iVar15++) {
+                if (Bases[iVar15].faction_id_current == (unsigned char)faction_id && iVar15 != base_id) {
+                    bitmask(1, &idxTmp, &maskTmp);
+                    if ((Bases[iVar15].facilities_built[idxTmp] & maskTmp) != 0) {
+                        parse_says(2, Bases[iVar15].name_string, -1, -1);
+                        bestBase = iVar15;
+                        break;
+                    }
+                    cVar2 = Bases[iVar15].population_size;
+                    if (cVar4 < cVar2) {
+                        parse_says(2, Bases[iVar15].name_string, -1, -1);
+                        cVar4 = cVar2;
+                    }
+                }
+            }
+            (void)bestBase;
+        }
+        iVar15 = local_28;
+        iVar5 = base_find(local_28, local_1c, (int)local_8);
+        if (iVar5 < 0) {
+            hqDirectionName = label_get(403);
+        } else {
+            iVar10 = (int)Bases[iVar5].x;
+            iVar8 = iVar10 - iVar15;
+            if (iVar8 < 0) iVar8 = iVar15 - iVar10;
+            iVar17 = (int)Bases[iVar5].y;
+            iVar5 = iVar17 - local_1c;
+            if (iVar5 < 0) iVar5 = local_1c - iVar17;
+            if ((iVar8 * 3) / 2 < iVar5) {
+                if (iVar17 < local_1c) hqDirectionName = label_get(403);
+                else hqDirectionName = label_get(405);
+            } else {
+                iVar15 = iVar15 - iVar10;
+                if (MapLongitudeBounds / 2 < iVar15) iVar15 -= MapLongitudeBounds;
+                if (iVar15 < -(MapLongitudeBounds / 2)) iVar15 += MapLongitudeBounds;
+                if (iVar15 < 1) hqDirectionName = label_get(404);
+                else hqDirectionName = label_get(406);
+            }
+        }
+        uVar21 = -1; uVar20 = -1;
+        parse_says(4, hqDirectionName, uVar20, uVar21);
+        strcpy(hqName, Players[ConsoleGlobal.faction_id_].assistant_city);
+        make_base_unique(base_id);
+        interlude(7, 0, 1, 1);
+        draw_map(1);
+        text_close();
+    }
+
+    eliminate_player((int)local_8, faction_id);
+    if (base_id >= 0) {
+        set_base(base_id);
+        base_compute(1);
+        if (faction_id == ConsoleGlobal.faction_id_) {
+            iVar15 = ConsoleGlobal.ready_search(-1);
+            if (iVar15 < 0) {
+                GameState |= 4;
+                return;
+            }
+            TutWinBaseWindow.zoom(base_id, 0);
+        }
+    }
+    return;
 }
 
 // ORIGINAL: 0x004EC3F0 ?base_connect@@YAHH@Z 0x004EC3F0-0x004ECB84
