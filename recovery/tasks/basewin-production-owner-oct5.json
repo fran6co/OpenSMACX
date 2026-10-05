@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "task_id": "basewin-production-owner-oct5",
+  "target": "opensmacx",
+  "author": "framework-coordinator",
+  "base_revision": "f1948a8610bea1917865ab8599ffa231b86813d6",
+  "intent": "Replace the production-panel continuity placeholder with its complete compiling typed renderer and nested mineral grid; preserve original behavior, full primary/cleanup spans and seed findings; retire the superseded scaffold without granting byte or game acceptance.",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4252512
+    }
+  ],
+  "files": [
+    "src/basewin.cpp",
+    "src/palette.h",
+    "src/unrecovered/0040e360.cpp",
+    "recovery/tests/test_basewin_production_actual_source.py",
+    "recovery/tests/basewin_production_source_control.cpp"
+  ],
+  "evidence": [
+    "User authorizes coordinator-reviewed coverage integration with matching restoration deferred, not behavior fixes.",
+    "Root fresh private VC6 compile of the complete renderer passed; observed physical method 4048 bytes versus original primary3461, not a match grant.",
+    "Pinned instruction review establishes typed receivers/lifetimes, native gross-cost square-root branch, full nested grid, font/color branches and live callback-sensitive economy reads.",
+    "Actual source extraction host controls cover vehicle/facility paths, grid cells and native details with rejecting semantic mutants; narrow host controls are not original ABI or runtime proof."
+  ]
+}

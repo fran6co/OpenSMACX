@@ -326,3 +326,6 @@ extern IDirectDrawPalette *DirectDrawPalette;
  */
 extern Palette g_PALETTE1;
 extern Palette g_PALETTE2;
+
+// Shared interface swatches owned and initialized by textcolor_init.
+extern int TextColourTable[195];
