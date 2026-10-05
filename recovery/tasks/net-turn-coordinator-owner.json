@@ -1,0 +1,45 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "a61eaab05378c3e8ae791d630dd3bf1d5df3dd62",
+  "editable_files": [
+    "src/game.cpp",
+    "src/game.h",
+    "src/stringstruct.cpp",
+    "src/pending_bodies.cpp",
+    "src/unrecovered/005290a0.cpp",
+    "src/unrecovered/0052a2e0.cpp",
+    "src/recovered/units/00529f30.cpp",
+    "recovery/tests/test_net_turn_owner.py"
+  ],
+  "evidence": [
+    "Ignored complete typed proposals build/recovery/remaining-bulk-oct4/net_upkeep_draft.cpp, net_end_of_turn_draft.cpp, net_control_turn_draft.cpp; require native instruction/caller checks, actual compiler, independent review, full build/link and claim continuity before integration.",
+    "Positive source ownership: ConsoleGlobal9156B0 +23BE4/+23BE8 equals939294/939298; base.cpp UpgradePromptAnswered90EA3C; time.cpp TurnRedrawPending703DE0; council.cpp CouncilPendingMessageArgs68BF38. Do not duplicate existing storage. VehPrototype stride34 and checksum rows derive from native evidence and retained discovery history.",
+    "User authorizes coordinator-reviewed coverage-first migrations with matching regressions retained, never demotion or discarded discoveries; preserve original identities/spans/claims and seed findings. Build success and bounded controls are not full-game or automatic acceptance."
+  ],
+  "intent": "Recover complete multiplayer upkeep, end-turn and turn-control bodies as one ownership batch; reconcile their shared state with actual Console, council, upgrade and redraw owners.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5410976,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5414704,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5415648,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5414512,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "net-turn-coordinator-owner"
+}
