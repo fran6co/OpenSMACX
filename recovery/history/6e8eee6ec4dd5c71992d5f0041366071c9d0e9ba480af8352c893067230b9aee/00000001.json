@@ -1,0 +1,19 @@
+{
+  "event_id": "e9848d74dadf1ead2b7621e7c1b3a7ac231ec8359dbd3d11eb1c613cc16e5aab",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/net_turn_harness.cpp"
+    ],
+    "evidence": [
+      "Retain actual-source host branch/call-order controls and six meaningful damage controls for the whole batch alongside native ABI checks; host projection is not game runtime or linked acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "native-owner-host-controls",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:net-turn-coordinator-owner"
+}

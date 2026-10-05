@@ -517,3 +517,9 @@ int __cdecl load_game(int save_slot, int faction_id);
 void __cdecl show_credits();
 
 char *__cdecl get_pacts(int faction_id, int other_id);
+
+// Multiplayer turn family; bodies and original mappings live in game.cpp.
+void __cdecl net_upkeep();
+void __cdecl net_end_of_turn();
+int __cdecl net_upkeep_phase(int phase);
+int __cdecl next_player_turn();

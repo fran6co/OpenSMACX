@@ -1408,32 +1408,22 @@ Purpose: Wait out the other factions' turns in a network game, skipping
 //         independent global stores.
 Status: Coverage transcription - unclaimed body
 */
-namespace {
-// The turn-handover flags beside the local-faction slot.
-static int *const TurnHandoverFlag = (int *)0x00939294;
-static int *const TurnHandoverFlag2 = (int *)0x00939298;
-// The faction-waiting latch and game.cpp's NextTurnReady/TurnsAssigned.
-static const int *const TurnsAssigned = (const int *)0x0093E8C0;
-}
-
-int __cdecl next_player_turn();  // 0x0052DBF0, game.cpp's definition
-
 void __cdecl net_not_my_turn() {
-    *TurnHandoverFlag = 0;
-    *TurnHandoverFlag2 = 1;
+    ConsoleGlobal.field_23BE4_ = 0;
+    ConsoleGlobal.field_23BE8_ = 1;
     ConsoleGlobal.set_view(0);
     MultiWindow.draw(0);
-    ConsoleFactionsWaitingMask |= (1 << *LocalFactionSlot);
+    ConsoleFactionsWaitingMask |= (1u << (ConsoleGlobal.faction_id_ & 31));
     while (ExitTurnLoop == 0 && NextTurnReady == 0
-           && NetTurnFaction != *LocalFactionSlot) {
-        *TurnHandoverFlag = 1;
+           && NetTurnFaction != ConsoleGlobal.faction_id_) {
+        ConsoleGlobal.field_23BE4_ = 1;
         NetDaemonNet.net_tasks();
-        if (*TurnsAssigned != 0) {
+        if (NetDaemonNet.lock_state_[0].leading_words_[1] != 0) {
             const int level = NetTurnFaction;
             if (level <= 0) {
                 next_player_turn();
             } else {
-                const unsigned char bit = static_cast<unsigned char>(1 << level);
+                const unsigned char bit = static_cast<unsigned char>(1u << (level & 31));
                 const unsigned char *const lock_bytes =
                     reinterpret_cast<const unsigned char *>(&LockEnableMask);
                 if ((lock_bytes[0] & bit) == 0) {
@@ -1444,8 +1434,8 @@ void __cdecl net_not_my_turn() {
             }
         }
     }
-    *TurnHandoverFlag = 0;
-    *TurnHandoverFlag2 = 0;
+    ConsoleGlobal.field_23BE4_ = 0;
+    ConsoleGlobal.field_23BE8_ = 0;
 }
 
 // The menu border padding pulldown.cpp keeps beside its defaults; the row

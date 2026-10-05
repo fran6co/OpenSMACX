@@ -691,11 +691,7 @@ void __cdecl control_turn() {
     PENDING_BODY(0x005275B0, pending)();
 }
 
-// ?net_control_turn@@YAXXZ at 0x0052A2E0
-void __cdecl net_control_turn() {
-    typedef void(__cdecl *pending)();
-    PENDING_BODY(0x0052A2E0, pending)();
-}
+// The real multiplayer turn coordinator is source-owned in game.cpp.
 
 // ?desktop_close@@YAXXZ at 0x0058EFF0, ?close_opening@@YAXXZ at 0x00589B20
 // and ?game_close@@YAXH@Z at 0x0058F430 - homed into game.cpp on 2026-08-29,
