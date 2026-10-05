@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "task_id": "enemy-strategy-owner-oct5",
+  "author": "framework-coordinator",
+  "target": "opensmacx",
+  "base_revision": "0eaaff083ce2e682b282db0ea097650c63bf625d",
+  "intent": "Replace the full enemy_strategy placeholder with a compiling typed military-planning implementation, preserving original quirks and indexed field evidence; retire its seed only after build/link and identity controls.",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5640320
+    }
+  ],
+  "editable_files": [
+    "src/faction_strategy.cpp",
+    "recovery/tests/test_enemy_strategy_basefind_dist.py",
+    "recovery/tests/test_enemy_strategy_candidate.py",
+    "recovery/tests/test_enemy_strategy_foreign_plan9.py",
+    "recovery/tests/test_enemy_strategy_goal_types.py",
+    "recovery/tests/test_enemy_strategy_region_enemy.py",
+    "recovery/tests/test_enemy_strategy_site_scan.py",
+    "src/unrecovered/00561080.cpp"
+  ],
+  "evidence": [
+    "Use pinned instructions, not decompiler stack aliases. Prior offensive planning at region zero is retained; 512 active/queue slots are cleared, not lost-prototype storage.",
+    "Bounded actual-source host controls cover multiple planning branches but do not prove complete semantic equivalence, native ABI, runtime correctness or full-game acceptance. No claims banked."
+  ]
+}
