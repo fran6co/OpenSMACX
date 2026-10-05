@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "task_id": "alien-buster-owner-oct5",
+  "target": "opensmacx",
+  "author": "framework-coordinator",
+  "intent": "Recover full alien movement and planet-buster target policy in the existing vehicle owner with source-owned vehicle/base/player/map storage. Preserve original invalid-base storage effects through the verified adjacent PlayerData field, native radius exits and scoring order, and native uninitialized winning-launch scratch. Keep historical obligations and discoveries; retire superseded seed scaffolds only after verified compiling semantic coverage.",
+  "base_revision": "8db6693bfec806e2f697c803bae51eaebfb816c7",
+  "subjects": [
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 5662736},
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 5679264}
+  ],
+  "editable_files": ["src/veh.cpp", "src/general.h", "src/enemy_pb_policy.h", "src/unrecovered/00566810.cpp", "src/unrecovered/0056a8a0.cpp", "recovery/tests/test_alien_buster_product_source.py", "recovery/tests/fixtures/alien_buster"],
+  "evidence": [
+    "Pinned full alien566810..5678B9 and buster56A8A0..56B31A identities. Neither seed carries a historical byte or semantic claim; preserve both TRIED discoveries via native source writer.",
+    "Fresh full private native source-tree preflight passes both definitions under current project flags. Independent raw review corrected empty-center/protected-city breaks, deferred uninitialized launch scratch reads and post-radius orbital scoring.",
+    "Native invalid Base[-1].x/y reads alias the signed halves of PlayersData[7].sites[14].base_id, proved by original addresses, PlayerData stride20CC and native compiler offsetof witness. No current-tile behavior fix or fabricated Base object.",
+    "Actual-product-source GCC/Clang controls and damage controls, fresh application compile/link and identity/claim/reference continuity required before coordinator publication. Uninitialized launch result remains a runtime/fidelity obligation; no exact/game acceptance claim."
+  ]
+}
