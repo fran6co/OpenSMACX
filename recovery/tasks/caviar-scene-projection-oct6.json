@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "task_id": "caviar-scene-projection-oct6",
+  "author": "framework-coordinator",
+  "target": "opensmacx",
+  "base_revision": "391bfcee8594817f18887fbc9324e971956b026d",
+  "intent": "Recover four complete Caviar scene/shape/direction entries with genuine shared context, source-owned scratch, constants and pinned row data; preserve existing historical obligations and retire superseded seeds.",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6526624
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6529664
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6551008
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6552736
+    }
+  ],
+  "editable_files": [
+    "src/caviar.cpp",
+    "src/caviar_projection_state.h",
+    "src/caviar_render_types.h",
+    "src/caviar.h",
+    "src/selectpartwin.cpp",
+    "src/designwin.cpp",
+    "recovery/terrain_data.py",
+    "recovery/tests/test_caviar_scene_product_source.py",
+    "recovery/tests/fixtures/caviar_product_extraction.cpp",
+    "recovery/tests/test_caviar_initializer.py",
+    "src/unrecovered/006396a0.cpp",
+    "src/unrecovered/0063a280.cpp",
+    "src/unrecovered/0063f5e0.cpp",
+    "src/unrecovered/0063fca0.cpp",
+    "src/statuswin.cpp",
+    "src/basewin.cpp",
+    "src/datalink.cpp",
+    "src/prodpicker.cpp",
+    "src/veh.cpp"
+  ],
+  "evidence": [
+    "Coordinator-reviewed manual coverage integration; no BYTE claim is created or demoted.",
+    "Four source symbols and fifteen new data symbols observed in fresh VC6 COFF, initialized accessed windows checked against the pinned image, and all 24 row-pointer relocations checked against owned row offsets. Start-only mappings do not assert original allocation bounds.",
+    "All 32 prior historical Caviar claim bodies and symbolic references remained unchanged under both settled flag sets; compiler size of Caviar remains 5072. Scope is not linked preservation or runtime acceptance.",
+    "Existing light/shadow member evidence is transported through the composed context at +0x18. Four complete original function records, spans and seed findings are preserved.",
+    "Variable-shape capacities, original aggregate/type spellings and full image/runtime fidelity remain unverified; the two existing draw forwarders are not recovered by this change.",
+    "Whole application compilation exposed five additional real callers of the former public vector fields. Ownership scope expands to migrate their same-storage reads/writes through the narrow composed-context accessors; no fallback storage or behavior is added."
+  ]
+}

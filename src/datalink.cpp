@@ -3475,10 +3475,10 @@ void Datalink::init() {
     float transformed_forward[3];
     vox_matrix_vector_mul(camera_rotation.values, forward,
                           transformed_forward);
-    caviar_.shadow_vector_.values[0] = forward[0];
-    caviar_.shadow_vector_.values[1] = forward[1];
-    caviar_.shadow_vector_.values[2] = forward[2];
-    caviar_.light_vector_ = caviar_.shadow_vector_;
+    caviar_.shadow_vector().values[0] = forward[0];
+    caviar_.shadow_vector().values[1] = forward[1];
+    caviar_.shadow_vector().values[2] = forward[2];
+    caviar_.light_vector() = caviar_.shadow_vector();
 
     // The legacy parent computation reaches Console's real Win base. Its
     // static conversion applies the compiler's current virtual-base layout.

@@ -205,7 +205,7 @@ void DesignWin::init() {
 
     // The vehicle preview uses the same light direction as the game renderer.
     caviar_.init();
-    caviar_.field_A4_ = 0;
+    caviar_.set_field_A4(0);
     const float angles[3] = {0.0f, 0.0f, 0.785f};
     VOX_Matrix rotation;
     caviar_apply_rotation(angles, &rotation);
@@ -216,8 +216,8 @@ void DesignWin::init() {
     }
     caviar_.set_camera_direct(&camera, &rotation);
     caviar_.set_scaling(0.18f);
-    caviar_.shadow_vector_ = VehLightDirMap;
-    caviar_.light_vector_ = VehLightDirMap;
+    caviar_.shadow_vector() = VehLightDirMap;
+    caviar_.light_vector() = VehLightDirMap;
 
     const int frame_height = 0x258 - MainInterfaceGlobal.field_D7C_;
     buffer_.load_pcx("deswin.pcx", 0, 0x0A, 0xEC);

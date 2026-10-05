@@ -235,6 +235,8 @@ def project_initializers(root: Path, original: Path, directory: Path) -> None:
     movie_decoder_initializers(root, original, directory)
     graphicwin_palette_initializer(
         root, original, directory / 'graphicwin_palette_polynomials.inc')
+    caviar_projection_rows_initializer(
+        root, original, directory / 'caviar_angle_rows.inc')
 
 
 def terrain_direction_initializer(root: Path, original: Path, output: Path) -> None:
@@ -259,3 +261,67 @@ def terrain_altitude_initializer(root: Path, original: Path, output: Path) -> No
     _terrain_initializer(root, original, output, output_name=output.name,
                          unit='src/map.cpp', symbol=symbol, size=44,
                          unsigned_words=True)
+
+
+_CAVIAR_PROJECTION_TABLE = Span(0x006A5A00, 0x006A5A60)
+_CAVIAR_PROJECTION_ROWS = Span(0x00699100, 0x006A5A00)
+_CAVIAR_PROJECTION_ROW_SIZE = 0x860
+_CAVIAR_PROJECTION_ROW_COUNT = 24
+_CAVIAR_PROJECTION_ROW_SYMBOL = '?CaviarProjectionAngleData@@3QAY0IGA@$$CBEA'
+
+
+def caviar_projection_rows_initializer(root: Path, original: Path,
+                                        output: Path) -> None:
+    root = root.resolve()
+    original = original.resolve(strict=True)
+    output = output.absolute()
+    expected_parent = root / "build/recovery/preparation/terrain-data"
+    if (output.resolve() != output or output.name != "caviar_angle_rows.inc"
+            or output.parent != expected_parent):
+        raise ValueError("Caviar row initializer must remain in the existing ignored preparation directory")
+    if any(path.is_symlink() for path in (output, *output.parents)
+           if path.is_relative_to(root)):
+        raise ValueError("Caviar row initializer cannot use path aliases")
+
+    pin = image_pin(root)
+    bindings = [item for item in read_objects(root, pin)
+                if item.unit == "src/caviar.cpp"
+                and item.origin.address == _CAVIAR_PROJECTION_ROWS.start and item.span is None
+                and item.symbol == _CAVIAR_PROJECTION_ROW_SYMBOL]
+    if len(bindings) != 1:
+        raise ValueError("Caviar rows require exactly one v1 start-only source binding")
+
+    original_bytes = original.read_bytes()
+    image = PeImage(original_bytes, pin)
+    table = image.read_initial(_CAVIAR_PROJECTION_TABLE)
+    pointers = [int.from_bytes(table[index:index + 4], "little")
+                for index in range(0, len(table), 4)]
+    expected = [_CAVIAR_PROJECTION_ROWS.start + row * _CAVIAR_PROJECTION_ROW_SIZE for row in range(_CAVIAR_PROJECTION_ROW_COUNT)]
+    if pointers != expected or len(pointers) != _CAVIAR_PROJECTION_ROW_COUNT:
+        raise ValueError("Caviar pointer table no longer describes the reviewed 24-row window")
+    if any(address not in image.relocations
+           for address in range(_CAVIAR_PROJECTION_TABLE.start, _CAVIAR_PROJECTION_TABLE.end, 4)):
+        raise ValueError("each Caviar row pointer must retain its original relocation")
+    if len(image.absolute_sites(_CAVIAR_PROJECTION_TABLE)) != _CAVIAR_PROJECTION_ROW_COUNT:
+        raise ValueError("unexpected relocation set in Caviar pointer table")
+
+    rows = image.read(_CAVIAR_PROJECTION_ROWS)
+    if image.read_initial(_CAVIAR_PROJECTION_ROWS) != rows or image.absolute_sites(_CAVIAR_PROJECTION_ROWS):
+        raise ValueError("Caviar row bytes must remain file-backed and relocation-free")
+    if len(rows) != _CAVIAR_PROJECTION_ROW_SIZE * _CAVIAR_PROJECTION_ROW_COUNT:
+        raise ValueError("Caviar row accessed window changed size")
+    text = "// Generated from pinned Caviar row data; do not edit.\n"
+    text += "\n".join(
+        ", ".join(f"0x{byte:02x}" for byte in rows[offset:offset + 16]) + ","
+        for offset in range(0, len(rows), 16)
+    ) + "\n"
+
+    if (original.read_bytes() != original_bytes or image_pin(root) != pin
+            or bindings[0] not in read_objects(root, pin)):
+        raise ValueError("pinned inputs changed during Caviar row generation")
+    artifact_parent(root, output.parent.relative_to(root).as_posix(),
+                    excluded_roots=("src", "recovery", "cmake"))
+    if output.exists() and (not output.is_file() or output.stat().st_nlink != 1):
+        raise ValueError("Caviar generated include must be an unlinked regular file")
+    if not output.exists() or output.read_text() != text:
+        output.write_text(text)

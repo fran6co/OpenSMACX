@@ -7110,12 +7110,12 @@ void BaseWin::init() {
     camera.values[2] = camera_rotation_.values[2][2] * -10000.0f;
     caviar_.set_camera_direct(&camera, &camera_rotation_);
     caviar_.set_scaling(0.18f);
-    caviar_.shadow_vector_.values[0] = 0.0f;
-    caviar_.shadow_vector_.values[1] = 0.0f;
-    caviar_.shadow_vector_.values[2] = 1.0f;
-    caviar_.light_vector_.values[0] = 0.0f;
-    caviar_.light_vector_.values[1] = 0.0f;
-    caviar_.light_vector_.values[2] = 1.0f;
+    caviar_.shadow_vector().values[0] = 0.0f;
+    caviar_.shadow_vector().values[1] = 0.0f;
+    caviar_.shadow_vector().values[2] = 1.0f;
+    caviar_.light_vector().values[0] = 0.0f;
+    caviar_.light_vector().values[1] = 0.0f;
+    caviar_.light_vector().values[2] = 1.0f;
     time_.init(BaseWin::timer_callback, 0, reinterpret_cast<int>(this), 50, 5);
     GraphicWin::init((WinScreenWidth - 726) / 2,
         WinScreenHeight - MainInterfaceGlobal.field_D7C_ - window_height,

@@ -1906,12 +1906,12 @@ void StatusWin::init() {
     caviar_.set_camera_direct(&direction, &camera_rotation_);
     caviar_.set_scaling(0.18f);
 
-    caviar_.light_vector_.values[0] = 0.0f;
-    caviar_.light_vector_.values[1] = 0.0f;
-    caviar_.light_vector_.values[2] = 1.0f;
-    caviar_.shadow_vector_.values[0] = 0.0f;
-    caviar_.shadow_vector_.values[1] = 0.0f;
-    caviar_.shadow_vector_.values[2] = 1.0f;
+    caviar_.light_vector().values[0] = 0.0f;
+    caviar_.light_vector().values[1] = 0.0f;
+    caviar_.light_vector().values[2] = 1.0f;
+    caviar_.shadow_vector().values[0] = 0.0f;
+    caviar_.shadow_vector().values[1] = 0.0f;
+    caviar_.shadow_vector().values[2] = 1.0f;
 }
 
 // ORIGINAL: 0x0050F630 sub_50f630 0x0050F630-0x0050F640 BYTE_EXACT

@@ -86,6 +86,120 @@ const float CaviarProjectionRoundAbove = 0.5f;       // 0x00671044
 // RECOVERY_OBJECT: v1 0x00670C18 ?CaviarBoundsRadiusScale@@3MB
 const float CaviarBoundsRadiusScale = 128.0f;        // 0x00670C18
 
+#include "caviar_projection_state.h"
+
+#pragma once
+
+#include "caviar.h"
+
+// The exact observed C++ view windows used by 63FE00/63FFE0. These are
+// separate objects with address starts 0x9C0AA0 (matrix), 0x9C0A70 (three
+// rounded coordinates), 0x9C0AC4 (stage word), 0x9C0AC8 (prepared word), and
+// 0x9C0B74 (octant mask). Wider ownership/lifetime is not inferred here.
+extern VOX_Matrix vox_projection_matrix_;
+extern int32_t vox_projection_component_[3];
+extern int32_t vox_projection_render_stage_;
+extern int32_t vox_projection_prepared_;
+extern int32_t vox_projection_octant_mask_;
+
+// Pinned read-only scalar values consumed by these direction helpers.
+extern const float CaviarProjectionDirectionScale;
+extern const float CaviarProjectionRoundThreshold;
+extern const float CaviarProjectionRoundBelow;
+extern const float CaviarProjectionRoundAbove;
+extern const float CaviarProjectionAngleLimit;
+extern const float CaviarProjectionAngleWrap;
+extern const float CaviarProjectionPolarScale;
+extern const float CaviarProjectionAzimuthScale;
+
+// The source owner must provide these 24 immutable byte rows through the
+// existing data-preparation mechanism. Their row contents are original data,
+// not a formula derivable from the current body. Row cardinality and extent
+// come from the pinned relocation table and contiguous target storage.
+typedef uint8_t CaviarProjectionAngleRowCandidate[0x860];
+extern const CaviarProjectionAngleRowCandidate CaviarProjectionAngleData[24];
+extern const CaviarProjectionAngleRowCandidate *CaviarProjectionAngleRows[24];
+extern const uint8_t CaviarProjectionZeroByte;
+// 0x9BE6A0 stores an actual pointer into the selected row; the index may be
+// an interior byte selected by the 0x59-angle subtraction. It is not an
+// integer encoding to be reinterpreted by downstream consumers.
+extern const uint8_t *vox_projection_selected_angle_;
+
+// Provisional source objects for the direction-helper access windows. The
+// native writer must bind each object independently after its fresh compile;
+// these declarations do not claim wider original capacities.
+// The already mapped direction cells and rounding scalars above remain the
+// sole storage owners; these new helpers consume them directly.
+// RECOVERY_OBJECT: v1 0x00671048 ?CaviarProjectionAngleLimit@@3MB
+const float CaviarProjectionAngleLimit = 1.0f;                 // 0x00671048
+// RECOVERY_OBJECT: v1 0x0067104C ?CaviarProjectionAngleWrap@@3MB
+const float CaviarProjectionAngleWrap = -6.283185482025146484375f; // 0x0067104C
+// RECOVERY_OBJECT: v1 0x00671050 ?CaviarProjectionPolarScale@@3MB
+const float CaviarProjectionPolarScale = -14.64225482940673828125f; // 0x00671050
+// RECOVERY_OBJECT: v1 0x00671054 ?CaviarProjectionAzimuthScale@@3MB
+const float CaviarProjectionAzimuthScale = -14.1647891998291015625f; // 0x00671054
+
+// The existing preparation hook materializes exactly the reviewed 24*0x860
+// file-backed bytes. This source-owned byte owner has an accessed-window
+// extent, not an asserted original allocation boundary.
+// RECOVERY_OBJECT: v1 0x00699100 ?CaviarProjectionAngleData@@3QAY0IGA@$$CBEA
+const CaviarProjectionAngleRowCandidate CaviarProjectionAngleData[24] = {
+#include "caviar_angle_rows.inc"
+};
+
+// RECOVERY_OBJECT: v1 0x006A5A00 ?CaviarProjectionAngleRows@@3PAPAY0IGA@$$CBEA
+const CaviarProjectionAngleRowCandidate *CaviarProjectionAngleRows[24] = {
+    &CaviarProjectionAngleData[0],  &CaviarProjectionAngleData[1],
+    &CaviarProjectionAngleData[2],  &CaviarProjectionAngleData[3],
+    &CaviarProjectionAngleData[4],  &CaviarProjectionAngleData[5],
+    &CaviarProjectionAngleData[6],  &CaviarProjectionAngleData[7],
+    &CaviarProjectionAngleData[8],  &CaviarProjectionAngleData[9],
+    &CaviarProjectionAngleData[10], &CaviarProjectionAngleData[11],
+    &CaviarProjectionAngleData[12], &CaviarProjectionAngleData[13],
+    &CaviarProjectionAngleData[14], &CaviarProjectionAngleData[15],
+    &CaviarProjectionAngleData[16], &CaviarProjectionAngleData[17],
+    &CaviarProjectionAngleData[18], &CaviarProjectionAngleData[19],
+    &CaviarProjectionAngleData[20], &CaviarProjectionAngleData[21],
+    &CaviarProjectionAngleData[22], &CaviarProjectionAngleData[23]
+};
+
+// Pinned original initial bytes are zero. Runtime direction selection writes
+// an interior pointer into one of the owned immutable row windows.
+// RECOVERY_OBJECT: v1 0x009BE6A0 ?vox_projection_selected_angle_@@3PBEB
+const uint8_t *vox_projection_selected_angle_ = 0;
+
+// Typed literals preserve the original data objects; declarations receive
+// fresh RECOVERY_OBJECT mappings only after native compiler measurement.
+extern const float CaviarProjectionZero;
+extern const float CaviarProjectionMinusOne;
+extern const float CaviarProjectionOne;
+extern const float CaviarProjectionHalfPixel;
+extern const float CaviarProjectionNearNegativeEpsilon;
+extern const float CaviarProjectionNearPositiveEpsilon;
+// RECOVERY_OBJECT: v1 0x00670FF8 ?CaviarProjectionZero@@3MB
+const float CaviarProjectionZero = 0.0f;              // 0x00670FF8
+// RECOVERY_OBJECT: v1 0x00670FFC ?CaviarProjectionMinusOne@@3MB
+const float CaviarProjectionMinusOne = -1.0f;         // 0x00670FFC
+// RECOVERY_OBJECT: v1 0x00671000 ?CaviarProjectionOne@@3MB
+const float CaviarProjectionOne = 1.0f;               // 0x00671000
+// RECOVERY_OBJECT: v1 0x00671004 ?CaviarProjectionHalfPixel@@3MB
+const float CaviarProjectionHalfPixel = -0.5f;        // 0x00671004
+// RECOVERY_OBJECT: v1 0x00671008 ?CaviarProjectionNearNegativeEpsilon@@3MB
+const float CaviarProjectionNearNegativeEpsilon = -1.0e-6f; // 0x00671008
+// RECOVERY_OBJECT: v1 0x0067100C ?CaviarProjectionNearPositiveEpsilon@@3MB
+const float CaviarProjectionNearPositiveEpsilon = 1.0e-6f;  // 0x0067100C
+
+// This mutable global starts with native rows (1,0,.1),(0,1,.1),(0,0,0).
+// The builder changes cells [0][2] and [2][2], leaving [1][2] untouched.
+// RECOVERY_OBJECT: v1 0x00698A78 ?CaviarProjectionShadowBasis@@3UVOX_Matrix@@A
+VOX_Matrix CaviarProjectionShadowBasis = {
+  {
+    {1.0f, 0.0f, 0.1f},
+    {0.0f, 1.0f, 0.1f},
+    {0.0f, 0.0f, 0.0f}
+  }
+}; // 0x00698A78
+
 namespace {
 
 // /O2 implies /Oi, and /Oi expands `memset` into the `rep stosd` form at
@@ -397,9 +511,9 @@ Return Value: n/a
 Status: Complete
 */
 void Caviar::UNK10(float offset_x, float offset_y, float offset_z) {
-    scene_state_.scene_offset_.values[0] = offset_x;
-    scene_state_.scene_offset_.values[1] = offset_y;
-    scene_state_.scene_offset_.values[2] = offset_z;
+    scene_context_.state_.scene_offset_.values[0] = offset_x;
+    scene_context_.state_.scene_offset_.values[1] = offset_y;
+    scene_context_.state_.scene_offset_.values[2] = offset_z;
 }
 
 
@@ -419,7 +533,7 @@ Status: Complete
 */
 void Caviar::set_scene_rotation(float x, float y, float z) {
     float angles[3] = {x, y, z};
-    caviar_apply_rotation(angles, &scene_state_.scene_rotation_);
+    caviar_apply_rotation(angles, &scene_context_.state_.scene_rotation_);
 }
 
 
@@ -452,13 +566,13 @@ Status: Complete
 */
 void Caviar::UNK11(float *out1, float *out2, float *out3) {
     if (out1) {
-        *out1 = scene_state_.scene_offset_.values[0];
+        *out1 = scene_context_.state_.scene_offset_.values[0];
     }
     if (out2) {
-        *out2 = scene_state_.scene_offset_.values[1];
+        *out2 = scene_context_.state_.scene_offset_.values[1];
     }
     if (out3) {
-        *out3 = scene_state_.scene_offset_.values[2];
+        *out3 = scene_context_.state_.scene_offset_.values[2];
     }
 }
 
@@ -711,6 +825,9 @@ CaviarData g_NI_CAVIARDATA;  // 0x007791C0
 CaviarData g_NLC_CAVIARDATA;  // 0x00779660
 CaviarData g_UNUSED_CAVIARDATA_VAR5[5];  // 0x00787E08, 0xc stride
 
+// RECOVERY_OBJECT: v1 0x009C0ACC ?CaviarSceneProjectionScratch@@3UCaviarSceneProjectionScratchCandidate@@A
+CaviarSceneProjectionScratchCandidate CaviarSceneProjectionScratch = {0};
+
 // ---------------------------------------------------------------------------
 // The voxel renderer's workspace, set up once by init_class below. These are
 // REAL OBJECTS now - they used to be `T *const` bindings naming terranx.exe
@@ -796,25 +913,6 @@ void *vox_active_ramp_a_ = 0;   // 0x009C0A18
 void *vox_active_ramp_b_ = 0;   // 0x009C082C
 uint8_t vox_active_size_code_ = 0;  // 0x009C0A1C
 
-// 0x009C0ACC (a vector) and 0x009C0AD8 (a matrix): the view the instance's
-// own vector and matrix are composed with - the draw adds the one to the
-// scaled vector and multiplies the other through the part's matrix.
-VOX_Vect vox_view_offset_;    // 0x009C0ACC
-VOX_Matrix vox_view_rotation_;  // 0x009C0AD8
-
-// 0x009C0B00. The cut handed to vox_walk_scaled_chain, which walks a node
-// chain while its scaled extent stays under it - the level-of-detail cut.
-float vox_lod_cut_ = 0;  // 0x009C0B00
-
-// 0x009C0B20 (a vector) and 0x009C0B2C (a matrix): the second view, the one
-// the shadow branch of the draw composes the part with.
-VOX_Vect vox_shadow_offset_;     // 0x009C0B20
-VOX_Matrix vox_shadow_rotation_;  // 0x009C0B2C
-
-// 0x009C0B50, 0x009C0B54. The two factors the shadow's clip test inflates the
-// part's radius by, one per axis.
-float vox_shadow_span_x_ = 0;  // 0x009C0B50
-float vox_shadow_span_y_ = 0;  // 0x009C0B54
 
 // 0x00671010. The visibility cut the part's scaled extent is compared against
 // to decide whether it is drawn at all.
@@ -3280,23 +3378,384 @@ void Caviar::close_class() {
 // 0x006396A0. Six arguments, two of them the same output buffer - the draw
 // computes one address twice and pushes both. Leaves a float on the FPU stack
 // that the draw discards (`fstp st(0)` at 0x639E9F).
-OPENSMACX_NOINLINE
-float __cdecl vox_stage_scene(void *record, void *state, void *view, int step,
-                              void *scratch_a, void *scratch_b) {
-    typedef float(__cdecl *pending)(void *, void *, void *, int, void *,
-                                    void *);
-    return reinterpret_cast<pending>(static_cast<unsigned long>(0x006396A0))(
-        record, state, view, step, scratch_a, scratch_b);
+
+// Complete typed-source candidate for 0x6396A0.  The seed's `p1` is ESI,
+// hence arg2/context; arg1 remains the record and supplies setup_block_.
+// Callee return is the final x87 value; the caller discards it.  Its two
+// output pointers are intentionally independent formals because native code
+// writes both even though the mapped caller passes the same address.
+extern const float CaviarProjectionZero;
+extern const float CaviarProjectionMinusOne;
+extern const float CaviarProjectionOne;
+extern const float CaviarProjectionHalfPixel;
+extern const float CaviarProjectionNearNegativeEpsilon;
+extern const float CaviarProjectionNearPositiveEpsilon;
+extern const float CaviarProjectionShadowRadiusScale;
+extern const float CaviarProjectionShadowAxisScaleX;
+extern const float CaviarProjectionShadowAxisScaleY;
+extern VOX_Matrix CaviarProjectionShadowBasis;
+extern CaviarSceneProjectionScratchCandidate CaviarSceneProjectionScratch;
+
+struct CaviarRenderSetupViewCandidate {
+    uint8_t bytes_00_[8];
+    uint32_t shadow_data_;
+    int32_t half_width_;
+    int32_t half_height_;
+};
+
+static int caviar_projection_floor(float value) {
+    return static_cast<int>(floor(static_cast<double>(value)));
 }
 
-// 0x0063A280. Four arguments, the draw's four.
-OPENSMACX_NOINLINE
-void __cdecl vox_load_scene_view(void *record, void *state, void *view,
-                                 int step) {
-    typedef void(__cdecl *pending)(void *, void *, void *, int);
-    reinterpret_cast<pending>(static_cast<unsigned long>(0x0063A280))(
-        record, state, view, step);
+static void caviar_projection_copy_float_bits(float value, float *out) {
+    memcpy(out, &value, sizeof(value));
 }
+
+// ORIGINAL: 0x006396A0 sub_6396a0 0x006396A0-0x00639E54
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original identity/name/span and complete historical lesson run are transported from the matching seed record by match_recovery.source.", "The staged typed definition is uniquely found by match_recovery.source.reader.function_line and compiles in the coordinator's three-TU VC6 overlay.", "The emitted symbol is read from the coordinator's fresh native COFF observation log; it is not inferred from the C++ spelling.", "Caviar data access windows and initialization remain separate coordinator-owned object-mapping obligations; this transfer creates no allocation-bound or initializer claim."], "reason": "Rehome this complete pinned original identity from its generated seed file to the typed Caviar renderer owner; preserve the original span and seed lesson history without asserting BYTE_EXACT. The old FILE interpretation is converted to a function BODY because the new owner contains multiple original identities."}
+// symbol    ?vox_stage_scene@@YAMPAUVoxRenderRecord@@PAUCaviarSceneContext@@PAUVoxCameraBlock@@HPAM3@Z
+// TRIED: dense FPU tile/sprite-projection math, esp-relative (frameless) args - tracked esp displacement by hand across every sub/add esp to resolve which [esp+N] occurrences are the same real argument vs reused scratch slots (found Ghidra's own decompile conflated two different pointers under one "param_1", corrected to p1+4 vs p1+0xc). Signature changed to float(int,int,int,int,float*,float*) - FPU return, matches trailing fld+ret with no output slot. Compiles, sim 0.61 framed/frameless (tied). fxch-heavy FPU scheduling makes byte-exact implausible by hand; not retried given size (1972 bytes).
+float __cdecl vox_stage_scene(
+    VoxRenderRecord *record, CaviarSceneContext *context,
+    VoxCameraBlock *camera, int step, float *output_a, float *output_b) {
+    CaviarSceneProjectionScratchCandidate &scratch =
+        CaviarSceneProjectionScratch;
+    CaviarRenderSetupViewCandidate *setup =
+        reinterpret_cast<CaviarRenderSetupViewCandidate *>(
+            static_cast<uintptr_t>(record->setup_block_));
+
+    vox_matrix_matrix_mul(camera->camera_.rotation.values,
+                          context->state_.scene_rotation_.values,
+                          scratch.view_scene_matrix_.values);
+    for (int row = 0; row != 3; ++row) {
+        for (int column = 0; column != 3; ++column) {
+            scratch.view_scene_matrix_.values[row][column] *=
+                context->state_.scale_;
+        }
+    }
+
+    float camera_relative_scene[3];
+    leaf_00628180_redirect(context->state_.scene_offset_.values,
+                           camera->camera_.position.values,
+                           camera_relative_scene);
+    vox_matrix_vector_mul(camera->camera_.rotation.values,
+                          camera_relative_scene,
+                          scratch.camera_offset_.values);
+
+    // Native accesses the first instance's vector stream without an empty
+    // table guard. Preserve that precondition and the selected step.
+    const VOX_Vect &first_instance_step =
+        context->state_.instances_[0].instance_vector_[step];
+    float projected_instance[3];
+    vox_matrix_vector_mul(scratch.view_scene_matrix_.values,
+                          first_instance_step.values, projected_instance);
+    vector_add(projected_instance, scratch.camera_offset_.values,
+               projected_instance);
+
+    if (projected_instance[2] <= CaviarProjectionZero ||
+        camera->camera_.scaling <= CaviarProjectionZero) {
+        scratch.perspective_factor_ = CaviarProjectionOne;
+    } else {
+        scratch.perspective_factor_ = CaviarProjectionOne /
+            (projected_instance[2] * camera->camera_.scaling -
+             CaviarProjectionMinusOne);
+    }
+    scratch.projected_scale_ = camera->camera_.scaling *
+        context->field_90_ * scratch.perspective_factor_;
+    scratch.viewport_aspect_ =
+        (camera->bounds_.lead_[4] - camera->bounds_.lead_[3]) /
+        (camera->bounds_.lead_[2] - camera->bounds_.lead_[1]);
+
+    // The original scales the first six matrix cells here, not the last row.
+    float *matrix_cells = &scratch.view_scene_matrix_.values[0][0];
+    for (int index = 0; index != 6; ++index) {
+        matrix_cells[index] *= scratch.projected_scale_;
+    }
+
+    const float half_width = static_cast<float>(setup->half_width_ >> 1) -
+                             CaviarProjectionHalfPixel;
+    const float half_height = static_cast<float>(setup->half_height_ >> 1) -
+                              CaviarProjectionHalfPixel;
+    scratch.camera_offset_.values[0] =
+        context->field_7C_ * context->field_90_ + context->field_88_ +
+        half_width + scratch.camera_offset_.values[0] * scratch.projected_scale_;
+    scratch.camera_offset_.values[1] =
+        context->field_80_ * context->field_90_ + context->field_8C_ +
+        half_height + scratch.camera_offset_.values[1] * scratch.projected_scale_;
+    scratch.camera_offset_.values[2] -= camera->bounds_.lead_[1];
+
+    const uint8_t *instance_pointer_bytes = reinterpret_cast<const uint8_t *>(
+        &context->state_.instances_[0].instance_colour_);
+    if ((*instance_pointer_bytes & 1) == 0) {
+        scratch.view_scene_matrix_.values[2][0] *= scratch.viewport_aspect_;
+        scratch.view_scene_matrix_.values[2][1] *= scratch.viewport_aspect_;
+        scratch.view_scene_matrix_.values[2][2] *= scratch.viewport_aspect_;
+        scratch.camera_offset_.values[2] *= scratch.viewport_aspect_;
+    } else {
+        scratch.view_scene_matrix_.values[2][0] =
+            -scratch.view_scene_matrix_.values[2][0];
+        scratch.view_scene_matrix_.values[2][1] =
+            -scratch.view_scene_matrix_.values[2][1];
+        scratch.view_scene_matrix_.values[2][2] =
+            -(scratch.view_scene_matrix_.values[2][2] * scratch.viewport_aspect_);
+        scratch.camera_offset_.values[2] =
+            -(scratch.camera_offset_.values[2] * scratch.viewport_aspect_);
+    }
+    scratch.camera_offset_.values[2] += context->field_84_ +
+        (((*instance_pointer_bytes & 1) == 0)
+            ? camera->bounds_.lead_[3]
+            : camera->bounds_.lead_[4]);
+
+    scratch.projected_scale_ =
+        context->state_.scale_ * scratch.projected_scale_;
+    scratch.viewport_aspect_ =
+        context->state_.scale_ * scratch.viewport_aspect_;
+    scratch.part_clip_.left_ = caviar_projection_floor(
+        static_cast<float>(camera->bounds_.values_[0]) * context->field_90_);
+    scratch.part_clip_.top_ = caviar_projection_floor(
+        static_cast<float>(camera->bounds_.values_[1]) * context->field_90_);
+    scratch.part_clip_.right_ = caviar_projection_floor(
+        static_cast<float>(camera->bounds_.values_[4] + 1) * context->field_90_) + 1;
+    scratch.part_clip_.bottom_ = caviar_projection_floor(
+        static_cast<float>(camera->bounds_.values_[5] + 1) * context->field_90_) + 1;
+    scratch.part_clip_.width_ = scratch.part_clip_.left_ - 1 +
+                                scratch.part_clip_.right_;
+    scratch.part_clip_.height_ = scratch.part_clip_.top_ - 1 +
+                                 scratch.part_clip_.bottom_;
+
+    if (context->field_A4_ != 0 && setup->shadow_data_ != 0) {
+        float &shadow_z = context->shadow_vector_.values[2];
+        if (shadow_z <= CaviarProjectionNearNegativeEpsilon ||
+            CaviarProjectionZero <= shadow_z) {
+            if (CaviarProjectionZero <= shadow_z &&
+                shadow_z < CaviarProjectionNearPositiveEpsilon) {
+                caviar_projection_copy_float_bits(
+                    CaviarProjectionNearPositiveEpsilon, &shadow_z);
+            }
+        } else {
+            caviar_projection_copy_float_bits(
+                CaviarProjectionNearNegativeEpsilon, &shadow_z);
+        }
+
+        const float inverse_shadow_z = CaviarProjectionOne / shadow_z;
+        const float shadow_x = context->shadow_vector_.values[0] * inverse_shadow_z;
+        const float shadow_y = context->shadow_vector_.values[1] * inverse_shadow_z;
+        CaviarProjectionShadowBasis.values[0][2] = -shadow_x;
+        CaviarProjectionShadowBasis.values[2][2] = -shadow_y;
+        vox_matrix_vector_mul(CaviarProjectionShadowBasis.values,
+                              context->state_.scene_offset_.values,
+                              scratch.shadow_centre_.values);
+        scratch.shadow_centre_.values[0] +=
+            shadow_x * context->field_78_;
+        scratch.shadow_centre_.values[1] +=
+            shadow_y * context->field_78_;
+        scratch.shadow_centre_.values[2] += context->field_78_;
+
+        float shadow_relative[3];
+        leaf_00628180_redirect(scratch.shadow_centre_.values,
+                               camera->camera_.position.values,
+                               shadow_relative);
+        vox_matrix_vector_mul(camera->camera_.rotation.values, shadow_relative,
+                              scratch.shadow_centre_.values);
+
+        VOX_Matrix shadow_axes;
+        vox_matrix_matrix_mul(camera->camera_.rotation.values,
+                              CaviarProjectionShadowBasis.values,
+                              shadow_axes.values);
+        vox_matrix_matrix_mul(shadow_axes.values,
+                              context->state_.scene_rotation_.values,
+                              shadow_axes.values);
+        const float shadow_projected_scale = context->state_.scale_ *
+            camera->camera_.scaling * scratch.perspective_factor_;
+        const float shadow_x_scale = shadow_projected_scale * context->field_9C_;
+        const float shadow_y_scale = shadow_projected_scale * context->field_A0_;
+        for (int axis = 0; axis != 3; ++axis) {
+            scratch.shadow_matrix_.values[0][axis] =
+                shadow_axes.values[axis][0] * shadow_x_scale;
+            scratch.shadow_matrix_.values[1][axis] =
+                shadow_axes.values[axis][1] * shadow_y_scale;
+        }
+        scratch.shadow_centre_.values[0] =
+            context->field_7C_ * context->field_9C_ + context->field_94_ +
+            half_width + scratch.shadow_centre_.values[0] * shadow_x_scale;
+        scratch.shadow_centre_.values[1] =
+            context->field_80_ * context->field_A0_ + context->field_98_ +
+            half_height + scratch.shadow_centre_.values[1] * shadow_y_scale;
+
+        scratch.shadow_radius_x_ = static_cast<float>(_hypot(
+            static_cast<double>(scratch.shadow_matrix_.values[0][0]),
+            static_cast<double>(scratch.shadow_matrix_.values[0][2])));
+        scratch.shadow_radius_y_ = static_cast<float>(_hypot(
+            static_cast<double>(scratch.shadow_matrix_.values[1][0]),
+            static_cast<double>(scratch.shadow_matrix_.values[1][2])));
+        if (scratch.shadow_radius_x_ < CaviarProjectionNearPositiveEpsilon)
+            scratch.shadow_radius_x_ = CaviarProjectionNearPositiveEpsilon;
+        if (scratch.shadow_radius_y_ < CaviarProjectionNearPositiveEpsilon)
+            scratch.shadow_radius_y_ = CaviarProjectionNearPositiveEpsilon;
+        *output_a = scratch.shadow_radius_x_;
+        *output_b = scratch.shadow_radius_y_;
+
+        scratch.shadow_clip_.left_ = caviar_projection_floor(
+            static_cast<float>(camera->bounds_.values_[0]) * context->field_9C_);
+        scratch.shadow_clip_.top_ = caviar_projection_floor(
+            static_cast<float>(camera->bounds_.values_[1]) * context->field_A0_);
+        scratch.shadow_clip_.right_ = caviar_projection_floor(
+            static_cast<float>(camera->bounds_.values_[4] + 1) * context->field_9C_) + 1;
+        scratch.shadow_clip_.bottom_ = caviar_projection_floor(
+            static_cast<float>(camera->bounds_.values_[5] + 1) * context->field_A0_) + 1;
+        scratch.shadow_clip_.width_ = scratch.shadow_clip_.left_ - 1 +
+                                      scratch.shadow_clip_.right_;
+        scratch.shadow_clip_.height_ = scratch.shadow_clip_.top_ - 1 +
+                                       scratch.shadow_clip_.bottom_;
+    }
+    return scratch.projected_scale_;
+}
+
+
+// 0x0063A280. Four arguments, the draw's four.
+void __cdecl caviar_clip_shape(
+    VoxRenderRecord *, const CvrRasterShapeViewCandidate *, const VOX_Vect *,
+    const VOX_Matrix *, const CaviarRenderClipWindowCandidate *, int[6]);
+
+// Native 0x63A280 traverses variable-size shapes through the typed shared
+// projection owner; original allocation capacities remain unproved.
+// ORIGINAL: 0x0063A280 sub_63a280 0x0063A280-0x0063A6F0
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original identity/name/span and complete historical lesson run are transported from the matching seed record by match_recovery.source.", "The staged typed definition is uniquely found by match_recovery.source.reader.function_line and compiles in the coordinator's three-TU VC6 overlay.", "The emitted symbol is read from the coordinator's fresh native COFF observation log; it is not inferred from the C++ spelling.", "Caviar data access windows and initialization remain separate coordinator-owned object-mapping obligations; this transfer creates no allocation-bound or initializer claim."], "reason": "Rehome this complete pinned original identity from its generated seed file to the typed Caviar renderer owner; preserve the original span and seed lesson history without asserting BYTE_EXACT. The old FILE interpretation is converted to a function BODY because the new owner contains multiple original identities."}
+// symbol    ?vox_load_scene_view@@YAXPAUVoxRenderRecord@@PAUCaviarSceneContext@@PAUVoxCameraBlock@@H@Z
+// TRIED: __cdecl(int,int,int,int) direct transcription of the Ghidra decompile (per-item bbox accumulation via sub_6280e0/628150/ 6385d0/6282e0/627e20/63f5e0, two parallel min/max passes for two bbox slots at param_1+8 and param_1+0x20); diverges at insn #13, no-frame ESP-relative local layout not reproduced
+void __cdecl vox_load_scene_view(
+    VoxRenderRecord *record, CaviarSceneContext *context,
+    VoxCameraBlock *camera, int step) {
+    VoxSceneState &state = context->state_;
+    int bounds[12];
+    bounds[0] = bounds[1] = bounds[6] = bounds[7] = 0x7fff;
+    bounds[2] = bounds[3] = bounds[8] = bounds[9] = -0x7fff;
+
+    int previous_right = -0x7fff;
+    int previous_bottom = -0x7fff;
+    int shadow_right = -0x7fff;
+    int shadow_bottom = -0x7fff;
+    int index = 0;
+
+    for (; index < state.instance_count_; ++index) {
+        VoxInstance &instance = state.instances_[index];
+        if ((instance.instance_colour_[step] & 0x80) != 0) continue;
+
+        const CvrShape *shape = reinterpret_cast<const CvrShape *>(
+            vox_walk_scaled_chain(
+                reinterpret_cast<unsigned char *>(
+                    state.instance_steps_[index].shape_),
+                CaviarSceneProjectionScratch.projected_scale_));
+        const float extent = shape->scale_;
+
+        VOX_Vect projection_position;
+        vox_matrix_vector_mul(CaviarSceneProjectionScratch.view_scene_matrix_.values,
+                              instance.instance_vector_[step].values,
+                              projection_position.values);
+        vector_add(projection_position.values, CaviarSceneProjectionScratch.camera_offset_.values,
+                   projection_position.values);
+
+        if (vox_part_behind(
+                &projection_position, extent, camera)) {
+            goto shadow_pass;
+        }
+
+        {
+            VOX_Matrix part;
+            vox_matrix_matrix_mul(CaviarSceneProjectionScratch.view_scene_matrix_.values,
+                                  instance.instance_matrix_[step].values,
+                                  part.values);
+            for (int row = 0; row < 3; ++row) {
+                for (int column = 0; column < 3; ++column) {
+                    part.values[row][column] *= extent;
+                }
+            }
+
+            CaviarRenderClipWindowCandidate object_box;
+            caviar_clip_shape(
+                record,
+                reinterpret_cast<const CvrRasterShapeViewCandidate *>(shape),
+                &projection_position, &part, &CaviarSceneProjectionScratch.part_clip_,
+                &object_box.left_);
+            if (object_box.width_ != 0 && object_box.height_ != 0) {
+                if (object_box.left_ < bounds[0]) bounds[0] = object_box.left_;
+                if (object_box.top_ < bounds[1]) bounds[1] = object_box.top_;
+                if (bounds[2] < object_box.right_) bounds[2] = object_box.right_;
+                if (bounds[3] < object_box.bottom_) bounds[3] = object_box.bottom_;
+            }
+        }
+
+shadow_pass:
+        const uint32_t *descriptor =
+            reinterpret_cast<const uint32_t *>(record->setup_block_);
+        if (context->field_A4_ != 0 && descriptor[2] != 0) {
+            VOX_Vect shadow;
+            vox_matrix_vector_mul(caviar_scene_shadow_matrix_view(CaviarSceneProjectionScratch).values,
+                                  instance.instance_vector_[step].values,
+                                  shadow.values);
+            vector_add(shadow.values, CaviarSceneProjectionScratch.shadow_centre_.values,
+                       shadow.values);
+            const float shadow_scale = extent * vox_radius_scale_;
+            if (-shadow_scale * CaviarSceneProjectionScratch.shadow_radius_x_ <= shadow.values[0] &&
+                shadow.values[0] <= camera->bounds_.values_[4] +
+                                      shadow_scale * CaviarSceneProjectionScratch.shadow_radius_x_ &&
+                -shadow_scale * CaviarSceneProjectionScratch.shadow_radius_y_ <= shadow.values[1] &&
+                shadow.values[1] <= camera->bounds_.values_[5] +
+                                      shadow_scale * CaviarSceneProjectionScratch.shadow_radius_y_) {
+                VOX_Matrix shadow_part;
+                vox_matrix_matrix_mul(caviar_scene_shadow_matrix_view(CaviarSceneProjectionScratch).values,
+                                      instance.instance_matrix_[step].values,
+                                      shadow_part.values);
+                for (int row = 0; row < 2; ++row) {
+                    for (int column = 0; column < 3; ++column) {
+                        shadow_part.values[row][column] *= extent;
+                    }
+                }
+
+                CaviarRenderClipWindowCandidate shadow_box;
+                caviar_clip_shape(
+                    record,
+                    reinterpret_cast<const CvrRasterShapeViewCandidate *>(shape),
+                    &shadow, &shadow_part, &CaviarSceneProjectionScratch.shadow_clip_,
+                    &shadow_box.left_);
+                if (shadow_box.width_ != 0 && shadow_box.height_ != 0) {
+                    if (shadow_box.left_ < bounds[6]) bounds[6] = shadow_box.left_;
+                    if (shadow_box.top_ < bounds[7]) bounds[7] = shadow_box.top_;
+                    if (bounds[8] < shadow_box.right_) bounds[8] = shadow_box.right_;
+                    if (bounds[9] < shadow_box.bottom_) bounds[9] = shadow_box.bottom_;
+                }
+            }
+        }
+
+        previous_right = bounds[2];
+        previous_bottom = bounds[3];
+        shadow_right = bounds[8];
+        shadow_bottom = bounds[9];
+    }
+
+    bounds[4] = previous_right < 0 || previous_bottom < 0
+        ? 0 : previous_right - bounds[0] + 1;
+    bounds[5] = previous_right < 0 || previous_bottom < 0
+        ? 0 : previous_bottom - bounds[1] + 1;
+    bounds[10] = shadow_right < 0 || shadow_bottom < 0
+        ? 0 : shadow_right - bounds[6] + 1;
+    bounds[11] = shadow_right < 0 || shadow_bottom < 0
+        ? 0 : shadow_bottom - bounds[7] + 1;
+
+    CaviarRenderClipWindowCandidate *primary =
+        reinterpret_cast<CaviarRenderClipWindowCandidate *>(
+            &record->clip_max_a_x_);
+    CaviarRenderClipWindowCandidate *secondary =
+        reinterpret_cast<CaviarRenderClipWindowCandidate *>(
+            &record->clip_max_b_x_);
+    primary->left_ = bounds[0]; primary->top_ = bounds[1];
+    primary->right_ = bounds[2]; primary->bottom_ = bounds[3];
+    primary->width_ = bounds[4]; primary->height_ = bounds[5];
+    secondary->left_ = bounds[6]; secondary->top_ = bounds[7];
+    secondary->right_ = bounds[8]; secondary->bottom_ = bounds[9];
+    secondary->width_ = bounds[10]; secondary->height_ = bounds[11];
+}
+
 
 // 0x006282E0. Three arguments, a byte answer - the draw tests `al` and skips
 // the part when it is non-zero.
@@ -3310,14 +3769,167 @@ OPENSMACX_NOINLINE
 // no prior push are three plain __cdecl arguments (float*, float, int),
 // matching the Ghidra hint's arity.
 // ORIGINAL: 0x006282E0 sub_6282e0 0x006282E0-0x00628377
-// RECOVERY_BINDING: v1 {"reason":"Complete typed Caviar helper in the existing renderer owner; preserve native branch/store order and historical restoration obligations.","evidence":["Pinned original entry and seed span transported by the native source writer; current symbol observed from the VC6 source overlay.","The four-helper closure uses real shared Caviar projection storage and existing vector/matrix owners, not executable-address aliases.","Fresh native review corrected argument byte0, scaled Y/Z rounding, void builder result and overlapping output streams at offsets0/20/24 with stride16.","Source arrays describe accessed windows, not proven original allocation bounds or original class names; remaining draw/setup callers are still unfinished."]}
 // symbol    ?vox_part_behind@@YA_NPBUVOX_Vect@@MPBUVoxCameraBlock@@@Z
+
+// Candidate source body for 0x63F5E0. Uses the real record/shape/vector
+// owners plus a non-owning variable-tail view; not product source yet.
+extern "C" void __cdecl sub_63fa80(float *);
+extern "C" void __cdecl sub_6401b0(const short *, const short *, int *);
+// ORIGINAL: 0x0063F5E0 sub_63f5e0 0x0063F5E0-0x0063F9A8
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original identity/name/span and complete historical lesson run are transported from the matching seed record by match_recovery.source.", "The staged typed definition is uniquely found by match_recovery.source.reader.function_line and compiles in the coordinator's three-TU VC6 overlay.", "The emitted symbol is read from the coordinator's fresh native COFF observation log; it is not inferred from the C++ spelling.", "Caviar data access windows and initialization remain separate coordinator-owned object-mapping obligations; this transfer creates no allocation-bound or initializer claim."], "reason": "Rehome this complete pinned original identity from its generated seed file to the typed Caviar renderer owner; preserve the original span and seed lesson history without asserting BYTE_EXACT. The old FILE interpretation is converted to a function BODY because the new owner contains multiple original identities."}
+// symbol    ?caviar_clip_shape@@YAXPAUVoxRenderRecord@@PBUCvrRasterShapeViewCandidate@@PBUVOX_Vect@@PBUVOX_Matrix@@PBUCaviarRenderClipWindowCandidate@@QAH@Z
+// TRIED: 6-arg __cdecl signature derived from esp+N reads at the anchor (post-prologue esp) rather than IDA's untyped guess; the per-vertex bbox loop, sub_6280e0/sub_628150/sub_6401b0 arg order, and the final outBox/localBox clamp (which Ghidra's pseudocode also shows) are transcribed from the raw asm since Ghidra's __ftol() calls hide their FPU source operands.
+void __cdecl caviar_clip_shape(VoxRenderRecord *record,
+                               const CvrRasterShapeViewCandidate *shape,
+                               const VOX_Vect *position,
+                               const VOX_Matrix *orientation,
+                               const CaviarRenderClipWindowCandidate *clip,
+                               int output[6]) {
+    output[4] = 0;
+    output[5] = 0;
+    output[0] = 0x7fff;
+    output[1] = 0x7fff;
+    output[2] = -0x7fff;
+    output[3] = -0x7fff;
+
+    // The existing C ABI declaration lacks const; its recovered body only
+    // reads the nine source matrix cells into separate projection storage.
+    sub_63fa80(const_cast<float *>(&orientation->values[0][0]));
+
+    int local_box[6];
+    local_box[0] = record->draw_left_;
+    local_box[1] = record->draw_top_;
+    local_box[2] = record->draw_right_;
+    local_box[3] = record->draw_bottom_;
+    local_box[4] = record->draw_width_;
+    local_box[5] = record->draw_height_;
+
+    if (clip->width_ != 0 && clip->height_ != 0) {
+        if (local_box[0] < clip->left_) local_box[0] = clip->left_;
+        if (local_box[1] < clip->top_) local_box[1] = clip->top_;
+        if (clip->right_ < local_box[2]) local_box[2] = clip->right_;
+        if (clip->bottom_ < local_box[3]) local_box[3] = clip->bottom_;
+    }
+
+    if ((shape->shape_prefix_.field_0_ & 2) == 0) {
+        const int offset_x = static_cast<int>(position->values[0]);
+        const int offset_y = static_cast<int>(position->values[1]);
+        sub_6401b0(&shape->shape_prefix_.offset_x_,
+                   &shape->shape_prefix_.axis_x_, output);
+
+        if (output[4] != 0 && output[5] != 0) {
+            output[0] += offset_x;
+            output[1] += offset_y;
+            output[2] += offset_x;
+            output[3] += offset_y;
+        }
+        if (output[2] < local_box[0] || output[3] < local_box[1] ||
+            local_box[2] < output[0] || local_box[3] < output[1]) {
+            output[2] = -0x7fff;
+            output[3] = -0x7fff;
+            output[0] = 0x7fff;
+            output[1] = 0x7fff;
+            output[4] = 0;
+            output[5] = 0;
+            return;
+        }
+        if (output[0] < local_box[0]) output[0] = local_box[0];
+        if (output[1] < local_box[1]) output[1] = local_box[1];
+        if (local_box[2] < output[2]) output[2] = local_box[2];
+        if (local_box[3] < output[3]) output[3] = local_box[3];
+        return;
+    }
+
+    int box[4];
+    box[0] = 0x7fff;
+    box[1] = 0x7fff;
+    box[2] = -0x7fff;
+    box[3] = -0x7fff;
+    int accumulated_width = 0;
+    int accumulated_height = 0;
+    uint32_t visited_items = 0;
+    const CvrRasterItemHeaderCandidate *item =
+        reinterpret_cast<const CvrRasterItemHeaderCandidate *>(
+            shape->item_stream_);
+
+    if (shape->item_count_ != 0) {
+        do {
+            float point[3];
+            point[0] = static_cast<float>(static_cast<int>(item->endpoint_[0]) +
+                                          static_cast<int>(item->base_[0]));
+            point[1] = static_cast<float>(static_cast<int>(item->endpoint_[1]) +
+                                          static_cast<int>(item->base_[1]));
+            point[2] = static_cast<float>(static_cast<int>(item->endpoint_[2]) +
+                                          static_cast<int>(item->base_[2]));
+
+            float transformed[3];
+            vox_matrix_vector_mul(orientation->values, point, transformed);
+            vector_add(position->values, transformed, point);
+
+            int16_t delta[3];
+            delta[0] = static_cast<int16_t>(
+                static_cast<int>(item->endpoint_[3]) - item->base_[0]);
+            delta[1] = static_cast<int16_t>(
+                static_cast<int>(item->endpoint_[4]) - item->base_[1]);
+            delta[2] = static_cast<int16_t>(
+                static_cast<int>(item->endpoint_[5]) - item->base_[2]);
+            sub_6401b0(delta, item->extent_, box);
+
+            const int x = static_cast<int>(transformed[0]);
+            const int y = static_cast<int>(point[1]);
+            if (accumulated_width != 0 && accumulated_height != 0) {
+                box[1] += y;
+                box[0] += x;
+                box[2] += x;
+                box[3] += y;
+            }
+
+            if (local_box[0] <= box[2] && local_box[1] <= box[3] &&
+                box[0] <= local_box[2] && box[1] <= local_box[3]) {
+                if (box[0] < local_box[0]) box[0] = local_box[0];
+                if (box[1] < local_box[1]) box[1] = local_box[1];
+                if (local_box[2] < box[2]) box[2] = local_box[2];
+                if (local_box[3] < box[3]) box[3] = local_box[3];
+                if (box[2] < 0 || box[3] < 0) {
+                    accumulated_height = 0;
+                    accumulated_width = 0;
+                } else {
+                    accumulated_width = (box[2] - box[0]) + 1;
+                    accumulated_height = (box[3] - box[1]) + 1;
+                }
+                if (accumulated_width != 0 && accumulated_height != 0) {
+                    if (box[0] < output[0]) output[0] = box[0];
+                    if (box[1] < output[1]) output[1] = box[1];
+                    if (output[2] < box[2]) output[2] = box[2];
+                    if (output[3] < box[3]) output[3] = box[3];
+                }
+            }
+
+            visited_items += item->item_count_;
+            const uint32_t payload_size = (item->flags_ & 1) == 0
+                ? item->item_count_ * 3u
+                : *reinterpret_cast<const uint32_t *>(item->inline_payload_);
+            item = reinterpret_cast<const CvrRasterItemHeaderCandidate *>(
+                item->inline_payload_ + payload_size);
+        } while (visited_items < shape->item_count_);
+    }
+
+    if (output[2] > -1 && output[3] > -1) {
+        output[4] = (output[2] - output[0]) + 1;
+        output[5] = (output[3] - output[1]) + 1;
+        return;
+    }
+    output[4] = 0;
+    output[5] = 0;
+}
+
+
 bool __cdecl vox_part_behind(const VOX_Vect *position, float extent,
                              const VoxCameraBlock *view) {
     const CaviarChannelBounds &clip = view->bounds_;
     if (position->values[2] < clip.lead_[3]) return true;
     if (position->values[2] > clip.lead_[4]) return true;
-    float delta = extent * vox_lod_cut_;
+    float delta = extent * CaviarSceneProjectionScratch.projected_scale_;
     delta *= CaviarBoundsRadiusScale;
     if (position->values[0] < -delta) return true;
     if (position->values[0] >
@@ -3331,6 +3943,66 @@ bool __cdecl vox_part_behind(const VOX_Vect *position, float extent,
 // Typed candidates for the two direction-to-octant routines. Their shared
 // storage declarations are provisional and must be admitted only with the
 // accompanying source mapping/consumer closure.
+
+// Native 0x63FCA0 direction selection. The original 24-row table is composed
+// from typed source-owned pointers and its pinned bytes come from the existing
+// configure-time terrain-data initializer hook.
+// ORIGINAL: 0x0063FCA0 sub_63fca0 0x0063FCA0-0x0063FDF6
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original identity/name/span and complete historical lesson run are transported from the matching seed record by match_recovery.source.", "The staged typed definition is uniquely found by match_recovery.source.reader.function_line and compiles in the coordinator's three-TU VC6 overlay.", "The emitted symbol is read from the coordinator's fresh native COFF observation log; it is not inferred from the C++ spelling.", "Caviar data access windows and initialization remain separate coordinator-owned object-mapping obligations; this transfer creates no allocation-bound or initializer claim."], "reason": "Rehome this complete pinned original identity from its generated seed file to the typed Caviar renderer owner; preserve the original span and seed lesson history without asserting BYTE_EXACT. The old FILE interpretation is converted to a function BODY because the new owner contains multiple original identities."}
+// symbol    ?caviar_direction_to_projection_index@@YAXPBUVOX_Matrix@@PBUVOX_Vect@@M0@Z
+// TRIED: FPU scheduling of the two-argument sub_627f50 call push sequence (register-save push esi + call-arg pushes) does not reproduce exactly; landed at 0.77 mnemonic similarity. The logic itself (spherical-to-index trig via acos/atan2/table lookup) is transcribed directly from the disassembly.
+void __cdecl caviar_direction_to_projection_index(
+    const VOX_Matrix *part_matrix, const VOX_Vect *direction,
+    float shape_scale, const VOX_Matrix *camera_rotation) {
+    const float xy_scale = shape_scale * CaviarSceneProjectionScratch.projected_scale_;
+    const float z_scale = shape_scale * CaviarSceneProjectionScratch.viewport_aspect_;
+
+    VOX_Matrix inverse_part;
+    vox_matrix_inverse(part_matrix->values, inverse_part.values);
+    vox_projection_render_stage_ = 1;
+
+    VOX_Vect camera_direction;
+    vox_matrix_vector_mul(camera_rotation->values, direction->values,
+                          camera_direction.values);
+    camera_direction.values[0] *= xy_scale;
+    camera_direction.values[1] *= xy_scale;
+    camera_direction.values[2] *= z_scale;
+
+    VOX_Vect local_direction;
+    vox_matrix_vector_mul(inverse_part.values, camera_direction.values,
+                          local_direction.values);
+    if (local_direction.values[2] < CaviarProjectionRoundThreshold) {
+        local_direction.values[0] = -local_direction.values[0];
+        local_direction.values[1] = -local_direction.values[1];
+        local_direction.values[2] = -local_direction.values[2];
+    }
+
+    double polar_angle;
+    if (local_direction.values[2] < CaviarProjectionAngleLimit) {
+        polar_angle = acos(local_direction.values[2]);
+    } else {
+        polar_angle = CaviarProjectionRoundThreshold;
+    }
+
+    double azimuth_angle = atan2(local_direction.values[1],
+                                 local_direction.values[0]);
+    if (!(azimuth_angle < CaviarProjectionRoundThreshold)) {
+        azimuth_angle -= CaviarProjectionAngleWrap;
+    }
+
+    const int polar_index = static_cast<int>(
+        CaviarProjectionRoundAbove - polar_angle *
+            CaviarProjectionPolarScale);
+    int azimuth_index = static_cast<int>(
+        CaviarProjectionRoundAbove - azimuth_angle *
+            CaviarProjectionAzimuthScale);
+    if (azimuth_index == 0x59) azimuth_index = 0;
+
+    vox_projection_selected_angle_ =
+        (*CaviarProjectionAngleRows[polar_index]) + (0x59 - azimuth_index);
+}
+
+
 // Historical seed proposal; current ABI/field interpretation is stated below.
 // PROPOSAL: extern "C" int __cdecl sub_63fe00() ->
 //           extern "C" void __cdecl sub_63fe00(unsigned char *param_1) -
@@ -3339,7 +4011,7 @@ bool __cdecl vox_part_behind(const VOX_Vect *position, float extent,
 //           int, matching IDA's one-argument guess; no explicit `mov eax,`
 //           before `ret` (see the sibling 0x0063FFE0's identical tail).
 // ORIGINAL: 0x0063FE00 sub_63fe00 0x0063FE00-0x0063FFDD
-// RECOVERY_BINDING: v1 {"reason":"Complete typed Caviar helper in the existing renderer owner; preserve native branch/store order and historical restoration obligations.","evidence":["Pinned original entry and seed span transported by the native source writer; current symbol observed from the VC6 source overlay.","The four-helper closure uses real shared Caviar projection storage and existing vector/matrix owners, not executable-address aliases.","Fresh native review corrected argument byte0, scaled Y/Z rounding, void builder result and overlapping output streams at offsets0/20/24 with stride16.","Source arrays describe accessed windows, not proven original allocation bounds or original class names; remaining draw/setup callers are still unfinished."]}
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original entry and seed span transported by the native source writer; current symbol observed from the VC6 source overlay.", "The four-helper closure uses real shared Caviar projection storage and existing vector/matrix owners, not executable-address aliases.", "Fresh native review corrected argument byte0, scaled Y/Z rounding, void builder result and overlapping output streams at offsets0/20/24 with stride16.", "Source arrays describe accessed windows, not proven original allocation bounds or original class names; remaining draw/setup callers are still unfinished."], "reason": "Complete typed Caviar helper in the existing renderer owner; preserve native branch/store order and historical restoration obligations."}
 // symbol    ?vox_direction_to_octant@@YAXPBUVoxRenderRecord@@@Z
 // TRIED: near-duplicate of 0x0063FFE0 past the preamble (same 628220/6281b0/round-to-nearest/octant/ratio tail) - only the first block differs, negating all three floats when `*param_1 & 1` instead of calling sub_627f50. The three round-to-nearest computations are inlined at each call site rather than factored into a shared helper: a free-function helper ahead of the definition compiles to zero external .text symbols in body-mode extraction (only a helper CLASS is special-cased). Landing the closest control-flow-faithful form (divergence starts at instruction #2, on the flag test).
 void __cdecl vox_direction_to_octant(const VoxRenderRecord *render_record) {
@@ -3676,11 +4348,12 @@ Purpose: Draw the scene. Refuses to re-enter, stages the record and the
 //        scaled matrix elements in registers across the clip test, and the
 //        spellings here stage them to memory instead.
 */
-void __cdecl vox_draw_scene(VoxRenderRecord *record, VoxSceneState *state,
+void __cdecl vox_draw_scene(VoxRenderRecord *record, CaviarSceneContext *context,
                             VoxCameraBlock *view, int step) {
+    VoxSceneState *state = &context->state_;
     // Scratch the two setup helpers fill. The image computes one address and
     // pushes it for both of the first helper's trailing arguments.
-    uint8_t staged[0x20];
+    float staged[8];
 
     if (vox_scene_busy != 0) {
         for (;;) {
@@ -3689,8 +4362,8 @@ void __cdecl vox_draw_scene(VoxRenderRecord *record, VoxSceneState *state,
     }
     vox_scene_busy = 1;
 
-    vox_stage_scene(record, state, view, step, &staged, &staged);
-    vox_load_scene_view(record, state, view, step);
+    vox_stage_scene(record, context, view, step, staged, staged);
+    vox_load_scene_view(record, context, view, step);
 
     vox_active_colour_table_ = record->colour_table_;
     vox_active_ramp_a_ = record->ramp_a_ptr_;
@@ -3712,7 +4385,7 @@ void __cdecl vox_draw_scene(VoxRenderRecord *record, VoxSceneState *state,
         callback();
     }
 
-    // +0x8c into the state block is Caviar::field_A4_ at 0xA4 - the
+    // +0x8c into the state block is Caviar::scene_context_.field_A4_ at 0xA4 - the
     // "keep the scene rectangle too" byte render sets from bit 1 of its flags.
     // The state struct models only the 0x48 bytes the transform reads, so the
     // byte is reached by its offset and named here.
@@ -3728,22 +4401,22 @@ void __cdecl vox_draw_scene(VoxRenderRecord *record, VoxSceneState *state,
             vox_walk_scaled_chain(
                 reinterpret_cast<unsigned char *>(
                     state->instance_steps_[index].shape_),
-                vox_lod_cut_));
+                CaviarSceneProjectionScratch.projected_scale_));
 
         // The part's world position: its own vector through the view's
         // rotation, plus the view's offset.
         VOX_Vect position;
-        vox_matrix_vector_mul(vox_view_rotation_.values,
+        vox_matrix_vector_mul(CaviarSceneProjectionScratch.view_scene_matrix_.values,
                               instance.instance_vector_[step].values,
                               position.values);
-        vector_add(position.values, vox_view_offset_.values, position.values);
+        vector_add(position.values, CaviarSceneProjectionScratch.camera_offset_.values, position.values);
 
         // The level-of-detail cut decides whether the part is drawn at all:
         // the image seeds the flag with 1 and clears it when the walked
         // node's extent, scaled by the cut, is past the visibility cut.
         const float extent = node->scale_;
         int visible = 1;
-        if (vox_lod_cut_ * extent > vox_visibility_cut_) {
+        if (CaviarSceneProjectionScratch.projected_scale_ * extent > vox_visibility_cut_) {
             visible = 0;
         }
 
@@ -3754,7 +4427,7 @@ void __cdecl vox_draw_scene(VoxRenderRecord *record, VoxSceneState *state,
         // The part's rotation is the view's rotation times its own, scaled
         // by the walked node's extent.
         VOX_Matrix part;
-        vox_matrix_matrix_mul(vox_view_rotation_.values,
+        vox_matrix_matrix_mul(CaviarSceneProjectionScratch.view_scene_matrix_.values,
                               instance.instance_matrix_[step].values,
                               part.values);
         for (int row = 0; row < 3; ++row) {
@@ -3782,14 +4455,14 @@ void __cdecl vox_draw_scene(VoxRenderRecord *record, VoxSceneState *state,
         if (want_shadow != 0 &&
             ((uint32_t *)record->setup_block_)[2] != 0) {
             VOX_Vect shadow;
-            vox_matrix_vector_mul(vox_shadow_rotation_.values,
+            vox_matrix_vector_mul(caviar_scene_shadow_matrix_view(CaviarSceneProjectionScratch).values,
                                   instance.instance_vector_[step].values,
                                   shadow.values);
-            vector_add(shadow.values, vox_shadow_offset_.values, shadow.values);
+            vector_add(shadow.values, CaviarSceneProjectionScratch.shadow_centre_.values, shadow.values);
 
             const float radius = extent * vox_radius_scale_;
-            const float span_x = radius * vox_shadow_span_x_;
-            const float span_y = radius * vox_shadow_span_y_;
+            const float span_x = radius * CaviarSceneProjectionScratch.shadow_radius_x_;
+            const float span_y = radius * CaviarSceneProjectionScratch.shadow_radius_y_;
             if (-span_x <= shadow.values[0] &&
                 shadow.values[0] <=
                     static_cast<float>(view->bounds_.values_[4]) + span_x &&
@@ -3797,7 +4470,7 @@ void __cdecl vox_draw_scene(VoxRenderRecord *record, VoxSceneState *state,
                 shadow.values[1] <=
                     static_cast<float>(view->bounds_.values_[5]) + span_y) {
                 VOX_Matrix shadow_part;
-                vox_matrix_matrix_mul(vox_shadow_rotation_.values,
+                vox_matrix_matrix_mul(caviar_scene_shadow_matrix_view(CaviarSceneProjectionScratch).values,
                                       instance.instance_matrix_[step].values,
                                       shadow_part.values);
                 // The shadow renderer scales only the first two rows.
@@ -3837,7 +4510,7 @@ Purpose: Draw the scene. Resets the six channel bounds to their defaults,
 //
 // The catalogue's second argument is the draw's flags: bit 0 is passed on to
 // clear_buffers, bit 1 says the colour table the draw filled is not to be
-// kept - which is why it lands in field_A4_, the byte init seeds with 1.
+// kept - which is why it lands in scene_context_.field_A4_, the byte init seeds with 1.
 Return Value: 0, 7 when the renderer is switched off (field_4_'s bit 0 is
               clear), 0x10 on a null Buffer, and nothing further is drawn when
               no instance has been added.
@@ -3860,14 +4533,14 @@ int Caviar::render_scene(Buffer *buffer, int flags) {
     camera_view_.bounds_.values_[4] = 0x100;
     camera_view_.bounds_.values_[5] = 0x100;
     buffer_ = buffer;
-    scene_state_.instance_count_ = field_13CC_;
-    scene_state_.draw_flags_ = 1;
-    field_7C_ = 0;
-    field_80_ = 0;
-    field_84_ = 0;
-    field_A4_ = (flags & 2) != 0 ? 0 : 1;
+    scene_context_.state_.instance_count_ = field_13CC_;
+    scene_context_.state_.draw_flags_ = 1;
+    scene_context_.field_7C_ = 0;
+    scene_context_.field_80_ = 0;
+    scene_context_.field_84_ = 0;
+    scene_context_.field_A4_ = (flags & 2) != 0 ? 0 : 1;
     CaviarScene.renderer_ = this;
-    vox_draw_scene(CaviarScene.created_, &scene_state_, &camera_view_, 0);
+    vox_draw_scene(CaviarScene.created_, &scene_context_, &camera_view_, 0);
     CaviarScene.renderer_ = 0;
     RECT drawn;
     drawn.left = CaviarScene.created_->clip_max_a_x_;
@@ -4116,7 +4789,7 @@ int Caviar::render(Buffer *buffer, int centre_x, int centre_y, int flags) {
     // dword (+0x04 of the block it is handed), so the old store handed the
     // transform a pointer to walk as a loop bound. render_scene (0x00617080)
     // already spelled it correctly.
-    scene_state_.instance_count_ = field_13CC_;
+    scene_context_.state_.instance_count_ = field_13CC_;
     camera_view_.bounds_.values_[0] = 0;
     camera_view_.bounds_.values_[1] = 0;
     camera_view_.bounds_.values_[2] = 0xff;
@@ -4124,8 +4797,8 @@ int Caviar::render(Buffer *buffer, int centre_x, int centre_y, int flags) {
     camera_view_.bounds_.values_[4] = 0x100;
     camera_view_.bounds_.values_[5] = 0x100;
     buffer_ = buffer;
-    scene_state_.draw_flags_ = 1;
-    field_A4_ = (flags & 2) != 0 ? 0 : 1;
+    scene_context_.state_.draw_flags_ = 1;
+    scene_context_.field_A4_ = (flags & 2) != 0 ? 0 : 1;
 
     int left = centre_x - 0x80;
     int top = centre_y - 0x80;
@@ -4152,22 +4825,22 @@ int Caviar::render(Buffer *buffer, int centre_x, int centre_y, int flags) {
     record->draw_height_ = area.bottom - area.top;
 
     if (flags & 4) {
-        VOX_Matrix saved = scene_state_.scene_rotation_;
+        VOX_Matrix saved = scene_context_.state_.scene_rotation_;
         VOX_Vect position;
         VOX_Vect extent;
-        vox_transform_camera(&scene_state_, (flags & 0x10) != 0 ? flags : 0,
+        vox_transform_camera(&scene_context_.state_, (flags & 0x10) != 0 ? flags : 0,
                              &position, &extent);
         position.values[0] = (extent.values[0] + position.values[0]) * 0.5f;
-        scene_state_.scene_rotation_ = saved;
+        scene_context_.state_.scene_rotation_ = saved;
         position.values[1] = (extent.values[1] + position.values[1]) * 0.5f;
         position.values[2] = (extent.values[2] + position.values[2]) * 0.5f;
-        scene_state_.scene_offset_.values[0] -= position.values[0];
-        scene_state_.scene_offset_.values[1] -= position.values[1];
-        scene_state_.scene_offset_.values[2] -= position.values[2];
+        scene_context_.state_.scene_offset_.values[0] -= position.values[0];
+        scene_context_.state_.scene_offset_.values[1] -= position.values[1];
+        scene_context_.state_.scene_offset_.values[2] -= position.values[2];
     }
 
     CaviarScene.renderer_ = this;
-    vox_draw_scene(CaviarScene.created_, &scene_state_, &camera_view_, 0);
+    vox_draw_scene(CaviarScene.created_, &scene_context_, &camera_view_, 0);
     CaviarScene.renderer_ = 0;
 
     RECT covered;
@@ -4178,7 +4851,7 @@ int Caviar::render(Buffer *buffer, int centre_x, int centre_y, int flags) {
     UnionRect(reinterpret_cast<RECT *>(&CaviarViewportState), &covered,
               reinterpret_cast<RECT *>(&CaviarViewportState));
 
-    if (field_A4_ != 0) {
+    if (scene_context_.field_A4_ != 0) {
         RECT scene;
         scene.left = record->clip_max_b_x_;
         scene.top = record->clip_max_b_y_;
@@ -4186,7 +4859,7 @@ int Caviar::render(Buffer *buffer, int centre_x, int centre_y, int flags) {
         scene.bottom = record->clip_min_b_y_ + 1;
         UnionRect(reinterpret_cast<RECT *>(&CaviarScene.field_00_), &scene,
                   reinterpret_cast<RECT *>(&CaviarScene.field_00_));
-        if (field_A4_ != 0) {
+        if (scene_context_.field_A4_ != 0) {
             unsigned char *colour = static_cast<unsigned char *>(record->colour_table_);
             int mode;
             int origin_x;
@@ -4536,7 +5209,7 @@ Purpose: Set the shadow direction from an elevation and an azimuth:
 // calls     0x006463E4 0x00646494
 //
 // HOMED from src/unrecovered/006181d0.cpp. The three stores at 0x6C,
-// 0x70 and 0x74 are the components of Caviar::shadow_vector_.
+// 0x70 and 0x74 are the components of Caviar::scene_context_.shadow_vector_.
 Return Value: n/a
 */
 // The image CALLS cos here (0x646494) as it calls sin; stdafx's pragma line
@@ -4554,9 +5227,9 @@ void Caviar::set_shadow_vector(float elevation, float azimuth) {
     float sin_azimuth = (float)sin(azimuth);
     float cos_elevation = (float)cos(elevation);
     float cos_azimuth = (float)cos(azimuth);
-    shadow_vector_.values[2] = cos_elevation;
-    shadow_vector_.values[0] = cos_azimuth * sin_elevation;
-    shadow_vector_.values[1] = sin_azimuth * sin_elevation;
+    scene_context_.shadow_vector_.values[2] = cos_elevation;
+    scene_context_.shadow_vector_.values[0] = cos_azimuth * sin_elevation;
+    scene_context_.shadow_vector_.values[1] = sin_azimuth * sin_elevation;
 }
 
 /*
@@ -4689,17 +5362,17 @@ void Caviar::init() {
     float cos_elevation = (float)cos(1.0);
     float cos_azimuth = (float)cos(0.0);
 
-    shadow_vector_.values[0] = cos_azimuth * sin_elevation;
-    shadow_vector_.values[1] = sin_zero * sin_elevation;
-    shadow_vector_.values[2] = cos_elevation;
+    scene_context_.shadow_vector_.values[0] = cos_azimuth * sin_elevation;
+    scene_context_.shadow_vector_.values[1] = sin_zero * sin_elevation;
+    scene_context_.shadow_vector_.values[2] = cos_elevation;
 
-    scene_state_.scene_offset_.values[0] = 0.0f;
-    scene_state_.scene_offset_.values[1] = 0.0f;
-    scene_state_.scene_offset_.values[2] = 0.0f;
+    scene_context_.state_.scene_offset_.values[0] = 0.0f;
+    scene_context_.state_.scene_offset_.values[1] = 0.0f;
+    scene_context_.state_.scene_offset_.values[2] = 0.0f;
 
     const float negative_distance_limit = -65535.0f;
     const float positive_distance_limit = 65535.0f;
-    scene_state_.scale_ = 1.0f;
+    scene_context_.state_.scale_ = 1.0f;
 
     camera_view_.camera_.scaling = 1.0f;
 
@@ -4713,48 +5386,48 @@ void Caviar::init() {
     camera_view_.bounds_.values_[4] = 0x100;
     camera_view_.bounds_.values_[5] = 0x100;
 
-    field_7C_ = 0;
-    field_80_ = 0;
-    field_84_ = 0;
-    field_88_ = 0;
-    field_8C_ = 0;
-    field_90_ = 1.0f;
-    field_94_ = 0;
-    field_98_ = 0;
-    field_9C_ = 1.0f;
-    field_A0_ = 1.0f;
+    scene_context_.field_7C_ = 0;
+    scene_context_.field_80_ = 0;
+    scene_context_.field_84_ = 0;
+    scene_context_.field_88_ = 0;
+    scene_context_.field_8C_ = 0;
+    scene_context_.field_90_ = 1.0f;
+    scene_context_.field_94_ = 0;
+    scene_context_.field_98_ = 0;
+    scene_context_.field_9C_ = 1.0f;
+    scene_context_.field_A0_ = 1.0f;
 
     camera_view_.bounds_.lead_[0] = 0;
     camera_view_.bounds_.lead_[1] = negative_distance_limit;
     camera_view_.bounds_.lead_[2] = positive_distance_limit;
 
-    scene_state_.instance_count_ = 0;
-    scene_state_.instances_ = &slots_[0];
-    scene_state_.draw_flags_ = 0;
-    scene_state_.instance_steps_ = &instance_steps_[0];
+    scene_context_.state_.instance_count_ = 0;
+    scene_context_.state_.instances_ = &slots_[0];
+    scene_context_.state_.draw_flags_ = 0;
+    scene_context_.state_.instance_steps_ = &instance_steps_[0];
 
-    light_vector_.values[0] = 0;
-    light_vector_.values[1] = 0;
-    light_vector_.values[2] = -1.0f;
+    scene_context_.light_vector_.values[0] = 0;
+    scene_context_.light_vector_.values[1] = 0;
+    scene_context_.light_vector_.values[2] = -1.0f;
 
-    vox_normalise_vector(light_vector_.values, light_vector_.values);
+    vox_normalise_vector(scene_context_.light_vector_.values, scene_context_.light_vector_.values);
 
     // The normalised down vector is the light: its x and y are the shadow
     // direction's in-plane pair and its z is the elevation term
     // set_shadow_vector writes over.
-    shadow_vector_.values[0] = light_vector_.values[0];
-    shadow_vector_.values[1] = light_vector_.values[1];
+    scene_context_.shadow_vector_.values[0] = scene_context_.light_vector_.values[0];
+    scene_context_.shadow_vector_.values[1] = scene_context_.light_vector_.values[1];
 
-    scene_state_.scene_rotation_.values[0][0] = 1.0f;
-    scene_state_.scene_rotation_.values[0][1] = 0;
-    scene_state_.scene_rotation_.values[0][2] = 0;
-    scene_state_.scene_rotation_.values[1][0] = 0;
-    scene_state_.scene_rotation_.values[1][1] = 1.0f;
-    scene_state_.scene_rotation_.values[1][2] = 0;
-    scene_state_.scene_rotation_.values[2][0] = 0;
-    scene_state_.scene_rotation_.values[2][1] = 0;
-    scene_state_.scene_rotation_.values[2][2] = 1.0f;
-    field_78_ = 0;
+    scene_context_.state_.scene_rotation_.values[0][0] = 1.0f;
+    scene_context_.state_.scene_rotation_.values[0][1] = 0;
+    scene_context_.state_.scene_rotation_.values[0][2] = 0;
+    scene_context_.state_.scene_rotation_.values[1][0] = 0;
+    scene_context_.state_.scene_rotation_.values[1][1] = 1.0f;
+    scene_context_.state_.scene_rotation_.values[1][2] = 0;
+    scene_context_.state_.scene_rotation_.values[2][0] = 0;
+    scene_context_.state_.scene_rotation_.values[2][1] = 0;
+    scene_context_.state_.scene_rotation_.values[2][2] = 1.0f;
+    scene_context_.field_78_ = 0;
 
     camera_view_.camera_.rotation.values[0][0] = 1.0f;
     camera_view_.camera_.rotation.values[1][1] = 1.0f;
@@ -4767,8 +5440,8 @@ void Caviar::init() {
     camera_view_.camera_.rotation.values[2][1] = 0;
 
 
-    field_A4_ = 1;
-    shadow_vector_.values[2] = light_vector_.values[2];
+    scene_context_.field_A4_ = 1;
+    scene_context_.shadow_vector_.values[2] = scene_context_.light_vector_.values[2];
     field_4_ |= 1;
 }
 

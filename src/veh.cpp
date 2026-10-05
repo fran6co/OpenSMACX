@@ -2576,11 +2576,11 @@ void __cdecl vehdraw_scoot(Buffer *buffer, int x, int y, int frame, int zoom) {
     vox_normalise_vector(normal.values, normal.values);
     VOX_Matrix camera, inverse;
     compute_camera(&normal, &camera);
-    g_VEHDRAW_CAVIAR.light_vector_ = light;
+    g_VEHDRAW_CAVIAR.light_vector() = light;
     vox_matrix_inverse(camera.values, inverse.values);
     VOX_Vect shadow;
     vox_matrix_vector_mul(inverse.values, shadow_direction.values, shadow.values);
-    g_VEHDRAW_CAVIAR.shadow_vector_ = shadow;
+    g_VEHDRAW_CAVIAR.shadow_vector() = shadow;
     g_VEHDRAW_CAVIAR.set_shadow_table(ShadowColorTable);
     VOX_Vect position;
     position.values[0] = camera.values[2][0] * -10000.0f;
@@ -2635,11 +2635,11 @@ void __cdecl vehdraw_draw(Buffer *buffer, int veh_id, int x, int y, int flags,
     }
     VOX_Matrix camera, inverse;
     compute_camera(&normal, &camera);
-    g_VEHDRAW_CAVIAR.light_vector_ = light;
+    g_VEHDRAW_CAVIAR.light_vector() = light;
     vox_matrix_inverse(camera.values, inverse.values);
     VOX_Vect shadow;
     vox_matrix_vector_mul(inverse.values, shadow_direction.values, shadow.values);
-    g_VEHDRAW_CAVIAR.shadow_vector_ = shadow;
+    g_VEHDRAW_CAVIAR.shadow_vector() = shadow;
     g_VEHDRAW_CAVIAR.set_shadow_table(ShadowColorTable);
     VOX_Vect position;
     position.values[0] = camera.values[2][0] * -10000.0f;
@@ -2705,12 +2705,12 @@ int __cdecl vehdraw_turn_start(int veh_id, int direction, int speed, int flags) 
 
     VOX_Matrix camera;
     compute_camera(&normal, &camera);
-    g_VEHDRAW_CAVIAR.light_vector_ = light;
+    g_VEHDRAW_CAVIAR.light_vector() = light;
     VOX_Matrix inverse;
     vox_matrix_inverse(camera.values, inverse.values);
     VOX_Vect shadow;
     vox_matrix_vector_mul(inverse.values, shadow_direction.values, shadow.values);
-    g_VEHDRAW_CAVIAR.shadow_vector_ = shadow;
+    g_VEHDRAW_CAVIAR.shadow_vector() = shadow;
     g_VEHDRAW_CAVIAR.set_shadow_table(ShadowColorTable);
     VOX_Vect position;
     position.values[0] = camera.values[2][0] * -10000.0f;

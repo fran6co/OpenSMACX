@@ -47,7 +47,7 @@ int SelectPartWin::exec(int x, int y, int value0, int kind, int selected,
     }
 
     caviar_.init();
-    caviar_.field_A4_ = 0;
+    caviar_.set_field_A4(0);
     font1_.init(DefaultFontFace, 10, 0);
     font2_.init(DefaultFontFace, 12, 1);
     static_cast<Buffer *>(this)->set_font(&font1_, 0, 0, 0);
@@ -66,8 +66,8 @@ int SelectPartWin::exec(int x, int y, int value0, int kind, int selected,
     union { uint32_t bits; float value; } scene_angle;
     scene_angle.bits = 0x3f05f92d;
     caviar_.set_scene_rotation(scene_angle.value, 0.0f, 0.0f);
-    caviar_.light_vector_ = *SelectPartCameraOrigin;
-    caviar_.shadow_vector_ = *SelectPartCameraOrigin;
+    caviar_.light_vector() = *SelectPartCameraOrigin;
+    caviar_.shadow_vector() = *SelectPartCameraOrigin;
 
     field_2B74_ = 0;
     switch (kind) {

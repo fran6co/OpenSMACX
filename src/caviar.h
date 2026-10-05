@@ -279,6 +279,35 @@ static_assert(sizeof(VoxSceneState) == 0x48,
 // ints at 0xED - so this is the camera and the bounds that follow it, passed
 // as `this + 0xA5`.
 #pragma pack(push, 1)
+
+#pragma pack(push, 1)
+struct CaviarSceneContext {
+  VoxSceneState state_;       // Caviar+0x18, engine's existing scene prefix
+  // RECOVERY_MEMBER: v2 CaviarSceneContext light_vector_ VOX_Vect 0x48 0x00616DE0
+  VOX_Vect light_vector_;     // Caviar+0x60
+  // RECOVERY_MEMBER: v2 CaviarSceneContext shadow_vector_ VOX_Vect 0x54 0x006181D0
+  VOX_Vect shadow_vector_;    // Caviar+0x6C
+  float field_78_;            // native scene projection scalar
+  float field_7C_;
+  float field_80_;
+  float field_84_;
+  float field_88_;
+  float field_8C_;
+  float field_90_;
+  float field_94_;
+  float field_98_;
+  float field_9C_;
+  float field_A0_;
+  uint8_t field_A4_;
+};
+#pragma pack(pop)
+static_assert(sizeof(CaviarSceneContext) == 0x8D,
+              "Caviar scene context occupies +0x18 through +0xA4");
+static_assert(offsetof(CaviarSceneContext, state_) == 0x00,
+              "engine state prefix starts at the context pointer");
+static_assert(offsetof(CaviarSceneContext, field_A4_) == 0x8C,
+              "scene-state draw byte remains at Caviar+0xA4");
+
 struct VoxCameraBlock {
   CaviarCamera camera_;         // +0x00, Caviar::camera_ at 0xA5
   CaviarChannelBounds bounds_;  // +0x34, Caviar::field_D9_ at 0xD9
@@ -484,7 +513,9 @@ class Caviar {
   void set_scene_rotation(float x, float y, float z);
   // ProdPicker::exec writes this existing one-byte state immediately after
   // initialization; keep the byte private while exposing that observed store.
-  void set_field_A4(int value) { field_A4_ = static_cast<uint8_t>(value); }
+  void set_field_A4(int value) { scene_context_.field_A4_ = static_cast<uint8_t>(value); }
+  VOX_Vect &light_vector() { return scene_context_.light_vector_; }
+  VOX_Vect &shadow_vector() { return scene_context_.shadow_vector_; }
   // 0x00618DA0. The engine's per-object callback: fills the handle's colour
   // table with 0x1800 bytes chosen by field_4_'s bits - the shared monochrome
   // source when bit 3 is on, the caller's table when bit 4 is on, otherwise
@@ -541,37 +572,13 @@ class Caviar {
   // the setter that writes it (0x006183F0 `mov dword ptr [ecx + 0x14], eax`
   // with the Buffer * in eax).
   Buffer *buffer_;
-  // 0x18..0x5F, THE BLOCK THE ENGINE IS HANDED. Both engine entry points -
-  // the draw 0x00639E60 and the camera transform 0x0063A6F0 - take it as
-  // their first argument, and both of this class's own call sites pass
-  // `this + 0x18` (image 0x61743F `lea eax, [ebp + 0x18]`), so the ten
-  // members that used to be carved out one at a time here are one struct:
-  // the instance count render stores, the instance and step tables init
-  // seeds, the scene offset the draw adjusts, the scene rotation
-  // set_scene_rotation fills, and the scale seeded 1.0f. VoxSceneState above
-  // is that block, with each offset's Caviar member named on it.
-  VoxSceneState scene_state_;  // 0x18, 0x48 bytes
- public:
-  // init normalises the light and copies it to the shadow direction;
-  // turn_start supplies both vectors directly for the vehicle renderer.
-  // RECOVERY_MEMBER: v2 Caviar light_vector_ VOX_Vect 0x60 0x00616DE0
-  VOX_Vect light_vector_;
-  // RECOVERY_MEMBER: v2 Caviar shadow_vector_ VOX_Vect 0x6C 0x006181D0
-  VOX_Vect shadow_vector_;
+  // The engine's first two arguments both receive this+0x18, and source
+  // callers now pass the actual composed owner rather than downcasting its
+  // VoxSceneState prefix. The state prefix and its Caviar tail share one
+  // lifetime through +0xA4; camera_view_ remains at the pinned +0xA5.
+  // RECOVERY_MEMBER: v2 Caviar scene_context_ CaviarSceneContext 0x18 0x006396A0
+  CaviarSceneContext scene_context_;  // 0x18..0xA4
 
- private:
-  uint32_t field_78_;  // 0x78
-  uint32_t field_7C_;  // 0x7C
-  uint32_t field_80_;  // 0x80
-  uint32_t field_84_;  // 0x84
-  uint32_t field_88_;  // 0x88
-  uint32_t field_8C_;  // 0x8C
-  float field_90_;     // 0x90, seeded 1.0f
-  uint32_t field_94_;  // 0x94
-  uint32_t field_98_;  // 0x98
-  float field_9C_;     // 0x9C, seeded 1.0f
-  float field_A0_;     // 0xA0, seeded 1.0f
-  uint8_t field_A4_;  // 0xA4
   // NAMED THROUGH A PACKED STRUCT, because 0xA5 is not 4-aligned. The
   // arithmetic is exact: `set_camera_direct` memcpys a `VOX_Vect` to 0xA5 and
   // a `VOX_Matrix` to 0xB1, 0xA5 + 12 is 0xB1, and 0xB1 + 36 is 0xD5, which is

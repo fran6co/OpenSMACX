@@ -783,12 +783,12 @@ int ProdPicker::exec(Base *base, int factionId, GraphicWin *owner, int modal) {
             caviar_.set_camera_direct(&camera, &field_A748_);
             caviar_.set_scaling(0.1f);
 
-            caviar_.light_vector_.values[0] = 0.0f;
-            caviar_.light_vector_.values[1] = 0.0f;
-            caviar_.light_vector_.values[2] = 1.0f;
-            caviar_.shadow_vector_.values[0] = 0.0f;
-            caviar_.shadow_vector_.values[1] = 0.0f;
-            caviar_.shadow_vector_.values[2] = 1.0f;
+            caviar_.light_vector().values[0] = 0.0f;
+            caviar_.light_vector().values[1] = 0.0f;
+            caviar_.light_vector().values[2] = 1.0f;
+            caviar_.shadow_vector().values[0] = 0.0f;
+            caviar_.shadow_vector().values[1] = 0.0f;
+            caviar_.shadow_vector().values[2] = 1.0f;
 
             calculate();
 
