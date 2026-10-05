@@ -32,6 +32,7 @@ class GraphicWin;
   */
 class Dialog {
   friend class ListBox;
+  friend class NetSessionPickerWin;
  public:
   friend class CheckBox;
   friend class RadioButton;

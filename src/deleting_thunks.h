@@ -221,11 +221,4 @@ void *__fastcall scalar_delete_push_button(void *self, void *,
                                            unsigned int arg0);
 void *__fastcall adjust_this_push_button(void *self, void *,
                                          unsigned int arg0);
-void *__fastcall scalar_delete_sub_633160(void *self, void *,
-                                          unsigned int arg0);
 void *__fastcall adjust_this_sub_633730(void *self, void *, unsigned int arg0);
-void *__fastcall adjust_this_sub_633740(void *self, void *, unsigned int arg0);
-
-// Remaining legacy teardown declaration, outside the Video owner. Video's
-// Sound-prefix destruction is now compiler-owned in video.cpp/video.h.
-void __fastcall sub_633010(void *self);

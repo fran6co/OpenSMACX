@@ -200,6 +200,8 @@ class NetUnk72C : public NetTextListBase {
 // payload factory/nominal identity and complete lifetime proof remain open.
 class NetAllocationNode : public virtual StringAllocationBase {
   friend class Net;
+  // Consumer access to the measured nested entry list; no parallel storage.
+  friend class NetSessionPickerWin;
  public:
   NetAllocationNode();
   virtual ~NetAllocationNode();
@@ -341,6 +343,7 @@ class AlphaNetLedger;
 class Net {
   // Original multiplayer startup changes this owner's existing voice flags.
   friend int __cdecl multiplayer_init(int);
+  friend class NetSessionPickerWin;
   friend class AlphaNet;
   friend struct NetThreadInfo;
   // Original MultiDebug paint 0x005C9920 displays these session/player fields.
@@ -478,6 +481,10 @@ class Net {
   // it once at boot with the command line and the DirectPlay application GUID.
   int check_for_lobby(char *app_name, _GUID *guid, int option_a,
                       int option_b);
+
+  // Provisional descriptive API for the receiver-backed original 0x631050.
+  // Its source-level name remains unresolved.
+  int session_picker_dialog();
 
  public:
   Net();

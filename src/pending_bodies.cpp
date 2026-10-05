@@ -781,11 +781,6 @@ Status: Complete
 
 
 
-int Win::sub_63c7c0() {
-    typedef int(__fastcall *pending)(Win *, void *);
-    return PENDING_BODY(0x0063C7C0, pending)(this, nullptr);
-}
-
 // The four one-directional treaty/agenda writers DipEdit's checkbox handlers
 // call - treaty_on (0x0055B870), treaty_off (0x0055B760), agenda_on
 // (0x0055BA80) and agenda_off (0x0055B820) - are homed into src/faction.cpp

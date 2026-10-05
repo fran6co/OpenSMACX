@@ -1,0 +1,122 @@
+{
+  "schema_version": 1,
+  "task_id": "session-picker-owner-oct6",
+  "author": "framework-coordinator",
+  "target": "opensmacx",
+  "base_revision": "7881933b340b33f677daa8f552f0c3b54e4cae9f",
+  "intent": "Recover the complete typed session-picker ownership group and Net modal caller; preserve all historical identities, claims and unwind spans while retiring superseded Win/teardown/seed scaffolding.",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6535968
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6500704
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6502208
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6500368
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6536464
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6540624
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6539728
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6539936
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6539200
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6538048
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6538464
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6538128
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6536976
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6538512
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6538144
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6492240
+    }
+  ],
+  "editable_files": [
+    "src/net_session_picker.cpp",
+    "src/net_session_picker.h",
+    "recovery/tests/test_session_picker_actual_source.py",
+    "CMakeLists.txt",
+    "src/net_class.h",
+    "src/dialog.h",
+    "src/deleting_thunks.cpp",
+    "src/deleting_thunks.h",
+    "src/leaf_recoveries.cpp",
+    "src/pending_bodies.cpp",
+    "src/win.cpp",
+    "src/win.h",
+    "src/recovered/0063c390.cpp",
+    "src/unrecovered/00631050.cpp",
+    "src/unrecovered/0063bb20.cpp",
+    "src/unrecovered/0063bd10.cpp",
+    "src/unrecovered/0063bf10.cpp",
+    "src/unrecovered/0063c3a0.cpp",
+    "src/unrecovered/0063c510.cpp",
+    "src/unrecovered/0063c7c0.cpp",
+    "src/unrecovered/0063c9d0.cpp",
+    "src/unrecovered/0063caa0.cpp",
+    "src/unrecovered/0063cd50.cpp"
+  ],
+  "evidence": [
+    "The user authorizes coordinator-reviewed manual coverage integration and temporary matching regressions while retaining restoration obligations; no claim is demoted or banked here.",
+    "Pinned constructor/member accesses and dispatch/caller evidence establish the typed source owner; original class spelling, full allocation, indirect event wiring and precise generated-unwind equivalence remain unverified.",
+    "The nullary focus entry and int-context timer callback are distinct. The caller constructs its ledger and picker before testing Net+0x6E0, reloads password state after modal execution, preserves unguarded invalid-node and unchecked-copy paths, and uses natural cleanup without duplicate explicit close.",
+    "The source owner retains all 16 original identities, complete main/cold spans and historical claims. The compiler owns both deleting entries and member/base lifetime transitions; source-owned v1 data start preserves the one-byte empty-input observation without asserting allocation bounds.",
+    "Native compile/layout and bounded host controls are not full linked-preservation, structure/runtime or automatic acceptance proof."
+  ]
+}

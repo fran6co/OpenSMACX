@@ -785,8 +785,6 @@ class Win : public AutoSound {
   void screen_to_nonclient(int * x, int * y);
   void set_caption(char * text);
   void sub_5ef1e0(int x1, int y1, int x2, int y2, void *pen, int unused6);
-  int sub_63c340();
-
  public:
   void __cdecl OnKey(void * hwnd, unsigned int key, long flags, int repeat, unsigned int scan);
   void OnLButtonUp(void *hwnd, int x, int y, unsigned int keys);
@@ -818,7 +816,6 @@ class Win : public AutoSound {
  public:
   // A MEMBER: the caller at 0x0063C340 sets up `mov ecx, esi` before
   // this call, which is a thiscall receiver, not a __cdecl free function.
-  int sub_63c7c0();  // 0x0063C7C0
 };
 
 static_assert(sizeof(Win) == 0x444, "Win layout must match the legacy ABI");
@@ -1077,8 +1074,6 @@ void __cdecl recurse_zorder(Win *window);
 // subtree and a position in that subtree's coordinates.
 Win *__cdecl get_mouse_window_recurse(Win *window, int *x, int *y);
 // 0x0063C4E0, homed into win.cpp.
-void __cdecl sub_63c4e0(int context);
-
 // 0x009B7B3C. Cleared on every WM_MOUSEMOVE and read by
 // `Win::update_cursor`, which is the only other function that touches it.
 extern int WinCursorMoved;

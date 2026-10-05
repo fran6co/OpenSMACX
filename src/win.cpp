@@ -4162,38 +4162,6 @@ void __cdecl restore_flip_sprite(int do_flip) {
 
 
 /*
-Purpose: Run the teardown step for the given instance, but only while it is
-         still the current one - the timer callback Win::sub_63c340 hands to
-         Time::start. HOMED from src/recovered/0063c4e0.cpp on 2026-08-25.
-         The artifact needed a one-method `S_0063C7C0` shim because its
-         callee is __thiscall and nothing declared it; Win::sub_63c7c0 is a
-         real member now, so the shim is gone and the receiver comes from
-         the class.
-*/
-// ORIGINAL: 0x0063C4E0 sub_63c4e0 0x0063C4E0-0x0063C4F6 BYTE_EXACT
-// symbol    ?sub_63c4e0@@YAXH@Z
-// size      22 bytes
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-// tops out at MNEMONIC_ONLY - seven mnemonics agreeing, one register wrong -
-// across eight source shapes. Only phrasing the tail call as a member on
-// `a1` reproduces ecx.
-// NAMED-INT, DELIBERATE (2026-08-27): `context` IS a Win* - its one
-// registration site below passes `reinterpret_cast<int>(this)` into
-// Time::start - but the IMAGE keeps it an H end to end: the symbol above
-// spells YAXH, and every Time prototype spells its callback payload H
-// (time.cpp P6AXH@ZH...). A pointer-typed parameter would emit PAV and
-// detach the name from the shipped bytes. The int is the image's own
-// generic-timer ABI; the pun documents itself here instead of pretending.
-void __cdecl sub_63c4e0(int context) {
-    if (context != 0 && WinFocusWindow == reinterpret_cast<Win *>(context)) {
-        reinterpret_cast<Win *>(context)->sub_63c7c0();
-    }
-}
-
-/*
 Purpose: Close one window through its vtable, but only when it reports it
          is not already closing. HOMED from src/recovered/005f86a0.cpp on
          2026-08-25; the artifact needed a `GateVCall` shim class because
@@ -9253,97 +9221,6 @@ shared:
     resize_event(outer_rect_.right - outer_rect_.left, outer_rect_.bottom - outer_rect_.top);
     this->on_redraw();
     return 0;
-}
-
-// ===== homed from src/recovered/units/0063c340.cpp =====
-
-// ORIGINAL: 0x0063C340 sub_63c340 0x0063C340-0x0063C38F FILE BYTE_EXACT
-// symbol    ?sub_63c340@Win@@QAEHXZ
-// size      79 bytes
-// prototype 
-// callers   0   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x00616350 0x0063C7C0
-// indirect  0x0063C374 0x0063C37E
-// PRESERVED UNIT - measured BYTE_EXACT.
-//
-// Kept for COVERAGE. This directory IS on the ratchet: every file here
-// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
-// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
-// quarter of the project's total. It is still in no build; the earlier
-// header said "on no ratchet", which stopped being true when the map
-// moved into src/ and was still being written into new files.
-//
-// address        0x0063C340
-// measured tier  BYTE_EXACT
-//
-// The WHOLE unit as measured, scaffolding included: for the units
-// that are byte-exact yet refuse extraction, the agent tuned the
-// emitted scaffolding and the body alone will not reproduce the
-// verdict. To resume, copy everything below back over
-//   build/byte-match/0063c340/unit.cpp
-// and score it with tools/agent_brief.py.
-// GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: sub_63c340  at 0x0063C340  (79 bytes)
-//
-// A VERIFICATION ARTIFACT, not product source: classes are opaque and
-// globals are bound to fixed addresses, because both are byte-visible
-// and both differ from the style src/ is written in.
-//
-// VC6 DIALECT - this must compile under cl 12.00.8168, which is the
-// only compiler this project builds with. Avoid: auto, nullptr, constexpr,
-// static_assert, enum class, range-for, lambdas, long long, <cstdint>,
-// and declaring `int i` twice in one function (VC6 leaks for-scope).
-// static_cast/reinterpret_cast are fine and are the right spelling.
-//
-// SOURCE-FORM RULES, each one learned by a fan-out agent that lost
-// attempts to it. They are here rather than in a prompt so the next
-// agent does not rediscover them:
-//
-//  * A ternary is not an if. `x ? a : b` lowers to `jne` with the arms
-//    swapped; `if (x) {...}` gives `je`.
-//  * VC6 NEVER hoists a same-polarity guard's body out of line. To get
-//    two special cases branching FAR away, write them negated and
-//    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
-//    sequential guard clauses, which inline each body instead.
-//  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
-//    an indirect virtual call use the generated VCall shim below; for a
-//    thiscall function POINTER, take a member-function pointer of a
-//    dummy class instead of spelling the convention.
-//  * Loop form is visible: while / do-while / for lower differently,
-//    and so does counting up versus down.
-//  * If the original dedicates a callee-saved register to a constant
-//    across the whole body (an extra `push ebx`/`push edi` in the
-//    prologue), it had enough register pressure to do so. That is a
-//    hard case - the tool reports a similarity ratio so you can tell a
-//    near miss from a wrong body.
-// TWO FINDINGS, both recorded rather than cleared, and they are different
-// kinds of stuck.
-// 1. `self + 0xa14` is PAST `sizeof(Win)` (0x444), so the receiver is a
-//    Win-DERIVED class carrying an embedded Time - the same misattribution
-//    as on_l_button_down above. Unlike that one this body IS BYTE_EXACT, so
-//    the image itself validates the offset: [this+0xA14] is really read.
-//    The offset is right and the CLASS is wrong.
-// 2. `reinterpret_cast<int>(this)` here is not a member walk and cannot be
-//    spelled away: `Time::start(void(__cdecl *)(int), int param, ...)`
-//    takes its callback context as an int, so a Win * has to go through
-//    one. class_debt counts it as raw self-access, and its remedy - use the
-//    declared member - does not apply to a pointer crossing an int-typed
-//    API. Retyping that context is the Time work the plan calls A3; it
-//    touches both Time::start overloads, the callback typedefs and every
-//    caller including Palette's, so it belongs to Time's pass, not here.
-int Win::sub_63c340() {
-    char *self = reinterpret_cast<char *>(this);
-    if (reinterpret_cast<Time *>(self + 0xa14)->start(
-            sub_63c4e0,
-            reinterpret_cast<int>(this), 1000, 5) != 0) {
-        return 0;
-    }
-    this->sub_63c7c0();
-    this->set_modal(0, 0, 0);
-    this->hide();
-    return *reinterpret_cast<int *>(*reinterpret_cast<char **>(self + 0x36a4) + 0x760);
 }
 
 // ===== homed from src/unrecovered/005edf50.cpp =====

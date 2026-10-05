@@ -225,6 +225,7 @@ set(OPENSMACX_SOURCES
     src/spritebox.cpp
     src/listbox.cpp
     src/net_class.cpp
+    src/net_session_picker.cpp
     src/node.cpp
     src/voice.cpp
     src/squarelock.cpp

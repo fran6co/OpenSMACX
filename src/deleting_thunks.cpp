@@ -1612,30 +1612,6 @@ void *__fastcall scalar_delete_push_button(void *self, void *,
 }
 
 /*
-Purpose: The compiler-generated scalar deleting destructor at sub_633160: run
-         the complete destructor, then release the storage through the
-         executable's operator delete only when bit 0 of the flags asks.
-// ORIGINAL: 0x00633160 sub_633160 0x00633160-0x0063317E BYTE_EXACT
-// symbol    ?scalar_delete_sub_633160@@YIPAXPAX0I@Z
-// size      30 bytes
-// prototype 
-// callers   0   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x00633010 0x0064557F
-Return Value: the object pointer
-Status: Complete
-*/
-void *__fastcall scalar_delete_sub_633160(void *self, void *,
-                                          unsigned int arg0) {
-    sub_633010(self);
-    if (arg0 & 1) {
-        operator delete(self);
-    }
-    return self;
-}
-
-/*
 Purpose: Step the receiver back to the subobject sub_6336d0 expects, then
          forward unchanged.
 // ORIGINAL: 0x00633730 sub_633730 0x00633730-0x00633738
@@ -1653,24 +1629,4 @@ void *__fastcall adjust_this_sub_633730(void *self, void *,
                                         unsigned int arg0) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     return (ORIGINAL(object - 0x58)->*Sub006336D0Target)(arg0);
-}
-
-/*
-Purpose: Step the receiver back to the subobject sub_633160 expects, then
-         forward unchanged.
-// ORIGINAL: 0x00633740 sub_633740 0x00633740-0x0063374B
-// symbol    ?adjust_this_sub_633740@@YIPAXPAX0I@Z
-// size      11 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the forwarded call's
-Status: Complete
-*/
-void *__fastcall adjust_this_sub_633740(void *self, void *,
-                                        unsigned int arg0) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    return scalar_delete_sub_633160(object - 0x444, nullptr, arg0);
 }
