@@ -312,8 +312,9 @@ endif()
 # rather than a probe, and its name should say so.
 add_executable(OpenSMACX ${OPENSMACX_SOURCES})
 
-# Irregular terrain palette and landmark choices remain local derivatives of the pinned
-# original. Source owns their bounded object mapping; the include lives in
+# Terrain, media decoder and GraphicWin lookup data remain local derivatives of
+# the pinned original. Source owns bounded objects or explicit accessed windows;
+# each generated include lives in
 # ignored preparation context, also for IDE builds outside the build/ tree.
 find_program(OPENSMACX_UV_EXECUTABLE NAMES uv REQUIRED)
 if(NOT DEFINED OPENSMACX_ORIGINAL_IMAGE)
@@ -340,6 +341,7 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/src/game.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/src/mapwin.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/map.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/movie_media_decoder.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/graphicwin.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/recovery/terrain_data.py")
 target_include_directories(OpenSMACX PRIVATE "${OPENSMACX_TERRAIN_DIRECTORY}")
 

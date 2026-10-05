@@ -404,3 +404,31 @@ int main() {
                            capture_output=True, text=True)
     assert built.returncode == 0, built.stderr
     assert subprocess.run([str(exe)]).returncode == 0
+
+def test_graphicwin_palette_initializer_projects_only_start_bound_window(tmp_path, hook):
+    payload = bytes((index * 29 + 7) % 256 for index in range(132))
+    root, original, unused = project(
+        tmp_path, data_image(payload + b"neighbor"), start=0x401000, size=132,
+        symbol='?GraphicWinBlitPolynomialWords@@3PAIA', unit="graphicwin.cpp", bounded=False)
+    output = unused.with_name("graphicwin_palette_polynomials.inc")
+    hook.graphicwin_palette_initializer(root, original, output)
+    values = [int(value) for value in
+              re.findall(r"(?<![A-Za-z0-9_])([0-9]+)u", output.read_text())]
+    expected = [int.from_bytes(payload[index:index + 4], "little")
+                for index in range(0, 132, 4)]
+    assert values == expected and len(values) == 33
+    assert "Generated from pinned source-owned terrain data" in output.read_text()
+    first = output.read_bytes()
+    hook.graphicwin_palette_initializer(root, original, output)
+    assert output.read_bytes() == first
+
+
+def test_graphicwin_palette_initializer_refuses_a_bounded_extent(tmp_path, hook):
+    payload = bytes((index * 29 + 7) % 256 for index in range(132))
+    root, original, unused = project(
+        tmp_path, data_image(payload + b"neighbor"), start=0x401000, size=132,
+        symbol='?GraphicWinBlitPolynomialWords@@3PAIA', unit="graphicwin.cpp", bounded=True)
+    output = unused.with_name("graphicwin_palette_polynomials.inc")
+    with pytest.raises(ValueError, match="start-only"):
+        hook.graphicwin_palette_initializer(root, original, output)
+    assert not output.exists()

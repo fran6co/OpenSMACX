@@ -98,6 +98,9 @@ class GraphicWin : public Win, public Buffer {
   int probe_image_file(const char *, Palette *, int, int);
   int load_pcx_from_source(PcxInputView *, Palette *, int, int);
   int resize_screen_and_sync_palette();
+  // Provisional descriptive names; native name/dispatch evidence is incomplete.
+  void blit_palette_pattern_rows();
+  void blit_palette_pattern_rows_entry();
 
   int load_pcx(char *path, Palette *palette, int flags, int transparency);
   // Recompute frame minima only when all four selected corner sprites exist.

@@ -27,6 +27,13 @@ is no zero/stale fallback or runtime executable-address dependency. Preparation
 retains and fingerprints its generated header for measurements and overlays.
 The initializer is disposable data, never a matching or acceptance report.
 
+GraphicWin's palette-pattern row blit uses the same hook for its writable
+33-word accessed window at `0x00696B6C`, emitted into
+`graphicwin_palette_polynomials.inc` in that ignored directory. Its source
+binding is start-only: the window does not prove the original allocation bound
+or former owner. Generation requires the pinned, backed, relocation-free data;
+there is no literal proprietary table in tracked source or zero fallback.
+
 Compiler and toolchain JSON clients explicitly launch with `{framework_python}`
 and `-I -B`, so their framework imports use the caller's selected installation,
 not a retained worktree's older editable package. Compiler scripts and flags remain

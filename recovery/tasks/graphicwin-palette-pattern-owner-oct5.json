@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "task_id": "graphicwin-palette-pattern-owner-oct5",
+  "author": "framework-coordinator",
+  "target": "opensmacx",
+  "base_revision": "03027fbbe5e66260ad79fca5474173bb92e8ed32",
+  "intent": "Recover the two complete same-receiver palette-pattern blit entries in the existing GraphicWin/Win/Buffer owner, preserving native palette/HDC/LFSR/cleanup behavior and both original identity boundaries; retire the superseded seeds only after owner/build checks.",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6118272
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6118256
+    }
+  ],
+  "editable_files": [
+    "src/graphicwin.cpp",
+    "src/graphicwin.h",
+    "CMakeLists.txt",
+    "recovery/terrain_data.py",
+    "recovery/README.md",
+    "src/unrecovered/005d5b70.cpp",
+    "src/unrecovered/005d5b80.cpp",
+    "recovery/tests/test_graphicwin_palette_owner_actual_source.py",
+    "recovery/tests/graphicwin_palette_control.cpp",
+    "recovery/tests/test_terrain_data.py",
+    "recovery/tests/test_movie_decoder_preparation_hook.py"
+  ],
+  "evidence": [
+    "Pinned5D5B80 uses ECX as GraphicWin receiver, calls Win and Palette owners, and uses this+444 as Buffer; current GraphicWin inherits Win then Buffer, with DIB width/height at this+4C4/+4C8.",
+    "Pinned5D5B70 is a five-byte direct E9 tail transfer to5D5B80 preserving ECX/stack. Its forwarding source method is provisional and must be freshly compiled; do not hand-write the jump.",
+    "Preserve full original spans and historical claim/lesson facts with the source writer: only5D5B70 carries historical BYTE_EXACT; 5D5B80 has historical TRIED notes. No fresh match claim is granted by this task.",
+    "The typed body preserves palette-before-HDC acquisition, asymmetric failure cleanup, signed row test, unsigned LFSR recurrence, BitBlt arguments and Win-then-Buffer release. Host controls compile the actual source method bodies under available C++98 compilers.",
+    "Method names are descriptive, not proven original names; no inbound direct caller or sampled virtual slot is known. EAX is unobserved and not assigned a synthetic return value. The polynomial table is a source-owned 33-word accessed window initialized from the pinned image into an ignored generated include; its original allocation bound and former owner remain unknown.",
+    "No vtable changes, executable-address aliases or manual jumps. Reuse the existing configure-time pinned-data generation hook and ignored include directory. Require fresh native build/link, layout/references, claim continuity, source checks and independent review before seed removal/checkpoint."
+  ]
+}

@@ -40,9 +40,10 @@ def test_existing_terrain_hook_retains_all_calls_and_project_hook_extends_it() -
     calls[:] = []
     functions["terrain_initializers"] = lambda *args: calls.append("terrain")
     functions["movie_decoder_initializers"] = lambda *args: calls.append("decoder")
+    functions["graphicwin_palette_initializer"] = lambda *args: calls.append("graphicwin")
     namespace["project_initializers"](Path("/irrelevant"), Path("/irrelevant"),
                                        Path("/irrelevant"))
-    assert calls == ["terrain", "decoder"]
+    assert calls == ["terrain", "decoder", "graphicwin"]
 
 
 def test_cmake_configure_uses_extended_hook_without_replacing_legacy_entry() -> None:
@@ -51,6 +52,7 @@ def test_cmake_configure_uses_extended_hook_without_replacing_legacy_entry() -> 
     assert "['terrain_initializers']" not in cmake
     assert '"${CMAKE_CURRENT_SOURCE_DIR}/recovery/terrain_data.py"' in cmake
     assert '"${CMAKE_CURRENT_SOURCE_DIR}/src/movie_media_decoder.cpp"' in cmake
+    assert '"${CMAKE_CURRENT_SOURCE_DIR}/src/graphicwin.cpp"' in cmake
 
 
 def test_decoder_initializers_require_v1_start_only_access_windows(

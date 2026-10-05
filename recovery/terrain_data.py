@@ -57,7 +57,8 @@ def _terrain_initializer(root: Path, original: Path, output: Path, *,
                          output_name: str, unit: str, symbol: str,
                          size: int, signed_pairs: bool = False,
                          unsigned_words: bool = False,
-                         accessed_window: bool = False) -> None:
+                         accessed_window: bool = False,
+                         require_start_only: bool = False) -> None:
     if unsigned_words and (signed_pairs or size % 4):
         raise ValueError('altitude initializer requires complete unsigned words')
     root = root.resolve()
@@ -73,6 +74,8 @@ def _terrain_initializer(root: Path, original: Path, output: Path, *,
     pin = image_pin(root)
     binding, = [b for b in read_objects(root, pin)
                 if b.unit == unit and b.symbol == symbol]
+    if require_start_only and binding.span is not None:
+        raise ValueError('accessed-window initializer requires a start-only source binding')
     if binding.span is None and accessed_window:
         # A reviewed memcpy window is not an original allocation upper bound.
         # Only the named landmark template hook opts into this start-only view.
@@ -219,9 +222,19 @@ def movie_decoder_initializers(root: Path, original: Path,
         raise ValueError('decoder initializer inputs changed during generation')
 
 
+def graphicwin_palette_initializer(root: Path, original: Path, output: Path) -> None:
+    _terrain_initializer(root, original, output,
+                         output_name='graphicwin_palette_polynomials.inc',
+                         unit='src/graphicwin.cpp',
+                         symbol='?GraphicWinBlitPolynomialWords@@3PAIA', size=132,
+                         unsigned_words=True, accessed_window=True,
+                         require_start_only=True)
+
 def project_initializers(root: Path, original: Path, directory: Path) -> None:
     terrain_initializers(root, original, directory)
     movie_decoder_initializers(root, original, directory)
+    graphicwin_palette_initializer(
+        root, original, directory / 'graphicwin_palette_polynomials.inc')
 
 
 def terrain_direction_initializer(root: Path, original: Path, output: Path) -> None:

@@ -41,6 +41,7 @@
 // RECOVERY_IMPORT: v1 __imp__InvalidateRect@12 USER32.dll name:InvalidateRect
 // RECOVERY_IMPORT: v1 __imp__GetWindowRect@8 USER32.dll name:GetWindowRect
 // RECOVERY_IMPORT: v1 __imp__IntersectRect@12 USER32.dll name:IntersectRect
+// RECOVERY_IMPORT: v1 __imp__BitBlt@36 GDI32.dll name:BitBlt
 
 void __fastcall buffer_subobject_destructor(void *self) {
     // Source-owned: dispatches to the recovered Buffer destructor rather than
@@ -1529,4 +1530,66 @@ int GraphicWin::resize_screen_and_sync_palette() {
   Win::move(0, 0);
   Buffer::sync_to_palette(PaletteActive);
   return 0;
+}
+
+// The source declares the 33-word accessed window required by the pinned reads;
+// neither the original allocation's upper bound nor its former owner is proven.
+// RECOVERY_OBJECT: v1 0x00696B6C ?GraphicWinBlitPolynomialWords@@3PAIA
+unsigned int GraphicWinBlitPolynomialWords[33] = {
+#include "graphicwin_palette_polynomials.inc"
+};
+
+// ORIGINAL: 0x005D5B80 sub_5d5b80 0x005D5B80-0x005D5C4E
+// RECOVERY_BINDING: v1 {"evidence":["Pinned5D5B80 uses ECX as the same receiver for Win calls and passes GraphicWin+444 as Buffer receiver.","GraphicWin's existing Win,Buffer bases and Buffer DIB width/height fields account for all observed object reads.","Source uses existing PaletteActive, Buffer methods, Win methods, bit_count_signed and BitBlt import; no code-address dependency.","This source-owned 33-word window is initialized from a pinned-data generated include; only the indexed window is asserted, not the original allocation upper bound or former owner."],"reason":"Provisional descriptive GraphicWin owner for the complete palette-synchronized LFSR row blit; preserve the native branches, lock cleanup and row recurrence."}
+// symbol    ?blit_palette_pattern_rows@GraphicWin@@QAEXXZ
+// kind game
+// TRIED: Win::get_hdc/release_hdc called w/ explicit this (mismatch at implicit-ecx call sites); LFSR loop as do/while matching asm
+// Original EAX is call residue on several return paths; no result consumer or
+// original method spelling is proven. This provisional void API adds no result.
+void GraphicWin::blit_palette_pattern_rows() {
+    Buffer *const buffer = static_cast<Buffer *>(this);
+    buffer->sync_to_palette(PaletteActive);
+    sync_palette();
+    PaletteActive->set();
+
+    HDC const window_dc = Win::get_hdc();
+    if (window_dc == 0) {
+        return;
+    }
+
+    HDC const buffer_dc = buffer->get_hdc();
+    if (buffer_dc == 0) {
+        Win::release_hdc();
+        return;
+    }
+
+    int const rows = -buffer->dib_.bmiHeader.biHeight;
+    int const width = buffer->dib_.bmiHeader.biWidth;
+    unsigned int const polynomial =
+        GraphicWinBlitPolynomialWords[bit_count_signed(rows)];
+
+    unsigned int y = 1;
+    do {
+        if (static_cast<int>(y) < rows) {
+            BitBlt(window_dc, 0, static_cast<int>(y), width, 1,
+                   buffer_dc, 0, static_cast<int>(y), SRCCOPY);
+        }
+        if ((y & 1U) == 0) {
+            y = (y >> 1) ^ polynomial;
+        } else {
+            y >>= 1;
+        }
+    } while (y != 1);
+
+    Win::release_hdc();
+    buffer->release_hdc(static_cast<int>(y));
+}
+
+// ORIGINAL: 0x005D5B70 sub_5d5b70 0x005D5B70-0x005D5B75 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence":["Pinned5D5B70 is one E9 direct tail jump to5D5B80 and preserves ECX and stack.","No original C++ method name, direct caller or sampled virtual slot is proven; source forwarding member is provisional pending compiler output."],"reason":"Retain the full original forwarding identity in the genuine GraphicWin owner without an executable-address alias or hand-written jump."}
+// symbol    ?blit_palette_pattern_rows_entry@GraphicWin@@QAEXXZ
+// kind thunk
+// LEVER: plain tailcall to a declared nullary callee; last-statement return
+void GraphicWin::blit_palette_pattern_rows_entry() {
+    blit_palette_pattern_rows();
 }
