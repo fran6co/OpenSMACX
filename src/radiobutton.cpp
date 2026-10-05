@@ -175,12 +175,12 @@ void RadioButton::draw_item(int position, int state) {
         if (Dialog::item_list_.current_ != 0 &&
             static_cast<int>(Dialog::item_list_.current_entry()->field_8_) > 1) {
             int lines = Dialog::item_list_.head_ != 0
-                ? static_cast<int>(Dialog::item_list_.current_->payload->field_8_)
+                ? static_cast<int>(Dialog::item_list_.current_->string_payload()->field_8_)
                 : 0;
             int height = static_cast<int>(Dialog::field_68_);
             if (height <= Buffer::text_line_height() * lines) {
                 lines = Dialog::item_list_.head_ != 0
-                    ? static_cast<int>(Dialog::item_list_.current_->payload->field_8_)
+                    ? static_cast<int>(Dialog::item_list_.current_->string_payload()->field_8_)
                     : 0;
                 height = Buffer::text_line_height() * lines;
             }
@@ -201,12 +201,12 @@ void RadioButton::draw_item(int position, int state) {
     }
 
     int text_lines = Dialog::item_list_.head_ != 0
-        ? static_cast<int>(Dialog::item_list_.current_->payload->field_8_)
+        ? static_cast<int>(Dialog::item_list_.current_->string_payload()->field_8_)
         : 0;
     int item_height = static_cast<int>(Dialog::field_68_);
     if (item_height <= Buffer::text_line_height() * text_lines) {
         text_lines = Dialog::item_list_.head_ != 0
-            ? static_cast<int>(Dialog::item_list_.current_->payload->field_8_)
+            ? static_cast<int>(Dialog::item_list_.current_->string_payload()->field_8_)
             : 0;
         item_height = Buffer::text_line_height() * text_lines;
     }
@@ -251,7 +251,7 @@ void RadioButton::draw_item(int position, int state) {
 
     area.left += Dialog::field_34_;
     if (Dialog::item_list_.head_ != 0 &&
-        Dialog::item_list_.current_->payload->field_8_ == 1) {
+        Dialog::item_list_.current_->string_payload()->field_8_ == 1) {
         char *text = Dialog::item_list_.current_text();
         char *separator = strchr(text, '|');
         if (separator == 0) {
@@ -367,13 +367,13 @@ int RadioButton::calculate_dimensions() {
             }
         }
         StringStructEntry *const entry = dialog.item_list_.current_;
-        char *text = entry == 0 || entry->payload == 0 ? 0 : entry->payload->text;
+        char *text = entry == 0 || entry->payload == 0 ? 0 : entry->string_payload()->text;
         const int width = buffer->text_width(text);
         if (max_text_width < width) {
             max_text_width = width;
         }
-        if (entry != 0 && entry->payload != 0) {
-            entry->payload->field_8_ = width / max_wrap_width + 1;
+        if (entry != 0 && entry->string_payload() != 0) {
+            entry->string_payload()->field_8_ = width / max_wrap_width + 1;
         }
     }
     dialog.field_64_ = dialog.field_44_ + dialog.field_34_ + max_text_width;
@@ -478,7 +478,7 @@ void RadioButton::on_left_down(int x, int y) {
         Dialog::item_list_.next_entry();
         const int lines = Dialog::item_list_.current_ == 0 ||
                           Dialog::item_list_.current_->payload == 0
-            ? 0 : static_cast<int>(Dialog::item_list_.current_->payload->field_8_);
+            ? 0 : static_cast<int>(Dialog::item_list_.current_->string_payload()->field_8_);
         int item_height = Buffer::text_line_height() * lines;
         const int minimum = static_cast<int>(Dialog::field_2C_ + Dialog::field_50_);
         if (minimum > item_height) item_height = minimum;
@@ -524,7 +524,7 @@ void RadioButton::on_mouse_move(int x, int y) {
         Dialog::item_list_.next_entry();
         const int lines = Dialog::item_list_.current_ == 0 ||
                           Dialog::item_list_.current_->payload == 0
-            ? 0 : static_cast<int>(Dialog::item_list_.current_->payload->field_8_);
+            ? 0 : static_cast<int>(Dialog::item_list_.current_->string_payload()->field_8_);
         int item_height = Buffer::text_line_height() * lines;
         const int minimum = static_cast<int>(Dialog::field_2C_ + Dialog::field_50_);
         if (minimum > item_height) item_height = minimum;

@@ -18,7 +18,9 @@
 
 
 class StringStructPayload;
+class ListPayloadBase;
 struct StringStructEntry;
+struct SpriteStruct;
 
 
 // The hand-staged close chain is gone: the four staged table constants, the
@@ -121,6 +123,11 @@ class StringAllocationBase {
   Heap *allocation_owner_;
 };
 
+// Common complete-object type for the two independent list payload layouts.
+// Its virtual allocation base owns dynamic deleting-destructor adjustment;
+// the concrete payload fields begin after this compiler-owned header.
+class ListPayloadBase : public virtual StringAllocationBase {};
+
 // REAL VIRTUAL INHERITANCE, like StringStructPayload below it: the word
 // add's construction installs at +0 is the VBTABLE 0x006693C8, whose two
 // entries read {0, 0x14} - self displacement zero, the StringAllocationBase
@@ -130,14 +137,19 @@ class StringAllocationBase {
 // the raw tearing-down walks (spritebox.cpp, leaf_recoveries.cpp) index the
 // words numerically and are untouched by the spelling.
 struct StringStructEntry : public virtual StringAllocationBase {
+  // RECOVERY_MEMBER: v1 StringStructEntry id 0x04 0x00402550
   int id;                        // 0x04
-  // The entry's payload: StringStruct::add's 0x18-byte node, whose +4 is
-  // the string (see StringStructPayload below) - remove_all hands it to the
-  // entry-visitor virtual and destroys it through the virtual-base teardown,
-  // and Caviar's unit-list walks read its text through it. The old int
-  // spelling was the catalogue's H return leaking into the struct.
-  StringStructPayload *payload;  // 0x08
+  // StringStructEntry is shared by independent string and sprite lists.
+  // The allocation owner supplies the concrete payload interpretation.
+  // RECOVERY_MEMBER: v3 StringStructEntry payload ListPayloadBase* 0x08 0x00402550
+  ListPayloadBase *payload;  // 0x08
+  StringStructPayload *string_payload();
+  const StringStructPayload *string_payload() const;
+  SpriteStruct *sprite_payload();
+  const SpriteStruct *sprite_payload() const;
+  // RECOVERY_MEMBER: v3 StringStructEntry next StringStructEntry* 0x0C 0x00402550
   StringStructEntry *next;       // 0x0C
+  // RECOVERY_MEMBER: v3 StringStructEntry previous StringStructEntry* 0x10 0x00402550
   StringStructEntry *previous;   // 0x10
 
   // Original deleting destructor 0x00402C20 releases the complete allocation,
@@ -170,7 +182,7 @@ static_assert(offsetof(StringStructEntry, payload) == 0x8,
 // the image's consumers read the second word as the text (Caviar's
 // unit-list walk indexes payload[1] for the display name), which is the
 // string-related type the accessor family is named for.
-class StringStructPayload : public virtual StringAllocationBase {
+class StringStructPayload : public ListPayloadBase {
  public:
   char *text;      // 0x04 - the string this entry carries
   uint32_t field_8_;  // 0x08 - role-dependent metadata, not universally a line count
@@ -189,6 +201,13 @@ class StringStructPayload : public virtual StringAllocationBase {
 static_assert(sizeof(StringStructPayload) == 0x18,
               "payload node must match the 0x18 allocation add makes");
 
+inline StringStructPayload *StringStructEntry::string_payload() {
+  return static_cast<StringStructPayload *>(payload);
+}
+inline const StringStructPayload *StringStructEntry::string_payload() const {
+  return static_cast<const StringStructPayload *>(payload);
+}
+
 class StringStruct : public virtual StringAllocationBase {
  public:
   // Insertion 0x004012F2 passes the newly allocated 0x18-byte payload to
@@ -196,8 +215,8 @@ class StringStruct : public virtual StringAllocationBase {
   // The primary table ends where the separate allocation-base table begins
   // at 0x006693AC; that table's destructor is not a third primary slot.
   // RECOVERY_GENERATED: v1 vtable 0x006693A4 0x006693AC ??_7StringStruct@@6B0@@ 0x006086F0
-  virtual int on_insert(StringStructPayload *payload);
-  virtual void on_remove(StringStructPayload *payload);
+  virtual int on_insert(void *payload);
+  virtual void on_remove(void *payload);
   // Zeroes the five list fields, which the implicit construction chain
   // therefore emits between StringStruct's vtable stage and StringList's - the
   // image's order. The standalone original401000 entry is source-owned in
@@ -259,13 +278,13 @@ class StringList : public StringStruct {
   // the next table at 0x006698CC belongs to BasePop's Buffer subobject.
   // Its 0x004070B0 deleting-destructor thunk adjusts that receiver by -0x444.
   // RECOVERY_GENERATED: v1 vtable 0x006698C4 0x006698CC ??_7StringList@@6BStringStruct@@@ 0x006086F0
-  virtual int on_insert(StringStructPayload *payload);
-  virtual void on_remove(StringStructPayload *payload);
+  virtual int on_insert(void *payload);
+  virtual void on_remove(void *payload);
 
   // Provisional name: 0x005E3630 returns the current StringList text.
   // Its original Buffer callers pass this list in ECX and consume a char*.
   char *current_text() {
-    return head_ != 0 ? current_->payload->text : 0;
+    return head_ != 0 ? current_->string_payload()->text : 0;
   }
 
   // Sort the circular list by payload text, retaining each ID with its
@@ -375,7 +394,7 @@ MEASURED inline StringStructPayload *StringStruct::next_entry() {
     if (position == count) {
         current_position_ = 0;
     }
-    return current_->payload;
+    return current_->string_payload();
 }
 
 // Provisional name/range ownership family; no historical class/TU name proven.

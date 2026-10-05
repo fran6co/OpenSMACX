@@ -461,8 +461,9 @@ int SpriteBox::calculate_dimensions() {
                 }
             }
         }
-        Sprite *const prototype = list_.current_ == 0 || list_.current_->payload == 0
-            ? 0 : reinterpret_cast<Sprite *>(list_.current_->payload->text);
+        SpriteStruct *const sprite_payload = list_.current_ == 0
+            ? 0 : list_.current_->sprite_payload();
+        Sprite *const prototype = sprite_payload == 0 ? 0 : sprite_payload->sprite_;
         if (prototype != 0) {
             int width = prototype->width() * static_cast<int>(field_1C_)
                         / static_cast<int>(field_20_);
@@ -473,9 +474,9 @@ int SpriteBox::calculate_dimensions() {
             if (height < static_cast<int>(field_58_)) height = field_58_;
             field_58_ = height;
         }
-        char *const label = dialog.item_list_.current_ == 0
-            || dialog.item_list_.current_->payload == 0
-            ? 0 : dialog.item_list_.current_->payload->text;
+        StringStructPayload *const text_payload = dialog.item_list_.current_ == 0
+            ? 0 : dialog.item_list_.current_->string_payload();
+        char *const label = text_payload == 0 ? 0 : text_payload->text;
         const int text_width = buffer->text_width(label);
         if (field_5C_ < static_cast<uint32_t>(text_width)) field_5C_ = text_width;
     }
@@ -523,8 +524,9 @@ void SpriteBox::draw_item(int position) {
 
     if (position > list_.entry_count_ - 1) return;
     if (!list_.seek_pos(position)) return;
-    Sprite *const sprite = list_.current_ == 0 || list_.current_->payload == 0
-        ? 0 : reinterpret_cast<Sprite *>(list_.current_->payload->text);
+    SpriteStruct *const sprite_payload = list_.current_ == 0
+        ? 0 : list_.current_->sprite_payload();
+    Sprite *const sprite = sprite_payload == 0 ? 0 : sprite_payload->sprite_;
     if (!Dialog::item_list_.seek_pos(position)) return;
     const int item_id = list_.current_ == 0 ? 0 : list_.current_->id;
 
@@ -677,7 +679,28 @@ void SpriteBox::close() {
     field_7C_ = 0;
     double_click_callback_ = 0;
     field_84_ = 0;
-    list_.close();
+
+    if (list_.head_ != 0) {
+        int index = 0;
+        if (list_.entry_count_ > 0) {
+            do {
+                StringStructEntry *const entry = list_.head_;
+                list_.current_ = entry->next;
+                SpriteStruct *const payload = entry->sprite_payload();
+                list_.on_remove(payload);
+                if (payload != 0) delete payload;
+                entry->payload = 0;
+                delete entry;
+                ++index;
+                list_.head_ = list_.current_;
+            } while (index < list_.entry_count_);
+        }
+        list_.head_ = 0;
+        list_.current_position_ = 0;
+        list_.entry_count_ = 0;
+    }
+    list_.current_position_ = 0;
+
     spots_.shutdown();
     field_8_ = SpriteBoxDefaultField8;
     Buffer *const buffer = static_cast<Buffer *>(static_cast<GraphicWin *>(this));
@@ -940,6 +963,147 @@ Purpose: Adjust the receiver from the thunk1 subobject back to SpriteBox and
 Status: Complete
 */
 
+// SpriteList owns the sprite-specific payload lifecycle. Ordinary close is a
+// separate list clear with no original identity; 0x611730 is associated with
+// the compiler-generated virtual-base destructor entry by the native writer
+// after caller/layout review. C++ owns all vptr/vbtable staging.
+namespace {
+template<class Node>
+Node *allocate_sprite_node(Heap *owner) {
+    void *memory;
+    if (owner != 0) {
+        memory = owner->get(sizeof(Node));
+        if (memory == 0) {
+            MessageBoxA(0, "out of heap space in new function", "Aborting", MB_OK);
+            exit(3);
+        }
+    } else {
+        memory = mem_get(sizeof(Node));
+        if (memory == 0) return 0;
+    }
+    StringAllocationHeap = owner;
+    return ::new(memory) Node;
+}
+}
+
+SpriteList::SpriteList() {}
+
+// ORIGINAL: 0x005EB29F ?fill_entry@SpriteList@@QAEHPAUSpriteStruct@@@Z 0x005EB29F-0x005EB320 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["git:bfba7856bfc5f41b1118cfb67d83a35108f698d9:src/unrecovered/005eb29f.cpp", "pinned:SpriteList tables6708A0/6708A4;6116E0 calls611730 with virtual-baseview+28", "source:src/spritebox.h;src/stringstruct.h", "source:recovery/tests/test_sprite_list_lifecycle_actual_source.py"], "reason": "Recover the complete operation through genuine SpriteList : StringStruct and distinct polymorphic string/sprite payload siblings, with compiler-owned virtual-base allocation and lifetime. Historical catalogue names, spans, claims and seed discoveries remain obligations, not fresh grants. The original virtual-base-view611730 maps to ??1SpriteList, not the complete-object ??_D wrapper; current32-byte emitted body delegates base destruction and is not the original147-byte extent. Base destruction selects the base no-op removal hook; ordinary derived close invokes SpriteList label cleanup. The historical kill_entry int-return contract remains unresolved for unknown indirect callers; the current void hook follows observed result-discarding callers without inventing a return."}
+// symbol    ?on_insert@SpriteList@@UAEHPAX@Z
+// Historical seed finding: int8 catalogue spelling means char, not signed char; PAD/PAC mangling distinction
+// Historical seed finding: generated verification scaffold is not product source
+// Historical seed finding: writes sprite at payload+4, label at +8, metadata at +C; null source writes zero label and metadata
+// Historical seed finding: allocator is list+0x18; allocation failure returns 4 after payload label pointer was stored
+// Historical seed finding: calls/callee evidence at 0x5D4510, 0x5D4680, 0x6453E0, 0x645470
+int SpriteList::on_insert(void *raw_payload) {
+    SpriteStruct *const payload = static_cast<SpriteStruct *>(raw_payload);
+    payload->sprite_ = pending_sprite_;
+    char *const source = pending_label_;
+    if (source == 0) {
+        payload->label_ = 0;
+        payload->field_C_ = field_24_;
+        return 0;
+    }
+
+    const size_t length = strlen(source);
+    char *copy = allocator_ != 0
+        ? static_cast<char *>(allocator_->get(length + 1))
+        : static_cast<char *>(mem_get(length + 1));
+    payload->label_ = copy;
+    if (copy == 0) return 4;
+    *copy = '\0';
+    strcat(copy, source);
+    payload->field_C_ = field_24_;
+    return 0;
+}
+
+// ORIGINAL: 0x005EB32F ?kill_entry@SpriteList@@QAEHPAUSpriteStruct@@@Z 0x005EB32F-0x005EB34B FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:bfba7856bfc5f41b1118cfb67d83a35108f698d9:src/recovered/units/005eb32f.cpp", "pinned:SpriteList tables6708A0/6708A4;6116E0 calls611730 with virtual-baseview+28", "source:src/spritebox.h;src/stringstruct.h", "source:recovery/tests/test_sprite_list_lifecycle_actual_source.py"], "reason": "Recover the complete operation through genuine SpriteList : StringStruct and distinct polymorphic string/sprite payload siblings, with compiler-owned virtual-base allocation and lifetime. Historical catalogue names, spans, claims and seed discoveries remain obligations, not fresh grants. The original virtual-base-view611730 maps to ??1SpriteList, not the complete-object ??_D wrapper; current32-byte emitted body delegates base destruction and is not the original147-byte extent. Base destruction selects the base no-op removal hook; ordinary derived close invokes SpriteList label cleanup. The historical kill_entry int-return contract remains unresolved for unknown indirect callers; the current void hook follows observed result-discarding callers without inventing a return."}
+// symbol    ?on_remove@SpriteList@@UAEXPAX@Z
+// Historical seed finding: historical body reads allocator at +0x18, payload label at +8, frees only when allocator is null
+// Historical seed finding: catalogue records one _free call at 0x644EF2
+// Historical seed finding: guard-vs-early-return source-form note: a second ret4 changed the matched shape
+// Historical seed finding: same-polarity guards, ternary lowering, loop lowering and dummy-member-pointer advice are seed lessons, not current behavior mandates
+// Historical seed finding: all observed mapped direct virtual callers discard EAX; indirect caller domain and original return contract remain unresolved
+// Historical seed finding: the old claim does not establish current source equivalence
+void SpriteList::on_remove(void *raw_payload) {
+    SpriteStruct *const payload = static_cast<SpriteStruct *>(raw_payload);
+    if (allocator_ == 0) {
+        if (payload->label_ != 0) {
+            free(payload->label_);
+        }
+    }
+}
+
+// ORIGINAL: 0x00402550 SpriteStruct::add 0x00402550-0x00402963 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["git:bfba7856bfc5f41b1118cfb67d83a35108f698d9:src/leaf_recoveries.cpp", "pinned:SpriteList tables6708A0/6708A4;6116E0 calls611730 with virtual-baseview+28", "source:src/spritebox.h;src/stringstruct.h", "source:recovery/tests/test_sprite_list_lifecycle_actual_source.py"], "reason": "Recover the complete operation through genuine SpriteList : StringStruct and distinct polymorphic string/sprite payload siblings, with compiler-owned virtual-base allocation and lifetime. Historical catalogue names, spans, claims and seed discoveries remain obligations, not fresh grants. The original virtual-base-view611730 maps to ??1SpriteList, not the complete-object ??_D wrapper; current32-byte emitted body delegates base destruction and is not the original147-byte extent. Base destruction selects the base no-op removal hook; ordinary derived close invokes SpriteList label cleanup. The historical kill_entry int-return contract remains unresolved for unknown indirect callers; the current void hook follows observed result-discarding callers without inventing a return."}
+// symbol    ?add@SpriteList@@QAEHH@Z
+// Historical seed finding: TRIED fallback __stdcall(int) signature; native ECX/prologue supports thiscall
+// Historical seed finding: signature divergence from ServiceStruct::add sibling begins at instruction 7
+// Historical seed finding: native body allocates the 0x1C entry and 0x20 sprite payload, with calls at 0x5D4510, 0x5D4680 and 0x644DFF
+// Historical seed finding: old fixed-image seam/class attribution was provisional; retain as history, not current hierarchy proof
+// TRIED: fallback __stdcall(int) signature - disasm has `mov esi,ecx` in the prologue (this-in-ecx), matched as __thiscall SpriteStruct::add per the ServiceStruct::add sibling shape; diverges at insn #7, same prologue-order divergence as 0x00401760
+int SpriteList::add(int id) {
+    Heap *owner = allocator_ != 0 ? allocator_ : allocation_owner_;
+    if (entry_count_ == 0) {
+        head_ = allocate_sprite_node<StringStructEntry>(owner);
+        if (head_ == 0) return 4;
+        head_->id = id;
+        head_->next = head_;
+        head_->previous = head_;
+        head_->payload = allocate_sprite_node<SpriteStruct>(owner);
+        if (head_->payload == 0) return 4;
+        on_insert(head_->sprite_payload());
+        current_ = head_;
+    } else {
+        head_->previous->next = allocate_sprite_node<StringStructEntry>(owner);
+        if (head_->previous->next == 0) return 4;
+        head_->previous->next->previous = head_->previous;
+        head_->previous->next->next = head_;
+        head_->previous = head_->previous->next;
+        current_ = head_->previous;
+        current_->id = id;
+        current_->payload = allocate_sprite_node<SpriteStruct>(owner);
+        if (current_->payload == 0) return 4;
+        on_insert(current_->sprite_payload());
+    }
+    current_position_ = entry_count_;
+    ++entry_count_;
+    return 0;
+}
+
+// StringStruct::seek_pos supplies the sibling cursor contract. SpriteList
+// owns these links directly and does not inherit StringList.
+// Ordinary list clear is distinct and has no proposed original identity.
+void SpriteList::close() {
+    if (head_ != 0) {
+        int index = 0;
+        if (entry_count_ > 0) {
+            do {
+                StringStructEntry *const entry = head_;
+                current_ = entry->next;
+                SpriteStruct *const payload = entry->sprite_payload();
+                on_remove(payload);
+                if (payload != 0) delete payload;
+                entry->payload = 0;
+                delete entry;
+                ++index;
+                head_ = current_;
+            } while (index < entry_count_);
+        }
+        current_position_ = 0;
+        head_ = 0;
+        entry_count_ = 0;
+        current_position_ = 0;
+    } else {
+        current_position_ = 0;
+    }
+}
+
+// Historical notes attached to the rehomed 0x611730 owner. Every item below
+// is retained as seed evidence, not as the current class/lifecycle conclusion.
+// HISTORICAL 611730 NOTES (retained as evidence, not as current conclusions):
 // THE LIST SpriteBox EMPTIES, and it is SpriteBox's alone. Measured across the
 // whole image: the two vtables this body installs, 0x0066943C and 0x00669438,
 // are referenced by exactly four functions - ??0SpriteBox, ??1SpriteBox,
@@ -956,11 +1120,10 @@ Status: Complete
 // here - only bytes - and the artifact's `Obj611730` was as invented as this.
 // SpriteBoxList itself moved to spritebox.h as the real StringStruct sibling
 // SpriteBox embeds at 0x24.
-
-// SUB_402BB0 IS THIS CLASS'S DELETING DESTRUCTOR, still unrecovered
-// (src/recovered/units/00402bb0.cpp, NOT_MATCHING). Named here because the
-// evidence is here:
 //
+// SUB_402BB0 WAS ASSERTED TO BE THIS CLASS'S DELETING DESTRUCTOR, still
+// unrecovered (src/recovered/units/00402bb0.cpp, NOT_MATCHING). The old evidence
+// was recorded as follows:
 //   * it installs the SAME pair, 0x0066943C at the object's start and
 //     0x00669438 through the vbtable, which no other class in the image does;
 //   * it then stores 0x006693AC at +0x1C. That one is referenced 158 times
@@ -971,87 +1134,68 @@ Status: Complete
 //   * it calls 0x00402970, StringStruct::remove_all;
 //   * and it ends `mov cl, [ebp+8]; test cl, 1` with a conditional
 //     `operator delete` - the flags byte a deleting destructor takes.
+// The former conclusion was `??_ESpriteBoxList@@...`, a vector deleting
+// destructor (`??_E`) rather than the census's `??_G`. This classification is
+// superseded by the genuine SpriteList owner proposal; the bytes/evidence stay.
 //
-// So it is `??_ESpriteBoxList@@...`, the VECTOR deleting destructor - `??_E`
-// rather than the census's `??_G`, for the reason forty other thunks needed
-// correcting today.
-
-/*
-Purpose: Close the list - install its pair of virtual tables, release every
-         entry through its own vtable, then clear head, count and position.
-// ORIGINAL: 0x00611730 sub_611730 0x00611730-0x006117C3
-// CORRECTED from sub_611730
-//   It is a StringStruct-derived list's `close`. src/stringstruct.h declares
-//   `close_with_tables(primary, virtual_base)` as "installs the pair of
-//   virtual tables, releases the entries, then clears the position", and
-//   StringStruct's offsets 0x00/0x04 are its vftable and vbtable slots - the
-//   two raw stores this body's immediates make. src/dialog.cpp
-//   calls the same helper the same way for the list at Dialog's this+0xBC.
+// Historical body purpose: close the list - install its pair of virtual
+// tables, release every entry through its own vtable, then clear head, count
+// and position.
+// Historical marker: ORIGINAL 0x00611730 sub_611730 0x00611730-0x006117C3
+// Historical correction: the body was identified as a StringStruct-derived
+// list's `close`; `src/stringstruct.h` declared `close_with_tables(primary,
+// virtual_base)` to install the pair, release entries, then clear position.
+// StringStruct offsets 0x00/0x04 were interpreted as vftable/vbtable slots
+// matching the two raw stores; `src/dialog.cpp` called the helper for its list
+// at Dialog +0xBC.
+// Historical TRIED: PROMOTED out of `src/unrecovered/00611730.cpp`; the body
+// was called by both ??0SpriteBox and ??1SpriteBox and therefore described as
+// shared setup/teardown rather than either one alone.
+// Historical TRIED: spelling this as
+// `list->close_with_tables(0x0066943C, 0x00669438)` on StringStruct at
+// `this - 0x28`, following `dialog.cpp`. It emitted 5 instructions against
+// the image's 63; the inline folded almost entirely at this offset, so the
+// old body kept the walk written out.
+// Historical symbol: ?close@SpriteBoxList@@QAEXXZ
+// Historical size: 147 bytes; kind: game; return value: n/a; status: Complete.
+//
+// Native writer transport intent: move the existing 0x00611730 identity and
+// its complete historical record to this genuine virtual-base destructor
+// body. Do not create a second identity or hand-author a claim/symbol fact.
+// ORIGINAL: 0x00611730 sub_611730 0x00611730-0x006117C3 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["git:bfba7856bfc5f41b1118cfb67d83a35108f698d9:src/spritebox.cpp", "pinned:SpriteList tables6708A0/6708A4;6116E0 calls611730 with virtual-baseview+28", "source:src/spritebox.h;src/stringstruct.h", "source:recovery/tests/test_sprite_list_lifecycle_actual_source.py"], "reason": "Recover the complete operation through genuine SpriteList : StringStruct and distinct polymorphic string/sprite payload siblings, with compiler-owned virtual-base allocation and lifetime. Historical catalogue names, spans, claims and seed discoveries remain obligations, not fresh grants. The original virtual-base-view611730 maps to ??1SpriteList, not the complete-object ??_D wrapper; current32-byte emitted body delegates base destruction and is not the original147-byte extent. Base destruction selects the base no-op removal hook; ordinary derived close invokes SpriteList label cleanup. The historical kill_entry int-return contract remains unresolved for unknown indirect callers; the current void hook follows observed result-discarding callers without inventing a return."}
+// symbol    ??1SpriteList@@UAE@XZ
+// Historical seed finding: historical two-vtable census and private-class conclusion, now explicitly superseded but retained
+// Historical seed finding: historical 0x402BB0 deleting/vector-destructor theories and all supporting evidence bullets
+// Historical seed finding: historical close purpose and close_with_tables API attempt; old five-instruction emission miss against 63 instructions
+// Historical seed finding: historical TRIED promotion from unrecovered seed and shared setup/teardown claim
+// Historical seed finding: pinned receiver is virtual-base view +0x28; fresh native body is 32 bytes and delegates to natural StringStruct base cleanup; 147-byte original extent is retained, not asserted as present emitted extent
 // TRIED: PROMOTED out of src/unrecovered/00611730.cpp. Called by both ??0SpriteBox and ??1SpriteBox, so it is shared setup and teardown rather than one or the other.
 // TRIED: spelling the body AS `list->close_with_tables(0x0066943C, 0x00669438)` on the StringStruct at `this - 0x28`, which is the idiom dialog.cpp uses. It compiles to 5 instructions against the image's 63 - the inline folds to almost nothing at this offset - so the walk stays written out here.
-// symbol    ?close@SpriteBoxList@@QAEXXZ
-// size      147 bytes
-// kind      game
-Return Value: n/a
-Status: Complete
-*/
-void SpriteBoxList::close() {
-    class LocalVCall {
-    public:
-        virtual void slot0(int) = 0;
-        virtual void slot1(void *) = 0;
-    };
+SpriteList::~SpriteList() {}
 
-    char *self = reinterpret_cast<char *>(this) - 0x28;
-
-    // Strip-all direction: the pair install the image stages here
-    // (`mov [esi-0x28], 0x66943c` and the vbtable-relative 0x669438) is
-    // gone; the walk below dispatches through whatever tables the
-    // constructing chain installed.
-
-    void *head = *reinterpret_cast<void **>(self + 8);
-    if (head != 0) {
-        int count = *reinterpret_cast<int *>(self + 0x10);
-        int i = 0;
-        if (count > 0) {
-            do {
-                *reinterpret_cast<void **>(self + 0xc) =
-                    *reinterpret_cast<void **>(reinterpret_cast<char *>(
-                        *reinterpret_cast<void **>(self + 8)) + 0xc);
-                void *child = *reinterpret_cast<void **>(reinterpret_cast<char *>(
-                    *reinterpret_cast<void **>(self + 8)) + 8);
-
-                reinterpret_cast<LocalVCall *>(self)->slot1(child);
-
-                if (child != 0) {
-                    char *vtbl = *reinterpret_cast<char **>(child);
-                    int adj = *reinterpret_cast<int *>(vtbl + 4);
-                    char *adjusted = reinterpret_cast<char *>(child) + adj;
-                    reinterpret_cast<LocalVCall *>(adjusted)->slot0(1);
-                }
-
-                *reinterpret_cast<int *>(reinterpret_cast<char *>(
-                    *reinterpret_cast<void **>(self + 8)) + 8) = 0;
-
-                void *cur2 = *reinterpret_cast<void **>(self + 8);
-                if (cur2 != 0) {
-                    reinterpret_cast<LocalVCall *>(
-                        reinterpret_cast<char *>(cur2) +
-                        *reinterpret_cast<int *>(
-                            *reinterpret_cast<char **>(cur2) + 4))->slot0(1);
-                }
-
-                i++;
-                *reinterpret_cast<void **>(self + 8) = *reinterpret_cast<void **>(self + 0xc);
-            } while (i < *reinterpret_cast<int *>(self + 0x10));
-        }
-        *reinterpret_cast<volatile int *>(self + 0x14) = 0;
-        *reinterpret_cast<int *>(self + 8) = 0;
-        *reinterpret_cast<int *>(self + 0x10) = 0;
-        *reinterpret_cast<int *>(self + 0x14) = 0;
-    } else {
-        *reinterpret_cast<int *>(self + 0x14) = 0;
+// ORIGINAL: 0x006108E0 ?sprite@SpriteBox@@QAEHPAUSprite@@PADH@Z 0x006108E0-0x00610965 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["git:bfba7856bfc5f41b1118cfb67d83a35108f698d9:src/leaf_recoveries.cpp", "pinned:SpriteList tables6708A0/6708A4;6116E0 calls611730 with virtual-baseview+28", "source:src/spritebox.h;src/stringstruct.h", "source:recovery/tests/test_sprite_list_lifecycle_actual_source.py"], "reason": "Recover the complete operation through genuine SpriteList : StringStruct and distinct polymorphic string/sprite payload siblings, with compiler-owned virtual-base allocation and lifetime. Historical catalogue names, spans, claims and seed discoveries remain obligations, not fresh grants. The original virtual-base-view611730 maps to ??1SpriteList, not the complete-object ??_D wrapper; current32-byte emitted body delegates base destruction and is not the original147-byte extent. Base destruction selects the base no-op removal hook; ordinary derived close invokes SpriteList label cleanup. The historical kill_entry int-return contract remains unresolved for unknown indirect callers; the current void hook follows observed result-discarding callers without inventing a return."}
+// symbol    ?sprite@SpriteBox@@QAEHPAVSprite@@PADH@Z
+// Historical seed finding: popup pops() invokes the original by name via rel32
+// Historical seed finding: sprite insertion at 0x402550 was an unhomed dependency/seam discovery
+// Historical seed finding: old body was only a forwarding seam, not product behavior
+// Historical seed finding: current implementation preserves partial state on add failures: pending sprite/label/metadata stores occur before add and no rollback occurs
+// Historical seed finding: null sprite returns 3; either list insertion failure returns 4
+// TRIED: popup.cpp's `pops()` calls it BY NAME so it emits the image's `call rel32`. The sprite-list insertion (0x00402550, SpriteStruct::add) is unhomed, so the call goes through the original's address; its receiver is the sprite list this class embeds at 0x24, which is why the member has to be real for the receiver to exist at all.
+int SpriteBox::sprite(Sprite *row_sprite, char *text, int id) {
+    if (row_sprite == 0) return 3;
+    list_.pending_sprite_ = row_sprite;
+    list_.pending_label_ = 0;
+    list_.field_24_ = 0;
+    if (list_.add(id) != 0) return 4;
+    if (text != 0) {
+        Dialog::item_list_.pending_text_ = text;
+        Dialog::item_list_.field_20_ = 0;
+        Dialog::item_list_.field_24_ = 0;
+        if (Dialog::item_list_.add(id) != 0) return 4;
     }
+    return 0;
 }
 
 // ====================
@@ -1093,6 +1237,18 @@ void SpriteBox::on_left_down(int x_coord, int y_coord) {
         }
     }
 }
+
+// Compiler-generated SpriteList scalar deleting destructor; not a handwritten wrapper.
+/*
+// ORIGINAL: 0x006116E0 sub_6116e0 0x006116E0-0x00611728 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:bfba7856bfc5f41b1118cfb67d83a35108f698d9:src/recovered/006116e0.cpp", "git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/006116e0.cpp", "pinned:6708A0 first virtual-base table slot6116E0;6116E0..611728 receiver/flags/delete/return", "source:src/spritebox.h:SpriteList"], "reason": "Map the compiler-generated scalar deleting destructor of the genuine SpriteList virtual-base owner. Preserve the canonical complete72-byte original span and historical exact claim; current physical64-byte COFF emission is a restoration obligation, not fresh matching or linked-selection proof. Original flags-byte, owner publication, conditional free and complete-object return remain generated lifetime evidence."}
+// symbol    ??_GSpriteList@@UAEPAXI@Z
+*/
+
+// Historical generated-entry findings: byte flags parameter and +28 virtual-base receiver;
+// conditional free publishes captured Heap through StringAllocationHeap, then returns complete object.
+// Older whole-unit and PAD/PAC spelling experiments are provenance, not current ABI or workflow rules.
+// The retired overlapping claimless seed is not an extra original identity.
 
 /*
 Purpose: Hit-test the owned Spot member, notify the stored double-click

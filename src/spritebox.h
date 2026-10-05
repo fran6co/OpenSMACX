@@ -24,20 +24,52 @@
 #include "stringstruct.h"
 extern uint32_t SpriteBoxDefaultField8;
 
-// THE SPRITE LIST, the StringStruct sibling SpriteBox embeds at 0x24. Its
-// own close (0x00611730, spritebox.cpp) stages the sibling pair
-// 0x0066943C/0x00669438 - StringStruct's construction shape at this class's
-// own table address - and its deleting destructor (0x00402BB0, still
-// unrecovered) installs the same pair, which is the evidence that this is a
-// distinct class and not plain StringStruct. StringList-shaped (0x30: the
-// three list-own dwords at SpriteBox+0x40 are StringList's field_1C_/20_/
-// 24_). No own virtual is declared yet: the table the compiler emits for it
-// is StringStruct-shaped until the sibling's virtual surface is named
-// (recorded semantic debt, unk-method).
-class SpriteBoxList : public StringList {
- public:
-  void close();
+// A sprite payload is a separately allocated owner-bearing node. Its fields
+// come from 0x5EB29F and 0x402550; the unknown trailing words stay unnamed.
+struct Sprite;
+struct SpriteStruct : public ListPayloadBase {
+  // RECOVERY_MEMBER: v3 SpriteStruct sprite_ Sprite* 0x04 0x005EB29F
+  Sprite *sprite_;
+  // RECOVERY_MEMBER: v1 SpriteStruct label_ 0x08 0x005EB29F
+  char *label_;
+  // RECOVERY_MEMBER: v1 SpriteStruct field_C_ 0x0C 0x005EB29F
+  uint32_t field_C_;
+  uint32_t field_10_;
+  uint32_t field_14_;
+  static void operator delete(void *memory) {
+    if (StringAllocationHeap == 0) free(memory);
+    StringAllocationHeap = 0;
+  }
 };
+static_assert(sizeof(SpriteStruct) == 0x20,
+              "sprite payload layout must match the original executable");
+inline SpriteStruct *StringStructEntry::sprite_payload() {
+  return static_cast<SpriteStruct *>(payload);
+}
+inline const SpriteStruct *StringStructEntry::sprite_payload() const {
+  return static_cast<const SpriteStruct *>(payload);
+}
+
+// SpriteList owns the 0x1C ring entries and 0x20 SpriteStruct payloads. It is
+// deliberately independent of StringList, whose payload nodes are 0x18 bytes.
+class SpriteList : public StringStruct {
+ public:
+  // StringStruct owns the inherited ring, allocator and shared virtual base.
+  SpriteList();
+  int on_insert(void *payload);
+  void on_remove(void *payload);
+  int add(int id);
+  void close();
+  virtual ~SpriteList();
+  // RECOVERY_MEMBER: v3 SpriteList pending_sprite_ Sprite* 0x1C 0x005EB29F
+  Sprite *pending_sprite_;
+  // RECOVERY_MEMBER: v1 SpriteList pending_label_ 0x20 0x005EB29F
+  char *pending_label_;
+  // RECOVERY_MEMBER: v1 SpriteList field_24_ 0x24 0x005EB29F
+  uint32_t field_24_;
+};
+static_assert(sizeof(SpriteList) == 0x30,
+              "SpriteList layout must match the original executable");
 
 // GraphicWin and Dialog are virtual bases; Spot and the item list are
 // owned members. Remaining offset-named fields and virtual operations still
@@ -84,8 +116,8 @@ class SpriteBox : public virtual GraphicWin, public virtual Dialog {
  public:
   void on_dialog_focus(int a1);
   void close();
-  // 0x006108E0, still a pending_bodies forwarder: `pops()` (popup.cpp) calls
-  // it BY NAME so it emits the image's `call rel32`.
+  // 0x006108E0, recovered as the typed SpriteList and Dialog-item producer.
+  // The original caller remains evidence; no fixed-address forwarding remains.
   int sprite(Sprite *a1, char *a2, int a3);
   int init(RECT* group_id, int flags);
   int init(int file_name);
@@ -137,22 +169,11 @@ class SpriteBox : public virtual GraphicWin, public virtual Dialog {
   uint32_t field_1C_;  // 0x1C
   uint32_t field_20_;  // 0x20
  private:
-  // THE EMBEDDED SPRITE LIST, carved 2026-09-01 from what was field_24_ ..
-  // field_50_: exactly 0x30 = sizeof(StringList) - the two ABI words at its
-  // front, the four list fields (head 0x2C, cursor 0x30, signed count 0x34,
-  // position 0x38 - the walk `?id_to_pos@SpriteBox@@QAEIH@Z` proves at
-  // 0x00611600), the allocator, StringList's own three dwords, and the
-  // virtual base (vptr 0x4C + saved owner 0x50). The ctor's field_24_/
-  // field_28_/field_4C_/field_50_ stores were StringList's construction
-  // sequence by hand - the StringAllocationBase capture read the hand-off
-  // global and cleared it - and the compiler emits all of it from this
-  // declaration now. SpriteBoxList is the sibling whose own close stages
-  // the 0x0066943C/0x00669438 pair (spritebox.cpp).
-  // PUBLIC, not private: Dialogs (which derives SpriteBox) returns the
-  // list's count for kind 8, exactly as it did through field_34_ before.
-  // Access changes no offset.
+  // SpriteBox's embedded sprite list; Dialog::item_list_ remains a distinct
+  // StringList of StringStructPayload objects.
  public:
-  SpriteBoxList list_;  // 0x24
+  // RECOVERY_MEMBER: v2 SpriteBox list_ SpriteList 0x24 0x006108E0
+  SpriteList list_;  // 0x24
  private:
   uint32_t field_54_;  // 0x54
   uint32_t field_58_;  // 0x58

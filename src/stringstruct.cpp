@@ -73,10 +73,10 @@ StringStruct::StringStruct() {
 
 // The original primary table uses these shared defaults. Hook names describe
 // their list role; the catalogue's unrelated class names are retained as seeds.
-// RECOVERY_SHARED: v1 0x00404250 0x00404255 ?on_insert@StringStruct@@UAEHPAVStringStructPayload@@@Z 0x006086F0
-int StringStruct::on_insert(StringStructPayload *) { return 0; }
-// RECOVERY_SHARED: v1 0x00404270 0x00404273 ?on_remove@StringStruct@@UAEXPAVStringStructPayload@@@Z 0x006086F0
-void StringStruct::on_remove(StringStructPayload *) { }
+// RECOVERY_SHARED: v1 0x00404250 0x00404255 ?on_insert@StringStruct@@UAEHPAX@Z 0x006086F0
+int StringStruct::on_insert(void *) { return 0; }
+// RECOVERY_SHARED: v1 0x00404270 0x00404273 ?on_remove@StringStruct@@UAEXPAX@Z 0x006086F0
+void StringStruct::on_remove(void *) { }
 
 namespace {
 // 0x00401100 selects the list's allocator before its inherited allocation
@@ -127,7 +127,7 @@ int StringStruct::add(int id) {
         if (head_->payload == 0) {
             return 4;
         }
-        on_insert(head_->payload);
+        on_insert(head_->string_payload());
         current_ = head_;
     } else {
         head_->previous->next = allocate_list_node(this, static_cast<StringStructEntry *>(0));
@@ -143,7 +143,7 @@ int StringStruct::add(int id) {
         if (current_->payload == 0) {
             return 4;
         }
-        on_insert(current_->payload);
+        on_insert(current_->string_payload());
     }
     current_position_ = entry_count_;
     ++entry_count_;
@@ -164,7 +164,7 @@ inline void clear_list_entries(StringStruct *self) {
         do {
             StringStructEntry *const entry = self->head_;
             self->current_ = entry->next;
-            StringStructPayload *const payload = entry->payload;
+            ListPayloadBase *const payload = entry->payload;
             self->on_remove(payload);
             delete payload;
             self->head_->payload = nullptr;
@@ -226,7 +226,7 @@ Status: Complete
 */
 StringStructPayload *StringStruct::current_entry() {
     if (head_) {
-        return current_->payload;
+        return current_->string_payload();
     }
     return 0;
 }

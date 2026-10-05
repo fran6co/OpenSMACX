@@ -24,8 +24,11 @@ inline void release_text(char *text) {
 }
 
 // ORIGINAL: 0x006086F0 ?on_insert@StringList@@UAEHPAVStringStructPayload@@@Z 0x006086F0-0x00608761 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Primary table 0x6698C4 slot0 targets this body. Original StringStruct::add at 0x4012ED/0x4014F7 passes its 0x18 allocation as the one hook argument; this body writes text at +4 and metadata at +8/+C. The retired seed identity and extent are retained by this compiled owner.", "Original 0x6086FD bypasses the text store when the source is null; preserve that behavior without assuming zeroed allocation. Receiver +0x18 is passed to Heap::get. No byte claim is banked by this binding.", "git:293937ab6f3be75999e0c0a4c9c110c02930624c:src/unrecovered/006086f0.cpp", "Historical seed spelling ?fill_entry@StringList@@QAEHPAUStringStruct@@@Z; current source mapping ?on_insert@StringList@@UAEHPAVStringStructPayload@@@Z; emitted symbol ?on_insert@StringList@@UAEHPAVStringStructPayload@@@Z."], "reason": "Recover the StringList insertion virtual using its allocated payload type; on_insert is a descriptive name, not a recovered original spelling. Superseded seed retired after owner review; original spans, existing claims and useful seed findings remain in source. This cleanup grants no new match or acceptance claim."}
-int StringList::on_insert(StringStructPayload *payload) {
+// RECOVERY_BINDING: v1 {"evidence": ["Primary table 0x6698C4 slot0 targets this body. Original StringStruct::add at 0x4012ED/0x4014F7 passes its 0x18 allocation as the one hook argument; this body writes text at +4 and metadata at +8/+C. The retired seed identity and extent are retained by this compiled owner.", "Original 0x6086FD bypasses the text store when the source is null; preserve that behavior without assuming zeroed allocation. Receiver +0x18 is passed to Heap::get. No byte claim is banked by this binding.", "git:293937ab6f3be75999e0c0a4c9c110c02930624c:src/unrecovered/006086f0.cpp", "Historical seed spelling ?fill_entry@StringList@@QAEHPAUStringStruct@@@Z; prior typed-payload source mapping ?on_insert@StringList@@UAEHPAVStringStructPayload@@@Z; prior emitted symbol ?on_insert@StringList@@UAEHPAVStringStructPayload@@@Z.", "Current erased hook is ?on_insert@StringList@@UAEHPAX@Z; real StringStructPayload remains the concrete typed sibling behind ListPayloadBase. Native COFF confirms this current symbol, not a new byte grant."], "reason": "Recover the StringList insertion virtual using its allocated payload type; on_insert is a descriptive name, not a recovered original spelling. Superseded seed retired after owner review; original spans, existing claims and useful seed findings remain in source. This cleanup grants no new match or acceptance claim. The shared erased hook accepts either concrete payload sibling; this method restores its genuine string payload view."}
+// symbol    ?on_insert@StringList@@UAEHPAX@Z
+int StringList::on_insert(void *raw_payload) {
+    StringStructPayload *const payload =
+        static_cast<StringStructPayload *>(raw_payload);
     if (pending_text_ != 0) {
         char *copy;
         if (allocator_ != 0) {
@@ -46,8 +49,11 @@ int StringList::on_insert(StringStructPayload *payload) {
 }
 
 // ORIGINAL: 0x00608770 ?on_remove@StringList@@UAEXPAVStringStructPayload@@@Z 0x00608770-0x0060879B BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Primary table 0x6698C4 slot1 targets this body; original 0x608775 loads payload text at +4, then 0x60877C checks the list allocator at +0x18. Only a null allocator permits free and clearing text. on_remove is descriptive; the historical kill_entry claim is retained by this compiled owner.", "git:293937ab6f3be75999e0c0a4c9c110c02930624c:src/recovered/00608770.cpp", "Historical seed spelling ?kill_entry@StringList@@QAEXPAUStringStruct@@@Z; current source mapping ?on_remove@StringList@@UAEXPAVStringStructPayload@@@Z; emitted symbol ?on_remove@StringList@@UAEXPAVStringStructPayload@@@Z."], "reason": "Recover allocator-aware StringList text cleanup as a real virtual method; the payload node lifetime remains owned by enclosing list teardown. Superseded seed retired after owner review; original spans, existing claims and useful seed findings remain in source. This cleanup grants no new match or acceptance claim."}
-void StringList::on_remove(StringStructPayload *payload) {
+// RECOVERY_BINDING: v1 {"evidence": ["Primary table 0x6698C4 slot1 targets this body; original 0x608775 loads payload text at +4, then 0x60877C checks the list allocator at +0x18. Only a null allocator permits free and clearing text. on_remove is descriptive; the historical kill_entry claim is retained by this compiled owner.", "git:293937ab6f3be75999e0c0a4c9c110c02930624c:src/recovered/00608770.cpp", "Historical seed spelling ?kill_entry@StringList@@QAEXPAUStringStruct@@@Z; prior typed-payload source mapping ?on_remove@StringList@@UAEXPAVStringStructPayload@@@Z; prior emitted symbol ?on_remove@StringList@@UAEXPAVStringStructPayload@@@Z.", "Current erased hook is ?on_remove@StringList@@UAEXPAX@Z; real StringStructPayload remains the concrete typed sibling behind ListPayloadBase. Native COFF confirms this current symbol, not a new byte grant."], "reason": "Recover allocator-aware StringList text cleanup as a real virtual method; the payload node lifetime remains owned by enclosing list teardown. Superseded seed retired after owner review; original spans, existing claims and useful seed findings remain in source. This cleanup grants no new match or acceptance claim. The shared erased hook accepts either concrete payload sibling; this method restores its genuine string payload view."}
+// symbol    ?on_remove@StringList@@UAEXPAX@Z
+void StringList::on_remove(void *raw_payload) {
+    StringStructPayload *const payload =
+        static_cast<StringStructPayload *>(raw_payload);
     if (payload->text != 0 && allocator_ == 0) {
         release_text(payload->text);
         payload->text = 0;
@@ -103,8 +109,8 @@ void StringList::sort(int) {
         for (int candidate = position + 1; candidate < entry_count_;
              ++candidate) {
             next_entry();
-            if (strcmp(current_->payload->text,
-                       smallest->payload->text) < 0) {
+            if (strcmp(current_->string_payload()->text,
+                       smallest->string_payload()->text) < 0) {
                 smallest = current_;
             }
         }
@@ -112,9 +118,9 @@ void StringList::sort(int) {
         if (smallest != first) {
             seek_pos(position);
             const int id = first->id;
-            StringStructPayload *const payload = first->payload;
+            StringStructPayload *const payload = first->string_payload();
             first->id = smallest->id;
-            first->payload = smallest->payload;
+            first->payload = smallest->string_payload();
             smallest->id = id;
             smallest->payload = payload;
         }

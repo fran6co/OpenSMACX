@@ -32,7 +32,7 @@ def objects():
                          "src/net_class.cpp", "src/alphanet.cpp")}
 
 
-def test_hooks_use_payload_fields_and_keep_list_layout(objects):
+def test_erased_hooks_use_payload_fields_and_keep_list_layout(objects):
     for obj in objects["src/stringstruct.cpp"]:
         payload = class_layout(obj, "StringStructPayload")
         assert payload["size"] == 0x18
@@ -49,7 +49,7 @@ def test_hooks_use_payload_fields_and_keep_list_layout(objects):
         # type through a pointer-to-member, not a size/offset inference.
 
 
-def test_real_tables_dispatch_to_both_typed_hooks(objects):
+def test_real_tables_dispatch_to_both_erased_hooks(objects):
     # Standalone base construction now owns its emission in stringstruct.cpp;
     # callers need not emit a duplicate base table to reference that constructor.
     for unit, owner, name in (
@@ -62,8 +62,8 @@ def test_real_tables_dispatch_to_both_typed_hooks(objects):
             # the derived table; its destructor thunk is not a third hook.
             assert len(section.data) == 8
             assert [obj.symbols[index].name for _, index, _ in section.relocations[:2]] == [
-                f"?on_insert@{owner}@@UAEHPAVStringStructPayload@@@Z",
-                f"?on_remove@{owner}@@UAEXPAVStringStructPayload@@@Z"]
+                f"?on_insert@{owner}@@UAEHPAX@Z",
+                f"?on_remove@{owner}@@UAEXPAX@Z"]
 
 
 def test_complete_destructor_is_generated_and_destroys_virtual_base(objects):

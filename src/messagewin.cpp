@@ -132,7 +132,7 @@ void MessageWin::remove_selected_message() {
     if (entry == 0) {
         return;
     }
-    StringStructPayload *payload = entry->payload;
+    StringStructPayload *payload = entry->string_payload();
     if (payload != 0) {
         listBox_.field_20_ -= payload->field_C_;
     }
@@ -171,8 +171,8 @@ void MessageWin::add_message(char *text, int item_id) {
     // The seed seeks the most recent entry before comparing zero-ID text.
     if (item_id == 0 && MessageWinMessageCount != 0 && items.head_ != 0) {
         StringStructEntry *last = items.head_->previous;
-        if (last->payload != 0 && last->payload->text != 0 &&
-            strcmp(text, last->payload->text) == 0) {
+        if (last->string_payload() != 0 && last->string_payload()->text != 0 &&
+            strcmp(text, last->string_payload()->text) == 0) {
             return;
         }
     }
@@ -184,7 +184,7 @@ void MessageWin::add_message(char *text, int item_id) {
     while (MessageWinMessageCount > 100 && items.head_ != 0) {
         --MessageWinMessageCount;
         StringStructEntry *oldest = items.head_;
-        StringStructPayload *payload = oldest->payload;
+        StringStructPayload *payload = oldest->string_payload();
         if (payload != 0) {
             listBox_.field_20_ -= payload->field_C_;
         }

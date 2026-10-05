@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "task_id": "sprite-list-owner-oct5",
+  "target": "opensmacx",
+  "author": "framework-coordinator",
+  "base_revision": "bfba7856bfc5f41b1118cfb67d83a35108f698d9",
+  "intent": "Recover genuine SpriteList hierarchy, distinct polymorphic payload allocation and native lifecycle/producer roles; migrate all consumers and eight canonical current bindings plus shared hooks; preserve historical claims through explicitly authorized matching regressions, and retire three superseded seeds/raw leaf add/producer.",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4203856
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6206111
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6206255
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6326000
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6326128
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6359264
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6362848
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6362928
+    }
+  ],
+  "files": [
+    "recovery/tests/stringlist_construction_harness.cpp",
+    "recovery/tests/stringlist_hooks_harness.cpp",
+    "recovery/tests/stringlist_lifetime_harness.cpp",
+    "recovery/tests/test_stringlist_recovery.py",
+    "recovery/tests/test_stringlist_sort.py",
+    "recovery/tests/test_stringstruct_lifecycle_coverage.py",
+    "recovery/tests/sprite_list_lifecycle_control.cpp",
+    "recovery/tests/sprite_list_producer_control.cpp",
+    "recovery/tests/test_sprite_list_lifecycle_actual_source.py",
+    "recovery/tests/test_sprite_list_producer_actual_source.py",
+    "src/base.cpp",
+    "src/basepop.cpp",
+    "src/checkbox.cpp",
+    "src/editgroup.cpp",
+    "src/game.cpp",
+    "src/hypothesis_layouts.h",
+    "src/leaf_recoveries.cpp",
+    "src/messagewin.cpp",
+    "src/popmenu.cpp",
+    "src/popup.cpp",
+    "src/radiobutton.cpp",
+    "src/recovered/006116e0.cpp",
+    "src/recovered/units/005eb32f.cpp",
+    "src/setupwin.cpp",
+    "src/spritebox.cpp",
+    "src/spritebox.h",
+    "src/stringbox.cpp",
+    "src/stringlist.cpp",
+    "src/stringstruct.cpp",
+    "src/stringstruct.h",
+    "src/unrecovered/005eb29f.cpp"
+  ],
+  "evidence": [
+    "Coordinator-reviewed structural recovery integration and temporary matching regressions explicitly authorized by user; no demotion, new claim or full-game acceptance.",
+    "Root fresh composed15-TU native compilation and current-symbol probes pass; host actual-source lifecycle/producer controls pass before writer transport.",
+    "Original receiver/vtable evidence distinguishes virtual-base-view611730 from complete wrapper; real base-destructor dispatch differs from ordinary derived list clear.",
+    "Standalone00630D70 scaffold defines its own raw node, is not a product header consumer, and remains a seed recovery obligation. Do not apply its ill-typed provisional string_payload hunk.",
+    "Fresh full build/link, historical baseline/current byte observations, claim continuity and source/reference/mapping checks remain required; masked equality is not strict relocation or linked preservation."
+  ]
+}

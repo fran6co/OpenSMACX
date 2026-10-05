@@ -493,7 +493,7 @@ int EditGroup::calculate_dimensions() {
             }
         }
         StringStructEntry *const entry = dialog.item_list_.current_;
-        char *label = entry == 0 || entry->payload == 0 ? 0 : entry->payload->text;
+        char *label = entry == 0 || entry->payload == 0 ? 0 : entry->string_payload()->text;
         const int measured_label = buffer->text_width(label);
         if (label_width_ < measured_label) label_width_ = measured_label;
         const int measured_edit = buffer->text_width(text_buffers_[i]);

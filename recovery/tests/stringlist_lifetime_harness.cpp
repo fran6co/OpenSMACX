@@ -48,15 +48,22 @@ void operator delete(void *memory) { release(memory); }
 // LIVE_OWNER_PUBLICATION
 #define free release
 // LIVE_PAYLOAD
+struct SpriteStruct;
 // LIVE_ENTRY
+StringStructPayload *StringStructEntry::string_payload() {
+    return static_cast<StringStructPayload *>(payload);
+}
+const StringStructPayload *StringStructEntry::string_payload() const {
+    return static_cast<const StringStructPayload *>(payload);
+}
 #undef free
 // LIVE_LIST_BASE
 // LIVE_LIST
 // LIVE_CONSTRUCTOR
 // LIVE_CLEANUP_HELPER
-int StringStruct::on_insert(StringStructPayload *) { return 0; }
-void StringStruct::on_remove(StringStructPayload *) {}
-int StringList::on_insert(StringStructPayload *) { return 0; }
+int StringStruct::on_insert(void *) { return 0; }
+void StringStruct::on_remove(void *) {}
+int StringList::on_insert(void *) { return 0; }
 #define free release
 // LIVE_TEXT_RELEASE
 // LIVE_REMOVE
@@ -88,7 +95,8 @@ void reclaim() {
 }
 
 struct ObservedList : StringStruct {
-    virtual void on_remove(StringStructPayload *payload) {
+    virtual void on_remove(void *raw_payload) {
+        StringStructPayload *payload = static_cast<StringStructPayload *>(raw_payload);
         assert(!StringAllocationHeap);
         assert(head_ && head_->payload == payload);
         assert(current_ == head_->next);

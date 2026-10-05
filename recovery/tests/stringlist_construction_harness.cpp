@@ -57,13 +57,20 @@ void test_exit(int code) { assert(code == 3 && notices == 1); throw code; }
 // LIVE_OWNER_PUBLICATION
 #define free release
 // LIVE_PAYLOAD
+struct SpriteStruct;
 // LIVE_ENTRY
+StringStructPayload *StringStructEntry::string_payload() {
+    return static_cast<StringStructPayload *>(payload);
+}
+const StringStructPayload *StringStructEntry::string_payload() const {
+    return static_cast<const StringStructPayload *>(payload);
+}
 #undef free
 // LIVE_LIST_BASE
 // LIVE_CONSTRUCTOR
 // LIVE_CLEANUP_HELPER
-int StringStruct::on_insert(StringStructPayload *) { return 0; }
-void StringStruct::on_remove(StringStructPayload *) {}
+int StringStruct::on_insert(void *) { return 0; }
+void StringStruct::on_remove(void *) {}
 // LIVE_BASE_DESTRUCTOR
 // LIVE_CLEAR
 #define exit test_exit
@@ -74,7 +81,8 @@ void StringStruct::on_remove(StringStructPayload *) {}
 struct HookList : StringStruct {
     int inserts, removes, mutate_count;
     HookList() : inserts(0), removes(0), mutate_count(0) {}
-    virtual int on_insert(StringStructPayload *payload) {
+    virtual int on_insert(void *raw_payload) {
+        StringStructPayload *payload = static_cast<StringStructPayload *>(raw_payload);
         assert(!StringAllocationHeap);
         if (entry_count_ == 0) {
             assert(head_->payload == payload && !current_);
@@ -88,7 +96,7 @@ struct HookList : StringStruct {
         if (mutate_count) entry_count_ = mutate_count;
         return 4; // add ignores the hook's result, including this error value.
     }
-    virtual void on_remove(StringStructPayload *) { ++removes; }
+    virtual void on_remove(void *) { ++removes; }
 };
 
 void park(StringStruct &list) {

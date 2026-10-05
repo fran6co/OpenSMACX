@@ -6464,7 +6464,7 @@ int __cdecl display_player_messages(int faction) {
         messages.seek_pos(index);
         ++MessageWinMessageCount;
         const int id = messages.head_ != 0 ? messages.current_->id : 0;
-        char *text = messages.head_ != 0 ? messages.current_->payload->text : 0;
+        char *text = messages.head_ != 0 ? messages.current_->string_payload()->text : 0;
         InterfaceMessageWin.listBox_.item(text, id | 0x40000000);
         InterfaceMessageWin.listBox_.set_selected_pos(-1, 1);
     }

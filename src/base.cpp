@@ -1235,8 +1235,8 @@ void __cdecl base_kill(int base_id) {
                 entry->previous->next = entry->next;
                 if (entry == messages.head_) messages.head_ = entry->next;
                 messages.current_ = entry->next;
-                messages.on_remove(entry->payload);
-                delete entry->payload;
+                messages.on_remove(entry->string_payload());
+                delete entry->string_payload();
                 entry->payload = 0;
                 delete entry;
                 --messages.entry_count_;

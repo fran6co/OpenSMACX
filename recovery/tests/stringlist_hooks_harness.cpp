@@ -35,15 +35,22 @@ void *mem_get(size_t size) { return allocate(size); }
 // LIVE_ALLOCATION_BASE
 StringAllocationBase::~StringAllocationBase() { StringAllocationHeap = allocation_owner_; }
 // LIVE_PAYLOAD
+struct SpriteStruct;
 // LIVE_ENTRY
+StringStructPayload *StringStructEntry::string_payload() {
+    return static_cast<StringStructPayload *>(payload);
+}
+const StringStructPayload *StringStructEntry::string_payload() const {
+    return static_cast<const StringStructPayload *>(payload);
+}
 // LIVE_LIST_BASE
 // LIVE_LIST
 // LIVE_CONSTRUCTOR
 // Full outer destruction remains a separate recovery obligation.
 StringStruct::~StringStruct() {}
 StringList::~StringList() {}
-int StringStruct::on_insert(StringStructPayload *) { return 0; }
-void StringStruct::on_remove(StringStructPayload *) {}
+int StringStruct::on_insert(void *) { return 0; }
+void StringStruct::on_remove(void *) {}
 #define free release
 // LIVE_TEXT_RELEASE
 // LIVE_INSERT

@@ -27,12 +27,19 @@ def test_string_list_sort_keeps_ids_with_text_and_cursor(tmp_path: Path) -> None
 #include <cassert>
 #include <cstring>
 
-struct StringStructPayload { char *text; };
+struct ListPayloadBase { virtual ~ListPayloadBase() {} };
+struct StringStructPayload : ListPayloadBase {
+    char *text;
+    StringStructPayload() : text(0) {}
+};
 struct StringStructEntry {
     int id;
-    StringStructPayload *payload;
+    ListPayloadBase *payload;
     StringStructEntry *next;
     StringStructEntry *previous;
+    StringStructPayload *string_payload() {
+        return static_cast<StringStructPayload *>(payload);
+    }
 };
 struct StringList {
     StringStructEntry *head_ = nullptr;
@@ -49,7 +56,7 @@ struct StringList {
     StringStructPayload *next_entry() {
         current_ = current_->next;
         current_position_ = (current_position_ + 1) % entry_count_;
-        return current_->payload;
+        return current_->string_payload();
     }
     void sort(int);
 };
@@ -60,7 +67,11 @@ int main() {
     assert(empty.head_ == nullptr && empty.entry_count_ == 0);
 
     char a[] = "zeta", b[] = "alpha", c[] = "alpha", d[] = "beta";
-    StringStructPayload payloads[4] = {{a}, {b}, {c}, {d}};
+    StringStructPayload payloads[4];
+    payloads[0].text = a;
+    payloads[1].text = b;
+    payloads[2].text = c;
+    payloads[3].text = d;
     StringStructEntry entries[4] = {};
     for (int i = 0; i < 4; ++i) {
         entries[i].id = 100 + i;
@@ -74,10 +85,10 @@ int main() {
     list.entry_count_ = 4;
     list.current_position_ = 2;
     list.sort(42); // the original ignores the key argument
-    assert(std::strcmp(entries[0].payload->text, "alpha") == 0);
-    assert(std::strcmp(entries[1].payload->text, "alpha") == 0);
-    assert(std::strcmp(entries[2].payload->text, "beta") == 0);
-    assert(std::strcmp(entries[3].payload->text, "zeta") == 0);
+    assert(std::strcmp(entries[0].string_payload()->text, "alpha") == 0);
+    assert(std::strcmp(entries[1].string_payload()->text, "alpha") == 0);
+    assert(std::strcmp(entries[2].string_payload()->text, "beta") == 0);
+    assert(std::strcmp(entries[3].string_payload()->text, "zeta") == 0);
     assert(entries[0].id == 101 && entries[1].id == 102);
     assert(entries[2].id == 103 && entries[3].id == 100);
     assert(list.head_ == entries && list.entry_count_ == 4);

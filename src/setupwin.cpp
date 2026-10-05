@@ -478,7 +478,7 @@ int SetupWin::draw_item(int position, int selected) {
         }
         StringStructEntry *entry = item_texts_->current_;
         char *name = item_texts_->head_ != 0 && entry != 0 &&
-                     entry->payload != 0 ? entry->payload->text : 0;
+                     entry->string_payload() != 0 ? entry->string_payload()->text : 0;
         if (name != 0) {
             CharUpperA(name);
             char *pipe = strchr(name, '|');

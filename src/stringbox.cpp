@@ -35,7 +35,7 @@ void erase_string_list_current(StringList &list) {
     }
     list.current_ = next;
 
-    StringStructPayload *const payload = entry->payload;
+    StringStructPayload *const payload = entry->string_payload();
     list.on_remove(payload);
     delete payload;
     entry->payload = 0;
@@ -254,7 +254,7 @@ void StringBox::on_redraw() {
     int remaining = -dib_.bmiHeader.biHeight;
     for (int index = 0; index < list.entry_count_ && remaining > 0; ++index) {
         StringStructPayload *payload = list.head_ != 0
-                                           ? list.current_->payload : 0;
+                                           ? list.current_->string_payload() : 0;
         char *text = payload != 0 ? payload->text : 0;
         remaining -= wrap_height(text, text_width);
         if (remaining < 0) {

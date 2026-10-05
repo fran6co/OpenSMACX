@@ -202,12 +202,12 @@ void CheckBox::draw_item(int position, int state, int) {
         if (Dialog::item_list_.current_ != 0 &&
             static_cast<int>(Dialog::item_list_.current_entry()->field_8_) > 1) {
             int lines = Dialog::item_list_.head_ != 0
-                ? static_cast<int>(Dialog::item_list_.current_->payload->field_8_)
+                ? static_cast<int>(Dialog::item_list_.current_->string_payload()->field_8_)
                 : 0;
             int height = static_cast<int>(Dialog::field_68_);
             if (height <= Buffer::text_line_height() * lines) {
                 lines = Dialog::item_list_.head_ != 0
-                    ? static_cast<int>(Dialog::item_list_.current_->payload->field_8_)
+                    ? static_cast<int>(Dialog::item_list_.current_->string_payload()->field_8_)
                     : 0;
                 height = Buffer::text_line_height() * lines;
             }
@@ -228,12 +228,12 @@ void CheckBox::draw_item(int position, int state, int) {
     }
 
     int text_lines = Dialog::item_list_.head_ != 0
-        ? static_cast<int>(Dialog::item_list_.current_->payload->field_8_)
+        ? static_cast<int>(Dialog::item_list_.current_->string_payload()->field_8_)
         : 0;
     int item_height = static_cast<int>(Dialog::field_68_);
     if (item_height <= Buffer::text_line_height() * text_lines) {
         text_lines = Dialog::item_list_.head_ != 0
-            ? static_cast<int>(Dialog::item_list_.current_->payload->field_8_)
+            ? static_cast<int>(Dialog::item_list_.current_->string_payload()->field_8_)
             : 0;
         item_height = Buffer::text_line_height() * text_lines;
     }
@@ -279,7 +279,7 @@ void CheckBox::draw_item(int position, int state, int) {
     area.top += Buffer::font1_->descent_;
     area.left += Dialog::field_34_;
     if (Dialog::item_list_.head_ != 0 &&
-        Dialog::item_list_.current_->payload->field_8_ == 1) {
+        Dialog::item_list_.current_->string_payload()->field_8_ == 1) {
         char *text = Dialog::item_list_.current_text();
         char *separator = strchr(text, '|');
         if (separator == 0) {
@@ -382,7 +382,7 @@ int CheckBox::calculate_dimensions() {
             }
         }
         StringStructEntry *const entry = dialog.item_list_.current_;
-        char *text = entry == 0 || entry->payload == 0 ? 0 : entry->payload->text;
+        char *text = entry == 0 || entry->payload == 0 ? 0 : entry->string_payload()->text;
         const int width = buffer->text_width(text);
         if (max_text_width < width) {
             max_text_width = width;

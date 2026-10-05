@@ -1560,12 +1560,6 @@ struct SpotList {
   uint32_t cur_count_;  // 0x8
 };
 
-/* 0x28 bytes, 1 member(s), 0 named. From its own code, which reaches that far. 2 function(s) in the image. */
-class SpriteList {
- public:
-  uint8_t field_0_[0x28];  // 0x0
-};
-
 /* 0xC bytes, 12 member(s), 0 named. From Thinker. */
 struct TTilePos {
   uint8_t field_0_;  // 0x0

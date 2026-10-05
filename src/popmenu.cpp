@@ -38,7 +38,7 @@ int PopMenu::exec(int x, int y, int (*poll)()) {
     for (int i = 0; i < dialogs().get_num_items(); ++i) {
         StringList &items = dialogs().item_list_;
         items.seek_pos(i);
-        char *text = items.head_ ? items.current_->payload->text : 0;
+        char *text = items.head_ ? items.current_->string_payload()->text : 0;
         int id = items.head_ ? items.current_->id : 0;
         // Dialog menu separator literal at 0x006900C8.
         if (strcmp(text, "*") == 0) pull_down_.add_separator(id);

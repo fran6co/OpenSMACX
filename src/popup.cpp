@@ -2007,7 +2007,7 @@ int Popup::on_exec() {
             : *(const char **)((head == 0
                                 ? 0
                                 : reinterpret_cast<uint32_t>(
-                                      unit_ids_.current_->payload)) + 4);
+                                      unit_ids_.current_->string_payload())) + 4);
         strcat(StringTemp, msg);
     }
 

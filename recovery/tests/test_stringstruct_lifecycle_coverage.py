@@ -32,6 +32,7 @@ typedef unsigned int uint32_t;
 #define MEASURED
 class Heap {};
 class StringStructPayload;
+struct SpriteStruct;
 struct StringStructEntry;
 static Heap *StringAllocationHeap;
 static int releases, teardowns;
@@ -47,8 +48,8 @@ static void finish_list_teardown(StringStruct *p) {
   assert(!p->current_position_ && !p->allocator_); ++teardowns;
 }
 @@BODIES@@
-int StringStruct::on_insert(StringStructPayload *) { return 0; }
-void StringStruct::on_remove(StringStructPayload *) {}
+int StringStruct::on_insert(void *) { return 0; }
+void StringStruct::on_remove(void *) {}
 int main() {
   Heap heap;
   for (int owned=0; owned!=2; ++owned) {

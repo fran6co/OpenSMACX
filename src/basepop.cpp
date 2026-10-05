@@ -3233,7 +3233,7 @@ int BasePop::UNK2() {
 
         // StringStruct::current_entry()->text, open-coded.
         char *text = item_ids_.current_ != 0
-                   ? (item_ids_.head_ != 0 ? item_ids_.current_->payload->text
+                   ? (item_ids_.head_ != 0 ? item_ids_.current_->string_payload()->text
                                            : static_cast<char *>(0))
                    : static_cast<char *>(0);
         int width = button_font1_->width(text);
@@ -3845,19 +3845,19 @@ int BasePop::calculate_dimensions() {
 
     int wrap_kind = 0;
     if (unit_ids_.head_ != 0) {
-        wrap_kind = unit_ids_.current_->payload->field_8_;
+        wrap_kind = unit_ids_.current_->string_payload()->field_8_;
     }
     field_30D4_ = 0;
     if (wrap_kind == 3) {
         field_30D4_ += owner_window_->text_line_height();
         owner_window_->wrap_height_flying(static_cast<char *>(0), text_left);
     } else if (wrap_kind == 2) {
-        char *text = unit_ids_.head_ != 0 ? unit_ids_.current_->payload->text
+        char *text = unit_ids_.head_ != 0 ? unit_ids_.current_->string_payload()->text
                                           : static_cast<char *>(0);
         field_30D4_ += owner_window_->wrap_height(text, text_left);
         owner_window_->wrap_height_flying(static_cast<char *>(0), text_left);
     } else {
-        char *text = unit_ids_.head_ != 0 ? unit_ids_.current_->payload->text
+        char *text = unit_ids_.head_ != 0 ? unit_ids_.current_->string_payload()->text
                                           : static_cast<char *>(0);
         owner_window_->wrap_height_flying(text, text_left);
     }
@@ -3879,14 +3879,14 @@ int BasePop::calculate_dimensions() {
         // address 4 when the list has a cursor but no head - the image emits
         // `xor eax,eax / mov ebp,[eax+4]` there. Reproduced as shipped.
         char *text = unit_ids_.current_ != 0
-                   ? (unit_ids_.head_ != 0 ? unit_ids_.current_->payload
+                   ? (unit_ids_.head_ != 0 ? unit_ids_.current_->string_payload()
                                            : static_cast<StringStructPayload *>(0))
                          ->text
                    : static_cast<char *>(0);
 
         int kind = wrap_kind;
         if (unit_ids_.head_ != 0) {
-            kind = unit_ids_.current_->payload->field_8_;
+            kind = unit_ids_.current_->string_payload()->field_8_;
         }
         if (unit_ids_.head_ != 0 && kind != 0) {
             field_30D4_ += owner_window_->wrap_height_flying_flush();
