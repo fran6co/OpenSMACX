@@ -1,0 +1,33 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "89aa3bbeaed90e52e07d360d87b3ec39251d75b5",
+  "editable_files": [
+    "src/alphanet.cpp",
+    "src/net_class.cpp",
+    "src/unrecovered/004e26e0.cpp",
+    "src/unrecovered/0062e540.cpp",
+    "recovery/tests/alphanet-pick-service-control.cpp",
+    "recovery/tests/test_alphanet_pick_service_transfer.py"
+  ],
+  "evidence": [
+    "Current genuine AlphaNet::pick_service implementation uses ServiceList, BasePop/Dialogs and real join_service; seed 004e26e0 preserves main, cold and EH spans. Existing sub_630d70 also maps the cold span; keep that ambiguity visible, not exclusive ownership.",
+    "Current genuine Net::join_session implementation uses NetAllocationNode, real Font lifetimes and typed DirectPlay calls; old SessionStruct interpreted name is retained separately from compiler-observed NetAllocationNode symbol in current native map.",
+    "Native source writer and symbol writer own annotation transfer. Neither seed has a historical BYTE_EXACT or SEMANTIC claim; full TRIED lessons and all extents remain load-bearing. Host controls extract actual owners and include selection/PBEM and live-player-ID mutants."
+  ],
+  "intent": "Bind the complete existing typed AlphaNet service-selection and Net session-join implementations to their original identities, retaining every original span and historical lesson. Remove only the two superseded seeds after reviewed identity continuity, build/link and scoped controls. Preserve the overlapping sub_630d70 cold-tail interpretation and all historical matching obligations; this is coordinator-reviewed coverage integration, not automatic or game acceptance.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5121760,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6481216,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "session-owner-identities-oct5"
+}
