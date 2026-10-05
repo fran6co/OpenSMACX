@@ -1,0 +1,59 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "9f7d39cdb1f16680ac232f60bab112bfbe678a3d",
+  "editable_files": [
+    "src/general.cpp",
+    "src/general.h",
+    "src/statuswin.cpp",
+    "src/statuswin.h",
+    "src/stringstruct.cpp",
+    "src/game.h",
+    "src/maininterface.cpp",
+    "src/maininterface.h",
+    "src/recovered/00515430.cpp",
+    "src/recovered/00592d70.cpp",
+    "src/recovered/00592d90.cpp",
+    "src/recovered/units/0058fb70.cpp",
+    "src/recovered/units/004396b0.cpp",
+    "recovery/tests/test_owned_helper_batch.py",
+    "recovery/tests/owned_helper_harness.cpp",
+    "recovery/tests/test_charupper_adapter.py",
+    "recovery/tests/charupper_adapter_harness.cpp"
+  ],
+  "evidence": [
+    "Pinned complete seed spans and ignored helper/callback/CharUpper proposals; require original-flow review, actual-source host damage controls, native compiler, build/link and fresh claim continuity.",
+    "StoredScaleAdjustment945AEC has only proven four-byte accesses and unresolved complete allocation/lifetime; use unbounded v1 object identity rather than falsely claiming complete extent.",
+    "User authorizes coordinator-reviewed coverage-first integration, matching regressions preserved with no demotion."
+  ],
+  "intent": "Recover five complete helpers through typed SDK, status and MainInterface owners; preserve native modulo32 arithmetic and distinct callback identities, without asserting unknown scale allocation capacity.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5329968,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5831536,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5844336,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5844368,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4429488,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "owned-helper-coverage-batch"
+}
