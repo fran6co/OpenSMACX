@@ -1486,6 +1486,39 @@ found:
     }
 }
 
+// Compiler-generated source-owned lifecycle entry; no handwritten wrapper.
+/*
+// ORIGINAL: 0x00440F30 sub_440f30 0x00440F30-0x00440F54 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:bcad94a018ff94737abb85df10d24ca7aa405b1a:src/recovered/00440f30.cpp", "pinned:terranx_original lifecycle0x440f30", "source:src/diplowin.cpp"], "reason": "Generated complete initializer for the genuine64-element DiplomacyTranscriptLists array composes array construction and registration of reverse array destruction. Preserve complete original spans, catalogue names, claims and historical lessons; current compiler emission is not a fresh grant or linked selection proof."}
+// symbol    _$E26
+*/
+
+// Historical seed finding: Native vector constructor receives64 elements with30-byte stride, constructor4450B0 and destructor406820, then registers440F60.
+// Historical seed finding: Current vector/registration helper delegation is generated lowering; original full36-byte span remains a matching obligation.
+
+// Compiler-generated source-owned lifecycle entry; no handwritten wrapper.
+/*
+// ORIGINAL: 0x00440F60 sub_440f60 0x00440F60-0x00440F74 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:bcad94a018ff94737abb85df10d24ca7aa405b1a:src/recovered/units/00440f60.cpp", "pinned:terranx_original lifecycle0x440f60", "source:src/diplowin.cpp"], "reason": "Generated reverse array teardown owns the complete DiplomacyTranscriptLists64-element StringList lifecycle. Preserve complete original spans, catalogue names, claims and historical lessons; current compiler emission is not a fresh grant or linked selection proof."}
+// symbol    _$E24
+*/
+
+// Historical seed finding: Native vector destruction helper6456E4 takes the array737CD8, stride30, count40hex and complete StringList destruction406820.
+// Historical seed finding: Opaque void-pointer callback spelling was a scaffold workaround, not the actual source array type.
+
+// Compiler-generated source-owned lifecycle entry; no handwritten wrapper.
+/*
+// ORIGINAL: 0x004450B0 sub_4450b0 0x004450B0-0x0044511C FILE
+// RECOVERY_BINDING: v1 {"evidence": ["git:bcad94a018ff94737abb85df10d24ca7aa405b1a:src/leaf_recoveries.cpp", "pinned:terranx_original lifecycle0x4450b0", "source:src/diplowin.cpp"], "reason": "The actual compiler-generated StringList constructor owns virtual-base allocation capture, inherited field initialization and both derived table transitions. This replaces the raw-address leaf transcription without changing StringList members. Preserve complete original spans, catalogue names, claims and historical lessons; current compiler emission is not a fresh grant or linked selection proof."}
+// symbol    ??0StringList@@QAE@XZ
+// TRIED: homed into game.cpp (its real TU) 2026-09-03 and reverted for one reason:
+// TRIED: plain constructor with raw pointer-offset writes (eax=ecx=this, returns this implicitly). Diverges at instr #2: original pushes ecx for a compiler-generated [ebp-4] unwind-context local (a partially-constructed-object marker) that a plain non-throwing body never allocates.
+*/
+
+// Historical seed finding: Original30-byte object has virtual allocation base at28; constructor captures StringAllocationHeap and clears it only for complete-object construction.
+// Historical seed finding: Original inherited fields8/C/10/14/18 are zeroed; trailing StringList pending fields are not silently initialized.
+// Historical seed finding: Prior attribution to game.cpp and raw-pointer constructor experiments are historical, not proof of original translation-unit ownership.
+
 // Superseded seed removal retains historical Git provenance below.
 // ORIGINAL: 0x004415C0 ?on_button_clicked@DiploWin@@QAEXH@Z 0x004415C0-0x004424C6;0x00654A50-0x00654CEA
 // RECOVERY_BINDING: v1 {"evidence": ["historical seed:src/unrecovered/004415c0.cpp", "task:diplowin-button-handler-owner", "Pinned native button+2 fifteen-way dispatch, original local Popup lifetime; corrected final offline random state writes and row-directed treaty checks. Primary table slot44; real SubInterface remains independent. Preserve observed gender/plural assignment order."], "reason": "Recover this complete operation in its genuine C++ popup/diplomacy owner using actual members, virtual dispatch and typed shared dependencies; retain original identity, spans, claims and seed discoveries."}

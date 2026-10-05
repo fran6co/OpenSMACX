@@ -210,16 +210,16 @@ void __cdecl blink_timer(int a1) {
 // the same recovered constructors run through this build's own startup,
 // and the matching destructors close them at exit. Declarations in time.h
 // beside their users.
-Time TurnTimer;    // 0x00915628
-// Constructor6161D0 initializes a 0x28-byte Time; startup50E9B0 constructs
-// these three distinct objects, and stop_timers50F440 closes them in order.
+// One declaration owns the original five-object initializer and reverse
+// destructor group; ConsoleTimer has an independent lifetime.
 // RECOVERY_OBJECT: v2 0x00915658 0x00915680 ?LineTimer@@3VTime@@A 0x0050F440
-Time LineTimer;    // 0x00915658
 // RECOVERY_OBJECT: v2 0x00915688 0x009156B0 ?BlinkTimer@@3VTime@@A 0x0050F440
-Time BlinkTimer;   // 0x00915688
 // RECOVERY_OBJECT: v2 0x00939EB0 0x00939ED8 ?Blink2Timer@@3VTime@@A 0x0050F440
-Time Blink2Timer;  // 0x00939EB0
-Time GoTimer;      // 0x00939E60
+Time BlinkTimer,   // 0x00915688
+     Blink2Timer,  // 0x00939EB0
+     LineTimer,    // 0x00915658
+     GoTimer,      // 0x00939E60
+     TurnTimer;    // 0x00915628
 Time ConsoleTimer; // 0x00939E88
 
 Time *Time::TimeModal;
@@ -1132,3 +1132,23 @@ void __cdecl clock_wait(int milliseconds) {
         do_non_input();
     } while (read_clock() - started < static_cast<DWORD>(milliseconds));
 }
+
+// Compiler-generated source-owned lifecycle entry; no handwritten wrapper.
+/*
+// ORIGINAL: 0x0050E9B0 sub_50e9b0 0x0050E9B0-0x0050E9EE FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:bcad94a018ff94737abb85df10d24ca7aa405b1a:src/recovered/0050e9b0.cpp", "pinned:terranx_original lifecycle0x50e9b0", "source:src/time.cpp"], "reason": "Generated complete five-Time-object initializer composes the real constructor group and destructor registration. Delegated generated helpers are current lowering, not a claim of one-to-one byte layout. Preserve complete original spans, catalogue names, claims and historical lessons; current compiler emission is not a fresh grant or linked selection proof."}
+// symbol    _$E21
+*/
+
+// Historical seed finding: Native construction order: Blink, Blink2, Line, Go, Turn; registers the aggregate reverse teardown.
+// Historical seed finding: ConsoleTimer startup50E980 is a separate original group and is not annexed by this binding.
+
+// Compiler-generated source-owned lifecycle entry; no handwritten wrapper.
+/*
+// ORIGINAL: 0x0050E9F0 sub_50e9f0 0x0050E9F0-0x0050EA22 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:bcad94a018ff94737abb85df10d24ca7aa405b1a:src/recovered/0050e9f0.cpp", "pinned:terranx_original lifecycle0x50e9f0", "source:src/time.cpp"], "reason": "Generated destructor for the single five-Time-object declaration preserves native reverse destruction and timer shutdown effects. Preserve complete original spans, catalogue names, claims and historical lessons; current compiler emission is not a fresh grant or linked selection proof."}
+// symbol    _$E19
+*/
+
+// Historical seed finding: Native destruction order: Turn, Go, Line, Blink2, Blink.
+// Historical seed finding: The former separate per-object declarations did not own the complete original aggregate.

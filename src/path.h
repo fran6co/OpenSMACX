@@ -22,8 +22,8 @@
   */
 class Path {
  public:
-  Path() : map_table_(0), x_table_(0), y_table_(0), index1_(0), index2_(0), faction_id_(0), 
-           x_dst_(0), y_dst_(0), unk_(5), faction_id_2_(0), proto_id_(0) { } // n/a
+  // Paths is statically zero-initialized in the original. Its startup entry
+  // 59A1B0 only registers destruction; there is no constructor setting unk_=5.
   MEASURED ~Path() { shutdown(); } // 0059A320
 
   void init();

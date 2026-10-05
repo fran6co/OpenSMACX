@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "task_id": "startup-lifetimes-owner-oct5",
+  "target": "opensmacx",
+  "author": "framework-coordinator",
+  "base_revision": "bcad94a018ff94737abb85df10d24ca7aa405b1a",
+  "intent": "Recover genuine five-timer grouped initialization/destruction, original zero-initialized Paths lifetime and diplomacy StringList array lifecycle; transport complete canonical identities and historical obligations and retire six superseded seeds plus raw constructor seam.",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5302704
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5302768
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5874096
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5874112
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4460336
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4460384
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4477104
+    }
+  ],
+  "files": [
+    "recovery/tests/test_startup_lifecycle_controls.py",
+    "src/time.cpp",
+    "src/path.h",
+    "src/path.cpp",
+    "src/diplowin.cpp",
+    "src/leaf_recoveries.cpp",
+    "src/recovered/0050e9b0.cpp",
+    "src/recovered/0050e9f0.cpp",
+    "src/recovered/0059a1b0.cpp",
+    "src/recovered/units/0059a1c0.cpp",
+    "src/recovered/00440f30.cpp",
+    "src/recovered/units/00440f60.cpp"
+  ],
+  "evidence": [
+    "Coordinator-reviewed recovery and temporary structural matching regressions authorized by user; claims remain restoration obligations.",
+    "Pinned Path initial storage is44 zero bytes; original59A1B0 only registers destruction. Remove unsupported unk_=5 constructor initialization, not an original bug fix.",
+    "Fresh private VC6 observations for grouped timer declaration and natural Path initialization pass both settled flag sets. Generated local names are current compiler facts, not durable original names.",
+    "Fresh full build/link, native baseline/current historical observations and actual-source lifecycle controls are required before integration; no strict/full-game/autonomous acceptance claim."
+  ]
+}
