@@ -38,6 +38,7 @@ class BaseButton : public GraphicWin {
   friend class DesignWin;
 
  public:
+  virtual void on_dialog_focus(int focus);
   void on_left_down(int x, int y);
   void on_left_up(int x, int y);
   void on_left_click(int x, int y);

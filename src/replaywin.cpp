@@ -431,3 +431,92 @@ void __cdecl fn_005adbd0(ReplayWin* a1) {
         a1->timer_callback();
     }
 }
+
+/*
+Purpose: ?on_left_click@ReplayWin@@QAEXHH@Z - dispatch to slot 0xe8 of this object's OWN
+         vtable with NO arguments: the original pushes nothing between the
+         vtable load and the call, so the parameters this function declares are
+         discarded and only the `ret` cleans them up.
+// ORIGINAL: 0x005AD3B0 ?on_left_click@ReplayWin@@QAEXHH@Z 0x005AD3B0-0x005AD3BB BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned original own table 0x0066F8F0, pointer word at +0x4C, identifies original entry 0x005AD3B0", "source:src/win.h inherited virtual interface; actual emitted method ?on_left_click_event@ReplayWin@@UAEXHH@Z in primary Win table ??_7ReplayWin@@6BWin@@@"], "reason": "The original own Win table binds this entry as virtual slot 19. Use genuine member dispatch, not an opaque redirect; retain the catalogued original spelling as historical evidence."}
+// symbol    ?on_left_click_event@ReplayWin@@UAEXHH@Z
+// size      11 bytes
+// prototype void (__thiscall ?on_left_click@ReplayWin@@QAEXHH@Z)(ReplayWin* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x005AD3B2
+Return Value: n/a
+Status: Complete
+*/
+void ReplayWin::on_left_click_event(int, int) {
+  release_modal();
+}
+
+/*
+Purpose: ?on_right_click@ReplayWin@@QAEXHH@Z - dispatch to slot 0xe8 of this object's OWN
+         vtable with NO arguments: the original pushes nothing between the
+         vtable load and the call, so the parameters this function declares are
+         discarded and only the `ret` cleans them up.
+// ORIGINAL: 0x005AD3C0 ?on_right_click@ReplayWin@@QAEXHH@Z 0x005AD3C0-0x005AD3CB BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned original own table 0x0066F8F0, pointer word at +0x58, identifies original entry 0x005AD3C0", "source:src/win.h inherited virtual interface; actual emitted method ?vslot_22@ReplayWin@@UAEXHH@Z in primary Win table ??_7ReplayWin@@6BWin@@@"], "reason": "The original own Win table binds this entry as virtual slot 22. Use genuine member dispatch, not an opaque redirect; retain the catalogued original spelling as historical evidence."}
+// symbol    ?vslot_22@ReplayWin@@UAEXHH@Z
+// size      11 bytes
+// prototype void (__thiscall ?on_right_click@ReplayWin@@QAEXHH@Z)(ReplayWin* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x005AD3C2
+Return Value: n/a
+Status: Complete
+*/
+void ReplayWin::vslot_22(int, int) {
+  release_modal();
+}
+
+/*
+Purpose: ?on_button_clicked@ReplayWin@@QAEXH@Z - dispatch to slot 0xe8 of this object's OWN
+         vtable with NO arguments: the original pushes nothing between the
+         vtable load and the call, so the parameters this function declares are
+         discarded and only the `ret` cleans them up.
+// ORIGINAL: 0x005AD430 ?on_button_clicked@ReplayWin@@QAEXH@Z 0x005AD430-0x005AD43B BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned original own table 0x0066F8F0, pointer word at +0xB0, identifies original entry 0x005AD430", "source:src/win.h inherited virtual interface; actual emitted method ?on_button_clicked@ReplayWin@@UAEXH@Z in primary Win table ??_7ReplayWin@@6BWin@@@"], "reason": "The original own Win table binds this entry as virtual slot 44. Use genuine member dispatch, not an opaque redirect; retain the catalogued original spelling as historical evidence."}
+// symbol    ?on_button_clicked@ReplayWin@@UAEXH@Z
+// size      11 bytes
+// prototype void (__thiscall ?on_button_clicked@ReplayWin@@QAEXH@Z)(ReplayWin* this, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x005AD432
+Return Value: n/a
+Status: Complete
+*/
+void ReplayWin::on_button_clicked(int) {
+  release_modal();
+}
+
+/*
+Purpose: ?on_key_click@ReplayWin@@QAEHHH@Z - dispatch to slot 0xe8 of this object's OWN
+         vtable with NO arguments: the original pushes nothing between the
+         vtable load and the call, so the parameters this function declares are
+         discarded and only the `ret` cleans them up.
+// ORIGINAL: 0x005AD440 ?on_key_click@ReplayWin@@QAEHHH@Z 0x005AD440-0x005AD450 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned original own table 0x0066F8F0, pointer word at +0x64, identifies original entry 0x005AD440", "source:src/win.h inherited virtual interface; actual emitted method ?on_key_click@ReplayWin@@UAEHHH@Z in primary Win table ??_7ReplayWin@@6BWin@@@"], "reason": "The original own Win table binds this entry as virtual slot 25. Use genuine member dispatch, not an opaque redirect; retain the catalogued original spelling as historical evidence."}
+// symbol    ?on_key_click@ReplayWin@@UAEHHH@Z
+// size      16 bytes
+// prototype int (__thiscall ?on_key_click@ReplayWin@@QAEHHH@Z)(ReplayWin* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x005AD442
+Return Value: 0x1, a constant
+Status: Complete
+*/
+int ReplayWin::on_key_click(int, int) {
+  release_modal();
+  return 1;
+}

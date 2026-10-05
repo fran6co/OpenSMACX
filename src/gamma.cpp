@@ -294,6 +294,8 @@ int Gamma::on_key_click(int, int) {
 
 /*
 // ORIGINAL: 0x005C9390 ?on_scrolled@Gamma@@QAEXHH@Z 0x005C9390-0x005C9398 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned original own table 0x0066C3D8, pointer word at +0xC0, identifies original entry 0x005C9390", "source:src/win.h inherited virtual interface; actual emitted method ?vslot_48@Gamma@@UAEXHH@Z in primary Win table ??_7Gamma@@6BWin@@@"], "reason": "The original own Win table binds this entry as virtual slot 48. Use genuine member dispatch, not an opaque redirect; retain the catalogued original spelling as historical evidence. The previous on_scrolled definition is the class slot-48 target; renaming connects the unchanged body to its real virtual slot."}
+// symbol    ?vslot_48@Gamma@@UAEXHH@Z
 // size      8 bytes
 // prototype void (__thiscall ?on_scrolled@Gamma@@QAEXHH@Z)(Gamma* this, int, int)
 // callers   0   call targets   1
@@ -302,7 +304,7 @@ int Gamma::on_key_click(int, int) {
 // calls     0x005C9520
 Status: Complete
 */
-void Gamma::on_scrolled(int code, int pos) {
+void Gamma::vslot_48(int code, int pos) {
     adjust_palette();
 }
 
@@ -618,6 +620,26 @@ Purpose: Step the receiver back to the subobject ??_GGamma@@UAEPAXI@Z expects,
 Return Value: the forwarded call's
 Status: Complete
 */
+
+/*
+Purpose: ?on_scrolling@Gamma@@QAEXHH@Z - dispatch to slot 0xc0 of this object's OWN
+         vtable, forwarding 2 argument(s).
+// ORIGINAL: 0x005C93A0 ?on_scrolling@Gamma@@QAEXHH@Z 0x005C93A0-0x005C93B7 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned original own table 0x0066C3D8, pointer word at +0xC4, identifies original entry 0x005C93A0", "source:src/win.h inherited virtual interface; actual emitted method ?vslot_49@Gamma@@UAEXHH@Z in primary Win table ??_7Gamma@@6BWin@@@"], "reason": "The original own Win table binds this entry as virtual slot 49. Use genuine member dispatch, not an opaque redirect; retain the catalogued original spelling as historical evidence."}
+// symbol    ?vslot_49@Gamma@@UAEXHH@Z
+// size      23 bytes
+// prototype void (__thiscall ?on_scrolling@Gamma@@QAEXHH@Z)(Gamma* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x005C93AD
+Return Value: n/a
+Status: Complete
+*/
+void Gamma::vslot_49(int code, int position) {
+  vslot_48(code, position);
+}
 
 /*
 Purpose: Step the receiver back to the subobject ??_GPushButton@@UAEPAXI@Z

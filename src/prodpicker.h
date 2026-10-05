@@ -65,7 +65,8 @@ class ProdPicker : public ConstructedGraphicWin {
   void on_redraw();
   void on_left_double_click(int x, int y);
   void on_button_clicked(int button_id);
-  void on_scrolled(int code, int position);
+  virtual void vslot_48(int code, int position);
+  virtual void vslot_49(int code, int position);
   // PAURECT@@H, per ?on_redraw_nc@ProdPicker@@QAEXPAURECT@@H@Z; the body is
   // `ret 8` either way and only the decorated name moves.
   void on_redraw_nc(RECT *, int);

@@ -697,3 +697,26 @@ LRESULT __cdecl sub_5ffe80(HWND, int double_click, int x, int y,
     return DefWindowProcA(MciVideoCallbackWindow, message, keys,
                           static_cast<LPARAM>(packed));
 }
+
+/*
+Purpose: ?on_key_click@AlphaMovie@@QAEHHH@Z - dispatch to slot 0xe8 of this object's OWN
+         vtable with NO arguments: the original pushes nothing between the
+         vtable load and the call, so the parameters this function declares are
+         discarded and only the `ret` cleans them up.
+// ORIGINAL: 0x00404210 ?on_key_click@AlphaMovie@@QAEHHH@Z 0x00404210-0x00404220 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned original own table 0x00669458, pointer word at +0x64, identifies original entry 0x00404210", "source:src/win.h inherited virtual interface; actual emitted method ?on_key_click@AlphaMovie@@UAEHHH@Z in primary Win table ??_7AlphaMovie@@6BWin@@@"], "reason": "The original own Win table binds this entry as virtual slot 25. Use genuine member dispatch, not an opaque redirect; retain the catalogued original spelling as historical evidence."}
+// symbol    ?on_key_click@AlphaMovie@@UAEHHH@Z
+// size      16 bytes
+// prototype int (__thiscall ?on_key_click@AlphaMovie@@QAEHHH@Z)(AlphaMovie* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x00404212
+Return Value: 0x1, a constant
+Status: Complete
+*/
+int AlphaMovie::on_key_click(int, int) {
+  release_modal();
+  return 1;
+}

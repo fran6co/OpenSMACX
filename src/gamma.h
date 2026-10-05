@@ -46,7 +46,8 @@ class Gamma : public GraphicWin {
   // stores a2 in field_40B10_; StringBox::on_scrolled stores a2 in
   // field_A1C_; BaseWin::on_iface_scrolled tests `a1 != 2` and copies a2.
   // The first is switched on, the second is kept - a code and a position.
-  void on_scrolled(int code, int pos);
+  virtual void vslot_48(int code, int position);
+  virtual void vslot_49(int code, int position);
   Gamma();
   // 0x00456110 lives in gamma.cpp. C++ emits the reverse member teardown;
   // the body first closes the dialog's owned controls.

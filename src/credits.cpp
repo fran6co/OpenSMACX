@@ -282,3 +282,48 @@ Wave g_CREDITS_WAVE;  // 0x00703E30
 // (winedbg-confirmed: walker return 0x00644EEB, table at 0x682568..).
 // Here the same recovered constructors run through this build's own
 // startup, and the matching destructors close them at exit.
+
+/*
+Purpose: ?on_key_click@Credits@@QAEXHH@Z - dispatch to slot 0xe8 of this object's OWN
+         vtable with NO arguments: the original pushes nothing between the
+         vtable load and the call, so the parameters this function declares are
+         discarded and only the `ret` cleans them up.
+// ORIGINAL: 0x00428D60 ?on_key_click@Credits@@QAEXHH@Z 0x00428D60-0x00428D70 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned original own table 0x0066AC58, pointer word at +0x64, identifies original entry 0x00428D60", "source:src/win.h inherited virtual interface; actual emitted method ?on_key_click@Credits@@UAEHHH@Z in primary Win table ??_7Credits@@6BWin@@@"], "reason": "The original own Win table binds this entry as virtual slot 25. Use genuine member dispatch, not an opaque redirect; retain the catalogued original spelling as historical evidence. The catalogued void prototype conflicts with Win slot 25 and the original EAX=1 return; the source therefore uses int."}
+// symbol    ?on_key_click@Credits@@UAEHHH@Z
+// size      16 bytes
+// prototype void (__thiscall ?on_key_click@Credits@@QAEXHH@Z)(Credits* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x00428D62
+Return Value: 0x1, a constant
+Status: Complete
+*/
+int Credits::on_key_click(int, int) {
+  release_modal();
+  return 1;
+}
+
+/*
+Purpose: ?on_left_click@Credits@@QAEXHH@Z - dispatch to slot 0xe8 of this object's OWN
+         vtable with NO arguments: the original pushes nothing between the
+         vtable load and the call, so the parameters this function declares are
+         discarded and only the `ret` cleans them up.
+// ORIGINAL: 0x00428D70 ?on_left_click@Credits@@QAEXHH@Z 0x00428D70-0x00428D7B BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned original own table 0x0066AC58, pointer word at +0x4C, identifies original entry 0x00428D70", "source:src/win.h inherited virtual interface; actual emitted method ?on_left_click_event@Credits@@UAEXHH@Z in primary Win table ??_7Credits@@6BWin@@@"], "reason": "The original own Win table binds this entry as virtual slot 19. Use genuine member dispatch, not an opaque redirect; retain the catalogued original spelling as historical evidence."}
+// symbol    ?on_left_click_event@Credits@@UAEXHH@Z
+// size      11 bytes
+// prototype void (__thiscall ?on_left_click@Credits@@QAEXHH@Z)(Credits* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x00428D72
+Return Value: n/a
+Status: Complete
+*/
+void Credits::on_left_click_event(int, int) {
+  release_modal();
+}

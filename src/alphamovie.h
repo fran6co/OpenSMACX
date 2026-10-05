@@ -98,6 +98,7 @@ class MCIVideo {
 class AlphaMovie : public GraphicWin {
  public:
   void close();
+  virtual int on_key_click(int repeat, int key);
   AlphaMovie();
   // ?exec@AlphaMovie@@QAEHPAD@Z at 0x00404070; implemented in
   // alphamovie.cpp from the compatible seed and routed through its embedded

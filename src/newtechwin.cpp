@@ -597,3 +597,25 @@ void NewTechWin::on_group_clicked(int, int group) {
     stringBox2_.strings().load(title, StringTemp, 1, 0);
     stringBox2_.add_fixup();
 }
+
+/*
+Purpose: ?on_button_clicked@NewTechWin@@QAEXH@Z - dispatch to slot 0xe8 of this object's OWN
+         vtable with NO arguments: the original pushes nothing between the
+         vtable load and the call, so the parameters this function declares are
+         discarded and only the `ret` cleans them up.
+// ORIGINAL: 0x00483E80 ?on_button_clicked@NewTechWin@@QAEXH@Z 0x00483E80-0x00483E8B BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned original own table 0x0066CE5C, pointer word at +0xB0, identifies original entry 0x00483E80", "source:src/win.h inherited virtual interface; actual emitted method ?on_button_clicked@NewTechWin@@UAEXH@Z in primary Win table ??_7NewTechWin@@6BWin@@@"], "reason": "The original own Win table binds this entry as virtual slot 44. Use genuine member dispatch, not an opaque redirect; retain the catalogued original spelling as historical evidence."}
+// symbol    ?on_button_clicked@NewTechWin@@UAEXH@Z
+// size      11 bytes
+// prototype void (__thiscall ?on_button_clicked@NewTechWin@@QAEXH@Z)(NewTechWin* this, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x00483E82
+Return Value: n/a
+Status: Complete
+*/
+void NewTechWin::on_button_clicked(int) {
+  release_modal();
+}

@@ -142,7 +142,8 @@ class BaseWin : public ConstructedGraphicWin, public SubInterface {
   // stores a2 in field_40B10_; StringBox::on_scrolled stores a2 in
   // field_A1C_; BaseWin::on_iface_scrolled tests `a1 != 2` and copies a2.
   // The first is switched on, the second is kept - a code and a position.
-  void on_scrolled(int code, int pos);
+  virtual void vslot_48(int code, int position);
+  virtual void vslot_49(int code, int position);
   // The four stay scaffold - see the note on the body in basewin.cpp.
   void UNK2(int a1, int a2, int a3, int a4);
 

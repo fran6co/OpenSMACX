@@ -42,6 +42,7 @@ class NewTechWin : public GraphicWin {
   virtual int on_link_clicked(int id, char *link);
   virtual void on_redraw();  // original vtable slot 12, 0x00483950
   void on_left_click(int a1, int a2);
+  virtual void on_button_clicked(int button_id);
   void on_group_clicked(int, int);
   int on_key_click(int a, int b);
 

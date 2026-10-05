@@ -988,3 +988,25 @@ void BaseButton::timer_callback(int stage) {
         on_left_down(0, 0);
     }
 }
+
+/*
+Purpose: ?on_dialog_focus@BaseButton@@QAEXH@Z - dispatch to slot 0xf8 of this object's OWN
+         vtable with NO arguments: the original pushes nothing between the
+         vtable load and the call, so the parameters this function declares are
+         discarded and only the `ret` cleans them up.
+// ORIGINAL: 0x00607B00 ?on_dialog_focus@BaseButton@@QAEXH@Z 0x00607B00-0x00607B0B BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned original own table 0x00670290, pointer word at +0xCC, identifies original entry 0x00607B00", "source:src/win.h inherited virtual interface; actual emitted method ?on_dialog_focus@BaseButton@@UAEXH@Z in primary Win table ??_7BaseButton@@6BWin@@@"], "reason": "The original own Win table binds this entry as virtual slot 51. Use genuine member dispatch, not an opaque redirect; retain the catalogued original spelling as historical evidence."}
+// symbol    ?on_dialog_focus@BaseButton@@UAEXH@Z
+// size      11 bytes
+// prototype void (__thiscall ?on_dialog_focus@BaseButton@@QAEXH@Z)(BaseButton* this, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x00607B02
+Return Value: n/a
+Status: Complete
+*/
+void BaseButton::on_dialog_focus(int) {
+  redraw();
+}

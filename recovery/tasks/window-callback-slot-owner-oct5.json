@@ -1,0 +1,115 @@
+{
+  "schema_version": 1,
+  "task_id": "window-callback-slot-owner-oct5",
+  "target": "opensmacx",
+  "author": "framework-coordinator",
+  "base_revision": "0d4842297459039709f14f08cc8d83381aa91fb4",
+  "intent": "Move twelve recovered UI callback bodies from generic redirect ownership into their evidence-backed typed class owners, connect three existing slot-48 implementations and the corresponding slot-49 overrides, and preserve every original mapping, claim, span, and seed note. Keep generic Win slot names and existing generic callers unchanged; no new byte claim or full-game acceptance.",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4211216
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4306112
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4361568
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4361584
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4734592
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4800112
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5952432
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5952448
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5952560
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5952576
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6067104
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6322944
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4306080
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6067088
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4799664
+    }
+  ],
+  "editable_files": [
+    "recovery/tests/callback_owner_control.cpp",
+    "recovery/tests/callback_owner_fixture.h",
+    "recovery/tests/test_callback_owner.py",
+    "src/alphamovie.cpp",
+    "src/alphamovie.h",
+    "src/basebutton.cpp",
+    "src/basebutton.h",
+    "src/basewin.cpp",
+    "src/basewin.h",
+    "src/credits.cpp",
+    "src/credits.h",
+    "src/delegation_thunks.cpp",
+    "src/delegation_thunks.h",
+    "src/gamma.cpp",
+    "src/gamma.h",
+    "src/newtechwin.cpp",
+    "src/newtechwin.h",
+    "src/prodpicker.cpp",
+    "src/prodpicker.h",
+    "src/replaywin.cpp",
+    "src/replaywin.h"
+  ],
+  "evidence": [
+    "Pinned-image own vftables place the twelve callbacks at AlphaMovie table 669458/slot25, BaseWin 66A40C/slot49, Credits 66AC58/slots25 and19, NewTechWin 66CE5C/slot44, ProdPicker 66A250/slot49, ReplayWin 66F8F0/slots19,22,44,25, Gamma 66C3D8/slot49, and BaseButton 670290/slot51.",
+    "The BaseWin, Gamma and ProdPicker table slot-48 entries select their existing 41B4A0, 5C9390 and 493CB0 bodies; each slot-49 seed forwards both original integer values to slot48. AlphaSave's opposite slot ordering is why generic Win slot names/callers remain unchanged.",
+    "The source-writer patch transfers twelve complete ORIGINAL annotations, including existing BYTE_EXACT claims and all comment/fact provenance; it removes only superseded thunk bodies/declarations.",
+    "Credits::on_key_click's native decorated record says void while its body sets EAX=1 and uses the integer-return Win key slot; the typed override returns int without changing the original identity. Old emitted redirect symbol facts are deliberately retained until a fresh compiler observation.",
+    "Permanent C++98 host controls extract the twelve definitions from actual owner TUs and check callback dispatch plus deliberate mutants. Build/link, native task checks, fresh emitted symbols and scoped references remain coordinator review obligations."
+  ]
+}

@@ -50,17 +50,5 @@ typedef int (OriginalObject::*func_delegation_1)(int);
 typedef int (OriginalObject::*func_delegation_2)(int, int);
 typedef int (OriginalObject::*func_delegation_3)(int, int, int);
 
-int __fastcall alpha_movie_on_key_click_redirect(void *self, void *, int a1, int a2);
-void __fastcall base_win_on_scrolling_redirect(void *self, void *, int a1, int a2);
-int __fastcall credits_on_key_click_redirect(void *self, void *, int a1, int a2);
-void __fastcall credits_on_left_click_redirect(void *self, void *, int a1, int a2);
-void __fastcall new_tech_win_on_button_clicked_redirect(void *self, void *, int a1);
-void __fastcall prod_picker_on_scrolling_redirect(void *self, void *, int a1, int a2);
 int __fastcall wave_in_device_set_codec_redirect(void *self, void *, uint32_t a1);
 int __fastcall wave_in_device_set_vxw_key_redirect(void *self, void *, int a1);
-void __fastcall replay_win_on_left_click_redirect(void *self, void *, int a1, int a2);
-void __fastcall replay_win_on_right_click_redirect(void *self, void *, int a1, int a2);
-void __fastcall replay_win_on_button_clicked_redirect(void *self, void *, int a1);
-int __fastcall replay_win_on_key_click_redirect(void *self, void *, int a1, int a2);
-void __fastcall gamma_on_scrolling_redirect(void *self, void *, int a1, int a2);
-void __fastcall base_button_on_dialog_focus_redirect(void *self, void *, int a1);
