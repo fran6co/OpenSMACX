@@ -1,0 +1,30 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "ea6ec50dec31d1eec4e13d91c716bb50323d6360",
+  "editable_files": [
+    "src/veh.cpp",
+    "src/temp.h",
+    "src/game.cpp",
+    "src/technology.cpp",
+    "src/pending_bodies.cpp",
+    "src/unrecovered/00581260.cpp",
+    "recovery/tests/test_consider_designs_host.py",
+    "recovery/tests/consider_designs_host_fixture.cpp"
+  ],
+  "evidence": [
+    "Pinned original 581260..583C8F and existing seed identify consider_designs signed-int ABI; veh.cpp owns prototype selection and proposal helpers.",
+    "Prepared full flattened C++98 candidate and seven host controls retain all strategy routes, shared armor-scale lifetime and native negative-armor sentinel gate. Prior draft native compile is not current integration or acceptance evidence.",
+    "User authorizes coordinator-reviewed coverage-first recovery with temporary matching regressions, not automatic claim demotion. Fresh build/link, actual-source controls, scoped measurement, caller preservation and independent review are required."
+  ],
+  "intent": "Recover the complete AI prototype-design selection owner in veh.cpp, with native signed faction ABI, all strategy and proposal routes, shared local lifetime, source-driven host controls and seed retirement after continuity verification. Preserve all existing caller behavior and historical obligations.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5771872,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "consider-designs-owner-oct5"
+}
