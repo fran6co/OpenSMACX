@@ -53,26 +53,27 @@ class PushButton : public BaseButton {
   ~PushButton();
   // Constructor62BF28 installs670C60: slot90 selects62C030.
   virtual void close();
+  virtual void on_redraw();  // original Win slot 12, 0x0062C110
 
  private:
-  uint32_t field_AB8_;  // 0xAB8
-  uint32_t field_ABC_;  // 0xABC
-  uint32_t field_AC0_;  // 0xAC0
-  uint32_t field_AC4_;  // 0xAC4
-  uint32_t field_AC8_;  // 0xAC8
-  uint32_t field_ACC_;  // 0xACC
-  uint32_t field_AD0_;  // 0xAD0
-  uint32_t field_AD4_;  // 0xAD4
-  uint32_t field_AD8_;  // 0xAD8
-  uint32_t field_ADC_;  // 0xADC
-  uint32_t field_AE0_;  // 0xAE0
-  uint32_t field_AE4_;  // 0xAE4
-  uint32_t field_AE8_;  // 0xAE8
-  uint32_t field_AEC_;  // 0xAEC
-  uint32_t field_AF0_;  // 0xAF0
-  uint32_t field_AF4_;  // 0xAF4
-  uint32_t field_AF8_;  // 0xAF8
-  uint32_t field_AFC_;  // 0xAFC, the IDB's last member; the class ends 0xB00
+  Sprite *field_AB8_;  // 0xAB8
+  Sprite *field_ABC_;  // 0xABC
+  Sprite *field_AC0_;  // 0xAC0
+  Sprite *field_AC4_;  // 0xAC4
+  Sprite *field_AC8_;  // 0xAC8
+  Sprite *field_ACC_;  // 0xACC
+  Sprite *field_AD0_;  // 0xAD0
+  Sprite *field_AD4_;  // 0xAD4
+  Sprite *field_AD8_;  // 0xAD8
+  Sprite *field_ADC_;  // 0xADC
+  Sprite *field_AE0_;  // 0xAE0
+  Sprite *field_AE4_;  // 0xAE4
+  Sprite *field_AE8_;  // 0xAE8
+  Sprite *field_AEC_;  // 0xAEC
+  Sprite *field_AF0_;  // 0xAF0
+  Sprite *field_AF4_;  // 0xAF4
+  Sprite *field_AF8_;  // 0xAF8
+  Sprite *field_AFC_;  // 0xAFC, the IDB's last member; the class ends 0xB00
 };
 static_assert(sizeof(PushButton) == 0xB00, "probe");
 
@@ -80,4 +81,4 @@ static_assert(sizeof(PushButton) == 0xB00, "probe");
 // defaults from (0x009BC118..0x009BC15C in the image), rebindable like
 // BaseButtonA94Default and DialogField30Default. Defined in gamma.cpp beside
 // PushButton's other bodies.
-extern uint32_t PushButtonDefaults[18];
+extern Sprite *PushButtonDefaults[18];

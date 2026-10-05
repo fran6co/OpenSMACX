@@ -8364,18 +8364,17 @@ int Win::init(int x, int y, int width, int height, char * caption,
     this->cached_outer_rect_.right = this->outer_rect_.right;
     this->cached_outer_rect_.bottom = this->outer_rect_.bottom;
 
-    void **nameSlot = reinterpret_cast<void **>(&field_E0_);
-    if (*nameSlot) {
-        free(*nameSlot);
-        *nameSlot = 0;
+    if (field_E0_ != 0) {
+        free(field_E0_);
+        field_E0_ = 0;
     }
     if (caption != 0) {
         unsigned int len = strlen(caption) + 1;
         void *mem = mem_get(static_cast<int>(len));
-        *nameSlot = mem;
+        field_E0_ = static_cast<char *>(mem);
         if (mem != 0) {
-            reinterpret_cast<char *>(mem)[0] = 0;
-            strcat(reinterpret_cast<char *>(*nameSlot), caption);
+            field_E0_[0] = 0;
+            strcat(field_E0_, caption);
         }
     }
 
@@ -8923,7 +8922,7 @@ void Win::on_redraw_nc(RECT * area, int flags) {
                     buf->set_text_color(this->field_104_, this->field_108_, this->field_10C_, this->field_110_);
                     buf->set_font(this->field_F8_, 0, 0, 0);
                     buf->set_clip(&r);
-                    char *title = (char *)this->field_E0_;
+                    char *title = this->field_E0_;
                     if ((win_flags & 0x10000) != 0) {
                         if (title != 0) {
                             unsigned int len = strlen(title);
@@ -8941,7 +8940,7 @@ void Win::on_redraw_nc(RECT * area, int flags) {
                 }
                 buf->set_clip(&buf->rect2_);
             }
-            this->vslot_60(reinterpret_cast<int>(buf), 0);
+            this->vslot_60(buf, 0);
         }
     }
 
@@ -8980,7 +8979,7 @@ void Win::on_redraw_nc(RECT * area, int flags) {
                 }
                 buf->set_clip(&buf->rect2_);
             }
-            this->vslot_60(reinterpret_cast<int>(buf), 2);
+            this->vslot_60(buf, 2);
         }
     }
 
@@ -9020,7 +9019,7 @@ void Win::on_redraw_nc(RECT * area, int flags) {
                 }
                 buf->set_clip(&buf->rect2_);
             }
-            this->vslot_60(reinterpret_cast<int>(buf), 3);
+            this->vslot_60(buf, 3);
         }
     }
 
@@ -9067,7 +9066,7 @@ void Win::on_redraw_nc(RECT * area, int flags) {
                 }
                 buf->set_clip(&buf->rect2_);
             }
-            this->vslot_60(reinterpret_cast<int>(buf), 1);
+            this->vslot_60(buf, 1);
         }
     }
 }
@@ -9375,20 +9374,19 @@ int Win::sub_63c340() {
 // ===== homed from src/unrecovered/005edf50.cpp =====
 
 void Win::set_caption(char * text) {
-    void **caption = reinterpret_cast<void **>(&field_E0_);
-    if (*caption != 0) {
-        free(*caption);
-        *caption = 0;
+    if (field_E0_ != 0) {
+        free(field_E0_);
+        field_E0_ = 0;
     }
     if (text != 0) {
         unsigned int len = strlen(text);
         void *buf = mem_get(len + 1);
-        *caption = buf;
+        field_E0_ = static_cast<char *>(buf);
         if (buf == 0) {
             return;
         }
-        *reinterpret_cast<char *>(buf) = 0;
-        strcat(reinterpret_cast<char *>(*caption), text);
+        field_E0_[0] = 0;
+        strcat(field_E0_, text);
     }
     if (iSomeFlag_ & 1) {
         Win *other = win_parent_;
@@ -11140,9 +11138,8 @@ void Win::close() {
     field_F8_ = WinDynamicDefaults.default_font_;
 
     {
-        void *p0xE0 = reinterpret_cast<void *>(field_E0_);
-        if (p0xE0 != 0) {
-            free(p0xE0);
+        if (field_E0_ != 0) {
+            free(field_E0_);
         }
         field_E0_ = 0;
     }

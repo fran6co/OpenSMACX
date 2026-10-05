@@ -25,6 +25,7 @@
 #include "font.h"
 #include "lock.h"
 #include "maininterface.h"
+#include "map.h"  // mandate_color
 #include "strings.h"
 #include "stringstruct.h"
 #include "technology.h"
@@ -125,6 +126,174 @@ int NewTechWin::on_key_click(int, int) {
 // ORIGINAL: 0x00483F90 ?exec@NewTechWin@@QAEXHH@Z 0x00483F90-0x0048480F
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00483f90.cpp retained full original extent; independent pinned geometry review and actual-source controls in recovery/tests/test_newtechwin_exec_behavior.py"], "reason": "Technology popup uses real embedded controls, callback receiver, shared data owners, audio and modal hyperlink dispatch."}
 // TRIED: literal transcription of the RECT-cascade prologue (traced every register's concrete value through ~150 straight-line instrs) plus the loop-over-4-StringBox body using a LOCAL scratch array (the original inset math lives on the stack, not the object's fields - the loop never writes field_AA4_ etc back). Named scaffold members (flatButtons_[3], buttonGroup_, stringBoxes_[4], stringBox2_) used directly instead of raw offsets where the class already typed them. Compiles; not chased to byte-exact given size (2175 bytes).
+// Include in the real owner: game.h, alpha.h, strings.h, technology.h,
+// font.h, map.h, console.h and buffer.h are current owners of these APIs.
+extern BoxSpriteParams InterfaceStandardPopupBoxStyle;
+extern Sprite g_TECH_ICON_SPRITES[MaxTechnologyNum];
+// The pinned image's null-terminated data at VA 0x00682820 is one ASCII
+// space; this source-owned literal preserves the CENTEMP separator.
+static const char NewTechCentempSuffix[] = " ";
+
+// ORIGINAL: 0x00483950 ?on_redraw@NewTechWin@@QAEXXZ 0x00483950-0x00483E7F
+// RECOVERY_BINDING: v1 {"reason":"Recover the complete technology popup redraw in its real NewTechWin owner.","evidence":["Pinned NewTechWin table 0x66CE5C slot 12 selects 0x483950.","Current NewTechWin rectangle words are written by exec; existing label, technology, player-data, buffer, style and sprite owners supply every draw.","The previous unit's NO_COMPILE finding was its fake standalone class/undefined Buffer scaffold; this candidate instead uses newtechwin.h's genuine GraphicWin hierarchy and embedded rectangle words."]}
+// kind      game
+// symbol    ?on_redraw@NewTechWin@@UAEXXZ
+void NewTechWin::on_redraw() {
+    const int faction_snapshot = ConsoleGlobal.faction_id_;
+    Buffer *buffer = static_cast<Buffer *>(this);
+    buffer->clear_links();
+
+    RECT working = *buffer_working_rect();
+    buffer->box_sprite(&working, &InterfaceStandardPopupBoxStyle);
+
+    RECT main_area = {
+        static_cast<LONG>(field_A24_), static_cast<LONG>(field_A28_),
+        static_cast<LONG>(field_A2C_), static_cast<LONG>(field_A30_)
+    };
+    buffer->box_sprite(&main_area, &InterfaceBoxStyles[3]);
+
+    RECT inset_area = {
+        static_cast<LONG>(field_AF4_), static_cast<LONG>(field_AF8_),
+        static_cast<LONG>(field_AFC_), static_cast<LONG>(field_B00_)
+    };
+    inset_area.left -= 3;
+    inset_area.top -= 3;
+    inset_area.right += 3;
+    inset_area.bottom += 3;
+    buffer->box_sprite(&inset_area, &InterfaceBoxStyles[3]);
+
+    buffer->set_font(find_font(0x10, 1), 0, 0, 0);
+    buffer->set_text_color(0xE1, -1, 1, 1);
+
+    RECT title_area = {
+        static_cast<LONG>(field_A34_), static_cast<LONG>(field_A38_),
+        static_cast<LONG>(field_A3C_), static_cast<LONG>(field_A40_)
+    };
+    buffer->box_sprite(&title_area, &InterfaceBoxStyles[0]);
+
+    StringTemp[0] = '\0';
+    strcat(StringTemp, label_get(static_cast<int>(field_B28_) > 0 ? 542 : 541));
+    CharUpperA(StringTemp);
+    if (StringTemp != 0) {
+        buffer->write_cent_l(StringTemp, &title_area,
+                             static_cast<unsigned int>(strlen(StringTemp)));
+    }
+
+    const int title_offsets[4] = {0x110 / 4, 0x130 / 4, 0xEF0 / 4, 0xEF4 / 4};
+    const int title_rect_offsets[4] = {0xA94, 0xAA4, 0xAB4, 0xAC4};
+    int i;
+    for (i = 0; i != 4; ++i) {
+        RECT text_area;
+        switch (title_rect_offsets[i]) {
+        case 0xA94:
+            text_area.left = static_cast<LONG>(field_A94_);
+            text_area.top = static_cast<LONG>(field_A98_);
+            text_area.right = static_cast<LONG>(field_A9C_);
+            text_area.bottom = static_cast<LONG>(field_AA0_);
+            break;
+        case 0xAA4:
+            text_area.left = static_cast<LONG>(field_AA4_);
+            text_area.top = static_cast<LONG>(field_AA8_);
+            text_area.right = static_cast<LONG>(field_AAC_);
+            text_area.bottom = static_cast<LONG>(field_AB0_);
+            break;
+        case 0xAB4:
+            text_area.left = static_cast<LONG>(field_AB4_);
+            text_area.top = static_cast<LONG>(field_AB8_);
+            text_area.right = static_cast<LONG>(field_ABC_);
+            text_area.bottom = static_cast<LONG>(field_AC0_);
+            break;
+        default:
+            text_area.left = static_cast<LONG>(field_AC4_);
+            text_area.top = static_cast<LONG>(field_AC8_);
+            text_area.right = static_cast<LONG>(field_ACC_);
+            text_area.bottom = static_cast<LONG>(field_AD0_);
+            break;
+        }
+        buffer->box_sprite(&text_area, &InterfaceBoxStyles[6]);
+        StringTemp[0] = '\0';
+        strcat(StringTemp, label_get(title_offsets[i]));
+        CharUpperA(StringTemp);
+        if (StringTemp != 0) {
+            buffer->write_cent_l(StringTemp, &text_area,
+                                 static_cast<unsigned int>(strlen(StringTemp)));
+        }
+    }
+
+    RECT row_rects[4];
+    row_rects[0].left = static_cast<LONG>(field_A54_);
+    row_rects[0].top = static_cast<LONG>(field_A58_);
+    row_rects[0].right = static_cast<LONG>(field_A5C_);
+    row_rects[0].bottom = static_cast<LONG>(field_A60_);
+    row_rects[1].left = static_cast<LONG>(field_A64_);
+    row_rects[1].top = static_cast<LONG>(field_A68_);
+    row_rects[1].right = static_cast<LONG>(field_A6C_);
+    row_rects[1].bottom = static_cast<LONG>(field_A70_);
+    row_rects[2].left = static_cast<LONG>(field_A74_);
+    row_rects[2].top = static_cast<LONG>(field_A78_);
+    row_rects[2].right = static_cast<LONG>(field_A7C_);
+    row_rects[2].bottom = static_cast<LONG>(field_A80_);
+    row_rects[3].left = static_cast<LONG>(field_A84_);
+    row_rects[3].top = static_cast<LONG>(field_A88_);
+    row_rects[3].right = static_cast<LONG>(field_A8C_);
+    row_rects[3].bottom = static_cast<LONG>(field_A90_);
+    for (i = 0; i != 4; ++i) {
+        buffer->box_sprite(&row_rects[i], &InterfaceBoxStyles[0]);
+    }
+
+    RECT category_area = {
+        static_cast<LONG>(field_A44_), static_cast<LONG>(field_A48_),
+        static_cast<LONG>(field_A4C_), static_cast<LONG>(field_A50_)
+    };
+    buffer->box_sprite(&category_area, &InterfaceBoxStyles[0]);
+
+    const int technology_id = static_cast<int>(field_B24_);
+    const int category = tech_category(technology_id);
+    buffer->set_font(find_font(0x28, 0), 0, 0, 0);
+    buffer->set_text_color(mandate_color(category), -1, 1, 1);
+
+    RECT category_label = category_area;
+    category_label.left += 3;
+    category_label.top += 3;
+    category_label.right -= 3;
+    category_label.bottom -= 3;
+    category_label.bottom = buffer->text_line_height() + category_label.top;
+
+    StringTemp[0] = '\0';
+    say_tech(StringTemp, technology_id, 0);
+    if (technology_id == TECH_CENTEMP) {
+        // PlayersData+0x368 is theory_of_everything; the neutral member name
+        // and exact offset are already independently established in
+        // faction.h and consumed by picktech/faction/reportif.
+        strcat(StringTemp, NewTechCentempSuffix);
+        char number[80];
+        _itoa(PlayersData[faction_snapshot].theory_of_everything,
+              number, 10);
+        strcat(StringTemp, number);
+    }
+    if (StringTemp != 0) {
+        buffer->write_cent_l(StringTemp, &category_label,
+                             static_cast<unsigned int>(strlen(StringTemp)));
+    }
+
+    const int line_height = buffer->text_line_height();
+    const int image_top = category_area.top + line_height + 3;
+    const int image_bottom = category_area.bottom - 3;
+    const int image_height = image_bottom - image_top;
+    const int image_width = category_area.right - category_area.left;
+    Sprite *icon = &g_TECH_ICON_SPRITES[technology_id];
+    const int icon_y = image_top + (image_height - 0xA0) / 2;
+    const int icon_x = category_area.left + (image_width - 0xA0) / 2;
+    icon->draw_mono(buffer, icon->transparent_index(), icon_x, icon_y,
+                    mandate_color(category), 0xA0, 0xD7);
+
+    RECT bottom_area = {
+        static_cast<LONG>(field_AD4_), static_cast<LONG>(field_AD8_),
+        static_cast<LONG>(field_ADC_), static_cast<LONG>(field_AE0_)
+    };
+    buffer->box_sprite(&bottom_area, &InterfaceBoxStyles[0]);
+}
+
 void NewTechWin::exec(int technology_id, int other_faction_id) {
     field_B28_ = static_cast<uint32_t>(other_faction_id);
     field_B24_ = static_cast<uint32_t>(technology_id);

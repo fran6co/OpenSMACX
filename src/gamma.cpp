@@ -310,7 +310,8 @@ void Gamma::on_scrolled(int code, int pos) {
 // The zero-init .bss table PushButton's constructor loads its field defaults
 // from. Zero at load in the image, as here - the same idiom as
 // BaseButtonA94Default (basebutton.cpp) and `Log Logging` (log.cpp).
-uint32_t PushButtonDefaults[18];  // 0x009BC118
+// RECOVERY_OBJECT: v1 0x009BC118 ?PushButtonDefaults@@3PAPAVSprite@@A
+Sprite *PushButtonDefaults[18];  // 0x009BC118
 
 
 /*
@@ -370,6 +371,168 @@ Purpose: Destroy PushButton through its real BaseButton subobject.
 // calls     (none)
 */
 PushButton::~PushButton() {
+}
+
+// ORIGINAL: 0x0062C110 ?on_redraw@PushButton@@QAEXXZ 0x0062C110-0x0062C82D
+// RECOVERY_BINDING: v1 {"reason":"Recover the complete inherited-buffer painter in PushButton, using typed Sprite consumers and its actual BaseButton/GraphicWin hierarchy.","evidence":["Pinned PushButton table 0x670C60 slot 12 selects 0x62C110.","The original body consumes all eighteen AB8..AFC words as Sprite receivers/tile arguments. gamma.cpp copies the table into those words; game.cpp publishes six borrowed sprite pointers and nulls the other twelve.","The retained seed TRIED note documents the two parallel nine-sprite sets and pressed-state nesting; both branches remain in this source body."]}
+// kind      game
+// symbol    ?on_redraw@PushButton@@UAEXXZ
+// TRIED: transcribed from Ghidra's decompile, fixing a real structural miss on the first pass - the sprite/tile draw block (0xac8!=0 branch) nests on `*(self+0xa9c)==0`, selecting between TWO parallel 9-draw sets (0xac8.. vs 0xaec..) that share one closing `tile()` call after the if/else, not one flat sequence. `this`-null guards (`-(uint)(this!=0)&buf`) are dropped in favour of `buf` directly - a member fn's `this` is never null, and the brief warns the ternary form of this idiom gets optimized away anyway. Frameless build compiles and matches through instr #2 (mov vs push) - not chased further, large member function with many null-guarded draws, landed for coverage.
+void PushButton::on_redraw() {
+    WinCallbackWindow = parent_window();
+    if (HandleMain == 0) return;
+
+    Buffer *buffer = static_cast<Buffer *>(this);
+    buffer->sync_to_palette(PaletteActive);
+    RECT rectangle = *buffer_working_rect();
+    fill(static_cast<int>(color_));
+
+    if (field_AC8_ == 0) {
+        int bevel_count = 0;
+        if (field_A94_ != 0xFFFFFFFFU) {
+            buffer->box(&rectangle, static_cast<int>(field_A94_),
+                        static_cast<int>(field_A94_));
+            ++rectangle.left;
+            --rectangle.right;
+            ++rectangle.top;
+            --rectangle.bottom;
+            if (parent_window()->has_dialog_focus_flag() == false &&
+                is_dialog_focus() != 0) {
+                buffer->box(&rectangle, static_cast<int>(field_A94_),
+                            static_cast<int>(field_A94_));
+                ++rectangle.left;
+                --rectangle.right;
+                ++rectangle.top;
+                --rectangle.bottom;
+                bevel_count = 1;
+            }
+        }
+
+        if (field_A9C_ == 0) {
+            while (bevel_count < static_cast<int>(bevel_thickness_)) {
+                buffer->box(&rectangle, static_cast<int>(bevel_upper_),
+                            static_cast<int>(bevel_lower_));
+                ++rectangle.left;
+                --rectangle.right;
+                ++rectangle.top;
+                --rectangle.bottom;
+                ++bevel_count;
+            }
+        } else {
+            while (bevel_count < static_cast<int>(bevel_thickness_)) {
+                buffer->box(&rectangle, static_cast<int>(bevel_lower_),
+                            static_cast<int>(bevel_upper_));
+                ++rectangle.left;
+                --rectangle.right;
+                ++rectangle.top;
+                --rectangle.bottom;
+                ++bevel_count;
+            }
+            rectangle.left += static_cast<LONG>(bevel_thickness_);
+            rectangle.right += static_cast<LONG>(bevel_thickness_);
+            rectangle.top += static_cast<LONG>(bevel_thickness_);
+            rectangle.bottom += static_cast<LONG>(bevel_thickness_);
+        }
+    } else {
+        const int inset = static_cast<int>(bevel_thickness_);
+        rectangle.left += inset;
+        rectangle.right -= inset;
+        rectangle.top += inset;
+        rectangle.bottom -= inset;
+
+        Sprite *top_left;
+        Sprite *top_right;
+        Sprite *bottom_left;
+        Sprite *bottom_right;
+        Sprite *top_edge;
+        Sprite *bottom_edge;
+        Sprite *left_edge;
+        Sprite *right_edge;
+        Sprite *center;
+        if (field_A9C_ == 0) {
+            top_left = field_AC8_; top_right = field_ACC_;
+            bottom_left = field_AD0_; bottom_right = field_AD4_;
+            top_edge = field_AB8_; bottom_edge = field_ABC_;
+            left_edge = field_AC0_; right_edge = field_AC4_; center = field_AD8_;
+        } else {
+            rectangle.left += inset;
+            rectangle.right += inset;
+            rectangle.top += inset;
+            rectangle.bottom += inset;
+            top_left = field_AEC_; top_right = field_AF0_;
+            bottom_left = field_AF4_; bottom_right = field_AF8_;
+            top_edge = field_ADC_; bottom_edge = field_AE0_;
+            left_edge = field_AE4_; right_edge = field_AE8_; center = field_AFC_;
+        }
+
+        int draw_count = 0;
+        if (top_left != 0) {
+            top_left->draw(buffer, top_left->transparent_index(), 0, 0, 1, 1);
+            draw_count = 1;
+        }
+        const int width = buffer->pixel_width();
+        const int height = buffer->pixel_height();
+        if (top_right != 0) {
+            ++draw_count;
+            top_right->draw(buffer, top_right->transparent_index(),
+                            width - top_right->width(), 0, 1, 1);
+        }
+        if (bottom_left != 0) {
+            ++draw_count;
+            bottom_left->draw(buffer, bottom_left->transparent_index(), 0,
+                              -(bottom_left->height() + height), 1, 1);
+        }
+        if (bottom_right != 0) {
+            ++draw_count;
+            bottom_right->draw(buffer, bottom_right->transparent_index(),
+                               width - bottom_right->width(),
+                               -(bottom_right->height() + height), 1, 1);
+        }
+        if (top_edge != 0 && top_left != 0 && bottom_left != 0) {
+            const int source_height = top_left->height();
+            ++draw_count;
+            buffer->tile(top_edge, 0, 0, 0, source_height,
+                         top_edge->width(),
+                         -(bottom_left->height() + height + source_height));
+        }
+        if (bottom_edge != 0 && top_right != 0 && bottom_right != 0) {
+            const int source_height = top_right->height();
+            ++draw_count;
+            buffer->tile(bottom_edge, 0, 0, width - bottom_edge->width(),
+                         source_height, bottom_edge->width(),
+                         -(bottom_right->height() + height + source_height));
+        }
+        if (left_edge != 0 && top_left != 0 && top_right != 0) {
+            const int source_width = top_left->width();
+            ++draw_count;
+            buffer->tile(left_edge, 0, 0, source_width, 0,
+                         (width - top_right->width()) - source_width,
+                         left_edge->height());
+        }
+        if (right_edge != 0 && bottom_left != 0 && bottom_right != 0) {
+            const int source_width = bottom_left->width();
+            ++draw_count;
+            buffer->tile(right_edge, 0, 0, source_width,
+                         -(height + right_edge->height()),
+                         (width - bottom_right->width()) - source_width,
+                         right_edge->height());
+        }
+
+        if (center != 0 && draw_count == 8 && top_edge != 0 && left_edge != 0 &&
+            right_edge != 0 && bottom_edge != 0 && top_right != 0 &&
+            bottom_left != 0 && bottom_right != 0) {
+            const int source_y = left_edge->height();
+            const int source_x = bottom_edge->width();
+            const int tile_height = height + right_edge->height() + source_y;
+            buffer->tile(center, 0, 0, source_x, source_y,
+                         (width - top_edge->width()) - source_x, -tile_height);
+        }
+    }
+
+    if (name_ != 0) {
+        buffer->write_cent_l(name_, &rectangle,
+                             static_cast<unsigned int>(strlen(name_)));
+    }
 }
 
 // Reset the base first, then consume the current shared defaults. This is

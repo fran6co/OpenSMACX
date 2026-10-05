@@ -84,6 +84,7 @@ struct GraphicWinFrameDefaults {
 // it is not __thiscall, and zero-argument __cdecl and __stdcall are
 // indistinguishable here.
 typedef void(__cdecl func_graphic_win_paint_hook)();
+typedef int (__cdecl *GraphicWinCaptionDraw)(GraphicWin *, char *, Buffer *);
 // The base is spelled `public` deliberately. Win grants `friend class
 // BaseButton;` / `friend class Scroll;` so those classes may touch
 // win_parent_, but VC6 does not implement the friend clause of
@@ -140,13 +141,15 @@ class GraphicWin : public Win, public Buffer {
   // and canvas pointers. All observed original derived tables inherit it.
   virtual int on_link_clicked(int, char *) { return 1; }  // slot88,4042A0
   virtual void on_draw_caption(char *, Buffer *) {}       // slot89,404260
+  // Original GraphicWin vtable slot 67 overrides Win's non-client painter.
+  virtual void on_redraw_nc(RECT *area, int flags);
   // Focus and mouse-leave override Win slots51 and18 respectively. They
   // must not be appended here merely to produce matching adjustor thunks.
   // Nonvirtual reusable cleanup. Its artificial integer return and manual
   // owned-buffer deletion still need the separately reviewed void migration.
   // The original PullDown normal-cancel path reads this inherited word,
   // not an item before the array. Keep that storage owned by GraphicWin.
-  uint32_t field_A0C_value() const { return field_A0C_; }
+  uint32_t field_A0C_value() const;
   uint32_t close();
   // 0x00589550, a 5-byte `jmp` to GraphicWin::close, homed into general.cpp.
   // A plain member: no virtual, so nothing adjusts the receiver and VC6 can
@@ -233,7 +236,7 @@ class GraphicWin : public Win, public Buffer {
   // 0x005D628D before calling Buffer::resize at 0x005D6299.
   // RECOVERY_MEMBER: v3 GraphicWin owned_buffer_ Buffer* 0xA08 0x005D4EF0
   Buffer *owned_buffer_;
-  uint32_t field_A0C_;
+  GraphicWinCaptionDraw field_A0C_;
   // 0xA10. THE PAINT HOOK `redraw` calls before painting, not storage: null
   // by default, installed from outside, entered with no arguments. Was
   // `uint32_t field_A10_` - same four bytes, and the caller stops casting.
@@ -267,7 +270,7 @@ extern func_subobject_close BufferSubobjectClose;
 extern func_subobject_close WinOriginalClose;
 
 // Process default copied into field_A0C_ by close().
-extern uint32_t GraphicWinFieldA0CDefault;
+extern GraphicWinCaptionDraw GraphicWinFieldA0CDefault;
 
 GraphicWin *__fastcall graphic_win_destructor_redirect(GraphicWin *self, void *);
 // A GraphicWin THAT CONSTRUCTS ITSELF, for the derived classes whose image

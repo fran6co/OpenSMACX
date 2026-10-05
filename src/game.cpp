@@ -1119,7 +1119,7 @@ int PopupThemeColorB4 = 0x94; // 0x0068A5B4, tenth independent palette cell
 // symbol    ?load_interface@@YAXH@Z
 void __cdecl load_interface(int mode) {
     Buffer &canvas = g_PCX_PARSE_TEMP_BUFFER1;
-    GraphicWinFieldA0CDefault = reinterpret_cast<uint32_t>(&def_caption_draw);
+    GraphicWinFieldA0CDefault = &def_caption_draw;
     canvas.load_pcx("iface.pcx", 0, 10, 0xEC);
     int *palette_cells[10] = {&PopupThemeWindowColor, &MessageWinTextColor,
         &PopupThemeButtonColor, &PopupThemeTextShadow, &MessageWinTextBackground,
@@ -1168,12 +1168,12 @@ void __cdecl load_interface(int mode) {
     BasePopDefaultBlock31B8[6] = &g_BASEWIN_SPRITES[19];
     BasePopDefaultBlock31B8[7] = &g_BASEWIN_SPRITES[22];
     BasePopDefaultBlock31B8[8] = &g_BASEWIN_SPRITES[25];
-    PushButtonDefaults[4] = reinterpret_cast<uint32_t>(&g_BASEWIN_SPRITES[18]);
-    PushButtonDefaults[13] = reinterpret_cast<uint32_t>(&g_BASEWIN_SPRITES[24]);
-    PushButtonDefaults[2] = reinterpret_cast<uint32_t>(&g_BASEWIN_SPRITES[19]);
-    PushButtonDefaults[11] = reinterpret_cast<uint32_t>(&g_BASEWIN_SPRITES[25]);
-    PushButtonDefaults[5] = reinterpret_cast<uint32_t>(&g_BASEWIN_SPRITES[20]);
-    PushButtonDefaults[14] = reinterpret_cast<uint32_t>(&g_BASEWIN_SPRITES[26]);
+    PushButtonDefaults[4] = &g_BASEWIN_SPRITES[18];
+    PushButtonDefaults[13] = &g_BASEWIN_SPRITES[24];
+    PushButtonDefaults[2] = &g_BASEWIN_SPRITES[19];
+    PushButtonDefaults[11] = &g_BASEWIN_SPRITES[25];
+    PushButtonDefaults[5] = &g_BASEWIN_SPRITES[20];
+    PushButtonDefaults[14] = &g_BASEWIN_SPRITES[26];
     const int push_zero_slots[12] = {6,15,7,16,3,12,0,9,1,10,8,17};
     for (int slot = 0; slot < 12; ++slot) PushButtonDefaults[push_zero_slots[slot]] = 0;
     FlatButtonDefaultsTable[12] = &g_BASEWIN_SPRITES[18];

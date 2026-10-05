@@ -68,7 +68,8 @@ func_subobject_destructor WinOriginalDestructor =
 func_subobject_close BufferSubobjectClose = original_method<func_subobject_close>(
     reinterpret_cast<unsigned long>(&buffer_subobject_close));
 func_subobject_close WinOriginalClose = original_method<func_subobject_close>(0x005EB640);
-uint32_t GraphicWinFieldA0CDefault;  // 0x009B33C0
+// RECOVERY_OBJECT: v1 0x009B33C0 ?GraphicWinFieldA0CDefault@@3P6AHPAVGraphicWin@@PADPAVBuffer@@@ZA
+GraphicWinCaptionDraw GraphicWinFieldA0CDefault;  // 0x009B33C0
 
 // Eleven borrowed Sprite defaults, originally in PE zero-fill. The loader
 // publishes them through set_def_nc_sprites after creating the frame assets.
@@ -240,10 +241,10 @@ uint32_t GraphicWin::close() {
     overlay_bottom_left_ = 0;
     overlay_top_right_ = 0;
     overlay_bottom_right_ = 0;
-    const uint32_t default_value = GraphicWinFieldA0CDefault;
+    const GraphicWinCaptionDraw default_value = GraphicWinFieldA0CDefault;
     field_A0C_ = default_value;
     if (!release_target) {
-        return default_value;
+        return field_A0C_value();
     }
 
     // Slot 0, called where it lives: `vtable_method` leaves the call operand
@@ -504,6 +505,163 @@ Verification note: the calling convention of the 0xA10 paint hook is inferred,
          ABI-identical here, so either spelling works and neither is a
          callee-pop fact.
 */
+uint32_t GraphicWin::field_A0C_value() const {
+    uint32_t value = 0;
+    memcpy(&value, &field_A0C_, sizeof(value));
+    return value;
+}
+
+// ORIGINAL: 0x005D63F0 ?on_redraw_nc@GraphicWin@@QAEXPAURECT@@H@Z 0x005D63F0-0x005D68B7
+// RECOVERY_BINDING: v1 {"reason":"Recover the complete non-client frame painter in GraphicWin using its real Win/Buffer/member ownership.","evidence":["Pinned GraphicWin table 0x66FC50 slot 67 selects 0x5D63F0.","Win::on_redraw_nc calls slot 60 with each live border Buffer and quadrant; the owned caption and frame members are source-typed.","The old recovered-unit seed retains its complete ORIGINAL span and call-list evidence in Git history; no byte claim or old frame-layout typo is converted into an acceptance claim."]}
+// kind      game
+// symbol    ?on_redraw_nc@GraphicWin@@UAEXPAUtagRECT@@H@Z
+void GraphicWin::on_redraw_nc(RECT *area, int side) {
+    if ((iSomeFlag_ & 2) == 0) {
+        return;
+    }
+
+    if (area != 0) {
+        side = -1;
+    }
+
+    if ((iFlags_ & 0x10000000) == 0) {
+        Win::on_redraw_nc(area, side);
+        return;
+    }
+
+    int top_inset;
+    Sprite *top_left;
+    Sprite *top_edge;
+    Sprite *top_right;
+    if ((iFlags_ & 0x10) == 0 || (iFlags_ & 0x400000) != 0) {
+        top_inset = border_thickness_;
+        top_left = frame_noncaption_left_;
+        top_edge = frame_noncaption_middle_;
+        top_right = frame_noncaption_right_;
+    } else {
+        top_inset = caption_height_;
+        top_left = frame_top_left_;
+        top_edge = frame_top_;
+        top_right = frame_top_right_;
+    }
+
+    int bottom_inset = bottom_border_thickness_;
+    if (bottom_inset == -1) {
+        bottom_inset = border_thickness_;
+    }
+    const int client_width = client_rect_.right - client_rect_.left;
+    char *caption = field_E0_;
+
+    // Quadrant 0: top caption/non-caption strip.
+    if (buffer1_ != 0 && (side == -1 || side == 0)) {
+        Buffer *const buffer = buffer1_;
+        buffer->fill(WinFillColour);
+        if (top_left != 0) {
+            top_left->draw(buffer, top_left->transparent_index(), 0, 0, 1, 1);
+        }
+        if (top_right != 0) {
+            top_right->draw(buffer, top_right->transparent_index(),
+                            buffer->pixel_width() - top_right->width(), 0, 1, 1);
+        }
+        if (top_edge != 0 && top_left != 0 && top_right != 0) {
+            buffer->tile(top_edge, 0, 0, top_left->width(), 0,
+                         client_width - top_right->width() - top_left->width(),
+                         buffer->pixel_height());
+        }
+        if (caption != 0 && (iFlags_ & 0x10) != 0) {
+            if (field_A0C_ != 0) {
+                field_A0C_(this, caption, buffer);
+            }
+            on_draw_caption(caption, buffer);
+        }
+        vslot_60(buffer, 0);
+    }
+
+    // Quadrant 2: bottom strip.
+    if (buffer4_ != 0 && (side == -1 || side == 2)) {
+        Buffer *const buffer = buffer4_;
+        buffer->fill(WinFillColour);
+        if (frame_bottom_left_ != 0) {
+            frame_bottom_left_->draw(
+                buffer, frame_bottom_left_->transparent_index(), 0,
+                -(frame_bottom_left_->height() + buffer->pixel_height()), 1, 1);
+        }
+        if (frame_bottom_right_ != 0) {
+            frame_bottom_right_->draw(
+                buffer, frame_bottom_right_->transparent_index(),
+                buffer->pixel_width() - frame_bottom_right_->width(),
+                -(frame_bottom_right_->height() + buffer->pixel_height()), 1, 1);
+        }
+        if (frame_bottom_ != 0 && frame_bottom_left_ != 0 &&
+            frame_bottom_right_ != 0) {
+            buffer->tile(
+                frame_bottom_, 0, 0, frame_bottom_left_->width(),
+                -(buffer->pixel_height() + frame_bottom_->height()),
+                (buffer->pixel_width() - frame_bottom_right_->width()) -
+                    frame_bottom_left_->width(),
+                frame_bottom_->height());
+        }
+        vslot_60(buffer, 2);
+    }
+
+    // Quadrant 3: right strip.
+    if (buffer3_ != 0 && (side == -1 || side == 3)) {
+        Buffer *const buffer = buffer3_;
+        buffer->fill(WinFillColour);
+        if (top_left != 0) {
+            top_left->draw(buffer, top_left->transparent_index(),
+                           0, -top_inset, 1, 1);
+        }
+        if (frame_bottom_left_ != 0) {
+            frame_bottom_left_->draw(
+                buffer, frame_bottom_left_->transparent_index(), 0,
+                (bottom_inset - buffer->pixel_height()) -
+                    frame_bottom_left_->height(), 1, 1);
+        }
+        if (frame_left_ != 0 && top_left != 0 &&
+            frame_bottom_left_ != 0) {
+            buffer->tile(
+                frame_left_, 0, 0, 0,
+                top_left->height() - top_inset,
+                border_thickness_,
+                (((bottom_inset - buffer->pixel_height()) -
+                  frame_bottom_left_->height()) - top_left->height()) +
+                    top_inset);
+        }
+        vslot_60(buffer, 3);
+    }
+
+    // Quadrant 1: left strip.
+    if (buffer2_ != 0 && (side == -1 || side == 1)) {
+        Buffer *const buffer = buffer2_;
+        buffer->fill(WinFillColour);
+        if (top_right != 0) {
+            top_right->draw(buffer, top_right->transparent_index(),
+                            buffer->pixel_width() - top_right->width(),
+                            -top_inset, 1, 1);
+        }
+        if (frame_bottom_right_ != 0) {
+            frame_bottom_right_->draw(
+                buffer, frame_bottom_right_->transparent_index(),
+                buffer->pixel_width() - frame_bottom_right_->width(),
+                (bottom_inset - buffer->pixel_height()) -
+                    frame_bottom_right_->height(), 1, 1);
+        }
+        if (frame_right_ != 0 && top_right != 0 &&
+            frame_bottom_right_ != 0) {
+            buffer->tile(
+                frame_right_, 0, 0,
+                buffer->pixel_width() - frame_right_->width(),
+                top_right->height() - top_inset,
+                frame_right_->width(),
+                (((bottom_inset - buffer->pixel_height()) -
+                  frame_bottom_right_->height()) - top_right->height()) +
+                    top_inset);
+        }
+        vslot_60(buffer, 1);
+    }
+}
+
 void GraphicWin::redraw() {
     if (HandleMain == nullptr) {
         return;

@@ -417,8 +417,9 @@ class Win : public AutoSound {
   // ahead of the constructor BODY produces - and only then installs Win's
   // own vtable at offset 0.
   WinNodeList list_;
-  // 0xE0. Zeroed by the constructor; nothing yet reads it.
-  uint32_t field_E0_;
+  // 0xE0. Zeroed by the constructor; caption lifecycle is owned by Win.
+  // Owned duplicate of the window caption; read by both non-client painters.
+  char *field_E0_;
   // redo_caption_buttons (5F2760) uses ImageButton's borrowed Sprite at
   // +AB8 and its inherited Buffer DIB width at +444+7C+4. ImageButton
   // init/paint (625380/6253D0) establish that Sprite relationship; ctor
@@ -661,7 +662,8 @@ class Win : public AutoSound {
   virtual int set_modal(int flag, int (*poll)(), Win *owner);  // slot 57  0x005EE190
   virtual void release_modal();  // slot 58  0x005EE280
   virtual int vslot_59() { return 1; }  // 0x00406840
-  virtual void vslot_60(int = 0, int = 0) {}  // 0x00404260
+  // Border-paint notification receives the source Buffer and quadrant.
+  virtual void vslot_60(Buffer * = 0, int = 0) {}  // 0x00404260
   // Slot 61 (0xF4): ordinary windows have no GraphicWin surface.
   virtual GraphicWin *get_graphic_win() { return nullptr; }  // 0x00406B30
   // Slot 62: plain Win has no surface; GraphicWin supplies the redraw.

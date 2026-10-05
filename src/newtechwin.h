@@ -40,6 +40,7 @@ class NewTechWin : public GraphicWin {
   // Real member/base destruction is emitted from the out-of-line body.
   ~NewTechWin();
   virtual int on_link_clicked(int id, char *link);
+  virtual void on_redraw();  // original vtable slot 12, 0x00483950
   void on_left_click(int a1, int a2);
   void on_group_clicked(int, int);
   int on_key_click(int a, int b);
