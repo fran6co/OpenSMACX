@@ -58,8 +58,8 @@ class AlphaMenu : public Menu {
   // object at this+0x22A2C and then calls 0x00460DD0 on it), so the method
   // lives here rather than on a class the tree would have to invent.
   // Declared ahead of its own body landing because Console::prev_cursor and
-  // menu_update drive it every turn. Body still unrecovered - a
-  // pending_bodies forwarder.
+  // menu_update drive it every turn. The full source owner is
+  // this AlphaMenu definition in alphamenu.cpp; the native catalogue name is retained.
   void check(int veh_id);
   int menu_init(); // original catalogue MainMenu::menu_init, Console-owned receiver
 

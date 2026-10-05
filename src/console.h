@@ -761,9 +761,9 @@ extern int TimeControlsSelection;
 // here pointed at the image's address while the binary's own storage lived
 // elsewhere, and on_sys_close stores through the global with the same bytes.
 
-// menu_update hands the console's selected-vehicle id to the MainMenu the
-// original embeds at +0x22A2C. MainMenu::check (0x00460DD0, 4782 bytes) is
-// unrecovered and MainMenu has no header in src/, so this is a seam rather
-// than a declared type.
+// menu_update hands the console's selected-vehicle id to its embedded
+// AlphaMenu at +0x22A2C. The catalogued MainMenu::check (0x00460DD0,
+// 4782 bytes) is implemented on the genuine AlphaMenu member declared in
+// alphamenu.h; no MainMenu source type or forwarding seam is required.
 
 extern int ConsoleFactionsWaitingMask;

@@ -21,6 +21,7 @@
 #include "strings.h"
 #include "text.h"
 #include "terraforming.h"
+#include "technology.h"
 #include "veh.h"
 
 #include "console.h"
@@ -59,6 +60,457 @@ void wait_for_animation_frame(DWORD started) {
 // symbol    ??1AlphaMenu@@UAE@XZ
 AlphaMenu::~AlphaMenu() {}
 
+// ORIGINAL: 0x00460DD0 ?check@MainMenu@@QAEXH@Z 0x00460DD0-0x0046207E
+// RECOVERY_BINDING: v1 {"evidence": ["historical retired seed src/unrecovered/00460dd0.cpp", "recovery/tasks/alphamenu-check-owner-oct5.json", "Console embedded member +22A2C, actual constructor and by-name callers", "complete pinned 460DD0..46207E CFG and fresh native current owner symbol; actual-source bounded trace/mutant controls"], "reason": "Recover complete menu policy in the actual Console::alpha_menu_ subobject. Preserve historical MainMenu catalogue identity separately from the observed current AlphaMenu symbol; genuine source ownership corrects the old seed hypothesis. No current byte or runtime acceptance claim."}
+// symbol    ?check@AlphaMenu@@QAEXH@Z
+// TRIED: time-boxed - roughly the first quarter of the function (a long sequence of Menu::show_menu_item/hide_menu_item/ enable_menu_item gates against game-option and tech flags, transcribed with goto-labelled control flow matching the disassembly's branch targets) is faithful; the difficulty-table-driven remainder (several hundred more show/hide/enable calls) is a deliberate stub. MISMATCH #2, well past the prologue.
+void AlphaMenu::check(int veh_id) {
+    if ((GameMorePreferences & 0x200000u) != 0) {
+        show_menu_item(0, 0x52);
+        hide_menu_item(0, 0x51);
+    } else {
+        show_menu_item(0, 0x51);
+        hide_menu_item(0, 0x52);
+    }
+
+    if (IsMultiplayerNet || IsMultiplayerPBEM) {
+        hide_menu_item(0, 0x5C);
+        goto difficulty_gate;
+    }
+    if ((GameRules & 0x400u) != 0) {
+        goto difficulty_gate;
+    }
+    show_menu_item(0, 0x5C);
+    show_menu_item(0, 0x5A);
+    goto expansion_gate;
+
+difficulty_gate:
+    if ((GameState & 0x1000u) != 0) {
+        show_menu_item(0, 0x5A);
+        goto expansion_gate;
+    }
+    hide_menu_item(0, 0x5A);
+
+expansion_gate:
+    if ((GameMorePreferences & 0x200000u) != 0) {
+        const int general_items[] = {
+            0x205, 0x206, 0x207, 0x208, 0x20C, 0x215, 0x211, 0x212
+        };
+        const int terraforming_items[] = {
+            0x31B, 0x324, 0x306, 0x304, 0x319, 0x31A, 0x317, 0x31F,
+            0x320, 0x307, 0x322
+        };
+        const int scenario_items[] = {
+            0x9F8, 0x9F9, 0x9F6, 0x9F5, 0x9F4, 0x9F3, 0x9F1, 0x9F0,
+            5, 6, 7
+        };
+        for (unsigned int general_index = 0;
+             general_index != sizeof(general_items)/sizeof(general_items[0]);
+             ++general_index)
+            show_menu_item(2, general_items[general_index]);
+        for (unsigned int terraforming_index = 0;
+             terraforming_index != sizeof(terraforming_items)/sizeof(terraforming_items[0]);
+             ++terraforming_index)
+            show_menu_item(3, terraforming_items[terraforming_index]);
+        for (unsigned int scenario_index = 0;
+             scenario_index != sizeof(scenario_items)/sizeof(scenario_items[0]);
+             ++scenario_index)
+            show_menu_item(9, scenario_items[scenario_index]);
+    }
+
+    if ((GameState & 0x10u) == 0 && ObjectiveReqVictory >= 0x3E8 &&
+        static_cast<int32_t>(ObjectivesSuddenDeathVictory) >= 0x3E8) {
+        hide_menu_item(1, 0x115);
+    } else {
+        show_menu_item(1, 0x115);
+    }
+
+    if (IsMultiplayerNet && (GameState & 2u) != 0 &&
+        ConsoleFactionsWaitingMask != 0 && ConsoleFactionsWaitingMask != 0xFF) {
+        hide_menu_item(8, 0x807);
+        show_menu_item(8, 0x808);
+    } else {
+        show_menu_item(8, 0x807);
+        hide_menu_item(8, 0x808);
+    }
+
+    if ((GameState & 0xC0u) != 0 && (NetTurnFlags & 8u) != 0) {
+        hide_menu_item(1, 0x105);
+    } else {
+        show_menu_item(1, 0x105);
+    }
+
+    if ((GameRules & 0x200u) != 0) {
+        show_menu_item(1, 0x106);
+        show_menu_item(1, 0x107);
+    } else {
+        show_menu_item(1, 0x107);
+        show_menu_item(1, 0x106);
+    }
+    hide_menu_item(1, 0x106);
+
+    if (ConsoleGlobal.cursor_active_ != 0) {
+        show_menu_item(2, 0x201);
+        hide_menu_item(2, 0x200);
+    } else {
+        show_menu_item(2, 0x200);
+        hide_menu_item(2, 0x201);
+    }
+
+    if (ConsoleGlobal.cursor_active_ != 0 && veh_id >= 0) {
+        for (int unit_item_id = 0x300; unit_item_id <= 0x324; ++unit_item_id) {
+            enable_menu_item(3, unit_item_id);
+        }
+    // The native branch at 0x4611C2 sends cursor-inactive and negative-ID
+    // calls directly to 0x461E48. Keep the following unit-dependent region
+    // inside this arm; its final join is 0x461E78.
+// Native-derived continuation for AlphaMenu::check after its first known
+// prefix. This block corresponds to original 0x004611D5..0x00461E47 and is
+// dominated by the native cursor/vehicle guards.
+const Veh &selected_veh = Vehs[veh_id];
+if (has_abil(selected_veh.proto_id, ABL_DROP_POD)) {
+    show_menu_item(3, 0x309);
+} else {
+    hide_menu_item(3, 0x309);
+}
+
+// Native 0x00461224-0x00461273 asks for the owner of this unit's map tile and
+// then reads PlayersData[local].diplo_treaties[owner]. The byte at PlayersData
+// base+0x18 is the same treaty member declared in faction.h; the native
+// arithmetic is local*0x833+owner. It shows 0x31F only when bit 0x08 is set
+// and bit 0x10 is clear. The later prototype predicate can overwrite this
+// intermediate menu state, so keep this mutation in its original position.
+const int selected_tile_owner = whose_territory(
+    ConsoleGlobal.faction_id_, selected_veh.x, selected_veh.y, nullptr, 0);
+if (selected_tile_owner >= 0 &&
+    selected_tile_owner != ConsoleGlobal.faction_id_) {
+    const uint32_t treaty = PlayersData[ConsoleGlobal.faction_id_]
+                                .diplo_treaties[selected_tile_owner];
+    if ((treaty & DTREATY_COMMLINK) != 0 &&
+        (treaty & DTREATY_VENDETTA) == 0) {
+        show_menu_item(3, 0x31F);
+    }
+}
+
+const uint32_t selected_proto_id = selected_veh.proto_id;
+if (static_cast<int32_t>(selected_proto_id) < 0x40 &&
+    (get_proto_offense_rating(selected_proto_id) < 0 ||
+     selected_proto_id == BSC_SPORE_LAUNCHER)) {
+    show_menu_item(3, 0x31F);
+} else {
+    hide_menu_item(3, 0x31F);
+}
+
+const VehPrototype &selected_proto = VehPrototypes[selected_proto_id];
+if (Chassis[selected_proto.chassis_id].missile != 0 &&
+    (selected_proto.weapon_id == 0x18 || selected_proto.weapon_id == 0x19)) {
+    show_menu_item(3, 0x30A);
+} else {
+    hide_menu_item(3, 0x30A);
+}
+
+const int selected_base = base_at(selected_veh.x, selected_veh.y);
+if (selected_base >= 0 && has_fac_built(0x21, selected_base)) {
+    show_menu_item(3, 0x310);
+} else {
+    hide_menu_item(3, 0x310);
+}
+
+if (veh_cargo(veh_id) != 0 || has_abil(selected_proto_id, ABL_CARRIER)) {
+    show_menu_item(3, 0x31D);
+} else {
+    hide_menu_item(3, 0x31D);
+}
+
+if (Chassis[selected_proto.chassis_id].triad == TRIAD_SEA) {
+    show_menu_item(3, 0x306);
+    show_menu_item(3, 0x304);
+} else {
+    hide_menu_item(3, 0x306);
+    hide_menu_item(3, 0x304);
+}
+
+if (can_arty(selected_proto_id, 1)) {
+    show_menu_item(3, 0x305);
+} else {
+    hide_menu_item(3, 0x305);
+}
+
+if (selected_proto.plan == 0x0A) {
+    show_menu_item(3, 0x308);
+    enable_menu_item(3, 0x308);
+} else {
+    hide_menu_item(3, 0x308);
+    disable_menu_item(3, 0x308);
+}
+
+// The image tests plan 8 separately after the plan-10 branch. Preserve the
+// native sequential state transitions rather than collapsing them to a final
+// enable/show bit for each item.
+if (selected_proto.plan == 0x08) {
+    enable_menu_item(3, 0x300);
+    enable_menu_item(3, 0x301);
+    show_menu_item(3, 2);
+    const Map *const selected_tile = map_loc(selected_veh.x, selected_veh.y);
+    const int tile_owner = (selected_tile->bit & 1u) != 0
+        ? static_cast<int>(selected_tile->val2 & 0x0Fu) : -1;
+    if (tile_owner >= 0 && tile_owner < 8) {
+        show_menu_item(3, 0x301);
+        hide_menu_item(3, 0x300);
+    } else {
+        hide_menu_item(3, 0x301);
+        show_menu_item(3, 0x300);
+    }
+} else {
+    hide_menu_item(3, 2);
+    disable_menu_item(3, 0x300);
+    disable_menu_item(3, 0x301);
+    hide_menu_item(3, 0x300);
+    hide_menu_item(3, 0x301);
+}
+
+const Map *const selected_tile_for_action =
+    map_loc(selected_veh.x, selected_veh.y);
+const int action_tile_owner = (selected_tile_for_action->bit & 1u) != 0
+    ? static_cast<int>(selected_tile_for_action->val2 & 0x0Fu) : -1;
+if (get_proto_offense_rating(selected_proto_id) != 0 &&
+    action_tile_owner == static_cast<int>(selected_veh.faction_id) &&
+    Chassis[selected_proto.chassis_id].triad != TRIAD_AIR) {
+    show_menu_item(3, 0x302);
+    enable_menu_item(3, 0x302);
+} else {
+    disable_menu_item(3, 0x302);
+    hide_menu_item(3, 0x302);
+}
+
+// Native continuation beginning at 0x00461672.
+if (Chassis[selected_proto.chassis_id].triad != TRIAD_LAND) {
+    show_menu_item(3, 0x320);
+    show_menu_item(3, 0x311);
+} else {
+    hide_menu_item(3, 0x320);
+    hide_menu_item(3, 0x311);
+}
+
+if (selected_proto.plan != 9) {
+    bool sea_order_labels = false;
+    const uint8_t selected_triad = Chassis[selected_proto.chassis_id].triad;
+    if (selected_triad == TRIAD_SEA) {
+        sea_order_labels = true;
+    } else if (selected_triad == TRIAD_AIR) {
+        const Map *const tile = map_loc(selected_veh.x, selected_veh.y);
+        sea_order_labels = (tile->climate & 0xE0u) < 0x60u;
+    }
+
+    for (int terraform_id = 0; terraform_id != 19; ++terraform_id) {
+        StringTemp[0] = '\0';
+        const int order_name = static_cast<int>(reinterpret_cast<intptr_t>(
+            sea_order_labels ? Order[terraform_id + 4].order_sea
+                             : Order[terraform_id + 4].order));
+        strcat(StringTemp, StringTable.get(order_name));
+        strcat(StringTemp, "|");
+        strcat(StringTemp, StringTable.get(
+            static_cast<int>(reinterpret_cast<intptr_t>(
+                Terraforming[terraform_id].shortcuts))));
+        rename_menu_item(9, 0x900 + terraform_id, StringTemp);
+
+        if (terrain_avail(terraform_id, sea_order_labels,
+                          ConsoleGlobal.faction_id_)) {
+            enable_menu_item(9, 0x900 + terraform_id);
+            if (terraform_id == 18) show_menu_item(9, 1);
+        } else {
+            disable_menu_item(9, 0x900 + terraform_id);
+            if (terraform_id == 18) hide_menu_item(9, 1);
+        }
+    }
+
+    disable_menu_item(9, 0x9F8);
+    disable_menu_item(9, 0x9F9);
+    disable_menu_item(9, 0x9F0);
+    disable_menu_item(9, 0x9F1);
+    disable_menu_item(9, 0x9F6);
+    disable_menu_item(9, 0x9F3);
+    disable_menu_item(9, 0x9F4);
+    disable_menu_item(9, 0x9F5);
+    disable_menu_item(9, 0x9F7);
+    disable_menu_item(9, 0x9F2);
+
+    const Map *const tile = map_loc(selected_veh.x, selected_veh.y);
+    const int owner = (tile->bit & 1u) != 0
+        ? static_cast<int>(tile->val2 & 0x0Fu) : -1;
+    if (owner >= 0 && owner < 8) {
+        hide_menu_item(3, 0x317);
+        show_menu_item(3, 0x316);
+    } else {
+        show_menu_item(3, 0x317);
+        hide_menu_item(3, 0x316);
+    }
+} else {
+    // A plan-9 former gets context-sensitive menu rows. The selector is the
+    // same typed terrain choice, but rows 1 and 6 are gated by the actual
+    // selected-tile flag before their build-cost labels become actionable.
+    bool sea_order_labels = false;
+    const uint8_t selected_triad = Chassis[selected_proto.chassis_id].triad;
+    if (selected_triad == TRIAD_SEA) {
+        sea_order_labels = true;
+    } else if (selected_triad == TRIAD_AIR) {
+        const Map *const tile = map_loc(selected_veh.x, selected_veh.y);
+        sea_order_labels = (tile->climate & 0xE0u) < 0x60u;
+    }
+
+    const Map *const selected_tile = map_loc(selected_veh.x, selected_veh.y);
+    for (int terraform_id = 0; terraform_id != 19; ++terraform_id) {
+        const bool row_action_flag =
+            (terraform_id != 1 && terraform_id != 6) ||
+            (terraform_id == 1 && (selected_tile->bit & 0x80000000u) != 0) ||
+            (terraform_id == 6 && (selected_tile->bit & 0x4u) != 0);
+        const bool can_build_here = row_action_flag && terrain_avail(
+            terraform_id, sea_order_labels, ConsoleGlobal.faction_id_);
+
+        StringTemp[0] = '\0';
+        const int order_name = static_cast<int>(reinterpret_cast<intptr_t>(
+            sea_order_labels ? Order[terraform_id + 4].order_sea
+                             : Order[terraform_id + 4].order));
+        strcat(StringTemp, StringTable.get(order_name));
+        if (can_build_here) {
+            strcat(StringTemp, " (");
+            char turn_count[10];
+            const int turns = action_terraform(veh_id, terraform_id, 0) + 1;
+            _itoa(turns, turn_count, 10);
+            strcat(StringTemp, turn_count);
+            strcat(StringTemp, " ");
+            strcat(StringTemp, label_get(turns == 1 ? 0x30 : 0x31));
+            strcat(StringTemp, ")");
+        }
+        strcat(StringTemp, "|");
+        strcat(StringTemp, StringTable.get(static_cast<int>(reinterpret_cast<intptr_t>(
+            Terraforming[terraform_id].shortcuts))));
+        const int menu_item = 0x900 + terraform_id;
+        rename_menu_item(9, menu_item, StringTemp);
+
+        if (can_build_here) {
+            show_menu_item(9, menu_item);
+            enable_menu_item(9, menu_item);
+            if (terraform_id == 18) show_menu_item(9, 1);
+        } else {
+            disable_menu_item(9, menu_item);
+            hide_menu_item(9, menu_item);
+            if (terraform_id == 18) hide_menu_item(9, 1);
+        }
+    }
+
+    // The native state transitions intentionally occur after the row loop.
+    show_menu_item(9, 0x9F8);
+    show_menu_item(9, 0x9F9);
+    enable_menu_item(9, 0x9F8);
+    enable_menu_item(9, 0x9F9);
+    hide_menu_item(9, 0x9F7);
+    hide_menu_item(9, 0x9F2);
+
+    const int local_faction = ConsoleGlobal.faction_id_;
+    const int terrain_row_10 = sea_order_labels
+        ? Terraforming[10].preq_tech_sea : Terraforming[10].preq_tech;
+    if (has_tech(terrain_row_10, local_faction)) {
+        enable_menu_item(9, 0x9F6);
+    } else {
+        disable_menu_item(9, 0x9F6);
+    }
+
+    const int terrain_row_5 = sea_order_labels
+        ? Terraforming[5].preq_tech_sea : Terraforming[5].preq_tech;
+    if (has_tech(terrain_row_5, local_faction)) {
+        enable_menu_item(9, 0x9F0);
+        show_menu_item(9, 0x9F3);
+        enable_menu_item(9, 0x9F3);
+    } else {
+        disable_menu_item(9, 0x9F0);
+        hide_menu_item(9, 0x9F3);
+    }
+
+    const int terrain_row_6 = sea_order_labels
+        ? Terraforming[6].preq_tech_sea : Terraforming[6].preq_tech;
+    if (has_tech(terrain_row_6, local_faction)) {
+        show_menu_item(9, 0x9F1);
+        show_menu_item(9, 0x9F4);
+        enable_menu_item(9, 0x9F1);
+        enable_menu_item(9, 0x9F4);
+    } else {
+        hide_menu_item(9, 0x9F1);
+        hide_menu_item(9, 0x9F4);
+    }
+
+    const int terrain_row_9 = sea_order_labels
+        ? Terraforming[9].preq_tech_sea : Terraforming[9].preq_tech;
+    if (has_tech(terrain_row_9, local_faction)) {
+        show_menu_item(9, 0x9F5);
+        enable_menu_item(9, 0x9F5);
+    } else {
+        hide_menu_item(9, 0x9F5);
+    }
+
+    const int owner = (selected_tile->bit & 1u) != 0
+        ? static_cast<int>(selected_tile->val2 & 0x0Fu) : -1;
+    if (owner >= 0 && owner < 8) {
+        hide_menu_item(3, 0x317);
+        show_menu_item(3, 0x316);
+    } else {
+        show_menu_item(3, 0x317);
+        hide_menu_item(3, 0x316);
+    }
+
+}
+    } else {
+        // Native 0x00461E48 fallback for a disabled cursor or negative ID.
+        for (int fallback_item_id = 0x300; fallback_item_id <= 0x324;
+             ++fallback_item_id) {
+            if (fallback_item_id == 0x313) enable_menu_item(3, fallback_item_id);
+            else disable_menu_item(3, fallback_item_id);
+        }
+    }
+
+for (int scenario_menu_id = 0x601; scenario_menu_id <= 0x61B; ++scenario_menu_id) {
+    if ((GameState & 0x40u) != 0) enable_menu_item(6, scenario_menu_id);
+    else disable_menu_item(6, scenario_menu_id);
+}
+for (int scenario_option_id = 0xA00; scenario_option_id <= 0xA54; ++scenario_option_id) {
+    if ((GameState & 0x40u) != 0) enable_menu_item(10, scenario_option_id);
+    else disable_menu_item(10, scenario_option_id);
+}
+
+if ((GameMorePreferences & 0x200000u) == 0) {
+    hide_menu_item(2, 0x205);
+    hide_menu_item(2, 0x206);
+    hide_menu_item(2, 0x207);
+    hide_menu_item(2, 0x208);
+    hide_menu_item(2, 0x20C);
+    hide_menu_item(2, 0x215);
+    hide_menu_item(2, 0x211);
+    hide_menu_item(2, 0x212);
+    hide_menu_item(3, 0x31B);
+    hide_menu_item(3, 0x324);
+    hide_menu_item(3, 0x306);
+    hide_menu_item(3, 0x304);
+    hide_menu_item(3, 0x319);
+    hide_menu_item(3, 0x31A);
+    hide_menu_item(3, 0x317);
+    hide_menu_item(3, 0x320);
+    hide_menu_item(3, 0x31F);
+    hide_menu_item(3, 0x307);
+    hide_menu_item(3, 0x322);
+    hide_menu_item(9, 0x9F8);
+    hide_menu_item(9, 0x9F9);
+    hide_menu_item(9, 0x9F6);
+    hide_menu_item(9, 0x9F5);
+    hide_menu_item(9, 0x9F4);
+    hide_menu_item(9, 0x9F3);
+    hide_menu_item(9, 0x9F1);
+    hide_menu_item(9, 0x9F0);
+    hide_menu_item(9, 5);
+    hide_menu_item(9, 6);
+    hide_menu_item(9, 7);
+}
+
+}
 // The initialization loads the screen-size-specific menu sheet into a
 // temporary Buffer, extracts the button sprites, then initializes the real
 // GraphicWin base. The local's automatic lifetime also covers the early

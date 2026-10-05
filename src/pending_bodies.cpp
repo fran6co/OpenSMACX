@@ -490,16 +490,7 @@ void MapWin::gen_overlays(int x, int y) {
 // SpriteBox::on_redraw (0x00611380) WAS HERE and is gone: the body is homed
 // into src/leaf_recoveries.cpp 2026-09-27.
 
-// ?check@MainMenu@@QAEXH@Z at 0x00460DD0. The catalogue's class name for the
-// object at Console+0x22A2C is MainMenu, but that object is AlphaMenu-shaped
-// (??0Console builds Menu at +0x22A2C, then Buffer, Sprite and Sprite[3]
-// after it - AlphaMenu's own member list), so the method is declared on
-// AlphaMenu and this forwarder carries the tree's emitted name.
-//             body in src/unrecovered/00460dd0.cpp
-void AlphaMenu::check(int veh_id) {  // 0x00460DD0
-    typedef void(__fastcall *pending)(AlphaMenu *, void *, int);
-    PENDING_BODY(0x00460DD0, pending)(this, nullptr, veh_id);
-}
+// The catalogued ?check@MainMenu@@QAEXH@Z body at 0x00460DD0 is source-owned by AlphaMenu::check in alphamenu.cpp. The native writer retains its original identity and spans there; no pending forwarder remains.
 
 // ?write_raw_l@Buffer@@QAEHPADHHH@Z at 0x005DBD00 - 1475 bytes, the raster
 // writer that puts one single-font run on the surface. Called by name from
