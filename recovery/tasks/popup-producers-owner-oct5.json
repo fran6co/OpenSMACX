@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "task_id": "popup-producers-owner-oct5",
+  "target": "opensmacx",
+  "author": "framework-coordinator",
+  "base_revision": "67e9243d4c82aaa8b046653cd25ad7281d0e1bef",
+  "intent": "Recover complete popb and separate five-argument popm with genuine embedded ownership and no executable forwarding; retire both superseded seeds.",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4769360
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5886896
+    }
+  ],
+  "files": [
+    "src/popup.cpp",
+    "src/popmenu.cpp",
+    "src/popmenu.h",
+    "src/basepop.h",
+    "src/pending_bodies.cpp",
+    "src/unrecovered/0048c650.cpp",
+    "src/unrecovered/0059d3b0.cpp",
+    "recovery/tests/test_popup_dialog_producer_actual_source.py",
+    "recovery/tests/fixtures/popup_producers/popb-host.cpp",
+    "recovery/tests/fixtures/popup_producers/popm-host.cpp"
+  ],
+  "evidence": [
+    "User authorizes coordinator-reviewed compiling recovery and temporary structural matching regressions; preserve historical obligations.",
+    "Pinned popb Popup frame-5490 owns Sprite+2118 and Dialogs+21D0;48CC1D is embedded Scroll cleanup, not a second Dialogs constructor.",
+    "Native facility threshold adds2 and warning persistence tests input_poll_state independently of exec result.",
+    "Native59D3B0 uses one PopMenu with PullDown+537C and complete exception-cleanup span, distinct from59D690 overload.",
+    "Require fresh build/link, baseline/current scoped measurements, continuity and self-contained actual-source controls before commit; no full acceptance claim."
+  ]
+}

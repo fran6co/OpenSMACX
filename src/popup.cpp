@@ -41,6 +41,8 @@
 #include "console.h"
 #include "game.h"
 #include "palette.h"
+#include "general.h"
+#include "faction.h"
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0048C320 ?popt@@YAHPADPBDHPADH@Z 0x0048C320-0x0048C353 FILE BYTE_EXACT
@@ -3204,3 +3206,129 @@ int __cdecl popup_faction_datalinks(int faction_id) {
     return x_pop_caption_label(Players[faction_id].filename, "DATALINKS",
                                0);
 }
+
+// Superseded seed removed; retained findings below are historical evidence.
+// ORIGINAL: 0x0048C650 ?popb@@YAHPBDHHPBDPAUSprite@@@Z 0x0048C650-0x0048CEA2;0x00658411-0x006585CB FILE
+// RECOVERY_BINDING: v1 {"evidence": ["git:67e9243d4c82aaa8b046653cd25ad7281d0e1bef:src/unrecovered/0048c650.cpp", "pinned:terranx_original:0x48c650", "source:src/popup.cpp"], "reason": "Recover complete popup operation with native early gates, warning/focus/result effects and genuine owned Sprite/Dialogs members, never duplicate locals. Preserve complete spans, original identity and historical obligations; scoped compiler/host observations are not game acceptance."}
+// symbol    ?popb@@YAHPBDHH0PAVSprite@@@Z
+// TRIED: no Ghidra hypothesis was available for this one (brief carried none). This function registers a real SEH frame (mov fs:[0],esp) around a huge local Popup (which embeds Scroll/2xFlatButton/Sprite/Heap per the scaffold's own already- reverse-engineered layout) plus several more locals (Dialogs embedding Dialog+GraphicWin, a second Sprite, SpriteBox) - the destructor cascades visible in the disasm are the INLINED expansion of each object's own close()/dtor. A plain `Popup popup_;` local compiled but left `??1Popup@@QAE@XZ` as a SECOND external .text symbol (the compiler declined to inline it here, unlike the proven pattern from other landings) - fixed by placement-new into a raw byte buffer with explicit `popup_->close(); popup_->~Popup();` at every exit instead of relying on scope-exit RAII. Also needed `struct Sprite` (not `class`) and a `static` fix on `Buffer::get_pcx_dimensions` to match the catalogued mangled name (PAU not PAV; QAA not QAE). The early-return bailout conditions (3 checks on 9a64c0/9a64e8/939284/93a95c) and the mid-function dialog-population logic are a good-faith reading of the raw disasm, not independently re-verified argument- by-argument the way the other 7 addresses were - lowest-confidence landing in this batch. Compiles; not chased to byte-exact given size (2572 bytes) and time.
+int __cdecl popb(LPCSTR text_label, int warning_mask, int sound_id,
+                 LPCSTR picture_file, Sprite *caller_picture) {
+    Popup popup;
+    const int faction = BaseCurrent->faction_id_current;
+    const uint8_t faction_bit = static_cast<uint8_t>(1u << faction);
+
+    if ((static_cast<uint8_t>(LockEnableMask) & faction_bit) == 0) {
+        return 0;
+    }
+    if ((GameState & STATE_UNK_1) != 0 && (GameState & STATE_UNK_8) == 0) {
+        return 0;
+    }
+    if (faction != ConsoleGlobal.faction_id_
+        && CurrentFactionEnergyReserves == 0) {
+        return 0;
+    }
+
+    char popup_text[0x114];
+    strcpy(popup_text, text_label);
+    parse_says(0, BaseCurrent->name_string, -1, -1);
+
+    if (sound_id >= 0) {
+        g_FX.play(sound_id);
+    } else if (IsMultiplayerNet != 0) {
+        g_FX.play(0x21);
+    }
+
+    popup.start(PopupStartCaption, popup_text, -1, 0, 0, 0);
+
+    popup.set_auto_hide_value(0x3EA);
+    const bool warning_enabled = warning_mask != 0
+        && (GameWarnings & static_cast<uint32_t>(warning_mask)) != 0
+        && CurrentFactionEnergyReserves == 0;
+    if (!warning_enabled) {
+        popup.set_auto_hide_value(2);
+    } else {
+        bool focus_allowed = faction == ConsoleGlobal.faction_id_
+            || (GameState & STATE_OMNISCIENT_VIEW) != 0;
+        if (!focus_allowed) {
+            const Base &selected = Bases[BaseIDCurrentSelected];
+            const uint8_t selected_owner = selected.faction_id_current;
+            const uint8_t viewer_bit = static_cast<uint8_t>(
+                1u << ConsoleGlobal.faction_id_);
+            focus_allowed = selected_owner == ConsoleGlobal.faction_id_
+                || (selected.visibility & viewer_bit) != 0;
+        }
+        if (focus_allowed
+            && (GameMorePreferences & MPREF_ADV_ZOOM_BASE_NO_RECENTER_MAP) == 0) {
+            ConsoleGlobal.focus(BaseCurrent->x, BaseCurrent->y, faction);
+        }
+    }
+
+    int picture_width;
+    int picture_height;
+    if (picture_file != 0
+        && Buffer::get_pcx_dimensions(picture_file, &picture_width,
+                                      &picture_height) == 0
+        && popup.owned_picture().init(const_cast<char *>(picture_file),
+                                      picture_width, picture_height) == 0) {
+        popup.set_caller_picture(&popup.owned_picture());
+    }
+    if (BaseProductionZoomRequested == 0
+        && faction == ConsoleGlobal.faction_id_
+        && IsMultiplayerNet == 0
+        && CurrentFactionEnergyReserves == 0) {
+        popup.dialogs().item(label_get(0xB0 / 4), 0);
+        popup.dialogs().item(label_get(0xB4 / 4), 1);
+
+        if ((GameState & STATE_UNK_8) != 0 && BaseCurrent->population_size > 1) {
+            int facility_offset;
+            int facility_mask;
+            bitmask_call(0x23, &facility_offset, &facility_mask);
+            const bool has_psi_facility =
+                (Bases[BaseIDCurrentSelected].facilities_built[facility_offset]
+                 & static_cast<uint8_t>(facility_mask)) != 0;
+            const int specialist_flag = static_cast<int>(
+                PlayersData[faction].flags) + (has_psi_facility ? 2 : 0);
+            if (specialist_flag >= 0) {
+                popup.dialogs().item(label_get(0x7AC / 4), 3);
+            }
+        }
+    }
+
+    if (warning_mask != 0) {
+        popup.button(label_get(0x6EC / 4));
+    }
+    popup.set_value(0);
+    if (caller_picture != 0) {
+        popup.configure_sprite_dialog(caller_picture);
+    }
+
+    const int popup_result = popup.exec(0, 0);
+    int result = popup_result;
+    if (IsMultiplayerNet != 0 || CurrentFactionEnergyReserves != 0) {
+        result = 1;
+    }
+
+    // Native tests BasePop::field_3100_, independently of exec's return.
+    if (popup.input_poll_state() != 0) {
+        GameWarnings &= ~static_cast<uint32_t>(warning_mask);
+        AlphaIniPrefs.announce = GameWarnings;
+        prefs_save(0);
+    }
+
+    if (sound_id >= 0) {
+        g_FX.fade(sound_id);
+    }
+
+    if (result == 0 && CurrentFactionEnergyReserves == 0) {
+        BaseProductionZoomRequested = 1;
+    } else if (result == 2) {
+        BaseCurrent->state |= BSTATE_UNK_8000000000 | BSTATE_RESEARCH_DATA_STOLEN;
+    } else if (result == 3) {
+        action_staple(BaseIDCurrentSelected);
+    }
+    return result;
+}
+
+// Historical seed lifetime hypotheses used duplicate locals and raw placement storage.
+// Native receiver evidence supersedes those models; genuine embedded member lifetimes now own cleanup.

@@ -522,6 +522,12 @@ class BasePop : public GraphicWin {
   // Satellite target selection initializes the owned picture, then selects
   // that same member only after Sprite::init succeeds (4A067F..4A0694).
   Sprite &owned_picture() { return sprite_; }
+  // Native popb configures this owned SpriteBox, then its two state fields.
+  void configure_sprite_dialog(Sprite *picture) {
+    dialogs_.sprite(picture, 0, 0);
+    field_3104_ = 2;
+    field_3108_ = 1;
+  }
   void select_owned_picture() { caller_sprite_ = &sprite_; }
   bool picture_enabled() const { return dialogs_.SpriteBox::list_.entry_count_ != 0; }
   void set_caller_picture(Sprite *picture) { caller_sprite_ = picture; }

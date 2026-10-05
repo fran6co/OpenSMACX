@@ -95,3 +95,6 @@ class PopMenu : public Popup {
 
 // Opens one owning PopMenu and returns its selected slot.
 int __cdecl popm(char *section, int x, int y, int (__cdecl *poll)());
+
+// File-and-section overload opens the same owning PopMenu lifecycle.
+int __cdecl popm(char *file, char *section, int x, int y, int (__cdecl *poll)());

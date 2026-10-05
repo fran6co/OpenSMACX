@@ -379,10 +379,7 @@ int __cdecl battle_fight(int veh_id, int dir, int x, int y, int src_mode,
 
 
 
-int __cdecl popb(LPCSTR a1, int a2, int a3, LPCSTR a4, Sprite * a5) {  // 0x0048C650
-    typedef int(__cdecl *pending)(LPCSTR, int, int, LPCSTR, Sprite *);
-    return PENDING_BODY(0x0048C650, pending)(a1, a2, a3, a4, a5);
-}
+// popb is source-owned in popup.cpp; no original-image forwarder.
 
 
 
