@@ -5,6 +5,12 @@ framework. Work units are ownership groups; functions and original spans are
 measurement units. Byte-exact code can still have wrong hierarchy, lifetime or
 references. Do not preserve those defects to protect a local similarity score.
 
+First milestone: complete byte-exact source recovery, bug for bug with the pinned
+original. Bug fixes and improvements come afterward; this supersedes earlier
+prospective fix approvals. Compiling coverage remains an intermediate step, not
+milestone completion. See `recovery/WORKFLOW.md`, "Milestone order". Preserve
+original quirks and evidence; do not silently normalize unsafe/error paths.
+
 ## Read next
 
 - `recovery/WORKFLOW.md`: active coordinator, worker and review workflow.

@@ -6,6 +6,50 @@ are hints in `COMPILER_EVIDENCE.md`, never workflow policy. The implementation
 boundary and unfinished capabilities are described in `README.md` here and
 `docs/recovery/FRAMEWORK.md` at the repository root.
 
+## Milestone order: faithful recovery before improvements
+
+The user's first milestone is **complete byte-exact source recovery, bug for
+bug with the pinned original executable**. Fixes, safety improvements and other
+intentional behavior changes belong to a subsequent milestone. This ordering
+supersedes earlier prospective bug-fix permissions, including the alien-movement
+current-tile fallback; retain those proposals separately rather than publishing
+them as the faithful implementation.
+
+Continue parallel full-owner recovery toward compiling source coverage as an
+intermediate checkpoint. A compiling body or a temporary matching regression is
+not completion of the first milestone. Recover the original branch ordering,
+error paths, initialization, arithmetic, storage and lifetime effects, including
+defects. Do not silently add bounds checks, initialize formerly uninitialized
+values, fix leaks or substitute safe fallback behavior. A correction of a
+translation to agree with the original is recovery, not a bug fix.
+
+Use genuine source-owned C++ classes, members, globals and compiler-generated
+lifetime operations. Do not substitute machine-code copies, old executable
+addresses or manually staged vtables for faithful source reconstruction. Preserve
+justified structural work and original obligations through temporary mismatches;
+restore fidelity across the complete affected ownership group rather than
+discarding discoveries to protect one local score.
+
+Before declaring the first milestone complete, establish all of the following:
+
+- Every in-scope original identity has its complete compiling implementation in
+  the real source owner; no seed-only body, placeholder or address forwarder
+  substitutes for recovered behavior. Superseded seed artifacts are retired.
+- Fresh measurements establish exact matching for the complete original spans,
+  including generated lifetime code and associated data/reference targets.
+  Masked local byte equality alone does not establish full executable fidelity.
+- The complete application builds and links with verified dependency versions,
+  source mappings and the original ABI/storage relationships. Unresolved scope,
+  image-layout, reference and linked-preservation evidence remains unfinished.
+- Deliberate behavior fixes already integrated are audited and separated from
+  the faithful milestone without losing their source work or provenance.
+
+Undefined behavior requires evidence of the original compiler/runtime effects;
+it is not permission to choose a convenient result. Record unresolved effects as
+remaining obligations. No current coverage count, historical claim ledger or
+bounded host test proves this milestone. Once independently verified, preserve a
+Git checkpoint of the faithful source before implementing fixes or improvements.
+
 ## 1. Establish ownership and evidence
 
 For executable-first exploration, `uv run recover survey --image <image> --summary`

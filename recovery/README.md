@@ -6,6 +6,11 @@ verification run in the library; the former application operation bridge is
 removed. Local compiler scripts remain in `environment/`. See
 [the portable package](../packages/match-recovery/README.md) for starting an unrelated project.
 
+The first user milestone is complete byte-exact source recovery, bug for bug
+with the original; intentional bug fixes and improvements follow afterward.
+Compiling coverage is intermediate progress, not that milestone. The controlling
+ordering and evidence requirements are in `WORKFLOW.md`, "Milestone order".
+
 The terrain loader and renderer need one palette-index table and three signed
 landmark receiver/rotation tables from the pinned original. CMake materializes
 them into ignored `build/recovery/preparation/terrain-data/`
