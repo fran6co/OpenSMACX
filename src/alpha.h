@@ -755,6 +755,10 @@ void __cdecl prefs_save(BOOL save_factions);
 void __cdecl prefs_use();
 LPSTR __cdecl prefs_get_binary(int value);
 BOOL __cdecl labels_init();
+// alpha.cpp keeps Compass storage private and populates it from #COMPASS.
+// say_orders indexes this parsed eight-direction table by waypoint direction.
+LPSTR __cdecl compass_name(int direction);
+
 void __cdecl say_label(int label_offset);
 LPSTR __cdecl label_get(int label_offset);
 

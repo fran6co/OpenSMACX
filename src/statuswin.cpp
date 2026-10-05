@@ -1079,7 +1079,7 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
 
         StringTemp[0] = '\0';
         strcat(StringTemp, "(");
-        say_orders(StringTemp, vehicle.proto_id);
+        say_orders(StringTemp, vehicle_id);
         if (vehicle.state & VSTATE_DESIGNATE_DEFENDER) {
             strcat(StringTemp, "#");
         }
@@ -1496,13 +1496,134 @@ void say_orders(int veh_id) {
     say_orders(StringTemp, veh_id);
 }
 
-// ?say_orders@@YAXPADH@Z at 0x004B43E0, 1421 bytes - still an original body
-// (src/recovered/units/004b43e0.cpp), forwarded here because the int form
-// above calls it by name. It carries no claim, so a forwarder is allowed.
-void say_orders(char *text, int veh_id) {  // 0x004B43E0
-    typedef void(__cdecl *pending)(char *, int);
-    reinterpret_cast<pending>(static_cast<unsigned long>(0x004B43E0))(text,
-                                                                     veh_id);
+static const char *vehicle_order_text_id(int id) {
+    return StringTable.get(id);
+}
+
+static const char *vehicle_order_rule_text(LPSTR encoded_id) {
+    return vehicle_order_text_id(static_cast<int>(
+        reinterpret_cast<intptr_t>(encoded_id)));
+}
+
+// ORIGINAL: 0x004B43E0 ?say_orders@@YAXPADH@Z 0x004B43E0-0x004B496D
+// RECOVERY_BINDING: v1 {"evidence": ["git:eff92f20c0edb9c702224c574918f09a95579182:src/recovered/units/004b43e0.cpp: complete original identity/span and historical scaffolding measurement", "Pinned4B5C17 passes StatusWin::draw_active vehicle_id to4B43E0", "96C9B0 is Order[26].order; original ORDERS parser populates this shared record", "Seed g_96c878x/stride12 is Order; g_94615cx/stride8 is Resource.name_plural; g_945d48x/stride4 is parsed Compass", "recovery/tasks/say-orders-owner-oct5.json", "recovery/tests/test_say_orders_actual_source.py"], "reason": "Recover complete vehicle order text builder through genuine vehicle, base, map and parsed rules owners; replace only the old executable forwarder. Native caller passes vehicle_id, not prototype_id. Preserve original branch, buffer and index behavior; parsed Compass/Resource pointer-shaped string IDs retain their current representation pending separate type cleanup."}
+// Historical seed observation: complete scaffold measured MISMATCH at3;
+// its obsolete tool instructions are retired, not a current body claim.
+void __cdecl say_orders(char *text, int veh_id) {
+    Veh &vehicle = Vehs[veh_id];
+    const uint32_t state = vehicle.state;
+
+    const bool prefix_state = vehicle.waypoint_count <= vehicle.patrol_current_point;
+    if ((state & 0x00000200u) != 0
+        && (state & 0x01000200u) != 0x01000200u
+        && ((state & 0x02000200u) != 0x02000200u || prefix_state)) {
+        ::strcat(text, "(");
+        if (vehicle.order_auto_type == 10) {
+            char prefix[80];
+            prefix[0] = '\0';
+            ::strcat(prefix, label_get(0x6F0 / 4));
+            const int base_id = base_at(vehicle.waypoint_x[1],
+                                        vehicle.waypoint_y[1]);
+            if (base_id >= 0) {
+                parse_says(0, Bases[base_id].name_string, -1, -1);
+                char suffix[80];
+                parse_string(prefix, suffix);
+                ::strcat(text, suffix);
+            }
+        } else if (vehicle.order_auto_type == 11) {
+            ::strcat(text, label_get(0x6F4 / 4));
+        } else if (VehPrototypes[vehicle.proto_id].plan == 9
+                   && vehicle.order_auto_type != 0) {
+            ::strcat(text, label_get((0x62C
+                + vehicle.order_auto_type * 4) / 4));
+        } else {
+            ::strcat(text, label_get(0x62C / 4));
+        }
+        ::strcat(text, ") ");
+    }
+
+    if ((state & 0x00004000u) != 0) {
+        ::strcat(text, vehicle_order_rule_text(Order[26].order));
+        return;
+    }
+
+    if ((state & 0x01000200u) == 0x01000200u) {
+        ::strcat(text, label_get(0x65C / 4));
+        ::strcat(text, ": ");
+        const int count = vehicle.waypoint_count + 1;
+        for (int index = 0; index < count; ++index) {
+            say_loc(text, vehicle.waypoint_x[index],
+                    vehicle.waypoint_y[index], 0, 2, 0);
+            if (index < vehicle.waypoint_count) {
+                ::strcat(text, " ");
+                ::strcat(text, label_get(0x660 / 4));
+                ::strcat(text, " ");
+            }
+        }
+        return;
+    }
+
+    const int tile_index = vehicle.y * static_cast<int>(MapLongitude)
+                        + (vehicle.x >> 1);
+    const uint8_t altitude = MapTiles[tile_index].climate & 0xE0;
+    const int terrain_row = altitude < 0x60 ? 1 : 0;
+    const unsigned int order_index =
+        static_cast<unsigned char>(vehicle.order) & 0x3F;
+    const RulesOrder &order = Order[order_index];
+    const LPSTR order_label = terrain_row ? order.order_sea : order.order;
+    ::strcat(text, vehicle_order_rule_text(order_label));
+
+    if (vehicle.order == ORDER_CONVOY) {
+        ::strcat(text, " ");
+        ::strcat(text, StringTable.get(static_cast<int>(
+            reinterpret_cast<intptr_t>(
+                Resource[vehicle.order_auto_type].name_plural))));
+        const int base_id = base_at(vehicle.x, vehicle.y);
+        if (base_id >= 0) {
+            ::strcat(text, " ");
+            ::strcat(text, label_get(0x6C8 / 4));
+            ::strcat(text, " ");
+            say_base(text, vehicle.home_base_id);
+        } else {
+            ::strcat(text, "(");
+            const int yield = resource_yield(
+                vehicle.order_auto_type, vehicle.faction_id,
+                vehicle.home_base_id, vehicle.x, vehicle.y);
+            char number[80];
+            _itoa(yield, number, 10);
+            ::strcat(text, number);
+            ::strcat(text, label_get(0x5EC / 4));
+            ::strcat(text, ") ");
+        }
+    }
+
+    if ((static_cast<unsigned char>(vehicle.order) & 0x3F) == ORDER_MOVE_TO) {
+        ::strcat(text, " ");
+        const bool has_patrol_route =
+            (state & 0x02000200u) == 0x02000200u
+            && vehicle.patrol_current_point < vehicle.waypoint_count;
+        const int location_mode = has_patrol_route ? 2 : 1;
+        say_loc(text, vehicle.waypoint_x[0], vehicle.waypoint_y[0],
+                0, location_mode, 0);
+        if (has_patrol_route && vehicle.waypoint_count != 0) {
+            for (int index = 0; index < vehicle.waypoint_count; ++index) {
+                ::strcat(text, " ");
+                ::strcat(text, label_get(0x664 / 4));
+                ::strcat(text, " ");
+                say_loc(text, vehicle.waypoint_x[index + 1],
+                        vehicle.waypoint_y[index + 1], 0, 2, 0);
+            }
+        }
+    }
+    if (vehicle.order == ORDER_MOVE) {
+        ::strcat(text, " ");
+        ::strcat(text, compass_name(vehicle.waypoint_x[0]));
+    }
+    if (vehicle.order == ORDER_ROAD_TO || vehicle.order == ORDER_MAGTUBE_TO) {
+        ::strcat(text, " ");
+        say_loc(text, vehicle.waypoint_x[0], vehicle.waypoint_y[0],
+                0, 2, 0);
+    }
 }
 
 // ORIGINAL: 0x004B6530 ?reset_active@StatusWin@@QAEXXZ 0x004B6530-0x004B6569 BYTE_EXACT

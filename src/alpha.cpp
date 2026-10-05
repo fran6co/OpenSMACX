@@ -64,7 +64,16 @@ LPCSTR ScriptTxtID = "SCRIPT";
 // `const` + static: nothing outside this file names them, so internal
 // linkage folds the address into every subscript.
 static LPSTR Compass[MaxCompassNum];      // 0x00945D48
+
+// Typed view over Compass's existing #COMPASS parsing and eight-entry
+// lifetime. The native reader treats each LPSTR as an encoded StringTable ID.
+LPSTR __cdecl compass_name(int direction) {
+    return StringTable.get(static_cast<int>(
+        reinterpret_cast<intptr_t>(Compass[direction])));
+}
+
 LPSTR Difficulty[MaxDiffNum];      // 0x0096C85C
+
 // ===== THE RULES OBJECTS - real storage, homed to the parser =====
 // Each address is zero-initialised data in the shipped image (image_data.py:
 // all sixteen sit in .data past the bytes the file carries, ZERO at run

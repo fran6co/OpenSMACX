@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "task_id": "say-orders-owner-oct5",
+  "target": "opensmacx",
+  "author": "framework-coordinator",
+  "base_revision": "eff92f20c0edb9c702224c574918f09a95579182",
+  "intent": "Complete typed vehicle-order text operation, correct genuine vehicle-id caller and use shared parsed rule tables. Retire superseded seed with full original identity/findings; no altered original behavior or byte grant.",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4932576
+    }
+  ],
+  "files": [
+    "recovery/tests/say_orders_host.cpp",
+    "recovery/tests/test_say_orders_actual_source.py",
+    "src/alpha.cpp",
+    "src/alpha.h",
+    "src/recovered/units/004b43e0.cpp",
+    "src/statuswin.cpp"
+  ],
+  "evidence": [
+    "Independent pinned-native review corrected Order[26] shared unavailable string and caller vehicle ID; complete remaining branch/field/control flow reviewed.",
+    "Native private alpha/statuswin compilation passes under current source closure.",
+    "Current Compass/Resource encoded-pointer representation is retained as explicit type debt; no guessed capacity, detached state, new match or runtime acceptance."
+  ]
+}
