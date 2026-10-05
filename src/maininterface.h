@@ -117,6 +117,7 @@ class MainInterface : public GraphicWin, public SubInterface {
   friend class CouncWin;  // Council init reads the existing panel height metric.
   friend class BaseWin;  // draw_garrison uses the adjacent panel rectangles.
   friend class WorldWin;  // UNK1 copies the owned tutorial rectangle.
+  friend void __cdecl blink_timer(int); // timer clips this owned StringBox.
   // MessageWin::init copies the pane bounds at +0xD1C..+0xD28 into its
   // own RECT. This grants that owner typed access while this region awaits
   // a named MainInterface rectangle member.

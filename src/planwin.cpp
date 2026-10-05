@@ -554,12 +554,8 @@ void PlanWin::close() {
 
 namespace {
 
-// blink dispatches through the virtual base's own vtable rather than a C++
-// virtual call, so no vtable this toolchain lays out can disagree with the
-// original's. Slot 0x30 is read from whatever object is actually there.
-typedef void (OriginalObject::*func_base_vtable_slot)();
-
-static const size_t PlanWinBlinkSlot = 0x30;
+// blink uses genuine virtual on_redraw dispatch. The helper below still
+// serves the separately mapped center operation; its migration is pending.
 
 // Both methods reach the virtual base the way the original does - through the
 // vbtable rather than through the member - so they stay correct for any class
@@ -589,9 +585,7 @@ void PlanWin::blink() {
         return;
     }
     field_21A6C_ = (field_21A6C_ == 0) ? 1 : 0;
-    uint8_t *const base = virtual_base_of(this);
-    void **const vtable = *reinterpret_cast<void ***>(base);
-    (ORIGINAL(base)->*original_method<func_base_vtable_slot>(reinterpret_cast<unsigned long>(vtable[PlanWinBlinkSlot / sizeof(void *)])))();
+    on_redraw();
 }
 
 

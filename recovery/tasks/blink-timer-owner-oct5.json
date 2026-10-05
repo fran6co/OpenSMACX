@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "task_id": "blink-timer-owner-oct5",
+  "target": "opensmacx",
+  "author": "framework-coordinator",
+  "base_revision": "371deca46d2a09538c2887fcf5c729de7add0065",
+  "intent": "Complete blink_timer callback and replace PlanWin manual vtable-slot dispatch with genuine virtual redraw; remove the old executable forwarder and superseded seed with all obligations intact.",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5302848
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4766752
+    }
+  ],
+  "files": [
+    "recovery/tests/test_blink_timer_actual_source.py",
+    "src/console.h",
+    "src/maininterface.h",
+    "src/mapwin.h",
+    "src/pending_bodies.cpp",
+    "src/planwin.cpp",
+    "src/recovered/units/0050ea40.cpp",
+    "src/temp.h",
+    "src/time.cpp"
+  ],
+  "evidence": [
+    "Complete original997byte extent and historical lessons transported with native source writer, not new binding/claim.",
+    "Genuine existing member/base owners, typedMapWinTable and source-owned WinInstance; no fixed executable-address data or virtual-dispatch stand-ins.",
+    "Host tests project actual production body, not native hierarchy/member adjustment or full-game proof; native verification remains independent."
+  ]
+}

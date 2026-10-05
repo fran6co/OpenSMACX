@@ -204,14 +204,9 @@ void __stdcall VectorCtorIterator(void *array, unsigned int element_size, int co
 // Four Time callbacks `temp.h` bound as pointers - start_timers (time.cpp)
 // calls each by name now, reaching the image's `push 0x...` immediate
 // instead of loading the pointer from memory.
-// blink2_timer, line_timer and turn_timer WERE HERE, forwarding to
+// blink_timer, blink2_timer, line_timer and turn_timer WERE HERE, forwarding to
 // 0x0050EE30, 0x0050EE80 and 0x0050EF10. Homed into time.cpp 2026-08-29;
-// blink_timer's forwarder below remains.
-
-void __cdecl blink_timer(int a1) {
-    typedef void(__cdecl *pending)(int);
-    PENDING_BODY(0x0050EA40, pending)(a1);
-}
+// blink_timer is now homed into time.cpp with the other callback definitions.
 
 // social_set's 0x005B4600 forwarder was retired when the complete
 // typed body moved to faction.cpp; the seed identity/history remains

@@ -121,6 +121,7 @@ class Console : public MapWin {
   friend class MapWin;
  friend int __cdecl desktop_init(int fresh);
   friend void __cdecl go_timer(int selection_mode);
+ friend void __cdecl blink_timer(int); // reads the timer's mapped Console state.
  public:
   void chat(int faction_id);
   void road_to(int veh_id, int cursor_mode);

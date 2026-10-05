@@ -35,6 +35,164 @@ int Blink2Counter;      // 0x009392B4
 int PlanLineCounter;    // 0x00939FD4
 int TurnRedrawPending;  // 0x00703DE0
 
+// ORIGINAL: 0x0050EA40 ?blink_timer@@YAXH@Z 0x0050EA40-0x0050EE25 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["git:371deca46d2a09538c2887fcf5c729de7add0065:src/recovered/units/0050ea40.cpp: full original identity/spans and historical source-form findings", "Independent full seed/native semantic review; original three USER32 IAT targets resolve GetAsyncKeyState/GetFocus/GetWindowLongA with GWL_HINSTANCE.", "Win primary virtual slot12 is on_redraw; PlanWin::blink now uses genuine virtual dispatch, not manual vbase/table indexing.", "recovery/tasks/blink-timer-owner-oct5.json", "recovery/tests/test_blink_timer_actual_source.py"], "reason": "Complete timer callback through existing genuine tutorial/Plan/MainInterface/Console/MapWin owners and USER32 APIs. Preserve original guards, parity/wrap geometry, half-open bounds and cursor update ordering. Source family home is not asserted original TU ownership."}
+void __cdecl blink_timer(int a1) {
+    (void)a1;
+    if (WorldClimateSkipTerrainClear != 0) return;
+    if (TimerHoldFlag != 0) return;
+
+    if (TutWinBaseWindow.is_visible() != 0) {
+        TutWinGlobal->draw_arrow();
+        return;
+    }
+    if (TutWinSocWindow.is_visible() != 0) {
+        TutWinGlobal->draw_arrow();
+        return;
+    }
+
+    PlanWindow.blink();
+    MainInterfaceGlobal.string_box_.clip_ids(0x96);
+
+    const int t1 = ConsoleGlobal.field_23BE8_;
+    const unsigned char game_state = static_cast<unsigned char>(GameState);
+    const int multiplayer = IsMultiplayerNet;
+    if (t1 == 0 && (multiplayer == 0 || (game_state & 2) == 0)) {
+        ConsoleGlobal.field_23BFC_ = 0;
+        return;
+    }
+    if (ExitTurnLoop != 0) {
+        ConsoleGlobal.field_23BFC_ = 0;
+        return;
+    }
+    if (ConsoleGlobal.field_23BE4_ == 0
+        && (multiplayer == 0 || (game_state & 2) == 0)) {
+        return;
+    }
+
+    ConsoleGlobal.field_23BF8_ = ConsoleGlobal.field_23BF8_ == 0 ? 1 : 0;
+    draw_cursor();
+
+    const int blink_col = (GetAsyncKeyState(1) >> 8) & 0xFF;
+    if (reinterpret_cast<HINSTANCE>(GetWindowLongA(GetFocus(), GWL_HINSTANCE))
+        != WinInstance) {
+        return;
+    }
+    if (TutorialWindow.is_visible() != 0) return;
+    if (ConsoleGlobal.field_23D80_ == -1) return;
+    if (ConsoleGlobal.field_23D84_ == -1) return;
+    if (ConsoleGlobal.field_23D88_ == -1) return;
+    if (ConsoleGlobal.field_23D8C_ == -1) return;
+
+    const unsigned char preferences_high =
+        static_cast<unsigned char>(GamePreferences >> 8);
+    if ((preferences_high & 0x10) == 0 && blink_col == 0
+        && WinModalDepth == 0) {
+        return;
+    }
+
+    for (size_t slot = 0; slot < MapWinTableSlots; ++slot) {
+        MapWin *const window = MapWinTable[slot];
+        if (window == 0) continue;
+        int col = blink_col;
+
+        if (slot != 0 && window->field_1DD74_ == 0) continue;
+        if (col != 0 && window->field_1DD80_ == 0) continue;
+        if (window->field_1DDD4_ + window->field_1DDCC_
+            >= MapLongitudeBounds) {
+            continue;
+        }
+
+        int row = static_cast<int32_t>(window->field_1DDA0_);
+        col = static_cast<int32_t>(window->field_1DD9C_);
+
+        int mouse_x;
+        int mouse_y;
+        window->get_mouse_pos(&mouse_x, &mouse_y);
+        window->client_to_screen(&mouse_x, &mouse_y);
+
+        const unsigned char flat = static_cast<unsigned char>(MapIsFlat);
+        if (mouse_x == 0) {
+            col -= (window->field_1DDCC_ + 2) / 3;
+            if ((flat & 1) == 0) {
+                if (col < 0) {
+                    col += MapLongitudeBounds;
+                } else {
+                    const int width = MapLongitudeBounds;
+                    if (col >= width) col -= width;
+                }
+            }
+        }
+
+        if (mouse_x >= WinScreenWidth - 0xA
+            && mouse_x < WinScreenWidth + 0xA) {
+            int next_col = (window->field_1DDCC_ + 2) / 3 + col;
+            if ((flat & 1) != 0) {
+                col = next_col;
+            } else if (next_col < 0) {
+                col = MapLongitudeBounds + next_col;
+            } else {
+                const int width = MapLongitudeBounds;
+                if (next_col >= width) next_col -= width;
+                col = next_col;
+            }
+        }
+
+        if (mouse_y == 0 && window->field_1DDA8_ > -2) {
+            const int max_shift = window->field_1DDA8_ + 2;
+            const int requested = (window->field_1DDD0_ + 2) / 3;
+            int delta;
+            if (requested < 0 || max_shift < 0) {
+                delta = 0;
+            } else if (requested <= max_shift) {
+                delta = requested;
+            } else {
+                delta = max_shift;
+            }
+            row -= delta;
+        }
+
+        if (mouse_y >= WinScreenHeight - 0xA
+            && mouse_y < WinScreenHeight + 0xA) {
+            const int limit = MapLatitudeBounds + 2;
+            const int count = static_cast<int32_t>(window->field_1DDD8_);
+            const int start = window->field_1DDA8_;
+            if (start + count * 2 - 2 < limit) {
+                const int max_shift = (2 - count) * 2 - start
+                                    + MapLatitudeBounds;
+                const int requested = (window->field_1DDD0_ + 2) / 3;
+                int delta;
+                if (requested < 0 || max_shift < 0) {
+                    delta = 0;
+                } else if (requested > max_shift) {
+                    delta = max_shift;
+                } else {
+                    delta = requested;
+                }
+                row += delta;
+            }
+        }
+
+        if ((col & 1) != 0) col -= 1;
+        if ((row & 1) != 0) col += 1;
+
+        if (col == static_cast<int32_t>(window->field_1DD9C_)
+            && row == static_cast<int32_t>(window->field_1DDA0_)) {
+            continue;
+        }
+        if (row < 0) continue;
+        if (row >= MapLatitudeBounds) continue;
+        if (col < 0) continue;
+        if (col >= MapLongitudeBounds) continue;
+
+        if (window == static_cast<MapWin *>(&ConsoleGlobal)) {
+            window->field_21A44_ = 1;
+        }
+        window->set_center(col, row, 1);
+        window->field_21A44_ = 0;
+    }
+}
+
 // PlanWindow's virtual GraphicWin base begins at the timer's historical
 // receiver 0x00856DC0. The real PlanWin object owns that base and lifetime.
 // The MultiWin the turn timer redraws (`mov ecx, 0x7fd648`) is the REAL

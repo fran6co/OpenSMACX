@@ -73,10 +73,10 @@ void __cdecl draw_radius(int x_coord, int y_coord, int a3, int draw_type);
 
 // Time
 typedef void func30(int);
-// The four callbacks below are pending_bodies forwarders (src/pending_bodies.cpp).
+// The four callbacks below are implemented in time.cpp.
 // They were bound as pointers here, which cost `start_timers` the image's `E8`
 // at each of its four calls - see the note there.
-// 0x0050EA40, a pending_bodies forwarder.
+// 0x0050EA40, implemented in time.cpp beside the other timer callbacks.
 void __cdecl blink_timer(int a1);
 // 0x0050EE30, a pending_bodies forwarder.
 void __cdecl blink2_timer(int a1);

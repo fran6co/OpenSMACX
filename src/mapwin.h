@@ -528,6 +528,8 @@ extern int MapDestinationCost;
 // - 19 of 85 instructions in `Console::focus` against 29.
 typedef MapWin *MapWinSlots[8];
 extern MapWinSlots MapWinTable;
+// Free timer callback at 0x0050EA40 repaints the process-wide cursor.
+void __cdecl draw_cursor();
 // StatusWin clears this signed vehicle ID to -1 when no route destination
 // remains. MapWin::set_center uses it to redraw a selected destination.
 extern int DestinationVehicleId;
