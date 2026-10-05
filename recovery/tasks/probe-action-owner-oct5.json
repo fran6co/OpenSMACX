@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "task_id": "probe-action-owner-oct5",
+  "author": "framework-coordinator",
+  "target": "opensmacx",
+  "base_revision": "cefb36b328faa6f0623ba0d624c8529eaa0f6c35",
+  "intent": "Recover complete typed Probe action/UI behavior beside existing owner helpers, preserve original quirks and both spans, expose existing shared diplomacy declarations, and retire the superseded seed after compiling/linking and continuity controls.",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5894432
+    }
+  ],
+  "editable_files": [
+    "src/probe.cpp",
+    "src/faction.h",
+    "recovery/tests/test_probe_actual_source_runtime.py",
+    "recovery/tests/fixtures/probe_host_stubs.inc",
+    "recovery/tests/test_probe_actual_source_controls.py",
+    "src/unrecovered/0059f120.cpp"
+  ],
+  "evidence": [
+    "Existing shared scratch cells stay defined and originally mapped solely in faction.cpp; faction.h gains declarations, not shadow storage.",
+    "Real headers and original receiver/member relationships replace seed fixed-address operations; no byte claims banked.",
+    "False threshold-write edges preserve the prior path-local stack value. Test-only sentinel instrumentation observes no-store behavior without initializing product source.",
+    "Exact ordered comparison/reload and VC6 EH-state correspondence, linked preservation and full-game/runtime acceptance remain unverified."
+  ]
+}

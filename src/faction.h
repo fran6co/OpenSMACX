@@ -952,6 +952,7 @@ void __cdecl enemies_team_up(int faction_id, int faction_id_with,
 // or "they" by the faction's noun gender. 0x0058FCE0, still unrecovered and
 // forwarded in pending_bodies.cpp.
 char *__cdecl get_he_she(int faction_id, int sentence_form);
+char *__cdecl get_him_her(int faction_id, int sentence_form);
 char *__cdecl get_his_her(int faction_id, int sentence_form);
 char *__cdecl get_pact_hood(int faction_id, int faction_id_with);
 
@@ -1103,6 +1104,7 @@ extern int DiploScratchF7C0, DiploScratchF7EC, DiploScratchF7F4;
 extern int DiploScratchF800, DiploScratchF80C, DiploScratchF814;
 extern int DiploScratchFA20, DiploScratchFA44, DiploScratchFA6C, DiploScratchFA84, DiploScratchFAA4;
 extern int DiploScratchFA60;
+extern int DiploScratchFA3C, DiploScratchFA88, DiploScratchFA98;
 void __cdecl tech_analysis(int faction_id, int faction_id_with);
 void __cdecl diplomacy_caption(int faction_id, int faction_id_with);
 int __cdecl wants_to_speak(int faction_id, int other_faction_id);
