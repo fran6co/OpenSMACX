@@ -1,0 +1,29 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "ddebcdcd22f5d98121213a409fda31a381ea1600",
+  "editable_files": [
+    "src/console.cpp",
+    "src/console.h",
+    "src/time.h",
+    "src/pending_bodies.cpp",
+    "src/unrecovered/005178c0.cpp",
+    "recovery/tests/test_console_key_click_dispatch_host.py"
+  ],
+  "evidence": [
+    "Pinned native 0x5178C0-0x51B66F and EH 0x65D4D0-0x65D4E2; actual Console virtual GraphicWin receiver +0x23D94, compiler-emitted UAE member and compiler-owned vtordisp thunk. Retain legacy QAE interpreted original name separately.",
+    "Independent entry/cursor/modal review corrected missing map corridor, false-visible ButtonGroup handoff, normalized/raw key distinction, native nonzero mode-8 predicate, and unconditional single-player quit path. Nine host controls and full draft VC6 compile pass; production integration still needs fresh build/link and checks.",
+    "New touched-width storage: 0x939FE0 six byte cells,0x939FCC dword,0x68A5C8 dword initially -2,0x7CD2E8 dword. Pinned read_initial confirms exact accessed initial bytes; use v1 start-only bindings, not invented full allocation extents. NetMsg active cells belong to existing real objects and are not new globals.",
+    "Only layout-neutral Time::has_timer getter is added; existing feedback_hover_y_/field_1DD80 members and real MainInterface ButtonGroup are reused. Scoped C++ and source facts may differ from historical bytes; no claim demotion, machine-code copying or acceptance waiver. Coordinator-reviewed integration is authorized by user."
+  ],
+  "intent": "Recover the complete Console key/event handler through its genuine virtual MapWin/GraphicWin owner and typed methods, with ordinary Log lifetime, all dispatch corridors, and four explicitly provisional source storage identities. Replace the original-address forwarder and superseded seed only after all identity/spans/history and relevant checks survive. Preserve all historical claims; matching regressions are authorized under user coverage-first policy, not automatic acceptance.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5339328,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "console-key-owner-oct5"
+}
