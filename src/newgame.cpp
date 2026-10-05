@@ -49,9 +49,12 @@
 #include "time.h"
 #include "editgroup.h"
 #include "statuswin.h"
+#include "flic.h"
 
 // Existing process-wide audio owner defined in wave.cpp.
 extern Wave g_TOP_MENU_WAVE;
+extern Wave g_CRASH_LANDING_WAVE;
+extern int ConsoleNoMapOverrideLatch;
 void __cdecl world_build();
 
 // New-game and menu ownership group; original TU boundary is not proven.
@@ -923,9 +926,176 @@ int __cdecl config_game(int) {
     return 0;
 }
 
-// ORIGINAL: 0x005AE120 ?crash_landing@@YAXH@Z 0x005AE120-0x005AED43;0x00662450-0x00662705
-// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/005ae120.cpp: full retained body and historical findings", "src/game.cpp: original5275B0 invokes crash_landing5AE120 on the initial non-PBEM faction path", "recovery/tasks/control-turn-owner-oct5.json"], "reason": "Explicitly unfinished new-game lifecycle dependency newly called by recovered control_turn. This empty body only keeps the application linkable; the complete retained seed and primary/exceptional spans remain recovery obligations. No behavior, coverage or matching is claimed."}
+// ORIGINAL: 0x005AE120 ?crash_landing@@YAXH@Z 0x005AE120-0x005AED43;0x00662450-0x00662705 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["git:cd1b6385ec054fee65debf65d8bcda2c36f7176c:src/unrecovered/005ae120.cpp", "pinned:5AE120..5AED43 and662450..662705;5AE594 fungusx0;5AE58E/5AE5D0 signedcenters;5AE74A..74F fungus smoke gate", "source:src/game.cpp:control_turn;src/popup.h;src/flic.h;src/buffer.cpp", "source:recovery/tests/test_crash_landing_actual_source.py"], "reason": "Recover the complete first-landing operation through real Popup, Buffer, Flic, MapWin, Wave, Player, Base and vehicle owners with automatic normal/exceptional lifetimes. The historical second local widget aggregate is interpreted as Popup-owned embedded components, not duplicated manual vtable storage. Preserve first-owned-base/vehicle selection, early no-match teardown, single-player FUNGBOY shortcut, native fungus start at zero, signed viewport halves, previous-footprint restoration and normal-only smoke independent of pod draw return. The smoke table is existing ExplosionColorTables row12 at6FDB7C; the possible lookup beyond its4096-byte row remains unresolved original asset/read-range evidence, not permission to introduce detached storage or a bounds fix. Both primary and cleanup spans and the seed historical transcription limitations remain obligations; no byte or runtime acceptance is granted."}
 // TRIED: byte-exactness is out of reach here without more structural knowledge than the scaffold carries. The SEH frame is real (fs:[0] chain, __CxxFrameHandler, ~40-entry unwind thunk table) and Popup/BasePop already has its own giant field layout (FlatButton x2, Sprite, a 0xC94 dialogs_ blob) that the emitter resolved from other callers, so declaring `Popup popup;` and letting real RAII drive its construction/close() is right and reproduces the two search loops -> short-cleanup vs big-body split faithfully. What is NOT resolvable from this scaffold alone: a SECOND, function-local widget aggregate (GraphicWin+Dialog+ListBox+EditGroup+SpriteBox+CheckBox+Sprite+ 2x FlatButton+2x StringStruct+Heap) built with fully-inlined (vtable-write-only, no visible constructor call) construction and torn down through this-pointer adjustor arithmetic that reads a vtable-relative offset (`aiStackY_4900[1]+4/+8`) - true multiple/virtual-inheritance thunk codegen, not reachable by declaring ordinary separate locals. Modelled those as separate top-level objects in the same relative call order instead, which preserves the call graph but not the stack layout or the thunk bytes. Also approximated: the per-frame x87 pixel-interpolation math in the 30-frame drop loop (kept the draw/decode/timing calls exact, simplified the float position derivation) and the two indirect-IAT-style calls to StringStruct::remove_all/sub_406a90/sub_406820, which were dropped rather than guessing a `this`.
-void __cdecl crash_landing(int) {
-    // BODY GOES HERE.
+void __cdecl crash_landing(int faction_id) {
+    Popup popup;
+    Buffer captured_screen;
+    Flic pod_animation;
+    Flic smoke_animation;
+    Buffer pod_frame;
+    Buffer smoke_frame;
+
+    int base_id = 0;
+    int base_found = 0;
+    const int base_count = BaseCurrentCount;
+    for (; base_id < base_count; ++base_id) {
+        if (Bases[base_id].faction_id_current == faction_id) {
+            base_found = 1;
+            break;
+        }
+    }
+
+    int tile_x = 0;
+    int tile_y = 0;
+    int found_base = 0;
+    if (base_found && base_id < base_count) {
+        tile_x = Bases[base_id].x;
+        tile_y = Bases[base_id].y;
+        found_base = 1;
+    } else {
+        int vehicle_id = 0;
+        const int vehicle_count = VehCurrentCount;
+        for (; vehicle_id < vehicle_count; ++vehicle_id) {
+            if (Vehs[vehicle_id].faction_id == faction_id) break;
+        }
+        if (vehicle_id < vehicle_count) {
+            tile_x = Vehs[vehicle_id].x;
+            tile_y = Vehs[vehicle_id].y;
+        } else {
+            return;
+        }
+    }
+
+    const int local_faction = ConsoleGlobal.faction_id_;
+    StringTemp[0] = '\0';
+    const int fungus = (Players[local_faction].rule_flags >> 7) & 1;
+    strcat(StringTemp, Players[local_faction].filename);
+    CharUpperA(StringTemp);
+
+    if (!IsMultiplayerNet) {
+        if (fungus) TurnCurrentNum = 5;
+        if (strcmp(StringTemp, "FUNGBOY") == 0) {
+            TurnCurrentNum = 5;
+            ConsoleGlobal.update_data(0);
+            goto flush_and_continue;
+        }
+    }
+    ConsoleGlobal.update_data(0);
+
+    if (GamePreferences & 0x400) {
+        g_CRASH_LANDING_WAVE.init(const_cast<char *>("fx\\crash land.wav"), 4);
+        g_CRASH_LANDING_WAVE.play();
+    }
+
+    pod_frame.init(0x15f, 0x197, 0, 0);
+    smoke_frame.init(0x15f, 0x197, 0, 0);
+    if (!fungus) {
+        pod_animation.init(&pod_frame, const_cast<char *>("drop_pod.flc"), 0, 0, 0);
+        smoke_animation.init(&smoke_frame, const_cast<char *>("drop_smoke.flc"), 0, 0, 0);
+    } else {
+        pod_animation.init(&pod_frame, const_cast<char *>("alien_pod.flc"), 0, 0, 0);
+    }
+
+    {
+    MapWin &map_window = *MapWinTable[0];
+    map_window.field_1DD70_ &= 0xfffff73f;
+    map_window.set_center(tile_x, tile_y, 1);
+    map_window.draw_map(1);
+    do_all_draws();
+
+    GraphicWin &graphic_window = map_window;
+    Buffer &screen = graphic_window;
+    const int screen_width = screen.pixel_width();
+    const int screen_height = screen.pixel_height();
+    captured_screen.init(screen_width, screen_height, 0, 0);
+    screen.copy(&captured_screen, 0, 0, screen_width, screen_height);
+
+    int tile_pixel_x;
+    int tile_pixel_y;
+    map_window.tile_to_pixel(tile_x, tile_y, &tile_pixel_x, &tile_pixel_y);
+
+    const float initial_x = static_cast<float>(screen_width - 0x15f);
+    const float initial_y = static_cast<float>(screen_height - 0x197);
+    const float target_x = static_cast<float>(
+        static_cast<int>(map_window.field_1DDB4_) / 2 + tile_pixel_x - 0xa8);
+    const float target_y = static_cast<float>(
+        static_cast<int>(map_window.field_1DDB8_) / 2 + tile_pixel_y - 0xc0);
+    const float x_start = fungus ? 0.0f : initial_x;
+    const float x_step = (target_x - x_start) * (1.0f / 30.0f);
+    const float y_step = (target_y - initial_y) * (1.0f / 30.0f);
+    float animation_x = x_start;
+    float animation_y = initial_y + 15.0f;
+
+    RECT previous_rect;
+    previous_rect.left = static_cast<int>(animation_x);
+    previous_rect.top = static_cast<int>(animation_y);
+    previous_rect.right = previous_rect.left + 0x15f;
+    previous_rect.bottom = previous_rect.top + 0x197;
+    DWORD last_tick = timeGetTime();
+
+    for (int frame = 0; frame < 0x1e; ++frame) {
+        captured_screen.copy(&screen, &previous_rect);
+
+        const int half_frame = frame / 2;
+        if (fungus) {
+            animation_x = animation_x + x_step - static_cast<float>(half_frame) + 7.0f;
+        } else {
+            animation_x = animation_x + static_cast<float>(half_frame) + x_step - 7.0f;
+        }
+        animation_y = animation_y + static_cast<float>(frame) + y_step - 15.0f;
+
+        pod_animation.decode_frame(0, 0);
+        smoke_animation.decode_frame(0, 0);
+
+        RECT frame_rect;
+        frame_rect.left = static_cast<int>(animation_x);
+        frame_rect.top = static_cast<int>(animation_y);
+        frame_rect.right = frame_rect.left + 0x15f;
+        frame_rect.bottom = frame_rect.top + 0x197;
+
+        pod_frame.draw(&screen, 9, frame_rect.left, frame_rect.top, 1, 1);
+        if (!fungus) {
+            smoke_frame.draw_multi_table_dest(
+                &screen, 0xff, frame_rect.left, frame_rect.top, 1, 1,
+                &ExplosionColorTables[12][0][0]);
+        }
+
+        RECT damage_rect;
+        UnionRect(&damage_rect, &frame_rect, &previous_rect);
+        graphic_window.update(&damage_rect, 0);
+        previous_rect = frame_rect;
+
+        const short shift_held = GetAsyncKeyState(VK_SHIFT);
+        DWORD tick;
+        for (;;) {
+            tick = timeGetTime();
+            const DWORD frame_delay = (shift_held & 0xff00) ? 1 : 0x47;
+            if (tick - last_tick >= frame_delay) break;
+            if (ConsoleNoMapOverrideLatch != 0) break;
+        }
+        last_tick = tick;
+    }
+    }
+
+flush_and_continue:
+    flush_input();
+    SpriteScaleNumerator = 1;
+    SpriteScaleDenominator = 1;
+    if (found_base) {
+        char base_name[256];
+        strcpy(base_name, Bases[base_id].name_string);
+        popup.start(PopupStartCaption, "FIRSTBASE", 0x17, base_name, 4, 0);
+        popup.exec(0, 0);
+        strcpy(Bases[base_id].name_string, ParseStrBuffer[0].str);
+        make_base_unique(base_id);
+    }
+
+    MapWin &map_window_after_animation = *MapWinTable[0];
+    map_window_after_animation.field_1DD70_ |= 0x8c0;
+    map_window_after_animation.draw_map(1);
+    flush_input();
+    captured_screen.close();
+    if (GamePreferences & 0x400) g_CRASH_LANDING_WAVE.fade(1000);
 }

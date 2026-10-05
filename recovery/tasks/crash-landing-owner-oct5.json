@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "task_id": "crash-landing-owner-oct5",
+  "target": "opensmacx",
+  "author": "framework-coordinator",
+  "base_revision": "cd1b6385ec054fee65debf65d8bcda2c36f7176c",
+  "intent": "Replace crash_landing continuity placeholder with complete typed original first-landing behavior and natural Popup/Flic/Buffer lifetimes; retain primary/cleanup spans, seed findings and smoke read-range uncertainty; retire superseded seed without granting matching or game acceptance.",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5955872
+    }
+  ],
+  "files": [
+    "src/newgame.cpp",
+    "src/unrecovered/005ae120.cpp",
+    "recovery/tests/test_crash_landing_actual_source.py"
+  ],
+  "evidence": [
+    "User authorizes coordinator-reviewed complete compiling coverage integrations with deferred matching, not deliberate bug fixes.",
+    "Root pinned instructions correct fungus start, signed viewport halves and smoke conditional; fresh corrected v5 whole-TU VC6 compilation passes.",
+    "Worker and root lifetime review identify one real Popup with embedded widget components; natural reverse local teardown, logical positive captured-buffer height, original row12 smoke table are retained.",
+    "Actual-source host controls cover normal/fungus trajectories, smoke independence, decode order, first-base naming, vehicle fallback and no-match cleanup; no native runtime or full-game proof."
+  ]
+}
