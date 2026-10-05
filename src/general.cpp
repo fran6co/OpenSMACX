@@ -35,6 +35,7 @@ void __cdecl teardown_0060e5d0();
 extern Sprite g_BLANK_SPRITE;
 #include "temp.h"
 #include "general.h"
+#include "movie_media.h"
 #include "alpha.h"
 #include "game.h"
 #include "log.h" // log_say
@@ -3814,24 +3815,34 @@ void __cdecl sub_5ce640(int first_sample, int codes, int samples,
 // accumulated sum - sub_5d2761 forms `(sum >> 23)`, `(sum >> 11) & 0x1ff` and
 // `sum & 0x1ff` and adds one entry from each - plus a 256-entry byte remap
 // that sub_5ceb12 packs two at a time into each output word.
-static unsigned int *const MovieBlendTableHi = (unsigned int *)0x009C872C;
-static unsigned int *const MovieBlendTableMid = (unsigned int *)0x009C8BF4;
-static unsigned int *const MovieBlendTableLow = (unsigned int *)0x009C900C;
-static unsigned char *const MovieByteRemapLut = (unsigned char *)0x009C5F2C;
+static DWORD *const MovieBlendTableHi =
+    movie_media_conversion_tables.blend_high;
+static DWORD *const MovieBlendTableMid =
+    movie_media_conversion_tables.blend_mid;
+static DWORD *const MovieBlendTableLow =
+    movie_media_conversion_tables.blend_low;
+static unsigned char *const MovieByteRemapLut =
+    reinterpret_cast<unsigned char *>(movie_media_conversion_tables.remap_or_lookup_storage.words);
 
 // A second tier of the same family, named from the lane each one indexes.
 // sub_5d2834 / sub_5d2901 build a sum and pull one entry per BYTE lane out of
 // it - `[sum >> 0x18]`, `[sum & 0xff]`, `[(sum >> 8) & 0xff]` - so each of
 // these is a 256-entry-per-byte-value contribution table for one lane.
-static unsigned int *const MovieColourTableByte3 = (unsigned int *)0x009C6F2C;
-static unsigned int *const MovieColourTableByte1 = (unsigned int *)0x009C772C;
-static unsigned int *const MovieColourTableByte0 = (unsigned int *)0x009C7F2C;
+static DWORD *const MovieColourTableByte3 =
+    movie_media_conversion_tables.contribution_byte3;
+static DWORD *const MovieColourTableByte1 =
+    movie_media_conversion_tables.contribution_byte1;
+static DWORD *const MovieColourTableByte0 =
+    movie_media_conversion_tables.contribution_byte0;
 // sub_5d1b88 / sub_5d2037 index these three by three DIFFERENT coefficient
 // streams rather than by byte lanes: `data[i]`, `tables[i]` and
 // `tables[0x40 + i]` respectively.
-static unsigned int *const MovieBlendTableData = (unsigned int *)0x009C732C;
-static unsigned int *const MovieBlendTableQuant = (unsigned int *)0x009C7B2C;
-static unsigned int *const MovieBlendTableQuant2 = (unsigned int *)0x009C832C;
+static DWORD *const MovieBlendTableData =
+    movie_media_conversion_tables.contribution_byte3 + 256;
+static DWORD *const MovieBlendTableQuant =
+    movie_media_conversion_tables.contribution_byte1 + 256;
+static DWORD *const MovieBlendTableQuant2 =
+    movie_media_conversion_tables.contribution_byte0 + 256;
 
 // DIRECTDRAW / USER32 IMPORT THUNKS (tools/iat_names.py) and the two
 // DirectDraw surfaces the movie window's redraw path works on.

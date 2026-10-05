@@ -216,7 +216,7 @@ void UV2Player::close() {
     back_buffer_surface_ = nullptr;
     field_11C_ = 0;
     field_120_ = 0;
-    field_124_ = 0;
+    media_session_ = 0;
 }
 
 /*
