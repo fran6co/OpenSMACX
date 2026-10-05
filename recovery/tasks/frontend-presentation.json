@@ -25,6 +25,21 @@
       "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
       "address_space": "pe:va",
       "address": 5806640
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5391040
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5391168
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5391456
     }
   ],
   "editable_files": [
@@ -33,7 +48,10 @@
     "src/unrecovered/00455400.cpp",
     "src/unrecovered/004554c0.cpp",
     "src/unrecovered/005243a0.cpp",
-    "src/unrecovered/00589a30.cpp"
+    "src/unrecovered/00589a30.cpp",
+    "recovery/tests/fixtures/demo_game_source.cpp",
+    "recovery/tests/test_demo_game_source.py",
+    "src/unrecovered/00524460.cpp"
   ],
   "evidence": [
     "Seed provenance: unfinished game work in 58644d4e, a6c6a601, 93e5745b and 9b23e49c, reviewed before deleting the inactive branch. These hypotheses carry no match scores or accepted declarations. The generators work from 49b910a3 was already incorporated separately; do not duplicate it. Existing src seeds retain the function control flow.",
@@ -41,6 +59,11 @@
     "Caption ownership hypothesis: GraphicWin's fields at +0x9DC and +0x9E8 are pointers whose pointees are read at +0x20 and +0x24; those inner offsets are not GraphicWin members. Compare their initialization through GraphicWinInitDefaults with all consumers. The old attempt's early-return mismatch may indicate a wrong return-type interpretation; inspect callers before concluding the original has a bug or introducing an uninitialized return.",
     "Attract-window hypothesis (0x005243A0): this is the pointer-move handler for the owner constructed at 0x00524460 and used by 0x005242C0 and timer callback 0x00524340. Proposed state is selected hotspot +0xA14, timer flag +0xA18, three RECTs +0xA44/+0xA54/+0xA64, and two Sprite-sized objects beginning at +0xA74. A fourth hotspot rectangle was correlated with 0x00939FF8. Validate the actual derived class and repaint override corresponding to slot +0xE8 instead of copying the provisional GraphicWinSub layout or manual vtable dispatch.",
     "Opening-window hypothesis (0x00589A30): a real local Buffer and its destructor should generate the recorded exception-cleanup span automatically. The seed's apparent bindings into 0x00660260 and 0x0067DA18 are candidates for compiler-owned cleanup, not application globals. Correlate opening_window(), Buffer bitmap metrics and the copy overload at 0x005D9610; recover the virtual operation at slot +0xFC through the class rather than a manual table call.",
-    "Palette hypothesis (0x00455400): use the existing text_open/text_get/text_item_number and Palette cycle methods. The ocean-offset table appears to cover 80 ints from 0x006861F0 to 0x00686330, shared with alt_get_ocean_detail at 0x004632D0. Validate the bounds and owning declaration, and recover initial values from the pinned image because entries not replaced by configuration must retain them. Do not copy the old integer-cast pointer comparison or assume zero initialization."
+    "Palette hypothesis (0x00455400): use the existing text_open/text_get/text_item_number and Palette cycle methods. The ocean-offset table appears to cover 80 ints from 0x006861F0 to 0x00686330, shared with alt_get_ocean_detail at 0x004632D0. Validate the bounds and owning declaration, and recover initial values from the pinned image because entries not replaced by configuration must retain them. Do not copy the old integer-cast pointer comparison or assume zero initialization.",
+    "Coordinator expands the retained frontend scope to the complete four-entry Demo owner; the original task baseline is retained, not reset. Coordinator-reviewed manual coverage integration is not native automatic acceptance.",
+    "Replace the raw-offset redraw and manual-vtable timer callback with real GraphicWin virtual overrides, typed Time/RECT/Sprite storage and one automatic local Buffer. Preserve both historical byte claims and complete new entry/EH spans.",
+    "Independent pinned-image review corrected two draft fidelity errors: ShowWindow belongs only in selection 1/2/3 branches; the original global hotspot transposes its first two coordinates. Preserve these original quirks.",
+    "Fresh native actual-replacement trial observes all five member offsets and the four emitted method symbols. The source-owned hotspot has a pinned exact 16-byte zero initial access window, but its start-only binding makes no complete allocation claim.",
+    "Original class spelling, complete constructor/allocation/modal registration/destruction/timer-cancellation owner and full runtime/linked fidelity remain unproved. Temporary matching regressions are admitted for reviewed structural recovery without claim demotion."
   ]
 }

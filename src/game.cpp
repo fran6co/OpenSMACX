@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include <shellapi.h>
 #include <ctype.h> // yearmotize uses the original unsigned-char CRT classification.
 #include <mmsystem.h>
 #include "temp.h"
@@ -3585,82 +3586,162 @@ int __cdecl next_player_turn() {
     return 1;
 }
 
-// ORIGINAL: 0x005242C0 sub_5242c0 0x005242C0-0x00524317 BYTE_EXACT
-// symbol    ?sub_5242c0@GraphicWinSub@@QAEXXZ
-// size      87 bytes
-// prototype
-// callers   0   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x005D5930 0x005E4B4A
-// 0x005242C0  sub_5242c0  ->  _sub_5242c0
-//
-// A byte-exact Mizuchi match that no file in the tree owns yet. NOT in
-// OPENSMACX_SOURCES and not compiled: it is the emitter's verification style,
-// and rewriting it in the tree's own style is a later phase. See README.md
-// beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
+// The original class spelling, complete object extent and allocation/lifetime
+// owner are not established. This private role name groups the receiver
+// fields used by the four retained original entries.
+// RECOVERY_BASE: v1 Demo GraphicWin 0x0 0x00524460
+class Demo : public GraphicWin { public:
+    int init();
+    virtual void redraw();
+    virtual void on_left_down(int x, int y);
+    static void __cdecl timer_callback(int self);
 
-
-class GraphicWinSub : public GraphicWin { public:
-    void sub_5242c0();
+    // RECOVERY_MEMBER: v1 Demo selected_link_ 0xA14 0x005243A0
+    int selected_link_;       // observed at +0xA14
+    // RECOVERY_MEMBER: v1 Demo timer_phase_ 0xA18 0x00524340
+    int timer_phase_;         // observed at +0xA18
+    // RECOVERY_MEMBER: v2 Demo timer_ Time 0xA1C 0x00524460
+    Time timer_;              // observed at +0xA1C
+    // RECOVERY_MEMBER: v4 Demo splash_rects_ tagRECT[3] 0xA44 0x30 0x00524460
+    RECT splash_rects_[3];    // observed at +0xA44
+    // RECOVERY_MEMBER: v4 Demo splash_sprites_ Sprite[2] 0xA74 0x58 0x005242C0
+    Sprite splash_sprites_[2];// observed at +0xA74 and +0xAA0
 };
 
-void GraphicWinSub::sub_5242c0() {
-    // GraphicWin derives from Buffer, so the Buffer subobject at +0x444 IS the
-    // base-class view of `this` - no pun, no offset.
-    Buffer *buf = this;
-    if (this) {
-    } else {
-        buf = 0;
+// Four consecutive original dwords at 0x939FF8 are initialized/read as RECT.
+// Descriptive source-owned storage; the start binding does not prove the
+// complete original allocation or original spelling.
+// RECOVERY_OBJECT: v1 0x00939FF8 ?DemoFourthHotspot@@3UtagRECT@@A
+RECT DemoFourthHotspot;
+
+static void set_demo_rect(RECT &rect, long left, long top, long right,
+                          long bottom) {
+    rect.left = left;
+    rect.top = top;
+    rect.right = right;
+    rect.bottom = bottom;
+}
+
+// ORIGINAL: 0x005242C0 sub_5242c0 0x005242C0-0x00524317 BYTE_EXACT
+// symbol    ?redraw@Demo@@UAEXXZ
+// kind      game
+// Historical matching used GraphicWinSub::sub_5242c0 with raw receiver offsets;
+// the observed Demo fields now own those accesses and the virtual redraw slot.
+void Demo::redraw() {
+    const int frame = timer_phase_ == 0 ? 1 : 0;
+    Sprite &sprite = splash_sprites_[frame];
+    RECT &area = splash_rects_[0];
+    sprite.draw(static_cast<Buffer *>(this), sprite.transparent_index(),
+                area.left, area.top, 1, 1);
+    soft_update(&area);
+}
+
+// ORIGINAL: 0x005243A0 sub_5243a0 0x005243A0-0x0052445B
+// symbol    ?on_left_down@Demo@@UAEXHH@Z
+// kind      game
+// TRIED: extern "C" __stdcall(int,int) contract (ecx has no matching stack slot, so it is __thiscall); own Obj_5243a0 class (3 embedded RECTs) + VCall slot058 reaches MNEMONIC_ONLY, same 187 bytes, same mnemonics, an operand still differs
+void Demo::on_left_down(int x, int y) {
+    selected_link_ = 0;
+    for (int index = 0; index < 3; ++index) {
+        if (in_box(x, y, &splash_rects_[index]) != 0) {
+            selected_link_ = index + 1;
+            release_modal();
+            return;
+        }
     }
-    char *self = reinterpret_cast<char *>(this);
-    int flag = (*reinterpret_cast<int *>(self + 0xa18) == 0);
-    char *rect = self + 0xa44;
-    Sprite *spr = reinterpret_cast<Sprite *>(self + 0xa74 + flag * 0x2c);
-    int p4 = *reinterpret_cast<int *>(self + 0xa48);
-    int p3 = *reinterpret_cast<int *>(rect);
-    int p2 = *reinterpret_cast<unsigned char *>(reinterpret_cast<char *>(spr) + 8);
-    spr->draw(buf, p2, p3, p4, 1, 1);
-    this->soft_update(reinterpret_cast<RECT *>(rect));
+    if (in_box(x, y, &DemoFourthHotspot) != 0) {
+        selected_link_ = 3;
+    }
+    release_modal();
 }
 
 // ORIGINAL: 0x00524340 Demo::timer_callback 0x00524340-0x00524363 BYTE_EXACT
-// symbol    _fn_00524340
-// size      35 bytes
-// prototype
-// callers   0   call targets   0
+// symbol    ?timer_callback@Demo@@SAXH@Z
 // kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     (none)
-// indirect  0x0052435B
-// 0x00524340  Demo::timer_callback  ->  _fn_00524340
-//
-// A byte-exact Mizuchi match that no file in the tree owns yet. NOT in
-// OPENSMACX_SOURCES and not compiled: it is the emitter's verification style,
-// and rewriting it in the tree's own style is a later phase. See README.md
-// beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
-
-
-/*
-Purpose: Toggle the flag and repaint through virtual slot 62.
-Original Offset: 00524340
-Return Value: the slot's result
-Status: Complete
-*/
-// The receiver arrives as an EXPLICIT stack argument here - `mov ecx,[ebp+8]`
-// at entry - unlike the __thiscall sibling at 0x00524320, which never needs
-// that load. Catalogued as taking none.
-class Slot { public: int slot062(); };
-typedef int (Slot::*Slot062Fn)();
-
-extern "C" int __cdecl fn_00524340(void *self) {
-    // ONE statement. Splitting the toggle into a temp and a separate store
-    // hoists the vtable load ahead of the `sete`.
-    *reinterpret_cast<int *>(reinterpret_cast<char *>(self) + 0xa18) =
-        (*reinterpret_cast<int *>(reinterpret_cast<char *>(self) + 0xa18) == 0);
-    return (reinterpret_cast<Slot *>(self)->*(*reinterpret_cast<Slot062Fn *>(
-        reinterpret_cast<char *>(*reinterpret_cast<void **>(self)) + 0xf8)))();
+// Replaces _fn_00524340's manual slot-62 dispatch. Time passes an integer
+// receiver payload and ignores a return value; redraw remains virtual.
+void __cdecl Demo::timer_callback(int self) {
+    Demo *demo = reinterpret_cast<Demo *>(self);
+    demo->timer_phase_ = (demo->timer_phase_ == 0);
+    demo->redraw();
 }
+
+// ORIGINAL: 0x00524460 Demo__init 0x00524460-0x005247A6;0x0065D6C8-0x0065D6DD
+// symbol    ?init@Demo@@QAEHXZ
+// kind      game
+int Demo::init() {
+    Buffer local_buffer;
+
+    const int width = WinScreenWidth;
+    const int height = WinScreenHeight;
+    const bool compact_layout = width == 0x320;
+
+    GraphicWin::init(0, 0, width, height, 0, 0, 0, 0, 0);
+
+    char *background = const_cast<char *>(
+        compact_layout ? "demosplash800.pcx" : "demosplash1024.pcx");
+    load_pcx(background, 0, 10, 0xEC);
+
+    const char *foreground;
+    if (compact_layout) {
+        set_demo_rect(splash_rects_[0], 0x21, 0x1E1, 0x135, 0x210);
+        set_demo_rect(splash_rects_[1], 0x23A, 0x1FF, 0x2AE, 0x228);
+        set_demo_rect(splash_rects_[2], 0x14A, 0x182, 0x1D6, 0x22A);
+        // The original global RECT transposes its first two coordinates.
+        set_demo_rect(DemoFourthHotspot, 0x1C5, 0x23A, 0x262, 0x24E);
+        foreground = "demosplash800_2.pcx";
+    } else {
+        set_demo_rect(splash_rects_[0], 0x2B, 0x268, 0x18B, 0x2A3);
+        set_demo_rect(splash_rects_[1], 0x2DA, 0x28E, 0x36E, 0x2C2);
+        set_demo_rect(splash_rects_[2], 0x1A7, 0x1EF, 0x259, 0x2C5);
+        set_demo_rect(DemoFourthHotspot, 0x243, 0x2DA, 0x30C, 0x2F1);
+        foreground = "demosplash1024_2.pcx";
+    }
+
+    local_buffer.load_pcx(const_cast<char *>(foreground), 0, 10, 0xEC);
+    const RECT &first_source = splash_rects_[0];
+    const int first_source_width = first_source.right - first_source.left;
+    const int first_source_height = first_source.bottom - first_source.top;
+    const unsigned char first_transparent = WinFillColour;
+    splash_sprites_[0].extract(static_cast<Buffer *>(this), first_transparent,
+                               first_source.left, first_source.top,
+                               first_source_width, first_source_height, 0);
+
+    // Native reloads this RECT and WinFillColour after Sprite::extract returns;
+    // preserve those live reads rather than carrying values over the call.
+    const RECT &second_source = splash_rects_[0];
+    const int second_source_width = second_source.right - second_source.left;
+    const int second_source_height = second_source.bottom - second_source.top;
+    const unsigned char second_transparent = WinFillColour;
+    splash_sprites_[1].extract(&local_buffer, second_transparent,
+                               second_source.left, second_source.top,
+                               second_source_width, second_source_height, 0);
+
+    local_buffer.close();
+    timer_.start(&Demo::timer_callback, reinterpret_cast<int>(this), 600, 5);
+
+    selected_link_ = 0;
+    timer_phase_ = 0;
+    set_modal(0, 0, 0);
+
+    if (selected_link_ == 1) {
+        ShowWindow(HandleMain, SW_HIDE);
+        ShellExecuteA(0, "open",
+            "http:\\\\www.eastore.ea.com\\cgi-bin\\eastore.storefront\\EN\\addtobasket\\10509",
+            0, 0, SW_SHOWNORMAL);
+    } else if (selected_link_ == 2) {
+        ShowWindow(HandleMain, SW_HIDE);
+        ShellExecuteA(0, "open",
+            "http:\\\\www.amazon.com\\exec\\obidos\\ASIN\\B00000DMA7\\ref=ad_cgm1",
+            0, 0, SW_SHOWNORMAL);
+    } else if (selected_link_ == 3) {
+        ShowWindow(HandleMain, SW_HIDE);
+        ShellExecuteA(0, "open", "http:\\\\www.alphacentauri.com",
+                      0, 0, SW_SHOWNORMAL);
+    }
+    return selected_link_ != 0;
+}
+
 
 // ORIGINAL: 0x0058F4F0 sub_58f4f0 0x0058F4F0-0x0058F609 FILE BYTE_EXACT
 // LEVER: string-routines-are-calls the body was already right; the scaffold was compiling a string routine the image CALLS into an `/Oi` inline expansion. What was written down here as a tried source form - "VC6 lowers `local_104[0]=0;` as `and byte ptr [buf],0` rather than `mov`, and each branch shares one `lea` instead of recomputing it, both compiler instruction-selection choices at /O1 that plain restatement did not move" - was that expansion changing the register pressure around them. The if/else-if chain matching Ghidra's structure is the right shape and always was.
