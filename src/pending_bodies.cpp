@@ -424,10 +424,6 @@ int __cdecl popb(LPCSTR a1, int a2, int a3, LPCSTR a4, Sprite * a5) {  // 0x0048
 
 
 
-SocialWin::~SocialWin() {  // ??1SocialWin@@QAE@XZ at 0x004B3C80
-    typedef void(__fastcall *pending)(SocialWin *, void *);
-    PENDING_BODY(0x004B3C80, pending)(this, nullptr);
-}
 
 
 

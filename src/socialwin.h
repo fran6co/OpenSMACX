@@ -31,10 +31,8 @@ void __cdecl social_select(int faction_id);
  /*
   * SocialWin class
   *
-  * Derives from GraphicWin in the original by ordinary single inheritance -
-  * its constructor calls GraphicWin's on an unadjusted `this` - so unlike the
-  * virtually-derived windows this one is written as the original wrote it and
-  * needs no ABI workaround.
+  * The constructor establishes a primary GraphicWin base and a secondary
+  * SubInterface base at 0xA14. Ordinary C++ owns both base lifetimes.
   *
   * The complete layout and object extent are not established. The constructor's
   * own fields begin at 0xA14, immediately after the base; only evidenced
@@ -363,16 +361,12 @@ class SocialWin : public GraphicWin, public SubInterface {
   SocialEffect socEffectOrig_;  // 0xD34
   uint32_t netIncome_;  // 0xD60
   uint32_t breakthroughTurns_;  // 0xD64
-  // MEASURED against the constructor's own disassembly (0x004AE9E0): the
-  // vector ctor iterator builds this array at `self + 0xD6C`, not 0xD68 -
-  // and the constructor's LATER sub-object offsets land back on this
-  // header's existing numbers (e.g. the Sprite[0xA] run at 0x2C60), so the
-  // discrepancy is confined to this one boundary, not a uniform shift. Left
-  // as the header already had it - the constructor below reaches every
-  // sub-object at its own raw, disassembly-measured offset rather than
-  // through these names, so nothing here depends on resolving it.
-  CheckButton energyLockButtons_[3];  // 0xD68, 3 * sizeof(CheckButton) == 0x1E84
-  uint32_t field_2BEC_;  // 0x2BEC
+  uint32_t field_D68_;  // 0xD68; interpretation unestablished
+  // Constructor 0x004AE9E0 and destructor 0x004B3C80 use three CheckButtons
+  // at 0xD6C, stride 0xA2C. The run ends at 0x2BF0; 0x2BEC is inside it,
+  // not an independent scalar. This does not establish the full class extent.
+  // RECOVERY_MEMBER: v4 SocialWin energyLockButtons_ CheckButton[3] 0xD6C 0x1E84 0x004B3C80
+  CheckButton energyLockButtons_[3];  // 0xD6C, extent 0x1E84
   uint32_t field_2BF0_;  // 0x2BF0
   uint32_t field_2BF4_;  // 0x2BF4
   uint32_t field_2BF8_;  // 0x2BF8

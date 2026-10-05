@@ -127,17 +127,6 @@ void __fastcall SocialWinFlatButtonCtor(void *self) { reinterpret_cast<FlatButto
 void __fastcall SocialWinFlatButtonDtor(void *self) { reinterpret_cast<FlatButton *>(self)->~FlatButton(); }
 void __fastcall SocialWinCheckButtonCtor(void *self) { reinterpret_cast<CheckButton *>(self)->CheckButton::CheckButton(); }
 void __fastcall SocialWinCheckButtonDtor(void *self) { reinterpret_cast<CheckButton *>(self)->~CheckButton(); }
-// CheckButton's own init (0x006337E0) is out of this file's scope, so init
-// reaches it raw, the same way the constructor/destructor pair above is
-// reached: a __fastcall wrapper whose second parameter consumes edx while
-// ecx carries the receiver.
-static int __fastcall SocialWinCheckButtonInit(void *self, void *, int label_a,
-    int label_b, GraphicWin *owner, int flags) {
-    typedef int (__fastcall *pending)(void *, void *, int, int, GraphicWin *,
-                                      int);
-    return reinterpret_cast<pending>(0x006337E0)(self, 0, label_a, label_b,
-                                                 owner, flags);
-}
 void __fastcall SocialWinButtonGroupCtor(void *self) { reinterpret_cast<ButtonGroup *>(self)->ButtonGroup::ButtonGroup(); }
 void __fastcall SocialWinButtonGroupDtor(void *self) { reinterpret_cast<ButtonGroup *>(self)->~ButtonGroup(); }
 
@@ -184,25 +173,13 @@ Purpose: Install the SubInterface vftable, construct the Spot, nine runs of
 // flags     frame;sp_ready;purged_ok
 // calls     0x005D4CF0 0x005FA860 0x00618EA0 0x0062B7C0 0x006456E4 0x006457C2
 */
-// Every sub-object is placement-new'd EXPLICITLY, in the exact order the
-// disassembly shows, at its raw offset rather than through a named member -
-// GraphicWin::construct() has to run first, which implicit member
-// construction cannot reproduce, and the header's own mid-section field
-// names are unverified guesses this constructor's own evidence disagrees
-// with in at least one place (see the note beside energyLockButtons_ in
-// socialwin.h). CheckButton's own recovery is out of this batch's scope, so
-// its constructor/destructor addresses are reached raw, same as every
-// other not-yet-promoted callee.
+// Bases precede members in the native construction sequence. Their ordinary
+// C++ construction must not be repeated with placement-new in this body.
+// The CheckButton array boundary is supported by both lifecycle entries;
+// remaining provisional field names do not establish complete layout recovery.
 SocialWin::SocialWin() {
-    new (static_cast<GraphicWin *>(this)) GraphicWin();
-    char *const self = reinterpret_cast<char *>(this);
-
-    // spot_, controls, button groups and fonts are class members and follow
-    // normal C++ construction. socCategory_ and the two SocialEffect records
-    // are POD state, initialized by reset rather than object constructors.
-    // The remaining image-only sprite/buffer runs are still explicit because
-    // their complete member ownership has not been established.
-
+    // Declared object members construct automatically in declaration order.
+    // POD social state is subsequently initialized by reset.
     factionID_ = 0xFFFFFFFFU;
 }
 
@@ -1593,11 +1570,7 @@ void SocialWin::on_status(int mode) {
             ++button;
             --count;
         } while (count != 0);
-        // The lock array is reached at its measured 0xD6C, not the header's
-        // 0xD68 - the same boundary the constructor already reaches raw (see
-        // the note beside energyLockButtons_ in socialwin.h).
-        CheckButton *lock = reinterpret_cast<CheckButton *>(
-            reinterpret_cast<char *>(this) + 0xD6C);
+        CheckButton *lock = energyLockButtons_;
         count = 3;
         do {
             lock->show(0);
@@ -1619,8 +1592,7 @@ void SocialWin::on_status(int mode) {
             ++button;
             --count;
         } while (count != 0);
-        CheckButton *lock = reinterpret_cast<CheckButton *>(
-            reinterpret_cast<char *>(this) + 0xD6C);
+        CheckButton *lock = energyLockButtons_;
         count = 3;
         do {
             lock->hide();
@@ -2944,28 +2916,22 @@ void SocialWin::init(int faction_id) {
             reinterpret_cast<char *>(Labels.strings_ptr) + 0xD34)));
 
     {
-        CheckButton *lock0 = reinterpret_cast<CheckButton *>(self + 0xD6C);
-        CheckButton *lock1 = reinterpret_cast<CheckButton *>(self + 0x1798);
-        CheckButton *lock2 = reinterpret_cast<CheckButton *>(self + 0x21C4);
+        CheckButton *lock0 = &energyLockButtons_[0];
+        CheckButton *lock1 = &energyLockButtons_[1];
+        CheckButton *lock2 = &energyLockButtons_[2];
         // Each lock links its own sprite pointers to the energy lock and
         // arrow runs.
-        *reinterpret_cast<int *>(reinterpret_cast<char *>(lock0) + 0xA24)
-            = reinterpret_cast<int>(self + 0x3D90);
-        *reinterpret_cast<int *>(reinterpret_cast<char *>(lock0) + 0xA28)
-            = reinterpret_cast<int>(self + 0x3DBC);
-        SocialWinCheckButtonInit(lock0, 0, tutRects1_[0].left,
+        lock0->unchecked_sprite_ = &energyAllocLock_[0];
+        lock0->checked_sprite_ = &energyAllocLock_[1];
+        lock0->init(tutRects1_[0].left,
             tutRects1_[0].top, &MainInterfaceGlobal, 0);
-        *reinterpret_cast<int *>(reinterpret_cast<char *>(lock1) + 0xA24)
-            = reinterpret_cast<int>(self + 0x3D90);
-        *reinterpret_cast<int *>(reinterpret_cast<char *>(lock1) + 0xA28)
-            = reinterpret_cast<int>(self + 0x3DBC);
-        SocialWinCheckButtonInit(lock1, 0, tutRects1_[1].left,
+        lock1->unchecked_sprite_ = &energyAllocLock_[0];
+        lock1->checked_sprite_ = &energyAllocLock_[1];
+        lock1->init(tutRects1_[1].left,
             tutRects1_[1].top, &MainInterfaceGlobal, 0);
-        *reinterpret_cast<int *>(reinterpret_cast<char *>(lock2) + 0xA24)
-            = reinterpret_cast<int>(self + 0x3D90);
-        *reinterpret_cast<int *>(reinterpret_cast<char *>(lock2) + 0xA28)
-            = reinterpret_cast<int>(self + 0x3DBC);
-        SocialWinCheckButtonInit(lock2, 0, tutRects1_[2].left,
+        lock2->unchecked_sprite_ = &energyAllocLock_[0];
+        lock2->checked_sprite_ = &energyAllocLock_[1];
+        lock2->init(tutRects1_[2].left,
             tutRects1_[2].top, &MainInterfaceGlobal, 0);
 
         lock0->hide();
@@ -3072,4 +3038,22 @@ void __cdecl social_select(int faction_id) {
     synch_soc(selected_faction);
     if (IsMultiplayerNet == 0)
         social_set(selected_faction);
+}
+
+// C++ owns member/base teardown after these explicit close/reset operations.
+// ORIGINAL: 0x004B3C80 ??1SocialWin@@QAE@XZ 0x004B3C80-0x004B3EB7;0x00659700-0x00659878
+// RECOVERY_BINDING: v1 {"evidence": ["historical seed:src/recovered/units/004b3c80.cpp", "task:socialwin-lifetime-owner", "Pinned4B3C80:35 virtual FlatButton closes; four ButtonGroup closes then standalone close; resets+A2C,+A30,+2C28,+2C24.", "Automatic reverse teardown: nine Fonts, standalone group, ButtonGroup[4], FlatButton[35], Buffer[6], Sprite[6/2/90/10], CheckButton[3], Spot, GraphicWin. Constructor4AE9E0 and destructor agree CheckButton starts+D6C, strideA2C; no complete layout or runtime acceptance claim."], "reason": "Recover complete SocialWin destruction through actual embedded members and bases, not an executable-address forwarder or explicit destructor cascade."}
+// symbol    ??1SocialWin@@UAE@XZ
+SocialWin::~SocialWin() {
+    for (int i = 0; i < 35; ++i) {
+        flatButtons_[i].close();
+    }
+    for (int j = 0; j < 4; ++j) {
+        buttonGroups_[j].close();
+    }
+    buttonGroup_.close();
+    field_A2C_ = 0xFFFFFFFFU;
+    field_A30_ = 0xFFFFFFFFU;
+    field_2C28_ = 0;
+    effectMaximize_ = 0xFFFFFFFFU;
 }
