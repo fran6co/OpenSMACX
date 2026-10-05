@@ -110,6 +110,7 @@ class Console : public MapWin {
   friend int __cdecl action_airdrop(int, int, int, int);
   // MainInterface's status/button callbacks operate this owned AlphaMenu.
   friend class MainInterface;
+  friend void __cdecl control_turn();
   // TutWin's tutorial tour checks and reopens the owned AlphaMenu.
   friend class TutWin;
   // PrefWin hides the main menu before opening its own modal window.

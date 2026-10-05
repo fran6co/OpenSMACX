@@ -122,6 +122,7 @@ class MainInterface : public GraphicWin, public SubInterface {
   // own RECT. This grants that owner typed access while this region awaits
   // a named MainInterface rectangle member.
   friend class MessageWin;
+  friend void __cdecl control_turn();
  public:
   // The shared UI font at global 0x007CFE8C is this object's font1_ at
   // +0x2166C. ReplayWin's title and other windows borrow it, not own it.

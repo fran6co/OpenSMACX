@@ -2352,7 +2352,9 @@ int ControlTurnPhase;   // 0x009B2070
 // Remaining net_upkeep recovery must publish to this owner, not an old address.
 // RECOVERY_OBJECT: v2 0x00945F48 0x00945F4C ?TurnUpkeepPhase@@3HA 0x005BE940
 int TurnUpkeepPhase = 0;
-char SaveGameFileName[0x104];  // 0x0093AA0C
+// Native control_game reads only this pinned NUL-terminated source string;
+// one byte is the observed lower bound, not its complete original capacity.
+char SaveGameFileName[1];  // 0x0093AA0C
 char SaveNameBuffer[0x104];    // 0x009B2078
 
 // The window the loop paints colour 9 over and hides while the game boots,
@@ -10851,4 +10853,476 @@ int __cdecl end_of_game(int check_victory) {
     }
     ExitTurnLoop = 1;
     return 1;
+}
+
+// Source-owned storage observed by the retained control_turn body. These
+// initial-text objects own only their pinned NUL byte; X_pop_ask's 0x50 is a
+// dialog limit, not a writable span for this input pointer.
+char ControlTurnMailTemplate[1];             // 0x0093AA04 lower bound
+char ControlTurnPasswordInitialText[1];      // 0x0093AA08 lower bound
+
+// The original flattens PendingDiplomacyFlags with (other + 2*faction). Keep
+// that arithmetic while resolving the touched index into the actual typed
+// row-major array. Its broader intended matrix semantics remain unproven.
+extern uint32_t FactionDiplomacyFlags[MaxPlayerNum];
+static unsigned int &pending_diplomacy_flag(int flat_index) {
+    return PendingDiplomacyFlags[flat_index / MaxPlayerNum]
+                                [flat_index % MaxPlayerNum];
+}
+
+// Native 0x7388E0 walks a 9-DWORD stride through the first word of the
+// existing OfferResetCells owner. Its measured start is two DWORDs into
+// OfferResetCells[0][0], and each fourth step lands on the next cell's first
+// word. These aliases use the actual typed members.
+static int &control_turn_relation_first_word(int flat_index) {
+    OfferResetCell &cell = OfferResetCells[0][flat_index / 4];
+    switch (flat_index % 4) {
+    case 0: return cell.state_[0];
+    case 1: return cell.type_[0][7];
+    case 2: return cell.value_[0][0];
+    default: return cell.value_[1][1];
+    }
+}
+
+int __cdecl save_game(int save_slot);
+void __cdecl crash_landing(int faction_id);
+
+// ORIGINAL: 0x005275B0 ?control_turn@@YAXXZ 0x005275B0-0x00528E94;0x0065D6DD-0x0065DB67 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["git:f22102a247081a5708204bb307a39c7ddafbe018:src/unrecovered/005275b0.cpp: full original identity/spans and useful historical findings", "ConsoleInfoWin original object7AD2A0 owns suppression memberAC at7AD34C; native527A70/527C9E set1/0; init4592A0 and timer_proc459150 confirm ownership.", "OfferResetCells, PendingDiplomacyFlags and FactionDiplomacyFlags retain original flattened indexing through their actual typed owners.", "Initial text at93AA04/08/0C is proven loader-zero and only read by observed consumers; one-byte source bounds are lower-bound interpretations, not claims of complete original capacity or absence of indirect writers.", "Complete native cleanup-route review supports one real Popup owner; matching and exceptional cleanup restoration remain unfinished.", "recovery/tasks/control-turn-owner-oct5.json", "recovery/tests/test_control_turn_actual_source.py"], "reason": "Recover complete turn orchestration through existing genuine application owners and automatic Popup lifetime. Preserve original branch ordering and error behavior; all primary and exceptional spans remain restoration obligations, not a claim of current native lifetime/byte/runtime equivalence."}
+// TRIED: mismatch #11 near prologue (xor vs push) - popup/end_game_pop declared as real C++ locals rather than the original's staggered same-slot vtable-poke construction; the "big dialog" tail (Dialogs/Spot/ListBox/CheckBox/EditGroup/ SpriteBox/StringStruct x2/Sprite) is reached by raw offset casts into BasePop's own dialogs_/spot_/sprite_ members, not by a modelled derived class - faithful call order/args, not byte fidelity. Main loop, faction dispatch, diplomacy/ tech/council logic transcribed directly from the disasm.
+void __cdecl control_turn() {
+    Popup popup;
+    int retry_count = 0;
+    int save_pending;
+    int result;
+
+    if (TurnCurrentNum == 0 && ControlTurnPhase == 0 &&
+        ((static_cast<unsigned char>(LockEnableMask >> 8) >>
+          (ConsoleGlobal.faction_id_ & 0x1F)) & 1u) != 0) {
+        if (IsMultiplayerPBEM == 0) {
+            crash_landing(ConsoleGlobal.faction_id_);
+        }
+    }
+    if (IsMultiplayerPBEM == 0) {
+        draw_map(1);
+    }
+
+    MapBaseDisplayOverride = 1;
+    if (ControlTurnPhase != 0 &&
+        ((static_cast<unsigned char>(LockEnableMask >> 8) >>
+          (ConsoleGlobal.faction_id_ & 0x1F)) & 1u) == 0) {
+        ConsoleGlobal.human_turn();
+    }
+
+    do {
+        if (IsMultiplayerPBEM == 0) {
+            InterfaceMessageWin.clear();
+        }
+        if (ControlTurnPhase == 0) {
+            ConsoleControlTurnActive = 1;
+            turn_upkeep();
+            if (end_of_game(1) != 0) {
+                return;
+            }
+        } else {
+            rankings(1);
+        }
+
+        int human_turn_shown = 0;
+        int faction = 0;
+        do {
+            const unsigned int alive_mask =
+                static_cast<unsigned char>(LockEnableMask >> 8);
+            if (((alive_mask >> (faction & 0x1F)) & 1u) != 0 &&
+                ControlTurnPhase <= faction) {
+                const int active_faction = ConsoleGlobal.faction_id_;
+                NetTurnFaction = faction;
+                const unsigned int report_mask =
+                    static_cast<unsigned char>(LockEnableMask);
+                const bool has_report =
+                    ((report_mask >> (faction & 0x1F)) & 1u) != 0;
+                if (has_report &&
+                    (faction != active_faction || (NetTurnFlags & 0x20) != 0 ||
+                     IsMultiplayerPBEM != 0)) {
+                    Player &player = Players[faction];
+                    parse_says(0, ControlTurnMailTemplate, -1, -1);
+                    GenderDefault = player.is_leader_female;
+                    PluralityDefault = 0;
+                    parse_says(1, player.name_leader, -1, -1);
+                    GenderDefault = player.is_leader_female;
+                    PluralityDefault = 0;
+                    parse_says(2, player.title_leader, -1, -1);
+                    PluralityDefault = player.is_noun_plural;
+                    GenderDefault = player.noun_gender;
+                    parse_says(3, player.noun_faction, -1, -1);
+                    ConsoleGlobal.faction_id_ = faction;
+
+                    if (IfaceIdToSlotStorage[ActiveIfaceIdStorage] == 10) {
+                        g_BattleWin.stop_timer();
+                        static_cast<SubInterface &>(g_BattleWin)
+                            .release_iface_mode();
+                    }
+                    stop_timers();
+                    TutWinBaseWindow.exit();
+                    ConsoleGlobal.alpha_menu_.hide();
+                    MultiWindow.hide();
+                    InterfaceMessageWin.listBox_.Win::hide();
+                    MainInterfaceGlobal.string_box_.Win::hide();
+                    WorldClimateWorldWin.hide_all();
+
+                    RECT frame = MainInterfaceGlobal.status_left_rect_;
+                    static_cast<Buffer &>(MainInterfaceGlobal).box_sprite(
+                        &frame, &InterfaceBoxStyles[21]);
+                    frame.left += 3; frame.top += 3;
+                    frame.right -= 3; frame.bottom -= 3;
+                    static_cast<Buffer &>(MainInterfaceGlobal).box_sprite(
+                        &frame, &InterfaceBoxStyles[18]);
+
+                    frame = MainInterfaceGlobal.status_right_rect_;
+                    static_cast<Buffer &>(MainInterfaceGlobal).box_sprite(
+                        &frame, &InterfaceBoxStyles[21]);
+                    frame.left += 3; frame.top += 3;
+                    frame.right -= 3; frame.bottom -= 3;
+                    static_cast<Buffer &>(MainInterfaceGlobal).box_sprite(
+                        &frame, &InterfaceBoxStyles[18]);
+
+                    frame = MainInterfaceGlobal.status_hit_rect_;
+                    static_cast<Buffer &>(MainInterfaceGlobal).box_sprite(
+                        &frame, &InterfaceBoxStyles[21]);
+                    frame.left += 3; frame.top += 3;
+                    frame.right -= 3; frame.bottom -= 3;
+                    static_cast<Buffer &>(MainInterfaceGlobal).box_sprite(
+                        &frame, &InterfaceBoxStyles[18]);
+
+                    frame = MainInterfaceGlobal.tutorial_bounds_;
+                    MainInterfaceGlobal.Buffer::box_sprite(
+                        &frame, &InterfaceBoxStyles[21]);
+                    frame.left += 3; frame.top += 3;
+                    frame.right -= 3; frame.bottom -= 3;
+                    MainInterfaceGlobal.Buffer::box_sprite(
+                        &frame, &InterfaceBoxStyles[18]);
+
+                    frame = MainInterfaceGlobal.message_bounds_;
+                    MainInterfaceGlobal.Buffer::box_sprite(
+                        &frame, &InterfaceBoxStyles[21]);
+                    frame.left += 3; frame.top += 3;
+                    frame.right -= 3; frame.bottom -= 3;
+                    MainInterfaceGlobal.Buffer::box_sprite(
+                        &frame, &InterfaceBoxStyles[18]);
+
+                    frame = MainInterfaceGlobal.date_rect_;
+                    MainInterfaceGlobal.Buffer::box_sprite(
+                        &frame, &InterfaceBoxStyles[18]);
+
+                    MainInterfaceGlobal.update(static_cast<GraphicWin *>(0));
+                    ConsoleInfoWin.set_timer_suppression(1);
+                    CoverWindow.fill(0);
+                    CoverWindow.Win::show(0);
+                    do_all_draws();
+                    MainInterfaceGlobal.string_box_.clear();
+
+                show_turn_password:
+                    popup.start(PopupStartCaption,
+                        PlayersData[faction].unk_102 == 0
+                            ? "SWITCHING" : "SWITCHING2",
+                        -1, 0, 0x800004, 0);
+                    result = popup.exec(0, 0);
+                    if (result < 0) {
+                        if (ExitTurnLoop != 0) goto turn_exit;
+                        goto show_turn_password;
+                    }
+
+                    save_pending = static_cast<int>(popup.input_poll_state());
+                    if (save_pending != 0) {
+                        NetTurnFlags |= 0x40;
+                        if (save_game(0) == 0) {
+                            return;
+                        }
+                        NetTurnFlags &= ~0x40;
+                        if (ExitTurnLoop != 0) {
+                            return;
+                        }
+                        goto show_turn_password;
+                    }
+
+                    {
+                        const uint32_t password_hash =
+                            checksum_password(ParseStrBuffer[0].str);
+                        PlayerData &data = PlayersData[faction];
+                        if (password_hash != static_cast<uint32_t>(data.unk_102)) {
+                            if (data.unk_102 != 0) {
+                                if (++retry_count > 2) {
+                                    NetTurnFlags |= 0x40;
+                                    save_game(0);
+                                    ConsoleGlobal.Win::hide();
+                                    ExitTurnLoop = 1;
+                                    GameRestartQueued = 0;
+                                    return;
+                                }
+                                goto bad_turn_password;
+                            }
+                            if (X_pop_ask(
+                                    "VERIFYPASSWORD", 0x50,
+                                    ControlTurnPasswordInitialText,
+                                    static_cast<int (__cdecl *)()>(0),
+                                    0x800000) != 0) {
+                                goto bad_turn_password;
+                            }
+                            if (checksum_password(ParseStrBuffer[0].str) !=
+                                password_hash) {
+                                goto bad_turn_password;
+                            }
+                            data.unk_102 = static_cast<int>(password_hash);
+                        }
+                    }
+                    goto password_accepted;
+
+                bad_turn_password:
+                    if (ExitTurnLoop != 0) goto turn_exit;
+                    goto show_turn_password;
+
+                password_accepted:
+                    if (ExitTurnLoop == 0) {
+                        bool found_owned_base = false;
+                        int index = 0;
+                        if (BaseCurrentCount > 0) {
+                            while (index < BaseCurrentCount &&
+                                   Bases[index].faction_id_current !=
+                                       ConsoleGlobal.faction_id_) {
+                                ++index;
+                            }
+                            if (index < BaseCurrentCount) {
+                                ConsoleGlobal.set_center(Bases[index].x,
+                                                         Bases[index].y, 1);
+                                ConsoleGlobal.set_cursor(Bases[index].x,
+                                                         Bases[index].y);
+                                found_owned_base = true;
+                            }
+                        }
+                        if (!found_owned_base && VehCurrentCount > 0) {
+                            index = 0;
+                            while (index < VehCurrentCount &&
+                                   static_cast<unsigned char>(
+                                       Vehs[index].faction_id) !=
+                                       ConsoleGlobal.faction_id_) {
+                                ++index;
+                            }
+                            if (index < VehCurrentCount) {
+                                ConsoleGlobal.set_center(Vehs[index].x,
+                                                         Vehs[index].y, 1);
+                                ConsoleGlobal.set_cursor(Vehs[index].x,
+                                                         Vehs[index].y);
+                            }
+                        }
+                    }
+
+                    CoverWindow.Win::hide();
+                    ConsoleInfoWin.set_timer_suppression(0);
+                    ConsoleStatusWin.on_redraw();
+                    UnkBitfield1 |= 4;
+                    WorldClimateWorldWin.show_all();
+                    WorldClimateWorldWin.redraw();
+                    MainInterfaceGlobal.string_box_.Win::show(0);
+                    InterfaceMessageWin.clear();
+
+                    {
+                        const int local_faction = ConsoleGlobal.faction_id_;
+                        const int wins = FactionTurnCombatWins[local_faction];
+                        const int losses = FactionTurnCombatLosses[local_faction];
+                        if (wins != 0 || losses != 0) {
+                            parse_num(wins, 0);
+                            parse_num(losses, 1);
+                            popp(ScriptPopupFile, "WONLOST", 0,
+                                 "bad_sm.pcx", 0);
+                        }
+                    }
+                    if (display_player_messages(ConsoleGlobal.faction_id_) != 0) {
+                        MainInterfaceGlobal.button_group(0).set(1, 0x3E8);
+                    }
+                    if (MainInterfaceGlobal.button_group(0).field_84_ == 0x3E8) {
+                        InterfaceMessageWin.listBox_.Win::show(0);
+                    }
+                    ConsoleGlobal.update_data(0);
+                    start_timers();
+                    do_all_draws();
+
+                    {
+                        const int local_faction = ConsoleGlobal.faction_id_;
+                        const int other = TamperDialogFaction[local_faction];
+                        if (other != 0) {
+                            Player &tamper_player = Players[other];
+                            GenderDefault = tamper_player.is_leader_female;
+                            PluralityDefault = 0;
+                            parse_says(0, tamper_player.title_leader, -1, -1);
+                            GenderDefault = tamper_player.is_leader_female;
+                            PluralityDefault = 0;
+                            parse_says(1, tamper_player.name_leader, -1, -1);
+                            GenderDefault = tamper_player.noun_gender;
+                            PluralityDefault = tamper_player.is_noun_plural;
+                            parse_says(2, tamper_player.noun_faction, -1, -1);
+                            parse_num(TamperDialogValue[local_faction], 0);
+                            X_pop("HOTTAMPER2", 0);
+                            TamperDialogFaction[local_faction] = 0;
+                            TamperDialogValue[local_faction] = 0;
+                        }
+                    }
+
+                    {
+                        int local_faction = ConsoleGlobal.faction_id_;
+                        while (PlayersData[local_faction].earned_techs_saved > 0) {
+                            --PlayersData[local_faction].earned_techs_saved;
+                            tech_advance(local_faction);
+                            local_faction = ConsoleGlobal.faction_id_;
+                        }
+
+                        for (int other = 1; other < MaxPlayerNum; ++other) {
+                            const int pending_index = other + local_faction * 2;
+                            FactionDiplomacyFlags[1] =
+                                pending_diplomacy_flag(pending_index);
+                            pending_diplomacy_flag(pending_index) = 0;
+                            if (other != local_faction) {
+                                const unsigned int alive =
+                                    static_cast<unsigned char>(LockEnableMask >> 8);
+                                if (((alive >> (other & 0x1F)) & 1u) == 0) {
+                                    if (FactionDiplomacyFlags[1] != 0) {
+                                        communicate(local_faction, other, 0);
+                                        local_faction = ConsoleGlobal.faction_id_;
+                                    }
+                                } else if (FactionDiplomacyFlags[1] != 0) {
+                                    int &relation_first_word =
+                                        control_turn_relation_first_word(
+                                            other + local_faction * 2);
+                                    if (relation_first_word == 3) {
+                                        relation_first_word = 0;
+                                        Player &message_player = Players[other];
+                                        GenderDefault = message_player.is_leader_female;
+                                        PluralityDefault = 0;
+                                        parse_says(0, message_player.title_leader,
+                                                   -1, -1);
+                                        GenderDefault = message_player.is_leader_female;
+                                        PluralityDefault = 0;
+                                        parse_says(1, message_player.name_leader,
+                                                   -1, -1);
+                                        GenderDefault = message_player.noun_gender;
+                                        PluralityDefault = message_player.is_noun_plural;
+                                        parse_says(2, message_player.noun_faction,
+                                                   -1, -1);
+                                        X_pop("COMMCOMPLETE", 0);
+                                        local_faction = ConsoleGlobal.faction_id_;
+                                    } else {
+                                        diplo(other, local_faction);
+                                        local_faction = ConsoleGlobal.faction_id_;
+                                    }
+                                }
+                                FactionDiplomacyFlags[1] = 0;
+                            }
+                        }
+
+                        if (CouncilPbemGate == 0) {
+                            int council_state =
+                                CouncilNotifyPluralSlots[local_faction];
+                            if (council_state != 0) {
+                                const int proposal_id =
+                                    CouncilNotifyFormSlots[local_faction];
+                                parse_say(0,
+                                    static_cast<int>(reinterpret_cast<intptr_t>(
+                                        Proposal[proposal_id].name)),
+                                    -1, -1);
+                                local_faction = ConsoleGlobal.faction_id_;
+                                int message_state =
+                                    CouncilNotifyPluralSlots[local_faction];
+                                const char *picture;
+                                const char *message;
+                                if (CouncilNotifyFormSlots[local_faction] == 0) {
+                                    if (GovernorFaction > 0) {
+                                        Player &governor = Players[GovernorFaction];
+                                        GenderDefault = governor.is_leader_female;
+                                        PluralityDefault = 0;
+                                        parse_says(0, governor.title_leader,
+                                                   -1, -1);
+                                        GenderDefault = governor.is_leader_female;
+                                        PluralityDefault = 0;
+                                        parse_says(1, governor.name_leader,
+                                                   -1, -1);
+                                        GenderDefault = governor.noun_gender;
+                                        PluralityDefault = governor.is_noun_plural;
+                                        parse_says(2, governor.noun_faction,
+                                                   -1, -1);
+                                    }
+                                    if (message_state == 1) {
+                                        picture = "council_sm.pcx";
+                                        message = "COUNCILHOTGOVWIN";
+                                    } else if (GovernorFaction < 1) {
+                                        picture = "council_sm.pcx";
+                                        message = "COUNCILHOTGOVNONE";
+                                    } else {
+                                        picture = "council_sm.pcx";
+                                        message = "COUNCILHOTGOVLOSE";
+                                    }
+                                } else if (message_state == 1) {
+                                    picture = "council_sm.pcx";
+                                    message = "COUNCILHOTPASS";
+                                } else if (message_state == -2) {
+                                    picture = "council_sm.pcx";
+                                    message = "COUNCILHOTVETO";
+                                } else {
+                                    picture = "council_sm.pcx";
+                                    message = "COUNCILHOTFAIL";
+                                }
+                                popp(ScriptPopupFile, message, 0, picture, 0);
+                                local_faction = ConsoleGlobal.faction_id_;
+                                clear_council_notify(local_faction);
+                            }
+                        } else {
+                            council(local_faction, 0, 0);
+                            local_faction = ConsoleGlobal.faction_id_;
+                        }
+                    }
+                }
+
+                if (ExitTurnLoop == 0) {
+                    if (ControlTurnPhase == 0 ||
+                        (IsMultiplayerPBEM != 0 && (NetTurnFlags & 0x40) != 0)) {
+                        ConsoleControlTurnActive = 1;
+                        faction_upkeep(faction);
+                        result = end_of_game(0);
+                        if (result != 0) goto turn_exit;
+                    }
+                    NetTurnFlags &= ~0x40;
+                    ConsoleControlTurnActive = 0;
+                    const unsigned int alive =
+                        static_cast<unsigned char>(LockEnableMask);
+                    const int current_faction = ConsoleGlobal.faction_id_;
+                        if ((alive & (1u << (faction & 0x1F))) == 0) {
+                            enemy_turn(faction);
+                        } else {
+                        if (faction != current_faction && bit_count(alive) < 2) {
+                            goto post_human_dispatch;
+                        }
+                        ConsoleGlobal.human_turn();
+                        if (ControlTurnPhase != 0) {
+                            faction = 0;
+                            goto post_human_dispatch;
+                        }
+                        human_turn_shown = 1;
+                    }
+
+                post_human_dispatch:
+                    ControlTurnPhase = 0;
+                    if (ExitTurnLoop == 0) {
+                        result = end_of_game(0);
+                        if (result != 0) goto turn_exit;
+                    }
+                }
+            }
+            ++faction;
+        } while (faction < MaxPlayerNum);
+
+        if (human_turn_shown == 0) {
+            ConsoleGlobal.human_turn();
+        }
+    } while (ExitTurnLoop == 0);
+
+turn_exit:
+    return;
 }

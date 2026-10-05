@@ -285,10 +285,10 @@ extern GraphicWin CoverWindow;  // 0x00937118
 extern int ControlTurnPhase;  // 0x009B2070
 // Research/upkeep phase: distinct from the UI/control-turn phase above.
 extern int TurnUpkeepPhase;  // 0x00945F48
-// The open savegame's file name, copied into SaveNameBuffer and handed to
-// filefind_set_alternate when the loop reloads. Bounds unknown, like
-// CommandLineText - the next referenced dword in, 0x0093AA10, only caps it.
-extern char SaveGameFileName[0x104];  // 0x0093AA0C
+// control_game reads this pinned NUL-terminated source string. Only one byte
+// is established; the complete original capacity and any indirect producer
+// remain unknown.
+extern char SaveGameFileName[1];  // 0x0093AA0C lower-bound view
 // The working copy filefind_set_alternate runs on. Same unknown bound.
 extern char SaveNameBuffer[0x104];  // 0x009B2078
 

@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "task_id": "control-turn-owner-oct5",
+  "target": "opensmacx",
+  "author": "framework-coordinator",
+  "base_revision": "f22102a247081a5708204bb307a39c7ddafbe018",
+  "intent": "Recover full control_turn in its game owner, remove executable-address forwarding and superseded seed, retain original identity/spans/findings and justified member ownership. Preserve original defects; no byte, runtime or full-game acceptance grant.",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5404080
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5955872
+    }
+  ],
+  "files": [
+    "recovery/tests/test_control_turn_actual_source.py",
+    "src/console.h",
+    "src/game.cpp",
+    "src/game.h",
+    "src/infowin.h",
+    "src/maininterface.h",
+    "src/newgame.cpp",
+    "src/pending_bodies.cpp",
+    "src/unrecovered/005275b0.cpp",
+    "src/unrecovered/005ae120.cpp"
+  ],
+  "evidence": [
+    "User authorizes coordinator-reviewed recovery checkpoint after build/link, scoped observations, continuity and semantic review; incomplete exceptional and runtime fidelity remains an obligation.",
+    "One genuine Popup lifetime; original dialog limit50 and retry ExitTurnLoop/GameRestartQueued writes retained; real InfoWin timer suppression member, no detached transition global.",
+    "Source-extracted host controls exercise bounded branches and reject focus-fallback mutant; they do not prove native object layout or complete game behavior.",
+    "Fresh complete link exposed only missingcrash_landing; native writer transports its seed obligations into an explicitly unfinished newgame.cpp body while retaining the seed. This dependency is NOT recovered coverage."
+  ]
+}

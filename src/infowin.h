@@ -73,6 +73,9 @@ class InfoWin {
   void on_redraw();
   const RECT &bounds() const { return bounds_; }
   void set_redraw_phase(int phase) { redraw_phase_ = phase; }
+  // control_turn suppresses this owner's pane timer across the faction-switch
+  // display transition; timer_proc reads the same +0xAC member.
+  void set_timer_suppression(int suppressed) { field_AC_ = suppressed; }
   // Console end-turn clears only the pending timer at InfoWin +0xA8;
   // reset() additionally advances the pane through timer_proc(1).
   void clear_pending_timer() { field_A8_ = 0; }

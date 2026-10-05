@@ -606,11 +606,7 @@ void __cdecl basepop_close_class() {
 // ?multiplayer_init@@YAHH@Z at 0x0058DB30
 // Complete body is source-owned in newgame.cpp.
 
-// ?control_turn@@YAXXZ at 0x005275B0
-void __cdecl control_turn() {
-    typedef void(__cdecl *pending)();
-    PENDING_BODY(0x005275B0, pending)();
-}
+// control_turn 0x005275B0 is source-owned in game.cpp.
 
 // The real multiplayer turn coordinator is source-owned in game.cpp.
 
