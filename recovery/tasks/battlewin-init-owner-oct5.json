@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "task_id": "battlewin-init-owner-oct5",
+  "target": "opensmacx",
+  "author": "framework-coordinator",
+  "intent": "Recover BattleWin initialization through its genuine SubInterface member, typed rectangles, actual MainInterface source members and Buffer automatic lifetime. Replace the one game caller's old executable-address receiver with g_BattleWin. Preserve complete native identity/spans, historical lessons and claims; delete the superseded seed after build/link and relevant controls. Temporary matching regressions are authorized, not behavior changes or full acceptance.",
+  "base_revision": "e23c15cf876f744bfb6f3a06b959cdebbb74c044",
+  "subjects": [{"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 4332000}],
+  "editable_files": ["src/battlewin.h", "src/battlewin.cpp", "src/game.h", "src/game.cpp", "src/pending_bodies.cpp", "src/recovered/units/004219e0.cpp", "recovery/tests/test_battlewin_init_owner.py", "recovery/tests/battlewin_init_owner_control.cpp"],
+  "evidence": [
+    "Pinned entire 4219E0..421B1F body constructs and destroys Buffer, copies MainInterface rectangles at D80/DC0 into receiver70/90, computes four panels, sets inherited SubInterface mode10 and stores receiver to independent7AE818 process slot.",
+    "Full private five-file native overlay compiles BattleWin, game and pending_bodies; emitted init and receiver slot symbols are directly observed. Pinned 7AE818 initial four bytes are zero; complete original allocation extent/lifetime remains unverified.",
+    "Current statuswin.h explicitly identifies original6EEED8 as same g_BattleWin object. Host candidate rectangle/lifetime controls pass; permanent actual-source controls, native matching, claim continuity and fresh full application build/link remain required."
+  ]
+}
