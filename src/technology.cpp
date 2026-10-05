@@ -1360,7 +1360,7 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
                  proto_id < first_proto + MaxVehProtoFactionNum; ++proto_id) {
                 VehPrototypes[proto_id].flags &= 0x3F;
             }
-            consider_designs(static_cast<uint32_t>(faction_id));
+            consider_designs(faction_id);
             if (faction_id == ConsoleGlobal.faction_id_) {
                 for (int proto_id = 0; proto_id < MaxVehProtoFactionNum;
                      ++proto_id) {

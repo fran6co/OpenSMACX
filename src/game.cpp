@@ -4691,7 +4691,7 @@ void __cdecl time_warp() {
         player_data.tech_accumulated = static_cast<int>(player_data.tech_achieved << 1);
         AiResearchBatchActive = 0;
         player_data.tech_id_researching = -1;
-        consider_designs(static_cast<uint32_t>(faction_id));
+        consider_designs(faction_id);
 
         set_fac(FAC_RECYCLING_TANKS, starting_base_id, 1);
         set_fac(FAC_RECREATION_COMMONS, starting_base_id, 1);
@@ -9301,7 +9301,7 @@ skip_upkeep_synch:
                     }
                 }
                 if ((data.flags & 2u) != 0) {
-                    consider_designs(faction);
+                    consider_designs(static_cast<int>(faction));
                 }
                 data.flags &= ~2u;
             }

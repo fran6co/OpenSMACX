@@ -1,0 +1,33 @@
+{
+  "event_id": "ccc9f51de5b6c2cf944a9233a78e928fdf09a5a710258a56eff34f04401aa115",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Authorize the three source-mapped caller relocations induced by restoring the original signed-int consider_designs ABI: time_warp5AEDE0 and tech_achieved5BB000 pass existing signed faction IDs, net_upkeep5290A0 explicitly converts its unsigned loop index. No other caller behavior or body rewrite is authorized; baseline remains ea6ec50d and all historical obligations persist."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5959136,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5410976,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6008832,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "consider-designs-signed-callers-oct5",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:consider-designs-owner-oct5"
+}

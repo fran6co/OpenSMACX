@@ -1,0 +1,38 @@
+{
+  "event_id": "d26939582204d416cfb3e8f3c8fbde4bce777c81ea198615327a66c79d0dc8b0",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Pinned original signed faction ABI changes actual call targets from unsigned seed I to signed H in four unchanged-source faction/designwin callers; authorize these reference changes without resetting task baseline or changing caller source. Coordinator-reviewed coverage-first integration preserves all historical obligations."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5982096,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5967360,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4449424,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4424800,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "ccc9f51de5b6c2cf944a9233a78e928fdf09a5a710258a56eff34f04401aa115",
+  "request_id": "consider-designs-all-signed-callers-oct5",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:consider-designs-owner-oct5"
+}

@@ -1,0 +1,38 @@
+{
+  "event_id": "ec5ea99400573907c492928c5223325844d98516691014e65bf7470c6df7c03e",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Fresh baseline/current VC6 function comparison identifies instruction scheduling/branch displacement changes in four otherwise unchanged veh.cpp definitions after adding the AI owner. None carries a historical byte claim. Their source is untouched; coordinator explicitly includes their emitted changes under user coverage-first regression permission. Native whole residual remains failed, not automatic acceptance; retain original baseline and all obligations."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5261984,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5030752,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5250464,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5245792,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "d26939582204d416cfb3e8f3c8fbde4bce777c81ea198615327a66c79d0dc8b0",
+  "request_id": "consider-designs-compiler-neighbours-oct5",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:consider-designs-owner-oct5"
+}

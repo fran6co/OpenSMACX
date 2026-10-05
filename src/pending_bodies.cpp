@@ -217,10 +217,6 @@ void __cdecl blink_timer(int a1) {
 // typed body moved to faction.cpp; the seed identity/history remains
 // adjacent to that owner through its native source annotation.
 
-void __cdecl consider_designs(uint32_t faction_id) {
-    typedef void(__cdecl *pending)(uint32_t);
-    PENDING_BODY(0x00581260, pending)(faction_id);
-}
 
 // `Win::~Win` WAS HERE, forwarding to 0x005EBC90. Homed into `win.cpp`
 // 2026-08-29; the linker (LNK2005) enforced it exactly as the note at the
