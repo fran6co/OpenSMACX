@@ -24,6 +24,33 @@ struct VOX_Matrix {
   float values[3][3];
 };
 
+// Independently measured isometric projection views. The row structures keep
+// the observed 16-byte strides; the fourth word remains uninterpreted.
+struct CaviarProjectionCell {
+  int32_t x_;
+  int32_t y_;
+  int32_t z_;
+  uint32_t unobserved_word_;
+};
+
+struct CaviarFixedPointProjectionMatrix {
+  int16_t word_00_;
+  int16_t word_02_;
+  int16_t word_04_;
+  int16_t word_06_;
+  int16_t word_08_;
+  int16_t word_0A_;
+  int32_t dword_0C_;
+  int32_t dword_10_;
+  int32_t dword_14_;
+};
+
+typedef char CaviarProjectionCell_stride_is_16[
+    sizeof(CaviarProjectionCell) == 0x10 ? 1 : -1];
+typedef char CaviarFixedPointProjectionMatrix_size_is_24[
+    sizeof(CaviarFixedPointProjectionMatrix) == 0x18 ? 1 : -1];
+
+
 // UNALIGNED BY CONSTRUCTION: this group lives at 0xA5 inside `Caviar`, so it
 // must have alignment 1 or the class grows. `pack(1)` is scoped to the struct
 // and does not touch anything else.
@@ -40,8 +67,8 @@ struct CaviarCamera {
 #pragma pack(push, 1)
 struct CaviarChannelBounds {
   // 0xD9..0xEC, five engine limits init seeds: 0, 0xc77fff00, 0x477fff00, 0,
-  // 0x477fff00 - the outer pair is a float -1e38/+1e38-style clip range.
-  uint32_t lead_[5];     // 0x00; at Caviar+0xD9
+  // 0x477fff00 - the outer pair is the float -65535/+65535 clip range.
+  float lead_[5];        // 0x00; at Caviar+0xD9
   int32_t values_[6];    // 0x14; at Caviar+0xED, the six channel bounds init, set_buffer and
                          // render_scene all reset to {0,0,0xff,0xff,0x100,0x100}
   uint8_t tail_[3];      // 0x2C; at Caviar+0x105
@@ -257,6 +284,36 @@ struct VoxCameraBlock {
   CaviarChannelBounds bounds_;  // +0x34, Caviar::field_D9_ at 0xD9
 };
 #pragma pack(pop)
+
+extern CaviarProjectionCell CaviarProjectionCells[0x1A];
+extern uint32_t CaviarProjectionOutputWords[0x6B];
+extern CaviarFixedPointProjectionMatrix CaviarFixedPointProjection;
+extern float CaviarProjectionScaledMatrix[9];
+extern float CaviarProjectionScratchE0;
+extern float CaviarProjectionScratchE4;
+extern float CaviarProjectionScratchE8;
+extern float CaviarProjectionScratchEC;
+extern float CaviarProjectionScratchF0;
+extern float CaviarProjectionScratchF4;
+extern float CaviarProjectionScratchFC;
+extern float CaviarProjectionScratchA00;
+extern float CaviarProjectionScratchA04;
+extern int32_t vox_projection_render_stage_;
+extern int32_t vox_projection_prepared_;
+extern int32_t vox_projection_octant_mask_;
+extern int32_t vox_projection_component_[3];
+extern VOX_Matrix vox_projection_matrix_;
+extern const float CaviarProjectionDirectionScale;
+extern const float CaviarProjectionRoundThreshold;
+extern const float CaviarProjectionRoundBelow;
+extern const float CaviarProjectionRoundAbove;
+extern const float CaviarBoundsRadiusScale;
+
+bool __cdecl vox_part_behind(const VOX_Vect *position, float extent,
+                             const VoxCameraBlock *view);
+void __cdecl vox_direction_to_octant(const VoxRenderRecord *render_record);
+void __cdecl vox_inverse_direction_to_octant(const VOX_Matrix *source);
+void __cdecl caviar_build_projection_tables();
 
 static_assert(offsetof(VoxCameraBlock, bounds_) == 0x34,
               "VoxCameraBlock must reach the channel bounds at +0x34");

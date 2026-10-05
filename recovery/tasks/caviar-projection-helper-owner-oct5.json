@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "task_id": "caviar-projection-helper-owner-oct5",
+  "author": "framework-coordinator",
+  "target": "opensmacx",
+  "base_revision": "b44fd9ac4d704ae65bab8077f027482b7eba7d62",
+  "intent": "Recover four complete Caviar helpers and migrate their two existing projection consumers to genuine shared typed source storage. Preserve full original identities, spans, claims and useful seed history; retire seeds only after fresh native source/data/layout/build checks.",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6456032
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6553088
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6553568
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6554864
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6552192
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6554032
+    }
+  ],
+  "editable_files": [
+    "src/caviar.cpp",
+    "src/caviar.h",
+    "src/leaf_recoveries.cpp",
+    "src/unrecovered/006282e0.cpp",
+    "src/unrecovered/0063fe00.cpp",
+    "src/unrecovered/0063ffe0.cpp",
+    "src/unrecovered/006404f0.cpp",
+    "recovery/tests/test_caviar_three_helpers_actual_source.py",
+    "recovery/tests/test_caviar_projection_builder_actual_source.py"
+  ],
+  "evidence": [
+    "Native review establishes by-value clipping extent, byte-zero render discriminator, scaled XYZ outputs and provisional void builder contract without an invented result.",
+    "The builder uses overlapping 16-stride streams beginning at9C0B90/9C0BA4/9C0BA8, expressed by one107-word accessed window. Initial pinned bytes are zero and have no absolute relocations; original allocation bounds and former owner names remain unproved.",
+    "Existing63FA80/6401B0 share a genuine fixed-point matrix, scaled scratch and stage/prepared cells; no executable-address aliases or duplicate global allocations.",
+    "Native source overlay compiles caviar.cpp and leaf_recoveries.cpp and observes all four current function symbols. Actual-source host controls exercise field offsets, scaled values, output stream indexing and mutation refusals.",
+    "Coordinator-reviewed manual coverage requires fresh build/link, relevant historical matching/layout/data/references and claim continuity. No new byte claims, demotion, automatic acceptance or game/runtime proof. Remaining draw/setup bodies and source ownership questions stay explicit."
+  ]
+}
