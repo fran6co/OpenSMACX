@@ -580,15 +580,7 @@ void __cdecl basepop_close_class() {
 // custom_planet58C2A0 has its complete source owner in newgame.cpp.
 // Complete body is source-owned in newgame.cpp.
 
-// load_faction_art at 0x00453710 - body in src/unrecovered/00453710.cpp.
-// Was a temp.h function POINTER (`func5 *const load_faction_art`); see the
-// note above draw_map.
-// ORIGINAL: 0x00453710 ?load_faction_art@@YAXH@Z 0x00453710-0x00453A17
-// RECOVERY_BINDING: v1 {"evidence": ["Coordinator investigation_deferred 2026-09-19 (run-z7f3353q): obligation-5fbf6e74 read_faction(int) is unknown solely on 'unresolved targets: ?load_faction_art@@YAXH@Z'; src/alpha.cpp:681-686 spells both image call targets with load_faction_art(player_id) at image 0x00453710, and src/alpha.cpp:1210,1224 spell read_factions' two physical sites exactly as the image keeps them - no edit confined to alpha.cpp/alpha.h can resolve a link-time-absent definition.", "Seed src/unrecovered/00453710.cpp line 1 catalogues ORIGINAL 0x00453710 ?load_faction_art@@YAXH@Z 0x00453710-0x00453A17 FILE (775 bytes); the forwarder at src/pending_bodies.cpp:1492-1496 carries the same address in its PENDING_BODY macro and its comment records the function-pointer history."], "reason": "The pending_bodies.cpp forwarder at the annotated line is the only compiled definition of the symbol (a temp.h function-pointer binding historically); the name and extent are the seed's catalogue, adopted verbatim so cross-TU by-name references resolve against the original identity without transcribing the body."}
-void __cdecl load_faction_art(int player_id) {
-    typedef void(__cdecl *pending)(int);
-    PENDING_BODY(0x00453710, pending)(player_id);
-}
+// load_faction_art now has a source owner in game.cpp.
 
 // ?control_game@@YAXXZ at 0x0052AA30 - homed into game.cpp on 2026-08-29,
 // so the forwarder that stood here is gone. ITS CALLEES moved in here with
@@ -849,14 +841,7 @@ int Win::sub_63c7c0() {
 // (0x0055BA80) and agenda_off (0x0055B820) - are homed into src/faction.cpp
 // now, so the forwarders that stood here are gone.
 
-// ?ambience@@YAHH@Z at 0x00446B40 - the event-sound player treaty_on asks for
-// (0xcc) when it sets a vendetta with the local faction involved.
-int __cdecl ambience(int ambience_id) {
-    typedef int(__cdecl *pending)(int);
-    return PENDING_BODY(0x00446B40, pending)(ambience_id);
-}
-
-
+// ambience now has a source owner in ambience.cpp.
 
 
 // Menu's add_menu_item (0x005FB100) and rename_menu_item (0x005FB700) - homed

@@ -394,6 +394,9 @@ extern unsigned char ConstantColorTables[24][256];         // 0x00788250, 0x1800
 extern unsigned char ArmorTintColorTables[4][24][256];     // 0x00792664, 0x6000 bytes
 extern unsigned char BodyTintColorTables[8][24][256];      // 0x0079A7EC, 0xC000 bytes
 
+void __cdecl colortables_init_faction(int faction_id);
+void __cdecl load_faction_art(int faction_id);
+
 extern "C" int __cdecl _mkdir(const char *path);
 
 // 0x00403BE0, defined in alphamovie.cpp (homed from

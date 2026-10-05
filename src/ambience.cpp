@@ -20,6 +20,7 @@
 #include "original_seam.h"
 #include "ambience.h"
 #include "sound.h"   // Sound::set_type, reached by cast
+#include "fx.h"
 #include "wave.h"
 #include "general.h"  // filefind_get
 #include "faction.h"
@@ -30,6 +31,68 @@
 FactionAmbience *FactionMusic = nullptr;
 // RECOVERY_OBJECT: v1 0x00683BF4 ?LastAmbienceVehicle@@3HA
 int LastAmbienceVehicle = -1;
+
+// These exact cells are source-owned here; the transition marker's wider
+// external lifetime census remains open for 0x0074C5E4.
+// RECOVERY_OBJECT: v1 0x00683BF0 ?AmbienceCurrentEffect@@3HA
+int AmbienceCurrentEffect = -1;
+// RECOVERY_OBJECT: v1 0x0074C5E4 ?AmbienceTransitionMarker@@3HA
+int AmbienceTransitionMarker = 0;
+
+// ORIGINAL: 0x00446B40 ?ambience@@YAHH@Z 0x00446B40-0x00446CD6
+// RECOVERY_BINDING: v1 {"evidence": ["historical retired seed src/unrecovered/00446b40.cpp", "recovery/tasks/ambience-faction-art-owner-oct5.json", "pinned complete original spans; fresh native owner compilation and actual-source behavior controls"], "reason": "Complete semantic recovery through genuine source-owned members, globals and lifetime operations; retain original defects and historical obligations. Current byte restoration remains unfinished."}
+// symbol    ?ambience@@YAHH@Z
+// TRIED: guard bit 0x800, no-op-if-unchanged, in-range switch dispatch on *DAT_0074daa0's vtable (14 cases mapping to slots verified against the raw jump table at 0x446CD8, not Ghidra's summary, which collapsed two distinct case targets), else stop the old FX entry (slot 0x28), start the new one (slot 0x5c), revert on failure (slot 0x20), and FX::play() the result. Landed at 0.89 similarity; diverges at #108 where case 0xc8 and case 0xd0 - same vtable slot, genuinely two separate blocks in the original (`mov eax`/`call [eax+..]` vs `mov edx`/`call [edx+..]`) - compile to one shared jump target here. Tried plain int* stride (`g_00749cf8 + id*27`) against explicit byte-offset char* arithmetic for the FX table addressing; neither changed the divergence.
+int __cdecl ambience(int ambience_id) {
+    if ((GamePreferences & 0x800) == 0) {
+        return ambience_id;
+    }
+
+    if (AmbienceCurrentEffect == ambience_id) {
+        return AmbienceCurrentEffect;
+    }
+
+    if (ambience_id >= 0xC8 && ambience_id < 0xD6) {
+        if (FactionMusic == nullptr) {
+            return ambience_id;
+        }
+
+        switch (ambience_id) {
+        case 0xC8: FactionMusic->general(); break;
+        case 0xC9: FactionMusic->tech(); break;
+        case 0xCA: FactionMusic->popup1(); break;
+        case 0xCB: FactionMusic->eot(); break;
+        case 0xCC: FactionMusic->hostility(); break;
+        case 0xCD: FactionMusic->basewin_show(); break;
+        case 0xCE: FactionMusic->basewin_hide(); break;
+        case 0xCF: FactionMusic->terraform(); break;
+        case 0xD0: FactionMusic->general(); break;
+        case 0xD1: FactionMusic->new_base(); break;
+        case 0xD2: FactionMusic->energy_resources(); break;
+        case 0xD3: FactionMusic->design_window_show(); break;
+        case 0xD4: FactionMusic->design_window_hide(); break;
+        case 0xD5: FactionMusic->base_liberated(); break;
+        }
+        return ambience_id;
+    }
+
+    AmbienceTransitionMarker = -1;
+    const int previous_effect = AmbienceCurrentEffect;
+    if (previous_effect >= 0) {
+        g_FX.effect(previous_effect).fade();
+    }
+
+    AmbienceCurrentEffect = ambience_id;
+    if (ambience_id >= 0) {
+        if (g_FX.effect(ambience_id).is_playing() != 0) {
+            g_FX.effect(AmbienceCurrentEffect).stop();
+        }
+        g_FX.play(AmbienceCurrentEffect);
+    }
+
+    return AmbienceCurrentEffect;
+}
+
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004457E0 ?load_music@@YAXH@Z 0x004457E0-0x00445BA4;0x00654CF0-0x00654D52 FILE

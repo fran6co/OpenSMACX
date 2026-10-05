@@ -693,6 +693,255 @@ unsigned char ArmorTintColorTables[4][24][256];
 // RECOVERY_OBJECT: v2 0x0079A7EC 0x007A67EC ?BodyTintColorTables@@3PAY1BI@BAA@EA 0x00423570
 unsigned char BodyTintColorTables[8][24][256];
 
+// ORIGINAL: 0x00423000 ?colortables_init_faction@@YAXH@Z 0x00423000-0x00423566;0x00652BE2-0x00652C0A
+// RECOVERY_BINDING: v1 {"evidence": ["historical retired seed src/recovered/units/00423000.cpp", "recovery/tasks/ambience-faction-art-owner-oct5.json", "pinned complete original spans; fresh native owner compilation and actual-source behavior controls"], "reason": "Complete semantic recovery through genuine source-owned members, globals and lifetime operations; retain original defects and historical obligations. Current byte restoration remains unfinished."}
+// symbol    ?colortables_init_faction@@YAXH@Z
+void __cdecl colortables_init_faction(int faction_id) {
+    Palette local_palette;
+    Filemap cache_file;
+
+    int weight_by_faction[8] = {80, 80, 80, 80, 80, 80, 80, 80};
+    int territory_index_by_faction[8] = {96, 105, 156, 0, 85, 47, 89, 227};
+    int body_tint_index_by_faction[8] = {96, 105, 156, 0, 85, 47, 89, 227};
+
+    Buffer source_buffer;
+    const int palettes_match = compare_palettes();
+
+    StringTemp[0] = '\0';
+    strcat(StringTemp, Players[faction_id].filename);
+    strcat(StringTemp, ".pcx");
+    if (source_buffer.load_pcx(StringTemp, &local_palette, 10, 0xEC) != 0) {
+        return;
+    }
+
+    const int territory_sample = source_buffer.get_pixel(0xA1, 0x2EB);
+    territory_index_by_faction[faction_id] = territory_sample;
+
+    const int weight_sample = source_buffer.get_pixel(0xA1, 0x2F5);
+    if (weight_sample == WinFillColour) {
+        return;
+    }
+    const unsigned char wrapped_territory_delta =
+        static_cast<unsigned char>(weight_sample - 10);
+    weight_by_faction[faction_id] =
+        (static_cast<unsigned int>(wrapped_territory_delta) * 100) / 255;
+
+    const int body_tint_sample = source_buffer.get_pixel(0x1B3, 0x2E9);
+    if (body_tint_sample == WinFillColour) {
+        return;
+    }
+    body_tint_index_by_faction[faction_id] = body_tint_sample;
+
+    const uint32_t cache_key[3] = {
+        static_cast<uint32_t>(weight_by_faction[faction_id]),
+        static_cast<uint32_t>(territory_index_by_faction[faction_id]),
+        static_cast<uint32_t>(body_tint_index_by_faction[faction_id]),
+    };
+
+    StringTemp[0] = '\0';
+    strcat(StringTemp, Players[faction_id].filename);
+    strcat(StringTemp, "vals.tmp");
+
+    bool refresh_tables = false;
+    bool values_match = false;
+    void *values_view = cache_file.open(StringTemp, 1);
+    const DWORD values_start_time = timeGetTime();
+    if (values_view != nullptr && palettes_match == 0) {
+        unsigned char *saved = static_cast<unsigned char *>(values_view);
+        values_match =
+            memcmp(saved, &cache_key[0], sizeof(cache_key[0])) == 0 &&
+            memcmp(saved + 4, &cache_key[1], sizeof(cache_key[1])) == 0 &&
+            memcmp(saved + 8, &cache_key[2], sizeof(cache_key[2])) == 0;
+        if (values_match) {
+            cache_file.close(saved + 12);
+        }
+    }
+
+    if (!values_match) {
+        void *values_view = nullptr;
+        do {
+            values_view = cache_file.create(StringTemp, 0x80, 1);
+            if (values_view != nullptr) {
+                unsigned char *saved =
+                    static_cast<unsigned char *>(values_view);
+                memcpy(saved, &cache_key[0], sizeof(cache_key[0]));
+                memcpy(saved + 4, &cache_key[1], sizeof(cache_key[1]));
+                memcpy(saved + 8, &cache_key[2], sizeof(cache_key[2]));
+                cache_file.close(saved + 12);
+                break;
+            }
+        } while (timeGetTime() - values_start_time < 0xBB8);
+        refresh_tables = true;
+    }
+
+    StringTemp[0] = '\0';
+    strcat(StringTemp, Players[faction_id].filename);
+    strcat(StringTemp, ".tmp");
+
+    void *table_view = nullptr;
+    bool tables_loaded = false;
+    if (!refresh_tables) {
+        table_view = cache_file.open(StringTemp, 1);
+        if (table_view != nullptr && cache_file.get_size() >= 0xC100) {
+            memcpy(TerritoryColorTables[faction_id], table_view, 0x100);
+            memcpy(BodyTintColorTables[faction_id],
+                   static_cast<unsigned char *>(table_view) + 0x100,
+                   0xC000);
+            tables_loaded = true;
+        }
+    }
+
+    if (!tables_loaded) {
+        for (;;) {
+            const DWORD start_time = refresh_tables
+                ? timeGetTime() : values_start_time;
+            DWORD now = start_time;
+            for (;;) {
+                table_view = cache_file.create(StringTemp, 0xC100, 1);
+                if (table_view != nullptr) {
+                    break;
+                }
+                now = timeGetTime();
+                break;
+            }
+            if (table_view != nullptr) {
+                break;
+            }
+
+            if (now - start_time >= 0xBB8) {
+                break;
+            }
+
+            // The native retry edge returns to its values-cache decision
+            // block with StringTemp still naming the output .tmp file. It
+            // creates/truncates that same path through the 0x80-byte path
+            // before beginning a fresh 0xC100-byte output retry window.
+            values_view = nullptr;
+            do {
+                values_view = cache_file.create(StringTemp, 0x80, 1);
+                if (values_view != nullptr) {
+                    unsigned char *saved =
+                        static_cast<unsigned char *>(values_view);
+                    memcpy(saved, &cache_key[0], sizeof(cache_key[0]));
+                    memcpy(saved + 4, &cache_key[1], sizeof(cache_key[1]));
+                    memcpy(saved + 8, &cache_key[2], sizeof(cache_key[2]));
+                    cache_file.close(saved + 12);
+                    break;
+                }
+            } while (timeGetTime() - values_start_time < 0xBB8);
+            refresh_tables = true;
+        }
+    }
+
+    if (table_view != nullptr && !tables_loaded) {
+        unsigned char *territory_table = TerritoryColorTables[faction_id];
+        const int territory_weight = weight_by_faction[faction_id];
+        g_PALETTE1.create_table_from_color(
+            territory_index_by_faction[faction_id], territory_table,
+            10, 0xEC, 100 - territory_weight, territory_weight);
+        memcpy(table_view, territory_table, 0x100);
+
+        const PALETTEENTRY tint =
+            g_PALETTE1.entries()[body_tint_index_by_faction[faction_id]];
+        HSV hsv;
+        RGB_to_HSV(&tint, &hsv);
+
+        const unsigned char *source_palette =
+            g_VBP_CAVIARDATA.record()->palette_ + 0x302;
+        for (int row = 0; row < 24; ++row) {
+            for (int color = 0; color < 256; ++color) {
+                const PALETTEENTRY source =
+                    g_PALETTE1.entries()[source_palette[row * 256 + color]];
+                const unsigned char red = static_cast<unsigned char>(
+                    static_cast<int>(static_cast<double>(tint.peRed) *
+                                     source.peRed * (1.0f / 255.0f)));
+                const unsigned char green = static_cast<unsigned char>(
+                    static_cast<int>(static_cast<double>(tint.peGreen) *
+                                     source.peGreen * (1.0f / 255.0f)));
+                const unsigned char blue = static_cast<unsigned char>(
+                    static_cast<int>(static_cast<double>(tint.peBlue) *
+                                     source.peBlue * (1.0f / 255.0f)));
+                BodyTintColorTables[faction_id][row][color] =
+                    static_cast<unsigned char>(
+                        g_PALETTE1.get_nearest_palette_index(
+                            red, green, blue, 0));
+            }
+        }
+        memcpy(static_cast<unsigned char *>(table_view) + 0x100,
+               BodyTintColorTables[faction_id], 0xC000);
+    }
+
+    cache_file.close();
+}
+
+// ORIGINAL: 0x00453710 ?load_faction_art@@YAXH@Z 0x00453710-0x00453A17
+// RECOVERY_BINDING: v1 {"evidence": ["historical retired seed src/unrecovered/00453710.cpp", "recovery/tasks/ambience-faction-art-owner-oct5.json", "pinned complete original spans; fresh native owner compilation and actual-source behavior controls"], "reason": "Complete semantic recovery through genuine source-owned members, globals and lifetime operations; retain original defects and historical obligations. Current byte restoration remains unfinished."}
+// symbol    ?load_faction_art@@YAXH@Z
+// Historical forwarder discovery (Git b295f309, pending_bodies.cpp):
+// read_faction/read_factions in alpha.cpp require this genuine out-of-line
+// definition. The earlier temp.h function-pointer spelling emitted indirect
+// calls instead of the original direct calls. Retain the real function ABI.
+// TRIED: caching (Buffer*)0x798668 in a local `buf` (no change, still diverges at #7 push-vs-call in the prologue call setup).
+void __cdecl load_faction_art(int faction_id) {
+    colortables_init_faction(faction_id);
+
+    Buffer &canvas = g_PCX_PARSE_TEMP_BUFFER1;
+    StringTemp[0] = '\0';
+    strcat(StringTemp, Players[faction_id].filename);
+    strcat(StringTemp, ".pcx");
+    // The native test branches around the fallback on zero; a nonzero status
+    // is the one path that attempts the stock faction sheet.
+    if (canvas.load_pcx(StringTemp, nullptr, 10, 0xEC) != 0) {
+        canvas.load_pcx("faction.pcx", nullptr, 10, 0xEC);
+    }
+
+    InfoFactionTextColors[faction_id] = canvas.get_pixel(4, 0x2E3);
+    InfoFactionShadowColors[faction_id] = canvas.get_pixel(4, 0x2EB);
+    ChatItemIdTable[faction_id] = canvas.get_pixel(4, 0x2F3);
+    ChatShadowColors[faction_id] = canvas.get_pixel(4, 0x2FB);
+
+    FactionArt &art = FactionsArt[faction_id];
+    int code_y = 1;
+    for (int set = 0; set < 2; ++set) {
+        for (int column = 0; column < 3; ++column) {
+            int code_x = 1;
+            for (int row = 0; row < 4; ++row) {
+                art.base[set][row][column].extract(
+                    &canvas, 9, code_x, code_y, 0x64, 0x4B, nullptr);
+                code_x += 0x65;
+            }
+            code_y += 0x4C;
+        }
+    }
+
+    code_y = 0x1C9;
+    for (int council_logo_index = 0; council_logo_index < 2;
+         ++council_logo_index) {
+        art.council_logo[council_logo_index].extract(
+            &canvas, 9, 1, code_y, 0x56, 0x48, nullptr);
+        code_y += 0x49;
+    }
+    art.council_small.extract(&canvas, 9, 0x58, 0x1C9, 0x60, 0x73, nullptr);
+    art.council_big.extract(&canvas, 9, 0xB9, 0x1C9, 0x76, 0x90, nullptr);
+    art.diplomacy.extract(&canvas, 9, 0x130, 0x1C9, 0x83, 0x9D, nullptr);
+    art.diplomacy_logo.extract(&canvas, 9, 0x1B4, 0x1C9, 0x41, 0x32, nullptr);
+    art.diplomacy_landscape.extract(&canvas, 9, 0x1F6, 0x1C9,
+                                    0xE9, 0x7C, nullptr);
+    art.datalink.extract(&canvas, 9, 0x213, 1, 0xA4, 0xC6, nullptr);
+    art.report_logo[0].extract(&canvas, 9, 0x2BD, 1, 0x46, 0x46, nullptr);
+    art.report_logo[1].extract(&canvas, 9, 0x2BD, 0x48, 0x46, 0x46, nullptr);
+
+    code_y = 1;
+    for (int report_logo_index = 0; report_logo_index < 3;
+         ++report_logo_index) {
+        art.report_logo_small[report_logo_index].extract(
+            &canvas, 9, 0x304, code_y, 0x25, 0x1D, nullptr);
+        code_y += 0x1E;
+    }
+
+    canvas.close();
+}
+
 // The original compares exactly 256 PALETTEENTRYs. Existing mappings are
 // writable: a changed palette overwrites the mapped cache before closing it.
 // ORIGINAL: 0x00422F20 ?compare_palettes@@YAHXZ 0x00422F20-0x00422FFA;0x00652BD0-0x00652BE2 BYTE_EXACT
