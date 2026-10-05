@@ -1,0 +1,262 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "86eaaea29c593208d348f680d9aa76304c8544d9",
+  "editable_files": [
+    "CMakeLists.txt",
+    "recovery/tests/fixtures/movie_media_host.cpp",
+    "recovery/tests/test_movie_media_behavior.py",
+    "src/alphamovie.cpp",
+    "src/alphamovie.h",
+    "src/general.cpp",
+    "src/general.h",
+    "src/leaf_recoveries.cpp",
+    "src/movie_media.cpp",
+    "src/movie_media.h",
+    "src/pending_bodies.cpp",
+    "src/recovered/005ce620.cpp",
+    "src/recovered/005cf120.cpp",
+    "src/recovered/units/005cb610.cpp",
+    "src/recovered/units/005ce2b0.cpp",
+    "src/recovered/units/005ce450.cpp",
+    "src/unrecovered/005c9ec0.cpp",
+    "src/unrecovered/005ca310.cpp",
+    "src/unrecovered/005ca6c0.cpp",
+    "src/unrecovered/005caab0.cpp",
+    "src/unrecovered/005cae00.cpp",
+    "src/unrecovered/005cae80.cpp",
+    "src/unrecovered/005cb050.cpp",
+    "src/unrecovered/005cb220.cpp",
+    "src/unrecovered/005cb6c0.cpp",
+    "src/unrecovered/005cbc00.cpp",
+    "src/unrecovered/005cbe30.cpp",
+    "src/unrecovered/005cc150.cpp",
+    "src/unrecovered/005cc2b0.cpp",
+    "src/unrecovered/005cc450.cpp",
+    "src/unrecovered/005cc710.cpp",
+    "src/unrecovered/005cc860.cpp",
+    "src/unrecovered/005cc940.cpp",
+    "src/unrecovered/005cd2d0.cpp",
+    "src/unrecovered/005cd560.cpp",
+    "src/unrecovered/005cd750.cpp",
+    "src/unrecovered/005cd8d0.cpp",
+    "src/unrecovered/005cd980.cpp",
+    "src/unrecovered/005cda30.cpp",
+    "src/unrecovered/005cdb90.cpp",
+    "src/unrecovered/005cdd10.cpp",
+    "src/unrecovered/005cdfa0.cpp",
+    "src/unrecovered/005ce2f0.cpp",
+    "src/unrecovered/005ce340.cpp",
+    "src/unrecovered/005ce4b0.cpp",
+    "src/unrecovered/005cfaed.cpp",
+    "src/unrecovered/005d02cc.cpp",
+    "src/unrecovered/005d35b0.cpp",
+    "src/uv2player.cpp"
+  ],
+  "evidence": [
+    "Complete corrected ignored movie_media.cpp/.h compiles through the configured native VC6 source overlay; observed layouts runtime660, descriptor7B4, pixel-format20, table3D74. Draft compilation is not integration, matching or runtime proof.",
+    "Independent pinned review confirms UV2 descriptor extent and native descriptor58 dual use. Integration must reconcile duplicate current leaf definitions, migrate general table aliases to the one source-owned object, and add the normal dsound import dependency.",
+    "User authorizes coordinator-reviewed coverage-first integration and temporary matching regressions with preserved historical obligations. New owner sentinels must retain original mappings and BODY GOES HERE. and cannot replace recovered behavior or retire their seeds.",
+    "Actual-source host controls and mutants exercise parser, MMIO cleanup, HRESULT lookup, DirectDraw/DirectSound setup/release and block conversion. Fresh native layouts, scoped measurements, build/link, source/reference/claim checks and post-integration checks required; full-game and decoder closure remain unfinished."
+  ],
+  "intent": "Recover the complete prepared 32-body media owner wave with genuine SDK interfaces, typed embedded descriptor/runtime/queues and shared table ownership. Reconcile existing bodies/callers and preserve all original identities, claims and discoveries. Seven missing converter dependencies may receive explicit owning-TU sentinels, retaining seeds and uncounted unfinished debt.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6069952,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6071056,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6072000,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6072688,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6073008,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6073856,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6073984,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6074448,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6074912,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6075920,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6076000,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6076096,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6077440,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6078000,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6078800,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6079152,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6079568,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6080272,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6080608,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6080832,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6083280,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6083936,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6084432,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6084816,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6084992,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6085168,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6085520,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6085904,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6086560,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6087344,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6087408,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6087488,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6087760,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6087856,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6088224,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6091040,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6093549,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6095564,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6108592,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "movie-media-owner-wave"
+}
