@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "task_id": "council-atrocity-owner-oct5",
+  "target": "opensmacx",
+  "author": "framework-coordinator",
+  "intent": "Recover complete council and atrocity policies in the existing faction owner. Use genuine council window/player storage and directed treaty/agenda/mercenary fields; preserve callback reloads, exact parser slot/default ordering and original 32-bit wrapping. Replace the old executable forwarder and retire complete superseded seeds after compiling semantic coverage checks, without granting claims or deliberately fixing behavior.",
+  "base_revision": "602ad8cbae687e426300c19803c14b4a290c0f29",
+  "subjects": [
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 4358992},
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 5631712}
+  ],
+  "editable_files": ["src/faction.cpp", "src/faction.h", "src/base.cpp", "src/veh.cpp", "src/pending_bodies.cpp", "src/recovered/units/00428350.cpp", "src/recovered/units/0055eee0.cpp", "recovery/tests/test_council_atrocity_product_source.py"],
+  "evidence": [
+    "Pinned complete council428350..42854E and atrocity55EEE0..55F44F identities; existing CounсWin, Console, Council state and PlayerData are genuine dependencies.",
+    "Independent raw-instruction review corrected extra parser calls: council slots0/1 then proposal parse_say2; atrocity actor0/1 victim2/3 then parse_num. Current bodies and controls preserve per-call GenderDefault/PluralityDefault.",
+    "PlayerData[1] base96EAAC plus treaty offset18 yields native96EAC4; per-row20CC loop addresses diplo_treaties[actor] and diplo_merc[actor], with fresh reads after callbacks. Existing wrapped-counter helper preserves signed word effects.",
+    "Native preflight covers all affected base/faction/veh/pending translation units. Permanent host controls extract only actual product bodies/helpers; original span/claim continuity and fresh application build/link remain required before cleanup publication."
+  ]
+}
