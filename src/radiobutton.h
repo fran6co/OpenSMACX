@@ -79,7 +79,7 @@ class RadioButton : public virtual GraphicWin, public virtual Dialog {
   // The original deleting entry closes the control before destroying its
   // virtual bases. VC6 owns their destruction, optional operator delete,
   // and all three receiver adjustors; their image bindings live in the TU.
-  virtual ~RadioButton() { close(); }
+  virtual ~RadioButton();
   uint32_t close();
 
  public:

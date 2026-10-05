@@ -52,8 +52,20 @@ RadioButton::RadioButton() {
     unchecked_sprite_ = RadioButtonDefault1;
 }
 
+// Genuine destructor phase; virtual-base table staging belongs to VC6.
 /*
-Purpose: Compiler-generated scalar deleting destructor for the inline
+// ORIGINAL: 0x00406A90 sub_406a90 0x00406A90-0x00406AE3 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:360abf0bcf225dda7b384e46e5c26fb7bd2a3bda:src/recovered/units/00406a90.cpp", "pinned:terranx_original:0x406a90", "source:src/radiobutton.cpp"], "reason": "Original stages RadioButton tables and vtordisps through the+18 virtual-base receiver then calls close. Real out-of-line destructor supplies this non-deleting phase; separate original406F60 owns full scalar deletion and virtual-base destruction. Constructor table correspondence identifies the class, not proximity alone. Preserve all original spans, names, claims and seed discoveries; no new byte grant."}
+// symbol    ??1RadioButton@@UAE@XZ
+*/
+// Historical seed findings: explicit vbtable and vtordisp staging reproduced
+// an83-byte fixed-address body; natural hierarchy retains the restoration obligation.
+RadioButton::~RadioButton() {
+    close();
+}
+
+/*
+Purpose: Compiler-generated scalar deleting destructor for the out-of-line
          ~RadioButton. Entered on GraphicWin at +0x18, it restores the
          derived tables, closes the control, destroys Dialog and GraphicWin,
          and conditionally deletes the complete object. The catalogue's int

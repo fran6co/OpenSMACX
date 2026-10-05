@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "task_id": "container-lifetimes-owner-oct5",
+  "target": "opensmacx",
+  "author": "framework-coordinator",
+  "base_revision": "360abf0bcf225dda7b384e46e5c26fb7bd2a3bda",
+  "intent": "Recover allocation cleanup and two distinct generated class destruction phases in genuine source owners, retire three fixed-address seed implementations, preserve historical claims.",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4203296
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4220528
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4221584
+    }
+  ],
+  "files": [
+    "src/radiobutton.h",
+    "src/radiobutton.cpp",
+    "src/net_class.cpp",
+    "src/dialog.cpp",
+    "recovery/tests/test_container_lifecycle_actual_source.py",
+    "src/recovered/00402320.cpp",
+    "src/recovered/00406670.cpp",
+    "src/recovered/units/00406a90.cpp"
+  ],
+  "evidence": [
+    "Standing coordinator-reviewed integration permission includes temporary matching regressions; no historical demotion.",
+    "Move RadioButton close-only destructor out of line without fields or base changes; current-source graph and caller results require rebuild.",
+    "402BB0 remains unresolved; table coincidence does not grant attribution.",
+    "Require fresh full build/link, actual-source controls, claim/source/reference continuity and scoped native baseline/current measurements. Physical COFF is not linked retained-selection proof or game acceptance."
+  ]
+}

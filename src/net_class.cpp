@@ -3557,6 +3557,11 @@ void *allocate_net_node(size_t size, Heap *owner) {
     return memory;
 }
 
+/*
+// ORIGINAL: 0x00402320 sub_402320 0x00402320-0x00402349 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:360abf0bcf225dda7b384e46e5c26fb7bd2a3bda:src/recovered/00402320.cpp", "pinned:terranx_original:0x402320", "source:src/net_class.cpp"], "reason": "Original cleanup preserves StringAllocationHeap on null input; otherwise free only when owner is null, then clear handoff. Real Net/AlphaNet placement-delete callers discard its result. Indirect return consumers remain unverified. Preserve all original spans, names, claims and seed discoveries; no new byte grant."}
+// symbol    ?cleanup_failed_net_construction@@YAXPAX@Z
+*/
 void cleanup_failed_net_construction(void *memory) {
     if (memory != 0) {
         if (StringAllocationHeap == 0) free(memory);
