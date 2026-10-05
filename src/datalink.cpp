@@ -3602,3 +3602,21 @@ void Datalink::init() {
     static_cast<Buffer &>(detail_box_).set_text_color_hyper(0x96, -1, 1, 1);
     (void)temporary_buffer;
 }
+
+// ORIGINAL: 0x00590CD0 sub_590cd0 0x00590CD0-0x00590CE6 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:d3362d4a5fec8fef6555623f53e48513f4953148:src/recovered/00590cd0.cpp", "pinned:590CB0..590CC2 initializer;590CD0..590CE6 and590CF0..590D0F complete dispatch/stack cleanup", "source:src/datalink.h:DatalinkEntryCallbacks", "source:recovery/tests/test_datalink_callback_owner.py"], "reason": "Recover the complete guarded callback dispatch through the existing two-pointer row. Adjacent 590CB0 stores these fields at offsets0/4; the pinned member dispatches one or three stack arguments and skips null callbacks. Existing selection-entry direct dispatch remains unchanged. The native EAX survives the callback or is zero on the null path, but no observed direct call or stored pointer establishes a typed return contract; void source roles do not invent one. The old int-return scaffold interpretation remains historical; its BYTE claim and complete original span remain restoration obligations, not a fresh grant. Historical single-epilogue spelling observation: explicitly returning zero added a second return site; no such typed return is introduced."}
+// symbol    ?invoke_help@DatalinkEntryCallbacks@@QBEXH@Z
+void DatalinkEntryCallbacks::invoke_help(int value) const {
+  if (help != 0) {
+    help(value);
+  }
+}
+
+// ORIGINAL: 0x00590CF0 sub_590cf0 0x00590CF0-0x00590D0F FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:d3362d4a5fec8fef6555623f53e48513f4953148:src/recovered/00590cf0.cpp", "pinned:590CB0..590CC2 initializer;590CD0..590CE6 and590CF0..590D0F complete dispatch/stack cleanup", "source:src/datalink.h:DatalinkEntryCallbacks", "source:recovery/tests/test_datalink_callback_owner.py"], "reason": "Recover the complete guarded callback dispatch through the existing two-pointer row. Adjacent 590CB0 stores these fields at offsets0/4; the pinned member dispatches one or three stack arguments and skips null callbacks. Existing selection-entry direct dispatch remains unchanged. The native EAX survives the callback or is zero on the null path, but no observed direct call or stored pointer establishes a typed return contract; void source roles do not invent one. The old int-return scaffold interpretation remains historical; its BYTE claim and complete original span remain restoration obligations, not a fresh grant."}
+// symbol    ?invoke_text@DatalinkEntryCallbacks@@QBEXPAXHH@Z
+void DatalinkEntryCallbacks::invoke_text(void *output, int value, int extra) const {
+  if (append_text != 0) {
+    append_text(output, value, extra);
+  }
+}

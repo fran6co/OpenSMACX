@@ -388,6 +388,9 @@ typedef void (__cdecl *DatalinkTextCallback)(void *, int, int);
 struct DatalinkEntryCallbacks {
   DatalinkHelpCallback help;
   DatalinkTextCallback append_text;
+
+  void invoke_help(int value) const;
+  void invoke_text(void *output, int value, int extra) const;
 };
 
 // Candidate lower-bound model: the native constructor writes through entry 10.

@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "task_id": "datalink-callback-owner-oct5",
+  "target": "opensmacx",
+  "author": "framework-coordinator",
+  "base_revision": "d3362d4a5fec8fef6555623f53e48513f4953148",
+  "intent": "Recover complete guarded callback wrappers through the genuine existing two-pointer Datalink callback row, preserve native null behavior and argument forwarding, retain original spans and historical claims, and retire superseded scaffold seeds. Preserve existing selection-entry inline/direct calls. Unknown typed EAX return contract remains explicit; no fresh byte or full-game grant.",
+  "subjects": [
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 5835984},
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 5836016}
+  ],
+  "files": [
+    "src/datalink.cpp", "src/datalink.h",
+    "src/recovered/00590cd0.cpp", "src/recovered/00590cf0.cpp",
+    "recovery/tests/test_datalink_callback_owner.py",
+    "recovery/tests/datalink_callback_owner_control.cpp"
+  ],
+  "evidence": [
+    "Coordinator-reviewed manual integration authorized by user; temporary matching regressions retain historical claims and require fresh build/link, continuity and scoped comparison.",
+    "Independent worker native read-only decode: adjacent590CB0 stores callbacks at row offsets0/4;590CD0 and590CF0 dispatch one and three stack arguments with ret4/ret12. No observed executable direct calls or stored pointer references establish typed return contract.",
+    "Root fresh private VC6 COFF compile observes actual const member symbols and no relocations; nullable branches preserve callback-result EAX or zero without synthetic typed return. Raw full-section comparison is not a byte grant; instruction extent and configured trial measurement are separate.",
+    "Actual-source C++98 controls exercise null/nonnull behavior, exact forwarded arguments and reject argument swaps, wrong help value and dropped dispatch. Host pointer-relative layout checks are not evidence of native i386 allocation or linked selection."
+  ]
+}
