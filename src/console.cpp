@@ -4792,8 +4792,8 @@ void Console::designate(int veh_id) {
 // Homed 2026-09-05 from src/unrecovered/0050e890.cpp (deleted). The
 // catalogue's callers-0 is right in spirit: nothing calls it, Console::
 // on_key_click (0x005178C0) takes its ADDRESS at 0x00517987 - it is a timer
-// callback - and on_key_click is not homed yet, so nothing in this build
-// reaches the body either way.
+// callback - the source-owned on_key_click handler below installs it
+// through the real Time owner.
 //
 // Every fixed address in it is a name the tree already owns: AutoPlayCounter
 // (0x00939FD0, above), WinModalDepth (0x009B7AE4), GameState's low byte
@@ -11404,3 +11404,2149 @@ int __cdecl supply_options(int veh_id, int base_id) {
 // Current source ownership is not original TU or COMDAT-selection proof.
 // ORIGINAL: 0x0051DDF0 ??_GConsole@@UAEPAXI@Z 0x0051DDF0-0x0051DE26 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["historical seed:src/recovered/0051ddf0.cpp", "task:window-generated-deletion-owners", "Pinned entry receives the Console virtual GraphicWin subobject at complete-object+0x23D94; own-part destructor, virtual-base destructor and conditional delete are separate native stages.", "Fresh emitted code and receiver/target controls remain required. Duplicate COMDAT emission does not establish historical translation-unit placement or retained link selection."], "reason": "The existing real class lifetime generates this deleting entry; bind compiler-owned code rather than transcribing receiver arithmetic or invoking member/base destructors twice."}
+
+// Provisional original storage identities: access widths and initial values
+// are observed, but no complete allocation/lifetime interpretation is claimed.
+// Six individually stored bytes at 0x517930-0x51795D initially read as zero. Only the touched cells are known; original allocation extent, terminator and other consumers remain unverified.
+// RECOVERY_OBJECT: v1 0x00939FE0 ?ConsoleKeyByteRegion@@3PAEA
+unsigned char ConsoleKeyByteRegion[6] = {0};
+
+// Interlude selection dword read/written at 0x518871/0x5188AB, initially zero. Its complete original allocation and lifetime remain unverified.
+// RECOVERY_OBJECT: v1 0x00939FCC ?ConsoleInterludeSelection@@3HA
+int ConsoleInterludeSelection = 0;
+
+// Key-cycle dword read/written at 0x5185CE-0x518674, initially -2 in the pinned PE. Adjacent DiploKnownTechColor is independent; full allocation and lifetime remain unverified.
+// RECOVERY_OBJECT: v1 0x0068A5C8 ?ConsoleKeyCycleState@@3HA
+int ConsoleKeyCycleState = -2;
+
+// Enter/Space guard dword read at 0x517A0B/0x517A93, initially zero. It starts after EditorBrushButtonGroup; semantic identity, allocation extent and other writers remain unverified.
+// RECOVERY_OBJECT: v1 0x007CD2E8 ?ConsoleModalState7CD2E8@@3HA
+int ConsoleModalState7CD2E8 = 0;
+
+// ORIGINAL: 0x005178C0 ?on_key_click@Console@@QAEHHH@Z 0x005178C0-0x0051B66F;0x0065D4D0-0x0065D4E2
+// RECOVERY_BINDING: v1 {"reason":"Recover the complete Console key/event dispatcher in its genuine virtual MapWin/GraphicWin owner, with ordinary scoped Log lifetime and typed map, player, vehicle, modal-window and editor operations.","evidence":["Pinned entry 0x005178C0-0x0051B66F and EH span 0x0065D4D0-0x0065D4E2; receiver is the Console virtual GraphicWin subobject.","Independent native entry/cursor/modal review: zero-tested mode-8 member, false-visible button handoff, normalized versus raw dispatch and unconditional confirmed single-player quit.","Current VC6 emits the UAE virtual member and its own vtordisp thunk; retain the legacy QAE interpreted original name, not a hand-coded adjustment."]}
+// kind      game
+// symbol    ?on_key_click@Console@@UAEHHH@Z
+int Console::on_key_click(int a1, int a2) {
+
+// ---- flattened from fragments/01-first-command-and-character-switches.inc ----
+// Native body prelude and digit fallback, pinned offsets 0x5178C0..0x51803E.
+// This section declares the method-local Log/latches, applies the first modal
+// input router and joins the first byte dispatch in fragment 14.
+
+// Common per-entry native return value is 1; every branch reaches the one
+// cleanup edge at 0x51B648. `a1` is the character/key value at [ebp+8], and
+// `a2` is the event command at [ebp+0xC]. Native 0x6466EF is a locale-aware
+// lowercase conversion and is represented by `tolower(a1)`. Its keyboard
+// trace call at 0x626350 is the source-owned log_say_hex overload.
+
+int normalized_character;
+Log native_handler_log; // native entry constructs at 0x625FB0; epilogue destroys it
+char native_key_character[2];
+char native_decimal_buffer[16];
+int native_editor_lock;
+int native_command_consumed = 0; // native stack local [ebp-0x28]
+int native_original_key;
+int native_mode_flag;
+
+// Native entry guards 0x5178F3..0x517910 run after the local Log has been
+// constructed and before the first sparse event table. The command mask is
+// applied to the original a2 dword, not to its low byte.
+if (ExitTurnLoop != 0 ||
+    (static_cast<unsigned int>(a2) & 0xFFFCFFFFu) == 0x12u) {
+    goto native_done;
+}
+
+// The first sparse event switch (0x51B690; a2 base 0x30041, 58 bytes) has
+// six individual byte writes and the ConsoleTimer command. The neutral
+// ConsoleKeyByteRegion owner is provisional as described beside its definition;
+// its six byte cells cover observed stores only and assert no original
+// allocation capacity or terminator.
+switch (a2) {
+case 0x30050: ConsoleKeyByteRegion[0] = 'p'; break;
+case 0x30049: ConsoleKeyByteRegion[1] = 'i'; break;
+case 0x30052: ConsoleKeyByteRegion[2] = 'r'; break;
+case 0x30041: ConsoleKeyByteRegion[3] = 'a'; break;
+case 0x30054: ConsoleKeyByteRegion[4] = 't'; break;
+case 0x30045: ConsoleKeyByteRegion[5] = 'e'; break;
+case 0x3007A:
+    // Native reads ConsoleTimer.id_event_ at +4 (not count_), stops an active
+    // timer and stores 0x10 to LockEnableMask's low byte, or starts the
+    // callback with (param=0,count=100,resolution=5) and clears that byte.
+    if (ConsoleTimer.has_timer()) {
+        ConsoleTimer.stop();
+        LockEnableMask = (LockEnableMask & 0xFFFFFF00u) | 0x10u;
+    } else {
+        LockEnableMask &= 0xFFFFFF00u;
+        ConsoleTimer.start(auto_play_callback, 0, 100, 5);
+    }
+    break;
+default:
+    break;
+}
+
+// After that event switch, native calls AlphaMenu::hide at 0x9380DC. This is
+// the already modeled ConsoleGlobal.alpha_menu_ member (Console +0x22A2C).
+// Then it tests MapBaseDisplayOverride and either sets
+// ConsoleNoMapOverrideLatch or enters the later command router.
+
+ConsoleGlobal.alpha_menu_.hide();
+if (MapBaseDisplayOverride == 0) {
+    ConsoleNoMapOverrideLatch = 1;
+    goto native_done;
+}
+
+if (TutorialWindow.reset() != 0 && (a2 == 0x0D || a2 == 0x1B)) {
+    goto native_done;
+}
+if (a2 == 0x91) {
+    MainInterfaceGlobal.draw_edit_pane();
+}
+
+// Native Enter/Space panel handoff (0x5179F0..0x517AB7). The scalar and
+// ButtonGroup is the real MainInterface member; the standalone modal-state
+// scalar remains provisional as described beside its definition.
+{
+    bool enter_space_handoff = false;
+    if (a2 == 0x0D || a1 == 0x20) {
+        if (NetMsgPrimary.is_active() == 0 &&
+            NetMsgSecondary.is_active() == 0 &&
+            ConsoleModalState7CD2E8 == 0 &&
+            MainInterfaceGlobal.button_group(0).field_84_ == 0x3E8 &&
+            TutWinBaseWindow.is_visible() == 0) {
+            enter_space_handoff = true;
+        }
+    }
+    if (enter_space_handoff == false && a2 == 0x0D &&
+        (ConsoleGlobal.alpha_menu_.is_visible() != 0 || MultiWindowOpen != 0)) {
+        enter_space_handoff = true;
+    }
+    if (enter_space_handoff != false) {
+        if (TutWinBaseWindow.is_visible() == 0) {
+            MainInterfaceGlobal.button_group(0).button_click(0x3E9);
+        }
+        if (ConsoleGlobal.alpha_menu_.is_visible() != 0) {
+            ConsoleGlobal.alpha_menu_.hide();
+        }
+        if (MultiWindowOpen != 0) {
+            MultiWindow.hide();
+        }
+        if (ConsoleModalState7CD2E8 != 0) {
+            MainInterfaceGlobal.clear_message();
+        }
+        if (NetMsgPrimary.is_active() != 0 ||
+            NetMsgSecondary.is_active() != 0) {
+            goto native_done;
+        }
+    }
+}
+ConsoleInfoWin.reset();
+ConsoleStatusWin.reset();
+
+if (a2 >= 0x60 && a2 <= 0x69) {
+    a1 = 0;
+}
+if (a2 == 0x0D && (GameState & 0x80u) != 0 &&
+    (MapWinTable[0]->field_1DD70_ & 0x4000u) != 0) {
+    const int history = ConsoleGlobal.cursor_history_index_;
+    int vehicle_id = veh_at(ConsoleGlobal.cursor_history_x_[history],
+                            ConsoleGlobal.cursor_history_y_[history]);
+    while (vehicle_id >= 0) {
+        const Veh &vehicle = Vehs[vehicle_id];
+        if (vehicle.order == 0x18) {
+            Paths.move(vehicle_id, vehicle.faction_id);
+            do_all_draws();
+            goto native_done;
+        }
+        if (vehicle.next_veh_id_stack < 0) {
+            do_all_draws();
+            goto native_done;
+        }
+        vehicle_id = vehicle.next_veh_id_stack;
+    }
+    do_all_draws();
+    goto native_done;
+}
+
+// Native 0x517B81..A2 normalizes the key and logs the raw key/event pair.
+normalized_character = tolower(a1);
+native_key_character[0] = static_cast<char>(a1);
+native_key_character[1] = '\0';
+log_say_hex("Key: ", native_key_character, a1, a2, 0);
+
+// Native 0x517BA7..0x517BDF derives [ebp-0x2C] only for network games. A
+// nonzero ConsoleControlTurnActive (0x93A938) sets the local latch and takes the immediate
+// cleanup edge. With it clear, either nonzero lock-state sentinel sets the
+// latch but continues; only when both are zero does the latch remain clear.
+native_editor_lock = 0;
+if (IsMultiplayerNet != 0) {
+    if (ConsoleControlTurnActive != 0) {
+        native_editor_lock = 1;
+        goto native_done;
+    } else if (NetDaemonNet.lock_state_[2].payload_.flags != 0 ||
+               NetDaemonNet.lock_state_[0].leading_words_[3] != 0) {
+        native_editor_lock = 1;
+    }
+}
+
+// ---- flattened from fragments/00-map-cursor-pre-modal-corridor.inc ----
+// Native 0x517BDF..0x517FB7. ESI is the Console virtual GraphicWin receiver;
+// all accesses below are expressed through its real MapWin/Console/Veh owners.
+// Native slot17 is MapWin::on_mouse_move; the earlier 0x5EC8A0 call is the
+// inherited Win::get_mouse_pos operation.
+{
+    const uint32_t map_cursor_mode = field_23D10_;
+    const int selected_map_slot = MapWinSelectedSlot;
+    const int selected_vehicle_id = selected_vehicle_;
+    if (map_cursor_mode == 1 && selected_map_slot >= 0 &&
+        selected_vehicle_id >= 0 && ConsoleGlobal.cursor_active_ != 0) {
+        MapWin &selected_map = *MapWinTable[selected_map_slot];
+        if (normalized_character == 'j') {
+            selected_map.field_1DD84_ =
+                selected_map.field_1DD84_ == 0 ? 1u : 0u;
+            int mouse_x = 0;
+            int mouse_y = 0;
+            selected_map.get_mouse_pos(&mouse_x, &mouse_y);
+            selected_map.on_mouse_move(mouse_x, mouse_y);
+            goto native_done;
+        }
+        if (normalized_character == 'g' || a1 == 0x20) {
+            Veh &selected_vehicle = Vehs[selected_vehicle_id];
+            if ((selected_vehicle.state & 0x01000200u) == 0x01000200u) {
+                if (selected_vehicle.waypoint_count >= 3) {
+                    selected_vehicle.waypoint_count = 0;
+                } else {
+                    ++selected_vehicle.waypoint_count;
+                }
+            } else if ((selected_vehicle.state & 0x02000000u) == 0) {
+                selected_vehicle.state |= 0x02000000u;
+                selected_vehicle.patrol_current_point = 0;
+                selected_vehicle.waypoint_count = 1;
+            } else {
+                ++selected_vehicle.waypoint_count;
+                if (selected_vehicle.waypoint_count >= 4) {
+                    selected_vehicle.state &= ~0x02000000u;
+                    selected_vehicle.waypoint_count = 0;
+                }
+            }
+            int mouse_x = 0;
+            int mouse_y = 0;
+            selected_map.get_mouse_pos(&mouse_x, &mouse_y);
+            selected_map.feedback_hover_y_ = -1;
+            selected_map.field_1DE0C_ = static_cast<uint32_t>(-1);
+            selected_map.on_mouse_move(mouse_x, mouse_y);
+            goto native_done;
+        }
+
+        Veh &selected_vehicle = Vehs[selected_vehicle_id];
+        selected_vehicle.state &= ~0x02000200u;
+        selected_vehicle.order = -1;
+    }
+
+    // Map-mode 8 updates the active primary window's route-point counter.
+    // ESI is Console+0x23D94 here; its -0x6014 read rebases to the existing
+    // MapWin::field_1DD80_ at front offset 0x1DD80.
+    if (field_23D10_ == 8 && field_1DD80_ != 0 &&
+        selected_vehicle_ >= 0 &&
+        ConsoleGlobal.cursor_active_ != 0 &&
+        (normalized_character == ' ' || normalized_character == 'g')) {
+        Veh &selected_vehicle = Vehs[selected_vehicle_];
+        if (selected_vehicle.waypoint_count >= 3) {
+            selected_vehicle.waypoint_count = 0;
+        } else {
+            ++selected_vehicle.waypoint_count;
+        }
+        MapWin &primary_map = *MapWinTable[0];
+        int mouse_x = 0;
+        int mouse_y = 0;
+        primary_map.get_mouse_pos(&mouse_x, &mouse_y);
+        primary_map.field_1DE0C_ = static_cast<uint32_t>(-1);
+        primary_map.on_mouse_move(mouse_x, mouse_y);
+        goto native_done;
+    }
+
+    // Pan commands in a flagged window consume the character and event before
+    // the shared go_reset/cursor restoration path.
+    for (size_t pan_window_slot = 0;
+         pan_window_slot < MapWinTableSlots; ++pan_window_slot) {
+        MapWin *const window = MapWinTable[pan_window_slot];
+        if (window == 0 ||
+            (pan_window_slot != 0 && window->field_1DD74_ == 0)) {
+            continue;
+        }
+        if ((window->field_1DD70_ & 0x00400000u) != 0 &&
+            (normalized_character == 'g' || normalized_character == 'p')) {
+            a2 = 0;
+            a1 = 0;
+            normalized_character = 0;
+        }
+    }
+    if (field_23D10_ != 0 &&
+        (normalized_character == 'g' || normalized_character == 'p')) {
+        a2 = 0;
+        a1 = 0;
+        normalized_character = 0;
+    }
+
+    go_reset();
+    field_23D10_ = 0;
+    for (size_t cursor_window_slot = 0;
+         cursor_window_slot < MapWinTableSlots; ++cursor_window_slot) {
+        MapWin *const window = MapWinTable[cursor_window_slot];
+        if (window == 0 ||
+            (cursor_window_slot != 0 && window->field_1DD74_ == 0)) {
+            continue;
+        }
+        if (window->cursor_sprite_ != 0 ||
+            window->cursor_resource_id_ != 0x7F00) {
+            window->set_cursor(0x7F00);
+            window->cursor_resource_id_ = 0x7F00;
+            window->cursor_sprite_ = 0;
+        }
+        if ((window->field_1DD70_ & 0x00C40000u) != 0) {
+            window->field_1DD70_ &= ~0x00C40000u;
+            window->draw_map(1);
+        }
+        do_non_input();
+    }
+
+    if (a2 == 0x0D &&
+        IfaceIdToSlotStorage[ActiveIfaceIdStorage] == 5) {
+        ReportIfGlobal.done();
+        if (TutWinBaseWindow.is_visible() != 0) {
+            TutWinBaseWindow.exit();
+        }
+        goto native_done;
+    }
+}
+
+// Native 0x517FB8 tests TutWinBaseWindow::is_visible before the 0x51B6CC
+// event table. The false edge targets 0x518179 and bypasses both the modal
+// table and the numeric/raw-character handlers below.
+if (TutWinBaseWindow.is_visible() == 0) {
+    if (MainInterfaceGlobal.button_group(0).field_84_ == 0x3E8) {
+        MainInterfaceGlobal.button_group(0).button_click(0x3E9);
+    }
+    goto native_after_basewindow_raw_map;
+}
+
+// Modal BaseWin event routing (native table 0x51B6CC, index a2-0x0D,
+// count 0x5D), only after the native visible-window guard:
+switch (a2) {
+case 0x0D: // Enter
+case 0x1B: // Escape
+    TutWinBaseWindow.exit();
+    goto native_done;
+case 0x21: // Page Up
+case 0x25: // Left
+case 0x64: // keypad 4
+case 0x69: // keypad 9
+    TutWinBaseWindow.prev();
+    goto native_done;
+case 0x22: // Page Down
+case 0x27: // Right
+case 0x63: // keypad 3
+case 0x66: // keypad 6
+    TutWinBaseWindow.next();
+    goto native_done;
+default:
+    break;
+}
+
+// Native numeric-key fallback after modal routing. The digit is the normalized
+// character [ebp-0x24], not a2. Native guards are editor/network-sensitive:
+// edit-lock state must be clear; in editor mode UnkGlobal0093A934 must be set;
+// and NetDaemonNet's faction mask bit for ConsoleGlobal.faction_id_ must be
+// clear. Once those have been established by the translated common prelude:
+if (normalized_character >= '0' && normalized_character <= '9') {
+    const int digit = normalized_character - '0';
+    if (native_editor_lock != 0 &&
+        (UnkGlobal0093A934 == 0 ||
+         (NetDaemonNet.lock_state_[0].trailing_words_[8] &
+          (1u << faction_id_)) != 0)) {
+        goto native_done;
+    }
+    TutWinBaseWindow.production(digit, 0);
+    goto native_done;
+}
+
+
+// ---- flattened from fragments/14-base-window-character-routes.inc ----
+// INCOMPLETE C++ body fragment for the first normalized-character map
+// (dispatch table at 0x51B73C, lookup bytes at 0x51B764; index is
+// [ebp-0x24]-0x2B, where [ebp-0x24] is tolower(a1)). This precedes the
+// separate raw-a1 0x51B7AC character table.
+// Receiver 0x006A7628 is the source-owned TutWinBaseWindow object.
+
+// The first raw-key map covers every input in [0x2B,0x72]. Its default table
+// entry is not a fallthrough: native 0x518170 sets the command-consumed local
+// and continues to the 0x2000D/0x20020 command tests, then the scenario gate.
+if (normalized_character >= 0x2B && normalized_character <= 0x72) {
+switch (normalized_character) {
+case 'p':
+case 'c':
+    if (!native_editor_lock ||
+        (UnkGlobal0093A934 != 0 &&
+         (NetDaemonNet.lock_state_[0].trailing_words_[8] &
+          (1u << faction_id_)) == 0)) {
+        TutWinBaseWindow.production(0, 0);
+    }
+    goto native_done;
+case 'h':
+    if (!native_editor_lock) {
+        TutWinBaseWindow.hurry();
+    }
+    goto native_done;
+case ',':
+case '<':
+    TutWinBaseWindow.prev();
+    goto native_done;
+case '.':
+case '>':
+case 'n':
+    TutWinBaseWindow.next();
+    goto native_done;
+case 'r':
+    TutWinBaseWindow.rename();
+    goto native_done;
+case 'e':
+    if ((GameMorePreferences & 0x40u) != 0) {
+        TutWinBaseWindow.base_editor();
+    }
+    goto native_done;
+case '-':
+case '_':
+    if ((GameMorePreferences & 0x40u) != 0) {
+        TutWinBaseWindow.focus();
+        if (BaseCurrent->population_size > 1) {
+            --BaseCurrent->population_size;
+            TutWinBaseWindow.recompute(0);
+        }
+    }
+    native_command_consumed = 1;
+    goto native_after_base_character;
+case '+':
+case '=':
+    if ((GameMorePreferences & 0x40u) != 0) {
+        TutWinBaseWindow.focus();
+        if (BaseCurrent->population_size < 0x63) {
+            ++BaseCurrent->population_size;
+            TutWinBaseWindow.recompute(0);
+        }
+    }
+    native_command_consumed = 1;
+    goto native_after_base_character;
+default:
+    native_command_consumed = 1;
+    goto native_after_base_character;
+}
+} else {
+    // Native unsigned range failure at 0x518044 also falls to 0x518170.
+    native_command_consumed = 1;
+}
+
+// Native false-visible edge enters 0x518179 here, after bypassing the raw
+// BaseWin key map at 0x51803E..0x518170. Both edges share these command-ID
+// tests and then the native command-consumed/secondary-character routing.
+native_after_basewindow_raw_map:
+native_after_base_character:
+if (a2 == 0x2000D) {
+    end_my_turn();
+    goto native_done;
+}
+if (a2 == 0x20020) {
+    use_time_bonus();
+    goto native_done;
+}
+if (native_command_consumed != 0) {
+    goto native_scenario_editor_gate;
+}
+
+// Evidence from the 0x51B764 map: normalized ','/'<' target 0x5180D3 prev;
+// '.'/'>'/'n' target 0x5180E2 next; 'r' renames; normalized 'e' targets
+// 0x518100 and preference-gates BaseWin::base_editor;
+// 0x51811C/140 call BaseWin::focus, then modify BaseCurrent.population_size
+// at Base+6 (bounds 1..99) and call BaseWin::recompute(0). The six mapped
+// character groups above are mechanically derived from the PeImage table.
+// Native 0x518059/080 are BaseWin::production(0,0), gated by the preserved
+// editor latch, UnkGlobal0093A934 and lock_state_[0].trailing_words_[8];
+// 0x5180BB is BaseWin::hurry(), with the native editor-latch guard.
+
+
+// ---- flattened from fragments/01b-secondary-character-table.inc ----
+// Native secondary character table 0x51B7AC, after the 0x51B764 BaseWin
+// lookup and its command-consumed join.
+switch (a1) {
+case '+':
+    custom_my_faction();
+    goto native_done;
+
+case ',':
+    if (!native_editor_lock) {
+        corner_the_market();
+    }
+    goto native_done;
+
+case '=':
+    if ((GameState & 0x10u) != 0 || ObjectiveReqVictory < 0x2328 ||
+        ObjectivesSuddenDeathVictory < 0x2328) {
+        show_scen_objectives();
+    }
+    goto native_done;
+
+case 'D':
+    if (!native_editor_lock) {
+        if (ConsoleGlobal.cursor_active_ != 0 &&
+            ConsoleGlobal.selected_vehicle_ >= 0) {
+            disband(ConsoleGlobal.selected_vehicle_);
+        } else {
+            const int cursor = ConsoleGlobal.cursor_history_index_;
+            disband(ConsoleGlobal.cursor_history_x_[cursor],
+                    ConsoleGlobal.cursor_history_y_[cursor]);
+        }
+    }
+    goto native_done;
+
+case 'X': zoom(0x206, 0); go_reset(); goto native_done;
+case 'Z': zoom(0x205, 0); go_reset(); goto native_done;
+case 'x': zoom(0x204, 0); go_reset(); goto native_done;
+case 'z': zoom(0x203, 0); go_reset(); goto native_done;
+
+case 'c': {
+    const int cursor = ConsoleGlobal.cursor_history_index_;
+    MapWinTable[0]->set_center(ConsoleGlobal.cursor_history_x_[cursor],
+                               ConsoleGlobal.cursor_history_y_[cursor], 1);
+    goto native_done;
+}
+case 'e':
+    if (!native_editor_lock) {
+        social_select(ConsoleGlobal.faction_id_);
+    }
+    goto native_done;
+case 't': survey(); goto native_done;
+case 'u':
+    if (!native_editor_lock) {
+        design_new_veh(ConsoleGlobal.faction_id_, -1);
+    }
+    goto native_done;
+default:
+    break;
+}
+
+
+// ---- flattened from fragments/02-uppercase-and-scenario-switches.inc ----
+// Native key-handler dispatch region.
+// Depends on first-command fragment state and still omits the later command
+// tables/shared tails; this is not an independent member definition.
+
+// The native case-table 0x51B830 is keyed by a1 in [0x41,0x76]. It is only
+// entered when Console::edit_lock() is false. Exact active character groups:
+// A=0, P=1, T=2, '^'=3, J=4, j=5, R=6, v=7; all other table bytes route to
+// the shared 0x5185B0 branch.
+// Native first calls edit_lock(); when blocked, only `v` or `a` produces the
+// synchronous PROTECTED notification (literal 0x68AAA4). It calls edit_lock()
+// again before entering the key table, so preserve both reads around callback.
+if (edit_lock() != 0 && (a1 == 'v' || a1 == 'a')) {
+    NetMsgPrimary.pop("PROTECTED", 5000, 0, 0);
+}
+
+if (edit_lock() == 0) {
+switch (a1) {
+case 'A':
+    if (!native_editor_lock) { // previously established native [ebp-0x2C]
+        automate(selected_vehicle_, 0);
+    }
+    goto native_shared_after_key;
+case 'P':
+    if (IsMultiplayerNet) {
+        MultiWindow.on_button_clicked(2);
+    }
+    goto native_shared_after_key;
+case 'T':
+    time_controls();
+    goto native_shared_after_key;
+case '^':
+    use_time_bonus();
+    goto native_shared_after_key;
+case 'J':
+    assemble();
+    goto native_shared_after_key;
+case 'j':
+    go_to(selected_vehicle_, 0x18, 1);
+    goto native_shared_after_key;
+case 'R':
+    {
+    // The route is independently transcribed in the typed fragment; inline
+    // it here during final assembly so all route outcomes share the common
+    // post-key continuation.
+    if ((GameMorePreferences & 0x200u) != 0) {
+        const int faction = faction_id_;
+        int *const toggles = PlayersData[faction].unk_38 + 2;
+        PopupWriteCheckState = toggles[0] != 0 ? 1 : 0;
+        if (toggles[1] != 0) {
+            PopupWriteCheckState |= 2;
+        } else {
+            PopupWriteCheckState &= ~2;
+        }
+        popup_set_write_check_bit(2, toggles[2]);
+        popup_set_write_check_bit(3, toggles[3]);
+        if (x_pop_short(StrTechRandom, 1, 0) >= 0) {
+            const char answer = static_cast<char>(PopupWriteCheckState);
+            toggles[0] = answer & 1;
+            toggles[1] = (answer & 2) >> 1;
+            toggles[2] = (answer & 4) >> 2;
+            toggles[3] = (answer & 8) >> 3;
+            synch_ai(faction);
+        }
+    } else {
+        social_select(faction_id_);
+    }
+    goto native_shared_after_key;
+    }
+case 'v':
+    {
+    if (!native_editor_lock) {
+        if (ConsoleGlobal.cursor_active_ == 0) {
+            set_move(0);
+        } else {
+            ambience(0x1E);
+            field_23BF8_ = 1;
+            field_23BFC_ = 1;
+            const int had_survey = survey_mode_;
+            survey_mode_ = 0;
+            cursor_active_ = 0;
+            if (had_survey != 0) {
+                MapWinTable[0]->draw_map(1);
+            }
+            ::draw_cursor();
+            ConsoleInfoWin.change(0);
+            ConsoleStatusWin.redraw();
+            MapWinTable[0]->main_caption();
+
+            alpha_menu_.check(selected_vehicle_);
+            const int cursor = ConsoleGlobal.cursor_history_index_;
+            focus(ConsoleGlobal.cursor_history_x_[cursor],
+                  ConsoleGlobal.cursor_history_y_[cursor], faction_id_);
+        }
+    }
+    goto native_shared_after_key;
+    }
+default:
+    break;
+}
+}
+
+native_shared_after_key:
+// Native 0x5185B0 handles the character produced by the normalization path.
+if (normalized_character == ':' && ConsoleKeyCycleState == -1) {
+    ConsoleKeyCycleState = 0;
+}
+
+if (normalized_character == '~' && (GameState & 0x60u) == 0) {
+    int cycle = ConsoleKeyCycleState;
+    if (cycle == -1) {
+        if (!IsMultiplayerNet) {
+            ++cycle;
+        }
+    } else if (cycle < 4) {
+        ++cycle;
+    }
+    ConsoleKeyCycleState = cycle;
+
+    const int threshold = IsMultiplayerNet ? 4 : 0;
+    if (cycle >= threshold) {
+        GameState ^= 0x1000u;
+        if (IsMultiplayerNet && (GameState & 0x1000u) != 0 &&
+            (GameState & 0x20u) == 0) {
+            GameState |= 0xA0u;
+        }
+
+        set_dirty();
+        draw_map(1);
+        WorldClimateWorldWin.redraw();
+        ConsoleInfoWin.change(0);
+        ConsoleStatusWin.redraw();
+        MapWinTable[0]->main_caption();
+    }
+}
+
+// When GameState has STATE_SCENARIO_EDITOR and the earlier event was not
+// handled, the native 0x51B88C switch (input = normalized_character-0x21,
+// count 0x59) has five active non-default entries. The `y` route's MainInterface button
+// callback is typed in fragment 10; other active routes follow below.
+if (normalized_character == 'y' &&
+    (GameState & STATE_SCENARIO_EDITOR) != 0 &&
+    native_command_consumed == 0) {
+    GameState ^= STATE_OMNISCIENT_VIEW;
+    if ((GameState & STATE_OMNISCIENT_VIEW) != 0 &&
+        (GameState & STATE_DEBUG_MODE) != 0) {
+        MainInterfaceGlobal.flat_button_[2].show(0);
+    } else {
+        MainInterfaceGlobal.flat_button_[2].hide();
+    }
+    set_dirty();
+    ::draw_map(1);
+    WorldClimateWorldWin.redraw();
+    desktop_update();
+    ConsoleInfoWin.change(0);
+    ConsoleStatusWin.redraw();
+    MapWinTable[0]->main_caption();
+    goto native_editor_command_dispatch;
+}
+
+// Remaining active native entries (verified mechanically from
+// byte_lookups[0x0051B8A4] in dispatch-map.json):
+//   '@' / 0x40 -> 0x51872B random/retry loop; CRT rand plus do_task;
+//   ';' / 0x3B -> 0x518863 scenario-mask/string helper, then interlude;
+//   '&' / 0x26 -> 0x5188C7 vehicle/map bounds and linked-stack repair;
+//   '!' / 0x21 -> 0x518BB1 checksum/base/report construction (not interlude);
+//   'y' / 0x79 -> 0x5186AE omniscient toggle and flat_button_[2] show/hide;
+//   default -> 0x519F9C command-number dispatch.
+// The byte-index map is authoritative; in particular, the native interlude
+// call is in `;` (0x3B), not `!` (0x21). Route fragments 09-12 contain the
+// source-typed R/y/;/@ behavior; final assembly must preserve their exact
+// incoming guards and shared continuation targets.
+
+
+// ---- flattened from fragments/23-scenario-character-routes.inc ----
+// Assembled 0x51B88C character-table routes. This file is included from the
+// method body after fragment 02 and before command dispatch fragment 03.
+// The table is reached only for the native scenario-editor state and only
+// after native_command_consumed remains clear; keep each table target's own
+// switch route and its continuation distinct.
+
+if ((GameState & STATE_SCENARIO_EDITOR) != 0 &&
+    native_command_consumed == 0) {
+    switch (normalized_character) {
+    case '@':
+        {
+
+// ---- flattened from fragments/12-at-hotkey-random-pump.inc ----
+// Native key-handler dispatch region.
+// from 0x51B8A4 input 0x40/index 3 to target 0x51872B. This native route has
+// no exit edge: it continually samples rand() and pumps the typed do_task()
+// message loop. Counter locals whose increments never affect a branch are
+// omitted; every controlling counter and every random/pump call is retained.
+
+{
+    int range = 0xA0;
+    int passes = 1;
+    int samples_per_round = 0x14;
+    int successes_remaining = 0x1E;
+    int widening_rounds = 4;
+    int widened = 0;
+
+    for (;;) {
+        if (successes_remaining != 0 && samples_per_round != 0) {
+            while (successes_remaining != 0 && samples_per_round != 0) {
+                int range_sample = 0;
+                if (range - 1 > 0) {
+                    range_sample = rand() % range;
+                }
+                const int comparison_sample = rand() % 0x30;
+                if (range_sample > comparison_sample) {
+                    --samples_per_round;
+                } else {
+                    --successes_remaining;
+                }
+            }
+        }
+
+        if (successes_remaining == 0) {
+            --passes;
+            if (passes > 0) {
+                successes_remaining = 0x1E;
+                widened = 0;
+                range = 0xA0;
+                do_task();
+                continue;
+            }
+
+            widening_rounds = 4;
+            passes = 1;
+            successes_remaining = 0x1E;
+            samples_per_round = 0x14;
+            widened = 0;
+            range = 0xA0;
+            do_task();
+            continue;
+        }
+
+        if (range + 0x2F > 0) {
+            const int widening_sample = rand() % (range + 0x30);
+            if (widening_sample < 0x30 && widened == 0) {
+                widened = 1;
+                range += range / 2;
+            }
+        }
+
+        --widening_rounds;
+        if (widening_rounds > 0) {
+            samples_per_round = 0x14;
+            do_task();
+            continue;
+        }
+
+        widening_rounds = 4;
+        passes = 1;
+        successes_remaining = 0x1E;
+        samples_per_round = 0x14;
+        widened = 0;
+        range = 0xA0;
+        do_task();
+    }
+}
+
+
+        }
+        break;
+    case ';':
+
+// ---- flattened from fragments/11-semicolon-interlude-prompt-owner-gap.inc ----
+// Native key-handler dispatch region.
+// from 0x51B8A4 input 0x3B/index 2 to native target 0x518863.
+// Native guard is GameState bit 0x1000. The selector storage is a standalone
+// zero-initialized dword touched only by this Console route in the pinned
+// image. `ConsoleInterludeSelection` is a provisional source-owned name; the
+// evidence proves a four-byte touched extent, not the complete original object
+// extent or its original C++ spelling.
+
+if ((GameState & 0x1000u) != 0) {
+    // Native 0x518871 reads 0x939FCC as the current EDITINTERLUDE number,
+    // and 0x5188AB stores the accepted result there.
+    const int current_interlude_selection = ConsoleInterludeSelection;
+    if (X_pop_ask_number("EDITINTERLUDE", current_interlude_selection,
+                         0) == 0) {
+        const int interlude_id = atoi(ParseStrBuffer[0].str);
+        // After a successful popup the native write at 0x5188AB publishes
+        // this value to the same selector cell.
+        ConsoleInterludeSelection = interlude_id;
+        const unsigned int bit =
+            1u << (static_cast<unsigned int>(interlude_id) & 31u);
+        GameInterludeFlags &= ~bit;
+        interlude(interlude_id, 0, 1, 0);
+    }
+}
+
+// Continue to shared scenario-editor/gameplay dispatch.
+
+        break;
+    case '&':
+
+// ---- flattened from fragments/13-ampersand-audit-route.inc ----
+// Native key-handler dispatch region.
+// The non-debug validator and stack-link repair paths below are translated
+// from the native loop edges. The debug report's faction text is
+// Players[faction].adj_name_faction: Players starts at 0x946A50, typed member
+// offset +0x304, with Player's independently asserted native stride 0x59C.
+
+if ((GameState & STATE_DEBUG_MODE) == 0) {
+    if (IsMultiplayerNet != 0) {
+        goto native_editor_command_dispatch;
+    }
+
+    bool found_invalid_vehicle = false;
+    for (int bounds_vehicle_id = VehCurrentCount - 1; bounds_vehicle_id >= 0;
+         --bounds_vehicle_id) {
+        const Veh &vehicle = Vehs[bounds_vehicle_id];
+        if (vehicle.x < 0 || vehicle.x >= MapLongitudeBounds ||
+            vehicle.y < 0 || vehicle.y >= MapLatitudeBounds) {
+            veh_kill(bounds_vehicle_id);
+            danger("Killed a baddy!", StringTable.get(0), 0, 0, 0);
+            found_invalid_vehicle = true;
+        }
+    }
+
+    for (int stack_vehicle_id = VehCurrentCount - 1; stack_vehicle_id >= 0;
+         --stack_vehicle_id) {
+        const Veh &vehicle = Vehs[stack_vehicle_id];
+        if (vehicle.next_veh_id_stack == stack_vehicle_id ||
+            vehicle.prev_veh_id_stack == stack_vehicle_id) {
+            const int x = vehicle.x;
+            const int y = vehicle.y;
+            const int lifted_vehicle = veh_lift(stack_vehicle_id);
+            veh_drop(lifted_vehicle, x, y);
+            danger("Found a baddy!", StringTable.get(0), 0, 0, 0);
+            found_invalid_vehicle = true;
+        }
+    }
+
+    if (!found_invalid_vehicle) {
+        danger("Game fixed!", StringTable.get(0), 0, 0, 0);
+    }
+    goto native_editor_command_dispatch;
+}
+
+if ((GameState & STATE_DEBUG_MODE) != 0) {
+    for (int debug_vehicle_id = 0; debug_vehicle_id < VehCurrentCount; ++debug_vehicle_id) {
+        const Veh &vehicle = Vehs[debug_vehicle_id];
+        if (vehicle.next_veh_id_stack != debug_vehicle_id &&
+            vehicle.prev_veh_id_stack != debug_vehicle_id) {
+            continue;
+        }
+
+        StringTemp[0] = '\0';
+        strcat(StringTemp, Players[vehicle.faction_id].adj_name_faction);
+        strcat(StringTemp, " ");
+        strcat(StringTemp, VehPrototypes[vehicle.proto_id].veh_name);
+        strcat(StringTemp, "(");
+        char number[16];
+        _itoa(vehicle.x, number, 10);
+        strcat(StringTemp, number);
+        strcat(StringTemp, ",");
+        _itoa(vehicle.y, number, 10);
+        strcat(StringTemp, number);
+        strcat(StringTemp, ")");
+
+        danger("Funny Unit", StringTemp, debug_vehicle_id, vehicle.x, vehicle.y);
+    }
+    goto native_editor_command_dispatch;
+}
+
+        break;
+    case '!':
+        if ((GameState & STATE_SCENARIO_EDITOR) != 0) {
+
+// ---- flattened from fragments/16-checksum-base-report.inc ----
+// Native key-handler dispatch region.
+// This is the checked-in, typed translation of the report filename/header
+// and per-Base checksum loop only. Continue with later report families and
+// the shared 0x519F9C dispatcher before assembling the member. The debug
+// guard intentionally remains open for sequential fragment 17 and later
+// report slices; close it only at the actual native branch continuation.
+
+if ((GameState & STATE_DEBUG_MODE) != 0) {
+    StringTemp[0] = '\0';
+    strcat(StringTemp, "Checksum");
+    _itoa(faction_id_, native_decimal_buffer, 10);
+    strcat(StringTemp, native_decimal_buffer);
+    strcat(StringTemp, ".TXT");
+
+    native_handler_log.init(StringTemp);
+    native_handler_log.reset();
+    native_handler_log.say("BASE CHECKSUMS", 0, 0, 0, 0);
+
+    for (int checksum_base_id = 0; checksum_base_id < BaseCurrentCount; ++checksum_base_id) {
+        Base &base = Bases[checksum_base_id];
+        uint8_t value = checksum(reinterpret_cast<char *>(&base), 7, 0);
+        value = checksum(reinterpret_cast<char *>(&base.nutrients_accumulated),
+                          4, value);
+        value = checksum(reinterpret_cast<char *>(&base.minerals_accumulated),
+                          4, value);
+        value = checksum(reinterpret_cast<char *>(&base.queue_size), 4, value);
+        value = checksum(reinterpret_cast<char *>(&base.queue_production_id[0]),
+                          4, value);
+        value = checksum(reinterpret_cast<char *>(&base.resource_sqr_radius),
+                          4, value);
+        value = checksum(reinterpret_cast<char *>(&base.spec[0]),
+                          8, value);
+        value = checksum(reinterpret_cast<char *>(&base.facilities_built[0]),
+                          9, value);
+
+        StringTemp[0] = '\0';
+        _itoa(value, native_decimal_buffer, 10);
+        strcat(StringTemp, native_decimal_buffer);
+        strcat(StringTemp, " Base ");
+        _itoa(checksum_base_id, native_decimal_buffer, 10);
+        strcat(StringTemp, native_decimal_buffer);
+        native_handler_log.say(StringTemp, base.name_string, value, 0, 0);
+    }
+
+    native_handler_log.say(" ", 0, 0, 0, 0);
+    native_handler_log.say("LEADER CHECKSUMS", 0, 0, 0, 0);
+// Evidence: the active `!` table entry is input 0x21/index 0 -> 0x518BB1.
+// This block is entered only with GameState bit 0x1000. It initializes the
+// local Log with "Checksum" + faction_id + ".TXT", resets it, emits
+// "BASE CHECKSUMS", then scans BaseCurrentCount records at stride 0x134.
+// Each checksum input/length follows 0x518C48..0x518CC6 in order; Base layout
+// fields and sizeof(Base)==0x134 are source-owned in base.h; the following
+// leader, technology and player reports retain the same outer scan order.
+
+
+// ---- flattened from fragments/17-player-diplomacy-report.inc ----
+// Native key-handler dispatch region.
+// faction loop. Native starts at faction 1 and stops when the next Player
+// pointer reaches Players[8]+0x2FC; thus source bounds are 1 <= owner < 8.
+// The six outer owner scalar/social/satellite groups precede these seven
+// diplomacy rows and remain in the same native outer loop.
+
+{
+    for (int owner_faction = 1; owner_faction < MaxPlayerNum;
+         ++owner_faction) {
+    PlayerData &report_player = PlayersData[owner_faction];
+
+    GenderDefault = Players[owner_faction].noun_gender;
+    PluralityDefault = Players[owner_faction].is_noun_plural;
+    native_handler_log.say(" ", Players[owner_faction].noun_faction,
+                           0, 0, 0);
+
+    StringTemp[0] = '\0';
+    _itoa(report_player.tech_accumulated, native_decimal_buffer, 10);
+    strcat(StringTemp, native_decimal_buffer);
+    strcat(StringTemp, " Research");
+    native_handler_log.say(StringTemp, 0, 0, 0, 0);
+
+    StringTemp[0] = '\0';
+    _itoa(report_player.tech_id_researching, native_decimal_buffer, 10);
+    strcat(StringTemp, native_decimal_buffer);
+    strcat(StringTemp, " Researching");
+    native_handler_log.say(StringTemp, 0, 0, 0, 0);
+
+    StringTemp[0] = '\0';
+    _itoa(report_player.planet_ecology, native_decimal_buffer, 10);
+    strcat(StringTemp, native_decimal_buffer);
+    strcat(StringTemp, " Planet");
+    native_handler_log.say(StringTemp, 0, 0, 0, 0);
+
+    StringTemp[0] = '\0';
+    _itoa(report_player.energy_reserves, native_decimal_buffer, 10);
+    strcat(StringTemp, native_decimal_buffer);
+    strcat(StringTemp, " Energy");
+    native_handler_log.say(StringTemp, 0, 0, 0, 0);
+
+    StringTemp[0] = '\0';
+    _itoa(report_player.integrity_blemishes, native_decimal_buffer, 10);
+    strcat(StringTemp, native_decimal_buffer);
+    strcat(StringTemp, " Blacken");
+    native_handler_log.say(StringTemp, 0, 0, 0, 0);
+
+    for (int social_index = 0; social_index < 4; ++social_index) {
+        StringTemp[0] = '\0';
+        _itoa(static_cast<int>(report_player.soc_category_pending.models_[social_index]),
+              native_decimal_buffer, 10);
+        strcat(StringTemp, native_decimal_buffer);
+        strcat(StringTemp, " Social");
+        _itoa(social_index, native_decimal_buffer, 10);
+        strcat(StringTemp, native_decimal_buffer);
+        native_handler_log.say(StringTemp, 0, 0, 0, 0);
+    }
+
+    for (int satellite_index = 0; satellite_index < 4; ++satellite_index) {
+        StringTemp[0] = '\0';
+        _itoa(static_cast<int>(report_player.satellites_[satellite_index]),
+              native_decimal_buffer, 10);
+        strcat(StringTemp, native_decimal_buffer);
+        strcat(StringTemp, " Satellites");
+        _itoa(satellite_index, native_decimal_buffer, 10);
+        strcat(StringTemp, native_decimal_buffer);
+        native_handler_log.say(StringTemp, 0, 0, 0, 0);
+    }
+
+    for (int treaty_faction = 0; treaty_faction < MaxPlayerNum; ++treaty_faction) {
+        StringTemp[0] = '\0';
+        _itoa(static_cast<int>(report_player.diplo_treaties[treaty_faction]),
+              native_decimal_buffer, 10);
+        strcat(StringTemp, native_decimal_buffer);
+        strcat(StringTemp, " Treaties with ");
+        GenderDefault = Players[treaty_faction].noun_gender;
+        PluralityDefault = Players[treaty_faction].is_noun_plural;
+        strcat(StringTemp, Players[treaty_faction].noun_faction);
+        native_handler_log.say(StringTemp, 0, 0, 0, 0);
+    }
+
+    for (int agenda_faction = 0; agenda_faction < MaxPlayerNum; ++agenda_faction) {
+        StringTemp[0] = '\0';
+        _itoa(report_player.diplo_agenda[agenda_faction], native_decimal_buffer, 10);
+        strcat(StringTemp, native_decimal_buffer);
+        strcat(StringTemp, " Agenda with ");
+        GenderDefault = Players[agenda_faction].noun_gender;
+        PluralityDefault = Players[agenda_faction].is_noun_plural;
+        strcat(StringTemp, Players[agenda_faction].noun_faction);
+        native_handler_log.say(StringTemp, 0, 0, 0, 0);
+    }
+
+    for (int friction_faction = 0; friction_faction < MaxPlayerNum; ++friction_faction) {
+        StringTemp[0] = '\0';
+        _itoa(report_player.diplo_friction[friction_faction], native_decimal_buffer, 10);
+        strcat(StringTemp, native_decimal_buffer);
+        strcat(StringTemp, " Friction with ");
+        GenderDefault = Players[friction_faction].noun_gender;
+        PluralityDefault = Players[friction_faction].is_noun_plural;
+        strcat(StringTemp, Players[friction_faction].noun_faction);
+        native_handler_log.say(StringTemp, 0, 0, 0, 0);
+    }
+
+    for (int patience_faction = 0; patience_faction < MaxPlayerNum; ++patience_faction) {
+        StringTemp[0] = '\0';
+        _itoa(static_cast<signed char>(report_player.diplo_patience[patience_faction]),
+              native_decimal_buffer, 10);
+        strcat(StringTemp, native_decimal_buffer);
+        strcat(StringTemp, " Patience with ");
+        GenderDefault = Players[patience_faction].noun_gender;
+        PluralityDefault = Players[patience_faction].is_noun_plural;
+        strcat(StringTemp, Players[patience_faction].noun_faction);
+        native_handler_log.say(StringTemp, 0, 0, 0, 0);
+    }
+
+    for (int merc_faction = 0; merc_faction < MaxPlayerNum; ++merc_faction) {
+        StringTemp[0] = '\0';
+        _itoa(report_player.diplo_merc[merc_faction], native_decimal_buffer, 10);
+        strcat(StringTemp, native_decimal_buffer);
+        strcat(StringTemp, " Merc with ");
+        GenderDefault = Players[merc_faction].noun_gender;
+        PluralityDefault = Players[merc_faction].is_noun_plural;
+        strcat(StringTemp, Players[merc_faction].noun_faction);
+        native_handler_log.say(StringTemp, 0, 0, 0, 0);
+    }
+
+    for (int spoke_faction = 0; spoke_faction < MaxPlayerNum; ++spoke_faction) {
+        StringTemp[0] = '\0';
+        _itoa(report_player.diplo_spoke[spoke_faction], native_decimal_buffer, 10);
+        strcat(StringTemp, native_decimal_buffer);
+        strcat(StringTemp, " Spoke with ");
+        GenderDefault = Players[spoke_faction].noun_gender;
+        PluralityDefault = Players[spoke_faction].is_noun_plural;
+        strcat(StringTemp, Players[spoke_faction].noun_faction);
+        native_handler_log.say(StringTemp, 0, 0, 0, 0);
+    }
+
+    for (int wrongs_faction = 0; wrongs_faction < MaxPlayerNum; ++wrongs_faction) {
+        StringTemp[0] = '\0';
+        _itoa(report_player.diplo_wrongs[wrongs_faction], native_decimal_buffer, 10);
+        strcat(StringTemp, native_decimal_buffer);
+        strcat(StringTemp, " Wrongs with ");
+        GenderDefault = Players[wrongs_faction].noun_gender;
+        PluralityDefault = Players[wrongs_faction].is_noun_plural;
+        strcat(StringTemp, Players[wrongs_faction].noun_faction);
+        native_handler_log.say(StringTemp, 0, 0, 0, 0);
+    }
+    }
+}
+
+// Native ranges: [0x51904F,0x5190E4) diplo_treaties, [0x5190E4,0x519179)
+// diplo_agenda, [0x519179,0x51920E) diplo_friction, [0x51920E,0x5192A2)
+// signed-byte diplo_patience, [0x5192A2,0x519337) diplo_merc, and
+// [0x519337,0x5193CC) diplo_spoke. Each scans the eight Player records at
+// stride 0x59C; the source members and both grammatical defaults are typed.
+
+
+// ---- flattened from fragments/18-vehicle-checksum-report.inc ----
+// Native key-handler dispatch region.
+// checksum section. Place after fragments 16 and 17, still inside the
+// original GameState debug guard. Map checksums and record enumerations follow.
+
+native_handler_log.say(" ", 0, 0, 0, 0);
+native_handler_log.say("UNIT CHECKSUMS", 0, 0, 0, 0);
+for (int checksum_vehicle_id = 0; checksum_vehicle_id < VehCurrentCount; ++checksum_vehicle_id) {
+    Veh &vehicle = Vehs[checksum_vehicle_id];
+    uint8_t value = checksum(reinterpret_cast<char *>(&vehicle.x), 2, 0);
+    value = checksum(reinterpret_cast<char *>(&vehicle.y), 2, value);
+    value = checksum(reinterpret_cast<char *>(&vehicle.proto_id), 3, value);
+    value = checksum(reinterpret_cast<char *>(&vehicle.morale), 1, value);
+    value = checksum(reinterpret_cast<char *>(&vehicle.moves_expended), 1,
+                      value);
+    value = checksum(reinterpret_cast<char *>(&vehicle.home_base_id), 2,
+                      value);
+
+    StringTemp[0] = '\0';
+    _itoa(value, native_decimal_buffer, 10);
+    strcat(StringTemp, native_decimal_buffer);
+    strcat(StringTemp, " Veh ");
+    _itoa(checksum_vehicle_id, native_decimal_buffer, 10);
+    strcat(StringTemp, native_decimal_buffer);
+    strcat(StringTemp, ": ");
+    GenderDefault = Players[vehicle.faction_id].noun_gender;
+    PluralityDefault = Players[vehicle.faction_id].is_noun_plural;
+    strcat(StringTemp, Players[vehicle.faction_id].adj_name_faction);
+    strcat(StringTemp, " ");
+    strcat(StringTemp, VehPrototypes[vehicle.proto_id].veh_name);
+    native_handler_log.say(StringTemp, 0, value, 0, 0);
+}
+
+// Pinned native checks at [Veh+0, +2, +0xA, +0x24, +0x28, +0x2E) with byte
+// lengths 2,2,3,1,1,2 and rolling uint8 seed; the Veh array stride is 0x34.
+// The row appends the native vehicle ordinal, faction adjective, and prototype
+// name, then passes the checksum as Log::say's first integer parameter.
+
+
+// ---- flattened from fragments/19-map-checksum-report.inc ----
+// Native key-handler dispatch region.
+// checksum section. Follow unit checksums; continue with base/vehicle detail
+// rows before closing the debug-report guard.
+
+native_handler_log.say(" ", 0, 0, 0, 0);
+native_handler_log.say("MAP CHECKSUMS", 0, 0, 0, 0);
+for (int map_y = 0; map_y < MapLatitudeBounds; ++map_y) {
+    int map_x = map_y & 1;
+    for (; map_x < MapLongitudeBounds; map_x += 2) {
+        Map &tile = MapTiles[MapLongitude * map_y + (map_x >> 1)];
+        uint8_t value = checksum(reinterpret_cast<char *>(&tile.climate), 1, 0);
+        value = checksum(reinterpret_cast<char *>(&tile.region), 1, value);
+        value = checksum(reinterpret_cast<char *>(&tile.bit), 4, value);
+        value = checksum(reinterpret_cast<char *>(&tile.contour), 1, value);
+        value = checksum(reinterpret_cast<char *>(&tile.territory), 1, value);
+        value = checksum(reinterpret_cast<char *>(&tile.bit_visible[0]), 2, value);
+
+        StringTemp[0] = '\0';
+        _itoa(value, native_decimal_buffer, 10);
+        strcat(StringTemp, native_decimal_buffer);
+        strcat(StringTemp, " at: ");
+        _itoa(map_x, native_decimal_buffer, 10);
+        strcat(StringTemp, native_decimal_buffer);
+        strcat(StringTemp, ", ");
+        _itoa(map_y, native_decimal_buffer, 10);
+        strcat(StringTemp, native_decimal_buffer);
+        strcat(StringTemp, ": ");
+        native_handler_log.say(StringTemp, 0, value, 0, 0);
+    }
+}
+
+// Native report walks y=0..MapLatitudeBounds-1 and x=(y&1), +=2, with one
+// Map record per pair of horizontal map coordinates. Its checksum covers
+// offsets {0,3,8,1,7,0xC} for {1,1,4,1,1,2} bytes, then logs x and y. Map's
+// source-owned stride is 0x2C. Confirmed source translation of the native
+// formatting pieces matches the bounded literals in native-literals.json.
+
+
+// ---- flattened from fragments/20-base-enumeration-report.inc ----
+// Native key-handler dispatch region.
+// enumeration. Follow map checksums; UNIT ENUMERATION follows this block.
+
+native_handler_log.say(" ", 0, 0, 0, 0);
+native_handler_log.say("BASES CHECKSUMS", 0, 0, 0, 0);
+for (int enumerated_base_id = 0; enumerated_base_id < BaseCurrentCount; ++enumerated_base_id) {
+    Base &base = Bases[enumerated_base_id];
+
+    StringTemp[0] = '\0';
+    _itoa(enumerated_base_id, native_decimal_buffer, 10);
+    strcat(StringTemp, native_decimal_buffer);
+    native_handler_log.say(StringTemp, base.name_string, 0, 0, 0);
+
+    StringTemp[0] = '\0';
+    _itoa(static_cast<int>(base.x), native_decimal_buffer, 10);
+    strcat(StringTemp, native_decimal_buffer);
+    strcat(StringTemp, " X");
+    native_handler_log.say(StringTemp, 0, 0, 0, 0);
+
+    StringTemp[0] = '\0';
+    _itoa(static_cast<int>(base.y), native_decimal_buffer, 10);
+    strcat(StringTemp, native_decimal_buffer);
+    strcat(StringTemp, " Y");
+    native_handler_log.say(StringTemp, 0, 0, 0, 0);
+
+    StringTemp[0] = '\0';
+    _itoa(static_cast<int>(base.population_size), native_decimal_buffer, 10);
+    strcat(StringTemp, native_decimal_buffer);
+    strcat(StringTemp, " Size");
+    native_handler_log.say(StringTemp, 0, 0, 0, 0);
+
+    StringTemp[0] = '\0';
+    _itoa(static_cast<int>(base.faction_id_former), native_decimal_buffer, 10);
+    strcat(StringTemp, native_decimal_buffer);
+    strcat(StringTemp, " Former");
+    native_handler_log.say(StringTemp, 0, 0, 0, 0);
+
+    StringTemp[0] = '\0';
+    _itoa(base.nutrients_accumulated, native_decimal_buffer, 10);
+    strcat(StringTemp, native_decimal_buffer);
+    strcat(StringTemp, " Nutrient");
+    native_handler_log.say(StringTemp, 0, 0, 0, 0);
+
+    StringTemp[0] = '\0';
+    _itoa(base.minerals_accumulated, native_decimal_buffer, 10);
+    strcat(StringTemp, native_decimal_buffer);
+    strcat(StringTemp, " Minerals");
+    native_handler_log.say(StringTemp, 0, 0, 0, 0);
+
+    StringTemp[0] = '\0';
+    _itoa(static_cast<int>(base.queue_size), native_decimal_buffer, 10);
+    strcat(StringTemp, native_decimal_buffer);
+    strcat(StringTemp, " Num Making");
+    native_handler_log.say(StringTemp, 0, 0, 0, 0);
+
+    StringTemp[0] = '\0';
+    _itoa(base.queue_production_id[0], native_decimal_buffer, 10);
+    strcat(StringTemp, native_decimal_buffer);
+    strcat(StringTemp, " Making");
+    native_handler_log.say(StringTemp, 0, 0, 0, 0);
+
+    StringTemp[0] = '\0';
+    _itoa(base.resource_sqr_radius, native_decimal_buffer, 10);
+    strcat(StringTemp, native_decimal_buffer);
+    strcat(StringTemp, " Radius");
+    native_handler_log.say(StringTemp, 0, 0, 0, 0);
+
+    for (int specialist_word = 0; specialist_word < 2; ++specialist_word) {
+        StringTemp[0] = '\0';
+        _itoa(static_cast<int>(base.spec[specialist_word]), native_decimal_buffer, 10);
+        strcat(StringTemp, native_decimal_buffer);
+        strcat(StringTemp, specialist_word == 0 ? " Spec 0" : " Spec 1");
+        native_handler_log.say(StringTemp, 0, 0, 0, 0);
+    }
+
+    for (int facility_index = 0; facility_index < 9; ++facility_index) {
+        StringTemp[0] = '\0';
+        _itoa(static_cast<int>(base.facilities_built[facility_index]),
+              native_decimal_buffer, 10);
+        strcat(StringTemp, native_decimal_buffer);
+        strcat(StringTemp, " Fac");
+        native_handler_log.say(StringTemp, 0, 0, 0, 0);
+    }
+}
+
+// Native source row offsets are Base+0,+2,+6,+5,+0x3C,+0x40,+0x4C,+0x50,
+// +0x78,+0x84,+0x88,+0x8C..+0x94; source Base fields and 0x134 stride own
+// every access. The fixed facility loop is exactly nine bytes, not the full
+// source member's twelve-byte extent. Bounded source strings were retained in
+// native-literals.json. Verify each call's pushed argument order when the
+// report slices are assembled.
+
+
+// ---- flattened from fragments/21-unit-enumeration-report.inc ----
+// Native key-handler dispatch region.
+// enumeration, followed by its final danger notification in fragment 22.
+
+native_handler_log.say(" ", 0, 0, 0, 0);
+native_handler_log.say("UNIT ENUMERATION", 0, 0, 0, 0);
+for (int unit_vehicle_id = 0; unit_vehicle_id < VehCurrentCount; ++unit_vehicle_id) {
+    Veh &vehicle = Vehs[unit_vehicle_id];
+
+    StringTemp[0] = '\0';
+    _itoa(unit_vehicle_id, native_decimal_buffer, 10);
+    strcat(StringTemp, native_decimal_buffer);
+    strcat(StringTemp, " ");
+    GenderDefault = Players[vehicle.faction_id].noun_gender;
+    PluralityDefault = Players[vehicle.faction_id].is_noun_plural;
+    strcat(StringTemp, Players[vehicle.faction_id].adj_name_faction);
+    strcat(StringTemp, " ");
+    strcat(StringTemp, VehPrototypes[vehicle.proto_id].veh_name);
+    native_handler_log.say(StringTemp, 0, 0, 0, 0);
+
+    StringTemp[0] = '\0';
+    _itoa(static_cast<int>(vehicle.x), native_decimal_buffer, 10);
+    strcat(StringTemp, native_decimal_buffer);
+    strcat(StringTemp, " X");
+    native_handler_log.say(StringTemp, 0, 0, 0, 0);
+
+    StringTemp[0] = '\0';
+    _itoa(static_cast<int>(vehicle.y), native_decimal_buffer, 10);
+    strcat(StringTemp, native_decimal_buffer);
+    strcat(StringTemp, " Y");
+    native_handler_log.say(StringTemp, 0, 0, 0, 0);
+
+    StringTemp[0] = '\0';
+    _itoa(static_cast<int>(vehicle.proto_id), native_decimal_buffer, 10);
+    strcat(StringTemp, native_decimal_buffer);
+    strcat(StringTemp, " proto");
+    native_handler_log.say(StringTemp, 0, 0, 0, 0);
+
+    StringTemp[0] = '\0';
+    _itoa(static_cast<int>(vehicle.faction_id), native_decimal_buffer, 10);
+    strcat(StringTemp, native_decimal_buffer);
+    strcat(StringTemp, " who");
+    native_handler_log.say(StringTemp, 0, 0, 0, 0);
+
+    StringTemp[0] = '\0';
+    _itoa(static_cast<int>(vehicle.dmg_incurred), native_decimal_buffer, 10);
+    strcat(StringTemp, native_decimal_buffer);
+    strcat(StringTemp, " damage");
+    native_handler_log.say(StringTemp, 0, 0, 0, 0);
+
+    StringTemp[0] = '\0';
+    _itoa(static_cast<int>(vehicle.morale), native_decimal_buffer, 10);
+    strcat(StringTemp, native_decimal_buffer);
+    strcat(StringTemp, " morale");
+    native_handler_log.say(StringTemp, 0, 0, 0, 0);
+
+    StringTemp[0] = '\0';
+    _itoa(static_cast<int>(vehicle.moves_expended), native_decimal_buffer, 10);
+    strcat(StringTemp, native_decimal_buffer);
+    strcat(StringTemp, " moves");
+    native_handler_log.say(StringTemp, 0, 0, 0, 0);
+
+    StringTemp[0] = '\0';
+    _itoa(static_cast<int>(vehicle.home_base_id), native_decimal_buffer, 10);
+    strcat(StringTemp, native_decimal_buffer);
+    strcat(StringTemp, " home");
+    native_handler_log.say(StringTemp, 0, 0, 0, 0);
+}
+
+// Native receiver starts at Vehs[0]+0x0A (proto_id), then advances by the
+// source-owned Veh stride 0x34. Signed word reads are x, y, proto_id and
+// home_base_id; byte reads for faction, damage, morale and moves are zero
+// extended. All listed members are source-owned in veh.h.
+
+
+// ---- flattened from fragments/22-checksum-danger-tail.inc ----
+// Native key-handler dispatch region.
+// After all report sections, the native method presents this synchronous
+// notification, then converges on command dispatch at 0x519F9C.
+
+danger("Made CHECKSUM FILE", StringTable.get(0), 0, 0, 0);
+
+        }
+        // Close the outer GameState::STATE_SCENARIO_EDITOR guard separately
+        // from the nested debug-report guard closed immediately above.
+        }
+        break;
+    default:
+        break;
+    }
+}
+
+native_editor_command_dispatch:
+
+// ---- flattened from fragments/03-editor-command-tables.inc ----
+// Native key-handler dispatch region.
+// These switches are selected by a2 command IDs after the main input mode
+// transitions. They are not the same domain as the character switches.
+
+switch (a2) {
+// 0x51B900, a2 in [0x10070,0x1007B], native input base 0x10070.
+case 0x10070: editor_veh(); break;
+case 0x10071: tech_advance(ConsoleGlobal.faction_id_); break;
+case 0x10072: editor_view(); break;
+case 0x10073: editor_energy(); break;
+case 0x10074: editor_date(); break;
+case 0x10075: editor_eliminate(); break;
+case 0x10076: show_replay(); break;
+case 0x10077: show_movies(); break;
+case 0x10078: editor_diplomacy(); break;
+case 0x10079: editor_rules(); break;
+case 0x1007A: editor_scen_rules(); break;
+case 0x1007B: editor_scen_param(); break;
+
+// 0x51B930, a2 in [0x20074,0x20078].
+case 0x20074: editor_tech(); break;
+case 0x20075: editor_save(); break;
+case 0x20076:
+    // Preserved dependency: this function remains seed-only and cannot be
+    // replaced by an empty local definition. The native call passes slot 1.
+    save_game(1);
+    break;
+case 0x20077: editor_kill_vehicles(); break;
+case 0x20078: editor_reset_tech(); break;
+
+// The neighboring command is tested outside the 0x51B930 table.
+case 0x30070: editor_edit_veh(-1); break;
+
+// 0x51B944, a2 in [0x30071,0x3007B]. The 0x30071 arm is a faction-specific
+// 0x59-record scan. Native does not call tech_advance here: it tests the
+// ownership predicate and prerequisite sentinels, marks every eligible
+// GameTechAchieved bit, and adds two to tech_ranking per newly granted record.
+case 0x30071:
+    {
+        const int faction = ConsoleGlobal.faction_id_;
+        int granted_count = 0;
+        for (int tech_id = 0; tech_id < MaxTechnologyNum; ++tech_id) {
+            if (has_tech_call(tech_id, faction) != 0) continue;
+            if (Technology[tech_id].preq_tech_1 < TechNone) continue;
+            if (Technology[tech_id].preq_tech_2 < TechNone) continue;
+
+            int bit_offset;
+            int bit_mask;
+            bitmask_call(tech_id, &bit_offset, &bit_mask);
+            GameTechAchieved[tech_id] = static_cast<uint8_t>(
+                GameTechAchieved[tech_id] | (1u << faction));
+            ++PlayersData[faction].tech_ranking;
+            ++PlayersData[faction].tech_ranking;
+            ++granted_count;
+        }
+        if (granted_count == 0) {
+            PlayersData[faction].tech_ranking = 1;
+            for (int tech_id = 0; tech_id < MaxTechnologyNum; ++tech_id) {
+                GameTechAchieved[tech_id] = static_cast<uint8_t>(
+                    GameTechAchieved[tech_id] & ~(1u << faction));
+            }
+        }
+    }
+    break;
+case 0x30072: editor_diff(); break;
+case 0x30073: break; // target is the native no-op continuation 0x51A2C2
+case 0x30074: editor_load(); break;
+case 0x30075: editor_reload(); break;
+case 0x30076: load_proc(1, 0); break;
+case 0x30077: editor_reset_faction(); break;
+case 0x30078: editor_strategy(); break;
+case 0x30079: editor_lock2(); break;
+case 0x3007A: break; // target is the native no-op continuation 0x51A2C2
+case 0x3007B: editor_scen_victory(); break;
+default:
+    break;
+}
+
+// Keep the guarded single-id selection event distinct from table 0x51B944:
+// a2 == 0x30070 enters editor_edit_veh(-1) directly at 0x51A0FF. The native
+// branch at a2 == 0x40008 enters editor_undo() at 0x51A2B7.
+if (a2 == 0x40008) {
+    editor_undo();
+}
+
+// This fragment ends before the map-view hotkey and later faction/gameplay
+// character tables; their code is in progress. Direct menu/owner methods above
+// use the class declarations already present in console.h. The seed-only
+// save_game body is an outside-owner dependency, not a forwarding stand-in.
+
+
+// ---- flattened from fragments/04-scenario-editor-character-table.inc ----
+// Native key-handler dispatch region.
+// Native enters the 0x51B970 byte table only when GameState has
+// STATE_SCENARIO_EDITOR and the earlier command-consumed local is clear.
+native_scenario_editor_gate:
+if ((GameState & STATE_SCENARIO_EDITOR) != 0 &&
+    native_command_consumed == 0) {
+switch (normalized_character) {
+case '$':
+    if ((GameState & STATE_DEBUG_MODE) != 0) {
+        MapWinTable[0]->field_1DD70_ ^= 4;
+    }
+    break;
+case '%':
+    if ((GameState & STATE_DEBUG_MODE) != 0) {
+        MapWinTable[0]->field_1DD70_ ^= 0x2000;
+    }
+    break;
+case '*':
+    if ((GameState & STATE_DEBUG_MODE) != 0) {
+        MapWinTable[0]->field_1DD70_ ^= 0x10000;
+    }
+    break;
+case '1': editor_paints(0); break;
+case '2': editor_paints(1); break;
+case '3': editor_paints(2); break;
+case '4': editor_paints(3); break;
+case '5': editor_paints(4); break;
+case '6': editor_terrain(); break;
+case '7': editor_set_brush(); break;
+case '8': editor_climate(); break;
+case '9': editor_generate(); break;
+case '0': editor_fast(); break;
+default:
+    // The byte table sends every other normalized byte to the shared
+    // 0x51A3F8 tail, which sets the WorldClimateWin repaint latch and refreshes
+    // WorldClimateWorldWin. It does not consume arbitrary editor characters.
+    break;
+}
+// The native explicit 0 key calls editor_fast() at 0x51A389; the 7/8/9 keys
+// call editor_set_brush/editor_climate/editor_generate. Keep this as the
+// exact table mapping rather than renumbering the editor tools by intuition.
+
+// Shared 0x51A3F8 tail reached after this table, including default entries:
+// draw_map(1), set WorldWin's redraw latch bit 4 and dispatch the world map.
+::draw_map(1);
+WorldClimateWorldWin.field_239BC_ |= 4;
+WorldClimateWorldWin.set_world_map();
+}
+
+
+// ---- flattened from fragments/05-report-menu-and-enter-handlers.inc ----
+// Native key-handler dispatch region.
+// Candidate translation of the active 0x51B9C0 key table and adjacent direct
+// commands. The common 0x10051/0x20051 confirmation path is represented below;
+// coordinator review still owns whole-function integration and source binding.
+
+// Native 0x51A53E compares the command before entering this table: exactly
+// 0x20043 calls Console::chat(0), while larger IDs dispatch at 0x51AC11.
+if (a2 == 0x20043) {
+    chat(0);
+    goto native_command_done;
+}
+if (a2 > 0x20043) {
+    goto native_mode_command_tables;
+}
+
+if (a2 == 0x77) {
+    report_score(0);
+    goto native_command_done;
+}
+
+switch (a2) {
+case 0x13: // Ctrl+S/native save menu action
+    if (IsMultiplayerNet != 0 &&
+        (NetDaemonNet.lock_state_[0].trailing_words_[4] &
+         (1u << ConsoleGlobal.faction_id_)) != 0) {
+        message_data(0x4C01, 0, 0, 0, 0, 0);
+        MultiWindow.draw(0);
+        goto native_command_done;
+    }
+    if ((NetTurnFlags & 0x10u) != 0) {
+        // Native pushes target=null and channel=0 before duration and label;
+        // these are all four explicit parameters of the owned NetMsg method.
+        NetMsgPrimary.pop("SIMULNOT", 5000, 0, 0);
+        MultiWindow.draw(0);
+        goto native_command_done;
+    }
+    message_data(0x4C00, 0, 0, 0, 0, 0);
+    MultiWindow.draw(0);
+    goto native_command_done;
+case 0x1B: // Escape
+    {
+        const char *confirmation = "REALLYQUIT";
+        if ((IsMultiplayerNet != 0 || IsMultiplayerPBEM != 0) &&
+            bit_count(static_cast<int>(LockEnableMask & 0xFFu)) > 1) {
+            confirmation = "REALLYWIMPOUT";
+        }
+        if (X_pop(confirmation, 0) != 0) {
+            if (IsMultiplayerPBEM != 0) {
+                LockEnableMask &= ~(1u << ConsoleGlobal.faction_id_);
+                save_game(0);
+            }
+            if ((GameRules & 0x400u) != 0 &&
+                IsMultiplayerPBEM == 0) {
+                auto_save();
+            }
+            if (IsMultiplayerNet != 0) {
+                NetDaemonNet.hang_up();
+                NetDaemonNet.reset();
+                IsMultiplayerNet = 0;
+            }
+            ExitTurnLoop = 1;
+            log_say("Quit***********************************", 0, 0, 0);
+        }
+    }
+    goto native_command_done;
+case 0x08: // Backspace: clear cursor selection/order and refresh UI state
+    field_23BF8_ = 0;
+    if (survey_mode_ != 0) {
+        survey_mode_ = 0;
+        MapWinTable[0]->draw_map(1);
+    }
+    MapWinTable[0]->draw_cursor();
+    if (cursor_active_ != 0) {
+        ambience(0x1E);
+        cursor_active_ = 0;
+        field_23BF8_ = 1;
+        field_23BFC_ = 1;
+        if (survey_mode_ != 0) {
+            survey_mode_ = 0;
+            MapWinTable[0]->draw_map(1);
+        }
+        ::draw_cursor();
+        ConsoleInfoWin.change(0);
+        ConsoleStatusWin.redraw();
+        MapWinTable[0]->main_caption();
+        alpha_menu_.check(selected_vehicle_);
+    }
+    --cursor_history_index_;
+    if (cursor_history_index_ < 0) {
+        cursor_history_index_ = 0x1F;
+    }
+    {
+        const int history = cursor_history_index_;
+        const int x = cursor_history_x_[history];
+        const int y = cursor_history_y_[history];
+        ConsoleStatusWin.set_loc(x, y);
+        MapWinTable[0]->focus(x, y);
+    }
+    goto native_map_pan_route;
+case 0x70: DatalinkMain.exec(0x0E, 0); goto native_command_done;
+case 0x71: report_labs(); goto native_command_done;
+case 0x72: report_energy(); goto native_command_done;
+case 0x73: report_ops(); goto native_command_done;
+case 0x74: report_projects(); goto native_command_done;
+case 0x75: report_sat(); goto native_command_done;
+case 0x76: report_security(); goto native_command_done;
+case 0x78: hall_of_fame(0); goto native_command_done;
+case 0x79: monument(0); goto native_command_done;
+case 0x7A:
+    if ((GameMorePreferences & 0x200000u) != 0) {
+        GameMorePreferences &= ~0x200000u;
+        ConsoleGlobal.alpha_menu_.check(ConsoleGlobal.selected_vehicle_);
+        X_pop("MENUSIMPLE", 0);
+    } else {
+        GameMorePreferences |= 0x200000u;
+        ConsoleGlobal.alpha_menu_.check(ConsoleGlobal.selected_vehicle_);
+        X_pop("MENUDETAIL", 0);
+    }
+    goto native_command_done;
+case 0x7B:
+    MainInterfaceGlobal.on_iface_button_clicked(0x3EC);
+    goto native_command_done;
+case 0x0D:
+case 0x1000D: // Enter/remote command: activate the current cursor base
+    if ((GameState & STATE_UNK_2) != 0 && edit_lock() == 0) {
+        field_23BE4_ = 0;
+        field_23BE8_ = 0;
+        goto native_command_done;
+    }
+    {
+        const int history = cursor_history_index_;
+        const int x = cursor_history_x_[history];
+        const int y = cursor_history_y_[history];
+        const int base_id = base_at(x, y);
+        if (base_id >= 0) {
+            const Base &base = Bases[base_id];
+            const int owner = base.faction_id_current;
+            const int local_faction = faction_id_;
+            const bool omniscient = (GameState & STATE_OMNISCIENT_VIEW) != 0;
+            const bool visible =
+                (base.visibility & (1u << local_faction)) != 0;
+            if (owner == local_faction || visible || omniscient) {
+                if (omniscient || owner == local_faction || spying(owner)) {
+                    TutWinBaseWindow.zoom(base_id, 0);
+                }
+            }
+        }
+    }
+    goto native_command_done;
+case 0x10008: // advance cursor history, then share native map/cursor routing
+    if (native_command_consumed == 0) { // native stack local [ebp-0x28]
+        ConsoleGlobal.next_cursor();
+        goto native_map_pan_route;
+    }
+    goto native_done;
+default:
+    break; // all other byte-table indexes reach native 0x51B078
+}
+
+// The native direct-command tail is deliberately kept separate from the
+// 0x51B9C0 byte table. These IDs do not alias the later 0x200xx preferences.
+if (a2 == 0x1004E) {
+    if (native_command_consumed != 0) {
+        goto native_done;
+    }
+    name_landmark(-1, -1);
+    goto native_map_pan_route;
+}
+if (a2 == 0x20041) {
+    set_auto_preferences();
+    goto native_command_done;
+}
+if (a2 == 0x20042) {
+    if (native_command_consumed != 0) {
+        goto native_done;
+    }
+    go_to(-1, -2, 0);
+    goto native_map_pan_route;
+}
+if (a2 == 0x10051) {
+    retire_game();
+    goto native_retirement_confirmation;
+}
+goto native_command_done;
+
+// Native 0x10051 reaches this block after retire_game(); 0x20051 enters the
+// same block directly from the 0x51BA60 table. They share this exact tail.
+native_retirement_confirmation:
+{
+    // Native asks about ending the active multiplayer/PBEM game after the
+    // optional preceding retire operation. Its tail is shared by both IDs.
+    const char *quit_confirmation = "REALLYQUIT";
+    if ((IsMultiplayerNet != 0 || IsMultiplayerPBEM != 0) &&
+        bit_count(static_cast<int>(LockEnableMask & 0xFFu)) > 1) {
+        quit_confirmation = "REALLYWIMPOUT";
+    }
+    if (X_pop(quit_confirmation, 0) != 0) {
+        if (IsMultiplayerPBEM != 0) {
+            LockEnableMask &= ~(1u << ConsoleGlobal.faction_id_);
+            save_game(0);
+        }
+        if ((GameRules & 0x400u) != 0 && IsMultiplayerPBEM == 0) {
+            auto_save();
+        }
+        if (IsMultiplayerNet != 0) {
+            NetDaemonNet.hang_up();
+            NetDaemonNet.reset();
+            IsMultiplayerNet = 0;
+        }
+        ExitTurnLoop = 1;
+        log_say("Quit***********************************", 0, 0, 0);
+    }
+}
+goto native_command_done;
+
+// Native 0x51B078 tests stack local [ebp-0x28] before entering 0x51B081.
+// Most successful command handlers arrive with it clear and continue through
+// the shared map/cursor router; the handful of earlier consumed-key paths
+// take the common cleanup edge directly.
+native_command_done:
+if (native_command_consumed != 0) {
+    goto native_done;
+}
+goto native_map_pan_route;
+
+// Native adjacent command overrides represented here:
+// - 0x77 calls report_score(0); 0x1000D enters Enter/base selection;
+// - 0x10008 advances cursor history when the native consumed local is clear;
+// - 0x1004E names the current landmark; 0x10051 retires then performs the
+//   separate native post-retire transition; 0x20041 opens automation prefs;
+//   0x20042 invokes go_to(-1,-2,0).
+
+
+// ---- flattened from fragments/06-preference-and-mode-command-tables.inc ----
+// Native late mode/preferences command families, native 0x51AC11..0x51B146.
+// Includes 0x51BA60 (command IDs 0x20047..0x2005A) and 0x51BAB0 (byte-map
+// domain 0x30041..0x30073); the substantial setting/network branches and the
+// map-panel key layout cases continue in fragment 07.
+
+native_mode_command_tables:
+
+switch (a2) {
+case 0x20047:
+    GamePreferences ^= 0x100;
+    if ((GamePreferences & 0x100) != 0) {
+        alpha_menu_.check_menu_item(2, 0x20A);
+    } else {
+        alpha_menu_.uncheck_menu_item(2, 0x20A);
+    }
+    AlphaIniPrefs.preferences = GamePreferences;
+    prefs_save(0);
+    ::draw_map(1);
+    break;
+case 0x20049: set_audiovisual(); break;
+case 0x2004B: editor_on(); break;
+case 0x2004C:
+    // The native branch skips the load only when multiplayer is active and
+    // GameState's STATE_DEBUG_MODE bit is clear (test at 0x51ACE5..0x51ACF5).
+    if (IsMultiplayerNet == 0 || (GameState & STATE_DEBUG_MODE) != 0) {
+        load_proc(0, 0);
+    }
+    break;
+case 0x2004D: set_map_display(); break;
+case 0x2004E:
+    if ((GameMorePreferences & 0x1000) != 0) {
+        GameMorePreferences &= ~0x3000u;
+    } else if ((GameMorePreferences & 0x2000) != 0) {
+        GameMorePreferences |= 0x1000;
+    } else {
+        GameMorePreferences |= 0x2000;
+    }
+    AlphaIniPrefs.more_preferences = GameMorePreferences;
+    prefs_save(0);
+    ::draw_map(1);
+    break;
+case 0x2004F: set_adv_preferences(); break;
+case 0x20050: set_preferences(); break;
+case 0x20051:
+    // Native 0x20051 branches directly to 0x51AA0D, unlike 0x10051 which
+    // first calls retire_game() and then falls into this same tail.
+    goto native_retirement_confirmation;
+case 0x20053:
+    save_game(0);
+    break;
+case 0x20057: set_base_preferences(); break;
+case 0x20058: zoom(0x208, 0); go_reset(); break;
+case 0x2005A: zoom(0x207, 0); go_reset(); break;
+default:
+    break;
+}
+
+// The 0x51BAB0 lookup is keyed by a2 codes in [0x30041,0x30073]. Its active
+// bytes are exact and sparse: 0x30041, 0x30047, 0x3004C, 0x3004E, 0x30051,
+// 0x30057, 0x30058, 0x30073; all other bytes use the native shared no-op.
+switch (a2) {
+case 0x30041:
+    MapWinTable[0]->field_1DD70_ ^= 0x40000;
+    ::draw_map(1);
+    break;
+case 0x30047:
+    GamePreferences ^= 0x200;
+    if ((GamePreferences & 0x200) != 0) {
+        alpha_menu_.check_menu_item(2, 0x20B);
+    } else {
+        alpha_menu_.uncheck_menu_item(2, 0x20B);
+    }
+    AlphaIniPrefs.preferences = GamePreferences;
+    prefs_save(0);
+    ::draw_map(1);
+    break;
+case 0x3004C:
+    if (IsMultiplayerNet != 0 || (GameState & STATE_DEBUG_MODE) != 0) {
+        ConsoleGlobal.load_proc(0, 0);
+    }
+    break;
+case 0x3004E:
+    if (native_editor_lock == 0) {
+        ConsoleGlobal.editor_undo();
+    }
+    break;
+case 0x30051:
+    {
+        if (IsMultiplayerNet != 0) {
+            const char *confirmation = "REALLYQUIT";
+            if (IsMultiplayerPBEM != 0 &&
+                bit_count(static_cast<int>(LockEnableMask & 0xFFu)) > 1) {
+                confirmation = "REALLYWIMPOUT";
+            }
+            if (X_pop(confirmation, 0) != 0) {
+                if (IsMultiplayerPBEM != 0) {
+                    LockEnableMask &= ~(1u << ConsoleGlobal.faction_id_);
+                    save_game(0);
+                }
+                if ((GameRules & 0x400u) != 0 &&
+                    IsMultiplayerPBEM == 0) {
+                    auto_save();
+                }
+                if (IsMultiplayerNet != 0) {
+                    NetDaemonNet.hang_up();
+                    NetDaemonNet.reset();
+                    IsMultiplayerNet = 0;
+                }
+                ExitTurnLoop = 1;
+                log_say("Quit***********************************", 0, 0, 0);
+            }
+            if (ExitTurnLoop != 0) {
+                GameRestartQueued = 1;
+            }
+        }
+        break;
+    }
+case 0x30057:
+    GameMorePreferences ^= 1;
+    ::draw_map(1);
+    prefs_save(0);
+    break;
+case 0x30058:
+    if ((GameMorePreferences & 0x10000u) != 0) {
+        GameMorePreferences &= ~0x10000u;
+        alpha_menu_.uncheck_menu_item(2, 0x209);
+    } else {
+        GameMorePreferences |= 0x10000u;
+        alpha_menu_.check_menu_item(2, 0x209);
+    }
+    AlphaIniPrefs.more_preferences = GameMorePreferences;
+    ::draw_map(1);
+    prefs_save(0);
+    break;
+case 0x30073:
+    show_credits();
+    break;
+default:
+    break; // table value 8 routes to native 0x51B078
+}
+
+// The next three tables (0x51BB08, 0x51BB28, 0x51BB48) are not ordinary
+// character actions. They select editor/map-panel layout modes. Their exact
+// bases are respectively 0x21/count8, 0x62/count8, and 0x10026/count0x43.
+// Targets 0x51B14D/1E9/248/2AC perform signed divide-by-3 viewport math on
+// MapWin slot-zero fields 0x1DDCC..0x1DDD8, wrap X with map longitude and call
+// MapWin::set_center. The common 0x51B1A4.. tail gates on cursor/selected
+// vehicle, Console::edit_lock(), and updates Console cursor history or hover
+// state. Keep signed divisions, edge clamping, longitude wrapping, and the
+// selected-vehicle source distinct while translating the remaining lines.
+
+
+// ---- flattened from fragments/07-layout-and-map-pan.inc ----
+// Native key-handler dispatch region.
+// Contains the mapped layout events, map pan, cursor movement, selected-unit
+// mode handling and shared cursor/vehicle key continuation.
+
+native_map_pan_route:
+
+// 0x51B081 preserves the independent 0x20000 mode flag, and when set strips
+// both high control bits before the byte/direct key lookups.
+native_original_key = a2;
+native_mode_flag = a2 & 0x20000;
+if (native_mode_flag != 0) {
+    a2 &= ~0x30000;
+}
+
+// The first layout table is indexed from 0x21 through 0x28 (8 entries).
+// Native maps those eight keys to mode values 0,2,4,6,5,7,1,3 respectively.
+// The second table is indexed from 0x62 through 0x69 and maps to
+// 3,2,5, native-shared,1,6,7,0. Both later store this in the input slot.
+// The mapped values are cursor direction modes and go to the distinct
+// 0x51B324 movement/action block. Key 0x65 instead lands at shared 0x51B1A4.
+switch (a2) {
+case 0x21: a2 = 0; goto native_cursor_move_mode;
+case 0x22: a2 = 2; goto native_cursor_move_mode;
+case 0x23:
+    a2 = 4;
+    goto native_cursor_move_mode;
+case 0x24: a2 = 6; goto native_cursor_move_mode;
+case 0x25: a2 = 5; goto native_cursor_move_mode;
+case 0x26: a2 = 7; goto native_cursor_move_mode;
+case 0x27: a2 = 1; goto native_cursor_move_mode;
+case 0x28: a2 = 3; goto native_cursor_move_mode;
+case 0x61:
+    // Native tests bit 0x10000 in the unmasked original event only when the
+    // independent 0x20000 mode bit is present. In that combination this key
+    // maps to mode 4 but the native target rejects it (only mode 1 dispatches
+    // the special selection path there).
+    if (native_mode_flag != 0 && (native_original_key & 0x10000) != 0) {
+        goto native_done;
+    }
+    a2 = 4;
+    goto native_cursor_move_mode;
+case 0x62: a2 = 3; goto native_cursor_move_mode;
+case 0x63: a2 = 2; goto native_cursor_move_mode;
+case 0x64: a2 = 5; goto native_cursor_move_mode;
+case 0x65:
+    break;
+case 0x66: a2 = 1; goto native_cursor_move_mode;
+case 0x67: a2 = 6; goto native_cursor_move_mode;
+case 0x68: a2 = 7; goto native_cursor_move_mode;
+case 0x69: a2 = 0; goto native_cursor_move_mode;
+default:
+    break;
+}
+
+// The 0x51BB5C byte map's input domain is [0x10026, 0x10069], count 0x43;
+// its active events are 0x10026/0x10068 (north), 0x10027/0x10066 (east),
+// 0x10028/0x10062 (south), and 0x10064 (west). Direct 0x10025 also enters
+// the west-pan target at 0x51B248. The native map is in dispatch-map.json.
+{
+    MapWin *map_window = MapWinTable[0];
+    if (a2 == 0x10025 || a2 == 0x10026 || a2 == 0x10027 ||
+        a2 == 0x10028 || a2 == 0x10062 || a2 == 0x10064 ||
+        a2 == 0x10066 || a2 == 0x10068) {
+        int destination_x = map_window->field_1DD9C_;
+        int destination_y = map_window->field_1DDA0_;
+        if (a2 == 0x10026 || a2 == 0x10068) {
+            // Native signed multiply-high sequence is truncating signed / 3.
+            int step = (map_window->field_1DDD0_ + 2) / 3;
+            if (step < 0 || map_window->field_1DDA8_ < 0) {
+                step = 0;
+            } else if (step > map_window->field_1DDA8_) {
+                step = map_window->field_1DDA8_;
+            }
+            destination_y -= step;
+        } else if (a2 == 0x10028 || a2 == 0x10062) {
+            int step = (map_window->field_1DDD0_ + 2) / 3;
+            const int maximum = MapLatitudeBounds -
+                2 * map_window->field_1DDD8_ - map_window->field_1DDA8_ + 1;
+            if (step < 0 || maximum < 0) {
+                step = 0;
+            } else if (step > maximum) {
+                step = maximum;
+            }
+            destination_y += step;
+        } else {
+            int step = (map_window->field_1DDCC_ + 2) / 3;
+            // West/east use the signed horizontal step without a latitude
+            // clamp; only the longitude wrap below belongs to these routes.
+            if (a2 == 0x10025 || a2 == 0x10064) {
+                destination_x -= step;
+            } else {
+                destination_x += step;
+            }
+
+            if ((MapIsFlat & 1) == 0) {
+                if (destination_x < 0) {
+                    destination_x += MapLongitudeBounds;
+                } else if (destination_x >= MapLongitudeBounds) {
+                    destination_x -= MapLongitudeBounds;
+                }
+            }
+        }
+
+        if (destination_x != map_window->field_1DD9C_ ||
+            destination_y != map_window->field_1DDA0_) {
+            map_window->set_center(destination_x, destination_y, 1);
+        }
+    }
+}
+
+goto native_cursor_common;
+
+native_cursor_move_mode:
+// 0x51B324 movement-mode handler. With no active cursor (or after native's
+// editor-lock deactivation sequence), move one signed map step from history.
+if (cursor_active_ != 0) {
+    if (edit_lock() == 0) {
+        if (native_editor_lock != 0) {
+            goto native_done;
+        }
+        if (selected_vehicle_ < 0) {
+            goto native_done;
+        }
+        if (native_mode_flag != 0) {
+            Veh &vehicle = Vehs[selected_vehicle_];
+            vehicle.order = 0x19;
+            vehicle.waypoint_x[0] = static_cast<int16_t>(a2);
+            vehicle.waypoint_x[1] = vehicle.x;
+            vehicle.waypoint_y[1] = vehicle.y;
+            goto native_done;
+        }
+        if (not_my_turn() != 0) {
+            NetMsgPrimary.pop("SIMULNO", 5000, 0, 0);
+            goto native_done;
+        }
+        if (veh_ready(selected_vehicle_) == 0) {
+            NetMsgPrimary.pop("UNITMOVED", 5000, 0, 0);
+            field_23BE4_ = 0;
+            goto native_done;
+        }
+        NetDaemonNet.order_veh(selected_vehicle_, a2, 0);
+        goto native_done;
+    }
+    ambience(0x1E);
+    field_23BF8_ = 1;
+    field_23BFC_ = 1;
+    const uint32_t previous_survey_mode = survey_mode_;
+    cursor_active_ = 0;
+    if (previous_survey_mode != 0) {
+        survey_mode_ = 0;
+        MapWinTable[0]->draw_map(1);
+    }
+    ::draw_cursor();
+    ConsoleInfoWin.change(0);
+    ConsoleStatusWin.redraw();
+    MapWinTable[0]->main_caption();
+    alpha_menu_.check(selected_vehicle_);
+}
+
+{
+    const int history = cursor_history_index_;
+    int x = cursor_history_x_[history] + VehMoveDeltaX[a2];
+    int y = cursor_history_y_[history] + VehMoveDeltaY[a2];
+    if ((MapIsFlat & 1) == 0) {
+        if (x < 0) {
+            x += MapLongitudeBounds;
+        } else if (x >= MapLongitudeBounds) {
+            x -= MapLongitudeBounds;
+        }
+    }
+    if (y >= 0 && y < MapLatitudeBounds && x >= 0 &&
+        x < MapLongitudeBounds) {
+        field_23BF8_ = 0;
+        MapWin *const map_window = MapWinTable[0];
+        if (survey_mode_ != 0) {
+            survey_mode_ = 0;
+            map_window->draw_map(1);
+        }
+        map_window->draw_cursor();
+        cursor_next(x, y);
+        ConsoleStatusWin.redraw();
+        field_23BF8_ = 1;
+        field_23BFC_ = 1;
+        map_window->draw_cursor();
+        map_window->focus(x, y);
+    }
+}
+goto native_done;
+
+native_cursor_common:
+if (cursor_active_ == 0) {
+    cursor_key(a1, normalized_character, a2);
+    goto native_done;
+}
+if (edit_lock() == 0) {
+    if (selected_vehicle_ < 0) {
+        goto native_done;
+    }
+    veh_key(a1, normalized_character, a2);
+    goto native_done;
+}
+ambience(0x1E);
+field_23BF8_ = 1;
+field_23BFC_ = 1;
+{
+    const uint32_t previous_survey_mode = survey_mode_;
+    cursor_active_ = 0;
+    if (previous_survey_mode != 0) {
+        survey_mode_ = 0;
+        MapWinTable[0]->draw_map(1);
+    }
+}
+::draw_cursor();
+ConsoleInfoWin.change(0);
+ConsoleStatusWin.redraw();
+MapWinTable[0]->main_caption();
+alpha_menu_.check(selected_vehicle_);
+cursor_key(a1, normalized_character, a2);
+goto native_done;
+
+
+// ---- flattened from fragments/15-common-epilogue.inc ----
+// Shared return edge at native 0x51B648/0x51B64F.
+// Declare one automatic `Log` in the enclosing member body: native constructs
+// it at entry with Log::Log (0x625FB0) and destroys it on this common edge
+// with Log::~Log (0x626020). Its scope is the whole handler, matching the
+// native SEH lifetime. Keep the ordinary source-owned class lifetime instead
+// of spelling calls through addresses.
+
+native_done:
+return 1;
+
+}

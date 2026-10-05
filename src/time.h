@@ -66,6 +66,8 @@ class Time {
   uint32_t pulse(void(__cdecl *callback)(int), int param, uint32_t cnt, uint32_t res);
   uint32_t pulse(void(__cdecl *callback)(int, int), int param, int param2, uint32_t cnt, 
                  uint32_t res);
+  // Timer identifier at +4 is the native active predicate (0x00517966).
+  bool has_timer() const { return id_event_ != 0; }
   uint32_t start();
   uint32_t pulse();
   // Visible to the lifecycle TU: both close and the destructor contain

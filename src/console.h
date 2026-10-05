@@ -437,7 +437,7 @@ class Console : public MapWin {
   int on_nc_hittest(int x, int y);
 
  public:
-  // 0x005178C0, a pending_bodies forwarder.
+  // 0x005178C0, source-owned virtual key/event dispatcher in console.cpp.
   int on_key_click(int a, int b);
 
  public:

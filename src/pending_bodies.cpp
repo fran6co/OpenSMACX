@@ -433,10 +433,6 @@ int __cdecl popb(LPCSTR a1, int a2, int a3, LPCSTR a4, Sprite * a5) {  // 0x0048
 
 
 
-int Console::on_key_click(int a1, int a2) {  // 0x005178C0
-    typedef int(__fastcall *pending)(Console *, void *, int, int);
-    return PENDING_BODY(0x005178C0, pending)(this, nullptr, a1, a2);
-}
 
 // Console::on_nc_left_down (0x0050FB10) and Console::on_nc_mouse_move
 // (0x00510110) WERE HERE and are gone: both bodies are homed into
