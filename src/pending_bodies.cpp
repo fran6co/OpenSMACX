@@ -616,25 +616,13 @@ void __cdecl load_faction_art(int player_id) {
 // receiver-first free functions there, because game.h cannot add a member to
 // a header it does not own.
 
-// ?load_sprites@@YAXXZ at 0x00455EB0
-void __cdecl load_sprites() {
-    typedef void(__cdecl *pending)();
-    PENDING_BODY(0x00455EB0, pending)();
-}
+// load_sprites is source-owned in src/game.cpp.
 
 // load_fixed_sprites' callees, declared in game.h when its body landed: the
 // fixed-art load names them and nothing else in the tree does.
-// ?load_palette@@YAXXZ at 0x00451A10
-void __cdecl load_palette() {
-    typedef void(__cdecl *pending)();
-    PENDING_BODY(0x00451A10, pending)();
-}
+// load_palette is source-owned in src/palette.cpp.
 
-// ?load_misc@@YAXXZ at 0x00454D10
-void __cdecl load_misc() {
-    typedef void(__cdecl *pending)();
-    PENDING_BODY(0x00454D10, pending)();
-}
+// load_misc is source-owned in src/sprite.cpp.
 
 // load_interface455610 is recovered in game.cpp, with its original mapping.
 

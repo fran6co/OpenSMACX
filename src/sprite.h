@@ -62,6 +62,8 @@ static_assert(sizeof(TexHeap) == 0x10, "Original sheet heap footprint");
 class Sprite {
   // MainInterface's panel initialization adjusts displayed dimensions.
   friend class MainInterface;
+  // Native454D10 owns asset initialization and its displayed dimensions.
+  friend void __cdecl load_misc();
  public:
   // Original5E4ADA is a genuine seven-argument zero-return entry.
   // Buffer5D8740 supplies its actual Buffer destination and six scalars;

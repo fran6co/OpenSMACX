@@ -1,0 +1,19 @@
+{
+  "event_id": "76a505bde8b255ad77d0b08463bdbac89112988b4b12b366c5cdfd518e4c7c0a",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/sprite.h"
+    ],
+    "evidence": [
+      "Native454D10 owns displayed dimension initialization for the constructed Sprite families; add narrow friend load_misc instead of weakening member privacy or using raw offsets. Layout and every existing ABI remain unchanged."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "native-sprite-loader-access",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:asset-startup-loader-owner"
+}

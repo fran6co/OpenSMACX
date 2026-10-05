@@ -18,6 +18,9 @@
 #include "stdafx.h"
 #include <ddraw.h>  // IDirectDrawPalette::SetEntries in set()
 #include "palette.h"
+#include "gamma.h"
+#include "alpha.h" // prefs_get
+extern float PrefWinGammaCorrection; // prefwin.cpp owns original6846A8
 #include "general.h"  // mem_get
 #include "buffer.h"   // Buffer::sync_to_palette in set()
 #include "random.h"   // random in init()
@@ -2376,4 +2379,21 @@ void __cdecl textcolor_init() {
         p += 3;
         y += 0x10;
     } while ((int)p < (int)&TextColourTable[69]);
+}
+
+// ORIGINAL: 0x00451A10 ?load_palette@@YAXXZ 0x00451A10-0x00451C44;0x00655042-0x006550F9
+// RECOVERY_BINDING: v1 {"evidence": ["historical seed:src/recovered/units/00451a10.cpp", "task:asset-startup-loader-owner", "Native Buffer then Gamma lifetime; prefs key/default100; float operand66C540(0.01f) and existing PrefWinGammaCorrection6846A8; Palette1 PCX range10/236, Palette2 copy direction and Gamma apply1. Separate VGA port helper5D4240 is not this loader or a proved equivalent device path."], "reason": "Recover the complete asset loader through source-owned C++ objects, arrays and normal lifecycle while retaining original mappings and historical findings; no asset/runtime acceptance claimed."}
+void __cdecl load_palette() {
+    Buffer buffer;
+    Gamma gamma;
+    int gamma_percent;
+    float gamma_value;
+
+    gamma_percent = prefs_get("Gamma Correction", 100, 0);
+    gamma_value = static_cast<float>(gamma_percent) * 0.01f;
+    PrefWinGammaCorrection = gamma_value;
+
+    buffer.load_pcx("PALETTE.PCX", &g_PALETTE1, 0x0A, 0xEC);
+    g_PALETTE2.copy_from(&g_PALETTE1);
+    gamma.exec(&g_PALETTE1, gamma_value, 1);
 }

@@ -18,6 +18,7 @@
 #include "stdafx.h"
 #include "original_seam.h"
 #include "sprite.h"
+#include "strings.h" // source-owned shared filename buffer
 #include "buffer.h"
 #include "graphicwin.h"
 #include "texture.h"
@@ -2460,14 +2461,37 @@ Sprite g_XI_BOOM_VEH_SPRITES[144];
 // bottom-row sentinel7AC0C0 is not the end of this object's storage.
 // RECOVERY_OBJECT: v2 0x007AB460 0x007ABF60 ?g_XF_BOOM_VEH_SPRITES@@3PAVSprite@@A 0x00454270
 Sprite g_XF_BOOM_VEH_SPRITES[64];
+// Loader454D10 identifies these owners; the pinned CRT table6823A4..6823C8
+// selects their constructor wrappers in this order. Each uses Sprite2C;
+// array wrappers pass the stated count/stride to the CRT vector helpers.
+// Constructor/destructor pairs below prove original bounds/lifetime intent,
+// not current linked initializer ordering or successful artwork loading.
+// Native ctor44F8F0 / dtor44F910, one Sprite.
+// RECOVERY_OBJECT: v2 0x00779200 0x0077922C ?g_BATTLE_MIND_WORM_SPRITE@@3VSprite@@A 0x00454D10
 Sprite g_BATTLE_MIND_WORM_SPRITE;  // 0x00779200
+// Native ctor44F920 / dtor44F940, one Sprite.
+// RECOVERY_OBJECT: v2 0x0076DC30 0x0076DC5C ?g_BATTLE_ISLE_DEEP_SPRITE@@3VSprite@@A 0x00454D10
 Sprite g_BATTLE_ISLE_DEEP_SPRITE;  // 0x0076DC30
+// Native ctor44F950 / dtor44F970, one Sprite.
+// RECOVERY_OBJECT: v2 0x0078A4A0 0x0078A4CC ?g_BATTLE_LOCUSTS_CHIRON_SPRITE@@3VSprite@@A 0x00454D10
 Sprite g_BATTLE_LOCUSTS_CHIRON_SPRITE;  // 0x0078A4A0
+// Native ctor44F980 / dtor44F9A0, one Sprite.
+// RECOVERY_OBJECT: v2 0x00787E70 0x00787E9C ?g_BATTLE_FUNGAL_TOWER_SPRITE@@3VSprite@@A 0x00454D10
 Sprite g_BATTLE_FUNGAL_TOWER_SPRITE;  // 0x00787E70
+// Native ctor44F9B0 / dtor44F9D0, one Sprite.
+// RECOVERY_OBJECT: v2 0x007AC000 0x007AC02C ?g_BATTLE_SPORE_LAUNCHER_SPRITE@@3VSprite@@A 0x00454D10
 Sprite g_BATTLE_SPORE_LAUNCHER_SPRITE;  // 0x007AC000
+// Native ctor44F9E0 / dtor44FA00, one Sprite.
+// RECOVERY_OBJECT: v2 0x00779570 0x0077959C ?g_BATTLE_SEALURK_SPRITE@@3VSprite@@A 0x00454D10
 Sprite g_BATTLE_SEALURK_SPRITE;  // 0x00779570
+// Native ctor44FA10 / dtor44FA40, 89 Sprites at stride2C.
+// RECOVERY_OBJECT: v2 0x00759E28 0x0075AD74 ?g_TECH_ICON_SPRITES@@3PAVSprite@@A 0x00454D10
 Sprite g_TECH_ICON_SPRITES[89];  // 0x00759E28, 0x2c stride
+// Native ctor44FA60 / dtor44FA90, 70 Sprites at stride2C.
+// RECOVERY_OBJECT: v2 0x00787200 0x00787E08 ?g_FACILITY_ICON_SPRITES@@3PAVSprite@@A 0x00454D10
 Sprite g_FACILITY_ICON_SPRITES[70];  // 0x00787200, 0x2c stride
+// Native ctor44FAB0 / dtor44FAE0, 64 Sprites at stride2C.
+// RECOVERY_OBJECT: v2 0x00759320 0x00759E20 ?g_SECRET_PROJECT_ICON_SPRITES@@3PAVSprite@@A 0x00454D10
 Sprite g_SECRET_PROJECT_ICON_SPRITES[64];  // 0x00759320, 0x2c stride
 // Original 0x44FB00/0x44FB30 construct/destroy 3 elements at stride 0x2C.
 // RECOVERY_OBJECT: v2 0x00788038 0x007880BC ?g_IFACE_MP_COMBO_ARROW_SPRITES@@3PAVSprite@@A 0x00453A70
@@ -3413,4 +3437,77 @@ int TexHeap::configure(int count) {
         reinterpret_cast<unsigned char *>(cursor),
         static_cast<size_t>(arena + capacity_ - cursor));
     return 0;
+}
+
+// ORIGINAL: 0x00454D10 ?load_misc@@YAXXZ 0x00454D10-0x00454FB6
+// RECOVERY_BINDING: v1 {"evidence": ["historical seed:src/recovered/units/00454d10.cpp", "task:asset-startup-loader-owner", "Native229 init receivers:89 tech,70 facility,64 project and6 battle Sprites;44-byte element stride; facility34..64 x prefix and >64 index-31; native files/dimensions/order. Existing Sprite storage is constructed in this owner, not original-address aliases."], "reason": "Recover the complete asset loader through source-owned C++ objects, arrays and normal lifecycle while retaining original mappings and historical findings; no asset/runtime acceptance claimed."}
+void __cdecl load_misc() {
+    int index;
+    char number[80];
+
+    for (index = 0; index < 89; ++index) {
+        StringTemp[0] = '\0';
+        strcat(StringTemp, "techs\\tech");
+        if (index < 10) {
+            strcat(StringTemp, "0");
+        }
+        _itoa(index, number, 10);
+        strcat(StringTemp, number);
+        g_TECH_ICON_SPRITES[index].init(StringTemp, 0, 0);
+        g_TECH_ICON_SPRITES[index].iWidth_ = 0xD7;
+        g_TECH_ICON_SPRITES[index].iHeight_ = 0xD7;
+    }
+
+    for (index = 0; index < 70; ++index) {
+        StringTemp[0] = '\0';
+        strcat(StringTemp, "facs\\");
+        if (index >= 34 && index <= 64) {
+            strcat(StringTemp, "x");
+        }
+        strcat(StringTemp, "fac0");
+        if (index < 10) {
+            strcat(StringTemp, "0");
+        }
+        if (index > 64) {
+            _itoa(index - 0x1F, number, 10);
+        } else {
+            _itoa(index, number, 10);
+        }
+        strcat(StringTemp, number);
+        g_FACILITY_ICON_SPRITES[index].init(StringTemp, 0, 0);
+        g_FACILITY_ICON_SPRITES[index].iWidth_ = 0xD7;
+        g_FACILITY_ICON_SPRITES[index].iHeight_ = 0xD7;
+    }
+
+    for (index = 0; index < 64; ++index) {
+        StringTemp[0] = '\0';
+        strcat(StringTemp, "projs\\proj0");
+        if (index < 10) {
+            strcat(StringTemp, "0");
+        }
+        _itoa(index, number, 10);
+        strcat(StringTemp, number);
+        g_SECRET_PROJECT_ICON_SPRITES[index].init(StringTemp, 0, 0);
+        g_SECRET_PROJECT_ICON_SPRITES[index].iWidth_ = 0xD7;
+        g_SECRET_PROJECT_ICON_SPRITES[index].iHeight_ = 0xD7;
+    }
+
+    g_BATTLE_MIND_WORM_SPRITE.init("btwrm.pcx", 0, 0);
+    g_BATTLE_MIND_WORM_SPRITE.iWidth_ = 0x60;
+    g_BATTLE_MIND_WORM_SPRITE.iHeight_ = 0x73;
+    g_BATTLE_ISLE_DEEP_SPRITE.init("btisl.pcx", 0, 0);
+    g_BATTLE_ISLE_DEEP_SPRITE.iWidth_ = 0x60;
+    g_BATTLE_ISLE_DEEP_SPRITE.iHeight_ = 0x73;
+    g_BATTLE_LOCUSTS_CHIRON_SPRITE.init("btchi.pcx", 0, 0);
+    g_BATTLE_LOCUSTS_CHIRON_SPRITE.iWidth_ = 0x60;
+    g_BATTLE_LOCUSTS_CHIRON_SPRITE.iHeight_ = 0x73;
+    g_BATTLE_FUNGAL_TOWER_SPRITE.init("BTfungtow.pcx", 0, 0);
+    g_BATTLE_FUNGAL_TOWER_SPRITE.iWidth_ = 0x60;
+    g_BATTLE_FUNGAL_TOWER_SPRITE.iHeight_ = 0x73;
+    g_BATTLE_SPORE_LAUNCHER_SPRITE.init("BTsporlnch.pcx", 0, 0);
+    g_BATTLE_SPORE_LAUNCHER_SPRITE.iWidth_ = 0x60;
+    g_BATTLE_SPORE_LAUNCHER_SPRITE.iHeight_ = 0x73;
+    g_BATTLE_SEALURK_SPRITE.init("BTsealrk.pcx", 0, 0);
+    g_BATTLE_SEALURK_SPRITE.iWidth_ = 0x60;
+    g_BATTLE_SEALURK_SPRITE.iHeight_ = 0x73;
 }
