@@ -1899,7 +1899,8 @@ static void netwin_copy_lobby_text(char *destination, size_t capacity,
 }
 
 // ORIGINAL: 0x0047BBF0 ?pick_player@NetWin@@QAEXXZ 0x0047BBF0-0x0047C527;0x00656740-0x006568F9
-// TRIED: retained seed src/unrecovered/0047bbf0.cpp mixes an approximate
+// RECOVERY_BINDING: v1 {"evidence": ["git:0db4f0dc:src/unrecovered/0047bbf0.cpp", "source:src/netwin.h:NetWinLobbyRow"], "reason": "Retain the substantive typed lobby-name editor and its complete original primary/exceptional mapping; retire the unannotated generated duplicate, not its unresolved radio/default-faction and seventh gender-field behavior. The seed's synthetic stack frame and manual widget teardown are hypotheses, not additional source owners or proof of native lifetime fidelity."}
+// TRIED: historical scaffold git:0db4f0dc:src/unrecovered/0047bbf0.cpp mixes an approximate
 // stack-frame reconstruction with untyped widget cleanup and custom/default
 // radio selection. This source recovers the typed six-field edit and outgoing
 // lobby update; its radio/default-faction branch still needs restoration.
@@ -2043,6 +2044,7 @@ void NetWin::pick_diff(int slot) {
 }
 
 // ORIGINAL: 0x0047D300 ?pick_map@NetWin@@QAEXXZ 0x0047D300-0x0047E003;0x00656BC5-0x00656D9D
+// RECOVERY_BINDING: v1 {"evidence": ["git:0db4f0dc:src/unrecovered/0047d300.cpp", "source:src/netwin.h", "source:recovery/tests/test_netwin_pick_map_behavior.py"], "reason": "Retain the typed map/game picker with its complete original primary/exceptional mapping. The retired unannotated scaffold omitted the host session population, used an unconstructed scratch Dialogs receiver, and approximated the local widget aggregate. Its useful lifetime observation is that nested Popup/Scroll/FlatButton cleanup belongs to genuine member destruction, not independent manually staged objects; complete native cleanup fidelity remains an obligation."}
 // TRIED: the popup and load-map/game dispatch are transcribed; the scenario
 // host guard now uses LockEnableMask's live-faction byte. Choice zero still
 // lacks the original session-record population and is explicitly unfinished.
