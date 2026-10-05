@@ -350,7 +350,7 @@ def fields():
     out = []
     for n in names:
         name = 'field_' + n + '_'
-        declaration, = re.findall(r'(?:int|uint32_t) ' + name + ';', header)
+        declaration, = re.findall(r'(?:int|int32_t|uint32_t) ' + name + ';', header)
         out.append(declaration)
     for name in ('horizontal_damage_', 'vertical_damage_'):
         declaration, = re.findall(r'MapTileDamageRect ' + name + ';', header)
@@ -798,9 +798,6 @@ void bitmask(int, int *o, int *m) { *o = 0; *m = 1; }
 int alt_get_ocean_detail(int, int, int corner, int sub) {
     return (corner * 3 + sub) & 7;
 }
-struct MapWin;
-static MapWin *const MapWinTerrainFixupExtra1 = (MapWin *)1;
-
 // ---- recording real member interfaces, not executable-address seams ----
 int Line_calls, Line_color; int Draw2_calls;
 struct Line { int x0, y0, x1, y1, color; };
@@ -825,6 +822,9 @@ struct MapWin : Buffer {
     int get_point_light(int, int, int corner) { return 0x37 + (landmark_lighting ? corner * 3 : 0); }
     MapWin() : Buffer(), owned_(0), field_8_(0) {}
 };
+
+struct WorldWin { MapWin mapWin_; };
+static WorldWin WorldClimateWorldWin;
 
 // SOURCE
 
@@ -960,9 +960,8 @@ int main() {
         check(clamp_events.empty());
     }
     treset();
-    // This existing fixture's special-window identity is compared only;
-    // the early original branch never dereferences that service identity.
-    check(gen_terrain_poly(&buffer, MapWinTerrainFixupExtra1, 5, 1, 0, 1,
+    // The special receiver is the embedded world map, not a fake address.
+    check(gen_terrain_poly(&buffer, &WorldClimateWorldWin.mapWin_, 5, 1, 0, 1,
                            0, 0, 100, 100) == 1);
     check(TextureLightFloor == -71 && TextureLightCeiling == 113);
     check(clamp_events.empty());

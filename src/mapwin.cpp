@@ -2465,16 +2465,16 @@ void __cdecl draw_radius(int x_coord, int y_coord, int a3, int draw_type) {
     } while (cursor < end);
 }
 
-// Two additional windows still lack source-owned identities. The third
-// original fixed receiver is the genuine FarmMapWindow declared above.
-static MapWin *const MapWinTerrainFixupExtra1 =
-    reinterpret_cast<MapWin *>(0x008EB48C);
+// The first extra receiver is WorldClimateWorldWin's complete embedded MapWin:
+// original WorldWin storage 0x008E9F60 + constructor/destructor member offset
+// 0x152C = 0x008EB48C. Its lifetime belongs to WorldWin, not another global.
+// Only the second extra receiver still lacks a source-owned identity.
 static MapWin *const MapWinTerrainFixupExtra2 =
     reinterpret_cast<MapWin *>(0x006C5C9C);
 
 /*
-Purpose: Fix up terrain on every live MapWin slot, then two unresolved
-         windows and the shared farm display window, in that order.
+Purpose: Fix up terrain on every live MapWin slot, then the embedded world
+         map, one unresolved window and the shared farm display, in that order.
 // ORIGINAL: 0x00471240 ?mapwin_terrain_fixup@@YAXXZ 0x00471240-0x00471293 BYTE_EXACT
 // size      83 bytes
 // prototype void (__cdecl ?mapwin_terrain_fixup@@YAXXZ)()
@@ -2486,24 +2486,17 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl mapwin_terrain_fixup() {
-    int cursor = reinterpret_cast<int>(MapWinTable);
-    const int end = cursor + static_cast<int>(MapWinTableSlots) * 4;
-    do {
+    for (unsigned int slot = 0; slot < MapWinTableSlots; ++slot) {
         // BUG IN THE ORIGINAL: unlike draw_tile/draw_tiles/draw_radius, this
-        // reads `(*cursor)->field_at(0x1DD74)` for every non-zero slot
+        // reads the active field at +0x1DD74 for every non-zero slot
         // WITHOUT first checking that the slot itself is non-null - only
-        // slot 0 (`cursor == MapWinTable`) skips the read. An unpopulated
+        // slot 0 skips the read. An unpopulated
         // later slot would dereference a null MapWin*. Reproduced as-is.
-        if (cursor == reinterpret_cast<int>(MapWinTable) ||
-            *reinterpret_cast<int *>(
-                reinterpret_cast<char *>(
-                    *reinterpret_cast<MapWin *const *>(cursor)) +
-                0x1DD74) != 0) {
-            terrain_fixup(*reinterpret_cast<MapWin *const *>(cursor));
+        if (slot == 0 || MapWinTable[slot]->field_1DD74_ != 0) {
+            terrain_fixup(MapWinTable[slot]);
         }
-        cursor += 4;
-    } while (cursor < end);
-    terrain_fixup(MapWinTerrainFixupExtra1);
+    }
+    terrain_fixup(&WorldClimateWorldWin.mapWin_);
     terrain_fixup(MapWinTerrainFixupExtra2);
     terrain_fixup(&FarmMapWindow);
 }
@@ -3181,7 +3174,7 @@ int __cdecl gen_terrain_poly(Buffer *buffer, MapWin *window, int a3, int a4,
     uint32_t *const tile_bit2_ptr = &tile->bit2;
     local_34 = tile->bit2;
     result = 0;
-    if (window == MapWinTerrainFixupExtra1 && (a6 & 0x80000000) == 0 &&
+    if (window == &WorldClimateWorldWin.mapWin_ && (a6 & 0x80000000) == 0 &&
         (local_34 & 0x400000) == 0) {
         return 1;
     }

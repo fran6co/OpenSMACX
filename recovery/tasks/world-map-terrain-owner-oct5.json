@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "task_id": "world-map-terrain-owner-oct5",
+  "target": "opensmacx",
+  "author": "framework-coordinator",
+  "base_revision": "ef28ddf036073960a50ee55c1388323cdf2b1f78",
+  "intent": "Resolve the original 8EB48C terrain/serializer receiver to WorldClimateWorldWin's genuine embedded MapWin and preserve terrain-fixup slot semantics with typed accesses.",
+  "subjects": [
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 4657728},
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 4600528}
+  ],
+  "editable_files": ["src/mapwin.cpp", "recovery/tests/test_mapwin_generation.py", "recovery/tests/test_world_map_terrain_owner.py"],
+  "evidence": [
+    "Source-owned WorldClimateWorldWin object starts at8E9F60; WorldWin constructor4C4BF0 and destructor4C4A70 establish embedded complete MapWin at+152C, yielding8EB48C. Existing MapWin::init already uses this genuine member.",
+    "Preserve native unconditional slot-zero fixup and unchecked active-field dereference for other slots; do not repair original null-slot defect. Second receiver6C5C9C stays explicitly unresolved.",
+    "Standing coordinator-reviewed structural recovery authorization includes temporary byte regressions; preserve all historical claims. Require fresh full build/link, actual-source controls and baseline/current historical measurements; no linked preservation or full-game acceptance claim."
+  ]
+}

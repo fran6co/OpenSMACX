@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "task_id": "node-list-owner-oct5",
+  "target": "opensmacx",
+  "author": "framework-coordinator",
+  "base_revision": "ef28ddf036073960a50ee55c1388323cdf2b1f78",
+  "intent": "Recover two complete intrusive-list operations in one provisional typed owner with source-owned pointer endpoints; retire fixed-address seeds without dropping historical obligations.",
+  "subjects": [
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 5000368},
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 5000464}
+  ],
+  "editable_files": ["src/node.h", "src/node.cpp", "CMakeLists.txt", "src/recovered/units/004c4cb0.cpp", "src/unrecovered/004c4d10.cpp", "recovery/tests/test_node_list_owner_actual_source.py"],
+  "evidence": [
+    "Independent pinned review confirms complete algorithms, DWORD flags+4, previous+18 and next+1C. Unknown prefix bytes and original class name remain provisional; no original full allocation or hierarchy claim.",
+    "Original shared head90D944/tail90D948 pointer cells have zero initial bytes and all observed absolute-word uses fall inside these two complete original spans. Indirect alias/caller closure remains unproved; use start-only object bindings after fresh physical COFF observation.",
+    "Historical seed symbols ?enqueue@Node@@QAEHXZ and ?unlink@ListNode4C4D10@@QAEHXZ were scaffold compiler proposals, not original class evidence. Preserve their provenance here while selecting fresh emitted source facts. Generic retired-tool run instructions remain in Git, not current source guidance; neither seed has parsed LEVER/TRIED/DEFERRED findings.",
+    "Preserve singleton double-enqueue and stale-link no-op behavior plus high flag bits. Standing coordinator-reviewed structural recovery permits temporary matching regressions without demotion; no new claims granted.",
+    "Fresh baseline seed measurements both BYTE_EXACT under primary settled flags. Require new TU recipes, physical symbols/layout/references, full build/link, source/claim continuity and actual-product host controls. No linked retained-selection, original TU, full structure/runtime or game acceptance proof."
+  ]
+}
