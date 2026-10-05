@@ -148,3 +148,5 @@ inline SubInterface *sub_interface_global() {
 // InfoWin sets bit 4, WorldWin bit 8, and StatusWin bit 0x20. This is real
 // source storage, not a pointer back into the retired executable image.
 extern uint32_t StatusFlags;
+
+int __cdecl reset_status_and_initialize_desktop();

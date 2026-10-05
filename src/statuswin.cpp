@@ -1798,3 +1798,11 @@ void __stdcall sub_50f630(int unused) {
     (void)unused;
     ConsoleStatusWin.redraw();
 }
+
+// ORIGINAL: 0x00515430 sub_515430 0x00515430-0x00515443 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["historical seed:src/recovered/00515430.cpp", "task:owned-helper-coverage-batch", "StatusFlags939ED8 is already owned by statuswin.cpp; native515430 clears it before desktop_init(1)."], "reason": "Recover a complete native helper through genuine source owners and SDK calls, preserving original identity, extent and historical obligations. Source home is not proof of original TU or complete-game acceptance."}
+// symbol    ?reset_status_and_initialize_desktop@@YAHXZ
+int __cdecl reset_status_and_initialize_desktop() {
+    StatusFlags = 0;
+    return desktop_init(1);
+}

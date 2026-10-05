@@ -2628,3 +2628,16 @@ void __stdcall main_interface_bubble_callback(char *text, int x, int y) {
     rectangle.bottom = y;
     MainInterfaceGlobal.Win::set_bubble_text(text, &rectangle);
 }
+
+// ORIGINAL: 0x004396B0 ?bubble_me_elmo2@DesignWin@@QAGXPADHH@Z 0x004396B0-0x004396F2 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["historical seed:src/recovered/units/004396b0.cpp", "task:owned-helper-coverage-batch", "Pinned4396B0 ignores incomingECX, consumes text/x/y from stack and returns ret0C; MainInterfaceGlobal7AE820 is the actual receiver. Historical DesignWin label retained, no caller/owning table claim. Distinct original entry and body from existing4B1B70, never a shared-span alias."], "reason": "Recover a complete native helper through genuine source owners and SDK calls, preserving original identity, extent and historical obligations. Source home is not proof of original TU or complete-game acceptance."}
+// symbol    ?main_interface_bubble_callback_4396b0@@YGXPADHH@Z
+void __stdcall main_interface_bubble_callback_4396b0(char *text, int x, int y) {
+    MainInterfaceGlobal.client_to_screen(&x, &y);
+    RECT point;
+    point.left = x;
+    point.top = y;
+    point.right = x;
+    point.bottom = y;
+    MainInterfaceGlobal.Win::set_bubble_text(text, &point);
+}

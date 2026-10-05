@@ -523,3 +523,5 @@ void __cdecl net_upkeep();
 void __cdecl net_end_of_turn();
 int __cdecl net_upkeep_phase(int phase);
 int __cdecl next_player_turn();
+
+char *__cdecl uppercase_text(char *text, int mode);

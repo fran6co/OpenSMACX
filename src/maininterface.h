@@ -455,3 +455,6 @@ extern MainInterface MainInterfaceGlobal;
 bool __cdecl active_interface_slot_occupied();
 
 void __stdcall main_interface_bubble_callback(char *text, int x, int y);
+
+// Distinct original singleton callback; its incoming class receiver is unused.
+void __stdcall main_interface_bubble_callback_4396b0(char *text, int x, int y);

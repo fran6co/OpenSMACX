@@ -1922,3 +1922,22 @@ void PathRecord::set_name(char *name) {
         name_ = 0;
     }
 }
+
+// ORIGINAL: 0x0058FB70 sub_58fb70 0x0058FB70-0x0058FBB2 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["historical seed:src/recovered/units/0058fb70.cpp", "task:owned-helper-coverage-batch", "Native58FB70 mode0 returns unchanged, mode1 passes a two-byte terminated buffer and writes the first byte back; other nonzero modes call USER32 CharUpperA on the whole text. No mapped-caller claim."], "reason": "Recover a complete native helper through genuine source owners and SDK calls, preserving original identity, extent and historical obligations. Source home is not proof of original TU or complete-game acceptance."}
+// symbol    ?uppercase_text@@YAPADPADH@Z
+char *__cdecl uppercase_text(char *text, int mode) {
+    if (mode == 0) {
+        return text;
+    }
+    if (mode == 1) {
+        char first_character[2];
+        first_character[0] = *text;
+        first_character[1] = '\0';
+        CharUpperA(first_character);
+        *text = first_character[0];
+        return text;
+    }
+    CharUpperA(text);
+    return text;
+}
