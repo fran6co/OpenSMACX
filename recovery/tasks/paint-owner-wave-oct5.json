@@ -1,0 +1,49 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "137e80b838108230eb6e90f10a89002ded44bbcb",
+  "editable_files": [
+    "src/win.h",
+    "src/win.cpp",
+    "src/graphicwin.h",
+    "src/graphicwin.cpp",
+    "src/game.cpp",
+    "src/newtechwin.h",
+    "src/newtechwin.cpp",
+    "src/pushbutton.h",
+    "src/gamma.cpp",
+    "src/recovered/units/005d63f0.cpp",
+    "src/recovered/units/00483950.cpp",
+    "src/unrecovered/0062c110.cpp",
+    "recovery/tests/test_paint_owner_wave_host.py",
+    "recovery/tests/graphicwin_paint_owner_control.cpp",
+    "recovery/tests/newtechwin_paint_owner_control.cpp",
+    "recovery/tests/pushbutton_paint_owner_control.cpp"
+  ],
+  "evidence": [
+    "Pinned GraphicWin table 66FC50 slot67, NewTechWin 66CE5C slot12 and PushButton 670C60 slot12 select complete seed bodies; legacy QAE names remain historical interpretations, native current UAE symbols are separately observed.",
+    "Fresh native compiler overlay passes GraphicWin/NewTechWin/gamma/Win/game with all nine changed files together. GraphicWin RECT emits tagRECT; caption callback and borrowed Sprite-default global manglings are directly observed, not guessed.",
+    "Win fieldE0 caption is allocated/copied/freed by actual source lifecycle; all four border slot60 callers pass Buffer pointers. Caption callback uses one genuine typed function pointer; raw-bit legacy consumer uses memcpy, not inactive union punning.",
+    "load_interface publishes six Sprite pointers and twelve nulls to eighteen PushButton defaults consumed by constructor/close/painter. NewTech uses existing PlayersData theory_of_everything and inline native separator. Host candidates pass eleven controls, but integrated permanent tests/native matching/full-link checks still required."
+  ],
+  "intent": "Recover complete GraphicWin non-client, NewTechWin technology and PushButton redraw owners with their true inherited virtual methods, typed owned caption, caption callback and eighteen borrowed Sprite defaults. Migrate every producer/consumer together, keep original identity/spans/lessons and historical claims, retire superseded seeds only after reviewed build/link and relevant checks. User permits temporary matching regressions for correct structure/coverage, not automatic acceptance or claim demotion.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6120432,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4733264,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6471952,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "paint-owner-wave-oct5"
+}
