@@ -1,0 +1,27 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "5bc25d02ccc7c66c0cb3da679b8baeee66a0c5d0",
+  "editable_files": [
+    "src/designwin.cpp",
+    "src/designwin.h",
+    "src/unrecovered/00438460.cpp",
+    "recovery/tests/test_designwin_button_owner.py",
+    "recovery/tests/designwin_button_harness.cpp"
+  ],
+  "evidence": [
+    "Complete ignored typed proposal and host damage controls in build/recovery/late-ui-owner-oct4; verify actual product bodies after integration, not draft-only test results.",
+    "User authorizes coverage-first coordinator-reviewed integration with preserved historical identities and matching obligations; no automatic or game acceptance claim.",
+    "Actual DesignWin virtual slot44, source-owned prototype/weapon/armor arrays, Players/PlayersData, NetDaemon, Popup and existing design-selection globals; never substitute fixed executable addresses."
+  ],
+  "intent": "Recover the complete DesignWin button handler through typed C++ owners, preserving original main/cold spans and seed findings, with host damage controls and native compiler review.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4424800,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "designwin-button-owner"
+}
