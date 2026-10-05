@@ -1793,17 +1793,59 @@ void __cdecl message_base(int opcode, int payload_10, char *text, int target) {
     NetBusyCount--;
 }
 
-// 0x00592EE0 ?message_data@@YAXHHHHHH@Z is the one member of this family
-// that stays a pending_bodies forwarder, and the reason is its return value.
-// The catalogue spells it void, but EAX is live at its ret - it is whatever
-// Net::send left there, two calls down - and unlock_veh (0x005310F0,
-// BYTE_EXACT) returns exactly that residue. A body spelled here would have to
-// name a value no source expression reaches: the last EAX-writing event is
-// inside send_message, after which the image only decrements NetBusyCount.
-// TRIED: a uint32_t body with no return statement - VC6 makes that C4716, a
-// hard error. TRIED: returning NetBusyCount - adds a load the image has not
-// got. The forwarder is the only spelling that passes the callee's EAX
-// through, so it stays.
+// The two bytes after opcode are observed unwritten in the native stack record;
+// keep them unresolved and do not value-initialize the local object.
+struct MessageDataRecord {
+    int16_t opcode_;
+    unsigned char unresolved_2_[2];
+    int faction_;
+    uint32_t timestamp_;
+    int sequence_;
+    int payload_10_;
+    int payload_14_;
+    int payload_18_;
+    int payload_1C_;
+};
+
+static_assert(sizeof(MessageDataRecord) == 0x20,
+              "message_data stack record width from native stores");
+static_assert(offsetof(MessageDataRecord, faction_) == 0x04,
+              "message_data faction field offset");
+static_assert(offsetof(MessageDataRecord, timestamp_) == 0x08,
+              "message_data timestamp field offset");
+static_assert(offsetof(MessageDataRecord, sequence_) == 0x0C,
+              "message_data sequence field offset");
+static_assert(offsetof(MessageDataRecord, payload_10_) == 0x10,
+              "message_data first payload field offset");
+static_assert(offsetof(MessageDataRecord, payload_14_) == 0x14,
+              "message_data second payload field offset");
+static_assert(offsetof(MessageDataRecord, payload_18_) == 0x18,
+              "message_data third payload field offset");
+static_assert(offsetof(MessageDataRecord, payload_1C_) == 0x1C,
+              "message_data fourth payload field offset");
+
+// ORIGINAL: 0x00592EE0 ?message_data@@YAXHHHHHH@Z 0x00592EE0-0x00592F4C
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned592EE0..592F4C: six int inputs, target is argument2; 32-byte local packet has unwritten bytes2..3. Call532940 then dec93F664 and epilogue preserve EAX.", "Pinned53111B caller and source NetDaemon::unlock_veh consume all32 result bits; other current callers discard them.", "Superseded source dead ends: nonvoid body without return failed VC6 C4716; returning NetBusyCount added a wrong load. Returning the actual lower Net::send result resolves both without register tricks.", "Fresh root private VC6 COFF probe observes current symbol ?message_data@@YAHHHHHHH@Z", "recovery/tasks/message-data-owner-oct5.json", "recovery/tests/test_message_data_actual_source.py"], "reason": "Replace the original-address forwarding wrapper with the complete typed automatic packet builder. Expose the send result already observed by unlock_veh without changing native routing, busy-count ordering or the two unwritten packet bytes. Current netdaemon.cpp home is family ownership, not asserted original TU ownership."}
+// symbol    ?message_data@@YAHHHHHHH@Z
+int __cdecl message_data(int opcode, int target, int payload_10,
+                         int payload_14, int payload_18, int payload_1C) {
+    MessageDataRecord message;
+    message.opcode_ = static_cast<int16_t>(opcode);
+    message.faction_ = ConsoleGlobal.faction_id_;
+    message.timestamp_ = timeGetTime();
+    message.payload_14_ = payload_14;
+    message.sequence_ = NetDaemonNet.lock_state_[0].leading_words_[0];
+
+    ++NetBusyCount;
+    message.payload_18_ = payload_18;
+    message.payload_10_ = payload_10;
+    message.payload_1C_ = payload_1C;
+    const int result = NetDaemonNet.send_message(
+        reinterpret_cast<char *>(&message), 0x20, target);
+    --NetBusyCount;
+    return result;
+}
+
 // ORIGINAL: 0x00592F50 sub_592f50 0x00592F50-0x00592FE9
 // symbol    ?send_raw_data@@YAXHHHHHHHHHH@Z
 // size      153 bytes
@@ -2013,6 +2055,8 @@ void __cdecl message_chat(int opcode, int target, char *text) {
 // Fixed-slot bindings carried from 00532940.cpp
 
 // ORIGINAL: 0x00532940 ?send_message@NetDaemon@@QAEXPADKH@Z 0x00532940-0x00532A44 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned532940..532A44: initial IsMultiplayerNet load supplies offline EAX; every enabled Net::send630080 result reaches the epilogue unchanged.", "Keep native mask precedence4000,8000,A000 and server/turn-owner fallback routing; caller arguments and object layout remain unchanged.", "Fresh root private VC6 COFF probe observes current symbol ?send_message@NetDaemon@@QAEHPADKH@Z", "recovery/tasks/message-data-owner-oct5.json", "recovery/tests/test_message_data_actual_source.py"], "reason": "Expose the existing native transport result as a typed int while preserving the original void-decorated identity, full spans and historical match/restoration obligations. Disabled transport returns its captured zero flag; each enabled route returns Net::send EAX. This is not a new measured claim."}
+// symbol    ?send_message@NetDaemon@@QAEHPADKH@Z
 // size      260 bytes
 // prototype void (__thiscall ?send_message@NetDaemon@@QAEXPADKH@Z)(NetDaemon* this, int8*, unsigned int, int)
 // callers   12   call targets   2
@@ -2110,53 +2154,52 @@ void __cdecl message_chat(int opcode, int target, char *text) {
 // trailing send into both arms, a reused parameter compiled the load and
 // compare in the opposite order, and `target = target;` was folded away
 // entirely. Measured, and the three sites are spelled the same way for it.
-void NetDaemon::send_message(char *message, unsigned long length, int target) {
-    if (IsMultiplayerNet) {
-        unsigned short flags = *reinterpret_cast<unsigned short *>(message);
-        if (flags & 0x4000) {
-            *reinterpret_cast<unsigned long *>(message + 8) =
-                timeGetTime();
-            Net::send(message, length, 0, 1);
-            return;
-        }
-        if (flags & 0x8000) {
-            int value;
-            if (NetDaemonNet.lock_state_[0].trailing_words_[0] == 1) {
-                value = target;
-            } else {
-                value = field_764_;
-            }
-            target = value;
-            Net::send(message, length, target, 1);
-            return;
-        }
-        if (flags & 0xa000) {
-            int counter = NetDaemonNet.lock_state_[0].trailing_words_[0];
-            if ((NetTurnFlags & 0x10) &&
-                ConsoleControlTurnActive == 0 && NetTurnFaction > 0 && counter > 1) {
-                Net::send(message, length,
-                          AlphaNet::who_2_pid(NetTurnFaction), 1);
-                return;
-            }
-            int value;
-            if (counter == 1) {
-                value = target;
-            } else {
-                value = field_764_;
-            }
-            target = value;
-            Net::send(message, length, target, 1);
-            return;
-        }
+int NetDaemon::send_message(char *message, unsigned long length, int target) {
+    const int multiplayer = IsMultiplayerNet;
+    if (!multiplayer) {
+        return multiplayer;
+    }
+
+    const unsigned short flags = *reinterpret_cast<unsigned short *>(message);
+    if (flags & 0x4000) {
+        *reinterpret_cast<uint32_t *>(message + 8) = timeGetTime();
+        return Net::send(message, length, 0, 1);
+    }
+    if (flags & 0x8000) {
         int value;
         if (NetDaemonNet.lock_state_[0].trailing_words_[0] == 1) {
             value = target;
         } else {
-            value = AlphaNet::who_2_pid(target);
+            value = field_764_;
         }
         target = value;
-        Net::send(message, length, target, 1);
+        return Net::send(message, length, target, 1);
     }
+    if (flags & 0xA000) {
+        const int counter = NetDaemonNet.lock_state_[0].trailing_words_[0];
+        if ((NetTurnFlags & 0x10) && ConsoleControlTurnActive == 0 &&
+            NetTurnFaction > 0 && counter > 1) {
+            return Net::send(message, length,
+                             AlphaNet::who_2_pid(NetTurnFaction), 1);
+        }
+        int value;
+        if (counter == 1) {
+            value = target;
+        } else {
+            value = field_764_;
+        }
+        target = value;
+        return Net::send(message, length, target, 1);
+    }
+
+    int value;
+    if (NetDaemonNet.lock_state_[0].trailing_words_[0] == 1) {
+        value = target;
+    } else {
+        value = AlphaNet::who_2_pid(target);
+    }
+    target = value;
+    return Net::send(message, length, target, 1);
 }
 
 

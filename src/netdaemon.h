@@ -213,7 +213,8 @@ class NetDaemon : public AlphaNet {
 
  public:
   // 0x00532940. Every message builder in netdaemon.cpp hands its record here.
-  void send_message(char *message, unsigned long length, int target);
+  // Native void-decorated method leaves Net::send's EAX live (zero offline).
+  int send_message(char *message, unsigned long length, int target);
   // 0x00530630, a pending_bodies forwarder (archived in 00530630.cpp). It
   // broadcasts a lock request, then polls for every client's ack - which is
   // the wait loop unlock_base and await_synch spell out inline. The three
@@ -375,14 +376,14 @@ int __cdecl order_veh(int veh_id, int x, int y);
 // parameters are named for the record offset they land at, which is the one
 // thing about them the bodies prove.
 //
-// message_data is NOT here: see netdaemon.cpp's note by the family. Its
-// catalogued return is void, but EAX is live at its ret and unlock_veh
-// returns that residue, so it stays a pending_bodies forwarder.
+// message_data's source type exposes the live 32-bit EAX result; its original
+// decorated name remains void. Only unlock_veh consumes the value in current
+// source; the other callers ignore it.
 void __cdecl message_veh(int opcode, int payload_10, int payload_14,
                          int target);
 void __cdecl message_base(int opcode, int payload_10, char *text, int target);
-uint32_t __cdecl message_data(int opcode, int target, int payload_10,
-                              int payload_14, int payload_18, int payload_1C);
+int __cdecl message_data(int opcode, int target, int payload_10,
+                         int payload_14, int payload_18, int payload_1C);
 void __cdecl message_big_data(int opcode, int target, int *payload, int count);
 void __cdecl message_lock(int opcode, int target, int payload_10,
                           int payload_14, int payload_18, int payload_1C,

@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "task_id": "message-data-owner-oct5",
+  "target": "opensmacx",
+  "author": "framework-coordinator",
+  "base_revision": "f5c1e907a935d3e4b4331f9861ee0d78669aa174",
+  "intent": "Complete the source message-data packet builder and expose its native send-result contract; retire its fixed-address forwarding wrapper without behavior fixes or claim demotion.",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5844704
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5450048
+    }
+  ],
+  "files": [
+    "recovery/tests/message_data_owner_host.cpp",
+    "recovery/tests/test_message_data_actual_source.py",
+    "src/netdaemon.cpp",
+    "src/netdaemon.h",
+    "src/pending_bodies.cpp"
+  ],
+  "evidence": [
+    "Full pinned native control/dataflow, local packet field widths/offsets and unwritten gap retained.",
+    "Fresh private VC6 compilation of netdaemon.cpp/pending_bodies.cpp and physical current symbol observations before publication.",
+    "Original void names remain identities; current typed int returns preserve live EAX consumed by unlock_veh. Existing byte claim remains a restoration obligation, not a new grant."
+  ]
+}
