@@ -7255,7 +7255,8 @@ void Buffer::resize(int width, int height) {
 // shared lock pair is `get_data` / `free_data`.
 // ---------------------------------------------------------------------------
 
-// ORIGINAL: 0x005D7B20 ?load_tga@Buffer@@QAGHPBD@Z 0x005D7B20-0x005D7B36
+// ORIGINAL: 0x005D7B20 ?load_tga@Buffer@@QAGHPBD@Z 0x005D7B20-0x005D7B36 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/005d7b20.cpp"], "reason": "Retain the existing source implementation and complete original mapping. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
 // size      22 bytes
 // prototype int (__stdcall ?load_tga@Buffer@@QAGHPBD@Z)(Buffer* this, int8*)
 // callers   0   call targets   1
@@ -7269,7 +7270,8 @@ int __stdcall Buffer::load_tga(const char *filename) {
     return load_tga(filename, nullptr, 0, 0x100);
 }
 
-// ORIGINAL: 0x005D7C80 ?load_bmp@Buffer@@QAGHPBD@Z 0x005D7C80-0x005D7C96
+// ORIGINAL: 0x005D7C80 ?load_bmp@Buffer@@QAGHPBD@Z 0x005D7C80-0x005D7C96 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/005d7c80.cpp"], "reason": "Retain the existing source implementation and complete original mapping. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
 // size      22 bytes
 // prototype int (__stdcall ?load_bmp@Buffer@@QAGHPBD@Z)(Buffer* this, int8*)
 // callers   0   call targets   1
@@ -7482,7 +7484,8 @@ int Buffer::write_strings_height(StringList *strings, int width, int flags) {
     return wrap_height_flying_flush() + total_height;
 }
 
-// ORIGINAL: 0x005DB930 ?write_right_l@Buffer@@QAEHPAUFont@@PADPAURECT@@H@Z 0x005DB930-0x005DB984
+// ORIGINAL: 0x005DB930 ?write_right_l@Buffer@@QAEHPAVFont@@PADPAURECT@@H@Z 0x005DB930-0x005DB984 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/005db930.cpp"], "reason": "Retain the existing source implementation and complete original mapping. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
 // symbol    ?write_right_l@Buffer@@QAEHPAVFont@@PADPAUtagRECT@@H@Z
 //           The image spells the rectangle `PAURECT@@`; windows.h declares
 //           `struct tagRECT` behind the RECT define, so the object holds

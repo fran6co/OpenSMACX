@@ -736,8 +736,9 @@ void BaseButton::on_mouse_leave(int x, int y) {
     }
 }
 
-// ORIGINAL: 0x00607C30 ?UNK2@BaseButton@@QAEXXZ 0x00607C30-0x00607C74 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00607c30.cpp", "source:src/basebutton.cpp:BaseButton::set"], "reason": "Toggle through the already-typed value setter so redraw and parent notification use the same proven ownership path; the seed's exact claim remains a restoration obligation."}
+// ORIGINAL: 0x00607C30 ?UNK2@BaseButton@@QAEXXZ 0x00607C30-0x00607C74 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/00607c30.cpp", "source:src/basebutton.cpp:BaseButton::set"], "reason": "Toggle through the already-typed value setter so redraw and parent notification use the same proven ownership path; the seed's exact claim remains a restoration obligation. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// kind      game
 void BaseButton::UNK2() {
     set(field_A18_ == 0);
 }

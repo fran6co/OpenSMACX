@@ -3041,11 +3041,14 @@ void __cdecl slide_hide(GraphicWin *, int);
 Purpose: Show or hide the datalink status layer: the topic drawer, the
          eighteen per-category flat buttons and the entry list all follow
          the mode, and hiding it also clears the history-slot count.
-// ORIGINAL: 0x00432060 ?on_status@Datalink@@QAEXH@Z 0x00432060-0x00432152 FILE
+// ORIGINAL: 0x00432060 ?on_status@Datalink@@QAEXH@Z 0x00432060-0x00432152 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/unrecovered/00432060.cpp"], "reason": "Retain the existing source implementation and complete original mapping. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// kind      game
+// LEVER: statement-order not declaration order - `this - 0xA14` (the GraphicWin-adjusted receiver used for slide_show/slide_hide, draw_entry, show, hide) is recomputed fresh inside each branch rather than hoisted once; and in the a1==0 branch the `*(self+0x2020)=0` store sits between computing the 0x126A0 vtable-slot address and dereferencing it, matching the lea/mov/mov/call order byte for byte. Vtable dispatch and the recursive `esi-0xa14` receiver both use the OriginalObject/ original_method/original_slot pointer-to-member pattern from src/original_seam.h, inlined here since the scaffold TU cannot #include project headers and `__thiscall` on a function-pointer typedef is C4234 in this cl.
 // symbol    ?on_status@Datalink@@UAEXH@Z
 // size      242 bytes
 Status: Coverage transcription of the retained seed
-        (src/unrecovered/00432060.cpp), which is BYTE_EXACT in scaffold
+        (git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/unrecovered/00432060.cpp), which is BYTE_EXACT in scaffold
         form and keeps the banked claim until this body measures fresh.
         Model note, from the seed's own arithmetic: the image's receiver
         is the window at Datalink+0xA14 - its 0x2020 is field_2A34_,

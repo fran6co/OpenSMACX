@@ -559,8 +559,9 @@ void DiploPop::on_iface_button_toggled(int, int) {
 // callers   0   call targets   4
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
-// ORIGINAL: 0x00440380 ?on_status@DiploPop@@QAEXH@Z 0x00440380-0x004404B4 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00440380.cpp retained original identity and spans", "recovery/tasks/interface-contract-report-closure.json authorized ownership recovery", "original:0x00440380 complete control/member accesses and concrete interface table"], "reason": "Recover the concrete SubInterface owner operation through genuine window members and source-owned globals. Original table/call evidence identifies the callback receiver; the retained compatible seed supplies its complete original intervals, not an executable-address forwarding implementation."}
+// ORIGINAL: 0x00440380 ?on_status@DiploPop@@QAEXH@Z 0x00440380-0x004404B4 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/00440380.cpp retained original identity and spans", "recovery/tasks/interface-contract-report-closure.json authorized ownership recovery", "original:0x00440380 complete control/member accesses and concrete interface table", "git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/00440380.cpp"], "reason": "Recover the concrete SubInterface owner operation through genuine window members and source-owned globals. Original table/call evidence identifies the callback receiver; the retained compatible seed supplies its complete original intervals, not an executable-address forwarding implementation. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// kind      game
 // symbol    ?on_status@DiploPop@@UAEXH@Z
 void DiploPop::on_status(int mode) {
     GraphicWin *window = static_cast<GraphicWin *>(this);
@@ -871,8 +872,9 @@ void DiploPop::bioscan_anim() {
     MainInterfaceGlobal.soft_update(flic2_.update_rect());
 }
 
-// ORIGINAL: 0x0043F200 ?timer_callback_daemon@DiploPop@@QAAXHH@Z 0x0043F200-0x0043F245
-// RECOVERY_BINDING: v1 {"evidence": ["Disassembly reads the popup pointer from the second cdecl stack argument ([ebp+0xC]); it does not use ECX as a hidden DiploPop receiver.", "The callback's Flic2 decode, animation counter increment, and update rectangle are exactly the work owned by DiploPop::bioscan_anim."], "reason": "Keep the timer entry a real two-argument cdecl callback and route its explicit popup parameter into the typed owner method."}
+// ORIGINAL: 0x0043F200 ?timer_callback_daemon@DiploPop@@QAAXHH@Z 0x0043F200-0x0043F245 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Disassembly reads the popup pointer from the second cdecl stack argument ([ebp+0xC]); it does not use ECX as a hidden DiploPop receiver.", "The callback's Flic2 decode, animation counter increment, and update rectangle are exactly the work owned by DiploPop::bioscan_anim.", "git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/0043f200.cpp"], "reason": "Keep the timer entry a real two-argument cdecl callback and route its explicit popup parameter into the typed owner method. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// kind      game
 // symbol    ?timer_callback_daemon@@YAXHPAVDiploPop@@@Z
 void __cdecl timer_callback_daemon(int, DiploPop *popup) {
     popup->bioscan_anim();

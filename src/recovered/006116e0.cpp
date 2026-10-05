@@ -5,6 +5,11 @@
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x00611730 0x00644EF2
+// Duplicate whole-unit scaffold retired; its body and receiver/argument
+// observations were identical to this retained canonical seed. Historical
+// declarations: git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/006116e0.cpp.
+// No compiled product replacement is claimed here; the genuine SpriteList
+// lifecycle migration remains unfinished.
 // 0x006116E0  sub_6116e0  ->  _sub_6116e0
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

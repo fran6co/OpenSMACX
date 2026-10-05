@@ -1,0 +1,434 @@
+{
+  "schema_version": 1,
+  "task_id": "superseded-seed-retirement-oct5",
+  "target": "opensmacx",
+  "author": "framework-coordinator",
+  "base_revision": "b20012dad66f767e0e5f05b7aea45b88bd63a09d",
+  "intent": "Retire duplicate seed artifacts whenever a real nonplaceholder product definition exists; transfer existing historical claims and seed lessons without granting matches or changing C++ behavior.",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4200128
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4208160
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4231424
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4399200
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4452864
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4457344
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4471920
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4487376
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4498688
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4501072
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4501360
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4636704
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4659312
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4661200
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4680496
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4682256
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4688864
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4696064
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4718208
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4726032
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4731664
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4732912
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4763280
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4783968
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4799520
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4799600
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4810080
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4883520
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4890512
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4896080
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4910864
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4934640
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4951536
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5058016
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5085904
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5122528
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5158240
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5201712
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5290464
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5334160
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5834752
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5835568
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5952624
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5952768
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5953040
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5985824
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6113376
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6114496
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6126368
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6126720
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6142256
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6276640
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6278384
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6278464
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6278560
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6317808
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6323248
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6461312
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6502688
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5124864
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5125296
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5126288
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6362848
+    }
+  ],
+  "files": [
+    "recovery/WORKFLOW.md",
+    "recovery/tests/test_setup_dependencies_behavior.py",
+    "src/alphamenu.cpp",
+    "src/alphanet.cpp",
+    "src/ambience.cpp",
+    "src/base.cpp",
+    "src/basebutton.cpp",
+    "src/buffer.cpp",
+    "src/checkbutton.cpp",
+    "src/console.cpp",
+    "src/datalink.cpp",
+    "src/diplopop.cpp",
+    "src/diplowin.cpp",
+    "src/famewin.cpp",
+    "src/game.cpp",
+    "src/leaf_recoveries.cpp",
+    "src/mapwin.cpp",
+    "src/menu.cpp",
+    "src/messagewin.cpp",
+    "src/multiwin.cpp",
+    "src/net_class.cpp",
+    "src/netmsg.cpp",
+    "src/netwin.cpp",
+    "src/planwin.cpp",
+    "src/prefwin.cpp",
+    "src/prodpicker.cpp",
+    "src/quaylewin.cpp",
+    "src/recovered/004016c0.cpp",
+    "src/recovered/006116e0.cpp",
+    "src/recovered/0043f200.cpp",
+    "src/recovered/0044af70.cpp",
+    "src/recovered/00471870.cpp",
+    "src/recovered/00476b30.cpp",
+    "src/recovered/0047a800.cpp",
+    "src/recovered/0047fe80.cpp",
+    "src/recovered/004837f0.cpp",
+    "src/recovered/00493c70.cpp",
+    "src/recovered/00496560.cpp",
+    "src/recovered/004b8df0.cpp",
+    "src/recovered/005d4860.cpp",
+    "src/recovered/005d4cc0.cpp",
+    "src/recovered/005fcd40.cpp",
+    "src/recovered/005fcda0.cpp",
+    "src/recovered/units/00403620.cpp",
+    "src/recovered/units/00440380.cpp",
+    "src/recovered/units/00443c70.cpp",
+    "src/recovered/units/004478d0.cpp",
+    "src/recovered/units/0044a500.cpp",
+    "src/recovered/units/0044ae50.cpp",
+    "src/recovered/units/00471fd0.cpp",
+    "src/recovered/units/00477210.cpp",
+    "src/recovered/units/00483310.cpp",
+    "src/recovered/units/0048ff60.cpp",
+    "src/recovered/units/00493c20.cpp",
+    "src/recovered/units/004a8440.cpp",
+    "src/recovered/units/004a9f90.cpp",
+    "src/recovered/units/004aef10.cpp",
+    "src/recovered/units/004d2de0.cpp",
+    "src/recovered/units/004e29e0.cpp",
+    "src/recovered/units/004e3300.cpp",
+    "src/recovered/units/004e34b0.cpp",
+    "src/recovered/units/004e3890.cpp",
+    "src/recovered/units/0050b9e0.cpp",
+    "src/recovered/units/00516490.cpp",
+    "src/recovered/units/00590800.cpp",
+    "src/recovered/units/00590b30.cpp",
+    "src/recovered/units/005ad470.cpp",
+    "src/recovered/units/005ad610.cpp",
+    "src/recovered/units/005b5620.cpp",
+    "src/recovered/units/005d7b20.cpp",
+    "src/recovered/units/005d7c80.cpp",
+    "src/recovered/units/005db930.cpp",
+    "src/recovered/units/005fc620.cpp",
+    "src/recovered/units/006066f0.cpp",
+    "src/recovered/units/006116e0.cpp",
+    "src/recovered/units/00607c30.cpp",
+    "src/recovered/units/00629780.cpp",
+    "src/recovered/units/00633920.cpp",
+    "src/replaywin.cpp",
+    "src/reportif.cpp",
+    "src/scroll.cpp",
+    "src/socialwin.cpp",
+    "src/statuswin.cpp",
+    "src/stringbox.cpp",
+    "src/strings.cpp",
+    "src/unrecovered/00409100.cpp",
+    "src/unrecovered/00432060.cpp",
+    "src/unrecovered/0046c020.cpp",
+    "src/unrecovered/00478be0.cpp",
+    "src/unrecovered/00481d10.cpp",
+    "src/unrecovered/0048ae90.cpp",
+    "src/unrecovered/004ab550.cpp",
+    "src/unrecovered/004b4bf0.cpp",
+    "src/unrecovered/004d9ad0.cpp",
+    "src/unrecovered/004eb560.cpp",
+    "src/unrecovered/004f5f30.cpp",
+    "src/unrecovered/005ad500.cpp",
+    "src/unrecovered/005fccf0.cpp",
+    "src/win.cpp"
+  ],
+  "evidence": [
+    "User authorizes retirement independent of present byte score. Source-defined implementations retained; unfinished source placeholders and unproved generated-entry replacements retain seeds.",
+    "Native source writer unions existing historical claims and formal seed findings; C++ lexical tokens are unchanged. Git preserves old scaffold code.",
+    "Partial real implementations retain their explicit unresolved findings; retirement is not a new function-coverage or full-game acceptance claim.",
+    "Three independently emitted current COFF lifetime bodies support retiring their scaffolds; object presence is not original byte matching or final-link structural/selection acceptance.",
+    "The second 6116E0 scaffold had an identical body and behavioral observations, no independent claim or formal lessons; preserve the canonical historical seed pending genuine SpriteList integration.",
+    "Repair stale offer-reset host fixture to extract the actual source layout, preserve four-byte instrumented fields, and reject store-order, transposed-target and payload-write mutants. No application C++ behavior changes."
+  ]
+}

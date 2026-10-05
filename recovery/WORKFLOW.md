@@ -928,8 +928,15 @@ complete spans, historical byte/semantic obligations and useful unique findings.
 Review raw seed comments as well as parsed lessons before deletion. Transfer
 load-bearing discoveries to source and non-derivable decisions to task history;
 old scaffold bodies and obsolete run notes need not remain in the checkout.
-Keep unfinished seeds, conflicting mappings and evidence not yet migrated.
+A current byte mismatch is not a reason to keep a parallel seed implementation.
+Transport existing claims through the native writer; this preserves historical
+restoration obligations and does not grant a new measured claim. Real partial
+owner implementations may replace scaffold artifacts while their missing stages
+remain explicit source obligations; deletion does not make those bodies complete.
+Keep seed-only functions, conflicting mappings and evidence not yet migrated.
 Placeholders and executable-address forwarders do not qualify as replacements.
+Compiler-generated replacements require a distinct observed emitted body, not
+just a destructor declaration or a comment naming a presumed thunk.
 Check historical identity continuity, affected tests, build/link and references
 after cleanup. Mark deleted seed references as historical provenance, retained in
 Git; do not leave instructions requiring the removed file. Removing duplicate

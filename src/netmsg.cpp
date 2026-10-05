@@ -27,8 +27,9 @@
 #include "game.h"
 #include "maininterface.h"
 
-// ORIGINAL: 0x0047A800 ?timer_daemon@NetMsg@@QAAXH@Z 0x0047A800-0x0047A85F
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/0047a800.cpp"], "reason": "Original callback token46 routes primary, other tokens route secondary; genuine static cdecl member matches native calling convention, catalogue identity preserved separately. Seed retained, no byte claim by binding."}
+// ORIGINAL: 0x0047A800 ?timer_daemon@NetMsg@@QAAXH@Z 0x0047A800-0x0047A85F BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/0047a800.cpp"], "reason": "Original callback token46 routes primary, other tokens route secondary; genuine static cdecl member matches native calling convention, catalogue identity preserved separately. Seed retained, no byte claim by binding. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// kind      game
 // symbol    ?timer_daemon@NetMsg@@CAXH@Z
 void __cdecl NetMsg::timer_daemon(int token) {
     if (token == 0x46) {
@@ -235,8 +236,9 @@ void NetMsg::pop(const char *label, int duration, int channel,
 }
 
 // 0x0050B9E0 ignores its receiver and dispatches to the primary NetMsg.
-// ORIGINAL: 0x0050B9E0 ?pop@NetMsg@@QAAXPBDPBD@Z 0x0050B9E0-0x0050B9FE
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0050b9e0.cpp"], "reason": "Complete genuine NetMsg owner implementation replaces executable aliases/forwarders; original seed establishes catalogue identity and spans, native emitted symbols are separately recorded. Full private application compile/link and both native flag sets checked; preserve seed and historical claims, no exactness granted by binding."}
+// ORIGINAL: 0x0050B9E0 ?pop@NetMsg@@QAAXPBDPBD@Z 0x0050B9E0-0x0050B9FE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/0050b9e0.cpp"], "reason": "Complete genuine NetMsg owner implementation replaces executable aliases/forwarders; original seed establishes catalogue identity and spans, native emitted symbols are separately recorded. Full private application compile/link and both native flag sets checked; preserve seed and historical claims, no exactness granted by binding. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// kind      game
 // symbol    ?pop@NetMsg@@QAEXPBD0@Z
 void NetMsg::pop(const char *label, const char *target) {
     NetMsgPrimary.pop(label, -5000, 0, target);

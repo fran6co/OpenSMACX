@@ -154,8 +154,9 @@ void QuayleWin::on_selected(int selection, int) {
   redraw();
 }
 
-// ORIGINAL: 0x00496560 ?on_button_clicked@QuayleWin@@QAEXH@Z 0x00496560-0x004965B1
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned original entry 00496560; retained seed src/recovered/00496560.cpp", "recovery/tasks/quaylewin-owner-coverage-wave.json", "QuayleWin constructor layout and virtual-slot evidence; fresh isolated build and host controls"], "reason": "Rehome the retained QuayleWin seed into its real GraphicWin owner with typed subobjects; preserve original spans and historical seed obligations."}
+// ORIGINAL: 0x00496560 ?on_button_clicked@QuayleWin@@QAEXH@Z 0x00496560-0x004965B1 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original entry 00496560; retained seed git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/00496560.cpp", "recovery/tasks/quaylewin-owner-coverage-wave.json", "QuayleWin constructor layout and virtual-slot evidence; fresh isolated build and host controls", "git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/00496560.cpp"], "reason": "Rehome the retained QuayleWin seed into its real GraphicWin owner with typed subobjects; preserve original spans and historical seed obligations. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// kind      game
 // symbol    ?on_button_clicked@QuayleWin@@UAEXH@Z
 void QuayleWin::on_button_clicked(int button_id) {
   if (button_id != 999) return;

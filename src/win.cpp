@@ -12335,8 +12335,10 @@ void __cdecl dispatch_mouse_wheel(int unused, int keys, int delta, int x, int y)
     }
 }
 
-// ORIGINAL: 0x005FCCF0 sub_5fccf0 0x005FCCF0-0x005FCD3D
-// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/005fccf0.cpp"], "reason": "Recover the complete core message helper using SDK MSG/USER32, original queue ranges and callback ordering; preserve catalogue identity and historical seed obligation."}
+// ORIGINAL: 0x005FCCF0 sub_5fccf0 0x005FCCF0-0x005FCD3D BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/unrecovered/005fccf0.cpp"], "reason": "Recover the complete core message helper using SDK MSG/USER32, original queue ranges and callback ordering; preserve catalogue identity and historical seed obligation. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// kind      game
+// LEVER: cast the three fixed IAT slots to __stdcall function-pointer types and called through them directly
 // symbol    ?pump_key_message@@YAHXZ
 int __cdecl pump_key_message() {
     MSG message;
@@ -12349,8 +12351,9 @@ int __cdecl pump_key_message() {
     return 1;
 }
 
-// ORIGINAL: 0x005FCD40 sub_5fcd40 0x005FCD40-0x005FCD97
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/005fcd40.cpp"], "reason": "Recover the complete core message helper using SDK MSG/USER32, original queue ranges and callback ordering; preserve catalogue identity and historical seed obligation."}
+// ORIGINAL: 0x005FCD40 sub_5fcd40 0x005FCD40-0x005FCD97 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/005fcd40.cpp"], "reason": "Recover the complete core message helper using SDK MSG/USER32, original queue ranges and callback ordering; preserve catalogue identity and historical seed obligation. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// kind      game
 // symbol    ?pump_all_key_messages@@YAXXZ
 void __cdecl pump_all_key_messages() {
     MSG message;
@@ -12365,8 +12368,9 @@ void __cdecl pump_all_key_messages() {
     do_net();
 }
 
-// ORIGINAL: 0x005FCDA0 sub_5fcda0 0x005FCDA0-0x005FCDE5
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/005fcda0.cpp"], "reason": "Recover the complete core message helper using SDK MSG/USER32, original queue ranges and callback ordering; preserve catalogue identity and historical seed obligation."}
+// ORIGINAL: 0x005FCDA0 sub_5fcda0 0x005FCDA0-0x005FCDE5 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/005fcda0.cpp"], "reason": "Recover the complete core message helper using SDK MSG/USER32, original queue ranges and callback ordering; preserve catalogue identity and historical seed obligation. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// kind      game
 // symbol    ?pump_mouse_move_message@@YAHXZ
 int __cdecl pump_mouse_move_message() {
     MSG message;

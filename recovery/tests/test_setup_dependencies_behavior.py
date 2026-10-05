@@ -28,32 +28,44 @@ HARNESS = r"""
 #include <cassert>
 #include <cstdint>
 #include <cstring>
+#include <cstddef>
 #define __cdecl
 enum { MaxPlayerNum=8 };
 
 BODY_MONUMENT_LAYOUT
 MonumentFaction FactionMonuments[MaxPlayerNum];
 namespace ProductOfferLayout {
-BODY_OFFER_LAYOUT
+BODY_OFFER_NATIVE_LAYOUT
 }
 
 int offer_write_log[8*8*8];
 int offer_write_count;
 struct TrackedInt {
   int value;
-  int identity;
-  TrackedInt &operator=(int next) {
-    assert(next == 0 && offer_write_count < 8*8*8);
-    value = next;
-    offer_write_log[offer_write_count++] = identity;
-    return *this;
-  }
+  TrackedInt &operator=(int next);
 };
-struct OfferResetCell {
-  TrackedInt word_0_, word_1_, word_2_, word_3_;
-  uint8_t opaque_[0x80];
-};
+BODY_OFFER_LAYOUT
 OfferResetCell OfferResetCells[MaxPlayerNum][MaxPlayerNum];
+static_assert(sizeof(TrackedInt) == sizeof(int), "tracked word geometry");
+static_assert(sizeof(OfferResetCell) == sizeof(ProductOfferLayout::OfferResetCell), "cell geometry");
+static_assert(offsetof(OfferResetCell, count_) == 0, "count geometry");
+static_assert(offsetof(OfferResetCell, state_) == 8, "state geometry");
+static_assert(offsetof(OfferResetCell, type_) == 0x10, "type geometry");
+static_assert(offsetof(OfferResetCell, value_) == 0x50, "value geometry");
+int offer_word_identity(const TrackedInt &word) {
+  const uintptr_t offset = reinterpret_cast<uintptr_t>(&word) -
+                           reinterpret_cast<uintptr_t>(&OfferResetCells[0][0]);
+  assert(offset < sizeof(OfferResetCells) && offset % sizeof(OfferResetCell) < 16);
+  assert(offset % sizeof(int) == 0);
+  return static_cast<int>((offset / sizeof(OfferResetCell))*4 +
+                          (offset % sizeof(OfferResetCell))/sizeof(int));
+}
+TrackedInt &TrackedInt::operator=(int next) {
+  assert(next == 0 && offer_write_count < 8*8*8);
+  value = next;
+  offer_write_log[offer_write_count++] = offer_word_identity(*this);
+  return *this;
+}
 
 int TamperState93A9AC, TamperState93A9B0, TamperState93A9B4;
 int TamperDialogFaction[MaxPlayerNum], TamperDialogValue[MaxPlayerNum];
@@ -63,7 +75,7 @@ BODY_OFFERS
 BODY_TAMPER
 
 static void check_offer_word(const TrackedInt &word, int expected_id) {
-  assert(word.value == 0 && word.identity == expected_id);
+  assert(word.value == 0 && offer_word_identity(word) == expected_id);
 }
 
 int main() {
@@ -92,10 +104,10 @@ int main() {
   for (int row=0; row<8; ++row) {
     for (int column=0; column<8; ++column) {
       OfferResetCell &cell = OfferResetCells[row][column];
-      TrackedInt *words[4] = {&cell.word_0_, &cell.word_1_, &cell.word_2_, &cell.word_3_};
+      TrackedInt *words[4] = {&cell.count_[0], &cell.count_[1],
+                              &cell.state_[0], &cell.state_[1]};
       for (int field=0; field<4; ++field) {
         words[field]->value = 1000 + row*32 + column*4 + field;
-        words[field]->identity = (row*8 + column)*4 + field;
       }
     }
   }
@@ -115,11 +127,14 @@ int main() {
   for (int row=0; row<8; ++row) {
     for (int column=0; column<8; ++column) {
       OfferResetCell &cell = OfferResetCells[row][column];
-      check_offer_word(cell.word_0_, (row*8+column)*4);
-      check_offer_word(cell.word_1_, (row*8+column)*4+1);
-      check_offer_word(cell.word_2_, (row*8+column)*4+2);
-      check_offer_word(cell.word_3_, (row*8+column)*4+3);
-      for (int byte=0; byte<0x80; ++byte) assert(cell.opaque_[byte] == 0x6B);
+      check_offer_word(cell.count_[0], (row*8+column)*4);
+      check_offer_word(cell.count_[1], (row*8+column)*4+1);
+      check_offer_word(cell.state_[0], (row*8+column)*4+2);
+      check_offer_word(cell.state_[1], (row*8+column)*4+3);
+      const unsigned char *types = reinterpret_cast<const unsigned char *>(cell.type_);
+      const unsigned char *values = reinterpret_cast<const unsigned char *>(cell.value_);
+      for (unsigned byte=0; byte<sizeof(cell.type_); ++byte) assert(types[byte] == 0x6B);
+      for (unsigned byte=0; byte<sizeof(cell.value_); ++byte) assert(values[byte] == 0x6B);
     }
   }
 
@@ -148,6 +163,13 @@ def test_setup_reset_helpers_actual_typed_storage_and_order(tmp_path):
                       header.index("extern MonumentFaction FactionMonuments")]
     offer = header[header.index("struct OfferResetCell {") :
                    header.index("extern OfferResetCell OfferResetCells")]
+    harness = harness.replace("BODY_OFFER_NATIVE_LAYOUT", offer)
+    # Instrument only the actual reset fields. This host projection observes
+    # store ordering, not native layout; the product's stride assertion stays
+    # in the real header and is exercised by native compilation.
+    offer = offer[:offer.index("static_assert")]
+    offer = offer.replace("int count_[", "TrackedInt count_[")
+    offer = offer.replace("int state_[", "TrackedInt state_[")
     harness = harness.replace("BODY_MONUMENT_LAYOUT", monument)
     harness = harness.replace("BODY_OFFER_LAYOUT", offer)
     harness = harness.replace(
@@ -172,3 +194,20 @@ def test_setup_reset_helpers_actual_typed_storage_and_order(tmp_path):
     assert built.returncode == 0, built.stderr
     result = subprocess.run([str(executable)], capture_output=True)
     assert result.returncode == 0, result.stderr.decode()
+    original = source_function("void __cdecl clear_all_offers() {")
+    mutants = (
+        original.replace("flat.count_[0] = 0;\n            flat.count_[1] = 0;",
+                         "flat.count_[1] = 0;\n            flat.count_[0] = 0;"),
+        original.replace("transposed.state_[0] = 0;", "flat.state_[0] = 0;"),
+        original.replace("flat.count_[0] = 0;", "flat.count_[0] = 0; flat.type_[0][0] = 0;"),
+    )
+    for index, mutant in enumerate(mutants):
+        assert mutant != original
+        mutant_executable = tmp_path / f"setup-reset-mutant-{index}"
+        built = subprocess.run(
+            [compiler, "-std=c++17", "-x", "c++", "-", "-o", str(mutant_executable)],
+            input=harness.replace(original, mutant), text=True, capture_output=True,
+        )
+        assert built.returncode == 0, built.stderr
+        result = subprocess.run([str(mutant_executable)], capture_output=True)
+        assert result.returncode != 0, "wrong store order/target/payload escaped the control"

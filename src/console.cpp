@@ -138,8 +138,9 @@ void Console::wait(int veh_id) {
     field_23BE4_ = 0;
 }
 
-// ORIGINAL: 0x004D2DE0 ?disband@Console@@QAEXHH@Z 0x004D2DE0-0x004D2EF3
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004d2de0.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
+// ORIGINAL: 0x004D2DE0 ?disband@Console@@QAEXHH@Z 0x004D2DE0-0x004D2EF3 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/004d2de0.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships", "git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/004d2de0.cpp"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// kind      game
 void Console::disband(int x_coord, int y_coord) {
     const int vehicle = veh_at(x_coord, y_coord);
     if (vehicle >= 0) {
@@ -2924,8 +2925,9 @@ int Console::selecting(int tile_x, int tile_y) {
 // cursor-history coordinate when either supplied coordinate is outside the
 // map, then asks for confirmation before deleting the named landmark.
 // The three popup keys are the strings at 0x0068A994/0x0068A9A4/0x0068A9B0.
-// ORIGINAL: 0x00516490 ?erase_landmark@Console@@QAEXHH@Z 0x00516490-0x005165A6
-// RECOVERY_BINDING: v1 {"evidence": ["The original 0x00516490..0x005165A6 seed searches a landmark, checks editor permission, confirms LANDMARKKILL, then either sends a multiplayer message or deletes and redraws locally.", "src/map.h owns MapLandmark, MapLandmarkCount, map bounds and landmark helpers; src/console.h owns cursor-history coordinates and faction_id_; src/game.h owns GameState and IsMultiplayerNet.", "The pinned image stores popup keys LANDMARKNONE, LANDMARKNO and LANDMARKKILL at 0x0068A994, 0x0068A9A4 and 0x0068A9B0."], "reason": "Recover the Console landmark removal command through typed map, game and cursor owners while preserving its historical byte claim in the separate seed until remeasurement."}
+// ORIGINAL: 0x00516490 ?erase_landmark@Console@@QAEXHH@Z 0x00516490-0x005165A6 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["The original 0x00516490..0x005165A6 seed searches a landmark, checks editor permission, confirms LANDMARKKILL, then either sends a multiplayer message or deletes and redraws locally.", "src/map.h owns MapLandmark, MapLandmarkCount, map bounds and landmark helpers; src/console.h owns cursor-history coordinates and faction_id_; src/game.h owns GameState and IsMultiplayerNet.", "The pinned image stores popup keys LANDMARKNONE, LANDMARKNO and LANDMARKKILL at 0x0068A994, 0x0068A9A4 and 0x0068A9B0.", "git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/00516490.cpp"], "reason": "Recover the Console landmark removal command through typed map, game and cursor owners while preserving its historical byte claim in the separate seed until remeasurement. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// kind      game
 void Console::erase_landmark(int x_coord, int y_coord) {
     if (y_coord < 0 || y_coord >= MapLatitudeBounds ||
         x_coord < 0 || x_coord >= MapLongitudeBounds) {
@@ -5186,8 +5188,11 @@ void Console::zoom_to_upkeep_base() {
 // The picker calls Dialogs::item on the Popup's +0x21D0 member: original
 // popup stack slot -0x5388 plus 0x21D0 equals the item receiver -0x31B8.
 // Its automatic destructor owns the historical teardown sequence.
-// ORIGINAL: 0x004D9AD0 ?editor_who@Console@@QAEHHH@Z 0x004D9AD0-0x004D9DB4 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004d9ad0.cpp", "source:src/console.cpp:Console::editor_diplomacy", "source:src/faction.h:Player", "source:src/basepop.h:BasePop"], "reason": "Recover the editor faction picker through the typed popup, dialog member, faction nouns and post-start default value; C++ lifetime replaces the seed's explicit teardown."}
+// ORIGINAL: 0x004D9AD0 ?editor_who@Console@@QAEHHH@Z 0x004D9AD0-0x004D9DB4;0x0065B275-0x0065B347 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/unrecovered/004d9ad0.cpp", "source:src/console.cpp:Console::editor_diplomacy", "source:src/faction.h:Player", "source:src/basepop.h:BasePop"], "reason": "Recover the editor faction picker through the typed popup, dialog member, faction nouns and post-start default value; C++ lifetime replaces the seed's explicit teardown. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// kind      game
+// TRIED: a plain `Popup popup;` local reproduces the SEH frame, the __alloca_probe (Popup is ~21KB), and the whole close()-then- automatic-dtor cascade over its embedded scroll_/sprite_/ flat_button1_/flat_button2_/heap_ members for free - matched through instruction #11.
+// TRIED: MISMATCH #11 'push' vs 'lea', not chased further (950B, heaviest object graph in this batch: Popup->BasePop-> {Scroll{2x FlatButton}, 2x FlatButton, Sprite, Heap} plus separate Dialogs/Spot locals and two `sub_4066c0`-typed objects the emitter could only give a nullary cdecl decl, handled via a `Sub4066c0Thunk` shim class for the thiscall). Exact interleaving of the inlined implicit-dtor chain against the separate Dialogs/Spot/mystery destructors is optimizer scheduling, not fully controlled from source.
 int Console::editor_who(int default_faction, int first_faction) {
     Popup popup;
     PopupModalState = 6;

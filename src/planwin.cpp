@@ -455,8 +455,8 @@ void PlanWin::add_line(int x1, int y1, int x2, int y2, int color) {
     ++line_count_;
 }
 
-// ORIGINAL: 0x0048AE90 ?add_line@PlanWin@@QAEXHHH@Z 0x0048AE90-0x0048AF14 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["The original overload treats its first two arguments as Base indices and reads their source-owned signed x/y members before storing the four coordinates and color in the same PlanWin arrays.", "Base::x and Base::y are declared at offsets 0 and 2 with RECOVERY_MEMBER evidence; PlanWin's line arrays occupy +0x21FFC and +0x2200C."], "reason": "Home the base-to-base plan line using the existing Base and PlanWin members instead of address arithmetic."}
+// ORIGINAL: 0x0048AE90 ?add_line@PlanWin@@QAEXHHH@Z 0x0048AE90-0x0048AF14 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["The original overload treats its first two arguments as Base indices and reads their source-owned signed x/y members before storing the four coordinates and color in the same PlanWin arrays.", "Base::x and Base::y are declared at offsets 0 and 2 with RECOVERY_MEMBER evidence; PlanWin's line arrays occupy +0x21FFC and +0x2200C.", "git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/unrecovered/0048ae90.cpp"], "reason": "Home the base-to-base plan line using the existing Base and PlanWin members instead of address arithmetic. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
 void PlanWin::add_line(int base_id1, int base_id2, int color) {
     if (line_count_ >= 4) {
         return;

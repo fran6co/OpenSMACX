@@ -517,8 +517,10 @@ void MapWin::editor(int tile_x, int tile_y, int erase) {
     }
 }
 
-// ORIGINAL: 0x0046C020 ?UNK4@MapWin@@QAEXHH@Z 0x0046C020-0x0046C0C9 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0046c020.cpp", "Pinned original image review controls route precedence, cursor sprite dispatch, signed zoom, actual API imports and original member/data dependencies. Bounded compile and host controls do not establish game acceptance."], "reason": "Recover the genuine MapWin/Console owner operation using typed members, actual shared storage, virtual base APIs and full original branch evidence; keep seed and historical obligations."}
+// ORIGINAL: 0x0046C020 ?UNK4@MapWin@@QAEXHH@Z 0x0046C020-0x0046C0C9 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/unrecovered/0046c020.cpp", "Pinned original image review controls route precedence, cursor sprite dispatch, signed zoom, actual API imports and original member/data dependencies. Bounded compile and host controls do not establish game acceptance."], "reason": "Recover the genuine MapWin/Console owner operation using typed members, actual shared storage, virtual base APIs and full original branch evidence; keep seed and historical obligations. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// kind      game
+// LEVER: table walk over 0x7D3C3C..0x7D3C5C needed its own `extern MapWin *g_7d3c3c_tbl[]` (pointer-increment do/while, `p == g_7d3c3c_tbl` for the first-element special case) instead of the scaffold's fixed-address `int *const g_007d3c3c`.
 void MapWin::UNK4(int tile_x, int tile_y) {
     editor(tile_x, tile_y, static_cast<int>(field_1DD8C_ & 2));
     field_1DD8C_ = 0;

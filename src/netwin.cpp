@@ -433,17 +433,20 @@ Purpose: Paint the three setup-dialog panel sprites: the map's ocean colours
          and the two neighbour panels, each through Buffer::box_sprite with
          the shared InterfaceBoxStyles records (element 3 for the map, 0 for
          the pair beside it).
-// ORIGINAL: 0x0047FE80 ?UNK3@NetWin@@QAEXXZ 0x0047FE80-0x0047FEC5 FILE
+// ORIGINAL: 0x0047FE80 ?UNK3@NetWin@@QAEXXZ 0x0047FE80-0x0047FEC6 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/0047fe80.cpp"], "reason": "Retain the existing source implementation and complete original mapping. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
 // size      70 bytes
 // prototype void (__thiscall ?UNK3@NetWin@@QAEXXZ)(NetWin* this)
 // callers   2   call targets   3
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005E2DD3
-// Homed from src/recovered/0047fe80.cpp.
+// Historical scaffold: git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/0047fe80.cpp.
+// Its complete 70-byte span ends at FEC6; the prior owner annotation ended
+// at FEC5. Retain the full historical extent and restoration obligation.
 Return Value: n/a
-Status: Coverage transcription - unclaimed body (the preserved seed keeps its
-        own BYTE_EXACT claim until this converges)
+Status: Coverage transcription; the historical claim now lives on this owner,
+        not on a duplicate scaffold. Current exactness remains unproved.
 */
 void NetWin::UNK3() {
     unsigned char *const self = reinterpret_cast<unsigned char *>(this);
@@ -461,7 +464,8 @@ Purpose: Tear the setup dialog's session state down: drop both faction-record
          blocks, reset the two dialog words at 0x761C/0x7620 to -1, and close
          the embedded controls - the spot list, the message list, the edit
          box, the check box and the front flat button's slot-90 reset.
-// ORIGINAL: 0x00481D10 ?close@NetWin@@QAEXXZ 0x00481D10-0x00481D9C FILE
+// ORIGINAL: 0x00481D10 ?close@NetWin@@QAEXXZ 0x00481D10-0x00481D9C FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/unrecovered/00481d10.cpp"], "reason": "Retain the existing source implementation and complete original mapping. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
 // size      140 bytes
 // prototype void (__thiscall ?close@NetWin@@QAEXXZ)(NetWin* this)
 // callers   0   call targets   5
@@ -2906,7 +2910,8 @@ Purpose: Route one dialog key press: Enter sends the chat line the edit box
          as opcode 0x1E00, the edit box clears), Escape tears the session
          dialogs down the same way close() does and answers 1, everything
          else goes to the edit box's own slot-26 key handling.
-// ORIGINAL: 0x00483310 ?on_key_down@NetWin@@QAEHH@Z 0x00483310-0x00483414 FILE
+// ORIGINAL: 0x00483310 ?on_key_down@NetWin@@QAEHH@Z 0x00483310-0x00483414 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/00483310.cpp"], "reason": "Retain the existing source implementation and complete original mapping. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
 // size      260 bytes
 // prototype int (__thiscall ?on_key_down@NetWin@@QAEHH@Z)(NetWin* this, int)
 // callers   1   call targets   8
@@ -2983,7 +2988,8 @@ void NetWin::new_chat(char *message, int slot) {
 Purpose: Destroy the dialog's CheckBox view - the CheckBox subobject whose
          vbtable puts its GraphicWin base at +0x1C and its Dialog base at
          +0xA34 - then the Dialog and the GraphicWin, in that order.
-// ORIGINAL: 0x004837F0 ?UNK4@NetWin@@QAEXXZ 0x004837F0-0x00483813 FILE
+// ORIGINAL: 0x004837F0 ?UNK4@NetWin@@QAEXXZ 0x004837F0-0x00483813 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/004837f0.cpp"], "reason": "Retain the existing source implementation and complete original mapping. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
 // size      35 bytes
 // prototype void (__thiscall ?UNK4@NetWin@@QAEXXZ)(NetWin* this)
 // callers   2   call targets   3

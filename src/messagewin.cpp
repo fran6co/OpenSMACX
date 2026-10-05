@@ -368,8 +368,9 @@ void MessageWin::clear() {
 
 // 0x00471870. The original passes the list's GraphicWin to the callback;
 // its embedded Buffer is a real C++ base, and the arrow is a real Sprite.
-// ORIGINAL: 0x00471870 ?listbox_draw@MessageWin@@QAAHPAUGraphicWin@@HHHHH@Z 0x00471870-0x004718BF
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/00471870.cpp", "image:0x00471870"], "reason": "The archived callback draws the real interface arrow Sprite into the supplied GraphicWin Buffer and is installed by MessageWin init."}
+// ORIGINAL: 0x00471870 ?listbox_draw@MessageWin@@QAAHPAUGraphicWin@@HHHHH@Z 0x00471870-0x004718BF BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/00471870.cpp", "image:0x00471870"], "reason": "The archived callback draws the real interface arrow Sprite into the supplied GraphicWin Buffer and is installed by MessageWin init. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// kind      game
 // symbol    ?listbox_draw@MessageWin@@SAXPAVGraphicWin@@HHHHH@Z
 void __cdecl MessageWin::listbox_draw(GraphicWin *target, int, int x, int y,
                                        int row_height, int) {
@@ -393,8 +394,9 @@ int __cdecl MessageWin::listbox_fill(GraphicWin *target, int, int, RECT *) {
 
 // 0x00471FD0. The archived unit retains its historical BYTE_EXACT claim;
 // this source-owned spelling currently measures a miss and needs restoration.
-// ORIGINAL: 0x00471FD0 ?listbox_write@MessageWin@@QAAHPAUGraphicWin@@HHPAURECT@@PAD@Z 0x00471FD0-0x0047201F
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00471fd0.cpp", "image:0x00471FD0"], "reason": "The archived callback selects two text colors for the supplied GraphicWin Buffer and is installed by MessageWin init."}
+// ORIGINAL: 0x00471FD0 ?listbox_write@MessageWin@@QAAHPAUGraphicWin@@HHPAURECT@@PAD@Z 0x00471FD0-0x0047201F BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/00471fd0.cpp", "image:0x00471FD0"], "reason": "The archived callback selects two text colors for the supplied GraphicWin Buffer and is installed by MessageWin init. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// kind      game
 // symbol    ?listbox_write@MessageWin@@SAHPAVGraphicWin@@HHPAUtagRECT@@PAD@Z
 int __cdecl MessageWin::listbox_write(GraphicWin *target, int item_id, int,
                                        RECT *, char *) {

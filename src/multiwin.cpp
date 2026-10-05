@@ -101,7 +101,9 @@ void MultiWin::draw_player(int faction_id, int row, RECT *bounds) {
 }
 
 // ORIGINAL: 0x00478BE0 ?draw_time@MultiWin@@QAEXPAURECT@@H@Z 0x00478BE0-0x00479269
-// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00478be0.cpp", "src/multiwin.h", "src/console.h", "src/game.h", "src/alpha.h"], "reason": "Recover the clock region's owned hotspot, font and visible turn-state label; the countdown value and timer side effects await binding of the original shared time-control globals."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/unrecovered/00478be0.cpp", "src/multiwin.h", "src/console.h", "src/game.h", "src/alpha.h"], "reason": "Recover the clock region's owned hotspot, font and visible turn-state label; the countdown value and timer side effects await binding of the original shared time-control globals. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// kind      game
+// TRIED: transcribed from Ghidra's decompilation (which resolved the dataflow cleanly) with member calls fixed up (Spot::add, Buffer::set_font/set_text_color/write_cent_l, Strings::get, AlphaNet::who_2_pid, Net::get_player_name, NetMsg::pop, FX::play, message_data, wave_it) and the two `(x<0)?0:x` clamp bit-tricks written as plain clamps rather than neg/sbb/and. Compiles; diverges at instruction #3 (prologue - local frame size/shape, not chased further).
 // symbol    ?draw_time@MultiWin@@QAEXPAUtagRECT@@H@Z
 void MultiWin::draw_time(RECT *bounds, int draw_type) {
   Buffer *canvas = static_cast<Buffer *>(this);

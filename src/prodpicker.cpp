@@ -88,8 +88,9 @@ int ProdPicker::edbc_unit(int prototype_id) {
 
 // The constructor owns a Scroll at +0x7120, currently explicit storage to
 // preserve construction order. Wheel events are delivered to that object.
-// ORIGINAL: 0x00493C20 ?on_mousewheel@ProdPicker@@QAEXH@Z 0x00493C20-0x00493C68 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00493c20.cpp", "source:src/prodpicker.h", "source:src/scroll.h"], "reason": "Dispatch each wheel step to ProdPicker's real embedded Scroll rather than a raw receiver offset or vtable shim. The source form currently mismatches; retain the seed's historical exact claim as a restoration obligation, without demotion."}
+// ORIGINAL: 0x00493C20 ?on_mousewheel@ProdPicker@@QAEXH@Z 0x00493C20-0x00493C68 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/00493c20.cpp", "source:src/prodpicker.h", "source:src/scroll.h"], "reason": "Dispatch each wheel step to ProdPicker's real embedded Scroll rather than a raw receiver offset or vtable shim. The source form currently mismatches; retain the seed's historical exact claim as a restoration obligation, without demotion. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// kind      game
 void ProdPicker::on_mousewheel(int delta) {
     // x86 NEG leaves INT_MIN negative; the original's positive-count test
     // therefore sends no steps for that otherwise overflowing input.
@@ -263,8 +264,9 @@ void ProdPicker::on_left_click(int x, int y) {
     }
 }
 
-// ORIGINAL: 0x00493C70 ?on_redraw@ProdPicker@@QAEXXZ 0x00493C70-0x00493CA6
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/00493c70.cpp"], "reason": "Home the redraw callback in ProdPicker; it repaints exactly the currently visible item interval through the typed draw_item operation."}
+// ORIGINAL: 0x00493C70 ?on_redraw@ProdPicker@@QAEXXZ 0x00493C70-0x00493CA6 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/00493c70.cpp"], "reason": "Home the redraw callback in ProdPicker; it repaints exactly the currently visible item interval through the typed draw_item operation. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// kind      game
 // symbol    ?on_redraw@ProdPicker@@UAEXXZ
 void ProdPicker::on_redraw() {
     const int first = static_cast<int>(field_A77C_);

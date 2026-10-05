@@ -153,8 +153,9 @@ void __cdecl show_replay() {
 ReplayWin::~ReplayWin() {
 }
 
-// ORIGINAL: 0x005AD610 ?on_redraw@ReplayWin@@QAEXXZ 0x005AD610-0x005AD71F
-// RECOVERY_BINDING: v1 {"evidence": ["git:d7a40721:src/recovered/units/005ad610.cpp", "image:0x005AD610-0x005AD71F", "src/replaywin.h map_win_ and year_label_", "src/buffer.h InterfaceBoxStyles[9] and [6]", "src/maininterface.h MainInterfaceGlobal.font1_ at original 0x007CFE8C"], "reason": "Paint the replay title through real GraphicWin/Buffer bases, shared style and font owners, then dispatch the embedded MapWin's virtual redraw; retain the exact seed for byte restoration."}
+// ORIGINAL: 0x005AD610 ?on_redraw@ReplayWin@@QAEXXZ 0x005AD610-0x005AD71F BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:d7a40721:src/recovered/units/005ad610.cpp", "image:0x005AD610-0x005AD71F", "src/replaywin.h map_win_ and year_label_", "src/buffer.h InterfaceBoxStyles[9] and [6]", "src/maininterface.h MainInterfaceGlobal.font1_ at original 0x007CFE8C", "git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/005ad610.cpp"], "reason": "Paint the replay title through real GraphicWin/Buffer bases, shared style and font owners, then dispatch the embedded MapWin's virtual redraw; retain the exact seed for byte restoration. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// kind      game
 // symbol    ?on_redraw@ReplayWin@@UAEXXZ
 void ReplayWin::on_redraw() {
     GraphicWin::fill(9);
@@ -180,8 +181,9 @@ void ReplayWin::on_redraw() {
     map_win_.on_redraw();
 }
 
-// ORIGINAL: 0x005AD470 sub_5ad470 0x005AD470-0x005AD4C0
-// RECOVERY_BINDING: v1 {"evidence": ["git:7ba7935c:src/recovered/units/005ad470.cpp", "src/replaywin.h ReplayWin base_sites_ at 0xA20", "0x005AD560 make_bases consumes the same 512 records"], "reason": "Own insertion in ReplayWin rather than an isolated raw-offset table class; retain the byte-exact seed for restoration."}
+// ORIGINAL: 0x005AD470 sub_5ad470 0x005AD470-0x005AD4C0 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:7ba7935c:src/recovered/units/005ad470.cpp", "src/replaywin.h ReplayWin base_sites_ at 0xA20", "0x005AD560 make_bases consumes the same 512 records", "git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/005ad470.cpp"], "reason": "Own insertion in ReplayWin rather than an isolated raw-offset table class; retain the byte-exact seed for restoration. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// kind      game
 // symbol    ?add_base_site@ReplayWin@@QAEXHHH@Z
 void ReplayWin::add_base_site(int x, int y, int faction_id) {
     for (int index = 0; index < 512; ++index) {
@@ -209,8 +211,9 @@ int ReplayWin::update_base_site(int x, int y, int faction_id) {
     return 512;
 }
 
-// ORIGINAL: 0x005AD500 sub_5ad500 0x005AD500-0x005AD560
-// RECOVERY_BINDING: v1 {"evidence": ["git:7ba7935c:src/unrecovered/005ad500.cpp", "src/replaywin.h ReplayWin base_sites_ at 0xA20"], "reason": "Recover keyed site invalidation on the real ReplayWin owner rather than a raw-offset table stand-in; retain the exact seed as restoration evidence."}
+// ORIGINAL: 0x005AD500 sub_5ad500 0x005AD500-0x005AD560 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:7ba7935c:src/unrecovered/005ad500.cpp", "src/replaywin.h ReplayWin base_sites_ at 0xA20", "git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/unrecovered/005ad500.cpp"], "reason": "Recover keyed site invalidation on the real ReplayWin owner rather than a raw-offset table stand-in; retain the exact seed as restoration evidence. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// kind      game
 // symbol    ?remove_base_site@ReplayWin@@QAEXHHH@Z
 void ReplayWin::remove_base_site(int x, int y, int) {
     for (int index = 0; index < 512; ++index) {

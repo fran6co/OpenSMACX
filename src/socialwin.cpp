@@ -39,8 +39,9 @@ extern const char BufferJoinSpace[];
 extern int BreakthroughTurnsGlobal;
 extern int NetIncomeGlobal;
 
-// ORIGINAL: 0x004AEF10 ?exit@SocialWin@@QAEXXZ 0x004AEF10-0x004AF10C
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004aef10.cpp", "image:terranx_original.exe:0x004AEF10", "Original instructions establish owner, bounded body and callback/state order; SocialWin reloads faction after social_upheaval and every later stateful call. GraphicWin dispatches through the real Buffer base.", "recovery/tasks/interface-contract-report-closure.json; bounded UI-five scope preserves original baseline"], "reason": "Recover the original in its genuine UI owner using actual members, globals and base/virtual calls. Retain seed evidence and historical obligations; this binding does not grant a current matching or runtime claim."}
+// ORIGINAL: 0x004AEF10 ?exit@SocialWin@@QAEXXZ 0x004AEF10-0x004AF10C BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/004aef10.cpp", "image:terranx_original.exe:0x004AEF10", "Original instructions establish owner, bounded body and callback/state order; SocialWin reloads faction after social_upheaval and every later stateful call. GraphicWin dispatches through the real Buffer base.", "recovery/tasks/interface-contract-report-closure.json; bounded UI-five scope preserves original baseline"], "reason": "Recover the original in its genuine UI owner using actual members, globals and base/virtual calls. Retain seed evidence and historical obligations; this binding does not grant a current matching or runtime claim. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// kind      game
 void SocialWin::exit() {
     const uint32_t gross_upheaval = social_upheaval(factionID_, &socCategory_);
     int upheaval = static_cast<int>(
@@ -3018,8 +3019,10 @@ int SocialWin::on_iface_dialog_item_back_draw(GraphicWin *, int, int, RECT *) {
     return 0;
 }
 
-// ORIGINAL: 0x005B5620 ?social_select@@YAXH@Z 0x005B5620-0x005B5688
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/005b5620.cpp retained original identity/extent; pinned instructions5B5620..5B5688 establish flags, typed receivers and ordered calls; recovery/tests/test_social_select_behavior.py actual-source controls"], "reason": "SocialWin owner opens the real shared window, synchronizes choices and applies them offline, preserving native entry-state guards and editor selection."}
+// ORIGINAL: 0x005B5620 ?social_select@@YAXH@Z 0x005B5620-0x005B5688 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/005b5620.cpp retained original identity/extent; pinned instructions5B5620..5B5688 establish flags, typed receivers and ordered calls; recovery/tests/test_social_select_behavior.py actual-source controls", "git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/005b5620.cpp"], "reason": "SocialWin owner opens the real shared window, synchronizes choices and applies them offline, preserving native entry-state guards and editor selection. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// kind      game
+// TRIED: homed into general.cpp 2026-09-03 - does not compile: the body calls
 void __cdecl social_select(int faction_id) {
     const uint8_t state = static_cast<uint8_t>(GameState);
     if ((state & (STATE_SCENARIO_EDITOR | STATE_OMNISCIENT_VIEW)) == 0 &&

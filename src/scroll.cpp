@@ -894,8 +894,9 @@ void Scroll::on_resize(int width, int height) {
 /*
 Purpose: Paint the arrow buttons, track, optional pattern and the thumb's
          sprite and bevel on this window's inherited Buffer.
-// ORIGINAL: 0x006066F0 ?on_redraw@Scroll@@QAEXXZ 0x006066F0-0x00606854 FILE
-// RECOVERY_BINDING: v1 {"evidence":["source:src/recovered/units/006066f0.cpp","source:src/scroll.h:Scroll","source:src/graphicwin.h:GraphicWin","source:src/buffer.h:Buffer"],"reason":"Home the redraw path on the real GraphicWin/Buffer hierarchy, embedded FlatButtons and source-owned thumb sprite instead of seed vtable and raw-offset stand-ins."}
+// ORIGINAL: 0x006066F0 ?on_redraw@Scroll@@QAEXXZ 0x006066F0-0x00606854 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/006066f0.cpp", "source:src/scroll.h:Scroll", "source:src/graphicwin.h:GraphicWin", "source:src/buffer.h:Buffer"], "reason": "Home the redraw path on the real GraphicWin/Buffer hierarchy, embedded FlatButtons and source-owned thumb sprite instead of seed vtable and raw-offset stand-ins. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// kind      game
 // symbol    ?on_redraw@Scroll@@UAEXXZ
 // Likewise, this is Win's slot 12 override despite the catalogue's QAE name.
 // The separately claimed seed remains a restoration obligation while this

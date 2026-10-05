@@ -57,8 +57,9 @@ uint32_t StatusFlags;
 // The route destination renderer is called by MapWin::set_center. Its
 // retained seed indexes genuine Veh and chassis records, then publishes the
 // signed vehicle ID shared with StatusWin's selection lifecycle.
-// ORIGINAL: 0x004B4BF0 ?draw_my_dest@@YAXH@Z 0x004B4BF0-0x004B4CC5
-// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/004b4bf0.cpp retained BYTE_EXACT seed; Vehs stride 0x34, VehPrototypes chassis_id offset 0x24, Chassis triad offset 0x49."], "reason": "Home the destination vehicle route painter reached by MapWin recentering using Veh and Chassis records."}
+// ORIGINAL: 0x004B4BF0 ?draw_my_dest@@YAXH@Z 0x004B4BF0-0x004B4CC5 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/unrecovered/004b4bf0.cpp retained BYTE_EXACT seed; Vehs stride 0x34, VehPrototypes chassis_id offset 0x24, Chassis triad offset 0x49.", "git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/unrecovered/004b4bf0.cpp"], "reason": "Home the destination vehicle route painter reached by MapWin recentering using Veh and Chassis records. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// kind      game
 void __cdecl draw_my_dest(int vehicle_id) {
     if (vehicle_id < 0 || vehicle_id >= VehCurrentCount) {
         return;
@@ -1757,8 +1758,9 @@ void StatusWin::UNK4() {
     StatusFlags |= 0x20;
 }
 
-// ORIGINAL: 0x004B8DF0 ?UNK3@StatusWin@@QAEXXZ 0x004B8DF0-0x004B8E31
-// RECOVERY_BINDING: v1 {"evidence": ["The historical body tests StatusWin offsets +0x15BC and +0x15C0; statuswin.h maps these to iUnitIndex_ and iCityIndex_.", "The store at 0x0093928C is ConsoleGlobal.selected_vehicle_ (Console offset +0x23BDC), and the remaining dispatches match veh_wake, Console::set_move, and TutWinBaseWindow.zoom."], "reason": "Home the compact selected-unit/base action in StatusWin using the recovered members and process-owned C++ objects."}
+// ORIGINAL: 0x004B8DF0 ?UNK3@StatusWin@@QAEXXZ 0x004B8DF0-0x004B8E31 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["The historical body tests StatusWin offsets +0x15BC and +0x15C0; statuswin.h maps these to iUnitIndex_ and iCityIndex_.", "The store at 0x0093928C is ConsoleGlobal.selected_vehicle_ (Console offset +0x23BDC), and the remaining dispatches match veh_wake, Console::set_move, and TutWinBaseWindow.zoom.", "git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/004b8df0.cpp"], "reason": "Home the compact selected-unit/base action in StatusWin using the recovered members and process-owned C++ objects. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// kind      game
 void StatusWin::UNK3() {
     if (iUnitIndex_ >= 0) {
         veh_wake(iUnitIndex_);

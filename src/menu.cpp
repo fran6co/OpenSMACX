@@ -1693,8 +1693,9 @@ void Menu::on_adjust_pulldown_pos(int *, int *) {
 
 // Close the highlighted pull-down and publish the cleared selection through
 // the same redraw, input-flush, and task-pump sequence used by menu events.
-// ORIGINAL: 0x005FC620 ?hide_menus@Menu@@QAEXXZ 0x005FC620-0x005FC67C
-// RECOVERY_BINDING: v1 {"evidence": ["Retained 0x005FC620 seed, typed MenuEntry and PullDown owners, MenuSelection source global, redraw and task-pump callees"], "reason": "Home the highlighted pull-down close sequence in Menu owner source"}
+// ORIGINAL: 0x005FC620 ?hide_menus@Menu@@QAEXXZ 0x005FC620-0x005FC67C BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Retained 0x005FC620 seed, typed MenuEntry and PullDown owners, MenuSelection source global, redraw and task-pump callees", "git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/005fc620.cpp"], "reason": "Home the highlighted pull-down close sequence in Menu owner source Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// kind      game
 void Menu::hide_menus() {
     if (field_A24_ == -1) {
         return;

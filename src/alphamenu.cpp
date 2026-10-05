@@ -617,8 +617,9 @@ int AlphaMenu::requested_height() {
     return 0;
 }
 
-// ORIGINAL: 0x00403620 ?on_adjust_pulldown_pos@AlphaMenu@@QAEXPAHPAH@Z 0x00403620-0x00403677
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned image 0x00403620 reads Menu field_A24_ and SpotInternal[index].rect at stride 0x18; Win outer_rect_ is at 0x13c and caption_height_ at 0x118."], "reason": "Recover AlphaMenu pull-down placement through its inherited Menu, Spot and Win state."}
+// ORIGINAL: 0x00403620 ?on_adjust_pulldown_pos@AlphaMenu@@QAEXPAHPAH@Z 0x00403620-0x00403677 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned image 0x00403620 reads Menu field_A24_ and SpotInternal[index].rect at stride 0x18; Win outer_rect_ is at 0x13c and caption_height_ at 0x118.", "git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/00403620.cpp"], "reason": "Recover AlphaMenu pull-down placement through its inherited Menu, Spot and Win state. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// kind      game
 // symbol    ?on_adjust_pulldown_pos@AlphaMenu@@UAEXPAH0@Z
 void AlphaMenu::on_adjust_pulldown_pos(int *x, int *y) {
     if (field_A24_ != -1) {

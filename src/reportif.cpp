@@ -77,8 +77,9 @@ int __cdecl diplo_lock(int patience);
 void __cdecl diplo_unlock();
 void __cdecl draw_radius(int x, int y, int mode, int draw_type);
 
-// ORIGINAL: 0x004A8440 ?labs_write@@YAXPAUGraphicWin@@HHPAURECT@@PAD@Z 0x004A8440-0x004A846E FILE
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004a8440.cpp retained original identity, full spans and seed history", "recovery/tasks/interface-contract-report-closure.json authorized coupled owner recovery", "original:0x4a8440 complete control/data-access audit; ReportIf declarations and genuine ReportWin control storage"], "reason": "Recover the ReportIf technology-label writer from its retained seed through the genuine ReportWin/Buffer relationship. Its current emitted symbol is recorded separately from the historical catalogue spelling; this binding adds no claim about executable return decoration."}
+// ORIGINAL: 0x004A8440 ?labs_write@@YAXPAUGraphicWin@@HHPAURECT@@PAD@Z 0x004A8440-0x004A846E FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/004a8440.cpp retained original identity, full spans and seed history", "recovery/tasks/interface-contract-report-closure.json authorized coupled owner recovery", "original:0x4a8440 complete control/data-access audit; ReportIf declarations and genuine ReportWin control storage", "git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/004a8440.cpp"], "reason": "Recover the ReportIf technology-label writer from its retained seed through the genuine ReportWin/Buffer relationship. Its current emitted symbol is recorded separately from the historical catalogue spelling; this binding adds no claim about executable return decoration. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// kind      game
 // symbol    ?labs_write@@YAHPAVGraphicWin@@HHPAUtagRECT@@PAD@Z
 int __cdecl labs_write(GraphicWin *window, int technology, int, RECT *, char *) {
     static_cast<Buffer *>(window)->set_text_color3(
@@ -1034,8 +1035,9 @@ void ReportIf::close_security() {
 // ReportWin owns these three controls as members; close_ops clears
 // each ungrouped state word before hiding it. ReportIf's own controls and the
 // final MainInterface pair remain their respective typed owners.
-// ORIGINAL: 0x004A9F90 ?close_ops@ReportIf@@QAEXXZ 0x004A9F90-0x004AA0AF
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004a9f90.cpp", "source:src/reportif.h", "source:src/reportwin.h", "source:src/basebutton.h"], "reason": "Close the ReportIf and ReportWin operation controls through their named owners, preserve conditional map cleanup, and clear only ungrouped ReportWin BaseButton state through an encapsulated helper."}
+// ORIGINAL: 0x004A9F90 ?close_ops@ReportIf@@QAEXXZ 0x004A9F90-0x004AA0AF BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/004a9f90.cpp", "source:src/reportif.h", "source:src/reportwin.h", "source:src/basebutton.h"], "reason": "Close the ReportIf and ReportWin operation controls through their named owners, preserve conditional map cleanup, and clear only ungrouped ReportWin BaseButton state through an encapsulated helper. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// kind      game
 void ReportIf::close_ops() {
     listBox1_.close();
     flatButton3_.hide();
@@ -1619,7 +1621,8 @@ Purpose: Close the satellite report: hide every faction's panel button
              the three (flag, state) pairs, then the three Win::hide calls -
              DIRECT `call 0x5EDCD0`, the qualified-base spelling
              Time::stop on 0x00884738 and 0x00884760
-// ORIGINAL: 0x004AB550 ?close_sat@ReportIf@@QAEXXZ 0x004AB550-0x004AB5F9
+// ORIGINAL: 0x004AB550 ?close_sat@ReportIf@@QAEXXZ 0x004AB550-0x004AB5F9 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/unrecovered/004ab550.cpp"], "reason": "Retain the existing source implementation and complete original mapping. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
 // size      169 bytes
 // prototype void (__thiscall ?close_sat@ReportIf@@QAEXXZ)(ReportIf* this)
 // callers   2   call targets   2
