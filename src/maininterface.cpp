@@ -1281,8 +1281,8 @@ bool __cdecl active_interface_slot_occupied() {
 
 // The MessageWin the interface events are delivered to is now the real global
 // InterfaceMessageWin (messagewin.h / messagewin.cpp) - game.cpp's system_init
-// builds the same object through messagewin_init, and the image's handlers
-// reach it by its address, `mov ecx, 0x7f67f8` before the call.
+// builds the same object through InterfaceMessageWin.init(), and the image's
+// handlers reach it by its address, `mov ecx, 0x7f67f8` before the call.
 
 // ORIGINAL: 0x0045D140 ?on_iface_selected@MainInterface@@QAEXHH@Z 0x0045D140-0x0045D159 BYTE_EXACT
 // symbol    ?on_iface_selected@MainInterface@@UAEXHH@Z

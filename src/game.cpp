@@ -20,6 +20,7 @@
 #include "temp.h"
 #include "xpops.h"  // X_pop
 #include "popup.h"  // Existing POP2 owner interface.
+#include "ambience.h"  // load_music, the startup faction ambience owner.
 #include "game.h"
 #include "sound.h"
 #include "netmsg.h"
@@ -62,6 +63,7 @@
 #include "wave.h"  // g_WAVE_GENERAL
 #include "worldwin.h"  // WorldClimateWorldWin
 #include "diplowin.h"  // DiploWin::exec, homed here out of the archive
+#include "diplopop.h"  // DiplomacyPopup
 #include "filemap.h"
 #include "palette.h"
 #include "caviar.h"
@@ -2753,6 +2755,9 @@ Purpose: Bring the shared system up, once per process: create the four data
 //   slots above it are the ones the allocation loop walks (0x7D3C40 to
 //   0x7D3C5C exclusive), so the loop is `&MapWinTable[1] .. &MapWinTable[8]`
 //   and not the whole table.
+// Historical constraint below is superseded: InterfaceMessageWin now owns
+// original 0x7F67F8, and WinBubbleWindow has its genuine MultiDebug owner.
+// system_init uses those source objects; no fixed receiver is needed here.
 // TRIED: `static_cast<MultiDebug *>(&WinBubbleWindow)` and a named extern for
 //   the MessageWin storage - the image has no MessageWin object in this tree
 //   (messagewin.cpp defines nothing at 0x7F67F8) and WinBubbleWindow is a
@@ -2831,10 +2836,99 @@ int __cdecl system_init() {
     Win *console_window = &ConsoleGlobal;
     WinBubbleWindow.init(&NetDaemonNet, console_window, ShadowColorTable);
 
-    messagewin_init(reinterpret_cast<MessageWin *>(0x007F67F8));
+    InterfaceMessageWin.init();
     DatalinkMain.init();
     bung_momma();
     return 0;
+}
+
+// The desktop coordinator calls each real source-owned window and publishes
+// its four bounds in the existing Console storage used by blink_timer and
+// the Console splitter. Original owner TU remains unknown; game.cpp is the
+// current home because this is the startup coordinator.
+// ORIGINAL: 0x0058EE60 ?desktop_init@@YAHH@Z 0x0058EE60-0x0058EFEB
+// RECOVERY_BINDING: v1 {"evidence": ["git:b84036a86445148d25d4e216ac24c131e108bea8:src/unrecovered/0058ee60.cpp", "Pinned58EE60..58EFEB bounds939430..43C are Console+23D80..8C; DIB width/height come from the Console virtual Buffer base, not detached globals.", "Original startup interfaces, multiplayer/PBEM branches and two non-input pumps; OpeningWindow is deleted through its actual GraphicWin owner.", "recovery/tasks/startup-desktop-owner-oct5.json", "recovery/tests/test_startup_actual_source.py"], "reason": "Complete startup coordination through real owned windows and Console bounds; preserve the original calls, stores, redraw/cover ordering and OpeningWindow lifetime. Current source home is game.cpp, not a claim about original translation-unit ownership."}
+// kind      game
+// TRIED: none confirmed byte-exact; MISMATCH #5 push-count differs - the original sets up an ebp frame (push ebp/mov ebp,esp) that this body's register pressure does not need, so /O2 drops it.
+int __cdecl desktop_init(int fresh) {
+    load_music(ConsoleGlobal.faction_id_);
+    ConsoleInfoWin.init();
+    WorldClimateWorldWin.init(fresh);
+    ConsoleStatusWin.init();
+    mapwin_system_init(fresh);
+    MultiWindow.init();
+    TutWinBaseWindow.init();
+    TutWinDesWindow.init();
+    DiplomacyPopup.init();
+    ReportIfGlobal.init();
+    ConsolePrefWin.init();
+
+    // Keep both native stores: the first value is immediately replaced.
+    ConsoleGlobal.field_23D80_ = 10;
+    const RECT &menu_client = ConsoleGlobal.alpha_menu_.client_rect();
+    ConsoleGlobal.field_23D80_ = static_cast<unsigned int>(
+        (menu_client.right - menu_client.left) + 10);
+
+    ConsoleGlobal.field_23D84_ = static_cast<unsigned int>(
+        static_cast<int>(ConsoleGlobal.dib_.bmiHeader.biWidth) - 10);
+    if (IsMultiplayerNet != 0) {
+        const RECT &multi_client = MultiWindow.client_rect();
+        ConsoleGlobal.field_23D84_ += static_cast<unsigned int>(
+            multi_client.left - multi_client.right);
+    }
+
+    ConsoleGlobal.field_23D88_ = 10;
+    ConsoleGlobal.field_23D8C_ = static_cast<unsigned int>(
+        -10 - static_cast<int>(ConsoleGlobal.dib_.bmiHeader.biHeight));
+
+    if (TurnCurrentNum != 0) {
+        draw_map(1);
+    }
+
+    static_cast<Win &>(MainInterfaceGlobal).Win::show(0);
+    static_cast<Win &>(ConsoleGlobal).Win::show(0);
+    if (IsMultiplayerPBEM != 0) {
+        CoverWindow.GraphicWin::fill(0);
+        static_cast<Win &>(CoverWindow).Win::show(0);
+    }
+    do_all_non_input();
+
+    BasePopDefaultField322C = static_cast<Win *>(&ConsoleGlobal);
+    if (OpeningWindow != 0) {
+        GraphicWin *const opening = OpeningWindow;
+        delete opening;
+        OpeningWindow = 0;
+    }
+    do_all_non_input();
+    return 0;
+}
+
+// ORIGINAL: 0x004595C0 ?bung_momma@@YAXXZ 0x004595C0-0x0045967F
+// RECOVERY_BINDING: v1 {"evidence": ["git:b84036a86445148d25d4e216ac24c131e108bea8:src/unrecovered/004595c0.cpp", "Pinned4595C0..45967F font7CFEDC is MainInterface7AE820+216BC, its third Font; native title bounds and shared StringBox identify actual members.", "recovery/tasks/startup-desktop-owner-oct5.json", "recovery/tests/test_startup_actual_source.py"], "reason": "Complete shared message-box setup through MainInterface owned Font/StringBox, genuine Console parent and Buffer base; retain both original font-height paths and original window geometry."}
+// kind      game
+void __cdecl bung_momma() {
+    const int screen_width = WinScreenWidth;
+    const int box_width = screen_width - 0x140;
+    Font *const font = MainInterfaceGlobal.tertiary_font();
+    const int font_mode = font->unk_1_;
+    const int rows = font_mode < 0
+        ? font->line_height()
+        : font_mode + font->pixel_height();
+    const int box_height = rows * 4;
+    const int box_x = (screen_width - box_width) / 2;
+    const int box_y = MainInterfaceGlobal.title_bounds().bottom - box_height;
+
+    StringBox &box = MainInterfaceGlobal.shared_string_box();
+    Win *const parent = static_cast<Win *>(&ConsoleGlobal);
+    box.init(box_x, box_y, box_width, box_height, parent, 0, 0x1000022);
+    box.set_draw_mode(1);
+    box.set_visible_rows(4);
+
+    Buffer &buffer = static_cast<Buffer &>(box);
+    buffer.set_font(font, 0, 0, 0);
+    buffer.set_text_color(0x5F, -1, 1, 1);
+    box.clear();
+    static_cast<Win &>(box).Win::show(0);
 }
 
 /*

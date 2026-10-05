@@ -119,6 +119,7 @@ class Console : public MapWin {
   friend class CouncWin;
   // MapWin's input handlers operate the existing Console cursor state.
   friend class MapWin;
+ friend int __cdecl desktop_init(int fresh);
   friend void __cdecl go_timer(int selection_mode);
  public:
   void chat(int faction_id);

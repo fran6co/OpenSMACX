@@ -63,6 +63,7 @@ class StringBox : public GraphicWin {
   void add(char *text, int index, int flag);
   void set_visible_rows(uint32_t rows) { visible_rows_ = rows; }
 
+  void set_draw_mode(uint32_t mode) { per_line_draw_ = mode; }
  private:
   // Draw-mode flag: 0 and on_redraw paints the whole list with one bulk
   // Buffer::write_strings; set, it walks the visible lines individually

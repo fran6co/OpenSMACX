@@ -364,7 +364,6 @@ void __cdecl load_cycling();                       // ?load_cycling@@YAXXZ
 extern int OceanDetailShade[80];
 void __cdecl config_popups();                      // ?config_popups@@YAXXZ
 void __cdecl bung_momma();                         // ?bung_momma@@YAXXZ
-void __fastcall messagewin_init(MessageWin *self);
 
 // The pinned PE import directory identifies original 0x0066931C as the
 // loader-owned USER32 CharUpperA slot. Its initial on-disk word is not

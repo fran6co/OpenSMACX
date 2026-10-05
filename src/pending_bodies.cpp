@@ -601,11 +601,6 @@ void __cdecl basepop_close_class() {
 
 // config_popups588AA0 is recovered in popup.cpp, with its original mapping.
 
-// ?bung_momma@@YAXXZ at 0x004595C0
-void __cdecl bung_momma() {
-    typedef void(__cdecl *pending)();
-    PENDING_BODY(0x004595C0, pending)();
-}
 
 
 
@@ -614,11 +609,6 @@ void __cdecl bung_momma() {
 // ?init@MultiDebug@@QAEHPAUNet@@PAUWin@@PAE@Z at 0x005C9860 is homed as a
 // real member in multidebug.cpp - no forwarder, and no game.h shape either.
 
-// ?init@MessageWin@@QAEXXZ at 0x00471D50
-void __fastcall messagewin_init(MessageWin *self) {
-    typedef void(__fastcall *pending)(MessageWin *);
-    PENDING_BODY(0x00471D50, pending)(self);
-}
 
 
 // ?game_reload@@YAHHH@Z at 0x0058F450 WAS HERE. Homed into game.cpp
@@ -627,11 +617,6 @@ void __fastcall messagewin_init(MessageWin *self) {
 // ?top_menu@@YAHH@Z at 0x0058E360
 // Complete body is source-owned in newgame.cpp.
 
-// ?desktop_init@@YAHH@Z at 0x0058EE60
-int __cdecl desktop_init(int fresh) {
-    typedef int(__cdecl *pending)(int);
-    return PENDING_BODY(0x0058EE60, pending)(fresh);
-}
 
 // ?multiplayer_init@@YAHH@Z at 0x0058DB30
 // Complete body is source-owned in newgame.cpp.

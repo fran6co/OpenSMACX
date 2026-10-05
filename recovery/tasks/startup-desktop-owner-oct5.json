@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "task_id": "startup-desktop-owner-oct5",
+  "target": "opensmacx",
+  "author": "framework-coordinator",
+  "base_revision": "b84036a86445148d25d4e216ac24c131e108bea8",
+  "intent": "Complete desktop and shared message-box startup operations, replace three old-executable forwarders with genuine source owners, and retire two seeds with original identity/history intact.",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5828672
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5828192
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4560320
+    }
+  ],
+  "files": [
+    "recovery/tests/startup_owner_host.cpp",
+    "recovery/tests/test_startup_actual_source.py",
+    "src/console.h",
+    "src/game.cpp",
+    "src/game.h",
+    "src/maininterface.cpp",
+    "src/maininterface.h",
+    "src/messagewin.h",
+    "src/pending_bodies.cpp",
+    "src/stringbox.h",
+    "src/unrecovered/004595c0.cpp",
+    "src/unrecovered/0058ee60.cpp",
+    "src/win.h"
+  ],
+  "evidence": [
+    "Independently reviewed full pinned native startup behavior; third Font receiver and Console virtual Buffer geometry corrected before integration.",
+    "Existing MessageWin::init remains canonical; system_init now calls InterfaceMessageWin.init rather than a fixed executable receiver/forwarder.",
+    "Layout-neutral accessors/friendship only; no new globals, invented object capacity, behavior fixes or matching grants. Historical startup seed findings remain source-owned."
+  ]
+}

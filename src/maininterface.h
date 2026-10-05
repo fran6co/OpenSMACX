@@ -126,6 +126,9 @@ class MainInterface : public GraphicWin, public SubInterface {
   // +0x2166C. ReplayWin's title and other windows borrow it, not own it.
   Font *primary_font() { return &font1_; }
   Font *secondary_font() { return &font2_; }
+  Font *tertiary_font() { return &font3_; }
+  const RECT &title_bounds() const { return title_bounds_; }
+  StringBox &shared_string_box() { return string_box_; }
   FlatButton &flat_button(int index) { return flat_button_[index]; }
   const RECT &main_frame_rect() const { return rect4_; }
   const RECT &main_layout_rect() const { return rect1_; }

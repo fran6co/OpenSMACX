@@ -76,6 +76,7 @@ typedef int (__cdecl *WinKeyHookFn)(int key);
 
 class Win : public AutoSound {
  public:
+  const RECT &client_rect() const { return client_rect_; }
   const RECT &cached_outer_rect() const { return cached_outer_rect_; }
 
  public:

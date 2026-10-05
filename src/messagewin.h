@@ -87,8 +87,8 @@ static_assert(sizeof(MessageWin) == 0x3758,
               "MessageWin layout must match the original executable");
 
 // 0x007F67F8. The desktop's MessageWin - the same object game.cpp's system_init
-// builds through messagewin_init. MainInterface's interface-event handlers reach
-// it by this address (`mov ecx, 0x7f67f8` at on_iface_selected), and it is a real
+// builds through InterfaceMessageWin.init(). MainInterface's interface-event
+// handlers reach it by this address (`mov ecx, 0x7f67f8` at on_iface_selected), and it is a real
 // object with a real constructor in the image, so it is declared as one.
 extern MessageWin InterfaceMessageWin;
 
