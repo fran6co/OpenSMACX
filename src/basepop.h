@@ -535,6 +535,7 @@ class BasePop : public GraphicWin {
   // Modal editor pickers set their default answer after start configures
   // the popup. This is the value word at original +0xA44.
   void set_value(int value) { value_ = value; }
+  int value() const { return value_; }
 
  private:
   // THE TWO 0x118 TEXT BLOCKS at 0x2E64 and 0x2F7C, typed 2026-09-04. These

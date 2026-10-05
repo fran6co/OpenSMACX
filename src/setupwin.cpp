@@ -19,6 +19,12 @@
 #include "setupwin.h"
 #include "filewin.h"
 #include "game.h"
+#include "popup.h"
+#include "dialog.h"
+#include "wave.h"
+#include "palette.h"
+#include "text.h"
+#include "general.h"
 #include "stringstruct.h"
 #include <cstring>
 
@@ -180,6 +186,242 @@ int SetupWin::do_menu(Popup *popup, int menu_kind, int flags) {
         menu_popup_ = nullptr;
         return -1;
     }
+}
+
+// Complete owner recovery for SetupWin::do_menu_rightside(char *, int).
+// Uses the actual source-owned SetupWin/GraphicWin/Win,
+// Buffer, Flic, Wave, Palette, Font, Spot, StringList and Popup/Dialog APIs.
+// Current byte restoration remains an obligation, not a coverage prerequisite.
+// Seed path below was retired; Git retains its historical provenance.
+// ORIGINAL: 0x004ADB70 ?do_menu_rightside@SetupWin@@QAEHPADH@Z 0x004ADB70-0x004AE336;0x0065960C-0x00659697
+// RECOVERY_BINDING: v1 {"evidence": ["pinned 4ADB70..4AE336 and EH65960C..659697", "historical seed src/unrecovered/004adb70.cpp", "full owner/pending native overlay and observed current QAEHPADH symbol", "actual-source host controls with original text-get ordering, signed DIB geometry, Popup selection and explicit/automatic cleanup"], "reason": "Complete SetupWin right-side menu through genuine inherited members and Popup/Dialog APIs, preserving native branch, error-path and cleanup order; no original-address forwarding."}
+// kind      game
+// symbol    ?do_menu_rightside@SetupWin@@QAEHPADH@Z
+// TRIED: SEH-framed function with 4 real local objects (Buffer, Font, Wave, Flic) - reproduced via plain RAII locals (`Buffer buf1; Font font; Wave wave; Flic flic;` with `Palette pal;` scoped to end right before the final destructor cascade, matching the original's separate ~Palette() call ahead of the buf1/font/wave/flic teardown) and plain `return`/goto for the early-exit paths, letting the compiler emit its own SEH prologue/epilogue and destructor calls rather than hand-writing the fs:[0] chain or the mid-function state-index byte stores. Diverges at #2 (framed EH prologue ordering) - did not chase further given the size; body is a full instruction-level transcription of the menu/flic drawing logic (token-line parsing loop, two flic decode/blit/pace loops via a shared static helper, Spot::add layout loop, draw_item loop) with call arguments cross-checked against raw disassembly.
+int SetupWin::do_menu_rightside(char *filename, int flags) {
+    Buffer scratch;
+    Font font;
+    Wave wave;
+    Flic flic;
+
+    selected_row_ = 0;
+    row_count_ = 0;
+    field_A14_ = 0;
+    field_A18_ = 0;
+    buffer_.close();
+    spot_.shutdown();
+    field_FE0_.remove_all();
+    field_FE0_.current_position_ = 0;
+    field_A14_ = WinScreenWidth;
+    field_A18_ = WinScreenHeight;
+
+    if (opening_window_snapshot_ == nullptr) {
+        flic.close();
+        return -1;
+    }
+    if (filename == nullptr && menu_popup_ == nullptr) {
+        flic.close();
+        return -1;
+    }
+    if (menu_popup_ == nullptr && X_text_open(filename, "script.txt") != 0) {
+        flic.close();
+        return -1;
+    }
+
+    int result = 0;
+    {
+        Palette palette;
+        char token[512];
+        bool has_token = false;
+        RECT title_rect;
+
+        field_FE0_.remove_all();
+        field_FE0_.current_position_ = 0;
+        field_FE0_.field_20_ = 0;
+
+        font.init(const_cast<char *>(DefaultFontFace), 0x12, 1);
+        wave.load("fx\\menu out.wav");
+        selected_row_ = static_cast<uint32_t>(flags);
+        token[0] = '\0';
+
+        if (menu_popup_ == nullptr) {
+            bool seen_blank = false;
+            row_count_ = 0;
+            for (;;) {
+                char *line = text_get();
+                // Preserve the source transcription's ordering: the original
+                // dereferences line to test '#' before checking the null exit.
+                // Whether text_get can return null here is a native-runtime
+                // question, not an invitation to silently reorder the branch.
+                if (line[0] == '#') {
+                    if (_strnicmp(line + 1, "caption", 7) == 0) {
+                        purge_spaces(line + 8);
+                        purge_leading(line + 8);
+                        token[0] = '\0';
+                        strcat(token, line + 8);
+                    }
+                    continue;
+                }
+                if (line == nullptr) {
+                    break;
+                }
+                if (line[0] == '\0') {
+                    if (seen_blank) {
+                        break;
+                    }
+                    seen_blank = true;
+                } else {
+                    const int position = static_cast<int>(row_count_++);
+                    field_FE0_.pending_text_ = line;
+                    field_FE0_.field_20_ = 0;
+                    field_FE0_.field_24_ = 0;
+                    field_FE0_.add(position);
+                    seen_blank = true;
+                }
+            }
+            item_texts_ = &field_FE0_;
+            text_close();
+        } else {
+            Dialog &dialog = static_cast<Dialog &>(menu_popup_->dialogs());
+            item_texts_ = &dialog.item_list_;
+            row_count_ = static_cast<uint32_t>(dialog.item_list_.entry_count_);
+            if (menu_popup_->value() >= 0) {
+                selected_row_ = static_cast<uint32_t>(menu_popup_->value());
+            }
+            const char *caption = menu_popup_->caption_text();
+            if (caption != nullptr) {
+                strcat(filename, caption);
+            }
+        }
+
+        has_token = token[0] != '\0';
+        spot_.init(static_cast<int>(row_count_) + 2);
+        buffer2_.init(0x162, 0x4B, 0, nullptr);
+        flic.init(&buffer2_, const_cast<char *>("openitem.flc"), 0, 0, 0);
+
+        // Native arithmetic carries DIB::biHeight (negative for this
+        // top-down surface) as-is. Do not normalize it to pixel_height().
+        const int line_stride = static_cast<int>(buffer2_.dib_.bmiHeader.biHeight);
+        const int menu_width = static_cast<int>(buffer2_.dib_.bmiHeader.biWidth);
+        const int menu_rows = static_cast<int>(row_count_);
+        int menu_height = -(line_stride * menu_rows);
+        if (has_token) {
+            menu_height += 0x14 - line_stride;
+            ++row_count_;
+        }
+        GraphicWin::init(field_A14_ - menu_width, field_A18_ - menu_height,
+                         menu_width, menu_height, nullptr, 0x1000020,
+                         opening_window_snapshot_, nullptr, nullptr);
+
+        field_A0_ = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(
+            ExpansionEnabled ? RedTintColorTable : BlueTintColorTable));
+        show(0);
+        static_cast<Buffer *>(this)->set_text_color(0x41, -1, 1, 1);
+        static_cast<Buffer *>(this)->set_font(&font, nullptr, nullptr, nullptr);
+
+        WinFlipClipped = 1;
+        if ((GamePreferences & 0x400) != 0) {
+            wave.play();
+        }
+
+        for (int frame_intro = 0; frame_intro != 6; ++frame_intro) {
+            const DWORD started = timeGetTime();
+            flic.decode_stored_frame();
+            int y = 0;
+            for (uint32_t copy_row_intro = 0; copy_row_intro < row_count_; ++copy_row_intro) {
+                const int height = static_cast<int>(buffer2_.dib_.bmiHeader.biHeight);
+                const int width = static_cast<int>(buffer2_.dib_.bmiHeader.biWidth);
+                buffer2_.copy(static_cast<Buffer *>(this), 0, 0, 0, y,
+                              width, -height);
+                y -= height;
+                if (copy_row_intro == 0 && has_token) {
+                    fill(0, y, width, 0x14, 9);
+                    y += 0x14;
+                }
+            }
+            on_update();
+            while (static_cast<DWORD>(timeGetTime() - started) < 10) {
+            }
+        }
+
+        title_rect.left = 0x0F;
+        title_rect.top = 0;
+        title_rect.right = 0x12C;
+        title_rect.bottom = -line_stride;
+        if (has_token) {
+            static_cast<Buffer *>(this)->set_text_color(0x42, -1, 1, 1);
+            const int top = title_rect.top + 0x1F;
+            const int left = title_rect.left + 4;
+            const int bottom = top + 0x1A - 2;
+            const int second_top = top + 2;
+            const int right = title_rect.right - 4;
+            title_rect.left = left;
+            title_rect.top = second_top;
+            title_rect.right = right;
+            title_rect.bottom = bottom;
+            static_cast<Buffer *>(this)->write_cent_l(token, &title_rect,
+                                                       static_cast<int>(strlen(token)));
+            --row_count_;
+            title_rect.left -= 4;
+            title_rect.right += 4;
+            title_rect.top = 0x14 - line_stride;
+            title_rect.bottom = title_rect.top - line_stride;
+        }
+
+        for (uint32_t spot_row = 0; spot_row < row_count_; ++spot_row) {
+            const int left = title_rect.left;
+            const int top = title_rect.top;
+            const int right = title_rect.right;
+            const int bottom = title_rect.bottom;
+            spot_.add(static_cast<int>(spot_row), 0, left, top,
+                      right - left, bottom - top);
+            title_rect.top = top - line_stride;
+            title_rect.bottom = bottom - line_stride;
+        }
+
+        WinFlipClipped = 0;
+        for (uint32_t draw_row = 0; draw_row < row_count_; ++draw_row) {
+            draw_item(static_cast<int>(draw_row), draw_row == selected_row_ ? 1 : 0);
+        }
+        soft_update();
+        set_modal(0, nullptr, nullptr);
+        if (has_token) {
+            ++row_count_;
+        }
+        for (int frame_outro = 0; frame_outro != 6; ++frame_outro) {
+            const DWORD started = timeGetTime();
+            flic.decode_stored_frame();
+            int y = 0;
+            for (uint32_t copy_row_outro = 0; copy_row_outro < row_count_; ++copy_row_outro) {
+                const int height = static_cast<int>(buffer2_.dib_.bmiHeader.biHeight);
+                const int width = static_cast<int>(buffer2_.dib_.bmiHeader.biWidth);
+                buffer2_.copy(static_cast<Buffer *>(this), 0, 0, 0, y,
+                              width, -height);
+                y -= height;
+                if (copy_row_outro == 0 && has_token) {
+                    fill(0, y, width, 0x14, 9);
+                    y += 0x14;
+                }
+            }
+            on_update();
+            while (static_cast<DWORD>(timeGetTime() - started) < 10) {
+            }
+        }
+
+        spot_.shutdown();
+        buffer_.close();
+        opening_window_snapshot_->restore_clip();
+        hide();
+
+        if (menu_popup_ != nullptr && static_cast<int32_t>(selected_row_) >= 0) {
+            Dialog &dialog = static_cast<Dialog &>(menu_popup_->dialogs());
+            result = dialog.pos_to_id(static_cast<int>(selected_row_));
+        } else {
+            result = static_cast<int>(selected_row_);
+        }
+        flic.close();
+    }
+    return result;
 }
 
 // ORIGINAL: 0x004AE380 ?on_mouse_move@SetupWin@@QAEHHH@Z 0x004AE380-0x004AE3DA

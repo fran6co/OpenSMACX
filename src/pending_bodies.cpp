@@ -379,10 +379,6 @@ int __cdecl battle_fight(int veh_id, int dir, int x, int y, int src_mode,
 // daemon wrapper sat_anim_daemon (leaf_recoveries.cpp) already called it
 // by name, so no caller repointing was needed.
 
-int SetupWin::do_menu_rightside(char *a1, int a2) {  // 0x004ADB70
-    typedef int(__fastcall *pending)(SetupWin *, void *, char *, int);
-    return PENDING_BODY(0x004ADB70, pending)(this, nullptr, a1, a2);
-}
 
 
 // ?edit@EditGroup@@QAEHPADPADH@Z at 0x00611F80 - WAS HERE and is gone: the
