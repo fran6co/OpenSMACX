@@ -1130,6 +1130,8 @@ void __cdecl enemies_unpact(int faction_id, int faction_id_with);
 void __cdecl enemies_trade_tech(int faction_id, int faction_id_with);
 void __cdecl enemies_treaty(int faction_id, int faction_id_with, int check_technology);
 void __cdecl encounter(int faction_id, int faction_id_with, int x, int y, int event_flag_a, int event_flag_b);
+void __cdecl council(int faction_id, int proposal, int target_faction);
+void __cdecl atrocity(int faction_id, int victim_id, int kind, int unknown);
 
 // Directed diplomacy consequences of an original major atrocity.
 void __cdecl major_atrocity(int faction_id, int victim_id);

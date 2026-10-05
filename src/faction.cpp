@@ -10217,6 +10217,213 @@ static inline int major_atrocity_add_wrapped32(int value, int amount) {
     return value;
 }
 
+// ORIGINAL: 0x00428350 ?council@@YAXHHH@Z 0x00428350-0x0042854E
+// RECOVERY_BINDING: v1 {"evidence": ["historical retired seed src/recovered/units/00428350.cpp", "recovery/tasks/council-atrocity-owner-oct5.json", "complete pinned native instruction/argument review and current compiler-observed function symbol", "actual-product-source host parser/directed-row/wrap controls; prior fixed-address scaffold mismatches retained as Git provenance"], "reason": "Complete semantic policy recovery through genuine source-owned window/player/global APIs, directed field relations, fresh callback reads and native parser/default ordering. Historical byte restoration and runtime acceptance remain unfinished."}
+// symbol    ?council@@YAXHHH@Z
+void __cdecl council(int faction_id, int proposal, int target_faction) {
+    const int original_governor = GovernorFaction;
+
+    for (int actor = 1; actor < MaxPlayerNum; ++actor) {
+        for (int peer = 1; peer < actor; ++peer) {
+            if ((Players[actor].rule_flags & RFLAG_ALIEN) == 0 &&
+                (Players[peer].rule_flags & RFLAG_ALIEN) == 0) {
+                treaty_on(actor, peer, DTREATY_COMMLINK);
+            }
+        }
+    }
+
+    int leader_faction;
+    int leader_proposal;
+    int selected_proposal;
+    if (!IsMultiplayerPBEM || CouncilPbemGate == 0) {
+        const int now = TurnCurrentNum;
+        if (proposal != 0) {
+            PlayersData[target_faction].council_call_turn = now;
+        }
+        CouncilLastResolutionTurn[proposal] = now;
+        leader_faction = faction_id;
+        leader_proposal = target_faction;
+        selected_proposal = proposal;
+    } else {
+        leader_faction = CouncilPbemGate;
+        leader_proposal = static_cast<int>(CouncilWindow.field_A20_);
+        selected_proposal = static_cast<int>(CouncilWindow.field_A1C_);
+    }
+
+    if (leader_faction != ConsoleGlobal.faction_id_ ||
+        (static_cast<unsigned>(LockEnableMask) &
+         (1u << (leader_faction & 0x1f))) == 0) {
+        GenderDefault = Players[leader_faction].is_leader_female;
+        PluralityDefault = FALSE;
+        parse_says(0, Players[leader_faction].title_leader, -1, -1);
+        GenderDefault = Players[leader_faction].is_leader_female;
+        PluralityDefault = FALSE;
+        parse_says(1, Players[leader_faction].name_leader, -1, -1);
+        parse_say(2, static_cast<int>(reinterpret_cast<intptr_t>(
+                            Proposal[selected_proposal].name)), -1, -1);
+        popp(ScriptPopupFile, "CALLSCOUNCIL", 0, "council_sm.pcx", 0);
+    }
+
+    GameState |= 0x10000u;
+    CouncilWindow.init(selected_proposal, leader_proposal);
+
+    if (leader_proposal == 0 &&
+        GovernorFaction == ConsoleGlobal.faction_id_ &&
+        original_governor != ConsoleGlobal.faction_id_ &&
+        IsMultiplayerNet == 0 &&
+        (!IsMultiplayerPBEM || CouncilPbemGate == 0)) {
+        if ((PlayersData[ConsoleGlobal.faction_id_].flags &
+             PFLAG_BEEN_ELECTED_GOVERNOR) == 0) {
+            PlayersData[ConsoleGlobal.faction_id_].flags |=
+                PFLAG_BEEN_ELECTED_GOVERNOR;
+            popp(ScriptPopupFile, "GOVERNOR", 0, "council_sm.pcx", 0);
+        }
+    }
+}
+
+static int atrocity_signed_from_bits(uint32_t bits) {
+    int value;
+    memcpy(&value, &bits, sizeof value);
+    return value;
+}
+
+// ORIGINAL: 0x0055EEE0 ?atrocity@@YAXHHHH@Z 0x0055EEE0-0x0055F44F
+// RECOVERY_BINDING: v1 {"evidence": ["historical retired seed src/recovered/units/0055eee0.cpp", "recovery/tasks/council-atrocity-owner-oct5.json", "complete pinned native instruction/argument review and current compiler-observed function symbol", "actual-product-source host parser/directed-row/wrap controls; prior fixed-address scaffold mismatches retained as Git provenance"], "reason": "Complete semantic policy recovery through genuine source-owned window/player/global APIs, directed field relations, fresh callback reads and native parser/default ordering. Historical byte restoration and runtime acceptance remain unfinished."}
+// symbol    ?atrocity@@YAXHHHH@Z
+void __cdecl atrocity(int actor_id, int victim_id, int kind, int unknown) {
+    uint32_t &victim_treaty =
+        PlayersData[victim_id].diplo_treaties[actor_id];
+    const bool was_allied = (victim_treaty & DTREATY_ATROCITY_VICTIM) != 0;
+    victim_treaty |= DTREATY_ATROCITY_VICTIM | DTREATY_WANT_REVENGE;
+    PlayersData[victim_id].diplo_agenda[actor_id] |= DAGENDA_UNK_4;
+
+    if (CouncilResolutionCount[8] > CouncilResolutionCount[9]) return;
+
+    if (SunspotDuration > 0) {
+        if (actor_id != ConsoleGlobal.faction_id_) return;
+        NetMsgPrimary.pop("ATROCITYSPOTS", 5000, 0, 0);
+        return;
+    }
+
+    if (ExpansionEnabled && unknown == 0 &&
+        (is_alien_faction(actor_id) || is_alien_faction(victim_id))) return;
+
+    const uint32_t actor_bit = 1u << (actor_id & 0x1f);
+    for (int other_id = 1; other_id < MaxPlayerNum; ++other_id) {
+        if (other_id == actor_id || other_id == victim_id) continue;
+        const uint32_t other_treaty_flags =
+            PlayersData[other_id].diplo_treaties[actor_id];
+        if ((other_treaty_flags & DTREATY_COMMLINK) == 0) continue;
+
+        if (ExpansionEnabled && unknown != 0 &&
+            (Players[actor_id].rule_flags & RFLAG_ALIEN) == 0 &&
+            (Players[other_id].rule_flags & RFLAG_ALIEN) != 0) continue;
+
+        if ((other_treaty_flags & DTREATY_UNK_200000) != 0) {
+            cause_friction(other_id, actor_id, 5);
+            const uint32_t other_bit = 1u << (other_id & 0x1f);
+            const uint32_t local_humans = LockEnableMask & 0xffu;
+            const bool can_attack =
+                (local_humans & other_bit) == 0 &&
+                (local_humans & actor_bit) != 0 &&
+                (PlayersData[other_id].diplo_treaties[actor_id] &
+                 DTREATY_COMMLINK) != 0 &&
+                (PlayersData[other_id].diplo_treaties[actor_id] &
+                 (DTREATY_TREATY | DTREATY_VENDETTA)) == 0 && !was_allied;
+
+            if (can_attack) {
+                bool commit_atrocity = false;
+                if ((PlayersData[other_id].diplo_treaties[actor_id] & 0x20u) != 0) {
+                    commit_atrocity = true;
+                } else if (great_satan(actor_id, 0) != 0) {
+                    int roll = rand() & 0x8000000f;
+                    if (roll < 0) roll = ((roll - 1) | 0xfffffff0) + 1;
+                    const uint32_t difference_bits =
+                        static_cast<uint32_t>(roll) -
+                        static_cast<uint32_t>(PlayersData[actor_id].atrocities);
+                    commit_atrocity = atrocity_signed_from_bits(difference_bits) < 9;
+                } else {
+                    int denominator = 5;
+                    if ((GameRules & 0x40u) == 0) denominator = DiffLevelCurrent;
+                    denominator = (8 - denominator) * 2;
+                    const int roll = denominator - 1 < 1
+                        ? 0 : rand() % denominator;
+                    commit_atrocity = roll == 0;
+                }
+
+                if (commit_atrocity) {
+                    if (actor_id == ConsoleGlobal.faction_id_) {
+                        GenderDefault = Players[actor_id].is_leader_female;
+                        PluralityDefault = FALSE;
+                        parse_says(0, Players[actor_id].title_leader, -1, -1);
+                        GenderDefault = Players[actor_id].is_leader_female;
+                        PluralityDefault = FALSE;
+                        parse_says(1, Players[actor_id].name_leader, -1, -1);
+                        diplomacy_caption(actor_id, other_id);
+                        x_pops_minimal("ATROCIOUSITY",
+                                       FactionDiplomacyPortraits[other_id], 0);
+                    }
+                    treaty_on(actor_id, other_id, DTREATY_VENDETTA);
+                    PlayersData[other_id].diplo_treaties[actor_id] |=
+                        DTREATY_UNK_40;
+                    PlayersData[other_id].diplo_merc[actor_id] = 0x32;
+                }
+            }
+            if ((PlayersData[other_id].diplo_treaties[actor_id] &
+                 DTREATY_VENDETTA) == 0)
+                treaty_on(other_id, actor_id, 0x400000u);
+        }
+    }
+
+    if (kind != 0 || PlayersData[actor_id].atrocities == 0) {
+        PlayersData[actor_id].atrocities = major_atrocity_add_wrapped32(
+            PlayersData[actor_id].atrocities, 1);
+        if ((PlayersData[victim_id].diplo_treaties[actor_id] &
+             DTREATY_ATROCITY_VICTIM) == 0)
+            PlayersData[actor_id].integrity_blemishes =
+                major_atrocity_add_wrapped32(
+                    PlayersData[actor_id].integrity_blemishes, 1);
+    }
+    const int atrocities = PlayersData[actor_id].atrocities;
+    const int atrocity_threshold =
+        (8 - PlayersData[actor_id].diff_level) * 4;
+    if (atrocities > atrocity_threshold) {
+        major_atrocity(actor_id, victim_id);
+        return;
+    }
+
+    const uint32_t final_human_mask = LockEnableMask & 0xffu;
+    if ((final_human_mask & actor_bit) != 0 &&
+        (final_human_mask & (1u << (MaxPlayerNum & 0x1f))) == 0 &&
+        !was_allied && atrocities > 4)
+        PlayersData[victim_id].flags |= PFLAG_COMMIT_ATROCIT_WANTONLY;
+
+    GenderDefault = Players[actor_id].is_leader_female;
+    PluralityDefault = FALSE;
+    parse_says(0, Players[actor_id].title_leader, -1, -1);
+    GenderDefault = Players[actor_id].is_leader_female;
+    PluralityDefault = FALSE;
+    parse_says(1, Players[actor_id].name_leader, -1, -1);
+    GenderDefault = Players[victim_id].is_leader_female;
+    PluralityDefault = FALSE;
+    parse_says(2, Players[victim_id].title_leader, -1, -1);
+    GenderDefault = Players[victim_id].is_leader_female;
+    PluralityDefault = FALSE;
+    parse_says(3, Players[victim_id].name_leader, -1, -1);
+    const int atrocity_count_times_ten =
+        atrocity_signed_from_bits(static_cast<uint32_t>(atrocities) * 10u);
+    parse_num(0, atrocity_count_times_ten);
+
+    StringTemp[0] = '\0';
+    strcat(StringTemp, "ATROCITY");
+    if (actor_id == ConsoleGlobal.faction_id_) strcat(StringTemp, "2");
+    else if (victim_id == actor_id) strcat(StringTemp, "1");
+    if ((Players[actor_id].rule_flags & RFLAG_ALIEN) == 0)
+        NetMsgPrimary.pop(StringTemp, 5000, 0, 0);
+    PlayersData[actor_id].sanction_turns = major_atrocity_add_wrapped32(
+        PlayersData[actor_id].sanction_turns, atrocity_count_times_ten);
+}
+
 // ORIGINAL: 0x0055F450 ?major_atrocity@@YAXHH@Z 0x0055F450-0x0055F76A
 // RECOVERY_BINDING: v1 {"evidence": ["task:major-atrocity-owner", "pinned:55F450..55F76A; Council count9A6638/9A663C slots8/9, PlayerData20CC integrity124 and atrocity1D8, Player59C name/title/noun grammar fields.", "pinned:68E780 MAJORATROCITY and68E790 council_sm.pcx bounded original strings; source-owned read-only text inputs.", "historical seed:src/unrecovered/0055f450.cpp; original identity/span and prior literal-transcription mismatch finding retained.", "recovery/tests/test_major_atrocity.py actual-source host/damage controls; not linked runtime acceptance."], "reason": "Recover directed diplomacy consequences and living nonhuman faction reporting with real Player/PlayerData storage; preserve modulo32 counter updates and signed integrity clamp, parser grammar and callback order. Replace executable-pointer label aliases by original-verified source literals. No byte or game acceptance claim."}
 // TRIED: literal asm-mirrored translation (byte-offset arithmetic on fixed globals, parse_says/pact_ends/treaty_on call order) compiles and matches through instr #4; diverges at #5 (push vs mov) - not chased further, landed at MISMATCH.

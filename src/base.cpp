@@ -45,7 +45,6 @@
 #include "path.h"
 #include "terraforming.h"
 
-void __cdecl atrocity(int faction_id, int victim, int kind, int unknown);
 void __cdecl kill(int vehicle_id);
 void __cdecl interlude(int id, char *text, int mode, int flag);
 

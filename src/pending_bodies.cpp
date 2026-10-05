@@ -928,15 +928,6 @@ int __cdecl order_veh(int veh_id, int x, int y) {
 
 
 
-void __cdecl atrocity(int faction_id, int faction_id_victim, int kind, int unk) {
-    // ?atrocity@@YAXHHHH@Z at 0x0055EEE0, still archived (1391 bytes,
-    // src/recovered/units/0055eee0.cpp). Not claimed, so this forwarder is the
-    // only definition and faults loudly if reached before that archive is
-    // homed. action_oblit commits the atrocity the obliteration of a base is.
-    typedef void(__cdecl *pending)(int, int, int, int);
-    PENDING_BODY(0x0055EEE0, pending)(faction_id, faction_id_victim, kind, unk);
-}
-
 // --- callees of the console turn/editor bodies, still archived ---
 
 // ?world_fungus@@YAXXZ at 0x005C3440 - HOMED into src/map.cpp 2026-09-05 over

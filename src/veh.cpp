@@ -11343,11 +11343,6 @@ char *const VehLabelOBLITTED = (char *)0x0068800C;        // "OBLITTED"
 char *const VehIconBASEOBL2_SM_PCX = (char *)0x00688018;  // "baseobl_sm.pcx"
 char *const VehLabelOBLITTED2 = (char *)0x00688028;       // "OBLITTED2"
 
-// Still archived, so veh.cpp cannot link to a definition: 0x0055EEE0 carries
-// the atrocity the obliteration commits and is forwarded like the other
-// unrecovered callees in this file.
-void __cdecl atrocity(int faction_id, int faction_id_victim, int kind,
-                      int unk);
 // base_kill's forwarder lives in pending_bodies.cpp beside the other
 // unrecovered callees; no header claims it yet, so this file declares it.
 void __cdecl base_kill(int base_id);

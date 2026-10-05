@@ -11,7 +11,7 @@
   ],
   "editable_files": ["src/faction.cpp", "src/faction.h", "src/base.cpp", "src/veh.cpp", "src/pending_bodies.cpp", "src/recovered/units/00428350.cpp", "src/recovered/units/0055eee0.cpp", "recovery/tests/test_council_atrocity_product_source.py"],
   "evidence": [
-    "Pinned complete council428350..42854E and atrocity55EEE0..55F44F identities; existing CounсWin, Console, Council state and PlayerData are genuine dependencies.",
+    "Pinned complete council428350..42854E and atrocity55EEE0..55F44F identities; existing CouncWin, Console, Council state and PlayerData are genuine dependencies.",
     "Independent raw-instruction review corrected extra parser calls: council slots0/1 then proposal parse_say2; atrocity actor0/1 victim2/3 then parse_num. Current bodies and controls preserve per-call GenderDefault/PluralityDefault.",
     "PlayerData[1] base96EAAC plus treaty offset18 yields native96EAC4; per-row20CC loop addresses diplo_treaties[actor] and diplo_merc[actor], with fresh reads after callbacks. Existing wrapped-counter helper preserves signed word effects.",
     "Native preflight covers all affected base/faction/veh/pending translation units. Permanent host controls extract only actual product bodies/helpers; original span/claim continuity and fresh application build/link remain required before cleanup publication."
