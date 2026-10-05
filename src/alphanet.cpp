@@ -624,7 +624,20 @@ AlphaNetLedger::~AlphaNetLedger() {
     current_position_ = 0;
 }
 
+// ORIGINAL: 0x004E26E0 ?pick_service@AlphaNet@@QAEHPAH@Z 0x004E26E0-0x004E29DF;0x004E38E0-0x004E38FB;0x0065C630-0x0065C664
+// kind      game
+// TRIED: full transcription (guard/save-global, ServiceStruct local, BasePop::start/exec, Dialogs::item list build, join_service) compiles but this address is catalogued SHARED_TAIL - one of its spans is COMDAT-folded with another function, so no body, not even a one-line stub, gets a MISMATCH/BYTE_EXACT verdict
 int AlphaNet::pick_service(int *allow_pbem) {
+    // The original saves and clears the allocation handoff before creating
+    // the local list, then restores it after list destruction (0x004E26E0).
+    // An outer pending Heap must not become this list's allocation owner.
+    struct AllocationHandoffScope {
+        Heap *saved;
+        AllocationHandoffScope() : saved(StringAllocationHeap) {
+            StringAllocationHeap = 0;
+        }
+        ~AllocationHandoffScope() { StringAllocationHeap = saved; }
+    } allocation_handoff;
     ServiceList providers;
     if (allow_pbem != 0) *allow_pbem = 0;
     if (buffer_6E0_ == 0) return 7;
@@ -654,7 +667,9 @@ int AlphaNet::pick_service(int *allow_pbem) {
             result = 0;
             if (allow_pbem != 0) *allow_pbem = 1;
         } else {
-            providers.seek_pos(selected);
+            // Native selection starts at the head even when the popup's row
+            // lies outside the circular list's signed indexing domain.
+            if (providers.seek_pos(selected) == 0) providers.seek_pos(0);
             ServiceStruct *payload = providers.head_ == 0 ? 0 : providers.current_->payload_;
             result = join_service(payload);
         }

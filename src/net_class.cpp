@@ -3118,6 +3118,10 @@ int NetUnk72C::on_insert(Payload *payload) {
     return 0;
 }
 
+// ORIGINAL: 0x0062E540 ?join_session@Net@@QAEHPAUSessionStruct@@PADPAD@Z 0x0062E540-0x0062EA97;0x006634DF-0x006634FF
+// kind      game
+// symbol    ?join_session@Net@@QAEHPAVNetAllocationNode@@PAD1@Z
+// TRIED: real Font locals (SEH-frame lever) + COM-style dispatch through the provided ComSlot004/006/014/022/024 shims, retyped to their real arities, plus an added ComSlot031; diverges at insn #8 of this SEH-wrapped, DirectPlay-COM-heavy ~1400-byte body
 int Net::join_session(NetAllocationNode *session, char *player_name,
                       char *password) {
     // Both Font subobjects are constructed in the native prologue and remain
