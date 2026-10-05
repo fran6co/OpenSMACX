@@ -856,10 +856,6 @@ int __cdecl save_game(int a1) {
 
 // base_kill4E5250 is recovered in base.cpp under its original mapping.
 
-int __cdecl end_of_game(int a1) {
-    typedef int(__cdecl *pending)(int);
-    return PENDING_BODY(0x00524870, pending)(a1);
-}
 
 int __cdecl load_game(int a1, int a2) {
     typedef int(__cdecl *pending)(int, int);

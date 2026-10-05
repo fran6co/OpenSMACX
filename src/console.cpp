@@ -1037,7 +1037,6 @@ int __cdecl tut_check(int veh_id);                            // 0x004BA5F0 ?tut
 int __cdecl tut_check2(int veh_id);                           // 0x004BA650 ?tut_check2@@YAHH@Z
 int __cdecl save_game(int save_slot);                            // 0x005A9EB0 ?save_game@@YAHH@Z
 void __cdecl base_kill(int base_id);                      // 0x004E5250 ?base_kill@@YAXH@Z
-int __cdecl end_of_game(int victory_kind);                          // 0x00524870 ?end_of_game@@YAHH@Z
 int __cdecl load_game(int save_slot, int faction_id);                    // 0x005AAAB0 ?load_game@@YAHHH@Z
 int __cdecl load_map();                                   // 0x005AB600 ?load_map@@YAHXZ
 void __cdecl save_map();                                  // 0x005ABB90 ?save_map@@YAXXZ

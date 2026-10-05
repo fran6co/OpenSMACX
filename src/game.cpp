@@ -49,6 +49,10 @@
 #include "messagewin.h"  // the standing MessageWin
 #include "multidebug.h"  // MultiDebug, the standing debug window
 #include "netdaemon.h"  // NetDaemonNet
+#include "halloffame.h"
+#include "interlude.h"
+#include "quaylewin.h"
+#include "reportif.h"
 #include "statuswin.h"  // StatusWin::close
 #include "strings.h"  // StringTable
 #include "text.h"  // text_open/text_get/text_item, TextBufferGetPtr
@@ -9386,7 +9390,6 @@ extern int SpockHelpActive; // netdaemon.cpp, original93F674
 extern int SpockNotifyPending; // netdaemon.cpp, original93F670
 extern int NetDaemonWaitTicks; // netdaemon.cpp, original93A960
 extern int MessageWinNetworkMessageCount; // messagewin.cpp, original93E964
-int __cdecl end_of_game(int victory_kind); // pending owner, original524870
 
 // RECOVERY_OBJECT: v2 0x0068BBE4 0x0068BBFA _NetUpkeepSkippingUpkeepSynch 0x005290A0
 static const char NetUpkeepSkippingUpkeepSynch[] = "Skipping upkeep synch";
@@ -10233,4 +10236,468 @@ void __cdecl load_sprites() {
 
     load_icons();
     load_cursors();
+}
+
+// Native game/turn lifecycle owners. Their historical TU boundary is not
+// established; these bodies live with the current game/turn source owner.
+void __cdecl mon_winning_unify(int faction_id, int counterpart);
+void __cdecl show_replay();
+void __cdecl quayle(int faction_id);
+extern int MessageWinNetworkMessageCount;
+
+
+namespace {
+enum EndgameReasonValue {
+    EndgameReason1 = 1, EndgameReason2, EndgameReason3, EndgameReason4,
+    EndgameReason5, EndgameReason6, EndgameReason7, EndgameReason8,
+    EndgameReason9, EndgameReason10, EndgameReason11, EndgameReason12,
+    EndgameReason13, EndgameReason14, EndgameReason15, EndgameReason16,
+    EndgameReason17, EndgameReason18
+};
+const uint32_t EndgameRecorded = STATE_UNK_1;
+const uint32_t EndgamePresented = STATE_UNK_8;
+const uint32_t EndgameNetResults = STATE_IS_SCENARIO;
+const uint32_t EndgameScoreMode = STATE_SCN_VICT_HIGHEST_AC_SCORE_WINS;
+const uint32_t PlayerEndgameFlagA = 0x00020000u;
+const uint32_t PlayerEndgameFlagB = 0x00040000u;
+const uint32_t PlayerGeneratorWin = 0x00100000u;
+const uint32_t PlayerConquestWin = 0x00040000u;
+const uint32_t PlayerConquestLoss = 0x00020000u;
+
+void parse_player_identity(int faction_id) {
+    Player &player = Players[faction_id];
+    PluralityDefault = 0;
+    GenderDefault = player.is_leader_female;
+    parse_says(0, player.title_leader, -1, -1);
+    GenderDefault = player.is_leader_female;
+    PluralityDefault = 0;
+    parse_says(1, player.name_leader, -1, -1);
+    GenderDefault = player.noun_gender;
+    PluralityDefault = player.is_noun_plural;
+    parse_says(2, player.noun_faction, -1, -1);
+}
+
+void clear_multiplayer_endgame_state() {
+    NetDaemonNet.hang_up();
+    NetDaemonNet.lock_state_[0].leading_words_[1] = 0;
+    NetDaemonNet.lock_state_[0].leading_words_[2] = 0;
+    NetDaemonNet.lock_state_[0].leading_words_[3] = 0;
+    NetDaemonNet.lock_state_[0].payload_.flags = 0;
+    NetDaemonNet.lock_state_[0].trailing_words_[8] = 0;
+    NetDaemonNet.lock_state_[0].trailing_words_[7] = 0;
+    NetDaemonNet.lock_state_[1].leading_words_[1] = 0;
+    NetDaemonNet.lock_state_[1].leading_words_[0] = 0;
+    NetDaemonNet.lock_state_[1].trailing_words_[0] = 0;
+    NetDaemonNet.lock_state_[2].leading_words_[1] = 0;
+    NetDaemonNet.lock_state_[1].trailing_words_[9] = 0;
+    NetDaemonNet.lock_state_[2].leading_words_[0] = 0;
+    NetDaemonNet.lock_state_[2].trailing_words_[5] = 0;
+    NetDaemonNet.lock_state_[2].trailing_words_[4] = 0;
+    NetDaemonNet.lock_state_[0].trailing_words_[4] = 0;
+    NetDaemonNet.lock_state_[0].trailing_words_[5] = 0;
+    NetDaemonNet.lock_state_[0].trailing_words_[6] = 0;
+    NetDaemonNet.lock_state_[2].trailing_words_[3] = 0;
+    NetDaemonNet.lock_state_[2].trailing_words_[2] = 0;
+    NetDaemonNet.lock_state_[2].leading_words_[3] = 0;
+    NetDaemonNet.lock_state_[2].leading_words_[2] = 0;
+    NetDaemonNet.lock_state_[2].payload_.flags = 0;
+    NetDaemonNet.lock_state_[0].trailing_words_[0] = 0;
+    NetDaemonNet.lock_state_[0].trailing_words_[1] = 0;
+    MessageWinNetworkMessageCount = 0;
+    NetDaemonNet.lock_state_[2].trailing_words_[8] = 0;
+    NetDaemonNet.lock_state_[2].trailing_words_[7] = 0;
+    NetDaemonNet.lock_state_[0].trailing_words_[2] = 0;
+    NetDaemonNet.lock_state_[0].trailing_words_[3] = 0;
+    NetDaemonNet.lock_state_[2].trailing_words_[6] = 0xFF;
+    NetDaemonNet.lock_state_[1].payload_.flags = 0;
+    for (int index = 0; index < 8; ++index) {
+        NetDaemonNet.lock_state_[1].trailing_words_[index + 1] = 0;
+    }
+    NetDaemonNet.locks_.clear();
+    NetDaemonNet.AlphaNet::close();
+    IsMultiplayerNet = 0;
+}
+}
+
+// ORIGINAL: 0x00524870 ?end_of_game@@YAHH@Z 0x00524870-0x0052581F
+// RECOVERY_BINDING: v1 {"evidence": ["git:990398817a2f8abd81f8ecd21a1c87f88712f379:src/unrecovered/00524870.cpp: retained complete native extent and seed findings", "src/game.h: game state, mission years, result flags and canonical end_of_game declaration", "src/base.h and src/faction.h: objective, faction, ranking and project owners", "src/netdaemon.h: original three-entry lock-state cleanup through typed members", "recovery/tasks/endgame-owner-oct5.json", "recovery/tests/test_end_of_game_actual_source.py"], "reason": "Recover complete endgame decisions, result dialogs, media, scores and multiplayer teardown through genuine source owners. Preserve original defects and branch ordering, including repeated cleanup in the separate net_control_turn caller. Historical spans/findings remain obligations, not byte or runtime acceptance."}
+// TRIED: mechanical transcription of the Ghidra decompilation (which already resolved the three provided jump tables into real switch/case), with every FUN_ callee re-derived from the disassembly's own `; ?mangled@Class` comments rather than guessed - all resolved to functions the scaffold already declares (X_pop, popp, interlude, num_objectives, compute_score, mon_winning_unify, report_score, hall_of_fame, quayle, show_credits, show_replay, has_fac, say_year, amovie_project, parse_num, parse_says) plus three fixed- receiver member calls confirmed from `mov ecx, ADDR; call` (Lock::clear at 0x93e230, AlphaNet::close and NetDaemon::hang_up both at 0x93cd90). Compiles and preserves every branch and both nested nested switches; did not chase the prologue-class mismatch (#0, push-vs-sub) given the size.
+int __cdecl end_of_game(int check_victory) {
+    char year_text[80];
+    int score_items[9];
+    int winner_score;
+    unsigned int winner = 0xFFFFFFFFu;
+    unsigned int selected_faction = 0xFFFFFFFFu;
+    int current_reason;
+    bool show_ending_interlude = false;
+
+    if ((GameState & EndgameRecorded) != 0 &&
+        (GameState & EndgamePresented) != 0) {
+        return 0;
+    }
+
+    if ((GameState & EndgameRecorded) == 0) {
+        if (check_victory != 0) {
+            if (static_cast<int>(EndingMissionYear) <=
+                static_cast<int>(MissionYearCurrent)) {
+                GameState |= EndgameRecorded;
+                EndgameExitReason = EndgameReason8;
+            }
+
+            current_reason = EndgameExitReason;
+            for (int faction_id = 1; faction_id < 8; ++faction_id) {
+                const unsigned int faction_bit = 1u << (faction_id & 0x1F);
+                if ((static_cast<unsigned char>(LockEnableMask >> 8) &
+                     faction_bit) == 0) {
+                    continue;
+                }
+
+                Player &player = Players[faction_id];
+                PlayerData &data = PlayersData[faction_id];
+                int generator_count = 0;
+                if ((player.rule_flags & RFLAG_ALIEN) != 0) {
+                    for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+                        const Base &base = Bases[base_id];
+                        if (static_cast<unsigned char>(base.faction_id_current) ==
+                                faction_id &&
+                            has_fac(0x28, base_id, 0) != 0 &&
+                            static_cast<int>(Rules.size_base_subspace_gen) <=
+                                static_cast<int>(base.population_size)) {
+                            ++generator_count;
+                        }
+                    }
+                }
+                if (static_cast<int>(Rules.subspace_generators_needed) <=
+                    generator_count) {
+                    data.flags |= PlayerGeneratorWin;
+                    if (faction_id == ConsoleGlobal.faction_id_) {
+                        current_reason = EndgameReason16;
+                        EndgameExitReason = current_reason;
+                    } else if ((data.diplo_treaties[
+                                    ConsoleGlobal.faction_id_] & 1u) == 0 ||
+                               (GameRules & RULES_VICTORY_COOPERATIVE) == 0) {
+                        if (current_reason != EndgameReason16 &&
+                            current_reason != EndgameReason17) {
+                            current_reason = EndgameReason18;
+                            EndgameExitReason = current_reason;
+                        }
+                    } else if (current_reason != EndgameReason16) {
+                        current_reason = EndgameReason17;
+                        EndgameExitReason = current_reason;
+                    }
+                    GameState |= EndgameRecorded;
+                    if (selected_faction == 0xFFFFFFFFu ||
+                        faction_id == ConsoleGlobal.faction_id_) {
+                        selected_faction = faction_id;
+                    }
+                    NetTurnFlags |= 0x80u;
+                }
+
+                if (data.corner_market_turn < 1 ||
+                    data.corner_market_turn != TurnCurrentNum ||
+                    data.corner_market_active < 1) {
+                    if (((faction_bit & static_cast<unsigned char>(LockEnableMask)) !=
+                         0 || (GameRules & RULES_SCN_VICT_SOLO_MISSION) == 0) &&
+                        ObjectiveReqVictory > 0 &&
+                        num_objectives(faction_id,
+                            GameRules & RULES_VICTORY_COOPERATIVE) >=
+                            ObjectiveReqVictory) {
+                        GameState |= EndgameRecorded;
+                        EndgameExitReason = EndgameReason9;
+                        current_reason = EndgameReason9;
+                        if (selected_faction == 0xFFFFFFFFu ||
+                            faction_id == ConsoleGlobal.faction_id_) {
+                            selected_faction = faction_id;
+                        }
+                    }
+                } else {
+                    const bool is_current_faction =
+                        faction_id == ConsoleGlobal.faction_id_;
+                    data.flags |= PlayerConquestWin;
+                    if (is_current_faction) {
+                        current_reason = EndgameReason12;
+                        EndgameExitReason = current_reason;
+                    } else if ((data.diplo_treaties[
+                                    ConsoleGlobal.faction_id_] & 1u) == 0 ||
+                               (GameRules & RULES_VICTORY_COOPERATIVE) == 0) {
+                        if (current_reason != EndgameReason12 &&
+                            current_reason != EndgameReason13) {
+                            current_reason = EndgameReason14;
+                            EndgameExitReason = current_reason;
+                        }
+                    } else if (current_reason != EndgameReason12) {
+                        current_reason = EndgameReason13;
+                        EndgameExitReason = current_reason;
+                    }
+                    GameState |= EndgameRecorded | STATE_VICTORY_ECONOMIC;
+                    selected_faction = faction_id;
+                    if (faction_id == ConsoleGlobal.faction_id_) break;
+                }
+            }
+        }
+        if ((GameState & EndgameRecorded) == 0) {
+            // The retained body handles the retirement warning here, before
+            // returning for the ordinary no-result path. The scenario warning
+            // has a different string pair and also fires ten years early.
+            if (check_victory != 0 &&
+                (GameState & STATE_IS_SCENARIO) == 0 &&
+                MissionYearCurrent == EndingMissionYear - 20) {
+                parse_num(0, static_cast<int>(EndingMissionYear));
+                StringTemp[0] = 0;
+                _itoa(static_cast<int>(EndingMissionYear), year_text, 10);
+                strcat(StringTemp, year_text);
+                parse_says(0, StringTemp, -1, -1);
+                X_pop("RETIREWARNING", 0);
+            } else if (check_victory != 0 &&
+                       (GameState & STATE_IS_SCENARIO) != 0 &&
+                       (MissionYearCurrent == EndingMissionYear - 20 ||
+                        MissionYearCurrent == EndingMissionYear - 10)) {
+                parse_num(0, static_cast<int>(EndingMissionYear));
+                StringTemp[0] = 0;
+                _itoa(static_cast<int>(EndingMissionYear), year_text, 10);
+                strcat(StringTemp, year_text);
+                parse_says(0, StringTemp, -1, -1);
+                x_pop_caption_label(const_cast<char *>("SCENARIOWARNING"),
+                                    "SCENARIO", nullptr);
+            }
+            return 0;
+        }
+    }
+
+    if ((GameState & EndgamePresented) != 0) return 0;
+
+    winner = 0;
+    int winner_data_index = 0;
+    for (int faction_id = 1; faction_id < 8; ++faction_id) {
+        const uint32_t flags = PlayersData[faction_id].flags;
+        if ((flags & PlayerEndgameFlagA) != 0) {
+            winner_data_index = faction_id;
+            winner = faction_id;
+        }
+        if ((flags & PlayerEndgameFlagB) != 0 &&
+            (winner == 0 ||
+             (PlayersData[winner]
+                  .diplo_treaties[ConsoleGlobal.faction_id_] & 1u) != 0 ||
+             winner == static_cast<unsigned int>(ConsoleGlobal.faction_id_))) {
+            winner_data_index = faction_id;
+            winner = faction_id;
+        }
+    }
+
+    current_reason = EndgameExitReason;
+    switch (current_reason) {
+    case 1:
+    case 2:
+    case 3:
+        break;
+    case 6:
+        popp(ScriptPopupFile, "DIPLOMATICVICTORY", 0,
+             "dipvic_sm.pcx", 0);
+        break;
+    case 7:
+        if ((GamePreferences & PREF_AV_SECRET_PROJECT_MOVIES) != 0) {
+            if ((Players[ConsoleGlobal.faction_id_].rule_flags & 0x80) != 0) {
+                amovie_project("losealien");
+            } else if (Players[ConsoleGlobal.faction_id_].is_leader_female != 0) {
+                amovie_project("losewoman");
+            } else {
+                amovie_project("loseman");
+            }
+        }
+        break;
+    case 8:
+        parse_num(0, static_cast<int>(MissionYearCurrent));
+        StringTemp[0] = 0;
+        say_year(StringTemp);
+        parse_says(0, StringTemp, -1, -1);
+        if ((GameState & EndgameNetResults) == 0) {
+            X_pop("TIMELIMIT", 0);
+        } else if (ObjectiveReqVictory == 0 ||
+                   (GameState & EndgameScoreMode) != 0) {
+            winner_score = -9999;
+            winner = ConsoleGlobal.faction_id_;
+            for (int faction_id = 1; faction_id < 8; ++faction_id) {
+                const unsigned int faction_bit = 1u << (faction_id & 0x1F);
+                if ((static_cast<unsigned char>(LockEnableMask >> 8) &
+                     faction_bit) != 0) {
+                    int score;
+                    if ((GameState & EndgameScoreMode) == 0) {
+                        score = num_objectives(faction_id,
+                            GameRules & RULES_VICTORY_COOPERATIVE);
+                    } else {
+                        compute_score(faction_id, &score, score_items, 1);
+                    }
+                    if (winner_score < score ||
+                        (winner_score == score &&
+                         faction_id == ConsoleGlobal.faction_id_)) {
+                        winner = faction_id;
+                        winner_score = score;
+                    }
+                }
+            }
+            GenderDefault = Players[winner].is_leader_female;
+            PluralityDefault = 0;
+            parse_says(0, Players[winner].title_leader, -1, -1);
+            GenderDefault = Players[winner].is_leader_female;
+            PluralityDefault = 0;
+            parse_says(1, Players[winner].name_leader, -1, -1);
+            GenderDefault = Players[winner].noun_gender;
+            PluralityDefault = Players[winner].is_noun_plural;
+            parse_says(2, Players[winner].noun_faction, -1, -1);
+            x_pop_caption_label(const_cast<char *>("SCENTIMEWIN"),
+                                "SCENARIO", nullptr);
+        } else {
+            x_pop_caption_label(const_cast<char *>("SCENARIO"),
+                                "SCENTIMELIMIT", nullptr);
+        }
+        break;
+    case 9:
+        PluralityDefault = 0;
+        GenderDefault = Players[selected_faction].is_leader_female;
+        parse_says(0, Players[selected_faction].title_leader, -1, -1);
+        GenderDefault = Players[winner].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(1, Players[winner].name_leader, -1, -1);
+        GenderDefault = Players[winner].noun_gender;
+        PluralityDefault = Players[winner].is_noun_plural;
+        parse_says(2, Players[winner].noun_faction, -1, -1);
+        if (winner == static_cast<unsigned int>(ConsoleGlobal.faction_id_)) {
+            x_pop_caption_label(const_cast<char *>("SCENARIO"),
+                                "SUDDENDEATH0", nullptr);
+        } else {
+            x_pop_caption_label(const_cast<char *>("SCENARIO"),
+                                "SUDDENDEATH", nullptr);
+        }
+        break;
+    case 10:
+    case 11:
+    case 13:
+    case 14:
+        parse_player_identity(static_cast<int>(winner));
+        if (current_reason == 10) {
+            popp(ScriptPopupFile, "DIPLOMATICCOOP", 0,
+                 "dipvic_sm.pcx", 0);
+        } else if (current_reason == 11) {
+            const char *label =
+                (PlayersData[winner]
+                     .diplo_treaties[ConsoleGlobal.faction_id_] & 0x40020u) != 0
+                    ? "DIPLOMATICLOSE2" : "DIPLOMATICLOSE";
+            popp(ScriptPopupFile, label, 0, "dipvic_sm.pcx", 0);
+        } else if (current_reason == 13) {
+            popp(ScriptPopupFile, "ECONOMICCOOP", 0,
+                 "econwin_sm.pcx", 0);
+        } else {
+            const char *label =
+                (PlayersData[winner]
+                     .diplo_treaties[ConsoleGlobal.faction_id_] & 0x40020u) != 0
+                    ? "ECONOMICLOSE2" : "ECONOMICLOSE";
+            popp(ScriptPopupFile, label, 0, "econwin_sm.pcx", 0);
+        }
+        break;
+    case 12:
+        popp(ScriptPopupFile, "ECONOMICVICTORY", 0,
+             "econwin_sm.pcx", 0);
+        break;
+    case 15:
+        if (Language != 0) X_pop("YOULOSE2", 0);
+        break;
+    case 16:
+        interlude(0x20, 0, 4, 0);
+        parse_player_identity(static_cast<int>(winner));
+        popp(ScriptPopupFile, "ENDBEACON", 0,
+             "beacon_sm.pcx", 0);
+        if ((GamePreferences & PREF_AV_SECRET_PROJECT_MOVIES) != 0) {
+            StringTemp[0] = 0;
+            strcat(StringTemp, Players[ConsoleGlobal.faction_id_].filename);
+            CharUpperA(StringTemp);
+            if (strcmp(StringTemp, "CARETAKE") == 0) {
+                amovie_project("close_ct");
+            } else {
+                amovie_project("close_us");
+            }
+        }
+        break;
+    case 17:
+        parse_player_identity(static_cast<int>(winner));
+        popp(ScriptPopupFile, "ENDBEACONCOOP", 0,
+             "beacon_sm.pcx", 0);
+        break;
+    case 18:
+        if ((Players[ConsoleGlobal.faction_id_].rule_flags & 0x80) == 0) {
+            GenderDefault = Players[winner].noun_gender;
+            PluralityDefault = Players[winner].is_noun_plural;
+            interlude(0x1D, Players[winner].noun_faction, 1, 0);
+        }
+        parse_player_identity(static_cast<int>(winner));
+        popp(ScriptPopupFile, "ENDBEACONLOSE", 0,
+             "beaconlose_sm.pcx", 0);
+        break;
+    default:
+        break;
+    }
+
+    switch (current_reason) {
+    case 4:
+    case 5:
+    case 6:
+    case 12:
+        winner = ConsoleGlobal.faction_id_;
+        mon_winning_unify(static_cast<int>(winner), -1);
+        break;
+    case 10:
+    case 13:
+        mon_winning_unify(static_cast<int>(winner), -1);
+        mon_winning_unify(ConsoleGlobal.faction_id_, static_cast<int>(winner));
+        break;
+    case 11:
+    case 14:
+        mon_winning_unify(static_cast<int>(winner), -1);
+        break;
+    default:
+        break;
+    }
+
+    if ((GamePreferences & PREF_AV_INTERLUDES_DISABLED) == 0) {
+        switch (current_reason) {
+        case 4:
+        case 6:
+        case 12:
+            if ((Players[ConsoleGlobal.faction_id_].rule_flags & 0x80) == 0)
+                interlude(0x13, 0, 4, 0);
+            else
+                interlude(0x21, 0, 4, 0);
+            show_ending_interlude = true;
+            break;
+        case 5:
+        case 10:
+        case 13:
+            interlude(0x14, 0, 4, 0);
+            show_ending_interlude = true;
+            break;
+        default:
+            break;
+        }
+    }
+
+    if ((current_reason == 1 || current_reason == 2 || current_reason == 3) ||
+        show_ending_interlude) {
+        show_credits();
+    }
+    report_score(1);
+    if ((GameState & EndgameNetResults) == 0) {
+        quayle(ConsoleGlobal.faction_id_);
+        hall_of_fame(1);
+    }
+    show_replay();
+    GameState |= EndgamePresented;
+    if (IsMultiplayerNet == 0 && current_reason != 7 &&
+        popp(ScriptPopupFile, "GAMEOVERMAN", 0, "stars_sm.pcx", 0) != 0) {
+        return 0;
+    }
+    GameRestartQueued = (IsMultiplayerNet == 0);
+    if (IsMultiplayerNet != 0) {
+        clear_multiplayer_endgame_state();
+    }
+    ExitTurnLoop = 1;
+    return 1;
 }

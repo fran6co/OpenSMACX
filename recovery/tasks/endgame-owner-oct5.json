@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "task_id": "endgame-owner-oct5",
+  "target": "opensmacx",
+  "author": "framework-coordinator",
+  "base_revision": "990398817a2f8abd81f8ecd21a1c87f88712f379",
+  "intent": "Recover full endgame operation with actual game/faction/base/network owners, remove pending address forwarder and superseded seed, and consolidate existing caller declarations. Preserve native repeated net_control_turn cleanup; no matching, runtime or game acceptance grant.",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5392496
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5415648
+    }
+  ],
+  "files": [
+    "recovery/tests/test_end_of_game_actual_source.py",
+    "recovery/tests/test_end_of_game_source_extraction.py",
+    "src/console.cpp",
+    "src/game.cpp",
+    "src/game.h",
+    "src/pending_bodies.cpp",
+    "src/unrecovered/00524870.cpp"
+  ],
+  "evidence": [
+    "Native original524870 full span through52581F defines result and teardown behavior. Preserve flags, winner scans, dialog ordering and all original error paths.",
+    "Current caller game.cpp net_control_turn is original52A2E0, not5275B0; pinned52A4BE/52A880..52A970 proves repeated teardown and ConsoleFactionsWaitingMask clear, so no caller behavior correction is authorized.",
+    "Root native writer retains seed identity/span/claim state and all useful findings; complete native application build/link and actual-source host controls required for manual coordinator integration."
+  ]
+}

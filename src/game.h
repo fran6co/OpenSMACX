@@ -311,6 +311,7 @@ void __cdecl setup_game(int reload);
 int __cdecl top_menu(int mode);
 int __cdecl desktop_init(int fresh);
 int __cdecl multiplayer_init(int a1);
+int __cdecl end_of_game(int check_victory);
 void __cdecl control_turn();
 void __cdecl net_control_turn();
 void __cdecl desktop_close();
