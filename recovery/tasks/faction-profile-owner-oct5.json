@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "task_id": "faction-profile-owner-oct5",
+  "author": "framework-coordinator",
+  "target": "opensmacx",
+  "base_revision": "5e2b7e460e238eab2ab8dfbd50c7520591165854",
+  "intent": "Recover both complete typed faction-profile members in their own provisional role-named GraphicWin owner, preserving live faction reloads, local Buffer lifetime and all seed mappings/history. Retire superseded seeds only after fresh build/link and continuity controls.",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5805920
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5805408
+    }
+  ],
+  "editable_files": [
+    "src/factionprofilewin.cpp",
+    "src/factionprofilewin.h",
+    "recovery/tests/test_factionprofilewin_actual_source.py",
+    "recovery/tests/factionprofilewin_control.cpp",
+    "recovery/tests/factionprofilewin_control.hpp",
+    "CMakeLists.txt",
+    "src/unrecovered/00589560.cpp",
+    "src/unrecovered/00589760.cpp"
+  ],
+  "evidence": [
+    "Pinned receiver stores/calls establish GraphicWin base at zero, Popup atA3C and faction/layout members; existing InterfaceBoxStyles[9] owns the frame style.",
+    "Retain both initializer image spans, including the original local Buffer unwind funclet. Source marker/lesson/symbol transport uses installed writers.",
+    "Original class spelling, construction/allocation and registration sites remain unproved; do not invent a factory, caller or dispatch edge.",
+    "Original callback-capable calls require fresh later faction reads; reentrant actual-body controls cover those reloads. No new matching claims or game/runtime acceptance."
+  ]
+}

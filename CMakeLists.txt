@@ -119,6 +119,7 @@ set(OPENSMACX_SOURCES
     src/alpha.cpp
     src/alphasave.cpp
     src/faction_strategy.cpp
+    src/factionprofilewin.cpp
     src/main.cpp
     src/pending_bodies.cpp
     src/multiwin.cpp
