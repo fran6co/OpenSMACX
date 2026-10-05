@@ -585,6 +585,10 @@ class Console : public MapWin {
  private:
   uint32_t field_23BEC_;  // 0x23BEC
   uint32_t field_23BF0_;  // 0x23BF0
+ public:
+  // Native order_veh mode zero selects this existing UI-state word.
+  uint32_t& vehicle_order_ui_state() { return field_23BF0_; }
+ private:
   uint32_t field_23BF4_;  // 0x23BF4
  public:
   // 0x9392A8 in ConsoleGlobal. Cursor/radius drawing tests this flag;
@@ -770,3 +774,6 @@ extern int TimeControlsSelection;
 // alphamenu.h; no MainMenu source type or forwarding seam is required.
 
 extern int ConsoleFactionsWaitingMask;
+
+// Supply dialog implemented by the Console translation unit.
+int __cdecl supply_options(int veh_id, int base_id);

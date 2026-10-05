@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "task_id": "vehicle-orders-full-oct6",
+  "author": "framework-coordinator",
+  "target": "opensmacx",
+  "base_revision": "a7d57af16b968d543c6c68d146da584e2e760f2e",
+  "intent": "Recover the complete vehicle-order owner, preserve native mode/faction and path-dependent state, and retire its seed and executable forwarder.",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5851072
+    }
+  ],
+  "editable_files": [
+    "src/veh.cpp",
+    "src/console.h",
+    "src/pending_bodies.cpp",
+    "recovery/tests/fixtures/order_veh_host_surface.h",
+    "recovery/tests/fixtures/order_veh_tail_control.cpp",
+    "recovery/tests/test_vehicle_orders_product_source.py",
+    "recovery/tasks/vehicle-orders-full-oct6.json",
+    "src/unrecovered/005947c0.cpp"
+  ],
+  "evidence": [
+    "Coordinator-reviewed manual coverage integration, not native autonomous or full-game acceptance.",
+    "Independent pinned-image review covered the requested high-risk control-flow and call contracts; listing gaps remain explicit.",
+    "Fresh VC6 emitted the complete entry and both counter definitions; four-byte zero initial windows agree with the pinned image. Start-only bindings do not assert allocation bounds or original type/name provenance.",
+    "Keep native unchecked and path-dependent uninitialized behavior; one automatic Popup owns cleanup. Both original hot and generated lifetime spans remain obligations.",
+    "No claim is created or demoted; matching and full runtime/linked preservation remain separate obligations."
+  ]
+}

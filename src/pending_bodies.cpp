@@ -853,11 +853,6 @@ Status: Complete
 // homed into src/netdaemon.cpp, whose wait loops call it, and a forwarder
 // beside a compiled claim is the one thing address_index refuses.
 
-int __cdecl order_veh(int veh_id, int x, int y) {
-    // ?order_veh@@YAHHHH@Z at 0x005947C0
-    typedef int(__cdecl *pending)(int, int, int);
-    return PENDING_BODY(0x005947C0, pending)(veh_id, x, y);
-}
 
 // NetFifo::sub_634200 (0x00634200) and NetFifo::sub_6340c0 (0x006340C0) WERE
 // HERE and are gone: both bodies are homed into src/leaf_recoveries.cpp
