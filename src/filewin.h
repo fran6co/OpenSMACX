@@ -49,7 +49,7 @@ class FileWin {
   void on_double_clicked(int a1);
   void on_button_clicked(int button_id);
   int populate_directory(char *directory);
-  void save();
+  char *save();
   char *load();
   FileWin();
   ~FileWin();

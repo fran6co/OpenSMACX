@@ -34,7 +34,7 @@ def test_load_map_candidate_actual_body(tmp_path):
 #define __cdecl
 typedef char *LPSTR;
 typedef const char *LPCSTR;
-static const char ScenarioFileExtension[] = "SC";
+static const char MapFileExtension[] = "MP";
 static const char SaveGameFileExtension[] = "SAV";
 static int IsMultiplayerNet = 0;
 static char StringTemp[1024];
@@ -86,9 +86,9 @@ int main() {
   assert(load_map() == 1);
   assert(init_count == 1 && draw_count == 1 && destructor_count == 2);
   assert(destructor_order_count == 2 && destructor_order[0] == 2 && destructor_order[1] == 1);
-  assert(extensions_count == 2 && strcmp(extensions[0], ".SC") == 0);
+  assert(extensions_count == 2 && strcmp(extensions[0], ".MP") == 0);
   assert(strcmp(extensions[1], ".SAV") == 0);
-  assert(strcmp(preference_default, "maps\\*.SC") == 0);
+  assert(strcmp(preference_default, "maps\\*.MP") == 0);
   assert(strcmp(initial_default, "old-pref") == 0);
   assert(popup_count == 0 && daemon_path[0] == 0);
 

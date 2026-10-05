@@ -808,19 +808,11 @@ int Win::sub_63c7c0() {
 // callers that needed them; homing any of these into its own TU deletes both
 // the forwarder here and the declaration there.
 
-int __cdecl save_game(int a1) {
-    typedef int(__cdecl *pending)(int);
-    return PENDING_BODY(0x005A9EB0, pending)(a1);
-}
-
+// save_game is fully source-owned in game.cpp.
 // base_kill4E5250 is recovered in base.cpp under its original mapping.
 
 
-int __cdecl load_game(int a1, int a2) {
-    typedef int(__cdecl *pending)(int, int);
-    return PENDING_BODY(0x005AAAB0, pending)(a1, a2);
-}
-
+// load_game is fully source-owned in game.cpp.
 // Complete body is source-owned in newgame.cpp.
 
 

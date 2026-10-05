@@ -1,0 +1,97 @@
+{
+  "schema_version": 1,
+  "task_id": "game-save-load-complete-oct5",
+  "target": "opensmacx",
+  "author": "framework-coordinator",
+  "base_revision": "f802f71ac84cd67eae7b7f525688da0cb17cd211",
+  "intent": "Recover complete faithful save_game/load_game orchestration and real selected-filename result APIs; preserve original bugs, shared NetWin PBEM storage and separate filename/extension identities. Remove two old-executable forwarders and superseded seeds.",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5938864
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5941936
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6507760
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6372688
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4225312
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6027216
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6026032
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5937952
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5946256
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5944832
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5938608
+    }
+  ],
+  "files": [
+    "src/game.cpp",
+    "src/game.h",
+    "src/filebox.cpp",
+    "src/filebox.h",
+    "src/filewin.cpp",
+    "src/filewin.h",
+    "src/alphasave.cpp",
+    "src/alphasave.h",
+    "src/xpops.cpp",
+    "src/xpops.h",
+    "src/pending_bodies.cpp",
+    "recovery/tests/fixtures/game_save_load/load_game_host_fixture.cpp",
+    "recovery/tests/fixtures/game_save_load/save_game_host_fixture.cpp",
+    "recovery/tests/test_load_game_actual_source.py",
+    "recovery/tests/test_save_game_actual_source.py",
+    "src/unrecovered/005a9eb0.cpp",
+    "src/unrecovered/005aaab0.cpp",
+    "src/leaf_recoveries.cpp",
+    "recovery/tests/test_load_map_behavior.py",
+    "recovery/tests/game_save_load_host_control.cpp",
+    "recovery/tests/test_filebox_save_behavior.py",
+    "recovery/tests/filebox_save_host_control.cpp"
+  ],
+  "evidence": [
+    "Standing user coordinator-reviewed recovery and temporary structural matching regression permission; no bug fixes, no dropped claims.",
+    "Independent pinned review corrected positive prompt return: sign controls retry, saved daemon result is returned.",
+    "Shared PBEM output is NetWinDialog+7624/+7728, not a new detached global. Default filename storage is explicitly provisional9-byte view, not original aggregate/capacity proof.",
+    "Require fresh native compilation/link, observed current symbols, complete span/claim continuity and actual-source host controls. Serializer game_data remains explicitly unfinished; build success does not imply functional saves or game acceptance.",
+    "Original map extension pointer B3C refers toMP, scenarioB38 refers toSC. Fix all existing map consumers together; preserve prior interpretation in commit history.",
+    "Native load_game passes Difficulty table values to parse_say, not strings; legacy pointer spelling is converted through intptr_t consistently with existing console/fame consumers. Correct typing of the wider table producer remains a structural obligation."
+  ]
+}

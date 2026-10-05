@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include <ctype.h> // yearmotize uses the original unsigned-char CRT classification.
 #include <mmsystem.h>
 #include "temp.h"
 #include "xpops.h"  // X_pop
@@ -2355,7 +2356,11 @@ int TurnUpkeepPhase = 0;
 // Native control_game reads only this pinned NUL-terminated source string;
 // one byte is the observed lower bound, not its complete original capacity.
 char SaveGameFileName[1];  // 0x0093AA0C
-char SaveNameBuffer[0x104];    // 0x009B2078
+// Original serializer transfers two adjacent, independent256-byte records.
+// RECOVERY_OBJECT: v2 0x009B2078 0x009B2178 ?SaveNameBuffer@@3PADA 0x005A6AC0
+char SaveNameBuffer[256];
+// RECOVERY_OBJECT: v2 0x009B2178 0x009B2278 ?ScenarioSaveNameBuffer@@3PADA 0x005A6AC0
+char ScenarioSaveNameBuffer[256];
 
 // The window the loop paints colour 9 over and hides while the game boots,
 // showing it again for a PBEM session - REAL STORAGE, not the
@@ -5778,12 +5783,17 @@ static const char LatestMapPreference[] = "Latest Map";
 char SaveGameFileExtensionText[4] = "SAV";
 // RECOVERY_OBJECT: v1 0x00691B34 ?SaveGameFileExtension@@3PBDB
 LPCSTR SaveGameFileExtension = SaveGameFileExtensionText;
-// Native5A9B6C/5ABBD1 load this distinct SC pointer, not the MP map
-// extension. The three-byte view claims no neighboring allocation extent.
+// Native scenario save/load uses pointerB38 toSC; map save/load uses
+// pointerB3C toMP. These three-byte text views claim no neighboring extent.
 // RECOVERY_OBJECT: v1 0x00691BF0 ?ScenarioFileExtensionText@@3PADA
 char ScenarioFileExtensionText[3] = "SC";
-// RECOVERY_OBJECT: v1 0x00691B3C ?ScenarioFileExtension@@3PBDB
+// RECOVERY_OBJECT: v1 0x00691B38 ?ScenarioFileExtension@@3PBDB
 LPCSTR ScenarioFileExtension = ScenarioFileExtensionText;
+// RECOVERY_OBJECT: v1 0x00691BF4 ?MapFileExtensionText@@3PADA
+char MapFileExtensionText[3] = "MP";
+// Historical SC attribution of this cell was wrong; originalB3C points toMP.
+// RECOVERY_OBJECT: v1 0x00691B3C ?MapFileExtension@@3PBDB
+LPCSTR MapFileExtension = MapFileExtensionText;
 // RECOVERY_OBJECT: v1 0x00690D9C ?GameSaveMultiplayerMarker@@3PADA
 char GameSaveMultiplayerMarker[] = "multi";  // native string starts at 0x00690D9C
 
@@ -6142,7 +6152,7 @@ int __cdecl save_map_daemon(char *path) {
     strcat(filename, path);
     if (strchr(filename, '.') == 0) {
         strcat(filename, PathDot);
-        strcat(filename, ScenarioFileExtension);
+        strcat(filename, MapFileExtension);
     }
 
     FILE *file = env_open(filename, SaveFileMode);
@@ -6300,12 +6310,12 @@ int __cdecl load_daemon(LPCSTR path, int linearize_contours) {
 void __cdecl save_map() {
     FileBox box;
     box.set_def_name(MapFilePath);
-    box.set_def_ext(ScenarioFileExtension);
+    box.set_def_ext(MapFileExtension);
 
     char filter[256];
     filter[0] = 0;
     strcat(filter, MapFileFilterPattern);
-    strcat(filter, ScenarioFileExtension);
+    strcat(filter, MapFileExtension);
     box.add_filter(filter, label_get(0x678 / 4));
 
     char *const selection = box.save();
@@ -6345,14 +6355,14 @@ int __cdecl load_map() {
     dialog.init();
 
     char scenario_filter[16] = ".";
-    strcat(scenario_filter, ScenarioFileExtension);
+    strcat(scenario_filter, MapFileExtension);
     dialog.add_default_extension(scenario_filter);
     char save_filter[16] = ".";
     strcat(save_filter, SaveGameFileExtension);
     dialog.add_default_extension(save_filter);
 
     char initial_pattern[260] = "maps\\*.";
-    strcat(initial_pattern, ScenarioFileExtension);
+    strcat(initial_pattern, MapFileExtension);
     LPSTR preference_name = prefs_get("Latest Map", initial_pattern, 0xFF);
     char default_name[264];
     strncpy(default_name, preference_name, 0xFF);
@@ -6408,6 +6418,46 @@ int __cdecl load_map() {
     }
     return result;
 }
+
+/*
+// ORIGINAL: 0x005A9DB0 ?yearmotize@@YAXPAD@Z 0x005A9DB0-0x005A9EB0 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["git:f802f71a:src/leaf_recoveries.cpp", "image:0x005A9DB0", "source:src/game.cpp"], "reason": "The complete year-digit rewrite is the helper called by save_game; move its unchanged typed body and original identity out of the generic leaf container into the game owner."}
+// TRIED: scaffold's own `isdigit()`/`_itoa()` (empty-parens fallback declarations) - redeclared under new names `my_isdigit`/ `my_itoa` with the real signatures instead (relocation is masked regardless of the symbol name, matching the existing `my_itoa` idiom in git:20b88b523285a816ba99f503d727b761b89b227f:src/recovered/units/0042abc0.cpp).
+*/
+void __cdecl yearmotize(char *text) {
+    char *p = text;
+    if (*p == 0) {
+        return;
+    }
+    char c;
+    do {
+        ++p;
+        char *run = p - 1;
+        if (strlen(run) < 4) {
+            return;
+        }
+        if (isdigit(static_cast<unsigned char>(run[0])) &&
+            isdigit(static_cast<unsigned char>(run[1])) &&
+            isdigit(static_cast<unsigned char>(run[2])) &&
+            isdigit(static_cast<unsigned char>(run[3])) &&
+            !isdigit(static_cast<unsigned char>(run[4])) &&
+            (run == text || !isdigit(static_cast<unsigned char>(run[-1])))) {
+            char buf[80];
+            char year_str[80];
+            buf[0] = 0;
+            const int year = static_cast<int>(game_year(TurnCurrentNum));
+            _itoa(year, year_str, 10);
+            strcat(buf, year_str);
+            run[0] = buf[0];
+            run[1] = buf[1];
+            run[2] = buf[2];
+            run[3] = buf[3];
+        }
+        c = *p;
+        ++p;
+    } while (c != 0);
+}
+
 
 // Combat updates50A4A7/50A4B5 and50AF1B/50AF2D index these eight words.
 // Turn display527CEE/527D0F passes them to WONLOST; reset51E3C0 clears all.
@@ -10884,7 +10934,7 @@ static int &control_turn_relation_first_word(int flat_index) {
     }
 }
 
-int __cdecl save_game(int save_slot);
+// save_game is declared by the real game owner header.
 void __cdecl crash_landing(int faction_id);
 
 // ORIGINAL: 0x005275B0 ?control_turn@@YAXXZ 0x005275B0-0x00528E94;0x0065D6DD-0x0065DB67 FILE
@@ -11325,4 +11375,390 @@ void __cdecl control_turn() {
 
 turn_exit:
     return;
+}
+
+
+// Only NUL string starts945D80/84/88 and a9-byte minimum touched window
+// are proved. This provisional view is not an original aggregate-type or
+// full-capacity claim; larger allocation and indirect aliases remain unknown.
+struct SaveNameDefaultStorage {
+    char game_data_migration_default_[1];
+    char unassigned_1_[3];
+    char scenario_equal_default_[1];
+    char unassigned_2_[3];
+    char save_equal_default_[1];
+};
+// RECOVERY_OBJECT: v1 0x00945D80 ?SaveNameDefaultStorageGlobal@@3USaveNameDefaultStorage@@A
+SaveNameDefaultStorage SaveNameDefaultStorageGlobal;
+
+/*
+// ORIGINAL: 0x005A9EB0 ?save_game@@YAHH@Z 0x005A9EB0-0x005AAAA9;0x00661B40-0x00661E84 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["git:f802f71ac84cd67eae7b7f525688da0cb17cd211:src/unrecovered/005a9eb0.cpp", "image:0x5a9eb0", "task:game-save-load-complete-oct5"], "reason": "Complete original orchestration uses one FileBox and one AlphaSave; the apparent stack widgets are its real embedded objects, not independent locals. Preserve original error/retry branches, first-dot filename handling, owned selected-buffer results and all body/EH spans. Source recovery is not exact constructor/unwind or linked fidelity proof."}
+// TRIED: time-boxed - the filename/faction/year string build, the FileBox/FileWin set_def_name/set_def_ext/add_filter/ add_def_ext setup, prefs_get/put, the is_visible-gated AlphaSave::save vs FileBox::save dispatch and do_all_draws are transcribed against the disassembly; the failure path (daemon-reserved-name checks, save_daemon, auto_save, NetDaemon::hang_up, a large session-struct zero-fill) is a deliberate stub. MISMATCH #0, prologue only.
+*/
+int __cdecl save_game(int mode) {
+    FileBox file_box;
+    AlphaSave alpha_save;
+
+    if (ConsoleGlobal.is_visible() != 0 &&
+        WorldClimateSkipTerrainClear == 0) {
+        alpha_save.init();
+    }
+
+    StringTemp[0] = 0;
+    strcat(StringTemp, mode != 0 ? "scenarios\\" : "saves\\");
+
+    const int faction_id = ConsoleGlobal.faction_id_;
+    PluralityDefault = 0;
+    GenderDefault = Players[faction_id].is_leader_female;
+    strcat(StringTemp, Players[faction_id].name_leader);
+    strcat(StringTemp, " ");
+    strcat(StringTemp, label_get(0x2D0 / 4));
+    strcat(StringTemp, " ");
+    GenderDefault = Players[faction_id].noun_gender;
+    PluralityDefault = Players[faction_id].is_noun_plural;
+    strcat(StringTemp, Players[faction_id].noun_faction);
+    strcat(StringTemp, ",");
+    say_year(StringTemp);
+
+    char transient_name[188];
+    strcpy(transient_name, mode != 0 ? ScenarioSaveNameBuffer
+                                    : LegacyGameSaveName);
+    yearmotize(transient_name);
+    char *const default_name = transient_name[0] != 0
+        ? transient_name : StringTemp;
+
+    file_box.set_def_name(default_name);
+    alpha_save.set_default_filename(default_name);
+
+    const char *const extension =
+        mode != 0 ? ScenarioFileExtension : SaveGameFileExtension;
+    file_box.set_def_ext(extension);
+
+    transient_name[0] = 0;
+    strcat(transient_name, "*.");
+    strcat(transient_name, extension);
+    file_box.add_filter(transient_name,
+                        label_get(mode != 0 ? 0x9C8 / 4 : 0x674 / 4));
+
+    transient_name[0] = 0;
+    strcat(transient_name, ".");
+    strcat(transient_name, extension);
+    alpha_save.add_default_extension(transient_name);
+
+    const int use_file_box = prefs_get("WindowsFileBox", 0, 0);
+    prefs_put("WindowsFileBox", use_file_box, 0);
+
+    char *selected_path;
+    if (ConsoleGlobal.is_visible() != 0 &&
+        WorldClimateSkipTerrainClear == 0 && use_file_box == 0) {
+        selected_path = alpha_save.save();
+    } else {
+        selected_path = file_box.save();
+    }
+    do_all_draws();
+
+    if (selected_path == 0) {
+        return 1;
+    }
+
+    char filename[256];
+    strcpy(filename, selected_path);
+    if (strcmp(filename, "auto\\") == 0) {
+        strcpy(StringTemp, filename);
+    }
+
+    char filename_stem[256];
+    strcpy(filename_stem, filename);
+    char *dot = strchr(filename_stem, '.');
+    if (dot != 0) {
+        *dot = 0;
+    }
+
+    char *selected_basename = strrchr(filename_stem, '\\');
+    if (selected_basename == 0) {
+        selected_basename = strrchr(filename_stem, ':');
+    }
+    if (selected_basename != 0) {
+        ++selected_basename;
+    } else {
+        selected_basename = filename_stem;
+    }
+
+    char *default_basename = strrchr(StringTemp, '\\');
+    if (default_basename == 0) {
+        default_basename = strrchr(StringTemp, ':');
+    }
+    if (default_basename != 0) {
+        ++default_basename;
+    } else {
+        default_basename = StringTemp;
+    }
+
+    if (mode != 0) {
+        if (_stricmp(selected_basename, default_basename) != 0) {
+            strcpy(ScenarioSaveNameBuffer, selected_basename);
+            GameState |= 0x10;
+            for (int faction = 0; faction < MaxPlayerNum; ++faction) {
+                PlayersData[faction].unk_102 = 0;
+            }
+        } else {
+            strcpy(ScenarioSaveNameBuffer,
+                   SaveNameDefaultStorageGlobal.scenario_equal_default_);
+        }
+    } else {
+        const char *save_name = selected_basename;
+        if (_stricmp(selected_basename, default_basename) == 0) {
+            save_name = SaveNameDefaultStorageGlobal.save_equal_default_;
+        }
+        strcpy(LegacyGameSaveName, save_name);
+        prefs_put("Latest Save", selected_basename);
+    }
+
+    const int daemon_result = save_daemon(filename);
+    if (daemon_result != 0) {
+        parse_says(-1, filename, -1, 0);
+        X_pop("SAVEFAILED", 0);
+        do_all_draws();
+        return 1;
+    }
+
+    if (IsMultiplayerPBEM != 0) {
+        ExitTurnLoop = 1;
+        return 0;
+    }
+
+    if (mode == 0 && (GameRules & RULES_IRONMAN) != 0) {
+        auto_save();
+        ExitTurnLoop = 1;
+
+        if (IsMultiplayerNet != 0) {
+            NetDaemonNet.hang_up();
+
+            LockStateEntry *const state = NetDaemonNet.lock_state_;
+            state[0].leading_words_[1] = 0;
+            state[0].leading_words_[2] = 0;
+            state[0].leading_words_[3] = 0;
+            state[0].payload_.flags = 0;
+            state[0].trailing_words_[0] = 0;
+            state[0].trailing_words_[1] = 0;
+            state[0].trailing_words_[2] = 0;
+            state[0].trailing_words_[3] = 0;
+            state[0].trailing_words_[4] = 0;
+            state[0].trailing_words_[5] = 0;
+            state[0].trailing_words_[6] = 0;
+            state[0].trailing_words_[7] = 0;
+            state[0].trailing_words_[8] = 0;
+            state[1].leading_words_[0] = 0;
+            state[1].leading_words_[1] = 0;
+            state[1].payload_.flags = 0;
+            state[1].trailing_words_[0] = 0;
+            state[1].trailing_words_[9] = 0;
+            for (int word = 1; word <= 8; ++word) {
+                state[1].trailing_words_[word] = 0;
+            }
+            state[2].leading_words_[0] = 0;
+            state[2].leading_words_[1] = 0;
+            state[2].leading_words_[2] = 0;
+            state[2].leading_words_[3] = 0;
+            state[2].payload_.flags = 0;
+            state[2].trailing_words_[2] = 0;
+            state[2].trailing_words_[3] = 0;
+            state[2].trailing_words_[4] = 0;
+            state[2].trailing_words_[5] = 0;
+            state[2].trailing_words_[6] = 0xFF;
+            state[2].trailing_words_[7] = 0;
+            state[2].trailing_words_[8] = 0;
+
+            NetDaemonNet.locks_.clear();
+            NetDaemonNet.AlphaNet::close();
+            IsMultiplayerNet = 0;
+        }
+
+        X_pop("IRONMAN", 0);
+        do_all_draws();
+    }
+
+    return 0;
+}
+
+/*
+// ORIGINAL: 0x005AAAB0 ?load_game@@YAHHH@Z 0x005AAAB0-0x005AB5E3;0x00661E84-0x006620A7 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["git:f802f71ac84cd67eae7b7f525688da0cb17cd211:src/unrecovered/005aaab0.cpp", "image:0x5aaab0", "task:game-save-load-complete-oct5"], "reason": "Complete original orchestration uses one FileBox and one AlphaSave; the apparent stack widgets are its real embedded objects, not independent locals. Preserve original error/retry branches, first-dot filename handling, owned selected-buffer results and all body/EH spans. Source recovery is not exact constructor/unwind or linked fidelity proof."}
+// TRIED: RAII locals (FileBox/AlphaSave/FileWin/Scroll/Sprite x7/ FlatButton x4/ListBox/Dialog/EditBox/Time) declared once at function scope in place of the original's per-branch conditionally-constructed objects (evidenced by inline vtable-pointer stores immediately before each dtor/close() in the exception funclets at 0x661E84+); AlphaSave and EditBox were given a GraphicWin base (embedded Buffer at +0x444 matches the paired GraphicWin-dtor calls on the same address) and FileBox::load/AlphaSave::load were retyped to return char* (eax used immediately as a strcpy/strncpy source, but the catalogued mangling is QAEXXZ = void) - see PROPOSALS. Diverges at instr #14 (xor vs lea); not chased further given the 3414-byte, ~15-local-object scope.
+*/
+int __cdecl load_game(int mode, int load_argument) {
+    FileBox file_box;
+    AlphaSave alpha_save;
+    char default_name[256];
+    char selected_path[256];
+    char save_stem[336];
+    char previous_name[256];
+    char filter[256];
+    int result = 0;
+    int remove_auto_saves = 0;
+
+    for (;;) {
+        alpha_save.init();
+
+        const char *const pattern = mode == 0 ? "saves\\*." : "scenarios\\*.";
+        const char *const extension = mode == 0 ? SaveGameFileExtension
+                                                 : ScenarioFileExtension;
+        const char *const latest_key = mode == 0 ? "Latest Save"
+                                                   : "Latest Scenario";
+        strcpy(default_name, pattern);
+        strcat(default_name, extension);
+        strcpy(filter, "*.");
+        strcat(filter, pattern);
+        strcat(filter, extension);
+
+        char *preference = prefs_get(latest_key, default_name, 0);
+        strncpy(default_name, preference, sizeof(default_name) - 1);
+        if (default_name[0] == '\0') {
+            strcpy(default_name, pattern);
+            strcat(default_name, extension);
+        }
+
+        file_box.set_def_name(default_name);
+        file_box.set_def_ext(const_cast<char *>(extension));
+        file_box.add_filter(filter,
+                            label_get(mode == 0 ? 0x674 / 4 : 0x9C8 / 4));
+
+        char initial_extension[8];
+        strcpy(initial_extension, ".");
+        strcat(initial_extension, extension);
+        alpha_save.set_default_filename(default_name);
+        alpha_save.add_default_extension(initial_extension);
+
+        const int use_file_box = prefs_get("WindowsFileBox", 0, 0);
+        prefs_put("WindowsFileBox", use_file_box, 0);
+        char *loaded_name = use_file_box != 0 ? file_box.load()
+                                               : alpha_save.load();
+        do_all_draws();
+        if (loaded_name == 0) return 1;
+
+        strcpy(selected_path, loaded_name);
+        strcpy(save_stem, loaded_name);
+        char *dot = strchr(save_stem, '.');
+        if (dot != 0) *dot = '\0';
+        if (strstr(save_stem, "auto\\") == 0)
+            prefs_put(latest_key, save_stem);
+
+        strcpy(previous_name, SaveNameBuffer);
+        result = load_daemon(selected_path, load_argument);
+
+        if (IsMultiplayerNet != 0 && result == 0) {
+            NetWinDialog.field_7624_[0] = '\0';
+            strcat(reinterpret_cast<char *>(NetWinDialog.field_7624_), save_stem);
+            NetWinDialog.field_7728_ = (mode != 0) + 2;
+        }
+
+        if (mode != 0) {
+            for (int faction = 1; faction < MaxPlayerNum; ++faction)
+                load_faction_art(faction);
+            load_flags();
+            GameState &= 0xF79FCF16u;
+            if ((GameState & 0xC0u) == 0xC0u)
+                MainInterfaceGlobal.flat_button(2).show(0);
+            else
+                MainInterfaceGlobal.flat_button(2).hide();
+
+            strcpy(SaveNameBuffer, save_stem);
+            char *slash = strrchr(SaveNameBuffer, '\\');
+            if (slash != 0) {
+                slash[1] = '\0';
+            } else if (strlen(SaveNameBuffer) != 0) {
+                strcat(SaveNameBuffer, "\\");
+            }
+            prefs_use();
+        }
+
+        GameSessionActive = strcmp(SaveNameBuffer, previous_name);
+        filefind_set_alternative(SaveNameBuffer);
+        mode |= static_cast<int>(GameState & 0x10u);
+
+        if (IsMultiplayerNet == 0 && IsMultiplayerPBEM == 0) {
+            for (int faction = 1; faction < MaxPlayerNum; ++faction) {
+                if (PlayersData[faction].unk_102 != 0) {
+                    X_pop(ScriptPopupFile, "PASSWORDEDLOADATTEMPT", 0);
+                    if (WorldClimateSkipTerrainClear == 0) ExitTurnLoop = 1;
+                    return 5;
+                }
+            }
+        }
+
+        if (result != 0) {
+            parse_says(-1, selected_path, -1, -1);
+            parse_num(0, result);
+            StringTemp[0] = '\0';
+            strcat(StringTemp, "LOAD");
+            switch (result) {
+            case 1: strcat(StringTemp, "NONE"); break;
+            case 2: strcat(StringTemp, "NOT"); break;
+            case 3: strcat(StringTemp, "OLD"); break;
+            case 4: strcat(StringTemp, "ERROR"); break;
+            case 5: strcat(StringTemp, "SECURITY"); break;
+            default: break;
+            }
+            X_pop(StringTemp, 0);
+            do_all_draws();
+            break;
+        }
+
+        if (mode != 0) {
+            break;
+        }
+
+        for (int faction = 1; faction < MaxPlayerNum; ++faction)
+            load_faction_art(faction);
+        load_flags();
+        // Difficulty still uses the legacy pointer spelling for StringTable
+        // IDs; native passes its32-bit table value, not the pointed-to text.
+        parse_say(0, static_cast<int>(reinterpret_cast<intptr_t>(
+            Difficulty[DiffLevelCurrent])), -1, -1);
+
+        Player &player = Players[ConsoleGlobal.faction_id_];
+        GenderDefault = player.is_leader_female;
+        PluralityDefault = 0;
+        parse_says(1, player.adj_name_faction, -1, -1);
+        GenderDefault = player.is_leader_female;
+        PluralityDefault = 0;
+        parse_says(2, player.name_leader, -1, -1);
+        GenderDefault = player.noun_gender;
+        PluralityDefault = player.is_noun_plural;
+        parse_says(3, player.noun_faction, -1, -1);
+
+        StringTemp[0] = '\0';
+        strcat(StringTemp,
+               StringTable.get(reinterpret_cast<int *>(Labels.strings_ptr)[0]));
+        strcat(StringTemp, " ");
+        say_year(StringTemp);
+        parse_says(4, StringTemp, -1, -1);
+        const int prompt_result = X_pops(
+            "LOADGAME", 0x40, FactionDiplomacyPortraits[ConsoleGlobal.faction_id_], 0);
+        do_all_draws();
+        if (prompt_result < 0) {
+            alpha_save.close_for_load_retry();
+            continue;
+        }
+        remove_auto_saves = 1;
+        break;
+    }
+
+    if ((GamePreferences & 0x20000000u) == 0)
+        DialogDefaults[36] |= 4u;
+    else
+        DialogDefaults[36] &= ~4u;
+
+    if (remove_auto_saves != 0) {
+        for (int suffix = 9; suffix >= 1; --suffix) {
+            StringTemp[0] = '\0';
+            strcat(StringTemp, "saves\\auto\\Scenario Editor Undo ");
+            char number[16];
+            _itoa(suffix, number, 10);
+            strcat(StringTemp, number);
+            remove(StringTemp);
+        }
+    }
+    return result;
 }

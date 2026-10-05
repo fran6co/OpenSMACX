@@ -290,7 +290,8 @@ extern int TurnUpkeepPhase;  // 0x00945F48
 // remain unknown.
 extern char SaveGameFileName[1];  // 0x0093AA0C lower-bound view
 // The working copy filefind_set_alternate runs on. Same unknown bound.
-extern char SaveNameBuffer[0x104];  // 0x009B2078
+extern char SaveNameBuffer[256];
+extern char ScenarioSaveNameBuffer[256];  // 0x009B2178
 
 // The multiplayer window, 0x007FD648 in the image - a REAL OBJECT defined in
 // game.cpp, not the `GraphicWin *const MultiWindow` binding that named
@@ -480,7 +481,9 @@ extern int GameDataLoadStatusWord;  // 0x00945D7C
 extern char SaveGameFileExtensionText[4];  // pointee starts at 0x00691BEC
 extern const char *SaveGameFileExtension;  // pointer cell at 0x00691B34
 extern char ScenarioFileExtensionText[3];  // three-byte SC view at 0x00691BF0
-extern const char *ScenarioFileExtension;  // distinct pointer cell at 0x00691B3C
+extern const char *ScenarioFileExtension;  // distinct pointer cell at0x00691B38
+extern char MapFileExtensionText[3];
+extern const char *MapFileExtension; //0x00691B3C -> MP at0x00691BF4
 
 // Scenario placement and Unity events are genuine game.cpp owners.
 void __cdecl scenario_setup();
@@ -515,7 +518,9 @@ int __cdecl config_game(int mode);
 int __cdecl change_opening(char *filename);
 int __cdecl load_map_daemon(char *filename);
 int __cdecl load_map();
-int __cdecl load_game(int save_slot, int faction_id);
+int __cdecl save_game(int mode);
+void __cdecl yearmotize(char *text);
+int __cdecl load_game(int mode, int load_argument);
 void __cdecl show_credits();
 
 char *__cdecl get_pacts(int faction_id, int other_id);
@@ -527,3 +532,6 @@ int __cdecl net_upkeep_phase(int phase);
 int __cdecl next_player_turn();
 
 char *__cdecl uppercase_text(char *text, int mode);
+
+struct SaveNameDefaultStorage;
+extern SaveNameDefaultStorage SaveNameDefaultStorageGlobal;

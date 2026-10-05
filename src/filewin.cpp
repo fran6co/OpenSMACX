@@ -302,6 +302,7 @@ restore_dialog_focus:
 }
 
 // ORIGINAL: 0x00613D50 ?save@FileWin@@QAEXXZ 0x00613D50-0x00613F5C
+// symbol    ?save@FileWin@@QAEPADXZ
 // The sibling load path differs in its action code and filename fallback.
 // Both use FileWin's real directory, suffix and control subobjects instead
 // of the old standalone unit's self-offset and IAT-pointer scaffolding.
@@ -310,8 +311,8 @@ restore_dialog_focus:
 // an EBP frame for WIN32_FIND_DATA. Both image bodies also leave EAX as 0
 // or this+0x208 despite their void-decorated catalogue symbols. load_map
 // consumes that result through AlphaSave::load (5AB76A..5AB778).
-void FileWin::save() {
-    run_file_dialog(true);
+char *FileWin::save() {
+    return run_file_dialog(true);
 }
 
 // ORIGINAL: 0x00613F60 ?load@FileWin@@QAEXXZ 0x00613F60-0x00614133

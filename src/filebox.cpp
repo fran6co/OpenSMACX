@@ -96,9 +96,9 @@ char *FileBox::save() {
 Purpose: Show the common open dialog using FileBox's saved filter and defaults.
 // ORIGINAL: 0x00634CF0 ?load@FileBox@@QAEXXZ 0x00634CF0-0x00634DAE FILE
 // RECOVERY_BINDING: v1 {"reason":"The open dialog reads and writes the same inline FileBox buffers as the save dialog, with open-specific flags and default extension.","evidence":["Original 0x00634CF0-0x00634DAE calls strcat and GetOpenFileNameA with FileBox offsets +0, +0x104, +0x30c, +0x414 and +0x418.","The prior compiling redirect and its observations are preserved at git:06248782:src/leaf_recoveries.cpp."]}
-// symbol    ?load@FileBox@@QAEXXZ
+// symbol    ?load@FileBox@@QAEPADXZ
 */
-void FileBox::load() {
+char *FileBox::load() {
     char *const file = file_;
     char *const title = def_name_;
     if (*title != 0) {
@@ -125,7 +125,7 @@ void FileBox::load() {
     ofn.lCustData = 0;
     ofn.lpfnHook = 0;
     ofn.lpTemplateName = 0;
-    GetOpenFileNameA(&ofn);
+    return GetOpenFileNameA(&ofn) != 0 ? file : 0;
 }
 
 /*

@@ -24,6 +24,7 @@ class AlphaSave : public GraphicWin {
   virtual ~AlphaSave();
 
   void close();
+  void close_for_load_retry();
   void on_double_clicked(int button_id);
   void forward_button_click(int button_id);
   int on_listbox_scroll_delete(Scroll *scroll);
@@ -36,7 +37,7 @@ class AlphaSave : public GraphicWin {
   void show_save_window(int mode);
   void hide_save_window();
   void on_selected(int selection_id);
-  void save();
+  char *save();
   char *load();
   void init();
   int set_default_filename(char *name);

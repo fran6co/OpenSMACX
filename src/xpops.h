@@ -167,3 +167,8 @@ int __cdecl x_pops_no_flags(char *caption, const char *label,
                                       int title, char *text, int value,
                                       Sprite *sprite,
                                       int (__cdecl *callback)());
+
+int __cdecl X_pops(const char *label, int value, Sprite *sprite,
+                   int (__cdecl *callback)());
+int __cdecl X_pop(char *caption, const char *label,
+                  int (__cdecl *callback)());

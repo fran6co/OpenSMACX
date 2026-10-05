@@ -24,7 +24,7 @@ class FileBox {
   int set_def_name(const char *name);
   int set_initial_dir(const char *directory);
   char *save();
-  void load();
+  char *load();
   int add_filter(char *pattern, char *label);
 
   char file_[0x104];

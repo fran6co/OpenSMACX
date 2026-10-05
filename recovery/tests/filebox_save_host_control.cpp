@@ -32,7 +32,8 @@ static int dialog_result;
 static int dialog_calls;
 static bool publish_filename;
 
-int GetSaveFileNameA(OPENFILENAMEA *ofn) {
+static bool expect_open;
+static int common_dialog(OPENFILENAMEA *ofn, uint32_t flags) {
     ++dialog_calls;
     assert(ofn->lStructSize == 0x4C);
     assert(ofn->hwndOwner == 0 && ofn->hInstance == 0);
@@ -44,7 +45,7 @@ int GetSaveFileNameA(OPENFILENAMEA *ofn) {
     assert(ofn->nMaxFileTitle == 0x104);
     assert(ofn->lpstrInitialDir ==
            (expected_box->initial_dir_[0] ? expected_box->initial_dir_ : 0));
-    assert(ofn->lpstrTitle == 0 && ofn->Flags == 0xE);
+    assert(ofn->lpstrTitle == 0 && ofn->Flags == flags);
     assert(ofn->nFileOffset == 0 && ofn->nFileExtension == 0);
     assert(ofn->lpstrDefExt ==
            (expected_box->def_ext_[0] ? expected_box->def_ext_ : 0));
@@ -53,9 +54,20 @@ int GetSaveFileNameA(OPENFILENAMEA *ofn) {
     return dialog_result;
 }
 
+int GetSaveFileNameA(OPENFILENAMEA *ofn) {
+    assert(!expect_open);
+    return common_dialog(ofn, 0xE);
+}
+int GetOpenFileNameA(OPENFILENAMEA *ofn) {
+    assert(expect_open);
+    return common_dialog(ofn, 0x180E);
+}
+
 /* ACTUAL_FILEBOX_BODIES */
 
 int main() {
+  for (int mode = 0; mode != 2; ++mode) {
+    expect_open = mode != 0;
     FileBox box;
     expected_box = &box;
     dialog_result = 0;
@@ -64,12 +76,12 @@ int main() {
     std::strcpy(box.def_name_, "default.SC");
     std::strcpy(box.initial_dir_, "maps");
     std::strcpy(box.def_ext_, "SC");
-    assert(box.save() == 0);
+    assert((expect_open ? box.load() : box.save()) == 0);
     assert(std::strcmp(box.file_, "default.SC") == 0);
 
     dialog_result = 1;
     publish_filename = true;
-    assert(box.save() == box.file_);
+    assert((expect_open ? box.load() : box.save()) == box.file_);
     assert(std::strcmp(box.file_, "chosen.SC") == 0);
 
     // Empty defaults and a noncanonical nonzero BOOL still preserve the API.
@@ -78,7 +90,8 @@ int main() {
     box.def_ext_[0] = 0;
     dialog_result = -1;
     publish_filename = false;
-    assert(box.save() == box.file_);
+    assert((expect_open ? box.load() : box.save()) == box.file_);
     assert(std::strcmp(box.file_, "chosen.SC") == 0);
-    assert(dialog_calls == 3);
+    assert(dialog_calls == 3 * (mode + 1));
+  }
 }

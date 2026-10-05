@@ -299,11 +299,12 @@ void AlphaSave::on_selected(int) {
 }
 
 // ORIGINAL: 0x00407920 ?save@AlphaSave@@QAEXXZ 0x00407920-0x00407A7E
+// symbol    ?save@AlphaSave@@QAEPADXZ
 // The caption is label slot 674; the paired load dialog uses 673. The
 // original temporarily disables the two Net voice hotkeys while modal.
 // The retired standalone transcription reached the correct owner calls but
 // diverged early in VC6 register scheduling; this typed body is not exact.
-void AlphaSave::save() {
+char *AlphaSave::save() {
     RECT caption = *buffer_working_rect();
     if (ConsoleGlobal.is_visible()) {
         caption.left += 0x17;
@@ -330,9 +331,10 @@ void AlphaSave::save() {
     ActiveAlphaSave = this;
     NetDaemonNet.voice_hotkey_48_ = 0;
     NetDaemonNet.voice_hotkey_4c_ = 0;
-    file_win_.save();
+    char *const selected = file_win_.save();
     NetDaemonNet.voice_hotkey_48_ = 0xDC;
     NetDaemonNet.voice_hotkey_4c_ = 0x100DC;
+    return selected;
 }
 
 // ORIGINAL: 0x00407A80 ?load@AlphaSave@@QAEXXZ 0x00407A80-0x00407BDE
@@ -380,4 +382,10 @@ int AlphaSave::add_default_extension(char *extension) {
 
 int AlphaSave::set_default_filename(char *name) {
     return file_win_.set_def_name(name);
+}
+
+// Negative load-success prompt retries explicitly close these two owners.
+void AlphaSave::close_for_load_retry() {
+    close();
+    file_win_.close();
 }

@@ -849,3 +849,17 @@ int __cdecl X_pops(char *caption, const char *label, int text_length,
     return pops(caption, mutable_label, text_length, text, value,
                 sprite, flag_a, flag_b, callback);
 }
+
+// Native load_game5AB014 calls the same original5BF7D0 short popup body.
+// RECOVERY_SHARED: v1 0x005BF7D0 0x005BF7FA ?X_pops@@YAHPBDHPAVSprite@@P6AHXZ@Z 0x005AAAB0
+int __cdecl X_pops(const char *label, int value, Sprite *sprite,
+                   int (__cdecl *callback)()) {
+    return X_pops(PopupStartCaption, label, -1, nullptr, value, sprite, 1, 1,
+                  callback);
+}
+// The password warning uses the captioned original5BF330 overload directly.
+// RECOVERY_SHARED: v1 0x005BF330 0x005BF34F ?X_pop@@YAHPADPBDP6AHXZ@Z 0x005AAAB0
+int __cdecl X_pop(char *caption, const char *label,
+                  int (__cdecl *callback)()) {
+    return X_pop(caption, label, -1, nullptr, 0, callback);
+}

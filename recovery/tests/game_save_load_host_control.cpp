@@ -72,7 +72,7 @@ static uint32_t AltContour[11], AltNatural[11];
 static PathStub Paths;
 static char MapFilePath[80] = "maps\\default";
 static char StringTemp[1032] = "fallback.map";
-static const char *ScenarioFileExtension = "SC";
+static const char *MapFileExtension = "MP";
 static const char *SaveGameFileExtension = "SAV";
 static const char MapHeaderText[] = "TERRANMAP", SaveHeaderText[] = "TERRAN";
 static const char OpenFileMode[] = "rb", SaveFileMode[] = "wb";
@@ -191,7 +191,7 @@ int main() {
 
     open_fails = 1; close_calls = null_closes = remove_calls = 0;
     assert(save_map_daemon((char *)"scenario") == 1);
-    assert(last_path == "scenario.SC" && close_calls == 1 && null_closes == 1 && remove_calls == 1);
+    assert(last_path == "scenario.MP" && close_calls == 1 && null_closes == 1 && remove_calls == 1);
     open_fails = 0; fail_io_at = 1; io_calls = 0;
     assert(save_map_daemon((char *)"scenario.SC") == 2 && last_header == "TERRANMAP");
     assert(close_calls == 2 && remove_calls == 2);
@@ -216,7 +216,7 @@ int main() {
     FileBox::save_succeeds = false;
     save_map();
     assert(draws == 1 && preference_calls == 0 && label_value == 0x678 / 4);
-    assert(FileBox::filters.size() == 1 && FileBox::filters[0] == "*.SC");
+    assert(FileBox::filters.size() == 1 && FileBox::filters[0] == "*.MP");
     std::strcpy(FileBox::chosen_file, "maps\\Europa.MP");
     FileBox::save_succeeds = true;
     save_map();

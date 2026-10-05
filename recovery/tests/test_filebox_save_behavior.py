@@ -29,7 +29,7 @@ def definition(text, signature):
 
 
 @pytest.mark.parametrize("compiler", ["g++", "clang++"])
-def test_actual_filebox_save_and_cancellation(compiler, tmp_path):
+def test_actual_filebox_save_load_and_cancellation(compiler, tmp_path):
     executable = shutil.which(compiler)
     if executable is None:
         pytest.skip(f"host compiler unavailable: {compiler}")
@@ -38,6 +38,7 @@ def test_actual_filebox_save_and_cancellation(compiler, tmp_path):
     declaration = definition(header, "class FileBox {") + ";"
     bodies = "\n\n".join(definition(source, signature) for signature in (
         "FileBox::FileBox()", "FileBox::~FileBox()", "char *FileBox::save()",
+        "char *FileBox::load()",
     ))
     fixture = FIXTURE.read_text()
     assert fixture.count("/* ACTUAL_FILEBOX_CLASS */") == 1
