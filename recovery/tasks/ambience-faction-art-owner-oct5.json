@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "task_id": "ambience-faction-art-owner-oct5",
+  "target": "opensmacx",
+  "author": "framework-coordinator",
+  "intent": "Recover complete ambience dispatch and faction art/color-table initialization in genuine source owners. Preserve original initial effect -1, callback state reloads, nonzero art fallback, wrapped palette weight, unusual cache retries and automatic lifetimes. Coverage first; no deliberate fixes or new byte claims. Retire complete superseded seeds only after build/link and identity continuity checks.",
+  "base_revision": "b295f3093b62e44258f0613f461fa2b0e48626eb",
+  "subjects": [
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 4483904},
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 4337664},
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 4536080}
+  ],
+  "editable_files": ["src/ambience.cpp", "src/game.cpp", "src/game.h", "src/temp.h", "src/pending_bodies.cpp", "src/unrecovered/00446b40.cpp", "src/recovered/units/00423000.cpp", "src/unrecovered/00453710.cpp", "recovery/tests/test_ambience_colortables_source.py", "recovery/tests/test_ambience_colortables_behavior.py"],
+  "evidence": [
+    "Pinned complete source identities and spans: 446B40..446CD6; 423000..423566 and EH652BE2..652C0A; 453710..453A17.",
+    "Fresh full native proposal compiles ambience.cpp, game.cpp and pending_bodies.cpp; all three owner function symbols and two new storage symbols observed.",
+    "Actual extracted candidate host controls include cache retry and callback mutation paths and discriminating mutants; permanent tests extract product definitions after native source annotation transport.",
+    "AmbienceCurrentEffect original 683BF0 initial FFFFFFFF; transition marker touched start 74C5E4 initial zero. Larger transition-owner extent and lifetime remain unverified, so only start binding is authorized."
+  ]
+}
