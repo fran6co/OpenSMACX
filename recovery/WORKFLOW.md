@@ -37,6 +37,15 @@ justified structural work and original obligations through temporary mismatches;
 restore fidelity across the complete affected ownership group rather than
 discarding discoveries to protect one local score.
 
+Act on evidence-backed structural discoveries as soon as they arise. The
+coordinator may expand the recovery ownership scope and coordinate affected
+workers immediately; do not park a necessary class/member/global/lifetime or
+caller correction merely because it crosses a function boundary or regresses
+matching. Keep workers' edits isolated, avoid conflicting active scopes, preserve
+prior source work and obligations, and verify the integrated compiling closure.
+This standing manual-recovery direction does not bypass native automatic
+driver permissions or convert uncertain structural hypotheses into proven facts.
+
 Before declaring the first milestone complete, establish all of the following:
 
 - Every in-scope original identity has its complete compiling implementation in

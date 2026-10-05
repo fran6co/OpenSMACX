@@ -14,6 +14,10 @@ is welcome when readily achieved; preserve historical claims and restoration
 obligations for the subsequent matching pass. Coverage is not final milestone
 completion. See `recovery/WORKFLOW.md`, "Milestone order". Preserve original
 quirks and evidence; do not silently normalize unsafe/error paths.
+Act on evidence-backed structural discoveries immediately: the coordinator
+expands affected ownership scopes and coordinates dependent workers without
+waiting for function-local byte equality. Correct classes, members, globals,
+lifetimes and callers together; preserve prior work and matching obligations.
 
 ## Read next
 

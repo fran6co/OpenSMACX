@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "task_id": "alphamenu-check-owner-oct5",
+  "target": "opensmacx",
+  "author": "framework-coordinator",
+  "intent": "Recover the complete menu-policy function in genuine Console::alpha_menu_ ownership. Correct the historical MainMenu catalogue spelling through a separate current AlphaMenu symbol, preserving original identity/span and incomplete-seed findings. Act on structural evidence now, retain original gate ordering and quirks, and retire the seed after compiling coverage checks; no new historical byte claim or intentional bug fix.",
+  "base_revision": "67cf48ccafb6ddde5a716e5ac180731b80041ea0",
+  "subjects": [{"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 4591056}],
+  "editable_files": ["src/alphamenu.cpp", "src/alphamenu.h", "src/console.h", "src/pending_bodies.cpp", "src/unrecovered/00460dd0.cpp", "recovery/tests/alphamenu_check_actual_source_harness.cpp", "recovery/tests/test_alphamenu_check_actual_source.py"],
+  "evidence": [
+    "Original complete span 460DD0..46207E; existing Console embedded AlphaMenu at +22A2C and actual by-name callers prove current owner, not a second MainMenu singleton.",
+    "Full v6 proposal natively compiles AlphaMenu and pending-bodies TUs. Observed ?check@AlphaMenu@@QAEXH@Z. Distinct loop names handle VC6 lexical scoping; technology.h supplies actual has_tech declaration.",
+    "Complete CFG/caller review and bounded extracted-body trace controls cover prefix, scenario, vehicle and terrain gates and seven discriminating mutants. Original matching, runtime and complete indirect caller domain remain unfinished."
+  ]
+}
