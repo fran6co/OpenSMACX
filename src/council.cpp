@@ -23,6 +23,20 @@
 #include "console.h"
 #include "game.h"
 #include "map.h"
+#include "buffer.h"
+#include "faction.h"
+#include "general.h"
+#include "netdaemon.h"
+#include "netmsg.h"
+#include "popup.h"
+#include "sprite.h"
+#include "strings.h"
+#include "technology.h"
+#include <string.h>
+
+int __cdecl wants_prop(int, int, int);
+int __cdecl diplo_lock(int);
+void __cdecl diplo_unlock();
 
 // council_action increments a proposal's resolution count and records the
 // current turn before dispatching its effect. setup_game's native paired
@@ -48,17 +62,492 @@ int CouncilNotifyPluralSlots[8];
 
 // call_council's original multiplayer deferral stores three message arguments
 // here; net_upkeep 5294D3..529536 sends them and resets each to -1. Their
-// initial image bytes are twelve FF bytes. Keep their meanings neutral until
-// the unfinished council producer is recovered, rather than inventing fields.
+// initial image bytes are twelve FF bytes. The producer stores faction,
+// proposal and selected faction in that order; keep the existing shared array.
 // RECOVERY_OBJECT: v1 0x0068BF38 ?CouncilPendingMessageArgs@@3PAHA
 int CouncilPendingMessageArgs[3] = {-1, -1, -1};
 
-// The council dialog remains an explicit dependency of MultiWin's button
-// callback. Its full historical body is retained in the seed, not discarded.
 // ORIGINAL: 0x0052C880 ?call_council@@YAXH@Z 0x0052C880-0x0052DA98;0x0065DB70-0x0065DF45
-// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0052c880.cpp", "src/council.h", "src/multiwin.cpp"], "reason": "The original MultiWin council button calls this faction-taking council dialog. This linkable placeholder preserves the dependency until the council owner recovers its complex dialog body."}
-void __cdecl call_council(int) {
-    // BODY GOES HERE.
+// RECOVERY_BINDING: v1 {"reason":"Recover the complete faction-taking council dialog in its existing owner with genuine automatic Popup and Sprite lifetimes, typed game/faction storage and live post-modal reads.","evidence":["Pinned52C880 and its65DB70 lifetime tail establish the proposal selection, cooldown and network dispatch paths.","Existing Rules.min_turns_councils and Players/PlayersData members account for the observed storage; no executable-address aliases or manual vtable writes.","The original s14 local is initialized only on eligible proposal1 paths; alternate_selection retains that unresolved stack-residue obligation rather than inventing a default."]}
+// TRIED: literal register/goto transcription of all ~85 branches and the 10-entry switch resolved from the image; Popup+embedded Scroll+ 2 embedded FlatButton locals (BasePop+0x3230=Scroll start, Scroll+0xAAC/0x15F8=flat_button_left_/right_, matching the SEH thunks at 0x65DB99/0x65DBA7); vtable-reassert writes before every close() and the per-site EH state bytes are compiler artifacts, not transcribed. #18 first divergence still open.
+void __cdecl call_council(int faction_id) {
+    // These automatic objects are significant even on all of the early
+    // returns: Popup owns Dialogs and Scroll, and Sprite owns its initialized
+    // image.  Let the compiler's ordinary destruction chain run.  In
+    // particular, do not spell Popup::close/Scroll::close here: Popup's
+    // destructor calls close(), and its Scroll member then has its own dtor.
+    Popup popup;
+    Sprite council_sprite;
+
+    int faction_bit;
+    int human_mask;
+    int local_faction;
+    int last_selected_faction;
+    int last_proposal;
+    int max_wants;
+    int rendered_count;
+    int offered_count;
+    int proposal;
+    int proposal_tech;
+    int has_proposal_tech;
+    int option;
+    int target;
+    int candidate;
+    int candidate_votes;
+    int larger_vote_counts;
+    int current_votes;
+    int total_votes;
+    int pledged_votes;
+    int turn;
+    int council_delay;
+    int last_resolution_turn;
+    int picture_width;
+    int picture_height;
+    int alternate_selection;
+    int sprite_initialized;
+    int selected_item;
+    int proposal_text_id;
+    int proposal_description_id;
+    int due_turn;
+
+    if (ExpansionEnabled && (Players[faction_id].rule_flags & RFLAG_ALIEN)) {
+        return;
+    }
+    if (faction_id == 0) {
+        return;
+    }
+
+    if (ConsoleControlTurnActive != 0) {
+        if ((LockEnableMask & (1 << faction_id)) != 0 || IsMultiplayerNet) {
+            return;
+        }
+    }
+
+    if (can_call_council(faction_id,
+            (faction_id == ConsoleGlobal.faction_id_
+             && (LockEnableMask & (1 << faction_id)) != 0) ? 1 : 0) == 0) {
+        return;
+    }
+
+    faction_bit = 1 << faction_id;
+    human_mask = static_cast<unsigned char>(LockEnableMask);
+    if ((human_mask & faction_bit) == 0 && GovernorFaction > 0
+            && ((TurnCurrentNum + faction_id * 2) & 0xF) != 0) {
+        return;
+    }
+    if ((human_mask & faction_bit) == 0 && (GameState & 1) != 0) {
+        return;
+    }
+    if (IsMultiplayerNet && (NetTurnFlags & 0x10) != 0
+            && (human_mask & faction_bit) != 0 && NetTurnFaction == faction_id) {
+        NetMsgPrimary.pop("SIMULNO", 0x1388, 0, 0);
+        return;
+    }
+
+    // If a human must convene the Council, no alien faction may still be
+    // active.  The native path uses the saved low-byte mask for this walk.
+    for (candidate = 1; candidate < MaxPlayerNum; ++candidate) {
+        if ((human_mask & faction_bit) != 0
+                || ((human_mask >> candidate) & 1) != 0) {
+            if ((Players[candidate].rule_flags & RFLAG_ALIEN) != 0) {
+                return;
+            }
+        }
+    }
+
+    offered_count = 0;
+    last_proposal = -1;
+    last_selected_faction = faction_id;
+    max_wants = 0;
+    rendered_count = 0;
+
+    popup.start(PopupStartCaption, "COUNCILISSUES", -1, 0, 64, 0);
+    if (Buffer::get_pcx_dimensions("council_sm.pcx", &picture_width,
+                                   &picture_height) == 0) {
+        sprite_initialized = council_sprite.init(
+                                                  const_cast<char *>("council_sm.pcx"),
+                                                  picture_width,
+                                                  picture_height);
+        // The original only uses this for initialization/lifetime side
+        // effects.  Its pointer is never consumed by the dialog.
+        (void)sprite_initialized;
+    }
+
+    proposal = 0;
+proposal_loop:
+    proposal_tech = Proposal[proposal].preq_tech;
+    has_proposal_tech = has_tech(proposal_tech, faction_id);
+    if (has_proposal_tech == 0) {
+        if ((GameState & 0x80) == 0 || (GameState & 0x1000) == 0) {
+            goto proposal_next;
+        }
+    }
+    if (proposal_tech < -1) {
+        goto proposal_next;
+    }
+    if (proposal > 9) {
+        goto proposal_render;
+    }
+
+    switch (proposal) {
+    case PROP_ELECT_PLANETARY_GOVERNOR:
+        goto governor_proposal;
+    case PROP_UNITE_SUPREME_LEADER:
+        goto supreme_leader_proposal;
+    case PROP_SALVAGE_UNITY_CORE:
+    case PROP_LAUNCH_SOLAR_SHADE:
+        goto one_resolution_proposal;
+    case PROP_GLOBAL_TRADE_PACT:
+        goto trade_pact_proposal;
+    case PROP_REPEAL_GLOBAL_TRADE_PACT:
+        goto repeal_trade_pact_proposal;
+    case PROP_INCREASE_SOLAR_SHADE:
+        goto increase_shade_proposal;
+    case PROP_MELT_POLAR_CAPS:
+        goto proposal_render;
+    case PROP_REPEAL_UN_CHARTER:
+        goto repeal_charter_proposal;
+    case PROP_REINSTATE_UN_CHARTER:
+        goto reinstate_charter_proposal;
+    }
+    goto proposal_render;
+
+governor_proposal:
+    if (ExpansionEnabled
+            && (Players[faction_id].rule_flags & RFLAG_ALIEN) != 0) {
+        goto governor_candidate_counted;
+    }
+    candidate = council_votes(faction_id);
+    larger_vote_counts = 0;
+    for (target = 1; target < MaxPlayerNum; ++target) {
+        if (faction_id != target
+                && (static_cast<unsigned char>(LockEnableMask >> 8)
+                    & (1 << target)) != 0
+                && council_votes(target) > candidate) {
+            ++larger_vote_counts;
+        }
+    }
+    if (larger_vote_counts >= 2) {
+        goto governor_candidate_counted;
+    }
+    goto governor_vote_rule;
+
+governor_candidate_counted:
+    human_mask = static_cast<unsigned char>(LockEnableMask);
+    if ((faction_bit & human_mask) == 0 && GovernorFaction > 0) {
+        goto proposal_next;
+    }
+governor_vote_rule:
+    local_faction = GovernorFaction;
+    human_mask = static_cast<unsigned char>(LockEnableMask);
+    if (local_faction == faction_id
+            && (human_mask & faction_bit) == 0) {
+        goto proposal_next;
+    }
+    human_mask = static_cast<unsigned char>(LockEnableMask);
+    if ((human_mask & faction_bit) != 0) {
+        goto proposal_render;
+    }
+    if (local_faction <= 0) {
+        goto governor_tally;
+    }
+    {
+        const uint32_t relationship =
+            PlayersData[faction_id].diplo_treaties[local_faction];
+        if ((relationship & DTREATY_PACT) == 0) {
+            goto governor_tally;
+        }
+        if (PlayersData[faction_id].ranking
+                    < PlayersData[local_faction].ranking
+                || (relationship & 0x02000000) != 0) {
+            goto proposal_next;
+        }
+    }
+
+governor_tally:
+    total_votes = 0;
+    pledged_votes = 0;
+    for (candidate = 1; candidate < MaxPlayerNum; ++candidate) {
+        current_votes = council_votes(candidate);
+        total_votes += current_votes;
+        if (council_get_vote(candidate, PROP_ELECT_PLANETARY_GOVERNOR,
+                             faction_id) == faction_id) {
+            pledged_votes += council_votes(candidate);
+        }
+    }
+    if (pledged_votes * 2 >= total_votes) {
+        goto proposal_render;
+    }
+    local_faction = GovernorFaction;
+    if (local_faction <= 0) {
+        goto proposal_render;
+    }
+    human_mask = static_cast<unsigned char>(LockEnableMask);
+    if ((human_mask & (1 << local_faction)) != 0) {
+        goto proposal_render;
+    }
+    goto proposal_next;
+
+supreme_leader_proposal:
+    if ((GameRules & 8) == 0 || (GameState & 1) != 0
+            || CouncilResolutionCount[PROP_UNITE_SUPREME_LEADER] != 0) {
+        goto proposal_next;
+    }
+    if (ExpansionEnabled
+            && (Players[faction_id].rule_flags & RFLAG_ALIEN) != 0) {
+        goto proposal_next;
+    }
+    candidate = council_votes(faction_id);
+    larger_vote_counts = 0;
+    for (target = 1; target < MaxPlayerNum; ++target) {
+        if (faction_id != target
+                && (static_cast<unsigned char>(LockEnableMask >> 8)
+                    & (1 << target)) != 0
+                && council_votes(target) > candidate) {
+            ++larger_vote_counts;
+        }
+    }
+    if (larger_vote_counts < 2) {
+        goto proposal_next;
+    }
+    alternate_selection = 0;
+    for (candidate = 1; candidate < MaxPlayerNum; ++candidate) {
+        if ((Players[candidate].rule_flags & RFLAG_ALIEN) != 0
+                && (static_cast<unsigned char>(LockEnableMask >> 8)
+                    & (1 << candidate)) != 0) {
+            alternate_selection = 1;
+        }
+    }
+    goto proposal_render;
+
+one_resolution_proposal:
+    if (CouncilResolutionCount[proposal] != 0) {
+        goto proposal_next;
+    }
+    goto proposal_render;
+
+trade_pact_proposal:
+    if (CouncilResolutionCount[3] > CouncilResolutionCount[4]) {
+        goto proposal_next;
+    }
+    goto proposal_render;
+
+repeal_trade_pact_proposal:
+    if (CouncilResolutionCount[4] == CouncilResolutionCount[3]) {
+        goto proposal_next;
+    }
+    goto proposal_render;
+
+increase_shade_proposal:
+    if (CouncilResolutionCount[5] == 0) {
+        goto proposal_next;
+    }
+    goto proposal_render;
+
+repeal_charter_proposal:
+    if (CouncilResolutionCount[8] > CouncilResolutionCount[9]) {
+        goto proposal_next;
+    }
+    goto proposal_render;
+
+reinstate_charter_proposal:
+    if (CouncilResolutionCount[9] >= CouncilResolutionCount[8]) {
+        goto proposal_next;
+    }
+    goto proposal_render;
+
+proposal_render:
+    StringTemp[0] = 0;
+    proposal_text_id = static_cast<int>(reinterpret_cast<intptr_t>(
+        Proposal[proposal].name));
+    strcat(StringTemp, StringTable.get(proposal_text_id));
+    strcat(StringTemp, "|");
+    proposal_description_id = static_cast<int>(reinterpret_cast<intptr_t>(
+        Proposal[proposal].description));
+    strcat(StringTemp, StringTable.get(proposal_description_id));
+    popup.dialogs().item(StringTemp, rendered_count);
+    ++rendered_count;
+
+    // Source fields named unk_29/unk_30 are independently anchored at
+    // PlayerData+0x400/+0x42C.  Their meanings remain provisional: this is the
+    // original nonzero-entry/vote scan, expressed through those real arrays.
+    human_mask = static_cast<unsigned char>(LockEnableMask);
+    if ((human_mask & faction_bit) != 0) {
+        goto proposal_next;
+    }
+    option = PlayersData[faction_id].unk_29[rendered_count - 1];
+    if (option == 0) {
+        goto no_vote_option;
+    }
+    if (rendered_count - 1 != 0) {
+        goto proposal_next;
+    }
+    target = PlayersData[faction_id].unk_30[0];
+    if (ExpansionEnabled
+            && (Players[target].rule_flags & RFLAG_ALIEN) != 0) {
+        goto no_vote_option;
+    }
+    candidate_votes = council_votes(target);
+    larger_vote_counts = 0;
+    for (candidate = 1; candidate < MaxPlayerNum; ++candidate) {
+        if (target != candidate
+                && (static_cast<unsigned char>(LockEnableMask >> 8)
+                    & (1 << candidate)) != 0
+                && council_votes(candidate) > candidate_votes) {
+            ++larger_vote_counts;
+        }
+    }
+    if (larger_vote_counts >= 2) {
+        goto no_vote_option;
+    }
+    goto proposal_next;
+
+no_vote_option:
+    if (rendered_count != 1) {
+        goto proposal_score;
+    }
+    candidate = 1;
+    while (candidate != GovernorFaction) {
+        if (!(ExpansionEnabled
+                && (Players[candidate].rule_flags & RFLAG_ALIEN) != 0)) {
+            candidate_votes = council_votes(candidate);
+            larger_vote_counts = 0;
+            for (target = 1; target < MaxPlayerNum; ++target) {
+                if (candidate != target
+                        && (static_cast<unsigned char>(LockEnableMask >> 8)
+                            & (1 << target)) != 0
+                        && council_votes(target) > candidate_votes) {
+                    ++larger_vote_counts;
+                }
+            }
+            if (larger_vote_counts < 2) {
+                option = wants_prop(faction_id, 0, candidate);
+                if (option > max_wants) {
+                    max_wants = option;
+                    last_proposal = 0;
+                    last_selected_faction = candidate;
+                }
+            }
+        }
+        ++candidate;
+    }
+    goto proposal_next;
+
+proposal_score:
+    // TODO: the seed's s14 stack slot is only initialized on the proposal-1
+    // path but is later read for some recorded vote paths.  Do not silently
+    // turn that image-dependent stack residue into a clean false default.
+    if (alternate_selection != 0) {
+        goto proposal_next;
+    }
+    option = wants_prop(faction_id, rendered_count - 1, faction_id);
+    if (option <= max_wants) {
+        goto proposal_next;
+    }
+    max_wants = option;
+    last_proposal = rendered_count - 1;
+    last_selected_faction = faction_id;
+    goto proposal_next;
+
+proposal_next:
+    ++proposal;
+    if (proposal < MaxProposalNum) {
+        goto proposal_loop;
+    }
+
+    if (rendered_count == 0) {
+        return;
+    }
+    if ((static_cast<unsigned char>(LockEnableMask) & faction_bit) != 0) {
+        selected_item = popup.exec(0, 0);
+    } else {
+        selected_item = last_proposal;
+    }
+
+    if (alternate_selection != 0 && selected_item == 1) {
+        if (faction_id == ConsoleGlobal.faction_id_
+                && (static_cast<unsigned char>(LockEnableMask) & faction_bit) != 0) {
+            NetMsgPrimary.pop("NOTWHILEALIENSLIVE", 0xFFFFEC78, 0,
+                              "council_sm.pcx");
+        }
+        return;
+    }
+    if (selected_item < 0) {
+        return;
+    }
+
+    turn = TurnCurrentNum;
+    council_delay = static_cast<int>(Rules.min_turns_councils);
+    if (selected_item != 0) {
+        if ((GameState & 0x80) != 0 && (GameState & 0x1000) != 0
+                && (static_cast<unsigned char>(LockEnableMask) & faction_bit) != 0) {
+            goto proposal_resolved;
+        }
+        if (GovernorFaction == faction_id) {
+            due_turn = council_delay / 2;
+        } else {
+            due_turn = council_delay;
+        }
+        if (turn - PlayersData[faction_id].council_call_turn >= due_turn) {
+            goto proposal_resolved;
+        }
+        if (faction_id == ConsoleGlobal.faction_id_
+                && (static_cast<unsigned char>(LockEnableMask) & faction_bit) != 0) {
+            parse_num(0, game_year(PlayersData[faction_id].council_call_turn));
+            parse_num(1, council_delay);
+            parse_num(2, council_delay / 2);
+            NetMsgPrimary.pop("COUNCILRECENTCALL", 0xFFFFEC78, 0,
+                              "council_sm.pcx");
+        }
+        return;
+    }
+
+proposal_resolved:
+    last_resolution_turn = CouncilLastResolutionTurn[selected_item];
+    if (turn - last_resolution_turn >= council_delay) {
+        goto council_resolution;
+    }
+    if ((GameState & 0x80) != 0 && (GameState & 0x1000) != 0
+            && (static_cast<unsigned char>(LockEnableMask) & faction_bit) != 0) {
+        goto council_resolution;
+    }
+    if (faction_id == ConsoleGlobal.faction_id_
+            && (static_cast<unsigned char>(LockEnableMask) & faction_bit) != 0) {
+        parse_num(0, game_year(last_resolution_turn));
+        parse_num(1, council_delay);
+        NetMsgPrimary.pop("COUNCILRECENTPROP", 0xFFFFEC78, 0,
+                          "council_sm.pcx");
+    }
+    return;
+
+council_resolution:
+    if (!IsMultiplayerNet) {
+        council(faction_id, selected_item, last_selected_faction);
+        return;
+    }
+    if ((static_cast<unsigned char>(LockEnableMask) & faction_bit) == 0) {
+        CouncilPendingMessageArgs[0] = faction_id;
+        CouncilPendingMessageArgs[1] = selected_item;
+        CouncilPendingMessageArgs[2] = last_selected_faction;
+        return;
+    }
+
+    NetMsgPrimary.pop("CONVENING", 0x0BB8, 0, 0);
+    if (diplo_lock(0x32) == 0) {
+        message_data(0x2600, 0, faction_id, selected_item,
+                     last_selected_faction, 0);
+        TurnRedrawPending = 1;
+        while (ExitTurnLoop == 0) {
+            wait_loop();
+            if (TurnRedrawPending == 0) {
+                break;
+            }
+        }
+        diplo_unlock();
+    } else {
+        NetMsgPrimary.close();
+        return;
+    }
 }
 
 

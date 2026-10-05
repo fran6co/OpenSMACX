@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "task_id": "call-council-owner-oct5",
+  "author": "framework-coordinator",
+  "target": "opensmacx",
+  "base_revision": "4b1574de66b4c6855bcebf2beda16852dc59ecc3",
+  "intent": "Replace the council dialog placeholder with its complete typed implementation and genuine Popup/Sprite lifetimes, retaining both original spans and all seed discoveries. Retire the superseded seed after build/link and identity continuity checks.",
+  "subjects": [{
+    "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+    "address_space": "pe:va",
+    "address": 5425280
+  }],
+  "editable_files": [
+    "src/council.cpp",
+    "src/unrecovered/0052c880.cpp",
+    "recovery/tests/call_council_control.cpp",
+    "recovery/tests/test_call_council_owner_actual_source.py"
+  ],
+  "evidence": [
+    "Pinned 52C880 plus 65DB70 lifetime tail establish proposal selection, original cooldowns, network deferral/lock/dispatch, and cleanup.",
+    "Existing Popup and Sprite objects supply genuine construction/destruction; no manual vtable transitions or private Scroll access.",
+    "Existing Rules, faction, player-data and council owners account for observed storage. Preserve live mask reads across modal callbacks and the original proposal-specific branch polarity.",
+    "Original alternate_selection stack residue remains unresolved: no invented zero default and no claim that current stack layout restores original undefined-path effects.",
+    "Coordinator-reviewed manual coverage checkpoint requires actual source host controls, fresh application build/link, relevant historical matching, references and claim continuity. It grants no new match claim or full-game acceptance."
+  ]
+}
