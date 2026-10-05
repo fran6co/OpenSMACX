@@ -1,0 +1,65 @@
+{
+  "event_id": "c9e8138a586ae3fbe3e81c7984b396531cbac4e98084f7dc14690ffc8c847b20",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/uv2player.h"
+    ],
+    "evidence": [
+      "Live source inspection places the UV2Player declaration in uv2player.h, not alphamovie.h. Authorize replacement of raw +128..8DC storage with the observed embedded7B4 descriptor and typed124 session pointer, preserving Buffer8DC/write_delayE64/sizeE68. Existing UV2 constructor/destructor/callers remain historical obligations; fresh native layouts and scoped measurements required. This is member/caller integration authorization, not completion of the forwarded UV2 exec4BEA50 or full-game acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4975152,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4977552,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4976064,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4976224,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4977536,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4211664,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4977664,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4977840,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4976384,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "5422fc31291d4a14eb787fb9160a9895ac63e82b5484c6a513f71e36e0a35585",
+  "request_id": "media-uv2-member-owner-oct5",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:movie-media-owner-wave"
+}

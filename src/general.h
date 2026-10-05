@@ -271,6 +271,19 @@ MEASURED inline void __cdecl purge_trailing(LPSTR input) {
 // IMA ADPCM audio. sub_5ce640 decodes a run of 4-bit nibbles; its two state
 // words (the predictor and the step index) live in the caller's frame and are
 // read AND written, so they travel as pointers.
+// Original access window 0x00693794..0x00694E24, not a claim that this was
+// one original declaration. The coefficient views at +0 and +16 overlap;
+// deltas start at +32. One array keeps those observed overlaps valid C++.
+struct MediaAdpcmStorage {
+    int lookup_and_delta_words[1432];
+    int index_adjust[8];
+    int predictor_left;
+    int predictor_right;
+    int step_index_left;
+    int step_index_right;
+};
+extern MediaAdpcmStorage MediaAdpcmTables;
+
 void __cdecl sub_5ce640(int first_sample, unsigned char *codes, short *samples,
                         int sample_total, int *predictor, int *step_index);
 void __cdecl sub_5ce6e3(unsigned char *param_3, short *param_4, int param_5,

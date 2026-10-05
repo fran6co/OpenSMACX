@@ -3648,7 +3648,63 @@ void GraphicWin::j_close() {
 // itself travels as a byte offset: the eight dwords are {-1,-1,-1,-1,2,4,6,8}
 // times 64, and the 0x1600 clamp below is 88 * 64, the IMA step index's own
 // maximum. Image .data at 0x00694DF4.
-static int *const AdpcmIndexAdjust = (int *)0x00694DF4;
+// Pinned image initial bytes: eight prefix words, 89 rows of 16 deltas,
+// eight adjustments, then four zero state words. Every delta was compared
+// with the original, including signed nibbles and the final step of 32767.
+// Earlier seed notes describing these lookup words as zero were incorrect.
+#define MEDIA_ADPCM_MAG(s, n) (((s) >> 3) + (((n) & 1) ? ((s) >> 2) : 0) + \
+    (((n) & 2) ? ((s) >> 1) : 0) + (((n) & 4) ? (s) : 0))
+#define MEDIA_ADPCM_ROW(s) \
+    MEDIA_ADPCM_MAG(s, 0), MEDIA_ADPCM_MAG(s, 1), \
+    MEDIA_ADPCM_MAG(s, 2), MEDIA_ADPCM_MAG(s, 3), \
+    MEDIA_ADPCM_MAG(s, 4), MEDIA_ADPCM_MAG(s, 5), \
+    MEDIA_ADPCM_MAG(s, 6), MEDIA_ADPCM_MAG(s, 7), \
+    -MEDIA_ADPCM_MAG(s, 0), -MEDIA_ADPCM_MAG(s, 1), \
+    -MEDIA_ADPCM_MAG(s, 2), -MEDIA_ADPCM_MAG(s, 3), \
+    -MEDIA_ADPCM_MAG(s, 4), -MEDIA_ADPCM_MAG(s, 5), \
+    -MEDIA_ADPCM_MAG(s, 6), -MEDIA_ADPCM_MAG(s, 7)
+// Access-window binding: native coefficient readers at 0x005CDB90/0x005CDD10
+// overlap the first delta row; 0x005CE6E3 owns the four trailing state writes.
+// This groups proven storage accesses, not a recovered original declaration.
+// RECOVERY_OBJECT: v2 0x00693794 0x00694E24 ?MediaAdpcmTables@@3UMediaAdpcmStorage@@A 0x005CE6E3
+MediaAdpcmStorage MediaAdpcmTables = {
+    {0, 240, 460, 392, 0, 0, -208, -220,
+     MEDIA_ADPCM_ROW(7), MEDIA_ADPCM_ROW(8), MEDIA_ADPCM_ROW(9),
+     MEDIA_ADPCM_ROW(10), MEDIA_ADPCM_ROW(11), MEDIA_ADPCM_ROW(12),
+     MEDIA_ADPCM_ROW(13), MEDIA_ADPCM_ROW(14), MEDIA_ADPCM_ROW(16),
+     MEDIA_ADPCM_ROW(17), MEDIA_ADPCM_ROW(19), MEDIA_ADPCM_ROW(21),
+     MEDIA_ADPCM_ROW(23), MEDIA_ADPCM_ROW(25), MEDIA_ADPCM_ROW(28),
+     MEDIA_ADPCM_ROW(31), MEDIA_ADPCM_ROW(34), MEDIA_ADPCM_ROW(37),
+     MEDIA_ADPCM_ROW(41), MEDIA_ADPCM_ROW(45), MEDIA_ADPCM_ROW(50),
+     MEDIA_ADPCM_ROW(55), MEDIA_ADPCM_ROW(60), MEDIA_ADPCM_ROW(66),
+     MEDIA_ADPCM_ROW(73), MEDIA_ADPCM_ROW(80), MEDIA_ADPCM_ROW(88),
+     MEDIA_ADPCM_ROW(97), MEDIA_ADPCM_ROW(107), MEDIA_ADPCM_ROW(118),
+     MEDIA_ADPCM_ROW(130), MEDIA_ADPCM_ROW(143), MEDIA_ADPCM_ROW(157),
+     MEDIA_ADPCM_ROW(173), MEDIA_ADPCM_ROW(190), MEDIA_ADPCM_ROW(209),
+     MEDIA_ADPCM_ROW(230), MEDIA_ADPCM_ROW(253), MEDIA_ADPCM_ROW(279),
+     MEDIA_ADPCM_ROW(307), MEDIA_ADPCM_ROW(337), MEDIA_ADPCM_ROW(371),
+     MEDIA_ADPCM_ROW(408), MEDIA_ADPCM_ROW(449), MEDIA_ADPCM_ROW(494),
+     MEDIA_ADPCM_ROW(544), MEDIA_ADPCM_ROW(598), MEDIA_ADPCM_ROW(658),
+     MEDIA_ADPCM_ROW(724), MEDIA_ADPCM_ROW(796), MEDIA_ADPCM_ROW(876),
+     MEDIA_ADPCM_ROW(963), MEDIA_ADPCM_ROW(1060), MEDIA_ADPCM_ROW(1166),
+     MEDIA_ADPCM_ROW(1282), MEDIA_ADPCM_ROW(1411), MEDIA_ADPCM_ROW(1552),
+     MEDIA_ADPCM_ROW(1707), MEDIA_ADPCM_ROW(1878), MEDIA_ADPCM_ROW(2066),
+     MEDIA_ADPCM_ROW(2272), MEDIA_ADPCM_ROW(2499), MEDIA_ADPCM_ROW(2749),
+     MEDIA_ADPCM_ROW(3024), MEDIA_ADPCM_ROW(3327), MEDIA_ADPCM_ROW(3660),
+     MEDIA_ADPCM_ROW(4026), MEDIA_ADPCM_ROW(4428), MEDIA_ADPCM_ROW(4871),
+     MEDIA_ADPCM_ROW(5358), MEDIA_ADPCM_ROW(5894), MEDIA_ADPCM_ROW(6484),
+     MEDIA_ADPCM_ROW(7132), MEDIA_ADPCM_ROW(7845), MEDIA_ADPCM_ROW(8630),
+     MEDIA_ADPCM_ROW(9493), MEDIA_ADPCM_ROW(10442), MEDIA_ADPCM_ROW(11487),
+     MEDIA_ADPCM_ROW(12635), MEDIA_ADPCM_ROW(13899), MEDIA_ADPCM_ROW(15289),
+     MEDIA_ADPCM_ROW(16818), MEDIA_ADPCM_ROW(18500), MEDIA_ADPCM_ROW(20350),
+     MEDIA_ADPCM_ROW(22385), MEDIA_ADPCM_ROW(24623), MEDIA_ADPCM_ROW(27086),
+     MEDIA_ADPCM_ROW(29794), MEDIA_ADPCM_ROW(32767)},
+    {-64, -64, -64, -64, 128, 256, 384, 512}, 0, 0, 0, 0
+};
+#undef MEDIA_ADPCM_ROW
+#undef MEDIA_ADPCM_MAG
+
+static int *const AdpcmIndexAdjust = MediaAdpcmTables.index_adjust;
 // THE REST OF THE IMA ADPCM DECODER'S STATE, and the delta table. All four
 // state words are zero in the shipped .data (they are decoder state, not
 // data), so the evidence for the names is the arithmetic:
@@ -3661,12 +3717,20 @@ static int *const AdpcmIndexAdjust = (int *)0x00694DF4;
 //     the IMA step index. That is the matching step-index pair.
 //   * 0x006937B4 is indexed `(nibble * 4) + step_index`, i.e. [code][index],
 //     and its first row reads 0,1,3,4,7,8,10,11 - exactly step 7 split by the
-//     three magnitude bits of an IMA nibble. 88 rows of 8 dwords.
-static int *const AdpcmPredictorLeft = (int *)0x00694E14;
-static int *const AdpcmPredictorRight = (int *)0x00694E18;
-static int *const AdpcmStepIndexLeft = (int *)0x00694E1C;
-static int *const AdpcmStepIndexRight = (int *)0x00694E20;
-static int *const AdpcmDeltaTable = (int *)0x006937B4;
+//     three magnitude bits of an IMA nibble. 89 rows of 16 dwords.
+static int *const AdpcmPredictorLeft = &MediaAdpcmTables.predictor_left;
+static int *const AdpcmPredictorRight = &MediaAdpcmTables.predictor_right;
+static int *const AdpcmStepIndexLeft = &MediaAdpcmTables.step_index_left;
+static int *const AdpcmStepIndexRight = &MediaAdpcmTables.step_index_right;
+
+// Preserve the native byte-offset interpretation, including unaligned input
+// offsets, without an unaligned int dereference. This is not a bounds waiver.
+static int media_adpcm_delta(int step_byte_offset, unsigned int nibble) {
+    int delta;
+    memcpy(&delta, reinterpret_cast<const unsigned char *>(MediaAdpcmTables.lookup_and_delta_words + 8) +
+           step_byte_offset + nibble * sizeof(int), sizeof(delta));
+    return delta;
+}
 
 
 // ORIGINAL: 0x005CE640 sub_5ce640 0x005CE640-0x005CE6E3 FILE
@@ -3719,7 +3783,7 @@ void __cdecl sub_5ce640(int first_sample, int codes, int samples,
             nibble &= 0xF;
             src++;
         }
-        predicted += *(int *)(step + nibble * 4 + 0x6937b4);
+        predicted += media_adpcm_delta(step, nibble);
         if (predicted > 0x7FFF) {
             predicted = 0x7FFF;
         } else if (predicted < (int)0xFFFF8000) {
@@ -4746,6 +4810,9 @@ int __cdecl sub_62d2c0() {
 // does not ask for them to be invented: an unclaimed body with evidence-free
 // bindings waits for the class pass that measures it in context.
 // TRIED: original uses `pushal`/`popal` around the whole body (5 stack args, no `this`); no portable C source form reproduces that register-save shape, so #0 mismatches in the prologue.
+// The preceding fixed-address/naming objection is superseded by the shared
+// MediaAdpcmTables owner above: its complete initial bytes and observed state
+// offsets are verified. The pushal/popal matching limitation remains.
 // size      375 bytes
 // prototype 
 // callers   1   call targets   0
@@ -4775,8 +4842,7 @@ void __cdecl sub_5ce6e3(unsigned char *codes, short *samples, int sample_total, 
     *AdpcmPredictorRight = (int)(short)(*reinterpret_cast<unsigned int *>(predictor_pair) >> 16);
     do {
         unsigned char bVar1 = *codes;
-        *AdpcmPredictorLeft = *AdpcmPredictorLeft + *reinterpret_cast<int *>(
-            reinterpret_cast<char *>(AdpcmDeltaTable) + (bVar1 >> 4) * 4 + *AdpcmStepIndexLeft);
+        *AdpcmPredictorLeft += media_adpcm_delta(*AdpcmStepIndexLeft, bVar1 >> 4);
         if (*AdpcmPredictorLeft < 0x8000) {
             if (*AdpcmPredictorLeft < -0x8000) {
                 *AdpcmPredictorLeft = -0x8000;
@@ -4796,8 +4862,7 @@ void __cdecl sub_5ce6e3(unsigned char *codes, short *samples, int sample_total, 
             *AdpcmStepIndexLeft = 0x1600;
         }
         bVar1 = *codes;
-        *AdpcmPredictorRight = *AdpcmPredictorRight + *reinterpret_cast<int *>(
-            reinterpret_cast<char *>(AdpcmDeltaTable) + (bVar1 & 0x0f) * 4 + *AdpcmStepIndexRight);
+        *AdpcmPredictorRight += media_adpcm_delta(*AdpcmStepIndexRight, bVar1 & 0x0f);
         if (*AdpcmPredictorRight < 0x8000) {
             if (*AdpcmPredictorRight < -0x8000) {
                 *AdpcmPredictorRight = -0x8000;
