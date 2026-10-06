@@ -10,6 +10,8 @@ PlayerSeam Players[8];
 MonumentFaction FactionMonuments[8];
 ConsoleSeam ConsoleGlobal;
 int TurnCurrentNum;
+// Test-only projection of the actual source-owned turn field.
+struct GameDataStorageFixture { struct Fields { int turn_current_num_; } fields_; } GameDataStateStorage;
 static int year_calls, notifications, year_effect;
 static int expected_faction, expected_target, expected_first, expected_flag;
 unsigned int game_year(int turn) {
@@ -33,6 +35,7 @@ static void reset(int faction, int target, int first, int flag) {
     memset(FactionMonuments, 0, sizeof FactionMonuments);
     ConsoleGlobal.faction_id_ = -1;
     TurnCurrentNum = 37;
+    GameDataStateStorage.fields_.turn_current_num_ = TurnCurrentNum;
     year_calls = notifications = year_effect = 0;
     expected_faction = faction; expected_target = target;
     expected_first = first; expected_flag = flag;

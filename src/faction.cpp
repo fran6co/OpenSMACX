@@ -55,7 +55,6 @@
 #include "datalink.h"
 
 void __cdecl draw_tile_fixup(int x, int y, int wider_radius, int redraw_flags);
-void __cdecl mon_killed_faction(int faction, int killed_faction);
 char *__cdecl get_him_her(int faction_id, int sentence_form);
 void __cdecl interlude(int id, char *filename, int arg3, int arg4);
 int __cdecl base_init(int faction, int x, int y);

@@ -34,6 +34,7 @@ MonumentFaction FactionMonuments[MaxPlayerNum];
 struct Player { int rule_flags; } Players[MaxPlayerNum];
 struct Console { int faction_id_; } ConsoleGlobal;
 int TurnCurrentNum, year_value, year_calls, popup_calls, change_local=-1;
+struct GameDataStorageFixture { struct Fields { int turn_current_num_; } fields_; } GameDataStateStorage;
 uint32_t game_year(int turn) {
     assert(turn==TurnCurrentNum); ++year_calls;
     if (change_local!=-1) ConsoleGlobal.faction_id_=change_local;
@@ -44,7 +45,7 @@ __BODIES__
 void reset() {
     std::memset(FactionMonuments,0,sizeof FactionMonuments);
     std::memset(Players,0,sizeof Players);
-    ConsoleGlobal.faction_id_=3; TurnCurrentNum=21; year_value=2150;
+    ConsoleGlobal.faction_id_=3; TurnCurrentNum=21; GameDataStateStorage.fields_.turn_current_num_=TurnCurrentNum; year_value=2150;
     year_calls=popup_calls=0; change_local=-1;
 }
 int main() {
@@ -158,9 +159,9 @@ def test_shared_monument_records_and_native_milestone_flow(tmp_path):
     layout = header[header.index("struct MonumentRecord {"):
                     header.index("extern MonumentFaction FactionMonuments")]
     bodies = [body("src/game.cpp", "void __cdecl mon_secrets_of_tech(int faction_id) {")]
-    bodies += [body("src/leaf_recoveries.cpp", f"void __cdecl {name}(int faction_id, int counterpart) {{")
+    bodies += [body("src/game.cpp", f"void __cdecl {name}(int faction_id, int counterpart) {{")
                for name in ("mon_winning_unify", "mon_winning_trans", "mon_killed_faction")]
-    bodies += [body("src/leaf_recoveries.cpp", f"void __cdecl {name}(int faction_id) {{")
+    bodies += [body("src/game.cpp", f"void __cdecl {name}(int faction_id) {{")
                for name in ("mon_prototype_built", "mon_naval_unit_built", "mon_air_unit_built",
                             "mon_native_life_bred", "mon_first_in_space")]
     source = tmp_path / "monuments.cpp"

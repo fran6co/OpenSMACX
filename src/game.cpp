@@ -11361,7 +11361,6 @@ void __cdecl load_sprites() {
 
 // Native game/turn lifecycle owners. Their historical TU boundary is not
 // established; these bodies live with the current game/turn source owner.
-void __cdecl mon_winning_unify(int faction_id, int counterpart);
 void __cdecl show_replay();
 void __cdecl quayle(int faction_id);
 extern int MessageWinNetworkMessageCount;
@@ -12669,4 +12668,365 @@ int __cdecl load_game(int mode, int load_argument) {
         }
     }
     return result;
+}
+
+// These first-built triggers select individual records in FactionMonuments.
+// Their latest-type word belongs to the faction block, not to a fabricated
+// per-type overlay extending across unrelated records.
+// The same event owner also receives victory and faction-loss notifications.
+
+/*
+Purpose: Record the local faction's first built prototype (the mon type-3
+         trigger): latch the year, count the rival factions that already
+         hold this monument, decide the builder, then open the monument
+         window when it was the local faction's own build.
+// size      254 bytes
+Status: Coverage transcription of the retained seed
+        (git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00476ee0.cpp, plain FILE). The seed's TRIED wall
+        stands: the original reserves the year local with `push ecx` ahead
+        of the callee-save pushes, and the C forms tried all save
+        ebx/esi first. rule_flags is read as the typed dword here where
+        the image tests the byte at 0x00946F58 + f*0x59C; bit 0x80 is the
+        same test. game_year expands from its MEASURED inline in game.h
+        where the image calls 0x005C89A0 - the accepted mon_winning_*
+        house form above.
+*/
+// ORIGINAL: 0x00476EE0 ?mon_prototype_built@@YAXH@Z 0x00476EE0-0x00476FDE
+// RECOVERY_BINDING: v1 {"evidence":["Pinned original entry 0x00476EE0 and its complete recorded span identify mon_prototype_built.","src/game.h defines MonumentRecord/MonumentFaction and the shared FactionMonuments[8] object; the body uses those typed record/faction owners rather than a second table view.","Existing src/game.cpp milestone producers already own neighboring records 0,1,2,4,5,6,7,12; this event family fills record types 3,8,9,10,11,13,14,15..20 on the same owner.","Actual callers remain in src/base.cpp (build/turn events), src/faction.cpp (faction death), and src/game.cpp (unification); notification calls resolve through the existing monument UI API.","Historical seed comments and unclaimed/non-byte-exact status are retained; no new byte or semantic claim is made."],"reason":"Keep this milestone producer with the existing source-owned FactionMonuments event family. Retain the exact branch order, record writes, unchecked faction indices, current-local-faction notification timing, and original matching/restoration obligations."}
+// TRIED: MonRecord struct + reinterpret_cast<MonRecord*>(base)+a1 array indexing reproduces every instruction from the flag/active check onward byte-for-byte; only the prologue diverges at MISMATCH #6 (original reserves the `year` local with `push ecx` ahead of the ebx/esi callee-save pushes - same wall as 0x00477840's sibling, and every C form tried here has the compiler push ebx/esi first instead).
+void __cdecl mon_prototype_built(int faction_id) {
+    const int year = static_cast<int>(game_year(GameDataStateStorage.fields_.turn_current_num_));
+    if ((Players[faction_id].rule_flags & 0x80) == 0) {
+        MonumentRecord &record = FactionMonuments[faction_id].records_[3];
+        if (record.achieved_ == 0) {
+            record.word_14_ = 0;
+            for (int i = 0; i < 8; i++) {
+                if (i != faction_id && FactionMonuments[i].records_[3].achieved_ != 0) {
+                    record.word_14_++;
+                }
+            }
+            int builder = faction_id;
+            if (record.word_14_ == 0) {
+                record.word_14_ = 1;
+            } else {
+                record.word_14_ = 0;
+                for (int j = 0; j < 8; j++) {
+                    if (j != faction_id && FactionMonuments[j].records_[3].achieved_ != 0 &&
+                        FactionMonuments[j].records_[3].word_14_ != 0) {
+                        builder = j;
+                    }
+                }
+            }
+            record.achieved_ = 1;
+            record.owner_faction_ = builder;
+            record.year_ = year;
+            const bool is_local = (faction_id == ConsoleGlobal.faction_id_);
+            FactionMonuments[faction_id].latest_type_ = 3;
+            if (is_local) {
+                monument(1);
+            }
+        }
+    }
+}
+
+/*
+Purpose: The type-8 trigger: the faction's first naval unit built.
+// size      254 bytes
+Status: Coverage transcription of the retained seed
+        (git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00477440.cpp, plain FILE); same shape and walls
+        as mon_prototype_built above, over the naval record table.
+*/
+// ORIGINAL: 0x00477440 ?mon_naval_unit_built@@YAXH@Z 0x00477440-0x0047753E
+// RECOVERY_BINDING: v1 {"evidence":["Pinned original entry 0x00477440 and its complete recorded span identify mon_naval_unit_built.","src/game.h defines MonumentRecord/MonumentFaction and the shared FactionMonuments[8] object; the body uses those typed record/faction owners rather than a second table view.","Existing src/game.cpp milestone producers already own neighboring records 0,1,2,4,5,6,7,12; this event family fills record types 3,8,9,10,11,13,14,15..20 on the same owner.","Actual callers remain in src/base.cpp (build/turn events), src/faction.cpp (faction death), and src/game.cpp (unification); notification calls resolve through the existing monument UI API.","Historical seed comments and unclaimed/non-byte-exact status are retained; no new byte or semantic claim is made."],"reason":"Keep this milestone producer with the existing source-owned FactionMonuments event family. Retain the exact branch order, record writes, unchecked faction indices, current-local-faction notification timing, and original matching/restoration obligations."}
+// TRIED: MonRecord struct + reinterpret_cast<MonRecord*>(base)+a1 array indexing reproduces every instruction from the flag/active check onward byte-for-byte; only the prologue diverges at MISMATCH #6 (original reserves the `year` local with `push ecx` ahead of the ebx/esi callee-save pushes - same wall as 0x00477840's sibling, and every C form tried here has the compiler push ebx/esi first instead).
+void __cdecl mon_naval_unit_built(int faction_id) {
+    const int year = static_cast<int>(game_year(GameDataStateStorage.fields_.turn_current_num_));
+    if ((Players[faction_id].rule_flags & 0x80) == 0) {
+        MonumentRecord &record = FactionMonuments[faction_id].records_[8];
+        if (record.achieved_ == 0) {
+            record.word_14_ = 0;
+            for (int i = 0; i < 8; i++) {
+                if (i != faction_id && FactionMonuments[i].records_[8].achieved_ != 0) {
+                    record.word_14_++;
+                }
+            }
+            int builder = faction_id;
+            if (record.word_14_ == 0) {
+                record.word_14_ = 1;
+            } else {
+                record.word_14_ = 0;
+                for (int j = 0; j < 8; j++) {
+                    if (j != faction_id && FactionMonuments[j].records_[8].achieved_ != 0 &&
+                        FactionMonuments[j].records_[8].word_14_ != 0) {
+                        builder = j;
+                    }
+                }
+            }
+            record.achieved_ = 1;
+            record.owner_faction_ = builder;
+            record.year_ = year;
+            const bool is_local = (faction_id == ConsoleGlobal.faction_id_);
+            FactionMonuments[faction_id].latest_type_ = 8;
+            if (is_local) {
+                monument(1);
+            }
+        }
+    }
+}
+
+/*
+Purpose: The type-9 trigger: the faction's first air unit built.
+// size      254 bytes
+Status: Coverage transcription of the retained seed
+        (git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00477540.cpp, plain FILE); same shape and walls
+        as mon_prototype_built above, over the air record table.
+*/
+// ORIGINAL: 0x00477540 ?mon_air_unit_built@@YAXH@Z 0x00477540-0x0047763E
+// RECOVERY_BINDING: v1 {"evidence":["Pinned original entry 0x00477540 and its complete recorded span identify mon_air_unit_built.","src/game.h defines MonumentRecord/MonumentFaction and the shared FactionMonuments[8] object; the body uses those typed record/faction owners rather than a second table view.","Existing src/game.cpp milestone producers already own neighboring records 0,1,2,4,5,6,7,12; this event family fills record types 3,8,9,10,11,13,14,15..20 on the same owner.","Actual callers remain in src/base.cpp (build/turn events), src/faction.cpp (faction death), and src/game.cpp (unification); notification calls resolve through the existing monument UI API.","Historical seed comments and unclaimed/non-byte-exact status are retained; no new byte or semantic claim is made."],"reason":"Keep this milestone producer with the existing source-owned FactionMonuments event family. Retain the exact branch order, record writes, unchecked faction indices, current-local-faction notification timing, and original matching/restoration obligations."}
+// TRIED: MonRecord struct + reinterpret_cast<MonRecord*>(base)+a1 array indexing reproduces every instruction from the flag/active check onward byte-for-byte; only the prologue diverges at MISMATCH #6 (original reserves the `year` local with `push ecx` ahead of the ebx/esi callee-save pushes - same wall as 0x00477840's sibling, and every C form tried here has the compiler push ebx/esi first instead).
+void __cdecl mon_air_unit_built(int faction_id) {
+    const int year = static_cast<int>(game_year(GameDataStateStorage.fields_.turn_current_num_));
+    if ((Players[faction_id].rule_flags & 0x80) == 0) {
+        MonumentRecord &record = FactionMonuments[faction_id].records_[9];
+        if (record.achieved_ == 0) {
+            record.word_14_ = 0;
+            for (int i = 0; i < 8; i++) {
+                if (i != faction_id && FactionMonuments[i].records_[9].achieved_ != 0) {
+                    record.word_14_++;
+                }
+            }
+            int builder = faction_id;
+            if (record.word_14_ == 0) {
+                record.word_14_ = 1;
+            } else {
+                record.word_14_ = 0;
+                for (int j = 0; j < 8; j++) {
+                    if (j != faction_id && FactionMonuments[j].records_[9].achieved_ != 0 &&
+                        FactionMonuments[j].records_[9].word_14_ != 0) {
+                        builder = j;
+                    }
+                }
+            }
+            record.achieved_ = 1;
+            record.owner_faction_ = builder;
+            record.year_ = year;
+            const bool is_local = (faction_id == ConsoleGlobal.faction_id_);
+            FactionMonuments[faction_id].latest_type_ = 9;
+            if (is_local) {
+                monument(1);
+            }
+        }
+    }
+}
+
+/*
+Purpose: The type-10 trigger: the faction's first native life bred.
+// size      254 bytes
+Status: Coverage transcription of the retained seed
+        (git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00477640.cpp, plain FILE); same shape and walls
+        as mon_prototype_built above, over the native-life record table.
+*/
+// ORIGINAL: 0x00477640 ?mon_native_life_bred@@YAXH@Z 0x00477640-0x0047773E
+// RECOVERY_BINDING: v1 {"evidence":["Pinned original entry 0x00477640 and its complete recorded span identify mon_native_life_bred.","src/game.h defines MonumentRecord/MonumentFaction and the shared FactionMonuments[8] object; the body uses those typed record/faction owners rather than a second table view.","Existing src/game.cpp milestone producers already own neighboring records 0,1,2,4,5,6,7,12; this event family fills record types 3,8,9,10,11,13,14,15..20 on the same owner.","Actual callers remain in src/base.cpp (build/turn events), src/faction.cpp (faction death), and src/game.cpp (unification); notification calls resolve through the existing monument UI API.","Historical seed comments and unclaimed/non-byte-exact status are retained; no new byte or semantic claim is made."],"reason":"Keep this milestone producer with the existing source-owned FactionMonuments event family. Retain the exact branch order, record writes, unchecked faction indices, current-local-faction notification timing, and original matching/restoration obligations."}
+// TRIED: MonRecord struct + reinterpret_cast<MonRecord*>(base)+a1 array indexing reproduces every instruction from the flag/active check onward byte-for-byte; only the prologue diverges at MISMATCH #6 (original reserves the `year` local with `push ecx` ahead of the ebx/esi callee-save pushes - same wall as 0x00477840's sibling, and every C form tried here has the compiler push ebx/esi first instead).
+void __cdecl mon_native_life_bred(int faction_id) {
+    const int year = static_cast<int>(game_year(GameDataStateStorage.fields_.turn_current_num_));
+    if ((Players[faction_id].rule_flags & 0x80) == 0) {
+        MonumentRecord &record = FactionMonuments[faction_id].records_[10];
+        if (record.achieved_ == 0) {
+            record.word_14_ = 0;
+            for (int i = 0; i < 8; i++) {
+                if (i != faction_id && FactionMonuments[i].records_[10].achieved_ != 0) {
+                    record.word_14_++;
+                }
+            }
+            int builder = faction_id;
+            if (record.word_14_ == 0) {
+                record.word_14_ = 1;
+            } else {
+                record.word_14_ = 0;
+                for (int j = 0; j < 8; j++) {
+                    if (j != faction_id && FactionMonuments[j].records_[10].achieved_ != 0 &&
+                        FactionMonuments[j].records_[10].word_14_ != 0) {
+                        builder = j;
+                    }
+                }
+            }
+            record.achieved_ = 1;
+            record.owner_faction_ = builder;
+            record.year_ = year;
+            const bool is_local = (faction_id == ConsoleGlobal.faction_id_);
+            FactionMonuments[faction_id].latest_type_ = 10;
+            if (is_local) {
+                monument(1);
+            }
+        }
+    }
+}
+
+/*
+Purpose: The type-11 trigger: the faction's first craft in space.
+// size      254 bytes
+Status: Coverage transcription of the retained seed
+        (git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00477740.cpp, plain FILE); same shape and walls
+        as mon_prototype_built above, over the space record table.
+*/
+// ORIGINAL: 0x00477740 ?mon_first_in_space@@YAXH@Z 0x00477740-0x0047783E
+// RECOVERY_BINDING: v1 {"evidence":["Pinned original entry 0x00477740 and its complete recorded span identify mon_first_in_space.","src/game.h defines MonumentRecord/MonumentFaction and the shared FactionMonuments[8] object; the body uses those typed record/faction owners rather than a second table view.","Existing src/game.cpp milestone producers already own neighboring records 0,1,2,4,5,6,7,12; this event family fills record types 3,8,9,10,11,13,14,15..20 on the same owner.","Actual callers remain in src/base.cpp (build/turn events), src/faction.cpp (faction death), and src/game.cpp (unification); notification calls resolve through the existing monument UI API.","Historical seed comments and unclaimed/non-byte-exact status are retained; no new byte or semantic claim is made."],"reason":"Keep this milestone producer with the existing source-owned FactionMonuments event family. Retain the exact branch order, record writes, unchecked faction indices, current-local-faction notification timing, and original matching/restoration obligations."}
+// TRIED: MonRecord struct + reinterpret_cast<MonRecord*>(base)+a1 array indexing reproduces every instruction from the flag/active check onward byte-for-byte; only the prologue diverges at MISMATCH #6 (original reserves the `year` local with `push ecx` ahead of the ebx/esi callee-save pushes - same wall as 0x00477840's sibling, and every C form tried here has the compiler push ebx/esi first instead).
+void __cdecl mon_first_in_space(int faction_id) {
+    const int year = static_cast<int>(game_year(GameDataStateStorage.fields_.turn_current_num_));
+    if ((Players[faction_id].rule_flags & 0x80) == 0) {
+        MonumentRecord &record = FactionMonuments[faction_id].records_[11];
+        if (record.achieved_ == 0) {
+            record.word_14_ = 0;
+            for (int i = 0; i < 8; i++) {
+                if (i != faction_id && FactionMonuments[i].records_[11].achieved_ != 0) {
+                    record.word_14_++;
+                }
+            }
+            int builder = faction_id;
+            if (record.word_14_ == 0) {
+                record.word_14_ = 1;
+            } else {
+                record.word_14_ = 0;
+                for (int j = 0; j < 8; j++) {
+                    if (j != faction_id && FactionMonuments[j].records_[11].achieved_ != 0 &&
+                        FactionMonuments[j].records_[11].word_14_ != 0) {
+                        builder = j;
+                    }
+                }
+            }
+            record.achieved_ = 1;
+            record.owner_faction_ = builder;
+            record.year_ = year;
+            const bool is_local = (faction_id == ConsoleGlobal.faction_id_);
+            FactionMonuments[faction_id].latest_type_ = 11;
+            if (is_local) {
+                monument(1);
+            }
+        }
+    }
+}
+
+/*
+Purpose: Record the unification victory monument for one faction: skip
+         factions already flagged, take the faction's unify record slot
+         when its live word is clear, stamp the year/counterpart/faction
+         and the two live words, publish 0xD as the faction's latest
+         monument type, and open the monument window for the local faction.
+
+// size      135 bytes
+// prototype
+// callers   0   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005C89A0 0x00476A50
+Return Value: n/a
+Status: Coverage transcription - unclaimed body
+*/
+// ORIGINAL: 0x00477940 ?mon_winning_unify@@YAXHH@Z 0x00477940-0x004779C7
+// RECOVERY_BINDING: v1 {"evidence":["Pinned original entry 0x00477940 and its complete recorded span identify mon_winning_unify.","src/game.h defines MonumentRecord/MonumentFaction and the shared FactionMonuments[8] object; the body uses those typed record/faction owners rather than a second table view.","Existing src/game.cpp milestone producers already own neighboring records 0,1,2,4,5,6,7,12; this event family fills record types 3,8,9,10,11,13,14,15..20 on the same owner.","Actual callers remain in src/base.cpp (build/turn events), src/faction.cpp (faction death), and src/game.cpp (unification); notification calls resolve through the existing monument UI API.","Historical seed comments and unclaimed/non-byte-exact status are retained; no new byte or semantic claim is made."],"reason":"Keep this milestone producer with the existing source-owned FactionMonuments event family. Retain the exact branch order, record writes, unchecked faction indices, current-local-faction notification timing, and original matching/restoration obligations."}
+// kind game
+void __cdecl mon_winning_unify(int faction_id, int counterpart) {
+    const int year = static_cast<int>(game_year(GameDataStateStorage.fields_.turn_current_num_));
+    if ((Players[faction_id].rule_flags & 0x80) != 0) {
+        return;
+    }
+    MonumentRecord &record = FactionMonuments[faction_id].records_[13];
+    if (record.achieved_ != 0) {
+        return;
+    }
+    record.year_ = year;
+    record.owner_faction_ = faction_id;
+    record.word_14_ = 1;
+    record.achieved_ = 1;
+    record.word_8_ = counterpart;
+    FactionMonuments[faction_id].latest_type_ = 0xD;
+    if (faction_id == ConsoleGlobal.faction_id_) {
+        monument(1);
+    }
+}
+
+/*
+Purpose: The transcendence twin of mon_winning_unify: same gates and
+         record shape over the faction's trans record slot, publishing
+         0xE as the latest monument type instead.
+
+// size      135 bytes
+// prototype
+// callers   0   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005C89A0 0x00476A50
+Return Value: n/a
+Status: Coverage transcription - unclaimed body
+*/
+// ORIGINAL: 0x004779D0 ?mon_winning_trans@@YAXHH@Z 0x004779D0-0x00477A57
+// RECOVERY_BINDING: v1 {"evidence":["Pinned original entry 0x004779D0 and its complete recorded span identify mon_winning_trans.","src/game.h defines MonumentRecord/MonumentFaction and the shared FactionMonuments[8] object; the body uses those typed record/faction owners rather than a second table view.","Existing src/game.cpp milestone producers already own neighboring records 0,1,2,4,5,6,7,12; this event family fills record types 3,8,9,10,11,13,14,15..20 on the same owner.","Actual callers remain in src/base.cpp (build/turn events), src/faction.cpp (faction death), and src/game.cpp (unification); notification calls resolve through the existing monument UI API.","Historical seed comments and unclaimed/non-byte-exact status are retained; no new byte or semantic claim is made."],"reason":"Keep this milestone producer with the existing source-owned FactionMonuments event family. Retain the exact branch order, record writes, unchecked faction indices, current-local-faction notification timing, and original matching/restoration obligations."}
+// TRIED: `extern "C"` on the already-declared plain-linkage game_year/monument callees conflicts as C2732; a byte-table extern for 0x94CD18 compiles but the `lea` vs `sub` MISMATCH stayed open.
+// kind game
+void __cdecl mon_winning_trans(int faction_id, int counterpart) {
+    const int year = static_cast<int>(game_year(GameDataStateStorage.fields_.turn_current_num_));
+    if ((Players[faction_id].rule_flags & 0x80) != 0) {
+        return;
+    }
+    MonumentRecord &record = FactionMonuments[faction_id].records_[14];
+    if (record.achieved_ != 0) {
+        return;
+    }
+    record.year_ = year;
+    record.owner_faction_ = faction_id;
+    record.word_14_ = 1;
+    record.achieved_ = 1;
+    record.word_8_ = counterpart;
+    FactionMonuments[faction_id].latest_type_ = 0xE;
+    if (faction_id == ConsoleGlobal.faction_id_) {
+        monument(1);
+    }
+}
+
+/*
+Purpose: Place a faction-killed faction's shared monument: scan the six
+         free 0x38-byte slots for the first clear achieved word, take the
+         matching 0xF+i index, stamp the finished-record fields, publish
+         the chosen index as the latest monument type, and open the
+         monument window for the unflagged local faction.
+
+// size      175 bytes
+// prototype
+// callers   0   call targets   2
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005C89A0 0x00476A50
+Return Value: n/a
+Status: Coverage transcription - unclaimed body
+*/
+// ORIGINAL: 0x00477A60 ?mon_killed_faction@@YAXHH@Z 0x00477A60-0x00477B0F
+// RECOVERY_BINDING: v1 {"evidence":["Pinned original entry 0x00477A60 and its complete recorded span identify mon_killed_faction.","src/game.h defines MonumentRecord/MonumentFaction and the shared FactionMonuments[8] object; the body uses those typed record/faction owners rather than a second table view.","Existing src/game.cpp milestone producers already own neighboring records 0,1,2,4,5,6,7,12; this event family fills record types 3,8,9,10,11,13,14,15..20 on the same owner.","Actual callers remain in src/base.cpp (build/turn events), src/faction.cpp (faction death), and src/game.cpp (unification); notification calls resolve through the existing monument UI API.","Historical seed comments and unclaimed/non-byte-exact status are retained; no new byte or semantic claim is made."],"reason":"Keep this milestone producer with the existing source-owned FactionMonuments event family. Retain the exact branch order, record writes, unchecked faction indices, current-local-faction notification timing, and original matching/restoration obligations."}
+// TRIED: the flag byte needs its own extern beside the scaffold's int-typed binding (C2373), and the three table bases need masked relocations; the spill of `year` to an extra frame slot stayed a 0.86-similarity MISMATCH.
+// kind game
+void __cdecl mon_killed_faction(int faction_id, int counterpart) {
+    const int year = static_cast<int>(game_year(GameDataStateStorage.fields_.turn_current_num_));
+    int chosen = -1;
+    for (int index = 0; index < 6; ++index) {
+        if (FactionMonuments[faction_id].records_[index + 0xF].achieved_ == 0
+            && chosen == -1) {
+            chosen = index + 0xF;
+        }
+    }
+    if (chosen == -1) {
+        return;
+    }
+    MonumentRecord &record = FactionMonuments[faction_id].records_[chosen];
+    record.year_ = year;
+    record.word_8_ = counterpart;
+    record.word_14_ = 1;
+    record.achieved_ = 1;
+    record.owner_faction_ = faction_id;
+    FactionMonuments[faction_id].latest_type_ = chosen;
+    if ((Players[faction_id].rule_flags & 0x80) == 0
+        && faction_id == ConsoleGlobal.faction_id_) {
+        monument(1);
+    }
 }

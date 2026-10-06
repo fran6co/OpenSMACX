@@ -37,6 +37,7 @@ __LAYOUT__
 MonumentFaction FactionMonuments[8];
 struct Player { int rule_flags; } Players[8];
 struct Console { int faction_id_; } ConsoleGlobal;
+struct GameDataStorageFixture { struct Fields { int turn_current_num_; } fields_; } GameDataStateStorage = {{21}};
 int TurnCurrentNum=21, year_calls, popup_calls, change_local=-1;
 uint32_t game_year(int turn) {
     assert(turn==21); ++year_calls;
