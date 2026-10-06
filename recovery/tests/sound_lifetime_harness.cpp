@@ -20,6 +20,7 @@ struct _MMIOINFO;
 #undef private
 #undef protected
 
+// LIVE_FADE_CONSTRUCTOR
 // LIVE_FADE_INTERVAL
 // LIVE_ROOT_FADE
 // LIVE_SOUND_FADE

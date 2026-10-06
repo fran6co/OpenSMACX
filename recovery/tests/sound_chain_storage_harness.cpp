@@ -55,6 +55,7 @@ int WaveDeviceReleaseGuard;
 inline func_wave_device_release *&WaveDeviceReleaseSlot() { return release_hook; }
 // SOUND_LINK_DOUBLES_END
 
+// LIVE_FADE_CONSTRUCTOR
 // LIVE_ATTACH
 // LIVE_DETACH
 // LIVE_DESTRUCTOR

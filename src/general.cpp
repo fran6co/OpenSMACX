@@ -24,6 +24,10 @@
 #include <dos.h>
 // _outp for the same body's DAC port writes.
 #include <conio.h>
+// VC6's real intrinsic lowering emits cli/out/sti without importing
+// nonexistent _enable helpers. pushad/popad remain a documented
+// source-vs-original caller-register-preservation obligation.
+#pragma intrinsic(_disable, _enable, _outp)
 #include "sprite.h"
 #include "popup.h"
 #include "buffer.h"
@@ -3040,6 +3044,32 @@ extern "C" void __fastcall sub_5d3f50(int *param_1) {
     } while (outOff < 0x7b0);
 }
 
+// Historical TRIED (2026-09-06): the first general.cpp trial failed
+// at link because the CRT did not resolve _enable; the old note also
+// recorded that dos.h treated _disable/_enable as calls and VC6 had no
+// intrin.h declaration. Retained finding: this body requires a pragma
+// intrinsic, not the header's callable fallback. The explicit pragma
+// above selects the compiler's instruction lowering instead of CRT calls.
+// Original pushad/popad restores volatile caller registers too; ordinary
+// C++ does not promise that stronger behavior. The conversion and I/O order
+// have a C++ owner; native exactness and extra register preservation stay open.
+// ORIGINAL: 0x005D4240 sub_5d4240 0x005D4240-0x005D427C
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x005D4240-0x005D427C: complete60-byte listing performs cli, selects DAC index0, writes256 RGB triplets from four-byte-spaced input, then sti", "build/recovery/palette-intrinsic-control-oct6.cpp: VC6 pragma intrinsic control has no unresolved helpers and emits physical cli/out/sti; it does not execute privileged I/O", "src/general.h: existing free __cdecl sub_5d4240(unsigned char*) declaration; source preserves that ABI rather than fabricating a Palette receiver or caller", "src/general.cpp: existing DOS/conio includes were specifically retained for this hardware routine"], "reason": "Own the original VGA DAC operation in the existing general hardware-helper TU. Preserve index selection, 256 four-byte-stride RGB conversions, output order and interrupt enable; retain the original full span/history while explicitly leaving pushad/popad volatile-register restoration as a native exactness obligation. No hardware port access is run by the host control."}
+// symbol    ?sub_5d4240@@YAXPAE@Z
+void __cdecl sub_5d4240(unsigned char *palette_rgb) {
+    _disable();
+    _outp(0x3c8, 0);
+    int n = 0x100;
+    do {
+        _outp(0x3c9, palette_rgb[0] >> 2);
+        _outp(0x3c9, palette_rgb[1] >> 2);
+        _outp(0x3c9, palette_rgb[2] >> 2);
+        palette_rgb += 4;
+        n--;
+    } while (n != 0);
+    _enable();
+}
+
 // ORIGINAL: 0x005D427C sub_5d427c 0x005D427C-0x005D439F
 // TRIED: entry uses pushal/popal (all eight registers saved and restored) around the whole body with cld and only rep movsb/ rep movsd inside, which VC6 never emits for ordinary compiled C++ - this is very likely inline assembly in the original source, which the rules here bar reproducing. Transcribed Ghidra's decompilation (already a faithful read of the byte stream) into plain C++ instead: a byte-oriented decoder that walks a control word one bit at a time, alternating literal dword/byte copies from the source with back-reference copies from already-written output, matching an LZ-style unpacker. No `__asm`; this compiles but will not reach the original's register-saving shape.
 // size      291 bytes
@@ -3856,17 +3886,8 @@ void GraphicWin::j_close() {
 // eight adjustments, then four zero state words. Every delta was compared
 // with the original, including signed nibbles and the final step of 32767.
 // Earlier seed notes describing these lookup words as zero were incorrect.
-#define MEDIA_ADPCM_MAG(s, n) (((s) >> 3) + (((n) & 1) ? ((s) >> 2) : 0) + \
-    (((n) & 2) ? ((s) >> 1) : 0) + (((n) & 4) ? (s) : 0))
-#define MEDIA_ADPCM_ROW(s) \
-    MEDIA_ADPCM_MAG(s, 0), MEDIA_ADPCM_MAG(s, 1), \
-    MEDIA_ADPCM_MAG(s, 2), MEDIA_ADPCM_MAG(s, 3), \
-    MEDIA_ADPCM_MAG(s, 4), MEDIA_ADPCM_MAG(s, 5), \
-    MEDIA_ADPCM_MAG(s, 6), MEDIA_ADPCM_MAG(s, 7), \
-    -MEDIA_ADPCM_MAG(s, 0), -MEDIA_ADPCM_MAG(s, 1), \
-    -MEDIA_ADPCM_MAG(s, 2), -MEDIA_ADPCM_MAG(s, 3), \
-    -MEDIA_ADPCM_MAG(s, 4), -MEDIA_ADPCM_MAG(s, 5), \
-    -MEDIA_ADPCM_MAG(s, 6), -MEDIA_ADPCM_MAG(s, 7)
+#define MEDIA_ADPCM_MAG(s, n) (((s) >> 3) + (((n) & 1) ? ((s) >> 2) : 0) + (((n) & 2) ? ((s) >> 1) : 0) + (((n) & 4) ? (s) : 0))
+#define MEDIA_ADPCM_ROW(s) MEDIA_ADPCM_MAG(s, 0), MEDIA_ADPCM_MAG(s, 1), MEDIA_ADPCM_MAG(s, 2), MEDIA_ADPCM_MAG(s, 3), MEDIA_ADPCM_MAG(s, 4), MEDIA_ADPCM_MAG(s, 5), MEDIA_ADPCM_MAG(s, 6), MEDIA_ADPCM_MAG(s, 7), -MEDIA_ADPCM_MAG(s, 0), -MEDIA_ADPCM_MAG(s, 1), -MEDIA_ADPCM_MAG(s, 2), -MEDIA_ADPCM_MAG(s, 3), -MEDIA_ADPCM_MAG(s, 4), -MEDIA_ADPCM_MAG(s, 5), -MEDIA_ADPCM_MAG(s, 6), -MEDIA_ADPCM_MAG(s, 7)
 // Access-window binding: native coefficient readers at 0x005CDB90/0x005CDD10
 // overlap the first delta row; 0x005CE6E3 owns the four trailing state writes.
 // This groups proven storage accesses, not a recovered original declaration.

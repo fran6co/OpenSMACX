@@ -982,6 +982,18 @@ int __cdecl init_sound(void *window, unsigned long backends) {
     return 0;
 }
 
+// ORIGINAL: 0x004C8410 ??0Patch@@QAE@XZ 0x004C8410-0x004C8442 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:4C8410..4C8442: stores root table66E444, volume+4=7F, pan+8=0, zeroes+C..+2F and clears+30; +34/+38 remain untouched", "pinned:Sound constructor4C6080 publishes66E444 before Sound table66E3C0; Sound destructor4C6120 and shared unwind path4C8450 restore the same root; Ambience/Wave/Voice constructors stage the same prefix", "src/sound.h SoundFadeState actual members and RECOVERY_MEMBER bindings account for fields+4..+38; the root's two fade slots select the shared typed SoundFadeState behavior", "promoted historical seed src/recovered/units/004c8410.cpp retains original catalog name ??0Patch@@QAE@XZ, full50-byte span, and BYTE_EXACT claim"], "reason": "Own the complete initialized 0x3C SoundFadeState prefix through its existing real base class. The old Patch catalog name is retained only as historical function identity; it does not establish a Patch class or hierarchy. Leave delay_ and fade_38_ untouched. Externalizing this formerly inline constructor changes compiler call placement, so native matching/restoration across Sound-derived constructors remains required."}
+// symbol    ??0SoundFadeState@@QAE@XZ
+SoundFadeState::SoundFadeState() {
+  volume_ = 0x7F;
+  pan_8_ = 0;
+  memset(state_C_, 0, sizeof(state_C_));
+  loop_flag_30_ = 0;
+  // The original base does not initialize delay_ or fade_38_. Sound sets
+  // the default interval after constructing this prefix.
+}
+
 // Original family tables share slot 1 at 0x004482F0. Unlike set_fade,
 // this changes the remembered interval without notifying the wrapped device.
 // The behavioral name is provisional; zero refuses without changing state.

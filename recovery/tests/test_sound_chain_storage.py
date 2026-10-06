@@ -65,6 +65,7 @@ def test_strict_references_reject_swapped_chain_ends(chain):
 
 
 CHAIN_HANDLERS = [
+    ("// LIVE_FADE_CONSTRUCTOR", "src/sound.cpp", 0x4C8410),
     ("// LIVE_ATTACH", "src/sound.cpp", 0x4C6370),
     ("// LIVE_DETACH", "src/sound.cpp", 0x4C63D0),
     ("// LIVE_DESTRUCTOR", "src/sound.cpp", 0x4C6120),

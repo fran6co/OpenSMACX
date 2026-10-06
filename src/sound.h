@@ -27,14 +27,7 @@
 // Sound's first additional field is device_ at 0x3C.
 class SoundFadeState {
  public:
-  SoundFadeState() {
-    volume_ = 0x7F;
-    pan_8_ = 0;
-    memset(state_C_, 0, sizeof(state_C_));
-    loop_flag_30_ = 0;
-    // The original base does not initialize delay_ or fade_38_. Sound sets
-    // the default interval after constructing this prefix.
-  }
+  SoundFadeState();
   virtual int set_fade(unsigned long interval);           // root slot 0
   virtual int set_fade_interval(unsigned long interval);  // root slot 1
 

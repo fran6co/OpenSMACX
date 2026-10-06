@@ -98,6 +98,7 @@ def test_root_slots_and_compiler_cleanup_keep_their_original_targets(family):
 
 def run_constructor(tmp_path, monkeypatch):
     run_recovered_harness(tmp_path, monkeypatch, "sound_lifetime_harness.cpp", [
+        ("// LIVE_FADE_CONSTRUCTOR", "src/sound.cpp", 0x4C8410),
         ("// LIVE_FADE_INTERVAL", "src/sound.cpp", 0x4482F0),
         ("// LIVE_SOUND_FADE", "src/sound.cpp", 0x4C6580),
         ("// LIVE_SOUND_CONSTRUCTOR", "src/sound.cpp", 0x4C6080),
@@ -117,9 +118,9 @@ def test_actual_constructor_sets_owned_state_and_leaves_uninitialized_delay_unto
 
 
 @pytest.mark.parametrize("unit,before,after", [
-    ("src/sound.h", "volume_ = 0x7F;", "volume_ = 0x7E;"),
-    ("src/sound.h", "sizeof(state_C_)", "sizeof(state_C_) - 4"),
-    ("src/sound.h", "loop_flag_30_ = 0;", "loop_flag_30_ = 1;"),
+    ("src/sound.cpp", "volume_ = 0x7F;", "volume_ = 0x7E;"),
+    ("src/sound.cpp", "sizeof(state_C_)", "sizeof(state_C_) - 4"),
+    ("src/sound.cpp", "loop_flag_30_ = 0;", "loop_flag_30_ = 1;"),
     ("src/sound.cpp", "Sound::set_fade(1000);", "Sound::set_fade(999);"),
     ("src/sound.cpp", "Sound::set_fade(1000);", "Sound::set_fade(1000); delay_ = 0;"),
     ("src/sound.cpp", "device_ = 0;", "device_ = reinterpret_cast<void *>(1);"),

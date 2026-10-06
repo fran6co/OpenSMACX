@@ -119,6 +119,7 @@ typedef void(__cdecl func_wave_device_release)(void *);
 static func_wave_device_release *release_hook = release_device;
 inline func_wave_device_release *&WaveDeviceReleaseSlot() { return release_hook; }
 
+// LIVE_FADE_CONSTRUCTOR
 // LIVE_ATTACH
 // LIVE_DETACH
 // LIVE_NEXT
