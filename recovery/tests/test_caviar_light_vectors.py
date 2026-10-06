@@ -29,7 +29,7 @@ def parts():
 
 
 def run_host(tmp_path,source):
-    compiler=shutil.which("g++")
+    compiler=shutil.which(os.environ.get("OSMX_HOST_CXX", "g++"))
     if not compiler:pytest.skip("host g++ required")
     program=r'''
         #include <cstdint>
@@ -56,12 +56,12 @@ def run_host(tmp_path,source):
         SETTER
         void require(bool ok) {if(!ok)std::exit(42);}
         void external_vectors(Caviar &renderer) {
-            renderer.light_vector_.values[0]=2;
-            renderer.light_vector_.values[1]=3;
-            renderer.light_vector_.values[2]=4;
-            renderer.shadow_vector_.values[0]=5;
-            renderer.shadow_vector_.values[1]=6;
-            renderer.shadow_vector_.values[2]=7;
+            renderer.light_vector().values[0]=2;
+            renderer.light_vector().values[1]=3;
+            renderer.light_vector().values[2]=4;
+            renderer.shadow_vector().values[0]=5;
+            renderer.shadow_vector().values[1]=6;
+            renderer.shadow_vector().values[2]=7;
         }
         int main() {
             static_assert(sizeof(VOX_Vect)==12,"three floats");
@@ -83,8 +83,8 @@ def run_host(tmp_path,source):
             value.object.init();
             require(closes==1 && allocations.size()==600);
             for(int n=0;n<3;++n) {
-                require(value.object.light_vector_.values[n]==(n==2?-1.0f:0.0f));
-                require(value.object.shadow_vector_.values[n]==value.object.light_vector_.values[n]);
+                require(value.object.light_vector().values[n]==(n==2?-1.0f:0.0f));
+                require(value.object.shadow_vector().values[n]==value.object.light_vector().values[n]);
             }
             external_vectors(value.object);
             const float angles[][2]={{0,0},{0.5f,0.7f},{-0.8f,1.2f},{1.5707963f,-0.4f}};
@@ -93,8 +93,8 @@ def run_host(tmp_path,source):
                 const double expected[]={std::cos(double(a[1]))*std::sin(double(a[0])),
                     std::sin(double(a[1]))*std::sin(double(a[0])),std::cos(double(a[0]))};
                 for(int n=0;n<3;++n) {
-                    require(value.object.light_vector_.values[n]==float(n+2));
-                    require(std::fabs(value.object.shadow_vector_.values[n]-expected[n])<0.000001);
+                    require(value.object.light_vector().values[n]==float(n+2));
+                    require(std::fabs(value.object.shadow_vector().values[n]-expected[n])<0.000001);
                 }
             }
             require(value.before==0x12345678 && value.after==0xABCD1234);
@@ -119,8 +119,14 @@ def test_vector_damage_controls(tmp_path,damage):
     source=parts()
     if damage=="setter_light":source["setter"]=source["setter"].replace("shadow_vector_","light_vector_")
     elif damage=="setter_swap":source["setter"]=source["setter"].replace("values[0]","values[2]")
-    elif damage=="init_copy":source["init"]=source["init"].replace("shadow_vector_.values[2] = light_vector_.values[2]","shadow_vector_.values[2] = light_vector_.values[0]")
-    elif damage=="init_seed":source["init"]=source["init"].replace("light_vector_.values[2] = -1.0f","light_vector_.values[2] = 1.0f")
+    elif damage=="init_copy":
+        old="scene_context_.shadow_vector_.values[2] = scene_context_.light_vector_.values[2]"
+        assert source["init"].count(old)==1
+        source["init"]=source["init"].replace(old,old.replace("values[2] = scene_context_.light_vector_.values[2]","values[2] = scene_context_.light_vector_.values[0]"),1)
+    elif damage=="init_seed":
+        old="scene_context_.light_vector_.values[2] = -1.0f"
+        assert source["init"].count(old)==1
+        source["init"]=source["init"].replace(old,old.replace("-1.0f","1.0f"),1)
     elif damage=="add_snapshot":
         source["add"]=source["add"].replace("    float rx", "    float y = left[1] + right[1], z = left[2] + right[2];\n    float rx").replace("output[1] = left[1] + right[1]","output[1] = y").replace("output[2] = left[2] + right[2]","output[2] = z")
     elif damage=="add_reverse":
@@ -128,7 +134,7 @@ def test_vector_damage_controls(tmp_path,damage):
         source["add"]=prefix+"{output[2]=left[2]+right[2];output[1]=left[1]+right[1];output[0]=right[0]+left[0];}"
     else:source["add"]=source["add"].replace("left[2] + right[2]","left[1] + right[2]")
     result=run_host(tmp_path,source)
-    assert result.returncode!=0
+    assert result.returncode==42
 
 
 def test_original_vector_groups_and_external_renderer():

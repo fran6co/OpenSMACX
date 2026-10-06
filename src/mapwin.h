@@ -264,7 +264,7 @@ class MapWin : public virtual GraphicWin {
   // 0x00466CA0, source-owned vehicle painter. The pushes at
   // 0x00468CA3..AD and 0x0046A023..32 fix this five-argument shape.
   void draw_vehicles(int x, int y, int pixel_x, int pixel_y, int draw_type);
-  // 0x004688E0, no seed mapping yet: the name and the void(int, int) shape
+  // 0x004688E0, source-owned goal overlays: the name and void(int, int) shape
   // come from the two call sites that push exactly (x, y) after gen_tile's
   // vehicle draw and inside gen_map's overlay scan.
   void gen_overlays(int x, int y);

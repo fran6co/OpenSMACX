@@ -8676,6 +8676,31 @@ int Win::center() {
     return move(local_8, local_4);
 }
 
+// ORIGINAL: 0x005ED700 sub_5ed700 0x005ED700-0x005ED7B4 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["historical seed:src/unrecovered/005ed700.cpp; full original marker, spans, byte claim and lessons transported by match_recovery.source.writer", "historical scaffold symbol hint (not an emitted-symbol fact):    ?center_on_parent@WinCentering@@QAEHXZ", "owner proposal: src/win.cpp; original identity 0x005ED700; symbol observation intentionally pending physical compilation"], "reason": "Recover parent-relative centering through the real Win receiver and existing move/API owners; emitted symbol awaits physical observation."}
+// symbol    ?center_on_parent@Win@@QAEHXZ
+// working copy - scaffold materialised by --work
+// size      180 bytes
+// prototype
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005ED7D0
+// indirect  0x005ED746
+int Win::center_on_parent() {
+    Win *const parent = win_parent_;
+    if (parent == 0) return 1;
+
+    RECT local = parent->client_rect_;
+    if (IsRectEmpty(&local)) return 7;
+
+    return move(
+        local.left + (((parent->client_rect_.right - client_rect_.right) +
+                        client_rect_.left - parent->client_rect_.left) >> 1),
+        local.top + (((parent->client_rect_.bottom - parent->client_rect_.top) -
+                       client_rect_.bottom + client_rect_.top) >> 1));
+}
+
 // ===== homed from src/unrecovered/005ee750.cpp =====
 typedef void (__cdecl *FnCallback)(int, int);
 

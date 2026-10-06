@@ -48,6 +48,64 @@ struct CaviarFixedPointProjectionMatrix {
 
 typedef char CaviarProjectionCell_stride_is_16[
     sizeof(CaviarProjectionCell) == 0x10 ? 1 : -1];
+
+// Shared accessed windows reached by the current projection producer, scalar
+// and shadow consumers, and error-message writer. These exact extents describe
+// observed source accesses only, not original allocation bounds.
+#pragma pack(push, 1)
+struct CaviarKernelStepRowCandidate {
+  int32_t x_;
+  int32_t y_;
+  int32_t z_;
+  uint32_t unobserved_word_;
+};
+struct CaviarKernelAliasTailCandidate {
+  float scratch_e0_;             // +0x00, 0x9C09E0
+  float scratch_e4_;             // +0x04, 0x9C09E4
+  float scratch_e8_;             // +0x08, 0x9C09E8
+  float scratch_ec_;             // +0x0C, 0x9C09EC
+  float scratch_f0_;             // +0x10, 0x9C09F0
+  float scratch_f4_;             // +0x14, 0x9C09F4
+  uint32_t vox_scene_extent_;     // +0x18, 0x9C09F8; prior local source view
+  float scratch_fc_;             // +0x1C, 0x9C09FC
+  float scratch_a00_;            // +0x20, 0x9C0A00
+  float scratch_a04_;            // +0x24, 0x9C0A04
+  uint8_t unknown_18_[0x38];     // +0x28..+0x5F, remains untyped
+};
+struct CaviarKernelKnownProjectionViewsCandidate {
+  CaviarProjectionCell cells_[0x1A];
+  CaviarKernelAliasTailCandidate tail_;
+};
+union CaviarKernelProjectionWindowCandidate {
+  CaviarKernelKnownProjectionViewsCandidate current_views_;
+  CaviarKernelStepRowCandidate raster_step_rows_[32];
+  uint32_t accessed_words_[0x80];
+};
+struct CaviarOutputMessageWindowCandidate {
+  uint32_t projection_words_[0x6B];       // +0x000..+0x1AB
+  uint8_t unidentified_gap_[0x24];        // +0x1AC..+0x1CF
+  char message_[0x100];                    // +0x1D0..+0x2CF
+};
+#pragma pack(pop)
+static_assert(sizeof(CaviarKernelStepRowCandidate) == 0x10,
+              "raster stepper reads four dwords per row");
+static_assert(sizeof(CaviarKernelAliasTailCandidate) == 0x60,
+              "projection tail occupies 0x9C09E0..0x9C0A3F");
+static_assert(offsetof(CaviarKernelKnownProjectionViewsCandidate, tail_) == 0x1A0,
+              "26 projection cells end exactly at 0x9C09E0");
+static_assert(offsetof(CaviarKernelAliasTailCandidate, vox_scene_extent_) == 0x18,
+              "scene extent field follows six adjacent scratch floats");
+static_assert(offsetof(CaviarKernelProjectionWindowCandidate, current_views_) == 0,
+              "projection child paths start at the parent base");
+static_assert(sizeof(CaviarKernelProjectionWindowCandidate) == 0x200,
+              "projection owner covers the observed 0x200-byte access window");
+static_assert(sizeof(CaviarOutputMessageWindowCandidate) == 0x2D0,
+              "output/message owner covers only the observed corridor");
+static_assert(offsetof(CaviarOutputMessageWindowCandidate, message_) == 0x1D0,
+              "message buffer begins at the observed +0x1D0 offset");
+
+extern CaviarKernelProjectionWindowCandidate CaviarKernelProjectionWindow;
+extern CaviarOutputMessageWindowCandidate CaviarOutputMessageWindow;
 typedef char CaviarFixedPointProjectionMatrix_size_is_24[
     sizeof(CaviarFixedPointProjectionMatrix) == 0x18 ? 1 : -1];
 
@@ -102,12 +160,15 @@ struct CvrPart {
   VOX_Matrix *matrices_; // +0x08, one 36-byte matrix per step
 };
 
-// What one step entry's second dword POINTS AT, named from the engine's own
-// camera transform (0x0063A6F0), which is the only body that dereferences it:
-// it loads a float at +8 (image 0x63A746 `fld dword ptr [esi + 8]`) and six
-// signed 16-bit fields at +0x14..+0x1f (`movsx` off the same register), and
-// multiplies all seven by one scale. The rest of the block belongs to the
-// loader and nothing here reads it.
+// Historical prefix-only qualification: the camera transform
+// (0x0063A6F0) reads scale at +8 and six signed shorts at +0x14..+0x1f.
+// Raster callers also prove the packed variable-tail accesses below; no
+// complete allocation extent is inferred from either access family.
+// The historical +0x20 interpretation remains a retained qualification
+// and restoration obligation. Raster callers prove the directly following
+// packed wire fields, but neither byte_size_ nor these accesses prove the
+// allocation's complete extent or variable stream capacity.
+#pragma pack(push, 1)
 struct CvrShape {
   uint32_t field_0_;   // +0x00, serialized prefix; interpretation unresolved
   uint32_t byte_size_; // +0x04, current shape bytes moved by patch chunks
@@ -119,10 +180,18 @@ struct CvrShape {
   int16_t offset_x_;   // +0x1A, the three per-axis offsets
   int16_t offset_y_;   // +0x1C
   int16_t offset_z_;   // +0x1E
+  int16_t raster_origin_[3]; // +0x20..+0x25, flat-path source vector
+  uint32_t item_count_; // +0x26, observed dword traversal count (unaligned)
+  uint8_t item_stream_[1]; // +0x2A, variable payload start; not a capacity
 };
+#pragma pack(pop)
 
-static_assert(sizeof(CvrShape) == 0x20,
-              "CvrShape must reach its six per-axis fields at +0x14..+0x1f");
+static_assert(offsetof(CvrShape, raster_origin_) == 0x20,
+              "CvrShape raster origin must follow the historical prefix");
+static_assert(offsetof(CvrShape, item_count_) == 0x26,
+              "CvrShape observed count is an unaligned dword at +0x26");
+static_assert(offsetof(CvrShape, item_stream_) == 0x2A,
+              "CvrShape variable stream begins at +0x2a");
 
 struct CvrStep {
   uint32_t lead_;      // +0x00
@@ -315,19 +384,8 @@ struct VoxCameraBlock {
 };
 #pragma pack(pop)
 
-extern CaviarProjectionCell CaviarProjectionCells[0x1A];
-extern uint32_t CaviarProjectionOutputWords[0x6B];
 extern CaviarFixedPointProjectionMatrix CaviarFixedPointProjection;
 extern float CaviarProjectionScaledMatrix[9];
-extern float CaviarProjectionScratchE0;
-extern float CaviarProjectionScratchE4;
-extern float CaviarProjectionScratchE8;
-extern float CaviarProjectionScratchEC;
-extern float CaviarProjectionScratchF0;
-extern float CaviarProjectionScratchF4;
-extern float CaviarProjectionScratchFC;
-extern float CaviarProjectionScratchA00;
-extern float CaviarProjectionScratchA04;
 extern int32_t vox_projection_render_stage_;
 extern int32_t vox_projection_prepared_;
 extern int32_t vox_projection_octant_mask_;
@@ -442,6 +500,10 @@ class Caviar {
   void set_scaling(float scaling);
   void set_scaling_bits(uint32_t scaling_bits);
   float get_scaling();
+  // Side-effect-free live reads for the renderer's protected Buffer
+  // DIB fields; Caviar is already Buffer's friend.
+  static void *render_color_dib_bits();
+  static void *render_shadow_dib_bits();
 
   // 0x00618520 and 0x00618560 - the image's UNK13 and UNK14, named from what
   // both bodies do: they read the created render record's clip bounds, one to
@@ -660,7 +722,8 @@ void __cdecl vox_fill_colour_table(void *table, unsigned long value,
 // 0x006393C0. Creates the scene render record from the descriptor block
 // init_class fills at 0x009BB438; the created handle lands at 0x009BB478.
 // The renderer record vox_create_record builds. 0x80 bytes are allocated and
-// all of them are zeroed, so the tail is unknown padding.
+// all of them are zeroed. Historical tail-as-padding interpretation is
+// superseded by the dispatch/callsite evidence for five nonvirtual callbacks.
 struct VoxRenderRecord {
     uint32_t setup_id_;        // 0x00 - first argument, stored verbatim
     uint32_t setup_block_;     // 0x04 - the descriptor block
@@ -701,10 +764,24 @@ struct VoxRenderRecord {
     void **ramp_a_ptr_;  // 0x60
     void **ramp_b_ptr_;  // 0x64
     uint8_t setup_size_code_;  // 0x68 - low byte of the last argument
-    uint8_t field_69_[0x7C - 0x69];
-    // 0x7C. The setup hook the draw calls once per frame, before the walk -
-    // the third of the record's three callbacks.
-    void *setup_callback_;
+    uint8_t field_69_[0x6C - 0x69];
+    // Nonvirtual callback data in the original 0x6c..0x7f record tail.
+    // Slot identity/signature remains subject to the pending fresh serializer
+    // parent/member proof; these types reflect the observed call protocols.
+    typedef void (__cdecl *PartContainedCallback)(int32_t, int32_t, int32_t,
+        uint32_t, const uint8_t *, int32_t);
+    typedef void (__cdecl *PartClippedCallback)(int32_t, int32_t, int32_t,
+        const int32_t *, uint32_t, const uint8_t *, int32_t);
+    typedef void (__cdecl *ShadowContainedCallback)(int32_t, int32_t,
+        uint32_t, const uint8_t *, int32_t);
+    typedef void (__cdecl *ShadowClippedCallback)(int32_t, int32_t,
+        const int32_t *, uint32_t, const uint8_t *, int32_t);
+    typedef void (__cdecl *SetupCallback)(void);
+    PartContainedCallback part_contained_;    // +0x6c
+    PartClippedCallback part_clipped_;        // +0x70
+    ShadowContainedCallback shadow_contained_; // +0x74
+    ShadowClippedCallback shadow_clipped_;     // +0x78
+    SetupCallback setup_callback_;            // +0x7c
 };
 
 static_assert(sizeof(VoxRenderRecord) == 0x80,

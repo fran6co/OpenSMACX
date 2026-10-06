@@ -33,7 +33,7 @@ def actual_source():
 
 
 def run_host(tmp_path,parts):
-    compiler=shutil.which("g++")
+    compiler=shutil.which(os.environ.get("OSMX_HOST_CXX", "g++"))
     if not compiler:pytest.skip("host g++ required")
     header=parts["header"]
     for key,name in (("model_dtor","CaviarData"),("renderer_dtor","Caviar")):
@@ -136,7 +136,7 @@ def run_host(tmp_path,parts):
                 Caviar renderer;require_empty(renderer);
                 require(renderer.field_108_==0x461C4000 && renderer.field_13CC_==0);
                 renderer.init();require(allocated.size()==600 && released.empty());
-                require(renderer.scene_state_.instances_==renderer.slots_);
+                require(renderer.scene_context_.state_.instances_==renderer.slots_);
             }
             require(allocated==released && released_models.size()==model_releases);
             reset_allocations();
@@ -182,7 +182,7 @@ def test_lifetime_damage_controls(tmp_path,damage):
     elif damage=="model_clear":parts["model_close"]=parts["model_close"].replace("record_ = nullptr;","record_ = nullptr; field_0_ = 0;")
     elif damage=="model_fd_close":parts["model_dtor"]=parts["model_dtor"].replace("close();","close(); _close(fileDescriptor_);")
     else:parts["renderer_dtor"]=parts["renderer_dtor"].replace("close();","caviar_free_record(reinterpret_cast<CvrRecord*>(slots_[0].instance_matrix_)); close();")
-    result=run_host(tmp_path,parts);assert result.returncode!=0
+    result=run_host(tmp_path,parts);assert result.returncode==42
 
 
 def test_original_distinct_destruction_paths():

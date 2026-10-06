@@ -2560,45 +2560,7 @@ void __cdecl jackal_close() {
 // ===== archived teardown callbacks for still-bound globals =====
 // These globals are not modelled as real objects yet; the bindings move
 // with the callbacks until their domains claim them.
-void *const TeardownObject0090EA68 = (void *)0x0090EA68;
-Buffer *const TeardownObject00915068 = (Buffer *)0x00915068;
 void *const TeardownObject009403E0 = (void *)0x009403E0;
-/*
-Purpose: ??__Eg_BOOM_BUFFER1@@YAXXZ - run 1 (ORIGINAL(s)->*teardown)() on fixed globals,
-         unguarded. The last is a tail jump in the original, so its
-         return goes straight to this function's caller.
-// ORIGINAL: 0x00505D20 ??__Eg_BOOM_BUFFER1@@YAXXZ 0x00505D20-0x00505D2A BYTE_EXACT
-// symbol    ?teardown_00505d20@@YAXXZ
-// size      10 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __cdecl teardown_00505d20() {
-    TeardownObject00915068->Buffer::~Buffer();
-}
-/*
-Purpose: ??__Eg_BOOM_FLIC@@YAXXZ - run 1 (ORIGINAL(s)->*teardown)() on fixed globals,
-         unguarded. The last is a tail jump in the original, so its
-         return goes straight to this function's caller.
-// ORIGINAL: 0x00505D30 ??__Eg_BOOM_FLIC@@YAXXZ 0x00505D30-0x00505D3A BYTE_EXACT
-// symbol    ?teardown_00505d30@@YAXXZ
-// size      10 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __cdecl teardown_00505d30() {
-    reinterpret_cast<Flic *>(TeardownObject0090EA68)->Flic::~Flic();
-}
 /*
 Purpose: sub_589890 - run 1 (ORIGINAL(s)->*teardown)() on fixed globals,
          unguarded. The last is a tail jump in the original, so its

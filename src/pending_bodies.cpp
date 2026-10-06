@@ -432,15 +432,6 @@ void *__cdecl WaveOperatorNew(unsigned int size) {
 // MapWin::on_sys_close WAS HERE, forwarding to 0x0046F880. Homed into
 // mapwin.cpp 2026-08-29.
 
-// 0x004688E0 - NO catalogue mapping and no seed: the name gen_overlays and
-// the void(int, int) shape rest on its two call sites alone (gen_tile's
-// overlay tail at 0x00468CB9 and gen_map's overlay scan at 0x0046A221, both
-// pushing (x, y) after `mov ecx, esi` with the callee cleaning ret 8). The
-// header declaration carries the same caveat.
-void MapWin::gen_overlays(int x, int y) {
-    typedef void(__fastcall *pending)(MapWin *, void *, int, int);
-    PENDING_BODY(0x004688E0, pending)(this, nullptr, x, y);
-}
 
 
 

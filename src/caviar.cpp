@@ -24,45 +24,42 @@
 #include <io.h>        // _read/_write/_lseek/_tell - the vx_* IO shims
 #include <new>
 
+// Forward declaration: the record dispatchers precede the retained kernel
+// definition in this translation unit.
+static void caviar_install_record_kernels_candidate(
+    VoxRenderRecord *, uint8_t, int);
+void __cdecl caviar_original_666fd0(
+    int32_t, int32_t, uint32_t, const uint8_t *, int32_t);
+
 // Original readonly IEEE754 scalar is0xC61C4000 (-10000.0f), with no relocation.
 // Datalink and SelectPartWin both multiply their camera vectors by this storage.
 // RECOVERY_OBJECT: v2 0x0066AA40 0x0066AA44 ?CaviarCameraDistance@@3MB 0x00429300
 const float CaviarCameraDistance = -10000.0f;
 
-// Source-owned views of the 6404F0 input and overlapping output streams.
-// Accesses identify these starts and the required storage windows, not the
-// original allocation bounds. VC6-observed symbols and current initial bytes
-// are checked against the pinned image; v1 bindings deliberately make no
-// bounded original-object or complete linked-layout claim.
-// RECOVERY_OBJECT: v1 0x009C0840 ?CaviarProjectionCells@@3PAUCaviarProjectionCell@@A
-CaviarProjectionCell CaviarProjectionCells[0x1A] = {0};  // 0x009C0840
-// RECOVERY_OBJECT: v1 0x009C0B90 ?CaviarProjectionOutputWords@@3PAIA
-uint32_t CaviarProjectionOutputWords[0x6B] = {0}; // 0x009C0B90
+// Shared accessed windows for the 6404F0 producer, raster/scalar/shadow
+// consumers, and stage-error writer. Their source types retain the known
+// member identities qualified by the fresh standalone Caviar COFF/CodeView
+// object. The 0x200 parent remains only an observed access window.
+// Historical split-view notes about stores around vox_scene_extent_ remain
+// review debt; grouping here proposes typed ownership, not original extent,
+// lifetime or final-linked placement.
+// RECOVERY_OBJECT: v3 0x009C0840 ?CaviarProjectionCells@@3PAUCaviarProjectionCell@@A member ?CaviarKernelProjectionWindow@@3TCaviarKernelProjectionWindowCandidate@@A current_views_.cells_
+// RECOVERY_OBJECT: v3 0x009C09E0 ?CaviarProjectionScratchE0@@3MA member ?CaviarKernelProjectionWindow@@3TCaviarKernelProjectionWindowCandidate@@A current_views_.tail_.scratch_e0_
+// RECOVERY_OBJECT: v3 0x009C09E4 ?CaviarProjectionScratchE4@@3MA member ?CaviarKernelProjectionWindow@@3TCaviarKernelProjectionWindowCandidate@@A current_views_.tail_.scratch_e4_
+// RECOVERY_OBJECT: v3 0x009C09E8 ?CaviarProjectionScratchE8@@3MA member ?CaviarKernelProjectionWindow@@3TCaviarKernelProjectionWindowCandidate@@A current_views_.tail_.scratch_e8_
+// RECOVERY_OBJECT: v3 0x009C09EC ?CaviarProjectionScratchEC@@3MA member ?CaviarKernelProjectionWindow@@3TCaviarKernelProjectionWindowCandidate@@A current_views_.tail_.scratch_ec_
+// RECOVERY_OBJECT: v3 0x009C09F0 ?CaviarProjectionScratchF0@@3MA member ?CaviarKernelProjectionWindow@@3TCaviarKernelProjectionWindowCandidate@@A current_views_.tail_.scratch_f0_
+// RECOVERY_OBJECT: v3 0x009C09F4 ?CaviarProjectionScratchF4@@3MA member ?CaviarKernelProjectionWindow@@3TCaviarKernelProjectionWindowCandidate@@A current_views_.tail_.scratch_f4_
+// RECOVERY_OBJECT: v3 0x009C09FC ?CaviarProjectionScratchFC@@3MA member ?CaviarKernelProjectionWindow@@3TCaviarKernelProjectionWindowCandidate@@A current_views_.tail_.scratch_fc_
+// RECOVERY_OBJECT: v3 0x009C0A00 ?CaviarProjectionScratchA00@@3MA member ?CaviarKernelProjectionWindow@@3TCaviarKernelProjectionWindowCandidate@@A current_views_.tail_.scratch_a00_
+// RECOVERY_OBJECT: v3 0x009C0A04 ?CaviarProjectionScratchA04@@3MA member ?CaviarKernelProjectionWindow@@3TCaviarKernelProjectionWindowCandidate@@A current_views_.tail_.scratch_a04_
+// RECOVERY_OBJECT: v3 0x009C0B90 ?CaviarProjectionOutputWords@@3PAIA member ?CaviarOutputMessageWindow@@3UCaviarOutputMessageWindowCandidate@@A projection_words_
+CaviarKernelProjectionWindowCandidate CaviarKernelProjectionWindow = {0};
+CaviarOutputMessageWindowCandidate CaviarOutputMessageWindow = {0};
 // RECOVERY_OBJECT: v1 0x009C0A40 ?CaviarFixedPointProjection@@3UCaviarFixedPointProjectionMatrix@@A
 CaviarFixedPointProjectionMatrix CaviarFixedPointProjection = {0}; // 0x009C0A40
 // RECOVERY_OBJECT: v1 0x009C0A7C ?CaviarProjectionScaledMatrix@@3PAMA
 float CaviarProjectionScaledMatrix[9] = {0}; // 0x009C0A7C
-
-// These are separate observed float stores around the already-owned
-// vox_scene_extent_ at 0x009C09F8; the gap is intentional.
-// RECOVERY_OBJECT: v1 0x009C09E0 ?CaviarProjectionScratchE0@@3MA
-float CaviarProjectionScratchE0 = 0.0f;  // 0x009C09E0
-// RECOVERY_OBJECT: v1 0x009C09E4 ?CaviarProjectionScratchE4@@3MA
-float CaviarProjectionScratchE4 = 0.0f;  // 0x009C09E4
-// RECOVERY_OBJECT: v1 0x009C09E8 ?CaviarProjectionScratchE8@@3MA
-float CaviarProjectionScratchE8 = 0.0f;  // 0x009C09E8
-// RECOVERY_OBJECT: v1 0x009C09EC ?CaviarProjectionScratchEC@@3MA
-float CaviarProjectionScratchEC = 0.0f;  // 0x009C09EC
-// RECOVERY_OBJECT: v1 0x009C09F0 ?CaviarProjectionScratchF0@@3MA
-float CaviarProjectionScratchF0 = 0.0f;  // 0x009C09F0
-// RECOVERY_OBJECT: v1 0x009C09F4 ?CaviarProjectionScratchF4@@3MA
-float CaviarProjectionScratchF4 = 0.0f;  // 0x009C09F4
-// RECOVERY_OBJECT: v1 0x009C09FC ?CaviarProjectionScratchFC@@3MA
-float CaviarProjectionScratchFC = 0.0f;  // 0x009C09FC
-// RECOVERY_OBJECT: v1 0x009C0A00 ?CaviarProjectionScratchA00@@3MA
-float CaviarProjectionScratchA00 = 0.0f; // 0x009C0A00
-// RECOVERY_OBJECT: v1 0x009C0A04 ?CaviarProjectionScratchA04@@3MA
-float CaviarProjectionScratchA04 = 0.0f; // 0x009C0A04
 
 // Separate direction-helper cells whose consumers share the existing
 // projection matrix/state rather than owning an invented scratch aggregate.
@@ -906,7 +903,6 @@ void *vox_active_colour_table_ = 0;  // 0x009BE6BC
 
 // 0x009C09F8. setup_block[0] minus setup_block[4] - the same two dwords the
 // clip rectangle the draw starts from is built out of.
-uint32_t vox_scene_extent_ = 0;  // 0x009C09F8
 
 // 0x009C0A18, 0x009C082C, 0x009C0A1C. The record's two ramp tables and its
 // pixel-size code, copied to where the per-part walkers read them.
@@ -957,6 +953,16 @@ CaviarSceneRecord CaviarScene;  // 0x009BB438
 
 
 } // namespace
+
+// Narrow Caviar-owned reads preserve the original live Buffer field
+// value without acquiring/releasing pixels or exposing Buffer layout.
+void *Caviar::render_color_dib_bits() {
+    return CaviarSceneBufferA.dib_bits_;
+}
+
+void *Caviar::render_shadow_dib_bits() {
+    return CaviarSceneBufferB.dib_bits_;
+}
 
 /*
 Purpose: Boot the CAVIAR voxel renderer. Hands the vx_* file-IO callbacks to
@@ -1308,20 +1314,6 @@ uint32_t vox_record_count = 0;  // 0x009BE69C, records created, bumped per creat
 // slot until the engine's behaviour names the tables themselves. The two
 // dispatchers are byte-identical twins in the shipped image, so both bodies
 // store the SAME five tables.
-static const unsigned long vox_size1_aligned_6c = 0x006647F0;
-static const unsigned long vox_size1_aligned_70 = 0x00664000;
-static const unsigned long vox_size1_aligned_7c = 0x0063AF00;
-static const unsigned long vox_size1_odd_6c = 0x00665640;
-static const unsigned long vox_size1_odd_70 = 0x00664E50;
-static const unsigned long vox_size1_odd_7c = 0x0063AF40;
-static const unsigned long vox_size2_aligned_6c = 0x00666440;
-static const unsigned long vox_size2_aligned_70 = 0x00665CA0;
-static const unsigned long vox_size2_aligned_7c = 0x0063AEE0;
-static const unsigned long vox_size2_odd_6c = 0x00667B20;
-static const unsigned long vox_size2_odd_70 = 0x00667380;
-static const unsigned long vox_size2_odd_7c = 0x0063AF20;
-static const unsigned long vox_shared_74 = 0x00666FD0;
-static const unsigned long vox_shared_78 = 0x00666A80;
 
 // The engine's message strings. Real literals now - the image keeps them in
 // .rdata at the addresses each name carried, and vox_stage_error copies from the
@@ -1836,42 +1828,12 @@ Purpose: Fill a render record's pixel-size dispatch slots for CPU ranks 3 and
 //        artifact, measured BYTE_EXACT there).
 */
 void __cdecl sub_63ae20(unsigned char *record) {
-    unsigned char type =
-        *(unsigned char *)(*(int *)(record + 4) + 0x20);
-    switch (type) {
-    case 1:
-        if ((*record & 1) != 0) {
-            *(unsigned long *)(record + 0x6c) = vox_size1_odd_6c;
-            *(unsigned long *)(record + 0x70) = vox_size1_odd_70;
-            *(unsigned long *)(record + 0x7c) = vox_size1_odd_7c;
-            *(unsigned long *)(record + 0x74) = vox_shared_74;
-            *(unsigned long *)(record + 0x78) = vox_shared_78;
-            return;
-        }
-        *(unsigned long *)(record + 0x6c) = vox_size1_aligned_6c;
-        *(unsigned long *)(record + 0x70) = vox_size1_aligned_70;
-        *(unsigned long *)(record + 0x7c) = vox_size1_aligned_7c;
-        break;
-    case 2:
-        if ((*record & 1) != 0) {
-            *(unsigned long *)(record + 0x6c) = vox_size2_odd_6c;
-            *(unsigned long *)(record + 0x70) = vox_size2_odd_70;
-            *(unsigned long *)(record + 0x7c) = vox_size2_odd_7c;
-            *(unsigned long *)(record + 0x74) = vox_shared_74;
-            *(unsigned long *)(record + 0x78) = vox_shared_78;
-            return;
-        }
-        *(unsigned long *)(record + 0x6c) = vox_size2_aligned_6c;
-        *(unsigned long *)(record + 0x70) = vox_size2_aligned_70;
-        *(unsigned long *)(record + 0x7c) = vox_size2_aligned_7c;
-        *(unsigned long *)(record + 0x74) = vox_shared_74;
-        *(unsigned long *)(record + 0x78) = vox_shared_78;
-        return;
-    default:
-        break;
-    }
-    *(unsigned long *)(record + 0x74) = vox_shared_74;
-    *(unsigned long *)(record + 0x78) = vox_shared_78;
+    VoxRenderRecord *const typed =
+        reinterpret_cast<VoxRenderRecord *>(record);
+    const unsigned char type = static_cast<unsigned char>(
+        *reinterpret_cast<const unsigned char *>(typed->setup_block_ + 0x20));
+    caviar_install_record_kernels_candidate(
+        typed, type, (typed->setup_id_ & 1u) != 0);
 }
 
 /*
@@ -1921,10 +1883,9 @@ Return Value: n/a
 // strlen-tests it and reads it back (0x0063830E/0x006383F1/0x0063FA61 - the
 // last copies 27 bytes, so the slot holds at least that; the image's extent
 // is unpinned, 0x100 is comfortable).
-char vox_message_buffer[0x100];
 
 extern "C" void __cdecl vox_stage_error(const char *message) {
-    strcpy(vox_message_buffer, message);
+    strcpy(CaviarOutputMessageWindow.message_, message);
 }
 
 /*
@@ -1955,42 +1916,12 @@ Purpose: Fill a render record's pixel-size dispatch slots for CPU ranks 1, 2
 Return Value: n/a
 */
 void __cdecl sub_63ad60(unsigned char *record) {
-    unsigned char type =
-        *(unsigned char *)(*(int *)(record + 4) + 0x20);
-    switch (type) {
-    case 1:
-        if ((*record & 1) != 0) {
-            *(unsigned long *)(record + 0x6c) = vox_size1_odd_6c;
-            *(unsigned long *)(record + 0x70) = vox_size1_odd_70;
-            *(unsigned long *)(record + 0x7c) = vox_size1_odd_7c;
-            *(unsigned long *)(record + 0x74) = vox_shared_74;
-            *(unsigned long *)(record + 0x78) = vox_shared_78;
-            return;
-        }
-        *(unsigned long *)(record + 0x6c) = vox_size1_aligned_6c;
-        *(unsigned long *)(record + 0x70) = vox_size1_aligned_70;
-        *(unsigned long *)(record + 0x7c) = vox_size1_aligned_7c;
-        break;
-    case 2:
-        if ((*record & 1) != 0) {
-            *(unsigned long *)(record + 0x6c) = vox_size2_odd_6c;
-            *(unsigned long *)(record + 0x70) = vox_size2_odd_70;
-            *(unsigned long *)(record + 0x7c) = vox_size2_odd_7c;
-            *(unsigned long *)(record + 0x74) = vox_shared_74;
-            *(unsigned long *)(record + 0x78) = vox_shared_78;
-            return;
-        }
-        *(unsigned long *)(record + 0x6c) = vox_size2_aligned_6c;
-        *(unsigned long *)(record + 0x70) = vox_size2_aligned_70;
-        *(unsigned long *)(record + 0x7c) = vox_size2_aligned_7c;
-        *(unsigned long *)(record + 0x74) = vox_shared_74;
-        *(unsigned long *)(record + 0x78) = vox_shared_78;
-        return;
-    default:
-        break;
-    }
-    *(unsigned long *)(record + 0x74) = vox_shared_74;
-    *(unsigned long *)(record + 0x78) = vox_shared_78;
+    VoxRenderRecord *const typed =
+        reinterpret_cast<VoxRenderRecord *>(record);
+    const unsigned char type = static_cast<unsigned char>(
+        *reinterpret_cast<const unsigned char *>(typed->setup_block_ + 0x20));
+    caviar_install_record_kernels_candidate(
+        typed, type, (typed->setup_id_ & 1u) != 0);
 }
 
 /*
@@ -3657,7 +3588,7 @@ float __cdecl vox_stage_scene(
 
 // 0x0063A280. Four arguments, the draw's four.
 void __cdecl caviar_clip_shape(
-    VoxRenderRecord *, const CvrRasterShapeViewCandidate *, const VOX_Vect *,
+    VoxRenderRecord *, const CvrShape *, const VOX_Vect *,
     const VOX_Matrix *, const CaviarRenderClipWindowCandidate *, int[6]);
 
 // Native 0x63A280 traverses variable-size shapes through the typed shared
@@ -3717,7 +3648,7 @@ void __cdecl vox_load_scene_view(
             CaviarRenderClipWindowCandidate object_box;
             caviar_clip_shape(
                 record,
-                reinterpret_cast<const CvrRasterShapeViewCandidate *>(shape),
+                shape,
                 &projection_position, &part, &CaviarSceneProjectionScratch.part_clip_,
                 &object_box.left_);
             if (object_box.width_ != 0 && object_box.height_ != 0) {
@@ -3758,7 +3689,7 @@ shadow_pass:
                 CaviarRenderClipWindowCandidate shadow_box;
                 caviar_clip_shape(
                     record,
-                    reinterpret_cast<const CvrRasterShapeViewCandidate *>(shape),
+                    shape,
                     &shadow, &shadow_part, &CaviarSceneProjectionScratch.shadow_clip_,
                     &shadow_box.left_);
                 if (shadow_box.width_ != 0 && shadow_box.height_ != 0) {
@@ -3823,7 +3754,7 @@ extern "C" void __cdecl sub_6401b0(const short *, const short *, int *);
 // symbol    ?caviar_clip_shape@@YAXPAUVoxRenderRecord@@PBUCvrRasterShapeViewCandidate@@PBUVOX_Vect@@PBUVOX_Matrix@@PBUCaviarRenderClipWindowCandidate@@QAH@Z
 // TRIED: 6-arg __cdecl signature derived from esp+N reads at the anchor (post-prologue esp) rather than IDA's untyped guess; the per-vertex bbox loop, sub_6280e0/sub_628150/sub_6401b0 arg order, and the final outBox/localBox clamp (which Ghidra's pseudocode also shows) are transcribed from the raw asm since Ghidra's __ftol() calls hide their FPU source operands.
 void __cdecl caviar_clip_shape(VoxRenderRecord *record,
-                               const CvrRasterShapeViewCandidate *shape,
+                               const CvrShape *shape,
                                const VOX_Vect *position,
                                const VOX_Matrix *orientation,
                                const CaviarRenderClipWindowCandidate *clip,
@@ -3854,11 +3785,11 @@ void __cdecl caviar_clip_shape(VoxRenderRecord *record,
         if (clip->bottom_ < local_box[3]) local_box[3] = clip->bottom_;
     }
 
-    if ((shape->shape_prefix_.field_0_ & 2) == 0) {
+    if ((shape->field_0_ & 2) == 0) {
         const int offset_x = static_cast<int>(position->values[0]);
         const int offset_y = static_cast<int>(position->values[1]);
-        sub_6401b0(&shape->shape_prefix_.offset_x_,
-                   &shape->shape_prefix_.axis_x_, output);
+        sub_6401b0(&shape->offset_x_,
+                   &shape->axis_x_, output);
 
         if (output[4] != 0 && output[5] != 0) {
             output[0] += offset_x;
@@ -4215,108 +4146,108 @@ void __cdecl caviar_build_projection_tables() {
     int iVar3;
     int iVar4;
 
-    CaviarProjectionCells[15].x_ = (int)w42;
-    CaviarProjectionCells[13].x_ = (int)w44;
-    CaviarProjectionCells[24].x_ = CaviarProjectionCells[15].x_ + w40;
-    CaviarProjectionCells[15].y_ = (int)w48;
-    CaviarProjectionCells[25].x_ = CaviarProjectionCells[24].x_ + CaviarProjectionCells[13].x_;
-    CaviarProjectionCells[0].x_ = -CaviarProjectionCells[25].x_;
-    CaviarProjectionCells[24].y_ = CaviarProjectionCells[15].y_ + w46;
-    CaviarProjectionCells[13].y_ = (int)w4a;
-    CaviarProjectionCells[25].y_ = CaviarProjectionCells[24].y_ + CaviarProjectionCells[13].y_;
-    CaviarProjectionCells[0].y_ = -CaviarProjectionCells[25].y_;
+    CaviarKernelProjectionWindow.current_views_.cells_[15].x_ = (int)w42;
+    CaviarKernelProjectionWindow.current_views_.cells_[13].x_ = (int)w44;
+    CaviarKernelProjectionWindow.current_views_.cells_[24].x_ = CaviarKernelProjectionWindow.current_views_.cells_[15].x_ + w40;
+    CaviarKernelProjectionWindow.current_views_.cells_[15].y_ = (int)w48;
+    CaviarKernelProjectionWindow.current_views_.cells_[25].x_ = CaviarKernelProjectionWindow.current_views_.cells_[24].x_ + CaviarKernelProjectionWindow.current_views_.cells_[13].x_;
+    CaviarKernelProjectionWindow.current_views_.cells_[0].x_ = -CaviarKernelProjectionWindow.current_views_.cells_[25].x_;
+    CaviarKernelProjectionWindow.current_views_.cells_[24].y_ = CaviarKernelProjectionWindow.current_views_.cells_[15].y_ + w46;
+    CaviarKernelProjectionWindow.current_views_.cells_[13].y_ = (int)w4a;
+    CaviarKernelProjectionWindow.current_views_.cells_[25].y_ = CaviarKernelProjectionWindow.current_views_.cells_[24].y_ + CaviarKernelProjectionWindow.current_views_.cells_[13].y_;
+    CaviarKernelProjectionWindow.current_views_.cells_[0].y_ = -CaviarKernelProjectionWindow.current_views_.cells_[25].y_;
     iVar4 = d4c + d54;
-    CaviarProjectionCells[0].z_ = (iVar4 + d50) * -0x100;
-    CaviarProjectionCells[1].x_ = -CaviarProjectionCells[24].x_;
-    CaviarProjectionCells[1].y_ = -CaviarProjectionCells[24].y_;
-    CaviarProjectionCells[1].z_ = (d4c + d50) * -0x100;
-    CaviarProjectionCells[5].x_ = CaviarProjectionCells[13].x_ - w40;
-    CaviarProjectionCells[2].x_ = CaviarProjectionCells[5].x_ - CaviarProjectionCells[15].x_;
-    CaviarProjectionCells[5].y_ = CaviarProjectionCells[13].y_ - w46;
-    CaviarProjectionCells[2].y_ = CaviarProjectionCells[5].y_ - CaviarProjectionCells[15].y_;
+    CaviarKernelProjectionWindow.current_views_.cells_[0].z_ = (iVar4 + d50) * -0x100;
+    CaviarKernelProjectionWindow.current_views_.cells_[1].x_ = -CaviarKernelProjectionWindow.current_views_.cells_[24].x_;
+    CaviarKernelProjectionWindow.current_views_.cells_[1].y_ = -CaviarKernelProjectionWindow.current_views_.cells_[24].y_;
+    CaviarKernelProjectionWindow.current_views_.cells_[1].z_ = (d4c + d50) * -0x100;
+    CaviarKernelProjectionWindow.current_views_.cells_[5].x_ = CaviarKernelProjectionWindow.current_views_.cells_[13].x_ - w40;
+    CaviarKernelProjectionWindow.current_views_.cells_[2].x_ = CaviarKernelProjectionWindow.current_views_.cells_[5].x_ - CaviarKernelProjectionWindow.current_views_.cells_[15].x_;
+    CaviarKernelProjectionWindow.current_views_.cells_[5].y_ = CaviarKernelProjectionWindow.current_views_.cells_[13].y_ - w46;
+    CaviarKernelProjectionWindow.current_views_.cells_[2].y_ = CaviarKernelProjectionWindow.current_views_.cells_[5].y_ - CaviarKernelProjectionWindow.current_views_.cells_[15].y_;
     iVar3 = d54 - d4c;
-    CaviarProjectionCells[2].z_ = (iVar3 - d50) * 0x100;
-    CaviarProjectionCells[7].x_ = (int)w40;
-    CaviarProjectionCells[22].x_ = CaviarProjectionCells[13].x_ + CaviarProjectionCells[7].x_;
-    CaviarProjectionCells[3].x_ = -CaviarProjectionCells[22].x_;
-    CaviarProjectionCells[22].y_ = w46 + CaviarProjectionCells[13].y_;
-    CaviarProjectionCells[3].y_ = -CaviarProjectionCells[22].y_;
-    CaviarProjectionCells[3].z_ = iVar4 * -0x100;
-    CaviarProjectionCells[4].x_ = -CaviarProjectionCells[7].x_;
-    CaviarProjectionCells[4].y_ = -(int)w46;
-    CaviarProjectionCells[4].z_ = d4c * -0x100;
-    CaviarProjectionCells[5].z_ = iVar3 * 0x100;
-    CaviarProjectionCells[7].x_ = CaviarProjectionCells[15].x_ - CaviarProjectionCells[7].x_;
-    CaviarProjectionCells[6].x_ = CaviarProjectionCells[7].x_ - CaviarProjectionCells[13].x_;
-    CaviarProjectionCells[7].y_ = CaviarProjectionCells[15].y_ - w46;
-    CaviarProjectionCells[6].y_ = CaviarProjectionCells[7].y_ - CaviarProjectionCells[13].y_;
-    CaviarProjectionCells[6].z_ = ((d50 - d4c) - d54) * 0x100;
-    CaviarProjectionCells[7].z_ = (d50 - d4c) * 0x100;
-    CaviarProjectionCells[8].x_ = (CaviarProjectionCells[13].x_ + CaviarProjectionCells[15].x_) - (int)w40;
-    CaviarProjectionCells[8].y_ = (CaviarProjectionCells[13].y_ + CaviarProjectionCells[15].y_) - (int)w46;
-    CaviarProjectionCells[8].z_ = (iVar3 + d50) * 0x100;
-    CaviarProjectionCells[9].x_ = -(CaviarProjectionCells[13].x_ + CaviarProjectionCells[15].x_);
-    CaviarProjectionCells[9].y_ = -(CaviarProjectionCells[13].y_ + CaviarProjectionCells[15].y_);
-    CaviarProjectionCells[9].z_ = (d50 + d54) * -0x100;
-    CaviarProjectionCells[10].x_ = -CaviarProjectionCells[15].x_;
-    CaviarProjectionCells[10].y_ = -CaviarProjectionCells[15].y_;
-    CaviarProjectionCells[10].z_ = d50 * -0x100;
-    CaviarProjectionCells[11].x_ = CaviarProjectionCells[13].x_ - CaviarProjectionCells[15].x_;
-    CaviarProjectionCells[11].y_ = CaviarProjectionCells[13].y_ - CaviarProjectionCells[15].y_;
-    CaviarProjectionCells[11].z_ = (d54 - d50) * 0x100;
-    CaviarProjectionCells[12].x_ = -CaviarProjectionCells[13].x_;
-    CaviarProjectionCells[12].y_ = -CaviarProjectionCells[13].y_;
-    CaviarProjectionCells[12].z_ = d54 * -0x100;
-    CaviarProjectionCells[13].z_ = d54 << 8;
-    CaviarProjectionCells[14].x_ = CaviarProjectionCells[15].x_ - CaviarProjectionCells[13].x_;
-    CaviarProjectionCells[14].y_ = CaviarProjectionCells[15].y_ - CaviarProjectionCells[13].y_;
-    CaviarProjectionCells[14].z_ = (d50 - d54) * 0x100;
-    CaviarProjectionCells[15].z_ = d50 << 8;
-    CaviarProjectionCells[16].x_ = CaviarProjectionCells[13].x_ + CaviarProjectionCells[15].x_;
-    CaviarProjectionCells[16].y_ = CaviarProjectionCells[13].y_ + CaviarProjectionCells[15].y_;
-    CaviarProjectionCells[16].z_ = (d50 + d54) * 0x100;
-    CaviarProjectionScratchEC = (float)CaviarProjectionCells[13].x_;
-    CaviarProjectionCells[18].x_ = w40 - CaviarProjectionCells[15].x_;
-    CaviarProjectionScratchE0 = (float)CaviarProjectionCells[13].y_;
-    CaviarProjectionCells[17].x_ = CaviarProjectionCells[18].x_ - CaviarProjectionCells[13].x_;
-    CaviarProjectionScratchFC = (float)CaviarProjectionCells[13].z_;
-    CaviarProjectionCells[18].y_ = w46 - CaviarProjectionCells[15].y_;
-    CaviarProjectionCells[17].y_ = CaviarProjectionCells[18].y_ - CaviarProjectionCells[13].y_;
-    CaviarProjectionScratchF0 = (float)CaviarProjectionCells[15].x_;
-    CaviarProjectionScratchE4 = (float)CaviarProjectionCells[15].y_;
-    CaviarProjectionCells[17].z_ = ((d4c - d50) - d54) * 0x100;
-    CaviarProjectionScratchA00 = (float)CaviarProjectionCells[15].z_;
-    CaviarProjectionCells[19].x_ = CaviarProjectionCells[22].x_ - CaviarProjectionCells[15].x_;
-    CaviarProjectionCells[18].z_ = (d4c - d50) * 0x100;
-    CaviarProjectionCells[19].y_ = CaviarProjectionCells[22].y_ - CaviarProjectionCells[15].y_;
-    CaviarProjectionCells[19].z_ = ((d54 - d50) + d4c) * 0x100;
-    CaviarProjectionCells[21].x_ = (int)w40;
-    CaviarProjectionCells[20].x_ = CaviarProjectionCells[21].x_ - CaviarProjectionCells[13].x_;
-    CaviarProjectionCells[21].z_ = d4c << 8;
-    CaviarProjectionCells[21].y_ = (int)w46;
-    CaviarProjectionScratchF4 = (float)CaviarProjectionCells[21].x_;
-    CaviarProjectionCells[22].z_ = iVar4 * 0x100;
-    CaviarProjectionCells[20].y_ = CaviarProjectionCells[21].y_ - CaviarProjectionCells[13].y_;
-    CaviarProjectionScratchE8 = (float)CaviarProjectionCells[21].y_;
-    CaviarProjectionCells[23].x_ = CaviarProjectionCells[24].x_ - CaviarProjectionCells[13].x_;
-    CaviarProjectionScratchA04 = (float)CaviarProjectionCells[21].z_;
-    CaviarProjectionCells[23].y_ = CaviarProjectionCells[24].y_ - CaviarProjectionCells[13].y_;
-    CaviarProjectionCells[24].z_ = (d4c + d50) * 0x100;
-    CaviarProjectionCells[23].z_ = ((d50 - d54) + d4c) * 0x100;
-    CaviarProjectionCells[20].z_ = (d4c - d54) * 0x100;
-    CaviarProjectionCells[25].z_ = (iVar4 + d50) * 0x100;
+    CaviarKernelProjectionWindow.current_views_.cells_[2].z_ = (iVar3 - d50) * 0x100;
+    CaviarKernelProjectionWindow.current_views_.cells_[7].x_ = (int)w40;
+    CaviarKernelProjectionWindow.current_views_.cells_[22].x_ = CaviarKernelProjectionWindow.current_views_.cells_[13].x_ + CaviarKernelProjectionWindow.current_views_.cells_[7].x_;
+    CaviarKernelProjectionWindow.current_views_.cells_[3].x_ = -CaviarKernelProjectionWindow.current_views_.cells_[22].x_;
+    CaviarKernelProjectionWindow.current_views_.cells_[22].y_ = w46 + CaviarKernelProjectionWindow.current_views_.cells_[13].y_;
+    CaviarKernelProjectionWindow.current_views_.cells_[3].y_ = -CaviarKernelProjectionWindow.current_views_.cells_[22].y_;
+    CaviarKernelProjectionWindow.current_views_.cells_[3].z_ = iVar4 * -0x100;
+    CaviarKernelProjectionWindow.current_views_.cells_[4].x_ = -CaviarKernelProjectionWindow.current_views_.cells_[7].x_;
+    CaviarKernelProjectionWindow.current_views_.cells_[4].y_ = -(int)w46;
+    CaviarKernelProjectionWindow.current_views_.cells_[4].z_ = d4c * -0x100;
+    CaviarKernelProjectionWindow.current_views_.cells_[5].z_ = iVar3 * 0x100;
+    CaviarKernelProjectionWindow.current_views_.cells_[7].x_ = CaviarKernelProjectionWindow.current_views_.cells_[15].x_ - CaviarKernelProjectionWindow.current_views_.cells_[7].x_;
+    CaviarKernelProjectionWindow.current_views_.cells_[6].x_ = CaviarKernelProjectionWindow.current_views_.cells_[7].x_ - CaviarKernelProjectionWindow.current_views_.cells_[13].x_;
+    CaviarKernelProjectionWindow.current_views_.cells_[7].y_ = CaviarKernelProjectionWindow.current_views_.cells_[15].y_ - w46;
+    CaviarKernelProjectionWindow.current_views_.cells_[6].y_ = CaviarKernelProjectionWindow.current_views_.cells_[7].y_ - CaviarKernelProjectionWindow.current_views_.cells_[13].y_;
+    CaviarKernelProjectionWindow.current_views_.cells_[6].z_ = ((d50 - d4c) - d54) * 0x100;
+    CaviarKernelProjectionWindow.current_views_.cells_[7].z_ = (d50 - d4c) * 0x100;
+    CaviarKernelProjectionWindow.current_views_.cells_[8].x_ = (CaviarKernelProjectionWindow.current_views_.cells_[13].x_ + CaviarKernelProjectionWindow.current_views_.cells_[15].x_) - (int)w40;
+    CaviarKernelProjectionWindow.current_views_.cells_[8].y_ = (CaviarKernelProjectionWindow.current_views_.cells_[13].y_ + CaviarKernelProjectionWindow.current_views_.cells_[15].y_) - (int)w46;
+    CaviarKernelProjectionWindow.current_views_.cells_[8].z_ = (iVar3 + d50) * 0x100;
+    CaviarKernelProjectionWindow.current_views_.cells_[9].x_ = -(CaviarKernelProjectionWindow.current_views_.cells_[13].x_ + CaviarKernelProjectionWindow.current_views_.cells_[15].x_);
+    CaviarKernelProjectionWindow.current_views_.cells_[9].y_ = -(CaviarKernelProjectionWindow.current_views_.cells_[13].y_ + CaviarKernelProjectionWindow.current_views_.cells_[15].y_);
+    CaviarKernelProjectionWindow.current_views_.cells_[9].z_ = (d50 + d54) * -0x100;
+    CaviarKernelProjectionWindow.current_views_.cells_[10].x_ = -CaviarKernelProjectionWindow.current_views_.cells_[15].x_;
+    CaviarKernelProjectionWindow.current_views_.cells_[10].y_ = -CaviarKernelProjectionWindow.current_views_.cells_[15].y_;
+    CaviarKernelProjectionWindow.current_views_.cells_[10].z_ = d50 * -0x100;
+    CaviarKernelProjectionWindow.current_views_.cells_[11].x_ = CaviarKernelProjectionWindow.current_views_.cells_[13].x_ - CaviarKernelProjectionWindow.current_views_.cells_[15].x_;
+    CaviarKernelProjectionWindow.current_views_.cells_[11].y_ = CaviarKernelProjectionWindow.current_views_.cells_[13].y_ - CaviarKernelProjectionWindow.current_views_.cells_[15].y_;
+    CaviarKernelProjectionWindow.current_views_.cells_[11].z_ = (d54 - d50) * 0x100;
+    CaviarKernelProjectionWindow.current_views_.cells_[12].x_ = -CaviarKernelProjectionWindow.current_views_.cells_[13].x_;
+    CaviarKernelProjectionWindow.current_views_.cells_[12].y_ = -CaviarKernelProjectionWindow.current_views_.cells_[13].y_;
+    CaviarKernelProjectionWindow.current_views_.cells_[12].z_ = d54 * -0x100;
+    CaviarKernelProjectionWindow.current_views_.cells_[13].z_ = d54 << 8;
+    CaviarKernelProjectionWindow.current_views_.cells_[14].x_ = CaviarKernelProjectionWindow.current_views_.cells_[15].x_ - CaviarKernelProjectionWindow.current_views_.cells_[13].x_;
+    CaviarKernelProjectionWindow.current_views_.cells_[14].y_ = CaviarKernelProjectionWindow.current_views_.cells_[15].y_ - CaviarKernelProjectionWindow.current_views_.cells_[13].y_;
+    CaviarKernelProjectionWindow.current_views_.cells_[14].z_ = (d50 - d54) * 0x100;
+    CaviarKernelProjectionWindow.current_views_.cells_[15].z_ = d50 << 8;
+    CaviarKernelProjectionWindow.current_views_.cells_[16].x_ = CaviarKernelProjectionWindow.current_views_.cells_[13].x_ + CaviarKernelProjectionWindow.current_views_.cells_[15].x_;
+    CaviarKernelProjectionWindow.current_views_.cells_[16].y_ = CaviarKernelProjectionWindow.current_views_.cells_[13].y_ + CaviarKernelProjectionWindow.current_views_.cells_[15].y_;
+    CaviarKernelProjectionWindow.current_views_.cells_[16].z_ = (d50 + d54) * 0x100;
+    CaviarKernelProjectionWindow.current_views_.tail_.scratch_ec_ = (float)CaviarKernelProjectionWindow.current_views_.cells_[13].x_;
+    CaviarKernelProjectionWindow.current_views_.cells_[18].x_ = w40 - CaviarKernelProjectionWindow.current_views_.cells_[15].x_;
+    CaviarKernelProjectionWindow.current_views_.tail_.scratch_e0_ = (float)CaviarKernelProjectionWindow.current_views_.cells_[13].y_;
+    CaviarKernelProjectionWindow.current_views_.cells_[17].x_ = CaviarKernelProjectionWindow.current_views_.cells_[18].x_ - CaviarKernelProjectionWindow.current_views_.cells_[13].x_;
+    CaviarKernelProjectionWindow.current_views_.tail_.scratch_fc_ = (float)CaviarKernelProjectionWindow.current_views_.cells_[13].z_;
+    CaviarKernelProjectionWindow.current_views_.cells_[18].y_ = w46 - CaviarKernelProjectionWindow.current_views_.cells_[15].y_;
+    CaviarKernelProjectionWindow.current_views_.cells_[17].y_ = CaviarKernelProjectionWindow.current_views_.cells_[18].y_ - CaviarKernelProjectionWindow.current_views_.cells_[13].y_;
+    CaviarKernelProjectionWindow.current_views_.tail_.scratch_f0_ = (float)CaviarKernelProjectionWindow.current_views_.cells_[15].x_;
+    CaviarKernelProjectionWindow.current_views_.tail_.scratch_e4_ = (float)CaviarKernelProjectionWindow.current_views_.cells_[15].y_;
+    CaviarKernelProjectionWindow.current_views_.cells_[17].z_ = ((d4c - d50) - d54) * 0x100;
+    CaviarKernelProjectionWindow.current_views_.tail_.scratch_a00_ = (float)CaviarKernelProjectionWindow.current_views_.cells_[15].z_;
+    CaviarKernelProjectionWindow.current_views_.cells_[19].x_ = CaviarKernelProjectionWindow.current_views_.cells_[22].x_ - CaviarKernelProjectionWindow.current_views_.cells_[15].x_;
+    CaviarKernelProjectionWindow.current_views_.cells_[18].z_ = (d4c - d50) * 0x100;
+    CaviarKernelProjectionWindow.current_views_.cells_[19].y_ = CaviarKernelProjectionWindow.current_views_.cells_[22].y_ - CaviarKernelProjectionWindow.current_views_.cells_[15].y_;
+    CaviarKernelProjectionWindow.current_views_.cells_[19].z_ = ((d54 - d50) + d4c) * 0x100;
+    CaviarKernelProjectionWindow.current_views_.cells_[21].x_ = (int)w40;
+    CaviarKernelProjectionWindow.current_views_.cells_[20].x_ = CaviarKernelProjectionWindow.current_views_.cells_[21].x_ - CaviarKernelProjectionWindow.current_views_.cells_[13].x_;
+    CaviarKernelProjectionWindow.current_views_.cells_[21].z_ = d4c << 8;
+    CaviarKernelProjectionWindow.current_views_.cells_[21].y_ = (int)w46;
+    CaviarKernelProjectionWindow.current_views_.tail_.scratch_f4_ = (float)CaviarKernelProjectionWindow.current_views_.cells_[21].x_;
+    CaviarKernelProjectionWindow.current_views_.cells_[22].z_ = iVar4 * 0x100;
+    CaviarKernelProjectionWindow.current_views_.cells_[20].y_ = CaviarKernelProjectionWindow.current_views_.cells_[21].y_ - CaviarKernelProjectionWindow.current_views_.cells_[13].y_;
+    CaviarKernelProjectionWindow.current_views_.tail_.scratch_e8_ = (float)CaviarKernelProjectionWindow.current_views_.cells_[21].y_;
+    CaviarKernelProjectionWindow.current_views_.cells_[23].x_ = CaviarKernelProjectionWindow.current_views_.cells_[24].x_ - CaviarKernelProjectionWindow.current_views_.cells_[13].x_;
+    CaviarKernelProjectionWindow.current_views_.tail_.scratch_a04_ = (float)CaviarKernelProjectionWindow.current_views_.cells_[21].z_;
+    CaviarKernelProjectionWindow.current_views_.cells_[23].y_ = CaviarKernelProjectionWindow.current_views_.cells_[24].y_ - CaviarKernelProjectionWindow.current_views_.cells_[13].y_;
+    CaviarKernelProjectionWindow.current_views_.cells_[24].z_ = (d4c + d50) * 0x100;
+    CaviarKernelProjectionWindow.current_views_.cells_[23].z_ = ((d50 - d54) + d4c) * 0x100;
+    CaviarKernelProjectionWindow.current_views_.cells_[20].z_ = (d4c - d54) * 0x100;
+    CaviarKernelProjectionWindow.current_views_.cells_[25].z_ = (iVar4 + d50) * 0x100;
 
     unsigned int outputIndex = 0;
     int localCount = 0x1a;
-    CaviarProjectionCell *piVar2 = CaviarProjectionCells;
+    CaviarProjectionCell *piVar2 = CaviarKernelProjectionWindow.current_views_.cells_;
     do {
         unsigned int uVar1 = (unsigned int)piVar2->y_;
         int recA = piVar2->x_;
-        CaviarProjectionOutputWords[outputIndex + 5] = (uint32_t)(((int)uVar1 >> 8) *
+        CaviarOutputMessageWindow.projection_words_[outputIndex + 5] = (uint32_t)(((int)uVar1 >> 8) *
             (int32_t)vox_setup_copy_[4] + (recA >> 8));
-        CaviarProjectionOutputWords[outputIndex] =
+        CaviarOutputMessageWindow.projection_words_[outputIndex] =
             (uint32_t)recA * 0x01000000u + (uVar1 & 0xffu);
-        CaviarProjectionOutputWords[outputIndex + 6] =
+        CaviarOutputMessageWindow.projection_words_[outputIndex + 6] =
             (((unsigned int)piVar2->z_ >> 0x10) +
             (unsigned int)piVar2->z_ * 0x10000) & 0xff00ffff;
         outputIndex += 4;
@@ -4327,30 +4258,159 @@ void __cdecl caviar_build_projection_tables() {
 }
 
 
+void __cdecl caviar_original_6647f0(
+    int32_t, int32_t, int32_t, uint32_t, const uint8_t *, int32_t);
+void __cdecl caviar_original_664000(
+    int32_t, int32_t, int32_t, const int32_t *, uint32_t,
+    const uint8_t *, int32_t);
+void __cdecl caviar_original_665640(
+    int32_t, int32_t, int32_t, uint32_t, const uint8_t *, int32_t);
+void __cdecl caviar_original_664e50(
+    int32_t, int32_t, int32_t, const int32_t *, uint32_t,
+    const uint8_t *, int32_t);
+void __cdecl caviar_original_666440(
+    int32_t, int32_t, int32_t, uint32_t, const uint8_t *, int32_t);
+void __cdecl caviar_original_665ca0(
+    int32_t, int32_t, int32_t, const int32_t *, uint32_t,
+    const uint8_t *, int32_t);
+void __cdecl caviar_original_667b20(
+    int32_t, int32_t, int32_t, uint32_t, const uint8_t *, int32_t);
+void __cdecl caviar_original_667380(
+    int32_t, int32_t, int32_t, const int32_t *, uint32_t,
+    const uint8_t *, int32_t);
+void __cdecl caviar_original_666a80(
+    int32_t, int32_t, const int32_t *, uint32_t,
+    const uint8_t *, int32_t);
+
+#include "caviar_raster_kernels.inc"
+
+// Contained-shadow callback: the pinned CFG reaches its common return at
+// 0x0066714D; the terminal jump ends at exclusive 0x0066731C, where the
+// separately catalogued shared self-modifying setup helper begins.
+OPENSMACX_NOINLINE
+// ORIGINAL: 0x00666FD0 sub_666fd0 0x00666FD0-0x0066731C
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "build/recovery/caviar-owner-refresh-oct6/shadow-666fd0-boundary-evidence.md:217-reachable-instructions-831-bytes-13-padding-bytes", "source:src/caviar_raster_kernels.inc:caviar_shadow_kernel_candidate", "docs/recovery/ida9-functions.csv:neighbor-shared-helper-0x0066731C-0x00667375"], "reason": "Recover the contained-shadow callback on the genuine Caviar render record; local wrapper name is descriptive, not an original decorated symbol. Pinned reachable CFG and eight relocated dispatch pointers establish the entry; terminal branch ends exactly where the independently catalogued setup helper begins. Shared source kernel implements the callback, with x87 exceptional and allocation/lifetime fidelity still unresolved."}
+// symbol    ?caviar_original_666fd0@@YAXHHIPBEH@Z
+void __cdecl caviar_original_666fd0(
+    int32_t x, int32_t y, uint32_t count, const uint8_t *stream,
+    int32_t flags) {
+    caviar_shadow_kernel_candidate(0, x, y, 0, count, stream, flags);
+}
+
+// The prior seed classifications were EXCLUDED S2d. These now have typed,
+// compiled callback implementations, but no BYTE_EXACT claim is made. Each
+// following SEED HISTORY line retains that former classification and flags.
+// SEED HISTORY (prior excluded record): 0x006647F0 sub_6647f0 0x006647F0-0x00664D51 EXCLUDED S2d; hidden;sp_ready;purged_ok
+// ORIGINAL: 0x006647F0 sub_6647f0 0x006647F0-0x00664D51
+// symbol    ?caviar_original_6647f0@@YAXHHHIPBEH@Z
+// kind      game
+void __cdecl caviar_original_6647f0(
+    int32_t x, int32_t y, int32_t z, uint32_t count,
+    const uint8_t *stream, int32_t flags) {
+    caviar_part_s1a_contained_candidate(x, y, z, count, stream, flags);
+}
+// SEED HISTORY (prior excluded record): 0x00664000 sub_664000 0x00664000-0x006646FB EXCLUDED S2d; hidden;sp_ready;purged_ok
+// ORIGINAL: 0x00664000 sub_664000 0x00664000-0x006646FB
+// symbol    ?caviar_original_664000@@YAXHHHPBHIPBEH@Z
+// kind      game
+void __cdecl caviar_original_664000(
+    int32_t x, int32_t y, int32_t z, const int32_t *rect, uint32_t count,
+    const uint8_t *stream, int32_t flags) {
+    caviar_part_s1a_clipped_candidate(x, y, z, rect, count, stream, flags);
+}
+// SEED HISTORY (prior excluded record): 0x00665640 sub_665640 0x00665640-0x00665BA1 EXCLUDED S2d; hidden;sp_ready;purged_ok
+// ORIGINAL: 0x00665640 sub_665640 0x00665640-0x00665BA1
+// symbol    ?caviar_original_665640@@YAXHHHIPBEH@Z
+// kind      game
+void __cdecl caviar_original_665640(
+    int32_t x, int32_t y, int32_t z, uint32_t count,
+    const uint8_t *stream, int32_t flags) {
+    caviar_part_s1o_contained_candidate(x, y, z, count, stream, flags);
+}
+// SEED HISTORY (prior excluded record): 0x00664E50 sub_664e50 0x00664E50-0x0066554B EXCLUDED S2d; hidden;sp_ready;purged_ok
+// ORIGINAL: 0x00664E50 sub_664e50 0x00664E50-0x0066554B
+// symbol    ?caviar_original_664e50@@YAXHHHPBHIPBEH@Z
+// kind      game
+void __cdecl caviar_original_664e50(
+    int32_t x, int32_t y, int32_t z, const int32_t *rect, uint32_t count,
+    const uint8_t *stream, int32_t flags) {
+    caviar_part_s1o_clipped_candidate(x, y, z, rect, count, stream, flags);
+}
+// SEED HISTORY (prior excluded record): 0x00666440 sub_666440 0x00666440-0x00666989 EXCLUDED S2d; hidden;sp_ready;purged_ok
+// ORIGINAL: 0x00666440 sub_666440 0x00666440-0x00666989
+// symbol    ?caviar_original_666440@@YAXHHHIPBEH@Z
+// kind      game
+void __cdecl caviar_original_666440(
+    int32_t x, int32_t y, int32_t z, uint32_t count,
+    const uint8_t *stream, int32_t flags) {
+    caviar_part_s2a_contained_candidate(x, y, z, count, stream, flags);
+}
+// SEED HISTORY (prior excluded record): 0x00665CA0 sub_665ca0 0x00665CA0-0x0066638F EXCLUDED S2d; hidden;sp_ready;purged_ok
+// ORIGINAL: 0x00665CA0 sub_665ca0 0x00665CA0-0x0066638F
+// symbol    ?caviar_original_665ca0@@YAXHHHPBHIPBEH@Z
+// kind      game
+void __cdecl caviar_original_665ca0(
+    int32_t x, int32_t y, int32_t z, const int32_t *rect, uint32_t count,
+    const uint8_t *stream, int32_t flags) {
+    caviar_part_s2a_clipped_candidate(x, y, z, rect, count, stream, flags);
+}
+// SEED HISTORY (prior excluded record): 0x00667B20 sub_667b20 0x00667B20-0x00668069 EXCLUDED S2d; hidden;sp_ready;purged_ok
+// ORIGINAL: 0x00667B20 sub_667b20 0x00667B20-0x00668069
+// symbol    ?caviar_original_667b20@@YAXHHHIPBEH@Z
+// kind      game
+void __cdecl caviar_original_667b20(
+    int32_t x, int32_t y, int32_t z, uint32_t count,
+    const uint8_t *stream, int32_t flags) {
+    caviar_part_s2o_contained_candidate(x, y, z, count, stream, flags);
+}
+// SEED HISTORY (prior excluded record): 0x00667380 sub_667380 0x00667380-0x00667A6F EXCLUDED S2d; hidden;sp_ready;purged_ok
+// ORIGINAL: 0x00667380 sub_667380 0x00667380-0x00667A6F
+// symbol    ?caviar_original_667380@@YAXHHHPBHIPBEH@Z
+// kind      game
+void __cdecl caviar_original_667380(
+    int32_t x, int32_t y, int32_t z, const int32_t *rect, uint32_t count,
+    const uint8_t *stream, int32_t flags) {
+    caviar_part_s2o_clipped_candidate(x, y, z, rect, count, stream, flags);
+}
+// SEED HISTORY (prior excluded record): 0x00666A80 sub_666a80 0x00666A80-0x00666F68 EXCLUDED S2d; hidden;sp_ready;purged_ok
+// ORIGINAL: 0x00666A80 sub_666a80 0x00666A80-0x00666F68
+// symbol    ?caviar_original_666a80@@YAXHHPBHIPBEH@Z
+// kind      game
+void __cdecl caviar_original_666a80(
+    int32_t x, int32_t y, const int32_t *rect, uint32_t count,
+    const uint8_t *stream, int32_t flags) {
+    caviar_shadow_clipped_callback_candidate(x, y, rect, count, stream, flags);
+}
+
 // 0x0063E950. Eight arguments: the record, the walked node, the part's
 // position and its scaled matrix, both callers' clip blocks, the node's extent
 // and the visibility flag the draw computed.
 OPENSMACX_NOINLINE
-void __cdecl vox_draw_part(void *record, const CvrShape *node,
-                           const VOX_Vect *position, const VOX_Matrix *matrix,
-                           void *clip_a, void *clip_b, float extent,
+// SEED HISTORY: archived draw seed mapping used FILE mode; current source ownership is a BODY mapping.
+// ORIGINAL: 0x0063E950 sub_63e950 0x0063E950-0x0063EFFF
+// symbol    ?vox_draw_part@@YAXPAUVoxRenderRecord@@PBUCvrShape@@PBUVOX_Vect@@PAUVOX_Matrix@@32MH@Z
+// kind      game
+// TRIED: 8-int __cdecl signature transcribed faithfully from both branches (bit2==0 single-shot with nested bit4 split vs bit2-set do/while loop over pbVar7), following the sibling 0x0063F000's shape; prologue diverges at instr #11 (sub esp/push framing) - not chased further, large FP-heavy function, landed for coverage.
+void __cdecl vox_draw_part(VoxRenderRecord *record, const CvrShape *node,
+                           const VOX_Vect *position, VOX_Matrix *matrix,
+                           VOX_Matrix *camera_rotation,
+                           const VOX_Vect *state_direction, float extent,
                            int visible) {
-    typedef void(__cdecl *pending)(void *, const CvrShape *, const VOX_Vect *,
-                                   const VOX_Matrix *, void *, void *, float,
-                                   int);
-    reinterpret_cast<pending>(static_cast<unsigned long>(0x0063E950))(
-        record, node, position, matrix, clip_a, clip_b, extent, visible);
+    caviar_draw_part_candidate(record, node, position, matrix,
+                               camera_rotation, state_direction, extent, visible);
 }
 
 // 0x0063F000. Five arguments: the shadow branch's counterpart of the above.
 OPENSMACX_NOINLINE
-void __cdecl vox_draw_shadow(void *record, const CvrShape *node,
+// SEED HISTORY: archived draw seed mapping used FILE mode; current source ownership is a BODY mapping.
+// ORIGINAL: 0x0063F000 sub_63f000 0x0063F000-0x0063F5D7
+// symbol    ?vox_draw_shadow@@YAXPAUVoxRenderRecord@@PBUCvrShape@@PBUVOX_Vect@@PAUVOX_Matrix@@PBX@Z
+// kind      game
+// TRIED: 5-int __cdecl signature transcribed faithfully from the two branches (bit2==0 single-shot vs bit2-set do/while loop over pbVar6); prologue diverges at instr #0 (sub esp,0x58 vs push) - not chased further, large FP-heavy function, landed for coverage.
+void __cdecl vox_draw_shadow(VoxRenderRecord *record, const CvrShape *node,
                              const VOX_Vect *position,
-                             const VOX_Matrix *matrix, void *clip) {
-    typedef void(__cdecl *pending)(void *, const CvrShape *, const VOX_Vect *,
-                                   const VOX_Matrix *, void *);
-    reinterpret_cast<pending>(static_cast<unsigned long>(0x0063F000))(
-        record, node, position, matrix, clip);
+                             VOX_Matrix *matrix, const void *camera_nonnull) {
+    caviar_draw_shadow_candidate(record, node, position, matrix, camera_nonnull);
 }
 
 /*
@@ -4412,7 +4472,7 @@ void __cdecl vox_draw_scene(VoxRenderRecord *record, CaviarSceneContext *context
     vox_active_ramp_a_ = record->ramp_a_ptr_;
     vox_active_ramp_b_ = record->ramp_b_ptr_;
     vox_active_size_code_ = record->setup_size_code_;
-    vox_scene_extent_ = ((uint32_t *)record->setup_block_)[0] -
+    CaviarKernelProjectionWindow.current_views_.tail_.vox_scene_extent_ = ((uint32_t *)record->setup_block_)[0] -
                         ((uint32_t *)record->setup_block_)[1];
     vox_setup_copy_[3] = ((uint32_t *)record->setup_block_)[5];
     vox_setup_copy_[4] = ((uint32_t *)record->setup_block_)[6];
@@ -4422,9 +4482,7 @@ void __cdecl vox_draw_scene(VoxRenderRecord *record, CaviarSceneContext *context
     vox_setup_copy_[2] = ((uint32_t *)record->setup_block_)[2];
 
     // The record's own setup hook, called once before the walk.
-    typedef void(__cdecl *setup_callback)();
-    if (setup_callback callback =
-            reinterpret_cast<setup_callback>(record->setup_callback_)) {
+    if (VoxRenderRecord::SetupCallback callback = record->setup_callback_) {
         callback();
     }
 
@@ -4490,8 +4548,9 @@ void __cdecl vox_draw_scene(VoxRenderRecord *record, CaviarSceneContext *context
             callback(record, index, &position, &part, &view->bounds_,
                      state_bytes + 0x48);
         }
-        vox_draw_part(record, node, &position, &part, state_bytes + 0x48,
-                      &view->bounds_, extent, visible);
+        vox_draw_part(record, node, &position, &part, &view->camera_.rotation,
+                      reinterpret_cast<const VOX_Vect *>(state_bytes + 0x48),
+                      extent, visible);
 
         // The shadow pass, when the state asks for it and the record's
         // descriptor block names a shadow.
@@ -4645,19 +4704,104 @@ void __cdecl vox_matrix_matrix_mul(const float (*left)[3], const float (*right)[
         + left[2][2] * right[2][2];
 }
 
-// 0x0063A9D0. Builds the axis-aligned box one part covers: the centre, the
-// three scaled axis vectors, and the low and high corners the caller
-// accumulates across the instance table.
-OPENSMACX_NOINLINE
-void __cdecl vox_bounds_from_axes(const float *centre, const float *axis_a,
-                                  const float *axis_b, const float *axis_c,
-                                  float *low, float *high) {
-    typedef void(__cdecl *pending)(const float *, const float *, const float *,
-                                  const float *, float *, float *);
-    reinterpret_cast<pending>(static_cast<unsigned long>(0x0063A9D0))(
-        centre, axis_a, axis_b, axis_c, low, high);
-}
+/*
+Purpose: The voxel-facet bounding box: start the min/max pair at the
+         caller's origin vector, then walk the eight corners of the box the
+         three edge vectors span - +edge_b, +edge_c, -edge_b, +edge_d,
+         +edge_b, -edge_c, -edge_b - widening min/max after every step.
+         The first step is the tree's own vector_add (0x00628150); the
+         rest are component adds the original inlines.
 
+// ORIGINAL: 0x0063A9D0 sub_63a9d0 0x0063A9D0-0x0063AD54
+// symbol    _sub_63a9d0
+// size      900 bytes
+// Deleted seed provenance: git:1ed59304110fc2098fb1dd11457fa5b0074169bd:src/unrecovered/0063a9d0.cpp
+Status: Coverage transcription of the retained seed (src/unrecovered/0063a9d0.cpp,
+        plain FILE). The seed's TRIED wall stands: the max-update predicate
+        is written value-first (`local > max` against the original's
+        `ah & 0x41` FPU polarity test) and the compare scheduling still
+        diverges; with this TU's /Oy- frame against the original's
+        frameless one the streams separate early, documented and not
+        chased. Parameters keep the seed's reading (VOX_Vect *origin plus
+        three edges and the two outputs; `a`/`b`/`c`/`d` in the seed and
+        Ghidra).
+*/
+extern "C" void __cdecl sub_63a9d0(VOX_Vect *origin, VOX_Vect *edge_b,
+                                   VOX_Vect *edge_c, VOX_Vect *edge_d,
+                                   VOX_Vect *min_out, VOX_Vect *max_out) {
+    *min_out = *origin;
+    *max_out = *origin;
+
+    VOX_Vect walked;
+    vector_add(origin->values, edge_b->values, walked.values);
+
+    if (walked.values[0] < min_out->values[0]) min_out->values[0] = walked.values[0];
+    if (walked.values[1] < min_out->values[1]) min_out->values[1] = walked.values[1];
+    if (walked.values[2] < min_out->values[2]) min_out->values[2] = walked.values[2];
+    if (walked.values[0] > max_out->values[0]) max_out->values[0] = walked.values[0];
+    if (walked.values[1] > max_out->values[1]) max_out->values[1] = walked.values[1];
+    if (walked.values[2] > max_out->values[2]) max_out->values[2] = walked.values[2];
+
+    walked.values[0] = edge_c->values[0] + walked.values[0];
+    walked.values[1] = walked.values[1] + edge_c->values[1];
+    walked.values[2] = edge_c->values[2] + walked.values[2];
+    if (walked.values[0] < min_out->values[0]) min_out->values[0] = walked.values[0];
+    if (walked.values[1] < min_out->values[1]) min_out->values[1] = walked.values[1];
+    if (walked.values[2] < min_out->values[2]) min_out->values[2] = walked.values[2];
+    if (walked.values[0] > max_out->values[0]) max_out->values[0] = walked.values[0];
+    if (walked.values[1] > max_out->values[1]) max_out->values[1] = walked.values[1];
+    if (walked.values[2] > max_out->values[2]) max_out->values[2] = walked.values[2];
+
+    walked.values[0] = walked.values[0] - edge_b->values[0];
+    walked.values[1] = walked.values[1] - edge_b->values[1];
+    walked.values[2] = walked.values[2] - edge_b->values[2];
+    if (walked.values[0] < min_out->values[0]) min_out->values[0] = walked.values[0];
+    if (walked.values[1] < min_out->values[1]) min_out->values[1] = walked.values[1];
+    if (walked.values[2] < min_out->values[2]) min_out->values[2] = walked.values[2];
+    if (walked.values[0] > max_out->values[0]) max_out->values[0] = walked.values[0];
+    if (walked.values[1] > max_out->values[1]) max_out->values[1] = walked.values[1];
+    if (walked.values[2] > max_out->values[2]) max_out->values[2] = walked.values[2];
+
+    walked.values[0] = edge_d->values[0] + walked.values[0];
+    walked.values[1] = walked.values[1] + edge_d->values[1];
+    walked.values[2] = edge_d->values[2] + walked.values[2];
+    if (walked.values[0] < min_out->values[0]) min_out->values[0] = walked.values[0];
+    if (walked.values[1] < min_out->values[1]) min_out->values[1] = walked.values[1];
+    if (walked.values[2] < min_out->values[2]) min_out->values[2] = walked.values[2];
+    if (walked.values[0] > max_out->values[0]) max_out->values[0] = walked.values[0];
+    if (walked.values[1] > max_out->values[1]) max_out->values[1] = walked.values[1];
+    if (walked.values[2] > max_out->values[2]) max_out->values[2] = walked.values[2];
+
+    walked.values[0] = edge_b->values[0] + walked.values[0];
+    walked.values[1] = walked.values[1] + edge_b->values[1];
+    walked.values[2] = edge_b->values[2] + walked.values[2];
+    if (walked.values[0] < min_out->values[0]) min_out->values[0] = walked.values[0];
+    if (walked.values[1] < min_out->values[1]) min_out->values[1] = walked.values[1];
+    if (walked.values[2] < min_out->values[2]) min_out->values[2] = walked.values[2];
+    if (walked.values[0] > max_out->values[0]) max_out->values[0] = walked.values[0];
+    if (walked.values[1] > max_out->values[1]) max_out->values[1] = walked.values[1];
+    if (walked.values[2] > max_out->values[2]) max_out->values[2] = walked.values[2];
+
+    walked.values[0] = walked.values[0] - edge_c->values[0];
+    walked.values[1] = walked.values[1] - edge_c->values[1];
+    walked.values[2] = walked.values[2] - edge_c->values[2];
+    if (walked.values[0] < min_out->values[0]) min_out->values[0] = walked.values[0];
+    if (walked.values[1] < min_out->values[1]) min_out->values[1] = walked.values[1];
+    if (walked.values[2] < min_out->values[2]) min_out->values[2] = walked.values[2];
+    if (walked.values[0] > max_out->values[0]) max_out->values[0] = walked.values[0];
+    if (walked.values[1] > max_out->values[1]) max_out->values[1] = walked.values[1];
+    if (walked.values[2] > max_out->values[2]) max_out->values[2] = walked.values[2];
+
+    walked.values[0] = walked.values[0] - edge_b->values[0];
+    walked.values[1] = walked.values[1] - edge_b->values[1];
+    walked.values[2] = walked.values[2] - edge_b->values[2];
+    if (walked.values[0] < min_out->values[0]) min_out->values[0] = walked.values[0];
+    if (walked.values[1] < min_out->values[1]) min_out->values[1] = walked.values[1];
+    if (walked.values[2] < min_out->values[2]) min_out->values[2] = walked.values[2];
+    if (walked.values[0] > max_out->values[0]) max_out->values[0] = walked.values[0];
+    if (walked.values[1] > max_out->values[1]) max_out->values[1] = walked.values[1];
+    if (walked.values[2] > max_out->values[2]) max_out->values[2] = walked.values[2];
+}
 /*
 Purpose: The engine's camera transform. Walks the renderer's instance table
          once, and for every part whose shape it can reach builds the world
@@ -4760,8 +4904,7 @@ void __cdecl vox_transform_camera(VoxSceneState *state, int step,
 
         VOX_Vect low;
         VOX_Vect high;
-        vox_bounds_from_axes(corner.values, axes[0].values, axes[1].values,
-                             axes[2].values, low.values, high.values);
+        sub_63a9d0(&corner, &axes[0], &axes[1], &axes[2], &low, &high);
 
         if (index == 0) {
             *position = low;
@@ -5595,7 +5738,7 @@ CvrRecord *__cdecl vox_load_record(int fd) {
             break;
         case 0x0F000000: {
             vox_user_chunk_fn callback = vox_user_chunk;
-            vox_message_buffer[0] = 0;
+            CaviarOutputMessageWindow.message_[0] = 0;
             if (callback == 0) {
                 if (vox_seek_slot((unsigned long)fd, vox_chunk_payload(header.length), 1) < 0) {
                     vox_stage_error(vox_msg_bad_file_format);
@@ -5603,7 +5746,7 @@ CvrRecord *__cdecl vox_load_record(int fd) {
                 }
             } else {
                 if (callback(fd, record, &header) != 0) {
-                    if (strlen(vox_message_buffer) == 0) vox_stage_error(vox_msg_user_chunk);
+                    if (strlen(CaviarOutputMessageWindow.message_) == 0) vox_stage_error(vox_msg_user_chunk);
                     return 0;
                 }
                 // The callback may rewrite the header; remaining was already

@@ -1518,16 +1518,39 @@ static int boom_zoomed_extent(int zoom, int extent) {
 }
 
 // ORIGINAL: 0x00504AA0 ?boom@@YAHHHH@Z 0x00504AA0-0x00505D1B FILE
-// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00504aa0.cpp", "src/veh.h", "src/flic.h", "recovery/tasks/mapwin-owner-coverage-wave.json"], "reason": "Recover per-window explosion and Flic animation with genuine typed static buffers, real MapWin/GraphicWin bases, source-owned weapon tables and original branch/timing/sound behavior; preserve the original seed and its correction evidence."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00504aa0.cpp", "src/veh.h", "src/flic.h", "recovery/tasks/mapwin-owner-coverage-wave.json", "Pinned 0x00504AA0 guard 0x0090F7D8 lazily constructs the two Buffer[8] arrays at 0x0090F7E0 and 0x00912428, registers distinct atexit destructors, then constructs/registers Flic at 0x0090EA68 and Buffer at 0x00915068.", "The four adjacent original teardown identities now have source-owned local-static object bindings at their exact original data extents; fresh retained COFF callback relocations and MAP owner rows are preserved in the generated identity records beside each declaration.", "All original callback spans, claims and TRIED lesson text are transferred to the corresponding source declaration mapping. Physical wrapper names are written back from retained COFF facts, not inferred from seed names."], "reason": "Recover per-window explosion and Flic animation with genuine typed static buffers, real MapWin/GraphicWin bases, source-owned weapon tables and original branch/timing/sound behavior; preserve the original seed and its correction evidence."}
 // TRIED: mechanical transcription of the Ghidra decompilation (integer fixed-point animation math, no float). Two one-time static-init pools (8 Buffers at 0x912428, 8 more at 0x90f7e0, each array-constructed via the compiler's own `??_L` array- construct helper already declared as fn_006457c2) plus a lone Flic/Buffer pair at 0x90ea68/0x915068 constructed with placement `new` and registered via atexit for teardown - all four receivers confirmed from the raw disassembly's `mov ecx, ADDR` before each ctor call. Every FUN_ callee resolved to a real name from the disassembly's own comments. Not fully chased: several Buffer::copy/init/draw_multi_ table_dest calls inside the 8-slot animation loop use a fixed 0x915068 receiver as a placeholder - the raw asm shows the true receiver is a per-iteration resolved screen-buffer pointer (the same `*(int*)0x7d3c3c`-based idiom used throughout this codebase) that would take another pass to thread through every call site correctly. Landed at MISMATCH #4 without chasing the prologue divergence, given the size of this function and the remaining time in this batch.
 // symbol    ?boom@@YAHHHH@Z
 int __cdecl boom(int x, int y, int flags) {
     // The two arrays and both working buffers are genuine function-local
     // statics. Their constructors/destructors and first-use guard are thus
     // compiler-owned rather than replayed through fixed image addresses.
+// ORIGINAL: 0x00505D60 ??__Eg_BOOM_BUFFERS2@@YAXXZ 0x00505D60-0x00505D77 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned original initializer 0x00504AA0 constructs and registers this object's matching teardown callback", "retained COFF build/recovery/builds/build-sep4rpby/CMakeFiles/OpenSMACX.dir/src/veh.cpp.obj: _$E19 physically relocates to _?original_screen_snapshots@?1??boom@@YAHHHH@Z@4PAVBuffer@@A", "retained MAP names veh.cpp.obj as the generated wrapper's physical contribution", "full original span, historical claim and seed lessons are retained; this mapping does not assert byte equality"], "reason": "Map the original BOOM atexit identity to the compiler-emitted destructor wrapper owned by the corresponding genuine function-local object."}
+// symbol    _$E19
+// kind      game
+// TRIED: same wall as 0x00505D40 - the body calls the MSVC 'eh vector constructor iterator' at 0x006456E4, whose mangled name no forward declaration can reach. Needs a real global array with a non-trivial ctor and dtor.
+// TRIED: same wall as 0x00505D40 - the body calls the MSVC 'eh vector constructor iterator' at 0x006456E4, whose mangled name no forward declaration can reach. Needs a real global array with a non-trivial ctor and dtor.
+// RECOVERY_OBJECT: v2 0x00912428 0x00915068 _?original_screen_snapshots@?1??boom@@YAHHHH@Z@4PAVBuffer@@A 0x00504AA0
     static Buffer original_screen_snapshots[8];
+// ORIGINAL: 0x00505D40 ??__Eg_BOOM_BUFFERS1@@YAXXZ 0x00505D40-0x00505D57 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned original initializer 0x00504AA0 constructs and registers this object's matching teardown callback", "retained COFF build/recovery/builds/build-sep4rpby/CMakeFiles/OpenSMACX.dir/src/veh.cpp.obj: _$E20 physically relocates to _?redrawn_map_snapshots@?1??boom@@YAHHHH@Z@4PAVBuffer@@A", "retained MAP names veh.cpp.obj as the generated wrapper's physical contribution", "full original span, historical claim and seed lessons are retained; this mapping does not assert byte equality"], "reason": "Map the original BOOM atexit identity to the compiler-emitted destructor wrapper owned by the corresponding genuine function-local object."}
+// symbol    _$E20
+// kind      game
+// TRIED: homed into general.cpp 2026-09-03 - does not compile: the body calls 0x006456E4, which is the MSVC 'eh vector constructor iterator' CRT helper (mangled ??_M@YGXPAXIHP6EX0@Z@Z). Its mangled name is compiler-generated, so a normal forward declaration cannot reach it; the faithful source form is a real global array of a class with a non-trivial ctor and dtor, which is a recovery design for the global-object pass, not a homing. Stays here.
+// RECOVERY_OBJECT: v2 0x0090F7E0 0x00912420 _?redrawn_map_snapshots@?1??boom@@YAHHHH@Z@4PAVBuffer@@A 0x00504AA0
     static Buffer redrawn_map_snapshots[8];
+// ORIGINAL: 0x00505D30 ??__Eg_BOOM_FLIC@@YAXXZ 0x00505D30-0x00505D3A FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned original initializer 0x00504AA0 constructs and registers this object's matching teardown callback", "retained COFF build/recovery/builds/build-sep4rpby/CMakeFiles/OpenSMACX.dir/src/veh.cpp.obj: _$E21 physically relocates to _?animation@?1??boom@@YAHHHH@Z@4VFlic@@A", "retained MAP names veh.cpp.obj as the generated wrapper's physical contribution", "full original span, historical claim and seed lessons are retained; this mapping does not assert byte equality"], "reason": "Map the original BOOM atexit identity to the compiler-emitted destructor wrapper owned by the corresponding genuine function-local object."}
+// symbol    _$E21
+// kind      game
+// RECOVERY_OBJECT: v2 0x0090EA68 0x0090F54C _?animation@?1??boom@@YAHHHH@Z@4VFlic@@A 0x00504AA0
     static Flic animation;
+// ORIGINAL: 0x00505D20 ??__Eg_BOOM_BUFFER1@@YAXXZ 0x00505D20-0x00505D2A FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned original initializer 0x00504AA0 constructs and registers this object's matching teardown callback", "retained COFF build/recovery/builds/build-sep4rpby/CMakeFiles/OpenSMACX.dir/src/veh.cpp.obj: _$E22 physically relocates to _?working_buffer@?1??boom@@YAHHHH@Z@4VBuffer@@A", "retained MAP names veh.cpp.obj as the generated wrapper's physical contribution", "full original span, historical claim and seed lessons are retained; this mapping does not assert byte equality"], "reason": "Map the original BOOM atexit identity to the compiler-emitted destructor wrapper owned by the corresponding genuine function-local object."}
+// symbol    _$E22
+// kind      game
+// RECOVERY_OBJECT: v2 0x00915068 0x009155F0 _?working_buffer@?1??boom@@YAHHHH@Z@4VBuffer@@A 0x00504AA0
     static Buffer working_buffer;
 
     int selected_vehicle = VehDrawSelection689F28;

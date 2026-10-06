@@ -13,6 +13,26 @@
 #define BaseCurrentCount 64
 #define RFLAG_ALIEN 0x80u
 
+// Minimal typed view of the real state-window members read by communicate.
+// This fixture proves host behavior only; it does not claim ABI layout.
+struct GameDataLockMaskBytes {
+    uint8_t human_mask_, alive_mask_, unassigned_[2];
+};
+union GameDataLockMaskView {
+    uint32_t enable_mask_;
+    GameDataLockMaskBytes bytes_;
+};
+struct GameDataStateWindowFields {
+    uint32_t game_rules_;
+    uint32_t game_state_;
+    int base_current_count_;
+    int turn_current_num_;
+    GameDataLockMaskView lock_masks_;
+    uint8_t game_tech_achieved_[MaxTechnologyNum];
+};
+struct GameDataStateWindow { GameDataStateWindowFields fields_; };
+GameDataStateWindow GameDataStateStorage;
+
 /*ACTUAL_SOCIAL_EFFECT_OWNER*/
 struct SocialCategory { int models_[4]; };
 struct Player {
@@ -100,19 +120,18 @@ NetDaemon NetDaemonNet;
 char StringTemp[4096];
 char PopupStartCaption[256];
 char ScriptPopupFile[256];
-uint8_t GameTechAchieved[MaxTechnologyNum];
 int FactionDiplomacyFlags[MaxPlayerNum];
 Sprite *FactionDiplomacyPortraits[MaxPlayerNum];
 Sprite g_portraits[MaxPlayerNum];
 char g_player_filenames[MaxPlayerNum][16];
-int GameRules, GameState, GamePreferences, GameMorePreferences, GameWarnings;
+int GamePreferences, GameMorePreferences, GameWarnings;
 int DiplomacyActive, DiplomacyContactResult, DiplomacyEndState;
 int DiplomacyMapTransferChanged, DiplomacyProposalMode, EndgameExitReason;
 int DiplomacyProposalGateCount;
 int DiploFriction;
 uint32_t DiploFrictionFactionID, DiploFrictionFactionIDWith;
-int IsMultiplayerNet, IsMultiplayerPBEM, LockEnableMask;
-int BaseIDCurrentSelected, TurnCurrentNum, WinScreenWidth;
+int IsMultiplayerNet, IsMultiplayerPBEM;
+int BaseIDCurrentSelected, WinScreenWidth;
 int PopupDialogFactionID, ExitTurnLoop, GenderDefault, PluralityDefault;
 int FALSE = 0, TRUE = 1;
 FactionArt FactionsArt[MaxPlayerNum];
@@ -203,7 +222,8 @@ int has_project(int, int) { return 0; }
 int wants_to_attack(...) { return 0; }
 int contiguous(...) { return 0; }
 int factions_status_byte(int index) {
-    return reinterpret_cast<const uint8_t *>(&LockEnableMask)[index];
+    return reinterpret_cast<const uint8_t *>(
+        &GameDataStateStorage.fields_.lock_masks_.enable_mask_)[index];
 }
 int is_human(int faction) {
     return factions_status_byte(0) & (1u << faction);
@@ -305,7 +325,9 @@ void reset_extra_fixture(int entry) {
     DiploScratchFAA0 = DiploScratchFA50 = DiploScratchFA54 = 0;
     DiploScratchF7FC = DiploScratchF7E8 = DiploScratchFA8C = 0;
     DiploScratchFA4C = 0;
-    IsMultiplayerNet = IsMultiplayerPBEM = GameRules = GameState = 0;
+    IsMultiplayerNet = IsMultiplayerPBEM = 0;
+    GameDataStateStorage.fields_.game_rules_ = 0;
+    GameDataStateStorage.fields_.game_state_ = 0;
 }
 void run_extra_fixtures() {
     assert(sizeof(SocialEffect) == 0x2C);
@@ -320,7 +342,7 @@ void run_extra_fixtures() {
     const int initial_constructions = g_popup_constructions;
     const int initial_destructions = g_popup_destructions;
     reset_extra_fixture(1);
-    TurnCurrentNum = 73;
+    GameDataStateStorage.fields_.turn_current_num_ = 73;
     communicate(0, 1, 0);
     assert(g_short_popup_calls == 1 && strcmp(g_short_label, "BREAKPACT") == 0);
     assert(g_pact_end_calls == 1);
@@ -390,7 +412,7 @@ void run_extra_fixtures() {
 
 
 int main() {
-    LockEnableMask = 0x303;
+    GameDataStateStorage.fields_.lock_masks_.enable_mask_ = 0x303;
     for (int player = 0; player < MaxPlayerNum; ++player) {
         sprintf(g_player_filenames[player], "PLAYER%d", player);
         Players[player].filename = g_player_filenames[player];

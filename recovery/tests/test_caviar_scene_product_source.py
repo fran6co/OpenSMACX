@@ -7,7 +7,8 @@ import tempfile
 
 
 HERE = Path(__file__).resolve().parent
-DEFAULT_SOURCE = HERE.parents[1] / "src/caviar.cpp"
+DEFAULT_SOURCE = next(parent / "src/caviar.cpp" for parent in HERE.parents
+                      if (parent / "src/caviar.cpp").is_file())
 FIXTURE = HERE / "fixtures/caviar_product_extraction.cpp"
 FUNCTIONS = (
     "caviar_projection_floor",

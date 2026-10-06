@@ -11,21 +11,20 @@
 
 struct VOX_Vect { float values[3]; };
 struct VOX_Matrix { float values[3][3]; };
+#pragma pack(push, 1)
 struct CvrShape {
     uint32_t field_0_;
     uint32_t byte_size_;
     float scale_;
-    uint8_t middle_[8];
+    uint8_t mid_[8];
     int16_t axis_x_, axis_y_, axis_z_;
     int16_t offset_x_, offset_y_, offset_z_;
-};
-#pragma pack(push, 1)
-struct CvrRasterShapeViewCandidate {
-    CvrShape shape_prefix_;
     int16_t raster_origin_[3];
     uint32_t item_count_;
     uint8_t item_stream_[1];
 };
+#pragma pack(pop)
+#pragma pack(push, 1)
 struct CvrRasterItemHeaderCandidate {
     int16_t endpoint_[6];
     int16_t extent_[3];
@@ -39,7 +38,7 @@ struct CaviarRenderClipWindowCandidate {
     int32_t left_, top_, right_, bottom_, width_, height_;
 };
 #pragma pack(pop)
-struct CvrStep { unsigned char *shape_; };
+struct CvrStep { uint32_t lead_; CvrShape *shape_; };
 struct VoxInstance {
     uint8_t *instance_colour_;
     VOX_Vect *instance_vector_;
@@ -175,7 +174,7 @@ static void sub_6401b0(const int16_t *centre, const int16_t *, int *out) {
 }
 static double _hypot(double x, double y) { return sqrt(x * x + y * y); }
 void __cdecl caviar_clip_shape(
-    VoxRenderRecord *, const CvrRasterShapeViewCandidate *, const VOX_Vect *,
+    VoxRenderRecord *, const CvrShape *, const VOX_Vect *,
     const VOX_Matrix *, const CaviarRenderClipWindowCandidate *, int[6]);
 
 /* PRODUCT_EXTRACTS */
@@ -225,7 +224,7 @@ static void test_stage_scene_alias_and_shadow_z() {
     setup.shadow_data_ = 1;
     setup.half_width_ = setup.half_height_ = 20;
     record.setup_block_ = reinterpret_cast<uintptr_t>(&setup);
-    step.shape_ = reinterpret_cast<unsigned char *>(&shape);
+    step.shape_ = &shape;
     CaviarProjectionShadowBasis.values[0][0] = 1.0f;
     CaviarProjectionShadowBasis.values[1][1] = 1.0f;
 
@@ -251,9 +250,8 @@ static void test_inline_shape_stride_sentinel_and_inclusive_edge() {
     CaviarRenderClipWindowCandidate clip = {2, 2, 2, 2, 1, 1};
     unsigned char storage[0x100];
     memset(storage, 0xA5, sizeof(storage));
-    CvrRasterShapeViewCandidate *shape =
-        reinterpret_cast<CvrRasterShapeViewCandidate *>(storage);
-    shape->shape_prefix_.field_0_ = 2;
+    CvrShape *shape = reinterpret_cast<CvrShape *>(storage);
+    shape->field_0_ = 2;
     shape->item_count_ = 2;
     CvrRasterItemHeaderCandidate *first =
         reinterpret_cast<CvrRasterItemHeaderCandidate *>(shape->item_stream_);
@@ -293,7 +291,7 @@ static void test_inline_shape_stride_sentinel_and_inclusive_edge() {
     instance.instance_colour_ = colour;
     instance.instance_vector_ = vectors;
     instance.instance_matrix_ = matrices;
-    step.shape_ = storage;
+    step.shape_ = reinterpret_cast<CvrShape *>(storage);
     CaviarSceneContext context;
     memset(&context, 0, sizeof(context));
     context.state_.instance_count_ = 1;

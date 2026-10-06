@@ -4,7 +4,8 @@ import subprocess
 import tempfile
 
 
-ROOT = pathlib.Path(__file__).resolve().parents[2]
+ROOT = next(parent for parent in pathlib.Path(__file__).resolve().parents
+            if (parent / "src/caviar.cpp").is_file())
 PRODUCT = ROOT / "src/caviar.cpp"
 
 
@@ -35,19 +36,23 @@ struct CaviarFixedPointProjectionMatrix {
     int16_t word_06_; int16_t word_08_; int16_t word_0A_;
     int32_t dword_0C_; int32_t dword_10_; int32_t dword_14_;
 };
-CaviarProjectionCell CaviarProjectionCells[0x1A] = {};
-uint32_t CaviarProjectionOutputWords[0x6B] = {};
+#pragma pack(push, 1)
+struct CaviarKernelTail { float scratch_e0_, scratch_e4_, scratch_e8_, scratch_ec_;
+    float scratch_f0_, scratch_f4_; uint32_t vox_scene_extent_; float scratch_fc_;
+    float scratch_a00_, scratch_a04_; uint8_t unknown_[0x38]; };
+struct CaviarKernelKnownViews { CaviarProjectionCell cells_[0x1A]; CaviarKernelTail tail_; };
+struct CaviarKernelStepRow { int32_t x_, y_, z_; uint32_t unobserved_word_; };
+union CaviarKernelProjectionWindowCandidate { CaviarKernelKnownViews current_views_;
+    CaviarKernelStepRow raster_step_rows_[32]; uint32_t accessed_words_[0x80]; };
+struct CaviarOutputMessageWindowCandidate { uint32_t projection_words_[0x6B];
+    uint8_t unidentified_gap_[0x24]; char message_[0x100]; };
+#pragma pack(pop)
+typedef char kernel_window_is_0x200[sizeof(CaviarKernelProjectionWindowCandidate) == 0x200 ? 1 : -1];
+typedef char output_window_is_0x2d0[sizeof(CaviarOutputMessageWindowCandidate) == 0x2D0 ? 1 : -1];
+CaviarKernelProjectionWindowCandidate CaviarKernelProjectionWindow = {};
+CaviarOutputMessageWindowCandidate CaviarOutputMessageWindow = {};
 CaviarFixedPointProjectionMatrix CaviarFixedPointProjection = {};
 uint32_t vox_setup_copy_[6] = {};
-float CaviarProjectionScratchE0 = 0.0f;
-float CaviarProjectionScratchE4 = 0.0f;
-float CaviarProjectionScratchE8 = 0.0f;
-float CaviarProjectionScratchEC = 0.0f;
-float CaviarProjectionScratchF0 = 0.0f;
-float CaviarProjectionScratchF4 = 0.0f;
-float CaviarProjectionScratchFC = 0.0f;
-float CaviarProjectionScratchA00 = 0.0f;
-float CaviarProjectionScratchA04 = 0.0f;
 '''
 
 
@@ -64,36 +69,36 @@ int main() {
     CaviarFixedPointProjection.dword_14_ = 23;
     vox_setup_copy_[4] = 29;
     for (int i = 0; i < 0x6B; ++i) {
-        CaviarProjectionOutputWords[i] = 0xfeedfaceu;
+        CaviarOutputMessageWindow.projection_words_[i] = 0xfeedfaceu;
     }
     for (int i = 0; i < 0x1A; ++i) {
-        CaviarProjectionCells[i].unobserved_word_ = 0x13579BDFu;
+        CaviarKernelProjectionWindow.current_views_.cells_[i].unobserved_word_ = 0x13579BDFu;
     }
     caviar_build_projection_tables();
-    if (CaviarProjectionCells[0].x_ != -10 ||
-        CaviarProjectionCells[0].y_ != -31 ||
-        CaviarProjectionCells[0].z_ != -15104) return 2;
-    if (CaviarProjectionOutputWords[5] != (uint32_t)-30 ||
-        CaviarProjectionOutputWords[0] != (uint32_t)-167771935) {
+    if (CaviarKernelProjectionWindow.current_views_.cells_[0].x_ != -10 ||
+        CaviarKernelProjectionWindow.current_views_.cells_[0].y_ != -31 ||
+        CaviarKernelProjectionWindow.current_views_.cells_[0].z_ != -15104) return 2;
+    if (CaviarOutputMessageWindow.projection_words_[5] != (uint32_t)-30 ||
+        CaviarOutputMessageWindow.projection_words_[0] != (uint32_t)-167771935) {
         return 3;
     }
-    if (CaviarProjectionOutputWords[100] == 0xfeedfaceu ||
-        CaviarProjectionOutputWords[105] == 0xfeedfaceu ||
-        CaviarProjectionOutputWords[106] == 0xfeedfaceu) return 4;
-    if (CaviarProjectionCells[0].unobserved_word_ != 0x13579BDFu ||
-        CaviarProjectionCells[25].unobserved_word_ != 0x13579BDFu ||
-        CaviarProjectionOutputWords[1] != 0xfeedfaceu ||
-        CaviarProjectionOutputWords[2] != 0xfeedfaceu ||
-        CaviarProjectionOutputWords[3] != 0xfeedfaceu) return 5;
-    if (CaviarProjectionScratchE0 != 13.0f ||
-        CaviarProjectionScratchE4 != 11.0f ||
-        CaviarProjectionScratchE8 != 7.0f ||
-        CaviarProjectionScratchEC != 5.0f ||
-        CaviarProjectionScratchF0 != 3.0f ||
-        CaviarProjectionScratchF4 != 2.0f ||
-        CaviarProjectionScratchFC != 5888.0f ||
-        CaviarProjectionScratchA00 != 4864.0f ||
-        CaviarProjectionScratchA04 != 4352.0f) return 6;
+    if (CaviarOutputMessageWindow.projection_words_[100] == 0xfeedfaceu ||
+        CaviarOutputMessageWindow.projection_words_[105] == 0xfeedfaceu ||
+        CaviarOutputMessageWindow.projection_words_[106] == 0xfeedfaceu) return 4;
+    if (CaviarKernelProjectionWindow.current_views_.cells_[0].unobserved_word_ != 0x13579BDFu ||
+        CaviarKernelProjectionWindow.current_views_.cells_[25].unobserved_word_ != 0x13579BDFu ||
+        CaviarOutputMessageWindow.projection_words_[1] != 0xfeedfaceu ||
+        CaviarOutputMessageWindow.projection_words_[2] != 0xfeedfaceu ||
+        CaviarOutputMessageWindow.projection_words_[3] != 0xfeedfaceu) return 5;
+    if (CaviarKernelProjectionWindow.current_views_.tail_.scratch_e0_ != 13.0f ||
+        CaviarKernelProjectionWindow.current_views_.tail_.scratch_e4_ != 11.0f ||
+        CaviarKernelProjectionWindow.current_views_.tail_.scratch_e8_ != 7.0f ||
+        CaviarKernelProjectionWindow.current_views_.tail_.scratch_ec_ != 5.0f ||
+        CaviarKernelProjectionWindow.current_views_.tail_.scratch_f0_ != 3.0f ||
+        CaviarKernelProjectionWindow.current_views_.tail_.scratch_f4_ != 2.0f ||
+        CaviarKernelProjectionWindow.current_views_.tail_.scratch_fc_ != 5888.0f ||
+        CaviarKernelProjectionWindow.current_views_.tail_.scratch_a00_ != 4864.0f ||
+        CaviarKernelProjectionWindow.current_views_.tail_.scratch_a04_ != 4352.0f) return 6;
     return 0;
 }
 '''
@@ -134,7 +139,7 @@ def test_loop_count_mutant_fails_actual_source_control():
 def test_depth_stream_row_offset_mutant_fails_actual_source_control():
     body = extract_body(PRODUCT.read_text(),
                         "void __cdecl caviar_build_projection_tables(")
-    mutant = body.replace("CaviarProjectionOutputWords[outputIndex] =",
-                          "CaviarProjectionOutputWords[outputIndex + 4] =", 1)
+    mutant = body.replace("CaviarOutputMessageWindow.projection_words_[outputIndex] =",
+                          "CaviarOutputMessageWindow.projection_words_[outputIndex + 1] =", 1)
     assert mutant != body
     compile_and_run(shutil.which("g++"), mutant, False)

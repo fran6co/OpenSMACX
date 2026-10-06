@@ -45,6 +45,12 @@ def sources():
     assert len(calls) == 7
     result["calls"] = "\n".join(calls)
     header = (ROOT / "src/caviar.h").read_text()
+    result["scene_state_type"] = braced(header, header.index("struct VoxSceneState {")) + ";"
+    result["scene_state_type"] = "struct VoxInstance; struct CvrStep;\n" + result["scene_state_type"]
+    result["projection_support"] = (
+        '#include "' + str(ROOT / "src/caviar_projection_state.h") + '"\n'
+        "CaviarSceneProjectionScratchCandidate CaviarSceneProjectionScratch = {};"
+    )
     result["types"] = "\n".join(braced(header, header.index("struct " + name + " {")) + ";"
                                    for name in ("VOX_Matrix", "VOX_Vect"))
     return result
@@ -57,6 +63,8 @@ def harness(parts):
         #include <cstdlib>
         #define __cdecl
         TYPES
+        SCENE_STATE_TYPE
+        PROJECTION_SUPPORT
         VECTOR_BODY
         MATRIX_BODY
         void scale_main(VOX_Matrix &part, float extent) { MAIN_SCALE }
@@ -139,13 +147,13 @@ def harness(parts):
             require(std::memcmp(&main,&want_main,sizeof(main)) == 0);
             require(std::memcmp(&shadow,&want_shadow,sizeof(shadow)) == 0);
         }
-    '''.replace("TYPES", parts["types"]).replace("VECTOR_BODY", parts[VECTOR]).replace(
+    '''.replace("TYPES", parts["types"]).replace("SCENE_STATE_TYPE", parts["scene_state_type"]).replace("PROJECTION_SUPPORT", parts["projection_support"]).replace("VECTOR_BODY", parts[VECTOR]).replace(
         "MATRIX_BODY", parts[MATRIX]).replace("MAIN_SCALE", parts["main_scale"]).replace(
         "SHADOW_SCALE", parts["shadow_scale"]).replace("CALLS", parts["calls"])
 
 
 def run_host(tmp_path, parts):
-    compiler = shutil.which("g++")
+    compiler = shutil.which(os.environ.get("OSMX_HOST_CXX", "g++"))
     if compiler is None:
         pytest.skip("host g++ required")
     path, executable = tmp_path / "matrix.cpp", tmp_path / "matrix"

@@ -10,6 +10,7 @@
 #include "dialogs.h"
 #include "general.h"
 #include "main.h"
+#include "popup.h"
 #include "strings.h"
 #include "temp.h"
 #include "win.h"
@@ -548,6 +549,38 @@ int NetSessionPickerWin::connect_session() {
     status = x_pop_caption_value_flags("jackal", "NETCONNECT_CREATE",
                                        0x3c, 0x44, 0);
   }
+}
+
+// ORIGINAL: 0x0063C6D0 sub_63c6d0 0x0063C6D0-0x0063C7B5 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["historical seed:src/unrecovered/0063c6d0.cpp; full original marker, spans, byte claim and lessons transported by match_recovery.source.writer", "historical scaffold symbol hint (not an emitted-symbol fact):    ?connect@T63C6D0@@QAEHXZ", "owner proposal: src/net_session_picker.cpp; original identity 0x0063C6D0; symbol observation intentionally pending physical compilation"], "reason": "Recover the selected-session operation as a real NetSessionPickerWin member over the existing ListBox, AlphaNetLedger, Net and popup owners; emitted symbol awaits physical observation."}
+// symbol    ?join_selected_session@NetSessionPickerWin@@QAEHXZ
+// LEVER: ecx/cdecl the given `extern "C" int __cdecl sub_63c6d0()` head was wrong - every field access reads `[ecx+N]`/`[esi+N]` with `esi=ecx` and no stack argument, so the receiver is `this`. Changing it to a `__thiscall` member of a local helper class is part of what made this match, so it is a lever and not a tried spelling.
+// LEVER: reversing a `>=` comparison's operand order (`iVar2 <= *w` instead of `*w >= iVar2`) flipped `jl` to the original's `jg`; and giving the "abs bound exceeded" early-exit its own flag (skipping the trailing `field36bc = iVar1` store) instead of relying on it falling out of a plain if/else, matched the original NOT sharing that store between the negative- and positive-`iVar1` branches - it stores separately in each.
+// working copy - scaffold materialised by --work
+// size      229 bytes
+// prototype
+// callers   0   call targets   3
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x00627200 0x0062E540 0x00644F3A
+int NetSessionPickerWin::join_selected_session() {
+    static char caption[] = "jackal";
+    static char label[] = "NETCONNECT_JOIN";
+    if (pop_caption_value_title(caption, label, 0x3c, 0x44, 0) == -1) {
+        return 1;
+    }
+
+    Dialog &dialog = static_cast<Dialog &>(sessions_view_);
+    sessions_.seek_pos(dialog.selected_position_);
+    NetAllocationNode *session = 0;
+    if (sessions_.head_ != 0) {
+        session = sessions_.current_->payload_;
+    }
+
+    const int result = net_->join_session(
+        session, ParseStrBuffer[0].str, 0);
+    tail_.action_result_ = result;
+    return result == 0;
 }
 
 // ORIGINAL: 0x0063C3A0 sub_63c3a0 0x0063C3A0-0x0063C4D6 FILE

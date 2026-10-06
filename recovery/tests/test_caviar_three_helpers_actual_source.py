@@ -4,7 +4,8 @@ import subprocess
 import tempfile
 
 
-ROOT = pathlib.Path(__file__).resolve().parents[2]
+ROOT = next(parent for parent in pathlib.Path(__file__).resolve().parents
+            if (parent / "src/caviar.cpp").is_file())
 PRODUCT = ROOT / "src/caviar.cpp"
 
 FIXTURE = r'''#include <stdint.h>
@@ -15,6 +16,8 @@ FIXTURE = r'''#include <stdint.h>
 struct VOX_Vect { float values[3]; };
 struct VOX_Matrix { float values[3][3]; };
 struct CaviarChannelBounds { float lead_[5]; int32_t values_[6]; };
+struct CaviarSceneProjectionScratchCandidate { float projected_scale_; };
+CaviarSceneProjectionScratchCandidate CaviarSceneProjectionScratch = {1.0f};
 struct VoxCameraBlock { CaviarChannelBounds bounds_; };
 struct VoxRenderRecord { int32_t setup_id_; int32_t clip_max_a_x_; };
 VOX_Matrix vox_projection_matrix_ = {0};
@@ -73,6 +76,7 @@ void vox_matrix_inverse(const float (*s)[3], float (*o)[3]) {
 ''' + r'''
 int main() {
     VoxCameraBlock view = {};
+    CaviarSceneProjectionScratch.projected_scale_ = 1.0f;
     view.bounds_.lead_[3] = -10.0f;
     view.bounds_.lead_[4] = 10.0f;
     view.bounds_.values_[4] = 12;

@@ -64,25 +64,6 @@ typedef char caviar_render_dispatch_slots_must_be_16[
     (sizeof(void *) != 4 ||
      sizeof(CaviarRenderDispatchSlotsCandidate) == 0x10) ? 1 : -1];
 
-// A *non-owning view* of a variable-size loaded shape. CvrShape's established
-// 0x20 prefix remains unchanged. The six bytes after it and the exact role of
-// the dword at +0x26 remain unresolved; the draw code observes that dword as
-// a count and begins its variable stream at +0x2A. This is not a claim that
-// the complete allocation has this fixed size.
-#pragma pack(push, 1)
-struct CvrRasterShapeViewCandidate {
-  CvrShape shape_prefix_;     // +0x00..+0x1F, existing typed owner
-  int16_t raster_origin_[3];  // +0x20..+0x25, flat-path source vector
-  uint32_t item_count_;       // +0x26, observed dword count
-  uint8_t item_stream_[1];    // +0x2A, variable payload starts here
-};
-#pragma pack(pop)
-
-typedef char cvr_raster_count_must_be_at_0x26[
-    offsetof(CvrRasterShapeViewCandidate, item_count_) == 0x26 ? 1 : -1];
-typedef char cvr_raster_stream_must_be_at_0x2a[
-    offsetof(CvrRasterShapeViewCandidate, item_stream_) == 0x2A ? 1 : -1];
-
 // One variable record in the raster stream. The first twelve shorts provide
 // low/high endpoints, extent and base vectors used by 63F5E0; the dword at
 // +0x18 is the record's item count, and bit 0 of the byte at +0x1C selects

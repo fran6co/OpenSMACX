@@ -84,6 +84,7 @@ class NetSessionPickerWin : public GraphicWin {
   void close();
   // Original 0x63C510 interactive create/join helper.
   int connect_session();
+  int join_selected_session();
   // Original 0x63C7C0 timer/list refresh.
   void refresh_player_list();
   // Original 0x63CAA0 selected-row rendering helper.

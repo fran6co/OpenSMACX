@@ -781,6 +781,7 @@ class Win : public AutoSound {
 
  public:
   int center();
+  int center_on_parent();
   int minimize();
   void nonclient_to_screen(int * x, int * y);
   void screen_to_nonclient(int * x, int * y);

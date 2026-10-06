@@ -4980,6 +4980,136 @@ void MapWin::gen_tile(int x, int y, int a3, int a4) {
     }
 }
 
+// The pinned image catalogue calls this entry sub_4688E0; the source name is
+// inferred from both typed MapWin callers (gen_tile at 0x00468CB9 and gen_map
+// at 0x0046A221), not from an original decorated name. Catalogued code span:
+// [0x004688E0, 0x00468BC5). Its jump/selector data at 0x00468BC8..0x00468C12
+// is adjacent data outside that span and is intentionally not source-mapped
+// here. See build/recovery/mapwin-gen-overlays-oct6/REPORT.md for the pinned
+// hash, full call chains, data interpretation, and remaining identity limits.
+// ORIGINAL: 0x004688E0 sub_4688e0 0x004688E0-0x00468BC5
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "build/recovery/mapwin-gen-overlays-oct6/REPORT.md:catalogue-chunk-caller-storage", "build/recovery/mapwin-gen-overlays-oct6/INDEPENDENT-REVIEW-OCT6.md:original-0x4689EF-per-goal-reset", "native:COFF:218f67bf0421f47c7bbcbabcfa583b5d325520e1eff7580df081c758b94aa1cc:752bytes-39references"], "reason": "Complete MapWin goal overlays through genuine PlayerData Goal arrays, mapped game state and inherited Buffer APIs. Local name is inferred from two receiver-backed callers, not an original decorated symbol. Catalogue/chunk, receiver accesses and ret8 support extent; adjacent selector tables stay outside. Preserve unchecked strings, signed-short priorities, duplicate mutation and per-renderable-goal reset/global updates."}
+// symbol    ?gen_overlays@MapWin@@QAEXHH@Z
+void MapWin::gen_overlays(int x, int y) {
+    if ((field_1DD70_ & 0x2000U) == 0) {
+        return;
+    }
+
+    int pixel_x;
+    int pixel_y;
+    tile_to_pixel(x, y, &pixel_x, &pixel_y);
+
+    RECT text_area;
+    text_area.left = pixel_x;
+    text_area.top = pixel_y;
+    text_area.right = pixel_x + static_cast<int>(field_1DDB4_);
+    text_area.bottom = pixel_y + static_cast<int>(field_1DDB8_);
+
+    const bool omniscient =
+        (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) != 0;
+    Buffer *const canvas = static_cast<Buffer *>(this);
+
+    // The original visits factions 1 through 7. In ordinary view it keeps
+    // only the local faction; with omniscience it walks all seven rows.
+    for (int faction = 1; faction < MaxPlayerNum; ++faction) {
+        if (!omniscient && faction != ConsoleGlobal.faction_id_) {
+            continue;
+        }
+
+        Goal *const goals = PlayersData[faction].goals;
+        for (int goal_index = 0; goal_index < MaxGoalsNum; ++goal_index) {
+            Goal &goal = goals[goal_index];
+            if (goal.x != x || goal.y != y || goal.type < 0 ||
+                goal.priority == 0) {
+                continue;
+            }
+
+            // Negative priorities trigger the image's duplicate check. It
+            // suppresses a later same-type, same-coordinate record by
+            // mutating that current Goal's type to -1 in place. Preserve the
+            // mutation and the negative-priority-only condition.
+            if (goal.priority < 0) {
+                for (int previous = 0; previous < goal_index; ++previous) {
+                    const Goal &earlier = goals[previous];
+                    if (earlier.x == x && earlier.y == y &&
+                        earlier.type == goal.type) {
+                        goal.type = -1;
+                    }
+                }
+                if (goal.type < 0) {
+                    continue;
+                }
+            }
+
+            // The image resets the shared text buffer for each renderable
+            // record, then prepends the faction noun only in omniscient view.
+            StringTemp[0] = '\0';
+            if (omniscient) {
+                GenderDefault = Players[faction].noun_gender;
+                PluralityDefault = Players[faction].is_noun_plural;
+                strcat(StringTemp, Players[faction].noun_faction);
+            }
+
+            // The original adjacent selector tables map only these Goal type
+            // values to a one-character label and color. Other nonnegative
+            // types, including values above 0x29, keep the default color and
+            // have no label. Keep numeric identities rather than inventing
+            // names for the enum values.
+            const char *label = 0;
+            int color = 0xFF;
+            switch (goal.type) {
+            case 0:
+                label = "a";
+                color = 0xF9;
+                break;
+            case 2:
+                label = "d";
+                color = 0xFB;
+                break;
+            case 3:
+                label = "f";
+                color = 0xFA;
+                break;
+            case 6:
+                label = "c";
+                color = 0xFE;
+                break;
+            case 8:
+                label = "n";
+                color = 0xFC;
+                break;
+            case 9:
+                label = "^";
+                color = 0xFF;
+                break;
+            case 41:
+                label = "s";
+                color = 0xFD;
+                break;
+            default:
+                break;
+            }
+
+            if (label != 0) {
+                strcat(StringTemp, label);
+            }
+
+            int priority = goal.priority;
+            if (priority < 0) {
+                priority = -priority;
+            }
+            char number[10];
+            _itoa(priority, number, 10);
+            strcat(StringTemp, number);
+
+            canvas->set_text_color(color, 0, 1, 1);
+            canvas->set_font(&font_b_, 0, 0, 0);
+            canvas->write_cent_l(StringTemp, &text_area,
+                                 static_cast<int>(strlen(StringTemp)));
+        }
+    }
+}
+
 // Original0x00467DE0 draws base labels and map landmarks in the visible map
 // rectangle. Both data collections use their source-owned records and counts.
 // ORIGINAL: 0x00467DE0 ?draw_base_names@MapWin@@QAEXXZ 0x00467DE0-0x004688E0 FILE
