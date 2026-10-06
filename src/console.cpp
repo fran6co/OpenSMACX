@@ -15,6 +15,18 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
+// ORIGINAL: 0x0051DE60 ?on_sys_close@thunk1_Console@@QAEXXZ 0x0051DE60-0x0051DE68 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["The pinned Console constructor 0x0050F460 stores Win-view table 0x0066EC18; slot 14 (byte offset 0x38) contains original thunk 0x0051DE60.", "The pinned Win primary slot 14 targets 0x00404280, the existing Win::on_sys_close contract; Console declares the real override.", "Original thunk 0x0051DE60 adjusts the vtordisp receiver and tail-jumps to mapped Console::on_sys_close at 0x0051D7C0.", "Seed history records `void (__thiscall ?on_sys_close@thunk1_Console@@QAEXXZ)(Console* this)` and flags hidden/sp_ready/purged_ok; those source findings remain with this original identity."], "reason": "Bind the original Console Win-view receiver adjustment to the existing typed Console callback at 0051DE60; the pinned Win base contract and Console constructor-installed view establish the ownership relation."}
+// symbol    ?on_sys_close@Console@@$4PPPPPPPM@A@AEXXZ
+// kind game
+// ORIGINAL: 0x0051DED0 ?on_key_click@thunk1_Console@@QAEHHH@Z 0x0051DED0-0x0051DED8 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["The pinned Console constructor 0x0050F460 stores Win-view table 0x0066EC18; slot 25 (byte offset 0x64) contains original thunk 0x0051DED0.", "The pinned Win primary slot 25 targets 0x00406A80; Win declares int on_key_click(int, int), and Console retains the same int callback contract.", "Original thunk 0x0051DED0 adjusts the vtordisp receiver and tail-jumps to mapped Console::on_key_click at 0x005178C0.", "Seed history records `int (__thiscall ?on_key_click@thunk1_Console@@QAEHHH@Z)(Console* this, int, int)` and flags hidden/sp_ready/purged_ok; those source findings remain with this original identity."], "reason": "Bind the original Console Win-view receiver adjustment to the existing typed Console callback at 0051DED0; the pinned Win base contract and Console constructor-installed view establish the ownership relation."}
+// symbol    ?on_key_click@Console@@$4PPPPPPPM@A@AEHHH@Z
+// kind game
+// ORIGINAL: 0x0051DF40 ?on_nc_hittest@thunk1_Console@@QAEXHH@Z 0x0051DF40-0x0051DF48 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["The pinned Console constructor 0x0050F460 stores Win-view table 0x0066EC18; slot 75 (byte offset 0x12C) contains original thunk 0x0051DF40.", "The pinned Win primary slot 75 targets 0x005F5AD0; Win::on_nc_hittest and the existing Console::on_nc_hittest source method both have int(int,int) contracts.", "The seed catalogue's thunk prototype says void, but the original thunk preserves EAX while tail-jumping to 0x0050F680; that body sets EAX to 0 or 1 on its exits. The source owner keeps the int result; no source callback or base slot is renamed.", "Seed history records `void (__thiscall ?on_nc_hittest@thunk1_Console@@QAEXHH@Z)(Console* this, int, int)` and flags hidden/sp_ready/purged_ok; those source findings remain with this original identity."], "reason": "Bind the original Console Win-view receiver adjustment to the existing typed Console callback at 0051DF40; the pinned Win base contract and Console constructor-installed view establish the ownership relation."}
+// symbol    ?on_nc_hittest@Console@@$4PPPPPPPM@A@AEHHH@Z
+// kind game
 #include "stdafx.h"
 #include "text.h" // TextBufferGetPtr is reloaded after parser callbacks.
 #include "alphamovie.h"

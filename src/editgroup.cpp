@@ -668,3 +668,8 @@ void EditGroup::pass_dialog_focus() {
     }
     Win::pass_dialog_focus();
 }
+
+// ORIGINAL: 0x006127D0 ?pass_dialog_focus@thunk1_EditGroup@@QAEXXZ 0x006127D0-0x006127D8 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: EditGroup constructor 0x00611940 installs Win view 0x006708D4; slot +0x100 points to original identity 0x006127D0", "retained build/recovery/builds/build-rosw1myy: build/recovery/builds/build-rosw1myy/CMakeFiles/OpenSMACX.dir/src/editgroup.cpp.obj has matching source-input closure and physical table relocation to ?pass_dialog_focus@EditGroup@@$4PPPPPPPM@A@AEXXZ", "retained COFF ?pass_dialog_focus@EditGroup@@$4PPPPPPPM@A@AEXXZ has the 8-byte vtordisp subtraction shape and tail relocation to real method symbol ?pass_dialog_focus@EditGroup@@UAEXXZ", "the exact legacy kind fact `game` is copied verbatim from the source envelope and parser-read back; it is existing catalogue classification, not a newly granted kind", "this evidence establishes a current owner-TU/compiler-thunk correspondence only; no fresh build, linked retained-table selection, body-byte match, or whole-game acceptance is claimed"], "reason": "The EditGroup Win-view constructor-installed table selects this original receiver adjustor at byte offset 0x100; the retained owner COFF physically emits the corresponding compiler vtordisp thunk and its relocation tails to EditGroup::pass_dialog_focus. This FILE marker remains with the actual class owner TU; it does not prove final linked table selection or full acceptance."}
+// kind      game
+// symbol    ?pass_dialog_focus@EditGroup@@$4PPPPPPPM@A@AEXXZ

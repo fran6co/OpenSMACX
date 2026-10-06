@@ -1046,3 +1046,8 @@ void CheckBox::on_mouse_move(int x_coord, int y_coord) {
     }
     redraw();
 }
+
+// ORIGINAL: 0x0060FE80 ?on_key_down@thunk1_CheckBox@@QAEHH@Z 0x0060FE80-0x0060FE88 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: CheckBox constructor 0x0060E670 installs Win view 0x006705B0; slot +0x68 points to original identity 0x0060FE80", "retained build/recovery/builds/build-rosw1myy: build/recovery/builds/build-rosw1myy/CMakeFiles/OpenSMACX.dir/src/checkbox.cpp.obj has matching source-input closure and physical table relocation to ?on_key_down@CheckBox@@$4PPPPPPPM@A@AEHH@Z", "retained COFF ?on_key_down@CheckBox@@$4PPPPPPPM@A@AEHH@Z has the 8-byte vtordisp subtraction shape and tail relocation to real method symbol ?on_key_down@CheckBox@@UAEHH@Z", "the exact legacy kind fact `game` is copied verbatim from the source envelope and parser-read back; it is existing catalogue classification, not a newly granted kind", "this evidence establishes a current owner-TU/compiler-thunk correspondence only; no fresh build, linked retained-table selection, body-byte match, or whole-game acceptance is claimed"], "reason": "The CheckBox Win-view constructor-installed table selects this original receiver adjustor at byte offset 0x68; the retained owner COFF physically emits the corresponding compiler vtordisp thunk and its relocation tails to CheckBox::on_key_down. This FILE marker remains with the actual class owner TU; it does not prove final linked table selection or full acceptance."}
+// kind      game
+// symbol    ?on_key_down@CheckBox@@$4PPPPPPPM@A@AEHH@Z

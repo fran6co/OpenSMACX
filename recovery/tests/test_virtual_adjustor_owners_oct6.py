@@ -32,6 +32,13 @@ SPECS = (
 
 # These five names are evidence-backed virtual API corrections made after
 # BASE=ab27be1; exact expected symbols remain asserted rather than waiving names.
+# Exact follow-on cohort moved after the original virtual-owner tests were authored.
+FOLLOW_ON_MIGRATED_ADDRESSES = frozenset({
+    0x0051DE60, 0x0051DED0, 0x0051DF40,
+    0x0060CF60, 0x0060CFB0, 0x0060FE80,
+    0x00611850, 0x00611880, 0x006118B0, 0x006127D0,
+})
+
 CURRENT_CALLBACK_SYMBOLS = {
     0x00612CC0: "?on_key_down@Dialogs@@UAEHH@Z",
     0x00612E80: "?on_left_click@Dialogs@@UAEXHH@Z",
@@ -68,7 +75,8 @@ def test_generated_owner_retains_original_identity_and_history(address, owner, s
                                    "src/adjustor_thunks.cpp"))
 def test_unmigrated_bodies_keep_their_actual_extraction(path):
     old = before(path)
-    moved = ({address for address, _, _ in SPECS} | MAPWIN_MIGRATED_ADDRESSES)
+    moved = ({address for address, _, _ in SPECS} | MAPWIN_MIGRATED_ADDRESSES
+             | FOLLOW_ON_MIGRATED_ADDRESSES)
     current = {r.address: r for r in read_file(ROOT / path)}
     for address, prior in old.items():
         if address in moved:

@@ -717,27 +717,6 @@ void * __fastcall adjust_console1_scalar_delete(void *self, void *,
 
 
 
-/*
-Purpose: Adjust the receiver from Console's thunk1 subobject to the one
-         Console::on_sys_close expects, then forward unchanged.
-// RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
-// ORIGINAL: 0x0051DE60 ?on_sys_close@thunk1_Console@@QAEXXZ 0x0051DE60-0x0051DE68 BYTE_EXACT
-// symbol    ?adjust_console1_on_sys_close@@YIXPAX0@Z
-// size      8 bytes
-// prototype void (__thiscall ?on_sys_close@thunk1_Console@@QAEXXZ)(Console* this)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_console1_on_sys_close(void *self, void *) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<Console *>(object - vtordisp)->Console::on_sys_close();
-}
 
 
 
@@ -746,28 +725,6 @@ void __fastcall adjust_console1_on_sys_close(void *self, void *) {
 
 
 
-/*
-Purpose: Adjust the receiver from Console's thunk1 subobject to the one
-         Console::on_key_click expects, then forward unchanged.
-// RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
-// ORIGINAL: 0x0051DED0 ?on_key_click@thunk1_Console@@QAEHHH@Z 0x0051DED0-0x0051DED8
-// symbol    ?adjust_console1_on_key_click@@YIHPAX0HH@Z
-// size      8 bytes
-// prototype int (__thiscall ?on_key_click@thunk1_Console@@QAEHHH@Z)(Console* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the forwarded call's
-Status: Complete
-*/
-int __fastcall adjust_console1_on_key_click(void *self, void *, int arg0,
-                                            int arg1) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    return reinterpret_cast<Console *>(object - vtordisp)->Console::on_key_click(arg0, arg1);
-}
 
 
 /*
@@ -865,28 +822,6 @@ void __fastcall adjust_console1_on_post_redraw_nc_buffer(void *self, void *,
         static_cast<Buffer *>(arg0), arg1);
 }
 
-/*
-Purpose: Adjust the receiver from Console's thunk1 subobject to the one
-         Console::on_nc_hittest expects, then forward unchanged.
-// RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
-// ORIGINAL: 0x0051DF40 ?on_nc_hittest@thunk1_Console@@QAEXHH@Z 0x0051DF40-0x0051DF48
-// symbol    ?adjust_console1_on_nc_hittest@@YIXPAX0HH@Z
-// size      8 bytes
-// prototype void (__thiscall ?on_nc_hittest@thunk1_Console@@QAEXHH@Z)(Console* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_console1_on_nc_hittest(void *self, void *, int arg0,
-                                              int arg1) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<Console *>(object - vtordisp)->Console::on_nc_hittest(arg0, arg1);
-}
 
 /*
 Purpose: Adjust the receiver from Console's thunk2 subobject to the one
@@ -932,27 +867,6 @@ Purpose: Adjust the receiver from ListBox's thunk1 subobject to the one
 Return Value: n/a
 Status: Complete
 */
-/*
-Purpose: Adjust the receiver from ListBox's thunk1 subobject to the one
-         ListBox::on_mousewheel expects, then forward unchanged.
-// RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
-// ORIGINAL: 0x0060CF60 ?on_mousewheel@thunk1_ListBox@@QAEXH@Z 0x0060CF60-0x0060CF68
-// symbol    ?adjust_list_box1_on_mousewheel@@YIXPAX0H@Z
-// size      8 bytes
-// prototype void (__thiscall ?on_mousewheel@thunk1_ListBox@@QAEXH@Z)(ListBox* this, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_list_box1_on_mousewheel(void *self, void *, int arg0) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<ListBox *>(object - vtordisp)->ListBox::on_mousewheel(arg0);
-}
 
 /*
 Purpose: Adjust the receiver from ListBox's thunk1 subobject to the one
@@ -993,27 +907,6 @@ Purpose: Adjust the receiver from ListBox's thunk1 subobject to the one
 Return Value: n/a
 Status: Complete
 */
-/*
-Purpose: Adjust the receiver from ListBox's thunk1 subobject to the one
-         ListBox::on_key_down expects, then forward unchanged.
-// RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
-// ORIGINAL: 0x0060CFB0 ?on_key_down@thunk1_ListBox@@QAEXH@Z 0x0060CFB0-0x0060CFB8
-// symbol    ?adjust_list_box1_on_key_down@@YIXPAX0H@Z
-// size      8 bytes
-// prototype void (__thiscall ?on_key_down@thunk1_ListBox@@QAEXH@Z)(ListBox* this, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_list_box1_on_key_down(void *self, void *, int arg0) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<ListBox *>(object - vtordisp)->ListBox::on_key_down(arg0);
-}
 
 /*
 Purpose: Adjust the receiver from ListBox's thunk1 subobject to the one
@@ -1166,27 +1059,6 @@ Purpose: Adjust the receiver from CheckBox's thunk1 subobject to the one
 Return Value: n/a
 Status: Complete
 */
-/*
-Purpose: Adjust the receiver from CheckBox's thunk1 subobject to the one
-         CheckBox::on_key_down expects, then forward unchanged.
-// RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
-// ORIGINAL: 0x0060FE80 ?on_key_down@thunk1_CheckBox@@QAEHH@Z 0x0060FE80-0x0060FE88
-// symbol    ?adjust_check_box1_on_key_down@@YIHPAX0H@Z
-// size      8 bytes
-// prototype int (__thiscall ?on_key_down@thunk1_CheckBox@@QAEHH@Z)(CheckBox* this, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the forwarded call's
-Status: Complete
-*/
-int __fastcall adjust_check_box1_on_key_down(void *self, void *, int arg0) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    return reinterpret_cast<CheckBox *>(object - vtordisp)->CheckBox::on_key_down(arg0);
-}
 
 /*
 Purpose: Adjust the receiver from CheckBox's thunk1 subobject to the one
@@ -1255,28 +1127,6 @@ Purpose: Adjust the receiver from SpriteBox's thunk1 subobject to the one
 Return Value: n/a
 Status: Complete
 */
-/*
-Purpose: Adjust the receiver from SpriteBox's thunk1 subobject to the one
-         SpriteBox::on_left_click expects, then forward unchanged.
-// RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
-// ORIGINAL: 0x00611850 ?on_left_click@thunk1_SpriteBox@@QAEXHH@Z 0x00611850-0x00611858
-// symbol    ?adjust_sprite_box1_on_left_click@@YIXPAX0HH@Z
-// size      8 bytes
-// prototype void (__thiscall ?on_left_click@thunk1_SpriteBox@@QAEXHH@Z)(SpriteBox* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_sprite_box1_on_left_click(void *self, void *, int arg0,
-                                                 int arg1) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<SpriteBox *>(object - vtordisp)->SpriteBox::on_left_click(arg0, arg1);
-}
 
 /*
 Purpose: Adjust the receiver from SpriteBox's thunk1 subobject to the one
@@ -1304,28 +1154,6 @@ Purpose: Adjust the receiver from SpriteBox's thunk1 subobject to the one
 Return Value: n/a
 Status: Complete
 */
-/*
-Purpose: Adjust the receiver from SpriteBox's thunk1 subobject to the one
-         SpriteBox::on_right_click expects, then forward unchanged.
-// RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
-// ORIGINAL: 0x00611880 ?on_right_click@thunk1_SpriteBox@@QAEXHH@Z 0x00611880-0x00611888
-// symbol    ?adjust_sprite_box1_on_right_click@@YIXPAX0HH@Z
-// size      8 bytes
-// prototype void (__thiscall ?on_right_click@thunk1_SpriteBox@@QAEXHH@Z)(SpriteBox* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_sprite_box1_on_right_click(void *self, void *,
-                                                  int arg0, int arg1) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<SpriteBox *>(object - vtordisp)->SpriteBox::on_right_click(arg0, arg1);
-}
 
 /*
 Purpose: Adjust the receiver from SpriteBox's thunk1 subobject to the one
@@ -1363,27 +1191,6 @@ void __fastcall adjust_sprite_box1_on_right_up(void *self, void *, int arg0,
     reinterpret_cast<SpriteBox *>(object - vtordisp)->SpriteBox::on_right_up(arg0, arg1);
 }
 
-/*
-Purpose: Adjust the receiver from SpriteBox's thunk1 subobject to the one
-         SpriteBox::on_key_down expects, then forward unchanged.
-// RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
-// ORIGINAL: 0x006118B0 ?on_key_down@thunk1_SpriteBox@@QAEHH@Z 0x006118B0-0x006118B8
-// symbol    ?adjust_sprite_box1_on_key_down@@YIHPAX0H@Z
-// size      8 bytes
-// prototype int (__thiscall ?on_key_down@thunk1_SpriteBox@@QAEHH@Z)(SpriteBox* this, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the forwarded call's
-Status: Complete
-*/
-int __fastcall adjust_sprite_box1_on_key_down(void *self, void *, int arg0) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    return reinterpret_cast<SpriteBox *>(object - vtordisp)->SpriteBox::on_key_down(arg0);
-}
 
 /*
 Purpose: Adjust the receiver from SpriteBox's thunk1 subobject to the one
@@ -1443,28 +1250,3 @@ Purpose: Adjust the receiver from SpriteBox's thunk3 subobject to the one
 Return Value: n/a
 Status: Complete
 */
-/*
-Purpose: Adjust the receiver from EditGroup's thunk1 subobject to the one
-         EditGroup::pass_dialog_focus expects, then forward unchanged.
-// RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
-// ORIGINAL: 0x006127D0 ?pass_dialog_focus@thunk1_EditGroup@@QAEXXZ 0x006127D0-0x006127D8 BYTE_EXACT
-// symbol    ?adjust_edit_group1_pass_dialog_focus@@YIXPAX0@Z
-// size      8 bytes
-// prototype void (__thiscall ?pass_dialog_focus@thunk1_EditGroup@@QAEXXZ)(EditGroup* this)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_edit_group1_pass_dialog_focus(void *self, void *) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    // CAST TO Win, NOT TO THE DERIVED CLASS. `pass_dialog_focus` is Win's
-    // virtual; reaching it through the derived type makes the compiler add
-    // the subobject adjustment on top of the vtordisp one, and the image
-    // emits only the vtordisp adjust.
-    reinterpret_cast<Win *>(object - vtordisp)->Win::pass_dialog_focus();
-}
