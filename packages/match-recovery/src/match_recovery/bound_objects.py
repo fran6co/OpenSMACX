@@ -9,7 +9,7 @@ import hashlib
 from typing import Mapping, Sequence
 
 from .binary import AbsoluteConstant, BoundedTarget, CompilerArtifact, compare_bound_code
-from .components import relative_path
+from .components import archive_member_identity, relative_path
 from .model import Origin, Result, Span, require_text
 from .pe_coff import Coff, PeImage
 
@@ -59,7 +59,7 @@ class FunctionBinding:
 
     def __post_init__(self):
         require_text(self.symbol, "emitted symbol")
-        relative_path(self.unit)
+        require_text(self.unit, "function binding unit")
         if not self.spans or self.spans[0].start != self.origin.address:
             raise ValueError("function requires an independently mapped entry span")
         ordered = sorted(self.spans)
@@ -71,7 +71,8 @@ def check_objects(bindings: Sequence[FunctionBinding], objects: Mapping[str, Cof
                   image: PeImage, *, external_targets: Mapping[str, int | AbsoluteConstant] | None = None,
                   import_targets: Mapping[str, int] | None = None,
                   literal_targets: Mapping[tuple[str, str], BoundedTarget | None] | None = None,
-                  errors: Mapping[str, str] | None = None, member_functions: bool = False) -> list[dict]:
+                  errors: Mapping[str, str] | None = None, member_functions: bool = False,
+                  section_bases: Mapping[tuple[str, int], int] | None = None) -> list[dict]:
     """One report per selected binding, including missing objects and symbols.
 
     External targets must be unambiguous source-owned mappings supplied by the
@@ -104,7 +105,24 @@ def check_objects(bindings: Sequence[FunctionBinding], objects: Mapping[str, Cof
         raise ValueError("invalid explicit external target binding")
     if imports.keys() & (externals.keys() | {binding.symbol for binding in bindings}):
         raise ValueError("conflicting source and import symbol bindings")
+    for binding in bindings:
+        if member_functions:
+            archive_member_identity(binding.unit)
+        else:
+            relative_path(binding.unit)
     sections, subjects, layouts = {}, {}, {}
+    for key, base in (section_bases or {}).items():
+        if (not isinstance(key, tuple) or len(key) != 2 or not isinstance(key[0], str)
+                or not key[0] or type(key[1]) is not int or key[1] < 1
+                or type(base) is not int or not 0 <= base <= 0xFFFFFFFF):
+            raise ValueError("invalid explicitly bound COFF section placement")
+        if member_functions:
+            archive_member_identity(key[0])
+        else:
+            relative_path(key[0])
+        if key[0] not in objects or key[1] > len(objects[key[0]].sections):
+            raise ValueError("explicitly bound COFF section placement names a missing section")
+        sections[key] = base
     for binding in bindings:
         obj = objects.get(binding.unit)
         if obj is None:

@@ -3143,6 +3143,18 @@ load-bearing fields:
   implied or performed;
 - `bindings`: original image/spans, emitted symbol, `unit` naming the library
   member, and independent binding/boundary evidence, as for upstream components.
+- Optional `data_sections`: complete initialized non-COMDAT COFF contributions,
+  with exact member/section identity, original full span, static symbol offsets
+  and independent evidence. These anchors assert no per-symbol extent or type.
+
+Toolchain function `unit` values are opaque canonical archive keys, not filesystem
+paths; parent-looking names are allowed, but controls, non-ASCII names and
+backslashes are refused. Upstream-source units remain normalized relative paths.
+Data contributions qualify only when their complete bytes, size, ordinary data
+flags, exact symbol inventory and relocation-free COFF/PE storage agree. Only
+passing contributions supply section bases for function-reference verification;
+unsupported or damaged contributions cannot resolve those references. This does
+not establish linked allocation, selection, object lifetimes or application coverage.
 
 The companion uses one `image` pin/address space and hexadecimal binding spans.
 It contains no archive location, extracted objects, derived per-member hashes,

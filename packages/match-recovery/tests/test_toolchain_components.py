@@ -10,7 +10,9 @@ from match_recovery.cli import main
 from match_recovery.coff_archive import CoffArchive
 from match_recovery.component_binary import verify_toolchain
 from match_recovery.component_source import parse_component, parse_components, render_component
-from match_recovery.components import ToolchainManifest, VendorBinding
+from match_recovery.components import (DataSymbolAnchor, ToolchainBinding,
+                                       ToolchainDataSectionBinding, ToolchainManifest,
+                                       VendorBinding)
 from match_recovery.model import Component, Delivery, Origin, Ownership, Span, canonical
 from test_binary import coff_fixture, pe_fixture
 
@@ -25,6 +27,174 @@ def member(name, body):
 def archive(records):
     return b"!<arch>\n" + b"".join(member(name, body) for name, body in records)
 
+
+def coff_data_fixture(data, *, data_flags=0xC0400040, data_relocation=False):
+    import struct
+    code = b"\xa1\0\0\0\0\xc3" + b"\xcc" * 10
+    text_reloc = struct.pack("<IIH", 1, 1, 6)
+    data_reloc = struct.pack("<IIH", 0, 1, 6) if data_relocation else b""
+    data_at, data_reloc_at = 126, 126 + len(data)
+    symbols_at = data_reloc_at + len(data_reloc)
+    double_name, float_name = b"_DoubleFormat\0", b"_FloatFormat\0"
+    strings = struct.pack("<I", 4 + len(double_name) + len(float_name)) + double_name + float_name
+    symbols = (b"_f".ljust(8, b"\0") + struct.pack("<IhHBB", 0, 1, 0x20, 2, 0)
+               + bytes(4) + struct.pack("<I", 4) + struct.pack("<IhHBB", 0, 2, 0, 3, 0)
+               + bytes(4) + struct.pack("<I", 4 + len(double_name))
+               + struct.pack("<IhHBB", 24, 2, 0, 3, 0))
+    header = struct.pack("<HHIIIHH", 0x14C, 2, 0, symbols_at, 3, 0, 0)
+    text_section = b".text\0\0\0" + struct.pack("<IIIIIIHHI", 0, 0, 16, 100, 116, 0, 1, 0, 0x60500020)
+    data_section = b".data\0\0\0" + struct.pack("<IIIIIIHHI", 0, 0, 48, data_at,
+                   data_reloc_at if data_relocation else 0, 0, int(data_relocation), 0, data_flags)
+    return (header + text_section + data_section + code + text_reloc + data + data_reloc
+            + symbols + strings)
+
+
+def pe_data_fixture(data, *, data_relocation=False):
+    import struct
+    raw = bytearray(pe_fixture())
+    raw.extend(bytes(512))
+    struct.pack_into("<H", raw, 0x86, 2)
+    at = 0x178 + 40
+    raw[at:at + 8] = b".data\0\0\0"
+    struct.pack_into("<IIII", raw, at + 8, 512, 0x2000, 512, 1024)
+    struct.pack_into("<I", raw, at + 36, 0xC0000040)
+    raw[512:518] = b"\xa1" + (0x402000).to_bytes(4, "little") + b"\xc3"
+    raw[1024:1072] = data
+    blocks = [(0x1000, 0x3001)] + ([(0x2000, 0x3000)] if data_relocation else [])
+    struct.pack_into("<II", raw, 0x98 + 96 + 5 * 8, 0x1100, 12 * len(blocks))
+    for index, (page, entry) in enumerate(blocks):
+        struct.pack_into("<IIHH", raw, 768 + index * 12, page, 12, entry, 0)
+    return bytes(raw)
+
+
+def data_component(*, section_bytes=None, data_flags=0xC0400040,
+                   data_relocation=False, double_offset=0, image_bytes=None):
+    original, section = bytes(range(48)), section_bytes or bytes(range(48))
+    image = pe_data_fixture(original) if image_bytes is None else image_bytes
+    unit = "release/runtime.obj"
+    raw = archive([("//", (unit + "\0").encode()), ("/0", coff_data_fixture(
+        section, data_flags=data_flags, data_relocation=data_relocation))])
+    pin = hashlib.sha256(image).hexdigest()
+    function = VendorBinding(Origin(pin, "pe:va", 0x401000), (Span(0x401000, 0x401006),),
+                             "_f", unit, "synthetic original function boundary")
+    data = ToolchainDataSectionBinding(unit, 2, ".data", Origin(pin, "pe:va", 0x402000),
+             Span(0x402000, 0x402030), (DataSymbolAnchor("_DoubleFormat", double_offset, 3),
+             DataSymbolAnchor("_FloatFormat", 24, 3)), "synthetic full data-section placement")
+    manifest = ToolchainManifest(Component("runtime", Ownership.RUNTIME, Delivery.TOOLCHAIN,
+             ("Synthetic compiler distribution",), "test"), hashlib.sha256(raw).hexdigest(),
+             "Synthetic test fixture", (function,), data_sections=(data,))
+    return manifest, image, raw
+
+
+def test_opaque_archive_member_identity_works_and_vendor_paths_stay_guarded():
+    image = pe_fixture(b"\xe8\xfb\xff\xff\xff\xc3")
+    unit = "../build/intel/mt_obj/intrncvt.obj"
+    raw = archive([("//", (unit + "\0").encode("ascii")), ("/0", coff_fixture(b"\xe8\0\0\0\0\xc3", relocation=(1, 0, 20)))])
+    pin = hashlib.sha256(image).hexdigest()
+    binding = ToolchainBinding(Origin(pin, "pe:va", 0x401000), (Span(0x401000, 0x401006),),
+                               "_f", unit, "exact archive member identity")
+    manifest = ToolchainManifest(Component("runtime", Ownership.RUNTIME, Delivery.TOOLCHAIN,
+             ("Synthetic runtime",), "test"), hashlib.sha256(raw).hexdigest(), "test license", (binding,))
+    assert ToolchainManifest.from_dict(json.loads(canonical(manifest.to_dict()))) == manifest
+    legacy = json.loads(canonical(manifest.to_dict()))
+    legacy.pop("data_sections")
+    assert ToolchainManifest.from_dict(legacy) == manifest
+    assert parse_component(render_component(manifest)) == manifest
+    assert verify_toolchain(manifest, image, raw)["functions"][0]["result"] == "pass"
+    with pytest.raises(ValueError, match="normalized relative path"):
+        VendorBinding(binding.origin, binding.spans, "_f", unit, "not a vendor path")
+
+
+@pytest.mark.parametrize("unit", ["", "../bad\nmember.obj", "obj/\x7fbad.obj", "café.obj"])
+def test_opaque_archive_member_rejects_empty_control_and_nonascii(unit):
+    with pytest.raises(ValueError):
+        ToolchainBinding(Origin("a" * 64, "pe:va", 0x401000),
+                         (Span(0x401000, 0x401001),), "_f", unit, "test")
+
+
+def test_archive_member_identity_rejects_reader_noncanonical_names():
+    with pytest.raises(ValueError, match="forward slashes"):
+        ToolchainBinding(Origin("a" * 64, "pe:va", 0x401000),
+                         (Span(0x401000, 0x401001),), "_f", "a\\b.obj", "test")
+
+
+def test_full_section_data_binding_resolves_relocation_after_exact_checks():
+    manifest, image, raw = data_component()
+    assert ToolchainManifest.from_dict(json.loads(canonical(manifest.to_dict()))) == manifest
+    assert parse_component(render_component(manifest)) == manifest
+    result = verify_toolchain(manifest, image, raw)
+    assert result["data_sections"][0]["result"] == "pass"
+    assert result["functions"][0]["result"] == "pass"
+    assert result["data_sections"][0]["span"] == {"start": 0x402000, "end": 0x402030}
+    assert set(result["data_sections"][0]["symbol_offsets"]) == {"_DoubleFormat", "_FloatFormat"}
+    assert not {"size", "type"} & set(result["data_sections"][0])
+
+
+@pytest.mark.parametrize("damage", ["bytes", "anchor", "flags", "coff_reloc", "pe_reloc"])
+def test_data_section_damage_never_supplies_reference_target(damage):
+    kwargs = {}
+    if damage == "bytes":
+        kwargs["section_bytes"] = b"X" + bytes(range(1, 48))
+    elif damage == "anchor":
+        kwargs["double_offset"] = 1
+    elif damage == "flags":
+        kwargs["data_flags"] = 0xE0400040
+    elif damage == "coff_reloc":
+        kwargs["data_relocation"] = True
+    elif damage == "pe_reloc":
+        kwargs["image_bytes"] = pe_data_fixture(bytes(range(48)), data_relocation=True)
+    manifest, image, raw = data_component(**kwargs)
+    result = verify_toolchain(manifest, image, raw)
+    assert result["data_sections"][0]["result"] != "pass"
+    assert result["functions"][0]["result"] == "unknown"
+
+
+@pytest.mark.parametrize("flag", [0x00000200, 0x00000800])
+def test_data_sections_not_selected_or_allocated_by_linker_do_not_supply_bases(flag):
+    manifest, image, raw = data_component(data_flags=0xC0400040 | flag)
+    result = verify_toolchain(manifest, image, raw)
+    assert result["data_sections"][0]["result"] != "pass"
+    assert result["functions"][0]["result"] == "unknown"
+
+
+@pytest.mark.parametrize("damage", ["section_ordinal", "section_name", "section_size", "missing_anchor"])
+def test_data_section_metadata_damage_never_supplies_reference_target(damage):
+    manifest, image, raw = data_component()
+    data = manifest.data_sections[0]
+    if damage == "section_ordinal":
+        changed = replace(data, section=3)
+    elif damage == "section_name":
+        changed = replace(data, section_name=".rdata")
+    elif damage == "section_size":
+        changed = replace(data, span=Span(data.span.start, data.span.end - 1))
+    else:
+        changed = replace(data, symbols=data.symbols[:1])
+    damaged = replace(manifest, data_sections=(changed,))
+    result = verify_toolchain(damaged, image, raw)
+    assert result["data_sections"][0]["result"] != "pass"
+    assert result["functions"][0]["result"] == "unknown"
+
+
+def test_duplicate_data_symbol_anchor_is_rejected_at_manifest_boundary():
+    manifest, _, _ = data_component()
+    data = manifest.data_sections[0]
+    with pytest.raises(ValueError, match="unique symbol anchors"):
+        replace(data, symbols=data.symbols + (data.symbols[0],))
+
+
+def test_explicit_data_section_base_conflicts_with_function_section_placement():
+    from match_recovery.bound_objects import FunctionBinding, check_objects
+    from match_recovery.pe_coff import Coff, PeImage
+
+    manifest, image, raw = data_component()
+    function = manifest.bindings[0]
+    unit = function.unit
+    obj = Coff(CoffArchive(raw).member(unit))
+    pinned = PeImage(image, hashlib.sha256(image).hexdigest())
+    with pytest.raises(ValueError, match="conflicting original placement"):
+        check_objects((FunctionBinding(function.origin, function.spans, function.symbol, unit),),
+                      {unit: obj}, pinned, member_functions=True,
+                      section_bases={(unit, 1): 0x401001})
 
 @pytest.fixture
 def dependency():
@@ -277,3 +447,12 @@ def test_plain_archive_member_codes_verify_through_their_binding():
     row, = check_objects((product_binding,), {"release/runtime.obj": Coff(bytes(plain))},
                          PeImage(image, pin))
     assert row["result"] == "unknown" and "COMDAT" in row["reason"]
+
+
+@pytest.mark.parametrize("invalid", [None, False, 0, "", {}])
+def test_explicit_data_sections_must_be_an_array(invalid):
+    manifest, _, _ = data_component()
+    value = json.loads(json.dumps(manifest.to_dict()))
+    value["data_sections"] = invalid
+    with pytest.raises(ValueError, match="data_sections must be an array"):
+        ToolchainManifest.from_dict(value)
