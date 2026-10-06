@@ -5,7 +5,7 @@
 
 // Historical generated-seed metadata; these facts do not claim current matching.
 // seed-history 0x006501F0: size      6 bytes
-// seed-history 0x006501F0: prototype 
+// seed-history 0x006501F0: prototype
 // seed-history 0x006501F0: callers   1   call targets   0
 // seed-history 0x006501F0: kind      thunk
 // seed-history 0x006501F0: flags     hidden;thunk;sp_ready;purged_ok

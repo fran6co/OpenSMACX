@@ -75,3 +75,28 @@ def test_cleanup_member_path_has_real_automatic_cpp_owners():
     assert "Scroll scroll_;" in (ROOT / "src/popup.h").read_text()
     assert "FlatButton flat_button_left_;" in (ROOT / "src/scroll.h").read_text()
     assert "class FlatButton : public BaseButton" in (ROOT / "src/flatbutton.h").read_text()
+
+
+def test_all_original_unwind_actions_keep_spans_in_parent_lifetime_owner():
+    text = (ROOT / "src/console.cpp").read_text()
+    parent = assert_complete_editor_region(text)
+    # Independently bounded contiguous actions preceding the parent's handler.
+    boundaries = (
+        0x65BFB1, 0x65BFBC, 0x65BFC7, 0x65BFD2, 0x65BFDD, 0x65BFE5,
+        0x65BFF3, 0x65C001, 0x65C009, 0x65C011, 0x65C01C, 0x65C027,
+        0x65C032, 0x65C03D, 0x65C048, 0x65C053, 0x65C05E, 0x65C069,
+        0x65C074, 0x65C07F, 0x65C08A, 0x65C092, 0x65C0A0, 0x65C0AE,
+        0x65C0B6, 0x65C0BE,
+    )
+    records = list(read(ROOT / "src"))
+    for start, end in zip(boundaries, boundaries[1:]):
+        action, = [row for row in records if row.address == start]
+        assert action.path == ROOT / "src/console.cpp" and action.line < parent.line
+        assert action.name == f"sub_{start:x}"
+        assert action.image_spans == ((start, end),)
+        assert action.mode is Mode.FILE and action.kind == "game"
+        assert not action.symbol and not action.byte_exact and not action.semantic
+        assert not (ROOT / f"src/unrecovered/{start:08x}.cpp").exists()
+        assert f"void {action.name}(" not in text
+    # This is source/lifetime navigation, not one-to-one current EH matching.
+    assert parent.image_spans[-1] == (boundaries[-1], 0x65C0C8)

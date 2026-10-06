@@ -103,7 +103,8 @@
 //     {"evidence": "zlib 1.0.2; inflate.c definition `int inflateEnd(z)`; source archive sha256 517f7df278536bf9b91bb14104fcb4b13ce7b3c791d174195fec1618621b24e6; seed symbol `_sub_63df90` was historical metadata, not a current binary measurement", "origin": "0x0063DF90", "spans": ["0x0063DF90-0x0063DFDD"], "symbol": "_inflateEnd", "unit": "inflate.c"},
 //     {"evidence": "zlib 1.0.2; inflate.c definition `int inflateInit_(z, version, stream_size)`; source archive sha256 517f7df278536bf9b91bb14104fcb4b13ce7b3c791d174195fec1618621b24e6; seed symbol `?sub_63e0f0@@YAHHHH@Z` was historical metadata, not a current binary measurement", "origin": "0x0063E0F0", "spans": ["0x0063E0F0-0x0063E10A"], "symbol": "_inflateInit_", "unit": "inflate.c"},
 //     {"evidence": "zlib 1.0.2; inftrees.c definition `int inflate_trees_free(t, z)`; source archive sha256 517f7df278536bf9b91bb14104fcb4b13ce7b3c791d174195fec1618621b24e6; seed symbol `_sub_644100` was historical metadata, not a current binary measurement", "origin": "0x00644100", "spans": ["0x00644100-0x0064413F"], "symbol": "_inflate_trees_free", "unit": "inftrees.c"},
-//     {"evidence": "zlib 1.0.2; infcodes.c definition `inflate_codes_statef *inflate_codes_new(bl, bd, tl, td, z)`; source archive sha256 517f7df278536bf9b91bb14104fcb4b13ce7b3c791d174195fec1618621b24e6; seed symbol `_sub_644140` was historical metadata, not a current binary measurement", "origin": "0x00644140", "spans": ["0x00644140-0x00644179"], "symbol": "_inflate_codes_new", "unit": "infcodes.c"}
+//     {"evidence": "zlib 1.0.2; infcodes.c definition `inflate_codes_statef *inflate_codes_new(bl, bd, tl, td, z)`; source archive sha256 517f7df278536bf9b91bb14104fcb4b13ce7b3c791d174195fec1618621b24e6; seed symbol `_sub_644140` was historical metadata, not a current binary measurement", "origin": "0x00644140", "spans": ["0x00644140-0x00644179"], "symbol": "_inflate_codes_new", "unit": "infcodes.c"},
+//     {"evidence": "Pinned zlib 1.0.2 upstream deflate.c lines 390-408 define `local void flush_pending(z_stream *strm)`; local is static in this release. The exact upstream archive SHA256 is recorded by this companion.", "origin": "0x0063D450", "spans": ["0x0063D450-0x0063D4C2"], "symbol": "_flush_pending", "unit": "deflate.c"}
 //   ]
 // }
 // RECOVERY_COMPONENT_END
@@ -115,6 +116,7 @@
 // ZLIB_SEED_HISTORY: 0x0063E0F0 old-symbol=?sub_63e0f0@@YAHHHH@Z; historical kind=game; caller=1; target=0x0063DFE0; flags=hidden;sp_ready;purged_ok
 // ZLIB_SEED_HISTORY: 0x00644100 old-symbol=_sub_644100; historical status=MISMATCH (not a marker claim); callers=5; callback at +0x24 is a direct one-indirection function pointer, not a vtable; indirect site=0x0064412D
 // ZLIB_SEED_HISTORY: 0x00644140 old-symbol=_sub_644140; historical status=MNEMONIC_ONLY (not a marker claim); caller=1; allocator/context at +0x20/+0x28; stored fields at +0x10/+0x11/+0x14/+0x18; allocator call is direct cdecl, not vtable; prior byte-register mismatch remains historical only; indirect site=0x0064414C
+// ZLIB_SEED_HISTORY: 0x0063D450 old-symbol=_sub_63d450; prior marker mode=FILE; seed note=CORRECTED from sub_63d450; zlib 1.0.2 deflate.c; 114-byte span; callers=4; historical target/call-target facts were empty
 // ZLIB_SEED_HISTORY_END
 // ORIGINAL: 0x0063CF00 deflateInit_ 0x0063CF00-0x0063CF25 BYTE_EXACT
 // ORIGINAL: 0x0063D4D0 _deflateEnd 0x0063D4D0-0x0063D55F BYTE_EXACT
@@ -122,3 +124,6 @@
 // ORIGINAL: 0x0063E0F0 _inflateInit_ 0x0063E0F0-0x0063E10A BYTE_EXACT
 // ORIGINAL: 0x00644100 _inflate_trees_free 0x00644100-0x0064413F
 // ORIGINAL: 0x00644140 _inflate_codes_new 0x00644140-0x00644179
+// ORIGINAL: 0x0063D450 _flush_pending 0x0063D450-0x0063D4C2 BYTE_EXACT
+// Historical seed lesson below; its referenced src/recovered file is retired.
+// LEVER: `rep movsd`/`rep movsb` is VC6's /Oi expansion of memcpy(dst, src, n) for a runtime-determined n, not a hand-rolled loop (matches the strcpy lesson already in src/recovered/00639390.cpp). Catalogued as nullary returning int; the disassembly reads a real stack argument at [esp+4] and never sets eax on purpose, so it is a one-`int`-parameter `void` function instead. Min-of-two-sizes has to be spelled `if (count > mySize) count = mySize;` (condition polarity `>`, not `<` on the flipped operands) to get the original's `jbe`; the algebraically-equivalent `if (mySize < count)` compiles to `jae`, and a `cond ? a : b` ternary compiles to `ja` - same logic, three different branch mnemonics.

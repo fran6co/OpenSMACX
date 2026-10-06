@@ -64,7 +64,6 @@
 #include "original_seam.h"
 #include "deleting_thunks.h"
 #include "adjustor_thunks.h"
-#include "ambience.h"
 #include "basebutton.h"
 #include "buffer.h"
 #include "flatbutton.h"
@@ -326,37 +325,6 @@ void *__fastcall adjust_this_pop_menu_delete3(void *self, void *,
 
 
 
-/*
-Purpose: The compiler-generated scalar deleting destructor at sub_448390: run
-         the complete destructor, then release the storage through the
-         executable's operator delete only when bit 0 of the flags asks.
-// RECOVERY_ROLE: SCAFFOLD Hand-written deletion adapter; original lifetime identity still needs its genuine class-generated implementation.
-// ORIGINAL: 0x00448390 sub_448390 0x00448390-0x004483B1 BYTE_EXACT
-// symbol    ?scalar_delete_sub_448390@@YIPAXPAX0I@Z
-// size      33 bytes
-// prototype
-// callers   0   call targets   2
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     0x004483C0 0x0064557F
-Return Value: the object pointer
-Status: Complete
-*/
-void *__fastcall scalar_delete_sub_448390(void *self, void *,
-                                          unsigned int arg0) {
-    // THE METHOD, not the redirect: `nullptr` for the redirect's unused
-    // second argument materialises `xor edx, edx`, which the image does not
-    // emit. Same fix as SelectPartWin::close.
-    // QUALIFIED: Sound's destructor is virtual since the sound family
-    // declared its real virtual set, so the unqualified `~Ambience()`
-    // dispatched through the vtable (a `push 0` and an indirect call the
-    // image's direct `call` to the complete destructor never has).
-    reinterpret_cast<Ambience *>(self)->Ambience::~Ambience();
-    if (arg0 & 1) {
-        operator delete(self);
-    }
-    return self;
-}
 
 /*
 Purpose: The compiler-generated scalar deleting destructor at

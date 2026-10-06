@@ -6,14 +6,14 @@
 
 // Historical generated-seed metadata; these facts do not claim current matching.
 // seed-history 0x006501F6: size      6 bytes
-// seed-history 0x006501F6: prototype 
+// seed-history 0x006501F6: prototype
 // seed-history 0x006501F6: callers   1   call targets   0
 // seed-history 0x006501F6: kind      thunk
 // seed-history 0x006501F6: flags     hidden;thunk;sp_ready;purged_ok
 // seed-history 0x006501F6: calls     (none)
 // seed-history 0x006501F6: excluded - expressibility - C++ EH unwind funclet; borrows the enclosing function's frame (docs/EXCLUSIONS.md section 2a)
 // seed-history 0x006501FC: size      6 bytes
-// seed-history 0x006501FC: prototype 
+// seed-history 0x006501FC: prototype
 // seed-history 0x006501FC: callers   1   call targets   0
 // seed-history 0x006501FC: kind      thunk
 // seed-history 0x006501FC: flags     hidden;thunk;sp_ready;purged_ok

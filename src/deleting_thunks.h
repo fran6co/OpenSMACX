@@ -116,8 +116,6 @@ void *__fastcall adjust_this_datalink(void *self, void *, unsigned int arg0);
 void *__fastcall adjust_this_design_win(void *self, void *, unsigned int arg0);
 void *__fastcall adjust_this_diplo_pop(void *self, void *, unsigned int arg0);
 void *__fastcall adjust_this_diplo_win(void *self, void *, unsigned int arg0);
-void *__fastcall scalar_delete_sub_448390(void *self, void *,
-                                          unsigned int arg0);
 void *__fastcall scalar_delete_fame_win(void *self, void *, unsigned int arg0);
 void *__fastcall adjust_this_fame_win(void *self, void *, unsigned int arg0);
 void *__fastcall adjust_this_gamma(void *self, void *, unsigned int arg0);

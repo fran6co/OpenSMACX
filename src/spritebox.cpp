@@ -164,6 +164,13 @@ Purpose: Close the control, then let the compiler destroy its owned list and
 Return Value: n/a
 Status: Complete
 */
+// The historical omitted-walk note above predates the real list hierarchy.
+// Original 0x6101AC enters the list at GraphicWin-view this-0x68: with that
+// view at complete+0x8C this is list_ at complete+0x24, not a separate vector.
+// Normal member destruction runs list_ before spots_. SpriteListBase's
+// remove_all() supplies the base-hook ring teardown; StringAllocationBase
+// republishes its saved allocator before Spot destruction. Do not add a
+// second manual traversal or explicitly destroy either member here.
 SpriteBox::~SpriteBox() {
     close();
 }
@@ -1285,6 +1292,17 @@ void SpriteBox::on_left_down(int x_coord, int y_coord) {
 
 // Compiler-generated SpriteList scalar deleting destructor; not a handwritten wrapper.
 /*
+// ORIGINAL: 0x006117D0 sub_6117d0 0x006117D0-0x006117D8;0x006117E0-0x0061181E FILE
+// RECOVERY_BINDING: v1 {"evidence":["pinned image sha256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; original 0x610120 receiver math is GraphicWin view this+0x8c minus 0x68 = complete-object+0x24, the SpriteBox::list_ member","pinned list walk addresses head/current/count at list+0x08/+0x0c/+0x10 and payload at entry+0x08; source StringStruct/StringStructEntry declarations match those roles","source lifecycle: SpriteBox::~ calls close; close performs the original ordered ring clear; reverse member destruction then runs SpriteListBase::remove_all, StringStruct final teardown/allocation-owner publication, and Spot destruction","pinned:SpriteBox constructor at 0x0060FFDB installs Win-view table 0x00670738; slot zero selects the original 0x006117D0 adjustor","physical ??_ESpriteBox@@$4PPPPPPPM@A@AEPAXI@Z is the compiler-generated slot-zero symbol in ??_7SpriteBox@@6BWin@@@; linked PE table word selects its exact linked entry","the shared original tail 0x006117E0-0x0061181E remains separately retained in the 0x006118F0 and 0x00611910 identities; this transfer grants no matching claim"],"reason":"Transfer the original Win-virtual-base scalar-deleting adjustor identity to the actual compiler-emitted SpriteBox Win-view vftable entry. Pinned receiver arithmetic identifies the list_ member and its real compiler-owned teardown chain; no wrapper or hand-authored vtable is introduced. Original exactness remains unmeasured."}
+// symbol    ??_ESpriteBox@@$4PPPPPPPM@A@AEPAXI@Z
+// TRIED: reproducing MSVC's own vtordisp adjustor thunk mechanism; wrote `raw - *(int*)(raw-4)` as explicit pointer arithmetic in a shim member instead - first instruction diverges (sub vs push)
+// Historical seed facts (verbatim; not new measurements):
+// size      70 bytes
+// prototype
+// callers   0   call targets   4
+// kind      game
+// flags     hidden
+// calls     0x005D4DD0 0x00608E10 0x00610120 0x0064557F
 // ORIGINAL: 0x006118F0 sub_6118f0 0x006118F0-0x00611901;0x006117E0-0x0061181E FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:01a84efe8fe7feece991db1a99114c60b7342c4f:src/recovered/units/006118f0.cpp; historical seed/source provenance (seed path is retired from the current working tree)", "pinned image vtable 0x00670730 entry zero selects original 0x006118F0; all original spans retained", "physical COFF:spritebox.cpp.obj defines observed emitted symbol ??_ESpriteBox@@$4PPPPPLLI@EEE@AEPAXI@Z, and its table COMDAT selects that exact symbol", "physical COFF weak external tail alias resolves to ??_GSpriteBox@@UAEPAXI@Z; linked map confirms the owner row", "strict native binary comparator readback covers the independent primary span; SpriteBox shared tail remains a separate full-span obligation", "current-owner:src/spritebox.cpp:0x006118F0; the live ORIGINAL marker retains name sub_6118f0, complete spans 0x006118F0-0x00611901;0x006117E0-0x0061181E, historical byte claim retained=False, historical semantic claim retained=False, and the complete parsed LEVER/TRIED/UNRECOVERABLE/DEFERRED lesson set (0/0/0/0); current binding is source navigation/provenance only, not a new claim or match result"], "reason": "17-byte Buffer/secondary-GraphicWin deleting adjustor; preserve its shared 0x6117E0 tail span as a separate target-owner obligation."}
 // symbol    ??_ESpriteBox@@$4PPPPPLLI@EEE@AEPAXI@Z

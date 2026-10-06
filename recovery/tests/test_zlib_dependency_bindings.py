@@ -1,8 +1,8 @@
-"""Standalone candidate test to promote after the zlib transfer is integrated.
+"""Installed zlib dependency bindings and retired-seed continuity controls.
 
 It reads only the checkout's installed source annotations and public recovery
 APIs; it does not import the guarded emitter or a generated proposal fixture.
-The transfer assertions are intentionally for the post-integration tree.
+The assertions inspect the actual integrated source tree.
 """
 from __future__ import annotations
 
@@ -35,6 +35,7 @@ MOVED = {
     0x0063E0F0: (0x0063E10A, "_inflateInit_", "_inflateInit_", "inflate.c", True),
     0x00644100: (0x0064413F, "_inflate_trees_free", "_inflate_trees_free", "inftrees.c", False),
     0x00644140: (0x00644179, "_inflate_codes_new", "_inflate_codes_new", "infcodes.c", False),
+    0x0063D450: (0x0063D4C2, "_flush_pending", "_flush_pending", "deflate.c", True),
 }
 
 
@@ -75,16 +76,17 @@ def test_integrated_companion_contains_each_original_and_exact_vendor_binding():
         assert routed_by_address[address][1] == "zlib"
         assert routed_by_address[address][2] == binding
 
-    assert 0x0063D450 not in bindings
-    assert (ROOT / "src/unrecovered/0063d450.cpp").is_file()
-    remaining = read_text((ROOT / "src/unrecovered/0063d450.cpp").read_text(),
-                          ROOT / "src/unrecovered/0063d450.cpp")
-    record, = remaining
+    record = records[0x0063D450]
+    assert record.name == "_flush_pending"
+    assert record.image_spans == ((0x0063D450, 0x0063D4C2),)
     assert record.byte_exact and record.levers
+    assert "old-symbol=_sub_63d450" in text
+    assert not (ROOT / "src/unrecovered/0063d450.cpp").exists()
 
     for relative in (
         "src/recovered/0063cf00.cpp", "src/unrecovered/0063d4d0.cpp",
         "src/recovered/0063df90.cpp", "src/recovered/0063e0f0.cpp",
         "src/recovered/units/00644100.cpp", "src/recovered/units/00644140.cpp",
+        "src/unrecovered/0063d450.cpp",
     ):
         assert not (ROOT / relative).exists()
