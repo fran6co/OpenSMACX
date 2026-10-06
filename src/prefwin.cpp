@@ -36,6 +36,10 @@
 int __cdecl X_text_open(char *src_file_id, const char *section_id);
 void __cdecl slide_show(GraphicWin *window, int mode);
 void __cdecl slide_hide(GraphicWin *window, int mode);
+// The process-wide preference window is a genuine PrefWin object. Its
+// original CRT initializer is 0x48D4F0, before ButtonGroup at 0x48D520.
+// RECOVERY_OBJECT: v2 0x008578D8 0x00872CA8 ?ConsolePrefWin@@3VPrefWin@@A 0x004921E0
+PrefWin ConsolePrefWin;   // 0x008578D8
 // The six preference-page tabs have their own ButtonGroup at 0x8577F0,
 // immediately before the initialized geometry words beginning at 0x857884.
 // RECOVERY_OBJECT: v2 0x008577F0 0x00857884 ?PrefWinButtonGroup@@3VButtonGroup@@A 0x0048D840
@@ -56,19 +60,6 @@ extern int32_t PrefWinGeometryConstant_686B78;
 // Original 0x48D884 writes 50 to this separate DWORD on the 800-pixel path.
 // RECOVERY_OBJECT: v2 0x00872CA8 0x00872CAC ?PrefWinNarrowDisplayVerticalOffset@@3HA 0x0048D840
 int PrefWinNarrowDisplayVerticalOffset;
-extern int32_t PrefWinGeometryValue_8577D8, PrefWinGeometryValue_8577DC;
-extern int32_t PrefWinGeometryValue_8577E0, PrefWinGeometryValue_8577E4;
-extern int32_t PrefWinGeometryValue_8577E8, PrefWinGeometryValue_8577EC;
-extern int32_t PrefWinGeometryValue_857884, PrefWinGeometryValue_857888;
-extern int32_t PrefWinGeometryValue_85788C, PrefWinGeometryValue_857890;
-extern int32_t PrefWinGeometryValue_857894, PrefWinGeometryValue_857898;
-extern int32_t PrefWinGeometryValue_85789C, PrefWinGeometryValue_8578A0;
-extern int32_t PrefWinGeometryValue_8578A4, PrefWinGeometryValue_8578A8;
-extern int32_t PrefWinGeometryValue_8578AC, PrefWinGeometryValue_8578B0;
-extern int32_t PrefWinGeometryValue_8578B4, PrefWinGeometryValue_8578B8;
-extern int32_t PrefWinGeometryValue_8578BC, PrefWinGeometryValue_8578C0;
-extern int32_t PrefWinGeometryValue_8578C4, PrefWinGeometryValue_8578C8;
-extern int32_t PrefWinGeometryValue_8578CC, PrefWinGeometryValue_8578D0;
 extern int MessageWinTextColor, MessageWinTextBackground;
 // Mutable preference state begins at 1.0; the 100.0 factor converts the
 // stored gamma scalar to the integer value written to the preferences file.

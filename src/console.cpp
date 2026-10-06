@@ -2087,19 +2087,7 @@ void Console::close() {
 }
 
 // ====================
-Time g_CONSOLE_TIMER;
 
-// ===== The console domain's fixed windows, REAL OBJECTS at their image
-// addresses (0x008578D8, 0x007AD2A0, 0x009156B0 - see console.h). The image's
-// ??__E dynamic initializers construct the InfoWin and the Console's
-// neighbours at their fixed addresses before WinMain (measured: `mov ecx,
-// 0x7ad2a0; call InfoWin::InfoWin` at 0x004562C0 with an atexit thunk);
-// ConsoleGlobal also has a real constructor; its static zero-initialization
-// supplies the scalar/history storage that constructor leaves untouched.
-// RECOVERY_OBJECT: v2 0x008578D8 0x00872CA8 ?ConsolePrefWin@@3VPrefWin@@A 0x004921E0
-PrefWin ConsolePrefWin;   // 0x008578D8
-// RECOVERY_OBJECT: v1 0x007AD2A0 ?ConsoleInfoWin@@3VInfoWin@@A
-InfoWin ConsoleInfoWin;
 // 0x009156B0 - the bare declaration is what the image has: its ??__E
 // dynamic initialiser pushes the hidden most-derived flag (push 1 at
 // 0x0050E852) and the compiler emits that push for a most-derived global
@@ -2109,6 +2097,48 @@ InfoWin ConsoleInfoWin;
 // history members. The following stores instead use the method receiver.
 // RECOVERY_OBJECT: v1 0x009156B0 ?ConsoleGlobal@@3VConsole@@A
 Console ConsoleGlobal;
+// ===== MANAGED GLOBALS - real objects, homed to their domain =====
+// In the shipped image these live at fixed data addresses and are
+// constructed before WinMain by the CRT's dynamic-initializer walk
+// (image bytes: ??__E at 0x0050E980 builds the ConsoleTimer object at
+// 0x00939E88, the one at 0x0050E9B0 builds the other five - Blink 0x915688,
+// Blink2 0x939EB0, Line 0x915658, Go 0x939E60, Turn 0x915628, each
+// `mov ecx, <addr>; call Time::Time` - and registers their teardowns;
+// winedbg-confirmed walker return 0x00644EEB, table at 0x682568..). Here
+// the same recovered constructors run through this build's own startup,
+// and the matching destructors close them at exit. Declarations in time.h
+// beside their users.
+// Keep the Console timer lifecycles in their original domain order.
+// RECOVERY_OBJECT: v1 0x00939E88 ?ConsoleTimer@@3VTime@@A
+Time ConsoleTimer; // 0x00939E88
+// RECOVERY_OBJECT: v2 0x00915658 0x00915680 ?LineTimer@@3VTime@@A 0x0050F440
+// RECOVERY_OBJECT: v2 0x00915688 0x009156B0 ?BlinkTimer@@3VTime@@A 0x0050F440
+// RECOVERY_OBJECT: v2 0x00939EB0 0x00939ED8 ?Blink2Timer@@3VTime@@A 0x0050F440
+Time BlinkTimer,   // 0x00915688
+     Blink2Timer,  // 0x00939EB0
+     LineTimer,    // 0x00915658
+     GoTimer,      // 0x00939E60
+     TurnTimer;    // 0x00915628
+
+// Compiler-generated source-owned lifecycle entry; no handwritten wrapper.
+/*
+// ORIGINAL: 0x0050E9B0 sub_50e9b0 0x0050E9B0-0x0050E9EE FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:bcad94a018ff94737abb85df10d24ca7aa405b1a:src/recovered/0050e9b0.cpp", "pinned:terranx_original lifecycle0x50e9b0", "historical source owner before rehome:src/time.cpp"], "reason": "Generated complete five-Time-object initializer composes the real constructor group and destructor registration. Delegated generated helpers are current lowering, not a claim of one-to-one byte layout. Preserve complete original spans, catalogue names, claims and historical lessons; current compiler emission is not a fresh grant or linked selection proof."}
+// symbol    _$E21
+*/
+
+// Historical seed finding: Native construction order: Blink, Blink2, Line, Go, Turn; registers the aggregate reverse teardown.
+// Historical seed finding: ConsoleTimer startup50E980 is a separate original group and is not annexed by this binding.
+
+// Compiler-generated source-owned lifecycle entry; no handwritten wrapper.
+/*
+// ORIGINAL: 0x0050E9F0 sub_50e9f0 0x0050E9F0-0x0050EA22 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:bcad94a018ff94737abb85df10d24ca7aa405b1a:src/recovered/0050e9f0.cpp", "pinned:terranx_original lifecycle0x50e9f0", "historical source owner before rehome:src/time.cpp"], "reason": "Generated destructor for the single five-Time-object declaration preserves native reverse destruction and timer shutdown effects. Preserve complete original spans, catalogue names, claims and historical lessons; current compiler emission is not a fresh grant or linked selection proof."}
+// symbol    _$E19
+*/
+
+// Historical seed finding: Native destruction order: Turn, Go, Line, Blink2, Blink.
+// Historical seed finding: The former separate per-object declarations did not own the complete original aggregate.
 int Console::game_data_private_word(FILE *file, int write_mode) {
     if (write_mode != 0) {
         field_23D20_[0] = 0;

@@ -40,6 +40,10 @@
 #include "technology.h"
 #include <cstring>
 
+// Process-wide InfoWin lifecycle; original table callback 0x004562C0
+// constructs the object at 0x007AD2A0 and registers its teardown.
+// RECOVERY_OBJECT: v1 0x007AD2A0 ?ConsoleInfoWin@@3VInfoWin@@A
+InfoWin ConsoleInfoWin;
 void __cdecl help_any();
 
 static void infowin_append_label(char *out, int index) {

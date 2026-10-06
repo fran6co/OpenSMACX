@@ -145,10 +145,5 @@ int ButtonGroup::set(int button_id, int notify) {
     return result;
 }
 
-// ===== MANAGED GLOBALS - real objects, homed to their domain =====
-// In the shipped image these live at fixed data addresses and are
-// constructed before WinMain by the CRT's dynamic-initializer walk
-// (winedbg-confirmed: walker return 0x00644EEB, table at 0x682568..).
-// Here the same recovered constructors run through this build's own
-// startup, and the matching destructors close them at exit.
-ButtonGroup g_PREFWIN_BUTTONGROUP;  // 0x008577F0
+// The original PrefWin ButtonGroup object is solely owned as
+// PrefWinButtonGroup in src/prefwin.cpp; do not define a duplicate here.

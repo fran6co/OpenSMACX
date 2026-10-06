@@ -265,9 +265,9 @@ def test_transcript_array_ctor_dtor_vector_order_and_mutation_controls(tmp_path:
 
 
 def test_grouped_timer_declaration_compiler_order_and_object_marker_mutation(tmp_path: Path, host_compiler: str) -> None:
-    time_cpp = (ROOT / "src/time.cpp").read_text(encoding="utf-8")
-    _mapped_record("src/time.cpp", 0x0050E9B0, "sub_50e9b0", (0x0050E9B0, 0x0050E9EE), "_$E21", True)
-    _mapped_record("src/time.cpp", 0x0050E9F0, "sub_50e9f0", (0x0050E9F0, 0x0050EA22), "_$E19", True)
+    time_cpp = (ROOT / "src/console.cpp").read_text(encoding="utf-8")
+    _mapped_record("src/console.cpp", 0x0050E9B0, "sub_50e9b0", (0x0050E9B0, 0x0050E9EE), "_$E21", True)
+    _mapped_record("src/console.cpp", 0x0050E9F0, "sub_50e9f0", (0x0050E9F0, 0x0050EA22), "_$E19", True)
     expected_names = ["BlinkTimer", "Blink2Timer", "LineTimer", "GoTimer", "TurnTimer"]
     assert "Time ConsoleTimer;" in time_cpp
     grouped = re.search(r"Time\s+BlinkTimer,(.*?)TurnTimer\s*;", time_cpp, re.DOTALL)
@@ -275,7 +275,7 @@ def test_grouped_timer_declaration_compiler_order_and_object_marker_mutation(tmp
     declarators = re.sub(r"//[^\n]*", "", grouped.group(0))
     found = re.findall(r"\b(BlinkTimer|Blink2Timer|LineTimer|GoTimer|TurnTimer)\b", declarators)
     assert found == expected_names
-    timer_objects = [row for row in read_objects(ROOT, image_pin(ROOT)) if row.unit == "src/time.cpp"]
+    timer_objects = [row for row in read_objects(ROOT, image_pin(ROOT)) if row.unit == "src/console.cpp"]
     actual_object_bindings = {row.symbol: row.origin.address for row in timer_objects
                               if row.symbol in ("?LineTimer@@3VTime@@A", "?BlinkTimer@@3VTime@@A",
                                                 "?Blink2Timer@@3VTime@@A")}
@@ -284,6 +284,12 @@ def test_grouped_timer_declaration_compiler_order_and_object_marker_mutation(tmp
         "?Blink2Timer@@3VTime@@A": 0x00939EB0,
         "?LineTimer@@3VTime@@A": 0x00915658,
     }
+    console_timer, = [row for row in timer_objects if row.symbol == "?ConsoleTimer@@3VTime@@A"]
+    assert console_timer.origin.address == 0x00939E88
+    assert console_timer.span is None and console_timer.evidence is None
+    console_cpp = (ROOT / "src/console.cpp").read_text(encoding="utf-8")
+    assert "Time g_CONSOLE_TIMER;" not in console_cpp
+    assert console_cpp.index("Console ConsoleGlobal;") < console_cpp.index("Time ConsoleTimer;") < console_cpp.index("Time BlinkTimer,")
 
     def probe(names: list[str]) -> str:
         declaration = "Probe " + ", ".join(names) + ";"

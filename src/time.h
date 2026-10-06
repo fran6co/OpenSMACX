@@ -161,7 +161,7 @@ class Time {
 static_assert(sizeof(Time) == 0x28, "Time layout must match the legacy ABI");
 #endif
 
-// GLOBAL TIMER OBJECTS - real storage, defined in time.cpp. In the shipped
+// GLOBAL TIMER OBJECTS - real storage, defined in console.cpp with the Console-domain lifecycle. In the shipped
 // image these are Time objects at fixed .bss addresses, constructed before
 // WinMain by the CRT's dynamic-initializer walk: the ??__E at 0x0050E980
 // constructs the ConsoleTimer object at 0x00939E88, and the one at

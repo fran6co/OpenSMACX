@@ -150,7 +150,6 @@ set(OPENSMACX_SOURCES
     src/dialogs.cpp
     src/faction.cpp
     src/famewin.cpp
-    src/quaylewin.cpp
     src/filemap.cpp
     src/flatbutton.cpp
     src/flic.cpp
@@ -212,10 +211,12 @@ set(OPENSMACX_SOURCES
     src/planwin.cpp
     src/playerlock.cpp
     src/netdaemon.cpp
-    src/console.cpp
     src/prefwin.cpp
+    src/prefwin_geometry.cpp
+    src/quaylewin.cpp
     src/replaywin.cpp
     src/reportif.cpp
+    src/console.cpp
     src/alphamenu.cpp
     src/uv2player.cpp
     src/dipedit.cpp
