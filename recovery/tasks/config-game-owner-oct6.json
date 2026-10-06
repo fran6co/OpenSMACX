@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "task_id": "config-game-owner-oct6",
+  "author": "framework-coordinator",
+  "target": "opensmacx",
+  "base_revision": "024f47e6bbeacfd8be1209d2ab0ba3565abd1c63",
+  "intent": "Recover the complete game configuration owner and shared faction-preview callback in genuine source, preserving original UI/error quirks, main/cold spans and historical matching obligations.",
+  "subjects": [
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 5807408},
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 5806240}
+  ],
+  "editable_files": [
+    "src/newgame.cpp",
+    "src/unrecovered/00589d30.cpp",
+    "src/recovered/units/005898a0.cpp",
+    "recovery/tests/test_config_game_actual_source.py",
+    "recovery/tests/fixtures/config_game_api.cpp"
+  ],
+  "evidence": [
+    "Complete original config_game spans589D30..58C29D and66028A..6605A5 and preview callback5898A0..589A24 remain source-owned through the package writer. No fixed executable calls, manual vtables or invented generated code tokens replace these bodies.",
+    "Original random selector divides by7, CH rule bits/inverted checkbox, unchanged seventh-name editor buffer, normal0/cancel1 and uninitialized PBEM human_mask remain preserved; no bounds/error-path safety fix is admitted.",
+    "Fresh physical VC6 COFF fb3165e29218e1f94437b8ba0ff08d29e4985a2801fe27054a5925b3f75bf40e observes real config_game, thumb_routine and three ordinary globals. This is compilation evidence, not original matching or linked/runtime proof. Brace-only loop scopes retain all other tokens and support VC6's old for-init rules without changing flags.",
+    "Popup preview9403E0..94575C and callback detail word945818..94581C use native object bindings. Initial empty string945834 has a provisional four-byte C++ declaration but remains start-only: original allocation extent is unproved.",
+    "Independent bounded callback/lifetime review finds no product registration of the retained fixed teardown. Original initializer589870 and teardown589890 identities and claims remain untouched and unqualified; generated startup/destructor selection still needs physical source-owned recovery. Do not count that lifetime debt as solved.",
+    "Coordinator-reviewed coverage only; require actual-source host controls, fresh whole application compile/link, source integrity/references and claim continuity after seed cleanup. No new byte claim, full linked preservation, native undefined-state outcome or game/autonomous acceptance is granted."
+  ]
+}

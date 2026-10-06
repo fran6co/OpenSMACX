@@ -30,6 +30,8 @@
 #include "popup.h"
 #include "xpops.h"
 #include "setupwin.h"
+#include "pickwin.h"
+#include "font.h"
 #include "basepop.h"
 #include "graphicwin.h"
 #include "palette.h"
@@ -918,11 +920,578 @@ do_cleanup:
 }
 
 
+// Newgame-owned shared faction preview and callback state.
+// Original storage bindings do not establish generated startup selection.
+// RECOVERY_OBJECT: v2 0x009403E0 0x0094575C ?ConfigFactionPreview@@3VPopup@@A 0x00589870
+Popup ConfigFactionPreview;
+// RECOVERY_OBJECT: v2 0x00945818 0x0094581C ?ConfigFactionDetailMode@@3HA 0x005898A0
+int ConfigFactionDetailMode;
+// The image uses this zero-filled byte string only as initial prompt text.
+// The adjacent PronounBuffer is independently owned; no overlay is introduced.
+// RECOVERY_OBJECT: v1 0x00945834 ?ConfigRandomLeaderInitial@@3PADA
+char ConfigRandomLeaderInitial[4];
+
+// ORIGINAL: 0x005898A0 ?thumb_routine@@YAXH@Z 0x005898A0-0x00589A24
+// RECOVERY_BINDING: v1 {"evidence": ["historical seed:src/recovered/units/005898a0.cpp", "pinned:5898A0..589A24; preview9403E0; detail945818; diplomacy art78EE48 with65C faction stride", "source:Popup537C and PickWin redraw/ListBox cdecl(int) callback contract; allocation/lifetime selection still requires native qualification"], "reason": "Typed shared faction preview callback with real Popup/SpriteBox/FactionArt owners and genuine global storage; no executable-address aliases or manual vtables."}
+void __cdecl thumb_routine(int faction) {
+    if (ExpansionEnabled) {
+        PickWinGlobal.GraphicWin::redraw();
+        if (strcmp(Players[faction].filename, "JENN282") == 0) {
+            ConfigFactionPreview.close();
+            return;
+        }
+    }
+    StringTemp[0] = 0;
+    strcat(StringTemp, ConfigFactionDetailMode ? "DATALINKS1" : "BLURB");
+    ConfigFactionPreview.start(Players[faction].filename, StringTemp, -1, 0, 0x10500, 0);
+    if (ConfigFactionDetailMode) {
+        StringTemp[0] = 0;
+        strcat(StringTemp, "DATALINKS2");
+        ConfigFactionPreview.start(Players[faction].filename, StringTemp, -1, 0, 0x80, 0);
+    }
+    ConfigFactionPreview.set_caller_picture(ConfigFactionPreview.picture_enabled()
+        ? 0 : &FactionsArt[faction].diplomacy);
+    ConfigFactionPreview.dialogs().SpriteBox::sprite(&FactionsArt[faction].diplomacy, 0, 0);
+    ConfigFactionPreview.Win::set_caption(Players[faction].formal_name_faction);
+    ConfigFactionPreview.set_string_font(PopupMenuFont, PopupMenuBoldFont, PopupMenuItalicFont, 0);
+    PopupModalActive = 1;
+    ConfigFactionPreview.set_loc(5, 0x136);
+    ConfigFactionPreview.BasePop::exec(0, 0);
+    PopupModalActive = 0;
+}
+
+// These masks are derived from the original low-byte and CH tests, retaining
+// the asymmetric default/reset path and inverse 0x100 checkbox.
+static void config_game_seed_checks() {
+    static const unsigned int rules[16] = {
+        0x800, 2, 8, 4, 0x1000, 1, 0x10, 0x20,
+        0x4000, 0x200, 0x40, 0x100, 0x2000, 0x8000, 0x80, 0x400
+    };
+    unsigned int checks = 0;
+    for (int i = 0; i < 16; ++i) {
+        bool checked = (GameRules & rules[i]) != 0;
+        if (i == 11) checked = !checked;
+        if (checked) checks |= 1u << i;
+    }
+    if (GameState & 0x00800000u) checks |= 0x10000u;
+    if (GameState & 0x01000000u) checks |= 0x20000u;
+    PopupWriteCheckState = checks;
+}
+
+static void config_game_apply_checks() {
+    static const unsigned int rules[16] = {
+        0x800, 2, 8, 4, 0x1000, 1, 0x10, 0x20,
+        0x4000, 0x200, 0x40, 0x100, 0x2000, 0x8000, 0x80, 0x400
+    };
+    unsigned int checks = PopupWriteCheckState;
+    for (int i = 0; i < 16; ++i) {
+        bool checked = (checks & (1u << i)) != 0;
+        if (i == 11) checked = !checked;
+        if (checked) GameRules |= rules[i];
+    }
+    if (checks & 0x10000u) GameState |= 0x00800000u;
+    if (checks & 0x20000u) GameState |= 0x01000000u;
+}
+
+static void config_game_play_voice(int faction, bool flagged) {
+    StringTemp[0] = 0;
+    strcat(StringTemp, "voices\\");
+    strcat(StringTemp, Players[faction].filename);
+    strcat(StringTemp, ".mp3");
+    g_WAVE_GENERAL.unload();
+    if (flagged) g_WAVE_GENERAL.load(StringTemp, 0x100UL);
+    else g_WAVE_GENERAL.load(StringTemp);
+    g_WAVE_GENERAL.play();
+}
+
+static unsigned char config_game_original_rule_byte(int selected) {
+    // The pinned expression uses unchecked native Player stride. Its one
+    // observed adjacent-storage case is represented through its real owner.
+    if (selected == MaxPlayerNum) return static_cast<unsigned char>(MapLandmark[23].name[4]);
+    return static_cast<unsigned char>(Players[selected].rule_flags);
+}
+
 // ORIGINAL: 0x00589D30 ?config_game@@YAHH@Z 0x00589D30-0x0058C29D;0x0066028A-0x006605A5
-// RECOVERY_BINDING: v1 {"evidence": ["task:newgame-menu-owner", "historical seed:src/unrecovered/00589d30.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:complete mapped native control flow", "source:existing SetupWin/Popup/Buffer/NetDaemon owner declarations; provisional bounded945820 and9B2074 objects, not raw image aliases"], "reason": "Source-owned new-game/menu family preserving complete original identity, auxiliary spans and historical seed findings; existing genuine object lifetimes and typed member owners. Unfinished bodies remain explicit, not implementation coverage."}
+// RECOVERY_BINDING: v1 {"evidence": ["historical seed:src/unrecovered/00589d30.cpp; existing original identity and useful lessons preserved", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:589D30..58C29D and66028A..6605A5", "pinned:5898A0..589A24 typed cdecl(int) preview callback; ListBox dispatch retains current declaration", "source:BasePop +A44 value setter,+3100 input poll state; Popup picture/dialog/font and PickWin owned ListBox", "pinned:58A9BA passes zero-filled945834 initial string, allocation extent remains unknown", "source:recovery/tests/test_config_game_actual_source.py actual installed body, bounded API fixture and six compile-success runtime damage controls", "source:589870 initializer seed and589890 fixed teardown retained until real generated physical lifetime binding qualifies"], "reason": "Complete new-game rules, faction selection, custom naming, PBEM/network and world/setup flow with genuine Popup/SetupWin automatic local lifetimes and a source-owned shared preview. Original undefined and unchecked paths and historical main/cleanup spans remain restoration obligations; no byte or runtime acceptance is granted."}
 // TRIED: mismatch #0 - only the entry (a1&1 defaults shortcut) and the first two do_menu() results (0=default_rules toggle, 1=difficulty rules-flag encode) are transcribed from the 2618-instruction original; the disassembly shows several more do_menu() results driving a PickWin faction picker, Wave/Sound playback, EditGroup name entry and a time_controls_dialog that are NOT modelled - this body loops back to do_menu() for any other result rather than fabricating their bit-flag encodings.
-int __cdecl config_game(int) {
-    // BODY GOES HERE.
+// Full config_game candidate. Original identities/claims remain on the owning
+// TU; this ignored include is a body proposal, not a measurement or annotation.
+int __cdecl config_game(int mode) {
+    Popup popup;
+    SetupWin setup;
+    int selected;                 // native EBP-14, not the parser cursor
+    int human_mask;               // intentionally not initialized on shortcut
+    int picked;
+    int use_expansion_picker;
+    int special_a, special_b;
+    int custom_count;
+    int special_count;
+    char first_special[0x18];
+    char gender_text[0x50];
+
+    if (mode & 1) {
+        DiffLevelCurrent = DefaultPrefs.difficulty;
+        GameRules = AlphaIniPrefs.rules;
+        selected = DefaultPrefs.faction_id;
+        goto parse_factions;
+    }
+
+difficulty_menu:
+    setup.Win::hide();
+    setup.Win::show(0);
+    if ((GameRules & 0x01000000u) == 0) {
+        popup.start(PopupStartCaption, "DIFFICULTY", -1, 0, 0x40, 0);
+        for (int i = 0; i < 6; ++i) {
+            StringTemp[0] = 0;
+            strcat(StringTemp, StringTable.get(static_cast<int>(reinterpret_cast<size_t>(Difficulty[i]))));
+            if (i == 0 || i == 5) {
+                strcat(StringTemp, " ");
+                strcat(StringTemp, "(");
+                strcat(StringTemp, label_get((i == 0 ? 0x1C4 : 0x1C8) / 4));
+                strcat(StringTemp, ")");
+            }
+            popup.dialogs().item(StringTemp, i);
+        }
+        popup.set_value(DefaultPrefs.difficulty);
+        picked = setup.do_menu(&popup, 1, 0);
+        if (picked < 0) return 1;
+        DefaultPrefs.difficulty = picked;
+        DiffLevelCurrent = picked;
+    }
+
+rules_menu:
+    human_mask = 0;
+    if (mode == 2) goto select_faction;
+    setup.Win::hide();
+    setup.Win::show(0);
+    popup.start(PopupStartCaption, "USERULES", -1, 0, 0x40, 0);
+    popup.set_value(AlphaIniPrefs.customize);
+    picked = setup.do_menu(&popup, 1, 0);
+    if (picked < 0) {
+        if ((GameRules & 0x01000000u) == 0) goto difficulty_menu;
+        return 1;
+    }
+    AlphaIniPrefs.customize = picked;
+    if (picked == 0) {
+        GameRules &= 0xFFFF0000u;
+        GameRules |= default_rules();
+        goto select_faction;
+    }
+    if (picked == 1) {
+        GameRules &= 0xFFFF0000u;
+        GameRules |= DiffLevelCurrent != 0 ? AlphaIniPrefs.rules & 0xFFFFu
+            : (AlphaIniPrefs.rules & 0xFDFFu) | 0x200u;
+        GameState = (GameState & 0xFE7FFFFFu) | AlphaIniPrefs.semaphore;
+        goto select_faction;
+    }
+    human_mask = 0;
+custom_rules:
+    setup.Win::hide();
+    setup.Win::show(0);
+    GameRules = (GameRules & 0xFFFF0000u) |
+        (DiffLevelCurrent != 0 ? AlphaIniPrefs.rules & 0xFFFFu
+            : (AlphaIniPrefs.rules & 0xFDFFu) | 0x200u);
+    GameState = (GameState & 0xFE7FFFFFu) | AlphaIniPrefs.semaphore;
+    if (IsMultiplayerNet) GameRules |= 0x200u;
+    config_game_seed_checks();
+    if (x_pop_short("RULES", 0x41, 0) < 0) goto rules_menu;
+    GameRules &= 0xFFFF0000u;
+    GameState &= 0xFE7FFFFFu;
+    if (ConsoleGroupAction) {
+        GameRules |= default_rules();
+        AlphaIniPrefs.rules = GameRules;
+        AlphaIniPrefs.semaphore = GameState & 0x01800000u;
+        goto custom_rules;
+    }
+    config_game_apply_checks();
+    AlphaIniPrefs.rules = GameRules;
+    AlphaIniPrefs.semaphore = GameState & 0x01800000u;
+    ConfigFactionDetailMode = 0;
+
+select_faction:
+    if ((GameRules & 0x00100000u) && !IsMultiplayerPBEM) {
+        selected = ConsoleGlobal.faction_id_;
+        goto store_single_faction;
+    }
+    use_expansion_picker = ExpansionEnabled && !(mode & 2);
+    if (use_expansion_picker) {
+        PickWinGlobal.init(thumb_routine, mode, ConfigFactionDetailMode);
+        for (int i = 1; i < 8; ++i) {
+            if (mode == 2 && !(factions_status_byte(1) & (1u << i))) continue;
+            StringTemp[0] = 0;
+            if (strcmp(Players[i].filename, "JENN282") != 0) {
+                strcat(StringTemp, Players[i].formal_name_faction);
+                strcat(StringTemp, "|");
+                strcat(StringTemp, "(");
+                strcat(StringTemp, Players[i].desc_name_faction);
+                strcat(StringTemp, ")");
+            } else strcat(StringTemp, "RANDOM");
+            PickWinGlobal.listBox_.item(StringTemp, i);
+        }
+        PickWinGlobal.listBox_.attach(&PickWinGlobal,
+            PickWinGlobal.listBox_.Dialog::field_24_,
+            PickWinGlobal.listBox_.Dialog::field_28_, 0x80020);
+        picked = DefaultPrefs.faction_id;
+        if (picked < 1) picked = 1;
+        else if (picked > 7) picked = 7;
+        DefaultPrefs.faction_id = picked;
+        PickWinGlobal.listBox_.set_selected_id(picked);
+        PickWinGlobal.field_5DB4_ = PickWinGlobal.listBox_.Dialog::get_selected_id();
+        PickWinGlobal.listBox_.set_selection_callback(thumb_routine);
+        thumb_routine(DefaultPrefs.faction_id);
+        picked = PickWinGlobal.go_girl();
+        if (picked < 0) {
+            if (bit_count(human_mask) > 1 && selected > 0 &&
+                (human_mask & (1u << (selected & 31)))) {
+                human_mask &= ~(1u << (selected & 31));
+                if (human_mask > 1) {
+                    int first = 1;
+                    for (; first < human_mask; ++first) {
+                        if (human_mask & (1u << (first & 31))) { selected = first; break; }
+                    }
+                }
+                PickWinGlobal.GraphicWin::close();
+                goto pbem_selection;
+            }
+            ConfigFactionPreview.close();
+            PickWinGlobal.GraphicWin::close();
+            do_all_draws();
+            goto difficulty_menu;
+        }
+        DefaultPrefs.faction_id = picked;
+        if (IsMultiplayerPBEM && (human_mask & (1u << (picked & 31)))) {
+            X_pop("FACTIONTAKEN", 0);
+            goto select_faction;
+        }
+        selected = picked;
+        if (PickWinGlobal.field_5DA4_ == 0x105) {
+            picked = rand() % 7 + 1;
+            selected = picked;
+            ConfigFactionPreview.close();
+            PickWinGlobal.GraphicWin::close();
+            goto expansion_name;
+        }
+        if (PickWinGlobal.field_5DA4_ == 0x107) {
+            ConfigFactionDetailMode = ConfigFactionDetailMode == 0;
+            goto select_faction;
+        }
+        if (GameMorePreferences & 0x4000u) config_game_play_voice(selected, false);
+        if (PickWinGlobal.field_5DA4_ != 0) {
+            if (strcmp(Players[picked].filename, "JENN282") == 0) goto select_faction;
+            if (PickWinGlobal.field_5DA4_ != 0) goto edit_names;
+        }
+
+expansion_name:
+        if (strcmp(Players[picked].filename, "JENN282") == 0) {
+            ConfigFactionPreview.close();
+            PickWinGlobal.GraphicWin::close();
+            goto parse_factions;
+        }
+expansion_prompt:
+        StringTemp[0] = 0;
+        strcat(StringTemp, "NAME");
+        if (Players[picked].is_leader_female && PickWinGlobal.field_5DA4_ != 0x105)
+            strcat(StringTemp, "2");
+        if (PickWinGlobal.field_5DA4_ == 0x105) strcat(StringTemp, "3");
+        {
+            char *initial = PickWinGlobal.field_5DA4_ == 0x105
+                ? ConfigRandomLeaderInitial : Players[picked].name_leader;
+            int answer = X_pop_ask(StringTemp, 0x17, initial, 0, 0);
+            ConfigFactionPreview.close();
+            if (GameMorePreferences & 0x4000u) g_WAVE_GENERAL.Sound::fade(0x7D0);
+            if (answer != 0) goto select_faction;
+        }
+        PickWinGlobal.GraphicWin::close();
+        strcpy(Players[picked].name_leader, ParseStrBuffer[0].str);
+        if (!ConsoleGroupAction) goto parse_factions;
+        if (PickWinGlobal.field_5DA4_ == 0x105) {
+            Players[picked].is_leader_female = !Players[picked].is_leader_female;
+            if (strcmp(Players[picked].filename, "JENN282") != 0) goto expansion_prompt;
+            ConfigFactionPreview.close();
+            PickWinGlobal.GraphicWin::close();
+            goto parse_factions;
+        }
+        goto edit_names;
+    }
+
+    popup.start(PopupStartCaption, "FACTIONX", -1, 0, 0x40, 0);
+    {
+        for (int i = 1; i < 8; ++i) {
+            if (mode == 2 && !(factions_status_byte(1) & (1u << i))) continue;
+            StringTemp[0] = 0;
+            strcat(StringTemp, Players[i].formal_name_faction);
+            strcat(StringTemp, "|");
+            strcat(StringTemp, "(");
+            strcat(StringTemp, Players[i].desc_name_faction);
+            strcat(StringTemp, ")");
+            popup.dialogs().item(StringTemp, i);
+        }
+    }
+    popup.set_value(mode & 2 ? ConsoleGlobal.faction_id_ : DefaultPrefs.faction_id);
+    popup.dialogs().ListBox::set_selection_callback(thumb_routine);
+    thumb_routine(mode & 2 ? ConsoleGlobal.faction_id_ : DefaultPrefs.faction_id);
+    picked = popup.BasePop::exec(0, 0);
+    if (picked < 0) {
+        if (bit_count(human_mask) > 1 && selected > 0 &&
+            (human_mask & (1u << (selected & 31)))) {
+            human_mask &= ~(1u << (selected & 31));
+            if (human_mask > 1) {
+                int first = 1;
+                for (; first < human_mask; ++first) {
+                    if (human_mask & (1u << (first & 31))) { selected = first; break; }
+                }
+            }
+            goto pbem_selection;
+        }
+        ConfigFactionPreview.close();
+        if (mode == 2) goto difficulty_menu;
+        goto rules_menu;
+    }
+    if (!(mode & 2)) DefaultPrefs.faction_id = picked;
+    if (IsMultiplayerPBEM && (human_mask & (1u << (picked & 31)))) {
+        X_pop("FACTIONTAKEN", 0);
+        goto select_faction;
+    }
+    selected = picked;
+    if (popup.input_poll_state() == 2) {
+        ConfigFactionDetailMode = ConfigFactionDetailMode == 0;
+        goto select_faction;
+    }
+    if (popup.input_poll_state() == 3) {
+        ConfigFactionPreview.close();
+        if (X_pop_ask("RELOADFAC", 0x50, Players[picked].filename, 0, 0)) goto select_faction;
+        strcpy(Players[picked].filename, ParseStrBuffer[0].str);
+        strcpy(Players[picked].search_key, ParseStrBuffer[0].str);
+        if (picked) { read_faction(&Players[picked], 0); load_faction_art(picked); }
+        compute_faction_modifiers(picked);
+        goto select_faction;
+    }
+    if (GameMorePreferences & 0x4000u) config_game_play_voice(picked, true);
+    if (!popup.input_poll_state()) {
+        StringTemp[0] = 0;
+        strcat(StringTemp, "NAME");
+        if (Players[picked].is_leader_female) strcat(StringTemp, "2");
+        int answer = X_pop_ask(StringTemp, 0x17, Players[picked].name_leader, 0, 0);
+        ConfigFactionPreview.close();
+        if (GameMorePreferences & 0x4000u) g_WAVE_GENERAL.Sound::fade(0x7D0);
+        if (answer) goto select_faction;
+        strcpy(Players[picked].name_leader, ParseStrBuffer[0].str);
+        if (!ConsoleGroupAction) goto parse_factions;
+    }
+
+edit_names:
+    for (;;) {
+        strcpy(gender_text, label_get((Players[picked].is_leader_female ? 0xB8C : 0xB88) / 4));
+        popup.start(PopupStartCaption, "CUSTOMNAMES", -1, 0, 0x44, 0);
+        popup.dialogs().EditGroup::edit(label_get(0x2B8 / 4), Players[picked].name_leader, 0x17);
+        popup.dialogs().EditGroup::edit(label_get(0x2BC / 4), Players[picked].formal_name_faction, 0x27);
+        popup.dialogs().EditGroup::edit(label_get(0x2C0 / 4), Players[picked].noun_faction, 0x17);
+        popup.dialogs().EditGroup::edit(label_get(0x2C4 / 4), Players[picked].adj_name_faction, 0x17);
+        popup.dialogs().EditGroup::edit(label_get(0x78C / 4), Players[picked].title_leader, 0x17);
+        popup.dialogs().EditGroup::edit(label_get(0x790 / 4), Players[picked].adj_leader, 0x17);
+        popup.dialogs().EditGroup::edit(label_get(0x794 / 4), gender_text, 0x17);
+        int answer = popup.BasePop::exec(0, 0);
+        if (GameMorePreferences & 0x4000u) g_WAVE_GENERAL.Sound::fade(0x7D0);
+        if (!use_expansion_picker) ConfigFactionPreview.close();
+        if (answer < 0) {
+            if (use_expansion_picker) popup.close();
+            goto select_faction;
+        }
+        if (popup.input_poll_state()) {
+            if (picked) { read_faction(&Players[picked], 0); load_faction_art(picked); }
+            continue;
+        }
+        if (use_expansion_picker) {
+            ConfigFactionPreview.close();
+            PickWinGlobal.GraphicWin::close();
+        }
+        strcpy(Players[picked].name_leader, ParseStrBuffer[0].str);
+        strcpy(Players[picked].formal_name_faction, ParseStrBuffer[1].str);
+        strcpy(Players[picked].noun_faction, ParseStrBuffer[2].str);
+        strcpy(Players[picked].adj_name_faction, ParseStrBuffer[3].str);
+        strcpy(Players[picked].title_leader, ParseStrBuffer[4].str);
+        strcpy(Players[picked].adj_leader, ParseStrBuffer[5].str);
+        Players[picked].is_leader_female = _strnicmp(gender_text, label_get(0xB8C / 4), 1) == 0;
+        if (use_expansion_picker) goto select_faction;
+        break;
+    }
+
+parse_factions:
+    if (mode == 0) prefs_save(1);
+    custom_count = 14;
+    special_a = 0;
+    special_b = 0;
+    first_special[0] = 0;
+    if (text_open(AlphaxFileID, "CUSTOMFACTIONS") == 0) {
+        text_get();
+        while (*text_item()) { ++custom_count; text_get(); }
+    }
+    special_count = 0;
+    {
+        for (int i = 1; i < 8; ++i) {
+            if (strcmp(Players[i].filename, "JENN282") != 0 && (Players[i].rule_flags & 0x80)) {
+                ++special_count;
+                if (special_count == 1) strcat(first_special, Players[i].filename);
+            }
+        }
+    }
+    if (special_count == 1) {
+        int last_random = 0;
+        for (int i = 1; i < 8; ++i)
+            if (strcmp(Players[i].filename, "JENN282") == 0) last_random = i;
+        if (last_random) {
+            if (text_open(AlphaxFileID, "NEWFACTIONS")) goto select_faction;
+            text_get();
+            for (int skip = 0; skip < 5; ++skip) text_get();
+            strcpy(Players[last_random].filename, text_item());
+            if (strcmp(Players[last_random].filename, first_special) == 0) {
+                text_get();
+                strcpy(Players[last_random].filename, text_item());
+            }
+            strcpy(Players[last_random].search_key, Players[last_random].filename);
+            read_faction(&Players[last_random], 0);
+            load_faction_art(last_random);
+        }
+    } else if (!special_count && rand() % 2 != 0) {
+        int start = rand() % 7;
+        // Native scan computes modulo seven afresh on each iteration.
+        for (int attempt = start; 1 - start + attempt < 8; ++attempt) {
+            int i = attempt % 7;
+            if (strcmp(Players[i + 1].filename, "JENN282") == 0) {
+                if (!special_a) special_a = i + 1;
+                else if (!special_b) special_b = i + 1;
+            }
+        }
+        if (!special_a || !special_b) { special_a = 0; special_b = 0; }
+    }
+    {
+        for (int i = 1; i < 8; ++i) {
+            if (strcmp(Players[i].filename, "JENN282") != 0) continue;
+            if (special_a == i || special_b == i) {
+                if (text_open(AlphaxFileID, "NEWFACTIONS")) goto select_faction;
+                text_get();
+                int skip_count = special_a == i ? 5 : 6;
+                for (int skip = 0; skip < skip_count; ++skip) text_get();
+                strcpy(Players[i].filename, text_item());
+                strcpy(Players[i].search_key, Players[i].filename);
+                read_faction(&Players[i], 0);
+                load_faction_art(i);
+                continue;
+            }
+            for (;;) {
+                int residue;
+                do { residue = rand() % custom_count; } while (residue == 12 || residue == 13);
+                switch (residue / 7) {
+                case 0: if (text_open(AlphaxFileID, "FACTIONS")) goto select_faction; break;
+                case 1: if (text_open(AlphaxFileID, "NEWFACTIONS")) goto select_faction; break;
+                case 2: if (text_open(AlphaxFileID, "CUSTOMFACTIONS")) goto select_faction; break;
+                }
+                int row = residue % 7;
+                text_get();
+                for (int skip = 0; skip < row; ++skip) text_get();
+                strcpy(Players[i].filename, text_item());
+                strcpy(Players[i].search_key, Players[i].filename);
+                bool duplicate = false;
+                for (int other = 1; other < 8; ++other) {
+                    if (i != other && strcmp(Players[i].filename, Players[other].filename) == 0) {
+                        duplicate = true; break;
+                    }
+                }
+                if (duplicate) continue;
+                read_faction(&Players[i], 0);
+                load_faction_art(i);
+                break;
+            }
+        }
+    }
+    load_flags();
+    if (ExpansionEnabled && !IsMultiplayerNet && !IsMultiplayerPBEM &&
+        (config_game_original_rule_byte(selected) & 0x80))
+        GameRules = (GameRules & ~0x200u) | 0x140u;
+    if (mode & 1) goto pbem_commit;
+    do_all_draws();
+
+pbem_selection:
+    if (!IsMultiplayerPBEM) goto store_single_faction;
+    {
+        unsigned int selected_bit = 1u << (selected & 31);
+        human_mask |= selected_bit;
+        popup.start(PopupStartCaption, "HOTSEATADD0", -1, 0, 0x40, 0);
+        for (int i = 1; i < 8; ++i) {
+            if (!(human_mask & (1u << i))) continue;
+            if (X_text_open(const_cast<char *>(ScriptTxtID), "MULTISTRING")) break;
+            text_get();
+            GenderDefault = Players[i].is_leader_female;
+            PluralityDefault = 0;
+            parse_says(0, Players[i].title_leader, -1, -1);
+            GenderDefault = Players[i].is_leader_female;
+            PluralityDefault = 0;
+            parse_says(1, Players[i].name_leader, -1, -1);
+            GenderDefault = Players[i].noun_gender;
+            PluralityDefault = Players[i].is_noun_plural;
+            parse_says(2, Players[i].noun_faction, -1, -1);
+            StringTemp[0] = 0;
+            parse_string(TextBufferGetPtr, StringTemp);
+            popup.string(StringTemp);
+        }
+        popup.start(PopupStartCaption, "HOTSEATADD1", -1, 0, 0x80, 0);
+        int answer = popup.BasePop::exec(0, 0);
+        if (answer) {
+            if (answer < 0) human_mask &= ~selected_bit;
+            goto select_faction;
+        }
+    }
+pbem_commit:
+    if (!IsMultiplayerPBEM) goto store_single_faction;
+    *reinterpret_cast<unsigned char *>(&LockEnableMask) = static_cast<unsigned char>(human_mask);
+    selected = 1;
+    for (; selected < 8; ++selected) if ((human_mask & 0xFF) & (1u << selected)) break;
+    if (selected >= 8) selected = 1;
+    ConsoleGlobal.faction_id_ = selected;
+    goto time_controls;
+
+store_single_faction:
+    ConsoleGlobal.faction_id_ = selected;
+    *reinterpret_cast<unsigned char *>(&LockEnableMask) =
+        static_cast<unsigned char>(1u << (selected & 31));
+time_controls:
+    if (IsMultiplayerNet) {
+        time_controls_dialog(&popup);
+        popup.set_value(AlphaIniPrefs.time_controls);
+        int answer = popup.BasePop::exec(0, 0);
+        if (answer < 0) {
+            if (!(GameRules & 0x00100000u)) goto select_faction;
+            if (mode != 2) goto rules_menu;
+            goto difficulty_menu;
+        }
+        AlphaIniPrefs.time_controls = answer;
+        TimeControlsSelection = answer;
+    }
+    prefs_save(0);
+    log_set_state(0);
+    if (!(mode & 2)) {
+        VehCurrentCount = 0;
+        if (MapSetupStatus) world_build();
+        if (!(mode & 2)) setup_game(0);
+    }
+    if (mode == 2) scenario_setup();
+    if (IsMultiplayerNet) log_set_state(1);
+    if (ExpansionEnabled) alien_start();
+    if (!IsMultiplayerNet) {
+        if (!IsMultiplayerPBEM) {
+            if (mode & 2) return 0;
+            planetfall(ConsoleGlobal.faction_id_);
+        }
+    }
+    if (IsMultiplayerPBEM) {
+        clear_tamper();
+        unsigned int ticks = GetTickCount();
+        TamperState93A9AC = ticks + MapRandSeed;
+        SYSTEMTIME date;
+        GetSystemTime(&date);
+        TamperState93A9B4 = 0;
+        TamperState93A9B0 = ((date.wYear << 4) + date.wMonth) * 32 + date.wDay;
+    }
     return 0;
 }
 
