@@ -15,6 +15,7 @@ from match_recovery.model import Origin, Span
 from match_recovery.partition import Candidate, partition, select_group
 from match_recovery.source_inventory import source_snapshot
 from .source_config import SourceConfiguration
+from .component_original_routing import exact_component_record_bindings
 
 
 def class_hint(symbol: str) -> str | None:
@@ -57,6 +58,7 @@ def component_manifests(snapshot: dict):
 def project_view(root: Path, image: Path | None = None, *, allow_empty: bool = False) -> tuple[dict, dict]:
     snapshot = source_snapshot(root, image, allow_empty=allow_empty)
     configuration = SourceConfiguration.from_dict(snapshot["source_configuration"])
+    component_owners = exact_component_record_bindings(snapshot)
     candidates = []
     for row in snapshot["records"]:
         seed = row["candidate_kind"] == "legacy_seed"
@@ -70,6 +72,7 @@ def project_view(root: Path, image: Path | None = None, *, allow_empty: bool = F
                                     tuple(Span(*span) for span in row["spans"] if span not in row["invalid_spans"]),
                                     row["path"], row["line"], seed,
                                     row["emitted_symbol_hint"], emitted or catalogued,
+                                    component=(component_owners.get((row["path"], row["entity_id"])) or (None,))[0],
                                     owner_hint_basis="source_symbol" if emitted else "catalogued_symbol",
                                     catalogued_owner_hint=catalogued))
     for annotation, manifest in component_entries(snapshot):
@@ -77,6 +80,11 @@ def project_view(root: Path, image: Path | None = None, *, allow_empty: bool = F
             if (binding.origin.image_sha256 != snapshot["image_sha256"]
                     or binding.origin.address_space != configuration.address_space):
                 raise ValueError("component bindings refer to a different original image/address space")
+            # One exact companion marker carries the historical notes/claims;
+            # the manifest contributes its component owner, not a duplicate
+            # candidate for the same original identity.
+            if (annotation, binding.origin.entity_id) in component_owners:
+                continue
             candidates.append(Candidate(binding.origin, binding.spans,
                                         (manifest.source_root + "/" + binding.unit
                                          if isinstance(manifest, VendorManifest) else annotation), 1, False,

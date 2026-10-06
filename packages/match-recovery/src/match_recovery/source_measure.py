@@ -20,6 +20,9 @@ from .source.model import Tier
 from .source_history import git
 from .source_inventory import image_pin, source_snapshot
 from .source_selection import select_records, snapshot_mappings, selected_source_records
+from .component_original_routing import (component_claim_result, component_function_observations,
+                                         exact_component_record_bindings)
+from .model import Origin
 
 
 def _unit(job):
@@ -63,9 +66,15 @@ def measure_source(root: Path, targets, *, image: Path, in_file=None, jobs=1):
     records = snapshot_mappings(root, snapshot)
     host = settings.source.path(root, in_file) if in_file is not None else None
     selected = selected_source_records(root, snapshot, select_records(records, targets, host, settings.source.symbol_format))
-    groups, unavailable = defaultdict(list), []
+    component_owners = exact_component_record_bindings(snapshot)
+    groups, unavailable, component_selected = defaultdict(list), [], {}
     for record in selected:
-        if record.path.suffix not in settings.unit_extensions:
+        relative = record.path.relative_to(root).as_posix()
+        entity = Origin(image_pin(root, settings.source), settings.source.address_space, record.address).entity_id
+        owner = component_owners.get((relative, entity))
+        if owner is not None:
+            component_selected[(relative, record.line)] = (record, owner)
+        elif record.path.suffix not in settings.unit_extensions:
             unavailable.append((record, "mapping host is not a configured translation unit"))
         elif record.state is State.PLACEHOLDER:
             unavailable.append((record, "unfinished source placeholder; matching an empty body is not recovery"))
@@ -91,6 +100,10 @@ def measure_source(root: Path, targets, *, image: Path, in_file=None, jobs=1):
         if len(unit.results) != len(expected) or [row for row, _ in unit.results] != expected:
             raise ValueError("unit comparison did not cover exactly the selected source mappings")
         results.extend(unit.results)
+    component_functions, component_checks = component_function_observations(
+        root, image, {key: value[1] for key, value in component_selected.items()}) if component_selected else ({}, [])
+    if inputs() != before:
+        raise ValueError("source, original, history or component inputs changed during measurement")
     rows = []
     for record, value in results:
         row = {"address": record.address_hex, "path": record.path.relative_to(root).as_posix(),
@@ -106,13 +119,38 @@ def measure_source(root: Path, targets, *, image: Path, in_file=None, jobs=1):
         else:
             raise ValueError("invalid selected-body comparison observation")
         rows.append(row)
+    for (relative, _), (record, owner) in component_selected.items():
+        component_id, _, binding = owner
+        observed = component_functions.get(binding.origin.entity_id)
+        result, verdict = component_claim_result(observed)
+        row = {"address": record.address_hex, "path": relative, "line": record.line,
+               "name": record.name, "symbol": record.symbol or record.name,
+               "historical_byte_obligation": record.byte_exact,
+               "historical_shape_obligation": record.semantic,
+               "source_state": record.state.value, "result": result, "verdict": verdict,
+               "measurement_backend": "component_binary",
+               "component": component_id, "component_unit": binding.unit,
+               "provenance": "verified_component_mapping"}
+        if observed is None:
+            row["diagnostic"] = next((item["reason"] for item in component_checks
+                                      if item["component"] == component_id),
+                                     "component verifier returned no row for the exact original identity")
+        else:
+            row["component_dimensions"] = {name: observed.get(name)
+                                            for name in ("bytes", "boundary", "references")}
+            if observed.get("reason"):
+                row["diagnostic"] = observed["reason"]
+        rows.append(row)
     counts = Counter(row["result"] for row in rows)
     result = "fail" if counts["fail"] else "unknown" if counts["unknown"] else "pass"
     return {"schema_version": 1, "operation": "measure", "result": result,
-            "verification": "historical_masked_bytes_only", "ready_for_collection": False, "persisted": False,
+            "verification": ("source_masked_bytes_and_component_binary" if component_selected
+                             else "historical_masked_bytes_only"),
+            "ready_for_collection": False, "persisted": False,
             "selected": len(selected), "counts": dict(counts),
             "measurements": sorted(rows, key=lambda row: (row["path"], row["line"])),
             "translation_units": len(units), "compile_attempts": sum(unit.compile_attempts for unit in units),
+            "component_checks": component_checks,
             "reused_attempts": sum(unit.reused_attempts for unit in units), "input_fingerprint": digest(before),
             "limitations": ["selected current spellings only; no source claims are banked, demoted or reverted",
                             "masked-byte comparison is not strict reference, structure, preservation, build/link or runtime proof",

@@ -16,6 +16,7 @@ from .records import parse_json
 from .compilation_database import entries
 from .source_config import SourceConfiguration
 from .source_inventory import source_snapshot, assert_snapshot_current
+from .component_original_routing import exact_component_record_bindings
 
 
 RULES = ("ambiguous_source", "unbuilt_host", "seed_build_input", "claimed_forwarder", "body_reference")
@@ -116,6 +117,7 @@ def check_mappings(root: Path) -> dict:
         raise ValueError("source configuration changed during mapping check")
     units, external = build_units(root, database_bytes)
     records = snapshot["records"]
+    component_owners = exact_component_record_bindings(snapshot)
     by_entity, by_file = defaultdict(list), defaultdict(list)
     for record in records:
         by_entity[record["entity_id"]].append(record)
@@ -169,7 +171,9 @@ def check_mappings(root: Path) -> dict:
             # A retained claimed seed is compatible only when the product
             # carries every historical obligation too. Matching checks still
             # independently remeasure those claims; this is ownership, not proof.
-            adopted = (len(product) == 1 and bool(product[0]["binding_evidence"])
+            component_owner = (len(product) == 1 and
+                               (product[0]["path"], product[0]["entity_id"]) in component_owners)
+            adopted = (len(product) == 1 and (bool(product[0]["binding_evidence"]) or component_owner)
                        and bool(product[0]["spans"]) and not product[0]["invalid_spans"]
                        and all(row["spans"] == product[0]["spans"]
                                and not row["invalid_spans"]
@@ -184,7 +188,9 @@ def check_mappings(root: Path) -> dict:
                     details["product_owner"] = location(product[0])
                 alternatives.append(details)
     for name, candidates in sorted(by_file.items()):
-        if not source.is_seed(name) and name not in units:
+        component_owned = bool(candidates) and all(
+            (name, row["entity_id"]) in component_owners for row in candidates)
+        if not source.is_seed(name) and name not in units and not component_owned:
             findings.append({"rule": "unbuilt_host", "path": name,
                              "entities": sorted({row["entity_id"] for row in candidates})})
     for name in sorted(units):
@@ -221,6 +227,10 @@ def check_mappings(root: Path) -> dict:
         "annotations": len(records), "entities": len(by_entity), "build_units": len(units),
         "rules": [{"name": name, "failures": counts[name]} for name in RULES],
         "findings": findings, "errors": errors, "seed_alternatives": alternatives,
+        "component_owned_records": [
+            {"path": path, "entity_id": entity, "component": owner[0],
+             "symbol": owner[2].symbol, "unit": owner[2].unit}
+            for (path, entity), owner in sorted(component_owners.items())],
         "forwarders": forwarders, "external_build_units": external,
         "body_references": body_references,
         "input_fingerprint": digest({"source": {name: row["sha256"] for name, row in snapshot["files"].items()},

@@ -21,6 +21,10 @@ from .source.asm import AsmComparison, compare_unit, shared_spans
 from .source.model import Tier
 from .source_history import git
 from .source_inventory import image_pin
+from .source_inventory import source_snapshot
+from .component_original_routing import (component_claim_result, component_function_observations,
+                                         exact_component_record_bindings)
+from .model import Origin
 
 
 def _unit(job):
@@ -104,15 +108,21 @@ def check_matches(root: Path, image: Path, *, jobs: int = 1) -> dict:
     before = inputs()
     database_bytes = database.read_bytes()
     built, external = build_units(root, database_bytes)
+    source_index = source_snapshot(root, image)
+    component_owners = exact_component_record_bindings(source_index)
     records = [row for path in settings.source.files(root) for row in read_file(path)]
     shared = shared_spans(records)
-    groups, unsupported = defaultdict(list), []
+    groups, unsupported, component_selected = defaultdict(list), [], {}
     for record in records:
         claimed = record.byte_exact or record.semantic
         name = record.path.relative_to(root).as_posix()
         if not claimed and not (name in built and record.name and record.image_spans):
             continue
-        if record.path.suffix not in settings.unit_extensions:
+        entity = Origin(image_pin(root, settings.source), settings.source.address_space, record.address).entity_id
+        owner = component_owners.get((name, entity))
+        if owner is not None:
+            component_selected[(name, record.line)] = (record, owner)
+        elif record.path.suffix not in settings.unit_extensions:
             row = _observation(root, record, "mapping host is not a configured translation unit",
                                built=built, source=settings.source)
             row["result"] = "unknown" if claimed else None
@@ -132,6 +142,10 @@ def check_matches(root: Path, image: Path, *, jobs: int = 1) -> dict:
             measurements = list(pool.map(_unit, work))
     if inputs() != before or database.read_bytes() != database_bytes:
         raise ValueError("source, image, history or compiler inputs changed during match checking")
+    component_functions, component_checks = component_function_observations(
+        root, image, {key: value[1] for key, value in component_selected.items()}) if component_selected else ({}, [])
+    if inputs() != before or database.read_bytes() != database_bytes:
+        raise ValueError("source, image, history or component inputs changed during match checking")
     rows = list(unsupported)
     for job, unit in zip(work, measurements, strict=True):
         # The selection, not a worker's report length, defines coverage.
@@ -142,6 +156,30 @@ def check_matches(root: Path, image: Path, *, jobs: int = 1) -> dict:
             raise ValueError("unit comparison did not cover the selected source mappings")
         rows.extend(_observation(root, row, result, built=built, source=settings.source)
                     for row, result in unit.results)
+    for (name, _), (record, owner) in component_selected.items():
+        component_id, _, binding = owner
+        observed = component_functions.get(binding.origin.entity_id)
+        outcome, verdict = component_claim_result(observed)
+        byte_claim = record.byte_exact
+        shape_claim = record.semantic or record.byte_exact
+        row = {"address": record.address_hex, "path": name, "line": record.line,
+               "name": record.name, "symbol": record.symbol or record.name,
+               "byte_obligation": byte_claim, "shape_obligation": shape_claim,
+               "seed": settings.source.is_seed(name), "built": False,
+               "result": outcome if (byte_claim or shape_claim) else None,
+               "verdict": verdict, "measurement_backend": "component_binary",
+               "component": component_id, "component_unit": binding.unit,
+               "provenance": "verified_component_mapping"}
+        if observed is None:
+            row["diagnostic"] = next((item["reason"] for item in component_checks
+                                      if item["component"] == component_id),
+                                     "component verifier returned no row for the exact original identity")
+        else:
+            row["component_dimensions"] = {dimension: observed.get(dimension)
+                                            for dimension in ("bytes", "boundary", "references")}
+            if observed.get("reason"):
+                row["diagnostic"] = observed["reason"]
+        rows.append(row)
     rows.sort(key=lambda row: (row["path"], row["line"], row["address"]))
     claims = [row for row in rows if row["byte_obligation"] or row["shape_obligation"]]
     counts = Counter(row["result"] for row in claims)
@@ -149,7 +187,9 @@ def check_matches(root: Path, image: Path, *, jobs: int = 1) -> dict:
     unclaimed = [row for row in rows if not row["byte_obligation"] and not row["shape_obligation"]]
     return {
         "schema_version": 1, "check": "historical_source_matches", "result": result,
-        "verification": "historical_masked_bytes_only", "claims": len(claims), "counts": dict(counts),
+        "verification": ("source_masked_bytes_and_component_binary" if component_selected
+                         else "historical_masked_bytes_only"),
+        "claims": len(claims), "counts": dict(counts),
         "verified": sum(row["result"] == "pass" and row["verdict"] == "BYTE_EXACT" for row in claims),
         "semantic": sum(row["result"] == "pass" and row["verdict"] != "BYTE_EXACT" for row in claims),
         "regressed": [row for row in claims if row["result"] == "fail"],
@@ -159,6 +199,7 @@ def check_matches(root: Path, image: Path, *, jobs: int = 1) -> dict:
                       and 0 < row.get("original_instructions", 0) - row.get("matching_instructions", 0) <= 3],
         "allocation_only": [row for row in unclaimed if row["verdict"] != "BYTE_EXACT" and row.get("allocation_only")],
         "measurements": rows, "translation_units": len(groups), "unsupported_hosts": unsupported,
+        "component_checks": component_checks,
         "compile_attempts": sum(unit.compile_attempts for unit in measurements),
         "reused_attempts": sum(unit.reused_attempts for unit in measurements),
         "external_build_inputs": external, "input_fingerprint": digest(before),

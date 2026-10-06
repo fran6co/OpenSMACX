@@ -3129,6 +3129,20 @@ Source integrity needs the pinned upstream archive and is not binary proof.
 The current strict binary backend supports i386 PE/COFF; unsupported formats or
 unresolved bindings remain unmeasurable, not exemptions from recovery.
 
+An `ORIGINAL` marker can preserve a retired dependency seed's identity, full
+spans, historical claims and lessons in the same `.recovery.h` companion as its
+component manifest. Only an exact pinned identity/span join supplies dependency
+ownership; a header name alone never exempts an unbuilt application mapping.
+`measure` and `check-matches` route these joined records through the existing
+component binary verifier and report that backend separately from application
+compilation. Byte, boundary and reference evidence must each explicitly pass;
+missing archives, members, symbols or dimensions remain unresolved. Toolchain
+archives come from the project's `components.toolchain_archives` configuration,
+which accepts explicit absolute artifact paths or contained relative paths.
+The recorder still refuses component-header claim grants. This routing preserves
+old obligations; it does not bank claims, establish final-link selection or count
+dependency code as recovered application functions.
+
 ### Precompiled toolchain dependencies
 
 `ToolchainManifest` represents an existing runtime/third-party library, separately
