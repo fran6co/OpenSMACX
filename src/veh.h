@@ -701,7 +701,7 @@ int __cdecl get_basic_defense(int veh_id_def, int veh_id_atk,
 void __cdecl add_bat(int type, int modifier, LPCSTR display_str);
 void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, 
                                       int *defense_out, int combat_type);
-uint32_t __cdecl best_defender(int veh_id_def, int veh_id_atk, BOOL check_artillery);
+int __cdecl best_defender(int veh_id_def, int veh_id_atk, BOOL check_artillery);
 void __cdecl invasions(int base_id);
 void __cdecl set_course(int veh_id, char type, int x, int y);
 int __cdecl veh_top(int veh_id);
@@ -760,6 +760,8 @@ int __cdecl veh_drop(int veh_id, int x, int y);
 void __cdecl action_arty(int veh_id, int x, int y);
 void __cdecl action_destroy(int veh_id, int bits, int x, int y);
 void __cdecl action_destruct(int veh_id);
+int __cdecl battle_fight(int veh_id, int direction, int target_x, int target_y,
+                        int source_mode, int allow_interceptor, int *odds_out);
 int __cdecl battle_fight(int veh_id, int direction, int mode,
                         int allow_interceptor, int *odds_out);
 void __cdecl veh_demote(int veh_id);
@@ -942,3 +944,9 @@ void __cdecl monolith(int vehicle_id);
 
 // Source-owned original helper; identity and behavior evidence are in its TU.
 int __cdecl veh_next_stack_id(int veh_id);
+
+// Existing source-owned APIs used by enemy movement.
+int __cdecl air_power(int vehicle_id, int faction_base_distance, int movement_zone, int *current_x, int *current_y);
+int __cdecl enemy_planet_buster(int vehicle_id);
+void __cdecl action_gate(int vehicle_id, int base_id);
+int __cdecl alien_move(int vehicle_id);

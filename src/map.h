@@ -394,8 +394,8 @@ BOOL __cdecl transport_base(int base_id);
 BOOL __cdecl naval_base(int base_id);
 BOOL __cdecl convoy(int veh_id, int base_id);
 BOOL __cdecl get_there(int veh_id, int x_dst, int y_dst);
-BOOL __cdecl coast_or_border(uint32_t x_point_a, uint32_t y_point_a, uint32_t x_point_b, 
-                                       uint32_t y_point_b, uint32_t faction_id);
+BOOL __cdecl coast_or_border(int x_point_a, int y_point_a, int x_point_b,
+                            int y_point_b, int faction_id);
 // INLINE, AND IN THE HEADER. The image has no `map_loc` - every caller
 // computes the tile address itself, because this is a helper the tree
 // invented to name what the original open-coded. Defined in a .cpp, VC6
@@ -870,3 +870,6 @@ MEASURED inline void __cdecl map_shutdown() {
 
 void __cdecl alt_set(int x, int y, int altitude);
 void __cdecl delete_landmark(int x, int y);
+
+// Existing source-owned APIs used by enemy movement.
+int __cdecl site_at(int x, int y, int is_ocean_site);

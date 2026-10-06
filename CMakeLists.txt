@@ -256,6 +256,7 @@ set(OPENSMACX_SOURCES
     src/textindex.cpp
     src/time.cpp
     src/time_lifecycle.cpp
+    src/enemy.cpp
     src/veh.cpp
     src/vector.cpp
     src/win.cpp

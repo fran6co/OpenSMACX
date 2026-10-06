@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "task_id": "enemy-movement-owner-oct6",
+  "author": "framework-coordinator",
+  "target": "opensmacx",
+  "base_revision": "9d6ac074ba331b079a584bc73bfd0ce20699a9b4",
+  "intent": "Recover the complete per-vehicle enemy movement owner in genuine compiling source; preserve original path-dependent state and retire its seed and executable forwarder after reviewed integration.",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5682608
+    }
+  ],
+  "editable_files": [
+    "CMakeLists.txt",
+    "src/enemy.cpp",
+    "src/veh.h",
+    "src/console.h",
+    "src/probe.h",
+    "src/map.h",
+    "src/pending_bodies.cpp",
+    "src/unrecovered/0056b5b0.cpp",
+    "recovery/tests/test_enemy_move_product_source.py",
+    "recovery/tests/fixtures/enemy_move_full_body.cpp"
+  ],
+  "evidence": [
+    "Coordinator-reviewed manual full-owner coverage integration, not autonomous acceptance or full-game fidelity. Native original span56B5B0..579208 remains complete and unchanged; use installed source writer for identity, claims and useful history.",
+    "Independent targeted review admitted the complete CFG/frame/declaration proposal. One automatic frame preserves reaching stores and reference views without aggregate zeroing, bounds fixes, no-base fallback or error-path normalization.",
+    "Expose eight already implemented source APIs; do not create fake functions. Reuse actual Vehicle, PlayerData, Base and Map owners and expand dependent ownership on evidenced discoveries.",
+    "Full-link discovery: map.h declared coast_or_border with five unsigned arguments although its existing map.cpp owner and pinned decorated symbol use five signed ints. Correct the declaration and actual-body fixture together; do not add a duplicate overload. The owner's prior deliberate boolean-return translation remains a separate fidelity obligation, not a change authorized by this declaration repair.",
+    "Native56FE51 passes the address93FC30 to message_base. Only the initial NUL and one-byte compiled storage view are established: keep start-only object binding, unknown original allocation/name/TU and indirect-write obligations.",
+    "Require fresh full application compile/link, actual-source host controls, identity/claim continuity and source references after cleanup. Existing source claims remain restoration obligations; no new claim is granted.",
+    "Full linked selection/allocation preservation, exact native frame/undefined-state outcomes, reference-target equality, matching and whole-game runtime remain unfinished; never relabel bounded controls as those proofs."
+  ]
+}

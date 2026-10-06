@@ -74,6 +74,9 @@ class StatusWin {
   // 0x004B4A20, 451 bytes - homed in statuswin.cpp. go_reset calls this
   // member twice; the typed body still has a byte-restoration obligation.
   void set_title(int title_id);
+  // Native combat stores at 507D83/507EC7/50888F/508C32 use this existing member.
+  // Name remains provisional; preserve original storage and unconditional write.
+  void set_field_15D4(int value) { field_15D4_ = value; }
 
 
  private:

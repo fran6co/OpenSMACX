@@ -777,3 +777,7 @@ extern int ConsoleFactionsWaitingMask;
 
 // Supply dialog implemented by the Console translation unit.
 int __cdecl supply_options(int veh_id, int base_id);
+
+// Existing source-owned APIs used by enemy movement.
+int __cdecl action_build(int vehicle_id, char *base_name);
+int __cdecl can_convoy(int x, int y);

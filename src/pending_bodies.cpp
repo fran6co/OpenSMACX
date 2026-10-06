@@ -269,18 +269,8 @@ void *__cdecl WaveOperatorNew(unsigned int size) {
 
 // battle_kill (0x00505D80), veh_kill and veh_ready are implemented by
 // genuine veh.cpp owners; their former image forwarders are removed.
-// battle_fight's seven-parameter overload and add_deletion remain unfinished.
+// Seven-parameter battle_fight is implemented by its genuine veh.cpp owner.
 
-// The seven-parameter ?battle_fight@@YAHHHHHHPAH@Z at 0x00506AF0, 19,875
-// bytes - the largest body in the veh family - still FILE-tier in
-// src/unrecovered/00506af0.cpp. Its five-parameter overload is homed in
-// veh.cpp and tail-calls it, so this forwarder is what makes that call link.
-int __cdecl battle_fight(int veh_id, int dir, int x, int y, int src_mode,
-                         int allow_interceptor, int *odds_out) {
-    typedef int(__cdecl *pending)(int, int, int, int, int, int, int *);
-    return PENDING_BODY(0x00506AF0, pending)(veh_id, dir, x, y, src_mode,
-                                             allow_interceptor, odds_out);
-}
 
 // 0x0060C5D0 ListBox::on_scrolling and 0x0060CB70 ListBox::on_mousewheel
 // WERE HERE (dispatched to by kind from dialogs.cpp): both bodies are homed
@@ -875,14 +865,3 @@ Status: Complete
 // archived. Console::editor_lock2 calls it when the cursor vehicle is live;
 // the forwarder goes when the claimed body homes.
 //             body homed into src/console.cpp (set_view, BYTE_EXACT)
-
-
-
-// ?enemy_move@@YAHH@Z at 0x0056B5B0 - the AI's per-vehicle move driver, the
-// one callee enemy_veh (general.cpp) was homed without. 56 KB of image span,
-// still the original's own bytes, so this is the forwarder and not a homed
-// body. base_terraform also reaches it by name (terraforming.cpp).
-int __cdecl enemy_move(int veh_id) {
-    typedef int(__cdecl *pending)(int);
-    return PENDING_BODY(0x0056B5B0, pending)(veh_id);
-}

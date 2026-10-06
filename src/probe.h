@@ -40,3 +40,6 @@ extern BOOL ProbeTargetHasHSA;
 int __cdecl steal_energy(int base_id);
 int __cdecl mind_control(int base_id, int faction_id, BOOL is_corner_market);
 int __cdecl success_rates(int id, int morale, int diff_modifier, int base_id);
+
+// Existing source-owned APIs used by enemy movement.
+int __cdecl probe(int actor_vehicle_id, int target_base_id, int fallback_vehicle_id, int mode);
