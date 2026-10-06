@@ -103,6 +103,9 @@ extern int VehDrawSelection689F2C;
 int __cdecl pick_top_veh(int veh_id);
 int __cdecl veh_draw(Buffer *buffer, int veh_id, int screen_x, int screen_y,
                      int zoom, int flags, int frame);
+void __cdecl vehdraw_unk1(Buffer *buffer, int vehicle_id, int x, int y,
+                         unsigned int flags, int scale_numerator,
+                         int scale_denominator, int terrain);
 void __cdecl veh_scoot(int veh_id, int tile_x, int tile_y, int direction, int flags);
 extern int FastUnitAnim;
 int __cdecl boom(int x, int y, int flags);

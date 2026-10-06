@@ -270,6 +270,7 @@ void draw_dest_unk1(Buffer *, int, int, int, int, unsigned char *);
   void set_markup_enabled(int enabled) { markup_enabled_ = enabled; }
   // FileWin::populate_directory branches on the existing DIB pixel pointer.
   bool has_dib_bits() const { return dib_bits_ != nullptr; }
+  bool has_locked_bits() const { return locked_bits_ != nullptr; }
   // 0x10, the wrap width every writer measures against: wrap_height and
   // wrap_height_flying seed their running width from it
   // (`field_14_ = field_10_`, src/buffer.cpp), and NetWin::draw_session_info
@@ -1037,6 +1038,7 @@ static const size_t BufferSurfaceUnlockSlot = 0x80;
 extern Buffer g_PCX_PARSE_TEMP_BUFFER1;  // 0x00798668
 extern Buffer g_IFACE_BOX_SPRITE_BUFFERS[51];
 extern Buffer g_IFACE_STD_POPUPS_MIDDLE_BUFFER;
+extern Buffer g_VEHDRAW_BUFFER;  // 0x008CC298
 
 
 void __fastcall buffer_destructor_redirect(Buffer *self, void *);

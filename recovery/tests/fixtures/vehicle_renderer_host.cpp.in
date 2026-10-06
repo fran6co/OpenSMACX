@@ -1,0 +1,206 @@
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <string>
+#include <vector>
+
+#ifndef __cdecl
+#define __cdecl
+#endif
+
+struct VOX_Vect { float values[3]; };
+struct VOX_Matrix { float values[3][3]; };
+struct Map { unsigned char climate; };
+struct Veh { int x, y; signed char facing; int proto_id, faction_id; };
+struct VehPrototype { int armor_id, chassis_id, weapon_id; };
+struct Palette {};
+static std::vector<std::string> events;
+static VOX_Vect captured_light;
+struct Buffer {
+    bool locked = false;
+    int init_count = 0, sync_count = 0;
+    bool has_locked_bits() const { return locked; }
+    void init(int, int, int, int) { ++init_count; events.push_back("buffer.init"); }
+    void sync_to_palette(Palette *) { ++sync_count; events.push_back("buffer.sync"); }
+};
+
+static void require(bool ok, const char *label) {
+    if (!ok) { std::fprintf(stderr, "FAIL: %s\n", label); std::exit(42); }
+}
+static bool near(float a, float b) { return std::fabs(a - b) < 0.00002f; }
+
+static Veh Vehs[4];
+static VehPrototype VehPrototypes[4];
+static Map tile_storage[16];
+static Map *tiles = tile_storage;
+static int map_read_count;
+static bool forbid_map_read;
+static int MapLongitude = 4;
+static int alt_calls[4];
+struct ConsoleType {
+    int get_relative_alt(int, int, int n) {
+        events.push_back("alt" + std::to_string(n));
+        ++alt_calls[n - 1];
+        return n;
+    }
+} ConsoleGlobal;
+static Map *map_tiles() {
+    ++map_read_count;
+    if (forbid_map_read) {
+        std::fprintf(stderr, "FAIL: terrain-zero path read MapTiles/MapRowStride\n");
+        std::exit(42);
+    }
+    return tiles;
+}
+
+static VOX_Vect VehLightDirMap = {{7.0f, 8.0f, 9.0f}};
+static VOX_Vect VehDrawCameraAngles = {{0.25f, 0.0f, 0.0f}};
+static VOX_Vect VehDrawFacetNormals0[2401];
+static VOX_Vect VehDrawFacetNormals1[2401];
+static VOX_Vect VehDrawFacetNormals2[2401];
+static VOX_Vect VehDrawFacetNormals3[2401];
+static int CaviarCameraDistance = 123;
+static unsigned char ShadowColorTable[256];
+static unsigned char ArmorTransparentColorTables[4][256];
+static Palette g_PALETTE1;
+static int render_callback_mode;
+static int active_vehicle_id;
+
+static int pick_top_veh(int id) {
+    events.push_back("pick");
+    VehLightDirMap = {{70.0f, 80.0f, 90.0f}};
+    return id + 1;
+}
+static void vector_add(const float *a, const float *b, float *out) {
+    events.push_back("vector_add");
+    for (int i = 0; i != 3; ++i) out[i] = a[i] + b[i];
+}
+static void vox_normalise_vector(const float *in, float *out) {
+    events.push_back("normalise");
+    const float length = std::sqrt(in[0]*in[0] + in[1]*in[1] + in[2]*in[2]);
+    for (int i = 0; i != 3; ++i) out[i] = in[i] / length;
+}
+static void compute_camera(VOX_Vect *light, VOX_Matrix *m) {
+    events.push_back("compute_camera");
+    std::memcpy(&captured_light, light, sizeof(*light));
+    for (int r = 0; r != 3; ++r) for (int c = 0; c != 3; ++c) m->values[r][c] = r == c ? 1.0f : 0.0f;
+}
+static void vox_matrix_inverse(const float in[3][3], float out[3][3]) {
+    events.push_back("inverse");
+    std::memcpy(out, in, sizeof(float) * 9);
+}
+static void vox_matrix_vector_mul(const float m[3][3], const float *v, float *out) {
+    events.push_back("matrix_vector");
+    for (int r = 0; r != 3; ++r) out[r] = m[r][0]*v[0] + m[r][1]*v[1] + m[r][2]*v[2];
+}
+
+struct Caviar {
+    VOX_Vect light, shadow, camera_origin;
+    VOX_Matrix camera_matrix;
+    float scaling = 0.0f, rotation[3] = {};
+    unsigned int render_flags = 0, destination_flags = 0;
+    int renders = 0, multi_renders = 0, clears = 0, resets = 0, shadow_sets = 0;
+    int last_fill = -1, transparent_bytes = 0, constructed_armor = 0;
+    VOX_Vect &light_vector() { events.push_back("light_vector"); return light; }
+    VOX_Vect &shadow_vector() { events.push_back("shadow_vector"); return shadow; }
+    int set_shadow_table(unsigned char *) { ++shadow_sets; events.push_back("shadow_table"); return 0; }
+    void set_scaling(float s) { scaling = s; events.push_back("scale"); }
+    void set_camera_direct(const VOX_Vect *p, const VOX_Matrix *m) {
+        camera_origin = *p; camera_matrix = *m; events.push_back("camera");
+    }
+    void set_scene_rotation(float x, float y, float z) { rotation[0]=x; rotation[1]=y; rotation[2]=z; events.push_back("rotation"); }
+    void render(Buffer *, int, int, unsigned int f) {
+        ++renders; render_flags = f; events.push_back("render");
+        if (render_callback_mode == 1) { Vehs[active_vehicle_id].proto_id = 1; Vehs[active_vehicle_id].faction_id = 6; }
+    }
+    void reset_objects() { ++resets; events.push_back("reset"); }
+    void render_multi_table_dest(Buffer *, int, int, int fill, unsigned char *bits, unsigned int f) {
+        ++multi_renders; last_fill = fill; destination_flags = f;
+        transparent_bytes = bits == reinterpret_cast<unsigned char *>(&ArmorTransparentColorTables) ? 0x400 : -1;
+        events.push_back("multi_render");
+    }
+    void clear_buffers(int f) { ++clears; last_fill = f; events.push_back("clear"); }
+} g_VEHDRAW_CAVIAR;
+static Buffer g_VEHDRAW_BUFFER;
+
+static void vehdraw_construct_vehicle(int id, Caviar *) { active_vehicle_id = id; events.push_back("construct_vehicle" + std::to_string(id)); }
+static void vehdraw_construct_armor(int faction, int chassis, int weapon, int armor, int count, Caviar *) {
+    require(faction == 6 && chassis == 12 && weapon == 13 && armor == 5 && count == 1, "post-render armor arguments");
+    ++g_VEHDRAW_CAVIAR.constructed_armor; events.push_back("construct_armor");
+}
+
+// ACTUAL_EMITTED_FUNCTION
+
+static void reset_fixture() {
+    events.clear();
+    std::memset(alt_calls, 0, sizeof(alt_calls));
+    map_read_count = 0;
+    forbid_map_read = false;
+    tiles = tile_storage;
+    std::memset(VehDrawFacetNormals0, 0, sizeof(VehDrawFacetNormals0));
+    std::memset(VehDrawFacetNormals1, 0, sizeof(VehDrawFacetNormals1));
+    std::memset(VehDrawFacetNormals2, 0, sizeof(VehDrawFacetNormals2));
+    std::memset(VehDrawFacetNormals3, 0, sizeof(VehDrawFacetNormals3));
+    g_VEHDRAW_CAVIAR = Caviar{};
+    g_VEHDRAW_BUFFER = Buffer{};
+    Vehs[0] = {2, 1, -1, 0, 2};
+    Vehs[1] = {4, 2, 5, 0, 3};
+    Vehs[2] = {6, 3, 5, 0, 4};
+    VehPrototypes[0] = {0, 1, 2};
+    VehPrototypes[1] = {5, 12, 13};
+    VehLightDirMap = {{7.0f, 8.0f, 9.0f}};
+    VehDrawCameraAngles = {{0.25f, 0.0f, 0.0f}};
+    render_callback_mode = 0;
+    active_vehicle_id = -1;
+}
+
+int main() {
+    Buffer dest;
+    reset_fixture();
+    forbid_map_read = true;
+    vehdraw_unk1(&dest, 0, 20, 30, 0, 3, 2, 0);
+    require(map_read_count == 0, "terrain-zero branch skips MapTiles/MapRowStride access");
+    require(near(captured_light.values[0], 0) && near(captured_light.values[1], 0) && near(captured_light.values[2], 1), "flat-normal fallback");
+    require(near(g_VEHDRAW_CAVIAR.scaling, 0.105f), "camera scale numerator/denominator ratio");
+    require(near(g_VEHDRAW_CAVIAR.camera_origin.values[0], 0) && near(g_VEHDRAW_CAVIAR.camera_origin.values[2], 123), "camera distance vector");
+    require(near(g_VEHDRAW_CAVIAR.light.values[0], 7) && near(g_VEHDRAW_CAVIAR.shadow.values[2], 9), "pre-selection camera-position snapshot");
+    require(g_VEHDRAW_CAVIAR.render_flags == 1 && g_VEHDRAW_CAVIAR.clears == 1, "regular render flags and clear path");
+    require(g_VEHDRAW_CAVIAR.rotation[0] != 0.0f, "facing -1 normalization and rotation");
+    require(g_VEHDRAW_BUFFER.init_count == 1 && g_VEHDRAW_BUFFER.sync_count == 1, "unlocked scratch init then palette sync");
+    require(events[0] == "compute_camera" && events[1] == "light_vector" && events[2] == "inverse" && events[3] == "matrix_vector", "camera/shadow publication call order");
+    require(events[events.size()-2] == "render" && events.back() == "clear", "render precedes ordinary clear");
+
+    reset_fixture();
+    vehdraw_unk1(&dest, 0, 0, 0, 0, 16777217, 16777219, 0);
+    const float original_order_scale = static_cast<float>(
+        (static_cast<double>(16777217) * static_cast<double>(0.07f)) /
+        static_cast<double>(16777219));
+    require(std::memcmp(&g_VEHDRAW_CAVIAR.scaling, &original_order_scale, sizeof(float)) == 0,
+            "signed int scale operands convert only at original float argument boundary");
+
+    reset_fixture();
+    tiles[2 * MapLongitude + (4 >> 1)].climate = 0x60;
+    // Heights 1,2,3,4 yield index 466: table zero is read at 66, tables 1-3 at 466.
+    VehDrawFacetNormals0[66] = {{1,0,0}}; VehDrawFacetNormals0[466] = {{50,0,0}};
+    VehDrawFacetNormals1[466] = {{0,2,0}};
+    VehDrawFacetNormals2[466] = {{0,0,3}};
+    VehDrawFacetNormals3[466] = {{1,0,0}};
+    g_VEHDRAW_BUFFER.locked = true;
+    render_callback_mode = 1;
+    vehdraw_unk1(&dest, 0, 40, 50, 0x3001, 3, 2, 1);
+    const float norm = std::sqrt(17.0f);
+    require(alt_calls[0] == 1 && alt_calls[1] == 1 && alt_calls[2] == 1 && alt_calls[3] == 1, "all four terrain reads once");
+    require(events[0] == "pick" && events[1] == "alt1" && events[2] == "alt2" && events[3] == "alt3" && events[4] == "alt4", "selection before ordered repeated terrain reads");
+    require(near(captured_light.values[0], 2.0f/norm) && near(captured_light.values[1], 2.0f/norm) && near(captured_light.values[2], 3.0f/norm), "asymmetric table-zero -400 index and chained vector additions");
+    require(g_VEHDRAW_CAVIAR.render_flags == 3, "original render flag mask");
+    require(g_VEHDRAW_BUFFER.init_count == 0 && g_VEHDRAW_BUFFER.sync_count == 0, "locked scratch skips init/sync");
+    require(g_VEHDRAW_CAVIAR.multi_renders == 1 && g_VEHDRAW_CAVIAR.resets == 1 && g_VEHDRAW_CAVIAR.clears == 0, "post-render prototype reread selects armor branch");
+    require(g_VEHDRAW_CAVIAR.constructed_armor == 1 && g_VEHDRAW_CAVIAR.destination_flags == 2 && g_VEHDRAW_CAVIAR.transparent_bytes == 0x400, "transparent armor destination arguments/flags");
+    require(events[events.size()-4] == "render" && events[events.size()-3] == "reset" && events[events.size()-2] == "construct_armor" && events.back() == "multi_render", "render callback then armor/reset/multitable order");
+
+    reset_fixture();
+    vehdraw_unk1(nullptr, 0, 0, 0, 0, 1, 1, 0);
+    require(events.empty() && g_VEHDRAW_CAVIAR.renders == 0, "null Buffer returns before observable work");
+    std::puts("vehdraw actual-body host controls PASS");
+}

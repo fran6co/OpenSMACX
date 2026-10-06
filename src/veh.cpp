@@ -2706,6 +2706,118 @@ void __cdecl vehdraw_draw(Buffer *buffer, int veh_id, int x, int y, int flags,
     vehdraw_finish_frame(buffer, veh_id, x, y, (flags >> 12) & 2);
 }
 
+// ORIGINAL: 0x004C1740 vehdraw_unk1 0x004C1740-0x004C1B05
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004c1740.cpp: preserved original identity/span and retained 18 call targets", "seed history preserved in the parsed source record and this binding: FILE mode, IMPLEMENTED state, kind=game, empty prototype, 0 callers, flags=frame;hidden;sp_ready;purged_ok, VERBATIM recipe; formal LEVER/TRIED/UNRECOVERABLE/DEFERRED lessons remain empty", "original call-target set:0x0046FE00,0x004BF740,0x004C1D20,0x004C3090,0x005593E0,0x005D7670,0x005DE8F0,0x006171A0,0x00617230,0x006182A0,0x00618370,0x006183B0,0x00618430,0x00618470,0x00627F50,0x006280E0,0x00628150,0x00628220", "source:src/veh.h: Veh 0x34 layout, Vehs, four 2401-record facet tables and renderer declarations", "source:src/veh.cpp: pick_top_veh, compute_camera, current vehicle construction/armor owners and render helpers", "source:src/console.h: ConsoleGlobal is a real MapWin subtype with get_relative_alt", "source:src/map.h: MapTiles/MapLongitude and Map::climate typed ownership", "source:src/buffer.cpp: g_VEHDRAW_BUFFER at 0x008CC298; Buffer+0x50 is typed locked_bits_", "source:src/caviar.cpp: g_VEHDRAW_CAVIAR and camera/render/reset APIs", "source:src/game.cpp and src/palette.cpp: ShadowColorTable, ArmorTransparentColorTables and g_PALETTE1 owners", "docs/recovery/agent-structure-observations.csv: 0x004C1740 four-table vector-chain observation remains open"], "reason": "Recover the retained vehicle-renderer identity through the genuine Veh, MapWin/Console, Buffer, Palette and Caviar owners. Preserve the seed's terrain table asymmetry, render flag derivation, post-render prototype reread, transparent-armor path and unchecked failure/invalid-index behavior. Original decorated symbol and exact caller boundary remain unverified; this proposal is semantic source ownership, not native acceptance."}
+// symbol    ?vehdraw_unk1@@YAXPAVBuffer@@HHHIHHH@Z
+void __cdecl vehdraw_unk1(Buffer *buffer, int vehicle_id, int x, int y,
+                         unsigned int flags, int scale_numerator,
+                         int scale_denominator, int terrain) {
+    if (buffer == 0) {
+        return;
+    }
+
+    const unsigned int original_flags = flags;
+    // Snapshot before stack selection, as the original does.
+    const VOX_Vect camera_position = VehLightDirMap;
+    if ((original_flags & 1) != 0) {
+        vehicle_id = pick_top_veh(vehicle_id);
+    }
+
+    const Veh &vehicle = Vehs[vehicle_id];
+    const int facing_x = vehicle.x;
+    const int facing_y = vehicle.y;
+    int frame = vehicle.facing;
+    if (frame == -1) {
+        frame = 0;
+    }
+
+    VOX_Vect light;
+    if (terrain == 0) {
+        light.values[0] = 0.0f;
+        light.values[1] = 0.0f;
+        light.values[2] = 1.0f;
+    } else {
+        const Map &tile = map_tiles()[facing_y * MapLongitude + (facing_x >> 1)];
+        if ((tile.climate & 0xE0) < 0x60) {
+            light.values[0] = 0.0f;
+            light.values[1] = 0.0f;
+            light.values[2] = 1.0f;
+        } else {
+            const int r1 = ConsoleGlobal.get_relative_alt(facing_x, facing_y, 1);
+            const int r2 = ConsoleGlobal.get_relative_alt(facing_x, facing_y, 2);
+            const int r3 = ConsoleGlobal.get_relative_alt(facing_x, facing_y, 3);
+            const int r4 = ConsoleGlobal.get_relative_alt(facing_x, facing_y, 4);
+            const int index = r4 + ((r1 * 7 + r2) * 7 + r3) * 7;
+            // The image uses table zero at the -400 bias and the other three at
+            // the unshifted four-height index; retain that asymmetric read.
+            const VOX_Vect n0 = VehDrawFacetNormals0[index - 400];
+            const VOX_Vect n1 = VehDrawFacetNormals1[index];
+            const VOX_Vect n2 = VehDrawFacetNormals2[index];
+            const VOX_Vect n3 = VehDrawFacetNormals3[index];
+            vector_add(n0.values, n1.values, light.values);
+            vector_add(light.values, n2.values, light.values);
+            vector_add(light.values, n3.values, light.values);
+            vox_normalise_vector(light.values, light.values);
+        }
+    }
+
+    VOX_Matrix camera;
+    compute_camera(&light, &camera);
+    g_VEHDRAW_CAVIAR.light_vector() = camera_position;
+
+    VOX_Matrix inverse_camera;
+    vox_matrix_inverse(camera.values, inverse_camera.values);
+    VOX_Vect shadow;
+    vox_matrix_vector_mul(inverse_camera.values, camera_position.values,
+                          shadow.values);
+    g_VEHDRAW_CAVIAR.shadow_vector() = shadow;
+    g_VEHDRAW_CAVIAR.set_shadow_table(ShadowColorTable);
+
+    VOX_Vect camera_origin;
+    camera_origin.values[0] = camera.values[2][0] * CaviarCameraDistance;
+    camera_origin.values[1] = camera.values[2][1] * CaviarCameraDistance;
+    camera_origin.values[2] = camera.values[2][2] * CaviarCameraDistance;
+    g_VEHDRAW_CAVIAR.set_scaling(
+        static_cast<float>((static_cast<double>(scale_numerator) * 0.07f)
+                           / static_cast<double>(scale_denominator)));
+    g_VEHDRAW_CAVIAR.set_camera_direct(&camera_origin, &camera);
+
+    vehdraw_construct_vehicle(vehicle_id, &g_VEHDRAW_CAVIAR);
+    const int rotation = (frame - 3) & 7;
+    g_VEHDRAW_CAVIAR.set_scene_rotation(
+        static_cast<float>(rotation) * 0.785375f
+            - VehDrawCameraAngles.values[0],
+        0.0f, 0.0f);
+
+    // The old test is Buffer+0x50 == 0. Expose that already-typed state by
+    // a read-only Buffer API rather than retaining the absolute address.
+    if (!g_VEHDRAW_BUFFER.has_locked_bits()) {
+        g_VEHDRAW_BUFFER.init(200, 200, 0, 0);
+        g_VEHDRAW_BUFFER.sync_to_palette(&g_PALETTE1);
+    }
+
+    const unsigned int render_flags =
+        ((original_flags & 0x2000) | 0x1000) >> 12;
+    g_VEHDRAW_CAVIAR.render(buffer, x, y, render_flags);
+
+    // Rendering may mutate the selected vehicle's prototype; reload it after
+    // the render, matching the original order.
+    const VehPrototype &prototype = VehPrototypes[Vehs[vehicle_id].proto_id];
+    if (prototype.armor_id == 5) {
+        g_VEHDRAW_CAVIAR.reset_objects();
+        vehdraw_construct_armor(Vehs[vehicle_id].faction_id,
+                                prototype.chassis_id, prototype.weapon_id,
+                                5, 1, &g_VEHDRAW_CAVIAR);
+        const unsigned int destination_flags = (original_flags >> 12) & 2;
+        g_VEHDRAW_CAVIAR.render_multi_table_dest(
+            buffer, x, y, 0x18,
+            reinterpret_cast<unsigned char *>(&ArmorTransparentColorTables),
+            destination_flags);
+        return;
+    }
+    g_VEHDRAW_CAVIAR.clear_buffers(0);
+}
+
 // ORIGINAL: 0x004BF8D0 ?vehdraw_turn_start@@YAHHHHH@Z 0x004BF8D0-0x004BFC67
 // RECOVERY_BINDING: v1 {"evidence": ["Original4BF8D0..4BFC67 returns the integer animation step count, snapshots light before selection, publishes selection before facing access, loads the map pointer slot, and uses unsigned Weapon.mode at+0A.", "All four facet vectors are copied before calls; camera/light/shadow publication follows original call order. Original stores only negative arc to float before comparison; preserving positive precision determines half-turn direction. Zero angle preserves zero steps and NaN increment. Observed VC6 emitted symbol and layouts."], "reason": "Recover vehicle turn setup using actual map, vehicle, renderer and vector ownership instead of fixed executable storage."}
 int __cdecl vehdraw_turn_start(int veh_id, int direction, int speed, int flags) {

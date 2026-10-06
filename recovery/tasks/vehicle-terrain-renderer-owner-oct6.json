@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "task_id": "vehicle-terrain-renderer-owner-oct6",
+  "author": "framework-coordinator",
+  "target": "opensmacx",
+  "base_revision": "71343381095f4232f2791cb313fedc9303dbafac",
+  "intent": "Recover the full terrain-aware vehicle renderer in the genuine vehicle owner, preserving original branch ordering, callbacks, table asymmetry and post-render reads. Retire its seed only after complete source identity/history transport, original review and compiling/linking closure.",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4986688
+    }
+  ],
+  "editable_files": [
+    "src/veh.cpp",
+    "src/veh.h",
+    "src/buffer.h",
+    "src/unrecovered/004c1740.cpp",
+    "recovery/tests/test_vehicle_terrain_renderer_actual_source.py",
+    "recovery/tests/fixtures/vehicle_renderer_host.cpp.in"
+  ],
+  "evidence": [
+    "Standing coordinator-reviewed full compiling coverage authorization. No matching claim or prior task baseline is reset.",
+    "Buffer's already source-owned locked_bits_ member at +0x50 requires only a read-only accessor for the original scratch Buffer guard; no new storage or raw original-address alias is authorized.",
+    "Pinned original 0x4C17B8 branches to flat-normal block 0x4C190C when terrain is zero before reading MapTiles/row stride. Independent review rejected the initial unconditional tile-reference formulation; preserve this error-path/read ordering in the full implementation.",
+    "Existing original spans, call targets, class declarations and renderer observations are inputs, not native or full-game acceptance. Unknown original ABI/callers and facet-table structural findings remain obligations."
+  ]
+}
