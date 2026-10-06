@@ -11,7 +11,7 @@ import json
 from pathlib import Path
 import re
 
-from .components import ComponentManifest, ToolchainManifest, VendorManifest
+from .components import ComponentManifest, SystemImportManifest, ToolchainManifest, VendorManifest
 from .model import canonical
 from .records import parse_json, publish_text
 
@@ -91,6 +91,8 @@ def parse_component(text: str) -> ComponentManifest:
         binding["spans"] = spans
     if data.get("kind") == "toolchain_component":
         return ToolchainManifest.from_dict(data)
+    if data.get("kind") == "system_import_component":
+        return SystemImportManifest.from_dict(data)
     return VendorManifest.from_dict(data)
 
 

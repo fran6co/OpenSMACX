@@ -5,7 +5,7 @@ import hashlib
 from pathlib import Path
 
 from .component_source import parse_components
-from .components import ToolchainManifest, source_integrity
+from .components import SystemImportManifest, ToolchainManifest, source_integrity
 from .fingerprint import input_snapshot
 from .model import Result
 from .source_config import SourceConfiguration
@@ -47,6 +47,7 @@ def execute(root: Path, arguments: dict):
         raise ValueError(f"expected one component named {arguments['component']}")
     manifest, = selected
     toolchain = isinstance(manifest, ToolchainManifest)
+    system_import = isinstance(manifest, SystemImportManifest)
     if action == "check-link":
         if not toolchain:
             raise ValueError("linked component verification currently requires a precompiled toolchain dependency")
@@ -57,9 +58,9 @@ def execute(root: Path, arguments: dict):
         if arguments.get("summary"):
             result.pop("functions", None)
         return {Result.PASS: 0, Result.FAIL: 1, Result.UNKNOWN: 3}[result["result"]], result
-    if toolchain and action != "check-binary":
-        raise ValueError("precompiled toolchain dependencies have no upstream source; use check-binary --archive")
-    inputs = [] if toolchain else [manifest.source_root + "/" + item.path for item in manifest.files]
+    if (toolchain or system_import) and action != "check-binary":
+        raise ValueError("precompiled dependencies have no upstream source; use check-binary --archive")
+    inputs = [] if toolchain or system_import else [manifest.source_root + "/" + item.path for item in manifest.files]
     sources = input_snapshot(root, inputs, manifest.to_dict())
     external = arguments.get("image" if action == "check-binary" else "archive")
     if external is not None:
@@ -76,9 +77,9 @@ def execute(root: Path, arguments: dict):
 
     original_digest = external_digest()
     archive_path, archive_data = None, None
-    if toolchain:
+    if toolchain or system_import:
         if arguments.get("archive") is None:
-            raise ValueError("toolchain binary verification requires --archive")
+            raise ValueError("precompiled dependency binary verification requires --archive")
         archive_path = Path(arguments["archive"])
         archive_path = archive_path if archive_path.is_absolute() else root / archive_path
         archive_data = archive_path.read_bytes()
@@ -93,7 +94,9 @@ def execute(root: Path, arguments: dict):
         import_source = source_snapshot(root, allow_empty=True)
         imports = read_imports(root)
         assert_snapshot_current(root, import_source)
-        if toolchain:
+        if system_import:
+            result = manifest.verify(external.read_bytes(), archive_data, imports)
+        elif toolchain:
             from .component_binary import verify_toolchain
             result = verify_toolchain(manifest, external.read_bytes(), archive_data, import_bindings=imports)
         else:

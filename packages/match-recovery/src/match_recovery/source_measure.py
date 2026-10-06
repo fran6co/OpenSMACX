@@ -22,6 +22,7 @@ from .source_inventory import image_pin, source_snapshot
 from .source_selection import select_records, snapshot_mappings, selected_source_records
 from .component_original_routing import (component_claim_result, component_function_observations,
                                          exact_component_record_bindings)
+from .components import SystemImportManifest
 from .model import Origin
 
 
@@ -123,14 +124,18 @@ def measure_source(root: Path, targets, *, image: Path, in_file=None, jobs=1):
         component_id, _, binding = owner
         observed = component_functions.get(binding.origin.entity_id)
         result, verdict = component_claim_result(observed)
+        backend = observed.get("measurement_backend", "component_binary") if observed else (
+            "system_import_original_thunk" if isinstance(owner[1], SystemImportManifest)
+            else "component_binary")
         row = {"address": record.address_hex, "path": relative, "line": record.line,
                "name": record.name, "symbol": record.symbol or record.name,
                "historical_byte_obligation": record.byte_exact,
                "historical_shape_obligation": record.semantic,
                "source_state": record.state.value, "result": result, "verdict": verdict,
-               "measurement_backend": "component_binary",
+               "measurement_backend": backend,
                "component": component_id, "component_unit": binding.unit,
-               "provenance": "verified_component_mapping"}
+               "provenance": ("verified_system_import_original_thunk" if backend == "system_import_original_thunk"
+                              else "verified_component_mapping")}
         if observed is None:
             row["diagnostic"] = next((item["reason"] for item in component_checks
                                       if item["component"] == component_id),
@@ -138,13 +143,17 @@ def measure_source(root: Path, targets, *, image: Path, in_file=None, jobs=1):
         else:
             row["component_dimensions"] = {name: observed.get(name)
                                             for name in ("bytes", "boundary", "references")}
+            if observed.get("dependency_verification"):
+                row["dependency_verification"] = observed["dependency_verification"]
             if observed.get("reason"):
                 row["diagnostic"] = observed["reason"]
         rows.append(row)
     counts = Counter(row["result"] for row in rows)
     result = "fail" if counts["fail"] else "unknown" if counts["unknown"] else "pass"
     return {"schema_version": 1, "operation": "measure", "result": result,
-            "verification": ("source_masked_bytes_and_component_binary" if component_selected
+            "verification": ("source_and_system_import_original_thunks"
+                             if any(row.get("measurement_backend") == "system_import_original_thunk" for row in rows)
+                             else "source_masked_bytes_and_component_binary" if component_selected
                              else "historical_masked_bytes_only"),
             "ready_for_collection": False, "persisted": False,
             "selected": len(selected), "counts": dict(counts),

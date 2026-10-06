@@ -24,6 +24,7 @@ from .source_inventory import image_pin
 from .source_inventory import source_snapshot
 from .component_original_routing import (component_claim_result, component_function_observations,
                                          exact_component_record_bindings)
+from .components import SystemImportManifest
 from .model import Origin
 
 
@@ -160,6 +161,9 @@ def check_matches(root: Path, image: Path, *, jobs: int = 1) -> dict:
         component_id, _, binding = owner
         observed = component_functions.get(binding.origin.entity_id)
         outcome, verdict = component_claim_result(observed)
+        backend = observed.get("measurement_backend", "component_binary") if observed else (
+            "system_import_original_thunk" if isinstance(owner[1], SystemImportManifest)
+            else "component_binary")
         byte_claim = record.byte_exact
         shape_claim = record.semantic or record.byte_exact
         row = {"address": record.address_hex, "path": name, "line": record.line,
@@ -167,9 +171,10 @@ def check_matches(root: Path, image: Path, *, jobs: int = 1) -> dict:
                "byte_obligation": byte_claim, "shape_obligation": shape_claim,
                "seed": settings.source.is_seed(name), "built": False,
                "result": outcome if (byte_claim or shape_claim) else None,
-               "verdict": verdict, "measurement_backend": "component_binary",
+               "verdict": verdict, "measurement_backend": backend,
                "component": component_id, "component_unit": binding.unit,
-               "provenance": "verified_component_mapping"}
+               "provenance": ("verified_system_import_original_thunk" if backend == "system_import_original_thunk"
+                              else "verified_component_mapping")}
         if observed is None:
             row["diagnostic"] = next((item["reason"] for item in component_checks
                                       if item["component"] == component_id),
@@ -177,6 +182,8 @@ def check_matches(root: Path, image: Path, *, jobs: int = 1) -> dict:
         else:
             row["component_dimensions"] = {dimension: observed.get(dimension)
                                             for dimension in ("bytes", "boundary", "references")}
+            if observed.get("dependency_verification"):
+                row["dependency_verification"] = observed["dependency_verification"]
             if observed.get("reason"):
                 row["diagnostic"] = observed["reason"]
         rows.append(row)
@@ -187,7 +194,9 @@ def check_matches(root: Path, image: Path, *, jobs: int = 1) -> dict:
     unclaimed = [row for row in rows if not row["byte_obligation"] and not row["shape_obligation"]]
     return {
         "schema_version": 1, "check": "historical_source_matches", "result": result,
-        "verification": ("source_masked_bytes_and_component_binary" if component_selected
+        "verification": ("source_and_system_import_original_thunks"
+                         if any(row.get("measurement_backend") == "system_import_original_thunk" for row in rows)
+                         else "source_masked_bytes_and_component_binary" if component_selected
                          else "historical_masked_bytes_only"),
         "claims": len(claims), "counts": dict(counts),
         "verified": sum(row["result"] == "pass" and row["verdict"] == "BYTE_EXACT" for row in claims),

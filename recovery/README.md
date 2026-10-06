@@ -588,6 +588,19 @@ DLL/export slots but still needs runtime data and remaining callee bindings and
 final-link selection. It does not promote library symbols into application acceptance.
 Use the actual local compiler path; the example above is not an installation step.
 
+Seven `src/system_import_*.recovery.h` companions retain the original identities
+of thirteen SDK import stubs formerly stored in `src/unrecovered`. They bind exact
+physical short-import records in the configured local VC6 SDK archives, rather
+than duplicating linker thunks with C++ forwarding bodies. The old seed comments
+misclassified several of these as exception cleanup funclets; their preserved
+`seed-history` text is historical, not the current ownership interpretation.
+Use `components check-binary <component> --image <image> --archive <archive>`
+with a component from `components list`. Passing original attribution does not
+establish current link selection or DLL implementation, grant a byte claim, or
+increase application-function recovery coverage. Historical claims remain
+restoration obligations and current matching is unresolved. Local SDK archives
+are not redistributed; their redistribution rights remain unestablished.
+
 The native `components check-link` command makes a fresh configured build and
 compares every declared runtime function with the pinned library member at its
 actual linked placement. `recovery/build.json` declares the PE and MSVC map as

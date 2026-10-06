@@ -3143,6 +3143,27 @@ The recorder still refuses component-header claim grants. This routing preserves
 old obligations; it does not bank claims, establish final-link selection or count
 dependency code as recovered application functions.
 
+### System import dependencies
+
+`SystemImportManifest` attributes original loader thunks to existing SDK import
+archives, without inventing C++ forwarding bodies. Its companion envelope uses
+`kind: "system_import_component"`, system ownership and `system_import` delivery.
+Load-bearing fields are the archive SHA-256 and provenance, original image/full
+spans, API identity, exact archive member and zero-based repeated-member
+`occurrence`, plus the source-declared `RECOVERY_IMPORT` pointer symbol.
+Projects configure local artifacts in `components.system_import_archives`.
+
+`components check-binary <component> --image <image> --archive <archive>` checks
+the pinned six-byte PE import thunk, its base relocation and unique DLL/export
+slot against the exact physical short-import record. This proves original
+dependency attribution only: it does not prove current linker selection, DLL
+implementation, ABI compatibility or application recovery. Joined `ORIGINAL`
+records retain historical obligations; `measure` and `check-matches` leave their
+current byte/boundary/reference dimensions unresolved even when attribution
+passes. The recorder refuses claim grants on these companions. Archives are
+not copied or redistributed; license evidence does not establish distribution
+rights.
+
 ### Precompiled toolchain dependencies
 
 `ToolchainManifest` represents an existing runtime/third-party library, separately

@@ -6,6 +6,15 @@
   "components": {
     "toolchain_archives": {
       "vc6-runtime": "/home/fran6co/opt/vc6/LIB/LIBCMT.LIB"
+    },
+    "system_import_archives": {
+      "vc6-system-import-winmm": "/home/fran6co/opt/vc6/LIB/WINMM.LIB",
+      "vc6-system-import-ddraw": "/home/fran6co/opt/vc6/LIB/DDRAW.LIB",
+      "vc6-system-import-vfw32": "/home/fran6co/opt/vc6/LIB/VFW32.LIB",
+      "vc6-system-import-dsound": "/home/fran6co/opt/vc6/LIB/DSOUND.LIB",
+      "vc6-system-import-comdlg32": "/home/fran6co/opt/vc6/LIB/COMDLG32.LIB",
+      "vc6-system-import-dplayx": "/home/fran6co/opt/vc6/LIB/DPLAYX.LIB",
+      "vc6-system-import-kernel32": "/home/fran6co/opt/vc6/LIB/KERNEL32.LIB"
     }
   },
   "audits": "recovery/audits.json",

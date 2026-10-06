@@ -15,6 +15,9 @@ import tarfile
 from typing import Any
 
 from .model import Component, Delivery, Origin, Ownership, Result, Span, require_digest, require_text
+from .coff_archive import CoffArchive
+from .coff_inventory import short_import
+from .pe_coff import PeImage
 
 
 def relative_path(value: str) -> str:
@@ -84,6 +87,192 @@ class VendorBinding:
         require_text(self.evidence, "binding evidence")
         if not self.spans or self.spans[0].start != self.origin.address:
             raise ValueError("binding must have an independently recorded entry span")
+
+
+@dataclass(frozen=True)
+class SystemImportBinding:
+    """One original loader thunk backed by one physical SDK short-import record."""
+    origin: Origin
+    spans: tuple[Span, ...]
+    symbol: str
+    unit: str
+    occurrence: int
+    import_symbol: str
+    evidence: str
+
+    def __post_init__(self):
+        require_text(self.symbol, "public source symbol")
+        archive_member_identity(self.unit)
+        if type(self.occurrence) is not int or self.occurrence < 0:
+            raise ValueError("short-import physical occurrence must be a nonnegative integer")
+        require_text(self.import_symbol, "RECOVERY_IMPORT symbol")
+        require_text(self.evidence, "binding evidence")
+        if len(self.spans) != 1 or self.spans[0].start != self.origin.address:
+            raise ValueError("system import requires one complete original entry span")
+        if self.spans[0].end - self.spans[0].start != 6:
+            raise ValueError("i386 import thunk span must be exactly six bytes")
+
+
+@dataclass(frozen=True)
+class SystemImportManifest:
+    """Pinned SDK short-import records backing loader-generated original thunks.
+
+    This verifies the original thunk and import-library record only. It does not
+    identify the OS DLL implementation, prove ABI/runtime compatibility, or
+    establish current-link archive selection.
+    """
+    component: Component
+    archive_sha256: str
+    license_evidence: str
+    bindings: tuple[SystemImportBinding, ...]
+
+    def __post_init__(self):
+        if (self.component.ownership != Ownership.SYSTEM
+                or self.component.delivery != Delivery.SYSTEM_IMPORT):
+            raise ValueError("system-import manifests require system/system-import classification")
+        require_digest(self.archive_sha256)
+        require_text(self.license_evidence, "system import archive provenance")
+        if not self.bindings:
+            raise ValueError("system import manifest bindings must be nonempty")
+        if len({row.origin.entity_id for row in self.bindings}) != len(self.bindings):
+            raise ValueError("duplicate original system-import identity")
+        if len({row.symbol for row in self.bindings}) != len(self.bindings):
+            raise ValueError("duplicate current public symbol in system-import manifest")
+        if len({row.import_symbol for row in self.bindings}) != len(self.bindings):
+            raise ValueError("one RECOVERY_IMPORT declaration cannot back multiple original thunks")
+        origins = [row.origin for row in self.bindings]
+        if any(row.address_space != "pe:va" for row in origins):
+            raise ValueError("system-import bindings require PE virtual addresses")
+        if len({row.image_sha256 for row in origins}) != 1:
+            raise ValueError("system-import bindings must use one pinned image")
+        spans = sorted(span for row in self.bindings for span in row.spans)
+        if any(left.end > right.start for left, right in zip(spans, spans[1:])):
+            raise ValueError("system-import original spans overlap")
+
+    def to_dict(self) -> dict:
+        return {"schema_version": 1, "kind": "system_import_component", **asdict(self)}
+
+    @classmethod
+    def from_dict(cls, value: dict) -> SystemImportManifest:
+        allowed = {"schema_version", "kind", "component", "archive_sha256", "license_evidence", "bindings"}
+        _fields(value, allowed, "system import manifest")
+        if type(value["schema_version"]) is not int or value["schema_version"] != 1:
+            raise ValueError("unsupported system import manifest schema")
+        if value["kind"] != "system_import_component":
+            raise ValueError("not a system import component manifest")
+        component = _fields(value["component"], {"component_id", "ownership", "delivery", "evidence", "version"}, "component")
+        if component["version"] is not None:
+            require_text(component["version"], "component version")
+        owner = Component(component["component_id"], Ownership(component["ownership"]),
+                          Delivery(component["delivery"]), tuple(_list(component["evidence"], "component evidence")),
+                          component["version"])
+        bindings = []
+        for item in _list(value["bindings"], "bindings"):
+            _fields(item, {"origin", "spans", "symbol", "unit", "occurrence", "import_symbol",
+                           "evidence"}, "system import binding")
+            origin = Origin(**_fields(item["origin"], {"image_sha256", "address_space", "address"}, "origin"))
+            spans = tuple(Span(**_fields(span, {"start", "end"}, "span"))
+                          for span in _list(item["spans"], "spans"))
+            bindings.append(SystemImportBinding(origin, spans, item["symbol"], item["unit"],
+                item["occurrence"], item["import_symbol"], item["evidence"]))
+        return cls(owner, value["archive_sha256"], value["license_evidence"], tuple(bindings))
+
+    def verify(self, image_data: bytes, archive_data: bytes, import_bindings) -> dict:
+        """Qualify source-owned ORIGINAL records against fresh original inputs."""
+        import hashlib
+        from collections import Counter
+        from .model import Result
+        pin = self.bindings[0].origin.image_sha256
+        image = PeImage(image_data, pin)
+        archive_actual = hashlib.sha256(archive_data).hexdigest()
+        archive_ok = archive_actual == self.archive_sha256
+        archive = CoffArchive(archive_data) if archive_ok else None
+        imports, import_error = (), None
+        try:
+            imports = image.imports()
+        except ValueError as error:
+            import_error = str(error)
+        rows = []
+        imports_by_symbol = {}
+        for binding in import_bindings:
+            if binding.symbol in imports_by_symbol:
+                raise ValueError("duplicate RECOVERY_IMPORT source binding")
+            imports_by_symbol[binding.symbol] = binding
+        for binding in self.bindings:
+            span = binding.spans[0]
+            row = {"entity_id": binding.origin.entity_id, "address": f"0x{span.start:08X}",
+                   "symbol": binding.symbol, "unit": binding.unit, "occurrence": binding.occurrence,
+                   "bytes": Result.UNKNOWN, "boundary": Result.UNKNOWN, "references": Result.UNKNOWN}
+            try:
+                if not archive_ok:
+                    raise ValueError("pinned system import archive digest mismatch")
+                if import_error:
+                    raise ValueError(import_error)
+                source_import = imports_by_symbol.get(binding.import_symbol)
+                if source_import is None:
+                    raise ValueError("bound RECOVERY_IMPORT symbol is absent from source snapshot")
+                matching_slots = [slot for slot in imports if slot.module.casefold() == source_import.module.casefold()
+                                  and slot.name == source_import.name and slot.ordinal == source_import.ordinal]
+                if len(matching_slots) != 1:
+                    raise ValueError("RECOVERY_IMPORT must identify one original loader module/export slot")
+                raw = image.read(span)
+                if raw[:2] != b"\xff\x25":
+                    row["bytes"] = Result.FAIL
+                    raise ValueError("original bytes are not an i386 indirect-jump thunk")
+                if len(raw) != 6:
+                    row["bytes"] = Result.FAIL
+                    raise ValueError("original thunk does not have a six-byte extent")
+                import struct
+                operand, = struct.unpack_from("<I", raw, 2)
+                if operand != matching_slots[0].address:
+                    row["references"] = Result.FAIL
+                    raise ValueError("original thunk target differs from the independent loader slot")
+                if image.absolute_sites(span) != frozenset({2}):
+                    row["references"] = Result.FAIL
+                    raise ValueError("original thunk requires exactly one HIGHLOW fixup on its absolute operand")
+                backed = [(index, region, flags) for index, (region, _, _) in enumerate(image.sections, 1)
+                          if region.start <= span.start and span.end <= region.end
+                          for flags in (image.section_flags[index - 1],)]
+                if len(backed) != 1 or backed[0][2] & 0x20000020 != 0x20000020:
+                    row["boundary"] = Result.FAIL
+                    raise ValueError("original six-byte thunk is not uniquely backed by executable image storage")
+                records = archive.members.get(binding.unit, ())
+                if binding.occurrence >= len(records):
+                    raise ValueError("physical short-import member occurrence is absent")
+                record = records[binding.occurrence]
+                record_sha256 = hashlib.sha256(record).hexdigest()
+                imported = short_import(record)
+                if imported["type"] != "code":
+                    row["bytes"] = Result.FAIL
+                    raise ValueError("physical archive record is not a short code import")
+                if (imported["module"].casefold() != source_import.module.casefold()
+                        or imported["name"] != source_import.name or imported["ordinal"] != source_import.ordinal):
+                    row["references"] = Result.FAIL
+                    raise ValueError("physical short import disagrees with RECOVERY_IMPORT module/export identity")
+                row.update(bytes=Result.PASS, boundary=Result.PASS, references=Result.PASS,
+                           archive_record_sha256=record_sha256,
+                           limitation="physical original thunk + SDK short import only")
+                row["import"] = {"module": source_import.module, "name": source_import.name,
+                                 "ordinal": source_import.ordinal, "address": f"0x{operand:08X}"}
+                row["physical_record"] = {"member": binding.unit, "occurrence": binding.occurrence,
+                                           "sha256": record_sha256}
+                row["archive_selection"] = Result.UNKNOWN
+            except ValueError as error:
+                row["reason"] = str(error)
+            rows.append(row)
+        outcomes = [Result.PASS if archive_ok else Result.FAIL]
+        outcomes.extend(row[dimension] for row in rows for dimension in ("bytes", "boundary", "references"))
+        result = Result.FAIL if Result.FAIL in outcomes else Result.UNKNOWN if Result.UNKNOWN in outcomes else Result.PASS
+        return {"component_id": self.component.component_id, "check": "system_import_original_thunks",
+                "result": result, "archive": {"result": Result.PASS if archive_ok else Result.FAIL,
+                "sha256": archive_actual}, "functions": rows,
+                "counts": dict(sorted(Counter(row["bytes"] for row in rows).items())),
+                "application_recoveries": 0, "link_verification": Result.UNKNOWN,
+                "dll_implementation": Result.UNKNOWN, "runtime_verification": Result.UNKNOWN,
+                "ready_for_collection": False,
+                "limitations": ["source mapping covers original loader thunk and pinned short-import record only",
+                                "selected SDK link input, generated link thunk, DLL implementation, ABI and runtime remain unknown",
+                                "this dependency result adds no application-function coverage"]}
 
 
 @dataclass(frozen=True)
@@ -282,7 +471,7 @@ class ToolchainManifest:
                    tuple(absolutes), tuple(data_sections))
 
 
-ComponentManifest = VendorManifest | ToolchainManifest
+ComponentManifest = VendorManifest | ToolchainManifest | SystemImportManifest
 
 
 @dataclass(frozen=True)

@@ -11,7 +11,7 @@ import base64
 from pathlib import Path
 
 from .component_source import parse_component_entries
-from .components import ToolchainManifest, relative_path
+from .components import SystemImportManifest, ToolchainManifest, relative_path
 from .model import Result
 from .source_config import SourceConfiguration
 
@@ -65,16 +65,18 @@ def component_function_observations(root: Path, image: Path, owners: dict) -> tu
     configuration = read_json(root / "recovery/project.json")
     component_options = configuration.get("components", {})
     archives = component_options.get("toolchain_archives", {}) if isinstance(component_options, dict) else {}
+    system_archives = component_options.get("system_import_archives", {}) if isinstance(component_options, dict) else {}
     reports, manifests, observations = {}, {}, []
     for component_id, manifest in sorted({value[0]: value[1] for value in owners.values()}.items()):
         arguments = {"action": "check-binary", "component": component_id,
                      "root": root, "image": image}
-        if isinstance(manifest, ToolchainManifest):
-            archive = archives.get(component_id) if isinstance(archives, dict) else None
+        if isinstance(manifest, (ToolchainManifest, SystemImportManifest)):
+            selected_archives = system_archives if isinstance(manifest, SystemImportManifest) else archives
+            archive = selected_archives.get(component_id) if isinstance(selected_archives, dict) else None
             if not isinstance(archive, str) or not archive:
                 reports[component_id] = None
                 observations.append({"component": component_id, "result": Result.UNKNOWN,
-                                    "reason": "no configured archive for this toolchain component"})
+                                    "reason": "no configured archive for this precompiled component"})
                 continue
             archive_path = Path(archive)
             if archive_path.is_absolute():
@@ -106,7 +108,9 @@ def component_function_observations(root: Path, image: Path, owners: dict) -> tu
         if report is None:
             continue
         manifest = manifests[component_id]
-        if isinstance(manifest, ToolchainManifest):
+        backend = ("system_import_original_thunk" if isinstance(manifest, SystemImportManifest)
+                   else "component_binary")
+        if isinstance(manifest, (ToolchainManifest, SystemImportManifest)):
             # A passing function subrow is meaningful only after the archive
             # identity itself passed.  Do not let rows synthesized from an
             # unread/unpinned archive route a historical function claim.
@@ -120,24 +124,47 @@ def component_function_observations(root: Path, image: Path, owners: dict) -> tu
                         raise ValueError("component backends returned a duplicate original function identity")
                     functions[key] = {
                         "entity_id": key, "prerequisite": prerequisite,
-                        "reason": "toolchain archive identity did not pass",
+                        "reason": "component archive identity did not pass",
                         "component": component_id, "component_check": report.get("check"),
-                        "measurement_backend": "component_binary",
+                        "measurement_backend": backend,
                     }
+                    if isinstance(manifest, SystemImportManifest):
+                        functions[key]["dependency_verification"] = {
+                            "result": archive_result, "archive_selection": Result.UNKNOWN,
+                            "link_selection": Result.UNKNOWN,
+                        }
                 continue
         for row in report.get("functions", ()):
             key = row.get("entity_id")
             if key in functions:
                 raise ValueError("component backends returned a duplicate original function identity")
-            functions[key] = {**row, "component": component_id,
-                              "component_check": report.get("check"),
-                              "measurement_backend": "component_binary"}
+            observed = {**row, "component": component_id,
+                        "component_check": report.get("check"),
+                        "measurement_backend": backend}
+            if isinstance(manifest, SystemImportManifest):
+                dimensions = {name: row.get(name) for name in ("bytes", "boundary", "references")}
+                dependency_result = (Result.FAIL if Result.FAIL in dimensions.values() else
+                                     Result.UNKNOWN if any(value != Result.PASS for value in dimensions.values())
+                                     else Result.PASS)
+                observed["dependency_verification"] = {
+                    "result": dependency_result, "physical_dimensions": dimensions,
+                    "physical_record": row.get("physical_record"), "import": row.get("import"),
+                    "archive_selection": Result.UNKNOWN, "link_selection": Result.UNKNOWN,
+                }
+                # These fields feed historical claim promotion. Physical
+                # original evidence is not current compiled/link-selected code.
+                observed.update(bytes=Result.UNKNOWN, boundary=Result.UNKNOWN,
+                                references=Result.UNKNOWN,
+                                reason="current emitted thunk and selected link input are unproved")
+            functions[key] = observed
     return functions, observations
 
 
 def component_claim_result(observed: dict | None) -> tuple[str, str]:
     """Collapse the verifier's byte/boundary/reference dimensions for a claim."""
     if observed is None:
+        return "unknown", "UNRESOLVED"
+    if observed.get("measurement_backend") == "system_import_original_thunk":
         return "unknown", "UNRESOLVED"
     prerequisite = observed.get("prerequisite")
     if prerequisite == Result.FAIL:
