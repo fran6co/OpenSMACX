@@ -1007,6 +1007,30 @@ Node *allocate_sprite_node(Heap *owner) {
 }
 }
 
+// Pinned 0x00402BB0 receiver is the allocation virtual-base view (+0x1C);
+// it adjusts to this list, clears through 0x00402970, restores the
+// StringAllocationBase table/owner, then honors deleting bit 0. The
+// class hierarchy, not staged tables, supplies that lifecycle.
+// StringStruct::remove_all performs the no-op base hook and polymorphic
+// node deletes; 0x00611730 remains the derived SpriteList dtor identity.
+// ORIGINAL: 0x00402BB0 sub_402bb0 0x00402BB0-0x00402C16
+// symbol    ??_GSpriteListBase@@UAEPAXI@Z
+// kind      game
+// Historical seed fact (inactive): size      102 bytes
+// Historical seed fact (inactive): prototype
+// Historical seed fact (inactive): callers   0   call targets   2
+// Historical seed fact (inactive): kind      game
+// Historical seed fact (inactive): flags     frame;sp_ready;purged_ok
+// Historical seed fact (inactive): calls     0x00402970 0x00644EF2
+// Historical seed fact (inactive): PRESERVED UNIT - measured MNEMONIC_ONLY.
+// Historical seed fact (inactive): Historical seed mode (inactive): the artifact record was FILE; this proposal uses BODY because the identity is transferred to a genuine C++ method owner.
+// Historical seed fact (inactive): Historical owner evidence: receiver is the StringAllocationBase virtual view +0x1C.
+// Historical seed fact (inactive): Historical owner evidence: restores the 0x669438/0x66943C list stage, calls 0x402970, clears +0x14, restores 0x6693AC/owner, then tests deleting bit 0 and conditionally frees.
+// Historical seed fact (inactive): Historical measurement note: the seed reported MNEMONIC_ONLY; no BYTE_EXACT or SEMANTIC claim is transferred.
+SpriteListBase::~SpriteListBase() {
+    remove_all();
+}
+
 SpriteList::SpriteList() {}
 
 // ORIGINAL: 0x005EB29F ?fill_entry@SpriteList@@QAEHPAUSpriteStruct@@@Z 0x005EB29F-0x005EB320 FILE
@@ -1142,9 +1166,9 @@ void SpriteList::close() {
 // SpriteBoxList itself moved to spritebox.h as the real StringStruct sibling
 // SpriteBox embeds at 0x24.
 //
-// SUB_402BB0 WAS ASSERTED TO BE THIS CLASS'S DELETING DESTRUCTOR, still
-// unrecovered (src/recovered/units/00402bb0.cpp, NOT_MATCHING). The old evidence
-// was recorded as follows:
+// Historical seed assertion: SUB_402BB0 was treated as this class's deleting
+// destructor (retired seed src/recovered/units/00402bb0.cpp, NOT_MATCHING).
+// Its real SpriteListBase owner is defined above. The old evidence follows:
 //   * it installs the SAME pair, 0x0066943C at the object's start and
 //     0x00669438 through the vbtable, which no other class in the image does;
 //   * it then stores 0x006693AC at +0x1C. That one is referenced 158 times

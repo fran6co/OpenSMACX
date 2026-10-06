@@ -52,7 +52,18 @@ inline const SpriteStruct *StringStructEntry::sprite_payload() const {
 
 // SpriteList owns the 0x1C ring entries and 0x20 SpriteStruct payloads. It is
 // deliberately independent of StringList, whose payload nodes are 0x18 bytes.
-class SpriteList : public StringStruct {
+// Pinned list table boundary: 0x669438 is the virtual-base deleting
+// entry; primary 0x66943C contains only on_insert (0x404250) and
+// on_remove (0x404270). The adjacent 0x669444 word starts the
+// separate SpriteStruct virtual-base table (installed by SpriteStruct
+// allocation sites 0x40267A/0x402714/0x402884/0x40291E), not a third
+// list slot. This empty-storage layer owns the list destructor stage.
+class SpriteListBase : public StringStruct {
+ public:
+  virtual ~SpriteListBase();
+};
+
+class SpriteList : public SpriteListBase {
  public:
   // StringStruct owns the inherited ring, allocator and shared virtual base.
   SpriteList();
