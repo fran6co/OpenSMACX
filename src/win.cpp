@@ -24,7 +24,6 @@
 #include "multidebug.h"
 
 typedef signed char int8;  // a scaffold spelling the artifacts use
-#include "vtable_shim.h"
 #include "scroll.h"
 #include "win.h"
 #include "imagebutton.h"
@@ -45,6 +44,9 @@ extern Buffer g_WIN_BUFFER;
 // RECOVERY_OBJECT: v1 0x009B7B6C ?MenuPullDownInputOrigin@@3HA
 // Shared state written by Menu and PullDown keyboard navigation paths.
 int MenuPullDownInputOrigin;
+
+// The Win message-status word shares the owner of its message-pump consumers.
+uint32_t MsgStatus;  // 0x009B7B9C
 // `DirectDrawCreate` (DDInit::init) is the one symbol this tree needs out of
 // ddraw.lib; it is on the CMake link line now, where dxguid already was.
 
@@ -5782,14 +5784,8 @@ struct PAINTSTRUCT_ {
 // `extern int WinRootWindows[];` and never defined it anywhere, so nothing
 // that used it could ever have linked.
 
-// Remaining legacy menu-init shim: its declaration order does not model
-// original Menu slot90. This is an unresolved menu contract, not the
-// GraphicWin link hook (now dispatched through the real hierarchy below).
-namespace { class MenuInitLegacyShim { public:
-  virtual void pad(); 
-  virtual int slot088(int, int);
-  virtual int slot090(Win *);
-}; }
+// Menu's real slot-90 contract is Menu::init(Win*), declared on Menu
+// and selected by the constructor-installed Menu table.
 
 void __cdecl flush_input();
 void __cdecl wait_task();
@@ -5855,42 +5851,6 @@ static void RestoreAndFlip(bool useHelper) {
         WinDirtyRect.right = 0;
     }
     WinFlipSprite = 0;
-}
-
-namespace {
-// SCROLL'S SLOT 25, NOT WIN'S. `scroll_vert_` is a `Scroll *`, so this
-// dispatch indexes Scroll's vtable - Win's slot map does not apply, and
-// converting it to a Win virtual would have called the wrong function
-// while compiling cleanly. It stays a shim until Scroll's vtable is
-// declared. Only declaration ORDER fixes a slot, hence the pads.
-class ScrollSlots { public:
-  virtual void pad000();
-  virtual void pad001();
-  virtual void pad002();
-  virtual void pad003();
-  virtual void pad004();
-  virtual void pad005();
-  virtual void pad006();
-  virtual void pad007();
-  virtual void pad008();
-  virtual void pad009();
-  virtual void pad010();
-  virtual void pad011();
-  virtual void pad012();
-  virtual void pad013();
-  virtual void pad014();
-  virtual void pad015();
-  virtual void pad016();
-  virtual void pad017();
-  virtual void pad018();
-  virtual void pad019();
-  virtual void pad020();
-  virtual void pad021();
-  virtual void pad022();
-  virtual void pad023();
-  virtual void pad024();
-  virtual int slot025(int, int);
-};
 }
 
 
@@ -8336,7 +8296,7 @@ int Win::init(int x, int y, int width, int height, char * caption,
     this->set_rects();
 
     if (menu != 0) {
-        int result = reinterpret_cast<MenuInitLegacyShim *>(menu)->slot090(this);
+        int result = menu->init(this);
         if (result != 0) {
             this->close();
             return result;
@@ -9179,11 +9139,11 @@ void Win::on_char(char param2, int param3) {
 
     bool handled = false;
     if (scroll_vert_ != 0 &&
-        reinterpret_cast<ScrollSlots *>(scroll_vert_)->slot025((int)param2, WinKeyModifiers) != 0) {
+        scroll_vert_->on_key_click((int)param2, WinKeyModifiers) != 0) {
         handled = true;
     }
     if (!handled && scroll_horz_ != 0 &&
-        reinterpret_cast<ScrollSlots *>(scroll_horz_)->slot025((int)param2, WinKeyModifiers) != 0) {
+        scroll_horz_->on_key_click((int)param2, WinKeyModifiers) != 0) {
         handled = true;
     }
     if (!handled) {
@@ -12837,3 +12797,196 @@ GraphicWin *Win::get_graphic_win() { return nullptr; }
 // RECOVERY_BINDING: v1 {"evidence": ["historical source:src/deleting_thunks.cpp; preserved full original span 0x005F8610-0x005F862E and BYTE_EXACT obligation.", "pinned Win constructor 0x005EB402 installs primary table 0x0066FDD0, whose slot 0 selects 0x005F8610; the owner class remains Win.", "pinned scalar body calls Win::~Win at 0x005EBC90, tests flags bit 0, skips 0x0064557F when clear, otherwise deletes, then returns the original this with ret 4.", "the prior retained owner COFF/PE snapshot emitted ??_GWin@@UAEPAXI@Z with destructor/delete relocations and its Win table selected that address; this is historical evidence only, not qualification of the current source.", "Win::~Win closes the window; the real WinNodeList member and AutoSound base provide the remaining C++ lifetime. The unused standalone helper has no remaining source caller.", "the byte-exact claim is historical and remains a restoration obligation; no current equality or whole-application acceptance is asserted."], "reason": "Bind Win's original scalar deleting identity to the compiler-generated operation of Win's genuine virtual destructor; this FILE mapping is not a source-body byte-equivalence claim."}
 // symbol    ??_GWin@@UAEPAXI@Z
 // kind game
+
+// Original global Win message-pump family; inline definitions remain in win.h.
+// ORIGINAL: 0x005FC9F0 ?do_all_tasks@@YAXPAUWin@@@Z 0x005FC9F0-0x005FCA23 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x005FC9F0-0x005FCA23", "git:7c6c86d9:src/recovered/units/005fc9f0.cpp"], "reason": "Clear the real queued-window globals before polling do_net; the independently remeasured seed is retired."}
+// symbol    ?do_all_tasks@@YAXPAVWin@@@Z
+void __cdecl do_all_tasks(Win *window) {
+    MsgStatus = 0;
+    if (window) {
+        Win *active = WinPointerOwner1 ? WinPointerOwner1 : WinPointerOwner2;
+        if (window == active) {
+            WinPointerOwner1 = 0;
+            WinPointerOwner2 = 0;
+        }
+    }
+    do_net();
+}
+
+/*
+Purpose: Process non-input related message.
+// ORIGINAL: 0x005FCA30 ?do_non_input@@YAXXZ 0x005FCA30-0x005FCB14 BYTE_EXACT
+// symbol    ?do_non_input@@YAHXZ
+// LEVER: A WRONG PROGRAM, not a wrong spelling. The three PeekMessage guards
+//        were chained with `||`: `if (!A || !B || !C) return false;`, which
+//        gives up unless ALL THREE ranges have a message waiting. The image
+//        jumps AWAY on each success (`test eax, eax; jne 0x5FCAA7`) and only
+//        falls through the third into `pop edi; add esp, 0x54; ret`, so it
+//        gives up only when NONE of them does - `&&`. 33/84 -> 81/84, and the
+//        recovered program now answers the message pump the way the image does.
+// LEVER: 0x020A spelled out, because `WM_MOUSELAST` is not one constant.
+//        winuser.h defines it 0x020A under WINVER >= 0x0400 and 0x0209
+//        otherwise, and this build takes the 0x0209 arm while the image pushes
+//        0x020A. Worth the 82nd instruction. `osmx semantic` is what found it -
+//        it names the operand pair, "push immediate 0x20a against 0x209",
+//        where `listing_diff` cannot: it masks every immediate before
+//        comparing, so a wrong constant is invisible there.
+// LEVER: init-decl order for strength-reduced loop offsets. VC6 emits the
+//        byte-offset initialisations for the min-search loop in DECLARATION
+//        ORDER: `int c = 1; int a = 0; for (; c < 3; c++)` puts `mov eax, 0x1c`
+//        (c's offset) before `xor esi, esi` (a's offset), matching the image.
+//        The old `int a = 0; for (int c = 1; ...)` had them swapped. 82/84 -> 84/84.
+// size      228 bytes
+// prototype
+// callers   12   call targets   3
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x0062D5B0 0x0062D5D0 0x00636300
+// indirect  0x005FCA6E 0x005FCA85 0x005FCA9C 0x005FCAEF 0x005FCAF6 0x005FCB01
+Return Value: Is message available? true/false
+Status: Complete - testing
+*/
+BOOL __cdecl do_non_input() {
+    do_video();
+    check_net();
+    do_net();
+    MSG msg[3];
+    for (int i = 0; i < 3; i++) {
+        msg[i].time = 0xFFFFFFFF;
+    }
+    // `&&`, NOT `||`. This tree had `if (!A || !B || !C) return false;`, which
+    // demands a message in ALL THREE ranges; the image returns false only when
+    // NONE of them has one - it jumps AWAY on each success and falls through
+    // the third test into the epilogue. A different program, not a different
+    // spelling. 33/84 -> 81/84 on the fix.
+    if (!PeekMessage(&msg[0], NULL, WM_NULL, WM_INPUT, PM_NOREMOVE)
+        && !PeekMessage(&msg[1], NULL, WM_UNICHAR, WM_KEYDOWN | WM_INPUT, PM_NOREMOVE)
+        // 0x020A, NOT `WM_MOUSELAST`. winuser.h defines that name TWICE - 0x020A
+        // when WINVER >= 0x0400, 0x0209 otherwise - and this build takes the
+        // 0x0209 arm, while the image pushes 0x020A. `osmx semantic` names the
+        // pair outright: "push immediate 0x20a against 0x209".
+        && !PeekMessage(&msg[2], NULL, 0x020A, UNICODE_NOCHAR, PM_NOREMOVE)) {
+        return false;
+    }
+    int c = 1;
+    int a = 0;
+    for (; c < 3; c++) {
+        if (msg[c].time < msg[a].time) {
+            a = c;
+        }
+    }
+    PeekMessage(&msg[0], msg[a].hwnd, msg[a].message, msg[a].message, PM_REMOVE);
+    TranslateMessage(&msg[0]);
+    DispatchMessage(&msg[0]);
+    return true;
+}
+
+/*
+Purpose: Process all non-input related messages.
+// ORIGINAL: 0x005FCB20 ?do_all_non_input@@YAXXZ 0x005FCB20-0x005FCB5A BYTE_EXACT
+// size      58 bytes
+// prototype
+// callers   27   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005FCA30 0x0062D5B0
+Return Value: n/a
+Status: Complete - testing
+*/
+// BODY IN win.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+//
+// The two lines above were prose, so `frontier.py --untouched` kept offering
+// this address as fresh. Restated as lesson lines:
+//
+// LEVER: already BYTE_EXACT 11/11 - re-measured 2026-08-22 at
+//        `/c /O2 /Gy /GR- /Oy- /GX`, unchanged. `MEASURED inline` in temp.h
+//        with the marker left in this .cpp is what makes it both reproduce
+//        and stay measurable; decomp's reader globs only *.cpp and *.c.
+// TRIED: an out-of-line `do_all_non_input_call` forwarder, the
+//        `sleep_call`/`base_cost_call` idiom, to unblock Path::continent -
+//        which this `MEASURED inline` caps because the image CALLS 0x005FCB20
+//        there. Measured and reverted in path.cpp: agreement 16/206 -> 1/206
+//        and call_diff went from MORE to FEWER, because it resolves callees by
+//        ADDRESS and a forwarder is not the address the image calls. Recorded
+//        here too so the ceiling is visible from the callee, not only from the
+//        caller that hit it.
+
+/*
+Purpose: Process draw related message.
+// ORIGINAL: 0x005FCB60 ?do_draw@@YAHXZ 0x005FCB60-0x005FCBAC BYTE_EXACT
+// size      76 bytes
+// prototype
+// callers   1   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0062D5B0 0x0062D5D0 0x00636300
+// indirect  0x005FCB7F 0x005FCB92 0x005FCB9D
+Return Value: Is message available? true/false
+Status: Complete - testing
+*/
+// BODY IN win.h, as `MEASURED inline`: do_draw is inlined by its
+// only caller and also exists standalone. The marker stays here.
+
+/*
+Purpose: Process all draw related messages.
+// ORIGINAL: 0x005FCBB0 ?do_all_draws@@YAXXZ 0x005FCBB0-0x005FCC1F BYTE_EXACT
+// size      111 bytes
+// prototype
+// callers   57   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0062D5B0 0x0062D5D0 0x00636300
+// indirect  0x005FCBEE 0x005FCBF9 0x005FCC00
+Return Value: n/a
+Status: Complete - testing
+*/
+void __cdecl do_all_draws() {
+    MsgStatus = 1;
+    while (do_draw()) {
+        MsgStatus = 1;
+    }
+    MsgStatus = 0;
+}
+
+/*
+Purpose: Process keyboard related message.
+// ORIGINAL: 0x005FCC20 ?do_keyboard@@YAXXZ 0x005FCC20-0x005FCC6D BYTE_EXACT
+// symbol    ?do_keyboard@@YAHXZ
+// size      77 bytes
+// prototype
+// callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0062D5D0 0x00636300
+// indirect  0x005FCC40 0x005FCC53 0x005FCC5E
+Return Value: Is message available? true/false
+Status: Complete - testing
+*/
+// BODY IN win.h, as `MEASURED inline`: do_keyboard is inlined by its
+// only caller and also exists standalone. The marker stays here.
+
+/*
+Purpose: Process all keyboard related messages.
+// ORIGINAL: 0x005FCC70 ?do_all_keyboard@@YAXXZ 0x005FCC70-0x005FCCE5 BYTE_EXACT
+// size      117 bytes
+// prototype
+// callers   0   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0062D5B0 0x0062D5D0 0x00636300
+// indirect  0x005FCCAF 0x005FCCBA 0x005FCCC1
+Return Value: n/a
+Status: Complete - testing
+*/
+void __cdecl do_all_keyboard() {
+    MsgStatus = 2;
+    while (do_keyboard()) {
+        MsgStatus = 2;
+    }
+    MsgStatus = 0;
+    do_net();
+}

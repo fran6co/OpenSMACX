@@ -10,6 +10,7 @@
 #include "stdafx.h"
 #include "vector.h"
 #include <math.h>
+#include <cmath>
 
 // 0x0063456A calls the CRT sqrt with a double argument. Do not substitute
 // the compiler's fsqrt intrinsic: it omits that argument-rounding boundary
@@ -214,6 +215,50 @@ void __cdecl vector_add(const float *left, const float *right, float *output) {
     output[0] = rx + left[0];
     output[1] = left[1] + right[1];
     output[2] = left[2] + right[2];
+}
+
+// Historical source note: original x87 subtracts each pair and rounds only at the float store.
+// ORIGINAL: 0x00628180 sub_628180 0x00628180-0x006281A5 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence":["pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: complete original body 00628180 is a cdecl three-float vector operation; see its preserved ORIGINAL span and instruction claim","prior transitional source spelling ?leaf_00628180_redirect@@YAXPBM0PAM@Z is retained here as history only, not asserted as an original debug symbol","pinned direct E8 callsites span vehicle setup/drawing and Caviar projection; source counterparts pass float[3]/VOX_Vect::values buffers rather than Vector objects","src/vector.cpp already owns 0x00628150 vector_add with the same cdecl float-array shape; this is module co-location, not a claim of original TU or historical source name","the selected body keeps component/store order and existing overlap behavior; the scale locals preserve source-before-store aliasing; the length expression retains the original extended-precision accumulation order"],"reason":"Rehome the mapped free Vec3 operation into the existing vector-array module. The operation-derived API name does not assert an original class or source spelling; this binding records current ownership evidence only."}
+// symbol    ?vec3_subtract@@YAXPBM0PAM@Z
+// kind      game
+void __cdecl vec3_subtract(const float *left, const float *right,
+                             float *result) {
+    result[0] = left[0] - right[0];
+    result[1] = left[1] - right[1];
+    result[2] = left[2] - right[2];
+}
+
+// Historical source note: bind each source component before its multiply; this preserves
+// source-before-store behavior when result aliases source and retains the original operand scheduling.
+// ORIGINAL: 0x006281B0 sub_6281b0 0x006281B0-0x006281D5 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence":["pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: complete original body 006281B0 is a cdecl three-float vector operation; see its preserved ORIGINAL span and instruction claim","prior transitional source spelling ?leaf_006281b0_redirect@@YAXPBMMPAM@Z is retained here as history only, not asserted as an original debug symbol","pinned direct E8 callsites span vehicle setup/drawing and Caviar projection; source counterparts pass float[3]/VOX_Vect::values buffers rather than Vector objects","src/vector.cpp already owns 0x00628150 vector_add with the same cdecl float-array shape; this is module co-location, not a claim of original TU or historical source name","the selected body keeps component/store order and existing overlap behavior; the scale locals preserve source-before-store aliasing; the length expression retains the original extended-precision accumulation order"],"reason":"Rehome the mapped free Vec3 operation into the existing vector-array module. The operation-derived API name does not assert an original class or source spelling; this binding records current ownership evidence only."}
+// symbol    ?vec3_scale@@YAXPBMMPAM@Z
+// kind      game
+void __cdecl vec3_scale(const float *source, float scale,
+                         float *result) {
+    const float x = source[0];
+    result[0] = x * scale;
+    const float y = source[1];
+    result[1] = y * scale;
+    const float z = source[2];
+    result[2] = z * scale;
+}
+
+// Historical body note: the original stores y/z scratch slots before reloading them;
+// the LEVER annotation below retains the measured register/spill exploration.
+// ORIGINAL: 0x006281E0 sub_6281e0 0x006281E0-0x00628217
+// RECOVERY_BINDING: v1 {"evidence":["pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: complete original body 006281E0 is a cdecl three-float vector operation; see its preserved ORIGINAL span and instruction claim","prior transitional source spelling ?leaf_006281e0_redirect@@YAMPBM@Z is retained here as history only, not asserted as an original debug symbol","pinned direct E8 callsites span vehicle setup/drawing and Caviar projection; source counterparts pass float[3]/VOX_Vect::values buffers rather than Vector objects","src/vector.cpp already owns 0x00628150 vector_add with the same cdecl float-array shape; this is module co-location, not a claim of original TU or historical source name","the selected body keeps component/store order and existing overlap behavior; the scale locals preserve source-before-store aliasing; the length expression retains the original extended-precision accumulation order"],"reason":"Rehome the mapped free Vec3 operation into the existing vector-array module. The operation-derived API name does not assert an original class or source spelling; this binding records current ownership evidence only."}
+// symbol    ?vec3_length@@YAMPBM@Z
+// kind      game
+// LEVER: NAMED LOCALS FOR y AND z, rather than `vector[1]`/`vector[2]` read twice each: the image loads both as raw ints into ecx/edx and writes them to a two-slot scratch on the stack (reusing the argument's own slot, since __cdecl leaves it dead once the pointer is in eax) before reloading each from memory for its square - a local-variable spill, not a re-read through the pointer. `vector[1]`/`vector[2]` written out scored 0/21; these two locals reach 7/21 (0.818), the ceiling found - the two scratch SLOTS still land swapped ([esp]/[esp+8]) no matter which of y/z is declared or summed first (measured, six spellings).
+float __cdecl vec3_length(const float *vector) {
+    const float y = vector[1];
+    const float z = vector[2];
+    const long double sum = static_cast<long double>(y) * y
+                          + static_cast<long double>(z) * z
+                          + static_cast<long double>(vector[0]) * vector[0];
+    return static_cast<float>(std::sqrt(sum));
 }
 
 // ORIGINAL: 0x00634650 sub_634650 0x00634650-0x0063466B BYTE_EXACT

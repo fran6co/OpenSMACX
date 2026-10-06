@@ -1308,3 +1308,58 @@ void __cdecl win_forward_mouse_move(HWND hwnd, int x, int y, unsigned int keys);
 int __cdecl win_forward_set_cursor(HWND hwnd, void *cursor, unsigned int hit, unsigned int message);
 void __cdecl win_window_moved(HWND hwnd, int x, int y);
 int __cdecl win_window_nc_paint(HWND hwnd);
+
+
+// Win message-pump API and state. Original mappings and historical lessons are in win.cpp.
+/*
+ * AN OBJECT, NOT A `uint32_t *` TO A FIXED ADDRESS. The pointer form costs a
+ * load the image does not perform: `MsgStatus |= 0x3F` is
+ * `mov ecx, [0x9b7b9c]` in the image and `mov eax, [MsgStatus]` followed by
+ * `mov ecx, [eax]` through a pointer, which is what held `flush_timer` at
+ * 4 of 44 instructions. It also cannot work outside the shipped image - the
+ * address is in terranx.exe's data, unmapped in a standalone build, so every
+ * use through it is a wild pointer.
+ */
+extern uint32_t MsgStatus;  // 0x009B7B9C
+void __cdecl do_all_tasks(Win *window);
+BOOL __cdecl do_non_input();
+void __cdecl do_all_draws();
+void __cdecl do_all_keyboard();
+void __cdecl do_video();
+void __cdecl check_net();
+void __cdecl do_net();
+
+MEASURED inline BOOL __cdecl do_draw() {
+    do_video();
+    check_net();
+    do_net();
+    MSG msg;
+    if (!PeekMessage(&msg, NULL, WM_PAINT, WM_PAINT, WM_CREATE)) {
+        return false;
+    }
+    TranslateMessage(&msg);
+    DispatchMessage(&msg);
+    return true;
+}
+
+MEASURED inline BOOL __cdecl do_keyboard() {
+    do_video();
+    check_net();
+    MSG msg;
+    if (!PeekMessage(&msg, NULL, WM_KEYDOWN, WM_KEYLAST, WM_CREATE)) {
+        return false;
+    }
+    TranslateMessage(&msg);
+    DispatchMessage(&msg);
+    return true;
+}
+
+MEASURED inline void __cdecl do_all_non_input() {
+    MsgStatus = 32;
+    while (do_non_input()) {
+        MsgStatus = 32;
+    }
+    MsgStatus = 0;
+    do_net();
+    check_net();
+}

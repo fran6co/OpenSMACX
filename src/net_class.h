@@ -30,6 +30,10 @@ struct IDirectPlay2;
 
 #include "voice.h"
 
+// Free polling entry points consumed by the Win message pump.
+void __cdecl do_net();
+void __cdecl check_net();
+
 // Original 0x00633180 allocates 0x60 bytes, constructs VoiceRx at +0, then
 // publishes primary table 0x670F48 and virtual-base table 0x670FE0. The latter
 // gives StringAllocationBase at +0x58. This models the observed wrapper as a
@@ -442,6 +446,15 @@ class Net {
   // 0x006309C0, homed into net_class.cpp: the sibling sender on the second
   // reader of the same queue.
   int sub_6309c0(int first, int second);
+  // The timeout readers operate on the embedded middle FIFO. The head form
+  // writes the key out; the keyed form uses the supplied key and signed size.
+  void *read_queue_head_until_timeout(unsigned int *key_out, unsigned int *length_out);
+  void *read_queue_key_until_timeout(unsigned int *key, int *length_out);
+  // DirectPlay receive pump and its source-owned player/session companions.
+  void receive_directplay_messages(int player_id);
+  void broadcast_player_table();
+  int set_player_host_flag(int is_host);
+  int check_message(unsigned long player, unsigned long stamp);
   // 0x00630080: typed payload sender owns queueing and peer retries.
   int send(void *data, int data_size, unsigned long target, int flags);
   // 0x00630C80. The DirectPlay player-callback body: appends one NetPlayer

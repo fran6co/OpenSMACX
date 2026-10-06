@@ -3455,13 +3455,8 @@ void Console::editor_load() {
     ConsoleInfoWin.on_redraw();
 }
 
-// Fixed-slot bindings carried from 004e0fd0.cpp
-
-class VCall { public:
-    virtual void slot000();
-    virtual void slot001(int);  // <-- used, called with arg 0
-    virtual void slot002();     // <-- used, called with no args
-};
+// MainInterface owns the concrete third FlatButton selected by the
+// original constructor's 42-element member-array initialization.
 
 // ORIGINAL: 0x004E0FD0 ?editor_generate@Console@@QAEXXZ 0x004E0FD0-0x004E10BC FILE
 // size      236 bytes
@@ -4535,10 +4530,9 @@ void Console::editor_flat() {
 // veh_count is map.cpp's MapArea (0x00949884), veh_array is map.h's
 // map_tiles() (0x0094A30C), editor_undo_a/b are VehCurrentCount
 // (0x009A64C8) and BaseCurrentCount (0x009A64CC), and editor_flag_a/b are
-// console.cpp's own CursorVehActive (0x00939288) and CursorVehIndex
-// (0x0093928C). 0x007B0CB8 is the same singleton editor_generate dispatches
-// through, so the body reuses console.cpp's file-scope VCall shim rather
-// than carrying a second copy of it.
+// Historical note, corrected: the pinned MainInterface constructor at
+// 0x0045EF10 builds 42 FlatButtons at +0xE00 with stride 0xB4C; the
+// receiver at 0x007B0CB8 is element 2 of MainInterfaceGlobal.flat_button_.
 // LEVER: the loop bound is `static_cast<int>(MapArea)` and not MapArea
 // itself. MapArea is uint32_t (map.h) and the emitter's `veh_count` was
 // int, so the plain spelling compiled `jbe` against the image's `jl` -
@@ -4565,9 +4559,9 @@ void Console::editor_fast() {
     }
     unsigned char al = *reinterpret_cast<unsigned char *>(&GameDataStateStorage.fields_.game_state_);
     if ((al & 0x80) != 0 && (al & 0x40) != 0) {
-        reinterpret_cast<VCall *>(0x007B0CB8)->slot001(0);
+        MainInterfaceGlobal.flat_button_[2].show(0);
     } else {
-        reinterpret_cast<VCall *>(0x007B0CB8)->slot002();
+        MainInterfaceGlobal.flat_button_[2].hide();
     }
     ::draw_map(1);
 }

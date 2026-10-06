@@ -19,7 +19,6 @@
 #include "stringstruct.h"
 #include "strings.h"    // StringTemp
 #include "vector.h"     // vector_add - the engine's geometry accumulator
-#include "leaf_recoveries.h"  // leaf_006281b0_redirect, 0x006281B0 - the engine's scale
 
 #include <io.h>        // _read/_write/_lseek/_tell - the vx_* IO shims
 #include <new>
@@ -3422,7 +3421,7 @@ float __cdecl vox_stage_scene(
     }
 
     float camera_relative_scene[3];
-    leaf_00628180_redirect(context->state_.scene_offset_.values,
+    vec3_subtract(context->state_.scene_offset_.values,
                            camera->camera_.position.values,
                            camera_relative_scene);
     vox_matrix_vector_mul(camera->camera_.rotation.values,
@@ -3539,7 +3538,7 @@ float __cdecl vox_stage_scene(
         scratch.shadow_centre_.values[2] += context->field_78_;
 
         float shadow_relative[3];
-        leaf_00628180_redirect(scratch.shadow_centre_.values,
+        vec3_subtract(scratch.shadow_centre_.values,
                                camera->camera_.position.values,
                                shadow_relative);
         vox_matrix_vector_mul(camera->camera_.rotation.values, shadow_relative,
@@ -4017,7 +4016,7 @@ void __cdecl vox_direction_to_octant(const VoxRenderRecord *render_record) {
     float unit[3];
     float scaled[3];
     vox_normalise_vector(vector, unit);
-    leaf_006281b0_redirect(unit, CaviarProjectionDirectionScale, scaled);
+    vec3_scale(unit, CaviarProjectionDirectionScale, scaled);
 
     // The original tests x87 C0: unordered follows the below branch too.
     const float add_x = unit[0] >= CaviarProjectionRoundThreshold
@@ -4088,7 +4087,7 @@ void __cdecl vox_inverse_direction_to_octant(const VOX_Matrix *source) {
     float unit[3];
     float scaled[3];
     vox_normalise_vector(vector, unit);
-    leaf_006281b0_redirect(unit, CaviarProjectionDirectionScale, scaled);
+    vec3_scale(unit, CaviarProjectionDirectionScale, scaled);
 
     // The original tests x87 C0: unordered follows the below branch too.
     const float add_x = unit[0] >= CaviarProjectionRoundThreshold
@@ -5035,7 +5034,7 @@ void __cdecl vox_transform_camera(VoxSceneState *state, int step,
         vox_matrix_vector_mul(state->scene_rotation_.values,
                               instance.instance_vector_[step].values,
                               rotated.values);
-        leaf_006281b0_redirect(rotated.values, state->scale_, scaled.values);
+        vec3_scale(rotated.values, state->scale_, scaled.values);
         vector_add(scaled.values, state->scene_offset_.values, centre.values);
 
         // The part's rotation is the scene rotation times the instance's own.

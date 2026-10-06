@@ -19,7 +19,7 @@
         "explicit base construct/destroy": 1,
         "placement new on a subobject": 1,
         "hand-walked vbtable": 0,
-        "VCall shim": 5,
+        "VCall shim": 1,
         "ORIGINAL() vtable-slot dispatch": 0,
         "ORIGINAL() named-pointer seam": 72,
         "vtable-as-member": 3,
@@ -29,7 +29,7 @@
         "anonymous fixed-address global": 0,
         "adjustor_thunks.cpp markers": 42,
         "field_accessors.cpp markers": 16,
-        "leaf_recoveries.cpp markers": 112,
+        "leaf_recoveries.cpp markers": 103,
         "nullsub_thunks.cpp markers": 46,
         "hypothesis_layouts.h lines": 1610,
         "stringstruct.cpp markers": 41

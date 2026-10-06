@@ -81,3 +81,6 @@ static_assert(sizeof(Vector) == 0xC, "Vector layout must match the legacy ABI");
 // Three-component voxel array addition, not a gameplay Vector lifetime.
 // Inputs are reloaded between stores, preserving overlapping-array behavior.
 void __cdecl vector_add(const float *left, const float *right, float *output);
+void __cdecl vec3_subtract(const float *left, const float *right, float *result);
+void __cdecl vec3_scale(const float *source, float scale, float *result);
+float __cdecl vec3_length(const float *vector);

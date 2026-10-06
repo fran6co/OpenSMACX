@@ -2592,12 +2592,12 @@ void __cdecl vehdraw_scoot_start(int veh_id, int direction, int steps, int flags
         }
     }
     vox_normalise_vector(midpoint.values, midpoint.values);
-    leaf_00628180_redirect(midpoint.values, start.values, VehDrawScootFirstIncrement.values);
-    leaf_00628180_redirect(end.values, midpoint.values, VehDrawScootSecondIncrement.values);
+    vec3_subtract(midpoint.values, start.values, VehDrawScootFirstIncrement.values);
+    vec3_subtract(end.values, midpoint.values, VehDrawScootSecondIncrement.values);
     const int half = steps >> 1;
-    leaf_006281b0_redirect(VehDrawScootFirstIncrement.values, 1.0f / half,
+    vec3_scale(VehDrawScootFirstIncrement.values, 1.0f / half,
                           VehDrawScootFirstIncrement.values);
-    leaf_006281b0_redirect(VehDrawScootSecondIncrement.values, 1.0f / (steps - half),
+    vec3_scale(VehDrawScootSecondIncrement.values, 1.0f / (steps - half),
                           VehDrawScootSecondIncrement.values);
     VehDrawScootNormalStart = start;
     VehDrawScootNormalMid = midpoint;
@@ -2620,7 +2620,7 @@ void __cdecl vehdraw_scoot(Buffer *buffer, int x, int y, int frame, int zoom) {
         base = VehDrawScootNormalStart;
         increment = VehDrawScootFirstIncrement;
     }
-    leaf_006281b0_redirect(increment.values, (float)frame, increment.values);
+    vec3_scale(increment.values, (float)frame, increment.values);
     vector_add(increment.values, base.values, normal.values);
     vox_normalise_vector(normal.values, normal.values);
     VOX_Matrix camera, inverse;
@@ -2930,7 +2930,7 @@ void __cdecl compute_camera(VOX_Vect *normal, VOX_Matrix *matrix) {
     caviar_apply_rotation(angles.values, &first_rotation);
 
     VOX_Vect projected = {{rotated.values[0], rotated.values[1], 0.0f}};
-    float length = leaf_006281e0_redirect(projected.values);
+    float length = vec3_length(projected.values);
     if (length == 0.0f || length != length) {
         angles.values[2] = 0.0f;
     } else if (rotated.values[2] == 0.0f || rotated.values[2] != rotated.values[2]) {

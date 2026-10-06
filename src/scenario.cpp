@@ -13,6 +13,7 @@
 #include "alpha.h"
 #include "game.h"
 #include "map.h"
+#include "maininterface.h"
 #include "temp.h"
 #include "veh.h"
 
@@ -27,37 +28,11 @@ namespace {
 static const uintptr_t TopMenuAddress = 0x0058E360;
 static const uintptr_t OpeningMovieAddress = 0x00403BE0;
 static const uintptr_t LoadFlagsAddress = 0x00453F70;
-// 0x007B0CB8 is an interface object, but it is NOT the MainInterface: the
-// desktop MainInterface is MainInterfaceGlobal at 0x007AE820 (mapwin.h), and
-// 0x7B0CB8 sits inside no part of it. Every image site that reaches it does
-// the same three things - `mov eax, [0x7b0cb8]` for the vftable,
-// `mov ecx, 0x7b0cb8` for the receiver, then a call through slot 1 or slot 2 -
-// and the same sites first read ActiveInterfaceId (0x007D392C) and the
-// id-to-slot map (0x007AE778) and skip the call when a slot is already taken,
-// which is the interface-registry guard maininterface.cpp's own handlers use.
-// So this is a second interface object under the same registry, one whose
-// slot 1 takes a single int and whose slot 2 is nullary, and the class that
-// owns it is still unidentified: no `mov dword ptr [0x7b0cb8], imm` store
-// exists in .text, so its constructor installs the vftable through a
-// register.
-//
-// THE ADDRESS IS UNREACHABLE TO ANY CONSTRUCTOR, measured 2026-09-05 by
-// scanning every section of the shipped image for the four bytes B8 0C 7B 00.
-// .text holds 32, and every one is one of the NINE dispatch sites (0x4D9A46,
-// 0x4DF7DC, 0x4E109C, 0x4E115F, 0x5186CC, 0x51C296, 0x51CEAA, 0x5A9A81,
-// 0x5AADFE) in the forms `b9 b8 0c 7b 00` (mov ecx, imm),
-// `a1 b8 0c 7b 00` (mov eax, [imm]) and `8b 15 b8 0c 7b 00` (mov edx, [imm])
-// - all READS. There is no `89 05`/`89 0d`/`89 15`/`a3` store to the dword and
-// no `b8 b8 0c 7b 00` that would put the address in a register to store
-// through, and _SELFMOD/.rdata/.data hold it not at all. 0x7B0CB8 is past
-// .data's raw data (which ends at 0x6A8000), so it is zero-initialised BSS:
-// the nine sites read a null vftable pointer. 0x51BC1B does `or dword ptr
-// [0x9A64C0], 0xE0`, which is the guard - `test byte [0x9A64C0], 0x80` and
-// `, 0x40` - opening, so the shipped game either never reaches one of these
-// nine sites or faults there. There is therefore no class to model: do not
-// name one from the two slots. Named for what the harness does with it rather
-// than for a class the image has not given us.
-static const uintptr_t InterfaceSingletonAddress = 0x007B0CB8;
+// Historical finding (superseded): the 2026-09-05 absolute-reference
+// scan missed MainInterface's array constructor because it searched for an
+// immediate-address vptr store. Pinned constructor 0x0045EF10 builds the
+// 42-element FlatButton member array at this+0xE00, stride 0xB4C; element
+// 2 is 0x007B0CB8. Keep the same object's behavior through that owner.
 static const uintptr_t ActionGoToAddress = 0x004CB310;
 static const uintptr_t TurnUpkeepCallerReturn = 0x0052768F;
 // The turn-loop exit flag and the turn phase are named globals now - see
@@ -68,7 +43,6 @@ static const uintptr_t TurnUpkeepCallerReturn = 0x0052768F;
 typedef int (__cdecl *TopMenuFunction)(int);
 typedef void (__cdecl *OpeningMovieFunction)(char *);
 typedef void (__cdecl *LoadFlagsFunction)();
-typedef void (__fastcall *InterfaceRefreshFunction)(void *, void *);
 typedef void (__cdecl *ActionGoToFunction)(int);
 
 TopMenuFunction OriginalTopMenu = reinterpret_cast<TopMenuFunction>(TopMenuAddress);
@@ -207,15 +181,8 @@ void refresh_loaded_game() {
     LoadFlags();
     GameDataStateStorage.fields_.game_state_ &= 0xF79FCF16;
 
-    void *object = reinterpret_cast<void *>(InterfaceSingletonAddress);
-    uintptr_t *vtable = *reinterpret_cast<uintptr_t **>(object);
-    // vftable slot 2 of the interface object - the image's
-    // `mov eax,[0x7b0cb8] / mov ecx,0x7b0cb8 / call dword ptr [eax+8]`, the
-    // same refresh the console's own guard dispatches when no other
-    // interface holds the registry slot.
-    InterfaceRefreshFunction refresh =
-        reinterpret_cast<InterfaceRefreshFunction>(vtable[2]);
-    refresh(object, nullptr);
+    // Original slot 2 on this selected FlatButton view is its hide action.
+    MainInterfaceGlobal.flat_button_[2].hide();
     prefs_use();
 }
 

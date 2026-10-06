@@ -1677,6 +1677,11 @@ int ListBox::update_changes() {
     {
         Win *target = *reinterpret_cast<Win **>(gw_base + 0xC4);
         if (target != 0) {
+            // The pinned child sequence is slot 23 (nullary int result),
+            // then slot 7 (nullary side effect). This does not match Win's
+            // declared slot-23 coordinate callback, and no physical owner
+            // view proves Sound or another typed receiver here; retain the
+            // distinct unresolved view instead of guessing its class.
             Win *child = *reinterpret_cast<Win **>(
                 reinterpret_cast<char *>(target) + 0x90);
             if (child != 0) {
@@ -1690,7 +1695,7 @@ int ListBox::update_changes() {
     }
 
     if (was_visible != 0) {
-        reinterpret_cast<VCall *>(gw_base)->slot062();
+        static_cast<GraphicWin *>(this)->redraw();
     }
 
     return 0;

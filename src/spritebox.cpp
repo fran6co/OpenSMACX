@@ -47,7 +47,6 @@
 #include "spritebox.h"
 #include "temp.h" // HandleMain
 #include "dialog.h"
-#include "vtable_shim.h"
 #include "sounddevice.h"
 #include "menu.h"
 #include "win.h"

@@ -98,7 +98,6 @@
 #include "main.h"  // PopupAllocHook
 #include "font.h"
 
-extern "C" void __fastcall sub_62d5f0(void *self, void *unused);
 
 // The lobby probe's DirectPlay types and import. The image really does import
 // DirectPlayLobbyCreateA from DPLAYX.DLL, so the link input belongs beside the
@@ -2608,6 +2607,264 @@ int Net::sub_6309c0(int first, int second) {
   return got != 0 ? reinterpret_cast<int>(NetGetScratch) : 0;
 }
 
+
+
+// Recovered Net receive/player operations; original stack receivers are Net.
+/*
+Purpose: Read one packet off Net's middle queue, retrying until something
+         arrives or the receive timeout at Net+0x6FC expires.
+
+         The queue is the NetFifo at Net+0x10C; each attempt reads into the
+         shared NetGetScratch buffer and answers that buffer's address on
+         success, zero on timeout.
+
+// ORIGINAL: 0x00630A80 sub_630a80 0x00630A80-0x00630AFC
+// symbol    ?read_queue_head_until_timeout@Net@@QAEPAXPAI0@Z
+// TRIED: original spills its cached timeGetTime() start value into the (now-unused) first stack argument slot instead of a fresh local; not reproduced.
+// Historical emitted-symbol hint: @sub_630a80@16
+// size      124 bytes
+// prototype
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00633F70
+// indirect  0x00630A9D 0x00630AA5 0x00630AD1
+Return Value: NetGetScratch when a packet was read, zero otherwise
+Status: Complete
+*/
+void *Net::read_queue_head_until_timeout(unsigned int *key_out, unsigned int *length_out) {
+    if (NetDirectPlay == 0 || key_out == 0) {
+        return 0;
+    }
+    const DWORD start = timeGetTime();
+    DWORD now = timeGetTime();
+    if (now - start >= field_6FC_) {
+        return 0;
+    }
+    do {
+        if (queue_10c_.get(NetGetScratch, key_out, 0, length_out) != 0) {
+            return NetGetScratch;
+        }
+        now = timeGetTime();
+    } while (now - start < field_6FC_);
+    return 0;
+}
+
+/*
+Purpose: The sender's twin of sub_630a80: wait on the same queue for the
+         NEXT reader, using the signed-length get overload, until the
+         timeout at Net+0x6FC expires.
+
+// ORIGINAL: 0x00630B00 sub_630b00 0x00630B00-0x00630B7C
+// symbol    ?read_queue_key_until_timeout@Net@@QAEPAXPAIPAH@Z
+// TRIED: kept the contract's __stdcall(int,int) head question open - the disasm sets ebx = ecx on entry, so it is really this receiver.
+// Historical emitted-symbol hint: @sub_630b00@16
+// size      124 bytes
+// prototype
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00633D90
+// indirect  0x00630B1D 0x00630B25 0x00630B51
+Return Value: NetGetScratch when a packet was read, zero otherwise
+Status: Complete
+*/
+void *Net::read_queue_key_until_timeout(unsigned int *key, int *length_out) {
+    if (NetDirectPlay != 0 && key != 0) {
+        const DWORD start = timeGetTime();
+        DWORD now = timeGetTime();
+        if (now - start < field_6FC_) {
+            do {
+                if (queue_10c_.get(NetGetScratch, key, 0, length_out) != 0) {
+                    return NetGetScratch;
+                }
+                now = timeGetTime();
+            } while (now - start < field_6FC_);
+        }
+    }
+    return 0;
+}
+
+/*
+Purpose: Pump DirectPlay receives until one fails: the reader loop the
+         receive thread lives in, dispatching through
+         IDirectPlay2::Receive on the shared interface.
+
+         The flag argument selects 6 when the player id is non-zero and 3
+         when it is not; the size slot starts from Net+0x6E4's capacity
+         and is handed by address so the callee can shrink it.
+
+// ORIGINAL: 0x00630B80 sub_630b80 0x00630B80-0x00630BE3
+// symbol    ?receive_directplay_messages@Net@@QAEXH@Z
+// Historical emitted-symbol hint: @sub_630b80@12
+// size      99 bytes
+// prototype
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x00630BD4
+Return Value: n/a
+Status: Complete
+*/
+void Net::receive_directplay_messages(int player_id) {
+    if (NetDirectPlay != 0) {
+        int working_id;
+        HRESULT result;
+        do {
+            // The native loop restores the input player id before each call,
+            // even though Receive writes through this same local.
+            working_id = player_id;
+            DPID counterpart = field_760_;
+            DWORD size = field_6E4_;
+            const DWORD flags = (player_id != 0) ? 6 : 3;
+            result = NetDirectPlay->Receive(
+                reinterpret_cast<LPDPID>(&working_id), &counterpart,
+                flags, NetGetScratch, &size);
+        } while (result == 0);
+    }
+}
+
+/*
+Purpose: Flush Net's whole player table as one packet: when the table's two
+         bounds coincide, pack every player record (id, name, flags) into a
+         0x2C-stride array prefixed with the count and hand it to
+         Net::send_packet_type as a 0x10 broadcast.
+
+         The sixteen 0x58-byte NetPlayer records begin at Net+0x154; the
+         walk reads each record's first word, its name at +0x15 and its
+         flags byte at +0x14, exactly as the player record is laid out.
+
+// ORIGINAL: 0x0062D5F0 sub_62d5f0 0x0062D5F0-0x0062D69D
+// symbol    ?broadcast_player_table@Net@@QAEXXZ
+// TRIED: calling strcat by name inlines it (repne scasb), which the original does not; the pointer-cast call site was a byte-convergence lever, dropped for this coverage landing.
+// Historical emitted-symbol hint: @sub_62d5f0@8
+// size      173 bytes
+// prototype
+// callers   1   call targets   4
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4510 0x0062F8A0 0x00644EF2 0x00645470
+Return Value: n/a
+Status: Complete
+*/
+void Net::broadcast_player_table() {
+    if (field_760_ == field_764_) {
+        const int count = static_cast<int>(field_6DC_);
+        if (count != 0) {
+            const unsigned int size = static_cast<unsigned int>(count) * 0x2C + 4;
+            unsigned char *const packet = static_cast<unsigned char *>(mem_get(static_cast<int>(size)));
+            *packet = static_cast<unsigned char>(count);
+            if (count > 0) {
+                unsigned char *entry = packet + 8;
+                NetPlayer *player = players_;
+                int remaining = count;
+                do {
+                    *reinterpret_cast<uint32_t *>(entry - 4) = player->field_0_;
+                    *entry = 0;
+                    player->name_and_tail_[0x1F] = 0;
+                    strcat(reinterpret_cast<char *>(entry), player->name_and_tail_);
+                    const unsigned char flags = player->flags_14_;
+                    ++player;
+                    *reinterpret_cast<unsigned int *>(entry + 0x20) = flags;
+                    entry += 0x28;
+                    --remaining;
+                } while (remaining != 0);
+            }
+            send_packet_type(packet, static_cast<int>(size), 0, 0x10, 1);
+            if (packet != 0) {
+                free(packet);
+            }
+        }
+    }
+}
+
+/*
+Purpose: Set or clear a player's "host" flag through DirectPlay: read the
+         current per-player data word with IDirectPlay2::GetPlayerData,
+         flip bit 1 according to the argument, and write it back.
+
+         The original uses slot 0x74 after a successful GetPlayerData, passing
+         the player id, one-byte value, size 1 and flags 2. This owner
+         expresses the observed call through the typed DirectPlay API;
+         its HRESULT becomes the method result; a failed get is
+         returned unchanged and suppresses the set call.
+
+// ORIGINAL: 0x00632290 sub_632290 0x00632290-0x006322FC
+// symbol    ?set_player_host_flag@Net@@QAEHH@Z
+// Historical emitted-symbol hint: @sub_632290@12
+// size      108 bytes
+// prototype
+// callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
+// indirect  0x006322BD 0x006322F2
+Return Value: the DirectPlay GetPlayerData failure or SetPlayerData result; 0 when DirectPlay is absent
+Status: Complete
+*/
+int Net::set_player_host_flag(int is_host) {
+    int result = 0;
+    if (NetDirectPlay != 0) {
+        const DPID player = field_760_;
+        unsigned char data = 0;
+        DWORD size = 1;
+        result = NetDirectPlay->GetPlayerData(player, &data, &size, 0);
+        if (result == 0) {
+            if (is_host != 0) {
+                data = static_cast<unsigned char>(data | 2);
+            } else {
+                data = static_cast<unsigned char>(data & 0xFD);
+            }
+            result = NetDirectPlay->SetPlayerData(field_760_, &data, 1, 2);
+        }
+    }
+    return result;
+}
+
+/*
+Purpose: Net::check_message - remember a player's message stamp, answering
+         whether the stamp moved. The dead null-receiver branch keeps the
+         MessageBox the original would show if the player table could ever
+         be null.
+
+// ORIGINAL: 0x00632FA0 ?check_message@Net@@QAEHKK@Z 0x00632FA0-0x00633007
+// symbol    ?check_message@Net@@QAEHKK@Z
+// TRIED: do-while loop form (same #21 jne/je divergence); reordering the i==0x10 branch did not change it.
+// Historical emitted-symbol hint: ?net_check_message_redirect@@YIHPAX0KK@Z
+// size      103 bytes
+// prototype int (__thiscall ?check_message@Net@@QAEHKK@Z)(Net* this, unsigned int, unsigned int)
+// callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
+// indirect  0x00632FB6
+Return Value: 1 when the stamp already covers this message (or the table is
+              null), 0 when the stamp advanced
+Status: Complete
+*/
+int Net::check_message(unsigned long player, unsigned long stamp) {
+    NetPlayer *record = &players_[0];
+    if (record == 0) {
+        MessageBoxA(nullptr, "Help in net!!", "NO message_stamp!", 0);
+        return 1;
+    }
+    int slot;
+    for (slot = 0; slot < 0x10; ++slot, ++record) {
+        if (record->field_0_ == player) {
+            break;
+        }
+    }
+    if (slot == 0x10) {
+        return 0;
+    }
+    if (stamp <= record->stamp_10_) {
+        return 1;
+    }
+    record->stamp_10_ = stamp;
+    return 0;
+}
+
 // ORIGINAL: 0x00632300 ?set_polling@Net@@QAEXH@Z 0x00632300-0x0063234F BYTE_EXACT
 // size      80 bytes
 // prototype void (__thiscall ?set_polling@Net@@QAEHH@Z)(Net* this, int)
@@ -2737,7 +2994,7 @@ int Net::sub_632cc0(char *text, int id, unsigned char flag) {
     if ((flag & 1) != 0) field_764_ = static_cast<uint32_t>(id);
 
     ++field_6DC_;
-    if (field_760_ == field_764_) sub_62d5f0(this, 0);
+    if (field_760_ == field_764_) broadcast_player_table();
     on_player_added(player.name_and_tail_, player.field_0_);
     jackal_voice_rx_.add_player(id);
 

@@ -48,6 +48,12 @@ def run_host(tmp_path,source):
         std::vector<void*> allocations;
         int closes;
         void *mem_get(size_t n) {void *p=std::malloc(n);if(!p)std::abort();allocations.push_back(p);return p;}
+        // Fixture-only dependency for the actual Caviar bodies below. The
+        // production header declares this constructor and caviar.cpp owns
+        // its definition; initialize its three pointer fields like that
+        // owner, without substituting any production behavior under test.
+        VoxInstance::VoxInstance()
+            : instance_colour_(0), instance_vector_(0), instance_matrix_(0) {}
         Caviar::Caviar() {}
         void Caviar::close() {++closes;}
         NORMALISE

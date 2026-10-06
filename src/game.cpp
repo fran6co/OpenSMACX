@@ -70,6 +70,7 @@
 #include "filemap.h"
 #include "palette.h"
 #include "caviar.h"
+#include "vector.h"  // free three-float operations
 #include "leaf_recoveries.h"
 #include "newtechwin.h"  // Existing technology-popup sprite assets.
 #include "infowin.h"  // Shared faction text/shadow colors.
@@ -531,7 +532,7 @@ void __cdecl load_voxels() {
             VehGunMountOffset.values[2] = 0.0f;
         } else if (record->step_count_ == 2) {
             const VOX_Vect *vectors = record->parts_[0].vectors_;
-            leaf_00628180_redirect(vectors[1].values, vectors[0].values, VehGunMountOffset.values);
+            vec3_subtract(vectors[1].values, vectors[0].values, VehGunMountOffset.values);
         }
     }
     scratch.close();
@@ -546,7 +547,7 @@ void __cdecl load_voxels() {
             VehDropOffset.values[2] = 0.0f;
         } else if (record->step_count_ == 2) {
             const VOX_Vect *vectors = record->parts_[0].vectors_;
-            leaf_00628180_redirect(vectors[1].values, vectors[0].values, VehDropOffset.values);
+            vec3_subtract(vectors[1].values, vectors[0].values, VehDropOffset.values);
         }
     }
     scratch.close();
@@ -575,7 +576,7 @@ void __cdecl load_voxels() {
             VehHoverGunOffset.values[2] = 0.0f;
         } else if (record->step_count_ == 2) {
             const VOX_Vect *vectors = record->parts_[0].vectors_;
-            leaf_00628180_redirect(vectors[1].values, vectors[0].values, VehHoverGunOffset.values);
+            vec3_subtract(vectors[1].values, vectors[0].values, VehHoverGunOffset.values);
         }
     }
     scratch.init("AVHT-LightsReposition.cvr");
@@ -587,7 +588,7 @@ void __cdecl load_voxels() {
             VehHoverLightsOffset.values[2] = 0.0f;
         } else if (record->step_count_ == 2) {
             const VOX_Vect *vectors = record->parts_[0].vectors_;
-            leaf_00628180_redirect(vectors[1].values, vectors[0].values, VehHoverLightsOffset.values);
+            vec3_subtract(vectors[1].values, vectors[0].values, VehHoverLightsOffset.values);
         }
     }
     g_VFL_CAVIARDATA.init("VFL.cvr");
