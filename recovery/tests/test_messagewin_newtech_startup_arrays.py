@@ -17,7 +17,7 @@ import pytest
 from match_recovery.model import Span
 from match_recovery.object_source import read_objects
 from match_recovery.pe_coff import PeImage
-from match_recovery.source import read_file
+from match_recovery.source import Mode, read_file
 from match_recovery.source_inventory import image_pin
 
 
@@ -40,6 +40,7 @@ def _mapped_record(path: str, address: int, name: str, span: tuple[int, int],
     assert len(records) == 1
     row = records[0]
     assert row.name == name
+    assert row.mode is Mode.FILE
     assert row.image_spans == (span,)
     assert row.symbol == symbol
     assert row.byte_exact is byte_exact
@@ -245,9 +246,10 @@ def test_newtech_sprite_array_real_global_constructor_and_exit_cleanup(
     assert "set_report_icons(&g_NEWTECHWIN_SPRITES[0], &g_NEWTECHWIN_SPRITES[1], &g_NEWTECHWIN_SPRITES[2])" in compact_owner
     assert "set_report_icons(&g_NEWTECHWIN_SPRITES[3], &g_NEWTECHWIN_SPRITES[4], &g_NEWTECHWIN_SPRITES[5])" in compact_owner
 
-    _mapped_record("src/recovered/units/004838b0.cpp", 0x004838B0,
+    _mapped_record("src/newtechwin.cpp", 0x004838B0,
                    "??__Fg_NEWTECHWIN_SPRITES@@YAXXZ", (0x004838B0, 0x004838D8),
-                   "", False)
+                   "_$E24", False)
+    assert not (ROOT / "src/recovered/units/004838b0.cpp").exists()
     objects = [row for row in read_objects(ROOT, image_pin(ROOT))
                if row.origin.address == 0x00822610]
     assert len(objects) == 1

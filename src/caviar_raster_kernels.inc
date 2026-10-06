@@ -731,21 +731,21 @@ static void caviar_install_record_kernels_candidate(
         if (odd) {
             slots->part_contained_ = &caviar_original_665640;
             slots->part_clipped_ = &caviar_original_664e50;
-            slots->setup_callback_ = &caviar_setup_size1_odd_candidate;
+            slots->setup_callback_ = &caviar_original_63af40;
         } else {
             slots->part_contained_ = &caviar_original_6647f0;
             slots->part_clipped_ = &caviar_original_664000;
-            slots->setup_callback_ = &caviar_setup_size1_aligned_candidate;
+            slots->setup_callback_ = &caviar_original_63af00;
         }
     } else if (size_code == 2) {
         if (odd) {
             slots->part_contained_ = &caviar_original_667b20;
             slots->part_clipped_ = &caviar_original_667380;
-            slots->setup_callback_ = &caviar_setup_size2_odd_candidate;
+            slots->setup_callback_ = &caviar_original_63af20;
         } else {
             slots->part_contained_ = &caviar_original_666440;
             slots->part_clipped_ = &caviar_original_665ca0;
-            slots->setup_callback_ = &caviar_setup_size2_aligned_candidate;
+            slots->setup_callback_ = &caviar_original_63aee0;
         }
     }
 }

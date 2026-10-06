@@ -4282,6 +4282,10 @@ void __cdecl caviar_original_666a80(
     int32_t, int32_t, const int32_t *, uint32_t,
     const uint8_t *, int32_t);
 
+void __cdecl caviar_original_63aee0();
+void __cdecl caviar_original_63af00();
+void __cdecl caviar_original_63af20();
+void __cdecl caviar_original_63af40();
 #include "caviar_raster_kernels.inc"
 
 // Contained-shadow callback: the pinned CFG reaches its common return at
@@ -4295,6 +4299,53 @@ void __cdecl caviar_original_666fd0(
     int32_t x, int32_t y, uint32_t count, const uint8_t *stream,
     int32_t flags) {
     caviar_shadow_kernel_candidate(0, x, y, 0, count, stream, flags);
+}
+
+// SEED HISTORY: 0x0063AEE0 previously used FILE mode with spans 0063AEE0-0063AEF4;0066731C-00667375; no BYTE_EXACT, SEMANTIC, or EXCLUDED claim; flags=hidden;sp_ready;purged_ok; seed artifact size=109 bytes, kind=game, direct callers=0, catalogued call targets=0x0066638F 0x00666989 0x00666F68.
+// SEED HISTORY: former direct-call order 0x00666989 -> 0x0066638F -> 0x00666F68. The shared 0x66731C-0x667375 secondary body is retained on this identity; its self-modifying immediate stores are replaced by typed prepared state.
+OPENSMACX_NOINLINE
+// ORIGINAL: 0x0063AEE0 sub_63aee0 0x0063AEE0-0x0063AEF4;0x0066731C-0x00667375
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "source:src/caviar.cpp:vox_draw_scene calls the record setup callback before the instance walk", "source:src/caviar_raster_kernels.inc:caviar_install_record_kernels_candidate selects the mode-specific callback", "source:src/caviar_raster_kernels.inc:caviar_prepare_kernel_bindings_candidate publishes typed current inputs and lane bases", "source:src/caviar_raster_kernels.inc:caviar_part_output_bases_candidate and caviar_shadow_output_bases_candidate compute destinations without executable-page writes", "docs/recovery/ida9-functions.csv:shared secondary range 0x0066731C-0x00667375 is retained by the four historical setup records"], "reason": "Own the renderer's zero-argument setup callback in the configured Caviar TU. The mode-specific wrapper delegates to the existing typed prepared-state callback; the shared original secondary span remains on this mapping."}
+// symbol    ?caviar_original_63aee0@@YAXXZ
+// TRIED: `int` return (no eax set before final ret, changed to `void`); address range carries a _SELFMOD (copy-protection) span, so the harness's authoritative check REFUSES any body here regardless of content - MISMATCH is the best obtainable signal via --dir.
+// kind      game
+void __cdecl caviar_original_63aee0() {
+    caviar_setup_size2_aligned_candidate();
+}
+
+// SEED HISTORY: 0x0063AF00 previously used FILE mode with spans 0063AF00-0063AF14;0066731C-00667375; no BYTE_EXACT, SEMANTIC, or EXCLUDED claim; flags=hidden; seed artifact size=109 bytes, kind=game, direct callers=0, catalogued call targets=0x006646FB 0x00664D51 0x00666F68.
+// SEED HISTORY: former direct-call order 0x00664D51 -> 0x006646FB -> 0x00666F68. The shared 0x66731C-0x667375 secondary body is retained on this identity; its self-modifying immediate stores are replaced by typed prepared state.
+OPENSMACX_NOINLINE
+// ORIGINAL: 0x0063AF00 sub_63af00 0x0063AF00-0x0063AF14;0x0066731C-0x00667375
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "source:src/caviar.cpp:vox_draw_scene calls the record setup callback before the instance walk", "source:src/caviar_raster_kernels.inc:caviar_install_record_kernels_candidate selects the mode-specific callback", "source:src/caviar_raster_kernels.inc:caviar_prepare_kernel_bindings_candidate publishes typed current inputs and lane bases", "source:src/caviar_raster_kernels.inc:caviar_part_output_bases_candidate and caviar_shadow_output_bases_candidate compute destinations without executable-page writes", "docs/recovery/ida9-functions.csv:shared secondary range 0x0066731C-0x00667375 is retained by the four historical setup records"], "reason": "Own the renderer's zero-argument setup callback in the configured Caviar TU. The mode-specific wrapper delegates to the existing typed prepared-state callback; the shared original secondary span remains on this mapping."}
+// symbol    ?caviar_original_63af00@@YAXXZ
+// TRIED: nothing to rule out on tier - REFUSED here is unconditional (SELFMOD span), verified with a `return 0;` stub scoring MISMATCH while the correct tail-call form scores REFUSED.
+// kind      game
+void __cdecl caviar_original_63af00() {
+    caviar_setup_size1_aligned_candidate();
+}
+
+// SEED HISTORY: 0x0063AF20 previously used FILE mode with spans 0063AF20-0063AF34;0066731C-00667375; no BYTE_EXACT, SEMANTIC, or EXCLUDED claim; flags=hidden; seed artifact size=109 bytes, kind=game, direct callers=0, catalogued call targets=0x00666F68 0x00667A6F 0x00668069.
+// SEED HISTORY: former direct-call order 0x00668069 -> 0x00667A6F -> 0x00666F68. The shared 0x66731C-0x667375 secondary body is retained on this identity; its self-modifying immediate stores are replaced by typed prepared state.
+OPENSMACX_NOINLINE
+// ORIGINAL: 0x0063AF20 sub_63af20 0x0063AF20-0x0063AF34;0x0066731C-0x00667375
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "source:src/caviar.cpp:vox_draw_scene calls the record setup callback before the instance walk", "source:src/caviar_raster_kernels.inc:caviar_install_record_kernels_candidate selects the mode-specific callback", "source:src/caviar_raster_kernels.inc:caviar_prepare_kernel_bindings_candidate publishes typed current inputs and lane bases", "source:src/caviar_raster_kernels.inc:caviar_part_output_bases_candidate and caviar_shadow_output_bases_candidate compute destinations without executable-page writes", "docs/recovery/ida9-functions.csv:shared secondary range 0x0066731C-0x00667375 is retained by the four historical setup records"], "reason": "Own the renderer's zero-argument setup callback in the configured Caviar TU. The mode-specific wrapper delegates to the existing typed prepared-state callback; the shared original secondary span remains on this mapping."}
+// symbol    ?caviar_original_63af20@@YAXXZ
+// kind      game
+void __cdecl caviar_original_63af20() {
+    caviar_setup_size2_odd_candidate();
+}
+
+// SEED HISTORY: 0x0063AF40 previously used FILE mode with spans 0063AF40-0063AF54;0066731C-00667375; no BYTE_EXACT, SEMANTIC, or EXCLUDED claim; flags=hidden; seed artifact size=109 bytes, kind=game, direct callers=0, catalogued call targets=0x0066554B 0x00665BA1 0x00666F68.
+// SEED HISTORY: former direct-call order 0x00665BA1 -> 0x0066554B -> 0x00666F68. The shared 0x66731C-0x667375 secondary body is retained on this identity; its self-modifying immediate stores are replaced by typed prepared state.
+OPENSMACX_NOINLINE
+// ORIGINAL: 0x0063AF40 sub_63af40 0x0063AF40-0x0063AF54;0x0066731C-0x00667375
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "source:src/caviar.cpp:vox_draw_scene calls the record setup callback before the instance walk", "source:src/caviar_raster_kernels.inc:caviar_install_record_kernels_candidate selects the mode-specific callback", "source:src/caviar_raster_kernels.inc:caviar_prepare_kernel_bindings_candidate publishes typed current inputs and lane bases", "source:src/caviar_raster_kernels.inc:caviar_part_output_bases_candidate and caviar_shadow_output_bases_candidate compute destinations without executable-page writes", "docs/recovery/ida9-functions.csv:shared secondary range 0x0066731C-0x00667375 is retained by the four historical setup records"], "reason": "Own the renderer's zero-argument setup callback in the configured Caviar TU. The mode-specific wrapper delegates to the existing typed prepared-state callback; the shared original secondary span remains on this mapping."}
+// symbol    ?caviar_original_63af40@@YAXXZ
+// TRIED: straight-line body after the 3 calls. The original's own tail is a `jmp` into a block shared with another caller (spans two disjoint ranges); inlining it here compiles to `mov` straight-through instead of the shared-tail `jmp`.
+// kind      game
+void __cdecl caviar_original_63af40() {
+    caviar_setup_size1_odd_candidate();
 }
 
 // The prior seed classifications were EXCLUDED S2d. These now have typed,

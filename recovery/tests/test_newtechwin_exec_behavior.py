@@ -54,7 +54,14 @@ struct Trace {
     std::vector<int> help_style;
     std::vector<std::string> appended[4];
 } trace = {};
-int GameMorePreferences = 0, LockEnableMask = 0, IsMultiplayerNet = 0;
+struct GameDataLockMaskView { uint32_t enable_mask_; };
+struct GameDataStateWindowFields {
+    uint32_t game_more_preferences_;
+    GameDataLockMaskView lock_masks_;
+};
+struct GameDataStateWindow { GameDataStateWindowFields fields_; };
+GameDataStateWindow GameDataStateStorage = {};
+int IsMultiplayerNet = 0;
 const int MPREF_AV_VOICEOVER_TECH_FAC = 0x4000;
 const int MPREF_AV_VOICEOVER_STOP_CLOSE_POPUP = 0x20000;
 int CurrentTechnologyBoxIndex = -1;
@@ -153,7 +160,7 @@ void help_tech_info(void (__cdecl *append)(char *),int,int,int box_index) {
     ++trace.help_calls; char text[20]; std::sprintf(text,"box%d",box_index); append(text);
     if(trace.mutate_multiplayer_on_help==box_index) IsMultiplayerNet=1;
     if(trace.reset_multiplayer_on_help==box_index) IsMultiplayerNet=0;
-    if(trace.mutate_human_mask_on_help==box_index) LockEnableMask=1u<<ConsoleGlobal.faction_id_;
+    if(trace.mutate_human_mask_on_help==box_index) GameDataStateStorage.fields_.lock_masks_.enable_mask_=1u<<ConsoleGlobal.faction_id_;
 }
 '''
 
@@ -161,8 +168,8 @@ void help_tech_info(void (__cdecl *append)(char *),int,int,int box_index) {
 def compile_and_run() -> None:
     program = HARNESS + "\n" + CTOR + "\n" + DTOR + "\n" + LINK_HOOK + "\n" + INFO_CALLBACK + "\n" + BODY + r'''
 int main() {
-    ConsoleGlobal.faction_id_=2; LockEnableMask=0; IsMultiplayerNet=0;
-    GameMorePreferences=MPREF_AV_VOICEOVER_TECH_FAC|MPREF_AV_VOICEOVER_STOP_CLOSE_POPUP;
+    ConsoleGlobal.faction_id_=2; GameDataStateStorage.fields_.lock_masks_.enable_mask_=0; IsMultiplayerNet=0;
+    GameDataStateStorage.fields_.game_more_preferences_=MPREF_AV_VOICEOVER_TECH_FAC|MPREF_AV_VOICEOVER_STOP_CLOSE_POPUP;
     trace.mutate_multiplayer_on_help=0; trace.reset_multiplayer_on_help=3;
     trace.mutate_human_mask_on_help=0; modal_event_pending=1;
     NewTechWindow.exec(37,5);
@@ -219,16 +226,16 @@ int main() {
     assert(PendingTechnologyLink==84 && trace.release_calls==releases_before+1);
     PendingTechnologyLink=-1;
     trace.mutate_human_mask_on_help=-1;
-    GameMorePreferences=MPREF_AV_VOICEOVER_TECH_FAC; LockEnableMask=1u<<1;
+    GameDataStateStorage.fields_.game_more_preferences_=MPREF_AV_VOICEOVER_TECH_FAC; GameDataStateStorage.fields_.lock_masks_.enable_mask_=1u<<1;
     const int loads_before=trace.wave_loads;
     NewTechWindow.exec(4,7);
     assert(trace.wave_loads==loads_before);
     // Native 484741 tests AL against only the low byte of the faction mask.
-    ConsoleGlobal.faction_id_=8; LockEnableMask=1u<<8;
+    ConsoleGlobal.faction_id_=8; GameDataStateStorage.fields_.lock_masks_.enable_mask_=1u<<8;
     NewTechWindow.exec(4,7);
     assert(trace.wave_loads==loads_before);
     // x86 masks the shift count to five bits, including unusual caller IDs.
-    ConsoleGlobal.faction_id_=33; LockEnableMask=1u<<1;
+    ConsoleGlobal.faction_id_=33; GameDataStateStorage.fields_.lock_masks_.enable_mask_=1u<<1;
     NewTechWindow.exec(4,7);
     assert(trace.wave_loads==loads_before+1);
     return 0;
