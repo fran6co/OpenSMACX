@@ -125,14 +125,64 @@ static void add_prototype_name_suffix(char *name, const char *suffix,
     }
 }
 
+static const char *prototype_collision_name_bytes(int candidate_id) {
+    if (candidate_id == -1) {
+        // On the original 32-bit layout this is exactly VehPrototypes - 1's
+        // veh_name address, but the bytes belong to this real rules member.
+        return reinterpret_cast<const char *>(&Ability[27].abbreviation);
+    }
+    return VehPrototypes[candidate_id].veh_name;
+}
+
+static void apply_prototype_name_collisions(
+    char *output, char *alternate_name, int prototype_id, int faction_id,
+    int chassis_id, int weapon_id, int armor_id, int ability_flags,
+    int reactor_id, int primary_alternate_difference, int &gendered_form,
+    const char *duplicate_suffix) {
+    bool suffix_exhausted = false;
+    for (int candidate_id = 0; candidate_id < MaxVehProtoNum;
+         ++candidate_id) {
+        const VehPrototype &candidate = VehPrototypes[candidate_id];
+        const int candidate_faction = candidate_id / MaxVehProtoFactionNum;
+        const bool candidate_is_other_design =
+            candidate.chassis_id != chassis_id
+            || candidate.weapon_id != weapon_id
+            || candidate.armor_id != armor_id
+            || candidate.reactor_id != reactor_id
+            || candidate.ability_flags != static_cast<uint32_t>(ability_flags);
+        if (candidate_id == prototype_id
+            || (candidate_faction != 0 && candidate_faction != faction_id)
+            || !candidate_is_other_design) {
+            continue;
+        }
+
+        if (!suffix_exhausted
+            && std::strcmp(output, candidate.veh_name) == 0) {
+            if (primary_alternate_difference != 0) gendered_form = 1;
+            add_prototype_name_suffix(output, duplicate_suffix,
+                                      suffix_exhausted);
+            // The original resets ESI before its alternate comparison even
+            // when primary and alternate forms differ.
+            candidate_id = -1;
+        }
+        if (primary_alternate_difference != 0
+            && std::strcmp(alternate_name + 1,
+                           prototype_collision_name_bytes(candidate_id)) == 0) {
+            gendered_form = 0;
+            add_prototype_name_suffix(alternate_name + 1, duplicate_suffix,
+                                      suffix_exhausted);
+            candidate_id = -1;
+        }
+    }
+}
+
 // ORIGINAL: 0x0057E040 ?name_proto@@YAXPADHHHHHHH@Z 0x0057E040-0x0057EF95
-// RECOVERY_BINDING: v1 {"evidence": ["git:2f89503ec251ffc8b9ff894998c01944c173a4fb:src/unrecovered/0057e040.cpp;image:0x0057E040-0x0057EF95", "EDI normalizes equality:0x0057EC53-0x0057EC61;primary restart and branch:0x0057EE10-0x0057EE35", "Owned accidental storage:Ability base0x009AB538,stride0x1C,abbreviation+8 =>0x009AB834 = VehPrototypes base0x009AB868-0x34;source:src/veh.h RulesAbility;source:src/alpha.cpp ability loader", "git:2f89503ec251ffc8b9ff894998c01944c173a4fb:src/unrecovered/0057e040.cpp"], "reason": "Prototype naming composes loaded ability, chassis, weapon, armor and reactor rules, with faction-local duplicate-name selection. The reactor-zero path borrows Palette animation storage. Equal primary/alternate forms restart the candidate scan safely after primary collisions. For differing forms, the native primary-collision restart compares alternate text with bytes beginning at Ability[27].abbreviation storage, not its resolved string; its read boundary remains unresolved. Preserve original spans and the unfinished sentinel; the complete historical scaffold is retained in Git rather than as duplicate source. Retain the substantive typed prototype-naming implementation and its explicitly unfinished duplicate-name error path. Retiring the duplicate scaffold neither closes that path nor grants complete recovery or matching."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:2f89503ec251ffc8b9ff894998c01944c173a4fb:src/unrecovered/0057e040.cpp;image:0x0057E040-0x0057EF95", "pinned image:0x0057EE10 or esi,-1;0x0057EE13 test edi,edi;0x0057EE1B..0x0057EE35 builds VehPrototypes[-1].veh_name and calls strcmp", "pinned image:0x0057EF67..0x0057EF71 resets ESI after a matched alternate suffix and increments/restarts at zero", "Owned accidental storage:Ability base0x009AB538,stride0x1C,abbreviation+8 =>0x009AB834 = VehPrototypes base0x009AB868-0x34;source:src/veh.h RulesAbility;source:src/alpha.cpp ability loader", "git:2f89503ec251ffc8b9ff894998c01944c173a4fb:src/unrecovered/0057e040.cpp"], "reason": "Complete the original duplicate-name candidate loop, including its unconditional primary-collision restart before the differing-form alternate compare and its alternate-collision restart. The -1 candidate name view points to the source-owned object representation of Ability[27].abbreviation, preserving the native pointer-field-byte comparison instead of resolving the pointed-to rule string. The original unbounded strcmp read extent beyond that member remains unresolved; preserve its unsafe read/overflow behavior as an obligation. Full span and prior source/history remain intact; no byte-exact or runtime acceptance is claimed."}
+
 // TRIED: near-direct Ghidra transcription (this decompile had no extraout/jumptable warnings); table strides and Strings::get call sites were cross-checked against the disassembly, but the exact if/else vs goto shape of the two long fallback chains was not re-derived instruction-by-instruction, so byte-exactness is unlikely even though structure matches.
 void __cdecl name_proto(char *output, int prototype_id, int faction_id,
                         int chassis_id, int weapon_id, int armor_id,
                         int ability_flags, int reactor_id) {
-    // Duplicate-name restart at 0x0057EE10 reads before VehPrototypes on
-    // the differing-name route. Its portable behavior remains unresolved.
     output[0] = '\0';
     for (int ability_id = 0; ability_id < MaxAbilityNum; ++ability_id) {
         if ((static_cast<uint32_t>(ability_flags) & (1u << ability_id)) == 0) {
@@ -441,46 +491,15 @@ void __cdecl name_proto(char *output, int prototype_id, int faction_id,
 
     const int primary_alternate_difference =
         std::strcmp(output, alternate_name + 1);
-    bool suffix_exhausted = false;
     const char *duplicate_suffix = label_get(0xe5c / 4);
-    for (int candidate_id = 0; candidate_id < MaxVehProtoNum;
-         ++candidate_id) {
-        const VehPrototype &candidate = VehPrototypes[candidate_id];
-        const int candidate_faction = candidate_id / MaxVehProtoFactionNum;
-        const bool candidate_is_other_design =
-            candidate.chassis_id != chassis_id
-            || candidate.weapon_id != weapon_id
-            || candidate.armor_id != armor_id
-            || candidate.reactor_id != reactor_id
-            || candidate.ability_flags != static_cast<uint32_t>(ability_flags);
-        if (candidate_id == prototype_id
-            || (candidate_faction != 0 && candidate_faction != faction_id)
-            || !candidate_is_other_design) {
-            continue;
-        }
-
-        if (!suffix_exhausted
-            && std::strcmp(output, candidate.veh_name) == 0) {
-            if (primary_alternate_difference != 0) gendered_form = 1;
-            add_prototype_name_suffix(output, duplicate_suffix,
-                                      suffix_exhausted);
-            // Native EDI is one for equal forms; that path skips the
-            // alternate comparison and restarts at candidate zero.
-            if (primary_alternate_difference == 0) candidate_id = -1;
-        }
-        if (primary_alternate_difference != 0
-            && std::strcmp(alternate_name + 1, candidate.veh_name) == 0) {
-            gendered_form = 0;
-            add_prototype_name_suffix(alternate_name + 1, duplicate_suffix,
-                                      suffix_exhausted);
-            candidate_id = -1;
-        }
-    }
+    apply_prototype_name_collisions(
+        output, alternate_name, prototype_id, faction_id, chassis_id,
+        weapon_id, armor_id, ability_flags, reactor_id,
+        primary_alternate_difference, gendered_form, duplicate_suffix);
 
     if (gendered_form != 0) {
         ::strcpy(output, alternate_name + 1);
     }
-    // BODY GOES HERE.
 }
 
 int VehCurrentCount;  // 0x009A64C8
