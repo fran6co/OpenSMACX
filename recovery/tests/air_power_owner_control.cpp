@@ -31,7 +31,11 @@ struct Base {
     uint32_t event, state; int visibility;
 };
 struct Goal { int type, priority, x, y, base_id; };
-struct SocialEffect { int planet; };
+struct SocialEffect {
+    enum EffectIndex { ECONOMY, EFFICIENCY, SUPPORT, TALENT, MORALE, POLICE,
+                       GROWTH, PLANET, PROBE, INDUSTRY, RESEARCH };
+    int values_[11];
+};
 struct PlayerData {
     uint32_t flags, diplo_treaties[8];
     uint8_t region_base_plan[128], region_total_bases[128];

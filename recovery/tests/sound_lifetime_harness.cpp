@@ -32,7 +32,7 @@ struct _MMIOINFO;
 
 // These definitions only make the actual declaration's vtable linkable.
 Sound::~Sound() {}
-void Sound::unk_slot24() {}
+int Sound::unk_slot24() { return 0; }
 int Sound::set_attrib(unsigned long) { assert(false); return 0; }
 int Sound::get_attrib() { assert(false); return 0; }
 int Sound::UNK1(int) { assert(false); return 0; }

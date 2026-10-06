@@ -21,7 +21,12 @@ HARNESS=r'''
 #define __cdecl
 #define nullptr 0
 const int SP_TELEPATHIC_MATRIX=30;
-struct Effect {int police,efficiency;};
+struct SocialEffect {
+    enum EffectIndex { ECONOMY, EFFICIENCY, SUPPORT, TALENT, MORALE, POLICE,
+                       GROWTH, PLANET, PROBE, INDUSTRY, RESEARCH };
+    int values_[11];
+};
+typedef SocialEffect Effect;
 struct PlayerData {int diff_level,pop_total,energy_reserves,se_alloc_psych,se_alloc_labs,ai_tech,ai_power,ai_wealth,tech_id_researching;Effect soc_effect_pending,soc_effect_temp;unsigned char region_total_bases[128],region_base_plan[128];};
 struct Player {int rule_techcost;};
 struct Base {int faction_id_current,specialist_total,specialist_unk_1,talent_total,drone_total,unk_10;uint32_t state;};
@@ -56,15 +61,15 @@ void reset(){
 }
 int main(){
  // Native526A00 subtracts current psych BEFORE /2, not ai_wealth twice.
- reset();PlayersData[2].soc_effect_pending.police=-2;PlayersData[2].se_alloc_psych=1;
+ reset();PlayersData[2].soc_effect_pending.values_[SocialEffect::POLICE]=-2;PlayersData[2].se_alloc_psych=1;
  allocate_energy(2);assert(PlayersData[2].se_alloc_psych==2);assert(first_cap_labs==7);
  // First pass intentionally uses existing global current, not the owned row.
  reset();BaseCurrentCount=1;Bases[0].faction_id_current=2;Bases[0].specialist_total=2;
- Bases[1].state=2;PlayersData[2].soc_effect_pending.police=-1;
+ Bases[1].state=2;PlayersData[2].soc_effect_pending.values_[SocialEffect::POLICE]=-1;
  allocate_energy(2);assert(PlayersData[2].se_alloc_psych==1);assert(set_calls==0&&BaseCurrent==&Bases[1]);
  // Severe police selects/recomputes, then reads the reloaded current owner.
  reset();BaseCurrentCount=1;Bases[0].faction_id_current=2;Bases[0].state=2;Bases[0].drone_total=1;
- PlayersData[2].soc_effect_pending.police=-3;
+ PlayersData[2].soc_effect_pending.values_[SocialEffect::POLICE]=-3;
  allocate_energy(2);assert(set_calls==1&&compute_calls==1&&BaseCurrent==&Bases[0]);
  // An emergency refusal does not fall through into allocation.
  reset();LockEnableMask=4;PlayersData[2].energy_reserves=20;PlayersData[2].se_alloc_psych=2;PlayersData[2].se_alloc_labs=4;

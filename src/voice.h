@@ -34,7 +34,7 @@ class SoundDeviceInterface {
   virtual int set_fade_in(unsigned int) = 0;          // 21
   virtual int is_looping() = 0;                      // 22
   virtual int is_playing() = 0;                      // 23
-  virtual void unk_slot24() = 0;                     // 24, existing unknown contract
+  virtual int unk_slot24() = 0;                      // 24, provider return forwarded by Wave
   virtual Sound *get_next() = 0;                    // 25
   virtual Sound *get_prev() = 0;                    // 26
   virtual int set_attrib(unsigned long) = 0;         // 27

@@ -781,36 +781,3 @@ void __fastcall field_accessor_004c80e0_redirect(void *self, void *, int stack0)
     }
     *reinterpret_cast<uint32_t *>(bytes + 0xc) = static_cast<uint32_t>(stack0);
 }
-
-/*
-Purpose: Sign-extend bit 0 of field 0x40: 0 or -1.
-         Emitted by tools/generate_field_accessors.py from
-
-             mov eax, dword ptr [ecx + 0x40] / shl eax, 0x1f / sar eax, 0x1f / ret
-
-         The name is the ADDRESS, not an invention, and `self` is a void
-         pointer because this body needs `this` to be nothing more than a
-         pointer and an offset - the class it belongs to is not established.
-         The adapter declares 0 stack dword(s) so it
-         cleans 0 bytes, taken from the body's own `ret` -
-         the only statement of this function's arity that exists, since it has
-         no mangled name. Declaring fewer would leave them on the caller's
-         stack.
-// ORIGINAL: 0x00448380 sub_448380 0x00448380-0x0044838A BYTE_EXACT
-// symbol    ?field_accessor_00448380_redirect@@YIIPAX0@Z
-// size      10 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the value described above
-Status: Complete
-*/
-uint32_t __fastcall field_accessor_00448380_redirect(void *self, void *) {
-    // Sign-extend bit 0 to 0xFFFFFFFF or 0: `shl 31` puts it in the sign
-    // position and `sar 31` smears it back, which is what the original does.
-    const int32_t value = *reinterpret_cast<const int32_t *>(
-        static_cast<const uint8_t *>(self) + 0x40);
-    return static_cast<uint32_t>((value << 31) >> 31);
-}

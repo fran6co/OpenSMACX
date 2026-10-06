@@ -711,8 +711,7 @@ int __cdecl weap_strat(int weapon_id, int faction_id);
 int __cdecl weap_val(int proto_id, int faction_id);
 int __cdecl arm_val(int armor_id, int faction_id);
 int __cdecl armor_val(int proto_id, int faction_id);
-uint32_t __cdecl transport_val(uint32_t chassis_id, uint32_t ability, 
-                                         uint32_t reactor_id);
+int __cdecl transport_val(int chassis_id, int ability, int reactor_id);
 void __cdecl say_offense(LPSTR stat, int proto_id);
 void __cdecl say_defense(LPSTR stat, int proto_id);
 void __cdecl say_stats_3(LPSTR stat, int proto_id);

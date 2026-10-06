@@ -1,0 +1,163 @@
+{
+  "schema_version": 1,
+  "task_id": "owner-coverage-wave-oct6",
+  "author": "framework-coordinator",
+  "target": "opensmacx",
+  "base_revision": "01a84efe8fe7feece991db1a99114c60b7342c4f",
+  "intent": "Recover complete communication and DesignWin preview ownership, typed prototype scratch/caller closure, Sound/Wave/Win behavior and six genuine compiler-generated lifecycle mappings together; retire nine fully superseded seeds without discarding obligations.",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5570512
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4415632
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4408912
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4447568
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4435056
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4490112
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4490048
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6245712
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6367200
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6367232
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6363376
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6363408
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6502096
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6502192
+    }
+  ],
+  "editable_files": [
+    "CMakeLists.txt",
+    "recovery/tests/air_power_owner_control.cpp",
+    "recovery/tests/base_build_host_fixture.cpp",
+    "recovery/tests/communicate_owner_host_fixture.cpp",
+    "recovery/tests/consider_designs_host_fixture.cpp",
+    "recovery/tests/council_vote_purchase_harness.cpp",
+    "recovery/tests/fixtures/alien_buster/alien_host_fixture.h",
+    "recovery/tests/fixtures/designwin_scratch_storage_host.hpp",
+    "recovery/tests/fixtures/designwin_scratch_storage_host_main.inc",
+    "recovery/tests/fixtures/enemy_move_full_body.cpp",
+    "recovery/tests/fixtures/order_veh_host_surface.h",
+    "recovery/tests/netdaemon_synch_rules_harness.cpp",
+    "recovery/tests/secretproject-ownership-harness.cpp",
+    "recovery/tests/sound_chain_storage_harness.cpp",
+    "recovery/tests/sound_lifetime_harness.cpp",
+    "recovery/tests/test_alien_buster_product_source.py",
+    "recovery/tests/test_allocate_energy_behavior.py",
+    "recovery/tests/test_base_colony_economy.py",
+    "recovery/tests/test_base_colony_production.py",
+    "recovery/tests/test_base_psych.py",
+    "recovery/tests/test_base_yield.py",
+    "recovery/tests/test_communicate_owner.py",
+    "recovery/tests/test_designwin_scratch_owner_behavior.py",
+    "recovery/tests/test_game_logic_seed_batch_behavior.py",
+    "recovery/tests/test_goody_box.py",
+    "recovery/tests/test_psych_display.py",
+    "recovery/tests/test_setup_game_behavior.py",
+    "recovery/tests/test_small_seed_owner_actual_source.py",
+    "recovery/tests/test_social_ai_enumeration.py",
+    "recovery/tests/test_turn_production_chain_behavior.py",
+    "recovery/tests/test_wants_prop_behavior.py",
+    "recovery/tests/ui_owner_wave_harness.cpp",
+    "recovery/tests/wave_lifetime_harness.cpp",
+    "src/alpha.cpp",
+    "src/base.cpp",
+    "src/basewin.cpp",
+    "src/datalink.cpp",
+    "src/deleting_thunks.cpp",
+    "src/deleting_thunks.h",
+    "src/designwin.cpp",
+    "src/designwin.h",
+    "src/editgroup.cpp",
+    "src/enemy.cpp",
+    "src/faction.cpp",
+    "src/faction.h",
+    "src/field_accessors.cpp",
+    "src/field_accessors.h",
+    "src/game.cpp",
+    "src/leaf_recoveries.cpp",
+    "src/net_class.cpp",
+    "src/probe.cpp",
+    "src/reportif.cpp",
+    "src/socialwin.cpp",
+    "src/sound.cpp",
+    "src/sound.h",
+    "src/spritebox.cpp",
+    "src/technology.cpp",
+    "src/veh.cpp",
+    "src/veh.h",
+    "src/voice.h",
+    "src/wave.cpp",
+    "src/wave.h",
+    "src/win.h",
+    "src/win_reparent.cpp",
+    "src/unrecovered/00436090.cpp",
+    "src/unrecovered/0054ffd0.cpp",
+    "src/recovered/00448340.cpp",
+    "src/recovered/units/005f4d50.cpp",
+    "src/recovered/006127e0.cpp",
+    "src/recovered/00612800.cpp",
+    "src/recovered/units/006118f0.cpp",
+    "src/recovered/units/00611910.cpp",
+    "src/recovered/006336d0.cpp"
+  ],
+  "evidence": [
+    "Complete communication retains original54FFD0..558980 and65FF4F..65FF64 spans, unchecked social selector, original error/uninitialized state and all seed findings. SocialEffect is genuine11-word array with every current named/indexed owner migrated; native out-of-domain effects remain unresolved.",
+    "DesignWin scratch addresses9AC554/558/559/55A/55B/562 are exactly fields of VehPrototypes[63], from existing base9AB868/stride34 and reserved veh_fake(63) use. All three same-TU store owners migrate together; complete draw_vehicle and select_special typed callers preserve original order and draw_info's RET0 ABI.",
+    "Sound slot24 preserves integer0/-1 flags-bit0 result; Wave forwards the existing provider virtualslot24 with original null branch. Win callback retains low-byteflag20/parent comparison/conditional reparent order and return1. New Win TU diagnostic donor object is not configured-build qualification; require actual CMake recipe and fresh physical product object before checkpoint.",
+    "Four EditGroup/SpriteBox and two VoiceRx generated mappings use real C++ hierarchy/destruction, actual COFF/vtables/weak mode2 fallback/MAP evidence. Voice primary table base670F48 deleting slot+8; SpriteBox sharedtail spans remain. Voice6336D0 65-original/64-emitted mismatch and all historical claims remain restoration obligations, not exactness assertions.",
+    "Nine superseded seed removals are guarded by exact original identity/span/claim/history continuity. No original marker or matching token was hand-created; installed source/symbol/binding writers perform migrations. Provenance remains in Git.",
+    "Independent bounded reviews and private compiler evidence guide manual coverage admission; require fresh combined configured build/link, actual-source controls, references/mapping/claim continuity and fresh generated evidence after Sound signature changes. Missing original runtime, full structure, linked preservation or matching proof is not waived or reported green."
+  ]
+}

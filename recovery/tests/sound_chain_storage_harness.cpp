@@ -18,7 +18,7 @@ Sound::Sound() : device_(0), flags_40_(0), chain_prev_(0), chain_next_(0), fname
 int SoundFadeState::set_fade(unsigned long) { assert(false); return 0; }
 int SoundFadeState::set_fade_interval(unsigned long) { assert(false); return 0; }
 int Sound::set_fade(unsigned long) { assert(false); return 0; }
-void Sound::unk_slot24() { assert(false); }
+int Sound::unk_slot24() { assert(false); return 0; }
 int Sound::set_attrib(unsigned long) { assert(false); return 0; }
 int Sound::get_attrib() { assert(false); return 0; }
 int Sound::UNK1(int) { assert(false); return 0; }

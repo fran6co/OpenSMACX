@@ -7,7 +7,12 @@
 #include <string.h>
 
 #define __cdecl
-struct SocialPlanet { int planet; };
+struct SocialEffect {
+    enum EffectIndex { ECONOMY, EFFICIENCY, SUPPORT, TALENT, MORALE, POLICE,
+                       GROWTH, PLANET, PROBE, INDUSTRY, RESEARCH };
+    int values_[11];
+};
+typedef SocialEffect SocialPlanet;
 struct GoalHost { int16_t type,priority; int x,y,base_id; };
 typedef GoalHost Goal;
 static const int MaxGoalsNum = 75;
@@ -429,7 +434,7 @@ inline int veh_moves(int id) { return range(speed(id,0)-Vehs[id].moves_expended,
 inline int planet_buster(int) { return 0; }
 inline void do_all_non_input() { ++test_non_input_calls; }
 
-struct SocialEffect { int planet; };
+
 struct Continent { unsigned tile_count,open_terrain; }; extern Continent Continents[128];
 struct Player { unsigned rule_flags; }; extern Player Players[8];
 extern unsigned GameState;

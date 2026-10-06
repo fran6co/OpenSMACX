@@ -2162,21 +2162,10 @@ void DesignWin::construct_reactor() {
                               protoReactorType_, protoAbilityFlags_, &caviar_);
 }
 
-// Fixed-slot bindings carried from 00434650.cpp
-// The vehdraw stat block the design-window renderer reads back: the four
-// chosen component types as BYTES at 0x009AC558..0x009AC55B, the ability flag
-// word at 0x009AC554 and a byte at 0x009AC562 whose only writer is this
-// function's 0xFF. Each is an `int *const` / `uint8_t *const` at file scope,
-// which folds to the bare immediate, so the image's
-// `mov [0x9ac558], al` shape survives. No catalogue name for any of them;
-// these are the roles, read off the three sites that touch the block
-// (UNK3 here, draw_vehicle and draw_flash, both still unrecovered).
-static int *const VehDrawAbilityFlags = (int *)0x009AC554;
-static unsigned char *const VehDrawChassis = (unsigned char *)0x009AC558;
-static unsigned char *const VehDrawWeapon = (unsigned char *)0x009AC559;
-static unsigned char *const VehDrawArmor = (unsigned char *)0x009AC55A;
-static unsigned char *const VehDrawReactor = (unsigned char *)0x009AC55B;
-static unsigned char *const VehDrawComponentTail = (unsigned char *)0x009AC562;
+// The six renderer scratch writes at 0x009AC554..0x009AC562 are the
+// fields of VehPrototypes[0x3f]: VehPrototypes begins at 0x009AB868 with a
+// measured 0x34 stride, so row 63 begins at 0x009AC534. Keep the signed
+// icon_offset and uint32 ability_flags types owned by VehPrototype itself.
 
 // ORIGINAL: 0x00434650 ?UNK3@DesignWin@@QAEXXZ 0x00434650-0x00434691 FILE BYTE_EXACT
 // size      65 bytes
@@ -2245,12 +2234,12 @@ static unsigned char *const VehDrawComponentTail = (unsigned char *)0x009AC562;
 
 
 void DesignWin::UNK3() {
-    *VehDrawChassis = (unsigned char)protoChassisType_;
-    *VehDrawWeapon = (unsigned char)protoWeaponType_;
-    *VehDrawArmor = (unsigned char)protoArmorType_;
-    *VehDrawReactor = (unsigned char)protoReactorType_;
-    *VehDrawAbilityFlags = (int)protoAbilityFlags_;
-    *VehDrawComponentTail = 0xFF;
+    VehPrototypes[0x3f].chassis_id = static_cast<uint8_t>(protoChassisType_);
+    VehPrototypes[0x3f].weapon_id = static_cast<uint8_t>(protoWeaponType_);
+    VehPrototypes[0x3f].armor_id = static_cast<uint8_t>(protoArmorType_);
+    VehPrototypes[0x3f].reactor_id = static_cast<uint8_t>(protoReactorType_);
+    VehPrototypes[0x3f].ability_flags = static_cast<uint32_t>(protoAbilityFlags_);
+    VehPrototypes[0x3f].icon_offset = static_cast<int8_t>(0xFF);
 }
 
 // Original exec and shutdown share the writable tutor-state dword at
@@ -3234,10 +3223,507 @@ void DesignWin::draw_special_2(int redraw) {
 }
 
 // ORIGINAL: 0x00436090 ?draw_vehicle@DesignWin@@QAEXH@Z 0x00436090-0x00437999 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00436090.cpp"], "reason": "Link-continuity placeholder only; retain the seed until this original body is migrated."}
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/veh.h:VehPrototype is size 0x34; row 63 begins at 0x009AC534 and fields at 0x20,0x24-0x27,0x2E own the observed stores", "source:src/designwin.cpp:UNK3, draw_vehicle and draw_flash share VehPrototypes[0x3f] preview storage", "source:src/designwin.h:draw_special_2(int), draw_special_1(int), draw_vehicle(int), draw_flash(), draw_info() are declared DesignWin methods", "source:src/leaf_recoveries.cpp:abil_cond(int,int,int,int) is the existing __cdecl definition at 0x00584B50", "historical seed (Git tree 01a84efe; retired from the live source tree): src/unrecovered/00436090.cpp; preserve its original draw_vehicle identity, spans and TRIED lesson"], "reason": "Publish the editor preview scratch through the real 0x34-stride VehPrototype row 63, and close its repaint/ability-validation calls through the declared DesignWin methods and existing cdecl abil_cond owner."}
+// TRIED: full transcription (mnemonic_similarity 0.576, 930/1780 original mnemonics in common); two Font structs are embedded back to back at +0x14568 (detail line font) and +0x14590 (name font), each with the compiler inlining `unk1<0 ? line_height_ : height_+unk1` at every call site rather than through a getter - kept as a helper here. First divergence is in the opening RECT-copy prologue (four field reads compiled as one push/lea shuffle in the original vs plain assignment here).
 void DesignWin::draw_vehicle(int redraw) {
     (void)redraw;
-    // BODY GOES HERE.
+
+    Buffer *screen = static_cast<Buffer *>(this);
+    Buffer *backing = &buffer_;
+    Font *cur_font = &font3_;
+    const int prototype_id = static_cast<int>(protoID_);
+    const int faction_id = static_cast<int>(factionID_);
+    const int chassis_id = static_cast<int>(protoChassisType_);
+    const int weapon_id = static_cast<int>(protoWeaponType_);
+    const int armor_id = static_cast<int>(protoArmorType_);
+    const uint32_t abilities = protoAbilityFlags_;
+    const int reactor_id = static_cast<int>(protoReactorType_);
+
+    RECT src = vehicle_panel_rect_;
+    screen->set_clip(&src);
+    backing->copy(this != 0 ? screen : 0, &src);
+
+    const int chassis_slot = prototype_id;
+    field_CE8_ += 1;
+    const VehPrototype &selected = VehPrototypes[chassis_slot];
+    const bool matches_current = !((selected.icon_offset < 0)
+        || chassis_id != selected.chassis_id
+        || weapon_id != selected.weapon_id
+        || armor_id != selected.armor_id
+        || reactor_id != selected.reactor_id
+        || abilities != selected.ability_flags);
+    const bool needs_construct = !matches_current
+        && ((Weapon[weapon_id].icon < 0) || chassis_id != 0);
+
+    int cx = 0;
+    int cy = 0;
+    if (needs_construct) {
+        caviar_.set_scene_rotation(scene_rotation_, 0.0f, 0.0f);
+        scene_rotation_ += 0.05f;
+        construct_vehicle();
+        caviar_.set_scaling(0.3921568691730499267578125f);
+        cx = (src.right + src.left) / 2;
+        cy = (src.bottom + src.top) / 2;
+        caviar_.render(screen, cx, cy, 0x17);
+        if (armor_id == 5) {
+            caviar_.reset_objects();
+            vehdraw_construct_armor(ConsoleGlobal.faction_id_, chassis_id,
+                                    weapon_id, armor_id, 1, &caviar_);
+            caviar_.render_multi_table_dest(
+                screen, cx, cy, 0x18,
+                reinterpret_cast<unsigned char *>(&ArmorTransparentColorTables),
+                0x22);
+        } else {
+            caviar_.clear_buffers(0);
+        }
+    } else {
+        VehPrototypes[0x3f].chassis_id = static_cast<uint8_t>(chassis_id);
+        VehPrototypes[0x3f].weapon_id = static_cast<uint8_t>(weapon_id);
+        VehPrototypes[0x3f].armor_id = static_cast<uint8_t>(armor_id);
+        VehPrototypes[0x3f].reactor_id = static_cast<uint8_t>(reactor_id);
+        VehPrototypes[0x3f].ability_flags = static_cast<uint32_t>(abilities);
+        VehPrototypes[0x3f].icon_offset = selected.icon_offset;
+        const int lock = veh_fake(0x3f, faction_id);
+        const int pct_w = MapWinCaptionScale < 1 ? 0xbb
+            : (MapWinCaptionScale * 100) / MapWinCaptionDivisor;
+        const int pct_h = MapWinCaptionScale < 1 ? 0x8c
+            : (MapWinCaptionScale * 0x4b) / MapWinCaptionDivisor;
+        veh_draw(screen, lock,
+                 src.left + ((src.right - pct_w) - src.left) / 2,
+                 src.top + ((src.bottom - pct_h) - src.top) / 2,
+                 0xe, 0x44, 0);
+    }
+
+    screen->set_font(cur_font, 0, 0, 0);
+    screen->set_text_color(TextColourTable[140], TextColourTable[141], 1, 1);
+
+    RECT dest;
+    int adv = cur_font->unk_1_ < 0
+        ? cur_font->line_height_ : cur_font->height_ + cur_font->unk_1_;
+    dest.top = src.top + adv;
+    dest.bottom = src.top + adv + adv * 2;
+    dest.left = src.left + 0x2d;
+    dest.right = src.right - 0x2d;
+
+    StringTemp[0] = 0;
+    if (chassis_slot < 0x40
+        && chassis_id == VehPrototypes[chassis_slot].chassis_id
+        && weapon_id == VehPrototypes[chassis_slot].weapon_id
+        && armor_id == VehPrototypes[chassis_slot].armor_id
+        && reactor_id == VehPrototypes[chassis_slot].reactor_id
+        && abilities == VehPrototypes[chassis_slot].ability_flags) {
+        strcat(StringTemp, VehPrototypes[chassis_slot].veh_name);
+    } else {
+        const unsigned int name_len = static_cast<unsigned int>(strlen(prototype_name_));
+        if (name_len == 0 || (VehPrototypes[prototype_id].flags & 2) == 0) {
+            char name_buf[256];
+            name_proto(name_buf, prototype_id, faction_id, chassis_id, weapon_id,
+                       armor_id, static_cast<int>(abilities), reactor_id);
+            strcat(StringTemp, name_buf);
+            VehPrototypes[prototype_id].flags &= static_cast<uint16_t>(~2u);
+        } else {
+            strcat(StringTemp, prototype_name_);
+        }
+    }
+    CharUpperA(StringTemp);
+    dest.top = screen->wrap_cent(StringTemp, &dest);
+
+    VehPrototypes[0x3f].chassis_id = static_cast<uint8_t>(chassis_id);
+    VehPrototypes[0x3f].weapon_id = static_cast<uint8_t>(weapon_id);
+    VehPrototypes[0x3f].armor_id = static_cast<uint8_t>(armor_id);
+    VehPrototypes[0x3f].reactor_id = static_cast<uint8_t>(reactor_id);
+    VehPrototypes[0x3f].ability_flags = static_cast<uint32_t>(abilities);
+    VehPrototypes[0x3f].icon_offset = static_cast<int8_t>(0xff);
+    dest.right = src.right;
+    dest.left = src.left;
+    adv = cur_font->unk_1_ < 0
+        ? cur_font->line_height_ : cur_font->height_ + cur_font->unk_1_;
+    dest.bottom = (src.bottom - adv) + adv * -3;
+    dest.top = src.bottom + adv * -3;
+
+    StringTemp[0] = 0;
+    say_stats_3(StringTemp, 0x3f);
+    char ability_names[256];
+    ability_names[0] = 0;
+    for (int bit = 0; bit < MaxAbilityNum; ++bit) {
+        if (abilities & (1 << (bit & 0x1f))) {
+            char *name = StringTable.get(reinterpret_cast<int>(Ability[bit].name));
+            if (strlen(name) != 0) {
+                if (strlen(ability_names) != 0) strcat(ability_names, ", ");
+                strcat(ability_names, StringTable.get(
+                    reinterpret_cast<int>(Ability[bit].name)));
+            }
+        }
+    }
+    strcat(StringTemp, " ");
+    strcat(StringTemp, ability_names);
+    screen->write_cent_l(StringTemp, &dest, static_cast<int>(strlen(StringTemp)));
+    field_B3C_ = dest.left;
+    field_B40_ = dest.top;
+    field_B44_ = dest.right;
+    field_B48_ = dest.bottom;
+
+    if (Weapon[weapon_id].mode == 7) {
+        adv = ((cur_font->unk_1_ < 0 ? cur_font->line_height_
+                : cur_font->height_ + cur_font->unk_1_) * 3) / 2;
+        dest.bottom += adv;
+        dest.top += adv;
+        screen->set_font(&font2_, 0, 0, 0);
+        StringTemp[0] = 0;
+        strcat(StringTemp, label_get(0x360 / 4));
+        strcat(StringTemp, ": ");
+        char numbuf[80];
+        _itoa(transport_val(chassis_id, abilities, reactor_id), numbuf, 10);
+        strcat(StringTemp, numbuf);
+        screen->write_cent_l(StringTemp, &dest, static_cast<int>(strlen(StringTemp)));
+    }
+    if (Weapon[weapon_id].offense_rating > 1
+        && Chassis[chassis_id].triad == 0
+        && Chassis[chassis_id].speed == 1
+        && Rules.combat_pct_infantry_vs_base != 0
+        && (abilities & 0x8000) == 0) {
+        adv = ((cur_font->unk_1_ < 0 ? cur_font->line_height_
+                : cur_font->height_ + cur_font->unk_1_) * 3) / 2;
+        dest.top += adv;
+        dest.bottom += adv;
+        screen->set_font(&font2_, 0, 0, 0);
+        StringTemp[0] = 0;
+        strcat(StringTemp, "+");
+        char numbuf[80];
+        _itoa(Rules.combat_pct_infantry_vs_base, numbuf, 10);
+        strcat(StringTemp, numbuf);
+        strcat(StringTemp, "% ");
+        strcat(StringTemp, label_get(0x88c / 4));
+        screen->write_cent_l(StringTemp, &dest, static_cast<int>(strlen(StringTemp)));
+    }
+    if (Weapon[weapon_id].offense_rating > 0
+        && Chassis[chassis_id].triad == 0
+        && Chassis[chassis_id].speed > 1
+        && Rules.combat_pct_mobile_open_ground != 0
+        && (abilities & 0x8000) != 0) {
+        adv = ((cur_font->unk_1_ < 0 ? cur_font->line_height_
+                : cur_font->height_ + cur_font->unk_1_) * 3) / 2;
+        dest.bottom += adv;
+        dest.top += adv;
+        screen->set_font(&font2_, 0, 0, 0);
+        StringTemp[0] = 0;
+        strcat(StringTemp, "+");
+        char numbuf[80];
+        _itoa(Rules.combat_pct_mobile_open_ground, numbuf, 10);
+        strcat(StringTemp, numbuf);
+        strcat(StringTemp, "% ");
+        strcat(StringTemp, label_get(0x98c / 4));
+        screen->write_cent_l(StringTemp, &dest, static_cast<int>(strlen(StringTemp)));
+    }
+
+    screen->set_text_color2(TextColourTable[142], TextColourTable[143], 1, 1);
+    screen->set_text_color(TextColourTable[144], TextColourTable[145], 1, 1);
+    screen->set_font(&font2_, 0, 0, 0);
+    dest.left = src.left;
+    dest.right = src.right;
+    dest.top = src.top;
+    adv = cur_font->unk_1_ < 0
+        ? cur_font->line_height_ : cur_font->height_ + cur_font->unk_1_;
+    dest.bottom = src.top + adv;
+
+    const int proto_price = static_cast<int>(proto_cost(
+        chassis_id, weapon_id, armor_id, static_cast<int>(abilities), reactor_id));
+    StringTemp[0] = 0;
+    strcat(StringTemp, "{");
+    strcat(StringTemp, label_get(0x160 / 4));
+    strcat(StringTemp, ": ");
+    strcat(StringTemp, " ");
+    strcat(StringTemp, "}");
+    int total_cost;
+    char numbuf80[80];
+    if (proto_price < reactor_id) {
+        strcat(StringTemp, "(");
+        strcat(StringTemp, label_get(0x1e8 / 4));
+        strcat(StringTemp, ": ");
+        total_cost = reactor_id * static_cast<int>(mineralCostFactor_);
+        _itoa(total_cost, numbuf80, 10);
+        strcat(StringTemp, numbuf80);
+        strcat(StringTemp, ")");
+    } else {
+        total_cost = static_cast<int>(mineralCostFactor_) * proto_price;
+        _itoa(total_cost, numbuf80, 10);
+        strcat(StringTemp, numbuf80);
+    }
+    if (Chassis[chassis_id].speed > 1
+        && Chassis[chassis_id].triad == 0
+        && Armor[armor_id].defense_rating > 1
+        && Weapon[weapon_id].cost > 1) {
+        strcat(StringTemp, "!");
+        screen->set_text_color(TextColourTable[46], TextColourTable[47], 1, 1);
+        screen->set_text_color2(TextColourTable[46], TextColourTable[47], 1, 1);
+    }
+    CharUpperA(StringTemp);
+    screen->write_cent_l(StringTemp, &dest, static_cast<int>(strlen(StringTemp)));
+    field_B2C_rect_ = dest;
+
+    bool custom = (0x3f < prototype_id);
+    if (custom) {
+        bool armor_ok = false;
+        bool reactor_ok = false;
+        bool weapon_ok = false;
+        int j = 0;
+        while (j < 0x80) {
+            int jj = j & 0x8000003f;
+            if (jj < 0) jj = (jj - 1 | 0xffffffc0) + 1;
+            if (jj != j) jj += faction_id * 0x40;
+            if (VehPrototypes[jj].flags & 1) {
+                bool ok = false;
+                if (jj < 0x40) {
+                    ok = has_tech(VehPrototypes[jj].preq_tech, faction_id) != 0;
+                } else if (VehPrototypes[jj].flags & 4) {
+                    ok = true;
+                }
+                if (ok) {
+                    const int j_armor = VehPrototypes[jj].weapon_id;
+                    if (weapon_id == j_armor) armor_ok = true;
+                    const int j_reactor = VehPrototypes[jj].armor_id;
+                    if (armor_id == j_reactor) reactor_ok = true;
+                    if (chassis_id == VehPrototypes[jj].chassis_id) weapon_ok = true;
+                    if (Weapon[weapon_id].offense_rating > 0
+                        && Weapon[weapon_id].offense_rating
+                            <= Weapon[j_armor].offense_rating) {
+                        armor_ok = true;
+                    }
+                    if (Armor[armor_id].defense_rating > 0
+                        && Armor[armor_id].defense_rating
+                            <= Armor[j_reactor].defense_rating) {
+                        reactor_ok = true;
+                    }
+                    const int wj = VehPrototypes[jj].chassis_id;
+                    if (Chassis[chassis_id].triad == Chassis[wj].triad
+                        && Chassis[chassis_id].speed <= Chassis[wj].speed) {
+                        weapon_ok = true;
+                    }
+                }
+            }
+            ++j;
+        }
+        if (armor_ok && reactor_ok && weapon_ok) custom = false;
+    }
+
+    const bool already_designed = !((
+        (VehPrototypes[chassis_slot].obsolete_factions
+         & (1 << (faction_id & 0x1f))) == 0)
+        || chassis_id != VehPrototypes[chassis_slot].chassis_id
+        || weapon_id != VehPrototypes[chassis_slot].weapon_id
+        || armor_id != VehPrototypes[chassis_slot].armor_id
+        || reactor_id != VehPrototypes[chassis_slot].reactor_id
+        || abilities != VehPrototypes[chassis_slot].ability_flags);
+
+    bool skip_to_name = false;
+    if (!already_designed) {
+        screen->set_text_color(TextColourTable[148], TextColourTable[149], 1, 1);
+        screen->set_text_color2(TextColourTable[146], TextColourTable[147], 1, 1);
+        unsigned int slen;
+        if (!custom) {
+            if (prototype_id < 0x40) {
+                skip_to_name = true;
+            } else {
+                StringTemp[0] = 0;
+                strcat(StringTemp, label_get(0x3a4 / 4));
+                CharUpperA(StringTemp);
+                slen = static_cast<unsigned int>(strlen(StringTemp));
+                screen->write_cent_l(&font2_, StringTemp, &dest,
+                                     static_cast<int>(slen));
+            }
+        } else {
+            const int base_cost = static_cast<int>(proto_cost(
+                chassis_id, weapon_id, armor_id, 0, reactor_id));
+            const int factor = prototype_factor(prototype_id);
+            total_cost = total_cost + ((base_cost * factor + 0x32) / 100)
+                * static_cast<int>(mineralCostFactor_);
+            StringTemp[0] = 0;
+            strcat(StringTemp, "{");
+            strcat(StringTemp, label_get(0x2fc / 4));
+            strcat(StringTemp, ": ");
+            strcat(StringTemp, " ");
+            strcat(StringTemp, "}");
+            char numbuf3[80];
+            _itoa(total_cost, numbuf3, 10);
+            strcat(StringTemp, numbuf3);
+            if (Chassis[chassis_id].speed > 1
+                && Armor[armor_id].defense_rating > 1
+                && Weapon[weapon_id].cost > 1) {
+                strcat(StringTemp, "!");
+                screen->set_text_color(TextColourTable[46], TextColourTable[47], 1, 1);
+                screen->set_text_color2(TextColourTable[46], TextColourTable[47], 1, 1);
+            }
+            CharUpperA(StringTemp);
+            slen = static_cast<unsigned int>(strlen(StringTemp));
+            screen->write_cent_l(&font2_, StringTemp, &dest,
+                                 static_cast<int>(slen));
+        }
+    } else {
+        screen->set_text_color(TextColourTable[46], TextColourTable[47], 1, 1);
+        screen->set_text_color2(TextColourTable[46], TextColourTable[47], 1, 1);
+        if ((static_cast<int>(field_CE8_) / 0xc) % 3 != 0) {
+            StringTemp[0] = 0;
+            strcat(StringTemp, label_get(0xe40 / 4));
+            CharUpperA(StringTemp);
+            const unsigned int slen2 = static_cast<unsigned int>(strlen(StringTemp));
+            screen->write_cent_l(&font2_, StringTemp, &dest,
+                                 static_cast<int>(slen2));
+        }
+    }
+    if (!skip_to_name) {
+        adv = font2_.unk_1_ < 0 ? font2_.line_height_
+            : font2_.height_ + font2_.unk_1_;
+        src.top += adv;
+        src.bottom += adv;
+    }
+
+    screen->set_text_color2(0xde, -1, 1, 1);
+    screen->set_text_color(TextColourTable[150], TextColourTable[151], 1, 1);
+    const int y = src.left + 0x14;
+    adv = font2_.unk_1_ < 0 ? font2_.line_height_
+        : font2_.height_ + font2_.unk_1_;
+    char *veh_name = preset_names_[6];
+    int cap_x = (vehicle_panel_rect_.bottom + vehicle_panel_rect_.top) / 2
+        + adv * -4;
+    CharUpperA(veh_name);
+    if (veh_name != 0) {
+        const unsigned int slen = static_cast<unsigned int>(strlen(veh_name));
+        screen->write_l(&font2_, veh_name, y, cap_x, static_cast<int>(slen));
+    }
+    adv = font2_.unk_1_ < 0 ? font2_.line_height_
+        : font2_.height_ + font2_.unk_1_;
+    cap_x += adv;
+
+    screen->set_text_color2(TextColourTable[152], TextColourTable[153], 1, 1);
+    screen->set_text_color(TextColourTable[154], TextColourTable[155], 1, 1);
+    StringTemp[0] = 0;
+    if (Weapon[weapon_id].mode < 3) {
+        strcat(StringTemp, "*");
+        strcat(StringTemp, preset_names_[8]);
+        strcat(StringTemp, "{");
+        strcat(StringTemp, " ");
+        const signed char techlevel = Weapon[weapon_id].offense_rating;
+        char numbuf4[80];
+        if (techlevel < 0) {
+            strcat(StringTemp, label_get(0x310 / 4));
+        } else if (techlevel < 0x63) {
+            _itoa(static_cast<int>(techlevel), numbuf4, 10);
+            strcat(StringTemp, numbuf4);
+        } else {
+            strcat(StringTemp, "}");
+        }
+    } else {
+        strcat(StringTemp, "{");
+        strcat(StringTemp, preset_names_[14]);
+        strcat(StringTemp, "}");
+        strcat(StringTemp, " ");
+        char numbuf5[80];
+        _itoa(static_cast<int>(Weapon[weapon_id].cost), numbuf5, 10);
+        strcat(StringTemp, numbuf5);
+    }
+    unsigned int slen = static_cast<unsigned int>(strlen(StringTemp));
+    screen->write_l(StringTemp, y, cap_x, static_cast<int>(slen));
+    adv = font2_.unk_1_ < 0 ? font2_.line_height_
+        : font2_.height_ + font2_.unk_1_;
+    cap_x += adv;
+
+    StringTemp[0] = 0;
+    strcat(StringTemp, "{");
+    strcat(StringTemp, preset_names_[9]);
+    strcat(StringTemp, "}");
+    strcat(StringTemp, " ");
+    if (Armor[armor_id].mode < 3) {
+        if (Armor[armor_id].defense_rating < 0) {
+            strcat(StringTemp, label_get(0x310 / 4));
+        } else {
+            char numbuf6[80];
+            _itoa(static_cast<int>(Armor[armor_id].defense_rating), numbuf6, 10);
+            strcat(StringTemp, numbuf6);
+        }
+        slen = static_cast<unsigned int>(strlen(StringTemp));
+        screen->write_l(StringTemp, y, cap_x, static_cast<int>(slen));
+    }
+    adv = font2_.unk_1_ < 0 ? font2_.line_height_
+        : font2_.height_ + font2_.unk_1_;
+    cap_x += adv;
+
+    StringTemp[0] = 0;
+    strcat(StringTemp, "{");
+    strcat(StringTemp, preset_names_[10]);
+    strcat(StringTemp, "}");
+    strcat(StringTemp, " ");
+    strcat(StringTemp, StringTable.get(
+        reinterpret_cast<int>(Triad[Chassis[chassis_id].triad])));
+    StringTemp[4] = 0;
+    strcat(StringTemp, " ");
+    char numbuf7[80];
+    _itoa(speed_proto(0x3f) / static_cast<int>(Rules.move_rate_roads), numbuf7, 10);
+    strcat(StringTemp, numbuf7);
+    slen = static_cast<unsigned int>(strlen(StringTemp));
+    screen->write_l(StringTemp, y, cap_x, static_cast<int>(slen));
+    adv = font2_.unk_1_ < 0 ? font2_.line_height_
+        : font2_.height_ + font2_.unk_1_;
+    cap_x += adv;
+
+    StringTemp[0] = 0;
+    strcat(StringTemp, "{");
+    strcat(StringTemp, preset_names_[11]);
+    strcat(StringTemp, "}");
+    strcat(StringTemp, " ");
+    char numbuf8[80];
+    _itoa(reactor_id, numbuf8, 10);
+    strcat(StringTemp, numbuf8);
+    slen = static_cast<unsigned int>(strlen(StringTemp));
+    screen->write_l(StringTemp, y, cap_x, static_cast<int>(slen));
+    adv = font2_.unk_1_ < 0 ? font2_.line_height_
+        : font2_.height_ + font2_.unk_1_;
+    cap_x += adv;
+
+    StringTemp[0] = 0;
+    strcat(StringTemp, "{");
+    strcat(StringTemp, preset_names_[12]);
+    strcat(StringTemp, "}");
+    strcat(StringTemp, " ");
+    if (protoAbilityID1_ < 0) {
+        strcat(StringTemp, "-");
+    } else {
+        ability_names[0] = 0;
+        strcat(ability_names, StringTable.get(reinterpret_cast<int>(
+            Ability[protoAbilityID1_].name)));
+        strcat(StringTemp, ability_names);
+        StringTemp[6] = 0;
+        char *sp2 = strchr(ability_names, 0x20);
+        if (sp2 != 0 && sp2[1] != 0) {
+            strcat(StringTemp, sp2 + 1);
+            StringTemp[7] = 0;
+        }
+    }
+    slen = static_cast<unsigned int>(strlen(StringTemp));
+    screen->write_l(StringTemp, y, cap_x, static_cast<int>(slen));
+    adv = font2_.unk_1_ < 0 ? font2_.line_height_
+        : font2_.height_ + font2_.unk_1_;
+
+    StringTemp[0] = 0;
+    strcat(StringTemp, "{");
+    strcat(StringTemp, preset_names_[13]);
+    strcat(StringTemp, "}");
+    strcat(StringTemp, " ");
+    if (protoAbilityID2_ < 0) {
+        strcat(StringTemp, "-");
+    } else {
+        ability_names[0] = 0;
+        strcat(ability_names, StringTable.get(reinterpret_cast<int>(
+            Ability[protoAbilityID2_].name)));
+        strcat(StringTemp, ability_names);
+        StringTemp[6] = 0;
+        char *sp3 = strchr(ability_names, 0x20);
+        if (sp3 != 0 && sp3[1] != 0) {
+            strcat(StringTemp, sp3 + 1);
+            StringTemp[7] = 0;
+        }
+    }
+    slen = static_cast<unsigned int>(strlen(StringTemp));
+    screen->write_l(StringTemp, y, cap_x + adv, static_cast<int>(slen));
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
@@ -4007,12 +4493,12 @@ settled:
 void DesignWin::draw_flash() {
     char *name = prototype_name_;
 
-    *VehDrawChassis = static_cast<unsigned char>(protoChassisType_);
-    *VehDrawWeapon = static_cast<unsigned char>(protoWeaponType_);
-    *VehDrawArmor = static_cast<unsigned char>(protoArmorType_);
-    *VehDrawReactor = static_cast<unsigned char>(protoReactorType_);
-    *VehDrawAbilityFlags = static_cast<int>(protoAbilityFlags_);
-    *VehDrawComponentTail = 0xFF;
+    VehPrototypes[0x3f].chassis_id = static_cast<uint8_t>(protoChassisType_);
+    VehPrototypes[0x3f].weapon_id = static_cast<uint8_t>(protoWeaponType_);
+    VehPrototypes[0x3f].armor_id = static_cast<uint8_t>(protoArmorType_);
+    VehPrototypes[0x3f].reactor_id = static_cast<uint8_t>(protoReactorType_);
+    VehPrototypes[0x3f].ability_flags = static_cast<uint32_t>(protoAbilityFlags_);
+    VehPrototypes[0x3f].icon_offset = static_cast<int8_t>(0xFF);
 
     Buffer *canvas = reinterpret_cast<Buffer *>(InterfaceBuffer);
     int shown = static_cast<int>(field_CE0_);
@@ -4206,12 +4692,14 @@ Purpose: The unit-special ability picker both select_special_N thunks tail
 //         tail into - the definition lived in pending_bodies.cpp until this
 //         transcription landed it at the end of this file so no recovered
 //         body above shifts.
-// NOTES: the four panel repaints after a successful pick (0x00435DE0
+// HISTORICAL NOTES (before v4 homing): the four panel repaints after a successful pick (0x00435DE0
 //         draw_special_2, 0x00435B30 draw_special_1, 0x00436090
 //         draw_vehicle, 0x004346A0 draw_info) are unhomed, so they go
 //         through the original's addresses; abil_cond (0x00584B50) is
 //         unhomed the same way. The trailing slot-63 virtual is Win's
 //         on_update.
+// v4 resolves those historical seams through existing typed methods and
+// the existing __cdecl abil_cond owner while preserving call order.
 Status: Coverage transcription - unclaimed body
 */
 void DesignWin::select_special(int which) {
@@ -4295,12 +4783,9 @@ void DesignWin::select_special(int which) {
         if (!has_tech(preq_tech, faction)) {
             continue;
         }
-        typedef int(__cdecl *AbilCondSeam)(int, int, int, int);
-        if (reinterpret_cast<AbilCondSeam>(
-                static_cast<unsigned long>(0x00584B50))(
-                ability, static_cast<int>(protoChassisType_),
-                static_cast<int>(protoWeaponType_),
-                static_cast<int>(protoArmorType_)) == 0) {
+        if (abil_cond(ability, static_cast<int>(protoChassisType_),
+                      static_cast<int>(protoWeaponType_),
+                      static_cast<int>(protoArmorType_)) == 0) {
             continue;
         }
 
@@ -4482,16 +4967,11 @@ void DesignWin::select_special(int which) {
 
     // The four panel repaints are unhomed; they go through the original's
     // addresses like the rest of this file's pending seams.
-    typedef void(__fastcall *DesignWinIntSeam)(void *, void *, int);
-    reinterpret_cast<DesignWinIntSeam>(
-        static_cast<unsigned long>(0x00435DE0))(this, nullptr, 0);
-    reinterpret_cast<DesignWinIntSeam>(
-        static_cast<unsigned long>(0x00435B30))(this, nullptr, 0);
-    reinterpret_cast<DesignWinIntSeam>(
-        static_cast<unsigned long>(0x00436090))(this, nullptr, 0);
+    draw_special_2(0);
+    draw_special_1(0);
+    draw_vehicle(0);
     draw_flash();
-    reinterpret_cast<DesignWinIntSeam>(
-        static_cast<unsigned long>(0x004346A0))(this, nullptr, 0);
+    draw_info();
     on_update();
 
     stat_list_a.remove_all();

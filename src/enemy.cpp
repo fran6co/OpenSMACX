@@ -1554,7 +1554,7 @@ static int enemy_move_tactical_tail(TacticalFrame &s) {
                                 odds=compute_odds(odds,s.faction,s.vehicle,unit,base);
                                 if(!s.local70&&(s.faction_base<0||!Bases[s.faction_base].eco_damage)&&
                                     Vehs[unit].order_auto_type!=s.faction){
-                                    odds*=player.soc_effect_active.planet>=3?8:2;}
+                                    odds*=player.soc_effect_active.values_[SocialEffect::PLANET]>=3?8:2;}
                                 if(odds>=8){score+=odds;handled=true;}
                             }
                         } else if(stack_check(unit,1,-1,-1,-1)<=1&&
@@ -2006,7 +2006,7 @@ static StrategicActionExit enemy_move_strategic_actions(StrategicActionState &s)
 typedef char NonseaRegionVisibilityOffset[
     offsetof(PlayerData,unk_79)==0x157c ? 1 : -1];
 typedef char NonseaPendingPlanetOffset[
-    offsetof(PlayerData,soc_effect_pending)+offsetof(SocialEffect,planet)==0x268 ? 1 : -1];
+    offsetof(PlayerData,soc_effect_pending)+(offsetof(SocialEffect,values_)+sizeof(int)*SocialEffect::PLANET)==0x268 ? 1 : -1];
 #endif
 enum NonseaExit {
     NONSEA_JOIN_578B26, NONSEA_JOIN_57707F,
@@ -2206,7 +2206,7 @@ static NonseaExit enemy_move_nonsea(NonseaState &s,
                             } while (s.mode < 9);
                             if ((map_loc(s.scan_x,s.scan_y)->bit & 0x20) &&
                                 (map_loc(s.scan_x,s.scan_y)->climate & 0xe0) >= 0x40 &&
-                                PlayersData[s.faction].soc_effect_pending.planet <= 0)
+                                PlayersData[s.faction].soc_effect_pending.values_[SocialEffect::PLANET] <= 0)
                                 candidate_score /= 2;
                             s.altitude_or_scratch = candidate_score;
                             if (s.faction_base >= 0) {

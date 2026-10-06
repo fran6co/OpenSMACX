@@ -134,7 +134,7 @@ void reset(){
     std::memset(facilities,0,sizeof(facilities));std::memset(abilities,0,sizeof(abilities));
     BaseCurrent=&Bases[0];BaseIDCurrentSelected=0;BaseCurrent->x=20;BaseCurrent->y=12;BaseCurrent->population_size=5;BaseCurrent->faction_id_current=3;
     PlayersData[3].diff_level=3;PlayersData[3].current_num_bases=1;MapAreaSqRoot=0;LockEnableMask=8;
-    PlayersData[3].soc_effect_pending.police=-2;
+    PlayersData[3].soc_effect_pending.values_[SocialEffect::POLICE]=-2;
     BaseUpkeepStage=0;BaseCurrentVehPacifismCount=0;
     raw_vehicle=fixed_vehicle=-1;veh_calls=fix_calls=ability_calls=0;facility_calls.clear();
     ability_answers.clear();ability_position=0;change_proto=change_selected=change_base=-1;
@@ -157,11 +157,11 @@ void stage_controls(){
     reset();BaseCurrent->psych_total=10;base_psych();expect_stage(0,0,2,0);
     for(int s=1;s<5;++s)expect_stage(s,4,1,0);
     reset();Players[3].faction_bonus_count=2;Players[3].faction_bonus_id[0]=Players[3].faction_bonus_id[1]=RULE_NODRONE;
-    Players[3].faction_bonus_val1[0]=10;Players[3].faction_bonus_val1[1]=-100;PlayersData[3].soc_effect_pending.talent=-2;
+    Players[3].faction_bonus_val1[0]=10;Players[3].faction_bonus_val1[1]=-100;PlayersData[3].soc_effect_pending.values_[SocialEffect::TALENT]=-2;
     base_psych();for(int s=0;s<5;++s)expect_stage(s,0,2,0);
-    reset();Players[3].rule_talent=1;PlayersData[3].soc_effect_pending.talent=4;
+    reset();Players[3].rule_talent=1;PlayersData[3].soc_effect_pending.values_[SocialEffect::TALENT]=4;
     base_psych();for(int s=0;s<5;++s)expect_stage(s,5,0,0);
-    reset();MapAreaSqRoot=28;PlayersData[3].current_num_bases=10;PlayersData[3].soc_effect_pending.talent=-5;
+    reset();MapAreaSqRoot=28;PlayersData[3].current_num_bases=10;PlayersData[3].soc_effect_pending.values_[SocialEffect::TALENT]=-5;
     base_psych();for(int s=0;s<5;++s)expect_stage(s,0,5,1);
     BaseCurrent->nerve_staple_turns_left=1;publish_count=0;base_psych();expect_stage(4,0,0,1);
     reset();BaseCurrent->specialist_total=2;BaseCurrent->psych_total=10;
@@ -195,36 +195,36 @@ void matrix_controls(){
 }
 void unit(){raw_vehicle=4;fixed_vehicle=0;Vehs[0].proto_id=1;Vehs[0].faction_id=7;}
 void police_controls(){
-    for(int p=-3;p>=-5;--p){reset();PlayersData[3].soc_effect_pending.police=p;BaseCurrentVehPacifismCount=3;
+    for(int p=-3;p>=-5;--p){reset();PlayersData[3].soc_effect_pending.values_[SocialEffect::POLICE]=p;BaseCurrentVehPacifismCount=3;
         base_psych();expect_stage(2,0,2,0);expect_stage(3,0,p==-3?4:5,0);}
-    reset();unit();PlayersData[3].soc_effect_pending.police=-1;base_psych();
+    reset();unit();PlayersData[3].soc_effect_pending.values_[SocialEffect::POLICE]=-1;base_psych();
     expect_stage(3,0,1,0);require(veh_calls==2 && fix_calls==2 && ability_calls==3);
-    reset();unit();PlayersData[3].soc_effect_pending.police=-1;abilities[1]=true;base_psych();
+    reset();unit();PlayersData[3].soc_effect_pending.values_[SocialEffect::POLICE]=-1;abilities[1]=true;base_psych();
     expect_stage(3,0,0,0);require(veh_calls==1 && fix_calls==1 && ability_calls==2);
-    reset();unit();PlayersData[3].soc_effect_pending.police=-1;ability_answers={1,0};base_psych();
+    reset();unit();PlayersData[3].soc_effect_pending.values_[SocialEffect::POLICE]=-1;ability_answers={1,0};base_psych();
     expect_stage(3,0,1,0);require(ability_calls==2);
-    reset();unit();PlayersData[3].soc_effect_pending.police=-1;Players[3].rule_flags=0x40;Weapon[0].offense_rating=-1;
+    reset();unit();PlayersData[3].soc_effect_pending.values_[SocialEffect::POLICE]=-1;Players[3].rule_flags=0x40;Weapon[0].offense_rating=-1;
     base_psych();expect_stage(3,0,0,0);require(veh_calls==1);
-    for(int p=0;p<4;++p){reset();unit();PlayersData[3].soc_effect_pending.police=p;
-        PlayersData[3].soc_effect_pending.talent=-3;
+    for(int p=0;p<4;++p){reset();unit();PlayersData[3].soc_effect_pending.values_[SocialEffect::POLICE]=p;
+        PlayersData[3].soc_effect_pending.values_[SocialEffect::TALENT]=-3;
         for(int id=0;id<4;++id){Vehs[id].proto_id=1;Vehs[id].next_veh_id_stack=id==3?-1:id+1;}
         base_psych();expect_stage(3,0,p==0?4:p==1?3:p==2?2:0,0);}
-    reset();unit();PlayersData[3].soc_effect_pending.police=-1;change_base=1;Bases[1]=Bases[0];
+    reset();unit();PlayersData[3].soc_effect_pending.values_[SocialEffect::POLICE]=-1;change_base=1;Bases[1]=Bases[0];
     Bases[1].faction_id_current=7;Bases[1].drone_total=4;Bases[1].x=18;
     Players[3].rule_flags=0x40;Weapon[0].offense_rating=-1;
     base_psych();expect_stage(3,0,2,0);require(BaseCurrent==&Bases[1] && Bases[0].drone_total==2);
-    reset();unit();PlayersData[3].soc_effect_pending.police=-1;Players[3].rule_flags=0x40;Vehs[0].proto_id=15;
+    reset();unit();PlayersData[3].soc_effect_pending.values_[SocialEffect::POLICE]=-1;Players[3].rule_flags=0x40;Vehs[0].proto_id=15;
     base_psych();expect_stage(3,0,0,0);require(veh_calls==1);
-    reset();unit();PlayersData[3].soc_effect_pending.police=-1;Players[3].rule_flags=0x40;
+    reset();unit();PlayersData[3].soc_effect_pending.values_[SocialEffect::POLICE]=-1;Players[3].rule_flags=0x40;
     base_psych();expect_stage(3,0,1,0);require(veh_calls==2);
-    reset();unit();PlayersData[3].soc_effect_pending.police=-1;Players[3].rule_flags=0x40;Weapon[0].offense_rating=-1;Chassis[0].triad=1;
+    reset();unit();PlayersData[3].soc_effect_pending.values_[SocialEffect::POLICE]=-1;Players[3].rule_flags=0x40;Weapon[0].offense_rating=-1;Chassis[0].triad=1;
     base_psych();expect_stage(3,0,1,0);require(veh_calls==2);
-    reset();unit();PlayersData[3].soc_effect_pending.police=-1;Players[3].rule_flags=0x40;Weapon[0].offense_rating=-1;Vehs[0].proto_id=64;
+    reset();unit();PlayersData[3].soc_effect_pending.values_[SocialEffect::POLICE]=-1;Players[3].rule_flags=0x40;Weapon[0].offense_rating=-1;Vehs[0].proto_id=64;
     base_psych();expect_stage(3,0,1,0);require(veh_calls==2);
-    reset();unit();PlayersData[3].soc_effect_pending.police=-1;VehPrototypes[1].plan=4;
+    reset();unit();PlayersData[3].soc_effect_pending.values_[SocialEffect::POLICE]=-1;VehPrototypes[1].plan=4;
     base_psych();expect_stage(3,0,2,0);require(ability_calls==0 && veh_calls==2);
     // has_abil changes prototype; the native-trait check must reread the vehicle.
-    reset();unit();PlayersData[3].soc_effect_pending.police=-1;Players[3].rule_flags=0x40;
+    reset();unit();PlayersData[3].soc_effect_pending.values_[SocialEffect::POLICE]=-1;Players[3].rule_flags=0x40;
     VehPrototypes[2].weapon_id=1;Weapon[1].offense_rating=-1;change_proto=2;
     base_psych();expect_stage(3,0,0,0);require(veh_calls==1);
 }
@@ -238,10 +238,10 @@ void project_controls(){
     base_psych();expect_stage(3,0,2,0);expect_stage(4,3,2,0);
     for(int economy=0;economy<3;++economy){reset();SecretProject.longevity_vaccine()=0;
         PlayersData[3].soc_category_pending.models_[SocialCategory::ECONOMICS]=economy;base_psych();expect_stage(4,0,economy==1?2:economy==2?0:1,0);}
-    reset();built(23);PlayersData[3].soc_effect_pending.talent=1;base_psych();expect_stage(3,1,2,0);expect_stage(4,0,0,0);
-    reset();PlayersData[3].soc_effect_pending.police=-1;SecretProject.self_aware_colony()=0;
+    reset();built(23);PlayersData[3].soc_effect_pending.values_[SocialEffect::TALENT]=1;base_psych();expect_stage(3,1,2,0);expect_stage(4,0,0,0);
+    reset();PlayersData[3].soc_effect_pending.values_[SocialEffect::POLICE]=-1;SecretProject.self_aware_colony()=0;
     base_psych();expect_stage(3,0,1,0);require(veh_calls==0);
-    reset();built(35);PlayersData[3].soc_effect_pending.police=-3;unit();base_psych();expect_stage(3,0,1,0);
+    reset();built(35);PlayersData[3].soc_effect_pending.values_[SocialEffect::POLICE]=-3;unit();base_psych();expect_stage(3,0,1,0);
     reset();facilities[8]=true;SecretProject.virtual_world()=0;base_psych();expect_stage(2,0,0,0);
     require(std::count(facility_calls.begin(),facility_calls.end(),11)==0);
     reset();facilities[8]=true;SecretProject.virtual_world()=1;Bases[1].faction_id_current=7;
@@ -256,17 +256,17 @@ void initial_controls(){
     reset();BaseCurrent->assimilation_turns_left=1;base_psych();expect_stage(0,0,3,0);
     reset();Players[3].rule_drone=2;base_psych();expect_stage(0,0,4,0);
     reset();Players[3].rule_talent=2;base_psych();expect_stage(0,3,2,0);
-    reset();PlayersData[3].soc_effect_pending.police=-3;BaseCurrentVehPacifismCount=0x80000000u;
+    reset();PlayersData[3].soc_effect_pending.values_[SocialEffect::POLICE]=-3;BaseCurrentVehPacifismCount=0x80000000u;
     base_psych();expect_stage(3,0,2,0);
-    reset();PlayersData[3].soc_effect_pending.police=-3;BaseCurrentVehPacifismCount=0xffffffffu;
+    reset();PlayersData[3].soc_effect_pending.values_[SocialEffect::POLICE]=-3;BaseCurrentVehPacifismCount=0xffffffffu;
     base_psych();expect_stage(3,0,2,0);
-    reset();PlayersData[3].soc_effect_pending.police=-5;BaseCurrentVehPacifismCount=0x7fffffffu;
+    reset();PlayersData[3].soc_effect_pending.values_[SocialEffect::POLICE]=-5;BaseCurrentVehPacifismCount=0x7fffffffu;
     base_psych();expect_stage(3,0,0,0);
-    reset();PlayersData[3].soc_effect_pending.police=-5;BaseCurrentVehPacifismCount=0x80000000u;
+    reset();PlayersData[3].soc_effect_pending.values_[SocialEffect::POLICE]=-5;BaseCurrentVehPacifismCount=0x80000000u;
     base_psych();expect_stage(3,0,2,0);
-    reset();BaseCurrent->population_size=3;PlayersData[3].soc_effect_pending.talent=-2;
+    reset();BaseCurrent->population_size=3;PlayersData[3].soc_effect_pending.values_[SocialEffect::TALENT]=-2;
     SecretProject.planetary_transit_system()=0;base_psych();expect_stage(0,0,2,0);expect_stage(2,0,1,0);
-    reset();MapAreaSqRoot=28;PlayersData[3].current_num_bases=10;PlayersData[3].soc_effect_pending.talent=-5;
+    reset();MapAreaSqRoot=28;PlayersData[3].current_num_bases=10;PlayersData[3].soc_effect_pending.values_[SocialEffect::TALENT]=-5;
     built(23);base_psych();expect_stage(3,0,5,1);expect_stage(4,0,0,1);
 }
 int main(){baseline();stage_controls();matrix_controls();police_controls();project_controls();initial_controls();}
@@ -294,7 +294,7 @@ def test_actual_base_psych(tmp_path):
 # Every damage variant must compile and fail an actual body observation. The
 # mutations alter only extracted product code, never fixtures or expected data.
 MUTANTS=[
-    ("talent-not-police", "body", "talent_case - 4 : PlayersData[faction].soc_effect_pending.talent", "talent_case - 4 : PlayersData[faction].soc_effect_pending.police"),
+    ("talent-not-police", "body", "talent_case - 4 : PlayersData[faction].soc_effect_pending.values_[SocialEffect::TALENT]", "talent_case - 4 : PlayersData[faction].soc_effect_pending.values_[SocialEffect::POLICE]"),
     ("no-drone-immediate", "body", "if (initial_drones < 0) initial_drones = 0;", ""),
     ("no-drone-first", "body", "            break;", "            continue;"),
     ("stage-zero-talent-clamp", "body", "            base_psych_balance();", "            base_psych_clamp_totals();"),

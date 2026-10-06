@@ -53,7 +53,11 @@ struct VehiclePrototype { int chassis_id, weapon_id; char veh_name[32]; int plan
 struct RulesChassis { uint8_t speed, padding[0x48], triad; };
 struct RulesWeapon { char *name, *name_short; int8_t offense_rating; };
 struct RulesBasic { uint32_t move_rate_roads; };
-struct SocialEffect { int research; };
+struct SocialEffect {
+    enum EffectIndex { ECONOMY, EFFICIENCY, SUPPORT, TALENT, MORALE, POLICE,
+                       GROWTH, PLANET, PROBE, INDUSTRY, RESEARCH };
+    int values_[11];
+};
 struct PlayerData {
     int unk_94, unk_95, unk_96, unk_97, energy_reserves;
     int tech_accumulated, flags, current_num_bases, unk_69, tech_achieved;
@@ -575,4 +579,3 @@ def test_actual_overflow_claim_and_event18_nonoverflow_gate():
         _compile_run(compiler, namespace, owner, EVENT18_MAIN)
         mutant = owner.replace(overflow_gate, "if (event_id >= 18) {")
         _compile_run(compiler, namespace, mutant, EVENT18_MAIN, expected_run=None)
-

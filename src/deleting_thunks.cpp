@@ -122,8 +122,6 @@ checks; none alone establishes complete game acceptance.
 // Remaining executable-address targets are unfinished ownership seams.
 func_deleting_dtor PopupDtorTarget =
     original_method<func_deleting_dtor>(0x00406C00);
-func_deleting_forward Sub006336D0Target =
-    original_method<func_deleting_forward>(0x006336D0);
 
 /*
 Purpose: The compiler-generated scalar deleting destructor at
@@ -1609,24 +1607,4 @@ void *__fastcall scalar_delete_push_button(void *self, void *,
         operator delete(self);
     }
     return self;
-}
-
-/*
-Purpose: Step the receiver back to the subobject sub_6336d0 expects, then
-         forward unchanged.
-// ORIGINAL: 0x00633730 sub_633730 0x00633730-0x00633738
-// symbol    ?adjust_this_sub_633730@@YIPAXPAX0I@Z
-// size      8 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the forwarded call's
-Status: Complete
-*/
-void *__fastcall adjust_this_sub_633730(void *self, void *,
-                                        unsigned int arg0) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    return (ORIGINAL(object - 0x58)->*Sub006336D0Target)(arg0);
 }

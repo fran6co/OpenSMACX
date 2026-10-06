@@ -206,6 +206,13 @@ def test_actual_product_source_with_gcc_and_clang(tmp_path):
         (compiler_dir / "enemy_pb_policy.h").write_text(
             PRODUCT_POLICY.read_text(encoding="utf-8"), encoding="utf-8"
         )
+        # Stage the current host storage adapters too, so the compiled
+        # fixture uses the same source snapshot as the extracted product body.
+        for header in ("alien_host_fixture.h", "enemy_pb_host_fixture.h"):
+            (compiler_dir / header).write_text(
+                (FIXTURES / header).read_text(encoding="utf-8"), encoding="utf-8"
+            )
+        include_dirs = (compiler_dir,)
         compile_run(alien_harness, compiler, include_dirs, compiler_dir,
                     "alien_product", True)
         compile_run(buster_harness, compiler, include_dirs, compiler_dir,

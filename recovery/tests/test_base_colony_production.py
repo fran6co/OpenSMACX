@@ -1375,7 +1375,11 @@ ECOLOGY_HARNESS = r"""
 enum { BIT_FUNGUS=0x20, BIT_BASE_IN_TILE=1, BIT_VEH_IN_TILE=2,
        PFLAG_MAP_REVEALED=0x200, ALT_OCEAN_SHELF=2, ALT_BIT_OCEAN_SHELF=0x40,
        SP_VOICE_OF_PLANET=31, SP_Unbuilt=-1 };
-struct SocialEffect { int planet; };
+struct SocialEffect {
+    enum EffectIndex { ECONOMY, EFFICIENCY, SUPPORT, TALENT, MORALE, POLICE,
+                       GROWTH, PLANET, PROBE, INDUSTRY, RESEARCH };
+    int values_[11];
+};
 struct PlayerData {
     uint32_t flags;
     int ranking;

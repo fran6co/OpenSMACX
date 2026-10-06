@@ -47,7 +47,11 @@ struct RulesChassis { int preq_tech; int speed; int missile; };
 struct RulesReactor { int preq_tech; };
 struct RulesAbility { int preq_tech; };
 struct RulesBasic { int tech_two_spec_abilities; };
-struct SocialEffect { int morale; int industry; };
+struct SocialEffect {
+    enum EffectIndex { ECONOMY, EFFICIENCY, SUPPORT, TALENT, MORALE, POLICE,
+                       GROWTH, PLANET, PROBE, INDUSTRY, RESEARCH };
+    int values_[11];
+};
 struct PlayerData {
     int ranking, diff_level;
     unsigned int diplo_treaties[MaxPlayerNum];

@@ -1049,9 +1049,49 @@ uint32_t Sound::get_type() {
     return type_;
 }
 
-// These remaining base contracts are unfinished; their existence is not
-// evidence that the original table or derived overrides have been recovered.
-void Sound::unk_slot24() {}
+// Historical seed catalog (inactive): /*
+// Historical seed catalog (inactive): Purpose: Sign-extend bit 0 of field 0x40: 0 or -1.
+// Historical seed catalog (inactive):          Emitted by tools/generate_field_accessors.py from
+// Historical seed catalog (inactive):
+// Historical seed catalog (inactive):              mov eax, dword ptr [ecx + 0x40] / shl eax, 0x1f / sar eax, 0x1f / ret
+// Historical seed catalog (inactive):
+// Historical seed catalog (inactive):          The name is the ADDRESS, not an invention, and `self` is a void
+// Historical seed catalog (inactive):          pointer because this body needs `this` to be nothing more than a
+// Historical seed catalog (inactive):          pointer and an offset - the class it belongs to is not established.
+// Historical seed catalog (inactive):          The adapter declares 0 stack dword(s) so it
+// Historical seed catalog (inactive):          cleans 0 bytes, taken from the body's own `ret` -
+// Historical seed catalog (inactive):          the only statement of this function's arity that exists, since it has
+// Historical seed catalog (inactive):          no mangled name. Declaring fewer would leave them on the caller's
+// Historical seed catalog (inactive):          stack.
+// Historical seed catalog (inactive): // prior-original: 0x00448380 sub_448380 0x00448380-0x0044838A historical-byte-exact
+// Historical seed catalog (inactive): // symbol    ?field_accessor_00448380_redirect@@YIIPAX0@Z
+// Historical seed catalog (inactive): // size      10 bytes
+// Historical seed catalog (inactive): // prototype
+// Historical seed catalog (inactive): // callers   0   call targets   0
+// Historical seed catalog (inactive): // kind      game
+// Historical seed catalog (inactive): // flags     hidden;sp_ready;purged_ok
+// Historical seed catalog (inactive): // calls     (none)
+// Historical seed catalog (inactive): Return Value: the value described above
+// Historical seed catalog (inactive): Status: Complete
+// Historical seed catalog (inactive): */
+// Historical seed catalog (inactive): address=0x00448380
+// Historical seed catalog (inactive): mode=body; state=implemented
+// Historical seed catalog (inactive): name=sub_448380; symbol=?field_accessor_00448380_redirect@@YIIPAX0@Z
+// Historical seed catalog (inactive): spans=((4490112, 4490122),)
+// Historical seed catalog (inactive): kind='game'; exclusion=''
+// Historical seed catalog (inactive): byte_exact=True; semantic=False
+// Historical seed catalog (inactive): recipe=census
+// Historical seed catalog (inactive): levers=()
+// Historical seed catalog (inactive): ruled_out=()
+// Historical seed catalog (inactive): unrecoverable=()
+// Historical seed catalog (inactive): deferred=()
+// ORIGINAL: 0x00448380 sub_448380 0x00448380-0x0044838A BYTE_EXACT
+// symbol    ?unk_slot24@Sound@@UAEHXZ
+// The original Sound table selects 0x00448380 at slot 24. This
+// inherited integer contract sign-extends flags_40_ bit zero.
+int Sound::unk_slot24() {
+    return (flags_40_ & 1) ? -1 : 0;
+}
 int Sound::set_attrib(unsigned long) {
     // BODY GOES HERE.
     // The original base is pure. Remaining family overrides are unfinished;

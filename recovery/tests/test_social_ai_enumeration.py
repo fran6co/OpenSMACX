@@ -56,7 +56,11 @@ struct Guarded {
         return true;
     }
 };
-struct SocialEffect {};
+struct SocialEffect {
+    enum EffectIndex { ECONOMY, EFFICIENCY, SUPPORT, TALENT, MORALE, POLICE,
+                       GROWTH, PLANET, PROBE, INDUSTRY, RESEARCH };
+    int values_[11];
+};
 struct PlayerFixture { int soc_anti_ideology_category, soc_anti_ideology_model; } Players[1];
 struct RulesFixture { int preq_tech[4]; } SocialCategories[4];
 const int MaxSocialCatNum=4;

@@ -1027,7 +1027,7 @@ int __cdecl base_init(int faction_id, int x, int y) {
         base.minerals_accumulated = cost_factor(faction_id, 1, -1)
             * VehPrototypes[production].cost / 2;
     } else {
-        base.minerals_accumulated = faction.soc_effect_active.support < -1
+        base.minerals_accumulated = faction.soc_effect_active.values_[SocialEffect::SUPPORT] < -1
             ? 0 : Rules.retool_exemption;
     }
     base.resource_sqr_radius = 0;
@@ -1047,13 +1047,13 @@ int __cdecl base_init(int faction_id, int x, int y) {
             if (TurnCurrentNum >= 150) set_fac(7, base_id, TRUE);
         } else {
             base.population_size = 3;
-            if (Players[faction_id].rule_talent || faction.soc_effect_base.planet > 0)
+            if (Players[faction_id].rule_talent || faction.soc_effect_base.values_[SocialEffect::PLANET] > 0)
                 base.population_size = 4;
             if (Players[faction_id].rule_drone || Players[faction_id].rule_population)
                 --base.population_size;
             set_fac(3, base_id, TRUE);
             if (DiffLevelCurrent > 2) set_fac(6, base_id, TRUE);
-            if (faction.soc_effect_base.economy >= 1) set_fac(7, base_id, TRUE);
+            if (faction.soc_effect_base.values_[SocialEffect::ECONOMY] >= 1) set_fac(7, base_id, TRUE);
         }
     }
     if ((tile->climate & 0xE0) < 0x60) set_fac(26, base_id, TRUE);
@@ -2071,13 +2071,13 @@ label_4f94e1:
   }
   bitmask(0x23,&v61,&v60);
   v16 = BaseIDCurrentSelected;
-  if ((int)((int)(PlayersData[faction_id].soc_effect_pending.police) + (uint32_t)(((uint8_t)(Bases[v8].facilities_built[v61]) & (uint8_t)v60) != 0) * 2) <= -3) {
+  if ((int)((int)(PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::POLICE]) + (uint32_t)(((uint8_t)(Bases[v8].facilities_built[v61]) & (uint8_t)v60) != 0) * 2) <= -3) {
     v11 = (v11 + 1) / 2;
     v123 = v11;
   }
   bitmask(0x23,&v63,&v62);
   v18 = faction_id;
-  if ((int)((int)(PlayersData[faction_id].soc_effect_pending.police) + (uint32_t)(((uint8_t)(Bases[v16].facilities_built[v63]) & (uint8_t)v62) != 0) * 2) <= -5)
+  if ((int)((int)(PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::POLICE]) + (uint32_t)(((uint8_t)(Bases[v16].facilities_built[v63]) & (uint8_t)v62) != 0) * 2) <= -5)
     v123 = v11 / 2;
   v75 = 0;
   v135 = 0;
@@ -2543,7 +2543,7 @@ label_4fa54e:
           }
           v75 = v167;
           v11 = has_abil(v167,0x40000);
-          if ((((v11) && (v11 = stack_check(v153,6,0x40000,-1,-1), !v11)) && (4 <= (int)(PlayersData[faction_id].planet_ecology))) && (v9 = (int)(v9 * 2) / 3, (int)(PlayersData[faction_id].soc_effect_pending.morale) <= 0))
+          if ((((v11) && (v11 = stack_check(v153,6,0x40000,-1,-1), !v11)) && (4 <= (int)(PlayersData[faction_id].planet_ecology))) && (v9 = (int)(v9 * 2) / 3, (int)(PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::MORALE]) <= 0))
             v9 = (int)(v9 * 2) / 3;
           if (has_abil(v75,0x100)) {
             if (BaseCurrent->state & 0x100000)
@@ -3099,7 +3099,7 @@ label_4fc14e:
                 v154 = v76 * 0x20cc;
                 v8 = has_treaty(faction_id,v76,7);
                 v75 = bit_count(v8);
-                v11 = ((((((int)(PlayersData[faction_id].tech_ranking) / v11 - (int)(PlayersData[v76].tech_ranking) / v11) + (int)(PlayersData[v76].soc_effect_pending.probe)) - (int)v125) - (int)v137) - v126) - (int)v151;
+                v11 = ((((((int)(PlayersData[faction_id].tech_ranking) / v11 - (int)(PlayersData[v76].tech_ranking) / v11) + (int)(PlayersData[v76].soc_effect_pending.values_[SocialEffect::PROBE])) - (int)v125) - (int)v137) - v126) - (int)v151;
                 v8 = plan_count_0[v140 / 4];
                 v9 = (int)(range(v11 + 0xd + v8 + v75,v16,v77) * v159 * 3) / (int)((v150 - v148) + 3);
                 if (!((uint8_t)v165 & (uint8_t)LockEnableMask)) {
@@ -3359,7 +3359,7 @@ label_4fcd31:
           }
           else {
             if ((((uint8_t)(VehPrototypes[(v163 / 0x34)].plan) <= 9) && (v8 = BaseCurrent->mineral_intake_2, v8)) && (((uint8_t)(VehPrototypes[(v163 / 0x34)].plan) != 7 || (regional_plan != 7)))) {
-              v75 = (int)(PlayersData[faction_id].soc_effect_pending.support);
+              v75 = (int)(PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::SUPPORT]);
               v11 = BaseCurrent->mineral_consumption;
               if (3 <= v75) {
                 v16 = (int)BaseCurrent->population_size;
@@ -3479,10 +3479,10 @@ label_4fd242:
           if ((char)(Weapon[VehPrototypes[(v163 / 0x34)].weapon_id].offense_rating)) {
             v75 = worm_mod(BaseIDCurrentSelected,faction_id);
             v8 = morale_mod(BaseIDCurrentSelected,v18,(uint32_t)(uint8_t)(Chassis[VehPrototypes[(v163 / 0x34)].chassis_id].triad));
-            v8 += (int)(PlayersData[faction_id].soc_effect_pending.morale);
+            v8 += (int)(PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::MORALE]);
             if (v161 == 2) {
               if (has_fac_built(2)) {
-                v11 = (v8 - (int)(PlayersData[faction_id].soc_effect_pending.morale)) + 1;
+                v11 = (v8 - (int)(PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::MORALE])) + 1;
                 if (v8 <= v11)
                   v8 = v11;
               }
@@ -3658,7 +3658,7 @@ label_4fd6f8:
           break;
         case 0xe:
           v9 *= 0x40;
-          if (1 <= (int)(PlayersData[faction_id].soc_effect_pending.planet))
+          if (1 <= (int)(PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::PLANET]))
             v9 = (int)v9 / 2;
           if (plan_count_2[v161 * 3 + v164] <= 1) {
             if (!((uint8_t)v165 & (uint8_t)LockEnableMask)) {
@@ -3692,16 +3692,16 @@ label_4fd8f6:
     v159 = 0x100;
     switch(v164) {
       case 1:
-        if (((regional_plan != 2) && (-3 <= (int)(PlayersData[faction_id].soc_effect_pending.efficiency))) && ((!v99 || ((v99 == 1 && (BaseCurrent->queue_production_id[0] == -1))))))
+        if (((regional_plan != 2) && (-3 <= (int)(PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::EFFICIENCY]))) && ((!v99 || ((v99 == 1 && (BaseCurrent->queue_production_id[0] == -1))))))
           v8 = 3 - (int)BaseCurrent->population_size / 5;
         break;
       case 2:
-        if (-3 <= (int)(PlayersData[faction_id].soc_effect_pending.efficiency))
+        if (-3 <= (int)(PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::EFFICIENCY]))
           v8 = BaseCurrent->energy_inefficiency;
         else {
           v8 = 0;
         }
-        v75 = (int)(PlayersData[faction_id].soc_effect_pending.morale);
+        v75 = (int)(PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::MORALE]);
         if (1 <= v75)
           v11 = 1;
         else {
@@ -3713,7 +3713,7 @@ label_4fd8f6:
         v8 = has_project(0x18,faction_id);
         if (((!v8) && (3 <= BaseCurrent->mineral_surplus)) && (5 <= v75))
           v75 = 4;
-        if (((int)(Players[v9].rule_morale) + (int)(PlayersData[faction_id].soc_effect_pending.morale) <= -1) && (regional_plan == 2))
+        if (((int)(Players[v9].rule_morale) + (int)(PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::MORALE]) <= -1) && (regional_plan == 2))
           v75 /= 2;
         v8 = range(v75,1,0xc);
         if (((has_fac_built(3)) || (5 <= BaseCurrent->population_size)) && (((int)BaseCurrent->population_size / 2 <= BaseCurrent->energy_inefficiency || (BaseCurrent->energy_intake_2 / 2 <= BaseCurrent->energy_inefficiency))))
@@ -3924,7 +3924,7 @@ label_4fec33:
           v8 = (v11 * 200) / range(v75 + 100,0x32,200);
           v167 = v144;
         }
-        v75 = (int)(PlayersData[faction_id].soc_effect_pending.morale);
+        v75 = (int)(PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::MORALE]);
         if (v75 <= -1) {
           v8 = (v75 + -1) / 2 + v8 / 2;
           v167 = v144;
@@ -4034,7 +4034,7 @@ label_4fe4ee:
           v11 = 0x10;
           v75 = 1;
           v8 = has_fac_built(0x23);
-          v8 = range(((((BaseCurrent->drone_total - BaseCurrent->talent_total) - v8) * 2 + 0x10) - BaseCurrent->mineral_intake_1) - (int)(PlayersData[faction_id].soc_effect_pending.police),v75,v11);
+          v8 = range(((((BaseCurrent->drone_total - BaseCurrent->talent_total) - v8) * 2 + 0x10) - BaseCurrent->mineral_intake_1) - (int)(PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::POLICE]),v75,v11);
           if ((!v160) || ((int)regional_plan <= 2)) goto label_4fe410;
           v18 = 1;
         }
@@ -4042,7 +4042,7 @@ label_4fe4ee:
       case 0x17:
         if (!((uint8_t)v165 & (uint8_t)LockEnableMask)) {
           v75 = has_fac_built(0x23);
-          if (((((int)(PlayersData[faction_id].soc_effect_pending.police) + v75 * 2 <= 0) && (2 <= BaseCurrent->drone_total)) && ((int)regional_plan <= 2)) && ((2 <= (int)(PlayersData[faction_id].soc_effect_pending.economy) && ((BaseCurrent->assimilation_turns_left || (!v102))))))
+          if (((((int)(PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::POLICE]) + v75 * 2 <= 0) && (2 <= BaseCurrent->drone_total)) && ((int)regional_plan <= 2)) && ((2 <= (int)(PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::ECONOMY]) && ((BaseCurrent->assimilation_turns_left || (!v102))))))
             v8 = range((8U - BaseCurrent->drone_total) * 2 - (int)BaseCurrent->population_size / 2,1,0x10);
           v18 = v160;
         }
@@ -4178,8 +4178,8 @@ label_4feda1:
           v75 = (v75 * 100) / range(v8 + 100,0x32,200);
           v167 = v144;
         }
-        if ((int)(PlayersData[faction_id].soc_effect_pending.morale) <= -1) {
-          v75 = ((int)(PlayersData[faction_id].soc_effect_pending.morale) + -1) / 2 + v75 / 2;
+        if ((int)(PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::MORALE]) <= -1) {
+          v75 = ((int)(PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::MORALE]) + -1) / 2 + v75 / 2;
           v167 = v144;
           if ((v160) && (!((uint8_t)((PlayersData[faction_id].unk_77[region] >> 8)) & 0x40))) {
             v16 = 0xc;
@@ -4382,7 +4382,7 @@ label_4ff11f:
       if ((base_id != 7) && (base_id)) {
 label_4ff44c:
         if ((((base_id == 8) || (base_id == 0x10)) || (base_id == 0x13)) || (base_id == 9)) {
-          v75 = ((int)(Players[v18].rule_morale) + 8 + (int)(PlayersData[faction_id].soc_effect_pending.morale)) * v75;
+          v75 = ((int)(Players[v18].rule_morale) + 8 + (int)(PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::MORALE])) * v75;
           v75 = (int)(v75 + (v75 >> 0x1f & 7U)) >> 3;
         }
         if (((!base_id) || (base_id == 6)) || ((base_id == 0xe || ((base_id == 0x1a || (base_id == 0x1e)))))) goto label_4ff4a5;
@@ -4391,7 +4391,7 @@ label_4ff44c:
         if (regional_plan == 8)
           v75 = 0xaa;
         if (base_id) goto label_4ff44c;
-        if (((int)(Players[v18].rule_talent)) || (1 <= (int)(PlayersData[faction_id].soc_effect_pending.talent)))
+        if (((int)(Players[v18].rule_talent)) || (1 <= (int)(PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::TALENT])))
           v75 *= 2;
 label_4ff4a5:
         if ((int)(Players[v18].rule_talent))
@@ -4470,9 +4470,9 @@ label_4ff5f6:
             v75 /= 2;
           if ((int)(PlayersData[faction_id].ai_tech))
             v75 /= 2;
-          if ((int)(PlayersData[faction_id].soc_effect_base.probe) <= -1)
+          if ((int)(PlayersData[faction_id].soc_effect_base.values_[SocialEffect::PROBE]) <= -1)
             v75 /= 2;
-          if (1 <= (int)(PlayersData[faction_id].soc_effect_base.probe))
+          if (1 <= (int)(PlayersData[faction_id].soc_effect_base.values_[SocialEffect::PROBE]))
             v75 *= 2;
         }
         if (((!v128) && (base_id <= 0x1e)) && ((regional_plan == 2 || ((uint8_t)((PlayersData[faction_id].unk_77[region] >> 8)) & 0x40))))
@@ -5790,7 +5790,7 @@ int __cdecl cost_factor(int faction_id, int rsc_type, int base_id) {
     }
     if (rsc_type) {
         if (rsc_type == RSC_MINERALS) {
-            switch (PlayersData[faction_id].soc_effect_pending.industry) {
+            switch (PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::INDUSTRY]) {
               case -7:
               case -6:
               case -5:
@@ -5818,7 +5818,7 @@ int __cdecl cost_factor(int faction_id, int rsc_type, int base_id) {
             return factor; // Energy/PSI? Legacy code logic in case cost used these?
         }
     } else { // nutrient
-        int growth_factor = PlayersData[faction_id].soc_effect_pending.growth;
+        int growth_factor = PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::GROWTH];
         if (base_id >= 0) {
             if (has_fac_built_call(FAC_CHILDREN_CRECHE, base_id)) {
                 growth_factor += 2; // +2 on growth scale
@@ -5976,7 +5976,7 @@ void __cdecl base_ecology() {
     PlayerData &player = PlayersData[faction];
 
     int ecology_divisor = ecology_wrap_int(
-        4u - static_cast<uint32_t>(player.soc_effect_pending.planet));
+        4u - static_cast<uint32_t>(player.soc_effect_pending.values_[SocialEffect::PLANET]));
     if (ecology_divisor < 1) ecology_divisor = 1;
     else if (ecology_divisor > 99) ecology_divisor = 99;
     player.unk_49 = ecology_wrapped_add(player.unk_49,
@@ -6477,7 +6477,7 @@ void __cdecl base_hurry() {
                 (Bases[selected_base_id].facilities_built[offset] & mask) != 0
                     ? 2 : 0;
             if (base_yield_add(
-                    PlayersData[faction].soc_effect_pending.police, police_bonus) <= -2
+                    PlayersData[faction].soc_effect_pending.values_[SocialEffect::POLICE], police_bonus) <= -2
                 && facility_index < 0x46) {
                 const int remaining_cost =
                     base_yield_sub(scaled_cost, current_base->minerals_accumulated);
@@ -6697,7 +6697,7 @@ void __cdecl base_check_support() {
             if (plan == PLAN_COLONIZATION) {
                 vehicle.state &= ~VSTATE_REQUIRES_SUPPORT;
                 if (!has_abil(prototype_id, ABL_CLEAN_REACTOR)) {
-                    const int support = PlayersData[faction].soc_effect_pending.support;
+                    const int support = PlayersData[faction].soc_effect_pending.values_[SocialEffect::SUPPORT];
                     BaseCurrentForcesMaintCost -= support < -3 ? 2 : 1;
                 }
             }
@@ -6710,7 +6710,7 @@ void __cdecl base_check_support() {
             break;
         }
 
-        const int support = PlayersData[faction].soc_effect_pending.support;
+        const int support = PlayersData[faction].soc_effect_pending.values_[SocialEffect::SUPPORT];
         BaseCurrentForcesMaintCost -= support < -3 ? 2 : 1;
         kill(selected_vehicle);
     }
@@ -6732,7 +6732,7 @@ void __cdecl base_check_support() {
     const int morale_bonus =
         (Bases[BaseIDCurrentSelected].facilities_built[morale_bonus_offset]
          & morale_bonus_mask) != 0 ? 2 : 0;
-    const int morale = PlayersData[faction].soc_effect_pending.morale;
+    const int morale = PlayersData[faction].soc_effect_pending.values_[SocialEffect::MORALE];
     if (base_yield_add(morale, morale_bonus) >= -2
         || (BaseCurrent->drone_total <= BaseCurrent->talent_total
             && BaseCurrent->nutrient_surplus >= 0)) {
@@ -6817,7 +6817,7 @@ void __cdecl base_research() {
         points = research_bonus / 2;
     }
     PlayerData &player = PlayersData[faction_id];
-    if (TurnCurrentNum < base_yield_mul(-5, player.soc_effect_pending.research)) {
+    if (TurnCurrentNum < base_yield_mul(-5, player.soc_effect_pending.values_[SocialEffect::RESEARCH])) {
         points = 0;
     }
     if (TurnCurrentNum < 5 && player.diff_level < 2) {
@@ -6826,7 +6826,7 @@ void __cdecl base_research() {
 
     player.labs_total = base_yield_add(player.labs_total, points);
 
-    int research_rate = player.soc_effect_pending.research;
+    int research_rate = player.soc_effect_pending.values_[SocialEffect::RESEARCH];
     if (research_rate < -5) {
         research_rate = -5;
     } else if (research_rate > 5) {
@@ -7035,7 +7035,7 @@ int __cdecl morale_mod(int base_id, int faction_id, int triad) {
         || has_project(SP_CYBORG_FACTORY, faction_id)) {
         morale_modifier += 2;
     }
-    if (PlayersData[faction_id].soc_effect_pending.morale < -1) {
+    if (PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::MORALE] < -1) {
         morale_modifier /= 2;
     }
     return morale_modifier;
@@ -7236,12 +7236,12 @@ int __cdecl crop_yield(int faction_id, int base_id, int x, int y,
             crop += ResourceInfo[RSCINFO_BONUS_SQ].nutrients;
         }
         if (has_project(SP_MANIFOLD_HARMONICS, faction_id)
-            && PlayersData[faction_id].soc_effect_pending.planet > 0) {
+            && PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::PLANET] > 0) {
             crop++;
         }
     } else if ((bit & BIT_FUNGUS) && !assume_improved
                && (tile->climate & 0xE0) >= ALT_BIT_OCEAN_SHELF) {
-        int planet = PlayersData[faction_id].soc_effect_pending.planet;
+        int planet = PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::PLANET];
         int planet_mod = (planet < -3) ? -3 : ((planet > 0) ? 0 : planet);
         crop = range(PlayersData[faction_id].tech_fungus_nutrient + planet_mod,
                      0, 99);
@@ -7422,7 +7422,7 @@ int __cdecl mine_yield(int faction_id, int base_id, int x, int y,
             mineral += ResourceInfo[RSCINFO_BONUS_SQ].minerals;
         }
         if (has_project(SP_MANIFOLD_HARMONICS, faction_id)
-            && PlayersData[faction_id].soc_effect_pending.planet > 1) {
+            && PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::PLANET] > 1) {
             mineral++;
         }
     } else if (bit & BIT_THERMAL_BORE) {
@@ -7435,7 +7435,7 @@ int __cdecl mine_yield(int faction_id, int base_id, int x, int y,
     } else if ((bit & BIT_FUNGUS)
                && (tile->climate & 0xE0) >= ALT_BIT_OCEAN_SHELF) {
         // Note there is no assume_improved suppressor here; crop_yield has one.
-        int planet = PlayersData[faction_id].soc_effect_pending.planet;
+        int planet = PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::PLANET];
         int planet_mod = (planet < -3) ? -3 : ((planet > 0) ? 0 : planet);
         mineral = range(PlayersData[faction_id].tech_fungus_mineral + planet_mod,
                         0, 99);
@@ -7599,7 +7599,7 @@ int __cdecl energy_yield(int faction_id, int base_id, int x, int y,
                 golden_age = 1;
             }
         }
-        int economy = PlayersData[faction_id].soc_effect_pending.economy
+        int economy = PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::ECONOMY]
                       + golden_age;
         if (economy < 0) {
             // The original asks for Headquarters again here rather than reusing
@@ -7622,7 +7622,7 @@ int __cdecl energy_yield(int faction_id, int base_id, int x, int y,
     } else if (bit & BIT_MONOLITH) {
         energy = ResourceInfo[RSCINFO_MONOLITH].energy;
         if (has_project(SP_MANIFOLD_HARMONICS, faction_id)) {
-            int planet = PlayersData[faction_id].soc_effect_pending.planet;
+            int planet = PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::PLANET];
             if (planet >= 0) {
                 energy++;
             }
@@ -7634,7 +7634,7 @@ int __cdecl energy_yield(int faction_id, int base_id, int x, int y,
         energy = ResourceInfo[RSCINFO_BOREHOLE_SQ].energy;
     } else if ((bit & BIT_FUNGUS)
                && (tile->climate & 0xE0) >= ALT_BIT_OCEAN_SHELF) {
-        int planet = PlayersData[faction_id].soc_effect_pending.planet;
+        int planet = PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::PLANET];
         int planet_mod = (planet < -3) ? -3 : ((planet > 0) ? 0 : planet);
         energy = range(PlayersData[faction_id].tech_fungus_energy + planet_mod,
                        0, 99);
@@ -7732,7 +7732,7 @@ int __cdecl energy_yield(int faction_id, int base_id, int x, int y,
                 golden_age = 1;
             }
         }
-        if (PlayersData[faction_id].soc_effect_pending.economy + golden_age
+        if (PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::ECONOMY] + golden_age
             >= 2) {
             energy++;
         }
@@ -7941,7 +7941,7 @@ void __cdecl base_support() {
             }
             if (!free_in_fungus) {
                 (BaseCurrentForcesSupported)++;
-                int support = PlayersData[faction_id].soc_effect_pending.support;
+                int support = PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::SUPPORT];
                 if ((int)BaseCurrentForcesSupported
                         > free_support[range(support + 4, 0, 7)]
                     && !has_abil(proto_id, ABL_CLEAN_REACTOR)) {
@@ -7989,7 +7989,7 @@ void __cdecl base_support() {
             }
         }
         (BaseCurrentVehPacifismCount)++;
-        int police = PlayersData[faction_id].soc_effect_pending.police
+        int police = PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::POLICE]
             + (has_fac_built_call(FAC_BROOD_PIT, BaseIDCurrentSelected) ? 2 : 0);
         if (police == -3) {
             veh->state |= (BaseCurrentVehPacifismCount == 1) ? VSTATE_PACIFISM_FREE_SKIP
@@ -8033,7 +8033,7 @@ Status: Complete
 */
 void __cdecl base_nutrient() {
     uint32_t faction_id = BaseCurrent->faction_id_current;
-    BaseCurrentGrowthRate = PlayersData[faction_id].soc_effect_pending.growth;
+    BaseCurrentGrowthRate = PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::GROWTH];
     if (has_fac_built_call(FAC_CHILDREN_CRECHE, BaseIDCurrentSelected)) {
         BaseCurrentGrowthRate += 2; // +2 on growth scale
     }
@@ -8160,7 +8160,7 @@ void __cdecl base_minerals() {
     }
     BaseCurrent->eco_damage = ((PlayersData[faction_id].tech_ranking
         - PlayersData[faction_id].theory_of_everything)
-        * (3 - range(PlayersData[faction_id].soc_effect_pending.planet, -3, 2))
+        * (3 - range(PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::PLANET], -3, 2))
         * (MapNativeLifeForms + 1) * BaseCurrent->eco_damage * diff_factor) / 6;
     BaseCurrent->eco_damage = (BaseCurrent->eco_damage + 50) / 100;
     int queue_id;
@@ -8263,7 +8263,7 @@ uint32_t __cdecl black_market(int energy) {
             }
         }
     }
-    int ineffciency = 4 - PlayersData[faction_id].soc_effect_pending.efficiency;
+    int ineffciency = 4 - PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::EFFICIENCY];
     if (has_creche) {
         ineffciency -= 2; // +2 on efficiency scale
     }
@@ -8362,7 +8362,7 @@ void __cdecl base_psych() {
     const bool human = (static_cast<unsigned char>(LockEnableMask) & (1u << faction)) != 0;
     const int difficulty = human ? PlayersData[faction].diff_level : 3;
     const int content = base_yield_sub(6, difficulty);
-    const int efficiency = PlayersData[faction].soc_effect_pending.efficiency;
+    const int efficiency = PlayersData[faction].soc_effect_pending.values_[SocialEffect::EFFICIENCY];
     int bureaucracy = base_yield_mul(base_yield_mul(base_yield_add(content, 2),
         base_yield_add(efficiency < 0 ? 0 : efficiency, 4)),
         base_yield_signed_bits(MapAreaSqRoot)) / 56 / 2;
@@ -8413,13 +8413,13 @@ void __cdecl base_psych() {
 
     for (int talent_case = 8; talent_case >= 0; --talent_case) {
         if (talent_case != 0 && BaseUpkeepStage != 1) continue;
-        const int talent = talent_case != 0 ? talent_case - 4 : PlayersData[faction].soc_effect_pending.talent;
+        const int talent = talent_case != 0 ? talent_case - 4 : PlayersData[faction].soc_effect_pending.values_[SocialEffect::TALENT];
         for (int police_case = 9; police_case >= 0; --police_case) {
             int police;
             if (police_case == 0) {
                 // This query also occurs at the end of each hypothetical row.
                 const bool brood_pit = base_yield_has_facility(FAC_BROOD_PIT);
-                police = base_yield_add(PlayersData[faction].soc_effect_pending.police, brood_pit ? 2 : 0);
+                police = base_yield_add(PlayersData[faction].soc_effect_pending.values_[SocialEffect::POLICE], brood_pit ? 2 : 0);
                 if (talent_case != 0) continue;
             } else {
                 if (BaseUpkeepStage != 1 || talent_case == 0) continue;
@@ -9312,7 +9312,7 @@ int __cdecl garrison_check(int base_id) {
         || PlayersData[faction_id_sea].integrity_blemishes >= 4)) {
         garrison++;
     }
-    int support = PlayersData[faction_id].soc_effect_pending.support;
+    int support = PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::SUPPORT];
     if (support <= -4) {
         garrison--;
     }
@@ -13914,7 +13914,7 @@ int __cdecl base_upkeep(int base_id) {
     const uint8_t resource_class = PlayersData[faction_id].unk_83[
         MapTiles[tile_index].region];
     const int tile_weight = resource_class == 7 &&
-        PlayersData[faction_id].soc_effect_base.talent < 1
+        PlayersData[faction_id].soc_effect_base.values_[SocialEffect::TALENT] < 1
         ? 4 : (resource_class != 2) + 1;
     PlayersData[faction_id].unk_47 = base_upkeep_wrap_add(
         PlayersData[faction_id].unk_47,
@@ -14260,7 +14260,7 @@ after_popup:
     int offset = 0;
     int mask = 0;
     bitmask(0x23, &offset, &mask);
-    int riot_total = PlayersData[faction_id].soc_effect_pending.police + 7;
+    int riot_total = PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::POLICE] + 7;
     if ((Bases[base_id].facilities_built[offset] & mask) != 0) riot_total += 2;
     if (riot_total != 1 && riot_total - 1 >= 0 &&
         rand() % riot_total != 0) return;
@@ -14324,7 +14324,7 @@ after_popup:
             bitmask(0x23, &offset, &mask);
             base = BaseCurrent;
             const bool has_pressure = (base->facilities_built[offset] & mask) != 0;
-            const int severity = PlayersData[faction_id].soc_effect_pending.police +
+            const int severity = PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::POLICE] +
                                  (has_pressure ? 2 : 0);
             if (severity < -2 && !is_alien_faction(faction_id) &&
                 (LockEnableMask & faction_bit(faction_id)) != 0) {

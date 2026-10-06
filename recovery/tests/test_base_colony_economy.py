@@ -54,7 +54,11 @@ struct VehPrototype {
     uint8_t chassis_id, weapon_id, armor_id, reactor_id;
     uint8_t carry_capacity, cost, plan;
 };
-struct SocialEffect { int support, morale; };
+struct SocialEffect {
+    enum EffectIndex { ECONOMY, EFFICIENCY, SUPPORT, TALENT, MORALE, POLICE,
+                       GROWTH, PLANET, PROBE, INDUSTRY, RESEARCH };
+    int values_[11];
+};
 struct PlayerData { SocialEffect soc_effect_pending; int ai_fight; };
 
 Base *BaseCurrent;
@@ -170,7 +174,7 @@ int main() {
     base.state = BSTATE_DRONE_RIOTS_ACTIVE;
     base.drone_total = 1;
     base.talent_total = 0;
-    PlayersData[2].soc_effect_pending.morale = -3;
+    PlayersData[2].soc_effect_pending.values_[SocialEffect::MORALE] = -3;
     PlayersData[2].ai_fight = -1;
     VehCurrentCount = 1;
     Vehs[0].faction_id = 2;
@@ -215,7 +219,11 @@ const unsigned int RULES_SCN_NO_TECH_ADVANCES = 0x04000000u;
 unsigned int GameRules = 0;
 int TurnCurrentNum = 0;
 struct Base { int faction_id_current, labs_total; uint8_t facilities_built[12]; };
-struct SocialEffect { int research; };
+struct SocialEffect {
+    enum EffectIndex { ECONOMY, EFFICIENCY, SUPPORT, TALENT, MORALE, POLICE,
+                       GROWTH, PLANET, PROBE, INDUSTRY, RESEARCH };
+    int values_[11];
+};
 struct PlayerData { int diff_level; SocialEffect soc_effect_pending; int labs_total, net_random_event; };
 Base *BaseCurrent = 0;
 Base Bases[8] = {};
@@ -241,7 +249,7 @@ int main() {
     BaseCurrent = &base;
     PlayerData &player = PlayersData[3];
     player.diff_level = 3;
-    player.soc_effect_pending.research = 0;
+    player.soc_effect_pending.values_[SocialEffect::RESEARCH] = 0;
 
     Bases[3].facilities_built[2] = 0x80;
     base_research();
@@ -251,7 +259,7 @@ int main() {
     Bases[3].facilities_built[2] = 0;
     player.labs_total = 0;
     player.net_random_event = 0;
-    player.soc_effect_pending.research = -2;
+    player.soc_effect_pending.values_[SocialEffect::RESEARCH] = -2;
     TurnCurrentNum = 11;
     base_research();
     assert(player.labs_total == 25 && player.net_random_event == 0);
@@ -279,7 +287,7 @@ int main() {
 
     GameRules = 0;
     player.diff_level = 3;
-    player.soc_effect_pending.research = 0;
+    player.soc_effect_pending.values_[SocialEffect::RESEARCH] = 0;
     player.labs_total = 0x7FFFFFFF;
     base.labs_total = 0x7FFFFFFF;
     TurnCurrentNum = 10;
@@ -289,7 +297,7 @@ int main() {
     // -5 * INT_MIN wraps to INT_MIN, so turn -1 is not below that threshold.
     player.labs_total = 17;
     player.net_random_event = 0;
-    player.soc_effect_pending.research = (-2147483647 - 1);
+    player.soc_effect_pending.values_[SocialEffect::RESEARCH] = (-2147483647 - 1);
     base.labs_total = 25;
     TurnCurrentNum = -1;
     base_research();
@@ -382,7 +390,11 @@ struct Base {
 struct Map { uint32_t bit; uint8_t val2, region; };
 struct VehPrototype { uint16_t flags; uint8_t plan; };
 struct Player { char filename[24]; char adj_name_faction[128]; int rule_hurry; };
-struct SocialEffect { int economy, efficiency, support, talent, morale, police; };
+struct SocialEffect {
+    enum EffectIndex { ECONOMY, EFFICIENCY, SUPPORT, TALENT, MORALE, POLICE,
+                       GROWTH, PLANET, PROBE, INDUSTRY, RESEARCH };
+    int values_[11];
+};
 struct PlayerData {
     uint32_t ranking;
     int major_atrocities, energy_reserves, ai_wealth, ai_power, ai_growth;
@@ -600,8 +612,8 @@ void police_field_control() {
     PlayersData[2].energy_reserves = 1000;
     PlayersData[2].ai_wealth = 0;
     PlayersData[2].ai_power = 0;
-    PlayersData[2].soc_effect_pending.police = -5;
-    PlayersData[2].soc_effect_pending.morale = 20;
+    PlayersData[2].soc_effect_pending.values_[SocialEffect::POLICE] = -5;
+    PlayersData[2].soc_effect_pending.values_[SocialEffect::MORALE] = 20;
     BaseCurrent = &entry_base;
     base_hurry();
     assert(PlayersData[2].energy_reserves == 1000);

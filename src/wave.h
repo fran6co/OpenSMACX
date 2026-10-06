@@ -113,6 +113,9 @@ class Wave : public Sound {
   int set_attrib(unsigned long attrib);
   int get_attrib();
 
+  // Slot 24 is inherited from Sound but Wave overrides it to call
+  // the DLL-created SoundDeviceInterface at device_ (+0x3C).
+  virtual int unk_slot24();  // slot 24, original 0x00448340
   // Original Wave (0x0066E44C) and Effect (0x0066B7A4) tables agree on
   // this derived virtual sequence, slots 33..56. In particular FX::init
   // calls set_pitch through slot 38, and Effect::init calls load at 35.

@@ -367,8 +367,11 @@ BASE_UPKEEP_FIXTURE = r'''// Private host-only behavioral transcription control.
 enum { MaxPlayerNum = 8, MaxSecretProjectNum = 64 };
 enum { STATE_UNK_1 = 1 };
 
-struct SocialEffect { int economy, efficiency, support, talent, morale, police,
-    growth, planet, probe, industry, research; };
+struct SocialEffect {
+    enum EffectIndex { ECONOMY, EFFICIENCY, SUPPORT, TALENT, MORALE, POLICE,
+                       GROWTH, PLANET, PROBE, INDUSTRY, RESEARCH };
+    int values_[11];
+};
 struct PlayerData {
     int energy_reserves;
     SocialEffect soc_effect_base;
@@ -833,17 +836,9 @@ struct Base {
 
 struct SocialCategory { uint32_t models[4]; };
 struct SocialEffect {
-    int economy;
-    int efficiency;
-    int support;
-    int talent;
-    int morale;
-    int police;
-    int growth;
-    int planet;
-    int probe;
-    int industry;
-    int research;
+    enum EffectIndex { ECONOMY, EFFICIENCY, SUPPORT, TALENT, MORALE, POLICE,
+                       GROWTH, PLANET, PROBE, INDUSTRY, RESEARCH };
+    int values_[11];
 };
 struct PlayerData {
     uint32_t flags;
@@ -996,7 +991,7 @@ typedef char private_attack_target_offset[
     (__builtin_offsetof(PlayerData, base_id_atk_target) == 0x468) ? 1 : -1];
 typedef char private_police_offset[
     (__builtin_offsetof(PlayerData, soc_effect_pending) +
-     __builtin_offsetof(SocialEffect, police) == 0x260) ? 1 : -1];
+     (__builtin_offsetof(SocialEffect,values_)+sizeof(int)*SocialEffect::POLICE) == 0x260) ? 1 : -1];
 typedef char private_active_proto_offset[
     (__builtin_offsetof(PlayerData, proto_id_active) == 0x858) ? 1 : -1];
 typedef char private_base_count_offset[
@@ -1271,7 +1266,7 @@ static void reset_fixture() {
     Bases[1].faction_id_current = 2;
     Bases[1].population_size = 4;
     Bases[1].visibility = static_cast<uint8_t>(1 << 7);
-    PlayersData[1].soc_effect_pending.police = -3;
+    PlayersData[1].soc_effect_pending.values_[SocialEffect::POLICE] = -3;
     PlayersData[1].current_num_bases = 2;
     PlayersData[1].proto_id_active[10] = 1;
     Players[3].faction_bonus_count = 1;
@@ -1414,7 +1409,7 @@ static void test_visibility_gate_and_specialist_prerequisite() {
     Players[1].faction_bonus_count = 1;
     Players[1].faction_bonus_id[0] = 2;
     Players[1].faction_bonus_val1[0] = 5;
-    PlayersData[1].soc_effect_pending.police = 0;
+    PlayersData[1].soc_effect_pending.values_[SocialEffect::POLICE] = 0;
     const int bonus_two_values[] = { 0, 5 };
     set_random_values(bonus_two_values, 2);
     drone_riot();
@@ -1428,7 +1423,7 @@ static void test_visibility_gate_and_specialist_prerequisite() {
     Players[1].faction_bonus_id[0] = 12;
     Players[1].faction_bonus_val1[0] = 5;
     tech_enabled = 1;
-    PlayersData[1].soc_effect_pending.police = 0;
+    PlayersData[1].soc_effect_pending.values_[SocialEffect::POLICE] = 0;
     timer_value = 1050;
     const int blocked_values[] = { 0, 5 };
     set_random_values(blocked_values, 2);
@@ -1443,7 +1438,7 @@ static void test_visibility_gate_and_specialist_prerequisite() {
     Players[1].faction_bonus_id[0] = 12;
     Players[1].faction_bonus_val1[0] = 5;
     tech_enabled = 0;
-    PlayersData[1].soc_effect_pending.police = 0;
+    PlayersData[1].soc_effect_pending.values_[SocialEffect::POLICE] = 0;
     const int converted_values[] = { 0, 5 };
     set_random_values(converted_values, 2);
     drone_riot();

@@ -46,7 +46,11 @@ class SetupWin : public GraphicWin {
 };
 
 struct SocialCategory { int models_[4]; };
-struct SocialEffect { int value; };
+struct SocialEffect {
+    enum EffectIndex { ECONOMY, EFFICIENCY, SUPPORT, TALENT, MORALE, POLICE,
+                       GROWTH, PLANET, PROBE, INDUSTRY, RESEARCH };
+    int values_[11];
+};
 struct PlayerData {
   int energy_reserves;
   int soc_upheaval_cost_paid;

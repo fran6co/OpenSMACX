@@ -103,7 +103,7 @@ class Sound : public SoundFadeState {
   virtual int set_fade_in(unsigned int fade_in);   // slot 21 (0x4C65B0)
   virtual int is_looping();                        // slot 22 (0x4C6690)
   virtual int is_playing();                        // slot 23 (0x4C64C0)
-  virtual void unk_slot24();                       // slot 24 (0x448380, unrecovered)
+  virtual int unk_slot24();                        // slot 24 (0x448380)
   virtual Sound *get_next();                       // slot 25 (0x448310)
   virtual Sound *get_prev();                       // slot 26 (0x448320)
   // Pure in the original base; Wave/Effect select 0x004C6F20, whose

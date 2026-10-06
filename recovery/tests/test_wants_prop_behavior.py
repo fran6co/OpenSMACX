@@ -57,7 +57,11 @@ const int DTREATY_WANT_REVENGE = 0x20;
 const int DTREATY_HAVE_SURRENDERED = 0x2000000;
 const int RULES_VICTORY_COOPERATIVE = 0x1000;
 const int RFLAG_ALIEN = 0x80;
-struct SocialEffect { int economy; };
+struct SocialEffect {
+    enum EffectIndex { ECONOMY, EFFICIENCY, SUPPORT, TALENT, MORALE, POLICE,
+                       GROWTH, PLANET, PROBE, INDUSTRY, RESEARCH };
+    int values_[11];
+};
 struct PlayerData {
     int diff_level;
     uint32_t maint_cost_total;
@@ -197,7 +201,7 @@ int main() {
     PlayersData[0].ai_wealth = 1;
     PlayersData[0].ai_power = 1;
     PlayersData[0].ai_fight = 1;
-    PlayersData[0].soc_effect_pending.economy = 2;
+    PlayersData[0].soc_effect_pending.values_[SocialEffect::ECONOMY] = 2;
     for (int faction = 1; faction < MaxPlayerNum; ++faction) {
         PlayersData[faction].tech_commerce_bonus = 3;
         PlayersData[0].diplo_treaties[faction] = 3;

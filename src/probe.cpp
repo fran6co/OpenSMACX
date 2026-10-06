@@ -244,7 +244,7 @@ int __cdecl success_rates(int id, int morale, int diff_modifier, int base_id) {
         // bitmask() E8, matching the image's two `call 0x50ba00` sites).
         int prb_defense = ((base_id + 1) != 0 && has_fac_built_call(FAC_COVERT_OPS_CENTER, base_id))
             ? 2 : 0;
-        prb_defense = range(PlayersData[ProbeTargetFactionID].soc_effect_active.probe
+        prb_defense = range(PlayersData[ProbeTargetFactionID].soc_effect_active.values_[SocialEffect::PROBE]
             + prb_defense, -2, 0);
         int failure_rate = (diff_modifier * 100) / ((morale / 2) - prb_defense + 1);
         if (ProbeHasAlgoEnhancement && !ProbeTargetHasHSA) {
@@ -259,7 +259,7 @@ int __cdecl success_rates(int id, int morale, int diff_modifier, int base_id) {
 
         int prb_defense_2 = ((base_id + 1) != 0 && has_fac_built_call(FAC_COVERT_OPS_CENTER, base_id))
             ? 2 : 0;
-        prb_defense_2 = range(PlayersData[ProbeTargetFactionID].soc_effect_active.probe
+        prb_defense_2 = range(PlayersData[ProbeTargetFactionID].soc_effect_active.values_[SocialEffect::PROBE]
             + prb_defense_2, -2, 0);
         int loss_rate = ((diff_modifier + 1) * 100) / (morale - prb_defense_2);
         if (ProbeHasAlgoEnhancement && !ProbeTargetHasHSA) {
@@ -1326,9 +1326,9 @@ static void probe_native_negative_selector_accounting(
         static_cast<uint32_t>(
             PlayersData[actor_faction_id].energy_reserves) -
         static_cast<uint32_t>(amount));
-    PlayersData[actor_faction_id].soc_effect_base.talent = static_cast<int32_t>(
+    PlayersData[actor_faction_id].soc_effect_base.values_[SocialEffect::TALENT] = static_cast<int32_t>(
         static_cast<uint32_t>(
-            PlayersData[actor_faction_id].soc_effect_base.talent) + 4u);
+            PlayersData[actor_faction_id].soc_effect_base.values_[SocialEffect::TALENT]) + 4u);
     PlayersData[target_faction_id]
         .diplo_mind_control[actor_faction_id] += 4;
 }
@@ -1566,7 +1566,7 @@ static BOOL probe_native_success_roll_passes(int action_result,
     if (morale_veh(actor_vehicle_id, 1, 0) >= 1)
         morale_for_roll = morale_veh(actor_vehicle_id, 1, 0);
     const int target_probe = range(
-        PlayersData[target_faction_id].soc_effect_active.probe +
+        PlayersData[target_faction_id].soc_effect_active.values_[SocialEffect::PROBE] +
             facility_bonus,
         -2, 0);
     const int roll = rnd((morale_for_roll / 2 - target_probe) + 1, nullptr);
@@ -1970,7 +1970,7 @@ label_5a2574:
             PlayersData[target_faction_id].diff_level <= 2 &&
             (factions_status_byte(0) &
              (1u << (static_cast<uint32_t>(target_faction_id) & 31u))) == 0 &&
-            PlayersData[target_faction_id].soc_effect_temp.probe < 3) {
+            PlayersData[target_faction_id].soc_effect_temp.values_[SocialEffect::PROBE] < 3) {
             action_result = 6;
         }
         native_fallback_marker = true;
@@ -2538,7 +2538,7 @@ label_5a0917_done:
                 amount = probe_native_negative_selector_adjust_amount(
                     amount, actor_faction_id);
                 const int native_score_policy =
-                    PlayersData[target_faction_id].soc_effect_active.probe;
+                    PlayersData[target_faction_id].soc_effect_active.values_[SocialEffect::PROBE];
                 BOOL native_territory_mismatch = 0;
                 amount = probe_native_strategy_adjusted_amount(
                     amount, fallback_vehicle_id, native_score_policy);
@@ -2689,7 +2689,7 @@ label_5a0917_done:
             // The target policy is the active probe field (+0x298), separate
             // from the temporary social-effect talent member.
             int social_modifier =
-                PlayersData[target_faction_id].soc_effect_active.probe;
+                PlayersData[target_faction_id].soc_effect_active.values_[SocialEffect::PROBE];
             if (has_fac(0x16, target_base_id, 0)) --social_modifier;
             if (has_fac(0x22, target_base_id, 0)) social_modifier += 2;
             if (social_modifier + 2 < 6) {

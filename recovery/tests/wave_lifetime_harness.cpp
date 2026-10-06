@@ -54,7 +54,7 @@ void Sound::set_type(unsigned int) { assert(false); }
 int Sound::set_fade_in(unsigned int) { assert(false); return 0; }
 int Sound::is_looping() { assert(false); return 0; }
 int Sound::is_playing() { assert(false); return 0; }
-void Sound::unk_slot24() { assert(false); }
+int Sound::unk_slot24() { assert(false); return 0; }
 int Sound::set_attrib(unsigned long) { assert(false); return 0; }
 int Sound::get_attrib() { assert(false); return 0; }
 int Sound::get_time() { assert(false); return 0; }
@@ -64,6 +64,7 @@ int Wave::unload() { assert(false); return 0; }
 int Wave::is_playing() { assert(false); return 0; }
 int Wave::get_game_hwnd() { assert(false); return 0; }
 int Wave::get_attrib() { assert(false); return 0; }
+int Wave::unk_slot24() { assert(false); return 0; }
 int Wave::set_attrib(unsigned long) { assert(false); return 0; }
 int Wave::reload() { assert(false); return 0; }
 void Wave::init(char *, unsigned long) { assert(false); }

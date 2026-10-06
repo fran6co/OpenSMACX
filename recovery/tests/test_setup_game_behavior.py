@@ -36,8 +36,11 @@ enum { MaxPlayerNum=8, MaxProposalNum=11, MaxTechnologyNum=89,
 enum { RFLAG_ALIEN=0x80 };
 struct RulesBasic { uint32_t normal_starting_year, normal_end_year_low_three_diff,
                     normal_end_year_high_three_diff; } Rules;
-struct SocialEffect { int economy, efficiency, support, talent, morale, police,
-                      growth, planet, probe, industry, research; };
+struct SocialEffect {
+    enum EffectIndex { ECONOMY, EFFICIENCY, SUPPORT, TALENT, MORALE, POLICE,
+                       GROWTH, PLANET, PROBE, INDUSTRY, RESEARCH };
+    int values_[11];
+};
 struct RulesSocialCategory { SocialEffect model_effect[4]; };
 RulesSocialCategory SocialCategories[4];
 struct Player {
@@ -264,13 +267,13 @@ int main() {
 
   std::memset(Players,0,sizeof Players);
   std::memset(SocialCategories,0,sizeof SocialCategories);
-  SocialCategories[0].model_effect[1].efficiency=1;
-  SocialCategories[0].model_effect[2].research=1;
-  SocialCategories[1].model_effect[1].morale=1;
-  SocialCategories[1].model_effect[2].growth=1;
-  SocialCategories[1].model_effect[3].planet=1;
-  SocialCategories[2].model_effect[1].probe=1;
-  SocialCategories[2].model_effect[2].industry=1;
+  SocialCategories[0].model_effect[1].values_[SocialEffect::EFFICIENCY]=1;
+  SocialCategories[0].model_effect[2].values_[SocialEffect::RESEARCH]=1;
+  SocialCategories[1].model_effect[1].values_[SocialEffect::MORALE]=1;
+  SocialCategories[1].model_effect[2].values_[SocialEffect::GROWTH]=1;
+  SocialCategories[1].model_effect[3].values_[SocialEffect::PLANET]=1;
+  SocialCategories[2].model_effect[1].values_[SocialEffect::PROBE]=1;
+  SocialCategories[2].model_effect[2].values_[SocialEffect::INDUSTRY]=1;
   const int choices[16]={0,0, 0,0, 0,1, 1,0, 1,1, 1,2, 2,0, 2,1};
   for (int i=0;i<16;++i) setup_rand_values[i]=choices[i];
   setup_rand_count=16; setup_rand_index=0;

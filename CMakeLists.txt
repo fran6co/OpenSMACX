@@ -260,6 +260,7 @@ set(OPENSMACX_SOURCES
     src/veh.cpp
     src/vector.cpp
     src/win.cpp
+    src/win_reparent.cpp
     src/winnodelist.cpp
 )
 

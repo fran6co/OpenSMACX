@@ -83,11 +83,9 @@
  */
 
 typedef void (OriginalObject::*func_deleting_dtor)();
-typedef void * (OriginalObject::*func_deleting_forward)(unsigned int arg0);
 
 extern func_deleting_dtor PopupDtorTarget;   // 0x00406C00
 
-extern func_deleting_forward Sub006336D0Target;   // 0x006336D0
 
 void *__fastcall scalar_delete_alpha_movie(void *self, void *,
                                            unsigned int arg0);
@@ -221,4 +219,3 @@ void *__fastcall scalar_delete_push_button(void *self, void *,
                                            unsigned int arg0);
 void *__fastcall adjust_this_push_button(void *self, void *,
                                          unsigned int arg0);
-void *__fastcall adjust_this_sub_633730(void *self, void *, unsigned int arg0);

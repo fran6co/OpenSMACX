@@ -236,22 +236,26 @@ struct SocialCategory {
 static_assert(sizeof(SocialCategory) == 0x10,
               "SocialCategory layout must match the original executable");
 
+// Proposed replacement of the scalar-only SocialEffect declaration in faction.h.
+// All existing named consumers migrate to values_[SocialEffect::<AXIS>].
+// This is a genuine eleven-word owner, not an alias over unrelated members.
 struct SocialEffect {
-    int economy;
-    int efficiency;
-    int support;
-    int talent;
-    int morale;
-    int police;
-    int growth;
-    int planet;
-    int probe;
-    int industry;
-    int research;
+    enum EffectIndex {
+        ECONOMY, EFFICIENCY, SUPPORT, TALENT, MORALE, POLICE,
+        GROWTH, PLANET, PROBE, INDUSTRY, RESEARCH
+    };
+    // RECOVERY_MEMBER: v1 SocialEffect values_ 0x0 0x0054FFD0
+    // Native 55013C..55014B reads the nonnegative selector without an upper
+    // bound, at PlayerData pending row + selector*4. Preserve that unsafe
+    // path; effects for selectors outside 0..10 are not proved by this type.
+    int values_[11];
 };
 
 static_assert(sizeof(SocialEffect) == 0x2C,
               "SocialEffect layout must match the original executable");
+static_assert(offsetof(SocialEffect, values_) == 0,
+              "SocialEffect word array must begin at the native row start");
+
 
 struct RulesSocialEffect {
     char set1[24];
@@ -1175,3 +1179,23 @@ int __cdecl propose_attack(int actor, int other);
 int __cdecl tech_trade(int actor, int partner, int request_mode, int action, int context);
 
 void __cdecl make_a_proposal(int faction_id, int other_faction_id, int selection_ready);
+
+// Communicate product declaration closure; existing identities unchanged.
+// Proposed faction.h closure; all names below already have genuine definitions
+// in faction.cpp or leaf_recoveries.cpp, except newly proposed neutral F7B4.
+// Keep the existing object identity, type, array extent and binding unchanged.
+int __cdecl diplo_lock(int patience); // existing leaf owner, native 539820
+void __cdecl diplo_unlock();         // existing faction owner, native 5398C0
+extern uint32_t FactionDiplomacyFlags[MaxPlayerNum]; // native 93F678
+extern uint32_t DiplomacyRegionMask[128];           // native 93F818
+extern int DiplomacyProposalGateCount;             // existing native 93F7D0
+extern int DiploScratchF7B4; // new separately proposed start-only cell 93F7B4
+extern int DiploScratchF7B8, DiploScratchF7C4, DiploScratchF7C8;
+extern int DiploScratchF7D4, DiploScratchF7D8, DiploScratchF7E0;
+extern int DiploScratchF7E4, DiploScratchF7E8, DiploScratchF7F0;
+extern int DiploScratchF7FC, DiploScratchF808, DiploScratchFA24;
+extern int DiploScratchFA2C, DiploScratchFA38, DiploScratchFA48;
+extern int DiploScratchFA4C, DiploScratchFA50, DiploScratchFA54;
+extern int DiploScratchFA64, DiploScratchFA68, DiploScratchFA70;
+extern int DiploScratchFA78, DiploScratchFA80, DiploScratchFA8C;
+extern int DiploScratchFA90, DiploScratchFAA0;

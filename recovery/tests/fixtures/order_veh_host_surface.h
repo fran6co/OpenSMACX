@@ -28,7 +28,12 @@ struct Veh {
 struct VehPrototype { char veh_name[32]; uint32_t ability_flags;
  uint8_t chassis_id,weapon_id,armor_id,reactor_id,carry_capacity,cost,plan;
  uint16_t flags; };
-struct Effect { int planet; };
+struct SocialEffect {
+    enum EffectIndex { ECONOMY, EFFICIENCY, SUPPORT, TALENT, MORALE, POLICE,
+                       GROWTH, PLANET, PROBE, INDUSTRY, RESEARCH };
+    int values_[11];
+};
+typedef SocialEffect Effect;
 struct PlayerData { uint32_t diplo_treaties[32],flags; int diff_level,planet_ecology;
  Effect soc_effect_active,soc_effect_base; uint8_t proto_id_active[512];
  uint16_t unk_77[128],region_total_combat_vehs[128]; };

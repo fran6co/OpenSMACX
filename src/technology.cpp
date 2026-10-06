@@ -651,11 +651,11 @@ void __cdecl tech_effects(int faction_id) {
             tech_fungus[n] = 0;
         }
     }
-    if (PlayersData[faction_id].soc_effect_pending.economy > 2) {
+    if (PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::ECONOMY] > 2) {
         PlayersData[faction_id].tech_commerce_bonus++;
-        if (PlayersData[faction_id].soc_effect_pending.economy > 3) {
+        if (PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::ECONOMY] > 3) {
             PlayersData[faction_id].tech_commerce_bonus++;
-            if (PlayersData[faction_id].soc_effect_pending.economy > 4) {
+            if (PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::ECONOMY] > 4) {
                 PlayersData[faction_id].tech_commerce_bonus++;
             }
         }
@@ -816,7 +816,7 @@ int __cdecl tech_val(int tech_id, int faction_id, BOOL simple_calc) {
             && tech_is_preq(tech_id, Facility[FAC_ASCENT_TO_TRANSCENDENCE].preq_tech, 2)) {
             value_ret *= 4;
         }
-        if (PlayersData[faction_id].soc_effect_base.planet > 0 && ai_growth) {
+        if (PlayersData[faction_id].soc_effect_base.values_[SocialEffect::PLANET] > 0 && ai_growth) {
             if (tech_is_preq(tech_id, TECH_CENTMED, 9999)) {
                 value_ret *= 3;
             }
@@ -827,7 +827,7 @@ int __cdecl tech_val(int tech_id, int faction_id, BOOL simple_calc) {
                 value_ret *= 2;
             }
         }
-        if (PlayersData[faction_id].soc_effect_base.probe <= 0) {
+        if (PlayersData[faction_id].soc_effect_base.values_[SocialEffect::PROBE] <= 0) {
             if (tech_is_preq(tech_id, Facility[FAC_HUNTER_SEEKER_ALGO].preq_tech, ai_tech + 2)) {
                 if (!ai_power) {
                     value_ret *= 2;
@@ -1190,7 +1190,7 @@ int __cdecl tech_rate(int faction_id) {
     int fin_factor = range(
         player_factor - (TurnCurrentNum / static_cast<int>(rule_factor >> 3)),
         0, (diff_factor * static_cast<int>(rule_factor >> 5)) >> 1) + diff_factor;
-    int resch_base = range(PlayersData[faction_id].soc_effect_base.research, -1, 1);
+    int resch_base = range(PlayersData[faction_id].soc_effect_base.values_[SocialEffect::RESEARCH], -1, 1);
     int discovery_rate = (fin_factor
         - range((top_factor - diff_lvl - player_factor + 7) / (8 - diff_lvl),
             0, diff_lvl * fin_factor / 10 + 1))

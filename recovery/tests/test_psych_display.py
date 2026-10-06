@@ -198,7 +198,7 @@ void panel_controls(){
     reset();BaseCurrent->population_size=6;
     const int t[5]={0,1,2,2,3},d[5]={3,3,2,2,1},s[5]={0,0,0,1,0};
     for(int i=0;i<5;++i){BasePsychTalents[i]=t[i];BasePsychDrones[i]=d[i];BasePsychSuperDrones[i]=s[i];}
-    PlayersData[3].soc_effect_pending.police=-2;window.draw_psych();
+    PlayersData[3].soc_effect_pending.values_[SocialEffect::POLICE]=-2;window.draw_psych();
     require(texts.size()==5 && draws.size()==30 && clip_calls==2);
     const int labels[]={322,323,324,326,327};
     const int moods[5][6]={{1,1,1,2,2,2},{0,1,1,2,2,2},{0,0,1,1,2,2},{0,0,1,1,2,3},{0,0,0,1,1,2}};
@@ -215,10 +215,10 @@ void panel_controls(){
         BaseCurrent->faction_id_former=kind==1?7:3;BaseCurrent->nerve_staple_turns_left=1;
         window.draw_psych();require(texts[0].label==(kind==1?970:971));}
     reset();BaseCurrent->population_size=1;BasePsychTalents[3]=BasePsychTalents[4]=1;
-    PlayersData[3].soc_effect_pending.police=-3;Bases[0].facilities_built[4]=8;change_selected=1;
+    PlayersData[3].soc_effect_pending.values_[SocialEffect::POLICE]=-3;Bases[0].facilities_built[4]=8;change_selected=1;
     window.draw_psych();require(texts.size()==2 && texts[1].label==325);
     reset();Bases[1]=Bases[0];Bases[1].faction_id_current=7;Bases[1].faction_id_former=3;Bases[1].assimilation_turns_left=5;
-    BasePsychTalents[3]=BasePsychTalents[4]=1;PlayersData[3].soc_effect_pending.police=-3;PlayersData[7].soc_effect_pending.police=3;
+    BasePsychTalents[3]=BasePsychTalents[4]=1;PlayersData[3].soc_effect_pending.values_[SocialEffect::POLICE]=-3;PlayersData[7].soc_effect_pending.values_[SocialEffect::POLICE]=3;
     change_base_on_font=1;window.draw_psych();require(texts[0].label==970 && texts[1].label==326);
     reset();BaseCurrent->population_size=6;change_width_on_text=10;window.draw_psych();
     require(draws.size()==6 && draws[1].x==23); // width is read after the caption callback.
@@ -265,7 +265,7 @@ MUTANTS=[
     ("caption-reset","bodies","MapWinCaptionDivisor = -1;","MapWinCaptionDivisor = 0;"),
     ("restore-original-clip","bodies","canvas->set_clip(&saved_clip);","canvas->set_clip(&rect1_);"),
     ("former-faction-caption","bodies","base->faction_id_former != base->faction_id_current","base->faction_id_former == base->faction_id_current"),
-    ("police-cached-faction","bodies","PlayersData[faction].soc_effect_pending.police","PlayersData[BaseCurrent->faction_id_current].soc_effect_pending.police"),
+    ("police-cached-faction","bodies","PlayersData[faction].soc_effect_pending.values_[SocialEffect::POLICE]","PlayersData[BaseCurrent->faction_id_current].soc_effect_pending.values_[SocialEffect::POLICE]"),
     ("selected-before-bitmask","bodies","Bases[selected].facilities_built","Bases[BaseIDCurrentSelected].facilities_built"),
     ("brood-police-caption","bodies","brood_pit ? 2 : 0","brood_pit ? 0 : 0"),
     ("sprite-width-accessor","sprite","return iWidth_;","return iHeight_;"),

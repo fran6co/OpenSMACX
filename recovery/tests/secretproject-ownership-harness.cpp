@@ -7,7 +7,11 @@
 
 /*ACTUAL_PROJECT_OWNER*/
 struct Base { unsigned char faction_id_current; int labs_total, economy_total; };
-struct SocialEffect { int research; };
+struct SocialEffect {
+    enum EffectIndex { ECONOMY, EFFICIENCY, SUPPORT, TALENT, MORALE, POLICE,
+                       GROWTH, PLANET, PROBE, INDUSTRY, RESEARCH };
+    int values_[11];
+};
 struct PlayerData {
     SocialEffect soc_effect_pending;
     uint32_t diplo_treaties[8];

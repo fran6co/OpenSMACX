@@ -339,7 +339,7 @@ void convoy_consumer(){
     base_yield();require(BaseCurrent->nutrient_intake_2==3); // yield does not consume convoys
     BaseCurrent->nutrients_accumulated=-4;BaseCurrent->state|=BSTATE_GOLDEN_AGE_ACTIVE;
     Bases[0].facilities_built[FAC_CHILDREN_CRECHE/8]|=1<<(FAC_CHILDREN_CRECHE%8);
-    PlayersData[3].soc_effect_pending.growth=1;BaseUpkeepStage=1;
+    PlayersData[3].soc_effect_pending.values_[SocialEffect::GROWTH]=1;BaseUpkeepStage=1;
     base_nutrient();require(BaseCurrentGrowthRate==5 && BaseCurrent->nutrient_intake_2==5);
     require(BaseCurrent->nutrient_consumption==3 && BaseCurrent->nutrient_surplus==2 && BaseCurrent->nutrients_accumulated==0);
     require(PlayersData[3].nutrient_surplus_total==2 && BaseCurrentConvoyFrom[0]==1 && BaseCurrentConvoyTo[0]==2);

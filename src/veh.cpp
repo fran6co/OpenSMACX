@@ -2916,7 +2916,7 @@ void __cdecl say_morale(LPSTR morale_output, int veh_id, int faction_id_vs_nativ
         if (base_id >= 0 && morale < 6) {
             if (has_fac_built(FAC_CHILDREN_CRECHE, base_id)) {
                 VehMoraleModifierCount++;
-                int morale_active = range(PlayersData[faction_id].soc_effect_active.morale, -4, 4);
+                int morale_active = range(PlayersData[faction_id].soc_effect_active.values_[SocialEffect::MORALE], -4, 4);
                 if (morale_active <= -2) {
                     morale_active++;
                 }
@@ -2939,7 +2939,7 @@ void __cdecl say_morale(LPSTR morale_output, int veh_id, int faction_id_vs_nativ
                 && proto_id < MaxVehProtoFactionNum
                 && (get_proto_offense_rating(proto_id) < 0 || proto_id == BSC_SPORE_LAUNCHER)) {
                 VehMoraleModifierCount++;
-                int morale_active = range(PlayersData[faction_id].soc_effect_active.morale, -4, 4);
+                int morale_active = range(PlayersData[faction_id].soc_effect_active.values_[SocialEffect::MORALE], -4, 4);
                 if (morale_active <= -2) {
                     morale_active++;
                 }
@@ -2956,7 +2956,7 @@ void __cdecl say_morale(LPSTR morale_output, int veh_id, int faction_id_vs_nativ
                 }
             }
         }
-        int morale_pending = PlayersData[faction_id].soc_effect_pending.morale;
+        int morale_pending = PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::MORALE];
         if (morale_pending == 2 || morale_pending == 3) {
             VehMoraleModifierCount++;
         }
@@ -4149,7 +4149,7 @@ int __cdecl get_basic_offense(int veh_id_atk, int veh_id_def, int psi_combat_typ
     if (base_id_atk >= 0) {
         if (has_fac_built(FAC_CHILDREN_CRECHE, base_id_atk)) {
             morale++;
-            int morale_active = range(PlayersData[faction_id_atk].soc_effect_active.morale, -4, 4);
+            int morale_active = range(PlayersData[faction_id_atk].soc_effect_active.values_[SocialEffect::MORALE], -4, 4);
             if (morale_active <= -2) {
                 morale_active++;
             }
@@ -4165,14 +4165,14 @@ int __cdecl get_basic_offense(int veh_id_atk, int veh_id_def, int psi_combat_typ
         } else if (has_fac_built_call(FAC_BROOD_PIT, base_id_atk) && proto_id_atk < MaxVehProtoFactionNum
             && (get_proto_offense_rating(proto_id_atk) < 0 || proto_id_atk == BSC_SPORE_LAUNCHER)) {
             morale++;
-            int morale_active = range(PlayersData[faction_id_atk].soc_effect_active.morale, -4, 4);
+            int morale_active = range(PlayersData[faction_id_atk].soc_effect_active.values_[SocialEffect::MORALE], -4, 4);
             if (morale_active <= -2) {
                 morale_active++;
             }
             morale -= morale_active;
         }
         if (unk_tgl) {
-            int morale_pending = PlayersData[faction_id_atk].soc_effect_pending.morale;
+            int morale_pending = PlayersData[faction_id_atk].soc_effect_pending.values_[SocialEffect::MORALE];
             if (morale_pending >= 2 && morale_pending <= 3) {
                 morale++;
             }
@@ -4232,7 +4232,7 @@ int __cdecl get_basic_defense(int veh_id_def, int veh_id_atk, int psi_combat_typ
     if (base_id_def >= 0) {
         if (has_fac_built(FAC_CHILDREN_CRECHE, base_id_def)) {
             morale++;
-            int morale_active = range(PlayersData[faction_id_def].soc_effect_active.morale, -4, 0);
+            int morale_active = range(PlayersData[faction_id_def].soc_effect_active.values_[SocialEffect::MORALE], -4, 0);
             if (morale_active <= -2) {
                 morale_active++;
             }
@@ -4250,7 +4250,7 @@ int __cdecl get_basic_defense(int veh_id_def, int veh_id_atk, int psi_combat_typ
             &&  proto_id_def < MaxVehProtoFactionNum
             && (get_proto_offense_rating(proto_id_def) < 0 || proto_id_def == BSC_SPORE_LAUNCHER)) {
             morale++;
-            int morale_active = range(PlayersData[faction_id_def].soc_effect_active.morale, -4, 4);
+            int morale_active = range(PlayersData[faction_id_def].soc_effect_active.values_[SocialEffect::MORALE], -4, 4);
             if (morale_active <= -2) {
                 morale_active++;
             }
@@ -4259,7 +4259,7 @@ int __cdecl get_basic_defense(int veh_id_def, int veh_id_atk, int psi_combat_typ
         if (has_fac_built(FAC_HEADQUARTERS, base_id_def)) { // bug fix: per manual
             morale++; // "Units in a headquarters base automatically gain +1 Morale when defending."
         }
-        int morale_pending = PlayersData[faction_id_def].soc_effect_pending.morale;
+        int morale_pending = PlayersData[faction_id_def].soc_effect_pending.values_[SocialEffect::MORALE];
         if (morale_pending >= 2 && morale_pending <= 3) {
             morale++;
         }
@@ -4500,7 +4500,7 @@ void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, in
                     }
                 }
                 if (psi_combat_type && faction_id_atk) {
-                    int planet_atk = PlayersData[faction_id_atk].soc_effect_active.planet;
+                    int planet_atk = PlayersData[faction_id_atk].soc_effect_active.values_[SocialEffect::PLANET];
                     if (planet_atk && Rules.combat_pct_psi_atk_bonus_planet) {
                         int planet_modifier = planet_atk * Rules.combat_pct_psi_atk_bonus_planet;
                         add_bat(0, planet_modifier, label_get(625)); // "Planet"
@@ -6077,7 +6077,7 @@ int __cdecl hex_cost(int proto_id, int faction_id, int x_src, int y_src, int x_d
         || get_proto_offense_rating(proto_id) >= 0)) {
         uint8_t plan = VehPrototypes[proto_id].plan;
         if (plan != PLAN_TERRAFORMING && plan != PLAN_ALIEN_ARTIFACT
-            && PlayersData[faction_id].soc_effect_active.planet <= 0) {
+            && PlayersData[faction_id].soc_effect_active.values_[SocialEffect::PLANET] <= 0) {
             return cost + Rules.move_rate_roads * 2;
         }
         uint32_t speed = speed_proto(proto_id);
@@ -8077,7 +8077,7 @@ int __cdecl morale_veh(int veh_id, BOOL check_drone_riot, int faction_id_vs_nati
     }
     int16_t proto_id = Vehs[veh_id].proto_id;
     if (VehPrototypes[proto_id].plan == PLAN_INFO_WARFARE) { // probe
-        int probe_morale = range(PlayersData[faction_id].soc_effect_active.probe, 0, 3);
+        int probe_morale = range(PlayersData[faction_id].soc_effect_active.values_[SocialEffect::PROBE], 0, 3);
         probe_morale += has_project(SP_TELEPATHIC_MATRIX, faction_id) ? 2 : 0;
         for (int i = 0; i < MaxTechnologyNum; i++) {
             if (Technology[i].flags & TFLAG_IMPROVED_PROBES && has_tech(i, faction_id)) {
@@ -8092,7 +8092,7 @@ int __cdecl morale_veh(int veh_id, BOOL check_drone_riot, int faction_id_vs_nati
         return range(Vehs[veh_id].morale, 0, 6); // Basic Psi Veh
     }
     // everything else
-    int morale_modifier = range(PlayersData[faction_id].soc_effect_active.morale, -4, 4);
+    int morale_modifier = range(PlayersData[faction_id].soc_effect_active.values_[SocialEffect::MORALE], -4, 4);
     if (morale_modifier <= -2) {
         morale_modifier++;
     } else if (morale_modifier >= 2) {
@@ -9151,7 +9151,7 @@ int __cdecl alien_base(int veh_id, int x, int y) {
             value /= 2;
         }
         if (Vehs[veh_id].order_auto_type != base.faction_id_current
-            && PlayersData[base.faction_id_current].soc_effect_active.planet > 0
+            && PlayersData[base.faction_id_current].soc_effect_active.values_[SocialEffect::PLANET] > 0
             && !base.eco_damage) {
             value *= 2;
         }
@@ -12829,7 +12829,7 @@ int __cdecl goody_box(int veh_id, int type) {
     PlayerData &faction = PlayersData[faction_id];
     ++faction.unk_94; // original 0x96EA20; setup_player clears the DWORD.
     if (IsMultiplayerNet) my_srand((int)StartingMissionYear + faction.unk_94 * 0x25);
-    if (faction.soc_effect_pending.research * -5 <= TurnCurrentNum
+    if (faction.soc_effect_pending.values_[SocialEffect::RESEARCH] * -5 <= TurnCurrentNum
         && !(GameRules & 0x04000000u))
         ++faction.tech_accumulated;
 
@@ -16383,7 +16383,7 @@ static bool air_power_fungal_goal_route(int vehicle_id, int *target_x,
         if ((PlayersData[faction_id].diplo_treaties[base.faction_id_current]
              & 0x10) == 0)
             continue;
-        if (PlayersData[base.faction_id_current].soc_effect_pending.planet < 1)
+        if (PlayersData[base.faction_id_current].soc_effect_pending.values_[SocialEffect::PLANET] < 1)
             continue;
 
         base_tile = map_loc(base.x, base.y);
@@ -17406,7 +17406,7 @@ static ConsiderDesignsTailOutput consider_designs_strategy_tail(
     }
     add_abil(&ability_flags, ABL_COMM_JAMMER, faction_id);
     bool trained_gate = faction_data.ai_fight < 0;
-    if (!trained_gate && faction_data.soc_effect_pending.morale < 0 &&
+    if (!trained_gate && faction_data.soc_effect_pending.values_[SocialEffect::MORALE] < 0 &&
         ((LockEnableMask & faction_mask) == 0 ||
          Players[faction_id].rule_morale < 0)) {
         trained_gate = true;
@@ -17424,7 +17424,7 @@ static ConsiderDesignsTailOutput consider_designs_strategy_tail(
         if ((LockEnableMask & faction_mask) == 0 &&
             (other_faction_mask != 0 ||
              (faction_data.planet_ecology >= 4 &&
-              faction_data.soc_effect_pending.industry <= 0))) {
+              faction_data.soc_effect_pending.values_[SocialEffect::INDUSTRY] <= 0))) {
             ability_flags |= ABL_TRANCE;
         }
     }
@@ -17457,7 +17457,7 @@ static ConsiderDesignsTailOutput consider_designs_strategy_tail(
         (ability_flags & ABL_TRANCE) == 0 &&
         (LockEnableMask & faction_mask) == 0 &&
         ((faction_data.planet_ecology >= 4 &&
-          faction_data.soc_effect_pending.industry <= 0) ||
+          faction_data.soc_effect_pending.values_[SocialEffect::INDUSTRY] <= 0) ||
          (other_faction_mask & 0x3) != 0)) {
         propose_proto(faction_id, output.chassis_id, chosen_weapon_id,
                       chosen_armor_id, ABL_TRANCE, input.reactor_id,
@@ -17581,7 +17581,7 @@ static ConsiderDesignsTailOutput consider_designs_strategy_tail(
     }
     if (ability_flags == 0 &&
         (faction_data.ai_fight < 0 ||
-         (faction_data.soc_effect_pending.morale < 0 &&
+         (faction_data.soc_effect_pending.values_[SocialEffect::MORALE] < 0 &&
           (LockEnableMask & faction_mask) == 0))) {
         add_abil(&ability_flags, ABL_TRAINED, faction_id);
     }
@@ -17894,13 +17894,13 @@ static void consider_designs_plan3_selection(
     }
     bool add_protective_ability = Players[faction_id].rule_morale < 0;
     if (!add_protective_ability && faction_data.ai_fight > 0
-        && faction_data.soc_effect_pending.industry >= 0) {
+        && faction_data.soc_effect_pending.values_[SocialEffect::INDUSTRY] >= 0) {
         add_protective_ability = true;
     }
     if (!add_protective_ability
         && (faction_data.ai_fight <= 0
-            || faction_data.soc_effect_pending.industry < 0)
-        && faction_data.soc_effect_pending.morale < 0 && !design_locked) {
+            || faction_data.soc_effect_pending.values_[SocialEffect::INDUSTRY] < 0)
+        && faction_data.soc_effect_pending.values_[SocialEffect::MORALE] < 0 && !design_locked) {
         add_protective_ability = true;
     }
     if (add_protective_ability) {
@@ -18699,7 +18699,7 @@ int __cdecl alien_move(int veh_id) {
     if (base_id < 0 || static_cast<uint8_t>(PlayersData[faction].current_num_bases) < 3 ||
         TurnCurrentNum < 0x33 ||
         (vehicle.order_auto_type != faction &&
-         PlayersData[faction].soc_effect_active.planet > 0 && vehicle.proto_id != 14)) {
+         PlayersData[faction].soc_effect_active.values_[SocialEffect::PLANET] > 0 && vehicle.proto_id != 14)) {
         move_result = static_cast<int8_t>(vehicle.facing);
     } else {
         vehicle.waypoint_x[0] = static_cast<int16_t>(target_x);
@@ -21806,14 +21806,14 @@ label_595be6:
     if (Vehs[visible_vehicle].proto_id == 7) goto label_59724d;
     if (Vehs[visible_vehicle].proto_id == 19) goto label_59724d;
     local_2c = faction * static_cast<int>(sizeof(PlayerData));
-    if (PlayersData[faction].soc_effect_active.planet <= 0)
+    if (PlayersData[faction].soc_effect_active.values_[SocialEffect::PLANET] <= 0)
         goto label_59724d;
     {
         int remaining = speed(veh_id, 0) - Vehs[veh_id].moves_expended;
         if (remaining < 0) remaining = 0;
         else if (remaining > 999) remaining = 999;
         if (remaining < static_cast<int>(Rules.move_rate_roads)) {
-            if (PlayersData[faction].soc_effect_base.planet <= 0)
+            if (PlayersData[faction].soc_effect_base.values_[SocialEffect::PLANET] <= 0)
                 goto label_59724d;
             if (PlayersData[faction].proto_id_active[Vehs[visible_vehicle].proto_id] != 0)
                 goto label_59724d;
@@ -21829,13 +21829,13 @@ label_595be6:
             goto label_597216;
     }
     log_say("Precapture who, enemy", faction, visible_vehicle, 0);
-    log_say("Precapture fac, proto", PlayersData[faction].soc_effect_base.planet,
+    log_say("Precapture fac, proto", PlayersData[faction].soc_effect_base.values_[SocialEffect::PLANET],
             PlayersData[faction].proto_id_active[Vehs[visible_vehicle].proto_id], 0);
     log_say("Precapture type, soc2", Vehs[visible_vehicle].proto_id,
-            PlayersData[faction].soc_effect_active.planet, 0);
+            PlayersData[faction].soc_effect_active.values_[SocialEffect::PLANET], 0);
     if ((Vehs[visible_vehicle].flags & 0x2000) != 0)
         goto label_5971ce;
-    if (rand() % 4 < PlayersData[faction].soc_effect_active.planet) {
+    if (rand() % 4 < PlayersData[faction].soc_effect_active.values_[SocialEffect::PLANET]) {
         const int bound = TurnCurrentNum / 5 + 100;
         int roll;
         if (bound - 1 > 0) roll = rand() % bound;
@@ -21844,7 +21844,7 @@ label_595be6:
             goto label_595e1b;
         if (rand() % 10 == 0) goto label_595e1b;
     }
-    if (PlayersData[faction].soc_effect_base.planet <= 0)
+    if (PlayersData[faction].soc_effect_base.values_[SocialEffect::PLANET] <= 0)
         goto label_5971ce;
     if (PlayersData[faction].proto_id_active[Vehs[visible_vehicle].proto_id] != 0)
         goto label_5971ce;

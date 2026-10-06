@@ -1854,7 +1854,7 @@ void ReportIf::draw_labs() {
             const int labs = Bases[base].labs_total;
             _itoa(labs, number, 10); strcat(StringTemp, number);
             strcat(StringTemp, " "); strcat(StringTemp, "(");
-            int research = PlayersData[report_faction_id_].soc_effect_pending.research;
+            int research = PlayersData[report_faction_id_].soc_effect_pending.values_[SocialEffect::RESEARCH];
             if (research < -5) research = -5;
             else if (research > 5) research = 5;
             const int scaled = (research + 10) * labs * 10;

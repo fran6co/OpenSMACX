@@ -36,8 +36,9 @@ struct RulesFacility {
         sp_ai_wealth, sp_ai_power;
 };
 struct SocialEffect {
-    int economy, efficiency, support, talent, morale, police, growth, planet,
-        probe, industry, research;
+    enum EffectIndex { ECONOMY, EFFICIENCY, SUPPORT, TALENT, MORALE, POLICE,
+                       GROWTH, PLANET, PROBE, INDUSTRY, RESEARCH };
+    int values_[11];
 };
 struct RulesSocialCategory {
     LPSTR type;

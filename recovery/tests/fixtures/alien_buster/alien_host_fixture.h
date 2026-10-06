@@ -5,7 +5,12 @@
 #include <string.h>
 
 #define __cdecl
-struct SocialPlanet { int planet; };
+struct SocialEffect {
+    enum EffectIndex { ECONOMY, EFFICIENCY, SUPPORT, TALENT, MORALE, POLICE,
+                       GROWTH, PLANET, PROBE, INDUSTRY, RESEARCH };
+    int values_[11];
+};
+typedef SocialEffect SocialPlanet;
 struct GoalHost { int16_t type,priority; int x,y,base_id; };
 struct PlayerDataHost {
     int diff_level;

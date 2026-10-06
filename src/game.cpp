@@ -4884,17 +4884,17 @@ void __cdecl setup_game(int reload) {
                 for (int effect = 0; effect < 11; ++effect) {
                     int value = 0;
                     switch (effect) {
-                    case 0: value = effects.economy; break;
-                    case 1: value = effects.efficiency; break;
-                    case 2: value = effects.support; break;
-                    case 3: value = effects.talent; break;
-                    case 4: value = effects.morale; break;
-                    case 5: value = effects.police; break;
-                    case 6: value = effects.growth; break;
-                    case 7: value = effects.planet; break;
-                    case 8: value = effects.probe; break;
-                    case 9: value = effects.industry; break;
-                    case 10: value = effects.research; break;
+                    case 0: value = effects.values_[SocialEffect::ECONOMY]; break;
+                    case 1: value = effects.values_[SocialEffect::EFFICIENCY]; break;
+                    case 2: value = effects.values_[SocialEffect::SUPPORT]; break;
+                    case 3: value = effects.values_[SocialEffect::TALENT]; break;
+                    case 4: value = effects.values_[SocialEffect::MORALE]; break;
+                    case 5: value = effects.values_[SocialEffect::POLICE]; break;
+                    case 6: value = effects.values_[SocialEffect::GROWTH]; break;
+                    case 7: value = effects.values_[SocialEffect::PLANET]; break;
+                    case 8: value = effects.values_[SocialEffect::PROBE]; break;
+                    case 9: value = effects.values_[SocialEffect::INDUSTRY]; break;
+                    case 10: value = effects.values_[SocialEffect::RESEARCH]; break;
                     }
                     if (value > 0) {
                         Players[social_faction].soc_ideology_effect = effect;

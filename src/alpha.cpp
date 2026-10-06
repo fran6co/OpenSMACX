@@ -1689,7 +1689,7 @@ for (i = 0; i < MaxCompassNum; i++) {
                 }
                 for (int k = 0; k < MaxSocialEffectNum; k++) {
                     if (!_stricmp(mod_value, SocialEffects[k].set1)) {
-                        *(&SocialCategories[i].model_effect[j].economy + k) = value;
+                        *(&SocialCategories[i].model_effect[j].values_[SocialEffect::ECONOMY] + k) = value;
                         break;
                     }
                 }

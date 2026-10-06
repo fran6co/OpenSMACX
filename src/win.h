@@ -107,6 +107,7 @@ class Win : public AutoSound {
   // resolves as active; the image treats it as part of Win even though
   // its receiver is an HWND, not a `this`.
   friend void __cdecl OnSysKey(void *, unsigned int, long, int, unsigned int);
+  friend int __stdcall win_reparent_window(HWND, int);
  public:
   // homed from 005f1340.cpp
   // STATIC, not the `QAA` member the catalogue reconstructs: the body reads
@@ -1290,7 +1291,8 @@ LRESULT __cdecl win_window_pos_changed(HWND hwnd, LPARAM parameter);
 void __cdecl win_window_sized(HWND hwnd, unsigned int flags, int width, int height);
 void __cdecl win_window_nonclient_sized(HWND hwnd, unsigned int flags, int width, int height);
 
-// Source-owned Win adapters; bindings and unresolved names/routes in win.cpp.
+// Source-owned Win adapters; each mapping stays beside its owner TU.
+int __stdcall win_reparent_window(HWND hwnd, int unused);
 void __cdecl win_forward_size(HWND hwnd, unsigned int flags, int width, int height);
 void __cdecl win_forward_mouse_move(HWND hwnd, int x, int y, unsigned int keys);
 int __cdecl win_forward_set_cursor(HWND hwnd, void *cursor, unsigned int hit, unsigned int message);

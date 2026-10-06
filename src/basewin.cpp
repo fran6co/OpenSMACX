@@ -1097,7 +1097,7 @@ void BaseWin::staple_the_bastards() {
     const int faction = BaseCurrent->faction_id_current;
     const bool alien = (Players[faction].rule_flags & 0x80) != 0;
     parse_says(0, BaseCurrent->name_string, -1, -1);
-    const int police = PlayersData[faction].soc_effect_active.police
+    const int police = PlayersData[faction].soc_effect_active.values_[SocialEffect::POLICE]
         + has_fac(0x23, BaseIDCurrentSelected, 0) * 2;
     const char *caption = reinterpret_cast<const char *>(*ClimatePopupTitle);
     if (police < 0) {
@@ -1417,7 +1417,7 @@ void BaseWin::draw_psych() {
                 bitmask(FAC_BROOD_PIT, &byte_index, &mask);
                 const bool brood_pit = (Bases[selected].facilities_built[byte_index]
                     & static_cast<unsigned char>(mask)) != 0;
-                const int police = psych_display_add(PlayersData[faction].soc_effect_pending.police,
+                const int police = psych_display_add(PlayersData[faction].soc_effect_pending.values_[SocialEffect::POLICE],
                     brood_pit ? 2 : 0);
                 label = police <= -2 ? 326 : 325;
                 break;
@@ -6739,14 +6739,14 @@ void BaseWin::draw_supported(int update_mode) {
         SpriteScaleDenominator = MapWinCaptionScale > 0 ? MapWinCaptionDivisor : 16;
         int support = 0, total = 0, convoy_yield; // native yield only read in convoy arm
         if (Vehs[vehicle_id].state & 0x10u) {
-            const int pending_support = PlayersData[faction].soc_effect_pending.support;
+            const int pending_support = PlayersData[faction].soc_effect_pending.values_[SocialEffect::SUPPORT];
             support = has_abil(Vehs[vehicle_id].proto_id, 0x10000)
                 ? 0 : 1 + (pending_support <= -4);
             total = support;
         }
         if (Vehs[vehicle_id].state & 0x600000u) {
             const int facility = has_fac_built(35, BaseIDCurrentSelected);
-            total += 1 + (PlayersData[faction].soc_effect_pending.police + 2 * facility <= -5);
+            total += 1 + (PlayersData[faction].soc_effect_pending.values_[SocialEffect::POLICE] + 2 * facility <= -5);
         }
         if (VehPrototypes[Vehs[vehicle_id].proto_id].plan == 10 && Vehs[vehicle_id].order == 3) {
             if (base_convoy_tile(Vehs[vehicle_id])) { convoy_yield = 1; ++total; }
@@ -6767,7 +6767,7 @@ void BaseWin::draw_supported(int update_mode) {
                 // on every iteration, including the terminating test.
                 for (int i = 0;; ++i) {
                     const int facility = has_fac_built(35, BaseIDCurrentSelected);
-                    const int peace = 1 + (PlayersData[faction].soc_effect_pending.police + 2 * facility <= -5);
+                    const int peace = 1 + (PlayersData[faction].soc_effect_pending.values_[SocialEffect::POLICE] + 2 * facility <= -5);
                     if (i >= peace) break;
                     base_panel_sprite(g_PEACE_SIGN_SPRITES[1], canvas, icon_x, icon_y);
                     icon_x += icon_pitch;

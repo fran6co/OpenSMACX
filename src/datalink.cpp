@@ -820,9 +820,9 @@ void Datalink::draw_social() {
     int bottom = field_103A0_ - 3;
     if (model >= 0) {
         const SocialEffect &effect = SocialCategories[category].model_effect[model];
-        int values[11] = {effect.economy, effect.efficiency, effect.support,
-            effect.talent, effect.morale, effect.police, effect.growth,
-            effect.planet, effect.probe, effect.industry, effect.research};
+        int values[11] = {effect.values_[SocialEffect::ECONOMY], effect.values_[SocialEffect::EFFICIENCY], effect.values_[SocialEffect::SUPPORT],
+            effect.values_[SocialEffect::TALENT], effect.values_[SocialEffect::MORALE], effect.values_[SocialEffect::POLICE], effect.values_[SocialEffect::GROWTH],
+            effect.values_[SocialEffect::PLANET], effect.values_[SocialEffect::PROBE], effect.values_[SocialEffect::INDUSTRY], effect.values_[SocialEffect::RESEARCH]};
         int count = 0;
         int i;
         for (i = 0; i < 11; ++i) if (values[i] != 0) ++count;

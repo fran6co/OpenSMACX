@@ -144,7 +144,11 @@ enum { MaxFactions=8, BSC_FUNGAL_TOWER=19, VSTATE_UNK_4=4,
        BIT_FUNGUS=0x20, DTREATY_VENDETTA=0x10, STATE_DEBUG_MODE=0x1000,
        VK_CONTROL=0x11, VK_SHIFT=0x10 };
 struct SocialCategory { int value; };
-struct SocialEffect { int value; };
+struct SocialEffect {
+    enum EffectIndex { ECONOMY, EFFICIENCY, SUPPORT, TALENT, MORALE, POLICE,
+                       GROWTH, PLANET, PROBE, INDUSTRY, RESEARCH };
+    int values_[11];
+};
 struct PlayerData {
     SocialCategory soc_category_pending; SocialEffect soc_effect_pending;
     uint32_t diplo_treaties[8]; int diplo_spoke[8]; char diplo_patience[8];

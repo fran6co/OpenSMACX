@@ -487,9 +487,9 @@ class DesignWin : public GraphicWin, public SubInterface {
 };
 
 
-// DesignWin::select_special is not recovered, so the body at the end of
-// designwin.cpp forwards through this seam. Both byte-exact select_special_N
-// thunks tail into it, so the definition stands on its own account now that
+// DesignWin::select_special is owned in designwin.cpp and calls its real
+// panel methods directly. Both historical select_special_N thunks tail into
+// that complete body, whose definition stands on its own account now that
 // the class is no longer `__declspec(dllexport)`. The `H` in
 // ?select_special@DesignWin@@QAEXH@Z is the one int both select_special_N
 // thunks pass.

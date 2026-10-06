@@ -8,8 +8,13 @@
 #define __cdecl
 
 struct Player { int is_leader_female = 0; char name_leader[16] = "leader"; char title_leader[16] = "title"; };
+struct SocialEffect {
+    enum EffectIndex { ECONOMY, EFFICIENCY, SUPPORT, TALENT, MORALE, POLICE,
+                       GROWTH, PLANET, PROBE, INDUSTRY, RESEARCH };
+    int values_[11];
+};
 struct Data {
-    struct { int economy = 0; } soc_effect_base;
+    SocialEffect soc_effect_base{};
     int unk_13 = 0, maint_cost_total = 0, current_num_bases = 1;
     int energy_reserves = 0;
     uint32_t diplo_treaties[8]{};

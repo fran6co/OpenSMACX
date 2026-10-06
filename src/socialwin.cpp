@@ -1383,7 +1383,7 @@ void __cdecl energy_compute(int faction_id, int recompute_bases) {
     }
 
     const int research_cost = tech_rate(faction_id);
-    int research_level = PlayersData[faction_id].soc_effect_pending.research;
+    int research_level = PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::RESEARCH];
     if (research_level < -5) research_level = -5;
     if (research_level > 5) research_level = 5;
     EnergyLabsTotal = (research_level + 10) * EnergyLabsTotal * 10;
@@ -1440,19 +1440,7 @@ static void set_social_category_value(SocialCategory &category, int index,
 }
 
 static int social_effect_value(const SocialEffect &effect, int index) {
-    switch (index) {
-    case 0: return effect.economy;
-    case 1: return effect.efficiency;
-    case 2: return effect.support;
-    case 3: return effect.talent;
-    case 4: return effect.morale;
-    case 5: return effect.police;
-    case 6: return effect.growth;
-    case 7: return effect.planet;
-    case 8: return effect.probe;
-    case 9: return effect.industry;
-    default: return effect.research;
-    }
+    return effect.values_[index];
 }
 
 /*
@@ -2395,7 +2383,7 @@ void SocialWin::draw_info() {
         imbalance = (5 - SocialAllocTable[faction_stride + 1]) * 2
             - SocialAllocTable[faction_stride];
     }
-    int model_shift = socEffect_.efficiency;
+    int model_shift = socEffect_.values_[SocialEffect::EFFICIENCY];
     imbalance /= 2;
     int clamped_shift;
     if (model_shift < -4) {

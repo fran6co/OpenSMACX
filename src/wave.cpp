@@ -20,6 +20,7 @@
 #include "original_seam.h"
 #include "general.h"
 #include "wave.h"
+#include "voice.h"
 #include "fx.h"
 #include "dialog.h"
 #include "sounddevice.h"
@@ -34,6 +35,41 @@
 // 33..56 are also present in Effect's table; inherited placeholders still
 // need recovery, so no complete-table acceptance is implied here.
 // RECOVERY_GENERATED: v1 vtable 0x0066E44C ? ??_7Wave@@6B@ 0x004C66E0
+
+// Historical seed catalog (inactive): // prior-original: 0x00448340 sub_448340 0x00448340-0x0044834F historical-byte-exact
+// Historical seed catalog (inactive): // symbol    ?Method@S_00448340@@QAEHXZ
+// Historical seed catalog (inactive): // size      15 bytes
+// Historical seed catalog (inactive): // prototype
+// Historical seed catalog (inactive): // callers   0   call targets   0
+// Historical seed catalog (inactive): // kind      game
+// Historical seed catalog (inactive): // flags     hidden;sp_ready;purged_ok
+// Historical seed catalog (inactive): // calls     (none)
+// Historical seed catalog (inactive): // 0x00448340  sub_448340  ->  _sub_448340
+// Historical seed catalog (inactive): //
+// Historical seed catalog (inactive): // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in
+// Historical seed catalog (inactive): // OPENSMACX_SOURCES and not compiled: it is the emitter's verification style,
+// Historical seed catalog (inactive): // and rewriting it in the tree's own style is a later phase. See README.md
+// Historical seed catalog (inactive): // beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
+// Historical seed catalog (inactive): address=0x00448340
+// Historical seed catalog (inactive): mode=body; state=implemented
+// Historical seed catalog (inactive): name=sub_448340; symbol=?Method@S_00448340@@QAEHXZ
+// Historical seed catalog (inactive): spans=((4490048, 4490063),)
+// Historical seed catalog (inactive): kind='game'; exclusion=''
+// Historical seed catalog (inactive): byte_exact=True; semantic=False
+// Historical seed catalog (inactive): recipe=census
+// Historical seed catalog (inactive): levers=()
+// Historical seed catalog (inactive): ruled_out=()
+// Historical seed catalog (inactive): unrecoverable=()
+// Historical seed catalog (inactive): deferred=()
+// ORIGINAL: 0x00448340 sub_448340 0x00448340-0x0044834F BYTE_EXACT
+// symbol    ?unk_slot24@Wave@@UAEHXZ
+int Wave::unk_slot24() {
+    if (device_ != 0) {
+        return static_cast<SoundDeviceInterface *>(device_)->unk_slot24();
+    }
+    return 0;
+}
+
 
 /*
 Purpose: Returns a fixed 11; the legacy implementation is a single constant load.
