@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "task_id": "planetfall-owner-oct6",
+  "author": "framework-coordinator",
+  "target": "opensmacx",
+  "base_revision": "a1789f75edf013b92928cd06b3c548caf72e56a2",
+  "intent": "Complete the real Planetfall owner with pinned parser-default ordering, shared popup key construction and owned-project context; preserve original quirks and historical obligations.",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5804416
+    }
+  ],
+  "editable_files": [
+    "src/game.cpp",
+    "recovery/tests/test_planetfall_owner_actual_source.py",
+    "recovery/tests/fixtures/planetfall_owner_harness.cpp"
+  ],
+  "evidence": [
+    "Pinned 00589180-00589329 body and direct callers establish the cdecl faction input. Independent review confirms parse_says slots 2,3,0,1 and ordered gender/plurality writes.",
+    "Raw alien flag, filename uppercase and exact USURPER/FUNGBOY branches remain faithful; nonzero turn gates parse_num, the 64-project scan, int-input parse_say and suffix before X_pop.",
+    "Actual-source C++98 behavior controls and a rejected parser-order mutation accompany the implementation. Host controls use modeled dependencies; they are not whole-game proof.",
+    "Coordinator-reviewed integration requires fresh application build/link and original identity continuity. No new byte or semantic claim is granted; strict matching, linked preservation and full game acceptance remain open."
+  ]
+}

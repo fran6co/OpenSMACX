@@ -1859,6 +1859,7 @@ Status: Complete
 /*
 Purpose: Handle creation of pop-up message on Planetfall.
 // ORIGINAL: 0x00589180 ?planetfall@@YAXH@Z 0x00589180-0x00589329
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned 0x00589180-0x00589329 calls parse_says with slots 2, 3, 0, 1 in that order; the four text pointers are Player.title_leader (+0x4C), name_leader (+0x34), adj_name_faction (+0x304), and noun_faction (+0x2E4).", "Pinned default writes are ordered: PluralityDefault=0 before slot 2; GenderDefault=is_leader_female before slot 2; then GenderDefault and PluralityDefault=0 before slot 3; slot 0 inherits those defaults; finally noun_gender then is_noun_plural before slot 1. general.h binds those defaults to 0x009BBFEC/0x009BBFF0.", "Pinned Player records begin at 0x00946A50 with 0x59C stride; rule_flags is +0x508 and alien bit 0x80 is tested directly. The image uppercases the copied filename via CharUpperA then calls the pinned _strcmp entry at 0x00645660 for exact USURPER/FUNGBOY comparisons; this preserves the raw flag test and exact string behavior, not is_alien_faction's expansion gate or case-insensitive comparison.", "Pinned UI key construction clears and appends PLANETFALLX for an alien USURPER, PLANETFALLF for exact FUNGBOY, otherwise PLANETFALL. It uses shared StringTemp at 0x009B86A0. Nonzero TurnCurrentNum at 0x009A64D4 gates parse_num(0, turn), the 64-slot project scan, and a final appended '2' suffix before X_pop(StringTemp, 0); zero turn skips all three.", "The project scan reads the 64 dword SecretProject array at 0x009A6514, accepts nonnegative base owners matching faction_id, and calls the int-input parse_say(4, Facility[70+project].name, -1, -1) for each match. The typed sources are GameDataStateWindowFields::secret_project_, Base.faction_id_current, and RulesFacility.name; the generated body uses has_project without adding bounds or error-path changes.", "The previous TRIED finding remains verbatim as history; this rationale records the pinned call/global/UI mapping only. Existing ORIGINAL identity and complete 425-byte span remain; no exactness/semantic claim is granted."], "reason": "Recover Planetfall's ordered parser defaults, shared scratch-buffer popup key, current-turn project context and source-owned faction/project state from the pinned body."}
 // size      425 bytes
 // prototype void (__cdecl ?planetfall@@YAXH@Z)(int factionID)
 // callers   2   call targets   6
@@ -1880,29 +1881,49 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl planetfall(int faction_id) {
-    parse_set(Players[faction_id].is_leader_female, false);
-    parse_says(0, Players[faction_id].adj_name_faction, -1, -1);
-    parse_says(2, Players[faction_id].title_leader, -1, -1);
-    parse_says(3, Players[faction_id].name_leader, -1, -1);
-    parse_set(Players[faction_id].noun_gender, Players[faction_id].is_noun_plural);
-    parse_says(1, Players[faction_id].noun_faction, -1, -1); // unused in script, leaving in for now
-    char script_id[13];
-    if (GameDataStateStorage.fields_.turn_current_num_) { // shifted logic to top to fix nonexistent accelerated script ids
-        parse_num(0, GameDataStateStorage.fields_.turn_current_num_);
-        for (uint32_t i = 0; i < MaxSecretProjectNum; i++) {
-            if (has_project(i, faction_id)) { // script assumes at least one SP is built per faction
-                parse_says(4, Facility[FAC_HUMAN_GENOME_PROJ + i].name, -1, -1);
+    Player &player = Players[faction_id];
+
+    PluralityDefault = 0;
+    GenderDefault = player.is_leader_female;
+    parse_says(2, player.title_leader, -1, -1);
+
+    GenderDefault = player.is_leader_female;
+    PluralityDefault = 0;
+    parse_says(3, player.name_leader, -1, -1);
+    parse_says(0, player.adj_name_faction, -1, -1);
+
+    GenderDefault = player.noun_gender;
+    PluralityDefault = player.is_noun_plural;
+    parse_says(1, player.noun_faction, -1, -1);
+
+    StringTemp[0] = 0;
+    strcat(StringTemp, player.filename);
+    CharUpperA(StringTemp);
+    if ((player.rule_flags & RFLAG_ALIEN) != 0
+        && strcmp(StringTemp, "USURPER") == 0) {
+        StringTemp[0] = 0;
+        strcat(StringTemp, "PLANETFALLX");
+    } else if (strcmp(StringTemp, "FUNGBOY") == 0) {
+        StringTemp[0] = 0;
+        strcat(StringTemp, "PLANETFALLF");
+    } else {
+        StringTemp[0] = 0;
+        strcat(StringTemp, "PLANETFALL");
+    }
+
+    const int turn = GameDataStateStorage.fields_.turn_current_num_;
+    if (turn != 0) {
+        parse_num(0, turn);
+        for (int project = 0; project < MaxSecretProjectNum; ++project) {
+            if (has_project(project, faction_id)) {
+                parse_say(4, static_cast<int>(reinterpret_cast<uintptr_t>(
+                    Facility[FacilitySPStart + project].name)), -1, -1);
             }
         }
-        strcpy_s(script_id, 13, "PLANETFALL2"); // bug fix: changed to fixed id rather than concat 2
-    } else if (is_alien_faction(faction_id) && !_stricmp(Players[faction_id].filename, "USURPER")) {
-        strcpy_s(script_id, 13, "PLANETFALLX");
-    } else if (!_stricmp(Players[faction_id].filename, "FUNGBOY")) {
-        strcpy_s(script_id, 13, "PLANETFALLF");
-    } else {
-        strcpy_s(script_id, 13, "PLANETFALL");
+        strcat(StringTemp, "2");
     }
-    X_pop(script_id, NULL);
+
+    X_pop(StringTemp, 0);
 }
 
 /*
