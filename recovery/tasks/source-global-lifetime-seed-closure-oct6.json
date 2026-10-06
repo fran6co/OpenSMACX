@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "task_id": "source-global-lifetime-seed-closure-oct6",
+  "author": "framework-coordinator",
+  "target": "opensmacx",
+  "base_revision": "c29ad87b70cf9766d1f1b5cef05356369c05c69c",
+  "intent": "Finish genuine source-owned static lifetimes for BufferSpecialTexts, ConfigFactionPreview and ScreenBuffer, preserving seed identities and historical restoration obligations while removing superseded seeds and the fixed-address teardown.",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6123888
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6123936
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5806192
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5806224
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6206352
+    }
+  ],
+  "editable_files": [
+    "src/buffer.cpp",
+    "src/buffer_special_text.h",
+    "src/newgame.cpp",
+    "src/palette.cpp",
+    "src/general.cpp",
+    "src/recovered/units/00589870.cpp",
+    "src/recovered/units/005d7170.cpp",
+    "src/recovered/units/005d71a0.cpp",
+    "src/recovered/units/005eb390.cpp",
+    "recovery/tests/test_buffer_special_text_owner_actual_source.py",
+    "recovery/tests/fixtures/config_game_api.cpp"
+  ],
+  "evidence": [
+    "The pinned vector lifetime constructs ten 0x30-byte BufferSpecialText objects and guards reverse teardown with the separate byte at 0x009B37CC. Genuine aligned raw-storage ownership preserves explicit construction, partial-construction cleanup, guard-before-teardown and untouched neighboring globals without fabricating padding or forwarding into the executable.",
+    "Existing genuine ConfigFactionPreview Popup and ScreenBuffer Buffer globals own the generated initialization and cleanup; source-writer transfer retains complete original spans, identities, historical claims and useful seed findings. The obsolete sole fixed-address Popup teardown is superseded by its real source-owned lifetime.",
+    "Temporary matching regressions are authorized for these structural closures; historical claims remain restoration obligations, not fresh measurements. Native generated symbol and initializer selection require fresh candidate verification. No byte claim, whole-game acceptance or linked outside-scope preservation is granted.",
+    "Actual-source host controls cover ordinary construction, constructor failure cleanup, reverse destruction and guard behavior. The config_game host fixture is repaired to reflect the previously integrated typed state owner, not promoted into an ABI/layout witness."
+  ]
+}

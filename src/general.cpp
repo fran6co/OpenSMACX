@@ -2557,33 +2557,6 @@ void __cdecl jackal_close() {
 // startup, and the matching destructors close them at exit.
 // Faction artwork is owned by the genuine FactionArt array in faction.cpp;
 // its Sprite members now participate in C++ construction and destruction.
-// ===== archived teardown callbacks for still-bound globals =====
-// These globals are not modelled as real objects yet; the bindings move
-// with the callbacks until their domains claim them.
-void *const TeardownObject009403E0 = (void *)0x009403E0;
-/*
-Purpose: sub_589890 - run 1 (ORIGINAL(s)->*teardown)() on fixed globals,
-         unguarded. The last is a tail jump in the original, so its
-         return goes straight to this function's caller.
-// ORIGINAL: 0x00589890 sub_589890 0x00589890-0x0058989A BYTE_EXACT
-// symbol    ?teardown_00589890@@YAXXZ
-// size      10 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __cdecl teardown_00589890() {
-    // THIS SITE is why `convert_seams --dtors` refused PopupDtorTarget: it read
-    // the seam as a VALUE through `original_address`, so the pointer could not
-    // be retired while it stood. It is a named destructor call now.
-    reinterpret_cast<Popup *>(TeardownObject009403E0)->Popup::~Popup();
-}
-
-
 
 /*
 // ORIGINAL: 0x0063B9B0 ?sin@@YAHHH@Z 0x0063B9B0-0x0063BABB BYTE_EXACT

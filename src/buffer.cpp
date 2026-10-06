@@ -4302,8 +4302,32 @@ int Buffer::box_sprite(RECT *rect, BoxSpriteParams *params) {
 
 #include "buffer_special_text.h"
 // Native CRT slots68266C/682670 establish record-array then Sprite order.
-// RECOVERY_OBJECT: v1 0x009B37E0 ?BufferSpecialTexts@@3PAUBufferSpecialText@@A
-BufferSpecialText BufferSpecialTexts[10];
+// Exact native shared once-guard; constructor leaves its static zero intact.
+// ORIGINAL: 0x005D7170 sub_5d7170 0x005D7170-0x005D7194 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason":"The original ten-record initializer belongs to the genuine BufferSpecialTextsOwner static lifetime, not a fixed-address callback wrapper.","evidence":["Pinned 5D7170..5D7194 constructs ten records at 9B37E0 with stride30 through 5E35D0/5E35F0 and registers cleanup5D71A0.","BufferSpecialTextArrayOwner placement-constructs actual records and reverse-unwinds a successfully constructed prefix; the compiler-generated initializer selects that owner and registers its cleanup.","The original unbounded record-array identity is retained as the owner's elements_ member; historical exactness is a restoration obligation, not a current matching claim."]}
+// symbol    _$E21
+// size      36 bytes
+// prototype 
+// callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00645398 0x006457C2
+// RECOVERY_OBJECT: v1 0x009B37CC ?BufferSpecialTextsCleanupGuard@@3EA
+uint8_t BufferSpecialTextsCleanupGuard;
+// One true C++ static-lifetime owner for the ten records.
+// The generated initializer and registered cleanup belong to this owner;
+// their selected symbols and historical obligations remain mapped separately.
+// ORIGINAL: 0x005D71A0 sub_5d71a0 0x005D71A0-0x005D71C8 FILE
+// RECOVERY_BINDING: v1 {"reason":"The original registered cleanup belongs to BufferSpecialTextsOwner's guarded reverse teardown of actual BufferSpecialText objects.","evidence":["Pinned 5D71A0..5D71C8 tests and sets bit0 at9B37CC before reverse teardown of ten stride30 records at9B37E0 through5E35F0.","The guard is a separate byte:9B37D0/D4 are existing renderer globals, not padding for this owner.","Trivial aligned storage suppresses implicit duplicate destruction; the owner preserves upper guard bits, guard-before-callback order and reverse record destruction."]}
+// symbol    _$E19
+// size      40 bytes
+// prototype 
+// callers   0   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x006456E4
+// RECOVERY_OBJECT: v3 0x009B37E0 ?BufferSpecialTexts@@3PAUBufferSpecialText@@A member ?BufferSpecialTextsOwner@@3UBufferSpecialTextArrayOwner@@A elements_
+BufferSpecialTextArrayOwner BufferSpecialTextsOwner;
 
 // Original initializer 0x005D71D0 constructs this Sprite at 0x009B3A50
 // through 0x005E37E0 and registers its cleanup; 0x005D71F0 closes it through
@@ -9266,11 +9290,11 @@ int Buffer::write_raw_l(char *text, int x, int y, int length) {
             segment_length = remaining;
             field_528_ = special;
         }
-        SetTextColor(hdc2_, (BufferSpecialTexts[special].color_ & 0xffff) | 0x10ff0000);
+        SetTextColor(hdc2_, (BufferSpecialTextsOwner.at(special).color_ & 0xffff) | 0x10ff0000);
         TextOutA(hdc2_, x, y, cursor, segment_length);
         int advanced = (*fonts[font_slot])->width(cursor, segment_length) + x;
         cursor += segment_length + 1;
-        RECT &bounds = BufferSpecialTexts[special].bounds[second_bounds];
+        RECT &bounds = BufferSpecialTextsOwner.at(special).bounds[second_bounds];
         bounds.left = x;
         bounds.top = y;
         bounds.right = advanced;

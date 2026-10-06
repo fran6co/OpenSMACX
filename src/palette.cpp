@@ -33,6 +33,9 @@ HPALETTE PaletteInitialized;  // 0x009B8178
 int PaletteUsesSystemColours;  // 0x009B8188
 // RECOVERY_OBJECT: v1 0x009B8180 ?PaletteActive@@3PAVPalette@@A
 Palette *PaletteActive;                 // 0x009B8180
+// ORIGINAL: 0x005EB390 sub_5eb390 0x005EB390-0x005EB3A6 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned terranx_original.exe 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: original initializer 0x005EB390-0x005EB3A6 constructs the Buffer at 0x009B7490 and registers its matching teardown callback.", "Source owner: palette.cpp declares the actual global Buffer ScreenBuffer, used by the palette and rendering paths; this is the object's typed storage, not an address alias.", "The emitted startup helper _$E31 references ScreenBuffer, Buffer's constructor and the compiler's destructor callback before registering that callback with atexit; _$E29 references the same object and Buffer destructor.", "The old seed's complete mapping and historical matching claim are moved unchanged; generated lifetime bytes remain a restoration obligation, not a new grant or acceptance."], "reason": "Bind the original ScreenBuffer startup initializer to palette.cpp's genuine Buffer global and its compiler-generated lifetime; retain the complete historical identity, span, claim and seed provenance."}
+// symbol    _$E31
 Buffer ScreenBuffer;                    // 0x009B7490
 int PaletteSeedCache;                   // 0x009B8184
 IDirectDrawPalette *DirectDrawPalette;  // 0x009BC4A0

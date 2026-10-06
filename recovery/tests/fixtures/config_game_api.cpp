@@ -145,11 +145,23 @@ extern char StringTemp[4096], PopupStartCaption[256];
 extern char *TextBufferGetPtr;
 extern const char *AlphaxFileID, *ScriptTxtID;
 extern Font *PopupMenuFont, *PopupMenuBoldFont, *PopupMenuItalicFont;
-extern uint32_t GameRules, GameState, GameMorePreferences, LockEnableMask;
-extern uint32_t VehCurrentCount, MapRandSeed;
+// Bounded API fixture, not a witness of the application's complete save layout.
+// Keep the field access surface used by the installed source; the legacy test
+// names below are references to that same fixture storage, not separate globals.
+struct ConfigGameHostStateFields {
+    uint32_t game_rules_, game_state_, game_more_preferences_;
+    int diff_level_current_, vehicle_current_count_, time_controls_selection_;
+    struct LockMasks { uint32_t enable_mask_; } lock_masks_;
+};
+struct ConfigGameHostStateWindow { ConfigGameHostStateFields fields_; };
+extern ConfigGameHostStateWindow GameDataStateStorage;
+extern uint32_t &GameRules, &GameState, &GameMorePreferences, &LockEnableMask;
+extern int &VehCurrentCount;
+extern uint32_t MapRandSeed;
 extern int IsMultiplayerPBEM, IsMultiplayerNet, ExpansionEnabled;
-extern int DiffLevelCurrent, PopupWriteCheckState, ConsoleGroupAction;
-extern int PopupModalActive, TimeControlsSelection, MapSetupStatus;
+extern int &DiffLevelCurrent, &TimeControlsSelection;
+extern int PopupWriteCheckState, ConsoleGroupAction;
+extern int PopupModalActive, MapSetupStatus;
 extern int GenderDefault, PluralityDefault;
 extern int TamperState93A9AC, TamperState93A9B0, TamperState93A9B4;
 char *label_get(int);
@@ -222,9 +234,17 @@ LPSTR Difficulty[6]; char StringTemp[4096], PopupStartCaption[256];
 char text_line[256]; char *TextBufferGetPtr = text_line;
 const char *AlphaxFileID = "ALPHAX", *ScriptTxtID = "SCRIPT";
 Font *PopupMenuFont, *PopupMenuBoldFont, *PopupMenuItalicFont;
-uint32_t GameRules, GameState, GameMorePreferences, LockEnableMask, VehCurrentCount, MapRandSeed;
-int IsMultiplayerPBEM, IsMultiplayerNet, ExpansionEnabled, DiffLevelCurrent;
-int PopupWriteCheckState, ConsoleGroupAction, PopupModalActive, TimeControlsSelection, MapSetupStatus;
+ConfigGameHostStateWindow GameDataStateStorage;
+uint32_t &GameRules = GameDataStateStorage.fields_.game_rules_;
+uint32_t &GameState = GameDataStateStorage.fields_.game_state_;
+uint32_t &GameMorePreferences = GameDataStateStorage.fields_.game_more_preferences_;
+uint32_t &LockEnableMask = GameDataStateStorage.fields_.lock_masks_.enable_mask_;
+int &VehCurrentCount = GameDataStateStorage.fields_.vehicle_current_count_;
+int &DiffLevelCurrent = GameDataStateStorage.fields_.diff_level_current_;
+int &TimeControlsSelection = GameDataStateStorage.fields_.time_controls_selection_;
+uint32_t MapRandSeed;
+int IsMultiplayerPBEM, IsMultiplayerNet, ExpansionEnabled;
+int PopupWriteCheckState, ConsoleGroupAction, PopupModalActive, MapSetupStatus;
 int GenderDefault, PluralityDefault, TamperState93A9AC, TamperState93A9B0, TamperState93A9B4;
 int text_row;
 std::string text_section;

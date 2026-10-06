@@ -921,9 +921,26 @@ do_cleanup:
 
 
 // Newgame-owned shared faction preview and callback state.
-// Original storage bindings do not establish generated startup selection.
+// Generated initializer and destructor bindings below identify this global's startup lifetime.
 // RECOVERY_OBJECT: v2 0x009403E0 0x0094575C ?ConfigFactionPreview@@3VPopup@@A 0x00589870
+// ORIGINAL: 0x00589870 sub_589870 0x00589870-0x00589886 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned terranx_original.exe 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: original initializer 0x00589870-0x00589886 constructs the Popup stored at 0x009403E0 and registers original teardown 0x00589890.", "Source owner: newgame.cpp declares and uses the genuine Popup ConfigFactionPreview at 0x009403E0; the global, not a fixed-address reinterpretation, owns this lifetime.", "The emitted initializer _$E21 references ConfigFactionPreview and Popup's constructor, then registers _$E19 with atexit; _$E19 references the same global and Popup destructor.", "The archived seed's prior general.cpp placement and compiler-spelling trials are historical; the complete original mapping and claim remain live here for restoration measurement."], "reason": "Bind the original Preview startup constructor to the real global Popup in newgame.cpp and the compiler-emitted constructor/atexit lifetime pair. The prior fixed-address experiment is superseded by this typed owner."}
+// symbol    _$E21
+// TRIED: homed into general.cpp (its real TU) 2026-09-03. Two source forms were
+// measured there and both are archived here verbatim:
+//   * as written (placement new + _atexit) it does not compile in the TU -
+//     libc.lib has no _atexit, and the placement new buys VC6's null guard;
+//   * retyped to a qualified constructor call plus plain atexit it compiles and
+//     measures 5 of 6 instructions, the one divergence being VC6 cleaning the
+//     atexit push with 'add esp,4' where the image has 'pop ecx'. general.cpp
+//     compiles under /Oy- and every cleanup spelling tried kept 'add esp,4';
+//     'pop ecx' is the /Oy form. Reverted so the BYTE_EXACT claim stays live
+//     here rather than reading REGRESSED there. The qualified-ctor + atexit
+//     spelling is the right one; it needs a TU on the /Oy flag set.
 Popup ConfigFactionPreview;
+// ORIGINAL: 0x00589890 sub_589890 0x00589890-0x0058989A FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned terranx_original.exe 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: original callback 0x00589890-0x0058989A destroys the Popup at 0x009403E0 registered by 0x00589870.", "Source owner: ConfigFactionPreview is the genuine Popup global declared and consumed by newgame.cpp; its lifetime is not independently owned by general.cpp.", "The emitted helper _$E19 references ConfigFactionPreview and Popup's destructor and is the callback registered by the same translation unit's _$E21 global initializer.", "The original identity, complete span and historical claim are preserved on the source-owned FILE mapping; the retired wrapper is not treated as independent recovered behavior."], "reason": "Bind the original ConfigFactionPreview teardown identity to the compiler-generated destructor callback of newgame.cpp's real Popup global, replacing the fixed-address wrapper in general.cpp."}
+// symbol    _$E19
 // RECOVERY_OBJECT: v2 0x00945818 0x0094581C ?ConfigFactionDetailMode@@3HA 0x005898A0
 int ConfigFactionDetailMode;
 // The image uses this zero-filled byte string only as initial prompt text.
@@ -1012,7 +1029,7 @@ static unsigned char config_game_original_rule_byte(int selected) {
 }
 
 // ORIGINAL: 0x00589D30 ?config_game@@YAHH@Z 0x00589D30-0x0058C29D;0x0066028A-0x006605A5
-// RECOVERY_BINDING: v1 {"evidence": ["historical seed:src/unrecovered/00589d30.cpp; existing original identity and useful lessons preserved", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:589D30..58C29D and66028A..6605A5", "pinned:5898A0..589A24 typed cdecl(int) preview callback; ListBox dispatch retains current declaration", "source:BasePop +A44 value setter,+3100 input poll state; Popup picture/dialog/font and PickWin owned ListBox", "pinned:58A9BA passes zero-filled945834 initial string, allocation extent remains unknown", "source:recovery/tests/test_config_game_actual_source.py actual installed body, bounded API fixture and six compile-success runtime damage controls", "source:589870 initializer seed and589890 fixed teardown retained until real generated physical lifetime binding qualifies"], "reason": "Complete new-game rules, faction selection, custom naming, PBEM/network and world/setup flow with genuine Popup/SetupWin automatic local lifetimes and a source-owned shared preview. Original undefined and unchecked paths and historical main/cleanup spans remain restoration obligations; no byte or runtime acceptance is granted."}
+// RECOVERY_BINDING: v1 {"evidence": ["historical seed:src/unrecovered/00589d30.cpp; existing original identity and useful lessons preserved", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:589D30..58C29D and66028A..6605A5", "pinned:5898A0..589A24 typed cdecl(int) preview callback; ListBox dispatch retains current declaration", "source:BasePop +A44 value setter,+3100 input poll state; Popup picture/dialog/font and PickWin owned ListBox", "pinned:58A9BA passes zero-filled945834 initial string, allocation extent remains unknown", "source:recovery/tests/test_config_game_actual_source.py actual installed body, bounded API fixture and six compile-success runtime damage controls", "source:589870 initializer and589890 teardown identities now bind to the generated ConfigFactionPreview lifetime in this owner"], "reason": "Complete new-game rules, faction selection, custom naming, PBEM/network and world/setup flow with genuine Popup/SetupWin automatic local lifetimes and a source-owned shared preview. Original undefined and unchecked paths and historical main/cleanup spans remain restoration obligations; no byte or runtime acceptance is granted."}
 // TRIED: mismatch #0 - only the entry (a1&1 defaults shortcut) and the first two do_menu() results (0=default_rules toggle, 1=difficulty rules-flag encode) are transcribed from the 2618-instruction original; the disassembly shows several more do_menu() results driving a PickWin faction picker, Wave/Sound playback, EditGroup name entry and a time_controls_dialog that are NOT modelled - this body loops back to do_menu() for any other result rather than fabricating their bit-flag encodings.
 // Full config_game candidate. Original identities/claims remain on the owning
 // TU; this ignored include is a body proposal, not a measurement or annotation.
