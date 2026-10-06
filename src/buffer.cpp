@@ -593,8 +593,15 @@ int Buffer::text_line_height() {
 
 // QueryInterface output at 62CDBD, interface load/call at 62CDEF and
 // release/clear at 62D100..62D13A establish this four-byte pointer slot.
-// RECOVERY_OBJECT: v2 0x009BC494 0x009BC498 ?BufferDirectDraw@@3PAUIDirectDraw@@A 0x00454FC0
-IDirectDraw *BufferDirectDraw;  // 0x009BC494
+// Typed ownership: 62CD50 queries IID_IDirectDraw2 at 66FC38. The original
+// four-byte slot and evidence 454FC0 remain unchanged. Historical interpretation
+// ?BufferDirectDraw@@3PAUIDirectDraw@@A, ID
+// 5e3e31ec571e75aee88ad3ac82d452b4f2e1d1387927bdb14c6aa08b4a3556d1,
+// remains a restoration obligation; do not claim that obsolete symbol is emitted.
+// The current Draw2 symbol's four-byte initial zeros agree with the pinned image,
+// not a proof of the historical interpretation, linked allocation or acceptance.
+// RECOVERY_OBJECT: v2 0x009BC494 0x009BC498 ?BufferDirectDraw@@3PAUIDirectDraw2@@A 0x00454FC0
+IDirectDraw2 *BufferDirectDraw;  // 0x009BC494
 // 0x00696BF0, holding 1. `Buffer::Buffer` and `Buffer::close` are its
 // only two references in the whole image and both READ it, so it is a
 // default that the two restore into `markup_enabled_` rather than state.

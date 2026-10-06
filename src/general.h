@@ -339,8 +339,10 @@ void __fastcall sub_5d4020(void *thisPtr, unsigned char *dest,
 void __cdecl sub_5d4240(unsigned char *);
 
 // DirectSound/DirectDraw bring-up and teardown for the movie window.
-int __cdecl sub_62cd50();
-int __cdecl sub_62d160();
+int __cdecl sub_62cd50(int bit_depth);
+HDC __cdecl sub_62d160();
+void __cdecl sub_62d1a0();
+int __cdecl sub_62d0f0();
 void __cdecl sub_62d1e0(RECT *rect);
 int __cdecl sub_62d2c0();
 void *__fastcall sub_63bb20(void *this_ptr);

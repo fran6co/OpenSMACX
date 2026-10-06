@@ -849,8 +849,9 @@ extern HDC WinSharedHdc;        // 0x009B7B2C
 // `IDirectDrawSurface` are exactly `GetDC(HDC *)` and `ReleaseDC(HDC)`.
 // Calling them by name emits the same `call [reg + 0x44]`, and unlike an
 // offset it cannot be silently wrong.
-struct IDirectDrawSurface;  // <ddraw.h>, included where it is called
-extern IDirectDrawSurface *DirectDrawSurface;
+struct IDirectDrawSurface;  // Buffer's SDK ABI-prefix view
+struct IDirectDrawSurface2; // Shared display QueryInterface output66FC28
+extern IDirectDrawSurface2 *DirectDrawSurface;
 
 // 0x009B6EF8. The modal-window stack, indexed by the depth at 0x009B7AE4:
 // `Win::release_modal` reads `[edx*4 + 0x9b6ef8]` and shuffles entries down
@@ -1114,7 +1115,7 @@ extern Sprite *WinFlipSprite;          // 0x009B7A2C
 extern int WinFlipSpriteY;             // 0x009B7A30
 extern int WinFlipSpriteX;             // 0x009B7A34
 extern int WinFlipClipped;             // 0x009B7AD8
-extern IDirectDrawSurface *DirectDrawBackBuffer;  // 0x009BC49C
+extern IDirectDrawSurface2 *DirectDrawBackBuffer;  // 0x009BC49C
 extern RECT DirectDrawClipRect;        // 0x009BC2D0
 
 // A `Win *`, not a word: `Win::set_bubble_text` (0x005F83D0) stores `this`

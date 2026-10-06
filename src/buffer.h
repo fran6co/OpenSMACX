@@ -22,6 +22,8 @@
 #include "spot.h"
 #include "sprite.h"
 
+extern "C" int __cdecl sub_62d100();
+
 class Palette;
 class StringList;
 
@@ -728,6 +730,9 @@ void draw_dest_unk1(Buffer *, int, int, int, int, unsigned char *);
   // `Win::flip` clips the screen buffer back to its own extent and reads
   // the DIB's dimensions for the final BitBlt.
   friend class Win;
+  // Shared display init/teardown own ScreenBuffer's borrowed COM handles.
+  friend int __cdecl sub_62cd50(int bit_depth);
+  friend int __cdecl sub_62d100();
 
   // Caviar::init_class reads the two voxel scene surfaces' `dib_bits_` into
   // its render record - the image reads BufferA/BufferB + 0x54 by fixed
@@ -803,7 +808,9 @@ void draw_dest_unk1(Buffer *, int, int, int, int, unsigned char *);
   // creates is QueryInterface'd into 0x58. `Buffer::get_hdc` then calls
   // slot 0x44 - IDirectDrawSurface::GetDC - on 0x58 and had to cast it back
   // out of a `uint32_t` to do it.
+  // RECOVERY_MEMBER: v3 Buffer surface_ IDirectDrawSurface* 0x58 0x0062CD50
   IDirectDrawSurface *surface_;
+  // RECOVERY_MEMBER: v3 Buffer clipper_ IDirectDrawClipper* 0x5C 0x0062CD50
   IDirectDrawClipper *clipper_;
   HDC hdc2_;
   HDC hdc_;
@@ -1046,7 +1053,7 @@ Buffer *__fastcall buffer_construct_redirect(Buffer *self, void *);
 // which is what made `int` survive - but `Buffer::init` does
 // `mov ecx, [eax]` and `call [ecx + 0x18]` on it, which is slot 6,
 // IDirectDraw::CreateSurface. It also calls slot 4, CreateClipper.
-extern IDirectDraw *BufferDirectDraw;
+extern IDirectDraw2 *BufferDirectDraw;
 
 // Shared file-backed sprite staging surface (original 0x009B6080).
 extern Buffer g_BUFFER;

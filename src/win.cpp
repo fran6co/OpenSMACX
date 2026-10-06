@@ -702,7 +702,8 @@ int Win::is_dialog_focus() {
 
 int WinHdcRefCount;        // 0x009B3AB0
 HDC WinSharedHdc;          // 0x009B7B2C
-IDirectDrawSurface *DirectDrawSurface;  // 0x009BC498
+// RECOVERY_OBJECT: v2 0x009BC498 0x009BC49C ?DirectDrawSurface@@3PAUIDirectDrawSurface2@@A 0x0062CD50
+IDirectDrawSurface2 *DirectDrawSurface;  // 0x009BC498
 Win *WinModalStack[4];     // 0x009B6EF8
 HINSTANCE WinInstance;     // 0x009B7B14
 int WinScreenWidth;        // 0x009B7B1C
@@ -1123,7 +1124,8 @@ int WinFlipSpriteX;                    // 0x009B7A34
 int WinFlipClipped;
 // 0x009BC49C. The surface `DirectDrawSurface` is blitted FROM - the back
 // buffer to its front.
-IDirectDrawSurface *DirectDrawBackBuffer;
+// RECOVERY_OBJECT: v2 0x009BC49C 0x009BC4A0 ?DirectDrawBackBuffer@@3PAUIDirectDrawSurface2@@A 0x0062CD50
+IDirectDrawSurface2 *DirectDrawBackBuffer;
 // 0x009BC2D0. The rectangle a clipped flip intersects against.
 RECT DirectDrawClipRect;
 
@@ -10413,7 +10415,7 @@ void __cdecl Win::OnKey(void * hwnd, unsigned int key, long flags, int repeat, u
 long Win::on_activate(unsigned int state, void * other, long minimized) {
     if (state != 0 && minimized == 0 && BufferDirectDraw == 0) {
         if (WinHdcRefCount == 0) {
-            IDirectDrawSurface *obj = DirectDrawSurface;
+            IDirectDrawSurface2 *obj = DirectDrawSurface;
             if (obj == 0) {
                 WinSharedHdc = GetDC(HandleMain);
             } else {
@@ -10433,7 +10435,7 @@ long Win::on_activate(unsigned int state, void * other, long minimized) {
             RealizePalette(WinSharedHdc);
             WinHdcRefCount = WinHdcRefCount - 1;
             if (WinHdcRefCount == 0) {
-                IDirectDrawSurface *obj = DirectDrawSurface;
+                IDirectDrawSurface2 *obj = DirectDrawSurface;
                 if (obj == 0) {
                     ReleaseDC(HandleMain, WinSharedHdc);
                 } else {

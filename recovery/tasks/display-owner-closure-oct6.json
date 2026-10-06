@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "task_id": "display-owner-closure-oct6",
+  "author": "framework-coordinator",
+  "target": "opensmacx",
+  "base_revision": "f5f92aba1e7fe6fbb249debf0ea12b16d5499b65",
+  "intent": "Recover complete shared DirectDraw selection/init/DC/clip ownership, correct genuine COM interfaces and ScreenBuffer members, preserve all ten original identities and retire five superseded seeds.",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6473824
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6473952
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6475024
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6475088
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6476016
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6476032
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6476128
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6476192
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6476256
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6476480
+    }
+  ],
+  "editable_files": [
+    "src/general.cpp",
+    "src/leaf_recoveries.cpp",
+    "src/buffer.h",
+    "src/buffer.cpp",
+    "src/win.h",
+    "src/win.cpp",
+    "src/graphicwin.cpp",
+    "src/general.h",
+    "src/unrecovered/0062c860.cpp",
+    "src/unrecovered/0062c8e0.cpp",
+    "src/unrecovered/0062cd50.cpp",
+    "src/recovered/0062d0f0.cpp",
+    "src/recovered/0062d1a0.cpp",
+    "recovery/tests/fixtures/display_owner_control.cpp",
+    "recovery/tests/test_display_owner_source.py",
+    "recovery/tasks/display-owner-closure-oct6.json"
+  ],
+  "evidence": [
+    "Coordinator-reviewed manual coverage migration; no automatic or full game acceptance. Original spans including selector663340..663494 and four historical claims remain unchanged.",
+    "SDK IID/slot signatures establish Draw2, Surface2 and Clipper ownership; old cached globals are actual ScreenBuffer.surface_/clipper_ members. The incoming62CD50 bit-depth parameter is proven by original stack accesses.",
+    "Preserve unchecked GUID enumeration, provisional source capacity10 with start-only binding, partial/uninitialized API outputs, GUID/surface leaks, ignored HRESULTs, original HRESULT!=0 failure tests, callback reloads and HDC refcount quirks. No safety fixes authorized.",
+    "Fresh native candidate compilation observes all ten symbols in general.cpp, all five consumer TUs compile, DDCAPS364/DDSURFACEDESC108/clip-region48 layouts agree; bounded storage symbols/extents and original initial bytes agree. These are not original aggregate allocation or full linked preservation proof.",
+    "BufferDirectDraw typed symbol migration retains original9BC494..9BC498/evidence454FC0 and old interpretation 5e3e31ec571e75aee88ad3ac82d452b4f2e1d1387927bdb14c6aa08b4a3556d1 / ?BufferDirectDraw@@3PAUIDirectDraw@@A as an explicit historical restoration obligation. Current Draw2 initial bytes match; the historical decorated-symbol interpretation is not declared restored.",
+    "Complete original identities, spans, claims and useful seed history are transported by native source writers. No claim banked, demoted or waived. Temporary matching regressions remain for the subsequent matching milestone."
+  ]
+}

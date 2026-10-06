@@ -1404,7 +1404,10 @@ void GraphicWin::on_paint(RECT *area) {
         rectangle.top = origin_y;
         rectangle.right = origin_x + outer_rect_.right - outer_rect_.left;
         rectangle.bottom = origin_y + outer_rect_.bottom - outer_rect_.top;
-        DirectDrawBackBuffer->Blt(&rectangle, surface_, 0, DDBLT_WAIT, 0);
+        // Existing Buffer surfaces use the Surface1 prefix; the shared
+        // device surface is Surface2. SDK slots through Blt are identical.
+        DirectDrawBackBuffer->Blt(&rectangle,
+            reinterpret_cast<IDirectDrawSurface2 *>(surface_), 0, DDBLT_WAIT, 0);
     } else {
         Buffer *destination = &ScreenBuffer;
         int x = origin_x;
