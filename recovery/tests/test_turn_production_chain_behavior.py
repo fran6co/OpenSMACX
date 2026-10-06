@@ -966,6 +966,21 @@ struct Veh {
     int16_t home_base_id;
 };
 struct Console { int faction_id_; };
+struct DroneRiotSecretProject {
+    int telepathic_matrix_value_;
+    int telepathic_matrix() const { return telepathic_matrix_value_; }
+};
+struct DroneRiotLockMasks { uint32_t enable_mask_; };
+struct DroneRiotGameDataStateFields {
+    uint32_t game_state_;
+    int vehicle_current_count_;
+    int base_current_count_;
+    int turn_current_num_;
+    DroneRiotLockMasks lock_masks_;
+    DroneRiotSecretProject secret_project_;
+};
+struct DroneRiotGameDataState { DroneRiotGameDataStateFields fields_; };
+extern DroneRiotGameDataState GameDataStateStorage;
 class MapWin { public: void set_center(int x, int y, int draw_type); };
 
 #if __SIZEOF_POINTER__ == 4
@@ -1005,14 +1020,12 @@ typedef char private_tile_visibility[
 extern Base Bases[64];
 extern Base *BaseCurrent;
 extern int BaseIDCurrentSelected;
-extern int BaseCurrentCount;
 extern int BaseComputedID;
 extern Player Players[MaxPlayerNum];
 extern PlayerData PlayersData[MaxPlayerNum];
 extern RulesFacility Facility[MaxFacilityNum];
 extern Map MapTiles[4096];
 extern Veh Vehs[2049];
-extern int VehCurrentCount;
 extern VehPrototype VehPrototypes[512];
 extern RulesChassis Chassis[32];
 extern int MapLongitudeBounds;
@@ -1021,9 +1034,6 @@ extern uint32_t MapLongitude;
 extern BOOL MapIsFlat;
 extern const int RadiusOffsetX[21];
 extern const int RadiusOffsetY[21];
-extern uint32_t GameState;
-extern int TurnCurrentNum;
-extern uint8_t LockEnableMask;
 extern int ExpansionEnabled;
 extern Console ConsoleGlobal;
 extern MapWin *MapWinTable[8];
@@ -1075,14 +1085,12 @@ DRONE_RIOT_FIXTURE = r'''#include <assert.h>
 Base Bases[64];
 Base *BaseCurrent;
 int BaseIDCurrentSelected;
-int BaseCurrentCount;
 int BaseComputedID;
 Player Players[MaxPlayerNum];
 PlayerData PlayersData[MaxPlayerNum];
 RulesFacility Facility[MaxFacilityNum];
 Map MapTiles[4096];
 Veh Vehs[2049];
-int VehCurrentCount;
 VehPrototype VehPrototypes[512];
 RulesChassis Chassis[32];
 int MapLongitudeBounds;
@@ -1097,9 +1105,7 @@ const int RadiusOffsetY[21] = {
     0, 0, 100, 100, 100, 100, 100, 100, 100, 100, 100,
     100, 100, 100, 100, 100, 100, 100, 100, 100, 100
 };
-uint32_t GameState;
-int TurnCurrentNum;
-uint8_t LockEnableMask;
+DroneRiotGameDataState GameDataStateStorage;
 int ExpansionEnabled;
 Console ConsoleGlobal;
 MapWin *MapWinTable[8];
@@ -1251,7 +1257,8 @@ static void reset_fixture() {
     memset(popup_label, 0, sizeof(popup_label));
     BaseCurrent = &Bases[0];
     BaseIDCurrentSelected = 0;
-    BaseCurrentCount = 2;
+    memset(&GameDataStateStorage, 0, sizeof(GameDataStateStorage));
+    GameDataStateStorage.fields_.base_current_count_ = 2;
     BaseComputedID = -1;
     Bases[0].x = 10;
     Bases[0].y = 10;
@@ -1272,20 +1279,30 @@ static void reset_fixture() {
     Players[3].faction_bonus_count = 1;
     Players[3].faction_bonus_id[0] = 13;
     Players[3].faction_bonus_val1[0] = 60;
+    // Native reads all seven target slots; initialize otherwise absent
+    // type-13 bonuses in this deterministic host fixture.
+    for (int faction = 1; faction < MaxPlayerNum; ++faction) {
+        if (Players[faction].faction_bonus_count == 0) {
+            Players[faction].faction_bonus_count = 1;
+            Players[faction].faction_bonus_id[0] = 13;
+            Players[faction].faction_bonus_val1[0] = 0;
+        }
+    }
     Facility[5].name = const_cast<char *>("fixture specialist");
     Facility[5].preq_tech = 42;
     MapLongitudeBounds = 32;
     MapLatitudeBounds = 32;
     MapLongitude = 16;
     MapIsFlat = 1;
-    GameState = 0;
-    TurnCurrentNum = 0x1234;
-    LockEnableMask = static_cast<uint8_t>((1 << 1) | (1 << 2) | (1 << 3));
+    GameDataStateStorage.fields_.game_state_ = 0;
+    GameDataStateStorage.fields_.turn_current_num_ = 0x1234;
+    GameDataStateStorage.fields_.lock_masks_.enable_mask_ =
+        static_cast<uint32_t>((1 << 1) | (1 << 2) | (1 << 3));
     ExpansionEnabled = 0;
     ConsoleGlobal.faction_id_ = 7;
     Bases[0].visibility = static_cast<uint8_t>(1 << 7);
     MapWinTable[0] = &test_map_win;
-    VehCurrentCount = 0;
+    GameDataStateStorage.fields_.vehicle_current_count_ = 0;
     timer_value = 1039;
     tech_enabled = 0;
     tech_calls = 0;
@@ -1308,7 +1325,7 @@ static void test_weighted_threshold_and_radius_transfer() {
     for (int test = 0; test < 3; ++test) {
         reset_fixture();
         timer_value = ticks[test];
-        VehCurrentCount = 2;
+        GameDataStateStorage.fields_.vehicle_current_count_ = 2;
         Vehs[0].x = 11;
         Vehs[0].y = 10;
         Vehs[0].proto_id = 10;
@@ -1341,7 +1358,7 @@ static void test_weighted_threshold_and_radius_transfer() {
 
     reset_fixture();
     Bases[1].visibility = 0;
-    VehCurrentCount = 1;
+    GameDataStateStorage.fields_.vehicle_current_count_ = 1;
     Vehs[0].x = 11;
     Vehs[0].y = 10;
     Vehs[0].proto_id = 10;
@@ -1366,7 +1383,7 @@ static void test_signed_former_faction_sentinel() {
 static void test_nearest_fallback_treaty_weight() {
     reset_fixture();
     Bases[0].faction_id_former = 1;
-    BaseCurrentCount = 3;
+    GameDataStateStorage.fields_.base_current_count_ = 3;
     Bases[1].faction_id_current = 2;
     Bases[1].x = 13;
     Bases[1].y = 10;
@@ -1379,6 +1396,57 @@ static void test_nearest_fallback_treaty_weight() {
     Players[7].faction_bonus_val1[0] = 100;
     timer_value = 1050; // cutoff=0: retain treaty-adjusted nearest fallback
     drone_riot();
+    assert(Bases[0].faction_id_current == 2);
+    assert(replay_calls == 1 && replay_faction == 2);
+}
+
+static void test_initial_treaty_index_reads_last_turn_member() {
+    reset_fixture();
+    Bases[0].faction_id_former = 1;
+    GameDataStateStorage.fields_.base_current_count_ = 3;
+    Bases[1].faction_id_current = 2;
+    Bases[1].x = 13;
+    Bases[1].y = 10;
+    Bases[2].faction_id_current = 3;
+    Bases[2].x = 14;
+    Bases[2].y = 10;
+    PlayersData[1].last_turn_new_base = DTREATY_PACT;
+    timer_value = 1050;
+    drone_riot();
+    // The sentinel -1 reads the preceding member's pact bit: faction 2's
+    // initial score doubles, allowing faction 3's score to replace it.
+    assert(Bases[0].faction_id_current == 3);
+    assert(replay_calls == 1 && replay_faction == 3);
+}
+
+static void test_duplicate_bonus_uses_first_match() {
+    reset_fixture();
+    Bases[0].faction_id_former = 1;
+    GameDataStateStorage.fields_.base_current_count_ = 4;
+    Bases[1].faction_id_current = 2;
+    Bases[1].x = 13;
+    Bases[1].y = 10;
+    Bases[2].faction_id_current = 3;
+    Bases[2].x = 14;
+    Bases[2].y = 10;
+    Bases[3].faction_id_current = 4;
+    Bases[3].x = 15;
+    Bases[3].y = 10;
+    // Initialize each native weight slot through a real type-13 record; the
+    // pinned executable leaves slots without a match indeterminate.
+    for (int faction = 1; faction < MaxPlayerNum; ++faction) {
+        Players[faction].faction_bonus_count = 1;
+        Players[faction].faction_bonus_id[0] = 13;
+        Players[faction].faction_bonus_val1[0] = 0;
+    }
+    Players[2].faction_bonus_count = 2;
+    Players[2].faction_bonus_id[1] = 13;
+    Players[2].faction_bonus_val1[1] = 100;
+    Players[3].faction_bonus_val1[0] = 1;
+    Bases[0].queue_production_id[1] = 0x1234;
+    timer_value = 0;
+    drone_riot();
+    assert(Bases[0].queue_production_id[1] == 0x1234);
     assert(Bases[0].faction_id_current == 3);
     assert(replay_calls == 1 && replay_faction == 3);
 }
@@ -1451,6 +1519,8 @@ int main() {
     test_weighted_threshold_and_radius_transfer();
     test_signed_former_faction_sentinel();
     test_nearest_fallback_treaty_weight();
+    test_initial_treaty_index_reads_last_turn_member();
+    test_duplicate_bonus_uses_first_match();
     test_draw_and_popup_selection_reloads();
     test_visibility_gate_and_specialist_prerequisite();
     puts("drone_riot fixture controls passed");
@@ -1744,7 +1814,14 @@ def test_base_drones_control_rejects_reversed_reset_arguments(tmp_path: Path) ->
         compile_run(tmp_path, "reversed_base_drones", harness)
 
 
-def test_drone_riot_actual_body_embedded_cpp98_controls(tmp_path: Path) -> None:
+@pytest.mark.parametrize("host_compiler", ["g++", "clang++"])
+def test_drone_riot_actual_body_embedded_cpp98_controls(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, host_compiler: str
+) -> None:
+    executable = shutil.which(host_compiler)
+    if executable is None:
+        pytest.skip(f"{host_compiler} is unavailable")
+    monkeypatch.setitem(globals(), "compiler", lambda: executable)
     body = owner_section("0x004F4FB0", "void __cdecl drone_riot()", "src/base.cpp")
     harness = DRONE_RIOT_FIXTURE
     harness = harness.replace('#include "api.h"\n#include "../drone_riot.v2.cpp"', "")

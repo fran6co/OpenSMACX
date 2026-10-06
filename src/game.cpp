@@ -3118,6 +3118,40 @@ void __cdecl load_cycling() {
     }
 }
 
+// Construct and destroy the fixed-art loader's genuine local Buffer.
+// ORIGINAL: 0x00455E50 ?load_deswin_sprites@@YAXXZ 0x00455E50-0x00455E73 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned 0x00455E80 load_fixed_sprites calls 0x00455E50 in its documented fixed-art call order", "the pinned body invokes only Buffer construction then destruction on the same local object; the projected source uses Buffer automatic storage", "src/game.cpp already owns load_fixed_sprites and includes buffer.h"], "reason": "Move the helper beside the startup loader that directly calls it and express its single Buffer object's original construction/destruction lifetime through automatic storage; no DesignWin instance or sprite state is inferred."}
+// direct calls to the named redirects, not through the
+// `LeafBufferConstruct`/`LeafBufferDestruct` pointer variables (an indirect
+// `call dword ptr [...]` where the image has a direct `call rel32`, since
+// the target is a relocation on both sides). `listing_diff` no longer shows
+// an unresolved `call dword ptr [0]` after this.
+// redirects - PLACEMENT NEW PULLS IN AN SEH FRAME here (Buffer's destructor
+// is non-trivial and its constructor calls non-intrinsics), even though
+// `scratch` is a local array's address and provably non-null. Similarity
+// fell from 0.909 to 0.474 (`push -1; push 0; mov eax, fs:[0]` unwind
+// prologue the image does not pay for). Reverted. Still MISMATCH at 0.909
+// (3/10 agreeing, best `/c /O2 /Gy /GR- /Oy- /GX`) - the residual gap is
+// the two redirects' unused `void *` second parameter, called with
+// `nullptr`, costing an `xor edx, edx` each the image does not emit.
+// RENAMED from leaf_00455e50_redirect on 2026-09-03, when load_fixed_sprites
+// (0x00455E80, its one caller in the image) was homed into game.cpp and
+// needed to name it: the body was BYTE_EXACT under a seam name it did not
+// need, the `symbol` fact that recorded the mismatch is gone with the old
+// name, and the tree now emits the image's own `?load_deswin_sprites@@YAXXZ`.
+// size      35 bytes
+// prototype
+// callers   1   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005D7210 0x005D7410
+// historical Return Value: n/a
+// historical Status: Complete
+// LEVER: same fix as leaf_004080b0_redirect/leaf_00406af0_redirect above -
+void __cdecl load_deswin_sprites() {
+    Buffer scratch;
+}
+
 /*
 Purpose: Load the art that never changes between games: the palette, the
          miscellaneous bitmaps, the interface sprites (mode 0), the voxels,
@@ -10573,6 +10607,108 @@ static const char NetUpkeepMapSectionChecksum[] = "Failed MAP section chcksum - 
 // RECOVERY_OBJECT: v2 0x0068BD84 0x0068BD9A _NetUpkeepSkippingUpkeepPhase 0x005290A0
 static const char NetUpkeepSkippingUpkeepPhase[] = "Skipping upkeep phase";
 
+// ORIGINAL: 0x00528EA0 ?net_upkeep_phase@@YAHH@Z 0x00528EA0-0x00529097
+// RECOVERY_BINDING: v1 {"evidence": ["image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; original:0x00528EA0-0x00529097; saved pinned full-span sha256:6d3147e1a8d83201f57389f6c8ed65a0938667f845bfcec4215f941828ab75ee", "source:src/game.cpp:net_upkeep at 0x005290A0 is the existing caller/turn owner; game.cpp already includes the NetDaemon, Console, lock-mask, MultiWindow, parser/message, log, temp and WinMM interfaces", "source:src/netdaemon.h:LockStateEntry is 0x3C bytes; lock_state_ begins at NetDaemon+0x1B2C; the referenced sent, ack and turn-end words are existing members, not new globals", "source:src/console.h:ConsoleGlobal.faction_id_; source:src/game_data_state_window.h:GameDataStateStorage.fields_.turn_current_num_ and lock_masks_.enable_mask_; source:src/game.h:ExitTurnLoop", "pinned branch review: preserve early returns before close/mask reset, timeout > 1000, phase>=4 popup suppression, live callback mask rereads, server receive loop, common cleanup order and final ExitTurnLoop reread", "historical seed:git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00528ea0.cpp; existing TRIED note remains attached verbatim"], "reason": "Keep the multiplayer turn rendezvous in the existing game-turn owner, using the already typed NetDaemon lock-state, Console, game-turn, GameDataStateWindow lock-mask and WinMM APIs while retaining this complete original body identity."}
+// TRIED: `int shiftAmt = *g_00939284; ... 1 << shiftAmt` vs a two-statement `unsigned int bit = 1; bit <<= shiftAmt;` vs computing the bitmask load before/after the shift - all three schedule the same as the original up to instruction #5, where the original still has a bare `mov eax, 1` that the rebuilt folds away before the `shl`. Rest of the function (the do/while upkeep-poll loop, the two log_say/message_data pairs, the NetDaemon/NetMsg calls) is a straight disassembly transcription.
+// kind      game
+// Native daemon words: 0x0093E8F0 receives peer acknowledgements and
+// 0x0093E8FC marks this faction at entry. The literals below replace their
+// seed aliases at 0x0068BB88..0x0068BBC0; timeGetTime uses its SDK import.
+/*
+Purpose: Run the multiplayer turn's upkeep rendezvous: mark the local
+         faction in the sent mask, redraw the multiplayer window, log and
+         broadcast the upkeep phase, then pump NetDaemon::net_tasks (with
+         the "waiting for player N" popup every second) until every enabled
+         faction is acknowledged; on the turn-end gate the same pump runs
+         NetDaemon::receive instead, and the masks clear on the way out.
+
+// size      503 bytes
+// prototype int (__cdecl ?net_upkeep_phase@@YAHH@Z)(int32 phase)
+// callers   1   call targets   10
+// flags     frame;sp_ready;purged_ok
+// calls     0x0047A890 0x00592EE0 0x00593780 0x005D5A70 0x005DAE60 0x005DAEA0 0x00645470 0x0064FC88 0x00669368 0x006454E1
+// notes     Seed provenance (TRIED): the `1 << shiftAmt` schedule matches
+//           the original only up to instruction #5 - the image keeps a bare
+//           `mov eax, 1` the rebuilt folds away - so this body is not
+//           measured exact; the rest is the seed's transcription.
+Return Value: the exit-turn flag
+Status: Coverage transcription - unclaimed body, seed
+        git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00528ea0.cpp retained.
+*/
+int __cdecl net_upkeep_phase(int phase) {
+    char number_buffer[0x50];
+    const int faction_id = ConsoleGlobal.faction_id_;
+    const uint32_t faction_bit =
+        1u << (static_cast<unsigned int>(faction_id) & 31u);
+    uint32_t &sent_mask = NetDaemonNet.lock_state_[1].leading_words_[1];
+    uint32_t &ack_mask = NetDaemonNet.lock_state_[0].trailing_words_[8];
+
+    sent_mask |= faction_bit;
+    MultiWindow.draw(0);
+
+    const int counter = static_cast<int>(ack_mask);
+    const int turn = GameDataStateStorage.fields_.turn_current_num_;
+    log_say("Upkeep Phase", phase, turn, counter);
+    message_data(0x2303, 0, phase,
+                 GameDataStateStorage.fields_.turn_current_num_, 0, 0);
+
+    DWORD time_base = timeGetTime();
+    int sent_upkeep = phase >= 4 ? 1 : 0;
+    const uint8_t initial_human_mask = static_cast<uint8_t>(
+        GameDataStateStorage.fields_.lock_masks_.enable_mask_);
+    if ((initial_human_mask & ack_mask) != initial_human_mask) {
+        do {
+            if (ExitTurnLoop != 0) return 1;
+
+            const DWORD now = timeGetTime();
+            if (now - time_base > 0x3E8) {
+                if (sent_upkeep == 0) {
+                    parse_num(0, static_cast<int>(ack_mask));
+                    parse_num(1, static_cast<uint8_t>(
+                        GameDataStateStorage.fields_.lock_masks_.enable_mask_));
+                    StringTemp[0] = 0;
+                    strcat(StringTemp, "UPKEEP");
+                    _itoa(phase, number_buffer, 10);
+                    strcat(StringTemp, number_buffer);
+                    NetMsgPrimary.pop(StringTemp, 0, 1,
+                                      static_cast<const char *>(0));
+                    sent_upkeep = 1;
+                }
+                time_base = timeGetTime();
+            }
+
+            NetDaemonNet.net_tasks();
+        } while ((static_cast<uint8_t>(
+                      GameDataStateStorage.fields_.lock_masks_.enable_mask_) &
+                  ack_mask) != static_cast<uint8_t>(
+                      GameDataStateStorage.fields_.lock_masks_.enable_mask_));
+    }
+
+    if (ExitTurnLoop != 0) return 1;
+
+    if (NetDaemonNet.lock_state_[0].leading_words_[1] == 0) {
+        log_say("Client falling out of upkeep loop", phase, 0, 0);
+    } else {
+        log_say("Server sending upkeep message", phase, 0, 0);
+        message_data(0x4303, 0, phase,
+                     GameDataStateStorage.fields_.turn_current_num_, 0, 0);
+        ack_mask = 0;
+        if (static_cast<uint8_t>(
+                GameDataStateStorage.fields_.lock_masks_.enable_mask_) != 0) {
+            do {
+                NetDaemonNet.receive();
+            } while ((static_cast<uint8_t>(
+                          GameDataStateStorage.fields_.lock_masks_.enable_mask_) &
+                      ack_mask) != static_cast<uint8_t>(
+                          GameDataStateStorage.fields_.lock_masks_.enable_mask_));
+        }
+    }
+
+    NetMsgPrimary.close();
+    sent_mask = 0;
+    ack_mask = 0;
+    return ExitTurnLoop;
+}
 // ORIGINAL: 0x005290A0 ?net_upkeep@@YAXXZ 0x005290A0-0x00529BE2
 // RECOVERY_BINDING: v1 {"evidence": ["historical seed:src/unrecovered/005290a0.cpp", "task:net-turn-coordinator-owner", "ConsoleGlobal9156B0+23BE4/+23BE8 owns939294/939298; UpgradePromptAnswered90EA3C, TurnRedrawPending703DE0 and CouncilPendingMessageArgs68BF38 already own their storage. Do not create competing aliases.", "Native prototypes64..511 use34-byte records and flags+30/obsolete_factions+2C, not seed1A stride; peer checksums use8x21-word existing storage. Preserve wait/abort ordering and masked PlayerLock active-bit test; extent/lifetime/runtime and retained-link evidence remain bounded."], "reason": "Recover the complete multiplayer turn operation through actual source-owned objects, arrays, members and SDK calls; preserve historical identity, spans and seed discoveries without implying game acceptance."}
 // TRIED: direct global-arithmetic translation of the Ghidra listing (fixed globals, DeletionList/NetDaemon/NetMsg/Console members, NET_DRAIN() macro for the receive-loop idiom) matches the first 10 instructions then diverges (xor vs mov) - register allocation for the 5-way local flags, not a structural difference.

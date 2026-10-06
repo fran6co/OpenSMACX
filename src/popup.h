@@ -319,6 +319,8 @@ int __cdecl pops(char *caption, char *label, char *text, int value,
 int __cdecl pops(char *caption, char *label, char *text, int value,
                  Sprite *sprite, int flag_a, int flag_b,
                  int (__cdecl *callback)());
+int __cdecl pop_ask(char *text_file, char *section, int value,
+                    int (__cdecl *callback)(), int flags);
 int __cdecl pop_ask_number(char *caption, char *label,
                            int (__cdecl *callback)());
 

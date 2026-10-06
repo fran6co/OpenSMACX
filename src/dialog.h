@@ -163,6 +163,7 @@ class Dialog {
   // to. Three bodies are in dialog.cpp; init(RECT*, int) remains unfinished.
   int init(RECT *group_id, int flags);  // ?init@Dialog@@QAEHPAURECT@@H@Z  0x00609470
   int init(int file_name);            // ?init@Dialog@@QAEHH@Z           0x006095F0
+  int init();                         // ?init@Dialog@@QAEHXZ
   int init(Heap *file_name);          // ?init@Dialog@@QAEHPAUHeap@@@Z   0x006098D0
   int init(int left, int top, int right, int bottom, int heap_size);
   int init(RECT *rect, Heap *heap);

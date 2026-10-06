@@ -958,6 +958,121 @@ void Dialog::UNK2(int window, int message, int wparam, int lparam) {
 // symbol    ??_GStringList@@UAEPAXI@Z
 */
 
+// Initialize using the already requested size; unlike init(int), the negative
+// size path returns before clearing entries or closing the dialog.
+// ORIGINAL: 0x00609150 ?init@Dialog@@QAEHXZ 0x00609150-0x006092FB
+// RECOVERY_BINDING: v1 {"evidence": ["pinned original decorated identity is ?init@Dialog@@QAEHXZ, with requested size at Dialog+0x1c, Heap at +0x4 and StringList at +0xbc", "src/dialog.h already declares those typed Dialog members; src/dialog.cpp owns the sibling overloads", "the recovered body has only StringList on_remove/deleting-destructor dispatches and Heap::init; no Win callback slot is involved", "the historical emitted redirect spelling ?dialog_init_redirect@@YIHPAX0@Z is retained only in this packet's audit history, not as the moved owner's symbol"], "reason": "Home the zero-argument initializer on Dialog and use its declared field_1C_, heap_, and item_list_ members. Preserve the original negative-size check, three explicit teardown sites, heap-init timing, returns, and allocator writes; do not substitute the non-equivalent init(int) overload."}
+//            redefined dispatch shim for the notify/destroy virtual calls;
+//            stack frame layout differs from instruction 1 on.
+// size      427 bytes
+// prototype int (__thiscall ?init@Dialog@@QAEHXZ)(Dialog* this)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4620
+// indirect  0x00609197 0x006091A9 0x006091C5 0x0060922D 0x00609241 0x0060925C 0x006092A6 0x006092B8 0x006092D4
+// historical Return Value: 0 on success, 1 when the requested size is negative, 4 when
+// historical Status: Complete
+// TRIED: the three inlined entry-list clears written out with a locally redefined dispatch shim for the notify/destroy virtual calls; stack frame layout differs from instruction 1 on.
+int Dialog::init() {
+    StringList *const list = &item_list_;
+    Heap *const heap = &heap_;
+    const int32_t requested = static_cast<int32_t>(field_1C_);
+    if (requested < 0) {
+        return 1;
+    }
+
+    // The same inlined teardown the image repeats between its decisions -
+    // see clear_list_entries in stringstruct.cpp for the shared shape.
+    if (list->head_ != 0) {
+        int index = 0;
+        if (0 < list->entry_count_) {
+            do {
+                StringStructEntry *const entry = list->head_;
+                list->current_ = entry->next;
+                StringStructPayload *const payload = entry->string_payload();
+                list->on_remove(payload);
+                if (payload != 0) {
+                    delete payload;
+                }
+                entry->payload = 0;
+                StringStructEntry *const head = list->head_;
+                if (head != 0) {
+                    delete head;
+                }
+                ++index;
+                list->head_ = list->current_;
+            } while (index < list->entry_count_);
+        }
+        list->head_ = 0;
+        list->current_position_ = 0;
+        list->entry_count_ = 0;
+    }
+    list->current_position_ = 0;
+
+    if (requested == 0) {
+        if (list->head_ != 0) {
+            int index = 0;
+            if (0 < list->entry_count_) {
+                do {
+                    StringStructEntry *const entry = list->head_;
+                    list->current_ = entry->next;
+                    StringStructPayload *const payload = entry->string_payload();
+                    list->on_remove(payload);
+                    if (payload != 0) {
+                        delete payload;
+                    }
+                    entry->payload = 0;
+                    StringStructEntry *const head = list->head_;
+                    if (head != 0) {
+                        delete head;
+                    }
+                    ++index;
+                    list->head_ = list->current_;
+                } while (index < list->entry_count_);
+            }
+            list->head_ = 0;
+            list->current_position_ = 0;
+            list->entry_count_ = 0;
+        }
+        list->current_position_ = 0;
+        list->allocator_ = 0;
+        return 0;
+    }
+
+    if (heap->init(static_cast<size_t>(requested)) != 0) {
+        return 4;
+    }
+
+    if (list->head_ != 0) {
+        int index = 0;
+        if (0 < list->entry_count_) {
+            do {
+                StringStructEntry *const entry = list->head_;
+                list->current_ = entry->next;
+                StringStructPayload *const payload = entry->string_payload();
+                list->on_remove(payload);
+                if (payload != 0) {
+                    delete payload;
+                }
+                entry->payload = 0;
+                StringStructEntry *const head = list->head_;
+                if (head != 0) {
+                    delete head;
+                }
+                ++index;
+                list->head_ = list->current_;
+            } while (index < list->entry_count_);
+        }
+        list->head_ = 0;
+        list->current_position_ = 0;
+        list->entry_count_ = 0;
+    }
+    list->allocator_ = heap;
+    list->current_position_ = 0;
+    return 0;
+}
+
 /*
 Purpose: Dialog's one-int init: reset the live dialog through close(), store
          the requested heap size at 0x1c, and hand the embedded item list the

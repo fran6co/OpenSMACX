@@ -347,8 +347,7 @@ void __cdecl textcolor_init();                     // ?textcolor_init@@YAXXZ
 // The fixed-art load itself. Six of the seven are still original bodies
 // reached through pending_bodies.cpp forwarders - declared nowhere before
 // load_fixed_sprites landed, so the forwarders came with it. The seventh,
-// load_deswin_sprites, was already compiled in leaf_recoveries.cpp under the
-// seam name leaf_00455e50_redirect and answers to its own image name here.
+// load_deswin_sprites is a local Buffer lifetime helper beside the fixed-art loader.
 // Arities are the mangled names'.
 void __cdecl load_palette();                       // ?load_palette@@YAXXZ
 void __cdecl load_misc();                          // ?load_misc@@YAXXZ
@@ -357,7 +356,7 @@ extern unsigned char VoxelRowColorTables[24][256];
 void __cdecl load_voxels();                        // ?load_voxels@@YAXXZ
 void __cdecl load_cursors();
 void __cdecl load_icons();
-void __cdecl load_deswin_sprites();                // 0x00455E50, leaf_recoveries.cpp
+void __cdecl load_deswin_sprites();                // 0x00455E50, game.cpp
 void __cdecl colortables_init();                   // ?colortables_init@@YAXXZ
 int __cdecl compare_palettes();
 void __cdecl load_cycling();                       // ?load_cycling@@YAXXZ

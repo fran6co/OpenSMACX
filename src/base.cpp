@@ -14338,8 +14338,10 @@ after_popup:
                         const int high = dx > dy ? dx : dy;
                         const int low = dx < dy ? dx : dy;
                         int score = high - (((dx + dy) / 2 - low + 1) / 2);
-                        const int relation = PlayersData[faction_id].diplo_treaties[
-                            Bases[rival_base].faction_id_current];
+                        const int relation = best_faction == -1
+                            ? PlayersData[faction_id].last_turn_new_base
+                            : static_cast<int>(
+                                PlayersData[faction_id].diplo_treaties[best_faction]);
                         if ((relation & DTREATY_PACT) != 0) score *= 2;
                         if ((relation & DTREATY_TREATY) != 0)
                             score = (3 * score) / 2;
@@ -14359,21 +14361,32 @@ after_popup:
                     // draw replaces it. Keep the signed divisions/modulo and
                     // the live timeGetTime sample used by the native code.
                     int target_weight[7];
+                    // Native 4F5570..4F55B6 writes a slot only on the first
+                    // type-13 match; 4F55D5..4F55F4 nevertheless reads all
+                    // seven slots, skipping the product only for value -1.
+                    // Preserve the untouched slots, not zero defaults. Their
+                    // incidental native stack values remain a fidelity
+                    // obligation: an indeterminate C++ read is not proof of
+                    // the original compiler/runtime effects.
                     int total_target_weight = 0;
                     double fallback_probability = 1.0;
                     for (int candidate_player_id = 1; candidate_player_id < MaxPlayerNum; ++candidate_player_id) {
-                        int weight = 0;
                         const Player &candidate = Players[candidate_player_id];
                         for (int k = 0; k < candidate.faction_bonus_count; ++k) {
                             if (candidate.faction_bonus_id[k] == 13) {
-                                weight = candidate.faction_bonus_val1[k];
+                                int weight = candidate.faction_bonus_val1[k];
                                 if (weight < 0) weight = 0;
                                 if (weight > 100) weight = 100;
                                 total_target_weight += weight;
+                                target_weight[candidate_player_id - 1] = weight;
+                                break;
                             }
                         }
-                        target_weight[candidate_player_id - 1] = weight;
-                        fallback_probability *= 1.0 - weight * 0.01;
+                    }
+                    for (int i = 0; i < 7; ++i) {
+                        const int weight = target_weight[i];
+                        if (weight != -1)
+                            fallback_probability *= 1.0 - weight * 0.01;
                     }
                     const int tick = static_cast<int>(timeGetTime());
                     const int fallback_cutoff =

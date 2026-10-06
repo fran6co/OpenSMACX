@@ -22,6 +22,10 @@
 #include "log.h"
 #include "strings.h"
 #include "textindex.h"
+#include "popup.h"
+#include "game.h"
+#include "faction.h"
+#include "console.h"
 
 /*
 Purpose: Initialize the class instance.
@@ -559,6 +563,33 @@ Status: Complete
 */
 
 
+// ORIGINAL: 0x005BECA0 ?X_text_open@@YAHPADPBD@Z 0x005BECA0-0x005BED17 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["the current helper calls only text_open and compares the requested file to the process script-file pointer", "ClimatePopupTitle aliases &ScriptPopupFile; 0x00939284 is ConsoleGlobal.faction_id_; 0x00946f58 is Players[0].rule_flags with 0x59c stride", "src/game.h, src/console.h, src/faction.h and src/popup.h declare the corresponding real objects and flags; unrelated leaf bodies still use the two TU-local aliases, which this transfer leaves in place", "the current function checks only the local faction's 0x80 rule bit and ExpansionEnabled, tries PopupStartAltFile1, then falls back to the original requested file"], "reason": "Home the original section-opening policy beside Text::open/text_open, replacing transitional pointer aliases with existing source-owned script, local-faction, player-rule, expansion, and alternate-file objects without changing branch order."}
+// size      119 bytes
+// prototype int (__cdecl ?X_text_open@@YAHPADPBD@Z)(int8* srcFileID, int8* sectionID)
+// callers   19   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005FD550 0x00645660
+// notes     Seed provenance: the LEVER note records that the entry frame is
+//           downstream of the strcmp intrinsic - inlining a string routine
+//           forced esi/edi saves - and that the two globals are PTR_s_
+//           slots holding a char*, one dereference more than the string.
+// historical Return Value: text_open's result for the section
+// historical Status: Measured BYTE_EXACT here in place (wave 7 record-then-retire); the
+// LEVER: string-routines-are-calls "Original keeps a `push ebp; mov ebp, esp` frame this source form never reproduces (register-pressure shape, not yet found)" was the note here, and the shape has now been found: the scaffold inlined a string routine the image calls, the expansion needs esi and edi, and VC6 answered by changing what it saved on entry. The prologue was downstream of the intrinsic. The `g_00691b0c`/`g_00691b20` reading stands - they are PTR_s_ globals holding a `char*`, one dereference more than the address of the string itself.
+int __cdecl X_text_open(char *src_file_id, const char *section_id) {
+    if (strcmp(src_file_id, ScriptPopupFile) != 0) {
+        return text_open(src_file_id, section_id);
+    }
+    const int faction_id = ConsoleGlobal.faction_id_;
+    if ((Players[faction_id].rule_flags & RFLAG_ALIEN) != 0 && ExpansionEnabled != 0) {
+        if (text_open(PopupStartAltFile1, section_id) == 0) {
+            return 0;
+        }
+    }
+    return text_open(src_file_id, section_id);
+}
 // ORIGINAL: 0x005FD550 ?text_open@@YAHPADPAD@Z 0x005FD550-0x005FD565 BYTE_EXACT
 // symbol    ?text_open@@YAHPBD0@Z
 // size      21 bytes

@@ -24,6 +24,7 @@
 #include <cstring>
 #include "original_seam.h"
 #include "popup.h"
+#include "buffer.h"
 #include "diplopop.h"
 #include "main.h"  // PopupModalActive, shared modal width override.
 #include "wave.h"
@@ -1567,6 +1568,20 @@ int __cdecl pop_ask(char *text_file, char *text_label, int value,
     return execResult;
 }
 
+// ORIGINAL: 0x00627830 ?pop_ask@@YAHPADPADHP6AHXZH@Z 0x00627830-0x00627854 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["the complete original body forwards arguments 1-3 and 4-5 unchanged and supplies null for the six-argument implementation's override-text slot", "src/popup.cpp already owns the matching six-argument pop_ask implementation and the other convenience overloads", "no address call, base-slot change, or semantic normalization is required"], "reason": "Move the original five-argument pop_ask overload beside the existing six-argument implementation it forwards to, preserving the null override-text argument and return value."}
+// symbol    ?pop_ask@@YAHPAD0HP6AHXZH@Z
+// size      36 bytes
+// prototype int (__cdecl ?pop_ask@@YAHPADPADHP6AHXZH@Z)(int8* srcFileID, int8* sectionID, int, int (__cdecl *)(), int)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00627910
+// historical Status: Complete
+int __cdecl pop_ask(char *a1, char *a2, int a3, int (__cdecl *a4)(), int a5) {
+    return pop_ask(a1, a2, a3, 0, a4, a5);
+}
+
 // The short popup overloads supply the process-wide default text file and
 // delegate to the six-argument implementation above. Their original bodies
 // contain no popup lifetime of their own.
@@ -2068,6 +2083,130 @@ int Popup::set_picture(Sprite *picture, int mode, char *text) {
 // symbol    ?POP3@@YAXPBDHHH@Z
 void __cdecl POP3(const char *section, int mode, int x, int y) {
     POP3(section, static_cast<const char *>(0), mode, x, y);
+}
+
+// ORIGINAL: 0x00405140 ?POP2@@YAHPBDPBDH@Z 0x00405140-0x0040559B;0x0065078F-0x00650839
+// RECOVERY_BINDING: v1 {"evidence": ["pinned 0x405140..0x40559B builds BasePop at EBP-0x5390 and Scroll at EBP-0x2160 (= BasePop+0x3230), then installs Popup primary vptr 0x6695C8 and Buffer-base vptr 0x6695C0", "pinned normal and cold cleanup spans 0x65078F..0x650839 show Scroll/BasePop close and destructor order; current Popup::~Popup calls close, then compiler-owned Scroll and BasePop teardown", "source:src/popup.h Popup inherits BasePop and owns Scroll scroll_ at 0x3230; current sizeof(Popup) is 0x537C", "source:src/basepop.h unit_ids_, owned_picture(), set_caller_picture(); source:src/stringstruct.h entry payload/previous links and StringList::add", "source:src/strings.h StringTemp; src/popup.h PopupStartCaption; src/game.h IsMultiplayerPBEM; src/game_data_state_window.h lock_masks_.bytes_.human_mask_/alive_mask_ and game_warnings_; src/messagewin.h MessageWinDeferredBaseMessages[8]; src/base.h Bases[].faction_id_current; src/mapwin.h MainInterfaceGlobal", "the original rec=0x93A800..<0x93A950 walk advances by 0x30, yielding exactly queue indexes 1..7; keep that bound and the unchecked indexing behavior", "both original spans and seed history remain attached to this identity; the historical TRIED/mismatch notes remain obligations, not current owner claims"], "reason": "Recover POP2 on the real Popup object: its pinned local has Popup's vptr plus Buffer-base vptr, with BasePop at frame offset -0x5390 and its owned Scroll exactly at +0x3230. Popup construction/destruction now follows the actual class lifetime; the body keeps the original queue, text, warning, image and return paths."}
+// size      1285 bytes
+// prototype
+// callers   4   call targets   18
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00401100 0x00402500 0x00406380 0x004064D0 0x00406880 0x00406E60 0x0045C0F0 0x005D4DD0 0x005E2480 0x005E3890 0x00600860 0x00600F00 0x00602600 0x006051D0 0x00605370 0x00644F3A 0x00645470 0x00645550
+// symbol    ?POP2@@YAHPBD0H@Z
+// historical Status: Coverage transcription - unclaimed body; the BasePop member walks
+// TRIED: a real `Popup pop;` local forces the compiler to synthesise and EMIT its own ~Popup() (Scroll has a declared, non-trivial dtor), which fails the one-external-symbol check; split into `BasePop pop; Scroll scroll;` locals instead (both already declare their own ctor/dtor) and call Popup::start() through a `(Popup*)&pop` cast. Reaches MISMATCH #19 in the construction/frame-setup area; did not chase the exact stack-slot layout (BasePop's true size vs. the scaffold's estimate) further.
+int __cdecl POP2(const char *a1, const char *a2, int a3) {
+    // Popup's real base/member lifetime is the native local object.
+    Popup pop;
+
+    pop.start(
+        PopupStartCaption, a1, -1,
+        static_cast<char *>(0), 0, static_cast<GraphicWin *>(0));
+
+    int total = pop.unit_ids_.entry_count_;
+    *StringTemp = 0;
+
+    if (!(total - 1 < -1)) {
+        StringStructEntry *entry = pop.unit_ids_.head_;
+        pop.unit_ids_.current_ = entry;
+        int n = abs(-1);
+        if (n <= pop.unit_ids_.entry_count_) {
+            n = abs(-1);
+            if (n > 0) {
+                do {
+                    entry = *reinterpret_cast<StringStructEntry **>(
+                        reinterpret_cast<char *>(entry) + 0x10);
+                    n--;
+                } while (n != 0);
+                pop.unit_ids_.current_ = entry;
+            }
+            pop.unit_ids_.current_position_ =
+                pop.unit_ids_.entry_count_ - 1;
+        }
+    }
+
+    int i;
+    for (i = 0; i < total; i++) {
+        if (i != 0) {
+            strcat(StringTemp,
+                   BufferJoinSpace);
+        }
+        pop.unit_ids_.next_entry();
+        const char *text;
+        StringStructEntry *entry = pop.unit_ids_.current_;
+        if (entry == 0) {
+            text = 0;
+        } else if (pop.unit_ids_.head_ == 0) {
+            text = reinterpret_cast<const char *>(*reinterpret_cast<int *>(4));
+        } else {
+            text = entry->string_payload()->text;
+        }
+        strcat(StringTemp,
+               text);
+    }
+
+    if (IsMultiplayerPBEM != 0) {
+        if (a3 == -1) {
+            int idx = 1;
+            do {
+                const unsigned char bit = static_cast<unsigned char>(
+                    1u << (idx & 0x1F));
+                if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & bit) != 0 &&
+                    (GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & bit) != 0) {
+                    StringList &pending = MessageWinDeferredBaseMessages[idx];
+                    pending.pending_text_ = StringTemp;
+                    pending.field_20_ = 0;
+                    pending.field_24_ = 0;
+                    pending.add(0x10000000);
+                }
+                ++idx;
+            } while (idx < 8);
+        } else if (a3 >= 0) {
+            const uint8_t idx2 = Bases[a3].faction_id_current;
+            if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &
+                 static_cast<unsigned char>(1u << (idx2 & 0x1Fu))) != 0) {
+                StringList &pending = MessageWinDeferredBaseMessages[idx2];
+                pending.pending_text_ = StringTemp;
+                pending.field_20_ = 0;
+                pending.field_24_ = 0;
+                pending.add(a3 | 0x40000000);
+            }
+        } else if (a3 != -1) {
+            int neg = -1 - a3;
+            unsigned char bit = static_cast<unsigned char>(1 << (neg & 0x1F));
+            if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & bit) != 0 &&
+                (GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & bit) != 0) {
+                StringList &pending = MessageWinDeferredBaseMessages[neg];
+                pending.pending_text_ = StringTemp;
+                pending.field_20_ = 0;
+                pending.field_24_ = 0;
+                pending.add(0x10000000);
+            }
+        }
+        return 0;
+    }
+
+    MainInterfaceGlobal.set_message(
+        StringTemp, 0x5F, 0, 1, 1);
+    if ((GameDataStateStorage.fields_.game_warnings_ & 0x20000) == 0) {
+        return 0;
+    }
+
+    if (a2 != 0) {
+        int w;
+        int h;
+        if (Buffer::get_pcx_dimensions(a2, &h, &w) ==
+            0) {
+            // These are the owned picture and caller-picture roles of the real Popup.
+            Sprite &sprite = pop.owned_picture();
+            if (sprite.init(const_cast<char *>(a2), h, w) == 0) {
+                pop.set_caller_picture(&sprite);
+            }
+        }
+    }
+    int result = pop.exec(0, reinterpret_cast<int (__cdecl *)()>(0));
+    return result;
 }
 
 // ORIGINAL: 0x004055A0 ?POP3@@YAXPBDPBDHHH@Z 0x004055A0-0x00405910;0x00650839-0x006508CD
