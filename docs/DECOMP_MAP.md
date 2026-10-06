@@ -54,6 +54,34 @@ measurement. The installed `recover check-data` computes compiler extents, initi
 bytes and relocation-target agreement; missing bounds stay unknown. The active
 workflow explains history/review preservation and lifetime limitations.
 
+Version 3 binds an old object identity to a named embedded member of a current
+parent object. The unbounded and bounded forms are:
+
+```cpp
+// RECOVERY_OBJECT: v3 <start> <old-emitted-symbol> member <parent-symbol> <member.path>
+// RECOVERY_OBJECT: v3 <start> <end> <old-emitted-symbol> <evidence-address> member <parent-symbol> <member.path>
+```
+
+The old symbol, original start, optional exclusive end and evidence anchor retain
+their historical identity and obligations. `parent-symbol` names the current
+compiled COFF data definition; the dotted path names direct embedded CodeView
+members. It does not follow pointers or inherited bases. Each fresh owner object
+must provide one unambiguous standalone CodeView definition and every path step's
+extent must fit its containing UDT. Several old members may share one parent only
+in the same source unit and only when fresh layout plus original addresses imply
+one consistent parent base. A historical object symbol cannot also name a current
+member owner; that collision would redirect old relocations. Unsupported, missing
+or ambiguous layout remains unknown.
+
+For a bounded v3 record, initial bytes are compared with exactly the resolved
+member slice. A relocation wholly inside that slice is rebased against the parent
+base and keeps its COFF addend; a relocation crossing the slice boundary or using
+an unsupported form does not borrow adjacent-member bytes and remains unknown.
+Object-reference scheduling recognizes both historical child IDs and current
+parent symbols, but compilation remains read-only and does not expand edit scope.
+The member path is structural source evidence, not a byte claim, lifetime proof,
+final-link selection proof or game acceptance.
+
 `match_recovery.object_writer.write_object_bytes` is the pure, add-only writer
 for these object bindings. Supply the complete current `parse_objects` snapshot
 and reviewed `ObjectBinding` additions; their one-based lines anchor insertion
@@ -63,6 +91,15 @@ It refuses unsupported lexical forms and insertion inside block comments.
 It performs no file IO or publication and does not infer symbols, allocation
 bounds, initializers, acceptance or recovery permission. Compiler evidence and
 coordinator-authorized publication remain separate requirements.
+
+`match_recovery.object_writer.replace_object_records` is the pure rehome
+transformation for a reviewed v3 migration. Supply the complete object-annotation
+snapshot and bytes for every affected source unit; one-for-one replacements retain
+old symbols, original addresses, spans and evidence anchors while changing only
+the parent/path and insertion unit/line. It reparses the result and refuses
+stale/incomplete snapshots, duplicate identities, parent-owner aliases and
+insertion inside a block comment. The caller still owns fresh on-disk validation,
+review and guarded publication; the transformation itself writes no files.
 
 ## TU-private literal bindings
 

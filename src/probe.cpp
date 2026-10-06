@@ -122,7 +122,7 @@ int __cdecl mind_control(int base_id, int faction_id, BOOL is_corner_market) {
     int target_x = Bases[base_id].x;
     int target_y = Bases[base_id].y;
     int cost = 12; // vulnerable(): default when faction has no HQ
-    for (int i = 0; i < BaseCurrentCount; i++) {
+    for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
         if (Bases[i].faction_id_current == target_faction_id && has_fac(FAC_HEADQUARTERS, i, 0)) {
             int dx = x_dist(target_x, Bases[i].x);
             int dy = abs(target_y - Bases[i].y);
@@ -155,7 +155,7 @@ int __cdecl mind_control(int base_id, int faction_id, BOOL is_corner_market) {
         + PlayersData[faction_id].mind_control_total / 4 + Bases[base_id].population_size)
         * ((PlayersData[target_faction_id].corner_market_active
             + PlayersData[target_faction_id].energy_reserves + 1200) / (cost + 4));
-    if (!((LockEnableMask & 0xFF) & (1 << faction_id)) && ((LockEnableMask & 0xFF) & (1 << target_faction_id))) {
+    if (!((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFF) & (1 << faction_id)) && ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFF) & (1 << target_faction_id))) {
         int diff = PlayersData[target_faction_id].diff_level;
         if (diff > DLVL_LIBRARIAN) {
             cost = (cost * 3) / diff;
@@ -444,7 +444,7 @@ static BOOL probe_native_entry_local_warning(int actor_faction_id,
     const uint32_t actor_shift =
         static_cast<uint32_t>(actor_faction_id) & 31u;
     const uint8_t actor_bit = static_cast<uint8_t>(1u << actor_shift);
-    if ((static_cast<uint8_t>(LockEnableMask) & actor_bit) == 0) return 0;
+    if ((static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & actor_bit) == 0) return 0;
     if ((NetDaemonNet.lock_state_[1].leading_words_[3] & 1u) == 0) return 0;
 
     parse_say(0, static_cast<int>(reinterpret_cast<uintptr_t>(
@@ -500,7 +500,7 @@ static int probe_native_result_one_choices(Popup &popup, int actor_faction_id,
             continue;
         }
         const uint8_t alive = reinterpret_cast<const uint8_t *>(
-            &LockEnableMask)[1];
+            &GameDataStateStorage.fields_.lock_masks_.enable_mask_)[1];
         const uint8_t faction_bit = static_cast<uint8_t>(1u << faction_id);
         if ((alive & faction_bit) == 0) continue;
 
@@ -622,7 +622,7 @@ static void probe_native_set_monument_selection_lock_bit(int selected_faction_id
     // one-bit result is truncated to one byte before writing [0x9A64E9].
     const uint32_t shift_count = (uint32_t)selected_faction_id & 31u;
     const uint8_t selected_bit = (uint8_t)(1u << shift_count);
-    LockEnableMask |= (uint32_t)selected_bit << 8;
+    GameDataStateStorage.fields_.lock_masks_.enable_mask_ |= (uint32_t)selected_bit << 8;
 }
 
 // Typed Popup/Dialogs list region at 0x5A3B23..0x5A3C50. Popup lifetime is
@@ -704,7 +704,7 @@ static int probe_native_commit_monument_choice(Popup &popup,
         NetMsgPrimary.pop("fac_escape_sm.pcx", "WILLYFREE");
     }
 
-    if (!(GameRules & 0x02000000)) {
+    if (!(GameDataStateStorage.fields_.game_rules_ & 0x02000000)) {
         for (int tech_id = 0; tech_id < MaxTechnologyNum; ++tech_id) {
             if (has_tech(tech_id, selected_faction_id) &&
                 !has_tech(tech_id, actor_faction_id)) {
@@ -962,7 +962,7 @@ static void probe_native_select_target_faction(int base_id,
 // compares that base's current faction with the target. Preserve all three
 // states: -1 = unbuilt path, 0 = built but not target-owned, 1 = target-owned.
 static int probe_native_hsa_project_target_relation(int target_faction_id) {
-    const int owner_base_id = SecretProject.hunter_seeker_algorithm();
+    const int owner_base_id = GameDataStateStorage.fields_.secret_project_.hunter_seeker_algorithm();
     if (owner_base_id < 0) return -1;
     return Bases[owner_base_id].faction_id_current == target_faction_id ? 1 : 0;
 }
@@ -1180,7 +1180,7 @@ static void probe_native_atrocity_followup(int actor_faction_id,
 
     if (actor_faction_id != ConsoleGlobal.faction_id_ &&
         target_faction_id != ConsoleGlobal.faction_id_ &&
-        !(GameState & 0x80)) return;
+        !(GameDataStateStorage.fields_.game_state_ & 0x80)) return;
 
     parse_says(0, base.name_string, -1, -1);
     parse_says(1, get_adjective(actor_faction_id), -1, -1);
@@ -1210,7 +1210,7 @@ static int probe_native_relocation_base(int x, int y, int actor_faction_id,
         return relocation_base;
 
     native_port_scan = true;
-    for (int candidate_base = 0; candidate_base < BaseCurrentCount;
+    for (int candidate_base = 0; candidate_base < GameDataStateStorage.fields_.base_current_count_;
          ++candidate_base) {
         if (Bases[candidate_base].faction_id_current != actor_faction_id)
             continue;
@@ -1253,7 +1253,7 @@ static int probe_native_trade_source_word(const PlayerData &data) {
 static int probe_native_negative_selector_base_distance(
         int fallback_vehicle_id, int target_faction_id) {
     int base_distance = 0x0C;
-    for (int base_cursor = 0; base_cursor < BaseCurrentCount; ++base_cursor) {
+    for (int base_cursor = 0; base_cursor < GameDataStateStorage.fields_.base_current_count_; ++base_cursor) {
         if (Bases[base_cursor].faction_id_current == target_faction_id &&
             has_fac(1, base_cursor, 0)) {
             const int dx = x_dist(
@@ -1352,7 +1352,7 @@ static BOOL probe_native_negative_selector_target_can_afford(
 // modifiers for a protected target; the earlier distance change stays.
 static int probe_native_nethack_terminus_adjust_amount(
         int amount, int actor_faction_id) {
-    const int nethack_terminus_base = SecretProject.nethack_terminus();
+    const int nethack_terminus_base = GameDataStateStorage.fields_.secret_project_.nethack_terminus();
     if (nethack_terminus_base >= 0 &&
         Bases[nethack_terminus_base].faction_id_current == actor_faction_id) {
         const int32_t tripled = static_cast<int32_t>(
@@ -1497,7 +1497,7 @@ static int probe_native_strategy_score_core(int &native_amount,
         PlayersData[actor_faction_id].diplo_treaties[target_faction_id];
     if (pair_flags & 2u)
         score = probe_native_wrapped_product(score, 2);
-    if (!(pair_flags & 0x20u) && !(GameState & 0x200u) &&
+    if (!(pair_flags & 0x20u) && !(GameDataStateStorage.fields_.game_state_ & 0x200u) &&
         !is_alien_faction(actor_faction_id) && (pair_flags & 0x1000000u) &&
         (pair_flags & 6u)) {
         if (whose_territory(actor_faction_id,
@@ -1606,7 +1606,7 @@ static int probe_native_automatic_faction_choice(int actor_vehicle_id,
             (static_cast<uint32_t>(candidate_faction_id) & 31u));
         if ((native_human_bits & candidate_bit) == 0 ||
             (native_alive_bits & candidate_bit) == 0 ||
-            candidate_faction_id != RankingFactionIDUnk1)
+            candidate_faction_id != GameDataStateStorage.fields_.ranking_faction_id_unk1_)
             continue;
         const uint32_t target_policy =
             PlayersData[target_faction_id]
@@ -1695,7 +1695,7 @@ int __cdecl probe(int actor_vehicle_id, int target_base_id,
     actor_has_hsa_ability = has_abil(actor_proto_id, 0x10000000) != 0;
     if (actor_has_hsa_ability) {
         ProbeHasAlgoEnhancement = 1;
-        const int hsa_owner_base = SecretProject.hunter_seeker_algorithm();
+        const int hsa_owner_base = GameDataStateStorage.fields_.secret_project_.hunter_seeker_algorithm();
         native_hsa_owner_mismatch = hsa_owner_base < 0 ||
             Bases[hsa_owner_base].faction_id_current != target_faction_id;
         if (native_hsa_owner_mismatch) {
@@ -1733,10 +1733,10 @@ label_59f769:
             1u << (static_cast<uint32_t>(actor_faction_id) & 31u);
         const bool local_human_network_choice =
             actor_faction_id == ConsoleGlobal.faction_id_ &&
-            (LockEnableMask & actor_bit) != 0 &&
+            (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & actor_bit) != 0 &&
             (NetDaemonNet.lock_state_[1].leading_words_[3] & 1u) != 0;
         if (!local_human_network_choice) {
-            if ((LockEnableMask & actor_bit) == 0)
+            if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & actor_bit) == 0)
                 goto label_5a2574;
             action_result = Vehs[actor_vehicle_id].probe_action & 7;
             goto label_59fb67;
@@ -1848,7 +1848,7 @@ label_5a2574:
         if (native_known_flag10) {
             if (Bases[target_base_id].population_size >= 6 &&
                 (((native_pair_treaty & 0x40000u) != 0) ||
-                 ((CouncilResolutionCount[8] > CouncilResolutionCount[9]) &&
+                 ((GameDataStateStorage.fields_.council_resolution_count_[8] > GameDataStateStorage.fields_.council_resolution_count_[9]) &&
                   (native_pair_treaty & 0x20u) != 0)) &&
                 probe_native_region_selector_byte(actor_faction_id,
                                                     target_base_region) == 2) {
@@ -2019,7 +2019,7 @@ label_59fb67:
         const uint32_t target_to_actor_treaty =
             PlayersData[target_faction_id].diplo_treaties[actor_faction_id];
         if (actor_faction_id == ConsoleGlobal.faction_id_ &&
-            (static_cast<uint8_t>(LockEnableMask) &
+            (static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) &
              static_cast<uint8_t>(1u << (actor_faction_id & 31))) != 0 &&
             (NetDaemonNet.lock_state_[1].leading_words_[3] & 1u) != 0 &&
             (actor_to_target_treaty & 7u) != 0 &&
@@ -2052,7 +2052,7 @@ label_59fb67:
             (Bases[target_base_id].state & 0x40u) != 0 ? 1 : 0;
         if ((Bases[target_base_id].state & 0x40u) != 0 &&
             actor_faction_id == ConsoleGlobal.faction_id_ &&
-            (static_cast<uint8_t>(LockEnableMask) &
+            (static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) &
              static_cast<uint8_t>(1u << (actor_faction_id & 31))) != 0 &&
             (NetDaemonNet.lock_state_[1].leading_words_[3] & 1u) != 0) {
             parse_says(0, Bases[target_base_id].name_string, -1, -1);
@@ -2076,8 +2076,8 @@ label_59fb67:
         // repeated (start + previous-cursor) modulo-89 order. Do not replace
         // this with a linear first-match search: the order is observable.
         int technology_start;
-        if (IsMultiplayerNet != 0 && (LockEnableMask & actor_bit) != 0) {
-            random_reseed(MapRandSeed + TurnCurrentNum + actor_faction_id);
+        if (IsMultiplayerNet != 0 && (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & actor_bit) != 0) {
+            random_reseed(MapRandSeed + GameDataStateStorage.fields_.turn_current_num_ + actor_faction_id);
             technology_start = static_cast<int>(random(0, 0x59));
             random_reseed(timeGetTime());
         } else {
@@ -2103,7 +2103,7 @@ label_59fb67:
 
 label_5a00b2:
         if (actor_faction_id == ConsoleGlobal.faction_id_ &&
-            (LockEnableMask & actor_bit) != 0) {
+            (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & actor_bit) != 0) {
             const int first_theft_morale =
                 morale_veh(actor_vehicle_id, 1, 0);
             success_rates(1, first_theft_morale,
@@ -2142,7 +2142,7 @@ label_5a00b2:
 
         if (selected_technology == 0x270F &&
             (PlayersData[actor_faction_id].flags & 0x200u) != 0) {
-            if ((LockEnableMask & actor_bit) != 0) {
+            if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & actor_bit) != 0) {
                 if (actor_faction_id != ConsoleGlobal.faction_id_ ||
                     (NetDaemonNet.lock_state_[1].leading_words_[3] & 2u) == 0)
                     goto label_5a2dcd;
@@ -2163,7 +2163,7 @@ label_5a00b2:
                 native_probe_roll_threshold = 1;
             if ((Bases[target_base_id].state & 0x00400000u) == 0 ||
                 actor_faction_id != ConsoleGlobal.faction_id_ ||
-                (LockEnableMask & actor_bit) == 0 ||
+                (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & actor_bit) == 0 ||
                 (NetDaemonNet.lock_state_[1].leading_words_[3] & 1u) == 0) {
                 goto label_5a2dcd;
             }
@@ -2193,8 +2193,8 @@ label_5a00b2:
 
             int random_amount;
             if (IsMultiplayerNet != 0 &&
-                (LockEnableMask & actor_bit) != 0) {
-                random_reseed(MapRandSeed + TurnCurrentNum + actor_faction_id);
+                (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & actor_bit) != 0) {
+                random_reseed(MapRandSeed + GameDataStateStorage.fields_.turn_current_num_ + actor_faction_id);
                 const int morale = morale_veh(actor_vehicle_id, 1, 0);
                 random_amount = static_cast<int>(
                     random(0, morale / 2 + 2));
@@ -2244,7 +2244,7 @@ label_5a00b2:
                     }
                     ++candidate_action;
                 } while (candidate_attempts < 0x46);
-                if ((LockEnableMask & actor_bit) == 0) {
+                if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & actor_bit) == 0) {
                     action_result =
                         Bases[target_base_id].faction_id_current <= 3 ? 4 : 0;
                     goto label_59fb67;
@@ -2252,7 +2252,7 @@ label_5a00b2:
             }
 
 label_5a074b:
-            if ((LockEnableMask & actor_bit) == 0) {
+            if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & actor_bit) == 0) {
                 if (morale_veh(actor_vehicle_id, 1, 0) >= 5) {
                     const int first_vehicle = veh_at(
                         Bases[target_base_id].x, Bases[target_base_id].y);
@@ -2290,7 +2290,7 @@ label_5a074b:
 label_5a0852:
                 local_result =
                     (Vehs[actor_vehicle_id].probe_action & 8u) >> 3;
-            } else if ((LockEnableMask & actor_bit) != 0 &&
+            } else if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & actor_bit) != 0 &&
                        (NetDaemonNet.lock_state_[1].leading_words_[3] & 1u) != 0) {
                 const int second_build_morale =
                     morale_veh(actor_vehicle_id, 1, 0);
@@ -2317,7 +2317,7 @@ label_5a0852:
             native_probe_roll_threshold = 1;
             if (local_result != 0 &&
                 actor_faction_id == ConsoleGlobal.faction_id_ &&
-                (LockEnableMask & actor_bit) != 0 &&
+                (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & actor_bit) != 0 &&
                 (NetDaemonNet.lock_state_[1].leading_words_[3] & 1u) != 0) {
                 popup.start(PopupStartCaption, "VIRUS", -1, nullptr, 0,
                             nullptr);
@@ -2401,7 +2401,7 @@ label_5a0aff:
                 1u << (static_cast<uint32_t>(actor_faction_id) & 31u);
             const bool report_facility_probe =
                 actor_faction_id == ConsoleGlobal.faction_id_ &&
-                (LockEnableMask & actor_bit) != 0 &&
+                (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & actor_bit) != 0 &&
                 (NetDaemonNet.lock_state_[1].leading_words_[3] & 1u) != 0;
             if (!facility_option_available &&
                 local_project_cursor != 4 && local_project_cursor != 5) {
@@ -2459,7 +2459,7 @@ label_5a0917_done:
                 success_rates(1, success_morale, 1, target_base_id);
             const bool actor_can_report =
                 actor_faction_id == ConsoleGlobal.faction_id_ &&
-                (LockEnableMask & actor_bit) != 0 &&
+                (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & actor_bit) != 0 &&
                 (NetDaemonNet.lock_state_[1].leading_words_[3] & 1u) != 0;
             if (assault_success != 0) {
                 if (!actor_can_report) goto label_5a2dcd;
@@ -2488,7 +2488,7 @@ label_5a0917_done:
             if (Chassis[fallback_chassis_id].triad == 2 &&
                 !has_abil(actor_proto_id, 0x20)) {
                 if (actor_faction_id == ConsoleGlobal.faction_id_ && mode != 0 &&
-                    (LockEnableMask & actor_bit) != 0 &&
+                    (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & actor_bit) != 0 &&
                     (NetDaemonNet.lock_state_[1].leading_words_[3] & 1u) != 0) {
                     parse_say(0, static_cast<int>(reinterpret_cast<intptr_t>(
                         Ability[abil_index(0x20)].name)), -1, -1);
@@ -2511,8 +2511,8 @@ label_5a0917_done:
                     target_faction_id, fallback_proto_id, base_distance);
                 amount = probe_native_negative_selector_target_ratio(
                     amount, actor_faction_id, target_faction_id,
-                    (LockEnableMask & actor_bit) != 0,
-                    (LockEnableMask & (1u <<
+                    (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & actor_bit) != 0,
+                    (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u <<
                         (static_cast<uint32_t>(target_faction_id) & 31u))) != 0);
 
                 // Project protection is tested after the preceding amount
@@ -2521,7 +2521,7 @@ label_5a0917_done:
                 if (probe_native_negative_selector_protected(
                     target_faction_id)) {
                     if (actor_faction_id == ConsoleGlobal.faction_id_ &&
-                        (LockEnableMask & actor_bit) != 0 && mode != 0 &&
+                        (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & actor_bit) != 0 && mode != 0 &&
                         (NetDaemonNet.lock_state_[1].leading_words_[3] & 1u) != 0) {
                         parse_says(0,
                             Players[target_faction_id].noun_faction,
@@ -2552,7 +2552,7 @@ label_5a0917_done:
                 // then shares the mode/selector continuation below.
                 const bool skip_native_strategy_score =
                     probe_native_strategy_human_vehicle_early_exit(
-                        LockEnableMask, actor_faction_id,
+                        GameDataStateStorage.fields_.lock_masks_.enable_mask_, actor_faction_id,
                         Vehs[actor_vehicle_id]);
                 if (!skip_native_strategy_score) {
                     const int native_strategy_score =
@@ -2583,7 +2583,7 @@ label_5a0917_done:
                 // execution performs both success-rate calls before checking
                 // the actor's energy, and changes energy only after the
                 // selected action and second lock-state bit allow accounting.
-                if ((LockEnableMask & actor_bit) != 0) {
+                if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & actor_bit) != 0) {
                     int chosen_policy =
                         actor_faction_id == ConsoleGlobal.faction_id_ &&
                         (NetDaemonNet.lock_state_[1].leading_words_[3] & 1u) != 0
@@ -2613,7 +2613,7 @@ label_5a0917_done:
                         PlayersData[actor_faction_id].energy_reserves;
                     const uint32_t target_bit = 1u <<
                         (static_cast<uint32_t>(target_faction_id) & 31u);
-                    if ((LockEnableMask & target_bit) != 0) {
+                    if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & target_bit) != 0) {
                         int reserve_margin = actor_energy / 10;
                         if (reserve_margin < 0) reserve_margin = 0;
                         if (reserve_margin > 0x32) reserve_margin = 0x32;
@@ -2636,7 +2636,7 @@ label_5a0917_done:
                 goto label_5a2012;
             }
             if (actor_faction_id == ConsoleGlobal.faction_id_ && mode != 0 &&
-                (LockEnableMask & actor_bit) != 0 &&
+                (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & actor_bit) != 0 &&
                 (NetDaemonNet.lock_state_[1].leading_words_[3] & 1u) != 0)
                 NetMsgPrimary.pop("ALIENPROBE", -5000, 0, nullptr);
             goto label_5a2ce9;
@@ -2646,7 +2646,7 @@ label_5a0917_done:
             control_chance =
                 mind_control(target_base_id, actor_faction_id, 1);
             if (control_chance < 0) {
-                if ((LockEnableMask & actor_bit) != 0) {
+                if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & actor_bit) != 0) {
                     goto label_5a2ce9;
                 }
                 action_result = 1;
@@ -2654,7 +2654,7 @@ label_5a0917_done:
             }
 
             if ((Players[target_faction_id].rule_flags & 0x800) != 0) {
-                if ((LockEnableMask & actor_bit) == 0)
+                if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & actor_bit) == 0)
                     goto label_5a2574;
                 if (actor_faction_id == ConsoleGlobal.faction_id_ &&
                     (NetDaemonNet.lock_state_[1].leading_words_[3] & 1u) != 0) {
@@ -2677,7 +2677,7 @@ label_5a0917_done:
             }
             control_chance = probe_native_nethack_terminus_adjust_amount(
                 control_chance, actor_faction_id);
-            const int cloudbase_academy_base = SecretProject.cloudbase_academy();
+            const int cloudbase_academy_base = GameDataStateStorage.fields_.secret_project_.cloudbase_academy();
             if (cloudbase_academy_base >= 0 &&
                 Bases[cloudbase_academy_base].faction_id_current ==
                     actor_faction_id) {
@@ -2694,7 +2694,7 @@ label_5a0917_done:
             if (has_fac(0x22, target_base_id, 0)) social_modifier += 2;
             if (social_modifier + 2 < 6) {
                 if (social_modifier == 3) {
-                    if ((LockEnableMask & actor_bit) == 0)
+                    if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & actor_bit) == 0)
                         goto label_5a2455;
                     if (actor_faction_id == ConsoleGlobal.faction_id_ &&
                         (NetDaemonNet.lock_state_[1].leading_words_[3] & 1u) != 0) {
@@ -2708,7 +2708,7 @@ label_5a0917_done:
                     control_chance, social_modifier);
             }
 
-            if ((LockEnableMask & actor_bit) != 0) {
+            if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & actor_bit) != 0) {
 label_5a2ab3:
                 if (actor_faction_id != ConsoleGlobal.faction_id_ ||
                     (NetDaemonNet.lock_state_[1].leading_words_[3] & 1u) == 0) {
@@ -2795,9 +2795,9 @@ label_5a2dcd:
         // dispatcher entry; no-chooser selectors must not retain input mode.
         native_relationship_choice = 0;
         native_human_bits =
-            reinterpret_cast<const uint8_t *>(&LockEnableMask)[0];
+            reinterpret_cast<const uint8_t *>(&GameDataStateStorage.fields_.lock_masks_.enable_mask_)[0];
         native_alive_bits =
-            reinterpret_cast<const uint8_t *>(&LockEnableMask)[1];
+            reinterpret_cast<const uint8_t *>(&GameDataStateStorage.fields_.lock_masks_.enable_mask_)[1];
         native_actor_bit = static_cast<uint8_t>(1u <<
             (static_cast<uint32_t>(actor_faction_id) & 31u));
         native_target_bit = static_cast<uint8_t>(1u <<
@@ -3050,9 +3050,9 @@ label_5a36ee:
                 target_faction_id == ConsoleGlobal.faction_id_ ||
                 spying(actor_faction_id) != 0 ||
                 spying(target_faction_id) != 0 ||
-                (GameState & 0x80u) != 0;
+                (GameDataStateStorage.fields_.game_state_ & 0x80u) != 0;
             if (selector6_has_local_context) {
-                if ((GameState & 0x80u) != 0 ||
+                if ((GameDataStateStorage.fields_.game_state_ & 0x80u) != 0 ||
                     Bases[target_base_id].faction_id_current ==
                         ConsoleGlobal.faction_id_ ||
                     (Bases[target_base_id].visibility & local_faction_bit) != 0) {
@@ -3076,7 +3076,7 @@ label_5a36ee:
                 X_pop(StringTemp, actor_noun != nullptr
                     ? "al_cap_sm.pcx" : "capture_sm.pcx", nullptr);
 
-                for (int vehicle_id = VehCurrentCount - 1;
+                for (int vehicle_id = GameDataStateStorage.fields_.vehicle_current_count_ - 1;
                      vehicle_id >= 0; --vehicle_id) {
                     Veh &vehicle = Vehs[vehicle_id];
                     if (vehicle.faction_id != target_faction_id) continue;
@@ -3170,7 +3170,7 @@ label_5a4b28:
             // branch only when the selected faction bit is clear in the
             // existing lock/human mask. Keep the byte mask and directed
             // treaty writer and local FRAMEFLOP parser/message path as seen.
-            if ((LockEnableMask & selected_response_bit) == 0) {
+            if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & selected_response_bit) == 0) {
                 if (actor_faction_id == ConsoleGlobal.faction_id_) {
                     parse_says(0,
                         get_title(selected_response_faction), -1, -1);
@@ -3188,7 +3188,7 @@ label_5a4b28:
             }
         }
         if (native_relationship_choice <= -1 &&
-            (LockEnableMask & selected_response_bit) != 0) {
+            (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & selected_response_bit) != 0) {
                 // The human-partner response consumes parser slots in this
                 // exact native order before either multiplayer agenda update
                 // or the local treaty response. Preserve repeated reads and
@@ -3232,7 +3232,7 @@ label_5a4b28:
                         pact_ends(selected_response_faction,
                                   actor_faction_id);
                         PlayersData[selected_response_faction]
-                            .diplo_spoke[actor_faction_id] = TurnCurrentNum;
+                            .diplo_spoke[actor_faction_id] = GameDataStateStorage.fields_.turn_current_num_;
                     }
                 } else {
                     const char *const image = actor_is_alien
@@ -3242,7 +3242,7 @@ label_5a4b28:
                         treaty_on(actor_faction_id,
                                   selected_response_faction, 0x10);
                         PlayersData[selected_response_faction]
-                            .diplo_spoke[actor_faction_id] = TurnCurrentNum;
+                            .diplo_spoke[actor_faction_id] = GameDataStateStorage.fields_.turn_current_num_;
                     }
                 }
         }

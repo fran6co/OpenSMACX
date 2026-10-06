@@ -95,7 +95,7 @@ int __cdecl terraform_cost(int x, int y, int faction_id) {
     cost *= 2;
     if (alt < ALT_SHORE_LINE) {
         cost *= 2;
-        if (!GameTechAchieved[TECH_DOCAIR]) {
+        if (!GameDataStateStorage.fields_.game_tech_achieved_[TECH_DOCAIR]) {
             cost *= 2;
         }
     }
@@ -196,7 +196,7 @@ Status: Complete
 BOOL __cdecl terrain_avail(int terraform_id, BOOL is_sea, int faction_id) {
     int preq_tech = *(&Terraforming[terraform_id].preq_tech + is_sea);
     if (preq_tech < TechNone || ((terraform_id == TERRA_RAISE_LAND
-        || terraform_id == TERRA_LOWER_LAND) && GameRules & RULES_SCN_NO_TERRAFORMING)) {
+        || terraform_id == TERRA_LOWER_LAND) && GameDataStateStorage.fields_.game_rules_ & RULES_SCN_NO_TERRAFORMING)) {
         return false;
     }
     if (terraform_id >= TERRA_CONDENSER && terraform_id <= TERRA_LEVEL_TERRAIN
@@ -392,7 +392,7 @@ int __cdecl can_terraform(int faction_id, int x, int y, int force_improve, int b
                 return ORDER_NONE;
             }
             if (is_human(faction_id)
-                && !(GameMorePreferences & MPREF_AUTO_FORMER_REMOVE_FUNGUS)) {
+                && !(GameDataStateStorage.fields_.game_more_preferences_ & MPREF_AUTO_FORMER_REMOVE_FUNGUS)) {
                 return ORDER_NONE;
             }
             return has_tech(Terraforming[TERRA_REMOVE_FUNGUS].preq_tech_sea, faction_id)
@@ -494,7 +494,7 @@ int __cdecl can_terraform(int faction_id, int x, int y, int force_improve, int b
             return ORDER_NONE;   // the fungus is worth more than the terrain under it
         }
         if (is_human(faction_id)
-            && !(GameMorePreferences & MPREF_AUTO_FORMER_REMOVE_FUNGUS)) {
+            && !(GameDataStateStorage.fields_.game_more_preferences_ & MPREF_AUTO_FORMER_REMOVE_FUNGUS)) {
             return ORDER_NONE;
         }
         return has_tech(Terraforming[TERRA_REMOVE_FUNGUS].preq_tech_sea, faction_id)
@@ -646,7 +646,7 @@ int __cdecl can_terraform(int faction_id, int x, int y, int force_improve, int b
             }
         }
     }
-    if (rainfall && elev && rockiness == ROCKINESS_ROLLING && TurnCurrentNum < 50) {
+    if (rainfall && elev && rockiness == ROCKINESS_ROLLING && GameDataStateStorage.fields_.turn_current_num_ < 50) {
         plant_value++;
     }
     int result = order;
@@ -658,7 +658,7 @@ int __cdecl can_terraform(int faction_id, int x, int y, int force_improve, int b
         && plant_value < forest_value
         && (!is_human(faction_id)
             || (faction_id == ConsoleGlobal.faction_id_
-                && (GamePreferences & PREF_AUTO_FORMER_PLANT_FORESTS)))) {
+                && (GameDataStateStorage.fields_.game_preferences_ & PREF_AUTO_FORMER_PLANT_FORESTS)))) {
         result = ORDER_PLANT_FOREST;
     }
     if (has_tech(Terraforming[TERRA_PLANT_FUNGUS].preq_tech, faction_id)

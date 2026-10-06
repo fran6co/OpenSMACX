@@ -144,7 +144,7 @@ void ReportIf::on_status(int mode) {
     for (int history = 0; history < 19; ++history) report_page_history_[history] = -1;
     window.shared_report_selection() = -1; field_1E1D8_ = 1;
     int research = PlayersData[report_faction_id_].tech_id_researching;
-    if (!((GameState & 0x80) || !(GameRules & 0x200)) || research < 0 || research > 89)
+    if (!((GameDataStateStorage.fields_.game_state_ & 0x80) || !(GameDataStateStorage.fields_.game_rules_ & 0x200)) || research < 0 || research > 89)
         research = 0;
     window.shared_research_focus() = research;
     for (int topic = 0; topic < 7; ++topic) {
@@ -262,7 +262,7 @@ void ReportIf::on_status(int mode) {
     for (int other = 1; other < 8; ++other) {
         if (other == ConsoleGlobal.faction_id_) continue;
         int elevators = 0;
-        for (int base = 0; base < BaseCurrentCount; ++base)
+        for (int base = 0; base < GameDataStateStorage.fields_.base_current_count_; ++base)
             if (Bases[base].faction_id_current == other && has_fac(41, base, 0)) ++elevators;
         const PlayerData &data = PlayersData[other];
         if (!(has_tech(Facility[65].preq_tech, other)
@@ -278,7 +278,7 @@ void ReportIf::on_status(int mode) {
     for (int faction = 1; faction < 8; ++faction) {
         const int current = ConsoleGlobal.faction_id_;
         if (!(PlayersData[faction].diplo_treaties[current] & 1) && !spying(faction)
-            && faction != current && !(GameState & 0x80)) continue;
+            && faction != current && !(GameDataStateStorage.fields_.game_state_ & 0x80)) continue;
         StringTemp[0] = 0; strcat(StringTemp, get_title(faction)); strcat(StringTemp, " ");
         strcat(StringTemp, get_name(faction)); strcat(StringTemp, " ");
         strcat(StringTemp, label_get(0xB4)); strcat(StringTemp, " ");
@@ -427,7 +427,7 @@ void ReportIf::on_iface_selected(int item, int) {
             sort_entries_[i].sorted_base_id = i;
             sort_entries_[i].sorted_value = 0;
         }
-        for (int base = 0; base < BaseCurrentCount; ++base) {
+        for (int base = 0; base < GameDataStateStorage.fields_.base_current_count_; ++base) {
             set_base(base);
             base_compute(0);
             int &value = sort_entries_[base].value;
@@ -460,7 +460,7 @@ void ReportIf::on_iface_selected(int item, int) {
             }
             sort_entries_[base].sorted_value = value;
         }
-        merge_sort(0, BaseCurrentCount - 1);
+        merge_sort(0, GameDataStateStorage.fields_.base_current_count_ - 1);
         ReportWinGlobal.field_5A08_ = item;
         ReportWinGlobal.redraw();
     }
@@ -498,7 +498,7 @@ void ReportIf::on_iface_button_clicked(int button) {
         }
         case 0xCF0: case 0xCF1: case 0xCF2: case 0xCF3: {
             log_say("Global EDBC base set", 0, 0, 0);
-            for (int base = 0; base < BaseCurrentCount; ++base) {
+            for (int base = 0; base < GameDataStateStorage.fields_.base_current_count_; ++base) {
                 if (Bases[base].faction_id_current == faction
                     && (ReportWinGlobal.selected_bases_[base >> 5] & (1u << (base & 31)))
                     && NetDaemonNet.lock_base(base, 0, -1, -1) == 0) {
@@ -515,7 +515,7 @@ void ReportIf::on_iface_button_clicked(int button) {
         case 0xCF4: {
             log_say("Global governor advanced", 0, 0, 0);
             bool configured = false;
-            for (int base = 0; base < BaseCurrentCount; ++base) {
+            for (int base = 0; base < GameDataStateStorage.fields_.base_current_count_; ++base) {
                 if (Bases[base].faction_id_current != faction
                     || !(ReportWinGlobal.selected_bases_[base >> 5] & (1u << (base & 31)))) continue;
                 if (!configured) {
@@ -535,7 +535,7 @@ void ReportIf::on_iface_button_clicked(int button) {
         }
         case 0xCF5: {
             log_say("Global governor off", 0, 0, 0);
-            for (int base = 0; base < BaseCurrentCount; ++base) {
+            for (int base = 0; base < GameDataStateStorage.fields_.base_current_count_; ++base) {
                 if (Bases[base].faction_id_current == faction
                     && (ReportWinGlobal.selected_bases_[base >> 5] & (1u << (base & 31)))
                     && NetDaemonNet.lock_base(base, 0, -1, -1) == 0) {
@@ -565,7 +565,7 @@ void ReportIf::on_iface_button_clicked(int button) {
                 }
                 if (!(ReportWinGlobal.selected_prototypes_[row >> 5] & (1u << (row & 31)))) continue;
                 if (diplo_lock(100) != 0) break;
-                for (int vehicle = 0; vehicle < VehCurrentCount; ++vehicle) {
+                for (int vehicle = 0; vehicle < GameDataStateStorage.fields_.vehicle_current_count_; ++vehicle) {
                     Veh &record = Vehs[vehicle];
                     const bool selected = button == 0xCF7
                         ? static_cast<uint8_t>(record.unk_1) == report_faction_id_
@@ -848,7 +848,7 @@ void ReportIf::on_iface_button_toggled(int, int) {
 // ORIGINAL: 0x004ACC30 ?merge_sort@ReportIf@@QAEXHH@Z 0x004ACC30-0x004ACD98
 // RECOVERY_BINDING: v1 {"evidence": ["git:4097a7c0:src/recovered/units/004acc30.cpp;source:src/reportif.h;source:src/base.h:BaseCurrentCount;source:src/general.h:swap"], "reason": "Recover the ReportIf base-ranking merge sort over its measured 0x200-entry, 16-byte scratch workspace, using the source-owned BaseCurrentCount bound and preserving original range normalization and key-prefetch order."}
 void ReportIf::merge_sort(int first, int last) {
-    const int maximum = BaseCurrentCount - 1;
+    const int maximum = GameDataStateStorage.fields_.base_current_count_ - 1;
     if (first < 0 || maximum < 0) {
         first = 0;
     } else if (first > maximum) {
@@ -1736,8 +1736,8 @@ void ReportIf::report(int report_id, int faction_id, int selection) {
 
     if (previous_page != 2 && ReportWinGlobal.shared_report_selection() != -1) {
         int next_focus;
-        if (!(GameState & STATE_OMNISCIENT_VIEW)
-            && (GameRules & RULES_BLIND_RESEARCH)) {
+        if (!(GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)
+            && (GameDataStateStorage.fields_.game_rules_ & RULES_BLIND_RESEARCH)) {
             if (ReportWinGlobal.shared_research_focus() >= 0 && ReportWinGlobal.shared_research_focus() <= 0x59
                 && has_tech_call(ReportWinGlobal.shared_research_focus(), faction_id)) {
                 next_focus = ReportWinGlobal.shared_research_focus();
@@ -1846,7 +1846,7 @@ void ReportIf::draw_labs() {
     list.set_write_callback(labs_write);
     char number[80];
     if (field_1E1D8_ == 0) {
-        for (int base = 0; base < BaseCurrentCount; ++base) {
+        for (int base = 0; base < GameDataStateStorage.fields_.base_current_count_; ++base) {
             if (Bases[base].faction_id_current != report_faction_id_) continue;
             StringTemp[0] = 0;
             say_base(StringTemp, base);
@@ -2046,7 +2046,7 @@ void ReportIf::draw_energy() {
     dialog.set_dialog_text_color2(0x99, -1, 1, 1);
     dialog.set_dialog_text_color3(0x99, -1, 1, 1);
     list.set_report_text_color(0xF2);
-    for (int base = 0; base < BaseCurrentCount; ++base) {
+    for (int base = 0; base < GameDataStateStorage.fields_.base_current_count_; ++base) {
         if (Bases[base].faction_id_current != report_faction_id_) continue;
         char number[80];
         const int income = Bases[base].economy_total;
@@ -2135,7 +2135,7 @@ void ReportIf::draw_energy() {
         _itoa(count, number, 10); strcat(StringTemp, number); strcat(StringTemp, " ");
         strcat(StringTemp, StringTable.get(reinterpret_cast<int>(Facility[facility].name)));
         strcat(StringTemp, "|"); strcat(StringTemp, "-");
-        const int project_base = SecretProject.planetary_energy_grid();
+        const int project_base = GameDataStateStorage.fields_.secret_project_.planetary_energy_grid();
         if (project_base >= 0 && Bases[project_base].faction_id_current == report_faction_id_) {
             const int half = fac_maint(facility, report_faction_id_) * count;
             const int cost = fac_maint(facility, report_faction_id_) * count;
@@ -2209,7 +2209,7 @@ void ReportIf::draw_ops() {
             strcat(StringTemp, ": ");
             int winner = -1;
             int best = 0;
-            for (int base = 0; base < BaseCurrentCount; ++base) {
+            for (int base = 0; base < GameDataStateStorage.fields_.base_current_count_; ++base) {
                 if (static_cast<int>(Bases[base].faction_id_current) != report_faction_id_) continue;
                 set_base(base);
                 base_compute(0);
@@ -2519,7 +2519,7 @@ void ReportIf::draw_sat() {
         for (int other = 1; other < 8; ++other) {
             if (other == ConsoleGlobal.faction_id_) continue;
             int elevators = 0;
-            for (int base = 0; base < BaseCurrentCount; ++base)
+            for (int base = 0; base < GameDataStateStorage.fields_.base_current_count_; ++base)
                 if (Bases[base].faction_id_current == other && has_fac(41, base, 0)) ++elevators;
             const PlayerData &data = PlayersData[other];
             if (data.satellites_[0] + data.satellites_[1] + data.satellites_[2]
@@ -2615,7 +2615,7 @@ void ReportIf::draw_sat() {
                 static_cast<Buffer *>(&button)->set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
                 button.redraw(); button.hide();
                 elevators = 0;
-                for (int base = 0; base < BaseCurrentCount; ++base)
+                for (int base = 0; base < GameDataStateStorage.fields_.base_current_count_; ++base)
                     if (Bases[base].faction_id_current == target && has_fac(41, base, 0)) ++elevators;
                 if (kind == 4 ? elevators != 0 : PlayersData[target].satellites_[kind] != 0) {
                     button.show(0); buttonGroup4_.add(&button); field_10_ += 22;
@@ -2774,7 +2774,7 @@ void ReportIf::draw_security() {
 void ReportIf::draw_intel() {
     Buffer &canvas = static_cast<Buffer &>(MainInterfaceGlobal);
     const int target = report_selection_;
-    const bool informed = (GameState & STATE_OMNISCIENT_VIEW)
+    const bool informed = (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)
         || spying(target) != 0
         || (PlayersData[report_faction_id_].diplo_treaties[target] & 1);
     canvas.set_clip(&field_20_);
@@ -2870,7 +2870,7 @@ void ReportIf::draw_intel() {
     base_dialog.set_dialog_text_color2(0x99, -1, 1, 1);
     base_dialog.set_dialog_text_color3(0x99, -1, 1, 1);
     listBox2_.set_report_text_color(0xF2);
-    for (int base = 0; base < BaseCurrentCount; ++base) {
+    for (int base = 0; base < GameDataStateStorage.fields_.base_current_count_; ++base) {
         const Base &record = Bases[base];
         if (record.faction_id_current == target && (informed
             || record.faction_id_current == report_faction_id_

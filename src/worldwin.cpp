@@ -97,7 +97,7 @@ void WorldWin::right_menu(int x, int y) {
     menu.add_item(0x14, label_get(0x23F));
     menu.show(x, y, pop_expire);
 
-    if ((GameState & 0x800) != 0) {
+    if ((GameDataStateStorage.fields_.game_state_ & 0x800) != 0) {
         return;
     }
     switch (menu.get_selected_id()) {

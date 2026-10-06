@@ -704,7 +704,7 @@ void BattleWin::battle_report(int first_vehicle_id, int second_vehicle_id,
             strcat(StringTemp, Players[faction].noun_faction);
             strcat(StringTemp, ")");
         }
-        if ((GameState & 0x80) != 0) {
+        if ((GameDataStateStorage.fields_.game_state_ & 0x80) != 0) {
             char vehicle_number[40];
             strcat(StringTemp, "(");
             _itoa(current_vehicle_id, vehicle_number, 10);

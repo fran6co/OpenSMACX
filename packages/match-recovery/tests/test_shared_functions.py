@@ -13,7 +13,8 @@ from match_recovery.model import Origin, Span
 from match_recovery.ownership_source import project_view
 from match_recovery.pe_coff import Coff, PeImage
 from match_recovery.shared_binary import check_shared
-from match_recovery.shared_source import SharedFunctionBinding, parse_shared, read_shared, validate_shared
+from match_recovery.shared_source import (SharedFunctionBinding, parse_shared, read_shared,
+                                          referenced_shared_units, validate_shared)
 from match_recovery.tasks import Task, TaskStore
 from test_binary import coff_fixture, pe_fixture
 
@@ -79,6 +80,15 @@ def test_shared_relocations_use_declared_targets_not_original_operands():
         targets, rows = check_shared([binding], objects, image, external)
         assert rows[0]["result"] == expected
         assert bool(targets) == (expected == "pass")
+
+
+def test_shared_reference_scheduler_uses_function_owners_without_object_members():
+    bindings, _, _ = fixture()
+    binding = replace(bindings[0], symbol="_g")
+    caller = Coff(coff_fixture(b"\xe8\0\0\0\0\xc3", relocation=(1, 1, 20)))
+    assert referenced_shared_units([binding], {"code/caller.cc": caller}) == frozenset({binding.unit})
+    with pytest.raises(ValueError, match="duplicate shared function symbol"):
+        referenced_shared_units([binding, binding], {"code/caller.cc": caller})
 
 
 @pytest.mark.parametrize("storage", [3, 105])

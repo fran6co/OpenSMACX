@@ -11,7 +11,8 @@ from .import_source import import_targets, read_imports
 from .measurement import Measurement
 from .model import Result, digest
 from .object_data import check_initial_data, referenced_initial_object_units
-from .object_source import object_targets, read_objects, referenced_object_units
+from .object_source import (object_targets, read_objects, referenced_object_units,
+                            require_disjoint_object_symbols)
 from .literal_source import read_literals
 from .literal_data import check_literals
 from .ownership_source import project_view
@@ -45,7 +46,10 @@ def check_data(root: Path, image_path: Path, *, symbols=None, compiler=None):
     shared = read_shared(root, pin)
     validate_shared(shared, view)
     _, _, functions = select_bindings(view, frozenset())
-    groups = [set(functions), {b.symbol for b in bindings}, {b.symbol for b in generated},
+    object_symbols = require_disjoint_object_symbols(
+        bindings, set(functions), {b.symbol for b in generated}, {b.symbol for b in imports},
+        {b.symbol for b in shared})
+    groups = [set(functions), set(object_symbols), {b.symbol for b in generated},
               {b.symbol for b in imports}, {b.symbol for b in shared}]
     if any(group & other for i, group in enumerate(groups) for other in groups[:i]):
         raise ValueError("conflicting function/object/generated/import bindings")

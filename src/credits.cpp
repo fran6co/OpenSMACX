@@ -123,7 +123,7 @@ void Credits::exec() {
 
   time_.set_modal();
   time_.start(credits_timer_tick, reinterpret_cast<int>(this), 30, 5);
-  if ((GamePreferences & 0x800) != 0) {
+  if ((GameDataStateStorage.fields_.game_preferences_ & 0x800) != 0) {
     g_CREDITS_WAVE.play();
   }
   show(0);

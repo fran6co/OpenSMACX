@@ -671,7 +671,7 @@ void FameWin::demote(int rank) {
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/0044a660.cpp", "Pinned original owner review: original clip resets and absent-record branches, CharUpperA import, difficulty-label capitalization and exact demote tail copying."], "reason": "Recover FameWin owner behavior through existing GraphicWin/Buffer bases, owned buttons and sprites, and typed HallOfFame/Player records; retain historical seed identity and extents without a measurement claim."}
 // TRIED: MISMATCH #14, register-allocation-level divergence in the compute_score call setup; full body (score/rank tables, demote chain, 3 tie-break loops, name copies, pcx message) transcribed from the disassembly with byte-offset field access.
 void FameWin::try_to_add_me() {
-  if ((GamePreferences & 0x20) != 0) return;
+  if ((GameDataStateStorage.fields_.game_preferences_ & 0x20) != 0) return;
 
   const int player_id = ConsoleGlobal.faction_id_;
   factionID_ = static_cast<uint32_t>(player_id);
@@ -701,7 +701,7 @@ void FameWin::try_to_add_me() {
   record.leader_two = player_data.energy_reserves;
   record.award_flags = 0;
   record.present = 1;
-  record.year = game_year(TurnCurrentNum);
+  record.year = game_year(GameDataStateStorage.fields_.turn_current_num_);
   record.field_1C = player_data.score_items_[3] + player_data.score_items_[2];
   record.field_14 = player_data.score_items_[4];
   record.field_18 = player_data.score_items_[0];
@@ -720,16 +720,16 @@ void FameWin::try_to_add_me() {
           sizeof(record.faction_noun));
 
   record.field_20 = static_cast<uint8_t>(player_data.diff_level);
-  if ((GameRules & 0x400) != 0) record.present |= 2;
-  if ((GamePreferences & 0x2000) != 0) {
+  if ((GameDataStateStorage.fields_.game_rules_ & 0x400) != 0) record.present |= 2;
+  if ((GameDataStateStorage.fields_.game_preferences_ & 0x2000) != 0) {
     record.present |= 8;
-  } else if ((GamePreferences & 0x400000) != 0) {
+  } else if ((GameDataStateStorage.fields_.game_preferences_ & 0x400000) != 0) {
     record.present |= 0x10;
-  } else if ((GamePreferences & 0x200000) != 0) {
+  } else if ((GameDataStateStorage.fields_.game_preferences_ & 0x200000) != 0) {
     record.present |= 0x20;
   } else if (player_data.unk_109 != 0) {
     record.present |= 4;
-  } else if ((GamePreferences & 0x10) != 0) {
+  } else if ((GameDataStateStorage.fields_.game_preferences_ & 0x10) != 0) {
     record.present |= 0x40;
   }
 

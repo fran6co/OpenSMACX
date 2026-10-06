@@ -733,7 +733,7 @@ MEASURED inline int __cdecl bonus_at(int x, int y, int UNUSED(unk_val)) {
     int alt = alt_at(x, y);
     BOOL has_rsc_bonus = bit & BIT_RSC_BONUS;
     if (!has_rsc_bonus && (!MapRandSeed
-        || (alt >= ALT_SHORE_LINE && !(GameRules & RULES_NO_UNITY_SCATTERING)))) {
+        || (alt >= ALT_SHORE_LINE && !(GameDataStateStorage.fields_.game_rules_ & RULES_NO_UNITY_SCATTERING)))) {
         return 0;
     }
     uint32_t avg = (x + y) >> 1;

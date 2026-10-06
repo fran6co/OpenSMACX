@@ -494,8 +494,8 @@ void ReportWin::draw_labs() {
     // energy_compute has run. Keep this read here: that call updates the live
     // accounting used by the research header below.
     const int current_tech_rate = datalink ? 0 : tech_rate(faction);
-    const bool hide_research = !datalink && (GameState & 0x80) == 0
-        && (GameRules & RULES_BLIND_RESEARCH) != 0;
+    const bool hide_research = !datalink && (GameDataStateStorage.fields_.game_state_ & 0x80) == 0
+        && (GameDataStateStorage.fields_.game_rules_ & RULES_BLIND_RESEARCH) != 0;
     int research_header_end_x = host_area.left + 0x49;
     int research = -1;
     if (!datalink) {
@@ -657,7 +657,7 @@ void ReportWin::draw_labs() {
                 / EnergyLabsTotal;
         }
         parse_num(0, static_cast<int>(game_year(
-            TurnCurrentNum + turns_to_discovery)));
+            GameDataStateStorage.fields_.turn_current_num_ + turns_to_discovery)));
         parse_it(ScriptPopupFile, "NEXTDISCOV");
         canvas.write_l(StringTemp, next_caption_x, progress_y,
             static_cast<int>(strlen(StringTemp)));
@@ -1210,7 +1210,7 @@ void ReportWin::draw_projects() {
         if (base_project(project) != SP_Unbuilt)
             ++entry_count;
     }
-    for (int base_id = 0; base_id < BaseCurrentCount; ++base_id)
+    for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id)
         if (Bases[base_id].queue_production_id[0] <= -FacilitySPStart)
             ++entry_count;
     if (!field_C0F8_) {
@@ -1240,7 +1240,7 @@ void ReportWin::draw_projects() {
             int base_id = owner_base;
             int faction = -1;
             if (mode < 2) {
-                for (int candidate = 0; candidate < BaseCurrentCount; ++candidate) {
+                for (int candidate = 0; candidate < GameDataStateStorage.fields_.base_current_count_; ++candidate) {
                     const Base &base = Bases[candidate];
                     const bool same_faction = base.faction_id_current == viewer;
                     if ((mode == 0) != same_faction) continue;
@@ -1519,7 +1519,7 @@ void ReportWin::draw_energy() {
     // participant mask and PlayerData's typed bilateral treaty/loan arrays.
     // It keeps the original asymmetric balance/payment choices for outgoing
     // versus incoming loans.
-    const unsigned char live_factions = static_cast<unsigned char>(LockEnableMask >> 8);
+    const unsigned char live_factions = static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8);
     for (int other = 1; other < MaxPlayerNum; ++other) {
         if (other == viewer) continue;
         if (((live_factions >> (other & 31)) & 1) == 0
@@ -1592,7 +1592,7 @@ void ReportWin::draw_energy() {
 
     if (field_59AC_ == -1) {
         field_59B0_ = 0;
-        for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+        for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
             if (Bases[base_id].faction_id_current == viewer) {
                 field_59B0_ = 1;
                 field_59AC_ = base_id;
@@ -1635,7 +1635,7 @@ void ReportWin::draw_energy() {
         canvas->write_cent_l(StringTemp, &heading, strlen(StringTemp));
 
         int maintenance_total = 0;
-        for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+        for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
             if (facility >= 0x41
                 || Bases[base_id].faction_id_current != viewer) continue;
             int byte_offset;
@@ -1648,7 +1648,7 @@ void ReportWin::draw_energy() {
             say_base(StringTemp, base_id);
             strcat(StringTemp, "|");
             const int maintenance = fac_maint(facility, viewer);
-            const int project_base = SecretProject.planetary_energy_grid();
+            const int project_base = GameDataStateStorage.fields_.secret_project_.planetary_energy_grid();
             const bool halved = project_base >= 0
                 && Bases[project_base].faction_id_current == viewer;
             maintenance_total += maintenance;
@@ -1665,7 +1665,7 @@ void ReportWin::draw_energy() {
         strcat(StringTemp, label_get(0xA9C / 4));
         strcat(StringTemp, ": ");
         strcat(StringTemp, "|");
-        const int project_base = SecretProject.planetary_energy_grid();
+        const int project_base = GameDataStateStorage.fields_.secret_project_.planetary_energy_grid();
         const bool halved = project_base >= 0
             && Bases[project_base].faction_id_current == viewer;
         if (halved) {
@@ -1701,7 +1701,7 @@ void ReportWin::draw_energy() {
             say_facility(StringTemp, facility, 0);
             strcat(StringTemp, "|");
             const int maintenance = fac_maint(facility, viewer);
-            const int project_base = SecretProject.planetary_energy_grid();
+            const int project_base = GameDataStateStorage.fields_.secret_project_.planetary_energy_grid();
             const bool halved = project_base >= 0
                 && Bases[project_base].faction_id_current == viewer;
             maintenance_total += maintenance;
@@ -1718,7 +1718,7 @@ void ReportWin::draw_energy() {
         strcat(StringTemp, label_get(0xA9C / 4));
         strcat(StringTemp, ": ");
         strcat(StringTemp, "|");
-        const int project_base = SecretProject.planetary_energy_grid();
+        const int project_base = GameDataStateStorage.fields_.secret_project_.planetary_energy_grid();
         const bool halved = project_base >= 0
             && Bases[project_base].faction_id_current == viewer;
         if (halved) {
@@ -2488,7 +2488,7 @@ void ReportWin::right_menu(int base_id, int x, int y) {
     menu.add_item(8, label_get(0xBFC / 4));
     menu.add_item(9, label_get(0xA54 / 4));
     menu.show(x, y, pop_expire);
-    if (GameState & 0x800) return;
+    if (GameDataStateStorage.fields_.game_state_ & 0x800) return;
     const int selected = menu.get_selected();
     // The original performs only the signed upper-bound check here.
     const int action = selected < 64 ? menu.item_id(selected) : -1;
@@ -2544,7 +2544,7 @@ void ReportWin::on_right_click(int x, int y) {
         base_compute(1);
         NetDaemonNet.unlock_base(BaseIDCurrentSelected);
     } else if (ReportIfGlobal.field_8_ == 6
-        && (GameState & 0x40) != 0 && (GameState & 0x80) != 0) {
+        && (GameDataStateStorage.fields_.game_state_ & 0x40) != 0 && (GameDataStateStorage.fields_.game_state_ & 0x80) != 0) {
         sat_edit(ReportIfGlobal.report_faction_id_, payload, spot_id);
         redraw();
         return;
@@ -2679,13 +2679,13 @@ void ReportWin::on_left_click(int x, int y) {
     if (page == 2) {
         if (selected != 0x29A) return;
         const int tech = PlayersData[ReportIfGlobal.report_faction_id_].tech_id_researching;
-        if (tech > -1 && ((GameState & 0x80) != 0 || (GameRules & 0x200) == 0)) {
+        if (tech > -1 && ((GameDataStateStorage.fields_.game_state_ & 0x80) != 0 || (GameDataStateStorage.fields_.game_rules_ & 0x200) == 0)) {
             field_FAB8_ = field_59AC_ = tech;
             reset(); draw_labs(); soft_update();
             ReportIfGlobal.reset(); ReportIfGlobal.draw_labs();
             MainInterfaceGlobal.soft_update();
         }
-        if ((GameRules & 0x200) == 0) ConsoleGlobal.set_tech(ConsoleGlobal.faction_id_);
+        if ((GameDataStateStorage.fields_.game_rules_ & 0x200) == 0) ConsoleGlobal.set_tech(ConsoleGlobal.faction_id_);
         else ConsoleGlobal.set_ai(ConsoleGlobal.faction_id_);
         reset(); draw_labs(); soft_update();
         ReportIfGlobal.reset(); ReportIfGlobal.draw_labs();
@@ -2915,7 +2915,7 @@ void ReportWin::draw_intel() {
     rect1_.top = body.top + 4;
     rect1_.right = body.right - body.left - 8;
     rect1_.bottom = rect1_.right;
-    const bool informed = (GameState & 0x80) || spying(subject) ||
+    const bool informed = (GameDataStateStorage.fields_.game_state_ & 0x80) || spying(subject) ||
         (PlayersData[viewer].diplo_treaties[subject] & 1);
     Sprite &portrait = FactionsArt[subject].council_big;
     portrait.draw(&canvas, portrait.transparent_index(), rect1_.left, rect1_.top);
@@ -2977,7 +2977,7 @@ void ReportWin::draw_intel() {
         rect1_.top += field_E268_;
     }
     int headquarters = -1;
-    for (int base = 0; base < BaseCurrentCount; ++base) {
+    for (int base = 0; base < GameDataStateStorage.fields_.base_current_count_; ++base) {
         if (Bases[base].faction_id_current == subject && has_fac(FAC_HEADQUARTERS, base, 0)) {
             headquarters = base;
             break;
@@ -2994,7 +2994,7 @@ void ReportWin::draw_intel() {
         report_topic_line(canvas, rect1_, text_x);
         rect1_.top += field_E268_;
     }
-    if ((GameState & 0x80) || !(GameRules & 0x200)) {
+    if ((GameDataStateStorage.fields_.game_state_ & 0x80) || !(GameDataStateStorage.fields_.game_rules_ & 0x200)) {
         StringTemp[0] = 0;
         strcat(StringTemp, "[");
         strcat(StringTemp, label_get(0x254 / 4));
@@ -3091,7 +3091,7 @@ void ReportWin::draw_score() {
         StringTemp[0] = 0;
         if (item == 6) {
             const int own = num_objectives(faction, 0);
-            const int total = num_objectives(faction, GameRules & 0x1000);
+            const int total = num_objectives(faction, GameDataStateStorage.fields_.game_rules_ & 0x1000);
             report_topic_number(own);
             strcat(StringTemp, " ");
             if (total > own) {
@@ -3108,10 +3108,10 @@ void ReportWin::draw_score() {
             }
             strcat(StringTemp, TextBufferGetPtr);
         } else if (item == 7) {
-            if (GameState & 0x200000) strcat(StringTemp, label_get(0xE70 / 4));
-            else if (GameState & 0x400000) strcat(StringTemp, label_get(0xE88 / 4));
+            if (GameDataStateStorage.fields_.game_state_ & 0x200000) strcat(StringTemp, label_get(0xE70 / 4));
+            else if (GameDataStateStorage.fields_.game_state_ & 0x400000) strcat(StringTemp, label_get(0xE88 / 4));
             else if (PlayersData[faction].flags & 0x100000) strcat(StringTemp, label_get(0x1198 / 4));
-            else if (!(GameState & 0x2000)) strcat(StringTemp, label_get(0xE10 / 4));
+            else if (!(GameDataStateStorage.fields_.game_state_ & 0x2000)) strcat(StringTemp, label_get(0xE10 / 4));
             else strcat(StringTemp, TextBufferGetPtr);
         } else strcat(StringTemp, TextBufferGetPtr);
         report_topic_line(canvas, rect1_, rect1_.left);
@@ -3137,7 +3137,7 @@ void ReportWin::draw_score() {
                              rect1_.top, strlen(StringTemp));
         rect1_.top += field_E268_;
     }
-    if ((GameRules & 0x400) && !(GameState & 0x20) && PlayersData[faction].unk_109 > 0) {
+    if ((GameDataStateStorage.fields_.game_rules_ & 0x400) && !(GameDataStateStorage.fields_.game_state_ & 0x20) && PlayersData[faction].unk_109 > 0) {
         rect1_.top += field_E268_;
         StringTemp[0] = 0;
         strcat(StringTemp, label_get(0x1044 / 4));
@@ -3161,8 +3161,8 @@ void ReportWin::draw_score() {
     canvas.write_right_l(StringTemp, rect1_.left + rect1_.right,
                          rect1_.top, strlen(StringTemp));
     rect1_.top += field_E268_ * 2;
-    if (GameState & 1) {
-        if (GameState & 0x80000) {
+    if (GameDataStateStorage.fields_.game_state_ & 1) {
+        if (GameDataStateStorage.fields_.game_state_ & 0x80000) {
             StringTemp[0] = 0;
             if (PlayersData[faction].score_items_[7]) strcat(StringTemp, label_get(0xE10 / 4));
             else {
@@ -3185,15 +3185,15 @@ void ReportWin::draw_score() {
                 report_topic_line(canvas, rect1_, rect1_.left);
                 rect1_.top += field_E268_ * 2;
             }
-        } else if (!(GameState & 0x602000) && ObjectiveReqVictory <= 9000) {
+        } else if (!(GameDataStateStorage.fields_.game_state_ & 0x602000) && ScenarioSave.objective_req_victory <= 9000) {
             StringTemp[0] = 0;
             // Original reuses the faction byte-index local as the outcome.
             // The unmet nonzero objective target with item 8 nonzero leaves it
             // intact; preserve that malformed DRAWSTRING selection path.
             int outcome = faction * sizeof(PlayerData);
             int most = 0;
-            if (ObjectiveReqVictory == 0) {
-                const int objectives = num_objectives(faction, GameRules & 0x1000);
+            if (ScenarioSave.objective_req_victory == 0) {
+                const int objectives = num_objectives(faction, GameDataStateStorage.fields_.game_rules_ & 0x1000);
                 int leader, pacts;
                 most = most_objectives(&leader, &pacts);
                 if (objectives >= (most < 0 ? 0 : most)) {
@@ -3211,7 +3211,7 @@ void ReportWin::draw_score() {
                         strcat(StringTemp, ")");
                     }
                 }
-            } else if (num_objectives(faction, GameRules & 0x1000) >= ObjectiveReqVictory) {
+            } else if (num_objectives(faction, GameDataStateStorage.fields_.game_rules_ & 0x1000) >= ScenarioSave.objective_req_victory) {
                 strcat(StringTemp, label_get(0xE10 / 4)); outcome = 1;
             } else if (PlayersData[faction].score_items_[8] == 0) {
                 outcome = 0;
@@ -3223,9 +3223,9 @@ void ReportWin::draw_score() {
             rect1_.top += field_E268_ * 2;
             for (int other = 1; other < 8; ++other) {
                 if (!(factions_status_byte(1) & (1 << other)) || other == faction) continue;
-                const int target = ObjectiveReqVictory ? ObjectiveReqVictory : most;
-                if (num_objectives(other, GameRules & 0x1000) < target) continue;
-                if (!(factions_status_byte(0) & (1 << other)) && (GameRules & 0x80000)) continue;
+                const int target = ScenarioSave.objective_req_victory ? ScenarioSave.objective_req_victory : most;
+                if (num_objectives(other, GameDataStateStorage.fields_.game_rules_ & 0x1000) < target) continue;
+                if (!(factions_status_byte(0) & (1 << other)) && (GameDataStateStorage.fields_.game_rules_ & 0x80000)) continue;
                 const char *section = outcome > 1 ? "DRAWSTRING" : outcome ? "WINSTRING2" : "WINSTRING";
                 if (X_text_open(reinterpret_cast<char *>(*ClimatePopupTitle), section)) break;
                 text_get();
@@ -3238,10 +3238,10 @@ void ReportWin::draw_score() {
                 parse_says(2, Players[other].noun_faction, -1, -1);
                 StringTemp[0] = 0;
                 report_topic_number(num_objectives(other, 0));
-                const int all = num_objectives(other, GameRules & 0x1000);
+                const int all = num_objectives(other, GameDataStateStorage.fields_.game_rules_ & 0x1000);
                 if (all > num_objectives(other, 0)) {
                     strcat(StringTemp, "(");
-                    report_topic_number(num_objectives(other, GameRules & 0x1000));
+                    report_topic_number(num_objectives(other, GameDataStateStorage.fields_.game_rules_ & 0x1000));
                     strcat(StringTemp, ")");
                 }
                 parse_says(3, StringTemp, -1, -1);
@@ -3252,7 +3252,7 @@ void ReportWin::draw_score() {
             }
         }
     }
-    if (GameState & 0x20) {
+    if (GameDataStateStorage.fields_.game_state_ & 0x20) {
         canvas.set_text_color(0xF9, -1, 1, 1);
         canvas.set_font(ReportIfGlobal.field_1E1B8_, 0, 0, 0);
         StringTemp[0] = 0;
@@ -3333,7 +3333,7 @@ void ReportWin::draw_ops() {
     // Original 49DF66/49E0CB assign this only for facilities; 49E0C4 reads
     // it on the unit path too. Preserve the stale/uninitialized value.
     int facility_scratch;
-    for (int list_index = 0; list_index < BaseCurrentCount; ++list_index) {
+    for (int list_index = 0; list_index < GameDataStateStorage.fields_.base_current_count_; ++list_index) {
         const int base_id = ReportIfGlobal.sort_entries_[list_index].base_id;
         Base &base = Bases[base_id];
         if (base.faction_id_current != faction) continue;
@@ -3388,7 +3388,7 @@ void ReportWin::draw_ops() {
         CharUpperA(StringTemp);
         canvas.write_l(StringTemp, rect1_.left, text.top + 5, strlen(StringTemp));
         StringTemp[0] = 0;
-        if (is_objective(base_id) && !(GameRules & 0x20000000)) {
+        if (is_objective(base_id) && !(GameDataStateStorage.fields_.game_rules_ & 0x20000000)) {
             // The original indexes colour by list position, not sorted base ID.
             canvas.set_text_color(InfoFactionTextColors[Bases[list_index].faction_id_current], -1, 1, 1);
             strcat(StringTemp, label_get(0xE08 / 4));
@@ -3591,7 +3591,7 @@ void ReportWin::draw_sat() {
                     canvas.wrap_cent(StringTemp, &report_work_rect_);
                 } else {
                     int elevators = 0;
-                    for (int base = 0; base < BaseCurrentCount; ++base)
+                    for (int base = 0; base < GameDataStateStorage.fields_.base_current_count_; ++base)
                         if (Bases[base].faction_id_current == other && has_fac(41, base, 0)) ++elevators;
                     const bool nonzero = kind == 4 ? elevators != 0 : report_sat_count(PlayersData[other], kind) != 0;
                     const int colors[5] = {0x98, 0xDF, 0x62, 0xF9, 0xFF};
@@ -3688,7 +3688,7 @@ void __cdecl sat_attack(int attacker, int target, int kind) {
         return;
     }
     int targets = 0;
-    for (int base = 0; base < BaseCurrentCount; ++base) {
+    for (int base = 0; base < GameDataStateStorage.fields_.base_current_count_; ++base) {
         if (Bases[base].faction_id_current == target && has_fac_built(41, base)) ++targets;
     }
     if (kind == 4) {
@@ -3711,7 +3711,7 @@ void __cdecl sat_attack(int attacker, int target, int kind) {
                 if (Buffer::get_pcx_dimensions("satbat_sm.pcx", &width, &height) == 0
                     && popup.owned_picture().init("satbat_sm.pcx", width, height) == 0)
                     popup.select_owned_picture();
-                for (int item_base = 0; item_base < BaseCurrentCount; ++item_base) {
+                for (int item_base = 0; item_base < GameDataStateStorage.fields_.base_current_count_; ++item_base) {
                     if (Bases[item_base].faction_id_current == target && has_fac_built(41, item_base))
                         popup.dialogs().item(Bases[item_base].name_string, item_base);
                 }

@@ -18,6 +18,8 @@
 #pragma once
 
 #include "console.h"  // not_my_turn reads the current Console faction.
+#include <stdio.h>
+#include "base.h"  // supplies the contiguous game_data state owner
 
 class MultiWin;
 class MainInterface;
@@ -29,6 +31,9 @@ class Datalink;
 class Net;
 class Win;
 class GraphicWin;
+
+int __cdecl game_data_transfer_block(FILE *file, void *buffer, unsigned int size);
+int __cdecl game_data_plain_transfer(FILE *file, void *buffer, unsigned int byte_count, int write_mode);
 
  /*
   * Game related objects, variables and functions.
@@ -117,7 +122,6 @@ enum GameDifficultyLevel {
 // initial value is zero either way and the pointer form only bought an
 // extra load. WinMain's `mov dword ptr [0x9a6488], 1` is a direct store.
 extern BOOL ExpansionEnabled;
-extern uint32_t GamePreferences;
 // Founding476B70 establishes record0 at94CA08; secrets476DA0 uses record2
 // at94CA78. Reset476B30 clears each achieved word (+10), not each year.
 // Word meanings depend on the monument type: +4/+8 are repeat years for
@@ -192,31 +196,29 @@ void __cdecl clear_all_player_messages();
 void __cdecl clear_player_messages(int faction);
 int __cdecl display_player_messages(int faction);
 
-extern uint32_t GameMorePreferences;
-extern uint32_t GameWarnings; // used for setting pop notifications
-extern uint32_t GameRules; // bitfield
-extern uint32_t GameInterludeFlags;  // 0x009A64A4
 // Exact retained wire intervals; opaque names assert no gameplay semantics.
-extern uint8_t GameWireOpaque_9A64A0[4];
-extern uint8_t GameWireOpaque_9A64A8[4];
-extern char LegacyGameSaveName[256];
-extern uint8_t GameWireOpaque_9A67C9[3];
-extern uint32_t GameState; // bitfield
-extern int DiffLevelCurrent;
-extern int TurnCurrentNum;
-extern int GameSetupResetWord;
-extern int TurnControlDurationMilliseconds;
+// One native game_data owner at 0x0094B4C0; the 0x98-byte access does not
+// establish the original enclosing allocation bound. Former globals remain
+// navigable here with their old offsets and source-owner provenance.
+struct ScenarioSaveState {
+    int objective_req_victory;  // former ObjectiveReqVictory global, src/game.cpp, 0x0094B4C0; no separate object marker
+    uint32_t objectives_sudden_death_victory;  // former ObjectivesSuddenDeathVictory global, src/game.cpp, 0x0094B4C4; no separate object marker
+    uint32_t objective_achieve_points;  // former ObjectiveAchievePts global, src/game.cpp, 0x0094B4C8; no separate object marker
+    uint32_t victory_achieve_bonus_points;  // former VictoryAchieveBonusPts global, src/game.cpp, 0x0094B4CC; no separate object marker
+    uint32_t starting_mission_year;  // former StartingMissionYear global, src/game.cpp, 0x0094B4D0; no separate object marker
+    uint32_t ending_mission_year;  // former EndingMissionYear global, src/game.cpp, 0x0094B4D4; no separate object marker
+    uint8_t wire_opaque_94b4d8[0x80];  // old ?GameWireOpaque_94B4D8@@3PAEA start 0x0094B4D8, former src/game.cpp, parent member +0x18
+};
+extern ScenarioSaveState ScenarioSave;
 // `int`: great_beelzebub compares it with `<= 1000` and the image's
 // branch is `jle`, the signed test.
-extern int ObjectiveReqVictory;
-extern uint32_t ObjectivesSuddenDeathVictory;
-extern uint32_t ObjectiveAchievePts;
-extern uint32_t VictoryAchieveBonusPts;
-extern uint32_t MissionYearCurrent;
-extern uint32_t StartingMissionYear;
-extern uint32_t EndingMissionYear;
+
+
+
+
+
+
 extern uint32_t TectonicDetonationCount[8];  // 0x00946138, logical faction slots
-extern int SunspotDuration;
 extern int IfaceScreenHeight;
 extern int IfaceScreenWidth;
 extern int PopupThemeWindowColor;
@@ -225,10 +227,6 @@ extern int PopupThemeTextShadow;
 extern int PopupThemeSurfaceColor;
 extern int PopupThemeBevelUpper;
 extern int PopupThemeBevelLower;
-extern uint32_t MountPlanetX;
-extern uint32_t MountPlanetY;
-extern int DustCloudDuration;
-extern int SaveDaemonStateWord;
 extern BOOL IsMultiplayerNet;
 extern BOOL IsMultiplayerPBEM;
 
@@ -241,11 +239,8 @@ extern BOOL IsMultiplayerPBEM;
 // slot with a whole `mov dword ptr [0x9a681c], esi` each pass of the main
 // loop, and `& 0x10` on a dword still narrows to the image's
 // `test byte ptr [0x9a681c], 0x10` in not_my_turn.
-extern uint32_t NetTurnFlags;
-extern int NetTurnFaction;
 extern int NextTurnReady;
 extern int NetUpkeepPhase;
-extern int EcologyEventAccumulator;
 
 
 void __cdecl reset_territory();
@@ -272,10 +267,6 @@ extern int GameRestartQueued;  // 0x0093A948
 // ExitTurnLoopAddress; both now reach this global by name.
 extern int ExitTurnLoop;  // 0x009B2068
 extern int EndgameExitReason;
-extern int ClimateRiseStep;
-extern int ClimateRiseLimit;
-extern int ClimateRiseAccum;
-extern int ClimateSeaLevelDelta;
 
 // Shared cover window hidden by go_reset and shown/painted by the main loop.
 extern GraphicWin CoverWindow;  // 0x00937118
@@ -428,16 +419,16 @@ MEASURED inline BOOL __cdecl not_my_turn() {
     if (!IsMultiplayerNet) {
         return false;
     }
-    if (!(NetTurnFlags & 0x10)) {
+    if (!(GameDataStateStorage.fields_.net_turn_flags_ & 0x10)) {
         return false;
     }
     // `cmp ecx, edx` / `setne al`: the result is the inequality itself, not a
     // normalised flag, and the faction identity is what decides it.
-    return NetTurnFaction != ConsoleGlobal.faction_id_;
+    return GameDataStateStorage.fields_.net_turn_faction_ != ConsoleGlobal.faction_id_;
 }
 
 MEASURED inline uint32_t __cdecl game_year(int turn) {
-    return StartingMissionYear + turn;
+    return ScenarioSave.starting_mission_year + turn;
 }
 
 MEASURED inline int __cdecl energy_limit(int) {
@@ -466,7 +457,7 @@ void __cdecl time_warp();
 // it; the definition is here.
 
 // Observed synchronization window; complete historical allocation unknown.
-extern uint8_t GameWireOpaque_94B4D8[0x80];
+
 
 // Existing application GUID storage, shared with AlphaNet setup.
 extern const GUID LobbyAppGuid;
@@ -536,5 +527,14 @@ int __cdecl next_player_turn();
 
 char *__cdecl uppercase_text(char *text, int mode);
 
-struct SaveNameDefaultStorage;
+// Only NUL string starts945D80/84/88 and a9-byte minimum touched window
+// are proved. This provisional view is not an original aggregate-type or
+// full-capacity claim; larger allocation and indirect aliases remain unknown.
+struct SaveNameDefaultStorage {
+    char game_data_migration_default_[1];
+    char unassigned_1_[3];
+    char scenario_equal_default_[1];
+    char unassigned_2_[3];
+    char save_equal_default_[1];
+};
 extern SaveNameDefaultStorage SaveNameDefaultStorageGlobal;

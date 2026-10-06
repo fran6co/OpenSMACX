@@ -963,7 +963,7 @@ Status: Complete
 int PopupWaveLastIndex;  // 0x0074DAA4
 
 void __cdecl popup_wave_callback(BasePopTextBlock *popup, int) {
-    if (!(GamePreferences & 0x400)) {
+    if (!(GameDataStateStorage.fields_.game_preferences_ & 0x400)) {
         return;
     }
     if (!popup) {
@@ -988,7 +988,7 @@ void __cdecl popup_wave_callback(BasePopTextBlock *popup, int) {
         return;
     }
     const int32_t chosen = popup->field_104_;
-    if (GamePreferences & 0x400) {
+    if (GameDataStateStorage.fields_.game_preferences_ & 0x400) {
         if (!g_WAVE_GENERAL.Wave::is_playing() &&
             !(g_CPU_WAVES + PopupWaveLastIndex)->Wave::is_playing()) {
             PopupWaveLastIndex = chosen;
@@ -1502,7 +1502,7 @@ void Popup::hide() {
 //   on the image's.
 
 void __cdecl wave_it(int wave_id) {
-    if (GamePreferences & 0x400) {
+    if (GameDataStateStorage.fields_.game_preferences_ & 0x400) {
         if (!g_WAVE_GENERAL.Wave::is_playing()) {
             if (!(g_CPU_WAVES + PopupWaveLastIndex)->Wave::is_playing()) {
                 PopupWaveLastIndex = wave_id;
@@ -2095,8 +2095,8 @@ void __cdecl POP3(const char *section, const char *unused, int recipient,
     } else if (recipient < 1) {
         for (int faction = 1; faction < 8; ++faction) {
             const unsigned int faction_mask = 1u << faction;
-            const int alive = (LockEnableMask & (faction_mask << 8)) != 0;
-            const int human = (LockEnableMask & faction_mask) != 0;
+            const int alive = (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (faction_mask << 8)) != 0;
+            const int human = (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_mask) != 0;
             if (alive && human && y >= 0 && y < MapLatitudeBounds &&
                 x >= 0 && x < MapLongitudeBounds) {
                 StringList &pending = MessageWinDeferredBaseMessages[faction];
@@ -2215,7 +2215,7 @@ void __cdecl slide_show(GraphicWin *window, int mode) {
     }
 
     if (window != 0) {
-        if ((GamePreferences & PREF_AV_SOUND_EFFECTS) != 0) {
+        if ((GameDataStateStorage.fields_.game_preferences_ & PREF_AV_SOUND_EFFECTS) != 0) {
             g_MAININTERFACE_WAVE.play();
         }
 
@@ -2254,7 +2254,7 @@ void __cdecl slide_show(GraphicWin *window, int mode) {
             - right_outer.width() - 0x20;
 
         int animation_y = area.bottom - frame_count;
-        if ((GamePreferences & PREF_AV_SLIDING_WINDOWS) != 0
+        if ((GameDataStateStorage.fields_.game_preferences_ & PREF_AV_SLIDING_WINDOWS) != 0
             && IsMultiplayerNet == 0) {
             WinFlipClipped = 1;
             for (int frame = 0; frame < frame_divisor; ++frame) {
@@ -2292,7 +2292,7 @@ void __cdecl slide_show(GraphicWin *window, int mode) {
             WinFlipClipped = 0;
         }
 
-        if ((GamePreferences & PREF_AV_SOUND_EFFECTS) != 0) {
+        if ((GameDataStateStorage.fields_.game_preferences_ & PREF_AV_SOUND_EFFECTS) != 0) {
             g_MAININTERFACE_WAVE.fade(0x32);
         }
 
@@ -2383,7 +2383,7 @@ void __cdecl scroll_show(GraphicWin *window, Scroll *scroll) {
     if (PopupScrollVerticalFrameCount > 1) {
         ScreenBuffer.set_clip(&area);
         edge_y -= PopupScrollVerticalFrameCount;
-        if ((GameMorePreferences & MPREF_AV_SLIDING_SCROLLBARS) != 0
+        if ((GameDataStateStorage.fields_.game_more_preferences_ & MPREF_AV_SLIDING_SCROLLBARS) != 0
             && IsMultiplayerNet == 0) {
             WinFlipClipped = 1;
             for (int frame = vertical_step; frame > 0; --frame) {
@@ -2439,7 +2439,7 @@ void __cdecl scroll_show(GraphicWin *window, Scroll *scroll) {
     const int horizontal_frame_count = IsMultiplayerNet != 0 ? 4 : 8;
     PopupScrollHorizontalStep = IsMultiplayerNet != 0 ? 8 : 4;
     int frame_x = area.left + PopupScrollHorizontalStep - 0x20;
-    if ((GamePreferences & PREF_AV_SLIDING_WINDOWS) != 0
+    if ((GameDataStateStorage.fields_.game_preferences_ & PREF_AV_SLIDING_WINDOWS) != 0
         && IsMultiplayerNet == 0) {
         WinFlipClipped = 1;
         for (int frame = horizontal_frame_count; frame > 0; --frame) {
@@ -2535,9 +2535,9 @@ void __cdecl slide_hide(GraphicWin *window, int mode) {
     Buffer screen_restore;        // native EF10, constructed third
 
     if (window != 0 && window->Win::is_visible() != 0
-        && (GamePreferences & PREF_AV_SLIDING_WINDOWS) != 0
+        && (GameDataStateStorage.fields_.game_preferences_ & PREF_AV_SLIDING_WINDOWS) != 0
         && IsMultiplayerNet == 0) {
-        if ((GamePreferences & PREF_AV_SOUND_EFFECTS) != 0)
+        if ((GameDataStateStorage.fields_.game_preferences_ & PREF_AV_SOUND_EFFECTS) != 0)
             g_MAININTERFACE_WAVE.play();
 
         const int frame_edge = WinScreenWidth == 0x320 ? 0x5e : 0xee;
@@ -2627,7 +2627,7 @@ void __cdecl slide_hide(GraphicWin *window, int mode) {
                     break;
             } while (true);
         }
-        if ((GamePreferences & PREF_AV_SOUND_EFFECTS) != 0)
+        if ((GameDataStateStorage.fields_.game_preferences_ & PREF_AV_SOUND_EFFECTS) != 0)
             g_MAININTERFACE_WAVE.fade(0x32);
         ScreenBuffer.set_clip(&WinScreenClipRect);
     }
@@ -2702,7 +2702,7 @@ void __cdecl scroll_hide(GraphicWin *window, Scroll *scroll) {
     int frame_x = area.left - horizontal_step;
     const int horizontal_frames = IsMultiplayerNet != 0 ? 4 : 8;
     ScreenBuffer.set_clip(&area);
-    if ((GameMorePreferences & MPREF_AV_SLIDING_SCROLLBARS) != 0
+    if ((GameDataStateStorage.fields_.game_more_preferences_ & MPREF_AV_SLIDING_SCROLLBARS) != 0
         && IsMultiplayerNet == 0) {
         WinFlipClipped = 1;
         for (int frame = 0; frame < horizontal_frames; ++frame) {
@@ -2736,7 +2736,7 @@ void __cdecl scroll_hide(GraphicWin *window, Scroll *scroll) {
     if (enter_vertical_close) {
         ScreenBuffer.set_clip(&area);
         int edge_y = frame_edge - 0xD;
-        if ((GamePreferences & PREF_AV_SLIDING_WINDOWS) != 0
+        if ((GameDataStateStorage.fields_.game_preferences_ & PREF_AV_SLIDING_WINDOWS) != 0
             && IsMultiplayerNet == 0) {
             WinFlipClipped = 1;
             for (int frame = 0; frame < vertical_iterations; ++frame) {
@@ -3220,10 +3220,10 @@ int __cdecl popb(LPCSTR text_label, int warning_mask, int sound_id,
     const int faction = BaseCurrent->faction_id_current;
     const uint8_t faction_bit = static_cast<uint8_t>(1u << faction);
 
-    if ((static_cast<uint8_t>(LockEnableMask) & faction_bit) == 0) {
+    if ((static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & faction_bit) == 0) {
         return 0;
     }
-    if ((GameState & STATE_UNK_1) != 0 && (GameState & STATE_UNK_8) == 0) {
+    if ((GameDataStateStorage.fields_.game_state_ & STATE_UNK_1) != 0 && (GameDataStateStorage.fields_.game_state_ & STATE_UNK_8) == 0) {
         return 0;
     }
     if (faction != ConsoleGlobal.faction_id_
@@ -3245,13 +3245,13 @@ int __cdecl popb(LPCSTR text_label, int warning_mask, int sound_id,
 
     popup.set_auto_hide_value(0x3EA);
     const bool warning_enabled = warning_mask != 0
-        && (GameWarnings & static_cast<uint32_t>(warning_mask)) != 0
+        && (GameDataStateStorage.fields_.game_warnings_ & static_cast<uint32_t>(warning_mask)) != 0
         && CurrentFactionEnergyReserves == 0;
     if (!warning_enabled) {
         popup.set_auto_hide_value(2);
     } else {
         bool focus_allowed = faction == ConsoleGlobal.faction_id_
-            || (GameState & STATE_OMNISCIENT_VIEW) != 0;
+            || (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) != 0;
         if (!focus_allowed) {
             const Base &selected = Bases[BaseIDCurrentSelected];
             const uint8_t selected_owner = selected.faction_id_current;
@@ -3261,7 +3261,7 @@ int __cdecl popb(LPCSTR text_label, int warning_mask, int sound_id,
                 || (selected.visibility & viewer_bit) != 0;
         }
         if (focus_allowed
-            && (GameMorePreferences & MPREF_ADV_ZOOM_BASE_NO_RECENTER_MAP) == 0) {
+            && (GameDataStateStorage.fields_.game_more_preferences_ & MPREF_ADV_ZOOM_BASE_NO_RECENTER_MAP) == 0) {
             ConsoleGlobal.focus(BaseCurrent->x, BaseCurrent->y, faction);
         }
     }
@@ -3282,7 +3282,7 @@ int __cdecl popb(LPCSTR text_label, int warning_mask, int sound_id,
         popup.dialogs().item(label_get(0xB0 / 4), 0);
         popup.dialogs().item(label_get(0xB4 / 4), 1);
 
-        if ((GameState & STATE_UNK_8) != 0 && BaseCurrent->population_size > 1) {
+        if ((GameDataStateStorage.fields_.game_state_ & STATE_UNK_8) != 0 && BaseCurrent->population_size > 1) {
             int facility_offset;
             int facility_mask;
             bitmask_call(0x23, &facility_offset, &facility_mask);
@@ -3313,8 +3313,8 @@ int __cdecl popb(LPCSTR text_label, int warning_mask, int sound_id,
 
     // Native tests BasePop::field_3100_, independently of exec's return.
     if (popup.input_poll_state() != 0) {
-        GameWarnings &= ~static_cast<uint32_t>(warning_mask);
-        AlphaIniPrefs.announce = GameWarnings;
+        GameDataStateStorage.fields_.game_warnings_ &= ~static_cast<uint32_t>(warning_mask);
+        AlphaIniPrefs.announce = GameDataStateStorage.fields_.game_warnings_;
         prefs_save(0);
     }
 

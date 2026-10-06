@@ -27,7 +27,7 @@ void __cdecl enemy_strategy(int faction_id) {
     faction_data.unk_71 = 0;
     faction_data.unk_72 = 0;
 
-    const int turn_faction = TurnCurrentNum + faction_id;
+    const int turn_faction = GameDataStateStorage.fields_.turn_current_num_ + faction_id;
     const uint16_t retained_region_planning_bits =
         ((turn_faction & 0x0F) != 0) ? 0x0008 : 0;
     for (int reset_region = 0; reset_region < 128; ++reset_region) {
@@ -47,7 +47,7 @@ void __cdecl enemy_strategy(int faction_id) {
     // opportunities for unclaimed or fungus locations and an attack goal for
     // visible bases selected by the current diplomacy predicates. The
     // 0x561459 edge is the distinct own-base update path.
-    for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+    for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
         Base &base = Bases[base_id];
         const int x = base.x;
         const int y = base.y;
@@ -93,7 +93,7 @@ void __cdecl enemy_strategy(int faction_id) {
                 if ((faction_data.flags & 0x00200000u) != 0) {
                     attack_priority *= 2;
                 }
-                if (TurnCurrentNum < PlayersData[owner].corner_market_turn) {
+                if (GameDataStateStorage.fields_.turn_current_num_ < PlayersData[owner].corner_market_turn) {
                     attack_priority <<= 3;
                 }
             }
@@ -150,15 +150,15 @@ void __cdecl enemy_strategy(int faction_id) {
         if (is_coast(x, y, 0)) {
             faction_data.unk_77[tile_region] |= 0x0080;
         }
-        if (((TurnCurrentNum + base_id) & 3) == 0) {
+        if (((GameDataStateStorage.fields_.turn_current_num_ + base_id) & 3) == 0) {
             base.event &= 0xFFFFFF00u;
         }
     }
 
     // 0x005615D9..0x00561622: reset flagged bases for factions whose turn is
     // not locked to a human, preserving the native sentinel test in queue[0].
-    if ((LockEnableMask & faction_bit) == 0) {
-        for (int reset_base_id = 0; reset_base_id < BaseCurrentCount;
+    if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_bit) == 0) {
+        for (int reset_base_id = 0; reset_base_id < GameDataStateStorage.fields_.base_current_count_;
              ++reset_base_id) {
             Base &reset_base = Bases[reset_base_id];
             if (reset_base.faction_id_current == faction_id
@@ -184,7 +184,7 @@ void __cdecl enemy_strategy(int faction_id) {
     int maximum_carrier_cargo = 2;
     int invalid_target_vehicle_count = 0;
 
-    for (int vehicle_id = VehCurrentCount - 1; vehicle_id >= 0; --vehicle_id) {
+    for (int vehicle_id = GameDataStateStorage.fields_.vehicle_current_count_ - 1; vehicle_id >= 0; --vehicle_id) {
         Veh &vehicle = Vehs[vehicle_id];
         const int prototype_id = vehicle.proto_id;
         const VehPrototype &prototype = VehPrototypes[prototype_id];
@@ -252,7 +252,7 @@ void __cdecl enemy_strategy(int faction_id) {
         }
 
         int upgrade_result = 1;
-        if ((LockEnableMask & faction_bit) == 0
+        if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_bit) == 0
             && (prototype.obsolete_factions & static_cast<int8_t>(faction_bit)) != 0) {
             // A successful upgrade skips only the obsolete-design subpath;
             // the native body still processes this vehicle's current state.
@@ -279,9 +279,9 @@ void __cdecl enemy_strategy(int faction_id) {
         const bool is_ocean_tile = (current_tile->climate & 0xE0u) < 0x60u;
 
         if (upgrade_result == 0
-            && (LockEnableMask & faction_bit) == 0
-            && ((TurnCurrentNum + vehicle_id) & 3) != 0
-            && TurnCurrentNum >= 0x1A
+            && (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_bit) == 0
+            && ((GameDataStateStorage.fields_.turn_current_num_ + vehicle_id) & 3) != 0
+            && GameDataStateStorage.fields_.turn_current_num_ >= 0x1A
             && current_triad == TRIAD_LAND
             && (current_vehicle.move_to_ai_type != 'F'
                 && current_vehicle.move_to_ai_type != '1'
@@ -338,7 +338,7 @@ void __cdecl enemy_strategy(int faction_id) {
         // unit and the current tile's native shore-line predicate is ocean.
         // The later ocean/land branches also run when the lock mask bypasses
         // this order-byte update.
-        if ((LockEnableMask & faction_bit) == 0 && current_vehicle.order == 1) {
+        if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_bit) == 0 && current_vehicle.order == 1) {
             if (current_triad != TRIAD_LAND || !is_ocean_tile) {
                 current_vehicle.order = 0;
             }
@@ -418,11 +418,11 @@ void __cdecl enemy_strategy(int faction_id) {
                     current_triad == TRIAD_SEA ? 0x00080000u : 0x00000020u;
                 if (home_base_id >= 0
                     && (Bases[home_base_id].state & relocation_base_mask) != 0
-                    && (LockEnableMask & faction_bit) == 0) {
+                    && (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_bit) == 0) {
                     int nearest_base_id = -1;
                     int nearest_distance = 9999;
                     for (int candidate_id = 0;
-                         candidate_id < BaseCurrentCount; ++candidate_id) {
+                         candidate_id < GameDataStateStorage.fields_.base_current_count_; ++candidate_id) {
                         if (candidate_id == home_base_id) continue;
                         const Base &candidate = Bases[candidate_id];
                         if (map_loc(candidate.x, candidate.y)->region != current_region
@@ -570,7 +570,7 @@ void __cdecl enemy_strategy(int faction_id) {
     faction_data.unk_64 += strongest_unpacted_enemy_navy * 0x800;
 
     if (carrier_count >= 2) {
-        for (int vehicle_id = 0; vehicle_id < VehCurrentCount; ++vehicle_id) {
+        for (int vehicle_id = 0; vehicle_id < GameDataStateStorage.fields_.vehicle_current_count_; ++vehicle_id) {
             Veh &vehicle = Vehs[vehicle_id];
             if (vehicle.faction_id != faction_id) continue;
             const VehPrototype &prototype = VehPrototypes[vehicle.proto_id];
@@ -584,7 +584,7 @@ void __cdecl enemy_strategy(int faction_id) {
         }
     }
 
-    for (int coastal_vehicle_id = 0; coastal_vehicle_id < VehCurrentCount; ++coastal_vehicle_id) {
+    for (int coastal_vehicle_id = 0; coastal_vehicle_id < GameDataStateStorage.fields_.vehicle_current_count_; ++coastal_vehicle_id) {
         Veh &vehicle = Vehs[coastal_vehicle_id];
         if (vehicle.faction_id != faction_id
             || VehPrototypes[vehicle.proto_id].plan != 9) continue;
@@ -606,7 +606,7 @@ void __cdecl enemy_strategy(int faction_id) {
     // the stack actually at that tile, and this faction's target-region
     // counters; it is separate from base_id_atk_target.
     const uint32_t human_turn_bit =
-        static_cast<uint32_t>(LockEnableMask) & 0xFFu & faction_bit;
+        static_cast<uint32_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & 0xFFu & faction_bit;
     bool reset_target = false;
     int old_attack_target_region = 0;
     if (faction_data.y_target >= 0) {
@@ -667,10 +667,10 @@ void __cdecl enemy_strategy(int faction_id) {
             const uint8_t target_region_plan =
                 faction_data.region_base_plan[target_region];
             if (target_region_plan <= 2) {
-                GameState &= ~0x00000800u;
+                GameDataStateStorage.fields_.game_state_ &= ~0x00000800u;
             } else if (target_region_plan != 8
                        && is_coast(target_x, target_y, 0)) {
-                GameState |= 0x00000800u;
+                GameDataStateStorage.fields_.game_state_ |= 0x00000800u;
             } else {
                 reset_target = true;
             }
@@ -680,7 +680,7 @@ void __cdecl enemy_strategy(int faction_id) {
     }
 
     if (reset_target) {
-        for (int vehicle_id = 0; vehicle_id < VehCurrentCount; ++vehicle_id) {
+        for (int vehicle_id = 0; vehicle_id < GameDataStateStorage.fields_.vehicle_current_count_; ++vehicle_id) {
             Veh &vehicle = Vehs[vehicle_id];
             if (vehicle.faction_id == faction_id
                 && (vehicle.state & 0x00040000u) != 0) {
@@ -752,15 +752,15 @@ void __cdecl enemy_strategy(int faction_id) {
 
             bool mode0_or_no_bases = false;
             bool either_mode_or_no_bases = false;
-            if (TurnCurrentNum > 1) {
+            if (GameDataStateStorage.fields_.turn_current_num_ > 1) {
                 const int continent_size = Continents[region].tile_count;
                 const bool large_continent = continent_size >= 500;
                 const bool large_combined_base_count =
                     static_cast<int>(other_bases) * own_bases >= 50;
                 if (large_continent || large_combined_base_count) {
                     const int cycle = continent_size >= 1000
-                        ? (TurnCurrentNum + other * 2) & 0x0F
-                        : (TurnCurrentNum + other) & 7;
+                        ? (GameDataStateStorage.fields_.turn_current_num_ + other * 2) & 0x0F
+                        : (GameDataStateStorage.fields_.turn_current_num_ + other) & 7;
                     if (cycle != 0 && other_bases != 0
                         && other_data.region_base_plan[region] > 2) {
                         mode0_or_no_bases = false;
@@ -845,9 +845,9 @@ void __cdecl enemy_strategy(int faction_id) {
             const uint8_t other_lock_bit = static_cast<uint8_t>(
                 1u << (static_cast<uint32_t>(other) & 7u));
             if ((treaty & 0x0C10u) != 0
-                && (LockEnableMask & other_lock_bit) != 0
+                && (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & other_lock_bit) != 0
                 && (mode0_or_no_bases || either_mode_or_no_bases)) {
-                for (int vehicle_id = 0; vehicle_id < VehCurrentCount;
+                for (int vehicle_id = 0; vehicle_id < GameDataStateStorage.fields_.vehicle_current_count_;
                      ++vehicle_id) {
                     const Veh &vehicle = Vehs[vehicle_id];
                     if (vehicle.faction_id == other
@@ -869,12 +869,12 @@ void __cdecl enemy_strategy(int faction_id) {
         // faction ranking, this region's unk_82 byte, current globals, and
         // the self-inclusive faction count. These are source-owned fields;
         // arithmetic order mirrors the native integer instructions.
-        const int regional_threshold = great_satan(FactionRankings[7], 0)
+        const int regional_threshold = great_satan(GameDataStateStorage.fields_.faction_rankings_[7], 0)
             + (faction_data.unk_82[region] < 4 ? 1 : 0)
-            - static_cast<int>((GameState >> 7) & 2u)
-            + (DiffLevelCurrent > 4 ? 1 : 0)
+            - static_cast<int>((GameDataStateStorage.fields_.game_state_ >> 7) & 2u)
+            + (GameDataStateStorage.fields_.diff_level_current_ > 4 ? 1 : 0)
             + (MapArea > 3200 ? 1 : 0)
-            + (TurnCurrentNum > 75 ? 1 : 0)
+            + (GameDataStateStorage.fields_.turn_current_num_ > 75 ? 1 : 0)
             + 3 + factions_with_bases;
 
         bool priority_region = false;
@@ -917,7 +917,7 @@ void __cdecl enemy_strategy(int faction_id) {
         if (region < 0x40 && human_turn_bit == 0 &&
             region == old_attack_target_region &&
             no_base_or_mode0_count >= 2) {
-            for (int group_id = 0; group_id < VehCurrentCount; ++group_id) {
+            for (int group_id = 0; group_id < GameDataStateStorage.fields_.vehicle_current_count_; ++group_id) {
                 Veh &group_vehicle = Vehs[group_id];
                 if (group_vehicle.faction_id == faction_id
                     && (group_vehicle.state & 0x00040000u) != 0) {
@@ -936,7 +936,7 @@ void __cdecl enemy_strategy(int faction_id) {
         // plan 7 uses the raw regional base count. Strict comparisons retain
         // the first region on ties.
         if (region < 0x40 && !reset_target && faction_data.x_target < 0
-            && (LockEnableMask & faction_bit) == 0) {
+            && (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_bit) == 0) {
             if (region_plan < 2 && no_base_or_mode0_count < 2
                 && (planning_flags & 0x4000u) == 0) {
                 const int candidate_score = own_bases + 1000;
@@ -950,9 +950,9 @@ void __cdecl enemy_strategy(int faction_id) {
             }
         }
 
-        if (region < 0x40 && ((((LockEnableMask & faction_bit) == 0)
+        if (region < 0x40 && ((((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_bit) == 0)
              || (faction_id == ConsoleGlobal.faction_id_
-                 && (GamePreferences & 0x00020000u) != 0))
+                 && (GameDataStateStorage.fields_.game_preferences_ & 0x00020000u) != 0))
             && own_bases != 0
             && (region_plan == 7
                 || (region_plan == 8 && Continents[region].tile_count < 0x96u)))) {
@@ -1076,7 +1076,7 @@ void __cdecl enemy_strategy(int faction_id) {
         }
         // Native 0x5634A5 calls bases_reset only after the optional landing
         // site search/goal insertion, and only on the unlocked-faction edge.
-        if (region < 0x40 && (LockEnableMask & faction_bit) == 0) {
+        if (region < 0x40 && (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_bit) == 0) {
             bases_reset(region, faction_id,
                         region_plan == previous_region_plan);
         }
@@ -1091,7 +1091,7 @@ void __cdecl enemy_strategy(int faction_id) {
     const int selected_region = selected_attack_region;
     if (selected_region > 0 && selected_region < 0x3F
         && reset_target == false
-        && (LockEnableMask & faction_bit) == 0
+        && (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_bit) == 0
         && (faction_data.flags & 0x20000000u) == 0) {
         int current_rank = -1;
         for (int other = 1; other < MaxPlayerNum; ++other) {
@@ -1116,7 +1116,7 @@ void __cdecl enemy_strategy(int faction_id) {
             const bool regional_special_case = regional_enemy_score == 0x800;
             int nearest_target_vehicle = -1;
             int nearest_target_distance = 9999;
-            for (int vehicle_id = 0; vehicle_id < VehCurrentCount; ++vehicle_id) {
+            for (int vehicle_id = 0; vehicle_id < GameDataStateStorage.fields_.vehicle_current_count_; ++vehicle_id) {
                 const Veh &vehicle = Vehs[vehicle_id];
                 if (vehicle.faction_id != faction_id) continue;
                 const Map *tile = map_loc(vehicle.x, vehicle.y);
@@ -1172,7 +1172,7 @@ void __cdecl enemy_strategy(int faction_id) {
                     static_cast<uint32_t>(faction_data.unk_70) << 1);
                 const int special_case_cap =
                     (twice_naval_total + (twice_naval_total >> 31 & 0x003FFFFF)) >> 22;
-                for (int vehicle_id = 0; vehicle_id < VehCurrentCount;
+                for (int vehicle_id = 0; vehicle_id < GameDataStateStorage.fields_.vehicle_current_count_;
                      ++vehicle_id) {
                     Veh &vehicle = Vehs[vehicle_id];
                     if (vehicle.faction_id != faction_id
@@ -1228,19 +1228,19 @@ void __cdecl enemy_strategy(int faction_id) {
     // faction. It clears the 75 goal-use counters, converts this faction's
     // prior move marker '1' to the retry marker '2', then performs two
     // descending passes (the first only processes marker '2').
-    if (TurnCurrentNum != 0 && faction_id != 0) {
+    if (GameDataStateStorage.fields_.turn_current_num_ != 0 && faction_id != 0) {
       int goal_assignments[75];
       for (int goal_id = 0; goal_id < 75; ++goal_id) {
           goal_assignments[goal_id] = 0;
       }
-      for (int vehicle_id = VehCurrentCount - 1; vehicle_id >= 0; --vehicle_id) {
+      for (int vehicle_id = GameDataStateStorage.fields_.vehicle_current_count_ - 1; vehicle_id >= 0; --vehicle_id) {
           Veh &vehicle = Vehs[vehicle_id];
           if (vehicle.faction_id == faction_id && vehicle.move_to_ai_type == '1') {
               vehicle.move_to_ai_type = '2';
           }
       }
       for (int planning_pass = 0; planning_pass < 2; ++planning_pass) {
-        for (int vehicle_id = VehCurrentCount - 1; vehicle_id >= 0; --vehicle_id) {
+        for (int vehicle_id = GameDataStateStorage.fields_.vehicle_current_count_ - 1; vehicle_id >= 0; --vehicle_id) {
             Veh &vehicle = Vehs[vehicle_id];
             if (vehicle.faction_id != faction_id) continue;
             if (planning_pass == 0 && vehicle.move_to_ai_type != '2') continue;
@@ -1270,7 +1270,7 @@ void __cdecl enemy_strategy(int faction_id) {
             vehicle.state &= ~0x40000000u;
 
             if (vehicle.order > 3 && vehicle.order < 0x18) continue;
-            const bool human_controlled = (LockEnableMask & faction_bit) != 0;
+            const bool human_controlled = (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_bit) != 0;
             if (human_controlled) {
                 if ((vehicle.state & 0x200u) == 0) continue;
                 if (plan == 9 && vehicle.probe_action != 0) continue;
@@ -1305,7 +1305,7 @@ void __cdecl enemy_strategy(int faction_id) {
                 int divisor = 2 - faction_data.ai_fight;
                 if (region_plan == 8) divisor += 2;
                 else if (region_plan == 2) divisor = 1;
-                if ((GameState & 0x40000000u) != 0) divisor = 1;
+                if ((GameDataStateStorage.fields_.game_state_ & 0x40000000u) != 0) divisor = 1;
                 const int regional_capacity =
                     (static_cast<int>(faction_data.region_total_bases[region])
                      + divisor - 1) / divisor;
@@ -1566,7 +1566,7 @@ void __cdecl enemy_strategy(int faction_id) {
                 if (goal.type == AI_GOAL_TERRAFORM_LAND) {
                     bool closer_plan9_unit = false;
                     for (int other_vehicle_id = 0;
-                         other_vehicle_id < VehCurrentCount;
+                         other_vehicle_id < GameDataStateStorage.fields_.vehicle_current_count_;
                          ++other_vehicle_id) {
                         if (other_vehicle_id == vehicle_id) continue;
                         const Veh &other_vehicle = Vehs[other_vehicle_id];
@@ -1612,7 +1612,7 @@ void __cdecl enemy_strategy(int faction_id) {
             if (goal.type == 2 && target_base >= 0
                 && Bases[target_base].faction_id_current == faction_id) {
                 Bases[target_base].state |= 0x08000000u;
-                if ((LockEnableMask & faction_bit) == 0) {
+                if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_bit) == 0) {
                     base_reset(target_base, 0);
                 }
             }

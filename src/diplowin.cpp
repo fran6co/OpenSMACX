@@ -351,11 +351,11 @@ void DiploWin::exec(int faction_id, int faction_id_with) {
     field_A28_ = 0;
   }
 
-  const int player_flags = static_cast<int>(LockEnableMask & 0xFF);
+  const int player_flags = static_cast<int>(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFF);
   CommlinkPending = 1;
   DiploOffersDirty = 0;
   if (bit_count(player_flags) == 2)
-    TurnControlDurationMilliseconds *= 2;
+    GameDataStateStorage.fields_.turn_control_duration_milliseconds_ *= 2;
   if (DiploDefaultFlag93A968 == 0)
     DiploDefaultFlag93A968 = 1;
 
@@ -785,7 +785,7 @@ void DiploWin::do_it() {
                     case 3: net_treaty_on(giver, recipient, 2, 1); break;
                     case 4: net_treaty_on(giver, recipient, 4, 1); break;
                     case 5:
-                        if (((1 << (value & 31)) & static_cast<unsigned char>(LockEnableMask)) != 0
+                        if (((1 << (value & 31)) & static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_)) != 0
                             && !(PlayersData[giver].diplo_treaties[value] & 0x10)) {
                             message_data(0x150F, value, giver, recipient, 0, 0);
                         }
@@ -1726,7 +1726,7 @@ void DiploWin::on_button_clicked(int button_id) {
 
       for (int faction = 1; faction < MaxPlayerNum; ++faction) {
         if (faction == faction_id_ || faction == faction_id_with_) continue;
-        if ((LockEnableMask & (1u << faction)) == 0) continue;
+        if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u << faction)) == 0) continue;
         if ((PlayersData[faction_id_].diplo_treaties[faction] & 8) != 0)
           continue;
         if ((PlayersData[faction_id_with_].diplo_treaties[faction] & 8) != 0)

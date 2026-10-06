@@ -608,6 +608,9 @@ struct BaseSecretProject {
     const int &user_defined_64() const { return project_base[63]; }
 };
 
+#include "game_data_state_window.h"
+
+
 static const int MaxBaseNum = 512;
 static const int MaxFacilityNum = 134; // 0 slot unused
 static const int MaxSecretProjectNum = 64;
@@ -758,7 +761,7 @@ int __cdecl suggest_plan(int faction_id, int faction_id_2);
 void __cdecl set_base(int base_id);
 
 MEASURED inline int __cdecl base_project(int project_id) {
-    return SecretProject[project_id];
+    return GameDataStateStorage.fields_.secret_project_[project_id];
 }
 
 MEASURED inline BOOL __cdecl has_project(int project_id, int faction_id) {

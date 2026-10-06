@@ -18,6 +18,7 @@
 #include "stdafx.h"
 #include <shellapi.h>
 #include <ctype.h> // yearmotize uses the original unsigned-char CRT classification.
+#include <stddef.h>
 #include <mmsystem.h>
 #include "temp.h"
 #include "xpops.h"  // X_pop
@@ -76,6 +77,7 @@
 #include "pushbutton.h"
 #include "flatbutton.h"
 #include "council.h"
+#include "councwin.h"  // game_data transfers the live council window fields
 #include "replaywin.h"
 #include "technology.h"
 #include "path.h"
@@ -667,7 +669,32 @@ char PronounBuffer[256];  // 0x00945838 - see game.h for the naming evidence
 
 // RECOVERY_OBJECT: v1 0x009A6488 ?ExpansionEnabled@@3HA
 BOOL ExpansionEnabled;  // 0x009A6488
-uint32_t GamePreferences;  // 0x009A6490
+// RECOVERY_OBJECT: v3 0x009A64EC 0x009A650C ?FactionRankings@@3PAIA 0x005AC690 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.faction_rankings_
+// RECOVERY_OBJECT: v3 0x009A6514 0x009A6614 ?SecretProject@@3UBaseSecretProject@@A 0x005002E0 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.secret_project_
+// RECOVERY_OBJECT: v3 0x009A64CC 0x009A64D0 ?BaseCurrentCount@@3HA 0x004E68B0 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.base_current_count_
+// RECOVERY_OBJECT: v3 0x009A6614 0x009A6618 ?GovernorFaction@@3HA 0x00424410 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.governor_faction_
+// RECOVERY_OBJECT: v3 0x009A67DC 0x009A67E0 ?TranscendenceScoreBonus@@3HA 0x005ACBE0 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.transcendence_score_bonus_
+// RECOVERY_OBJECT: v3 0x009A67E0 0x009A6800 ?TranscendenceScoreWeights@@3PAHA 0x005ACBE0 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.transcendence_score_weights_
+// RECOVERY_OBJECT: v3 0x009A64E0 ?TimeControlsSelection@@3HA member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.time_controls_selection_
+// RECOVERY_OBJECT: v3 0x009A6618 0x009A6644 ?CouncilResolutionCount@@3PAHA 0x005B3920 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.council_resolution_count_
+// RECOVERY_OBJECT: v3 0x009A6644 0x009A6670 ?CouncilLastResolutionTurn@@3PAHA 0x005B3920 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.council_last_resolution_turn_
+// RECOVERY_OBJECT: v3 0x009A64D0 0x009A64D4 ?GameSetupResetWord@@3HA 0x005B3920 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.game_setup_reset_word_
+// RECOVERY_OBJECT: v3 0x009A64E4 0x009A64E8 ?TurnControlDurationMilliseconds@@3HA 0x00523C60 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.turn_control_duration_milliseconds_
+// RECOVERY_OBJECT: v3 0x009A6810 0x009A6814 ?SaveDaemonStateWord@@3HA 0x005A94F0 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.save_daemon_state_word_
+// RECOVERY_OBJECT: v3 0x009A6824 0x009A6828 ?EcologyEventAccumulator@@3HA 0x004F67F0 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.ecology_event_accumulator_
+// RECOVERY_OBJECT: v3 0x009A64A4 ?GameInterludeFlags@@3IA member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.game_interlude_flags_
+// RECOVERY_OBJECT: v3 0x009A64A0 0x009A64A4 ?GameWireOpaque_9A64A0@@3PAEA 0x00532E00 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.game_wire_opaque_9a64a0_
+// RECOVERY_OBJECT: v3 0x009A64A8 0x009A64AC ?GameWireOpaque_9A64A8@@3PAEA 0x00532E00 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.game_wire_opaque_9a64a8_
+// RECOVERY_OBJECT: v3 0x009A66C9 0x009A67C9 ?LegacyGameSaveName@@3PADA 0x005A6AC0 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.legacy_game_save_name_
+// RECOVERY_OBJECT: v3 0x009A67C9 0x009A67CC ?GameWireOpaque_9A67C9@@3PAEA 0x00532E00 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.game_wire_opaque_9a67c9_
+// RECOVERY_OBJECT: v3 0x009A67CC 0x009A67D0 ?ClimateRiseStep@@3HA 0x00524210 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.climate_rise_step_
+// RECOVERY_OBJECT: v3 0x009A67D0 0x009A67D4 ?ClimateRiseLimit@@3HA 0x00524210 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.climate_rise_limit_
+// RECOVERY_OBJECT: v3 0x009A67D4 0x009A67D8 ?ClimateRiseAccum@@3HA 0x00524210 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.climate_rise_accum_
+// RECOVERY_OBJECT: v3 0x009A67D8 0x009A67DC ?ClimateSeaLevelDelta@@3HA 0x00524210 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.climate_sea_level_delta_
+// RECOVERY_OBJECT: v3 0x009A6670 0x009A66C9 ?GameTechAchieved@@3PAEA 0x004DFAD0 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.game_tech_achieved_
+// RECOVERY_OBJECT: v3 0x009A64BC ?TutWinFlags9A64BC@@3HA member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.tutwin_flags_9a64bc_
+// RECOVERY_OBJECT: v3 0x009A64DC 0x009A64E0 ?VehSelectionFollowLimit@@3HA 0x005C08C0 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.vehicle_selection_follow_limit_
+GameDataStateWindow GameDataStateStorage;
 
 uint32_t SystemInterfaceFlags;  // 0x00933420
 
@@ -1321,28 +1348,33 @@ void __cdecl clear_tamper() {
     TamperState93A9B4 = 0;
 }
 
-uint32_t GameMorePreferences;  // 0x009A6494
-uint32_t GameWarnings;  // 0x009A6498
-uint32_t GameRules;  // 0x009A649C
-uint32_t GameState;  // 0x009A64C0
-int DiffLevelCurrent;  // 0x009A64C4
-int TurnCurrentNum;  // 0x009A64D4
+// 0x009A6494
+// 0x009A6498
+// 0x009A649C
+// 0x009A64C0
+// 0x009A64C4
+// 0x009A64D4
 // setup_game clears this independent DWORD after BaseCurrentCount. No
 // additional semantic use is established; it is not part of the base count.
-// RECOVERY_OBJECT: v2 0x009A64D0 0x009A64D4 ?GameSetupResetWord@@3HA 0x005B3920
-int GameSetupResetWord;
+// Historical object identity moved to GameDataStateStorage; see the transport manifest.
+
 // set_time_controls publishes its selected seconds multiplied by 1000.
 // net_control_turn copies the duration to the distinct live wait accumulator.
-// RECOVERY_OBJECT: v2 0x009A64E4 0x009A64E8 ?TurnControlDurationMilliseconds@@3HA 0x00523C60
-int TurnControlDurationMilliseconds;
-int ObjectiveReqVictory;  // 0x0094B4C0
-uint32_t ObjectivesSuddenDeathVictory;  // 0x0094B4C4
-uint32_t ObjectiveAchievePts;  // 0x0094B4C8
-uint32_t VictoryAchieveBonusPts;  // 0x0094B4CC
-uint32_t MissionYearCurrent;  // 0x009A64D8
-uint32_t StartingMissionYear;  // 0x0094B4D0
-uint32_t EndingMissionYear;  // 0x0094B4D4
-int SunspotDuration;  // 0x009A6800
+// Historical object identity moved to GameDataStateStorage; see the transport manifest.
+
+// RECOVERY_OBJECT: v3 0x0094B4D8 ?GameWireOpaque_94B4D8@@3PAEA member ?ScenarioSave@@3UScenarioSaveState@@A wire_opaque_94b4d8
+ScenarioSaveState ScenarioSave;
+typedef char ScenarioSaveStateHasNativeExtent[
+    sizeof(ScenarioSaveState) == 0x98 ? 1 : -1];
+typedef char ScenarioSaveReqOffset[offsetof(ScenarioSaveState, objective_req_victory) == 0x00 ? 1 : -1];
+typedef char ScenarioSaveSuddenDeathOffset[offsetof(ScenarioSaveState, objectives_sudden_death_victory) == 0x04 ? 1 : -1];
+typedef char ScenarioSaveObjectivePtsOffset[offsetof(ScenarioSaveState, objective_achieve_points) == 0x08 ? 1 : -1];
+typedef char ScenarioSaveVictoryBonusOffset[offsetof(ScenarioSaveState, victory_achieve_bonus_points) == 0x0C ? 1 : -1];
+typedef char ScenarioSaveStartingYearOffset[offsetof(ScenarioSaveState, starting_mission_year) == 0x10 ? 1 : -1];
+typedef char ScenarioSaveEndingYearOffset[offsetof(ScenarioSaveState, ending_mission_year) == 0x14 ? 1 : -1];
+typedef char ScenarioSaveTailOffset[offsetof(ScenarioSaveState, wire_opaque_94b4d8) == 0x18 ? 1 : -1];
+// 0x009A64D8
+// 0x009A6800
 // config_popups copies the live screen dimensions to these independent
 // dwords; both are beyond Console's proven end, not Console members.
 // RECOVERY_OBJECT: v1 0x00939E58 ?IfaceScreenHeight@@3HA
@@ -1493,19 +1525,19 @@ void __cdecl load_interface(int mode) {
     canvas.close();
     load_box_sprites();
 }
-uint32_t MountPlanetX;  // 0x009A6804
-uint32_t MountPlanetY;  // 0x009A6808
-int DustCloudDuration;  // 0x009A680C
+// 0x009A6804
+// 0x009A6808
+// 0x009A680C
 // save_daemon writes 12 before serialization; setup_game clears this word.
 // Its precise save-format meaning is not established by that write alone.
-// RECOVERY_OBJECT: v2 0x009A6810 0x009A6814 ?SaveDaemonStateWord@@3HA 0x005A94F0
-int SaveDaemonStateWord;
+// Historical object identity moved to GameDataStateStorage; see the transport manifest.
+
 // Original4838E3 reads this DWORD network-game flag; initial image storage is0.
 // RECOVERY_OBJECT: v2 0x0093F660 0x0093F664 ?IsMultiplayerNet@@3HA 0x004838E0
 BOOL IsMultiplayerNet;  // DirectPlay - Serial, Modem, Internet (TCP/IP)
 BOOL IsMultiplayerPBEM;  // 0x0093A95C // HotSeat / PBEM
-uint32_t NetTurnFlags;  // 0x009A681C
-int NetTurnFaction;  // 0x009A6820
+// 0x009A681C
+// 0x009A6820
 
 // Shared turn handoff flag: next_player_turn and player deletion write it;
 // net_not_my_turn reads it. The observed four bytes start loader-zeroed.
@@ -1518,8 +1550,8 @@ int NetUpkeepPhase;
 // base_ecology increments this signed accumulator, scales it in its event
 // threshold, then clears it when the threshold is met. setup_game also clears
 // it. The adjacent NetTurnFaction is a separate object, not an array element.
-// RECOVERY_OBJECT: v2 0x009A6824 0x009A6828 ?EcologyEventAccumulator@@3HA 0x004F67F0
-int EcologyEventAccumulator;
+// Historical object identity moved to GameDataStateStorage; see the transport manifest.
+
 
 /*
 Purpose: Wrap an x coordinate the way reset_territory() wraps it.
@@ -1775,7 +1807,7 @@ void __cdecl reset_territory() {
             PlayersData[owner].unk_83[region]++;
             if (owner) {
                 if (tile->visibility & (1 << owner)
-                    || (!is_human(owner) && DiffLevelCurrent > 3)) {
+                    || (!is_human(owner) && GameDataStateStorage.fields_.diff_level_current_ > 3)) {
                     add_site(owner, 3, 1, x, y);
                 }
                 continue;
@@ -1785,7 +1817,7 @@ void __cdecl reset_territory() {
                     continue;
                 }
                 if (!(tile->visibility & (1 << faction_id))
-                    && (is_human(faction_id) || DiffLevelCurrent <= 3)) {
+                    && (is_human(faction_id) || GameDataStateStorage.fields_.diff_level_current_ <= 3)) {
                     continue;
                 }
                 if (at_site(faction_id, 3, x, y)) {
@@ -1855,8 +1887,8 @@ void __cdecl planetfall(int faction_id) {
     parse_set(Players[faction_id].noun_gender, Players[faction_id].is_noun_plural);
     parse_says(1, Players[faction_id].noun_faction, -1, -1); // unused in script, leaving in for now
     char script_id[13];
-    if (TurnCurrentNum) { // shifted logic to top to fix nonexistent accelerated script ids
-        parse_num(0, TurnCurrentNum);
+    if (GameDataStateStorage.fields_.turn_current_num_) { // shifted logic to top to fix nonexistent accelerated script ids
+        parse_num(0, GameDataStateStorage.fields_.turn_current_num_);
         for (uint32_t i = 0; i < MaxSecretProjectNum; i++) {
             if (has_project(i, faction_id)) { // script assumes at least one SP is built per faction
                 parse_says(4, Facility[FAC_HUMAN_GENOME_PROJ + i].name, -1, -1);
@@ -1886,12 +1918,12 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl clear_scenario() {
-    ObjectiveReqVictory = 9999;
-    ObjectivesSuddenDeathVictory = 9999;
-    ObjectiveAchievePts = 0;
-    VictoryAchieveBonusPts = 0;
-    StartingMissionYear = Rules.normal_starting_year;
-    EndingMissionYear = DiffLevelCurrent < DLVL_LIBRARIAN
+    ScenarioSave.objective_req_victory = 9999;
+    ScenarioSave.objectives_sudden_death_victory = 9999;
+    ScenarioSave.objective_achieve_points = 0;
+    ScenarioSave.victory_achieve_bonus_points = 0;
+    ScenarioSave.starting_mission_year = Rules.normal_starting_year;
+    ScenarioSave.ending_mission_year = GameDataStateStorage.fields_.diff_level_current_ < DLVL_LIBRARIAN
         ? Rules.normal_end_year_low_three_diff : Rules.normal_end_year_high_three_diff;
 }
 
@@ -1930,7 +1962,7 @@ Status: Complete
 */
 void __cdecl say_year(LPSTR output) {
     char year[80];
-    _itoa_s(game_year(TurnCurrentNum), year, 80, 10);
+    _itoa_s(game_year(GameDataStateStorage.fields_.turn_current_num_), year, 80, 10);
     // Plain `strcat`, not `strcat_s`: the image calls 0x645470 here, and the
     // `_s` spelling reaches `strcat` through the inline in vc6_compat.h, which
     // the optimiser then folds in WITH strcat's own `repne scasb` +
@@ -2065,7 +2097,7 @@ captor's own redraw pass in the same call. Transcribed as written.
 */
 void __cdecl repair_phase(int faction_id) {
     PlayersData[faction_id].sat_odp_deployed = 0;
-    for (int veh_id = 0; veh_id < VehCurrentCount; veh_id++) {
+    for (int veh_id = 0; veh_id < GameDataStateStorage.fields_.vehicle_current_count_; veh_id++) {
         if (Vehs[veh_id].faction_id != faction_id) {
             continue;
         }
@@ -2081,7 +2113,7 @@ void __cdecl repair_phase(int faction_id) {
         Vehs[veh_id].flags &= (uint16_t)~VFLAG_UNK_1000;
         // One unit in four each turn, cycling by unit id so the whole table is covered every
         // fourth turn rather than all at once.
-        if (!((TurnCurrentNum + veh_id) & 3)) {
+        if (!((GameDataStateStorage.fields_.turn_current_num_ + veh_id) & 3)) {
             Vehs[veh_id].state &= ~VSTATE_UNK_800;
             // Tested NEGATED, with the arms the other way round: the image's `jne`
             // goes to the `&= ~VFLAG_UNK_2` arm and FALLS THROUGH to
@@ -2255,7 +2287,7 @@ void __cdecl repair_phase(int faction_id) {
             }
         }
     }
-    for (veh_id = 0; veh_id < VehCurrentCount; veh_id++) {
+    for (veh_id = 0; veh_id < GameDataStateStorage.fields_.vehicle_current_count_; veh_id++) {
         int veh_faction_id = Vehs[veh_id].faction_id;
         if (veh_faction_id != faction_id) {
             continue;
@@ -2320,22 +2352,22 @@ int ExitTurnLoop;       // 0x009B2068
 // RECOVERY_OBJECT: v1 0x009B206C ?EndgameExitReason@@3HA
 int EndgameExitReason;
 // Original interlude reads/writes this complete story-mask word.
-// RECOVERY_OBJECT: v1 0x009A64A4 ?GameInterludeFlags@@3IA
-uint32_t GameInterludeFlags;
+// Historical object identity moved to GameDataStateStorage; see the transport manifest.
+
 // Wire0 and game_data transfer these exact independent byte intervals.
 // No direct semantic use or original allocation boundary is proved; they are
 // retained state, never padding or zero-producing packet filler. Keep the
 // filename tail separate from the exactly bounded legacy 256-byte copy.
-// RECOVERY_OBJECT: v2 0x009A64A0 0x009A64A4 ?GameWireOpaque_9A64A0@@3PAEA 0x00532E00
-uint8_t GameWireOpaque_9A64A0[4];
-// RECOVERY_OBJECT: v2 0x009A64A8 0x009A64AC ?GameWireOpaque_9A64A8@@3PAEA 0x00532E00
-uint8_t GameWireOpaque_9A64A8[4];
+// Historical object identity moved to GameDataStateStorage; see the transport manifest.
+
+// Historical object identity moved to GameDataStateStorage; see the transport manifest.
+
 // Native game_data5A6BA3..5A6BB9 copies exactly256 bytes; setup_game
 // clears only byte0. NUL-scanning consumers do not prove loaded termination.
-// RECOVERY_OBJECT: v2 0x009A66C9 0x009A67C9 ?LegacyGameSaveName@@3PADA 0x005A6AC0
-char LegacyGameSaveName[256];
-// RECOVERY_OBJECT: v2 0x009A67C9 0x009A67CC ?GameWireOpaque_9A67C9@@3PAEA 0x00532E00
-uint8_t GameWireOpaque_9A67C9[3];
+// Historical object identity moved to GameDataStateStorage; see the transport manifest.
+
+// Historical object identity moved to GameDataStateStorage; see the transport manifest.
+
 // Logical faction0..7 indexing is independently observed; original
 // containing allocation bounds are not asserted.
 // RECOVERY_OBJECT: v1 0x00946138 ?TectonicDetonationCount@@3PAIA
@@ -2475,10 +2507,10 @@ void __cdecl control_game() {
         filefind_init("movies\\virtualWorld.wve", is_complete);
 
         prefs_load(0);
-        GamePreferences = AlphaIniPrefs.preferences;
+        GameDataStateStorage.fields_.game_preferences_ = AlphaIniPrefs.preferences;
         movie_disabled = prefs_get("DisableOpeningMovie", 0, 0);
         prefs_put("DisableOpeningMovie", movie_disabled, 0);
-        if (movie_disabled == 0 && (GamePreferences & 0x10000000) != 0) {
+        if (movie_disabled == 0 && (GameDataStateStorage.fields_.game_preferences_ & 0x10000000) != 0) {
             amovie_project("openingx");
         }
     }
@@ -2498,10 +2530,10 @@ void __cdecl control_game() {
             if (game_reload(0, 1) != 0) {
                 goto close_game;
             }
-            VehCurrentCount = 0;
+            GameDataStateStorage.fields_.vehicle_current_count_ = 0;
             setup_game(1);
-            GameRules = AlphaIniPrefs.rules;
-            NetTurnFlags = 0;
+            GameDataStateStorage.fields_.game_rules_ = AlphaIniPrefs.rules;
+            GameDataStateStorage.fields_.net_turn_flags_ = 0;
         }
 
         GameRestartQueued = 0;
@@ -2889,7 +2921,7 @@ int __cdecl desktop_init(int fresh) {
     ConsoleGlobal.field_23D8C_ = static_cast<unsigned int>(
         -10 - static_cast<int>(ConsoleGlobal.dib_.bmiHeader.biHeight));
 
-    if (TurnCurrentNum != 0) {
+    if (GameDataStateStorage.fields_.turn_current_num_ != 0) {
         draw_map(1);
     }
 
@@ -3336,28 +3368,28 @@ void __cdecl load_vehicles() {
 
 // Council shade/melt resolutions write these cells; the turn-phase consumer
 // advances the accumulated sea-level change against the same signed counters.
-// RECOVERY_OBJECT: v2 0x009A67CC 0x009A67D0 ?ClimateRiseStep@@3HA 0x00524210
-int ClimateRiseStep;
-// RECOVERY_OBJECT: v2 0x009A67D0 0x009A67D4 ?ClimateRiseLimit@@3HA 0x00524210
-int ClimateRiseLimit;
-// RECOVERY_OBJECT: v2 0x009A67D4 0x009A67D8 ?ClimateRiseAccum@@3HA 0x00524210
-int ClimateRiseAccum;
-// RECOVERY_OBJECT: v2 0x009A67D8 0x009A67DC ?ClimateSeaLevelDelta@@3HA 0x00524210
-int ClimateSeaLevelDelta;
+// Historical object identity moved to GameDataStateStorage; see the transport manifest.
+
+// Historical object identity moved to GameDataStateStorage; see the transport manifest.
+
+// Historical object identity moved to GameDataStateStorage; see the transport manifest.
+
+// Historical object identity moved to GameDataStateStorage; see the transport manifest.
+
 
 void __cdecl climactic_changes() {
     int sign;
 
-    if (ClimateSeaLevelDelta != 0) {
-        ClimateRiseAccum += ClimateRiseStep;
-        if (ClimateRiseLimit <= ClimateRiseAccum) {
-            ClimateRiseAccum -= ClimateRiseLimit;
-            if (ClimateSeaLevelDelta > 0) {
+    if (GameDataStateStorage.fields_.climate_sea_level_delta_ != 0) {
+        GameDataStateStorage.fields_.climate_rise_accum_ += GameDataStateStorage.fields_.climate_rise_step_;
+        if (GameDataStateStorage.fields_.climate_rise_limit_ <= GameDataStateStorage.fields_.climate_rise_accum_) {
+            GameDataStateStorage.fields_.climate_rise_accum_ -= GameDataStateStorage.fields_.climate_rise_limit_;
+            if (GameDataStateStorage.fields_.climate_sea_level_delta_ > 0) {
                 sign = 1;
             } else {
-                sign = (ClimateSeaLevelDelta >= 0) - 1;
+                sign = (GameDataStateStorage.fields_.climate_sea_level_delta_ >= 0) - 1;
             }
-            ClimateSeaLevelDelta -= sign;
+            GameDataStateStorage.fields_.climate_sea_level_delta_ -= sign;
             MapSeaLevel += sign;
             world_climate();
             draw_map(1);
@@ -3444,8 +3476,8 @@ int __cdecl sub_52a980() {
         *reinterpret_cast<int8_t *>(address - 2) = all;
         address += 0x34;
     } while (address < reinterpret_cast<int>(VehPrototypeFlagsEnd));
-    VehCurrentCount = 0;
-    BaseCurrentCount = 0;
+    GameDataStateStorage.fields_.vehicle_current_count_ = 0;
+    GameDataStateStorage.fields_.base_current_count_ = 0;
     return 0;
 }
 
@@ -3539,13 +3571,13 @@ int __cdecl sub_52db70() {
     // form found gets both the register roles and the `sete` tail at
     // once. Left as the closest candidate (edit_count 1) rather than
     // reverted, per the "do not throw away a measured near miss" rule.
-    if ((NetTurnFlags & 0x10) == 0) {
+    if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10) == 0) {
         return 0;
     }
     if (ConsoleControlTurnActive != 0) {
         return 0;
     }
-    return NetTurnFaction == ConsoleGlobal.faction_id_;
+    return GameDataStateStorage.fields_.net_turn_faction_ == ConsoleGlobal.faction_id_;
 }
 
 // ORIGINAL: 0x0052DBF0 ?next_player_turn@@YAHXZ 0x0052DBF0-0x0052DC68 FILE
@@ -3561,18 +3593,18 @@ int __cdecl sub_52db70() {
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
 static int *const TurnsAssigned = (int *)0x0093E8C0;
-static int *const LockAliveMask = (int *)0x009A64E9;
+
 int __cdecl next_player_turn() {
-    if ((NetTurnFlags & 0x10) == 0) {
+    if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10) == 0) {
         return 0;
     }
     if (*TurnsAssigned == 0) {
         return 0;
     }
-    int i = NetTurnFaction + 1;
+    int i = GameDataStateStorage.fields_.net_turn_faction_ + 1;
     if (i < 8) {
-        unsigned int hi_byte = *reinterpret_cast<unsigned char *>(LockAliveMask);
-        unsigned char lo_byte = *reinterpret_cast<unsigned char *>(&LockEnableMask);
+        unsigned int hi_byte = *reinterpret_cast<unsigned char *>(&GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_);
+        unsigned char lo_byte = *reinterpret_cast<unsigned char *>(&GameDataStateStorage.fields_.lock_masks_.enable_mask_);
         do {
             unsigned int bit = 1 << i;
             if ((bit & hi_byte) != 0 && (static_cast<unsigned char>(bit) & lo_byte) != 0) {
@@ -4061,8 +4093,8 @@ char *__cdecl get_pact(int faction_id) {
 // return); it reads as five live values forcing two callee-saved spills.
 int __cdecl current_server() {
     int in_transit = ConsoleControlTurnActive;
-    if ((NetTurnFlags & 0x10) != 0 && in_transit == 0) {
-        if (NetTurnFaction == ConsoleGlobal.faction_id_) {
+    if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10) != 0 && in_transit == 0) {
+        if (GameDataStateStorage.fields_.net_turn_faction_ == ConsoleGlobal.faction_id_) {
             return 1;
         }
         return 0;
@@ -4600,18 +4632,18 @@ void __cdecl balance() {
             }
         }
 
-        int difficulty = DiffLevelCurrent;
+        int difficulty = GameDataStateStorage.fields_.diff_level_current_;
         if (difficulty > 1) {
             bool defend = deficit >= 3;
             if (!defend) {
-                const int human_bit = (1 << faction_id) & (LockEnableMask & 0xFFu);
+                const int human_bit = (1 << faction_id) & (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFu);
                 defend = difficulty >= (human_bit ? 4 : 5);
             }
             if (defend) {
                 deficit -= 3;
                 if ((player.rule_flags & RFLAG_AQUATIC) == 0) {
                     const int defender_id = veh_init(0, faction_id, x, y);
-                    difficulty = DiffLevelCurrent;
+                    difficulty = GameDataStateStorage.fields_.diff_level_current_;
                     Vehs[defender_id].next_veh_id_stack = -1;
                 }
             }
@@ -4666,7 +4698,7 @@ int __cdecl generators(int faction_id, int *count_out) {
     if ((Players[faction_id].rule_flags & RFLAG_ALIEN) == 0) {
         return 0;
     }
-    int total = BaseCurrentCount;
+    int total = GameDataStateStorage.fields_.base_current_count_;
     if (total > 0) {
         int index = 0;
         do {
@@ -4784,82 +4816,82 @@ extern int TutorialFlags2;
 void __cdecl setup_game(int reload) {
     // This initializer deliberately retains the native order: profile state,
     // transient game state, player construction, then optional diplomacy.
-    GameTechAchieved[MaxTechnologyNum - 1] = 0;
-    LegacyGameSaveName[0] = 0;
+    GameDataStateStorage.fields_.game_tech_achieved_[MaxTechnologyNum - 1] = 0;
+    GameDataStateStorage.fields_.legacy_game_save_name_[0] = 0;
 
     // The image passes zero-filled 0x945E78/0x945E7C strings to these keys.
     // Pinned-image initial bytes are NUL, and no other absolute references to
     // either cell exist; the existing prefs_put overload consumes the values.
     prefs_put("Latest Save", "");
     prefs_put("Latest Scenario", "");
-    if (DiffLevelCurrent == 0 && reload == 0 &&
+    if (GameDataStateStorage.fields_.diff_level_current_ == 0 && reload == 0 &&
         prefs_get("DontResetBeginnerPrefs", 0, 0) == 0) {
         prefs_load(1);
-        GameRules |= 0x20;
+        GameDataStateStorage.fields_.game_rules_ |= 0x20;
         prefs_put("DontResetBeginnerPrefs", 0, 0);
     }
-    if (IsMultiplayerNet) GameRules &= ~0x20u;
+    if (IsMultiplayerNet) GameDataStateStorage.fields_.game_rules_ &= ~0x20u;
     prefs_use();
 
-    ObjectiveAchievePts = 0;
-    ObjectiveReqVictory = 9999;
-    ObjectivesSuddenDeathVictory = 9999;
-    VictoryAchieveBonusPts = 0;
-    StartingMissionYear = Rules.normal_starting_year;
-    EndingMissionYear = DiffLevelCurrent < 3
+    ScenarioSave.objective_achieve_points = 0;
+    ScenarioSave.objective_req_victory = 9999;
+    ScenarioSave.objectives_sudden_death_victory = 9999;
+    ScenarioSave.victory_achieve_bonus_points = 0;
+    ScenarioSave.starting_mission_year = Rules.normal_starting_year;
+    ScenarioSave.ending_mission_year = GameDataStateStorage.fields_.diff_level_current_ < 3
         ? Rules.normal_end_year_low_three_diff
         : Rules.normal_end_year_high_three_diff;
 
     clear_monuments();
     wipe_undo();
     ReplayEventBytes = 0;
-    GameState &= 0x01800000u;
-    GameInterludeFlags = 0;
-    TutorialFlags = 0;
-    TutorialFlags2 = 0;
-    TerraformAnnouncedMask[0] = 0;
-    TerraformAnnouncedMask[1] = 0;
-    TutWinFlags9A64BC = 0;
-    BaseCurrentCount = 0;
-    GameSetupResetWord = 0;
-    TurnCurrentNum = 0;
-    LockEnableMask = (LockEnableMask & ~0x0000FF00u) | 0x0000FF00u;
-    ClimateRiseStep = 0;
-    ClimateRiseLimit = 0;
-    ClimateRiseAccum = 0;
-    ClimateSeaLevelDelta = 0;
+    GameDataStateStorage.fields_.game_state_ &= 0x01800000u;
+    GameDataStateStorage.fields_.game_interlude_flags_ = 0;
+    GameDataStateStorage.fields_.tutorial_flags_ = 0;
+    GameDataStateStorage.fields_.tutorial_flags_2_ = 0;
+    GameDataStateStorage.fields_.terraform_announced_mask_[0] = 0;
+    GameDataStateStorage.fields_.terraform_announced_mask_[1] = 0;
+    GameDataStateStorage.fields_.tutwin_flags_9a64bc_ = 0;
+    GameDataStateStorage.fields_.base_current_count_ = 0;
+    GameDataStateStorage.fields_.game_setup_reset_word_ = 0;
+    GameDataStateStorage.fields_.turn_current_num_ = 0;
+    GameDataStateStorage.fields_.lock_masks_.enable_mask_ = (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & ~0x0000FF00u) | 0x0000FF00u;
+    GameDataStateStorage.fields_.climate_rise_step_ = 0;
+    GameDataStateStorage.fields_.climate_rise_limit_ = 0;
+    GameDataStateStorage.fields_.climate_rise_accum_ = 0;
+    GameDataStateStorage.fields_.climate_sea_level_delta_ = 0;
     clear_all_offers();
     clear_hotseat_chat();
     clear_council_notify();
     clear_tamper();
-    TurnControlDurationMilliseconds = 0;
-    GovernorFaction = -1;
+    GameDataStateStorage.fields_.turn_control_duration_milliseconds_ = 0;
+    GameDataStateStorage.fields_.governor_faction_ = -1;
     for (int proposal = 0; proposal < MaxProposalNum; ++proposal) {
-        CouncilResolutionCount[proposal] = 0;
-        CouncilLastResolutionTurn[proposal] = -9999;
+        GameDataStateStorage.fields_.council_resolution_count_[proposal] = 0;
+        GameDataStateStorage.fields_.council_last_resolution_turn_[proposal] = -9999;
     }
 
     if (!IsMultiplayerNet && reload != 0 && GameRestartQueued == 0)
-        GameState |= 0xE0;
+        GameDataStateStorage.fields_.game_state_ |= 0xE0;
 
     // The reset words and pending-diplomacy matrix have independent source owners.
     for (int technology = 0; technology < MaxTechnologyNum; ++technology)
-        GameTechAchieved[technology] = 0;
-    memset(&SecretProject, 0xFF, sizeof SecretProject);
+        GameDataStateStorage.fields_.game_tech_achieved_[technology] = 0;
+    memset(&GameDataStateStorage.fields_.secret_project_, 0xFF, sizeof GameDataStateStorage.fields_.secret_project_);
     memset(ReplayEvents, 0, sizeof ReplayEvents);
     memset(FactionRankingHistory, 0, sizeof FactionRankingHistory);
-    SunspotDuration = 0;
-    MountPlanetX = 0;
-    MountPlanetY = 0;
-    DustCloudDuration = 0;
-    SaveDaemonStateWord = 0;
-    ScnVictFacilityObj = 0;
-    GlobalEnergyEventState = 0;
-    NetTurnFlags = 0;
-    NetTurnFaction = 0;
-    EcologyEventAccumulator = 0;
+    GameDataStateStorage.fields_.sunspot_duration_ = 0;
+    GameDataStateStorage.fields_.mount_planet_x_ = 0;
+    GameDataStateStorage.fields_.mount_planet_y_ = 0;
+    GameDataStateStorage.fields_.dust_cloud_duration_ = 0;
+    GameDataStateStorage.fields_.save_daemon_state_word_ = 0;
+    GameDataStateStorage.fields_.scenario_victory_facility_ = 0;
+    GameDataStateStorage.fields_.global_energy_event_state_ = 0;
+    GameDataStateStorage.fields_.net_turn_flags_ = 0;
+    GameDataStateStorage.fields_.net_turn_faction_ = 0;
+    GameDataStateStorage.fields_.ecology_event_accumulator_ = 0;
 
-    if ((GameState & 0x01000000u) != 0) {
+    if ((GameDataStateStorage.fields_.game_state_ & 0x01000000u) != 0) {
         int placed = 1;
         int seen_social_effects[12] = {0};
         for (int social_faction = 1; social_faction < MaxPlayerNum; ++social_faction) {
@@ -4907,14 +4939,14 @@ void __cdecl setup_game(int reload) {
 
     int setup_results[MaxPlayerNum] = {0};
     for (int human_setup_faction = 0; human_setup_faction < MaxPlayerNum; ++human_setup_faction) {
-        if ((LockEnableMask & (1u << human_setup_faction)) != 0) {
+        if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u << human_setup_faction)) != 0) {
             setup_player(human_setup_faction, -1 - reload, 0);
             setup_results[human_setup_faction] = 0;
         }
     }
     memset(TectonicDetonationCount, 0, sizeof TectonicDetonationCount);
     for (int computer_setup_faction = 0; computer_setup_faction < MaxPlayerNum; ++computer_setup_faction) {
-        if ((LockEnableMask & (1u << computer_setup_faction)) == 0) {
+        if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u << computer_setup_faction)) == 0) {
             setup_player(computer_setup_faction, -1 - reload, 0);
             setup_results[computer_setup_faction] = 0;
         }
@@ -4947,8 +4979,8 @@ void __cdecl setup_game(int reload) {
                           (tries < 200 ||
                            (tries < 400 &&
                             (Players[other].rule_flags & 0x1000) == 0))) ||
-                         ((LockEnableMask & (1u << pair_faction)) != 0 &&
-                          (LockEnableMask & (1u << other)) != 0 && tries < 100));
+                         ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u << pair_faction)) != 0 &&
+                          (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u << other)) != 0 && tries < 100));
                 ++setup_results[pair_faction];
                 ++setup_results[other];
             }
@@ -4963,16 +4995,16 @@ void __cdecl setup_game(int reload) {
                     do {
                         other = rand() % 7 + 1;
                     } while (other == extra_pair_faction);
-                } while ((LockEnableMask & (1u << extra_pair_faction)) != 0 &&
-                         (LockEnableMask & (1u << other)) != 0 &&
+                } while ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u << extra_pair_faction)) != 0 &&
+                         (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u << other)) != 0 &&
                          (++tries, tries < 200));
                 ++setup_results[extra_pair_faction];
                 ++setup_results[other];
             }
         }
 
-        if (!IsMultiplayerNet || (GameRules & 0x40u) != 0) {
-            if ((GameState & 0x00800000u) == 0) {
+        if (!IsMultiplayerNet || (GameDataStateStorage.fields_.game_rules_ & 0x40u) != 0) {
+            if ((GameDataStateStorage.fields_.game_state_ & 0x00800000u) == 0) {
                 static const char *const pairs[][2] = {
                     {"PEACE", "SPARTANS"}, {"GAIANS", "MORGAN"},
                     {"HIVE", "BELIEVE"}, {"UNIV", "BELIEVE"},
@@ -5012,9 +5044,9 @@ void __cdecl setup_game(int reload) {
                     }
                 }
             } else {
-                unsigned int rules_snapshot = GameRules;
+                unsigned int rules_snapshot = GameDataStateStorage.fields_.game_rules_;
                 for (int network_faction = 1; network_faction < MaxPlayerNum; ++network_faction) {
-                    if ((LockEnableMask & (1u << network_faction)) != 0) {
+                    if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u << network_faction)) != 0) {
                         int required = ((rules_snapshot >> 6) & 1u) +
                             (PlayersData[network_faction].diff_level > 2 ? 1 : 0);
                         int assigned = 0;
@@ -5027,14 +5059,14 @@ void __cdecl setup_game(int reload) {
                                 if (tries > 99) break;
                                 if ((PlayersData[other].diplo_agenda[network_faction] & 0x200) == 0) {
                                     const unsigned int other_bit = 1u << other;
-                                    const bool alive = (LockEnableMask & (other_bit << 8)) != 0;
-                                    const bool human = (LockEnableMask & other_bit) != 0;
+                                    const bool alive = (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (other_bit << 8)) != 0;
+                                    const bool human = (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & other_bit) != 0;
                                     if (alive && !human) break;
                                 }
                             }
                             if (tries < 100) agenda_on(other, network_faction, 0x200);
                             ++assigned;
-                            rules_snapshot = GameRules;
+                            rules_snapshot = GameDataStateStorage.fields_.game_rules_;
                             required = ((rules_snapshot >> 6) & 1u) +
                                 (PlayersData[network_faction].diff_level > 2 ? 1 : 0);
                         }
@@ -5043,7 +5075,7 @@ void __cdecl setup_game(int reload) {
             }
         }
 
-        if ((GameRules & 0x80u) != 0) {
+        if ((GameDataStateStorage.fields_.game_rules_ & 0x80u) != 0) {
             time_warp();
             return;
         }
@@ -5097,7 +5129,7 @@ void __cdecl time_warp() {
 
     for (int faction_id = 1; faction_id < MaxPlayerNum; ++faction_id) {
         const uint32_t alive_faction = 1u << (faction_id + 8);
-        if ((LockEnableMask & alive_faction) == 0) continue;
+        if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & alive_faction) == 0) continue;
         const int starting_base_id = base_find(0, 0, faction_id);
         if (starting_base_id < 0) continue;
 
@@ -5212,24 +5244,24 @@ void __cdecl time_warp() {
         do {
             starting_project = rand() % 8;
             switch (starting_project) {
-            case 0: current_project_base = SecretProject.human_genome_project(); break;
-            case 1: current_project_base = SecretProject.command_nexus(); break;
-            case 2: current_project_base = SecretProject.weather_paradigm(); break;
-            case 3: current_project_base = SecretProject.merchant_exchange(); break;
-            case 5: current_project_base = SecretProject.citizens_defense_force(); break;
-            case 6: current_project_base = SecretProject.virtual_world(); break;
-            default: current_project_base = SecretProject.planetary_transit_system(); break;
+            case 0: current_project_base = GameDataStateStorage.fields_.secret_project_.human_genome_project(); break;
+            case 1: current_project_base = GameDataStateStorage.fields_.secret_project_.command_nexus(); break;
+            case 2: current_project_base = GameDataStateStorage.fields_.secret_project_.weather_paradigm(); break;
+            case 3: current_project_base = GameDataStateStorage.fields_.secret_project_.merchant_exchange(); break;
+            case 5: current_project_base = GameDataStateStorage.fields_.secret_project_.citizens_defense_force(); break;
+            case 6: current_project_base = GameDataStateStorage.fields_.secret_project_.virtual_world(); break;
+            default: current_project_base = GameDataStateStorage.fields_.secret_project_.planetary_transit_system(); break;
             }
         } while (current_project_base != SP_Unbuilt || starting_project == 4 ||
                  (starting_project == 5 && strcmp(player.filename, "HIVE") == 0));
         switch (starting_project) {
-        case 0: SecretProject.human_genome_project() = starting_base_id; break;
-        case 1: SecretProject.command_nexus() = starting_base_id; break;
-        case 2: SecretProject.weather_paradigm() = starting_base_id; break;
-        case 3: SecretProject.merchant_exchange() = starting_base_id; break;
-        case 5: SecretProject.citizens_defense_force() = starting_base_id; break;
-        case 6: SecretProject.virtual_world() = starting_base_id; break;
-        default: SecretProject.planetary_transit_system() = starting_base_id; break;
+        case 0: GameDataStateStorage.fields_.secret_project_.human_genome_project() = starting_base_id; break;
+        case 1: GameDataStateStorage.fields_.secret_project_.command_nexus() = starting_base_id; break;
+        case 2: GameDataStateStorage.fields_.secret_project_.weather_paradigm() = starting_base_id; break;
+        case 3: GameDataStateStorage.fields_.secret_project_.merchant_exchange() = starting_base_id; break;
+        case 5: GameDataStateStorage.fields_.secret_project_.citizens_defense_force() = starting_base_id; break;
+        case 6: GameDataStateStorage.fields_.secret_project_.virtual_world() = starting_base_id; break;
+        default: GameDataStateStorage.fields_.secret_project_.planetary_transit_system() = starting_base_id; break;
         }
 
         // The native expansion pass considers expansion_count - 1 rounds.
@@ -5245,8 +5277,8 @@ void __cdecl time_warp() {
             int scan_base_id = 0;
             int last_base_x = 0;
             int last_base_y = 0;
-            if (BaseCurrentCount > 0) {
-                for (; scan_base_id < BaseCurrentCount; ++scan_base_id) {
+            if (GameDataStateStorage.fields_.base_current_count_ > 0) {
+                for (; scan_base_id < GameDataStateStorage.fields_.base_current_count_; ++scan_base_id) {
                     Base &search_base = Bases[scan_base_id];
                     if (search_base.faction_id_current != faction_id) continue;
                     const int center_x = search_base.x;
@@ -5321,11 +5353,11 @@ void __cdecl time_warp() {
             }
 
             if (best_score <= 0) {
-                if (BaseCurrentCount > 0) {
+                if (GameDataStateStorage.fields_.base_current_count_ > 0) {
                     int smallest_base_id = -1;
                     int smallest_population = 999;
                     for (int candidate_base_id = 0;
-                         candidate_base_id < BaseCurrentCount; ++candidate_base_id) {
+                         candidate_base_id < GameDataStateStorage.fields_.base_current_count_; ++candidate_base_id) {
                         const Base &candidate_base = Bases[candidate_base_id];
                         if (candidate_base.faction_id_current == faction_id &&
                             candidate_base.population_size < smallest_population) {
@@ -5412,7 +5444,7 @@ void __cdecl time_warp() {
         AiResearchBatchActive = 1;
         reset_territory();
         enemy_strategy(faction_id);
-        for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+        for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
             Base &base = Bases[base_id];
             if (base.faction_id_current != faction_id) continue;
             for (int synch_radius_index = 0; synch_radius_index < 81; ++synch_radius_index) {
@@ -5453,7 +5485,7 @@ void __cdecl time_warp() {
                     synch_bit(radius_x, radius_y, faction_id);
             }
             const int base_region = map_loc(base.x, base.y)->region;
-            for (int other_base_id = 0; other_base_id < BaseCurrentCount; ++other_base_id) {
+            for (int other_base_id = 0; other_base_id < GameDataStateStorage.fields_.base_current_count_; ++other_base_id) {
                 if (other_base_id == base_id ||
                     Bases[other_base_id].faction_id_current != faction_id) continue;
                 Base &other_base = Bases[other_base_id];
@@ -5494,7 +5526,7 @@ void __cdecl time_warp() {
         }
         AiResearchBatchActive = 0;
 
-        for (int vehicle_id = 0; vehicle_id < VehCurrentCount; ++vehicle_id) {
+        for (int vehicle_id = 0; vehicle_id < GameDataStateStorage.fields_.vehicle_current_count_; ++vehicle_id) {
             Veh &vehicle = Vehs[vehicle_id];
             if (vehicle.faction_id != faction_id ||
                 VehPrototypes[vehicle.proto_id].plan != 9) continue;
@@ -5530,7 +5562,7 @@ void __cdecl time_warp() {
             }
         }
     }
-    TurnCurrentNum = scenario_turn;
+    GameDataStateStorage.fields_.turn_current_num_ = scenario_turn;
 }
 
 void __cdecl monument(int from_load);
@@ -5539,7 +5571,7 @@ void __cdecl monument(int from_load);
 // ORIGINAL: 0x00476B70 ?mon_colony_founded@@YAXHPAD@Z 0x00476B70-0x00476C84 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["image:terranx_original.exe:0x00476B70-0x00476C84", "source:src/recovered/units/00476b70.cpp", "Original faction stride4F4, record0 flag/first-owner words and name copy to4AC determine existing type ownership; preserve24byte strncpy behavior."], "reason": "Recover first colony founding in the shared genuine FactionMonuments owner, including first-achiever selection, the bounded faction-owned base-name field and live local notification."}
 void __cdecl mon_colony_founded(int faction_id, char *base_name) {
-    const int year = static_cast<int>(game_year(TurnCurrentNum));
+    const int year = static_cast<int>(game_year(GameDataStateStorage.fields_.turn_current_num_));
     if ((Players[faction_id].rule_flags & RFLAG_ALIEN) != 0)
         return;
     MonumentFaction &faction = FactionMonuments[faction_id];
@@ -5577,7 +5609,7 @@ void __cdecl mon_colony_founded(int faction_id, char *base_name) {
 // ORIGINAL: 0x00476C90 ?mon_tech_discovered@@YAXHH@Z 0x00476C90-0x00476D93
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original00476C90 and seed git:91b86557299ab66a61f1184540338d569e780e7e:src/recovered/units/00476c90.cpp; record1 at factionstride4F4, year0, payload8, firstownerC, achieved10, firstflag14 and latesttype498 are independently established by native stores.", "The original calls game_year before alien/duplicate guards and includes all eight peer records regardless of peer flags; later qualifying first-achiever ties win."], "reason": "Recover the complete native milestone producer against genuine shared monument records, with typed peer selection and live local notification rather than executable-address table views."}
 void __cdecl mon_tech_discovered(int faction_id, int tech_id) {
-    const int year = static_cast<int>(game_year(TurnCurrentNum));
+    const int year = static_cast<int>(game_year(GameDataStateStorage.fields_.turn_current_num_));
     if ((Players[faction_id].rule_flags & RFLAG_ALIEN) != 0)
         return;
     MonumentFaction &faction = FactionMonuments[faction_id];
@@ -5614,7 +5646,7 @@ void __cdecl mon_tech_discovered(int faction_id, int tech_id) {
 // ORIGINAL: 0x00477100 ?mon_secret_project@@YAXHH@Z 0x00477100-0x00477207
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original00477100 and seed git:91b86557299ab66a61f1184540338d569e780e7e:src/recovered/units/00477100.cpp; record5 at factionstride4F4, year0, payload8, firstownerC, achieved10, firstflag14 and latesttype498 are independently established by native stores.", "The original calls game_year before alien/duplicate guards and includes all eight peer records regardless of peer flags; later qualifying first-achiever ties win."], "reason": "Recover the complete native milestone producer against genuine shared monument records, with typed peer selection and live local notification rather than executable-address table views."}
 void __cdecl mon_secret_project(int faction_id, int project_id) {
-    const int year = static_cast<int>(game_year(TurnCurrentNum));
+    const int year = static_cast<int>(game_year(GameDataStateStorage.fields_.turn_current_num_));
     if ((Players[faction_id].rule_flags & RFLAG_ALIEN) != 0)
         return;
     MonumentFaction &faction = FactionMonuments[faction_id];
@@ -5652,7 +5684,7 @@ void __cdecl mon_secret_project(int faction_id, int project_id) {
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original00477840 and seed git:91b86557299ab66a61f1184540338d569e780e7e:src/unrecovered/00477840.cpp; record12 at factionstride4F4, year0, firstownerC, achieved10, firstflag14 and latesttype498 are independently established by native stores.", "The original calls game_year before alien/duplicate guards and includes all eight peer records regardless of peer flags; later qualifying first-achiever ties win."], "reason": "Recover the complete native milestone producer against genuine shared monument records, with typed peer selection and live local notification rather than executable-address table views."}
 // TRIED: single `if(!(flag)&&active==0)` short-circuit form vs hoisting `winner`/`count=0` before the scan loop - both land the same MISMATCH #3 (original reserves the stack slot for `year` with `push ecx` ahead of the ebx/esi pushes; every C form tried here has the compiler push ebx/esi first instead).
 void __cdecl mon_built_preserve(int faction_id) {
-    const int year = static_cast<int>(game_year(TurnCurrentNum));
+    const int year = static_cast<int>(game_year(GameDataStateStorage.fields_.turn_current_num_));
     if ((Players[faction_id].rule_flags & RFLAG_ALIEN) != 0)
         return;
     MonumentFaction &faction = FactionMonuments[faction_id];
@@ -5688,7 +5720,7 @@ void __cdecl mon_built_preserve(int faction_id) {
 // ORIGINAL: 0x00476FE0 ?mon_facility_built@@YAXHPAD@Z 0x00476FE0-0x004770F2
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original 00476FE0 and seed git:fc8112d1ca80fbe743dd051511ad7e0af8454e94:src/recovered/units/00476fe0.cpp; faction stride4F4, record4, name field4C4 and24byte strncpy are established by the complete native body.", "Native first-achiever selection includes all eight peer factions; alien target and duplicate events return without updates. Local notification reads the live ConsoleGlobal owner after game_year and name copying."], "reason": "Recover the native milestone and its bounded base-name storage in the genuine shared FactionMonuments owner, not a duplicate raw table view."}
 void __cdecl mon_facility_built(int faction_id, char *base_name) {
-    const int year = static_cast<int>(game_year(TurnCurrentNum));
+    const int year = static_cast<int>(game_year(GameDataStateStorage.fields_.turn_current_num_));
     MonumentFaction &faction = FactionMonuments[faction_id];
     MonumentRecord &record = faction.records_[4];
     if (record.achieved_ != 0 || (Players[faction_id].rule_flags & RFLAG_ALIEN) != 0)
@@ -5726,7 +5758,7 @@ void __cdecl mon_facility_built(int faction_id, char *base_name) {
 // ORIGINAL: 0x00477320 ?mon_conquer_base@@YAXHPAD@Z 0x00477320-0x00477434
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original 00477320 and seed git:fc8112d1ca80fbe743dd051511ad7e0af8454e94:src/recovered/units/00477320.cpp; faction stride4F4, record7, name field4DC and24byte strncpy are established by the complete native body.", "Native first-achiever selection includes all eight peer factions; alien target and duplicate events return without updates. Local notification reads the live ConsoleGlobal owner after game_year and name copying."], "reason": "Recover the native milestone and its bounded base-name storage in the genuine shared FactionMonuments owner, not a duplicate raw table view."}
 void __cdecl mon_conquer_base(int faction_id, char *base_name) {
-    const int year = static_cast<int>(game_year(TurnCurrentNum));
+    const int year = static_cast<int>(game_year(GameDataStateStorage.fields_.turn_current_num_));
     if ((Players[faction_id].rule_flags & RFLAG_ALIEN) != 0)
         return;
     MonumentFaction &faction = FactionMonuments[faction_id];
@@ -5763,14 +5795,13 @@ void __cdecl mon_conquer_base(int faction_id, char *base_name) {
 
 // Opcode0x24 transfers this persistent window at 0x0094B4D8.
 // No semantic fields or complete original allocation extent are asserted.
-// RECOVERY_OBJECT: v1 0x0094B4D8 ?GameWireOpaque_94B4D8@@3PAEA
-uint8_t GameWireOpaque_94B4D8[0x80];
+// Historical identity moved to ScenarioSaveState::wire_opaque_94b4d8 at parent offset +0x18; see member provenance.
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00476DA0 ?mon_secrets_of_tech@@YAXH@Z 0x00476DA0-0x00476EDD
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00476da0.cpp preserved original identity/extent; pinned instructions and independent family review establish317byte body and fields; actual-source milestone/reset controls verify shared ownership and native branches"], "reason": "Record first/repeated technology secrets in genuine shared monument record2, retain first-achiever peer interpretation and notify the live local faction."}
 void __cdecl mon_secrets_of_tech(int faction_id) {
-    const int year = static_cast<int>(game_year(TurnCurrentNum));
+    const int year = static_cast<int>(game_year(GameDataStateStorage.fields_.turn_current_num_));
     if ((Players[faction_id].rule_flags & RFLAG_ALIEN) != 0)
         return;
 
@@ -5926,7 +5957,7 @@ void __cdecl check_tamper() {
         TamperRecord &record = TamperRegistryRecords[index];
         if (record.field_0_ == TamperState93A9AC &&
             record.field_4_ == TamperState93A9B0 &&
-            record.field_8_ == TurnCurrentNum &&
+            record.field_8_ == GameDataStateStorage.fields_.turn_current_num_ &&
             record.field_C_ == ConsoleGlobal.faction_id_ &&
             record.field_14_ == TamperState93A9B4) {
             matching_index = index;
@@ -5968,7 +5999,7 @@ void __cdecl check_tamper() {
     TamperRecord &record = TamperRegistryRecords[cursor];
     record.field_0_ = TamperState93A9AC;
     record.field_4_ = TamperState93A9B0;
-    record.field_8_ = TurnCurrentNum;
+    record.field_8_ = GameDataStateStorage.fields_.turn_current_num_;
     record.field_C_ = ConsoleGlobal.faction_id_;
     record.count_ = 0;
     record.field_14_ = TamperState93A9B4;
@@ -6077,6 +6108,15 @@ static int map_data_block(FILE *file, void *buffer, unsigned int size) {
     return encrypt_write(buffer, size, 1, file);
 }
 
+int __cdecl game_data_transfer_block(FILE *file, void *buffer, unsigned int size) {
+    return map_data_block(file, buffer, size);
+}
+
+int __cdecl game_data_plain_transfer(FILE *file, void *buffer, unsigned int byte_count, int write_mode) {
+    if (write_mode != 0) return static_cast<int>(fwrite(buffer, byte_count, 1, file));
+    return static_cast<int>(fread(buffer, byte_count, 1, file));
+}
+
 // ORIGINAL: 0x005A9280 ?map_data@@YAHPAUFILE@@HH@Z 0x005A9280-0x005A94ED
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/005a9280.cpp", "recovery/tasks/game-save-load-owner-coverage.json"], "reason": "Recover complete map-data transfer including archive-header blocks, legacy version-dependent block length, failure ordering and real map_read/map_write owners."}
 // symbol    ?map_data@@YAHPAU_iobuf@@HH@Z
@@ -6142,8 +6182,8 @@ int __cdecl load_map_daemon(char *path) {
                 if (map_data(file, 0, is_saved_game) == 0) {
                     ConsoleGlobal.cursor_active_ = 0;
                     ConsoleGlobal.selected_vehicle_ = -1;
-                    BaseCurrentCount = 0;
-                    VehCurrentCount = 0;
+                    GameDataStateStorage.fields_.base_current_count_ = 0;
+                    GameDataStateStorage.fields_.vehicle_current_count_ = 0;
                     // Native5A9D58/5A9D73 use signed JLE/JL tests on the
                     // loaded area word, even though its shared owner is unsigned.
                     for (int map_tile_index = 0;
@@ -6174,23 +6214,23 @@ int __cdecl save_daemon(char *save_path) {
     if (IsMultiplayerPBEM != 0) ++TamperState93A9B4;
 
     DWORD save_tick = GetTickCount();
-    if ((GameRules & RULES_IRONMAN) != 0 && IsMultiplayerNet == 0) {
+    if ((GameDataStateStorage.fields_.game_rules_ & RULES_IRONMAN) != 0 && IsMultiplayerNet == 0) {
         my_srand(static_cast<int>(save_tick));
     }
 
-    SaveDaemonStateWord = 0xC;
+    GameDataStateStorage.fields_.save_daemon_state_word_ = 0xC;
     const uint32_t save_state_flag = 0x10000000u;
-    if ((GameRules & RULES_IRONMAN) != 0) {
+    if ((GameDataStateStorage.fields_.game_rules_ & RULES_IRONMAN) != 0) {
         GameDataPlayerCountSnapshot = 0;
-        GameState |= save_state_flag;
+        GameDataStateStorage.fields_.game_state_ |= save_state_flag;
     }
     if (IsMultiplayerPBEM != 0) {
-        NetTurnFlags |= 0x20u;
-        GameState |= save_state_flag;
+        GameDataStateStorage.fields_.net_turn_flags_ |= 0x20u;
+        GameDataStateStorage.fields_.game_state_ |= save_state_flag;
         GameDataPlayerCountSnapshot = 0;
     }
     if (IsMultiplayerNet != 0) {
-        GameState |= save_state_flag;
+        GameDataStateStorage.fields_.game_state_ |= save_state_flag;
         GameDataPlayerCountSnapshot = NetDaemonNet.player_count_;
         memcpy(NetDaemonNet.save_storage_.process_slots_,
                NetDaemonNet.process_slots_,
@@ -6291,7 +6331,7 @@ int __cdecl load_daemon(LPCSTR path, int linearize_contours) {
         return result;
     }
 
-    if ((GameRules & RULES_IRONMAN) != 0) {
+    if ((GameDataStateStorage.fields_.game_rules_ & RULES_IRONMAN) != 0) {
         int seed = 0;
         if (fread(&seed, sizeof(seed), 1, file) != 0) my_srand(seed);
     }
@@ -6323,14 +6363,14 @@ int __cdecl load_daemon(LPCSTR path, int linearize_contours) {
 
     for (int alive_faction = 1; alive_faction < MaxPlayerNum; ++alive_faction) {
         bool has_presence = false;
-        for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+        for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
             if (Bases[base_id].faction_id_current == alive_faction) {
                 has_presence = true;
                 break;
             }
         }
         if (!has_presence) {
-            for (int vehicle_id = 0; vehicle_id < VehCurrentCount; ++vehicle_id) {
+            for (int vehicle_id = 0; vehicle_id < GameDataStateStorage.fields_.vehicle_current_count_; ++vehicle_id) {
                 const Veh &vehicle = Vehs[vehicle_id];
                 if (vehicle.faction_id == alive_faction &&
                     VehPrototypes[vehicle.proto_id].plan == PLAN_COLONIZATION) {
@@ -6340,11 +6380,11 @@ int __cdecl load_daemon(LPCSTR path, int linearize_contours) {
             }
         }
         const uint32_t faction_bit = 1U << (8 + alive_faction);
-        if (has_presence) LockEnableMask |= faction_bit;
-        else LockEnableMask &= ~faction_bit;
+        if (has_presence) GameDataStateStorage.fields_.lock_masks_.enable_mask_ |= faction_bit;
+        else GameDataStateStorage.fields_.lock_masks_.enable_mask_ &= ~faction_bit;
     }
 
-    if ((GameRules & RULES_IRONMAN) != 0) remove(path);
+    if ((GameDataStateStorage.fields_.game_rules_ & RULES_IRONMAN) != 0) remove(path);
 
     const int cursor_history = ConsoleGlobal.cursor_history_index_;
     const int cursor_x = ConsoleGlobal.cursor_history_x_[cursor_history];
@@ -6359,8 +6399,8 @@ int __cdecl load_daemon(LPCSTR path, int linearize_contours) {
 
     if (strstr(path, GameSaveMultiplayerMarker) != 0 && IsMultiplayerNet == 0) {
         ConsoleGlobal.cursor_active_ = 0;
-        GameState |= 0x10C0;
-        const unsigned char state_low_byte = static_cast<unsigned char>(GameState);
+        GameDataStateStorage.fields_.game_state_ |= 0x10C0;
+        const unsigned char state_low_byte = static_cast<unsigned char>(GameDataStateStorage.fields_.game_state_);
         if ((state_low_byte & 0x80) != 0 && (state_low_byte & 0x40) != 0) {
             MainInterfaceGlobal.flat_button_[2].show(0);
         } else {
@@ -6370,7 +6410,7 @@ int __cdecl load_daemon(LPCSTR path, int linearize_contours) {
 
     ControlTurnPhase = ConsoleGlobal.faction_id_;
     if (IsMultiplayerNet == 0) {
-        if ((NetTurnFlags & 0x20) == 0 && bit_count(LockEnableMask & 0xFFu) <= 1) {
+        if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x20) == 0 && bit_count(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFu) <= 1) {
             IsMultiplayerPBEM = 0;
         } else {
             IsMultiplayerPBEM = 1;
@@ -6418,12 +6458,787 @@ void __cdecl save_map() {
     save_map_daemon(name);
 }
 
+// HISTORICAL DEFERRED ANALYSIS (retained from prior source; body below supersedes status): confirmed tractable shape, not yet landed - 1983 lines of Ghidra decompilation and 196 conditionals is more than this pass could hand-verify, but the structure is now characterised: Overwhelmingly mechanical: 220 of 256 call sites are __fwrite(60)/__fread(60)/?encrypt_write@@(50)/?encrypt_read@@(50); the other 36 are ?mem_get@@(4)/_memcpy(4)/_free(4)/_abs(4)/ _strcpy(3)/_strlen(2)/?game_io@@(2)/?add@StringStruct@@(2)/ ?map_write@@/?map_read@@/?clear_scenario@@/?clear_monuments@@/ ?clear_bunglist@@/?bit_count@@ (1 each). This is a save/load serializer, field after field. a2 selects the direction: the FIRST call is FUN_0064603f(local_378) when a2!=0 (write: pack current globals into a 0x31C-byte header buffer before writing it) vs FUN_00646178(local_378,0x31C,1,a1) when a2==0 (read: fread that many bytes off `a1` first). Confirmed against the raw disasm's branch on a2 at function entry. The named blockers are ONE gate, not many: `if (local_74 < 0xb)` (local_74 is the version field inside that same 0x31C legacy header) guards roughly 10 raw copy-loops migrating the OLD struct layout into the CURRENT globals (`?9a6490` region) - this is the whole "legacy-struct migration block" and it is READ-ONLY-PATH dead code on any save from version >= 0xb, i.e. every save this binary itself produces. It is real work to transcribe (found 0x2C/0x40/0x16-element copy loops in the first 120 Ghidra lines alone) but it is bounded and separable from the ~220 I/O calls. Frame is 0x374 bytes (from the brief) - count locals against it before landing; a batch of seven diverged only at the prologue over this exact mistake.
+// Complete source-owned serializer body; historical byte and seed obligations remain.
+
+struct GameDataHeaderWire {
+    unsigned char prefix_[0x304];
+    int version_;
+    unsigned char suffix_[0x14];
+};
+
+typedef char GameDataHeaderWireHasNativeExtent[
+    sizeof(GameDataHeaderWire) == 0x31C ? 1 : -1];
+
+static int game_data_candidate_transfer(FILE *file, void *buffer,
+                                        unsigned int byte_count) {
+    return map_data_block(file, buffer, byte_count);
+}
+
+// BungList remains private to veh.cpp behind its owner-local transfer API.
+extern int __cdecl veh_game_data_bunglist(FILE *file, int format_version);
+// Console owns its private word; ScenarioSave owns one native 0x98 transfer.
+// The native StringList records deliberately use raw fread/fwrite, unlike the
+// surrounding encrypted-aware fixed blocks.
+extern int __cdecl game_data_plain_transfer(FILE *file, void *buffer,
+                                            unsigned int byte_count,
+                                            int write_mode);
+
+static int game_data_header_dword(const GameDataHeaderWire &header,
+                                  unsigned int offset) {
+    int value;
+    memcpy(&value,
+           reinterpret_cast<const unsigned char *>(&header) + offset,
+           sizeof(value));
+    return value;
+}
+
+static void game_data_migrate_legacy_header(
+        const GameDataHeaderWire *header, int) {
+    const unsigned char *const bytes =
+        reinterpret_cast<const unsigned char *>(header);
+
+    // Native 5A6B2D copies the incoming 0x31C header over the live window
+    // before this migration. These typed destinations preserve the later
+    // field-specific writes without synthesizing or clearing other bytes.
+    memcpy(&GameDataStateStorage.fields_.secret_project_, bytes + 0x84, 33 * sizeof(int));
+    memset(reinterpret_cast<unsigned char *>(&GameDataStateStorage.fields_.secret_project_)
+               + 33 * sizeof(int),
+           0xFF, 31 * sizeof(int));
+    GameDataStateStorage.fields_.governor_faction_ = game_data_header_dword(*header, 0x108);
+    memcpy(GameDataStateStorage.fields_.council_resolution_count_, bytes + 0x10C,
+           sizeof(GameDataStateStorage.fields_.council_resolution_count_));
+    memcpy(GameDataStateStorage.fields_.council_last_resolution_turn_, bytes + 0x138,
+           sizeof(GameDataStateStorage.fields_.council_last_resolution_turn_));
+    memcpy(GameDataStateStorage.fields_.game_tech_achieved_, bytes + 0x164,
+           sizeof(GameDataStateStorage.fields_.game_tech_achieved_));
+    memcpy(GameDataStateStorage.fields_.legacy_game_save_name_, bytes + 0x1BD,
+           sizeof(GameDataStateStorage.fields_.legacy_game_save_name_));
+    GameDataStateStorage.fields_.climate_rise_step_ = game_data_header_dword(*header, 0x2C0);
+    GameDataStateStorage.fields_.climate_rise_limit_ = game_data_header_dword(*header, 0x2C4);
+    GameDataStateStorage.fields_.climate_rise_accum_ = game_data_header_dword(*header, 0x2C8);
+    GameDataStateStorage.fields_.climate_sea_level_delta_ = game_data_header_dword(*header, 0x2CC);
+    GameDataStateStorage.fields_.transcendence_score_bonus_ =
+        game_data_header_dword(*header, 0x2D0);
+    memcpy(GameDataStateStorage.fields_.transcendence_score_weights_, bytes + 0x2D4,
+           sizeof(GameDataStateStorage.fields_.transcendence_score_weights_));
+    memcpy(&GameDataStateStorage.fields_.sunspot_duration_, bytes + 0x2F4, 10 * sizeof(int));
+}
+
+// Version 3..10 PlayerData wire rows are 0x20BC bytes, while the live owner
+// stride is 0x20CC. Native first copies the complete 0x20BC prefix to the
+// PlayerData object, then applies the member rewrites below. Keep this as a
+// wire-record view: the old format is not itself the current C++ class.
+struct GameDataLegacyPlayerRowV3 {
+    unsigned char bytes_[0x20BC];
+};
+
+typedef char GameDataLegacyPlayerRowV3HasNativeExtent[
+    sizeof(GameDataLegacyPlayerRowV3) == 0x20BC ? 1 : -1];
+
+struct GameDataLegacyPlayerRowV2 {
+    unsigned char bytes_[0x1CBC];
+};
+
+typedef char GameDataLegacyPlayerRowV2HasNativeExtent[
+    sizeof(GameDataLegacyPlayerRowV2) == 0x1CBC ? 1 : -1];
+
+struct GameDataLegacyBaseRowV1 {
+    unsigned char bytes_[0x130];
+};
+typedef char GameDataLegacyBaseRowV1HasNativeExtent[
+    sizeof(GameDataLegacyBaseRowV1) == 0x130 ? 1 : -1];
+
+static void game_data_migrate_legacy_base(Base &base,
+                                           const unsigned char *row) {
+    // Native 5A7Fxx first copies the complete 0x130-byte legacy prefix into
+    // the existing Base, leaving its current-only final dword untouched.
+    memcpy(&base, row, 0x130);
+
+    // The native conversion then recopies five facility bytes and clears the
+    // following four bytes before its later wider facility writes.
+    memcpy(base.facilities_built, row + 0x8C, 5);
+    memset(base.facilities_built + 5, 0, 4);
+    memcpy(&base.mineral_surplus_final, row + 0x94, 4);
+    memcpy(&base.minerals_accumulated_2, row + 0x98, 4);
+
+    // The six parallel native copy lanes start at destination offsets
+    // A0/B0/C0/D0/E0/F0 and wire offsets 9C/AC/BC/CC/DC/EC respectively.
+    // Express their destinations as the current Base members, retaining the
+    // native interleaving order rather than treating the wire row as a Base.
+    int *const lane_a[] = {&base.unk_6, &base.unk_7, &base.unk_8, &base.unk_9};
+    int *const lane_b[] = {&base.nutrient_intake_1, &base.mineral_intake_1,
+                           &base.energy_intake_1, &base.unused_intake_1};
+    int *const lane_c[] = {&base.nutrient_intake_2, &base.mineral_intake_2,
+                           &base.energy_intake_2, &base.unused_intake_2};
+    int *const lane_d[] = {&base.nutrient_surplus, &base.mineral_surplus,
+                           &base.energy_surplus, &base.unused_surplus};
+    int *const lane_e[] = {&base.nutrient_inefficiency,
+                           &base.mineral_inefficiency,
+                           &base.energy_inefficiency,
+                           &base.unused_inefficiency};
+    int *const lane_f[] = {&base.nutrient_consumption,
+                           &base.mineral_consumption,
+                           &base.energy_consumption,
+                           &base.unused_consumption};
+    for (int field = 0; field < 4; ++field) {
+        memcpy(lane_a[field], row + 0x9C + field * 4, 4);
+        memcpy(lane_b[field], row + 0xAC + field * 4, 4);
+        memcpy(lane_c[field], row + 0xBC + field * 4, 4);
+        memcpy(lane_d[field], row + 0xCC + field * 4, 4);
+        memcpy(lane_e[field], row + 0xDC + field * 4, 4);
+        memcpy(lane_f[field], row + 0xEC + field * 4, 4);
+    }
+    memcpy(&base.economy_total, row + 0xFC, 4);
+    memcpy(&base.psych_total, row + 0x100, 4);
+    memcpy(&base.labs_total, row + 0x104, 4);
+    memcpy(&base.unk_10, row + 0x108, 4);
+    memcpy(&base.spec[0], row + 0x10C, 2);
+    memcpy(&base.spec[1], row + 0x10E, 2);
+    memcpy(reinterpret_cast<unsigned char *>(&base.spec[1]) + 2,
+           row + 0x110, 2);
+    memcpy(base.facilities_built, row + 0x114, 4);
+    memcpy(base.facilities_built + 4, row + 0x118, 4);
+    memcpy(base.facilities_built + 8, row + 0x11C, 4);
+    memcpy(&base.mineral_surplus_final, row + 0x120, 4);
+    memcpy(&base.minerals_accumulated_2, row + 0x124, 4);
+    memcpy(&base.unk_6, row + 0x128, 4);
+    memcpy(&base.unk_7, row + 0x12C, 4);
+
+    for (int item = 0; item < 10; ++item) {
+        if (base.queue_production_id[item] <= -0x22)
+            base.queue_production_id[item] += -0x1F;
+    }
+}
+
+static int game_data_expand_legacy_prototype_id(int value) {
+    int low = value & 0x1F;
+    if ((low & 0x10) != 0) low -= 0x20;
+    const int high = (value + (value < 0 ? 0x1F : 0)) >> 5;
+    return (high << 6) + low;
+}
+
+static void game_data_copy_wire_bytes(unsigned char *destination,
+                                      unsigned int destination_offset,
+                                      const unsigned char *source,
+                                      unsigned int source_offset,
+                                      unsigned int byte_count) {
+    memcpy(destination + destination_offset, source + source_offset,
+           byte_count);
+}
+
+// Native <=2 conversion first copies each complete 0x1CBC source row into a
+// 0x20BC temporary row, then clears/remaps the old diplomacy/prototype and
+// region arrays. Offsets here are within explicitly-sized wire records, not
+// live C++ object aliases. The later current-PlayerData conversion consumes
+// this intermediate row in the same eight-faction order.
+static void game_data_expand_legacy_player_v2(
+        GameDataLegacyPlayerRowV3 &destination,
+        const GameDataLegacyPlayerRowV2 &source) {
+    unsigned char *const out = destination.bytes_;
+    const unsigned char *const in = source.bytes_;
+    memcpy(out, in, sizeof(source));
+
+    // These clears happen after the record copy and before the interleaving
+    // loops in the native converter.
+    memset(out + 0x854, 0, 0x200);
+    memset(out + 0xA54, 0, 0x200);
+    memset(out + 0xC54, 0, 0x400);
+
+    for (int faction = 0; faction < 8; ++faction) {
+        for (int item = 0; item < 0x20; ++item) {
+            out[0x854 + faction * 0x20 + item] =
+                in[0x854 + faction * 0x20 + item];
+            out[0xA54 + faction * 0x20 + item] =
+                in[0x954 + faction * 0x20 + item];
+            memcpy(out + 0xC54 + (faction * 0x20 + item) * 2,
+                   in + 0xA54 + (faction * 0x20 + item) * 2, 2);
+        }
+    }
+
+    // Fixed tail fields and arrays are copied in the source's original order.
+    game_data_copy_wire_bytes(out, 0x1054, in, 0xC54, 9 * 4);
+    for (int index = 0; index < 0x80; ++index) {
+        game_data_copy_wire_bytes(out, 0x1078 + index * 2, in,
+                                  0xC78 + index * 2, 2);
+        game_data_copy_wire_bytes(out, 0x1178 + index, in, 0xD78 + index, 1);
+        game_data_copy_wire_bytes(out, 0x11F8 + index, in, 0xDF8 + index, 1);
+        game_data_copy_wire_bytes(out, 0x1278 + index * 2, in,
+                                  0xE78 + index * 2, 2);
+        game_data_copy_wire_bytes(out, 0x1378 + index * 2, in,
+                                  0xF78 + index * 2, 2);
+        game_data_copy_wire_bytes(out, 0x1478 + index * 2, in,
+                                  0x1078 + index * 2, 2);
+        game_data_copy_wire_bytes(out, 0x1578 + index * 2, in,
+                                  0x1178 + index * 2, 2);
+        game_data_copy_wire_bytes(out, 0x1678 + index * 2, in,
+                                  0x1278 + index * 2, 2);
+        game_data_copy_wire_bytes(out, 0x1778 + index * 2, in,
+                                  0x1378 + index * 2, 2);
+        game_data_copy_wire_bytes(out, 0x1878 + index, in, 0x1378 + index, 1);
+        game_data_copy_wire_bytes(out, 0x18F8 + index, in, 0x13F8 + index, 1);
+        game_data_copy_wire_bytes(out, 0x1978 + index, in, 0x1578 + index, 1);
+    }
+    game_data_copy_wire_bytes(out, 0x13F8, in, 0x15F8, 0x12C);
+    game_data_copy_wire_bytes(out, 0x1EA8, in, 0x1AA8, 0x190);
+    game_data_copy_wire_bytes(out, 0x2038, in, 0x1C38, 8 * 4);
+    game_data_copy_wire_bytes(out, 0x2058, in, 0x1C58, 8 * 4);
+    game_data_copy_wire_bytes(out, 0x206C, in, 0x1C6C, 10 * 4);
+    game_data_copy_wire_bytes(out, 0x2094, in, 0x1C94, 4);
+    game_data_copy_wire_bytes(out, 0x2098, in, 0x1C98, 9 * 4);
+}
+
+// Complete per-row translation of the v3..10 body through 0x5A783A. ESI is
+// the current PlayerData row plus facility_announced, and EDI is the legacy
+// wire row plus 0x460; source/destination expressions below are expressed
+// through the actual PlayerData members rather than a live-object byte view.
+static void game_data_migrate_legacy_player_v3(
+        PlayerData &player, const GameDataLegacyPlayerRowV3 &wire) {
+    const unsigned char *const bytes = wire.bytes_;
+    memcpy(&player, bytes, sizeof(wire));
+    memcpy(player.facility_announced, bytes + 0x458, 5);
+    memset(player.facility_announced + 5, 0, 4);
+    memcpy(&player.planet_ecology, bytes + 0x460, sizeof(int));
+    memcpy(&player.base_id_atk_target, bytes + 0x464, sizeof(int));
+    memcpy(&player.unk_37, bytes + 0x468, sizeof(int));
+    memcpy(player.saved_queue_name, bytes + 0x46C,
+           sizeof(player.saved_queue_name));
+    memcpy(player.saved_queue_size, bytes + 0x52C,
+           sizeof(player.saved_queue_size));
+    memcpy(player.saved_queue_items, bytes + 0x54C,
+           sizeof(player.saved_queue_items));
+    memcpy(player.unk_38, bytes + 0x68C, sizeof(player.unk_38));
+    for (int row = 0; row < 9; ++row) {
+        for (int column = 0; column < 8; ++column) {
+            memcpy(&player.unk_39[column][row],
+                   bytes + 0x6AC + (row + column * 9) * sizeof(int),
+                   sizeof(int));
+        }
+    }
+    memcpy(player.unk_46, bytes + 0x7CC, sizeof(player.unk_46));
+
+    memcpy(&player.unk_47, bytes + 0x7F0, sizeof(player.unk_47) * 3);
+    memcpy(&player.nutrient_surplus_total, bytes + 0x85C, sizeof(int));
+    memcpy(&player.labs_total, bytes + 0x860, sizeof(int));
+    memcpy(player.satellites_, bytes + 0x864, sizeof(player.satellites_));
+    memcpy(&player.best_weapon_value, bytes + 0x874,
+           sizeof(player.best_weapon_value) * 15);
+    memcpy(player.unk_69, bytes + 0x850, sizeof(player.unk_69));
+
+    memcpy(player.proto_id_active, bytes + 0x854,
+           sizeof(player.proto_id_active));
+    memcpy(player.proto_id_queue, bytes + 0xA54,
+           sizeof(player.proto_id_queue));
+    memcpy(player.proto_id_lost, bytes + 0xC54,
+           sizeof(player.proto_id_lost));
+    memcpy(&player.total_mil_veh, bytes + 0xF54,
+           sizeof(player.total_mil_veh) * 9);
+
+    memcpy(player.region_total_combat_vehs, bytes + 0x1078,
+           sizeof(player.region_total_combat_vehs));
+    memcpy(player.region_total_bases, bytes + 0x1178,
+           sizeof(player.region_total_bases));
+    memcpy(player.region_total_offensive_vehs, bytes + 0x11F8,
+           sizeof(player.region_total_offensive_vehs));
+    memcpy(player.region_force_rating, bytes + 0x1278,
+           sizeof(player.region_force_rating));
+    memcpy(player.unk_77, bytes + 0x1378, sizeof(player.unk_77));
+    memcpy(player.unk_78, bytes + 0x1478, sizeof(player.unk_78));
+    memcpy(player.unk_79, bytes + 0x1578, sizeof(player.unk_79));
+    memcpy(player.unk_80, bytes + 0x1678, sizeof(player.unk_80));
+    memcpy(player.unk_81, bytes + 0x1778, sizeof(player.unk_81));
+    memcpy(player.unk_82, bytes + 0x1878, sizeof(player.unk_82));
+    memcpy(player.unk_83, bytes + 0x18F8, sizeof(player.unk_83));
+    memcpy(player.region_base_plan, bytes + 0x1978,
+           sizeof(player.region_base_plan));
+
+    memcpy(player.goals, bytes + 0x19F8, sizeof(player.goals));
+    memcpy(player.sites, bytes + 0x1EA8, sizeof(player.sites));
+    memcpy(&player.unk_93, bytes + 0x2038,
+           sizeof(player.unk_93) * 8);
+    memcpy(player.secret_project_intel, bytes + 0x2058,
+           sizeof(unsigned int) * 5);
+    memset(player.secret_project_intel + 5, 0,
+           sizeof(player.secret_project_intel) - sizeof(unsigned int) * 5);
+    memcpy(&player.corner_market_turn, bytes + 0x206C,
+           sizeof(player.corner_market_turn) * 10);
+    memcpy(&player.unk_109, bytes + 0x2094, sizeof(player.unk_109));
+    memcpy(player.score_items_, bytes + 0x2098,
+           sizeof(player.score_items_));
+}
+
+static int game_data_candidate_transfer_players(FILE *file, int version) {
+    // Native allocates the v3 row window even for a current v11+ file. Keep
+    // allocation and failed-transfer return order: early errors leak these
+    // buffers in the original routine.
+    GameDataLegacyPlayerRowV3 *const rows =
+        static_cast<GameDataLegacyPlayerRowV3 *>(mem_get(0x105E0));
+    if (version <= 2) {
+        GameDataLegacyPlayerRowV2 *const old_rows =
+            static_cast<GameDataLegacyPlayerRowV2 *>(mem_get(0xE5E0));
+        if (game_data_candidate_transfer(file, old_rows, 0xE5E0) == 0)
+            return 1;
+        for (int old_faction = 0; old_faction < 8; ++old_faction)
+            game_data_expand_legacy_player_v2(
+                rows[old_faction], old_rows[old_faction]);
+        free(old_rows);
+    } else if (version < 0xB) {
+        if (game_data_candidate_transfer(file, rows, 0x105E0) == 0)
+            return 1;
+    }
+
+    if (version >= 0xB) {
+        if (game_data_candidate_transfer(file, PlayersData, 0x10660) == 0)
+            return 1;
+    } else {
+        for (int legacy_faction = 0; legacy_faction < 8; ++legacy_faction)
+            game_data_migrate_legacy_player_v3(
+                PlayersData[legacy_faction], rows[legacy_faction]);
+    }
+    free(rows);
+    return 0;
+}
+
+static int game_data_candidate_string_list(FILE *file, StringList &list,
+                                           int write_mode) {
+    int count = list.entry_count_;
+    if (write_mode != 0) {
+        if (game_data_plain_transfer(file, &count, 4, write_mode) == 0)
+            return 1;
+        for (int index = 0; index < count; ++index) {
+            list.seek_pos(index);
+            StringStructPayload *const payload = list.current_entry();
+            int id = list.current_id();
+            strcpy(StringTemp, payload->text);
+            int length = static_cast<int>(strlen(StringTemp));
+            if (game_data_plain_transfer(file, &id, 4, write_mode) == 0)
+                return 1;
+            if (game_data_plain_transfer(file, &length, 4, write_mode) == 0)
+                return 1;
+            if (length != 0
+                && game_data_plain_transfer(
+                       file, StringTemp, static_cast<unsigned int>(length),
+                       write_mode) == 0)
+                return 1;
+        }
+        return 0;
+    }
+
+    list.remove_all();
+    list.current_position_ = 0;
+    list.allocator_ = 0;
+    if (game_data_plain_transfer(file, &count, 4, write_mode) == 0)
+        return 1;
+    for (int index = 0; index < count; ++index) {
+        int id;
+        int length;
+        if (game_data_plain_transfer(file, &id, 4, write_mode) == 0)
+            return 1;
+        if (game_data_plain_transfer(file, &length, 4, write_mode) == 0)
+            return 1;
+        if (game_data_plain_transfer(
+                file, StringTemp, static_cast<unsigned int>(length),
+                write_mode) == 0)
+            return 1;
+        StringTemp[length] = '\0';
+        list.field_20_ = 0;
+        list.field_24_ = 0;
+        list.pending_text_ = StringTemp;
+        list.add(id);
+    }
+    return 0;
+}
+
 // ORIGINAL: 0x005A6AC0 ?game_data@@YAHPAUFILE@@H@Z 0x005A6AC0-0x005A9279
-// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/005a6ac0.cpp", "recovery/tasks/game-save-load-owner-coverage.json"], "reason": "Explicitly unfinished link-continuity body for the serializer called by recovered loaders. BODY GOES HERE remains; this body grants no recovery or runtime coverage and all original seed obligations remain."}
 // symbol    ?game_data@@YAHPAU_iobuf@@H@Z
-// DEFERRED: confirmed tractable shape, not yet landed - 1983 lines of Ghidra decompilation and 196 conditionals is more than this pass could hand-verify, but the structure is now characterised: Overwhelmingly mechanical: 220 of 256 call sites are __fwrite(60)/__fread(60)/?encrypt_write@@(50)/?encrypt_read@@(50); the other 36 are ?mem_get@@(4)/_memcpy(4)/_free(4)/_abs(4)/ _strcpy(3)/_strlen(2)/?game_io@@(2)/?add@StringStruct@@(2)/ ?map_write@@/?map_read@@/?clear_scenario@@/?clear_monuments@@/ ?clear_bunglist@@/?bit_count@@ (1 each). This is a save/load serializer, field after field. a2 selects the direction: the FIRST call is FUN_0064603f(local_378) when a2!=0 (write: pack current globals into a 0x31C-byte header buffer before writing it) vs FUN_00646178(local_378,0x31C,1,a1) when a2==0 (read: fread that many bytes off `a1` first). Confirmed against the raw disasm's branch on a2 at function entry. The named blockers are ONE gate, not many: `if (local_74 < 0xb)` (local_74 is the version field inside that same 0x31C legacy header) guards roughly 10 raw copy-loops migrating the OLD struct layout into the CURRENT globals (`?9a6490` region) - this is the whole "legacy-struct migration block" and it is READ-ONLY-PATH dead code on any save from version >= 0xb, i.e. every save this binary itself produces. It is real work to transcribe (found 0x2C/0x40/0x16-element copy loops in the first 120 Ghidra lines alone) but it is bounded and separable from the ~220 I/O calls. Frame is 0x374 bytes (from the brief) - count locals against it before landing; a batch of seven diverged only at the prologue over this exact mistake.
-int __cdecl game_data(FILE *, int) {
-    // BODY GOES HERE.
+int __cdecl game_data(FILE *file, int write_mode) {
+    GameDataHeaderWire header;  // deliberately not initialized before write
+    GameDataWriteMode = write_mode;
+    GameDataEncryptedMode = 0;
+    GameDataLoadStatusWord = 0;
+
+    if (game_data_candidate_transfer(file, &header, sizeof(header)) == 0)
+        return 1;
+
+    const int version = header.version_;
+    if (version >= 0xB) {
+        if (game_data_candidate_transfer(
+                file, &GameDataStateStorage, 0x398) == 0)
+            return 1;
+    } else {
+        // Native copies the complete old header into the live state window
+        // before the field-by-field legacy conversion; do not stage this in a
+        // success-only temporary or normalize its read/write ordering.
+        memcpy(&GameDataStateStorage, &header, 0x31C);
+        game_data_migrate_legacy_header(&header, version);
+    }
+
+    if (version >= 4) {
+        GameDataEncryptedMode =
+            static_cast<int>(GameDataStateStorage.fields_.game_state_
+                             & 0x10000000u);
+        if (GameDataEncryptedMode != 0) {
+            if (game_data_candidate_transfer(
+                    file, &GameDataStateStorage, 0x398) == 0)
+                return 1;
+            if (game_data_candidate_transfer(
+                    file, NetDaemonNet.save_storage_.process_slots_, 0xCE0) == 0)
+                return 1;
+            if (game_data_candidate_transfer(
+                    file, &GameDataPlayerCountSnapshot, 4) == 0)
+                return 1;
+            if (GameDataWriteMode == 0) {
+                LPSTR saved_time_control[6];
+                for (int save_name_index = 0; save_name_index < 6; ++save_name_index)
+                    saved_time_control[save_name_index] = TimeControl[save_name_index].name;
+                if (game_data_candidate_transfer(file, TimeControl, 0xC0) == 0)
+                    return 1;
+                for (int restore_name_index = 0; restore_name_index < 6; ++restore_name_index)
+                    TimeControl[restore_name_index].name = saved_time_control[restore_name_index];
+            } else if (game_data_candidate_transfer(file, TimeControl, 0xC0) == 0) {
+                return 1;
+            }
+        }
+        if (game_data_candidate_transfer(
+                file, &ConsoleGlobal.faction_id_,
+                sizeof(ConsoleGlobal.faction_id_)) == 0)
+            return 1;
+    } else {
+        GameDataEncryptedMode = 0;
+        if (game_data_candidate_transfer(
+                file, &ConsoleGlobal.faction_id_,
+                sizeof(ConsoleGlobal.faction_id_)) == 0)
+            return 1;
+    }
+
+    if (game_data_candidate_transfer_players(file, version) != 0)
+        return 1;
+
+    if (game_data_candidate_transfer(file, Players, 0x2CE0) == 0)
+        return 1;
+    if (game_data_candidate_transfer(file, FactionRankingsUnk, 0x20) == 0)
+        return 1;
+
+    if (GameDataWriteMode != 0) {
+        if (map_write(file) != 0) return 1;
+    } else {
+        if (GameDataLoadRequest == 0
+            && (GameDataStateStorage.fields_.game_state_ & 1u) == 0) {
+            const unsigned int lock_mask =
+                GameDataStateStorage.fields_.lock_masks_.enable_mask_;
+            const unsigned int alive = (lock_mask >> 8) & 0xffu;
+            const unsigned int human = lock_mask & 0xffu;
+            unsigned int both = alive & human;
+            unsigned int faction_bits = both;
+            int matching_factions = 0;
+            while (faction_bits != 0) {
+                matching_factions += static_cast<int>(faction_bits & 1u);
+                faction_bits >>= 1;
+            }
+            if (matching_factions > 1) {
+                for (int faction = 1; faction < 8; ++faction) {
+                    const unsigned int bit = 1u << faction;
+                    if ((alive & bit) != 0 && (human & bit) != 0
+                        && PlayersData[faction].unk_102 != 0) {
+                        GameDataLoadStatusWord = 1;
+                        return 1;
+                    }
+                }
+            }
+        }
+        // Native reloads the direction global after the legacy permission
+        // probe and can branch to map_write at this second test.
+        if (GameDataWriteMode != 0) {
+            if (map_write(file) != 0) return 1;
+        } else if (map_read(file) != 0) {
+            return 1;
+        }
+    }
+
+    if (game_data_candidate_transfer(
+            file, FactionRankingHistory, 16000) == 0)
+        return 1;
+    if (game_data_candidate_transfer(file, &ReplayEventBytes, 4) == 0)
+        return 1;
+    if (ReplayEventBytes != 0
+        && game_data_candidate_transfer(file, ReplayEvents,
+                                        static_cast<unsigned int>(ReplayEventBytes)) == 0)
+        return 1;
+    if (game_data_candidate_transfer(file, Continents, 0xE00) == 0)
+        return 1;
+
+    if (version >= 3) {
+        if (game_data_candidate_transfer(file, VehPrototypes, 0x6800) == 0)
+            return 1;
+    } else {
+        for (int prototype_block = 0; prototype_block < 512;
+             prototype_block += 64) {
+            if (game_data_candidate_transfer(
+                    file, &VehPrototypes[prototype_block], 0x680) == 0)
+                return 1;
+            for (int cleared_prototype = prototype_block + 32;
+                 cleared_prototype < prototype_block + 64;
+                ++cleared_prototype) {
+                VehPrototypes[cleared_prototype].veh_name[0] = '\0';
+                VehPrototypes[cleared_prototype].flags = 0;
+                VehPrototypes[cleared_prototype].unk_1 = 0;
+            }
+        }
+    }
+
+    if (veh_game_data_bunglist(file, version) == 0) return 1;
+
+    if (version <= 10) {
+        for (int prototype_id = 0; prototype_id < 512; ++prototype_id) {
+            if (VehPrototypes[prototype_id].weapon_id >= 0x0C)
+                VehPrototypes[prototype_id].weapon_id += 3;
+        }
+    }
+
+    if (GameDataStateStorage.fields_.vehicle_current_count_ != 0) {
+        if (version >= 3) {
+            if (game_data_candidate_transfer(
+                    file, Vehs,
+                    static_cast<unsigned int>(GameDataStateStorage.fields_.vehicle_current_count_) * 0x34u) == 0)
+                return 1;
+        } else {
+            typedef char GameDataLegacyVehRowExtent[0x30];
+            GameDataLegacyVehRowExtent *const old_rows =
+                static_cast<GameDataLegacyVehRowExtent *>(
+                    mem_get(GameDataStateStorage.fields_.vehicle_current_count_ * 0x30));
+            if (game_data_candidate_transfer(
+                    file, old_rows,
+                    static_cast<unsigned int>(GameDataStateStorage.fields_.vehicle_current_count_) * 0x30u) == 0)
+                return 1;
+            for (int vehicle_id = 0; vehicle_id < GameDataStateStorage.fields_.vehicle_current_count_; ++vehicle_id) {
+                const unsigned char *const row =
+                    reinterpret_cast<const unsigned char *>(old_rows[vehicle_id]);
+                Veh &vehicle = Vehs[vehicle_id];
+                memcpy(&vehicle.x, row + 0x00, sizeof(vehicle.x));
+                memcpy(&vehicle.y, row + 0x02, sizeof(vehicle.y));
+                memcpy(&vehicle.state, row + 0x04, sizeof(vehicle.state));
+                memcpy(&vehicle.flags, row + 0x08, sizeof(vehicle.flags));
+                vehicle.proto_id = row[0x0A];
+                vehicle.unk_1 = 0;
+                vehicle.faction_id = row[0x0A];
+                vehicle.year_end_lurking = 0;
+                vehicle.dmg_incurred = row[0x0C];
+                vehicle.order = static_cast<int8_t>(row[0x0D]);
+                vehicle.waypoint_count = row[0x0E];
+                vehicle.patrol_current_point = row[0x0F];
+                for (int point = 0; point < 4; ++point) {
+                    memcpy(&vehicle.waypoint_x[point], row + 0x10 + point * 2, 2);
+                    memcpy(&vehicle.waypoint_y[point], row + 0x18 + point * 2, 2);
+                }
+                vehicle.morale = row[0x20];
+                vehicle.terraforming_turns = row[0x21];
+                vehicle.order_auto_type = row[0x22];
+                vehicle.visibility = row[0x23];
+                vehicle.moves_expended = row[0x24];
+                vehicle.facing = static_cast<int8_t>(row[0x25]);
+                vehicle.unk_6 = row[0x26];
+                vehicle.move_to_ai_type = row[0x27];
+                vehicle.probe_action = row[0x28];
+                vehicle.probe_sabotage_id = row[0x29];
+                memcpy(&vehicle.home_base_id, row + 0x2A, 2);
+                memcpy(&vehicle.next_veh_id_stack, row + 0x2C, 2);
+                memcpy(&vehicle.prev_veh_id_stack, row + 0x2E, 2);
+            }
+            for (int expanded_vehicle_id = 0; expanded_vehicle_id < GameDataStateStorage.fields_.vehicle_current_count_; ++expanded_vehicle_id)
+                Vehs[expanded_vehicle_id].proto_id = static_cast<int16_t>(
+                    game_data_expand_legacy_prototype_id(
+                        Vehs[expanded_vehicle_id].proto_id));
+            if (old_rows != 0) free(old_rows);
+        }
+    }
+
+    if (version <= 7) {
+        // The two byte stores are inside the real VehPrototype icon_offset
+        // fields: 0x9ABA36 is prototype 8 + 0x2E, then 0x9ABA02 is
+        // prototype 7 + 0x2E.
+        VehPrototypes[8].icon_offset = 3;
+        VehPrototypes[7].icon_offset = 2;
+    }
+
+    if (version >= 0xB) {
+        if (GameDataStateStorage.fields_.base_current_count_ != 0
+            && game_data_candidate_transfer(
+                   file, Bases,
+                   static_cast<unsigned int>(GameDataStateStorage.fields_.base_current_count_) * 0x134u) == 0)
+            return 1;
+    } else if (GameDataStateStorage.fields_.base_current_count_ != 0) {
+        GameDataLegacyBaseRowV1 *const old_rows =
+            static_cast<GameDataLegacyBaseRowV1 *>(
+                mem_get(GameDataStateStorage.fields_.base_current_count_ * 0x130));
+        if (game_data_candidate_transfer(
+                file, old_rows,
+                static_cast<unsigned int>(GameDataStateStorage.fields_.base_current_count_) * 0x130u) == 0)
+            return 1;
+        for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id)
+            game_data_migrate_legacy_base(
+                Bases[base_id], old_rows[base_id].bytes_);
+        if (old_rows != 0) free(old_rows);
+    }
+
+    if (version <= 2) {
+        for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
+            Base &base = Bases[base_id];
+            const int queue_count = static_cast<int>(base.queue_size);
+            if (queue_count >= 0) {
+                for (int queue_item = 0; queue_item <= queue_count;
+                     ++queue_item) {
+                    int &production_id = base.queue_production_id[queue_item];
+                    if (production_id >= 0)
+                        production_id = game_data_expand_legacy_prototype_id(
+                            production_id);
+                }
+            }
+        }
+    }
+
+    if ((GameDataStateStorage.fields_.game_state_ & 0x10u) != 0
+        && game_data_candidate_transfer(file, ScenarioSaveNameBuffer, 0x100) == 0)
+        return 1;
+    if (version >= 1) {
+        if (game_data_candidate_transfer(file, SaveNameBuffer, 0x100) == 0)
+            return 1;
+    } else {
+        strcpy(SaveNameBuffer,
+               SaveNameDefaultStorageGlobal.game_data_migration_default_);
+    }
+    if (version >= 2) {
+        if (game_data_candidate_transfer(file, &ScenarioSave, 0x98) == 0)
+            return 1;
+    } else {
+        clear_scenario();
+    }
+    if (version >= 7) {
+        if (game_data_candidate_transfer(file, FactionMonuments, 0x27A0) == 0)
+            return 1;
+    } else {
+        clear_monuments();
+    }
+    if (version >= 12) {
+        if (game_data_candidate_transfer(file, TectonicDetonationCount, 0x20) == 0)
+            return 1;
+    } else {
+        for (int faction = 0; faction < 8; ++faction)
+            TectonicDetonationCount[faction] = 0;
+    }
+
+    if (game_data_candidate_transfer(
+            file, &ConsoleGlobal.cursor_active_, 4) == 0)
+        return 1;
+    if (game_data_candidate_transfer(
+            file, &ConsoleGlobal.selected_vehicle_, 4) == 0)
+        return 1;
+    const int history_index = ConsoleGlobal.cursor_history_index_;
+    if (game_data_candidate_transfer(
+            file, &ConsoleGlobal.cursor_history_x_[history_index], 4) == 0)
+        return 1;
+    if (game_data_candidate_transfer(
+            file, &ConsoleGlobal.cursor_history_y_[history_index], 4) == 0)
+        return 1;
+    if (ConsoleGlobal.game_data_private_word(file, GameDataWriteMode) == 0)
+        return 1;
+
+    for (int map_slot = 0; map_slot < 8; ++map_slot) {
+        if (game_io(MapWinTable[map_slot], file) != 0) return 1;
+    }
+    if (game_io(&WorldClimateWorldWin.mapWin_, file) != 0) return 1;
+
+    if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x20u) != 0
+        && game_data_candidate_transfer(file, OfferResetCells, 0x2400) == 0)
+        return 1;
+    if (game_data_candidate_transfer(file, PendingDiplomacyFlags, 0x100) == 0)
+        return 1;
+    if (game_data_candidate_transfer(file, FactionTurnCombatWins, 0x20) == 0)
+        return 1;
+    if (game_data_candidate_transfer(file, FactionTurnCombatLosses, 0x20) == 0)
+        return 1;
+    for (int faction = 1; faction < 8; ++faction) {
+        if (game_data_candidate_string_list(
+                file, MessageWinDeferredBaseMessages[faction],
+                write_mode) != 0)
+            return 1;
+    }
+
+    // Native starts at DiplomacyTranscriptLists[1][1] and traverses a
+    // triangular set with one-list outer and two-list inner steps. The stop
+    // address is the [2][0] head field (+8), so these typed array pointers
+    // retain the image's exact 0x30/0x60 progression without raw aliases.
+    StringList *outer = &DiplomacyTranscriptLists[1][1];
+    StringList *const stop = &DiplomacyTranscriptLists[2][0];
+    int inner_count = 1;
+    while (outer < stop) {
+        StringList *const row_begin = outer;
+        StringList *inner = row_begin;
+        for (int pair = 0; pair < inner_count; ++pair) {
+            if (game_data_candidate_string_list(
+                    file, *inner, write_mode) != 0)
+                return 1;
+            inner += 2;
+        }
+        outer = row_begin + 1;
+        ++inner_count;
+    }
+
+    if (game_data_candidate_transfer(
+            file, &CouncilWindow.field_A1C_, 4) == 0)
+        return 1;
+    if (game_data_candidate_transfer(
+            file, &CouncilWindow.field_A20_, 4) == 0)
+        return 1;
+    if (game_data_candidate_transfer(
+            file, &CouncilWindow.field_A24_, 4) == 0)
+        return 1;
+    if (game_data_candidate_transfer(
+            file, &CouncilWindow.field_A28_, 4) == 0)
+        return 1;
+    if (game_data_candidate_transfer(
+            file, CouncilWindow.leader_label_kind_, 0x20) == 0)
+        return 1;
+    if (game_data_candidate_transfer(
+            file, CouncilWindow.leader_tech_, 0x20) == 0)
+        return 1;
+    if (game_data_candidate_transfer(file, &CouncilPbemGate, 4) == 0)
+        return 1;
+    if (game_data_candidate_transfer(file, CouncilNotifyFormSlots, 0x20) == 0)
+        return 1;
+    if (game_data_candidate_transfer(file, CouncilNotifyPluralSlots, 0x20) == 0)
+        return 1;
+    if (game_data_candidate_transfer(file, &TamperState93A9AC, 4) == 0)
+        return 1;
+    if (game_data_candidate_transfer(file, &TamperState93A9B0, 4) == 0)
+        return 1;
+    if (game_data_candidate_transfer(file, &TamperState93A9B4, 4) == 0)
+        return 1;
+    if (game_data_candidate_transfer(file, TamperDialogFaction, 0x20) == 0)
+        return 1;
+    if (game_data_candidate_transfer(file, TamperDialogValue, 0x20) == 0)
+        return 1;
+
+    if (write_mode != 0) {
+        if (game_data_candidate_transfer(file, &IfaceScreenWidth, 4) == 0)
+            return 1;
+        if (game_data_candidate_transfer(file, &IfaceScreenHeight, 4) == 0)
+            return 1;
+        return 0;
+    }
+
+    int saved_width;
+    int saved_height;
+    if (game_data_candidate_transfer(file, &saved_width, 4) == 0)
+        return 1;
+    if (game_data_candidate_transfer(file, &saved_height, 4) == 0)
+        return 1;
+    if (saved_width != IfaceScreenWidth || saved_height != IfaceScreenHeight) {
+        for (int map_slot = 1; map_slot < 8; ++map_slot) {
+            if (MapWinTable[map_slot] != 0)
+                MapWinTable[map_slot]->field_1DD74_ = 0;
+        }
+        return 0;
+    }
     return 0;
 }
 
@@ -6526,7 +7341,7 @@ void __cdecl yearmotize(char *text) {
             char buf[80];
             char year_str[80];
             buf[0] = 0;
-            const int year = static_cast<int>(game_year(TurnCurrentNum));
+            const int year = static_cast<int>(game_year(GameDataStateStorage.fields_.turn_current_num_));
             _itoa(year, year_str, 10);
             strcat(buf, year_str);
             run[0] = buf[0];
@@ -6641,7 +7456,7 @@ int __cdecl do_unity_crash(int x, int y, int faction_id) {
         return 1;
     }
     case 10: {
-        const int bonus = (TurnCurrentNum >= 0x32) ? 300 : 150;
+        const int bonus = (GameDataStateStorage.fields_.turn_current_num_ >= 0x32) ? 300 : 150;
         PlayersData[faction_id].energy_reserves += bonus;
         parse_num(0, bonus);
         ConsoleInfoWin.on_redraw();
@@ -6654,7 +7469,7 @@ int __cdecl do_unity_crash(int x, int y, int faction_id) {
         return 1;
     }
     case 0x13: {
-        int base_count = BaseCurrentCount;
+        int base_count = GameDataStateStorage.fields_.base_current_count_;
         int base_id = 0;
         while (base_id < base_count) {
             StringTemp[0] = 0;
@@ -6672,7 +7487,7 @@ int __cdecl do_unity_crash(int x, int y, int faction_id) {
                 && strcmp(StringTemp, "FUNGBOY") != 0) {
                 spot_loc(Bases[base_id].x, Bases[base_id].y, faction_id);
             }
-            base_count = BaseCurrentCount;
+            base_count = GameDataStateStorage.fields_.base_current_count_;
             ++base_id;
         }
 
@@ -6696,7 +7511,7 @@ int __cdecl do_unity_crash(int x, int y, int faction_id) {
 // RECOVERY_BINDING: v1 {"reason":"Recover complete descending vehicle-placement retries with real prototypes/chassis/Map records, native odd-y x adjustment and failed-placement deletion. Original68FAF0 is MapLongitude for tile-row stride and wrap threshold, not full MapLongitudeBounds; air-only placement does not form a terrain pointer. No byte/reference or runtime claim is granted.","evidence":["git:0de05de6:src/unrecovered/005b0a30.cpp","image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","recovery/tasks/scenario-artifact-unity-owner-coverage.json","Original full span and native physical COFF emitted symbol ?scenario_setup@@YAXXZ; existing source owns all referenced storage and services."]}
 // TRIED: literal asm-mirrored translation (nested short-circuit accept flags for zone/tile/veh-stack checks, best-distance search loop) compiles and matches through instr #4; diverges at #5 (test vs mov, prologue-adjacent) - landed at MISMATCH.
 void __cdecl scenario_setup() {
-    for (int vehicle_id = VehCurrentCount - 1; vehicle_id >= 0; --vehicle_id) {
+    for (int vehicle_id = GameDataStateStorage.fields_.vehicle_current_count_ - 1; vehicle_id >= 0; --vehicle_id) {
         Veh &vehicle = Vehs[vehicle_id];
         const unsigned short start_flags = VFLAG_START_RAND_LOCATION |
                                            VFLAG_START_RAND_MONOLITH |
@@ -6772,8 +7587,8 @@ void __cdecl scenario_setup() {
 
             if (accept) {
                 int best_distance = 9999;
-                if (VehCurrentCount > 0) {
-                    for (int other_id = 0; other_id < VehCurrentCount;
+                if (GameDataStateStorage.fields_.vehicle_current_count_ > 0) {
+                    for (int other_id = 0; other_id < GameDataStateStorage.fields_.vehicle_current_count_;
                          ++other_id) {
                         if (vehicle_id != other_id) {
                             int dx = abs(x - Vehs[other_id].x);
@@ -6810,7 +7625,7 @@ void __cdecl alien_start() {
     static const char alien_filename_a[] = "FUNGBOY";
     static const char alien_filename_b[] = "FUNGBOY";
 
-    if (TurnCurrentNum != 0 || ExpansionEnabled == 0) {
+    if (GameDataStateStorage.fields_.turn_current_num_ != 0 || ExpansionEnabled == 0) {
         return;
     }
 
@@ -6828,7 +7643,7 @@ void __cdecl alien_start() {
 
     for (int faction_id = 1; faction_id < MaxPlayerNum; ++faction_id) {
         const uint32_t faction_bit = 1U << faction_id;
-        if ((LockEnableMask & faction_bit) != 0 || IsMultiplayerPBEM != 0 ||
+        if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_bit) != 0 || IsMultiplayerPBEM != 0 ||
             IsMultiplayerNet != 0) {
             continue;
         }
@@ -6841,11 +7656,11 @@ void __cdecl alien_start() {
             continue;
         }
 
-        LockEnableMask &= ~faction_bit;
+        GameDataStateStorage.fields_.lock_masks_.enable_mask_ &= ~faction_bit;
         // The original separately clears byte +1, the alive-faction mask.
-        LockEnableMask &= ~(faction_bit << 8);
+        GameDataStateStorage.fields_.lock_masks_.enable_mask_ &= ~(faction_bit << 8);
 
-        for (int base_id = BaseCurrentCount - 1; base_id >= 0; --base_id) {
+        for (int base_id = GameDataStateStorage.fields_.base_current_count_ - 1; base_id >= 0; --base_id) {
             if (Bases[base_id].faction_id_current == faction_id) {
                 base_kill(base_id);
             }
@@ -6853,8 +7668,8 @@ void __cdecl alien_start() {
 
         // veh_kill compacts the vehicle table; the original checks the live
         // count before dereferencing each descending id.
-        for (int veh_id = VehCurrentCount - 1; veh_id >= 0; --veh_id) {
-            if (veh_id < VehCurrentCount &&
+        for (int veh_id = GameDataStateStorage.fields_.vehicle_current_count_ - 1; veh_id >= 0; --veh_id) {
+            if (veh_id < GameDataStateStorage.fields_.vehicle_current_count_ &&
                 Vehs[veh_id].faction_id == faction_id) {
                 veh_kill(veh_id);
             }
@@ -6909,7 +7724,7 @@ static bool alien_tile_vehicle_visible(int vehicle_id, int faction) {
 void __cdecl alien_fauna() {
     bool final_spore_launcher_spawned = false;
     int spread_rounds = static_cast<int>(MapArea) /
-        (((TurnCurrentNum + ((TurnCurrentNum >> 31) & 3)) >> 2) + 0x20);
+        (((GameDataStateStorage.fields_.turn_current_num_ + ((GameDataStateStorage.fields_.turn_current_num_ >> 31) & 3)) >> 2) + 0x20);
 
     for (int attempt = 0; attempt < spread_rounds; ++attempt) {
         const int raw_x = alien_random_x();
@@ -6988,18 +7803,18 @@ void __cdecl alien_fauna() {
         }
     }
 
-    if ((GameRules & 0x200000u) != 0) return;
+    if ((GameDataStateStorage.fields_.game_rules_ & 0x200000u) != 0) return;
     const uint32_t early_limit_bits =
         ((3u - MapNativeLifeForms) * 10u -
-         static_cast<uint32_t>(DiffLevelCurrent)) * 2u;
+         static_cast<uint32_t>(GameDataStateStorage.fields_.diff_level_current_)) * 2u;
     const int early_limit = alien_signed_wrap(early_limit_bits);
-    const bool very_early = TurnCurrentNum < early_limit;
-    if (SecretProject.voice_of_planet() != -1 || VehCurrentCount > 0x6ff) return;
+    const bool very_early = GameDataStateStorage.fields_.turn_current_num_ < early_limit;
+    if (GameDataStateStorage.fields_.secret_project_.voice_of_planet() != -1 || GameDataStateStorage.fields_.vehicle_current_count_ > 0x6ff) return;
 
     const uint32_t transport_period_bits =
         (5u - MapNativeLifeForms) * 2u;
     const int transport_period = alien_signed_wrap(transport_period_bits);
-    if (TurnCurrentNum % transport_period == 0) {
+    if (GameDataStateStorage.fields_.turn_current_num_ % transport_period == 0) {
         int x = 0;
         int y = 0;
         int region = 0;
@@ -7031,12 +7846,12 @@ void __cdecl alien_fauna() {
         if (found) {
             const uint32_t cargo_denominator_bits =
                 ((8u - MapNativeLifeForms) * 4u -
-                 static_cast<uint32_t>(DiffLevelCurrent)) * 4u;
+                 static_cast<uint32_t>(GameDataStateStorage.fields_.diff_level_current_)) * 4u;
             const int cargo_denominator =
                 alien_signed_wrap(cargo_denominator_bits);
             const uint32_t cargo_numerator_bits =
-                (((GameState & 0x100000u) != 0) ? 2u : 1u) *
-                static_cast<uint32_t>(TurnCurrentNum);
+                (((GameDataStateStorage.fields_.game_state_ & 0x100000u) != 0) ? 2u : 1u) *
+                static_cast<uint32_t>(GameDataStateStorage.fields_.turn_current_num_);
             const int cargo_numerator = alien_signed_wrap(cargo_numerator_bits);
             const int cargo_quotient = cargo_numerator / cargo_denominator;
             int cargo_count = alien_signed_wrap(
@@ -7057,8 +7872,8 @@ void __cdecl alien_fauna() {
                         --cargo_count;
                     }
                     veh_promote(sea_unit);
-                    if (GameTechAchieved[TECH_CENTPSI] != 0 ||
-                        GameTechAchieved[TECH_QUANTUM] != 0) {
+                    if (GameDataStateStorage.fields_.game_tech_achieved_[TECH_CENTPSI] != 0 ||
+                        GameDataStateStorage.fields_.game_tech_achieved_[TECH_QUANTUM] != 0) {
                         veh_init(10, 0, x, y);
                     }
                 }
@@ -7066,8 +7881,8 @@ void __cdecl alien_fauna() {
                 const int sea_unit = veh_init(14, 0, x, y);
                 if (sea_unit >= 0) {
                     veh_promote(sea_unit);
-                    if (GameTechAchieved[TECH_CENTPSI] != 0 ||
-                        GameTechAchieved[TECH_QUANTUM] != 0) {
+                    if (GameDataStateStorage.fields_.game_tech_achieved_[TECH_CENTPSI] != 0 ||
+                        GameDataStateStorage.fields_.game_tech_achieved_[TECH_QUANTUM] != 0) {
                         veh_init(10, 0, x, y);
                     }
                 }
@@ -7162,15 +7977,15 @@ alien_sample_complete:
                 if (very_early) {
                     spawn_count = 1;
                 } else {
-                    if (GameTechAchieved[TECH_CENTPSI] != 0 ||
-                        GameTechAchieved[TECH_QUANTUM] != 0) {
+                    if (GameDataStateStorage.fields_.game_tech_achieved_[TECH_CENTPSI] != 0 ||
+                        GameDataStateStorage.fields_.game_tech_achieved_[TECH_QUANTUM] != 0) {
                         veh_init(10, 0, last_x, last_y);
                     }
                     const int population = last_base >= 0
                         ? Bases[last_base].population_size : 0;
                     const uint32_t spawn_count_bits =
                         static_cast<uint32_t>(population) *
-                        (((GameState & 0x100000u) != 0) + 1u) *
+                        (((GameDataStateStorage.fields_.game_state_ & 0x100000u) != 0) + 1u) *
                         (MapNativeLifeForms + 1u) + 3u;
                     spawn_count = alien_signed_wrap(spawn_count_bits);
                     spawn_count = (spawn_count + ((spawn_count >> 31) & 3)) >> 2;
@@ -7228,7 +8043,7 @@ alien_sample_complete:
 // RECOVERY_BINDING: v1 {"evidence": ["git:99d6e72bcd5ae3be3566222736528cb0dc57935c:src/unrecovered/005258c0.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tasks/game-logic-seed-owner-coverage.json; preserve original extents and historical seed lessons. Ordinary owned literals have pinned content provenance, not exact original data-allocation claims."], "reason": "Recover end-turn aircraft attrition, climate, native-life/alien arrival, caretaker diplomacy and ordered alien-pair stores through genuine owners. Random-events remains an explicitly unfinished separate dependency; build continuity is not game behavior acceptance."}
 // TRIED: transcribed directly from Ghidra's decompile (already correct, self-consistent short*/uint* pointer arithmetic throughout), fixing only DAT_/FUN_ names against the catalogue (all ~25 callees were already declared with matching signatures) and CharUpperA (undeclared IAT slot at 0x66931C, called through a typed function-pointer global). MapWin::main_caption()'s receiver is `*g_007d3c3c`, confirmed against src/console.cpp's own use of the same slot. Framed build compiles and matches through instr #3 (mov vs push), sim 0.75 - not chased further, very large orchestration function, landed for coverage.
 void __cdecl turn_upkeep() {
-    int vehicle_id = VehCurrentCount - 1;
+    int vehicle_id = GameDataStateStorage.fields_.vehicle_current_count_ - 1;
     while (vehicle_id >= 0) {
         Veh &vehicle = Vehs[vehicle_id];
         const VehPrototype &prototype = VehPrototypes[vehicle.proto_id];
@@ -7279,21 +8094,21 @@ void __cdecl turn_upkeep() {
 
     VehTerraformStingLatch = 0;
     rankings(1);
-    ++TurnCurrentNum;
-    MissionYearCurrent = game_year(TurnCurrentNum);
+    ++GameDataStateStorage.fields_.turn_current_num_;
+    GameDataStateStorage.fields_.mission_year_current_ = game_year(GameDataStateStorage.fields_.turn_current_num_);
     MapWinTable[0]->main_caption();
 
-    if (ClimateSeaLevelDelta != 0) {
-        ClimateRiseAccum += ClimateRiseStep;
-        if (ClimateRiseLimit <= ClimateRiseAccum) {
-            ClimateRiseAccum -= ClimateRiseLimit;
+    if (GameDataStateStorage.fields_.climate_sea_level_delta_ != 0) {
+        GameDataStateStorage.fields_.climate_rise_accum_ += GameDataStateStorage.fields_.climate_rise_step_;
+        if (GameDataStateStorage.fields_.climate_rise_limit_ <= GameDataStateStorage.fields_.climate_rise_accum_) {
+            GameDataStateStorage.fields_.climate_rise_accum_ -= GameDataStateStorage.fields_.climate_rise_limit_;
             int step;
-            if (ClimateSeaLevelDelta > 0) {
+            if (GameDataStateStorage.fields_.climate_sea_level_delta_ > 0) {
                 step = 1;
             } else {
                 step = -1;
             }
-            ClimateSeaLevelDelta -= step;
+            GameDataStateStorage.fields_.climate_sea_level_delta_ -= step;
             MapSeaLevel += step;
             world_climate();
             draw_map(1);
@@ -7309,23 +8124,23 @@ void __cdecl turn_upkeep() {
     do_fungal_towers();
 
     bool announced_native_faction = false;
-    if (TurnCurrentNum == 4) {
+    if (GameDataStateStorage.fields_.turn_current_num_ == 4) {
         const unsigned int masked = static_cast<unsigned int>(rand()) & 0x80000003u;
         bool starts = masked == 0;
         if (static_cast<int>(masked) < 0) {
             starts = (((masked - 1u) | 0xfffffffcu) == 0xffffffffu);
         }
         if (starts) goto initialize_factions;
-    } else if (TurnCurrentNum == 5) {
+    } else if (GameDataStateStorage.fields_.turn_current_num_ == 5) {
         if (rand() % 3 == 0) goto initialize_factions;
-    } else if (TurnCurrentNum == 6) {
+    } else if (GameDataStateStorage.fields_.turn_current_num_ == 6) {
         const unsigned int masked = static_cast<unsigned int>(rand()) & 0x80000001u;
         bool starts = masked == 0;
         if (static_cast<int>(masked) < 0) {
             starts = (((masked - 1u) | 0xfffffffeu) == 0xffffffffu);
         }
         if (starts) goto initialize_factions;
-    } else if (TurnCurrentNum >= 7) {
+    } else if (GameDataStateStorage.fields_.turn_current_num_ >= 7) {
 initialize_factions:
         for (int faction = 1; faction < MaxPlayerNum; ++faction) {
             Player &player = Players[faction];
@@ -7339,7 +8154,7 @@ initialize_factions:
                 (data.flags | 0x200u) == 0xffffffffu &&
                 data.diff_level == -1) {
                 const unsigned int bit = 1u << faction;
-                uint8_t *const lock_bytes = reinterpret_cast<uint8_t *>(&LockEnableMask);
+                uint8_t *const lock_bytes = reinterpret_cast<uint8_t *>(&GameDataStateStorage.fields_.lock_masks_.enable_mask_);
                 if ((lock_bytes[0] & bit) == 0 && (lock_bytes[1] & bit) == 0) {
                     if (alien) announced_native_faction = true;
                     lock_bytes[1] |= static_cast<uint8_t>(bit);
@@ -7360,8 +8175,8 @@ initialize_factions:
         CharUpperA(StringTemp);
         if (strcmp(StringTemp, "CARETAKE") == 0) caretaker = faction;
     }
-    if (caretaker != 0 && BaseCurrentCount > 0) {
-        for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+    if (caretaker != 0 && GameDataStateStorage.fields_.base_current_count_ > 0) {
+        for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
             const int owner = Bases[base_id].faction_id_current;
             if (Bases[base_id].production_id_last == -0x66 &&
                 (PlayersData[caretaker].diplo_treaties[owner] & 0x10) == 0) {
@@ -7370,7 +8185,7 @@ initialize_factions:
                 }
                 treaty_on(caretaker, owner, 0x18);
                 set_treaty(caretaker, owner, 0x40, 1);
-                PlayersData[caretaker].diplo_spoke[owner] = TurnCurrentNum;
+                PlayersData[caretaker].diplo_spoke[owner] = GameDataStateStorage.fields_.turn_current_num_;
                 if (owner == ConsoleGlobal.faction_id_) {
                     x_pops_short("NOTRANSCEND", 0x100000,
                            FactionDiplomacyPortraits[caretaker], pop_wait);
@@ -7386,12 +8201,12 @@ initialize_factions:
                 (Players[second].rule_flags & RFLAG_ALIEN) == 0) continue;
             set_treaty(second, first, 0xc80c0c38, 1);
             set_agenda(second, first, 0x2c2d, 1);
-            PlayersData[second].diplo_spoke[first] = TurnCurrentNum;
+            PlayersData[second].diplo_spoke[first] = GameDataStateStorage.fields_.turn_current_num_;
         }
     }
 
     random_events(0);
-    if (TurnCurrentNum == 0x4b &&
+    if (GameDataStateStorage.fields_.turn_current_num_ == 0x4b &&
         has_tech(Facility[FAC_BIOLOGY_LAB].preq_tech,
                  ConsoleGlobal.faction_id_)) {
         interlude(1, 0, 1, 0);
@@ -7412,7 +8227,7 @@ initialize_factions:
         parse_says(1, Players[faction_for_name].name_leader, -1, -1);
         popp(*ClimatePopupTitle, "ASCENT", 0, "asctran_sm.pcx", 0);
     }
-    if ((TurnCurrentNum & 3) == 1) reset_territory();
+    if ((GameDataStateStorage.fields_.turn_current_num_ & 3) == 1) reset_territory();
     do_all_non_input();
 }
 
@@ -7949,9 +8764,9 @@ struct RandomEventsNativeState9_11 {
     RandomEventsNativePlayerView players;
 
     RandomEventsNativeState9_11()
-        : energy_event_state(GlobalEnergyEventState),
-          sunspot_duration(SunspotDuration),
-          turn_current_num(TurnCurrentNum),
+        : energy_event_state(GameDataStateStorage.fields_.global_energy_event_state_),
+          sunspot_duration(GameDataStateStorage.fields_.sunspot_duration_),
+          turn_current_num(GameDataStateStorage.fields_.turn_current_num_),
           player_count(MaxPlayerNum), players() {}
 };
 
@@ -8035,13 +8850,13 @@ struct RandomEventsNativePositionServices {
 };
 
 struct RandomEventsNativeCase6State {
-    int turn_current_num() const { return TurnCurrentNum; }
+    int turn_current_num() const { return GameDataStateStorage.fields_.turn_current_num_; }
     int local_faction() const { return ConsoleGlobal.faction_id_; }
     int multiplayer_pbem() const { return IsMultiplayerPBEM != 0; }
     int longitude_bounds() const { return (int)MapLongitudeBounds; }
     int longitude_half() const { return (int)MapLongitude; }
     int map_is_flat() const { return MapIsFlat; }
-    int base_count() const { return BaseCurrentCount; }
+    int base_count() const { return GameDataStateStorage.fields_.base_current_count_; }
 };
 
 struct RandomEventsNativeCase6Services {
@@ -8110,8 +8925,8 @@ static void random_events_cases_0_5(int event_kind, int faction_id,
         // Native 51F5FB..51F6C0: the event is always allowed for a different
         // top-ranked faction. For that faction, easy humans suppress the
         // random gate; all other cases draw once and proceed only on zero.
-        if (FactionRankings[7] == static_cast<unsigned int>(faction_id) &&
-            ((static_cast<uint8_t>(LockEnableMask) &
+        if (GameDataStateStorage.fields_.faction_rankings_[7] == static_cast<unsigned int>(faction_id) &&
+            ((static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) &
               static_cast<uint8_t>(1u << faction_id)) == 0 ||
              PlayersData[faction_id].diff_level > 1) &&
             random(0, 4) != 0) {
@@ -8131,7 +8946,7 @@ static void random_events_cases_0_5(int event_kind, int faction_id,
         // diff_level (+8): require ranking >= 4 before turn 150 and >= 5
         // beginning at turn 150.
         const int required_rank =
-            (TurnCurrentNum >= 150) ? 5 : 4;
+            (GameDataStateStorage.fields_.turn_current_num_ >= 150) ? 5 : 4;
         if (static_cast<int>(PlayersData[faction_id].ranking) <
             required_rank) break;
         base.event |= BEVENT_FAMINE;
@@ -8148,8 +8963,8 @@ static void random_events_cases_0_5(int event_kind, int faction_id,
     }
 
     case 2: // Native 51F7A2..51F867.
-        if (FactionRankings[7] == static_cast<unsigned int>(faction_id) &&
-            ((static_cast<uint8_t>(LockEnableMask) &
+        if (GameDataStateStorage.fields_.faction_rankings_[7] == static_cast<unsigned int>(faction_id) &&
+            ((static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) &
               static_cast<uint8_t>(1u << faction_id)) == 0 ||
              PlayersData[faction_id].diff_level > 1) &&
             random(0, 4) != 0) {
@@ -8166,7 +8981,7 @@ static void random_events_cases_0_5(int event_kind, int faction_id,
 
     case 3: { // Native 51F867..51F917.
         const int required_rank =
-            (TurnCurrentNum >= 150) ? 5 : 4;
+            (GameDataStateStorage.fields_.turn_current_num_ >= 150) ? 5 : 4;
         if (static_cast<int>(PlayersData[faction_id].ranking) <
             required_rank) break;
         base.event |= BEVENT_BUST;
@@ -8180,8 +8995,8 @@ static void random_events_cases_0_5(int event_kind, int faction_id,
     }
 
     case 4: // Native 51F917..51F9DC.
-        if (FactionRankings[7] == static_cast<unsigned int>(faction_id) &&
-            ((static_cast<uint8_t>(LockEnableMask) &
+        if (GameDataStateStorage.fields_.faction_rankings_[7] == static_cast<unsigned int>(faction_id) &&
+            ((static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) &
               static_cast<uint8_t>(1u << faction_id)) == 0 ||
              PlayersData[faction_id].diff_level > 1) &&
             random(0, 4) != 0) {
@@ -8198,7 +9013,7 @@ static void random_events_cases_0_5(int event_kind, int faction_id,
 
     case 5: { // Native 51F9DC..51FA8C.
         const int required_rank =
-            (TurnCurrentNum >= 150) ? 5 : 4;
+            (GameDataStateStorage.fields_.turn_current_num_ >= 150) ? 5 : 4;
         if (static_cast<int>(PlayersData[faction_id].ranking) <
             required_rank) break;
         base.event |= BEVENT_CLOUD_COVER;
@@ -8231,7 +9046,7 @@ static void random_events_cases_12_13(int event_kind, int faction_id,
         const int reserves = PlayersData[faction_id].energy_reserves;
         if (reserves > 1000) {
             const unsigned char human_bits =
-                static_cast<unsigned char>(LockEnableMask);
+                static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_);
             if ((human_bits & static_cast<unsigned char>(1u << faction_id)) == 0 &&
                 reserves <= 2000) break;
 
@@ -8266,8 +9081,8 @@ static void random_events_cases_12_13(int event_kind, int faction_id,
         // Native 52079F..520A37. The selected faction's ranking gates the
         // event; it is not its difficulty. Keep the native one-wrap rule for
         // round maps rather than using a general modulo operation.
-        if (TurnCurrentNum < 75) break;
-        const int required_ranking = (TurnCurrentNum >= 150) ? 5 : 4;
+        if (GameDataStateStorage.fields_.turn_current_num_ < 75) break;
+        const int required_ranking = (GameDataStateStorage.fields_.turn_current_num_ >= 150) ? 5 : 4;
         if (PlayersData[faction_id].ranking < required_ranking) break;
 
         int event_visible = 0;
@@ -8358,11 +9173,11 @@ static void random_events_cases_15_16(int event_kind, int faction_id,
                                       int base_x, int base_y) {
     switch (event_kind) {
     case 15: {
-        if (IsMultiplayerPBEM || TurnCurrentNum < 75) break;
+        if (IsMultiplayerPBEM || GameDataStateStorage.fields_.turn_current_num_ < 75) break;
         // Native uses a signed JL on this dword despite current_num_bases
         // being represented unsigned in PlayerData.
         if (static_cast<int>(PlayersData[faction_id].current_num_bases) < 8 ||
-            (GameState & 0x10u) != 0 || near_landmark(base_x, base_y)) break;
+            (GameDataStateStorage.fields_.game_state_ & 0x10u) != 0 || near_landmark(base_x, base_y)) break;
 
         const int initial_local_faction = ConsoleGlobal.faction_id_;
         const unsigned char local_bit = static_cast<unsigned char>(
@@ -8434,7 +9249,7 @@ static void random_events_cases_15_16(int event_kind, int faction_id,
             // The native vehicle scan follows base_at for every in-bounds
             // radius cell, removing every matching record. It sets the event
             // flag before removal only for a locally owned vehicle.
-            for (int vehicle_id = VehCurrentCount - 1;
+            for (int vehicle_id = GameDataStateStorage.fields_.vehicle_current_count_ - 1;
                  vehicle_id >= 0; --vehicle_id) {
                 if (Vehs[vehicle_id].x != x || Vehs[vehicle_id].y != y)
                     continue;
@@ -8449,7 +9264,7 @@ static void random_events_cases_15_16(int event_kind, int faction_id,
         if (!event_seen || ConsoleGlobal.focus(base_x, base_y,
                                                ConsoleGlobal.faction_id_) == 0)
             draw_map(1);
-        DustCloudDuration = 10;
+        GameDataStateStorage.fields_.dust_cloud_duration_ = 10;
         popp(*ClimatePopupTitle, "EATTHIS", 0, "astp_sm.pcx", 0);
         return;
     }
@@ -8459,7 +9274,7 @@ static void random_events_cases_15_16(int event_kind, int faction_id,
         const bool has_biology_lab = has_fac_built(FAC_BIOLOGY_LAB,
                                                    selected_base_id);
         if (!has_biology_lab) {
-            const int required_ranking = (TurnCurrentNum >= 150) ? 5 : 4;
+            const int required_ranking = (GameDataStateStorage.fields_.turn_current_num_ >= 150) ? 5 : 4;
             if (PlayersData[faction_id].ranking < required_ranking) break;
         }
 
@@ -8559,7 +9374,7 @@ static void random_events_cases_17_18(int event_kind, int faction_id,
         const bool has_energy_bank =
             has_fac_built(FAC_ENERGY_BANK, selected_base_id);
         if (!has_energy_bank) {
-            const int minimum_ranking = (TurnCurrentNum >= 150) ? 5 : 4;
+            const int minimum_ranking = (GameDataStateStorage.fields_.turn_current_num_ >= 150) ? 5 : 4;
             if (static_cast<int>(PlayersData[faction_id].ranking) <
                 minimum_ranking) break;
         }
@@ -8659,7 +9474,7 @@ static void random_events_cases_17_18(int event_kind, int faction_id,
             return;
         }
 
-        const int minimum_ranking = (TurnCurrentNum >= 150) ? 5 : 4;
+        const int minimum_ranking = (GameDataStateStorage.fields_.turn_current_num_ >= 150) ? 5 : 4;
         if (static_cast<int>(PlayersData[faction_id].ranking) <
             minimum_ranking) break;
 
@@ -8727,7 +9542,7 @@ static void random_events_cases_19_21(int event_kind, int faction_id,
             return;
         }
 
-        const int required_ranking = 4 + (TurnCurrentNum >= 150 ? 1 : 0);
+        const int required_ranking = 4 + (GameDataStateStorage.fields_.turn_current_num_ >= 150 ? 1 : 0);
         if (PlayersData[faction_id].ranking < required_ranking) break;
         if (Bases[selected_base_id].assimilation_turns_left != 0) break;
         Bases[selected_base_id].assimilation_turns_left = 5;
@@ -8748,8 +9563,8 @@ static void random_events_cases_19_21(int event_kind, int faction_id,
     }
 
     case 20: {
-        if (IsMultiplayerPBEM != 0 || TurnCurrentNum < 75) break;
-        const int required_ranking = 4 + (TurnCurrentNum >= 150 ? 1 : 0);
+        if (IsMultiplayerPBEM != 0 || GameDataStateStorage.fields_.turn_current_num_ < 75) break;
+        const int required_ranking = 4 + (GameDataStateStorage.fields_.turn_current_num_ >= 150 ? 1 : 0);
         if (PlayersData[faction_id].ranking < required_ranking) break;
 
         bool changed_for_local_view = false;
@@ -8819,8 +9634,8 @@ static void random_events_cases_19_21(int event_kind, int faction_id,
     }
 
     case 21: {
-        if (IsMultiplayerPBEM != 0 || TurnCurrentNum < 75) break;
-        const int required_ranking = 4 + (TurnCurrentNum >= 150 ? 1 : 0);
+        if (IsMultiplayerPBEM != 0 || GameDataStateStorage.fields_.turn_current_num_ < 75) break;
+        const int required_ranking = 4 + (GameDataStateStorage.fields_.turn_current_num_ >= 150 ? 1 : 0);
         if (PlayersData[faction_id].ranking < required_ranking) break;
 
         bool changed_for_local_view = false;
@@ -9039,11 +9854,11 @@ static void random_events_case14(Ops &ops, int faction_id,
 // separate Ops with identical member semantics.
 struct RandomEventsCase14NativeOps {
     int is_multiplayer_pbem() const { return IsMultiplayerPBEM; }
-    int turn_current_num() const { return TurnCurrentNum; }
+    int turn_current_num() const { return GameDataStateStorage.fields_.turn_current_num_; }
     PlayerData &player_data(int faction_id) { return PlayersData[faction_id]; }
-    uint32_t random_event_flags() const { return GameState; }
-    uint32_t mount_planet_x() const { return MountPlanetX; }
-    uint32_t mount_planet_y() const { return MountPlanetY; }
+    uint32_t random_event_flags() const { return GameDataStateStorage.fields_.game_state_; }
+    uint32_t mount_planet_x() const { return GameDataStateStorage.fields_.mount_planet_x_; }
+    uint32_t mount_planet_y() const { return GameDataStateStorage.fields_.mount_planet_y_; }
     int map_latitude_bounds() const { return MapLatitudeBounds; }
     int map_longitude_bounds() const { return MapLongitudeBounds; }
     int map_longitude() const { return MapLongitude; }
@@ -9053,7 +9868,7 @@ struct RandomEventsCase14NativeOps {
     int local_faction() const { return ConsoleGlobal.faction_id_; }
     int radius_offset_x(int index) const { return RadiusOffsetX[index]; }
     int radius_offset_y(int index) const { return RadiusOffsetY[index]; }
-    int vehicle_count() const { return VehCurrentCount; }
+    int vehicle_count() const { return GameDataStateStorage.fields_.vehicle_current_count_; }
     Veh &vehicle(int veh_id) { return Vehs[veh_id]; }
     const VehPrototype &prototype(int proto_id) const { return VehPrototypes[proto_id]; }
     void bit_set(int x, int y, int mask, bool set) { ::bit_set(x, y, mask, set); }
@@ -9068,7 +9883,7 @@ struct RandomEventsCase14NativeOps {
         return ConsoleGlobal.focus(x, y, faction_id) != 0;
     }
     void draw_map(int mode) { ::draw_map(mode); }
-    void set_dust_cloud_duration(int value) { DustCloudDuration = value; }
+    void set_dust_cloud_duration(int value) { GameDataStateStorage.fields_.dust_cloud_duration_ = value; }
     void popp_big_fat_volcano() {
         ::popp(*ClimatePopupTitle, "BIGFATVOLCANO", 0, "volc_sm.pcx", 0);
     }
@@ -9092,21 +9907,21 @@ static bool random_events_entry_prepare(int mode,
     if (mode == 0) {
         // Preserve the original byte-level state transition: when bit 1 is
         // present the complete word is cleared before bit zero is examined.
-        if ((GlobalEnergyEventState & 2) != 0)
-            GlobalEnergyEventState = 0;
-        if ((GlobalEnergyEventState & 1) != 0)
-            GlobalEnergyEventState = 2;
+        if ((GameDataStateStorage.fields_.global_energy_event_state_ & 2) != 0)
+            GameDataStateStorage.fields_.global_energy_event_state_ = 0;
+        if ((GameDataStateStorage.fields_.global_energy_event_state_ & 1) != 0)
+            GameDataStateStorage.fields_.global_energy_event_state_ = 2;
 
-        int sunspot_duration = SunspotDuration;
+        int sunspot_duration = GameDataStateStorage.fields_.sunspot_duration_;
         if (sunspot_duration < -1000) sunspot_duration = -1000;
-        SunspotDuration = --sunspot_duration;
+        GameDataStateStorage.fields_.sunspot_duration_ = --sunspot_duration;
         if (sunspot_duration == 0)
             (void)POP2("NOMORESPOTS", "space_sm.pcx", -1);
 
         // The native nested scan uses PlayerData[row].diplo_treaties[column],
         // visits both faction axes 1..7, and reloads the byte mask only after
         // a set_treaty callback. Keep that callback-visible re-read order.
-        unsigned char lock_bits = static_cast<unsigned char>(LockEnableMask);
+        unsigned char lock_bits = static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_);
         for (int column = 1; column < 8; ++column) {
             if ((lock_bits & static_cast<unsigned char>(1u << column)) == 0)
                 continue;
@@ -9116,20 +9931,20 @@ static bool random_events_entry_prepare(int mode,
                 if ((PlayersData[row].diplo_treaties[column] & 0x30u) != 0)
                     continue;
                 set_treaty(row, column, 0xC00, 0);
-                lock_bits = static_cast<unsigned char>(LockEnableMask);
+                lock_bits = static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_);
             }
         }
 
-        int dust_duration = DustCloudDuration;
+        int dust_duration = GameDataStateStorage.fields_.dust_cloud_duration_;
         if (dust_duration < 0) {
-            DustCloudDuration = 0;
+            GameDataStateStorage.fields_.dust_cloud_duration_ = 0;
         } else if (dust_duration > 0) {
-            DustCloudDuration = --dust_duration;
+            GameDataStateStorage.fields_.dust_cloud_duration_ = --dust_duration;
             if (dust_duration == 0)
                 (void)POP2("NOMOREDUST", "stars_sm.pcx", -1);
         }
 
-        const int base_count_for_timers = BaseCurrentCount;
+        const int base_count_for_timers = GameDataStateStorage.fields_.base_current_count_;
         for (int base_id = 0; base_id < base_count_for_timers; ++base_id) {
             Base &base = Bases[base_id];
             if ((base.event & 0x7E00u) == 0) continue;
@@ -9139,11 +9954,11 @@ static bool random_events_entry_prepare(int mode,
                 base.event &= 0xFFFF81FFu;
         }
 
-        if ((GameState & 0x100000u) != 0) {
-            const int anniversary = static_cast<int>(game_year(TurnCurrentNum))
+        if ((GameDataStateStorage.fields_.game_state_ & 0x100000u) != 0) {
+            const int anniversary = static_cast<int>(game_year(GameDataStateStorage.fields_.turn_current_num_))
                                     - 0x8A2;
             if (anniversary % 0x50 == 0) {
-                GameState &= ~0x100000u;
+                GameDataStateStorage.fields_.game_state_ &= ~0x100000u;
                 (void)POP2("PERIHELIONENDS", "heat_sm.pcx", -1);
                 return false;
             }
@@ -9153,19 +9968,19 @@ static bool random_events_entry_prepare(int mode,
     // The only continuing paths from the annual check have TurnCurrentNum in
     // EAX: the non-anniversary mode-zero path explicitly reloads it at
     // 0x51F4D1, while all other paths arrive with the initial load intact.
-    const int current_turn = TurnCurrentNum;
+    const int current_turn = GameDataStateStorage.fields_.turn_current_num_;
     if (current_turn > 50 && mode == 0) {
         const int anniversary = static_cast<int>(game_year(current_turn))
                                 - 0x88E;
         if (anniversary % 0x50 == 0) {
-            GameState |= 0x100000u;
+            GameDataStateStorage.fields_.game_state_ |= 0x100000u;
             (void)POP2("PERIHELION", "heat_sm.pcx", -1);
             return false;
         }
     }
 
-    if ((GameRules & 0x8000u) != 0) return false;
-    const int turn_threshold = 0x4B - 10 * DiffLevelCurrent;
+    if ((GameDataStateStorage.fields_.game_rules_ & 0x8000u) != 0) return false;
+    const int turn_threshold = 0x4B - 10 * GameDataStateStorage.fields_.diff_level_current_;
     if (current_turn < turn_threshold) return false;
 
     if (mode == 0) {
@@ -9176,10 +9991,10 @@ static bool random_events_entry_prepare(int mode,
         random_reseed(static_cast<int>(seed));
     }
 
-    int random_upper_bound = BaseCurrentCount;
+    int random_upper_bound = GameDataStateStorage.fields_.base_current_count_;
     if (random_upper_bound <= 100) random_upper_bound = 100;
     const int base_roll = random(0, random_upper_bound);
-    if (base_roll >= BaseCurrentCount) return false;
+    if (base_roll >= GameDataStateStorage.fields_.base_current_count_) return false;
 
     Base &selected_base = Bases[base_roll];
     if (selected_base.population_size <= 3) return false;
@@ -9257,7 +10072,7 @@ struct RandomEventsNativeCase78State {
     unsigned int player_data_flags() const {
         return PlayersData[event_faction_id].flags;
     }
-    int turn_current_num() const { return TurnCurrentNum; }
+    int turn_current_num() const { return GameDataStateStorage.fields_.turn_current_num_; }
     int console_faction_id() const { return ConsoleGlobal.faction_id_; }
 };
 
@@ -9335,7 +10150,7 @@ void __cdecl random_events(int mode) {
 // ORIGINAL: 0x00529C00 ?mash_planes@@YAXXZ 0x00529C00-0x00529E67
 // RECOVERY_BINDING: v1 {"evidence": ["git:8b0da75894c71ec098213e7e12cc29fb1dfc01f3:src/recovered/units/00529c00.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tasks/game-logic-seed-owner-coverage.json; complete typed owner migration, preserve original spans and seed lessons. Literal content provenance does not assert original allocation or game acceptance."], "reason": "Native aircraft attrition: vehicle movement spent at+0x28 controls eligibility; damage at+0x10 accumulates reactor-derived attrition; terraforming turns at+0x25 clears on survival. Prototype+0x2A is plan, chassis+0x4A is range; preserve post-focus/boom prototype reads."}
 void __cdecl mash_planes() {
-    for (int veh_id = VehCurrentCount - 1; veh_id >= 0; --veh_id) {
+    for (int veh_id = GameDataStateStorage.fields_.vehicle_current_count_ - 1; veh_id >= 0; --veh_id) {
         Veh &veh = Vehs[veh_id];
         const int initial_proto_id = veh.proto_id;
         const int initial_chassis_id = VehPrototypes[initial_proto_id].chassis_id;
@@ -9441,7 +10256,7 @@ void __cdecl diplo(int faction_id, int faction_id_with) {
 // symbol    ?mon_enemy_destroyed@@YAXHH@Z
 // kind      game
 void __cdecl mon_enemy_destroyed(int faction_id, int target_faction) {
-    const int year = static_cast<int>(game_year(TurnCurrentNum));
+    const int year = static_cast<int>(game_year(GameDataStateStorage.fields_.turn_current_num_));
     MonumentFaction &faction = FactionMonuments[faction_id];
     MonumentRecord &record = faction.records_[6];
 
@@ -9569,7 +10384,7 @@ void __cdecl clear_tamper_registry() {
 // ORIGINAL: 0x00523B50 ?ascent@@YAXXZ 0x00523B50-0x00523C58
 // RECOVERY_BINDING: v1 {"evidence": ["task:pact-ascent-owner", "pinned:0x00523B50 original complete span; Player59C fields and real NetMsgPrimary/ConsoleGlobal owners.", "pinned:68E62C PACTTREATY, ASCENT and asctran_sm.pcx text inputs; source literals, never original-image calls.", "pinned:525F08..52600E same turn_upkeep ascent path; plural0, leader gender and console-faction reload after parser; bit2000 unnamed, not PFLAG_MAP_REVEALED200.", "historical seed:src/recovered/units/00523b50.cpp complete mapping/findings retained.", "recovery/tests/test_pact_ascent.py actual-source callback/damage controls, not native layout or runtime acceptance."], "reason": "Recover the complete announcement/turn-flow function using real source-owned players, console, parser state and callbacks. Retain original identity/spans and seed findings; live faction reloads and grammar come from full pinned instructions. No byte or game acceptance claim."}
 void __cdecl ascent() {
-    if (TurnCurrentNum == 0x4b &&
+    if (GameDataStateStorage.fields_.turn_current_num_ == 0x4b &&
         has_tech(Facility[FAC_BIOLOGY_LAB].preq_tech,
                  ConsoleGlobal.faction_id_)) {
         interlude(1, 0, 1, 0);
@@ -9604,8 +10419,8 @@ int GameSessionActive;
 // ORIGINAL: 0x00523C60 ?set_time_controls@@YAXXZ 0x00523C60-0x00523DC9
 // RECOVERY_BINDING: v1 {"evidence": ["task:time-control-calculation-and-dialog", "historical seed:src/recovered/units/00523c60.cpp", "Pinned original native instructions and existing typed source layout; seed aliases independently reconciled."], "reason": "Recover complete turn-duration calculation through typed rules, faction and vehicle records and actual NetDaemon state; preserve the native bonus-update order and state predicates."}
 void __cdecl set_time_controls() {
-    RulesTimeControl &control = TimeControl[TimeControlsSelection];
-    const unsigned int active_mask = LockEnableMask & 0xFF;
+    RulesTimeControl &control = TimeControl[GameDataStateStorage.fields_.time_controls_selection_];
+    const unsigned int active_mask = GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFF;
     int active_factions = 0;
     int eligible_vehicle_support = 0;
     int weighted_base_count = 0;
@@ -9615,7 +10430,7 @@ void __cdecl set_time_controls() {
         PlayerData &faction = PlayersData[faction_id];
 
         if (ConsoleControlTurnActive != 0 && ControlTurnPhase == 0 &&
-            control.refresh != 0 && TurnCurrentNum % control.refresh == 0) {
+            control.refresh != 0 && GameDataStateStorage.fields_.turn_current_num_ % control.refresh == 0) {
             int next_bonus = faction.time_bonus_count + 1;
             if (next_bonus >= control.accumulated) {
                 next_bonus = control.accumulated;
@@ -9631,7 +10446,7 @@ void __cdecl set_time_controls() {
             static_cast<int>(faction.current_num_bases);
         ++active_factions;
 
-        for (int vehicle_id = 0; vehicle_id < VehCurrentCount; ++vehicle_id) {
+        for (int vehicle_id = 0; vehicle_id < GameDataStateStorage.fields_.vehicle_current_count_; ++vehicle_id) {
             const Veh &vehicle = Vehs[vehicle_id];
             if (vehicle.faction_id != faction_id ||
                 vehicle.order == 1 || vehicle.order == 2) {
@@ -9655,10 +10470,10 @@ void __cdecl set_time_controls() {
             seconds = candidate;
         }
     }
-    if (TurnCurrentNum < 6) {
+    if (GameDataStateStorage.fields_.turn_current_num_ < 6) {
         seconds *= 2;
     }
-    TurnControlDurationMilliseconds = seconds * 1000;
+    GameDataStateStorage.fields_.turn_control_duration_milliseconds_ = seconds * 1000;
 }
 
 // Original four-byte accesses529Cxx/52A3xx/52A7xx identify this separate
@@ -9751,13 +10566,13 @@ void __cdecl net_upkeep() {
     SpockHelpActive = 0;
     SpockNotifyPending = 0;
 
-    for (i = 0; i < BaseCurrentCount; ++i) {
+    for (i = 0; i < GameDataStateStorage.fields_.base_current_count_; ++i) {
         Bases[i].state &= 0xEFFFFFEFu;
         if (Bases[i].faction_id_current == ConsoleGlobal.faction_id_) {
             synch_radius(i);
         }
     }
-    for (i = 0; i < VehCurrentCount; ++i) {
+    for (i = 0; i < GameDataStateStorage.fields_.vehicle_current_count_; ++i) {
         veh_promote(i);
     }
 
@@ -9765,10 +10580,10 @@ void __cdecl net_upkeep() {
     ++NetUpkeepPhase;
 
     for (i = 0; i < 8; ++i) {
-        int faction = (TurnCurrentNum + i) & 0x80000007;
+        int faction = (GameDataStateStorage.fields_.turn_current_num_ + i) & 0x80000007;
         if (faction < 0) faction = ((faction - 1) | 0xFFFFFFF8) + 1;
         if (((1u << (faction & 0x1F)) &
-             static_cast<unsigned char>(LockEnableMask >> 8)) != 0) {
+             static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8)) != 0) {
             faction_upkeep(faction);
         }
     }
@@ -9779,7 +10594,7 @@ void __cdecl net_upkeep() {
                  0, 0, 0);
 
     if (NetDaemonNet.lock_state_[0].trailing_words_[9] != 0) {
-        for (i = 0; i < BaseCurrentCount; ++i) {
+        for (i = 0; i < GameDataStateStorage.fields_.base_current_count_; ++i) {
             const Base &base = Bases[i];
             if (base.faction_id_current == ConsoleGlobal.faction_id_ &&
                 (base.state & 0x10000010u) != 0) {
@@ -9813,13 +10628,13 @@ skip_upkeep_synch:
             const unsigned char bit =
                 static_cast<unsigned char>(1u << (faction & 0x1F));
             PlayerData &data = PlayersData[faction];
-            if ((bit & static_cast<unsigned char>(LockEnableMask >> 8)) != 0) {
+            if ((bit & static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8)) != 0) {
                 while (data.earned_techs_saved != 0) {
                     log_say(NetUpkeepUpkeepAdvance, Players[faction].name_leader,
                             faction, data.earned_techs_saved, 0);
                     --data.earned_techs_saved;
                     tech_advance(static_cast<int>(faction));
-                    if ((bit & static_cast<unsigned char>(LockEnableMask)) != 0) {
+                    if ((bit & static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_)) != 0) {
                         flags |= (faction ==
                                   static_cast<unsigned int>(ConsoleGlobal.faction_id_))
                             + 1u;
@@ -9830,7 +10645,7 @@ skip_upkeep_synch:
                     log_say(NetUpkeepSetResearch, faction, 0, 0);
                     data.tech_id_researching =
                         tech_selection(static_cast<int>(faction));
-                    if ((bit & static_cast<unsigned char>(LockEnableMask)) != 0) {
+                    if ((bit & static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_)) != 0) {
                         flags |= (faction ==
                                   static_cast<unsigned int>(ConsoleGlobal.faction_id_))
                             + 1u;
@@ -9850,7 +10665,7 @@ skip_upkeep_synch:
         }
         ++NetUpkeepPhase;
         TurnUpkeepPhase = 0;
-        if ((flags & 2u) != 0 && (GameRules & 0x200u) != 0) {
+        if ((flags & 2u) != 0 && (GameDataStateStorage.fields_.game_rules_ & 0x200u) != 0) {
             ConsoleGlobal.set_ai(ConsoleGlobal.faction_id_);
         }
     }
@@ -9872,7 +10687,7 @@ skip_upkeep_synch:
                     found_prototype = 1;
                     prototype.flags = static_cast<uint16_t>(flags & 0xFEFFu);
                     if (faction == ConsoleGlobal.faction_id_ &&
-                        (GameMorePreferences & 0x100000u) != 0) {
+                        (GameDataStateStorage.fields_.game_more_preferences_ & 0x100000u) != 0) {
                         upgrade_prototypes(ConsoleGlobal.faction_id_,
                                            prototype_id);
                     }
@@ -9908,8 +10723,8 @@ upkeep5:
     NetMsgPrimary.pop(NetUpkeepUpkeep5, 0, 1, 0);
     for (i = 0; i < 8; ++i) {
         const unsigned char bit = static_cast<unsigned char>(1u << i);
-        if ((static_cast<unsigned char>(LockEnableMask >> 8) & bit) != 0 &&
-            (static_cast<unsigned char>(LockEnableMask) & bit) == 0) {
+        if ((static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8) & bit) != 0 &&
+            (static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & bit) == 0) {
             log_say(NetUpkeepEnemyTurn, i, 0, 0);
             enemy_turn(i);
         }
@@ -9923,7 +10738,7 @@ upkeep5:
     }
     do_checksums(4);
 
-    if ((GamePreferences & 2u) != 0) {
+    if ((GameDataStateStorage.fields_.game_preferences_ & 2u) != 0) {
         if (BaseAtDebugPopupFlag == 0) {
             auto_save();
         } else {
@@ -9935,7 +10750,7 @@ upkeep5:
             strcat(StringTemp, faction_text);
             strcat(StringTemp, NetUpkeepSaveSuffix);
             char turn_text[16];
-            _itoa(TurnCurrentNum, turn_text, 10);
+            _itoa(GameDataStateStorage.fields_.turn_current_num_, turn_text, 10);
             strcat(StringTemp, turn_text);
             log_say(NetUpkeepSaveLog, StringTemp, 0, 0, 0);
             save_daemon(StringTemp);
@@ -9955,8 +10770,8 @@ upkeep5:
         for (unsigned int faction = 1; faction < MaxPlayerNum; ++faction) {
             const unsigned char bit =
                 static_cast<unsigned char>(1u << (faction & 0x1F));
-            if ((static_cast<unsigned char>(LockEnableMask >> 8) & bit) == 0 ||
-                (static_cast<unsigned char>(LockEnableMask) & bit) == 0 ||
+            if ((static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8) & bit) == 0 ||
+                (static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & bit) == 0 ||
                 static_cast<int>(faction) == ConsoleGlobal.faction_id_) {
                 continue;
             }
@@ -10074,7 +10889,7 @@ static const char NetEndTurnSaveFileLog[] = "Writing save file";
 // ORIGINAL: 0x00529F30 ?net_end_of_turn@@YAXXZ 0x00529F30-0x0052A2D3
 // RECOVERY_BINDING: v1 {"evidence": ["historical seed:src/recovered/units/00529f30.cpp", "task:net-turn-coordinator-owner", "ConsoleGlobal9156B0+23BE4/+23BE8 owns939294/939298; UpgradePromptAnswered90EA3C, TurnRedrawPending703DE0 and CouncilPendingMessageArgs68BF38 already own their storage. Do not create competing aliases.", "Native prototypes64..511 use34-byte records and flags+30/obsolete_factions+2C, not seed1A stride; peer checksums use8x21-word existing storage. Preserve wait/abort ordering and masked PlayerLock active-bit test; extent/lifetime/runtime and retained-link evidence remain bounded."], "reason": "Recover the complete multiplayer turn operation through actual source-owned objects, arrays, members and SDK calls; preserve historical identity, spans and seed discoveries without implying game acceptance."}
 void __cdecl net_end_of_turn() {
-    if ((NetTurnFlags & 0x10u) != 0) {
+    if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10u) != 0) {
         if (IsMultiplayerNet != 0) {
             message_data(0x4301, 0, 0, 0, 0, 0);
         } else {
@@ -10086,9 +10901,9 @@ void __cdecl net_end_of_turn() {
 
     log_say(NetEndTurnEnterEndTurnLog, ConsoleFactionsWaitingMask,
             NetDaemonNet.lock_state_[1].leading_words_[0],
-            GameState & 2u);
+            GameDataStateStorage.fields_.game_state_ & 2u);
     g_FX.play(0x22);
-    GameState |= 2u;
+    GameDataStateStorage.fields_.game_state_ |= 2u;
     ConsoleGlobal.field_23BE4_ = 0;
     ConsoleGlobal.set_view(0);
 
@@ -10099,7 +10914,7 @@ void __cdecl net_end_of_turn() {
     NetDaemonNet.lock_state_[0].leading_words_[3] |= 1u << local_faction;
     MultiWindow.draw(0);
 
-    if ((NetTurnFlags & 0x10u) != 0) {
+    if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10u) != 0) {
         goto proceed_next_turn;
     }
 
@@ -10108,7 +10923,7 @@ void __cdecl net_end_of_turn() {
         const DWORD start_time = timeGetTime();
         bool sent_finishing = false;
         for (;;) {
-            const unsigned int enabled_factions = LockEnableMask & 0xFFu;
+            const unsigned int enabled_factions = GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFu;
             const bool masks_incomplete =
                 (enabled_factions & ConsoleFactionsWaitingMask) !=
                     enabled_factions ||
@@ -10119,7 +10934,7 @@ void __cdecl net_end_of_turn() {
                 (NetDaemonNet.locks_.any_locks() != 0 ||
                  NetDaemonNet.lock_state_[1].trailing_words_[0] != 0);
             if (!(masks_incomplete || daemon_pending) || ExitTurnLoop != 0 ||
-                (GameState & 2u) == 0) {
+                (GameDataStateStorage.fields_.game_state_ & 2u) == 0) {
                 break;
             }
 
@@ -10135,18 +10950,18 @@ void __cdecl net_end_of_turn() {
         }
     }
 
-    if ((GameState & 2u) != 0) {
+    if ((GameDataStateStorage.fields_.game_state_ & 2u) != 0) {
         if (NetDaemonNet.lock_state_[0].leading_words_[1] == 0) {
             log_say(NetEndTurnReadyToProceedLog,
                     ConsoleFactionsWaitingMask,
-                    LockEnableMask & 0xFFu, 0);
+                    GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFu, 0);
         } else {
             goto handle_93e8c0;
         }
     }
     if (NetDaemonNet.lock_state_[0].leading_words_[1] != 0) {
 handle_93e8c0:
-        if ((GameState & 2u) == 0) {
+        if ((GameDataStateStorage.fields_.game_state_ & 2u) == 0) {
             return;
         }
         if (ExitTurnLoop != 0) {
@@ -10177,7 +10992,7 @@ handle_93e8c0:
     }
 
 after_wait:
-    if ((GameState & 2u) == 0) {
+    if ((GameDataStateStorage.fields_.game_state_ & 2u) == 0) {
         return;
     }
 
@@ -10196,7 +11011,7 @@ proceed_next_turn:
     mash_planes();
     do_checksums(0);
 
-    if ((GamePreferences & 2u) != 0 && BaseAtDebugPopupFlag != 0) {
+    if ((GameDataStateStorage.fields_.game_preferences_ & 2u) != 0 && BaseAtDebugPopupFlag != 0) {
         StringTemp[0] = 0;
         strcat(StringTemp, NetEndTurnSaveDirectory);
         strcat(StringTemp, NetEndTurnSaveGamePrefix);
@@ -10204,7 +11019,7 @@ proceed_next_turn:
         _itoa(ConsoleGlobal.faction_id_, number, 10);
         strcat(StringTemp, number);
         strcat(StringTemp, NetEndTurnSaveGameSuffix);
-        _itoa(TurnCurrentNum, number, 10);
+        _itoa(GameDataStateStorage.fields_.turn_current_num_, number, 10);
         strcat(StringTemp, number);
         log_say(NetEndTurnSaveFileLog, StringTemp, 0, 0, 0);
         save_daemon(StringTemp);
@@ -10272,7 +11087,7 @@ void __cdecl net_control_turn() {
     }
     log_set_state(logged);
     do_checksums(1);
-    if ((NetTurnFlags & 0x10u) != 0) {
+    if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10u) != 0) {
         TurnControlWord93A954 = 1;
     }
 
@@ -10291,11 +11106,11 @@ void __cdecl net_control_turn() {
 
         if (ControlTurnPhase == 0) {
             const unsigned char alive =
-                reinterpret_cast<const unsigned char *>(&LockEnableMask)[1];
+                reinterpret_cast<const unsigned char *>(&GameDataStateStorage.fields_.lock_masks_.enable_mask_)[1];
             const unsigned char human =
-                reinterpret_cast<const unsigned char *>(&LockEnableMask)[0];
+                reinterpret_cast<const unsigned char *>(&GameDataStateStorage.fields_.lock_masks_.enable_mask_)[0];
             int faction = 1;
-            NetTurnFaction = 1;
+            GameDataStateStorage.fields_.net_turn_faction_ = 1;
             for (;;) {
                 const unsigned int bit = 1u << (faction & 0x1F);
                 if ((bit & alive) != 0 && (bit & human) != 0) {
@@ -10303,10 +11118,10 @@ void __cdecl net_control_turn() {
                 }
                 ++faction;
             }
-            NetTurnFaction = faction;
+            GameDataStateStorage.fields_.net_turn_faction_ = faction;
             turn_upkeep();
             net_upkeep();
-            NetTurnFaction = 0;
+            GameDataStateStorage.fields_.net_turn_faction_ = 0;
             if (end_of_game(1) != 0) {
                 NetDaemonNet.hang_up();
                 NetDaemonNet.lock_state_[0].leading_words_[1] = 0;
@@ -10354,17 +11169,17 @@ void __cdecl net_control_turn() {
         }
 
         set_time_controls();
-        NetDaemonWaitTicks = static_cast<int>(TurnControlDurationMilliseconds);
-        GameState &= 0xFFFFF7FFu;
+        NetDaemonWaitTicks = static_cast<int>(GameDataStateStorage.fields_.turn_control_duration_milliseconds_);
+        GameDataStateStorage.fields_.game_state_ &= 0xFFFFF7FFu;
         ConsoleControlTurnActive = 0;
         NetDaemonNet.lock_state_[0].trailing_words_[5] = 0;
 
-        if ((NetTurnFlags & 0x10u) != 0 &&
-            (TurnCurrentNum == 1 || ControlTurnPhase != 0)) {
+        if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10u) != 0 &&
+            (GameDataStateStorage.fields_.turn_current_num_ == 1 || ControlTurnPhase != 0)) {
             int x = -1;
             int y = -1;
             bool found_base = false;
-            for (int id = 0; id < BaseCurrentCount; ++id) {
+            for (int id = 0; id < GameDataStateStorage.fields_.base_current_count_; ++id) {
                 if (Bases[id].faction_id_current == ConsoleGlobal.faction_id_) {
                     x = Bases[id].x;
                     y = Bases[id].y;
@@ -10373,7 +11188,7 @@ void __cdecl net_control_turn() {
                 }
             }
             if (!found_base) {
-                for (int id = 0; id < VehCurrentCount; ++id) {
+                for (int id = 0; id < GameDataStateStorage.fields_.vehicle_current_count_; ++id) {
                     if (Vehs[id].faction_id == ConsoleGlobal.faction_id_) {
                         x = Vehs[id].x;
                         y = Vehs[id].y;
@@ -10389,12 +11204,12 @@ void __cdecl net_control_turn() {
             }
         }
 
-        if ((NetTurnFlags & 0x10u) != 0 &&
+        if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10u) != 0 &&
             NetDaemonNet.lock_state_[0].leading_words_[1] != 0) {
             if (ControlTurnPhase == 0) {
                 next_player_turn();
             } else {
-                message_data(0x4309, 0, NetTurnFaction, 0, 0, 0);
+                message_data(0x4309, 0, GameDataStateStorage.fields_.net_turn_faction_, 0, 0, 0);
             }
         }
         ControlTurnPhase = 0;
@@ -10403,17 +11218,17 @@ void __cdecl net_control_turn() {
         for (;;) {
             state = ExitTurnLoop;
             if (state == 0) {
-                if ((NetTurnFlags & 0x10u) == 0 ||
-                    NetTurnFaction == ConsoleGlobal.faction_id_) {
+                if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10u) == 0 ||
+                    GameDataStateStorage.fields_.net_turn_faction_ == ConsoleGlobal.faction_id_) {
                     bool skip_human = false;
-                    if ((NetTurnFlags & 0x10u) == 0) {
-                        if ((GameState & 0x800u) != 0) {
-                            GameState |= 2u;
+                    if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10u) == 0) {
+                        if ((GameDataStateStorage.fields_.game_state_ & 0x800u) != 0) {
+                            GameDataStateStorage.fields_.game_state_ |= 2u;
                             skip_human = true;
                         }
                     } else {
-                        NetDaemonWaitTicks = static_cast<int>(TurnControlDurationMilliseconds);
-                        GameState &= 0xFFFFF7FFu;
+                        NetDaemonWaitTicks = static_cast<int>(GameDataStateStorage.fields_.turn_control_duration_milliseconds_);
+                        GameDataStateStorage.fields_.game_state_ &= 0xFFFFF7FFu;
                         TurnControlWord93A954 = 0;
                         ConsoleFactionsWaitingMask &=
                             ~(1u << (ConsoleGlobal.faction_id_ & 0x1F));
@@ -10421,7 +11236,7 @@ void __cdecl net_control_turn() {
                     if (!skip_human) {
                         ConsoleGlobal.human_turn();
                         state = ExitTurnLoop;
-                        if ((NetTurnFlags & 0x10u) != 0) {
+                        if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10u) != 0) {
                             TurnControlWord93A954 = 1;
                             while (ExitTurnLoop == 0 &&
                                    NetDaemonNet.locks_.any_locks() != 0) {
@@ -10431,14 +11246,14 @@ void __cdecl net_control_turn() {
                             for (;;) {
                                 state = ExitTurnLoop;
                                 if (ExitTurnLoop != 0 ||
-                                    NetTurnFaction != ConsoleGlobal.faction_id_) {
+                                    GameDataStateStorage.fields_.net_turn_faction_ != ConsoleGlobal.faction_id_) {
                                     break;
                                 }
                                 if (NextTurnReady != 0) goto after_state_switch;
                                 NetDaemonNet.net_tasks();
                             }
                             if (NextTurnReady == 0) {
-                                GameState &= 0xFFFFF7FFu;
+                                GameDataStateStorage.fields_.game_state_ &= 0xFFFFF7FFu;
                             }
                         }
                     }
@@ -10451,15 +11266,15 @@ void __cdecl net_control_turn() {
                     ConsoleFactionsWaitingMask |=
                         1u << (ConsoleGlobal.faction_id_ & 0x1F);
                     while (ExitTurnLoop == 0 && NextTurnReady == 0 &&
-                           NetTurnFaction != ConsoleGlobal.faction_id_) {
+                           GameDataStateStorage.fields_.net_turn_faction_ != ConsoleGlobal.faction_id_) {
                         ConsoleGlobal.field_23BE4_ = 1;
                         NetDaemonNet.net_tasks();
                         if (NetDaemonNet.lock_state_[0].leading_words_[1] != 0) {
-                            if (NetTurnFaction < 1 ||
-                                ((static_cast<unsigned char>(LockEnableMask) &
-                                  static_cast<unsigned char>(1u << (NetTurnFaction & 0x1F))) == 0) ||
-                                ((static_cast<unsigned char>(LockEnableMask >> 8) &
-                                  static_cast<unsigned char>(1u << (NetTurnFaction & 0x1F))) == 0)) {
+                            if (GameDataStateStorage.fields_.net_turn_faction_ < 1 ||
+                                ((static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) &
+                                  static_cast<unsigned char>(1u << (GameDataStateStorage.fields_.net_turn_faction_ & 0x1F))) == 0) ||
+                                ((static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8) &
+                                  static_cast<unsigned char>(1u << (GameDataStateStorage.fields_.net_turn_faction_ & 0x1F))) == 0)) {
                                 next_player_turn();
                             }
                         }
@@ -10469,26 +11284,26 @@ void __cdecl net_control_turn() {
                     state = ExitTurnLoop;
                 }
             } else {
-                GameState |= 2u;
+                GameDataStateStorage.fields_.game_state_ |= 2u;
             }
 after_state_switch:
             if (state != 0) break;
             unsigned int cont;
-            if ((NetTurnFlags & 0x10u) == 0) {
+            if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10u) == 0) {
                 net_end_of_turn();
                 state = ExitTurnLoop;
                 if (ExitTurnLoop != 0) break;
-                if ((NetTurnFlags & 0x10u) != 0) {
+                if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10u) != 0) {
                     cont = NextTurnReady == 0 ? 1u : 0u;
                 } else {
-                    cont = (~GameState >> 1) & 1u;
+                    cont = (~GameDataStateStorage.fields_.game_state_ >> 1) & 1u;
                 }
             } else {
                 cont = NextTurnReady == 0 ? 1u : 0u;
             }
             if (cont == 0) break;
         }
-        if ((NetTurnFlags & 0x10u) != 0) {
+        if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10u) != 0) {
             net_end_of_turn();
             state = ExitTurnLoop;
         }
@@ -10615,23 +11430,23 @@ int __cdecl end_of_game(int check_victory) {
     int current_reason;
     bool show_ending_interlude = false;
 
-    if ((GameState & EndgameRecorded) != 0 &&
-        (GameState & EndgamePresented) != 0) {
+    if ((GameDataStateStorage.fields_.game_state_ & EndgameRecorded) != 0 &&
+        (GameDataStateStorage.fields_.game_state_ & EndgamePresented) != 0) {
         return 0;
     }
 
-    if ((GameState & EndgameRecorded) == 0) {
+    if ((GameDataStateStorage.fields_.game_state_ & EndgameRecorded) == 0) {
         if (check_victory != 0) {
-            if (static_cast<int>(EndingMissionYear) <=
-                static_cast<int>(MissionYearCurrent)) {
-                GameState |= EndgameRecorded;
+            if (static_cast<int>(ScenarioSave.ending_mission_year) <=
+                static_cast<int>(GameDataStateStorage.fields_.mission_year_current_)) {
+                GameDataStateStorage.fields_.game_state_ |= EndgameRecorded;
                 EndgameExitReason = EndgameReason8;
             }
 
             current_reason = EndgameExitReason;
             for (int faction_id = 1; faction_id < 8; ++faction_id) {
                 const unsigned int faction_bit = 1u << (faction_id & 0x1F);
-                if ((static_cast<unsigned char>(LockEnableMask >> 8) &
+                if ((static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8) &
                      faction_bit) == 0) {
                     continue;
                 }
@@ -10640,7 +11455,7 @@ int __cdecl end_of_game(int check_victory) {
                 PlayerData &data = PlayersData[faction_id];
                 int generator_count = 0;
                 if ((player.rule_flags & RFLAG_ALIEN) != 0) {
-                    for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+                    for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
                         const Base &base = Bases[base_id];
                         if (static_cast<unsigned char>(base.faction_id_current) ==
                                 faction_id &&
@@ -10659,7 +11474,7 @@ int __cdecl end_of_game(int check_victory) {
                         EndgameExitReason = current_reason;
                     } else if ((data.diplo_treaties[
                                     ConsoleGlobal.faction_id_] & 1u) == 0 ||
-                               (GameRules & RULES_VICTORY_COOPERATIVE) == 0) {
+                               (GameDataStateStorage.fields_.game_rules_ & RULES_VICTORY_COOPERATIVE) == 0) {
                         if (current_reason != EndgameReason16 &&
                             current_reason != EndgameReason17) {
                             current_reason = EndgameReason18;
@@ -10669,24 +11484,24 @@ int __cdecl end_of_game(int check_victory) {
                         current_reason = EndgameReason17;
                         EndgameExitReason = current_reason;
                     }
-                    GameState |= EndgameRecorded;
+                    GameDataStateStorage.fields_.game_state_ |= EndgameRecorded;
                     if (selected_faction == 0xFFFFFFFFu ||
                         faction_id == ConsoleGlobal.faction_id_) {
                         selected_faction = faction_id;
                     }
-                    NetTurnFlags |= 0x80u;
+                    GameDataStateStorage.fields_.net_turn_flags_ |= 0x80u;
                 }
 
                 if (data.corner_market_turn < 1 ||
-                    data.corner_market_turn != TurnCurrentNum ||
+                    data.corner_market_turn != GameDataStateStorage.fields_.turn_current_num_ ||
                     data.corner_market_active < 1) {
-                    if (((faction_bit & static_cast<unsigned char>(LockEnableMask)) !=
-                         0 || (GameRules & RULES_SCN_VICT_SOLO_MISSION) == 0) &&
-                        ObjectiveReqVictory > 0 &&
+                    if (((faction_bit & static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_)) !=
+                         0 || (GameDataStateStorage.fields_.game_rules_ & RULES_SCN_VICT_SOLO_MISSION) == 0) &&
+                        ScenarioSave.objective_req_victory > 0 &&
                         num_objectives(faction_id,
-                            GameRules & RULES_VICTORY_COOPERATIVE) >=
-                            ObjectiveReqVictory) {
-                        GameState |= EndgameRecorded;
+                            GameDataStateStorage.fields_.game_rules_ & RULES_VICTORY_COOPERATIVE) >=
+                            ScenarioSave.objective_req_victory) {
+                        GameDataStateStorage.fields_.game_state_ |= EndgameRecorded;
                         EndgameExitReason = EndgameReason9;
                         current_reason = EndgameReason9;
                         if (selected_faction == 0xFFFFFFFFu ||
@@ -10703,7 +11518,7 @@ int __cdecl end_of_game(int check_victory) {
                         EndgameExitReason = current_reason;
                     } else if ((data.diplo_treaties[
                                     ConsoleGlobal.faction_id_] & 1u) == 0 ||
-                               (GameRules & RULES_VICTORY_COOPERATIVE) == 0) {
+                               (GameDataStateStorage.fields_.game_rules_ & RULES_VICTORY_COOPERATIVE) == 0) {
                         if (current_reason != EndgameReason12 &&
                             current_reason != EndgameReason13) {
                             current_reason = EndgameReason14;
@@ -10713,32 +11528,32 @@ int __cdecl end_of_game(int check_victory) {
                         current_reason = EndgameReason13;
                         EndgameExitReason = current_reason;
                     }
-                    GameState |= EndgameRecorded | STATE_VICTORY_ECONOMIC;
+                    GameDataStateStorage.fields_.game_state_ |= EndgameRecorded | STATE_VICTORY_ECONOMIC;
                     selected_faction = faction_id;
                     if (faction_id == ConsoleGlobal.faction_id_) break;
                 }
             }
         }
-        if ((GameState & EndgameRecorded) == 0) {
+        if ((GameDataStateStorage.fields_.game_state_ & EndgameRecorded) == 0) {
             // The retained body handles the retirement warning here, before
             // returning for the ordinary no-result path. The scenario warning
             // has a different string pair and also fires ten years early.
             if (check_victory != 0 &&
-                (GameState & STATE_IS_SCENARIO) == 0 &&
-                MissionYearCurrent == EndingMissionYear - 20) {
-                parse_num(0, static_cast<int>(EndingMissionYear));
+                (GameDataStateStorage.fields_.game_state_ & STATE_IS_SCENARIO) == 0 &&
+                GameDataStateStorage.fields_.mission_year_current_ == ScenarioSave.ending_mission_year - 20) {
+                parse_num(0, static_cast<int>(ScenarioSave.ending_mission_year));
                 StringTemp[0] = 0;
-                _itoa(static_cast<int>(EndingMissionYear), year_text, 10);
+                _itoa(static_cast<int>(ScenarioSave.ending_mission_year), year_text, 10);
                 strcat(StringTemp, year_text);
                 parse_says(0, StringTemp, -1, -1);
                 X_pop("RETIREWARNING", 0);
             } else if (check_victory != 0 &&
-                       (GameState & STATE_IS_SCENARIO) != 0 &&
-                       (MissionYearCurrent == EndingMissionYear - 20 ||
-                        MissionYearCurrent == EndingMissionYear - 10)) {
-                parse_num(0, static_cast<int>(EndingMissionYear));
+                       (GameDataStateStorage.fields_.game_state_ & STATE_IS_SCENARIO) != 0 &&
+                       (GameDataStateStorage.fields_.mission_year_current_ == ScenarioSave.ending_mission_year - 20 ||
+                        GameDataStateStorage.fields_.mission_year_current_ == ScenarioSave.ending_mission_year - 10)) {
+                parse_num(0, static_cast<int>(ScenarioSave.ending_mission_year));
                 StringTemp[0] = 0;
-                _itoa(static_cast<int>(EndingMissionYear), year_text, 10);
+                _itoa(static_cast<int>(ScenarioSave.ending_mission_year), year_text, 10);
                 strcat(StringTemp, year_text);
                 parse_says(0, StringTemp, -1, -1);
                 x_pop_caption_label(const_cast<char *>("SCENARIOWARNING"),
@@ -10748,7 +11563,7 @@ int __cdecl end_of_game(int check_victory) {
         }
     }
 
-    if ((GameState & EndgamePresented) != 0) return 0;
+    if ((GameDataStateStorage.fields_.game_state_ & EndgamePresented) != 0) return 0;
 
     winner = 0;
     int winner_data_index = 0;
@@ -10779,7 +11594,7 @@ int __cdecl end_of_game(int check_victory) {
              "dipvic_sm.pcx", 0);
         break;
     case 7:
-        if ((GamePreferences & PREF_AV_SECRET_PROJECT_MOVIES) != 0) {
+        if ((GameDataStateStorage.fields_.game_preferences_ & PREF_AV_SECRET_PROJECT_MOVIES) != 0) {
             if ((Players[ConsoleGlobal.faction_id_].rule_flags & 0x80) != 0) {
                 amovie_project("losealien");
             } else if (Players[ConsoleGlobal.faction_id_].is_leader_female != 0) {
@@ -10790,24 +11605,24 @@ int __cdecl end_of_game(int check_victory) {
         }
         break;
     case 8:
-        parse_num(0, static_cast<int>(MissionYearCurrent));
+        parse_num(0, static_cast<int>(GameDataStateStorage.fields_.mission_year_current_));
         StringTemp[0] = 0;
         say_year(StringTemp);
         parse_says(0, StringTemp, -1, -1);
-        if ((GameState & EndgameNetResults) == 0) {
+        if ((GameDataStateStorage.fields_.game_state_ & EndgameNetResults) == 0) {
             X_pop("TIMELIMIT", 0);
-        } else if (ObjectiveReqVictory == 0 ||
-                   (GameState & EndgameScoreMode) != 0) {
+        } else if (ScenarioSave.objective_req_victory == 0 ||
+                   (GameDataStateStorage.fields_.game_state_ & EndgameScoreMode) != 0) {
             winner_score = -9999;
             winner = ConsoleGlobal.faction_id_;
             for (int faction_id = 1; faction_id < 8; ++faction_id) {
                 const unsigned int faction_bit = 1u << (faction_id & 0x1F);
-                if ((static_cast<unsigned char>(LockEnableMask >> 8) &
+                if ((static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8) &
                      faction_bit) != 0) {
                     int score;
-                    if ((GameState & EndgameScoreMode) == 0) {
+                    if ((GameDataStateStorage.fields_.game_state_ & EndgameScoreMode) == 0) {
                         score = num_objectives(faction_id,
-                            GameRules & RULES_VICTORY_COOPERATIVE);
+                            GameDataStateStorage.fields_.game_rules_ & RULES_VICTORY_COOPERATIVE);
                     } else {
                         compute_score(faction_id, &score, score_items, 1);
                     }
@@ -10890,7 +11705,7 @@ int __cdecl end_of_game(int check_victory) {
         parse_player_identity(static_cast<int>(winner));
         popp(ScriptPopupFile, "ENDBEACON", 0,
              "beacon_sm.pcx", 0);
-        if ((GamePreferences & PREF_AV_SECRET_PROJECT_MOVIES) != 0) {
+        if ((GameDataStateStorage.fields_.game_preferences_ & PREF_AV_SECRET_PROJECT_MOVIES) != 0) {
             StringTemp[0] = 0;
             strcat(StringTemp, Players[ConsoleGlobal.faction_id_].filename);
             CharUpperA(StringTemp);
@@ -10941,7 +11756,7 @@ int __cdecl end_of_game(int check_victory) {
         break;
     }
 
-    if ((GamePreferences & PREF_AV_INTERLUDES_DISABLED) == 0) {
+    if ((GameDataStateStorage.fields_.game_preferences_ & PREF_AV_INTERLUDES_DISABLED) == 0) {
         switch (current_reason) {
         case 4:
         case 6:
@@ -10968,12 +11783,12 @@ int __cdecl end_of_game(int check_victory) {
         show_credits();
     }
     report_score(1);
-    if ((GameState & EndgameNetResults) == 0) {
+    if ((GameDataStateStorage.fields_.game_state_ & EndgameNetResults) == 0) {
         quayle(ConsoleGlobal.faction_id_);
         hall_of_fame(1);
     }
     show_replay();
-    GameState |= EndgamePresented;
+    GameDataStateStorage.fields_.game_state_ |= EndgamePresented;
     if (IsMultiplayerNet == 0 && current_reason != 7 &&
         popp(ScriptPopupFile, "GAMEOVERMAN", 0, "stars_sm.pcx", 0) != 0) {
         return 0;
@@ -11027,8 +11842,8 @@ void __cdecl control_turn() {
     int save_pending;
     int result;
 
-    if (TurnCurrentNum == 0 && ControlTurnPhase == 0 &&
-        ((static_cast<unsigned char>(LockEnableMask >> 8) >>
+    if (GameDataStateStorage.fields_.turn_current_num_ == 0 && ControlTurnPhase == 0 &&
+        ((static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8) >>
           (ConsoleGlobal.faction_id_ & 0x1F)) & 1u) != 0) {
         if (IsMultiplayerPBEM == 0) {
             crash_landing(ConsoleGlobal.faction_id_);
@@ -11040,7 +11855,7 @@ void __cdecl control_turn() {
 
     MapBaseDisplayOverride = 1;
     if (ControlTurnPhase != 0 &&
-        ((static_cast<unsigned char>(LockEnableMask >> 8) >>
+        ((static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8) >>
           (ConsoleGlobal.faction_id_ & 0x1F)) & 1u) == 0) {
         ConsoleGlobal.human_turn();
     }
@@ -11063,17 +11878,17 @@ void __cdecl control_turn() {
         int faction = 0;
         do {
             const unsigned int alive_mask =
-                static_cast<unsigned char>(LockEnableMask >> 8);
+                static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8);
             if (((alive_mask >> (faction & 0x1F)) & 1u) != 0 &&
                 ControlTurnPhase <= faction) {
                 const int active_faction = ConsoleGlobal.faction_id_;
-                NetTurnFaction = faction;
+                GameDataStateStorage.fields_.net_turn_faction_ = faction;
                 const unsigned int report_mask =
-                    static_cast<unsigned char>(LockEnableMask);
+                    static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_);
                 const bool has_report =
                     ((report_mask >> (faction & 0x1F)) & 1u) != 0;
                 if (has_report &&
-                    (faction != active_faction || (NetTurnFlags & 0x20) != 0 ||
+                    (faction != active_faction || (GameDataStateStorage.fields_.net_turn_flags_ & 0x20) != 0 ||
                      IsMultiplayerPBEM != 0)) {
                     Player &player = Players[faction];
                     parse_says(0, ControlTurnMailTemplate, -1, -1);
@@ -11165,11 +11980,11 @@ void __cdecl control_turn() {
 
                     save_pending = static_cast<int>(popup.input_poll_state());
                     if (save_pending != 0) {
-                        NetTurnFlags |= 0x40;
+                        GameDataStateStorage.fields_.net_turn_flags_ |= 0x40;
                         if (save_game(0) == 0) {
                             return;
                         }
-                        NetTurnFlags &= ~0x40;
+                        GameDataStateStorage.fields_.net_turn_flags_ &= ~0x40;
                         if (ExitTurnLoop != 0) {
                             return;
                         }
@@ -11183,7 +11998,7 @@ void __cdecl control_turn() {
                         if (password_hash != static_cast<uint32_t>(data.unk_102)) {
                             if (data.unk_102 != 0) {
                                 if (++retry_count > 2) {
-                                    NetTurnFlags |= 0x40;
+                                    GameDataStateStorage.fields_.net_turn_flags_ |= 0x40;
                                     save_game(0);
                                     ConsoleGlobal.Win::hide();
                                     ExitTurnLoop = 1;
@@ -11216,13 +12031,13 @@ void __cdecl control_turn() {
                     if (ExitTurnLoop == 0) {
                         bool found_owned_base = false;
                         int index = 0;
-                        if (BaseCurrentCount > 0) {
-                            while (index < BaseCurrentCount &&
+                        if (GameDataStateStorage.fields_.base_current_count_ > 0) {
+                            while (index < GameDataStateStorage.fields_.base_current_count_ &&
                                    Bases[index].faction_id_current !=
                                        ConsoleGlobal.faction_id_) {
                                 ++index;
                             }
-                            if (index < BaseCurrentCount) {
+                            if (index < GameDataStateStorage.fields_.base_current_count_) {
                                 ConsoleGlobal.set_center(Bases[index].x,
                                                          Bases[index].y, 1);
                                 ConsoleGlobal.set_cursor(Bases[index].x,
@@ -11230,15 +12045,15 @@ void __cdecl control_turn() {
                                 found_owned_base = true;
                             }
                         }
-                        if (!found_owned_base && VehCurrentCount > 0) {
+                        if (!found_owned_base && GameDataStateStorage.fields_.vehicle_current_count_ > 0) {
                             index = 0;
-                            while (index < VehCurrentCount &&
+                            while (index < GameDataStateStorage.fields_.vehicle_current_count_ &&
                                    static_cast<unsigned char>(
                                        Vehs[index].faction_id) !=
                                        ConsoleGlobal.faction_id_) {
                                 ++index;
                             }
-                            if (index < VehCurrentCount) {
+                            if (index < GameDataStateStorage.fields_.vehicle_current_count_) {
                                 ConsoleGlobal.set_center(Vehs[index].x,
                                                          Vehs[index].y, 1);
                                 ConsoleGlobal.set_cursor(Vehs[index].x,
@@ -11313,7 +12128,7 @@ void __cdecl control_turn() {
                             pending_diplomacy_flag(pending_index) = 0;
                             if (other != local_faction) {
                                 const unsigned int alive =
-                                    static_cast<unsigned char>(LockEnableMask >> 8);
+                                    static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8);
                                 if (((alive >> (other & 0x1F)) & 1u) == 0) {
                                     if (FactionDiplomacyFlags[1] != 0) {
                                         communicate(local_faction, other, 0);
@@ -11365,8 +12180,8 @@ void __cdecl control_turn() {
                                 const char *picture;
                                 const char *message;
                                 if (CouncilNotifyFormSlots[local_faction] == 0) {
-                                    if (GovernorFaction > 0) {
-                                        Player &governor = Players[GovernorFaction];
+                                    if (GameDataStateStorage.fields_.governor_faction_ > 0) {
+                                        Player &governor = Players[GameDataStateStorage.fields_.governor_faction_];
                                         GenderDefault = governor.is_leader_female;
                                         PluralityDefault = 0;
                                         parse_says(0, governor.title_leader,
@@ -11383,7 +12198,7 @@ void __cdecl control_turn() {
                                     if (message_state == 1) {
                                         picture = "council_sm.pcx";
                                         message = "COUNCILHOTGOVWIN";
-                                    } else if (GovernorFaction < 1) {
+                                    } else if (GameDataStateStorage.fields_.governor_faction_ < 1) {
                                         picture = "council_sm.pcx";
                                         message = "COUNCILHOTGOVNONE";
                                     } else {
@@ -11413,16 +12228,16 @@ void __cdecl control_turn() {
 
                 if (ExitTurnLoop == 0) {
                     if (ControlTurnPhase == 0 ||
-                        (IsMultiplayerPBEM != 0 && (NetTurnFlags & 0x40) != 0)) {
+                        (IsMultiplayerPBEM != 0 && (GameDataStateStorage.fields_.net_turn_flags_ & 0x40) != 0)) {
                         ConsoleControlTurnActive = 1;
                         faction_upkeep(faction);
                         result = end_of_game(0);
                         if (result != 0) goto turn_exit;
                     }
-                    NetTurnFlags &= ~0x40;
+                    GameDataStateStorage.fields_.net_turn_flags_ &= ~0x40;
                     ConsoleControlTurnActive = 0;
                     const unsigned int alive =
-                        static_cast<unsigned char>(LockEnableMask);
+                        static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_);
                     const int current_faction = ConsoleGlobal.faction_id_;
                         if ((alive & (1u << (faction & 0x1F))) == 0) {
                             enemy_turn(faction);
@@ -11459,16 +12274,6 @@ turn_exit:
 }
 
 
-// Only NUL string starts945D80/84/88 and a9-byte minimum touched window
-// are proved. This provisional view is not an original aggregate-type or
-// full-capacity claim; larger allocation and indirect aliases remain unknown.
-struct SaveNameDefaultStorage {
-    char game_data_migration_default_[1];
-    char unassigned_1_[3];
-    char scenario_equal_default_[1];
-    char unassigned_2_[3];
-    char save_equal_default_[1];
-};
 // RECOVERY_OBJECT: v1 0x00945D80 ?SaveNameDefaultStorageGlobal@@3USaveNameDefaultStorage@@A
 SaveNameDefaultStorage SaveNameDefaultStorageGlobal;
 
@@ -11504,7 +12309,7 @@ int __cdecl save_game(int mode) {
 
     char transient_name[188];
     strcpy(transient_name, mode != 0 ? ScenarioSaveNameBuffer
-                                    : LegacyGameSaveName);
+                                    : GameDataStateStorage.fields_.legacy_game_save_name_);
     yearmotize(transient_name);
     char *const default_name = transient_name[0] != 0
         ? transient_name : StringTemp;
@@ -11579,7 +12384,7 @@ int __cdecl save_game(int mode) {
     if (mode != 0) {
         if (_stricmp(selected_basename, default_basename) != 0) {
             strcpy(ScenarioSaveNameBuffer, selected_basename);
-            GameState |= 0x10;
+            GameDataStateStorage.fields_.game_state_ |= 0x10;
             for (int faction = 0; faction < MaxPlayerNum; ++faction) {
                 PlayersData[faction].unk_102 = 0;
             }
@@ -11592,7 +12397,7 @@ int __cdecl save_game(int mode) {
         if (_stricmp(selected_basename, default_basename) == 0) {
             save_name = SaveNameDefaultStorageGlobal.save_equal_default_;
         }
-        strcpy(LegacyGameSaveName, save_name);
+        strcpy(GameDataStateStorage.fields_.legacy_game_save_name_, save_name);
         prefs_put("Latest Save", selected_basename);
     }
 
@@ -11609,7 +12414,7 @@ int __cdecl save_game(int mode) {
         return 0;
     }
 
-    if (mode == 0 && (GameRules & RULES_IRONMAN) != 0) {
+    if (mode == 0 && (GameDataStateStorage.fields_.game_rules_ & RULES_IRONMAN) != 0) {
         auto_save();
         ExitTurnLoop = 1;
 
@@ -11738,8 +12543,8 @@ int __cdecl load_game(int mode, int load_argument) {
             for (int faction = 1; faction < MaxPlayerNum; ++faction)
                 load_faction_art(faction);
             load_flags();
-            GameState &= 0xF79FCF16u;
-            if ((GameState & 0xC0u) == 0xC0u)
+            GameDataStateStorage.fields_.game_state_ &= 0xF79FCF16u;
+            if ((GameDataStateStorage.fields_.game_state_ & 0xC0u) == 0xC0u)
                 MainInterfaceGlobal.flat_button(2).show(0);
             else
                 MainInterfaceGlobal.flat_button(2).hide();
@@ -11756,7 +12561,7 @@ int __cdecl load_game(int mode, int load_argument) {
 
         GameSessionActive = strcmp(SaveNameBuffer, previous_name);
         filefind_set_alternative(SaveNameBuffer);
-        mode |= static_cast<int>(GameState & 0x10u);
+        mode |= static_cast<int>(GameDataStateStorage.fields_.game_state_ & 0x10u);
 
         if (IsMultiplayerNet == 0 && IsMultiplayerPBEM == 0) {
             for (int faction = 1; faction < MaxPlayerNum; ++faction) {
@@ -11796,7 +12601,7 @@ int __cdecl load_game(int mode, int load_argument) {
         // Difficulty still uses the legacy pointer spelling for StringTable
         // IDs; native passes its32-bit table value, not the pointed-to text.
         parse_say(0, static_cast<int>(reinterpret_cast<intptr_t>(
-            Difficulty[DiffLevelCurrent])), -1, -1);
+            Difficulty[GameDataStateStorage.fields_.diff_level_current_])), -1, -1);
 
         Player &player = Players[ConsoleGlobal.faction_id_];
         GenderDefault = player.is_leader_female;
@@ -11826,7 +12631,7 @@ int __cdecl load_game(int mode, int load_argument) {
         break;
     }
 
-    if ((GamePreferences & 0x20000000u) == 0)
+    if ((GameDataStateStorage.fields_.game_preferences_ & 0x20000000u) == 0)
         DialogDefaults[36] |= 4u;
     else
         DialogDefaults[36] &= ~4u;

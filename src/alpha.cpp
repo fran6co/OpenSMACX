@@ -122,8 +122,8 @@ Continent Continents[MaxContinentNum];                      // 0x009AA730
 // [0x009A64EC,0x009A650C). setup_player's apparent endgame selector
 // cells 0x009A6504/0x009A6508 are entries 6/7 of this same allocation;
 // InfoWin::setup_text also reads entry 7, not an independent scalar.
-// RECOVERY_OBJECT: v2 0x009A64EC 0x009A650C ?FactionRankings@@3PAIA 0x005AC690
-uint32_t FactionRankings[MaxPlayerNum];                     // 0x009A64EC
+// Historical object identity moved to GameDataStateStorage; see the transport manifest.
+// 0x009A64EC
 uint16_t FactionRankingHistory[MaxPlayerNum * MaxRankingHistoryTurns];  // 0x009A68AC
 // hof_save/hof_load transfer this complete zero-initialized 0x1324-byte
 // block, and FameWin indexes it in 0x8C-byte records. The original address
@@ -143,8 +143,8 @@ Base Bases[MaxBaseNum];                             // 0x0097D040
 // Native base_project indexes 64 dwords at 0x009A6514; setup_game
 // resets all 64 to -1. The spying/social/energy selectors inside this
 // range are views of named project fields, never separate allocations.
-// RECOVERY_OBJECT: v2 0x009A6514 0x009A6614 ?SecretProject@@3UBaseSecretProject@@A 0x005002E0
-BaseSecretProject SecretProject;                    // 0x009A6514
+// Historical object identity moved to GameDataStateStorage; see the transport manifest.
+// 0x009A6514
 // AN OBJECT, NOT A POINTER TO A FIXED ADDRESS: the pointer form costs a
 // load at every use where the image addresses the storage directly, and
 // the address is terranx.exe's data, unmapped in a standalone build.
@@ -2262,9 +2262,9 @@ void __cdecl prefs_use() {
     const uint32_t preferences = AlphaIniPrefs.preferences;
     const uint32_t more = AlphaIniPrefs.more_preferences;
     const uint32_t announce = AlphaIniPrefs.announce;
-    GamePreferences = preferences;
-    GameMorePreferences = more;
-    GameWarnings = announce;
+    GameDataStateStorage.fields_.game_preferences_ = preferences;
+    GameDataStateStorage.fields_.game_more_preferences_ = more;
+    GameDataStateStorage.fields_.game_warnings_ = announce;
 }
 
 /*

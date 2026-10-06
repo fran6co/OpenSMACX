@@ -61,12 +61,12 @@ uint32_t StatusFlags;
 // RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/unrecovered/004b4bf0.cpp retained BYTE_EXACT seed; Vehs stride 0x34, VehPrototypes chassis_id offset 0x24, Chassis triad offset 0x49.", "git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/unrecovered/004b4bf0.cpp"], "reason": "Home the destination vehicle route painter reached by MapWin recentering using Veh and Chassis records. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
 // kind      game
 void __cdecl draw_my_dest(int vehicle_id) {
-    if (vehicle_id < 0 || vehicle_id >= VehCurrentCount) {
+    if (vehicle_id < 0 || vehicle_id >= GameDataStateStorage.fields_.vehicle_current_count_) {
         return;
     }
     Veh &vehicle = Vehs[vehicle_id];
     if (vehicle.faction_id != ConsoleGlobal.faction_id_ &&
-        (GameState & STATE_OMNISCIENT_VIEW) == 0) {
+        (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) == 0) {
         return;
     }
     if (vehicle.order != 0x18) {
@@ -126,18 +126,18 @@ void StatusWin::on_right_click(int x, int y, int) {
             if (menu_id == 10) object_index = ConsoleGlobal.selected_vehicle_;
             menu.add_item(6, label_get(0x958 / 4));
             menu.add_item(7, label_get(0x112C / 4));
-            if (GameState & STATE_SCENARIO_EDITOR) {
+            if (GameDataStateStorage.fields_.game_state_ & STATE_SCENARIO_EDITOR) {
                 menu.add_item(90, label_get(0xDFC / 4));
             }
             menu.add_separator(99);
         } else {
             base_id = object_index;
             int owner = Bases[base_id].faction_id_current;
-            if ((GameState & STATE_OMNISCIENT_VIEW) || owner == ConsoleGlobal.faction_id_
+            if ((GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) || owner == ConsoleGlobal.faction_id_
                 || spying(owner) || (PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[owner] & 1)) {
                 menu.add_item(5, label_get(0x894 / 4));
             }
-            if (owner == ConsoleGlobal.faction_id_ || (GameState & STATE_OMNISCIENT_VIEW)) {
+            if (owner == ConsoleGlobal.faction_id_ || (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) {
                 for (int action = 51; action <= 56; ++action) {
                     StringTemp[0] = '\0';
                     strcat(StringTemp, " ");
@@ -427,7 +427,7 @@ void StatusWin::draw_status(int a1, int a2, int a3, int a4, int a5) {
     int tile_x = iTileX_;
     int tile_y = iTileY_;
     if (ConsoleGlobal.cursor_active_ != 0 && selected_vehicle >= 0 &&
-        TurnCurrentNum != 0) {
+        GameDataStateStorage.fields_.turn_current_num_ != 0) {
         tile_x = Vehs[selected_vehicle].x;
         tile_y = Vehs[selected_vehicle].y;
         if (tile_x != iTileX_ || tile_y != iTileY_) goto resolve_panel_selection;
@@ -435,7 +435,7 @@ void StatusWin::draw_status(int a1, int a2, int a3, int a4, int a5) {
 resolve_panel_selection:
         tile_x = iTileX_;
         tile_y = iTileY_;
-        selected_vehicle = TurnCurrentNum != 0 ? veh_at(tile_x, tile_y) : -1;
+        selected_vehicle = GameDataStateStorage.fields_.turn_current_num_ != 0 ? veh_at(tile_x, tile_y) : -1;
         base_under_cursor = base_at(tile_x, tile_y);
         if (selected_vehicle >= 0) {
             const int original_vehicle = selected_vehicle;
@@ -445,7 +445,7 @@ resolve_panel_selection:
             const int original_owner = Vehs[original_vehicle].faction_id;
             const int viewer = ConsoleGlobal.faction_id_;
             if (original_owner != viewer &&
-                (GameState & STATE_OMNISCIENT_VIEW) == 0) {
+                (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) == 0) {
                 const Map &tile = MapTiles[tile_y * MapLongitude + (tile_x >> 1)];
                 if ((PlayersData[viewer].flags & 0x200) == 0 &&
                     (tile.visibility & (1U << (viewer & 31))) == 0) {
@@ -473,7 +473,7 @@ resolve_panel_selection:
                             ((nearby.val2 & 0x0f) == viewer)) can_see_base = true;
                     }
                     if ((base.faction_id_current == viewer ||
-                         (GameState & STATE_OMNISCIENT_VIEW) != 0 ||
+                         (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) != 0 ||
                          (base.visibility & (1U << (viewer & 31))) != 0) &&
                         can_see_base) {
                         // Visibility of the base keeps the selected vehicle;
@@ -506,7 +506,7 @@ resolve_panel_selection:
             selected_base = iCityIndex_;
     }
     field_15DC_ = selected_vehicle >= 0;
-    if (selected_base >= 0 && (GameState & STATE_OMNISCIENT_VIEW) == 0) {
+    if (selected_base >= 0 && (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) == 0) {
         const Base &base = Bases[selected_base];
         if (base.faction_id_current != ConsoleGlobal.faction_id_ &&
             (base.visibility & (1U << (ConsoleGlobal.faction_id_ & 31))) == 0) {
@@ -529,14 +529,14 @@ resolve_panel_selection:
     const int viewer = ConsoleGlobal.faction_id_;
     const Map &tile = MapTiles[map_index];
     char number[84];
-    const bool visible = (GameState & STATE_OMNISCIENT_VIEW) != 0 ||
+    const bool visible = (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) != 0 ||
         (PlayersData[viewer].flags & 0x200) != 0 ||
         (tile.visibility & (1U << (viewer & 31))) != 0;
 
     if (visible) {
         MapWinCaptionScale = (work.right - work.left) - 4;
         MapWinCaptionDivisor = 100;
-        const int map_faction = (GameState & STATE_OMNISCIENT_VIEW)
+        const int map_faction = (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)
             ? -1 : viewer;
         gen_terrain_poly(canvas, 0, 0, map_faction, 0, 0x621,
                          tile_x, tile_y, text_x + 2, work.top + 1);
@@ -675,17 +675,17 @@ resolve_panel_selection:
 
         const int altitude = tile.climate & 0xe0;
         if (terrain_kind >= 0) {
-            if (ClimateSeaLevelDelta >= 1 &&
+            if (GameDataStateStorage.fields_.climate_sea_level_delta_ >= 1 &&
                 static_cast<int>(tile.contour) - MapSeaLevel <
-                    static_cast<int>(AltNatural[3]) + ClimateSeaLevelDelta) {
+                    static_cast<int>(AltNatural[3]) + GameDataStateStorage.fields_.climate_sea_level_delta_) {
                 StringTemp[0] = '\0';
                 strcat(StringTemp, label_get(0x7fc / 4));
                 canvas->set_text_color(0xf9, -1, 1, 1);
                 canvas->write_l(StringTemp, text_x, text_y, strlen(StringTemp));
                 text_y += a3;
             }
-        } else if (ClimateSeaLevelDelta <= -1 &&
-                   static_cast<int>(AltNatural[3]) + ClimateSeaLevelDelta <=
+        } else if (GameDataStateStorage.fields_.climate_sea_level_delta_ <= -1 &&
+                   static_cast<int>(AltNatural[3]) + GameDataStateStorage.fields_.climate_sea_level_delta_ <=
                        static_cast<int>(tile.contour) - MapSeaLevel) {
             StringTemp[0] = '\0';
             strcat(StringTemp, label_get(0x7fc / 4));
@@ -832,8 +832,8 @@ resolve_panel_selection:
         }
     }
 
-    if ((GameState & STATE_SCENARIO_EDITOR) != 0 &&
-        (GameState & STATE_DEBUG_MODE) != 0) {
+    if ((GameDataStateStorage.fields_.game_state_ & STATE_SCENARIO_EDITOR) != 0 &&
+        (GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE) != 0) {
         StringTemp[0] = '\0';
         strcat(StringTemp, "(");
         itoa(static_cast<int>(static_cast<int8_t>(tile.region)), number, 10);
@@ -843,8 +843,8 @@ resolve_panel_selection:
         canvas->write_l(StringTemp, text_x + 2, work.bottom - a3,
                         strlen(StringTemp));
     }
-    if (((GameState & STATE_SCENARIO_EDITOR) != 0 &&
-         (GameState & STATE_DEBUG_MODE) != 0) ||
+    if (((GameDataStateStorage.fields_.game_state_ & STATE_SCENARIO_EDITOR) != 0 &&
+         (GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE) != 0) ||
         text_y < work.bottom - a3) {
         StringTemp[0] = '\0';
         strcat(StringTemp, "(");
@@ -880,10 +880,10 @@ resolve_panel_selection:
     canvas->box_sprite(&unit_panel, &InterfaceBoxStyles[18]);
     unit_panel.top += 3; unit_panel.right -= 3;
     unit_panel.bottom -= 3; unit_panel.left += 3;
-    if (TurnCurrentNum == 0) return;
+    if (GameDataStateStorage.fields_.turn_current_num_ == 0) return;
 
     int base_id = base_at(tile_x, tile_y);
-    if (base_id >= 0 && (GameState & STATE_OMNISCIENT_VIEW) == 0 &&
+    if (base_id >= 0 && (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) == 0 &&
         Bases[base_id].faction_id_current != viewer &&
         (Bases[base_id].visibility & (1U << (viewer & 31))) == 0) base_id = -1;
     int item_count = base_id >= 0 ? 1 : 0;
@@ -957,7 +957,7 @@ resolve_panel_selection:
             const Veh &vehicle = Vehs[unit];
             if (vehicle.order >= 4 && vehicle.order <= 0x17 &&
                 (vehicle.faction_id == viewer ||
-                 (GameState & STATE_OMNISCIENT_VIEW) != 0 ||
+                 (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) != 0 ||
                  (PlayersData[viewer].diplo_treaties[vehicle.faction_id] & 1))) {
                 const int turns = action_terraform(unit, vehicle.order - 4, 0);
                 itoa(turns + 1, number, 10);
@@ -968,8 +968,8 @@ resolve_panel_selection:
             } else {
                 say_stats_3(StringTemp, vehicle.proto_id);
                 if ((vehicle.flags & 0x80) != 0) strcat(StringTemp, "#");
-                if ((GameState & STATE_SCENARIO_EDITOR) != 0 &&
-                    (GameState & STATE_DEBUG_MODE) != 0) {
+                if ((GameDataStateStorage.fields_.game_state_ & STATE_SCENARIO_EDITOR) != 0 &&
+                    (GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE) != 0) {
                     strcat(StringTemp, " ");
                     strcat(StringTemp, "(");
                     itoa(unit, number, 10);
@@ -1052,7 +1052,7 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
     const int title_offset = MapWinCaptionScale < 1 ? 56
         : MapWinCaptionScale * 75 / MapWinCaptionDivisor;
 
-    if (base_id < 0 && vehicle_id >= 0 && vehicle_id < VehCurrentCount) {
+    if (base_id < 0 && vehicle_id >= 0 && vehicle_id < GameDataStateStorage.fields_.vehicle_current_count_) {
         Veh &vehicle = Vehs[vehicle_id];
         screen->set_clip(&area);
         veh_draw(screen, vehicle_id, sprite_x, content_y, -4, 0x48, 0);
@@ -1060,8 +1060,8 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
         screen->set_font(&font1_, 0, 0, 0);
         StringTemp[0] = '\0';
         strcat(StringTemp, VehPrototypes[vehicle.proto_id].veh_name);
-        if ((GameState & STATE_SCENARIO_EDITOR) &&
-            (GameState & STATE_DEBUG_MODE)) {
+        if ((GameDataStateStorage.fields_.game_state_ & STATE_SCENARIO_EDITOR) &&
+            (GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE)) {
             char digits[80];
             strcat(StringTemp, "(");
             _itoa(vehicle_id, digits, 10);
@@ -1099,7 +1099,7 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
         const VehPrototype &prototype = VehPrototypes[vehicle.proto_id];
         const bool own_or_omniscient =
             vehicle.faction_id == ConsoleGlobal.faction_id_ ||
-            (GameState & STATE_OMNISCIENT_VIEW) != 0;
+            (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) != 0;
         const bool known_orders = own_or_omniscient ||
             (PlayersData[ConsoleGlobal.faction_id_]
                  .diplo_treaties[vehicle.faction_id] & 1) != 0;
@@ -1114,7 +1114,7 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
         }
         if (own_or_omniscient) {
             StringTemp[0] = '\0';
-            if (vehicle.home_base_id >= 0 && vehicle.home_base_id < BaseCurrentCount) {
+            if (vehicle.home_base_id >= 0 && vehicle.home_base_id < GameDataStateStorage.fields_.base_current_count_) {
                 strcat(StringTemp, Bases[vehicle.home_base_id].name_string);
             } else {
                 strcat(StringTemp, label_get(0x308 / 4));
@@ -1257,9 +1257,9 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
         }
         const bool show_destination =
             (vehicle.faction_id == ConsoleGlobal.faction_id_ ||
-             (GameState & STATE_OMNISCIENT_VIEW)) &&
+             (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) &&
             vehicle.order == 0x18 &&
-            (GameMorePreferences & MPREF_MAP_HIDE_ACTIVE_VEH_GOTO_PATH) == 0;
+            (GameDataStateStorage.fields_.game_more_preferences_ & MPREF_MAP_HIDE_ACTIVE_VEH_GOTO_PATH) == 0;
         if (show_destination) {
             draw_my_dest(vehicle_id);
             CoverWindow.Win::show(0);
@@ -1272,7 +1272,7 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
     }
 
     screen->restore_clip();
-    if (base_id >= 0 && base_id < BaseCurrentCount) {
+    if (base_id >= 0 && base_id < GameDataStateStorage.fields_.base_current_count_) {
         Base &base = Bases[base_id];
         base_draw(screen, base_id, sprite_x, content_y, -4, 0x40);
         base_draw(screen, base_id, sprite_x, content_y, 0, 0x1800);
@@ -1337,7 +1337,7 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
         }
         const int owner_id = base.faction_id_current;
         if (owner_id == ConsoleGlobal.faction_id_ ||
-            (GameState & STATE_OMNISCIENT_VIEW) ||
+            (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) ||
             (PlayersData[ConsoleGlobal.faction_id_]
                  .diplo_treaties[owner_id] & 1) != 0 || spying(owner_id)) {
             const int production = base.queue_production_id[0];
@@ -1413,7 +1413,7 @@ void StatusWin::on_left_click(int x, int y) {
         case 1:
         case 11: {
             const int owner = Bases[veh_id].faction_id_current;
-            if ((GameState & STATE_OMNISCIENT_VIEW) != 0
+            if ((GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) != 0
                 || owner == ConsoleGlobal.faction_id_
                 || spying(owner)
                 || (PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[owner] & 1) != 0) {
@@ -1456,7 +1456,7 @@ void StatusWin::set_title(int title_id) {
     }
 
     strcat(StringTemp, label_get(0x8C / 4));
-    if (TurnCurrentNum != 0) {
+    if (GameDataStateStorage.fields_.turn_current_num_ != 0) {
         strcat(StringTemp, ColonSpaceText);
         int x;
         int y;

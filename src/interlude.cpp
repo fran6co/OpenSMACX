@@ -123,20 +123,20 @@ void __cdecl interlude(int id, char *text, int mode, int ending) {
     Interlude popup;
     if (IsMultiplayerNet || DiplomacyActive) return;
     const unsigned int shift = static_cast<unsigned int>(id) & 31u;
-    if (GameInterludeFlags & (1u << shift)) return;
+    if (GameDataStateStorage.fields_.game_interlude_flags_ & (1u << shift)) return;
     int faction = ConsoleGlobal.faction_id_;
     const bool alien = (Players[faction].rule_flags & RFLAG_ALIEN) != 0;
     if (id < 32 ? alien : !alien) return;
-    if ((GameState & 0x10) || (GameRules & 0x200000)) return;
+    if ((GameDataStateStorage.fields_.game_state_ & 0x10) || (GameDataStateStorage.fields_.game_rules_ & 0x200000)) return;
     StringTemp[0] = 0;
     strcat(StringTemp, Players[faction].filename);
     CharUpperA(StringTemp);
     if (strcmp(StringTemp, "FUNGBOY") == 0) return;
-    if (id < 32) GameInterludeFlags |= 1u << shift;
-    if (id == 6) GameInterludeFlags |= 0x12;
-    if (GamePreferences & 0x40000) return;
+    if (id < 32) GameDataStateStorage.fields_.game_interlude_flags_ |= 1u << shift;
+    if (id == 6) GameDataStateStorage.fields_.game_interlude_flags_ |= 0x12;
+    if (GameDataStateStorage.fields_.game_preferences_ & 0x40000) return;
 
-    const int saved_turn = TurnCurrentNum;
+    const int saved_turn = GameDataStateStorage.fields_.turn_current_num_;
     parse_num(0, game_year(saved_turn));
     parse_num(1, game_year(saved_turn));
     parse_num(2, game_year(saved_turn));
@@ -173,7 +173,7 @@ void __cdecl interlude(int id, char *text, int mode, int ending) {
     // The original writes this local only when a positive best-base score
     // is found; the later tie-selection loop reads the same local.
     int best_base;
-    for (int i = 0; i < BaseCurrentCount; ++i) {
+    for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; ++i) {
         if (Bases[i].faction_id_current == ConsoleGlobal.faction_id_) {
             int value = Bases[i].population_size;
             int offset, mask;
@@ -188,7 +188,7 @@ void __cdecl interlude(int id, char *text, int mode, int ending) {
     }
     if (ending == 0) {
         int best = 0;
-        for (int i = 0; i < BaseCurrentCount; ++i) {
+        for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; ++i) {
             if (Bases[i].faction_id_current == ConsoleGlobal.faction_id_) {
                 int value = Bases[i].population_size + Bases[i].energy_surplus * 2;
                 if (i == best_base) value = 1;
@@ -214,9 +214,9 @@ void __cdecl interlude(int id, char *text, int mode, int ending) {
         if (Players[ConsoleGlobal.faction_id_].rule_flags & RFLAG_ALIEN) return;
     } else {
         id -= 32;
-        if (id == 3) GameInterludeFlags |= 0x10;
+        if (id == 3) GameDataStateStorage.fields_.game_interlude_flags_ |= 0x10;
     }
-    GameInterludeFlags |= 1u << (static_cast<unsigned int>(id) & 31u);
+    GameDataStateStorage.fields_.game_interlude_flags_ |= 1u << (static_cast<unsigned int>(id) & 31u);
     StringTemp[0] = 0;
     strcat(StringTemp, "INTERLUDE");
     char number[20];

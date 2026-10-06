@@ -47,8 +47,8 @@ void SocialWin::exit() {
     int upheaval = static_cast<int>(
         gross_upheaval - PlayersData[factionID_].soc_upheaval_cost_paid);
 
-    if ((GameState & STATE_SCENARIO_EDITOR) == 0
-        || (GameState & STATE_OMNISCIENT_VIEW) == 0) {
+    if ((GameDataStateStorage.fields_.game_state_ & STATE_SCENARIO_EDITOR) == 0
+        || (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) == 0) {
         if (upheaval > 0) {
             parse_num(0, upheaval);
             parse_num(1, PlayersData[factionID_].energy_reserves);
@@ -736,8 +736,8 @@ void SocialWin::draw_social(int a1) {
         while (p != SocialEffectRowEnd) {
             if (p != SocialEffectRow + 3) {
                 bool skip = false;
-                if (SecretProject.cloning_vats() >= 0 &&
-                    (unsigned int)Bases[SecretProject.cloning_vats()].faction_id_current == (unsigned int)faction) {
+                if (GameDataStateStorage.fields_.secret_project_.cloning_vats() >= 0 &&
+                    (unsigned int)Bases[GameDataStateStorage.fields_.secret_project_.cloning_vats()].faction_id_current == (unsigned int)faction) {
                     if (a1 == 2) {
                         if (row == 1) {
                             if (SocialEffectTable[a1 * 0x35 + idx + row * 0xb] < 0) {
@@ -751,8 +751,8 @@ void SocialWin::draw_social(int a1) {
                     }
                 }
                 if (!skip) {
-                    if (!((SecretProject.network_backbone() < 0) ||
-                          ((unsigned int)Bases[SecretProject.network_backbone()].faction_id_current != (unsigned int)faction) ||
+                    if (!((GameDataStateStorage.fields_.secret_project_.network_backbone() < 0) ||
+                          ((unsigned int)Bases[GameDataStateStorage.fields_.secret_project_.network_backbone()].faction_id_current != (unsigned int)faction) ||
                           (a1 != 3) ||
                           ((row != 1) || (*p >= 0)))) {
                         skip = true;
@@ -783,8 +783,8 @@ void SocialWin::draw_social(int a1) {
             while (p2 != SocialEffectRowEnd) {
                 if (p2 != SocialEffectRow + 3) {
                     bool skip = false;
-                    if (SecretProject.cloning_vats() >= 0 &&
-                        (unsigned int)Bases[SecretProject.cloning_vats()].faction_id_current == (unsigned int)faction) {
+                    if (GameDataStateStorage.fields_.secret_project_.cloning_vats() >= 0 &&
+                        (unsigned int)Bases[GameDataStateStorage.fields_.secret_project_.cloning_vats()].faction_id_current == (unsigned int)faction) {
                         if (a1 == 2) {
                             if (row == 1) {
                                 if (SocialEffectTable[a1 * 0x35 + idx2 + row * 0xb] < 0) {
@@ -798,8 +798,8 @@ void SocialWin::draw_social(int a1) {
                         }
                     }
                     if (!skip) {
-                        if (!((SecretProject.network_backbone() < 0) ||
-                              ((unsigned int)Bases[SecretProject.network_backbone()].faction_id_current != (unsigned int)faction) ||
+                        if (!((GameDataStateStorage.fields_.secret_project_.network_backbone() < 0) ||
+                              ((unsigned int)Bases[GameDataStateStorage.fields_.secret_project_.network_backbone()].faction_id_current != (unsigned int)faction) ||
                               (a1 != 3) ||
                               ((row != 1) || (*p2 >= 0)))) {
                             skip = true;
@@ -1349,7 +1349,7 @@ void __cdecl energy_compute(int faction_id, int recompute_bases) {
     EnergyCommerceDelta = 0;
 
     int discount_carry = 0;
-    for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+    for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
         EnergyBaseMaintenance[base_id] = 0;
         Base &base = Bases[base_id];
         if (base.faction_id_current != faction_id) continue;
@@ -1365,9 +1365,9 @@ void __cdecl energy_compute(int faction_id, int recompute_bases) {
                 maintenance += fac_maint(facility, faction_id);
             }
         }
-        if (SecretProject.self_aware_colony() >= 0 &&
-            SecretProject.self_aware_colony() < BaseCurrentCount &&
-            Bases[SecretProject.self_aware_colony()].faction_id_current == faction_id) {
+        if (GameDataStateStorage.fields_.secret_project_.self_aware_colony() >= 0 &&
+            GameDataStateStorage.fields_.secret_project_.self_aware_colony() < GameDataStateStorage.fields_.base_current_count_ &&
+            Bases[GameDataStateStorage.fields_.secret_project_.self_aware_colony()].faction_id_current == faction_id) {
             // The image carries the odd half-maintenance remainder across
             // bases; keep its order rather than rounding each base alone.
             if (discount_carry) ++maintenance;
@@ -1390,7 +1390,7 @@ void __cdecl energy_compute(int faction_id, int recompute_bases) {
     BreakthroughTurnsGlobal = EnergyLabsTotal <= 0 ? 9999
         : (EnergyLabsTotal - 1 + research_cost * 100) / EnergyLabsTotal;
 
-    const unsigned int alive = (LockEnableMask >> 8) & 0xffu;
+    const unsigned int alive = (GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8) & 0xffu;
     for (int other = 1; other < 8; ++other) {
         if (other == faction_id ||
             !(alive & (1u << other)) || !(alive & (1u << faction_id)) ||
@@ -1616,7 +1616,7 @@ void SocialWin::on_status(int mode) {
 */
 int SocialWin::immune(int soc_category, int soc_model, int effect_id) {
     int faction_owns_base = 0;
-    int base_id = SecretProject.cloning_vats();
+    int base_id = GameDataStateStorage.fields_.secret_project_.cloning_vats();
     if (base_id >= 0) {
         unsigned char base_faction_id = Bases[base_id].faction_id_current;
         faction_owns_base = (static_cast<int>(base_faction_id) == factionID_);
@@ -1631,7 +1631,7 @@ int SocialWin::immune(int soc_category, int soc_model, int effect_id) {
     }
 
     faction_owns_base = 0;
-    base_id = SecretProject.network_backbone();
+    base_id = GameDataStateStorage.fields_.secret_project_.network_backbone();
     if (base_id >= 0) {
         unsigned char base_faction_id = Bases[base_id].faction_id_current;
         faction_owns_base = (static_cast<int>(base_faction_id) == factionID_);
@@ -2149,8 +2149,8 @@ void SocialWin::draw_mouseover() {
                 v = PlayerPowerBlock[i + self_faction * 2099];
             } else {
                 bool skip = false;
-                if (SecretProject.cloning_vats() >= 0 &&
-                    Bases[SecretProject.cloning_vats()].faction_id_current ==
+                if (GameDataStateStorage.fields_.secret_project_.cloning_vats() >= 0 &&
+                    Bases[GameDataStateStorage.fields_.secret_project_.cloning_vats()].faction_id_current ==
                         static_cast<unsigned int>(self_faction)) {
                     if ((cat_idx == 2 && row_idx == 1) || (cat_idx == 3 && row_idx == 3)) {
                         if (SocialEffectTable[row_idx * 0xb + (i + cat_idx * 0x35)] < 0) {
@@ -2158,8 +2158,8 @@ void SocialWin::draw_mouseover() {
                         }
                     }
                 }
-                if (!skip && SecretProject.network_backbone() >= 0 &&
-                    Bases[SecretProject.network_backbone()].faction_id_current ==
+                if (!skip && GameDataStateStorage.fields_.secret_project_.network_backbone() >= 0 &&
+                    Bases[GameDataStateStorage.fields_.secret_project_.network_backbone()].faction_id_current ==
                         static_cast<unsigned int>(self_faction) &&
                     cat_idx == 3 && row_idx == 1 &&
                     SocialEffectRow[i] < 0) {
@@ -2190,8 +2190,8 @@ void SocialWin::draw_mouseover() {
                 if (i == 3) {
                     continue;
                 }
-                if (SecretProject.cloning_vats() >= 0 &&
-                    Bases[SecretProject.cloning_vats()].faction_id_current ==
+                if (GameDataStateStorage.fields_.secret_project_.cloning_vats() >= 0 &&
+                    Bases[GameDataStateStorage.fields_.secret_project_.cloning_vats()].faction_id_current ==
                         static_cast<unsigned int>(self_faction)) {
                     if ((cat_idx == 2 && row_idx == 1) || (cat_idx == 3 && row_idx == 3)) {
                         if (SocialEffectTable[row_idx * 0xb + (i + cat_idx * 0x35)] < 0) {
@@ -2199,8 +2199,8 @@ void SocialWin::draw_mouseover() {
                         }
                     }
                 }
-                if (SecretProject.network_backbone() >= 0 &&
-                    Bases[SecretProject.network_backbone()].faction_id_current ==
+                if (GameDataStateStorage.fields_.secret_project_.network_backbone() >= 0 &&
+                    Bases[GameDataStateStorage.fields_.secret_project_.network_backbone()].faction_id_current ==
                         static_cast<unsigned int>(self_faction) &&
                     cat_idx == 3 && row_idx == 1 &&
                     SocialEffectRow[i] < 0) {
@@ -3012,9 +3012,9 @@ int SocialWin::on_iface_dialog_item_back_draw(GraphicWin *, int, int, RECT *) {
 // kind      game
 // TRIED: homed into general.cpp 2026-09-03 - does not compile: the body calls
 void __cdecl social_select(int faction_id) {
-    const uint8_t state = static_cast<uint8_t>(GameState);
+    const uint8_t state = static_cast<uint8_t>(GameDataStateStorage.fields_.game_state_);
     if ((state & (STATE_SCENARIO_EDITOR | STATE_OMNISCIENT_VIEW)) == 0 &&
-        (NetTurnFlags & 8u) != 0)
+        (GameDataStateStorage.fields_.net_turn_flags_ & 8u) != 0)
         return;
 
     int selected_faction = faction_id;

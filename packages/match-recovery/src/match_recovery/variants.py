@@ -14,7 +14,7 @@ from .component_source import parse_components
 from .generated_source import read_generated
 from .measurement import Measurement
 from .model import Origin, Result, Span, digest, require_digest, require_text
-from .object_source import read_objects, referenced_object_units
+from .object_source import read_objects, referenced_object_units, require_disjoint_object_symbols
 from .literal_source import read_literals
 from .import_source import read_imports, parse_imports
 from .ownership_source import class_hint, project_view
@@ -290,9 +290,13 @@ def measure_variants(root: Path, task_name: str, image_path: Path, deck: dict, *
             raise ValueError("each edited file requires a mapped compiled task witness")
         witnesses[name] = witness
     imports = read_imports(root)
-    validate_shared(shared, view, reserved=[item.symbol for item in (*data_bindings, *generated, *imports)])
-    if ({item.symbol for item in data_bindings} & set(externals)
-            or {item.symbol for item in generated} & (set(externals) | {item.symbol for item in data_bindings})):
+    object_symbols = set(require_disjoint_object_symbols(
+        data_bindings, set(externals) | {item.symbol for item in bindings},
+        {item.symbol for item in generated},
+        {item.symbol for item in imports}, {item.symbol for item in shared}))
+    validate_shared(shared, view, reserved=[*object_symbols, *[item.symbol for item in (*generated, *imports)]])
+    if (object_symbols & set(externals)
+            or {item.symbol for item in generated} & (set(externals) | object_symbols)):
         raise ValueError("conflicting function/object/generated symbol bindings")
     candidate_bindings = {}
     for path, (_, contents) in damage_controls.items():
@@ -302,7 +306,7 @@ def measure_variants(root: Path, task_name: str, image_path: Path, deck: dict, *
         proposed, _, targets, _ = resolved
         if {item.origin.entity_id for item in proposed} != {item.origin.entity_id for item in bindings}:
             raise ValueError("candidate symbol changes create or resolve ambiguous bindings; checkpoint decisions first")
-        reserved = {item.symbol for item in (*data_bindings, *generated, *imports, *shared)}
+        reserved = {*object_symbols, *[item.symbol for item in (*generated, *imports, *shared)]}
         if set(targets) & reserved:
             raise ValueError("conflicting function/object/generated/import symbol bindings")
         candidate_bindings[name] = resolved

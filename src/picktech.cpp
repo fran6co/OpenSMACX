@@ -696,23 +696,23 @@ int PickTech::pick(int faction, int mode, int count, char *section_id) {
     faction_id_ = faction;
 
     int automated_research = 0;
-    if ((GameRules & 0x200u) != 0 && count <= 0) {
+    if ((GameDataStateStorage.fields_.game_rules_ & 0x200u) != 0 && count <= 0) {
         automated_research = 1;
         if (faction == ConsoleGlobal.faction_id_ && IsMultiplayerNet == 0 &&
             (((PlayersData[faction].tech_ranking >> 1) % 5) == 1 ||
-             TurnCurrentNum <= 11) && TechAchievedGate == 0) {
-            if ((GamePreferences & 0x20u) != 0 && tut_check2(1))
+             GameDataStateStorage.fields_.turn_current_num_ <= 11) && TechAchievedGate == 0) {
+            if ((GameDataStateStorage.fields_.game_preferences_ & 0x20u) != 0 && tut_check2(1))
                 popt(TutorialPopupCaption, "TECHNOLOGY", -1, 0, 0);
             ConsoleGlobal.set_tech(faction);
         }
     }
     if (mode == 0 && count < 0 &&
-        (TurnCurrentNum == 0 ||
-         (static_cast<unsigned char>(LockEnableMask) & (1u << faction)) == 0 ||
+        (GameDataStateStorage.fields_.turn_current_num_ == 0 ||
+         (static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & (1u << faction)) == 0 ||
          automated_research != 0)) {
         return tech_ai(faction);
     }
-    if ((GamePreferences & 0x20u) != 0 && TechAchievedGate == 0 &&
+    if ((GameDataStateStorage.fields_.game_preferences_ & 0x20u) != 0 && TechAchievedGate == 0 &&
         automated_research == 0 && faction == ConsoleGlobal.faction_id_ &&
         tut_check2(1)) {
         popt(TutorialPopupCaption, "TECHNOLOGY", -1, 0, 0);
@@ -855,7 +855,7 @@ int PickTech::pick(int faction, int mode, int count, char *section_id) {
         }
     }
     if (item_count_ == 0) return -1;
-    if ((static_cast<unsigned char>(LockEnableMask) & (1u << faction)) == 0)
+    if ((static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & (1u << faction)) == 0)
         return recommendation;
 
     const bool small_layout = item_count_ <= 8;

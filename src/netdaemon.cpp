@@ -224,18 +224,18 @@ void NetDaemon::on_player_deleted(char *, unsigned long id) {
         const int player_id = player.identity_;
 
         if (lock_state_[0].trailing_words_[0] == 2) {
-            uint8_t humans = static_cast<uint8_t>(LockEnableMask & 0xFF);
+            uint8_t humans = static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFF);
             humans = static_cast<uint8_t>(humans &
                 ~static_cast<uint8_t>(1u << (player_id & 31)));
-            LockEnableMask = (LockEnableMask & 0xFFFFFF00u) | humans;
+            GameDataStateStorage.fields_.lock_masks_.enable_mask_ = (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFFFFF00u) | humans;
         }
         lock_state_[2].payload_.flags &= ~(1u << (player_id & 31));
 
-        const bool turn_handoff = (NetTurnFlags & 0x10) != 0;
+        const bool turn_handoff = (GameDataStateStorage.fields_.net_turn_flags_ & 0x10) != 0;
         if (turn_handoff && lock_state_[0].leading_words_[1] != 0 &&
-            NetTurnFaction == player_id) {
-            const uint8_t alive = static_cast<uint8_t>(LockEnableMask >> 8);
-            const uint8_t humans = static_cast<uint8_t>(LockEnableMask);
+            GameDataStateStorage.fields_.net_turn_faction_ == player_id) {
+            const uint8_t alive = static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8);
+            const uint8_t humans = static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_);
             bool informed = false;
             for (int next = player_id + 1; next < 8; ++next) {
                 const uint8_t bit = static_cast<uint8_t>(1u << (next & 31));
@@ -272,15 +272,15 @@ void NetDaemon::on_player_deleted(char *, unsigned long id) {
         locks_.field_E4_ = 0;
     }
 
-    const uint8_t turn_bit = static_cast<uint8_t>(NetTurnFlags & 0x10);
+    const uint8_t turn_bit = static_cast<uint8_t>(GameDataStateStorage.fields_.net_turn_flags_ & 0x10);
     const bool skip_lock_notify =
         (turn_bit != 0 && ConsoleControlTurnActive == 0 &&
-         NetTurnFaction == ConsoleGlobal.faction_id_) ||
+         GameDataStateStorage.fields_.net_turn_faction_ == ConsoleGlobal.faction_id_) ||
         (turn_bit == 0 && lock_state_[0].leading_words_[1] != 0);
 
     if (!skip_lock_notify && lock_state_[0].trailing_words_[0] == 2) {
-        const uint8_t alive = static_cast<uint8_t>(LockEnableMask >> 8);
-        const uint8_t humans = static_cast<uint8_t>(LockEnableMask);
+        const uint8_t alive = static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8);
+        const uint8_t humans = static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_);
         for (int faction = 1; faction < 8; ++faction) {
             const uint8_t bit = static_cast<uint8_t>(1u << (faction & 31));
             PlayerLock &candidate = locks_.records_[faction];
@@ -343,10 +343,10 @@ void NetDaemon::on_player_deleted(char *, unsigned long id) {
     --player_count_;
     lock_state_[0].leading_words_[1] = (field_760_ == field_764_) ? 1 : 0;
 
-    const uint8_t post_turn_bit = static_cast<uint8_t>(NetTurnFlags & 0x10);
+    const uint8_t post_turn_bit = static_cast<uint8_t>(GameDataStateStorage.fields_.net_turn_flags_ & 0x10);
     const bool skip_after_delete =
         (post_turn_bit == 0 || ConsoleControlTurnActive != 0 ||
-         NetTurnFaction != ConsoleGlobal.faction_id_) &&
+         GameDataStateStorage.fields_.net_turn_faction_ != ConsoleGlobal.faction_id_) &&
         ((post_turn_bit != 0 && ConsoleControlTurnActive == 0) ||
          lock_state_[0].leading_words_[1] == 0);
 
@@ -359,7 +359,7 @@ void NetDaemon::on_player_deleted(char *, unsigned long id) {
         // The original reloads this global after the 0x8301 callback.
         if (ConsoleControlTurnActive != 0) {
             message_data(0x2303, 0, NetUpkeepPhase,
-                         TurnCurrentNum, 0, 0);
+                         GameDataStateStorage.fields_.turn_current_num_, 0, 0);
         }
     }
 
@@ -1003,9 +1003,9 @@ void NetDaemon::hang_up() {
         return;
     }
     lock_state_[0].payload_.flags = 1;
-    if (NetTurnFlags & 0x10) {
+    if (GameDataStateStorage.fields_.net_turn_flags_ & 0x10) {
         if (ConsoleControlTurnActive == 0) {
-            if (NetTurnFaction != ConsoleGlobal.faction_id_) {
+            if (GameDataStateStorage.fields_.net_turn_faction_ != ConsoleGlobal.faction_id_) {
                 goto L0cc;
             }
         } else if (NetDaemonNet.lock_state_[0].leading_words_[1] == 0) {
@@ -1194,7 +1194,7 @@ void NetDaemon::send_game() {
         process_message((char *)id, f, e);
     }
 
-    if (TurnCurrentNum != 0) {
+    if (GameDataStateStorage.fields_.turn_current_num_ != 0) {
         synch(0x20, 0, 0, 0, 0, 1, 0x2101);
         for (;;) {
             id = NetDaemonNet.Net::get(&e, &f);
@@ -1363,13 +1363,13 @@ void NetDaemon::game_checksum(int *results) {
     unsigned char cs;
     int *out = results;
 
-    cs = checksum((char *)&GameRules, 4, 0);
-    cs = checksum((char *)&VehCurrentCount, 0x10, cs);
-    cs = checksum((char *)&LockEnableMask, 2, cs);
-    cs = checksum((char *)&SecretProject, 0x100, cs);
+    cs = checksum((char *)&GameDataStateStorage.fields_.game_rules_, 4, 0);
+    cs = checksum((char *)&GameDataStateStorage.fields_.vehicle_current_count_, 0x10, cs);
+    cs = checksum((char *)&GameDataStateStorage.fields_.lock_masks_.enable_mask_, 2, cs);
+    cs = checksum((char *)&GameDataStateStorage.fields_.secret_project_, 0x100, cs);
 
     {
-        unsigned char *bitTable = (unsigned char *)GameTechAchieved;
+        unsigned char *bitTable = (unsigned char *)GameDataStateStorage.fields_.game_tech_achieved_;
         int bi;
         for (bi = 0; bi < 0x59; ++bi) {
             int bc = bit_count((int)bitTable[bi]);
@@ -1431,7 +1431,7 @@ void NetDaemon::game_checksum(int *results) {
     {
         int idx2;
         for (idx2 = 0; idx2 < 8; ++idx2) {
-            int countB = *(char *)&VehCurrentCount;
+            int countB = *(char *)&GameDataStateStorage.fields_.vehicle_current_count_;
             if (countB > 0) {
                 char *p3 = (char *)((char *)Vehs + 2);
                 int idxB = 0;
@@ -1445,7 +1445,7 @@ void NetDaemon::game_checksum(int *results) {
                         cs = checksum(p3 + 0x22, 1, cs);
                         cs = checksum(p3 + 0x26, 1, cs);
                         cs = checksum(p3 + 0x2c, 2, cs);
-                        countB = *(char *)&VehCurrentCount;
+                        countB = *(char *)&GameDataStateStorage.fields_.vehicle_current_count_;
                     }
                     p3 += 0x34;
                     idxB++;
@@ -1457,7 +1457,7 @@ void NetDaemon::game_checksum(int *results) {
     cs = 0;
 
     {
-        int countC = BaseCurrentCount;
+        int countC = GameDataStateStorage.fields_.base_current_count_;
         if (countC > 0) {
             char *p4 = (char *)((char *)Bases + 0x3C);
             int idxC = 0;
@@ -1511,14 +1511,14 @@ void NetDaemon::game_checksum(int *results) {
     }
 
     if (BaseAtDebugPopupFlag != 0) {
-        cs = checksum((char *)&GameRules, 4, 0);
-        cs = checksum((char *)&VehCurrentCount, 0x10, cs);
-        *out++ = checksum((char *)&LockEnableMask, 2, cs);
-        *out++ = checksum((char *)&SecretProject, 0x100, 0);
+        cs = checksum((char *)&GameDataStateStorage.fields_.game_rules_, 4, 0);
+        cs = checksum((char *)&GameDataStateStorage.fields_.vehicle_current_count_, 0x10, cs);
+        *out++ = checksum((char *)&GameDataStateStorage.fields_.lock_masks_.enable_mask_, 2, cs);
+        *out++ = checksum((char *)&GameDataStateStorage.fields_.secret_project_, 0x100, 0);
         cs = 0;
 
         {
-            unsigned char *bitTable = (unsigned char *)GameTechAchieved;
+            unsigned char *bitTable = (unsigned char *)GameDataStateStorage.fields_.game_tech_achieved_;
             int bi2;
             for (bi2 = 0; bi2 < 0x59; ++bi2) {
                 int bc = bit_count((int)bitTable[bi2]);
@@ -1634,7 +1634,7 @@ void NetDaemon::game_checksum(int *results) {
         {
             int idx2b;
             for (idx2b = 0; idx2b < 8; ++idx2b) {
-                int countB2 = *(char *)&VehCurrentCount;
+                int countB2 = *(char *)&GameDataStateStorage.fields_.vehicle_current_count_;
                 cs = 0;
                 if (countB2 > 0) {
                     char *p3b = (char *)Vehs;
@@ -1647,7 +1647,7 @@ void NetDaemon::game_checksum(int *results) {
                             cs = checksum(p3b + 0x24, 1, cs);
                             cs = checksum(p3b + 0x28, 1, cs);
                             cs = checksum(p3b + 0x2e, 2, cs);
-                            countB2 = *(char *)&VehCurrentCount;
+                            countB2 = *(char *)&GameDataStateStorage.fields_.vehicle_current_count_;
                         }
                         p3b += 0x34;
                         idxBb++;
@@ -1659,7 +1659,7 @@ void NetDaemon::game_checksum(int *results) {
 
         cs = 0;
         {
-            int countC2 = BaseCurrentCount;
+            int countC2 = GameDataStateStorage.fields_.base_current_count_;
             if (countC2 > 0) {
                 char *p4b = (char *)((char *)Bases + 0x3C);
                 int idxC2 = 0;
@@ -2177,10 +2177,10 @@ int NetDaemon::send_message(char *message, unsigned long length, int target) {
     }
     if (flags & 0xA000) {
         const int counter = NetDaemonNet.lock_state_[0].trailing_words_[0];
-        if ((NetTurnFlags & 0x10) && ConsoleControlTurnActive == 0 &&
-            NetTurnFaction > 0 && counter > 1) {
+        if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10) && ConsoleControlTurnActive == 0 &&
+            GameDataStateStorage.fields_.net_turn_faction_ > 0 && counter > 1) {
             return Net::send(message, length,
-                             AlphaNet::who_2_pid(NetTurnFaction), 1);
+                             AlphaNet::who_2_pid(GameDataStateStorage.fields_.net_turn_faction_), 1);
         }
         int value;
         if (counter == 1) {
@@ -2233,7 +2233,7 @@ int NetDaemon::lock_veh(int *veh_id, int target, int payload_1C,
         return 0;
     }
     if ((NetDaemonNet.lock_state_[0].trailing_words_[7] & (1 << ConsoleGlobal.faction_id_)) != 0 &&
-        (NetTurnFlags & 0x10) == 0) {
+        (GameDataStateStorage.fields_.net_turn_flags_ & 0x10) == 0) {
         NetMsgPrimary.pop("ALREADYDONE", 0, 2, 0);
         return 1;
     }
@@ -4710,7 +4710,7 @@ send_move:
                     if (other_faction < 8 && other_faction != ConsoleGlobal.faction_id_ &&
                         (PlayersData[other_faction]
                              .diplo_treaties[ConsoleGlobal.faction_id_] & 0x10U) != 0 &&
-                        (LockEnableMask & (1U << other_faction)) != 0) {
+                        (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1U << other_faction)) != 0) {
                         int other_vehicle = veh_at(adjacent_x, adjacent_y);
                         while (other_vehicle >= 0) {
                             if (Vehs[other_vehicle].faction_id == other_faction) {
@@ -4844,41 +4844,41 @@ static size_t copy_member_bytes(size_t chunk_offset, uint8_t *chunk,
 static bool wire0_range_is_owned(size_t first, size_t count) {
     struct Span { size_t first; size_t size; };
     const Span spans[] = {
-        {0x000, sizeof GamePreferences}, {0x004, sizeof GameMorePreferences},
-        {0x008, sizeof GameWarnings}, {0x00C, sizeof GameRules},
-        {0x010, sizeof GameWireOpaque_9A64A0},
-        {0x014, sizeof GameInterludeFlags},
-        {0x018, sizeof GameWireOpaque_9A64A8},
-        {0x01C, sizeof TutorialFlags}, {0x020, sizeof TutorialFlags2},
-        {0x024, sizeof TerraformAnnouncedMask},
-        {0x02C, sizeof TutWinFlags9A64BC}, {0x030, sizeof GameState},
-        {0x034, sizeof DiffLevelCurrent}, {0x038, sizeof VehCurrentCount},
-        {0x03C, sizeof BaseCurrentCount}, {0x040, sizeof GameSetupResetWord},
-        {0x044, sizeof TurnCurrentNum}, {0x048, sizeof MissionYearCurrent},
-        {0x04C, sizeof VehSelectionFollowLimit},
-        {0x050, sizeof TimeControlsSelection},
-        {0x054, sizeof TurnControlDurationMilliseconds},
-        {0x058, sizeof LockEnableMask}, {0x05C, sizeof FactionRankings},
-        {0x07C, sizeof RankingFactionIDUnk1},
-        {0x080, sizeof RankingFactionIDUnk2}, {0x084, sizeof SecretProject},
-        {0x184, sizeof GovernorFaction},
-        {0x188, sizeof CouncilResolutionCount},
-        {0x1B4, sizeof CouncilLastResolutionTurn},
-        {0x1E0, sizeof GameTechAchieved},
-        {0x239, sizeof LegacyGameSaveName},
-        {0x339, sizeof GameWireOpaque_9A67C9},
-        {0x33C, sizeof ClimateRiseStep}, {0x340, sizeof ClimateRiseLimit},
-        {0x344, sizeof ClimateRiseAccum},
-        {0x348, sizeof ClimateSeaLevelDelta},
-        {0x34C, sizeof TranscendenceScoreBonus},
-        {0x350, sizeof TranscendenceScoreWeights},
-        {0x370, sizeof SunspotDuration}, {0x374, sizeof MountPlanetX},
-        {0x378, sizeof MountPlanetY}, {0x37C, sizeof DustCloudDuration},
-        {0x380, sizeof SaveDaemonStateWord},
-        {0x384, sizeof ScnVictFacilityObj},
-        {0x388, sizeof GlobalEnergyEventState},
-        {0x38C, sizeof NetTurnFlags}, {0x390, sizeof NetTurnFaction},
-        {0x394, sizeof EcologyEventAccumulator}
+        {0x000, sizeof GameDataStateStorage.fields_.game_preferences_}, {0x004, sizeof GameDataStateStorage.fields_.game_more_preferences_},
+        {0x008, sizeof GameDataStateStorage.fields_.game_warnings_}, {0x00C, sizeof GameDataStateStorage.fields_.game_rules_},
+        {0x010, sizeof GameDataStateStorage.fields_.game_wire_opaque_9a64a0_},
+        {0x014, sizeof GameDataStateStorage.fields_.game_interlude_flags_},
+        {0x018, sizeof GameDataStateStorage.fields_.game_wire_opaque_9a64a8_},
+        {0x01C, sizeof GameDataStateStorage.fields_.tutorial_flags_}, {0x020, sizeof GameDataStateStorage.fields_.tutorial_flags_2_},
+        {0x024, sizeof GameDataStateStorage.fields_.terraform_announced_mask_},
+        {0x02C, sizeof GameDataStateStorage.fields_.tutwin_flags_9a64bc_}, {0x030, sizeof GameDataStateStorage.fields_.game_state_},
+        {0x034, sizeof GameDataStateStorage.fields_.diff_level_current_}, {0x038, sizeof GameDataStateStorage.fields_.vehicle_current_count_},
+        {0x03C, sizeof GameDataStateStorage.fields_.base_current_count_}, {0x040, sizeof GameDataStateStorage.fields_.game_setup_reset_word_},
+        {0x044, sizeof GameDataStateStorage.fields_.turn_current_num_}, {0x048, sizeof GameDataStateStorage.fields_.mission_year_current_},
+        {0x04C, sizeof GameDataStateStorage.fields_.vehicle_selection_follow_limit_},
+        {0x050, sizeof GameDataStateStorage.fields_.time_controls_selection_},
+        {0x054, sizeof GameDataStateStorage.fields_.turn_control_duration_milliseconds_},
+        {0x058, sizeof GameDataStateStorage.fields_.lock_masks_.enable_mask_}, {0x05C, sizeof GameDataStateStorage.fields_.faction_rankings_},
+        {0x07C, sizeof GameDataStateStorage.fields_.ranking_faction_id_unk1_},
+        {0x080, sizeof GameDataStateStorage.fields_.ranking_faction_id_unk2_}, {0x084, sizeof GameDataStateStorage.fields_.secret_project_},
+        {0x184, sizeof GameDataStateStorage.fields_.governor_faction_},
+        {0x188, sizeof GameDataStateStorage.fields_.council_resolution_count_},
+        {0x1B4, sizeof GameDataStateStorage.fields_.council_last_resolution_turn_},
+        {0x1E0, sizeof GameDataStateStorage.fields_.game_tech_achieved_},
+        {0x239, sizeof GameDataStateStorage.fields_.legacy_game_save_name_},
+        {0x339, sizeof GameDataStateStorage.fields_.game_wire_opaque_9a67c9_},
+        {0x33C, sizeof GameDataStateStorage.fields_.climate_rise_step_}, {0x340, sizeof GameDataStateStorage.fields_.climate_rise_limit_},
+        {0x344, sizeof GameDataStateStorage.fields_.climate_rise_accum_},
+        {0x348, sizeof GameDataStateStorage.fields_.climate_sea_level_delta_},
+        {0x34C, sizeof GameDataStateStorage.fields_.transcendence_score_bonus_},
+        {0x350, sizeof GameDataStateStorage.fields_.transcendence_score_weights_},
+        {0x370, sizeof GameDataStateStorage.fields_.sunspot_duration_}, {0x374, sizeof GameDataStateStorage.fields_.mount_planet_x_},
+        {0x378, sizeof GameDataStateStorage.fields_.mount_planet_y_}, {0x37C, sizeof GameDataStateStorage.fields_.dust_cloud_duration_},
+        {0x380, sizeof GameDataStateStorage.fields_.save_daemon_state_word_},
+        {0x384, sizeof GameDataStateStorage.fields_.scenario_victory_facility_},
+        {0x388, sizeof GameDataStateStorage.fields_.global_energy_event_state_},
+        {0x38C, sizeof GameDataStateStorage.fields_.net_turn_flags_}, {0x390, sizeof GameDataStateStorage.fields_.net_turn_faction_},
+        {0x394, sizeof GameDataStateStorage.fields_.ecology_event_accumulator_}
     };
     const size_t end = first + count;
     size_t covered = first;
@@ -4902,62 +4902,62 @@ bool opcode0_copy_chunk(size_t chunk_offset, uint8_t *chunk, size_t count,
 
     // game.cpp/game.h objects. The four-byte and three-byte opaque objects
     // below are retained independent arrays, not padding or a packed block.
-    COPY0(0x000, GamePreferences);
-    COPY0(0x004, GameMorePreferences);
-    COPY0(0x008, GameWarnings);
-    COPY0(0x00C, GameRules);
-    COPY0(0x010, GameWireOpaque_9A64A0);
-    COPY0(0x014, GameInterludeFlags);
-    COPY0(0x018, GameWireOpaque_9A64A8);
-    COPY0(0x01C, TutorialFlags);
-    COPY0(0x020, TutorialFlags2);
+    COPY0(0x000, GameDataStateStorage.fields_.game_preferences_);
+    COPY0(0x004, GameDataStateStorage.fields_.game_more_preferences_);
+    COPY0(0x008, GameDataStateStorage.fields_.game_warnings_);
+    COPY0(0x00C, GameDataStateStorage.fields_.game_rules_);
+    COPY0(0x010, GameDataStateStorage.fields_.game_wire_opaque_9a64a0_);
+    COPY0(0x014, GameDataStateStorage.fields_.game_interlude_flags_);
+    COPY0(0x018, GameDataStateStorage.fields_.game_wire_opaque_9a64a8_);
+    COPY0(0x01C, GameDataStateStorage.fields_.tutorial_flags_);
+    COPY0(0x020, GameDataStateStorage.fields_.tutorial_flags_2_);
 
     // veh.cpp/terraforming.h owns this two-word announced mask.
-    COPY0(0x024, TerraformAnnouncedMask);
-    COPY0(0x02C, TutWinFlags9A64BC);
+    COPY0(0x024, GameDataStateStorage.fields_.terraform_announced_mask_);
+    COPY0(0x02C, GameDataStateStorage.fields_.tutwin_flags_9a64bc_);
 
-    COPY0(0x030, GameState);
-    COPY0(0x034, DiffLevelCurrent);
-    COPY0(0x038, VehCurrentCount);
-    COPY0(0x03C, BaseCurrentCount);
-    COPY0(0x040, GameSetupResetWord);
-    COPY0(0x044, TurnCurrentNum);
-    COPY0(0x048, MissionYearCurrent);
-    COPY0(0x04C, VehSelectionFollowLimit);
-    COPY0(0x050, TimeControlsSelection);
-    COPY0(0x054, TurnControlDurationMilliseconds);
-    COPY0(0x058, LockEnableMask);
+    COPY0(0x030, GameDataStateStorage.fields_.game_state_);
+    COPY0(0x034, GameDataStateStorage.fields_.diff_level_current_);
+    COPY0(0x038, GameDataStateStorage.fields_.vehicle_current_count_);
+    COPY0(0x03C, GameDataStateStorage.fields_.base_current_count_);
+    COPY0(0x040, GameDataStateStorage.fields_.game_setup_reset_word_);
+    COPY0(0x044, GameDataStateStorage.fields_.turn_current_num_);
+    COPY0(0x048, GameDataStateStorage.fields_.mission_year_current_);
+    COPY0(0x04C, GameDataStateStorage.fields_.vehicle_selection_follow_limit_);
+    COPY0(0x050, GameDataStateStorage.fields_.time_controls_selection_);
+    COPY0(0x054, GameDataStateStorage.fields_.turn_control_duration_milliseconds_);
+    COPY0(0x058, GameDataStateStorage.fields_.lock_masks_.enable_mask_);
 
     // Canonical current owners: eight FactionRankings entries, followed by
     // the two other ranking words, then SecretProject exactly once.
-    COPY0(0x05C, FactionRankings);
-    COPY0(0x07C, RankingFactionIDUnk1);
-    COPY0(0x080, RankingFactionIDUnk2);
-    COPY0(0x084, SecretProject);
+    COPY0(0x05C, GameDataStateStorage.fields_.faction_rankings_);
+    COPY0(0x07C, GameDataStateStorage.fields_.ranking_faction_id_unk1_);
+    COPY0(0x080, GameDataStateStorage.fields_.ranking_faction_id_unk2_);
+    COPY0(0x084, GameDataStateStorage.fields_.secret_project_);
 
-    COPY0(0x184, GovernorFaction);
-    COPY0(0x188, CouncilResolutionCount);
-    COPY0(0x1B4, CouncilLastResolutionTurn);
-    COPY0(0x1E0, GameTechAchieved);
-    COPY0(0x239, LegacyGameSaveName);
-    COPY0(0x339, GameWireOpaque_9A67C9);
+    COPY0(0x184, GameDataStateStorage.fields_.governor_faction_);
+    COPY0(0x188, GameDataStateStorage.fields_.council_resolution_count_);
+    COPY0(0x1B4, GameDataStateStorage.fields_.council_last_resolution_turn_);
+    COPY0(0x1E0, GameDataStateStorage.fields_.game_tech_achieved_);
+    COPY0(0x239, GameDataStateStorage.fields_.legacy_game_save_name_);
+    COPY0(0x339, GameDataStateStorage.fields_.game_wire_opaque_9a67c9_);
 
-    COPY0(0x33C, ClimateRiseStep);
-    COPY0(0x340, ClimateRiseLimit);
-    COPY0(0x344, ClimateRiseAccum);
-    COPY0(0x348, ClimateSeaLevelDelta);
-    COPY0(0x34C, TranscendenceScoreBonus);
-    COPY0(0x350, TranscendenceScoreWeights);
-    COPY0(0x370, SunspotDuration);
-    COPY0(0x374, MountPlanetX);
-    COPY0(0x378, MountPlanetY);
-    COPY0(0x37C, DustCloudDuration);
-    COPY0(0x380, SaveDaemonStateWord);
-    COPY0(0x384, ScnVictFacilityObj);
-    COPY0(0x388, GlobalEnergyEventState);
-    COPY0(0x38C, NetTurnFlags);
-    COPY0(0x390, NetTurnFaction);
-    COPY0(0x394, EcologyEventAccumulator);
+    COPY0(0x33C, GameDataStateStorage.fields_.climate_rise_step_);
+    COPY0(0x340, GameDataStateStorage.fields_.climate_rise_limit_);
+    COPY0(0x344, GameDataStateStorage.fields_.climate_rise_accum_);
+    COPY0(0x348, GameDataStateStorage.fields_.climate_sea_level_delta_);
+    COPY0(0x34C, GameDataStateStorage.fields_.transcendence_score_bonus_);
+    COPY0(0x350, GameDataStateStorage.fields_.transcendence_score_weights_);
+    COPY0(0x370, GameDataStateStorage.fields_.sunspot_duration_);
+    COPY0(0x374, GameDataStateStorage.fields_.mount_planet_x_);
+    COPY0(0x378, GameDataStateStorage.fields_.mount_planet_y_);
+    COPY0(0x37C, GameDataStateStorage.fields_.dust_cloud_duration_);
+    COPY0(0x380, GameDataStateStorage.fields_.save_daemon_state_word_);
+    COPY0(0x384, GameDataStateStorage.fields_.scenario_victory_facility_);
+    COPY0(0x388, GameDataStateStorage.fields_.global_energy_event_state_);
+    COPY0(0x38C, GameDataStateStorage.fields_.net_turn_flags_);
+    COPY0(0x390, GameDataStateStorage.fields_.net_turn_faction_);
+    COPY0(0x394, GameDataStateStorage.fields_.ecology_event_accumulator_);
 
 #undef COPY0
     // A valid native request is fully covered by the independently owned
@@ -5107,7 +5107,7 @@ bool copy_nonrule_chunk(int16_t opcode, int a2, int a3, int a4,
     case 0x00: // decimal 0: one interval serialized from separately owned Game globals
         return opcode0_copy_chunk(offset, packet, count, packet_to_owner);
     case 0x01: { // decimal 1: only the first LockEnableMask byte
-        uint32_t &mask = LockEnableMask;
+        uint32_t &mask = GameDataStateStorage.fields_.lock_masks_.enable_mask_;
         COPY_BYTES(0, &mask, 1);
         break;
     }
@@ -5278,21 +5278,21 @@ bool copy_nonrule_chunk(int16_t opcode, int a2, int a3, int a4,
         break;
     }
     case 0x24: { // decimal 36: six named game words + observed opaque wire tail
-        COPY_AT(0x00, ObjectiveReqVictory);
-        COPY_AT(0x04, ObjectivesSuddenDeathVictory);
-        COPY_AT(0x08, ObjectiveAchievePts);
-        COPY_AT(0x0C, VictoryAchieveBonusPts);
-        COPY_AT(0x10, StartingMissionYear);
-        COPY_AT(0x14, EndingMissionYear);
-        COPY_BYTES(0x18, GameWireOpaque_94B4D8,
-                   sizeof GameWireOpaque_94B4D8);
+        COPY_AT(0x00, ScenarioSave.objective_req_victory);
+        COPY_AT(0x04, ScenarioSave.objectives_sudden_death_victory);
+        COPY_AT(0x08, ScenarioSave.objective_achieve_points);
+        COPY_AT(0x0C, ScenarioSave.victory_achieve_bonus_points);
+        COPY_AT(0x10, ScenarioSave.starting_mission_year);
+        COPY_AT(0x14, ScenarioSave.ending_mission_year);
+        COPY_BYTES(0x18, ScenarioSave.wire_opaque_94b4d8,
+                   sizeof ScenarioSave.wire_opaque_94b4d8);
         break;
     }
     case 0x25: // decimal 37
-        COPY_AT(0, VehCurrentCount);
+        COPY_AT(0, GameDataStateStorage.fields_.vehicle_current_count_);
         break;
     case 0x26: // decimal 38
-        COPY_AT(0, BaseCurrentCount);
+        COPY_AT(0, GameDataStateStorage.fields_.base_current_count_);
         break;
     case 0x27: // decimal 39: actual NetDaemon::send_files path owner, shared across methods
         copied += bounded_array_copy(offset, packet, count,
@@ -5389,10 +5389,10 @@ static NetDaemonSyncWire::MapRouteCapture capture_map_route(
 // this->send_message remain receiver-relative, unlike the singleton notify
 // gate below.
 static void synch_notify_or_queue() {
-    const bool rules_notify = (GameRules & 0x10u) != 0;
+    const bool rules_notify = (GameDataStateStorage.fields_.game_rules_ & 0x10u) != 0;
     const bool scripted_turn = ConsoleControlTurnActive != 0;
     if (rules_notify && !scripted_turn) {
-        if (NetTurnFaction != ConsoleGlobal.faction_id_) {
+        if (GameDataStateStorage.fields_.net_turn_faction_ != ConsoleGlobal.faction_id_) {
             message_data(0x2308, 0, 0, 0, 0, 0);
         } else {
             SpockNotifyPending = 1;
@@ -5522,14 +5522,14 @@ static int netdaemon_sync_payload_size(int16_t opcode, int a2, int a3) {
     case 0x0E: return 0x34;                         // decimal 14; VehPrototype[a2]
     case 0x0F: return a3 * 52;                      // decimal 15
     case 0x11: return 0x30;                         // decimal 17
-    case 0x12: return VehCurrentCount == 0 ? -1 : VehCurrentCount * 52; // 18
+    case 0x12: return GameDataStateStorage.fields_.vehicle_current_count_ == 0 ? -1 : GameDataStateStorage.fields_.vehicle_current_count_ * 52; // 18
     case 0x13: return 0x134;                        // decimal 19
-    case 0x14: return BaseCurrentCount == 0 ? -1 : BaseCurrentCount * 308; // 20
+    case 0x14: return GameDataStateStorage.fields_.base_current_count_ == 0 ? -1 : GameDataStateStorage.fields_.base_current_count_ * 308; // 20
     case 0x15: return 4;                            // decimal 21
     case 0x16: return 0x48;                         // decimal 22
     case 0x18: return 0x224;                        // decimal 24
     case 0x19: return 0x20;                         // decimal 25
-    case 0x20: return TurnCurrentNum << 4;           // decimal 32
+    case 0x20: return GameDataStateStorage.fields_.turn_current_num_ << 4;           // decimal 32
     case 0x21: return 4;                            // decimal 33
     case 0x22: return ReplayEventBytes;              // decimal 34
     case 0x24: return 0x98;                         // decimal 36

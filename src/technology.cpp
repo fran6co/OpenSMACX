@@ -81,8 +81,8 @@ int TechAchievedGate = 0;
 // loaders and changed as scenario-editor ownership is edited.
 // The editor traverses 89 byte cells at 9A6670; this is the array itself,
 // not a pointer containing an address in the old executable.
-// RECOVERY_OBJECT: v2 0x009A6670 0x009A66C9 ?GameTechAchieved@@3PAEA 0x004DFAD0
-uint8_t GameTechAchieved[MaxTechnologyNum];
+// Historical object identity moved to GameDataStateStorage; see the transport manifest.
+
 
 // The research slot is PlayersData[faction].tech_id_researching, not a
 // separate absolute table. A remote human's title/name are announced once
@@ -95,7 +95,7 @@ int __cdecl tech_selection(int faction) {
     const unsigned int faction_bit = 1u << (faction & 31);
     const bool network_human =
         IsMultiplayerNet != 0 &&
-        (static_cast<unsigned char>(LockEnableMask) & faction_bit) != 0;
+        (static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & faction_bit) != 0;
 
     if (network_human && faction != ConsoleGlobal.faction_id_) {
         bool announced = false;
@@ -120,7 +120,7 @@ int __cdecl tech_selection(int faction) {
     const bool network_game = IsMultiplayerNet != 0;
     selected = result;
     if (network_game &&
-        (static_cast<unsigned char>(LockEnableMask) & faction_bit) != 0) {
+        (static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & faction_bit) != 0) {
         synch_researching(faction);
         int stop = ExitTurnLoop;
         selected = -1;
@@ -737,7 +737,7 @@ int __cdecl tech_val(int tech_id, int faction_id, BOOL simple_calc) {
         }
         uint32_t factor_ai = 1;
         if (!simple_calc) {
-            factor_ai = (GameRules & RULES_BLIND_RESEARCH) ? 4 : 2;
+            factor_ai = (GameDataStateStorage.fields_.game_rules_ & RULES_BLIND_RESEARCH) ? 4 : 2;
         }
         BOOL ai_growth = PlayersData[faction_id].ai_growth;
         BOOL ai_power = PlayersData[faction_id].ai_power;
@@ -759,8 +759,8 @@ int __cdecl tech_val(int tech_id, int faction_id, BOOL simple_calc) {
             // LEVER: the image's two adjacent bit_count() calls (0x005BCEC7,
             // 0x005BCEDD, 22 bytes apart) are this test and this expression
             // each evaluating bit_count() separately, not a cached local.
-            if (bit_count(GameTechAchieved[tech_id]) > 1) {
-                value_ret += 2 - 2 * bit_count(GameTechAchieved[tech_id]); // increase priority if more factions have tech
+            if (bit_count(GameDataStateStorage.fields_.game_tech_achieved_[tech_id]) > 1) {
+                value_ret += 2 - 2 * bit_count(GameDataStateStorage.fields_.game_tech_achieved_[tech_id]); // increase priority if more factions have tech
             }
             int search_lvl = 1;
             for (int i = 0; i < MaxTechnologyNum; i++) {
@@ -843,8 +843,8 @@ int __cdecl tech_val(int tech_id, int faction_id, BOOL simple_calc) {
         if ((ai_wealth || !MapCloudCover) && tech_is_preq(tech_id, TECH_ENVECON, 9999)) {
             value_ret *= 2;
         }
-        if (Technology[tech_id].flags & TFLAG_SECRETS && !GameTechAchieved[tech_id]
-            && !(GameRules & RULES_BLIND_RESEARCH)) {
+        if (Technology[tech_id].flags & TFLAG_SECRETS && !GameDataStateStorage.fields_.game_tech_achieved_[tech_id]
+            && !(GameDataStateStorage.fields_.game_rules_ & RULES_BLIND_RESEARCH)) {
             value_ret *= (ai_power + 1) * 2;
         }
         if (Players[faction_id].rule_psi > 0) {
@@ -863,7 +863,7 @@ int __cdecl tech_val(int tech_id, int faction_id, BOOL simple_calc) {
                 value_ret++;
             }
             if (tech_is_preq(tech_id, preq_tech_fusion, 1)
-                && !(GameRules & RULES_BLIND_RESEARCH)) {
+                && !(GameDataStateStorage.fields_.game_rules_ & RULES_BLIND_RESEARCH)) {
                 value_ret *= 2;
             }
         }
@@ -879,7 +879,7 @@ int __cdecl tech_val(int tech_id, int faction_id, BOOL simple_calc) {
             if (tech_is_preq(tech_id, Facility[FAC_HAB_COMPLEX].preq_tech, 9999)) {
                 value_ret *= 2;
             } else if (tech_is_preq(tech_id, Facility[FAC_HABITATION_DOME].preq_tech, 9999)
-                && TurnCurrentNum > 250) {
+                && GameDataStateStorage.fields_.turn_current_num_ > 250) {
                 value_ret = (value_ret * 3) / 2;
             }
         }
@@ -898,7 +898,7 @@ int __cdecl tech_val(int tech_id, int faction_id, BOOL simple_calc) {
         if (ai_tech || !ai_power) {
             for (int i = 0; i < MaxTechnologyNum; i++) {
                 if (!has_tech(i, faction_id) && Technology[i].flags & TFLAG_SECRETS
-                    && !GameTechAchieved[i] && tech_is_preq(tech_id, i, 1)) {
+                    && !GameDataStateStorage.fields_.game_tech_achieved_[i] && tech_is_preq(tech_id, i, 1)) {
                     value_ret *= 3;
                 }
             }
@@ -990,7 +990,7 @@ int __cdecl tech_ai(int faction_id) {
         if (tech_avail(i, faction_id)) {
             int tech_value = tech_val(i, faction_id, false);
             int compare;
-            if (GameRules & RULES_BLIND_RESEARCH) {
+            if (GameDataStateStorage.fields_.game_rules_ & RULES_BLIND_RESEARCH) {
                 if (is_human_player && (PlayersData[faction_id].ai_growth
                     || PlayersData[faction_id].ai_wealth)
                     && i == VehPrototypes[BSC_FORMERS].preq_tech) {
@@ -1180,15 +1180,15 @@ int __cdecl tech_rate(int faction_id) {
     player_factor /= 2;
     top_factor /= 2;
     BOOL is_human_player = is_human(faction_id);
-    int diff_factor = is_human_player ? PlayersData[faction_id].diff_level : DiffLevelCurrent;
+    int diff_factor = is_human_player ? PlayersData[faction_id].diff_level : GameDataStateStorage.fields_.diff_level_current_;
     diff_factor += (diff_factor < DLVL_LIBRARIAN);
-    int diff_lvl = !is_human_player ? DiffLevelCurrent : DLVL_LIBRARIAN;
+    int diff_lvl = !is_human_player ? GameDataStateStorage.fields_.diff_level_current_ : DLVL_LIBRARIAN;
     diff_factor = is_human_player ? diff_factor * 4 + 8 : 29 - diff_factor * 3;
     diff_factor = range(diff_factor, 12 - player_factor, player_factor + 12);
-    int tech_stagnation = GameRules & RULES_TECH_STAGNATION;
+    int tech_stagnation = GameDataStateStorage.fields_.game_rules_ & RULES_TECH_STAGNATION;
     uint32_t rule_factor = tech_stagnation | 0x40; // 64 or 96
     int fin_factor = range(
-        player_factor - (TurnCurrentNum / static_cast<int>(rule_factor >> 3)),
+        player_factor - (GameDataStateStorage.fields_.turn_current_num_ / static_cast<int>(rule_factor >> 3)),
         0, (diff_factor * static_cast<int>(rule_factor >> 5)) >> 1) + diff_factor;
     int resch_base = range(PlayersData[faction_id].soc_effect_base.values_[SocialEffect::RESEARCH], -1, 1);
     int discovery_rate = (fin_factor
@@ -1226,7 +1226,7 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
             faction_id, faction_id_with);
 
     const uint32_t faction_mask = 1u << (faction_id & 31);
-    if ((LockEnableMask & faction_mask) != 0) {
+    if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_mask) != 0) {
         ambience(0xC9);
     }
 
@@ -1248,7 +1248,7 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
             }
         }
 
-        for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+        for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
             Base &base = Bases[base_id];
             if ((base.visibility & (1u << faction_id_with)) != 0 ||
                 base.faction_id_current == faction_id_with) {
@@ -1279,7 +1279,7 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
             const_cast<char *>(prototype.veh_name));
         if (proposed >= 0) {
             if (IsMultiplayerNet != 0 &&
-                (LockEnableMask & faction_mask) != 0) {
+                (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_mask) != 0) {
                 VehPrototypes[proposed].obsolete_factions |= 1;
             } else {
                 prune_protos(faction_id, proposed, 0);
@@ -1294,10 +1294,10 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
         player.tech_id_researching = -1;
     }
 
-    const bool was_new = GameTechAchieved[tech_id] == 0;
-    GameTechAchieved[tech_id] |= static_cast<uint8_t>(faction_mask);
+    const bool was_new = GameDataStateStorage.fields_.game_tech_achieved_[tech_id] == 0;
+    GameDataStateStorage.fields_.game_tech_achieved_[tech_id] |= static_cast<uint8_t>(faction_mask);
     ++player.tech_achieved;
-    if (TurnCurrentNum != 0 && TechAchievedGate == 0) {
+    if (GameDataStateStorage.fields_.turn_current_num_ != 0 && TechAchievedGate == 0) {
         ++player.tech_ranking;
         if (player.unk_26 != 0) --player.unk_26;
         ++player.tech_ranking;
@@ -1336,7 +1336,7 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
                 reactor_level, proposal_class, nullptr);
             if (proposed < 0) continue;
             if (IsMultiplayerNet != 0 &&
-                (LockEnableMask & faction_mask) != 0) {
+                (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_mask) != 0) {
                 VehPrototypes[proposed].obsolete_factions |= 1;
             } else {
                 prune_protos(faction_id, proposed, 0);
@@ -1353,8 +1353,8 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
 
     FirstProposedPrototype = -1;
     if (IsMultiplayerNet == 0) {
-        if ((LockEnableMask & faction_mask) != 0 &&
-            (GamePreferences & PREF_BSC_AUTO_DESIGN_VEH) != 0) {
+        if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_mask) != 0 &&
+            (GameDataStateStorage.fields_.game_preferences_ & PREF_BSC_AUTO_DESIGN_VEH) != 0) {
             const int first_proto = faction_id * MaxVehProtoFactionNum;
             for (int proto_id = first_proto;
                  proto_id < first_proto + MaxVehProtoFactionNum; ++proto_id) {
@@ -1467,7 +1467,7 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
         const int facility_id = Players[faction_id].faction_bonus_val1[bonus];
         if (Facility[facility_id].preq_tech != tech_id) continue;
         give_freebie = 1;
-        for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+        for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
             if (Bases[base_id].faction_id_current == faction_id) {
                 set_fac(facility_id, base_id, TRUE);
             }
@@ -1556,7 +1556,7 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
             if ((static_cast<uint8_t>(prototype.flags) & faction_mask) == 0 &&
                 (prototype.flags & 0x100) != 0 &&
                 (IsMultiplayerNet == 0 ||
-                 (LockEnableMask & faction_mask) == 0)) {
+                 (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_mask) == 0)) {
                 upgrade_prototypes(faction_id, proto_id);
             }
         }
@@ -1596,14 +1596,14 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
             }
         }
 
-        for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+        for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
             Bases[base_id].visibility |= static_cast<uint8_t>(faction_mask);
             Bases[base_id].faction_pop_size_intel[faction_id] =
                 Bases[base_id].population_size;
         }
         PlayersData[faction_id].flags |= 0x200;
 
-        if (TurnCurrentNum != 0 &&
+        if (GameDataStateStorage.fields_.turn_current_num_ != 0 &&
             faction_id == ConsoleGlobal.faction_id_) {
             parse_say(0, static_cast<int>(reinterpret_cast<intptr_t>(
                 Technology[tech_id].name)), -1, -1);
@@ -1626,15 +1626,15 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
             interlude(2, nullptr, 1, 0);
         }
 
-        if (SecretProject.voice_of_planet() != -1 && faction_id > 0 &&
+        if (GameDataStateStorage.fields_.secret_project_.voice_of_planet() != -1 && faction_id > 0 &&
             Technology[34].preq_tech_1 >= -1 &&
             (Technology[34].preq_tech_2 >= -1 ||
              Technology[34].preq_tech_1 == -1) &&
-            (GameTechAchieved[34] & faction_mask) != 0 &&
+            (GameDataStateStorage.fields_.game_tech_achieved_[34] & faction_mask) != 0 &&
             Technology[57].preq_tech_1 >= -1 &&
             (Technology[57].preq_tech_2 >= -1 ||
              Technology[57].preq_tech_1 == -1) &&
-            (GameTechAchieved[57] & faction_mask) != 0) {
+            (GameDataStateStorage.fields_.game_tech_achieved_[57] & faction_mask) != 0) {
             interlude(0xF, nullptr, 1, 0);
             interlude(0x10, nullptr, 0, 0);
         }
@@ -1650,16 +1650,16 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
         }
     }
 
-    const int chained_base = SecretProject.planetary_datalinks();
+    const int chained_base = GameDataStateStorage.fields_.secret_project_.planetary_datalinks();
     if (chained_base >= 0) {
         const int chained_faction = Bases[chained_base].faction_id_current;
         if (chained_faction > 0 && faction_id > 0 && technology_shareable(tech_id) &&
-            (GameTechAchieved[tech_id] & faction_mask) != 0 &&
-            (GameTechAchieved[tech_id] & (1u << chained_faction)) == 0) {
+            (GameDataStateStorage.fields_.game_tech_achieved_[tech_id] & faction_mask) != 0 &&
+            (GameDataStateStorage.fields_.game_tech_achieved_[tech_id] & (1u << chained_faction)) == 0) {
             int known_factions = 0;
             for (int other = 1; other < MaxPlayerNum; ++other) {
                 if (technology_shareable(tech_id) &&
-                    (GameTechAchieved[tech_id] & (1u << other)) != 0)
+                    (GameDataStateStorage.fields_.game_tech_achieved_[tech_id] & (1u << other)) != 0)
                     ++known_factions;
             }
             if (known_factions >= 3)
@@ -1668,24 +1668,24 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
     }
 
     if (faction_id > 0 && technology_shareable(tech_id) &&
-        (GameTechAchieved[tech_id] & faction_mask) != 0) {
+        (GameDataStateStorage.fields_.game_tech_achieved_[tech_id] & faction_mask) != 0) {
         for (int receiver = 1; receiver < MaxPlayerNum; ++receiver) {
             if (Players[receiver].rule_sharetech <= 0 ||
                 (technology_shareable(tech_id) &&
-                 (GameTechAchieved[tech_id] & (1u << receiver)) != 0))
+                 (GameDataStateStorage.fields_.game_tech_achieved_[tech_id] & (1u << receiver)) != 0))
                 continue;
             int known_factions = 0;
             for (int donor = 1; donor < MaxPlayerNum; ++donor) {
                 if (!technology_shareable(tech_id) ||
-                    (GameTechAchieved[tech_id] & (1u << donor)) == 0)
+                    (GameDataStateStorage.fields_.game_tech_achieved_[tech_id] & (1u << donor)) == 0)
                     continue;
                 if (ExpansionEnabled == 0 ||
                     (Players[receiver].rule_flags & RFLAG_TECHSHARE) == 0 ||
                     (PlayersData[receiver].diplo_treaties[donor] &
                      (DTREATY_HAVE_INFILTRATOR | DTREATY_PACT)) != 0 ||
-                    (SecretProject.empath_guild() >= 0 &&
-                     Bases[SecretProject.empath_guild()].faction_id_current == receiver) ||
-                    (receiver == GovernorFaction &&
+                    (GameDataStateStorage.fields_.secret_project_.empath_guild() >= 0 &&
+                     Bases[GameDataStateStorage.fields_.secret_project_.empath_guild()].faction_id_current == receiver) ||
+                    (receiver == GameDataStateStorage.fields_.governor_faction_ &&
                      (Players[donor].rule_flags & RFLAG_ALIEN) == 0))
                     ++known_factions;
             }
@@ -1694,7 +1694,7 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
         }
     }
 
-    if (TurnCurrentNum != 0 && was_new &&
+    if (GameDataStateStorage.fields_.turn_current_num_ != 0 && was_new &&
         (Technology[tech_id].flags & TFLAG_SECRETS) != 0) {
         player.flags |= 0x40;
         parse_say(0, static_cast<int>(reinterpret_cast<intptr_t>(
@@ -1710,7 +1710,7 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
         log_say("Learning a SECRET",
                 reinterpret_cast<const char *>(
                     &PlayersData[0].traded_maps),
-                faction_id, tech_id, GameTechAchieved[tech_id]);
+                faction_id, tech_id, GameDataStateStorage.fields_.game_tech_achieved_[tech_id]);
     }
 
     desktop_update();
@@ -1740,7 +1740,7 @@ void __cdecl tech_research(int faction, int points) {
 
     const uint32_t faction_mask = 1u << (faction & 31);
     bool double_points = false;
-    if ((static_cast<uint8_t>(LockEnableMask) & faction_mask) == 0
+    if ((static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & faction_mask) == 0
         && climactic_battle() != 0) {
         double_points = true;
         if (faction > 0) {
@@ -1753,7 +1753,7 @@ void __cdecl tech_research(int faction, int points) {
                 const int second_preq = Technology[tech_id].preq_tech_2;
                 if (first_preq < -1
                     || !(second_preq >= -1 || first_preq == -1)
-                    || (GameTechAchieved[tech_id] & faction_mask) == 0) {
+                    || (GameDataStateStorage.fields_.game_tech_achieved_[tech_id] & faction_mask) == 0) {
                     goto double_research;
                 }
             }
@@ -1773,7 +1773,7 @@ void __cdecl tech_research(int faction, int points) {
                     || !(second_preq >= -1 || first_preq == -1)) {
                     goto double_research;
                 }
-                if ((GameTechAchieved[tech_id] & faction_mask) != 0) {
+                if ((GameDataStateStorage.fields_.game_tech_achieved_[tech_id] & faction_mask) != 0) {
                     double_points = false;
                     goto after_research_multiplier;
                 }
@@ -1825,7 +1825,7 @@ after_research_multiplier:
 after_advance:
     if (player.tech_accumulated >= 0 && player.tech_id_researching < 0
         && TurnUpkeepPhase != 1
-        && ((static_cast<uint8_t>(LockEnableMask) & faction_mask) == 0
+        && ((static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & faction_mask) == 0
             || faction == ConsoleGlobal.faction_id_
             || IsMultiplayerPBEM == 0)) {
         player.tech_id_researching = tech_selection(faction);

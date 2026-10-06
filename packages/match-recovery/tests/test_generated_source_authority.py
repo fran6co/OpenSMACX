@@ -98,9 +98,13 @@ def test_duplicate_original_in_other_product_source_refuses(tmp_path, duplicate)
             "code/owner.cc": FUNCTION, duplicate: FUNCTION}})
 
 
-@pytest.mark.parametrize("raw", [FUNCTION + FUNCTION, OBJECT + OBJECT, FUNCTION + OBJECT])
-def test_duplicate_anchors_within_tu_or_across_kinds_refuse(tmp_path, raw):
-    with pytest.raises(ValueError, match="unique original source anchor"):
+@pytest.mark.parametrize("raw, diagnostic", [
+    (FUNCTION + FUNCTION, "unique original source anchor"),
+    (OBJECT + OBJECT, "duplicate original object symbol binding"),
+    (FUNCTION + OBJECT, "unique original source anchor"),
+])
+def test_duplicate_anchors_within_tu_or_across_kinds_refuse(tmp_path, raw, diagnostic):
+    with pytest.raises(ValueError, match=diagnostic):
         observe(tmp_path, versions={"baseline": {}, "current": {"code/owner.cc": raw}})
 
 

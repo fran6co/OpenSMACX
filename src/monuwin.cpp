@@ -1149,9 +1149,9 @@ void __cdecl monument(int from_load) {
     if ((Players[faction].rule_flags & 0x80) != 0 || IsMultiplayerNet != 0)
         return;
     if (from_load != 0 &&
-        ((GameMorePreferences & 0x1000000) != 0 ||
-         (GameState & 0x10) != 0 ||
-         ((GameState & 1) != 0 && (GameState & 8) != 0)))
+        ((GameDataStateStorage.fields_.game_more_preferences_ & 0x1000000) != 0 ||
+         (GameDataStateStorage.fields_.game_state_ & 0x10) != 0 ||
+         ((GameDataStateStorage.fields_.game_state_ & 1) != 0 && (GameDataStateStorage.fields_.game_state_ & 8) != 0)))
         return;
 
     MonumentWindowCount = 0;

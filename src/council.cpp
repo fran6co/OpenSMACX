@@ -42,10 +42,10 @@ void __cdecl diplo_unlock();
 // current turn before dispatching its effect. setup_game's native paired
 // reset loop (005B3A7A..3A90) independently establishes eleven signed entries
 // in each table; its owning implementation remains unfinished.
-// RECOVERY_OBJECT: v2 0x009A6618 0x009A6644 ?CouncilResolutionCount@@3PAHA 0x005B3920
-int CouncilResolutionCount[MaxProposalNum];
-// RECOVERY_OBJECT: v2 0x009A6644 0x009A6670 ?CouncilLastResolutionTurn@@3PAHA 0x005B3920
-int CouncilLastResolutionTurn[MaxProposalNum];
+// Historical object identity moved to GameDataStateStorage; see the transport manifest.
+
+// Historical object identity moved to GameDataStateStorage; see the transport manifest.
+
 
 // make_resolution publishes per-faction notifications; both overloads of
 // clear_council_notify clear these same eight signed cells per table.
@@ -118,28 +118,28 @@ void __cdecl call_council(int faction_id) {
     }
 
     if (ConsoleControlTurnActive != 0) {
-        if ((LockEnableMask & (1 << faction_id)) != 0 || IsMultiplayerNet) {
+        if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1 << faction_id)) != 0 || IsMultiplayerNet) {
             return;
         }
     }
 
     if (can_call_council(faction_id,
             (faction_id == ConsoleGlobal.faction_id_
-             && (LockEnableMask & (1 << faction_id)) != 0) ? 1 : 0) == 0) {
+             && (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1 << faction_id)) != 0) ? 1 : 0) == 0) {
         return;
     }
 
     faction_bit = 1 << faction_id;
-    human_mask = static_cast<unsigned char>(LockEnableMask);
-    if ((human_mask & faction_bit) == 0 && GovernorFaction > 0
-            && ((TurnCurrentNum + faction_id * 2) & 0xF) != 0) {
+    human_mask = static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_);
+    if ((human_mask & faction_bit) == 0 && GameDataStateStorage.fields_.governor_faction_ > 0
+            && ((GameDataStateStorage.fields_.turn_current_num_ + faction_id * 2) & 0xF) != 0) {
         return;
     }
-    if ((human_mask & faction_bit) == 0 && (GameState & 1) != 0) {
+    if ((human_mask & faction_bit) == 0 && (GameDataStateStorage.fields_.game_state_ & 1) != 0) {
         return;
     }
-    if (IsMultiplayerNet && (NetTurnFlags & 0x10) != 0
-            && (human_mask & faction_bit) != 0 && NetTurnFaction == faction_id) {
+    if (IsMultiplayerNet && (GameDataStateStorage.fields_.net_turn_flags_ & 0x10) != 0
+            && (human_mask & faction_bit) != 0 && GameDataStateStorage.fields_.net_turn_faction_ == faction_id) {
         NetMsgPrimary.pop("SIMULNO", 0x1388, 0, 0);
         return;
     }
@@ -178,7 +178,7 @@ proposal_loop:
     proposal_tech = Proposal[proposal].preq_tech;
     has_proposal_tech = has_tech(proposal_tech, faction_id);
     if (has_proposal_tech == 0) {
-        if ((GameState & 0x80) == 0 || (GameState & 0x1000) == 0) {
+        if ((GameDataStateStorage.fields_.game_state_ & 0x80) == 0 || (GameDataStateStorage.fields_.game_state_ & 0x1000) == 0) {
             goto proposal_next;
         }
     }
@@ -221,7 +221,7 @@ governor_proposal:
     larger_vote_counts = 0;
     for (target = 1; target < MaxPlayerNum; ++target) {
         if (faction_id != target
-                && (static_cast<unsigned char>(LockEnableMask >> 8)
+                && (static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8)
                     & (1 << target)) != 0
                 && council_votes(target) > candidate) {
             ++larger_vote_counts;
@@ -233,18 +233,18 @@ governor_proposal:
     goto governor_vote_rule;
 
 governor_candidate_counted:
-    human_mask = static_cast<unsigned char>(LockEnableMask);
-    if ((faction_bit & human_mask) == 0 && GovernorFaction > 0) {
+    human_mask = static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_);
+    if ((faction_bit & human_mask) == 0 && GameDataStateStorage.fields_.governor_faction_ > 0) {
         goto proposal_next;
     }
 governor_vote_rule:
-    local_faction = GovernorFaction;
-    human_mask = static_cast<unsigned char>(LockEnableMask);
+    local_faction = GameDataStateStorage.fields_.governor_faction_;
+    human_mask = static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_);
     if (local_faction == faction_id
             && (human_mask & faction_bit) == 0) {
         goto proposal_next;
     }
-    human_mask = static_cast<unsigned char>(LockEnableMask);
+    human_mask = static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_);
     if ((human_mask & faction_bit) != 0) {
         goto proposal_render;
     }
@@ -278,19 +278,19 @@ governor_tally:
     if (pledged_votes * 2 >= total_votes) {
         goto proposal_render;
     }
-    local_faction = GovernorFaction;
+    local_faction = GameDataStateStorage.fields_.governor_faction_;
     if (local_faction <= 0) {
         goto proposal_render;
     }
-    human_mask = static_cast<unsigned char>(LockEnableMask);
+    human_mask = static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_);
     if ((human_mask & (1 << local_faction)) != 0) {
         goto proposal_render;
     }
     goto proposal_next;
 
 supreme_leader_proposal:
-    if ((GameRules & 8) == 0 || (GameState & 1) != 0
-            || CouncilResolutionCount[PROP_UNITE_SUPREME_LEADER] != 0) {
+    if ((GameDataStateStorage.fields_.game_rules_ & 8) == 0 || (GameDataStateStorage.fields_.game_state_ & 1) != 0
+            || GameDataStateStorage.fields_.council_resolution_count_[PROP_UNITE_SUPREME_LEADER] != 0) {
         goto proposal_next;
     }
     if (ExpansionEnabled
@@ -301,7 +301,7 @@ supreme_leader_proposal:
     larger_vote_counts = 0;
     for (target = 1; target < MaxPlayerNum; ++target) {
         if (faction_id != target
-                && (static_cast<unsigned char>(LockEnableMask >> 8)
+                && (static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8)
                     & (1 << target)) != 0
                 && council_votes(target) > candidate) {
             ++larger_vote_counts;
@@ -313,7 +313,7 @@ supreme_leader_proposal:
     alternate_selection = 0;
     for (candidate = 1; candidate < MaxPlayerNum; ++candidate) {
         if ((Players[candidate].rule_flags & RFLAG_ALIEN) != 0
-                && (static_cast<unsigned char>(LockEnableMask >> 8)
+                && (static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8)
                     & (1 << candidate)) != 0) {
             alternate_selection = 1;
         }
@@ -321,37 +321,37 @@ supreme_leader_proposal:
     goto proposal_render;
 
 one_resolution_proposal:
-    if (CouncilResolutionCount[proposal] != 0) {
+    if (GameDataStateStorage.fields_.council_resolution_count_[proposal] != 0) {
         goto proposal_next;
     }
     goto proposal_render;
 
 trade_pact_proposal:
-    if (CouncilResolutionCount[3] > CouncilResolutionCount[4]) {
+    if (GameDataStateStorage.fields_.council_resolution_count_[3] > GameDataStateStorage.fields_.council_resolution_count_[4]) {
         goto proposal_next;
     }
     goto proposal_render;
 
 repeal_trade_pact_proposal:
-    if (CouncilResolutionCount[4] == CouncilResolutionCount[3]) {
+    if (GameDataStateStorage.fields_.council_resolution_count_[4] == GameDataStateStorage.fields_.council_resolution_count_[3]) {
         goto proposal_next;
     }
     goto proposal_render;
 
 increase_shade_proposal:
-    if (CouncilResolutionCount[5] == 0) {
+    if (GameDataStateStorage.fields_.council_resolution_count_[5] == 0) {
         goto proposal_next;
     }
     goto proposal_render;
 
 repeal_charter_proposal:
-    if (CouncilResolutionCount[8] > CouncilResolutionCount[9]) {
+    if (GameDataStateStorage.fields_.council_resolution_count_[8] > GameDataStateStorage.fields_.council_resolution_count_[9]) {
         goto proposal_next;
     }
     goto proposal_render;
 
 reinstate_charter_proposal:
-    if (CouncilResolutionCount[9] >= CouncilResolutionCount[8]) {
+    if (GameDataStateStorage.fields_.council_resolution_count_[9] >= GameDataStateStorage.fields_.council_resolution_count_[8]) {
         goto proposal_next;
     }
     goto proposal_render;
@@ -371,7 +371,7 @@ proposal_render:
     // Source fields named unk_29/unk_30 are independently anchored at
     // PlayerData+0x400/+0x42C.  Their meanings remain provisional: this is the
     // original nonzero-entry/vote scan, expressed through those real arrays.
-    human_mask = static_cast<unsigned char>(LockEnableMask);
+    human_mask = static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_);
     if ((human_mask & faction_bit) != 0) {
         goto proposal_next;
     }
@@ -391,7 +391,7 @@ proposal_render:
     larger_vote_counts = 0;
     for (candidate = 1; candidate < MaxPlayerNum; ++candidate) {
         if (target != candidate
-                && (static_cast<unsigned char>(LockEnableMask >> 8)
+                && (static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8)
                     & (1 << candidate)) != 0
                 && council_votes(candidate) > candidate_votes) {
             ++larger_vote_counts;
@@ -407,14 +407,14 @@ no_vote_option:
         goto proposal_score;
     }
     candidate = 1;
-    while (candidate != GovernorFaction) {
+    while (candidate != GameDataStateStorage.fields_.governor_faction_) {
         if (!(ExpansionEnabled
                 && (Players[candidate].rule_flags & RFLAG_ALIEN) != 0)) {
             candidate_votes = council_votes(candidate);
             larger_vote_counts = 0;
             for (target = 1; target < MaxPlayerNum; ++target) {
                 if (candidate != target
-                        && (static_cast<unsigned char>(LockEnableMask >> 8)
+                        && (static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8)
                             & (1 << target)) != 0
                         && council_votes(target) > candidate_votes) {
                     ++larger_vote_counts;
@@ -458,7 +458,7 @@ proposal_next:
     if (rendered_count == 0) {
         return;
     }
-    if ((static_cast<unsigned char>(LockEnableMask) & faction_bit) != 0) {
+    if ((static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & faction_bit) != 0) {
         selected_item = popup.exec(0, 0);
     } else {
         selected_item = last_proposal;
@@ -466,7 +466,7 @@ proposal_next:
 
     if (alternate_selection != 0 && selected_item == 1) {
         if (faction_id == ConsoleGlobal.faction_id_
-                && (static_cast<unsigned char>(LockEnableMask) & faction_bit) != 0) {
+                && (static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & faction_bit) != 0) {
             NetMsgPrimary.pop("NOTWHILEALIENSLIVE", 0xFFFFEC78, 0,
                               "council_sm.pcx");
         }
@@ -476,14 +476,14 @@ proposal_next:
         return;
     }
 
-    turn = TurnCurrentNum;
+    turn = GameDataStateStorage.fields_.turn_current_num_;
     council_delay = static_cast<int>(Rules.min_turns_councils);
     if (selected_item != 0) {
-        if ((GameState & 0x80) != 0 && (GameState & 0x1000) != 0
-                && (static_cast<unsigned char>(LockEnableMask) & faction_bit) != 0) {
+        if ((GameDataStateStorage.fields_.game_state_ & 0x80) != 0 && (GameDataStateStorage.fields_.game_state_ & 0x1000) != 0
+                && (static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & faction_bit) != 0) {
             goto proposal_resolved;
         }
-        if (GovernorFaction == faction_id) {
+        if (GameDataStateStorage.fields_.governor_faction_ == faction_id) {
             due_turn = council_delay / 2;
         } else {
             due_turn = council_delay;
@@ -492,7 +492,7 @@ proposal_next:
             goto proposal_resolved;
         }
         if (faction_id == ConsoleGlobal.faction_id_
-                && (static_cast<unsigned char>(LockEnableMask) & faction_bit) != 0) {
+                && (static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & faction_bit) != 0) {
             parse_num(0, game_year(PlayersData[faction_id].council_call_turn));
             parse_num(1, council_delay);
             parse_num(2, council_delay / 2);
@@ -503,16 +503,16 @@ proposal_next:
     }
 
 proposal_resolved:
-    last_resolution_turn = CouncilLastResolutionTurn[selected_item];
+    last_resolution_turn = GameDataStateStorage.fields_.council_last_resolution_turn_[selected_item];
     if (turn - last_resolution_turn >= council_delay) {
         goto council_resolution;
     }
-    if ((GameState & 0x80) != 0 && (GameState & 0x1000) != 0
-            && (static_cast<unsigned char>(LockEnableMask) & faction_bit) != 0) {
+    if ((GameDataStateStorage.fields_.game_state_ & 0x80) != 0 && (GameDataStateStorage.fields_.game_state_ & 0x1000) != 0
+            && (static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & faction_bit) != 0) {
         goto council_resolution;
     }
     if (faction_id == ConsoleGlobal.faction_id_
-            && (static_cast<unsigned char>(LockEnableMask) & faction_bit) != 0) {
+            && (static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & faction_bit) != 0) {
         parse_num(0, game_year(last_resolution_turn));
         parse_num(1, council_delay);
         NetMsgPrimary.pop("COUNCILRECENTPROP", 0xFFFFEC78, 0,
@@ -525,7 +525,7 @@ council_resolution:
         council(faction_id, selected_item, last_selected_faction);
         return;
     }
-    if ((static_cast<unsigned char>(LockEnableMask) & faction_bit) == 0) {
+    if ((static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & faction_bit) == 0) {
         CouncilPendingMessageArgs[0] = faction_id;
         CouncilPendingMessageArgs[1] = selected_item;
         CouncilPendingMessageArgs[2] = last_selected_faction;
@@ -581,7 +581,7 @@ int __cdecl council_votes(int faction_id) {
     }
     int votes = 0;
     Base *base = Bases;
-    for (int i = 0; i < BaseCurrentCount; i++, base++) {
+    for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++, base++) {
         if (base->faction_id_current == faction_id) {
             votes += base->population_size;
         }
@@ -679,19 +679,19 @@ proposal values themselves match CouncilProposals.
 void __cdecl council_action(int proposal, int faction_id) {
     // Preserve the native proposal index before dispatch. Unsupported proposal
     // values still update their in-range resolution records, then fall through.
-    CouncilResolutionCount[proposal]++;
-    CouncilLastResolutionTurn[proposal] = TurnCurrentNum;
+    GameDataStateStorage.fields_.council_resolution_count_[proposal]++;
+    GameDataStateStorage.fields_.council_last_resolution_turn_[proposal] = GameDataStateStorage.fields_.turn_current_num_;
 
     switch (proposal) {
     case PROP_UNITE_SUPREME_LEADER: {
-        GameState |= STATE_VICTORY_DIPLOMATIC;
+        GameDataStateStorage.fields_.game_state_ |= STATE_VICTORY_DIPLOMATIC;
         int local_faction = ConsoleGlobal.faction_id_;
         if (faction_id == local_faction) {
             if (!IsMultiplayerNet) {
                 bool candidate_found = false;
                 for (int candidate = 1; candidate < MaxPlayerNum; ++candidate) {
                     if (candidate == faction_id || !is_alive(candidate)
-                        || !(GameRules & RULES_VICTORY_CONQUEST)) {
+                        || !(GameDataStateStorage.fields_.game_rules_ & RULES_VICTORY_CONQUEST)) {
                         continue;
                     }
 
@@ -732,26 +732,26 @@ void __cdecl council_action(int proposal, int faction_id) {
 
             EndgameExitReason = 6;
             PlayersData[faction_id].flags |= PFLAG_UNK_20000;
-            GameState |= STATE_UNK_1;
+            GameDataStateStorage.fields_.game_state_ |= STATE_UNK_1;
             return;
         }
 
         council_parse_leader(faction_id);
         const bool cooperative_pact =
-            (GameRules & RULES_VICTORY_COOPERATIVE)
+            (GameDataStateStorage.fields_.game_rules_ & RULES_VICTORY_COOPERATIVE)
             && (PlayersData[local_faction].diplo_treaties[faction_id] & DTREATY_PACT);
         if (!cooperative_pact) {
             if (IsMultiplayerNet
                 || !popp(ScriptPopupFile, "ACCEDE", 0, "dipvic_sm.pcx", 0)) {
                 EndgameExitReason = 11;
-                GameState |= STATE_UNK_1;
+                GameDataStateStorage.fields_.game_state_ |= STATE_UNK_1;
                 PlayersData[faction_id].flags |= PFLAG_UNK_20000;
                 return;
             }
         } else if (IsMultiplayerNet
                    || !popp(ScriptPopupFile, "ACCEDECOOP", 0, "dipvic_sm.pcx", 0)) {
             EndgameExitReason = 10;
-            GameState |= STATE_UNK_1;
+            GameDataStateStorage.fields_.game_state_ |= STATE_UNK_1;
             PlayersData[faction_id].flags |= PFLAG_UNK_20000;
             return;
         }
@@ -791,13 +791,13 @@ void __cdecl council_action(int proposal, int faction_id) {
     case PROP_LAUNCH_SOLAR_SHADE:
     case PROP_INCREASE_SOLAR_SHADE:
         MapSeaLevelCouncil -= 3;
-        ClimateSeaLevelDelta -= static_cast<int>(WorldBuilder.sea_level_rises);
-        ClimateRiseStep = ClimateSeaLevelDelta;
-        if (ClimateRiseStep < 0) {
-            ClimateRiseStep = -ClimateRiseStep;
+        GameDataStateStorage.fields_.climate_sea_level_delta_ -= static_cast<int>(WorldBuilder.sea_level_rises);
+        GameDataStateStorage.fields_.climate_rise_step_ = GameDataStateStorage.fields_.climate_sea_level_delta_;
+        if (GameDataStateStorage.fields_.climate_rise_step_ < 0) {
+            GameDataStateStorage.fields_.climate_rise_step_ = -GameDataStateStorage.fields_.climate_rise_step_;
         }
-        ClimateRiseLimit = 20;
-        ClimateRiseAccum = 0;
+        GameDataStateStorage.fields_.climate_rise_limit_ = 20;
+        GameDataStateStorage.fields_.climate_rise_accum_ = 0;
         parse_num(0, 20);
         parse_num(1, (static_cast<int>(WorldBuilder.sea_level_rises) * 1000) / 15);
         if (Players[ConsoleGlobal.faction_id_].rule_flags & RFLAG_ALIEN) {
@@ -809,13 +809,13 @@ void __cdecl council_action(int proposal, int faction_id) {
 
     case PROP_MELT_POLAR_CAPS:
         MapSeaLevelCouncil += 3;
-        ClimateSeaLevelDelta += static_cast<int>(WorldBuilder.sea_level_rises);
-        ClimateRiseStep = ClimateSeaLevelDelta;
-        if (ClimateRiseStep < 0) {
-            ClimateRiseStep = -ClimateRiseStep;
+        GameDataStateStorage.fields_.climate_sea_level_delta_ += static_cast<int>(WorldBuilder.sea_level_rises);
+        GameDataStateStorage.fields_.climate_rise_step_ = GameDataStateStorage.fields_.climate_sea_level_delta_;
+        if (GameDataStateStorage.fields_.climate_rise_step_ < 0) {
+            GameDataStateStorage.fields_.climate_rise_step_ = -GameDataStateStorage.fields_.climate_rise_step_;
         }
-        ClimateRiseLimit = 20;
-        ClimateRiseAccum = 0;
+        GameDataStateStorage.fields_.climate_rise_limit_ = 20;
+        GameDataStateStorage.fields_.climate_rise_accum_ = 0;
         parse_num(0, 20);
         parse_num(1, (static_cast<int>(WorldBuilder.sea_level_rises) * 1000) / 15);
         if (Players[ConsoleGlobal.faction_id_].rule_flags & RFLAG_ALIEN) {

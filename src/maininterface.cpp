@@ -151,8 +151,8 @@ void MainInterface::redraw_complete() {
     spot_.get_rect(5, 0, &button_rect);
     canvas.set_font(&font1_, 0, 0, 0);
     const uint32_t ready = NetDaemonNet.lock_state_[0].trailing_words_[7];
-    if ((GameState & 2) && (!IsMultiplayerNet
-        || !(NetTurnFlags & 0x10) || NetTurnFaction == ConsoleGlobal.faction_id_)
+    if ((GameDataStateStorage.fields_.game_state_ & 2) && (!IsMultiplayerNet
+        || !(GameDataStateStorage.fields_.net_turn_flags_ & 0x10) || GameDataStateStorage.fields_.net_turn_faction_ == ConsoleGlobal.faction_id_)
         && (ConsoleGlobal.field_23BE4_ || (IsMultiplayerNet && ready != 0xFF && ready != 0))) {
         flic2_.decode_stored_frame();
         MainInterfaceEndTurnAnimation = 1;
@@ -162,7 +162,7 @@ void MainInterface::redraw_complete() {
         MainInterfaceEndTurnAnimation = 0;
     }
     const uint32_t label_ready = NetDaemonNet.lock_state_[0].trailing_words_[7];
-    const int label = !IsMultiplayerNet || !(GameState & 2) || (NetTurnFlags & 0x10)
+    const int label = !IsMultiplayerNet || !(GameDataStateStorage.fields_.game_state_ & 2) || (GameDataStateStorage.fields_.net_turn_flags_ & 0x10)
         || label_ready == 0xFF || !(label_ready & (1u << (ConsoleGlobal.faction_id_ & 31)))
         ? 0x68 / 4 : 0x3FC / 4;
     text[0] = 0;
@@ -540,7 +540,7 @@ void MainInterface::on_status(int active) {
         flic2_.rewind();
         for (int button = 0; button < 42; ++button) {
             if (button == 2) {
-                if ((GameState & 0xC0) == 0xC0) flat_button_[button].show(0);
+                if ((GameDataStateStorage.fields_.game_state_ & 0xC0) == 0xC0) flat_button_[button].show(0);
             } else if (button >= 8 && button <= 10) {
                 flat_button_[button].hide();
             } else if (button < 11 || button > 41 || button_group_[0].field_84_ == 1002) {

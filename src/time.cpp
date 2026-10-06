@@ -55,7 +55,7 @@ void __cdecl blink_timer(int a1) {
     MainInterfaceGlobal.string_box_.clip_ids(0x96);
 
     const int t1 = ConsoleGlobal.field_23BE8_;
-    const unsigned char game_state = static_cast<unsigned char>(GameState);
+    const unsigned char game_state = static_cast<unsigned char>(GameDataStateStorage.fields_.game_state_);
     const int multiplayer = IsMultiplayerNet;
     if (t1 == 0 && (multiplayer == 0 || (game_state & 2) == 0)) {
         ConsoleGlobal.field_23BFC_ = 0;
@@ -85,7 +85,7 @@ void __cdecl blink_timer(int a1) {
     if (ConsoleGlobal.field_23D8C_ == -1) return;
 
     const unsigned char preferences_high =
-        static_cast<unsigned char>(GamePreferences >> 8);
+        static_cast<unsigned char>(GameDataStateStorage.fields_.game_preferences_ >> 8);
     if ((preferences_high & 0x10) == 0 && blink_col == 0
         && WinModalDepth == 0) {
         return;

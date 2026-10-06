@@ -6,7 +6,7 @@ definition. No source spelling sizes, next-symbol guesses or PCH type voting.
 This observes compiler storage extent, not original extent or C++ lifetime.
 """
 
-from .codeview import Cursor, _type_records, _unqualified_type
+from .codeview import Cursor, _fields, _type_records, _unqualified_type
 
 
 def _class_record(leaf, record):
@@ -163,3 +163,74 @@ def data_layout(obj, name):
     if len(matches) != 1:
         raise ValueError("requires one directly bound CodeView data definition")
     return matches[0]
+
+
+def _complete_udt(index, records, seen=frozenset()):
+    index = _unqualified_type(index, records)
+    if index is None or index in seen or not 0 <= index - 0x1000 < len(records):
+        raise ValueError("member path requires a complete embedded CodeView UDT")
+    leaf, record = records[index - 0x1000]
+    if leaf not in (0x1004, 0x1005, 0x1006):
+        raise ValueError("member path crosses a non-UDT value")
+    properties, field, size, name = _class_record(leaf, record)
+    if properties & 0x80:
+        complete = []
+        for ordinal, (candidate_leaf, candidate) in enumerate(records):
+            if candidate_leaf != leaf:
+                continue
+            candidate_properties, _, _, candidate_name = _class_record(candidate_leaf, candidate)
+            if not candidate_properties & 0x80 and candidate_name == name:
+                complete.append(ordinal + 0x1000)
+        if len(complete) != 1:
+            raise ValueError("member path requires one complete same-stream UDT")
+        return _complete_udt(complete[0], records, seen | {index})
+    if size <= 0 or (field and (not 0 <= field - 0x1000 < len(records)
+                                or records[field - 0x1000][0] != 0x1203)):
+        raise ValueError("member path requires a complete direct field list")
+    members, member_types, bases = _fields(records[field - 0x1000][1].data[2:]) if field else ({}, {}, [])
+    if bases:
+        raise ValueError("member path through inherited layout is unsupported")
+    return index, size, members, member_types
+
+
+def member_data_layout(obj, parent_symbol, member_path):
+    """Resolve one named, embedded member path from the parent's CodeView UDT.
+
+    The emitted parent remains a real COFF data definition. Offsets and extents
+    come only from its directly bound standalone CodeView records.
+    """
+    if (not isinstance(member_path, tuple) or not member_path
+            or any(not isinstance(part, str) or not part for part in member_path)):
+        raise ValueError("member path must be a nonempty tuple of names")
+    parent = data_layout(obj, parent_symbol)
+    records = _type_records(obj)
+    current_type = parent["type_index"]
+    relative = 0
+    path_rows = []
+    visited_udts = set()
+    for part in member_path:
+        owner_type, owner_size, members, member_types = _complete_udt(current_type, records)
+        if owner_type in visited_udts:
+            raise ValueError("cyclic embedded CodeView member path")
+        visited_udts.add(owner_type)
+        if part not in members or part not in member_types:
+            raise ValueError("named CodeView member is missing or ambiguous")
+        member_offset = members[part]
+        member_type = member_types[part]
+        extent = storage_size(member_type, records)
+        normalized_member = _unqualified_type(member_type, records)
+        if normalized_member in visited_udts:
+            raise ValueError("cyclic embedded CodeView member type")
+        if extent <= 0 or member_offset < 0 or member_offset + extent > owner_size:
+            raise ValueError("CodeView member lies outside its owning UDT")
+        relative += member_offset
+        path_rows.append({"name": part, "offset": member_offset, "size": extent,
+                          "type_index": member_type})
+        current_type = member_type
+    if relative + path_rows[-1]["size"] > parent["size"]:
+        raise ValueError("resolved member path lies outside parent storage")
+    return {"symbol": parent_symbol, "source_name": parent["source_name"],
+            "section": parent["section"], "symbol_offset": parent["offset"],
+            "size": path_rows[-1]["size"], "type_index": path_rows[-1]["type_index"],
+            "offset": parent["offset"] + relative, "member_offset": relative,
+            "parent_size": parent["size"], "member_path": path_rows}

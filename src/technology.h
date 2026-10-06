@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+#include "base.h"  // contiguous game_data state owner
 extern int AiResearchBatchActive;
 extern int TechAchievedGate;
 
@@ -293,7 +294,7 @@ MEASURED inline BOOL __cdecl has_tech(int tech_id, int faction_id) {
     if (Technology[tech_id].preq_tech_2 < TechNone && preq_1 != TechNone) {
         return false;
     }
-    return ((1 << faction_id) & GameTechAchieved[tech_id]) != 0;
+    return ((1 << faction_id) & GameDataStateStorage.fields_.game_tech_achieved_[tech_id]) != 0;
 }
 
 // Non-inline forwarder to `has_tech` above: best_specialist (base.cpp) needs

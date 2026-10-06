@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include "game.h"  // shared state-window owner
 #include "deletionlist.h"
 #include "lock.h"
 
@@ -60,7 +61,7 @@ Purpose: Find a reusable deletion record. The image returns slot zero if all
 */
 int DeletionList::find_free_slot() {
     DeletionRecord *record = records_;
-    const unsigned char mask = static_cast<unsigned char>(LockEnableMask);
+    const unsigned char mask = static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_);
     int slot;
     for (slot = 0; slot < 24; ) {
         if ((record->acknowledgements_ & mask) == mask) {
@@ -80,7 +81,7 @@ Purpose: Find the occupied deletion record for an owner, or return -1.
 // symbol    ?find_owner_slot@DeletionList@@QAEHH@Z
 */
 int DeletionList::find_owner_slot(int owner) {
-    const unsigned char mask = static_cast<unsigned char>(LockEnableMask);
+    const unsigned char mask = static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_);
     for (int slot = 0; slot < 24; ++slot) {
         const DeletionRecord &record = records_[slot];
         if ((record.acknowledgements_ & mask) != mask && record.owner_ == owner) {
@@ -106,7 +107,7 @@ void DeletionList::ack(int owner, int faction) {
     const unsigned char bit = static_cast<unsigned char>(1u << (faction & 31));
     const unsigned char acknowledgements = record.acknowledgements_ | bit;
     record.acknowledgements_ = acknowledgements;
-    const unsigned char mask = static_cast<unsigned char>(LockEnableMask);
+    const unsigned char mask = static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_);
     if ((acknowledgements & mask) == mask) {
         record.acknowledgements_ = 0xFF;
     }

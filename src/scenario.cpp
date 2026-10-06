@@ -205,7 +205,7 @@ void refresh_loaded_game() {
         load_faction_art(faction);
     }
     LoadFlags();
-    GameState &= 0xF79FCF16;
+    GameDataStateStorage.fields_.game_state_ &= 0xF79FCF16;
 
     void *object = reinterpret_cast<void *>(InterfaceSingletonAddress);
     uintptr_t *vtable = *reinterpret_cast<uintptr_t **>(object);
@@ -221,13 +221,13 @@ void refresh_loaded_game() {
 
 bool validate_loaded_state() {
     return !IsMultiplayerNet && !IsMultiplayerPBEM
-        && VehCurrentCount > 0 && VehCurrentCount <= 2049;
+        && GameDataStateStorage.fields_.vehicle_current_count_ > 0 && GameDataStateStorage.fields_.vehicle_current_count_ <= 2049;
 }
 
 void inspect_loaded_state() {
     int current_faction = ConsoleGlobal.faction_id_;
     int candidate = -1;
-    for (int vehicle = 0; vehicle < VehCurrentCount; vehicle++) {
+    for (int vehicle = 0; vehicle < GameDataStateStorage.fields_.vehicle_current_count_; vehicle++) {
         if (Vehs[vehicle].faction_id == current_faction && veh_moves(vehicle) > 0) {
             candidate = vehicle;
             break;
@@ -248,7 +248,7 @@ void inspect_loaded_state() {
         "  \"candidate\": {\"id\": %d, \"x\": %d, \"y\": %d, "
         "\"prototype\": %d, \"triad\": %u, \"moves\": %u},\n"
         "  \"adjacent\": [\n",
-        TurnCurrentNum, current_faction, VehCurrentCount, candidate,
+        GameDataStateStorage.fields_.turn_current_num_, current_faction, GameDataStateStorage.fields_.vehicle_current_count_, candidate,
         Vehs[candidate].x, Vehs[candidate].y, Vehs[candidate].proto_id,
         get_proto_triad(Vehs[candidate].proto_id), veh_moves(candidate));
     if (size <= 0 || static_cast<size_t>(size) >= sizeof(output)) {
@@ -289,7 +289,7 @@ void inspect_loaded_state() {
 }
 
 void request_end_turn(Console *self) {
-    GameState |= STATE_UNK_2;
+    GameDataStateStorage.fields_.game_state_ |= STATE_UNK_2;
     ControlTurnPhase = 0;
     self->field_23BE4_ = 0;
     self->field_23BE8_ = 0;
@@ -297,7 +297,7 @@ void request_end_turn(Console *self) {
 }
 
 void execute_commands(Console *self) {
-    if (State.vehicle_id < 0 || State.vehicle_id >= VehCurrentCount) {
+    if (State.vehicle_id < 0 || State.vehicle_id >= GameDataStateStorage.fields_.vehicle_current_count_) {
         finish_failure("vehicle_out_of_range");
         return;
     }
@@ -329,7 +329,7 @@ void execute_commands(Console *self) {
         finish_failure("illegal_movement_target");
         return;
     }
-    State.initial_turn = TurnCurrentNum;
+    State.initial_turn = GameDataStateStorage.fields_.turn_current_num_;
     State.initial_x = Vehs[State.vehicle_id].x;
     State.initial_y = Vehs[State.vehicle_id].y;
     int initial_moves_expended = Vehs[State.vehicle_id].moves_expended;
@@ -344,7 +344,7 @@ void execute_commands(Console *self) {
         return;
     }
     if (State.advance_turn) {
-        for (int vehicle = 0; vehicle < VehCurrentCount; vehicle++) {
+        for (int vehicle = 0; vehicle < GameDataStateStorage.fields_.vehicle_current_count_; vehicle++) {
             if (get_triad(vehicle) == TRIAD_AIR) {
                 finish_failure("turn_fixture_contains_air_vehicle");
                 return;
@@ -380,7 +380,7 @@ void execute_commands(Console *self) {
         && Vehs[State.vehicle_id].next_veh_id_stack == -1
         && Vehs[State.vehicle_id].prev_veh_id_stack == -1;
     request_end_turn(self);
-    bool end_turn_requested = (GameState & STATE_UNK_2) != 0
+    bool end_turn_requested = (GameDataStateStorage.fields_.game_state_ & STATE_UNK_2) != 0
         && ControlTurnPhase == 0
         && self->field_23BE4_ == 0
         && self->field_23BE8_ == 0;
@@ -470,11 +470,11 @@ extern "C" void __cdecl scenario_turn_advanced(uintptr_t caller_return) {
         return;
     }
     ScenarioTurnAdvanceAction = 1;
-    int advanced_turn = TurnCurrentNum;
+    int advanced_turn = GameDataStateStorage.fields_.turn_current_num_;
     uint32_t expected_year = game_year(advanced_turn);
     bool turn_advanced = caller_return == TurnUpkeepCallerReturn
         && advanced_turn == State.initial_turn + 1
-        && MissionYearCurrent == expected_year
+        && GameDataStateStorage.fields_.mission_year_current_ == expected_year
         && Vehs[State.vehicle_id].x == State.target_x
         && Vehs[State.vehicle_id].y == State.target_y;
     if (!turn_advanced) {
@@ -494,7 +494,7 @@ extern "C" void __cdecl scenario_turn_advanced(uintptr_t caller_return) {
             "}\n",
             static_cast<unsigned int>(caller_return),
             static_cast<unsigned int>(TurnUpkeepCallerReturn),
-            State.initial_turn, advanced_turn, MissionYearCurrent, expected_year,
+            State.initial_turn, advanced_turn, GameDataStateStorage.fields_.mission_year_current_, expected_year,
             Vehs[State.vehicle_id].x, Vehs[State.vehicle_id].y,
             State.target_x, State.target_y);
         State.phase = ScenarioPhase::Finished;
@@ -523,7 +523,7 @@ extern "C" void __cdecl scenario_turn_advanced(uintptr_t caller_return) {
         "  \"end_turn_requested\": true,\n"
         "  \"turn_advanced\": true\n"
         "}\n",
-        advanced_turn, State.initial_turn, advanced_turn, MissionYearCurrent,
+        advanced_turn, State.initial_turn, advanced_turn, GameDataStateStorage.fields_.mission_year_current_,
         State.vehicle_id, State.initial_x, State.initial_y,
         State.target_x, State.target_y, State.movement_cost);
     State.phase = ScenarioPhase::Finished;

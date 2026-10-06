@@ -58,7 +58,7 @@ void MultiWin::draw_player(int faction_id, int row, RECT *bounds) {
   const int text_left = icon_left + (IsMultiplayerNet ? row_height : 0) + 3;
   const int text_right = bounds->right - 10;
   const unsigned int faction_bit = 1u << faction_id;
-  if (IsMultiplayerNet && (LockEnableMask & faction_bit)) {
+  if (IsMultiplayerNet && (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_bit)) {
     spot_.add(faction_id, 0, icon_left, bounds->top, row_height, row_height);
     Sprite &icon = sprites2_[0];
     icon.draw(canvas, icon.transparent_index(), icon_left,
@@ -114,8 +114,8 @@ void MultiWin::draw_time(RECT *bounds, int draw_type) {
   StringTemp[0] = 0;
   if (ConsoleControlTurnActive) {
     strcat(StringTemp, label_get(0x410 / 4));
-  } else if ((NetTurnFlags & 0x10) &&
-             NetTurnFaction != ConsoleGlobal.faction_id_) {
+  } else if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10) &&
+             GameDataStateStorage.fields_.net_turn_faction_ != ConsoleGlobal.faction_id_) {
     strcat(StringTemp, label_get(0x444 / 4));
   } else {
     strcat(StringTemp, label_get(0x40c / 4));
@@ -180,11 +180,11 @@ void MultiWin::draw(int draw_type) {
     for (int faction = 1; faction < 8; ++faction) {
       if (faction == ConsoleGlobal.faction_id_) continue;
       const unsigned int mask = 1u << faction;
-      if (!(LockEnableMask & (mask << 8))) continue;
-      if (!(GameState & 0x80) &&
+      if (!(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (mask << 8))) continue;
+      if (!(GameDataStateStorage.fields_.game_state_ & 0x80) &&
           !(PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[faction] & 8) &&
-          !(SecretProject.empath_guild() >= 0 && Bases[SecretProject.empath_guild()].faction_id_current == ConsoleGlobal.faction_id_) &&
-          !((LockEnableMask & mask) && auto_contact())) continue;
+          !(GameDataStateStorage.fields_.secret_project_.empath_guild() >= 0 && Bases[GameDataStateStorage.fields_.secret_project_.empath_guild()].faction_id_current == ConsoleGlobal.faction_id_) &&
+          !((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & mask) && auto_contact())) continue;
 
       ++row;
       drew_player = true;
@@ -336,7 +336,7 @@ void MultiWin::show() {
   }
   if (IsMultiplayerNet != 0) flat_button2_.show(1);
 
-  if (GamePreferences & 0x400) g_MULTIWIN_WAVE.play();
+  if (GameDataStateStorage.fields_.game_preferences_ & 0x400) g_MULTIWIN_WAVE.play();
   MultiWindowVisibilityState = 2;
   field_A24_ = 1;
   MultiWindowRedrawSuppressed = 1;
@@ -356,7 +356,7 @@ void MultiWin::show() {
   const int slide = (position - screen_rect.top) / 5;
   ScreenBuffer.set_clip(&screen_rect);
 
-  if ((GamePreferences & 0x8000000) != 0 && IsMultiplayerNet == 0) {
+  if ((GameDataStateStorage.fields_.game_preferences_ & 0x8000000) != 0 && IsMultiplayerNet == 0) {
     WinFlipClipped = 1;
     for (int frame = 0; frame < 6; ++frame) {
       const DWORD start = timeGetTime();
@@ -372,7 +372,7 @@ void MultiWin::show() {
     WinFlipClipped = 0;
   }
 
-  if (GamePreferences & 0x400) g_MULTIWIN_WAVE.fade(50);
+  if (GameDataStateStorage.fields_.game_preferences_ & 0x400) g_MULTIWIN_WAVE.fade(50);
   if (IsMultiplayerNet == 0) Win::show(3);
 }
 
@@ -386,7 +386,7 @@ void MultiWin::hide() {
   Buffer background;
   if (IsMultiplayerNet == 0 && field_A24_ == 0) return;
 
-  if (GamePreferences & 0x400) g_MULTIWIN_WAVE.play();
+  if (GameDataStateStorage.fields_.game_preferences_ & 0x400) g_MULTIWIN_WAVE.play();
   hovered_spot_ = -1;
   MultiWindowVisibilityState = 0;
 
@@ -411,7 +411,7 @@ void MultiWin::hide() {
   const int slide = (limit - screen_rect.top) / 5;
   ScreenBuffer.set_clip(&screen_rect);
 
-  if ((GamePreferences & 0x8000000) != 0 && IsMultiplayerNet == 0) {
+  if ((GameDataStateStorage.fields_.game_preferences_ & 0x8000000) != 0 && IsMultiplayerNet == 0) {
     WinFlipClipped = 1;
     int position = screen_rect.top;
     for (int frame = 0; frame < 6; ++frame) {
@@ -438,7 +438,7 @@ void MultiWin::hide() {
     WinFlipClipped = 0;
   }
 
-  if (GamePreferences & 0x400) g_MULTIWIN_WAVE.fade(50);
+  if (GameDataStateStorage.fields_.game_preferences_ & 0x400) g_MULTIWIN_WAVE.fade(50);
   field_A24_ = 0;
   if (IsMultiplayerNet == 0) {
     Win::hide();
@@ -552,7 +552,7 @@ void MultiWin::on_right_click(int x, int y) {
     }
 
     menu.show(x, y, pop_expire);
-    if (GameState & 0x800) return;
+    if (GameDataStateStorage.fields_.game_state_ & 0x800) return;
 
     const int selected = menu.get_selected();
     if (selected >= 0x40) return;

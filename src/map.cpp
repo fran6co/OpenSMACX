@@ -278,7 +278,7 @@ int __cdecl whose_territory(int faction_id, int x, int y, int *base_id,
         return -1; // no owner
     }
     if ((uint32_t)owner != faction_id) {
-        if (!ignore_comm && !(GameState & STATE_OMNISCIENT_VIEW)
+        if (!ignore_comm && !(GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)
             && has_treaty(faction_id, owner, DTREATY_COMMLINK | DTREATY_UNK_8000000)
                 != (DTREATY_COMMLINK | DTREATY_UNK_8000000)) {
             return -1; // owner unknown to faction
@@ -702,11 +702,11 @@ Return Value: Does base have a strategic naval importance? true/false
 Status: Complete
 */
 BOOL __cdecl naval_base(int base_id) {
-    if (base_coast(base_id) < 0 || BaseCurrentCount <= 0) {
+    if (base_coast(base_id) < 0 || GameDataStateStorage.fields_.base_current_count_ <= 0) {
         return false;
     }
     uint32_t faction_id = Bases[base_id].faction_id_current;
-    for (int i = 0; i < BaseCurrentCount; i++) {
+    for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
         if (faction_id != Bases[i].faction_id_current) {
             if (port_to_port(base_id, i)) {
                 return true;
@@ -1745,7 +1745,7 @@ int __cdecl goody_at(int x, int y) {
     if (bit & (BIT_SUPPLY_REMOVE | BIT_MONOLITH)) {
         return 0; // nothing, supply pod already opened or monolith
     }
-    if (GameRules & RULES_NO_UNITY_SCATTERING) {
+    if (GameDataStateStorage.fields_.game_rules_ & RULES_NO_UNITY_SCATTERING) {
         return (bit & (BIT_UNK_4000000 | BIT_UNK_8000000)) ? 2 : 0; // ?
     }
     if (bit & BIT_SUPPLY_POD) {
@@ -2040,7 +2040,7 @@ void __cdecl rebuild_vehicle_bits() {
     for (int y = 0; y < MapLatitudeBounds; y++) {
         for (int x = y & 1; x < MapLongitudeBounds; x += 2, tile++) {
             tile->bit &= ~BIT_VEH_IN_TILE;
-            for (int veh_id = 0; veh_id < VehCurrentCount; veh_id++) {
+            for (int veh_id = 0; veh_id < GameDataStateStorage.fields_.vehicle_current_count_; veh_id++) {
                 if (Vehs[veh_id].x == x && Vehs[veh_id].y == y) {
                     tile->bit |= BIT_VEH_IN_TILE;
                     if (!(tile->bit & BIT_BASE_IN_TILE)) {
@@ -2081,7 +2081,7 @@ void __cdecl rebuild_base_bits() {
     for (int y = 0; y < MapLatitudeBounds; y++) {
         for (int x = y & 1; x < MapLongitudeBounds; x += 2, tile++) {
             tile->bit &= ~BIT_BASE_IN_TILE;
-            for (int base_id = 0; base_id < BaseCurrentCount; base_id++) {
+            for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; base_id++) {
                 if (Bases[base_id].x == x && Bases[base_id].y == y) {
                     tile->bit |= BIT_BASE_IN_TILE;
                     tile->val2 = (tile->val2 & 0xF0) | (Bases[base_id].faction_id_current & 0xF);
@@ -3107,7 +3107,7 @@ void __cdecl brush(int x, int y, int altitude) {
                         region_set(x_radius, y_radius, 1);
                         use_draw_radius |= alt_at(x_radius, y_radius) != altitude;
                         world_alt_set(x_radius, y_radius, altitude, true);
-                        if (GameState & STATE_OMNISCIENT_VIEW && altitude > 3) {
+                        if (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW && altitude > 3) {
                             temp_set(x_radius, y_radius, 1);
                         }
                         BrushVal1 += 1;
@@ -3117,7 +3117,7 @@ void __cdecl brush(int x, int y, int altitude) {
             }
         }
     }
-    if (GameState & STATE_OMNISCIENT_VIEW && use_draw_radius) {
+    if (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW && use_draw_radius) {
         draw_radius(x, y, 2, 2);
     }
 }
@@ -3701,7 +3701,7 @@ int __cdecl world_site(int x, int y, BOOL is_ocean_site) {
     score += is_ocean_site ? water : -water;
     score += (rich_terrain * 3 + 6) / 4;
     score += (fair_terrain + 1) / 3;
-    if (TurnCurrentNum > 150) {
+    if (GameDataStateStorage.fields_.turn_current_num_ > 150) {
         score += fungus_tiles / -3;
     }
     Map *tile = site_tile(x, y);
@@ -4138,7 +4138,7 @@ void __cdecl world_shorelines() {
 
             alt_set(x, y, altitude);
 
-            if ((GameState & STATE_OMNISCIENT_VIEW) != 0
+            if ((GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) != 0
                 && WorldClimateRedrawRequest != 0) {
                 if (altitude >= 3) {
                     int temperature = altitude - 3;
@@ -4170,7 +4170,7 @@ void __cdecl world_shorelines() {
         }
     }
 
-    if ((GameState & STATE_OMNISCIENT_VIEW) != 0
+    if ((GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) != 0
         && WorldClimateRedrawRequest != 0) {
         MapWinTable[0]->clear_terrain();
         draw_map(1);
@@ -4966,8 +4966,8 @@ void __cdecl world_volcano(int x, int y, BOOL is_not_landmark) {
             rocky_set(x_radius, y_radius, ROCKINESS_ROCKY);
         }
     }
-    MountPlanetX = x;
-    MountPlanetY = y;
+    GameDataStateStorage.fields_.mount_planet_x_ = x;
+    GameDataStateStorage.fields_.mount_planet_y_ = y;
     if (!is_not_landmark) {
         new_landmark(x, y, StringTable.get((int)Natural[LM_VOLCANO].name));
     }
@@ -6749,7 +6749,7 @@ trailer:
         strcat(text, number);
         strcat(text, ")");
 
-        int flags = GameState;
+        int flags = GameDataStateStorage.fields_.game_state_;
         if ((flags & 0x40) != 0 && (flags & 0x1000) != 0) {
             strcat(StringTemp, " ");
             Map *tile = map_loc(x, y);
@@ -7573,7 +7573,7 @@ void __cdecl world_build() {
         BrushVal1 = 0;
         WorldBuildVal1 = land_target;
 
-        if ((GameState & 0x80) != 0) {
+        if ((GameDataStateStorage.fields_.game_state_ & 0x80) != 0) {
             MapWinTable[0]->clear_terrain();
             draw_map(1);
         }
@@ -7609,7 +7609,7 @@ void __cdecl world_build() {
         }
 
         world_shorelines();
-    } while ((GameState & 0x80) == 0 && world_validate() != 0
+    } while ((GameDataStateStorage.fields_.game_state_ & 0x80) == 0 && world_validate() != 0
              && (++attempt, attempt < 4));
 
     world_temperature();
@@ -7677,19 +7677,19 @@ void __cdecl do_checksums(int type) {
     if (type <= 4) {
         switch (type) {
         case 0:
-            log_say("Checksums at end of turn", TurnCurrentNum, 0, 0);
+            log_say("Checksums at end of turn", GameDataStateStorage.fields_.turn_current_num_, 0, 0);
             break;
         case 1:
-            log_say("Checksums at game start", TurnCurrentNum, 0, 0);
+            log_say("Checksums at game start", GameDataStateStorage.fields_.turn_current_num_, 0, 0);
             break;
         case 2:
-            log_say("Checksums before world regen", TurnCurrentNum, 0, 0);
+            log_say("Checksums before world regen", GameDataStateStorage.fields_.turn_current_num_, 0, 0);
             break;
         case 3:
-            log_say("Checksums after world regen", TurnCurrentNum, 0, 0);
+            log_say("Checksums after world regen", GameDataStateStorage.fields_.turn_current_num_, 0, 0);
             break;
         case 4:
-            log_say("Checksums at beginning of turn", TurnCurrentNum, 0, 0);
+            log_say("Checksums at beginning of turn", GameDataStateStorage.fields_.turn_current_num_, 0, 0);
             memcpy(NetTurnChecksums, checksums, 0x54);
             break;
         }
@@ -7946,12 +7946,12 @@ static void world_rainfall_pass2(int saved_faction) {
                 }
 
                 const int old_class = (climate >> 3) & 3;
-                if (TurnCurrentNum != 0 && old_class != rainfall_class
+                if (GameDataStateStorage.fields_.turn_current_num_ != 0 && old_class != rainfall_class
                     && TerraformDrownedBaseId < 0) {
                     if (old_class > rainfall_class) {
                         bool search = true;
                         if (TerraformTileFaction >= 0
-                            && (LockEnableMask
+                            && (GameDataStateStorage.fields_.lock_masks_.enable_mask_
                                 & (1u << (TerraformTileFaction & 0x1F))))
                             search = false;
                         if (search) {
@@ -8190,7 +8190,7 @@ void __cdecl alt_set(int x, int y, int altitude) {
     static char submerged_title[] = "BASESUBMERGED";
     static char submerged_lost_title[] = "BASESUBMERGED2";
 
-    if (TurnCurrentNum == 0) {
+    if (GameDataStateStorage.fields_.turn_current_num_ == 0) {
         return;
     }
 
@@ -8208,7 +8208,7 @@ void __cdecl alt_set(int x, int y, int altitude) {
                 tile->bit_visible[faction] = tile->bit;
             }
 
-            if (TurnCurrentNum != 0 &&
+            if (GameDataStateStorage.fields_.turn_current_num_ != 0 &&
                 WorldClimateSkipTerritoryReset == 0 && becomes_water) {
                 const int base_id = base_at(x, y);
                 if (base_id >= 0 &&

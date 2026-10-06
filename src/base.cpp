@@ -184,8 +184,8 @@ void __cdecl base_draw(Buffer *target, int base_id, int pixel_x, int pixel_y,
     int danger = 0;
     bitmask(4, &byte_index, &bit);
     if ((base.facilities_built[byte_index] & bit)
-        || (SecretProject.citizens_defense_force() >= 0
-            && Bases[SecretProject.citizens_defense_force()].faction_id_current == faction)) {
+        || (GameDataStateStorage.fields_.secret_project_.citizens_defense_force() >= 0
+            && Bases[GameDataStateStorage.fields_.secret_project_.citizens_defense_force()].faction_id_current == faction)) {
         danger = 1;
     }
     bitmask(5, &byte_index, &bit);
@@ -229,7 +229,7 @@ void __cdecl base_draw(Buffer *target, int base_id, int pixel_x, int pixel_y,
     if (visible_occupier < 0) {
         reveal = (PlayersData[faction].diplo_treaties[viewer] & 1)
             || spying(faction)
-            || (GameState & STATE_OMNISCIENT_VIEW)
+            || (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)
             || (PlayersData[viewer].flags & PFLAG_MAP_REVEALED)
             || faction == viewer;
         if (!reveal) {
@@ -312,10 +312,10 @@ int CurrentFactionEnergyReserves;
 // Window refreshes invalidate this cache without changing the selected base.
 // RECOVERY_OBJECT: v2 0x00689374 0x00689378 ?BaseComputedID@@3HA 0x004EC3B0
 int BaseComputedID = -1;
-// RECOVERY_OBJECT: v2 0x009A64CC 0x009A64D0 ?BaseCurrentCount@@3HA 0x004E68B0
-int BaseCurrentCount;  // 0x009A64CC
+// Historical object identity moved to GameDataStateStorage; see the transport manifest.
+// 0x009A64CC
 int BaseFindDist;  // 0x0090EA04
-uint32_t ScnVictFacilityObj;  // 0x009A6814
+// 0x009A6814
 // RECOVERY_OBJECT: v2 0x0090EA34 0x0090EA38 ?BaseUpkeepStage@@3IA 0x004E68B0
 uint32_t BaseUpkeepStage;  // 0x0090EA34
 
@@ -477,7 +477,7 @@ void __cdecl base_energy() {
     // base_rank sorts that same signed key in descending order and returns a
     // partner's base at the corresponding rank (or -1 if it has fewer bases).
     int commerce_rank = 0;
-    for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+    for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
         const Base &candidate = Bases[base_id];
         if (candidate.faction_id_current == faction &&
             base.energy_intake_1 * 512 + BaseIDCurrentSelected <
@@ -499,8 +499,8 @@ void __cdecl base_energy() {
         if (partner_base < 0) continue;
         int commerce_base = (Bases[partner_base].energy_intake_1 + 7 +
                              base.energy_intake_1) / 8;
-        if (CouncilResolutionCount[PROP_REPEAL_GLOBAL_TRADE_PACT] <
-            CouncilResolutionCount[PROP_GLOBAL_TRADE_PACT]) commerce_base *= 2;
+        if (GameDataStateStorage.fields_.council_resolution_count_[PROP_REPEAL_GLOBAL_TRADE_PACT] <
+            GameDataStateStorage.fields_.council_resolution_count_[PROP_GLOBAL_TRADE_PACT]) commerce_base *= 2;
         const int divisor = TechCommerceCount + 1;
         if (divisor <= 0) continue;
         int partner_receipt = ((PlayersData[partner].tech_commerce_bonus + 1) *
@@ -511,8 +511,8 @@ void __cdecl base_energy() {
             receipt /= 2;
             partner_receipt /= 2;
         }
-        if (GovernorFaction == faction) ++receipt;
-        if (GovernorFaction == partner) ++partner_receipt;
+        if (GameDataStateStorage.fields_.governor_faction_ == faction) ++receipt;
+        if (GameDataStateStorage.fields_.governor_faction_ == partner) ++partner_receipt;
         if (PlayersData[faction].sanction_turns != 0 ||
             PlayersData[partner].sanction_turns != 0 ||
             (Players[faction].rule_flags & RFLAG_ALIEN) != 0 ||
@@ -615,7 +615,7 @@ void __cdecl base_yield() {
     const int faction = base->faction_id_current;
     const uint32_t faction_bit = 1u << faction;
     BasePopulationUnassigned = base->population_size + 1;
-    const bool automatic = (static_cast<unsigned char>(LockEnableMask) & faction_bit) == 0
+    const bool automatic = (static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & faction_bit) == 0
         || (base->governor & 0x80000040u) == 0x80000040u;
     uint32_t worked = 0;
     base->state &= ~0x8000u;
@@ -628,11 +628,11 @@ void __cdecl base_yield() {
             base_yield_intake(*BaseCurrent, resource, true) = base_yield_satellite(faction, resource);
             const bool aerospace = base_yield_has_facility(29);
             bool full_yield = aerospace;
-            if (!full_yield && SecretProject.space_elevator() >= 0) {
-                full_yield = Bases[SecretProject.space_elevator()].faction_id_current == faction;
+            if (!full_yield && GameDataStateStorage.fields_.secret_project_.space_elevator() >= 0) {
+                full_yield = Bases[GameDataStateStorage.fields_.secret_project_.space_elevator()].faction_id_current == faction;
             }
-            if (!full_yield && SecretProject.cloudbase_academy() >= 0) {
-                full_yield = Bases[SecretProject.cloudbase_academy()].faction_id_current == faction;
+            if (!full_yield && GameDataStateStorage.fields_.secret_project_.cloudbase_academy() >= 0) {
+                full_yield = Bases[GameDataStateStorage.fields_.secret_project_.cloudbase_academy()].faction_id_current == faction;
             }
             if (!full_yield) {
                 int &intake = base_yield_intake(*BaseCurrent, resource, true);
@@ -713,7 +713,7 @@ void __cdecl base_yield() {
         // This reset is intentionally absent from the completed-reuse path.
         BaseNutrientAdequate = 0;
         int fight = 0, growth = 0, tech = 0, wealth = 0, power = 0;
-        if ((static_cast<unsigned char>(LockEnableMask) & faction_bit) != 0) {
+        if ((static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & faction_bit) != 0) {
             if ((base->governor & 0x80000000u) != 0) {
                 growth = (base->governor >> 24) & 1;
                 tech = (base->governor >> 24) & 2;
@@ -790,7 +790,7 @@ void __cdecl base_yield() {
 
             if (automatic && base->population_size >= 5
                 && (base->nutrient_intake_2 > base_yield_mul(base->population_size, static_cast<int>(Rules.nutrient_req_citizen))
-                    || max_nutrients == 0) && TurnCurrentNum > 100) {
+                    || max_nutrients == 0) && GameDataStateStorage.fields_.turn_current_num_ > 100) {
                 for (int specialist = 0; specialist < 7; ++specialist) {
                     if (has_tech(Citizen[specialist].preq_tech, faction)
                         && !has_tech(Citizen[specialist].obsol_tech, faction)) {
@@ -959,7 +959,7 @@ void __cdecl base_doctors() {
     // A human governor only changes citizen allocation when both its citizen
     // option and active state are set. The nutrient flag is published by
     // base_yield and can survive a cached allocation.
-    if ((static_cast<unsigned char>(LockEnableMask) & (1u << faction))
+    if ((static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & (1u << faction))
         && (base.governor & (GOV_MANAGES_CITIZENS_SPECS | GOV_ACTIVE))
             != (GOV_MANAGES_CITIZENS_SPECS | GOV_ACTIVE)) return;
 
@@ -991,13 +991,13 @@ void __cdecl base_doctors() {
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/004e4b80.cpp: canonical identity, original spans and retained seed history", "source:src/base.h: real Base storage and lifecycle contracts", "source:recovery/tasks/base-lifecycle-owner-closure.json: bounded coordinator authorization"], "reason": "The original base creation operation owns initialization of Bases records and faction base counts; source expresses real Base/PlayerData fields, facility bitmaps, technology and named UI/replay dependencies."}
 // TRIED: `>= 0x200` guard (matches original cmp/jl) over `> 0x1ff` moved divergence #4->#12; raw byte-offset arithmetic on the fixed 0x97dXXX/0x96XXXX globals (record stride 0x134, per-faction stride 0x20cc) rather than the Base struct - field order in src/base.h is only size-checked, not per-field, and several 0x97d0cc-family writes index past their nominal field width (a genuine original OOB-write reproduced faithfully). Not chased to byte-exact given size (1744 bytes / ~330 asm lines).
 int __cdecl base_init(int faction_id, int x, int y) {
-    if (BaseCurrentCount >= 512) return -1;
+    if (GameDataStateStorage.fields_.base_current_count_ >= 512) return -1;
     Map *tile = map_loc(x, y);
     const unsigned int region = tile->region;
     bit_set(x, y, 1, 1);
     owner_set(x, y, faction_id);
     synch_bit(x, y, faction_id);
-    const int base_id = BaseCurrentCount++;
+    const int base_id = GameDataStateStorage.fields_.base_current_count_++;
     PlayerData &faction = PlayersData[faction_id];
     ++faction.current_num_bases;
     ++faction.region_total_bases[region];
@@ -1007,8 +1007,8 @@ int __cdecl base_init(int faction_id, int x, int y) {
     base.y = static_cast<int16_t>(y);
     base.faction_id_current = base.faction_id_former = static_cast<uint8_t>(faction_id);
     base.nerve_staple_turns_left = base.assimilation_turns_left = base.unk_1 = 0;
-    base.population_size = SecretProject.planetary_transit_system() >= 0
-        && Bases[SecretProject.planetary_transit_system()].faction_id_current == faction_id ? 3 : 1;
+    base.population_size = GameDataStateStorage.fields_.secret_project_.planetary_transit_system() >= 0
+        && Bases[GameDataStateStorage.fields_.secret_project_.planetary_transit_system()].faction_id_current == faction_id ? 3 : 1;
     base.visibility = static_cast<uint8_t>(tile->visibility | (1u << faction_id));
     base.name_string[0] = 0;
     name_base(faction_id, base.name_string, TRUE, (tile->climate & 0xE0) < 0x60);
@@ -1020,7 +1020,7 @@ int __cdecl base_init(int faction_id, int x, int y) {
         = base.auto_forward_air_base_id = -1;
     base.queue_size = 0;
     base_first(base_id);
-    if (TurnCurrentNum == 0) {
+    if (GameDataStateStorage.fields_.turn_current_num_ == 0) {
         const int production = has_tech(VehPrototypes[1].preq_tech, faction_id)
             ? 1 : (faction.diff_level > 1 ? 2 : 0);
         base.queue_production_id[0] = production;
@@ -1041,10 +1041,10 @@ int __cdecl base_init(int faction_id, int x, int y) {
     if (faction.current_num_bases == 1) {
         set_fac(1, base_id, TRUE);
         if (!IsMultiplayerNet) {
-            base.population_size = static_cast<int8_t>(max(1, min(5, (TurnCurrentNum + 49) / 50)));
-            if (TurnCurrentNum > 74) set_fac(3, base_id, TRUE);
-            if (TurnCurrentNum > 99) set_fac(6, base_id, TRUE);
-            if (TurnCurrentNum >= 150) set_fac(7, base_id, TRUE);
+            base.population_size = static_cast<int8_t>(max(1, min(5, (GameDataStateStorage.fields_.turn_current_num_ + 49) / 50)));
+            if (GameDataStateStorage.fields_.turn_current_num_ > 74) set_fac(3, base_id, TRUE);
+            if (GameDataStateStorage.fields_.turn_current_num_ > 99) set_fac(6, base_id, TRUE);
+            if (GameDataStateStorage.fields_.turn_current_num_ >= 150) set_fac(7, base_id, TRUE);
         } else {
             base.population_size = 3;
             if (Players[faction_id].rule_talent || faction.soc_effect_base.values_[SocialEffect::PLANET] > 0)
@@ -1052,7 +1052,7 @@ int __cdecl base_init(int faction_id, int x, int y) {
             if (Players[faction_id].rule_drone || Players[faction_id].rule_population)
                 --base.population_size;
             set_fac(3, base_id, TRUE);
-            if (DiffLevelCurrent > 2) set_fac(6, base_id, TRUE);
+            if (GameDataStateStorage.fields_.diff_level_current_ > 2) set_fac(6, base_id, TRUE);
             if (faction.soc_effect_base.values_[SocialEffect::ECONOMY] >= 1) set_fac(7, base_id, TRUE);
         }
     }
@@ -1091,70 +1091,70 @@ int __cdecl base_init(int faction_id, int x, int y) {
 
 static void base_remap_projects(int removed) {
     int *projects[] = {
-        &SecretProject.human_genome_project(),
-        &SecretProject.command_nexus(),
-        &SecretProject.weather_paradigm(),
-        &SecretProject.merchant_exchange(),
-        &SecretProject.empath_guild(),
-        &SecretProject.citizens_defense_force(),
-        &SecretProject.virtual_world(),
-        &SecretProject.planetary_transit_system(),
-        &SecretProject.xenoempathy_dome(),
-        &SecretProject.neural_amplifier(),
-        &SecretProject.maritime_control_center(),
-        &SecretProject.planetary_datalinks(),
-        &SecretProject.supercollider(),
-        &SecretProject.ascetic_virtues(),
-        &SecretProject.longevity_vaccine(),
-        &SecretProject.hunter_seeker_algorithm(),
-        &SecretProject.pholus_mutagen(),
-        &SecretProject.cyborg_factory(),
-        &SecretProject.theory_of_everything(),
-        &SecretProject.dream_twister(),
-        &SecretProject.universal_translator(),
-        &SecretProject.network_backbone(),
-        &SecretProject.nano_factory(),
-        &SecretProject.living_refinery(),
-        &SecretProject.cloning_vats(),
-        &SecretProject.self_aware_colony(),
-        &SecretProject.clinical_immortality(),
-        &SecretProject.space_elevator(),
-        &SecretProject.singularity_inductor(),
-        &SecretProject.bulk_matter_transmitter(),
-        &SecretProject.telepathic_matrix(),
-        &SecretProject.voice_of_planet(),
-        &SecretProject.ascent_to_transcendence(),
-        &SecretProject.manifold_harmonics(),
-        &SecretProject.nethack_terminus(),
-        &SecretProject.cloudbase_academy(),
-        &SecretProject.planetary_energy_grid(),
-        &SecretProject.user_defined_38(),
-        &SecretProject.user_defined_39(),
-        &SecretProject.user_defined_40(),
-        &SecretProject.user_defined_41(),
-        &SecretProject.user_defined_42(),
-        &SecretProject.user_defined_43(),
-        &SecretProject.user_defined_44(),
-        &SecretProject.user_defined_45(),
-        &SecretProject.user_defined_46(),
-        &SecretProject.user_defined_47(),
-        &SecretProject.user_defined_48(),
-        &SecretProject.user_defined_49(),
-        &SecretProject.user_defined_50(),
-        &SecretProject.user_defined_51(),
-        &SecretProject.user_defined_52(),
-        &SecretProject.user_defined_53(),
-        &SecretProject.user_defined_54(),
-        &SecretProject.user_defined_55(),
-        &SecretProject.user_defined_56(),
-        &SecretProject.user_defined_57(),
-        &SecretProject.user_defined_58(),
-        &SecretProject.user_defined_59(),
-        &SecretProject.user_defined_60(),
-        &SecretProject.user_defined_61(),
-        &SecretProject.user_defined_62(),
-        &SecretProject.user_defined_63(),
-        &SecretProject.user_defined_64(),
+        &GameDataStateStorage.fields_.secret_project_.human_genome_project(),
+        &GameDataStateStorage.fields_.secret_project_.command_nexus(),
+        &GameDataStateStorage.fields_.secret_project_.weather_paradigm(),
+        &GameDataStateStorage.fields_.secret_project_.merchant_exchange(),
+        &GameDataStateStorage.fields_.secret_project_.empath_guild(),
+        &GameDataStateStorage.fields_.secret_project_.citizens_defense_force(),
+        &GameDataStateStorage.fields_.secret_project_.virtual_world(),
+        &GameDataStateStorage.fields_.secret_project_.planetary_transit_system(),
+        &GameDataStateStorage.fields_.secret_project_.xenoempathy_dome(),
+        &GameDataStateStorage.fields_.secret_project_.neural_amplifier(),
+        &GameDataStateStorage.fields_.secret_project_.maritime_control_center(),
+        &GameDataStateStorage.fields_.secret_project_.planetary_datalinks(),
+        &GameDataStateStorage.fields_.secret_project_.supercollider(),
+        &GameDataStateStorage.fields_.secret_project_.ascetic_virtues(),
+        &GameDataStateStorage.fields_.secret_project_.longevity_vaccine(),
+        &GameDataStateStorage.fields_.secret_project_.hunter_seeker_algorithm(),
+        &GameDataStateStorage.fields_.secret_project_.pholus_mutagen(),
+        &GameDataStateStorage.fields_.secret_project_.cyborg_factory(),
+        &GameDataStateStorage.fields_.secret_project_.theory_of_everything(),
+        &GameDataStateStorage.fields_.secret_project_.dream_twister(),
+        &GameDataStateStorage.fields_.secret_project_.universal_translator(),
+        &GameDataStateStorage.fields_.secret_project_.network_backbone(),
+        &GameDataStateStorage.fields_.secret_project_.nano_factory(),
+        &GameDataStateStorage.fields_.secret_project_.living_refinery(),
+        &GameDataStateStorage.fields_.secret_project_.cloning_vats(),
+        &GameDataStateStorage.fields_.secret_project_.self_aware_colony(),
+        &GameDataStateStorage.fields_.secret_project_.clinical_immortality(),
+        &GameDataStateStorage.fields_.secret_project_.space_elevator(),
+        &GameDataStateStorage.fields_.secret_project_.singularity_inductor(),
+        &GameDataStateStorage.fields_.secret_project_.bulk_matter_transmitter(),
+        &GameDataStateStorage.fields_.secret_project_.telepathic_matrix(),
+        &GameDataStateStorage.fields_.secret_project_.voice_of_planet(),
+        &GameDataStateStorage.fields_.secret_project_.ascent_to_transcendence(),
+        &GameDataStateStorage.fields_.secret_project_.manifold_harmonics(),
+        &GameDataStateStorage.fields_.secret_project_.nethack_terminus(),
+        &GameDataStateStorage.fields_.secret_project_.cloudbase_academy(),
+        &GameDataStateStorage.fields_.secret_project_.planetary_energy_grid(),
+        &GameDataStateStorage.fields_.secret_project_.user_defined_38(),
+        &GameDataStateStorage.fields_.secret_project_.user_defined_39(),
+        &GameDataStateStorage.fields_.secret_project_.user_defined_40(),
+        &GameDataStateStorage.fields_.secret_project_.user_defined_41(),
+        &GameDataStateStorage.fields_.secret_project_.user_defined_42(),
+        &GameDataStateStorage.fields_.secret_project_.user_defined_43(),
+        &GameDataStateStorage.fields_.secret_project_.user_defined_44(),
+        &GameDataStateStorage.fields_.secret_project_.user_defined_45(),
+        &GameDataStateStorage.fields_.secret_project_.user_defined_46(),
+        &GameDataStateStorage.fields_.secret_project_.user_defined_47(),
+        &GameDataStateStorage.fields_.secret_project_.user_defined_48(),
+        &GameDataStateStorage.fields_.secret_project_.user_defined_49(),
+        &GameDataStateStorage.fields_.secret_project_.user_defined_50(),
+        &GameDataStateStorage.fields_.secret_project_.user_defined_51(),
+        &GameDataStateStorage.fields_.secret_project_.user_defined_52(),
+        &GameDataStateStorage.fields_.secret_project_.user_defined_53(),
+        &GameDataStateStorage.fields_.secret_project_.user_defined_54(),
+        &GameDataStateStorage.fields_.secret_project_.user_defined_55(),
+        &GameDataStateStorage.fields_.secret_project_.user_defined_56(),
+        &GameDataStateStorage.fields_.secret_project_.user_defined_57(),
+        &GameDataStateStorage.fields_.secret_project_.user_defined_58(),
+        &GameDataStateStorage.fields_.secret_project_.user_defined_59(),
+        &GameDataStateStorage.fields_.secret_project_.user_defined_60(),
+        &GameDataStateStorage.fields_.secret_project_.user_defined_61(),
+        &GameDataStateStorage.fields_.secret_project_.user_defined_62(),
+        &GameDataStateStorage.fields_.secret_project_.user_defined_63(),
+        &GameDataStateStorage.fields_.secret_project_.user_defined_64(),
     };
     for (int project = 0; project < 64; ++project) {
         if (*projects[project] == removed) *projects[project] = -2;
@@ -1175,7 +1175,7 @@ void __cdecl base_kill(int base_id) {
     const int x = base.x, y = base.y;
     const int faction_id = base.faction_id_current;
     PlayerData &faction = PlayersData[faction_id];
-    if (has_fac(1, base_id, 0) && TurnCurrentNum < faction.corner_market_turn
+    if (has_fac(1, base_id, 0) && GameDataStateStorage.fields_.turn_current_num_ < faction.corner_market_turn
         && faction.corner_market_active) {
         faction.corner_market_turn = faction.corner_market_active = 0;
         if (faction_id == ConsoleGlobal.faction_id_)
@@ -1190,15 +1190,15 @@ void __cdecl base_kill(int base_id) {
     --faction.current_num_bases;
     --faction.region_total_bases[map_loc(x, y)->region];
     int vehicle;
-    for (vehicle = VehCurrentCount - 1; vehicle >= 0; --vehicle) {
-        if (vehicle >= VehCurrentCount || Vehs[vehicle].home_base_id != base_id) continue;
+    for (vehicle = GameDataStateStorage.fields_.vehicle_current_count_ - 1; vehicle >= 0; --vehicle) {
+        if (vehicle >= GameDataStateStorage.fields_.vehicle_current_count_ || Vehs[vehicle].home_base_id != base_id) continue;
         if (Vehs[vehicle].faction_id != faction_id) {
             Vehs[vehicle].home_base_id = -1;
             continue;
         }
         base.faction_id_current = 255;
         int nearest = -1, distance = 9999;
-        for (int candidate = 0; candidate < BaseCurrentCount; ++candidate) {
+        for (int candidate = 0; candidate < GameDataStateStorage.fields_.base_current_count_; ++candidate) {
             if (Bases[candidate].faction_id_current != faction_id) continue;
             const int dx = abs(x_dist(x, Bases[candidate].x));
             const int dy = abs(y - Bases[candidate].y);
@@ -1212,15 +1212,15 @@ void __cdecl base_kill(int base_id) {
     }
     bit_set(x, y, 1, 0);
     // This overlapping copy is memcpy in the original, not memmove.
-    if (base_id < BaseCurrentCount - 1)
+    if (base_id < GameDataStateStorage.fields_.base_current_count_ - 1)
         memcpy(&Bases[base_id], &Bases[base_id + 1],
-            (BaseCurrentCount - base_id - 1) * sizeof(Base));
-    --BaseCurrentCount;
+            (GameDataStateStorage.fields_.base_current_count_ - base_id - 1) * sizeof(Base));
+    --GameDataStateStorage.fields_.base_current_count_;
     if (BaseComputedID == base_id) BaseComputedID = -1;
-    for (vehicle = 0; vehicle < VehCurrentCount; ++vehicle)
+    for (vehicle = 0; vehicle < GameDataStateStorage.fields_.vehicle_current_count_; ++vehicle)
         if (Vehs[vehicle].home_base_id > base_id) --Vehs[vehicle].home_base_id;
     int remaining;
-    for (remaining = 0; remaining < BaseCurrentCount; ++remaining) {
+    for (remaining = 0; remaining < GameDataStateStorage.fields_.base_current_count_; ++remaining) {
         base_remap_reference(Bases[remaining].auto_forward_land_base_id, base_id);
         base_remap_reference(Bases[remaining].auto_forward_sea_base_id, base_id);
         base_remap_reference(Bases[remaining].auto_forward_air_base_id, base_id);
@@ -1272,21 +1272,21 @@ void __cdecl base_kill(int base_id) {
     }
     const bool ocean = (map_loc(x, y)->climate & 0xE0) < 0x60;
     if (ocean) {
-        for (vehicle = 0; vehicle < VehCurrentCount; ++vehicle)
+        for (vehicle = 0; vehicle < GameDataStateStorage.fields_.vehicle_current_count_; ++vehicle)
             if (VehPrototypes[Vehs[vehicle].proto_id].plan == 7
                 && ((x_dist(Vehs[vehicle].x, x) + abs(Vehs[vehicle].y - y)) & ~1) == 0)
                 stack_veh(vehicle, 0);
     }
     // Original terrain cleanup begins at the one-past active vehicle slot.
     // Do not silently repair that stale-slot/error-path read with a new guard.
-    for (vehicle = VehCurrentCount; vehicle >= 0; --vehicle) {
+    for (vehicle = GameDataStateStorage.fields_.vehicle_current_count_; vehicle >= 0; --vehicle) {
         if (get_triad(vehicle) == (ocean ? 0 : 1)
             && ((x_dist(Vehs[vehicle].x, x) + abs(Vehs[vehicle].y - y)) & ~1) == 0
             && (!ocean || Vehs[vehicle].order != 1 || Vehs[vehicle].waypoint_x[0] < 0))
             kill(vehicle);
     }
     TutWinBaseWindow.base_killed(base_id);
-    for (remaining = 0; remaining < BaseCurrentCount; ++remaining) base_mark(remaining);
+    for (remaining = 0; remaining < GameDataStateStorage.fields_.base_current_count_; ++remaining) base_mark(remaining);
     reset_territory();
     UnkBitfield1 |= 2;
 }
@@ -1496,7 +1496,7 @@ int __cdecl base_build(int base_id,int *out_secondary,int *out_tertiary,int *out
   best_reactor_id = best_reactor(v18);
   v8 = BaseIDCurrentSelected;
   v9 = 1 << (v15 & 0x1f);
-  if (((uint8_t)v9 & (uint8_t)LockEnableMask) && (v10 = BaseCurrent->governor, v10 & 0x80000000)) {
+  if (((uint8_t)v9 & (uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_) && (v10 = BaseCurrent->governor, v10 & 0x80000000)) {
     if ((!(v10 & 0xf200000)) && (8 <= BaseIDCurrentSelected)) {
       v15 = (uint8_t)(PlayersData[0].region_base_plan[v75 + v76]);
       if (v15 <= 2)
@@ -1647,7 +1647,7 @@ int __cdecl base_build(int base_id,int *out_secondary,int *out_tertiary,int *out
   v76 = 1;
   v9 = 0xffffffff;
   do {
-    if (((v18 != v76) && ((uint8_t)(PlayersData[v18].diplo_treaties[v76]) & 1)) && (((uint8_t)LockEnableMask & (uint8_t)(1 << ((uint8_t)v76 & 0x1f)) || ((int)v9 <= -1))))
+    if (((v18 != v76) && ((uint8_t)(PlayersData[v18].diplo_treaties[v76]) & 1)) && (((uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (uint8_t)(1 << ((uint8_t)v76 & 0x1f)) || ((int)v9 <= -1))))
       v9 = v76;
     v76 += 1;
   } while ((int)v76 < 8);
@@ -1661,9 +1661,9 @@ int __cdecl base_build(int base_id,int *out_secondary,int *out_tertiary,int *out
       v10 = (uint32_t)(PlayersData[v18].diplo_treaties[v76]);
       v133 = v10 & 0x10;
       v15 = (uint8_t)v76;
-      if ((v133) || ((((uint8_t)LockEnableMask & (uint8_t)(1 << (v15 & 0x1f)) && (v10 & 8)) && (!(v10 & 1))))) {
+      if ((v133) || ((((uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (uint8_t)(1 << (v15 & 0x1f)) && (v10 & 8)) && (!(v10 & 1))))) {
         v8 = 0;
-        if (1 <= BaseCurrentCount) {
+        if (1 <= GameDataStateStorage.fields_.base_current_count_) {
           scan_base = &Bases[0];
           do {
             if ((scan_base->faction_id_current == v18) && ((scan_base->faction_id_current == v76 || (scan_base->visibility & (uint8_t)(1 << (v15 & 0x1f)))))) {
@@ -1672,14 +1672,14 @@ int __cdecl base_build(int base_id,int *out_secondary,int *out_tertiary,int *out
             }
             v8 += 1;
             ++scan_base;
-          } while (v8 < BaseCurrentCount);
+          } while (v8 < GameDataStateStorage.fields_.base_current_count_);
 
         }
       }
       if (v133) {
         if (regional_plan == 7)
           v121 = 1;
-        if (((0 <= (int)v9) && ((uint8_t)(PlayersData[v9].diplo_treaties[v76]) & 0x10)) || ((((uint8_t)LockEnableMask & (uint8_t)(1 << (v15 & 0x1f)) && (GameRules & 0x40)) || (((v10 & 0x20 && (3 <= scan_faction->diff_level)) || (v10 & 0x40)))))) {
+        if (((0 <= (int)v9) && ((uint8_t)(PlayersData[v9].diplo_treaties[v76]) & 0x10)) || ((((uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (uint8_t)(1 << (v15 & 0x1f)) && (GameDataStateStorage.fields_.game_rules_ & 0x40)) || (((v10 & 0x20 && (3 <= scan_faction->diff_level)) || (v10 & 0x40)))))) {
 label_4f86ee:
           if (regional_plan == 7)
             v144 = 1;
@@ -1698,7 +1698,7 @@ label_4f86ee:
 
 
   } while (scan_faction < &PlayersData[8]);
-  if (((regional_plan == 7) && (v121)) && (GameState & 0x200))
+  if (((regional_plan == 7) && (v121)) && (GameDataStateStorage.fields_.game_state_ & 0x200))
     v144 = 2;
   v104 = 0;
   v12 = (PlayersData[faction_id].x_target);
@@ -1724,7 +1724,7 @@ label_4f86ee:
     v83 = BaseCurrent->talent_total <= v8;
     v143 = (uint32_t)v83;
     v9 = (uint32_t)v83;
-    if (((!((uint8_t)v165 & (uint8_t)LockEnableMask)) || (BaseCurrent->minerals_accumulated <= (int)Rules.retool_exemption)) && ((BaseCurrent->state & 2 || ((v9 && (2 <= BaseCurrent->specialist_total - BaseCurrent->specialist_unk_1))))))
+    if (((!((uint8_t)v165 & (uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_)) || (BaseCurrent->minerals_accumulated <= (int)Rules.retool_exemption)) && ((BaseCurrent->state & 2 || ((v9 && (2 <= BaseCurrent->specialist_total - BaseCurrent->specialist_unk_1))))))
       v143 = v9 + 1;
   }
   v75 = BaseCurrent->mineral_surplus;
@@ -1754,7 +1754,7 @@ label_4f86ee:
   }
   v100 = 0;
   do {
-    v11 = SecretProject[v16];
+    v11 = GameDataStateStorage.fields_.secret_project_[v16];
     if (v11 == BaseIDCurrentSelected)
       v100 += 1;
     if ((0 <= v11) && ((uint8_t)(Bases[v11].faction_id_current) == v18)) {
@@ -1776,7 +1776,7 @@ label_4f86ee:
   base_id = 0;
   v135 = 0;
   v116 = v8;
-  if (1 <= BaseCurrentCount) {
+  if (1 <= GameDataStateStorage.fields_.base_current_count_) {
     do {
       v8 = v75 * 0x134;
       v15 = (uint8_t)(Bases[v75].faction_id_current);
@@ -1792,7 +1792,7 @@ label_4f86ee:
           }
         }
         v8 = (int)(Bases[v75].queue_production_id[0]);
-        if ((v8 == -0x66) && (v146 = (int)((int)v146 + 1), (uint8_t)LockEnableMask & (uint8_t)(1 << (v15 & 0x1f))))
+        if ((v8 == -0x66) && (v146 = (int)((int)v146 + 1), (uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (uint8_t)(1 << (v15 & 0x1f))))
           v97 += 1;
         if (v8 == BaseCurrent->queue_production_id[0])
           v155 += 1;
@@ -1800,7 +1800,7 @@ label_4f86ee:
           v80 = &v30[-v8 - 70];
           *v80 = *v80 | 1 << (v15 & 0x1f);
         }
-        if (((((uint8_t)LockEnableMask & (uint8_t)(1 << (v15 & 0x1f))) && ((uint8_t)(Bases[v75].faction_id_former) == faction_id)) && (MapTiles[(int)(int16_t)(Bases[v75].y) * MapLongitude + ((int)Bases[v75].x >> 1)].region == region)) && ((!((uint8_t)(PlayersData[faction_id].diplo_treaties[v9]) & 1) && (v132 = v132 + 1, (int)(1 - v141) < v132))))
+        if (((((uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (uint8_t)(1 << (v15 & 0x1f))) && ((uint8_t)(Bases[v75].faction_id_former) == faction_id)) && (MapTiles[(int)(int16_t)(Bases[v75].y) * MapLongitude + ((int)Bases[v75].x >> 1)].region == region)) && ((!((uint8_t)(PlayersData[faction_id].diplo_treaties[v9]) & 1) && (v132 = v132 + 1, (int)(1 - v141) < v132))))
           v144 = 1;
       }
       else {
@@ -1829,7 +1829,7 @@ label_4f86ee:
           v95 = v11;
         bitmask(0x1d,&v34,&v33);
         v152 = (uint32_t)(((uint8_t)(Bases[(v8 / 0x134)].facilities_built[v34]) & (uint8_t)v33) != 0);
-        if (((v152) || ((0 <= SecretProject.cloudbase_academy() && ((char)(Bases[SecretProject.cloudbase_academy()].faction_id_current) == (char)(Bases[v75].faction_id_current))))) && (v11 < v93))
+        if (((v152) || ((0 <= GameDataStateStorage.fields_.secret_project_.cloudbase_academy() && ((char)(Bases[GameDataStateStorage.fields_.secret_project_.cloudbase_academy()].faction_id_current) == (char)(Bases[v75].faction_id_current))))) && (v11 < v93))
           v93 = v11;
         bitmask(0x21,&v36,&v35);
         v152 = (uint32_t)(((uint8_t)(Bases[(v8 / 0x134)].facilities_built[v36]) & (uint8_t)v35) != 0);
@@ -1954,9 +1954,9 @@ label_4f8eb5:
                   v18 += stack_check(v8,2,3,-1,-1);
                 }
                 v135 = 0;
-                if (1 <= VehCurrentCount) {
+                if (1 <= GameDataStateStorage.fields_.vehicle_current_count_) {
                   scan_vehicle = &Vehs[0];
-                  v114 = VehCurrentCount;
+                  v114 = GameDataStateStorage.fields_.vehicle_current_count_;
                   do {
                     if ((((scan_vehicle->faction_id == faction_id) && ((((char)(VehPrototypes[scan_vehicle->proto_id].plan) == '\x02' || (scan_vehicle->state & 0x10000000)) && (v8 = (int)scan_vehicle->y * MapLongitude + ((int)scan_vehicle->x >> 1), MapTiles[v8].region == region)))) && ((!(MapTiles[v8].bit & 1) || (8 <= (MapTiles[v8].val2 & 0xf))))) && ((v8 = (int)scan_vehicle->home_base_id, v8 == base_id || (v8 == BaseIDCurrentSelected)))) {
                       if (v8 == BaseIDCurrentSelected) {
@@ -1990,7 +1990,7 @@ label_4f94d9:
 label_4f94e1:
       v75 = base_id + 1;
       base_id = v75;
-      if (BaseCurrentCount <= v75) break;
+      if (GameDataStateStorage.fields_.base_current_count_ <= v75) break;
       v18 = faction_id;
     } while( true );
   }
@@ -2000,7 +2000,7 @@ label_4f94e1:
   v115 = 0;
   v114 = 0;
   v153 = 0;
-  if (1 <= VehCurrentCount) {
+  if (1 <= GameDataStateStorage.fields_.vehicle_current_count_) {
     scan_vehicle = &Vehs[0];
     do {
       v8 = v153;
@@ -2034,7 +2034,7 @@ label_4f94e1:
       }
       v153 += 1;
       ++scan_vehicle;
-    } while (v153 < VehCurrentCount);
+    } while (v153 < GameDataStateStorage.fields_.vehicle_current_count_);
   }
   v75 = v171;
   v8 = BaseIDCurrentSelected;
@@ -2065,7 +2065,7 @@ label_4f94e1:
     v11 += 1;
   v11 += (v130 + 2) / 3;
   v123 = v11;
-  if ((0 <= SecretProject.maritime_control_center()) && ((uint8_t)(Bases[SecretProject.maritime_control_center()].faction_id_current) == faction_id)) {
+  if ((0 <= GameDataStateStorage.fields_.secret_project_.maritime_control_center()) && ((uint8_t)(Bases[GameDataStateStorage.fields_.secret_project_.maritime_control_center()].faction_id_current) == faction_id)) {
     v11 = v11 * 2 + 1;
     v123 = v11;
   }
@@ -2177,7 +2177,7 @@ label_4f94e1:
   else {
     v18 = 3;
   }
-  v133 = LockEnableMask & 0xff & v165;
+  v133 = GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xff & v165;
   v162 = v18;
   if (((v133) && ((int)Rules.retool_exemption < BaseCurrent->minerals_accumulated)) && (!(BaseCurrent->state & 8))) {
     if (((v147) || (v157)) || (v156)) {
@@ -2200,7 +2200,7 @@ label_4f9c43:
       scan_faction = &PlayersData[1];
 
       do {
-        if (((faction_id != v76) && ((scan_faction->region_total_combat_vehs[region] || (scan_faction->region_total_bases[region])))) && ((v9 = (uint32_t)(PlayersData[faction_id].diplo_treaties[v76]), v9 & 0x30 || (((LockEnableMask & 0xff & 1 << ((uint8_t)v76 & 0x1f) && ((uint8_t)scan_faction->diplo_treaties[scan_diplo_target] & 8)) && ((!(v9 & 2) || (scan_faction->integrity_blemishes))))))))
+        if (((faction_id != v76) && ((scan_faction->region_total_combat_vehs[region] || (scan_faction->region_total_bases[region])))) && ((v9 = (uint32_t)(PlayersData[faction_id].diplo_treaties[v76]), v9 & 0x30 || (((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xff & 1 << ((uint8_t)v76 & 0x1f) && ((uint8_t)scan_faction->diplo_treaties[scan_diplo_target] & 8)) && ((!(v9 & 2) || (scan_faction->integrity_blemishes))))))))
           v159 = 0;
         ++scan_faction;
 
@@ -2266,7 +2266,7 @@ label_4f9fde:
       }
       v18 = whose_territory(v9,v8,v75,NULL,0);
       if ((1 <= (int)v18) && (v18 != v9)) {
-        if ((uint8_t)LockEnableMask & (uint8_t)(1 << ((uint8_t)v18 & 0x1f)))
+        if ((uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (uint8_t)(1 << ((uint8_t)v18 & 0x1f)))
           v15 = (uint8_t)(PlayersData[v9].diplo_treaties[v18]) & 1;
         else {
           v15 = (uint8_t)(PlayersData[v9].diplo_treaties[v18]) & 2;
@@ -2333,7 +2333,7 @@ label_4fa54b:
               v11 = (int)((v129 + 2) * v11) / (int)(v129 + 3);
               v159 = v11;
             }
-            if ((!((uint8_t)v165 & (uint8_t)LockEnableMask)) && (PlayersData[faction_id].flags & 0x10000000))
+            if ((!((uint8_t)v165 & (uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_)) && (PlayersData[faction_id].flags & 0x10000000))
               v159 = v11 / 2;
             v8 -= 2;
             if (0 <= v8) {
@@ -2369,7 +2369,7 @@ label_4fa54b:
                 v166 += 1;
               v166 += v55[1];
             }
-            v18 = LockEnableMask & 0xff & v165;
+            v18 = GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xff & v165;
             if ((!v18) && (PlayersData[faction_id].flags & 0x8000000))
               v9 /= 2;
             if ((!v18) && ((uint32_t)(Players[faction_id].rule_flags) & 0x100)) {
@@ -2410,9 +2410,9 @@ label_4fa54b:
         goto label_4fd8f6;
       }
       if (3 <= (uint8_t)(Weapon[VehPrototypes[v8].weapon_id].mode)) {
-        if ((((v161 != 8) || (regional_plan != 8)) || (BaseCurrent->state & 0x2000000)) || (DiffLevelCurrent <= 2)) {
+        if ((((v161 != 8) || (regional_plan != 8)) || (BaseCurrent->state & 0x2000000)) || (GameDataStateStorage.fields_.diff_level_current_ <= 2)) {
           v8 = plan_count_0[v161 * 3];
-          if ((((v161 != 8) || (regional_plan != 8)) || ((BaseCurrent->state & 0x1000000 || (DiffLevelCurrent <= 2)))) && (v8 = v8 + prototype_count_0[v167] + plan_count_2[v161 * 3], v161 == 8))
+          if ((((v161 != 8) || (regional_plan != 8)) || ((BaseCurrent->state & 0x1000000 || (GameDataStateStorage.fields_.diff_level_current_ <= 2)))) && (v8 = v8 + prototype_count_0[v167] + plan_count_2[v161 * 3], v161 == 8))
             v8 += plan_count_3[24];
         }
         else {
@@ -2455,7 +2455,7 @@ label_4fa634:
           v9 = (int)((int)((int)v107 + 2) * v9) / (int)((int)v107 + 3);
           v159 = v9;
         }
-        if (!((uint8_t)v165 & (uint8_t)LockEnableMask)) {
+        if (!((uint8_t)v165 & (uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_)) {
           v18 = PlayersData[faction_id].flags & 0x4000000;
 label_4fa2fe:
           if (v18) {
@@ -2495,7 +2495,7 @@ label_4fa54e:
             v9 = (int)(v9 * 3 + ((int)(v9 * 3) >> 0x1f & 3U)) >> 2;
           if ((v158) && (!v164))
             v9 *= 2;
-          if ((v160) && (((v164 == 2 || (!v158)) && (v9 = (int)v9 / 2, TurnCurrentNum <= 0x31))))
+          if ((v160) && (((v164 == 2 || (!v158)) && (v9 = (int)v9 / 2, GameDataStateStorage.fields_.turn_current_num_ <= 0x31))))
             v9 = (int)v9 / 2;
           if ((v164 == 2) && (regional_plan != 2)) {
             v75 = (int)(PlayersData[faction_id].unk_66);
@@ -2510,7 +2510,7 @@ label_4fa54e:
             if ((int)(plan_count_3[v161 * 3 + 2] + plan_count_1[v161 * 3 + 2]) < v75 * 2)
               v9 = (int)v9 / 2;
           }
-          if (((!((uint8_t)v165 & (uint8_t)LockEnableMask)) && ((char)(Chassis[VehPrototypes[(v163 / 0x34)].chassis_id].missile))) && ((uint8_t)(PlayersData[faction_id].flags_ext) & 0x10))
+          if (((!((uint8_t)v165 & (uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_)) && ((char)(Chassis[VehPrototypes[(v163 / 0x34)].chassis_id].missile))) && ((uint8_t)(PlayersData[faction_id].flags_ext) & 0x10))
             v9 = (int)v9 / 3;
           goto label_4fc68f;
         case 1:
@@ -2524,7 +2524,7 @@ label_4fa54e:
             v9 = (int)v9 / 2;
           if ((v158) && (!v164))
             v9 *= 2;
-          if (((v160) && (!v158)) && (v9 = (int)v9 / 2, 0x33 <= TurnCurrentNum))
+          if (((v160) && (!v158)) && (v9 = (int)v9 / 2, 0x33 <= GameDataStateStorage.fields_.turn_current_num_))
             v9 = (int)v9 / 2;
           goto label_4fc68f;
         case 2:
@@ -2563,9 +2563,9 @@ label_4fa54e:
             }
           }
           if (((v160) || (v157)) || (v147)) {
-            if (0x1a <= TurnCurrentNum)
+            if (0x1a <= GameDataStateStorage.fields_.turn_current_num_)
               v9 *= 2;
-            if (0x4c <= TurnCurrentNum)
+            if (0x4c <= GameDataStateStorage.fields_.turn_current_num_)
               v9 *= 2;
           }
           goto label_4fc68f;
@@ -2589,7 +2589,7 @@ label_4fabb2:
             v16 = prototype_count_2[v75];
             if ((v11 < v16 + prototype_count_0[v75] * 2) && (regional_plan != 8))
               v142 = 1;
-            v75 = range(TurnCurrentNum / 0x32,0,(int)(PlayersData[faction_id].current_num_bases) + -1);
+            v75 = range(GameDataStateStorage.fields_.turn_current_num_ / 0x32,0,(int)(PlayersData[faction_id].current_num_bases) + -1);
             if ((int)(PlayersData[faction_id].current_num_bases) - v75 < v16)
               v142 = 1;
           }
@@ -2661,7 +2661,7 @@ label_4fad22:
             v18 = 1;
             scan_faction = &PlayersData[1];
             do {
-              if ((v18 != faction_id) && ((v8 = has_treaty(faction_id,v18,1), !v8 || ((uint8_t)(1 << ((uint8_t)v18 & 0x1f)) & (uint8_t)LockEnableMask)))) {
+              if ((v18 != faction_id) && ((v8 = has_treaty(faction_id,v18,1), !v8 || ((uint8_t)(1 << ((uint8_t)v18 & 0x1f)) & (uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_)))) {
                 if ((int)v151 <= scan_faction->satellites_[3])
                   v151 = scan_faction->satellites_[3];
                 if ((!v155) && (((v8 = has_treaty(faction_id,v18,0x30), v8 || (scan_faction->major_atrocities)) && ((int)(PlayersData[faction_id].planet_busters) < scan_faction->satellites_[3] + 1)))) {
@@ -2673,7 +2673,7 @@ label_4fad22:
               v18 += 1;
             } while (scan_faction < &PlayersData[8]);
             if ((int)(PlayersData[faction_id].planet_busters) <= (int)v151) {
-              if (!((uint8_t)v165 & (uint8_t)LockEnableMask)) {
+              if (!((uint8_t)v165 & (uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_)) {
                 if ((uint8_t)(PlayersData[faction_id].flags_ext) & 0x10)
                   v9 = (int)v9 / 2;
                 if (PlayersData[faction_id].flags & 0x1000000)
@@ -2758,7 +2758,7 @@ label_4fad22:
             if (v8 <= v75)
               v9 *= 2;
             if (v161 == 7) {
-              if (((&plan_count_3[18])[v18] + (&plan_count_1[18])[v18] + v75 + (&plan_count_3[18])[v18 + 3] <= 1) && (TurnCurrentNum <= 99))
+              if (((&plan_count_3[18])[v18] + (&plan_count_1[18])[v18] + v75 + (&plan_count_3[18])[v18 + 3] <= 1) && (GameDataStateStorage.fields_.turn_current_num_ <= 99))
                 v9 = (int)v9 / 2;
               if ((((!v75) && (!(&plan_count_3[18])[v18 + 3])) && (((&plan_count_1[18])[v18 + 6] || ((&plan_count_3[18])[v18 + 6])))) && (3 <= (int)regional_plan))
                 v9 = (int)v9 / 2;
@@ -2768,7 +2768,7 @@ label_4fad22:
             if (regional_plan != 7) {
               if (v144 == 1)
                 v9 *= 2;
-              if ((!((uint8_t)v165 & (uint8_t)LockEnableMask)) && (((1 < prototype_count_2[v167] || (regional_plan == 2)) || ((uint8_t)((PlayersData[faction_id].unk_77[region] >> 8)) & 4))))
+              if ((!((uint8_t)v165 & (uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_)) && (((1 < prototype_count_2[v167] || (regional_plan == 2)) || ((uint8_t)((PlayersData[faction_id].unk_77[region] >> 8)) & 4))))
                 v142 = 1;
             }
             else if (((int)v162 <= 1) && (v161 == 7)) {
@@ -2789,7 +2789,7 @@ label_4fad22:
           }
           break;
         case 8:
-          v18 = LockEnableMask & 0xff & v165;
+          v18 = GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xff & v165;
           if ((v18) && ((BaseCurrent->governor & 0xdfbe00) == 0x20000)) goto label_4fb650;
           if ((((v18) && (BaseCurrent->governor & 0x80000000)) || ((((!v18 && ((int)v162 < 3)) || (2 <= BaseCurrent->population_size)) && (((int)((&plan_count_2[24])[v164] + (&plan_count_0[24])[v164]) <= 1 || (regional_plan == 8)))))) && ((1 <= BaseCurrent->nutrient_surplus || ((!(&plan_count_1[18])[v164 + 6] && (!(&plan_count_2[24])[v164])))))) {
             if (v164) {
@@ -2797,25 +2797,25 @@ label_4fad22:
 label_4fb650:
                 v76 = BaseCurrent->state & 0x1000000;
                 if (v76) {
-                  v10 = ((((int)(PlayersData[faction_id].current_num_bases) - TurnCurrentNum / (int)((-(uint32_t)(v18 != 0) & 0x14) + 0x14)) - v148) - v131) - 1;
+                  v10 = ((((int)(PlayersData[faction_id].current_num_bases) - GameDataStateStorage.fields_.turn_current_num_ / (int)((-(uint32_t)(v18 != 0) & 0x14) + 0x14)) - v148) - v131) - 1;
                   v166 += v10 & (uint32_t)((int)v10 < 0) - 1;
                 }
                 v10 = v9 * 5;
                 if (('\x02' <= BaseCurrent->population_size) || ((BaseCurrent->mineral_surplus <= BaseCurrent->nutrient_surplus && (1 <= BaseCurrent->nutrient_surplus)))) {
                   if ((3 <= (int)regional_plan) && (!v76)) {
                     if (v18) {
-                      if (((regional_plan == 7) && (BaseCurrentCount / 5 <= (int)(PlayersData[faction_id].current_num_bases))) && (10 <= (int)(PlayersData[faction_id].current_num_bases))) goto label_4fb765;
+                      if (((regional_plan == 7) && (GameDataStateStorage.fields_.base_current_count_ / 5 <= (int)(PlayersData[faction_id].current_num_bases))) && (10 <= (int)(PlayersData[faction_id].current_num_bases))) goto label_4fb765;
                       if ((!v18) || (!(BaseCurrent->governor & 0x80000000))) goto label_4fb755;
                       if (!v147) {
                         if ((v156) || (v160))
                           v10 = (int)v10 / 2;
                         goto label_4fb765;
                       }
-                      v8 = range(DiffLevelCurrent + 1,2,99);
+                      v8 = range(GameDataStateStorage.fields_.diff_level_current_ + 1,2,99);
                     }
                     else {
 label_4fb755:
-                      v8 = DiffLevelCurrent + 1;
+                      v8 = GameDataStateStorage.fields_.diff_level_current_ + 1;
                     }
                     v10 = (int)v10 / v8;
                   }
@@ -2834,7 +2834,7 @@ label_4fb765:
                   v9 *= 2;
                   v142 = 1;
                 }
-                if ((GameRules & 0x20000000) && (v9 = (int)v9 / 2, regional_plan == 8))
+                if ((GameDataStateStorage.fields_.game_rules_ & 0x20000000) && (v9 = (int)v9 / 2, regional_plan == 8))
                   v9 = (int)v9 / 2;
                 if (v164) {
                   if (v158) {
@@ -2854,21 +2854,21 @@ label_4fb765:
                       goto label_4fba09;
                     }
 label_4fba0d:
-                    if ((regional_plan != 7) && (((uint8_t)LockEnableMask & (uint8_t)v165 || (!((uint8_t)(PlayersData[faction_id].flags_ext) & 4)))))
+                    if ((regional_plan != 7) && (((uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (uint8_t)v165 || (!((uint8_t)(PlayersData[faction_id].flags_ext) & 4)))))
                       v9 *= 2;
                   }
                   else {
 label_4fba09:
                     if (!v158) goto label_4fba0d;
                   }
-                  if ((!((uint8_t)v165 & (uint8_t)LockEnableMask)) && ((uint8_t)(PlayersData[faction_id].flags_ext) & 4))
+                  if ((!((uint8_t)v165 & (uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_)) && ((uint8_t)(PlayersData[faction_id].flags_ext) & 4))
                     v9 = (int)v9 / 2;
 label_4fba4f:
                   v76 = faction_id;
                   if ((regional_plan != 8) || (2 <= (uint8_t)(PlayersData[faction_id].region_total_bases[region]))) goto label_4fba68;
                 }
                 else {
-                  if (((uint8_t)v165 & (uint8_t)LockEnableMask) && (100 < TurnCurrentNum)) break;
+                  if (((uint8_t)v165 & (uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_) && (100 < GameDataStateStorage.fields_.turn_current_num_)) break;
                   if ((((regional_plan == 8) && (((plan_count_0[9] || (plan_count_2[9])) || (!(char)(PlayersData[faction_id].unk_83[region]))))) && (((plan_count_0[27] || (plan_count_2[27])) || (v8 = has_tech((int)VehPrototypes[1].preq_tech,faction_id), !v8)))) && (!((uint8_t)(PlayersData[faction_id].unk_77[region]) & 0x20)))
                     v9 = (int)v9 / 2;
                   if ((((!plan_count_1[v161 * 3]) && (!plan_count_3[v161 * 3])) && ((0 <= BaseCurrent->nutrient_surplus && (v18 != 2)))) && ((!((uint16_t)(PlayersData[faction_id].unk_77[region]) & 0x401) || (v18 == 7))))
@@ -2889,11 +2889,11 @@ label_4fba68:
                     v9 *= 2;
                   if ((4 <= v8) && (v101 < BaseCurrent->population_size))
                     v9 *= 2;
-                  if (((uint8_t)v165 & (uint8_t)LockEnableMask) && ((((int)(PlayersData[faction_id].diff_level) + 1) * TurnCurrentNum) / 0x28 <= v8))
+                  if (((uint8_t)v165 & (uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_) && ((((int)(PlayersData[faction_id].diff_level) + 1) * GameDataStateStorage.fields_.turn_current_num_) / 0x28 <= v8))
                     v9 *= 3;
                 }
                 if (!strcmp(Players[v76].filename,"BELIEVE")) {
-                  if ((!((uint8_t)v165 & (uint8_t)LockEnableMask)) && (!((uint8_t)(PlayersData[faction_id].unk_77[region]) & 1)))
+                  if ((!((uint8_t)v165 & (uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_)) && (!((uint8_t)(PlayersData[faction_id].unk_77[region]) & 1)))
                     v9 = (int)v9 / 2;
                 }
                 if (v147)
@@ -2915,7 +2915,7 @@ label_4fba68:
           if (v164 != 1) {
             if (!v158) {
               v155 = (&plan_count_0[24])[v164 + 3];
-              if ((((v155) || (prototype_count_0[v167])) || (0x19 <= TurnCurrentNum)) || ((v160 || (v147)))) {
+              if ((((v155) || (prototype_count_0[v167])) || (0x19 <= GameDataStateStorage.fields_.turn_current_num_)) || ((v160 || (v147)))) {
                 if ((int)v162 <= 2) goto label_4fbceb;
 label_4fbd33:
                 if (regional_plan == 2) break;
@@ -2924,7 +2924,7 @@ label_4fbd33:
                 v162 = 0;
 label_4fbceb:
                 if ((v155) || (prototype_count_0[v167])) goto label_4fbd33;
-                if ((!((uint8_t)v165 & (uint8_t)LockEnableMask)) && ((regional_plan == 8 || (TurnCurrentNum <= 0x27))))
+                if ((!((uint8_t)v165 & (uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_)) && ((regional_plan == 8 || (GameDataStateStorage.fields_.turn_current_num_ <= 0x27))))
                   v9 = (int)(v9 + ((int)v9 >> 0x1f & 0xfU)) >> 4;
                 if (regional_plan != 7) goto label_4fbd33;
                 v9 = (int)v9 / 2;
@@ -2983,10 +2983,10 @@ label_4fbceb:
           }
           break;
         case 10:
-          if ((!((uint8_t)v165 & (uint8_t)LockEnableMask)) && (3 <= (int)regional_plan)) {
+          if ((!((uint8_t)v165 & (uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_)) && (3 <= (int)regional_plan)) {
             v8 = 0;
             v159 = 3;
-            if (1 <= VehCurrentCount) {
+            if (1 <= GameDataStateStorage.fields_.vehicle_current_count_) {
               scan_vehicle = &Vehs[0];
               do {
                 if ((scan_vehicle->faction_id == faction_id) && ((char)(VehPrototypes[scan_vehicle->proto_id].plan) == (char)v17)) {
@@ -3000,7 +3000,7 @@ label_4fbceb:
                 }
                 v8 += 1;
                 ++scan_vehicle;
-              } while (v8 < VehCurrentCount);
+              } while (v8 < GameDataStateStorage.fields_.vehicle_current_count_);
               if (!v159) break;
             }
             if (((!v128) && (regional_plan == 7)) && ((int)(PlayersData[faction_id].ai_tech)))
@@ -3012,10 +3012,10 @@ label_4fbceb:
         case 0xb:
           v8 = v164 + v161 * 3;
           v140 = v8 * 4;
-          if ((plan_count_0[v8] < (int)(uint32_t)(uint8_t)(PlayersData[faction_id].region_total_bases[region])) && ((!((uint8_t)v165 & (uint8_t)LockEnableMask) || ((int)(plan_count_3[v8] + plan_count_1[v8]) <= 1)))) {
+          if ((plan_count_0[v8] < (int)(uint32_t)(uint8_t)(PlayersData[faction_id].region_total_bases[region])) && ((!((uint8_t)v165 & (uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_) || ((int)(plan_count_3[v8] + plan_count_1[v8]) <= 1)))) {
             v12 = 0;
             v151 = 0;
-            if (((int)v162 <= 1) && ((3 <= DiffLevelCurrent && ((int)v143 <= 1)))) {
+            if (((int)v162 <= 1) && ((3 <= GameDataStateStorage.fields_.diff_level_current_ && ((int)v143 <= 1)))) {
               v8 = faction_id * 0x59c;
               v83 = strcmp(Players[faction_id].filename,"PEACE") == 0;
               if (v83)
@@ -3048,7 +3048,7 @@ label_4fbceb:
                       if (has_treaty(v18,v9,8)) {
                         v127 += 1;
                         if (has_treaty(v18,v9,7)) {
-                          if ((LockEnableMask & 0xff & 1 << ((uint8_t)v9 & 0x1f)) || (v165 & LockEnableMask & 0xff)) {
+                          if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xff & 1 << ((uint8_t)v9 & 0x1f)) || (v165 & GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xff)) {
                             if (v151) goto label_4fc14e;
                             if (has_treaty(v18,v9,0x1000000)) {
                               if (((int)(PlayersData[faction_id].ranking) <= scan_faction->ranking) && ((int)((-(uint32_t)(scan_faction->ranking != 7) & 0xfffffffd) + 6) <= (scan_faction->tech_ranking - (int)(PlayersData[faction_id].tech_ranking)) / 2)) goto label_4fc14e;
@@ -3059,7 +3059,7 @@ label_4fbceb:
                         else {
 label_4fc14e:
                           v76 = v9;
-                          if (((uint8_t)(1 << ((uint8_t)v9 & 0x1f)) & (uint8_t)LockEnableMask) && (!IsMultiplayerNet)) break;
+                          if (((uint8_t)(1 << ((uint8_t)v9 & 0x1f)) & (uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_) && (!IsMultiplayerNet)) break;
                         }
                       }
                     }
@@ -3070,39 +3070,39 @@ label_4fc14e:
                 ++scan_faction;
               } while (scan_faction < &PlayersData[8]);
               if ((int)v76 <= -1) {
-                if ((((regional_plan == 7) && (1 < DiffLevelCurrent)) || (v157)) && (!plan_count_0[v140 / 4]))
-                  v76 = FactionRankings[7];
+                if ((((regional_plan == 7) && (1 < GameDataStateStorage.fields_.diff_level_current_)) || (v157)) && (!plan_count_0[v140 / 4]))
+                  v76 = GameDataStateStorage.fields_.faction_rankings_[7];
                 if ((int)v76 < 0) break;
                 v18 = faction_id;
               }
               if (v76 != v18) {
-                if ((uint8_t)LockEnableMask & (uint8_t)v165)
+                if ((uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (uint8_t)v165)
                   v126 = 0;
                 else {
                   v8 = range((int)(PlayersData[v76].energy_reserves),100,999999);
                   v126 = (int)(PlayersData[faction_id].energy_reserves) / v8;
                 }
-                if ((uint8_t)v165 & (uint8_t)LockEnableMask)
+                if ((uint8_t)v165 & (uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_)
                   v137 = 0;
                 else {
                   v8 = range((int)(PlayersData[faction_id].mil_strength_1),(int)(PlayersData[faction_id].current_num_bases) + 1,999999);
                   v137 = ((int)(PlayersData[v76].mil_strength_1) / v8);
                 }
-                if (GameRules & 0x40)
+                if (GameDataStateStorage.fields_.game_rules_ & 0x40)
                   v125 = 0x5;
                 else {
                   v125 = (PlayersData[v76].diff_level);
                 }
                 v77 = 0x10;
                 v16 = 1;
-                v11 = (-(uint32_t)(((uint8_t)LockEnableMask & (uint8_t)v165) != 0) & 2) + 2;
+                v11 = (-(uint32_t)(((uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (uint8_t)v165) != 0) & 2) + 2;
                 v154 = v76 * 0x20cc;
                 v8 = has_treaty(faction_id,v76,7);
                 v75 = bit_count(v8);
                 v11 = ((((((int)(PlayersData[faction_id].tech_ranking) / v11 - (int)(PlayersData[v76].tech_ranking) / v11) + (int)(PlayersData[v76].soc_effect_pending.values_[SocialEffect::PROBE])) - (int)v125) - (int)v137) - v126) - (int)v151;
                 v8 = plan_count_0[v140 / 4];
                 v9 = (int)(range(v11 + 0xd + v8 + v75,v16,v77) * v159 * 3) / (int)((v150 - v148) + 3);
-                if (!((uint8_t)v165 & (uint8_t)LockEnableMask)) {
+                if (!((uint8_t)v165 & (uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_)) {
                   v8 = (int)Chassis[5].preq_tech;
                   if ((has_tech(v8,v76)) && (v8 = has_tech((int)Chassis[5].preq_tech,faction_id), !v8))
                     v9 = (int)v9 / 2;
@@ -3133,12 +3133,12 @@ label_4fc14e:
                 else {
                   v8 = has_tech((int)Chassis[3].preq_tech,faction_id);
                   if ((!v8) || ((plan_count_0[v140 / 4] && ((int)(v132 + v155) < 3)))) break;
-                  if ((uint8_t)LockEnableMask & (uint8_t)v165)
+                  if ((uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (uint8_t)v165)
                     v9 *= 2;
                   if (plan_count_3[v140 / 4] + plan_count_1[v140 / 4])
                     v9 *= 2;
                 }
-                if ((!((uint8_t)v165 & (uint8_t)LockEnableMask)) && ((uint8_t)(PlayersData[faction_id].flags_ext) & 8))
+                if ((!((uint8_t)v165 & (uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_)) && ((uint8_t)(PlayersData[faction_id].flags_ext) & 8))
                   v9 = (int)(v9 + ((int)v9 >> 0x1f & 3U)) >> 2;
                 if ((v144 == 1) && (1 <= (int)v141))
                   v166 *= 2;
@@ -3219,12 +3219,12 @@ label_4fc68f:
                 }
                 if ((regional_plan == 8) || ((regional_plan == 7 && (!(BaseCurrent->state & 0x1000000))))) {
                   if (v161 != 8) {
-                    if (((!v160) && (v166 = v166 + 1, !v111)) && (!((uint8_t)LockEnableMask & (uint8_t)v165)))
+                    if (((!v160) && (v166 = v166 + 1, !v111)) && (!((uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (uint8_t)v165)))
                       v9 *= 2;
                     if (!v75) {
-                      if (TurnCurrentNum <= 0x31)
+                      if (GameDataStateStorage.fields_.turn_current_num_ <= 0x31)
                         v9 *= 2;
-                      if ((TurnCurrentNum <= 99) && (!((uint8_t)v165 & (uint8_t)LockEnableMask)))
+                      if ((GameDataStateStorage.fields_.turn_current_num_ <= 99) && (!((uint8_t)v165 & (uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_)))
                         v9 *= 2;
                     }
                     if (!(BaseCurrent->state & 0x1000000))
@@ -3319,7 +3319,7 @@ label_4fcbbf:
                   if ((v161 != 1) || ((((v162 == 3 || (((int)v112 <= (int)(v149 + v122) && (v8 = guard_check(faction_id,region), v8 <= (int)(uint32_t)(uint8_t)(PlayersData[faction_id].region_total_offensive_vehs[v18]))))) && ((!regional_plan || (regional_plan == 7)))) && (v76 = v162, (int)v112 <= (int)(v149 + v122))))) {
 label_4fcd31:
                     if (v76 == 3) {
-                      if ((!((uint8_t)v165 & (uint8_t)LockEnableMask)) || (BaseCurrent->governor & 0x1000))
+                      if ((!((uint8_t)v165 & (uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_)) || (BaseCurrent->governor & 0x1000))
                         v142 = 1;
                     }
                     goto label_4fcf6d;
@@ -3503,7 +3503,7 @@ label_4fd242:
               v11 = (int)(Players[faction_id].rule_psi);
               if (v11)
                 v9 = (int)(v9 * 100) / range(v11 + 100,0x32,200);
-              if ((((uint8_t)v165 & (uint8_t)LockEnableMask) && (0 <= v8)) && (v75 <= 2)) {
+              if ((((uint8_t)v165 & (uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_) && (0 <= v8)) && (v75 <= 2)) {
                 v166 += 1;
                 v9 *= 2;
               }
@@ -3551,7 +3551,7 @@ label_4fd242:
           }
           v8 = base_lose_minerals(BaseIDCurrentSelected,v167);
           if (1 <= v8) {
-            if (((!((uint8_t)LockEnableMask & (uint8_t)v165)) || ((!out_score && (BaseCurrent->governor & 0x80000000)))) && (regional_plan != 2)) {
+            if (((!((uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (uint8_t)v165)) || ((!out_score && (BaseCurrent->governor & 0x80000000)))) && (regional_plan != 2)) {
               v75 = veh_cost(v167,BaseIDCurrentSelected,NULL);
               v11 = cost_factor(faction_id,1,-1);
               v75 *= v11;
@@ -3579,7 +3579,7 @@ label_4fd6f8:
             if (((((selected_id[1] <= 89999) && (v18 != 9)) && (v18 != 8)) || ((!(char)(VehPrototypes[(v163 / 0x34)].plan) || (v18 == 4)))) || (v18 == 6)) break;
           }
           else {
-            if ((uint8_t)v165 & (uint8_t)LockEnableMask) {
+            if ((uint8_t)v165 & (uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_) {
               v18 = 0;
               switch((char)(VehPrototypes[(v163 / 0x34)].plan)) {
                 case 0:
@@ -3647,7 +3647,7 @@ label_4fd6f8:
         case 0xd:
           v9 *= 0x40;
           if (plan_count_2[v161 * 3 + v164] <= 1) {
-            if (!((uint8_t)v165 & (uint8_t)LockEnableMask)) {
+            if (!((uint8_t)v165 & (uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_)) {
               if ((v150) && (!v148))
                 v9 = (int)v9 / 2;
               if ((uint8_t)(PlayersData[faction_id].flags_ext) & 0x10)
@@ -3661,7 +3661,7 @@ label_4fd6f8:
           if (1 <= (int)(PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::PLANET]))
             v9 = (int)v9 / 2;
           if (plan_count_2[v161 * 3 + v164] <= 1) {
-            if (!((uint8_t)v165 & (uint8_t)LockEnableMask)) {
+            if (!((uint8_t)v165 & (uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_)) {
               if ((v131) && (!v148))
                 v9 = (int)v9 / 2;
               if ((uint8_t)(PlayersData[faction_id].flags_ext) & 0x10)
@@ -3856,7 +3856,7 @@ label_4fdc5e:
         v18 = faction_id;
         do {
           if ((!has_treaty(v18,v75,0x10)) && (v11 = has_treaty(v18,v75,0x40020), v11)) {
-            if ((uint8_t)LockEnableMask & (uint8_t)(1 << ((uint8_t)v75 & 0x1f)))
+            if ((uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (uint8_t)(1 << ((uint8_t)v75 & 0x1f)))
               v11 = bit_count(v11);
             else {
               v11 = 1;
@@ -3933,7 +3933,7 @@ label_4fec33:
         goto label_4fef0c;
       case 10:
         v163 = 0x90000;
-        v75 = (((v113 - v148) * 2 + 6) - (~-(uint32_t)(((uint8_t)LockEnableMask & (uint8_t)v165) != 0) & v141)) + v106;
+        v75 = (((v113 - v148) * 2 + 6) - (~-(uint32_t)(((uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (uint8_t)v165) != 0) & v141)) + v106;
         if (has_fac_built(0x1b))
           v75 -= 1;
         if (has_fac_built(0x1e))
@@ -4030,7 +4030,7 @@ label_4fe4ee:
         v8 = 1;
         goto label_4fef3f;
       case 0x16:
-        if (!((uint8_t)v165 & (uint8_t)LockEnableMask)) {
+        if (!((uint8_t)v165 & (uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_)) {
           v11 = 0x10;
           v75 = 1;
           v8 = has_fac_built(0x23);
@@ -4040,7 +4040,7 @@ label_4fe4ee:
         }
         break;
       case 0x17:
-        if (!((uint8_t)v165 & (uint8_t)LockEnableMask)) {
+        if (!((uint8_t)v165 & (uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_)) {
           v75 = has_fac_built(0x23);
           if (((((int)(PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::POLICE]) + v75 * 2 <= 0) && (2 <= BaseCurrent->drone_total)) && ((int)regional_plan <= 2)) && ((2 <= (int)(PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::ECONOMY]) && ((BaseCurrent->assimilation_turns_left || (!v102))))))
             v8 = range((8U - BaseCurrent->drone_total) * 2 - (int)BaseCurrent->population_size / 2,1,0x10);
@@ -4085,7 +4085,7 @@ label_4feda1:
         if (alt_at((int)v6,(int)v5) == 3) {
           v5 = BaseCurrent->y;
           v6 = BaseCurrent->x;
-          if (ClimateSeaLevelDelta + AltNatural[3] <= alt_detail_at((int)v6,(int)v5) - MapSeaLevel) {
+          if (GameDataStateStorage.fields_.climate_sea_level_delta_ + AltNatural[3] <= alt_detail_at((int)v6,(int)v5) - MapSeaLevel) {
             if (PlayersData[faction_id].flags & 0x80000)
               v8 = 0;
             else {
@@ -4093,14 +4093,14 @@ label_4feda1:
               do {
                 if (base_project(v75) == BaseIDCurrentSelected) {
                   v8 = alt_detail_at((int)BaseCurrent->x,(int)BaseCurrent->y);
-                  if ((int)(WorldBuilder.sea_level_rises + ClimateSeaLevelDelta + AltNatural[3]) <= v8 - MapSeaLevel) {
+                  if ((int)(WorldBuilder.sea_level_rises + GameDataStateStorage.fields_.climate_sea_level_delta_ + AltNatural[3]) <= v8 - MapSeaLevel) {
                     v16 = 0xc;
-                    v8 = (-(uint32_t)(((uint8_t)LockEnableMask & (uint8_t)v165) != 0) & 2) + 4;
+                    v8 = (-(uint32_t)(((uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (uint8_t)v165) != 0) & 2) + 4;
                     v75 = 0x14 - (int)BaseCurrent->population_size / 2;
                   }
                   else {
                     v16 = 8;
-                    v8 = (-(uint32_t)(((uint8_t)LockEnableMask & (uint8_t)v165) != 0) & 2) + 2;
+                    v8 = (-(uint32_t)(((uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (uint8_t)v165) != 0) & 2) + 2;
                     v75 = 8 - (int)BaseCurrent->population_size / 3;
                   }
                   goto label_4fef3f;
@@ -4127,7 +4127,7 @@ label_4feda1:
         else {
           v79 = (v8 + 5);
         }
-        if (!((uint8_t)v165 & (uint8_t)LockEnableMask))
+        if (!((uint8_t)v165 & (uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_))
           v79 = (v79 + v141 * -2);
         v8 = fac_maint(v164,faction_id);
         v75 = (v8 + 4) * (int)v79;
@@ -4139,7 +4139,7 @@ label_4feda1:
           v75 /= 2;
         v8 = range(v75,1,99);
         v15 = (uint8_t)(PlayersData[faction_id].region_total_bases[region]);
-        if ((((uint16_t)(PlayersData[v10].region_total_combat_vehs[region]) < (uint16_t)((uint16_t)v15 * 2)) || ((uint8_t)((PlayersData[v10].unk_77[region] >> 8)) & 0x40)) || ((100 <= TurnCurrentNum && ((v15 <= 8 && (regional_plan != 7)))))) goto label_4fe410;
+        if ((((uint16_t)(PlayersData[v10].region_total_combat_vehs[region]) < (uint16_t)((uint16_t)v15 * 2)) || ((uint8_t)((PlayersData[v10].unk_77[region] >> 8)) & 0x40)) || ((100 <= GameDataStateStorage.fields_.turn_current_num_ && ((v15 <= 8 && (regional_plan != 7)))))) goto label_4fe410;
         v18 = v160;
         break;
       case 0x1c:
@@ -4267,7 +4267,7 @@ label_4fef47:
               }
               v11 = has_treaty(faction_id,v149,0x30);
               if (!v11) {
-                if (!((uint8_t)(1 << ((uint8_t)v149 & 0x1f)) & (uint8_t)LockEnableMask)) goto label_4fee63;
+                if (!((uint8_t)(1 << ((uint8_t)v149 & 0x1f)) & (uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_)) goto label_4fee63;
               }
               if (v75 <= scan_faction->satellites_[3])
                 v75 = scan_faction->satellites_[3];
@@ -4278,7 +4278,7 @@ label_4fee63:
           v149 += 1;
           ++scan_faction;
         } while (scan_faction < &PlayersData[8]);
-        if (((((int)(PlayersData[faction_id].satellites_[3]) < v75 + 2) && (v8 = range((((int)(PlayersData[faction_id].satellites_[3]) - v75) * 2 + 0xc) - (int)v82->population_size,1,0xc), !(int)(PlayersData[RankingFactionIDUnk1].planet_busters))) && (!(int)(PlayersData[RankingFactionIDUnk1].major_atrocities))) && ((int)(PlayersData[RankingFactionIDUnk1].satellites_[3]) <= (int)(PlayersData[faction_id].satellites_[3])))
+        if (((((int)(PlayersData[faction_id].satellites_[3]) < v75 + 2) && (v8 = range((((int)(PlayersData[faction_id].satellites_[3]) - v75) * 2 + 0xc) - (int)v82->population_size,1,0xc), !(int)(PlayersData[GameDataStateStorage.fields_.ranking_faction_id_unk1_].planet_busters))) && (!(int)(PlayersData[GameDataStateStorage.fields_.ranking_faction_id_unk1_].major_atrocities))) && ((int)(PlayersData[GameDataStateStorage.fields_.ranking_faction_id_unk1_].satellites_[3]) <= (int)(PlayersData[faction_id].satellites_[3])))
           v8 *= 2;
         v167 = 1;
 label_4feef7:
@@ -4298,7 +4298,7 @@ label_4fe410:
 label_4fef49:
     v75 = base_lose_minerals(BaseIDCurrentSelected,-v164);
     if (1 <= v75) {
-      if ((!((uint8_t)v165 & (uint8_t)LockEnableMask)) || ((BaseCurrent->governor & 0x80000000 && (!out_score)))) {
+      if ((!((uint8_t)v165 & (uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_)) || ((BaseCurrent->governor & 0x80000000 && (!out_score)))) {
         v11 = cost_factor(faction_id,1,-1);
         v11 *= (int)(Facility[v164].cost);
         if (v11)
@@ -4318,7 +4318,7 @@ label_4fef49:
       v8 *= 2;
       v166 = v8;
     }
-    if (((0 <= (int)v110) && (!v136)) && ((1 <= (int)v141 || (((uint8_t)LockEnableMask & (uint8_t)(1 << ((uint8_t)v110 & 0x1f)) && ((0 <= (int)v141 || (v75 = has_treaty(faction_id,v110,0x20), v75))))))))
+    if (((0 <= (int)v110) && (!v136)) && ((1 <= (int)v141 || (((uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (uint8_t)(1 << ((uint8_t)v110 & 0x1f)) && ((0 <= (int)v141 || (v75 = has_treaty(faction_id,v110,0x20), v75))))))))
       v166 = v8 * 2;
     v8 = 0;
     do {
@@ -4333,7 +4333,7 @@ label_4ff0fc:
         }
       }
       else {
-        if (!((uint8_t)v165 & (uint8_t)LockEnableMask)) {
+        if (!((uint8_t)v165 & (uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_)) {
 label_4ff0fa:
           v11 = 0;
           goto label_4ff0fc;
@@ -4353,7 +4353,7 @@ label_4ff11f:
     v164 = v8;
   } while (v8 <= 0x45);
   if (selection_mode) goto label_4ffea4;
-  if (((!v128) || ((v15 = (uint8_t)(PlayersData[faction_id].region_base_plan[region]), v15 <= 2 && ((int)((v15 != 2) + 1) <= v119)))) && ((v18 = LockEnableMask & 0xff & v165, !v18 || ((BaseCurrent->governor & 0xdfbe00) != 0x40000)))) {
+  if (((!v128) || ((v15 = (uint8_t)(PlayersData[faction_id].region_base_plan[region]), v15 <= 2 && ((int)((v15 != 2) + 1) <= v119)))) && ((v18 = GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xff & v165, !v18 || ((BaseCurrent->governor & 0xdfbe00) != 0x40000)))) {
     if ((((((char)(PlayersData[faction_id].region_base_plan[region]) == '\x02') || (v4 = BaseCurrent->population_size, v4 < 3)) || (2 <= (int)v162)) || (((v162 && ((int)v138 <= 1)) && (!v18)))) || (v116 < v4 * 2)) goto label_4ffea4;
     v8 = BaseCurrent->drone_total;
     if (((BaseCurrent->talent_total < v8) || (BaseCurrent->state & 2)) || (((v8 && (((BaseCurrent->talent_total <= v8 && (BaseCurrent->specialist_unk_1 < BaseCurrent->specialist_total)) && (v4 < 8)))) || (((int)v4 <= (v118 + 1) / 2 && (v116 <= ((int)(PlayersData[faction_id].unk_28) + 1) / 2)))))) goto label_4ffea4;
@@ -4369,13 +4369,13 @@ label_4ff11f:
     v18 = faction_id;
     v8 = base_id + 0x46;
     v75 = facility_avail(v8,faction_id,BaseIDCurrentSelected,0);
-    if ((v75) && ((((uint8_t)v165 & (uint8_t)LockEnableMask || (3 <= DiffLevelCurrent)) || ((v75 = (int)(Facility[v8].preq_tech), v75 < 0 || ((uint8_t)(GameTechAchieved[v75]) & (uint8_t)LockEnableMask)))))) {
+    if ((v75) && ((((uint8_t)v165 & (uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_ || (3 <= GameDataStateStorage.fields_.diff_level_current_)) || ((v75 = (int)(Facility[v8].preq_tech), v75 < 0 || ((uint8_t)(GameDataStateStorage.fields_.game_tech_achieved_[v75]) & (uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_)))))) {
       v167 = 0;
       v139 = v30[base_id] & v165;
       v154 = v29[(int)(base_id + (base_id >> 0x1f & 7U)) >> 3];
       v152 = (((((((v119 * 2 + 8) - (int)(Facility[v8].sp_ai_fight) * v141) - (int)(Facility[v8].sp_ai_power) * v148) - (int)(Facility[v8].sp_ai_wealth) * v134) - (int)(Facility[v8].sp_ai_tech) * v150) - (int)(Facility[v8].sp_ai_growth) * v131) - (uint32_t)(5 <= (int)(PlayersData[faction_id].ranking))) - (int)BaseCurrent->population_size;
       v75 = 0x100;
-      v166 = v100 / 2 + v154 + (v152 - TurnCurrentNum / 0x28) + v135;
+      v166 = v100 / 2 + v154 + (v152 - GameDataStateStorage.fields_.turn_current_num_ / 0x28) + v135;
       selection_mode = v156;
       if (v157)
         selection_mode = 2;
@@ -4428,7 +4428,7 @@ label_4ff539:
                     }
                     v9 += 1;
                   } while ((int)v9 < 8);
-                  if (GovernorFaction == v18)
+                  if (GameDataStateStorage.fields_.governor_faction_ == v18)
                     v75 /= 2;
                   if ((int)(PlayersData[faction_id].ranking) == 7)
                     v75 /= 2;
@@ -4477,7 +4477,7 @@ label_4ff5f6:
         }
         if (((!v128) && (base_id <= 0x1e)) && ((regional_plan == 2 || ((uint8_t)((PlayersData[faction_id].unk_77[region] >> 8)) & 0x40))))
           v75 *= 2;
-        if (((base_id == 0x1f) && (!v117)) && (GameRules & 0x800)) {
+        if (((base_id == 0x1f) && (!v117)) && (GameDataStateStorage.fields_.game_rules_ & 0x800)) {
           v75 /= 2;
           if (0 <= Facility[0x65].preq_tech) {
             v18 = 1;
@@ -4515,7 +4515,7 @@ label_4ff5f6:
         v152 = -(base_id + 0x46);
         v11 = base_lose_minerals(BaseIDCurrentSelected,v152);
         if (1 <= v11) {
-          if ((!((uint8_t)v165 & (uint8_t)LockEnableMask)) || ((!out_score && (BaseCurrent->governor & 0x80000000)))) {
+          if ((!((uint8_t)v165 & (uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_)) || ((!out_score && (BaseCurrent->governor & 0x80000000)))) {
             v16 = cost_factor(faction_id,1,-1);
             v16 *= (int)(Facility[v8].cost);
             v75 = ((v11 + v16) * v75) / v16;
@@ -4533,21 +4533,21 @@ label_4ff5f6:
           v11 = v117 + 1;
         }
         v16 = (int)(PlayersData[faction_id].energy_reserves);
-        v13 = TurnCurrentNum / 100;
+        v13 = GameDataStateStorage.fields_.turn_current_num_ / 100;
         v77 = BaseCurrent->mineral_surplus;
         v75 = (((v75 * v11 * 0x400) / (v16 + 0x400)) * 8) / (range(v77 / (v13 + 3),0,8) + 8);
         if (selection_mode)
           v75 /= (int)(selection_mode + 1);
         if ((has_fac_built(1)) && (!v139))
           v75 = (int)(v75 * 3 + (v75 * 3 >> 0x1f & 3U)) >> 2;
-        if ((!((uint8_t)v165 & (uint8_t)LockEnableMask)) && (BaseCurrent->queue_production_id[0] == v152)) {
+        if ((!((uint8_t)v165 & (uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_)) && (BaseCurrent->queue_production_id[0] == v152)) {
           v129 = (int)(v129 + ((int)v129 >> 0x1f & 3U)) >> 2;
           v11 = cost_factor(faction_id,1,-1);
           if ((v11 * (int)(Facility[v8].cost) <= BaseCurrent->minerals_accumulated) && (v75 = v75 / 2, (int)v162 <= 2))
             v162 = 0;
         }
         v8 = 0;
-        if (1 <= BaseCurrentCount) {
+        if (1 <= GameDataStateStorage.fields_.base_current_count_) {
           scan_base = &Bases[0];
           do {
             if (((scan_base->faction_id_current == faction_id) && (v8 != BaseIDCurrentSelected)) && (scan_base->queue_production_id[0] == -(base_id + 0x46))) {
@@ -4559,7 +4559,7 @@ label_4ff5f6:
             }
             v8 += 1;
             ++scan_base;
-          } while (v8 < BaseCurrentCount);
+          } while (v8 < GameDataStateStorage.fields_.base_current_count_);
         }
         if (0 <= v75) {
           v9 = 9999;
@@ -4580,7 +4580,7 @@ label_4ffbe9:
             if ((v15 != 2) || (!v162)) {
               if (3 <= v15) {
                 v75 /= 3;
-                if (((((int)v162 <= 2) && ((int)v143 <= 1)) && (v75 = v75 / 2, !(BaseCurrent->state & 8))) && ((SecretProject[base_id] == -1 && (-0x45 <= selected_id[0])))) {
+                if (((((int)v162 <= 2) && ((int)v143 <= 1)) && (v75 = v75 / 2, !(BaseCurrent->state & 8))) && ((GameDataStateStorage.fields_.secret_project_[base_id] == -1 && (-0x45 <= selected_id[0])))) {
                   selected_score[0] = 9999999;
                   v143 = 0;
                   v162 = 0;
@@ -4594,13 +4594,13 @@ label_4ffbe9:
           if ((!v139) || (((v119 && (v5 = BaseCurrent->y, v6 = BaseCurrent->x, !is_ocean((int)v6,(int)v5))) && (plan_count_3[30] + plan_count_1[30] <= 2)))) {
             v118 = base_id + 0x46;
             if (!has_fac_built(6)) {
-              if ((!((uint8_t)v165 & (uint8_t)LockEnableMask)) || (BaseCurrent->governor & 0x10000)) {
+              if ((!((uint8_t)v165 & (uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_)) || (BaseCurrent->governor & 0x10000)) {
                 v8 = has_tech(Facility[6].preq_tech,v18);
                 if (!v8) goto label_4ffe94;
                 v118 = 6;
               }
             }
-            if ((uint8_t)v165 & (uint8_t)LockEnableMask) {
+            if ((uint8_t)v165 & (uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_) {
               if (v76) goto label_4ffe94;
             }
             else if ((v76) && (v8 = veh_avail(5,v18,BaseIDCurrentSelected), !v8)) {
@@ -4610,7 +4610,7 @@ label_4ffbe9:
             if ((-0x45 <= selected_id[0]) || (v76)) {
               v8 = 0;
               do {
-                if ((!((uint8_t)v165 & (uint8_t)LockEnableMask)) || (BaseCurrent->governor & 0x40000)) {
+                if ((!((uint8_t)v165 & (uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_)) || (BaseCurrent->governor & 0x40000)) {
                   v11 = v75;
                   if ((out_score) && (v16 = base_claimed(-(base_id + 0x46),v75,v147,v157,v156,v160), v16))
                     v11 = v75 + 100000;
@@ -4632,7 +4632,7 @@ label_4ffbe9:
               v133 = v129;
               v8 = 0;
               do {
-                if ((!((uint8_t)LockEnableMask & (uint8_t)v165)) || (BaseCurrent->governor & 0x40000)) {
+                if ((!((uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (uint8_t)v165)) || (BaseCurrent->governor & 0x40000)) {
                   v11 = v75;
                   if ((out_score) && (v16 = base_claimed(-(base_id + 0x46),v75,v147,v157,v156,v160), v16))
                     v11 = v75 + 100000;
@@ -4681,7 +4681,7 @@ label_4ffea4:
     v5 = BaseCurrent->y;
     v6 = BaseCurrent->x;
     if ((veh_who((int)v6,(int)v5) <= -1) && ((int)v143 <= 1)) {
-      if ((!((uint8_t)v165 & (uint8_t)LockEnableMask)) || (BaseCurrent->governor & 0x1000)) {
+      if ((!((uint8_t)v165 & (uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_)) || (BaseCurrent->governor & 0x1000)) {
         v18 = 99999;
         v8 = 0;
         scan_prototype = &VehPrototypes[0];
@@ -4737,7 +4737,7 @@ void __cdecl base_change(int base_id, int production_id) {
     // base_lose_minerals already owns the matching classification and arithmetic.
     int loss = 0;
     if (Rules.retool_pct_pen_prod_chg
-        && (static_cast<unsigned char>(LockEnableMask)
+        && (static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_)
             & (1u << base.faction_id_current))
         && base_making(base.production_id_last, base_id)
             != base_making(production_id, base_id)
@@ -4761,14 +4761,14 @@ void __cdecl base_change(int base_id, int production_id) {
         if (project_base >= 0 && Bases[project_base].faction_id_current == owner)
             old_relevant = false;
     }
-    if ((!new_unbuilt && !old_relevant) || ((GameState & 1) && !(GameState & 8))) return;
+    if ((!new_unbuilt && !old_relevant) || ((GameDataStateStorage.fields_.game_state_ & 1) && !(GameDataStateStorage.fields_.game_state_ & 8))) return;
     const int facility = abs(next);
     const int project = facility - 70;
     int word, mask;
     bitmask(new_unbuilt ? project : abs(previous) - 70, &word, &mask);
     int old_count = 0, new_count = 0;
     int other;
-    for (other = 0; other < BaseCurrentCount; ++other) {
+    for (other = 0; other < GameDataStateStorage.fields_.base_current_count_; ++other) {
         if (Bases[other].faction_id_current == base.faction_id_current && other != base_id) {
             if (Bases[other].queue_production_id[0] == previous) ++old_count;
             if (Bases[other].queue_production_id[0] == base.queue_production_id[0]) ++new_count;
@@ -4777,11 +4777,11 @@ void __cdecl base_change(int base_id, int production_id) {
     if (!new_unbuilt || new_count) return;
     Player &player = Players[owner];
     if (old_relevant && (!old_count || base_project(-previous - 70) != -1)) {
-        for (other = 0; other < BaseCurrentCount; ++other)
+        for (other = 0; other < GameDataStateStorage.fields_.base_current_count_; ++other)
             if (Bases[other].faction_id_current == owner
                 && Bases[other].queue_production_id[0] == previous)
                 Bases[other].queue_production_id[0] = base.queue_production_id[0];
-        if (SunspotDuration > 0) return;
+        if (GameDataStateStorage.fields_.sunspot_duration_ > 0) return;
         parse_says(0, player.adj_name_faction, -1, -1);
         // RulesFacility's existing name field still carries the original
         // StringTable index with a legacy pointer spelling, as in base_reset.
@@ -4797,7 +4797,7 @@ void __cdecl base_change(int base_id, int production_id) {
         return;
     }
     if (!(faction.secret_project_intel[word] & mask)) {
-        if (SunspotDuration > 0 && project != 31) return;
+        if (GameDataStateStorage.fields_.sunspot_duration_ > 0 && project != 31) return;
         GenderDefault = player.is_leader_female;
         PluralityDefault = 0;
         parse_says(0, player.title_leader, -1, -1);
@@ -4814,7 +4814,7 @@ void __cdecl base_change(int base_id, int production_id) {
     }
     if (project == 31) {
         interlude(11, 0, 1, 0);
-        GameInterludeFlags |= 0x400;
+        GameDataStateStorage.fields_.game_interlude_flags_ |= 0x400;
     }
 }
 
@@ -4823,7 +4823,7 @@ void __cdecl base_change(int base_id, int production_id) {
 void __cdecl base_reset(int base_id, int force) {
     const uint8_t faction = Bases[base_id].faction_id_current;
     const uint8_t faction_bit = static_cast<uint8_t>(1u << faction);
-    const uint8_t active_mask = static_cast<uint8_t>(LockEnableMask);
+    const uint8_t active_mask = static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_);
     uint32_t state = Bases[base_id].state;
 
     if ((faction_bit & active_mask) != 0
@@ -4876,13 +4876,13 @@ void __cdecl base_reset(int base_id, int force) {
     int production = base_build(base_id, 0, 0, 0);
     base_change(base_id, production);
 
-    const uint8_t current_active_mask = static_cast<uint8_t>(LockEnableMask);
+    const uint8_t current_active_mask = static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_);
     if ((faction_bit & current_active_mask) == 0) return;
     if ((Bases[base_id].state & BSTATE_UNK_8000000000) == 0) return;
     if (location <= -0x46) return;
     if (Bases[base_id].location > -0x46) return;
     if (IsMultiplayerNet != 0) return;
-    if ((GameState & STATE_UNK_1) != 0) return;
+    if ((GameDataStateStorage.fields_.game_state_ & STATE_UNK_1) != 0) return;
 
     const int absolute_location = location < 0 ? -location : location;
     const char *const base_name = Bases[base_id].name_string;
@@ -5064,7 +5064,7 @@ void __cdecl farm_compute() {
         row_stride = static_cast<int>(MapLongitude);
     }
 
-    for (int other_id = 0; other_id < BaseCurrentCount; ++other_id) {
+    for (int other_id = 0; other_id < GameDataStateStorage.fields_.base_current_count_; ++other_id) {
         if (other_id == BaseIDCurrentSelected) {
             continue;
         }
@@ -5152,8 +5152,8 @@ int BaseSquareEnergy;  // 0x0090E914
  * and visibility checks must use this one source object, not independent
  * integers justified by the retired separate-suite build.
  */
-// RECOVERY_OBJECT: v2 0x009A6614 0x009A6618 ?GovernorFaction@@3HA 0x00424410
-int GovernorFaction;  // 0x009A6614
+// Historical object identity moved to GameDataStateStorage; see the transport manifest.
+// 0x009A6614
 // Former independent scalar views CommerceDoubleTarget (009A6624) and
 // CommerceDoubleProgress (009A6628) actually denote CouncilResolutionCount[3]
 // and [4]. council_action increments those proposal counters and setup_game
@@ -5165,7 +5165,7 @@ int GovernorFaction;  // 0x009A6614
  * at turn start and arms it at 0x00520529). While the selected bit is set,
  * energy_yield triples its result.
  */
-int GlobalEnergyEventState;  // 0x009A6818
+// 0x009A6818
 
 /*
  * Selects which bit of GlobalEnergyEventState energy_yield consults. Read by
@@ -5309,7 +5309,7 @@ int __cdecl base_at(int x, int y) {
         return -1;
     }
     Base *base = Bases;
-    for (int base_id = 0; base_id < BaseCurrentCount; base_id++, base++) {
+    for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; base_id++, base++) {
         if (base->x == x && base->y == y) {
             return base_id;
         }
@@ -5317,7 +5317,7 @@ int __cdecl base_at(int x, int y) {
     if (!BaseAtErrorGuard) {
         log_say("Base Bits Error  (x, y)", x, y, 0);
     }
-    if (!(GameState & STATE_DEBUG_MODE)) {
+    if (!(GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE)) {
         rebuild_base_bits();
         return -1;
     }
@@ -5363,7 +5363,7 @@ Status: Complete
 int __cdecl base_find(int x, int y) {
     int proximity = 9999;
     int base_id = -1;
-    for (int i = 0; i < BaseCurrentCount; i++) {
+    for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
         // Open-coded vector_dist(x, y, Bases[i].x, Bases[i].y): the image calls
         // abs() four times (never vector_dist itself) - see del_site
         // (0x00579E70) for the same expansion.
@@ -5411,12 +5411,12 @@ Return Value: Base id or -1 if not found
 Status: Complete
 */
 int __cdecl base_find(int x, int y, int faction_id) {
-    if (BaseCurrentCount <= 0) {
+    if (GameDataStateStorage.fields_.base_current_count_ <= 0) {
         return -1;
     }
     int proximity = 9999;
     int base_id = -1;
-    for (int i = 0; i < BaseCurrentCount; i++) {
+    for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
         if (Bases[i].faction_id_current == faction_id) {
             // Open-coded vector_dist(x, y, Bases[i].x, Bases[i].y): the
             // image calls abs() four times, never vector_dist itself - see
@@ -5482,7 +5482,7 @@ int __cdecl base_find(int x, int y, int faction_id, int region, int faction_id_2
     int base_id = -1;
     BaseFindDist = 9999; // difference from other two functions where this is reset at start
     Base *base = Bases;
-    for (int i = 0; i < BaseCurrentCount; i++, base++) {
+    for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++, base++) {
         if (region < 0 || region_at(base->x, base->y) == (uint32_t)region) {
             if (faction_id < 0 ? (faction_id_2 < 0 || base->faction_id_current != faction_id_2)
                 : (faction_id == base->faction_id_current || (faction_id_2 == -2
@@ -5776,9 +5776,9 @@ Status: Complete
 */
 int __cdecl cost_factor(int faction_id, int rsc_type, int base_id) {
     static const int diff_cost_base[] = { 13, 12, 11, 10, 8, 7 };
-    int factor = is_human(faction_id) ? 10 : diff_cost_base[DiffLevelCurrent]
-        - great_satan(FactionRankings[7], false)
-        - (!IsMultiplayerNet && is_human(FactionRankings[7]));
+    int factor = is_human(faction_id) ? 10 : diff_cost_base[GameDataStateStorage.fields_.diff_level_current_]
+        - great_satan(GameDataStateStorage.fields_.faction_rankings_[7], false)
+        - (!IsMultiplayerNet && is_human(GameDataStateStorage.fields_.faction_rankings_[7]));
     int cost_multiplier = rsc_type ? Rules.mineral_cost_multi : Rules.nutrient_cost_multi;
     if (cost_multiplier != 10) {
         factor = (factor * cost_multiplier) / 10;
@@ -5982,10 +5982,10 @@ void __cdecl base_ecology() {
     player.unk_49 = ecology_wrapped_add(player.unk_49,
         ecology_wrapped_shift_two(base->eco_damage) / ecology_divisor);
 
-    const int game_state = GameState;
+    const int game_state = GameDataStateStorage.fields_.game_state_;
     const int damage_divisor = (game_state & 0x100000) != 0 ? 2 : 1;
     if (rand() % 100 >= base->eco_damage / damage_divisor
-        || (GameRules & 0x200000) != 0
+        || (GameDataStateStorage.fields_.game_rules_ & 0x200000) != 0
         || ((game_state & 1) != 0 && (game_state & 8) == 0)) {
         return;
     }
@@ -6017,7 +6017,7 @@ void __cdecl base_ecology() {
         if (search_radius_index > 24) {
             int nearest_id = -1;
             int nearest_distance = 9999;
-            for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+            for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
                 const Base &candidate = Bases[base_id];
                 int dx = abs(x - candidate.x);
                 if ((MapIsFlat & 1) == 0 && dx > static_cast<int>(MapLongitude))
@@ -6119,7 +6119,7 @@ void __cdecl base_ecology() {
         const int current_viewer = ConsoleGlobal.faction_id_;
         const bool known = (PlayersData[current_viewer].flags & 0x200u) != 0
             || (tile->visibility & (1u << (current_viewer & 31))) != 0
-            || (GameState & 0x80) != 0;
+            || (GameDataStateStorage.fields_.game_state_ & 0x80) != 0;
         if (!known) goto next_spread_tile;
         changed_visible_tile = true;
         if (faction == current_viewer) {
@@ -6167,8 +6167,8 @@ next_spread_tile:
 
     if (!is_human(faction)) {
         int chance = rand() & 0x80000001;
-        if ((chance == 0 || static_cast<uint32_t>(chance) == 0x80000000u) && DiffLevelCurrent >= 1
-            && rand() % (DiffLevelCurrent + 1) != 0) {
+        if ((chance == 0 || static_cast<uint32_t>(chance) == 0x80000000u) && GameDataStateStorage.fields_.diff_level_current_ >= 1
+            && rand() % (GameDataStateStorage.fields_.diff_level_current_ + 1) != 0) {
             --player.planet_ecology;
             return;
         }
@@ -6207,7 +6207,7 @@ next_spread_tile:
                 if ((tile->bit & BIT_FUNGUS) != 0 && (tile->climate & 0xE0) >= 0x40) {
                     int nearest_id = -1;
                     int nearest_distance = 9999;
-                    for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+                    for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
                         const Base &candidate = Bases[base_id];
                         int dx = abs(x - candidate.x);
                         if ((MapIsFlat & 1) == 0 && dx > static_cast<int>(MapLongitude))
@@ -6274,8 +6274,8 @@ next_spread_tile:
         }
     }
 
-    if (((LockEnableMask & (1u << (faction & 31))) != 0) || DiffLevelCurrent >= 4) {
-        EcologyEventAccumulator = ecology_wrapped_add(EcologyEventAccumulator, 1);
+    if (((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u << (faction & 31))) != 0) || GameDataStateStorage.fields_.diff_level_current_ >= 4) {
+        GameDataStateStorage.fields_.ecology_event_accumulator_ = ecology_wrapped_add(GameDataStateStorage.fields_.ecology_event_accumulator_, 1);
         int warming = MapSeaLevel;
         if (warming < 0) warming = 0;
         else if (warming > 100) warming = 100;
@@ -6285,24 +6285,24 @@ next_spread_tile:
         else if (rise >= 100) rise = 99;
         const int warming_product = ecology_wrap_int(
             static_cast<uint32_t>(Rules.freq_global_warming_num)
-            * static_cast<uint32_t>(EcologyEventAccumulator));
+            * static_cast<uint32_t>(GameDataStateStorage.fields_.ecology_event_accumulator_));
         const int warming_denominator =
             ecology_wrap_int(static_cast<uint32_t>(Rules.freq_global_warming_denom));
         if ((warming * 3) / rise + 6 <= warming_product / warming_denominator) {
-            EcologyEventAccumulator = 0;
+            GameDataStateStorage.fields_.ecology_event_accumulator_ = 0;
             int increase = PlayersData[faction].planet_ecology / 6 - 1;
             if (increase < 1) increase = 1;
             else if (increase >= 4) increase = 3;
             MapSeaLevelCouncil = ecology_wrapped_add(MapSeaLevelCouncil, increase);
-            ClimateRiseLimit = 20;
+            GameDataStateStorage.fields_.climate_rise_limit_ = 20;
             const int sea_level_product = ecology_wrapped_multiply(
                 raw_sea_level_rises, increase);
-            ClimateSeaLevelDelta = ecology_wrapped_add(
-                ClimateSeaLevelDelta, sea_level_product / 3);
-            ClimateRiseStep = ecology_native_abs(ClimateSeaLevelDelta);
-            ClimateRiseAccum = 0;
+            GameDataStateStorage.fields_.climate_sea_level_delta_ = ecology_wrapped_add(
+                GameDataStateStorage.fields_.climate_sea_level_delta_, sea_level_product / 3);
+            GameDataStateStorage.fields_.climate_rise_step_ = ecology_native_abs(GameDataStateStorage.fields_.climate_sea_level_delta_);
+            GameDataStateStorage.fields_.climate_rise_accum_ = 0;
             parse_num(0, 20);
-            const int absolute_delta = ecology_native_abs(ClimateSeaLevelDelta);
+            const int absolute_delta = ecology_native_abs(GameDataStateStorage.fields_.climate_sea_level_delta_);
             const int scaled_delta = ecology_wrapped_multiply(absolute_delta, 1000);
             parse_num(1, scaled_delta / 15);
             if (faction != ConsoleGlobal.faction_id_) {
@@ -6317,7 +6317,7 @@ next_spread_tile:
         }
     }
 
-    if (PlayersData[faction].planet_ecology < 10 || (GameState & 0x20000) != 0) return;
+    if (PlayersData[faction].planet_ecology < 10 || (GameDataStateStorage.fields_.game_state_ & 0x20000) != 0) return;
     const int volcano_x_roll = MapLongitudeBounds > 1 ? rand() % MapLongitudeBounds : 0;
     const int volcano_y = MapLatitudeBounds > 1 ? rand() % MapLatitudeBounds : 0;
     int even_x = volcano_x_roll;
@@ -6348,7 +6348,7 @@ next_spread_tile:
         || (volcano_tile->visibility & (1u << (ConsoleGlobal.faction_id_ & 31))) != 0) {
         ConsoleGlobal.focus(even_x, volcano_y, ConsoleGlobal.faction_id_);
     }
-    GameState |= 0x20000;
+    GameDataStateStorage.fields_.game_state_ |= 0x20000;
     world_volcano(even_x, volcano_y, 1);
     world_climate();
     draw_map(1);
@@ -6373,7 +6373,7 @@ void __cdecl base_hurry() {
     Base *current_base = BaseCurrent;
     const int faction = current_base->faction_id_current;
     const uint32_t faction_bit = 1u << faction;
-    const bool is_human = (LockEnableMask & faction_bit) != 0;
+    const bool is_human = (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_bit) != 0;
 
     if (is_human
         && ((current_base->governor & GOV_MAY_HURRY_PRODUCTION) == 0
@@ -6437,7 +6437,7 @@ void __cdecl base_hurry() {
                             base_yield_add(PlayersData[faction].ai_growth, 5));
                         hurry_amount = base_yield_add(
                             adjusted, adjusted < 0 ? 3 : 0) >> 2;
-                        if (PlayersData[faction].energy_reserves > TurnCurrentNum) {
+                        if (PlayersData[faction].energy_reserves > GameDataStateStorage.fields_.turn_current_num_) {
                             hurry_amount = base_yield_add(hurry_amount, hurry_amount);
                         }
                     }
@@ -6482,7 +6482,7 @@ void __cdecl base_hurry() {
                 const int remaining_cost =
                     base_yield_sub(scaled_cost, current_base->minerals_accumulated);
                 const int human_factor =
-                    (LockEnableMask & faction_bit) != 0 ? 2 : 0;
+                    (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_bit) != 0 ? 2 : 0;
                 const int available = base_yield_mul(remaining_cost, human_factor);
                 const int reserves = PlayersData[faction].energy_reserves;
                 const int wrapped_three_quarters = base_yield_mul(reserves, 3);
@@ -6503,7 +6503,7 @@ void __cdecl base_hurry() {
             if (other != faction
                 && (PlayersData[faction].diplo_treaties[other] & 0x40030u) != 0
                 && (PlayersData[other].region_total_bases[other] != 0
-                    || (LockEnableMask & (1u << other)) != 0)) {
+                    || (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u << other)) != 0)) {
                 hurry_amount = PlayersData[faction].energy_reserves / 10;
             }
         }
@@ -6549,7 +6549,7 @@ void __cdecl base_hurry() {
             hurry_amount = remaining_cost;
         }
         if (hurry_amount != 0) {
-            if (SecretProject.voice_of_planet() >= 0) {
+            if (GameDataStateStorage.fields_.secret_project_.voice_of_planet() >= 0) {
                 hurry_amount /= 2;
             } else {
                 if (strcmp(Players[faction].filename, "MORGAN") == 0) {
@@ -6575,7 +6575,7 @@ void __cdecl base_hurry() {
             if (current_base->queue_production_id[0] <= -0x46) {
                 turns_factor = base_yield_add(turns_factor, turns_factor);
             }
-            if (SecretProject.voice_of_planet() >= 0) {
+            if (GameDataStateStorage.fields_.secret_project_.voice_of_planet() >= 0) {
                 turns_factor = base_yield_add(turns_factor, turns_factor);
             }
             int bought_turns = turns_factor != 0
@@ -6587,14 +6587,14 @@ void __cdecl base_hurry() {
                 base_yield_add(current_base->minerals_accumulated, bought_turns);
 
             int energy_change;
-            if ((LockEnableMask & faction_bit) != 0) {
+            if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_bit) != 0) {
                 energy_change = 0;
             } else {
-                const int ranking = PlayersData[RankingFactionIDUnk1].ranking;
+                const int ranking = PlayersData[GameDataStateStorage.fields_.ranking_faction_id_unk1_].ranking;
                 const int ranking_factor = base_yield_mul(
                     base_yield_sub(8, ranking), 10);
                 energy_change = base_yield_mul(
-                    DiffLevelCurrent, hurry_amount) / ranking_factor;
+                    GameDataStateStorage.fields_.diff_level_current_, hurry_amount) / ranking_factor;
             }
             PlayersData[faction].energy_reserves = base_yield_add(
                 PlayersData[faction].energy_reserves,
@@ -6602,13 +6602,13 @@ void __cdecl base_hurry() {
         }
     }
 
-    if ((LockEnableMask & faction_bit) != 0
+    if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_bit) != 0
         || facility_index < FacilitySPStart) {
         return;
     }
     if (base_project(facility_index - FacilitySPStart) != SP_Unbuilt
-        || SunspotDuration > 0
-        || (GameState & STATE_UNK_1) != 0) {
+        || GameDataStateStorage.fields_.sunspot_duration_ > 0
+        || (GameDataStateStorage.fields_.game_state_ & STATE_UNK_1) != 0) {
         return;
     }
 
@@ -6642,7 +6642,7 @@ void __cdecl base_check_support() {
         int selected_vehicle = -1;
         int selected_score = -1;
 
-        for (int vehicle_id = 0; vehicle_id < VehCurrentCount; ++vehicle_id) {
+        for (int vehicle_id = 0; vehicle_id < GameDataStateStorage.fields_.vehicle_current_count_; ++vehicle_id) {
             const Veh &vehicle = Vehs[vehicle_id];
             if (vehicle.faction_id != faction
                 || vehicle.home_base_id != BaseIDCurrentSelected) {
@@ -6693,7 +6693,7 @@ void __cdecl base_check_support() {
             continue;
         }
 
-        if ((LockEnableMask & faction_bit) == 0) {
+        if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_bit) == 0) {
             if (plan == PLAN_COLONIZATION) {
                 vehicle.state &= ~VSTATE_REQUIRES_SUPPORT;
                 if (!has_abil(prototype_id, ABL_CLEAN_REACTOR)) {
@@ -6715,7 +6715,7 @@ void __cdecl base_check_support() {
         kill(selected_vehicle);
     }
 
-    const bool is_human = (LockEnableMask & faction_bit) != 0;
+    const bool is_human = (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_bit) != 0;
     const uint32_t governor = BaseCurrent->governor;
     const bool state_allows_riot_check = !is_human
         || ((governor & GOV_MANAGES_CITIZENS_SPECS) != 0
@@ -6742,7 +6742,7 @@ void __cdecl base_check_support() {
     int selected_score = -1;
     int selected_vehicle = -1;
     const int riot_probability = PlayersData[faction].ai_fight;
-    for (int vehicle_id = 0; vehicle_id < VehCurrentCount; ++vehicle_id) {
+    for (int vehicle_id = 0; vehicle_id < GameDataStateStorage.fields_.vehicle_current_count_; ++vehicle_id) {
         const Veh &vehicle = Vehs[vehicle_id];
         if (vehicle.faction_id != faction
             || vehicle.home_base_id != BaseIDCurrentSelected
@@ -6801,7 +6801,7 @@ void __cdecl base_check_support() {
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004f4e80.cpp", "recovery/tasks/base-colony-economy-coverage-wave.json", "recovery/tests/test_base_colony_economy.py", "Pinned original 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; complete original extent reviewed against native instructions and measured VC6 owner layouts.", "Original4F4E80..4F4FAB reads Base.labs_total(+108), PlayerData.soc_effect_pending.research and net_random_event; faction-indexed Base bitset and signed remainder are intentional retained behavior."], "reason": "Recover the complete base laboratory contribution, scenario/early-turn gates and signed fractional research dispatch with native 32-bit wrap. Preserve original Bases[faction_id] facility lookup rather than silently correcting its behavior. Seed retained; no matching or game claim."}
 // symbol    ?base_research@@YAXXZ
 void __cdecl base_research() {
-    if ((GameRules & RULES_SCN_NO_TECH_ADVANCES) != 0) {
+    if ((GameDataStateStorage.fields_.game_rules_ & RULES_SCN_NO_TECH_ADVANCES) != 0) {
         return;
     }
 
@@ -6817,10 +6817,10 @@ void __cdecl base_research() {
         points = research_bonus / 2;
     }
     PlayerData &player = PlayersData[faction_id];
-    if (TurnCurrentNum < base_yield_mul(-5, player.soc_effect_pending.values_[SocialEffect::RESEARCH])) {
+    if (GameDataStateStorage.fields_.turn_current_num_ < base_yield_mul(-5, player.soc_effect_pending.values_[SocialEffect::RESEARCH])) {
         points = 0;
     }
-    if (TurnCurrentNum < 5 && player.diff_level < 2) {
+    if (GameDataStateStorage.fields_.turn_current_num_ < 5 && player.diff_level < 2) {
         points = 0;
     }
 
@@ -7616,7 +7616,7 @@ int __cdecl energy_yield(int faction_id, int base_id, int x, int y,
             economy = economy * 2 - 4;
         }
         energy += economy;
-        if (GovernorFaction == faction_id) {
+        if (GameDataStateStorage.fields_.governor_faction_ == faction_id) {
             energy++;
         }
     } else if (bit & BIT_MONOLITH) {
@@ -7725,7 +7725,7 @@ int __cdecl energy_yield(int faction_id, int base_id, int x, int y,
         }
         int golden_age = 0;
         if (base_id >= 0) {
-            if (SecretProject.merchant_exchange() == base_id) {
+            if (GameDataStateStorage.fields_.secret_project_.merchant_exchange() == base_id) {
                 energy++;
             }
             if (Bases[base_id].state & BSTATE_GOLDEN_AGE_ACTIVE) {
@@ -7756,11 +7756,11 @@ int __cdecl energy_yield(int faction_id, int base_id, int x, int y,
             energy--;
         }
     }
-    if (DustCloudDuration && energy) {
+    if (GameDataStateStorage.fields_.dust_cloud_duration_ && energy) {
         energy--;
     }
-    int event_active = UnkGlobal0093A934 ? (GlobalEnergyEventState & 2)
-                                          : (GlobalEnergyEventState & 1);
+    int event_active = UnkGlobal0093A934 ? (GameDataStateStorage.fields_.global_energy_event_state_ & 2)
+                                          : (GameDataStateStorage.fields_.global_energy_event_state_ & 1);
     return event_active ? energy * 3 : energy;
 }
 
@@ -7850,7 +7850,7 @@ void __cdecl base_support() {
         }
         free_support[support + 4] = free_units;
     }
-    for (int veh_id = 0; veh_id < VehCurrentCount; veh_id++) {
+    for (int veh_id = 0; veh_id < GameDataStateStorage.fields_.vehicle_current_count_; veh_id++) {
         Veh *veh = &Vehs[veh_id];
         if (veh->faction_id != faction_id) {
             continue;
@@ -8144,10 +8144,10 @@ void __cdecl base_minerals() {
     if (BaseCurrent->eco_damage < 0) {
         BaseCurrent->eco_damage = 0;
     }
-    if (ascending(faction_id) && GameRules & RULES_VICTORY_TRANSCENDENCE) {
+    if (ascending(faction_id) && GameDataStateStorage.fields_.game_rules_ & RULES_VICTORY_TRANSCENDENCE) {
         BaseCurrent->eco_damage *= 2;
     }
-    if (GameState & STATE_PERIHELION_ACTIVE) {
+    if (GameDataStateStorage.fields_.game_state_ & STATE_PERIHELION_ACTIVE) {
         BaseCurrent->eco_damage *= 2;
     }
     uint32_t diff_factor;
@@ -8156,7 +8156,7 @@ void __cdecl base_minerals() {
         diff_factor = !diff_lvl ? DLVL_TALENT
             : ((diff_lvl <= DLVL_LIBRARIAN) ? DLVL_LIBRARIAN : DLVL_TRANSCEND);
     } else {
-        diff_factor = range(6 - DiffLevelCurrent, DLVL_SPECIALIST, DLVL_LIBRARIAN);
+        diff_factor = range(6 - GameDataStateStorage.fields_.diff_level_current_, DLVL_SPECIALIST, DLVL_LIBRARIAN);
     }
     BaseCurrent->eco_damage = ((PlayersData[faction_id].tech_ranking
         - PlayersData[faction_id].theory_of_everything)
@@ -8215,7 +8215,7 @@ uint32_t __cdecl black_market(int energy) {
     }
     uint32_t faction_id = BaseCurrent->faction_id_current;
     int dist_hq = 999;
-    for (int i = 0; i < BaseCurrentCount; i++) { // modified version of vulnerable()
+    for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) { // modified version of vulnerable()
         if (Bases[i].faction_id_current == faction_id && has_fac_built_call(FAC_HEADQUARTERS, i)) {
             // Open-coded vector_dist(x,y,a,b): the image calls abs() four
             // times, never vector_dist itself - see base_find (0x004E3D50)
@@ -8359,7 +8359,7 @@ void __cdecl base_psych() {
     // Original domain: valid game indices, finite vehicle stacks, and valid
     // faction rule divisors. No malformed-data guards are present in the image.
     const int faction = BaseCurrent->faction_id_current;
-    const bool human = (static_cast<unsigned char>(LockEnableMask) & (1u << faction)) != 0;
+    const bool human = (static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & (1u << faction)) != 0;
     const int difficulty = human ? PlayersData[faction].diff_level : 3;
     const int content = base_yield_sub(6, difficulty);
     const int efficiency = PlayersData[faction].soc_effect_pending.values_[SocialEffect::EFFICIENCY];
@@ -8398,17 +8398,17 @@ void __cdecl base_psych() {
         ? Rules.drones_genejack_factory : 0;
     if (has_fac(FAC_RECREATION_COMMONS, BaseIDCurrentSelected, 0)) facility_drones = base_yield_sub(facility_drones, 2);
     if ((has_fac(FAC_NETWORK_NODE, BaseIDCurrentSelected, 0)
-         && base_psych_project_owned(SecretProject.virtual_world(), faction))
+         && base_psych_project_owned(GameDataStateStorage.fields_.secret_project_.virtual_world(), faction))
         || has_fac(FAC_HOLOGRAM_THEATRE, BaseIDCurrentSelected, 0)) {
         facility_drones = base_yield_sub(facility_drones, 2);
     }
-    if (base_psych_project_owned(SecretProject.planetary_transit_system(), faction)
+    if (base_psych_project_owned(GameDataStateStorage.fields_.secret_project_.planetary_transit_system(), faction)
         && BaseCurrent->population_size <= 3) facility_drones = base_yield_sub(facility_drones, 1);
     const int facility_talents = has_fac(FAC_PARADISE_GARDEN, BaseIDCurrentSelected, 0) ? 2 : 0;
     if (base_yield_has_facility(FAC_RESEARCH_HOSPITAL)) facility_drones = base_yield_sub(facility_drones, 1);
     if (base_yield_has_facility(FAC_NANOHOSPITAL)) facility_drones = base_yield_sub(facility_drones, 1);
-    int project_talents = base_psych_project_owned(SecretProject.human_genome_project(), faction) ? 1 : 0;
-    if (base_psych_project_owned(SecretProject.clinical_immortality(), faction)) project_talents += 2;
+    int project_talents = base_psych_project_owned(GameDataStateStorage.fields_.secret_project_.human_genome_project(), faction) ? 1 : 0;
+    if (base_psych_project_owned(GameDataStateStorage.fields_.secret_project_.clinical_immortality(), faction)) project_talents += 2;
     const bool punishment = base_yield_has_facility(FAC_PUNISHMENT_SPHERE);
 
     for (int talent_case = 8; talent_case >= 0; --talent_case) {
@@ -8451,7 +8451,7 @@ void __cdecl base_psych() {
 
             if (police_limit > 0) {
                 int used = 0;
-                if (base_psych_project_owned(SecretProject.self_aware_colony(), faction)) {
+                if (base_psych_project_owned(GameDataStateStorage.fields_.secret_project_.self_aware_colony(), faction)) {
                     used = 1;
                     base_psych_reduce_drone();
                     if (police >= 3) base_psych_reduce_drone();
@@ -8491,7 +8491,7 @@ void __cdecl base_psych() {
             base_psych_publish(3);
 
             BaseCurrent->talent_total = base_yield_add(BaseCurrent->talent_total, project_talents);
-            if (base_psych_project_owned(SecretProject.longevity_vaccine(), faction)) {
+            if (base_psych_project_owned(GameDataStateStorage.fields_.secret_project_.longevity_vaccine(), faction)) {
                 if (PlayersData[faction].soc_category_pending.models_[SocialCategory::ECONOMICS] == 2)
                     BaseCurrent->drone_total = base_yield_sub(BaseCurrent->drone_total, 1);
                 if (PlayersData[faction].soc_category_pending.models_[SocialCategory::ECONOMICS] != 1)
@@ -8553,7 +8553,7 @@ int __cdecl base_rank(int faction_id, int rank_position) {
     int base_id[MaxBaseNum];
     int base_energy[MaxBaseNum];
     int bases_found = 0;
-    for (int i = 0; i < BaseCurrentCount; i++) {
+    for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
         if (Bases[i].faction_id_current == faction_id) {
             base_id[bases_found] = i;
             base_energy[bases_found++] = (Bases[i].energy_intake_1 * 512) + i;
@@ -8722,11 +8722,11 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl base_energy_costs() {
-    if (BaseCurrent->energy_surplus >= 0 || VehCurrentCount <= 0) {
+    if (BaseCurrent->energy_surplus >= 0 || GameDataStateStorage.fields_.vehicle_current_count_ <= 0) {
         return;
     }
     uint32_t faction_id = BaseCurrent->faction_id_current;
-    for (int i = 0; i < VehCurrentCount; i++) {
+    for (int i = 0; i < GameDataStateStorage.fields_.vehicle_current_count_; i++) {
         if (Vehs[i].faction_id == faction_id
             && VehPrototypes[Vehs[i].proto_id].plan == PLAN_SUPPLY_CONVOY
             && Vehs[i].order == ORDER_CONVOY && Vehs[i].order_auto_type == RSC_ENERGY
@@ -8856,7 +8856,7 @@ Status: Complete
 void __cdecl make_base_unique(int base_id) {
     purge_spaces(Bases[base_id].name_string); // added to remove extraneous whitespace
     uint32_t found = 0;
-    for (int i = 0; i < BaseCurrentCount; i++) {
+    for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
         if (base_id != (uint32_t)i && !strcmp(Bases[i].name_string, Bases[base_id].name_string)) {
             // BUG IN THE ORIGINAL: only the FIRST collision truncates
             // name_string back to its 21-character core; a second collision
@@ -9026,7 +9026,7 @@ int __cdecl suggest_plan(int faction_id, int faction_id_2) {
     PopupDialogFactionID = faction_id_2;
     int lowest_cost = 9999;
     int base_id_best = -1;
-    for (int i = 0; i < BaseCurrentCount; i++) {
+    for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
         int faction_id_base = Bases[i].faction_id_current;
         if (faction_id_base == faction_id || faction_id_base == faction_id_2) {
             continue;
@@ -9093,7 +9093,7 @@ int __cdecl attack_from(int base_id_to_atk, int faction_id) {
     uint32_t region_src = region_at(Bases[base_id_to_atk].x, Bases[base_id_to_atk].y);
     int base_id_atk_from = 0; // TODO: eventually change this to -1 and add handling to the return
     int search = 9999;        // value to prevent the edge case of base id 0 being incorrect target
-    for (int i = 0; i < BaseCurrentCount; i++) {
+    for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
         if (Bases[i].faction_id_current == faction_id) {
             int x = Bases[i].x;
             int y = Bases[i].y;
@@ -9388,7 +9388,7 @@ Status: Complete
 */
 int __cdecl vulnerable(int faction_id, int x, int y) {
     int dist = 12; // default value for no bases or no HQ
-    for (int i = 0; i < BaseCurrentCount; i++) {
+    for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
         if (Bases[i].faction_id_current == faction_id && has_fac_built_call(FAC_HEADQUARTERS, i)) {
             // Open-coded vector_dist(x, y, Bases[i].x, Bases[i].y): the
             // image calls abs() four times, never vector_dist itself - see
@@ -9429,27 +9429,27 @@ Return Value: Is base an objective? true/false
 Status: Complete
 */
 BOOL __cdecl is_objective(int base_id) {
-    if (GameRules & RULES_SCN_VICT_ALL_BASE_COUNT_OBJ) {
+    if (GameDataStateStorage.fields_.game_rules_ & RULES_SCN_VICT_ALL_BASE_COUNT_OBJ) {
         return true;
     }
     if (Bases[base_id].event & BEVENT_OBJECTIVE) {
         return true;
     }
-    if (GameRules & RULES_SCN_VICT_SP_COUNT_OBJ) {
+    if (GameDataStateStorage.fields_.game_rules_ & RULES_SCN_VICT_SP_COUNT_OBJ) {
         for (int i = 0; i < MaxSecretProjectNum; i++) {
             if (base_project(i) == base_id) {
                 return true;
             }
         }
     }
-    if (GameState & STATE_SCN_VICT_BASE_FACIL_COUNT_OBJ) {
+    if (GameDataStateStorage.fields_.game_state_ & STATE_SCN_VICT_BASE_FACIL_COUNT_OBJ) {
         // Open-coded has_fac(ScnVictFacilityObj, base_id, 0): with
         // queue_count == 0 it reduces to has_fac's own early-out guard
         // followed by has_fac_built(), and the image inlines exactly that
         // (its `cmp eax, 0x41 / jge` IS has_fac's `facility_id >=
         // FacilityRepStart` guard) rather than calling has_fac out of line.
-        if ((int)ScnVictFacilityObj < FacilityRepStart
-            && has_fac_built_call(ScnVictFacilityObj, base_id)) {
+        if ((int)GameDataStateStorage.fields_.scenario_victory_facility_ < FacilityRepStart
+            && has_fac_built_call(GameDataStateStorage.fields_.scenario_victory_facility_, base_id)) {
             return true;
         }
     }
@@ -9502,19 +9502,19 @@ int __cdecl num_objectives(int faction_id, BOOL count_pact_factions) {
     }
     int total = PlayersData[faction_id].unk_101;
     // Objective units that have reached a base that qualifies.
-    for (int veh_id = 0; veh_id < VehCurrentCount; veh_id++) {
+    for (int veh_id = 0; veh_id < GameDataStateStorage.fields_.vehicle_current_count_; veh_id++) {
         Veh *veh = &Vehs[veh_id];
         if (veh->faction_id != faction_id || !(veh->flags & VFLAG_IS_OBJECTIVE)) {
             continue;
         }
         int base_id;
-        if (GameRules & RULES_SCN_VICT_OBJ_UNITS_REACH_FRIEND_OBJ_BASE) {
+        if (GameDataStateStorage.fields_.game_rules_ & RULES_SCN_VICT_OBJ_UNITS_REACH_FRIEND_OBJ_BASE) {
             base_id = base_at(veh->x, veh->y);
             if (base_id < 0 || !is_objective(base_id)) {
                 continue;
             }
         } else {
-            if (!(GameRules & RULES_SCN_VICT_OBJ_UNITS_REACH_FRIEND_HQ_BASE)) {
+            if (!(GameDataStateStorage.fields_.game_rules_ & RULES_SCN_VICT_OBJ_UNITS_REACH_FRIEND_HQ_BASE)) {
                 total++; // neither condition is set: the unit itself counts
                 continue;
             }
@@ -9527,25 +9527,25 @@ int __cdecl num_objectives(int faction_id, BOOL count_pact_factions) {
         if (owner == faction_id) {
             total++;
         } else if ((PlayersData[faction_id].diplo_treaties[owner] & DTREATY_PACT)
-            && (GameRules & RULES_VICTORY_COOPERATIVE)) {
+            && (GameDataStateStorage.fields_.game_rules_ & RULES_VICTORY_COOPERATIVE)) {
             total++; // a pact partner's base counts under 'One For All'
         }
     }
     // Population, and bases that are objectives in their own right.
-    for (int base_id = 0; base_id < BaseCurrentCount; base_id++) {
+    for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; base_id++) {
         if (Bases[base_id].faction_id_current != faction_id) {
             continue;
         }
-        if (GameState & STATE_SCN_VICT_POPULATION_COUNT_OBJ) {
+        if (GameDataStateStorage.fields_.game_state_ & STATE_SCN_VICT_POPULATION_COUNT_OBJ) {
             total += Bases[base_id].population_size;
         }
-        if (!(GameRules & RULES_SCN_VICT_ALL_BASE_COUNT_OBJ)
+        if (!(GameDataStateStorage.fields_.game_rules_ & RULES_SCN_VICT_ALL_BASE_COUNT_OBJ)
             && !(Bases[base_id].event & BEVENT_OBJECTIVE)) {
             continue;
         }
         total++;
     }
-    if (GameState & STATE_SCN_VICT_TECH_COUNT_OBJ) {
+    if (GameDataStateStorage.fields_.game_state_ & STATE_SCN_VICT_TECH_COUNT_OBJ) {
         for (int tech_id = 0; tech_id < MaxTechnologyNum; tech_id++) {
             if (has_tech(tech_id, faction_id)) {
                 total++;
@@ -9553,14 +9553,14 @@ int __cdecl num_objectives(int faction_id, BOOL count_pact_factions) {
         }
         total += PlayersData[faction_id].theory_of_everything;
     }
-    if (GameState & STATE_SCN_VICT_CREDITS_COUNT_OBJ) {
+    if (GameDataStateStorage.fields_.game_state_ & STATE_SCN_VICT_CREDITS_COUNT_OBJ) {
         total += PlayersData[faction_id].energy_reserves;
     }
-    if (GameState & STATE_SCN_VICT_BASE_FACIL_COUNT_OBJ) {
-        for (int base_id = 0; base_id < BaseCurrentCount; base_id++) {
+    if (GameDataStateStorage.fields_.game_state_ & STATE_SCN_VICT_BASE_FACIL_COUNT_OBJ) {
+        for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; base_id++) {
             if (Bases[base_id].faction_id_current == faction_id
-                && (int)ScnVictFacilityObj < FacilityRepStart
-                && has_fac_built(ScnVictFacilityObj, base_id)) {
+                && (int)GameDataStateStorage.fields_.scenario_victory_facility_ < FacilityRepStart
+                && has_fac_built(GameDataStateStorage.fields_.scenario_victory_facility_, base_id)) {
                 total++;
             }
         }
@@ -9570,7 +9570,7 @@ int __cdecl num_objectives(int faction_id, BOOL count_pact_factions) {
     * because a row holds only every other x and the rows pack together; the
     * pointer is not reset between rows.
     */
-    if (GameState & STATE_SCN_VICT_TERRAIN_ENH_COUNT_OBJ) {
+    if (GameDataStateStorage.fields_.game_state_ & STATE_SCN_VICT_TERRAIN_ENH_COUNT_OBJ) {
         Map *tile = map_tiles();
         for (int y = 0; y < MapLatitudeBounds; y++) {
             for (int x = y & 1; x < MapLongitudeBounds; x += 2) {
@@ -9581,7 +9581,7 @@ int __cdecl num_objectives(int faction_id, BOOL count_pact_factions) {
             }
         }
     }
-    if (GameState & STATE_SCN_VICT_TERRITORY_COUNT_OBJ) {
+    if (GameDataStateStorage.fields_.game_state_ & STATE_SCN_VICT_TERRITORY_COUNT_OBJ) {
         Map *tile = map_tiles();
         for (int y = 0; y < MapLatitudeBounds; y++) {
             for (int x = y & 1; x < MapLongitudeBounds; x += 2) {
@@ -9592,7 +9592,7 @@ int __cdecl num_objectives(int faction_id, BOOL count_pact_factions) {
             }
         }
     }
-    if (GameRules & RULES_SCN_VICT_SP_COUNT_OBJ) {
+    if (GameDataStateStorage.fields_.game_rules_ & RULES_SCN_VICT_SP_COUNT_OBJ) {
         for (int i = 0; i < MaxSecretProjectNum; i++) {
             int base_id = base_project(i);
             if (base_id >= 0 && Bases[base_id].faction_id_current == faction_id) {
@@ -9601,7 +9601,7 @@ int __cdecl num_objectives(int faction_id, BOOL count_pact_factions) {
         }
     }
     // One recursion deep only: the pact partners are asked with the flag off.
-    if (count_pact_factions && (GameRules & RULES_VICTORY_COOPERATIVE)) {
+    if (count_pact_factions && (GameDataStateStorage.fields_.game_rules_ & RULES_VICTORY_COOPERATIVE)) {
         for (int other_id = 1; other_id < MaxPlayerNum; other_id++) {
             if (other_id != faction_id
                 && (PlayersData[faction_id].diplo_treaties[other_id] & DTREATY_PACT)) {
@@ -9629,7 +9629,7 @@ BOOL __cdecl transcending(int faction_id) {
     if (!ascending(faction_id)) {
         return false;
     }
-    for (int i = 0; i < BaseCurrentCount; i++) {
+    for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
         // NOT NEGATED, and that is the image rather than a slip here. The
         // bytes at 0x005AC65C are `83 38 66` - `cmp dword ptr [eax], 0x66` -
         // a POSITIVE 102, where every other site in the tree writes
@@ -9759,12 +9759,12 @@ Status: Complete
 BOOL __cdecl facility_avail(int facility_id, int faction_id, int base_id,
                             int queue_count) {
     // initial checks
-    if (!facility_id || (facility_id == FAC_SKUNKWORKS && DiffLevelCurrent <= DLVL_SPECIALIST)
-        || (facility_id >= FAC_HUMAN_GENOME_PROJ && GameRules & RULES_SCN_NO_BUILDING_SP)) {
+    if (!facility_id || (facility_id == FAC_SKUNKWORKS && GameDataStateStorage.fields_.diff_level_current_ <= DLVL_SPECIALIST)
+        || (facility_id >= FAC_HUMAN_GENOME_PROJ && GameDataStateStorage.fields_.game_rules_ & RULES_SCN_NO_BUILDING_SP)) {
         return false; // Skunkworks removed if there are no prototype costs
     }
     if (facility_id == FAC_ASCENT_TO_TRANSCENDENCE) { // at top since anyone can build it
-        return ascending(faction_id) && GameRules & RULES_VICTORY_TRANSCENDENCE
+        return ascending(faction_id) && GameDataStateStorage.fields_.game_rules_ & RULES_VICTORY_TRANSCENDENCE
             && _stricmp(Players[faction_id].filename, "CARETAKE"); // bug fix for Caretakers
     }
     if (!has_tech(Facility[facility_id].preq_tech, faction_id)) { // Check tech for facility + SP
@@ -9931,13 +9931,13 @@ int __cdecl most_objectives(int *faction_id_out, int *pact_count_out) {
     }
     int faction_id = 1;
     do {
-        int count = num_objectives(faction_id, GameRules & RULES_VICTORY_COOPERATIVE);
+        int count = num_objectives(faction_id, GameDataStateStorage.fields_.game_rules_ & RULES_VICTORY_COOPERATIVE);
         if (count >= best_count) {
             if (pact_count_out != 0) {
                 if (count > best_count) {
                     *pact_count_out = 0;
                 } else if ((PlayersData[faction_id].diplo_treaties[best_faction] & DTREATY_PACT) == 0
-                           || (GameRules & RULES_VICTORY_COOPERATIVE) == 0) {
+                           || (GameDataStateStorage.fields_.game_rules_ & RULES_VICTORY_COOPERATIVE) == 0) {
                     ++*pact_count_out;
                 }
             }
@@ -10057,8 +10057,8 @@ int __cdecl upgrade_cost(int faction_id, int proto_id_init, int proto_id_upg) {
 
 void __cdecl upgrade_any_prototypes(int faction_id) {
     UpgradePromptAnswered = 0;
-    if (((1 << faction_id) & (int)(unsigned char)LockEnableMask) == 0
-        || (GameMorePreferences & 0x100000) != 0) {
+    if (((1 << faction_id) & (int)(unsigned char)GameDataStateStorage.fields_.lock_masks_.enable_mask_) == 0
+        || (GameDataStateStorage.fields_.game_more_preferences_ & 0x100000) != 0) {
         int i = 0;
         do {
             int proto_id = i;
@@ -10240,7 +10240,7 @@ int __cdecl get_rating(int faction_id, int arg2) {
     for (int i = 3; i <= value; i++) {
         rating += (i - 1) / 2;
     }
-    if (*(unsigned char *)&GameRules & 0x40) {
+    if (*(unsigned char *)&GameDataStateStorage.fields_.game_rules_ & 0x40) {
         rating++;
     }
     return (rating + 6) * arg2 / 0xa0;
@@ -10325,9 +10325,9 @@ void __cdecl do_upgrade(int faction_id, int proto_id_new, int proto_id_old) {
         } while (i < *ConsoleGroupCount);
     }
 
-    if (BaseCurrentCount > 0) {
+    if (GameDataStateStorage.fields_.base_current_count_ > 0) {
         Base *base = Bases;
-        int j = BaseCurrentCount;
+        int j = GameDataStateStorage.fields_.base_current_count_;
         do {
             if (base->faction_id_current == faction_id) {
                 int queue_size = base->queue_size;
@@ -10353,7 +10353,7 @@ void __cdecl do_upgrade(int faction_id, int proto_id_new, int proto_id_old) {
         VehPrototypes[proto_id_old].flags &= 0xfe;
     }
 
-    if ((*(unsigned char *)&LockEnableMask & (1 << faction_id)) != 0) {
+    if ((*(unsigned char *)&GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1 << faction_id)) != 0) {
         draw_map(1);
     }
     if (faction_id == ConsoleGlobal.faction_id_) {
@@ -10363,10 +10363,10 @@ void __cdecl do_upgrade(int faction_id, int proto_id_new, int proto_id_old) {
 
 // Original score calculation clears all eight weights, then publishes the
 // aggregate after dividing the transcendence bonus among faction populations.
-// RECOVERY_OBJECT: v2 0x009A67DC 0x009A67E0 ?TranscendenceScoreBonus@@3HA 0x005ACBE0
-int TranscendenceScoreBonus;
-// RECOVERY_OBJECT: v2 0x009A67E0 0x009A6800 ?TranscendenceScoreWeights@@3PAHA 0x005ACBE0
-int TranscendenceScoreWeights[8];
+// Historical object identity moved to GameDataStateStorage; see the transport manifest.
+
+// Historical object identity moved to GameDataStateStorage; see the transport manifest.
+
 
 static int score_word_add(int left, int right) {
     return static_cast<int>(static_cast<uint32_t>(left) + static_cast<uint32_t>(right));
@@ -10382,14 +10382,14 @@ static int score_word_mul(int left, int right) {
 // RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/unrecovered/005acbe0.cpp", "source:src/faction.h", "image:complete original instructions and independent storage/lifecycle evidence"], "reason": "Recover all original faction-score branches, recursive updates and publication in the base/objective domain through genuine Base, PlayerData and Rules fields; original signed population, word wrapping, bonus order and malformed-state paths remain explicit."}
 // symbol    ?compute_score@@YAXHPAH0H@Z
 void __cdecl compute_score(int faction, int *total, int *items, int recursive) {
-    if ((GameState & 8) && !recursive) return;
+    if ((GameDataStateStorage.fields_.game_state_ & 8) && !recursive) return;
     if (!total) total = &PlayersData[faction].unk_109;
     if (!items) items = PlayersData[faction].score_items_;
     *total = 0;
     if (!recursive) PlayersData[faction].unk_107 = 0;
     for (int item = 0; item < 9; ++item) items[item] = 0;
 
-    for (int base = 0; base < BaseCurrentCount; ++base) {
+    for (int base = 0; base < GameDataStateStorage.fields_.base_current_count_; ++base) {
         const int owner = Bases[base].faction_id_current;
         if (owner == faction) {
             items[0] = score_word_add(items[0], Bases[base].population_size);
@@ -10407,32 +10407,32 @@ void __cdecl compute_score(int faction, int *total, int *items, int recursive) {
             const uint32_t treaty = PlayersData[owner].diplo_treaties[faction];
             if (treaty & 0x2000000) {
                 if (treaty & 1) items[0] = score_word_add(items[0], Bases[base].population_size);
-            } else if ((treaty & 1) && (GameRules & 0x1000)) {
+            } else if ((treaty & 1) && (GameDataStateStorage.fields_.game_rules_ & 0x1000)) {
                 items[0] = score_word_add(items[0], Bases[base].population_size / 2);
             }
-        } else if (!(PlayersData[faction].diplo_treaties[owner] & 1) || !(GameRules & 0x1000)) {
+        } else if (!(PlayersData[faction].diplo_treaties[owner] & 1) || !(GameDataStateStorage.fields_.game_rules_ & 0x1000)) {
             items[0] = score_word_add(items[0], Bases[base].population_size / 2);
         } else items[0] = score_word_add(items[0], Bases[base].population_size);
     }
     for (int technology = 0; technology < 89; ++technology)
         if (has_tech(technology, faction)) items[2] = score_word_add(items[2], 1);
     items[3] = score_word_mul(PlayersData[faction].theory_of_everything, 10);
-    int objective_points = static_cast<int>(ObjectiveAchievePts);
+    int objective_points = static_cast<int>(ScenarioSave.objective_achieve_points);
     if (objective_points < 1) objective_points = 1;
-    items[6] = score_word_mul(num_objectives(faction, GameRules & 0x1000), objective_points);
+    items[6] = score_word_mul(num_objectives(faction, GameDataStateStorage.fields_.game_rules_ & 0x1000), objective_points);
     for (int project = 0; project < 64; ++project) {
         const int base = base_project(project);
         if (base >= 0 && Bases[base].faction_id_current == faction)
             items[4] = score_word_add(items[4], 25);
     }
 
-    TranscendenceScoreBonus = 0;
-    for (int slot = 0; slot < 8; ++slot) TranscendenceScoreWeights[slot] = 0;
-    const int transcendence_base = SecretProject.ascent_to_transcendence();
+    GameDataStateStorage.fields_.transcendence_score_bonus_ = 0;
+    for (int slot = 0; slot < 8; ++slot) GameDataStateStorage.fields_.transcendence_score_weights_[slot] = 0;
+    const int transcendence_base = GameDataStateStorage.fields_.secret_project_.ascent_to_transcendence();
     if (transcendence_base >= 0) {
-        TranscendenceScoreBonus = 300;
-        const int scaled = score_word_mul(score_word_sub(1000, TurnCurrentNum), 2);
-        if (scaled >= 300) TranscendenceScoreBonus = scaled;
+        GameDataStateStorage.fields_.transcendence_score_bonus_ = 300;
+        const int scaled = score_word_mul(score_word_sub(1000, GameDataStateStorage.fields_.turn_current_num_), 2);
+        if (scaled >= 300) GameDataStateStorage.fields_.transcendence_score_bonus_ = scaled;
         int own_weight = 0;
         int aggregate = 0;
         int leader = -1;
@@ -10440,7 +10440,7 @@ void __cdecl compute_score(int faction, int *total, int *items, int recursive) {
             if (Bases[transcendence_base].faction_id_current == candidate) {
                 leader = candidate;
                 aggregate = score_word_mul(PlayersData[candidate].pop_total, 2);
-                TranscendenceScoreWeights[candidate] = aggregate;
+                GameDataStateStorage.fields_.transcendence_score_weights_[candidate] = aggregate;
                 if (candidate == faction) own_weight = aggregate;
                 break;
             }
@@ -10451,22 +10451,22 @@ void __cdecl compute_score(int faction, int *total, int *items, int recursive) {
             if (other != leader && (PlayersData[other].diplo_treaties[leader] & 1)) {
                 const int weight = PlayersData[other].pop_total;
                 aggregate = score_word_add(aggregate, weight);
-                TranscendenceScoreWeights[other] = weight;
+                GameDataStateStorage.fields_.transcendence_score_weights_[other] = weight;
                 if (other == faction) own_weight = score_word_add(own_weight, weight);
             }
         }
-        items[6] = score_word_mul(TranscendenceScoreBonus, own_weight) / aggregate;
+        items[6] = score_word_mul(GameDataStateStorage.fields_.transcendence_score_bonus_, own_weight) / aggregate;
         // Original publishes aggregate only AFTER the signed division.
-        TranscendenceScoreWeights[0] = aggregate;
+        GameDataStateStorage.fields_.transcendence_score_weights_[0] = aggregate;
     }
 
-    int diplomatic_bonus = score_word_mul(score_word_sub(500, TurnCurrentNum), 2);
+    int diplomatic_bonus = score_word_mul(score_word_sub(500, GameDataStateStorage.fields_.turn_current_num_), 2);
     items[7] = diplomatic_bonus < 0 ? 0 : diplomatic_bonus;
-    if (!(GameRules & 2)) items[7] = 0;
-    if ((GameState & 0x2000) && (GameRules & 2) && items[7]) {
+    if (!(GameDataStateStorage.fields_.game_rules_ & 2)) items[7] = 0;
+    if ((GameDataStateStorage.fields_.game_state_ & 0x2000) && (GameDataStateStorage.fields_.game_rules_ & 2) && items[7]) {
         int matching_population = 0;
         int total_population = 0;
-        for (int base = 0; base < BaseCurrentCount; ++base) {
+        for (int base = 0; base < GameDataStateStorage.fields_.base_current_count_; ++base) {
             const int population = Bases[base].population_size;
             total_population = score_word_add(total_population, population);
             const int owner = Bases[base].faction_id_current;
@@ -10480,28 +10480,28 @@ void __cdecl compute_score(int faction, int *total, int *items, int recursive) {
         items[7] = 0;
         const uint32_t flags = PlayersData[faction].flags;
         if (flags & 0x20000) {
-            int bonus = score_word_mul(score_word_sub(600, TurnCurrentNum), 2);
+            int bonus = score_word_mul(score_word_sub(600, GameDataStateStorage.fields_.turn_current_num_), 2);
             if (bonus < 200) bonus = 200;
             items[7] = bonus;
         } else if (flags & 0x40000) {
-            int bonus = score_word_mul(score_word_sub(600, TurnCurrentNum), 2);
+            int bonus = score_word_mul(score_word_sub(600, GameDataStateStorage.fields_.turn_current_num_), 2);
             if (bonus < 200) bonus = 200;
             items[7] = bonus;
         } else if (flags & 0x100000) {
-            int bonus = score_word_mul(score_word_sub(1000, TurnCurrentNum), 2);
+            int bonus = score_word_mul(score_word_sub(1000, GameDataStateStorage.fields_.turn_current_num_), 2);
             if (bonus < 300) bonus = 300;
             items[7] = bonus;
         } else {
             for (int other = 1; other < 8; ++other) {
                 if (PlayersData[other].flags & 0x20000) {
-                    if ((PlayersData[faction].diplo_treaties[other] & 1) && (GameRules & 0x1000)) {
-                        int bonus = score_word_sub(600, TurnCurrentNum);
+                    if ((PlayersData[faction].diplo_treaties[other] & 1) && (GameDataStateStorage.fields_.game_rules_ & 0x1000)) {
+                        int bonus = score_word_sub(600, GameDataStateStorage.fields_.turn_current_num_);
                         if (bonus < 100) bonus = 100;
                         items[7] = bonus;
                     }
                 } else if (PlayersData[other].flags & 0x40000) {
-                    if ((PlayersData[faction].diplo_treaties[other] & 1) && (GameRules & 0x1000)) {
-                        int bonus = score_word_sub(600, TurnCurrentNum);
+                    if ((PlayersData[faction].diplo_treaties[other] & 1) && (GameDataStateStorage.fields_.game_rules_ & 0x1000)) {
+                        int bonus = score_word_sub(600, GameDataStateStorage.fields_.turn_current_num_);
                         if (bonus < 100) bonus = 100;
                         items[7] = bonus;
                     }
@@ -10514,9 +10514,9 @@ void __cdecl compute_score(int faction, int *total, int *items, int recursive) {
         items[8] = 0;
     }
 
-    int required = ObjectiveReqVictory;
-    if ((required < 9000 || static_cast<int>(ObjectivesSuddenDeathVictory) < 9000)
-        && !(GameState & 0x80000)) {
+    int required = ScenarioSave.objective_req_victory;
+    if ((required < 9000 || static_cast<int>(ScenarioSave.objectives_sudden_death_victory) < 9000)
+        && !(GameDataStateStorage.fields_.game_state_ & 0x80000)) {
         // Intentionally clears the faction's GLOBAL score cache even when
         // caller supplied a separate local items array in recursive mode.
         for (int item = 0; item < 9; ++item)
@@ -10527,22 +10527,22 @@ void __cdecl compute_score(int faction, int *total, int *items, int recursive) {
             int best = most_objectives(0, 0);
             if (best < 1) best = 1;
             else best = most_objectives(0, 0); // Original calls twice here.
-            if (num_objectives(faction, GameRules & 0x1000) >= best)
-                items[7] = static_cast<int>(VictoryAchieveBonusPts);
+            if (num_objectives(faction, GameDataStateStorage.fields_.game_rules_ & 0x1000) >= best)
+                items[7] = static_cast<int>(ScenarioSave.victory_achieve_bonus_points);
         } else {
-            const int mine = num_objectives(faction, GameRules & 0x1000);
-            required = ObjectiveReqVictory; // Original re-reads after call.
-            if (mine >= required) items[7] = static_cast<int>(VictoryAchieveBonusPts);
+            const int mine = num_objectives(faction, GameDataStateStorage.fields_.game_rules_ & 0x1000);
+            required = ScenarioSave.objective_req_victory; // Original re-reads after call.
+            if (mine >= required) items[7] = static_cast<int>(ScenarioSave.victory_achieve_bonus_points);
         }
     }
     for (int total_item = 0; total_item < 9; ++total_item)
         *total = score_word_add(*total, items[total_item]);
-    if (MapNativeLifeForms != 1 && !(GameState & 0x10)) {
+    if (MapNativeLifeForms != 1 && !(GameDataStateStorage.fields_.game_state_ & 0x10)) {
         const int difference = score_word_mul(score_word_sub(static_cast<int>(MapNativeLifeForms), 1), *total) / 4;
         items[5] = difference;
         *total = score_word_add(*total, difference);
     }
-    if (GameState & 0x80000) {
+    if (GameDataStateStorage.fields_.game_state_ & 0x80000) {
         if (recursive) return;
         int best = 0;
         int other_total;
@@ -10552,13 +10552,13 @@ void __cdecl compute_score(int faction, int *total, int *items, int recursive) {
             if (other_total > best) best = other_total;
         }
         if (*total >= best) {
-            int bonus = static_cast<int>(VictoryAchieveBonusPts);
+            int bonus = static_cast<int>(ScenarioSave.victory_achieve_bonus_points);
             if (!bonus) bonus = 1000;
             items[7] = bonus; // Original does NOT add this late bonus to total.
         }
     } else if (recursive) return;
     PlayersData[faction].unk_107 = *total;
-    if ((GameRules & 0x400) && !(GameState & 0x20))
+    if ((GameDataStateStorage.fields_.game_rules_ & 0x400) && !(GameDataStateStorage.fields_.game_state_ & 0x20))
         PlayersData[faction].unk_107 = score_word_mul(*total, 2);
 }
 
@@ -10623,8 +10623,8 @@ void __cdecl capture_base(int base_id, int faction_id, int mode) {
     treaty_off(faction_id, (int)local_8, 0x40);
     bVar11 = (unsigned char)faction_id;
     local_5c = 1u << (bVar11 & 0x1f);
-    if (((local_5c & LockEnableMask & 0xff) != 0) ||
-        ((LockEnableMask & 0xff & (1u << (local_8 & 0x1f))) != 0)) {
+    if (((local_5c & GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xff) != 0) ||
+        ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xff & (1u << (local_8 & 0x1f))) != 0)) {
         treaty_on(faction_id, (int)local_8, 0x2000);
     }
 
@@ -10644,8 +10644,8 @@ void __cdecl capture_base(int base_id, int faction_id, int mode) {
             if (iVar5 < 0) iVar5 = -iVar5;
             if (base_project(iVar5 - FAC_HUMAN_GENOME_PROJ) == -1) {
                 found = 0;
-                if (BaseCurrentCount > 0) {
-                    for (otherIdx = 0; otherIdx < BaseCurrentCount; otherIdx++) {
+                if (GameDataStateStorage.fields_.base_current_count_ > 0) {
+                    for (otherIdx = 0; otherIdx < GameDataStateStorage.fields_.base_current_count_; otherIdx++) {
                         if (otherIdx != base_id &&
                             Bases[otherIdx].faction_id_current == uVar14 &&
                             Bases[otherIdx].queue_production_id[0] == Bases[base_id].queue_production_id[0]) {
@@ -10711,8 +10711,8 @@ void __cdecl capture_base(int base_id, int faction_id, int mode) {
     if (local_10 != 0 && 999 < PlayersData[local_8].energy_reserves) {
         local_34 = 9999;
         local_38 = -1;
-        if (BaseCurrentCount > 0) {
-            for (local_14 = 0; local_14 < BaseCurrentCount; local_14++) {
+        if (GameDataStateStorage.fields_.base_current_count_ > 0) {
+            for (local_14 = 0; local_14 < GameDataStateStorage.fields_.base_current_count_; local_14++) {
                 if (local_14 != base_id && Bases[local_14].faction_id_current == (unsigned char)local_8) {
                     int aBase, bBase, hi, lo;
                     local_30 = Bases[local_14].y;
@@ -10720,8 +10720,8 @@ void __cdecl capture_base(int base_id, int faction_id, int mode) {
                     local_50 = 1;
                     local_2c = (unsigned int)MapTiles[(MapLongitude) * local_30 + ((int)uVar14 >> 1)].region;
                     local_10 = uVar14;
-                    if (BaseCurrentCount > 0) {
-                        for (j = 0; j < BaseCurrentCount; j++) {
+                    if (GameDataStateStorage.fields_.base_current_count_ > 0) {
+                        for (j = 0; j < GameDataStateStorage.fields_.base_current_count_; j++) {
                             if (j != local_14 && j != base_id &&
                                 Bases[j].faction_id_current == (unsigned char)local_8) {
                                 iVar15 = abs((int)uVar14 - (int)Bases[j].x);
@@ -10773,7 +10773,7 @@ void __cdecl capture_base(int base_id, int faction_id, int mode) {
                         pcVar18 = "ESCAPED";
                         NetMsgPrimary.pop(pcVar18, 5000, 0, 0);
                     }
-                    if ((LockEnableMask & (1u << (uVar14 & 0x1f))) == 0) {
+                    if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u << (uVar14 & 0x1f))) == 0) {
                         base_reset(local_38, 0);
                     }
                 }
@@ -10784,7 +10784,7 @@ void __cdecl capture_base(int base_id, int faction_id, int mode) {
     bitmask(1, &idxTmp, &maskTmp);
     uVar14 = local_8;
     local_10 = (unsigned int)((Bases[base_id].facilities_built[idxTmp] & maskTmp) != 0);
-    if (local_10 != 0 && TurnCurrentNum < PlayersData[local_8].corner_market_turn &&
+    if (local_10 != 0 && GameDataStateStorage.fields_.turn_current_num_ < PlayersData[local_8].corner_market_turn &&
         0 < PlayersData[local_8].corner_market_active) {
         PlayersData[local_8].energy_reserves += PlayersData[local_8].corner_market_active;
         uVar13 = (unsigned int)ConsoleGlobal.faction_id_;
@@ -10812,7 +10812,7 @@ void __cdecl capture_base(int base_id, int faction_id, int mode) {
         (Bases[base_id].state & 0x40000) == 0 &&
         is_objective(base_id) == 0 &&
         (Bases[base_id].population_size > 1 ||
-         (LockEnableMask & Bases[base_id].visibility) != 0 ||
+         (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & Bases[base_id].visibility) != 0 ||
          IsMultiplayerNet != 0)) {
         cVar4 = Bases[base_id].population_size - 1;
         Bases[base_id].population_size = cVar4;
@@ -10835,7 +10835,7 @@ void __cdecl capture_base(int base_id, int faction_id, int mode) {
             Bases[base_id].faction_id_former = (unsigned char)uVar14;
             Bases[base_id].assimilation_turns_left = 0x32;
         }
-        PlayersData[faction_id].last_turn_new_base = TurnCurrentNum;
+        PlayersData[faction_id].last_turn_new_base = GameDataStateStorage.fields_.turn_current_num_;
         PlayersData[uVar14].current_num_bases -= 1;
         PlayersData[faction_id].current_num_bases += 1;
         replay_base(1, local_28, local_1c, faction_id);
@@ -10858,8 +10858,8 @@ void __cdecl capture_base(int base_id, int faction_id, int mode) {
 
         local_34 = 0;
         local_38 = -1;
-        if (BaseCurrentCount > 0) {
-            for (j = 0; j < BaseCurrentCount; j++) {
+        if (GameDataStateStorage.fields_.base_current_count_ > 0) {
+            for (j = 0; j < GameDataStateStorage.fields_.base_current_count_; j++) {
                 if (j != base_id && Bases[j].faction_id_current == (unsigned char)faction_id) {
                     int val = (int)Bases[j].population_size;
                     bitmask(1, &idxTmp, &maskTmp);
@@ -10919,8 +10919,8 @@ void __cdecl capture_base(int base_id, int faction_id, int mode) {
 
         spot_base(base_id, (int)local_8);
         reset_territory();
-        for (i = VehCurrentCount - 1; i >= 0; i--) {
-            if (i < VehCurrentCount && Vehs[i].faction_id == (unsigned char)local_8 &&
+        for (i = GameDataStateStorage.fields_.vehicle_current_count_ - 1; i >= 0; i--) {
+            if (i < GameDataStateStorage.fields_.vehicle_current_count_ && Vehs[i].faction_id == (unsigned char)local_8 &&
                 Vehs[i].home_base_id == base_id) {
                 int vy, dx8, dy8, killIt;
                 Bases[base_id].faction_id_current = 0xff;
@@ -10984,8 +10984,8 @@ void __cdecl capture_base(int base_id, int faction_id, int mode) {
     strcat(local_174, "BASE");
 
     local_10 = 1u << (local_8 & 0x1f);
-    if ((LockEnableMask & 0xff & local_10) != 0 &&
-        (local_5c & LockEnableMask & 0xff) == 0 &&
+    if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xff & local_10) != 0 &&
+        (local_5c & GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xff) == 0 &&
         base_id >= 0 &&
         (Bases[base_id].state & 0x80) == 0 && local_3c == 0) {
         Bases[base_id].state |= 0x10000;
@@ -11136,7 +11136,7 @@ void __cdecl capture_base(int base_id, int faction_id, int mode) {
     }
 
     uVar14 = local_8;
-    if ((GameRules & 0x4000) == 0 && (Players[faction_id].rule_flags & 0x10) == 0) {
+    if ((GameDataStateStorage.fields_.game_rules_ & 0x4000) == 0 && (Players[faction_id].rule_flags & 0x10) == 0) {
         cnt3 = 0;
         for (techIdx = 0; techIdx < 0x59; techIdx++) {
             if (has_tech(techIdx, (int)local_8) != 0 && has_tech(techIdx, faction_id) == 0) {
@@ -11149,27 +11149,27 @@ void __cdecl capture_base(int base_id, int faction_id, int mode) {
         PlayersData[faction_id].tech_accumulated += (techVal + ((techVal >> 0x1f) & 7)) >> 3;
     } else {
         steal_tech(faction_id, (int)local_8, 1);
-        if (base_id >= 0 && SecretProject.universal_translator() == base_id) {
+        if (base_id >= 0 && GameDataStateStorage.fields_.secret_project_.universal_translator() == base_id) {
             steal_tech(faction_id, (int)uVar14, 1);
         }
     }
 
-    if (((unsigned char)local_10 & (unsigned char)LockEnableMask) == 0) {
+    if (((unsigned char)local_10 & (unsigned char)GameDataStateStorage.fields_.lock_masks_.enable_mask_) == 0) {
         bases_reset((int)local_8, (int)local_44, 0);
     }
     mon_conquer_base(faction_id, local_74);
 
     if (faction_id == ConsoleGlobal.faction_id_ && base_id >= 0 &&
         (Bases[base_id].state & 0x40000) != 0 &&
-        (GamePreferences & 0x40000) == 0 && IsMultiplayerNet == 0) {
+        (GameDataStateStorage.fields_.game_preferences_ & 0x40000) == 0 && IsMultiplayerNet == 0) {
         parse_says(6, Players[ConsoleGlobal.faction_id_].assistant_city, -1, -1);
         hqName = Bases[base_id].name_string;
         parse_says(5, hqName, -1, -1);
         parse_says(7, Players[local_8].adj_name_faction, -1, -1);
         cVar4 = 0;
-        if (BaseCurrentCount > 0) {
+        if (GameDataStateStorage.fields_.base_current_count_ > 0) {
             bestBase = -1;
-            for (iVar15 = 0; iVar15 < BaseCurrentCount; iVar15++) {
+            for (iVar15 = 0; iVar15 < GameDataStateStorage.fields_.base_current_count_; iVar15++) {
                 if (Bases[iVar15].faction_id_current == (unsigned char)faction_id && iVar15 != base_id) {
                     bitmask(1, &idxTmp, &maskTmp);
                     if ((Bases[iVar15].facilities_built[idxTmp] & maskTmp) != 0) {
@@ -11224,7 +11224,7 @@ void __cdecl capture_base(int base_id, int faction_id, int mode) {
         if (faction_id == ConsoleGlobal.faction_id_) {
             iVar15 = ConsoleGlobal.ready_search(-1);
             if (iVar15 < 0) {
-                GameState |= 4;
+                GameDataStateStorage.fields_.game_state_ |= 4;
                 return;
             }
             TutWinBaseWindow.zoom(base_id, 0);
@@ -11248,7 +11248,7 @@ int __cdecl base_connect(int priority) {
     int best_y = -1;
     bool found_connection = false;
 
-    for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+    for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
         if (base_id == BaseIDCurrentSelected) continue;
         const Base &destination = Bases[base_id];
         const int destination_x = destination.x;
@@ -11265,7 +11265,7 @@ int __cdecl base_connect(int priority) {
         if (destination.faction_id_current == faction) {
             if (distance > 8 && !has_fac_built(FAC_HEADQUARTERS, base_id)) {
                 bool outranked = false;
-                for (int other_base_id = 0; other_base_id < BaseCurrentCount;
+                for (int other_base_id = 0; other_base_id < GameDataStateStorage.fields_.base_current_count_;
                      ++other_base_id) {
                     const Base &other = Bases[other_base_id];
                     if (other.faction_id_current != faction ||
@@ -11351,14 +11351,14 @@ int __cdecl base_connect(int priority) {
     int destination_y = source_y;
     if (best_y < 0 || best_y >= MapLatitudeBounds || best_x < 0 ||
         best_x >= MapLongitudeBounds) {
-        if ((LockEnableMask & (1u << (faction & 0x1F))) != 0 &&
-            (GameMorePreferences & MPREF_AUTO_FORMER_BUILD_SENSORS) == 0)
+        if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u << (faction & 0x1F))) != 0 &&
+            (GameDataStateStorage.fields_.game_more_preferences_ & MPREF_AUTO_FORMER_BUILD_SENSORS) == 0)
             return 0;
         if (Paths.sensors(faction, &destination_x, &destination_y) != 0) return 0;
     } else {
         if (found_connection &&
-            ((LockEnableMask & (1u << (faction & 0x1F))) == 0 ||
-             (GameMorePreferences & MPREF_AUTO_FORMER_BUILD_SENSORS) != 0)) {
+            ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u << (faction & 0x1F))) == 0 ||
+             (GameDataStateStorage.fields_.game_more_preferences_ & MPREF_AUTO_FORMER_BUILD_SENSORS) != 0)) {
             int sensor_x;
             int sensor_y;
             if (Paths.sensors(faction, &sensor_x, &sensor_y) == 0) {
@@ -11403,7 +11403,7 @@ void __cdecl base_terraform(int force_improve) {
     const int faction = base.faction_id_current;
     const uint32_t faction_bit = 1u << (faction & 0x1F);
     // The native tests only the low byte of the mask at both use sites.
-    const bool human = (static_cast<uint8_t>(LockEnableMask) &
+    const bool human = (static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) &
                         static_cast<uint8_t>(faction_bit)) != 0;
 
     int growth_priority = 0;
@@ -11494,7 +11494,7 @@ void __cdecl base_terraform(int force_improve) {
             const int worked_modifier = (tile_flags >> 15) & 1;
             if (rainfall + worked_modifier > 1) {
                 bool contested_by_neighbor = false;
-                for (int other_id = 0; other_id < BaseCurrentCount; ++other_id) {
+                for (int other_id = 0; other_id < GameDataStateStorage.fields_.base_current_count_; ++other_id) {
                     if (Bases[other_id].faction_id_current != faction) continue;
                     int dx = abs(x - Bases[other_id].x);
                     if ((MapIsFlat & 1) == 0 && dx > MapLongitude)
@@ -11797,9 +11797,9 @@ void __cdecl base_terraform(int force_improve) {
         const bool fungus_technology = has_tech(
             Rules.tech_improve_fungus_sqr, faction) != 0;
         const bool human_sensor_policy =
-            (static_cast<uint8_t>(LockEnableMask) &
+            (static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) &
              static_cast<uint8_t>(faction_bit)) != 0 &&
-            (GameMorePreferences & 0x20u) == 0;
+            (GameDataStateStorage.fields_.game_more_preferences_ & 0x20u) == 0;
         const bool sensor_site_allowed = sensor_count == 0 && sensor == 0 &&
             bonus == 0 && (terrain_action_mask == 0 ||
                            base.population_size > 7) &&
@@ -11905,9 +11905,9 @@ void __cdecl base_terraform(int force_improve) {
             } else if ((flags & BIT_ROAD) == 0 && (mine_or_bore ||
                        (flags & BIT_THERMAL_BORE) != 0)) {
                 const bool suppress_mine_action =
-                    (static_cast<uint8_t>(LockEnableMask) &
+                    (static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) &
                      static_cast<uint8_t>(faction_bit)) != 0 &&
-                    (GameMorePreferences & 0x00400000u) != 0;
+                    (GameDataStateStorage.fields_.game_more_preferences_ & 0x00400000u) != 0;
                 if (!suppress_mine_action && score > best_action_score) {
                     best_action_score = score;
                     best_action_radius = radius_index;
@@ -12049,9 +12049,9 @@ void __cdecl base_terraform(int force_improve) {
                                        faction)
         ? 2 : 1;
     const bool allow_connection_goal =
-        (static_cast<uint8_t>(LockEnableMask) &
+        (static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) &
          static_cast<uint8_t>(faction_bit)) == 0 ||
-        (GameMorePreferences & 0x00400000u) == 0;
+        (GameDataStateStorage.fields_.game_more_preferences_ & 0x00400000u) == 0;
     if (best_action_radius < 1) {
         if (allow_connection_goal) base_connect(2);
     } else {
@@ -12129,7 +12129,7 @@ void __cdecl base_terraform(int force_improve) {
         if (terrain_pattern_count != 0) {
             if (base.population_size < 8 && energy_need < 2) {
                 if (has_tech(Ability[1].preq_tech, faction) != 0 ||
-                    TurnCurrentNum >= 0xC9)
+                    GameDataStateStorage.fields_.turn_current_num_ >= 0xC9)
                     thermal_site_allowed = true;
             } else {
                 thermal_site_allowed = true;
@@ -12138,10 +12138,10 @@ void __cdecl base_terraform(int force_improve) {
     }
     const bool thermal_goal_allowed = thermal_site_allowed &&
         terrain_avail(TERRA_THERMAL_BORE, FALSE, faction) != 0 &&
-        ((static_cast<uint8_t>(LockEnableMask) &
+        ((static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) &
           static_cast<uint8_t>(faction_bit)) == 0 ||
          (faction == ConsoleGlobal.faction_id_ &&
-          (GamePreferences & 0x02000000u) != 0));
+          (GameDataStateStorage.fields_.game_preferences_ & 0x02000000u) != 0));
 
     bool condenser_site_allowed = false;
     if (!condenser_present && best_condenser_score > 0 &&
@@ -12162,17 +12162,17 @@ void __cdecl base_terraform(int force_improve) {
                     ++terrain_pattern_count;
                 if (terrain_pattern_count != 0 &&
                     (has_tech(Ability[1].preq_tech, faction) != 0 ||
-                     TurnCurrentNum > 200))
+                     GameDataStateStorage.fields_.turn_current_num_ > 200))
                     condenser_site_allowed = true;
             }
         }
     }
     const bool condenser_goal_allowed = condenser_site_allowed &&
         terrain_avail(TERRA_CONDENSER, FALSE, faction) != 0 &&
-        ((static_cast<uint8_t>(LockEnableMask) &
+        ((static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) &
           static_cast<uint8_t>(faction_bit)) == 0 ||
          (faction == ConsoleGlobal.faction_id_ &&
-          (GamePreferences & 0x02000000u) != 0));
+          (GameDataStateStorage.fields_.game_preferences_ & 0x02000000u) != 0));
 
     // The native tail chooses at most one objective in this family: thermal
     // bore first, condenser as its fallback, and the landing-site candidate
@@ -12190,7 +12190,7 @@ void __cdecl base_terraform(int force_improve) {
                 (high_edge_square_count != 0 && energy_need < 3) ||
                 best_landing_score < 1 ||
                 (human && faction != ConsoleGlobal.faction_id_ &&
-                 (GameMorePreferences & 0x00020000u) == 0) ||
+                 (GameDataStateStorage.fields_.game_more_preferences_ & 0x00020000u) == 0) ||
                 terrain_avail(16, FALSE, faction) == 0;
             if (!landing_site_rejected)
                 add_goal(faction, AI_GOAL_LANDING_SITE, 1, best_landing_x,
@@ -12263,9 +12263,9 @@ int __cdecl base_growth() {
     const int owner = BaseCurrent->faction_id_current;
 
     if (BaseCurrent->nutrients_accumulated < 0) {
-        if ((GameState & 1) == 0 || (GameState & 8) != 0) {
-            if (BaseCurrentConvoyFrom[0] != 0 && VehCurrentCount > 0) {
-                for (int vehicle_id = 0; vehicle_id < VehCurrentCount; ++vehicle_id) {
+        if ((GameDataStateStorage.fields_.game_state_ & 1) == 0 || (GameDataStateStorage.fields_.game_state_ & 8) != 0) {
+            if (BaseCurrentConvoyFrom[0] != 0 && GameDataStateStorage.fields_.vehicle_current_count_ > 0) {
+                for (int vehicle_id = 0; vehicle_id < GameDataStateStorage.fields_.vehicle_current_count_; ++vehicle_id) {
                     Veh &vehicle = Vehs[vehicle_id];
                     if (vehicle.home_base_id == BaseIDCurrentSelected
                         && VehPrototypes[vehicle.proto_id].plan == 0xA
@@ -12305,13 +12305,13 @@ int __cdecl base_growth() {
         base_yield_add(static_cast<int>(BaseCurrent->population_size), 1));
     const int faction = BaseIDCurrentSelected;
 
-    if (((SecretProject.cloning_vats() >= 0
-          && Bases[SecretProject.cloning_vats()].faction_id_current == owner)
+    if (((GameDataStateStorage.fields_.secret_project_.cloning_vats() >= 0
+          && Bases[GameDataStateStorage.fields_.secret_project_.cloning_vats()].faction_id_current == owner)
          || BaseCurrentGrowthRate > 5)
         && Rules.nutrient_req_citizen != 0
         && static_cast<int>(Rules.nutrient_req_citizen) <= BaseCurrent->nutrient_surplus) {
-        const bool same = SecretProject.ascetic_virtues() >= 0
-            && Bases[SecretProject.ascetic_virtues()].faction_id_current
+        const bool same = GameDataStateStorage.fields_.secret_project_.ascetic_virtues() >= 0
+            && Bases[GameDataStateStorage.fields_.secret_project_.ascetic_virtues()].faction_id_current
                 == Bases[faction].faction_id_current;
         const int margin = same ? 2 : 0;
         const int total_population =
@@ -12345,8 +12345,8 @@ int __cdecl base_growth() {
             BaseCurrent->nutrients_accumulated = growth;
             return 0;
         }
-        const bool same = SecretProject.ascetic_virtues() >= 0
-            && Bases[SecretProject.ascetic_virtues()].faction_id_current
+        const bool same = GameDataStateStorage.fields_.secret_project_.ascetic_virtues() >= 0
+            && Bases[GameDataStateStorage.fields_.secret_project_.ascetic_virtues()].faction_id_current
                 == Bases[faction].faction_id_current;
         const int margin = same ? 2 : 0;
         const int total_population =
@@ -12511,21 +12511,21 @@ static int upgrade_arithmetic_shift_three(int value) {
 int __cdecl upgrade_prototype(int faction_id, int proto_id_new,
                                  int proto_id_old, int set_flag) {
     const uint32_t faction_bit = 1u << (faction_id & 0x1f);
-    if ((GameState & 1) != 0 && (GameState & 8) == 0) return 0;
+    if ((GameDataStateStorage.fields_.game_state_ & 1) != 0 && (GameDataStateStorage.fields_.game_state_ & 8) == 0) return 0;
 
     const int cost = base_yield_mul(base_yield_mul(
         upgrade_cost(faction_id, proto_id_new, proto_id_old),
         PlayersData[faction_id].proto_id_active[proto_id_old]), 10);
-    if (cost == 0 && !(set_flag == 0 && (LockEnableMask & faction_bit) != 0)) {
+    if (cost == 0 && !(set_flag == 0 && (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_bit) != 0)) {
         return 0;
     }
 
-    if ((LockEnableMask & faction_bit) == 0) {
-        const int ranking_factor = 8 - PlayersData[RankingFactionIDUnk1].ranking;
+    if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_bit) == 0) {
+        const int ranking_factor = 8 - PlayersData[GameDataStateStorage.fields_.ranking_faction_id_unk1_].ranking;
         const int energy = PlayersData[faction_id].energy_reserves;
-        int minerals = (base_yield_mul(DiffLevelCurrent, cost) / 10)
+        int minerals = (base_yield_mul(GameDataStateStorage.fields_.diff_level_current_, cost) / 10)
             / ranking_factor;
-        if (PlayersData[RankingFactionIDUnk2].energy_reserves < energy) {
+        if (PlayersData[GameDataStateStorage.fields_.ranking_faction_id_unk2_].energy_reserves < energy) {
             if (energy > 999) minerals /= 2;
             if (energy > 1999) minerals = 0;
         }
@@ -12538,7 +12538,7 @@ int __cdecl upgrade_prototype(int faction_id, int proto_id_new,
         const int threshold = upgrade_arithmetic_shift_three(base_yield_add(
             discount_energy, discount_energy < 0 ? 7 : 0));
         if (base_yield_sub(cost, minerals) <= threshold) {
-            if ((LockEnableMask & faction_bit) == 0 || !IsMultiplayerNet) {
+            if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_bit) == 0 || !IsMultiplayerNet) {
                 do_upgrade(faction_id, proto_id_new, proto_id_old);
             } else {
                 message_data(0x2411, 0, faction_id, proto_id_new,
@@ -12597,7 +12597,7 @@ int __cdecl upgrade_prototype(int faction_id, int proto_id_new,
             const int energy = PlayersData[faction_id].energy_reserves;
             if (base_yield_sub(cost, energy) != 0 && energy <= cost) {
                 if ((Players[faction_id].rule_flags & RFLAG_ALIEN) == 0) {
-                    if (set_flag != 0 && (GameWarnings & 4) == 0) return 0;
+                    if (set_flag != 0 && (GameDataStateStorage.fields_.game_warnings_ & 4) == 0) return 0;
                     const int triad = Chassis[VehPrototypes[proto_id_new].chassis_id].triad;
                     const char *picture = triad == 2 ? "air_sm.pcx"
                         : triad == 1 ? "navun_sm.pcx" : "unit_sm.pcx";
@@ -12606,7 +12606,7 @@ int __cdecl upgrade_prototype(int faction_id, int proto_id_new,
                          0, picture, 0);
                     return 0;
                 }
-                if (set_flag != 0 && (GameWarnings & 4) == 0) return 0;
+                if (set_flag != 0 && (GameDataStateStorage.fields_.game_warnings_ & 4) == 0) return 0;
                 const int triad = Chassis[VehPrototypes[proto_id_new].chassis_id].triad;
                 const char *picture = triad == 2 ? "alair_sm.pcx"
                     : triad == 1 ? "navun_sm.pcx" : "alunit_sm.pcx";
@@ -12631,7 +12631,7 @@ int __cdecl upgrade_prototype(int faction_id, int proto_id_new,
                 if (result > 1) UpgradePromptAnswered = 1;
             }
         }
-        if ((LockEnableMask & faction_bit) == 0 || !IsMultiplayerNet) {
+        if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_bit) == 0 || !IsMultiplayerNet) {
             do_upgrade(faction_id, proto_id_new, proto_id_old);
         } else {
             message_data(0x2411, 0, faction_id, proto_id_new,
@@ -12707,75 +12707,75 @@ int production_project(int item) {
 
 void production_set_project_owner(int project_id, int base_id) {
     switch (project_id) {
-    case 0: SecretProject.human_genome_project() = base_id; break;
-    case 1: SecretProject.command_nexus() = base_id; break;
-    case 2: SecretProject.weather_paradigm() = base_id; break;
-    case 3: SecretProject.merchant_exchange() = base_id; break;
-    case 4: SecretProject.empath_guild() = base_id; break;
-    case 5: SecretProject.citizens_defense_force() = base_id; break;
-    case 6: SecretProject.virtual_world() = base_id; break;
-    case 7: SecretProject.planetary_transit_system() = base_id; break;
-    case 8: SecretProject.xenoempathy_dome() = base_id; break;
-    case 9: SecretProject.neural_amplifier() = base_id; break;
-    case 10: SecretProject.maritime_control_center() = base_id; break;
-    case 11: SecretProject.planetary_datalinks() = base_id; break;
-    case 12: SecretProject.supercollider() = base_id; break;
-    case 13: SecretProject.ascetic_virtues() = base_id; break;
-    case 14: SecretProject.longevity_vaccine() = base_id; break;
-    case 15: SecretProject.hunter_seeker_algorithm() = base_id; break;
-    case 16: SecretProject.pholus_mutagen() = base_id; break;
-    case 17: SecretProject.cyborg_factory() = base_id; break;
-    case 18: SecretProject.theory_of_everything() = base_id; break;
-    case 19: SecretProject.dream_twister() = base_id; break;
-    case 20: SecretProject.universal_translator() = base_id; break;
-    case 21: SecretProject.network_backbone() = base_id; break;
-    case 22: SecretProject.nano_factory() = base_id; break;
-    case 23: SecretProject.living_refinery() = base_id; break;
-    case 24: SecretProject.cloning_vats() = base_id; break;
-    case 25: SecretProject.self_aware_colony() = base_id; break;
-    case 26: SecretProject.clinical_immortality() = base_id; break;
-    case 27: SecretProject.space_elevator() = base_id; break;
-    case 28: SecretProject.singularity_inductor() = base_id; break;
-    case 29: SecretProject.bulk_matter_transmitter() = base_id; break;
-    case 30: SecretProject.telepathic_matrix() = base_id; break;
-    case 31: SecretProject.voice_of_planet() = base_id; break;
-    case 32: SecretProject.ascent_to_transcendence() = base_id; break;
-    case 33: SecretProject.manifold_harmonics() = base_id; break;
-    case 34: SecretProject.nethack_terminus() = base_id; break;
-    case 35: SecretProject.cloudbase_academy() = base_id; break;
-    case 36: SecretProject.planetary_energy_grid() = base_id; break;
-    case 37: SecretProject.user_defined_38() = base_id; break;
-    case 38: SecretProject.user_defined_39() = base_id; break;
-    case 39: SecretProject.user_defined_40() = base_id; break;
-    case 40: SecretProject.user_defined_41() = base_id; break;
-    case 41: SecretProject.user_defined_42() = base_id; break;
-    case 42: SecretProject.user_defined_43() = base_id; break;
-    case 43: SecretProject.user_defined_44() = base_id; break;
-    case 44: SecretProject.user_defined_45() = base_id; break;
-    case 45: SecretProject.user_defined_46() = base_id; break;
-    case 46: SecretProject.user_defined_47() = base_id; break;
-    case 47: SecretProject.user_defined_48() = base_id; break;
-    case 48: SecretProject.user_defined_49() = base_id; break;
-    case 49: SecretProject.user_defined_50() = base_id; break;
-    case 50: SecretProject.user_defined_51() = base_id; break;
-    case 51: SecretProject.user_defined_52() = base_id; break;
-    case 52: SecretProject.user_defined_53() = base_id; break;
-    case 53: SecretProject.user_defined_54() = base_id; break;
-    case 54: SecretProject.user_defined_55() = base_id; break;
-    case 55: SecretProject.user_defined_56() = base_id; break;
-    case 56: SecretProject.user_defined_57() = base_id; break;
-    case 57: SecretProject.user_defined_58() = base_id; break;
-    case 58: SecretProject.user_defined_59() = base_id; break;
-    case 59: SecretProject.user_defined_60() = base_id; break;
-    case 60: SecretProject.user_defined_61() = base_id; break;
-    case 61: SecretProject.user_defined_62() = base_id; break;
-    case 62: SecretProject.user_defined_63() = base_id; break;
-    case 63: SecretProject.user_defined_64() = base_id; break;
+    case 0: GameDataStateStorage.fields_.secret_project_.human_genome_project() = base_id; break;
+    case 1: GameDataStateStorage.fields_.secret_project_.command_nexus() = base_id; break;
+    case 2: GameDataStateStorage.fields_.secret_project_.weather_paradigm() = base_id; break;
+    case 3: GameDataStateStorage.fields_.secret_project_.merchant_exchange() = base_id; break;
+    case 4: GameDataStateStorage.fields_.secret_project_.empath_guild() = base_id; break;
+    case 5: GameDataStateStorage.fields_.secret_project_.citizens_defense_force() = base_id; break;
+    case 6: GameDataStateStorage.fields_.secret_project_.virtual_world() = base_id; break;
+    case 7: GameDataStateStorage.fields_.secret_project_.planetary_transit_system() = base_id; break;
+    case 8: GameDataStateStorage.fields_.secret_project_.xenoempathy_dome() = base_id; break;
+    case 9: GameDataStateStorage.fields_.secret_project_.neural_amplifier() = base_id; break;
+    case 10: GameDataStateStorage.fields_.secret_project_.maritime_control_center() = base_id; break;
+    case 11: GameDataStateStorage.fields_.secret_project_.planetary_datalinks() = base_id; break;
+    case 12: GameDataStateStorage.fields_.secret_project_.supercollider() = base_id; break;
+    case 13: GameDataStateStorage.fields_.secret_project_.ascetic_virtues() = base_id; break;
+    case 14: GameDataStateStorage.fields_.secret_project_.longevity_vaccine() = base_id; break;
+    case 15: GameDataStateStorage.fields_.secret_project_.hunter_seeker_algorithm() = base_id; break;
+    case 16: GameDataStateStorage.fields_.secret_project_.pholus_mutagen() = base_id; break;
+    case 17: GameDataStateStorage.fields_.secret_project_.cyborg_factory() = base_id; break;
+    case 18: GameDataStateStorage.fields_.secret_project_.theory_of_everything() = base_id; break;
+    case 19: GameDataStateStorage.fields_.secret_project_.dream_twister() = base_id; break;
+    case 20: GameDataStateStorage.fields_.secret_project_.universal_translator() = base_id; break;
+    case 21: GameDataStateStorage.fields_.secret_project_.network_backbone() = base_id; break;
+    case 22: GameDataStateStorage.fields_.secret_project_.nano_factory() = base_id; break;
+    case 23: GameDataStateStorage.fields_.secret_project_.living_refinery() = base_id; break;
+    case 24: GameDataStateStorage.fields_.secret_project_.cloning_vats() = base_id; break;
+    case 25: GameDataStateStorage.fields_.secret_project_.self_aware_colony() = base_id; break;
+    case 26: GameDataStateStorage.fields_.secret_project_.clinical_immortality() = base_id; break;
+    case 27: GameDataStateStorage.fields_.secret_project_.space_elevator() = base_id; break;
+    case 28: GameDataStateStorage.fields_.secret_project_.singularity_inductor() = base_id; break;
+    case 29: GameDataStateStorage.fields_.secret_project_.bulk_matter_transmitter() = base_id; break;
+    case 30: GameDataStateStorage.fields_.secret_project_.telepathic_matrix() = base_id; break;
+    case 31: GameDataStateStorage.fields_.secret_project_.voice_of_planet() = base_id; break;
+    case 32: GameDataStateStorage.fields_.secret_project_.ascent_to_transcendence() = base_id; break;
+    case 33: GameDataStateStorage.fields_.secret_project_.manifold_harmonics() = base_id; break;
+    case 34: GameDataStateStorage.fields_.secret_project_.nethack_terminus() = base_id; break;
+    case 35: GameDataStateStorage.fields_.secret_project_.cloudbase_academy() = base_id; break;
+    case 36: GameDataStateStorage.fields_.secret_project_.planetary_energy_grid() = base_id; break;
+    case 37: GameDataStateStorage.fields_.secret_project_.user_defined_38() = base_id; break;
+    case 38: GameDataStateStorage.fields_.secret_project_.user_defined_39() = base_id; break;
+    case 39: GameDataStateStorage.fields_.secret_project_.user_defined_40() = base_id; break;
+    case 40: GameDataStateStorage.fields_.secret_project_.user_defined_41() = base_id; break;
+    case 41: GameDataStateStorage.fields_.secret_project_.user_defined_42() = base_id; break;
+    case 42: GameDataStateStorage.fields_.secret_project_.user_defined_43() = base_id; break;
+    case 43: GameDataStateStorage.fields_.secret_project_.user_defined_44() = base_id; break;
+    case 44: GameDataStateStorage.fields_.secret_project_.user_defined_45() = base_id; break;
+    case 45: GameDataStateStorage.fields_.secret_project_.user_defined_46() = base_id; break;
+    case 46: GameDataStateStorage.fields_.secret_project_.user_defined_47() = base_id; break;
+    case 47: GameDataStateStorage.fields_.secret_project_.user_defined_48() = base_id; break;
+    case 48: GameDataStateStorage.fields_.secret_project_.user_defined_49() = base_id; break;
+    case 49: GameDataStateStorage.fields_.secret_project_.user_defined_50() = base_id; break;
+    case 50: GameDataStateStorage.fields_.secret_project_.user_defined_51() = base_id; break;
+    case 51: GameDataStateStorage.fields_.secret_project_.user_defined_52() = base_id; break;
+    case 52: GameDataStateStorage.fields_.secret_project_.user_defined_53() = base_id; break;
+    case 53: GameDataStateStorage.fields_.secret_project_.user_defined_54() = base_id; break;
+    case 54: GameDataStateStorage.fields_.secret_project_.user_defined_55() = base_id; break;
+    case 55: GameDataStateStorage.fields_.secret_project_.user_defined_56() = base_id; break;
+    case 56: GameDataStateStorage.fields_.secret_project_.user_defined_57() = base_id; break;
+    case 57: GameDataStateStorage.fields_.secret_project_.user_defined_58() = base_id; break;
+    case 58: GameDataStateStorage.fields_.secret_project_.user_defined_59() = base_id; break;
+    case 59: GameDataStateStorage.fields_.secret_project_.user_defined_60() = base_id; break;
+    case 60: GameDataStateStorage.fields_.secret_project_.user_defined_61() = base_id; break;
+    case 61: GameDataStateStorage.fields_.secret_project_.user_defined_62() = base_id; break;
+    case 62: GameDataStateStorage.fields_.secret_project_.user_defined_63() = base_id; break;
+    case 63: GameDataStateStorage.fields_.secret_project_.user_defined_64() = base_id; break;
     }
 }
 
 bool production_faction_human(int faction_id) {
-    return (static_cast<unsigned char>(LockEnableMask) & (1u << faction_id)) != 0;
+    return (static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & (1u << faction_id)) != 0;
 }
 
 bool production_facility_built(int base_id, int facility_id) {
@@ -12810,9 +12810,9 @@ bool production_colony_abandon_prompt(int owner, int prototype_id) {
     Base &base = *BaseCurrent;
     const bool human = production_faction_human(owner);
     if (!human) {
-        if (DiffLevelCurrent > DLVL_LIBRARIAN) {
+        if (GameDataStateStorage.fields_.diff_level_current_ > DLVL_LIBRARIAN) {
             base.nutrients_accumulated = production_wrapped_add(
-                base.nutrients_accumulated, DiffLevelCurrent - DLVL_TALENT);
+                base.nutrients_accumulated, GameDataStateStorage.fields_.diff_level_current_ - DLVL_TALENT);
         }
         return false;
     }
@@ -12820,7 +12820,7 @@ bool production_colony_abandon_prompt(int owner, int prototype_id) {
     const uint32_t governor = base.governor;
     if (((governor & GOV_MANAGES_PRODUCTION) != 0
          && (governor & GOV_ACTIVE) != 0)
-        || ((GameState & 1u) != 0 && (GameState & 8u) == 0)) {
+        || ((GameDataStateStorage.fields_.game_state_ & 1u) != 0 && (GameDataStateStorage.fields_.game_state_ & 8u) == 0)) {
         return false;
     }
 
@@ -12861,7 +12861,7 @@ void production_spend(Base &base, int owner, int cost) {
     const int cap = exemption < base.mineral_surplus
                   ? exemption : base.mineral_surplus;
     const unsigned char owner_bit = static_cast<unsigned char>(1u << owner);
-    if ((static_cast<unsigned char>(LockEnableMask) & owner_bit) != 0
+    if ((static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & owner_bit) != 0
         && base.minerals_accumulated > cap) {
         base.minerals_accumulated = cap < 0 ? 0 : cap;
     }
@@ -12890,7 +12890,7 @@ bool production_reveal_faction(int faction_id) {
             tile.bit_visible[faction_id - 1] = tile.bit;
         }
     }
-    for (int base_index = 0; base_index < BaseCurrentCount; ++base_index) {
+    for (int base_index = 0; base_index < GameDataStateStorage.fields_.base_current_count_; ++base_index) {
         Base &base = Bases[base_index];
         base.visibility |= faction_mask;
         base.faction_pop_size_intel[faction_id] =
@@ -12921,7 +12921,7 @@ void production_voice_of_planet_spread() {
         faction_already_handled[faction_index] = !is_alive(faction_index);
     }
 
-    for (int base_index = 0; base_index < BaseCurrentCount; ++base_index) {
+    for (int base_index = 0; base_index < GameDataStateStorage.fields_.base_current_count_; ++base_index) {
         const Base &base = Bases[base_index];
         const int owner = base.faction_id_current;
         if (faction_already_handled[owner]) continue;
@@ -13025,12 +13025,12 @@ void production_vehicle_notice(int selected_base_id, int owner,
     bool route_to_warning = queue_result == 0 && !governor_full_auto;
     if (!route_to_warning) {
         route_to_warning = new_prototype
-            ? (GameWarnings & 4u) != 0
-            : (GameWarnings & 0x20000000u) != 0;
+            ? (GameDataStateStorage.fields_.game_warnings_ & 4u) != 0
+            : (GameDataStateStorage.fields_.game_warnings_ & 0x20000000u) != 0;
     }
 
     int popup_flags = 0;
-    if (route_to_warning && new_prototype && (GameWarnings & 4u) != 0) {
+    if (route_to_warning && new_prototype && (GameDataStateStorage.fields_.game_warnings_ & 4u) != 0) {
         const int faction_cost = cost_factor(owner, RSC_MINERALS, -1);
         const int unit_cost = veh_cost(prototype_id, selected_base_id, 0);
         parse_num(0, production_wrapped_multiply(faction_cost, unit_cost));
@@ -13117,8 +13117,8 @@ ProductionReportResume production_report_stage(
     const bool facility_popup = facility_id < 70
         && !has_fac_announced(static_cast<uint32_t>(owner),
                               static_cast<uint32_t>(facility_id))
-        && (GameState & 1u) == 0
-        && (GameWarnings & 1u) != 0;
+        && (GameDataStateStorage.fields_.game_state_ & 1u) == 0
+        && (GameDataStateStorage.fields_.game_warnings_ & 1u) != 0;
     if (facility_popup) {
         popup.init(0, 0);
         popup.set_width(500);
@@ -13149,9 +13149,9 @@ ProductionReportResume production_report_stage(
         strcat(StringTemp, ".mp3");
 
         const uint32_t owner_mask = 1u << owner;
-        if ((GameMorePreferences & 0x00400000u) != 0
+        if ((GameDataStateStorage.fields_.game_more_preferences_ & 0x00400000u) != 0
             && owner == ConsoleGlobal.faction_id_
-            && (static_cast<uint8_t>(LockEnableMask) & owner_mask) != 0) {
+            && (static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & owner_mask) != 0) {
             g_WAVE_GENERAL.unload();
             g_WAVE_GENERAL.load(StringTemp);
             g_WAVE_GENERAL.play();
@@ -13172,8 +13172,8 @@ ProductionReportResume production_report_stage(
                 ? "alfacblt_sm.pcx" : "facblt_sm.pcx";
         popb(StringTemp, 1, -1, image, 0);
 
-        if ((GameMorePreferences & 0x00400000u) != 0
-            && (GameWarnings & 0x00020000u) != 0) {
+        if ((GameDataStateStorage.fields_.game_more_preferences_ & 0x00400000u) != 0
+            && (GameDataStateStorage.fields_.game_warnings_ & 0x00020000u) != 0) {
             g_WAVE_GENERAL.Sound::fade(2000);
         }
         return PRODUCTION_REPORT_RESUME_2752;
@@ -13200,7 +13200,7 @@ ProductionReportResume production_report_stage(
     } else {
         image = "facblt_sm.pcx";
     }
-    const int show_popup = (GameWarnings & 0x00200000u) != 0 ? 1 : 0;
+    const int show_popup = (GameDataStateStorage.fields_.game_warnings_ & 0x00200000u) != 0 ? 1 : 0;
     popb(StringTemp, show_popup, -1, image, 0);
     return PRODUCTION_REPORT_RESUME_2752;
 }
@@ -13225,7 +13225,7 @@ static void production_report_foreign_stage_v3(
         popup.string(const_cast<char *>("^"));
         popup.start(PopupStartCaption, "PRODUCE2", -1, 0, 0x80, 0);
 
-        if ((GameState & 1u) == 0 || (GameState & 8u) != 0) {
+        if ((GameDataStateStorage.fields_.game_state_ & 1u) == 0 || (GameDataStateStorage.fields_.game_state_ & 8u) != 0) {
             int width = 0;
             int height = 0;
             if (Buffer::get_pcx_dimensions("secproj_sm.pcx", &width,
@@ -13241,7 +13241,7 @@ static void production_report_foreign_stage_v3(
     }
 
     if (facility_id == 40) {
-        if ((GameState & 1u) != 0 && (GameState & 8u) == 0) return;
+        if ((GameDataStateStorage.fields_.game_state_ & 1u) != 0 && (GameDataStateStorage.fields_.game_state_ & 8u) == 0) return;
         if ((Players[owner].rule_flags & RFLAG_ALIEN) == 0) {
             interlude(0x26, BaseCurrent->name_string, 1, 0);
         }
@@ -13270,7 +13270,7 @@ static void production_report_foreign_stage_v3(
     }
 
     parse_says(0, BaseCurrent->name_string, -1, -1);
-    if ((GameState & 1u) == 0 || (GameState & 8u) != 0) {
+    if ((GameDataStateStorage.fields_.game_state_ & 1u) == 0 || (GameDataStateStorage.fields_.game_state_ & 8u) != 0) {
         if (orbital_report) {
             popp(ScriptPopupFile, "PRODUCE3", 0, "space_sm.pcx", 0);
         } else {
@@ -13360,7 +13360,7 @@ void production_finish_vehicle(int selected_base_id, int owner,
     } else {
         UpgradePromptAnswered = 0;
         if (!production_faction_human(owner)
-            || (GameMorePreferences & 0x00100000u) != 0) {
+            || (GameDataStateStorage.fields_.game_more_preferences_ & 0x00100000u) != 0) {
             for (int prototype_index = 0; prototype_index < 128;
                  ++prototype_index) {
                 const int candidate_id = prototype_index < 64
@@ -13390,7 +13390,7 @@ void production_late_reconcile(int production_id, int project_id,
     const uint32_t managed_active = GOV_MANAGES_PRODUCTION | GOV_ACTIVE;
     Base *current = BaseCurrent;
     const bool human_owner =
-        (static_cast<uint8_t>(LockEnableMask) &
+        (static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) &
          static_cast<uint8_t>(faction_mask)) != 0;
     const bool production_managed =
         (current->governor & managed_active) == managed_active;
@@ -13403,7 +13403,7 @@ void production_late_reconcile(int production_id, int project_id,
     const bool reloaded_production_managed =
         (current->governor & managed_active) == managed_active;
     const bool human_owner_now =
-        (static_cast<uint8_t>(LockEnableMask) &
+        (static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) &
          static_cast<uint8_t>(faction_mask)) != 0;
     if (human_owner_now && !reloaded_production_managed &&
         current->queue_production_id[0] == -production_id &&
@@ -13415,13 +13415,13 @@ void production_late_reconcile(int production_id, int project_id,
     if (project_id < 0) return;
 
     const int selected_base_id = BaseIDCurrentSelected;
-    for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+    for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
         if (base_id == selected_base_id) continue;
 
         Base &base = Bases[base_id];
         const uint32_t base_faction_mask = 1u << base.faction_id_current;
         const bool base_is_human =
-            (static_cast<uint8_t>(LockEnableMask) &
+            (static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) &
              static_cast<uint8_t>(base_faction_mask)) != 0;
         if (base_is_human &&
             (base.governor & managed_active) != managed_active) {
@@ -13435,7 +13435,7 @@ void production_late_reconcile(int production_id, int project_id,
             base_yield_mul(base.mineral_surplus, 10));
         int best_other_base = -1;
         int best_other_score = base_score;
-        for (int other_id = 0; other_id < BaseCurrentCount; ++other_id) {
+        for (int other_id = 0; other_id < GameDataStateStorage.fields_.base_current_count_; ++other_id) {
             if (other_id == base_id || other_id == selected_base_id) continue;
             Base &other = Bases[other_id];
             if (other.faction_id_current != faction) continue;
@@ -13490,7 +13490,7 @@ bool production_project_events_tail(int owner, int project_id) {
     mon_secret_project(owner, project_id);
     if (project_id == SP_ASCENT_TO_TRANSCENDENCE) {
         mon_winning_trans(owner, -1);
-        if ((GameRules & RULES_VICTORY_COOPERATIVE) != 0) {
+        if ((GameDataStateStorage.fields_.game_rules_ & RULES_VICTORY_COOPERATIVE) != 0) {
             for (int target = 1; target < MaxPlayerNum; ++target) {
                 if (target == owner) continue;
                 if ((PlayersData[owner].diplo_treaties[target]
@@ -13516,9 +13516,9 @@ bool production_project_events_tail(int owner, int project_id) {
             PluralityDefault = 0;
             GenderDefault = Players[owner].is_leader_female;
             parse_says(5, Players[owner].name_leader, -1, -1);
-            const int year_turn = production_wrapped_add(TurnCurrentNum, 100);
+            const int year_turn = production_wrapped_add(GameDataStateStorage.fields_.turn_current_num_, 100);
             parse_num(2, game_year(year_turn));
-            const int century_turn = production_wrapped_add(TurnCurrentNum, 100);
+            const int century_turn = production_wrapped_add(GameDataStateStorage.fields_.turn_current_num_, 100);
             parse_num(3, century_turn / 100);
             if ((Players[owner].rule_flags & RFLAG_ALIEN) != 0) {
                 interlude(27, 0, 4, 0);
@@ -13526,14 +13526,14 @@ bool production_project_events_tail(int owner, int project_id) {
                 interlude(18, 0, 3, 0);
             }
         }
-        GameState |= 1u;
+        GameDataStateStorage.fields_.game_state_ |= 1u;
         return true;
     }
     if (project_id == SP_UNIVERSAL_TRANSLATOR) {
         tech_advance(owner);
         tech_advance(owner);
     } else if (project_id == SP_PLANETARY_TRANS_SYS) {
-        for (int base_index = 0; base_index < BaseCurrentCount; ++base_index) {
+        for (int base_index = 0; base_index < GameDataStateStorage.fields_.base_current_count_; ++base_index) {
             Base &base = Bases[base_index];
             if (base.faction_id_current != owner || base.population_size >= 3) {
                 continue;
@@ -13576,7 +13576,7 @@ void __cdecl base_production() {
     }
 
     const unsigned char owner_bit = static_cast<unsigned char>(1u << owner);
-    const bool human = (static_cast<unsigned char>(LockEnableMask) & owner_bit)
+    const bool human = (static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & owner_bit)
                     != 0;
     const uint32_t base_state_before_reset = BaseCurrent->state;
     const uint32_t governor_before_reset = BaseCurrent->governor;
@@ -13684,7 +13684,7 @@ process_production_item:
             }
         }
         if (production_id == 8 && faction_id == ConsoleGlobal.faction_id_
-            && (GameInterludeFlags & 0x10u) == 0) {
+            && (GameDataStateStorage.fields_.game_interlude_flags_ & 0x10u) == 0) {
             interlude(4, BaseCurrent->name_string, 1, 0);
             vehicle.state |= 0x00800000u;
         }
@@ -13764,7 +13764,7 @@ finalize_base_production:
             int offset;
             int mask;
             bitmask(FAC_HEADQUARTERS, &offset, &mask);
-            for (int base_index = 0; base_index < BaseCurrentCount;
+            for (int base_index = 0; base_index < GameDataStateStorage.fields_.base_current_count_;
                  ++base_index) {
                 Base &other_base = Bases[base_index];
                 if (other_base.faction_id_current == owner) {
@@ -13783,7 +13783,7 @@ finalize_base_production:
         }
         const bool revealed_map = production_reveal_faction(owner);
         if (revealed_map && owner == ConsoleGlobal.faction_id_
-            && (GameState & 1u) == 0) {
+            && (GameDataStateStorage.fields_.game_state_ & 1u) == 0) {
             popp(ScriptPopupFile, "SEEMAP", 0, "space_sm.pcx", 0);
             set_dirty();
             draw_map(1);
@@ -13814,7 +13814,7 @@ finalize_base_production:
     if (completed_facility_id == FAC_CENTAURI_PRESERVE) {
         mon_built_preserve(owner);
         if (owner == ConsoleGlobal.faction_id_) {
-            interlude((GameInterludeFlags & 0x20u) ? 9 : 5, 0, 1, 0);
+            interlude((GameDataStateStorage.fields_.game_interlude_flags_ & 0x20u) ? 9 : 5, 0, 1, 0);
         }
     }
     if (completed_facility_id == 31 || completed_facility_id == 32
@@ -13831,7 +13831,7 @@ finalize_base_production:
         if (completed_project_id == SP_VOICE_OF_PLANET) {
             interlude(12, 0, 1, 0);
         }
-        if ((GamePreferences & PREF_AV_SECRET_PROJECT_MOVIES) != 0
+        if ((GameDataStateStorage.fields_.game_preferences_ & PREF_AV_SECRET_PROJECT_MOVIES) != 0
             && !IsMultiplayerNet) {
             if (owner == ConsoleGlobal.faction_id_) {
                 amovie_project(completed_project_id);
@@ -13898,7 +13898,7 @@ int __cdecl base_upkeep(int base_id) {
     BaseCurrent->minerals_accumulated_2 = BaseCurrent->minerals_accumulated;
     BaseCurrent->production_id_last = BaseCurrent->queue_production_id[0];
     if (base_growth() != 0) return 1;
-    if (TurnCurrentNum > 1) base_check_support();
+    if (GameDataStateStorage.fields_.turn_current_num_ > 1) base_check_support();
 
     BaseUpkeepStage = 1;
     BaseComputedID = BaseIDCurrentSelected;
@@ -13921,13 +13921,13 @@ int __cdecl base_upkeep(int base_id) {
         bit_count(stage_one_base.resource_sqr_radius) * tile_weight);
 
     BaseUpkeepStage = 2;
-    if (TurnCurrentNum > 1) {
+    if (GameDataStateStorage.fields_.turn_current_num_ > 1) {
         base_drones();
         base_doctors();
         if (BaseCurrent->faction_id_current != faction_id) return 1;
         base_energy_costs();
-        if (TurnCurrentNum > 5 || IsMultiplayerNet != 0 ||
-            (GamePreferences & 0x20u) == 0) {
+        if (GameDataStateStorage.fields_.turn_current_num_ > 5 || IsMultiplayerNet != 0 ||
+            (GameDataStateStorage.fields_.game_preferences_ & 0x20u) == 0) {
             base_research();
         }
     }
@@ -13983,10 +13983,10 @@ int __cdecl base_upkeep(int base_id) {
             PlayersData[faction_id].turn_commerce_income, alien_commerce);
     }
 
-    if (TurnCurrentNum > 1) base_maint();
+    if (GameDataStateStorage.fields_.turn_current_num_ > 1) base_maint();
     base_terraform(0);
     if ((BaseCurrent->state & 0x10000u) != 0 && (rand() % 3) == 0 &&
-        (GameState & STATE_UNK_1) == 0) {
+        (GameDataStateStorage.fields_.game_state_ & STATE_UNK_1) == 0) {
         // Keep each native BaseCurrent reload across its callback boundary.
         // 0x4F7D69 supplies focus coordinates; 0x4F7D86 reloads for draw_tiles.
         const int focus_x = BaseCurrent->x;
@@ -14037,7 +14037,7 @@ int __cdecl base_upkeep(int base_id) {
         TutWinBaseWindow.on_redraw();
     }
     if (BaseProductionZoomRequested != 0) {
-        const uint32_t preferences = GamePreferences;
+        const uint32_t preferences = GameDataStateStorage.fields_.game_preferences_;
         if ((preferences & 1u) == 0 || (preferences & 8u) != 0) {
             log_say("UPKEEP zoom-to-base", base_id, 0, 0);
             TutWinBaseWindow.zoom(base_id, 1);
@@ -14058,7 +14058,7 @@ int __cdecl base_upkeep(int base_id) {
     }
     if (BaseCurrent->nerve_staple_turns_left != 0) --BaseCurrent->nerve_staple_turns_left;
     BaseCurrent->state &= 0xFFDFFFF7u;
-    if (((base_id + TurnCurrentNum) & 7) == 0) BaseCurrent->state &= 0xFFEFFFFFu;
+    if (((base_id + GameDataStateStorage.fields_.turn_current_num_) & 7) == 0) BaseCurrent->state &= 0xFFEFFFFFu;
     return 0;
 }
 // Native 0x009A658C is SecretProject.telepathic_matrix (SP_TELEPATHIC_MATRIX).
@@ -14104,7 +14104,7 @@ void __cdecl base_drones() {
 
     if (base->drone_total > base->talent_total) {
         int exempt = 0;
-        const int exemption_faction = SecretProject.telepathic_matrix();
+        const int exemption_faction = GameDataStateStorage.fields_.secret_project_.telepathic_matrix();
         if (exemption_faction >= 0 &&
             Bases[exemption_faction].faction_id_current == base->faction_id_current) {
             exempt = 1;
@@ -14146,7 +14146,7 @@ void __cdecl base_drones() {
         }
 
         faction_id = base->faction_id_current;
-        if ((LockEnableMask & (1u << faction_id)) == 0) {
+        if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u << faction_id)) == 0) {
             base_reset(BaseIDCurrentSelected, 0);
             base = BaseCurrent;
         }
@@ -14162,9 +14162,9 @@ static unsigned char faction_bit(int faction_id) {
 
 static void drone_riot_reassign_vehicles_on_tile(int x, int y, int actor,
                                                  int target, int &moved) {
-    for (int vehicle_id = VehCurrentCount - 1;
+    for (int vehicle_id = GameDataStateStorage.fields_.vehicle_current_count_ - 1;
          vehicle_id >= 0; --vehicle_id) {
-        if (vehicle_id >= VehCurrentCount) continue;
+        if (vehicle_id >= GameDataStateStorage.fields_.vehicle_current_count_) continue;
         Veh &vehicle = Vehs[vehicle_id];
         if (vehicle.x != x || vehicle.y != y) continue;
         if (vehicle.faction_id == target) {
@@ -14189,9 +14189,9 @@ static void drone_riot_reassign_vehicles_on_tile(int x, int y, int actor,
             }
         }
         // The native word store at Veh+0x24 covers these two adjacent bytes.
-        vehicle.morale = static_cast<uint8_t>(TurnCurrentNum);
+        vehicle.morale = static_cast<uint8_t>(GameDataStateStorage.fields_.turn_current_num_);
         vehicle.terraforming_turns = static_cast<uint8_t>(
-            static_cast<unsigned int>(TurnCurrentNum) >> 8);
+            static_cast<unsigned int>(GameDataStateStorage.fields_.turn_current_num_) >> 8);
         ++PlayersData[target].proto_id_active[prototype_id];
         owner_set(vehicle.x, vehicle.y, target);
         if (Chassis[VehPrototypes[prototype_id].chassis_id].range != 0)
@@ -14251,7 +14251,7 @@ after_popup:
     if ((base->state & BSTATE_DRONE_RIOTS_ACTIVE) == 0) return;
 
     if (unrest_flag_was_clear) {
-        if ((LockEnableMask & faction_bit(faction_id)) != 0) return;
+        if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_bit(faction_id)) != 0) return;
         base_reset(BaseIDCurrentSelected, 0);
         return;
     }
@@ -14327,7 +14327,7 @@ after_popup:
             const int severity = PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::POLICE] +
                                  (has_pressure ? 2 : 0);
             if (severity < -2 && !is_alien_faction(faction_id) &&
-                (LockEnableMask & faction_bit(faction_id)) != 0) {
+                (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_bit(faction_id)) != 0) {
                 int best_faction = -1;
                 const int former_faction = static_cast<int8_t>(
                     BaseCurrent->faction_id_former);
@@ -14336,7 +14336,7 @@ after_popup:
                 }
                 int best_score = 0x270f;
                 if (former_faction == faction_id) {
-                    for (int rival_base = 0; rival_base < BaseCurrentCount; ++rival_base) {
+                    for (int rival_base = 0; rival_base < GameDataStateStorage.fields_.base_current_count_; ++rival_base) {
                         if (Bases[rival_base].faction_id_current == faction_id) continue;
                         int dx = abs(static_cast<int>(Bases[rival_base].x) - BaseCurrent->x);
                         if ((MapIsFlat & 1) == 0 && static_cast<int>(MapLongitude) < dx)
@@ -14399,7 +14399,7 @@ after_popup:
                     }
                     if (best_faction <= 0) return;
                     const unsigned char human_mask =
-                        static_cast<unsigned char>(LockEnableMask);
+                        static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_);
                     if ((human_mask & faction_bit(faction_id)) == 0 ||
                         (human_mask & faction_bit(best_faction)) == 0 ||
                         is_alien_faction(best_faction)) return;
@@ -14429,7 +14429,7 @@ after_popup:
                     BaseCurrent->queue_production_id[0] = -69;
                     --PlayersData[faction_id].current_num_bases;
                     ++PlayersData[best_faction].current_num_bases;
-                    PlayersData[best_faction].last_turn_new_base = TurnCurrentNum;
+                    PlayersData[best_faction].last_turn_new_base = GameDataStateStorage.fields_.turn_current_num_;
                     replay_base(1, old_x, old_y, best_faction);
 
                     // Native reuses the selected Base pointer after replay
@@ -14438,7 +14438,7 @@ after_popup:
                     int best_governor_base = -1;
                     int best_population_weight = 0;
                     for (int rival_base = 0;
-                         rival_base < BaseCurrentCount; ++rival_base) {
+                         rival_base < GameDataStateStorage.fields_.base_current_count_; ++rival_base) {
                         if (Bases[rival_base].faction_id_current == faction_id) continue;
                         int population_weight = Bases[rival_base].population_size;
                         bitmask_call(1, &offset, &mask);
@@ -14475,9 +14475,9 @@ after_popup:
                     spot_base(BaseIDCurrentSelected, best_faction);
                     reset_territory();
 
-                    for (int vehicle_id = VehCurrentCount - 1;
+                    for (int vehicle_id = GameDataStateStorage.fields_.vehicle_current_count_ - 1;
                          vehicle_id >= 0; --vehicle_id) {
-                        if (vehicle_id >= VehCurrentCount) continue;
+                        if (vehicle_id >= GameDataStateStorage.fields_.vehicle_current_count_) continue;
                         Veh &vehicle = Vehs[vehicle_id];
                         if (vehicle.faction_id == faction_id &&
                             vehicle.home_base_id == BaseIDCurrentSelected)
@@ -14522,7 +14522,7 @@ after_popup:
                         draw_map(1);
                         parse_says(0, BaseCurrent->name_string, -1, -1);
                         parse_says(2, Players[best_faction].adj_name_faction, -1, -1);
-                        if ((GameState & 1) == 0 || (GameState & 8) != 0)
+                        if ((GameDataStateStorage.fields_.game_state_ & 1) == 0 || (GameDataStateStorage.fields_.game_state_ & 8) != 0)
                             popp("SCRIPT", "DRONEREVOLT", 0,
                                  "baseobl_sm.pcx", 0);
                     }

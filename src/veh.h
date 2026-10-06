@@ -16,11 +16,13 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+#include <stdio.h>
 #include <stddef.h>
 
 // Bounded network access to the genuine prototype-history owner in veh.cpp.
 bool veh_bung_copy_chunk(size_t offset, unsigned char *packet, size_t count,
                          bool packet_to_owner);
+int __cdecl veh_game_data_bunglist(FILE *file, int format_version);
 // Existing terraform announcement state, also transferred by game sync.
 extern uint32_t TerraformAnnouncedMask[2];
 extern uint32_t VehTerraformStingLatch;

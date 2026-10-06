@@ -640,7 +640,7 @@ int Path::find(int x_src, int y_src, int x_dst, int y_dst, int proto_id, int fac
                             if (!(self_bit & territory_bit)) {
                                 int penalty = 0;
                                 if (mask_treaty & territory_bit) {
-                                    penalty = SunspotDuration > 0 ? 2500 : 1000;
+                                    penalty = GameDataStateStorage.fields_.sunspot_duration_ > 0 ? 2500 : 1000;
                                 } else if (mask_truce & territory_bit) {
                                     penalty = is_human(faction_id) ? 1 : 100;
                                 }
@@ -849,7 +849,7 @@ int Path::find(int x_src, int y_src, int x_dst, int y_dst, int proto_id, int fac
                     if (!(self_bit & territory_bit)) {
                         int penalty = 0;
                         if (mask_treaty & territory_bit) {
-                            penalty = SunspotDuration > 0 ? 2500 : 1000;
+                            penalty = GameDataStateStorage.fields_.sunspot_duration_ > 0 ? 2500 : 1000;
                         } else if (mask_truce & territory_bit) {
                             penalty = is_human(faction_id) ? 1 : 100;
                         }
@@ -1464,8 +1464,8 @@ void Path::continents() {
             most_tiles = tiles;
         }
     }
-    GameState = (most_tiles >= ((total_tiles * 4) / 5))
-        ? GameState | STATE_UNK_100 : GameState & ~STATE_UNK_100;
+    GameDataStateStorage.fields_.game_state_ = (most_tiles >= ((total_tiles * 4) / 5))
+        ? GameDataStateStorage.fields_.game_state_ | STATE_UNK_100 : GameDataStateStorage.fields_.game_state_ & ~STATE_UNK_100;
     for (int i_414 = 0; i_414 < MaxRegionLandNum; i_414++) {
         ZeroMemory(Continents[i_414].sea_coasts, 8);
     }

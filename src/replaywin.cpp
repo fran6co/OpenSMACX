@@ -135,7 +135,7 @@ void __cdecl show_replay() {
     ReplayWin replay;
     WorldClimateSkipTerrainClear = 2;
     save_daemon(const_cast<char *>(ReplaySaveName));
-    GameState |= 0x80;
+    GameDataStateStorage.fields_.game_state_ |= 0x80;
 
     replay.init();
     replay.close();
@@ -231,8 +231,8 @@ void ReplayWin::remove_base_site(int x, int y, int) {
 // ORIGINAL: 0x005AD9E0 ?timer_callback@ReplayWin@@QAEXXZ 0x005AD9E0-0x005ADBCC
 // RECOVERY_BINDING: v1 {"evidence": ["git:7f24e1c4:src/recovered/units/005ad9e0.cpp", "image:0x005AD9E0-0x005ADBCC", "src/replaywin.h replay_turn_, event_offset_, year_label_ and base_sites_", "src/win.h release_modal slot58 and redraw slot62"], "reason": "Consume typed replay events and update the ReplayWin-owned site table; replace the original-image forwarder without raw self-offsets or vtable shims. The retained seed remains a restoration input, not a product body."}
 void ReplayWin::timer_callback() {
-    if (replay_turn_ >= TurnCurrentNum) {
-        if (replay_turn_ >= TurnCurrentNum + 50) {
+    if (replay_turn_ >= GameDataStateStorage.fields_.turn_current_num_) {
+        if (replay_turn_ >= GameDataStateStorage.fields_.turn_current_num_ + 50) {
             release_modal();
         }
         return;
@@ -280,11 +280,11 @@ void ReplayWin::timer_callback() {
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original 0x005ADE80-0x005ADF03 logs Replay Base and Replay Base Info, packs four arguments and TurnCurrentNum into eight bytes at 0x00950324 plus the byte counter at 0x009469F8, then adds eight", "git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/005b3920.cpp clears 0x800 dwords of that buffer; ReplayWin timer_callback reads the same eight-byte records"], "reason": "Own replay-event storage and byte-length accounting in the replay subsystem, replacing fixed-address writes with a typed event record."}
 void __cdecl replay_base(int type, int x, int y, int faction_id) {
     log_say("Replay Base", x, y, faction_id);
-    log_say("Replay Base Info", TurnCurrentNum, type, ReplayEventBytes);
+    log_say("Replay Base Info", GameDataStateStorage.fields_.turn_current_num_, type, ReplayEventBytes);
     ReplayEventRecord event;
     event.type = static_cast<uint8_t>(type);
     event.faction_id = static_cast<uint8_t>(faction_id);
-    event.turn = static_cast<int16_t>(TurnCurrentNum);
+    event.turn = static_cast<int16_t>(GameDataStateStorage.fields_.turn_current_num_);
     event.x = static_cast<int16_t>(x);
     event.y = static_cast<int16_t>(y);
     ReplayEvents[ReplayEventBytes / sizeof(ReplayEventRecord)] = event;
@@ -295,21 +295,21 @@ void __cdecl replay_base(int type, int x, int y, int faction_id) {
 // ORIGINAL: 0x005AD560 ?make_bases@ReplayWin@@QAEXXZ 0x005AD560-0x005AD607
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original 0x005AD560-0x005AD607 clears Map::bit bit zero over MapArea, then walks 512 twelve-byte records at ReplayWin+0xA20", "The original writes Bases with 0x134 stride, storing x/y/faction/population before bit_set, owner_set and reset_territory; src/unrecovered/005ad560.cpp preserves the seed"], "reason": "Rebuild bases from typed replay-owned records into the real Base array and map, without self-offset arithmetic or fixed executable addresses."}
 void ReplayWin::make_bases() {
-    BaseCurrentCount = 0;
+    GameDataStateStorage.fields_.base_current_count_ = 0;
     for (int tile = 0; tile < static_cast<int>(MapArea); ++tile) {
         map_tiles()[tile].bit &= ~1u;
     }
     for (int site_id = 0; site_id < 512; ++site_id) {
         const ReplayBaseSite &site = base_sites_[site_id];
         if (site.x < 0) continue;
-        Base &base = Bases[BaseCurrentCount];
+        Base &base = Bases[GameDataStateStorage.fields_.base_current_count_];
         base.x = static_cast<int16_t>(site.x);
         base.y = static_cast<int16_t>(site.y);
         base.population_size = 1;
         base.faction_id_current = static_cast<uint8_t>(site.faction_id);
         bit_set(base.x, base.y, 1, 1);
         owner_set(base.x, base.y, base.faction_id_current);
-        ++BaseCurrentCount;
+        ++GameDataStateStorage.fields_.base_current_count_;
     }
     reset_territory();
 }

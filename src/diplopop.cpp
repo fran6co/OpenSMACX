@@ -688,13 +688,13 @@ void DiploPop::draw_hq() {
 
     int base_id = 0;
     StringTemp[0] = 0;
-    while (base_id < BaseCurrentCount) {
+    while (base_id < GameDataStateStorage.fields_.base_current_count_) {
         if (Bases[base_id].faction_id_current == counterpart_faction_
             && has_fac_built_call(FAC_HEADQUARTERS, base_id)) break;
         ++base_id;
     }
 
-    const char *heading = base_id == BaseCurrentCount
+    const char *heading = base_id == GameDataStateStorage.fields_.base_current_count_
         ? label_get(0x3A9) : Bases[base_id].name_string;
     strcat(StringTemp, heading);
     CharUpperA(StringTemp);

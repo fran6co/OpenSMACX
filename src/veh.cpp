@@ -253,7 +253,7 @@ void __cdecl name_proto(char *output, int prototype_id, int faction_id,
     int gendered_form = (reactor_id - 1 ^ faction_id) & 1;
     const VehPrototype &named_prototype = VehPrototypes[prototype_id];
     if (named_prototype.unk_1 == 10
-        && (LockEnableMask & (1u << (faction_id & 0x1f))) == 0
+        && (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u << (faction_id & 0x1f))) == 0
         && chassis.speed > 1) {
         has_gendered_name_branch = true;
     } else if (weapon_rating <= chassis.speed
@@ -502,7 +502,7 @@ void __cdecl name_proto(char *output, int prototype_id, int faction_id,
     }
 }
 
-int VehCurrentCount;  // 0x009A64C8
+// 0x009A64C8
 int VehDropLiftVehID;  // 0x009B2280
 int VehLiftX;  // 0x009B2278
 int VehLiftY;  // 0x009B2284
@@ -601,7 +601,7 @@ int __cdecl veh_draw(Buffer * buffer, int veh_id, int screen_x, int screen_y, in
     if ((zoom < -8 || (flags & 0x100) != 0) && (flags & 8) == 0 && (flags & 0x800) == 0) {
         int prototype = Vehs[veh_id].proto_id;
         if (faction != (unsigned int)ConsoleGlobal.faction_id_ &&
-            VehPrototypes[prototype].plan == '\v' && (GameState & 0x80) == 0) {
+            VehPrototypes[prototype].plan == '\v' && (GameDataStateStorage.fields_.game_state_ & 0x80) == 0) {
             return 0;
         }
         if ((flags & 0x400) != 0) {
@@ -734,7 +734,7 @@ int __cdecl veh_draw(Buffer * buffer, int veh_id, int screen_x, int screen_y, in
     if ((((flags & 0x40) != 0 || (flags & 0x400) != 0) && flagBit800 == 0) ||
         (factionSaved != (unsigned int)ConsoleGlobal.faction_id_ &&
          VehPrototypes[Vehs[veh_id].proto_id].plan == '\v' &&
-         (GameState & 0x80) == 0)) {
+         (GameDataStateStorage.fields_.game_state_ & 0x80) == 0)) {
         goto tail;
     }
 
@@ -876,14 +876,14 @@ int __cdecl veh_draw(Buffer * buffer, int veh_id, int screen_x, int screen_y, in
         lineBuf[2] = 0;
         lineBuf[1] = 0;
         if (faction == (unsigned int)ConsoleGlobal.faction_id_ &&
-            (static_cast<unsigned char>(LockEnableMask) & (unsigned char)(1 << (faction & 0x1f))) != 0) {
+            (static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & (unsigned char)(1 << (faction & 0x1f))) != 0) {
             if (lineBuf[0] == '[' || lineBuf[0] == ']') {
                 lineBuf[1] = lineBuf[0];
             }
         } else {
-            if ((GameState & 0x80) != 0 ||
-                (static_cast<unsigned char>(LockEnableMask) & (unsigned char)(1 << (ConsoleGlobal.faction_id_ & 0x1f))) == 0) {
-                if ((GameState & 0x40) != 0 && (GameState & 0x1000) != 0) {
+            if ((GameDataStateStorage.fields_.game_state_ & 0x80) != 0 ||
+                (static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & (unsigned char)(1 << (ConsoleGlobal.faction_id_ & 0x1f))) == 0) {
+                if ((GameDataStateStorage.fields_.game_state_ & 0x40) != 0 && (GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
                     lineBuf[0] = Vehs[veh_id].move_to_ai_type;
                 }
                 if (lineBuf[0] != '-' && (Vehs[veh_id].state & 0x40000) != 0) {
@@ -902,7 +902,7 @@ int __cdecl veh_draw(Buffer * buffer, int veh_id, int screen_x, int screen_y, in
             if ((Vehs[veh_id].state & 0x200) != 0) {
                 buffer->set_text_color(InfoFactionShadowColors[faction], -1, 1, 1);
                 if (lineBuf[0] == '-') lineBuf[0] = 'a';
-                if ((GameState & 0x40) != 0 && (GameState & 0x1000) != 0) {
+                if ((GameDataStateStorage.fields_.game_state_ & 0x40) != 0 && (GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
                     lineBuf[0] = Vehs[veh_id].move_to_ai_type;
                 }
             }
@@ -1863,7 +1863,7 @@ int __cdecl boom(int x, int y, int flags) {
             }
             const SHORT shift = GetAsyncKeyState(VK_SHIFT);
             const bool fast = (shift & 0xff00) != 0 ||
-                              (((GamePreferences & 8u) != 0) &&
+                              (((GameDataStateStorage.fields_.game_preferences_ & 8u) != 0) &&
                                ((flags & 0x12) == 0)) || IsMultiplayerNet;
             const int delay = fast ? 0
                 : (flags & 0x12) == 0 ? 0x19 : 0x32;
@@ -1921,7 +1921,7 @@ int __cdecl boom(int x, int y, int flags) {
         }
     }
     if ((GetAsyncKeyState(VK_SHIFT) & 0xff00) == 0 &&
-        (GamePreferences & 8u) == 0 && !IsMultiplayerNet) {
+        (GameDataStateStorage.fields_.game_preferences_ & 8u) == 0 && !IsMultiplayerNet) {
         clock_wait(0x32);
     }
     TimerHoldFlag = 0;
@@ -3154,7 +3154,7 @@ int __cdecl drop_range(int faction_id) {
     // negated `base_id < 0 || owner != faction_id` form compiled a bare
     // `je` where the image materialises the comparison with `sete al` first.
     if (!has_tech_call(Rules.tech_orb_insert_sans_spc_elev, faction_id)) { // default 'Graviton Theory'
-        int base_id = SecretProject[SP_SPACE_ELEVATOR];
+        int base_id = GameDataStateStorage.fields_.secret_project_[SP_SPACE_ELEVATOR];
         BOOL has_orb_insert = (base_id < 0) ? false
             : (Bases[base_id].faction_id_current == faction_id);
         if (!has_orb_insert) {
@@ -3284,7 +3284,7 @@ int __cdecl action_airdrop(int veh_id, int x, int y, int mode) {
         int facility_offset, facility_mask;
         bitmask(0x1D, &facility_offset, &facility_mask);
         const bool airbase = (Bases[base_id].facilities_built[facility_offset] & facility_mask) != 0;
-        const int cloudbase = SecretProject.cloudbase_academy();
+        const int cloudbase = GameDataStateStorage.fields_.secret_project_.cloudbase_academy();
         const bool has_cloudbase = cloudbase >= 0 && Bases[cloudbase].faction_id_current == near_owner;
         if (!airbase && !has_cloudbase) {
             const int nearby_vehicle = veh_at(near_x, near_y);
@@ -3308,7 +3308,7 @@ int __cdecl action_airdrop(int veh_id, int x, int y, int mode) {
     if (!local_seen) {
         const bool visible_owner = (target->bit & 3) != 0 && owner < 8;
         local_seen = (visible_owner && owner == ConsoleGlobal.faction_id_) ||
-                     ((GameState & 0x80) != 0);
+                     ((GameDataStateStorage.fields_.game_state_ & 0x80) != 0);
         if (!local_seen) {
             for (int neighbor = 0; neighbor < 8; ++neighbor) {
                 int near_x = x + RadiusBaseX[neighbor];
@@ -3333,8 +3333,8 @@ int __cdecl action_airdrop(int veh_id, int x, int y, int mode) {
     bool allied_local = local_seen && faction == ConsoleGlobal.faction_id_;
     if (local_seen && faction != ConsoleGlobal.faction_id_) {
         const uint32_t treaty = PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[faction];
-        allied_local = (treaty & 1U) != 0 ? (GamePreferences & 0x8000U) != 0
-                                          : (GamePreferences & 4U) != 0;
+        allied_local = (treaty & 1U) != 0 ? (GameDataStateStorage.fields_.game_preferences_ & 0x8000U) != 0
+                                          : (GameDataStateStorage.fields_.game_preferences_ & 4U) != 0;
     }
 
     int best_score = 999999;
@@ -3426,17 +3426,17 @@ int __cdecl action_airdrop(int veh_id, int x, int y, int mode) {
     } else if (faction != Bases[base_here].faction_id_current &&
                (PlayersData[faction].diplo_treaties[Bases[base_here].faction_id_current] & 1U) == 0) {
         const int previous_owner = Bases[base_here].faction_id_current;
-        if ((LockEnableMask & (1U << faction)) == 0) veh_skip(veh_id);
-        VehSelectionFollowLimit = veh_id;
+        if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1U << faction)) == 0) veh_skip(veh_id);
+        GameDataStateStorage.fields_.vehicle_selection_follow_limit_ = veh_id;
         vehicle.dmg_incurred = 0;
         act_of_aggression(faction, previous_owner);
         capture_base(base_here, faction, 0);
-        veh_id = VehSelectionFollowLimit;
+        veh_id = GameDataStateStorage.fields_.vehicle_selection_follow_limit_;
     }
     spot_all(veh_id, 1);
     ConsoleGlobal.update_data(0);
     if (goody != 0) goody_box(veh_id, goody);
-    if (faction != ConsoleGlobal.faction_id_ && (GameState & 0x80) == 0 &&
+    if (faction != ConsoleGlobal.faction_id_ && (GameDataStateStorage.fields_.game_state_ & 0x80) == 0 &&
         local_seen && ConsoleGlobal.field_23BF0_ == 0 &&
         (GetAsyncKeyState(VK_SHIFT) >> 8) == 0 && IsMultiplayerNet == 0) {
         clock_wait(allied_local ? 200 : 50);
@@ -3468,9 +3468,9 @@ void __cdecl monolith(int veh_id) {
             if ((veh.state & VSTATE_MONOLITH_UPGRADED) == 0) {
                 veh.state |= VSTATE_MONOLITH_UPGRADED;
                 if (faction == ConsoleGlobal.faction_id_ &&
-                    (GameMorePreferences & 0x800u) == 0 && IsMultiplayerNet == 0) {
+                    (GameDataStateStorage.fields_.game_more_preferences_ & 0x800u) == 0 && IsMultiplayerNet == 0) {
                     NetMsgPrimary.pop("SEEMONOLITH", -5000, 0, "monolith_sm.pcx");
-                    GameState |= 4u;
+                    GameDataStateStorage.fields_.game_state_ |= 4u;
                 }
             }
         } else {
@@ -3479,7 +3479,7 @@ void __cdecl monolith(int veh_id) {
             draw_tile(x, y, 2);
             if (faction == ConsoleGlobal.faction_id_) {
                 NetMsgPrimary.pop("MONOLITHHEAL", 5000, 0, "monolith_sm.pcx");
-                GameState |= 4u;
+                GameDataStateStorage.fields_.game_state_ |= 4u;
             }
         }
         return;
@@ -3513,13 +3513,13 @@ void __cdecl monolith(int veh_id) {
                     add_site(site_id, 0, 2, x, y);
             return;
         }
-    } else if (IsMultiplayerNet == 0 && (GameMorePreferences & 0x800u) == 0) {
+    } else if (IsMultiplayerNet == 0 && (GameDataStateStorage.fields_.game_more_preferences_ & 0x800u) == 0) {
         g_FX.play(6);
         const int choice = popp(*ClimatePopupTitle, "MONOLITH", 0,
                                 "monolith_sm.pcx", 0);
         g_FX.stop(6);
         if (choice == 2) {
-            GameMorePreferences |= 0x800u;
+            GameDataStateStorage.fields_.game_more_preferences_ |= 0x800u;
             prefs_save(0);
         } else if (choice == 0) {
             for (int site_id = 1; site_id < 8; ++site_id)
@@ -3536,11 +3536,11 @@ void __cdecl monolith(int veh_id) {
         if ((veh.state & VSTATE_MONOLITH_UPGRADED) != 0 ||
             morale_veh(veh_id, 1, 0) > 5) {
             if (faction != ConsoleGlobal.faction_id_) return;
-            if ((GameMorePreferences & 0x800u) == 0)
+            if ((GameDataStateStorage.fields_.game_more_preferences_ & 0x800u) == 0)
                 NetMsgPrimary.pop("MONOLITHHEAL", -5000, 0, "monolith_sm.pcx");
             else
                 NetMsgPrimary.pop("MONOLITHHEAL", 5000, 0, "monolith_sm.pcx");
-            GameState |= 4u;
+            GameDataStateStorage.fields_.game_state_ |= 4u;
             return;
         }
     }
@@ -3550,7 +3550,7 @@ void __cdecl monolith(int veh_id) {
         unsigned int random_result = static_cast<unsigned int>(rand()) & 0x8000001Fu;
         if ((random_result & 0x80000000u) != 0)
             random_result = ((random_result - 1u) | 0xFFFFFFE0u) + 1u;
-        if ((map_loc(x, y)->bit & 0x02000000u) == 0 || TurnCurrentNum < 100) {
+        if ((map_loc(x, y)->bit & 0x02000000u) == 0 || GameDataStateStorage.fields_.turn_current_num_ < 100) {
             random_result = 1;
             bit_set(x, y, 0x02000000, 1);
         }
@@ -3579,14 +3579,14 @@ void __cdecl monolith(int veh_id) {
             char decimal[0x50];
             _itoa(random_result != 0, decimal, 10);
             strcat(StringTemp, decimal);
-            if ((GameMorePreferences & 0x800u) == 0)
+            if ((GameDataStateStorage.fields_.game_more_preferences_ & 0x800u) == 0)
                 NetMsgPrimary.pop(StringTemp, -5000, 0, "monolith_sm.pcx");
             else
                 NetMsgPrimary.pop(StringTemp, 5000, 0, "monolith_sm.pcx");
-            GameState |= 4u;
+            GameDataStateStorage.fields_.game_state_ |= 4u;
         }
     } else if (faction == ConsoleGlobal.faction_id_) {
-        if ((GameMorePreferences & 0x800u) != 0) {
+        if ((GameDataStateStorage.fields_.game_more_preferences_ & 0x800u) != 0) {
             NetMsgPrimary.pop("MONOLITHNO", 5000, 0, "monolith_sm.pcx");
             return;
         }
@@ -3627,7 +3627,7 @@ void __cdecl assemble_passengers(int base_id, int mode, int priority) {
     if (mode != 8 || (PlayersData[faction_id].unk_77[region] & 0x0800) != 0) {
         int requested_colonies = PlayersData[faction_id].ai_growth -
                                  PlayersData[faction_id].ai_fight -
-                                 TurnCurrentNum / 100 + 2;
+                                 GameDataStateStorage.fields_.turn_current_num_ / 100 + 2;
         if (requested_colonies < 0) {
             requested_colonies = 0;
         } else if (requested_colonies > 99) {
@@ -3714,7 +3714,7 @@ int __cdecl battle_kill(int vehicle_id, int *attacker_count_out,
     }
 
     if ((Vehs[vehicle_id].state & 0x800000) != 0 && killer_id >= 0 &&
-        (GamePreferences & 0x40000) == 0) {
+        (GameDataStateStorage.fields_.game_preferences_ & 0x40000) == 0) {
         int base_id = Vehs[killer_id].home_base_id;
         if (base_id < 0) {
             base_id = base_find(Vehs[killer_id].x, Vehs[killer_id].y,
@@ -3755,7 +3755,7 @@ int __cdecl interceptor(int faction_id, int opposing_faction,
     int selected_vehicle = -1;
     int best_weighted_score = 0;
 
-    for (int vehicle_id = 0; vehicle_id < VehCurrentCount; ++vehicle_id) {
+    for (int vehicle_id = 0; vehicle_id < GameDataStateStorage.fields_.vehicle_current_count_; ++vehicle_id) {
         const Veh &vehicle = Vehs[vehicle_id];
         const int prototype_id = vehicle.proto_id;
         int eligible = 0;
@@ -3863,7 +3863,7 @@ int __cdecl interceptor(int faction_id, int opposing_faction,
 // ORIGINAL: 0x00522F00 ?do_fungal_towers@@YAXXZ 0x00522F00-0x005230DD
 // RECOVERY_BINDING: v1 {"evidence":["Pinned native instructions at 0x00522F00..0x005230DD: descending vehicle traversal, random spread checks, radius offsets, per-faction synchronization and 0x0028805C clear mask.","source:src/veh.h Veh/Vehs and source:src/map.h map, bit, synchronization and radius owners."],"reason":"Recover fungal tower spread and local clearing in the vehicle owner through real vehicle/map state and synchronization calls; preserve original random order and seed identity, without claiming matching or runtime acceptance."}
 void __cdecl do_fungal_towers() {
-    for (int vehicle_id = VehCurrentCount - 1;
+    for (int vehicle_id = GameDataStateStorage.fields_.vehicle_current_count_ - 1;
          vehicle_id >= 0; --vehicle_id) {
         Veh &vehicle = Vehs[vehicle_id];
         if (vehicle.proto_id != BSC_FUNGAL_TOWER) {
@@ -4033,15 +4033,15 @@ Status: Complete
 */
 uint32_t __cdecl morale_alien(int veh_id, int faction_id_vs_native) {
     int morale;
-    if (TurnCurrentNum < 45) {
+    if (GameDataStateStorage.fields_.turn_current_num_ < 45) {
         morale = 0;
-    } else if (TurnCurrentNum < 90) {
+    } else if (GameDataStateStorage.fields_.turn_current_num_ < 90) {
         morale = 1;
-    } else if (TurnCurrentNum < 170) {
+    } else if (GameDataStateStorage.fields_.turn_current_num_ < 170) {
         morale = 2;
-    } else if (TurnCurrentNum < 250) {
+    } else if (GameDataStateStorage.fields_.turn_current_num_ < 250) {
         morale = 3;
-    } else if (TurnCurrentNum < 330) {
+    } else if (GameDataStateStorage.fields_.turn_current_num_ < 330) {
         morale = 4;
     } else { // 330+
         morale = 6;
@@ -4995,7 +4995,7 @@ void __cdecl invasions(int base_id) {
     uint32_t faction_id_base = Bases[base_id].faction_id_current;
     int16_t base_x = Bases[base_id].x;
     int16_t base_y = Bases[base_id].y;
-    for (int i = 0; i < VehCurrentCount; i++) {
+    for (int i = 0; i < GameDataStateStorage.fields_.vehicle_current_count_; i++) {
         uint32_t veh_faction_id = Vehs[i].faction_id;
         if (veh_faction_id && !is_human(veh_faction_id) && veh_faction_id != faction_id_base
             && !has_treaty(veh_faction_id, faction_id_base, DTREATY_TREATY)) {
@@ -6542,7 +6542,7 @@ void __cdecl spot_tile(int x, int y, int faction_id) {
     }
     Map *tile = map_tiles() + ((x >> 1) + y * MapLongitude);
     if (faction_id == ConsoleGlobal.faction_id_ && !(tile->visibility & (1 << faction_id))
-        && !(GameState & STATE_OMNISCIENT_VIEW)
+        && !(GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)
         && !(PlayersData[faction_id].flags & PFLAG_MAP_REVEALED)) {
         tile->bit2 |= 0x400000; // TODO: identify value
         UnkBitfield1 |= 1; // TODO: identify global + value
@@ -6593,7 +6593,7 @@ void __cdecl spot_base(int base_id, int faction_id) {
     }
     Map *tile = map_tiles() + ((x >> 1) + y * MapLongitude);
     if (faction_id == ConsoleGlobal.faction_id_ && !(tile->visibility & (1 << faction_id))
-        && !(GameState & STATE_OMNISCIENT_VIEW)
+        && !(GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)
         && !(PlayersData[faction_id].flags & PFLAG_MAP_REVEALED)) {
         tile->bit2 |= 0x400000; // TODO: identify value
         UnkBitfield1 |= 1; // TODO: identify global + value
@@ -6676,7 +6676,7 @@ void __cdecl spot_stack(int veh_id, int faction_id) {
             && x >= 0 && x < (int)MapLongitudeBounds) {
             Map *tile = map_tiles() + ((x >> 1) + y * MapLongitude);
             if (faction_id == ConsoleGlobal.faction_id_ && !(tile->visibility & (1 << faction_id))
-                && !(GameState & STATE_OMNISCIENT_VIEW)
+                && !(GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)
                 && !(PlayersData[faction_id].flags & PFLAG_MAP_REVEALED)) {
                 tile->bit2 |= 0x400000; // TODO: identify value
                 UnkBitfield1 |= 1; // TODO: identify global + value
@@ -6800,15 +6800,15 @@ BOOL __cdecl want_to_wake(int faction_id, int veh_id, int spotted_veh_id) {
         }
     } else {
         if (has_treaty(Vehs[veh_id].faction_id, faction_id, DTREATY_PACT)) {
-            wants_to_wake = GamePreferences & PREF_AUTO_END_MOVE_SPOT_VEH_PACT;
+            wants_to_wake = GameDataStateStorage.fields_.game_preferences_ & PREF_AUTO_END_MOVE_SPOT_VEH_PACT;
         } else if (has_treaty(Vehs[veh_id].faction_id, faction_id, DTREATY_TREATY)) {
-            wants_to_wake = GamePreferences & PREF_AUTO_END_MOVE_SPOT_VEH_TREATY;
+            wants_to_wake = GameDataStateStorage.fields_.game_preferences_ & PREF_AUTO_END_MOVE_SPOT_VEH_TREATY;
         } else if (has_treaty(Vehs[veh_id].faction_id, faction_id, DTREATY_TRUCE)) {
-            wants_to_wake = GamePreferences & PREF_AUTO_END_MOVE_SPOT_VEH_TRUCE;
+            wants_to_wake = GameDataStateStorage.fields_.game_preferences_ & PREF_AUTO_END_MOVE_SPOT_VEH_TRUCE;
         } else {
-            wants_to_wake = GamePreferences & PREF_AUTO_END_MOVE_SPOT_VEH_WAR;
+            wants_to_wake = GameDataStateStorage.fields_.game_preferences_ & PREF_AUTO_END_MOVE_SPOT_VEH_WAR;
         }
-        if (!(GamePreferences & PREF_AUTO_DONT_END_MOVE_DIFF_TRIAD)) {
+        if (!(GameDataStateStorage.fields_.game_preferences_ & PREF_AUTO_DONT_END_MOVE_DIFF_TRIAD)) {
             return wants_to_wake;
         }
     }
@@ -7104,7 +7104,7 @@ int __cdecl stack_fix(int veh_id) {
     if (Vehs[veh_id].next_veh_id_stack < 0 && Vehs[veh_id].prev_veh_id_stack < 0) {
         return veh_id; // no stack
     }
-    for (int i = 0; i < VehCurrentCount; i++) {
+    for (int i = 0; i < GameDataStateStorage.fields_.vehicle_current_count_; i++) {
         // BUG IN THE ORIGINAL: compares veh_id's own coordinates against
         // themselves, not the iterator's - always true, so veh_promote(i)/
         // stack_sort(veh_id) run on every iteration of this loop.
@@ -7243,7 +7243,7 @@ int __cdecl stack_veh(int veh_id, int mode) {
                 uint32_t unit_faction = Vehs[i].faction_id;
                 BOOL both_unk_200 = ((Vehs[veh_id].state & VSTATE_UNK_200)
                                      && (Vehs[i].state & VSTATE_UNK_200));
-                if (accept && (((1 << unit_faction) & LockEnableMask)) && !both_unk_200) {
+                if (accept && (((1 << unit_faction) & GameDataStateStorage.fields_.lock_masks_.enable_mask_)) && !both_unk_200) {
                     accept = (Vehs[i].order == ORDER_SENTRY_BOARD)
                         ? (Vehs[i].waypoint_x[0] < 0) : is_open_ocean;
                 } else if (accept) {
@@ -7492,7 +7492,7 @@ BOOL __cdecl veh_avail(int proto_id, int faction_id, int base_id) {
         }
     }
     if (VehPrototypes[proto_id].plan == PLAN_COLONIZATION
-        && GameRules & RULES_SCN_NO_COLONY_PODS) {
+        && GameDataStateStorage.fields_.game_rules_ & RULES_SCN_NO_COLONY_PODS) {
         return false;
     }
     // is_port(), hand-inlined - the image calls is_coast() directly here, not is_port().
@@ -7674,7 +7674,7 @@ int __cdecl veh_at(int x, int y) {
     if (y >= 0 && y < lat_bounds && x >= 0 && x < lon_bounds && !(bit_at(x, y) & BIT_VEH_IN_TILE)) {
         return -1; // not found
     }
-    for (int veh_id = 0; veh_id < VehCurrentCount; veh_id++) {
+    for (int veh_id = 0; veh_id < GameDataStateStorage.fields_.vehicle_current_count_; veh_id++) {
         if (Vehs[veh_id].x == x && Vehs[veh_id].y == y) {
             if (veh_id < 0) {
                 return -1;
@@ -7692,7 +7692,7 @@ int __cdecl veh_at(int x, int y) {
     if (!VehBitError) {
         log_say("Vehicle Bit Error  (x, y)", x, y, 0);
     }
-    if (GameState & STATE_SCENARIO_EDITOR || GameState & STATE_DEBUG_MODE || IsMultiplayerNet) {
+    if (GameDataStateStorage.fields_.game_state_ & STATE_SCENARIO_EDITOR || GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE || IsMultiplayerNet) {
         if (VehBitError) {
             return -1;
         }
@@ -8630,7 +8630,7 @@ int __cdecl action_home(int veh_id, int flags) {
     // collapsed into an ordinary break.
     bool alert_target = false;
 
-    for (int base_id = 0; base_id < BaseCurrentCount; base_id++) {
+    for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; base_id++) {
         Base &base = Bases[base_id];
         const int base_faction = base.faction_id_current;
         if (base_faction != faction_id
@@ -8668,7 +8668,7 @@ int __cdecl action_home(int veh_id, int flags) {
     if (!alert_target) {
         if (triad == TRIAD_AIR) {
             // An air unit can also come down on a friendly carrier or air supply convoy.
-            for (int other_id = 0; other_id < VehCurrentCount; other_id++) {
+            for (int other_id = 0; other_id < GameDataStateStorage.fields_.vehicle_current_count_; other_id++) {
                 Veh &other = Vehs[other_id];
                 if (other.faction_id != faction_id) {
                     continue;
@@ -9117,7 +9117,7 @@ int __cdecl alien_base(int veh_id, int x, int y) {
     BaseFindDist = 9999;
     int base_id_best = -1;
     const int region = region_at(x, y);
-    for (int base_id = 0; base_id < BaseCurrentCount; base_id++) {
+    for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; base_id++) {
         Base &base = Bases[base_id];
         if (Vehs[veh_id].proto_id == BSC_SEALURK) {
             if (region < MaxRegionLandNum && region != (int)region_at(base.x, base.y)
@@ -9254,8 +9254,8 @@ DeletionList VehDeletionList;  // 0x0093E31C
 // also decremented when it EQUALS the deleted id, which the three above do not
 // do. action_airdrop stores/reloads it across capture_base; veh_kill updates
 // the same signed slot, and synch transports its four-byte representation.
-// RECOVERY_OBJECT: v2 0x009A64DC 0x009A64E0 ?VehSelectionFollowLimit@@3HA 0x005C08C0
-int VehSelectionFollowLimit;
+// Historical object identity moved to GameDataStateStorage; see the transport manifest.
+
 
 // 0x00691DC0, the log_say title. The image logs every vehicle removal with the
 // vehicle id, its owner and its prototype as the three substitutions.
@@ -9323,15 +9323,15 @@ void __cdecl veh_kill(int veh_id) {
 
     veh_lift(veh_id);
 
-    if (veh_id < VehCurrentCount - 1) {
+    if (veh_id < GameDataStateStorage.fields_.vehicle_current_count_ - 1) {
         memcpy(&Vehs[veh_id], &Vehs[veh_id + 1],
-               (VehCurrentCount - veh_id - 1) * sizeof(Veh));
+               (GameDataStateStorage.fields_.vehicle_current_count_ - veh_id - 1) * sizeof(Veh));
     }
     if (veh_id < 0x800) {
-        --VehCurrentCount;
+        --GameDataStateStorage.fields_.vehicle_current_count_;
     }
-    if (VehCurrentCount > 0) {
-        int count = VehCurrentCount;
+    if (GameDataStateStorage.fields_.vehicle_current_count_ > 0) {
+        int count = GameDataStateStorage.fields_.vehicle_current_count_;
         Veh *rec = &Vehs[0];
         do {
             if (veh_id < rec->prev_veh_id_stack) {
@@ -9372,12 +9372,12 @@ void __cdecl veh_kill(int veh_id) {
     } else if (veh_id < *StatusHoverVehIdAlt) {
         --*StatusHoverVehIdAlt;
     }
-    if (VehSelectionFollowLimit != 0 && veh_id <= VehSelectionFollowLimit) {
-        --VehSelectionFollowLimit;
+    if (GameDataStateStorage.fields_.vehicle_selection_follow_limit_ != 0 && veh_id <= GameDataStateStorage.fields_.vehicle_selection_follow_limit_) {
+        --GameDataStateStorage.fields_.vehicle_selection_follow_limit_;
     }
     if (IsMultiplayerNet != 0) {
         int *slot = NetDaemonNet.vehicle_selection_follow();
-        if (slot != 0 && slot != &ConsoleGlobal.selected_vehicle_ && slot != &VehSelectionFollowLimit &&
+        if (slot != 0 && slot != &ConsoleGlobal.selected_vehicle_ && slot != &GameDataStateStorage.fields_.vehicle_selection_follow_limit_ &&
             slot != &ConsoleGlobal.focus_vehicle_) {
             if (veh_id <= *slot) {
                 --*slot;
@@ -9551,7 +9551,7 @@ int __cdecl veh_find(int x, int y, int faction_id, int skip_veh_id) {
     *VehFindBestDist = 9999;
     int best_idx = -1;
     int i = 0;
-    if (VehCurrentCount > 0) {
+    if (GameDataStateStorage.fields_.vehicle_current_count_ > 0) {
         do {
             if ((faction_id < 0 || Vehs[i].faction_id == (unsigned)faction_id) &&
                 i != skip_veh_id) {
@@ -9571,7 +9571,7 @@ int __cdecl veh_find(int x, int y, int faction_id, int skip_veh_id) {
                 }
             }
             ++i;
-        } while (i < VehCurrentCount);
+        } while (i < GameDataStateStorage.fields_.vehicle_current_count_);
         if (best_idx >= 0) {
             *VehFindBestDist = best_dist;
         }
@@ -9832,7 +9832,7 @@ void __cdecl promote(int veh_id) {
     if (Vehs[veh_id].faction_id != (uint8_t)ConsoleGlobal.faction_id_) {
         return;
     }
-    if (!((1 << Vehs[veh_id].faction_id) & LockEnableMask)) {
+    if (!((1 << Vehs[veh_id].faction_id) & GameDataStateStorage.fields_.lock_masks_.enable_mask_)) {
         return;
     }
     if (morale_before == morale_veh(veh_id, 1, 0)) {
@@ -9942,7 +9942,7 @@ Status: MISMATCH.
 */
 bool __cdecl is_bunged(int faction_id, int chassis_id, int weapon_id,
                        int armor_id, int ability_flags, int reactor_id) {
-    if ((1u << (faction_id & 0x1f)) & (uint8_t)LockEnableMask) {
+    if ((1u << (faction_id & 0x1f)) & (uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_) {
         const ProtoBung *entry = &BungList[faction_id][0];
         for (int i = 0; i < 0x40; ++i) {
             if (entry->chassis_id == chassis_id && entry->weapon_id == weapon_id &&
@@ -9985,6 +9985,14 @@ void __cdecl clear_bunglist(int faction_id) {
         entry->reactor_id = 0xff;
         ++entry;
     } while (--count);
+}
+
+int __cdecl veh_game_data_bunglist(FILE *file, int format_version) {
+    if (format_version >= 6) {
+        return game_data_transfer_block(file, &BungList[0][0], sizeof(BungList));
+    }
+    for (int faction = 0; faction < 8; ++faction) clear_bunglist(faction);
+    return 1;
 }
 
 /*
@@ -10530,7 +10538,7 @@ void __cdecl action_go_to(int veh_id) {
                 }
             }
 
-            if (!(LockEnableMask & (1 << Vehs[veh_id].faction_id))
+            if (!(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1 << Vehs[veh_id].faction_id))
                 && Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].cargo != 0) {
                 Map *tile = map_tiles()
                     + ((Vehs[veh_id].x >> 1) + Vehs[veh_id].y * MapLongitude);
@@ -10711,7 +10719,7 @@ void __cdecl action_road_to(int veh_id) {
 // 0x009A64B4, two dwords: the TERRA_* bits the local player has already been
 // shown a first-time popup for, [0] land and [1] sea - indexed by the same
 // not-ocean test that picks Terraforming[]'s preq_tech from its _sea twin.
-uint32_t TerraformAnnouncedMask[2];  // 0x009A64B4
+// 0x009A64B4
 
 // 0x009B22DC and 0x009B22E0 close the run map.cpp binds as
 // MapBaseIdClosestSubmergedVeh[8] (0x009B22BC) and hold two ids the terraform
@@ -10816,7 +10824,7 @@ Return Value: 1 when the action ran, 0 when it only reported progress.
 Status: MISMATCH.
 */
 int __cdecl action_terraform(int veh_id, int action, int do_it) {
-    const int veh_count_before = VehCurrentCount;
+    const int veh_count_before = GameDataStateStorage.fields_.vehicle_current_count_;
     const int y = Vehs[veh_id].y;
     const int x = Vehs[veh_id].x;
     const uint8_t faction = Vehs[veh_id].faction_id;
@@ -10882,7 +10890,7 @@ int __cdecl action_terraform(int veh_id, int action, int do_it) {
     }
 
     const uint8_t faction_bit = (uint8_t)(1 << (faction & 0x1F));
-    if (!(LockEnableMask & faction_bit) && DiffLevelCurrent > 3
+    if (!(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_bit) && GameDataStateStorage.fields_.diff_level_current_ > 3
         && base_time > 3) {
         base_time--;
     }
@@ -11084,7 +11092,7 @@ int __cdecl action_terraform(int veh_id, int action, int do_it) {
             Bases[near_base].minerals_accumulated_2 = forest_val;
             Bases[near_base].production_id_last =
                 Bases[near_base].queue_production_id[0];
-            if (faction == ConsoleGlobal.faction_id_ && (faction_bit & LockEnableMask) != 0
+            if (faction == ConsoleGlobal.faction_id_ && (faction_bit & GameDataStateStorage.fields_.lock_masks_.enable_mask_) != 0
                 && Rules.minerals_harvesting_forest != 0) {
                 parse_says(0, Bases[near_base].name_string, -1, -1);
                 parse_num(0, Rules.minerals_harvesting_forest);
@@ -11095,8 +11103,8 @@ int __cdecl action_terraform(int veh_id, int action, int do_it) {
         goto forest_shared;
     } else {
         if (TerraformTileFaction >= 0
-            && !(LockEnableMask & (uint8_t)(1 << (TerraformTileFaction & 0x1F)))
-            && (faction_bit & LockEnableMask) != 0
+            && !(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (uint8_t)(1 << (TerraformTileFaction & 0x1F)))
+            && (faction_bit & GameDataStateStorage.fields_.lock_masks_.enable_mask_) != 0
             && (PlayersData[TerraformTileFaction].diplo_treaties[faction]
                 & 0x11)
                 == 0) {
@@ -11128,7 +11136,7 @@ int __cdecl action_terraform(int veh_id, int action, int do_it) {
 forest_shared:
     synch_bit(x, y, faction);
     draw_tiles(x, y, 2);
-    if (veh_count_before == VehCurrentCount) {
+    if (veh_count_before == GameDataStateStorage.fields_.vehicle_current_count_) {
         (ORIGINAL(&TutWinBaseWindow)->*BaseWinOriginalCheckVeh)(veh_id);
         TutWinBaseWindow.check_loc(x, y, 2);
     } else {
@@ -11140,12 +11148,12 @@ forest_shared:
     }
 
     if ((Vehs[veh_id].state & VSTATE_UNK_200) != 0
-        && (GamePreferences & 0x20) != 0 && IsMultiplayerNet == 0) {
+        && (GameDataStateStorage.fields_.game_preferences_ & 0x20) != 0 && IsMultiplayerNet == 0) {
         const uint32_t bit = 1 << (action & 0x1F);
-        uint32_t seen = TerraformAnnouncedMask[not_ocean];
+        uint32_t seen = GameDataStateStorage.fields_.terraform_announced_mask_[not_ocean];
         if ((bit & seen) == 0) {
             const uint32_t new_mask = seen | bit;
-            TerraformAnnouncedMask[not_ocean] = new_mask;
+            GameDataStateStorage.fields_.terraform_announced_mask_[not_ocean] = new_mask;
             const void *sprite = 0;
             const char *msg = 0;
             int noun = veh_id;
@@ -11194,7 +11202,7 @@ forest_shared:
                     msg = VehLabelMADEAQUIFER;
                     break;
                 default:
-                    TerraformAnnouncedMask[not_ocean] = ~bit & new_mask;
+                    GameDataStateStorage.fields_.terraform_announced_mask_[not_ocean] = ~bit & new_mask;
                     do_popup = false;
                     break;
                 }
@@ -11211,7 +11219,7 @@ forest_shared:
                 msg = VehLabelMADESEASOLAR;
                 noun = -1;
             } else {
-                TerraformAnnouncedMask[not_ocean] = ~bit & new_mask;
+                GameDataStateStorage.fields_.terraform_announced_mask_[not_ocean] = ~bit & new_mask;
                 do_popup = false;
             }
             if (do_popup) {
@@ -11322,7 +11330,7 @@ void __cdecl sub_500380(int faction_id, int x, int y) {
         threshold = Rules.max_airdrop_sans_orb_insert;
     }
 
-    const int count = VehCurrentCount;
+    const int count = GameDataStateStorage.fields_.vehicle_current_count_;
     for (int i = 0; i < count; ++i) {
         if (Vehs[i].faction_id != faction_id) {
             continue;
@@ -11550,7 +11558,7 @@ static void add_sensor_facility_goals(int faction_id, int x, int y) {
 static int may_mark_spot_all_map_dirty(
     const SpotAllSourceContext &source) {
     return source.faction_id == ConsoleGlobal.faction_id_ &&
-           (GameState & STATE_OMNISCIENT_VIEW) == 0 &&
+           (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) == 0 &&
            (PlayersData[source.faction_id].flags & PFLAG_MAP_REVEALED) == 0;
 }
 
@@ -11582,7 +11590,7 @@ static int may_query_wake_policy(const SpotAllSourceContext &source,
     if (source_vehicle_id < 0 || sensor_faction < 0 ||
         sensor_faction >= 8) return 0;
     const uint32_t sensor_bit = (uint32_t)(1u << sensor_faction);
-    return (LockEnableMask & sensor_bit) != 0 &&
+    return (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & sensor_bit) != 0 &&
            source.source_low_terrain == detected_low_terrain;
 }
 
@@ -11592,7 +11600,7 @@ static int should_use_target_stack_wake_fallback(
     if (source_vehicle_id < 0 || contact_faction < 0 || contact_faction >= 8)
         return 0;
     const uint32_t lock_bit = (uint32_t)(1u << contact_faction);
-    if ((LockEnableMask & lock_bit) != 0) return 0;
+    if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & lock_bit) != 0) return 0;
     const uint32_t pair_flags = PlayersData[source.faction_id]
                                     .diplo_treaties[contact_faction];
     return (pair_flags & 7u) == 0 &&
@@ -11605,7 +11613,7 @@ static int should_use_source_vehicle_wake_fallback(
     if (source_vehicle_id < 0 || contact_faction < 0 || contact_faction >= 8)
         return 0;
     const uint32_t source_bit = (uint32_t)(1u << source.faction_id);
-    if ((LockEnableMask & source_bit) != 0) return 0;
+    if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & source_bit) != 0) return 0;
     const uint32_t pair_flags = PlayersData[source.faction_id]
                                     .diplo_treaties[contact_faction];
     return (pair_flags & 7u) == 0 &&
@@ -11621,7 +11629,7 @@ static int may_query_sensor_owner_wake_policy(
     if (source_vehicle_id < 0 || contact_faction < 0 || contact_faction >= 8)
         return 0;
     const uint32_t source_bit = (uint32_t)(1u << source.faction_id);
-    return (LockEnableMask & source_bit) != 0 &&
+    return (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & source_bit) != 0 &&
            (source.source_low_terrain == detected_low_terrain ||
             source.vehicle_triad == 2);
 }
@@ -11914,9 +11922,9 @@ static int find_inner_sensor_match(const SpotAllSourceContext &source,
 // facility matching, and marker-equality tier reduction are controlled by the
 // private host fixtures. This pass only computes the radius tier.
 static int scan_optical_location_radius(SpotAllSourceContext &source) {
-    if ((GameMorePreferences & 1u) == 0 ||
+    if ((GameDataStateStorage.fields_.game_more_preferences_ & 1u) == 0 ||
         source.faction_id != ConsoleGlobal.faction_id_ ||
-        (GameState & STATE_OMNISCIENT_VIEW) != 0) {
+        (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) != 0) {
         return 0;
     }
 
@@ -11980,7 +11988,7 @@ static int scan_terrain_visibility_radius(SpotAllSourceContext &source) {
             }
         }
         if (source.faction_id == ConsoleGlobal.faction_id_ &&
-            (GameState & STATE_OMNISCIENT_VIEW) == 0 &&
+            (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) == 0 &&
             (PlayersData[source.faction_id].flags &
              PFLAG_MAP_REVEALED) == 0) {
             const int unseen = (tile->visibility & source.faction_mask) == 0;
@@ -12061,7 +12069,7 @@ static void set_perimeter_tile_visibility(
     Map *base_tile = map_loc(base.x, base.y);
     if (may_mark_spot_all_map_dirty(source) &&
         (base_tile->visibility & faction_mask) == 0 &&
-        (GameState & STATE_OMNISCIENT_VIEW) == 0) {
+        (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) == 0) {
         base_tile->bit2 |= 0x400000u;
         UnkBitfield1 |= 1u;
     }
@@ -12085,7 +12093,7 @@ static void reveal_contact_base_history(
 
     Map *tile = map_loc(base.x, base.y);
     if (source.faction_id == ConsoleGlobal.faction_id_ &&
-        (GameState & STATE_OMNISCIENT_VIEW) == 0 &&
+        (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) == 0 &&
         (tile->visibility & source.faction_mask) == 0 &&
         (PlayersData[source.faction_id].flags & PFLAG_MAP_REVEALED) == 0) {
         tile->bit2 |= 0x400000u;
@@ -12206,7 +12214,7 @@ static int scan_enemy_sensor_contacts(SpotAllSourceContext &source,
                     record_foreign_base_encounter_fact(source, base,
                                                        encounter_mask);
                 if (source.faction_id == ConsoleGlobal.faction_id_ &&
-                    (GameState & STATE_OMNISCIENT_VIEW) == 0) {
+                    (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) == 0) {
                     const int had_base_memory =
                         (base.visibility & source.faction_mask) != 0;
                     const int changed_population =
@@ -12277,7 +12285,7 @@ static int scan_enemy_sensor_contacts(SpotAllSourceContext &source,
                 }
                 if (begin_offset < 9 && detected_base_id < 0 &&
                     source.faction_id == ConsoleGlobal.faction_id_ &&
-                    (GameState & STATE_OMNISCIENT_VIEW) == 0 &&
+                    (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) == 0 &&
                     (Vehs[detected_stack_id].visibility &
                      source.faction_mask) == 0 &&
                     source.early_radius_tier <= 1) {
@@ -12299,7 +12307,7 @@ static int scan_enemy_sensor_contacts(SpotAllSourceContext &source,
                         detected.proto_id != 0x13;
                     if (begin_offset >= 9 && !exceptional_highland_unit &&
                         source.faction_id == ConsoleGlobal.faction_id_ &&
-                        (GameState & STATE_OMNISCIENT_VIEW) == 0 &&
+                        (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) == 0 &&
                         (Vehs[source_vehicle_id].visibility &
                          source.faction_mask) == 0 &&
                         source.early_radius_tier <= 2) {
@@ -12526,7 +12534,7 @@ void __cdecl spot_all(int source_vehicle_id, int toggle) {
 
     // 0x5B8A00 onward presents the radius/interlude first and publishes
     // encounters only after that presentation path has returned.
-    if (TurnCurrentNum != 0) {
+    if (GameDataStateStorage.fields_.turn_current_num_ != 0) {
         const int radius_indicator = source.early_radius_tier;
         draw_radius(source.x, source.y,
                     source.faction_id == ConsoleGlobal.faction_id_
@@ -12767,7 +12775,7 @@ static int give_random_technology(int faction_id, int notify, int forced,
         if (has_tech(tech_id, faction_id)) continue;
         if (!tech_avail(tech_id, faction_id)) continue;
         if (tech_is_preq(tech_id, 0x30, 9999)
-            && !GameTechAchieved[TECH_BRAIN])
+            && !GameDataStateStorage.fields_.game_tech_achieved_[TECH_BRAIN])
             continue;
         const RulesTechnology &definition = Technology[tech_id];
         int terminal_prerequisites = 0;
@@ -12828,9 +12836,9 @@ int __cdecl goody_box(int veh_id, int type) {
 
     PlayerData &faction = PlayersData[faction_id];
     ++faction.unk_94; // original 0x96EA20; setup_player clears the DWORD.
-    if (IsMultiplayerNet) my_srand((int)StartingMissionYear + faction.unk_94 * 0x25);
-    if (faction.soc_effect_pending.values_[SocialEffect::RESEARCH] * -5 <= TurnCurrentNum
-        && !(GameRules & 0x04000000u))
+    if (IsMultiplayerNet) my_srand((int)ScenarioSave.starting_mission_year + faction.unk_94 * 0x25);
+    if (faction.soc_effect_pending.values_[SocialEffect::RESEARCH] * -5 <= GameDataStateStorage.fields_.turn_current_num_
+        && !(GameDataStateStorage.fields_.game_rules_ & 0x04000000u))
         ++faction.tech_accumulated;
 
     const int base_id = base_find(x, y);
@@ -12866,7 +12874,7 @@ int __cdecl goody_box(int veh_id, int type) {
                       || !faction.region_total_bases[tile->region])
                    ? 0x28 : 0x14;
         const int plan = VehPrototypes[Vehs[veh_id].proto_id].plan;
-        if ((plan == 9 && (BaseFindDist < 0x0C || TurnCurrentNum < 0x28))
+        if ((plan == 9 && (BaseFindDist < 0x0C || GameDataStateStorage.fields_.turn_current_num_ < 0x28))
             || plan == 8) chance += 10;
         if (chance > 1) event_id = rand() % chance;
     }
@@ -12880,7 +12888,7 @@ dispatch_event:
         switch (event_id) {
         case 0: { // credits
             const int threshold = native_terrain ? 0x64 : 0x32;
-            const int base_amount = TurnCurrentNum >= threshold ? 0x32 : 0x19;
+            const int base_amount = GameDataStateStorage.fields_.turn_current_num_ >= threshold ? 0x32 : 0x19;
             const int amount = (rand() % (native_terrain ? 4 : 3) + 1)
                              * base_amount;
             goody_box_detail::notify_energy(faction_id, amount,
@@ -12924,7 +12932,7 @@ dispatch_event:
             if (native_terrain || (tile->climate & 0xE0) >= 0xA0)
                 return goody_box_detail::reveal_nearby_terrain(
                     x, y, faction_id, native_terrain, local);
-            if (TurnCurrentNum >= 0x32) break;
+            if (GameDataStateStorage.fields_.turn_current_num_ >= 0x32) break;
             event_id = 8;
             goto dispatch_event; // Native shared dispatch skips the chassis reroll.
         }
@@ -12937,7 +12945,7 @@ dispatch_event:
             const int32_t denominator_minus_one =
                 (int32_t)(doubled_changes + 1u);
             const int eligible_by_preference =
-                !(GameRules & 0x01000000u) || DiffLevelCurrent >= 2;
+                !(GameDataStateStorage.fields_.game_rules_ & 0x01000000u) || GameDataStateStorage.fields_.diff_level_current_ >= 2;
             if (eligible_by_preference && (tile->climate & 0xE0) <= 0x80
                 && faction.current_num_bases >= 2 && !native_terrain
                 && !IsMultiplayerNet
@@ -12974,12 +12982,12 @@ dispatch_event:
         }
         case 4: {
             const int plan = VehPrototypes[Vehs[veh_id].proto_id].plan;
-            if (native_terrain || !(GameState & 0x00100000u)) {
+            if (native_terrain || !(GameDataStateStorage.fields_.game_state_ & 0x00100000u)) {
                 if (IsMultiplayerNet || plan == 12
-                    || ((GameRules & 0x01000000u) && DiffLevelCurrent <= 1))
+                    || ((GameDataStateStorage.fields_.game_rules_ & 0x01000000u) && GameDataStateStorage.fields_.diff_level_current_ <= 1))
                     break;
-                if (TurnCurrentNum >= 0x19
-                    && (TurnCurrentNum >= 0x32 || DiffLevelCurrent >= 2)) {
+                if (GameDataStateStorage.fields_.turn_current_num_ >= 0x19
+                    && (GameDataStateStorage.fields_.turn_current_num_ >= 0x32 || GameDataStateStorage.fields_.diff_level_current_ >= 2)) {
                     if (goody_box_detail::relocate_vehicle(
                             veh_id, x, y, faction_id, native_terrain, local))
                         return 0;
@@ -12992,7 +13000,7 @@ dispatch_event:
             goto dispatch_event;
         }
         case 5: {
-            if ((GameState & 0x00100000u) && !native_terrain) {
+            if ((GameDataStateStorage.fields_.game_state_ & 0x00100000u) && !native_terrain) {
                 event_id = 7;
                 goto dispatch_event;
             }
@@ -13036,33 +13044,33 @@ dispatch_event:
                     }
                 }
             }
-            if (native_terrain || (GameRules & 0x00040000u)) break;
+            if (native_terrain || (GameDataStateStorage.fields_.game_rules_ & 0x00040000u)) break;
 
             uint32_t supported = faction.proto_id_active[7];
-            for (int base = 0; base < BaseCurrentCount; ++base) {
+            for (int base = 0; base < GameDataStateStorage.fields_.base_current_count_; ++base) {
                 if (Bases[base].faction_id_current == faction_id
                     && (Bases[base].state & 0x400u))
                     ++supported;
             }
             if (faction.current_num_bases <= (int)supported
-                && !(GameState & 0x00040000u))
+                && !(GameDataStateStorage.fields_.game_state_ & 0x00040000u))
                 break;
             event_id = 6;
             goto dispatch_event;
         }
         case 6: {
-            if (GameRules & 0x00040000u) break;
+            if (GameDataStateStorage.fields_.game_rules_ & 0x00040000u) break;
             if (attempt <= 1 || event_id != 6) {
                 if (native_terrain
                     && stack_check(veh_id, 8, -1, -1, -1) <= 0)
                     break;
                 int share_artifact =
-                    !IsMultiplayerNet || (GameState & 0x00040000u);
+                    !IsMultiplayerNet || (GameDataStateStorage.fields_.game_state_ & 0x00040000u);
                 if (!share_artifact) {
                     share_artifact = 1;
                     for (int other = 1; other < 8; ++other) {
                         if (other == faction_id) continue;
-                        if (!(LockEnableMask & (1u << other))) continue;
+                        if (!(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u << other))) continue;
                         if (PlayersData[other].unk_95 < faction.unk_95) {
                             share_artifact = 0;
                             break;
@@ -13092,8 +13100,8 @@ dispatch_event:
             goto dispatch_event;
         }
         case 7: {
-            if ((GameRules & 0x00200000u)
-                || ((GameRules & 0x01000000u) && DiffLevelCurrent <= 1)
+            if ((GameDataStateStorage.fields_.game_rules_ & 0x00200000u)
+                || ((GameDataStateStorage.fields_.game_rules_ & 0x01000000u) && GameDataStateStorage.fields_.diff_level_current_ <= 1)
                 || attempt > 1)
                 break;
             if (native_terrain) {
@@ -13102,7 +13110,7 @@ dispatch_event:
             }
             base_find(x, y);
             if (BaseFindDist < 3) break;
-            if (IsMultiplayerNet && faction_id == RankingFactionIDUnk2
+            if (IsMultiplayerNet && faction_id == GameDataStateStorage.fields_.ranking_faction_id_unk2_
                 && !goody_box_detail::normalized_crt_mask_draw())
                 break;
             int tower_roll = goody_box_detail::normalized_crt_mask_draw();
@@ -13140,7 +13148,7 @@ dispatch_event:
             return 0;
         }
         case 8: // monolith
-            if (!(GameRules & 0x00020000u) && !bonus_at(x, y, 0)
+            if (!(GameDataStateStorage.fields_.game_rules_ & 0x00020000u) && !bonus_at(x, y, 0)
                 && !native_terrain) {
                 site_radius(x, y, 0);
                 bit_set(x, y, 0x2000, TRUE);
@@ -13152,13 +13160,13 @@ dispatch_event:
             }
             break;
         case 9: { // native lifeforms
-            if ((NetTurnFlags & 1u)
-                || GameTechAchieved[TECH_ORBITAL]
+            if ((GameDataStateStorage.fields_.net_turn_flags_ & 1u)
+                || GameDataStateStorage.fields_.game_tech_achieved_[TECH_ORBITAL]
                 || (native_terrain
                     && stack_check(veh_id, 8, -1, -1, -1) <= 0))
                 break;
             int proto_id = 11;
-            if (GameTechAchieved[TECH_FOSSIL]
+            if (GameDataStateStorage.fields_.game_tech_achieved_[TECH_FOSSIL]
                 && rand() % 3 == 0
                 && !faction.proto_id_active[12]) {
                 base_find(x, y, faction_id);
@@ -13222,7 +13230,7 @@ dispatch_event:
             const int new_vehicle = veh_init(proto_id, faction_id,
                                              spawn_x, spawn_y);
             if (new_vehicle < 0) break;
-            if (forced || TurnCurrentNum <= 0x31)
+            if (forced || GameDataStateStorage.fields_.turn_current_num_ <= 0x31)
                 Vehs[new_vehicle].home_base_id = -1;
             const uint16_t native_order_bits =
                 proto_id == 16 ? 2u : proto_id == 17 ? 4u
@@ -13243,15 +13251,15 @@ dispatch_event:
             return 0;
         }
         case 10: // treaty gift
-            if (NetTurnFlags & 2u) break;
+            if (GameDataStateStorage.fields_.net_turn_flags_ & 2u) break;
             {
                 const uint32_t gift_roll =
                     goody_box_detail::normalized_crt_mask_3_draw();
                 if (gift_roll == 0) {
                   const int other = rand() % 7 + 1;
                   const uint32_t other_bit = 1u << other;
-                  const uint32_t live_players = (LockEnableMask >> 8) & 0xFFu;
-                  const uint32_t human_players = LockEnableMask & 0xFFu;
+                  const uint32_t live_players = (GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8) & 0xFFu;
+                  const uint32_t human_players = GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFu;
                   const int disallowed_human_pair =
                       !(human_players & (1u << faction_id))
                       || (human_players & other_bit);
@@ -13282,12 +13290,12 @@ dispatch_event:
                   }
                 }
             }
-            if (GameRules & 0x04000000u) break;
+            if (GameDataStateStorage.fields_.game_rules_ & 0x04000000u) break;
             if (IsMultiplayerNet && !forced) {
                 int behind_peer = 0;
                 for (int other = 1; other < 8; ++other) {
                     const uint32_t bit = 1u << other;
-                    if (other == faction_id || !(LockEnableMask & bit))
+                    if (other == faction_id || !(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & bit))
                         continue;
                     const PlayerData &peer = PlayersData[other];
                     if (peer.unk_97 + 1 < faction.unk_97
@@ -13374,8 +13382,8 @@ dispatch_event:
             break;
         }
         case 12: case 13: case 14: case 15: case 16: case 17: {
-            if ((GameRules & 0x00200000u)
-                || ((GameRules & 0x01000000u) && DiffLevelCurrent <= 1))
+            if ((GameDataStateStorage.fields_.game_rules_ & 0x00200000u)
+                || ((GameDataStateStorage.fields_.game_rules_ & 0x01000000u) && GameDataStateStorage.fields_.diff_level_current_ <= 1))
                 break;
             base_find(x, y, faction_id);
             const int owned_base_distance = BaseFindDist;
@@ -13386,15 +13394,15 @@ dispatch_event:
                     (tile->bit & 0x20u) && (tile->climate & 0xE0u) >= 0x40u
                     ? 2 : 4;
                 if (!goody_box_detail::native_threshold_passes(
-                        event_id, GameState, owned_base_distance,
+                        event_id, GameDataStateStorage.fields_.game_state_, owned_base_distance,
                         terrain_factor, (int)MapNativeLifeForms))
                     break;
             }
-            if (IsMultiplayerNet && faction_id == RankingFactionIDUnk2
+            if (IsMultiplayerNet && faction_id == GameDataStateStorage.fields_.ranking_faction_id_unk2_
                 && !goody_box_detail::normalized_crt_mask_draw())
                 break;
             if (native_terrain && event_id > 12
-                + ((GameState & 0x00100000u) != 0))
+                + ((GameDataStateStorage.fields_.game_state_ & 0x00100000u) != 0))
                 break;
 
             if (native_terrain)
@@ -13408,7 +13416,7 @@ dispatch_event:
                 // Native57C6F5..57C7A1 performs no per-location RNG
                 // rejection; event11's separate conversion loop owns that draw.
                 const int radius = goody_box_detail::rotated_spawn_index(
-                    location, TurnCurrentNum);
+                    location, GameDataStateStorage.fields_.turn_current_num_);
                 const int nx = goody_box_detail::wrap_x(
                     x + RadiusBaseX[radius]);
                 const int ny = y + RadiusBaseY[radius];
@@ -13457,10 +13465,10 @@ dispatch_event:
                                     Vehs[created].visibility |= nearby_tile->visibility;
                                     draw_tile(nx, ny, 2);
                                     const int state_limit =
-                                        (int)(((GameState & 0x00100000u)
+                                        (int)(((GameDataStateStorage.fields_.game_state_ & 0x00100000u)
                                               | 0x00C00000u) >> 20);
                                     if (state_limit < event_id
-                                        || TurnCurrentNum < 0x0F
+                                        || GameDataStateStorage.fields_.turn_current_num_ < 0x0F
                                         || BaseFindDist <= 3)
                                         location = 8;
                                 }
@@ -13517,8 +13525,8 @@ dispatch_event:
                 for (int other = 1; other < 8; ++other) {
                     const uint32_t bit = 1u << other;
                     if (other == faction_id
-                        || !(LockEnableMask & (bit << 8))
-                        || !(LockEnableMask & bit))
+                        || !(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (bit << 8))
+                        || !(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & bit))
                         continue;
                     const int peer_total = PlayersData[other].total_mil_veh;
                     if (native_terrain) {
@@ -13571,7 +13579,7 @@ dispatch_event:
                 ((!native_terrain || (tile->climate & 0xE0u) >= 0x40u)
                  && (!(tile->bit & 0x20u) || (tile->climate & 0xE0u) <= 0x3Fu)
                  && y >= 2 && y < MapLatitudeBounds - 2
-                 && !(GameRules & 0x00010000u));
+                 && !(GameDataStateStorage.fields_.game_rules_ & 0x00010000u));
             if (fallback_allowed) {
                 bit_set(x, y, 0x400, TRUE);
                 const int existing_bonus = bonus_at(x, y, 0);
@@ -13738,7 +13746,7 @@ void __cdecl action_give(int vehicle_id, int faction_id) {
         if (base_id >= 0) {
             parse_says(4, Bases[base_id].name_string, -1, -1);
             if (Language != 0
-                || (LockEnableMask
+                || (GameDataStateStorage.fields_.lock_masks_.enable_mask_
                     & (1u << (original_owner & 0x1f))) != 0) {
                 // The seed tests Language (0x009BC054), not the network
                 // mode; this key is the pinned NUL string at 0x006882AC.
@@ -13973,7 +13981,7 @@ void __cdecl action_fungal(int vehicle_id, int x, int y) {
         if ((PlayersData[ConsoleGlobal.faction_id_].flags & PFLAG_MAP_REVEALED) != 0
             || (tile->visibility
                 & (1u << (ConsoleGlobal.faction_id_ & 0x1f))) != 0
-            || (GameState & 0x80) != 0) {
+            || (GameDataStateStorage.fields_.game_state_ & 0x80) != 0) {
             synch_bit(spread_x, spread_y, ConsoleGlobal.faction_id_);
             draw_tile(spread_x, spread_y, 2);
         }
@@ -14117,7 +14125,7 @@ int __cdecl shoot_it(int attacker, int defender, int x, int y,
     bool failed_prompt_dismissed = false;
     if (result == 0) {
         if (IsMultiplayerNet == 0
-            && (LockEnableMask & (1u << (defender & 0x1f))) != 0) {
+            && (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u << (defender & 0x1f))) != 0) {
             if (defender == ConsoleGlobal.faction_id_) {
                 parse_num(0, static_cast<int>(defending_faction.satellites_[3]));
                 const int base_id = base_find(x, y);
@@ -14302,7 +14310,7 @@ int __cdecl propose_proto(int faction_id, int chassis_id, int weapon_id,
                     && candidate.ability_flags == static_cast<uint32_t>(ability_flags)
                     && candidate.reactor_id == reactor_id
                     && DesignConsiderOverride == 0
-                    && (LockEnableMask & faction_bit) != 0) {
+                    && (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_bit) != 0) {
                     return -1;
                 }
 
@@ -14314,7 +14322,7 @@ int __cdecl propose_proto(int faction_id, int chassis_id, int weapon_id,
                         & PrototypeAbilityCompatibilityMask) == 0
                     && ((candidate.ability_flags & static_cast<uint32_t>(ability_flags))
                         == candidate.ability_flags
-                        || (LockEnableMask & faction_bit) == 0)) {
+                        || (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_bit) == 0)) {
                     if (design_category == -2) {
                         candidate.flags |= PROTO_TYPED_COMPLETE;
                     }
@@ -14389,7 +14397,7 @@ int __cdecl propose_proto(int faction_id, int chassis_id, int weapon_id,
                                 int defense_distance = defense_factor - other_defense;
                                 if (defense_distance < 0) defense_distance = -defense_distance;
                                 if (defense_distance < 2
-                                    && (comparison_bit & LockEnableMask) == 0
+                                    && (comparison_bit & GameDataStateStorage.fields_.lock_masks_.enable_mask_) == 0
                                     && std::strcmp(Players[faction_id].filename, "UNIV") != 0) {
                                     return slot;
                                 }
@@ -14446,7 +14454,7 @@ int __cdecl propose_proto(int faction_id, int chassis_id, int weapon_id,
     }
     make_proto(best_prototype, chassis_id, weapon_id, armor_id,
                ability_flags, reactor_id);
-    if (design_category == -2 || DiffLevelCurrent < 2) {
+    if (design_category == -2 || GameDataStateStorage.fields_.diff_level_current_ < 2) {
         selected.flags |= PROTO_TYPED_COMPLETE;
     }
     if (!was_active) selected.flags |= 0x40;
@@ -14477,7 +14485,7 @@ int __cdecl propose_proto(int faction_id, int chassis_id, int weapon_id,
     }
 
     prune_protos(faction_id, best_prototype, 0);
-    for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+    for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
         Base &base = Bases[base_id];
         if (base.faction_id_current != faction_id) continue;
         const int last_queue_slot = static_cast<int>(base.queue_size);
@@ -14538,12 +14546,12 @@ void __cdecl retire_proto(int prototype_id, int faction_id) {
         }
     }
 
-    for (int vehicle_id = VehCurrentCount - 1; vehicle_id >= 0; --vehicle_id) {
-        if (vehicle_id >= VehCurrentCount) continue;
+    for (int vehicle_id = GameDataStateStorage.fields_.vehicle_current_count_ - 1; vehicle_id >= 0; --vehicle_id) {
+        if (vehicle_id >= GameDataStateStorage.fields_.vehicle_current_count_) continue;
         Veh &vehicle = Vehs[vehicle_id];
         if (vehicle.proto_id != prototype_id) continue;
 
-        const uint8_t enabled_factions = static_cast<uint8_t>(LockEnableMask);
+        const uint8_t enabled_factions = static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_);
         // The original locked-faction path kills this prototype's live units
         // before the visibility, map-tile, or base-stack tests.
         if ((enabled_factions & faction_bit) != 0) {
@@ -14591,7 +14599,7 @@ void __cdecl retire_proto(int prototype_id, int faction_id) {
     }
 
     if (prototype_id >= MaxVehProtoFactionNum) {
-        for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+        for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
             Base &base = Bases[base_id];
             for (int queue_index = 0;
                  queue_index <= static_cast<int>(base.queue_size);
@@ -14725,7 +14733,7 @@ void __cdecl prune_protos(int faction_id, int prototype_id, int options) {
     // checks. The cross-prototype region is skipped while this faction is
     // locked; its automatic-prune tail has a separate native entry path.
     const uint8_t faction_bit = static_cast<uint8_t>(1u << (faction_id & 0x1f));
-    if ((LockEnableMask & faction_bit) == 0) {
+    if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_bit) == 0) {
     // The first native obsolescence walk compares faction designs with the
     // predefined bank too. Preserve its prerequisite and unsupported-weapon
     // exclusions before applying the exact-equivalence subcase.
@@ -14855,9 +14863,9 @@ void __cdecl prune_protos(int faction_id, int prototype_id, int options) {
     // additionally requires multiplayer or the single-player preference.
     // The outer design is the possible replacement; the inner design is the
     // design that receives the faction's obsolete bit.
-    if ((LockEnableMask & faction_bit) != 0
+    if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_bit) != 0
         && (IsMultiplayerNet != 0
-            || (GameMorePreferences & MPREF_BSC_AUTO_PRUNE_OBS_VEH) != 0)) {
+            || (GameDataStateStorage.fields_.game_more_preferences_ & MPREF_BSC_AUTO_PRUNE_OBS_VEH) != 0)) {
         for (int replacement_walk = 0;
              replacement_walk < 2 * MaxVehProtoFactionNum;
              ++replacement_walk) {
@@ -14999,7 +15007,7 @@ void __cdecl prune_protos(int faction_id, int prototype_id, int options) {
                 bool processed_any_owned_base = false;
                 bool has_queued_obsolete_prototype = false;
                 for (int queued_base_id = 0;
-                     queued_base_id < BaseCurrentCount; ++queued_base_id) {
+                     queued_base_id < GameDataStateStorage.fields_.base_current_count_; ++queued_base_id) {
                     const Base &base = Bases[queued_base_id];
                     if (base.faction_id_current != faction_id) continue;
                     const int queue_size =
@@ -15015,7 +15023,7 @@ void __cdecl prune_protos(int faction_id, int prototype_id, int options) {
                     if (has_queued_obsolete_prototype) break;
                 }
                 if (!has_queued_obsolete_prototype) continue;
-                for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+                for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
                     Base &base = Bases[base_id];
                     if (base.faction_id_current != faction_id) continue;
 
@@ -15130,9 +15138,9 @@ static int veh_init_abs32(int value) {
 // symbol    ?veh_init@@YAHHHHH@Z
 // TRIED: direct Ghidra transcription with own extern DAT_ table arrays (byte/dword typed per bracket-index width) instead of the given g_ address pointers; diverges at insn #5, plausibly register-allocation shape of the ~200-line body
 int __cdecl veh_init(int prototype, int faction, int x, int y) {
-    const int vehicle_id = VehCurrentCount;
+    const int vehicle_id = GameDataStateStorage.fields_.vehicle_current_count_;
     if (vehicle_id > 0x7FF) return -1;
-    VehCurrentCount = vehicle_id + 1;
+    GameDataStateStorage.fields_.vehicle_current_count_ = vehicle_id + 1;
 
     log_say("Adding Vehicle (v,who,v2)", vehicle_id, faction, prototype);
 
@@ -15146,7 +15154,7 @@ int __cdecl veh_init(int prototype, int faction, int x, int y) {
     veh_clear(vehicle_id, prototype, faction);
     const int base_id = base_find(x, y);
     if (VehPrototypes[prototype].plan == PLAN_ALIEN_ARTIFACT) {
-        if (GameState & 0x40000) {
+        if (GameDataStateStorage.fields_.game_state_ & 0x40000) {
             Vehs[vehicle_id].flags |= VFLAG_IS_OBJECTIVE;
         }
     } else if (base_id >= 0 &&
@@ -15286,7 +15294,7 @@ int __cdecl study_artifact(int veh_id) {
     const int tile_y = vehicle.y;
     const int faction_id = vehicle.faction_id;
     const int base_id = base_at(tile_x, tile_y);
-    if (base_id != SecretProject.universal_translator() && base_id >= 0) {
+    if (base_id != GameDataStateStorage.fields_.secret_project_.universal_translator() && base_id >= 0) {
         Base &base = Bases[base_id];
         if ((base.state & BSTATE_ARTIFACT_LINKED) != 0) {
             if ((base.state & BSTATE_ARTIFACT_ALREADY_LINKED) == 0
@@ -15464,7 +15472,7 @@ static bool air_power_ordinary_candidate_scan(
     const uint8_t faction_bit = static_cast<uint8_t>(
         1U << (faction_id & 0x1F));
 
-    for (int candidate_id = 0; candidate_id < VehCurrentCount;
+    for (int candidate_id = 0; candidate_id < GameDataStateStorage.fields_.vehicle_current_count_;
          ++candidate_id) {
         const Veh &candidate = Vehs[candidate_id];
         const int candidate_faction = candidate.faction_id;
@@ -15644,7 +15652,7 @@ static bool air_power_ordinary_post_loop(
             if (try_allied_base) {
                 const int selected_x = Vehs[best_vehicle_id].x;
                 const int selected_y = Vehs[best_vehicle_id].y;
-                for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+                for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
                     const Base &base = Bases[base_id];
                     const int base_faction = base.faction_id_current;
                     if (base_faction != faction_id
@@ -15810,7 +15818,7 @@ static int air_power_bombing_run(int vehicle_id, int *target_x,
     if (VehPrototypes[attacker.proto_id].plan == 0
         || ((auto_state & 0x200u) != 0
             && attacker.order_auto_type == auto_bombing)) {
-        for (int enemy_base_id = 0; enemy_base_id < BaseCurrentCount;
+        for (int enemy_base_id = 0; enemy_base_id < GameDataStateStorage.fields_.base_current_count_;
              ++enemy_base_id) {
             const Base &base = Bases[enemy_base_id];
             const int base_faction = base.faction_id_current;
@@ -15935,7 +15943,7 @@ air_power_bombing_v2_scored_base:
             if (attack_range / 2 < ((x_distance + y_distance) >> 1)) {
                 int nearest_friendly_base_distance = 9999;
                 for (int friendly_base_id = 0;
-                     friendly_base_id < BaseCurrentCount; ++friendly_base_id) {
+                     friendly_base_id < GameDataStateStorage.fields_.base_current_count_; ++friendly_base_id) {
                     const Base &base = Bases[friendly_base_id];
                     const int base_faction = base.faction_id_current;
                     if (base_faction != faction_id
@@ -16080,7 +16088,7 @@ static bool air_power_relocation(int vehicle_id, int *target_x,
 
     int best_base_id = -1;
     int best_random_distance = -1;
-    for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+    for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
         const Base &base = Bases[base_id];
         if (base.faction_id_current != faction_id) continue;
         int dx = abs(*target_x - base.x);
@@ -16277,7 +16285,7 @@ static bool air_power_tectonic_goal_route(int vehicle_id, int *target_x,
     }
 
     int base_id;
-    for (base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+    for (base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
         const Base &base = Bases[base_id];
         const Map *base_tile;
         int score;
@@ -16334,7 +16342,7 @@ static bool air_power_tectonic_goal_route(int vehicle_id, int *target_x,
     }
 
     int closest_base_distance = 9999;
-    for (base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+    for (base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
         const Base &base = Bases[base_id];
         const int base_faction = base.faction_id_current;
         if (base_faction == faction_id
@@ -16374,7 +16382,7 @@ static bool air_power_fungal_goal_route(int vehicle_id, int *target_x,
     chosen_x = -1;
     chosen_y = -1;
 
-    for (base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+    for (base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
         const Base &base = Bases[base_id];
         const Map *base_tile;
         int base_score;
@@ -16435,7 +16443,7 @@ static bool air_power_fungal_goal_route(int vehicle_id, int *target_x,
             actor.terraforming_turns = 0;
         } else {
         int closest_base_distance = 9999;
-        for (base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+        for (base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
             const Base &base = Bases[base_id];
             if (base.faction_id_current == faction_id) {
                 const int distance_from_target = cursor_dist(
@@ -16585,7 +16593,7 @@ static bool air_power_missile_enemy_candidate_score(
         ++proto_active_count;
     }
     if (proto_active_count != 0) {
-        if ((LockEnableMask & (1U << (candidate_faction & 0x1F))) != 0)
+        if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1U << (candidate_faction & 0x1F))) != 0)
             strategic_weight *= 2;
         if (PlayersData[candidate_faction].ranking == 7)
             strategic_weight *= 2;
@@ -16610,7 +16618,7 @@ static bool air_power_missile_enemy_candidate_score(
                                  - Rules.move_rate_roads) {
             int closest_base_distance = 9999;
             int base_index;
-            for (base_index = 0; base_index < BaseCurrentCount; ++base_index) {
+            for (base_index = 0; base_index < GameDataStateStorage.fields_.base_current_count_; ++base_index) {
                 const Base &base = Bases[base_index];
                 const int base_faction = base.faction_id_current;
                 if (base_faction != faction_id
@@ -16659,7 +16667,7 @@ static int air_power_missile_stack_fallback(int vehicle_id, int *target_x,
     if (actor_stack < 2) return -3;
 
     int base_id;
-    for (base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+    for (base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
         const Base &base = Bases[base_id];
         if (base.faction_id_current == actor.faction_id) {
             const int occupying_vehicle = veh_at(base.x, base.y);
@@ -16767,7 +16775,7 @@ static int air_power_missile_general_scan(int vehicle_id, int *target_x,
 
     // The native 64-step tally uses and leaves the iVar10 stack slot at 0.
     live_iVar10 = 0;
-    for (candidate_id = 0; candidate_id < VehCurrentCount;
+    for (candidate_id = 0; candidate_id < GameDataStateStorage.fields_.vehicle_current_count_;
          ++candidate_id) {
         air_power_missile_enemy_candidate_score(
             vehicle_id, candidate_id, proto_active_count, target_x,
@@ -16830,7 +16838,7 @@ static int air_power_after_relocation_dispatch(
     if (Chassis[chassis_id].missile != 0) {
         const uint32_t faction_bit =
             1U << (attacker.faction_id & 0x1F);
-        if ((LockEnableMask & faction_bit) != 0 && IsMultiplayerNet)
+        if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_bit) != 0 && IsMultiplayerNet)
             return -3;
         return air_power_missile_block(
             vehicle_id, target_x, target_y, live_iVar10, live_iVar11);
@@ -16968,7 +16976,7 @@ int __cdecl shoot(int atk_factionID, int def_factionID, int xDest, int yDest) {
         goto no_ammunition;
 
     if (!IsMultiplayerNet &&
-        (LockEnableMask & (1u << (def_factionID & 0x1f))) != 0) {
+        (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u << (def_factionID & 0x1f))) != 0) {
         if (def_factionID == ConsoleGlobal.faction_id_) {
             parse_num(0, PlayersData[def_factionID].satellites_[3]);
             const int base_id = base_find(xDest, yDest);
@@ -17354,15 +17362,15 @@ static ConsiderDesignsTailOutput consider_designs_strategy_tail(
     const PlayerData &faction_data = PlayersData[faction_id];
     uint32_t other_faction_mask = 0;
     if (Players[faction_id].rule_sharetech <= 0 &&
-        (LockEnableMask & faction_mask) == 0) {
+        (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_mask) == 0) {
         for (int other = 1; other < MaxPlayerNum; ++other) {
             const uint32_t other_mask = 1u << other;
-            if ((LockEnableMask & other_mask) == 0) continue;
+            if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & other_mask) == 0) continue;
             int relation_flags = 0;
             const int project_access = great_satan(other, 0);
             if (project_access == 0) {
                 if (faction_data.diff_level >= DLVL_THINKER ||
-                    (GameRules & RULES_INTENSE_RIVALRY) != 0) {
+                    (GameDataStateStorage.fields_.game_rules_ & RULES_INTENSE_RIVALRY) != 0) {
                     relation_flags = 0x10;
                 }
                 relation_flags |= 0x20;
@@ -17374,11 +17382,11 @@ static ConsiderDesignsTailOutput consider_designs_strategy_tail(
                 other_faction_mask |= 0x3;
                 continue;
             }
-            const int first_project_base = SecretProject.dream_twister();
+            const int first_project_base = GameDataStateStorage.fields_.secret_project_.dream_twister();
             if (first_project_base >= 0 &&
                 Bases[first_project_base].faction_id_current == other)
                 other_faction_mask |= 0x1;
-            const int second_project_base = SecretProject.neural_amplifier();
+            const int second_project_base = GameDataStateStorage.fields_.secret_project_.neural_amplifier();
             if (second_project_base >= 0 &&
                 Bases[second_project_base].faction_id_current == other)
                 other_faction_mask |= 0x2;
@@ -17407,12 +17415,12 @@ static ConsiderDesignsTailOutput consider_designs_strategy_tail(
     add_abil(&ability_flags, ABL_COMM_JAMMER, faction_id);
     bool trained_gate = faction_data.ai_fight < 0;
     if (!trained_gate && faction_data.soc_effect_pending.values_[SocialEffect::MORALE] < 0 &&
-        ((LockEnableMask & faction_mask) == 0 ||
+        ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_mask) == 0 ||
          Players[faction_id].rule_morale < 0)) {
         trained_gate = true;
     }
     if (trained_gate) add_abil(&ability_flags, ABL_TRAINED, faction_id);
-    if ((LockEnableMask & faction_mask) == 0 &&
+    if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_mask) == 0 &&
         (faction_data.enemy_best_psi_offense >=
              faction_data.enemy_best_weapon_value * 2 ||
          (other_faction_mask & 0x1) != 0)) {
@@ -17421,7 +17429,7 @@ static ConsiderDesignsTailOutput consider_designs_strategy_tail(
     if (has_tech(Ability[18].preq_tech, faction_id) &&
         (ability_flags == 0 ||
          has_tech(Rules.tech_two_spec_abilities, faction_id))) {
-        if ((LockEnableMask & faction_mask) == 0 &&
+        if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_mask) == 0 &&
             (other_faction_mask != 0 ||
              (faction_data.planet_ecology >= 4 &&
               faction_data.soc_effect_pending.values_[SocialEffect::INDUSTRY] <= 0))) {
@@ -17455,7 +17463,7 @@ static ConsiderDesignsTailOutput consider_designs_strategy_tail(
     }
     if (has_tech(Ability[18].preq_tech, faction_id) &&
         (ability_flags & ABL_TRANCE) == 0 &&
-        (LockEnableMask & faction_mask) == 0 &&
+        (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_mask) == 0 &&
         ((faction_data.planet_ecology >= 4 &&
           faction_data.soc_effect_pending.values_[SocialEffect::INDUSTRY] <= 0) ||
          (other_faction_mask & 0x3) != 0)) {
@@ -17465,7 +17473,7 @@ static ConsiderDesignsTailOutput consider_designs_strategy_tail(
         ability_flags = ABL_TRANCE;
     }
     if (has_tech(Ability[8].preq_tech, faction_id) &&
-        (LockEnableMask & faction_mask) == 0 &&
+        (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_mask) == 0 &&
         (faction_data.unk_66 != 0 || faction_data.unk_68 != 0)) {
         propose_proto(faction_id, output.chassis_id, chosen_weapon_id,
                       chosen_armor_id, ABL_AAA, input.reactor_id,
@@ -17497,7 +17505,7 @@ static ConsiderDesignsTailOutput consider_designs_strategy_tail(
         armor_cost_cap = candidate_cap;
     }
     const int armor_cost_limit =
-        (LockEnableMask & faction_mask) != 0
+        (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_mask) != 0
             ? 0x63
             : weapon_budget(faction_id, armor_cost_cap, 0);
     const int budget_weapon_id = armor_cost_limit;
@@ -17531,25 +17539,25 @@ static ConsiderDesignsTailOutput consider_designs_strategy_tail(
         cost_numerator += offense_step;
     }
     chosen_weapon_id = weapon_budget(faction_id, weapon_offense_cursor, 0);
-    if ((LockEnableMask & faction_mask) == 0 &&
+    if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_mask) == 0 &&
         faction_data.unk_66 > faction_data.unk_105 * 2 &&
         faction_data.unk_66 > 1 &&
         faction_data.unk_66 > faction_data.unk_106) {
         add_abil(&ability_flags, ABL_AAA, faction_id);
     }
-    if (CouncilResolutionCount[PROP_REPEAL_UN_CHARTER] >
-            CouncilResolutionCount[PROP_REINSTATE_UN_CHARTER] &&
+    if (GameDataStateStorage.fields_.council_resolution_count_[PROP_REPEAL_UN_CHARTER] >
+            GameDataStateStorage.fields_.council_resolution_count_[PROP_REINSTATE_UN_CHARTER] &&
         faction_data.ai_fight + faction_data.ai_power > 0 &&
-        (LockEnableMask & faction_mask) == 0) {
+        (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_mask) == 0) {
         add_abil(&ability_flags, ABL_NERVE_GAS, faction_id);
     }
     if (input.weighted_other_faction_score != 0 &&
         input.weighted_other_faction_score >
             1 - faction_data.ai_fight && faction_data.ai_fight >= 0 &&
-        (LockEnableMask & faction_mask) == 0) {
+        (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_mask) == 0) {
         add_abil(&ability_flags, ABL_NERVE_GAS, faction_id);
     }
-    if ((LockEnableMask & faction_mask) == 0) {
+    if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_mask) == 0) {
         const int scaled_armor = faction_data.best_armor_value * 3;
         const int defense_ratio = consider_designs_tail_half(scaled_armor);
         const int enemy_psi_defense = faction_data.enemy_best_psi_defense;
@@ -17582,7 +17590,7 @@ static ConsiderDesignsTailOutput consider_designs_strategy_tail(
     if (ability_flags == 0 &&
         (faction_data.ai_fight < 0 ||
          (faction_data.soc_effect_pending.values_[SocialEffect::MORALE] < 0 &&
-          (LockEnableMask & faction_mask) == 0))) {
+          (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_mask) == 0))) {
         add_abil(&ability_flags, ABL_TRAINED, faction_id);
     }
     const bool eligible_for_category_three =
@@ -17809,7 +17817,7 @@ static void consider_designs_plan3_selection(
     }
     const unsigned int faction_lock_bit = 1u << faction_id;
     const bool design_locked =
-        ((LockEnableMask & 0xFFu) & faction_lock_bit) != 0;
+        ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFu) & faction_lock_bit) != 0;
     if (design_locked) {
         max_weapon_cost = 0x63;
     }
@@ -17883,8 +17891,8 @@ static void consider_designs_plan3_selection(
         && faction_data.ai_fight >= 0 && !design_locked) {
         add_abil(&state.ability_flags, 0x100000, faction_id);
     }
-    if (CouncilResolutionCount[PROP_REPEAL_UN_CHARTER]
-            > CouncilResolutionCount[PROP_REINSTATE_UN_CHARTER]
+    if (GameDataStateStorage.fields_.council_resolution_count_[PROP_REPEAL_UN_CHARTER]
+            > GameDataStateStorage.fields_.council_resolution_count_[PROP_REINSTATE_UN_CHARTER]
         && faction_data.ai_power + faction_data.ai_fight > 0
         && !design_locked) {
         add_abil(&state.ability_flags, 0x100000, faction_id);
@@ -17926,7 +17934,7 @@ static bool consider_designs_plan1_ability_selection(
     const PlayerData& faction_data = PlayersData[faction_id];
     const unsigned int faction_lock_bit = 1u << faction_id;
     const bool design_locked =
-        ((LockEnableMask & 0xFFu) & faction_lock_bit) != 0;
+        ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFu) & faction_lock_bit) != 0;
     if (faction_data.unk_66 > faction_data.unk_106
         && faction_data.unk_66 > faction_data.unk_105
         && !design_locked) {
@@ -18036,7 +18044,7 @@ static void consider_designs_weapon_and_armor_choices(
     }
     const unsigned int faction_lock_bit = 1u << faction_id;
     const bool design_locked =
-        ((LockEnableMask & 0xFFu) & faction_lock_bit) != 0;
+        ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFu) & faction_lock_bit) != 0;
     const int category_six_weapon = design_locked
         ? weapon_budget(faction_id, 0x63, 0) : state.weapon_id;
     if (Weapon[category_six_weapon].offense_rating >= 1) {
@@ -18133,7 +18141,7 @@ for (int other_faction = 1; other_faction < MaxPlayerNum; ++other_faction) {
         continue;
     }
     const uint32_t other_bit = 1u << other_faction;
-    if ((LockEnableMask & other_bit) != 0) {
+    if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & other_bit) != 0) {
         const bool other_ranks_higher =
             PlayersData[other_faction].ranking
                 > PlayersData[faction_id].ranking;
@@ -18144,7 +18152,7 @@ for (int other_faction = 1; other_faction < MaxPlayerNum; ++other_faction) {
                     > PlayersData[faction_id].diplo_unk4[other_faction];
         }
         if (add_rivalry_score) {
-            state.diplomatic_score += static_cast<int>((GameRules >> 6) & 1u);
+            state.diplomatic_score += static_cast<int>((GameDataStateStorage.fields_.game_rules_ >> 6) & 1u);
         }
     }
     state.diplomatic_score +=
@@ -18290,7 +18298,7 @@ if (fallback_chassis_id >= 0) {
         && DesignConsiderOverride == 0) {
         special_weapon_gate_passed =
             has_tech(Ability[11].preq_tech, faction_id)
-            && ((LockEnableMask & 0xFFu) & (1u << faction_id)) == 0;
+            && ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFu) & (1u << faction_id)) == 0;
     }
     if (special_weapon_gate_passed) {
         const int selected_weapon_id = weapon_budget(faction_id, 1, 0);
@@ -18316,7 +18324,7 @@ if (fallback_chassis_id >= 0) {
         const bool has_empathic_tech =
             has_tech(Ability[11].preq_tech, faction_id);
         if (has_empathic_tech
-            && ((LockEnableMask & 0xFFu) & (1u << faction_id)) == 0) {
+            && ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFu) & (1u << faction_id)) == 0) {
             fallback_ability_flags |= ABL_EMPATHIC;
             if (has_tech(Rules.tech_two_spec_abilities, faction_id)) {
                 if (has_tech(Ability[10].preq_tech, faction_id)) {
@@ -18410,13 +18418,13 @@ if (chassis_id >= 0) {
     if (state.diplomatic_score != 0
         && state.diplomatic_score > 5 - faction_data.ai_fight
         && faction_data.ai_fight >= 0
-        && ((LockEnableMask & 0xFFu) & (faction_bit & 0xFFu)) == 0) {
+        && ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFu) & (faction_bit & 0xFFu)) == 0) {
         add_abil(&ability_flags, ABL_NERVE_GAS, faction_id);
     }
-    if (CouncilResolutionCount[PROP_REPEAL_UN_CHARTER]
-            > CouncilResolutionCount[PROP_REINSTATE_UN_CHARTER]
+    if (GameDataStateStorage.fields_.council_resolution_count_[PROP_REPEAL_UN_CHARTER]
+            > GameDataStateStorage.fields_.council_resolution_count_[PROP_REINSTATE_UN_CHARTER]
         && faction_data.ai_fight + faction_data.ai_power > 0
-        && ((LockEnableMask & 0xFFu) & (faction_bit & 0xFFu)) == 0) {
+        && ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFu) & (faction_bit & 0xFFu)) == 0) {
         add_abil(&ability_flags, ABL_NERVE_GAS, faction_id);
     }
     if (has_tech(Ability[1].preq_tech, faction_id)
@@ -18456,13 +18464,13 @@ if (chassis_id >= 0) {
     if (state.diplomatic_score != 0
         && state.diplomatic_score > 4 - faction_data.ai_fight
         && faction_data.ai_fight >= 0
-        && ((LockEnableMask & 0xFFu) & (faction_bit & 0xFFu)) == 0) {
+        && ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFu) & (faction_bit & 0xFFu)) == 0) {
         add_abil(&ability_flags, ABL_NERVE_GAS, faction_id);
     }
-    if (CouncilResolutionCount[PROP_REPEAL_UN_CHARTER]
-            > CouncilResolutionCount[PROP_REINSTATE_UN_CHARTER]
+    if (GameDataStateStorage.fields_.council_resolution_count_[PROP_REPEAL_UN_CHARTER]
+            > GameDataStateStorage.fields_.council_resolution_count_[PROP_REINSTATE_UN_CHARTER]
         && faction_data.ai_fight + faction_data.ai_power > 0
-        && ((LockEnableMask & 0xFFu) & (faction_bit & 0xFFu)) == 0) {
+        && ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFu) & (faction_bit & 0xFFu)) == 0) {
         add_abil(&ability_flags, ABL_NERVE_GAS, faction_id);
     }
     if (has_tech(Ability[1].preq_tech, faction_id)
@@ -18689,7 +18697,7 @@ int __cdecl alien_move(int veh_id) {
         const int triad = Chassis[chassis].triad;
         const int turns = (triad != 0 ? 16 : 6);
         if (turns < vehicle.terraforming_turns &&
-            ((TurnCurrentNum + veh_id) & 7) == 0) {
+            ((GameDataStateStorage.fields_.turn_current_num_ + veh_id) & 7) == 0) {
             kill(veh_id);
             return 1;
         }
@@ -18697,7 +18705,7 @@ int __cdecl alien_move(int veh_id) {
 
     int move_result;
     if (base_id < 0 || static_cast<uint8_t>(PlayersData[faction].current_num_bases) < 3 ||
-        TurnCurrentNum < 0x33 ||
+        GameDataStateStorage.fields_.turn_current_num_ < 0x33 ||
         (vehicle.order_auto_type != faction &&
          PlayersData[faction].soc_effect_active.values_[SocialEffect::PLANET] > 0 && vehicle.proto_id != 14)) {
         move_result = static_cast<int8_t>(vehicle.facing);
@@ -18816,7 +18824,7 @@ int __cdecl alien_move(int veh_id) {
         }
         const uint32_t terrain_bits = tile->bit;
         score += bit_count(static_cast<int>(terrain_bits & 0x80208054u)) * 4;
-        if (DiffLevelCurrent > 2 && (terrain_bits & 0x2000u) != 0 &&
+        if (GameDataStateStorage.fields_.diff_level_current_ > 2 && (terrain_bits & 0x2000u) != 0 &&
             (vehicle.state & 0x100u) == 0) score += 8;
 
         unsigned int random_bits = static_cast<unsigned int>(rand()) & 7u;
@@ -18833,7 +18841,7 @@ int __cdecl alien_move(int veh_id) {
 
     unsigned int retreat_factor = alien_morale == 0 ? 0 : (alien_morale == 1 ? 1 : (alien_morale == 2 ? 2 : 4));
     if (vehicle.dmg_incurred != 0) retreat_factor *= 2;
-    if ((LockEnableMask & (1u << (faction & 31))) != 0 && retreat_factor != 0) {
+    if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u << (faction & 31))) != 0 && retreat_factor != 0) {
         const unsigned int roll = static_cast<unsigned int>(rand()) & 3u;
         if (static_cast<int>(roll) < ((best_retreat_score < 999) ? 2 : 1)) {
             int remaining_moves = movement - vehicle.moves_expended;
@@ -18841,7 +18849,7 @@ int __cdecl alien_move(int veh_id) {
             else if (remaining_moves > 999) remaining_moves = 999;
             if (remaining_moves <= Rules.move_rate_roads &&
                 Chassis[VehPrototypes[vehicle.proto_id].chassis_id].triad != 2) {
-                int pressure = (GameRules & 0x40u) == 0
+                int pressure = (GameDataStateStorage.fields_.game_rules_ & 0x40u) == 0
                     ? PlayersData[faction].diff_level : 5;
                 if (pressure > 0 && rand() % (pressure + 1) != 0 &&
                     (map_loc(x, y)->bit & 0x80e88058u) != 0) {
@@ -18895,10 +18903,10 @@ int __cdecl enemy_planet_buster(int vehicle_id) {
     const int faction_id = vehicle.faction_id;
     const uint32_t faction_bit = 1u << faction_id;
 
-    if ((LockEnableMask & faction_bit) != 0) return -1;
+    if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_bit) != 0) return -1;
 
     int heavy_production_bases = 0;
-    for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+    for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
         const int prototype_id = Bases[base_id].queue_production_id[0];
         if (Bases[base_id].faction_id_current == faction_id
             && prototype_id >= 0
@@ -18908,7 +18916,7 @@ int __cdecl enemy_planet_buster(int vehicle_id) {
     }
 
     int carried_heavy_vehicles = 0;
-    for (int other_id = 0; other_id < VehCurrentCount; ++other_id) {
+    for (int other_id = 0; other_id < GameDataStateStorage.fields_.vehicle_current_count_; ++other_id) {
         const Veh &other = Vehs[other_id];
         if (other.faction_id == faction_id
             && get_offense_rating(static_cast<uint32_t>(other_id)) > 'b') {
@@ -18934,7 +18942,7 @@ int __cdecl enemy_planet_buster(int vehicle_id) {
         best_launch_base = 0;
 
         for (int candidate_base_id = 0;
-             candidate_base_id < BaseCurrentCount; ++candidate_base_id) {
+             candidate_base_id < GameDataStateStorage.fields_.base_current_count_; ++candidate_base_id) {
             const Base &candidate_base = Bases[candidate_base_id];
             const int candidate_faction = candidate_base.faction_id_current;
             const int candidate_difficulty = PlayersData[candidate_faction].diff_level;
@@ -18964,7 +18972,7 @@ int __cdecl enemy_planet_buster(int vehicle_id) {
                 int reachable = 0;
                 int qualifying_ownership_history = 0;
                 for (int friendly_base_id = 0;
-                     friendly_base_id < BaseCurrentCount; ++friendly_base_id) {
+                     friendly_base_id < GameDataStateStorage.fields_.base_current_count_; ++friendly_base_id) {
                     const Base &friendly_base = Bases[friendly_base_id];
                     if (friendly_base.faction_id_current == faction_id) {
                         int x_distance = abs(static_cast<int>(friendly_base.x)
@@ -18998,13 +19006,13 @@ int __cdecl enemy_planet_buster(int vehicle_id) {
             if (at_climax(faction_id) != 0) score += 2;
             if (!(treaty & DTREATY_WANT_REVENGE)
                 && !(PlayersData[faction_id].flags & PFLAG_COMMIT_ATROCIT_WANTONLY)) {
-                const int threshold_difficulty = (GameRules & RULES_INTENSE_RIVALRY)
+                const int threshold_difficulty = (GameDataStateStorage.fields_.game_rules_ & RULES_INTENSE_RIVALRY)
                     ? 6 : candidate_difficulty;
                 if (score < 9 - threshold_difficulty
-                    && ((LockEnableMask & (1u << candidate_faction)) == 0
-                        || (!(GameRules & RULES_INTENSE_RIVALRY)
-                            && (CouncilResolutionCount[PROP_REPEAL_UN_CHARTER]
-                                <= CouncilResolutionCount[PROP_REINSTATE_UN_CHARTER]
+                    && ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u << candidate_faction)) == 0
+                        || (!(GameDataStateStorage.fields_.game_rules_ & RULES_INTENSE_RIVALRY)
+                            && (GameDataStateStorage.fields_.council_resolution_count_[PROP_REPEAL_UN_CHARTER]
+                                <= GameDataStateStorage.fields_.council_resolution_count_[PROP_REINSTATE_UN_CHARTER]
                                 || PlayersData[faction_id].ai_fight < 1))
                         || PlayersData[candidate_faction].ranking
                             < PlayersData[faction_id].ranking
@@ -19014,14 +19022,14 @@ int __cdecl enemy_planet_buster(int vehicle_id) {
             }
 
             if (at_climax(faction_id) == 0 || PlayersData[faction_id].ai_fight < 0
-                || !(GameRules & RULES_INTENSE_RIVALRY)) {
+                || !(GameDataStateStorage.fields_.game_rules_ & RULES_INTENSE_RIVALRY)) {
                 if (!(treaty & DTREATY_UNK_80000)) {
                     if (!(PlayersData[faction_id].flags
                             & PFLAG_COMMIT_ATROCIT_WANTONLY)) {
                         const int aggression = PlayersData[candidate_faction].ai_fight
                             + enemy_pb_policy::charter_balance(
-                                CouncilResolutionCount[PROP_REPEAL_UN_CHARTER],
-                                CouncilResolutionCount[PROP_REINSTATE_UN_CHARTER])
+                                GameDataStateStorage.fields_.council_resolution_count_[PROP_REPEAL_UN_CHARTER],
+                                GameDataStateStorage.fields_.council_resolution_count_[PROP_REINSTATE_UN_CHARTER])
                             + candidate_difficulty + score;
                         if (aggression < 11
                             || (PlayersData[candidate_faction].mil_strength_1
@@ -19038,8 +19046,8 @@ int __cdecl enemy_planet_buster(int vehicle_id) {
                                <= PlayersData[faction_id].mil_strength_1 * 2
                            && at_climax(faction_id) == 0
                            && ((score < 4
-                                && CouncilResolutionCount[PROP_REPEAL_UN_CHARTER]
-                                   <= CouncilResolutionCount[PROP_REINSTATE_UN_CHARTER])
+                                && GameDataStateStorage.fields_.council_resolution_count_[PROP_REPEAL_UN_CHARTER]
+                                   <= GameDataStateStorage.fields_.council_resolution_count_[PROP_REINSTATE_UN_CHARTER])
                                || PlayersData[candidate_faction].ranking
                                    < PlayersData[faction_id].ranking)) {
                     continue;
@@ -19082,7 +19090,7 @@ int __cdecl enemy_planet_buster(int vehicle_id) {
                         score, static_cast<int>(PlayersData[city_faction].ranking),
                         static_cast<int>(city.population_size),
                         has_fac_built(FAC_HEADQUARTERS, city_id),
-                        TurnCurrentNum < PlayersData[city_faction].corner_market_turn,
+                        GameDataStateStorage.fields_.turn_current_num_ < PlayersData[city_faction].corner_market_turn,
                         city.queue_production_id[0] == -FAC_ASCENT_TO_TRANSCENDENCE,
                         city.minerals_accumulated,
                         base_project(SP_HUNTER_SEEKER_ALGO) == city_id,
@@ -19329,24 +19337,24 @@ static void order_veh_artifact_dialog_rows(
     int bit_mask;
     bitmask(8, &byte_offset, &bit_mask);
     if ((base.facilities_built[byte_offset] & bit_mask) != 0 &&
-        SecretProject.universal_translator() != base_id &&
+        GameDataStateStorage.fields_.secret_project_.universal_translator() != base_id &&
         (base.state & 0x800U) == 0) {
         StringTemp[0] = '\0';
         parse_string(row_text, StringTemp);
         popup.dialogs().item(StringTemp, 1);
         row_count = 2;
-        if ((LockEnableMask & (1U << (action_faction & 0x1f))) == 0) {
+        if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1U << (action_faction & 0x1f))) == 0) {
             vehicle.terraforming_turns = 1;
         }
     }
 
     row_text = text_get();
-    if (SecretProject.universal_translator() == base_id) {
+    if (GameDataStateStorage.fields_.secret_project_.universal_translator() == base_id) {
         StringTemp[0] = '\0';
         parse_string(row_text, StringTemp);
         popup.dialogs().item(StringTemp, 1);
         ++row_count;
-        if ((LockEnableMask & (1U << (action_faction & 0x1f))) == 0) {
+        if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1U << (action_faction & 0x1f))) == 0) {
             vehicle.terraforming_turns = 1;
         }
     }
@@ -19361,7 +19369,7 @@ static void order_veh_artifact_dialog_rows(
         parse_string(row_text, StringTemp);
         popup.dialogs().item(StringTemp, 2);
         ++row_count;
-        if ((LockEnableMask & (1U << (action_faction & 0x1f))) == 0) {
+        if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1U << (action_faction & 0x1f))) == 0) {
             vehicle.terraforming_turns = 2;
         }
     }
@@ -19377,7 +19385,7 @@ static void order_veh_artifact_dialog_rows(
     }
 
     if (row_count >= 2 && action_faction == ConsoleGlobal.faction_id_ &&
-        (LockEnableMask & (1U << (action_faction & 0x1f))) != 0) {
+        (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1U << (action_faction & 0x1f))) != 0) {
         vehicle.terraforming_turns = static_cast<uint8_t>(popup.exec(0, NULL));
         synch_veh(veh_id);
         NetDaemonNet.await_synch();
@@ -19503,7 +19511,7 @@ static bool order_veh_zoc_tutorial_notice(
     if (faction_id != ConsoleGlobal.faction_id_) return !IsMultiplayerNet;
     if (IsMultiplayerNet) return false;
 
-    if ((GamePreferences & 0x20) == 0) {
+    if ((GameDataStateStorage.fields_.game_preferences_ & 0x20) == 0) {
         if (PlayersData[faction_id].diff_level > 1) return true;
         ++tutorial_notice_counter;
         if ((tutorial_notice_counter & 3) != 1) return true;
@@ -19623,13 +19631,13 @@ static OrderVeh595422Path order_veh_595422_supply_spawn(
 
     const RulesWeapon &weapon = Weapon[VehPrototypes[vehicle.proto_id].weapon_id];
     if ((weapon.offense_rating == 0 || vehicle.order == ORDER_MOVE_TO) &&
-        SecretProject.xenoempathy_dome() >= 0 &&
-        Bases[SecretProject.xenoempathy_dome()].faction_id_current ==
+        GameDataStateStorage.fields_.secret_project_.xenoempathy_dome() >= 0 &&
+        Bases[GameDataStateStorage.fields_.secret_project_.xenoempathy_dome()].faction_id_current ==
             action_faction) {
         return OrderVeh595422Continue59512c;
     }
     if (goody_at(destination_x, destination_y) != 0 ||
-        (GameRules & 0x00200000U) != 0) {
+        (GameDataStateStorage.fields_.game_rules_ & 0x00200000U) != 0) {
         return OrderVeh595422Continue59512c;
     }
 
@@ -19762,7 +19770,7 @@ static OrderVeh595137Path order_veh_595137_gate(
         (visible_vehicle.faction_id != action_faction ||
          (visible_vehicle.flags & 0x440U) == 0x440U) &&
         (visible_vehicle.visibility & faction_bit) == 0 &&
-        (LockEnableMask & faction_bit) != 0;
+        (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_bit) != 0;
     if (visible_is_other_actionable_stack && selected_base_id < 0 &&
         (action_mode & 1) != 0 &&
         action_faction == ConsoleGlobal.faction_id_) {
@@ -19998,7 +20006,7 @@ static OrderVeh5958B8PromptPath order_veh_5958b8_probe_prompt(
         GenderDefault = Players[action_faction].is_leader_female;
         parse_says(2, Players[action_faction].title_leader, -1, -1);
         const bool action_is_locally_enabled =
-            ((1U << (action_faction & 0x1f)) & static_cast<uint8_t>(LockEnableMask)) != 0;
+            ((1U << (action_faction & 0x1f)) & static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_)) != 0;
         if (!action_is_locally_enabled) {
             return OrderVeh5958B8PromptContinueProbeSuccess;
         }
@@ -20070,7 +20078,7 @@ static void order_veh_probe_base_resolution(
     int active_faction, int origin_x, int origin_y) {
     int selected_base_id = -1;
     int largest_population = -1;
-    for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+    for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
         Base &base = Bases[base_id];
         if (base.faction_id_current == selected_faction_id &&
             base.population_size > largest_population) {
@@ -20085,7 +20093,7 @@ static void order_veh_probe_base_resolution(
         Vehs[selected_vehicle_id].visibility = 0;
         parse_says(2, base.name_string, -1, -1);
     }
-    else if ((static_cast<uint8_t>(LockEnableMask) &
+    else if ((static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) &
               (1U << (selected_faction_id & 0x1f))) == 0) {
         veh_kill(selected_vehicle_id);
     }
@@ -20156,7 +20164,7 @@ static OrderVeh595A92Path order_veh_595a92_hasty_gate(
 
     const uint8_t actor_mask = static_cast<uint8_t>(
         1U << (action_faction & 0x1f));
-    if ((actor_mask & LockEnableMask) != 0) {
+    if ((actor_mask & GameDataStateStorage.fields_.lock_masks_.enable_mask_) != 0) {
         return OrderVeh595A92Continue595BE6;
     }
     const int second_remaining_moves = order_veh_clamp_remaining_moves(
@@ -20269,7 +20277,7 @@ static OrderVeh5976d6Path order_veh_5976d6_terrain_delay(
         if (visible_vehicle_id >= 0) return OrderVeh5976d6Continue597B24;
     }
     if ((NetDaemonNet.lock_state_[1].leading_words_[3] & 1U) == 0 &&
-        (static_cast<uint8_t>(LockEnableMask) &
+        (static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) &
          static_cast<uint8_t>(1U << (action_faction & 0x1f))) != 0) {
         return OrderVeh5976d6Continue597B24;
     }
@@ -20296,7 +20304,7 @@ static OrderVeh5976d6Path order_veh_5976d6_terrain_delay(
         (ConsoleEditKeyStateSlot()(VK_SHIFT) & 0xff00) == 0 &&
         (NetDaemonNet.lock_state_[1].leading_words_[3] & 1U) != 0 &&
         (vehicle.state & 0x0200U) == 0 &&
-        (GameMorePreferences & 0x80U) == 0) {
+        (GameDataStateStorage.fields_.game_more_preferences_ & 0x80U) == 0) {
         order_veh_5976d6_focus_stack_scoot(
             veh_id, source_x, source_y, destination_x, destination_y,
             direction, action_faction);
@@ -20480,11 +20488,11 @@ static OrderVehPrefixResult order_veh_prefix_result(
         short_circuit = 1;
     } else if ((vehicle.visibility & faction_mask) != 0) {
         short_circuit = 1;
-    } else if ((GameState & 0x80u) != 0) {
+    } else if ((GameDataStateStorage.fields_.game_state_ & 0x80u) != 0) {
         short_circuit = 1;
     }
 
-    if ((GameState & 0x80u) == 0
+    if ((GameDataStateStorage.fields_.game_state_ & 0x80u) == 0
         && (PlayersData[current_faction].flags & 0x200u) == 0) {
         const int map_index = target_y * MapLongitude + (target_x >> 1);
         if ((MapTiles[map_index].visibility & faction_mask) == 0) {
@@ -20536,8 +20544,8 @@ static void order_veh_combat_and_turn_prelude(
     const bool local_faction =
         vehicle_faction_snapshot == ConsoleGlobal.faction_id_;
     const bool lock_disallows_sleep =
-        (vehicle_faction_mask & static_cast<uint8_t>(LockEnableMask)) != 0;
-    const bool omniscient = (GameState & STATE_OMNISCIENT_VIEW) != 0;
+        (vehicle_faction_mask & static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_)) != 0;
+    const bool omniscient = (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) != 0;
     if (!local_faction && !lock_disallows_sleep && !omniscient
         && native_local_24_nonzero && ConsoleGlobal.vehicle_order_ui_state() == 0) {
         const bool shift_down = (GetAsyncKeyState(VK_SHIFT) & 0xFF00) != 0;
@@ -20600,10 +20608,10 @@ static OrderVeh5980a8State order_veh_597f31_to_5980a8(
     bool native_v42 = true;
 
     if (vehicle_faction_snapshot != current_faction &&
-        (((GamePreferences & 0x04U) == 0) ||
+        (((GameDataStateStorage.fields_.game_preferences_ & 0x04U) == 0) ||
          (PlayersData[current_faction]
               .diplo_treaties[vehicle_faction_snapshot] & 1U) != 0) &&
-        (((GamePreferences & 0x8000U) == 0) ||
+        (((GameDataStateStorage.fields_.game_preferences_ & 0x8000U) == 0) ||
          (PlayersData[current_faction]
               .diplo_treaties[vehicle_faction_snapshot] & 1U) == 0) &&
         (destination_base_id < 0 ||
@@ -20632,7 +20640,7 @@ static OrderVeh5980a8State order_veh_597f31_to_5980a8(
         }
     }
 
-    if (take_cursor_path || shift_down || (GameMorePreferences & 0x80U) != 0) {
+    if (take_cursor_path || shift_down || (GameDataStateStorage.fields_.game_more_preferences_ & 0x80U) != 0) {
         native_v42 = false;
         native_local_30 = false;
         ConsoleGlobal.vehicle_order_ui_state() = 1;
@@ -20640,7 +20648,7 @@ static OrderVeh5980a8State order_veh_597f31_to_5980a8(
             ConsoleGlobal.vehicle_order_ui_state() = 2;
             ConsoleGlobal.cursor_next(destination_x, destination_y);
         }
-    } else if ((GameMorePreferences & 0x40U) != 0) {
+    } else if ((GameDataStateStorage.fields_.game_more_preferences_ & 0x40U) != 0) {
         if (vehicle_faction_snapshot == current_faction) {
             if ((vehicle.state & 0x00004200U) != 0 ||
                 vehicle.order == 0x18) {
@@ -20659,7 +20667,7 @@ static OrderVeh5980a8State order_veh_597f31_to_5980a8(
 
     if (native_local_24_nonzero &&
         (GetAsyncKeyState(VK_CONTROL) & 0xFF00) == 0 &&
-        (native_local_30 || (GamePreferences & 0x80000U) == 0)) {
+        (native_local_30 || (GameDataStateStorage.fields_.game_preferences_ & 0x80000U) == 0)) {
         ConsoleGlobal.focus(source_x, source_y, vehicle_faction_snapshot);
     }
 
@@ -20754,11 +20762,11 @@ static bool order_veh_5986ec_stack_put_and_capture(
         vehicle.dmg_incurred = 0;
     }
 
-    VehSelectionFollowLimit = veh_id;
+    GameDataStateStorage.fields_.vehicle_selection_follow_limit_ = veh_id;
     (void)act_of_aggression(vehicle_faction_snapshot,
                             destination_base_faction);
     capture_base(destination_base_id, vehicle_faction_snapshot, 0);
-    veh_id = VehSelectionFollowLimit;
+    veh_id = GameDataStateStorage.fields_.vehicle_selection_follow_limit_;
     return true;
 }
 
@@ -20888,7 +20896,7 @@ static OrderVehNativeLifeEventResult order_veh_598317_native_life_base_event(
         }
     }
 
-    if (TurnCurrentNum >= 10) {
+    if (GameDataStateStorage.fields_.turn_current_num_ >= 10) {
         Base &base = Bases[base_id];
         base.population_size = static_cast<int8_t>(
             static_cast<uint8_t>(base.population_size) - 1U);
@@ -20981,7 +20989,7 @@ static void order_veh_598993_clear_carried_sentry_orders(
     const int native_cargo_result = veh_cargo(veh_id);
     const bool native_controller_gate_allows_clear =
         vehicle_faction_snapshot == ConsoleGlobal.faction_id_ ||
-        (IsMultiplayerNet && (faction_mask & static_cast<uint8_t>(LockEnableMask)) != 0);
+        (IsMultiplayerNet && (faction_mask & static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_)) != 0);
     if (!native_cargo_result || destination_base_id < 0 ||
         !native_controller_gate_allows_clear || veh_id < 0) {
         return;
@@ -21106,7 +21114,7 @@ static OrderVeh598E84Continuation order_veh_598e84_range_speed_gate(
     const RulesChassis &chassis =
         Chassis[VehPrototypes[vehicle.proto_id].chassis_id];
 
-    if ((vehicle_faction_mask & static_cast<uint8_t>(LockEnableMask)) == 0) {
+    if ((vehicle_faction_mask & static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_)) == 0) {
         if (needs_transport) return OrderVeh598E84ContinueTo598F9E;
         vehicle.terraforming_turns = 0;
         veh_skip(veh_id);
@@ -21168,9 +21176,9 @@ static bool order_veh_598f9e_action_home_gate(
 
     const uint32_t state = vehicle.state;
     const bool action_home_allowed =
-        (vehicle_faction_mask & static_cast<uint8_t>(LockEnableMask)) == 0 ||
+        (vehicle_faction_mask & static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_)) == 0 ||
         (vehicle_faction_snapshot == ConsoleGlobal.faction_id_ &&
-         (((GamePreferences & 0x00010000U) != 0 ||
+         (((GameDataStateStorage.fields_.game_preferences_ & 0x00010000U) != 0 ||
            (state & 0x00004200U) != 0) &&
           (state & 0x01000200U) != 0x01000200U &&
           ((state & 0x02000200U) != 0x02000200U ||
@@ -21252,9 +21260,9 @@ static bool order_veh_599061_fatigue_and_damage(
     }
 
     if (static_cast<int>(chassis.range) / 2 <= next_morale &&
-        ((vehicle_faction_mask & static_cast<uint8_t>(LockEnableMask)) == 0 ||
+        ((vehicle_faction_mask & static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_)) == 0 ||
         (vehicle_faction_snapshot == ConsoleGlobal.faction_id_ &&
-        (((GamePreferences & 0x00010000U) != 0 ||
+        (((GameDataStateStorage.fields_.game_preferences_ & 0x00010000U) != 0 ||
           (vehicle.state & 0x00004200U) != 0) &&
          (vehicle.state & 0x01000200U) != 0x01000200U &&
          ((vehicle.state & 0x02000200U) != 0x02000200U ||
@@ -21475,7 +21483,7 @@ static void order_veh_59977a_selector_and_action_corridor(
     bool reaches_goal_scan = true;
     const uint8_t faction_lock_bit = static_cast<uint8_t>(
         1U << (static_cast<unsigned>(vehicle_faction_snapshot) & 31U));
-    if ((static_cast<uint8_t>(LockEnableMask) & faction_lock_bit) != 0 ||
+    if ((static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & faction_lock_bit) != 0 ||
         VehPrototypes[Vehs[veh_id].proto_id].plan != PLAN_NAVAL_TRANSPORT ||
         (destination_tile.climate & 0xE0U) >= 0x60U ||
         destination_base_id >= 0) {
@@ -21489,7 +21497,7 @@ static void order_veh_59977a_selector_and_action_corridor(
             const int zoc = zoc_any(Vehs[veh_id].x, Vehs[veh_id].y,
                                     vehicle_faction_snapshot);
             if (zoc == 0 &&
-                (LockEnableMask & Vehs[veh_id].visibility) == 0 &&
+                (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & Vehs[veh_id].visibility) == 0 &&
                 Vehs[veh_id].move_to_ai_type != 0x75U) {
                 reaches_goal_scan = true;
             } else {
@@ -21524,7 +21532,7 @@ static void order_veh_finalize_unselected_action(
 
     const uint32_t lock_bit = 1u << (action_faction_id & 0x1f);
     const bool faction_locked =
-        (static_cast<uint8_t>(LockEnableMask) & lock_bit) != 0;
+        (static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & lock_bit) != 0;
     if (!faction_locked || (vehicle.state & 0x00004200u) != 0) {
         vehicle.unk_6 = static_cast<uint8_t>(vehicle.unk_6 + 1u);
         if (vehicle.unk_6 >= 0x18u || faction_locked) {
@@ -21602,7 +21610,7 @@ label_5949b3:
     local_30 = (Vehs[veh_id].state & 0x4200) != 0;
     triad = Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad;
     if (order_veh_waypoint_treaty_clears_order(
-            veh_id, faction, (faction_mask & static_cast<uint8_t>(LockEnableMask)) != 0))
+            veh_id, faction, (faction_mask & static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_)) != 0))
         goto label_599b1a;
     if (order_veh_artifact_announcement(veh_id, base_id, faction,
             NetDaemonNet.lock_state_[1].leading_words_[3])) {
@@ -21654,7 +21662,7 @@ label_594f3c:
         if (base_id >= 0) {
             if (visible_vehicle >= 0 && stack_check(visible_vehicle, 2,
                     PLAN_INFO_WARFARE, -1, -1)) goto label_595083;
-            if ((faction_mask & static_cast<uint8_t>(LockEnableMask)) == 0 &&
+            if ((faction_mask & static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_)) == 0 &&
                     (PlayersData[faction].diplo_treaties[controller] & 1) != 0 &&
                     (Vehs[veh_id].waypoint_x[0] != Bases[base_id].x ||
                      Vehs[veh_id].waypoint_y[0] != Bases[base_id].y)) goto label_595083;
@@ -21797,7 +21805,7 @@ label_595a92:
 // In-function fragment. Inputs and joins are documented in contracts.md.
 // The enclosing owner supplies the sole Popup and native automatic lifetime.
 label_595be6:
-    VehSelectionFollowLimit = veh_id;
+    GameDataStateStorage.fields_.vehicle_selection_follow_limit_ = veh_id;
     if ((NetDaemonNet.lock_state_[1].leading_words_[3] & 2) == 0)
         goto label_59729d;
     if (controller != 0) goto label_59724d;
@@ -21836,7 +21844,7 @@ label_595be6:
     if ((Vehs[visible_vehicle].flags & 0x2000) != 0)
         goto label_5971ce;
     if (rand() % 4 < PlayersData[faction].soc_effect_active.values_[SocialEffect::PLANET]) {
-        const int bound = TurnCurrentNum / 5 + 100;
+        const int bound = GameDataStateStorage.fields_.turn_current_num_ / 5 + 100;
         int roll;
         if (bound - 1 > 0) roll = rand() % bound;
         else roll = 0;
@@ -21931,7 +21939,7 @@ label_59724d:
             selector = 0;
             goto label_599b1a;
         }
-        veh_id = VehSelectionFollowLimit;
+        veh_id = GameDataStateStorage.fields_.vehicle_selection_follow_limit_;
         destination_x = source_x;
         destination_y = source_y;
         battle_continuation = 1;
@@ -22004,7 +22012,7 @@ label_597350:
     }
     if ((PlayersData[faction].diplo_treaties[controller] & 7) == 0)
         goto label_597564;
-    if ((static_cast<unsigned char>(faction_mask) & static_cast<unsigned char>(LockEnableMask)) == 0) {
+    if ((static_cast<unsigned char>(faction_mask) & static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_)) == 0) {
         Vehs[veh_id].order = ORDER_NONE;
         goto label_599b1a;
     }
@@ -22015,7 +22023,7 @@ label_597350:
 
 label_597564:
     if (faction != ConsoleGlobal.faction_id_) goto label_59763b;
-    if ((static_cast<unsigned char>(faction_mask) & static_cast<unsigned char>(LockEnableMask)) == 0)
+    if ((static_cast<unsigned char>(faction_mask) & static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_)) == 0)
         goto label_59763b;
     if ((NetDaemonNet.lock_state_[1].leading_words_[3] & 1) == 0)
         goto label_59763b;
@@ -22096,7 +22104,7 @@ label_597b24:
     order_veh_598993_clear_carried_sentry_orders(veh_id, faction, base_id,
         destination_x, destination_y, static_cast<uint8_t>(faction_mask));
     order_veh_598a84_sea_cargo_recovery(veh_id, faction, destination_x,
-        destination_y, (GamePreferences & 0x80000000U) != 0, destination_lowland != 0);
+        destination_y, (GameDataStateStorage.fields_.game_preferences_ & 0x80000000U) != 0, destination_lowland != 0);
     if (triad == TRIAD_LAND && source_lowland && !destination_lowland)
         ++PlayersData[faction].region_total_combat_vehs[region];
 
@@ -22242,7 +22250,7 @@ static int battle_fight_nerve_gas_precombat_v4(
 
     const uint32_t attacker_bit =
         1u << (static_cast<unsigned>(attacker_faction) & 0x1Fu);
-    const bool attacker_is_human = (LockEnableMask & attacker_bit) != 0;
+    const bool attacker_is_human = (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & attacker_bit) != 0;
     Vehs[attacker_id].state &= ~VSTATE_USED_NERVE_GAS;
     permission_slot = static_cast<int>(Vehs[attacker_id].state);
 
@@ -22261,7 +22269,7 @@ static int battle_fight_nerve_gas_precombat_v4(
         // onward; 0x50728D then explicitly skips policy for remaining humans.
         // Consequently this AI policy subblock executes iff attacker is AI.
         const bool defender_is_human =
-            (LockEnableMask & (1u << (static_cast<unsigned>(defender_faction) &
+            (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u << (static_cast<unsigned>(defender_faction) &
                                      0x1Fu))) != 0;
         const uint32_t relation =
             PlayersData[attacker_faction].diplo_treaties[defender_faction];
@@ -22269,13 +22277,13 @@ static int battle_fight_nerve_gas_precombat_v4(
             (PlayersData[attacker_faction].flags &
              PFLAG_COMMIT_ATROCIT_WANTONLY) != 0 ||
             (defender_is_human &&
-             CouncilResolutionCount[PROP_REPEAL_UN_CHARTER] >
-                 CouncilResolutionCount[PROP_REINSTATE_UN_CHARTER])) {
+             GameDataStateStorage.fields_.council_resolution_count_[PROP_REPEAL_UN_CHARTER] >
+                 GameDataStateStorage.fields_.council_resolution_count_[PROP_REINSTATE_UN_CHARTER])) {
             Vehs[attacker_id].state |= VSTATE_USED_NERVE_GAS;
         } else if (defender_is_human &&
                    (relation & DTREATY_WANT_REVENGE) != 0) {
             int rivalry_adjustment = 0;
-            if ((GameRules & RULES_INTENSE_RIVALRY) != 0 &&
+            if ((GameDataStateStorage.fields_.game_rules_ & RULES_INTENSE_RIVALRY) != 0 &&
                 (PlayersData[attacker_faction].ranking <
                      PlayersData[defender_faction].ranking ||
                  PlayersData[attacker_faction].diplo_unk4[defender_faction] <
@@ -22309,7 +22317,7 @@ static bool battle_fight_precombat_diplomacy_v4(
 
     const uint32_t defender_human_bit =
         1u << (static_cast<unsigned>(defender_faction) & 0x1Fu);
-    if ((LockEnableMask & defender_human_bit) != 0) {
+    if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & defender_human_bit) != 0) {
         const uint32_t attacker_to_defender =
             PlayersData[attacker_faction].diplo_treaties[defender_faction];
         const uint32_t defender_to_attacker =
@@ -22344,7 +22352,7 @@ static bool battle_fight_precombat_diplomacy_v4(
                 POP2("PACTATTACKED", 0, -1 - defender_faction);
             }
             PlayersData[attacker_faction].diplo_spoke[defender_faction] =
-                TurnCurrentNum;
+                GameDataStateStorage.fields_.turn_current_num_;
         }
         return true;
     }
@@ -22362,7 +22370,7 @@ static bool battle_fight_precombat_diplomacy_v4(
         } else if ((PlayersData[local_faction].diplo_treaties[attacker_faction] &
                     DTREATY_PACT) != 0) {
             diplomacy_report_mode = 3;
-        } else if ((GameState & STATE_OMNISCIENT_VIEW) != 0) {
+        } else if ((GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) != 0) {
             diplomacy_report_mode = 1;
         }
     }
@@ -22515,8 +22523,8 @@ static int battle_fight_pre_prompt_residual_v2(
         1u << (static_cast<unsigned>(attacker_faction) & 0x1Fu);
     const uint32_t defender_bit =
         1u << (static_cast<unsigned>(defender_faction) & 0x1Fu);
-    const bool attacker_is_human = (LockEnableMask & attacker_bit) != 0;
-    const bool defender_is_human = (LockEnableMask & defender_bit) != 0;
+    const bool attacker_is_human = (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & attacker_bit) != 0;
+    const bool defender_is_human = (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & defender_bit) != 0;
     const int difficulty_floor = attacker_faction == 0 ? 3 : 2;
 
     // Native's two asymmetric human-vs-AI difficulty corrections.
@@ -22547,7 +22555,7 @@ static int battle_fight_pre_prompt_residual_v2(
                     1u << (static_cast<unsigned>(ConsoleGlobal.faction_id_) & 0x1Fu);
                 const uint16_t defender_stack_state = static_cast<uint16_t>(
                     Vehs[defender_id].next_veh_id_stack);
-                if ((GameState & STATE_OMNISCIENT_VIEW) == 0 &&
+                if ((GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) == 0 &&
                     !IsMultiplayerNet &&
                     !(defender_faction == ConsoleGlobal.faction_id_ &&
                       (defender_stack_state & 0x440u) != 0x440u) &&
@@ -22561,7 +22569,7 @@ static int battle_fight_pre_prompt_residual_v2(
                 local_base_context = 1;
             if (PlayersData[defender_faction].current_num_bases <= 1)
                 attacker_combat /= 2;
-            if (TurnCurrentNum <= 0x31) attacker_combat /= 2;
+            if (GameDataStateStorage.fields_.turn_current_num_ <= 0x31) attacker_combat /= 2;
             int bit_offset = 0;
             int bit_mask = 0;
             bitmask(1, &bit_offset, &bit_mask);
@@ -22572,7 +22580,7 @@ static int battle_fight_pre_prompt_residual_v2(
         }
     }
 
-    if (TurnCurrentNum < 0x0F) {
+    if (GameDataStateStorage.fields_.turn_current_num_ < 0x0F) {
         if (attacker_faction == 0) attacker_combat /= 3;
         if (defender_faction == 0) defender_combat /= 2;
     }
@@ -22644,7 +22652,7 @@ static int battle_fight_pre_prompt_residual_v2(
 
     // Strength-report preference branch: build the two display strings and
     // leave their power products at the exact 0x5080FC reducer boundary.
-    if ((GameMorePreferences & MPREF_ADV_CONFIRM_ODDS_BF_ATTACKING) == 0)
+    if ((GameDataStateStorage.fields_.game_more_preferences_ & MPREF_ADV_CONFIRM_ODDS_BF_ATTACKING) == 0)
         return 2; // native branch 0x507E86 -> 0x50835D
 
     g_BattleWin.set_iface_mode();
@@ -22869,7 +22877,7 @@ static int battle_fight_artillery_cleanup(int target_x,
 
     draw_tile_fixup(target_x, target_y, 1, 2);
     if (target_base_id >= 0 &&
-        (LockEnableMask &
+        (GameDataStateStorage.fields_.lock_masks_.enable_mask_ &
          (1u << (static_cast<unsigned>(defender_faction) & 0x1Fu))) == 0) {
         base_reset(target_base_id, 0);
     }
@@ -22892,7 +22900,7 @@ static bool battle_fight_should_show_artillery(int attacker_id,
     const int local_faction = ConsoleGlobal.faction_id_;
     bool show = attacker_faction == local_faction ||
                 defender_faction == local_faction ||
-                (GameState & STATE_OMNISCIENT_VIEW) != 0;
+                (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) != 0;
     const uint32_t local_bit =
         1u << (static_cast<unsigned>(local_faction) & 0x1Fu);
     const bool attacker_is_locally_visible =
@@ -22909,8 +22917,8 @@ static bool battle_fight_should_show_artillery(int attacker_id,
     const uint32_t local_to_attacker =
         PlayersData[local_faction].diplo_treaties[attacker_faction];
     const bool visibility_preference = (local_to_attacker & 1u) != 0
-                                     ? (GamePreferences & 0x8000u) != 0
-                                     : (GamePreferences & 4u) != 0;
+                                     ? (GameDataStateStorage.fields_.game_preferences_ & 0x8000u) != 0
+                                     : (GameDataStateStorage.fields_.game_preferences_ & 4u) != 0;
     if (visibility_preference) show = show || any_relevant_unit_seen;
     return show;
 }
@@ -23010,19 +23018,19 @@ static int battle_fight_source_mode(int attacker_id,
                 draw_tile(target_x, target_y, 2);
                 VehDrawSelection689F28 = -1;
                 VehDrawSelection689F2C = -1;
-                if ((GameMorePreferences & 0x10u) != 0) {
+                if ((GameDataStateStorage.fields_.game_more_preferences_ & 0x10u) != 0) {
                     g_BattleWin.stop_timer();
                     popp(ScriptPopupFile, "BATTLEPAUSE", 0,
                          "batwon_sm.pcx", 0);
                     g_BattleWin.pulse_timer();
                     if (ConsoleGroupAction != 0) {
-                        GameMorePreferences &= ~0x10u;
+                        GameDataStateStorage.fields_.game_more_preferences_ &= ~0x10u;
                         prefs_save(0);
                     }
                 } else {
                     const bool shift_down =
                         (GetAsyncKeyState(0x10) & 0x8000) != 0;
-                    if (!shift_down && (GamePreferences & 8u) == 0 &&
+                    if (!shift_down && (GameDataStateStorage.fields_.game_preferences_ & 8u) == 0 &&
                         IsMultiplayerNet == 0 && boom_after_hit != 0) {
                         clock_wait(200);
                     }
@@ -23125,7 +23133,7 @@ static BattleFightPostPromptRouteV1 battle_fight_normal_post_prompt_v1(
     report_selector_plus_1c =
         (attacker_faction_snapshot == local_faction ||
          defender_faction_snapshot == local_faction ||
-         (static_cast<uint8_t>(GameState) & 0x80u) != 0) ? 1 : 0;
+         (static_cast<uint8_t>(GameDataStateStorage.fields_.game_state_) & 0x80u) != 0) ? 1 : 0;
 
     // Native 0x508401..0x50846E: decide whether at least one participant is
     // locally seen. Owner-controlled units count as seen unless both native
@@ -23153,7 +23161,7 @@ static BattleFightPostPromptRouteV1 battle_fight_normal_post_prompt_v1(
     const uint32_t treaty = PlayersData[local_faction].diplo_treaties[
         attacker_faction_snapshot];
     const uint32_t preference_mask = (treaty & 1u) != 0 ? 0x8000u : 4u;
-    if ((GamePreferences & preference_mask) != 0)
+    if ((GameDataStateStorage.fields_.game_preferences_ & preference_mask) != 0)
         report_selector_plus_1c |= visibility_gate_minus_78;
 
     // Native 0x5084A8..0x5084AE uses an equality test, not a bit test:
@@ -24872,7 +24880,7 @@ static void battle_fight_b1bc_treaty_tail_v4(
     // Shared native B1BC..B203 block. The pointer is live because prior
     // report/kill callbacks can change the output local.
     if (*frame_minus_30 != 0 &&
-        (static_cast<uint8_t>(LockEnableMask) &
+        (static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) &
          static_cast<uint8_t>(1u <<
              (static_cast<uint32_t>(defender_faction) & 0x1Fu))) == 0 &&
         has_treaty(attacker_faction, defender_faction, 0x10) == 0) {
@@ -24967,7 +24975,7 @@ static void battle_fight_after_outcome_af13_to_b203_v4(
         }
         NetMsgPrimary.pop("COMBATWIN", 5000, 0, 0);
     } else if (opaque_report_gate != 0 &&
-               ((static_cast<uint8_t>(LockEnableMask) &
+               ((static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) &
                  static_cast<uint8_t>(1u <<
                      (static_cast<uint32_t>(defender_faction) & 0x1Fu))) != 0)) {
         int proto_id = defender_vehicle_record.proto_id;
@@ -25211,12 +25219,12 @@ static void battle_fight_post_redraw_notifications_v4(
         do_all_draws();
     }
 
-    if ((GameMorePreferences & 0x10u) != 0) {
+    if ((GameDataStateStorage.fields_.game_more_preferences_ & 0x10u) != 0) {
         g_BattleWin.stop_timer();
         popp(ScriptPopupFile, "BATTLEPAUSE", 0, "batwon_sm.pcx", 0);
         g_BattleWin.pulse_timer();
         if (ConsoleGroupAction != 0) {
-            GameMorePreferences &= ~0x10u;
+            GameDataStateStorage.fields_.game_more_preferences_ &= ~0x10u;
             prefs_save(0);
         }
     }
@@ -25333,7 +25341,7 @@ static int battle_fight_final_block_v5(
 
     // 0x50B765 reloads VehSelectionFollowLimit after interlude. Keep the
     // numeric slot ID, then re-index Vehs after each callback (no stale ref).
-    const int turn_vehicle_id = VehSelectionFollowLimit;
+    const int turn_vehicle_id = GameDataStateStorage.fields_.vehicle_selection_follow_limit_;
     int turn_chassis_id =
         VehPrototypes[Vehs[turn_vehicle_id].proto_id].chassis_id;
 
@@ -25363,7 +25371,7 @@ static int battle_fight_final_block_v5(
     // its return is tested, not ignored: nonnegative bypasses the special arm.
     const uint8_t attacker_bit = static_cast<uint8_t>(
         1u << (static_cast<uint8_t>(attacker_faction) & 0x1f));
-    if ((LockEnableMask & attacker_bit) == 0 && target_base_id >= 0 &&
+    if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & attacker_bit) == 0 && target_base_id >= 0 &&
         veh_who(target_x, target_y) < 0) {
         turn_chassis_id = VehPrototypes[Vehs[turn_vehicle_id].proto_id].chassis_id;
         if (Chassis[turn_chassis_id].triad == TRIAD_AIR &&
@@ -25459,7 +25467,7 @@ static BattleFightOutcomeJoinV4 battle_fight_outcome_join_live_v1(
     const uint8_t defender_bit = static_cast<uint8_t>(
         1u << (static_cast<uint32_t>(defender_faction_minus_0c) & 0x1Fu));
     if (IsMultiplayerPBEM == 0 ||
-        (static_cast<uint8_t>(LockEnableMask) & defender_bit) == 0) {
+        (static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & defender_bit) == 0) {
         return BATTLE_FIGHT_OUTCOME_JOIN_A730_V4;
     }
 
@@ -25528,7 +25536,7 @@ static void battle_fight_after_outcome_af13_live_v1(
         }
         NetMsgPrimary.pop("COMBATWIN", 5000, 0, 0);
     } else if (IsMultiplayerPBEM != 0 &&
-               ((static_cast<uint8_t>(LockEnableMask) &
+               ((static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) &
                  static_cast<uint8_t>(1u <<
                      (static_cast<uint32_t>(defender_faction) & 0x1Fu))) != 0)) {
         int proto_id = defender_vehicle_record.proto_id;
@@ -26076,7 +26084,7 @@ struct BattleFightMidPreRoundInputsV7 {
 // Native 0x9A6554 is SecretProject.pholus_mutagen: a BASE ID, not a faction
 // ID. The round candidate then checks Bases[base_id].faction_id_current.
 static int battle_fight_pholus_project_base_v3() {
-    return SecretProject.pholus_mutagen();
+    return GameDataStateStorage.fields_.secret_project_.pholus_mutagen();
 }
 
 // All stack witnesses have already been produced at their native sites.
@@ -26455,7 +26463,7 @@ int __cdecl battle_fight(int veh_id, int dir, int target_x, int target_y,
 
     const unsigned int attacker_lock_bit =
         1u << (static_cast<unsigned int>(attacker_faction) & 0x1Fu);
-    if ((static_cast<unsigned char>(LockEnableMask) &
+    if ((static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) &
          static_cast<unsigned char>(attacker_lock_bit)) != 0 &&
         attacker_definition.plan != 0x0B &&
         (defender_definition.plan != 0x0C || target_base_id >= 0) &&

@@ -529,9 +529,9 @@ void NewTechWin::exec(int technology_id, int other_faction_id) {
     _itoa(static_cast<int>(field_B24_), voice_number, 10);
     strcat(StringTemp, voice_number);
     strcat(StringTemp, ".mp3");
-    if ((GameMorePreferences & MPREF_AV_VOICEOVER_TECH_FAC) != 0) {
+    if ((GameDataStateStorage.fields_.game_more_preferences_ & MPREF_AV_VOICEOVER_TECH_FAC) != 0) {
         const int faction = ConsoleGlobal.faction_id_;
-        if ((static_cast<uint8_t>(LockEnableMask) &
+        if ((static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) &
              static_cast<uint8_t>(1u << (faction & 0x1F))) != 0) {
             g_WAVE_GENERAL.unload();
             g_WAVE_GENERAL.load(StringTemp);
@@ -553,8 +553,8 @@ void NewTechWin::exec(int technology_id, int other_faction_id) {
         PendingTechnologyLink = -1;
     } while (true);
 
-    if ((GameMorePreferences & MPREF_AV_VOICEOVER_TECH_FAC) != 0 &&
-        (GameMorePreferences & MPREF_AV_VOICEOVER_STOP_CLOSE_POPUP) != 0) {
+    if ((GameDataStateStorage.fields_.game_more_preferences_ & MPREF_AV_VOICEOVER_TECH_FAC) != 0 &&
+        (GameDataStateStorage.fields_.game_more_preferences_ & MPREF_AV_VOICEOVER_STOP_CLOSE_POPUP) != 0) {
         g_WAVE_GENERAL.fade(0x7d0);
     }
     close();

@@ -192,7 +192,7 @@ static EnemyMoveNoWaypointJoin enemy_move_no_waypoint_dispatch(
     }
 
     const bool faction_locked =
-        (LockEnableMask & (1u << faction_id)) != 0;
+        (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u << faction_id)) != 0;
     bool jumped_to_common_order_dispatch = false;
     if (!faction_locked && (vehicle.flags & 0x0800u) != 0) {
         if (has_tech(Terraforming[TERRA_MAGTUBE].preq_tech, faction_id))
@@ -230,7 +230,7 @@ static EnemyMoveNoWaypointJoin enemy_move_no_waypoint_dispatch(
         const bool uses_long_range_sensor =
             has_abil(vehicle.proto_id, 0x2000) != 0;
         if (uses_long_range_sensor && vehicle.order_auto_type == 0 &&
-            (GameMorePreferences & 8u) != 0) {
+            (GameDataStateStorage.fields_.game_more_preferences_ & 8u) != 0) {
             return ENEMY_MOVE_JOIN_56BF5F;
         }
         if (vehicle.order_auto_type != 7) return ENEMY_MOVE_JOIN_56C9E1;
@@ -663,9 +663,9 @@ static SeaScoringExit enemy_move_sea_scoring(SeaScoringState &s) {
         !(acting.order == 0x18 && acting.move_to_ai_type == 'd')) {
         if (((s.mask & 0x1000u) && s.unfiltered_distance) ||
             (s.unavailable && count <= s.unavailable &&
-             (s.unfiltered_distance <= 8 || TurnCurrentNum < 50))) {
+             (s.unfiltered_distance <= 8 || GameDataStateStorage.fields_.turn_current_num_ < 50))) {
             s.best = 9999;
-            for (s.index = 0; s.index < BaseCurrentCount; ++s.index) {
+            for (s.index = 0; s.index < GameDataStateStorage.fields_.base_current_count_; ++s.index) {
                 Base &b = Bases[s.index];
                 if (b.faction_id_current != s.faction ||
                     !base_on_sea(s.index, s.region)) continue;
@@ -690,7 +690,7 @@ static SeaScoringExit enemy_move_sea_scoring(SeaScoringState &s) {
         if (scan_ports) {
             s.best = 9999;
             s.target_strategy = 0;
-            for (s.index = 0; s.index < BaseCurrentCount; ++s.index) {
+            for (s.index = 0; s.index < GameDataStateStorage.fields_.base_current_count_; ++s.index) {
                 Base &b = Bases[s.index];
                 if (b.faction_id_current != s.faction || !is_port(s.index, 0))
                     continue;
@@ -727,7 +727,7 @@ static SeaScoringExit enemy_move_sea_scoring(SeaScoringState &s) {
                 s.score = s.scratch44 + 4;
                 if (player.region_base_plan[r] != 7 && !(flags & 0x800u) &&
                     !same_waypoint) {
-                    if ((s.index + TurnCurrentNum + s.vehicle_id) & 7) continue;
+                    if ((s.index + GameDataStateStorage.fields_.turn_current_num_ + s.vehicle_id) & 7) continue;
                     s.score *= 2;
                 }
                 if ((s.scratch44 == 0 ? 1 : 0) <
@@ -773,15 +773,15 @@ static SeaScoringExit enemy_move_sea_scoring(SeaScoringState &s) {
                     if (s.mode) s.unavailable = 1;
                 } else {
                     if (treaty & 2u) {
-                        if (!(LockEnableMask & (unsigned char)(1u << (foreign & 31))) ||
-                            !s.mode || TurnCurrentNum -
+                        if (!(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (unsigned char)(1u << (foreign & 31))) ||
+                            !s.mode || GameDataStateStorage.fields_.turn_current_num_ -
                             PlayersData[foreign].diplo_spoke[s.faction] < 16)
                             continue;
                         diplomacy_check(foreign, s.faction, 0);
                         if (!DiploScratchFA60 && !DiploScratchFA3C) continue;
                     } else if ((treaty & 4u) &&
-                        (!(LockEnableMask & (unsigned char)(1u << (foreign & 31))) ||
-                         TurnCurrentNum - PlayersData[foreign].diplo_spoke[s.faction] < 16))
+                        (!(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (unsigned char)(1u << (foreign & 31))) ||
+                         GameDataStateStorage.fields_.turn_current_num_ - PlayersData[foreign].diplo_spoke[s.faction] < 16))
                         continue;
                     // Original rereads treaty byte after diplomacy_check.
                     treaty = player.diplo_treaties[foreign];
@@ -805,7 +805,7 @@ static SeaScoringExit enemy_move_sea_scoring(SeaScoringState &s) {
                         const unsigned int treaty = player.diplo_treaties[foreign];
                         if (PlayersData[foreign].region_total_bases[r] &&
                             ((treaty & 0x10u) || !(treaty & 8u) ||
-                             TurnCurrentNum - PlayersData[foreign].diplo_spoke[s.faction] > 16))
+                             GameDataStateStorage.fields_.turn_current_num_ - PlayersData[foreign].diplo_spoke[s.faction] > 16))
                             s.unavailable = 1;
                     }
                 }
@@ -814,7 +814,7 @@ static SeaScoringExit enemy_move_sea_scoring(SeaScoringState &s) {
             if (!s.unavailable) continue;
             int movement_gate = s.unavailable;
             if (!(s.mask & (1u << (player.region_base_plan[r] & 31))) &&
-                s.scan_priority <= 2 && !(GameState & 0x100u) &&
+                s.scan_priority <= 2 && !(GameDataStateStorage.fields_.game_state_ & 0x100u) &&
                 (acting.order != 0x18 || r != map_loc(
                     acting.waypoint_x[0], acting.waypoint_y[0])->region ||
                  acting.move_to_ai_type == 'e')) {
@@ -923,7 +923,7 @@ static SeaScoringExit enemy_move_sea_scoring(SeaScoringState &s) {
     }
     if (acting.order != 0x18 && s.mode) {
         s.best = 9999;
-        for (s.index = 0; s.index < BaseCurrentCount; ++s.index) {
+        for (s.index = 0; s.index < GameDataStateStorage.fields_.base_current_count_; ++s.index) {
             Base &b = Bases[s.index];
             if (b.faction_id_current != s.faction) continue;
             s.target_region = sea_base_region(s.index);
@@ -945,23 +945,23 @@ static SeaScoringExit enemy_move_sea_scoring(SeaScoringState &s) {
         }
         if (acting.order != 0x18 && s.mode >= 2) {
             s.best = 9999;
-            for (s.index = 0; s.index < BaseCurrentCount; ++s.index) {
+            for (s.index = 0; s.index < GameDataStateStorage.fields_.base_current_count_; ++s.index) {
                 Base &b = Bases[s.index];
                 const int f = b.faction_id_current;
                 if (f == s.faction || !(is_objective(s.index) ||
                     (player.flags & 0x200000u) ||
                     player.base_id_atk_target == s.index ||
-                    !((s.index + TurnCurrentNum) & 3))) continue;
+                    !((s.index + GameDataStateStorage.fields_.turn_current_num_) & 3))) continue;
                 // Native57602D repurposes -30 from mode into the faction's
                 // dword-table stride. Retain the observable reaching integer.
                 s.mode = s.faction * 0x833;
                 const unsigned int treaty = player.diplo_treaties[f];
-                const bool human = (LockEnableMask &
+                const bool human = (GameDataStateStorage.fields_.lock_masks_.enable_mask_ &
                     (unsigned char)(1u << (f & 31))) != 0;
                 if ((treaty & 1u) || ((treaty & 2u) &&
                     (!human || !(treaty & 0xc00u))) ||
                     ((treaty & 4u) && (!human || (!(treaty & 0xc00u) &&
-                    TurnCurrentNum - PlayersData[f].diplo_spoke[s.faction] < 16))))
+                    GameDataStateStorage.fields_.turn_current_num_ - PlayersData[f].diplo_spoke[s.faction] < 16))))
                     continue;
                 const int r = sea_base_region(s.index);
                 if (r == s.region && !s.low_altitude) continue;
@@ -974,7 +974,7 @@ static SeaScoringExit enemy_move_sea_scoring(SeaScoringState &s) {
                     if (home >= 0 && sea_base_region(home) == r) s.unavailable = 0;
                 }
                 if (!s.unavailable && !(treaty & 0x10u) && (treaty & 8u) &&
-                    !(GameState & 0x100u) &&
+                    !(GameDataStateStorage.fields_.game_state_ & 0x100u) &&
                     !(s.mask & (1u << (player.region_base_plan[r] & 31)))) continue;
                 const int distance = sea_base_distance(s, b);
                 s.score = distance * 32;
@@ -984,7 +984,7 @@ static SeaScoringExit enemy_move_sea_scoring(SeaScoringState &s) {
                 if (has_fac(1, s.index, 0)) {
                     s.score /= 2;
                     if (player.flags & 0x200000u) s.score /= 2;
-                    if (TurnCurrentNum < PlayersData[f].corner_market_turn)
+                    if (GameDataStateStorage.fields_.turn_current_num_ < PlayersData[f].corner_market_turn)
                         s.score /= 8;
                 }
                 if (is_objective(s.index)) {
@@ -1014,7 +1014,7 @@ static SeaScoringExit enemy_move_sea_scoring(SeaScoringState &s) {
         }
         if (acting.order != 0x18) {
             s.best = 9999;
-            for (s.index = 0; s.index < BaseCurrentCount; ++s.index) {
+            for (s.index = 0; s.index < GameDataStateStorage.fields_.base_current_count_; ++s.index) {
                 Base &b = Bases[s.index];
                 if (b.faction_id_current != s.faction) continue;
                 const int r = sea_base_region(s.index);
@@ -1059,7 +1059,7 @@ static SeaScoringExit enemy_move_57666a_tail(SeaScoringState &s) {
     if (s.plan != 6) return SEA_JOIN_576DAF;
     if (VehPrototypes[acting.proto_id].unk_1 != 21) return SEA_JOIN_576835;
     s.best = 9999;
-    for (s.stack_vehicle = 0; s.stack_vehicle < VehCurrentCount;
+    for (s.stack_vehicle = 0; s.stack_vehicle < GameDataStateStorage.fields_.vehicle_current_count_;
          ++s.stack_vehicle) {
         const Veh &v = Vehs[s.stack_vehicle];
         if (v.faction_id != s.faction ||
@@ -1097,7 +1097,7 @@ static SeaScoringExit enemy_move_sea_after_scoring(
     //576847: faction rule100 gates a complete hostile-base target scan.
     if(Players[s.faction].rule_flags&0x100u){
         s.best=0;s.chosen_base=-1;
-        for(s.index=0;s.index<BaseCurrentCount;++s.index){
+        for(s.index=0;s.index<GameDataStateStorage.fields_.base_current_count_;++s.index){
             const Base &b=Bases[s.index];
             if(b.faction_id_current==s.faction||
                 !(player.diplo_treaties[b.faction_id_current]&0x10u))continue;
@@ -1108,7 +1108,7 @@ static SeaScoringExit enemy_move_sea_after_scoring(
                 port_to_port(s.faction_base_id,s.index)))continue;
             const int distance=(abs(s.y-b.y)+x_dist(s.x,b.x))>>1;
             s.scratch20=(b.population_size*b.population_size*32)/(distance+1);
-            for(s.stack_vehicle=0;s.stack_vehicle<VehCurrentCount;++s.stack_vehicle){
+            for(s.stack_vehicle=0;s.stack_vehicle<GameDataStateStorage.fields_.vehicle_current_count_;++s.stack_vehicle){
                 if(s.stack_vehicle==s.vehicle_id)continue;
                 const Veh &v=Vehs[s.stack_vehicle];
                 if(v.faction_id!=s.faction||VehPrototypes[v.proto_id].plan!=6)continue;
@@ -1124,7 +1124,7 @@ static SeaScoringExit enemy_move_sea_after_scoring(
                 acting.order=0;return SEA_JOIN_577071;}}
     }
 sea576a95:
-    if(acting.order!=0x18&&!((s.vehicle_id+TurnCurrentNum)&3)){
+    if(acting.order!=0x18&&!((s.vehicle_id+GameDataStateStorage.fields_.turn_current_num_)&3)){
         s.best=-9999;
         for(s.scan_y=0;s.scan_y<MapLatitudeBounds;++s.scan_y){
             for(s.scan_x=s.scan_y&1;s.scan_x<MapLongitudeBounds;s.scan_x+=2){
@@ -1134,7 +1134,7 @@ sea576a95:
                 else if(!base_on_sea(s.faction_base_id,tile.region))continue;
                 if(((abs(s.y-s.scan_y)+x_dist(s.x,s.scan_x))&~1)<16)continue;
                 bool assigned=false;
-                for(s.stack_vehicle=0;s.stack_vehicle<VehCurrentCount;++s.stack_vehicle){
+                for(s.stack_vehicle=0;s.stack_vehicle<GameDataStateStorage.fields_.vehicle_current_count_;++s.stack_vehicle){
                     const Veh &v=Vehs[s.stack_vehicle];
                     if(s.stack_vehicle!=s.vehicle_id&&v.faction_id==s.faction&&
                         v.waypoint_x[0]==s.scan_x&&v.waypoint_y[0]==s.scan_y){assigned=true;break;}}
@@ -1169,7 +1169,7 @@ sea576a95:
 sea576daf:
     if(acting.order==0x18&&(!(player.flags&0x20000000u)||
         stack_check(s.vehicle_id,1,-1,-1,-1)!=1))return SEA_JOIN_577071;
-    if((s.vehicle_id+TurnCurrentNum)&3)return SEA_JOIN_577071;
+    if((s.vehicle_id+GameDataStateStorage.fields_.turn_current_num_)&3)return SEA_JOIN_577071;
     s.best=-9999;
     for(s.scan_y=0;s.scan_y<MapLatitudeBounds;++s.scan_y){
         for(s.scan_x=s.scan_y&1;s.scan_x<MapLongitudeBounds;s.scan_x+=2){
@@ -1295,7 +1295,7 @@ static int enemy_move_tactical_action_tail(TacticalFrame &s) {
     if (v.order == 0 || v.order == 2) {
         if (s.triad != 2 || !s.faction_distance ||
             (map_loc(s.x,s.y)->bit & 0x40000u)) {
-            v.order = (LockEnableMask & (unsigned char)(1u << (s.faction & 31))) &&
+            v.order = (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (unsigned char)(1u << (s.faction & 31))) &&
                       !(v.state & 0x200u) ? 0 : 2;
             veh_skip(s.vehicle);
         } else action_home(s.vehicle,0);
@@ -1424,7 +1424,7 @@ static int enemy_move_tactical_tail(TacticalFrame &s) {
                 if((player.diplo_agenda[owner]&2u)||(treaty&0x100000u))continue;
                 if(treaty&4u)score-=6;
                 if(treaty&2u){score-=12;
-                    if(!(treaty&1u)&&(s.low_altitude||!(treaty&0x2020u)||SunspotDuration>0))continue;}
+                    if(!(treaty&1u)&&(s.low_altitude||!(treaty&0x2020u)||GameDataStateStorage.fields_.sunspot_duration_>0))continue;}
             }
         }
         if(s.strategic60000&&s.plan==2&&unit>=0&&owner==s.faction&&zoc_veh(x,y,s.faction))
@@ -1559,9 +1559,9 @@ static int enemy_move_tactical_tail(TacticalFrame &s) {
                             }
                         } else if(stack_check(unit,1,-1,-1,-1)<=1&&
                             base_who(Vehs[unit].x,Vehs[unit].y)<0){
-                            const int before=VehCurrentCount;
+                            const int before=GameDataStateStorage.fields_.vehicle_current_count_;
                             if(probe(s.vehicle,-1,unit,1)){
-                                if(before!=VehCurrentCount)return 1;
+                                if(before!=GameDataStateStorage.fields_.vehicle_current_count_)return 1;
                                 best=999;s.direction=pos-1;combat_choice=1;
                             }
                         }
@@ -1766,7 +1766,7 @@ struct StrategicActionState {
           scan_y(f.local_8) {}
 };
 static bool strategic_former_assigned(StrategicActionState &s,int x,int y){
-    for(s.stack_vehicle=0;s.stack_vehicle<VehCurrentCount;++s.stack_vehicle){
+    for(s.stack_vehicle=0;s.stack_vehicle<GameDataStateStorage.fields_.vehicle_current_count_;++s.stack_vehicle){
         const Veh &v=Vehs[s.stack_vehicle];
         if(v.faction_id!=s.faction||VehPrototypes[v.proto_id].plan!=9||
            s.stack_vehicle==s.vehicle)continue;
@@ -1779,7 +1779,7 @@ static StrategicActionExit enemy_move_strategic_actions(StrategicActionState &s)
     Veh &v=Vehs[s.vehicle];PlayerData &player=PlayersData[s.faction];
     s.sensor_routed=0; //573032, not an inferred default.
     if(!player.current_num_bases){
-        for(s.stack_vehicle=0;s.stack_vehicle<VehCurrentCount;++s.stack_vehicle){
+        for(s.stack_vehicle=0;s.stack_vehicle<GameDataStateStorage.fields_.vehicle_current_count_;++s.stack_vehicle){
             const Veh &colony=Vehs[s.stack_vehicle];
             if(colony.faction_id==s.faction&&VehPrototypes[colony.proto_id].plan==8){
                 go_to(s.vehicle,'#',colony.x,colony.y);
@@ -1810,7 +1810,7 @@ static StrategicActionExit enemy_move_strategic_actions(StrategicActionState &s)
         if(at_goal(s.faction,0x69,s.x,s.y)&&terrain_avail(14,s.low_altitude,s.faction)){
             v.order=18;return STRATEGIC_JOIN_578F46;}
         if(!s.low_altitude&&!s.special_mode&&
-            !((unsigned char)s.faction_mask&LockEnableMask)&&terrain_avail(16,0,s.faction)&&
+            !((unsigned char)s.faction_mask&GameDataStateStorage.fields_.lock_masks_.enable_mask_)&&terrain_avail(16,0,s.faction)&&
             ((int)Continents[s.region].tile_count<=49||
              ((int)Continents[s.region].tile_count<=149&&BaseFindDist>=4))&&
             s.unfiltered_distance>=2&&(map_loc(s.x,s.y)->climate&0xe0)<=0xbf){
@@ -1825,7 +1825,7 @@ static StrategicActionExit enemy_move_strategic_actions(StrategicActionState &s)
             const Map &tile=*map_loc(s.x,s.y);const unsigned bits=tile.bit;
             if((bits&0x10u||bits&0x200000u)&&!(bits&4u)&&
                 (!(bits&0x20u)||(tile.climate&0xe0)<=0x3f)&&!s.low_altitude&&
-                (!((unsigned char)s.faction_mask&LockEnableMask)||!(GameMorePreferences&0x400000u))){
+                (!((unsigned char)s.faction_mask&GameDataStateStorage.fields_.lock_masks_.enable_mask_)||!(GameDataStateStorage.fields_.game_more_preferences_&0x400000u))){
                 v.order=9;return STRATEGIC_JOIN_578F46;}
             s.radius_direction=radius_move(Bases[s.faction_base].x,Bases[s.faction_base].y,s.x,s.y,21);
         }
@@ -1849,8 +1849,8 @@ static StrategicActionExit enemy_move_strategic_actions(StrategicActionState &s)
             (1u<<(s.radius_direction&31))))){
             v.order=4;v.move_to_ai_type='+';return STRATEGIC_JOIN_578F46;
         }
-        if(!(s.low_altitude||(((unsigned char)s.faction_mask&LockEnableMask)&&
-                            (GameMorePreferences&0x400000u)))){
+        if(!(s.low_altitude||(((unsigned char)s.faction_mask&GameDataStateStorage.fields_.lock_masks_.enable_mask_)&&
+                            (GameDataStateStorage.fields_.game_more_preferences_&0x400000u)))){
             bool roads=s.mask!=0;
             if(!roads&&s.faction_distance<=2){
                 const unsigned bits=map_loc(s.x,s.y)->bit;
@@ -1875,7 +1875,7 @@ static StrategicActionExit enemy_move_strategic_actions(StrategicActionState &s)
             v.order=(signed char)s.recommendation;v.move_to_ai_type='+';
             return STRATEGIC_JOIN_578F46;
         }
-        if(!((unsigned char)s.faction_mask&LockEnableMask)||(GameMorePreferences&0x20u)){
+        if(!((unsigned char)s.faction_mask&GameDataStateStorage.fields_.lock_masks_.enable_mask_)||(GameDataStateStorage.fields_.game_more_preferences_&0x20u)){
             if(s.mask||!v.order){
                 if(is_sensor(s.x,s.y)&&whose_territory(s.faction,s.x,s.y,0,0)==s.faction&&
                     s.faction_distance>=2&&!(map_loc(s.x,s.y)->bit&0x800u)&&
@@ -1920,7 +1920,7 @@ static StrategicActionExit enemy_move_strategic_actions(StrategicActionState &s)
             }
             if(current_formers){
                 s.best=9999;s.radius_direction=0;
-                for(s.radius_direction=0;s.radius_direction<BaseCurrentCount;++s.radius_direction){
+                for(s.radius_direction=0;s.radius_direction<GameDataStateStorage.fields_.base_current_count_;++s.radius_direction){
                     const Base &b=Bases[s.radius_direction];
                     if(b.faction_id_current!=s.faction||map_loc(b.x,b.y)->region!=s.region)continue;
                     int formers=0;
@@ -1940,7 +1940,7 @@ static StrategicActionExit enemy_move_strategic_actions(StrategicActionState &s)
         if(s.chosen_base>=0){
             s.best=9999;
             for(s.mask=1;s.mask<21;++s.mask){
-                const int pos=(TurnCurrentNum+(int)s.mask)%21;
+                const int pos=(GameDataStateStorage.fields_.turn_current_num_+(int)s.mask)%21;
                 s.scan_x=xrange(s.altitude_or_scratch+RadiusOffsetX[pos]);
                 s.scan_y=s.scratch58+RadiusOffsetY[pos];
                 if(!on_map(s.scan_x,s.scan_y)||base_who(s.scan_x,s.scan_y)>=0)continue;
@@ -1951,7 +1951,7 @@ static StrategicActionExit enemy_move_strategic_actions(StrategicActionState &s)
                 s.stack_vehicle=veh_at(s.scan_x,s.scan_y);
                 if(s.stack_vehicle>=0&&(Vehs[s.stack_vehicle].faction_id!=s.faction||
                     stack_check(s.stack_vehicle,2,9,-1,-1)))continue;
-                const int flag=((unsigned char)s.faction_mask&LockEnableMask)&&s.special_mode;
+                const int flag=((unsigned char)s.faction_mask&GameDataStateStorage.fields_.lock_masks_.enable_mask_)&&s.special_mode;
                 if(!can_terraform(s.faction,s.scan_x,s.scan_y,flag,s.chosen_base))continue;
                 s.score=vector_dist(x_dist(Bases[s.chosen_base].x,s.scan_x),abs(Bases[s.chosen_base].y-s.scan_y));
                 if(s.score>2)continue;
@@ -1962,8 +1962,8 @@ static StrategicActionExit enemy_move_strategic_actions(StrategicActionState &s)
             }
             if(v.order==0x18)return STRATEGIC_JOIN_57707F;
         }
-        if(!s.sensor_routed&&(!((unsigned char)s.faction_mask&LockEnableMask)||
-                             (GameMorePreferences&0x20u))){
+        if(!s.sensor_routed&&(!((unsigned char)s.faction_mask&GameDataStateStorage.fields_.lock_masks_.enable_mask_)||
+                             (GameDataStateStorage.fields_.game_more_preferences_&0x20u))){
             s.scan_x=s.x;s.scan_y=s.y;
             if(!Paths.sensors(s.faction,&s.scan_x,&s.scan_y)){
                 if(s.scan_x==s.x&&s.scan_y==s.y){v.order=13;return STRATEGIC_JOIN_578F46;}
@@ -1979,7 +1979,7 @@ static StrategicActionExit enemy_move_strategic_actions(StrategicActionState &s)
                 if(map_loc(home.x,home.y)->region!=s.region)s.stack_vehicle=s.faction_base;
                 if(s.stack_vehicle>=0){const Base &b=Bases[s.stack_vehicle];
                     const int distance=vector_dist(x_dist(s.x,b.x),abs(s.y-b.y));
-                    if(distance>(TurnCurrentNum<=50)+3||s.movement_zone){
+                    if(distance>(GameDataStateStorage.fields_.turn_current_num_<=50)+3||s.movement_zone){
                         go_to(s.vehicle,'b',b.x,b.y);return STRATEGIC_JOIN_57707F;}
                 }
             }
@@ -2142,9 +2142,9 @@ static NonseaExit enemy_move_nonsea(NonseaState &s,
                     int candidate_score = (int)((unsigned int)((abs(s.y-s.scan_y) +
                         x_dist(s.x,s.scan_x)) >> 1) * (unsigned int)s.scratch20);
                     s.stack_vehicle = 0;
-                    if (VehCurrentCount > 0) {
-                        s.scratch4c = VehCurrentCount;
-                        s.stack_vehicle = VehCurrentCount;
+                    if (GameDataStateStorage.fields_.vehicle_current_count_ > 0) {
+                        s.scratch4c = GameDataStateStorage.fields_.vehicle_current_count_;
+                        s.stack_vehicle = GameDataStateStorage.fields_.vehicle_current_count_;
                         int vehicle = 0;
                         do {
                             if (Vehs[vehicle].faction_id == s.faction &&
@@ -2166,7 +2166,7 @@ static NonseaExit enemy_move_nonsea(NonseaState &s,
         }
     }
     if (entry == NONSEA_ENTRY_57460A || (entry == NONSEA_ENTRY_5741CF &&
-        (s.explore_bonus || (s.plan == 3 && TurnCurrentNum < 100)))) {
+        (s.explore_bonus || (s.plan == 3 && GameDataStateStorage.fields_.turn_current_num_ < 100)))) {
         if (s.triad != 2 &&
             (Vehs[s.vehicle].order != 0x18 || Vehs[s.vehicle].move_to_ai_type != '/')) {
             s.scratch4c = 0;
@@ -2229,7 +2229,7 @@ static NonseaExit enemy_move_nonsea(NonseaState &s,
                             if (s.best < s.scratch20) {
                                 s.stack_vehicle = 0;
                                 bool claimed = false;
-                                while (s.stack_vehicle < VehCurrentCount) {
+                                while (s.stack_vehicle < GameDataStateStorage.fields_.vehicle_current_count_) {
                                     const Veh &vehicle = Vehs[s.stack_vehicle];
                                     if (vehicle.faction_id == s.faction &&
                                         s.stack_vehicle != s.vehicle && vehicle.order == 0x18) {
@@ -2354,7 +2354,7 @@ static SelectedExit enemy_move_selected(EnemyMoveFullFrame &f) {
         if (f.local_b4) return SELECTED_JOIN_57707F;
         if (f.local_44) {
             f.local_24 = 0;
-            while (f.local_24 < BaseCurrentCount) {
+            while (f.local_24 < GameDataStateStorage.fields_.base_current_count_) {
                 const Base &base = Bases[f.local_24];
                 if (base.faction_id_current == f.local_c &&
                     map_loc(base.x,base.y)->region == f.local_34) {
@@ -2385,7 +2385,7 @@ static SelectedExit enemy_move_selected(EnemyMoveFullFrame &f) {
     if (f.local_50 != f.local_88 && f.local_88 >= 3 && !f.local_64 &&
         has_fac(0x21,f.local_5c,0) && !(Bases[f.local_5c].state & 0x20000000)) {
         f.local_24 = 0;
-        while (f.local_24 < BaseCurrentCount) {
+        while (f.local_24 < GameDataStateStorage.fields_.base_current_count_) {
             const Base &base = Bases[f.local_24];
             if (base.faction_id_current == f.local_c &&
                 has_fac(0x21,f.local_5c,0) && !(base.state & 0x20000000)) {
@@ -2815,7 +2815,7 @@ int __cdecl enemy_move(int incoming_vehicle_id) {
     f.local_b0 = Vehs[f.vehicle_id].state & 0x4000u;
     if (f.local_6c) goto label_57138d;
     if ((Vehs[f.vehicle_id].flags & 0x440) != 0 &&
-        !(static_cast<unsigned char>(LockEnableMask) & (1u << (f.local_c & 31)))) {
+        !(static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & (1u << (f.local_c & 31)))) {
         veh_skip(f.vehicle_id);
         return 0;
     }
@@ -2825,7 +2825,7 @@ int __cdecl enemy_move(int incoming_vehicle_id) {
     }
     if (Vehs[f.vehicle_id].order > 3 && Vehs[f.vehicle_id].order < 24) {
         if (!f.local_94 || (f.local_94 >= 2 &&
-            (!(static_cast<unsigned char>(LockEnableMask) & (1u << (f.local_c & 31))) ||
+            (!(static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & (1u << (f.local_c & 31))) ||
              !(PlayersData[f.local_c].diplo_treaties[f.local_94-1] & 0x10u))))
             goto label_578f46;
         if ((Vehs[f.vehicle_id].state & 0x200u) &&
@@ -2872,7 +2872,7 @@ int __cdecl enemy_move(int incoming_vehicle_id) {
         }
     }
     if (f.local_a8 && Vehs[f.vehicle_id].moves_expended >= Rules.move_rate_roads &&
-        !f.local_94 && !(static_cast<unsigned char>(LockEnableMask) &
+        !f.local_94 && !(static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) &
                        (1u << (f.local_c & 31))) &&
         stack_check(f.vehicle_id,14,-1,-1,-1)) {
         veh_skip(f.vehicle_id);
@@ -2937,7 +2937,7 @@ label_56bf5f:
     do {
         if (Vehs[f.vehicle_id].order == 0x18) goto label_578f46;
         f.local_24 = 0;
-        if (BaseCurrentCount > 0) {
+        if (GameDataStateStorage.fields_.base_current_count_ > 0) {
             int distance_scratch = f.local_38; // original uninitialized reaching read
             f.base_cursor_30 = &Bases[0].x;
             do {
@@ -2980,7 +2980,7 @@ label_56bf5f:
                 }
                 ++f.local_24;
                 f.base_cursor_30 += sizeof(Base)/sizeof(short);
-            } while (f.local_24 < BaseCurrentCount);
+            } while (f.local_24 < GameDataStateStorage.fields_.base_current_count_);
             f.local_38 = distance_scratch;
         }
         ++f.local_48;
@@ -2996,7 +2996,7 @@ label_56c35d:
     f.local_30 = (Vehs[f.vehicle_id].order_auto_type == 2)+0x1b;
     f.local_78 = -1;
     f.local_24 = 0;
-    if (BaseCurrentCount > 0) {
+    if (GameDataStateStorage.fields_.base_current_count_ > 0) {
         f.base_cursor_48 = &Bases[0].y;
         do {
             const int owner = Bases[f.local_24].faction_id_current;
@@ -3046,7 +3046,7 @@ label_56c35d:
             }
             ++f.local_24;
             f.base_cursor_48 += sizeof(Base)/sizeof(short);
-        } while (f.local_24 < BaseCurrentCount);
+        } while (f.local_24 < GameDataStateStorage.fields_.base_current_count_);
         if (f.local_78 >= 0) {
             Vehs[f.vehicle_id].move_to_ai_type = 0x52;
             Vehs[f.vehicle_id].order = static_cast<unsigned char>(f.local_30);
@@ -3055,7 +3055,7 @@ label_56c35d:
             goto label_578f46;
         }
     }
-    if (!(static_cast<unsigned char>(LockEnableMask) & static_cast<unsigned char>(f.local_68)) &&
+    if (!(static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & static_cast<unsigned char>(f.local_68)) &&
         (Vehs[f.vehicle_id].flags & 0x800)) goto label_56c9e1;
     Vehs[f.vehicle_id].order = 0;
     Vehs[f.vehicle_id].state &= ~0x200u;
@@ -3186,7 +3186,7 @@ label_56cfc1: {
     }
 
     if (f.local_50 == 12) {
-        const int project_base = SecretProject.universal_translator();
+        const int project_base = GameDataStateStorage.fields_.secret_project_.universal_translator();
         if ((acting.flags & 0x20u) == 0 && f.local_64 == 0) {
             const bool network_node =
                 has_fac(FAC_NETWORK_NODE, f.local_5c, 0) != 0;
@@ -3205,7 +3205,7 @@ label_56cfc1: {
         f.local_24 = 0;
         const uint8_t lock_mask =
             static_cast<uint8_t>(1u << (f.local_c & 0x1f));
-        for (; f.local_24 < BaseCurrentCount; ++f.local_24) {
+        for (; f.local_24 < GameDataStateStorage.fields_.base_current_count_; ++f.local_24) {
             const int base_id = f.local_24;
             Base &base = Bases[base_id];
             if (base.faction_id_current != f.local_c ||
@@ -3215,7 +3215,7 @@ label_56cfc1: {
             if (base_id != project_base) {
                 const bool skip_penalties = base.queue_production_id[0] < -0x46 &&
                     base.minerals_accumulated >= 0x64 &&
-                    (lock_mask & static_cast<uint8_t>(LockEnableMask)) == 0;
+                    (lock_mask & static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_)) == 0;
                 if (!skip_penalties) {
                     if (!has_fac(FAC_NETWORK_NODE, base_id, 0)) score += 0x3e8;
                     if (base.state & 0x04000000u) {
@@ -3245,14 +3245,14 @@ label_56cfc1: {
     if (f.local_50 != 10) goto label_56cdc1;
 
     if (f.local_50 == 10 &&
-        (static_cast<unsigned char>(LockEnableMask) &
+        (static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) &
          static_cast<unsigned char>(f.local_68)) == 0) {
         f.local_28 = 0x270f;
         f.local_78 = -1;
         f.local_24 = 0;
         int best_base = -1;
         int best_distance = 0x270f;
-        for (; f.local_24 < BaseCurrentCount; ++f.local_24) {
+        for (; f.local_24 < GameDataStateStorage.fields_.base_current_count_; ++f.local_24) {
             const int base_id = f.local_24;
             const Base &base = Bases[base_id];
             if (base.faction_id_current != f.local_c ||
@@ -3326,7 +3326,7 @@ label_56cfc1: {
             if (BaseFindDist <= 2) continue;
             bool occupied_goal = false;
             f.local_1c = 0;
-            for (; f.local_1c < VehCurrentCount; ++f.local_1c) {
+            for (; f.local_1c < GameDataStateStorage.fields_.vehicle_current_count_; ++f.local_1c) {
                 const int other_id = f.local_1c;
                 const Veh &other = Vehs[other_id];
                 if (other_id == f.vehicle_id || other.faction_id != f.local_c ||
@@ -3375,7 +3375,7 @@ label_56cfc1: {
 
 label_56cdc1:
     f.local_70 = f.local_60;
-    if ((static_cast<unsigned char>(LockEnableMask) &
+    if ((static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) &
          static_cast<unsigned char>(f.local_68)) != 0 ||
         f.local_60 == f.local_c || f.local_60 <= 0)
         goto label_56d7fc;
@@ -3530,7 +3530,7 @@ label_56e011: {
 
             f.local_28 = 0x1869f;
             f.local_24 = 0;
-            for (int base_id = 0; base_id < BaseCurrentCount;
+            for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_;
                  f.local_24 = ++base_id) {
                 f.local_24 = base_id;
                 const Base &base = Bases[base_id];
@@ -3753,7 +3753,7 @@ if (!Weapon[VehPrototypes[Vehs[f.vehicle_id].proto_id].weapon_id].offense_rating
 if (!stack_check(f.vehicle_id, 2, 2, -1, -1)) goto label_56e62d;
 if (Vehs[f.vehicle_id].state & 0x20u) goto label_56e62d;
 if ((static_cast<unsigned char>(f.local_68) &
-     static_cast<unsigned char>(LockEnableMask)) != 0)
+     static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_)) != 0)
     goto label_56e62d;
 if (f.local_90 >= 4) goto label_56e62d;
 
@@ -3791,8 +3791,8 @@ f.local_78 = -1;
 f.local_24 = 0;
 {
 int enemy_base_index = 0;
-if (BaseCurrentCount > 0) {
-for (; enemy_base_index < BaseCurrentCount; ++enemy_base_index) {
+if (GameDataStateStorage.fields_.base_current_count_ > 0) {
+for (; enemy_base_index < GameDataStateStorage.fields_.base_current_count_; ++enemy_base_index) {
     const Base &candidate = Bases[enemy_base_index];
     const int owner = candidate.faction_id_current;
     if (owner == f.local_c) continue;
@@ -3823,7 +3823,7 @@ f.local_24 = enemy_base_index;
 if (f.local_78 >= 0) {
     f.local_24 = f.local_78;
     f.local_28 = 99999;
-    for (f.local_54 = 0; f.local_54 < BaseCurrentCount; ++f.local_54) {
+    for (f.local_54 = 0; f.local_54 < GameDataStateStorage.fields_.base_current_count_; ++f.local_54) {
         const Base &candidate = Bases[f.local_54];
         if (candidate.faction_id_current != f.local_c) continue;
         const Base &selected = Bases[f.local_78];
@@ -3862,9 +3862,9 @@ if (PlayersData[f.local_c].proto_id_active[f.local_ac] <= 1)
 f.local_58 = -1;
 f.local_60 = -1;
 f.local_24 = 0;
-if (BaseCurrentCount > 0) {
+if (GameDataStateStorage.fields_.base_current_count_ > 0) {
     f.base_cursor_48 = reinterpret_cast<const short *>(&Bases[0].faction_id_current);
-    for (; f.local_24 < BaseCurrentCount;
+    for (; f.local_24 < GameDataStateStorage.fields_.base_current_count_;
          ++f.local_24,
          f.base_cursor_48 = reinterpret_cast<const short *>(
              &Bases[f.local_24].faction_id_current)) {
@@ -4052,7 +4052,7 @@ label_56ef2f:
             ++f.local_2c;
         }
         f.local_1c = 0;
-        while (f.local_1c < VehCurrentCount) {
+        while (f.local_1c < GameDataStateStorage.fields_.vehicle_current_count_) {
             const int owner = Vehs[f.local_1c].faction_id;
             if (owner != f.local_c &&
                 (PlayersData[f.local_c].diplo_treaties[owner] & 0xc30u) &&
@@ -4261,7 +4261,7 @@ label_56f8ad:
             }
             action_build(f.vehicle_id,NULL);
             if (PlayersData[f.local_c].current_num_bases == 1) {
-                for (int vehicle = 0; vehicle < VehCurrentCount; ++vehicle)
+                for (int vehicle = 0; vehicle < GameDataStateStorage.fields_.vehicle_current_count_; ++vehicle)
                     if (Vehs[vehicle].faction_id == f.local_c &&
                         VehPrototypes[Vehs[vehicle].proto_id].plan == 9)
                         go_to(vehicle,'C',f.local_18,f.local_14);
@@ -4383,7 +4383,7 @@ label_5702f7:
             --f.local_60;
         } while (f.local_60);
         f.local_2c = Vehs[f.vehicle_id].order == 24;
-        if (!f.local_30 || !((TurnCurrentNum+f.local_c) & (f.local_48 ? 15 : 3)) || !f.local_7c) {
+        if (!f.local_30 || !((GameDataStateStorage.fields_.turn_current_num_+f.local_c) & (f.local_48 ? 15 : 3)) || !f.local_7c) {
             f.local_28 = 0;
             f.local_8 = 0;
             while (f.local_8 < MapLatitudeBounds) {
@@ -4397,10 +4397,10 @@ label_5702f7:
                         goto late_policy_next_tile;
                     if (base_territory(f.local_c,f.local_4,f.local_8) >= 0)
                         goto late_policy_next_tile;
-                    if ((!f.local_30 || !((TurnCurrentNum+f.local_c) & 15)) &&
+                    if ((!f.local_30 || !((GameDataStateStorage.fields_.turn_current_num_+f.local_c) & 15)) &&
                         (is_known(f.local_4,f.local_8,f.local_c) ||
-                         (DiffLevelCurrent >= 4 &&
-                          !(static_cast<unsigned char>(f.local_68) & static_cast<unsigned char>(LockEnableMask)))) &&
+                         (GameDataStateStorage.fields_.diff_level_current_ >= 4 &&
+                          !(static_cast<unsigned char>(f.local_68) & static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_)))) &&
                         goody_at(f.local_4,f.local_8)) {
                         const int near_base = base_find(f.local_4,f.local_8);
                         if ((near_base >= 0 && Bases[near_base].faction_id_current == f.local_c) ||
@@ -4426,8 +4426,8 @@ label_5702f7:
                             if (on_map(xx,yy) && map_loc(xx,yy)->region == f.local_34) {
                                 if (at_site(f.local_c,3,xx,yy)) { existing_site = true; break; }
                                 if (is_known(xx,yy,f.local_c)) {
-                                    if ((DiffLevelCurrent >= 4 &&
-                                        !(static_cast<unsigned char>(f.local_68) & static_cast<unsigned char>(LockEnableMask))) ||
+                                    if ((GameDataStateStorage.fields_.diff_level_current_ >= 4 &&
+                                        !(static_cast<unsigned char>(f.local_68) & static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_))) ||
                                         f.local_48 < 0x24) f.local_20 |= 0x20;
                                 } else {
                                     ++f.local_20;
@@ -4492,14 +4492,14 @@ label_5702f7:
                         const int score = (int)((unsigned int)f.local_20 << 16)/(distance+1);
                         if (f.local_58 && (score > f.local_28 ||
                             is_known(f.local_4,f.local_8,f.local_c) ||
-                            (DiffLevelCurrent >= 4 &&
-                             !(static_cast<unsigned char>(f.local_68) & static_cast<unsigned char>(LockEnableMask))))) {
+                            (GameDataStateStorage.fields_.diff_level_current_ >= 4 &&
+                             !(static_cast<unsigned char>(f.local_68) & static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_))))) {
                             const int territory = whose_territory(f.local_c,f.local_4,f.local_8,NULL,0);
                             if (Paths.find(f.local_4,f.local_8,f.local_18,f.local_14,
                                 territory,f.local_c,0x201,-1) >= 0) {
                                 if (is_known(f.local_4,f.local_8,f.local_c) ||
-                                    (DiffLevelCurrent >= 4 &&
-                                     !(static_cast<unsigned char>(f.local_68) & static_cast<unsigned char>(LockEnableMask)))) {
+                                    (GameDataStateStorage.fields_.diff_level_current_ >= 4 &&
+                                     !(static_cast<unsigned char>(f.local_68) & static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_)))) {
                                     del_site(f.local_c,8,f.local_4,f.local_8,2);
                                     add_site(f.local_c,8,2,f.local_4,f.local_8);
                                     ++f.local_30;
@@ -4523,8 +4523,8 @@ late_policy_next_tile:
                     if (!site_count) site_count = 1;
                     add_site(f.local_c,3,2,Vehs[f.vehicle_id].waypoint_x[0],Vehs[f.vehicle_id].waypoint_y[0]);
                     if (is_known(Vehs[f.vehicle_id].waypoint_x[0],Vehs[f.vehicle_id].waypoint_y[0],f.local_c) ||
-                        (DiffLevelCurrent >= 4 &&
-                         !(static_cast<unsigned char>(f.local_68) & static_cast<unsigned char>(LockEnableMask)))) {
+                        (GameDataStateStorage.fields_.diff_level_current_ >= 4 &&
+                         !(static_cast<unsigned char>(f.local_68) & static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_)))) {
                         // Native bug: del_site uses terminal map-scan coordinates.
                         del_site(f.local_c,8,f.local_4,f.local_8,2);
                         add_site(f.local_c,8,3,Vehs[f.vehicle_id].waypoint_x[0],Vehs[f.vehicle_id].waypoint_y[0]);
@@ -4588,7 +4588,7 @@ label_570df9:
     }
     if (speed(f.vehicle_id,0) <= Rules.move_rate_roads && f.local_9c >= 0) {
         const int owner = Bases[f.local_9c].faction_id_current;
-        if ((static_cast<unsigned char>(LockEnableMask) & (1u << (owner & 31))) &&
+        if ((static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & (1u << (owner & 31))) &&
             (PlayersData[f.local_c].diplo_treaties[owner] & 0x10u) && f.local_40 != 2 &&
             (((map_loc(f.local_18,f.local_14)->climate & 0xe0) < 0x60) == (f.local_40 == 1)) &&
             Weapon[VehPrototypes[Vehs[f.vehicle_id].proto_id].weapon_id].offense_rating && !f.local_84 &&
@@ -4637,7 +4637,7 @@ label_57117a:
 label_5711c6:
     if (f.local_50 == 6 && Vehs[f.vehicle_id].order == 24) goto label_57137d;
 label_5711d4:
-    if (TurnCurrentNum >= 100 && !f.local_4c && f.local_64 > 6 &&
+    if (GameDataStateStorage.fields_.turn_current_num_ >= 100 && !f.local_4c && f.local_64 > 6 &&
         Vehs[f.vehicle_id].order == 24 && Vehs[f.vehicle_id].move_to_ai_type != 'X' &&
         !(Vehs[f.vehicle_id].state & 0x40000000u) && f.local_50 != 3)
         goto label_57137d;
@@ -4645,7 +4645,7 @@ label_5711d4:
     if (f.local_50 == 3 || f.local_40 == 1) f.local_54 = 49;
     if (f.local_50 == 7 &&
         (stack_check(f.vehicle_id,2,8,-1,-1) || f.local_90 >= 2)) f.local_54 = 9;
-    if (TurnCurrentNum >= (f.local_50 == 6 ? 400 : 100) &&
+    if (GameDataStateStorage.fields_.turn_current_num_ >= (f.local_50 == 6 ? 400 : 100) &&
         Vehs[f.vehicle_id].order == 24 && Vehs[f.vehicle_id].move_to_ai_type != 'X' &&
         f.local_50 != 3) f.local_54 = 9;
     f.local_2c = 1;
@@ -4655,8 +4655,8 @@ label_5711d4:
         f.local_8 = f.local_14+RadiusOffsetY[f.local_2c];
         if (on_map(f.local_4,f.local_8) && goody_at(f.local_4,f.local_8) &&
             (is_known(f.local_4,f.local_8,f.local_c) ||
-             (DiffLevelCurrent >= 4 &&
-              !(static_cast<unsigned char>(f.local_68) & static_cast<unsigned char>(LockEnableMask)))) &&
+             (GameDataStateStorage.fields_.diff_level_current_ >= 4 &&
+              !(static_cast<unsigned char>(f.local_68) & static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_)))) &&
             (((map_loc(f.local_4,f.local_8)->climate & 0xe0) < 0x60) == (f.local_40 == 1)) &&
             map_loc(f.local_4,f.local_8)->region == f.local_34)
             goto label_571537;
@@ -4676,14 +4676,14 @@ label_571537:
 
 label_57138d:
     f.local_68 = 1u << (f.local_c & 31);
-    if (!(static_cast<unsigned char>(LockEnableMask) & f.local_68) &&
+    if (!(static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & f.local_68) &&
         !f.local_64 && !f.local_6c && f.local_94 && !is_objective(f.local_5c) &&
         (f.local_88 == 2 || PlayersData[f.local_c].region_total_bases[f.local_34] == 1 ||
          (PlayersData[f.local_c].flags & 0x2000000u))) {
         f.local_70 = Bases[f.local_5c].faction_id_former;
         if (stack_check(f.vehicle_id,1,-1,-1,-1) <= (Bases[f.local_5c].population_size+1)/2 &&
             stack_check(f.vehicle_id,16,-1,-1,-1) < (Vehs[f.vehicle_id].dmg_incurred != 0)+2 &&
-            f.local_70 != f.local_c && (static_cast<unsigned char>(LockEnableMask) &
+            f.local_70 != f.local_c && (static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) &
                                     (1u << (f.local_70 & 31)))) {
             const unsigned treaty = PlayersData[f.local_c].diplo_treaties[f.local_70];
             if ((treaty & 0x20u) && !(treaty & 3u) &&
@@ -4741,7 +4741,7 @@ label_571853:
         if (available_units >= 2 && (!f.local_44 || !f.local_94)) goto label_571977;
     }
     if (!f.local_64 && Vehs[f.vehicle_id].home_base_id >= 0 &&
-        !(static_cast<unsigned char>(LockEnableMask) & static_cast<unsigned char>(f.local_68)))
+        !(static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & static_cast<unsigned char>(f.local_68)))
         Vehs[f.vehicle_id].home_base_id = static_cast<short>(f.local_5c);
     Vehs[f.vehicle_id].order = 0;
     f.local_8c = 1;
@@ -4765,7 +4765,7 @@ label_571982:
 label_572922:
     if (f.local_b0 || (f.local_50 & 15) != 9) goto label_5741cf;
     if (f.local_94 == 1 || (f.local_94 &&
-        (static_cast<unsigned char>(LockEnableMask) & static_cast<unsigned char>(f.local_68)) &&
+        (static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & static_cast<unsigned char>(f.local_68)) &&
         (PlayersData[f.local_c].diplo_treaties[f.local_94-1] & 0x10u))) goto label_57707f;
     //572984..57302D. Goal records and base coordinates retain their owners.
     f.local_30 = (Vehs[f.vehicle_id].state & 0x200u) != 0 &&
@@ -4816,7 +4816,7 @@ label_572922:
                             if (f.local_70 < 0 || f.local_70 == f.local_c ||
                                 (PlayersData[f.local_c].diplo_treaties[f.local_70] & 1u)) {
                                 f.local_1c = 0;
-                                while (f.local_1c < VehCurrentCount) {
+                                while (f.local_1c < GameDataStateStorage.fields_.vehicle_current_count_) {
                                     const Veh &other = Vehs[f.local_1c];
                                     if (other.faction_id == f.local_c &&
                                         VehPrototypes[other.proto_id].plan == 9 &&
@@ -4826,7 +4826,7 @@ label_572922:
                                           other.waypoint_y[0] == goal.y))) break;
                                     ++f.local_1c;
                                 }
-                                if (f.local_1c >= VehCurrentCount) {
+                                if (f.local_1c >= GameDataStateStorage.fields_.vehicle_current_count_) {
                                     go_to(f.vehicle_id,0x67,goal.x,goal.y);
                                     break;
                                 }
@@ -4852,7 +4852,7 @@ label_572d66:
     if (f.local_40 == 1 && Vehs[f.vehicle_id].order != 0x18) {
         f.local_28 = 0x98967f;
         f.local_24 = 0;
-        if (BaseCurrentCount > 0) {
+        if (GameDataStateStorage.fields_.base_current_count_ > 0) {
             f.base_cursor_44 = &Bases[0].y;
             do {
                 if (Bases[f.local_24].faction_id_current == f.local_c &&
@@ -4878,7 +4878,7 @@ label_572d66:
                                     if (f.local_24 == Vehs[f.vehicle_id].home_base_id) f.local_38 /= 2;
                                     if (bonus_at(f.local_4,f.local_8,0)) f.local_38 /= 2;
                                     f.local_1c = 0;
-                                    while (f.local_1c < VehCurrentCount) {
+                                    while (f.local_1c < GameDataStateStorage.fields_.vehicle_current_count_) {
                                         const Veh &other = Vehs[f.local_1c];
                                         if (other.faction_id == f.local_c &&
                                             VehPrototypes[other.proto_id].plan == 9 &&
@@ -4888,7 +4888,7 @@ label_572d66:
                                               other.waypoint_y[0] == f.local_8))) break;
                                         ++f.local_1c;
                                     }
-                                    if (f.local_1c >= VehCurrentCount && f.local_38 < f.local_28) {
+                                    if (f.local_1c >= GameDataStateStorage.fields_.vehicle_current_count_ && f.local_38 < f.local_28) {
                                         f.local_28 = f.local_38;
                                         go_to(f.vehicle_id,0x6f,f.local_4,f.local_8);
                                     }
@@ -4900,7 +4900,7 @@ label_572d66:
                 }
                 ++f.local_24;
                 f.base_cursor_44 += sizeof(Base)/sizeof(short);
-            } while (f.local_24 < BaseCurrentCount);
+            } while (f.local_24 < GameDataStateStorage.fields_.base_current_count_);
         }
     }
 

@@ -1309,7 +1309,7 @@ int DeletionList::convert(int original_id, int new_owner) {
     int search = new_owner + 1;
     const int total = current_owner_;
     if (search <= total) {
-        const unsigned char mask = static_cast<unsigned char>(LockEnableMask);
+        const unsigned char mask = static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_);
         do {
             for (int slot = 0; slot < 0x18; slot++) {
                 const DeletionRecord &record = records_[slot];
@@ -1523,17 +1523,17 @@ void __cdecl net_not_my_turn() {
     MultiWindow.draw(0);
     ConsoleFactionsWaitingMask |= (1u << (ConsoleGlobal.faction_id_ & 31));
     while (ExitTurnLoop == 0 && NextTurnReady == 0
-           && NetTurnFaction != ConsoleGlobal.faction_id_) {
+           && GameDataStateStorage.fields_.net_turn_faction_ != ConsoleGlobal.faction_id_) {
         ConsoleGlobal.field_23BE4_ = 1;
         NetDaemonNet.net_tasks();
         if (NetDaemonNet.lock_state_[0].leading_words_[1] != 0) {
-            const int level = NetTurnFaction;
+            const int level = GameDataStateStorage.fields_.net_turn_faction_;
             if (level <= 0) {
                 next_player_turn();
             } else {
                 const unsigned char bit = static_cast<unsigned char>(1u << (level & 31));
                 const unsigned char *const lock_bytes =
-                    reinterpret_cast<const unsigned char *>(&LockEnableMask);
+                    reinterpret_cast<const unsigned char *>(&GameDataStateStorage.fields_.lock_masks_.enable_mask_);
                 if ((lock_bytes[0] & bit) == 0) {
                     next_player_turn();
                 } else if ((lock_bytes[1] & bit) == 0) {

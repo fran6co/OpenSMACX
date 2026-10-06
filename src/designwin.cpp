@@ -994,7 +994,7 @@ void DesignWin::on_button_clicked(int button_id) {
     }
 
     if (button_id == 2) {
-        if ((GameState & 0x40) == 0) {
+        if ((GameDataStateStorage.fields_.game_state_ & 0x40) == 0) {
             return;
         }
         field_CDC_ = design_it();
@@ -1016,7 +1016,7 @@ void DesignWin::on_button_clicked(int button_id) {
     }
 
     if (button_id == 3) {
-        if ((GameState & 0x40) == 0) {
+        if ((GameDataStateStorage.fields_.game_state_ & 0x40) == 0) {
             return;
         }
         const bool alien_rules =
@@ -2760,7 +2760,7 @@ void DesignWin::check_abil() {
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00439d30.cpp", "src/veh.h:RulesAbility and abil_index", "src/faction.h:Player faction bonus members", "src/game.h:GamePreferences", "src/alpha.h:Rules.tech_two_spec_abilities", "src/console.h:ConsoleGlobal.faction_id_"], "reason": "Suggest a valid researched ability through the real design selection and faction bonus records, retaining the original seed's anomalous bonus scan as a restoration obligation."}
 void DesignWin::suggest_abil(int ability) {
     check_abil();
-    if ((GamePreferences & 0x4000) == 0) return;
+    if ((GameDataStateStorage.fields_.game_preferences_ & 0x4000) == 0) return;
 
     const int ability_id = abil_index(ability);
     const int faction = static_cast<int>(factionID_);

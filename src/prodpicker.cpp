@@ -569,7 +569,7 @@ void ProdPicker::calculate() {
 
         nameBuf[0] = '\0';
         strcat(nameBuf, VehPrototypes[protoId].veh_name);
-        if (GameState & 0x80) {
+        if (GameDataStateStorage.fields_.game_state_ & 0x80) {
             strcat(nameBuf, "(");
             _itoa(PlayersData[faction].proto_id_active[protoId], numBuf1, 10);
             strcat(nameBuf, numBuf1);
@@ -836,8 +836,8 @@ int ProdPicker::exec(Base *base, int factionId, GraphicWin *owner, int modal) {
 
         if (field_B68_ == 0) {
             field_B6C_ = 4;
-            const uint8_t aliveMask = static_cast<uint8_t>(LockEnableMask);
-            const uint8_t gameFlags = static_cast<uint8_t>(GameState);
+            const uint8_t aliveMask = static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_);
+            const uint8_t gameFlags = static_cast<uint8_t>(GameDataStateStorage.fields_.game_state_);
             const uint32_t baseGovernor = BaseCurrent->governor;
             if (((1U << (factionId & 0x1F)) & aliveMask) == 0
                 || ((gameFlags & 0x40) != 0
@@ -866,8 +866,8 @@ int ProdPicker::exec(Base *base, int factionId, GraphicWin *owner, int modal) {
 
         if (field_B68_ == 0) {
             const uint32_t baseGovernor = BaseCurrent->governor;
-            const uint8_t aliveMask = static_cast<uint8_t>(LockEnableMask);
-            const uint8_t gameFlags = static_cast<uint8_t>(GameState);
+            const uint8_t aliveMask = static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_);
+            const uint8_t gameFlags = static_cast<uint8_t>(GameDataStateStorage.fields_.game_state_);
             if (((aliveMask & (1U << (BaseCurrent->faction_id_current & 0x1F))) == 0)
                 || ((baseGovernor & 1U) != 0
                     && (baseGovernor & 0x80000000U) != 0

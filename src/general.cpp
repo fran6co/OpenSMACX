@@ -1682,7 +1682,7 @@ Status: Complete
 */
 void __cdecl auto_save() {
     if (!IsMultiplayerPBEM || IsMultiplayerNet) { // auto-saving disabled for PBEM/HotSeat games
-        if (GameRules & RULES_IRONMAN && !(GameState & STATE_SCENARIO_EDITOR)) {
+        if (GameDataStateStorage.fields_.game_rules_ & RULES_IRONMAN && !(GameDataStateStorage.fields_.game_state_ & STATE_SCENARIO_EDITOR)) {
             remove("saves\\auto\\Alpha Centauri Autosave 30.SAV");
             remove("saves\\auto\\Alpha Centauri Autosave 20.SAV");
             remove("saves\\auto\\Alpha Centauri Autosave 10.SAV");
@@ -1692,7 +1692,7 @@ void __cdecl auto_save() {
             remove("saves\\auto\\Alpha Centauri Autosave 2.SAV");
             save_daemon(const_cast<char *>("saves\\auto\\Alpha Centauri Autosave 1"));
         } else { // standard auto saves
-            if (!(TurnCurrentNum % 10)) {
+            if (!(GameDataStateStorage.fields_.turn_current_num_ % 10)) {
                 remove("saves\\auto\\Alpha Centauri Autosave 30.SAV");
                 rename("saves\\auto\\Alpha Centauri Autosave 20.SAV",
                     "saves\\auto\\Alpha Centauri Autosave 30.SAV");
@@ -1721,11 +1721,11 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl auto_save_debug() {
-    if (TurnCurrentNum == 1) {
+    if (GameDataStateStorage.fields_.turn_current_num_ == 1) {
         remove("saves\\auto\\Alpha Centauri Autosave Turn 1.SAV");
         save_daemon(const_cast<char *>("saves\\auto\\Alpha Centauri Autosave Turn 1"));
     }
-    if (!(TurnCurrentNum % 10)) {
+    if (!(GameDataStateStorage.fields_.turn_current_num_ % 10)) {
         remove("saves\\auto\\Alpha Centauri Autosave 500.SAV");
         char save_path_new[45];
         char save_path_old[45];
@@ -1827,7 +1827,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl auto_undo() {
-    if (!(GamePreferences & PREF_BSC_AUTOSAVE_EACH_TURN)) {
+    if (!(GameDataStateStorage.fields_.game_preferences_ & PREF_BSC_AUTOSAVE_EACH_TURN)) {
         return;
     }
     // THREE 0x100 BUFFERS AND THE PRE-sprintf IDIOM. The image reserves 0x250
@@ -5139,13 +5139,13 @@ void MCIVideo::blit_frame() {
 //        [ebp-0xc], so the frame is 0xc against the image's 8.
 void __cdecl enemy_turn(int faction_id) {
     for (int priority = 0; priority < 10; priority++) {
-        int veh_id = VehCurrentCount - 1;
+        int veh_id = GameDataStateStorage.fields_.vehicle_current_count_ - 1;
         if (veh_id < 0) {
             continue;
         }
         Veh *veh = &Vehs[veh_id];
         do {
-            if (veh_id < VehCurrentCount && veh->faction_id == faction_id) {
+            if (veh_id < GameDataStateStorage.fields_.vehicle_current_count_ && veh->faction_id == faction_id) {
                 bool matched = false;
                 if (priority == 0) {
                     matched = can_arty(veh->proto_id, 1) != 0;
@@ -5190,9 +5190,9 @@ void __cdecl enemy_turn(int faction_id) {
                                 }
                             }
 
-                            const int veh_count_before = VehCurrentCount;
+                            const int veh_count_before = GameDataStateStorage.fields_.vehicle_current_count_;
                             if (enemy_veh(veh_id) != 0
-                                    || veh_count_before != VehCurrentCount) {
+                                    || veh_count_before != GameDataStateStorage.fields_.vehicle_current_count_) {
                                 break;
                             }
 

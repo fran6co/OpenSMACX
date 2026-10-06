@@ -320,7 +320,7 @@ int SetupWin::do_menu_rightside(char *filename, int flags) {
         static_cast<Buffer *>(this)->set_font(&font, nullptr, nullptr, nullptr);
 
         WinFlipClipped = 1;
-        if ((GamePreferences & 0x400) != 0) {
+        if ((GameDataStateStorage.fields_.game_preferences_ & 0x400) != 0) {
             wave.play();
         }
 

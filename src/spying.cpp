@@ -8,6 +8,7 @@
  * (at your option) any later version.
  */
 #include "stdafx.h"
+#include "game.h"  // shared state-window owner
 #include "spying_recovery.h"
 #include "faction.h"  // Players, RFLAG_ALIEN
 #include "console.h"
@@ -37,10 +38,10 @@ int __cdecl spying(int subject) {
     const int faction = ConsoleGlobal.faction_id_;
     return (PlayersData[faction].diplo_treaties[subject]
             & 0x1000U) != 0
-           || (SecretProject.empath_guild() >= 0
-               ? (Bases[SecretProject.empath_guild()].faction_id_current == faction)
+           || (GameDataStateStorage.fields_.secret_project_.empath_guild() >= 0
+               ? (Bases[GameDataStateStorage.fields_.secret_project_.empath_guild()].faction_id_current == faction)
                : 0) != 0
-           || (faction == GovernorFaction
+           || (faction == GameDataStateStorage.fields_.governor_faction_
                && (Players[static_cast<size_t>(subject)].rule_flags &
                    RFLAG_ALIEN) == 0);
 }

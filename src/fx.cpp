@@ -339,7 +339,7 @@ Purpose: Trigger one sound effect from the process-wide bank.
 Status: Coverage transcription - unclaimed body
 */
 void FX::play(int effect) {
-    if (!(GamePreferences & 0x400)) return;
+    if (!(GameDataStateStorage.fields_.game_preferences_ & 0x400)) return;
     if (effect == 1 || effect == 0 || effect == 2) {
         if (FactionMusic) FactionMusic->hostility();
         if (effect == 0) {
@@ -355,7 +355,7 @@ void FX::play(int effect) {
 // ORIGINAL: 0x00446960 ?play@FX@@QAEXHHH@Z 0x00446960-0x004469F9 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:f7bbce35:src/unrecovered/00446960.cpp", "src/ambience.h", "src/midi.h", "src/fx.h"], "reason": "Original constructor staging, actual event tables and compiler-call contracts identify the genuine audio owner operation; compatible historical seed spans and claims remain available for restoration, not an acceptance verdict."}
 void FX::play(int effect, int, int) {
-    if (!(GamePreferences & 0x400)) return;
+    if (!(GameDataStateStorage.fields_.game_preferences_ & 0x400)) return;
     if (effect == 1 || effect == 0 || effect == 2) {
         if (FactionMusic) FactionMusic->hostility();
         effects_[effect].set_volume(60);
@@ -379,7 +379,7 @@ void __cdecl ambience_veh(int vehicle) {
     const int old = LastAmbienceVehicle;
     // Original quirk: previous VEHICLE id selects an effect directly if<97.
     if (old >= 0 && old != vehicle && old < 97) g_FX.effect(old).fade();
-    const uint32_t prefs = GamePreferences;
+    const uint32_t prefs = GameDataStateStorage.fields_.game_preferences_;
     LastAmbienceVehicle = vehicle;
     if (!(prefs & 0x800)) return;
     if (Vehs[vehicle].order != 0) return;

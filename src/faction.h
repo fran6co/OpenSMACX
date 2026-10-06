@@ -1034,7 +1034,7 @@ char *__cdecl get_insult_leader(int faction_id);
 // INLINE: the image has no is_human - it open-codes what this names.
 inline uint8_t __cdecl factions_status_byte(int index) {
     // the image's FactionsStatus byte view of the LockEnableMask dword
-    return reinterpret_cast<const uint8_t *>(&LockEnableMask)[index];
+    return reinterpret_cast<const uint8_t *>(&GameDataStateStorage.fields_.lock_masks_.enable_mask_)[index];
 }
 
 inline BOOL __cdecl is_human(uint32_t faction_id) {

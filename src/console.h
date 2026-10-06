@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+#include <stdio.h>
 
 // Shared popup/action result at original 0x009BC070, owned by console.cpp.
 extern int ConsoleGroupAction;
@@ -630,6 +631,9 @@ class Console : public MapWin {
   uint32_t field_23D18_;  // 0x23D18
   uint32_t field_23D1C_;  // 0x23D1C
   uint8_t field_23D20_[0x4];  // 0x23D20
+ public:
+  int game_data_private_word(FILE *file, int write_mode);
+ private:
   uint32_t field_23D24_;  // 0x23D24
   // THE TWO SPRITES, carved from what was field_23D28_[0x58]: two
   // 0x2C-byte Sprite objects, ??_DConsole's own close() calls at

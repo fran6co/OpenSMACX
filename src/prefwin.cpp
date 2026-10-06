@@ -444,9 +444,9 @@ void PrefWin::init() {
 void PrefWin::display(int page) {
   ConsoleGlobal.alpha_menu_.hide();
   prefsFinal_ = morePrefsFinal_ = warningsFinal_ = 0;
-  prefsBasicPending_ = prefsAdvPending_ = prefsAutoPending_ = prefsAVPending_ = prefsMapPending_ = GamePreferences;
-  morePrefsBasicPending_ = morePrefsAdvPending_ = morePrefsAutoPending_ = morePrefsAVPending_ = morePrefsMapPending_ = GameMorePreferences;
-  warningsPending_ = GameWarnings;
+  prefsBasicPending_ = prefsAdvPending_ = prefsAutoPending_ = prefsAVPending_ = prefsMapPending_ = GameDataStateStorage.fields_.game_preferences_;
+  morePrefsBasicPending_ = morePrefsAdvPending_ = morePrefsAutoPending_ = morePrefsAVPending_ = morePrefsMapPending_ = GameDataStateStorage.fields_.game_more_preferences_;
+  warningsPending_ = GameDataStateStorage.fields_.game_warnings_;
   RECT outer = {0x17, 0, PrefWinDisplayWidth + 0x17, PrefWinDisplayHeight};
   Buffer::box_sprite(&outer, &InterfaceBoxStyles[9]);
   RECT inner = {0x1B, 4, PrefWinDisplayWidth + 0x13, PrefWinDisplayHeight - 4};
@@ -474,7 +474,7 @@ void PrefWin::display(int page) {
   show(3);
   Win::set_def_focus(preference_window());
   set_modal(0, pop_wait, nullptr);
-  if (!(GamePreferences & 0x20000000))
+  if (!(GameDataStateStorage.fields_.game_preferences_ & 0x20000000))
     DialogDefaultStyle |= 4;
   else
     DialogDefaultStyle &= ~4;

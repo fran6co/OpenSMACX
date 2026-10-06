@@ -115,7 +115,7 @@ void set_specialist_at(Base &base, int position, int type) {
 void BaseWin::farm_click(int x, int y, int) {
     compute_selected_base();
     const int faction = BaseCurrent->faction_id_current;
-    if ((faction != ConsoleGlobal.faction_id_ && !(GameState & STATE_OMNISCIENT_VIEW))
+    if ((faction != ConsoleGlobal.faction_id_ && !(GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW))
         || field_40AFC_) return;
     int previous = field_40B4C_ == 0 ? farm_get(field_40B44_, field_40B48_) : -1;
     const int position = farm_get(x, y);
@@ -161,7 +161,7 @@ void BaseWin::farm_click(int x, int y, int) {
         if (available) --BaseCurrent->specialist_total;
         else {
             int fight, growth, tech, wealth, power;
-            if ((static_cast<unsigned char>(LockEnableMask) & (1u << faction))
+            if ((static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & (1u << faction))
                 && (BaseCurrent->governor & 0x80000000u)) {
                 growth = (BaseCurrent->governor >> 24) & 1;
                 tech = (BaseCurrent->governor >> 25) & 1;
@@ -221,7 +221,7 @@ void BaseWin::pop_click(int position, int, int, int) {
     Popup popup;
     compute_selected_base();
     if (BaseCurrent->faction_id_current != ConsoleGlobal.faction_id_
-        && !(GameState & STATE_OMNISCIENT_VIEW)) return;
+        && !(GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) return;
     int current = position < 0 ? 999 : position < 16
         ? specialist_at(*BaseCurrent, position) : best_specialist();
     if (current < 0) current = 1;
@@ -356,7 +356,7 @@ void BaseWin::queue_click(int row, int x, int y, int right) {
         compute_selected_base();
         // Original cancellation exits directly, even after the load case's
         // lock. Do not manufacture an unlock absent from that error path.
-        if (picked < 0 || (GameState & 0x800)) return;
+        if (picked < 0 || (GameDataStateStorage.fields_.game_state_ & 0x800)) return;
         if (action == 3) {
             char *name = PlayersData[faction].saved_queue_name[picked];
             if (X_pop_ask("TEMPNAME", 23, name, 0, 0) != 0) return;
@@ -414,7 +414,7 @@ void BaseWin::queue_click(int row, int x, int y, int right) {
 // RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/unrecovered/0040c070.cpp", "source:src/basewin.h", "image:0x40c070"], "reason": "Recover the complete original operation through genuine owning C++ classes, members and natural lifetimes; preserve retained seed evidence and historical restoration obligations separately from fresh matching."}
 int BaseWin::facilities_click(int facility, int, int, int) {
     const int faction = BaseCurrent->faction_id_current;
-    if (faction != ConsoleGlobal.faction_id_ && !(GameState & STATE_OMNISCIENT_VIEW))
+    if (faction != ConsoleGlobal.faction_id_ && !(GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW))
         return 0;
     parse_says(0, BaseCurrent->name_string, -1, -1);
     parse_say(1, reinterpret_cast<int>(Facility[facility].name), -1, -1);
@@ -440,7 +440,7 @@ int BaseWin::facilities_click(int facility, int, int, int) {
         X_pop("DURINGUPKEEP", 0);
         return 0;
     }
-    if ((BaseCurrent->state & BSTATE_FACILITY_SCRAPPED) && !(GameState & STATE_OMNISCIENT_VIEW)) {
+    if ((BaseCurrent->state & BSTATE_FACILITY_SCRAPPED) && !(GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) {
         parse_says(0, BaseCurrent->name_string, -1, -1);
         popp(reinterpret_cast<const char *>(*ClimatePopupTitle), "ONERECYCLE", 0,
             (Players[faction].rule_flags & 0x80) ? "alfacblt_sm.pcx" : "facblt_sm.pcx", 0);
@@ -472,13 +472,13 @@ int BaseWin::facilities_click(int facility, int, int, int) {
     if (selection == 3) {
         int payable = 0;
         int possessed = 0;
-        for (int base = 0; base < BaseCurrentCount; ++base) {
+        for (int base = 0; base < GameDataStateStorage.fields_.base_current_count_; ++base) {
             if (Bases[base].faction_id_current != faction) continue;
             if (facility == 26 && (map_tiles()[Bases[base].y * MapLongitude + (Bases[base].x >> 1)].contour & 0xE0) < 0x60) continue;
             bitmask(facility, &offset, &mask);
             if (Bases[base].facilities_built[offset] & (uint8_t)mask) {
                 ++possessed;
-                if (!(BaseCurrent->state & BSTATE_FACILITY_SCRAPPED) || (GameState & STATE_OMNISCIENT_VIEW)) ++payable;
+                if (!(BaseCurrent->state & BSTATE_FACILITY_SCRAPPED) || (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) ++payable;
             }
         }
         proceeds = static_cast<int>(static_cast<uint32_t>(Facility[facility].cost) * payable * 5u);
@@ -505,7 +505,7 @@ int BaseWin::facilities_click(int facility, int, int, int) {
         return 0;
     }
     if (selection == 3) {
-        for (int base = 0; base < BaseCurrentCount; ++base) {
+        for (int base = 0; base < GameDataStateStorage.fields_.base_current_count_; ++base) {
             if (Bases[base].faction_id_current != faction) continue;
             if (facility == 26 && (map_tiles()[Bases[base].y * MapLongitude + (Bases[base].x >> 1)].contour & 0xE0) < 0x60) continue;
             Bases[base].state |= BSTATE_FACILITY_SCRAPPED;
@@ -617,12 +617,12 @@ void BaseWin::draw_flash(int redraw_mode) {
         || (prototype.plan == 11 && morale_veh(vehicle_id, 1, 0) > 1)) {
         StringTemp[0] = 0;
         say_morale(vehicle_id, 0);
-        if (vehicle.faction_id != ConsoleGlobal.faction_id_ && !(GameState & 0x80))
+        if (vehicle.faction_id != ConsoleGlobal.faction_id_ && !(GameDataStateStorage.fields_.game_state_ & 0x80))
             y = canvas.wrap(StringTemp, x, y, text_width);
         else
             y = canvas.wrap_cent(StringTemp, x, y, text_width);
     }
-    if (vehicle.faction_id == ConsoleGlobal.faction_id_ || (GameState & 0x80)) {
+    if (vehicle.faction_id == ConsoleGlobal.faction_id_ || (GameDataStateStorage.fields_.game_state_ & 0x80)) {
         strcpy(StringTemp, vehicle.home_base_id < 0 ? label_get(0x308 / 4)
                : Bases[vehicle.home_base_id].name_string);
         y = canvas.wrap_cent(StringTemp, x, y, text_width);
@@ -699,7 +699,7 @@ void BaseWin::draw_flash(int redraw_mode) {
         y += line;
     }
     canvas.set_text_color(TextColourTable[14], TextColourTable[15], 1, 1);
-    if (vehicle.faction_id == ConsoleGlobal.faction_id_ || (GameState & 0x80)
+    if (vehicle.faction_id == ConsoleGlobal.faction_id_ || (GameDataStateStorage.fields_.game_state_ & 0x80)
         || (PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[vehicle.faction_id] & 1)) {
         StringTemp[0] = 0;
         say_orders(vehicle_id);
@@ -1012,7 +1012,7 @@ void BaseWin::base_killed(int base_id) {
 int BaseWin::governor(int settings_only) {
     compute_selected_base();
     if (Bases[focusedBaseID_].faction_id_current != ConsoleGlobal.faction_id_
-        && !(GameState & STATE_OMNISCIENT_VIEW)) return 1;
+        && !(GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) return 1;
     Base *base = BaseCurrent;
     const int faction = base->faction_id_current;
     const uint32_t source_bits[19] = {0x80000000u,0x200000,0x80,0x40,1,
@@ -1064,7 +1064,7 @@ int BaseWin::governor(int settings_only) {
 void BaseWin::rename() {
     compute_selected_base();
     if (BaseCurrent->faction_id_current != ConsoleGlobal.faction_id_
-        && !(GameState & STATE_OMNISCIENT_VIEW)) return;
+        && !(GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) return;
     if (NetDaemonNet.lock_base(BaseIDCurrentSelected, 0, -1, -1)) return;
     parse_says(0, BaseCurrent->name_string, -1, -1);
     if (X_pop_ask("RENAME", 0x18, BaseCurrent->name_string, nullptr, 0)) {
@@ -1074,7 +1074,7 @@ void BaseWin::rename() {
     strcpy(BaseCurrent->name_string, ParseStrBuffer[0].str);
     if (BaseCurrent->faction_id_current == ConsoleGlobal.faction_id_) {
         const int former = BaseCurrent->faction_id_former;
-        if (former != ConsoleGlobal.faction_id_ && !((1 << former) & LockEnableMask)
+        if (former != ConsoleGlobal.faction_id_ && !((1 << former) & GameDataStateStorage.fields_.lock_masks_.enable_mask_)
             && !IsMultiplayerNet) {
             cause_friction(former, ConsoleGlobal.faction_id_, 3);
             const uint32_t treaty = PlayersData[BaseCurrent->faction_id_former]
@@ -1093,7 +1093,7 @@ void BaseWin::rename() {
 void BaseWin::staple_the_bastards() {
     compute_selected_base();
     if (Bases[focusedBaseID_].faction_id_current != ConsoleGlobal.faction_id_
-        && !(GameState & STATE_OMNISCIENT_VIEW)) return;
+        && !(GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) return;
     const int faction = BaseCurrent->faction_id_current;
     const bool alien = (Players[faction].rule_flags & 0x80) != 0;
     parse_says(0, BaseCurrent->name_string, -1, -1);
@@ -1226,7 +1226,7 @@ void BaseWin::iface_click(int x, int y, int right, int is_double) {
     if (prodPicker_.is_visible() && type != 8) return;
     compute_selected_base();
     const int faction = BaseCurrent->faction_id_current;
-    if (faction != ConsoleGlobal.faction_id_ && !(GameState & STATE_OMNISCIENT_VIEW)
+    if (faction != ConsoleGlobal.faction_id_ && !(GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)
         && !(PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[faction] & 1)
         && type != 6) return;
     if (is_double) return;
@@ -1294,7 +1294,7 @@ void BaseWin::click(int x, int y, int right, int is_double) {
     if (spot2_.check(x, y, &position, &type) < 0) return;
     compute_selected_base();
     const int faction = BaseCurrent->faction_id_current;
-    if (faction != ConsoleGlobal.faction_id_ && !(GameState & STATE_OMNISCIENT_VIEW)
+    if (faction != ConsoleGlobal.faction_id_ && !(GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)
         && !(PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[faction] & 1)
         && type != 6) return;
     if (is_double) return;
@@ -1480,7 +1480,7 @@ HurryPrice hurry_price(int base_id, int production_id, int accounting_faction) {
             cost = hurry_add(cost, cost);
     }
     if (current_minerals < static_cast<int>(Rules.retool_exemption)) cost = hurry_add(cost, cost);
-    if (SecretProject.voice_of_planet() >= 0) cost = hurry_add(cost, cost);
+    if (GameDataStateStorage.fields_.secret_project_.voice_of_planet() >= 0) cost = hurry_add(cost, cost);
     const int hurry_percent = Players[accounting_faction].rule_hurry;
     if (hurry_percent != 100) cost = hurry_mul(hurry_percent, cost) / 100;
     HurryPrice result = {cost, gross_cost};
@@ -1727,7 +1727,7 @@ static void finish_production_success(BaseWin &window, int a1, int a2,
     int old_id_count = 0;
     const int focused_faction = Bases[window.focused_base_id()].faction_id_current;
     if (focused_faction == live_faction) {
-        for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+        for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
             if (base_id == BaseIDCurrentSelected) continue;
             const int queued_id = Bases[base_id].queue_production_id[0];
             if (queued_id == new_queue_id) ++new_id_count;
@@ -1773,7 +1773,7 @@ static void finish_production_success(BaseWin &window, int a1, int a2,
 
     if (a1 == 0 && BaseCurrent->queue_production_id[0] == -0x65) {
         interlude(10, 0, 1, 0);
-        GameState |= 0x800u;
+        GameDataStateStorage.fields_.game_state_ |= 0x800u;
     }
 }
 
@@ -1794,7 +1794,7 @@ void BaseWin::production(int a1, int a2) {
     compute_selected_base();
     const int entry_base_id = focused_base_id();
     if (Bases[entry_base_id].faction_id_current != ConsoleGlobal.faction_id_
-        && (GameState & 0x80u) == 0)
+        && (GameDataStateStorage.fields_.game_state_ & 0x80u) == 0)
         return;
 
     Base *entry_base = BaseCurrent;
@@ -1856,7 +1856,7 @@ void BaseWin::production(int a1, int a2) {
         compute_selected_base();
         g_FX.play(0x0F);
 
-        if (selected_id <= -9999 || (GameState & 0x800u) != 0) {
+        if (selected_id <= -9999 || (GameDataStateStorage.fields_.game_state_ & 0x800u) != 0) {
             field_40B2C_ = 0;
             draw_queue(1);
             if (a2 == 0)
@@ -2000,7 +2000,7 @@ void BaseWin::hurry() {
     compute_selected_base();
     const int entry_base_id = focused_base_id();
     if (Bases[entry_base_id].faction_id_current != ConsoleGlobal.faction_id_
-        && (GameState & 0x80u) == 0) return;
+        && (GameDataStateStorage.fields_.game_state_ & 0x80u) == 0) return;
 
     const int base_id = BaseIDCurrentSelected;
     Base *base = BaseCurrent;
@@ -2052,7 +2052,7 @@ void BaseWin::hurry() {
     selection_result = popup.exec(0, ConsoleControlTurnActive ? 0 : pop_expire);
     g_FX.play(0x0F);
     compute_selected_base();
-    if (selection_result < 1 || (GameState & 0x800u) != 0) {
+    if (selection_result < 1 || (GameDataStateStorage.fields_.game_state_ & 0x800u) != 0) {
         if (lock_held) NetDaemonNet.unlock_base(BaseIDCurrentSelected);
         return;
     }
@@ -2139,7 +2139,7 @@ void BaseWin::gov_on(int priorities) {
     } else {
         BaseCurrent->governor |= GOV_ACTIVE;
     }
-    if (((unsigned char)LockEnableMask & (1 << BaseCurrent->faction_id_current)) == 0) {
+    if (((unsigned char)GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1 << BaseCurrent->faction_id_current)) == 0) {
         BaseCurrent->governor &= ~GOV_ACTIVE;
     }
     BaseCurrent->governor &= ~GOV_UNK_40000000;
@@ -2206,7 +2206,7 @@ void BaseWin::recompute(int) {
 void BaseWin::prev() {
     set_base(static_cast<int>(focusedBaseID_));
     if (BaseCurrent->faction_id_current != ConsoleGlobal.faction_id_
-        && !(GameState & STATE_OMNISCIENT_VIEW)) {
+        && !(GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) {
         return;
     }
     if (ConsoleControlTurnActive) {
@@ -2216,7 +2216,7 @@ void BaseWin::prev() {
 
     int selected = static_cast<int>(focusedBaseID_);
     int nearest = -1;
-    for (int candidate = 0; candidate < BaseCurrentCount; ++candidate) {
+    for (int candidate = 0; candidate < GameDataStateStorage.fields_.base_current_count_; ++candidate) {
         if (candidate == static_cast<int>(focusedBaseID_)
             || Bases[candidate].faction_id_current != Bases[focusedBaseID_].faction_id_current) {
             continue;
@@ -2245,7 +2245,7 @@ void BaseWin::prev() {
 void BaseWin::next() {
     set_base(static_cast<int>(focusedBaseID_));
     if (BaseCurrent->faction_id_current != ConsoleGlobal.faction_id_
-        && !(GameState & STATE_OMNISCIENT_VIEW)) {
+        && !(GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) {
         return;
     }
     if (ConsoleControlTurnActive) {
@@ -2255,7 +2255,7 @@ void BaseWin::next() {
 
     int selected = static_cast<int>(focusedBaseID_);
     int nearest = -1;
-    for (int candidate = 0; candidate < BaseCurrentCount; ++candidate) {
+    for (int candidate = 0; candidate < GameDataStateStorage.fields_.base_current_count_; ++candidate) {
         if (candidate == static_cast<int>(focusedBaseID_)
             || Bases[candidate].faction_id_current != Bases[focusedBaseID_].faction_id_current) {
             continue;
@@ -3688,7 +3688,7 @@ void BaseWin::draw_garrison(int update_mode) {
 
         StringTemp[0] = 0;
         say_stats_3(StringTemp, Vehs[vehicle].proto_id);
-        if ((GameState & 0x1040) == 0x1040) {
+        if ((GameDataStateStorage.fields_.game_state_ & 0x1040) == 0x1040) {
             char number[80];
             strcat(StringTemp, " (");
             _itoa(vehicle, number, 10);
@@ -4070,7 +4070,7 @@ void BaseWin::on_button_clicked(int button_id) {
     case 15: hurry(); return;
     case 10:
         if (BaseCurrent->faction_id_current != ConsoleGlobal.faction_id_
-            && !(GameState & STATE_OMNISCIENT_VIEW)) return;
+            && !(GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) return;
         if (BaseCurrent->governor & 0x80000000u) {
             BaseCurrent->governor &= 0x7FFFFFFFu;
             redraw();
@@ -4080,14 +4080,14 @@ void BaseWin::on_button_clicked(int button_id) {
     case 20:
     case 21:
         if (BaseCurrent->faction_id_current == ConsoleGlobal.faction_id_
-            || (GameState & STATE_OMNISCIENT_VIEW)) governor(0);
+            || (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) governor(0);
         return;
     case 6:
     case 7:
     case 8:
     case 9:
         if (BaseCurrent->faction_id_current == ConsoleGlobal.faction_id_
-            || (GameState & STATE_OMNISCIENT_VIEW))
+            || (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW))
             gov_on(1 << (24 + selection - 6));
         return;
     case 11:
@@ -4112,11 +4112,11 @@ void BaseWin::on_button_clicked(int button_id) {
     }
     case 18:
         if (BaseCurrent->faction_id_current == ConsoleGlobal.faction_id_
-            || (GameState & STATE_OMNISCIENT_VIEW)) staple_the_bastards();
+            || (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) staple_the_bastards();
         return;
     case 23:
         if (BaseCurrent->faction_id_current == ConsoleGlobal.faction_id_
-            || (GameState & STATE_OMNISCIENT_VIEW)) base_editor();
+            || (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) base_editor();
         return;
     }
 }
@@ -4393,19 +4393,19 @@ void BaseWin::on_status(int mode) {
         for (int i = 0; i < 22; ++i) {
             if (i == 16 && (Players[Bases[focusedBaseID_].faction_id_current].rule_flags & 0x80)) {
                 flatButton_.show(4);
-            } else if (i != 21 || (GameState & 0x40)) {
+            } else if (i != 21 || (GameDataStateStorage.fields_.game_state_ & 0x40)) {
                 flatButtons_[i].show(4);
             }
         }
         MainInterfaceGlobal.update(0);
         field_40B54_ = -1;
-        if ((GamePreferences & 0x400) && !g_BASEWIN_WAVE.is_playing())
+        if ((GameDataStateStorage.fields_.game_preferences_ & 0x400) && !g_BASEWIN_WAVE.is_playing())
             g_BASEWIN_WAVE.play();
         ambience(0xCD);
         do_all_draws();
         slide_show(this, 0);
         Win::show(3);
-        if (GamePreferences & 0x400) g_BASEWIN_WAVE.fade();
+        if (GameDataStateStorage.fields_.game_preferences_ & 0x400) g_BASEWIN_WAVE.fade();
     } else {
         for (int j = 0; j < 22; ++j) {
             if (j == 16) flatButton_.hide();
@@ -4615,7 +4615,7 @@ void BaseWin::update_gov_buttons() {
     const Base &base = *BaseCurrent;
     const int faction = base.faction_id_current;
     const unsigned int governor = base.governor;
-    const bool human = (LockEnableMask & (1u << faction)) != 0;
+    const bool human = (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u << faction)) != 0;
 
     flatButtons_[8].set((governor & GOV_ACTIVE) != 0);
 
@@ -5920,7 +5920,7 @@ void BaseWin::draw_farm(int update_mode) {
         else if (event & 0x1000) { label = 0xBEC / 4; suffix = 0xBDC / 4; colour = 94; }
         else if (event & 0x2000) { label = 0xBF0 / 4; suffix = 0xBD8 / 4; colour = 86; }
         else if (event & 0x4000) { label = 0xBF4 / 4; suffix = 0xBDC / 4; colour = 86; }
-        else if (DustCloudDuration > 0) { label = 0xBF8 / 4; suffix = 0xBDC / 4; colour = 86; }
+        else if (GameDataStateStorage.fields_.dust_cloud_duration_ > 0) { label = 0xBF8 / 4; suffix = 0xBDC / 4; colour = 86; }
         if (label >= 0) {
             strcat(StringTemp, label_get(label));
             strcat(StringTemp, ": ");
@@ -6046,7 +6046,7 @@ void BaseWin::draw_commerce(int update_mode) {
     if ((Players[BaseCurrent->faction_id_current].rule_flags & RFLAG_ALIEN) != 0) {
         canvas->set_font(&font1_, nullptr, nullptr, nullptr);
         int current_base_id = 0;
-        for (int candidate = 0; candidate < BaseCurrentCount; ++candidate) {
+        for (int candidate = 0; candidate < GameDataStateStorage.fields_.base_current_count_; ++candidate) {
             if (&Bases[candidate] == BaseCurrent) current_base_id = candidate;
         }
         int score = 0;
@@ -6061,7 +6061,7 @@ void BaseWin::draw_commerce(int update_mode) {
             sizeof(BaseSecretProject) == MaxSecretProjectNum * sizeof(int) ? 1 : -1];
         (void)sizeof(ProjectRecordSizeCheck);
         int project_homes[MaxSecretProjectNum];
-        memcpy(project_homes, &SecretProject, sizeof(project_homes));
+        memcpy(project_homes, &GameDataStateStorage.fields_.secret_project_, sizeof(project_homes));
         for (int project = 0; project < MaxSecretProjectNum; ++project) {
             if (project_homes[project] == current_base_id) score += 5;
         }
@@ -6363,7 +6363,7 @@ void BaseWin::base_editor_proj() {
     // Re-read BaseCurrent and the live base count after each item call, as
     // original41BEBA..41BEC2 does; neither is captured as immutable UI state.
     for (int pass = 0; pass < 2; ++pass) {
-        for (int base = 0; base < BaseCurrentCount; ++base) {
+        for (int base = 0; base < GameDataStateStorage.fields_.base_current_count_; ++base) {
             const int owner = Bases[base].faction_id_current;
             const bool same_owner = owner == BaseCurrent->faction_id_current;
             if ((pass == 0 && !same_owner) || (pass != 0 && same_owner)) continue;
@@ -6384,7 +6384,7 @@ void BaseWin::base_editor_proj() {
     // Its current declaration is64 consecutive named int fields; base_project
     // uses this same indexed run. A future array migration must preserve all
     // named consumers centrally; this body introduces no independent storage.
-    SecretProject[project] = owner_base;
+    GameDataStateStorage.fields_.secret_project_[project] = owner_base;
     redraw();
     // Popup owns complete member/base teardown, including cancellation paths.
 }
@@ -6408,7 +6408,7 @@ void BaseWin::base_editor_copy(int copy_to) {
     // Own-faction bases first, then other-faction bases. Both include the
     // selected base; the original does not filter it from this menu.
     for (int group = 0; group < 2; ++group) {
-        for (int base = 0; base < BaseCurrentCount; ++base) {
+        for (int base = 0; base < GameDataStateStorage.fields_.base_current_count_; ++base) {
             const int faction = Bases[base].faction_id_current;
             if (group == 0 ? faction != BaseCurrent->faction_id_current
                            : faction == BaseCurrent->faction_id_current) continue;
@@ -6430,7 +6430,7 @@ void BaseWin::base_editor_copy(int copy_to) {
         } else if (selection < 9998) {
             Bases[selection].facilities_built[byte] = BaseCurrent->facilities_built[byte];
         } else {
-            for (int base = 0; base < BaseCurrentCount; ++base) {
+            for (int base = 0; base < GameDataStateStorage.fields_.base_current_count_; ++base) {
                 if (base == BaseIDCurrentSelected) continue;
                 if (selection == 9998 && Bases[base].faction_id_current != BaseCurrent->faction_id_current) continue;
                 Bases[base].facilities_built[byte] = BaseCurrent->facilities_built[byte];
@@ -6514,7 +6514,7 @@ void BaseWin::garrison_click(int vehicle_id, int x, int y, int right) {
     if (Vehs[vehicle_id].faction_id != ConsoleGlobal.faction_id_) return;
     if (IsMultiplayerNet && (NetDaemonNet.lock_state_[2].leading_words_[2]
         || NetDaemonNet.lock_state_[2].payload_.flags || ConsoleControlTurnActive)) return;
-    if (!right && (GamePreferences & 0x40000u)) {
+    if (!right && (GameDataStateStorage.fields_.game_preferences_ & 0x40000u)) {
         if (IsMultiplayerNet && veh_selectable(vehicle_id)
             && Vehs[vehicle_id].order == 0
             && !(Vehs[vehicle_id].state & 0x8004200u)) {
@@ -6549,7 +6549,7 @@ void BaseWin::garrison_click(int vehicle_id, int x, int y, int right) {
             && Vehs[vehicle_id].patrol_current_point < Vehs[vehicle_id].waypoint_count))
         menu.add_item(1, label_get(0xB6C / 4));
     menu.add_item(2, label_get(0x958 / 4));
-    if (GameState & 0x40u) menu.add_item(90, label_get(0xDFC / 4));
+    if (GameDataStateStorage.fields_.game_state_ & 0x40u) menu.add_item(90, label_get(0xDFC / 4));
     menu.add_separator(99);
     menu.add_item(10, label_get(0xB70 / 4));
     menu.add_item(11, label_get(0xB74 / 4));
@@ -6580,7 +6580,7 @@ void BaseWin::garrison_click(int vehicle_id, int x, int y, int right) {
     // The accessor uses daemon-owned +1B78, not a second global.
     NetDaemonNet.set_vehicle_selection_follow(&vehicle_id);
     menu.show(x, y, pop_expire);
-    if (GameState & 0x800u) return;
+    if (GameDataStateStorage.fields_.game_state_ & 0x800u) return;
     const int slot = menu.get_selected();
     const int action = slot == -1 ? base_panel_signed(menu.field_A0C_value())
         : slot < 64 ? menu.item_id(slot) : -1;
@@ -6701,7 +6701,7 @@ void BaseWin::draw_supported(int update_mode) {
     const int icon_width = scale > 0 ? scale * 22 / divisor : 13;
     const int icon_offset = scale > 0 ? scale * 22 / divisor : 13;
     int count = 0;
-    for (int i = 0; i < VehCurrentCount; ++i)
+    for (int i = 0; i < GameDataStateStorage.fields_.vehicle_current_count_; ++i)
         if (Vehs[i].faction_id == BaseCurrent->faction_id_current
             && Vehs[i].home_base_id == BaseIDCurrentSelected) ++count;
     const int columns = base_native_clamp((content.right - content.left - 12) / vehicle_width, 1, 3);
@@ -6728,7 +6728,7 @@ void BaseWin::draw_supported(int update_mode) {
     // Retain that uninitialized first use and previous-row pitch thereafter;
     // initialization would be a separately reviewed behavior change.
     int icon_pitch;
-    for (int vehicle_id = 0; vehicle_id < VehCurrentCount; ++vehicle_id) {
+    for (int vehicle_id = 0; vehicle_id < GameDataStateStorage.fields_.vehicle_current_count_; ++vehicle_id) {
         if (Vehs[vehicle_id].faction_id != BaseCurrent->faction_id_current
             || Vehs[vehicle_id].home_base_id != BaseIDCurrentSelected) continue;
         ++ordinal;

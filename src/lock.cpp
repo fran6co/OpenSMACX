@@ -16,10 +16,11 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include "game.h"  // shared state-window owner
 #include "original_seam.h"
 #include "lock.h"
 
-uint32_t LockEnableMask;  // 0x009A64E8, the faction human/alive status dword
+// 0x009A64E8, the faction human/alive status dword
 
 
 /*
@@ -105,7 +106,7 @@ int Lock::any_locks() {
     if (field_E0_ != 0) {
         return 1;
     }
-    const uint32_t mask = LockEnableMask;
+    const uint32_t mask = GameDataStateStorage.fields_.lock_masks_.enable_mask_;
     const uint32_t low_byte = mask & 0xFF;
     const uint8_t second_byte = reinterpret_cast<const uint8_t *>(&mask)[1];
     for (int index = 1; index < 8; ++index) {

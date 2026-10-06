@@ -118,7 +118,10 @@ def _bound_names(root):
             names.update((record.name, record.symbol))
         relative = path.relative_to(root).as_posix()
         for parse in (parse_objects, parse_shared, parse_generated):
-            names.update(item.symbol for item in parse(text, relative, pin, address_space=configuration.address_space))
+            for item in parse(text, relative, pin, address_space=configuration.address_space):
+                names.add(item.symbol)
+                if getattr(item, "parent_symbol", None) is not None:
+                    names.add(item.parent_symbol)
         names.update(item.symbol for item in parse_imports(text, relative))
     return names
 

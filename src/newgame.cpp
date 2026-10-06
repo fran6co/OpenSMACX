@@ -489,7 +489,7 @@ int __cdecl top_menu(int mode) {
     }
     prefs_load(0);
     prefs_use();
-    if (mode == 0 && (GamePreferences & 0x800) != 0) {
+    if (mode == 0 && (GameDataStateStorage.fields_.game_preferences_ & 0x800) != 0) {
         g_TOP_MENU_WAVE.load(const_cast<char *>("fx\\opening menu.wav"), 2);
         g_TOP_MENU_WAVE.play();
     }
@@ -558,10 +558,10 @@ top_menu_redraw:
                 esi = load_map();
                 if (esi != 0) goto top_menu_retry;
                 config_game(3);
-                VehCurrentCount = 0;
+                GameDataStateStorage.fields_.vehicle_current_count_ = 0;
                 setup_game(edi);
                 ControlTurnPhase = ConsoleGlobal.faction_id_;
-                GameState |= 0x080000E0u;
+                GameDataStateStorage.fields_.game_state_ |= 0x080000E0u;
                 goto top_menu_after_action;
             }
         } else {
@@ -602,10 +602,10 @@ top_menu_new_game:
     MapNativeLifeForms = static_cast<uint32_t>(edi);
     map_wipe();
     config_game(3);
-    VehCurrentCount = 0;
+    GameDataStateStorage.fields_.vehicle_current_count_ = 0;
     setup_game(edi);
     ControlTurnPhase = ConsoleGlobal.faction_id_;
-    GameState |= 0x080000E0u;
+    GameDataStateStorage.fields_.game_state_ |= 0x080000E0u;
     goto top_menu_scenario_return;
 
 top_menu_load_continue:
@@ -624,7 +624,7 @@ top_menu_load_continue:
     }
     if (esi != 0) {
         ControlTurnPhase = ConsoleGlobal.faction_id_;
-        GameState |= 0x080000E0u;
+        GameDataStateStorage.fields_.game_state_ |= 0x080000E0u;
         goto top_menu_normal_return;
     }
     esi = config_game(2);
@@ -653,10 +653,10 @@ top_menu_load_continue:
         say_year(StringTemp);
         parse_says(4, StringTemp, -1, -1);
         parse_says(0, StringTemp, -1, -1);
-        parse_num(0, ObjectiveReqVictory);
-        parse_num(1, static_cast<int>(ObjectivesSuddenDeathVictory));
-        parse_num(2, num_objectives(ConsoleGlobal.faction_id_, GameRules & 0x1000));
-        parse_num(3, static_cast<int>(EndingMissionYear));
+        parse_num(0, ScenarioSave.objective_req_victory);
+        parse_num(1, static_cast<int>(ScenarioSave.objectives_sudden_death_victory));
+        parse_num(2, num_objectives(ConsoleGlobal.faction_id_, GameDataStateStorage.fields_.game_rules_ & 0x1000));
+        parse_num(3, static_cast<int>(ScenarioSave.ending_mission_year));
         X_pop(const_cast<char *>("INTRO"), "SCENARIO", 0, 0, 0, 0);
         ConsoleGlobal.set_move(1);
     }
@@ -669,11 +669,11 @@ top_menu_retry:
     goto top_menu_redraw;
 
 top_menu_scenario_return:
-    if ((GamePreferences & 0x800) == 0) goto top_menu_audio_check;
+    if ((GameDataStateStorage.fields_.game_preferences_ & 0x800) == 0) goto top_menu_audio_check;
     goto top_menu_fade_music;
 
 top_menu_normal_return:
-    if (mode == 0 && (GamePreferences & 0x800) != 0)
+    if (mode == 0 && (GameDataStateStorage.fields_.game_preferences_ & 0x800) != 0)
         goto top_menu_fade_music;
 top_menu_audio_check:
     if (g_TOP_MENU_WAVE.is_playing() != 0) goto top_menu_fade_music;
@@ -721,15 +721,15 @@ int __cdecl multiplayer_init(int startup_mode) {
         const int difficulty = static_cast<int8_t>(NetWinSessionOptions.difficulty_);
         const uint32_t rules_a = NetWinSessionOptions.rule_bits_a_;
         const uint32_t rules_b = NetWinSessionOptions.rule_bits_b_;
-        GameRules = rules_a;
-        const uint32_t old_game_state = GameState;
-        DiffLevelCurrent = difficulty;
+        GameDataStateStorage.fields_.game_rules_ = rules_a;
+        const uint32_t old_game_state = GameDataStateStorage.fields_.game_state_;
+        GameDataStateStorage.fields_.diff_level_current_ = difficulty;
         const uint8_t rules_c = NetWinSessionOptions.rule_bits_c_;
         const uint32_t merged_game_state = old_game_state | (rules_b & 0x01800000u);
         const bool enable_turn_flag = (rules_c & 0x10u) != 0;
-        const uint32_t old_turn_flags = NetTurnFlags;
-        GameState = merged_game_state;
-        NetTurnFlags = enable_turn_flag ? (old_turn_flags | 0x10u)
+        const uint32_t old_turn_flags = GameDataStateStorage.fields_.net_turn_flags_;
+        GameDataStateStorage.fields_.game_state_ = merged_game_state;
+        GameDataStateStorage.fields_.net_turn_flags_ = enable_turn_flag ? (old_turn_flags | 0x10u)
                                         : (old_turn_flags & ~0x10u);
 
         if (NetDaemonNet.lock_state_[0].leading_words_[1] != 0) {
@@ -743,7 +743,7 @@ int __cdecl multiplayer_init(int startup_mode) {
                     mask = static_cast<uint8_t>(mask | (1u << (shift & 31)));
                 }
             }
-            LockEnableMask = (LockEnableMask & 0xFFFFFF00u) | mask;
+            GameDataStateStorage.fields_.lock_masks_.enable_mask_ = (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFFFFF00u) | mask;
 
             if (NetWinSessionData.mode_ == 0) {
                 result = text_open(AlphaxFileID, "WORLDSIZE");
@@ -799,7 +799,7 @@ int __cdecl multiplayer_init(int startup_mode) {
             }
 
             if (NetWinSessionData.mode_ != 3 && NetWinSessionData.mode_ != 2) {
-                VehCurrentCount = 0;
+                GameDataStateStorage.fields_.vehicle_current_count_ = 0;
                 setup_game(0);
             }
         }
@@ -813,18 +813,18 @@ int __cdecl multiplayer_init(int startup_mode) {
             }
         }
 
-        GameState |= NetWinSessionOptions.rule_bits_b_ & 0x01800000u;
+        GameDataStateStorage.fields_.game_state_ |= NetWinSessionOptions.rule_bits_b_ & 0x01800000u;
         if ((NetWinSessionOptions.rule_bits_c_ & 0x10u) != 0)
-            NetTurnFlags |= 0x10u;
+            GameDataStateStorage.fields_.net_turn_flags_ |= 0x10u;
         else
-            NetTurnFlags &= ~0x10u;
-        TimeControlsSelection = static_cast<uint8_t>(
+            GameDataStateStorage.fields_.net_turn_flags_ &= ~0x10u;
+        GameDataStateStorage.fields_.time_controls_selection_ = static_cast<uint8_t>(
             NetWinSessionOptions.time_control_);
         ConsoleGlobal.faction_id_ =
             NetDaemonNet.pid_2_who(static_cast<unsigned long>(NetWinPlayerId));
 
         if (NetWinSessionData.mode_ == 3) {
-            GameState |= 0x10u;
+            GameDataStateStorage.fields_.game_state_ |= 0x10u;
             if (NetDaemonNet.send_files() != 0) {
                 pop_close();
                 result = 1;
@@ -833,7 +833,7 @@ int __cdecl multiplayer_init(int startup_mode) {
             if (NetDaemonNet.lock_state_[0].leading_words_[1] != 0)
                 scenario_setup();
         } else {
-            GameState &= ~0x10u;
+            GameDataStateStorage.fields_.game_state_ &= ~0x10u;
         }
 
         log_reset();
@@ -855,7 +855,7 @@ int __cdecl multiplayer_init(int startup_mode) {
                     mask = static_cast<uint8_t>(mask | (1u << (shift & 31)));
                 }
             }
-            LockEnableMask = (LockEnableMask & 0xFFFFFF00u) | mask;
+            GameDataStateStorage.fields_.lock_masks_.enable_mask_ = (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFFFFF00u) | mask;
             NetDaemonNet.send_rules();
             NetDaemonNet.send_game();
         }
@@ -898,10 +898,10 @@ int __cdecl multiplayer_init(int startup_mode) {
             strcat(StringTemp, " ");
             say_year(StringTemp);
             parse_says(4, StringTemp, -1, -1);
-            parse_num(0, ObjectiveReqVictory);
-            parse_num(1, static_cast<int>(ObjectivesSuddenDeathVictory));
-            parse_num(2, num_objectives(ConsoleGlobal.faction_id_, GameRules & 0x1000u));
-            parse_num(3, static_cast<int>(EndingMissionYear));
+            parse_num(0, ScenarioSave.objective_req_victory);
+            parse_num(1, static_cast<int>(ScenarioSave.objectives_sudden_death_victory));
+            parse_num(2, num_objectives(ConsoleGlobal.faction_id_, GameDataStateStorage.fields_.game_rules_ & 0x1000u));
+            parse_num(3, static_cast<int>(ScenarioSave.ending_mission_year));
             x_pop_caption_label(const_cast<char *>("INTRO"), "SCENARIO", 0);
         }
 
@@ -969,12 +969,12 @@ static void config_game_seed_checks() {
     };
     unsigned int checks = 0;
     for (int i = 0; i < 16; ++i) {
-        bool checked = (GameRules & rules[i]) != 0;
+        bool checked = (GameDataStateStorage.fields_.game_rules_ & rules[i]) != 0;
         if (i == 11) checked = !checked;
         if (checked) checks |= 1u << i;
     }
-    if (GameState & 0x00800000u) checks |= 0x10000u;
-    if (GameState & 0x01000000u) checks |= 0x20000u;
+    if (GameDataStateStorage.fields_.game_state_ & 0x00800000u) checks |= 0x10000u;
+    if (GameDataStateStorage.fields_.game_state_ & 0x01000000u) checks |= 0x20000u;
     PopupWriteCheckState = checks;
 }
 
@@ -987,10 +987,10 @@ static void config_game_apply_checks() {
     for (int i = 0; i < 16; ++i) {
         bool checked = (checks & (1u << i)) != 0;
         if (i == 11) checked = !checked;
-        if (checked) GameRules |= rules[i];
+        if (checked) GameDataStateStorage.fields_.game_rules_ |= rules[i];
     }
-    if (checks & 0x10000u) GameState |= 0x00800000u;
-    if (checks & 0x20000u) GameState |= 0x01000000u;
+    if (checks & 0x10000u) GameDataStateStorage.fields_.game_state_ |= 0x00800000u;
+    if (checks & 0x20000u) GameDataStateStorage.fields_.game_state_ |= 0x01000000u;
 }
 
 static void config_game_play_voice(int faction, bool flagged) {
@@ -1030,8 +1030,8 @@ int __cdecl config_game(int mode) {
     char gender_text[0x50];
 
     if (mode & 1) {
-        DiffLevelCurrent = DefaultPrefs.difficulty;
-        GameRules = AlphaIniPrefs.rules;
+        GameDataStateStorage.fields_.diff_level_current_ = DefaultPrefs.difficulty;
+        GameDataStateStorage.fields_.game_rules_ = AlphaIniPrefs.rules;
         selected = DefaultPrefs.faction_id;
         goto parse_factions;
     }
@@ -1039,7 +1039,7 @@ int __cdecl config_game(int mode) {
 difficulty_menu:
     setup.Win::hide();
     setup.Win::show(0);
-    if ((GameRules & 0x01000000u) == 0) {
+    if ((GameDataStateStorage.fields_.game_rules_ & 0x01000000u) == 0) {
         popup.start(PopupStartCaption, "DIFFICULTY", -1, 0, 0x40, 0);
         for (int i = 0; i < 6; ++i) {
             StringTemp[0] = 0;
@@ -1056,7 +1056,7 @@ difficulty_menu:
         picked = setup.do_menu(&popup, 1, 0);
         if (picked < 0) return 1;
         DefaultPrefs.difficulty = picked;
-        DiffLevelCurrent = picked;
+        GameDataStateStorage.fields_.diff_level_current_ = picked;
     }
 
 rules_menu:
@@ -1068,48 +1068,48 @@ rules_menu:
     popup.set_value(AlphaIniPrefs.customize);
     picked = setup.do_menu(&popup, 1, 0);
     if (picked < 0) {
-        if ((GameRules & 0x01000000u) == 0) goto difficulty_menu;
+        if ((GameDataStateStorage.fields_.game_rules_ & 0x01000000u) == 0) goto difficulty_menu;
         return 1;
     }
     AlphaIniPrefs.customize = picked;
     if (picked == 0) {
-        GameRules &= 0xFFFF0000u;
-        GameRules |= default_rules();
+        GameDataStateStorage.fields_.game_rules_ &= 0xFFFF0000u;
+        GameDataStateStorage.fields_.game_rules_ |= default_rules();
         goto select_faction;
     }
     if (picked == 1) {
-        GameRules &= 0xFFFF0000u;
-        GameRules |= DiffLevelCurrent != 0 ? AlphaIniPrefs.rules & 0xFFFFu
+        GameDataStateStorage.fields_.game_rules_ &= 0xFFFF0000u;
+        GameDataStateStorage.fields_.game_rules_ |= GameDataStateStorage.fields_.diff_level_current_ != 0 ? AlphaIniPrefs.rules & 0xFFFFu
             : (AlphaIniPrefs.rules & 0xFDFFu) | 0x200u;
-        GameState = (GameState & 0xFE7FFFFFu) | AlphaIniPrefs.semaphore;
+        GameDataStateStorage.fields_.game_state_ = (GameDataStateStorage.fields_.game_state_ & 0xFE7FFFFFu) | AlphaIniPrefs.semaphore;
         goto select_faction;
     }
     human_mask = 0;
 custom_rules:
     setup.Win::hide();
     setup.Win::show(0);
-    GameRules = (GameRules & 0xFFFF0000u) |
-        (DiffLevelCurrent != 0 ? AlphaIniPrefs.rules & 0xFFFFu
+    GameDataStateStorage.fields_.game_rules_ = (GameDataStateStorage.fields_.game_rules_ & 0xFFFF0000u) |
+        (GameDataStateStorage.fields_.diff_level_current_ != 0 ? AlphaIniPrefs.rules & 0xFFFFu
             : (AlphaIniPrefs.rules & 0xFDFFu) | 0x200u);
-    GameState = (GameState & 0xFE7FFFFFu) | AlphaIniPrefs.semaphore;
-    if (IsMultiplayerNet) GameRules |= 0x200u;
+    GameDataStateStorage.fields_.game_state_ = (GameDataStateStorage.fields_.game_state_ & 0xFE7FFFFFu) | AlphaIniPrefs.semaphore;
+    if (IsMultiplayerNet) GameDataStateStorage.fields_.game_rules_ |= 0x200u;
     config_game_seed_checks();
     if (x_pop_short("RULES", 0x41, 0) < 0) goto rules_menu;
-    GameRules &= 0xFFFF0000u;
-    GameState &= 0xFE7FFFFFu;
+    GameDataStateStorage.fields_.game_rules_ &= 0xFFFF0000u;
+    GameDataStateStorage.fields_.game_state_ &= 0xFE7FFFFFu;
     if (ConsoleGroupAction) {
-        GameRules |= default_rules();
-        AlphaIniPrefs.rules = GameRules;
-        AlphaIniPrefs.semaphore = GameState & 0x01800000u;
+        GameDataStateStorage.fields_.game_rules_ |= default_rules();
+        AlphaIniPrefs.rules = GameDataStateStorage.fields_.game_rules_;
+        AlphaIniPrefs.semaphore = GameDataStateStorage.fields_.game_state_ & 0x01800000u;
         goto custom_rules;
     }
     config_game_apply_checks();
-    AlphaIniPrefs.rules = GameRules;
-    AlphaIniPrefs.semaphore = GameState & 0x01800000u;
+    AlphaIniPrefs.rules = GameDataStateStorage.fields_.game_rules_;
+    AlphaIniPrefs.semaphore = GameDataStateStorage.fields_.game_state_ & 0x01800000u;
     ConfigFactionDetailMode = 0;
 
 select_faction:
-    if ((GameRules & 0x00100000u) && !IsMultiplayerPBEM) {
+    if ((GameDataStateStorage.fields_.game_rules_ & 0x00100000u) && !IsMultiplayerPBEM) {
         selected = ConsoleGlobal.faction_id_;
         goto store_single_faction;
     }
@@ -1175,7 +1175,7 @@ select_faction:
             ConfigFactionDetailMode = ConfigFactionDetailMode == 0;
             goto select_faction;
         }
-        if (GameMorePreferences & 0x4000u) config_game_play_voice(selected, false);
+        if (GameDataStateStorage.fields_.game_more_preferences_ & 0x4000u) config_game_play_voice(selected, false);
         if (PickWinGlobal.field_5DA4_ != 0) {
             if (strcmp(Players[picked].filename, "JENN282") == 0) goto select_faction;
             if (PickWinGlobal.field_5DA4_ != 0) goto edit_names;
@@ -1198,7 +1198,7 @@ expansion_prompt:
                 ? ConfigRandomLeaderInitial : Players[picked].name_leader;
             int answer = X_pop_ask(StringTemp, 0x17, initial, 0, 0);
             ConfigFactionPreview.close();
-            if (GameMorePreferences & 0x4000u) g_WAVE_GENERAL.Sound::fade(0x7D0);
+            if (GameDataStateStorage.fields_.game_more_preferences_ & 0x4000u) g_WAVE_GENERAL.Sound::fade(0x7D0);
             if (answer != 0) goto select_faction;
         }
         PickWinGlobal.GraphicWin::close();
@@ -1266,14 +1266,14 @@ expansion_prompt:
         compute_faction_modifiers(picked);
         goto select_faction;
     }
-    if (GameMorePreferences & 0x4000u) config_game_play_voice(picked, true);
+    if (GameDataStateStorage.fields_.game_more_preferences_ & 0x4000u) config_game_play_voice(picked, true);
     if (!popup.input_poll_state()) {
         StringTemp[0] = 0;
         strcat(StringTemp, "NAME");
         if (Players[picked].is_leader_female) strcat(StringTemp, "2");
         int answer = X_pop_ask(StringTemp, 0x17, Players[picked].name_leader, 0, 0);
         ConfigFactionPreview.close();
-        if (GameMorePreferences & 0x4000u) g_WAVE_GENERAL.Sound::fade(0x7D0);
+        if (GameDataStateStorage.fields_.game_more_preferences_ & 0x4000u) g_WAVE_GENERAL.Sound::fade(0x7D0);
         if (answer) goto select_faction;
         strcpy(Players[picked].name_leader, ParseStrBuffer[0].str);
         if (!ConsoleGroupAction) goto parse_factions;
@@ -1291,7 +1291,7 @@ edit_names:
         popup.dialogs().EditGroup::edit(label_get(0x790 / 4), Players[picked].adj_leader, 0x17);
         popup.dialogs().EditGroup::edit(label_get(0x794 / 4), gender_text, 0x17);
         int answer = popup.BasePop::exec(0, 0);
-        if (GameMorePreferences & 0x4000u) g_WAVE_GENERAL.Sound::fade(0x7D0);
+        if (GameDataStateStorage.fields_.game_more_preferences_ & 0x4000u) g_WAVE_GENERAL.Sound::fade(0x7D0);
         if (!use_expansion_picker) ConfigFactionPreview.close();
         if (answer < 0) {
             if (use_expansion_picker) popup.close();
@@ -1407,7 +1407,7 @@ parse_factions:
     load_flags();
     if (ExpansionEnabled && !IsMultiplayerNet && !IsMultiplayerPBEM &&
         (config_game_original_rule_byte(selected) & 0x80))
-        GameRules = (GameRules & ~0x200u) | 0x140u;
+        GameDataStateStorage.fields_.game_rules_ = (GameDataStateStorage.fields_.game_rules_ & ~0x200u) | 0x140u;
     if (mode & 1) goto pbem_commit;
     do_all_draws();
 
@@ -1443,7 +1443,7 @@ pbem_selection:
     }
 pbem_commit:
     if (!IsMultiplayerPBEM) goto store_single_faction;
-    *reinterpret_cast<unsigned char *>(&LockEnableMask) = static_cast<unsigned char>(human_mask);
+    *reinterpret_cast<unsigned char *>(&GameDataStateStorage.fields_.lock_masks_.enable_mask_) = static_cast<unsigned char>(human_mask);
     selected = 1;
     for (; selected < 8; ++selected) if ((human_mask & 0xFF) & (1u << selected)) break;
     if (selected >= 8) selected = 1;
@@ -1452,7 +1452,7 @@ pbem_commit:
 
 store_single_faction:
     ConsoleGlobal.faction_id_ = selected;
-    *reinterpret_cast<unsigned char *>(&LockEnableMask) =
+    *reinterpret_cast<unsigned char *>(&GameDataStateStorage.fields_.lock_masks_.enable_mask_) =
         static_cast<unsigned char>(1u << (selected & 31));
 time_controls:
     if (IsMultiplayerNet) {
@@ -1460,17 +1460,17 @@ time_controls:
         popup.set_value(AlphaIniPrefs.time_controls);
         int answer = popup.BasePop::exec(0, 0);
         if (answer < 0) {
-            if (!(GameRules & 0x00100000u)) goto select_faction;
+            if (!(GameDataStateStorage.fields_.game_rules_ & 0x00100000u)) goto select_faction;
             if (mode != 2) goto rules_menu;
             goto difficulty_menu;
         }
         AlphaIniPrefs.time_controls = answer;
-        TimeControlsSelection = answer;
+        GameDataStateStorage.fields_.time_controls_selection_ = answer;
     }
     prefs_save(0);
     log_set_state(0);
     if (!(mode & 2)) {
-        VehCurrentCount = 0;
+        GameDataStateStorage.fields_.vehicle_current_count_ = 0;
         if (MapSetupStatus) world_build();
         if (!(mode & 2)) setup_game(0);
     }
@@ -1508,7 +1508,7 @@ void __cdecl crash_landing(int faction_id) {
 
     int base_id = 0;
     int base_found = 0;
-    const int base_count = BaseCurrentCount;
+    const int base_count = GameDataStateStorage.fields_.base_current_count_;
     for (; base_id < base_count; ++base_id) {
         if (Bases[base_id].faction_id_current == faction_id) {
             base_found = 1;
@@ -1525,7 +1525,7 @@ void __cdecl crash_landing(int faction_id) {
         found_base = 1;
     } else {
         int vehicle_id = 0;
-        const int vehicle_count = VehCurrentCount;
+        const int vehicle_count = GameDataStateStorage.fields_.vehicle_current_count_;
         for (; vehicle_id < vehicle_count; ++vehicle_id) {
             if (Vehs[vehicle_id].faction_id == faction_id) break;
         }
@@ -1544,16 +1544,16 @@ void __cdecl crash_landing(int faction_id) {
     CharUpperA(StringTemp);
 
     if (!IsMultiplayerNet) {
-        if (fungus) TurnCurrentNum = 5;
+        if (fungus) GameDataStateStorage.fields_.turn_current_num_ = 5;
         if (strcmp(StringTemp, "FUNGBOY") == 0) {
-            TurnCurrentNum = 5;
+            GameDataStateStorage.fields_.turn_current_num_ = 5;
             ConsoleGlobal.update_data(0);
             goto flush_and_continue;
         }
     }
     ConsoleGlobal.update_data(0);
 
-    if (GamePreferences & 0x400) {
+    if (GameDataStateStorage.fields_.game_preferences_ & 0x400) {
         g_CRASH_LANDING_WAVE.init(const_cast<char *>("fx\\crash land.wav"), 4);
         g_CRASH_LANDING_WAVE.play();
     }
@@ -1666,5 +1666,5 @@ flush_and_continue:
     map_window_after_animation.draw_map(1);
     flush_input();
     captured_screen.close();
-    if (GamePreferences & 0x400) g_CRASH_LANDING_WAVE.fade(1000);
+    if (GameDataStateStorage.fields_.game_preferences_ & 0x400) g_CRASH_LANDING_WAVE.fade(1000);
 }

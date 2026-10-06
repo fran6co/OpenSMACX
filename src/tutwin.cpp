@@ -72,8 +72,8 @@ uint32_t TutWinShownFlag;
 // window. Their fixed-image identities are recorded by the coordinator.
 // RECOVERY_OBJECT: v1 0x008CC248 ?TutWinTourPending@@3HA
 int TutWinTourPending;
-// RECOVERY_OBJECT: v1 0x009A64BC ?TutWinFlags9A64BC@@3HA
-int TutWinFlags9A64BC;
+// Historical object identity moved to GameDataStateStorage; see the transport manifest.
+
 // Tutorial tour's original 0x945830 gate controls WorldClimateWorldWin's
 // restoration. It is source-owned, writable state with loader-zero initial
 // storage; no writer or larger object owner is established.
@@ -85,8 +85,8 @@ int TutWinClimateGate945830;
 // the split into two words is what makes them independent hint sequences.
 // Both must be real globals (not const-address bindings) or VC6 caches the
 // word across the table read and the `|=` degrades to a load/or/store.
-int TutorialFlags;   // 0x009A64AC
-int TutorialFlags2;  // 0x009A64B0
+// 0x009A64AC
+// 0x009A64B0
 
 /*
 Purpose: Compute a rectangle center with wrapping subtraction and truncation toward zero.
@@ -238,7 +238,7 @@ void TutWin::on_button_clicked(int button_id) {
 
 finish_button:
     if (field_53D0_ != 0) {
-        TutWinFlags9A64BC |= field_53D0_;
+        GameDataStateStorage.fields_.tutwin_flags_9a64bc_ |= field_53D0_;
     }
 }
 
@@ -729,7 +729,7 @@ void TutWin::tour() {
     scores[4] = scores[5] = scores[0x1F] = -1;
 
     local_player = ConsoleGlobal.faction_id_;
-    visibility_override = (GameState & 0x80) != 0;
+    visibility_override = (GameDataStateStorage.fields_.game_state_ & 0x80) != 0;
     for (ring = 0; ring < 2; ++ring) {
         for (index = 1; index < 0x15; ++index) {
             neighbor_x = cursor_x + RadiusOffsetX[index];
@@ -959,7 +959,7 @@ void TutWin::tour() {
                 goto tour_cleanup;
             }
         }
-        if (ConsoleGlobal.cursor_active_ != 0 && TurnCurrentNum < 2) {
+        if (ConsoleGlobal.cursor_active_ != 0 && GameDataStateStorage.fields_.turn_current_num_ < 2) {
             if (field_53D4_ != 0) {
                 field_53A4_ = 0;
                 hide();
@@ -1239,7 +1239,7 @@ tour5_cleanup:
 // RECOVERY_BINDING: v1 {"evidence": ["seed:src/recovered/units/004baa70.cpp", "image:0x004baa70; original call/rectangle/lifetime review"], "reason": "Restore the original ownership-group implementation through real tutorial/editor windows, declared members and normal C++ lifecycle; retained seed extents include the associated exception cleanup where present."}
 void TutWin::tour6() {
     if (!TutWinBaseWindow.is_visible()) {
-        for (int i = 0; i < BaseCurrentCount; ++i) {
+        for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; ++i) {
             if (Bases[i].faction_id_current == ConsoleGlobal.faction_id_) {
                 TutWinBaseWindow.zoom(i, 0);
                 break;
@@ -1292,7 +1292,7 @@ void TutWin::tour6() {
 // TRIED: inline-casting the 0x6a7628/0x6c0df4/0x7ae820 receivers at every call site (no cached local pointer) matches from #0; remaining divergence is that /O2 and /O1 both hoist the ebx/edi push for the zoom-search loop into the true prologue, while the original defers it to just inside the `!is_visible()` branch and pops it back out before the giant guard-clause chain. Tried plain casts, reordering locals (count/target/rec/idx) to match register assignment order - none moved the push. Flat guard-clause control flow (if(!x) return;) reproduces the CFG; all ~30 repeated tut_win/iface_rect/base_rect/client_to_screen blocks and the ALLOC/ALLOC2 branch and do_iface/do_base tail are transcribed directly from the disassembly.
 void TutWin::tour1() {
     if (!TutWinBaseWindow.is_visible()) {
-        for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+        for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
             if (Bases[base_id].faction_id_current == ConsoleGlobal.faction_id_) {
                 TutWinBaseWindow.zoom(base_id, 0);
                 break;
@@ -1954,16 +1954,16 @@ tut_check(int flag) {
     if (IsMultiplayerNet != 0) {
         return 0;
     }
-    if ((GamePreferences & 0x20) == 0) {
+    if ((GameDataStateStorage.fields_.game_preferences_ & 0x20) == 0) {
         return 0;
     }
-    if ((flag & TutorialFlags) != 0) {
+    if ((flag & GameDataStateStorage.fields_.tutorial_flags_) != 0) {
         return 0;
     }
     if ((Players[ConsoleGlobal.faction_id_].rule_flags & RFLAG_ALIEN) != 0) {
         return 0;
     }
-    TutorialFlags |= flag;
+    GameDataStateStorage.fields_.tutorial_flags_ |= flag;
     return 1;
 }
 
@@ -1982,15 +1982,15 @@ tut_check2(int flag) {
     if (IsMultiplayerNet != 0) {
         return 0;
     }
-    if ((GamePreferences & 0x20) == 0) {
+    if ((GameDataStateStorage.fields_.game_preferences_ & 0x20) == 0) {
         return 0;
     }
-    if ((flag & TutorialFlags2) != 0) {
+    if ((flag & GameDataStateStorage.fields_.tutorial_flags_2_) != 0) {
         return 0;
     }
     if ((Players[ConsoleGlobal.faction_id_].rule_flags & RFLAG_ALIEN) != 0) {
         return 0;
     }
-    TutorialFlags2 |= flag;
+    GameDataStateStorage.fields_.tutorial_flags_2_ |= flag;
     return 1;
 }

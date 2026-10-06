@@ -44,7 +44,7 @@ int AmbienceTransitionMarker = 0;
 // symbol    ?ambience@@YAHH@Z
 // TRIED: guard bit 0x800, no-op-if-unchanged, in-range switch dispatch on *DAT_0074daa0's vtable (14 cases mapping to slots verified against the raw jump table at 0x446CD8, not Ghidra's summary, which collapsed two distinct case targets), else stop the old FX entry (slot 0x28), start the new one (slot 0x5c), revert on failure (slot 0x20), and FX::play() the result. Landed at 0.89 similarity; diverges at #108 where case 0xc8 and case 0xd0 - same vtable slot, genuinely two separate blocks in the original (`mov eax`/`call [eax+..]` vs `mov edx`/`call [edx+..]`) - compile to one shared jump target here. Tried plain int* stride (`g_00749cf8 + id*27`) against explicit byte-offset char* arithmetic for the FX table addressing; neither changed the divergence.
 int __cdecl ambience(int ambience_id) {
-    if ((GamePreferences & 0x800) == 0) {
+    if ((GameDataStateStorage.fields_.game_preferences_ & 0x800) == 0) {
         return ambience_id;
     }
 
@@ -131,7 +131,7 @@ void __cdecl load_music(int faction_id) {
         strcat(StringTemp, "aset1.amb");
         music = new AAmbience;
     }
-    const uint32_t preferences = GamePreferences;
+    const uint32_t preferences = GameDataStateStorage.fields_.game_preferences_;
     FactionMusic = music;
     if ((preferences & 0x800) && music) {
         music->load(StringTemp);

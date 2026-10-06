@@ -1190,8 +1190,8 @@ void MapWin::set_center(int x, int y, int draw_type) {
         destination = DestinationVehicleId;
         if (destination >= 0 &&
             (Vehs[destination].faction_id == ConsoleGlobal.faction_id_ ||
-             (GameState & STATE_OMNISCIENT_VIEW)) &&
-            !(GameMorePreferences & 0x2000000)) {
+             (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) &&
+            !(GameDataStateStorage.fields_.game_more_preferences_ & 0x2000000)) {
             CoverWindow.fill(9);
         }
     }
@@ -1233,7 +1233,7 @@ void MapWin::gen_bases_only() {
                     int pixel_x;
                     int pixel_y;
                     tile_to_pixel(wrapped_x, tile_y, &pixel_x, &pixel_y);
-                    const int faction = (GameState & STATE_OMNISCIENT_VIEW)
+                    const int faction = (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)
                                             ? -1 : ConsoleGlobal.faction_id_;
                     draw_bases(wrapped_x, tile_y, pixel_x,
                                pixel_y - field_1DDC0_, faction);
@@ -1253,14 +1253,14 @@ void MapWin::draw_bases(int tile_x, int tile_y, int pixel_x, int pixel_y,
         return;
     }
     if (MapBaseDisplayOverride == 0 && ControlTurnPhase == 0 &&
-        (GameRules & 0x80) == 0) {
+        (GameDataStateStorage.fields_.game_rules_ & 0x80) == 0) {
         return;
     }
     const int base_id = base_at(tile_x, tile_y);
     if (base_id < 0) {
         return;
     }
-    if ((GameState & STATE_OMNISCIENT_VIEW) == 0) {
+    if ((GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) == 0) {
         if ((PlayersData[faction_id].flags & 0x200) == 0 &&
             (map_loc(tile_x, tile_y)->visibility & (1 << faction_id)) == 0) {
             return;
@@ -1498,19 +1498,19 @@ void MapWin::draw_map(int draw_type) {
     // Clearing may have disabled incremental rendering. Full rendering
     // inherits the current clip and skips the incremental feedback/reset.
     if (field_21A44_ == 0) {
-        const int faction = (GameState & 0x80) != 0
+        const int faction = (GameDataStateStorage.fields_.game_state_ & 0x80) != 0
                                 ? -1 : ConsoleGlobal.faction_id_;
         gen_map(faction, draw_type < 0);
     } else {
         if (IsRectEmpty(&vertical_pixels)) {
             canvas->set_clip(&horizontal_pixels);
-            const int faction = (GameState & 0x80) != 0
+            const int faction = (GameDataStateStorage.fields_.game_state_ & 0x80) != 0
                                     ? -1 : ConsoleGlobal.faction_id_;
             gen_map(faction, draw_type < 0);
         } else if (IsRectEmpty(&horizontal_pixels)) {
             vertical_pixels.top -= 10;
             canvas->set_clip(&vertical_pixels);
-            const int faction = (GameState & 0x80) != 0
+            const int faction = (GameDataStateStorage.fields_.game_state_ & 0x80) != 0
                                     ? -1 : ConsoleGlobal.faction_id_;
             gen_map(faction, draw_type < 0);
         } else {
@@ -1518,7 +1518,7 @@ void MapWin::draw_map(int draw_type) {
             const MapTileDamageRect saved_vertical = vertical_damage_;
             vertical_damage_.left = horizontal_damage_.right;
             canvas->set_clip(&horizontal_pixels);
-            int faction = (GameState & 0x80) != 0
+            int faction = (GameDataStateStorage.fields_.game_state_ & 0x80) != 0
                               ? -1 : ConsoleGlobal.faction_id_;
             gen_map(faction, draw_type < 0);
             vertical_damage_ = saved_vertical;
@@ -1528,7 +1528,7 @@ void MapWin::draw_map(int draw_type) {
             const MapTileDamageRect saved_horizontal = horizontal_damage_;
             horizontal_damage_.left = horizontal_damage_.right;
             canvas->set_clip(&vertical_pixels);
-            faction = (GameState & 0x80) != 0
+            faction = (GameDataStateStorage.fields_.game_state_ & 0x80) != 0
                           ? -1 : ConsoleGlobal.faction_id_;
             gen_map(faction, draw_type < 0);
             horizontal_damage_ = saved_horizontal;
@@ -1717,7 +1717,7 @@ void MapWin::dest_line(int x1, int y1, int x2, int y2, int proto_id,
             Win::update_cursor(0, 1);
             int flags = repeat != 0 ? 0x80 : 0xc0;
             if (Weapon[VehPrototypes[proto_id].weapon_id].offense_rating == 0) {
-                const int project_base = SecretProject.xenoempathy_dome();
+                const int project_base = GameDataStateStorage.fields_.secret_project_.xenoempathy_dome();
                 if (project_base < 0 || Bases[project_base].faction_id_current != faction) {
                     flags |= 0x10;
                 }
@@ -1771,7 +1771,7 @@ void MapWin::dest_line(int x1, int y1, int x2, int y2, int proto_id,
             if ((PlayersData[faction].flags & 0x200) == 0 &&
                 (map_loc(next_x, next_y)->visibility &
                  static_cast<uint8_t>(1U << (static_cast<uint32_t>(faction) & 31))) == 0 &&
-                (GameState & 0x80) == 0 && (GameRules & 0x100) == 0) {
+                (GameDataStateStorage.fields_.game_state_ & 0x80) == 0 && (GameDataStateStorage.fields_.game_rules_ & 0x100) == 0) {
                 fallback = true;
             }
             steps = mapwin_dest_add(steps, 1);
@@ -2091,7 +2091,7 @@ void MapWin::draw_vehicles(int tile_x, int tile_y, int pixel_x, int pixel_y,
     int draw_state = 2;
     const uint32_t window_flags = field_1DD70_;
     if (MapBaseDisplayOverride == 0 && ControlTurnPhase == 0 &&
-        (GameRules & 0x80) == 0) {
+        (GameDataStateStorage.fields_.game_rules_ & 0x80) == 0) {
         return;
     }
     if ((window_flags & 0x01000000U) != 0 ||
@@ -2104,7 +2104,7 @@ void MapWin::draw_vehicles(int tile_x, int tile_y, int pixel_x, int pixel_y,
     bool draw_base = false;
     if ((window_flags & 0x80000000U) == 0 ||
         (window_flags & 0x80U) != 0) {
-        if ((GameState & STATE_OMNISCIENT_VIEW) != 0 ||
+        if ((GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) != 0 ||
             (PlayersData[faction_id].flags & 0x200U) != 0 ||
             (map_loc(tile_x, tile_y)->visibility & (1U << faction_id)) != 0) {
             draw_base = true;
@@ -2140,7 +2140,7 @@ void MapWin::draw_vehicles(int tile_x, int tile_y, int pixel_x, int pixel_y,
         goto draw_target;
     }
 
-    if ((GameState & STATE_OMNISCIENT_VIEW) == 0 &&
+    if ((GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) == 0 &&
         (PlayersData[faction_id].flags & 0x200U) == 0 &&
         (map_loc(tile_x, tile_y)->visibility & (1U << faction_id)) == 0) {
         return;
@@ -2148,7 +2148,7 @@ void MapWin::draw_vehicles(int tile_x, int tile_y, int pixel_x, int pixel_y,
     draw_state = 3;
     if (Vehs[ConsoleGlobal.selected_vehicle_].x == tile_x &&
         Vehs[ConsoleGlobal.selected_vehicle_].y == tile_y &&
-        (LockEnableMask & (1U << Vehs[ConsoleGlobal.selected_vehicle_].faction_id)) != 0 &&
+        (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1U << Vehs[ConsoleGlobal.selected_vehicle_].faction_id)) != 0 &&
         veh_selectable(ConsoleGlobal.selected_vehicle_) != 0 &&
         (Vehs[ConsoleGlobal.selected_vehicle_].state & 0x4200U) == 0) {
         target = ConsoleGlobal.selected_vehicle_;
@@ -2157,7 +2157,7 @@ void MapWin::draw_vehicles(int tile_x, int tile_y, int pixel_x, int pixel_y,
             ConsoleGlobal.field_23BE4_ != 0 &&
             Vehs[target].order == 0 && ConsoleGlobal.survey_mode_ == 0 &&
             (IsMultiplayerNet == 0 || ConsoleControlTurnActive == 0)) {
-            if ((GameMorePreferences & 0x200U) != 0) return;
+            if ((GameDataStateStorage.fields_.game_more_preferences_ & 0x200U) != 0) return;
             int mouse_x;
             int mouse_y;
             static_cast<Win *>(this)->get_mouse_pos(&mouse_x, &mouse_y);
@@ -2189,7 +2189,7 @@ void MapWin::draw_vehicles(int tile_x, int tile_y, int pixel_x, int pixel_y,
     }
     if (target < 0) return;
 
-    if ((GameState & STATE_OMNISCIENT_VIEW) == 0) {
+    if ((GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) == 0) {
         const Veh &vehicle = Vehs[target];
         if (vehicle.faction_id != ConsoleGlobal.faction_id_ ||
             (vehicle.flags & 0x440U) == 0x440U) {
@@ -2354,14 +2354,14 @@ void MapWin::gen_radius(int x, int y, int radius, int faction, int skip_terrain)
 // ORIGINAL: 0x0046A2A0 ?draw_radius@MapWin@@QAEXHHHH@Z 0x0046A2A0-0x0046A496
 // RECOVERY_BINDING: v1 {"evidence": ["Original46A2A0..46A496; retired seed git:b55fcf8b:src/recovered/units/0046a2a0.cpp records this identity and exact span.", "Original46A437 passes shared7D3BE8 vertices to the selected genuine radius Texture; signed zoom selects the texture. Console state is observed after generation and soft_update precedes optional do_all_draws."], "reason": "This unadjusted MapWin receiver owns radius generation, the live console cursor-overlay decision and the bounded update. It consumes the same four copied vertices as the terrain producer and scroll controller."}
 void MapWin::draw_radius(int x, int y, int radius, int draw_type) {
-    const int faction = (GameState & 0x80) != 0 ? -1 : ConsoleGlobal.faction_id_;
+    const int faction = (GameDataStateStorage.fields_.game_state_ & 0x80) != 0 ? -1 : ConsoleGlobal.faction_id_;
     gen_radius(x, y, radius, faction, draw_type < 0);
 
     if (ConsoleGlobal.cursor_active_ == 0) {
         const int network = IsMultiplayerNet;
         if ((network == 0 || ConsoleControlTurnActive == 0) && draw_type >= 0 &&
             (ConsoleGlobal.field_23BF8_ != 0 || ConsoleGlobal.survey_mode_ != 0) &&
-            (ConsoleGlobal.field_23BE4_ != 0 || (network != 0 && (GameState & 2) != 0)) &&
+            (ConsoleGlobal.field_23BE4_ != 0 || (network != 0 && (GameDataStateStorage.fields_.game_state_ & 2) != 0)) &&
             (field_1DD78_ == 0 || (field_1DD70_ & 0x80000000U) != 0)) {
             const int history = ConsoleGlobal.cursor_history_index_;
             const int cursor_y = ConsoleGlobal.cursor_history_y_[history];
@@ -3237,8 +3237,8 @@ int __cdecl gen_terrain_poly(Buffer *buffer, MapWin *window, int a3, int a4,
         // Vehs[1895].x in the original layout. Preserve that accidental
         // dependency by its real field, not an out-of-bounds player row.
         // Other out-of-range faction values have no recovered contract.
-        if ((((GameRules & 0x100) != 0) &&
-             ((GameState & 0x80) == 0) &&
+        if ((((GameDataStateStorage.fields_.game_rules_ & 0x100) != 0) &&
+             ((GameDataStateStorage.fields_.game_state_ & 0x80) == 0) &&
              ((a4 == -1 ? (Vehs[1895].x & 0x200)
                         : (PlayersData[a4].flags & 0x200)) == 0) &&
              ((tile->visibility & (uint8_t)(1u << (bVar10 & 0x1f))) == 0))) {
@@ -3252,8 +3252,8 @@ int __cdecl gen_terrain_poly(Buffer *buffer, MapWin *window, int a3, int a4,
             goto LAB_00463603;
         }
         local_70 = 0;
-        if (((GameState & 0x80) != 0) || a4 < 1 ||
-            ((GameMorePreferences & 1) == 0 || a3 < -7)) {
+        if (((GameDataStateStorage.fields_.game_state_ & 0x80) != 0) || a4 < 1 ||
+            ((GameDataStateStorage.fields_.game_more_preferences_ & 1) == 0 || a3 < -7)) {
             goto LAB_00463589;
         }
         local_1c = 0;
@@ -3567,7 +3567,7 @@ LAB_00463603:
     // THE WIREFRAME EXIT: a far-out zoom or an unexplored tile draws only
     // the tile's diamond outline.
     if (0x15 < a5 ||
-        (((GameRules & 0x100) == 0 && a4 > -1) &&
+        (((GameDataStateStorage.fields_.game_rules_ & 0x100) == 0 && a4 > -1) &&
          ((PlayersData[a4].flags & 0x200) == 0 &&
           (tile->visibility & (uint8_t)(1u << (bVar10 & 0x1f))) == 0))) {
         if (local_20 == 0) {
@@ -3678,7 +3678,7 @@ LAB_00463603:
           (tile->visibility &
            (uint8_t)(1 << ((uint8_t)ConsoleGlobal.faction_id_ & 0x1f))) !=
               0) ||
-         (GameState & 0x80) != 0) &&
+         (GameDataStateStorage.fields_.game_state_ & 0x80) != 0) &&
         local_20 != 0) {
         local_80 = 1;
         territory_faction = whose_territory(ConsoleGlobal.faction_id_, a7, a8, 0, 0);
@@ -3982,10 +3982,10 @@ landmark_chain:;
         // overlay flag, the tile outline is drawn 0x25/0xbe between this
         // tile's corners and its west/north neighbours' (site: Buffer::line
         // at 0x464CB3).
-        if ((((GamePreferences & 0x100) != 0 && local_20 == 0) ||
+        if ((((GameDataStateStorage.fields_.game_preferences_ & 0x100) != 0 && local_20 == 0) ||
              ((a6 & 0x4000000) != 0)) &&
             ((0x5f < (tile->climate & 0xe0)) || local_20 != 0 ||
-             ((GameMorePreferences & 0x800000) != 0))) {
+             ((GameDataStateStorage.fields_.game_more_preferences_ & 0x800000) != 0))) {
             iVar5 = a7 + -1;
             if ((MapIsFlat & 1) == 0) {
                 if (iVar5 < 0) {
@@ -4005,7 +4005,7 @@ landmark_chain:;
                              0xe0;
                     if (bVar11 < 0x60) {
                         if (local_20 != 0 ||
-                            ((GameMorePreferences & 0x800000) != 0)) {
+                            ((GameDataStateStorage.fields_.game_more_preferences_ & 0x800000) != 0)) {
                             if (0x5f < bVar11) {
                                 goto border_bright;
                             }
@@ -4185,7 +4185,7 @@ border_dim:
               (tile->visibility &
                (uint8_t)(1 << ((uint8_t)ConsoleGlobal.faction_id_ &
                                0x1f))) != 0) ||
-             (GameState & 0x80) != 0) &&
+             (GameDataStateStorage.fields_.game_state_ & 0x80) != 0) &&
             local_20 == 0) {
             territory_faction = whose_territory(ConsoleGlobal.faction_id_, a7,
                                           a8, 0, 0);
@@ -4369,7 +4369,7 @@ LAB_00465605:;
          (tile->visibility & (uint8_t)(1u << (bVar10 & 0x1f))) == 0)) {
         goto LAB_00466c32;
     }
-    if ((GamePreferences & 0x200) != 0 && local_20 == 0) {
+    if ((GameDataStateStorage.fields_.game_preferences_ & 0x200) != 0 && local_20 == 0) {
         uVar12 = tile->val3 & 7;
         if (a4 > -1 && (int)uVar12 != a4 &&
             (PlayersData[a4].diplo_treaties[uVar12] & 8) == 0) {
@@ -4987,7 +4987,7 @@ void MapWin::gen_tile(int x, int y, int a3, int a4) {
 // TRIED: Ghidra transcription with `this` restored on every Buffer/ Strings call Ghidra dropped (set_clip/set_font/set_text_color/ write_cent_l via a virtual-base offset `*(int*)(*(int*)this+4)`, Strings::get via fixed g_009b90d8); diverges at insn #6 (mov vs push), i.e. within the vtable/vbase-offset prologue read.
 void MapWin::draw_base_names() {
     if (MapBaseDisplayOverride == 0 && ControlTurnPhase == 0 &&
-        (GameRules & 0x80U) == 0) {
+        (GameDataStateStorage.fields_.game_rules_ & 0x80U) == 0) {
         return;
     }
 
@@ -4998,10 +4998,10 @@ void MapWin::draw_base_names() {
 
     const int faction = ConsoleGlobal.faction_id_;
     const uint32_t faction_bit = 1U << (faction & 31);
-    const bool omniscient = (GameState & STATE_OMNISCIENT_VIEW) != 0;
+    const bool omniscient = (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) != 0;
     const bool show_base_names =
         (field_1DD70_ & 0x800U) != 0 &&
-        (GameMorePreferences & MPREF_MAP_SHOW_BASE_NAMES) != 0;
+        (GameDataStateStorage.fields_.game_more_preferences_ & MPREF_MAP_SHOW_BASE_NAMES) != 0;
 
     if (show_base_names && field_1DD98_ < -10) {
         canvas->set_clip(&saved_clip);
@@ -5009,7 +5009,7 @@ void MapWin::draw_base_names() {
     }
     if (show_base_names) {
         canvas->set_font(&font_a_, 0, 0, 0);
-        for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+        for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
             const Base &base = Bases[base_id];
             const int tile_x = base.x;
             const int tile_y = base.y;
@@ -5051,8 +5051,8 @@ void MapWin::draw_base_names() {
             canvas->set_text_color(InfoFactionTextColors[base.faction_id_current],
                                    InfoFactionShadowColors[base.faction_id_current],
                                    1, 1);
-            if ((GameState & 0x1000U) != 0 &&
-                (omniscient || (LockEnableMask & faction_bit) == 0)) {
+            if ((GameDataStateStorage.fields_.game_state_ & 0x1000U) != 0 &&
+                (omniscient || (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_bit) == 0)) {
                 const PlayerData &owner_data =
                     PlayersData[base.faction_id_current];
                 if (base.x == owner_data.x_target &&
@@ -5064,7 +5064,7 @@ void MapWin::draw_base_names() {
                                  pixel_y + (field_1DDC8_ * 7) / 2,
                                  strlen(text));
 
-            const bool show_region_plan = (GameState & 0x1000U) != 0 &&
+            const bool show_region_plan = (GameDataStateStorage.fields_.game_state_ & 0x1000U) != 0 &&
                 omniscient && field_1DD98_ >= -3;
             if (show_region_plan) {
                 const int region = tile->region;
@@ -5089,11 +5089,11 @@ void MapWin::draw_base_names() {
                         font_a_.line_advance(), strlen(detail));
             } else {
                 const bool production_detail =
-                    (GameMorePreferences & MPREF_MAP_SHOW_PROD_WITH_BASE_NAMES) != 0 ||
+                    (GameDataStateStorage.fields_.game_more_preferences_ & MPREF_MAP_SHOW_PROD_WITH_BASE_NAMES) != 0 ||
                     (field_1DD70_ & 0x08000000U) != 0;
                 if (!production_detail) {
                     if (is_objective(base_id) &&
-                        (GameRules & 0x20000000U) == 0) {
+                        (GameDataStateStorage.fields_.game_rules_ & 0x20000000U) == 0) {
                         LPSTR objective = label_get(898);
                         if (objective) {
                             char detail[256];
@@ -5123,7 +5123,7 @@ void MapWin::draw_base_names() {
                         char detail[256];
                         detail[0] = '\0';
                         const bool objective = is_objective(base_id) != 0;
-                        if (objective && (GameRules & 0x20000000U) == 0) {
+                        if (objective && (GameDataStateStorage.fields_.game_rules_ & 0x20000000U) == 0) {
                             LPSTR name = label_get(898);
                             if (name) {
                                 strcat(detail, name);
@@ -5158,7 +5158,7 @@ void MapWin::draw_base_names() {
                     }
                 } else {
                     const bool objective = is_objective(base_id) != 0;
-                    if (objective && (GameRules & 0x20000000U) == 0) {
+                    if (objective && (GameDataStateStorage.fields_.game_rules_ & 0x20000000U) == 0) {
                         LPSTR objective_name = label_get(898);
                         if (objective_name) {
                             char detail[256];
@@ -5283,7 +5283,7 @@ void MapWin::right_menu(int tile_x, int tile_y, int screen_x, int screen_y) {
         mapwin_add_context_label(menu, 0x910, 0x321);
         mapwin_add_context_label(menu, 0x914, 0x322);
         menu.show(screen_x, screen_y, pop_expire);
-        if ((GameState & 0x800U) != 0) return;
+        if ((GameDataStateStorage.fields_.game_state_ & 0x800U) != 0) return;
 
         const int item_id = menu.get_selected_id();
         if (base_at(tile_x, tile_y) != base_id ||
@@ -5335,7 +5335,7 @@ void MapWin::right_menu(int tile_x, int tile_y, int screen_x, int screen_y) {
         mapwin_add_context_label(menu, 0xB18, 0x6E);
     }
     mapwin_add_context_label(menu, 0x8D4, 2);
-    if ((GameState & 0x4000U) != 0 && vehicle_id >= 0) {
+    if ((GameDataStateStorage.fields_.game_state_ & 0x4000U) != 0 && vehicle_id >= 0) {
         mapwin_add_context_label(menu, 0xDFC, 0x29A);
         mapwin_add_context_label(menu, 0x104C, 0x29B);
     }
@@ -5352,12 +5352,12 @@ void MapWin::right_menu(int tile_x, int tile_y, int screen_x, int screen_y) {
         const Base &base = Bases[base_id];
         const int faction = ConsoleGlobal.faction_id_;
         const int owner = base.faction_id_current;
-        if ((GameState & STATE_OMNISCIENT_VIEW) == 0 && owner != faction &&
+        if ((GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) == 0 && owner != faction &&
             spying(owner) == 0 &&
             (PlayersData[faction].diplo_treaties[owner] & 1U) == 0) {
             mapwin_add_context_label(menu, 0x894, 5);
         }
-        if ((GameState & STATE_OMNISCIENT_VIEW) != 0 ||
+        if ((GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) != 0 ||
             base.faction_id_current == faction) {
             mapwin_add_parenthesized_label(menu, 0x898, 0x33);
             mapwin_add_base_production(menu, base, 0x34);
@@ -5365,7 +5365,7 @@ void MapWin::right_menu(int tile_x, int tile_y, int screen_x, int screen_y) {
             mapwin_add_parenthesized_label(menu, 0x8A4, 0x36);
             mapwin_add_parenthesized_label(menu, 0x8A8, 0x37);
             mapwin_add_parenthesized_label(menu, 0x8AC, 0x38);
-            if ((GameMorePreferences & 4U) != 0) {
+            if ((GameDataStateStorage.fields_.game_more_preferences_ & 4U) != 0) {
                 mapwin_add_parenthesized_label(menu, 0x8B0, 0x39);
             }
         }
@@ -5384,7 +5384,7 @@ void MapWin::right_menu(int tile_x, int tile_y, int screen_x, int screen_y) {
             }
             const int delta_y = abs(tile_y - vehicle.y);
             if (vehicle.x != tile_x || vehicle.y != tile_y) {
-                if ((GameMorePreferences & 4U) != 0) {
+                if ((GameDataStateStorage.fields_.game_more_preferences_ & 4U) != 0) {
                     mapwin_add_context_label(menu, 0x8B8, 0x69);
                 }
                 const int prototype = vehicle.proto_id;
@@ -5435,7 +5435,7 @@ void MapWin::right_menu(int tile_x, int tile_y, int screen_x, int screen_y) {
             6);
     }
     mapwin_add_context_label(menu, 0x8E8, 8);
-    if ((GameMorePreferences & 4U) != 0) {
+    if ((GameDataStateStorage.fields_.game_more_preferences_ & 4U) != 0) {
         menu.add_separator(0x63);
         if (find_landmark(tile_x, tile_y, 1) >= 0) {
             mapwin_add_context_label(menu, 0x8EC, 9);
@@ -5464,7 +5464,7 @@ void MapWin::right_menu(int tile_x, int tile_y, int screen_x, int screen_y) {
     }
 
     menu.show(screen_x, screen_y, pop_expire);
-    if ((GameState & 0x800U) != 0) return;
+    if ((GameDataStateStorage.fields_.game_state_ & 0x800U) != 0) return;
     const int item_id = menu.get_selected_id();
     if (base_at(tile_x, tile_y) != base_id ||
         veh_at(tile_x, tile_y) != vehicle_id ||
@@ -5509,7 +5509,7 @@ void MapWin::right_menu(int tile_x, int tile_y, int screen_x, int screen_y) {
         if (edi || esi) return;
         ConsoleGlobal.set_move(esi);
         if (selected_vehicle >= 0) return;
-        GameState |= 2U;
+        GameDataStateStorage.fields_.game_state_ |= 2U;
         ConsoleGlobal.field_23BE4_ = static_cast<uint32_t>(esi);
         return;
     case 4:
@@ -5535,13 +5535,13 @@ void MapWin::right_menu(int tile_x, int tile_y, int screen_x, int screen_y) {
         return;
     case 8:
         if (edi || esi) return;
-        if ((GameState & 2U) == 0) {
+        if ((GameDataStateStorage.fields_.game_state_ & 2U) == 0) {
             ConsoleGlobal.set_move(1);
             if (ConsoleGlobal.cursor_active_ != 0 && selected_vehicle >= 0) {
                 if (X_pop("REALLYOVER", nullptr) == 0) return;
             }
         }
-        GameState |= 2U;
+        GameDataStateStorage.fields_.game_state_ |= 2U;
         ConsoleGlobal.field_23BE4_ = static_cast<uint32_t>(esi);
         ConsoleGlobal.field_23BE8_ = static_cast<uint32_t>(esi);
         return;
@@ -5759,7 +5759,7 @@ void MapWin::click(int pixel_x, int pixel_y, int button) {
     go_reset();
 
     bool control_down = (GetAsyncKeyState(VK_CONTROL) & 0x8000) != 0;
-    if ((GameState & STATE_SCENARIO_EDITOR) != 0 &&
+    if ((GameDataStateStorage.fields_.game_state_ & STATE_SCENARIO_EDITOR) != 0 &&
         (GetKeyState(VK_SCROLL) & 1) != 0 &&
         (GetAsyncKeyState(VK_SHIFT) & 0x8000) == 0) {
         control_down = !control_down;
@@ -5949,7 +5949,7 @@ void MapWin::click(int pixel_x, int pixel_y, int button) {
         return;
     }
 
-    if ((GameState & STATE_SCENARIO_EDITOR) != 0 && control_down &&
+    if ((GameDataStateStorage.fields_.game_state_ & STATE_SCENARIO_EDITOR) != 0 && control_down &&
         ConsoleControlTurnActive == 0) {
         ConsoleGlobal.set_view(1);
         ConsoleGlobal.set_cursor(tile_x, tile_y);
@@ -5967,7 +5967,7 @@ void MapWin::click(int pixel_x, int pixel_y, int button) {
             return;
         }
         if (!shift_down && !control_down) {
-            if ((GameState & STATE_UNK_100) != 0 ||
+            if ((GameDataStateStorage.fields_.game_state_ & STATE_UNK_100) != 0 ||
                 ConsoleControlTurnActive != 0) {
                 ConsoleGlobal.set_view(button);
                 ConsoleGlobal.set_cursor(tile_x, tile_y);
@@ -5980,7 +5980,7 @@ void MapWin::click(int pixel_x, int pixel_y, int button) {
             }
             return;
         }
-        if (((GameState & STATE_UNK_100) != 0 || field_1DD78_ == 1) &&
+        if (((GameDataStateStorage.fields_.game_state_ & STATE_UNK_100) != 0 || field_1DD78_ == 1) &&
             ConsoleControlTurnActive == 0) {
             right_menu(tile_x, tile_y, pixel_x, pixel_y);
             return;
@@ -6004,7 +6004,7 @@ void MapWin::click(int pixel_x, int pixel_y, int button) {
         ConsoleControlTurnActive == 0) {
         const Base &base = Bases[base_id];
         const int owner = base.faction_id_current;
-        const bool omniscient = (GameState & STATE_OMNISCIENT_VIEW) != 0;
+        const bool omniscient = (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) != 0;
         const bool visible = owner == local_faction ||
             (base.visibility & (1U << local_faction)) != 0;
         const bool access = omniscient || owner == local_faction ||
@@ -6047,7 +6047,7 @@ void MapWin::draw_base_dest(int draw_type) {
         field_1DDA4_, mapwin_dest_add(field_1DDD4_, field_1DDCC_));
 
     if ((field_1DD70_ & 0x40000U) != 0) {
-        for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+        for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
             const Base &base = Bases[base_id];
             if (base.faction_id_current != local_faction) {
                 continue;
@@ -6111,7 +6111,7 @@ void MapWin::draw_base_dest(int draw_type) {
     }
 
     if ((field_1DD70_ & 0xC00000U) != 0) {
-        for (int vehicle_id = 0; vehicle_id < VehCurrentCount; ++vehicle_id) {
+        for (int vehicle_id = 0; vehicle_id < GameDataStateStorage.fields_.vehicle_current_count_; ++vehicle_id) {
             const Veh &vehicle = Vehs[vehicle_id];
             if (vehicle.faction_id != local_faction) {
                 continue;
@@ -7529,7 +7529,7 @@ void MapWin::calculate_dimensions() {
     field_1DDE0_ = fogH;
 
     field_1DD6C_ = 0x19;
-    if ((GameMorePreferences & 0x10000) != 0) {
+    if ((GameDataStateStorage.fields_.game_more_preferences_ & 0x10000) != 0) {
         field_1DD6C_ = 8;
         field_1DDDC_ = fogW / 3;
         field_1DDE0_ = fogH / 3;
@@ -7813,7 +7813,7 @@ void MapWin::on_right_down(int x_coord, int y_coord) {
     }
 
 check_flag:
-    if (GameState & 0x40) {
+    if (GameDataStateStorage.fields_.game_state_ & 0x40) {
         this->field_1DD8C_ = 2;
         this->field_1DD94_ = -1;
         this->field_1DD90_ = -1;
@@ -7881,7 +7881,7 @@ void MapWin::on_left_down(int x_coord, int y_coord) {
     }
 
 check_undo:
-    if ((GameState & 0x40) != 0) {
+    if ((GameDataStateStorage.fields_.game_state_ & 0x40) != 0) {
         auto_undo();
         field_1DD8C_ = 1;
         field_1DD94_ = -1;
@@ -7915,7 +7915,7 @@ after_undo:
 
     MapWinSelectedSlot = static_cast<int>(field_1DD78_);
     if ((static_cast<uint16_t>(GetAsyncKeyState(VK_SHIFT)) & 0xFF00) != 0 &&
-        (GameState & 0x40) == 0) {
+        (GameDataStateStorage.fields_.game_state_ & 0x40) == 0) {
         go_timer(3);
         return;
     }

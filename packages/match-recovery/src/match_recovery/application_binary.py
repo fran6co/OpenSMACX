@@ -11,7 +11,9 @@ from typing import Callable
 from match_recovery.bound_objects import FunctionBinding, check_objects
 from match_recovery.generated_source import read_generated
 from match_recovery.model import Origin, Result, Span, digest
-from match_recovery.object_source import read_objects, object_targets, referenced_object_units
+from match_recovery.object_source import (emitted_object_symbols, object_targets,
+                                          require_disjoint_object_symbols,
+                                          read_objects, referenced_object_units)
 from .literal_source import read_literals
 from .literal_data import check_literals
 from match_recovery.pe_coff import Coff, PeImage
@@ -119,13 +121,15 @@ def _compiled_evidence(bindings, object_bindings, generated_bindings, objects, i
                        import_bindings=(), shared_bindings=(), literal_bindings=()):
     """Resolve targets from product objects, never from a retention probe."""
     data_targets, checked_objects = object_targets(object_bindings, objects)
-    if {item.symbol for item in shared_bindings} & (set(externals) | {item.symbol for item in bindings}
-            | {item.symbol for item in object_bindings} | {item.symbol for item in generated_bindings}
-            | {item.symbol for item in import_bindings}):
-        raise ValueError("shared symbol also has a function/object/generated/import binding")
-    if {item.symbol for item in import_bindings} & (
-            set(externals) | {item.symbol for item in object_bindings} | {item.symbol for item in generated_bindings}):
-        raise ValueError("import symbol also has a function/object/generated binding")
+    object_symbols = set(require_disjoint_object_symbols(
+        object_bindings, set(externals) | {item.symbol for item in bindings},
+        {item.symbol for item in generated_bindings}, {item.symbol for item in import_bindings},
+        {item.symbol for item in shared_bindings}))
+    namespaces = [set(externals) | {item.symbol for item in bindings}, object_symbols,
+                  {item.symbol for item in generated_bindings}, {item.symbol for item in import_bindings},
+                  {item.symbol for item in shared_bindings}]
+    if any(group & other for index, group in enumerate(namespaces) for other in namespaces[:index]):
+        raise ValueError("conflicting function/object/generated/import/shared symbol also has another binding")
     imports, checked_imports = import_targets(import_bindings, objects, image)
     active_literals = [item for item in literal_bindings if item.unit in objects or item.unit in (errors or {})]
     literal_targets, checked_literals = check_literals(active_literals, objects, image, errors=errors)
@@ -184,7 +188,9 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
     generated_bindings = read_generated(root, snapshot["image_sha256"])
     import_bindings = read_imports(root)
     shared_bindings = read_shared(root, snapshot["image_sha256"])
-    validate_shared(shared_bindings, view, reserved=[item.symbol for item in (*object_bindings, *generated_bindings, *import_bindings)])
+    object_symbols = set(emitted_object_symbols(object_bindings))
+    validate_shared(shared_bindings, view, reserved=[*object_symbols,
+        *[item.symbol for item in (*generated_bindings, *import_bindings)]])
     from .component_targets import component_targets
     try:
         dependency_targets, component_reports = component_targets(root, snapshot, image_data)
@@ -206,9 +212,11 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
     refused.extend({"entity_id": item.origin.entity_id, "result": Result.UNKNOWN, "symbol": item.symbol,
                     "reason": "source definition is not in a configured translation unit"} for item in unsupported)
     bindings = [item for item in bindings if item not in unsupported]
-    if {item.symbol for item in object_bindings} & set(externals):
-        raise ValueError("a source symbol is bound as both function and object")
-    if {item.symbol for item in generated_bindings} & (set(externals) | {item.symbol for item in object_bindings}):
+    require_disjoint_object_symbols(object_bindings,
+        set(externals) | {item.symbol for item in bindings},
+        {item.symbol for item in generated_bindings}, {item.symbol for item in import_bindings},
+        {item.symbol for item in shared_bindings})
+    if {item.symbol for item in generated_bindings} & (set(externals) | {item.symbol for item in bindings} | object_symbols):
         raise ValueError("generated symbol also has a function/object binding")
     command_for = command_for if command_for is not None else lambda path: ()
     required_data = [item for item in object_bindings if item.evidence is not None and item.evidence.entity_id in selected]

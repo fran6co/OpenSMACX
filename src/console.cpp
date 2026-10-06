@@ -147,7 +147,7 @@ void Console::disband(int x_coord, int y_coord) {
         disband(vehicle);
         return;
     }
-    if ((GameState & 0x40) == 0 || IsMultiplayerNet) return;
+    if ((GameDataStateStorage.fields_.game_state_ & 0x40) == 0 || IsMultiplayerNet) return;
     auto_undo();
     const int base = base_at(x_coord, y_coord);
     if (base < 0) return;
@@ -446,7 +446,7 @@ void Console::editor_edit_veh(int vehicle_id) {
         StringTemp[0] = '\0';
         ::strcat(StringTemp, label_get(25));
         popup.dialogs_.item(StringTemp, 9999);
-        for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+        for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
             if (Bases[base_id].faction_id_current == vehicle.faction_id) {
                 popup.dialogs_.item(Bases[base_id].name_string, base_id);
             }
@@ -617,7 +617,7 @@ void Console::assemble() { // 0x004D95F0
 
     field_23D1C_ = 1;
     int best_vehicle = -1;
-    for (int vehicle_id = 0; vehicle_id < VehCurrentCount; ++vehicle_id) {
+    for (int vehicle_id = 0; vehicle_id < GameDataStateStorage.fields_.vehicle_current_count_; ++vehicle_id) {
         Veh &vehicle = Vehs[vehicle_id];
         if (vehicle.faction_id != faction_id_) {
             continue;
@@ -683,7 +683,7 @@ void Console::assemble() { // 0x004D95F0
     }
 
     if (ConsoleGroupAction == 2) {
-        for (int vehicle_id = 0; vehicle_id < VehCurrentCount; ++vehicle_id) {
+        for (int vehicle_id = 0; vehicle_id < GameDataStateStorage.fields_.vehicle_current_count_; ++vehicle_id) {
             Veh &vehicle = Vehs[vehicle_id];
             if (vehicle.faction_id == faction_id_ &&
                 (vehicle.state & 0x08000000u) != 0) {
@@ -701,7 +701,7 @@ void Console::assemble() { // 0x004D95F0
 // ORIGINAL: 0x004E2000 ?corner_the_market@Console@@QAEXXZ 0x004E2000-0x004E2235
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original entry 004E2000; retained seed src/recovered/units/004e2000.cpp", "Native4E20BB..20DA formats amount/deadline before already-cornered and affordability checks. Native4E219F reloads current turn/rules after lock; message and final formatting read source-owned faction state after callbacks.", "recovery/tasks/console-scenario-owner-wave.json; native scope expansions retain the original task baseline"], "reason": "Recover the complete Console command into its genuine owner using typed state and existing lifecycle/network APIs. Preserve original spans and retained seed evidence; this binding is not a byte, reference or runtime acceptance claim."}
 void Console::corner_the_market() { // 0x004E2000
-    if ((GameRules & 4) == 0) {
+    if ((GameDataStateStorage.fields_.game_rules_ & 4) == 0) {
         return;
     }
 
@@ -711,7 +711,7 @@ void Console::corner_the_market() { // 0x004E2000
     }
 
     bool has_headquarters = false;
-    for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+    for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
         if (Bases[base_id].faction_id_current == faction_id &&
             has_fac_built(FAC_HEADQUARTERS, base_id)) {
             has_headquarters = true;
@@ -725,11 +725,11 @@ void Console::corner_the_market() { // 0x004E2000
 
     PlayerData &faction = PlayersData[faction_id];
     const int amount = corner_market(faction_id);
-    const int proposed_turn = TurnCurrentNum + Rules.turns_corner_gbl_energy_mrkt;
+    const int proposed_turn = GameDataStateStorage.fields_.turn_current_num_ + Rules.turns_corner_gbl_energy_mrkt;
     parse_num(0, amount);
     parse_num(1, static_cast<int>(game_year(proposed_turn)));
 
-    if (faction.corner_market_turn > TurnCurrentNum) {
+    if (faction.corner_market_turn > GameDataStateStorage.fields_.turn_current_num_) {
         parse_num(0, static_cast<int>(game_year(faction.corner_market_turn)));
         NetMsgPrimary.pop("CORNERALREADY", 5000, 0, nullptr);
         return;
@@ -749,7 +749,7 @@ void Console::corner_the_market() { // 0x004E2000
     }
 
     faction.corner_market_turn =
-        TurnCurrentNum + Rules.turns_corner_gbl_energy_mrkt;
+        GameDataStateStorage.fields_.turn_current_num_ + Rules.turns_corner_gbl_energy_mrkt;
     faction.corner_market_active = amount;
     faction.energy_reserves -= amount;
     synch_leader(faction_id);
@@ -766,13 +766,13 @@ void Console::corner_the_market() { // 0x004E2000
 // ORIGINAL: 0x00511800 ?turn_hints@Console@@QAEXXZ 0x00511800-0x00511BA8
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original entry 00511800; retained seed src/recovered/units/00511800.cpp", "Existing TutWin guard at8CC210 is member+53A8; stage8CC228 is+53C0. Typed global Console history, PlayerData prototype/base/population fields and diplomacy arrays replace seed address arithmetic. Caption pointer691B14 targets TUTOR691B8C.", "recovery/tasks/console-scenario-owner-wave.json; native scope expansions retain the original task baseline"], "reason": "Recover the complete Console command into its genuine owner using typed state and existing lifecycle/network APIs. Preserve original spans and retained seed evidence; this binding is not a byte, reference or runtime acceptance claim."}
 void Console::turn_hints() { // 0x00511800
-    if ((GamePreferences & PREF_BSC_TUTORIAL_MSGS) == 0 ||
+    if ((GameDataStateStorage.fields_.game_preferences_ & PREF_BSC_TUTORIAL_MSGS) == 0 ||
         IsMultiplayerNet != 0 || TutWinGlobal->tutorial_blocked()) {
         return;
     }
 
     const int faction_id = ConsoleGlobal.faction_id_;
-    int turn = TurnCurrentNum;
+    int turn = GameDataStateStorage.fields_.turn_current_num_;
     const int history = ConsoleGlobal.cursor_history_index_;
     const int history_x = ConsoleGlobal.cursor_history_x_[history];
     const int history_y = ConsoleGlobal.cursor_history_y_[history];
@@ -790,7 +790,7 @@ void Console::turn_hints() { // 0x00511800
                                       nullptr, 0x100, -1, -1);
             }
         }
-        turn = TurnCurrentNum;
+        turn = GameDataStateStorage.fields_.turn_current_num_;
     }
 
     bool second_base_tutorial_shown = false;
@@ -806,7 +806,7 @@ void Console::turn_hints() { // 0x00511800
             parse_says(0, Bases[base_id].name_string, -1, -1);
             TutWinGlobal->tut_map("SECONDBASE", x, y, -2 - base_id,
                                   nullptr, 0, -1, -1);
-            faction.last_turn_new_base = TurnCurrentNum;
+            faction.last_turn_new_base = GameDataStateStorage.fields_.turn_current_num_;
             second_base_tutorial_shown = true;
         }
     }
@@ -822,7 +822,7 @@ void Console::turn_hints() { // 0x00511800
                     const int y = Bases[base_id].y;
                     TutWinGlobal->tut_map("BUILDMORE", x, y, -2 - base_id,
                                           nullptr, 0, -1, -1);
-                    faction.last_turn_new_base = TurnCurrentNum;
+                    faction.last_turn_new_base = GameDataStateStorage.fields_.turn_current_num_;
                 }
             }
         }
@@ -866,12 +866,12 @@ void Console::governor_directives() { // 0x00516DA0
     }
 
     const int directive = x_pop_short("GOVERNORCONTROL", 0x40, 0);
-    if (directive < 0 || BaseCurrentCount <= 0) {
+    if (directive < 0 || GameDataStateStorage.fields_.base_current_count_ <= 0) {
         return;
     }
 
     int first_owned_base = -1;
-    for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+    for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
         if (Bases[base_id].faction_id_current == ConsoleGlobal.faction_id_) {
             first_owned_base = base_id;
             break;
@@ -892,7 +892,7 @@ void Console::governor_directives() { // 0x00516DA0
     }
 
     StringTemp[0] = 0;
-    for (int owned_base_id = 0; owned_base_id < BaseCurrentCount; ++owned_base_id) {
+    for (int owned_base_id = 0; owned_base_id < GameDataStateStorage.fields_.base_current_count_; ++owned_base_id) {
         if (Bases[owned_base_id].faction_id_current != ConsoleGlobal.faction_id_) {
             continue;
         }
@@ -1001,7 +1001,7 @@ void Console::chat(int target_faction) {
         return;
     }
 
-    const unsigned int enabled = LockEnableMask & 0xff;
+    const unsigned int enabled = GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xff;
     if (state[0].trailing_words_[0] >= 2 &&
         (enabled & state[2].trailing_words_[6]) != enabled) {
         for (int faction = 1; faction < 8; ++faction) {
@@ -1364,11 +1364,11 @@ Return Value: 1 when editing is locked, 0 otherwise
 Status: Complete
 */
 int Console::edit_lock() {
-    if (!(GameState & STATE_SCENARIO_EDITOR)) {
+    if (!(GameDataStateStorage.fields_.game_state_ & STATE_SCENARIO_EDITOR)) {
         return 0;
     }
     if (((ConsoleEditKeyStateSlot())(VK_SCROLL) & 1) ||
-        (GameState & STATE_EDITOR_ONLY_MODE)) {
+        (GameDataStateStorage.fields_.game_state_ & STATE_EDITOR_ONLY_MODE)) {
         return 1;
     }
     return 0;
@@ -1470,7 +1470,7 @@ Status: Complete
 */
 void Console::cursor_next(int x_coord, int y_coord) {
     if (((x_coord ^ y_coord) & 1) != 0) {
-        if ((GameState & STATE_DEBUG_MODE) != 0) {
+        if ((GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE) != 0) {
             danger(CursorNextDangerMsg1, CursorNextDangerMsg2, x_coord,
                   y_coord, 0);
         }
@@ -1715,7 +1715,7 @@ void Console::zoom(int zoom_command, int window_index) {
                     1U << (ConsoleGlobal.faction_id_ & 0x1f));
                 visible = (map_loc(tile_x, tile_y)->visibility & faction_bit) != 0;
                 if (!visible) {
-                    visible = (GameState & 0x80U) != 0;
+                    visible = (GameDataStateStorage.fields_.game_state_ & 0x80U) != 0;
                 }
             }
             if (visible) {
@@ -1757,7 +1757,7 @@ void Console::zoom(int zoom_command, int window_index) {
                     visible = (map_loc(candidate_x, candidate_y)->visibility &
                                faction_bit) != 0;
                     if (!visible) {
-                        visible = (GameState & 0x80U) != 0;
+                        visible = (GameDataStateStorage.fields_.game_state_ & 0x80U) != 0;
                     }
                 }
                 if (!visible) {
@@ -2109,6 +2109,16 @@ InfoWin ConsoleInfoWin;
 // history members. The following stores instead use the method receiver.
 // RECOVERY_OBJECT: v1 0x009156B0 ?ConsoleGlobal@@3VConsole@@A
 Console ConsoleGlobal;
+int Console::game_data_private_word(FILE *file, int write_mode) {
+    if (write_mode != 0) {
+        field_23D20_[0] = 0;
+        field_23D20_[1] = 0;
+        field_23D20_[2] = 0;
+        field_23D20_[3] = 0;
+    }
+    return game_data_transfer_block(file, field_23D20_, sizeof(field_23D20_));
+}
+
 
 // Shared four-field rectangle written by original Console51D760/51D890.
 // Start binding only: no complete original allocation/lifetime claim.
@@ -2324,7 +2334,7 @@ void Console::toggle_dest() {
 
 
 void Console::disband(int veh_id) {
-    if ((Vehs[veh_id].flags & 0x20) && !(GameState & 0x40)) {
+    if ((Vehs[veh_id].flags & 0x20) && !(GameDataStateStorage.fields_.game_state_ & 0x40)) {
         NetMsgPrimary.pop("DISBANDOBJ", 5000, 0, nullptr);
         return;
     }
@@ -2333,7 +2343,7 @@ void Console::disband(int veh_id) {
 
     Veh &vehicle = Vehs[veh_id];
     if (vehicle.faction_id != faction_id_ &&
-        (IsMultiplayerNet || !(GameState & 0x80))) {
+        (IsMultiplayerNet || !(GameDataStateStorage.fields_.game_state_ & 0x80))) {
         NetDaemonNet.unlock_veh();
         return;
     }
@@ -2637,8 +2647,8 @@ void Console::unload(int veh_id) {
 // 0x0094F25C..0x0094F274 are alpha.h's TimeControl[5].turn/.base/.unit/
 // .event/.extra/.refresh/.accumulated - the six parse_says'd fields plus the
 // seventh stored on accept.
-// RECOVERY_OBJECT: v1 0x009A64E0 ?TimeControlsSelection@@3HA
-int TimeControlsSelection = 0;
+// Historical object identity moved to GameDataStateStorage; see the transport manifest.
+
 
 // The turn-assignment guard: game.cpp owns the same storage as its TU-private
 // TurnsAssigned static at 0x0093E8C0. Until that static is exported this
@@ -2739,7 +2749,7 @@ void Console::editor_reset_faction() {
             } while (i != 0);
 
             social_upkeep(factionId);
-            int count = BaseCurrentCount;
+            int count = GameDataStateStorage.fields_.base_current_count_;
             faction_state[-0x53] = 0;
             faction_state[-0x54] = 0;
             *rules_flag = 0;
@@ -2763,9 +2773,9 @@ void Console::editor_reset_faction() {
             // Vehs owned by this faction are emptied. &Vehs[0].state is
             // 0x0095282C (see clear_group's note in console.h) and the
             // 0xd-dword step is the 0x34-byte Veh stride.
-            if (VehCurrentCount > 0) {
+            if (GameDataStateStorage.fields_.vehicle_current_count_ > 0) {
                 int *veh_state = reinterpret_cast<int *>(&Vehs[0].state);
-                int n = VehCurrentCount;
+                int n = GameDataStateStorage.fields_.vehicle_current_count_;
                 do {
                     if (*((unsigned char *)veh_state + 0xA) == factionId) {
                         *((unsigned char *)veh_state + 0xD) = 0;
@@ -2794,10 +2804,10 @@ void Console::editor_reset_faction() {
 
 void Console::editor_clear_vehicles() {
     auto_undo();
-    GameState |= 4;
+    GameDataStateStorage.fields_.game_state_ |= 4;
     int count = 0;
-    VehCurrentCount = 0;
-    BaseCurrentCount = 0;
+    GameDataStateStorage.fields_.vehicle_current_count_ = 0;
+    GameDataStateStorage.fields_.base_current_count_ = 0;
     ConsoleGlobal.cursor_active_ = 0;
     ConsoleGlobal.selected_vehicle_ = -1;
     if (MapArea > 0) {
@@ -2821,9 +2831,9 @@ void Console::editor_clear_vehicles() {
 // RECOVERY_BINDING: v1 {"evidence": ["git:d5d0b2c01472baa3cf01dda67b73e270d64b4db7:src/recovered/units/004e1290.cpp;source:src/console.cpp:Console::editor_clear_vehicles;source:src/map.h;source:src/path.h;source:src/worldwin.h;source:src/game.h;source:src/veh.h;source:src/base.h;source:src/console.h"], "reason": "Recover the editor map-reset coordinator through the typed GameState, vehicle/base counts, Console cursor state, map lifecycle, Path and WorldWin owners. The historical body establishes the ordered reset and redraw operations."}
 void Console::editor_clear() {
     auto_undo();
-    GameState |= STATE_UNK_4;
-    VehCurrentCount = 0;
-    BaseCurrentCount = 0;
+    GameDataStateStorage.fields_.game_state_ |= STATE_UNK_4;
+    GameDataStateStorage.fields_.vehicle_current_count_ = 0;
+    GameDataStateStorage.fields_.base_current_count_ = 0;
     ConsoleGlobal.cursor_active_ = 0;
     ConsoleGlobal.selected_vehicle_ = -1;
     map_wipe();
@@ -2841,11 +2851,11 @@ void Console::editor_clear() {
 void Console::editor_date() {
     auto_undo();
     const int accepted = X_pop_ask_number(
-        StrEditorYear, static_cast<int>(game_year(TurnCurrentNum)), 0);
+        StrEditorYear, static_cast<int>(game_year(GameDataStateStorage.fields_.turn_current_num_)), 0);
     if (accepted == 0) {
-        TurnCurrentNum = ParseNumTable[0] - static_cast<int>(StartingMissionYear);
-        if (TurnCurrentNum < 1) {
-            TurnCurrentNum = 1;
+        GameDataStateStorage.fields_.turn_current_num_ = ParseNumTable[0] - static_cast<int>(ScenarioSave.starting_mission_year);
+        if (GameDataStateStorage.fields_.turn_current_num_ < 1) {
+            GameDataStateStorage.fields_.turn_current_num_ = 1;
         }
         MapWinTable[0]->on_redraw();
         TutWinBaseWindow.on_redraw();
@@ -2941,7 +2951,7 @@ void Console::erase_landmark(int x_coord, int y_coord) {
         NetMsgPrimary.pop("LANDMARKNONE", 5000, 0, nullptr);
         return;
     }
-    if ((GameState & 0x80) == 0 &&
+    if ((GameDataStateStorage.fields_.game_state_ & 0x80) == 0 &&
         valid_landmark(x_coord, y_coord, ConsoleGlobal.faction_id_) == 0) {
         NetMsgPrimary.pop("LANDMARKNO", 5000, 0, nullptr);
         return;
@@ -3140,7 +3150,7 @@ void Console::menu_simple() {
     // reachable from portable source).
     // menu+0x11b0 is selected_vehicle_: 0x22A2C + 0x11B0 = 0x23BDC. The member
     // form replaces the MainMenu pun this body used to carry.
-    GameMorePreferences &= 0xffdfffff;
+    GameDataStateStorage.fields_.game_more_preferences_ &= 0xffdfffff;
     alpha_menu_.check(selected_vehicle_);
     X_pop(StrMenuSimple, 0);
 }
@@ -3148,7 +3158,7 @@ void Console::menu_simple() {
 // ORIGINAL: 0x00516930 ?menu_detail@Console@@QAEXXZ 0x00516930-0x00516961 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["The 0x00516930 seed sets GameMorePreferences bit 0x200000, calls the Console member at +0x22A2C using its current vehicle, and passes the image string at 0x0068A9C0 to X_pop.", "src/console.h identifies alpha_menu_ at Console +0x22A2C and selected_vehicle_; src/console.cpp already binds the matching MENUDETAIL text as StrMenuDetail, and alpha.h names GameMorePreferences."], "reason": "Express menu detail activation through the existing preference flag, typed AlphaMenu member, Console selection state and established string binding."}
 void Console::menu_detail() {
-    GameMorePreferences |= 0x200000;
+    GameDataStateStorage.fields_.game_more_preferences_ |= 0x200000;
     alpha_menu_.check(selected_vehicle_);
     X_pop(StrMenuDetail, 0);
 }
@@ -3158,10 +3168,10 @@ void Console::menu_detail() {
 void Console::show_scen_objectives() {
     const int faction_id = ConsoleGlobal.faction_id_;
     const Player &faction = Players[faction_id];
-    parse_num(0, ObjectiveReqVictory);
-    parse_num(1, ObjectivesSuddenDeathVictory);
-    parse_num(2, num_objectives(faction_id, GameRules & 0x1000));
-    parse_num(3, EndingMissionYear);
+    parse_num(0, ScenarioSave.objective_req_victory);
+    parse_num(1, ScenarioSave.objectives_sudden_death_victory);
+    parse_num(2, num_objectives(faction_id, GameDataStateStorage.fields_.game_rules_ & 0x1000));
+    parse_num(3, ScenarioSave.ending_mission_year);
 
     GenderDefault = faction.is_leader_female;
     PluralityDefault = 0;
@@ -3262,7 +3272,7 @@ int Console::ready_search(int veh_id) {
     int outerIdx = (IsMultiplayerNet != 0) ? -1 : 0;
 
     while (outerIdx <= 2) {
-        int vehCount = VehCurrentCount;
+        int vehCount = GameDataStateStorage.fields_.vehicle_current_count_;
 
         if ((IsMultiplayerNet != 0) && (outerIdx == 0) && (focus_vehicle_ >= 0) &&
             (focus_vehicle_ < vehCount) &&
@@ -3273,7 +3283,7 @@ int Console::ready_search(int veh_id) {
             goto searchDone;
         }
 
-        vehCount = VehCurrentCount;
+        vehCount = GameDataStateStorage.fields_.vehicle_current_count_;
         for (int innerIdx = 0; innerIdx < vehCount; innerIdx++) {
             unsigned char *rec = reinterpret_cast<unsigned char *>(&Vehs[innerIdx].state);
 
@@ -3314,7 +3324,7 @@ int Console::ready_search(int veh_id) {
         if (result >= 0) goto searchDone;
 
         if (outerIdx >= 0) {
-            vehCount = VehCurrentCount;
+            vehCount = GameDataStateStorage.fields_.vehicle_current_count_;
             for (int clearIdx = 0; clearIdx < vehCount; clearIdx++) {
                 unsigned int *rec = reinterpret_cast<unsigned int *>(&Vehs[clearIdx].state);
                 if (outerIdx != 0 || clearIdx != selected_vehicle_ || veh_id < 0) {
@@ -3403,13 +3413,13 @@ void Console::editor_load() {
     if (load_map() != 0) {
         return;
     }
-    int flags = GameState;
+    int flags = GameDataStateStorage.fields_.game_state_;
     flags |= 4;
-    VehCurrentCount = 0;
-    BaseCurrentCount = 0;
+    GameDataStateStorage.fields_.vehicle_current_count_ = 0;
+    GameDataStateStorage.fields_.base_current_count_ = 0;
     ConsoleGlobal.cursor_active_ = 0;
     ConsoleGlobal.selected_vehicle_ = -1;
-    GameState = flags;
+    GameDataStateStorage.fields_.game_state_ = flags;
     draw_map(1);
     ConsoleInfoWin.set_redraw_phase(7);
     ConsoleInfoWin.on_redraw();
@@ -3439,8 +3449,8 @@ void Console::editor_generate() {
     int count = MapArea;
     Map *tile = map_tiles();
 
-    VehCurrentCount = 0;
-    BaseCurrentCount = 0;
+    GameDataStateStorage.fields_.vehicle_current_count_ = 0;
+    GameDataStateStorage.fields_.base_current_count_ = 0;
     ConsoleGlobal.cursor_active_ = 0;
     ConsoleGlobal.selected_vehicle_ = -1;
 
@@ -3454,29 +3464,29 @@ void Console::editor_generate() {
     }
 
     ConsoleGlobal.field_23BF8_ = 0;
-    GameState = GameState | 4;
+    GameDataStateStorage.fields_.game_state_ = GameDataStateStorage.fields_.game_state_ | 4;
     // 0x004E1033 loads slot zero before accessing the window's +0x1DD98
     // member. The array itself is neither the receiver nor member storage.
     MapWinTable[0]->field_1DD98_ = static_cast<uint32_t>(-14);
     MapWinTable[0]->draw_map(1);
 
-    int flags = GameState;
+    int flags = GameDataStateStorage.fields_.game_state_;
     int wasSet = flags & 0x80;
     flags |= 0x80;
-    GameState = flags;
+    GameDataStateStorage.fields_.game_state_ = flags;
     world_build();
     ::draw_map(1);
     if (wasSet == 0) {
-        int f2 = GameState;
+        int f2 = GameDataStateStorage.fields_.game_state_;
         f2 &= ~0x80;
-        GameState = f2;
+        GameDataStateStorage.fields_.game_state_ = f2;
         ::draw_map(1);
     }
 
     // MainInterface construction at 0x0045EF10 creates 42 FlatButtons at
     // +0xE00 with stride 0xB4C. Element 2 is the original 0x007B0CB8
     // receiver; its table selects Win::show and BaseButton::hide.
-    unsigned char flagByte = static_cast<unsigned char>(GameState);
+    unsigned char flagByte = static_cast<unsigned char>(GameDataStateStorage.fields_.game_state_);
     if ((flagByte & 0x80) != 0 && (flagByte & 0x40) != 0) {
         MainInterfaceGlobal.flat_button_[2].show(0);
         return;
@@ -3922,15 +3932,15 @@ void Console::editor_fungus() {
 //        does not ask for - and neither guard reordering nor the mask's source
 //        form reaches it. Not chased further.
 void Console::editor_lock2() {
-    const uint32_t flags = GameState;
+    const uint32_t flags = GameDataStateStorage.fields_.game_state_;
     const uint32_t lock_mask = 0x8000000;
     if (flags & lock_mask) {
-        GameState = flags & ~lock_mask;
+        GameDataStateStorage.fields_.game_state_ = flags & ~lock_mask;
         NetMsgPrimary.pop(StrProtectOff, 5000, 0, 0);
         MainInterfaceGlobal.draw_edit_pane();
         return;
     }
-    GameState = flags | lock_mask;
+    GameDataStateStorage.fields_.game_state_ = flags | lock_mask;
     NetMsgPrimary.pop(StrProtectOn, 5000, 0, 0);
     if (ConsoleGlobal.cursor_active_ != 0) {
         set_view(1);
@@ -4030,7 +4040,7 @@ void Console::prev_cursor() {
 void Console::base_names() {
     // The 0x1000 / 0x2000 pair is the show-base-names / show-production
     // toggle: setting either forces 0x1000 on, clearing both clears it.
-    const int flags = GameMorePreferences;
+    const int flags = GameDataStateStorage.fields_.game_more_preferences_;
     int new_flags;
     if (flags & 0x1000) {
         new_flags = flags & 0xFFFFCFFF;
@@ -4039,7 +4049,7 @@ void Console::base_names() {
     } else {
         new_flags = flags | 0x2000;
     }
-    GameMorePreferences = AlphaIniPrefs.more_preferences = new_flags;
+    GameDataStateStorage.fields_.game_more_preferences_ = AlphaIniPrefs.more_preferences = new_flags;
     prefs_save(0);
     ::draw_map(1);
 }
@@ -4090,14 +4100,14 @@ void Console::base_names() {
 
 
 void Console::toggle_flatten() {
-    const int flags = GameMorePreferences ^ 0x10000;
-    GameMorePreferences = flags;
+    const int flags = GameDataStateStorage.fields_.game_more_preferences_ ^ 0x10000;
+    GameDataStateStorage.fields_.game_more_preferences_ = flags;
     if (flags & 0x10000) {
         alpha_menu_.check_menu_item(2, 0x209);
     } else {
         alpha_menu_.uncheck_menu_item(2, 0x209);
     }
-    AlphaIniPrefs.more_preferences = GameMorePreferences;
+    AlphaIniPrefs.more_preferences = GameDataStateStorage.fields_.game_more_preferences_;
     prefs_save(0);
     ::draw_map(1);
 }
@@ -4148,14 +4158,14 @@ void Console::toggle_flatten() {
 
 
 void Console::toggle_grid() {
-    const int flags = GamePreferences ^ 0x100;
-    GamePreferences = flags;
+    const int flags = GameDataStateStorage.fields_.game_preferences_ ^ 0x100;
+    GameDataStateStorage.fields_.game_preferences_ = flags;
     if (flags & 0x100) {
         alpha_menu_.check_menu_item(2, 0x20A);
     } else {
         alpha_menu_.uncheck_menu_item(2, 0x20A);
     }
-    AlphaIniPrefs.preferences = GamePreferences;
+    AlphaIniPrefs.preferences = GameDataStateStorage.fields_.game_preferences_;
     prefs_save(0);
     ::draw_map(1);
 }
@@ -4213,14 +4223,14 @@ void Console::toggle_grid() {
 
 
 void Console::toggle_base_grid() {
-    const int flags = GamePreferences ^ 0x200;
-    GamePreferences = flags;
+    const int flags = GameDataStateStorage.fields_.game_preferences_ ^ 0x200;
+    GameDataStateStorage.fields_.game_preferences_ = flags;
     if (flags & 0x200) {
         alpha_menu_.check_menu_item(2, 0x20B);
     } else {
         alpha_menu_.uncheck_menu_item(2, 0x20B);
     }
-    AlphaIniPrefs.preferences = GamePreferences;
+    AlphaIniPrefs.preferences = GameDataStateStorage.fields_.game_preferences_;
     prefs_save(0);
     ::draw_map(1);
 }
@@ -4507,23 +4517,23 @@ void Console::editor_flat() {
 
 void Console::editor_fast() {
     auto_undo();
-    unsigned int state = GameState | 4;
+    unsigned int state = GameDataStateStorage.fields_.game_state_ | 4;
     unsigned char *base = reinterpret_cast<unsigned char *>(map_tiles());
-    VehCurrentCount = 0;
-    BaseCurrentCount = 0;
+    GameDataStateStorage.fields_.vehicle_current_count_ = 0;
+    GameDataStateStorage.fields_.base_current_count_ = 0;
     ConsoleGlobal.cursor_active_ = 0;
     ConsoleGlobal.selected_vehicle_ = -1;
-    GameState = state;
+    GameDataStateStorage.fields_.game_state_ = state;
     for (int i = 0; i < static_cast<int>(MapArea); i++) {
         *reinterpret_cast<unsigned int *>(base + i * 0x2c + 8) &= 0xfffffffc;
     }
-    unsigned int flag80 = GameState & 0x80;
-    GameState = GameState & 0xffffff7f;
+    unsigned int flag80 = GameDataStateStorage.fields_.game_state_ & 0x80;
+    GameDataStateStorage.fields_.game_state_ = GameDataStateStorage.fields_.game_state_ & 0xffffff7f;
     world_build();
     if (flag80 != 0) {
-        GameState = GameState | 0x80;
+        GameDataStateStorage.fields_.game_state_ = GameDataStateStorage.fields_.game_state_ | 0x80;
     }
-    unsigned char al = *reinterpret_cast<unsigned char *>(&GameState);
+    unsigned char al = *reinterpret_cast<unsigned char *>(&GameDataStateStorage.fields_.game_state_);
     if ((al & 0x80) != 0 && (al & 0x40) != 0) {
         reinterpret_cast<VCall *>(0x007B0CB8)->slot001(0);
     } else {
@@ -4836,7 +4846,7 @@ void __cdecl auto_play_callback(int) {
     AutoPlayCounter = AutoPlayCounter + 1;
     if (AutoPlayCounter > 100) {
         if (WinModalDepth == 0) {
-            unsigned char state = *reinterpret_cast<unsigned char *>(&GameState);
+            unsigned char state = *reinterpret_cast<unsigned char *>(&GameDataStateStorage.fields_.game_state_);
             if ((state & 2) != 0) {
                 ConsoleGlobal.end_my_turn();
                 AutoPlayCounter = 0;
@@ -5078,10 +5088,10 @@ Purpose: Load a saved game: leave the base window, refuse outside an active
 */
 void Console::load_proc(int save_slot, int faction_id) {
     (ORIGINAL(&TutWinBaseWindow)->*BaseWinExit)();
-    if (IsMultiplayerNet != 0 && (GameState & 0x1000) == 0) {
+    if (IsMultiplayerNet != 0 && (GameDataStateStorage.fields_.game_state_ & 0x1000) == 0) {
         return;
     }
-    if (IsMultiplayerPBEM != 0 && (GameState & 0x1000) == 0) {
+    if (IsMultiplayerPBEM != 0 && (GameDataStateStorage.fields_.game_state_ & 0x1000) == 0) {
         return;
     }
     if (load_game(save_slot, faction_id) != 0) {
@@ -5093,7 +5103,7 @@ void Console::load_proc(int save_slot, int faction_id) {
         exit(3);
     }
     if (save_slot != 0) {
-        GameState |= 0xE0;
+        GameDataStateStorage.fields_.game_state_ |= 0xE0;
         do_all_draws();
         ::draw_map(1);
         UnkBitfield1 |= 4;
@@ -5128,7 +5138,7 @@ void Console::end_of_turn() {
             if (saved_group_count != *ConsoleGroupCount) break;
 
             if (IsMultiplayerNet != 0) {
-                if ((GameState & 0x800) != 0) break;
+                if ((GameDataStateStorage.fields_.game_state_ & 0x800) != 0) break;
             }
 
             wait_loop();
@@ -5152,8 +5162,8 @@ void Console::zoom_to_upkeep_base() {
     int best_distance = 99999;
     int best_base = -1;
 
-    if (BaseCurrentCount > 0) {
-        for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+    if (GameDataStateStorage.fields_.base_current_count_ > 0) {
+        for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
             const Base &base = Bases[base_id];
             if (base.faction_id_current == ConsoleGlobal.faction_id_ &&
                 (base.state & BSTATE_UNK_10) != 0) {
@@ -5340,9 +5350,9 @@ void Console::editor_strategy() {
 void Console::editor_rules() {
     auto_undo();
     for (;;) {
-        uint32_t rules = GameRules;
-        uint32_t state = GameState & ~0x01800000u;
-        GameState = state;
+        uint32_t rules = GameDataStateStorage.fields_.game_rules_;
+        uint32_t state = GameDataStateStorage.fields_.game_state_ & ~0x01800000u;
+        GameDataStateStorage.fields_.game_state_ = state;
         unsigned int checks = (rules >> 11) & 1u;
         checks |= (rules & 2u) ? 2u : 0u;
         checks |= (rules & 8u) ? 4u : 0u;
@@ -5369,8 +5379,8 @@ void Console::editor_rules() {
             break;
         }
 
-        rules = GameRules & 0xFFFF0000u;
-        state = GameState & ~0x01800000u;
+        rules = GameDataStateStorage.fields_.game_rules_ & 0xFFFF0000u;
+        state = GameDataStateStorage.fields_.game_state_ & ~0x01800000u;
         checks = PopupWriteCheckState;
         if (ConsoleGroupAction == 0) {
             if (checks & 1u) rules |= 0x800u;
@@ -5391,16 +5401,16 @@ void Console::editor_rules() {
             if (checks & 0x8000u) rules |= 0x400u;
             if (checks & 0x10000u) state |= 0x00800000u;
             if (checks & 0x20000u) state |= 0x01000000u;
-            GameRules = rules;
-            GameState = state;
+            GameDataStateStorage.fields_.game_rules_ = rules;
+            GameDataStateStorage.fields_.game_state_ = state;
             AlphaIniPrefs.rules = rules;
             AlphaIniPrefs.semaphore = state & 0x01800000u;
             prefs_save(0);
             return;
         }
-        GameRules |= default_rules();
-        AlphaIniPrefs.rules = GameRules;
-        AlphaIniPrefs.semaphore = GameState & 0x01800000u;
+        GameDataStateStorage.fields_.game_rules_ |= default_rules();
+        AlphaIniPrefs.rules = GameDataStateStorage.fields_.game_rules_;
+        AlphaIniPrefs.semaphore = GameDataStateStorage.fields_.game_state_ & 0x01800000u;
     }
 }
 
@@ -5414,10 +5424,10 @@ void Console::editor_diff() {
     for (int i = 0; i < MaxDiffNum; ++i) {
         popup.dialogs().item(StringTable.get(reinterpret_cast<int>(Difficulty[i])), i);
     }
-    popup.set_value(DiffLevelCurrent);
+    popup.set_value(GameDataStateStorage.fields_.diff_level_current_);
     const int selected = popup.exec(0, nullptr);
     if (selected >= 0) {
-        DiffLevelCurrent = selected;
+        GameDataStateStorage.fields_.diff_level_current_ = selected;
         for (int faction = 0; faction < MaxPlayerNum; ++faction) {
             PlayersData[faction].diff_level = selected;
         }
@@ -5471,10 +5481,10 @@ void Console::editor_eliminate() {
     }
 
     const unsigned char faction_bit = static_cast<unsigned char>(1u << faction);
-    uint8_t *status = reinterpret_cast<uint8_t *>(&LockEnableMask);
+    uint8_t *status = reinterpret_cast<uint8_t *>(&GameDataStateStorage.fields_.lock_masks_.enable_mask_);
     status[0] &= static_cast<uint8_t>(~faction_bit);
     status[1] &= static_cast<uint8_t>(~faction_bit);
-    for (int base = BaseCurrentCount - 1; base >= 0; --base) {
+    for (int base = GameDataStateStorage.fields_.base_current_count_ - 1; base >= 0; --base) {
         if (Bases[base].faction_id_current == faction) {
             base_kill(base);
         }
@@ -5518,8 +5528,8 @@ void Console::editor_terrain() {
 void Console::editor_scen_rules() {
     Popup popup;
     auto_undo();
-    const uint32_t original_rules = GameRules;
-    const uint32_t original_turn_flags = NetTurnFlags;
+    const uint32_t original_rules = GameDataStateStorage.fields_.game_rules_;
+    const uint32_t original_turn_flags = GameDataStateStorage.fields_.net_turn_flags_;
     unsigned int checks = PopupWriteCheckState;
     const unsigned int low = checks & 0xFFu;
     const unsigned int high = (checks >> 8) & 0xFFu;
@@ -5547,23 +5557,23 @@ void Console::editor_scen_rules() {
     }
 
     const unsigned int accepted = PopupWriteCheckState;
-    GameRules &= 0x7808FFFFu;
-    NetTurnFlags &= 0xFFFFFFF0u;
-    if (accepted & 0x0001u) GameRules |= 0x00200000u;
-    if (accepted & 0x0002u) GameRules |= 0x00400000u;
-    if (accepted & 0x0004u) GameRules |= 0x00800000u;
-    if (accepted & 0x0008u) GameRules |= 0x04000000u;
-    if (accepted & 0x0010u) GameRules |= 0x02000000u;
-    if (accepted & 0x0020u) GameRules |= 0x80000000u;
-    if (accepted & 0x0040u) GameRules |= 0x00040000u;
-    if (accepted & 0x0080u) GameRules |= 0x00020000u;
-    if (accepted & 0x0100u) GameRules |= 0x00010000u;
-    if (accepted & 0x0200u) NetTurnFlags |= 1u;
-    if (accepted & 0x0400u) NetTurnFlags |= 2u;
-    if (accepted & 0x0800u) GameRules |= 0x01000000u;
-    if (accepted & 0x1000u) GameRules |= 0x00100000u;
-    if (accepted & 0x2000u) NetTurnFlags |= 4u;
-    if (accepted & 0x4000u) NetTurnFlags |= 8u;
+    GameDataStateStorage.fields_.game_rules_ &= 0x7808FFFFu;
+    GameDataStateStorage.fields_.net_turn_flags_ &= 0xFFFFFFF0u;
+    if (accepted & 0x0001u) GameDataStateStorage.fields_.game_rules_ |= 0x00200000u;
+    if (accepted & 0x0002u) GameDataStateStorage.fields_.game_rules_ |= 0x00400000u;
+    if (accepted & 0x0004u) GameDataStateStorage.fields_.game_rules_ |= 0x00800000u;
+    if (accepted & 0x0008u) GameDataStateStorage.fields_.game_rules_ |= 0x04000000u;
+    if (accepted & 0x0010u) GameDataStateStorage.fields_.game_rules_ |= 0x02000000u;
+    if (accepted & 0x0020u) GameDataStateStorage.fields_.game_rules_ |= 0x80000000u;
+    if (accepted & 0x0040u) GameDataStateStorage.fields_.game_rules_ |= 0x00040000u;
+    if (accepted & 0x0080u) GameDataStateStorage.fields_.game_rules_ |= 0x00020000u;
+    if (accepted & 0x0100u) GameDataStateStorage.fields_.game_rules_ |= 0x00010000u;
+    if (accepted & 0x0200u) GameDataStateStorage.fields_.net_turn_flags_ |= 1u;
+    if (accepted & 0x0400u) GameDataStateStorage.fields_.net_turn_flags_ |= 2u;
+    if (accepted & 0x0800u) GameDataStateStorage.fields_.game_rules_ |= 0x01000000u;
+    if (accepted & 0x1000u) GameDataStateStorage.fields_.game_rules_ |= 0x00100000u;
+    if (accepted & 0x2000u) GameDataStateStorage.fields_.net_turn_flags_ |= 4u;
+    if (accepted & 0x4000u) GameDataStateStorage.fields_.net_turn_flags_ |= 8u;
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
@@ -5572,8 +5582,8 @@ void Console::editor_scen_rules() {
 void Console::editor_scen_victory() {
     Popup popup;
     unsigned int checks = PopupWriteCheckState;
-    const uint32_t rules = GameRules;
-    const uint32_t state = GameState;
+    const uint32_t rules = GameDataStateStorage.fields_.game_rules_;
+    const uint32_t state = GameDataStateStorage.fields_.game_state_;
     checks = (rules & 0x08000000u) ? checks | 0x001u : checks & ~0x001u;
     checks = (rules & 0x10000000u) ? checks | 0x002u : checks & ~0x002u;
     checks = (state & 0x00040000u) ? checks | 0x004u : checks & ~0x004u;
@@ -5593,30 +5603,30 @@ void Console::editor_scen_victory() {
     }
 
     const unsigned int accepted = PopupWriteCheckState;
-    GameRules &= 0x87F7FFFFu;
-    GameState &= 0x19F37FFFu;
-    if (accepted & 0x001u) GameRules |= 0x08000000u;
-    if (accepted & 0x002u) GameRules |= 0x10000000u;
-    if (accepted & 0x004u) GameState |= 0x00040000u;
-    if (accepted & 0x008u) GameRules |= 0x40000000u;
-    if (accepted & 0x010u) GameRules |= 0x20000000u;
-    if (accepted & 0x020u) GameState |= 0x02000000u;
-    if (accepted & 0x040u) GameState |= 0x04000000u;
-    if (accepted & 0x080u) GameState |= 0x00008000u;
-    if (accepted & 0x100u) GameState |= 0x80000000u;
-    if (accepted & 0x200u) GameState |= 0x20000000u;
-    if (accepted & 0x400u) GameState |= 0x40000000u;
-    if (accepted & 0x800u) GameRules |= 0x00080000u;
-    if (accepted & 0x1000u) GameState |= 0x00080000u;
+    GameDataStateStorage.fields_.game_rules_ &= 0x87F7FFFFu;
+    GameDataStateStorage.fields_.game_state_ &= 0x19F37FFFu;
+    if (accepted & 0x001u) GameDataStateStorage.fields_.game_rules_ |= 0x08000000u;
+    if (accepted & 0x002u) GameDataStateStorage.fields_.game_rules_ |= 0x10000000u;
+    if (accepted & 0x004u) GameDataStateStorage.fields_.game_state_ |= 0x00040000u;
+    if (accepted & 0x008u) GameDataStateStorage.fields_.game_rules_ |= 0x40000000u;
+    if (accepted & 0x010u) GameDataStateStorage.fields_.game_rules_ |= 0x20000000u;
+    if (accepted & 0x020u) GameDataStateStorage.fields_.game_state_ |= 0x02000000u;
+    if (accepted & 0x040u) GameDataStateStorage.fields_.game_state_ |= 0x04000000u;
+    if (accepted & 0x080u) GameDataStateStorage.fields_.game_state_ |= 0x00008000u;
+    if (accepted & 0x100u) GameDataStateStorage.fields_.game_state_ |= 0x80000000u;
+    if (accepted & 0x200u) GameDataStateStorage.fields_.game_state_ |= 0x20000000u;
+    if (accepted & 0x400u) GameDataStateStorage.fields_.game_state_ |= 0x40000000u;
+    if (accepted & 0x800u) GameDataStateStorage.fields_.game_rules_ |= 0x00080000u;
+    if (accepted & 0x1000u) GameDataStateStorage.fields_.game_state_ |= 0x00080000u;
 
-    if (GameState & 0x04000000u) {
+    if (GameDataStateStorage.fields_.game_state_ & 0x04000000u) {
         popup.start(PopupStartCaption, "FACOBJ", -1, nullptr, 0);
         for (int facility = 1; facility <= 64; ++facility) {
             popup.dialogs().item(
                 StringTable.get(reinterpret_cast<int>(Facility[facility].name)),
                 facility);
         }
-        ScnVictFacilityObj = static_cast<uint32_t>(popup.exec(0, nullptr));
+        GameDataStateStorage.fields_.scenario_victory_facility_ = static_cast<uint32_t>(popup.exec(0, nullptr));
     }
 }
 
@@ -5627,7 +5637,7 @@ void Console::editor_view() {
     Popup popup;
     PopupModalState = 6;
     popup.start(PopupStartCaption, "EDITORWHO", -1, nullptr, 0x40);
-    uint8_t *status = reinterpret_cast<uint8_t *>(&LockEnableMask);
+    uint8_t *status = reinterpret_cast<uint8_t *>(&GameDataStateStorage.fields_.lock_masks_.enable_mask_);
     for (int faction = 1; faction < MaxPlayerNum; ++faction) {
         if ((status[1] & (1u << faction)) == 0) {
             continue;
@@ -5658,16 +5668,16 @@ void Console::editor_view() {
         if (X_pop("EDITORCONTROLALL", nullptr) != 0) {
             status[0] = static_cast<uint8_t>(status[1] & 0xFEu);
         }
-        GameState |= 0x80u;
+        GameDataStateStorage.fields_.game_state_ |= 0x80u;
         PopupModalState = 0;
         ::draw_map(1);
         desktop_update();
         return;
     }
 
-    GameState &= ~0x80u;
+    GameDataStateStorage.fields_.game_state_ &= ~0x80u;
     desktop_update();
-    const unsigned char view_state = static_cast<unsigned char>(GameState);
+    const unsigned char view_state = static_cast<unsigned char>(GameDataStateStorage.fields_.game_state_);
     if ((view_state & 0xC0u) == 0xC0u) {
         MainInterfaceGlobal.flat_button_[2].show(0);
     } else {
@@ -5887,8 +5897,8 @@ void Console::editor_tech() {
             int ignored_a = 0;
             int ignored_b = 0;
             bitmask(selected, &ignored_a, &ignored_b);
-            GameTechAchieved[selected] = static_cast<uint8_t>(
-                GameTechAchieved[selected] & ~(1u << faction));
+            GameDataStateStorage.fields_.game_tech_achieved_[selected] = static_cast<uint8_t>(
+                GameDataStateStorage.fields_.game_tech_achieved_[selected] & ~(1u << faction));
         } else {
             tech_achieved(faction, selected, 0, 0);
         }
@@ -5977,7 +5987,7 @@ void Console::editor_veh() {
                 ConsoleGlobal.selected_vehicle_ = vehicle;
                 if (ConsoleGlobal.cursor_active_) set_move(1);
             }
-            uint8_t *const alive = reinterpret_cast<uint8_t *>(&LockEnableMask) + 1;
+            uint8_t *const alive = reinterpret_cast<uint8_t *>(&GameDataStateStorage.fields_.lock_masks_.enable_mask_) + 1;
             *alive |= static_cast<uint8_t>(1u << ScenarioVehicleFaction);
         }
         return;
@@ -6108,13 +6118,13 @@ void Console::editor_scen_param() {
 
     auto_undo();
 
-    parse_field_number(0, ObjectiveReqVictory);
-    parse_field_number(1, ObjectivesSuddenDeathVictory);
-    parse_field_number(2, ObjectiveAchievePts);
-    parse_field_number(3, VictoryAchieveBonusPts);
-    parse_field_number(4, StartingMissionYear);
-    parse_field_number(5, EndingMissionYear);
-    parse_field_number(6, SunspotDuration);
+    parse_field_number(0, ScenarioSave.objective_req_victory);
+    parse_field_number(1, ScenarioSave.objectives_sudden_death_victory);
+    parse_field_number(2, ScenarioSave.objective_achieve_points);
+    parse_field_number(3, ScenarioSave.victory_achieve_bonus_points);
+    parse_field_number(4, ScenarioSave.starting_mission_year);
+    parse_field_number(5, ScenarioSave.ending_mission_year);
+    parse_field_number(6, GameDataStateStorage.fields_.sunspot_duration_);
 
     popup.start(PopupStartCaption, StrScenParam, -1, nullptr, 0x44, nullptr);
 
@@ -6125,13 +6135,13 @@ void Console::editor_scen_param() {
 
     // The parser parked each field's text in ParseStrBuffer; read the edited
     // values back out.
-    ObjectiveReqVictory = atoi(ParseStrBuffer[0].str);
-    ObjectivesSuddenDeathVictory = atoi(ParseStrBuffer[1].str);
-    ObjectiveAchievePts = atoi(ParseStrBuffer[2].str);
-    VictoryAchieveBonusPts = atoi(ParseStrBuffer[3].str);
-    StartingMissionYear = atoi(ParseStrBuffer[4].str);
-    EndingMissionYear = atoi(ParseStrBuffer[5].str);
-    SunspotDuration = atoi(ParseStrBuffer[6].str);
+    ScenarioSave.objective_req_victory = atoi(ParseStrBuffer[0].str);
+    ScenarioSave.objectives_sudden_death_victory = atoi(ParseStrBuffer[1].str);
+    ScenarioSave.objective_achieve_points = atoi(ParseStrBuffer[2].str);
+    ScenarioSave.victory_achieve_bonus_points = atoi(ParseStrBuffer[3].str);
+    ScenarioSave.starting_mission_year = atoi(ParseStrBuffer[4].str);
+    ScenarioSave.ending_mission_year = atoi(ParseStrBuffer[5].str);
+    GameDataStateStorage.fields_.sunspot_duration_ = atoi(ParseStrBuffer[6].str);
 
     popup.close();
 }
@@ -6292,7 +6302,7 @@ void Console::custom_my_faction() {
     char name_buf[0xC8];
     int faction_idx;
 
-    const unsigned char state = static_cast<unsigned char>(GameState);
+    const unsigned char state = static_cast<unsigned char>(GameDataStateStorage.fields_.game_state_);
     if ((state & 0x40) != 0 && (state & 0x80) != 0) {
         int chosen;
         {
@@ -6410,7 +6420,7 @@ void Console::time_controls() {
     // dialog opens preselected. editor_diplomacy spells the same write the
     // same way.
     *reinterpret_cast<uint32_t *>(reinterpret_cast<uint8_t *>(&popup) + 0xa44) =
-        static_cast<uint32_t>(TimeControlsSelection);
+        static_cast<uint32_t>(GameDataStateStorage.fields_.time_controls_selection_);
     const int result = popup.exec(0, 0);
     if (result < 0) {
         popup.close();
@@ -6816,7 +6826,7 @@ void Console::on_nc_mouse_move(int x_coord, int y_coord) {
 // symbol    ?goto_routine@Console@@SAXH@Z
 void __cdecl Console::goto_routine(int base_id) {
     PlanWindow.clear_lines();
-    if (base_id < 0 || base_id >= BaseCurrentCount) {
+    if (base_id < 0 || base_id >= GameDataStateStorage.fields_.base_current_count_) {
         PlanWindow.back_redraw();
         PlanWindow.on_redraw();
         return;
@@ -6831,7 +6841,7 @@ void __cdecl Console::goto_routine(int base_id) {
         return;
     }
     PlanWindow.opticenter(GoToSourceX, GoToSourceY, x, y, 0);
-    if (base_id < BaseCurrentCount)
+    if (base_id < GameDataStateStorage.fields_.base_current_count_)
         PlanWindow.add_line(GoToSourceX, GoToSourceY, x, y,
                             InfoFactionTextColors[ConsoleGlobal.faction_id_]);
     PlanWindow.on_redraw();
@@ -6872,7 +6882,7 @@ void Console::cursor_key(int, int character, int) {
         const int i = ConsoleGlobal.cursor_history_index_;
         const int base = base_at(ConsoleGlobal.cursor_history_x_[i],
                                  ConsoleGlobal.cursor_history_y_[i]);
-        if (base >= 0 && ((GameState & 0x80) ||
+        if (base >= 0 && ((GameDataStateStorage.fields_.game_state_ & 0x80) ||
             Bases[base].faction_id_current == ConsoleGlobal.faction_id_ ||
             ((Bases[base].visibility & (1u << ConsoleGlobal.faction_id_)) &&
              spying(Bases[base].faction_id_current)))) {
@@ -6925,10 +6935,10 @@ void Console::cursor_key(int, int character, int) {
 // ORIGINAL: 0x00517060 ?use_time_bonus@Console@@QAEXXZ 0x00517060-0x00517173
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00517060.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
 void Console::use_time_bonus() {
-    if (ConsoleControlTurnActive || !TimeControlsSelection || !IsMultiplayerNet) return;
-    const int selection = TimeControlsSelection;
+    if (ConsoleControlTurnActive || !GameDataStateStorage.fields_.time_controls_selection_ || !IsMultiplayerNet) return;
+    const int selection = GameDataStateStorage.fields_.time_controls_selection_;
     const int faction = ConsoleGlobal.faction_id_;
-    if ((NetTurnFlags & 0x10) && NetTurnFaction != faction) {
+    if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10) && GameDataStateStorage.fields_.net_turn_faction_ != faction) {
         NetMsgPrimary.pop("SIMULNO", 5000, 0, nullptr);
         return;
     }
@@ -6937,11 +6947,11 @@ void Console::use_time_bonus() {
         NetMsgPrimary.pop("NOTIMEBONUSES", 5000, 0, nullptr);
         return;
     }
-    if (GameState & 0x800) {
+    if (GameDataStateStorage.fields_.game_state_ & 0x800) {
         NetMsgPrimary.pop("NOBONUSATEND", 5000, 0, nullptr);
         return;
     }
-    if ((GameState & 2) &&
+    if ((GameDataStateStorage.fields_.game_state_ & 2) &&
         ((1u << faction_id_) & NetDaemonNet.lock_state_[0].trailing_words_[7])) {
         NetMsgPrimary.pop("NOBONUSDONE", 5000, 0, nullptr);
         return;
@@ -6996,14 +7006,14 @@ inline void console_close_network(unsigned int final_channel_mask) {
 void Console::quit_game() {
     const char *prompt = "REALLYQUIT";
     if ((IsMultiplayerNet || IsMultiplayerPBEM) &&
-        bit_count(LockEnableMask & 255) > 1) prompt = "REALLYWIMPOUT";
+        bit_count(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 255) > 1) prompt = "REALLYWIMPOUT";
     if (!X_pop(prompt, nullptr)) return;
     if (IsMultiplayerPBEM) {
         // The original modifies only the human-faction byte of this word.
-        LockEnableMask &= ~(static_cast<unsigned char>(1u << ConsoleGlobal.faction_id_));
+        GameDataStateStorage.fields_.lock_masks_.enable_mask_ &= ~(static_cast<unsigned char>(1u << ConsoleGlobal.faction_id_));
         save_game(0);
     }
-    if ((GameRules & 0x400) && !IsMultiplayerPBEM) auto_save();
+    if ((GameDataStateStorage.fields_.game_rules_ & 0x400) && !IsMultiplayerPBEM) auto_save();
     if (IsMultiplayerNet) console_close_network(255);
     ExitTurnLoop = 1;
     log_say("Quit***********************************", 0, 0, 0);
@@ -7015,14 +7025,14 @@ void Console::quit_game() {
 void Console::new_game() {
     if (IsMultiplayerNet) return;
     const char *prompt = "REALLYQUIT";
-    if (IsMultiplayerPBEM && bit_count(LockEnableMask & 255) > 1)
+    if (IsMultiplayerPBEM && bit_count(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 255) > 1)
         prompt = "REALLYWIMPOUT";
     if (X_pop(prompt, nullptr)) {
         if (IsMultiplayerPBEM) {
-            LockEnableMask &= ~(static_cast<unsigned char>(1u << ConsoleGlobal.faction_id_));
+            GameDataStateStorage.fields_.lock_masks_.enable_mask_ &= ~(static_cast<unsigned char>(1u << ConsoleGlobal.faction_id_));
             save_game(0);
         }
-        if ((GameRules & 0x400) && !IsMultiplayerPBEM) auto_save();
+        if ((GameDataStateStorage.fields_.game_rules_ & 0x400) && !IsMultiplayerPBEM) auto_save();
         // Re-read after callbacks; the initial network refusal does not
         // establish that the network flag stayed clear during the popup.
         if (IsMultiplayerNet) {
@@ -7044,7 +7054,7 @@ void Console::name_landmark(int x, int y) {
         y = ConsoleGlobal.cursor_history_y_[i];
     }
     const int landmark = find_landmark(x, y, 1);
-    if (!(GameState & 0x80)) {
+    if (!(GameDataStateStorage.fields_.game_state_ & 0x80)) {
         const int valid = landmark < 0 ? valid_landmark(x, y, ConsoleGlobal.faction_id_)
             : valid_landmark(MapLandmark[landmark].x, MapLandmark[landmark].y,
                              ConsoleGlobal.faction_id_);
@@ -7083,27 +7093,27 @@ extern int ActiveIfaceIdStorage;
 // ORIGINAL: 0x004D9970 ?editor_on@Console@@QAEXXZ 0x004D9970-0x004D9AC5
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004d9970.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
 void Console::editor_on() {
-    const unsigned int flags = GameState;
+    const unsigned int flags = GameDataStateStorage.fields_.game_state_;
     if ((IsMultiplayerNet || IsMultiplayerPBEM) &&
         !(flags & 0x61) && !(flags & 0x1000)) {
         NetMsgPrimary.pop("EDITORNET", 5000, 0, nullptr);
         return;
     }
     if (!(flags & 0x60) && !X_pop("SCENEDITOR", nullptr)) return;
-    GameState = (GameState ^ 0x40) | 0x20;
-    if (GameRules & 0x400) auto_save();
-    if (GameState & 0x40) {
+    GameDataStateStorage.fields_.game_state_ = (GameDataStateStorage.fields_.game_state_ ^ 0x40) | 0x20;
+    if (GameDataStateStorage.fields_.game_rules_ & 0x400) auto_save();
+    if (GameDataStateStorage.fields_.game_state_ & 0x40) {
         NetMsgPrimary.pop("EDITORON", 5000, 0, nullptr);
-        GameState |= 0x80;
+        GameDataStateStorage.fields_.game_state_ |= 0x80;
     } else {
         NetMsgPrimary.pop("EDITOROFF", 5000, 0, nullptr);
-        GameState &= ~0x80u;
+        GameDataStateStorage.fields_.game_state_ &= ~0x80u;
     }
-    if ((GameState & 0xc0) == 0xc0 && !IfaceIdToSlotStorage[ActiveIfaceIdStorage])
+    if ((GameDataStateStorage.fields_.game_state_ & 0xc0) == 0xc0 && !IfaceIdToSlotStorage[ActiveIfaceIdStorage])
         MainInterfaceGlobal.flat_button(2).show(0);
     else MainInterfaceGlobal.flat_button(2).hide();
     alpha_menu_.check(selected_vehicle_);
-    MainInterfaceGlobal.button_group(0).set((GameState & 0xc0) == 0xc0 ? 1002 : 1001, 1);
+    MainInterfaceGlobal.button_group(0).set((GameDataStateStorage.fields_.game_state_ & 0xc0) == 0xc0 ? 1002 : 1001, 1);
     set_dirty();
     ::draw_map(1);
     WorldClimateWorldWin.GraphicWin::redraw();
@@ -7135,7 +7145,7 @@ void Console::ready() {
         ConsoleStatusWin.redraw();
         MapWinTable[0]->main_caption();
         const unsigned int state = Vehs[selected_vehicle_].state;
-        if (!(GamePreferences & 0x80000) ||
+        if (!(GameDataStateStorage.fields_.game_preferences_ & 0x80000) ||
             (!Vehs[selected_vehicle_].order && !(state & 0x200) &&
              (state & 0x1000200) != 0x1000200)) {
             focus(Vehs[selected_vehicle_].x, Vehs[selected_vehicle_].y,
@@ -7324,18 +7334,18 @@ void Console::go_to(int subject, int order, int grouped) {
             strcpy(StringTemp, "("); strcat(StringTemp, label_get(0x3ec / 4)); strcat(StringTemp, ")");
             popup.dialogs().item(StringTemp, 9999); count = 1;
         }
-        for (int i = 0; i < BaseCurrentCount; ++i) {
+        for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; ++i) {
             ids[i] = i;
             if (sorting == 1) scores[i] = Bases[i].population_size;
             else if (sorting == 2) scores[i] = -console_destination_distance(source_x, source_y, Bases[i].x, Bases[i].y);
         }
-        for (int pass = 0; pass < BaseCurrentCount; ++pass) for (int j = 0; j < BaseCurrentCount - pass - 1; ++j) {
+        for (int pass = 0; pass < GameDataStateStorage.fields_.base_current_count_; ++pass) for (int j = 0; j < GameDataStateStorage.fields_.base_current_count_ - pass - 1; ++j) {
             if (sorting ? scores[j] < scores[j + 1] : _stricmp(Bases[ids[j]].name_string, Bases[ids[j + 1]].name_string) > 0) {
                 const int id = ids[j]; ids[j] = ids[j + 1]; ids[j + 1] = id;
                 if (sorting) { const int score = scores[j]; scores[j] = scores[j + 1]; scores[j + 1] = score; }
             }
         }
-        for (int candidate = 0; candidate < BaseCurrentCount; ++candidate) {
+        for (int candidate = 0; candidate < GameDataStateStorage.fields_.base_current_count_; ++candidate) {
             const int id = ids[candidate]; Base &base = Bases[id];
             if (base.faction_id_current != faction) {
                 if (order == 128 ? !(PlayersData[faction].diplo_treaties[base.faction_id_current] & 0x10)
@@ -7364,7 +7374,7 @@ void Console::go_to(int subject, int order, int grouped) {
                     }
                 }
             }
-            if (base.faction_id_current != faction && !(base.visibility & (1 << faction)) && !(GameState & 0x80)) continue;
+            if (base.faction_id_current != faction && !(base.visibility & (1 << faction)) && !(GameDataStateStorage.fields_.game_state_ & 0x80)) continue;
             strcpy(StringTemp, base.name_string); strcat(StringTemp, "|");
             if (base.faction_id_current != faction) {
                 strcat(StringTemp, " ("); GenderDefault = Players[base.faction_id_current].noun_gender;
@@ -7372,9 +7382,9 @@ void Console::go_to(int subject, int order, int grouped) {
                 strcat(StringTemp, Players[base.faction_id_current].noun_faction); strcat(StringTemp, ")");
             }
             if (cargo && base.faction_id_current == faction) {
-                if (id == SecretProject.universal_translator() || (has_fac(8, id, 0) && !(base.state & 0x400))) {
+                if (id == GameDataStateStorage.fields_.secret_project_.universal_translator() || (has_fac(8, id, 0) && !(base.state & 0x400))) {
                     strcat(StringTemp, " (");
-                    strcat(StringTemp, id == SecretProject.universal_translator()
+                    strcat(StringTemp, id == GameDataStateStorage.fields_.secret_project_.universal_translator()
                         ? StringTable.get(reinterpret_cast<int>(Facility[90].name)) : label_get(0x4c4 / 4));
                     strcat(StringTemp, ")");
                 }
@@ -7461,7 +7471,7 @@ void Console::group(int vehicle_id) {
     const int faction = leader.faction_id;
     const int destination_region = map_loc(leader.waypoint_x[0], leader.waypoint_y[0])->region;
     leader.state |= 0x08000000;
-    for (int i = 0; i < VehCurrentCount; ++i) {
+    for (int i = 0; i < GameDataStateStorage.fields_.vehicle_current_count_; ++i) {
         Veh &vehicle = Vehs[i];
         if (i == vehicle_id || vehicle.faction_id != faction) continue;
         if (field_23D1C_ ? !(vehicle.state & 0x08000000)
@@ -7492,7 +7502,7 @@ void Console::group(int vehicle_id) {
         MapWin *window = MapWinTable[slot];
         if (!window || (slot && !window->field_1DD74_)) continue;
         window->field_1DD84_ = 1;
-        for (int i = 0; i < VehCurrentCount; ++i) {
+        for (int i = 0; i < GameDataStateStorage.fields_.vehicle_current_count_; ++i) {
             Veh &vehicle = Vehs[i];
             if (vehicle.faction_id == ConsoleGlobal.faction_id_ && (vehicle.state & 0x08000000)) {
                 MapWinTable[slot]->dest_line(vehicle.x, vehicle.y, vehicle.waypoint_x[0], vehicle.waypoint_y[0],
@@ -7517,7 +7527,7 @@ void Console::activate(int x, int y, int current_selection) {
             NetDaemonNet.lock_state_[2].payload_.flags) return;
         const unsigned int faction_bit = 1u << ConsoleGlobal.faction_id_;
         if (((NetDaemonNet.lock_state_[0].trailing_words_[7] & faction_bit) &&
-             !(NetTurnFlags & 0x10)) || ConsoleControlTurnActive) {
+             !(GameDataStateStorage.fields_.net_turn_flags_ & 0x10)) || ConsoleControlTurnActive) {
             int vehicle = veh_at(x, y);
             if (stack_check(vehicle, 1, -1, -1, -1) != 1)
                 vehicle = veh_pick(vehicle, "PICKUNIT", 1);
@@ -7554,7 +7564,7 @@ void Console::activate(int x, int y, int current_selection) {
             if (vehicle < 0) return;
         } else {
             log_say("VEH ORDERS", vehicle, 0, 0);
-            if (Vehs[vehicle].order > 2 && !(GameMorePreferences & 0x40000)) {
+            if (Vehs[vehicle].order > 2 && !(GameDataStateStorage.fields_.game_more_preferences_ & 0x40000)) {
                 parse_says(0, VehPrototypes[Vehs[vehicle].proto_id].veh_name, -1, -1);
                 StringTemp[0] = 0;
                 say_orders(vehicle);
@@ -7569,7 +7579,7 @@ void Console::activate(int x, int y, int current_selection) {
                 const int answer = X_pop(StringTemp, nullptr);
                 if (!answer) return;
                 if (answer == 2) {
-                    GameMorePreferences |= 0x40000;
+                    GameDataStateStorage.fields_.game_more_preferences_ |= 0x40000;
                     prefs_save(0);
                 }
             }
@@ -7593,7 +7603,7 @@ void Console::activate(int x, int y, int current_selection) {
     veh_wake(vehicle);
     if (!veh_selectable(vehicle)) {
         draw_tile(Vehs[vehicle].x, Vehs[vehicle].y, 1);
-        if (!ConsoleGlobal.cursor_active_ && !(GameState & 2) &&
+        if (!ConsoleGlobal.cursor_active_ && !(GameDataStateStorage.fields_.game_state_ & 2) &&
             (!IsMultiplayerNet || (!ConsoleControlTurnActive &&
              !NetDaemonNet.lock_state_[2].payload_.flags))) {
             if (popv(ScriptPopupFile, "ALREADYMOVED2", vehicle, 0))
@@ -7718,21 +7728,21 @@ void Console::give_veh(int vehicle_id) { // 0x004D26A0
 // ORIGINAL: 0x00514B30 ?retire_game@Console@@QAEXXZ 0x00514B30-0x00514D2B
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original 00514B30; retained seed src/recovered/units/00514b30.cpp", "Native514B55..64 passes the low-byte greater-than-one boolean into bit_count. Native514D10 writes closed-network==0 to93A948 GameRestartQueued,514D16 sets9B2068 ExitTurnLoop. Existing typed close-network helper reproduces lock clear/transport close; scenario, PBEM, ironman and replay branches remain distinct.", "recovery/tasks/console-scenario-owner-wave.json; native scope decisions preserve the original baseline"], "reason": "Recover the complete Console command in its genuine owner, retaining original spans and seed evidence. Typed state and lifecycle/network APIs replace seed address arithmetic; this source binding is not byte, reference, structure or runtime acceptance."}
 void Console::retire_game() { // 0x00514B30
-    if (GameRules & RULES_IRONMAN) {
+    if (GameDataStateStorage.fields_.game_rules_ & RULES_IRONMAN) {
         auto_save();
     }
 
     const bool multiple_players =
         (IsMultiplayerNet || IsMultiplayerPBEM) &&
-        bit_count(static_cast<uint8_t>(LockEnableMask) > 1) != 0;
+        bit_count(static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) > 1) != 0;
     const char *const prompt = multiple_players ? "REALLYWIMPOUT" :
-        (GameRules & RULES_IRONMAN) ? "REALLYRETIRE2" : "REALLYRETIRE";
+        (GameDataStateStorage.fields_.game_rules_ & RULES_IRONMAN) ? "REALLYRETIRE2" : "REALLYRETIRE";
     if (!X_pop(prompt, nullptr)) {
         return;
     }
 
     if (IsMultiplayerPBEM) {
-        LockEnableMask &= ~static_cast<uint8_t>(1u << ConsoleGlobal.faction_id_);
+        GameDataStateStorage.fields_.lock_masks_.enable_mask_ &= ~static_cast<uint8_t>(1u << ConsoleGlobal.faction_id_);
         save_game(0);
     }
 
@@ -7742,11 +7752,11 @@ void Console::retire_game() { // 0x00514B30
         closed_network = true;
     }
 
-    if (GameRules & RULES_IRONMAN) {
+    if (GameDataStateStorage.fields_.game_rules_ & RULES_IRONMAN) {
         kill_auto_save();
     }
     report_score(1);
-    if ((GameState & STATE_IS_SCENARIO) == 0) {
+    if ((GameDataStateStorage.fields_.game_state_ & STATE_IS_SCENARIO) == 0) {
         quayle(ConsoleGlobal.faction_id_);
         hall_of_fame(1);
     }
@@ -7802,7 +7812,7 @@ int Console::upgrade(int veh_id) { // 0x004D06C0
 
     const int faction_id = Vehs[veh_id].faction_id;
     const uint32_t faction_bit = 1U << faction_id;
-    const uint8_t human_factions = static_cast<uint8_t>(LockEnableMask);
+    const uint8_t human_factions = static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_);
     const bool human_faction = (human_factions & faction_bit) != 0;
     if (Vehs[veh_id].moves_expended != 0 && human_faction) {
         NetMsgPrimary.pop(IsMultiplayerNet ? "UNITMOVED" : "UNITMOVED2",
@@ -7924,7 +7934,7 @@ int Console::upgrade(int veh_id) { // 0x004D06C0
         }
 
         const uint8_t human_factions =
-            static_cast<uint8_t>(LockEnableMask);
+            static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_);
         const bool human_faction = (human_factions & faction_bit) != 0;
         if ((candidate.flags & 4U) == 0 && !human_faction) {
             continue;
@@ -7965,21 +7975,21 @@ int Console::upgrade(int veh_id) { // 0x004D06C0
 
         const int displayed_cost =
             upgrade_cost(faction_id, proto_id, candidate_id) * 10;
-        if ((static_cast<uint8_t>(LockEnableMask) & faction_bit) == 0) {
+        if ((static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & faction_bit) == 0) {
             // The non-human path evaluates the first eligible prototype
             // immediately. Its native threshold is based on the highest and
             // lowest ranked human factions' energy/rank state, then the
             // active faction's AI settings and base count.
             const int ranking_divisor =
-                8 - static_cast<int>(PlayersData[RankingFactionIDUnk1].ranking);
+                8 - static_cast<int>(PlayersData[GameDataStateStorage.fields_.ranking_faction_id_unk1_].ranking);
             int energy_threshold =
-                (static_cast<int>(static_cast<uint32_t>(DiffLevelCurrent) *
+                (static_cast<int>(static_cast<uint32_t>(GameDataStateStorage.fields_.diff_level_current_) *
                                   static_cast<uint32_t>(displayed_cost)) /
                  10) /
                 ranking_divisor;
             const int faction_energy = PlayersData[faction_id].energy_reserves;
             const int comparison_energy =
-                PlayersData[RankingFactionIDUnk2].energy_reserves;
+                PlayersData[GameDataStateStorage.fields_.ranking_faction_id_unk2_].energy_reserves;
             if (faction_energy > comparison_energy) {
                 if (faction_energy >= 1000) {
                     energy_threshold /= 2;
@@ -8014,7 +8024,7 @@ int Console::upgrade(int veh_id) { // 0x004D06C0
             return 1;
         }
 
-        if ((static_cast<uint8_t>(LockEnableMask) & faction_bit) != 0) {
+        if ((static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & faction_bit) != 0) {
             StringTemp[0] = '\0';
             strcat(StringTemp, candidate.veh_name);
             strcat(StringTemp, " ");
@@ -8048,7 +8058,7 @@ int Console::upgrade(int veh_id) { // 0x004D06C0
     }
 
     // The native no-candidate branch notifies before releasing the lock.
-    if ((static_cast<uint8_t>(LockEnableMask) & faction_bit) != 0 &&
+    if ((static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & faction_bit) != 0 &&
         candidate_count == 0) {
         NetMsgPrimary.pop("NOUPGRADE", 5000, 0, nullptr);
         NetDaemonNet.unlock_veh();
@@ -8058,7 +8068,7 @@ int Console::upgrade(int veh_id) { // 0x004D06C0
 
     // AI candidates have already returned from their score/commit path in
     // the loop. Reaching here without one means the native scan found none.
-    if ((static_cast<uint8_t>(LockEnableMask) & faction_bit) == 0) {
+    if ((static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & faction_bit) == 0) {
         popup.close();
         return 0;
     }
@@ -8210,7 +8220,7 @@ int Console::veh_turn() { // 0x00513B90
     int n = 0;
     field_23BE4_ = 1;
 
-    if ((GamePreferences & 0x20u) != 0 &&
+    if ((GameDataStateStorage.fields_.game_preferences_ & 0x20u) != 0 &&
         Vehs[selected_vehicle_].order == 0) {
         give_hints();
     }
@@ -8230,7 +8240,7 @@ int Console::veh_turn() { // 0x00513B90
         }
         if (field_23BE8_ == 0 || ExitTurnLoop != 0 ||
             end_of_game(0) != 0 ||
-            (IsMultiplayerNet != 0 && (GameState & 0x800u) != 0)) {
+            (IsMultiplayerNet != 0 && (GameDataStateStorage.fields_.game_state_ & 0x800u) != 0)) {
             goto finish_turn;
         }
 
@@ -8436,7 +8446,7 @@ void Console::give_hints() {
         proto_id = Vehs[selected_vehicle_].proto_id;
         if (VehPrototypes[proto_id].plan <= PLAN_RECONNAISANCE &&
             Vehs[selected_vehicle_].home_base_id >= 0 &&
-            tut_check(8) != 0 && TurnCurrentNum < 0x19) {
+            tut_check(8) != 0 && GameDataStateStorage.fields_.turn_current_num_ < 0x19) {
             StringTemp[0] = '\0';
             say_base(StringTemp, Vehs[selected_vehicle_].home_base_id);
             parse_says(0, StringTemp, -1, -1);
@@ -8452,7 +8462,7 @@ void Console::give_hints() {
         // therefore remains even when the turn is already 25 or later.
         proto_id = Vehs[selected_vehicle_].proto_id;
         if (VehPrototypes[proto_id].plan <= PLAN_RECONNAISANCE &&
-            tut_check(0x10) != 0 && TurnCurrentNum >= 0x28) {
+            tut_check(0x10) != 0 && GameDataStateStorage.fields_.turn_current_num_ >= 0x28) {
             TutorialWindow.tut_map("NEWUNITS", cursor_x, cursor_y,
                                    selected_vehicle_, 0, 0, -1, -1);
             return;
@@ -8477,7 +8487,7 @@ void Console::give_hints() {
                 TutorialWindow.tut_map("NEWTERRAFORMER", cursor_x, cursor_y,
                                        selected_vehicle_, 0, 0x100,
                                        -1, -1);
-                GameState |= 0x400;
+                GameDataStateStorage.fields_.game_state_ |= 0x400;
                 return;
             }
         }
@@ -8488,7 +8498,7 @@ void Console::give_hints() {
     const int chassis_id = VehPrototypes[proto_id].chassis_id;
     if (VehPrototypes[proto_id].plan == PLAN_COLONIZATION &&
         Chassis[chassis_id].triad == TRIAD_LAND &&
-        (TutWinFlags9A64BC & 0x1000000u) == 0) {
+        (GameDataStateStorage.fields_.tutwin_flags_9a64bc_ & 0x1000000u) == 0) {
         int best_site = 0;
         int best_x = -1;
         int best_y = -1;
@@ -8690,25 +8700,25 @@ if (Chassis[VehPrototypes[proto_id].chassis_id].triad == TRIAD_LAND &&
 // TutWinFlags9A64BC. Already-shown bits are ORed again, then flow continues.
 proto_id = Vehs[selected_vehicle_].proto_id;
 if (Chassis[VehPrototypes[proto_id].chassis_id].triad == TRIAD_SEA) {
-    if ((TutorialFlags & 0x20) == 0) {
+    if ((GameDataStateStorage.fields_.tutorial_flags_ & 0x20) == 0) {
         TutorialWindow.tut_map("NEWSHIP", cursor_x, cursor_y, selected_vehicle_,
                                0, 0, -1, -1);
-        TutorialFlags |= 0x20;
+        GameDataStateStorage.fields_.tutorial_flags_ |= 0x20;
         return;
     }
-    TutorialFlags |= 0x20;
+    GameDataStateStorage.fields_.tutorial_flags_ |= 0x20;
 }
 // Native reloads the selection/prototype/chassis after the sea-card path;
 // keep this independent so callback-visible changes affect the air branch.
 proto_id = Vehs[selected_vehicle_].proto_id;
 if (Chassis[VehPrototypes[proto_id].chassis_id].triad == TRIAD_AIR) {
-    if ((TutorialFlags & 0x40) == 0) {
+    if ((GameDataStateStorage.fields_.tutorial_flags_ & 0x40) == 0) {
         TutorialWindow.tut_map("NEWAIR", cursor_x, cursor_y, selected_vehicle_,
                                0, 0, -1, -1);
-        TutorialFlags |= 0x40;
+        GameDataStateStorage.fields_.tutorial_flags_ |= 0x40;
         return;
     }
-    TutorialFlags |= 0x40;
+    GameDataStateStorage.fields_.tutorial_flags_ |= 0x40;
 }
 
 // LAB_005127B5 base-defense card. The population/force/prototype thresholds
@@ -8723,7 +8733,7 @@ if (cursor_base >= 0 &&
         PlayersData[faction_id_].total_mil_veh > 3 ||
         PlayersData[faction_id_].proto_id_active[current_proto] > 1) {
         if (enemy_move(~selected_vehicle_) != 0 &&
-            (TutWinFlags9A64BC & 0x800000u) == 0) {
+            (GameDataStateStorage.fields_.tutwin_flags_9a64bc_ & 0x800000u) == 0) {
             StringTemp[0] = '\0';
             say_stats_3(StringTemp, Vehs[selected_vehicle_].proto_id);
             parse_says(2, StringTemp, -1, -1);
@@ -8749,10 +8759,10 @@ if (cursor_base >= 0 &&
 // iterating, visits BaseCurrentCount with 0x134-byte records, and calls
 // tut_check2 before the independent every-20-turn fallback.
 proto_id = Vehs[selected_vehicle_].proto_id;
-if (TurnCurrentNum >= 0x14 &&
-    (TutWinFlags9A64BC & 0x4000000u) == 0 &&
+if (GameDataStateStorage.fields_.turn_current_num_ >= 0x14 &&
+    (GameDataStateStorage.fields_.tutwin_flags_9a64bc_ & 0x4000000u) == 0 &&
     Weapon[VehPrototypes[proto_id].weapon_id].offense_rating != 0) {
-    for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+    for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
         const Base &base = Bases[base_id];
         if (base.faction_id_current != faction_id_ ||
             veh_at(base.x, base.y) >= 0 || base.population_size == 1) {
@@ -8791,7 +8801,7 @@ if (TurnCurrentNum >= 0x14 &&
                 map_window->field_1DDCC_ + map_window->field_1DDD4_ - 2) {
             continue;
         }
-        if (tut_check2(0x100) != 0 || TurnCurrentNum % 20 == 0) {
+        if (tut_check2(0x100) != 0 || GameDataStateStorage.fields_.turn_current_num_ % 20 == 0) {
             parse_says(0, base.name_string, -1, -1);
             TutorialWindow.tut_map("EMPTYBASE", base.x, base.y, -1, 0,
                                    0x4000000, -1, -1);
@@ -8921,10 +8931,10 @@ for (int offset = 0; offset < 0x20; offset += 4) {
     // 0x513022: tutorial-state gate; colonization-site advice. The current
     // tile's site is initialized/read before the neighbor scan, and each
     // candidate updates its site through the real world_site/site_set owners.
-    if ((GameState & 0x400u) != 0) return;
+    if ((GameDataStateStorage.fields_.game_state_ & 0x400u) != 0) return;
     proto_id = Vehs[selected_vehicle_].proto_id;
     if (VehPrototypes[proto_id].plan == PLAN_COLONIZATION &&
-        (TutWinFlags9A64BC & 0x10000u) == 0) {
+        (GameDataStateStorage.fields_.tutwin_flags_9a64bc_ & 0x10000u) == 0) {
         Map &here = *map_loc(cursor_x, cursor_y);
         int site = (here.bit & 0x1000u) ? 0 : (here.val2 >> 4);
         if (site == 0) {
@@ -8973,65 +8983,65 @@ for (int offset = 0; offset < 0x20; offset += 4) {
         if (base_id < 0) return;
         if (BaseFindDist <= 2) {
             if (at_goal(faction_id_, 0x29, cursor_x, cursor_y) != 0 &&
-                (TutWinFlags9A64BC & 0x200000u) == 0) {
+                (GameDataStateStorage.fields_.tutwin_flags_9a64bc_ & 0x200000u) == 0) {
                 parse_says(0, BaseCurrent->name_string, -1, -1);
                 if ((map_loc(cursor_x, cursor_y)->bit & 0x40u) != 0) {
                     give_hints_map("TERRARAISE", cursor_x, cursor_y, -1, 0,
                          0x200000, -1, -1);
                 }
-                GameState |= 0x400u;
+                GameDataStateStorage.fields_.game_state_ |= 0x400u;
                 return;
             }
 
             const int improve = can_terraform(faction_id_, cursor_x, cursor_y,
                                               0, base_id);
             if (improve == 4 &&
-                (TutWinFlags9A64BC & 0x100000u) == 0 &&
+                (GameDataStateStorage.fields_.tutwin_flags_9a64bc_ & 0x100000u) == 0 &&
                 (map_loc(cursor_x, cursor_y)->bit & 0x800000u) == 0) {
-                GameState |= 0x400u;
+                GameDataStateStorage.fields_.game_state_ |= 0x400u;
                 parse_says(0, Bases[base_id].name_string, -1, -1);
                 give_hints_map("TERRAFARM", cursor_x, cursor_y, -1,
                      &g_TER1_FARM_SPRITES[3], 0x100000, -1, -1);
                 return;
             }
             if (improve == 6 &&
-                (TutWinFlags9A64BC & 0x40000u) == 0) {
+                (GameDataStateStorage.fields_.tutwin_flags_9a64bc_ & 0x40000u) == 0) {
                 give_hints_map("TERRAMINE", cursor_x, cursor_y, -1,
                      &g_TER1_MINE_SPRITE, 0x40000, -1, -1);
-                GameState |= 0x400u;
+                GameDataStateStorage.fields_.game_state_ |= 0x400u;
                 return;
             }
             if (improve == 7 &&
-                (TutWinFlags9A64BC & 0x20000u) == 0) {
+                (GameDataStateStorage.fields_.tutwin_flags_9a64bc_ & 0x20000u) == 0) {
                 give_hints_map("TERRASOLAR", cursor_x, cursor_y, -1,
                      &g_TER1_SOLAR_COLLECTOR_SPRITE, 0x20000, -1, -1);
-                GameState |= 0x400u;
+                GameDataStateStorage.fields_.game_state_ |= 0x400u;
                 return;
             }
             if (improve == 8 &&
-                (TutWinFlags9A64BC & 0x400000u) == 0) {
+                (GameDataStateStorage.fields_.tutwin_flags_9a64bc_ & 0x400000u) == 0) {
                 give_hints_map("TERRAFOREST", cursor_x, cursor_y, -1, 0,
                      0x400000, -1, -1);
-                GameState |= 0x400u;
+                GameDataStateStorage.fields_.game_state_ |= 0x400u;
                 return;
             }
 
             if ((at_goal(faction_id_, 0x79, cursor_x, cursor_y) != 0 ||
                  good_sensor(ConsoleGlobal.faction_id_, cursor_x, cursor_y) != 0) &&
-                (TutWinFlags9A64BC & 0x2000000u) == 0) {
+                (GameDataStateStorage.fields_.tutwin_flags_9a64bc_ & 0x2000000u) == 0) {
                 give_hints_map("TERRASENSOR", cursor_x, cursor_y, -1, 0,
                      0x2000000, -1, -1);
-                GameState |= 0x400u;
+                GameDataStateStorage.fields_.game_state_ |= 0x400u;
                 return;
             }
             const uint32_t tile_flags = map_loc(cursor_x, cursor_y)->bit;
             if ((tile_flags & 4u) == 0 &&
-                (TutWinFlags9A64BC & 0x80000u) == 0 &&
+                (GameDataStateStorage.fields_.tutwin_flags_9a64bc_ & 0x80000u) == 0 &&
                 ((tile_flags & 0x10u) != 0 ||
                  at_goal(faction_id_, 9, cursor_x, cursor_y) != 0)) {
                 give_hints_map("TERRAROAD", cursor_x, cursor_y, -1, 0,
                      0x80000, -1, -1);
-                GameState |= 0x400u;
+                GameDataStateStorage.fields_.game_state_ |= 0x400u;
                 return;
             }
         }
@@ -9043,7 +9053,7 @@ for (int offset = 0; offset < 0x20; offset += 4) {
     bool matching_pod = false;
     int pod_x = cursor_x;
     int pod_y = cursor_y;
-    if ((TutorialFlags & 0x2000) == 0) {
+    if ((GameDataStateStorage.fields_.tutorial_flags_ & 0x2000) == 0) {
         for (int i = 0; i < 8; ++i) {
             const int x = give_hints_wrap_x(cursor_x + RadiusBaseX[i]);
             const int y = cursor_y + RadiusBaseY[i];
@@ -9077,7 +9087,7 @@ for (int offset = 0; offset < 0x20; offset += 4) {
     // 0x5135AD enemy-base scan. Its exhaustion proceeds to 0x5136B7, not to
     // the exploration checker. A previously set base flag bypasses this scan
     // but still proceeds to the same enemy-vehicle scan.
-    if ((TutorialFlags & 0x8000000) == 0) {
+    if ((GameDataStateStorage.fields_.tutorial_flags_ & 0x8000000) == 0) {
         for (int i = 0; i < 8; ++i) {
             const int x = give_hints_wrap_x(cursor_x + RadiusBaseX[i]);
             const int y = cursor_y + RadiusBaseY[i];
@@ -9096,7 +9106,7 @@ for (int offset = 0; offset < 0x20; offset += 4) {
 
     // Native 0x5136B7 enemy-vehicle scan follows either an exhausted base
     // scan or the pre-set base-hint bit. Its own independent flag controls it.
-    if ((TutorialFlags & 0x10000000) == 0) {
+    if ((GameDataStateStorage.fields_.tutorial_flags_ & 0x10000000) == 0) {
         for (int i = 0; i < 8; ++i) {
             const int x = give_hints_wrap_x(cursor_x + RadiusBaseX[i]);
             const int y = cursor_y + RadiusBaseY[i];
@@ -9117,7 +9127,7 @@ for (int offset = 0; offset < 0x20; offset += 4) {
     // 0x5138B3 territory edge scan. It compares each candidate owner against
     // the cursor tile owner, then emits only the
     // first edge faction meeting the two comparisons.
-    if ((TutorialFlags & 0x20000000) == 0) {
+    if ((GameDataStateStorage.fields_.tutorial_flags_ & 0x20000000) == 0) {
         for (int i = 0; i < 8; ++i) {
             const int x = give_hints_wrap_x(cursor_x + RadiusBaseX[i]);
             const int y = cursor_y + RadiusBaseY[i];
@@ -9507,7 +9517,7 @@ void Console::new_base(int vehicle_id) { // 0x004CF7C0
     if (existing_base < 0) {
         MapFocusX = x;
         MapFocusY = y;
-        if ((GamePreferences & 0x200) != 0) {
+        if ((GameDataStateStorage.fields_.game_preferences_ & 0x200) != 0) {
             draw_map(1);
         }
         const int answer =
@@ -9515,7 +9525,7 @@ void Console::new_base(int vehicle_id) { // 0x004CF7C0
         MapFocusY = -99;
         MapFocusX = -99;
         if (answer != 0) {
-            if ((GamePreferences & 0x200) == 0) {
+            if ((GameDataStateStorage.fields_.game_preferences_ & 0x200) == 0) {
                 return;
             }
             draw_map(1);
@@ -9527,7 +9537,7 @@ void Console::new_base(int vehicle_id) { // 0x004CF7C0
     ambience(0xD1);
     if (not_my_turn()) {
         NetMsgPrimary.pop("NEEDCOLONISTS", 5000, 0, nullptr);
-        if ((GamePreferences & 0x200) == 0) {
+        if ((GameDataStateStorage.fields_.game_preferences_ & 0x200) == 0) {
             return;
         }
         draw_map(1);
@@ -9536,7 +9546,7 @@ void Console::new_base(int vehicle_id) { // 0x004CF7C0
 
     int locked_vehicle_id = vehicle_id;
     if (NetDaemonNet.lock_veh(&locked_vehicle_id, 4, -1, -1, 0) != 0) {
-        if ((GamePreferences & 0x200) == 0) {
+        if ((GameDataStateStorage.fields_.game_preferences_ & 0x200) == 0) {
             return;
         }
         draw_map(1);
@@ -9549,7 +9559,7 @@ void Console::new_base(int vehicle_id) { // 0x004CF7C0
     if (locked_prototype.plan != PLAN_COLONIZATION) {
         NetDaemonNet.unlock_veh();
         NetMsgPrimary.pop("NEEDCOLONISTS", 5000, 0, nullptr);
-        if ((GamePreferences & 0x200) == 0) {
+        if ((GameDataStateStorage.fields_.game_preferences_ & 0x200) == 0) {
             return;
         }
         draw_map(1);
@@ -9562,7 +9572,7 @@ void Console::new_base(int vehicle_id) { // 0x004CF7C0
     if ((locked_altitude < 0x60) != locked_sea_chassis) {
         NetDaemonNet.unlock_veh();
         NetMsgPrimary.pop("NOTINTRIAD", 5000, 0, nullptr);
-        if ((GamePreferences & 0x200) == 0) {
+        if ((GameDataStateStorage.fields_.game_preferences_ & 0x200) == 0) {
             return;
         }
         draw_map(1);
@@ -9572,7 +9582,7 @@ void Console::new_base(int vehicle_id) { // 0x004CF7C0
     if ((locked_tile->bit & BIT_FUNGUS) != 0 && locked_altitude >= 0x40) {
         NetDaemonNet.unlock_veh();
         NetMsgPrimary.pop("FUNGUSDANGUS", 5000, 0, nullptr);
-        if ((GamePreferences & 0x200) == 0) {
+        if ((GameDataStateStorage.fields_.game_preferences_ & 0x200) == 0) {
             return;
         }
         draw_map(1);
@@ -9581,7 +9591,7 @@ void Console::new_base(int vehicle_id) { // 0x004CF7C0
     if ((locked_tile->bit & BIT_MONOLITH) != 0) {
         NetDaemonNet.unlock_veh();
         NetMsgPrimary.pop("NOTONMONOLITH", 5000, 0, nullptr);
-        if ((GamePreferences & 0x200) == 0) {
+        if ((GameDataStateStorage.fields_.game_preferences_ & 0x200) == 0) {
             return;
         }
         draw_map(1);
@@ -9590,7 +9600,7 @@ void Console::new_base(int vehicle_id) { // 0x004CF7C0
     if (!veh_ready(locked_vehicle_id)) {
         NetDaemonNet.unlock_veh();
         NetMsgPrimary.pop("UNITMOVED", 5000, 0, nullptr);
-        if ((GamePreferences & 0x200) == 0) {
+        if ((GameDataStateStorage.fields_.game_preferences_ & 0x200) == 0) {
             return;
         }
         draw_map(1);
@@ -9636,7 +9646,7 @@ void Console::new_base(int vehicle_id) { // 0x004CF7C0
     if (locked_adjacent_base) {
         NetDaemonNet.unlock_veh();
         NetMsgPrimary.pop("BASETOONEAR", 5000, 0, nullptr);
-        if ((GamePreferences & 0x200) == 0) {
+        if ((GameDataStateStorage.fields_.game_preferences_ & 0x200) == 0) {
             return;
         }
         draw_map(1);
@@ -9659,10 +9669,10 @@ void Console::new_base(int vehicle_id) { // 0x004CF7C0
     }
 
     if (ready_search(-1) < 0) {
-        GameState |= 4;
+        GameDataStateStorage.fields_.game_state_ |= 4;
     }
     parse_says(0, Bases[new_base_id].name_string, -1, -1);
-    parse_num(0, MissionYearCurrent);
+    parse_num(0, GameDataStateStorage.fields_.mission_year_current_);
 
     if (!IsMultiplayerNet) {
         const bool alien = (Players[faction_id].rule_flags & RFLAG_ALIEN) != 0;
@@ -9876,7 +9886,7 @@ void Console::terraform(int vehicle_id, int requested_terraform) { // 0x004D3470
 
     if (terraform_id == TERRA_RAISE_LAND ||
         terraform_id == TERRA_LOWER_LAND) {
-        if ((GameRules & 0x00800000u) != 0) {
+        if ((GameDataStateStorage.fields_.game_rules_ & 0x00800000u) != 0) {
             NetMsgPrimary.pop("NOTINSCENARIO", 5000, 0, nullptr);
             return;
         }
@@ -10153,11 +10163,11 @@ void Console::human_turn() {
 
     WorldClimateWorldWin.viewport_outline_enabled_ = 0;
     WorldClimateWorldWin.set_world_map();
-    GameState &= ~static_cast<uint32_t>(STATE_UNK_400);
+    GameDataStateStorage.fields_.game_state_ &= ~static_cast<uint32_t>(STATE_UNK_400);
     MapBaseDisplayOverride = 1;
     field_23D1C_ = 0;
 
-    for (int vehicle = 0; vehicle < VehCurrentCount; ++vehicle) {
+    for (int vehicle = 0; vehicle < GameDataStateStorage.fields_.vehicle_current_count_; ++vehicle) {
         Vehs[vehicle].state &= ~static_cast<uint32_t>(VSTATE_UNK_8000000);
     }
 
@@ -10220,8 +10230,8 @@ void Console::human_turn() {
     ControlTurnPhase = 0;
 
     for (;;) {
-        if ((GameState & 0x2000u) != 0 && (GameState & 1u) == 0 &&
-            (GameRules & RULES_VICTORY_CONQUEST) != 0) {
+        if ((GameDataStateStorage.fields_.game_state_ & 0x2000u) != 0 && (GameDataStateStorage.fields_.game_state_ & 1u) == 0 &&
+            (GameDataStateStorage.fields_.game_rules_ & RULES_VICTORY_CONQUEST) != 0) {
             GenderDefault = Players[ConsoleGlobal.faction_id_].is_leader_female;
             PluralityDefault = 0;
             parse_says(0, Players[ConsoleGlobal.faction_id_].title_leader, -1, -1);
@@ -10232,20 +10242,20 @@ void Console::human_turn() {
             PluralityDefault = Players[ConsoleGlobal.faction_id_].is_noun_plural;
             parse_says(2, Players[ConsoleGlobal.faction_id_].noun_faction, -1, -1);
             X_pop("CONQUERPLANET", nullptr);
-            GameState |= 1u;
+            GameDataStateStorage.fields_.game_state_ |= 1u;
         }
 
         bool keep_selection = false;
         const int selected = selected_vehicle_;
         const bool cursor_active = ConsoleGlobal.cursor_active_ != 0;
         if (!cursor_active) {
-            if (selected >= 0 && VehCurrentCount == previous_vehicle_count) {
+            if (selected >= 0 && GameDataStateStorage.fields_.vehicle_current_count_ == previous_vehicle_count) {
                 keep_selection = field_23BEC_ == 0
                     ? veh_ready(selected) != 0
                     : veh_selectable(selected) != 0;
             }
         } else if (selected >= 0 &&
-                   VehCurrentCount == previous_vehicle_count &&
+                   GameDataStateStorage.fields_.vehicle_current_count_ == previous_vehicle_count &&
                    (field_23BEC_ == 0 ? veh_ready(selected) != 0
                                       : veh_selectable(selected) != 0)) {
             keep_selection = true;
@@ -10281,28 +10291,28 @@ void Console::human_turn() {
             ready();
         }
 
-        previous_vehicle_count = VehCurrentCount;
+        previous_vehicle_count = GameDataStateStorage.fields_.vehicle_current_count_;
         field_23BF4_ = 0;
         field_23BF0_ = 0;
         field_23BEC_ = 0;
 
         if (selected_vehicle_ < 0) {
-            GameState |= 2u;
+            GameDataStateStorage.fields_.game_state_ |= 2u;
             if (TutWinBaseWindow.is_visible() || ReportWinGlobal.is_visible()) {
-                GameState |= 4u;
+                GameDataStateStorage.fields_.game_state_ |= 4u;
             }
             field_23BE8_ = 1;
             const int lock_result = edit_lock();
             if (lock_result == 0) {
                 const bool manual_stop =
-                    (GamePreferences & PREF_BSC_PAUSE_END_TURN) == 0 &&
+                    (GameDataStateStorage.fields_.game_preferences_ & PREF_BSC_PAUSE_END_TURN) == 0 &&
                     IsMultiplayerNet == 0 && IsMultiplayerPBEM == 0 &&
-                    flush_cache != 0 && (GameState & 4u) == 0;
+                    flush_cache != 0 && (GameDataStateStorage.fields_.game_state_ & 4u) == 0;
                 if (manual_stop) {
                     field_23BE8_ = 0;
-                } else if ((GamePreferences & PREF_BSC_PAUSE_END_TURN) == 0 ||
+                } else if ((GameDataStateStorage.fields_.game_preferences_ & PREF_BSC_PAUSE_END_TURN) == 0 ||
                            IsMultiplayerNet != 0) {
-                    parse_num(0, static_cast<int>(game_year(TurnCurrentNum)));
+                    parse_num(0, static_cast<int>(game_year(GameDataStateStorage.fields_.turn_current_num_)));
                     NetMsgPrimary.pop(flush_cache != 0 ? "ENDOFTURN" : "ENDOFTURN1",
                                      0x1388, 0, nullptr);
                 }
@@ -10330,10 +10340,10 @@ void Console::human_turn() {
         }
 
         turn_hints();
-        GameState &= ~4u;
+        GameDataStateStorage.fields_.game_state_ &= ~4u;
 
         if (selected_vehicle_ >= 0) {
-            GameState &= ~2u;
+            GameDataStateStorage.fields_.game_state_ &= ~2u;
             flush_cache |= static_cast<unsigned int>(veh_turn());
         } else {
             // 0x0074B504 is g_FX.effects_[57] (g_FX + 57 * 0x6C).
@@ -10348,12 +10358,12 @@ void Console::human_turn() {
             }
             ambience(0xCB);
             field_23BE4_ = 1;
-            const int saved_vehicle_count = VehCurrentCount;
+            const int saved_vehicle_count = GameDataStateStorage.fields_.vehicle_current_count_;
             while (ConsoleGlobal.cursor_active_ == 0 && field_23BE4_ != 0 &&
                    field_23BE8_ != 0 && ExitTurnLoop == 0 &&
                    end_of_game(0) == 0 &&
-                   saved_vehicle_count == VehCurrentCount &&
-                   (IsMultiplayerNet == 0 || (GameState & 0x800u) == 0)) {
+                   saved_vehicle_count == GameDataStateStorage.fields_.vehicle_current_count_ &&
+                   (IsMultiplayerNet == 0 || (GameDataStateStorage.fields_.game_state_ & 0x800u) == 0)) {
                 wait_loop();
                 if (TutWinTourPending != 0) {
                     TutWinTourPending = 0;
@@ -10366,14 +10376,14 @@ void Console::human_turn() {
         if (ExitTurnLoop != 0) {
             return;
         }
-        if ((GameState & 4u) != 0) {
+        if ((GameDataStateStorage.fields_.game_state_ & 4u) != 0) {
             flush_cache = 0;
         }
         if (field_23BF8_ != 0) {
             ::draw_cursor();
         }
         if (field_23BE8_ == 0 || ExitTurnLoop != 0 ||
-            (IsMultiplayerNet != 0 && (GameState & 0x800u) != 0) ||
+            (IsMultiplayerNet != 0 && (GameDataStateStorage.fields_.game_state_ & 0x800u) != 0) ||
             end_of_game(0) != 0) {
             goto finish_turn;
         }
@@ -10596,11 +10606,11 @@ void Console::end_my_turn() {
         return;
     }
 
-    const uint8_t game_flags = static_cast<uint8_t>(GameState);
+    const uint8_t game_flags = static_cast<uint8_t>(GameDataStateStorage.fields_.game_state_);
     if (IsMultiplayerNet != 0) {
-        if ((NetTurnFlags & 0x10) != 0 &&
-            NetTurnFaction != ConsoleGlobal.faction_id_) {
-            const int faction = NetTurnFaction;
+        if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10) != 0 &&
+            GameDataStateStorage.fields_.net_turn_faction_ != ConsoleGlobal.faction_id_) {
+            const int faction = GameDataStateStorage.fields_.net_turn_faction_;
             GenderDefault = Players[faction].is_leader_female;
             PluralityDefault = 0;
             parse_says(0, Players[faction].title_leader, -1, -1);
@@ -10615,12 +10625,12 @@ void Console::end_my_turn() {
             NetMsgPrimary.pop("SIMULWHOSE", 0x1388, 0, nullptr);
             return;
         }
-        if ((game_flags & 2) != 0 && (NetTurnFlags & 0x10) == 0) {
+        if ((game_flags & 2) != 0 && (GameDataStateStorage.fields_.net_turn_flags_ & 0x10) == 0) {
             const int faction_bit = 1 << ConsoleGlobal.faction_id_;
             if ((ConsoleFactionsWaitingMask & faction_bit) != 0 &&
                 ConsoleFactionsWaitingMask != 0xFF) {
                 NetMsgPrimary.pop("ATTEMPTTOCANCEL", 0x1388, 0, nullptr);
-                message_data(0x2302, 0, TurnCurrentNum, 0, 0, 0);
+                message_data(0x2302, 0, GameDataStateStorage.fields_.turn_current_num_, 0, 0, 0);
                 return;
             }
         }
@@ -10639,7 +10649,7 @@ void Console::end_my_turn() {
         }
     }
 
-    GameState |= 2u;
+    GameDataStateStorage.fields_.game_state_ |= 2u;
     const int current_selection = selected_vehicle_;
     field_23BE4_ = 0;
     field_23BE8_ = 0;
@@ -10733,7 +10743,7 @@ void Console::menu_proc(int command) {
             switch (command) {
             case 0x105: social_select(ConsoleGlobal.faction_id_); break;
             case 0x106: {
-                if ((GameRules & 0x200) == 0) break;
+                if ((GameDataStateStorage.fields_.game_rules_ & 0x200) == 0) break;
                 PlayerData &player = PlayersData[ConsoleGlobal.faction_id_];
                 int &popup_flags = PopupWriteCheckState;
                 popup_flags = (player.ai_growth != 0 ? 1 : 0) |
@@ -10752,7 +10762,7 @@ void Console::menu_proc(int command) {
                 break;
             }
             case 0x107:
-                if ((GameRules & 0x200) == 0) set_tech(ConsoleGlobal.faction_id_);
+                if ((GameDataStateStorage.fields_.game_rules_ & 0x200) == 0) set_tech(ConsoleGlobal.faction_id_);
                 break;
             case 0x108: help_topic(2, 0); break;
             case 0x109: report_labs(); break;
@@ -10783,19 +10793,19 @@ void Console::menu_proc(int command) {
             case 0x203: case 0x204: case 0x205: case 0x206: case 0x207:
             case 0x208: zoom(command, 0); break;
             case 0x209:
-                GameMorePreferences ^= 0x10000;
-                if ((GameMorePreferences & 0x10000) == 0)
+                GameDataStateStorage.fields_.game_more_preferences_ ^= 0x10000;
+                if ((GameDataStateStorage.fields_.game_more_preferences_ & 0x10000) == 0)
                     alpha_menu_.uncheck_menu_item(2, 0x209);
                 else alpha_menu_.check_menu_item(2, 0x209);
-                AlphaIniPrefs.more_preferences = GameMorePreferences;
+                AlphaIniPrefs.more_preferences = GameDataStateStorage.fields_.game_more_preferences_;
                 prefs_save(0); ::draw_map(1); break;
             case 0x20A: case 0x20B: {
                 const uint32_t bit = command == 0x20A ? 0x100 : 0x200;
-                GamePreferences ^= bit;
-                if ((GamePreferences & bit) == 0)
+                GameDataStateStorage.fields_.game_preferences_ ^= bit;
+                if ((GameDataStateStorage.fields_.game_preferences_ & bit) == 0)
                     alpha_menu_.uncheck_menu_item(2, command);
                 else alpha_menu_.check_menu_item(2, command);
-                AlphaIniPrefs.preferences = GamePreferences;
+                AlphaIniPrefs.preferences = GameDataStateStorage.fields_.game_preferences_;
                 prefs_save(0); ::draw_map(1); break;
             }
             case 0x20C:
@@ -10806,12 +10816,12 @@ void Console::menu_proc(int command) {
                 desktop_init(1); break;
             case 0x20F: survey(); break;
             case 0x210: {
-                uint32_t prefs = GameMorePreferences;
+                uint32_t prefs = GameDataStateStorage.fields_.game_more_preferences_;
                 if ((prefs & 0x1000) == 0) {
                     if ((prefs & 0x2000) == 0) prefs |= 0x2000;
                     else prefs |= 0x1000;
                 } else prefs &= ~0x3000u;
-                GameMorePreferences = prefs;
+                GameDataStateStorage.fields_.game_more_preferences_ = prefs;
                 AlphaIniPrefs.more_preferences = prefs;
                 prefs_save(0); ::draw_map(1); break;
             }
@@ -10956,8 +10966,8 @@ void Console::menu_proc(int command) {
         design_new_veh(ConsoleGlobal.faction_id_, -1);
     } else {
         switch (command) {
-        case 0x51: GameMorePreferences |= 0x200000; alpha_menu_.check(selected_vehicle_); X_pop("MENUDETAIL", 0); break;
-        case 0x52: GameMorePreferences &= ~0x200000u; alpha_menu_.check(selected_vehicle_); X_pop("MENUSIMPLE", 0); break;
+        case 0x51: GameDataStateStorage.fields_.game_more_preferences_ |= 0x200000; alpha_menu_.check(selected_vehicle_); X_pop("MENUDETAIL", 0); break;
+        case 0x52: GameDataStateStorage.fields_.game_more_preferences_ &= ~0x200000u; alpha_menu_.check(selected_vehicle_); X_pop("MENUSIMPLE", 0); break;
         case 0x53: set_preferences(); break;
         case 0x54: set_base_preferences(); break;
         case 0x55: set_adv_preferences(); break;
@@ -10972,15 +10982,15 @@ void Console::menu_proc(int command) {
             const char *const confirmation =
                 IsMultiplayerNet == 0 && IsMultiplayerPBEM == 0
                     ? "REALLYQUIT"
-                    : (bit_count(static_cast<unsigned char>(LockEnableMask)) > 1
+                    : (bit_count(static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_)) > 1
                         ? "REALLYWIMPOUT"
                         : "REALLYQUIT");
             if (X_pop(confirmation, 0) != 0) {
                 if (IsMultiplayerPBEM != 0) {
-                    LockEnableMask &= ~(1u << (ConsoleGlobal.faction_id_ & 0x1F));
+                    GameDataStateStorage.fields_.lock_masks_.enable_mask_ &= ~(1u << (ConsoleGlobal.faction_id_ & 0x1F));
                     save_game(0);
                 }
-                if ((GameRules & 0x400) != 0 && IsMultiplayerPBEM == 0) auto_save();
+                if ((GameDataStateStorage.fields_.game_rules_ & 0x400) != 0 && IsMultiplayerPBEM == 0) auto_save();
                 if (IsMultiplayerNet != 0) {
                     NetDaemonNet.hang_up();
                     NetDaemonNet.reset();
@@ -10995,7 +11005,7 @@ void Console::menu_proc(int command) {
         }
     }
 
-    if ((GameState & 0x40) == 0) return;
+    if ((GameDataStateStorage.fields_.game_state_ & 0x40) == 0) return;
     if (command > 0xA00) {
         switch (command) {
         case 0xA01: editor_load(); return;
@@ -11032,8 +11042,8 @@ void Console::menu_proc(int command) {
 
     switch (command) {
     case 0x601:
-        GameState ^= 0x80;
-        if ((GameState & 0x80) == 0 || (GameState & 0x40) == 0)
+        GameDataStateStorage.fields_.game_state_ ^= 0x80;
+        if ((GameDataStateStorage.fields_.game_state_ & 0x80) == 0 || (GameDataStateStorage.fields_.game_state_ & 0x40) == 0)
             MainInterfaceGlobal.flat_button_[2].hide();
         else
             MainInterfaceGlobal.flat_button_[2].show(0);
@@ -11240,7 +11250,7 @@ int __cdecl supply_options(int veh_id, int base_id) {
     Veh &vehicle = Vehs[veh_id];
     const int owner = vehicle.faction_id;
 
-    if ((static_cast<uint32_t>(LockEnableMask) & (1u << owner)) == 0) {
+    if ((static_cast<uint32_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & (1u << owner)) == 0) {
         return 0;
     }
     const int order = vehicle.order;
@@ -11479,9 +11489,9 @@ case 0x3007A:
     // callback with (param=0,count=100,resolution=5) and clears that byte.
     if (ConsoleTimer.has_timer()) {
         ConsoleTimer.stop();
-        LockEnableMask = (LockEnableMask & 0xFFFFFF00u) | 0x10u;
+        GameDataStateStorage.fields_.lock_masks_.enable_mask_ = (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFFFFF00u) | 0x10u;
     } else {
-        LockEnableMask &= 0xFFFFFF00u;
+        GameDataStateStorage.fields_.lock_masks_.enable_mask_ &= 0xFFFFFF00u;
         ConsoleTimer.start(auto_play_callback, 0, 100, 5);
     }
     break;
@@ -11550,7 +11560,7 @@ ConsoleStatusWin.reset();
 if (a2 >= 0x60 && a2 <= 0x69) {
     a1 = 0;
 }
-if (a2 == 0x0D && (GameState & 0x80u) != 0 &&
+if (a2 == 0x0D && (GameDataStateStorage.fields_.game_state_ & 0x80u) != 0 &&
     (MapWinTable[0]->field_1DD70_ & 0x4000u) != 0) {
     const int history = ConsoleGlobal.cursor_history_index_;
     int vehicle_id = veh_at(ConsoleGlobal.cursor_history_x_[history],
@@ -11814,13 +11824,13 @@ case 'r':
     TutWinBaseWindow.rename();
     goto native_done;
 case 'e':
-    if ((GameMorePreferences & 0x40u) != 0) {
+    if ((GameDataStateStorage.fields_.game_more_preferences_ & 0x40u) != 0) {
         TutWinBaseWindow.base_editor();
     }
     goto native_done;
 case '-':
 case '_':
-    if ((GameMorePreferences & 0x40u) != 0) {
+    if ((GameDataStateStorage.fields_.game_more_preferences_ & 0x40u) != 0) {
         TutWinBaseWindow.focus();
         if (BaseCurrent->population_size > 1) {
             --BaseCurrent->population_size;
@@ -11831,7 +11841,7 @@ case '_':
     goto native_after_base_character;
 case '+':
 case '=':
-    if ((GameMorePreferences & 0x40u) != 0) {
+    if ((GameDataStateStorage.fields_.game_more_preferences_ & 0x40u) != 0) {
         TutWinBaseWindow.focus();
         if (BaseCurrent->population_size < 0x63) {
             ++BaseCurrent->population_size;
@@ -11892,8 +11902,8 @@ case ',':
     goto native_done;
 
 case '=':
-    if ((GameState & 0x10u) != 0 || ObjectiveReqVictory < 0x2328 ||
-        ObjectivesSuddenDeathVictory < 0x2328) {
+    if ((GameDataStateStorage.fields_.game_state_ & 0x10u) != 0 || ScenarioSave.objective_req_victory < 0x2328 ||
+        ScenarioSave.objectives_sudden_death_victory < 0x2328) {
         show_scen_objectives();
     }
     goto native_done;
@@ -11983,7 +11993,7 @@ case 'R':
     // The route is independently transcribed in the typed fragment; inline
     // it here during final assembly so all route outcomes share the common
     // post-key continuation.
-    if ((GameMorePreferences & 0x200u) != 0) {
+    if ((GameDataStateStorage.fields_.game_more_preferences_ & 0x200u) != 0) {
         const int faction = faction_id_;
         int *const toggles = PlayersData[faction].unk_38 + 2;
         PopupWriteCheckState = toggles[0] != 0 ? 1 : 0;
@@ -12046,7 +12056,7 @@ if (normalized_character == ':' && ConsoleKeyCycleState == -1) {
     ConsoleKeyCycleState = 0;
 }
 
-if (normalized_character == '~' && (GameState & 0x60u) == 0) {
+if (normalized_character == '~' && (GameDataStateStorage.fields_.game_state_ & 0x60u) == 0) {
     int cycle = ConsoleKeyCycleState;
     if (cycle == -1) {
         if (!IsMultiplayerNet) {
@@ -12059,10 +12069,10 @@ if (normalized_character == '~' && (GameState & 0x60u) == 0) {
 
     const int threshold = IsMultiplayerNet ? 4 : 0;
     if (cycle >= threshold) {
-        GameState ^= 0x1000u;
-        if (IsMultiplayerNet && (GameState & 0x1000u) != 0 &&
-            (GameState & 0x20u) == 0) {
-            GameState |= 0xA0u;
+        GameDataStateStorage.fields_.game_state_ ^= 0x1000u;
+        if (IsMultiplayerNet && (GameDataStateStorage.fields_.game_state_ & 0x1000u) != 0 &&
+            (GameDataStateStorage.fields_.game_state_ & 0x20u) == 0) {
+            GameDataStateStorage.fields_.game_state_ |= 0xA0u;
         }
 
         set_dirty();
@@ -12079,11 +12089,11 @@ if (normalized_character == '~' && (GameState & 0x60u) == 0) {
 // count 0x59) has five active non-default entries. The `y` route's MainInterface button
 // callback is typed in fragment 10; other active routes follow below.
 if (normalized_character == 'y' &&
-    (GameState & STATE_SCENARIO_EDITOR) != 0 &&
+    (GameDataStateStorage.fields_.game_state_ & STATE_SCENARIO_EDITOR) != 0 &&
     native_command_consumed == 0) {
-    GameState ^= STATE_OMNISCIENT_VIEW;
-    if ((GameState & STATE_OMNISCIENT_VIEW) != 0 &&
-        (GameState & STATE_DEBUG_MODE) != 0) {
+    GameDataStateStorage.fields_.game_state_ ^= STATE_OMNISCIENT_VIEW;
+    if ((GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) != 0 &&
+        (GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE) != 0) {
         MainInterfaceGlobal.flat_button_[2].show(0);
     } else {
         MainInterfaceGlobal.flat_button_[2].hide();
@@ -12119,7 +12129,7 @@ if (normalized_character == 'y' &&
 // after native_command_consumed remains clear; keep each table target's own
 // switch route and its continuation distinct.
 
-if ((GameState & STATE_SCENARIO_EDITOR) != 0 &&
+if ((GameDataStateStorage.fields_.game_state_ & STATE_SCENARIO_EDITOR) != 0 &&
     native_command_consumed == 0) {
     switch (normalized_character) {
     case '@':
@@ -12215,7 +12225,7 @@ if ((GameState & STATE_SCENARIO_EDITOR) != 0 &&
 // evidence proves a four-byte touched extent, not the complete original object
 // extent or its original C++ spelling.
 
-if ((GameState & 0x1000u) != 0) {
+if ((GameDataStateStorage.fields_.game_state_ & 0x1000u) != 0) {
     // Native 0x518871 reads 0x939FCC as the current EDITINTERLUDE number,
     // and 0x5188AB stores the accepted result there.
     const int current_interlude_selection = ConsoleInterludeSelection;
@@ -12227,7 +12237,7 @@ if ((GameState & 0x1000u) != 0) {
         ConsoleInterludeSelection = interlude_id;
         const unsigned int bit =
             1u << (static_cast<unsigned int>(interlude_id) & 31u);
-        GameInterludeFlags &= ~bit;
+        GameDataStateStorage.fields_.game_interlude_flags_ &= ~bit;
         interlude(interlude_id, 0, 1, 0);
     }
 }
@@ -12244,13 +12254,13 @@ if ((GameState & 0x1000u) != 0) {
 // Players[faction].adj_name_faction: Players starts at 0x946A50, typed member
 // offset +0x304, with Player's independently asserted native stride 0x59C.
 
-if ((GameState & STATE_DEBUG_MODE) == 0) {
+if ((GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE) == 0) {
     if (IsMultiplayerNet != 0) {
         goto native_editor_command_dispatch;
     }
 
     bool found_invalid_vehicle = false;
-    for (int bounds_vehicle_id = VehCurrentCount - 1; bounds_vehicle_id >= 0;
+    for (int bounds_vehicle_id = GameDataStateStorage.fields_.vehicle_current_count_ - 1; bounds_vehicle_id >= 0;
          --bounds_vehicle_id) {
         const Veh &vehicle = Vehs[bounds_vehicle_id];
         if (vehicle.x < 0 || vehicle.x >= MapLongitudeBounds ||
@@ -12261,7 +12271,7 @@ if ((GameState & STATE_DEBUG_MODE) == 0) {
         }
     }
 
-    for (int stack_vehicle_id = VehCurrentCount - 1; stack_vehicle_id >= 0;
+    for (int stack_vehicle_id = GameDataStateStorage.fields_.vehicle_current_count_ - 1; stack_vehicle_id >= 0;
          --stack_vehicle_id) {
         const Veh &vehicle = Vehs[stack_vehicle_id];
         if (vehicle.next_veh_id_stack == stack_vehicle_id ||
@@ -12281,8 +12291,8 @@ if ((GameState & STATE_DEBUG_MODE) == 0) {
     goto native_editor_command_dispatch;
 }
 
-if ((GameState & STATE_DEBUG_MODE) != 0) {
-    for (int debug_vehicle_id = 0; debug_vehicle_id < VehCurrentCount; ++debug_vehicle_id) {
+if ((GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE) != 0) {
+    for (int debug_vehicle_id = 0; debug_vehicle_id < GameDataStateStorage.fields_.vehicle_current_count_; ++debug_vehicle_id) {
         const Veh &vehicle = Vehs[debug_vehicle_id];
         if (vehicle.next_veh_id_stack != debug_vehicle_id &&
             vehicle.prev_veh_id_stack != debug_vehicle_id) {
@@ -12309,7 +12319,7 @@ if ((GameState & STATE_DEBUG_MODE) != 0) {
 
         break;
     case '!':
-        if ((GameState & STATE_SCENARIO_EDITOR) != 0) {
+        if ((GameDataStateStorage.fields_.game_state_ & STATE_SCENARIO_EDITOR) != 0) {
 
 // ---- flattened from fragments/16-checksum-base-report.inc ----
 // Native key-handler dispatch region.
@@ -12319,7 +12329,7 @@ if ((GameState & STATE_DEBUG_MODE) != 0) {
 // guard intentionally remains open for sequential fragment 17 and later
 // report slices; close it only at the actual native branch continuation.
 
-if ((GameState & STATE_DEBUG_MODE) != 0) {
+if ((GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE) != 0) {
     StringTemp[0] = '\0';
     strcat(StringTemp, "Checksum");
     _itoa(faction_id_, native_decimal_buffer, 10);
@@ -12330,7 +12340,7 @@ if ((GameState & STATE_DEBUG_MODE) != 0) {
     native_handler_log.reset();
     native_handler_log.say("BASE CHECKSUMS", 0, 0, 0, 0);
 
-    for (int checksum_base_id = 0; checksum_base_id < BaseCurrentCount; ++checksum_base_id) {
+    for (int checksum_base_id = 0; checksum_base_id < GameDataStateStorage.fields_.base_current_count_; ++checksum_base_id) {
         Base &base = Bases[checksum_base_id];
         uint8_t value = checksum(reinterpret_cast<char *>(&base), 7, 0);
         value = checksum(reinterpret_cast<char *>(&base.nutrients_accumulated),
@@ -12531,7 +12541,7 @@ if ((GameState & STATE_DEBUG_MODE) != 0) {
 
 native_handler_log.say(" ", 0, 0, 0, 0);
 native_handler_log.say("UNIT CHECKSUMS", 0, 0, 0, 0);
-for (int checksum_vehicle_id = 0; checksum_vehicle_id < VehCurrentCount; ++checksum_vehicle_id) {
+for (int checksum_vehicle_id = 0; checksum_vehicle_id < GameDataStateStorage.fields_.vehicle_current_count_; ++checksum_vehicle_id) {
     Veh &vehicle = Vehs[checksum_vehicle_id];
     uint8_t value = checksum(reinterpret_cast<char *>(&vehicle.x), 2, 0);
     value = checksum(reinterpret_cast<char *>(&vehicle.y), 2, value);
@@ -12608,7 +12618,7 @@ for (int map_y = 0; map_y < MapLatitudeBounds; ++map_y) {
 
 native_handler_log.say(" ", 0, 0, 0, 0);
 native_handler_log.say("BASES CHECKSUMS", 0, 0, 0, 0);
-for (int enumerated_base_id = 0; enumerated_base_id < BaseCurrentCount; ++enumerated_base_id) {
+for (int enumerated_base_id = 0; enumerated_base_id < GameDataStateStorage.fields_.base_current_count_; ++enumerated_base_id) {
     Base &base = Bases[enumerated_base_id];
 
     StringTemp[0] = '\0';
@@ -12702,7 +12712,7 @@ for (int enumerated_base_id = 0; enumerated_base_id < BaseCurrentCount; ++enumer
 
 native_handler_log.say(" ", 0, 0, 0, 0);
 native_handler_log.say("UNIT ENUMERATION", 0, 0, 0, 0);
-for (int unit_vehicle_id = 0; unit_vehicle_id < VehCurrentCount; ++unit_vehicle_id) {
+for (int unit_vehicle_id = 0; unit_vehicle_id < GameDataStateStorage.fields_.vehicle_current_count_; ++unit_vehicle_id) {
     Veh &vehicle = Vehs[unit_vehicle_id];
 
     StringTemp[0] = '\0';
@@ -12840,8 +12850,8 @@ case 0x30071:
             int bit_offset;
             int bit_mask;
             bitmask_call(tech_id, &bit_offset, &bit_mask);
-            GameTechAchieved[tech_id] = static_cast<uint8_t>(
-                GameTechAchieved[tech_id] | (1u << faction));
+            GameDataStateStorage.fields_.game_tech_achieved_[tech_id] = static_cast<uint8_t>(
+                GameDataStateStorage.fields_.game_tech_achieved_[tech_id] | (1u << faction));
             ++PlayersData[faction].tech_ranking;
             ++PlayersData[faction].tech_ranking;
             ++granted_count;
@@ -12849,8 +12859,8 @@ case 0x30071:
         if (granted_count == 0) {
             PlayersData[faction].tech_ranking = 1;
             for (int tech_id = 0; tech_id < MaxTechnologyNum; ++tech_id) {
-                GameTechAchieved[tech_id] = static_cast<uint8_t>(
-                    GameTechAchieved[tech_id] & ~(1u << faction));
+                GameDataStateStorage.fields_.game_tech_achieved_[tech_id] = static_cast<uint8_t>(
+                    GameDataStateStorage.fields_.game_tech_achieved_[tech_id] & ~(1u << faction));
             }
         }
     }
@@ -12887,21 +12897,21 @@ if (a2 == 0x40008) {
 // Native enters the 0x51B970 byte table only when GameState has
 // STATE_SCENARIO_EDITOR and the earlier command-consumed local is clear.
 native_scenario_editor_gate:
-if ((GameState & STATE_SCENARIO_EDITOR) != 0 &&
+if ((GameDataStateStorage.fields_.game_state_ & STATE_SCENARIO_EDITOR) != 0 &&
     native_command_consumed == 0) {
 switch (normalized_character) {
 case '$':
-    if ((GameState & STATE_DEBUG_MODE) != 0) {
+    if ((GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE) != 0) {
         MapWinTable[0]->field_1DD70_ ^= 4;
     }
     break;
 case '%':
-    if ((GameState & STATE_DEBUG_MODE) != 0) {
+    if ((GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE) != 0) {
         MapWinTable[0]->field_1DD70_ ^= 0x2000;
     }
     break;
 case '*':
-    if ((GameState & STATE_DEBUG_MODE) != 0) {
+    if ((GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE) != 0) {
         MapWinTable[0]->field_1DD70_ ^= 0x10000;
     }
     break;
@@ -12963,7 +12973,7 @@ case 0x13: // Ctrl+S/native save menu action
         MultiWindow.draw(0);
         goto native_command_done;
     }
-    if ((NetTurnFlags & 0x10u) != 0) {
+    if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10u) != 0) {
         // Native pushes target=null and channel=0 before duration and label;
         // these are all four explicit parameters of the owned NetMsg method.
         NetMsgPrimary.pop("SIMULNOT", 5000, 0, 0);
@@ -12977,15 +12987,15 @@ case 0x1B: // Escape
     {
         const char *confirmation = "REALLYQUIT";
         if ((IsMultiplayerNet != 0 || IsMultiplayerPBEM != 0) &&
-            bit_count(static_cast<int>(LockEnableMask & 0xFFu)) > 1) {
+            bit_count(static_cast<int>(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFu)) > 1) {
             confirmation = "REALLYWIMPOUT";
         }
         if (X_pop(confirmation, 0) != 0) {
             if (IsMultiplayerPBEM != 0) {
-                LockEnableMask &= ~(1u << ConsoleGlobal.faction_id_);
+                GameDataStateStorage.fields_.lock_masks_.enable_mask_ &= ~(1u << ConsoleGlobal.faction_id_);
                 save_game(0);
             }
-            if ((GameRules & 0x400u) != 0 &&
+            if ((GameDataStateStorage.fields_.game_rules_ & 0x400u) != 0 &&
                 IsMultiplayerPBEM == 0) {
                 auto_save();
             }
@@ -13043,12 +13053,12 @@ case 0x76: report_security(); goto native_command_done;
 case 0x78: hall_of_fame(0); goto native_command_done;
 case 0x79: monument(0); goto native_command_done;
 case 0x7A:
-    if ((GameMorePreferences & 0x200000u) != 0) {
-        GameMorePreferences &= ~0x200000u;
+    if ((GameDataStateStorage.fields_.game_more_preferences_ & 0x200000u) != 0) {
+        GameDataStateStorage.fields_.game_more_preferences_ &= ~0x200000u;
         ConsoleGlobal.alpha_menu_.check(ConsoleGlobal.selected_vehicle_);
         X_pop("MENUSIMPLE", 0);
     } else {
-        GameMorePreferences |= 0x200000u;
+        GameDataStateStorage.fields_.game_more_preferences_ |= 0x200000u;
         ConsoleGlobal.alpha_menu_.check(ConsoleGlobal.selected_vehicle_);
         X_pop("MENUDETAIL", 0);
     }
@@ -13058,7 +13068,7 @@ case 0x7B:
     goto native_command_done;
 case 0x0D:
 case 0x1000D: // Enter/remote command: activate the current cursor base
-    if ((GameState & STATE_UNK_2) != 0 && edit_lock() == 0) {
+    if ((GameDataStateStorage.fields_.game_state_ & STATE_UNK_2) != 0 && edit_lock() == 0) {
         field_23BE4_ = 0;
         field_23BE8_ = 0;
         goto native_command_done;
@@ -13072,7 +13082,7 @@ case 0x1000D: // Enter/remote command: activate the current cursor base
             const Base &base = Bases[base_id];
             const int owner = base.faction_id_current;
             const int local_faction = faction_id_;
-            const bool omniscient = (GameState & STATE_OMNISCIENT_VIEW) != 0;
+            const bool omniscient = (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) != 0;
             const bool visible =
                 (base.visibility & (1u << local_faction)) != 0;
             if (owner == local_faction || visible || omniscient) {
@@ -13127,15 +13137,15 @@ native_retirement_confirmation:
     // optional preceding retire operation. Its tail is shared by both IDs.
     const char *quit_confirmation = "REALLYQUIT";
     if ((IsMultiplayerNet != 0 || IsMultiplayerPBEM != 0) &&
-        bit_count(static_cast<int>(LockEnableMask & 0xFFu)) > 1) {
+        bit_count(static_cast<int>(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFu)) > 1) {
         quit_confirmation = "REALLYWIMPOUT";
     }
     if (X_pop(quit_confirmation, 0) != 0) {
         if (IsMultiplayerPBEM != 0) {
-            LockEnableMask &= ~(1u << ConsoleGlobal.faction_id_);
+            GameDataStateStorage.fields_.lock_masks_.enable_mask_ &= ~(1u << ConsoleGlobal.faction_id_);
             save_game(0);
         }
-        if ((GameRules & 0x400u) != 0 && IsMultiplayerPBEM == 0) {
+        if ((GameDataStateStorage.fields_.game_rules_ & 0x400u) != 0 && IsMultiplayerPBEM == 0) {
             auto_save();
         }
         if (IsMultiplayerNet != 0) {
@@ -13177,13 +13187,13 @@ native_mode_command_tables:
 
 switch (a2) {
 case 0x20047:
-    GamePreferences ^= 0x100;
-    if ((GamePreferences & 0x100) != 0) {
+    GameDataStateStorage.fields_.game_preferences_ ^= 0x100;
+    if ((GameDataStateStorage.fields_.game_preferences_ & 0x100) != 0) {
         alpha_menu_.check_menu_item(2, 0x20A);
     } else {
         alpha_menu_.uncheck_menu_item(2, 0x20A);
     }
-    AlphaIniPrefs.preferences = GamePreferences;
+    AlphaIniPrefs.preferences = GameDataStateStorage.fields_.game_preferences_;
     prefs_save(0);
     ::draw_map(1);
     break;
@@ -13192,20 +13202,20 @@ case 0x2004B: editor_on(); break;
 case 0x2004C:
     // The native branch skips the load only when multiplayer is active and
     // GameState's STATE_DEBUG_MODE bit is clear (test at 0x51ACE5..0x51ACF5).
-    if (IsMultiplayerNet == 0 || (GameState & STATE_DEBUG_MODE) != 0) {
+    if (IsMultiplayerNet == 0 || (GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE) != 0) {
         load_proc(0, 0);
     }
     break;
 case 0x2004D: set_map_display(); break;
 case 0x2004E:
-    if ((GameMorePreferences & 0x1000) != 0) {
-        GameMorePreferences &= ~0x3000u;
-    } else if ((GameMorePreferences & 0x2000) != 0) {
-        GameMorePreferences |= 0x1000;
+    if ((GameDataStateStorage.fields_.game_more_preferences_ & 0x1000) != 0) {
+        GameDataStateStorage.fields_.game_more_preferences_ &= ~0x3000u;
+    } else if ((GameDataStateStorage.fields_.game_more_preferences_ & 0x2000) != 0) {
+        GameDataStateStorage.fields_.game_more_preferences_ |= 0x1000;
     } else {
-        GameMorePreferences |= 0x2000;
+        GameDataStateStorage.fields_.game_more_preferences_ |= 0x2000;
     }
-    AlphaIniPrefs.more_preferences = GameMorePreferences;
+    AlphaIniPrefs.more_preferences = GameDataStateStorage.fields_.game_more_preferences_;
     prefs_save(0);
     ::draw_map(1);
     break;
@@ -13234,18 +13244,18 @@ case 0x30041:
     ::draw_map(1);
     break;
 case 0x30047:
-    GamePreferences ^= 0x200;
-    if ((GamePreferences & 0x200) != 0) {
+    GameDataStateStorage.fields_.game_preferences_ ^= 0x200;
+    if ((GameDataStateStorage.fields_.game_preferences_ & 0x200) != 0) {
         alpha_menu_.check_menu_item(2, 0x20B);
     } else {
         alpha_menu_.uncheck_menu_item(2, 0x20B);
     }
-    AlphaIniPrefs.preferences = GamePreferences;
+    AlphaIniPrefs.preferences = GameDataStateStorage.fields_.game_preferences_;
     prefs_save(0);
     ::draw_map(1);
     break;
 case 0x3004C:
-    if (IsMultiplayerNet != 0 || (GameState & STATE_DEBUG_MODE) != 0) {
+    if (IsMultiplayerNet != 0 || (GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE) != 0) {
         ConsoleGlobal.load_proc(0, 0);
     }
     break;
@@ -13259,15 +13269,15 @@ case 0x30051:
         if (IsMultiplayerNet != 0) {
             const char *confirmation = "REALLYQUIT";
             if (IsMultiplayerPBEM != 0 &&
-                bit_count(static_cast<int>(LockEnableMask & 0xFFu)) > 1) {
+                bit_count(static_cast<int>(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFu)) > 1) {
                 confirmation = "REALLYWIMPOUT";
             }
             if (X_pop(confirmation, 0) != 0) {
                 if (IsMultiplayerPBEM != 0) {
-                    LockEnableMask &= ~(1u << ConsoleGlobal.faction_id_);
+                    GameDataStateStorage.fields_.lock_masks_.enable_mask_ &= ~(1u << ConsoleGlobal.faction_id_);
                     save_game(0);
                 }
-                if ((GameRules & 0x400u) != 0 &&
+                if ((GameDataStateStorage.fields_.game_rules_ & 0x400u) != 0 &&
                     IsMultiplayerPBEM == 0) {
                     auto_save();
                 }
@@ -13286,19 +13296,19 @@ case 0x30051:
         break;
     }
 case 0x30057:
-    GameMorePreferences ^= 1;
+    GameDataStateStorage.fields_.game_more_preferences_ ^= 1;
     ::draw_map(1);
     prefs_save(0);
     break;
 case 0x30058:
-    if ((GameMorePreferences & 0x10000u) != 0) {
-        GameMorePreferences &= ~0x10000u;
+    if ((GameDataStateStorage.fields_.game_more_preferences_ & 0x10000u) != 0) {
+        GameDataStateStorage.fields_.game_more_preferences_ &= ~0x10000u;
         alpha_menu_.uncheck_menu_item(2, 0x209);
     } else {
-        GameMorePreferences |= 0x10000u;
+        GameDataStateStorage.fields_.game_more_preferences_ |= 0x10000u;
         alpha_menu_.check_menu_item(2, 0x209);
     }
-    AlphaIniPrefs.more_preferences = GameMorePreferences;
+    AlphaIniPrefs.more_preferences = GameDataStateStorage.fields_.game_more_preferences_;
     ::draw_map(1);
     prefs_save(0);
     break;

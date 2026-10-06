@@ -21,16 +21,31 @@ def referenced_initial_object_units(selected, bindings, objects):
     A target needs its compiled definition, not proof of its own initializer
     unless independently selected. Missing bounds/types remain checker gaps.
     """
-    owners = {binding.symbol: binding.unit for binding in bindings}
-    if len(owners) != len(bindings):
+    from .object_source import object_targets, validate_object_symbol_ownership
+    validate_object_symbol_ownership(bindings)
+    owners = {}
+    for binding in bindings:
+        for symbol in (binding.symbol, binding.parent_symbol):
+            if symbol is not None:
+                owner = owners.setdefault(symbol, binding.unit)
+                if owner != binding.unit:
+                    raise ValueError("object relocation symbol has multiple declared source owners")
+    if len({binding.symbol for binding in bindings}) != len(bindings):
         raise ValueError("duplicate original object symbol binding")
     required = set()
+    validated_targets, _ = object_targets(bindings, objects)
     for binding in selected:
         if binding.span is None or binding.unit not in objects:
             continue
         obj = objects[binding.unit]
+        if binding.parent_symbol is not None and binding.parent_symbol not in validated_targets:
+            continue
         try:
-            observed = data_layout(obj, binding.symbol)
+            if binding.parent_symbol is not None:
+                from .codeview_data import member_data_layout
+                observed = member_data_layout(obj, binding.parent_symbol, binding.member_path)
+            else:
+                observed = data_layout(obj, binding.symbol)
         except ValueError:
             continue
         if observed["size"] != binding.span.end - binding.span.start:
@@ -52,13 +67,31 @@ def check_initial_data(bindings, objects, image, targets, *, literal_targets=Non
         row = {"symbol": binding.symbol, "unit": binding.unit, "address": f"0x{binding.origin.address:08X}",
                "source": {"path": binding.unit, "line": binding.line}, "definition": Result.UNKNOWN,
                "content": Result.UNKNOWN, "lifetime": Result.UNKNOWN}
+        if binding.parent_symbol is not None:
+            row["parent_symbol"] = binding.parent_symbol
+            row["member_path"] = ".".join(binding.member_path)
         if binding.span is not None:
             row["interpretation_id"] = binding.interpretation_id
         try:
             if binding.unit not in objects:
                 raise ValueError((errors or {}).get(binding.unit, "object owner was not compiled"))
             obj = objects[binding.unit]
-            observed = data_layout(obj, binding.symbol)
+            if binding.parent_symbol is not None:
+                from .codeview_data import member_data_layout
+                observed = member_data_layout(obj, binding.parent_symbol, binding.member_path)
+                resolved_base = binding.origin.address - observed["member_offset"]
+                if targets.get(binding.parent_symbol) != resolved_base:
+                    raise ValueError("member path lacks a consistent original parent-base binding")
+                if binding.span is not None and observed["size"] != binding.span.end - binding.span.start:
+                    row.update(definition=Result.PASS, compiler_storage=observed, content=Result.FAIL,
+                               proof={"result": Result.FAIL, "boundary": Result.FAIL,
+                                      "bytes": Result.UNKNOWN, "references": Result.UNKNOWN,
+                                      "original_size": binding.span.end - binding.span.start,
+                                      "candidate_size": observed["size"]})
+                    rows.append(row)
+                    continue
+            else:
+                observed = data_layout(obj, binding.symbol)
             row.update(definition=Result.PASS, compiler_storage=observed)
             if binding.span is None:
                 raise ValueError("original object extent is not declared; initial data remains unverified")

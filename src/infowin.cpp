@@ -173,7 +173,7 @@ void InfoWin::setup_text() {
             energy_compute(faction, 0);
             const int current_tech = PlayersData[faction].tech_id_researching;
             if (current_tech >= 0 &&
-                ((GameState & 0x80u) != 0 || (GameRules & 0x200u) == 0)) {
+                ((GameDataStateStorage.fields_.game_state_ & 0x80u) != 0 || (GameDataStateStorage.fields_.game_rules_ & 0x200u) == 0)) {
                 text[0] = 0;
                 infowin_append_label(text, 0x6a);
                 strcat(text, ": ");
@@ -372,8 +372,8 @@ void InfoWin::setup_text() {
             content_line_height = 0;
             canvas.set_clip(&clip);
             text[0] = 0;
-            if ((ObjectiveReqVictory < 9000 || ObjectivesSuddenDeathVictory < 9000) &&
-                ObjectiveAchievePts == 0) {
+            if ((ScenarioSave.objective_req_victory < 9000 || ScenarioSave.objectives_sudden_death_victory < 9000) &&
+                ScenarioSave.objective_achieve_points == 0) {
                 infowin_append_label(text, 899);
                 CharUpperA(text);
             } else {
@@ -397,13 +397,13 @@ void InfoWin::setup_text() {
             }
 
             int turn_step = 1;
-            while (TurnCurrentNum / turn_step > clip.right - clip.left) ++turn_step;
+            while (GameDataStateStorage.fields_.turn_current_num_ / turn_step > clip.right - clip.left) ++turn_step;
             for (int faction_index = 1; faction_index < MaxPlayerNum; ++faction_index) {
                 int turn = 1;
                 int x = clip.left;
                 int previous_y = clip.bottom - 1;
                 bool have_previous = false;
-                while (turn <= TurnCurrentNum) {
+                while (turn <= GameDataStateStorage.fields_.turn_current_num_) {
                     const int history_index = turn * MaxPlayerNum + faction_index;
                     const int score = static_cast<int16_t>(FactionRankingHistory[history_index]);
                     const int y = clip.bottom - 1 - score / y_divisor;
@@ -426,7 +426,7 @@ void InfoWin::setup_text() {
             // stored but not included by the final count pass.
             for (int rank_row = 0; rank_row < MaxPlayerNum; ++rank_row) {
                 const int faction_index = static_cast<int>(
-                    FactionRankings[MaxPlayerNum - 1 - rank_row]);
+                    GameDataStateStorage.fields_.faction_rankings_[MaxPlayerNum - 1 - rank_row]);
                 GenderDefault = Players[faction_index].noun_gender;
                 PluralityDefault = Players[faction_index].is_noun_plural;
                 strcpy(text, Players[faction_index].noun_faction);
@@ -448,8 +448,8 @@ void InfoWin::setup_text() {
             content_line_height = 0;
             canvas.set_clip(&clip);
             text[0] = 0;
-            if ((ObjectiveReqVictory < 9000 || ObjectivesSuddenDeathVictory < 9000) &&
-                ObjectiveAchievePts == 0) {
+            if ((ScenarioSave.objective_req_victory < 9000 || ScenarioSave.objectives_sudden_death_victory < 9000) &&
+                ScenarioSave.objective_achieve_points == 0) {
                 infowin_append_label(text, 899);
                 CharUpperA(text);
             } else {
@@ -506,7 +506,7 @@ void InfoWin::setup_text() {
         case 6: {
             content_line_height = 0;
             const int live_faction = ConsoleGlobal.faction_id_;
-            const uint8_t alive = static_cast<uint8_t>(LockEnableMask >> 8);
+            const uint8_t alive = static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8);
             infowin_write_faction_row(text, row_text_[pane][0], 0x41c / 4,
                 infowin_best_stat_faction(live_faction, alive, 0));
             infowin_write_faction_row(text, row_text_[pane][1], 0x420 / 4,
@@ -532,9 +532,9 @@ void InfoWin::setup_text() {
                                       best_sum_faction);
             displayed_rows = 5;
 
-            if (RankingFactionIDUnk1 > 0) {
+            if (GameDataStateStorage.fields_.ranking_faction_id_unk1_ > 0) {
                 infowin_write_faction_row(text, row_text_[pane][5], 0x428 / 4,
-                                          static_cast<int>(FactionRankings[7]));
+                                          static_cast<int>(GameDataStateStorage.fields_.faction_rankings_[7]));
                 displayed_rows = 6;
             }
             break;
@@ -809,7 +809,7 @@ void InfoWin::draw_text(int pane) {
             if (length) {
                 int color = row_color_[column][row];
                 if (ranked) {
-                    int faction = FactionRankings[8 - row];
+                    int faction = GameDataStateStorage.fields_.faction_rankings_[8 - row];
                     buffer.set_text_color(InfoFactionTextColors[faction],
                                           InfoFactionShadowColors[faction], 1, 1);
                 } else if (!color) {
@@ -936,14 +936,14 @@ int InfoWin::state_valid(int state) {
     if (state == 0) {
         return 1;
     }
-    if (TurnCurrentNum != 0) {
+    if (GameDataStateStorage.fields_.turn_current_num_ != 0) {
         switch (state) {
         case 0:
         case 11:
             return 1;
         case 1:
-            if (TurnCurrentNum >= 50 &&
-                (TurnCurrentNum >= 100 || PlayersData[ConsoleGlobal.faction_id_].diff_level >= DLVL_TALENT)) {
+            if (GameDataStateStorage.fields_.turn_current_num_ >= 50 &&
+                (GameDataStateStorage.fields_.turn_current_num_ >= 100 || PlayersData[ConsoleGlobal.faction_id_].diff_level >= DLVL_TALENT)) {
                 return 1;
             }
             break;
@@ -951,7 +951,7 @@ int InfoWin::state_valid(int state) {
             if (DiplomacyActive) {
                 return 1;
             }
-            if (TurnCurrentNum >= 50 || PlayersData[ConsoleGlobal.faction_id_].diff_level >= DLVL_TALENT) {
+            if (GameDataStateStorage.fields_.turn_current_num_ >= 50 || PlayersData[ConsoleGlobal.faction_id_].diff_level >= DLVL_TALENT) {
                 for (int faction = 1; faction < MaxPlayerNum; ++faction) {
                     if (faction != ConsoleGlobal.faction_id_ &&
                         (PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[faction] & DTREATY_COMMLINK)) {
@@ -968,12 +968,12 @@ int InfoWin::state_valid(int state) {
         case 4:
         case 5:
         case 6:
-            if (TurnCurrentNum >= 20 || (GameState & STATE_IS_SCENARIO)) {
+            if (GameDataStateStorage.fields_.turn_current_num_ >= 20 || (GameDataStateStorage.fields_.game_state_ & STATE_IS_SCENARIO)) {
                 return 1;
             }
             break;
         case 7:
-            if ((GameState & STATE_OMNISCIENT_VIEW) && (GameState & STATE_SCENARIO_EDITOR)) {
+            if ((GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) && (GameDataStateStorage.fields_.game_state_ & STATE_SCENARIO_EDITOR)) {
                 return 1;
             }
             break;
@@ -1102,7 +1102,7 @@ void InfoWin::right_menu(int x, int y) {
     menu.add_item(20, label_get(0x8FC / 4));
     menu.show(x, y, pop_expire);
 
-    if ((GameState & STATE_UNK_800) != 0) return;
+    if ((GameDataStateStorage.fields_.game_state_ & STATE_UNK_800) != 0) return;
     const int selection = menu.get_selected_id();
     if (selection >= 0 && selection <= 16 && state_valid(selection)) {
         pane_states_[active_pane_] = selection;

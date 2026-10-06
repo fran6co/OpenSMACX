@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include "game.h"  // shared state-window owner
 
 // PlanWin constructor-installed Win branch: capture4, resize13, mouse17, update63.
 // Table start is observed in the original constructor; full extent remains unknown.
@@ -330,7 +331,7 @@ extern "C" void __cdecl sub_54dc90(int base_id) {
 }
 
 static bool planwin_base_known_to_faction(const Base &base, int faction) {
-    if (GameState & STATE_OMNISCIENT_VIEW) return true;
+    if (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) return true;
     if ((PlayersData[faction].flags & PFLAG_MAP_REVEALED) == 0) {
         const int tile_index = base.y * static_cast<int>(MapLongitude)
                              + base.x / 2;
@@ -343,7 +344,7 @@ static bool planwin_base_known_to_faction(const Base &base, int faction) {
 
 static bool planwin_tile_has_known_base(int x, int y, int faction) {
     int base_index;
-    for (base_index = 0; base_index < BaseCurrentCount; ++base_index) {
+    for (base_index = 0; base_index < GameDataStateStorage.fields_.base_current_count_; ++base_index) {
         const Base &base = Bases[base_index];
         if (planwin_base_known_to_faction(base, faction)
             && base.x == x && base.y == y) {
@@ -369,7 +370,7 @@ void PlanWin::on_redraw() {
 
     const int faction = ConsoleGlobal.faction_id_;
     int base_draw_index;
-    for (base_draw_index = 0; base_draw_index < BaseCurrentCount;
+    for (base_draw_index = 0; base_draw_index < GameDataStateStorage.fields_.base_current_count_;
          ++base_draw_index) {
         const Base &base = Bases[base_draw_index];
         if (!planwin_base_known_to_faction(base, faction)) continue;

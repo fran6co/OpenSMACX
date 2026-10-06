@@ -2469,6 +2469,43 @@ size or the next symbol. This is an initial-storage requirement, not a stored
 verdict. Rehoming preserves its identity; replacing/removing the interpretation
 retains historical review requirements on the evidence anchor's task.
 
+Version 3 retains an old object identity while naming its current embedded owner
+and dotted direct-member path. It has an unbounded form and a bounded form:
+
+```cpp
+// RECOVERY_OBJECT: v3 <start> <old-symbol> member <parent-symbol> <member.path>
+// RECOVERY_OBJECT: v3 <start> <end> <old-symbol> <evidence-address> member <parent-symbol> <member.path>
+```
+
+For example, a bounded record keeps the same original span and evidence while
+resolving `Parent::field` from the freshly compiled parent object. The old symbol
+is the historical identity, not an emitted child alias. Parent symbols must be
+owned by one source unit; multiple child identities may share that owner only
+when their fresh CodeView paths and original starts imply one parent base. Old
+identity names cannot collide with a current member-owner name, because an old
+relocation could otherwise be redirected to a different object. The reader,
+target resolver and rehome writer refuse such aliases.
+
+The candidate extent comes from one standalone CodeView 5 data definition for
+the parent and each named direct embedded member. Pointer traversal, inherited
+members, missing or unresolved forward definitions, ambiguous layouts and unsupported type records remain
+unknown. For bounded records, `check-data` compares only the exact member slice.
+Relocations wholly contained in that slice are rebased to the parent base while
+preserving their COFF addends; edge-crossing and unsupported relocations remain
+unknown. Reference discovery can schedule a declared parent owner for read-only
+compilation, which does not grant source-edit scope. These checks cover initial
+storage and references only: constructors, later lifetime, physical final-link
+selection, complete hierarchy/runtime behavior and game acceptance remain
+separate requirements.
+
+`match_recovery.object_writer.replace_object_records` prepares a one-for-one
+rehome from a complete snapshot of all affected units. It preserves each old
+symbol, address, span, evidence anchor and interpretation while changing only
+the source unit/line and parent/member path. The pure result is reparsed and
+identity-checked; stale or partial snapshots, namespace aliases and unsafe
+comment boundaries refuse. It performs no file writes. The publisher still has
+to revalidate fresh inputs and enforce coordinator authorization.
+
 The PE/COFF backend uses standalone CodeView data records to measure candidate
 widths, tying the exact emitted symbol to its debug record with SECTION/SECREL
 relocations. It does not guess sizes from C++ spelling or neighboring symbols.

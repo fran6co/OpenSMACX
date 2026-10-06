@@ -10,7 +10,7 @@ import re
 
 from .bound_objects import FunctionBinding
 from .model import Origin, Span, digest
-from .object_source import referenced_object_units
+from .object_source import referenced_symbol_units
 from .source_config import SourceConfiguration
 
 
@@ -115,6 +115,11 @@ def validate_shared(bindings, view, *, reserved=()):
 
 
 def referenced_shared_units(bindings, objects):
-    # Owner scheduling uses the same external-relocation rules as real globals.
-    # It supplies no addresses and does not authorize editing a dependency.
-    return referenced_object_units(bindings, objects)
+    # Shared function identities have no object parent/member semantics. Build
+    # their owner map explicitly, then reuse only the generic COFF scheduler.
+    owners = {}
+    for binding in bindings:
+        if binding.symbol in owners:
+            raise ValueError("duplicate shared function symbol binding")
+        owners[binding.symbol] = binding.unit
+    return referenced_symbol_units(owners, objects)

@@ -65,7 +65,7 @@ AlphaMenu::~AlphaMenu() {}
 // symbol    ?check@AlphaMenu@@QAEXH@Z
 // TRIED: time-boxed - roughly the first quarter of the function (a long sequence of Menu::show_menu_item/hide_menu_item/ enable_menu_item gates against game-option and tech flags, transcribed with goto-labelled control flow matching the disassembly's branch targets) is faithful; the difficulty-table-driven remainder (several hundred more show/hide/enable calls) is a deliberate stub. MISMATCH #2, well past the prologue.
 void AlphaMenu::check(int veh_id) {
-    if ((GameMorePreferences & 0x200000u) != 0) {
+    if ((GameDataStateStorage.fields_.game_more_preferences_ & 0x200000u) != 0) {
         show_menu_item(0, 0x52);
         hide_menu_item(0, 0x51);
     } else {
@@ -77,7 +77,7 @@ void AlphaMenu::check(int veh_id) {
         hide_menu_item(0, 0x5C);
         goto difficulty_gate;
     }
-    if ((GameRules & 0x400u) != 0) {
+    if ((GameDataStateStorage.fields_.game_rules_ & 0x400u) != 0) {
         goto difficulty_gate;
     }
     show_menu_item(0, 0x5C);
@@ -85,14 +85,14 @@ void AlphaMenu::check(int veh_id) {
     goto expansion_gate;
 
 difficulty_gate:
-    if ((GameState & 0x1000u) != 0) {
+    if ((GameDataStateStorage.fields_.game_state_ & 0x1000u) != 0) {
         show_menu_item(0, 0x5A);
         goto expansion_gate;
     }
     hide_menu_item(0, 0x5A);
 
 expansion_gate:
-    if ((GameMorePreferences & 0x200000u) != 0) {
+    if ((GameDataStateStorage.fields_.game_more_preferences_ & 0x200000u) != 0) {
         const int general_items[] = {
             0x205, 0x206, 0x207, 0x208, 0x20C, 0x215, 0x211, 0x212
         };
@@ -118,14 +118,14 @@ expansion_gate:
             show_menu_item(9, scenario_items[scenario_index]);
     }
 
-    if ((GameState & 0x10u) == 0 && ObjectiveReqVictory >= 0x3E8 &&
-        static_cast<int32_t>(ObjectivesSuddenDeathVictory) >= 0x3E8) {
+    if ((GameDataStateStorage.fields_.game_state_ & 0x10u) == 0 && ScenarioSave.objective_req_victory >= 0x3E8 &&
+        static_cast<int32_t>(ScenarioSave.objectives_sudden_death_victory) >= 0x3E8) {
         hide_menu_item(1, 0x115);
     } else {
         show_menu_item(1, 0x115);
     }
 
-    if (IsMultiplayerNet && (GameState & 2u) != 0 &&
+    if (IsMultiplayerNet && (GameDataStateStorage.fields_.game_state_ & 2u) != 0 &&
         ConsoleFactionsWaitingMask != 0 && ConsoleFactionsWaitingMask != 0xFF) {
         hide_menu_item(8, 0x807);
         show_menu_item(8, 0x808);
@@ -134,13 +134,13 @@ expansion_gate:
         hide_menu_item(8, 0x808);
     }
 
-    if ((GameState & 0xC0u) != 0 && (NetTurnFlags & 8u) != 0) {
+    if ((GameDataStateStorage.fields_.game_state_ & 0xC0u) != 0 && (GameDataStateStorage.fields_.net_turn_flags_ & 8u) != 0) {
         hide_menu_item(1, 0x105);
     } else {
         show_menu_item(1, 0x105);
     }
 
-    if ((GameRules & 0x200u) != 0) {
+    if ((GameDataStateStorage.fields_.game_rules_ & 0x200u) != 0) {
         show_menu_item(1, 0x106);
         show_menu_item(1, 0x107);
     } else {
@@ -469,15 +469,15 @@ if (selected_proto.plan != 9) {
     }
 
 for (int scenario_menu_id = 0x601; scenario_menu_id <= 0x61B; ++scenario_menu_id) {
-    if ((GameState & 0x40u) != 0) enable_menu_item(6, scenario_menu_id);
+    if ((GameDataStateStorage.fields_.game_state_ & 0x40u) != 0) enable_menu_item(6, scenario_menu_id);
     else disable_menu_item(6, scenario_menu_id);
 }
 for (int scenario_option_id = 0xA00; scenario_option_id <= 0xA54; ++scenario_option_id) {
-    if ((GameState & 0x40u) != 0) enable_menu_item(10, scenario_option_id);
+    if ((GameDataStateStorage.fields_.game_state_ & 0x40u) != 0) enable_menu_item(10, scenario_option_id);
     else disable_menu_item(10, scenario_option_id);
 }
 
-if ((GameMorePreferences & 0x200000u) == 0) {
+if ((GameDataStateStorage.fields_.game_more_preferences_ & 0x200000u) == 0) {
     hide_menu_item(2, 0x205);
     hide_menu_item(2, 0x206);
     hide_menu_item(2, 0x207);
@@ -705,7 +705,7 @@ void AlphaMenu::on_redraw() {
 void AlphaMenu::show() {
   if (is_visible()) return;
 
-  if (GamePreferences & 0x400) g_ALPHAMENU_WAVE.play();
+  if (GameDataStateStorage.fields_.game_preferences_ & 0x400) g_ALPHAMENU_WAVE.play();
   on_redraw();
 
   RECT screen_rect = *buffer_working_rect();
@@ -714,7 +714,7 @@ void AlphaMenu::show() {
   const int step = (screen_rect.bottom - screen_rect.top) / 5;
   ScreenBuffer.set_clip(&screen_rect);
 
-  if ((GamePreferences & 0x8000000) != 0 && IsMultiplayerNet == 0) {
+  if ((GameDataStateStorage.fields_.game_preferences_ & 0x8000000) != 0 && IsMultiplayerNet == 0) {
     const int frame_x = animation_frame_x();
     WinFlipClipped = 1;
     for (int frame = 0; frame != 6; ++frame) {
@@ -744,7 +744,7 @@ void AlphaMenu::show() {
 void AlphaMenu::hide() {
   if (!is_visible()) return;
 
-  if (GamePreferences & 0x400) g_ALPHAMENU_WAVE.play();
+  if (GameDataStateStorage.fields_.game_preferences_ & 0x400) g_ALPHAMENU_WAVE.play();
   MenuSelection = -1;
   MainInterfaceGlobal.field_216E8_ = 0;
   on_redraw();
@@ -764,7 +764,7 @@ void AlphaMenu::hide() {
   const int target_y = screen_rect.bottom - sprite1_.height();
   const int step = (screen_rect.bottom - screen_rect.top) / 5;
   ScreenBuffer.set_clip(&screen_rect);
-  if ((GamePreferences & 0x8000000) != 0 && IsMultiplayerNet == 0) {
+  if ((GameDataStateStorage.fields_.game_preferences_ & 0x8000000) != 0 && IsMultiplayerNet == 0) {
     const int frame_x = animation_frame_x();
     WinFlipClipped = 1;
     for (int frame = 0; frame != 6; ++frame) {
@@ -1104,7 +1104,7 @@ int AlphaMenu::menu_init() {
     menu->hide_menu_item(3, 0x306);
     menu->hide_menu_item(3, 0x304);
     menu->disable_menu_item(3, 0x305);
-    if ((GameRules & RULES_IRONMAN) != 0) {
+    if ((GameDataStateStorage.fields_.game_rules_ & RULES_IRONMAN) != 0) {
         menu->hide_menu_item(0, 0x5a);
     }
     check(-1);

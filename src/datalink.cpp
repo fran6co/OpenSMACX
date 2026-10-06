@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include "game.h"  // shared state-window owner
 #include "original_seam.h"
 #include "datalink.h"
 // Datalink::show and Datalink::hide reach the SubInterface subobject the
@@ -2154,7 +2155,7 @@ void Datalink::set_cat_unit() {
         if ((proto.flags & 1) != 0 && index != 4) {
             StringTemp[0] = '\0';
             strcat(StringTemp, proto.veh_name);
-            if ((GameState & 0x1000) != 0) {
+            if ((GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
                 strcat(StringTemp, CategoryIdSeparator);
                 char digits[80];
                 _itoa(index + 30000, digits, 10);
@@ -2203,7 +2204,7 @@ void Datalink::set_cat_chassis() {
         if (Chassis[index].preq_tech >= -1) {
             StringTemp[0] = '\0';
             strcat(StringTemp, StringTable.get((int)Chassis[index].offsv_1_name));
-            if ((GameState & 0x1000) != 0) {
+            if ((GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
                 strcat(StringTemp, CategoryIdSeparator);
                 char digits[80];
                 _itoa(index + 40000, digits, 10);
@@ -2256,7 +2257,7 @@ void Datalink::set_cat_reactor() {
         if (record->preq_tech >= -1) {
             StringTemp[0] = '\0';
             strcat(StringTemp, StringTable.get((int)record->name));
-            if ((GameState & 0x1000) != 0) {
+            if ((GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
                 strcat(StringTemp, CategoryIdSeparator);
                 char digits[80];
                 _itoa(id, digits, 10);
@@ -2302,7 +2303,7 @@ void Datalink::set_cat_weapon() {
         if (Weapon[index].preq_tech >= -1) {
             StringTemp[0] = '\0';
             strcat(StringTemp, StringTable.get((int)Weapon[index].name));
-            if ((GameState & 0x1000) != 0) {
+            if ((GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
                 strcat(StringTemp, CategoryIdSeparator);
                 char digits[80];
                 _itoa(index + 60000, digits, 10);
@@ -2348,7 +2349,7 @@ void Datalink::set_cat_defense() {
         if (Armor[index].preq_tech >= -1) {
             StringTemp[0] = '\0';
             strcat(StringTemp, StringTable.get((int)Armor[index].name));
-            if ((GameState & 0x1000) != 0) {
+            if ((GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
                 strcat(StringTemp, CategoryIdSeparator);
                 char digits[80];
                 _itoa(index + 70000, digits, 10);
@@ -2394,7 +2395,7 @@ void Datalink::set_cat_ability() {
         if (Ability[index].preq_tech >= -1) {
             StringTemp[0] = '\0';
             strcat(StringTemp, StringTable.get((int)Ability[index].name));
-            if ((GameState & 0x1000) != 0) {
+            if ((GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
                 strcat(StringTemp, CategoryIdSeparator);
                 char digits[80];
                 _itoa(index + 80000, digits, 10);
@@ -2447,7 +2448,7 @@ void Datalink::set_cat_facility() {
         if (record->preq_tech >= -1) {
             StringTemp[0] = '\0';
             strcat(StringTemp, StringTable.get((int)record->name));
-            if ((GameState & 0x1000) != 0) {
+            if ((GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
                 strcat(StringTemp, CategoryIdSeparator);
                 char digits[80];
                 _itoa(id, digits, 10);
@@ -2504,7 +2505,7 @@ void Datalink::set_cat_project() {
                 strcpy(full, StringTemp);
                 strcpy(StringTemp, full + 4);
             }
-            if ((GameState & 0x1000) != 0) {
+            if ((GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
                 strcat(StringTemp, CategoryIdSeparator);
                 char digits[80];
                 _itoa(index + 68534, digits, 10);
@@ -2556,7 +2557,7 @@ void Datalink::set_cat_tech() {
         if (record[-1] >= -1 && record[0] >= -1) {
             StringTemp[0] = '\0';
             strcat(StringTemp, StringTable.get(record[-9]));
-            if ((GameState & 0x1000) != 0) {
+            if ((GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
                 strcat(StringTemp, CategoryIdSeparator);
                 char digits[0x54];
                 _itoa(index + 140000, digits, 10);
@@ -2611,7 +2612,7 @@ void Datalink::set_cat_concept() {
              ++index) {
             StringTemp[0] = '\0';
             strcat(StringTemp, TextBufferGetPtr);
-            if ((GameState & 0x1000) != 0) {
+            if ((GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
                 strcat(StringTemp, CategoryIdSeparator);
                 char digits[80];
                 _itoa(index, digits, 10);
@@ -2668,7 +2669,7 @@ void Datalink::set_cat_adv_concept() {
          TextBufferGetPtr != 0 && strlen(TextBufferGetPtr) != 0; ++index) {
         StringTemp[0] = '\0';
         strcat(StringTemp, TextBufferGetPtr);
-        if ((GameState & 0x1000) != 0) {
+        if ((GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
             strcat(StringTemp, CategoryIdSeparator);
             char digits[80];
             _itoa(index + 10000, digits, 10);
@@ -2725,7 +2726,7 @@ void Datalink::set_cat_social() {
             int id = category + choice;
             StringTemp[0] = '\0';
             strcat(StringTemp, StringTable.get(row[choice]));
-            if ((GameState & 0x1000) != 0) {
+            if ((GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
                 strcat(StringTemp, CategoryIdSeparator);
                 char digits[80];
                 _itoa(id, digits, 10);
@@ -2776,7 +2777,7 @@ void Datalink::set_cat_effect() {
         if (row != SocialEffectNullRow) {
             StringTemp[0] = '\0';
             strcat(StringTemp, row);
-            if ((GameState & 0x1000) != 0) {
+            if ((GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
                 strcat(StringTemp, CategoryIdSeparator);
                 char digits[80];
                 _itoa(index + 130000, digits, 10);
@@ -2829,7 +2830,7 @@ void Datalink::set_cat_faction() {
         PluralityDefault = reinterpret_cast<const int *>(record)[0];
         StringTemp[0] = '\0';
         strcat(StringTemp, record + 0x84);
-        if ((GameState & 0x1000) != 0) {
+        if ((GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
             strcat(StringTemp, CategoryIdSeparator);
             char digits[80];
             _itoa(index + 150001, digits, 10);
@@ -2889,7 +2890,7 @@ void Datalink::set_cat_terraform() {
         if (flags[-1] >= -1 && names[-1] != 0) {
             StringTemp[0] = '\0';
             strcat(StringTemp, StringTable.get(names[-1]));
-            if ((GameState & 0x1000) != 0) {
+            if ((GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
                 strcat(StringTemp, CategoryIdSeparator);
                 char digits[80];
                 _itoa(category - 20, digits, 10);
@@ -2907,7 +2908,7 @@ void Datalink::set_cat_terraform() {
 
         StringTemp[0] = '\0';
         strcat(StringTemp, StringTable.get(names[0]));
-        if ((GameState & 0x1000) != 0) {
+        if ((GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
             strcat(StringTemp, TerraformSecondSeparator);
             char digits[80];
             _itoa(category, digits, 10);
