@@ -54,6 +54,15 @@ MARKER_MATCHED = re.compile(r"(?<![A-Za-z0-9_])BYTE_EXACT(?![A-Za-z0-9_])")
 # from BYTE_EXACT, so it can never inflate the ratchet it sits beside.
 MARKER_SEMANTIC = re.compile(r"(?<![A-Za-z0-9_])SEMANTIC(?![A-Za-z0-9_])")
 
+# Source-authored classification for compiler scaffolding. This is a durable
+# role decision, never inferred from a symbol spelling or an observed body.
+# The directive must immediately precede its ORIGINAL marker; reader owns
+# association and rejects orphan/malformed occurrences.
+SOURCE_ROLE_DIRECTIVE = re.compile(
+    r"^\s*(?://|\*)\s*RECOVERY_ROLE\b(?P<tail>.*)$")
+SOURCE_ROLE = re.compile(
+    r"^\s*:\s*(?P<role>[A-Z_]+)(?:\s+(?P<reason>\S(?:.*\S)?))?\s*$")
+
 # -------------------------------------------------------- exclusion citations
 
 # The citation token after EXCLUDED is a section reference, not free prose.

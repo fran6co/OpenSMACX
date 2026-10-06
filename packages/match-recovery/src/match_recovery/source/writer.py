@@ -60,8 +60,9 @@ from pathlib import Path
 from .. import binding_source
 from .grammar import (FACT_LINE, LESSON_CONTINUED, LESSON_DEFERRED,
                       LESSON_LEVER, LESSON_RULED_OUT, LESSON_UNRECOVERABLE,
-                      MARKER, NEXT_MARKER)
-from .model import DecompilationState, Mode, State
+                      MARKER, NEXT_MARKER, SOURCE_ROLE_DIRECTIVE)
+from .model import (DecompilationState, Mode, SourceRole, State,
+                    validate_source_role)
 from .reader import _fact_lines, _lesson_run, read_text
 
 # Consume ordinary literals/comments before looking for a raw-string opener.
@@ -93,6 +94,13 @@ def _marker_line(record: DecompilationState) -> str:
     if record.semantic:
         line += " SEMANTIC"
     return line
+
+
+def _source_role_line(record: DecompilationState) -> str | None:
+    validate_source_role(record.source_role, record.source_role_reason)
+    if record.source_role is SourceRole.UNCLASSIFIED:
+        return None
+    return "// RECOVERY_ROLE: SCAFFOLD " + record.source_role_reason.strip()
 
 
 # `_fact_drop` IS GONE, and its absence is the point. It deleted any line
@@ -347,6 +355,7 @@ def write(text: str, records: list[DecompilationState]) -> str:
                 f"{record.address_hex}: line {record.line} is claimed by "
                 f"another record")
         by_line[record.line] = record
+        _source_role_line(record)  # Validate the durable role/reason pair.
 
     drop: set = set()
     respell: dict = {}
@@ -358,6 +367,8 @@ def write(text: str, records: list[DecompilationState]) -> str:
             for offset in gone & set(respell):
                 respell.pop(offset, None)
             drop |= gone
+            if index > 0 and SOURCE_ROLE_DIRECTIVE.fullmatch(lines[index - 1]):
+                drop.add(index - 1)
             respell.update(spelled)
             if additions:
                 add_after.setdefault(after, []).extend(additions)
@@ -369,6 +380,9 @@ def write(text: str, records: list[DecompilationState]) -> str:
         record = by_line.get(index + 1)
         if record is not None:
             if _holds_marker(line, record):
+                role_line = _source_role_line(record)
+                if role_line is not None:
+                    out.append(role_line)
                 out.append(_marker_line(record))
                 if index in add_after:
                     out.extend(add_after.pop(index))
@@ -378,6 +392,9 @@ def write(text: str, records: list[DecompilationState]) -> str:
                 raise ValueError(
                     f"{record.address_hex}: an annotation being added must "
                     f"carry its name and its spans")
+            role_line = _source_role_line(record)
+            if role_line is not None:
+                out.append(role_line)
             out.append(_marker_line(record))
             out.extend(_lesson_lines(record))
         out.append(respell.get(index, line))
@@ -390,6 +407,9 @@ def write(text: str, records: list[DecompilationState]) -> str:
             raise ValueError(
                 f"{record.address_hex}: an annotation being added must "
                 f"carry its name and its spans")
+        role_line = _source_role_line(record)
+        if role_line is not None:
+            out.append(role_line)
         out.append(_marker_line(record))
         out.extend(_lesson_lines(record))
 
@@ -547,6 +567,11 @@ def remove(text: str, records: list[DecompilationState]) -> str:
                 f"of a {len(lines)}-line file")
         index = record.line - 1
         drop.add(index)
+        if index > 0 and SOURCE_ROLE_DIRECTIVE.fullmatch(lines[index - 1]):
+            drop.add(index - 1)
+        if index + 1 < len(lines) and lines[index + 1].strip().startswith(
+                "// RECOVERY_BINDING:"):
+            drop.add(index + 1)
         drop.update(_lesson_drop(lines, index))
 
     out = [line for index, line in enumerate(lines) if index not in drop]

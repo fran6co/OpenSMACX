@@ -19,6 +19,39 @@ whole-project gate; `recover measure` owns diagnostics and
 `recover record` owns production claim stamping. The active task and
 structural-migration workflow is `recovery/WORKFLOW.md`, not this format reference.
 
+## Source-role rationale
+
+An optional source-owned role rationale is written on its own comment line
+immediately before an `ORIGINAL` marker:
+
+```cpp
+// RECOVERY_ROLE: SCAFFOLD compiler adjustor only; delegates to the real owner
+// ORIGINAL: 0x00401234 ?adjust@@YAXXZ 0x00401234-0x00401238
+// RECOVERY_BINDING: v1 {"reason":"...","evidence":["..."]}
+```
+
+`RECOVERY_ROLE` is a durable classification decision, not a measurement or a
+recovery waiver. The initial accepted role is `SCAFFOLD`; its nonblank reason
+must be one real text line, with no control/line-separator characters,
+embedded `ORIGINAL:` / `RECOVERY_ROLE:` tokens, or C block-comment delimiters.
+That restriction prevents the rationale from manufacturing or terminating
+neighboring annotation syntax. The optional binding rationale remains attached
+immediately after `ORIGINAL`, so both annotations retain independent,
+unambiguous attachment rules.
+
+No role annotation means `unclassified`, not `application implementation`.
+Role does not replace original identity, mode/state, claims, spans, source body
+region, or historical obligations. Inventory may report whether a source body
+region was extracted and its existing derived state by role, but that is not a
+recovered/implemented count: region text can include sentinels or comments, and
+source state is not a behavioral proof. Role does not remove a mapping from
+identity checks, measurements, or preservation.
+
+The source reader ignores annotation-looking lines inside multiline C++ raw
+string literals. Ordinary quoted strings and prose remain non-directives under
+the existing source grammar. This section adds no CLI or project-specific
+filename rules.
+
 ## Original-function binding rationale
 
 The native `recover bind` command adds a new, unverified function identity to an

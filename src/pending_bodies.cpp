@@ -672,6 +672,7 @@ void WaveGroupList::insert(Wave *wave) {
 /*
 Purpose: Step the receiver back to the subobject ??_GBasePop@@UAEPAXI@Z
          expects, then forward unchanged.
+// RECOVERY_ROLE: SCAFFOLD Transitional pending-body collection; original forwarders and placeholders are not recovered implementations.
 // ORIGINAL: 0x004070B0 ??_GBasePop@@WEEE@AEPAXI@Z 0x004070B0-0x004070BB BYTE_EXACT
 // symbol    ??_EBasePop@@WEEE@AEPAXI@Z
 // CORRECTED from ??3BasePop@@SAXPAXI@Z
@@ -692,6 +693,7 @@ Status: Complete
 /*
 Purpose: Step the receiver back to the subobject ??_GCredits@@UAEPAXI@Z
          expects, then forward unchanged.
+// RECOVERY_ROLE: SCAFFOLD Transitional pending-body collection; original forwarders and placeholders are not recovered implementations.
 // ORIGINAL: 0x00428F80 ??_GCredits@@WEEE@AEPAXI@Z 0x00428F80-0x00428F8B BYTE_EXACT
 // symbol    ??_ECredits@@WEEE@AEPAXI@Z
 // CORRECTED from ??3Credits@@SAXPAXI@Z
@@ -712,6 +714,7 @@ Status: Complete
 /*
 Purpose: Step the receiver back to the subobject ??_GSetupWin@@UAEPAXI@Z
          expects, then forward unchanged.
+// RECOVERY_ROLE: SCAFFOLD Transitional pending-body collection; original forwarders and placeholders are not recovered implementations.
 // ORIGINAL: 0x004AE9A0 ??_GSetupWin@@WEEE@AEPAXI@Z 0x004AE9A0-0x004AE9AB BYTE_EXACT
 // symbol    ??_ESetupWin@@WEEE@AEPAXI@Z
 // CORRECTED from ??3SetupWin@@SAXPAXI@Z
@@ -732,6 +735,7 @@ Status: Complete
 /*
 Purpose: Step the receiver back to the subobject ??_GReplayWin@@UAEPAXI@Z
          expects, then forward unchanged.
+// RECOVERY_ROLE: SCAFFOLD Transitional pending-body collection; original forwarders and placeholders are not recovered implementations.
 // ORIGINAL: 0x005AE0E0 ??_GReplayWin@@WEEE@AEPAXI@Z 0x005AE0E0-0x005AE0EB BYTE_EXACT
 // symbol    ??_EReplayWin@@WEEE@AEPAXI@Z
 // CORRECTED from ??3ReplayWin@@SAXPAXI@Z

@@ -161,10 +161,13 @@ def test_unsafe_existing_fact_is_not_repaired_by_deleting_comment_syntax(old):
 
 
 @pytest.mark.parametrize("prefix", [b"R", b"u8R", b"LR"])
-def test_raw_string_content_is_not_an_annotation(prefix):
+def test_raw_string_content_is_not_an_annotation_and_symbol_rewrite_refuses_raw_source(prefix):
     raw = b'const char *text = ' + prefix + b'"tag(\n' + MARKER + b' FILE\n)tag";\n'
+    assert records(raw) == []
+    actual = raw + MARKER + b" FILE\nint f() {}\n"
+    row, = records(actual)
     with pytest.raises(ValueError, match="raw-string"):
-        write_symbol(raw, records(raw)[0], SYMBOL)
+        write_symbol(actual, row, SYMBOL)
 
 
 @pytest.mark.parametrize("splice", [b"\\", b"??/", b"\\ "])

@@ -23,8 +23,10 @@ from .grammar import (DEFINITION_HEAD, DEFINITION_KEYWORDS,
                       LESSON_LEVER, LESSON_RULED_OUT, LESSON_UNRECOVERABLE,
                       MARKER, MARKER_KEYWORD, MARKER_MATCHED,
                       MARKER_SEMANTIC, MARKER_TAIL,
-                      NEXT_MARKER, SENTINEL, _MANGLED_BASE)
-from .model import DecompilationState, Lesson, Mode, Recipe, State
+                      NEXT_MARKER, SENTINEL, SOURCE_ROLE,
+                      SOURCE_ROLE_DIRECTIVE, _MANGLED_BASE)
+from .model import (DecompilationState, Lesson, Mode, Recipe, SourceRole,
+                    State, validate_source_role)
 
 
 
@@ -72,6 +74,60 @@ def _block_state_after(line: str, in_block: bool) -> bool:
         index = end + 2
 
 
+_RAW_STRING_OPEN = re.compile(r'(?:u8|u|U|L)?R"([^ ()\\\t\v\f\r\n]{0,16})\(')
+
+
+def _role_lexical_state_after(line: str, in_block: bool,
+                              raw_delimiter: str | None,
+                              ) -> tuple[bool, str | None, bool]:
+    """Track comment/raw-string state for source-role and marker recognition.
+
+    The ordinary source scanner has line-local quoted-literal rules. Raw C++
+    strings can span lines, so track their delimiter here; annotation-looking
+    text within one is source data, not a directive or ORIGINAL comment.
+    """
+    index, length = 0, len(line)
+    saw_raw = raw_delimiter is not None
+    while index < length:
+        if raw_delimiter is not None:
+            close = line.find(")" + raw_delimiter + '"', index)
+            if close < 0:
+                return in_block, raw_delimiter, saw_raw
+            index = close + len(raw_delimiter) + 2
+            raw_delimiter = None
+            continue
+        if in_block:
+            close = line.find("*/", index)
+            if close < 0:
+                return True, None, saw_raw
+            index, in_block = close + 2, False
+            continue
+        if line.startswith("//", index):
+            return False, None, saw_raw
+        if line.startswith("/*", index):
+            index, in_block = index + 2, True
+            continue
+        if line[index] in "\"'":
+            quote, index = line[index], index + 1
+            while index < length:
+                if line[index] == "\\":
+                    index += 2
+                    continue
+                if line[index] == quote:
+                    index += 1
+                    break
+                index += 1
+            continue
+        opener = _RAW_STRING_OPEN.match(line, index)
+        if opener is not None:
+            raw_delimiter = opener.group(1)
+            saw_raw = True
+            index = opener.end()
+            continue
+        index += 1
+    return in_block, raw_delimiter, saw_raw
+
+
 def _parse_marker(line: str, in_block: bool) -> tuple | None:
     """(address, keyword, rest, matched, name, spans, semantic) for a marker IN A
     COMMENT.
@@ -106,6 +162,28 @@ def _parse_marker(line: str, in_block: bool) -> tuple | None:
     rest = keyword_hit.group("rest") if keyword_hit else ""
     return (int(match.group("addr"), 16), keyword, rest, matched, name, spans,
             semantic)
+
+
+def _parse_source_role(line: str, in_block: bool) -> tuple[SourceRole, str] | None:
+    """Parse the source-role directive; `_read_text` binds it to the next marker."""
+    stripped = line.lstrip()
+    if not (stripped.startswith("//") or (in_block and stripped.startswith("*"))):
+        return None
+    hit = SOURCE_ROLE_DIRECTIVE.fullmatch(line)
+    if hit is None:
+        return None
+    parsed = SOURCE_ROLE.fullmatch(hit.group("tail"))
+    if parsed is None:
+        raise ValueError("malformed RECOVERY_ROLE directive")
+    role = parsed.group("role")
+    reason = (parsed.group("reason") or "").strip()
+    if role.lower() != SourceRole.SCAFFOLD.value:
+        raise ValueError("RECOVERY_ROLE requires supported SCAFFOLD role")
+    try:
+        validate_source_role(SourceRole.SCAFFOLD, reason)
+    except ValueError as error:
+        raise ValueError(f"RECOVERY_ROLE {error}") from error
+    return SourceRole.SCAFFOLD, reason
 
 
 def _lessons(lines: list[str], index: int,
@@ -394,12 +472,16 @@ def _region_end(lines: list[str], start: int, name: str = "", *,
     wanted = (None if subject is None
               else re.compile(rf"\b{re.escape(subject)}\b"))
     punctuated = None
+    raw_delimiter: str | None = None
     for offset, line in enumerate(lines[start:]):
+        next_block, next_raw, saw_raw = _role_lexical_state_after(
+            line, in_block, raw_delimiter)
         # Legacy bulk annotations can share one uninterrupted header comment.
         # Outside that header, a new marker belongs to another definition,
         # even when this marker has no local body (for example a header-homed
         # method). Never borrow its neighbour's body to conceal that absence.
-        if offset and (following := MARKER.search(line)) is not None:
+        if (offset and not saw_raw
+                and (following := MARKER.search(line)) is not None):
             same_comment = shared_comment and "*/" not in line[:following.start()]
             if (opened or not same_comment) and _parse_marker(line, in_block) is not None:
                 break
@@ -407,7 +489,8 @@ def _region_end(lines: list[str], start: int, name: str = "", *,
         # Within the original block, quotes do not escape its closing token.
         if shared_comment and "*/" in (line[marker_start:] if not offset else line):
             shared_comment = False
-        delta, in_block, saw_open, code = _brace_delta(line, in_block)
+        delta, _, saw_open, code = _brace_delta(line, in_block)
+        in_block, raw_delimiter = next_block, next_raw
         # BEFORE this line's braces are judged, since a single-line
         # definition names the subject and closes the region on one line.
         if wanted is not None and not defined and wanted.search(code):
@@ -648,17 +731,50 @@ def _read_text(text: str, path: Path | str,
     Only EXPLICIT markers are read - the tree's single annotation grammar.
     """
     path = Path(path)
+    pre_block, pre_raw = False, None
+    for raw_line in text.splitlines(keepends=True):
+        content = raw_line.rstrip("\r\n")
+        next_block, next_raw, saw_raw = _role_lexical_state_after(
+            content, pre_block, pre_raw)
+        if (not saw_raw and SOURCE_ROLE_DIRECTIVE.match(content)
+                and any(ord(char) < 32 or ord(char) in
+                        (0x7F, 0x85, 0x2028, 0x2029) for char in content)):
+            raise ValueError("RECOVERY_ROLE must contain one real text line")
+        pre_block, pre_raw = next_block, next_raw
     lines = text.splitlines()
     proved = _proved_store(path)
     found = []
 
     in_block = False
+    raw_delimiter: str | None = None
+    pending_role: tuple[int, SourceRole, str] | None = None
     for index, line in enumerate(lines):
         # Parse with the state the line OPENS in, then advance the state, so
         # a marker on the line that opens a comment is still inside it.
         marker_in_block = in_block
-        parsed = _parse_marker(line, marker_in_block)
-        in_block = _block_state_after(line, in_block)
+        next_in_block, next_raw_delimiter, saw_raw = _role_lexical_state_after(
+            line, in_block, raw_delimiter)
+        parsed = None if saw_raw else _parse_marker(line, marker_in_block)
+        role = None if saw_raw else _parse_source_role(line, marker_in_block)
+        in_block, raw_delimiter = next_in_block, next_raw_delimiter
+        if role is not None:
+            if parsed is not None:
+                raise ValueError(
+                    "RECOVERY_ROLE must occupy its own line before ORIGINAL")
+            if pending_role is not None:
+                raise ValueError(
+                    f"orphan RECOVERY_ROLE directive at line {pending_role[0] + 1}")
+            pending_role = (index, role[0], role[1])
+            continue
+        if pending_role is None:
+            source_role, source_role_reason = SourceRole.UNCLASSIFIED, ""
+        else:
+            role_index, source_role, source_role_reason = pending_role
+            if index != role_index + 1 or parsed is None:
+                raise ValueError(
+                    f"orphan RECOVERY_ROLE directive at line {role_index + 1}; "
+                    "it must immediately precede an ORIGINAL marker")
+            pending_role = None
         if parsed is None:
             continue
         address, keyword, rest, matched, name, spans, semantic = parsed
@@ -680,7 +796,8 @@ def _read_text(text: str, path: Path | str,
                 byte_exact=matched, semantic=semantic,
                 levers=found_levers,
                 ruled_out=found_ruled, unrecoverable=found_dead,
-                deferred=found_later, origin=found_run))
+                deferred=found_later, origin=found_run,
+                source_role=source_role, source_role_reason=source_role_reason))
         elif keyword == "EXCLUDED":
             found.append(DecompilationState(
                 address=address, mode=Mode.BODY, state=State.EXCLUDED,
@@ -690,7 +807,8 @@ def _read_text(text: str, path: Path | str,
                 semantic=semantic,
                 levers=found_levers, ruled_out=found_ruled,
                 unrecoverable=found_dead, deferred=found_later,
-                origin=found_run))
+                origin=found_run, source_role=source_role,
+                source_role_reason=source_role_reason))
         else:
             if proved:
                 # Proved bodies keep the writeback semantics even once an
@@ -714,7 +832,13 @@ def _read_text(text: str, path: Path | str,
                 byte_exact=matched, semantic=semantic,
                 levers=found_levers, ruled_out=found_ruled,
                 unrecoverable=found_dead, deferred=found_later,
-                origin=found_run))
+                origin=found_run, source_role=source_role,
+                source_role_reason=source_role_reason))
+
+    if pending_role is not None:
+        raise ValueError(
+            f"orphan RECOVERY_ROLE directive at line {pending_role[0] + 1}; "
+            "it must immediately precede an ORIGINAL marker")
 
     return found
 

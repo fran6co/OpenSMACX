@@ -27,6 +27,7 @@
 /*
 Purpose: ?set_codec@Wave_In_Device@@QAEHK@Z - forward 1 argument(s) to slot 0x60 of the
          object at +0x14, answering 0x13 when that object is absent.
+// RECOVERY_ROLE: SCAFFOLD Untyped delegate-slot adapter; real owner, interface and virtual dispatch remain recovery obligations.
 // ORIGINAL: 0x004C5A80 ?set_codec@Wave_In_Device@@QAEHK@Z 0x004C5A80-0x004C5AA0
 // symbol    ?wave_in_device_set_codec_redirect@@YIHPAX0I@Z
 // size      32 bytes
@@ -52,6 +53,7 @@ int __fastcall wave_in_device_set_codec_redirect(void *self, void *, uint32_t a1
 /*
 Purpose: ?set_vxw_key@Wave_In_Device@@QAEHPAC@Z - forward 1 argument(s) to slot 0x64 of the
          object at +0x14, answering 0x13 when that object is absent.
+// RECOVERY_ROLE: SCAFFOLD Untyped delegate-slot adapter; real owner, interface and virtual dispatch remain recovery obligations.
 // ORIGINAL: 0x004C5AA0 ?set_vxw_key@Wave_In_Device@@QAEHPAC@Z 0x004C5AA0-0x004C5AC0
 // symbol    ?wave_in_device_set_vxw_key_redirect@@YIHPAX0H@Z
 // size      32 bytes

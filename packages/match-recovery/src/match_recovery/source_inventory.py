@@ -95,6 +95,9 @@ def _parse_file(raw: bytes, path: Path, root: Path, pin: str, configuration: Sou
             "invalid_spans": invalid_spans,
             "body_path": record.body, "kind_hint": record.kind,
             "legacy_mode": record.mode.value, "legacy_state": record.state.value,
+            "source_body_region_present": bool(record.region.strip()),
+            "source_role": record.source_role.value,
+            "source_role_reason": record.source_role_reason,
             "legacy_exclusion": record.exclusion,
             "legacy_byte_exact": record.byte_exact,
             "legacy_semantic": record.semantic,
@@ -215,6 +218,13 @@ def inventory(snapshot: dict[str, Any]) -> dict[str, Any]:
             conflicts.append({"entity_id": entity_id,
                               "candidates": [{"path": row["path"], "line": row["line"]}
                                              for row in sources]})
+    body_presence_by_role = defaultdict(Counter)
+    body_states_by_role = defaultdict(Counter)
+    for row in records:
+        role = row["source_role"]
+        body_presence_by_role[role][
+            "present" if row["source_body_region_present"] else "absent"] += 1
+        body_states_by_role[role][row["legacy_state"]] += 1
     return {
         "schema_version": 1, "revision": snapshot["revision"],
         "image_sha256": snapshot["image_sha256"],
@@ -226,6 +236,15 @@ def inventory(snapshot: dict[str, Any]) -> dict[str, Any]:
             kind: dict(sorted(Counter(row["legacy_state"] for row in records if row["candidate_kind"] == kind).items()))
             for kind in sorted({row["candidate_kind"] for row in records})},
         "body_state_basis": "source_text_only_not_recovery_acceptance",
+        "source_role_counts": dict(sorted(Counter(
+            row["source_role"] for row in records).items())),
+        "source_body_region_presence_by_role": {
+            role: dict(sorted(counts.items()))
+            for role, counts in sorted(body_presence_by_role.items())},
+        "source_body_states_by_role": {
+            role: dict(sorted(counts.items()))
+            for role, counts in sorted(body_states_by_role.items())},
+        "source_role_basis": "source_authored_non_derivable_role_not_recovery_acceptance",
         "ownership_hints": dict(sorted(Counter(row["kind_hint"] or "unknown"
                                                 for row in records).items())),
         "historical_byte_obligations": sum(item["dimension"] == Dimension.BYTES

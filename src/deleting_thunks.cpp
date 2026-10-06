@@ -179,6 +179,7 @@ void *__fastcall scalar_delete_alpha_save(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GAlphaSave@@UAEPAXI@Z
          expects, then forward unchanged.
+// RECOVERY_ROLE: SCAFFOLD Hand-written deletion adapter; original lifetime identity still needs its genuine class-generated implementation.
 // ORIGINAL: 0x00408390 ??_GAlphaSave@@WEEE@AEPAXI@Z 0x00408390-0x0040839B
 // symbol    ?adjust_this_alpha_save@@YIPAXPAX0I@Z
 // CORRECTED from ??3AlphaSave@@SAXPAXI@Z
@@ -204,6 +205,7 @@ void *__fastcall adjust_this_alpha_save(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GEditBox@@UAEPAXI@Z
          expects, then forward unchanged.
+// RECOVERY_ROLE: SCAFFOLD Hand-written deletion adapter; original lifetime identity still needs its genuine class-generated implementation.
 // ORIGINAL: 0x004083A0 ??_GEditBox@@WEEE@AEPAXI@Z 0x004083A0-0x004083AB
 // symbol    ?adjust_this_edit_box@@YIPAXPAX0I@Z
 // CORRECTED from ??3EditBox@@SAXPAXI@Z
@@ -232,6 +234,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GPopMenu@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
+// RECOVERY_ROLE: SCAFFOLD Hand-written deletion adapter; original lifetime identity still needs its genuine class-generated implementation.
 // ORIGINAL: 0x00421640 ??_GPopMenu@@UAEPAXI@Z 0x00421640-0x00421661 BYTE_EXACT
 // symbol    ?scalar_delete_pop_menu@@YIPAXPAX0I@Z
 // size      33 bytes
@@ -255,6 +258,7 @@ void *__fastcall scalar_delete_pop_menu(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GPopMenu@@UAEPAXI@Z
          expects, then forward unchanged.
+// RECOVERY_ROLE: SCAFFOLD Hand-written deletion adapter; original lifetime identity still needs its genuine class-generated implementation.
 // ORIGINAL: 0x00421980 PopMenu::delete1 0x00421980-0x0042198B
 // symbol    ?adjust_this_pop_menu_delete1@@YIPAXPAX0I@Z
 // size      11 bytes
@@ -275,6 +279,7 @@ void *__fastcall adjust_this_pop_menu_delete1(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GPopMenu@@UAEPAXI@Z
          expects, then forward unchanged.
+// RECOVERY_ROLE: SCAFFOLD Hand-written deletion adapter; original lifetime identity still needs its genuine class-generated implementation.
 // ORIGINAL: 0x00421990 PopMenu::delete2 0x00421990-0x0042199B
 // symbol    ?adjust_this_pop_menu_delete2@@YIPAXPAX0I@Z
 // size      11 bytes
@@ -295,6 +300,7 @@ void *__fastcall adjust_this_pop_menu_delete2(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GPopMenu@@UAEPAXI@Z
          expects, then forward unchanged.
+// RECOVERY_ROLE: SCAFFOLD Hand-written deletion adapter; original lifetime identity still needs its genuine class-generated implementation.
 // ORIGINAL: 0x004219A0 PopMenu::delete3 0x004219A0-0x004219AB
 // symbol    ?adjust_this_pop_menu_delete3@@YIPAXPAX0I@Z
 // size      11 bytes
@@ -324,6 +330,7 @@ void *__fastcall adjust_this_pop_menu_delete3(void *self, void *,
 Purpose: The compiler-generated scalar deleting destructor at sub_448390: run
          the complete destructor, then release the storage through the
          executable's operator delete only when bit 0 of the flags asks.
+// RECOVERY_ROLE: SCAFFOLD Hand-written deletion adapter; original lifetime identity still needs its genuine class-generated implementation.
 // ORIGINAL: 0x00448390 sub_448390 0x00448390-0x004483B1 BYTE_EXACT
 // symbol    ?scalar_delete_sub_448390@@YIPAXPAX0I@Z
 // size      33 bytes
@@ -378,6 +385,7 @@ void *__fastcall scalar_delete_fame_win(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GFameWin@@UAEPAXI@Z
          expects, then forward unchanged.
+// RECOVERY_ROLE: SCAFFOLD Hand-written deletion adapter; original lifetime identity still needs its genuine class-generated implementation.
 // ORIGINAL: 0x0044B330 ??_GFameWin@@WEEE@AEPAXI@Z 0x0044B330-0x0044B33B
 // symbol    ?adjust_this_fame_win@@YIPAXPAX0I@Z
 // CORRECTED from ??3FameWin@@SAXPAXI@Z
@@ -432,6 +440,7 @@ void *__fastcall scalar_delete_monu_win(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GMonuWin@@UAEPAXI@Z
          expects, then forward unchanged.
+// RECOVERY_ROLE: SCAFFOLD Hand-written deletion adapter; original lifetime identity still needs its genuine class-generated implementation.
 // ORIGINAL: 0x00477E00 ??_GMonuWin@@WEEE@AEPAXI@Z 0x00477E00-0x00477E0B
 // symbol    ?adjust_this_monu_win@@YIPAXPAX0I@Z
 // CORRECTED from ??3MonuWin@@SAXPAXI@Z
@@ -480,6 +489,7 @@ void *__fastcall scalar_delete_multi_win(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GMultiWin@@UAEPAXI@Z
          expects, then forward unchanged.
+// RECOVERY_ROLE: SCAFFOLD Hand-written deletion adapter; original lifetime identity still needs its genuine class-generated implementation.
 // ORIGINAL: 0x0047A760 ??_GMultiWin@@WEEE@AEPAXI@Z 0x0047A760-0x0047A76B
 // symbol    ?adjust_this_multi_win@@YIPAXPAX0I@Z
 // CORRECTED from ??3MultiWin@@SAXPAXI@Z
@@ -531,6 +541,7 @@ void *__fastcall scalar_delete_pick_tech(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GPickTech@@UAEPAXI@Z
          expects, then forward unchanged.
+// RECOVERY_ROLE: SCAFFOLD Hand-written deletion adapter; original lifetime identity still needs its genuine class-generated implementation.
 // ORIGINAL: 0x00488740 ??_GPickTech@@WEEE@AEPAXI@Z 0x00488740-0x0048874B
 // symbol    ?adjust_this_pick_tech@@YIPAXPAX0I@Z
 // CORRECTED from ??3PickTech@@SAXPAXI@Z
@@ -556,6 +567,7 @@ void *__fastcall adjust_this_pick_tech(void *self, void *, unsigned int arg0) {
 /*
 Purpose: Step the receiver back by the vtordisp stored ahead of it to the one
          ??_GPlanWin@@UAEPAXI@Z expects, then forward unchanged.
+// RECOVERY_ROLE: SCAFFOLD Hand-written deletion adapter; original lifetime identity still needs its genuine class-generated implementation.
 // ORIGINAL: 0x0048BF10 ??_GPlanWin@@$4PPPPPPPM@A@AEPAXI@Z 0x0048BF10-0x0048BF18
 // symbol    ?adjust_this_plan_win@@YIPAXPAX0I@Z
 // CORRECTED from ??3PlanWin@@SAXPAXI@Z
@@ -606,6 +618,7 @@ void *__fastcall scalar_delete_pref_win(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GPrefWin@@UAEPAXI@Z
          expects, then forward unchanged.
+// RECOVERY_ROLE: SCAFFOLD Hand-written deletion adapter; original lifetime identity still needs its genuine class-generated implementation.
 // ORIGINAL: 0x00492410 ??_GPrefWin@@WEEE@AEPAXI@Z 0x00492410-0x0049241B
 // symbol    ?adjust_this_pref_win@@YIPAXPAX0I@Z
 // CORRECTED from ??3PrefWin@@SAXPAXI@Z
@@ -654,6 +667,7 @@ void *__fastcall scalar_delete_quayle_win(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GQuayleWin@@UAEPAXI@Z
          expects, then forward unchanged.
+// RECOVERY_ROLE: SCAFFOLD Hand-written deletion adapter; original lifetime identity still needs its genuine class-generated implementation.
 // ORIGINAL: 0x004968F0 ??_GQuayleWin@@WEEE@AEPAXI@Z 0x004968F0-0x004968FB
 // symbol    ?adjust_this_quayle_win@@YIPAXPAX0I@Z
 // CORRECTED from ??3QuayleWin@@SAXPAXI@Z
@@ -693,6 +707,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GAlphaMenu@@UAEPAXI@Z: run the complete destructor, then release
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
+// RECOVERY_ROLE: SCAFFOLD Hand-written deletion adapter; original lifetime identity still needs its genuine class-generated implementation.
 // ORIGINAL: 0x0051DC90 ??_GAlphaMenu@@UAEPAXI@Z 0x0051DC90-0x0051DCB1 BYTE_EXACT
 // symbol    ?scalar_delete_alpha_menu@@YIPAXPAX0I@Z
 // size      33 bytes
@@ -716,6 +731,7 @@ void *__fastcall scalar_delete_alpha_menu(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GAlphaMenu@@UAEPAXI@Z
          expects, then forward unchanged.
+// RECOVERY_ROLE: SCAFFOLD Hand-written deletion adapter; original lifetime identity still needs its genuine class-generated implementation.
 // ORIGINAL: 0x0051DF70 ??_GAlphaMenu@@WEEE@AEPAXI@Z 0x0051DF70-0x0051DF7B
 // symbol    ?adjust_this_alpha_menu@@YIPAXPAX0I@Z
 // CORRECTED from ??3AlphaMenu@@SAXPAXI@Z
@@ -743,6 +759,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GReplayWin@@UAEPAXI@Z: run the complete destructor, then release
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
+// RECOVERY_ROLE: SCAFFOLD Hand-written deletion adapter; original lifetime identity still needs its genuine class-generated implementation.
 // ORIGINAL: 0x005AE0B0 ??_GReplayWin@@UAEPAXI@Z 0x005AE0B0-0x005AE0D1 BYTE_EXACT
 // symbol    ?scalar_delete_replay_win@@YIPAXPAX0I@Z
 // size      33 bytes
@@ -770,6 +787,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GWin@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
+// RECOVERY_ROLE: SCAFFOLD Hand-written deletion adapter; original lifetime identity still needs its genuine class-generated implementation.
 // ORIGINAL: 0x005F8610 ??_GWin@@UAEPAXI@Z 0x005F8610-0x005F862E BYTE_EXACT
 // symbol    ?scalar_delete_win@@YIPAXPAX0I@Z
 // size      30 bytes

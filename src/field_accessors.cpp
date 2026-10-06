@@ -15,6 +15,7 @@ Purpose: Return the constant 0x1.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
+// RECOVERY_ROLE: SCAFFOLD Untyped raw-field or constant adapter; real method ownership and named member relationships remain recovery obligations.
 // ORIGINAL: 0x00406840 sub_406840 0x00406840-0x00406846 BYTE_EXACT
 // symbol    ?field_accessor_00406840_redirect@@YIIPAX0@Z
 // size      6 bytes
@@ -47,6 +48,7 @@ Purpose: Read the dword field at 0x200.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
+// RECOVERY_ROLE: SCAFFOLD Untyped raw-field or constant adapter; real method ownership and named member relationships remain recovery obligations.
 // ORIGINAL: 0x004C75A0 sub_4c75a0 0x004C75A0-0x004C75A7 BYTE_EXACT
 // symbol    ?field_accessor_004c75a0_redirect@@YIIPAX0@Z
 // size      7 bytes
@@ -77,6 +79,7 @@ Purpose: Set 9 field(s) to constants.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
+// RECOVERY_ROLE: SCAFFOLD Untyped raw-field or constant adapter; real method ownership and named member relationships remain recovery obligations.
 // ORIGINAL: 0x004C8090 sub_4c8090 0x004C8090-0x004C80B3 BYTE_EXACT
 // symbol    ?field_accessor_004c8090_redirect@@YIPAXPAX0@Z
 // size      35 bytes
@@ -116,6 +119,7 @@ Purpose: Set 2 field(s) to constants.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
+// RECOVERY_ROLE: SCAFFOLD Untyped raw-field or constant adapter; real method ownership and named member relationships remain recovery obligations.
 // ORIGINAL: 0x004C8100 sub_4c8100 0x004C8100-0x004C810B BYTE_EXACT
 // symbol    ?field_accessor_004c8100_redirect@@YIPAXPAX0@Z
 // size      11 bytes
@@ -148,6 +152,7 @@ Purpose: Return the constant 0xb.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
+// RECOVERY_ROLE: SCAFFOLD Untyped raw-field or constant adapter; real method ownership and named member relationships remain recovery obligations.
 // ORIGINAL: 0x004C93E0 sub_4c93e0 0x004C93E0-0x004C93E8 BYTE_EXACT
 // symbol    ?field_accessor_004c93e0_redirect@@YIIPAX0H@Z
 // size      8 bytes
@@ -179,6 +184,7 @@ Purpose: Return the constant 0x8.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
+// RECOVERY_ROLE: SCAFFOLD Untyped raw-field or constant adapter; real method ownership and named member relationships remain recovery obligations.
 // ORIGINAL: 0x005DA6A0 sub_5da6a0 0x005DA6A0-0x005DA6A8 BYTE_EXACT
 // symbol    ?field_accessor_005da6a0_redirect@@YIIPAX0HHH@Z
 // size      8 bytes
@@ -208,6 +214,7 @@ Purpose: Return the constant 0x8.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
+// RECOVERY_ROLE: SCAFFOLD Untyped raw-field or constant adapter; real method ownership and named member relationships remain recovery obligations.
 // ORIGINAL: 0x005DA6B0 sub_5da6b0 0x005DA6B0-0x005DA6B8 BYTE_EXACT
 // symbol    ?field_accessor_005da6b0_redirect@@YIIPAX0HHHH@Z
 // size      8 bytes
@@ -237,6 +244,7 @@ Purpose: Return the constant 0x8.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
+// RECOVERY_ROLE: SCAFFOLD Untyped raw-field or constant adapter; real method ownership and named member relationships remain recovery obligations.
 // ORIGINAL: 0x005E2460 sub_5e2460 0x005E2460-0x005E2468 BYTE_EXACT
 // symbol    ?field_accessor_005e2460_redirect@@YIIPAX0HHHHH@Z
 // size      8 bytes
@@ -266,6 +274,7 @@ Purpose: Return the constant 0x8.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
+// RECOVERY_ROLE: SCAFFOLD Untyped raw-field or constant adapter; real method ownership and named member relationships remain recovery obligations.
 // ORIGINAL: 0x005E2470 sub_5e2470 0x005E2470-0x005E2478 BYTE_EXACT
 // symbol    ?field_accessor_005e2470_redirect@@YIIPAX0HHHHH@Z
 // size      8 bytes
@@ -299,6 +308,7 @@ Purpose: Read the dword field at 0x0, masked to 0x1.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
+// RECOVERY_ROLE: SCAFFOLD Untyped raw-field or constant adapter; real method ownership and named member relationships remain recovery obligations.
 // ORIGINAL: 0x00600320 ?is_playing@MCIVideo@@QAEHXZ 0x00600320-0x00600326 BYTE_EXACT
 // symbol    ?field_accessor_00600320_redirect@@YIIPAX0@Z
 // size      6 bytes
@@ -330,6 +340,7 @@ Purpose: Set 3 field(s) to constants.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
+// RECOVERY_ROLE: SCAFFOLD Untyped raw-field or constant adapter; real method ownership and named member relationships remain recovery obligations.
 // ORIGINAL: 0x00616B20 sub_616b20 0x00616B20-0x00616B2D BYTE_EXACT
 // symbol    ?field_accessor_00616b20_redirect@@YIPAXPAX0@Z
 // size      13 bytes
@@ -363,6 +374,7 @@ Purpose: Set 9 field(s) to constants.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
+// RECOVERY_ROLE: SCAFFOLD Untyped raw-field or constant adapter; real method ownership and named member relationships remain recovery obligations.
 // ORIGINAL: 0x006346C0 sub_6346c0 0x006346C0-0x006346E4 BYTE_EXACT
 // symbol    ?field_accessor_006346c0_redirect@@YIPAXPAX0@Z
 // size      36 bytes
@@ -402,6 +414,7 @@ Purpose: Set 9 field(s) to constants.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
+// RECOVERY_ROLE: SCAFFOLD Untyped raw-field or constant adapter; real method ownership and named member relationships remain recovery obligations.
 // ORIGINAL: 0x006346F0 sub_6346f0 0x006346F0-0x00634712 BYTE_EXACT
 // symbol    ?field_accessor_006346f0_redirect@@YIXPAX0@Z
 // size      34 bytes
@@ -440,6 +453,7 @@ Purpose: Set 9 field(s) to constants.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
+// RECOVERY_ROLE: SCAFFOLD Untyped raw-field or constant adapter; real method ownership and named member relationships remain recovery obligations.
 // ORIGINAL: 0x00634B70 sub_634b70 0x00634B70-0x00634B94 BYTE_EXACT
 // symbol    ?field_accessor_00634b70_redirect@@YIPAXPAX0@Z
 // size      36 bytes
@@ -487,6 +501,7 @@ Purpose: Do nothing; the original body is only its `ret`.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
+// RECOVERY_ROLE: SCAFFOLD Untyped raw-field or constant adapter; real method ownership and named member relationships remain recovery obligations.
 // ORIGINAL: 0x00406B20 nullsub_27 0x00406B20-0x00406B23 BYTE_EXACT
 // symbol    ?field_accessor_00406b20_redirect@@YIXPAX0HHH@Z
 // size      3 bytes
@@ -516,6 +531,7 @@ Purpose: Return the constant 0x0.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
+// RECOVERY_ROLE: SCAFFOLD Untyped raw-field or constant adapter; real method ownership and named member relationships remain recovery obligations.
 // ORIGINAL: 0x00616D80 sub_616d80 0x00616D80-0x00616D85 BYTE_EXACT
 // symbol    ?field_accessor_00616d80_redirect@@YIIPAX0HHH@Z
 // size      5 bytes
@@ -545,6 +561,7 @@ Purpose: Do nothing; the original body is only its `ret`.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
+// RECOVERY_ROLE: SCAFFOLD Untyped raw-field or constant adapter; real method ownership and named member relationships remain recovery obligations.
 // ORIGINAL: 0x0061F785 nullsub_259 0x0061F785-0x0061F788 BYTE_EXACT
 // symbol    ?field_accessor_0061f785_redirect@@YIXPAX0HHHHHHH@Z
 // size      3 bytes
@@ -574,6 +591,7 @@ Purpose: Do nothing; the original body is only its `ret`.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
+// RECOVERY_ROLE: SCAFFOLD Untyped raw-field or constant adapter; real method ownership and named member relationships remain recovery obligations.
 // ORIGINAL: 0x0050F640 nullsub_185 0x0050F640-0x0050F643 BYTE_EXACT
 // symbol    ?field_accessor_0050f640_redirect@@YIXPAX0H@Z
 // size      3 bytes
@@ -603,6 +621,7 @@ Purpose: Copy 1 argument(s) into field(s) of `this`.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
+// RECOVERY_ROLE: SCAFFOLD Untyped raw-field or constant adapter; real method ownership and named member relationships remain recovery obligations.
 // ORIGINAL: 0x00589750 sub_589750 0x00589750-0x00589760 BYTE_EXACT
 // symbol    ?field_accessor_00589750_redirect@@YIXPAX0H@Z
 // size      16 bytes
@@ -633,6 +652,7 @@ Purpose: Copy 2 argument(s) into field(s) of `this`.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
+// RECOVERY_ROLE: SCAFFOLD Untyped raw-field or constant adapter; real method ownership and named member relationships remain recovery obligations.
 // ORIGINAL: 0x00590CB0 sub_590cb0 0x00590CB0-0x00590CC2 BYTE_EXACT
 // symbol    ?field_accessor_00590cb0_redirect@@YIXPAX0HH@Z
 // size      18 bytes
@@ -664,6 +684,7 @@ Purpose: Copy 1 argument(s) into field(s) of `this`.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
+// RECOVERY_ROLE: SCAFFOLD Untyped raw-field or constant adapter; real method ownership and named member relationships remain recovery obligations.
 // ORIGINAL: 0x005F05C0 sub_5f05c0 0x005F05C0-0x005F05CD BYTE_EXACT
 // symbol    ?field_accessor_005f05c0_redirect@@YIXPAX0H@Z
 // size      13 bytes
@@ -694,6 +715,7 @@ Purpose: Set 5 field(s) to constants.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
+// RECOVERY_ROLE: SCAFFOLD Untyped raw-field or constant adapter; real method ownership and named member relationships remain recovery obligations.
 // ORIGINAL: 0x005D4540 Heap::Heap2 0x005D4540-0x005D4551 BYTE_EXACT
 // symbol    ?field_accessor_005d4540_redirect@@YIXPAX0@Z
 // size      17 bytes
@@ -728,6 +750,7 @@ Purpose: Clamp field 0xc against an argument, then store unconditionally.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
+// RECOVERY_ROLE: SCAFFOLD Untyped raw-field or constant adapter; real method ownership and named member relationships remain recovery obligations.
 // ORIGINAL: 0x004C80C0 sub_4c80c0 0x004C80C0-0x004C80D7 BYTE_EXACT
 // symbol    ?field_accessor_004c80c0_redirect@@YIXPAX0H@Z
 // size      23 bytes
@@ -762,6 +785,7 @@ Purpose: Clamp field 0x8 against an argument, then store unconditionally.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
+// RECOVERY_ROLE: SCAFFOLD Untyped raw-field or constant adapter; real method ownership and named member relationships remain recovery obligations.
 // ORIGINAL: 0x004C80E0 sub_4c80e0 0x004C80E0-0x004C80F7 BYTE_EXACT
 // symbol    ?field_accessor_004c80e0_redirect@@YIXPAX0H@Z
 // size      23 bytes

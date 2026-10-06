@@ -86,6 +86,32 @@ class State(StrEnum):
     EXCLUDED = "excluded"
 
 
+class SourceRole(StrEnum):
+    """Source-authored classification, independent of body presence."""
+    UNCLASSIFIED = "unclassified"
+    SCAFFOLD = "scaffold"
+
+
+def validate_source_role(role: SourceRole, reason: str) -> None:
+    """Validate a durable single-line role rationale before it meets C++ text."""
+    if not isinstance(role, SourceRole):
+        raise ValueError("source role must use the SourceRole vocabulary")
+    if not isinstance(reason, str):
+        raise ValueError("source role rationale must be text")
+    if role is SourceRole.UNCLASSIFIED:
+        if reason:
+            raise ValueError("unclassified source role cannot carry a rationale")
+        return
+    if not isinstance(reason, str) or not reason.strip():
+        raise ValueError("scaffold source role requires nonblank rationale text")
+    if (any(ord(char) < 32 or 0x7F <= ord(char) < 0xA0
+            or ord(char) in (0x2028, 0x2029)
+            for char in reason)
+            or any(token in reason for token in
+                   ("ORIGINAL:", "RECOVERY_ROLE:", "/*", "*/"))):
+        raise ValueError("scaffold rationale must be single-line text without embedded markers")
+
+
 @dataclass(frozen=True)
 class Lesson:
     """One lesson token and the exact lines it occupies.
@@ -200,8 +226,11 @@ class DecompilationState:
                                  # means "this record says nothing about a
                                  # lesson run" - spell one from scratch, and
                                  # do NOT delete one.
+    source_role: SourceRole = SourceRole.UNCLASSIFIED
+    source_role_reason: str = ""
 
     def __post_init__(self) -> None:
+        validate_source_role(self.source_role, self.source_role_reason)
         # 1-BASED, AND CHECKED HERE. `writer` used to reject `line == 0` at
         # both of its entry points, describing it as a "filename-derived"
         # record - a kind nothing has ever produced. What the check was

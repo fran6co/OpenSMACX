@@ -25,13 +25,13 @@ No repository root, original image path or compiler flag sets are selected here.
 from __future__ import annotations
 
 from . import grammar, mangled, model, reader, writer
-from .model import DecompilationState, Mode, Recipe, State, Tier
+from .model import DecompilationState, Mode, Recipe, SourceRole, State, Tier
 from .reader import function_line, read, read_file, read_text
 from .writer import remove, remove_file, write, write_file, write_symbol
 
 __all__ = [
     "grammar", "mangled", "model", "reader", "writer",
-    "DecompilationState", "Mode", "Recipe", "State", "Tier",
+    "DecompilationState", "Mode", "Recipe", "SourceRole", "State", "Tier",
     "read", "read_file", "read_text", "function_line",
     "write", "remove", "write_file", "remove_file", "write_symbol",
 ]

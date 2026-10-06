@@ -135,6 +135,7 @@ int32_t PrefWinGeometryValue_8578D0;
 /*
 Purpose: sub_44c870 - arithmetic over 1 fixed global(s), one
          statement per original instruction.
+// RECOVERY_ROLE: SCAFFOLD Transitional address-named arithmetic/initializer adapter; preserve behavior while recovering genuine startup ownership.
 // ORIGINAL: 0x0044C870 sub_44c870 0x0044C870-0x0044C878
 // TRIED 2026-09-03: five spellings for the single statement, scored with
 // tools/try_spellings.py - `*p ^= 1`, `*p = *p ^ 1` (as committed), a
@@ -172,6 +173,7 @@ void __fastcall global_arith_0044c870_redirect(void *, void *) {
 /*
 Purpose: sub_48d550 - arithmetic over 2 fixed global(s), one
          statement per original instruction.
+// RECOVERY_ROLE: SCAFFOLD Transitional address-named arithmetic/initializer adapter; preserve behavior while recovering genuine startup ownership.
 // ORIGINAL: 0x0048D550 sub_48d550 0x0048D550-0x0048D55E BYTE_EXACT
 // symbol    ?global_arith_0048d550_redirect@@YIXPAX0@Z
 // size      14 bytes
@@ -192,6 +194,7 @@ void __fastcall global_arith_0048d550_redirect(void *, void *) {
 /*
 Purpose: sub_48d560 - arithmetic over 2 fixed global(s), one
          statement per original instruction.
+// RECOVERY_ROLE: SCAFFOLD Transitional address-named arithmetic/initializer adapter; preserve behavior while recovering genuine startup ownership.
 // ORIGINAL: 0x0048D560 sub_48d560 0x0048D560-0x0048D56B BYTE_EXACT
 // symbol    ?global_arith_0048d560_redirect@@YIXPAX0@Z
 // size      11 bytes
@@ -211,6 +214,7 @@ void __fastcall global_arith_0048d560_redirect(void *, void *) {
 /*
 Purpose: sub_48d570 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
+// RECOVERY_ROLE: SCAFFOLD Transitional address-named arithmetic/initializer adapter; preserve behavior while recovering genuine startup ownership.
 // ORIGINAL: 0x0048D570 sub_48d570 0x0048D570-0x0048D587 BYTE_EXACT
 // LEVER: the first global's register must stay live across the doubling.
 //   Committed as `void`, VC6 folds `2*a` into a's own register (`shl eax, 1`)
@@ -247,6 +251,7 @@ int32_t __fastcall global_arith_0048d570_redirect(void *, void *) {
 /*
 Purpose: sub_48d590 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
+// RECOVERY_ROLE: SCAFFOLD Transitional address-named arithmetic/initializer adapter; preserve behavior while recovering genuine startup ownership.
 // ORIGINAL: 0x0048D590 sub_48d590 0x0048D590-0x0048D5A7 BYTE_EXACT
 // LEVER: the first global's register must stay live across the doubling.
 //   VC6 folds `2*a` into a's own register (`shl eax, 1`) and gives the second
@@ -278,6 +283,7 @@ int32_t __fastcall global_arith_0048d590_redirect(void *, void *) {
 /*
 Purpose: sub_48d5b0 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
+// RECOVERY_ROLE: SCAFFOLD Transitional address-named arithmetic/initializer adapter; preserve behavior while recovering genuine startup ownership.
 // ORIGINAL: 0x0048D5B0 sub_48d5b0 0x0048D5B0-0x0048D5C4 BYTE_EXACT
 // LEVER: the first global's register must stay live across the add.
 //   As `void`, VC6 computes the sum into the FIRST global's register
@@ -308,6 +314,7 @@ int32_t __fastcall global_arith_0048d5b0_redirect(void *, void *) {
 /*
 Purpose: sub_48d5d0 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
+// RECOVERY_ROLE: SCAFFOLD Transitional address-named arithmetic/initializer adapter; preserve behavior while recovering genuine startup ownership.
 // ORIGINAL: 0x0048D5D0 sub_48d5d0 0x0048D5D0-0x0048D5E4 BYTE_EXACT
 // LEVER: the first global's register must stay live across the add.
 //   As `void`, VC6 computes the sum into the FIRST global's register
@@ -338,6 +345,7 @@ int32_t __fastcall global_arith_0048d5d0_redirect(void *, void *) {
 /*
 Purpose: sub_48d5f0 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
+// RECOVERY_ROLE: SCAFFOLD Transitional address-named arithmetic/initializer adapter; preserve behavior while recovering genuine startup ownership.
 // ORIGINAL: 0x0048D5F0 sub_48d5f0 0x0048D5F0-0x0048D607 BYTE_EXACT
 // LEVER: the first global's register must stay live across the doubling.
 //   VC6 folds `2*a` into a's own register (`shl eax, 1`) and gives the second
@@ -369,6 +377,7 @@ int32_t __fastcall global_arith_0048d5f0_redirect(void *, void *) {
 /*
 Purpose: sub_48d610 - arithmetic over 4 fixed global(s), one
          statement per original instruction.
+// RECOVERY_ROLE: SCAFFOLD Transitional address-named arithmetic/initializer adapter; preserve behavior while recovering genuine startup ownership.
 // ORIGINAL: 0x0048D610 sub_48d610 0x0048D610-0x0048D62B SEMANTIC
 // TRIED 2026-09-03: six shapes for the four-global chain, including the
 //   register-liveness lever that landed the other sixteen bodies in this
@@ -401,6 +410,7 @@ void __fastcall global_arith_0048d610_redirect(void *, void *) {
 /*
 Purpose: sub_48d630 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
+// RECOVERY_ROLE: SCAFFOLD Transitional address-named arithmetic/initializer adapter; preserve behavior while recovering genuine startup ownership.
 // ORIGINAL: 0x0048D630 sub_48d630 0x0048D630-0x0048D644 BYTE_EXACT
 // LEVER: the first global's register must stay live across the add.
 //   As `void`, VC6 computes the sum into the FIRST global's register
@@ -431,6 +441,7 @@ int32_t __fastcall global_arith_0048d630_redirect(void *, void *) {
 // Original ordered initializer at 0x0048D650, between the 0x48D630 and
 // 0x48D670 entries in the pinned CRT initializer array.
 // Superseded seed deleted; seed paths below are historical Git provenance.
+// RECOVERY_ROLE: SCAFFOLD Transitional address-named arithmetic/initializer adapter; preserve behavior while recovering genuine startup ownership.
 // ORIGINAL: 0x0048D650 sub_48d650 0x0048D650-0x0048D66E FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original CRT table entry selects 0048D650, whose typed arithmetic and output store were independently decoded from the pinned executable.", "recovery/tasks/prefwin-geometry-initializers.json", "src/global_arith.h"], "reason": "Recover the missing scalar initializer in the ordered PrefWin geometry startup family through genuine source-owned integer storage; retain the compatible historical exact seed and complete original span."}
 // symbol    _sub_48d650
@@ -443,6 +454,7 @@ extern "C" void __cdecl sub_48d650() {
 /*
 Purpose: sub_48d670 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
+// RECOVERY_ROLE: SCAFFOLD Transitional address-named arithmetic/initializer adapter; preserve behavior while recovering genuine startup ownership.
 // ORIGINAL: 0x0048D670 sub_48d670 0x0048D670-0x0048D687 BYTE_EXACT
 // LEVER: the first global's register must stay live across the doubling.
 //   VC6 folds `2*a` into a's own register (`shl eax, 1`) and gives the second
@@ -474,6 +486,7 @@ int32_t __fastcall global_arith_0048d670_redirect(void *, void *) {
 /*
 Purpose: sub_48d690 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
+// RECOVERY_ROLE: SCAFFOLD Transitional address-named arithmetic/initializer adapter; preserve behavior while recovering genuine startup ownership.
 // ORIGINAL: 0x0048D690 sub_48d690 0x0048D690-0x0048D6A4 BYTE_EXACT
 // LEVER: the first global's register must stay live across the add.
 //   As `void`, VC6 computes the sum into the FIRST global's register
@@ -504,6 +517,7 @@ int32_t __fastcall global_arith_0048d690_redirect(void *, void *) {
 /*
 Purpose: sub_48d6b0 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
+// RECOVERY_ROLE: SCAFFOLD Transitional address-named arithmetic/initializer adapter; preserve behavior while recovering genuine startup ownership.
 // ORIGINAL: 0x0048D6B0 sub_48d6b0 0x0048D6B0-0x0048D6C4 BYTE_EXACT
 // LEVER: the first global's register must stay live across the add.
 //   As `void`, VC6 computes the sum into the FIRST global's register
@@ -534,6 +548,7 @@ int32_t __fastcall global_arith_0048d6b0_redirect(void *, void *) {
 /*
 Purpose: sub_48d6d0 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
+// RECOVERY_ROLE: SCAFFOLD Transitional address-named arithmetic/initializer adapter; preserve behavior while recovering genuine startup ownership.
 // ORIGINAL: 0x0048D6D0 sub_48d6d0 0x0048D6D0-0x0048D6E7 BYTE_EXACT
 // LEVER: the first global's register must stay live across the doubling.
 //   VC6 folds `2*a` into a's own register (`shl eax, 1`) and gives the second
@@ -565,6 +580,7 @@ int32_t __fastcall global_arith_0048d6d0_redirect(void *, void *) {
 /*
 Purpose: sub_48d6f0 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
+// RECOVERY_ROLE: SCAFFOLD Transitional address-named arithmetic/initializer adapter; preserve behavior while recovering genuine startup ownership.
 // ORIGINAL: 0x0048D6F0 sub_48d6f0 0x0048D6F0-0x0048D704 BYTE_EXACT
 // LEVER: the first global's register must stay live across the add.
 //   As `void`, VC6 computes the sum into the FIRST global's register
@@ -595,6 +611,7 @@ int32_t __fastcall global_arith_0048d6f0_redirect(void *, void *) {
 /*
 Purpose: sub_48d710 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
+// RECOVERY_ROLE: SCAFFOLD Transitional address-named arithmetic/initializer adapter; preserve behavior while recovering genuine startup ownership.
 // ORIGINAL: 0x0048D710 sub_48d710 0x0048D710-0x0048D724 BYTE_EXACT
 // LEVER: the first global's register must stay live across the add.
 //   As `void`, VC6 computes the sum into the FIRST global's register
@@ -625,6 +642,7 @@ int32_t __fastcall global_arith_0048d710_redirect(void *, void *) {
 /*
 Purpose: sub_48d730 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
+// RECOVERY_ROLE: SCAFFOLD Transitional address-named arithmetic/initializer adapter; preserve behavior while recovering genuine startup ownership.
 // ORIGINAL: 0x0048D730 sub_48d730 0x0048D730-0x0048D747 BYTE_EXACT
 // LEVER: the first global's register must stay live across the doubling.
 //   VC6 folds `2*a` into a's own register (`shl eax, 1`) and gives the second
@@ -656,6 +674,7 @@ int32_t __fastcall global_arith_0048d730_redirect(void *, void *) {
 /*
 Purpose: sub_48d750 - arithmetic over 2 fixed global(s), one
          statement per original instruction.
+// RECOVERY_ROLE: SCAFFOLD Transitional address-named arithmetic/initializer adapter; preserve behavior while recovering genuine startup ownership.
 // ORIGINAL: 0x0048D750 sub_48d750 0x0048D750-0x0048D75B BYTE_EXACT
 // symbol    ?global_arith_0048d750_redirect@@YIXPAX0@Z
 // size      11 bytes
@@ -675,6 +694,7 @@ void __fastcall global_arith_0048d750_redirect(void *, void *) {
 /*
 Purpose: sub_48d760 - arithmetic over 2 fixed global(s), one
          statement per original instruction.
+// RECOVERY_ROLE: SCAFFOLD Transitional address-named arithmetic/initializer adapter; preserve behavior while recovering genuine startup ownership.
 // ORIGINAL: 0x0048D760 sub_48d760 0x0048D760-0x0048D770 BYTE_EXACT
 // symbol    ?global_arith_0048d760_redirect@@YIXPAX0@Z
 // size      16 bytes
@@ -695,6 +715,7 @@ void __fastcall global_arith_0048d760_redirect(void *, void *) {
 /*
 Purpose: sub_48d770 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
+// RECOVERY_ROLE: SCAFFOLD Transitional address-named arithmetic/initializer adapter; preserve behavior while recovering genuine startup ownership.
 // ORIGINAL: 0x0048D770 sub_48d770 0x0048D770-0x0048D787 BYTE_EXACT
 // LEVER: the first global's register must stay live across the doubling.
 //   VC6 folds `2*a` into a's own register (`shl eax, 1`) and gives the second
@@ -726,6 +747,7 @@ int32_t __fastcall global_arith_0048d770_redirect(void *, void *) {
 /*
 Purpose: sub_48d790 - arithmetic over 4 fixed global(s), one
          statement per original instruction.
+// RECOVERY_ROLE: SCAFFOLD Transitional address-named arithmetic/initializer adapter; preserve behavior while recovering genuine startup ownership.
 // ORIGINAL: 0x0048D790 sub_48d790 0x0048D790-0x0048D7AB BYTE_EXACT
 // symbol    ?global_arith_0048d790_redirect@@YIXPAX0@Z
 // size      27 bytes
@@ -749,6 +771,7 @@ void __fastcall global_arith_0048d790_redirect(void *, void *) {
 /*
 Purpose: sub_48d7b0 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
+// RECOVERY_ROLE: SCAFFOLD Transitional address-named arithmetic/initializer adapter; preserve behavior while recovering genuine startup ownership.
 // ORIGINAL: 0x0048D7B0 sub_48d7b0 0x0048D7B0-0x0048D7C4 BYTE_EXACT
 // LEVER: the first global's register must stay live across the add.
 //   As `void`, VC6 computes the sum into the FIRST global's register
@@ -779,6 +802,7 @@ int32_t __fastcall global_arith_0048d7b0_redirect(void *, void *) {
 /*
 Purpose: sub_48d7d0 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
+// RECOVERY_ROLE: SCAFFOLD Transitional address-named arithmetic/initializer adapter; preserve behavior while recovering genuine startup ownership.
 // ORIGINAL: 0x0048D7D0 sub_48d7d0 0x0048D7D0-0x0048D7E4 BYTE_EXACT
 // LEVER: the first global's register must stay live across the add.
 //   As `void`, VC6 computes the sum into the FIRST global's register
@@ -809,6 +833,7 @@ int32_t __fastcall global_arith_0048d7d0_redirect(void *, void *) {
 /*
 Purpose: sub_48d7f0 - arithmetic over 4 fixed global(s), one
          statement per original instruction.
+// RECOVERY_ROLE: SCAFFOLD Transitional address-named arithmetic/initializer adapter; preserve behavior while recovering genuine startup ownership.
 // ORIGINAL: 0x0048D7F0 sub_48d7f0 0x0048D7F0-0x0048D80B SEMANTIC
 // TRIED 2026-09-03: same six shapes as 0x0048D610, same wall - see that
 //   marker. The image's `add ecx,eax` needs the first global live past the
@@ -835,6 +860,7 @@ void __fastcall global_arith_0048d7f0_redirect(void *, void *) {
 /*
 Purpose: sub_48d810 - arithmetic over 2 fixed global(s), one
          statement per original instruction.
+// RECOVERY_ROLE: SCAFFOLD Transitional address-named arithmetic/initializer adapter; preserve behavior while recovering genuine startup ownership.
 // ORIGINAL: 0x0048D810 sub_48d810 0x0048D810-0x0048D81E
 // TRIED: the last of four instructions. The image has `add eax, -2` (83 C0 FE); VC6 emits `sub eax, 2` (83 E8 02) and will not be talked out of it. Six spellings measured with `tools/try_spellings.py` - `eax + -2`, `eax += -2`, unsigned `+ 0xFFFFFFFEu`, an int cast around the unsigned add, and both one-liner forms - all score 3 of 4, identically. All ten flag sets score 3 of 4 or worse. The two are semantically the same instruction; the encoding is not reachable from C++ with this compiler.
 // symbol    ?global_arith_0048d810_redirect@@YIXPAX0@Z
@@ -871,6 +897,7 @@ void __fastcall global_arith_0048d810_redirect(void *, void *) {
 
 // Original final initializer in the pinned geometry family.
 // Superseded seed deleted; seed paths below are historical Git provenance.
+// RECOVERY_ROLE: SCAFFOLD Transitional address-named arithmetic/initializer adapter; preserve behavior while recovering genuine startup ownership.
 // ORIGINAL: 0x0048D820 sub_48d820 0x0048D820-0x0048D83E FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original CRT table entry selects 0048D820, whose typed arithmetic and output store were independently decoded from the pinned executable.", "recovery/tasks/prefwin-geometry-initializers.json", "src/global_arith.h"], "reason": "Recover the missing scalar initializer in the ordered PrefWin geometry startup family through genuine source-owned integer storage; retain the compatible historical exact seed and complete original span."}
 // symbol    _sub_48d820
