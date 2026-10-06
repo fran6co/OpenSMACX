@@ -96,6 +96,7 @@
 #include "general.h"  // mem_get, for the lobby's address and session buffers
 #include "strings.h"
 #include "game.h"
+#include "main.h"  // PopupAllocHook
 #include "font.h"
 
 extern "C" void __fastcall sub_62d5f0(void *self, void *unused);
@@ -760,15 +761,210 @@ void Net::stop_voice() {
 // RECOVERY_OBJECT: v2 0x009BC4BC 0x009BE4BC ?NetGetScratch@@3PAEA 0x00630A00
 unsigned char NetGetScratch[0x2000];
 
-// 0x0062F390, unrecovered. In-file forwarder, the same shape NetFifo::~NetFifo
-// carries above: it keeps process_voice's call an `E8` to the image's own body
-// without pulling a second definition into pending_bodies.cpp.
-int Net::sub_62f390(void *data, int mode, unsigned long who, int size,
-                    int flags) {
-    typedef int(__fastcall *pending)(Net *, void *, void *, int, unsigned long,
-                                     int, int);
-    return reinterpret_cast<pending>(static_cast<unsigned long>(0x0062F390))(
-        this, nullptr, data, mode, who, size, flags);
+static int __stdcall net_group_player_callback(unsigned long player_id, unsigned long, const DPNAME *, unsigned long, void *);
+
+// ORIGINAL: 0x0062F390 sub_62f390 0x0062F390-0x0062F89D
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original 0x00631A60 callsite passes (buffer, size, voice_key, 0x100, 0).", "Pinned 0x0062F390 body uses the shared NetPlayerTable, Net FIFO, DirectPlay send interface, events and timeout UI.", "No byte claim is transferred or granted; preserve the native indeterminate pending/retry stack reads."], "reason": "Recover the group sender as a real Net member; pinned process_voice passes data, byte count, destination, packet type and flags in that order."}
+// symbol    ?send_group_flagged@Net@@QAEHPAXHJGI@Z
+int Net::send_group_flagged(void *data, int size, long target,
+                            unsigned short type, unsigned int flags) {
+    HANDLE wait_handles[2];
+    wait_handles[0] = thread_info_.events_[0];
+    wait_handles[1] = thread_info_.events_[1];
+
+    if (NetDirectPlay == 0) return 0;
+    if (size < 0) return 0;
+    if (static_cast<int>(field_6E4_) < size) return 0;
+
+    check_polling();
+
+    if ((type & 0xFFF0) == 0 &&
+        ((static_cast<unsigned char>(voice_flags_D8_) & 1) != 0 ||
+         (flags & 4) != 0)) {
+        const long host = static_cast<long>(field_760_);
+        if (target == host) {
+            queue_10c_.add(data, static_cast<unsigned long>(size),
+                           static_cast<unsigned long>(host), 0,
+                           static_cast<unsigned long>(-1));
+            return static_cast<int>(field_E4_);
+        }
+        if (target == 0) {
+            queue_10c_.add(data, static_cast<unsigned long>(size),
+                           static_cast<unsigned long>(host), 0,
+                           static_cast<unsigned long>(-1));
+            if (static_cast<int>(field_6DC_) < 2) {
+                return static_cast<int>(field_E4_);
+            }
+        }
+    }
+
+    const int allocation_size = size + 0x0C;
+    unsigned char *const packet =
+        static_cast<unsigned char *>(mem_get(allocation_size));
+    if (packet == 0) return 0;
+
+    const unsigned int reliable = flags & 1U;
+    if (reliable == 0) {
+        *reinterpret_cast<unsigned int *>(packet + 4) = 0;
+    } else {
+        ++field_E4_;
+        *reinterpret_cast<unsigned int *>(packet + 4) = field_E4_;
+    }
+    if (data != 0) memcpy(packet + 8, data, static_cast<unsigned int>(size));
+
+    if (reliable == 0 || (voice_flags_D8_ & 0x10000000U) != 0) {
+        *reinterpret_cast<unsigned short *>(packet) = type;
+        if (NetDirectPlay != 0 &&
+            NetDirectPlay->Send(field_760_, static_cast<DPID>(target),
+                                reliable, packet,
+                                static_cast<DWORD>(allocation_size)) != 0) {
+            free(packet);
+            return 0;
+        }
+        free(packet);
+        return static_cast<int>(field_E4_);
+    }
+
+    *reinterpret_cast<unsigned short *>(packet) =
+        static_cast<unsigned short>(type | 4);
+    for (int clear_index = 0; clear_index < 16; ++clear_index)
+        players_[clear_index].field_8_ = 0;
+    NetPlayerTable = players_;
+    if (NetDirectPlay == 0) {
+        free(packet);
+        return 0;
+    }
+    NetDirectPlay->EnumGroupPlayers(static_cast<DPID>(target), 0,
+                                   net_group_player_callback, 0, 0);
+
+    DWORD wait_timeout = 0xFFFFFFFFU;
+    int selected = -1;
+    for (int first_index = 0; first_index < 16; ++first_index) {
+        if (players_[first_index].field_8_ != 0) {
+            selected = first_index;
+            break;
+        }
+    }
+    if (selected < 0) {
+        free(packet);
+        return static_cast<int>(field_E4_);
+    }
+
+    int pending[16];
+    DWORD retry_delay[16];
+    DWORD base_time[16];
+    // Preserve the original stack behavior: only `selected` is initialized in
+    // these three arrays. The scan below reads all sixteen pending values, so
+    // non-selected slots retain the image's indeterminate-stack hazard.
+    pending[selected] = 1;
+    retry_delay[selected] = players_[selected].field_C_;
+    if (retry_delay[selected] != 0xFFFFFFFFU) {
+        wait_timeout = retry_delay[selected];
+    }
+
+    for (;;) {
+        if (NetDirectPlay == 0) {
+            free(packet);
+            return 0;
+        }
+        const DWORD now = timeGetTime();
+        for (int slot_index = 0; slot_index < 16; ++slot_index)
+            base_time[slot_index] = now;
+
+        if (NetDirectPlay->Send(field_760_, static_cast<DPID>(target), 0,
+                                packet, static_cast<DWORD>(allocation_size)) != 0) {
+            free(packet);
+            return 0;
+        }
+
+        const DWORD start = timeGetTime();
+        DWORD elapsed = timeGetTime() - start;
+        int any_pending = 0;
+        while (elapsed < 20000U) {
+            ResetEvent(wait_handles[1]);
+            ResetEvent(wait_handles[0]);
+            const DWORD waited = WaitForMultipleObjects(
+                2, wait_handles, FALSE, wait_timeout);
+            if (waited == WAIT_OBJECT_0 + 1) handle_sys_msg();
+
+            any_pending = 0;
+            for (int pending_index = 0; pending_index < 16; ++pending_index) {
+                if (pending[pending_index] != 0) {
+                    NetPlayer &peer = players_[pending_index];
+                    if (peer.field_0_ == 0) {
+                        pending[pending_index] = 0;
+                    } else if (peer.field_8_ == 0) {
+                        const DWORD tick = timeGetTime();
+                        pending[pending_index] = 0;
+                        peer.field_C_ =
+                            (tick + 0x14U +
+                             (peer.field_C_ - base_time[pending_index])) >> 1;
+                    } else {
+                        if (retry_delay[pending_index] <
+                            static_cast<DWORD>(timeGetTime() -
+                                               base_time[pending_index])) {
+                            retry_delay[pending_index] =
+                                (retry_delay[pending_index] * 3U) >> 1;
+                            if (NetDirectPlay == 0) {
+                                free(packet);
+                                return 0;
+                            }
+                            const DWORD resend_id = peer.field_0_;
+                            base_time[pending_index] = timeGetTime();
+                            if (NetDirectPlay->Send(
+                                    field_760_, static_cast<DPID>(resend_id), 0,
+                                    packet, static_cast<DWORD>(allocation_size)) != 0) {
+                                MessageBoxA(0, "Oh no!! Send failed!",
+                                            "Message from the Net Underworld", 0);
+                                free(packet);
+                                return 0;
+                            }
+                        }
+                        any_pending = 1;
+                    }
+                }
+            }
+            if (!any_pending) {
+                free(packet);
+                return static_cast<int>(field_E4_);
+            }
+            elapsed = timeGetTime() - start;
+        }
+
+        StringTemp[0] = 0;
+        int first = 1;
+        for (int peer_index = 0; peer_index < 16; ++peer_index) {
+            if (players_[peer_index].field_8_ != 0) {
+                int found = -1;
+                for (int candidate_index = 0; candidate_index < 16;
+                     ++candidate_index) {
+                    if (players_[candidate_index].field_0_ ==
+                        players_[peer_index].field_0_) {
+                        found = candidate_index;
+                        break;
+                    }
+                }
+                const char *name = found < 0
+                    ? static_cast<const char *>(0)
+                    : players_[found].name_and_tail_;
+                strcat(StringTemp, name);
+                if (!first) {
+                    strcat(StringTemp, ", ");
+                    strcat(StringTemp, " ");
+                }
+                first = 0;
+            }
+        }
+        strcat(StringTemp, ".");
+        parse_says(0, StringTemp, -1, -1);
+        const int choice = pop_caption(const_cast<char *>("jackal"),
+                                       const_cast<char *>("NET_SENDTIMEDOUT"), 0);
+        if (choice == 0) continue;
+        if (choice == 1) close();
+        else if (choice == 2) ExitTurnLoop = 1;
+        free(packet);
+        return 0;
+    }
 }
 
 // 0x009B2068 - the flag the "ok to drop the hosts?" answer lights: that
@@ -1153,7 +1349,7 @@ void Net::process_voice() {
         _MMIOINFO *packet = voice_tx_.get_next_buffer();
         if (packet != 0) {
             if (field_54_ != 0) {
-                sub_62f390(packet->pchBuffer,
+                send_group_flagged(packet->pchBuffer,
                            static_cast<int>(packet->pchEndRead - packet->pchBuffer),
                            voice_key_D4_, 0x100, 0);
             } else {
@@ -2206,15 +2402,127 @@ static DPCAPS NetServiceCaps;  // 0x009BE4C0
 // matches. A `char *const` at namespace scope so VC6 folds the push.
 static char *const NetZoneLauncher = (char *)0x00697578;  // "mplaynow.exe"
 
-// 0x00631BA0, unrecovered (827 bytes): the DirectPlay DPERR interpreter the
-// join paths hand their failing HRESULT to - a flat switch over the known
-// DPERR_ values ending in the matching in-game error dialog. Still its own
-// preserved seed (unrecovered/00631ba0.cpp), so this file carries the same
-// forwarder shape sub_62f390 does.
-static int sub_631ba0(int error) {
-    typedef int(__stdcall *pending)(int);
-    return reinterpret_cast<pending>(static_cast<unsigned long>(0x00631BA0))(
-        error);
+// ORIGINAL: 0x00630D70 sub_630d70 0x00630D70-0x00631044;0x004E38E0-0x004E38FB;0x006634FF-0x00663528
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned 0x00630D70 reads Net provider storage at +0x6E0/+0x6E8 and enumerates into the source-owned ServiceList callback target.", "Pinned 0x004E38E0 adjusts to ServiceList at receiver+0x24, calls its real destructor, then restores the saved StringAllocationHeap owner.", "Pinned 0x006634FF..0x00663528 is retained as the original EH cleanup span of this identity.", "The 0x004E38E0..0x004E38FB shared cleanup remains mapped in both Net and AlphaNet::pick_service pending native attribution; both current owners use real ServiceList RAII.", "Popup allocation uses main.h's actual PopupAllocHook declaration; dialog item insertion uses BasePop::dialogs() public accessor."], "reason": "Recover the provider chooser on the real Net owner using ServiceList, the StringAllocationHeap handoff, BasePop, Dialogs and join_service."}
+// symbol    ?choose_service@Net@@QAEHXZ
+int Net::choose_service() {
+    struct AllocationHandoffScope {
+        Heap *saved;
+        AllocationHandoffScope() : saved(StringAllocationHeap) {
+            StringAllocationHeap = 0;
+        }
+        ~AllocationHandoffScope() { StringAllocationHeap = saved; }
+    } allocation_handoff;
+
+    // The original constructs its provider-list object before checking the
+    // Net buffer, and the handoff remains cleared through list destruction.
+    ServiceList providers;
+    if (buffer_6E0_ == 0) return 7;
+
+    BasePop *popup = PopupAllocHook();
+    if (popup == 0) return 4;
+
+    int result = 1;
+    if (guid_6E8_ != 0) {
+        if (poll_services(&providers) == 0 &&
+            popup->start(const_cast<char *>("jackal"), "SELECTSERVICE",
+                         -1, 0, 0x42, 0) == 0) {
+            providers.seek_pos(-1);
+            for (int row = 0; row < providers.entry_count_; ++row) {
+                providers.next_entry();
+                char *name;
+                if (providers.current_ == 0) {
+                    name = 0;
+                } else {
+                    ServiceStruct *payload = providers.head_ == 0
+                        ? static_cast<ServiceStruct *>(0)
+                        : providers.current_->payload_;
+                    // Preserve the original null+4 fault if current_ is live
+                    // while head_ is null; do not turn it into a safe row.
+                    name = payload->name_;
+                }
+                popup->dialogs().item(name, row);
+            }
+
+            const int selected = popup->exec(0, 0);
+            if (selected == -1) {
+                result = 1;
+            } else {
+                providers.seek_pos(selected); // original ignores failure
+                ServiceStruct *service = providers.head_ == 0
+                    ? static_cast<ServiceStruct *>(0)
+                    : providers.current_->payload_;
+                result = join_service(service);
+            }
+        }
+    } else {
+        result = 7;
+    }
+
+    // The pinned method calls vtable slot zero with argument 1 on every path
+    // after allocation. The existing BasePop virtual deleting destructor is
+    // the source-owned C++ spelling of that lifetime operation.
+    delete popup;
+    return result;
+}
+
+// ORIGINAL: 0x00631BA0 sub_631ba0 0x00631BA0-0x00631EDB
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned 0x00631BA0 has 39 DPERR token arms feeding parse_says and the common DPLAYERROR popup.", "Pinned final branches return zero on dismissal and otherwise call source-owned cd_check at 0x00628F30.", "Transfer the seed TRIED switch-layout finding unchanged; no byte claim is transferred or granted."], "reason": "Recover the HRESULT interpreter as the existing DirectPlay error helper called by Net::join_service."}
+// symbol    ?sub_631ba0@@YGHJ@Z
+// TRIED: a single flat switch over the 38 DPERR_* case values with a `default: goto tail;` matches through instr #16 (the top-level binary-search split) but the compiler's chosen jump-table boundaries at #17 diverge from the original's nested-if split
+static int __stdcall sub_631ba0(HRESULT error) {
+    const char *message = 0;
+    switch (static_cast<unsigned int>(error)) {
+    case 0x88770005UL: message = "DPERR_ALREADYINITIALIZED"; break;
+    case 0x8877000AUL: message = "DPERR_ACCESSDENIED"; break;
+    case 0x88770014UL: message = "DPERR_ACTIVEPLAYERS"; break;
+    case 0x8877001EUL: message = "DPERR_BUFFERTOOSMALL"; break;
+    case 0x88770028UL: message = "DPERR_CANTADDPLAYER"; break;
+    case 0x88770032UL: message = "DPERR_CANTCREATEGROUP"; break;
+    case 0x8877003CUL: message = "DPERR_CANTCREATEPLAYER"; break;
+    case 0x88770046UL: message = "DPERR_CANTCREATESESSION"; break;
+    case 0x88770050UL: message = "DPERR_CAPSNOTAVAILABLEYET"; break;
+    case 0x8877005AUL: message = "DPERR_EXCEPTION"; break;
+    case 0x80004005UL: message = "DPERR_GENERIC"; break;
+    case 0x88770078UL: message = "DPERR_INVALIDFLAGS"; break;
+    case 0x88770082UL: message = "DPERR_INVALIDOBJECT"; break;
+    case 0x80070057UL: message = "DPERR_INVALIDPARAM"; break;
+    case 0x88770096UL: message = "DPERR_INVALIDPLAYER"; break;
+    case 0x887700A0UL: message = "DPERR_NOCAPS"; break;
+    case 0x887700AAUL: message = "DPERR_NOCONNECTION"; break;
+    case 0x8007000EUL: message = "DPERR_NOMEMORY"; break;
+    case 0x887700BEUL: message = "DPERR_NOMESSAGES"; break;
+    case 0x887700C8UL: message = "DPERR_NONAMESERVERFOUND"; break;
+    case 0x887700D2UL: message = "DPERR_NOPLAYERS"; break;
+    case 0x887700DCUL: message = "DPERR_NOSESSIONS"; break;
+    case 0x887700E6UL: message = "DPERR_SENDTOOBIG"; break;
+    case 0x887700F0UL: message = "DPERR_TIMEOUT"; break;
+    case 0x887700FAUL: message = "DPERR_UNAVAILABLE"; break;
+    case 0x80004001UL: message = "DPERR_UNSUPPORTED"; break;
+    case 0x80004002UL: message = "DPERR_NOINTERFACE"; break;
+    case 0x8877010EUL: message = "DPERR_BUSY"; break;
+    case 0x88770118UL: message = "DPERR_USERCANCEL"; break;
+    case 0x88770122UL: message = "DPERR_CANNOTCREATESERVER"; break;
+    case 0x8877012CUL: message = "DPERR_PLAYERLOST"; break;
+    case 0x88770132UL: message = "DPERR_SESSIONLOST"; break;
+    case 0x887703E8UL: message = "DPERR_BUFFERTOOLARGE"; break;
+    case 0x887703F2UL: message = "DPERR_CANTCREATEPROCESS"; break;
+    case 0x887703FCUL: message = "DPERR_APPNOTSTARTED"; break;
+    case 0x88770406UL: message = "DPERR_INVALIDINTERFACE"; break;
+    case 0x88770410UL: message = "DPERR_NOSERVICEPROVIDER"; break;
+    case 0x8877041AUL: message = "DPERR_UNKNOWNAPPLICATION"; break;
+    case 0x8877042EUL: message = "DPERR_NOTLOBBIED"; break;
+    default: break;
+    }
+
+    if (message != 0) {
+        parse_says(0, const_cast<char *>(message), -1, -1);
+    }
+    if (pop_caption_title(const_cast<char *>("jackal"),
+                          const_cast<char *>("DPLAYERROR"), 0x10040, 0) == -1) {
+        return 0;
+    }
+    return cd_check();
 }
 
 /*

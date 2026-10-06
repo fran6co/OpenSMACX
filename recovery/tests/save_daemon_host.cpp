@@ -29,13 +29,12 @@ struct NetDaemonHost {
     AlphaNetProcessSlotHost process_slots_[8];
     NetDaemonSaveStorageView save_storage_;
 } NetDaemonNet;
-uint32_t GameRules;
-uint32_t GameState;
+struct BaseSecretProject { unsigned char bytes_[0x100]; };
+/* ACTUAL_GAME_DATA_STATE_HEADER */
+GameDataStateWindow GameDataStateStorage;
 BOOL IsMultiplayerPBEM;
 BOOL IsMultiplayerNet;
 int TamperState93A9B4;
-int SaveDaemonStateWord;
-uint32_t NetTurnFlags;
 int GameDataPlayerCountSnapshot;
 
 static const char PathDot[] = ".";
@@ -60,9 +59,9 @@ static std::string calls;
 
 static void reset_fixture() {
     std::memset(static_cast<void *>(&NetDaemonNet), 0, sizeof NetDaemonNet);
-    GameRules = GameState = NetTurnFlags = 0;
+    GameDataStateStorage.fields_.game_rules_ = GameDataStateStorage.fields_.game_state_ = GameDataStateStorage.fields_.net_turn_flags_ = 0;
     IsMultiplayerPBEM = IsMultiplayerNet = 0;
-    TamperState93A9B4 = SaveDaemonStateWord = 0;
+    TamperState93A9B4 = GameDataStateStorage.fields_.save_daemon_state_word_ = 0;
     GameDataPlayerCountSnapshot = -1;
     open_succeeds = true;
     version_write_result = tick_write_result = 1;
@@ -120,7 +119,7 @@ static void test_filename_and_success_path() {
     assert(save_daemon(const_cast<char *>("autosave")) == 0);
     assert(opened_path == "autosave.SAV");
     assert(GameDataPlayerCountSnapshot == 4);
-    assert(GameState == 0x10000000u && seed_calls == 0);
+    assert(GameDataStateStorage.fields_.game_state_ == 0x10000000u && seed_calls == 0);
     assert(std::memcmp(NetDaemonNet.process_slots_, NetDaemonNet.save_storage_.process_slots_,
                        sizeof NetDaemonNet.process_slots_) == 0);
     assert(calls == "TOHVGKC");
@@ -129,10 +128,10 @@ static void test_filename_and_success_path() {
 
 static void test_open_failure_keeps_prior_side_effects_and_skips_cleanup() {
     reset_fixture(); open_succeeds = false;
-    GameRules = RULES_IRONMAN; IsMultiplayerPBEM = 1;
+    GameDataStateStorage.fields_.game_rules_ = RULES_IRONMAN; IsMultiplayerPBEM = 1;
     assert(save_daemon(const_cast<char *>("autosave")) == 1);
-    assert(TamperState93A9B4 == 1 && NetTurnFlags == 0x20);
-    assert(GameState == 0x10000000u && GameDataPlayerCountSnapshot == 0);
+    assert(TamperState93A9B4 == 1 && GameDataStateStorage.fields_.net_turn_flags_ == 0x20);
+    assert(GameDataStateStorage.fields_.game_state_ == 0x10000000u && GameDataPlayerCountSnapshot == 0);
     assert(seed_calls == 1 && seed_value == static_cast<int>(tick_value));
     assert(close_calls == 0 && remove_calls == 0 && calls == "TSO");
 }

@@ -76,6 +76,10 @@ def test_actual_product_body_and_storage_under_cpp98(tmp_path):
     fixture = FIXTURE.read_text()
     source = fixture.replace("// ACTUAL_STORAGE_DECLARATIONS",
                              actual_storage_declarations())
+    state_header = ROOT / "src/game_data_state_window.h"
+    state_marker = "/* ACTUAL_GAME_DATA_STATE_HEADER */"
+    assert source.count(state_marker) == 1
+    source = source.replace(state_marker, f'#include "{state_header}"')
     assert source.count("// ACTUAL_SAVE_DAEMON_BODY") == 1
     source = source.replace("// ACTUAL_SAVE_DAEMON_BODY", body)
     cpp = tmp_path / "save_daemon_actual.cpp"

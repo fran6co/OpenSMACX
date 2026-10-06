@@ -10,6 +10,12 @@
 
 struct MediaRuntime;
 struct MediaQueueRecord;
+#if defined(_MSC_VER)
+class __single_inheritance UV2Player;
+#else
+class UV2Player;
+#endif
+typedef int (__cdecl UV2Player::*MediaKeyPollMember)();
 
 // Verified storage chain produced by the media color setup and consumed by
 // movie conversion routines in general.cpp. The coefficient subviews are
@@ -114,7 +120,12 @@ struct MediaDescriptor {
   DWORD priority;                                // +a4
   DWORD beginthread_result;                      // +a8; not assumed HANDLE
   MediaCallback callback;                       // +ac
-  BYTE palette_rgb_triplets_b0[0x300];           // +b0..+3af; 256 three-byte entries
+  // Exec stores UV2Player::on_key here before palette data is populated.
+  // Native palette production/consumption later uses the same bytes.
+  union {
+    MediaKeyPollMember key_poll_member_b0;     // exec-time member callback
+    BYTE palette_rgb_triplets_b0[0x300];       // +b0..+3af; 256 RGB triplets
+  };
   BYTE unresolved_original_storage_3b0_7b3[0x404]; // +3b0..+7b3
 };
 
@@ -247,6 +258,10 @@ struct MediaRuntime {
 
 typedef char media_descriptor_extent_check[
     sizeof(MediaDescriptor) == 0x7b4 ? 1 : -1];
+#if defined(_MSC_VER) && defined(_M_IX86)
+typedef char media_key_poll_member_abi_check[
+    sizeof(MediaKeyPollMember) == 4 ? 1 : -1];
+#endif
 typedef char media_pixel_format_extent_check[
     sizeof(MediaPixelFormat) == 0x20 ? 1 : -1];
 typedef char media_conversion_storage_extent_check[

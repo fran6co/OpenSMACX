@@ -29,12 +29,11 @@ class UV2Player {
   // Release the native display interfaces before automatic Buffer destruction.
   void close();
   int play(int width, int height);
-  // ?exec@UV2Player@@QAEHPADHHH@Z at 0x004BEA50, still an original body
-  // (src/unrecovered/004bea50.cpp); the definition in pending_bodies.cpp
-  // forwards to it. amovie_project plays the .wve opening through it.
+  // Native .wve controller body is owned here; amovie_project passes
+  // the found movie path, 640x480 and flags 0xC.
   int exec(char *movie_file, int width, int height, int flags);
   int UNK4();
-  static int __cdecl on_key();
+  int __cdecl on_key();
   int write_timed(LPSTR text, int x, int y, int length);
   // Post-play MOVLIST text; exec invokes it only when playback was not quit.
   void show_post_movie_text();

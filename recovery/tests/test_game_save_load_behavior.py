@@ -37,7 +37,12 @@ def test_actual_save_load_bodies(compiler, tmp_path):
     assert fixture.count(marker) == 1
     cpp = tmp_path / "actual.cpp"
     binary = tmp_path / "control"
-    cpp.write_text(fixture.replace(marker, bodies))
+    fixture = fixture.replace(marker, bodies)
+    state_header = ROOT / "src/game_data_state_window.h"
+    state_marker = "/* ACTUAL_GAME_DATA_STATE_HEADER */"
+    assert fixture.count(state_marker) == 1
+    fixture = fixture.replace(state_marker, f'#include "{state_header}"')
+    cpp.write_text(fixture)
     built = subprocess.run([executable, "-std=c++11", "-Wall", "-Wextra", "-Werror", str(cpp), "-o", str(binary)], capture_output=True, text=True, timeout=30)
     assert built.returncode == 0, built.stdout + built.stderr
     ran = subprocess.run([str(binary)], capture_output=True, text=True, timeout=30)

@@ -610,13 +610,7 @@ void __cdecl basepop_close_class() {
 // 2026-08-29, so the forwarder that stood here is gone. desktop_close closes
 // the process-wide design window through this member.
 
-// ?exec@UV2Player@@QAEHPADHHH@Z at 0x004BEA50 - body in src/unrecovered/004bea50.cpp.
-// amovie_project plays the .wve candidates through it.
-int UV2Player::exec(char *movie_file, int width, int height, int flags) {
-    typedef int(__fastcall *pending)(UV2Player *, void *, char *, int, int, int);
-    return PENDING_BODY(0x004BEA50, pending)(this, nullptr, movie_file, width,
-                                             height, flags);
-}
+
 
 // ?check_for_lobby@Net@@QAEHPADPAU_GUID@@HH@Z at 0x0062D9E0 - homed into
 // net_class.cpp, so the forwarder that stood here is gone.

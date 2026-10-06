@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "task_id": "movie-net-complete-owners-oct6",
+  "author": "framework-coordinator",
+  "target": "opensmacx",
+  "base_revision": "b1cd34dd87763ff5a235767baec06433195a0e6c",
+  "intent": "Recover complete UV2Player movie execution and three Net sender/provider/error operations on genuine source owners; correct observed movie member ABI and descriptor sequential storage; preserve original unsafe/error behavior and all historical shared-span obligations.",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4975184
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4977552
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6484880
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6491504
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6495136
+    }
+  ],
+  "editable_files": [
+    "src/movie_media.h",
+    "src/net_class.cpp",
+    "src/net_class.h",
+    "src/pending_bodies.cpp",
+    "src/uv2player.cpp",
+    "src/uv2player.h",
+    "src/unrecovered/004bea50.cpp",
+    "src/unrecovered/0062f390.cpp",
+    "src/unrecovered/00630d70.cpp",
+    "src/unrecovered/00631ba0.cpp"
+  ],
+  "evidence": [
+    "Pinned full original movie and Net spans, caller argument order, DirectPlay errors, provider ServiceList cleanup and audio/message/cursor order.",
+    "Real VC6 full candidate TUs compile; movie PMF4B/descriptor0x7B4/player0xE68 verified with explicit single-inheritance declaration and nonstatic cdecl member. Host controls are bounded, not full runtime proof.",
+    "Retain original sender indeterminate stack reads and timeout name failure; preserve movie early audio/cursor failure and GetMessage branch quirks.",
+    "Existing source identities/spans/claims/TRIED move through native writers; overlapping shared 0x004E38E0 cleanup and 0x006634FF EH extent remain native-attribution/restoration obligations, not byte or acceptance claims.",
+    "Standing user coordinator-reviewed compiling coverage authorization; fresh full build/link, continuity/reference controls and post-integration rechecks required."
+  ]
+}

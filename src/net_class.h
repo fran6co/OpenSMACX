@@ -388,13 +388,11 @@ class Net {
   // 0x0062F8A0: typed packet sender owns reliable peer tracking in net_class.cpp.
   int send_packet_type(void *data, int data_size, unsigned long target,
                        int packet_type, int flags);
-  // 0x0062F390, still unrecovered (1293 bytes). process_voice routes a voice
-  // packet here instead of send_packet_type whenever field_54_ is set, and it
-  // calls close/check_polling like the rest of the session paths, so it is a
-  // member with the same five arguments. `sub_` is the tree's name for a body
-  // nothing has identified yet; the forwarder that gives its callers the
-  // image's `E8` lives in net_class.cpp beside process_voice.
-  int sub_62f390(void *data, int mode, unsigned long who, int size, int flags);
+  // Original 0x0062F390 group sender; process_voice passes the native stack order.
+  int send_group_flagged(void *data, int size, long target,
+                         unsigned short type, unsigned int flags);
+  // Original 0x00630D70 provider chooser, using the shared ServiceList lifecycle.
+  int choose_service();
   // 0x00632350, homed into net_class.cpp. check_polling calls it to cut a
   // stale player - by key, or 0xFFFFFFFF for everyone - and reads a zero
   // answer as "cut", which is when it refreshes the player's stamp.

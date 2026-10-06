@@ -24,6 +24,7 @@
 #include "win.h"
 #include "text.h"
 #include "stringstruct.h"
+#include "wave_device.h"
 
 // Shared help-file pointer; its storage is owned by datalink.cpp.
 extern char *DatalinkHelpFile;
@@ -61,7 +62,7 @@ int UV2PlayerQuitRequested;
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004BF390 ?on_key@UV2Player@@QAAHXZ 0x004BF390-0x004BF3FE
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004bf390.cpp", "image:terranx_original.exe:0x004BF390", "4BF3AA/BE reject only zero message results; Return/Escape/Space and either mouse-down set quit8CC250. Timed text disarms Buffer+8, writes individual bytes, reloads delayE64 after each timeGetTime and re-arms the cdecl callback even for nonpositive length.", "recovery/tasks/uv2player-complete-owner-recovery.json; bounded complete-owner scope, preserved historical baseline/claims, no matching or runtime acceptance."], "reason": "Recover the movie input/timed text owner using SDK messages and real Buffer callback, active instance and unsigned delay storage, preserving native input and callback order."}
-// symbol    ?on_key@UV2Player@@SAHXZ
+// symbol    ?on_key@UV2Player@@QAAHXZ
 int __cdecl UV2Player::on_key() {
     MSG message;
     if (!PeekMessageA(&message, 0, 0, 0, 0) ||
@@ -410,4 +411,118 @@ void UV2Player::show_post_movie_text() {
             now = timeGetTime();
         }
     }
+}
+
+// ORIGINAL: 0x004BEA50 ?exec@UV2Player@@QAEHPADHHH@Z 0x004BEA50-0x004BEDB5
+// RECOVERY_BINDING: v1 {"evidence": ["image:terranx_original.exe:0x004BEA50-0x004BEDB5", "image:terranx_original.exe:0x00403BE0 caller passes a found .wve path, 640x480, flags 0xC", "image:terranx_original.exe:0x004BF390 is ?on_key@UV2Player@@QAAHXZ", "image:terranx_original.exe:0x005CB220 and 0x005CAAB0 consume MediaDescriptor+0xAC only under flags&0x40000", "image:terranx_original.exe:0x005CB6C0 reads and 0x005CD750 writes MediaDescriptor palette bytes at +0xB0", "source:src/uv2player.h:UV2Player exact 0xE68 layout, media_ and Buffer ownership", "source:src/movie_media.h:MediaDescriptor exact 0x7B4 storage view", "source:src/wave_device.h:WaveDeviceGlobal", "source:src/alphamovie.cpp:amovie_project .wve caller"], "reason": "Recover the .wve controller on UV2Player using its real descriptor, sound device, movie lifecycle and caller, preserving the pinned message/audio/cursor order and early-return behavior."}
+// TRIED: direct transcription off Ghidra + raw disasm, `this` used as the char* name buffer at offset 0, indirect calls through the fixed import-table slots (ShowCursor/PeekMessage/GetMessage/ TranslateMessage/DispatchMessage/Sleep/CharUpperA); matches through instr #26, diverges in the strrchr/inc-vs-lea shape
+// Proposed source-owner replacement for the PENDING_BODY at 0x004BEA50.
+// Drop this definition into src/uv2player.cpp after reviewing the companion
+// evidence report and the MediaDescriptor +0xB0 union proposal.
+
+int UV2Player::exec(char *movie_file, int width, int height, int flags) {
+    if (movie_file == 0) {
+        return 1;
+    }
+
+    close();
+    UV2PlayerActive = this;
+    movie_name_[0] = '\0';
+    char *slash = strrchr(movie_file, '\\');
+    strcat(movie_name_, slash != 0 ? slash + 1 : movie_file);
+    char *extension = strrchr(movie_name_, '.');
+    if (extension != 0) {
+        *extension = '\0';
+    }
+    CharUpperA(movie_name_);
+
+    field_104_ = flags;
+    if (prefs_get("8BitMovieSound", 0, 0) == 0) {
+        WaveDeviceGlobal.suspend();
+    } else {
+        WaveDeviceGlobal.disable();
+    }
+
+    // The native body clears exactly the complete embedded descriptor after
+    // suspending/disabling sound and before attempting DirectDraw playback.
+    memset(&media_, 0, 0x7B4);
+    if (play(width, height) != 0) {
+        // The image returns here without restoring sound or undoing the cursor
+        // state. Keep that failure-path behavior intact.
+        return 1;
+    }
+
+    media_.draw_query_interface_0c = direct_draw_;
+    media_.draw_device_10 = direct_draw2_;
+    media_.surface_14 = primary_surface_;
+    media_.surface_18 = back_buffer_surface_;
+    media_.flags |= 0x0BA11600;
+    media_.capability_options_08 = 5;
+
+    // This address is stored at descriptor+0xB0 (player+0x1D8), not in the
+    // distinct C callback slot at +0xAC. The member-pointer view is a union
+    // with the stream RGB triplets because the media parser later writes those
+    // same bytes. Its 32-bit VC6 representation must be checked by the owner
+    // build before this proposal is integrated.
+    media_.key_poll_member_b0 = &UV2Player::on_key;
+
+    media_.sound_device =
+        reinterpret_cast<IDirectSound *>(WaveDeviceGlobal.get_ds());
+    media_.flags |= 0x00600000;
+    media_.unresolved_source_or_rate_58 = 0;
+    if ((flags & 0x0001) != 0) media_.flags |= 0x0001;
+    if ((flags & 0x0002) != 0) media_.flags |= 0x0002;
+    if ((flags & 0x0004) != 0) media_.flags |= 0x0004;
+    if ((flags & 0x0008) != 0) media_.flags |= 0x0008;
+    if ((flags & 0x0010) != 0) media_.flags |= 0x0010;
+    if ((flags & 0x0020) != 0) media_.flags |= 0x0020;
+    if ((flags & 0x0040) != 0) media_.flags |= 0x0040;
+    if ((flags & 0x8000) != 0) media_.flags |= 0x8000;
+
+    while (ShowCursor(FALSE) >= 0) {
+    }
+
+    UV2PlayerQuitRequested = 0;
+    media_session_ = sub_5cae80(movie_file, HandleMain, &media_);
+    if (media_session_ != 0) {
+        MSG message;
+        do {
+            if (PeekMessageA(&message, 0, 0, 0, 0) != 0) {
+                if (GetMessageA(&message, 0, 0, 0) == 0) {
+                    TranslateMessage(&message);
+                    DispatchMessageA(&message);
+                } else if (message.message == WM_KEYDOWN) {
+                    if (message.wParam == VK_RETURN ||
+                        message.wParam == VK_ESCAPE ||
+                        message.wParam == VK_SPACE) {
+                        UV2PlayerQuitRequested = 1;
+                        sub_5cb660(media_session_);
+                    }
+                } else if (message.message == WM_LBUTTONDOWN ||
+                           message.message == WM_RBUTTONDOWN) {
+                    UV2PlayerQuitRequested = 1;
+                    sub_5cb660(media_session_);
+                }
+            }
+            Sleep(30);
+        } while (sub_5cb610(media_session_) != 0);
+    }
+
+    if (UV2PlayerQuitRequested == 0) {
+        show_post_movie_text();
+    }
+    close();
+    do_all_non_input();
+    Win::update_screen(0, 0);
+    Win::flip(0);
+
+    while (ShowCursor(TRUE) <= 0) {
+    }
+
+    if (prefs_get("8BitMovieSound", 0, 0) == 0) {
+        WaveDeviceGlobal.restart();
+    } else {
+        WaveDeviceGlobal.enable();
+    }
+    return 0;
 }

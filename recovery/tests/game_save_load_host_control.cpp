@@ -49,15 +49,17 @@ static const int MaxPlayerNum = 8, MaxTechnologyNum = 89;
 static int VehMoveDeltaX[9] = {1,2,1,0,-1,-2,-1,0,0};
 static int VehMoveDeltaY[9] = {-1,0,1,2,1,0,-1,-2,0};
 int GameDataWriteMode, GameDataEncryptedMode, GameDataLoadStatusWord;
-static uint32_t GameRules, IsMultiplayerNet, SaveDaemonStateWord, NetTurnFlags, GameState;
+struct BaseSecretProject { unsigned char bytes_[0x100]; };
+/* ACTUAL_GAME_DATA_STATE_HEADER */
+GameDataStateWindow GameDataStateStorage;
+static uint32_t IsMultiplayerNet;
 static int IsMultiplayerPBEM, ControlTurnPhase, tamper_calls, rebuild_vehicle_calls, rebuild_base_calls;
 static uint32_t UnkBitfield1;
 static char GameSaveMultiplayerMarker[] = "multi";
-static uint32_t LockEnableMask;
 static PlayerData PlayersData[MaxPlayerNum];
 static TechnologyData Technology[MaxTechnologyNum];
 static Base Bases[16];
-static int BaseCurrentCount, VehCurrentCount, BaseComputedID;
+static int BaseComputedID;
 static Veh Vehs[16];
 static VehPrototype VehPrototypes[16];
 struct ButtonStub { int shown, hidden; void show(int) { ++shown; } void hide() { ++hidden; } };
@@ -178,7 +180,7 @@ int main() {
         assert(AltContour[copied_contour] == 700u + static_cast<uint32_t>(copied_contour));
     }
     assert(ConsoleGlobal.cursor_active_ == 0 && ConsoleGlobal.selected_vehicle_ == -1);
-    assert(BaseCurrentCount == 0 && VehCurrentCount == 0 && BaseComputedID == -1 && Paths.calls == 1);
+    assert(GameDataStateStorage.fields_.base_current_count_ == 0 && GameDataStateStorage.fields_.vehicle_current_count_ == 0 && BaseComputedID == -1 && Paths.calls == 1);
 
     // Native loader uses signed tests: an invalid negative area skips the
     // tile walk rather than treating the word as billions of unsigned tiles.
@@ -197,17 +199,17 @@ int main() {
     assert(close_calls == 2 && remove_calls == 2);
 
     std::strcpy(mock_header, "TERRAN"); mock_version = 0x56;
-    GameRules = RULES_IRONMAN; IsMultiplayerNet = 0; SaveDaemonStateWord = 1;
+    GameDataStateStorage.fields_.game_rules_ = RULES_IRONMAN; IsMultiplayerNet = 0; GameDataStateStorage.fields_.save_daemon_state_word_ = 1;
     mock_game_data_result = 0; fail_io_at = 0; io_calls = 0; game_data_calls = 0;
-    BaseCurrentCount = 1; Bases[0].faction_id_current = 4;
-    VehCurrentCount = 1; Vehs[0].proto_id = 0; Vehs[0].faction_id = 5;
+    GameDataStateStorage.fields_.base_current_count_ = 1; Bases[0].faction_id_current = 4;
+    GameDataStateStorage.fields_.vehicle_current_count_ = 1; Vehs[0].proto_id = 0; Vehs[0].faction_id = 5;
     VehPrototypes[0].plan = PLAN_COLONIZATION;
-    LockEnableMask = 0xA51234FFu;
-    const uint32_t preserved = LockEnableMask & 0xFFFF00FFu;
+    GameDataStateStorage.fields_.lock_masks_.enable_mask_ = 0xA51234FFu;
+    const uint32_t preserved = GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFFF00FFu;
     assert(load_daemon("slot.sav", 1) == 0 && game_data_calls == 1);
     assert(linearize_calls == 1 && random_seed == 0x56 && remove_calls >= 3);
-    assert((LockEnableMask & 0xFFFF00FFu) == preserved);
-    assert(((LockEnableMask >> 8) & 0xFFu) == 0x30u);
+    assert((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFFF00FFu) == preserved);
+    assert(((GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8) & 0xFFu) == 0x30u);
     assert(w3.closes_ == 1 && w3.field_1DD74_ == 0);
 
     // Cancellation may retain nonempty text: test the real returned pointer,
@@ -226,7 +228,7 @@ int main() {
     save_map();
     assert(last_path == "fallback.map" && preference_value == "fallback");
     // Native failure status is read from the distinct 0x945D7C owner.
-    mock_game_data_result = 1; GameRules = 0; IsMultiplayerNet = 0;
+    mock_game_data_result = 1; GameDataStateStorage.fields_.game_rules_ = 0; IsMultiplayerNet = 0;
     GameDataLoadStatusWord = 0;
     const int closes_before_failure = close_calls;
     assert(load_daemon("slot.sav", 0) == 4 && close_calls == closes_before_failure + 1);
@@ -243,11 +245,11 @@ int main() {
     }
     ConsoleGlobal.cursor_history_x_[3] = 17; ConsoleGlobal.cursor_history_y_[3] = 29;
     ConsoleGlobal.cursor_active_ = 1; ConsoleGlobal.faction_id_ = 4;
-    GameRules = 0; IsMultiplayerNet = 0; NetTurnFlags = 0;
-    LockEnableMask = 0; UnkBitfield1 = 0; tamper_calls = 0; GameState = 0;
+    GameDataStateStorage.fields_.game_rules_ = 0; IsMultiplayerNet = 0; GameDataStateStorage.fields_.net_turn_flags_ = 0;
+    GameDataStateStorage.fields_.lock_masks_.enable_mask_ = 0; UnkBitfield1 = 0; tamper_calls = 0; GameDataStateStorage.fields_.game_state_ = 0;
     assert(load_daemon("slot.multi.sav", 0) == 0);
     assert(MainInterfaceGlobal.flat_button_[2].shown == 1);
-    assert((GameState & 0x10C0u) == 0x10C0u && ConsoleGlobal.cursor_active_ == 0);
+    assert((GameDataStateStorage.fields_.game_state_ & 0x10C0u) == 0x10C0u && ConsoleGlobal.cursor_active_ == 0);
     assert(ControlTurnPhase == 4 && IsMultiplayerPBEM == 0 && tamper_calls == 0);
     assert(UnkBitfield1 & 4u);
     assert(rebuild_vehicle_calls >= 1 && rebuild_base_calls >= 1);
@@ -259,7 +261,7 @@ int main() {
         assert(ConsoleGlobal.cursor_history_x_[history_slot] == 17);
         assert(ConsoleGlobal.cursor_history_y_[history_slot] == 29);
     }
-    NetTurnFlags = 0x20;
+    GameDataStateStorage.fields_.net_turn_flags_ = 0x20;
     assert(load_daemon("slot.sav", 0) == 0);
     assert(IsMultiplayerPBEM == 1 && tamper_calls == 1);
 
