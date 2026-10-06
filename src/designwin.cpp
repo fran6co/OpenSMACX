@@ -51,8 +51,6 @@ int __cdecl diplo_lock(int patience);
 void __cdecl diplo_unlock();
 extern uint32_t UpgradePromptAnswered; // base.cpp owns original90EA3C
 
-int __cdecl abil_cond(int ability_id, int chassis_id, int weapon_id,
-                     int armor_id);  // 0x00584B50, implemented in leaf_recoveries.cpp
 
 // DISCOVERY 0x00439D30: the retained seed's 0x009AB550 is
 // Ability[].preq_tech, 0x009A6490 is GamePreferences, 0x00949780 is

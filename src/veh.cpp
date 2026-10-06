@@ -26810,3 +26810,247 @@ int __cdecl battle_fight(int veh_id, int dir, int target_x, int target_y,
     late_frame.continuation_edi_at_a730 = &Vehs[defender_id];
     return battle_fight_after_a44d_compose_v3(late_frame, native_minus78);
 }
+
+/*
+Purpose: Test whether one ability is legal for a chassis/weapon/armor
+         combination under the faction rule flags: missile chassis carry no
+         abilities, the chassis triad gates the ability's land/sea/air bits,
+         the weapon's offense/mode pair picks the offensive/defensive and
+         special-mode bits, expansion-only abilities drop without
+         ExpansionEnabled, and the remaining flags gate psi ratings and
+         single-mode chassis.
+
+// ORIGINAL: 0x00584B50 ?abil_cond@@YAHHHHH@Z 0x00584B50-0x00584CFF FILE
+// RECOVERY_BINDING: v1 {"evidence":["src/veh.h owns the declared Ability, Chassis, Weapon, and Armor record arrays and their field layouts consumed by this body.","designwin.cpp is the existing caller and includes veh.h; the proposal centralizes its declaration in veh.h instead of retaining a caller-local prototype.","All original ability-bit tests, expansion gates, signed ratings, and mode/speed branches are moved as written; no safety or mask normalization is added."],"reason":"Move the existing cdecl ability eligibility routine beside its actual vehicle-record owners and publish its single header declaration; do not alter its historical masks or branch order."}
+// TRIED: extern-array field access for the a1*7 flags table and a2*0x90/a3*0x10 lookups; diverges at #5 (prologue register order), not the field math
+// size      431 bytes
+// prototype int (__cdecl ?abil_cond@@YAHHHHH@Z)(int32 abilityID, int32 chassisID, int32 weaponID, int32 armorID)
+// callers   3   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Seed provenance (TRIED): the a1*7 dword step is Ability[]'s
+//           0x1C stride and the a2*0x90/a3*0x10/a4*0x10 lookups are
+//           Chassis[]/Weapon[]/Armor[] member reads (veh.h); the surviving
+//           divergence is #5, the prologue register order, not the field
+//           math - so this body is not measured exact.
+Return Value: 1 allowed, 0 not
+Status: Coverage transcription - unclaimed body, seed
+        git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00584b50.cpp retained.
+*/
+int __cdecl abil_cond(int ability_id, int chassis_id, int weapon_id,
+                      int armor_id) {
+    if (Chassis[chassis_id].missile != 0) {
+        return 0;
+    }
+    const uint32_t flags = Ability[ability_id].flags;
+    const int triad = Chassis[chassis_id].triad;
+    if (triad == 0) {
+        if ((flags & 1) == 0) {
+            return 0;
+        }
+    } else if (triad == 1) {
+        if ((flags & 2) == 0) {
+            return 0;
+        }
+    } else if (triad == 2) {
+        if ((flags & 4) == 0) {
+            return 0;
+        }
+    }
+
+    const int offense = Weapon[weapon_id].offense_rating;
+    int mode = Weapon[weapon_id].mode;
+    if (offense == 0) {
+        if (mode == 9) {
+            if ((flags & 0x10) == 0) {
+                return 0;
+            }
+        } else {
+            if ((flags & 0x20) == 0) {
+                return 0;
+            }
+        }
+    } else {
+        if ((flags & 8) == 0) {
+            return 0;
+        }
+    }
+
+    if (mode == 0xb) {
+        if ((flags & 0x40) != 0) {
+            return 0;
+        }
+    } else if ((flags & 0x800) != 0) {
+        return 0;
+    }
+
+    if (ExpansionEnabled == 0) {
+        const int bit = 1 << (ability_id & 0x1F);
+        if (bit == 0x1000000) {
+            return 0;
+        }
+        if (bit == 0x2000000) {
+            return 0;
+        }
+        if (bit == 0x4000000) {
+            return 0;
+        }
+        if (bit == 0x8000000) {
+            return 0;
+        }
+        if (bit == 0x10000000) {
+            return 0;
+        }
+    }
+
+    if ((offense < 0 || Armor[armor_id].defense_rating < 0) &&
+        (flags & 0x80) != 0) {
+        return 0;
+    }
+    if ((flags & 0x100) != 0 && mode != 7) {
+        return 0;
+    }
+    if ((flags & 0x200) != 0 &&
+        static_cast<uint8_t>(Chassis[chassis_id].speed) > 1) {
+        return 0;
+    }
+    return 1;
+}
+
+/*
+Purpose: Say whether a convoy-to-nearest-base order is possible from a tile:
+         reject occupied-enemy stacks, then walk the base array - wrapping
+         the x distance on a wrapping map - and reject when any base within
+         convoy range (the hex distance minus the diamond correction below
+         three) has the approach direction bit set in its worked-tile word.
+
+// ORIGINAL: 0x00564D90 ?can_convoy@@YAHHH@Z 0x00564D90-0x00564EAA FILE
+// RECOVERY_BINDING: v1 {"evidence":["veh.h owns the actual Veh and Base arrays and the vehicle APIs veh_at/stack_check; base.h/map.h own the traversed Base records, map globals, and radius_move API.","console.cpp and enemy.cpp are current source callers and both include veh.h; the duplicate console.h declaration is removed in favor of the actual vehicle API header.","The redundant four abs calls, x-wrap guard, pointer walk, worked-radius test, and early rejection order remain unchanged."],"reason":"Move the complete convoy eligibility helper beside the vehicle owner and expose its existing cdecl API through veh.h without simplifying its distance or call sequence."}
+// TRIED: transcribing Ghidra's redundant double-abs() calls (abs(dx) and abs(abs(dx))) literally rather than simplifying them away, since the original genuinely emits four `_abs` calls per loop iteration, not two. Landed as MISMATCH at 0.78 similarity: the remaining gap starts with the prologue's `push ecx` filler (a one-slot local reserved with a throwaway push instead of `sub esp,4`) that this body's local declaration order does not reproduce.
+// size      282 bytes
+// prototype int (__cdecl ?can_convoy@@YAHHH@Z)(int32 xCoord, int32 yCoord)
+// callers   2   call targets   4
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005A65D0 0x005B9580 0x005BFE90 0x00644F3A
+// notes     Seed provenance (TRIED): the image's four _abs calls per
+//           iteration are kept (including the redundant re-abs of the
+//           already-wrapped dx) and the walk stays a pointer walk over the
+//           0x134-byte base records. The surviving divergence is the
+//           prologue's one-slot local reserved by a throwaway `push ecx`
+//           (the mon_* family wall), so the body is not measured exact.
+Return Value: 0 impossible, 1 possible
+Status: Coverage transcription - unclaimed body, seed
+        git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00564d90.cpp retained.
+*/
+int __cdecl can_convoy(int x, int y) {
+    int veh_id = veh_at(x, y);
+    if (stack_check(veh_id, 9, 3, -1, -1) != 0) {
+        return 0;
+    }
+    int count = 0;
+    if (GameDataStateStorage.fields_.base_current_count_ > 0) {
+        const Base *base = Bases;
+        do {
+            const int base_y = base->y;
+            int dx = abs(x - base->x);
+            if (((MapIsFlat & 1) == 0) && static_cast<int>(MapLongitude) < dx) {
+                dx = MapLongitudeBounds - dx;
+            }
+            int dy = abs(y - base_y);
+            int adx = abs(dx);
+            int ady = abs(dy);
+            int mx = adx;
+            if (adx <= ady) {
+                mx = ady;
+            }
+            int mn = adx;
+            if (ady <= adx) {
+                mn = ady;
+            }
+            if (mx - ((((adx + ady) >> 1) - mn) + 1 >> 1) < 3) {
+                const int dir = radius_move(base->x, base_y, x, y, 0x15);
+                if ((dir >= 0) &&
+                    ((base->resource_sqr_radius & (1 << (dir & 0x1F))) != 0)) {
+                    return 0;
+                }
+            }
+            ++count;
+            ++base;
+        } while (count < GameDataStateStorage.fields_.base_current_count_);
+    }
+    return 1;
+}
+
+/*
+Purpose: The single-click handler for a fleet sprite: in a net game a
+         selectable, idle, unbusy unit is simply taken; a jailed unit pops
+         INJAIL; otherwise the click runs the net lock round-trip (lock,
+         wake, synch, unlock) before returning.
+
+// ORIGINAL: 0x0048CF50 ?veh_sprite_click@@YAHH@Z 0x0048CF50-0x0048D006 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence":["veh.h already declares the exact cdecl callback signature and console.cpp installs this function as the sprite click callback.","The body uses the existing Veh array, NetMsgPrimary, NetDaemonNet, and declared selection/wake/sync helpers; lock, wake, sync, await, and unlock order is preserved.","The literal at pinned 0x00686B5C is exactly `49 4e 4a 41 49 4c 00` (`INJAIL\\0`); replacing the fixed pointer alias with the source literal preserves the label bytes without an executable-address dependency.","The callback remains the existing cdecl function, not a guessed member or generated adapter; native symbol/reference measurement remains separate."],"reason":"Move the existing registered click callback into veh.cpp, replace only its verified INJAIL text pointer with the equivalent source literal, and preserve every return/call path."}
+// size      182 bytes
+// prototype int (__cdecl ?veh_sprite_click@@YAHH@Z)(int a1)
+// callers   ?   call targets   7
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0047A890 0x00531020 0x005310F0 0x00531480 0x00593220 0x005C1A20 0x005C1C40 0x005C1D70
+Return Value: 1 when the click only selects the unit, else 0
+Status: Coverage transcription - claim pending re-measurement
+*/
+int __cdecl veh_sprite_click(int veh_id) {
+    if (IsMultiplayerNet != 0 && veh_selectable(veh_id) != 0
+        && Vehs[veh_id].order == ORDER_NONE
+        && (Vehs[veh_id].state & 0x8004200) == 0) {
+        return 1;
+    }
+    if (veh_jail(veh_id) != 0) {
+        NetMsgPrimary.pop("INJAIL", 5000, 0, 0);
+        return 0;
+    }
+    if (NetDaemonNet.lock_veh(&veh_id, 0, -1, -1, 0) == 0) {
+        veh_wake(veh_id);
+        synch_veh(veh_id);
+        NetDaemonNet.await_synch();
+        NetDaemonNet.unlock_veh();
+    }
+    return 0;
+}
+
+/*
+Purpose: The double-click twin: the same net-select shortcut and INJAIL
+         pop, but the lock failure path returns early and a completed
+         lock round-trip reports the unit taken.
+
+// ORIGINAL: 0x0048D010 ?veh_sprite_double_click@@YAHH@Z 0x0048D010-0x0048D0CD FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence":["veh.h already declares the exact cdecl callback signature and console.cpp installs this function as the sprite double-click callback.","The body uses the existing Veh array, NetMsgPrimary, NetDaemonNet, and declared selection/wake/sync helpers; lock failure still returns before the wake/sync path.","The literal at pinned 0x00686B64 is exactly `49 4e 4a 41 49 4c 00` (`INJAIL\\0`); replacing the fixed pointer alias with the source literal preserves the label bytes without an executable-address dependency.","The callback remains the existing cdecl function, not a guessed member or generated adapter; native symbol/reference measurement remains separate."],"reason":"Move the existing registered double-click callback into veh.cpp, replace only its verified INJAIL text pointer with the equivalent source literal, and preserve its distinct lock-failure return."}
+// size      189 bytes
+// prototype int (__cdecl ?veh_sprite_double_click@@YAHH@Z)(int a1)
+// callers   ?   call targets   7
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0047A890 0x00531020 0x005310F0 0x00531480 0x00593220 0x005C1A20 0x005C1C40 0x005C1D70
+Return Value: 1 when the double-click takes the unit, else 0
+Status: Coverage transcription - claim pending re-measurement
+*/
+int __cdecl veh_sprite_double_click(int veh_id) {
+    if (IsMultiplayerNet != 0 && veh_selectable(veh_id) != 0
+        && Vehs[veh_id].order == ORDER_NONE
+        && (Vehs[veh_id].state & 0x8004200) == 0) {
+        return 1;
+    }
+    if (veh_jail(veh_id) != 0) {
+        NetMsgPrimary.pop("INJAIL", 5000, 0, 0);
+        return 0;
+    }
+    if (NetDaemonNet.lock_veh(&veh_id, 0, -1, -1, 0) != 0) {
+        return 0;
+    }
+    veh_wake(veh_id);
+    synch_veh(veh_id);
+    NetDaemonNet.await_synch();
+    NetDaemonNet.unlock_veh();
+    return 1;
+}

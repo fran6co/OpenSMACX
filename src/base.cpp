@@ -986,6 +986,238 @@ void __cdecl base_doctors() {
     }
 }
 
+/*
+Purpose: Reset every base of one faction: the faction's bases are visited in
+         table order and each is handed to base_reset when the caller's
+         context allows it - the faction is not locked out by the human/alive
+         status bytes, the base optionally lies in the requested region, and
+         with the occupancy flag the tile must be free of vehicles or without
+         a current owner.
+
+// ORIGINAL: 0x004E6300 ?bases_reset@@YAXHHH@Z 0x004E6300-0x004E63FC FILE
+// RECOVERY_BINDING: v1 {"evidence":["src/base.h declares bases_reset and owns the actual Base array and BaseCurrent; its Base members x/y/faction_id_current/state have RECOVERY_MEMBER evidence.","The pinned map-record stride is 0x2C; src/map.h's Map is size 0x2C with climate/contour/val2/region at +0..+3 and bit at +8. Typed indexing preserves the original field reads.","The body keeps both live enable-mask reads, the original short-circuit order, the base_reset callback, and the post-callback MapTiles/MapLongitude reload. No alias or manual table is introduced."],"reason":"Move the existing reset loop into the Base owner and express its already-established Base/Map storage through actual members while preserving branch, callback, reload, and unsafe-input behavior."}
+// TRIED: single AND-chained `if` (faction==a2 && (a1<0||idx_byte==a1) && (a3==0||bits check) && (mask flag||special)) reproduces the loop body; `int mask`/`unsigned char mask` both leave the divergence at MISMATCH #2 (original reserves the one local with `push ecx` right after `mov ebp,esp`; every C form tried here gets `sub esp,4` instead) - same prologue-reservation wall as the mon_* family (0x00477840).
+// size      252 bytes
+// callers   4   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004E5FE0
+// notes     Seed provenance (TRIED): the single AND-chained `if` reproduces
+//           the loop body; the residual divergence is the prologue local
+//           reservation - the original reserves its one local with `push ecx`
+//           right after `mov ebp,esp`, and every C form tried reaches for
+//           `sub esp,4` (the mon_* family wall at 0x00477840).
+Return Value: n/a
+Status: Coverage transcription - unclaimed body; the seed
+        git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/004e6300.cpp is retained until this product
+        definition measures fresh BYTE_EXACT.
+*/
+void __cdecl bases_reset(int region_id, int faction_id, int skip_occupied) {
+    int mask = 1 << faction_id;
+    if (((unsigned char)mask &
+         *reinterpret_cast<const unsigned char *>(
+             &GameDataStateStorage.fields_.lock_masks_.enable_mask_)) == 0) {
+        const int count = GameDataStateStorage.fields_.base_current_count_;
+        int i = 0;
+        if (count > 0) {
+            Map *tiles = map_tiles();
+            int mult = static_cast<int>(MapLongitude);
+            Base *base = Bases;
+            do {
+                if ((base->faction_id_current == faction_id) &&
+                    (region_id < 0 ||
+                     tiles[base->y * mult + (base->x >> 1)].region == region_id) &&
+                    (skip_occupied == 0 ||
+                     (tiles[base->y * mult + (base->x >> 1)].bit & 2) == 0 ||
+                     7 < (tiles[base->y * mult + (base->x >> 1)].val2 & 0xf)) &&
+                    (((unsigned char)mask &
+                      *reinterpret_cast<const unsigned char *>(
+                          &GameDataStateStorage.fields_.lock_masks_.enable_mask_)) == 0 ||
+                     (BaseCurrent->state & 0x80000000) == 0)) {
+                    base_reset(i, 0);
+                    tiles = map_tiles();
+                    mult = static_cast<int>(MapLongitude);
+                }
+                ++i;
+                ++base;
+            } while (i < count);
+        }
+    }
+}
+
+/*
+Purpose: Sum one base's terrain yields into the selected Base's intake_2
+         slots: walk the base's centre plus its radius offsets, wrap the x
+         edge on a flat map, latch the 0x8000 out-of-bounds state bit when
+         the tile is non-fungal rock, and add each of the four yield
+         passes' result into BaseCurrent's nutrient/mineral/energy/unused
+         intake_2 word, returning the sum.
+
+// ORIGINAL: 0x004E7E50 sub_4e7e50 0x004E7E50-0x004E7F63 FILE
+// RECOVERY_BINDING: v1 {"evidence":["The body reads the existing BaseCurrent/Bases layout (x, y, faction, state and contiguous intake_2 words), Map records, map bounds, and declared crop_yield/mine_yield/energy_yield APIs.","The function's fourth pass deliberately clears TileYieldRestricted; the body and original pass order are carried unchanged.","The identity remains the unmangled global sub_4e7e50; no original class name is inferred from its Base dataflow."],"reason":"Place the complete existing base-radius yield routine beside its genuine Base/Map dependencies without renaming it, changing pass order, or normalizing the original state updates."}
+// TRIED: various expression orderings for the x/y base+offset sums and the wrap-around guard placement all keep the divergence at the first instructions (register allocation for edx/ecx/a1 differs from the original's push-ebx/push-esi-before-movsx order).
+// size      276 bytes
+// prototype
+// callers   0   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004E6E50 0x004E7310 0x004E7750
+Return Value: the four-pass yield sum
+Status: Coverage transcription - unclaimed body
+*/
+extern "C" int __cdecl sub_4e7e50(int radius_index) {
+    Base *base = BaseCurrent;
+    int x = static_cast<int>(base->x) + RadiusOffsetX[radius_index];
+    if (!(MapIsFlat & 1)) {
+        if (x < 0) {
+            x += MapLongitudeBounds;
+        } else if (x >= MapLongitudeBounds) {
+            x -= MapLongitudeBounds;
+        }
+    }
+    int y = static_cast<int>(base->y) + RadiusOffsetY[radius_index];
+    if (y < 0 || y >= MapLatitudeBounds || x < 0 || x >= MapLongitudeBounds) {
+        return 0;
+    }
+    const Map *tile = map_tiles() + MapLongitude * y + (x >> 1);
+    if ((tile->climate & 0xE0) < 0x60) {
+        BaseCurrent->state |= 0x8000;
+    }
+    int sum = 0;
+    const uint8_t owner = base->faction_id_current;
+    for (int pass = 0; pass < 4; ++pass) {
+        int value;
+        switch (pass) {
+        case 0:
+            value = crop_yield(owner, BaseIDCurrentSelected, x, y, 0);
+            break;
+        case 1:
+            value = mine_yield(owner, BaseIDCurrentSelected, x, y, 0);
+            break;
+        case 2:
+            value = energy_yield(owner, BaseIDCurrentSelected, x, y, 0);
+            break;
+        default:
+            value = 0;
+            TileYieldRestricted = 0;
+            break;
+        }
+        // The image selects C0/C4/C8/CC and reloads BaseCurrent each pass.
+        // These are separate declared members, not a C++ array.
+        base = BaseCurrent;
+        switch (pass) {
+        case 0: base->nutrient_intake_2 += value; break;
+        case 1: base->mineral_intake_2 += value; break;
+        case 2: base->energy_intake_2 += value; break;
+        default: base->unused_intake_2 += value; break;
+        }
+        sum += value;
+    }
+    return sum;
+}
+
+/*
+Purpose: The sibling pass of sub_4e7e50: identical walk and tile gating,
+         but each pass's yield is SUBTRACTED from the matching intake_2
+         word while the same value still accumulates into the sum.
+
+// ORIGINAL: 0x004E7F80 sub_4e7f80 0x004E7F80-0x004E8094 FILE
+// RECOVERY_BINDING: v1 {"evidence":["The body reads the existing BaseCurrent/Bases layout, Map records, map bounds, and declared crop_yield/mine_yield/energy_yield APIs.","This is the subtracting sibling of 0x004E7E50; the original sum still accumulates positive yield values while intake_2 is decremented.","The identity remains the unmangled global sub_4e7f80; no original class name is inferred from its Base dataflow."],"reason":"Place the complete subtracting base-radius yield routine beside its genuine Base/Map dependencies, preserving its distinct subtraction and positive return-sum behavior."}
+// TRIED: the same prologue register-allocation divergence as its 0x004E7E50 sibling.
+// size      276 bytes
+// prototype
+// callers   0   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004E6E50 0x004E7310 0x004E7750
+Return Value: the negated-form four-pass yield sum
+Status: Coverage transcription - unclaimed body
+*/
+extern "C" int __cdecl sub_4e7f80(int radius_index) {
+    Base *base = BaseCurrent;
+    int x = static_cast<int>(base->x) + RadiusOffsetX[radius_index];
+    if (!(MapIsFlat & 1)) {
+        if (x < 0) {
+            x += MapLongitudeBounds;
+        } else if (x >= MapLongitudeBounds) {
+            x -= MapLongitudeBounds;
+        }
+    }
+    int y = static_cast<int>(base->y) + RadiusOffsetY[radius_index];
+    if (y < 0 || y >= MapLatitudeBounds || x < 0 || x >= MapLongitudeBounds) {
+        return 0;
+    }
+    const Map *tile = map_tiles() + MapLongitude * y + (x >> 1);
+    if ((tile->climate & 0xE0) < 0x60) {
+        BaseCurrent->state |= 0x8000;
+    }
+    int sum = 0;
+    const uint8_t owner = base->faction_id_current;
+    for (int pass = 0; pass < 4; ++pass) {
+        int value;
+        switch (pass) {
+        case 0:
+            value = crop_yield(owner, BaseIDCurrentSelected, x, y, 0);
+            break;
+        case 1:
+            value = mine_yield(owner, BaseIDCurrentSelected, x, y, 0);
+            break;
+        case 2:
+            value = energy_yield(owner, BaseIDCurrentSelected, x, y, 0);
+            break;
+        default:
+            value = 0;
+            TileYieldRestricted = 0;
+            break;
+        }
+        base = BaseCurrent;
+        switch (pass) {
+        case 0: base->nutrient_intake_2 -= value; break;
+        case 1: base->mineral_intake_2 -= value; break;
+        case 2: base->energy_intake_2 -= value; break;
+        default: base->unused_intake_2 -= value; break;
+        }
+        sum += value;
+    }
+    return sum;
+}
+
+/*
+Purpose: Bubble-sort an id list into base-name order: repeatedly walk the
+         caller's id array comparing the named Bases records case-blind,
+         swapping neighbours whose names order backwards, until a pass
+         makes no swap.
+
+// ORIGINAL: 0x004D5FF0 sub_4d5ff0 0x004D5FF0-0x004D606E FILE
+// RECOVERY_BINDING: v1 {"evidence":["The pinned routine repeatedly compares Bases[id].name_string using case-insensitive string comparison and swaps neighboring entries in the caller-owned id list.","The current Base array/count are source-owned in base.h/base.cpp; the global address-derived identity remains sub_4d5ff0, not a newly named Base method.","The one-element/negative-count early return, repeated bubble passes, comparator polarity, and caller-list mutation are preserved."],"reason":"Move the existing base-name id sort to the owner of its genuine Base storage while retaining the original global identity and exact comparison/swap control flow."}
+// size      126 bytes
+// prototype
+// callers   0   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00628A50 0x0064FD20
+Return Value: n/a
+Status: Coverage transcription - unclaimed body
+*/
+extern "C" void __cdecl sub_4d5ff0(int *id_list) {
+    bool did_swap;
+    do {
+        did_swap = false;
+        int *cursor = id_list;
+        const int count = GameDataStateStorage.fields_.base_current_count_;
+        if (count == 1 || count - 1 < 0) {
+            return;
+        }
+        for (int index = 0; index < count - 1; ++index, ++cursor) {
+            if (_stricmp(Bases[cursor[0]].name_string,
+                         Bases[cursor[1]].name_string) > 0) {
+                did_swap = true;
+                swap(cursor, cursor + 1);
+            }
+        }
+    } while (did_swap);
+}
+
 // ORIGINAL: 0x004E4B80 ?base_init@@YAHHHH@Z 0x004E4B80-0x004E5250
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/004e4b80.cpp: canonical identity, original spans and retained seed history", "source:src/base.h: real Base storage and lifecycle contracts", "source:recovery/tasks/base-lifecycle-owner-closure.json: bounded coordinator authorization"], "reason": "The original base creation operation owns initialization of Bases records and faction base counts; source expresses real Base/PlayerData fields, facility bitmaps, technology and named UI/replay dependencies."}
 // TRIED: `>= 0x200` guard (matches original cmp/jl) over `> 0x1ff` moved divergence #4->#12; raw byte-offset arithmetic on the fixed 0x97dXXX/0x96XXXX globals (record stride 0x134, per-faction stride 0x20cc) rather than the Base struct - field order in src/base.h is only size-checked, not per-field, and several 0x97d0cc-family writes index past their nominal field width (a genuine original OOB-write reproduced faithfully). Not chased to byte-exact given size (1744 bytes / ~330 asm lines).

@@ -637,6 +637,9 @@ extern Veh Vehs[2049];  // 0x00952828, 0x34 stride
 // Original sprite-picker item hooks, owned by leaf_recoveries.cpp.
 int __cdecl veh_sprite_click(int veh_id);
 int __cdecl veh_sprite_double_click(int veh_id);
+int __cdecl can_convoy(int x, int y);
+int __cdecl abil_cond(int ability_id, int chassis_id, int weapon_id,
+                      int armor_id);
 // THE EIGHT COMPASS DELTAS, indexed by the direction argument the cursor-key
 // and move-order paths pass: veh.cpp defines both runs, and Console::move_cursor
 // adds VehMoveDeltaX[direction] to the cursor's own x (and the Y twin to its y)
