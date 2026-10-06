@@ -53,7 +53,7 @@ class CouncWin : public GraphicWin, public SubInterface {
   // Original427150 is a visibility-query tail jump, not Win::hide.
   int council_visible();
   void set_vote(int faction_id, int vote);
-  void on_left_click(int x, int y);
+  void on_left_click(int x, int y) override;
   int on_key_click(int key, int flags) override;
   void draw_info();
   void init(int proposal, int faction_id);

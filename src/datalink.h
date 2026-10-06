@@ -86,7 +86,7 @@ class Datalink : public GraphicWin, public SubInterface {
   void UNK8();
   void UNK9();
   void close();
-  void on_left_click(int a1, int a2);
+  void on_left_click(int a1, int a2) override;
   void on_group_clicked(int a1, int a2);
   void on_mouse_move(int a1, int a2);
   void on_iface_left_click(int a1, int a2);

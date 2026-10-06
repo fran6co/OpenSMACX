@@ -2521,6 +2521,7 @@ void ReportWin::right_menu(int base_id, int x, int y) {
 
 // ORIGINAL: 0x00497F00 ?on_right_click@ReportWin@@QAEXHH@Z 0x00497F00-0x004980EF
 // RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/recovered/units/00497f00.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
+// symbol    ?on_right_click@ReportWin@@UAEXHH@Z
 void ReportWin::on_right_click(int x, int y) {
     if (reportwin_input_blocked()) return;
     int spot_id, payload;
@@ -2659,6 +2660,7 @@ void ReportWin::draw_security() {
 
 // ORIGINAL: 0x00496E10 ?on_left_click@ReportWin@@QAEXHH@Z 0x00496E10-0x00497A30
 // RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/unrecovered/00496e10.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
+// symbol    ?on_left_click@ReportWin@@UAEXHH@Z
 void ReportWin::on_left_click(int x, int y) {
     if (reportwin_input_blocked()) return;
     int selected, payload;

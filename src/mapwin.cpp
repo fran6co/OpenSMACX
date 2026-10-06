@@ -781,6 +781,7 @@ void __cdecl mapwin_activate_free_slot(int tile_x, int tile_y) {
 Purpose: Answer WM_SYSCLOSE: clear the window's per-slot state words, then run
          close() - the same owned-pointer free and vbtable walk, inlined.
 // ORIGINAL: 0x0046F880 ?on_sys_close@MapWin@@QAEXXZ 0x0046F880-0x0046F8C0 BYTE_EXACT
+// symbol    ?on_sys_close@MapWin@@UAEXXZ
 // LEVER: byte-exact on promotion from the 0046f880 archive unit. The Q
 //   spelling enters with `this` on the GraphicWin virtual base, and the image
 //   folds the guard and clear off the ENTERED this ([ecx - 0x3cf4],
@@ -859,6 +860,7 @@ Purpose: Report a left click on the map, but only when map input is enabled.
          Reached through the GraphicWin virtual base, so `this` points there
          and is adjusted back 0x21A6C to the MapWin before dispatching.
 // ORIGINAL: 0x0046EBA0 ?on_left_click@MapWin@@QAEXHH@Z 0x0046EBA0-0x0046EBC5 BYTE_EXACT
+// symbol    ?on_left_click@MapWin@@UAEXHH@Z
 // size      37 bytes
 // prototype void (__thiscall ?on_left_click@MapWin@@QAEXHH@Z)(MapWin* this, int, int)
 // callers   0   call targets   1
@@ -881,6 +883,7 @@ void MapWin::on_left_click(int a1, int a2) {
 Purpose: Report a right click on the map, but only when map input is enabled.
          Same virtual-base adjustment as the left click.
 // ORIGINAL: 0x0046EBE0 ?on_right_click@MapWin@@QAEXHH@Z 0x0046EBE0-0x0046EC05 BYTE_EXACT
+// symbol    ?on_right_click@MapWin@@UAEXHH@Z
 // size      37 bytes
 // prototype void (__thiscall ?on_right_click@MapWin@@QAEXHH@Z)(MapWin* this, int, int)
 // callers   0   call targets   1

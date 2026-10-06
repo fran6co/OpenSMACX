@@ -1833,7 +1833,8 @@ void ListBox::on_mouse_move(int x, int y) {
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0060AF90 ?on_key_down@ListBox@@QAEXH@Z 0x0060AF90-0x0060B4D5
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0060af90.cpp"], "reason": "Rehome seed catalogue identity and original extents into compiled owning class; native-emitted symbol is separate and no new byte claim granted."}
-void ListBox::on_key_down(int key) {
+// symbol    ?on_key_down@ListBox@@UAEHH@Z
+int ListBox::on_key_down(int key) {
     WinCallbackWindow = static_cast<GraphicWin *>(this)->parent_window();
     StringList &items = Dialog::item_list_;
     const int count = items.entry_count_;
@@ -1850,17 +1851,17 @@ void ListBox::on_key_down(int key) {
         &next_position);
     if (navigation > 0) {
         set_selected_pos(next_position, 1);
-        return;
+        return 1;
     }
-    if (navigation == 0) return;
+    if (navigation == 0) return 1;
     if (count <= 0) {
-        return;
+        return 0;
     }
 
     const UINT character = MapVirtualKeyA(
         static_cast<UINT>(key) & 0xFFF8FFFFu, 2);
     if (character == 0) {
-        return;
+        return 0;
     }
     const unsigned char first = static_cast<unsigned char>(character);
     for (int offset = 1; offset <= count; ++offset) {
@@ -1874,9 +1875,10 @@ void ListBox::on_key_down(int key) {
         }
         if (listbox_typeahead_matches(payload->text[0], first)) {
             set_selected_pos(candidate, 1);
-            return;
+            return 1;
         }
     }
+    return 0;
 }
 
 // Seed identity 0x0060C1E0, retained span 0x0060C1E0..0x0060C33F, has no

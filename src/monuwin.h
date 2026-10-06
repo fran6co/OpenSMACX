@@ -16,7 +16,7 @@ class MonuWin : public GraphicWin {
   int init();
   void on_redraw() override;
   void close();
-  void on_left_click_event(int x, int y) override;
+  void on_left_click(int x, int y) override;
   void on_mouse_move(int x, int y) override;
   void on_button_clicked(int id) override;
   int on_key_click(int key, int state) override;

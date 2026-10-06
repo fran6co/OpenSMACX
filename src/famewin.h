@@ -22,7 +22,7 @@ class FameWin : public GraphicWin {
   virtual void on_redraw();
   virtual void on_button_clicked(int button_id);
   void on_group_clicked(int, int, int);
-  void on_left_click(int x, int y);
+  void on_left_click(int x, int y) override;
   int on_key_click(int key, int code);
   void try_to_add_me();
   void demote(int rank);

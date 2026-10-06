@@ -133,7 +133,7 @@ class MapWin : public virtual GraphicWin {
 
  public:
   // 0x0046F880, source-owned close handler.
-  void on_sys_close();
+  void on_sys_close() override;
 
  public:
   // THE ENTERED-RECEIVER WALK. The image's Q-spelled handlers (on_sys_close,
@@ -315,8 +315,8 @@ class MapWin : public virtual GraphicWin {
   // prev_cursor and set_view all call it on the current map window. Body
   // still unrecovered - a pending_bodies forwarder.
   void draw_cursor();
-  void on_left_click(int a1, int a2);
-  void on_right_click(int a, int b);
+  void on_left_click(int a1, int a2) override;
+  void on_right_click(int a, int b) override;
   void on_left_double_click(int, int);
   void on_left_up(int, int);
   void close();

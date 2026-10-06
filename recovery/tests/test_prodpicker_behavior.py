@@ -217,7 +217,7 @@ struct PullDown {
 struct ProdPicker {
     int field_A774_ = 0, field_B68_ = 0;
     StringList prod_a_;
-    void on_left_click_event(int, int) { }
+    void on_left_click(int, int) { }
     void client_to_screen(int *, int *) { }
     void on_button_clicked(int) { events.push_back(4); }
     void calculate() { events.push_back(5); }
@@ -278,7 +278,8 @@ struct Base {
 } base;
 Base *BaseCurrent = &base;
 int BaseIDCurrentSelected = 2;
-int GameState = 0x80;
+struct GameStateFields { int game_state_ = 0x80; };
+struct GameDataStorage { GameStateFields fields_; } GameDataStateStorage;
 const int MaxWeaponNum = 0, MaxArmorNum = 0, MaxChassisNum = 0;
 const int MaxVehProtoNum = 128;
 const int PROTO_ACTIVE = 1;

@@ -39,7 +39,7 @@ class Credits : public GraphicWin {
   void on_right_down(int a, int b);
   void on_mouse_move(int a1, int a2);
   virtual int on_key_click(int repeat, int key);
-  virtual void on_left_click_event(int x, int y);
+  virtual void on_left_click(int x, int y) override;
   void on_button_clicked(int a1);
 
   // Lifecycle and timer methods recovered from the Credits-owned image

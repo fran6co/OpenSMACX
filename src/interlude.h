@@ -10,7 +10,7 @@ class Interlude : public GraphicWin {
   void close();
   virtual void on_redraw();
   virtual void on_left_down(int x, int y);
-  virtual int vslot_26(int key);
+  virtual int on_key_down(int key) override;
  private:
   // Original construction and redraw access these real embedded subobjects.
   // RECOVERY_MEMBER: v1 Interlude text_rect_ 0xA14 0x0045F5C0

@@ -110,7 +110,7 @@ class DesignWin : public GraphicWin, public SubInterface {
   void init();
   static void __cdecl timer_function(int tick);
   void setup_veh(int proto_id, int automatic);
-  void on_right_click(int x, int y);
+  void on_right_click(int x, int y) override;
   void on_redraw();
   void select_name();
   // Source-owned body closes the window; C++ owns member/base teardown.
@@ -162,7 +162,7 @@ class DesignWin : public GraphicWin, public SubInterface {
 
   // 0x00439960 ?on_left_click@DesignWin@@QAEXHH@Z - a click on the prototype
   // palette (spot2_) picks the component the spot type names.
-  void on_left_click(int a1, int a2);
+  void on_left_click(int a1, int a2) override;
 
   // 0x00439A20 ?on_key_click@DesignWin@@QAEHHH@Z - keyboard scrolling of the
   // prototype stack and the shared slot-44 button keys.

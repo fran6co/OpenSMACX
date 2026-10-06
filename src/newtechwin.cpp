@@ -97,6 +97,7 @@ int NewTechWin::on_link_clicked(int, char *link) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x00483E90 ?on_left_click@NewTechWin@@QAEXHH@Z 0x00483E90-0x00483E93 BYTE_EXACT
+// symbol    ?on_left_click@NewTechWin@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_left_click@NewTechWin@@QAEXHH@Z)(NewTechWin* this, int, int)
 // callers   0   call targets   0

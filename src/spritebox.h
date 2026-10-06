@@ -107,12 +107,12 @@ class SpriteBox : public virtual GraphicWin, public virtual Dialog {
   void on_left_double_click(int x_coord, int y_coord);
 
  public:
-  // 0x00611060, a pending_bodies forwarder.
-  void on_left_click(int a1, int a2);
+  // 0x00611060, the typed SpriteBox body is defined in spritebox.cpp.
+  void on_left_click(int a1, int a2) override;
 
  public:
-  // 0x00611400, a pending_bodies forwarder.
-  int on_key_down(int a);
+  // 0x00611400, the typed SpriteBox body is defined in spritebox.cpp.
+  int on_key_down(int a) override;
 
  public:
   // 0x00610540, a pending_bodies forwarder.
@@ -123,7 +123,7 @@ class SpriteBox : public virtual GraphicWin, public virtual Dialog {
   void on_right_double_click(int a, int b);
   void on_left_up(int a, int b);
   void on_right_up(int a, int b);
-  void on_right_click(int a, int b);
+  void on_right_click(int a, int b) override;
  public:
   void on_dialog_focus(int a1);
   void close();

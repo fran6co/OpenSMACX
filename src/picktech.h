@@ -15,9 +15,9 @@ public:
     void on_mouse_move(int x, int y);
     int on_key_click(int source, int key);
     // Native table slot19 directly owns 4860B0; no forwarding callback body.
-    virtual void on_left_click_event(int x, int y);
+    virtual void on_left_click(int x, int y) override;
     // Native66CFCC+22*4→486110. Win's inherited name is still neutral.
-    virtual void vslot_22(int x, int y);
+    virtual void on_right_click(int x, int y);
     void UNK1(char *text);
     int draw_item(int item, int selected);
     int draw_tech(int tech, RECT *rect, int flags);
@@ -51,4 +51,3 @@ public:
 
 
 static_assert(sizeof(PickTech) == 0xC5C, "PickTech native extent");
-

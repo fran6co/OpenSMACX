@@ -424,6 +424,7 @@ void DesignWin::init() {
 
 // ORIGINAL: 0x00439700 ?on_right_click@DesignWin@@QAEXHH@Z 0x00439700-0x00439948
 // RECOVERY_BINDING: v1 {"evidence": ["git:3f6ab06bdf3b791aa23454e19f71b4e8b5935caf:src/recovered/units/00439700.cpp"], "reason": "Spot palette categories select localized help labels; the two ability categories share a label."}
+// symbol    ?on_right_click@DesignWin@@UAEXHH@Z
 void DesignWin::on_right_click(int x, int y) {
     TutorialWindow.reset();
     int position;

@@ -9,12 +9,21 @@
 #include <cctype>
 #include <string>
 #include <vector>
+#if defined(__clang__)
+#pragma clang diagnostic ignored "-Winconsistent-missing-override"
+#endif
 #define __cdecl
 typedef char *LPSTR;
 const int MaxTechnologyNum=89, MaxVehProtoFactionNum=64, MaxAbilityNum=29;
 const int MaxArmorNum=14, MaxWeaponNum=26, MaxReactorNum=4, MaxChassisNum=9;
 const int MaxTerrainNum=20, MaxFacilityNum=134, FacilitySPStart=70;
 const int TECH_TRANT=88, FALSE=0;
+struct PickTechGameFields {
+    unsigned int game_rules_, turn_current_num_, game_preferences_;
+    struct { unsigned int enable_mask_; } lock_masks_;
+};
+struct PickTechGameState { PickTechGameFields fields_; };
+PickTechGameState GameDataStateStorage;
 struct RECT { int left, top, right, bottom; };
 int popup_ctor=0,popup_dtor=0,list_ctor=0,list_dtor=0;
 int list_load_result=1,list_remove_calls=0,list_final_cursor=-1;
@@ -62,7 +71,7 @@ struct Win {
  int caption_height_=-9;
  virtual ~Win(){} virtual void show(int){} virtual void hide(){}
  virtual void on_mouse_move(int,int){} virtual int on_key_click(int,int){return 0;}
- virtual void on_left_click_event(int,int){} virtual void vslot_22(int,int){}
+ virtual void on_left_click(int,int){} virtual void on_right_click(int,int){}
  virtual int set_modal(int,int(*)(),Win*);
  void center(){} void set_caption_height(int){} void on_lose_mouse_capture(){}
  void release_modal(){} };
@@ -161,6 +170,10 @@ static void reset_state() {
     fx_calls=tutorial_calls=console_tech_calls=0;
     list_ctor=list_dtor=0;displayed.clear();candidate_captions.clear();
     GameRules=GamePreferences=LockEnableMask=0;TurnCurrentNum=20;
+    GameDataStateStorage.fields_.game_rules_=GameRules;
+    GameDataStateStorage.fields_.game_preferences_=GamePreferences;
+    GameDataStateStorage.fields_.turn_current_num_=TurnCurrentNum;
+    GameDataStateStorage.fields_.lock_masks_.enable_mask_=LockEnableMask;
     IsMultiplayerNet=ConsoleControlTurnActive=TechAchievedGate=0;
     WinPointerOwner3=WinPointerOwner4=0;modal_selection=0;
     StringAllocationHeap=0;
@@ -203,7 +216,8 @@ int main() {
      assert(random_calls==4&&random_bounds[0]==9&&random_bounds[1]==17);
      assert(modal_calls==0&&popup_dtor==4);}
     reset_state();
-    LockEnableMask=2;available[1]=available[2]=available[8]=1;
+    LockEnableMask=2;GameDataStateStorage.fields_.lock_masks_.enable_mask_=LockEnableMask;
+    available[1]=available[2]=available[8]=1;
     modal_selection=1;
     {PickTech p;assert(p.pick(1,0,-1,0)==2);
      assert(p.item_count_==2&&p.technology_ids_[0]==1&&p.technology_ids_[1]==2);
@@ -216,16 +230,21 @@ int main() {
     {PickTech p;assert(p.pick(1,1,2,0)==6);assert(p.item_count_==1);
      assert(random_calls==2&&p.technology_ids_[0]==6);}
     reset_state();
-    LockEnableMask=2;modal_selection=41;
+    LockEnableMask=2;GameDataStateStorage.fields_.lock_masks_.enable_mask_=LockEnableMask;
+    modal_selection=41;
     for(int i=0;i<89;++i)available[i]=1;
     {PickTech p;assert(p.pick(1,1,-1,0)==41);
      assert(p.column_count_==10&&p.row_count_==9&&p.item_count_==89);
      assert(random_calls==178&&p.row_pitch_==10&&popup_dtor==4);}
     reset_state();
-    GameRules=0x200;GamePreferences=0x20;PlayersData[1].tech_ranking=2;
+    GameRules=0x200;GamePreferences=0x20;
+    GameDataStateStorage.fields_.game_rules_=GameRules;
+    GameDataStateStorage.fields_.game_preferences_=GamePreferences;
+    PlayersData[1].tech_ranking=2;
     {PickTech p;assert(p.pick(1,0,-1,0)==77);assert(tutorial_calls==1&&console_tech_calls==1);}
     reset_state();
-    GamePreferences=0x20;IsMultiplayerNet=ConsoleControlTurnActive=1;
+    GamePreferences=0x20;GameDataStateStorage.fields_.game_preferences_=GamePreferences;
+    IsMultiplayerNet=ConsoleControlTurnActive=1;
     {PickTech p;assert(p.pick(1,1,-1,0)==-1);assert(tutorial_calls==1&&fx_calls==1);}
     reset_state();
     {PickTech p;initialize_draw(p);RECT rect={0,0,240,300};
@@ -270,7 +289,7 @@ int main() {
      p.on_key_click(0,0x26);assert(p.selected_index_==3);
      p.on_mouse_move(-1,0);assert(p.selected_index_==-1&&p.selection_active_==0);
      p.on_mouse_move(1,30);assert(p.selected_index_==0&&p.selection_active_==1);
-     WinPointerOwner3=WinPointerOwner4=&p;static_cast<Win *>(&p)->on_left_click_event(1,30);
+     WinPointerOwner3=WinPointerOwner4=&p;static_cast<Win *>(&p)->on_left_click(1,30);
      assert(WinPointerOwner3==0&&WinPointerOwner4==0);}
     reset_state();
     {PickTech p;initialize_draw(p);p.cell_height_=2000;RECT rect={0,0,240,2000};
@@ -306,9 +325,9 @@ int main() {
      } p;
      initialize_draw(p);p.technology_ids_[0]=7;
      WinPointerOwner3=WinPointerOwner4=&p;
-     static_cast<Win *>(&p)->on_left_click_event(-500,-500);
+     static_cast<Win *>(&p)->on_left_click(-500,-500);
      assert(p.calls==1&&WinPointerOwner3==0&&WinPointerOwner4==0);
-     static_cast<Win *>(&p)->vslot_22(-500,-500);
+     static_cast<Win *>(&p)->on_right_click(-500,-500);
      assert(p.calls==2&&datalink_calls==1&&datalink_opcode==14&&datalink_tech==7);}
     puts("PickTech current-product controls passed (external APIs are doubles)");
 }

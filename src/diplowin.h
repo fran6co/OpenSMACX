@@ -39,7 +39,7 @@ extern int DiploKnownTechColor;
 class DiploWin : public GraphicWin, public SubInterface {
  public:
   // homed from 00442510.cpp
-  void on_left_click(int a1, int a2);
+  void on_left_click(int a1, int a2) override;
   int on_key_click(int repeat, int key);
   int on_key_down(int key);
   void done_deal();

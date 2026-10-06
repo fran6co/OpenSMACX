@@ -77,8 +77,8 @@ class CheckBox : public virtual GraphicWin, public virtual Dialog {
   void on_left_double_click(int x_coord, int y_coord);
 
  public:
-  // 0x0060F8B0, a pending_bodies forwarder.
-  int on_key_down(int a);
+  // 0x0060F8B0, the typed CheckBox body is defined in checkbox.cpp.
+  int on_key_down(int a) override;
 
  public:
   // 0x0060E800, a pending_bodies forwarder.

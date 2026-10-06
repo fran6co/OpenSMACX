@@ -13,9 +13,9 @@ OWNERS = (
 )
 PATTERN = re.compile(
     r"(?m)^(?:int|void)\s+(?:AlphaMovie::on_key_click|BaseWin::vslot_49|"
-    r"Credits::on_key_click|Credits::on_left_click_event|"
+    r"Credits::on_key_click|Credits::on_left_click|"
     r"NewTechWin::on_button_clicked|ProdPicker::vslot_49|"
-    r"ReplayWin::on_left_click_event|ReplayWin::vslot_22|"
+    r"ReplayWin::on_left_click|ReplayWin::on_right_click|"
     r"ReplayWin::on_button_clicked|ReplayWin::on_key_click|"
     r"Gamma::vslot_49|BaseButton::on_dialog_focus)"
     r"\s*\([^;{}]*\)\s*\{"

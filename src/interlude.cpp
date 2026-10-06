@@ -51,7 +51,7 @@ void Interlude::close() {
 // ORIGINAL: 0x0045F6F0 ?on_key_down@Interlude@@QAEXH@Z 0x0045F6F0-0x0045F700 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original instruction/call evidence retained from src/delegation_thunks.cpp", "source:src/interlude.h: real GraphicWin base, embedded StringList and Buffer, compiler-generated deleting/adjustor lifecycle"], "reason": "Original member/callback/lifetime identity is owned by genuine Interlude C++ hierarchy; actual emitted symbol replaces the retired raw receiver shim, preserving historical spans and claims."}
 // symbol    ?vslot_26@Interlude@@UAEHH@Z
-int Interlude::vslot_26(int) {
+int Interlude::on_key_down(int) {
     release_modal();
     return 1;
 }

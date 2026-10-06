@@ -46,7 +46,7 @@ class CheckButton : public GraphicWin {
   static void close_class();
   static int init_class();
   int init(int x, int y, GraphicWin *parent, int toggle_argument);
-  void on_left_click(int x, int y);
+  void on_left_click(int x, int y) override;
 
   // Constructor 0x63375A installs the vtable at 0x66DC14. Its words at
   // 0x66DC40 and 0x66DC84 select 0x633850 and 0x633980 respectively, so

@@ -38,8 +38,7 @@ def actual_source():
     parts = {}
     for unit, cls in (("win", "Win"), ("graphicwin", "GraphicWin"),
                       ("mapwin", "MapWin"), ("planwin", "PlanWin"),
-                      ("console", "Console"), ("scroll", "Scroll"),
-                      ("scroll", "ScrollGraphicWin")):
+                      ("console", "Console"), ("scroll", "Scroll")):
         declaration, = re.findall(r"^(?:class|struct) " + cls + r"\s*:[^{]+\{", headers[unit], re.M)
         parts[cls.upper() + "_BASES"] = declaration
     parts["DIB"] = braced(headers["buffer"], "struct Dib : BITMAPINFO") + ";"
@@ -99,7 +98,6 @@ public:
     int id;
 };
 GRAPHICWIN_BASES public:GRAPHIC_RESIZE_DECL};
-SCROLLGRAPHICWIN_BASES public:};
 SCROLL_BASES public:};
 MAPWIN_BASES public:MAP_HANDLER_DECL MAP_FLAGS void do_image_buttons();};
 PLANWIN_BASES public:};

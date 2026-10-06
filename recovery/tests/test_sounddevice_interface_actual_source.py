@@ -223,8 +223,15 @@ def test_actual_shared_fields_and_lifecycle_order_are_consistent():
     ):
         assert statement in base_ctor
     assert "if (device)" in base_dtor and "vtable_slot<device_release_fn>(device, 0x10)(device);" in base_dtor
-    assert wave_ctor.index("VectorCtorIterator") < wave_ctor.index("field_20_ = 0")
-    assert "VectorDtorIterator" in wave_dtor
+    assert "VectorCtorIterator" not in wave_ctor
+    assert "field_20_ = 0" in wave_ctor
+    assert "VectorDtorIterator" not in wave_dtor
+    wave_header = (ROOT / "src/wave_device.h").read_text()
+    assert "WaveControlGroup groups_[16]" in wave_header
+    assert "WaveControlGroup();" in wave_header
+    assert "~WaveControlGroup();" in wave_header
+    assert "WaveControlGroup::WaveControlGroup()" in wave_cpp
+    assert "WaveControlGroup::~WaveControlGroup()" in wave_cpp
     assert "device_release_fn" not in wave_dtor
     assert "Midi_Device::Midi_Device() {\n}" in sound_cpp
     assert "Wave_In_Device::Wave_In_Device() {\n}" in sound_cpp

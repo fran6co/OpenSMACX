@@ -6,8 +6,8 @@ class Win {
  public:
   Win() : release_calls(0), redraw_calls(0), scroll_calls(0), scroll_code(0), scroll_pos(0) {}
   virtual int on_key_click(int, int) { return 0; }
-  virtual void on_left_click_event(int, int) {}
-  virtual void vslot_22(int, int) {}
+  virtual void on_left_click(int, int) {}
+  virtual void on_right_click(int, int) {}
   virtual void on_button_clicked(int) {}
   virtual void vslot_48(int, int) {}
   virtual void vslot_49(int, int) {}
@@ -36,7 +36,7 @@ class BaseWin : public Win {
 class Credits : public Win {
  public:
   int on_key_click(int, int);
-  void on_left_click_event(int, int);
+  void on_left_click(int, int);
 };
 class NewTechWin : public Win {
  public:
@@ -52,8 +52,8 @@ class ProdPicker : public Win {
 class ReplayWin : public Win {
  public:
   int on_key_click(int, int);
-  void on_left_click_event(int, int);
-  void vslot_22(int, int);
+  void on_left_click(int, int);
+  void on_right_click(int, int);
   void on_button_clicked(int);
 };
 class Gamma : public Win {

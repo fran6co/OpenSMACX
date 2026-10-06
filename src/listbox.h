@@ -208,8 +208,8 @@ class ListBox : public virtual GraphicWin, public virtual Dialog {
   void on_left_double_click(int a1, int a2);
 
  public:
-  // 0x0060AF90, a pending_bodies forwarder.
-  void on_key_down(int a);
+  // 0x0060AF90, the typed ListBox body is defined in listbox.cpp.
+  int on_key_down(int a) override;
 
  public:
   // 0x0060A670, a pending_bodies forwarder.
@@ -221,7 +221,7 @@ class ListBox : public virtual GraphicWin, public virtual Dialog {
   void on_scrolling(int a, int b);
   // 0x0060CB70, homed in leaf_recoveries.cpp (2026-09-27): the wheel-notch
   // loop over the Win virtual base's two scrollbar clicks.
-  void on_mousewheel(int a);
+  void on_mousewheel(int a) override;
   // 0x0060B530 ?draw_item@ListBox@@QAEXH@Z (3240 bytes), implemented in
   // listbox.cpp. on_scrolling reaches it twice on the ListBox front.
   // The original raw-offset transcription survives in Git history at

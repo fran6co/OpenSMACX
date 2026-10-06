@@ -24,7 +24,7 @@ def test_actual_left_click_virtual_dispatch(tmp_path, compiler_name, damage):
     if compiler is None:
         pytest.skip(f"{compiler_name} unavailable")
     declaration = braced((ROOT / "src/win.h").read_text(),
-                         "virtual void on_left_click_event(")
+                         "virtual void on_left_click(")
     implementation = braced((ROOT / "src/win.cpp").read_text(),
                             "void Win::dispatch_19(")
     if damage:
@@ -35,6 +35,7 @@ def test_actual_left_click_virtual_dispatch(tmp_path, compiler_name, damage):
 #define __cdecl
 class Win;
 Win *WinCallbackWindow;
+class Sound { public: int is_playing() { return 0; } void play() {} };
 class Win {
  public:
     unsigned int iFlags_=0, iSomeFlag_=0;
@@ -49,7 +50,7 @@ __IMPLEMENTATION__
 class ClickOwner : public Win {
  public:
     int clicks=0, alternate=0, x_seen=0, y_seen=0;
-    void on_left_click_event(int x,int y) override {
+    void on_left_click(int x,int y) override {
         assert(WinCallbackWindow==this);
         ++clicks; x_seen=x; y_seen=y;
     }

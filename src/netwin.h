@@ -196,7 +196,7 @@ class NetWin : public ConstructedGraphicWin {
   void UNK2();
   void alloc_slots();
   void on_button_clicked(int clicked_id); // 0x0047B450
-  void on_left_click(int x, int y); // 0x0047B760
+  void on_left_click(int x, int y) override; // 0x0047B760
   int on_key_click(int a, int b);
   void on_mouse_move(int a1, int a2);
   void on_mouse_leave(int a1, int a2);

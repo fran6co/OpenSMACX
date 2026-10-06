@@ -1812,6 +1812,7 @@ Purpose: Dispatch a lobby spot click to the map/options/faction/player action
          represented by that spot. Rule toggles update the typed session state
          and send the zero-initialized 0x2F02 state packet.
 // ORIGINAL: 0x0047B760 ?on_left_click@NetWin@@QAEXHH@Z 0x0047B760-0x0047BAF6
+// symbol    ?on_left_click@NetWin@@UAEXHH@Z
 */
 void NetWin::on_left_click(int x, int y) {
     int spot_position;

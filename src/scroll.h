@@ -25,23 +25,9 @@
  /*
   * Scroll class
   */
-// THE BASE IS CONSTRUCTED BY A BASE, because C++'s own ordering rule is what
-// the image's order requires. 0x006051D0 runs GraphicWin::construct() BEFORE
-// the two FlatButton members (0x6051ee, then 0x6051ff/0x60520f); a
-// `GraphicWin::construct()` written in Scroll's constructor BODY cannot get
-// there, because member constructors always run first. Base subobject
-// constructors, however, run before members - so putting the call in a base
-// puts it where the image has it, with no raw storage and no placement-new.
-// Adds no data and no virtual of its own, so the layout is untouched, which
-// the static_assert below is what actually checks.
-struct ScrollGraphicWin : public GraphicWin {
-  // Empty: GraphicWin::GraphicWin() is a real constructor now, so the
-  // base runs implicitly at exactly the point this idiom existed to
-  // reach.
-  ScrollGraphicWin() { ; }
-};
-
-class Scroll : public ScrollGraphicWin {
+// GraphicWin is the genuine base. C++ constructs it before Scroll's
+// FlatButton members, preserving the pinned base-before-member order.
+class Scroll : public GraphicWin {
   friend class ReportWin;  // ReportWin::UNK1 sets this embedded scroll's paging_ field
   friend class Gamma;  // Gamma::exec configures its embedded scroll's defaults
  public:
@@ -80,9 +66,9 @@ class Scroll : public ScrollGraphicWin {
   void compute_thumb_rect(RECT *rect);
   uint32_t set_thumb_rect();
 
-  // ?on_left_click@Scroll@@QAEHHH@Z returns H; the body is empty and VC6
-  // emits the same `ret 8`.
-  int on_left_click(int a1, int a2);
+  // The catalogued int prototype is historical. This is the inherited
+  // void Win slot-19 callback, whose pinned body returns with ret 8.
+  void on_left_click(int a1, int a2) override;
   void on_mouse_move(int x, int y);
   void on_left_down(int x, int y);
   void on_left_up(int x, int y);

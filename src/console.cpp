@@ -1849,6 +1849,7 @@ void __cdecl flush_input() {
 Purpose: Record that the console was closed from the system menu, by raising
          the flag the turn loop watches.
 // ORIGINAL: 0x0051D7C0 ?on_sys_close@Console@@QAEXXZ 0x0051D7C0-0x0051D7CB BYTE_EXACT
+// symbol    ?on_sys_close@Console@@UAEXXZ
 // size      11 bytes
 // prototype void (__thiscall ?on_sys_close@Console@@QAEXXZ)(Console* this)
 // callers   0   call targets   0
@@ -5882,7 +5883,7 @@ void Console::editor_natural(int place) {
 // RECOVERY_BINDING: v1 {"evidence": ["pinned:Popup ctor 0x004048C4 constructs Scroll at this+0x3230", "pinned:Popup who receiver EBP-0x5398 plus 0x3230 equals Scroll receiver EBP-0x2168", "source:src/popup.h declares Scroll scroll_ at 0x3230; src/scroll.h declares the real Scroll destructor"], "reason": "Bind this generated cleanup identity to the real nested C++ lifetime: Popup who.scroll_; no standalone function or generated-symbol match is claimed."}
 // kind      game
 // ORIGINAL: 0x0065BFDD sub_65bfdd 0x0065BFDD-0x0065BFE5 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["pinned:the parent stores the Scroll subobject receiver EBP-0x2168 in its temporary receiver slot before the cleanup sequence", "pinned:Scroll ctor 0x006051EE constructs its GraphicWin base on unchanged this", "source:src/scroll.h Scroll derives through ScrollGraphicWin from GraphicWin"], "reason": "Bind this generated cleanup identity to the real nested C++ lifetime: Popup who.scroll_ ScrollGraphicWin/GraphicWin base; no standalone function or generated-symbol match is claimed."}
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:the parent stores the Scroll subobject receiver EBP-0x2168 in its temporary receiver slot before the cleanup sequence", "pinned:Scroll ctor 0x006051EE constructs its GraphicWin base on unchanged this", "source:src/scroll.h Scroll directly derives from GraphicWin"], "reason": "Bind this generated cleanup identity to the real nested C++ lifetime: Popup who.scroll_ Scroll/GraphicWin base; no standalone function or generated-symbol match is claimed."}
 // kind      game
 // ORIGINAL: 0x0065BFE5 sub_65bfe5 0x0065BFE5-0x0065BFF3 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["pinned:Scroll ctor 0x006051F5 constructs left FlatButton at this+0xAAC", "pinned:Popup who Scroll is EBP-0x2168; plus 0xAAC is left button EBP-0x16BC", "source:src/scroll.h declares flat_button_left_ at 0xAAC"], "reason": "Bind this generated cleanup identity to the real nested C++ lifetime: Popup who.scroll_.flat_button_left_; no standalone function or generated-symbol match is claimed."}
@@ -5927,7 +5928,7 @@ void Console::editor_natural(int place) {
 // RECOVERY_BINDING: v1 {"evidence": ["pinned:Popup ctor 0x004048C4 constructs Scroll at this+0x3230", "pinned:editor_tech Popup receiver EBP-0xA714 plus 0x3230 equals Scroll receiver EBP-0x74E4", "source:src/popup.h declares Scroll scroll_ at the BasePop-sized offset 0x3230; src/scroll.h declares its real destructor"], "reason": "Bind this generated cleanup identity to the real nested C++ lifetime: Popup popup.scroll_; no standalone function or generated-symbol match is claimed."}
 // kind      game
 // ORIGINAL: 0x0065C08A sub_65c08a 0x0065C08A-0x0065C092 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["pinned:editor_tech stores the Scroll subobject receiver EBP-0x74E4 in its temporary receiver slot before the cleanup sequence", "pinned:Scroll ctor 0x006051EE constructs its GraphicWin base on unchanged this", "source:src/scroll.h Scroll derives through ScrollGraphicWin from GraphicWin; Scroll's real destructor owns base teardown"], "reason": "Bind this generated cleanup identity to the real nested C++ lifetime: Popup popup.scroll_ ScrollGraphicWin/GraphicWin base; no standalone function or generated-symbol match is claimed."}
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:editor_tech stores the Scroll subobject receiver EBP-0x74E4 in its temporary receiver slot before the cleanup sequence", "pinned:Scroll ctor 0x006051EE constructs its GraphicWin base on unchanged this", "source:src/scroll.h Scroll directly derives from GraphicWin; Scroll's real destructor owns base teardown"], "reason": "Bind this generated cleanup identity to the real nested C++ lifetime: Popup popup.scroll_ Scroll/GraphicWin base; no standalone function or generated-symbol match is claimed."}
 // kind      game
 // ORIGINAL: 0x0065C092 sub_65c092 0x0065C092-0x0065C0A0 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["pinned:Scroll ctor 0x006051F5 constructs the left FlatButton at this+0xAAC", "pinned:original receiver arithmetic gives EBP-0x74E4+0xAAC for the left Scroll button", "source:src/scroll.h declares flat_button_left_ at 0xAAC; src/flatbutton.h declares the typed FlatButton member"], "reason": "Bind this generated cleanup identity to the real nested C++ lifetime: Popup popup.scroll_.flat_button_left_; no standalone function or generated-symbol match is claimed."}

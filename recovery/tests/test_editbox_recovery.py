@@ -16,7 +16,7 @@ def test_real_editbox_overrides_occupy_existing_primary_slots(control_objects):
     expected = {0: "??_EEditBox@@UAEPAXI@Z", 12: "?on_redraw@EditBox@@UAEXXZ",
                 17: "?on_mouse_move@EditBox@@UAEXHH@Z", 20: "?on_left_down@EditBox@@UAEXHH@Z",
                 21: "?on_left_up@EditBox@@UAEXHH@Z", 25: "?on_key_click@EditBox@@UAEHHH@Z",
-                26: "?vslot_26@EditBox@@UAEHH@Z", 51: "?on_dialog_focus@EditBox@@UAEXH@Z",
+                26: "?on_key_down@EditBox@@UAEHH@Z", 51: "?on_dialog_focus@EditBox@@UAEXH@Z",
                 64: "?pass_dialog_focus@EditBox@@UAEXXZ"}
     for obj in control_objects["src/editbox.cpp"]:
         section, slots = table_targets(obj, "??_7EditBox@@6BWin@@@")

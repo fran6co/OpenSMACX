@@ -170,8 +170,8 @@ void PickTech::UNK1(char *text) {
 
 // ORIGINAL: 0x004860B0 ?on_left_click@PickTech@@QAEXHH@Z 0x004860B0-0x00486109 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x004860B0; retired seed git:6e445109:src/recovered/units/004860b0.cpp; constructor484AC0/destructor488690 establish native C5C ownership.", "image:66CFCC callbackslots17/19/22/25; native rule-bank and UI call sites retain owner and evaluation order.", "source:src/stringstruct.cpp historical484B80 transcription; the canonical caption owns Font line-advance and Buffer wrap semantics."], "reason": "Genuine GraphicWin-derived PickTech owner with four automatic Font members, source-owned rule/global references, real callback dispatch and lexical popup/list lifetimes."}
-// symbol    ?on_left_click_event@PickTech@@UAEXHH@Z
-void PickTech::on_left_click_event(int x, int y) {
+// symbol    ?on_left_click@PickTech@@UAEXHH@Z
+void PickTech::on_left_click(int x, int y) {
     on_mouse_move(x, y);
     if (selection_active_ != 0) {
         if (WinPointerOwner3 == this) {
@@ -185,8 +185,8 @@ void PickTech::on_left_click_event(int x, int y) {
 
 // ORIGINAL: 0x00486110 ?on_right_click@PickTech@@QAEXHH@Z 0x00486110-0x0048616A BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x00486110; retired seed git:6e445109:src/recovered/units/00486110.cpp; constructor484AC0/destructor488690 establish native C5C ownership.", "image:66CFCC callbackslots17/19/22/25; native rule-bank and UI call sites retain owner and evaluation order.", "source:src/stringstruct.cpp historical484B80 transcription; the canonical caption owns Font line-advance and Buffer wrap semantics."], "reason": "Genuine GraphicWin-derived PickTech owner with four automatic Font members, source-owned rule/global references, real callback dispatch and lexical popup/list lifetimes."}
-// symbol    ?vslot_22@PickTech@@UAEXHH@Z
-void PickTech::vslot_22(int x, int y) {
+// symbol    ?on_right_click@PickTech@@UAEXHH@Z
+void PickTech::on_right_click(int x, int y) {
     on_mouse_move(x, y);
     if (selection_active_ != 0) {
         hide();

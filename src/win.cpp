@@ -2377,7 +2377,7 @@ Purpose: The window procedure the class registers - route every input
 // working copy dispatching through `VCall` slot shims and reading its
 // imports out of IAT addresses. It dispatches through the named virtual
 // members now - `focus->on_key(...)`, `over->on_l_button_up(...)`,
-// `owner->vslot_14()` - which VC6 lowers to the single
+// `owner->on_sys_close()` - which VC6 lowers to the single
 // `mov edx,[reg] / call dword ptr [edx+0xNNN]` the image has, and calls
 // BeginPaint, EndPaint, InvalidateRect, SelectPalette, RealizePalette,
 // GetWindowLongA, GetDC and DefWindowProcA by name, all eight checked
@@ -2623,7 +2623,7 @@ LRESULT __stdcall Win::window_proc(HWND window, UINT message, WPARAM wparam,
                             closed();
                         }
                     }
-                    owner->vslot_14();
+                    owner->on_sys_close();
                     sub_5f86a0(*reinterpret_cast<int *>(
                         reinterpret_cast<char *>(owner) + 0x18));
                     return 0;
@@ -6508,7 +6508,7 @@ void Win::on_l_button_up(int x, int y, unsigned int keys, int dbl) {
                 if (cb != 0) {
                     cb(x, y);
                 }
-                this->on_left_click_event(x, y);
+                this->on_left_click(x, y);
                 Win *child = reinterpret_cast<Win *>(flags_);
                 if (child != 0 && reinterpret_cast<Sound *>(child)->is_playing() == 0) {
                     reinterpret_cast<Sound *>(child)->play();
@@ -7543,7 +7543,7 @@ void Win::on_r_button_up(int x, int y, unsigned int keys, int dbl) {
                         if (fp != 0) {
                             reinterpret_cast<void(__cdecl *)(int, int)>(fp)(x, y);
                         }
-                        this->vslot_22(x, y);
+                        this->on_right_click(x, y);
                         related = val_11_;
                     } else {
                         this->vslot_35(x, y);
@@ -8140,7 +8140,7 @@ int Win::key_down_event(int key) {
     if (hook != 0) {
         ebx = hook(key);
     }
-    int r2 = this->vslot_26(key);
+    int r2 = this->on_key_down(key);
 
     Win *child = reinterpret_cast<Win *>(val_15_);
     if (child != 0) {
@@ -10107,7 +10107,7 @@ int __cdecl Win::OnSysCommand(HWND hwnd, unsigned int command, int x,
     if (cb != 0) {
         cb();
     }
-    self->vslot_14();
+    self->on_sys_close();
     Win *child = *reinterpret_cast<Win **>(
         reinterpret_cast<char *>(self) + 0x18);
     if (child != 0) {
@@ -11761,7 +11761,7 @@ void Win::send_wheel_delta(int key, short delta, int x, int y, int horizontal) {
     int notches = delta / 120;
     if ((iFlags_ & 0x200000) == 0 && (iSomeFlag_ & 8) == 0) {
         if (horizontal == 0) {
-            vslot_15(notches);
+            on_mousewheel(notches);
         } else {
             vslot_30(notches);
         }
@@ -11811,7 +11811,7 @@ void __cdecl remove_ancestor_origin(int *x, int *y, Win *window) {
 void Win::send_to_window(int value, int which) {
     if ((iFlags_ & 0x200000) == 0 && (iSomeFlag_ & 8) == 0) {
         if (which == 0) {
-            vslot_15(value);
+            on_mousewheel(value);
         } else {
             vslot_30(value);
         }
@@ -11839,7 +11839,7 @@ void Win::publish_callback_window() {
     if (callback != 0) {
         callback();
     }
-    vslot_14();
+    on_sys_close();
     Win *second = reinterpret_cast<Win *>(val_6_);
     if (second != 0) {
         if (reinterpret_cast<Sound *>(second)->is_playing() == 0) {
@@ -12027,7 +12027,7 @@ void Win::dispatch_19(int a, int b, int alternate) {
         if (hook != 0) {
             hook(a, b);
         }
-        on_left_click_event(a, b);
+        on_left_click(a, b);
         Win *child = reinterpret_cast<Win *>(flags_);
         if (child != 0) {
             if (reinterpret_cast<Sound *>(child)->is_playing() == 0) {
@@ -12120,7 +12120,7 @@ void Win::dispatch_22(int a, int b, int alternate) {
         if (hook != 0) {
             hook(a, b);
         }
-        vslot_22(a, b);
+        on_right_click(a, b);
         Win *child = reinterpret_cast<Win *>(val_11_);
         if (child != 0) {
             if (reinterpret_cast<Sound *>(child)->is_playing() == 0) {

@@ -33,7 +33,7 @@ void EditBox::on_mouse_move(int, int) {}
 void EditBox::on_left_down(int, int) {}
 void EditBox::on_left_up(int, int) {}
 int EditBox::on_key_click(int, int) { return 0; }
-int EditBox::vslot_26(int) { return 0; }
+int EditBox::on_key_down(int) { return 0; }
 void EditBox::on_dialog_focus(int) {}
 void EditBox::pass_dialog_focus() {}
 uint32_t EditBoxDefaultB1C = 255, EditBoxDefaultB20 = -1, EditBoxDefaultB24 = -1;

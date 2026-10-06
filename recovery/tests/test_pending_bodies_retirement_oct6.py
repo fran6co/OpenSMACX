@@ -35,12 +35,23 @@ def test_pending_translation_unit_is_retired_only_after_owners_are_present():
         row = leaf[address]
         assert row.mode is Mode.FILE and row.name == name
         assert row.image_spans == spans and not row.byte_exact and not row.semantic
-        assert row.body == "src/vector_teardown.cpp" and row.kind == "library"
+        assert not row.body and not row.symbol and row.kind == "library"
     assert "MISMATCH #12" in leaf[0x006456E4].ruled_out[0]
+    assert "Historical project-loop location" in (ROOT / "src/leaf_recoveries.cpp").read_text()
+    assert leaf[0x006456E4].image_spans == ((0x006456E4, 0x00645764),)
+    assert leaf[0x006457C2].image_spans == ((0x006457C2, 0x00645844),)
     vector = (ROOT / "src/vector_teardown.cpp").read_text()
-    assert "void __stdcall VectorDtorIterator(" in vector
-    assert "void __stdcall VectorCtorIterator(" in vector
+    assert "extern \"C\" void __stdcall sub_402ee0(" in vector
+    assert "VectorDtorIterator" not in vector
+    assert "VectorCtorIterator" not in vector
 
+    group_rows = {row.address: row for row in read_file(ROOT / "src/wave_device.cpp")}
+    for address, span in ((0x004C5490, (0x004C5490, 0x004C54AB)),
+                         (0x004C5B80, (0x004C5B80, 0x004C5BEF))):
+        row = group_rows[address]
+        assert row.mode is Mode.BODY and row.image_spans == (span,)
+        assert not row.symbol and row.kind == "game"
+        assert not row.byte_exact and not row.semantic
     wave = [row for row in read_file(ROOT / "src/wave_device.cpp")
             if row.address == 0x004C5BF0]
     assert len(wave) == 1 and wave[0].mode is Mode.BODY

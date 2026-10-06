@@ -416,6 +416,7 @@ Purpose: Forward on right click to the embedded widget, but only when the
          the discriminator sits 8 bytes before it and the target is reached by
          adjusting back 0x8C.
 // ORIGINAL: 0x00612F60 ?on_right_click@Dialogs@@QAEXHH@Z 0x00612F60-0x00612F7E BYTE_EXACT
+// symbol    ?on_right_click@Dialogs@@UAEXHH@Z
 // size      30 bytes
 // prototype void (__thiscall ?on_right_click@Dialogs@@QAEXHH@Z)(Dialogs* this, int xCoord, int yCoord)
 // callers   0   call targets   1
@@ -488,6 +489,7 @@ Purpose: Forward on mousewheel to the embedded widget, but only when the
          the discriminator sits 8 bytes before it and the target is reached by
          adjusting back 0x140.
 // ORIGINAL: 0x00612FC0 ?on_mousewheel@Dialogs@@QAEXH@Z 0x00612FC0-0x00612FDB BYTE_EXACT
+// symbol    ?on_mousewheel@Dialogs@@UAEXH@Z
 // size      27 bytes
 // prototype void (__thiscall ?on_mousewheel@Dialogs@@QAEXH@Z)(Dialogs* this, int)
 // callers   0   call targets   1
@@ -768,6 +770,7 @@ Purpose: Forward a left click to the embedded sprite box for every dialog
          subobject, so the discriminator sits 8 bytes below `this` and the
          sprite box is reached by adjusting back 0x8C.
 // ORIGINAL: 0x00612E80 ?on_left_click@Dialogs@@QAEXHH@Z 0x00612E80-0x00612EB0 SEMANTIC
+// symbol    ?on_left_click@Dialogs@@UAEXHH@Z
 // size      48 bytes
 // prototype void (__thiscall ?on_left_click@Dialogs@@QAEXHH@Z)(Dialogs* this, int xCoord, int yCoord)
 // callers   0   call targets   1
@@ -1109,13 +1112,13 @@ void Dialogs::on_mouse_leave(int x, int y) {
 
 // ORIGINAL: 0x00612CC0 ?on_key_down@Dialogs@@QAEHH@Z 0x00612CC0-0x00612D29
 // RECOVERY_BINDING: v1 {"evidence": ["Retained 0x00612CC0 seed; shared virtual Dialog and GraphicWin bases; Dialogs kind_ and named widget base APIs"], "reason": "Home on_key_down as a typed Dialogs kind dispatcher"}
+// symbol    ?on_key_down@Dialogs@@UAEHH@Z
 int Dialogs::on_key_down(int key) {
     switch (kind_) {
     case 16:
         return radio_button_view().RadioButton::on_key_down(key);
     case 2:
-        list_box_view().ListBox::on_key_down(key);
-        break;
+        return list_box_view().ListBox::on_key_down(key);
     case 1:
         return check_box_view().CheckBox::on_key_down(key);
     case 8:

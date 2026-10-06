@@ -145,6 +145,7 @@ void QuayleWin::close() {
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004964D0 ?on_left_click@QuayleWin@@QAEXHH@Z 0x004964D0-0x00496533 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original entry 004964D0; retained seed src/recovered/004964d0.cpp", "recovery/tasks/quaylewin-owner-coverage-wave.json", "QuayleWin constructor layout and virtual-slot evidence; fresh isolated build and host controls"], "reason": "Rehome the retained QuayleWin seed into its real GraphicWin owner with typed subobjects; preserve original spans and historical seed obligations."}
+// symbol    ?on_left_click@QuayleWin@@UAEXHH@Z
 void QuayleWin::on_left_click(int x, int y) {
   const unsigned int faction_bit = 1u << ConsoleGlobal.faction_id_;
   if ((NetDaemonNet.lock_state_[0].trailing_words_[7] & faction_bit) != 0) return;
@@ -394,8 +395,6 @@ void QuayleWin::on_redraw() {
   strings.remove_all();
   StringAllocationHeap = saved_string_owner;
 }
-
-void QuayleWin::on_left_click_event(int x, int y) { on_left_click(x, y); }
 
 void QuayleWin::vslot_53(int selection, int unused) {
   on_selected(selection, unused);

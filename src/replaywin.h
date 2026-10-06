@@ -82,8 +82,8 @@ class ReplayWin : public GraphicWin {
   void close();
   ReplayWin() { ; }
   ~ReplayWin();
-  virtual void on_left_click_event(int, int);
-  virtual void vslot_22(int, int);
+  virtual void on_left_click(int, int) override;
+  virtual void on_right_click(int, int);
   virtual void on_button_clicked(int);
   virtual int on_key_click(int, int);
   void on_left_double_click(int, int);

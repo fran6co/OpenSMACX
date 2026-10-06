@@ -82,11 +82,11 @@ class Dialogs : public ListBox,
 
  public:
   // 0x00612E80, recovered in dialogs.cpp.
-  void on_left_click(int a, int b);
+  void on_left_click(int a, int b) override;
 
  public:
   // 0x00612CC0, kind-dispatched through typed base views in dialogs.cpp.
-  int on_key_down(int a);
+  int on_key_down(int a) override;
 
  public:
   // 0x006130E0, kind-dispatched through typed base views in dialogs.cpp.
@@ -134,7 +134,7 @@ class Dialogs : public ListBox,
   void on_right_double_click(int a, int b);
   void on_left_up(int a, int b);
   void on_right_up(int a, int b);
-  void on_right_click(int a, int b);
+  void on_right_click(int a, int b) override;
   // (code, pos), the Win32 WM_VSCROLL shape the image mirrors. Evidence
   // is in the bodies: BaseWin::on_scrolled does `switch (a1)` and then
   // stores a2 in field_40B10_; StringBox::on_scrolled stores a2 in
@@ -142,7 +142,7 @@ class Dialogs : public ListBox,
   // The first is switched on, the second is kept - a code and a position.
   void on_scrolled(int code, int pos);
   void on_scrolling(int a, int b);
-  void on_mousewheel(int a);
+  void on_mousewheel(int a) override;
 
  public:
   // Original612977 writes the kind at complete Dialogs+180;612A72 reads it.

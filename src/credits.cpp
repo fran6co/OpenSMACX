@@ -316,8 +316,8 @@ Purpose: ?on_left_click@Credits@@QAEXHH@Z - dispatch to slot 0xe8 of this object
          vtable load and the call, so the parameters this function declares are
          discarded and only the `ret` cleans them up.
 // ORIGINAL: 0x00428D70 ?on_left_click@Credits@@QAEXHH@Z 0x00428D70-0x00428D7B BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["pinned original own table 0x0066AC58, pointer word at +0x4C, identifies original entry 0x00428D70", "source:src/win.h inherited virtual interface; actual emitted method ?on_left_click_event@Credits@@UAEXHH@Z in primary Win table ??_7Credits@@6BWin@@@"], "reason": "The original own Win table binds this entry as virtual slot 19. Use genuine member dispatch, not an opaque redirect; retain the catalogued original spelling as historical evidence."}
-// symbol    ?on_left_click_event@Credits@@UAEXHH@Z
+// RECOVERY_BINDING: v1 {"evidence": ["pinned original own table 0x0066AC58, pointer word at +0x4C, identifies original entry 0x00428D70", "Prior native snapshot: ?on_left_click_event@Credits@@UAEXHH@Z was emitted for this slot before the source rename. The candidate now names the same Win slot-19 override on_left_click; its current emitted symbol still requires fresh COFF observation."], "reason": "The original own Win table binds this entry as virtual slot 19. Use genuine member dispatch, not an opaque redirect; retain the catalogued original spelling as historical evidence."}
+// symbol    ?on_left_click@Credits@@UAEXHH@Z
 // size      11 bytes
 // prototype void (__thiscall ?on_left_click@Credits@@QAEXHH@Z)(Credits* this, int, int)
 // callers   0   call targets   0
@@ -328,7 +328,7 @@ Purpose: ?on_left_click@Credits@@QAEXHH@Z - dispatch to slot 0xe8 of this object
 Return Value: n/a
 Status: Complete
 */
-void Credits::on_left_click_event(int, int) {
+void Credits::on_left_click(int, int) {
   release_modal();
 }
 // ORIGINAL: 0x00428F80 ??_GCredits@@WEEE@AEPAXI@Z 0x00428F80-0x00428F8B FILE BYTE_EXACT

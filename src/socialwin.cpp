@@ -256,8 +256,9 @@ void SocialWin::on_iface_right_click(int x, int y) {
 
 // ORIGINAL: 0x004B1B20 ?on_left_click@SocialWin@@QAEHHH@Z 0x004B1B20-0x004B1B2D BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["The 0x004B1B20 body ignores its coordinates and returns TutWin::reset at 0x004BDDE0 on the process-lifetime object at 0x008C6E68.", "src/tutwin.cpp owns that object as TutorialWindow and its reset service returns int."], "reason": "Home the SocialWin click dismissal through the typed tutorial singleton."}
-int SocialWin::on_left_click(int, int) {
-    return TutorialWindow.reset();
+// symbol    ?on_left_click@SocialWin@@UAEXHH@Z
+void SocialWin::on_left_click(int, int) {
+    TutorialWindow.reset();
 }
 
 // ORIGINAL: 0x004B1BC0 ?on_right_click@SocialWin@@QAEXHH@Z 0x004B1BC0-0x004B1CD1 FILE

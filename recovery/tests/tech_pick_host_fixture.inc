@@ -4,6 +4,9 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+#if defined(__clang__)
+#pragma clang diagnostic ignored "-Winconsistent-missing-override"
+#endif
 #define __cdecl
 const int MaxTechnologyNum = 89;
 struct RECT { int left, top, right, bottom; };
@@ -26,8 +29,8 @@ struct GraphicWin {
     unsigned close();
     virtual void on_mouse_move(int, int) {}
     virtual int on_key_click(int, int) { return 0; }
-    virtual void on_left_click_event(int, int) {}
-    virtual void vslot_22(int, int) {}
+    virtual void on_left_click(int, int) {}
+    virtual void on_right_click(int, int) {}
 };
 /* PRODUCT_DECLARATION */
 /* PRODUCT_LIFETIME_AND_CALLER */
@@ -53,8 +56,8 @@ int PickTech::pick(int faction, int mode, int count, char *section) {
 // vtable on the host. Their behavior is not evidence in this caller test.
 void PickTech::on_mouse_move(int, int) {}
 int PickTech::on_key_click(int, int) { return 0; }
-void PickTech::on_left_click_event(int, int) {}
-void PickTech::vslot_22(int, int) {}
+void PickTech::on_left_click(int, int) {}
+void PickTech::on_right_click(int, int) {}
 void reset() {
     events.clear(); next_font = 0; fail_font = 0; pick_throws = false;
     expected_faction = 7; expected_mode = 11; expected_count = 19;
@@ -91,4 +94,3 @@ int main() {
         assert(caught && events == partial);
     }
 }
-

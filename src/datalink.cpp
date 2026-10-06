@@ -1224,6 +1224,7 @@ void Datalink::UNK9() {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x00431EB0 ?on_left_click@Datalink@@QAEXHH@Z 0x00431EB0-0x00431EB3 BYTE_EXACT
+// symbol    ?on_left_click@Datalink@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_left_click@Datalink@@QAEXHH@Z)(Datalink* this, int, int)
 // callers   0   call targets   0
@@ -3022,12 +3023,12 @@ void Datalink::on_redraw() {
 // Escape and Enter close the Datalink; other keys are delegated to its entry
 // list's Win key handler.
 // ORIGINAL: 0x00431FC0 ?on_key_click@Datalink@@QAEHHH@Z 0x00431FC0-0x00431FFB BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x00431FC0-0x00431FFB branches on key codes 0x0D and 0x1B, dynamically calls ListBox slot 26 otherwise, then Win slot 58; git:08336bcc:src/recovered/units/00431fc0.cpp; source:src/datalink.h embeds ListBox listBox_; source:src/win.h names slot 58 release_modal and slot 26 vslot_26"], "reason": "The Datalink key callback closes the modal window for Enter/Escape and delegates other keys through its embedded ListBox Win handler."}
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x00431FC0-0x00431FFB branches on key codes 0x0D and 0x1B, dynamically calls ListBox slot 26 otherwise, then Win slot 58; git:08336bcc:src/recovered/units/00431fc0.cpp; source:src/datalink.h embeds ListBox listBox_; source:src/win.h names slot 58 release_modal and slot 26 on_key_down"], "reason": "The Datalink key callback closes the modal window for Enter/Escape and delegates other keys through its embedded ListBox Win handler."}
 // symbol    ?on_key_click@Datalink@@UAEHHH@Z
 int Datalink::on_key_click(int, int key) {
     if (key != 0x0D) {
         if (key != 0x1B) {
-            return listBox_.vslot_26(key);
+            return listBox_.on_key_down(key);
         }
     }
     release_modal();

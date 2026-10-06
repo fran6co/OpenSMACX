@@ -190,6 +190,7 @@ int CheckButton::init(int x, int y, GraphicWin *parent, int toggle_argument) {
 // the button event through the parent's established Win virtual slot.
 // ORIGINAL: 0x00633920 ?on_left_click@CheckButton@@QAEXHH@Z 0x00633920-0x0063397F BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["partition class:CheckButton at master 9db3d883", "git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/00633920.cpp original signature, spans, call order and member accesses", "src/win.h Win::redraw and Win::on_button_clicked virtual slots", "git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/00633920.cpp"], "reason": "The existing seed identity is implemented by the typed CheckButton member. It preserves the seed's parent guard, toggle, redraw, callback, parent notification and final redraw sequence through current Win APIs. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// symbol    ?on_left_click@CheckButton@@UAEXHH@Z
 // kind      game
 void CheckButton::on_left_click(int, int) {
     if (win_parent_ == 0) {

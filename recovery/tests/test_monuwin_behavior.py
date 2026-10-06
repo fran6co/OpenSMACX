@@ -22,7 +22,7 @@ LEXEMES = re.compile(
 METHODS = (
     "MonuWin::MonuWin()", "MonuWin::~MonuWin()", "void MonuWin::close()",
     "void MonuWin::on_button_clicked(", "int MonuWin::on_key_click(",
-    "void MonuWin::on_left_click_event(", "void MonuWin::on_mouse_move(",
+    "void MonuWin::on_left_click(", "void MonuWin::on_mouse_move(",
     "int MonuWin::init()", "void MonuWin::on_redraw()",
 )
 DAMAGES = (

@@ -204,11 +204,11 @@ class MainInterface : public GraphicWin, public SubInterface {
 
  public:
   // homed from 0045c740.cpp
-  void on_right_click(int a1, int a2);
+  void on_right_click(int a1, int a2) override;
 
  public:
   // homed from 0045c700.cpp
-  void on_left_click(int a1, int a2);
+  void on_left_click(int a1, int a2) override;
 
  public:
   // homed from 0045c6c0.cpp

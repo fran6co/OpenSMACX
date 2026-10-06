@@ -83,7 +83,7 @@ struct GraphicWin : Buffer {
     virtual void on_redraw() {}
     virtual void on_button_clicked(int) {}
     virtual void on_mouse_move(int,int) {}
-    virtual void on_left_click_event(int,int) {}
+    virtual void on_left_click(int,int) {}
     virtual int on_key_click(int,int) { return 0; }
     int init(int x,int y,int w,int h,const char *title,int flags,void*,void*,void*) {
         record("window_init",this,{x,y,w,h,flags},title); return 0;
@@ -258,19 +258,19 @@ void init_contracts(MonuWin &window) {
     }
 }
 void callback_contracts(MonuWin &window) {
-    reset(window); spot_position=7; spot_type=0; window.on_left_click_event(101,202);
+    reset(window); spot_position=7; spot_type=0; window.on_left_click(101,202);
     check(FactionMonuments[3].latest_type_==7 && window.selected_monument_type_==7 && window.selection_pending_==1,"click consumes spot POSITION not type");
     check(named("redraw").size()==1,"click redraws selected panel");
     calls.clear(); window.on_button_clicked(998); check(calls.empty(),"other button ids ignored");
     window.on_button_clicked(999); check(window.selection_pending_==0 && named("redraw").size()==1,"button exits selected panel first");
     calls.clear(); window.on_button_clicked(999); check(named("modal").size()==1 && named("close").size()==1,"button releases modal then closes");
-    reset(window); window.selected_monument_type_=14; spot_position=69; window.on_left_click_event(3,4);
+    reset(window); window.selected_monument_type_=14; spot_position=69; window.on_left_click(3,4);
     check(FactionMonuments[3].latest_type_==14,"primary spot resolves current selection");
     for(int gate=0;gate<3;++gate) {
         reset(window); if(gate==0) NetDaemonNet.lock_state_[0].trailing_words_[7]=1u<<3;
         if(gate==1) NetDaemonNet.lock_state_[2].payload_.flags=1;
         if(gate==2) NetDaemonNet.lock_state_[0].leading_words_[3]=1;
-        window.on_left_click_event(3,4); window.on_mouse_move(3,4); check(calls.empty(),"all three network gates suppress callbacks");
+        window.on_left_click(3,4); window.on_mouse_move(3,4); check(calls.empty(),"all three network gates suppress callbacks");
     }
     for(int type:{0,4,13,15,20,69,-1}) {
         reset(window); spot_position=type; window.on_mouse_move(10,20);

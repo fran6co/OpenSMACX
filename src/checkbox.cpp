@@ -916,6 +916,7 @@ Purpose: A check box key press: publish the parent window as the callback
 
 // ORIGINAL: 0x0060F8B0 ?on_key_down@CheckBox@@QAEHH@Z 0x0060F8B0-0x0060FA18
 // RECOVERY_BINDING: v1 {"evidence": ["pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; original identity 0x0060F8B0 retains name and all original spans/claims", "src/checkbox.h declares the actual CheckBox::on_key_down class member; body uses that existing owner API", "original source was FILE-mode in src/leaf_recoveries.cpp; this transfer places the unchanged C++ member definition in its actual owner TU and changes measurement mode to BODY explicitly; it does not assert historical recipe equality", "the complete source body and existing TRIED/LEVER/DEFERRED history are carried forward unchanged; only annotation mode/location and transitional SCAFFOLD classification change"], "reason": "Transfer the complete CheckBox::on_key_down definition to its existing source owner without changing its C++ body. Keep the original FILE spans and historical claim state; BODY is the new per-member measurement scope, not a claim that the old whole-TU recipe is equivalent."}
+// symbol    ?on_key_down@CheckBox@@UAEHH@Z
 // size      360 bytes
 // prototype int (__thiscall ?on_key_down@CheckBox@@QAEHH@Z)(CheckBox* this, int)
 // callers   1   call targets   2

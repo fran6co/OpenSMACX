@@ -21,7 +21,8 @@ struct IDirectPlay2;
 
 #include "sound.h"          // VoiceTx's base
 #include "stringstruct.h"      // StringAllocationBase - the virtual base of Net's subobjects
-#include "hypothesis_layouts.h"  // NetFifo
+#include "hypothesis_layouts.h"  // Remaining transitional layout declarations
+#include "net_fifo.h"
 // DPNAME names the player-callback record enum_players reads; the typedef
 // has no struct tag, so the DirectPlay header is what makes the parameter
 // spellable in the class's own declaration.

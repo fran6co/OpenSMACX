@@ -61,8 +61,8 @@ class WorldWin : public GraphicWin {
   // Its naturally emitted 0x004C4A70 identity is mapped in worldwin.cpp.
   void clear_terrain();
   void on_left_double_click(int a1, int a2);
-  void on_left_click(int a1, int a2);
-  void on_right_click(int a, int b);
+  void on_left_click(int a1, int a2) override;
+  void on_right_click(int a, int b) override;
 
   // Storage the image proves is here: its own methods reach 0x239D0.
   // Extent only - this class carries no size assertion, and the bound is a floor.

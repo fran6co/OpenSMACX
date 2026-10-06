@@ -41,9 +41,9 @@ class BaseButton : public GraphicWin {
   virtual void on_dialog_focus(int focus);
   void on_left_down(int x, int y);
   void on_left_up(int x, int y);
-  void on_left_click(int x, int y);
+  void on_left_click(int x, int y) override;
   void on_mouse_move(int x, int y);
-  void on_right_click(int a, int b);
+  void on_right_click(int a, int b) override;
   // 0x00607B30  ?timer_callback@BaseButton@@QAEXH@Z - public, __thiscall,
   // void(int). Public is load-bearing: the non-member daemon fn_00607b10
   // reaches it through a BaseButton * it was handed.

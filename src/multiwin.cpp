@@ -465,6 +465,7 @@ int MultiWindowContactStatusMask;
 
 // ORIGINAL: 0x00477F30 ?on_left_click@MultiWin@@QAEXHH@Z 0x00477F30-0x00478148
 // RECOVERY_BINDING: v1 {"evidence": ["task:multiwin-contact-owner", "historical seed:src/recovered/units/00477f30.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:complete original mapped span and native call/branch order", "native:478500 subtracts item ID1; jump-table indices7..10 select items8renounce,9withdrawal,10contact,11chat; withdrawal arguments local then clicked", "source:existing typed subobjects, faction/player/parser/network and separate bounded contact-state storage; automatic PullDown/Buffer lifetime"], "reason": "Recover the complete original in its genuine MultiWin or diplomacy C++ owner, retaining identity, auxiliary spans and historical seed findings; no current match or runtime claim."}
+// symbol    ?on_left_click@MultiWin@@UAEXHH@Z
 void MultiWin::on_left_click(int x, int y) {
     ConsoleInfoWin.reset();
     ConsoleStatusWin.reset();
@@ -521,6 +522,7 @@ void MultiWin::on_left_click(int x, int y) {
 
 // ORIGINAL: 0x00478150 ?on_right_click@MultiWin@@QAEXHH@Z 0x00478150-0x004785FA;0x006563E0-0x006563F5
 // RECOVERY_BINDING: v1 {"evidence": ["task:multiwin-contact-owner", "historical seed:src/recovered/units/00478150.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:complete original mapped span and native call/branch order", "native:478500 subtracts item ID1; jump-table indices7..10 select items8renounce,9withdrawal,10contact,11chat; withdrawal arguments local then clicked", "source:existing typed subobjects, faction/player/parser/network and separate bounded contact-state storage; automatic PullDown/Buffer lifetime"], "reason": "Recover the complete original in its genuine MultiWin or diplomacy C++ owner, retaining identity, auxiliary spans and historical seed findings; no current match or runtime claim."}
+// symbol    ?on_right_click@MultiWin@@UAEXHH@Z
 void MultiWin::on_right_click(int x, int y) {
     PullDown menu;
     int faction = -1;

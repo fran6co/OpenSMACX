@@ -88,7 +88,6 @@
 #include "original_seam.h"
 #include "popup.h"    // pop_caption / pop_caption_value_title, drop_player's asks
 #include "stringstruct.h"
-#include "hypothesis_layouts.h"
 #include "vtable_shim.h"
 #include "wave.h"
 #include "wave_device.h"
@@ -119,12 +118,7 @@ static const GUID NetLobbyAppGuid = {
     0x02D1B480, 0xD680, 0x11D0, {0x82, 0x1E, 0x44, 0x45, 0x53, 0x54, 0x00, 0x00}};
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x006339E0 ??1NetFifo@@QAE@XZ 0x006339E0-0x00633A42
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/006339e0.cpp", "image:0x006339E0-0x00633A42", "src/net_class.h: Net::netfifo_ members at +0xE8, +0x10C and +0x130"], "reason": "Bind the existing queue-destructor forwarder to its retained original seed identity before typed ownership recovery. Original calls and the 0x24 embedded queue layout identify this destructor; this binding does not implement or verify it."}
-NetFifo::~NetFifo() {
-    close();
-    DeleteCriticalSection(&lock_);
-}
+
 
 AlphaNetLedger *SessionEnumTarget;
 BOOL __stdcall enumerate_session_callback(LPCDPSESSIONDESC2, LPDWORD, DWORD, LPVOID);
@@ -2053,221 +2047,6 @@ have_lobby:
     return 0;
 }
 
-/*
-Purpose: Zero the three head words and initialise the lock the fifo guards.
-// ORIGINAL: 0x006339C0 ??0NetFifo@@QAE@XZ 0x006339C0-0x006339DB BYTE_EXACT
-// LEVER: PROMOTED out of src/recovered/units/006339c0.cpp, which reached the CRITICAL_SECTION through `(*reinterpret_cast<InitFn *>(g_00669168))(this + 0xc)` - the import slot spelled as a raw address. A plain `InitializeCriticalSection` call compiles to the image's own `call dword ptr [0x669168]`.
-// LEVER: layout-corrected the IDB gave NetFifo 0x10 bytes and four uint32_t members. It is 0x24: ??0Net builds three of them at 0xE8, 0x10C and 0x130, spaced 0x24 apart, and this body starts a CRITICAL_SECTION at 0xC, which is 24 bytes. The fourth uint32_t was the head of that lock.
-// symbol    ??0NetFifo@@QAE@XZ
-// size      27 bytes
-// kind      game
-Return Value: `this`, which the image leaves in eax
-Status: Complete
-*/
-NetFifo::NetFifo() {
-    head_ = 0;
-    tail_ = 0;
-    count_ = 0;
-    InitializeCriticalSection(&lock_);
-}
-
-// ---------------------------------------------------------------------------
-// THE FIFO QUEUE - the four NetFifo bodies. A queue entry is one 0x18-byte
-// allocation: the caller's int at +0, the routing key at +4, the return value
-// at +8, a mem_get buffer at +0xC, its length at +0x10 and the intrusive next
-// pointer at +0x14. head_ is +0, tail_ +4, count_ +8 and the critical section
-// +0xC - the layout hypothesis_layouts.h declares.
-//
-// 0x00669174 and 0x0066917C are the IAT slots for LeaveCriticalSection and
-// EnterCriticalSection, so the bodies below call the real functions; the
-// image's `call dword ptr [0x66917c]` is the same import-table indirection.
-// ---------------------------------------------------------------------------
-
-// ORIGINAL: 0x00633A50 ?close@NetFifo@@QAEXXZ 0x00633A50-0x00633AAB
-// TRIED: all four bodies in this block land MISMATCH at instruction 0-1 with
-//   the same shape, and it is register allocation, not control flow: the
-//   image saves ebx/ebp/esi and dedicates one to the critical-section address
-//   (`lea ebp, [esi+0xc]` in the image is `lea ebp, [esi+0xc]` here too, but
-//   the image got there AFTER three pushes where this tree needs two). The
-//   archive's own transcription of close was 200/229 bytes at best for the
-//   sibling get. Naming head_/tail_/count_ and calling the real
-//   Enter/LeaveCriticalSection is the faithful form; the missing callee-saved
-//   push is not reachable from source form without a dedicated local nobody
-//   needs. 2026-09-04.
-// size      92 bytes
-// prototype void (__thiscall ?close@NetFifo@@QAEXXZ)(NetFifo* this)
-// callers   1   call targets   2
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-void NetFifo::close() {
-  EnterCriticalSection(&lock_);
-  while (head_ != 0) {
-    NetFifoNode *next = head_->next_;
-    if (head_->data_ != 0) {
-      free(head_->data_);
-    }
-    head_->data_ = 0;
-    if (head_ != 0) {
-      free(head_);
-    }
-    head_ = next;
-  }
-  tail_ = 0;
-  count_ = 0;
-  LeaveCriticalSection(&lock_);
-}
-
-// ORIGINAL: 0x00633AB0 ?add@NetFifo@@QAEHPAXKKHK@Z 0x00633AB0-0x00633B9A
-// size      235 bytes
-// prototype int (__thiscall ?add@NetFifo@@QAEHPAXKKHK@Z)(NetFifo* this, void*, unsigned long, unsigned long, int, unsigned long)
-// callers   2   call targets   2
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x0050BA30
-int NetFifo::add(void *data, unsigned long size, unsigned long key, int type,
-                 unsigned long extra) {
-  EnterCriticalSection(&lock_);
-
-  NetFifoNode *node = reinterpret_cast<NetFifoNode *>(mem_get(0x18));
-  if (head_ == 0) {
-    head_ = node;
-    if (node == 0) {
-      LeaveCriticalSection(&lock_);
-      return 4;
-    }
-  } else {
-    NetFifoNode *tail = tail_;
-    tail->next_ = node;
-    if (tail->next_ == 0) {
-      LeaveCriticalSection(&lock_);
-      return 4;
-    }
-  }
-  tail_ = node;
-  node->next_ = 0;
-
-  node->key_ = key;
-  node->caller_value_ = type;
-  node->next_ = reinterpret_cast<NetFifoNode *>(extra);
-
-  if (size != 0) {
-    node->data_ = mem_get(size);
-    if (node->data_ == 0) {
-      LeaveCriticalSection(&lock_);
-      return 4;
-    }
-    if (data != 0) {
-      memcpy(node->data_, data, size);
-    }
-    node->data_size_ = size;
-  }
-
-  ++count_;
-  LeaveCriticalSection(&lock_);
-  return 0;
-}
-
-// ORIGINAL: 0x00633D90 ?get@NetFifo@@QAEHPAXPAIPAH1@Z 0x00633D90-0x00633E75
-// symbol    ?get@NetFifo@@QAEHPAXPAIPAH2@Z
-// size      229 bytes
-// prototype int (__thiscall ?get@NetFifo@@QAEHPAXPAIPAH1@Z)(NetFifo* this, void*, unsigned int*, int*, int*)
-// callers   1   call targets   2
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// The queue is walked from the head for a matching key, so this is the
-// remove-by-key form; the 0x633F70 overload below pops the head instead.
-int NetFifo::get(void *data, unsigned int *key, int *type, int *len) {
-  EnterCriticalSection(&lock_);
-
-  NetFifoNode *cur = head_;
-  if (cur == 0) {
-    LeaveCriticalSection(&lock_);
-    return 0;
-  }
-
-  NetFifoNode *prev = 0;
-  while (cur->key_ != *key) {
-    NetFifoNode *next = cur->next_;
-    prev = cur;
-    if (next == 0) {
-      LeaveCriticalSection(&lock_);
-      return 0;
-    }
-    cur = next;
-  }
-
-  if (len != 0) {
-    *len = static_cast<int>(cur->data_size_);
-  }
-  if (cur->data_ != 0) {
-    if (data != 0) {
-      memcpy(data, cur->data_, cur->data_size_);
-    }
-    free(cur->data_);
-    cur->data_ = 0;
-  }
-
-  if (prev == 0) {
-    head_ = cur->next_;
-  } else {
-    prev->next_ = cur->next_;
-  }
-
-  if (type != 0) {
-    *type = cur->caller_value_;
-  }
-  int result = cur->result_;
-  free(cur);
-  --count_;
-  LeaveCriticalSection(&lock_);
-  return result;
-}
-
-// ORIGINAL: 0x00633F70 ?get@NetFifo@@QAEHPAXPAIPAHPAI@Z 0x00633F70-0x00634067
-// symbol    ?get@NetFifo@@QAEHPAXPAIPAH1@Z
-// size      248 bytes
-// prototype int (__thiscall ?get@NetFifo@@QAEHPAXPAIPAHPAI@Z)(NetFifo* this, void*, unsigned int*, int*, unsigned int*)
-// callers   1   call targets   2
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// The unsigned-int length pointer repeats the key type (backref 1); the
-// keyed-search overload repeats the int* type (backref 2). Keep the original
-// catalogue names as hints, distinct from these emitted-symbol bindings.
-// The pop-the-head form: whatever is at the front of the queue goes back, and
-// the key comes out with it.
-int NetFifo::get(void *data, unsigned int *key, int *type,
-                 unsigned int *len) {
-  EnterCriticalSection(&lock_);
-
-  NetFifoNode *node = head_;
-  if (node == 0) {
-    LeaveCriticalSection(&lock_);
-    return 0;
-  }
-
-  if (len != 0) {
-    *len = node->data_size_;
-  }
-  if (node->data_ != 0 && data != 0) {
-    memcpy(data, node->data_, node->data_size_);
-    if (node->data_ != 0) {
-      free(node->data_);
-    }
-    node->data_ = 0;
-  }
-  head_ = node->next_;
-  if (key != 0) {
-    *key = node->key_;
-  }
-  if (type != 0) {
-    *type = node->caller_value_;
-  }
-  int result = node->result_;
-  free(node);
-  --count_;
-  LeaveCriticalSection(&lock_);
-  return result;
-}
 // ---------------------------------------------------------------------------
 // THE DIRECTPLAY GROUP CALLS. All three read the interface pointer out of
 // NetDirectPlay - the image's 0x009BE600 .bss, already modelled above - and
@@ -2800,7 +2579,8 @@ int Net::sub_630980(int first, int second) {
   if (NetDirectPlay == 0 || first == 0) {
     return 0;
   }
-  int got = queue_10c_.sub_634200(NetGetScratch, first, 0, second);
+  int got = queue_10c_.peek_head(NetGetScratch, reinterpret_cast<unsigned int *>(first),
+                              0, reinterpret_cast<int *>(second));
   return got != 0 ? reinterpret_cast<int>(NetGetScratch) : 0;
 }
 
@@ -2823,7 +2603,8 @@ int Net::sub_6309c0(int first, int second) {
   if (first == 0) {
     return 0;
   }
-  int got = queue_10c_.sub_6340c0(NetGetScratch, first, 0, second);
+  int got = queue_10c_.peek_key(NetGetScratch, static_cast<unsigned int>(first),
+                             0, reinterpret_cast<int *>(second));
   return got != 0 ? reinterpret_cast<int>(NetGetScratch) : 0;
 }
 

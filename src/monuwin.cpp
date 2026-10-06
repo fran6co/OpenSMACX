@@ -90,9 +90,9 @@ int MonuWin::on_key_click(int key, int state) {
 
 // ORIGINAL: 0x00476780 ?on_left_click@MonuWin@@QAEXHH@Z 0x00476780-0x00476841
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x00476780; retired seed provenance git:670a036f:src/unrecovered/00476780.cpp; original spans and historical lessons retained.", "image:477C80/477B10 member order and36DC extent; primary66C880 slots12/17/19/25/44.", "image:476A50 binds singleton7F9F58 and independent count7FD634; Player59C and MonumentFaction4F4 strides.", "image:4737EE..475E58 localized owner/grammar cases; 472230/4736E0 resource, clipping, sprite and Spot accesses."], "reason": "Genuine GraphicWin-derived MonuWin owner with actual FlatButton/Spot/Buffer/Sprite members, real callback slots and automatic lifetimes; localized parser owner and grammar inputs follow the original branches rather than current-faction stand-ins."}
-// symbol    ?on_left_click_event@MonuWin@@UAEXHH@Z
+// symbol    ?on_left_click@MonuWin@@UAEXHH@Z
 // TRIED: fixed const-pointer global for 0x94cea0 (indexed table base, address itself scales - own raw cast used). First divergence #1 mov/push (prologue reg alloc), 214 vs 193 B.
-void MonuWin::on_left_click_event(int x, int y) {
+void MonuWin::on_left_click(int x, int y) {
   const int faction = ConsoleGlobal.faction_id_;
   if ((NetDaemonNet.lock_state_[0].trailing_words_[7] & (1u << faction)) != 0 ||
       NetDaemonNet.lock_state_[2].payload_.flags != 0 ||

@@ -72,10 +72,11 @@ class NetSessionPickerWin : public GraphicWin {
   NetSessionPickerWin();
   virtual ~NetSessionPickerWin();
 
-  // Original table 0x670DDC slot 14 -> 0x63C9D0.
-  virtual void vslot_14();
+  // Pinned constructor installs table 0x670DDC: slot 12 -> 0x63C9D0.
+  void on_redraw() override;
   // Original table 0x670DDC slot 44 -> 0x63C3A0; `ret 4` confirms this API.
   virtual void on_button_clicked(int action);
+  void vslot_54(int value) override;
 
   // Original 0x63BF10. Name and virtual slot identity remain unresolved.
   int initialize(Net *network, char *caption, Font *font,

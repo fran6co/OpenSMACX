@@ -246,8 +246,8 @@ int EditBox::on_key_click(int character, int) {
 // ORIGINAL: 0x00615840 ?on_key_down@EditBox@@QAEHH@Z 0x00615840-0x00615D73
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00615840.cpp", "Pinned original EditBox table66A038 and direct call/branch evidence"], "reason": "EditBox owns this table override or its direct text helper: pinned primary table66A038 slots12,17,20,21,25,26,51,64 and original direct-call receivers establish ownership. Use existing Win slot signatures without changing their order; text_position returns the EAX index consumed by callers despite the catalogue void label."}
 // Deleted seed provenance: git:25c0645e742c23f149e0895c391a9ba79ad744cb:src/unrecovered/00615840.cpp
-// symbol    ?vslot_26@EditBox@@UAEHH@Z
-int EditBox::vslot_26(int key_value) {
+// symbol    ?on_key_down@EditBox@@UAEHH@Z
+int EditBox::on_key_down(int key_value) {
     unsigned int key = static_cast<unsigned int>(key_value);
     if (key == 9) return 0;
     field_B38_ = 0;

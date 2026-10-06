@@ -952,11 +952,12 @@ typedef void (__fastcall *func_diplo_win_slot062)(void *);
 }
 
 // ORIGINAL: 0x00442560 ?on_key_down@DiploWin@@QAEHH@Z 0x00442560-0x0044258A BYTE_EXACT
+// symbol    ?on_key_down@DiploWin@@UAEHH@Z
 int DiploWin::on_key_down(int key) {
     if (key == 0x0D || key == 0x1B) {
         return 0;
     }
-    return editBox_.vslot_26(key);
+    return editBox_.on_key_down(key);
 }
 
 // ORIGINAL: 0x004429C0 ?done_deal@DiploWin@@QAEXXZ 0x004429C0-0x004429E7 BYTE_EXACT

@@ -572,6 +572,7 @@ int BaseButton::on_key_click(int a, int b) {
 /*
 Purpose: Legacy stub; the original body returns nothing without reading its
 // ORIGINAL: 0x00607800 ?on_key_down@BaseButton@@QAEHH@Z 0x00607800-0x00607805 BYTE_EXACT
+// symbol    ?on_key_down@BaseButton@@UAEHH@Z
 // CORRECTED from ?on_key_down@BaseButton@@QAEXH@Z
 //   body is `xor eax, eax; ret 4`; BasePop::on_key_down returns int
 // size      5 bytes
@@ -749,6 +750,7 @@ void BaseButton::UNK2() {
 
 /*
 // ORIGINAL: 0x00607A00 ?on_right_click@BaseButton@@QAEXHH@Z 0x00607A00-0x00607A14 BYTE_EXACT
+// symbol    ?on_right_click@BaseButton@@UAEXHH@Z
 // size      20 bytes
 // prototype void (__thiscall ?on_right_click@BaseButton@@QAEXHH@Z)(BaseButton* this, int, int)
 // callers   0   call targets   1

@@ -17,63 +17,14 @@
  */
 #pragma once
 
-#include "original_seam.h"
-
-/*
- * The CRT's vector destructor iterator: walk an array, calling one teardown
- * per element. Several recovered teardowns dispatch through it - the atexit
- * array thunks, the FX effect bank, the FontQueue - so the seam lives in its
- * own translation unit with no further dependencies, and each caller carries
- * its own per-element teardown seam.
- */
-typedef void (OriginalObject::*func_thiscall_teardown)();
-
-// The element callbacks are __fastcall with one pointer argument: the ABI is
-// thiscall's (the element arrives in ECX), which is what the image's vector
-// iterators invoke, and __fastcall is how a standalone build spells it.
+// 0x00402EE0 takes the element callback in ECX and walks the byte-strided
+// region without adding constructor-prefix unwind behavior.
 typedef void(__fastcall *func_vector_element_callback)(void *element);
-
-void __stdcall VectorDtorIterator(void *array, unsigned int element_size, int count,
-                                  func_vector_element_callback teardown);
 
 // The 0x00402EE0 game helper is distinct from the five-argument CRT ??_L
 // iterator above: it receives one typed element callback and performs no array
 // unwind/cleanup if a callback throws.
 extern "C" void __stdcall sub_402ee0(void *array, unsigned int element_size,
                                       int count, func_vector_element_callback callback);
-
-// Its construction-side companion: walk an array calling one constructor per
-// element, with the destructor along for exception unwind (unreachable here,
-// but passed faithfully).
-// THE CALLBACKS ARE ADDRESSES, not pointer-to-member VARIABLES. The image
-// pushes them as immediates - `push 0x4c67c0` at 0x00445450 - and a
-// `func_thiscall_teardown` built by `original_method` at load time is a
-// variable, so every caller pushed `dword ptr [...]` instead.
-void __stdcall VectorCtorIterator(void *array, unsigned int element_size, int count,
-                                  func_vector_element_callback ctor,
-                                  func_vector_element_callback dtor);
-
-// THE LAST TWO INSTRUCTIONS OF EVERY ARRAY THUNK, and there is no C++ for
-// them. `??_L@YGXPAXIHP6EX0@Z1@Z` and `??_M@...` are the compiler's own vector
-// constructor and destructor iterators: VC6 emits a `call rel32` to them when
-// it generates an array construction, and nothing a program can WRITE names
-// them - a declaration cannot carry a `??_` mangling, and array placement new
-// is not equivalent because MSVC stores a count cookie ahead of the array and
-// returns a shifted pointer.
-//
-// The POINTER was the problem, not the name. A `*const` bound to 0x006457C2
-// compiles `call dword ptr [...]` where the image has `call rel32`, which is
-// the two-instruction cap, and nothing about it needed the `??_` spelling:
-// what a call site needs is a DIRECT call, and its target is a relocation on
-// both sides, so it is discounted from the comparison. These are declared as
-// ordinary source-owned functions implemented in `vector_teardown.cpp`.
-// These CRT helpers remain scaffold: their exception-unwind paths are not yet
-// modeled by the current loops.
-//
-// The earlier note said "nothing a program can WRITE names them", which is
-// true and was the wrong question. What was fixable IS fixed: the element callbacks below are
-// addresses rather than pointer-to-member variables, because the image pushes
-// them as immediates - `push 0x4c67c0` - and a variable built by
-// `original_method` at load time pushed `dword ptr [...]` instead.
 
 // Audio and wave owners use the configured runtime's direct global operator new, matching the calls already present in Midi.

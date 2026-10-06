@@ -279,9 +279,9 @@ def test_net_receive_storage_and_interface_have_shared_source_owners(compiled):
             assert scratch in references(obj, symbol_at("src/net_class.cpp", address))
         # The original calls distinguish pop-head from keyed search. Both
         # symbols existing in one TU cannot justify swapping their addresses.
-        assert symbol_at("src/net_class.cpp", 0x633F70) in references(
+        assert symbol_at("src/net_fifo.cpp", 0x633F70) in references(
             obj, symbol_at("src/net_class.cpp", 0x630A00))
-        assert symbol_at("src/net_class.cpp", 0x633D90) in references(
+        assert symbol_at("src/net_fifo.cpp", 0x633D90) in references(
             obj, symbol_at("src/net_class.cpp", 0x630A40))
 
 
@@ -657,19 +657,19 @@ def test_receiver_cleanup_respects_payload_and_allocation_ownership(tmp_path, mo
          "// The original primary table uses these shared defaults."),
         ("// LIVE_RECEIVER_DECLARATIONS", "src/net_class.h", "struct VoiceReceiverEntry :",
          "// The list subobject at Net+0x72C"),
-        ("// LIVE_QUEUE_DECLARATIONS", "src/hypothesis_layouts.h", "class NetFifo {",
-         "/* 0x80 bytes, 18 member(s), 18 named. From Thinker. */"),
-        ("// LIVE_QUEUE_CONSTRUCTOR", "src/net_class.cpp", "NetFifo::NetFifo() {",
-         "// ---------------------------------------------------------------------------\n// THE FIFO QUEUE"),
-        ("// LIVE_QUEUE_CLOSE", "src/net_class.cpp", "void NetFifo::close() {",
+        ("// LIVE_QUEUE_DECLARATIONS", "src/net_fifo.h", "class NetFifo {",
+         "  CRITICAL_SECTION lock_;    // +0xC, extent +0x18\n};"),
+        ("// LIVE_QUEUE_CONSTRUCTOR", "src/net_fifo.cpp", "NetFifo::NetFifo() {",
+         "// ORIGINAL: 0x00633A50"),
+        ("// LIVE_QUEUE_CLOSE", "src/net_fifo.cpp", "void NetFifo::close() {",
          "// ORIGINAL: 0x00633AB0"),
-        ("// LIVE_QUEUE_GET", "src/net_class.cpp",
+        ("// LIVE_QUEUE_GET", "src/net_fifo.cpp",
          "int NetFifo::get(void *data, unsigned int *key, int *type,\n                 unsigned int *len)",
-         "// ---------------------------------------------------------------------------\n// THE DIRECTPLAY GROUP CALLS"),
+         "// Additional original operations"),
         ("// LIVE_SCRATCH_STORAGE", "src/net_class.cpp", "unsigned char NetGetScratch[",
          "// 0x0062F390, unrecovered"),
-        ("// LIVE_QUEUE_DESTRUCTOR", "src/net_class.cpp", "NetFifo::~NetFifo() {",
-         "// The wrapped device's own interface"),
+        ("// LIVE_QUEUE_DESTRUCTOR", "src/net_fifo.cpp", "NetFifo::~NetFifo() {",
+         "NetFifo::NetFifo() {"),
     ])
 
 

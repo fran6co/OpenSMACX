@@ -109,6 +109,7 @@ DipEdit::~DipEdit() {
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
 // ORIGINAL: 0x004D9DC0 ?on_left_click@DipEdit@@QAEXHH@Z 0x004D9DC0-0x004D9DC3 BYTE_EXACT
+// symbol    ?on_left_click@DipEdit@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_left_click@DipEdit@@QAEXHH@Z)(DipEdit* this, int, int)
 // callers   0   call targets   0

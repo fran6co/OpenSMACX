@@ -53,14 +53,14 @@ class ProdPicker : public ConstructedGraphicWin {
   void hide();
   void close();
   void calculate();
-  void on_right_click(int x, int y);
+  void on_right_click(int x, int y) override;
   int on_key_click(int repeat, int key);
   static void __cdecl UNK2(int unused, ProdPicker *picker);
   int exec(Base *base, int faction_id, GraphicWin *owner, int modal);
   void draw_item(int item, int update);
   int edbc_fac(int facility_id);   // 0x00493B70, editor category
   int edbc_unit(int prototype_id); // 0x00493AF0, prototype category
-  void on_mousewheel(int delta);   // 0x00493C20, embedded Scroll
+  void on_mousewheel(int delta) override;   // 0x00493C20, embedded Scroll
   void on_left_click(int x, int y);
   void on_redraw();
   void on_left_double_click(int x, int y);

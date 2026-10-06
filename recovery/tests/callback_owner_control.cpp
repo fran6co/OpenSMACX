@@ -13,7 +13,7 @@ int main() {
   Credits credits;
   window = &credits;
   if (window->on_key_click(2, 5) != 1) return 3;
-  window->on_left_click_event(10, 11);
+  window->on_left_click(10, 11);
   if (credits.release_calls != 2) return 4;
 
   NewTechWin tech;
@@ -28,8 +28,8 @@ int main() {
 
   ReplayWin replay;
   window = &replay;
-  window->on_left_click_event(1, 2);
-  window->vslot_22(3, 4);
+  window->on_left_click(1, 2);
+  window->on_right_click(3, 4);
   window->on_button_clicked(5);
   if (window->on_key_click(6, 7) != 1 || replay.release_calls != 4) return 7;
 

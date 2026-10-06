@@ -866,23 +866,6 @@ int __fastcall video_unk7_redirect(void *, void *, int, int) {
 
 
 
-/*
-Purpose: nullsub_175 - a do-nothing leaf. The whole body is a return
-         popping 4 bytes.
-// RECOVERY_ROLE: SCAFFOLD Generic no-op or constant adapter; genuine original behavior and source owner remain to be established.
-// ORIGINAL: 0x0063C500 nullsub_175 0x0063C500-0x0063C503 BYTE_EXACT
-// symbol    ?nullsub_0063c500_redirect@@YIXPAX0H@Z
-// size      3 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall nullsub_0063c500_redirect(void *, void *, int) {
-}
 
 /*
 Purpose: nullsub_266 - a do-nothing leaf. The whole body is a return

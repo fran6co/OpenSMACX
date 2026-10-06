@@ -3342,6 +3342,7 @@ void BaseWin::on_iface_scrolled(int code, int pos) {
 Purpose: Report a left click to the shared click handler. Unlike the
          iface_click family, `this` is the BaseWin itself with no adjustment.
 // ORIGINAL: 0x0041AF70 ?on_left_click@BaseWin@@QAEXHH@Z 0x0041AF70-0x0041AF88 BYTE_EXACT
+// symbol    ?on_left_click@BaseWin@@UAEXHH@Z
 // size      24 bytes
 // prototype void (__thiscall ?on_left_click@BaseWin@@QAEXHH@Z)(BaseWin* this, int xCoord, int yCoord)
 // callers   0   call targets   1
@@ -3359,6 +3360,7 @@ void BaseWin::on_left_click(int xCoord, int yCoord) {
 Purpose: Report a right click to the shared click handler. Unlike the
          iface_click family, `this` is the BaseWin itself with no adjustment.
 // ORIGINAL: 0x0041AF90 ?on_right_click@BaseWin@@QAEXHH@Z 0x0041AF90-0x0041AFA8 BYTE_EXACT
+// symbol    ?on_right_click@BaseWin@@UAEXHH@Z
 // size      24 bytes
 // prototype void (__thiscall ?on_right_click@BaseWin@@QAEXHH@Z)(BaseWin* this, int xCoord, int yCoord)
 // callers   0   call targets   1
@@ -3800,7 +3802,7 @@ void BaseWin::on_left_up(int xCoord, int yCoord) {
             // Front vtable slot 19 (0x4C), which in BaseWin's own front table
             // (0x66A40C) holds on_left_click (0x0041AF70). Win declares the
             // slot `on_left_click_event`, so the dispatch spells by name.
-            on_left_click_event(xCoord, yCoord);
+            on_left_click(xCoord, yCoord);
         }
     }
 
@@ -4340,7 +4342,7 @@ void BaseWin::on_iface_left_up(int xCoord, int yCoord) {
                 field_40B50_ = -1;
             } else {
                 // Front vtable slot 19 (0x4C) - the front's on_left_click.
-                on_left_click_event(xCoord, yCoord);
+                on_left_click(xCoord, yCoord);
             }
         } else {
             // This table's own slot 3, dispatched with the entry untouched -

@@ -1499,63 +1499,29 @@ int Wave_Device::release() {
 }
 
 
-// The group element lifecycle, recovered from 0x004C5490 / 0x004C5B80: the
-// constructor arms the group (enabled, volume 0x7f, empty list) and the
-// destructor frees every node head-first through the process allocator,
-// stopping at a node that carries no wave.
-void __fastcall WaveControlGroupOriginalCtor(void *self) {
-    WaveControlGroup *group = reinterpret_cast<WaveControlGroup *>(self);
-    group->head = nullptr;
-    group->tail = nullptr;
-    group->cursor = nullptr;
-    group->count = 0;
-    group->volume = 0x7f;
-    group->enabled = 1;
-}
-
-void __fastcall WaveControlGroupOriginalDtor(void *self) {
-    WaveControlGroup *group = reinterpret_cast<WaveControlGroup *>(self);
-    while (WaveGroupNode *node = group->head) {
-        Wave *wave = node->wave;
-        if (node->next) {
-            node->next->prev = nullptr;
-            group->head = node->next;
-        } else {
-            group->tail = nullptr;
-            group->head = nullptr;
-        }
-        operator delete(node);
-        --group->count;
-        if (!wave) {
-            break;
-        }
-    }
-}
-
 /*
 Purpose: Initialize one control group: clear head, tail, cursor and count,
          then set full volume and enable the group. Native4C54A0/4C54A7
          establish the last two stores; the old mapped wrapper omitted them.
 // ORIGINAL: 0x004C5490 ??0WaveControlGroup@@QAE@XZ 0x004C5490-0x004C54AB
-// symbol    ?wave_control_group_ctor_redirect@@YIXPAUWaveControlGroup@@PAX@Z
+// Historical project redirect symbol: ?wave_control_group_ctor_redirect@@YIXPAUWaveControlGroup@@PAX@Z
+// No candidate emitted symbol is asserted before fresh object inspection.
 // size      27 bytes
 // prototype void (__thiscall ??0WaveControlGroup@@QAE@XZ)(WaveControlGroup* this)
 // callers   0   call targets   0
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     (none)
-Return Value: n/a (the redirect leaves the object pointer where the original
-              does)
+Return Value: n/a (the constructor ABI returns this in eax)
 Status: Complete
 */
-void __fastcall wave_control_group_ctor_redirect(WaveControlGroup *self,
-                                                 void *) {
-    self->head = nullptr;
-    self->tail = nullptr;
-    self->cursor = nullptr;
-    self->count = 0;
-    self->volume = 0x7f;
-    self->enabled = 1;
+WaveControlGroup::WaveControlGroup() {
+    this->head = nullptr;
+    this->tail = nullptr;
+    this->cursor = nullptr;
+    this->count = 0;
+    this->volume = 0x7f;
+    this->enabled = 1;
 }
 
 /*
@@ -1566,7 +1532,8 @@ Purpose: Destroy one control group by draining its node list from the head:
          drain right after it is freed, leaving the rest of the list in
          place. The cursor is never touched.
 // ORIGINAL: 0x004C5B80 ??1WaveControlGroup@@QAE@XZ 0x004C5B80-0x004C5BEF
-// symbol    ?wave_control_group_dtor_redirect@@YIXPAUWaveControlGroup@@PAX@Z
+// Historical project redirect symbol: ?wave_control_group_dtor_redirect@@YIXPAUWaveControlGroup@@PAX@Z
+// No candidate emitted symbol is asserted before fresh object inspection.
 // size      111 bytes
 // prototype void (__thiscall ??1WaveControlGroup@@QAE@XZ)(WaveControlGroup* this)
 // callers   0   call targets   1
@@ -1576,26 +1543,25 @@ Purpose: Destroy one control group by draining its node list from the head:
 Return Value: n/a
 Status: Complete
 */
-void __fastcall wave_control_group_dtor_redirect(WaveControlGroup *self,
-                                                 void *) {
-    WaveGroupNode *node = self->head;
+WaveControlGroup::~WaveControlGroup() {
+    WaveGroupNode *node = this->head;
     while (node) {
         WaveGroupNode *const next = node->next;
         if (next) {
             next->prev = nullptr;
-            self->head = next;
+            this->head = next;
         } else {
             // One statement: the tail clears first, the head second, the
             // original's store order.
-            self->head = (self->tail = nullptr);
+            this->head = (this->tail = nullptr);
         }
         Wave *const wave = node->wave;
         operator delete(node);
-        self->count -= 1;
+        this->count -= 1;
         if (!wave) {
             break;
         }
-        node = self->head;
+        node = this->head;
     }
 }
 
@@ -1618,18 +1584,17 @@ Return Value: n/a (the redirect answers the object pointer)
 Status: Complete
 */
 Wave_Device::Wave_Device() {
-    (*VectorCtorIterator)(groups_, 0x18, 0x10, WaveControlGroupOriginalCtor,
-                          WaveControlGroupOriginalDtor);
     field_20_ = 0;
 }
 
 
 /*
 Purpose: Tear the device singleton down: its own vtable republishes, the
-         sixteen control groups drain through the CRT vector destructor
-         iterator, the base vtable takes over, and a wrapped device is wound
-         down through its slot 0x10 - kept in the field, since the object is
-         dying anyway. The SEH frame is omitted.
+         destructor body is empty, then C++ destroys the sixteen typed
+         WaveControlGroup members in reverse order before destroying the
+         SoundDeviceBase. A wrapped device is wound down through its slot
+         0x10 - kept in the field, since the object is dying anyway. The
+         compiler owns array iteration and destructor-failure unwinding.
 // ORIGINAL: 0x004C4E60 ??1Wave_Device@@QAE@XZ 0x004C4E60-0x004C4EC6;0x004C4DB0-0x004C4DC3;0x00659EB2-0x00659EC4
 // size      139 bytes
 // prototype void (__thiscall ??1Wave_Device@@QAE@XZ)(Wave_Device* this)
@@ -1642,9 +1607,6 @@ Return Value: n/a
 Status: Complete
 */
 Wave_Device::~Wave_Device() {
-    Wave_Device volatile *const self = this;
-    VectorDtorIterator(const_cast<WaveControlGroup *>(self->groups_), 0x18,
-                       0x10, WaveControlGroupOriginalDtor);
 }
 
 // ====================

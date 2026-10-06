@@ -208,6 +208,7 @@ Purpose: Construct a Scroll: run the GraphicWin base construction, install
          own base-then-member sequencing rather than an explicit placement
          call.
 // ORIGINAL: 0x006051D0 ??0Scroll@@QAE@XZ 0x006051D0-0x00605367;0x00662E30-0x00662E50
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned Scroll constructor 0x6051D0 calls GraphicWin construction at 0x6051EE before its two FlatButton member constructors at 0x6051FF and 0x60520F.", "The current GraphicWin is a real direct base with an implicit constructor; C++ runs that base before Scroll's FlatButton members, so removing empty ScrollGraphicWin preserves the observed order without adding a type, storage, or manual call.", "The existing sizeof(Scroll) == 0x214C assertion remains the source layout guard. Historical LEVER/TRIED notes about the former workaround remain as provenance, not current hierarchy claims."], "reason": "Express Scroll's original base-before-member lifetime through its real GraphicWin base; the constructor-only intermediary is unnecessary now that GraphicWin has a genuine C++ constructor."}
 // TRIED: hoisting the four source runs of the 0xA7C/0xA88/0xA94/0xAA0 loop
 //   into `const uint32_t *const d5 = dynamic + 5;` and friends, to make
 //   the induction variable start at zero the way the image's `xor eax,
@@ -1966,6 +1967,8 @@ void Scroll::on_button_pressed(int button_id) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x00606310 ?on_left_click@Scroll@@QAEHHH@Z 0x00606310-0x00606313 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned Scroll constructor 0x6051D0 stores primary addresspoint 0x669D58 at [this] at 0x605214; table slot 19 at 0x669DA4 targets original 0x606310.", "Pinned 0x606310 is a bare ret 8 with no register writes. Win's slot-19 callback type is void, and observed calls through that slot continue using other registers without consuming EAX.", "The original catalogued decorated identity/prototype still says int (__thiscall ?on_left_click@Scroll@@QAEHHH@Z); that mismatch is preserved in the ORIGINAL history. This candidate does not assert a new emitted symbol before native owner-object observation."], "reason": "Model Scroll's constructor-installed Win slot-19 entry as the genuine void callback, keeping its original byte claim and catalogued int signature as historical evidence."}
+// symbol    ?on_left_click@Scroll@@UAEXHH@Z
 // size      3 bytes
 // prototype int (__thiscall ?on_left_click@Scroll@@QAEHHH@Z)(Scroll* this, int, int)
 // callers   0   call targets   0
@@ -1975,16 +1978,8 @@ Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 Return Value: n/a
 Status: Complete
 */
-#pragma warning(push)
-#pragma warning(disable : 4716)
-// C4716 IS SUPPRESSED HERE ON PURPOSE. The mangled name says the function
-// returns `int`, and the original body is three bytes - `ret 8` at 0x00606310
-// and `ret 0xc` at 0x005F6A40 - which never sets EAX. A `return 0;` would emit
-// `xor eax, eax` and make the function five bytes, so falling off the end is
-// not a defect to fix but the behaviour to reproduce.
-int Scroll::on_left_click(int, int) {
+void Scroll::on_left_click(int, int) {
 }
-#pragma warning(pop)
 
 
 

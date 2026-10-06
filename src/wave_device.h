@@ -18,7 +18,6 @@
 #pragma once
 
 #include "original_seam.h"
-#include "vector_teardown.h"
 #include "sounddevice.h"
 
 class Wave;
@@ -59,6 +58,10 @@ struct WaveControlGroup {
   WaveGroupNode *cursor;  // +0x10, the node after the last removal, or null
   // RECOVERY_MEMBER: v1 WaveControlGroup count 0x14 0x004C5B80
   uint32_t count;         // +0x14
+
+  // The actual element lifetime used by Wave_Device::groups_[16].
+  WaveControlGroup();
+  ~WaveControlGroup();
 };
 
  /*
@@ -149,14 +152,6 @@ typedef int(__cdecl func_wave_device_factory)(void **device_slot,
                                               unsigned long kind);
 typedef void(__cdecl func_wave_device_destroy)(void);
 
-// The per-group construct/teardown pair the device's own lifetime hands to
-// the CRT vector iterators; both stay rebindable while they double as the
-// iterator arguments.
-// The group element lifecycle, recovered from 0x004C5490 / 0x004C5B80.
-void __fastcall WaveControlGroupOriginalCtor(void *group);
-void __fastcall WaveControlGroupOriginalDtor(void *group);
-
-void __fastcall wave_control_group_ctor_redirect(WaveControlGroup *self,
-                                                 void *);
-void __fastcall wave_control_group_dtor_redirect(WaveControlGroup *self,
-                                                 void *);
+// The 0x004C5490 / 0x004C5B80 lifecycle is owned directly by
+// WaveControlGroup; Wave_Device's typed member array supplies compiler
+// construction, reverse destruction, and constructed-prefix unwind.

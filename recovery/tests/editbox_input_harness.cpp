@@ -17,6 +17,11 @@ struct Win {
     Win *win_parent_;
     virtual void pass_dialog_focus() { passed = this; }
     virtual void on_lose_mouse_capture() { ++releases; }
+ protected:
+    // EditBox's extracted inline add_window_flags uses this real inherited
+    // Win member (src/win.h: iFlags_, offset 0x98). The host fixture omits the
+    // intervening native Win storage; this exposes the member, not its layout.
+    uint32_t iFlags_;
 };
 Win *WinPointerOwner3, *WinPointerOwner4;
 struct Buffer {
@@ -114,42 +119,42 @@ int main() {
     selection(edit, "abcd", 4); assert(beeps == 1 && !redraws);
 
     reset(edit, "abcd", 0, 0);
-    edit.vslot_26(8); selection(edit, "abcd", 0); assert(beeps == 1);
+    edit.on_key_down(8); selection(edit, "abcd", 0); assert(beeps == 1);
     reset(edit, "abcd", 2, 2);
-    edit.vslot_26(8); selection(edit, "acd", 1);
+    edit.on_key_down(8); selection(edit, "acd", 1);
     reset(edit, "abcd", 1, 3);
-    edit.vslot_26(8); selection(edit, "ad", 1);
+    edit.on_key_down(8); selection(edit, "ad", 1);
     reset(edit, "abcd", 3, 1);
-    edit.vslot_26(8); selection(edit, "ad", 1);
+    edit.on_key_down(8); selection(edit, "ad", 1);
     reset(edit, "abcd", 2, 2);
-    edit.vslot_26(0x2E); selection(edit, "abd", 2);
+    edit.on_key_down(0x2E); selection(edit, "abd", 2);
     reset(edit, "abcd", 1, 3);
-    edit.vslot_26(0x2E); selection(edit, "ad", 1);
+    edit.on_key_down(0x2E); selection(edit, "ad", 1);
     reset(edit, "abcd", 3, 1);
-    edit.vslot_26(0x2E); selection(edit, "ad", 1);
+    edit.on_key_down(0x2E); selection(edit, "ad", 1);
     reset(edit, "abcd", 2, 2);
-    edit.vslot_26(0x10008); selection(edit, "abcd", 2); assert(beeps == 1);
-    assert(edit.vslot_26(9) == 0);
-    assert(edit.vslot_26(0xFFFF) == 0);
+    edit.on_key_down(0x10008); selection(edit, "abcd", 2); assert(beeps == 1);
+    assert(edit.on_key_down(9) == 0);
+    assert(edit.on_key_down(0xFFFF) == 0);
 
     reset(edit, "abc def", 7, 7);
-    edit.vslot_26(0x20025); selection(edit, "abc def", 3);
+    edit.on_key_down(0x20025); selection(edit, "abc def", 3);
     reset(edit, "abc def", 0, 0);
-    edit.vslot_26(0x20027); selection(edit, "abc def", 4);
-    edit.vslot_26(0x10024);
+    edit.on_key_down(0x20027); selection(edit, "abc def", 4);
+    edit.on_key_down(0x10024);
     assert(edit.field_B40_ == 4 && edit.field_B44_ == 0);
-    edit.vslot_26(0x23); selection(edit, "abc def", 7);
-    edit.vslot_26(0x27); selection(edit, "abc def ", 8);
+    edit.on_key_down(0x23); selection(edit, "abc def", 7);
+    edit.on_key_down(0x27); selection(edit, "abc def ", 8);
     reset(edit, "abc", 1, 1);
-    edit.vslot_26(0x64); selection(edit, "abc", 0);
-    edit.vslot_26(0x66); selection(edit, "abc", 1);
+    edit.on_key_down(0x64); selection(edit, "abc", 0);
+    edit.on_key_down(0x66); selection(edit, "abc", 1);
     reset(edit, "abcd", 4, 4);
     edit.field_B14_ = 4;
-    edit.vslot_26(0x27);
+    edit.on_key_down(0x27);
     assert(edit.field_B44_ == 5 && edit.field_B40_ == 4);
     assert(beeps == 1 && widths == 0 && redraws == 0);
     reset(edit, "abcd", 0, 0);
-    edit.vslot_26(0x10025);
+    edit.on_key_down(0x10025);
     assert(redraws == 0 && edit.field_B44_ == 0);
 
     reset(edit, "abcd", 4, 4);

@@ -31,8 +31,8 @@ class MultiWin : public GraphicWin {
   virtual void on_mouse_leave(int x, int y);
   virtual void on_button_clicked(int button);
   virtual void on_redraw();
-  void on_left_click(int x, int y);
-  void on_right_click(int x, int y);
+  void on_left_click(int x, int y) override;
+  void on_right_click(int x, int y) override;
   void show();
   void hide();
   void init();

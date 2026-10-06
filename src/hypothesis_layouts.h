@@ -1310,60 +1310,6 @@ struct NameNode {
   uint8_t field_8_[0x258];  // 0x8
 };
 
-/* 0x24 bytes, not the IDB's 0x10. TWO INDEPENDENT PROOFS FROM THE IMAGE:
-   ??0Net builds three NetFifos at 0xE8, 0x10C and 0x130 (see src/alphanet.h),
-   spaced exactly 0x24 apart; and ??0NetFifo at 0x006339C0 ends
-   `lea eax, [esi + 0xc]; push eax; call dword ptr [0x669168]`, which the
-   import table resolves to KERNEL32!InitializeCriticalSection - so a
-   CRITICAL_SECTION starts at 0xC, and 0xC + 24 == 0x24. */
-class NetFifo {
- public:
-  // 0x006339C0 and 0x006339E0, source-owned in net_class.cpp. Declared HERE
-  // rather than as a file-local class in net_class.cpp, which is where they
-  // arrived: that spelling declared a NetFifo with no members at all, a
-  // different layout from this one, and two definitions of the same class in
-  // one translation unit - C2011. `Net::Net`/`~Net` need them by name so they
-  // reach the real bodies with an ordinary call rather than a bound pointer.
-  NetFifo();
-  ~NetFifo();
-  // 0x00633A50, 0x00633AB0 and the two get overloads 0x00633D90 / 0x00633F70,
-  // all homed into net_class.cpp. The two gets differ only in the fourth
-  // parameter's signedness - `PAH` against `PAI` - which is exactly why the
-  // catalogue can hold both names for one spelling of `get`.
-  // Net::get (src/net_class.cpp) reaches the second overload on the NetFifo
-  // embedded at its own this+0x10C.
-  void close();
-  int add(void *data, unsigned long size, unsigned long key, int type,
-          unsigned long extra);
-  // 0x00634200, a pending_bodies forwarder (archived in 00634200.cpp): the
-  // pop-the-head read the net sender reaches on the same queue.
-  int sub_634200(void *data, int key, int type, int len);
-  // 0x006340C0, a pending_bodies forwarder (archived in 006340c0.cpp) - the
-  // other reader on the same queue, reached by the sender's sibling.
-  int sub_6340c0(void *data, int key, int type, int len);
-  int get(void *data, unsigned int *key, int *type, int *len);
-  int get(void *data, unsigned int *key, int *type, unsigned int *len);
-
-  // The queue entry add() allocates and the two gets free, one 0x18-byte
-  // block - see the note by the bodies in net_class.cpp.
-  struct NetFifoNode {
-    int caller_value_;     // +0x0
-    uint32_t key_;         // +0x4
-    int result_;           // +0x8
-    void *data_;           // +0xC
-    uint32_t data_size_;   // +0x10
-    NetFifoNode *next_;    // +0x14, the intrusive next pointer
-  };
-
- public:
-  // head_, tail_ and count_: the three dwords the bodies reach at +0, +4 and
-  // +8, named for what the queue does with them.
-  NetFifoNode *head_;   // 0x0
-  NetFifoNode *tail_;   // 0x4, the last entry enqueued
-  uint32_t count_;      // 0x8
-  // 0xC, and it runs to 0x24. The IDB called this a fourth uint32_t.
-  CRITICAL_SECTION lock_;
-};
 
 /* 0x80 bytes, 18 member(s), 18 named. From Thinker. */
 struct PCXHeader {

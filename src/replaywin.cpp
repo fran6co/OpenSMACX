@@ -438,8 +438,8 @@ Purpose: ?on_left_click@ReplayWin@@QAEXHH@Z - dispatch to slot 0xe8 of this obje
          vtable load and the call, so the parameters this function declares are
          discarded and only the `ret` cleans them up.
 // ORIGINAL: 0x005AD3B0 ?on_left_click@ReplayWin@@QAEXHH@Z 0x005AD3B0-0x005AD3BB BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["pinned original own table 0x0066F8F0, pointer word at +0x4C, identifies original entry 0x005AD3B0", "source:src/win.h inherited virtual interface; actual emitted method ?on_left_click_event@ReplayWin@@UAEXHH@Z in primary Win table ??_7ReplayWin@@6BWin@@@"], "reason": "The original own Win table binds this entry as virtual slot 19. Use genuine member dispatch, not an opaque redirect; retain the catalogued original spelling as historical evidence."}
-// symbol    ?on_left_click_event@ReplayWin@@UAEXHH@Z
+// RECOVERY_BINDING: v1 {"evidence": ["pinned original own table 0x0066F8F0, pointer word at +0x4C, identifies original entry 0x005AD3B0", "Prior native snapshot: ?on_left_click_event@ReplayWin@@UAEXHH@Z was emitted for this slot before the source rename. The candidate now names the same Win slot-19 override on_left_click; its current emitted symbol still requires fresh COFF observation."], "reason": "The original own Win table binds this entry as virtual slot 19. Use genuine member dispatch, not an opaque redirect; retain the catalogued original spelling as historical evidence."}
+// symbol    ?on_left_click@ReplayWin@@UAEXHH@Z
 // size      11 bytes
 // prototype void (__thiscall ?on_left_click@ReplayWin@@QAEXHH@Z)(ReplayWin* this, int, int)
 // callers   0   call targets   0
@@ -450,7 +450,7 @@ Purpose: ?on_left_click@ReplayWin@@QAEXHH@Z - dispatch to slot 0xe8 of this obje
 Return Value: n/a
 Status: Complete
 */
-void ReplayWin::on_left_click_event(int, int) {
+void ReplayWin::on_left_click(int, int) {
   release_modal();
 }
 
@@ -460,8 +460,8 @@ Purpose: ?on_right_click@ReplayWin@@QAEXHH@Z - dispatch to slot 0xe8 of this obj
          vtable load and the call, so the parameters this function declares are
          discarded and only the `ret` cleans them up.
 // ORIGINAL: 0x005AD3C0 ?on_right_click@ReplayWin@@QAEXHH@Z 0x005AD3C0-0x005AD3CB BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["pinned original own table 0x0066F8F0, pointer word at +0x58, identifies original entry 0x005AD3C0", "source:src/win.h inherited virtual interface; actual emitted method ?vslot_22@ReplayWin@@UAEXHH@Z in primary Win table ??_7ReplayWin@@6BWin@@@"], "reason": "The original own Win table binds this entry as virtual slot 22. Use genuine member dispatch, not an opaque redirect; retain the catalogued original spelling as historical evidence."}
-// symbol    ?vslot_22@ReplayWin@@UAEXHH@Z
+// RECOVERY_BINDING: v1 {"evidence": ["pinned original own table 0x0066F8F0, pointer word at +0x58, identifies original entry 0x005AD3C0", "Prior native snapshot: ?vslot_22@ReplayWin@@UAEXHH@Z was emitted for this slot before the source rename. The candidate now names the same Win slot-22 override on_right_click; its current emitted symbol still requires fresh COFF observation."], "reason": "The original own Win table binds this entry as virtual slot 22. Use genuine member dispatch, not an opaque redirect; retain the catalogued original spelling as historical evidence."}
+// symbol    ?on_right_click@ReplayWin@@UAEXHH@Z
 // size      11 bytes
 // prototype void (__thiscall ?on_right_click@ReplayWin@@QAEXHH@Z)(ReplayWin* this, int, int)
 // callers   0   call targets   0
@@ -472,7 +472,7 @@ Purpose: ?on_right_click@ReplayWin@@QAEXHH@Z - dispatch to slot 0xe8 of this obj
 Return Value: n/a
 Status: Complete
 */
-void ReplayWin::vslot_22(int, int) {
+void ReplayWin::on_right_click(int, int) {
   release_modal();
 }
 

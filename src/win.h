@@ -588,8 +588,8 @@ class Win : public AutoSound {
   // MapWin supplies a genuine override; this is not MainInterface's slot13.
   // RECOVERY_SHARED: v1 0x00404260 0x00404263 ?on_resize@Win@@UAEXHH@Z 0x005EB3D0
   virtual void on_resize(int, int) {}
-  virtual void vslot_14() {}  // 0x00404280
-  virtual void vslot_15(int = 0) {}  // 0x00404270
+  virtual void on_sys_close() {}  // 0x00404280
+  virtual void on_mousewheel(int = 0) {}  // 0x00404270
   // The native tables require the router in slot 16 and the two-argument
   // callback in slot 17. VC6 reverses declaration order within this overload
   // group; physical compiler tables verify this order, unlike host mocks.
@@ -601,10 +601,10 @@ class Win : public AutoSound {
   // Slot 19 is the completed left-click callback: on_l_button_up dispatches
   // it after release, and MonuWin's original table66C880 points it at476780.
   // Keep this two-argument callback distinct from the slot20 press callback.
-  virtual void on_left_click_event(int = 0, int = 0) {}  // 0x00404260
+  virtual void on_left_click(int = 0, int = 0) {}  // 0x00404260
   virtual void on_left_down(int = 0, int = 0) {}  // slot 20
   virtual void on_left_up(int = 0, int = 0) {}  // slot 21
-  virtual void vslot_22(int = 0, int = 0) {}  // 0x00404260
+  virtual void on_right_click(int = 0, int = 0) {}  // 0x00404260
   // Receiver distinction: Win table66FDD0 slot23 consumes (x,y), with
   // shared default404260 ret8. The nullary/tested-EAX calls in5EE750 and
   // other dispatchers target Sound children (table66E3C0), not Win.
@@ -616,7 +616,7 @@ class Win : public AutoSound {
   virtual void vslot_24(int = 0, int = 0) {}  // 0x00404260
   // Existing slot 25: keyboard input dispatched by key_click_event.
   virtual int on_key_click(int = 0, int = 0);  // slot 25
-  virtual int vslot_26(int = 0) { return 0; }  // 0x00404250
+  virtual int on_key_down(int = 0) { return 0; }  // 0x00404250
   virtual int vslot_27(int = 0) { return 0; }  // 0x00404250
   // Slot 28: Win dispatches left double-clicks here (0x005EE570).
   // RadioButton's table at 0x00669A6C selects its receiver adjustor

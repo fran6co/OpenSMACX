@@ -54,8 +54,8 @@ class RadioButton : public virtual GraphicWin, public virtual Dialog {
   void on_left_double_click(int x_coord, int y_coord);
 
  public:
-  // 0x0060E020, a pending_bodies forwarder.
-  int on_key_down(int a);
+  // 0x0060E020, the typed RadioButton body is defined in radiobutton.cpp.
+  int on_key_down(int a) override;
 
  public:
   // 0x0060D1F0, a pending_bodies forwarder.

@@ -46,7 +46,7 @@ class EditBox : public GraphicWin {
   virtual void on_left_down(int x, int y);   // on_left_down
   virtual void on_left_up(int x, int y);   // on_left_up
   int on_key_click(int key, int repeat) override;
-  virtual int vslot_26(int key);         // on_key_down
+  virtual int on_key_down(int key) override;         // on_key_down
   virtual void on_dialog_focus(int focused);    // on_dialog_focus
   virtual void pass_dialog_focus();     // slot 64
   int text_fits();

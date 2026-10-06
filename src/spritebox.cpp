@@ -828,6 +828,7 @@ void SpriteBox::on_left_up(int x_coord, int y_coord) {
 Purpose: Same check-then-notify shape, for the right-click spot handler at
          this-0x18. NESTED, not early-return - the shape the image has here.
 // ORIGINAL: 0x006111F0 ?on_right_click@SpriteBox@@QAEXHH@Z 0x006111F0-0x00611240 BYTE_EXACT
+// symbol    ?on_right_click@SpriteBox@@UAEXHH@Z
 // size      80 bytes
 // prototype void (__thiscall ?on_right_click@SpriteBox@@QAEXHH@Z)(SpriteBox* this, int xCoord, int yCoord)
 // callers   1   call targets   1

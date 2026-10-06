@@ -254,6 +254,7 @@ void ProdPicker::draw_item(int item, int update) {
 
 // ORIGINAL: 0x004941C0 ?on_left_click@ProdPicker@@QAEXHH@Z 0x004941C0-0x0049422F
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004941c0.cpp", "source:src/prodpicker.h", "source:src/prodpicker.cpp"], "reason": "Apply the click-to-grid selection through the picker’s measured geometry and redraw both changed cells through draw_item and GraphicWin."}
+// symbol    ?on_left_click@ProdPicker@@UAEXHH@Z
 void ProdPicker::on_left_click(int x, int y) {
     const int row = y / field_A820_;
     const uint32_t oldSelection = field_A774_;
@@ -281,10 +282,10 @@ void ProdPicker::on_redraw() {
 }
 
 // ORIGINAL: 0x00494230 ?on_left_double_click@ProdPicker@@QAEXHH@Z 0x00494230-0x00494271 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:20b88b523285a816ba99f503d727b761b89b227f:src/recovered/units/00494230.cpp", "source:src/win.h:Win::on_left_click_event", "source:src/prodpicker.h:ProdPicker::on_button_clicked"], "reason": "Home the measured left double click event in ProdPicker and forward its notification and button selection through inherited virtual behavior."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:20b88b523285a816ba99f503d727b761b89b227f:src/recovered/units/00494230.cpp", "source:src/win.h:Win::on_left_click (candidate spelling for the inherited Win slot-19 callback; fresh emitted-symbol evidence is pending)", "source:src/prodpicker.h:ProdPicker::on_button_clicked"], "reason": "Home the measured left double click event in ProdPicker and forward its notification and button selection through inherited virtual behavior."}
 // symbol    ?on_left_double_click@ProdPicker@@UAEXHH@Z
 void ProdPicker::on_left_double_click(int x, int y) {
-    on_left_click_event(x, y);
+    on_left_click(x, y);
     if (field_B68_ == 0) {
         on_button_clicked(-1);
     } else {
@@ -980,7 +981,7 @@ int ProdPicker::exec(Base *base, int factionId, GraphicWin *owner, int modal) {
 // ORIGINAL: 0x00493EA0 ?on_right_click@ProdPicker@@QAEXHH@Z 0x00493EA0-0x0049419F;0x00658C09-0x00658C1E FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00493ea0.cpp", "Pinned original coordinator review: actual label-pointer dereference, camera word3F48F5C3, static cdecl callback ABI, row-end clamps and modal-parent/button suppression order."], "reason": "Recover ProdPicker owner behavior through existing window bases, owned StringLists/controls and typed Base/Caviar camera state; preserve historical seed identity and extents as restoration obligations, not current match claims."}
 void ProdPicker::on_right_click(int x, int y) {
-    on_left_click_event(x, y);
+    on_left_click(x, y);
     client_to_screen(&x, &y);
 
     int productionId = -1;

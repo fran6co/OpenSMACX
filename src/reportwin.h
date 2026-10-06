@@ -52,9 +52,9 @@ class ReportWin : public GraphicWin {
   void init();
   // Win slot 12: reset and repaint the active ReportIf category.
   virtual void on_redraw();
-  void on_left_click(int x, int y);
+  void on_left_click(int x, int y) override;
   void right_menu(int x, int y, int base_id);
-  void on_right_click(int x, int y);
+  void on_right_click(int x, int y) override;
   void on_button_clicked(int id);
   void on_group_clicked(int group, int id, int state);
   void draw_ops();

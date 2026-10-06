@@ -316,8 +316,8 @@ class BaseWin : public ConstructedGraphicWin, public SubInterface {
   void on_iface_button_clicked(int button_id);          // slot13 0x0041E510
 
   static void timer_callback(int key, int context);
-  void on_left_click(int xCoord, int yCoord);
-  void on_right_click(int xCoord, int yCoord);
+  void on_left_click(int xCoord, int yCoord) override;
+  void on_right_click(int xCoord, int yCoord) override;
   void on_left_double_click(int xCoord, int yCoord);
 
   // Storage the image proves is here: its own methods reach 0x40D20.
