@@ -308,6 +308,7 @@ class BasePop : public GraphicWin {
                                  Font *font4);
   uint32_t read_check();
   int item(char *text, int index);
+  int add_asterisk_item();
   int set_button_font(Font *font1, Font *font2, Font *font3);
   static int set_def_button_font(Font *font1, Font *font2, Font *font3);
   // DECLARED, NOT DEFINED INLINE, and that is what lets `basepop_alloc` be

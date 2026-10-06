@@ -30,6 +30,36 @@
 HDC Font::FontHDC;
 int Font::FontInitCount;
 
+/*
+Purpose: Field 0 as an offset into field 0x10, or field 0xc when it is negative.
+
+             mov edx,[ecx] / test edx,edx / jl other
+             mov eax,[ecx+0x10] / add eax,edx / ret
+      other: mov eax,[ecx+0xc] / ret
+
+         `jl` is the SIGNED test, so the negative branch is taken on the sign
+         bit rather than on a large unsigned value - the difference shows up
+         for any field with the top bit set.
+
+// ORIGINAL: 0x005E3650 sub_5e3650 0x005E3650-0x005E3660 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:0x005E3650-0x005E3660 reads this+0, this+0x0C, and this+0x10 with signed jl", "source:src/font.h Font::unk_1_, line_height_, and height_ are the named members at those offsets", "pinned callers in Buffer text layout invoke this metric operation"], "reason": "Bind the original signed Font metric selector to its existing named member operation, retaining native 32-bit addition wrap."}
+// symbol    ?line_advance@Font@@QBEHXZ
+// size      16 bytes
+// prototype
+// callers   2   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: field 0x10 + field 0, or field 0xc
+Status: Complete
+*/
+
+int Font::line_advance() const {
+    return unk_1_ < 0 ? line_height_ : static_cast<int32_t>(
+        static_cast<uint32_t>(height_) + static_cast<uint32_t>(unk_1_));
+}
+
+
 // RECOVERY_OBJECT: v1 0x00691B2C ?DefaultFontFace@@3PBDB
 LPCSTR DefaultFontFace = "Arial";  // 0x00691B2C -> 0x00691BD4
 // RECOVERY_OBJECT: v1 0x00691B30 ?DefaultLargeFontFace@@3PBDB

@@ -157,7 +157,7 @@ class MapWin : public virtual GraphicWin {
 
  public:
   // 0x0046F700, source-owned non-client input handler.
-  void on_nc_left_down(int x_coord, int y_coord);
+  void on_nc_left_down(int x_coord, int y_coord) override;
 
  public:
   // 0x0046F660, the custom non-client title-strip test; other points defer

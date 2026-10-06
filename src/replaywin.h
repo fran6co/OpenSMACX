@@ -97,6 +97,7 @@ class ReplayWin : public GraphicWin {
   int update_base_site(int x, int y, int faction_id);
   void remove_base_site(int x, int y, int unused);
   void make_bases();
+  void reset_base_sites();
 
  private:
   // [0, 0xA14) is the GraphicWin base subobject; the class's own storage

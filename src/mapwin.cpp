@@ -8313,6 +8313,7 @@ class VCallI { public:
 };
 
 // ORIGINAL: 0x0046F700 ?on_nc_left_down@MapWin@@QAEXHH@Z 0x0046F700-0x0046F880 FILE
+// symbol    ?on_nc_left_down@MapWin@@UAEXHH@Z
 // size      384 bytes
 // prototype void (__thiscall ?on_nc_left_down@MapWin@@QAEXHH@Z)(MapWin* this, int, int)
 // callers   0   call targets   1
@@ -8492,3 +8493,57 @@ Status: Complete
 // Current source ownership is not original TU or COMDAT-selection proof.
 // ORIGINAL: 0x00421830 ??_GMapWin@@UAEPAXI@Z 0x00421830-0x00421866 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["historical seed:src/recovered/units/00421830.cpp", "task:window-generated-deletion-owners", "Pinned entry receives the MapWin virtual GraphicWin subobject at complete-object+0x21A6C; own-part destructor, virtual-base destructor and conditional delete are separate native stages.", "Fresh emitted code and receiver/target controls remain required. Duplicate COMDAT emission does not establish historical translation-unit placement or retained link selection."], "reason": "The existing real class lifetime generates this deleting entry; bind compiler-owned code rather than transcribing receiver arithmetic or invoking member/base destructors twice."}
+
+// ORIGINAL: 0x00421820 ??_Gthunk1_MapWin@@UAEPAXI@Z 0x00421820-0x00421828 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: constructor span at 0x004626E0 stores table 0x0066A57C; exact cell 0x0066A57C is 0x00421820.", "The complete original thunk bytes at 0x00421820 tail to pinned target 0x00421830.", "Fresh full build build-fpcqf1x8: ??_7MapWin@@6BWin@@@+0x0 COFF relocation selects ??_EMapWin@@$4PPPPPPPM@A@AEPAXI@Z; thunk bytes and its unique relative tail relocation target ??_EMapWin@@UAEPAXI@Z.", "The owner compile receipt inputs were unchanged and match current files at proposal emission; selected output is observed in the fresh MAP/PE but this proposal does not claim complete link-preservation acceptance.", "Historical source kind `game`, original identity/name, complete span, and parsed claims/lessons are checked unchanged after native-writer readback."], "reason": "The pinned MapWin constructor at 0x004626E0 installs the ??_7MapWin@@6BWin@@@ address point; its exact slot cell at +0x0 selects original identity 0x00421820. The fresh full-build owner COFF vftable relocation selects the compiler-generated thunk ??_EMapWin@@$4PPPPPPPM@A@AEPAXI@Z, whose unique physical relative tail targets ??_EMapWin@@UAEPAXI@Z. The original marker name and complete source history remain attached to this FILE identity."}
+// kind      game
+// symbol    ??_EMapWin@@$4PPPPPPPM@A@AEPAXI@Z
+
+// ORIGINAL: 0x00421950 ??_Gthunk2_MapWin@@UAEPAXI@Z 0x00421950-0x00421961 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: constructor span at 0x004626E0 stores table 0x0066A574; exact cell 0x0066A574 is 0x00421950.", "The complete original thunk bytes at 0x00421950 tail to pinned target 0x00421830.", "Fresh full build build-fpcqf1x8: ??_7MapWin@@6BBuffer@@@+0x0 COFF relocation selects ??_EMapWin@@$4PPPPPLLI@EEE@AEPAXI@Z; thunk bytes and its unique relative tail relocation target ??_EMapWin@@UAEPAXI@Z.", "The owner compile receipt inputs were unchanged and match current files at proposal emission; selected output is observed in the fresh MAP/PE but this proposal does not claim complete link-preservation acceptance.", "Historical source kind `game`, original identity/name, complete span, and parsed claims/lessons are checked unchanged after native-writer readback."], "reason": "The pinned MapWin constructor at 0x004626E0 installs the ??_7MapWin@@6BBuffer@@@ address point; its exact slot cell at +0x0 selects original identity 0x00421950. The fresh full-build owner COFF vftable relocation selects the compiler-generated thunk ??_EMapWin@@$4PPPPPLLI@EEE@AEPAXI@Z, whose unique physical relative tail targets ??_EMapWin@@UAEPAXI@Z. The original marker name and complete source history remain attached to this FILE identity."}
+// kind      game
+// symbol    ??_EMapWin@@$4PPPPPLLI@EEE@AEPAXI@Z
+
+// ORIGINAL: 0x00421920 ?on_nc_left_down@thunk1_MapWin@@QAEXHH@Z 0x00421920-0x00421928 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: constructor span at 0x004626E0 stores table 0x0066A57C; exact cell 0x0066A600 is 0x00421920.", "The complete original thunk bytes at 0x00421920 tail to pinned target 0x0046F700.", "Fresh full build build-fpcqf1x8: ??_7MapWin@@6BWin@@@+0x84 COFF relocation selects ?on_nc_left_down@MapWin@@$4PPPPPPPM@A@AEXHH@Z; thunk bytes and its unique relative tail relocation target ?on_nc_left_down@MapWin@@UAEXHH@Z.", "The owner compile receipt inputs were unchanged and match current files at proposal emission; selected output is observed in the fresh MAP/PE but this proposal does not claim complete link-preservation acceptance.", "Historical source kind `game`, original identity/name, complete span, and parsed claims/lessons are checked unchanged after native-writer readback."], "reason": "The pinned MapWin constructor at 0x004626E0 installs the ??_7MapWin@@6BWin@@@ address point; its exact slot cell at +0x84 selects original identity 0x00421920. The fresh full-build owner COFF vftable relocation selects the compiler-generated thunk ?on_nc_left_down@MapWin@@$4PPPPPPPM@A@AEXHH@Z, whose unique physical relative tail targets ?on_nc_left_down@MapWin@@UAEXHH@Z. The original marker name and complete source history remain attached to this FILE identity."}
+// kind      game
+// symbol    ?on_nc_left_down@MapWin@@$4PPPPPPPM@A@AEXHH@Z
+/*
+Purpose: Range-and-parity screen test for one map coordinate: halve the
+         base coordinate read through the map geometry pointer, quarter the
+         map height, wrap the sum into range against half the height, and
+         report whether the requested half-coordinate falls inside the
+         computed band.
+
+// ORIGINAL: 0x004468F0 sub_4468f0 0x004468F0-0x0044695B FILE
+// symbol    _sub_4468f0
+// size      107 bytes
+// prototype
+// callers   0   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
+Status: Coverage transcription - unclaimed body (direct transcription of
+        the seed's materialised /O2 arithmetic; no caller in the product
+        yet, so the body stands on its own disassembly).
+*/
+extern "C" int __cdecl sub_4468f0(int a1) {
+    int base =
+        static_cast<int>(MapWinTable[0]->field_1DD9C_);
+    int iVar1 = base / 2;
+    int n = MapLongitudeBounds;
+    int iVar3 = n / 4;
+    int iVar2 = iVar3 + iVar1;
+    int half = a1 / 2;
+    if (n / 2 < iVar2) {
+        iVar2 = iVar2 - n / 2;
+    }
+    if (iVar1 < iVar3) {
+        if (half <= iVar1 || iVar2 <= half) {
+            return -1;
+        }
+    } else if (half < iVar1 && iVar2 < half) {
+        return -1;
+    }
+    return 1;
+}

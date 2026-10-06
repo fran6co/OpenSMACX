@@ -10,18 +10,10 @@ class Buffer;
 class Dialog;
 class GraphicWin;
 
-int __cdecl leaf_00559210_redirect(int, int);
-uint32_t __fastcall leaf_005e3650_redirect(void *, void *);
 void *__fastcall leaf_004c8070_redirect(void *, void *);
-void __fastcall leaf_006347c0_redirect(void *, void *, const float *);
-void __fastcall leaf_006348f0_redirect(void *, void *, const float *);
-void __fastcall leaf_006348c0_redirect(void *, void *, float);
-int32_t __fastcall leaf_0063beb0_redirect(void *, void *, int);
-int32_t __fastcall leaf_0063bee0_redirect(void *, void *, int);
 void __cdecl leaf_0057dee0_redirect(void *);
 void *__fastcall leaf_006252c0_redirect(void *, void *);
 int __cdecl leaf_00408470_redirect(const void *, int);
-void __fastcall leaf_005ad450_redirect(void *, void *);
 int __stdcall leaf_005d7a10_redirect(const void *, int, int, int);
 int __fastcall leaf_005d5470_redirect(void *, void *, const void *, int, int, int);
 uint32_t __cdecl leaf_00642940_redirect(uint32_t, int);
@@ -29,8 +21,6 @@ int __stdcall leaf_00532a50_redirect(int, int *, int *, int);
 int __cdecl leaf_00592db0_redirect(int, int, int, int, int, int);
 int __fastcall leaf_004041c0_redirect(void *, void *);
 void __cdecl leaf_0063d420_redirect(void *, uint32_t);
-char *const DialogsItemText6900C4 = (char *)0x006900C4;
-int __fastcall leaf_0059d230_redirect(void *, void *);
 
 // Seams for the two destructor chains; see src/leaf_recoveries.cpp for why.
 // Each defaults to the corresponding recovered redirect.

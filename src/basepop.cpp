@@ -34,6 +34,11 @@
 #include "text.h"  // text_open / text_get / text_close - start's script reader
 #include <cstring>
 
+// Pinned 0x006900C4 bytes are writable .data `2A 00`; only the observed two bytes are asserted. Old symbol/capacity/whole-use identity remain unknown pending native COFF object binding.
+// RECOVERY_OBJECT: v1 0x006900C4 ?BasePopItemMarkerText@@3PADA
+char BasePopItemMarkerText[2] = {'*', '\0'};
+
+
 /*
 Purpose: Update either base-popup coordinate unless its keep-current sentinel is supplied.
 // ORIGINAL: 0x00601B80 ?set_loc@BasePop@@QAEXHH@Z 0x00601B80-0x00601BA5 BYTE_EXACT
@@ -4190,3 +4195,38 @@ int __cdecl sub_48cf00(BasePop *owner, int vehicle) {
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned terranx_original.exe SHA-256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf.", "Pinned vftable slot 0: 0x006698CC -> 0x004070B0.", "the BasePop constructor stores secondary Buffer table 0x006698CC at object+0x444", "The original 11-byte adjustor corrects the earlier mistaken `??3BasePop@@SAXPAXI@Z` interpretation: it subtracts 0x444 from ECX and tail-transfers to primary scalar-deleting entry 0x00406B40; the corrected `WEEE` signature describes the compiler's adjusting-deleting entry.", "The historical disassembly note records that the primary path returns with ret 4, tests deletion flag bit 0, and invokes scalar operator delete only when that bit is set.", "The historical demangling note identifies adjustment 1092, equal to 0x444; the adjustor does not otherwise access the stack or change the receiver view.", "Source owner: src/basepop.cpp; generated entry name is compiler-observed as ??_EBasePop@@WEEE@AEPAXI@Z."], "reason": "Retain the original BasePop secondary-Buffer deleting-adjustor identity as a compiler-generated entry owned by the real BasePop destructor and GraphicWin hierarchy. The pinned secondary view at 0x006698CC, slot 0, targets 0x004070B0; this entry adjusts the Buffer receiver by 0x444 and reaches the primary scalar-deleting destructor, whose original path tests flag bit 0 before releasing storage. The current compiler-emitted symbol is recorded from the retained owner COFF, not handwritten."}
 // symbol    ??_EBasePop@@WEEE@AEPAXI@Z
 // kind      game
+
+// Historical original-image fixture note, retained verbatim:
+// The text sub_59d230 hands to Dialogs::item. It is a REBINDABLE pointer, not
+// a constant: the callee dereferences it, so a fixture that could not swap it
+// would fault on the original image's address rather than test anything.
+
+/*
+Purpose: Add one fixed item to the Dialogs at 0x21d0.
+
+             push -2 / push 0x6900c4 / add ecx,0x21d0
+             call ?item@Dialogs@@QAEHPADH@Z / ret
+
+         A tail call in everything but name: the callee cleans its own two
+         arguments and this function cleans none, so its `ret` carries the
+         callee's result straight out.
+
+         -2 is the index. It is not a count or a flag, and it is negative,
+         which is the sort of thing that gets "tidied" to 2 or 0 by someone
+         reading quickly.
+
+
+// ORIGINAL: 0x0059D230 sub_59d230 0x0059D230-0x0059D243 BYTE_EXACT
+// symbol    ?add_asterisk_item@BasePop@@QAEHXZ
+// size      19 bytes
+// prototype
+// callers   0   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x00612A70
+Return Value: whatever Dialogs::item returns
+Status: Complete
+*/
+int BasePop::add_asterisk_item() {
+    return dialogs_.Dialogs::item(BasePopItemMarkerText, -2);
+}

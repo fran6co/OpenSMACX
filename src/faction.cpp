@@ -16,7 +16,6 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
-#include "leaf_recoveries.h"
 #include "worldwin.h"
 #include "general.h"
 
@@ -7216,6 +7215,8 @@ static int communicate_imul_high_sar(int value, uint32_t multiplier,
 
 // Complete retained communicate continuation; the prior unfinished
 // binding/history below remains a historical restoration obligation.
+int communicate_round_down_multiple(int value, int step);
+
 // ORIGINAL: 0x0054FFD0 ?communicate@@YAXHHH@Z 0x0054FFD0-0x00558980;0x0065FF4F-0x0065FF64
 // RECOVERY_BINDING: v1 {"evidence": ["original:0x0054FFD0-0x00558980;0x0065FF4F-0x0065FF64", "source:src/unrecovered/0054ffd0.cpp:retained-seed", "task:base-colony-economy-coverage-wave:diplomacy-communicate-link-continuity-20261003", "Retired seed src/unrecovered/0054ffd0.cpp retains its complete original identity, hot/cold spans and historical findings in this owner", "SocialEffect.values_ is the genuine eleven-word indexed owner; original out-of-domain selector effects remain unresolved", "recovery/tests/test_communicate_owner.py: actual-source bounded behavior and mutation controls", "recovery/tasks/owner-coverage-wave-oct6.json"], "reason": "Recover the complete diplomacy conversation, topic and action paths through real faction, Base, social-effect array and UI owners, preserving original unchecked selectors, arithmetic, error and uninitialized-state behavior. Prior unfinished decision retained as history: Explicitly unfinished owner body for link continuity while complete communicate hot/cold behavior remains under recovery. The seed and original mapping are retained; this empty body does not implement diplomacy, reproduce its bytes or satisfy the pending dependency."}
 // TRIED: the seven-way relationship-topic greeting text build (war/ vendetta/truce/treaty/pact, chosen via has_treaty bits and distance, each with its own get_adjective_leader/ get_noun_phrase string chain and jump-table case 0-6) was collapsed to one generic diplomacy_caption() + say_num(0) call. The diplomacy_menu() result loop and its 8-way action dispatch (cases 0/1-2/3/4/5/6/7) were read from the raw disassembly (no Ghidra hypothesis was reliable there either) and reproduced with real callee names/order; the patience/ loop-exit condition nesting is approximated, not exact.
@@ -9068,7 +9069,7 @@ if (PlayersData[faction_id].energy_reserves < 125) {
 // The entry gate guarantees positive reserves >=125, so the native signed
 // divide sequence is represented by equivalent positive integer arithmetic.
 communicate_positive_reserves = PlayersData[faction_id].energy_reserves;
-DiploScratchFA88 = leaf_00559210_redirect(communicate_positive_reserves / 5, 25);
+DiploScratchFA88 = communicate_round_down_multiple(communicate_positive_reserves / 5, 25);
 communicate_after_contact_relations: // native 0x0055373A continuation
 if (mode != 0) {
     if (has_treaty(peer_id, faction_id, 0x00000010) == 0) {
@@ -9590,7 +9591,7 @@ communicate_custom_amount =
         communicate_wrapped_add(communicate_custom_tech_count, 1);
 communicate_custom_amount = communicate_wrapped_add(communicate_custom_amount, 24);
 communicate_custom_amount =
-    leaf_00559210_redirect(communicate_custom_amount, 25);
+    communicate_round_down_multiple(communicate_custom_amount, 25);
 parse_num(0, communicate_custom_amount);
 popup.start(PopupStartCaption, 0x00100000);
 popup.set_picture(FactionDiplomacyPortraits[peer_id], 0, 0);
@@ -10578,7 +10579,7 @@ if (communicate_late_truce_tech_amount >
         PlayersData[peer_id].energy_reserves;
 }
 communicate_late_truce_tech_amount =
-    leaf_00559210_redirect(communicate_late_truce_tech_amount, 25);
+    communicate_round_down_multiple(communicate_late_truce_tech_amount, 25);
 if (communicate_late_truce_tech_amount == 0) {
     goto communicate_late_truce_tech_complete; // native 0x00556723
 }
@@ -10970,7 +10971,7 @@ if (communicate_late_offer_eligible != 0) {
         const int peer_energy = PlayersData[peer_id].energy_reserves;
         int communicate_late_energy_offer =
             peer_energy >= energy_limit ? energy_limit : peer_energy;
-        communicate_late_energy_offer = leaf_00559210_redirect(
+        communicate_late_energy_offer = communicate_round_down_multiple(
             communicate_late_energy_offer, 25);
         if (communicate_late_energy_offer != 0) {
             parse_says(0, get_title(peer_id), -1, -1);
@@ -19548,4 +19549,35 @@ void __cdecl make_a_proposal(int faction_id, int other_faction_id,
         }
         return;
     }
+}
+
+/*
+Purpose: Round an integer DOWN to a multiple of another, toward zero.
+
+             mov eax, [ebp+8] / mov ecx, [ebp+0xc]
+             cdq / idiv ecx / imul eax, ecx
+             ret
+
+         `x / y * y` with signed division, so it truncates toward zero rather
+         than toward negative infinity: -7 with y=3 gives -6, not -9.
+
+         The compiler rewrites this as `x - x % y`, which is the same value for
+         every input and traps in the same two places, because both spellings
+         go through one `idiv`: y == 0 and INT_MIN / -1 raise #DE here exactly
+         as they do in the original.
+
+
+// ORIGINAL: 0x00559210 sub_559210 0x00559210-0x00559221 BYTE_EXACT
+// symbol    ?communicate_round_down_multiple@@YAHHH@Z
+// size      17 bytes
+// prototype
+// callers   1   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
+Return Value: the largest multiple of `step` no further from zero than `value`
+Status: Complete
+*/
+int communicate_round_down_multiple(int value, int step) {
+    return value / step * step;
 }

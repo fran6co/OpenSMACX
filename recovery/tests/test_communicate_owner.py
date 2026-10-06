@@ -39,6 +39,7 @@ def actual_parts():
     assert not row.extract_error and 'BODY GOES HERE.' not in row.region
     function = braced(row.region, 'void __cdecl communicate(')
     support = '\n'.join(braced(source, 'static int ' + name + '(') for name in HELPERS)
+    support += '\n' + braced(source, 'int communicate_round_down_multiple(int value, int step) {')
     effect = braced((ROOT / 'src/faction.h').read_text(), 'struct SocialEffect {') + ';'
     assert 'int values_[11];' in effect
     return function, support, effect

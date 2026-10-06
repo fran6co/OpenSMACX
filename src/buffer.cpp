@@ -2377,6 +2377,168 @@ int Buffer::text_width(LPSTR text) {
 // Draw an inclusive-endpoint segment inside the half-open active clip.
 // The original acquires before rejecting a non-axis-aligned segment and
 // releases on every acquired clipping exit. Clipping advances the original
+/*
+Purpose: The Buffer wide-line filler that sits between the blitter and the
+         nine-argument line: lock the surface (or fall back to the DIB
+         bits), clip the request against the buffer's rect1_, then stamp
+         the fill byte along the line - a run of `quotient+1` pixels per
+         row on shallow slopes, Bresenham steps on steep ones - and release
+         the lock when this body holds the last one.
+
+// ORIGINAL: 0x005E07A0 sub_5e07a0 0x005E07A0-0x005E09CB FILE
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:0x005E07A0-0x005E09CB uses ECX as receiver and reads the Buffer pixel, surface, clip, lock-count and stride fields", "source:src/buffer.h declares those members and IDirectDrawSurface* surface_ at the observed offsets", "pinned:0x005E07F5 Lock, 0x005E09B3 Unlock, and the saved 0x14-byte thiscall cleanup"], "reason": "Bind the original wide-line raster routine to Buffer's named pixel, clip, pitch and DirectDraw members."}
+// symbol    ?fill_line@Buffer@@QAEHHHHHD@Z
+// size      555 bytes
+// Deleted seed provenance: git:1ed59304110fc2098fb1dd11457fa5b0074169bd:src/unrecovered/005e07a0.cpp
+Status: Coverage transcription of the retained seed (src/unrecovered/005e07a0.cpp,
+        plain FILE, no callees of its own). The receiver is a Buffer - the
+        offsets it works through are exactly locked_bits_ (0x50), dib_bits_
+        (0x54), surface_ (0x58), surface_lock_count_ (0x6c), rect1_
+        (0x20..0x2c) and stride_ (0x4a8) - but buffer.h has no declaration
+        for this member, and those fields are protected, so the body lands
+        as the free __cdecl spelling with the leading receiver that
+        buffer.h's own polygon family uses. The offset reads are spelled
+        raw beside their field names; promoting this into a real member is
+        the coordinator's buffer.h scope, not a body rewrite. The two COM
+        calls are IDirectDrawSurface slots 25 (Lock) and 32 (Unlock) on the
+        surface the buffer keeps at 0x58.
+*/
+
+
+
+int Buffer::fill_line(int x1, int y1, int x2, int y2, char fill_colour) {
+    IDirectDrawSurface *const surface = surface_;
+    void *locked;
+
+    if (surface == 0) {
+        locked = dib_bits_;  // dib_bits_
+        locked_bits_ = locked;  // locked_bits_
+        if (locked == 0) {
+            return 0;
+        }
+        surface_lock_count_ += 1;  // surface_lock_count_
+    } else if (locked_bits_ == 0) {
+        // DDSURFACEDESC-shaped lock descriptor: dwSize at +0, lPitch at
+        // +0x10, lpSurface at +0x24 - sizeof == 0x6c, the constant stored
+        // into the first dword before the call.
+        DDSURFACEDESC lock_desc;
+        lock_desc.dwSize = 0x6c;
+        int lock_result = surface->Lock(nullptr, &lock_desc, DDLOCK_WAIT, nullptr);
+        if (lock_result != 0) {
+            return lock_result;
+        }
+        surface_lock_count_ += 1;
+        stride_ =
+            lock_desc.lPitch;  // stride_
+        locked = lock_desc.lpSurface;
+        locked_bits_ = locked;
+    } else {
+        surface_lock_count_ += 1;
+        locked = locked_bits_;
+    }
+
+    if (locked != 0) {
+        int hi_x = x1;
+        int lo_x = x2;
+        if (x1 < x2) {
+            hi_x = x2;
+            lo_x = x1;
+        }
+
+        // rect1_, the buffer's working rectangle, as four ints at 0x20.
+        const int clip_left = rect1_.left;
+        const int clip_top = rect1_.top;
+        const int clip_right = rect1_.right;
+        const int clip_bottom = rect1_.bottom;
+        if ((y2 <= y1) ||
+            (clip_left <= lo_x && clip_top <= y1 && hi_x <= clip_right &&
+             y2 <= clip_bottom && clip_top <= y2 && y1 <= clip_bottom)) {
+            int run = x2 - x1;
+            int step_x;
+            if (run < 0) {
+                step_x = -1;
+                run = -run;
+            } else {
+                step_x = 1;
+            }
+
+            const int stride =
+                static_cast<int>(stride_);  // stride_
+            int row_step = stride;
+            int height = y2 - y1;
+            if (height < 0) {
+                height = -height;
+                row_step = -stride;
+            }
+
+            unsigned char *dest = reinterpret_cast<unsigned char *>(
+                stride * y1 + reinterpret_cast<int>(locked) + x1);
+
+            if (height < run) {
+                if (height >= 0) {
+                    int quotient = run / height;
+                    int rows = height + 1;
+                    do {
+                        if (quotient >= 0) {
+                            int span = quotient + 1;
+                            do {
+                                if (dest != 0) {
+                                    *dest = (unsigned char)fill_colour;
+                                    dest++;
+                                }
+                                span--;
+                            } while (span != 0);
+                        }
+                        dest += row_step;
+                        rows--;
+                    } while (rows != 0);
+                }
+            } else if (height >= 0) {
+                int rows = height + 1;
+                int error = 0;
+                do {
+                    if (dest != 0) {
+                        *dest = (unsigned char)fill_colour;
+                    }
+                    error += run;
+                    if (error > 0) {
+                        error -= height;
+                        dest += step_x;
+                    }
+                    dest += row_step;
+                    rows--;
+                } while (rows != 0);
+            }
+        }
+    }
+
+    IDirectDrawSurface *const surface_at_end = surface_;
+    if (surface_at_end == 0) {
+        int holders = surface_lock_count_ - 1;
+        surface_lock_count_ = holders;
+        if (holders <= 0) {
+            locked_bits_ = 0;
+            surface_lock_count_ = 0;
+        }
+        return 0;
+    }
+
+    int holders = surface_lock_count_ - 1;
+    surface_lock_count_ = holders;
+    void *current = locked_bits_;
+    if (current == 0) {
+        return 0;
+    }
+    if (holders > 0) {
+        return reinterpret_cast<int>(current);
+    }
+    int unlock_result = surface_at_end->Unlock(current);
+    locked_bits_ = 0;
+    surface_lock_count_ = 0;
+    return unlock_result;
+}
+
+
 // Bresenham error; starting a new line at the clipped coordinates changes
 // the pixels at ties. The four octants share these two major-axis walks,
 // with descending lines starting at their left (higher-Y) endpoint.

@@ -126,6 +126,7 @@ set(OPENSMACX_SOURCES
     src/midi.cpp
     src/nullsub_thunks.cpp
     src/field_accessors.cpp
+    src/matrix3.cpp
     src/filebox.cpp
     src/leaf_recoveries.cpp
     src/selectpartwin.cpp

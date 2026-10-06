@@ -53,11 +53,7 @@ char ReplayLocalizedTitle[4];
 // symbol    ?init@ReplayWin@@QAEXXZ
 void ReplayWin::init() {
     field_A14_ = 0;
-    for (int index = 0; index < 512; ++index) {
-        base_sites_[index].x = -1;
-        base_sites_[index].y = -1;
-        base_sites_[index].faction_id = -1;
-    }
+    reset_base_sites();
 
     RECT rect = {0, 0, 0x320, 0x258};
     GraphicWin::init(&rect, 0, 0x1000000, 0, 0, 0);
@@ -530,3 +526,35 @@ int ReplayWin::on_key_click(int, int) {
 // RECOVERY_BINDING: v1 {"evidence": ["historical source:src/deleting_thunks.cpp; preserved full original span 0x005AE0B0-0x005AE0D1 and BYTE_EXACT obligation.", "pinned ReplayWin primary table 0x0066F8F0 has slot 0 = 0x005AE0B0; the original primary entry is the exact scalar deleting identity.", "pinned scalar body calls ReplayWin::~ReplayWin at 0x005ADF10, tests flags bit 0, conditionally calls 0x0064557F, returns saved this with ret 4.", "the prior retained owner COFF/PE snapshot emitted ??_GReplayWin@@UAEPAXI@Z with destructor/delete relocations and its ReplayWin table selected that address; this is historical evidence only, not qualification of the current source.", "ReplayWin's source lifetime owns the typed GraphicWin, MapWin, FlatButton and Time subobjects; show_replay creates a real local ReplayWin. No remaining mapped scalar adjustment adapter calls this helper.", "the byte-exact claim is historical and remains a restoration obligation; no current equality or whole-application acceptance is asserted."], "reason": "Bind ReplayWin's original scalar deleting identity to the compiler-generated operation of its genuine virtual destructor; this FILE mapping names generated owner code, not the destructor source text."}
 // symbol    ??_GReplayWin@@UAEPAXI@Z
 // kind game
+
+/*
+Purpose: Fill 1,536 dwords with -1, starting at offset 0xa20.
+
+             lea eax,[ecx+0xa24] / mov ecx,0x200 / or edx,0xffffffff
+             mov [eax-4],edx / mov [eax],edx / mov [eax+4],edx
+             add eax,0xc / dec ecx / jne / ret
+
+         Three dwords per pass and 0x200 passes, so 1,536 in all - and the
+         cursor starts at 0xa24 while the first store is at [eax-4], so the
+         region actually begins at 0xa20 and runs to 0x261f. Reading the
+         `lea` as the start would put the whole thing four bytes too high.
+
+
+// ORIGINAL: 0x005AD450 sub_5ad450 0x005AD450-0x005AD470 BYTE_EXACT
+// symbol    ?reset_base_sites@ReplayWin@@QAEXXZ
+// size      32 bytes
+// prototype
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void ReplayWin::reset_base_sites() {
+    for (int index = 0; index < 512; ++index) {
+        base_sites_[index].x = -1;
+        base_sites_[index].y = -1;
+        base_sites_[index].faction_id = -1;
+    }
+}

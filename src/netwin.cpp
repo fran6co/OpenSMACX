@@ -3664,3 +3664,20 @@ void __cdecl send_session2_packet(int slot_id, int target) {
     }
     NetDaemonNet.Net::send(&packet, 0x178, who, 1);
 }
+
+/*
+// ORIGINAL: 0x004E2450 sub_4e2450 0x004E2450-0x004E245D BYTE_EXACT
+// symbol    _sub_4e2450
+// size      13 bytes
+// prototype
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+extern "C" void __cdecl sub_4e2450() {
+    NetWinSessionData.mode_ = 0;
+    NetWinSessionData.state_[0x20] = 0;
+}

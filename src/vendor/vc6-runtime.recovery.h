@@ -117,7 +117,9 @@
 //     {"evidence": "Original seed identity sub_64d73b retained; pinned archive wrapper code and descriptor/callee relocations agree.", "origin": "0x0064D73B", "spans": ["0x0064D73B-0x0064D751"], "symbol": "__ld12tof", "unit": "../build/intel/mt_obj/intrncvt.obj"},
 //     {"evidence": "Original seed identity sub_64d751 retained; parser and double conversion relocation order agrees.", "origin": "0x0064D751", "spans": ["0x0064D751-0x0064D77E"], "symbol": "__atodbl", "unit": "../build/intel/mt_obj/intrncvt.obj"},
 //     {"evidence": "Original seed identity sub_64d77e retained; parser and float conversion relocation order agrees.", "origin": "0x0064D77E", "spans": ["0x0064D77E-0x0064D7AB"], "symbol": "__atoflt", "unit": "../build/intel/mt_obj/intrncvt.obj"},
-//     {"evidence": "Pinned body instructions end with RET at 0x0064F9C4. At 0x0064F587, bounded EAX 0..11 indexes a 12-DWORD switch table at 0x0064F9C5-0x0064F9F5; archive .text section 1 has $L679 at offset 0x4A1 and twelve corresponding DIR32 label relocations in offsets 0x4A1..0x4D0. The mapped physical span deliberately includes 1185 code bytes plus this 48-byte associated table. The next region starts at 0x0064F9F5 with a distinct frame prologue.", "origin": "0x0064F524", "spans": ["0x0064F524-0x0064F9F5"], "symbol": "___strgtold12", "unit": "../build/intel/mt_obj/strgtold.obj"}
+//     {"evidence": "Pinned body instructions end with RET at 0x0064F9C4. At 0x0064F587, bounded EAX 0..11 indexes a 12-DWORD switch table at 0x0064F9C5-0x0064F9F5; archive .text section 1 has $L679 at offset 0x4A1 and twelve corresponding DIR32 label relocations in offsets 0x4A1..0x4D0. The mapped physical span deliberately includes 1185 code bytes plus this 48-byte associated table. The next region starts at 0x0064F9F5 with a distinct frame prologue.", "origin": "0x0064F524", "spans": ["0x0064F524-0x0064F9F5"], "symbol": "___strgtold12", "unit": "../build/intel/mt_obj/strgtold.obj"},
+//     {"evidence": "Original runtime identity and full FILE span 0x006456E4-0x00645764; this pinned LIBCMT member owns the decorated EH vector destructor iterator and its original target at 0x00645764 is __ArrayUnwind. This records dependency ownership only; original final-link selection, complete relocation closure, and runtime/unwind equivalence remain unknown.", "origin": "0x006456E4", "spans": ["0x006456E4-0x00645764"], "symbol": "??_M@YGXPAXIHP6EX0@Z@Z", "unit": "build/intel/mt_obj/ehvecdtr.obj"},
+//     {"evidence": "Original runtime identity and full FILE span 0x006457C2-0x00645844; this pinned LIBCMT member owns the decorated EH vector constructor iterator. The original Wave_Device typed member array reaches this helper. This records dependency ownership only; original final-link selection and runtime/unwind equivalence remain unknown.", "origin": "0x006457C2", "spans": ["0x006457C2-0x00645844"], "symbol": "??_L@YGXPAXIHP6EX0@Z1@Z", "unit": "build/intel/mt_obj/ehvecctr.obj"}
 //   ]
 // }
 // RECOVERY_COMPONENT_END
@@ -147,3 +149,53 @@
 // Historical seed note (inert): catalogued seed symbol hypothesis: ?sub_64d77e@@YAHPAX0@Z (historical only; not the current toolchain symbol)
 // Historical seed note (inert): the seed declared a two-pointer __cdecl wrapper; it called ___strgtold12 with a three-DWORD local, the address of its second argument, that argument, and four zero arguments, then called sub_64d73b with the local result and first input
 // Historical seed note (inert): catalogued seed call targets: 0x0064F524 (___strgtold12) and 0x0064D73B (sub_64d73b)
+/*
+Purpose: Retain the original CRT vector-destructor runtime identity ??_M:
+         destroy `count` elements of `size` bytes back to front, with the
+         runtime's __ArrayUnwind exception behavior. The handwritten
+         project loop was removed after its only direct source use moved
+         to a typed WaveControlGroup member array. Runtime-provider
+         equivalence to the pinned image remains unqualified.
+
+// RECOVERY_ROLE: SCAFFOLD Transitional leaf collection, not completed genuine owner recovery; preserve body evidence during owner migration.
+// ORIGINAL: 0x006456E4 ??_M@YGXPAXIHP6EX0@Z@Z 0x006456E4-0x00645764 FILE
+// Historical project symbol: ?VectorDtorIterator@@YGXPAXIHP6IX0@Z@Z
+// Historical project-loop location: src/vector_teardown.cpp; no active
+// project-defined VectorDtorIterator implementation remains.
+// TRIED: explicit __thiscall keyword on a free-function-pointer typedef
+//            (C4234 reserved keyword); member-function-pointer/union shim
+//            instead. MISMATCH #12 'and' vs 'mov' remains open.
+// size      128 bytes
+// prototype void (__stdcall ??_M@YGXPAXIHP6EX0@Z@Z)(void*, unsigned int size, int count, void (__thiscall *)(void*))
+// callers   160   call targets   2
+// kind      library
+// flags     lib;frame;sp_ready;purged_ok
+// calls     0x006456E4 0x00645764
+// indirect  0x00645726
+Return Value: n/a
+Status: Complete
+*/
+/*
+Purpose: Retain the original CRT vector-constructor runtime identity ??_L:
+         construct `count` elements of `size` bytes front to back and
+         unwind the constructed prefix through __ArrayUnwind if a
+         constructor throws. The handwritten project loop was removed
+         after its only direct source use moved to a typed
+         WaveControlGroup member array. Runtime-provider equivalence to
+         the pinned image remains unqualified.
+
+// RECOVERY_ROLE: SCAFFOLD Transitional leaf collection, not completed genuine owner recovery; preserve body evidence during owner migration.
+// ORIGINAL: 0x006457C2 ??_L@YGXPAXIHP6EX0@Z1@Z 0x006457C2-0x00645844 FILE
+// Historical project symbol: ?VectorCtorIterator@@YGXPAXIHP6IX0@Z1@Z
+// Historical project-loop location: src/vector_teardown.cpp; no active
+// project-defined VectorCtorIterator implementation remains.
+// size      130 bytes
+// prototype void (__stdcall ??_L@YGXPAXIHP6EX0@Z1@Z)(void*, unsigned int size, int count, void (__thiscall *)(void*), void (__thiscall *)(void*))
+// callers   132   call targets   2
+// kind      library
+// flags     lib;frame;hidden;sp_ready;purged_ok
+// calls     0x00645764 0x006457C2
+// indirect  0x006457FD
+Return Value: n/a
+Status: Complete
+*/

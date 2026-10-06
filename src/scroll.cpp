@@ -2045,3 +2045,27 @@ Purpose: Step the receiver back to the subobject ??_GScroll@@UAEPAXI@Z expects,
 Return Value: the forwarded call's
 Status: Complete
 */
+
+/*
+// ORIGINAL: 0x006051C0 sub_6051c0 0x006051C0-0x006051CE BYTE_EXACT
+// symbol    _sub_6051c0
+// size      14 bytes
+// prototype
+// callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
+// indirect  0x006051C2
+Return Value: n/a
+Status: Complete
+*/
+// `__declspec(dllimport)` on GetSystemMetrics is load-bearing: without it
+// VC6 emits a direct `call rel32` (5 bytes) where the original calls
+// indirectly through the import slot at 0x00669334 with `call dword ptr`
+// (6 bytes). The declaration used to sit here for that reason; it comes from
+// the scaffold now (emit_translation_unit.WIN32_IMPORTS), which carries the
+// same `__declspec(dllimport)` for the same reason.
+
+extern "C" void __cdecl sub_6051c0() {
+    ScrollDefaultThickness = GetSystemMetrics(3);
+}

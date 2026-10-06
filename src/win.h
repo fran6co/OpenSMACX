@@ -626,7 +626,7 @@ class Win : public AutoSound {
   virtual void vslot_30(int = 0) {}  // 0x00404270
   virtual void vslot_31(int = 0, int = 0) {}  // 0x00404260
   virtual void vslot_32(int = 0, int = 0) {}  // 0x00404260
-  virtual void vslot_33(int = 0, int = 0) {}  // 0x00404260
+  virtual void on_nc_left_down(int = 0, int = 0) {}  // slot 33, 0x00404260
   virtual void vslot_34(int = 0, int = 0) {}  // 0x00404260
   virtual void vslot_35(int = 0, int = 0) {}  // 0x00404260
   virtual void vslot_36(int = 0, int = 0) {}  // 0x00404260
@@ -755,6 +755,8 @@ class Win : public AutoSound {
   Buffer *redraw_nc_buffer(int index);
   void __cdecl remove_parent(Win* window);
   void set_border_thickness(int thickness);
+
+  void set_field_128(int value);
   void set_parent_dialog(Win *dialog);
   void __cdecl update();
   void __cdecl update_zorder();

@@ -434,7 +434,7 @@ class Console : public MapWin {
 
  public:
   // 0x0050FB10, a pending_bodies forwarder.
-  void on_nc_left_down(int a1, int a2);
+  void on_nc_left_down(int a1, int a2) override;
 
  public:
   // 0x0050F680, hit-tests the Console's splitter and caption regions.

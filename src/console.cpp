@@ -6683,6 +6683,7 @@ Purpose: A non-client left press on the console frame: the minimize and
          claiming the shared input-focus pair when nothing owns it yet.
 
 // ORIGINAL: 0x0050FB10 ?on_nc_left_down@Console@@QAEXHH@Z 0x0050FB10-0x0050FE69 FILE
+// symbol    ?on_nc_left_down@Console@@UAEXHH@Z
 // size      857 bytes
 // prototype void (__thiscall ?on_nc_left_down@Console@@QAEXHH@Z)(Console* this, int, int)
 // callers   0   call targets   3
@@ -13673,3 +13674,8 @@ native_done:
 return 1;
 
 }
+
+// ORIGINAL: 0x0051DF00 ?on_nc_left_down@thunk1_Console@@QAEXHH@Z 0x0051DF00-0x0051DF08 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: constructor span at 0x0050F460 stores table 0x0066EC18; exact cell 0x0066EC9C is 0x0051DF00.", "The complete original thunk bytes at 0x0051DF00 tail to pinned target 0x0050FB10.", "Fresh full build build-fpcqf1x8: ??_7Console@@6BWin@@@+0x84 COFF relocation selects ?on_nc_left_down@Console@@$4PPPPPPPM@A@AEXHH@Z; thunk bytes and its unique relative tail relocation target ?on_nc_left_down@Console@@UAEXHH@Z.", "The owner compile receipt inputs were unchanged and match current files at proposal emission; selected output is observed in the fresh MAP/PE but this proposal does not claim complete link-preservation acceptance.", "Historical source kind `game`, original identity/name, complete span, and parsed claims/lessons are checked unchanged after native-writer readback."], "reason": "The pinned Console constructor at 0x0050F460 installs the ??_7Console@@6BWin@@@ address point; its exact slot cell at +0x84 selects original identity 0x0051DF00. The fresh full-build owner COFF vftable relocation selects the compiler-generated thunk ?on_nc_left_down@Console@@$4PPPPPPPM@A@AEXHH@Z, whose unique physical relative tail targets ?on_nc_left_down@Console@@UAEXHH@Z. The original marker name and complete source history remain attached to this FILE identity."}
+// kind      game
+// symbol    ?on_nc_left_down@Console@@$4PPPPPPPM@A@AEXHH@Z

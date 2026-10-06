@@ -278,7 +278,7 @@ INT_STUB(treaty_on) INT_STUB(pact_ends) INT_STUB(swap)
 INT_STUB(mention_prototypes) INT_STUB(pledge_truce)
 INT_STUB(text_get) INT_STUB(X_text_open) INT_STUB(exec)
 INT_STUB(wait_task) INT_STUB(timeGetTime) INT_STUB(has_tech_call)
-char *TextBufferGetPtr; INT_STUB(leaf_00559210_redirect)
+char *TextBufferGetPtr;
 char *_itoa(int value, char *buffer, int radix) {
     assert(radix == 10); sprintf(buffer, "%d", value); return buffer;
 }

@@ -14769,3 +14769,20 @@ after_popup:
         }
     }
 }
+
+/*
+// ORIGINAL: 0x004E7DB0 sub_4e7db0 0x004E7DB0-0x004E7DBD BYTE_EXACT
+// symbol    _sub_4e7db0
+// size      13 bytes
+// prototype
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: zero
+Status: Complete
+*/
+extern "C" int __cdecl sub_4e7db0() {
+    TileYieldRestricted = 0;
+    return 0;
+}

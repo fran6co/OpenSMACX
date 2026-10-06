@@ -8703,7 +8703,7 @@ void Win::left_down_event(int x, int y, int from_parent) {
             }
         }
     } else {
-        this->vslot_33(x, y);
+        this->on_nc_left_down(x, y);
         Win *child = reinterpret_cast<Win *>(val_21_);
         if (child != 0) {
             int r = reinterpret_cast<Sound *>(child)->is_playing();
@@ -12989,4 +12989,35 @@ void __cdecl do_all_keyboard() {
     }
     MsgStatus = 0;
     do_net();
+}
+
+
+/*
+Purpose: Copy 1 argument(s) into field(s) of `this`.
+         Emitted by tools/generate_field_accessors.py from
+
+             mov eax, dword ptr [esp + 4] / mov dword ptr [ecx + 0x128], eax / ret 4
+
+         The name is the ADDRESS, not an invention, and `self` is a void
+         pointer because this body needs `this` to be nothing more than a
+         pointer and an offset - the class it belongs to is not established.
+         The adapter declares 1 stack dword(s) so it
+         cleans 4 bytes, taken from the body's own `ret` -
+         the only statement of this function's arity that exists, since it has
+         no mangled name. Declaring fewer would leave them on the caller's
+         stack.
+// ORIGINAL: 0x005F05C0 sub_5f05c0 0x005F05C0-0x005F05CD BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence":["pinned 0x005F05C0 stores its one stack argument at receiver+0x128 and returns","the pinned Win constructor at 0x005EB50F writes receiver+0x128; docs/recovery/member-accesses.csv attributes that access to Win","src/win.h declares Win::field_128_ at +0x128","the neighboring pinned entries 0x005F0580, 0x005F05D0 and 0x005F0610 are Win methods already owned in src/win.cpp","the prior RECOVERY_ROLE/SCAFFOLD and emitted symbol ?field_accessor_005f05c0_redirect@@YIXPAX0H@Z described this transitional adapter, not a qualified current owner or emitted method symbol","original call-site and table ownership evidence remains unresolved in this proposal; absence from the current mapped-caller list is not treated as evidence that the function had no caller or owner","the current emitted method symbol remains unqualified until the coordinator captures fresh physical COFF evidence"],"reason":"Home the scalar store on the existing Win owner and its source-declared +0x128 member. Keep the method name offset-derived and its emitted symbol unqualified pending fresh object evidence; preserve open original caller/type questions."}
+// symbol    ?set_field_128@Win@@QAEXH@Z
+// size      13 bytes
+// prototype
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void Win::set_field_128(int value) {
+    field_128_ = static_cast<uint32_t>(value);
 }

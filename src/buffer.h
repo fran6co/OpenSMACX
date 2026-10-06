@@ -525,6 +525,7 @@ void draw_dest_unk1(Buffer *, int, int, int, int, unsigned char *);
   void line(int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8,
            int a9);
   void line(int x1, int y1, int x2, int y2, int color);
+  int fill_line(int x1, int y1, int x2, int y2, char fill_colour);
   // THE PATTERNED RUN PAIR, 0x005E10C0 and 0x005E1350
   // (`?hline@Buffer@@QAEXHHHHHHHH@Z` / `?vline@Buffer@@QAEXHHHHHHHH@Z`): the
   // clipped writers above with a dash pattern - two colours, an on length,
