@@ -20,6 +20,8 @@
 #include "alpha.h"
 #include "technology.h"
 #include "veh.h"
+#include "base.h"
+#include "faction.h"
 
 // RECOVERY_OBJECT: v1 0x009B86A0 ?StringTemp@@3PADA
 char StringTemp[1032];   // 0x009B86A0
@@ -349,4 +351,116 @@ void __cdecl say_techs(void *output, int tech_id, int with_detail) {
 // RECOVERY_BINDING: v1 {"evidence": ["git:bb3b3233842b050fb0840e1cc6c226e8f30f7055:src/recovered/units/005a58b0.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tasks/game-logic-seed-owner-coverage.json"], "reason": "strings.cpp / strings.h: append one ordinary space to the existing StringTemp via strcat. Complete reviewed source translation; historical claims remain restoration obligations, not proof of current matching, linked preservation or game acceptance."}
 void __cdecl space() {
     strcat(StringTemp, " ");
+}
+
+/*
+Purpose: Append a facility's name to a scratch text: the facility label from
+         base.h's Facility table (0x30-byte records, name first), and with
+         the cost flag the " (" + cost-label + ")" tail whose label is read
+         out of the label table through Labels.strings_ptr + 0x26C and
+         parked in the shared StringTemp.
+
+// ORIGINAL: 0x00590910 ?say_facility@@YAXPAXHH@Z 0x00590910-0x0059098E FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence":["src/strings.h declares say_facility; strings.cpp owns StringTable and StringTemp and already includes alpha/technology data declarations.","The pinned label word at byte offset 0x26C is dword index 0x9B; existing label_get(0x9B) performs the same LPSTR-table lookup through Labels and StringTable.","The one-space/open/close strings are emitted as source-owned literals; each strcat stays in its original order."],"reason":"Move the existing free formatter into the real string-table owner, use its existing typed label_get for index 0x9B, and source-own the bounded literals without changing append order or StringTemp destination."}
+// size      126 bytes
+// prototype void (__cdecl ?say_facility@@YAXPAXHH@Z)(int8* text, int32 facilityID, int32 withCost)
+// callers   1   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x006169A0 0x00645470
+// notes     Seed provenance (LEVER string-routines-are-calls): the string
+//           routines must stay real calls - an earlier inline expansion lost
+//           five bytes (121 vs 126, MISMATCH at #7) - which stdafx.h's
+//           project-wide `#pragma function(strcat, ...)` provides.
+Return Value: n/a
+Status: Measured BYTE_EXACT here in place (wave 8 record-then-retire); the
+        seed src/unrecovered/00590910.cpp is retired and its claim lives on
+        the marker above. The spelling is the retained seed's own statement
+        order: the receiver hoisted into a local before the Facility index,
+        and the second label read split into int locals before its get -
+        the original materializes StringTable's receiver in ECX ahead of the
+        Facility address math, and the tail's value lands in EAX only when
+        the label walk is stated stepwise (say_ability/say_society, whose
+        scratch borrows ECX, keep the fused form).
+*/
+void __cdecl say_facility(void *text, int facility_id, int with_cost) {
+    Strings *strings = &StringTable;
+    int name = reinterpret_cast<int>(Facility[facility_id].name);
+    strcat(static_cast<char *>(text),
+           reinterpret_cast<char *>(strings->get(name)));
+    if (with_cost != 0) {
+        strcat(static_cast<char *>(text), " ");
+        strcat(static_cast<char *>(text), "(");
+        char *detail = label_get(0x9B);
+        strcat(StringTemp, detail);
+        strcat(static_cast<char *>(text), ")");
+    }
+}
+
+/*
+Purpose: Append an ability's name, and with the flag the " (" + detail +
+         ")" tail, reading the ability label from veh.h's Ability table
+         (0x1C-byte records, name first) and the detail label through
+         Labels.strings_ptr + 0x290.
+
+// ORIGINAL: 0x00590AA0 ?say_ability@@YAXPAXHH@Z 0x00590AA0-0x00590B22 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence":["src/strings.h declares say_ability; strings.cpp owns StringTable/StringTemp and includes veh.h for Ability.","The pinned label word at byte offset 0x290 is dword index 0xA4; existing label_get(0xA4) performs the same LPSTR-table lookup.","The one-space/open/close strings are emitted as source-owned literals in the original strcat order."],"reason":"Move the existing formatter beside StringTable and express the observed label index through label_get(0xA4); preserve call order, index/flag quirks, StringTemp destination and historical claim."}
+// size      130 bytes
+// prototype void (__cdecl ?say_ability@@YAXPAXHH@Z)(int8* text, int32 abilityID, int32 withDetail)
+// callers   0   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x006169A0 0x00645470
+Return Value: n/a
+Status: Measured BYTE_EXACT here in place (wave 8 record-then-retire); the
+        seed src/unrecovered/00590aa0.cpp is retired and its claim lives on
+        the marker above. The Ability index is computed first and the
+        receiver materialized at the get, because the original needs ECX
+        for the 7-int scale and loads StringTable after it.
+*/
+void __cdecl say_ability(void *text, int ability_id, int with_detail) {
+    int name = reinterpret_cast<int>(Ability[ability_id].name);
+    char *s1 = StringTable.get(name);
+    strcat(static_cast<char *>(text), s1);
+    if (with_detail != 0) {
+        strcat(static_cast<char *>(text), " ");
+        strcat(static_cast<char *>(text), "(");
+        char *detail = label_get(0xA4);
+        strcat(StringTemp, detail);
+        strcat(static_cast<char *>(text), ")");
+    }
+}
+
+/*
+Purpose: Append a social category's name, and with the flag the " (" +
+         model + ")" tail, reading the category label from faction.h's
+         SocialCategories table (0xD4-byte records, type first) and the
+         model label through Labels.strings_ptr + 0x114.
+
+// ORIGINAL: 0x00590A10 ?say_society@@YAXPAXHH@Z 0x00590A10-0x00590A93 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence":["src/strings.h declares say_society; strings.cpp owns StringTable/StringTemp; src/faction.h declares SocialCategories.","The pinned label word at byte offset 0x114 is dword index 0x45; existing label_get(0x45) performs the same LPSTR-table lookup.","The one-space/open/close strings are emitted as source-owned literals in the original strcat order."],"reason":"Move the existing formatter beside StringTable, use label_get(0x45), and include the actual faction table declaration; preserve call order, model flag and claim."}
+// size      131 bytes
+// prototype void (__cdecl ?say_society@@YAXPAXHH@Z)(int8* text, int32 societyID, int32 withModel)
+// callers   0   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x006169A0 0x00645470
+Return Value: n/a
+Status: Measured BYTE_EXACT here in place (wave 8 record-then-retire); the
+        seed src/unrecovered/00590a10.cpp is retired and its claim lives on
+        the marker above. Like say_ability the 0xD4 scale borrows ECX, so
+        the receiver materializes at the get despite the hoisted local.
+*/
+void __cdecl say_society(void *text, int society_id, int with_model) {
+    Strings *strings = &StringTable;
+    int type = reinterpret_cast<int>(SocialCategories[society_id].type);
+    strcat(static_cast<char *>(text),
+           reinterpret_cast<char *>(strings->get(type)));
+    if (with_model != 0) {
+        strcat(static_cast<char *>(text), " ");
+        strcat(static_cast<char *>(text), "(");
+        char *model = label_get(0x45);
+        strcat(StringTemp, model);
+        strcat(static_cast<char *>(text), ")");
+    }
 }

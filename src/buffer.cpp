@@ -10038,3 +10038,78 @@ int Buffer::load_pcx_from_source(PcxInputView *source, Palette *palette,
   return load_pcx(source->data_, source->size_, palette, color_base,
                   color_count);
 }
+
+/*
+Purpose: The Buffer draw wrapper whose descriptor is the shared surface
+         Sprite (g_BUFFER_SPRITE, 0x009B3A50), the draw_dest_source member:
+         lock the surface (or reuse the DIB bits), publish this buffer's
+         geometry into the sprite descriptor the way every draw_* sibling
+         does, release the lock when this body holds the last one, then
+         draw through the sprite's source-remap entry and clear the bits
+         slot it published.
+
+// ORIGINAL: 0x005D8DF0 ?draw_dest_source@Buffer@@QAEHPAVBuffer@@HHHPAE@Z 0x005D8DF0-0x005D8EDE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence":["buffer.h declares the real draw_dest_source overload; buffer.cpp owns Buffer drawing siblings and g_BUFFER_SPRITE.","The full existing body preserves lock/DIB publication, Sprite draw and post-call clear order; its retained seed lesson explains the historical claim."],"reason":"Move this existing Buffer member beside its siblings and owner global; preserve the complete seed provenance and byte claim as an obligation."}
+// symbol    ?draw_dest_source@Buffer@@QAEHPAV1@HHHPAE@Z
+//           The image spells the leading `Buffer *` as `PAVBuffer@@`; VC6 emits
+//           the back-reference `PAV1@` for the same type, the same fact the
+//           0x005D8A30 sibling records. Bytes are unchanged.
+// size      238 bytes
+// Deleted seed provenance: git:1ed59304110fc2098fb1dd11457fa5b0074169bd:src/unrecovered/005d8df0.cpp
+Status: Coverage promotion of the retained seed (src/unrecovered/005d8df0.cpp).
+        The seed's dropped-claim note is the reason this body is here: it was
+        byte-exact as a scaffold and lost its claim the day Buffer became
+        polymorphic, with the instruction to promote it into the file that
+        owns its class. The declaration already lives in buffer.h beside the
+        other draw_* overloads; the body is the byte-exact sibling spelling
+        of 0x005D8A30 (Buffer::draw_dest) with this member's own tail - a5 is
+        `unsigned char *` on both sides, so the sprite call forwards it with
+        no cast.
+*/
+extern Sprite g_BUFFER_SPRITE;  // 0x009B3A50, buffer.cpp's shared surface Sprite
+
+int Buffer::draw_dest_source(Buffer *source, int transparent_in, int x, int y,
+                             unsigned char *bits) {
+    int transparent = transparent_in;
+    if (surface_ == 0) {
+        if (transparent_in == -1) {
+            transparent = WinFillColour;
+        }
+        locked_bits_ = dib_bits_;
+        if (locked_bits_ != nullptr) {
+            surface_lock_count_ = surface_lock_count_ + 1;
+        }
+        g_BUFFER_SPRITE.pcBits_ = static_cast<char *>(locked_bits_);
+        g_BUFFER_SPRITE.iSpriteWidth2_ = stride_;
+        g_BUFFER_SPRITE.iSpriteWidth_ = dib_.bmiHeader.biWidth;
+        g_BUFFER_SPRITE.iSpriteHeight_ = -dib_.bmiHeader.biHeight;
+        g_BUFFER_SPRITE.iWidth_ = dib_.bmiHeader.biWidth;
+        g_BUFFER_SPRITE.iHeight_ = -dib_.bmiHeader.biHeight;
+        g_BUFFER_SPRITE.iLeftOffset_ = 0;
+        g_BUFFER_SPRITE.iTopOffset_ = 0;
+        g_BUFFER_SPRITE.cTransparentIndex_ = (unsigned char)transparent;
+        g_BUFFER_SPRITE.fObj1Exists_ = 0;
+
+        if (surface_ == 0) {
+            surface_lock_count_ = surface_lock_count_ - 1;
+            if ((int)surface_lock_count_ > 0) {
+                goto tail;
+            }
+        } else {
+            surface_lock_count_ = surface_lock_count_ - 1;
+            if (locked_bits_ == nullptr || (int)surface_lock_count_ > 0) {
+                goto tail;
+            }
+            surface_->Unlock(locked_bits_);
+        }
+        locked_bits_ = nullptr;
+        surface_lock_count_ = 0;
+    }
+tail:
+    {
+        int result = g_BUFFER_SPRITE.draw_dest_source(source, transparent_in,
+                                                      x, y, bits);
+        g_BUFFER_SPRITE.pcBits_ = 0;
+        return result;
+    }
+}

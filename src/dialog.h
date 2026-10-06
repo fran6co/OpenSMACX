@@ -160,7 +160,7 @@ class Dialog {
   int get_selected_id();
   int pos_to_id(int position);
   // Four of Dialog's seven init overloads; the four SpriteBox::init forwards
-  // to. All unrecovered - declared so the recovered callers can name them.
+  // to. Three bodies are in dialog.cpp; init(RECT*, int) remains unfinished.
   int init(RECT *group_id, int flags);  // ?init@Dialog@@QAEHPAURECT@@H@Z  0x00609470
   int init(int file_name);            // ?init@Dialog@@QAEHH@Z           0x006095F0
   int init(Heap *file_name);          // ?init@Dialog@@QAEHPAUHeap@@@Z   0x006098D0
@@ -172,7 +172,7 @@ class Dialog {
   int init(int a1, int a2, int a3, int a4, Heap *a5);
   // ?init@Dialog@@QAEHHHHHPAUHeap@@@Z  0x00609730
   //
-  // Initializer seeds remain separate recovery work. StringStruct now owns
+  // Remaining initializer seeds are separate recovery work. StringStruct owns
   // typed insertion/removal hooks and allocator-aware node deletion; close()
   // uses that cleanup without destroying the embedded list. The primary list
   // table has two hook slots, separate from the allocation-base destructor.

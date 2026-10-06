@@ -50,7 +50,6 @@
 #include "map.h"
 #include "general.h"
 #include "council.h"
-#include "spying_recovery.h"
 #include "text.h"
 
 // Shared dependencies identified by the original animation calls. The daemon
@@ -3736,4 +3735,36 @@ void __cdecl sat_attack(int attacker, int target, int kind) {
     }
     diplo_unlock();
     // Popup's genuine destructor closes and tears down all member/base state.
+}
+
+/*
+// ORIGINAL: 0x0049FFC0 ?sat_anim_daemon@@YAXH@Z 0x0049FFC0-0x0049FFCD BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence":["ReportWin declares sat_anim(); reportwin.cpp already declares this callback and passes it to Time::init with the ReportWin payload.","The original identity's int callback ABI and current pointer-typed source symbol are both retained as facts; native symbol qualification is still required."],"reason":"Move the existing callback body into the ReportWin owner TU, preserving its typed dispatch and historical ABI mismatch evidence."}
+// symbol    ?sat_anim_daemon@@YAXPAVReportWin@@@Z
+// size      13 bytes
+// prototype
+// callers   0   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0049FE40
+Status: Complete
+*/
+void __cdecl sat_anim_daemon(ReportWin *a1) {
+    a1->sat_anim();
+}
+
+/*
+// ORIGINAL: 0x004A0250 ?sat_expl_daemon@@YAXH@Z 0x004A0250-0x004A025D BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence":["ReportWin declares exp_anim(); reportwin.cpp already declares this callback for its Time::init callback path.","The original int callback ABI versus pointer-typed source fact remains a native qualification obligation."],"reason":"Move the existing callback into reportwin.cpp unchanged; this does not independently prove the callback's original parameter type."}
+// symbol    ?sat_expl_daemon@@YAXPAVReportWin@@@Z
+// size      13 bytes
+// prototype
+// callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004A0100
+Status: Complete
+*/
+void __cdecl sat_expl_daemon(ReportWin *a1) {
+    a1->exp_anim();
 }

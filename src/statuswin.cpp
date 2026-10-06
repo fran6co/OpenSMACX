@@ -38,9 +38,9 @@
 #include "console.h"
 #include "datalink.h"
 #include "game.h"
+#include "faction.h"  // spying() is owned by the faction API
 #include "netdaemon.h"
 #include "popmenu.h"
-#include "spying_recovery.h"
 #include "tutwin.h"
 #include "veh.h"
 

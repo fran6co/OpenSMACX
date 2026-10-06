@@ -246,6 +246,7 @@ set(OPENSMACX_SOURCES
     src/stringbox.cpp
     src/stringlist.cpp
     src/stringstruct.cpp
+    src/name_table.cpp
     src/strings.cpp
     src/technology.cpp
     src/temp.cpp

@@ -93,7 +93,7 @@ class ReportIf : public SubInterface {
   void close_score();
   // PAUGraphicWin@@HHPAURECT@@, per the catalogued mangled name.
   // 0x004A4060  ?bl_anim@ReportIf@@QAEXXZ - public, __thiscall, void(void),
-  // unrecovered. The bl_daemon thunk in leaf_recoveries.cpp calls it.
+  // implemented in reportif.cpp; its bl_daemon adapter calls it.
   void bl_anim();
   // 0x004A3950  ?report@ReportIf@@QAEXHHH@Z - public, __thiscall,
   // void(int, int, int). on_iface_left_click and ReportWin's
@@ -310,6 +310,6 @@ void __cdecl report_score(int);
 void __cdecl report_intel(int selection);
 
 
-// ReportIf::bl_anim (0x004A4060) is now owned by reportif.cpp and uses the
+// ReportIf::bl_anim (0x004A4060) is owned by reportif.cpp and uses the
 // declared sprite run, animation state, WorldClimateWorldWin buffer and
-// ReportWin timer storage. leaf_recoveries.cpp calls the typed member.
+// ReportWin timer storage. reportif.cpp's bl_daemon adapter calls it.

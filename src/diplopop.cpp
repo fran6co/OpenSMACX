@@ -30,8 +30,8 @@
 #include "strings.h"
 #include "sprite.h"
 #include "game.h"
+#include "faction.h"  // spying() is owned by the faction API
 #include "console.h"
-#include "spying_recovery.h"
 
 void __cdecl report_intel(int selection);
 void __cdecl slide_show(GraphicWin *window, int mode);

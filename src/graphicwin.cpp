@@ -1600,3 +1600,41 @@ void GraphicWin::blit_palette_pattern_rows() {
 void GraphicWin::blit_palette_pattern_rows_entry() {
     blit_palette_pattern_rows();
 }
+
+/*
+Purpose: Update a screen rectangle of this window: build the client
+         rectangle from the four arguments, hand it to update_window,
+         convert it to screen coordinates and flip exactly that region to
+         the display - the synchronous variant soft_update is the deferred
+         counterpart of.
+
+// ORIGINAL: 0x005D55D0 ?update@GraphicWin@@QAEXHHHHPAUGraphicWin@@@Z 0x005D55D0-0x005D562F FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence":["graphicwin.h declares the exact five-argument member; graphicwin.cpp already owns the adjacent update overloads.","The fifth source parameter remains intentionally unused; this move does not change any address-based callers."],"reason":"Move the existing overload to GraphicWin's actual implementation TU, retaining the unused fifth argument and original full body."}
+// symbol    ?update@GraphicWin@@QAEXHHHHPAV1@@Z
+// size      95 bytes
+// prototype void (__thiscall ?update@GraphicWin@@QAEXHHHHPAUGraphicWin@@@Z)(GraphicWin* this, int, int, int, int, GraphicWin*)
+// callers   2   call targets   4
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005ECFE0 0x005EFD20 0x005F74A0 0x005F7E90
+// Homed from src/recovered/units/005d55d0.cpp. The fifth argument is part
+// of the symbol and dead in the body: the image's 95 bytes are the
+// is_visible guard, the rectangle arithmetic (right = x + width,
+// bottom = y + height) and the three Win calls (update_window at
+// 0x005F74A0, client_to_screen(RECT *) at 0x005ECFE0 and the static
+// __cdecl flip at 0x005EFD20, caller-cleaned), nothing else.
+Status: Coverage transcription - unclaimed body
+*/
+void GraphicWin::update(int x, int y, int width, int height,
+                        GraphicWin *source) {
+    if (is_visible()) {
+        RECT rect;
+        rect.left = x;
+        rect.top = y;
+        rect.right = x + width;
+        rect.bottom = y + height;
+        update_window(&rect);
+        client_to_screen(&rect);
+        flip(&rect);
+    }
+}

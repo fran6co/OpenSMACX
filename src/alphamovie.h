@@ -31,6 +31,7 @@ class MCIVideo {
   int load(char *movie_path, Win *target_window, int x, int y);
   void play();  // ?play@MCIVideo@@QAEXXZ  0x006001E0
   void stop();  // ?stop@MCIVideo@@QAEXXZ  0x00600270
+  int is_playing();
   int status();  // 0x006002F0
   // 0x00600330, homed into general.cpp: copies the posted frame into the
   // window's own device context. No catalogue name - `blit_frame` is the
@@ -46,6 +47,7 @@ class MCIVideo {
   // Extent only - this class carries no size assertion, and the bound is a floor.
   // 7 member(s) from the IDA database, 2 named; it starts a member at 0x0, which is where src/ ends.
 
+  // RECOVERY_MEMBER: v1 MCIVideo field_0_ uint32_t 0x0 0x00600320
   uint32_t field_0_;  // 0x0
   // The constructor only zeroes the LOW 16 bits at this offset
   // (`mov word ptr [esi+4], ax`), not the whole dword, so `mciId_` is
@@ -104,6 +106,7 @@ class AlphaMovie : public GraphicWin {
   // alphamovie.cpp from the compatible seed and routed through its embedded
   // MCIVideo member. amovie_project constructs a real AlphaMovie receiver.
   int exec(char *movie_name);
+  bool on_modal();
   // 0x00404310 closes the MCI stream and GraphicWin base in the body;
   // the compiler then destroys the embedded MCIVideo and base naturally.
   ~AlphaMovie();

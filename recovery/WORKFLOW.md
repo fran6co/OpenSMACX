@@ -41,8 +41,9 @@ The deleting/delegation adapter collections and pending-body collection are
 retired. Their identities and remaining obligations live with the actual owners;
 retiring a collection does not qualify every body previously stored there.
 The retirement inventory also includes `original_seam.h`'s original-address
-method machinery, `spying_recovery.h`'s fixed-address table view, and the
-transitional declarations/storage in `temp.*`. These are not all empty files:
+method machinery and the transitional declarations/storage in `temp.*`.
+The retired `spying_recovery.h` fixed-address view is now represented by named
+`PlayersData` members and the genuine faction API. These are not all empty files:
 move genuine behavior and storage to evidence-backed owners before retiring
 them. `vector_teardown.*` mixes a genuine game helper with incomplete CRT
 iterator substitutes; recover or verify the exception-unwind behavior before

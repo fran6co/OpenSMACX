@@ -25,7 +25,6 @@
 #include "strings.h"
 #include "alpha.h"
 #include "messagewin.h"
-#include "spying_recovery.h"
 #include "maininterface.h"
 #include "general.h"
 #include "statuswin.h"  // Shared source-owned layout initialization flags.

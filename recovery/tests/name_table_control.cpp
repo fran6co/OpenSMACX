@@ -40,6 +40,7 @@ static void initialization() {
     assert(table.initialize()==&table);empty(table,0,128);
     assert(table.name_==0&&table.flags_==2&&table.unknown_208_==0&&table.unknown_20c_==0);
     assert(table.unknown_210_==0&&table.unknown_214_==250);
+    assert(table.get_name()==0);
 }
 static void ordinary() {
     NameTable table;table.initialize();
@@ -57,6 +58,7 @@ static void ordinary() {
     assert(deletion_count==before+1);empty(table,0,128);
     char first_name[]="first",second_name[]="second-longer";
     table.set_name(first_name);assert(std::strcmp(table.name_,first_name)==0&&table.name_!=first_name);
+    assert(table.get_name()==table.name_);
     before=deletion_count;table.set_name(second_name);assert(deletion_count==before+1);
     assert(std::strcmp(table.name_,second_name)==0);
     assert(table.clear()==0);assert(table.name_==0);empty(table,0,128);

@@ -149,7 +149,7 @@ class DipEdit : public GraphicWin {
   int width_;   // 0xA14
   int height_;  // 0xA18
   // The faction whose status table row we're viewing. do_check indexes
-  // SpyingStatusTable[faction_index_ * SpyingStatusStride + selected_target_].
+  // PlayersData[faction_index_].diplo_treaties[selected_target_].
   uint32_t faction_index_;  // 0xA1C
   // 0xA20, the IDB's `field_A20`. `?on_selected@DipEdit@@QAEXH@Z` at
   // 0x004DA740 stores its incoming argument straight here:

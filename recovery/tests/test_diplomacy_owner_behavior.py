@@ -113,10 +113,15 @@ enum {
   DAGENDA_DIPLO_PERMANENT=0x2000, RFLAG_ALIEN=0x80,
   SP_EMPATH_GUILD=4
 };
+// Only the fields read/written by these extracted bodies are modeled.
+// Names and types follow src/faction.h; this is not a layout control.
 struct PlayerData {
   uint32_t diplo_treaties[8];
-  int diplo_agenda[8], diplo_spoke[8], diplo_merc[8], diplo_friction[8];
-  int tech_trade_source[MaxTechnologyNum], tech_ranking, ai_fight;
+  int diplo_agenda[8];
+  uint32_t diplo_friction[8];
+  int diplo_spoke[8], diplo_merc[8];
+  char tech_trade_source[92];
+  int tech_ranking, ai_fight;
   uint32_t ranking;
   int major_atrocities;
 };
@@ -127,10 +132,22 @@ struct Player {
   int noun_gender, is_noun_plural, rule_flags;
 };
 struct Base { int faction_id_current; };
+// Narrow host double with the actual nested source-owner path. This is not a
+// GameDataStateStorage ABI/layout proof and has no flat legacy global aliases.
 struct ProjectOwner { int empath_guild_;
  int &empath_guild() { return empath_guild_; }
  const int &empath_guild() const { return empath_guild_; }
 };
+struct LockMaskOwner { uint32_t enable_mask_; };
+struct GameDataStateFieldsOwner {
+  uint32_t game_rules_, game_state_;
+  int diff_level_current_, governor_faction_, sunspot_duration_, turn_current_num_;
+  uint32_t faction_rankings_[MaxPlayerNum];
+  uint32_t ranking_faction_id_unk1_, ranking_faction_id_unk2_;
+  ProjectOwner secret_project_;
+  LockMaskOwner lock_masks_;
+};
+struct GameDataStateOwner { GameDataStateFieldsOwner fields_; };
 struct ConsoleOwner { int faction_id_; };
 struct ParseEvent { int slot, gender, plural; const char *text; };
 struct TreatyEvent { int a, b, flag; };
@@ -150,14 +167,13 @@ struct NetMessage {
 PlayerData PlayersData[MaxPlayerNum];
 Player Players[MaxPlayerNum];
 Base Bases[64];
-ProjectOwner SecretProject;
+GameDataStateOwner GameDataStateStorage;
 ConsoleOwner ConsoleGlobal;
 NetMessage NetMsgPrimary;
-uint32_t LockEnableMask, FactionDiplomacyFlags[MaxPlayerNum];
+uint32_t FactionDiplomacyFlags[MaxPlayerNum];
 uint32_t PendingDiplomacyFlags[MaxPlayerNum][MaxPlayerNum];
-uint32_t FactionRankings[MaxPlayerNum], RankingFactionIDUnk1;
-int IsMultiplayerNet, IsMultiplayerPBEM, GameRules, GameState, GovernorFaction;
-int TurnCurrentNum, DiffLevelCurrent, SunspotDuration, MapLatitudeBounds;
+int IsMultiplayerNet, IsMultiplayerPBEM;
+int MapLatitudeBounds;
 int MapLongitudeBounds, MapLongitude, DiploFocusX, DiploFocusY;
 int GenderDefault, PluralityDefault;
 char StringTemp[4096];
@@ -256,18 +272,19 @@ extern "C" int rand(void) {
 @@ENCOUNTER@@
 static void reset_fixture() {
   memset(PlayersData,0,sizeof(PlayersData)); memset(Players,0,sizeof(Players));
+  memset(&GameDataStateStorage,0,sizeof(GameDataStateStorage));
   memset(Bases,0,sizeof(Bases)); memset(PendingDiplomacyFlags,0,sizeof(PendingDiplomacyFlags));
   memset(FactionDiplomacyFlags,0,sizeof(FactionDiplomacyFlags));
-  memset(FactionRankings,0,sizeof(FactionRankings)); memset(TechOwned,0,sizeof(TechOwned));
+  memset(GameDataStateStorage.fields_.faction_rankings_,0,sizeof(GameDataStateStorage.fields_.faction_rankings_)); memset(TechOwned,0,sizeof(TechOwned));
   memset(TechValues,0,sizeof(TechValues)); memset(InterludeCalls,0,sizeof(InterludeCalls));
   memset(ParseEvents,0,sizeof(ParseEvents)); memset(TreatyEvents,0,sizeof(TreatyEvents));
   memset(TechEvents,0,sizeof(TechEvents)); memset(HasTechQueries,0,sizeof(HasTechQueries));
   memset(CommunicateArgs,0,sizeof(CommunicateArgs)); memset(RandValues,0,sizeof(RandValues));
   for (int i=0;i<MaxPlayerNum;++i) Nouns[i] = (char*)"noun";
   Nouns[1]=(char*)"actor-noun"; Nouns[2]=(char*)"peer-noun";
-  SecretProject.empath_guild()=-1; ConsoleGlobal.faction_id_=0; NetMsgPrimary.count=0; NetMsgPrimary.callback=0;
-  LockEnableMask=0; IsMultiplayerNet=IsMultiplayerPBEM=0; GameRules=GameState=GovernorFaction=0;
-  TurnCurrentNum=0; DiffLevelCurrent=2; SunspotDuration=0; MapLatitudeBounds=MapLongitudeBounds=100;
+  GameDataStateStorage.fields_.secret_project_.empath_guild()=-1; ConsoleGlobal.faction_id_=0; NetMsgPrimary.count=0; NetMsgPrimary.callback=0;
+  GameDataStateStorage.fields_.lock_masks_.enable_mask_=0; IsMultiplayerNet=IsMultiplayerPBEM=0; GameDataStateStorage.fields_.game_rules_=GameDataStateStorage.fields_.game_state_=GameDataStateStorage.fields_.governor_faction_=0;
+  GameDataStateStorage.fields_.turn_current_num_=0; GameDataStateStorage.fields_.diff_level_current_=2; GameDataStateStorage.fields_.sunspot_duration_=0; MapLatitudeBounds=MapLongitudeBounds=100;
   MapLongitude=50; DiploFocusX=DiploFocusY=-1; GenderDefault=PluralityDefault=0;
   StringTemp[0]=0; TutorialWindow.count=0; TutorialWindow.text=0; TutorialAllowed=TRUE; WantsAttack=FALSE;
   ParseCount=TreatyCount=NetTreatyCount=SetTreatyCount=PactCount=0;
@@ -301,40 +318,40 @@ static void test_trade_direction_and_query_order() {
   assert(TechEvents[1].faction==2 && TechEvents[1].tech==8);
 }
 static void test_comm_pbem_row_and_network_callback_reload() {
-  reset_fixture(); IsMultiplayerPBEM=1; LockEnableMask=1u<<1; ConsoleGlobal.faction_id_=0;
+  reset_fixture(); IsMultiplayerPBEM=1; GameDataStateStorage.fields_.lock_masks_.enable_mask_=1u<<1; ConsoleGlobal.faction_id_=0;
   comm_check(1,2);
   assert(PendingDiplomacyFlags[1][2]==3u && PendingDiplomacyFlags[2][1]==0u);
   reset_fixture(); IsMultiplayerNet=1; ConsoleGlobal.faction_id_=1;
-  LockEnableMask=(1u<<1)|(1u<<2); NetMsgPrimary.callback=cb_change_console;
+  GameDataStateStorage.fields_.lock_masks_.enable_mask_=(1u<<1)|(1u<<2); NetMsgPrimary.callback=cb_change_console;
   comm_check(1,2);
   assert(NetMsgPrimary.count==2);
   assert(strcmp(NetMsgPrimary.events[0].label,"NETMET")==0);
   assert(strcmp(NetMsgPrimary.events[1].label,"NETMET")==0);
 }
 static void test_war_unpact_notice_bit() {
-  reset_fixture(); ConsoleGlobal.faction_id_=0; GovernorFaction=7;
+  reset_fixture(); ConsoleGlobal.faction_id_=0; GameDataStateStorage.fields_.governor_faction_=7;
   PlayersData[1].diplo_treaties[2]=DTREATY_PACT;
   PlayersData[0].diplo_treaties[1]=0x00001000u;
   enemies_unpact(1,2);
   assert(NetMsgPrimary.count==1 && strcmp(NetMsgPrimary.events[0].label,"ENEMYPACTENDS")==0);
-  reset_fixture(); ConsoleGlobal.faction_id_=0; GovernorFaction=7;
+  reset_fixture(); ConsoleGlobal.faction_id_=0; GameDataStateStorage.fields_.governor_faction_=7;
   PlayersData[1].diplo_treaties[2]=DTREATY_PACT;
   PlayersData[0].diplo_treaties[1]=0x00100000u;
   enemies_unpact(1,2); assert(NetMsgPrimary.count==0);
-  reset_fixture(); ConsoleGlobal.faction_id_=0; GovernorFaction=7;
+  reset_fixture(); ConsoleGlobal.faction_id_=0; GameDataStateStorage.fields_.governor_faction_=7;
   PlayersData[0].diplo_treaties[1]=0x00001000u;
   enemies_war(1,2);
   assert(NetMsgPrimary.count==1 && strcmp(NetMsgPrimary.events[0].label,"ENEMYWAR")==0);
-  reset_fixture(); ConsoleGlobal.faction_id_=0; GovernorFaction=7;
+  reset_fixture(); ConsoleGlobal.faction_id_=0; GameDataStateStorage.fields_.governor_faction_=7;
   PlayersData[0].diplo_treaties[1]=0x00100000u;
   enemies_war(1,2); assert(NetMsgPrimary.count==0);
 }
 static void test_encounter_uses_full_map_bounds() {
-  reset_fixture(); TurnCurrentNum=10; MapLatitudeBounds=50; MapLongitudeBounds=100; MapLongitude=50;
+  reset_fixture(); GameDataStateStorage.fields_.turn_current_num_=10; MapLatitudeBounds=50; MapLongitudeBounds=100; MapLongitude=50;
   Players[1].rule_flags=Players[2].rule_flags=RFLAG_ALIEN;
   encounter(1,2,75,49,0,0);
   assert((PlayersData[1].diplo_treaties[2]&0x40000000u)!=0);
-  reset_fixture(); TurnCurrentNum=10; MapLatitudeBounds=50; MapLongitudeBounds=100; MapLongitude=50;
+  reset_fixture(); GameDataStateStorage.fields_.turn_current_num_=10; MapLatitudeBounds=50; MapLongitudeBounds=100; MapLongitude=50;
   Players[1].rule_flags=Players[2].rule_flags=RFLAG_ALIEN;
   encounter(1,2,100,49,0,0);
   assert((PlayersData[1].diplo_treaties[2]&0x40000000u)==0);
@@ -372,7 +389,7 @@ static void test_treaty_direct_noun_slots_are_not_adjectives() {
   assert(strcmp(ParseEvents[1].text,"peer-noun")==0);
 }
 static void test_treaty_initial_slot_six_uses_actor_noun() {
-  reset_fixture(); ConsoleGlobal.faction_id_=3; DiffLevelCurrent=2;
+  reset_fixture(); ConsoleGlobal.faction_id_=3; GameDataStateStorage.fields_.diff_level_current_=2;
   PlayersData[1].diplo_treaties[2]=DTREATY_TRUCE; RandValues[0]=0; RandValueCount=1;
   PlayersData[3].diplo_treaties[1]=DTREATY_PACT;
   enemies_treaty(1,2,0);
@@ -417,7 +434,7 @@ HARNESS = HARNESS.replace(
     "  assert(ParseCount < 256);\n"
     "  ParseEvents[ParseCount++] = ParseEvent{slot, gender, plural, text};\n"
     "  if (ParseCount == ParseMutationCall) {\n"
-    "    LockEnableMask = static_cast<uint32_t>(ParseMutationMask);\n"
+    "    GameDataStateStorage.fields_.lock_masks_.enable_mask_ = static_cast<uint32_t>(ParseMutationMask);\n"
     "    ConsoleGlobal.faction_id_ = ParseMutationFaction;\n"
     "    Players[ParseMutationRuleFaction].rule_flags |= ParseMutationRuleFlags;\n"
     "  }\n"
@@ -451,7 +468,7 @@ HARNESS = HARNESS.replace(
 _EXTRA_ENCOUNTER_TESTS = r"""
 static void test_encounter_short_circuit_and_interlude_reload() {
   reset_fixture();
-  TurnCurrentNum=10; ConsoleGlobal.faction_id_=1; SunspotDuration=1;
+  GameDataStateStorage.fields_.turn_current_num_=10; ConsoleGlobal.faction_id_=1; GameDataStateStorage.fields_.sunspot_duration_=1;
   Players[1].rule_flags=RFLAG_ALIEN;
   PlayersData[1].diplo_treaties[2]=DTREATY_COMMLINK;
   TechOwned[2][0x4E]=TRUE; TechOwned[1][0x4E]=TRUE;
@@ -463,7 +480,7 @@ static void test_encounter_short_circuit_and_interlude_reload() {
 }
 static void test_encounter_peer_local_human_uses_8000_label() {
   reset_fixture();
-  TurnCurrentNum=10; ConsoleGlobal.faction_id_=2;
+  GameDataStateStorage.fields_.turn_current_num_=10; ConsoleGlobal.faction_id_=2;
   Players[2].rule_flags=RFLAG_ALIEN;
   TechOwned[1][0x4E]=TRUE; TechOwned[2][0x4E]=TRUE;
   strcpy(Players[2].noun_faction,"peer-noun");
@@ -476,7 +493,7 @@ static void test_encounter_peer_local_human_uses_8000_label() {
 }
 static void test_encounter_reloads_peer_alien_bit_after_parse() {
   reset_fixture();
-  TurnCurrentNum=10; ConsoleGlobal.faction_id_=2;
+  GameDataStateStorage.fields_.turn_current_num_=10; ConsoleGlobal.faction_id_=2;
   Players[1].rule_flags=RFLAG_ALIEN; TechOwned[1][4]=TRUE;
   strcpy(Players[2].noun_faction,"peer-noun");
   strcpy(Players[2].adj_name_faction,"peer-adj");
@@ -489,7 +506,7 @@ static void test_encounter_reloads_peer_alien_bit_after_parse() {
 }
 static void test_encounter_reloads_actor_alien_bit_after_parse() {
   reset_fixture();
-  TurnCurrentNum=10; ConsoleGlobal.faction_id_=1;
+  GameDataStateStorage.fields_.turn_current_num_=10; ConsoleGlobal.faction_id_=1;
   Players[2].rule_flags=RFLAG_ALIEN; TechOwned[1][0x4E]=TRUE;
   strcpy(Players[1].noun_faction,"actor-noun");
   strcpy(Players[1].adj_name_faction,"actor-adj");
@@ -502,7 +519,7 @@ static void test_encounter_reloads_actor_alien_bit_after_parse() {
 }
 static void test_encounter_aliens_gate_all_ai_callbacks_after_reload() {
   reset_fixture();
-  TurnCurrentNum=9; ConsoleGlobal.faction_id_=1;
+  GameDataStateStorage.fields_.turn_current_num_=9; ConsoleGlobal.faction_id_=1;
   Players[1].rule_flags=RFLAG_ALIEN;
   PlayersData[1].diplo_treaties[2]=DTREATY_COMMLINK;
   TechOwned[2][0x4E]=TRUE; TechOwned[1][0x4E]=TRUE;
@@ -537,7 +554,7 @@ def compile_and_run(tmp_path: Path, compiler: str, bodies, expect_success=True):
     source_path.write_text(make_source(bodies))
     built = subprocess.run(
         [compiler, "-std=c++11", "-Wall", "-Wextra", "-Werror",
-         "-fsanitize=undefined", "-fno-omit-frame-pointer",
+         "-Wno-sign-compare", "-fsanitize=undefined", "-fno-omit-frame-pointer",
          str(source_path), "-o", str(binary)],
         capture_output=True, text=True, timeout=60)
     assert built.returncode == 0, built.stdout + built.stderr

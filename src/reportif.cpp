@@ -41,7 +41,6 @@
 #include "basewin.h"
 #include "veh.h"
 #include "font.h"
-#include "spying_recovery.h"
 #include "stringstruct.h"
 #include "netdaemon.h"
 #include "log.h"
@@ -2914,4 +2913,20 @@ int ReportIf::on_iface_button_pressed(int) {
 // RECOVERY_SHARED: v1 0x00404250 0x00404255 ?on_iface_dialog_back_draw@ReportIf@@UAEHPAVGraphicWin@@@Z 0x004A41D0
 int ReportIf::on_iface_dialog_back_draw(::GraphicWin *) {
     return 0;
+}
+
+/*
+// ORIGINAL: 0x004A4050 ?bl_daemon@@YAXH@Z 0x004A4050-0x004A405D BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence":["ReportIf declares bl_anim(); reportif.h documents the existing leaf callback and the ReportIf receiver.","The image records an int callback ABI while this source body accepts the object pointer; keep both identities and verify emitted behavior."],"reason":"Move the current callback body to ReportIf's owner TU without adding a thunk or claiming the source spelling proves ABI equivalence."}
+// symbol    ?bl_daemon@@YAXPAVReportIf@@@Z
+// size      13 bytes
+// prototype
+// callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004A4060
+Status: Complete
+*/
+void __cdecl bl_daemon(ReportIf *a1) {
+    a1->bl_anim();
 }

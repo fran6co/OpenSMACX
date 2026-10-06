@@ -7300,3 +7300,50 @@ Status: Complete
 void BaseWin::vslot_49(int code, int position) {
   vslot_48(code, position);
 }
+
+/*
+Purpose: Map a click on the base screen's farm panel back to the tile it
+         picks: unproject the 0x60-by-0x30 half-scale sprite pixel through
+         rect1_'s placement and report the move offset of that radius.
+// RECOVERY_ROLE: SCAFFOLD The genuine buffer2_ receiver is typed, but the per-radius tables and radius_move call-shape remain unresolved.
+// ORIGINAL: 0x00409100 ?farm_get@BaseWin@@QAEHHH@Z 0x00409100-0x004091FB FILE
+// RECOVERY_BINDING: v1 {"evidence":["basewin.h declares farm_get and the real Buffer member buffer2_ at +0x40ECC; basewin.cpp owns its callers and BaseWin rendering methods.","Pinned 0x409164 computes the get_pixel receiver as this+0x40ECC, matching buffer2_; the body must call buffer2_.get_pixel, not reinterpret BaseWin itself as Buffer.","The per-radius tables 0x66EF24/0x66EF38 and inline radius_move expansion remain unresolved."],"reason":"Move farm_get into BaseWin's actual owner and use its evidenced buffer2_ subobject for the pinned pixel read. Keep the radius tables unresolved and the function SCAFFOLD; this is not full reference or matching proof."}
+// TRIED: the two field reads (0x40b8c, 0x40b94) as named int locals - compiles with an extra `push`/register spill the original (which keeps the value live in a register, never re-materialised) doesn't have. `get_pixel` called through `reinterpret_cast<Buffer*>(this)` since `ecx` (this) is never reassigned before that call in the original either. `extern int g_66ef24[]/g_66ef38[]` for the two lookup tables so indexing compiles as scaled-index addressing instead of folding the base.
+// SUPERSEDED_BINDING_HISTORY: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/unrecovered/00409100.cpp"], "reason": "Retain the existing source implementation and complete original mapping. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// kind      game
+// size      251 bytes
+Status: Coverage transcription of the retained seed
+        (git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/unrecovered/00409100.cpp, plain FILE). The three rect reads
+        are the typed rect1_ members (right 0x40B94, left 0x40B8C, top
+        0x40B90). Two known divergences from the image, both structural:
+        the image CALLS 0x005A65A0 (radius_move) here while the tree's
+        radius_move is MEASURED inline in map.h with no out-of-line body,
+        so this body can only expand it; and 0x0066EF24/0x0066EF38 are
+        unnamed per-radius offset tables, spelled as raw const-int
+        indexing like every other unnamed datum in this file.
+*/
+int BaseWin::farm_get(int a1, int a2) {
+    const int right = rect1_.right;
+    const int left = rect1_.left;
+    const int top = rect1_.top;
+
+    int y = a1 + ((0xc0 - (right - left) / 2) - left);
+    if (y >= 0 && y < 0x180) {
+        int x = a2 - top;
+        if (x >= 0 && x < 0xc0) {
+            int col = (y / 0x60) * 2 - 3;
+            int row = (x / 0x30) * 2 - 3;
+            int p = buffer2_.get_pixel(y % 0x60,
+                            x % 0x30);
+            int idx = (p - 10) / 16;
+            if (idx != 0) {
+                return radius_move(
+                    col + reinterpret_cast<const int *>(0x0066EF24)[idx],
+                    row + reinterpret_cast<const int *>(0x0066EF38)[idx],
+                    0x15);
+            }
+            return radius_move(col, row, 0x15);
+        }
+    }
+    return -1;
+}

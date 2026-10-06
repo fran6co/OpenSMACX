@@ -53,6 +53,9 @@ enum FactionSpecialRules {
     RULE_OFFENSE = 18,
 };
 
+// Historical GONE alias: 0x00946F58 was Players[0].rule_flags
+// (0x00946A50 + 0x508); its 0x80 bit is RFLAG_ALIEN. spying()
+// now reads the typed Player member directly.
 enum PlayerRuleFlagBitfield {
     RFLAG_TECHSTEAL = 0x10,
     RFLAG_TECHSHARE = 0x20,
@@ -648,38 +651,13 @@ extern int DiploRedrawFlag;  // 0x0074DA9C
 // decide between MultiWindow::hide and MultiWindow::show. Defined in
 // faction.cpp.
 extern int MultiWindowOpen;  // 0x007FE06C
-// The third per-(faction, faction) status view, 0x194 past the treaty view
-// SpyingStatusTable is the front of and 0x74 past its agenda view. Same
-// `faction_with + faction * SpyingStatusStride` indexing, same 2099 stride.
-// treaty_on zeroes both directions of it when a vendetta lands on top of a
-// live pact/treaty/truce; nothing homed reads it yet, so the name is the
-// role, not a catalogue label.
-uint32_t *const DiploVendettaTable = (uint32_t *)0x0096CB8C;
-
-// THE FOUR PAIRWISE STATUS VIEWS the diplomacy code walks, all of them
-// PlayerData fields read through the array's own stride. The image reaches
-// each as `PlayersData[a].<field>[b]` - `[reg*4 + 0x96C9E0 + <offsetof>]`,
-// where `reg` is the pair index `a * 2099 + b` and 2099 * 4 == 0x20CC ==
-// sizeof(PlayerData) - and the addresses below are just the field's byte
-// offset past the array front at 0x0096C9E0. They are recorded as addresses
-// rather than spelled `PlayersData[a].field[b]` at every site because most
-// callers compute one pair index and reuse it across several views, which
-// the array spelling cannot share.
-//
-//   0x0096C9F8  +0x018  diplo_treaties[0]  - the treaty/agenda word; this
-//                         is spying_recovery.h's SpyingStatusTable, which is
-//                         the binding the bodies here use
-//   0x0096CA18  +0x038  diplo_agenda[0]    - eight dwords in, per agenda_on
-//   0x0096CA58  +0x078  diplo_spoke[0]     - turn of the last contact
-//   0x0096CA78  +0x098  diplo_merc[0]
-//   0x0096CAA4  +0x0C4  loan_balance[0]
-//   0x0096CAC4  +0x0E4  loan_payment[0]
-//   0x0096CC00  +0x220  energy_reserves
-uint32_t *const DiploSpokeTable = (uint32_t *)0x0096CA58;
-uint32_t *const DiploMercTable = (uint32_t *)0x0096CA78;
-uint32_t *const DiploLoanBalanceTable = (uint32_t *)0x0096CAA4;
-uint32_t *const DiploLoanPaymentTable = (uint32_t *)0x0096CAC4;
-
+// The former fixed-address diplomacy views are fields of PlayersData.
+// Their pinned starts resolve as follows (all rows use the 0x20CC
+// PlayerData stride, 2099 dwords): 0x96C9F8 +0x18 diplo_treaties;
+// 0x96CA18 +0x38 diplo_agenda; 0x96CA38 +0x58 diplo_friction;
+// 0x96CA58 +0x78 diplo_spoke; 0x96CA78 +0x98 diplo_merc;
+// 0x96CAA4 +0xC4 loan_balance; 0x96CAC4 +0xE4 loan_payment;
+// 0x96CB8C +0x1AC diplo_unk4 (the former vendetta view).
 // Raised by pop_wait and pop_expire around their call to wait_loop, and
 // dropped again when it returns. Nothing this tree has recovered reads it -
 // whatever consults it lives in a body still unrecovered - so the name is the
@@ -1012,6 +990,7 @@ void __cdecl double_cross(int faction_id, int faction_id_with,
                           int victim);
 void __cdecl pact_ends(int faction_id, int faction_id_with);
 void __cdecl wait_loop();
+int __cdecl spying(int subject);
 
 MEASURED inline int __cdecl has_treaty(int faction_id, int faction_id_with, int treaty) {
     return PlayersData[faction_id].diplo_treaties[faction_id_with] & treaty;

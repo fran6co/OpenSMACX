@@ -11,17 +11,19 @@ def test_actual_name_table_and_damage(tmp_path, compiler_name):
     compiler = shutil.which(compiler_name)
     if compiler is None:
         pytest.skip(compiler_name + " unavailable")
-    header = (ROOT / "src/stringstruct.h").read_text()
+    header = (ROOT / "src/name_table.h").read_text()
     declarations = header[header.index("struct NameTableEntry {"):header.index("static_assert(sizeof(NameTableEntry)")]
-    source = (ROOT / "src/stringstruct.cpp").read_text()
+    source = (ROOT / "src/name_table.cpp").read_text()
     patterns = [r"NameTableEntry \*NameTableEntry::initialize\(\)",
         r"NameTable \*NameTable::initialize\(\)", r"int NameTable::clear\(\)",
         r"unsigned int NameTable::remove_range\([^)]*\)",
         r"void NameTable::install\([^)]*\)", r"void NameTable::set_name\([^)]*\)",
-        r"void NameTable::rewrite_directory\([^)]*\)"]
+        r"void NameTable::rewrite_directory\([^)]*\)",
+        r"char \*NameTable::get_name\(\)"]
     bodies = "\n".join(definition(source, pattern) for pattern in patterns)
     fixture = Path(__file__).with_name("name_table_control.cpp").read_text()
     mutations = {
+        "wrong_getter": ("return name_;", "return 0;"),
         "wrong_entry_status": ("status_ = 1;", "status_ = 2;"),
         "wrong_table_flags": ("flags_ = (flags_ & ~4u) | 2u;", "flags_ = 4u;"),
         "wrong_limit": ("slot_index < 0x80", "slot_index < 0x7F"),

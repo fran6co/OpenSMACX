@@ -7,36 +7,8 @@
 
 
 
-/*
-Purpose: Read the dword field at 0x200.
-         Emitted by tools/generate_field_accessors.py from
 
-             mov eax, dword ptr [ecx + 0x200] / ret
 
-         The name is the ADDRESS, not an invention, and `self` is a void
-         pointer because this body needs `this` to be nothing more than a
-         pointer and an offset - the class it belongs to is not established.
-         The adapter declares 0 stack dword(s) so it
-         cleans 0 bytes, taken from the body's own `ret` -
-         the only statement of this function's arity that exists, since it has
-         no mangled name. Declaring fewer would leave them on the caller's
-         stack.
-// RECOVERY_ROLE: SCAFFOLD Untyped raw-field or constant adapter; real method ownership and named member relationships remain recovery obligations.
-// ORIGINAL: 0x004C75A0 sub_4c75a0 0x004C75A0-0x004C75A7 BYTE_EXACT
-// symbol    ?field_accessor_004c75a0_redirect@@YIIPAX0@Z
-// size      7 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     (none)
-Return Value: the value described above
-Status: Complete
-*/
-uint32_t __fastcall field_accessor_004c75a0_redirect(void *self, void *) {
-    return *reinterpret_cast<const uint32_t *>(
-        static_cast<const uint8_t *>(self) + 0x200);
-}
 
 /*
 Purpose: Set 9 field(s) to constants.
@@ -238,37 +210,8 @@ uint32_t __fastcall field_accessor_005e2470_redirect(void *, void *, int stack0,
 
 
 
-/*
-Purpose: Read the dword field at 0x0, masked to 0x1.
-         Emitted by tools/generate_field_accessors.py from
 
-             mov eax, dword ptr [ecx] / and eax, 1 / ret
 
-         The name is the ADDRESS, not an invention, and `self` is a void
-         pointer because this body needs `this` to be nothing more than a
-         pointer and an offset - the class it belongs to is not established.
-         The adapter declares 0 stack dword(s) so it
-         cleans 0 bytes, taken from the body's own `ret` -
-         the only statement of this function's arity that exists, since it has
-         no mangled name. Declaring fewer would leave them on the caller's
-         stack.
-// RECOVERY_ROLE: SCAFFOLD Untyped raw-field or constant adapter; real method ownership and named member relationships remain recovery obligations.
-// ORIGINAL: 0x00600320 ?is_playing@MCIVideo@@QAEHXZ 0x00600320-0x00600326 BYTE_EXACT
-// symbol    ?field_accessor_00600320_redirect@@YIIPAX0@Z
-// size      6 bytes
-// prototype int (__thiscall ?is_playing@MCIVideo@@QAEHXZ)(MCIVideo* this)
-// callers   1   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the value described above
-Status: Complete
-*/
-uint32_t __fastcall field_accessor_00600320_redirect(void *self, void *) {
-    return *reinterpret_cast<const uint32_t *>(
-        static_cast<const uint8_t *>(self) + 0x0)
-        & 0x1U;
-}
 
 
 

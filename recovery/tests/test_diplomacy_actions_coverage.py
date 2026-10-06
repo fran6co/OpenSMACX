@@ -7,6 +7,101 @@ from pathlib import Path
 import pytest
 from recovery.tests.test_pact_ascent import ROOT, definition
 
+import re
+
+_GAME_DATA_STATE_STUB = '\n// Test-only subset of the actual nested source API; no global aliases or game ABI claim.\ntypedef unsigned int uint32_t;\nstruct GameDataLockMaskBytes { unsigned char human_mask_, alive_mask_, unassigned_[2]; };\nunion GameDataLockMaskView { uint32_t enable_mask_; GameDataLockMaskBytes bytes_; };\nstruct BaseSecretProject {\n    int project_base[64];\n    int &empath_guild() { return project_base[4]; }\n    const int &empath_guild() const { return project_base[4]; }\n};\nstruct GameDataStateWindowFields {\n    uint32_t game_rules_, game_state_;\n    int base_current_count_, turn_current_num_;\n    GameDataLockMaskView lock_masks_;\n    uint32_t faction_rankings_[8], ranking_faction_id_unk1_, ranking_faction_id_unk2_;\n    BaseSecretProject secret_project_;\n    unsigned char game_tech_achieved_[89];\n    int council_resolution_count_[11];\n};\nstruct GameDataStateWindow { GameDataStateWindowFields fields_; };\nGameDataStateWindow GameDataStateStorage;\n'
+_OLD_GAME_DATA_GLOBAL_NAMES = ('GameRules', 'GameState', 'BaseCurrentCount', 'LockEnableMask', 'RankingFactionIDUnk1', 'RankingFactionIDUnk2', 'CouncilResolutionCount', 'TurnCurrentNum', 'GameTechAchieved', 'FactionRankings')
+
+def _strip_old_storage_declarations(source: str) -> str:
+    output = []
+    decl = re.compile(r"^(\s*(?:unsigned(?:\s+char)?|uint32_t|int)\s+)(.*)$")
+    for line in source.splitlines(keepends=True):
+        raw = line.rstrip("\n")
+        if not any(re.search(r"\b" + re.escape(name) + r"\b", raw)
+                   for name in _OLD_GAME_DATA_GLOBAL_NAMES):
+            output.append(line)
+            continue
+        segments = raw.split(";")
+        if len(segments) == 1:
+            output.append(line)
+            continue
+        first_decl = decl.match(segments[0])
+        if (not first_decl or "=" in first_decl.group(2)
+                or "(" in first_decl.group(2)):
+            output.append(line)
+            continue
+        rewritten = []
+        for segment in segments[:-1]:
+            match = decl.match(segment)
+            if (not match or "=" in match.group(2) or "(" in match.group(2)
+                    or not any(re.search(r"\b" + re.escape(name) + r"\b", match.group(2))
+                               for name in _OLD_GAME_DATA_GLOBAL_NAMES)):
+                rewritten.append(segment)
+                continue
+            kept = []
+            for item in match.group(2).split(","):
+                name_match = re.match(r"\s*([A-Za-z_]\w*)", item)
+                if name_match and name_match.group(1) in _OLD_GAME_DATA_GLOBAL_NAMES:
+                    continue
+                kept.append(item.strip())
+            if kept:
+                rewritten.append(match.group(1) + ", ".join(kept))
+        tail = segments[-1]
+        rebuilt = ";".join(rewritten) + tail
+        if raw.endswith(";") and rebuilt.strip():
+            rebuilt += ";"
+        if rebuilt.strip():
+            output.append(rebuilt + ("\n" if line.endswith("\n") else ""))
+    return "".join(output)
+
+
+def host_fixture(source: str) -> str:
+    """Add a narrow typed owner and rewrite fixture setup to the owner fields."""
+    if "GameDataStateStorage" in source or "struct GameDataStateWindowFields" in source:
+        raise RuntimeError("fixture already has a game-data owner; review manually")
+    source = _strip_old_storage_declarations(source)
+    source, project_count = re.subn(
+        r"struct Projects\s*\{int empath_guild_;.*?\}\s*SecretProject;", "", source,
+        flags=re.S,
+    )
+    if project_count:
+        source = source.replace(
+            "SecretProject.empath_guild()=-1;",
+            "GameDataStateStorage.fields_.secret_project_.empath_guild()=-1;",
+        )
+
+    replacements = {
+        "GameRules": "GameDataStateStorage.fields_.game_rules_",
+        "GameState": "GameDataStateStorage.fields_.game_state_",
+        "BaseCurrentCount": "GameDataStateStorage.fields_.base_current_count_",
+        "LockEnableMask": "GameDataStateStorage.fields_.lock_masks_.enable_mask_",
+        "RankingFactionIDUnk1": "GameDataStateStorage.fields_.ranking_faction_id_unk1_",
+        "RankingFactionIDUnk2": "GameDataStateStorage.fields_.ranking_faction_id_unk2_",
+        "CouncilResolutionCount": "GameDataStateStorage.fields_.council_resolution_count_",
+        "TurnCurrentNum": "GameDataStateStorage.fields_.turn_current_num_",
+        "GameTechAchieved": "GameDataStateStorage.fields_.game_tech_achieved_",
+        "FactionRankings": "GameDataStateStorage.fields_.faction_rankings_",
+    }
+    for old, new in replacements.items():
+        source = re.sub(r"\b" + re.escape(old) + r"\b", new, source)
+
+    typedef = "typedef unsigned int uint32_t;"
+    if typedef in source:
+        source = source.replace(typedef, typedef + "\n" + _GAME_DATA_STATE_STUB, 1)
+    elif "#define __cdecl" in source:
+        source = source.replace("#define __cdecl", "#define __cdecl\n" + _GAME_DATA_STATE_STUB, 1)
+    else:
+        raise RuntimeError("cannot locate fixture host-declaration insertion anchor")
+    reset_re = re.compile(r"(\bvoid\s+(?:reset|reset_fixture)\s*\([^)]*\)\s*\{)")
+    source, reset_count = reset_re.subn(
+        r"\1\n    GameDataStateStorage = GameDataStateWindow();", source,
+    )
+    if reset_count == 0:
+        raise RuntimeError("no fixture reset function found")
+    return source
+
+
+
 
 @pytest.mark.parametrize('compiler_name', ['g++', 'clang++'])
 def test_actual_tech_trade_gate_and_owner(tmp_path, compiler_name):
@@ -118,7 +213,7 @@ int main(){
         variants[name] = gate.replace(old, new)
     for name, actual in variants.items():
         cpp, binary = tmp_path / (name + '.cpp'), tmp_path / name
-        cpp.write_text(fixture.replace('// @@GATE@@', actual).replace('// @@OWNER@@', owner))
+        cpp.write_text(host_fixture(fixture).replace('// @@GATE@@', actual).replace('// @@OWNER@@', owner))
         built = subprocess.run([compiler, '-std=c++98', '-pedantic-errors',
                                 '-fsanitize=undefined', '-fno-sanitize-recover=all',
                                 str(cpp), '-o', str(binary)], capture_output=True, text=True)
@@ -237,7 +332,7 @@ int main(){
         variants[name] = body.replace(old, new)
     for name, candidate in variants.items():
         cpp, binary = tmp_path / (name + '.cpp'), tmp_path / name
-        cpp.write_text(fixture.replace('@@BODY@@', candidate))
+        cpp.write_text(host_fixture(fixture).replace('@@BODY@@', candidate))
         result = subprocess.run([compiler, '-std=c++98', '-fsanitize=undefined',
                                  '-fno-sanitize-recover=all', str(cpp), '-o', str(binary)],
                                 capture_output=True, text=True, timeout=45)
@@ -377,7 +472,7 @@ int main() {
         variants[name] = body.replace(old, new)
     for name, candidate in variants.items():
         cpp, binary = tmp_path / (name + '.cpp'), tmp_path / name
-        cpp.write_text(fixture.replace('@@BODY@@', helpers + '\n' + candidate))
+        cpp.write_text(host_fixture(fixture).replace('@@BODY@@', helpers + '\n' + candidate))
         result = subprocess.run([compiler, '-std=c++98', '-fsanitize=undefined',
                                  '-fno-sanitize-recover=all', str(cpp), '-o', str(binary)],
                                 capture_output=True, text=True, timeout=45)
@@ -514,7 +609,7 @@ int main() {
         variants[name] = body.replace(old, new)
     for name, candidate in variants.items():
         cpp, binary = tmp_path / (name + '.cpp'), tmp_path / name
-        cpp.write_text(fixture.replace('@@BODY@@', helpers + '\n' + candidate))
+        cpp.write_text(host_fixture(fixture).replace('@@BODY@@', helpers + '\n' + candidate))
         result = subprocess.run([compiler, '-std=c++98', '-fsanitize=undefined',
                                  '-fno-sanitize-recover=all', str(cpp), '-o', str(binary)],
                                 capture_output=True, text=True, timeout=45)
@@ -614,7 +709,7 @@ int main() {
         variants[name] = body.replace(old, new)
     for name, candidate in variants.items():
         cpp, binary = tmp_path / (name + '.cpp'), tmp_path / name
-        cpp.write_text(fixture.replace('@@BODY@@', helpers + '\n' + candidate))
+        cpp.write_text(host_fixture(fixture).replace('@@BODY@@', helpers + '\n' + candidate))
         build = subprocess.run([compiler, '-std=c++98', '-fsanitize=undefined',
                                 '-fno-sanitize-recover=all', str(cpp), '-o', str(binary)],
                                capture_output=True, text=True, timeout=45)
@@ -871,13 +966,13 @@ def _run_make_proposal_controls():
             'x_pops_short("REPAIDLOAN", 0x100000,\n'
             '                     FactionDiplomacyPortraits[other_faction_id], pop_wait);',
             '(void)0;'),
-        "game_state_predicate": body.replace('(GameState & 1)', '(GameRules & 1)'),
+        "game_state_predicate": body.replace('(GameDataStateStorage.fields_.game_state_ & 1)', '(GameDataStateStorage.fields_.game_rules_ & 1)'),
         "governor_default_field": body.replace('popup.set_value(candidate)',
                                                 'popup.set_selected_id(candidate)'),
         "lost_pact_friction_guard": body.replace(
             '(((actor_treaty & DTREATY_PACT) == 0) && DiploFriction > 0) ||',
             'false ||'),
-        "lost_council_rule_guard": body.replace('(GameRules & 8) != 0', 'true'),
+        "lost_council_rule_guard": body.replace('(GameDataStateStorage.fields_.game_rules_ & 8) != 0', 'true'),
     }
     assert all(mutated != body for mutated in mutations.values()), "mutation anchor drift"
     failures = []
@@ -892,7 +987,7 @@ def _run_make_proposal_controls():
             candidates.update(mutations)
             for name, candidate in candidates.items():
                 cpp, binary = scratch / (name + ".cpp"), scratch / name
-                cpp.write_text(_MAKE_PROPOSAL_FIXTURE.replace("// @@BODY@@", candidate, 1))
+                cpp.write_text(host_fixture(_MAKE_PROPOSAL_FIXTURE).replace("// @@BODY@@", candidate, 1))
                 built = subprocess.run(
                     [compiler, "-std=c++98", "-pedantic-errors", "-Wall", "-Wextra",
                      "-Wno-unused-parameter", "-fsanitize=undefined",
@@ -1179,7 +1274,7 @@ def _run_tech_modal_controls():
             candidates.update(mutations)
             for name, candidate in candidates.items():
                 cpp, binary = scratch / (name + ".cpp"), scratch / name
-                cpp.write_text(_tech_modal_fixture.replace("// @@CANDIDATE@@", candidate, 1))
+                cpp.write_text(host_fixture(_tech_modal_fixture).replace("// @@CANDIDATE@@", candidate, 1))
                 compiled = subprocess.run(
                     [compiler, "-std=c++98", "-pedantic-errors", "-Wall", "-Wextra",
                      "-Wno-unused-parameter", "-fsanitize=undefined",
@@ -1485,7 +1580,7 @@ def _run_tech_policy_controls():
             candidates.update(mutations)
             for name, candidate in candidates.items():
                 cpp, binary = scratch / (name + ".cpp"), scratch / name
-                cpp.write_text(_tech_policy_fixture.replace("// @@CANDIDATE@@", candidate, 1))
+                cpp.write_text(host_fixture(_tech_policy_fixture).replace("// @@CANDIDATE@@", candidate, 1))
                 compiled = subprocess.run(
                     [compiler, "-std=c++98", "-pedantic-errors", "-Wall", "-Wextra",
                      "-Wno-unused-parameter",
@@ -1846,7 +1941,7 @@ def test_actual_propose_attack(tmp_path, compiler_name):
     for name, body in variants.items():
         cpp = tmp_path / (name + '.cpp')
         binary = tmp_path / name
-        cpp.write_text(fixture.replace('@@HELPERS@@', helpers, 1)
+        cpp.write_text(host_fixture(fixture).replace('@@HELPERS@@', helpers, 1)
                        .replace('@@BODY@@', body, 1))
         built = subprocess.run(
             [compiler, '-std=c++98', '-pedantic-errors', '-Wall', '-Wextra',
@@ -1973,7 +2068,7 @@ int main() {
         variants[name] = body.replace(old, new)
     for name, candidate in variants.items():
         cpp, binary = tmp_path / (name + '.cpp'), tmp_path / name
-        cpp.write_text(fixture.replace('@@BODY@@', helpers + '\n' + candidate))
+        cpp.write_text(host_fixture(fixture).replace('@@BODY@@', helpers + '\n' + candidate))
         build = subprocess.run([compiler, '-std=c++98', '-fsanitize=undefined',
                                 '-fno-sanitize-recover=all', str(cpp), '-o', str(binary)],
                                capture_output=True, text=True, timeout=45)
@@ -2105,7 +2200,7 @@ int main() {
         variants[name] = body.replace(old, new)
     for name, candidate in variants.items():
         cpp, binary = tmp_path / (name + '.cpp'), tmp_path / name
-        cpp.write_text(fixture.replace('@@BODY@@', helpers + '\n' + candidate))
+        cpp.write_text(host_fixture(fixture).replace('@@BODY@@', helpers + '\n' + candidate))
         build = subprocess.run([compiler, '-std=c++98', '-fsanitize=undefined',
                                 '-fno-sanitize-recover=all', str(cpp), '-o', str(binary)],
                                capture_output=True, text=True, timeout=45)
@@ -2228,7 +2323,7 @@ int main() {
         variants[name] = body.replace(old, new)
     for name, candidate in variants.items():
         cpp, binary = tmp_path / (name + '.cpp'), tmp_path / name
-        cpp.write_text(fixture.replace('@@BODY@@', candidate))
+        cpp.write_text(host_fixture(fixture).replace('@@BODY@@', candidate))
         build = subprocess.run([compiler, '-std=c++98', '-fsanitize=undefined',
                                 '-fno-sanitize-recover=all', str(cpp), '-o', str(binary)],
                                capture_output=True, text=True, timeout=45)
@@ -2337,7 +2432,7 @@ int main() {
         variants[name]=body.replace(old,new)
     for name,candidate in variants.items():
         cpp,binary=tmp_path/(name+'.cpp'),tmp_path/name
-        cpp.write_text(fixture.replace('@@BODIES@@',helper+'\n'+candidate))
+        cpp.write_text(host_fixture(fixture).replace('@@BODIES@@',helper+'\n'+candidate))
         build=subprocess.run([compiler,'-std=c++98','-fsanitize=undefined','-fno-sanitize-recover=all',str(cpp),'-o',str(binary)],capture_output=True,text=True,timeout=45)
         assert build.returncode==0,build.stderr
         run=subprocess.run([str(binary)],capture_output=True,text=True,timeout=10)
@@ -2454,7 +2549,7 @@ int main() {
         variants[name] = body.replace(old, new)
     for name, candidate in variants.items():
         cpp, binary = tmp_path / (name + '.cpp'), tmp_path / name
-        cpp.write_text(fixture.replace('@@BODY@@', helpers + '\n' + candidate))
+        cpp.write_text(host_fixture(fixture).replace('@@BODY@@', helpers + '\n' + candidate))
         build = subprocess.run([compiler, '-std=c++98', '-fsanitize=undefined',
                                 '-fno-sanitize-recover=all', str(cpp), '-o', str(binary)],
                                capture_output=True, text=True, timeout=45)

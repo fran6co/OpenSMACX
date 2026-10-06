@@ -65,6 +65,22 @@ MCIVideo *ActiveVideoPlayer;
 // RECOVERY_OBJECT: v2 0x009B8194 0x009B8198 ?MciVideoCallbackWindow@@3PAUHWND__@@A 0x005FFF90
 HWND MciVideoCallbackWindow;
 
+// ORIGINAL: 0x00600320 ?is_playing@MCIVideo@@QAEHXZ 0x00600320-0x00600326 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:0x00600320-0x00600326 executes mov eax,[ecx]; and eax,1; ret", "source:src/alphamovie.h MCIVideo owns uint32_t field_0_ at +0, anchored by this identity", "source:AlphaMovie embeds MCIVideo at +0xA14; 0x004041C0 is its recovered direct source caller and is migrated to the typed member"], "reason": "Move the existing MCIVideo::is_playing identity onto the class and dword already owned by MCIVideo; keep the exact bit-0 return."}
+// symbol    ?is_playing@MCIVideo@@QAEHXZ
+// kind      game
+int MCIVideo::is_playing() {
+    return static_cast<int>(field_0_ & 1U);
+}
+
+// ORIGINAL: 0x004041C0 ?on_modal@AlphaMovie@@QAE_NXZ 0x004041C0-0x004041D2
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:0x004041C0-0x004041D2 calls 0x00600320 through this+0xA14, then normalizes with neg/sbb/neg", "source:src/alphamovie.h AlphaMovie has MCIVideo mciVideo_ at +0xA14", "source:src/leaf_recoveries.cpp historical metadata: 18-byte body; prototype bool (__thiscall ?on_modal@AlphaMovie@@QAE_NXZ)(AlphaMovie* this); caller count 0; one direct call target 0x00600320; flags hidden;sp_ready;purged_ok; return value 1 when playing, 0 otherwise", "pinned behavior note: the original neg/sbb/neg normalizes any nonzero callee result to one; the callee currently masks bit 0, but the normalization remains explicit"], "reason": "Move the original AlphaMovie::on_modal body from the transitional leaf into the real AlphaMovie owner; use its typed embedded MCIVideo and preserve the native nonzero-to-bool normalization."}
+// symbol    ?on_modal@AlphaMovie@@QAE_NXZ
+// kind      game
+bool AlphaMovie::on_modal() {
+    return mciVideo_.is_playing() != 0;
+}
+
 // ORIGINAL: 0x005FFEC0 sub_5ffec0 0x005FFEC0-0x005FFF8B
 // RECOVERY_BINDING: v1 {"evidence": ["The pinned 0x005FFEC0 body forwards WM_KEYDOWN and WM_LBUTTONDOWN through DefWindowProcA using the HWND stored by MCIVideo::load at 0x009B8194; its 0x3B9 case clears the active MCIVideo flag, and remaining messages call the saved WNDPROC at MCIVideo+0x464 or fall back to DefWindowProcA.", "The MCI video owner stores its active receiver at 0x009B8190; MCIVideo::play is the source-owned writer of that storage and close/stop clear it."], "reason": "Move the MCI window hook into its owning source file and route through the typed active MCIVideo fields and SDK window-procedure APIs."}
 // symbol    ?MciVideoWindowProc@@YGJPAUHWND__@@IIJ@Z

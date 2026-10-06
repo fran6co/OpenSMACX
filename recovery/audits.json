@@ -28,11 +28,11 @@
         "short-named fixed-address binding": 0,
         "anonymous fixed-address global": 0,
         "adjustor_thunks.cpp markers": 70,
-        "field_accessors.cpp markers": 18,
-        "leaf_recoveries.cpp markers": 135,
+        "field_accessors.cpp markers": 16,
+        "leaf_recoveries.cpp markers": 119,
         "nullsub_thunks.cpp markers": 47,
         "hypothesis_layouts.h lines": 1664,
-        "stringstruct.cpp markers": 48
+        "stringstruct.cpp markers": 41
       },
       "counters": [
         {

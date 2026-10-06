@@ -3659,3 +3659,671 @@ void DatalinkEntryCallbacks::invoke_text(void *output, int value, int extra) con
     append_text(output, value, extra);
   }
 }
+
+static void emit_help(void (__cdecl *cb)(char *)) {
+    if (TechnologyHelpPrefixEmitted == 0 &&
+        TechnologyHelpSectionSelector == -1) {
+        TechnologyHelpPrefixEmitted = 1;
+        cb(TechnologyHelpPrefixText);
+    }
+    cb(TextBufferGetPtr);
+}
+
+/*
+Purpose: The help emission gate shared by the nineteen text_get tests: the
+         first call after a fresh section opens the paragraph with the
+         help prefix, later calls join with the separator; both shapes
+         then hand the staged text to the caller's emitter.
+
+// RECOVERY_ROLE: SCAFFOLD The owner body is present, but original absolute data/string references remain unresolved; source placement does not close these bindings.
+// ORIGINAL: 0x0044B380 ?tech_heck@@YAXP6AXPAD@ZH@Z 0x0044B380-0x0044B9DC FILE
+// RECOVERY_BINDING: v1 {"evidence":["datalink.cpp owns the TechnologyHelpPrefix globals and includes the real text, Strings, faction, base and technology interfaces used by this body.","The existing help_tech_info body calls this helper; the unannotated emit_help helper moves with the pair."],"reason":"Move the existing helper and its paired annotated body to the datalink owner; preserve all address-derived data traversals and historical mismatch notes."}
+// TRIED: 19 repeated "text_get(); if (cond) emit(a1);" blocks (7 direct ID compares, 8 bit-flag tests on a stride-0x2c table, 3 more ID compares, then a final ID compare) factored through a static `emit_help` helper (Ghidra's repeated if/if/call pattern makes this an exact behavioral match), plus the two trailing loops (0x691880 tech-name table, 0x9a6840 concatenation table). Compiles; diverges at instruction #3 (prologue - original reserves one local with a bare `push ecx`, rebuilt doesn't need a same-shaped stack slot since the outer scope has no locals of its own). Hoisting the loop-scratch locals to the top of the function did not change it.
+// size      1628 bytes
+// prototype
+// callers   1   call targets   7
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005FD550 0x005FD570 0x006169A0 0x00625880 0x00625E50 0x00645460 0x00645470
+// indirect  0x0044B3EB 0x0044B3F7 0x0044B426 0x0044B432 0x0044B461 0x0044B46C 0x0044B49B 0x0044B4A7 0x0044B4D6 0x0044B4E2 0x0044B511 0x0044B51C 0x0044B54B 0x0044B557 0x0044B591 0x0044B59C 0x0044B5CD 0x0044B5D9 0x0044B60A 0x0044B616 0x0044B647 0x0044B652 0x0044B683 0x0044B68F 0x0044B6C0 0x0044B6CC 0x0044B6FD 0x0044B708 0x0044B73B 0x0044B747 0x0044B77A 0x0044B786 0x0044B7B5 0x0044B7C0 0x0044B7EF 0x0044B7FB 0x0044B82A 0x0044B836 0x0044B8CE 0x0044B8DA 0x0044B9B6 0x0044B9C1
+Status: Coverage transcription - unclaimed body; the seed's emit_help
+        factoring and its push-ecx divergence stand, and the trailing
+        strcat/strcpy loops go through the CRT names the image's
+        0x00645460/0x00645470 wrappers are of.
+*/
+
+void __cdecl tech_heck(void (__cdecl *a1)(char *), int a2) {
+    if (a2 >= 0x59) {
+        return;
+    }
+    TechnologyHelpPrefixEmitted = 0;
+    if (text_open(DatalinkHelpFile,
+                  TechnologyHelpSectionName) != 0) {
+        return;
+    }
+
+    text_get();
+    if (a2 == *reinterpret_cast<int *>(0x00949774)) {
+        emit_help(a1);
+    }
+    text_get();
+    if (a2 == *reinterpret_cast<int *>(0x00949778)) {
+        emit_help(a1);
+    }
+    text_get();
+    if (a2 == *reinterpret_cast<int *>(0x0094977C)) {
+        emit_help(a1);
+    }
+    text_get();
+    if (a2 == *reinterpret_cast<int *>(0x00949780)) {
+        emit_help(a1);
+    }
+    text_get();
+    if (a2 == *reinterpret_cast<int *>(0x00949784)) {
+        emit_help(a1);
+    }
+    text_get();
+    if (a2 == *reinterpret_cast<int *>(0x00949788)) {
+        emit_help(a1);
+    }
+    text_get();
+    if (a2 == *reinterpret_cast<int *>(0x0094978C)) {
+        emit_help(a1);
+    }
+
+    text_get();
+    if (reinterpret_cast<unsigned char *>(0x0094F358)[a2 * 0x2C] & 1) {
+        emit_help(a1);
+    }
+    text_get();
+    if (reinterpret_cast<unsigned char *>(0x0094F358)[a2 * 0x2C] & 2) {
+        emit_help(a1);
+    }
+    text_get();
+    if (reinterpret_cast<unsigned char *>(0x0094F358)[a2 * 0x2C] & 4) {
+        emit_help(a1);
+    }
+    text_get();
+    if (reinterpret_cast<unsigned char *>(0x0094F358)[a2 * 0x2C] & 8) {
+        emit_help(a1);
+    }
+    text_get();
+    if (reinterpret_cast<unsigned char *>(0x0094F358)[a2 * 0x2C] & 0x10) {
+        emit_help(a1);
+    }
+    text_get();
+    if (reinterpret_cast<unsigned char *>(0x0094F358)[a2 * 0x2C] & 0x40) {
+        emit_help(a1);
+    }
+    text_get();
+    if (reinterpret_cast<unsigned char *>(0x0094F358)[a2 * 0x2C] & 0x80) {
+        emit_help(a1);
+    }
+    text_get();
+    if (*reinterpret_cast<unsigned int *>(0x0094F358 + a2 * 0x2C) & 0x100) {
+        emit_help(a1);
+    }
+
+    text_get();
+    if (a2 == *reinterpret_cast<int *>(0x009497C8)) {
+        emit_help(a1);
+    }
+    text_get();
+    if (a2 == *reinterpret_cast<int *>(0x009497DC)) {
+        emit_help(a1);
+    }
+    text_get();
+    if (a2 == *reinterpret_cast<int *>(0x009497E0)) {
+        emit_help(a1);
+    }
+    text_get();
+    if (a2 == *reinterpret_cast<int *>(0x009A683C)) {
+        emit_help(a1);
+    }
+
+    text_get();
+    strcpy(reinterpret_cast<char *>(0x009B86A0),
+           TextBufferGetPtr);
+
+    {
+        int *rec = reinterpret_cast<int *>(0x00691880);
+        int stringIdx = 0;
+        int i;
+        while (reinterpret_cast<char *>(rec) <
+               reinterpret_cast<char *>(0x00691AE0)) {
+            for (i = 0; i < 2; i++) {
+                if (a2 == rec[i] && (i != 1 || rec[0] != rec[1])) {
+                    parse_say(0, reinterpret_cast<int *>(
+                                     0x0096C8A8)[stringIdx + i], -1, -1);
+                    parse_string(reinterpret_cast<char *>(0x009B86A0),
+                                 TextBufferGetPtr);
+                    emit_help(a1);
+                }
+            }
+            rec += 8;
+            stringIdx += 3;
+        }
+    }
+
+    {
+        int *p = reinterpret_cast<int *>(0x009A6840);
+        while (reinterpret_cast<char *>(p) <
+               reinterpret_cast<char *>(0x009A68AC)) {
+            if (a2 == p[2]) {
+                *reinterpret_cast<char *>(0x009B86A0) = 0;
+                strcat(reinterpret_cast<char *>(0x009B86A0),
+                       TechnologyHelpSeparatorText);
+                strcat(reinterpret_cast<char *>(0x009B86A0),
+                       reinterpret_cast<Strings *>(0x009B90D8)->get(
+                           *reinterpret_cast<int *>(
+                               *reinterpret_cast<int *>(0x009B90F8) + 0x7C8)));
+                strcat(reinterpret_cast<char *>(0x009B86A0),
+                       reinterpret_cast<char *>(0x00682E94));
+                strcat(reinterpret_cast<char *>(0x009B86A0),
+                       reinterpret_cast<Strings *>(0x009B90D8)->get(p[0]));
+                strcpy(TextBufferGetPtr,
+                       reinterpret_cast<char *>(0x009B86A0));
+                emit_help(a1);
+            }
+            p += 3;
+        }
+    }
+}
+
+/*
+Purpose: The technology help compiler: for one id, walk the ten game-data
+         tables whose records reference it - technologies, secret projects,
+         four facility/structure lists, the faction/other linked list, the
+         nested four-group table, the id-only list and the final linked
+         list - staging each record's text into the shared buffer, wiring
+         its datalink id, and flushing through the caller's emitter either
+         per record (a4 >= 0) or joined per section (a4 < 0). Section
+         bodies run under their a4 gates; the tech_heck trailer runs when
+         a4 < 0 or a4 == 3, bracketed by the shared 0x00684634 section
+         flag.
+
+// RECOVERY_ROLE: SCAFFOLD The owner body is present, but original absolute table/data traversals remain unresolved; source placement does not close these bindings.
+// ORIGINAL: 0x0044B9E0 ?help_tech_info@@YAXP6AXPAD@ZHHH@Z 0x0044B9E0-0x0044C7C9 FILE
+// RECOVERY_BINDING: v1 {"evidence":["datalink.cpp already owns other help_tech_info overloads, DatalinkHelpFile, help-link APIs, Strings and the required game tables.","This is the distinct three-integer callback overload, not a replacement for existing Popup overloads."],"reason":"Move this existing global overload into the established help owner; preserve raw table walks, branch order, secondary call facts and all original notes."}
+// TRIED: exact per-record byte offsets for the 4 embedded-owner index chains (52/380/etc strides) - transcribed the strcat/get/ construct_id/help_create_link shape per loop faithfully but did not verify every offset bit-for-bit; MISMATCH #0 at prologue.
+// size      3561 bytes
+// prototype
+// callers   3   call targets   6
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0042A080 0x0044B380 0x0044CB80 0x006169A0 0x00645470 0x0064FC88
+Status: Coverage transcription - unclaimed body; the seed's offsets and
+        its prologue divergence stand. help_create_link is now the product
+        helper in datalink.cpp; tech_heck is the transcription beside this
+        body.
+*/
+void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
+                            int a4) {
+    char *const buf = reinterpret_cast<char *>(0x009B86A0);
+    char numbuf[80];
+    char idbuf[64];
+    bool flushed;
+    int idx;
+    char *p;
+
+    if (a4 < 0 || a4 == 2) {
+
+    // ---- section 1: technologies (0x9527f8, stride 0xc, match +8) ----
+    flushed = false;
+    idx = 0;
+    *buf = 0;
+    for (p = reinterpret_cast<char *>(0x009527F8);
+         p < reinterpret_cast<char *>(0x00952828); p += 0xC, ++idx) {
+        if (*reinterpret_cast<short *>(p + 8) == a2) {
+            if (a4 < 0) {
+                if (flushed) {
+                    strcat(buf, reinterpret_cast<char *>(0x00682E90));
+                } else {
+                    strcat(buf, reinterpret_cast<char *>(0x0068464C));
+                    char *s = reinterpret_cast<Strings *>(0x009B90D8)->get(
+                        *reinterpret_cast<int *>(
+                            *reinterpret_cast<int *>(0x009B90F8) + 0x234));
+                    strcat(buf, s);
+                    strcat(buf, reinterpret_cast<char *>(0x00682E94));
+                }
+            } else {
+                strcat(buf, reinterpret_cast<char *>(0x00684650));
+            }
+            reinterpret_cast<Datalink *>(0x00703EA0)->construct_id(idbuf, 5,
+                                                                  idx + 1);
+            char *link = reinterpret_cast<Strings *>(0x009B90D8)->get(
+                *reinterpret_cast<int *>(p));
+            help_create_link(buf, reinterpret_cast<char *>(link), idbuf);
+            flushed = (*buf != 0);
+            if (a4 >= 0 && *buf != 0) {
+                a1(buf);
+                flushed = false;
+                *buf = 0;
+            }
+        }
+    }
+    if (a4 < 0 && flushed) a1(buf);
+
+    // ---- section 2: secret projects (0x94a330, stride 0x90, match +0x8e) ----
+    flushed = false;
+    idx = 0;
+    *buf = 0;
+    for (p = reinterpret_cast<char *>(0x0094A330);
+         p < reinterpret_cast<char *>(0x0094A840); p += 0x90, ++idx) {
+        if (*reinterpret_cast<short *>(p + 0x8E) == a2) {
+            if (a4 < 0) {
+                if (flushed) {
+                    strcat(buf, reinterpret_cast<char *>(0x00682E90));
+                } else {
+                    strcat(buf, reinterpret_cast<char *>(0x00684654));
+                    char *s = reinterpret_cast<Strings *>(0x009B90D8)->get(
+                        *reinterpret_cast<int *>(
+                            *reinterpret_cast<int *>(0x009B90F8) + 0x120));
+                    strcat(buf, s);
+                    strcat(buf, reinterpret_cast<char *>(0x00682E94));
+                }
+            } else {
+                strcat(buf, reinterpret_cast<char *>(0x00684658));
+            }
+            reinterpret_cast<Datalink *>(0x00703EA0)->construct_id(idbuf, 4,
+                                                                  idx);
+            char *link = reinterpret_cast<Strings *>(0x009B90D8)->get(
+                *reinterpret_cast<int *>(p));
+            help_create_link(buf, reinterpret_cast<char *>(link), idbuf);
+            *reinterpret_cast<int *>(0x007591A4) =
+                *reinterpret_cast<int *>(p);
+            *reinterpret_cast<int *>(0x007591A8) = 0x62;
+            strcat(buf, reinterpret_cast<char *>(0x00682820));
+            strcat(buf, reinterpret_cast<char *>(0x00682E9C));
+            _itoa(*reinterpret_cast<unsigned char *>(p + 0x48), numbuf, 10);
+            strcat(buf, numbuf);
+            strcat(buf, reinterpret_cast<char *>(0x00682E98));
+            flushed = (*buf != 0);
+            if (a4 >= 0 && *buf != 0) {
+                a1(buf);
+                flushed = false;
+                *buf = 0;
+            }
+        }
+    }
+    if (a4 < 0 && flushed) a1(buf);
+
+    // ---- section 3: (0x94ae60, stride 0x10, match +0xc) ----
+    flushed = false;
+    idx = 0;
+    *buf = 0;
+    for (p = reinterpret_cast<char *>(0x0094AE60);
+         p < reinterpret_cast<char *>(0x0094B000); p += 0x10, ++idx) {
+        if (*reinterpret_cast<short *>(p + 0xC) == a2) {
+            if (a4 < 0) {
+                if (flushed) {
+                    strcat(buf, reinterpret_cast<char *>(0x00682E90));
+                } else {
+                    strcat(buf, reinterpret_cast<char *>(0x0068465C));
+                    char *s = reinterpret_cast<Strings *>(0x009B90D8)->get(
+                        *reinterpret_cast<int *>(
+                            *reinterpret_cast<int *>(0x009B90F8) + 0x124));
+                    strcat(buf, s);
+                    strcat(buf, reinterpret_cast<char *>(0x00682E94));
+                }
+            } else {
+                strcat(buf, reinterpret_cast<char *>(0x00684660));
+            }
+            reinterpret_cast<Datalink *>(0x00703EA0)->construct_id(idbuf, 6,
+                                                                  idx);
+            char *link = reinterpret_cast<Strings *>(0x009B90D8)->get(
+                *reinterpret_cast<int *>(p));
+            strcat(buf, reinterpret_cast<char *>(0x00683544));
+            strcat(buf, link);
+            strcat(buf, reinterpret_cast<char *>(0x00683540));
+            strcat(buf, idbuf);
+            strcat(buf, reinterpret_cast<char *>(0x0068353C));
+            if (*reinterpret_cast<int *>(p) == a2) {
+                strcat(buf, reinterpret_cast<char *>(0x00682820));
+                char *s2 = reinterpret_cast<Strings *>(0x009B90D8)->get(
+                    *reinterpret_cast<int *>(
+                        *reinterpret_cast<int *>(0x009B90F8) + 0x310));
+                strcat(buf, s2);
+                strcat(buf, reinterpret_cast<char *>(0x00682E9C));
+            }
+            char byteVal = *reinterpret_cast<char *>(p + 0xA);
+            (void)byteVal;
+            unsigned char kind = *reinterpret_cast<unsigned char *>(p + 8);
+            if (static_cast<char>(kind) >= 0) {
+                if (*reinterpret_cast<unsigned char *>(p + 0xA) < 3) {
+                    _itoa(kind, numbuf, 10);
+                    strcat(buf, numbuf);
+                } else {
+                    char *s3 = reinterpret_cast<Strings *>(0x009B90D8)->get(
+                        *reinterpret_cast<int *>(
+                            *reinterpret_cast<int *>(0x009B90F8) + 0x200));
+                    strcat(buf, s3);
+                }
+            } else {
+                char *s4 = reinterpret_cast<Strings *>(0x009B90D8)->get(
+                    *reinterpret_cast<int *>(
+                        *reinterpret_cast<int *>(0x009B90F8) + 0x310));
+                strcat(buf, s4);
+            }
+            strcat(buf, reinterpret_cast<char *>(0x00682E98));
+            flushed = (*buf != 0);
+            if (a4 >= 0 && *buf != 0) {
+                a1(buf);
+                flushed = false;
+                *buf = 0;
+            }
+        }
+    }
+    if (a4 < 0 && flushed) a1(buf);
+
+    // ---- section 4: (0x94f278, stride 0x10, match +0xc) ----
+    flushed = false;
+    idx = 0;
+    *buf = 0;
+    for (p = reinterpret_cast<char *>(0x0094F278);
+         p < reinterpret_cast<char *>(0x0094F358); p += 0x10, ++idx) {
+        if (*reinterpret_cast<short *>(p + 0xC) == a2) {
+            if (a4 < 0) {
+                if (flushed) {
+                    strcat(buf, reinterpret_cast<char *>(0x00682E90));
+                } else {
+                    strcat(buf, reinterpret_cast<char *>(0x00684664));
+                    char *s = reinterpret_cast<Strings *>(0x009B90D8)->get(
+                        *reinterpret_cast<int *>(
+                            *reinterpret_cast<int *>(0x009B90F8) + 0x128));
+                    strcat(buf, s);
+                    strcat(buf, reinterpret_cast<char *>(0x00682E94));
+                }
+            } else {
+                strcat(buf, reinterpret_cast<char *>(0x00684668));
+            }
+            reinterpret_cast<Datalink *>(0x00703EA0)->construct_id(idbuf, 7,
+                                                                  idx);
+            char *link = reinterpret_cast<Strings *>(0x009B90D8)->get(
+                *reinterpret_cast<int *>(p));
+            strcat(buf, reinterpret_cast<char *>(0x00683544));
+            strcat(buf, link);
+            strcat(buf, reinterpret_cast<char *>(0x00683540));
+            strcat(buf, idbuf);
+            strcat(buf, reinterpret_cast<char *>(0x0068353C));
+            *reinterpret_cast<int *>(0x007591A4) =
+                *reinterpret_cast<int *>(p);
+            *reinterpret_cast<int *>(0x007591A8) = 0x64;
+            strcat(buf, reinterpret_cast<char *>(0x00682820));
+            strcat(buf, reinterpret_cast<char *>(0x00682E9C));
+            char kind2 = *reinterpret_cast<char *>(p + 8);
+            if (kind2 >= 0) {
+                _itoa(static_cast<unsigned char>(kind2), numbuf, 10);
+                strcat(buf, numbuf);
+            } else {
+                char *s2 = reinterpret_cast<Strings *>(0x009B90D8)->get(
+                    *reinterpret_cast<int *>(
+                        *reinterpret_cast<int *>(0x009B90F8) + 0x310));
+                strcat(buf, s2);
+            }
+            strcat(buf, reinterpret_cast<char *>(0x00682E98));
+            flushed = (*buf != 0);
+            if (a4 >= 0 && *buf != 0) {
+                a1(buf);
+                flushed = false;
+                *buf = 0;
+            }
+        }
+    }
+    if (a4 < 0 && flushed) a1(buf);
+
+    // ---- section 5: (0x9ab538, stride 0x1c, match +0x18) ----
+    flushed = false;
+    idx = 0;
+    *buf = 0;
+    for (p = reinterpret_cast<char *>(0x009AB538);
+         p < reinterpret_cast<char *>(0x009AB864); p += 0x1C, ++idx) {
+        if (*reinterpret_cast<short *>(p + 0x18) == a2) {
+            if (a4 < 0) {
+                if (flushed) {
+                    strcat(buf, reinterpret_cast<char *>(0x00682E90));
+                } else {
+                    strcat(buf, reinterpret_cast<char *>(0x0068466C));
+                    char *s = reinterpret_cast<Strings *>(0x009B90D8)->get(
+                        *reinterpret_cast<int *>(
+                            *reinterpret_cast<int *>(0x009B90F8) + 0x12C));
+                    strcat(buf, s);
+                    strcat(buf, reinterpret_cast<char *>(0x00682E94));
+                }
+            } else {
+                strcat(buf, reinterpret_cast<char *>(0x00684670));
+            }
+            reinterpret_cast<Datalink *>(0x00703EA0)->construct_id(idbuf, 8,
+                                                                  idx);
+            char *link = reinterpret_cast<Strings *>(0x009B90D8)->get(
+                *reinterpret_cast<int *>(p));
+            strcat(buf, reinterpret_cast<char *>(0x00683544));
+            strcat(buf, link);
+            strcat(buf, reinterpret_cast<char *>(0x00683540));
+            strcat(buf, idbuf);
+            strcat(buf, reinterpret_cast<char *>(0x0068353C));
+            flushed = (*buf != 0);
+            if (a4 >= 0 && *buf != 0) {
+                a1(buf);
+                flushed = false;
+                *buf = 0;
+            }
+        }
+    }
+    if (a4 < 0 && flushed) a1(buf);
+
+    // ---- section 6: (0x9ab89a, stride 0x34, bitfield-gated) ----
+    {
+        int ctr = 0;
+        *buf = 0;
+        for (p = reinterpret_cast<char *>(0x009AB89A);
+             p < reinterpret_cast<char *>(0x009AC59A); p += 0x34, ++ctr) {
+            if ((*reinterpret_cast<unsigned char *>(p - 2) & 1) == 0) continue;
+            if (*reinterpret_cast<short *>(p) != a2) continue;
+            if (a4 < 0) {
+                if (*buf != 0) {
+                    strcat(buf, reinterpret_cast<char *>(0x00682E90));
+                } else {
+                    strcat(buf, reinterpret_cast<char *>(0x00684674));
+                    char *s = reinterpret_cast<Strings *>(0x009B90D8)->get(
+                        *reinterpret_cast<int *>(
+                            *reinterpret_cast<int *>(0x009B90F8) + 0x318));
+                    strcat(buf, s);
+                    strcat(buf, reinterpret_cast<char *>(0x00682E94));
+                }
+            } else {
+                strcat(buf, reinterpret_cast<char *>(0x00684678));
+            }
+            reinterpret_cast<Datalink *>(0x00703EA0)->construct_id(idbuf, 3,
+                                                                  ctr);
+            strcat(buf, reinterpret_cast<char *>(0x00683544));
+            strcat(buf, p - 0x32);
+            strcat(buf, reinterpret_cast<char *>(0x00683540));
+            strcat(buf, idbuf);
+            strcat(buf, reinterpret_cast<char *>(0x0068353C));
+            if (a4 >= 0 && *buf != 0) {
+                a1(buf);
+                *buf = 0;
+            }
+        }
+        if (a4 < 0 && *buf != 0) a1(buf);
+    }
+
+    } // end sections 1-6 (a4 < 0 || a4 == 2)
+
+    // ---- section 7: faction/other, linked-record list (0x9a4bb0, stride 0x30) ----
+    if (a4 < 0 || a4 == 0) {
+        int ctr = 1;
+        *buf = 0;
+        for (p = reinterpret_cast<char *>(0x009A4BB0);
+             p < reinterpret_cast<char *>(0x009A64A0); p += 0x30, ++ctr) {
+            bool match = (*reinterpret_cast<int *>(p - 4) == a2) ||
+                         (*reinterpret_cast<int *>(p) == a2);
+            if (!match) continue;
+            if (a4 < 0) {
+                if (*buf != 0) {
+                    strcat(buf, reinterpret_cast<char *>(0x00682E90));
+                } else {
+                    strcat(buf, reinterpret_cast<char *>(0x0068467C));
+                    char *s = reinterpret_cast<Strings *>(0x009B90D8)->get(
+                        *reinterpret_cast<int *>(
+                            *reinterpret_cast<int *>(0x009B90F8) + 0x110));
+                    strcat(buf, s);
+                    strcat(buf, reinterpret_cast<char *>(0x00682E94));
+                }
+            } else {
+                strcat(buf, reinterpret_cast<char *>(0x00684680));
+            }
+            if (*reinterpret_cast<int *>(p) == a2) {
+                strcat(buf, reinterpret_cast<char *>(0x00682E9C));
+            }
+            int category = (ctr >= 0x46) ? 0xB : 0xA;
+            reinterpret_cast<Datalink *>(0x00703EA0)->construct_id(idbuf,
+                                                                  category,
+                                                                  ctr);
+            char *link = reinterpret_cast<Strings *>(0x009B90D8)->get(
+                *reinterpret_cast<int *>(p - 0x18));
+            strcat(buf, reinterpret_cast<char *>(0x00683544));
+            strcat(buf, link);
+            strcat(buf, reinterpret_cast<char *>(0x00683540));
+            strcat(buf, idbuf);
+            strcat(buf, reinterpret_cast<char *>(0x0068353C));
+            if (*reinterpret_cast<int *>(p) == a2) {
+                strcat(buf, reinterpret_cast<char *>(0x00682820));
+                char *s2 = reinterpret_cast<Strings *>(0x009B90D8)->get(
+                    *reinterpret_cast<int *>(
+                        *reinterpret_cast<int *>(0x009B90F8) + 0x4DC));
+                strcat(buf, s2);
+                strcat(buf, reinterpret_cast<char *>(0x00682E98));
+            }
+            if (a4 >= 0 && *buf != 0) {
+                a1(buf);
+                *buf = 0;
+            }
+        }
+        if (a4 < 0 && *buf != 0) {
+            a1(buf);
+        }
+    }
+
+    // ---- section 8: nested loop, groups of 4 (0x94b014); section 9 follows in the same gate ----
+    if ((a4 < 0) || (a4 == 3)) {
+        int idBase;
+        char *outer;
+        *buf = 0;
+        idBase = 1;
+        outer = reinterpret_cast<char *>(0x0094B014);
+        do {
+            char *inner = outer;
+            for (int j = 0; j < 4; ++j, inner += 4) {
+                if (*reinterpret_cast<int *>(inner - 0x10) == a2) {
+                    if (a4 < 0) {
+                        if (*buf != 0) {
+                            strcat(buf, reinterpret_cast<char *>(0x00684688));
+                        } else {
+                            strcat(buf,
+                                   reinterpret_cast<char *>(0x00684684));
+                            char *s = reinterpret_cast<Strings *>(0x009B90D8)->get(
+                                *reinterpret_cast<int *>(
+                                    *reinterpret_cast<int *>(0x009B90F8) +
+                                    0x118));
+                            strcat(buf, s);
+                            strcat(buf,
+                                   reinterpret_cast<char *>(0x00682E94));
+                        }
+                    } else {
+                        strcat(buf, reinterpret_cast<char *>(0x00684688));
+                    }
+                    reinterpret_cast<Datalink *>(0x00703EA0)->construct_id(
+                        idbuf, 0xC, idBase + j);
+                    char *link = reinterpret_cast<Strings *>(0x009B90D8)->get(
+                        *reinterpret_cast<int *>(inner));
+                    strcat(buf, reinterpret_cast<char *>(0x00683544));
+                    strcat(buf, link);
+                    strcat(buf, reinterpret_cast<char *>(0x00683540));
+                    strcat(buf, idbuf);
+                    strcat(buf, reinterpret_cast<char *>(0x0068353C));
+                    if (*buf != 0) {
+                        a1(buf);
+                    }
+                }
+            }
+            outer += 0xD4;
+            idBase += 5;
+        } while (outer < reinterpret_cast<char *>(0x0094B364));
+
+        // ---- section 9: simple id-only list (0x946020, stride 0x1c, match +8) ----
+        // same gate as section 8: reached only when a4 < 0 || a4 == 3.
+        *buf = 0;
+        for (p = reinterpret_cast<char *>(0x00946020);
+             p < reinterpret_cast<char *>(0x009460E4); p += 0x1C) {
+            if (*reinterpret_cast<int *>(p + 8) != a2) continue;
+            if (a4 < 0) {
+                if (*buf != 0) {
+                    strcat(buf, reinterpret_cast<char *>(0x00682E90));
+                } else {
+                    strcat(buf, reinterpret_cast<char *>(0x0068468C));
+                    char *s = reinterpret_cast<Strings *>(0x009B90D8)->get(
+                        *reinterpret_cast<int *>(
+                            *reinterpret_cast<int *>(0x009B90F8) + 0x4CC));
+                    strcat(buf, s);
+                    strcat(buf, reinterpret_cast<char *>(0x00682E94));
+                }
+            } else {
+                strcat(buf, reinterpret_cast<char *>(0x00684690));
+            }
+            char *link = reinterpret_cast<Strings *>(0x009B90D8)->get(
+                *reinterpret_cast<int *>(p));
+            strcat(buf, link);
+            if (*buf != 0) {
+                a1(buf);
+            }
+        }
+    }
+
+    // ---- section 10: linked-record list (0x94f380, stride 0x2c) ----
+    if ((a4 < 0) || (a4 == 1)) {
+        int ctr = 0;
+        *buf = 0;
+        for (p = reinterpret_cast<char *>(0x0094F380);
+             p < reinterpret_cast<char *>(0x009502CC); p += 0x2C, ++ctr) {
+            bool match = (*reinterpret_cast<int *>(p - 4) == a2) ||
+                         (*reinterpret_cast<int *>(p) == a2);
+            if (!match) continue;
+            if (a4 < 0) {
+                if (*buf != 0) {
+                    strcat(buf, reinterpret_cast<char *>(0x00682E90));
+                } else {
+                    strcat(buf, reinterpret_cast<char *>(0x00684694));
+                    char *s = reinterpret_cast<Strings *>(0x009B90D8)->get(
+                        *reinterpret_cast<int *>(
+                            *reinterpret_cast<int *>(0x009B90F8) + 0x130));
+                    strcat(buf, s);
+                    strcat(buf, reinterpret_cast<char *>(0x00682E94));
+                }
+            } else {
+                strcat(buf, reinterpret_cast<char *>(0x00684698));
+            }
+            reinterpret_cast<Datalink *>(0x00703EA0)->construct_id(idbuf, 0xE,
+                                                                  ctr);
+            char *link = reinterpret_cast<Strings *>(0x009B90D8)->get(
+                *reinterpret_cast<int *>(p - 0x24));
+            strcat(buf, reinterpret_cast<char *>(0x00683544));
+            strcat(buf, link);
+            strcat(buf, reinterpret_cast<char *>(0x00683540));
+            strcat(buf, idbuf);
+            strcat(buf, reinterpret_cast<char *>(0x0068353C));
+            if (a4 >= 0 && *buf != 0) {
+                a1(buf);
+                *buf = 0;
+            }
+        }
+        if (a4 < 0 && *buf != 0) a1(buf);
+    }
+
+    if (a4 < 0 || a4 == 3) {
+        TechnologyHelpSectionSelector = a4;
+        tech_heck(a1, a2);
+        TechnologyHelpSectionSelector = -1;
+    }
+}

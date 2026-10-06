@@ -34,12 +34,16 @@ struct Player {
     const char *adj_name_faction;
     int noun_gender, is_noun_plural, is_leader_female;
 };
+// Fields touched by the actual extracted producer bodies, typed as in
+// src/faction.h; this narrow fixture is not a layout/ABI claim.
 struct PlayerData {
     uint32_t diplo_treaties[MaxPlayerNum];
-    int diplo_patience[MaxPlayerNum];
+    char diplo_patience[MaxPlayerNum];
     int diplo_spoke[MaxPlayerNum];
     int global_reputation;
 };
+struct GameDataStateFieldsOwner { int diff_level_current_, turn_current_num_; };
+struct GameDataStateOwner { GameDataStateFieldsOwner fields_; };
 struct VehPrototype { const char *veh_name; uint16_t flags; };
 struct NetMock {
     void await_diplo(int n);
@@ -70,12 +74,13 @@ static char string_temp[256];
 
 Player Players[MaxPlayerNum];
 PlayerData PlayersData[MaxPlayerNum];
+GameDataStateOwner GameDataStateStorage;
 VehPrototype VehPrototypes[MaxPlayerNum * MaxVehProtoFactionNum];
 Sprite sprites[MaxPlayerNum];
 Sprite *FactionDiplomacyPortraits[MaxPlayerNum];
 int PopupDialogFactionID, BestProtoForTrade, BestProtoToMention;
-int DiploScratchFA70, IsMultiplayerNet, TurnCurrentNum;
-int DiffLevelCurrent, PluralityDefault, GenderDefault;
+int DiploScratchFA70, IsMultiplayerNet;
+int PluralityDefault, GenderDefault;
 const char *PopupStartCaption = "CAPTION";
 const char *DiploLabelSendingTECH = "SENDINGTECH";
 const char *DiploLabelSendingTREATYON = "SENDINGTREATYON";
@@ -122,8 +127,8 @@ void __cdecl reset_fixture() {
     scan_best_proto = -1;
     last_message_opcode = last_message_payload = 0;
     PopupDialogFactionID = BestProtoForTrade = BestProtoToMention = -1;
-    DiploScratchFA70 = IsMultiplayerNet = DiffLevelCurrent = 0;
-    TurnCurrentNum = turn_number;
+    DiploScratchFA70 = IsMultiplayerNet = GameDataStateStorage.fields_.diff_level_current_ = 0;
+    GameDataStateStorage.fields_.turn_current_num_ = turn_number;
     PluralityDefault = GenderDefault = 0;
     std::memset(string_temp, 0, sizeof(string_temp));
 }
@@ -256,7 +261,7 @@ int main() {
     assert(events[0] == "log:Sending TREATY ON" && events[1] == "message");
 
     reset_fixture();
-    DiffLevelCurrent = 3;
+    GameDataStateStorage.fields_.diff_level_current_ = 3;
     tutorial_result = 0;
     pact_of_brotherhood(1, 2);
     assert(map_calls == 1 && scan_calls == 1);
@@ -288,7 +293,7 @@ int main() {
 
     reset_fixture();
     random_result = 2;
-    DiffLevelCurrent = 3;
+    GameDataStateStorage.fields_.diff_level_current_ = 3;
     tutorial_result = 0;
     territory_result = 1;
     make_treaty(1, 2);

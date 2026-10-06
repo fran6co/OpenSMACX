@@ -62,7 +62,6 @@
 
 #include "netmsg.h"  // NetMsgPrimary - the editor's ALREADYDONE/PROTECT* pops
 #include "tutwin.h"  // TutWinGlobal - survey2 raises the map tutorial on it
-#include "spying_recovery.h"  // spying - the espionage order
 #include "technology.h"  // has_tech - editor_tech and the tech orders gate on it
 #include "random.h"  // random - the editor's randomizer and the AI orders
 #include "alpha.h"  // AlphaIniPrefs - the toggles mirror the prefs into it

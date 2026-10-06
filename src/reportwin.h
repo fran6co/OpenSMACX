@@ -68,7 +68,7 @@ class ReportWin : public GraphicWin {
   // 0x0049B220 highlights report-category buttons and redraws their lab
   // connectors on this window or Datalink's canvas.
   void on_button_passover(int button_id, int state);
-  // The two animation ticks the daemons in leaf_recoveries.cpp drive. Public,
+  // The two animation ticks driven by callback adapters in reportwin.cpp. Public,
   // __thiscall, void(void). Both use genuine animation members and the
   // existing explosion sprite run; action_sat_attack remains a dependency.
   void sat_anim();  // 0x0049FE40  ?sat_anim@ReportWin@@QAEXXZ

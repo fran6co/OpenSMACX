@@ -292,7 +292,6 @@ int __cdecl success_rates(int id, int morale, int diff_modifier, int base_id) {
 #include "technology.h"
 #include "faction.h"
 #include "reportif.h"
-#include "spying_recovery.h"
 #include "infowin.h"
 #include "buffer.h"
 #include "sprite.h"

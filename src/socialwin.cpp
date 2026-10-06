@@ -33,7 +33,6 @@ extern const char BufferJoinSpace[];
 #include "technology.h"
 #include "lock.h"
 #include "alpha.h"
-#include "spying_recovery.h"
 #include "mapwin.h"   // MainInterfaceGlobal, at 0x007AE820
 #include "tutwin.h"
 #include "console.h"

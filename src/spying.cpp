@@ -9,7 +9,6 @@
  */
 #include "stdafx.h"
 #include "game.h"  // shared state-window owner
-#include "spying_recovery.h"
 #include "faction.h"  // Players, RFLAG_ALIEN
 #include "console.h"
 #include "base.h"  // GovernorFaction is the same Council-owned identity.

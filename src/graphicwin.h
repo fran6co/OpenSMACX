@@ -182,7 +182,7 @@ class GraphicWin : public Win, public Buffer {
   // screen coordinates and static-flip that region. The fifth argument is
   // part of the symbol but dead in the body (verified against the image:
   // every one of the 95 bytes is spelled by the four calls and the
-  // rectangle arithmetic). The body is homed in leaf_recoveries.cpp;
+  // rectangle arithmetic). The proposed body is homed in graphicwin.cpp;
   // Console's editor commands (console.cpp:4314..4323) still spell the two
   // calls as raw-address casts, which this declaration now unblocks
   // repointing.

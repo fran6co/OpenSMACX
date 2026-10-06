@@ -19,7 +19,6 @@
 #include "xpops.h"
 #include "popup.h"   // PopupStartCaption, the shared caption buffer
 #include "faction.h"  // PopupDialogFactionID, ExpansionEnabled
-#include "spying_recovery.h"  // SpyingFactionFlagBytes
 #include <cstdio>
 #include <cstring>
 

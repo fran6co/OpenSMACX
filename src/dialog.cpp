@@ -957,3 +957,171 @@ void Dialog::UNK2(int window, int message, int wparam, int lparam) {
 // RECOVERY_BINDING: v1 {"evidence": ["git:360abf0bcf225dda7b384e46e5c26fb7bd2a3bda:src/recovered/00406670.cpp", "pinned:terranx_original:0x406670", "source:src/dialog.cpp"], "reason": "Original receives the complete StringList virtual allocation-base view at+28, runs complete StringList teardown, restores allocation owner and conditionally releases complete storage for flag bit0. Real StringList hierarchy emits this scalar deleting entry in this TU; linked selection remains unverified. Preserve all original spans, names, claims and seed discoveries; no new byte grant."}
 // symbol    ??_GStringList@@UAEPAXI@Z
 */
+
+/*
+Purpose: Dialog's one-int init: reset the live dialog through close(), store
+         the requested heap size at 0x1c, and hand the embedded item list the
+         Dialog's own Heap as its allocator (or clear the allocator when no
+         size is given). The entry-list teardown between the decisions is the
+         same walk StringStruct::remove_all performs, inlined the way the
+         image inlines it (see clear_list_entries in stringstruct.cpp and the
+         sibling Dialog::init overloads above).
+
+// ORIGINAL: 0x006095F0 ?init@Dialog@@QAEHH@Z 0x006095F0-0x00609730 FILE
+// RECOVERY_BINDING: v1 {"evidence":["src/dialog.h declares this original Dialog overload and dialog.cpp owns the sibling init/close methods.","The body uses actual Dialog/Heap/StringStruct members; its explicit list-entry teardown and branch order are retained unchanged."],"reason":"Move the complete existing Dialog member body and original annotation to its declared owner. This records source ownership only; its historical span/claim and explicit list lifecycle remain obligations."}
+// TRIED: the scaffold-provided nullary `VCall` shim's slots could not be re-parameterised from the body, so the seed declared its own shim class for the two per-entry virtual calls; the real C++ spelling below reaches the same dispatches through the list's on_remove hook and the entries' deleting destructors. Testing heap_size == 0 first vs the non-zero branch first scored the latter higher in the seed.
+// size      320 bytes
+// prototype int (__thiscall ?init@Dialog@@QAEHH@Z)(Dialog* this, int)
+// callers   2   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4620 0x00608F50
+// indirect  0x00609655 0x00609667 0x00609683 0x006096D9 0x006096ED 0x00609708
+Status: Coverage transcription - unclaimed body
+*/
+int Dialog::init(int heap_size) {
+    close();
+    field_1C_ = static_cast<uint32_t>(heap_size);
+    if (heap_size != 0) {
+        if (heap_.init(static_cast<size_t>(heap_size)) != 0) {
+            return 4;
+        }
+    }
+    if (item_list_.head_ != 0) {
+        int index = 0;
+        if (0 < item_list_.entry_count_) {
+            do {
+                item_list_.current_ = item_list_.head_->next;
+                StringStructPayload *const payload = item_list_.head_->string_payload();
+                item_list_.on_remove(payload);
+                if (payload != 0) {
+                    delete payload;
+                }
+                item_list_.head_->payload = 0;
+                StringStructEntry *const head = item_list_.head_;
+                if (head != 0) {
+                    delete head;
+                }
+                ++index;
+                item_list_.head_ = item_list_.current_;
+            } while (index < item_list_.entry_count_);
+        }
+        item_list_.head_ = 0;
+        item_list_.current_position_ = 0;
+        item_list_.entry_count_ = 0;
+    }
+    item_list_.allocator_ = (heap_size != 0) ? &heap_ : 0;
+    item_list_.current_position_ = 0;
+    return 0;
+}
+
+/*
+Purpose: Dialog's Heap* init: reset the live dialog through close(), park
+         -1 in the size slot, store the caller's Heap as the dialog's heap
+         pointer, and hand that same Heap to the embedded item list as its
+         allocator after the entry teardown.
+
+// ORIGINAL: 0x006098D0 ?init@Dialog@@QAEHPAUHeap@@@Z 0x006098D0-0x0060996F FILE
+// RECOVERY_BINDING: v1 {"evidence":["src/dialog.h declares this original Dialog overload; dialog.cpp owns the sibling init/close methods.","The embedded list, heap pointer and allocator are existing Dialog members; SpriteBox's documented forwarder targets this overload."],"reason":"Move the existing typed overload to Dialog's owner without changing heap assignment, teardown order or return behavior."}
+// symbol    ?init@Dialog@@QAEHPAVHeap@@@Z
+// TRIED: SpriteBox::init(Heap*) tail-forwards here through the embedded Dialog base.
+// size      159 bytes
+// prototype int (__thiscall ?init@Dialog@@QAEHPAUHeap@@@Z)(Dialog* this, Heap*)
+// callers   2   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00608F50
+// indirect  0x00609915 0x00609927 0x00609943
+Status: Coverage transcription - unclaimed body
+*/
+int Dialog::init(Heap *heap) {
+    close();
+    field_1C_ = 0xFFFFFFFF;
+    heap_ptr_ = heap;
+    if (item_list_.head_ != 0) {
+        int index = 0;
+        if (0 < item_list_.entry_count_) {
+            do {
+                item_list_.current_ = item_list_.head_->next;
+                StringStructPayload *const payload = item_list_.head_->string_payload();
+                item_list_.on_remove(payload);
+                if (payload != 0) {
+                    delete payload;
+                }
+                item_list_.head_->payload = 0;
+                StringStructEntry *const head = item_list_.head_;
+                if (head != 0) {
+                    delete head;
+                }
+                ++index;
+                item_list_.head_ = item_list_.current_;
+            } while (index < item_list_.entry_count_);
+        }
+        item_list_.head_ = 0;
+        item_list_.current_position_ = 0;
+        item_list_.entry_count_ = 0;
+    }
+    item_list_.current_position_ = 0;
+    item_list_.allocator_ = heap;
+    return 0;
+}
+
+/*
+Purpose: Dialog's five-int init: reset through close(), store the geometry
+         and the two style bits, park the caller's Heap in the dialog's heap
+         pointer, and after the entry teardown hand the same Heap to the
+         embedded item list as its allocator.
+
+         Same store shape as the six-int init at 0x00609300, except the Heap
+         lands at +0x18 (the pointer slot) instead of the size slot, and no
+         Heap::init runs.
+
+// ORIGINAL: 0x00609730 ?init@Dialog@@QAEHHHHHPAUHeap@@@Z 0x00609730-0x006097EE FILE
+// RECOVERY_BINDING: v1 {"evidence":["src/dialog.h declares this original Dialog overload; dialog.cpp owns the sibling init/close methods.","The body uses existing Dialog members and preserves its independent geometry, style and list teardown sequence."],"reason":"Move the existing typed overload to Dialog's owner without folding it into a sibling or altering its writes and cleanup."}
+// symbol    ?init@Dialog@@QAEHHHHHPAVHeap@@@Z
+// TRIED: MISMATCH, closest at 187/190 bytes (mnemonic_similarity 0.97). Same embedded-manager close-and-relink shape as SetupWin::close (0x004AD9C0): a single mutated `char *p` (starts as `this`, then `p += 0xbc` to become the manager) reproduces the whole prologue, field stores AND the loop body byte-for-byte - matching original's single-register reuse (esi: this, then mgr) instead of a separate named `mgr` local, which cost an extra register/push. The two vtable-adjustment "deleting dtor" calls (vtbl[1] read as a byte displacement, this-adjusted, then that pointer's own vtbl[0] called with arg 1) still diverge by a few instructions each - same register-allocator nuance as 0x004AD9C0's second call site, not chased further.
+// TRIED: SpriteBox::init(int,int,int,int,Heap*) tail-forwards here through the embedded Dialog base.
+// size      190 bytes
+// prototype int (__thiscall ?init@Dialog@@QAEHHHHHPAUHeap@@@Z)(Dialog* this, int, int, int, int, Heap*)
+// callers   2   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x00608F50
+// indirect  0x00609793 0x006097A7 0x006097C2
+Status: Coverage transcription - unclaimed body
+*/
+int Dialog::init(int left, int top, int right, int bottom, Heap *heap) {
+    close();
+    field_28_ = top;
+    field_24_ = left;
+    field_20_ |= 3;
+    field_2C_ = right;
+    field_30_ = bottom;
+    heap_ptr_ = heap;
+    if (item_list_.head_ != 0) {
+        int index = 0;
+        if (0 < item_list_.entry_count_) {
+            do {
+                item_list_.current_ = item_list_.head_->next;
+                StringStructPayload *const payload = item_list_.head_->string_payload();
+                item_list_.on_remove(payload);
+                if (payload != 0) {
+                    delete payload;
+                }
+                item_list_.head_->payload = 0;
+                StringStructEntry *const head = item_list_.head_;
+                if (head != 0) {
+                    delete head;
+                }
+                ++index;
+                item_list_.head_ = item_list_.current_;
+            } while (index < item_list_.entry_count_);
+        }
+        item_list_.head_ = 0;
+        item_list_.current_position_ = 0;
+        item_list_.entry_count_ = 0;
+    }
+    item_list_.current_position_ = 0;
+    item_list_.allocator_ = heap;
+    return 0;
+}

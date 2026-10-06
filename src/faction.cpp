@@ -36,7 +36,6 @@
 #include "probe.h"
 #include "technology.h"
 #include "veh.h"
-#include "spying_recovery.h"  // SpyingStatusTable, SpyingStatusStride
 #include "netmsg.h"  // NetMsgPrimary, which the diplomacy bodies pop through
 #include "netdaemon.h"  // NetDaemonNet, message_data - the net_* writers
 #include "log.h"  // log_say, which the net_* writers announce each move with
@@ -1120,8 +1119,8 @@ void __cdecl cause_friction(int faction_id, int faction_id_with, int friction) {
     // treaty word - SpyingStatusTable[index + 16], exactly the +8 spelling
     // treaty_off uses for the agenda view. One index local reaches both the
     // read and the write, which is what the image keeps in a single register.
-    int index = faction_id_with + faction_id * SpyingStatusStride;
-    SpyingStatusTable[index + 16] = range(SpyingStatusTable[index + 16] + friction, 0, 20);
+    PlayersData[faction_id].diplo_friction[faction_id_with] =
+        range(PlayersData[faction_id].diplo_friction[faction_id_with] + friction, 0, 20);
     if (DiploFrictionFactionID == faction_id && DiploFrictionFactionIDWith == faction_id_with) {
         DiploFriction += friction; // not bounded?
     }
@@ -1422,15 +1421,15 @@ void __cdecl treaty_off(int faction_id, int faction_id_with, int treaty) {
     if (treaty & DTREATY_WANT_REVENGE) {
         // 0xfffff3ff == ~(SHALL_BETRAY | 0x800), and in the +8 view: dropping
         // WANT_REVENGE drops that pair as well.
-        int index = faction_id_with + faction_id * SpyingStatusStride;
-        SpyingStatusTable[index + 8] &= 0xfffff3ff;
-        index = faction_id + faction_id_with * SpyingStatusStride;
-        SpyingStatusTable[index + 8] &= 0xfffff3ff;
+        int index = faction_id_with;
+        PlayersData[faction_id].diplo_agenda[index] &= 0xfffff3ff;
+        index = faction_id;
+        PlayersData[faction_id_with].diplo_agenda[index] &= 0xfffff3ff;
     }
-    int index = faction_id_with + faction_id * SpyingStatusStride;
-    SpyingStatusTable[index] &= ~treaty;
-    index = faction_id + faction_id_with * SpyingStatusStride;
-    SpyingStatusTable[index] &= ~treaty;
+    int index = faction_id_with;
+    PlayersData[faction_id].diplo_treaties[index] &= ~treaty;
+    index = faction_id;
+    PlayersData[faction_id_with].diplo_treaties[index] &= ~treaty;
 }
 
 /*
@@ -1487,8 +1486,7 @@ void __cdecl treaty_on(int faction_id, int faction_id_with, int treaty) {
     int local_faction = ConsoleGlobal.faction_id_;
     if (treaty & 7) {
         if ((faction_id == local_faction || faction_id_with == local_faction)
-            && (SpyingStatusTable[faction_id_with
-                                  + faction_id * SpyingStatusStride]
+            && (PlayersData[faction_id].diplo_treaties[faction_id_with]
                 & DTREATY_VENDETTA)) {
             // ~1 on a bit-0 flag: the request goes away here.
             DiploRedrawFlag &= ~1;
@@ -1496,25 +1494,24 @@ void __cdecl treaty_on(int faction_id, int faction_id_with, int treaty) {
         // ~0x118050: VENDETTA, both UNK_40/UNK_8000 and the 0x1100000 pair -
         // the same bits treaty_off adds to its mask for the same three low
         // bits, cleared here rather than or'ed on.
-        int index = faction_id_with + faction_id * SpyingStatusStride;
-        SpyingStatusTable[index] &= 0xffee7faf;
-        index = faction_id + faction_id_with * SpyingStatusStride;
-        SpyingStatusTable[index] &= 0xffee7faf;
+        int index = faction_id_with;
+        PlayersData[faction_id].diplo_treaties[index] &= 0xffee7faf;
+        index = faction_id;
+        PlayersData[faction_id_with].diplo_treaties[index] &= 0xffee7faf;
     }
     if (treaty & DTREATY_PACT) {
         treaty |= DTREATY_TREATY;
     }
     if (treaty & DTREATY_VENDETTA) {
-        int index = faction_id_with + faction_id * SpyingStatusStride;
-        if (SpyingStatusTable[index] & 7) {
-            DiploVendettaTable[faction_id + faction_id_with
-                               * SpyingStatusStride] = 0;
-            DiploVendettaTable[index] = 0;
+        int index = faction_id_with;
+        if (PlayersData[faction_id].diplo_treaties[index] & 7) {
+            PlayersData[faction_id_with].diplo_unk4[faction_id] = 0;
+            PlayersData[faction_id].diplo_unk4[index] = 0;
             local_faction = ConsoleGlobal.faction_id_;
         }
         treaty |= 0x80000108;
-        SpyingStatusTable[index] &= 0xfaeef378;
-        SpyingStatusTable[faction_id + faction_id_with * SpyingStatusStride]
+        PlayersData[faction_id].diplo_treaties[index] &= 0xfaeef378;
+        PlayersData[faction_id_with].diplo_treaties[faction_id]
             &= 0xfaeef378;
         if (faction_id == local_faction
             || faction_id_with == local_faction) {
@@ -1524,15 +1521,15 @@ void __cdecl treaty_on(int faction_id, int faction_id_with, int treaty) {
         }
     }
     if (treaty & 0x17) {
-        int index = faction_id_with + faction_id * SpyingStatusStride;
-        SpyingStatusTable[index] &= 0xff7fffff;
-        index = faction_id + faction_id_with * SpyingStatusStride;
-        SpyingStatusTable[index] &= 0xff7fffff;
+        int index = faction_id_with;
+        PlayersData[faction_id].diplo_treaties[index] &= 0xff7fffff;
+        index = faction_id;
+        PlayersData[faction_id_with].diplo_treaties[index] &= 0xff7fffff;
     }
-    int index = faction_id_with + faction_id * SpyingStatusStride;
-    SpyingStatusTable[index] |= treaty;
-    index = faction_id + faction_id_with * SpyingStatusStride;
-    SpyingStatusTable[index] |= treaty;
+    int index = faction_id_with;
+    PlayersData[faction_id].diplo_treaties[index] |= treaty;
+    index = faction_id;
+    PlayersData[faction_id_with].diplo_treaties[index] |= treaty;
     if ((faction_id == local_faction || faction_id_with == local_faction)
         && (treaty & 0x1f) && MultiWindowOpen) {
         reinterpret_cast<GraphicWin *>(&MultiWindow)->GraphicWin::redraw();
@@ -1562,15 +1559,15 @@ void __cdecl agenda_on(int faction_id, int faction_id_with, int agenda) {
     // The agenda view is the same table eight dwords in - 0x96CA18, which is
     // PlayerData::diplo_agenda[0].
     if (agenda & 0x20) {
-        int index = faction_id_with + faction_id * SpyingStatusStride;
-        SpyingStatusTable[index + 8] &= ~0x40;
-        index = faction_id + faction_id_with * SpyingStatusStride;
-        SpyingStatusTable[index + 8] &= ~0x40;
+        int index = faction_id_with;
+        PlayersData[faction_id].diplo_agenda[index] &= ~0x40;
+        index = faction_id;
+        PlayersData[faction_id_with].diplo_agenda[index] &= ~0x40;
     }
-    int index = faction_id_with + faction_id * SpyingStatusStride;
-    SpyingStatusTable[index + 8] |= agenda;
-    index = faction_id + faction_id_with * SpyingStatusStride;
-    SpyingStatusTable[index + 8] |= agenda;
+    int index = faction_id_with;
+    PlayersData[faction_id].diplo_agenda[index] |= agenda;
+    index = faction_id;
+    PlayersData[faction_id_with].diplo_agenda[index] |= agenda;
 }
 
 /*
@@ -1594,10 +1591,10 @@ Status: Complete
 */
 void __cdecl agenda_off(int faction_id, int faction_id_with, int agenda) {
     int mask = ~agenda;
-    int index = faction_id_with + faction_id * SpyingStatusStride;
-    SpyingStatusTable[index + 8] &= mask;
-    index = faction_id + faction_id_with * SpyingStatusStride;
-    SpyingStatusTable[index + 8] &= mask;
+    int index = faction_id_with;
+    PlayersData[faction_id].diplo_agenda[index] &= mask;
+    index = faction_id;
+    PlayersData[faction_id_with].diplo_agenda[index] &= mask;
 }
 
 /*
@@ -1656,8 +1653,7 @@ void __cdecl set_treaty(int faction_id, int faction_id_with, int treaty, BOOL se
         uint32_t *treaty_slot = &PlayersData[faction_id].diplo_treaties[faction_id_with];
         *treaty_slot |= treaty;
         if (treaty & DTREATY_UNK_40) {
-            *(int *)((char *)treaty_slot
-                     + (offsetof(PlayerData, diplo_merc) - offsetof(PlayerData, diplo_treaties))) = 50;
+            PlayersData[faction_id].diplo_merc[faction_id_with] = 50;
         }
     } else {
         PlayersData[faction_id].diplo_treaties[faction_id_with] &= ~treaty;
@@ -4109,12 +4105,8 @@ void __cdecl net_loan(int faction_id, int faction_id_with, int balance,
         // stores through `[eax + <table>]` twice - an index expression at
         // each store lets VC6 keep the scale in the SIB byte instead, which
         // is two instructions longer. Same for net_energy's single update.
-        int offset = (faction_id * SpyingStatusStride + faction_id_with)
-                     * static_cast<int>(sizeof(uint32_t));
-        *reinterpret_cast<uint32_t *>(reinterpret_cast<char *>(DiploLoanBalanceTable)
-                                      + offset) = balance;
-        *reinterpret_cast<uint32_t *>(reinterpret_cast<char *>(DiploLoanPaymentTable)
-                                      + offset) = payment;
+        PlayersData[faction_id].loan_balance[faction_id_with] = balance;
+        PlayersData[faction_id].loan_payment[faction_id_with] = payment;
     }
 }
 
@@ -4473,12 +4465,12 @@ void __cdecl enemies_team_up(int faction_id, int faction_id_with,
                              int turncoat_faction) {
     // The image reuses the two parameter slots for the pair indexes it
     // computes, so these are assignments to the parameters' own locals.
-    int index = turncoat_faction + faction_id * SpyingStatusStride;
-    if (!(SpyingStatusTable[index] & 0x10)
+    int index = turncoat_faction;
+    if (!(PlayersData[faction_id].diplo_treaties[index] & 0x10)
         && (static_cast<uint8_t>(1 << turncoat_faction) & factions_status_byte(0)) != 0) {
-        int index_with = turncoat_faction + faction_id_with * SpyingStatusStride;
-        if (SpyingStatusTable[index_with] & 0x10) {
-            if (great_satan(turncoat_faction, 0) == 0 && !(SpyingStatusTable[index] & 0x20)) {
+        int index_with = turncoat_faction;
+        if (PlayersData[faction_id_with].diplo_treaties[index_with] & 0x10) {
+            if (great_satan(turncoat_faction, 0) == 0 && !(PlayersData[faction_id].diplo_treaties[index] & 0x20)) {
                 treaty_on(faction_id, turncoat_faction, 0x2000);
                 return;
             }
@@ -4488,17 +4480,17 @@ void __cdecl enemies_team_up(int faction_id, int faction_id_with,
                 parse_says(0, Players[faction_id].noun_faction, -1, -1);
                 NetMsgPrimary.pop(DiploLabelTEAM, 5000, 0, 0);
             }
-            DiploSpokeTable[turncoat_faction * SpyingStatusStride + faction_id_with] = GameDataStateStorage.fields_.turn_current_num_;
-            DiploSpokeTable[turncoat_faction * SpyingStatusStride + faction_id] = GameDataStateStorage.fields_.turn_current_num_;
+            PlayersData[turncoat_faction].diplo_spoke[faction_id_with] = GameDataStateStorage.fields_.turn_current_num_;
+            PlayersData[turncoat_faction].diplo_spoke[faction_id] = GameDataStateStorage.fields_.turn_current_num_;
             treaty_on(faction_id, turncoat_faction, 0x10);
             return;
         }
-        if (great_satan(turncoat_faction, 0) == 0 && !(SpyingStatusTable[index] & 0x20)
-            && !(SpyingStatusTable[index_with] & 0x20)) {
+        if (great_satan(turncoat_faction, 0) == 0 && !(PlayersData[faction_id].diplo_treaties[index] & 0x20)
+            && !(PlayersData[faction_id_with].diplo_treaties[index_with] & 0x20)) {
             treaty_on(faction_id, turncoat_faction, 0x2000);
             return;
         }
-        SpyingStatusTable[index] |= 0x400;
+        PlayersData[faction_id].diplo_treaties[index] |= 0x400;
     }
 }
 

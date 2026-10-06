@@ -48,7 +48,6 @@
 #include "strings.h"   // StringTemp is also the shared main-caption scratch buffer.
 #include "temp.h"      // PlanLineCounter controls the patterned-line phase.
 #include "alpha.h"     // Rules movement rate and label_get text lookup.
-#include "spying_recovery.h"  // Faction knowledge gate used for map labels.
 #include "pulldown.h"  // The context menu owns its live item and submenu rows.
 #include "xpops.h"     // right_menu confirms the original whole-stack order.
 #include "popup.h"     // click owns a genuine stack Popup for base routing.

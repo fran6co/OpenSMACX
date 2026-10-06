@@ -21,7 +21,6 @@
 #include "worldwin.h"
 #include "checkbox.h"
 #include "vtable_shim.h"
-#include "spying_recovery.h"  // SpyingStatusTable, SpyingStatusStride
 #include "faction.h"  // DTREATY_* treaty bit constants
 #include "alpha.h"     // Labels/label_get - the atrocity captions
 #include "popup.h"     // the local Popup, PopupStartCaption, PopupModalState
@@ -200,88 +199,74 @@ Status: Complete
 */
 void DipEdit::read_check() {
     if (check_box_.get_state_id(DTREATY_COMMLINK)) {
-        if (!(SpyingStatusTable[faction_index_ * SpyingStatusStride
-                + selected_target_] & DTREATY_COMMLINK)) {
+        if (!(PlayersData[faction_index_].diplo_treaties[selected_target_] & DTREATY_COMMLINK)) {
             treaty_on(faction_index_, selected_target_, DTREATY_COMMLINK);
         }
     } else {
-        if (SpyingStatusTable[faction_index_ * SpyingStatusStride
-                + selected_target_] & DTREATY_COMMLINK) {
+        if (PlayersData[faction_index_].diplo_treaties[selected_target_] & DTREATY_COMMLINK) {
             treaty_off(faction_index_, selected_target_, DTREATY_COMMLINK);
         }
     }
 
     if (check_box_.get_state_id(DTREATY_VENDETTA)) {
-        if (!(SpyingStatusTable[faction_index_ * SpyingStatusStride
-                + selected_target_] & DTREATY_VENDETTA)) {
+        if (!(PlayersData[faction_index_].diplo_treaties[selected_target_] & DTREATY_VENDETTA)) {
             treaty_on(faction_index_, selected_target_, DTREATY_VENDETTA);
         }
     } else {
-        if (SpyingStatusTable[faction_index_ * SpyingStatusStride
-                + selected_target_] & DTREATY_VENDETTA) {
+        if (PlayersData[faction_index_].diplo_treaties[selected_target_] & DTREATY_VENDETTA) {
             treaty_off(faction_index_, selected_target_, DTREATY_VENDETTA);
         }
     }
 
     if (check_box_.get_state_id(DTREATY_TRUCE)) {
-        if (!(SpyingStatusTable[faction_index_ * SpyingStatusStride
-                + selected_target_] & DTREATY_TRUCE)) {
+        if (!(PlayersData[faction_index_].diplo_treaties[selected_target_] & DTREATY_TRUCE)) {
             treaty_on(faction_index_, selected_target_, DTREATY_TRUCE);
         }
     } else {
-        if (SpyingStatusTable[faction_index_ * SpyingStatusStride
-                + selected_target_] & DTREATY_TRUCE) {
+        if (PlayersData[faction_index_].diplo_treaties[selected_target_] & DTREATY_TRUCE) {
             treaty_off(faction_index_, selected_target_, DTREATY_TRUCE);
         }
     }
 
     if (check_box_.get_state_id(DTREATY_TREATY)) {
-        if (!(SpyingStatusTable[faction_index_ * SpyingStatusStride
-                + selected_target_] & DTREATY_TREATY)) {
+        if (!(PlayersData[faction_index_].diplo_treaties[selected_target_] & DTREATY_TREATY)) {
             treaty_on(faction_index_, selected_target_, DTREATY_TREATY);
         }
     } else {
-        if (SpyingStatusTable[faction_index_ * SpyingStatusStride
-                + selected_target_] & DTREATY_TREATY) {
+        if (PlayersData[faction_index_].diplo_treaties[selected_target_] & DTREATY_TREATY) {
             treaty_off(faction_index_, selected_target_, DTREATY_TREATY);
         }
     }
 
     if (check_box_.get_state_id(DTREATY_PACT)) {
-        if (!(SpyingStatusTable[faction_index_ * SpyingStatusStride
-                + selected_target_] & DTREATY_PACT)) {
+        if (!(PlayersData[faction_index_].diplo_treaties[selected_target_] & DTREATY_PACT)) {
             treaty_on(faction_index_, selected_target_, DTREATY_PACT);
         }
     } else {
-        if (SpyingStatusTable[faction_index_ * SpyingStatusStride
-                + selected_target_] & DTREATY_PACT) {
+        if (PlayersData[faction_index_].diplo_treaties[selected_target_] & DTREATY_PACT) {
             treaty_off(faction_index_, selected_target_, DTREATY_PACT);
         }
     }
 
     if (check_box_.get_state_id(DTREATY_HAVE_INFILTRATOR)) {
-        if (!(SpyingStatusTable[faction_index_ * SpyingStatusStride
-                + selected_target_] & DTREATY_HAVE_INFILTRATOR)) {
+        if (!(PlayersData[faction_index_].diplo_treaties[selected_target_] & DTREATY_HAVE_INFILTRATOR)) {
             set_treaty(faction_index_, selected_target_,
                        DTREATY_HAVE_INFILTRATOR, TRUE);
         }
     } else {
-        if (SpyingStatusTable[faction_index_ * SpyingStatusStride
-                + selected_target_] & DTREATY_HAVE_INFILTRATOR) {
+        if (PlayersData[faction_index_].diplo_treaties[selected_target_] & DTREATY_HAVE_INFILTRATOR) {
             set_treaty(faction_index_, selected_target_,
                        DTREATY_HAVE_INFILTRATOR, FALSE);
         }
     }
 
     if (check_box_.get_state_id(DTREATY_WANT_TO_TALK)) {
-        if (!(SpyingStatusTable[faction_index_ * SpyingStatusStride
-                + selected_target_] & DTREATY_WANT_TO_TALK)) {
+        if (!(PlayersData[faction_index_].diplo_treaties[selected_target_] & DTREATY_WANT_TO_TALK)) {
             set_treaty(faction_index_, selected_target_,
                        DTREATY_WANT_TO_TALK, TRUE);
         }
     } else {
-        if (SpyingStatusTable[faction_index_ * SpyingStatusStride
-                + selected_target_] & DTREATY_WANT_TO_TALK) {
+        if (PlayersData[faction_index_].diplo_treaties[selected_target_] & DTREATY_WANT_TO_TALK) {
             set_treaty(faction_index_, selected_target_,
                        DTREATY_WANT_TO_TALK, FALSE);
         }
@@ -298,8 +283,7 @@ void DipEdit::read_check() {
     set_agenda_bit(DTREATY_COMMLINK);
     sync_agenda_bit(DTREATY_WANT_TO_TALK);
 
-    if (SpyingStatusTable[faction_index_ * SpyingStatusStride
-            + selected_target_] & DTREATY_HAVE_SURRENDERED) {
+    if (PlayersData[faction_index_].diplo_treaties[selected_target_] & DTREATY_HAVE_SURRENDERED) {
         treaty_on(faction_index_, selected_target_, DTREATY_PACT);
         // 0xc20 == DTREATY_WANT_REVENGE | DTREATY_SHALL_BETRAY | 0x800, the
         // three-bit treaty mask surrender clears; no name covers the 0x800.
@@ -310,13 +294,11 @@ void DipEdit::read_check() {
 
     // The +8 view of the same table, the other direction's word - the one
     // do_check reads for the 0x80000000-id boxes.
-    if (SpyingStatusTable[faction_index_ * SpyingStatusStride
-            + selected_target_ + 8] & DTREATY_COMMLINK) {
+    if (PlayersData[faction_index_].diplo_agenda[selected_target_] & DTREATY_COMMLINK) {
         treaty_on(faction_index_, selected_target_, DTREATY_VENDETTA);
     }
 
-    if (!(SpyingStatusTable[faction_index_ * SpyingStatusStride
-            + selected_target_] & DTREATY_WANT_REVENGE)) {
+    if (!(PlayersData[faction_index_].diplo_treaties[selected_target_] & DTREATY_WANT_REVENGE)) {
         // 0xc00 == DTREATY_SHALL_BETRAY | 0x800.
         set_agenda(faction_index_, selected_target_, 0xc00, FALSE);
     }
@@ -360,13 +342,11 @@ Status: Complete
 */
 void DipEdit::sync_treaty_bit(int bit) {
     if (check_box_.get_state_id(bit)) {
-        if (!(SpyingStatusTable[faction_index_ * SpyingStatusStride
-            + selected_target_] & bit)) {
+        if (!(PlayersData[faction_index_].diplo_treaties[selected_target_] & bit)) {
             treaty_on(faction_index_, selected_target_, bit);
         }
     } else {
-        if (SpyingStatusTable[faction_index_ * SpyingStatusStride
-            + selected_target_] & bit) {
+        if (PlayersData[faction_index_].diplo_treaties[selected_target_] & bit) {
             treaty_off(faction_index_, selected_target_, bit);
         }
     }
@@ -402,13 +382,11 @@ void DipEdit::sync_agenda_bit(int bit) {
     int id = static_cast<int>(0x80000000U) | bit;
 
     if (check_box_.get_state_id(id)) {
-        if (!(SpyingStatusTable[faction_index_ * SpyingStatusStride
-            + selected_target_ + 8] & bit)) {
+        if (!(PlayersData[faction_index_].diplo_agenda[selected_target_] & bit)) {
             agenda_on(faction_index_, selected_target_, bit);
         }
     } else {
-        if (SpyingStatusTable[faction_index_ * SpyingStatusStride
-            + selected_target_ + 8] & bit) {
+        if (PlayersData[faction_index_].diplo_agenda[selected_target_] & bit) {
             agenda_off(faction_index_, selected_target_, bit);
         }
     }
@@ -440,13 +418,11 @@ Status: Complete
 */
 void DipEdit::set_treaty_bit(int bit) {
     if (check_box_.get_state_id(bit)) {
-        if (!(SpyingStatusTable[faction_index_ * SpyingStatusStride
-            + selected_target_] & bit)) {
+        if (!(PlayersData[faction_index_].diplo_treaties[selected_target_] & bit)) {
             set_treaty(faction_index_, selected_target_, bit, TRUE);
         }
     } else {
-        if (SpyingStatusTable[faction_index_ * SpyingStatusStride
-            + selected_target_] & bit) {
+        if (PlayersData[faction_index_].diplo_treaties[selected_target_] & bit) {
             set_treaty(faction_index_, selected_target_, bit, FALSE);
         }
     }
@@ -480,13 +456,11 @@ void DipEdit::set_agenda_bit(int bit) {
     int id = static_cast<int>(0x80000000U) | bit;
 
     if (check_box_.get_state_id(id)) {
-        if (!(SpyingStatusTable[faction_index_ * SpyingStatusStride
-            + selected_target_ + 8] & bit)) {
+        if (!(PlayersData[faction_index_].diplo_agenda[selected_target_] & bit)) {
             set_agenda(faction_index_, selected_target_, bit, TRUE);
         }
     } else {
-        if (SpyingStatusTable[faction_index_ * SpyingStatusStride
-            + selected_target_ + 8] & bit) {
+        if (PlayersData[faction_index_].diplo_agenda[selected_target_] & bit) {
             set_agenda(faction_index_, selected_target_, bit, FALSE);
         }
     }
@@ -516,47 +490,34 @@ void DipEdit::do_check() {
     CheckBox *const cb = &check_box_;
 
     cb->set_state_id(DTREATY_COMMLINK,
-        SpyingStatusTable[faction_index_ * SpyingStatusStride
-            + selected_target_] & DTREATY_COMMLINK);
+        PlayersData[faction_index_].diplo_treaties[selected_target_] & DTREATY_COMMLINK);
     cb->set_state_id(DTREATY_VENDETTA,
-        SpyingStatusTable[faction_index_ * SpyingStatusStride
-            + selected_target_] & DTREATY_VENDETTA);
+        PlayersData[faction_index_].diplo_treaties[selected_target_] & DTREATY_VENDETTA);
     cb->set_state_id(DTREATY_TRUCE,
-        SpyingStatusTable[faction_index_ * SpyingStatusStride
-            + selected_target_] & DTREATY_TRUCE);
+        PlayersData[faction_index_].diplo_treaties[selected_target_] & DTREATY_TRUCE);
     cb->set_state_id(DTREATY_TREATY,
-        SpyingStatusTable[faction_index_ * SpyingStatusStride
-            + selected_target_] & DTREATY_TREATY);
+        PlayersData[faction_index_].diplo_treaties[selected_target_] & DTREATY_TREATY);
     cb->set_state_id(DTREATY_PACT,
-        SpyingStatusTable[faction_index_ * SpyingStatusStride
-            + selected_target_] & DTREATY_PACT);
+        PlayersData[faction_index_].diplo_treaties[selected_target_] & DTREATY_PACT);
     cb->set_state_id(DTREATY_HAVE_INFILTRATOR,
-        SpyingStatusTable[faction_index_ * SpyingStatusStride
-            + selected_target_] & DTREATY_HAVE_INFILTRATOR);
+        PlayersData[faction_index_].diplo_treaties[selected_target_] & DTREATY_HAVE_INFILTRATOR);
     cb->set_state_id(DTREATY_WANT_TO_TALK,
-        SpyingStatusTable[faction_index_ * SpyingStatusStride
-            + selected_target_] & DTREATY_WANT_TO_TALK);
+        PlayersData[faction_index_].diplo_treaties[selected_target_] & DTREATY_WANT_TO_TALK);
     cb->set_state_id(DTREATY_WANT_REVENGE,
-        SpyingStatusTable[faction_index_ * SpyingStatusStride
-            + selected_target_] & DTREATY_WANT_REVENGE);
+        PlayersData[faction_index_].diplo_treaties[selected_target_] & DTREATY_WANT_REVENGE);
     cb->set_state_id(DTREATY_HAVE_SURRENDERED,
-        SpyingStatusTable[faction_index_ * SpyingStatusStride
-            + selected_target_] & DTREATY_HAVE_SURRENDERED);
+        PlayersData[faction_index_].diplo_treaties[selected_target_] & DTREATY_HAVE_SURRENDERED);
     cb->set_state_id(DTREATY_SHALL_BETRAY,
-        SpyingStatusTable[faction_index_ * SpyingStatusStride
-            + selected_target_] & DTREATY_SHALL_BETRAY);
+        PlayersData[faction_index_].diplo_treaties[selected_target_] & DTREATY_SHALL_BETRAY);
     cb->set_state_id(DTREATY_ATROCITY_VICTIM,
-        SpyingStatusTable[faction_index_ * SpyingStatusStride
-            + selected_target_] & DTREATY_ATROCITY_VICTIM);
+        PlayersData[faction_index_].diplo_treaties[selected_target_] & DTREATY_ATROCITY_VICTIM);
 
     // The second table view, eight uint32_t elements (0x20 bytes) further
     // into the same SpyingStatusTable storage.
     cb->set_state_id(static_cast<int>(0x80000000U) | DTREATY_COMMLINK,
-        SpyingStatusTable[faction_index_ * SpyingStatusStride
-            + selected_target_ + 8] & DTREATY_COMMLINK);
+        PlayersData[faction_index_].diplo_agenda[selected_target_] & DTREATY_COMMLINK);
     cb->set_state_id(static_cast<int>(0x80000000U) | DTREATY_WANT_TO_TALK,
-        SpyingStatusTable[faction_index_ * SpyingStatusStride
-            + selected_target_ + 8] & DTREATY_WANT_TO_TALK);
+        PlayersData[faction_index_].diplo_agenda[selected_target_] & DTREATY_WANT_TO_TALK);
 
     // The redraw goes through the embedded CheckBox's own virtual dispatch
     // (win-table slot 62). Re-derived here rather than through the cached
@@ -657,66 +618,45 @@ void DipEdit::on_button_clicked(int button_id) {
 
         // The pair's shared status word decides what the vendetta-intensity
         // word becomes; the value lands in BOTH directions of the table.
-        uint32_t status = SpyingStatusTable[faction_index_ * SpyingStatusStride
-            + selected_target_];
+        uint32_t status = PlayersData[faction_index_].diplo_treaties[selected_target_];
         if (status & DTREATY_VENDETTA) {
-            SpyingStatusTable[16 + faction_index_ * SpyingStatusStride
-                + selected_target_] = 0x14;
-            SpyingStatusTable[16 + selected_target_ * SpyingStatusStride
-                + faction_index_] = 0x14;
+            PlayersData[faction_index_].diplo_friction[selected_target_] = 0x14;
+            PlayersData[selected_target_].diplo_friction[faction_index_] = 0x14;
         } else if (status & DTREATY_PACT) {
-            SpyingStatusTable[16 + faction_index_ * SpyingStatusStride
-                + selected_target_] = 2;
-            SpyingStatusTable[16 + selected_target_ * SpyingStatusStride
-                + faction_index_] = 2;
+            PlayersData[faction_index_].diplo_friction[selected_target_] = 2;
+            PlayersData[selected_target_].diplo_friction[faction_index_] = 2;
         } else if (status & DTREATY_WANT_REVENGE) {
-            SpyingStatusTable[16 + faction_index_ * SpyingStatusStride
-                + selected_target_] = random(0, 10) + 5;
-            SpyingStatusTable[16 + selected_target_ * SpyingStatusStride
-                + faction_index_] = random(0, 10) + 5;
+            PlayersData[faction_index_].diplo_friction[selected_target_] = random(0, 10) + 5;
+            PlayersData[selected_target_].diplo_friction[faction_index_] = random(0, 10) + 5;
         } else {
             // Nothing settled between the pair: the intensity is a fresh
             // random score in both directions, and each direction rolls its
             // own.
-            SpyingStatusTable[16 + faction_index_ * SpyingStatusStride
-                + selected_target_] = random(0, 15);
-            SpyingStatusTable[16 + selected_target_ * SpyingStatusStride
-                + faction_index_] = random(0, 15);
+            PlayersData[faction_index_].diplo_friction[selected_target_] = random(0, 15);
+            PlayersData[selected_target_].diplo_friction[faction_index_] = random(0, 15);
         }
 
         // The six per-pair detail words, wiped both ways.
-        SpyingStatusTable[43 + faction_index_ * SpyingStatusStride
-            + selected_target_] = 0;
-        SpyingStatusTable[69 + faction_index_ * SpyingStatusStride
-            + selected_target_] = 0;
-        SpyingStatusTable[77 + faction_index_ * SpyingStatusStride
-            + selected_target_] = 0;
-        SpyingStatusTable[85 + faction_index_ * SpyingStatusStride
-            + selected_target_] = 0;
-        SpyingStatusTable[93 + faction_index_ * SpyingStatusStride
-            + selected_target_] = 0;
-        SpyingStatusTable[101 + faction_index_ * SpyingStatusStride
-            + selected_target_] = 0;
-        SpyingStatusTable[43 + selected_target_ * SpyingStatusStride
-            + faction_index_] = 0;
-        SpyingStatusTable[69 + selected_target_ * SpyingStatusStride
-            + faction_index_] = 0;
-        SpyingStatusTable[77 + selected_target_ * SpyingStatusStride
-            + faction_index_] = 0;
-        SpyingStatusTable[85 + selected_target_ * SpyingStatusStride
-            + faction_index_] = 0;
-        SpyingStatusTable[93 + selected_target_ * SpyingStatusStride
-            + faction_index_] = 0;
-        SpyingStatusTable[101 + selected_target_ * SpyingStatusStride
-            + faction_index_] = 0;
+        PlayersData[faction_index_].loan_balance[selected_target_] = 0;
+        PlayersData[faction_index_].diplo_unk1[selected_target_] = 0;
+        PlayersData[faction_index_].diplo_wrongs[selected_target_] = 0;
+        PlayersData[faction_index_].diplo_betrayed[selected_target_] = 0;
+        PlayersData[faction_index_].diplo_unk3[selected_target_] = 0;
+        PlayersData[faction_index_].diplo_unk4[selected_target_] = 0;
+        PlayersData[selected_target_].loan_balance[faction_index_] = 0;
+        PlayersData[selected_target_].diplo_unk1[faction_index_] = 0;
+        PlayersData[selected_target_].diplo_wrongs[faction_index_] = 0;
+        PlayersData[selected_target_].diplo_betrayed[faction_index_] = 0;
+        PlayersData[selected_target_].diplo_unk3[faction_index_] = 0;
+        PlayersData[selected_target_].diplo_unk4[faction_index_] = 0;
 
         do_check();
     } else if (button_id == 2) {
         parse_says(0, get_noun(faction_index_), -1, -1);
         if (X_pop_ask_number("EDITINTEGRITY",
-                SpyingStatusTable[67 + faction_index_ * SpyingStatusStride],
+                PlayersData[faction_index_].integrity_blemishes,
                 0) == 0) {
-            SpyingStatusTable[67 + faction_index_ * SpyingStatusStride]
+            PlayersData[faction_index_].integrity_blemishes
                 = ParseNumTable[0];
         }
     } else if (button_id == 3) {
@@ -725,7 +665,7 @@ void DipEdit::on_button_clicked(int button_id) {
                     nullptr);
 
         StringTemp[0] = '\0';
-        _itoa(SpyingStatusTable[111 + faction_index_ * SpyingStatusStride],
+        _itoa(PlayersData[faction_index_].atrocities,
               number_text, 10);
         strcat(StringTemp, number_text);
         // The caption id is read out of the label blob the way the image reads it:
@@ -735,7 +675,7 @@ void DipEdit::on_button_clicked(int button_id) {
             StringTemp, 20);
 
         StringTemp[0] = '\0';
-        _itoa(SpyingStatusTable[112 + faction_index_ * SpyingStatusStride],
+        _itoa(PlayersData[faction_index_].major_atrocities,
               number_text, 10);
         strcat(StringTemp, number_text);
         popup.dialogs().edit(StringTable.get(
@@ -743,9 +683,9 @@ void DipEdit::on_button_clicked(int button_id) {
             StringTemp, 20);
 
         if (popup.exec(0, 0) == 0) {
-            SpyingStatusTable[111 + faction_index_ * SpyingStatusStride]
+            PlayersData[faction_index_].atrocities
                 = atoi(ParseStrBuffer[0].str);
-            SpyingStatusTable[112 + faction_index_ * SpyingStatusStride]
+            PlayersData[faction_index_].major_atrocities
                 = atoi(ParseStrBuffer[1].str);
         }
     }

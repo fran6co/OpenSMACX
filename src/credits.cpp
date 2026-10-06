@@ -335,3 +335,26 @@ void Credits::on_left_click_event(int, int) {
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned terranx_original.exe SHA-256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf.", "Pinned vftable slot 0: 0x0066AC50 -> 0x00428F80.", "the Credits constructor stores secondary Buffer table 0x0066AC50 at object+0x444", "The original 11-byte adjustor corrects the earlier mistaken `??3Credits@@SAXPAXI@Z` interpretation: it subtracts 0x444 from ECX and tail-transfers to primary scalar-deleting entry 0x00428E60; the corrected `WEEE` signature describes the compiler's adjusting-deleting entry.", "The historical disassembly note records that the primary path returns with ret 4, tests deletion flag bit 0, and invokes scalar operator delete only when that bit is set.", "The historical demangling note identifies adjustment 1092, equal to 0x444; the adjustor does not otherwise access the stack or change the receiver view.", "Source owner: src/credits.cpp; generated entry name is compiler-observed as ??_ECredits@@WEEE@AEPAXI@Z."], "reason": "Retain the original Credits secondary-Buffer deleting-adjustor identity as a compiler-generated entry owned by the real Credits destructor and GraphicWin hierarchy. The pinned secondary view at 0x0066AC50, slot 0, targets 0x00428F80; this entry adjusts the Buffer receiver by 0x444 and reaches the primary scalar-deleting destructor, whose original path tests flag bit 0 before releasing storage. The current compiler-emitted symbol is recorded from the retained owner COFF, not handwritten."}
 // symbol    ??_ECredits@@WEEE@AEPAXI@Z
 // kind      game
+
+/*
+Purpose: Start the credit roll: construct the 0x2D6C Credits object, run
+         its exec loop, and destroy it through the deleting-destructor
+         slot the vtable dispatch reaches.
+
+// ORIGINAL: 0x00428DF0 ?show_credits@@YAXXZ 0x00428DF0-0x00428E5B;0x0065315A-0x0065316F FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence":["game.h declares the global show_credits API; credits.cpp owns the genuine Credits constructor, exec loop and destructor.","The source keeps the original explicit new/exec/delete sequence and its second mapped span."],"reason":"Move the existing global lifecycle call into the owner of Credits; do not turn it into a member or claim generated lifetime from this move."}
+// size      128 bytes
+// prototype
+// callers   4   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00428780 0x004289F0 0x0064557F 0x0064558A
+// indirect  0x00428E4A
+Status: Typed Credits construction, execution and deleting-destructor
+        dispatch. The owned lifecycle bodies still require restoration.
+*/
+void __cdecl show_credits() {
+    Credits *credits = new Credits();
+    credits->exec();
+    delete credits;
+}

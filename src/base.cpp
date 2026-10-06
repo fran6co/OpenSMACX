@@ -36,7 +36,6 @@
 #include "infowin.h"
 #include "maininterface.h"
 #include "mapwin.h"
-#include "spying_recovery.h"
 #include "general.h"
 #include "netmsg.h"
 #include "replaywin.h"
