@@ -1118,6 +1118,79 @@ void __cdecl Time::close_class() {
     TimeInitCount = static_cast<int>(static_cast<uint32_t>(TimeInitCount) - 1U);
 }
 
+// These are behavior views over observed fields, not names or complete
+// allocation claims for either original class. No connection between their
+// construction/use/lifetime is inferred from the nearby addresses.
+class RangePrefixInitializationView {
+public:
+    RangePrefixInitializationView();
+    unsigned int unknown_dword_0_;
+    unsigned int zeroed_dword_4_;
+    unsigned int unknown_dword_8_;
+    unsigned int unknown_dword_C_;
+};
+
+// ORIGINAL: 0x004C8110 sub_4c8110 0x004C8110-0x004C813B BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x004C8110-0x004C813B: complete thiscall constructor first zeroes four bytes [this+4] through memset, then stores dword [this], dword [this+8], and dword [this+0xC] in this order; [this+4] is zeroed by the actual four-byte memset call at 0x004C811B to 0x006465F0", "git:aee589a5dd0fca997773070668af4e1ff9026684:src/recovered/004c8110.cpp: historical-only seed hint // symbol ??0LegacyBlock@@QAE@XZ; this deleted seed-file spelling is not emitted as the current symbol and is not independently established as the original class", "pinned scan: no direct caller edge or absolute-address data reference to 4C8110 was found"], "reason": "Cover only the constructor's concrete four-dword initialization through a typed source view. Preserve its original span and claim; keep field roles, complete original class name, allocation extent and runtime lifetime unknown. The view is not merged with the separate time-range receiver."}
+// symbol    ??0RangePrefixInitializationView@@QAE@XZ
+RangePrefixInitializationView::RangePrefixInitializationView() {
+    memset(&zeroed_dword_4_, 0, sizeof(zeroed_dword_4_));
+    unknown_dword_0_ = 0;
+    unknown_dword_8_ = 0;
+    unknown_dword_C_ = 0;
+}
+
+class TimeRangeReceiverView {
+public:
+    int sample();
+private:
+    unsigned char unobserved_prefix_0_[4];
+    unsigned char enabled_flags_4_;
+    unsigned char unobserved_bytes_5_7_[3];
+    int lower_bound_8_;
+    int upper_bound_C_;
+};
+
+// Historical TRIED: the seed candidate calculated range before the clock call;
+// the compiler scheduled the call earlier, retaining both endpoints and using
+// another callee-saved register. A volatile range instead spilled through a
+// frame. Those were compiler-shape findings, not evidence for a source class.
+// The original adds the unsigned remainder to the reloaded upper endpoint.
+// memcpy retains x86 32-bit wrap without C++ signed-overflow undefined behavior.
+static int range_view_wrapped_upper_add(int upper, DWORD remainder) {
+    const DWORD bits = static_cast<DWORD>(upper) + remainder;
+    int result;
+    memcpy(&result, &bits, sizeof(result));
+    return result;
+}
+
+// Historical seed called this an unknown Subject::roll and kept an IAT alias;
+// that is not pinned class/API evidence. The actual source uses the SDK clock.
+// ORIGINAL: 0x004C8350 sub_4c8350 0x004C8350-0x004C8396
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x004C8350-0x004C8396: thiscall reads byte[this+4]&1; signed-compares dwords+8/+C; forms a wrapped unsigned inclusive difference before timeGetTime; divides unsigned; reloads +C after the call and adds the remainder", "pinned calls at 0x004C836D and 0x004C8384 target PE import slot 0x00669368, which uniquely resolves to WINMM timeGetTime; the normal SDK API is used, not an executable-address alias", "promoted historical seed src/recovered/units/004c8350.cpp retained the complete70-byte span and MISMATCH state; prior range-before-clock source-shape observation is preserved here for later restoration", "pinned scan: no direct caller edge or absolute-address data reference to 4C8350 was found"], "reason": "Implement the observed time-based range read through a separate provisional receiver view. Preserve signed branch comparison, unsigned 32-bit range wrap, zero-divisor failure, the post-clock upper-field reload, and wrapped return addition. Do not claim a shared class/lifetime with the adjacent reset view or infer storage beyond accessed bytes."}
+// symbol    ?sample@TimeRangeReceiverView@@QAEHXZ
+int TimeRangeReceiverView::sample() {
+    if ((enabled_flags_4_ & 1) == 0) {
+        return 0;
+    }
+
+    const int lower = lower_bound_8_;
+    const int upper = upper_bound_C_;
+    if (lower > upper) {
+        const DWORD range = static_cast<DWORD>(lower)
+                          - static_cast<DWORD>(upper) + 1u;
+        const DWORD tick = timeGetTime();
+        const DWORD remainder = tick % range;
+        return range_view_wrapped_upper_add(upper_bound_C_, remainder);
+    }
+
+    const DWORD range = static_cast<DWORD>(upper)
+                      - static_cast<DWORD>(lower) + 1u;
+    const DWORD tick = timeGetTime();
+    const DWORD remainder = tick % range;
+    return range_view_wrapped_upper_add(upper_bound_C_, remainder);
+}
+
 // Pump redraws before non-input work at least once. The original captures the
 // WINMM timeGetTime import once and compares unsigned elapsed time, including
 // wraparound and negative arguments interpreted as unsigned durations.
