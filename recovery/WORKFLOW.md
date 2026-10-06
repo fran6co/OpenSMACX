@@ -23,6 +23,20 @@ matches when available, preserve historical obligations and structural findings,
 and defer prolonged spelling/layout restoration until coverage is complete.
 Build/link, source identity continuity and relevant behavioral checks still apply;
 neither placeholders nor forwarding into the old executable count as recovery.
+Coverage reports must distinguish source placement and body-text presence from
+genuine owner implementation. Manual adapters in `adjustor_thunks.*`,
+`deleting_thunks.*`, `delegation_thunks.*`, `field_accessors.*`,
+`nullsub_thunks.*`, and transitional `global_arith.*` are scaffolding, not
+finished implementation coverage. `leaf_recoveries.*`, `pending_bodies.cpp`,
+and legacy `src/recovered/**` / `src/unrecovered/**` remain transitional
+material rather than final owner coverage. Preserve useful behavior, original
+identities, spans, historical claims and findings while migrating them; do not
+erase a sole mapping or replace recovered behavior with an empty body.
+A genuine original no-op, accessor, initializer or compiler-generated thunk
+can qualify in its real owner with supporting evidence. Merely compiling an
+adapter, lacking source callers, or retaining a historical exactness token
+does not qualify it. Provisional declarations in `hypothesis_layouts.h` are
+structural recovery debt, not verified layout or function coverage.
 A compiling body or a temporary matching regression is not completion of the
 eventual byte-exact milestone. Recover the original branch ordering,
 error paths, initialization, arithmetic, storage and lifetime effects, including
