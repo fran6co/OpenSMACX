@@ -545,7 +545,7 @@ int Sound::load(const char *fname) {
         flags_40_ &= ~1u;
     }
     char *const copy =
-        static_cast<char *>(WaveOperatorNew(strlen(resolved) + 1));
+        static_cast<char *>(operator new(strlen(resolved) + 1));
     strcpy(copy, resolved);
     if (fname_) {
         operator delete(fname_);

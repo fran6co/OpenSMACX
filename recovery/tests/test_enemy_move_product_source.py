@@ -62,7 +62,6 @@ def test_complete_enemy_identity_and_path_dependent_frame():
     assert "BODY GOES HERE" not in source and "UNRESOLVED" not in source
     assert "__asm" not in source and "PENDING_BODY" not in source
     assert "base_near(" not in source
-    assert "PENDING_BODY(0x0056B5B0" not in (ROOT / "src/pending_bodies.cpp").read_text()
     original = ROOT / ".opensmacx/game/terranx_original.exe"
     if original.is_file():
         assert sha256(original.read_bytes()).hexdigest() == ORIGINAL_SHA256

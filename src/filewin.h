@@ -70,7 +70,7 @@ class FileWin {
   // 0x00614E30, recovered in filewin.cpp. __CDECL MEMBER - the image's name
   // ends in `QAA`, a member taking no receiver (jackal_close calls it with
   // no ecx set up), and this is the spelling that emits it.
-  void __cdecl close_class();
+  static void __cdecl close_class();
 
  private:
   // Not a base class: the constructor builds a FlatButton at +0x660 on an

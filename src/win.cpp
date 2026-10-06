@@ -12832,3 +12832,8 @@ int Win::on_key_click(int, int) { return 0; }
 // symbol    ?get_graphic_win@Win@@UAEPAVGraphicWin@@XZ
 // kind      game
 GraphicWin *Win::get_graphic_win() { return nullptr; }
+
+// ORIGINAL: 0x005F8610 ??_GWin@@UAEPAXI@Z 0x005F8610-0x005F862E FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["historical source:src/deleting_thunks.cpp; preserved full original span 0x005F8610-0x005F862E and BYTE_EXACT obligation.", "pinned Win constructor 0x005EB402 installs primary table 0x0066FDD0, whose slot 0 selects 0x005F8610; the owner class remains Win.", "pinned scalar body calls Win::~Win at 0x005EBC90, tests flags bit 0, skips 0x0064557F when clear, otherwise deletes, then returns the original this with ret 4.", "the prior retained owner COFF/PE snapshot emitted ??_GWin@@UAEPAXI@Z with destructor/delete relocations and its Win table selected that address; this is historical evidence only, not qualification of the current source.", "Win::~Win closes the window; the real WinNodeList member and AutoSound base provide the remaining C++ lifetime. The unused standalone helper has no remaining source caller.", "the byte-exact claim is historical and remains a restoration obligation; no current equality or whole-application acceptance is asserted."], "reason": "Bind Win's original scalar deleting identity to the compiler-generated operation of Win's genuine virtual destructor; this FILE mapping is not a source-body byte-equivalence claim."}
+// symbol    ??_GWin@@UAEPAXI@Z
+// kind game

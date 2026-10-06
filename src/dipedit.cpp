@@ -67,8 +67,8 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GDipEdit@@UAEPAXI@Z: run the complete destructor, then release
          the storage through the executable's operator delete only when bit 0
          of the flags asks. COMPILER-EMITTED from the real ~DipEdit below;
-         the hand shim this claim used to live on (deleting_thunks.cpp's
-         scalar_delete_dip_edit) is retired with the emission, the same move
+         the former hand shim `scalar_delete_dip_edit` was retired when the
+         compiler-generated entry became source-owned, the same move
          the adjustor above made.
 // ORIGINAL: 0x004E23C0 ??_GDipEdit@@UAEPAXI@Z 0x004E23C0-0x004E23E1 BYTE_EXACT
 // symbol    ??_GDipEdit@@UAEPAXI@Z

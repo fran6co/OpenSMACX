@@ -40,17 +40,17 @@ typedef struct char256 { char str[256]; } char256;
 typedef void func5(int);
 typedef void *func6(char const *, int(*)(void));
 typedef int func7(LPCSTR, LPCSTR, int, LPCSTR, int(__cdecl *)());
-// 0x0048C0A0, a pending_bodies forwarder.
+// 0x0048C0A0, implemented in popup.cpp.
 int __cdecl popp(LPCSTR a1, LPCSTR a2, int a3, LPCSTR a4, int(__cdecl *a5)());
 typedef void *func9(void);
 // A POINTER BINDING COSTS ITS CALLERS THE RATCHET. It compiles
 // `call dword ptr [name]` where the image has `call rel32`, so every caller
 // reads as a mismatch however right its body is - which is what held both of
-// the scenario editor's Console commands off the ratchet. `draw_map`,
-// `world_climate` and `custom_planet` left here for that reason: they are
-// declared properly now and forwarded in src/pending_bodies.cpp, which emits
-// the `E8`. Prefer a forwarder to a pointer for anything a recovered body
-// calls BY NAME; a pointer is only right for a genuine indirection.
+// the scenario editor's Console commands off the ratchet. The direct
+// source-owned functions `draw_map` (src/mapwin.cpp), `world_climate` (src/map.cpp),
+// and `custom_planet` (src/newgame.cpp) are called by name, emitting the `E8`.
+// Prefer a direct declaration for anything a recovered body calls BY NAME;
+// a function pointer is only right for a genuine indirection.
 typedef BOOL func11(int, int, int);
 typedef uint32_t func15(LPCSTR);
 // 0x005A94F0, recovered in game.cpp with the original mutable-pointer ABI.
@@ -63,7 +63,7 @@ typedef int func16(LPCSTR, int);
 int __cdecl load_daemon(LPCSTR save_path, int linearize_contours);
 typedef void func19(uint32_t);
 typedef int func20(LPCSTR, int, int, LPCSTR, Sprite *);
-// 0x0048C650, a pending_bodies forwarder.
+// 0x0048C650, implemented in popup.cpp.
 int __cdecl popb(LPCSTR a1, int a2, int a3, LPCSTR a4, Sprite * a5);
 typedef void func21(int, int, int, int);
 // 0x0046AEF0, defined at the end of src/mapwin.cpp.
@@ -78,11 +78,11 @@ typedef void func30(int);
 // at each of its four calls - see the note there.
 // 0x0050EA40, implemented in time.cpp beside the other timer callbacks.
 void __cdecl blink_timer(int a1);
-// 0x0050EE30, a pending_bodies forwarder.
+// 0x0050EE30, implemented in time.cpp.
 void __cdecl blink2_timer(int a1);
-// 0x0050EE80, a pending_bodies forwarder.
+// 0x0050EE80, implemented in time.cpp.
 void __cdecl line_timer(int a1);
-// 0x0050EF10, a pending_bodies forwarder.
+// 0x0050EF10, implemented in time.cpp.
 void __cdecl turn_timer(int a1);
 
 // Timer-domain state, defined in time.cpp beside the callbacks. Every one of

@@ -20,6 +20,15 @@ FIXTURE = r'''
 #define __cdecl
 typedef int BOOL;
 enum { MaxPlayerNum = 8 };
+struct GameDataLockMaskView { uint32_t enable_mask_; };
+struct GameDataStateWindowFields {
+    int base_current_count_, diff_level_current_, turn_current_num_;
+    int vehicle_current_count_, net_turn_faction_, governor_faction_;
+    uint32_t game_rules_, game_more_preferences_, game_state_, net_turn_flags_;
+    GameDataLockMaskView lock_masks_;
+};
+struct GameDataStateWindow { GameDataStateWindowFields fields_; };
+GameDataStateWindow GameDataStateStorage;
 struct RECT { long left, top, right, bottom; };
 struct Buffer { int draws; void box_sprite(RECT *, int *) { ++draws; } };
 struct GraphicWin : Buffer { void update(GraphicWin *) {} };
@@ -135,9 +144,8 @@ Player Players[8];
 PlayerData PlayersData[8];
 RulesProposal Proposal[11];
 Base Bases[16]; Veh Vehs[16];
-int BaseCurrentCount, VehCurrentCount;
-int TurnCurrentNum, ControlTurnPhase, LockEnableMask, IsMultiplayerPBEM;
-int NetTurnFlags, NetTurnFaction, ExitTurnLoop, ConsoleControlTurnActive;
+int ControlTurnPhase, IsMultiplayerPBEM;
+int ExitTurnLoop, ConsoleControlTurnActive;
 int MapBaseDisplayOverride, GameRestartQueued, IsMultiplayerNet;
 int FactionTurnCombatWins[8], FactionTurnCombatLosses[8];
 int TamperDialogFaction[8], TamperDialogValue[8];
@@ -253,13 +261,13 @@ int main() {
     // path. The fixture ends the loop at the ordinary human_turn boundary.
     ExitTurnLoop = 0; human_exit_after = 1;
     endgame_initial = endgame_later = 0;
-    LockEnableMask = 0x0101;
+    GameDataStateStorage.fields_.lock_masks_.enable_mask_ = 0x0101;
     ConsoleGlobal.faction_id_ = 1;
     PlayersData[0].unk_102 = 0;
     checksum_value = 123;
     player_message_result = 1;
-    BaseCurrentCount = 1; Bases[0].faction_id_current = 7;
-    VehCurrentCount = 1; Vehs[0].faction_id = 0;
+    GameDataStateStorage.fields_.base_current_count_ = 1; Bases[0].faction_id_current = 7;
+    GameDataStateStorage.fields_.vehicle_current_count_ = 1; Vehs[0].faction_id = 0;
     int previous_mail_parse = display_calls;
     int previous_center_calls = ConsoleGlobal.center_calls;
     control_turn();
@@ -276,8 +284,8 @@ int main() {
 
     // Pinned retry-limit exit writes the existing distinct globals.
     ExitTurnLoop = 0; human_exit_after = 1;
-    ControlTurnPhase = 0; IsMultiplayerPBEM = 1; NetTurnFlags = 0;
-    TurnCurrentNum = 1; LockEnableMask = 0x0101;
+    ControlTurnPhase = 0; IsMultiplayerPBEM = 1; GameDataStateStorage.fields_.net_turn_flags_ = 0;
+    GameDataStateStorage.fields_.turn_current_num_ = 1; GameDataStateStorage.fields_.lock_masks_.enable_mask_ = 0x0101;
     ConsoleGlobal.faction_id_ = 1;
     PlayersData[0].unk_102 = 7;
     checksum_value = 123; GameRestartQueued = 1;
@@ -289,8 +297,8 @@ int main() {
     // the next human-turn dispatch. This exercises the formerly omitted
     // 0x52821A -> 0x5285A4 native edge at the source-body boundary.
     ExitTurnLoop = 0; human_exit_after = 1;
-    ControlTurnPhase = 0; IsMultiplayerPBEM = 1; NetTurnFlags = 0x40;
-    TurnCurrentNum = 1; LockEnableMask = 0x0101;
+    ControlTurnPhase = 0; IsMultiplayerPBEM = 1; GameDataStateStorage.fields_.net_turn_flags_ = 0x40;
+    GameDataStateStorage.fields_.turn_current_num_ = 1; GameDataStateStorage.fields_.lock_masks_.enable_mask_ = 0x0101;
     ConsoleGlobal.faction_id_ = 1;
     PlayersData[0].unk_102 = 0; PopupInputState = 0;
     checksum_value = 321; endgame_initial = 0; endgame_later = 1;
@@ -341,8 +349,8 @@ def test_actual_control_turn_source_and_vehicle_fallback_mutant():
     result = compile_and_run(body)
     assert result.returncode == 0, result.stdout + result.stderr
 
-    mutant = body.replace("if (!found_owned_base && VehCurrentCount > 0)",
-                          "if (found_owned_base && VehCurrentCount > 0)", 1)
+    mutant = body.replace("if (!found_owned_base && GameDataStateStorage.fields_.vehicle_current_count_ > 0)",
+                          "if (found_owned_base && GameDataStateStorage.fields_.vehicle_current_count_ > 0)", 1)
     assert mutant != body
     result = compile_and_run(mutant)
     assert result.returncode != 0, "vehicle-focus fallback mutant unexpectedly passed"
@@ -367,7 +375,5 @@ def test_control_turn_source_identity_and_canonical_owner():
     assert "Popup popup;" in body
     assert "popup.heap_.shutdown()" not in body
     assert "ControlTurnPopupLifetime" not in source
-    assert "PENDING_BODY(0x005275B0" not in Path(
-        ROOT / "src/pending_bodies.cpp").read_text()
     header = (ROOT / "src/game.h").read_text()
     assert header.count("void __cdecl control_turn();") == 1

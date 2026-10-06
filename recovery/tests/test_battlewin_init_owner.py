@@ -58,6 +58,5 @@ def test_real_source_receiver_and_typed_rectangles():
     source = (ROOT / 'src/game.cpp').read_text()
     assert 'g_BattleWin.init();' in source
     assert 'battlewin_init(static_cast<BattleWin *>(sub_interface_global()))' not in source
-    assert 'void __fastcall battlewin_init' not in (ROOT / 'src/pending_bodies.cpp').read_text()
     header = (ROOT / 'src/battlewin.h').read_text()
     assert 'RECT field_70_;' in header and 'RECT field_90_;' in header

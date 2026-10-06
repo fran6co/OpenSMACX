@@ -66,9 +66,6 @@ def _actual_owner_block():
     assert "BODY GOES HERE" not in owner_block
     assert "PENDING_BODY" not in owner_block
     assert ".inc" not in owner_block
-    pending = (ROOT / "src/pending_bodies.cpp").read_text(encoding="utf-8")
-    assert "PENDING_BODY(0x00581260" not in pending, (
-        "old consider_designs forwarding body remains active")
     return owner_block
 
 

@@ -27,7 +27,6 @@ PLANWIN_CPP = ROOT / "src/planwin.cpp"
 PLANWIN_H = ROOT / "src/planwin.h"
 MAPWIN_H = ROOT / "src/mapwin.h"
 WIN_H = ROOT / "src/win.h"
-PENDING_CPP = ROOT / "src/pending_bodies.cpp"
 FACTION_H = ROOT / "src/faction.h"
 FACTION_CPP = ROOT / "src/faction.cpp"
 BASE_H = ROOT / "src/base.h"
@@ -221,8 +220,15 @@ enum { STATE_OMNISCIENT_VIEW = 0x80, PFLAG_MAP_REVEALED = 0x200 };
 static Base Bases[8];
 static MapTile MapTiles[64];
 static PlayerData PlayersData[8];
-static int BaseCurrentCount;
-static uint32_t GameState;
+// Narrow mock of the production GameDataStateStorage.fields_ owner API.
+// This fixture does not claim the whole storage type or its native allocation.
+struct GameDataStateFixtureFields {
+    uint32_t game_state_;
+    int base_current_count_;
+    int vehicle_current_count_;
+};
+struct GameDataStateFixtureWindow { GameDataStateFixtureFields fields_; };
+static GameDataStateFixtureWindow GameDataStateStorage;
 static uint32_t MapLongitude = 8;
 static int PlanLineCounter;
 static int PlanBattleFactionA, PlanBattleFactionB;
@@ -266,7 +272,6 @@ def test_source_has_typed_planwin_override_and_current_definitions() -> None:
     planwin_h = PLANWIN_H.read_text(encoding="utf-8")
     mapwin_h = MAPWIN_H.read_text(encoding="utf-8")
     win_h = WIN_H.read_text(encoding="utf-8")
-    pending = PENDING_CPP.read_text(encoding="utf-8")
     faction_h = FACTION_H.read_text(encoding="utf-8")
     faction_cpp = FACTION_CPP.read_text(encoding="utf-8")
     base_h = BASE_H.read_text(encoding="utf-8")
@@ -319,7 +324,6 @@ def test_source_has_typed_planwin_override_and_current_definitions() -> None:
     assert "class MapWin : public virtual GraphicWin" in mapwin_h
     assert "virtual void on_redraw()" in win_h
     assert re.search(r"\b(?:virtual\s+)?void\s+on_redraw\s*\(\s*\)\s*;", planwin_h)
-    assert "PENDING_BODY(0x0048AF30" not in pending
     assert "void __cdecl battle_routine(int base_id);" in planwin_h
     assert 'extern "C" void __cdecl sub_54dc90(int base_id);' in planwin_h
     assert "extern int PlanBattleFactionA;" in faction_h
@@ -418,7 +422,7 @@ int main() {
     GraphicWin *surface=static_cast<GraphicWin *>(&plan);
     surface->on_redraw();
     assert(plan.buffer_.copies==1 && surface->updates==1);
-    BaseCurrentCount=2;
+    GameDataStateStorage.fields_.base_current_count_=2;
     MapTiles[3*MapLongitude+1].visibility=2;
     MapTiles[7*MapLongitude+4].visibility=2;
     set_base(0,2,3,0,2); set_base(1,8,7,2,2);
@@ -438,7 +442,7 @@ int main() {
 
     // Native v4 iterates endpoint two, then endpoint one. Both endpoints are
     // deliberately absent from known bases so both calls are observable.
-    BaseCurrentCount=0;
+    GameDataStateStorage.fields_.base_current_count_=0;
     plan.line_count_=1;
     plan.line_records_[0].x1=20; plan.line_records_[0].y1=4;
     plan.line_records_[0].x2=24; plan.line_records_[0].y2=5;
@@ -565,9 +569,13 @@ static Player Players[8];
 static Sprite Portraits[8];
 static Sprite *FactionDiplomacyPortraits[8];
 static int InfoFactionTextColors[8];
-static int VehCurrentCount;
+// Same narrow nested owner API for the independent battle-plans fixture.
+// Only accessed counters are projected; no native allocation extent is claimed.
+struct BattleGameDataStateFields { int base_current_count_; int vehicle_current_count_; };
+struct BattleGameDataStateWindow { BattleGameDataStateFields fields_; };
+static BattleGameDataStateWindow GameDataStateStorage;
 static Veh Vehs[8];
-static int BaseCurrentCount;
+
 static int Longitude;
 static int BaseFindDist, SelectedDistance, PlannedDistance;
 static int DiploScratchFA2C, DiploScratchFA48, DiploScratchFA60, DiploFriction;
@@ -655,7 +663,7 @@ static void reset_fixture() {
         InfoFactionTextColors[i]=100+i;
         for(j=0;j<128;++j) PlayersData[i].region_base_plan[j]=0;
     }
-    Longitude=10; BaseCurrentCount=11; VehCurrentCount=0; BaseFindDist=0;
+    Longitude=10; GameDataStateStorage.fields_.base_current_count_=11; GameDataStateStorage.fields_.vehicle_current_count_=0; BaseFindDist=0;
     SelectedDistance=3; PlannedDistance=6;
     DiploScratchFA2C=0; DiploScratchFA48=1; DiploScratchFA60=0; DiploFriction=0;
     PopupDialogFactionID=-1; IsMultiplayerNet=0; PlanBattleFactionA=-1;

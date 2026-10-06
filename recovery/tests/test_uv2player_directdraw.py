@@ -78,7 +78,6 @@ def product_source():
     source = (ROOT / "src/uv2player.cpp").read_text()
     header = (ROOT / "src/uv2player.h").read_text()
     leaf = (ROOT / "src/leaf_recoveries.cpp").read_text()
-    pending = (ROOT / "src/pending_bodies.cpp").read_text()
 
     code = mask_comments(header)
     for field_decl in (
@@ -91,7 +90,6 @@ def product_source():
         assert re.search(field_decl, code), "missing typed member: " + field_decl
     assert re.search(r"int\s+play\(int\s+width,\s*int\s+height\)\s*;", code)
     assert "ComVCall" not in mask_comments(leaf)
-    assert "PENDING_BODY(0x004BF400" not in pending
 
     active = re.search(
         r"^UV2Player\s*\*\s*UV2PlayerActive\s*;\s*$",

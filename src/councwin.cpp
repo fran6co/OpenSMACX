@@ -18,6 +18,7 @@
 // ORIGINAL: 0x00428710 ??_GCouncWin@@UAEPAXI@Z 0x00428710-0x00428731 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["historical deleting-thunk source src/deleting_thunks.cpp; original full spans retained: 0x00428710-0x00428731", "Pinned class constructor ??0CouncWin@@QAE@XZ at 0x00428620 stores original class/view table VA 0x66aae8 at 0x004286DE (mov dword ptr [esi], 0x66aae8); the current genuine owner vftable ??_7CouncWin@@6BWin@@@ selects generated ??_GCouncWin@@UAEPAXI@Z in slot 0 (+0x0) through weak entry ??_ECouncWin@@UAEPAXI@Z (mode 2).", "Pinned ??_GCouncWin@@UAEPAXI@Z at 0x00428710 calls the source-mapped ??1CouncWin@@QAE@XZ at 0x00428550, then tests byte ptr [ebp + 8], 1; je 0x42872a bypasses scalar delete when bit 0 is clear, while bit 0 set calls 0x0064557F; it save original this; call destructor; delete only when flags bit 0 is set; return saved this with ret 4.", "The real class lifetime is owned by src/councwin.cpp; its compiler-emitted deleting symbol and vftable slot carry this original identity. Hand-written adapter bodies with live adjustor callers remain until those callers are independently qualified and transferred. The linked weak/COMDAT copy is not used to choose source ownership.", "the source writer preserves the historical mapping's exactness state (historical exactness obligation retained); current compiler extent is not asserted equal to the original span"], "reason": "Bind the original CouncWin scalar deleting-destructor identity to the actual compiler-emitted class deleting destructor in its genuine owner translation unit. The original constructor's pinned vptr store and the current owner's physical table slot identify this class/view; no callback/thunk body is hand-authored here."}
 // symbol    ??_GCouncWin@@UAEPAXI@Z
+// kind      game
 #include "stdafx.h"
 #include "councwin.h"
 #include "mapwin.h"   // MainInterfaceGlobal - the interface owner on_status drives
@@ -1827,10 +1828,10 @@ and this build emits the U spelling.
 //        IMPLICITLY declared destructor emits none and is otherwise the same
 //        chain (`add ecx,N / jmp ~Member` for BattleWin; the full ??_M walk
 //        here). Dropping the declaration from councwin.h is the whole fix -
-//        deleting_thunks.cpp's explicit `CouncWin::~CouncWin()` still names
-//        it, because an implicitly declared destructor may be called
-//        explicitly. There is no body to write: the definition below is gone
-//        and this marker records the compiler's.
+//        The retired adapter spelled `CouncWin::~CouncWin()` explicitly;
+//        the current source leaves this destructor implicit so the compiler
+//        emits the observed chain without the extra vptr stores. There is no
+//        user-written destructor body; this marker records the compiler's.
 
 /*
 // ORIGINAL: 0x00428620 ??0CouncWin@@QAE@XZ 0x00428620-0x00428706;0x00652CC0-0x00652D34 BYTE_EXACT

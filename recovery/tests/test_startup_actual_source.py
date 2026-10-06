@@ -53,9 +53,6 @@ def test_original_identity_seed_retirement_and_real_members():
                              (0x4595C0,'?bung_momma@@YAXXZ',0x45967F)):
         row=records[address];assert row.name==name and row.image_spans==((address,end),)
         assert not (ROOT/f'src/unrecovered/{address:08x}.cpp').exists()
-    pending=(ROOT/'src/pending_bodies.cpp').read_text()
-    for address in ('0058EE60','004595C0','00471D50'):
-        assert f'PENDING_BODY(0x{address}' not in pending
     assert 'Font *tertiary_font() { return &font3_; }' in (ROOT/'src/maininterface.h').read_text()
     assert 'const RECT &client_rect() const { return client_rect_; }' in (ROOT/'src/win.h').read_text()
     assert 'messagewin_init(' not in (ROOT/'src/game.cpp').read_text()

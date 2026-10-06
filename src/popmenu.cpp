@@ -22,8 +22,8 @@
 #include "sounddevice.h"
 #include "basepop.h"
 
-// PullDown is an owned member; Popup is the base. Reverse declaration order
-// supplies both normal destruction and exception cleanup exactly once.
+// Popup and PullDown are nonvirtual bases at +0 and +0x537C. Their reverse
+// base destruction order matches the pinned PopMenu teardown sequence.
 // ORIGINAL: 0x00421400 ??1PopMenu@@QAE@XZ 0x00421400-0x00421634;0x00652AB0-0x00652B9F
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x421400"], "reason": "Recover the full original operation using owned C++ members and base lifetimes; retain all original branches and expose unresolved callees instead of executing original-address forwarders."}
 // symbol    ??1PopMenu@@UAE@XZ
@@ -34,18 +34,18 @@ PopMenu::~PopMenu() {
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x0059D250-0x0059D392"], "reason": "Recovered original behavior through real source classes and owned members; source remains subject to byte and structural verification."}
 // symbol    ?exec@PopMenu@@QAEHHHP6AHXZ@Z
 int PopMenu::exec(int x, int y, int (*poll)()) {
-    pull_down_.init(0);
+    PullDown::init(0);
     for (int i = 0; i < dialogs().get_num_items(); ++i) {
         StringList &items = dialogs().item_list_;
         items.seek_pos(i);
         char *text = items.head_ ? items.current_->string_payload()->text : 0;
         int id = items.head_ ? items.current_->id : 0;
         // Dialog menu separator literal at 0x006900C8.
-        if (strcmp(text, "*") == 0) pull_down_.add_separator(id);
-        else pull_down_.add_item(id, text);
+        if (strcmp(text, "*") == 0) PullDown::add_separator(id);
+        else PullDown::add_item(id, text);
     }
-    pull_down_.show(x, y, poll);
-    return pull_down_.get_selected();
+    PullDown::show(x, y, poll);
+    return PullDown::get_selected();
 }
 
 
@@ -89,3 +89,23 @@ int __cdecl popm(char *text_file, char *text_label, int x, int y,
 
 // Historical seed lifetime hypotheses used duplicate locals and raw placement storage.
 // Native receiver evidence supersedes those models; genuine embedded member lifetimes now own cleanup.
+
+// ORIGINAL: 0x00421640 ??_GPopMenu@@UAEPAXI@Z 0x00421640-0x00421661 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned source-mapped BaseWin::queue_click ?queue_click@BaseWin@@QAEXHHHH@Z at 0x00409200 contains the sequence: 0x00409228 begins Popup setup with a LEA; the actual Popup constructor CALL is at 0x0040922E. A second LEA begins PullDown setup at 0x00409233; the actual PullDown constructor CALL at 0x00409240 constructs it at +0x537C.", "The original constructor writes four PopMenu vptrs at 0x00409245, 0x0040924F, 0x00409259 and 0x00409263; each is a 10-byte store and the fourth ends at 0x0040926D (next instruction begins there). Their slot-zero entries correspond to 0x00421640, 0x00421980, 0x00421990 and 0x004219A0. The class is a real Popup + PullDown multiple-inheritance object, not a PullDown member.", "the pinned full primary destructor calls the PopMenu virtual destructor, tests [ebp+8]&1, conditionally calls scalar operator delete only when set, returns saved this, and ret 4. The original full span is retained on this FILE mapping; this proposal does not claim the current emitted bytes match that span.", "Current genuine source owner is src/popmenu.cpp. Its physical object emits ??_GPopMenu@@UAEPAXI@Z; its class/view table ??_7PopMenu@@6BWin@@Popup@@@ has a unique slot-zero relocation resolving to that exact generated entry. The primary E weak external resolves with mode 2 to the physical G primary. The final MAP/PE selection is recorded separately and does not choose the source owner.", "PopMenu currently derives from Popup and PullDown; its teardown and secondary view adjustments are represented by the compiler-generated lifetime and real class layout. This binding records source ownership, not whole-object or runtime acceptance."], "reason": "Bind the original PopMenu deleting identity at 0x00421640 to its compiler-generated class lifetime/view."}
+// symbol    ??_GPopMenu@@UAEPAXI@Z
+// kind game
+
+// ORIGINAL: 0x00421980 PopMenu::delete1 0x00421980-0x0042198B FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned source-mapped BaseWin::queue_click ?queue_click@BaseWin@@QAEXHHHH@Z at 0x00409200 contains the sequence: 0x00409228 begins Popup setup with a LEA; the actual Popup constructor CALL is at 0x0040922E. A second LEA begins PullDown setup at 0x00409233; the actual PullDown constructor CALL at 0x00409240 constructs it at +0x537C.", "The original constructor writes four PopMenu vptrs at 0x00409245, 0x0040924F, 0x00409259 and 0x00409263; each is a 10-byte store and the fourth ends at 0x0040926D (next instruction begins there). Their slot-zero entries correspond to 0x00421640, 0x00421980, 0x00421990 and 0x004219A0. The class is a real Popup + PullDown multiple-inheritance object, not a PullDown member.", "the pinned secondary thunk subtracts 0x444 from the incoming receiver and tail-jumps to the primary deleting entry. The original full span is retained on this FILE mapping; this proposal does not claim the current emitted bytes match that span.", "Current genuine source owner is src/popmenu.cpp. Its physical object emits ??_EPopMenu@@WEEE@AEPAXI@Z; its class/view table ??_7PopMenu@@6BBuffer@@Popup@@@ has a unique slot-zero relocation resolving to that exact generated entry. The primary E weak external resolves with mode 2 to the physical G primary. The final MAP/PE selection is recorded separately and does not choose the source owner.", "PopMenu currently derives from Popup and PullDown; its teardown and secondary view adjustments are represented by the compiler-generated lifetime and real class layout. This binding records source ownership, not whole-object or runtime acceptance."], "reason": "Bind the original PopMenu deleting identity at 0x00421980 to its compiler-generated class lifetime/view."}
+// symbol    ??_EPopMenu@@WEEE@AEPAXI@Z
+// kind game
+
+// ORIGINAL: 0x00421990 PopMenu::delete2 0x00421990-0x0042199B FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned source-mapped BaseWin::queue_click ?queue_click@BaseWin@@QAEXHHHH@Z at 0x00409200 contains the sequence: 0x00409228 begins Popup setup with a LEA; the actual Popup constructor CALL is at 0x0040922E. A second LEA begins PullDown setup at 0x00409233; the actual PullDown constructor CALL at 0x00409240 constructs it at +0x537C.", "The original constructor writes four PopMenu vptrs at 0x00409245, 0x0040924F, 0x00409259 and 0x00409263; each is a 10-byte store and the fourth ends at 0x0040926D (next instruction begins there). Their slot-zero entries correspond to 0x00421640, 0x00421980, 0x00421990 and 0x004219A0. The class is a real Popup + PullDown multiple-inheritance object, not a PullDown member.", "the pinned secondary thunk subtracts 0x537C from the incoming receiver and tail-jumps to the primary deleting entry. The original full span is retained on this FILE mapping; this proposal does not claim the current emitted bytes match that span.", "Current genuine source owner is src/popmenu.cpp. Its physical object emits ??_EPopMenu@@WFDHM@AEPAXI@Z; its class/view table ??_7PopMenu@@6BWin@@PullDown@@@ has a unique slot-zero relocation resolving to that exact generated entry. The primary E weak external resolves with mode 2 to the physical G primary. The final MAP/PE selection is recorded separately and does not choose the source owner.", "PopMenu currently derives from Popup and PullDown; its teardown and secondary view adjustments are represented by the compiler-generated lifetime and real class layout. This binding records source ownership, not whole-object or runtime acceptance."], "reason": "Bind the original PopMenu deleting identity at 0x00421990 to its compiler-generated class lifetime/view."}
+// symbol    ??_EPopMenu@@WFDHM@AEPAXI@Z
+// kind game
+
+// ORIGINAL: 0x004219A0 PopMenu::delete3 0x004219A0-0x004219AB FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned source-mapped BaseWin::queue_click ?queue_click@BaseWin@@QAEXHHHH@Z at 0x00409200 contains the sequence: 0x00409228 begins Popup setup with a LEA; the actual Popup constructor CALL is at 0x0040922E. A second LEA begins PullDown setup at 0x00409233; the actual PullDown constructor CALL at 0x00409240 constructs it at +0x537C.", "The original constructor writes four PopMenu vptrs at 0x00409245, 0x0040924F, 0x00409259 and 0x00409263; each is a 10-byte store and the fourth ends at 0x0040926D (next instruction begins there). Their slot-zero entries correspond to 0x00421640, 0x00421980, 0x00421990 and 0x004219A0. The class is a real Popup + PullDown multiple-inheritance object, not a PullDown member.", "the pinned secondary thunk subtracts 0x57C0 from the incoming receiver and tail-jumps to the primary deleting entry. The original full span is retained on this FILE mapping; this proposal does not claim the current emitted bytes match that span.", "Current genuine source owner is src/popmenu.cpp. Its physical object emits ??_EPopMenu@@WFHMA@AEPAXI@Z; its class/view table ??_7PopMenu@@6BBuffer@@PullDown@@@ has a unique slot-zero relocation resolving to that exact generated entry. The primary E weak external resolves with mode 2 to the physical G primary. The final MAP/PE selection is recorded separately and does not choose the source owner.", "PopMenu currently derives from Popup and PullDown; its teardown and secondary view adjustments are represented by the compiler-generated lifetime and real class layout. This binding records source ownership, not whole-object or runtime acceptance."], "reason": "Bind the original PopMenu deleting identity at 0x004219A0 to its compiler-generated class lifetime/view."}
+// symbol    ??_EPopMenu@@WFHMA@AEPAXI@Z
+// kind game

@@ -69,13 +69,11 @@
  * undefined symbol anywhere is a link error - but it now answers it about the
  * program's own entry point rather than a placeholder beside it.
  *
- * WHAT STILL DOES NOT RUN. Six of the eleven functions WinMain calls have
- * bodies in src/unrecovered/ and src/recovered/ that are not in this build
- * yet, and reach it through src/pending_bodies.cpp instead. Their transitive
- * closure is 1,489 catalogued addresses, so they arrive a subtree at a time
- * rather than all at once. Until then this links and starts and stops at the
- * first of them; that is a worse program than the shipped one and a better
- * signal than a binary that pretends to be finished.
+ * HISTORICAL CONTEXT. During the first entry-point integration, six of the
+ * eleven startup callees still crossed fixed-address forwarding scaffolds.
+ * Those temporary routes and source directories have since been retired.
+ * This build/link milestone still does not establish game correctness or
+ * complete recovery; the executable remains explicitly unfinished.
  */
 
 /*
@@ -188,7 +186,7 @@ WHAT GOT IT HERE, since four of the five were wrong in the first draft:
   * ONE `refused` variable, not two `if`s and not `||`. See the note at the
     statement itself - the three read the same in C and produce three
     different block layouts.
-  * `Popup::alloc` is a real symbol (src/pending_bodies.cpp), so 0x0045F96F is
+  * `Popup::alloc` is a real source-owned symbol in `src/popup.cpp`, so 0x0045F96F is
     `mov eax, OFFSET` with a relocation the comparison masks. Through a
     `static const` pointer variable it was `mov eax, [mem]` - a different
     opcode, which no masking can rescue.

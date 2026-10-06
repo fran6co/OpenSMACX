@@ -110,7 +110,8 @@ def _mutated_cases(setter, dialog):
     cases.append(("network-slot", _replace_once(
         setter, "trailing_words_[8]", "trailing_words_[7]"), dialog))
     cases.append(("early-turn-boundary", _replace_once(
-        setter, "TurnCurrentNum < 6", "TurnCurrentNum <= 6"), dialog))
+        setter, "GameDataStateStorage.fields_.turn_current_num_ < 6",
+        "GameDataStateStorage.fields_.turn_current_num_ <= 6"), dialog))
     cases.append(("candidate-maximum", _replace_once(
         setter, "seconds <= candidate", "seconds >= candidate"), dialog))
     cases.append(("refresh-active-only", _replace_once(
@@ -223,5 +224,3 @@ def test_time_control_seed_cleanup_and_direct_caller_binding():
     assert not (ROOT / "src/recovered/units/00589330.cpp").exists()
     assert "time_controls_dialog(&pop_menu);" in (ROOT / "src/netwin.cpp").read_text()
     assert "sub_589330" not in (ROOT / "src/netwin.cpp").read_text()
-    assert "void __cdecl time_controls_dialog(" not in (
-        ROOT / "src/pending_bodies.cpp").read_text()

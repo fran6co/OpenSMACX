@@ -452,8 +452,9 @@ also fail. This never edits or stamps source. It does not replace the separate
 address/host audits, matching checks or full acceptance.
 
 The address/host check is now `uv run recover check-mappings --summary`, also
-called by the native full gate. Its only project-specific inputs are the
-compilation-database path and the `PENDING_BODY` macro name in `project.json`.
+called by the native full gate. Its project-specific inputs are the
+compilation-database path and configured forwarder macro names in
+`project.json` (currently none).
 There is no scaffold exemption list. It uses full paths, rejects ambiguous
 product mappings, repeated same-file markers, unbuilt mapping hosts and direct
 seed build inputs, and distinguishes live or seed claims behind forwarders.

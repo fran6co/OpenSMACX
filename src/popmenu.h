@@ -56,16 +56,27 @@
   * access-lower-bounds.csv states the identical 0x4C70 for Popup itself,
   * from the same instruction reached through ??1Popup@@QAE@XZ.
   *
-  * What PopMenu does own starts at 0x537C, which is sizeof(Popup) exactly
+  * The second base starts at 0x537C, which is sizeof(Popup) exactly
   * (0x3230 + 0x214C, both pinned), so nothing sits between the base and it.
   * Two independent measurements agree it is a PullDown:
   *   - ??1PopMenu@@QAE@XZ runs `lea ecx, [esi + 0x537c]` at 0x0042142C and
   *     calls ??1PullDown@@QAE@XZ at 0x00421432, under the usual null guard;
-  *   - the adjustor thunks in src/deleting_thunks.cpp step a receiver back by
+  *   - the pinned original adjustor thunks (the retired source record was
+  *     src/deleting_thunks.cpp) step a receiver back by
   *     0x537C (PopMenu::delete2, 0x00421990) and by 0x57C0 = 0x537C + 0x444
   *     (PopMenu::delete3, 0x004219A0). A pair of vtables 0x444 apart is a
   *     GraphicWin, which is what PullDown derives from.
   * PullDown is pinned at 0xF40, so the object is proved to run to 0x62BC.
+  * BaseWin::queue_click's constructor sequence independently distinguishes
+  * inheritance from the old member hypothesis: a LEA at 0x00409228 begins Popup setup,
+  * then the actual constructor CALL at 0x0040922E constructs Popup. A LEA at
+  * 0x00409233 begins PullDown setup; CALL 0x00409240 constructs PullDown at
+  * +0x537C. Four immediate vptr stores at 0x00409245, 0x0040924F, 0x00409259 and 0x00409263;
+  * each store is 10 bytes and the last ends at 0x0040926D. They install
+  * PopMenu's four derived views at +0, +0x444, +0x537C and +0x57C0.
+  * Their original slot-zero targets are 0x00421640, 0x00421980, 0x00421990
+  * and 0x004219A0, respectively. A plain PullDown member would retain its
+  * own tables rather than these PopMenu receiver-adjusting entries.
   * Whether anything follows it is NOT established - a member with no
   * constructor and no destructor is never built by a call and leaves no site
   * for verify_subobjects.py to see - so this class still carries no size
@@ -76,10 +87,10 @@
   // `call rel32`. Spelled `class X : Base` - private, since that is
   // what `class` means - those calls do not compile at all, and the
   // seam that stood in for them cost the caller `call [ptr]`.
-class PopMenu : public Popup {
+class PopMenu : public Popup, public PullDown {
  public:
   PopMenu() { ; }
-  // Original 0x00421400: destroy pull_down_, then the Popup base.
+  // Original 0x00421400: destroy PullDown then Popup in reverse base order.
   ~PopMenu();
   int init();
   // The caller at 0x004B9178 switches on the selected index returned in EAX;
@@ -87,10 +98,7 @@ class PopMenu : public Popup {
   int exec(int x, int y, int (*poll)());
   // exec returns a slot; picker handlers sometimes need the action ID stored
   // in that slot (which need not equal its index after filtering).
-  int get_selected_id() { return pull_down_.get_selected_id(); }
-
- private:
-  PullDown pull_down_;  // 0x537C
+  int get_selected_id() { return PullDown::get_selected_id(); }
 };
 
 // Opens one owning PopMenu and returns its selected slot.

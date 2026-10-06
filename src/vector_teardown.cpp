@@ -51,3 +51,26 @@ extern "C" void __stdcall sub_402ee0(
         element += element_size;
     } while (--iterations != 0);
 }
+
+
+// Existing CRT utility body moved from the transitional pending TU.
+void __stdcall VectorDtorIterator(void *array, unsigned int element_size, int count,
+                                  func_vector_element_callback teardown) {
+    char *element = static_cast<char *>(array) + element_size * count;
+    for (int index = 0; index < count; ++index) {
+        element -= element_size;
+        teardown(element);
+    }
+}
+
+
+// Existing CRT utility body moved from the transitional pending TU.
+void __stdcall VectorCtorIterator(void *array, unsigned int element_size, int count,
+                                  func_vector_element_callback ctor,
+                                  func_vector_element_callback dtor) {
+    char *element = static_cast<char *>(array);
+    for (int index = 0; index < count; ++index) {
+        ctor(element);
+        element += element_size;
+    }
+}

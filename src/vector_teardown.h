@@ -66,8 +66,9 @@ void __stdcall VectorCtorIterator(void *array, unsigned int element_size, int co
 // the two-instruction cap, and nothing about it needed the `??_` spelling:
 // what a call site needs is a DIRECT call, and its target is a relocation on
 // both sides, so it is discounted from the comparison. These are declared as
-// ordinary functions here and forwarded in `pending_bodies.cpp`, which is the
-// same treatment every other not-yet-promoted callee gets.
+// ordinary source-owned functions implemented in `vector_teardown.cpp`.
+// These CRT helpers remain scaffold: their exception-unwind paths are not yet
+// modeled by the current loops.
 //
 // The earlier note said "nothing a program can WRITE names them", which is
 // true and was the wrong question. What was fixable IS fixed: the element callbacks below are
@@ -75,16 +76,4 @@ void __stdcall VectorCtorIterator(void *array, unsigned int element_size, int co
 // them as immediates - `push 0x4c67c0` - and a variable built by
 // `original_method` at load time pushed `dword ptr [...]` instead.
 
-// The game's own operator new, ??2@YAPAXI@Z at 0x0064558A - a 14-byte
-// _nh_malloc(size, 1) forwarder that answers null rather than raising.
-// Anything the recovered code allocates and the original frees has to come
-// from here, so it lives beside the iterators for the same reason they do: it
-// has three callers already (Wave, Sound, Wave_Device) and now a fourth in
-// GraphicWin::init, and it must reach every one of them without dragging the
-// audio closure into their link. The name records the recovery that first
-// bound it, not an ownership claim - it is the process-wide allocator.
-// DECLARED, NOT BOUND. As a `func_operator_new *const` every call site emitted
-// `call dword ptr [...]` where the image emits `call rel32`; the target of an
-// `E8` is a relocation on both sides and is discounted, so an ordinary
-// declaration plus a forwarder in `pending_bodies.cpp` is all this needs.
-void *__cdecl WaveOperatorNew(unsigned int size);
+// Audio and wave owners use the configured runtime's direct global operator new, matching the calls already present in Midi.

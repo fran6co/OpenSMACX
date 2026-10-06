@@ -19,7 +19,7 @@ def test_destructor_retains_original_identity_and_seed_findings():
                   'levers', 'ruled_out', 'deferred', 'unrecoverable'):
         assert getattr(current, field) == getattr(old, field), field
     assert current.symbol == '??1SocialWin@@UAE@XZ'
-    assert 'SocialWin::~SocialWin()' not in (ROOT / 'src/pending_bodies.cpp').read_text()
+    assert (ROOT / 'src/socialwin.cpp').read_text().count('SocialWin::~SocialWin()') == 1
     assert not (ROOT / SEED).exists()
 
 

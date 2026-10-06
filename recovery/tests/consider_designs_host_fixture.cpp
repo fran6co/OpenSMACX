@@ -77,13 +77,28 @@ struct VehPrototype {
     int16_t preq_tech;
 };
 struct Base { int faction_id_current; };
-struct Projects { int dream_twister_, neural_amplifier_;
- int &neural_amplifier() { return neural_amplifier_; }
- const int &neural_amplifier() const { return neural_amplifier_; }
-
- int &dream_twister() { return dream_twister_; }
- const int &dream_twister() const { return dream_twister_; }
+struct BaseSecretProject {
+    int dream_twister_, neural_amplifier_, universal_translator_, xenoempathy_dome_;
+    int &neural_amplifier() { return neural_amplifier_; }
+    const int &neural_amplifier() const { return neural_amplifier_; }
+    int &dream_twister() { return dream_twister_; }
+    const int &dream_twister() const { return dream_twister_; }
+    int &universal_translator() { return universal_translator_; }
+    const int &universal_translator() const { return universal_translator_; }
+    int &xenoempathy_dome() { return xenoempathy_dome_; }
+    const int &xenoempathy_dome() const { return xenoempathy_dome_; }
 };
+struct GameDataLockMaskView { uint32_t enable_mask_; };
+struct GameDataStateWindowFields {
+    int base_current_count_, diff_level_current_, turn_current_num_;
+    int vehicle_current_count_;
+    uint32_t game_preferences_, game_rules_;
+    int council_resolution_count_[11];
+    GameDataLockMaskView lock_masks_;
+    BaseSecretProject secret_project_;
+};
+struct GameDataStateWindow { GameDataStateWindowFields fields_; };
+static GameDataStateWindow GameDataStateStorage;
 
 static RulesWeapon Weapon[MaxWeaponNum];
 static RulesArmor Armor[MaxArmorNum];
@@ -95,10 +110,6 @@ static PlayerData PlayersData[MaxPlayerNum];
 static Player Players[MaxPlayerNum];
 static VehPrototype VehPrototypes[MaxPlayerNum * MaxVehProtoFactionNum];
 static Base Bases[128];
-static Projects SecretProject;
-static int CouncilResolutionCount[16];
-static int LockEnableMask;
-static int GameRules;
 static int ExpansionEnabled;
 static int DesignConsiderArmor;
 static int DesignConsiderOverride;
@@ -168,8 +179,8 @@ int main(int argc, char **argv) {
         PlayersData[i].integrity_blemishes = 1;
         PlayersData[i].unk_105 = PlayersData[i].unk_106 = 0;
     }
-    SecretProject.dream_twister() = -1;
-    SecretProject.neural_amplifier() = -1;
+    GameDataStateStorage.fields_.secret_project_.dream_twister() = -1;
+    GameDataStateStorage.fields_.secret_project_.neural_amplifier() = -1;
 
     if (prototype_plan0) {
         Weapon[2].preq_tech = 777;

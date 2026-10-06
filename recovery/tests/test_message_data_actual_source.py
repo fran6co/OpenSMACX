@@ -70,7 +70,6 @@ def test_original_identities_claim_and_forwarder_retirement():
     assert send.name=='?send_message@NetDaemon@@QAEXPADKH@Z'
     assert send.image_spans==((0x532940,0x532A44),)
     assert send.symbol=='?send_message@NetDaemon@@QAEHPADKH@Z' and send.byte_exact
-    assert 'PENDING_BODY(0x00592EE0' not in (ROOT/'src/pending_bodies.cpp').read_text()
     # Unwritten original bytes are retained, not silently zero-initialized.
     assert 'MessageDataRecord message;' in message.region
     assert 'unresolved_2_' not in message.region

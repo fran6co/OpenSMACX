@@ -1008,9 +1008,9 @@ Purpose: Initialize the Filefind global along with a CD check if there isn't a c
 //        already uses (0x00696ECC), and the "message-box interaction" is a
 //        real call to `BasePop::start` (0x00601BF0) followed by the object's
 //        own vtable[0] scalar-deleting-destructor call
-//        (`??_GBasePop@@UAEPAXI@Z`, already recovered as
-//        `scalar_delete_base_pop` in deleting_thunks.cpp, dispatched here
-//        the same way `sound.cpp` dispatches slot 0 - through
+//        (`??_GBasePop@@UAEPAXI@Z`, now compiler-generated in
+//        `src/basepop.cpp`), dispatched here the same way `sound.cpp`
+//        dispatches slot 0 - through
 //        `vtable_method`, not by name, because the call site is an indirect
 //        `call dword ptr [edx]`). `is_complete` is read only ONCE, after the
 //        26-drive scan comes up empty, to decide whether to show that popup
@@ -2543,8 +2543,8 @@ void __cdecl jackal_close() {
     teardown_0060e5d0();
     Font::close_font_class();
     Sprite::close_class();
-    filewin_close_class();
-    basepop_close_class();
+    FileWin::close_class();
+    BasePop::close_class();
     Cursor::close_cursor_class();
     Win::close_class();
     Palette::close_palette_class();

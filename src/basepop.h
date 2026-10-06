@@ -83,9 +83,8 @@ class BasePop : public GraphicWin {
  public:
   // homed from 00604680.cpp
   // STATIC, and the `QAAX` the catalogue spells is a receiver nothing sets
-  // up: jackal_close reaches 0x00604680 with ecx untouched (see the
-  // basepop_close_class stand-in in pending_bodies.cpp), so the body reads
-  // no `this` and the image's own bytes agree. Same case as fallout() and
+  // up: jackal_close calls this actual static operation with ecx untouched.
+  // The body reads no `this` and the image's own bytes agree. Same case as fallout() and
   // set_def_ok_text above - the `// symbol` fact on the marker records the
   // SAX this tree emits.
   static void __cdecl close_class();

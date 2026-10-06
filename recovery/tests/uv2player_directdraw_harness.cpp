@@ -229,6 +229,7 @@ static HRESULT DirectDrawCreate(GUID *, LPDIRECTDRAW *out, void *) {
     return create_result;
 }
 
+struct MediaDescriptor;
 struct UV2Player {
     uint32_t field_0_, field_4_, field_8_, field_C_;
     uint32_t field_10_, field_14_, field_18_, field_1C_;
@@ -252,7 +253,8 @@ struct UV2Player {
     IDirectDrawSurface2 *primary_surface_;
     IDirectDrawSurface2 *back_buffer_surface_;
     IDirectDrawClipper *clipper_;
-    uint32_t field_11C_, field_120_, field_124_;
+    uint32_t field_11C_, field_120_;
+    MediaDescriptor *media_session_;
     void close();
     int play(int width, int height);
 };
@@ -354,7 +356,8 @@ int main(int argc, char **argv) {
         player.direct_draw_ = &draw;
         player.primary_surface_ = &primary2;
         player.back_buffer_surface_ = &back2;
-        player.field_11C_ = 1; player.field_120_ = 2; player.field_124_ = 3;
+        player.field_11C_ = 1; player.field_120_ = 2;
+        player.media_session_ = reinterpret_cast<MediaDescriptor *>(3);
         UV2PlayerActive = &player;
         pref_result = 0;
         player.close();
@@ -362,7 +365,7 @@ int main(int argc, char **argv) {
         assert(!has("prefs-DirectDraw") || mode_resolutions.empty());
         assert(player.direct_draw_ == 0 && player.direct_draw2_ == 0);
         assert(player.primary_surface_ == 0 && player.back_buffer_surface_ == 0);
-        assert(player.field_11C_ == 0 && player.field_120_ == 0 && player.field_124_ == 0);
+        assert(player.field_11C_ == 0 && player.field_120_ == 0 && player.media_session_ == 0);
         assert(UV2PlayerActive == 0);
     } else if (strcmp(scenario, "close_windowed_large") == 0) {
         player.direct_draw2_ = &draw2; player.primary_surface_ = &primary2;
@@ -377,7 +380,7 @@ int main(int argc, char **argv) {
         player.close();
         assert(trace.empty() && mode_resolutions.empty());
         assert(player.direct_draw_ == 0 && player.back_buffer_surface_ == 0);
-        assert(player.field_11C_ == 0 && player.field_120_ == 0 && player.field_124_ == 0);
+        assert(player.field_11C_ == 0 && player.field_120_ == 0 && player.media_session_ == 0);
     } else {
         assert(false);
     }

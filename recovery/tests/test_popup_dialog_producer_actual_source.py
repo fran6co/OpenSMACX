@@ -157,7 +157,7 @@ def test_popm_actual_source_arguments_result_and_exception_cleanup():
     ),
     (
         "early faction gate",
-        "if ((static_cast<uint8_t>(LockEnableMask) & faction_bit) == 0) {",
+        "if ((static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & faction_bit) == 0) {",
         "if (false) {",
     ),
     (

@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <string.h>
 #include <vector>
@@ -150,7 +151,15 @@ PrefWindow ConsolePrefWin;
 GraphicWin CoverWindow("cover");
 int IsMultiplayerNet = 0;
 int IsMultiplayerPBEM = 0;
-int TurnCurrentNum = 0;
+struct GameDataStateWindowFields {
+    unsigned char before_turn_current_num_[0x44];
+    int turn_current_num_; // actual GameDataStateStorage member +0x044
+};
+struct GameDataStateWindow { GameDataStateWindowFields fields_; };
+GameDataStateWindow GameDataStateStorage = {};
+typedef char StartupTurnOffset[
+    offsetof(GameDataStateWindowFields, turn_current_num_) == 0x44 ? 1 : -1];
+int &TurnCurrentNum = GameDataStateStorage.fields_.turn_current_num_;
 int WinScreenWidth = 0;
 Win *BasePopDefaultField322C = 0;
 GraphicWin *OpeningWindow = 0;

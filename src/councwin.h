@@ -68,9 +68,9 @@ class CouncWin : public GraphicWin, public SubInterface {
   // ~Spot, the GraphicWin base) with no vtable-restore stores anywhere. A
   // user-written `~CouncWin() {}` emits two vptr stores the image does not
   // have (measured, 48/50); leaving the destructor to the compiler removes
-  // them and the rest of the chain is identical. deleting_thunks.cpp still
-  // reaches it with an explicit `CouncWin::~CouncWin()`, which an implicitly
-  // declared destructor allows.
+  // them and the rest of the chain is identical. The retired adapter used
+  // an explicit destructor call; the compiler-generated destructor is now
+  // the source-owned lifetime operation.
   void on_group_clicked(int a1, int a2);
   void on_button_passover(int a1, int a2);
   void on_iface_left_click(int a1, int a2);

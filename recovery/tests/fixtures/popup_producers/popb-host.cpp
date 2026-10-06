@@ -112,15 +112,23 @@ struct Console {
     void focus(int, int, int) { ++focuses; }
 };
 
+// Minimal host projection of the actual nested GameDataStateStorage owner.
+// The tested function reads these same member paths in src/game_data_state_window.h.
+union GameDataLockMaskView { uint32_t enable_mask_; };
+struct GameDataStateWindowFields {
+    uint32_t game_more_preferences_;
+    uint32_t game_warnings_;
+    uint32_t game_state_;
+    GameDataLockMaskView lock_masks_;
+};
+struct GameDataStateWindow { GameDataStateWindowFields fields_; };
+GameDataStateWindow GameDataStateStorage = {};
+
 Base base_current;
 Base Bases[4];
 int BaseIDCurrentSelected = 1;
 Base *BaseCurrent = &base_current;
 PlayerData PlayersData[4];
-uint32_t LockEnableMask = 0;
-uint32_t GameState = 0;
-uint32_t GameWarnings = 0;
-uint32_t GameMorePreferences = 0;
 int CurrentFactionEnergyReserves = 0;
 int BaseProductionZoomRequested = 0;
 int IsMultiplayerNet = 0;
@@ -178,15 +186,15 @@ int main() {
     assert(parses == 0 && Popup::starts == 0);
 
     // Gate 2: state bit 1 without state bit 8 suppresses the popup.
-    LockEnableMask = 1;
-    GameState = 1;
+    GameDataStateStorage.fields_.lock_masks_.enable_mask_ = 1;
+    GameDataStateStorage.fields_.game_state_ = 1;
     assert(popb("BODY", 1, 7, "image.pcx", 0) == 0);
     assert(parses == 0 && Popup::starts == 0 && Popup::execs == 0);
 
     // Gate 3: enabled non-viewer faction with no energy cannot open it.
     base_current.faction_id_current = 1;
-    LockEnableMask = 3;
-    GameState = 8;
+    GameDataStateStorage.fields_.lock_masks_.enable_mask_ = 3;
+    GameDataStateStorage.fields_.game_state_ = 8;
     CurrentFactionEnergyReserves = 0;
     assert(popb("BODY", 1, 7, "image.pcx", 0) == 0);
     assert(parses == 0 && Popup::starts == 0 && Popup::execs == 0);
@@ -194,9 +202,9 @@ int main() {
 
     // Facility bit contributes exactly +2 to the signed PlayerData flags
     // threshold: -1 becomes 1, so the optional third dialog row is added.
-    LockEnableMask = 1;
-    GameState = 8;
-    GameWarnings = 1;
+    GameDataStateStorage.fields_.lock_masks_.enable_mask_ = 1;
+    GameDataStateStorage.fields_.game_state_ = 8;
+    GameDataStateStorage.fields_.game_warnings_ = 1;
     AlphaIniPrefs.announce = 1;
     Popup::result = 3;
     Popup::input_state = 1;
@@ -211,7 +219,7 @@ int main() {
     assert(Popup::auto_hide == 1002 && Popup::start_value == 0);
     assert(g_FX.plays == 1 && g_FX.fades == 1);
     assert(ConsoleGlobal.focuses == 1 && parses == 1 && staples == 1);
-    assert(GameWarnings == 0 && AlphaIniPrefs.announce == 0 && prefs_saved == 1);
+    assert(GameDataStateStorage.fields_.game_warnings_ == 0 && AlphaIniPrefs.announce == 0 && prefs_saved == 1);
 
     // Without the facility +2, signed -1 remains below zero and the third row
     // is omitted. This distinguishes the original threshold from a no-op.
@@ -223,21 +231,21 @@ int main() {
     Bases[1].facilities_built[0] = 1;
 
     // A stored warning-state value, not the exec result, controls persistence.
-    GameWarnings = 1;
+    GameDataStateStorage.fields_.game_warnings_ = 1;
     AlphaIniPrefs.announce = 1;
     Popup::result = 3;
     Popup::input_state = 0;
     CurrentFactionEnergyReserves = 1;
     assert(popb("BODY", 1, 7, 0, 0) == 1); // energy overrides exec result 3
-    assert(GameWarnings == 1 && AlphaIniPrefs.announce == 1 && prefs_saved == 1);
+    assert(GameDataStateStorage.fields_.game_warnings_ == 1 && AlphaIniPrefs.announce == 1 && prefs_saved == 1);
     assert(staples == 1 && g_FX.fades == 2);
 
     // After parse_says clears energy, selected-base visibility permits focus.
     base_current.faction_id_current = 1;
     Bases[1].faction_id_current = 2;
     Bases[1].visibility = 1;
-    LockEnableMask = 3;
-    GameWarnings = 1;
+    GameDataStateStorage.fields_.lock_masks_.enable_mask_ = 3;
+    GameDataStateStorage.fields_.game_warnings_ = 1;
     CurrentFactionEnergyReserves = 1;
     parse_sets_energy_to_zero = 1;
     Popup::result = 2;
@@ -253,7 +261,7 @@ int main() {
     assert(popb("BODY", 1, -1, 0, 0) == 1);
     assert(ConsoleGlobal.focuses == 2);
     Bases[1].visibility = 1;
-    GameMorePreferences = MPREF_ADV_ZOOM_BASE_NO_RECENTER_MAP;
+    GameDataStateStorage.fields_.game_more_preferences_ = MPREF_ADV_ZOOM_BASE_NO_RECENTER_MAP;
     CurrentFactionEnergyReserves = 1;
     assert(popb("BODY", 1, -1, 0, 0) == 1);
     assert(ConsoleGlobal.focuses == 2);
@@ -263,7 +271,7 @@ int main() {
     Bases[1].visibility = 1;
     CurrentFactionEnergyReserves = 0;
     parse_sets_energy_to_zero = 0;
-    GameMorePreferences = 0;
+    GameDataStateStorage.fields_.game_more_preferences_ = 0;
 
     Sprite caller_picture;
     Popup::result = 2;

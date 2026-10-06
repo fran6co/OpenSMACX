@@ -27,9 +27,11 @@ struct FakeConsole {
 
 int IsMultiplayerNet;
 int NetBusyCount;
-int NetTurnFlags;
 int ConsoleControlTurnActive;
-int NetTurnFaction;
+// Narrow mock of the current nested owner interface used by the extracted body.
+// It proves source/API use only; it does not assert the production allocation extent.
+struct FakeGameDataStateFields { uint32_t net_turn_flags_; int net_turn_faction_; };
+struct FakeGameDataStateWindow { FakeGameDataStateFields fields_; } GameDataStateStorage;
 uint32_t fake_time;
 int fake_time_calls;
 int fake_send_result;
@@ -161,9 +163,9 @@ int main() {
     // The earlier 0x8000 test takes precedence when both bits are set.
     flags = 0xA000;
     memcpy(packet, &flags, sizeof flags);
-    NetTurnFlags = 0x10;
+    GameDataStateStorage.fields_.net_turn_flags_ = 0x10;
     ConsoleControlTurnActive = 0;
-    NetTurnFaction = 3;
+    GameDataStateStorage.fields_.net_turn_faction_ = 3;
     reset_observations();
     assert(NetDaemonNet.send_message(reinterpret_cast<char *>(packet),
                                      sizeof packet, 13) == -37);
@@ -174,9 +176,9 @@ int main() {
     flags = 0x2000;
     memcpy(packet, &flags, sizeof flags);
     NetDaemonNet.lock_state_[0].trailing_words_[0] = 2;
-    NetTurnFlags = 0x10;
+    GameDataStateStorage.fields_.net_turn_flags_ = 0x10;
     ConsoleControlTurnActive = 0;
-    NetTurnFaction = 3;
+    GameDataStateStorage.fields_.net_turn_faction_ = 3;
     reset_observations();
     assert(NetDaemonNet.send_message(reinterpret_cast<char *>(packet),
                                      sizeof packet, 13) == -37);

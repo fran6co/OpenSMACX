@@ -15,6 +15,54 @@ END = 0x0046207E
 MARKER = "/* ACTUAL ALPHAMENU CHECK BODY */"
 
 
+def mask_noncode(text):
+    chars = list(text)
+    mode = "code"
+    i = 0
+    while i < len(text):
+        c = text[i]
+        n = text[i + 1] if i + 1 < len(text) else ""
+        if mode == "code":
+            if c == "/" and n == "/":
+                chars[i] = chars[i + 1] = " "
+                i += 2
+                mode = "line"
+                continue
+            if c == "/" and n == "*":
+                chars[i] = chars[i + 1] = " "
+                i += 2
+                mode = "block"
+                continue
+            if c == '"':
+                chars[i] = " "
+                mode = "string"
+            elif c == "'":
+                chars[i] = " "
+                mode = "char"
+        elif mode == "line":
+            if c == "\n":
+                mode = "code"
+            else:
+                chars[i] = " "
+        elif mode == "block":
+            chars[i] = " "
+            if c == "*" and n == "/":
+                chars[i + 1] = " "
+                i += 2
+                mode = "code"
+                continue
+        else:
+            chars[i] = " "
+            if c == "\\" and i + 1 < len(text):
+                chars[i + 1] = " "
+                i += 2
+                continue
+            if (mode == "string" and c == '"') or (mode == "char" and c == "'"):
+                mode = "code"
+        i += 1
+    return "".join(chars)
+
+
 def actual_body():
     rows = [row for row in read_file(OWNER) if row.address == ADDRESS]
     assert len(rows) == 1, "native writer must retain exactly one AlphaMenu check identity"
@@ -25,14 +73,15 @@ def actual_body():
     assert row.mode == Mode.BODY and row.state == State.IMPLEMENTED
 
     text = OWNER.read_text(encoding="utf-8")
+    code = mask_noncode(text)
     signature = "void AlphaMenu::check(int veh_id) {"
-    start = text.index(signature)
-    opening = text.index("{", start)
+    start = code.index(signature)
+    opening = code.index("{", start)
     depth = 0
-    for offset in range(opening, len(text)):
-        if text[offset] == "{":
+    for offset in range(opening, len(code)):
+        if code[offset] == "{":
             depth += 1
-        elif text[offset] == "}":
+        elif code[offset] == "}":
             depth -= 1
             if depth == 0:
                 return text[start:offset + 1]
@@ -107,5 +156,3 @@ def test_real_console_owner_and_callers_are_not_repointed():
     console = (ROOT / "src/console.cpp").read_text(encoding="utf-8")
     assert "alpha_menu_.check(selected_vehicle_);" in console
     assert "alpha_menu_.check(veh_id);" in console
-    pending = (ROOT / "src/pending_bodies.cpp").read_text(encoding="utf-8")
-    assert "PENDING_BODY(0x00460DD0" not in pending

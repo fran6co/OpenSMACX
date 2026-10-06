@@ -3,6 +3,7 @@
 // application ABI, native matching, linked preservation, or game runtime.
 
 #include <assert.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -49,13 +50,37 @@ struct NetDaemonProjection {
 RulesTimeControl TimeControl[MaxTimeControlNum];
 PlayerData PlayersData[MaxPlayerNum + 1]; // [8] sentinel detects upper-bound damage
 Veh Vehs[2049];
-int VehCurrentCount;
-int TimeControlsSelection;
-uint32_t LockEnableMask;
+// Host-only projection of the actual source owner's member paths.
+union GameDataLockMaskView { uint32_t enable_mask_; };
+struct GameDataStateWindowFields {
+    char before_vehicle_count_[0x38];
+    int vehicle_current_count_;
+    char before_turn_current_num_[8];
+    int turn_current_num_;
+    char before_time_controls_selection_[8];
+    int time_controls_selection_;
+    int turn_control_duration_milliseconds_;
+    GameDataLockMaskView lock_masks_;
+};
+struct GameDataStateWindow { GameDataStateWindowFields fields_; };
+GameDataStateWindow GameDataStateStorage = {};
+typedef char HostVehicleCountOffset[
+    offsetof(GameDataStateWindowFields, vehicle_current_count_) == 0x38 ? 1 : -1];
+typedef char HostTurnOffset[
+    offsetof(GameDataStateWindowFields, turn_current_num_) == 0x44 ? 1 : -1];
+typedef char HostTimeControlOffset[
+    offsetof(GameDataStateWindowFields, time_controls_selection_) == 0x50 ? 1 : -1];
+typedef char HostDurationOffset[
+    offsetof(GameDataStateWindowFields, turn_control_duration_milliseconds_) == 0x54 ? 1 : -1];
+typedef char HostLockMaskOffset[
+    offsetof(GameDataStateWindowFields, lock_masks_) == 0x58 ? 1 : -1];
+int &VehCurrentCount = GameDataStateStorage.fields_.vehicle_current_count_;
+int &TimeControlsSelection = GameDataStateStorage.fields_.time_controls_selection_;
+uint32_t &LockEnableMask = GameDataStateStorage.fields_.lock_masks_.enable_mask_;
 int ConsoleControlTurnActive;
 int ControlTurnPhase;
-int TurnCurrentNum;
-int TurnControlDurationMilliseconds;
+int &TurnCurrentNum = GameDataStateStorage.fields_.turn_current_num_;
+int &TurnControlDurationMilliseconds = GameDataStateStorage.fields_.turn_control_duration_milliseconds_;
 NetDaemonProjection NetDaemonNet;
 
 // Source-like 32-bit key conversion for this 64-bit host only. Product source

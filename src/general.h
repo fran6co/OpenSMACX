@@ -121,14 +121,8 @@ int __cdecl trig_init();
 // - `SinTable[i]` and `SinTable[i + 1]` - so nothing else may write it.
 extern int SinTable[256]; // 0x009BE6DC
 
-// jackal_close's own callees that are not yet recovered anywhere else.
-// Each is a pending_bodies forwarder; neither carries a catalogued name, the
-// same as `sub_63ce20` above. Two former entries here were promoted out of
-// pending_bodies.cpp: `sub_62d100` (now defined in general.cpp above
-// jackal_close) and the 0x00635750 teardown, which is DDInit::teardown on
-// the WinDisplayInit object itself - see win.h.
-void __cdecl filewin_close_class();
-void __cdecl basepop_close_class();
+// The remaining free-function teardown callees are declared here;
+// FileWin and BasePop cleanup use their real source-owned class operations.
 
 // 0x009BC4B0. jackal_init_real stores its `tgl_direct_draw` argument here on
 // entry and sets bit 0 once every subsystem has come up, so it is the engine's

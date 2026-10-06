@@ -924,7 +924,7 @@ int Wave::set_fname(const char *fname) {
         if (fname_) {
             operator delete(fname_);
         }
-        fname_ = WaveOperatorNew(strlen(fname) + 1);
+        fname_ = operator new(strlen(fname) + 1);
         strcpy(static_cast<char *>(fname_), fname);
         return 0;
     }
@@ -1444,7 +1444,7 @@ void Wave::init(char *group_id, unsigned long flags) {
     if (fname_) {
         operator delete(fname_);
     }
-    fname_ = WaveOperatorNew(strlen(resolved) + 1);
+    fname_ = operator new(strlen(resolved) + 1);
     strcpy(static_cast<char *>(fname_), resolved);
     // The original's `memset(this + 0x54, 0, 4)` at 0x004C6A1A. This used to be
     // a byte loop, the only way to spell a four-byte clear while the header

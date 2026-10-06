@@ -128,6 +128,12 @@ class Wave_In_Device : public SoundDeviceBase {
   int get_rate();
   int start_record();
   int end_record();
+
+  // Original wrappers moved here from delegation_thunks.cpp. Their
+  // backend slot calls remain SCAFFOLD until the external interface
+  // is represented by a verified typed declaration.
+  int set_codec(unsigned long codec);
+  int set_vxw_key(signed char *key);
 };  // vptr at 0x00 replaces the retired vtable_storage_
 
 static_assert(sizeof(Wave_In_Device) == 0x20,

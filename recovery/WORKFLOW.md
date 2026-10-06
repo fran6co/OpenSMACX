@@ -25,11 +25,11 @@ Build/link, source identity continuity and relevant behavioral checks still appl
 neither placeholders nor forwarding into the old executable count as recovery.
 Coverage reports must distinguish source placement and body-text presence from
 genuine owner implementation. Manual adapters in `adjustor_thunks.*`,
-`deleting_thunks.*`, `delegation_thunks.*`, `field_accessors.*`,
-`nullsub_thunks.*`, and transitional `global_arith.*` are scaffolding, not
-finished implementation coverage. `leaf_recoveries.*`, `pending_bodies.cpp`,
-and legacy `src/recovered/**` / `src/unrecovered/**` remain transitional
-material rather than final owner coverage. Preserve useful behavior, original
+`field_accessors.*`, `nullsub_thunks.*`, and transitional `global_arith.*` are scaffolding, not
+finished implementation coverage. `leaf_recoveries.*` remains transitional
+material rather than final owner coverage. Superseded source files are
+removed only after their owners retain identity, claims and useful
+findings. Preserve useful behavior, original
 identities, spans, historical claims and findings while migrating them; do not
 erase a sole mapping or replace recovered behavior with an empty body.
 A genuine original no-op, accessor, initializer or compiler-generated thunk
@@ -37,6 +37,17 @@ can qualify in its real owner with supporting evidence. Merely compiling an
 adapter, lacking source callers, or retaining a historical exactness token
 does not qualify it. Provisional declarations in `hypothesis_layouts.h` are
 structural recovery debt, not verified layout or function coverage.
+The deleting/delegation adapter collections and pending-body collection are
+retired. Their identities and remaining obligations live with the actual owners;
+retiring a collection does not qualify every body previously stored there.
+The retirement inventory also includes `original_seam.h`'s original-address
+method machinery, `spying_recovery.h`'s fixed-address table view, and the
+transitional declarations/storage in `temp.*`. These are not all empty files:
+move genuine behavior and storage to evidence-backed owners before retiring
+them. `vector_teardown.*` mixes a genuine game helper with incomplete CRT
+iterator substitutes; recover or verify the exception-unwind behavior before
+treating the latter as complete. Raw dispatch and unfinished bodies inside
+ordinary owner files remain recovery debt after dedicated scaffold files vanish.
 A compiling body or a temporary matching regression is not completion of the
 eventual byte-exact milestone. Recover the original branch ordering,
 error paths, initialization, arithmetic, storage and lifetime effects, including

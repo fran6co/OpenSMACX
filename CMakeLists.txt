@@ -121,11 +121,8 @@ set(OPENSMACX_SOURCES
     src/faction_strategy.cpp
     src/factionprofilewin.cpp
     src/main.cpp
-    src/pending_bodies.cpp
     src/multiwin.cpp
     src/adjustor_thunks.cpp
-    src/deleting_thunks.cpp
-    src/delegation_thunks.cpp
     src/midi.cpp
     src/nullsub_thunks.cpp
     src/field_accessors.cpp
@@ -312,9 +309,8 @@ endif()
 # link check was all it could be while `main()` returned 0 and nothing else was
 # reachable; it now has the shipped entry point - the recovered `_WinMain@16`
 # in src/main.cpp - and calls the game's own startup sequence from it. It is
-# not yet a game: six of WinMain's callees are still reached through
-# src/pending_bodies.cpp. But the artifact is the program being recovered
-# rather than a probe, and its name should say so.
+# not yet a recovered or accepted game. But the artifact is the program
+# being recovered rather than a probe, and its name should say so.
 add_executable(OpenSMACX ${OPENSMACX_SOURCES})
 
 # Terrain, media decoder and GraphicWin lookup data remain local derivatives of

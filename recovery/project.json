@@ -51,9 +51,7 @@
   },
   "mappings": {
     "compile_commands": "build/compile_commands.json",
-    "forwarder_macros": [
-      "PENDING_BODY"
-    ]
+    "forwarder_macros": []
   },
   "source": {
     "image_pin": "src/IMAGE_PIN",

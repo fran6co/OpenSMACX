@@ -75,10 +75,28 @@ struct Base {
     int nutrient_intake_2,mineral_intake_2,energy_intake_2,unused_intake_2;
     int nutrient_surplus,mineral_surplus,energy_surplus,unused_surplus;
 };
-struct BaseSecretProject { int universal_translator_;
- int &universal_translator() { return universal_translator_; }
- const int &universal_translator() const { return universal_translator_; }
+struct BaseSecretProject {
+    int dream_twister_, neural_amplifier_, universal_translator_, xenoempathy_dome_;
+    int &neural_amplifier() { return neural_amplifier_; }
+    const int &neural_amplifier() const { return neural_amplifier_; }
+    int &dream_twister() { return dream_twister_; }
+    const int &dream_twister() const { return dream_twister_; }
+    int &universal_translator() { return universal_translator_; }
+    const int &universal_translator() const { return universal_translator_; }
+    int &xenoempathy_dome() { return xenoempathy_dome_; }
+    const int &xenoempathy_dome() const { return xenoempathy_dome_; }
 };
+struct GameDataLockMaskView { uint32_t enable_mask_; };
+struct GameDataStateWindowFields {
+    int base_current_count_, diff_level_current_, turn_current_num_;
+    int vehicle_current_count_, sunspot_duration_;
+    uint32_t game_more_preferences_, game_state_;
+    GameDataLockMaskView lock_masks_;
+    BaseSecretProject secret_project_;
+};
+struct GameDataStateWindow { GameDataStateWindowFields fields_; };
+extern GameDataStateWindow GameDataStateStorage;
+
 struct Map { uint8_t climate,contour,val2,region,visibility,val3,unk; int8_t territory; uint32_t bit,bit2,bit_visible[7]; };
 struct RulesBasicHost {
     int move_rate_roads; int artillery_max_rng;
@@ -107,7 +125,6 @@ struct PathHost { int move(int,int); int sensors(int,int *,int *);
 
 extern Veh Vehs[128];
 extern Base Bases[128];
-extern BaseSecretProject SecretProject;
 extern Map TestMap[64][64];
 extern PlayerDataHost PlayersData[128];
 extern VehPrototype VehPrototypes[128];
@@ -118,10 +135,7 @@ extern ConsoleHost ConsoleGlobal;
 extern NetMsgHost NetMsgPrimary;
 extern PathHost Paths;
 extern int MapLongitudeBounds,MapLatitudeBounds,MapLongitude,MapIsFlat;
-extern int BaseFindDist,TurnCurrentNum,DiffLevelCurrent,IsMultiplayerNet;
-extern uint32_t LockEnableMask,GameRules;
-extern uint32_t GameMorePreferences;
-extern int VehCurrentCount,BaseCurrentCount;
+extern int BaseFindDist,IsMultiplayerNet;
 extern int VehMoveDeltaX[9],VehMoveDeltaY[9],RadiusOffsetX[289],RadiusOffsetY[289];
 extern int RadiusBaseX[9],RadiusBaseY[9];
 extern const int RadiusRange[9];
@@ -472,7 +486,6 @@ RulesTerraforming Terraforming[20];
 NetDaemonHost NetDaemonNet;
 Veh Vehs[128];
 Base Bases[128];
-BaseSecretProject SecretProject;
 Map TestMap[64][64];
 PlayerDataHost PlayersData[128];
 VehPrototype VehPrototypes[128];
@@ -483,10 +496,8 @@ ConsoleHost ConsoleGlobal;
 NetMsgHost NetMsgPrimary;
 PathHost Paths;
 int MapLongitudeBounds,MapLatitudeBounds,MapLongitude,MapIsFlat;
-int BaseFindDist,TurnCurrentNum,DiffLevelCurrent,IsMultiplayerNet;
-uint32_t LockEnableMask,GameRules;
-uint32_t GameMorePreferences;
-int VehCurrentCount,BaseCurrentCount;
+int BaseFindDist,IsMultiplayerNet;
+GameDataStateWindow GameDataStateStorage;
 int VehMoveDeltaX[9],VehMoveDeltaY[9],RadiusOffsetX[289],RadiusOffsetY[289];
 int RadiusBaseX[9],RadiusBaseY[9];
 const int RadiusRange[9]={1,9,25,49,81,121,169,225,289};
@@ -695,7 +706,7 @@ int main() {
     assert(enemy_move(0)==0&&Vehs[0].order==0&&Vehs[0].state==0x200);
 
     reset_late(f);test_base_find_count=0;test_stack_call_count=0;
-    Vehs[0].flags=0x440;LockEnableMask=0;
+    Vehs[0].flags=0x440;GameDataStateStorage.fields_.lock_masks_.enable_mask_=0;
     assert(enemy_move(0)==0&&Vehs[0].moves_expended==3);
 
     reset_late(f);test_base_find_count=0;test_stack_call_count=0;
@@ -734,15 +745,15 @@ int main() {
 
     // E52F tests moves_expended, not the distinct automatic-order byte.
     reset_late(f);f.local_64=1;f.local_7c=0;f.local_90=0;
-    BaseCurrentCount=0;test_has_abil_result=1;test_stack_check=1;
-    Weapon[0].offense_rating=1;LockEnableMask=0;test_drop_range_calls=0;
+    GameDataStateStorage.fields_.base_current_count_=0;test_has_abil_result=1;test_stack_check=1;
+    Weapon[0].offense_rating=1;GameDataStateStorage.fields_.lock_masks_.enable_mask_=0;test_drop_range_calls=0;
     Vehs[0].moves_expended=1;Vehs[0].order_auto_type=0;
     assert(run_final_upstream(f,0)==11&&test_drop_range_calls==0);
     Vehs[0].moves_expended=0;Vehs[0].order_auto_type=99;
     assert(run_final_upstream(f,0)==11&&test_drop_range_calls==1);
 
     // A distant selected enemy must skip the own-base route immediately.
-    reset_late(f);f.local_64=1;BaseCurrentCount=2;
+    reset_late(f);f.local_64=1;GameDataStateStorage.fields_.base_current_count_=2;
     memset(Bases,0,sizeof(Bases));test_has_tech_result=0;
     Bases[0].faction_id_current=2;Bases[0].x=30;Bases[0].y=10;
     Bases[1].faction_id_current=1;Bases[1].x=10;Bases[1].y=10;
@@ -754,7 +765,7 @@ int main() {
 
     // E9AA uses region_base_plan and preserves native terminal scratch writes.
     reset_late(f);f.local_64=1;f.local_38=1;f.local_28=99999;
-    BaseCurrentCount=2;memset(Bases,0,sizeof(Bases));
+    GameDataStateStorage.fields_.base_current_count_=2;memset(Bases,0,sizeof(Bases));
     Bases[0].faction_id_current=2;Bases[0].population_size=4;
     Bases[0].x=10;Bases[0].y=10;Bases[1].faction_id_current=1;
     PlayersData[1].proto_id_active[0]=2;

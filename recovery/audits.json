@@ -14,48 +14,31 @@
       ],
       "ceilings": {
         "vtable": 0,
-        "construct": 2,
+        "construct": 1,
         "free-function destructor": 5,
         "explicit base construct/destroy": 1,
-        "placement new on a subobject": 2,
+        "placement new on a subobject": 1,
         "hand-walked vbtable": 0,
         "VCall shim": 5,
-        "ORIGINAL() vtable-slot dispatch": 23,
-        "ORIGINAL() named-pointer seam": 77,
+        "ORIGINAL() vtable-slot dispatch": 0,
+        "ORIGINAL() named-pointer seam": 72,
         "vtable-as-member": 3,
         "vtable-initialiser store": 0,
         "vtable address constant": 0,
         "short-named fixed-address binding": 0,
         "anonymous fixed-address global": 0,
-        "adjustor_thunks.cpp markers": 102,
-        "deleting_thunks.cpp markers": 66,
-        "delegation_thunks.cpp markers": 22,
-        "field_accessors.cpp markers": 32,
-        "leaf_recoveries.cpp markers": 178,
-        "nullsub_thunks.cpp markers": 52,
-        "PENDING_BODY forwarders": 109,
-        "artifact files (recovered/)": 640,
-        "unrecovered files": 622,
-        "hypothesis_layouts.h lines": 2463,
-        "stringstruct.cpp markers": 49
+        "adjustor_thunks.cpp markers": 84,
+        "field_accessors.cpp markers": 18,
+        "leaf_recoveries.cpp markers": 135,
+        "nullsub_thunks.cpp markers": 47,
+        "hypothesis_layouts.h lines": 1664,
+        "stringstruct.cpp markers": 48
       },
       "counters": [
         {
           "name": "adjustor_thunks.cpp markers",
           "kind": "text",
           "path": "src/adjustor_thunks.cpp",
-          "pattern": "ORIGINAL: 0x"
-        },
-        {
-          "name": "deleting_thunks.cpp markers",
-          "kind": "text",
-          "path": "src/deleting_thunks.cpp",
-          "pattern": "ORIGINAL: 0x"
-        },
-        {
-          "name": "delegation_thunks.cpp markers",
-          "kind": "text",
-          "path": "src/delegation_thunks.cpp",
           "pattern": "ORIGINAL: 0x"
         },
         {
@@ -75,26 +58,6 @@
           "kind": "text",
           "path": "src/nullsub_thunks.cpp",
           "pattern": "ORIGINAL: 0x"
-        },
-        {
-          "name": "PENDING_BODY forwarders",
-          "kind": "text",
-          "path": "src/pending_bodies.cpp",
-          "pattern": "PENDING_BODY\\("
-        },
-        {
-          "name": "artifact files (recovered/)",
-          "kind": "files",
-          "path": "src/recovered",
-          "extension": ".cpp",
-          "recursive": true
-        },
-        {
-          "name": "unrecovered files",
-          "kind": "files",
-          "path": "src/unrecovered",
-          "extension": ".cpp",
-          "recursive": false
         },
         {
           "name": "hypothesis_layouts.h lines",

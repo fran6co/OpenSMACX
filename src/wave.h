@@ -211,8 +211,8 @@ extern int WaveDeviceReleaseGuard;  // 0x0090DB7C
 // one dword every 24 bytes from 0x0090D9A0; is_group_disabled is the device
 // singleton method play consults before starting; and the no-argument load
 // is the not-yet-recovered Wave::load() that play falls back to.
-// WaveOperatorNew and its typedef now live in "vector_teardown.h" above -
-// the seam outgrew this header once GraphicWin::init needed it too.
+// Filename and group allocations use the configured CRT operator new,
+// shared with the existing MIDI allocation path.
 uint32_t *const WaveDeviceGroupVolumes = (uint32_t *)0x0090D9A0;
 typedef int (OriginalObject::*func_wave_device_is_group_disabled)(uint32_t slot);
 typedef int (OriginalObject::*func_wave_original_load)();

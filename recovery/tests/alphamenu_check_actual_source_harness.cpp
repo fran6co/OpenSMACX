@@ -23,8 +23,33 @@ struct AlphaMenu {
     void check(int);
 };
 
-static uint32_t GameMorePreferences, GameRules, GameState, NetTurnFlags;
-static int ObjectiveReqVictory, ObjectivesSuddenDeathVictory;
+struct GameDataStateWindowFields {
+    uint32_t game_preferences_;
+    uint32_t game_more_preferences_;
+    uint32_t game_warnings_;
+    uint32_t game_rules_;
+    uint8_t before_game_state_[0x20];
+    uint32_t game_state_;                  // +0x030
+    uint8_t before_net_turn_flags_[0x358];
+    uint32_t net_turn_flags_;              // +0x38C
+};
+struct GameDataStateWindow { GameDataStateWindowFields fields_; };
+static GameDataStateWindow GameDataStateStorage = {};
+typedef char AlphaGameStateOffset[
+    offsetof(GameDataStateWindowFields, game_state_) == 0x30 ? 1 : -1];
+typedef char AlphaNetTurnFlagsOffset[
+    offsetof(GameDataStateWindowFields, net_turn_flags_) == 0x38C ? 1 : -1];
+static uint32_t &GameMorePreferences = GameDataStateStorage.fields_.game_more_preferences_;
+static uint32_t &GameRules = GameDataStateStorage.fields_.game_rules_;
+static uint32_t &GameState = GameDataStateStorage.fields_.game_state_;
+static uint32_t &NetTurnFlags = GameDataStateStorage.fields_.net_turn_flags_;
+struct ScenarioSaveState {
+    int objective_req_victory;
+    uint32_t objectives_sudden_death_victory;
+};
+static ScenarioSaveState ScenarioSave = {};
+static int &ObjectiveReqVictory = ScenarioSave.objective_req_victory;
+static uint32_t &ObjectivesSuddenDeathVictory = ScenarioSave.objectives_sudden_death_victory;
 static int IsMultiplayerNet, IsMultiplayerPBEM, ConsoleFactionsWaitingMask;
 struct ConsoleState { int cursor_active_; int faction_id_; } ConsoleGlobal;
 static const uint32_t BSC_SPORE_LAUNCHER = 15;

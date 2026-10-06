@@ -898,7 +898,7 @@ Purpose: Free the file text the init_class staged, once. Reads no state of
          its own - the object is irrelevant to the body - and is called by
          jackal_close with no receiver set up at all.
 // ORIGINAL: 0x00614E30 ?close_class@FileWin@@QAAXXZ 0x00614E30-0x00614E4D BYTE_EXACT
-// symbol    ?close_class@FileWin@@QAAXXZ
+// symbol    ?close_class@FileWin@@SAXXZ
 // size      29 bytes
 // callers   1   call targets   1
 // kind      game
@@ -907,10 +907,9 @@ Purpose: Free the file text the init_class staged, once. Reads no state of
 // PROMOTED out of the archived verification unit for this address. The free is the same
 // CRT callee init_class above reaches with the same `free` spelling; the
 // freed pointer is read once and the null test jumps to the plain return.
-// jackal_close still reaches this through the free forwarder
-// filewin_close_class (src/pending_bodies.cpp), which now forwards to the
-// member - the image's call there sets up no receiver, and a member call
-// cannot spell that.
+// jackal_close calls this source-owned static operation directly. The
+// implementation reads the process-global filename pointer and requires no
+// object receiver.
 Return Value: n/a
 Status: Complete
 */

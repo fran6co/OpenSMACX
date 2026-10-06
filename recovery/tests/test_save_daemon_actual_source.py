@@ -100,7 +100,6 @@ def test_seed_identity_and_history_are_owned_by_real_definition():
     assert not (ROOT / "src/unrecovered/005a94f0.cpp").exists()
     assert "// ORIGINAL: 0x005A94F0 ?save_daemon@@YAHPAD@Z 0x005A94F0-0x005A96C3" in owner
     assert "fclose`/`remove`" in owner and "return-value accumulator" in owner
-    assert "0x005A94F0" not in (ROOT / "src/pending_bodies.cpp").read_text()
     assert "int __cdecl save_daemon(char *save_path);" in (ROOT / "src/temp.h").read_text()
 
 

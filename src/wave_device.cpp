@@ -670,6 +670,12 @@ Purpose: Append a wave to a group's node list. A fresh 12-byte node comes
          RE-READ tail field, after the old tail's next was written - an
          order the original's aliasing permits to matter.
 // ORIGINAL: 0x004C5BF0 sub_4c5bf0 0x004C5BF0-0x004C5C4A BYTE_EXACT
+// symbol    ?insert@WaveGroupList@@QAEXPAVWave@@@Z
+// kind      game
+// size      90 bytes
+// callers   1   call targets   1
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0064558A
 // LEVER: `WaveGroupNode *const node` -> non-const with an explicit
 // `else { node = 0; }`. With the pointer const-initialized from the `if
 // (node) {...}` alone, this tree let the null path fall straight into the
@@ -678,20 +684,12 @@ Purpose: Append a wave to a group's node list. A fresh 12-byte node comes
 // 0x004C5C19) - 34/36 instructions, 0.971 similar. Materializing the
 // redundant zero explicitly reproduces the image's (needless) re-zero and
 // closes the last two instructions.
-// symbol    ?wave_group_insert_redirect@@YIXPAUWaveGroupList@@PAXPAVWave@@@Z
-// size      90 bytes
-// prototype 
-// callers   1   call targets   1
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x0064558A
 Return Value: n/a
 Status: Complete
 */
-void __fastcall wave_group_insert_redirect(WaveGroupList *self, void *,
-                                           Wave *a1) {
+void WaveGroupList::insert(Wave *a1) {
     WaveGroupNode *node =
-        static_cast<WaveGroupNode *>(WaveOperatorNew(0xC));
+        static_cast<WaveGroupNode *>(operator new(0xC));
     if (node) {
         node->prev = nullptr;
         node->next = nullptr;
@@ -699,7 +697,7 @@ void __fastcall wave_group_insert_redirect(WaveGroupList *self, void *,
     } else {
         node = 0;
     }
-    WaveGroupNode *const tail = self->tail;
+    WaveGroupNode *const tail = this->tail;
     if (tail) {
         // The old tail's next is written first and the tail field re-read
         // second, exactly as the original orders its memory operations; the
@@ -707,13 +705,13 @@ void __fastcall wave_group_insert_redirect(WaveGroupList *self, void *,
         // (the optimizer's type-based analysis would otherwise fold the
         // re-read).
         *reinterpret_cast<WaveGroupNode *volatile *>(&tail->next) = node;
-        node->prev = *reinterpret_cast<WaveGroupNode *volatile *>(&self->tail);
-        self->tail = node;
-        self->count += 1;
+        node->prev = *reinterpret_cast<WaveGroupNode *volatile *>(&this->tail);
+        this->tail = node;
+        this->count += 1;
     } else {
-        self->head = node;
-        self->tail = node;
-        self->count += 1;
+        this->head = node;
+        this->tail = node;
+        this->count += 1;
     }
 }
 

@@ -40,7 +40,7 @@ struct WaveGroupList {
   WaveGroupNode *cursor;
   uint32_t count;
 
-  // 0x004C5BF0, a pending_bodies forwarder: not yet source-owned.
+  // 0x004C5BF0, the original typed list insertion operation.
   void insert(Wave *wave);
 };
 
@@ -160,6 +160,3 @@ void __fastcall wave_control_group_ctor_redirect(WaveControlGroup *self,
                                                  void *);
 void __fastcall wave_control_group_dtor_redirect(WaveControlGroup *self,
                                                  void *);
-
-void __fastcall wave_group_insert_redirect(WaveGroupList *self, void *,
-                                           Wave *a1);
