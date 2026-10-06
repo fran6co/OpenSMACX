@@ -1234,3 +1234,164 @@ void Dialogs::on_redraw() {
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: Dialogs constructor span contains the store of table 0x00669BE8; the pinned dword at 0x00669CAC is 0x00407250.", "The original 8-byte receiver thunk at 0x00407250 tail-jumps to 0x00612FA0, mapped as ?on_scrolling@Dialogs@@QAEXHH@Z in this class owner.", "The actual class owner is src/dialogs.cpp; its current owner object vftable relocation at byte offset 0xC4 names the generated thunk, whose terminal relocation targets ?on_scrolling@Dialogs@@UAEXHH@Z.", "The source identity retains its exact historical kind fact `game`; its full original spans, claims, lessons, and findings are checked unchanged by the writer readback."], "reason": "The pinned Dialogs constructor at 0x00612830 installs its Win view at 0x00669BE8; the original slot cell at +0xC4 selects this full identity. The real Dialogs virtual member and owner-TU vftable are already source-owned; current owner COFF evidence binds this FILE identity to the compiler-emitted receiver adjustor tailing to ?on_scrolling@Dialogs@@UAEXHH@Z."}
 // kind      game
 // symbol    ?on_scrolling@Dialogs@@$4PPPPPPPM@A@AEXHH@Z
+
+/*
+ * RECOVERY_HISTORY: v1 address=0x00407150 source_sha256=5d8f8a1d88dea99894d068cf22393a1686f86c8deab34d7b504349c1d2069549 envelope_sha256=1c61ef27792b94d97baf7e4eeeb2e729fa6bcaf698d2c35e24918f5d64099826
+ * [ARCHIVE] /*
+ * [ARCHIVE] Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
+ * [ARCHIVE]          Dialogs::on_scroll_create expects, then forward unchanged.
+ * [ARCHIVE] // RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
+ * [ARCHIVE] // original marker: 0x00407150 ?on_scroll_create@thunk1_Dialogs@@QAEXXZ 0x00407150-0x00407158 BYTE_EXACT
+ * [ARCHIVE] // symbol    ?adjust_dialogs1_on_scroll_create@@YIXPAX0@Z
+ * [ARCHIVE] // size      8 bytes
+ * [ARCHIVE] // prototype void (__thiscall ?on_scroll_create@thunk1_Dialogs@@QAEXXZ)(Dialogs* this)
+ * [ARCHIVE] // callers   0   call targets   0
+ * [ARCHIVE] // kind      game
+ * [ARCHIVE] // flags     hidden;sp_ready;purged_ok
+ * [ARCHIVE] // calls     (none)
+ * [ARCHIVE] Return Value: n/a
+ * [ARCHIVE] Status: Complete
+ * [ARCHIVE] * /
+ */
+// ORIGINAL: 0x00407150 ?on_scroll_create@thunk1_Dialogs@@QAEXXZ 0x00407150-0x00407158 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: constructor-installed class table cell binds 0x00407150 to the complete original thunk span.", "The retained terminal artifact set at build/recovery/builds/build-8b7ms_6y recorded the observed compiler symbol ?on_scroll_create@Dialogs@@$4PPPPPPPM@A@AEHXZ in the class owner's physical COFF vftable relocation.", "That artifact set's MAP/PE cell selects the thunk and its PDB XFIXUP plus linked tail resolve to the mapped typed method.", "The original identity, spans, catalog purpose, source kind, claim state and formal lessons are retained; this binding is not a new byte claim."], "reason": "Bind the preserved original receiver-adjustor identity to the compiler-emitted class-view entry observed in the actual owner object and linked table."}
+// symbol    ?on_scroll_create@Dialogs@@$4PPPPPPPM@A@AEHXZ
+// kind      game
+
+/*
+ * RECOVERY_HISTORY: v1 address=0x00407160 source_sha256=5d8f8a1d88dea99894d068cf22393a1686f86c8deab34d7b504349c1d2069549 envelope_sha256=18eb40a5eb6529a13a790b90880a878d82f37e3b1324491eb4c2b7f3aadd384b
+ * [ARCHIVE] /*
+ * [ARCHIVE] Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
+ * [ARCHIVE]          Dialogs::on_scroll_delete expects, then forward unchanged.
+ * [ARCHIVE] // RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
+ * [ARCHIVE] // original marker: 0x00407160 ?on_scroll_delete@thunk1_Dialogs@@QAEHPAUScroll@@@Z 0x00407160-0x00407168
+ * [ARCHIVE] // symbol    ?adjust_dialogs1_on_scroll_delete@@YIHPAX00@Z
+ * [ARCHIVE] // size      8 bytes
+ * [ARCHIVE] // prototype int (__thiscall ?on_scroll_delete@thunk1_Dialogs@@QAEHPAUScroll@@@Z)(Dialogs* this, Scroll*)
+ * [ARCHIVE] // callers   0   call targets   0
+ * [ARCHIVE] // kind      game
+ * [ARCHIVE] // flags     hidden;sp_ready;purged_ok
+ * [ARCHIVE] // calls     (none)
+ * [ARCHIVE] Return Value: the forwarded call's
+ * [ARCHIVE] Status: Complete
+ * [ARCHIVE] * /
+ */
+// ORIGINAL: 0x00407160 ?on_scroll_delete@thunk1_Dialogs@@QAEHPAUScroll@@@Z 0x00407160-0x00407168 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: constructor-installed class table cell binds 0x00407160 to the complete original thunk span.", "The retained terminal artifact set at build/recovery/builds/build-8b7ms_6y recorded the observed compiler symbol ?on_scroll_delete@Dialogs@@$4PPPPPPPM@A@AEHPAVScroll@@@Z in the class owner's physical COFF vftable relocation.", "That artifact set's MAP/PE cell selects the thunk and its PDB XFIXUP plus linked tail resolve to the mapped typed method.", "The original identity, spans, catalog purpose, source kind, claim state and formal lessons are retained; this binding is not a new byte claim."], "reason": "Bind the preserved original receiver-adjustor identity to the compiler-emitted class-view entry observed in the actual owner object and linked table."}
+// symbol    ?on_scroll_delete@Dialogs@@$4PPPPPPPM@A@AEHPAVScroll@@@Z
+// kind      game
+
+/*
+ * RECOVERY_HISTORY: v1 address=0x00407180 source_sha256=5d8f8a1d88dea99894d068cf22393a1686f86c8deab34d7b504349c1d2069549 envelope_sha256=eec3a684474f320524f5a5a5646f28e479addd3d27da661c7df6fd78bb664400
+ * [ARCHIVE] /*
+ * [ARCHIVE] Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
+ * [ARCHIVE]          Dialogs::on_mousewheel expects, then forward unchanged.
+ * [ARCHIVE] // RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
+ * [ARCHIVE] // original marker: 0x00407180 ?on_mousewheel@thunk1_Dialogs@@QAEXH@Z 0x00407180-0x00407188
+ * [ARCHIVE] // symbol    ?adjust_dialogs1_on_mousewheel@@YIXPAX0H@Z
+ * [ARCHIVE] // size      8 bytes
+ * [ARCHIVE] // prototype void (__thiscall ?on_mousewheel@thunk1_Dialogs@@QAEXH@Z)(Dialogs* this, int)
+ * [ARCHIVE] // callers   0   call targets   0
+ * [ARCHIVE] // kind      game
+ * [ARCHIVE] // flags     hidden;sp_ready;purged_ok
+ * [ARCHIVE] // calls     (none)
+ * [ARCHIVE] Return Value: n/a
+ * [ARCHIVE] Status: Complete
+ * [ARCHIVE] * /
+ */
+// ORIGINAL: 0x00407180 ?on_mousewheel@thunk1_Dialogs@@QAEXH@Z 0x00407180-0x00407188 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: constructor-installed class table cell binds 0x00407180 to the complete original thunk span.", "The retained terminal artifact set at build/recovery/builds/build-8b7ms_6y recorded the observed compiler symbol ?on_mousewheel@Dialogs@@$4PPPPPPPM@A@AEXH@Z in the class owner's physical COFF vftable relocation.", "That artifact set's MAP/PE cell selects the thunk and its PDB XFIXUP plus linked tail resolve to the mapped typed method.", "The original identity, spans, catalog purpose, source kind, claim state and formal lessons are retained; this binding is not a new byte claim."], "reason": "Bind the preserved original receiver-adjustor identity to the compiler-emitted class-view entry observed in the actual owner object and linked table."}
+// symbol    ?on_mousewheel@Dialogs@@$4PPPPPPPM@A@AEXH@Z
+// kind      game
+
+/*
+ * RECOVERY_HISTORY: v1 address=0x004071B0 source_sha256=5d8f8a1d88dea99894d068cf22393a1686f86c8deab34d7b504349c1d2069549 envelope_sha256=311d6ed9fbd175ec5ccbbefdccb5abeca800bcc344d9479e6d9a6fbb18da1ed3
+ * [ARCHIVE] /*
+ * [ARCHIVE] Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
+ * [ARCHIVE]          Dialogs::on_left_click expects, then forward unchanged.
+ * [ARCHIVE] // RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
+ * [ARCHIVE] // original marker: 0x004071B0 ?on_left_click@thunk1_Dialogs@@QAEXHH@Z 0x004071B0-0x004071B8
+ * [ARCHIVE] // symbol    ?adjust_dialogs1_on_left_click@@YIXPAX0HH@Z
+ * [ARCHIVE] // size      8 bytes
+ * [ARCHIVE] // prototype void (__thiscall ?on_left_click@thunk1_Dialogs@@QAEXHH@Z)(Dialogs* this, int, int)
+ * [ARCHIVE] // callers   0   call targets   0
+ * [ARCHIVE] // kind      game
+ * [ARCHIVE] // flags     hidden;sp_ready;purged_ok
+ * [ARCHIVE] // calls     (none)
+ * [ARCHIVE] Return Value: n/a
+ * [ARCHIVE] Status: Complete
+ * [ARCHIVE] * /
+ */
+// ORIGINAL: 0x004071B0 ?on_left_click@thunk1_Dialogs@@QAEXHH@Z 0x004071B0-0x004071B8 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: constructor-installed class table cell binds 0x004071B0 to the complete original thunk span.", "The retained terminal artifact set at build/recovery/builds/build-8b7ms_6y recorded the observed compiler symbol ?on_left_click@Dialogs@@$4PPPPPPPM@A@AEXHH@Z in the class owner's physical COFF vftable relocation.", "That artifact set's MAP/PE cell selects the thunk and its PDB XFIXUP plus linked tail resolve to the mapped typed method.", "The original identity, spans, catalog purpose, source kind, claim state and formal lessons are retained; this binding is not a new byte claim."], "reason": "Bind the preserved original receiver-adjustor identity to the compiler-emitted class-view entry observed in the actual owner object and linked table."}
+// symbol    ?on_left_click@Dialogs@@$4PPPPPPPM@A@AEXHH@Z
+// kind      game
+
+/*
+ * RECOVERY_HISTORY: v1 address=0x004071E0 source_sha256=5d8f8a1d88dea99894d068cf22393a1686f86c8deab34d7b504349c1d2069549 envelope_sha256=04ac05c124f77eaaa62921668d02a1c75f9ba667e2633e70a70be460a890422c
+ * [ARCHIVE] /*
+ * [ARCHIVE] Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
+ * [ARCHIVE]          Dialogs::on_right_click expects, then forward unchanged.
+ * [ARCHIVE] // RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
+ * [ARCHIVE] // original marker: 0x004071E0 ?on_right_click@thunk1_Dialogs@@QAEXHH@Z 0x004071E0-0x004071E8
+ * [ARCHIVE] // symbol    ?adjust_dialogs1_on_right_click@@YIXPAX0HH@Z
+ * [ARCHIVE] // size      8 bytes
+ * [ARCHIVE] // prototype void (__thiscall ?on_right_click@thunk1_Dialogs@@QAEXHH@Z)(Dialogs* this, int, int)
+ * [ARCHIVE] // callers   0   call targets   0
+ * [ARCHIVE] // kind      game
+ * [ARCHIVE] // flags     hidden;sp_ready;purged_ok
+ * [ARCHIVE] // calls     (none)
+ * [ARCHIVE] Return Value: n/a
+ * [ARCHIVE] Status: Complete
+ * [ARCHIVE] * /
+ */
+// ORIGINAL: 0x004071E0 ?on_right_click@thunk1_Dialogs@@QAEXHH@Z 0x004071E0-0x004071E8 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: constructor-installed class table cell binds 0x004071E0 to the complete original thunk span.", "The retained terminal artifact set at build/recovery/builds/build-8b7ms_6y recorded the observed compiler symbol ?on_right_click@Dialogs@@$4PPPPPPPM@A@AEXHH@Z in the class owner's physical COFF vftable relocation.", "That artifact set's MAP/PE cell selects the thunk and its PDB XFIXUP plus linked tail resolve to the mapped typed method.", "The original identity, spans, catalog purpose, source kind, claim state and formal lessons are retained; this binding is not a new byte claim."], "reason": "Bind the preserved original receiver-adjustor identity to the compiler-emitted class-view entry observed in the actual owner object and linked table."}
+// symbol    ?on_right_click@Dialogs@@$4PPPPPPPM@A@AEXHH@Z
+// kind      game
+
+/*
+ * RECOVERY_HISTORY: v1 address=0x00407210 source_sha256=5d8f8a1d88dea99894d068cf22393a1686f86c8deab34d7b504349c1d2069549 envelope_sha256=70dac72bf15018a278389576c3676553978f6797532eb074f8425aab32a3065f
+ * [ARCHIVE] /*
+ * [ARCHIVE] Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
+ * [ARCHIVE]          Dialogs::on_key_down expects, then forward unchanged.
+ * [ARCHIVE] // RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
+ * [ARCHIVE] // original marker: 0x00407210 ?on_key_down@thunk1_Dialogs@@QAEHH@Z 0x00407210-0x00407218
+ * [ARCHIVE] // symbol    ?adjust_dialogs1_on_key_down@@YIHPAX0H@Z
+ * [ARCHIVE] // size      8 bytes
+ * [ARCHIVE] // prototype int (__thiscall ?on_key_down@thunk1_Dialogs@@QAEHH@Z)(Dialogs* this, int)
+ * [ARCHIVE] // callers   0   call targets   0
+ * [ARCHIVE] // kind      game
+ * [ARCHIVE] // flags     hidden;sp_ready;purged_ok
+ * [ARCHIVE] // calls     (none)
+ * [ARCHIVE] Return Value: the forwarded call's
+ * [ARCHIVE] Status: Complete
+ * [ARCHIVE] * /
+ */
+// ORIGINAL: 0x00407210 ?on_key_down@thunk1_Dialogs@@QAEHH@Z 0x00407210-0x00407218 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: constructor-installed class table cell binds 0x00407210 to the complete original thunk span.", "The retained terminal artifact set at build/recovery/builds/build-8b7ms_6y recorded the observed compiler symbol ?on_key_down@Dialogs@@$4PPPPPPPM@A@AEHH@Z in the class owner's physical COFF vftable relocation.", "That artifact set's MAP/PE cell selects the thunk and its PDB XFIXUP plus linked tail resolve to the mapped typed method.", "The original identity, spans, catalog purpose, source kind, claim state and formal lessons are retained; this binding is not a new byte claim."], "reason": "Bind the preserved original receiver-adjustor identity to the compiler-emitted class-view entry observed in the actual owner object and linked table."}
+// symbol    ?on_key_down@Dialogs@@$4PPPPPPPM@A@AEHH@Z
+// kind      game
+
+/*
+ * RECOVERY_HISTORY: v1 address=0x004072B0 source_sha256=5d8f8a1d88dea99894d068cf22393a1686f86c8deab34d7b504349c1d2069549 envelope_sha256=8e2b34215067873fa587d91183d644ed7c4f81587bc029482942fc941f96b566
+ * [ARCHIVE] /*
+ * [ARCHIVE] Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
+ * [ARCHIVE]          Dialogs::attach expects, then forward unchanged.
+ * [ARCHIVE] // RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
+ * [ARCHIVE] // original marker: 0x004072B0 ?attach@thunk1_Dialogs@@QAEHPAUGraphicWin@@HHH@Z 0x004072B0-0x004072B8
+ * [ARCHIVE] // symbol    ?adjust_dialogs1_attach@@YIHPAX00HHH@Z
+ * [ARCHIVE] // size      8 bytes
+ * [ARCHIVE] // prototype int (__thiscall ?attach@thunk1_Dialogs@@QAEHPAUGraphicWin@@HHH@Z)(Dialogs* this, GraphicWin*, int, int, int)
+ * [ARCHIVE] // callers   0   call targets   0
+ * [ARCHIVE] // kind      game
+ * [ARCHIVE] // flags     hidden;sp_ready;purged_ok
+ * [ARCHIVE] // calls     (none)
+ * [ARCHIVE] Return Value: the forwarded call's
+ * [ARCHIVE] Status: Complete
+ * [ARCHIVE] * /
+ */
+// ORIGINAL: 0x004072B0 ?attach@thunk1_Dialogs@@QAEHPAUGraphicWin@@HHH@Z 0x004072B0-0x004072B8 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: constructor-installed class table cell binds 0x004072B0 to the complete original thunk span.", "The retained terminal artifact set at build/recovery/builds/build-8b7ms_6y recorded the observed compiler symbol ?attach@Dialogs@@$4PPPPPPPM@A@AEHPAVGraphicWin@@HHH@Z in the class owner's physical COFF vftable relocation.", "That artifact set's MAP/PE cell selects the thunk and its PDB XFIXUP plus linked tail resolve to the mapped typed method.", "The original identity, spans, catalog purpose, source kind, claim state and formal lessons are retained; this binding is not a new byte claim."], "reason": "Bind the preserved original receiver-adjustor identity to the compiler-emitted class-view entry observed in the actual owner object and linked table."}
+// symbol    ?attach@Dialogs@@$4PPPPPPPM@A@AEHPAVGraphicWin@@HHH@Z
+// kind      game

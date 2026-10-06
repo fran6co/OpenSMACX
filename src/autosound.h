@@ -150,7 +150,8 @@ class AutoSound {
   // Menu::menu_event (0x005FB8B8) reads this as a window and dispatches
   // its event slots. The precise relationship remains unnamed.
   Win *event_window_;  // 0x88
-  int val_35_;
+  // RECOVERY_MEMBER: v3 AutoSound val_35_ Sound* 0x8C 0x005F2830
+  Sound *val_35_;
   // ListBox selection notification calls slots 23/7 on this window.
   // RECOVERY_MEMBER: v3 AutoSound val_36_ Win* 0x90 0x0060A020
   Win *val_36_;

@@ -3488,3 +3488,74 @@ int __cdecl set_popup_saved_location(int x, int y) {
     PopupSavedLocY = y;
     return x;
 }
+
+/*
+Purpose: Draw one dialog item's background for the popup: restore the
+         entered window's saved clip, centre the item's close-X sprite in
+         the frame when the dialog is in the icon mode, draw the panel box
+         from the interface style table, then pick the item text colours
+         from the pair of tables the title-bar list selects against.
+
+// HISTORICAL SCAFFOLD ROLE: SCAFFOLD Transitional leaf collection, not completed genuine owner recovery; preserve body evidence during owner migration.
+// ORIGINAL: 0x00405B20 ?on_dialog_item_back_draw@Popup@@QAEHPAUGraphicWin@@HHPAURECT@@@Z 0x00405B20-0x00405C72 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/popup.h Popup : BasePop and existing field/dialog callback API", "source:src/basepop.h and src/dialogs.h establish the protected dialog kind member", "source:src/palette.cpp textcolor_init populates source-owned TextColourTable", "source:src/diplopop.cpp source-owned DiplomacyPopup object"], "reason": "Own the dialog-item background callback as a nonvirtual Popup member: it reads Popup/BasePop state and uses the already-owned palette table, style tables and diplomacy singleton."}
+// symbol    ?on_dialog_item_back_draw@Popup@@QAEHPAVGraphicWin@@HHPAUtagRECT@@@Z
+// TRIED: RECT-by-value local plus Sprite/BoxSpriteParams table lookups (a3-indexed, stride 0x2C/0x28) compiles and matches structure; first divergence is #4 push/mov, not chased further.
+// HISTORICAL emitted-symbol fact (old free-function form): ?Popup_on_dialog_item_back_draw@@YIHPAVPopup@@PAXPAVGraphicWin@@HHPAUtagRECT@@@Z
+// size      338 bytes
+// prototype int (__thiscall ?on_dialog_item_back_draw@Popup@@QAEHPAUGraphicWin@@HHPAURECT@@@Z)(Popup* this, GraphicWin*, int, int, RECT*)
+// callers   0   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005D8000 0x005DACB0 0x005E2DD3 0x005E4B4A
+// notes     Seed provenance (TRIED): RECT-by-value local and the sprite/
+//           style-table lookups (a3-indexed, stride 0x2C/0x28) match
+//           structure; first divergence is #4 push/mov, not chased further.
+//           The protected BasePop state stays raw-offset (field_30AC_,
+//           the unnamed 0x2350 slot, external_window_) because friendship
+//           does not reach a free function.
+Return Value: 1 the item frame was drawn, 0 the guards rejected it
+Status: Coverage transcription - unclaimed body, seed
+        git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00405b20.cpp retained.
+*/
+
+int Popup::on_dialog_item_back_draw(GraphicWin *a1, int, int a3, RECT *a4) {
+    if (a1 == 0) {
+        return 0;
+    }
+    if (a4 == 0) {
+        return 0;
+    }
+    if (static_cast<int>(field_30AC_) / 10000 == 1000) {
+        return 0;
+    }
+
+    Buffer *const buffer = static_cast<Buffer *>(a1);
+    buffer->restore_clip();
+
+    RECT local_rect;
+    local_rect.left = a4->left;
+    local_rect.top = a4->top;
+    local_rect.right = a4->right;
+    local_rect.bottom = a4->bottom;
+
+    if (dialogs_.kind_ == 1) {
+        Sprite *const spr = &g_IFACE_CLOSE_X_SPRITES[a3];
+        local_rect.left += 3;
+        const int y = local_rect.top +
+                      (local_rect.bottom - spr->height() - local_rect.top) / 2;
+        spr->draw(buffer, spr->transparent_index(), local_rect.left, y, 1, 1);
+        local_rect.left += 0x15;
+    }
+
+    buffer->box_sprite(&local_rect, &InterfaceBoxStyles[27 + a3]);
+
+    if (external_window_ == static_cast<Win *>(&DiplomacyPopup)) {
+        buffer->set_text_color(TextColourTable[192 - a3 * 2],
+                               TextColourTable[193 - a3 * 2], 1, 1);
+        return 1;
+    }
+    buffer->set_text_color(TextColourTable[80 - a3 * 2],
+                           TextColourTable[81 - a3 * 2], 1, 1);
+    return 1;
+}

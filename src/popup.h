@@ -64,6 +64,7 @@ class Popup : public BasePop {
   int on_listbox_scroll_delete(Scroll *scroll);
 
  public:
+  int on_dialog_item_back_draw(GraphicWin *window, int unused, int item, RECT *rect);
   int on_nc_hittest(int x, int y);
 
   // `static`, because the image's name ends in `QAA` - a public member

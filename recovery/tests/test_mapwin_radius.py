@@ -42,7 +42,8 @@ def braced(source, signature):
 
 def actual_source():
     h = {name: (ROOT / "src" / (name + ".h")).read_text() for name in
-         ("win", "graphicwin", "mapwin", "console", "buffer", "vert", "map", "texture", "game")}
+         ("win", "graphicwin", "mapwin", "console", "buffer", "vert", "map", "texture", "game",
+          "game_data_state_window")}
     source = (ROOT / "src/mapwin.cpp").read_text()
     parts = {}
     for unit, cls in (("win", "Win"), ("graphicwin", "GraphicWin"), ("mapwin", "MapWin"), ("console", "Console")):
@@ -51,7 +52,7 @@ def actual_source():
     fields = []
     for name in ("field_1DD70_", "field_1DD78_", "field_1DD98_", "field_1DDC0_", "field_1DDA4_", "field_1DDA8_",
                  "field_1DDCC_", "field_1DDD0_", "field_1DDD4_", "field_1DDD8_"):
-        field, = re.findall(r"^  (?:int|uint32_t) " + name + r";", h["mapwin"], re.M)
+        field, = re.findall(r"^  (?:int|int32_t|uint32_t) " + name + r";", h["mapwin"], re.M)
         fields.append(field)
     parts["MAP_FIELDS"] = "\n".join(fields)
     fields = []
@@ -81,16 +82,23 @@ def actual_source():
         declaration, = re.findall(r"^int __cdecl " + name + r"\([^;{}]*\);", h["mapwin"], re.M)
         declarations.append(declaration)
     for unit, names in (("map", ("MapLongitude", "MapLongitudeBounds", "MapLatitudeBounds", "MapIsFlat")),
-                        ("game", ("GameState", "IsMultiplayerNet")), ("console", ("ConsoleControlTurnActive",))):
+                        ("game", ("IsMultiplayerNet",)), ("console", ("ConsoleControlTurnActive",))):
         for name in names:
             decl, = re.findall(r"^extern (?:int|uint32_t|BOOL) " + name + r";", h[unit], re.M)
             declarations.append(decl.removeprefix("extern "))
     corners, = re.findall(r"^Vert MapCornerCopy\[4\];", source, re.M)
     declarations.append(corners)
     parts["DECLARATIONS"] = "\n".join(declarations)
+    game_state_field, = re.findall(r"^    uint32_t game_state_;[ \t]*// \+0x030$", h["game_data_state_window"], re.M)
+    state_storage, = re.findall(r"^extern GameDataStateWindow GameDataStateStorage;$", h["game_data_state_window"], re.M)
+    parts["GAME_STATE_STORAGE"] = (
+        "struct GameDataStateWindowFields {\n" + game_state_field +
+        "\n};\nstruct GameDataStateWindow { GameDataStateWindowFields fields_; };\n" +
+        state_storage.removeprefix("extern ") + "\n")
     parts["MAP_ACCESS"] = braced(h["map"], "inline Map *__cdecl map_loc(") + "\n" + braced(h["map"], "MEASURED inline BOOL __cdecl on_map(")
     parts["HELPERS"] = "\n".join(braced(source, sig) for sig in (
-        "int map_dest_signed(", "int map_dest_add(", "int map_dest_sub(", "int map_dest_mul(", "bool map_dest_in_view(",
+        "int map_dest_signed(", "int mapwin_dest_add(int left, int right) {", "int mapwin_dest_sub(int left, int right) {",
+        "int mapwin_dest_mul(int left, int right) {", "bool map_dest_in_view(",
         "int map_radius_wrap_x(", "bool map_radius_valid(", "int map_radius_half_width("))
     for key, signature in (("VIEW", "int MapWin::tile_in_view("), ("ADAPTER", "int __cdecl gen_window_terrain("),
                            ("VEHICLES", "void MapWin::draw_vehicles(int x, int y, int radius,"),
@@ -122,6 +130,7 @@ CONSOLE_BASES public:CONSOLE_FIELDS};
 struct Texture {TEXTURE_METHOD};
 MapWin window;SHARED_DECLARATIONS
 DECLARATIONS
+GAME_STATE_STORAGE
 Map tiles[16000];int map_reads;
 Map *map_tiles(){++map_reads;return tiles;}
 MAP_ACCESS
@@ -182,7 +191,7 @@ void reset(){
     proposed_clip={4,6,80,90};window.rect1_=proposed_clip;window.rect2_={0,0,200,160};
     window.field_1DD70_=window.field_1DD78_=0;window.field_1DD98_=0;window.field_1DDC0_=7;
     window.field_1DDA4_=window.field_1DDA8_=0;window.field_1DDCC_=100;window.field_1DDD4_=100;window.field_1DDD0_=80;window.field_1DDD8_=80;
-    MapLongitudeBounds=200;MapLongitude=100;MapLatitudeBounds=160;MapIsFlat=0;GameState=0;IsMultiplayerNet=ConsoleControlTurnActive=0;
+    MapLongitudeBounds=200;MapLongitude=100;MapLatitudeBounds=160;MapIsFlat=0;GameDataStateStorage.fields_.game_state_=0;IsMultiplayerNet=ConsoleControlTurnActive=0;
     ConsoleGlobal.faction_id_=3;ConsoleGlobal.cursor_active_=0;ConsoleGlobal.field_23BF8_=1;ConsoleGlobal.survey_mode_=0;ConsoleGlobal.field_23BE4_=1;
     ConsoleGlobal.cursor_history_index_=2;for(int i=0;i<32;++i){ConsoleGlobal.cursor_history_x_[i]=-99;ConsoleGlobal.cursor_history_y_[i]=-99;}
     ConsoleGlobal.cursor_history_x_[2]=50;ConsoleGlobal.cursor_history_y_[2]=50;
@@ -278,11 +287,11 @@ void draw_controls(){
         case 6:ConsoleGlobal.cursor_history_x_[2]=-250;break;case 7:ConsoleGlobal.cursor_history_y_[2]=160;break;}
         window.draw_radius(50,50,0,0);require(events('X').empty());}
     reset();clip_results[0]=0;ConsoleGlobal.field_23BF8_=0;ConsoleGlobal.survey_mode_=2;window.field_1DD78_=1;window.field_1DD70_=0x80000000;
-    ConsoleGlobal.field_23BE4_=0;IsMultiplayerNet=1;GameState=2;window.field_1DD98_=uint32_t(-8);window.draw_radius(50,50,0,0);require(events('X').size()==1&&events('X')[0].a[0]==2);
+    ConsoleGlobal.field_23BE4_=0;IsMultiplayerNet=1;GameDataStateStorage.fields_.game_state_=2;window.field_1DD98_=uint32_t(-8);window.draw_radius(50,50,0,0);require(events('X').size()==1&&events('X')[0].a[0]==2);
     for(int draw=-1;draw<4;++draw){reset();clip_results[0]=0;window.draw_radius(50,50,0,draw);
         require(events('U').size()==size_t(draw!=0)&&events('D').size()==size_t(draw>=2)&&events('X').size()==size_t(draw>=0));
         if(draw>=2)require(seen[seen.size()-2].kind=='U'&&seen.back().kind=='D');}
-    reset();GameState=0x80;expected_faction=-1;window.draw_radius(50,50,0,-1);require(terrain_calls==0&&vehicle_calls==57&&events('U').size()==1&&events('X').empty());
+    reset();GameDataStateStorage.fields_.game_state_=0x80;expected_faction=-1;window.draw_radius(50,50,0,-1);require(terrain_calls==0&&vehicle_calls==57&&events('U').size()==1&&events('X').empty());
     reset();scenario=9;window.draw_radius(50,50,1,0);require(events('X').empty());
     reset();scenario=10;window.draw_radius(50,50,1,0);require(events('X').size()==1&&events('X')[0].a[0]==2);
     reset();clip_results[0]=clip_results[1]=0;window.draw_radius(50,50,0,2);require(events('U').empty()&&events('D').empty());
@@ -321,21 +330,21 @@ DAMAGE = [
     ("climate_altitude", "VIEW", "climate >> 5", "climate >> 6"),
     ("view_bottom_exclusive", "VIEW", "y >= bottom", "y > bottom"),
     ("view_right_exclusive", "VIEW", "x < right;", "x <= right;"),
-    ("view_margin_left", "VIEW", "map_dest_add(field_1DDA4_, margin)", "field_1DDA4_"),
-    ("view_margin_bottom", "VIEW", "map_dest_sub(map_dest_add(field_1DDD8_, field_1DDD0_), margin)", "map_dest_add(field_1DDD8_, field_1DDD0_)"),
+    ("view_margin_left", "VIEW", "mapwin_dest_add(field_1DDA4_, margin)", "field_1DDA4_"),
+    ("view_margin_bottom", "VIEW", "mapwin_dest_sub(mapwin_dest_add(field_1DDD8_, field_1DDD0_), margin)", "mapwin_dest_add(field_1DDD8_, field_1DDD0_)"),
     ("flat_bit_not_boolean", "HELPERS", "(MapIsFlat & 1) == 0", "MapIsFlat == 0"),
     ("southern_parity", "HELPERS", "row & 1", "row"),
-    ("northern_width", "HELPERS", "map_dest_sub(0, row)", "0"),
+    ("northern_width", "HELPERS", "mapwin_dest_sub(0, row)", "0"),
     ("vehicle_cap", "VEHICLES", "span < 10", "span < 8"),
     ("vehicle_radius_widening", "VEHICLES", "half_width, 2", "half_width, 0"),
     ("vehicle_last_row", "VEHICLES", "row <= extent + 1", "row <= extent"),
     ("vehicle_step", "VEHICLES", "column += 2", "column += 1"),
-    ("vehicle_live_vertical_center", "VEHICLES", "map_dest_sub(pixel_y, field_1DDC0_)", "map_dest_sub(pixel_y, 7)"),
+    ("vehicle_live_vertical_center", "VEHICLES", "mapwin_dest_sub(pixel_y, field_1DDC0_)", "mapwin_dest_sub(pixel_y, 7)"),
     ("vehicle_view_filter", "VEHICLES", "map_dest_in_view(*this, tile_x, tile_y)", "true"),
     ("clip_refusal", "GENERATE", "compute_clip(x, y, radius, &clip) == 0", "compute_clip(x, y, radius, &clip) != 0"),
     ("fill_flag", "GENERATE", "(field_1DD70_ & 0x10000000U) == 0", "true"),
     ("fill_color", "GENERATE", "fill(&clip, 0x41)", "fill(&clip, 0x40)"),
-    ("prelude_y", "GENERATE", "map_dest_sub(y, 3)", "map_dest_sub(y, 2)"),
+    ("prelude_y", "GENERATE", "mapwin_dest_sub(y, 3)", "mapwin_dest_sub(y, 2)"),
     ("right_conversion", "GENERATE", "pixel_to_tile(clip.right, clip.top", "pixel_to_tile(clip.left, clip.top"),
     ("conversion_sentinel", "GENERATE", "int upper_left_y = 32000", "int upper_left_y = 48"),
     ("terrain_radius_widening", "GENERATE", "half_width, 2", "half_width, 0"),
@@ -345,19 +354,19 @@ DAMAGE = [
     ("terrain_live_view", "GENERATE", "map_dest_in_view(*this, tile_x, tile_y)", "true"),
     ("names_missing", "GENERATE", "draw_base_names();", "/* omitted */"),
     ("overlays_flag", "GENERATE", "(field_1DD70_ & 0x2000) != 0", "false"),
-    ("overlay_left_only", "GENERATE", "while (upper_left_y < map_dest_sub(y, span))", "while (upper_y < map_dest_sub(y, span))"),
-    ("overlay_unwidened", "GENERATE", "map_radius_half_width(overlay_extent, row)", "map_dest_add(map_radius_half_width(overlay_extent, row), radius == 0 ? 2 : 0)"),
+    ("overlay_left_only", "GENERATE", "while (upper_left_y < mapwin_dest_sub(y, span))", "while (upper_y < mapwin_dest_sub(y, span))"),
+    ("overlay_unwidened", "GENERATE", "map_radius_half_width(overlay_extent, row)", "mapwin_dest_add(map_radius_half_width(overlay_extent, row), radius == 0 ? 2 : 0)"),
     ("overlay_live_view", "GENERATE", "tile_in_view(tile_x, tile_y, 0)", "true"),
     ("legend_flag", "GENERATE", "(field_1DD70_ & 0x20000) != 0", "false"),
     ("restore_current_clip", "GENERATE", "set_clip(&canvas->rect2_)", "set_clip(&clip)"),
-    ("spectator_faction", "DRAW", "(GameState & 0x80) != 0", "false"),
+    ("spectator_faction", "DRAW", "(GameDataStateStorage.fields_.game_state_ & 0x80) != 0", "false"),
     ("negative_draw_skip", "DRAW", "faction, draw_type < 0", "faction, 0"),
     ("cursor_active", "DRAW", "ConsoleGlobal.cursor_active_ == 0", "true"),
     ("network_turn", "DRAW", "network == 0 || ConsoleControlTurnActive == 0", "true"),
     ("negative_no_marker", "DRAW", "draw_type >= 0", "true"),
     ("survey_alternative", "DRAW", "ConsoleGlobal.field_23BF8_ != 0 || ConsoleGlobal.survey_mode_ != 0", "ConsoleGlobal.field_23BF8_ != 0"),
     ("display_mode_gate", "DRAW", "field_1DD78_ == 0 || (field_1DD70_ & 0x80000000U) != 0", "true"),
-    ("network_game_override", "DRAW", "network != 0 && (GameState & 2) != 0", "false"),
+    ("network_game_override", "DRAW", "network != 0 && (GameDataStateStorage.fields_.game_state_ & 2) != 0", "false"),
     ("history_index", "DRAW", "const int history = ConsoleGlobal.cursor_history_index_", "const int history = 0"),
     ("history_view", "DRAW", "map_dest_in_view(*this, cursor_x, cursor_y)", "true"),
     ("signed_zoom_boundary", "DRAW", "map_dest_signed(field_1DD98_) <= -8", "map_dest_signed(field_1DD98_) < -8"),

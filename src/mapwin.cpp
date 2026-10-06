@@ -7985,6 +7985,119 @@ int MapWin::pixel_to_tile(int x_pixel, int y_pixel, int *out_tile_x,
     return 1;
 }
 
+/*
+Purpose: Refresh the fog-of-war drawing over one tile (or a second tile
+         with it): under the map fog preference every live map window
+         redraws the tile with the caller's radius (plus one when widened)
+         against the acting faction; without it every live window draws
+         the single tile with the caller's draw type.
+
+// HISTORICAL SCAFFOLD ROLE: SCAFFOLD Transitional leaf collection, not completed genuine owner recovery; preserve body evidence during owner migration.
+// ORIGINAL: 0x0046AF90 ?draw_tile_fixup@@YAXHHHH@Z 0x0046AF90-0x0046B031 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/mapwin.h MapWinTable, MapWinTableSlots, field_1DD74_, and draw_radius", "source:src/mapwin.cpp source definition of both draw_tile_fixup overloads", "source:src/game.h GameDataStateStorage preference field; source:src/console.h ConsoleGlobal"], "reason": "Own the original one-tile map redraw in MapWin: its existing table, activity member, draw method, global preference and active faction are all declared source owners."}
+// size      161 bytes
+// prototype
+// callers   7   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0046A2A0
+Return Value: n/a
+Status: Coverage transcription - claim pending re-measurement
+*/
+
+void __cdecl draw_tile_fixup(int x_coord, int y_coord, int wider_radius,
+                             int draw_type) {
+    if (GameDataStateStorage.fields_.game_more_preferences_ & MPREF_MAP_SHOW_FOG_WAR) {
+        int const faction = ConsoleGlobal.faction_id_;
+        for (unsigned int slot = 0; slot < MapWinTableSlots; ++slot) {
+            MapWin *const window = MapWinTable[slot];
+            if (window == 0) {
+                continue;
+            }
+            if (slot != 0 && window->field_1DD74_ == 0) {
+                continue;
+            }
+            window->draw_radius(x_coord, y_coord, (wider_radius != 0) + 1,
+                                faction);
+        }
+    } else {
+        for (unsigned int slot = 0; slot < MapWinTableSlots; ++slot) {
+            MapWin *const window = MapWinTable[slot];
+            if (window == 0) {
+                continue;
+            }
+            if (slot != 0 && window->field_1DD74_ == 0) {
+                continue;
+            }
+            window->draw_radius(x_coord, y_coord, 0, draw_type);
+        }
+    }
+}
+
+/*
+Purpose: The twin-tile form of draw_tile_fixup: the first walk redraws
+         (x_coord, y_coord) with the widened-radius rule, a second walk
+         redraws (second_x_coord, second_y_coord) the same way unless the
+         caller passed -1, and the no-fog path draws only the first tile
+         with the caller's draw type.
+
+// HISTORICAL SCAFFOLD ROLE: SCAFFOLD Transitional leaf collection, not completed genuine owner recovery; preserve body evidence during owner migration.
+// ORIGINAL: 0x0046B040 ?draw_tile_fixup@@YAXHHHHHH@Z 0x0046B040-0x0046B132 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/mapwin.h MapWinTable, MapWinTableSlots, field_1DD74_, and draw_radius", "source:src/mapwin.cpp source definition of the one-tile sibling", "pinned original function 0x0046B040 span 0x0046B040-0x0046B132 and retained FILE/BYTE_EXACT claim"], "reason": "Own the original paired-tile overload beside MapWin's existing map redraw API; retain its second fog walk and first-tile-only non-fog branch."}
+// size      242 bytes
+// prototype
+// callers   ?   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0046A2A0
+Return Value: n/a
+Status: Coverage transcription - claim pending re-measurement
+*/
+
+void __cdecl draw_tile_fixup(int x_coord, int y_coord, int second_x_coord,
+                             int second_y_coord, int wider_radius,
+                             int draw_type) {
+    if (GameDataStateStorage.fields_.game_more_preferences_ & MPREF_MAP_SHOW_FOG_WAR) {
+        int const faction = ConsoleGlobal.faction_id_;
+        for (unsigned int slot = 0; slot < MapWinTableSlots; ++slot) {
+            MapWin *const window = MapWinTable[slot];
+            if (window == 0) {
+                continue;
+            }
+            if (slot != 0 && window->field_1DD74_ == 0) {
+                continue;
+            }
+            window->draw_radius(x_coord, y_coord, (wider_radius != 0) + 1,
+                                faction);
+        }
+        if (second_x_coord != -1) {
+            int const faction = ConsoleGlobal.faction_id_;
+            for (unsigned int slot = 0; slot < MapWinTableSlots; ++slot) {
+                MapWin *const window = MapWinTable[slot];
+                if (window == 0) {
+                    continue;
+                }
+                if (slot != 0 && window->field_1DD74_ == 0) {
+                    continue;
+                }
+                window->draw_radius(second_x_coord, second_y_coord,
+                                    (wider_radius != 0) + 1, faction);
+            }
+        }
+    } else {
+        for (unsigned int slot = 0; slot < MapWinTableSlots; ++slot) {
+            MapWin *const window = MapWinTable[slot];
+            if (window == 0) {
+                continue;
+            }
+            if (slot != 0 && window->field_1DD74_ == 0) {
+                continue;
+            }
+            window->draw_radius(x_coord, y_coord, 0, draw_type);
+        }
+    }
+}
+
 // Fixed-slot bindings carried from 0046ec10.cpp
 
 typedef short (__stdcall *KeyStateFn)(int);

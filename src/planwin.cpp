@@ -723,3 +723,26 @@ Status: Complete
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: constructor span at 0x0048BCD0 stores table 0x0066D2AC; exact cell 0x0066D330 is 0x0048C010.", "The complete original thunk bytes at 0x0048C010 tail to pinned target 0x0046F700.", "Fresh full build build-fpcqf1x8: ??_7PlanWin@@6BWin@@@+0x84 COFF relocation selects ?on_nc_left_down@MapWin@@$4PPPPPPPM@FOE@AEXHH@Z; thunk bytes and its unique relative tail relocation target ?on_nc_left_down@MapWin@@UAEXHH@Z.", "The owner compile receipt inputs were unchanged and match current files at proposal emission; selected output is observed in the fresh MAP/PE but this proposal does not claim complete link-preservation acceptance.", "Historical source kind `game`, original identity/name, complete span, and parsed claims/lessons are checked unchanged after native-writer readback."], "reason": "The pinned PlanWin constructor at 0x0048BCD0 installs the ??_7PlanWin@@6BWin@@@ address point; its exact slot cell at +0x84 selects original identity 0x0048C010. The fresh full-build owner COFF vftable relocation selects the compiler-generated thunk ?on_nc_left_down@MapWin@@$4PPPPPPPM@FOE@AEXHH@Z, whose unique physical relative tail targets ?on_nc_left_down@MapWin@@UAEXHH@Z. The original marker name and complete source history remain attached to this FILE identity."}
 // kind      game
 // symbol    ?on_nc_left_down@MapWin@@$4PPPPPPPM@FOE@AEXHH@Z
+
+/*
+ * RECOVERY_HISTORY: v1 address=0x0048C040 source_sha256=5d8f8a1d88dea99894d068cf22393a1686f86c8deab34d7b504349c1d2069549 envelope_sha256=b93efd888bdf42e0677fd6e0bbfb6fe5cb8ec58818d63167c25a45346f51d7ae
+ * [ARCHIVE] /*
+ * [ARCHIVE] Purpose: Adjust the receiver from PlanWin's thunk2 subobject to the one
+ * [ARCHIVE]          PlanWin::scalar_delete expects, then forward unchanged.
+ * [ARCHIVE] // RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
+ * [ARCHIVE] // original marker: 0x0048C040 ??_Gthunk2_PlanWin@@UAEPAXI@Z 0x0048C040-0x0048C051
+ * [ARCHIVE] // symbol    ?adjust_plan_win2_scalar_delete@@YIPAXPAX0I@Z
+ * [ARCHIVE] // size      17 bytes
+ * [ARCHIVE] // prototype void* (__thiscall ??_Gthunk2_PlanWin@@UAEPAXI@Z)(PlanWin* this, unsigned int)
+ * [ARCHIVE] // callers   0   call targets   0
+ * [ARCHIVE] // kind      game
+ * [ARCHIVE] // flags     hidden;sp_ready;purged_ok
+ * [ARCHIVE] // calls     (none)
+ * [ARCHIVE] Return Value: the forwarded call's
+ * [ARCHIVE] Status: Complete
+ * [ARCHIVE] * /
+ */
+// ORIGINAL: 0x0048C040 ??_Gthunk2_PlanWin@@UAEPAXI@Z 0x0048C040-0x0048C051 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: constructor-installed class-view slot 0 selects the complete original scalar deleting adjustor at 0x0048C040.", "The retained terminal artifact set at build/recovery/builds/build-8b7ms_6y recorded ??_EPlanWin@@$4PPPPPLLI@EEE@AEPAXI@Z in the actual planwin.cpp COFF view-table relocation; its adjustment prefix is byte-identical to the pinned thunk.", "That build's selected linked MAP/PE cell and PDB XFIXUP resolve the generated entry to ??_GPlanWin@@UAEPAXI@Z at 0x0053D730; the physical COFF E primary is a per-class weak fallback to its G primary (search mode 2).", "That linked primary tests mode bit 0, conditionally calls ??3@YAXPAX@Z, returns the saved object pointer in EAX, and uses ret 4.", "The original identity, spans, catalog purpose, source kind, claim state and formal lessons are retained; this binding is not a new byte claim."], "reason": "Bind the preserved scalar deleting-adjustor identity to the compiler-emitted class-view entry whose actual per-class E-to-G fallback and linked G body preserve the original receiver adjustment, deletion-flag contract, object return and stack cleanup."}
+// symbol    ??_EPlanWin@@$4PPPPPLLI@EEE@AEPAXI@Z
+// kind      game

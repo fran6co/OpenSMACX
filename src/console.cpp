@@ -83,7 +83,6 @@
 #include <cstring>
 
 void __cdecl base_kill(int base_id);
-int __cdecl action_build(int vehicle_id, char *base_name);
 int __cdecl wants_to_speak(int faction_id, int other_faction_id);
 extern int ConsoleGroupAction;
 
@@ -1077,7 +1076,6 @@ void __cdecl show_replay();                               // 0x005ADBF0 ?show_re
 int __cdecl tech_advance(int tech_id);                         // 0x005BE530 ?tech_advance@@YAHH@Z
 void __cdecl social_select(int faction_id);                       // 0x005B5620 ?social_select@@YAXH@Z
 void __cdecl design_new_veh(int faction_id, int proto_id);              // 0x00583CB0 ?design_new_veh@@YAXHH@Z
-void __cdecl draw_tile_fixup(int x, int y, int a3, int a4); // 0x0046AF90 ?draw_tile_fixup@@YAXHHHH@Z
 int __cdecl enemy_veh(int veh_id);                            // 0x00579240 ?enemy_veh@@YAHH@Z
 void __cdecl message_veh(int veh_id, int a2, int a3, int a4); // 0x00592E10 ?message_veh@@YAXHHHH@Z
 void __cdecl message_base(int base_id, int a2, char *text, int a4); // 0x00592E70 ?message_base@@YAXHHPADH@Z
@@ -13679,3 +13677,49 @@ return 1;
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: constructor span at 0x0050F460 stores table 0x0066EC18; exact cell 0x0066EC9C is 0x0051DF00.", "The complete original thunk bytes at 0x0051DF00 tail to pinned target 0x0050FB10.", "Fresh full build build-fpcqf1x8: ??_7Console@@6BWin@@@+0x84 COFF relocation selects ?on_nc_left_down@Console@@$4PPPPPPPM@A@AEXHH@Z; thunk bytes and its unique relative tail relocation target ?on_nc_left_down@Console@@UAEXHH@Z.", "The owner compile receipt inputs were unchanged and match current files at proposal emission; selected output is observed in the fresh MAP/PE but this proposal does not claim complete link-preservation acceptance.", "Historical source kind `game`, original identity/name, complete span, and parsed claims/lessons are checked unchanged after native-writer readback."], "reason": "The pinned Console constructor at 0x0050F460 installs the ??_7Console@@6BWin@@@ address point; its exact slot cell at +0x84 selects original identity 0x0051DF00. The fresh full-build owner COFF vftable relocation selects the compiler-generated thunk ?on_nc_left_down@Console@@$4PPPPPPPM@A@AEXHH@Z, whose unique physical relative tail targets ?on_nc_left_down@Console@@UAEXHH@Z. The original marker name and complete source history remain attached to this FILE identity."}
 // kind      game
 // symbol    ?on_nc_left_down@Console@@$4PPPPPPPM@A@AEXHH@Z
+
+/*
+ * RECOVERY_HISTORY: v1 address=0x0051DDE0 source_sha256=5d8f8a1d88dea99894d068cf22393a1686f86c8deab34d7b504349c1d2069549 envelope_sha256=0521c4f5ad1301580c581a88b1479693698786bf2c22227d2ccafa4d64ac80fb
+ * [ARCHIVE] /*
+ * [ARCHIVE] Purpose: Adjust the receiver from Console's thunk1 subobject to the one
+ * [ARCHIVE]          Console::scalar_delete expects, then forward unchanged.
+ * [ARCHIVE] // RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
+ * [ARCHIVE] // original marker: 0x0051DDE0 ??_Gthunk1_Console@@UAEPAXI@Z 0x0051DDE0-0x0051DDE8
+ * [ARCHIVE] // symbol    ?adjust_console1_scalar_delete@@YIPAXPAX0I@Z
+ * [ARCHIVE] // size      8 bytes
+ * [ARCHIVE] // prototype void* (__thiscall ??_Gthunk1_Console@@UAEPAXI@Z)(Console* this, unsigned int)
+ * [ARCHIVE] // callers   0   call targets   0
+ * [ARCHIVE] // kind      game
+ * [ARCHIVE] // flags     sp_ready;purged_ok
+ * [ARCHIVE] // calls     (none)
+ * [ARCHIVE] Return Value: the forwarded call's
+ * [ARCHIVE] Status: Complete
+ * [ARCHIVE] * /
+ */
+// ORIGINAL: 0x0051DDE0 ??_Gthunk1_Console@@UAEPAXI@Z 0x0051DDE0-0x0051DDE8 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: constructor-installed class-view slot 0 selects the complete original scalar deleting adjustor at 0x0051DDE0.", "The retained terminal artifact set at build/recovery/builds/build-8b7ms_6y recorded ??_EConsole@@$4PPPPPPPM@A@AEPAXI@Z in the actual console.cpp COFF view-table relocation; its adjustment prefix is byte-identical to the pinned thunk.", "That build's selected linked MAP/PE cell and PDB XFIXUP resolve the generated entry to ??_GConsole@@UAEPAXI@Z at 0x00407ED0; the physical COFF E primary is a per-class weak fallback to its G primary (search mode 2).", "That linked primary tests mode bit 0, conditionally calls ??3@YAXPAX@Z, returns the saved object pointer in EAX, and uses ret 4.", "The original identity, spans, catalog purpose, source kind, claim state and formal lessons are retained; this binding is not a new byte claim."], "reason": "Bind the preserved scalar deleting-adjustor identity to the compiler-emitted class-view entry whose actual per-class E-to-G fallback and linked G body preserve the original receiver adjustment, deletion-flag contract, object return and stack cleanup."}
+// symbol    ??_EConsole@@$4PPPPPPPM@A@AEPAXI@Z
+// kind      game
+
+/*
+ * RECOVERY_HISTORY: v1 address=0x0051DF50 source_sha256=5d8f8a1d88dea99894d068cf22393a1686f86c8deab34d7b504349c1d2069549 envelope_sha256=28abc097b47dd56ed1ee00d1e916a015f477f4889625fe90dd40a0b9eab886c9
+ * [ARCHIVE] /*
+ * [ARCHIVE] Purpose: Adjust the receiver from Console's thunk2 subobject to the one
+ * [ARCHIVE]          Console::scalar_delete expects, then forward unchanged.
+ * [ARCHIVE] // RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
+ * [ARCHIVE] // original marker: 0x0051DF50 ??_Gthunk2_Console@@UAEPAXI@Z 0x0051DF50-0x0051DF61
+ * [ARCHIVE] // symbol    ?adjust_console2_scalar_delete@@YIPAXPAX0I@Z
+ * [ARCHIVE] // size      17 bytes
+ * [ARCHIVE] // prototype void* (__thiscall ??_Gthunk2_Console@@UAEPAXI@Z)(Console* this, unsigned int)
+ * [ARCHIVE] // callers   0   call targets   0
+ * [ARCHIVE] // kind      game
+ * [ARCHIVE] // flags     hidden;sp_ready;purged_ok
+ * [ARCHIVE] // calls     (none)
+ * [ARCHIVE] Return Value: the forwarded call's
+ * [ARCHIVE] Status: Complete
+ * [ARCHIVE] * /
+ */
+// ORIGINAL: 0x0051DF50 ??_Gthunk2_Console@@UAEPAXI@Z 0x0051DF50-0x0051DF61 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: constructor-installed class-view slot 0 selects the complete original scalar deleting adjustor at 0x0051DF50.", "The retained terminal artifact set at build/recovery/builds/build-8b7ms_6y recorded ??_EConsole@@$4PPPPPLLI@EEE@AEPAXI@Z in the actual console.cpp COFF view-table relocation; its adjustment prefix is byte-identical to the pinned thunk.", "That build's selected linked MAP/PE cell and PDB XFIXUP resolve the generated entry to ??_GConsole@@UAEPAXI@Z at 0x00407ED0; the physical COFF E primary is a per-class weak fallback to its G primary (search mode 2).", "That linked primary tests mode bit 0, conditionally calls ??3@YAXPAX@Z, returns the saved object pointer in EAX, and uses ret 4.", "The original identity, spans, catalog purpose, source kind, claim state and formal lessons are retained; this binding is not a new byte claim."], "reason": "Bind the preserved scalar deleting-adjustor identity to the compiler-emitted class-view entry whose actual per-class E-to-G fallback and linked G body preserve the original receiver adjustment, deletion-flag contract, object return and stack cleanup."}
+// symbol    ??_EConsole@@$4PPPPPLLI@EEE@AEPAXI@Z
+// kind      game

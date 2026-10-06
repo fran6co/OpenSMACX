@@ -1,6 +1,6 @@
-"""Actual-source control for the corrected farm_get member receiver.
+"""Actual-source controls for BaseWin's farm raster reader.
 
-Radius tables remain unresolved; this is not native matching or game acceptance.
+The asset-domain evidence is specific to the pinned installed Rainfall.pcx.
 """
 from __future__ import annotations
 
@@ -21,7 +21,7 @@ SIGNATURE = "int BaseWin::farm_get(int a1, int a2)"
 def installed_basewin() -> str:
     text = (ROOT / "src/basewin.cpp").read_text()
     rows = {row.address: row for row in read_text(text, ROOT / "src/basewin.cpp")}
-    assert 0x00409100 in rows and rows[0x00409100].source_role.value == "scaffold"
+    assert 0x00409100 in rows and rows[0x00409100].source_role.value == "unclassified"
     return text
 
 
@@ -71,6 +71,8 @@ struct Buffer {
 Buffer *Buffer::expected = 0;
 Buffer *Buffer::receiver = 0;
 struct BaseWin { Rect rect1_; Buffer buffer2_; int farm_get(int, int); };
+const int RiverStepX[4] = {1, 1, -1, -1};
+const int RiverStepY[4] = {-1, 1, 1, -1};
 static int radius_calls, radius_x, radius_y, radius_range;
 int radius_move(int x, int y, int range) {
   ++radius_calls; radius_x=x; radius_y=y; radius_range=range; return 77;

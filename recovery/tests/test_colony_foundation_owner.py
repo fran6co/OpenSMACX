@@ -6,10 +6,32 @@ import subprocess
 
 import pytest
 
-from test_monument_records_behavior import body
-
 
 ROOT = Path(__file__).resolve().parents[2]
+
+
+def body(path, signature):
+    text = (ROOT / path).read_text()
+    start = text.index(signature)
+    opening = text.index("{", start)
+    depth = 0
+    for end in range(opening, len(text)):
+        depth += (text[end] == "{") - (text[end] == "}")
+        if depth == 0:
+            return text[start:end + 1]
+    raise AssertionError(f"unterminated {signature}")
+
+
+def action_captions():
+    text = (ROOT / "src/map.cpp").read_text()
+    declarations = [line for line in text.splitlines()
+                    if line.startswith(("char ActionBuildLogCaption[",
+                                        "char ActionBuildTurnLogCaption["))]
+    assert declarations == [
+        'char ActionBuildLogCaption[12] = "Action Base";',
+        'char ActionBuildTurnLogCaption[17] = "Action Base Turn";',
+    ]
+    return "\n".join(declarations)
 
 
 def test_colony_foundation_native_flow_and_name_storage(tmp_path):
@@ -31,9 +53,11 @@ __LAYOUT__
 MonumentFaction FactionMonuments[8];
 struct Player { int rule_flags; } Players[8];
 struct Console { int faction_id_; } ConsoleGlobal;
-int TurnCurrentNum=21, year_calls, popup_calls, change_local=-1;
+struct GameDataFields { int turn_current_num_; unsigned game_state_; };
+struct GameDataStorage { GameDataFields fields_; } GameDataStateStorage;
+int year_calls, popup_calls, change_local=-1;
 uint32_t game_year(int turn) {
-    assert(turn==21); ++year_calls;
+    assert(turn==GameDataStateStorage.fields_.turn_current_num_); ++year_calls;
     if (change_local!=-1) ConsoleGlobal.faction_id_=change_local;
     return 2150;
 }
@@ -43,6 +67,7 @@ void reset() {
     memset(FactionMonuments,0,sizeof FactionMonuments);
     memset(Players,0,sizeof Players);
     year_calls=popup_calls=0; change_local=-1; ConsoleGlobal.faction_id_=3;
+    GameDataStateStorage.fields_.turn_current_num_=21;
 }
 int main() {
     static_assert(sizeof(MonumentFaction)==0x4F4,"native faction stride");
@@ -100,10 +125,14 @@ int main() {
 
 
 def test_founding_action_uses_owned_dependencies_and_faction_count():
-    implementation = body("src/leaf_recoveries.cpp", "int __cdecl action_build(int veh_id, char *base_name) {")
+    implementation = body("src/map.cpp", "int __cdecl action_build(int veh_id, char *base_name) {")
+    captions = action_captions()
     assert "PlayersData[owner].current_num_bases" in implementation
     assert "base_init(owner, x, y)" in implementation
     assert "mon_colony_founded(owner, Bases[base_id].name_string)" in implementation
+    assert "ActionBuildLogCaption" in implementation and "ActionBuildTurnLogCaption" in implementation
+    assert 'char ActionBuildLogCaption[12] = "Action Base";' in captions
+    assert 'char ActionBuildTurnLogCaption[17] = "Action Base Turn";' in captions
     for retired_address in ("0x004E4B80", "0x00476B70", "FactionRelationSlot"):
         assert retired_address not in implementation
 
@@ -112,7 +141,8 @@ def test_founding_focus_reloads_vehicle_owner_after_callbacks(tmp_path):
     compiler = shutil.which("c++")
     if compiler is None:
         pytest.skip("host C++ compiler unavailable")
-    implementation = body("src/leaf_recoveries.cpp", "int __cdecl action_build(int veh_id, char *base_name) {")
+    implementation = body("src/map.cpp", "int __cdecl action_build(int veh_id, char *base_name) {")
+    captions = action_captions()
     harness = r'''
 #include <cassert>
 #include <cstring>
@@ -122,14 +152,19 @@ struct PlayerData { int current_num_bases; unsigned diplo_treaties[8]; int last_
 struct Base { unsigned governor; char name_string[32]; int faction_id_current; unsigned visibility; } Bases[1];
 int focus_calls, captured_owner, new_owner, skip_calls, TurnCurrentNum, GameState;
 enum { STATE_OMNISCIENT_VIEW=0x80 };
+struct GameDataFields { int turn_current_num_; unsigned game_state_; };
+struct GameDataStorage { GameDataFields fields_; } GameDataStateStorage;
+__CAPTIONS__
 struct Console {
     int faction_id_;
     void focus(int x,int y,int owner) {
         assert(x==6 && y==8); ++focus_calls; captured_owner=owner;
     }
 } ConsoleGlobal;
-int BuildLogCaption[1], BuildLogTurnCaption[1];
-void log_say(char*,int,int,int) { Vehs[0].faction_id=new_owner; }
+void log_say(char *caption,int,int,int) {
+    assert(caption==ActionBuildLogCaption || caption==ActionBuildTurnLogCaption);
+    Vehs[0].faction_id=new_owner;
+}
 int rocky_at(int,int) { return 0; }
 void rocky_set(int,int,int) {}
 int whose_territory(int,int,int,int,int) { return -1; }
@@ -162,7 +197,7 @@ int main() {
 '''
     source = tmp_path / "founding.cpp"
     executable = tmp_path / "founding"
-    source.write_text(harness.replace("__BODY__", implementation))
+    source.write_text(harness.replace("__BODY__", implementation).replace("__CAPTIONS__", captions))
     subprocess.run([compiler, "-std=c++17", str(source), "-o", str(executable)],
                    check=True, capture_output=True, text=True, timeout=30)
     subprocess.run([str(executable)], check=True, capture_output=True, text=True, timeout=10)

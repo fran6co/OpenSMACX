@@ -8488,3 +8488,112 @@ extern "C" void __cdecl sub_4ce6b0(int x_coord, int y_coord) {
         draw_tile(x_coord, y_coord, 2);
     }
 }
+
+// Neutral source captions for the initial bytes at 0x687B60 and 0x687B6C: original `push` references at 0x4C9713/0x4C972B and terminating NULs bound 12/17 bytes. The original .data section is writable; original symbols and wider allocation extents are unproved.
+// RECOVERY_OBJECT: v2 0x00687B60 0x00687B6C ?ActionBuildLogCaption@@3PADA 0x004C9713
+char ActionBuildLogCaption[12] = "Action Base";
+// RECOVERY_OBJECT: v2 0x00687B6C 0x00687B7D ?ActionBuildTurnLogCaption@@3PADA 0x004C972B
+char ActionBuildTurnLogCaption[17] = "Action Base Turn";
+
+/*
+Purpose: Found a base from the built colony pod: log it, clear rock under
+         the site, focus the view for the owning faction, settle the
+         territory and treaty fallout, run base_init, copy the pod's home
+         base's governor settings, name the base, kill the pod and record
+         the colony-founded monument trigger.
+// HISTORICAL SCAFFOLD ROLE: SCAFFOLD Transitional leaf collection, not completed genuine owner recovery; preserve body evidence during owner migration.
+// ORIGINAL: 0x004C96E0 ?action_build@@YAHHPAD@Z 0x004C96E0-0x004C99C5 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/map.cpp typed Vehs/Bases/PlayersData and base/map service declarations", "source callers:Console::new_base, enemy_move, NetDaemon::process_message; each owner includes map.h", "pinned original data at 0x687B60/0x687B6C has bounded NUL-terminated initial spans; former capacity unproved"], "reason": "Own base construction in the map/game-data API because its typed reads and writes use Vehs, Bases, PlayersData and existing map/base services. Keep the two caption arrays bounded to independently evidenced initial bytes."}
+// symbol    ?action_build@@YAHHPAD@Z
+// TRIED: byte-offset record indexing (a1*0x34) for the 0x952828/2a/2c/30/ 36/4f/56 base-record tables and the 0x20cc-stride diplomacy tables at 0x96c9f4/f8/0x96da3c and 0x134-stride base tables at 0x97d044/4a/53/78, matching Ghidra's decompile; diverges at instr #0 (prologue shape) given the function's size (741 bytes).
+// size      741 bytes
+Status: Coverage transcription of the retained seed
+        (git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/004c96e0.cpp, plain FILE). The veh record reads
+        are the typed Vehs[] members (x/y, state, flags, faction_id,
+        visibility); the base writes are Bases[] (governor, name_string,
+        visibility, faction_id_current); the diplomacy words are
+        PlayersData[].last_turn_new_base and .diplo_treaties. Two seeds
+        readings are corrected to the pinned layouts: the home-base read
+        is Vehs[a1].home_base_id (0x2E, stride 0x34) where the seed's
+        unmeasured note carried a 0x1A stride, and the is-human tests are
+        faction.h's is_human over LockEnableMask. The original +0x105C
+        faction word is PlayerData::current_num_bases. base_init and
+        mon_colony_founded use their genuine source owners. veh_skip
+        expands from its MEASURED inline
+        where the image calls 0x005C1D20 - the accepted house form.
+*/
+
+int __cdecl action_build(int veh_id, char *base_name) {
+    const int x = Vehs[veh_id].x;
+    const int y = Vehs[veh_id].y;
+    const unsigned char owner = Vehs[veh_id].faction_id;
+
+    log_say(ActionBuildLogCaption, x, y, owner);
+    log_say(ActionBuildTurnLogCaption, GameDataStateStorage.fields_.turn_current_num_, 0,
+            0);
+
+    if (rocky_at(x, y) > 0x40) {
+        rocky_set(x, y, 1);
+    }
+
+    if (owner == ConsoleGlobal.faction_id_ ||
+        (Vehs[veh_id].faction_id == ConsoleGlobal.faction_id_ &&
+         (Vehs[veh_id].flags & 0x440) != 0x440) ||
+        ((1 << (ConsoleGlobal.faction_id_ & 0x1f)) &
+         Vehs[veh_id].visibility) != 0 ||
+        (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) != 0) {
+        ConsoleGlobal.focus(x, y, owner);
+    }
+
+    int target = whose_territory(owner, x, y, 0, 0);
+
+    if (PlayersData[owner].current_num_bases != 0 && target >= 0 &&
+        static_cast<unsigned int>(target) != owner &&
+        (PlayersData[owner].diplo_treaties[target] & 0x11) == 0 &&
+        (is_human(owner) || is_human(target))) {
+        if ((PlayersData[owner].diplo_treaties[target] & 2) == 0) {
+            treaty_on(owner, target, 0x10);
+        } else {
+            double_cross(owner, target, -1);
+        }
+    }
+
+    int base_id = base_init(owner, x, y);
+    if (base_id >= 0) {
+        if (is_human(owner)) {
+            const short other_base = Vehs[veh_id].home_base_id;
+            if (other_base >= 0) {
+                Bases[base_id].governor = Bases[other_base].governor;
+            }
+            if ((Vehs[veh_id].state & 0x200) != 0) {
+                Bases[base_id].governor |= 0x80000000;
+            }
+        }
+        PlayersData[owner].last_turn_new_base = GameDataStateStorage.fields_.turn_current_num_;
+
+        if (base_name != 0 && strlen(base_name) != 0) {
+            strcpy(Bases[base_id].name_string, base_name);
+            make_base_unique(base_id);
+        }
+
+        veh_kill(veh_id);
+
+        if (owner == ConsoleGlobal.faction_id_ ||
+            Bases[base_id].faction_id_current == ConsoleGlobal.faction_id_ ||
+            (Bases[base_id].visibility &
+             (1 << (ConsoleGlobal.faction_id_ & 0x1f))) != 0 ||
+            (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) != 0) {
+            draw_map(1);
+        }
+
+        for (int i = 1; i < 8; i++) {
+            del_site(i, 8, x, y, 2);
+        }
+
+        mon_colony_founded(owner, Bases[base_id].name_string);
+        return base_id;
+    }
+
+    veh_skip(veh_id);
+    return base_id;
+}

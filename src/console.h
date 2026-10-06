@@ -783,4 +783,3 @@ extern int ConsoleFactionsWaitingMask;
 int __cdecl supply_options(int veh_id, int base_id);
 
 // Existing source-owned APIs used by enemy movement.
-int __cdecl action_build(int vehicle_id, char *base_name);

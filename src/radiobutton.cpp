@@ -42,6 +42,59 @@ Purpose: Construct the virtual bases through VC6's hidden most-derived flag,
 Return Value: n/a
 Status: Complete
 */
+
+/*
+ * RECOVERY_HISTORY: v1 address=0x00407030 source_sha256=5d8f8a1d88dea99894d068cf22393a1686f86c8deab34d7b504349c1d2069549 envelope_sha256=127bea19bd51d4ffaa256021e528250fd06478161070b5cf17c94a0e518b0262
+ * [ARCHIVE] /*
+ * [ARCHIVE] Purpose: Adjust the receiver from RadioButton's thunk1 subobject to the one
+ * [ARCHIVE]          RadioButton::on_key_down expects, then forward unchanged.
+ * [ARCHIVE] // RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
+ * [ARCHIVE] // original marker: 0x00407030 ?on_key_down@thunk1_RadioButton@@QAEHH@Z 0x00407030-0x00407038
+ * [ARCHIVE] // symbol    ?adjust_radio_button1_on_key_down@@YIHPAX0H@Z
+ * [ARCHIVE] // size      8 bytes
+ * [ARCHIVE] // prototype int (__thiscall ?on_key_down@thunk1_RadioButton@@QAEHH@Z)(RadioButton* this, int)
+ * [ARCHIVE] // callers   0   call targets   0
+ * [ARCHIVE] // kind      game
+ * [ARCHIVE] // flags     hidden;sp_ready;purged_ok
+ * [ARCHIVE] // calls     (none)
+ * [ARCHIVE] Return Value: the forwarded call's
+ * [ARCHIVE] Status: Complete
+ * [ARCHIVE] * /
+ */
+// ORIGINAL: 0x00407030 ?on_key_down@thunk1_RadioButton@@QAEHH@Z 0x00407030-0x00407038 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: constructor-installed class table cell binds 0x00407030 to the complete original thunk span.", "The retained terminal artifact set at build/recovery/builds/build-8b7ms_6y recorded the observed compiler symbol ?on_key_down@RadioButton@@$4PPPPPPPM@A@AEHH@Z in the class owner's physical COFF vftable relocation.", "That artifact set's MAP/PE cell selects the thunk and its PDB XFIXUP plus linked tail resolve to the mapped typed method.", "The original identity, spans, catalog purpose, source kind, claim state and formal lessons are retained; this binding is not a new byte claim."], "reason": "Bind the preserved original receiver-adjustor identity to the compiler-emitted class-view entry observed in the actual owner object and linked table."}
+// symbol    ?on_key_down@RadioButton@@$4PPPPPPPM@A@AEHH@Z
+// kind      game
+
+/*
+ * RECOVERY_HISTORY: v1 address=0x004070A0 source_sha256=5d8f8a1d88dea99894d068cf22393a1686f86c8deab34d7b504349c1d2069549 envelope_sha256=a916e3f64f8676db3c9c3fb87acda341ac5bc95a463b2c4f7c26778110b7d2b3
+ * [ARCHIVE] /*
+ * [ARCHIVE] Purpose: Adjust the receiver from RadioButton's thunk3 subobject to the one
+ * [ARCHIVE]          RadioButton::on_redraw expects, then forward unchanged.
+ * [ARCHIVE] // RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
+ * [ARCHIVE] // original marker: 0x004070A0 ?on_redraw@thunk3_RadioButton@@QAEXXZ 0x004070A0-0x004070AE BYTE_EXACT
+ * [ARCHIVE] // symbol    ?adjust_radio_button3_on_redraw@@YIXPAX0@Z
+ * [ARCHIVE] // size      14 bytes
+ * [ARCHIVE] // prototype void (__thiscall ?on_redraw@thunk3_RadioButton@@QAEXXZ)(RadioButton* this)
+ * [ARCHIVE] // callers   0   call targets   0
+ * [ARCHIVE] // kind      game
+ * [ARCHIVE] // flags     hidden;sp_ready;purged_ok
+ * [ARCHIVE] // calls     (none)
+ * [ARCHIVE] // TRIED 2026-09-26 (Win slot-12 on_redraw rename batch): the receiver fold is now
+ * [ARCHIVE] //            +0x18 (GraphicWin), so the walk keeps only the Dialog offset 0xA30; the
+ * [ARCHIVE] //            net adjustment is the image's `sub ecx, 0xa18` (the family-wide
+ * [ARCHIVE] //            Dialog-to-GraphicWin gap 0xA30 - 0x18). The pre-rename spelling also
+ * [ARCHIVE] //            pre-subtracted 2584 and emitted `sub ecx, 0x1430` after the rename.
+ * [ARCHIVE] //            The compiler now emits its own two-step thunk for this slot; this
+ * [ARCHIVE] //            handwritten walk stays the claim host pending coordinated retirement.
+ * [ARCHIVE] Return Value: n/a
+ * [ARCHIVE] Status: Complete
+ * [ARCHIVE] * /
+ */
+// ORIGINAL: 0x004070A0 ?on_redraw@thunk3_RadioButton@@QAEXXZ 0x004070A0-0x004070AE FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: constructor-installed class table cell binds 0x004070A0 to the complete original thunk span.", "The retained terminal artifact set at build/recovery/builds/build-8b7ms_6y recorded the observed compiler symbol ?on_redraw@RadioButton@@$4PPPPPPPM@KBI@AEXXZ in the class owner's physical COFF vftable relocation.", "That artifact set's MAP/PE cell selects the thunk and its PDB XFIXUP plus linked tail resolve to the mapped typed method.", "The original identity, spans, catalog purpose, source kind, claim state and formal lessons are retained; this binding is not a new byte claim."], "reason": "Bind the preserved original receiver-adjustor identity to the compiler-emitted class-view entry observed in the actual owner object and linked table."}
+// symbol    ?on_redraw@RadioButton@@$4PPPPPPPM@KBI@AEXXZ
+// kind      game
 RadioButton::RadioButton() {
     // VC6 owns virtual-base construction and derived table setup under its
     // hidden most-derived flag. The body initializes this class's own state.

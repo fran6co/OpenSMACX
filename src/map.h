@@ -19,6 +19,7 @@
 
 // Synchronization progress callback owned by map.cpp (original 0x00532C30).
 void __cdecl synch_display(int stage, int chunk, int chunk_count, int subject);
+int __cdecl action_build(int veh_id, char *base_name);
 // Shared prototype ordering produced by proto_sort and proto_sort_2.
 extern int ProtoSortCount;
 extern int ProtoSortIds[128];

@@ -82,7 +82,6 @@
  */
 
 #include "stdafx.h"
-#include "original_seam.h"
 #include "adjustor_thunks.h"
 #include "checkbox.h"
 #include "console.h"
@@ -147,70 +146,15 @@ is not built here.
 // Each seam defaults to the original method the thunk tail
 // jumps to; the hybrid redirects it to the recovered body at
 // run time, and the leaf suite rebinds it to a recorder.
-func_adjustor_p_u ConsoleScalarDeleteTarget =
-    original_method<func_adjustor_p_u>(0x0051DDF0);
 func_adjustor_p_u DialogsScalarDeleteTarget =
     original_method<func_adjustor_p_u>(0x00407100);
-func_adjustor_p_u MapWinScalarDeleteTarget =
-    original_method<func_adjustor_p_u>(0x00421830);
-func_adjustor_p_u PlanWinScalarDeleteTarget =
-    original_method<func_adjustor_p_u>(0x0048BF20);
 
 
 
 
 
-/*
-Purpose: Adjust the receiver from RadioButton's thunk1 subobject to the one
-         RadioButton::on_key_down expects, then forward unchanged.
-// RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
-// ORIGINAL: 0x00407030 ?on_key_down@thunk1_RadioButton@@QAEHH@Z 0x00407030-0x00407038
-// symbol    ?adjust_radio_button1_on_key_down@@YIHPAX0H@Z
-// size      8 bytes
-// prototype int (__thiscall ?on_key_down@thunk1_RadioButton@@QAEHH@Z)(RadioButton* this, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the forwarded call's
-Status: Complete
-*/
-int __fastcall adjust_radio_button1_on_key_down(void *self, void *, int arg0) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    return reinterpret_cast<RadioButton *>(object - vtordisp)->RadioButton::on_key_down(arg0);
-}
 
 
-/*
-Purpose: Adjust the receiver from RadioButton's thunk3 subobject to the one
-         RadioButton::on_redraw expects, then forward unchanged.
-// RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
-// ORIGINAL: 0x004070A0 ?on_redraw@thunk3_RadioButton@@QAEXXZ 0x004070A0-0x004070AE BYTE_EXACT
-// symbol    ?adjust_radio_button3_on_redraw@@YIXPAX0@Z
-// size      14 bytes
-// prototype void (__thiscall ?on_redraw@thunk3_RadioButton@@QAEXXZ)(RadioButton* this)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-// TRIED 2026-09-26 (Win slot-12 on_redraw rename batch): the receiver fold is now
-//            +0x18 (GraphicWin), so the walk keeps only the Dialog offset 0xA30; the
-//            net adjustment is the image's `sub ecx, 0xa18` (the family-wide
-//            Dialog-to-GraphicWin gap 0xA30 - 0x18). The pre-rename spelling also
-//            pre-subtracted 2584 and emitted `sub ecx, 0x1430` after the rename.
-//            The compiler now emits its own two-step thunk for this slot; this
-//            handwritten walk stays the claim host pending coordinated retirement.
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_radio_button3_on_redraw(void *self, void *) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<RadioButton *>(object - vtordisp - 0xA30)->RadioButton::on_redraw();
-}
 
 /*
 Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
@@ -235,147 +179,18 @@ void * __fastcall adjust_dialogs1_scalar_delete(void *self, void *,
     return (ORIGINAL(object - vtordisp)->*DialogsScalarDeleteTarget)(arg0);
 }
 
-/*
-Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
-         Dialogs::on_scroll_create expects, then forward unchanged.
-// RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
-// ORIGINAL: 0x00407150 ?on_scroll_create@thunk1_Dialogs@@QAEXXZ 0x00407150-0x00407158 BYTE_EXACT
-// symbol    ?adjust_dialogs1_on_scroll_create@@YIXPAX0@Z
-// size      8 bytes
-// prototype void (__thiscall ?on_scroll_create@thunk1_Dialogs@@QAEXXZ)(Dialogs* this)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_dialogs1_on_scroll_create(void *self, void *) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<Dialogs *>(object - vtordisp)->Dialogs::on_scroll_create();
-}
-
-/*
-Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
-         Dialogs::on_scroll_delete expects, then forward unchanged.
-// RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
-// ORIGINAL: 0x00407160 ?on_scroll_delete@thunk1_Dialogs@@QAEHPAUScroll@@@Z 0x00407160-0x00407168
-// symbol    ?adjust_dialogs1_on_scroll_delete@@YIHPAX00@Z
-// size      8 bytes
-// prototype int (__thiscall ?on_scroll_delete@thunk1_Dialogs@@QAEHPAUScroll@@@Z)(Dialogs* this, Scroll*)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the forwarded call's
-Status: Complete
-*/
-int __fastcall adjust_dialogs1_on_scroll_delete(void *self, void *,
-                                                void *arg0) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    return reinterpret_cast<Dialogs *>(object - vtordisp)->Dialogs::on_scroll_delete(static_cast<Scroll *>(arg0));
-}
-
-
-/*
-Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
-         Dialogs::on_mousewheel expects, then forward unchanged.
-// RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
-// ORIGINAL: 0x00407180 ?on_mousewheel@thunk1_Dialogs@@QAEXH@Z 0x00407180-0x00407188
-// symbol    ?adjust_dialogs1_on_mousewheel@@YIXPAX0H@Z
-// size      8 bytes
-// prototype void (__thiscall ?on_mousewheel@thunk1_Dialogs@@QAEXH@Z)(Dialogs* this, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_dialogs1_on_mousewheel(void *self, void *, int arg0) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<Dialogs *>(object - vtordisp)->Dialogs::on_mousewheel(arg0);
-}
 
 
 
-/*
-Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
-         Dialogs::on_left_click expects, then forward unchanged.
-// RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
-// ORIGINAL: 0x004071B0 ?on_left_click@thunk1_Dialogs@@QAEXHH@Z 0x004071B0-0x004071B8
-// symbol    ?adjust_dialogs1_on_left_click@@YIXPAX0HH@Z
-// size      8 bytes
-// prototype void (__thiscall ?on_left_click@thunk1_Dialogs@@QAEXHH@Z)(Dialogs* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_dialogs1_on_left_click(void *self, void *, int arg0,
-                                              int arg1) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<Dialogs *>(object - vtordisp)->Dialogs::on_left_click(arg0, arg1);
-}
 
 
 
-/*
-Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
-         Dialogs::on_right_click expects, then forward unchanged.
-// RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
-// ORIGINAL: 0x004071E0 ?on_right_click@thunk1_Dialogs@@QAEXHH@Z 0x004071E0-0x004071E8
-// symbol    ?adjust_dialogs1_on_right_click@@YIXPAX0HH@Z
-// size      8 bytes
-// prototype void (__thiscall ?on_right_click@thunk1_Dialogs@@QAEXHH@Z)(Dialogs* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_dialogs1_on_right_click(void *self, void *, int arg0,
-                                               int arg1) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<Dialogs *>(object - vtordisp)->Dialogs::on_right_click(arg0, arg1);
-}
 
 
 
-/*
-Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
-         Dialogs::on_key_down expects, then forward unchanged.
-// RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
-// ORIGINAL: 0x00407210 ?on_key_down@thunk1_Dialogs@@QAEHH@Z 0x00407210-0x00407218
-// symbol    ?adjust_dialogs1_on_key_down@@YIHPAX0H@Z
-// size      8 bytes
-// prototype int (__thiscall ?on_key_down@thunk1_Dialogs@@QAEHH@Z)(Dialogs* this, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the forwarded call's
-Status: Complete
-*/
-int __fastcall adjust_dialogs1_on_key_down(void *self, void *, int arg0) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    return reinterpret_cast<Dialogs *>(object - vtordisp)->Dialogs::on_key_down(arg0);
-}
+
+
+
 
 
 
@@ -429,29 +244,6 @@ void * __fastcall adjust_dialogs3_scalar_delete(void *self, void *,
     return (ORIGINAL(object - vtordisp - 2584)->*DialogsScalarDeleteTarget)(arg0);
 }
 
-/*
-Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
-         Dialogs::attach expects, then forward unchanged.
-// RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
-// ORIGINAL: 0x004072B0 ?attach@thunk1_Dialogs@@QAEHPAUGraphicWin@@HHH@Z 0x004072B0-0x004072B8
-// symbol    ?adjust_dialogs1_attach@@YIHPAX00HHH@Z
-// size      8 bytes
-// prototype int (__thiscall ?attach@thunk1_Dialogs@@QAEHPAUGraphicWin@@HHH@Z)(Dialogs* this, GraphicWin*, int, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the forwarded call's
-Status: Complete
-*/
-int __fastcall adjust_dialogs1_attach(void *self, void *, void *arg0,
-                                      int arg1, int arg2, int arg3) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    return reinterpret_cast<Dialogs *>(object - vtordisp - 0xBA0)
-        ->Dialogs::attach(static_cast<GraphicWin *>(arg0), arg1, arg2, arg3);
-}
 
 
 
@@ -490,51 +282,7 @@ int __fastcall adjust_dialogs1_attach(void *self, void *, void *arg0,
 
 
 
-/*
-Purpose: Adjust the receiver from PlanWin's thunk2 subobject to the one
-         PlanWin::scalar_delete expects, then forward unchanged.
-// RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
-// ORIGINAL: 0x0048C040 ??_Gthunk2_PlanWin@@UAEPAXI@Z 0x0048C040-0x0048C051
-// symbol    ?adjust_plan_win2_scalar_delete@@YIPAXPAX0I@Z
-// size      17 bytes
-// prototype void* (__thiscall ??_Gthunk2_PlanWin@@UAEPAXI@Z)(PlanWin* this, unsigned int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the forwarded call's
-Status: Complete
-*/
-void * __fastcall adjust_plan_win2_scalar_delete(void *self, void *,
-                                                 unsigned int arg0) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 1096);
-    return (ORIGINAL(object - vtordisp - 1092)->*PlanWinScalarDeleteTarget)(arg0);
-}
 
-/*
-Purpose: Adjust the receiver from Console's thunk1 subobject to the one
-         Console::scalar_delete expects, then forward unchanged.
-// RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
-// ORIGINAL: 0x0051DDE0 ??_Gthunk1_Console@@UAEPAXI@Z 0x0051DDE0-0x0051DDE8
-// symbol    ?adjust_console1_scalar_delete@@YIPAXPAX0I@Z
-// size      8 bytes
-// prototype void* (__thiscall ??_Gthunk1_Console@@UAEPAXI@Z)(Console* this, unsigned int)
-// callers   0   call targets   0
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     (none)
-Return Value: the forwarded call's
-Status: Complete
-*/
-void * __fastcall adjust_console1_scalar_delete(void *self, void *,
-                                                unsigned int arg0) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    return (ORIGINAL(object - vtordisp)->*ConsoleScalarDeleteTarget)(arg0);
-}
 
 
 
@@ -625,28 +373,6 @@ void __fastcall adjust_console1_on_post_redraw_nc_buffer(void *self, void *,
 }
 
 
-/*
-Purpose: Adjust the receiver from Console's thunk2 subobject to the one
-         Console::scalar_delete expects, then forward unchanged.
-// RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
-// ORIGINAL: 0x0051DF50 ??_Gthunk2_Console@@UAEPAXI@Z 0x0051DF50-0x0051DF61
-// symbol    ?adjust_console2_scalar_delete@@YIPAXPAX0I@Z
-// size      17 bytes
-// prototype void* (__thiscall ??_Gthunk2_Console@@UAEPAXI@Z)(Console* this, unsigned int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the forwarded call's
-Status: Complete
-*/
-void * __fastcall adjust_console2_scalar_delete(void *self, void *,
-                                                unsigned int arg0) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 1096);
-    return (ORIGINAL(object - vtordisp - 1092)->*ConsoleScalarDeleteTarget)(arg0);
-}
 
 /*
 Purpose: Adjust the receiver from ListBox's thunk1 subobject to the one

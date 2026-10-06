@@ -22335,10 +22335,6 @@ label_599b1a:
 #include "battlewin.h"
 #include "statuswin.h"
 #include "council.h"
-extern void __cdecl draw_tile_fixup(int x, int y, int wider_radius,
-                                    int redraw_flags);
-extern void __cdecl draw_tile_fixup(int x, int y, int second_x, int second_y,
-                                    int wider_radius, int draw_type);
 
 // Retained fragment: battle-fight-nerve-cancel-v1.cpp
 // Private typed translation of the cancellation epilogue shared by the two
@@ -23769,7 +23765,6 @@ static inline int battle_fight_transition_uses_fixup_v2(int tile_owner,
 // faction.h, game.h, popup.h, general.h, log.h.
 // mapwin.h owns draw_tile(); the original 0x46AF90 declaration currently
 // lives in console.cpp and should be made available through its owner header.
-void __cdecl draw_tile_fixup(int x, int y, int flags, int draw_type);
 
 // Native 0x509827..0x509923 is reached with these frame facts already live:
 //   - `native_second_argument` ([ebp+0x0C]) was overwritten at 0x509753 with
@@ -24943,10 +24938,8 @@ static bool battle_fight_apply_base_population_loss_v2(
 }
 // Retained fragment: battle-killoutcome-subagent/battle-fight-killoutcome-typed-v7.cpp
 // Typed redraw branch battle_fight [0x50B2FA,0x50B354).
-// Requires mapwin.h and temp.h. draw_tile_fixup has a measured four-int
-// owner but no public header declaration yet, so reproduce its existing
-// cross-TU declaration here rather than introducing an address call.
-void __cdecl draw_tile_fixup(int x, int y, int wider_radius, int redraw_flags);
+// Requires mapwin.h and temp.h; the map-window owner header declares the
+// typed overload used by this native redraw branch.
 enum BattleFightRedrawRouteV7 {
     BATTLE_FIGHT_REDRAW_ROUTE_B639_V7 = 0,
     BATTLE_FIGHT_REDRAW_ROUTE_B354_V7 = 1
@@ -26421,11 +26414,8 @@ static void battle_fight_round_redraw_tile_v1(int x, int y, int mode) {
     draw_tile(x, y, mode);
 }
 
-// Native `draw_tile_fixup` is a typed source function, not an executable
-// trampoline. The coordinator still has to admit its public declaration at
-// the appropriate source owner before installing this fragment.
-extern void __cdecl draw_tile_fixup(int x, int y, int wider_radius,
-                                   int redraw_flags);
+// Native `draw_tile_fixup` is a typed source function declared by mapwin.h,
+// not an executable trampoline.
 static void battle_fight_round_redraw_fixup_v1(
     int x, int y, int flags, int mode) {
     draw_tile_fixup(x, y, flags, mode);

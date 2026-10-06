@@ -149,7 +149,7 @@ def test_consumers_match_actual_targets_and_reject_wrong_tail(compiled, original
 
     path = ROOT / UNIT
     source = path.read_bytes()
-    assignment = b"val_37_ = static_cast<int>(AutoSoundDefaults[36]);"
+    assignment = b"val_37_ = reinterpret_cast<Win *>(AutoSoundDefaults[36]);"
     assert source.count(assignment) == 3
     for flags, obj in zip(settings.flag_sets, objects):
         assert offsets(obj) == list(range(0, 148, 4))
@@ -159,7 +159,7 @@ def test_consumers_match_actual_targets_and_reject_wrong_tail(compiled, original
         # The constructor also stores its compiler-generated vftable. Its
         # defaults loads are covered here without inventing a table binding.
         damaged = Coff(compiler.overlay(path, {UNIT: source.replace(
-            assignment, b"val_37_ = static_cast<int>(AutoSoundDefaults[35]);")},
+            assignment, b"val_37_ = reinterpret_cast<Win *>(AutoSoundDefaults[35]);")},
             (), flags + settings.layout_flags))
         assert offsets(damaged) != list(range(0, 148, 4))
         if address != 0x62BA80:

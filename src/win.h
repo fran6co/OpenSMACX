@@ -73,6 +73,7 @@ typedef void (__cdecl *WinNotificationCallback)(int selected_id);
 // resize_event's installable width/height callback, stored in Win::field_400_.
 typedef void (__cdecl *WinResizeCallback)(int width, int height);
 typedef int (__cdecl *WinKeyHookFn)(int key);
+typedef void (__cdecl *WinDisplayActionHookFn)();
 
 class Win : public AutoSound {
  public:
@@ -115,6 +116,7 @@ class Win : public AutoSound {
   // argument-offset shift that made OnPaletteChanged, init_class and
   // set_display_mode statics above.
   static bool __cdecl OnPaint(HWND hwnd);
+  static void __cdecl display_action(int action);
 
  public:
   // homed from 005ee330.cpp
@@ -527,7 +529,8 @@ class Win : public AutoSound {
   // virtual key and keeps its return. Was `uint32_t field_430_`.
   WinKeyHookFn key_hook_;
   uint32_t field_434_;
-  uint32_t field_438_;
+  // RECOVERY_MEMBER: v1 Win field_438_ 0x438 0x005F2830
+  WinDisplayActionHookFn field_438_;
   // Borrowed nonclient scrollbars; resize_event reloads them after callbacks.
   // RECOVERY_MEMBER: v3 Win scroll_vert_ Scroll* 0x43C 0x005EE330
   Scroll *scroll_vert_;

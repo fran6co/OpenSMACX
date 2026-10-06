@@ -11,8 +11,9 @@ import pytest
 from test_virtual_adjustor_owners_oct6 import SPECS as FOLLOW_ON_VIRTUAL_SPECS
 from test_mapwin_adjustor_owner_history_oct6 import MAPWIN_MIGRATED_ADDRESSES
 from test_virtual_adjustor_owners_oct6 import FOLLOW_ON_MIGRATED_ADDRESSES
-from match_recovery.source import Mode, read_file, read_text
+from match_recovery.source import Mode, Recipe, read_file, read_text
 from match_recovery import binding_source
+from test_remaining_adjustor_actual_source_oct7 import assert_archived_history
 
 ROOT = Path(__file__).resolve().parents[2]
 BASE = "8992788a853c19bca576c1a191021a8b00f300f9"
@@ -100,6 +101,36 @@ SPECS = (
     (0x0048BF10, 'src/planwin.cpp', '??_EPlanWin@@$4PPPPPPPM@A@AEPAXI@Z'),
 )
 
+# Transfers from mainline commits newer than BASE. Keep each identity and
+# positive FILE owner explicit so the exact residual-set assertion cannot
+# silently excuse vanished history.
+PRIOR_MAINLINE_MIGRATIONS = {
+    0x00406FF0: "src/radiobutton.cpp", 0x00407000: "src/radiobutton.cpp",
+    0x00407020: "src/radiobutton.cpp", 0x00407030: "src/radiobutton.cpp",
+    0x00407040: "src/radiobutton.cpp", 0x004070A0: "src/radiobutton.cpp",
+    0x00407150: "src/dialogs.cpp", 0x00407160: "src/dialogs.cpp",
+    0x00407170: "src/dialogs.cpp", 0x00407180: "src/dialogs.cpp",
+    0x00407190: "src/dialogs.cpp", 0x004071A0: "src/dialogs.cpp",
+    0x004071B0: "src/dialogs.cpp", 0x004071C0: "src/dialogs.cpp",
+    0x004071D0: "src/dialogs.cpp", 0x004071E0: "src/dialogs.cpp",
+    0x004071F0: "src/dialogs.cpp", 0x00407200: "src/dialogs.cpp",
+    0x00407210: "src/dialogs.cpp", 0x00407220: "src/dialogs.cpp",
+    0x00407230: "src/dialogs.cpp", 0x00407240: "src/dialogs.cpp",
+    0x00407250: "src/dialogs.cpp", 0x00407260: "src/dialogs.cpp",
+    0x00407270: "src/dialogs.cpp", 0x004072B0: "src/dialogs.cpp",
+    0x004072C0: "src/dialogs.cpp", 0x00421820: "src/mapwin.cpp",
+    0x00421920: "src/mapwin.cpp", 0x00421950: "src/mapwin.cpp",
+    0x0048C010: "src/planwin.cpp", 0x0048C040: "src/planwin.cpp",
+    0x0051DDE0: "src/console.cpp", 0x0051DF00: "src/console.cpp",
+    0x0051DF50: "src/console.cpp", 0x0060CFD0: "src/listbox.cpp",
+    0x0060CFE0: "src/listbox.cpp", 0x0060CFF0: "src/listbox.cpp",
+    0x006118A0: "src/spritebox.cpp", 0x006118D0: "src/spritebox.cpp",
+}
+HISTORICAL_FIELDS = (
+    "name", "image_spans", "byte_exact", "semantic", "levers", "ruled_out",
+    "unrecoverable", "deferred", "kind", "exclusion", "origin",
+)
+
 @lru_cache(None)
 def old_records():
     rows = []
@@ -112,6 +143,14 @@ def old_records():
 def current_records(unit):
     path = ROOT / unit
     return {r.address: r for r in read_file(path)} if path.is_file() else {}
+
+@lru_cache(None)
+def all_current_source_records():
+    rows = {}
+    for path in (ROOT / "src").rglob("*.cpp"):
+        for row in read_file(path):
+            rows.setdefault(row.address, []).append((path.relative_to(ROOT).as_posix(), row))
+    return rows
 
 @pytest.mark.parametrize("address,owner,symbol", SPECS)
 def test_original_identity_history_and_generated_owner(address, owner, symbol):
@@ -126,14 +165,30 @@ def test_original_identity_history_and_generated_owner(address, owner, symbol):
 
 def test_unmigrated_original_rows_are_retained():
     moved = ({a for a, _owner, _symbol in SPECS + FOLLOW_ON_VIRTUAL_SPECS}
-             | MAPWIN_MIGRATED_ADDRESSES | FOLLOW_ON_MIGRATED_ADDRESSES)
+             | MAPWIN_MIGRATED_ADDRESSES | FOLLOW_ON_MIGRATED_ADDRESSES
+             | set(PRIOR_MAINLINE_MIGRATIONS))
     current = {**current_records("src/deleting_thunks.cpp"),
                **current_records("src/adjustor_thunks.cpp")}
     assert set(current) == set(old_records()) - moved
     for address, after in current.items():
         before = old_records()[address]
-        for field in ("name", "image_spans", "byte_exact", "semantic"):
+        for field in HISTORICAL_FIELDS:
             assert getattr(after, field) == getattr(before, field), field
+
+@pytest.mark.parametrize("address,owner", sorted(PRIOR_MAINLINE_MIGRATIONS.items()))
+def test_prior_mainline_migrations_have_positive_file_owners_and_full_history(address, owner):
+    hits = all_current_source_records().get(address, [])
+    assert len(hits) == 1, f"{address:08X} must have exactly one current source owner"
+    actual_owner, after = hits[0]
+    assert actual_owner == owner
+    assert after.mode is Mode.FILE
+    before = old_records()[address]
+    # The reader derives the recipe from source placement: FILE resolves the
+    # compiler-generated owner definition, not the retired BODY census adapter.
+    assert before.recipe is Recipe.CENSUS
+    assert after.recipe is Recipe.VERBATIM
+    for field in HISTORICAL_FIELDS:
+        assert getattr(after, field) == getattr(before, field), field
 
 @pytest.mark.parametrize("address,owner,symbol", SPECS)
 def test_owner_transfers_preserve_catalogue_kind(address, owner, symbol):
@@ -242,7 +297,7 @@ def test_popmenu_generated_views_keep_pinned_and_current_table_binding_evidence(
         assert "mode 2" in evidence
 
 
-def test_deleting_adapter_translation_unit_is_retired_and_planwin_target_remains():
+def test_deleting_adapter_translation_unit_is_retired_and_only_dialogs_target_remains():
     assert not (ROOT / "src/deleting_thunks.cpp").exists()
     assert not (ROOT / "src/deleting_thunks.h").exists()
     for path in (ROOT / "src").rglob("*"):
@@ -253,14 +308,26 @@ def test_deleting_adapter_translation_unit_is_retired_and_planwin_target_remains
         assert "PopupDtorTarget" not in text, path
         assert "func_deleting_dtor" not in text, path
 
-    # The 0x48BF20 target remains required by PlanWin's distinct 0x48C040
-    # thunk2 adapter; deleting_thunks retirement must not erase this seam.
+    # Dialogs' original scalar adapters still use their one target. Console,
+    # MapWin and PlanWin use generated class-view entries instead.
     adjustor_header = (ROOT / "src/adjustor_thunks.h").read_text()
     adjustors = (ROOT / "src/adjustor_thunks.cpp").read_text()
-    assert "extern func_adjustor_p_u PlanWinScalarDeleteTarget;" in adjustor_header
-    assert "original_method<func_adjustor_p_u>(0x0048BF20)" in adjustors
-    assert "->*PlanWinScalarDeleteTarget" in adjustors
-    assert "0x0048C040" in adjustors
+    for unused in ("ConsoleScalarDeleteTarget", "MapWinScalarDeleteTarget",
+                   "PlanWinScalarDeleteTarget"):
+        assert unused not in adjustor_header
+        assert unused not in adjustors
+    assert "extern func_adjustor_p_u DialogsScalarDeleteTarget;" in adjustor_header
+    assert "original_method<func_adjustor_p_u>(0x00407100)" in adjustors
+    assert adjustors.count("->*DialogsScalarDeleteTarget") == 3
+
+    planwin_row = current_records("src/planwin.cpp")[0x0048C040]
+    assert planwin_row.mode is Mode.FILE
+    assert planwin_row.symbol == "??_EPlanWin@@$4PPPPPLLI@EEE@AEPAXI@Z"
+    before = old_records()[0x0048C040]
+    for field in HISTORICAL_FIELDS:
+        assert getattr(planwin_row, field) == getattr(before, field), field
+    assert 0x0048C040 not in current_records("src/adjustor_thunks.cpp")
+    assert_archived_history(ROOT / "src/planwin.cpp", 0x0048C040)
 
 
 def test_planwin_vtordisp_deleting_identity_and_live_target_dependency():

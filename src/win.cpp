@@ -13021,3 +13021,84 @@ Status: Complete
 void Win::set_field_128(int value) {
     field_128_ = static_cast<uint32_t>(value);
 }
+
+/*
+Purpose: The main-window display dispatch behind the interface's
+         maximise/restore/minimise requests: against WinCallbackWindow,
+         case 0 releases the pointer-owner pair and the two capture slots
+         (notifying the window through vtable slot 4 when it held the
+         capture) and maximises HandleMain; case 1 does the same releases
+         without the IsZoomed test and minimises; case 2 runs the window's
+         vtable slot 52, its installed hook at +0x438, and - when the child
+         window at +0x8c answers slot 23 with zero - the child's slot 7.
+
+// HISTORICAL SCAFFOLD ROLE: SCAFFOLD Transitional leaf collection, not completed genuine owner recovery; preserve body evidence during owner migration.
+// RECOVERY_ROLE: SCAFFOLD The typed Win side effects are retained, but the source void API does not express the original path-dependent EAX result: action 0/1 retain ShowWindow results, action 2 exposes virtual-call residue, and unknown actions leave action-2. Caller/result contract remains unresolved; this body is not semantic completion.
+// ORIGINAL: 0x005F2830 sub_5f2830 0x005F2830-0x005F293B FILE
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/win.cpp WinCallbackWindow and WinPointerOwner1..4 owners", "source:src/win.h Win::on_lose_mouse_capture and vslot_52 declarations", "source:src/win.cpp field_438_ zero writers in Win construction and close", "source:src/sound.h Sound::is_playing slot 23 and Sound::play slot 7", "source:src/autosound.cpp AutoSoundDefaults[34] copied into AutoSound offset 0x8C", "pinned original 0x005F2830 leaves branch-dependent EAX values; mapped caller inspection has no resolved edges"], "reason": "Own the main-window display side effects on Win. Its original EAX is a path-dependent residual (ShowWindow or a virtual callee, or action-2 on the unknown-action path), and no mapped caller establishes a result contract; do not claim the source void API reproduces an int result."}
+// symbol    ?display_action@Win@@SAXH@Z
+// size      267 bytes
+// Deleted seed provenance: git:1ed59304110fc2098fb1dd11457fa5b0074169bd:src/unrecovered/005f2830.cpp
+Status: Coverage transcription of the retained seed (src/unrecovered/005f2830.cpp,
+        plain FILE). The seed's TRIED note stands: landed for control flow -
+        the switch over {0,1,2} with the duplicated case-0/case-1 capture
+        release - and not chased to bytes (mismatch from instruction 0 in
+        the seed's own attempt). The globals are the tree's own names
+        (WinCallbackWindow, the WinPointerOwner1..4 quartet, HandleMain),
+        the unnamed vtable slots go through the member-fn-pointer shim
+        idiom stringstruct.cpp carries, and the two user32 entries are
+        called as the real functions instead of through the image's IAT
+        thunks at 0x00669270/0x00669320. One documented shape change: the
+        capture release the image duplicates in every branch is factored
+        into sub_5f2830_release_capture, so this body is shorter than the
+        267-byte original instead of byte-shaped.
+*/
+
+void __cdecl Win::display_action(int action) {
+    Win *self = WinCallbackWindow;
+    if (action == 0) {
+        int zoomed = IsZoomed(HandleMain);
+        WinPointerOwner1 = nullptr;
+        WinPointerOwner2 = nullptr;
+        if (zoomed != 0) {
+            if (WinPointerOwner3 == self) {
+                WinPointerOwner3 = nullptr;
+                self->on_lose_mouse_capture();
+            }
+        } else {
+            if (WinPointerOwner3 == self) {
+                WinPointerOwner3 = nullptr;
+                self->on_lose_mouse_capture();
+            }
+        }
+        if (WinPointerOwner4 == self) {
+            WinPointerOwner4 = nullptr;
+        }
+        ShowWindow(HandleMain, SW_MAXIMIZE);
+    } else if (action == 1) {
+        WinPointerOwner1 = nullptr;
+        WinPointerOwner2 = nullptr;
+        if (WinPointerOwner3 == self) {
+            WinPointerOwner3 = nullptr;
+            self->on_lose_mouse_capture();
+        }
+        if (WinPointerOwner4 == self) {
+            WinPointerOwner4 = nullptr;
+        }
+        ShowWindow(HandleMain, SW_MINIMIZE);
+        return;
+    } else if (action == 2) {
+        self->vslot_52();
+        WinDisplayActionHookFn hook = self->field_438_;
+        if (hook != 0) {
+            hook();
+        }
+        Sound *child = self->val_35_;
+        if (child != 0) {
+            if (child->is_playing() == 0) {
+                child->play();
+            }
+        }
+        return;
+    }
+}

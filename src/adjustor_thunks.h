@@ -44,33 +44,13 @@
 
 typedef void * (OriginalObject::*func_adjustor_p_u)(unsigned int);
 
-extern func_adjustor_p_u ConsoleScalarDeleteTarget;   // 0x0051DDF0
 extern func_adjustor_p_u DialogsScalarDeleteTarget;   // 0x00407100
-extern func_adjustor_p_u MapWinScalarDeleteTarget;   // 0x00421830
-extern func_adjustor_p_u PlanWinScalarDeleteTarget;   // 0x0048BF20
 
-int __fastcall adjust_radio_button1_on_key_down(void *self, void *, int arg0);
-void __fastcall adjust_radio_button3_on_redraw(void *self, void *);
 void * __fastcall adjust_dialogs1_scalar_delete(void *self, void *,
                                                 unsigned int arg0);
-void __fastcall adjust_dialogs1_on_scroll_create(void *self, void *);
-int __fastcall adjust_dialogs1_on_scroll_delete(void *self, void *,
-                                                void *arg0);
-void __fastcall adjust_dialogs1_on_mousewheel(void *self, void *, int arg0);
-void __fastcall adjust_dialogs1_on_left_click(void *self, void *, int arg0,
-                                              int arg1);
-void __fastcall adjust_dialogs1_on_right_click(void *self, void *, int arg0,
-                                               int arg1);
-int __fastcall adjust_dialogs1_on_key_down(void *self, void *, int arg0);
 void * __fastcall adjust_dialogs2_scalar_delete(void *self, void *,
                                                 unsigned int arg0);
 void * __fastcall adjust_dialogs3_scalar_delete(void *self, void *,
-                                                unsigned int arg0);
-int __fastcall adjust_dialogs1_attach(void *self, void *, void *arg0,
-                                      int arg1, int arg2, int arg3);
-void * __fastcall adjust_plan_win2_scalar_delete(void *self, void *,
-                                                 unsigned int arg0);
-void * __fastcall adjust_console1_scalar_delete(void *self, void *,
                                                 unsigned int arg0);
 void __fastcall adjust_console1_on_nc_mouse_move(void *self, void *, int arg0,
                                                  int arg1);
@@ -78,5 +58,3 @@ void __fastcall adjust_console1_on_nc_left_up(void *self, void *, int arg0,
                                               int arg1);
 void __fastcall adjust_console1_on_post_redraw_nc_buffer(void *self, void *,
                                                          void *arg0, int arg1);
-void * __fastcall adjust_console2_scalar_delete(void *self, void *,
-                                                unsigned int arg0);
