@@ -28,6 +28,12 @@ def test_actual_six_step_predictor_and_dct_bodies(tmp_path: Path) -> None:
     if compiler is None:
         return
     source_text = (SRC / "movie_media_decoder.cpp").read_text()
+    owner_header = (SRC / "movie_decoder_owner.h").read_text()
+    byte_view = _function(owner_header, "struct MediaCoefficientPredictorViewLayout") + ";\n"
+    byte_accessors = "\n".join(
+        _function(owner_header, signature)
+        for signature in ("static const BYTE *movie_media_luma_delta_entries(",
+                          "static const BYTE *movie_media_chroma_delta_entries("))
     signatures = (
         "static DWORD movie_media_read_bits32",
         "static DWORD movie_media_decode_predictor_delta",
@@ -42,6 +48,7 @@ def test_actual_six_step_predictor_and_dct_bodies(tmp_path: Path) -> None:
     unit_source = r'''#include <cassert>
 #include <cstdint>
 #include <cstring>
+#include <cstddef>
 #include <climits>
 #include <cstdio>
 #define __cdecl
@@ -73,7 +80,7 @@ extern "C" void __cdecl sub_5d2c0a(int *destination, int *source) {
   for (int i = 0; i != 8; ++i) destination[i] = source[0] + i;
 }
 void __cdecl sub_5d2037(int *, int *, unsigned int *) { ++converter_calls; }
-''' + bodies + r'''
+''' + byte_view + byte_accessors + "\n" + bodies + r'''
 static void set_msb(BYTE *buffer, unsigned position, unsigned value,
                     unsigned width) {
   for (unsigned bit = 0; bit != width; ++bit) {
@@ -114,8 +121,8 @@ int main() {
       movie_media_coefficient_tables.words) + 0x394;
   const BYTE *lookup_b = reinterpret_cast<const BYTE *>(
       movie_media_coefficient_tables.words) + 0x414;
-  (void)lookup_a;
-  (void)lookup_b;
+  assert(movie_media_luma_delta_entries() == lookup_a);
+  assert(movie_media_chroma_delta_entries() == lookup_b);
   reinterpret_cast<BYTE *>(movie_media_coefficient_tables.words)[0x394] = 0x12;
   reinterpret_cast<BYTE *>(movie_media_coefficient_tables.words)[0x414] = 0x12;
   DWORD scratch[512];

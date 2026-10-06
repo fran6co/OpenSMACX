@@ -67,6 +67,381 @@ static DWORD movie_media_decode_predictor_delta(
   return value - ((1u << width) - 1u);
 }
 
+/*
+Purpose: Decode one 64-coefficient block for the movie codec: dequant the DC
+         term through the table at 0x009C5820, then walk coefficients 63..1
+         through the dispatch table at 0x009C9AA8 - zero runs, direct table
+         dequant, negated dequant, the two-zero arm through 0x009C95A4, and
+         the ZRL run arm walking 0x009C95A4/0x009C95A0 while the escape count
+         lasts - refilling the accumulator a byte at a time whenever fewer
+         than 8 bits remain, and publishing the cursor/accumulator/count back
+         to their slots on the way out.
+
+// symbol    ?sub_5cf150@@YAHXZ
+// size      416 bytes
+// prototype int (__cdecl sub_5cf150)(void)
+// callers   3   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Status: Coverage transcription - unclaimed body (the original keeps the
+        bit-reader state register-resident across the whole switch; this
+        spelling re-reads the globals, diverging at instruction 0 - seed
+        TRIED).
+*/
+
+static LONG movie_media_add_ecx(LONG value, int amount) {
+    DWORD bits;
+    std::memcpy(&bits, &value, sizeof(bits));
+    bits += static_cast<DWORD>(amount);
+    std::memcpy(&value, &bits, sizeof(value));
+    return value;
+}
+
+static int movie_media_low32(__int64 value) {
+    const DWORD bits = static_cast<DWORD>(value);
+    int result;
+    std::memcpy(&result, &bits, sizeof(result));
+    return result;
+}
+
+static int movie_media_low32_after_arithmetic_shift16(__int64 value) {
+    uint64_t bits;
+    std::memcpy(&bits, &value, sizeof(bits));
+    // Only the low dword of the arithmetic shift survives; sign extension
+    // above bit 47 cannot affect those 32 result bits.
+    const DWORD low = static_cast<DWORD>(bits >> 16);
+    int result;
+    std::memcpy(&result, &low, sizeof(result));
+    return result;
+}
+
+static int movie_media_negate32(int value) {
+    DWORD bits;
+    std::memcpy(&bits, &value, sizeof(bits));
+    bits = 0u - bits;
+    std::memcpy(&value, &bits, sizeof(value));
+    return value;
+}
+
+static int movie_media_signed32(DWORD value) {
+    int result;
+    std::memcpy(&result, &value, sizeof(result));
+    return result;
+}
+
+static DWORD movie_media_raw_word_at(const DWORD *base, DWORD index_bits) {
+    uintptr_t address = reinterpret_cast<uintptr_t>(base);
+    address += static_cast<uintptr_t>(index_bits) * sizeof(DWORD);
+    DWORD value;
+    std::memcpy(&value, reinterpret_cast<const void *>(address), sizeof(value));
+    return value;
+}
+
+static void movie_media_raw_workspace_store(DWORD index_bits, DWORD value) {
+    uintptr_t address = reinterpret_cast<uintptr_t>(
+        movie_media_transform_workspace.row_and_butterfly_words);
+    address += static_cast<uintptr_t>(index_bits) * sizeof(DWORD);
+    std::memcpy(reinterpret_cast<void *>(address), &value, sizeof(value));
+}
+
+static DWORD movie_media_int_bits(int value) {
+    DWORD bits;
+    std::memcpy(&bits, &value, sizeof(bits));
+    return bits;
+}
+
+static MediaTransformRegisterContinuation movie_media_transform_return(
+    MediaTransformBitState &reader, const BYTE *cursor, DWORD accumulator,
+    LONG available_bits, int coefficient_index) {
+    reader.cursor = cursor;
+    reader.accumulator = accumulator;
+    reader.available_bits = available_bits;
+    MediaTransformRegisterContinuation result;
+    result.esi_cursor = cursor;
+    result.ebp_accumulator = accumulator;
+    result.ecx_available_bits = available_bits;
+    result.edi_coefficient_index = coefficient_index;
+    return result;
+}
+
+// ORIGINAL: 0x005CF150 sub_5cf150 0x005CF150-0x005CF2F0 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["pinned terranx_original.exe SHA-256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; mapped span 005CF150-005CF2F0", "pinned dispatch table at 009C9AA8 targets 005CF1CE/239/1AC/26A/1DB/226/1BC/26A; run arms read distinct A8/A4/A0 windows", "both native exits write ESI/EBP/ECX to 009C5920/28/24 and return EDI without restoring it; 5CF2F0 consumes those outputs after five calls", "existing movie_media_decoder.cpp shared workspace, scale and transform-bit-state owners; stack workspace pushes are cleaned by callers and not read in the 416-byte body", "historical leaf source comments preserved verbatim immediately before this mapping; new C++ wrapper/helper does not claim a measured symbol or ABI"], "reason": "Source-owned full implementation of the mapped 5CF150 transform; its normalized return carries the original post-call register state to the six-step 5CF2F0 decoder. This is not native custom-register ABI evidence."}
+// symbol    ?sub_5cf150@@YA?AUMediaTransformRegisterContinuation@@XZ
+// TRIED: The old leaf source transcript was not register-faithful. The mapped function now owns the full eight-way implementation; its C++ result normalizes the native ESI/EBP/ECX/EDI continuation and does not claim the unknown external custom-register ABI.
+MediaTransformRegisterContinuation
+__cdecl sub_5cf150() {
+    MediaCoefficientTableStorage &transform_constants =
+        movie_media_coefficient_tables;
+    MediaConversionTableStorage &conversion_tables =
+        movie_media_conversion_tables;
+    MediaTransformBitState &reader = conversion_tables.transform_bit_state;
+    const BYTE *cursor = reader.cursor;
+    DWORD accumulator = reader.accumulator;
+    LONG available_bits = reader.available_bits;
+    DWORD index_bits = 0x3f;
+
+    // 5CF150's initial signed-byte DC term and refill, in the same register
+    // widths as EBP/ESI/ECX. Its IMUL/SHR/ADC sequence is product >> 16.
+    const int dc = static_cast<signed char>(static_cast<BYTE>(accumulator));
+    const __int64 dc_product = static_cast<__int64>(dc) *
+        static_cast<__int64>(movie_media_signed32(
+            conversion_tables.block_scale_entries[0]));
+    movie_media_raw_workspace_store(0,
+        movie_media_int_bits(movie_media_low32(dc_product)));
+    accumulator >>= 8;
+    {
+        const BYTE byte = *cursor++;
+        available_bits = movie_media_add_ecx(available_bits, -8);
+        accumulator |= static_cast<DWORD>(byte) <<
+            (static_cast<unsigned int>(available_bits) & 31);
+        available_bits = movie_media_add_ecx(available_bits, 8);
+    }
+
+    for (;;) {
+        const unsigned int code = accumulator & 7;
+        const DWORD slot = movie_media_raw_word_at(
+            transform_constants.words + 5, index_bits);
+        switch (code) {
+        case 0:
+            movie_media_raw_workspace_store(slot, 0);
+            break;
+        case 1: {
+            unsigned int run = (accumulator & 0xff) >> 3;
+            // The key-1 run reads three distinct table windows: A8[i] is
+            // the first destination, A4[i] is the next destination, and
+            // A0[i] becomes the next live EBX-derived destination.
+            DWORD run_slot = slot;
+            do {
+                movie_media_raw_workspace_store(run_slot, 0);
+                movie_media_raw_workspace_store(movie_media_raw_word_at(
+                    transform_constants.words + 4, index_bits), 0);
+                run_slot = movie_media_raw_word_at(
+                    transform_constants.words + 3, index_bits);
+                index_bits -= 2;
+                --run;
+            } while (run != 0);
+            ++index_bits;
+
+            accumulator >>= 8;
+            {
+                const BYTE byte = *cursor++;
+                available_bits = movie_media_add_ecx(available_bits, -8);
+                accumulator |= static_cast<DWORD>(byte) <<
+                    (static_cast<unsigned int>(available_bits) & 31);
+                available_bits = movie_media_add_ecx(available_bits, 8);
+            }
+            --index_bits;
+            if (movie_media_signed32(index_bits) <= 0)
+                return movie_media_transform_return(
+                    reader, cursor, accumulator, available_bits,
+                    movie_media_signed32(index_bits));
+            continue;
+        }
+        case 2:
+            movie_media_raw_workspace_store(slot,
+                movie_media_raw_word_at(
+                    conversion_tables.block_scale_entries, slot));
+            break;
+        case 3:
+        case 7: {
+            if ((accumulator & 0xfc) == 0xfc) {
+                accumulator >>= 8;
+                const BYTE byte = *cursor++;
+                available_bits = movie_media_add_ecx(available_bits, -8);
+                accumulator |= static_cast<DWORD>(byte) <<
+                    (static_cast<unsigned int>(available_bits) & 31);
+                available_bits = movie_media_add_ecx(available_bits, 8);
+                const int amplitude = static_cast<signed char>(
+                    static_cast<BYTE>(accumulator));
+                const __int64 product = static_cast<__int64>(amplitude) *
+                    static_cast<__int64>(movie_media_signed32(
+                        movie_media_raw_word_at(
+                            conversion_tables.block_scale_entries, slot)));
+                movie_media_raw_workspace_store(slot,
+                    movie_media_int_bits(movie_media_low32(product)));
+            } else {
+                const int signed_code = static_cast<signed char>(
+                    static_cast<BYTE>(accumulator & 0xfc));
+                const int amplitude = signed_code * 0x4000;
+                const __int64 product = static_cast<__int64>(amplitude) *
+                    static_cast<__int64>(movie_media_signed32(
+                        movie_media_raw_word_at(
+                            conversion_tables.block_scale_entries, slot)));
+                movie_media_raw_workspace_store(slot, movie_media_int_bits(
+                    movie_media_low32_after_arithmetic_shift16(product)));
+            }
+
+            accumulator >>= 8;
+            {
+                const BYTE byte = *cursor++;
+                available_bits = movie_media_add_ecx(available_bits, -8);
+                accumulator |= static_cast<DWORD>(byte) <<
+                    (static_cast<unsigned int>(available_bits) & 31);
+                available_bits = movie_media_add_ecx(available_bits, 8);
+            }
+            --index_bits;
+            if (movie_media_signed32(index_bits) <= 0)
+                return movie_media_transform_return(
+                    reader, cursor, accumulator, available_bits,
+                    movie_media_signed32(index_bits));
+            continue;
+        }
+        case 4: {
+            movie_media_raw_workspace_store(slot, 0);
+            const DWORD next_slot = movie_media_raw_word_at(
+                transform_constants.words + 4, index_bits);
+            --index_bits;
+            movie_media_raw_workspace_store(next_slot, 0);
+            break;
+        }
+        case 5: {
+            // Key 5's target 226 path differs from key 1: clear A8[i], load
+            // A4[i], and pre-decrement EDI before the first run iteration.
+            movie_media_raw_workspace_store(slot, 0);
+            DWORD run_slot = movie_media_raw_word_at(
+                transform_constants.words + 4, index_bits);
+            --index_bits;
+            unsigned int run = (accumulator & 0xff) >> 3;
+            do {
+                movie_media_raw_workspace_store(run_slot, 0);
+                movie_media_raw_workspace_store(movie_media_raw_word_at(
+                    transform_constants.words + 4, index_bits), 0);
+                run_slot = movie_media_raw_word_at(
+                    transform_constants.words + 3, index_bits);
+                index_bits -= 2;
+                --run;
+            } while (run != 0);
+            ++index_bits;
+
+            accumulator >>= 8;
+            {
+                const BYTE byte = *cursor++;
+                available_bits = movie_media_add_ecx(available_bits, -8);
+                accumulator |= static_cast<DWORD>(byte) <<
+                    (static_cast<unsigned int>(available_bits) & 31);
+                available_bits = movie_media_add_ecx(available_bits, 8);
+            }
+            --index_bits;
+            if (movie_media_signed32(index_bits) <= 0)
+                return movie_media_transform_return(
+                    reader, cursor, accumulator, available_bits,
+                    movie_media_signed32(index_bits));
+            continue;
+        }
+        case 6:
+            movie_media_raw_workspace_store(slot, movie_media_int_bits(
+                movie_media_negate32(movie_media_signed32(
+                    movie_media_raw_word_at(
+                        conversion_tables.block_scale_entries, slot)))));
+            break;
+        }
+
+        accumulator >>= 3;
+        available_bits = movie_media_add_ecx(available_bits, -3);
+        if (available_bits < 8) {
+            const BYTE byte = *cursor++;
+            accumulator |= static_cast<DWORD>(byte) <<
+                (static_cast<unsigned int>(available_bits) & 31);
+            available_bits = movie_media_add_ecx(available_bits, 8);
+        }
+        --index_bits;
+        if (movie_media_signed32(index_bits) <= 0)
+            return movie_media_transform_return(
+                reader, cursor, accumulator, available_bits,
+                movie_media_signed32(index_bits));
+    }
+}
+
+// ORIGINAL: 0x005CF2F0 sub_5cf2f0 0x005CF2F0-0x005CF5C7
+// RECOVERY_BINDING: v1 {"evidence": ["pinned terranx_original.exe SHA-256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; mapped span 005CF2F0-005CF5C7", "original instruction/register dataflow: EBP bit buffer, EDI live bit cursor, ESI receiver; four 0x19 table lookups update +0x100, then two 0x18 lookups update +0x104/+0x108; after each helper call the next ESI/EBP/EDI are the returned clobbered registers", "5CF150 native eight-way dispatch targets at 005CF1CE/239/1AC/26A/1DB/226/1BC/26A; run keys 1 and 5 use distinct A8/A4/A0 indexed windows and distinct EDI update order", "movie_media_decoder.cpp shared typed bit-window/VLC helpers and MediaDecoderContext fields; coefficient table byte window is words+0x394 (128 bytes) and words+0x414 (256 bytes)", "mapped 005CF150 source definition consumes no stack arguments; original call sites set workspace operands but the callee uses shared source-owned conversion state", "recover inspect 005CF2F0 --callers: no callers among mapped spans; external/register-ABI caller remains unknown"], "reason": "Typed source owner for the mapped six-delta predictor decoder; the source API explicitly models the mutated cursor and real decoder context. This is not original custom-register ABI evidence or a byte-match claim."}
+// symbol    ?sub_5cf2f0@@YA?AUMediaTransformRegisterContinuation@@PBEKAAUMediaDecoderContext@@@Z
+// TRIED: no conventional signature can match - no prologue at all, and edi/esi/ebp are read as inputs pre-loaded by the caller (Ghidra: unaff_EBP/unaff_ESI/unaff_EDI), same shape as the established 0x005D1B88 case. Landed as an explicit 3-pointer __cdecl function reproducing the algorithm exactly (six unrolled Huffman-decode-and-advance blocks, matching the original's own unrolling) - MISMATCH from instruction #0 (prologue) is expected and cannot be closed without __asm.
+// TRIED: Post-call ESI-derived predictor accesses are raw byte dword effects; the returned address is not asserted to name a MediaDecoderContext.
+// The original entry's EBP/EDI/ESI are respectively the bit-buffer pointer,
+// live bit cursor, and MediaDecoderContext receiver. Each 5CF150 call then
+// overwrites those registers with its shared transform reader's accumulator,
+// coefficient index, and cursor. Carry those actual source-owned values back
+// into the next iteration; do not keep the entry values live across a call.
+// Original entry convention: no prologue; inputs arrive in EBP/EDI/ESI;
+// this source signature is semantic normalization, not original-ABI evidence.
+MediaTransformRegisterContinuation __cdecl sub_5cf2f0(
+    const BYTE *bit_buffer, DWORD bit_position,
+                        MediaDecoderContext &context) {
+  // The initial receiver is typed because the normal owner/caller provides
+  // this MediaDecoderContext. After the first 5CF150 call, however, ESI is
+  // replaced with that helper's cursor and the original performs raw
+  // dword accesses at ESI+100/104/108. Do not claim those derived addresses
+  // are another live MediaDecoderContext allocation.
+  BYTE *context_bytes = reinterpret_cast<BYTE *>(&context);
+  const BYTE *const luma_delta_table = movie_media_luma_delta_entries();
+  const BYTE *const chroma_delta_table = movie_media_chroma_delta_entries();
+
+  // The native caller pushes workspace addresses 9C5000/5020/5200/5220 and
+  // widths 0x40, then 9C5400/5500 and widths 0x20. 5CF150 reads no stack
+  // arguments but does overwrite ESI/EBP/EDI from its real shared state. The
+  // typed result exposes those live outputs rather than incorrectly retaining
+  // this body's old bit buffer, context, and cursor.
+  MediaTransformRegisterContinuation continuation;
+  DWORD predictor_word;
+  std::memcpy(&predictor_word, context_bytes + 0x100, sizeof(predictor_word));
+  predictor_word += static_cast<DWORD>(movie_media_decode_predictor_delta(
+      bit_buffer, bit_position, luma_delta_table, 0x19));
+  std::memcpy(context_bytes + 0x100, &predictor_word, sizeof(predictor_word));
+  continuation = sub_5cf150();
+  bit_buffer = reinterpret_cast<const BYTE *>(
+      static_cast<size_t>(continuation.ebp_accumulator));
+  bit_position = static_cast<DWORD>(continuation.edi_coefficient_index);
+  context_bytes = const_cast<BYTE *>(continuation.esi_cursor);
+
+  std::memcpy(&predictor_word, context_bytes + 0x100, sizeof(predictor_word));
+  predictor_word += static_cast<DWORD>(movie_media_decode_predictor_delta(
+      bit_buffer, bit_position, luma_delta_table, 0x19));
+  std::memcpy(context_bytes + 0x100, &predictor_word, sizeof(predictor_word));
+  continuation = sub_5cf150();
+  bit_buffer = reinterpret_cast<const BYTE *>(
+      static_cast<size_t>(continuation.ebp_accumulator));
+  bit_position = static_cast<DWORD>(continuation.edi_coefficient_index);
+  context_bytes = const_cast<BYTE *>(continuation.esi_cursor);
+
+  std::memcpy(&predictor_word, context_bytes + 0x100, sizeof(predictor_word));
+  predictor_word += static_cast<DWORD>(movie_media_decode_predictor_delta(
+      bit_buffer, bit_position, luma_delta_table, 0x19));
+  std::memcpy(context_bytes + 0x100, &predictor_word, sizeof(predictor_word));
+  continuation = sub_5cf150();
+  bit_buffer = reinterpret_cast<const BYTE *>(
+      static_cast<size_t>(continuation.ebp_accumulator));
+  bit_position = static_cast<DWORD>(continuation.edi_coefficient_index);
+  context_bytes = const_cast<BYTE *>(continuation.esi_cursor);
+
+  std::memcpy(&predictor_word, context_bytes + 0x100, sizeof(predictor_word));
+  predictor_word += static_cast<DWORD>(movie_media_decode_predictor_delta(
+      bit_buffer, bit_position, luma_delta_table, 0x19));
+  std::memcpy(context_bytes + 0x100, &predictor_word, sizeof(predictor_word));
+  continuation = sub_5cf150();
+  bit_buffer = reinterpret_cast<const BYTE *>(
+      static_cast<size_t>(continuation.ebp_accumulator));
+  bit_position = static_cast<DWORD>(continuation.edi_coefficient_index);
+  context_bytes = const_cast<BYTE *>(continuation.esi_cursor);
+
+  std::memcpy(&predictor_word, context_bytes + 0x104, sizeof(predictor_word));
+  predictor_word += static_cast<DWORD>(movie_media_decode_predictor_delta(
+      bit_buffer, bit_position, chroma_delta_table, 0x18));
+  std::memcpy(context_bytes + 0x104, &predictor_word, sizeof(predictor_word));
+  continuation = sub_5cf150();
+  bit_buffer = reinterpret_cast<const BYTE *>(
+      static_cast<size_t>(continuation.ebp_accumulator));
+  bit_position = static_cast<DWORD>(continuation.edi_coefficient_index);
+  context_bytes = const_cast<BYTE *>(continuation.esi_cursor);
+
+  std::memcpy(&predictor_word, context_bytes + 0x108, sizeof(predictor_word));
+  predictor_word += static_cast<DWORD>(movie_media_decode_predictor_delta(
+      bit_buffer, bit_position, chroma_delta_table, 0x18));
+  std::memcpy(context_bytes + 0x108, &predictor_word, sizeof(predictor_word));
+  continuation = sub_5cf150();
+  return continuation;
+}
+
 static DWORD movie_media_coefficient_entry(DWORD code) {
   const DWORD *const words = movie_media_coefficient_tables.words;
   if (code >= 0x8000)

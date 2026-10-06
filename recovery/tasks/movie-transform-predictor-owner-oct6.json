@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "task_id": "movie-transform-predictor-owner-oct6",
+  "author": "framework-coordinator",
+  "target": "opensmacx",
+  "base_revision": "74490a3ef9ab0f48fac04e4154073c756226c80c",
+  "intent": "Recover full eight-way transform and six-step predictor decoding in the genuine Movie decoder owner; transport historical mappings/lessons and retire only the superseded seed/leaf transcript. Preserve original register clobber effects through an explicit normalized C++ continuation, not a transparent helper or fabricated context.",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6091088
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6091504
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6097579
+    }
+  ],
+  "editable_files": [
+    "recovery/tests/fixtures/movie_predictor_actual.cpp",
+    "recovery/tests/fixtures/movie_transform_actual.cpp",
+    "recovery/tests/test_movie_decoder_owner_actual_source.py",
+    "recovery/tests/test_movie_decoder_transform_reader_source.py",
+    "recovery/tests/test_movie_decoder_six_block_math_source.py",
+    "src/general.h",
+    "src/leaf_recoveries.cpp",
+    "src/movie_decoder_owner.h",
+    "src/movie_media_decoder.cpp",
+    "src/unrecovered/005cf2f0.cpp"
+  ],
+  "evidence": [
+    "Standing coordinator-reviewed compiling coverage priority. The original has custom register entry/return conventions; normalized source continuation is not recovered external ABI or a byte-match claim.",
+    "Pinned 5CF150 arms use distinct A8/A4/A0 windows, signed low-dword IMUL operands, distinct refill/count paths and zero-run do/while wrap. No bounds/error normalization or original-address forwarding is introduced.",
+    "Pinned 5CF2F0 carries clobbered ESI/EBP/EDI into the following predictor load/decode. After the helper call ESI-derived accesses do not assert a live MediaDecoderContext allocation; preserve the original unsafe data-derived address effects.",
+    "Existing 5D0AAB byte-window consumers move to named accessors over the established DWORD object representation. Independent offsetof/size checks preserve the accessed windows without inactive-union reads.",
+    "Fresh isolated VC6 compile qualifies actual emitted symbols for both mapped bodies; whole application build/link and permanent actual-source controls are required before integration.",
+    "External caller/entry, custom-register ABI restoration, malformed-address fault equivalence, native layout/reference matching and full linked/game acceptance remain obligations. Controlled host pointer continuations are not whole-game or invalid-address proof."
+  ]
+}

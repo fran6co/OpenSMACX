@@ -4,6 +4,7 @@
 #include "movie_media.h"
 #include "movie_decoder_records.h"
 #include <stdint.h>
+#include <stddef.h>
 
 // Minimum transform working window reached by the 5CFAED/5D02CC schedules:
 // [009C5000,009C581C). The first 0x600 bytes are block/intermediate words;
@@ -22,10 +23,25 @@ extern MediaTransformWorkspace movie_media_transform_workspace;
 // proven access but does not establish the original object's upper bound or
 // allocation. Indexed DWORD tables overlap byte lookups, so separate alias
 // arrays would introduce unsupported ownership and indexing assumptions.
+struct MediaCoefficientPredictorViewLayout {
+  DWORD preceding_lookup_words[229]; // [009C9594,009C9928)
+  BYTE luma_delta_entries[128];      // [009C9928,009C99A8), lookup index 0..127
+  BYTE chroma_delta_entries[256];    // [009C99A8,009C9AA8), lookup index 0..255
+};
 struct MediaCoefficientTableStorage {
   DWORD words[325]; // selected access/initializer window [009C9594,009C9AA8)
 };
 extern MediaCoefficientTableStorage movie_media_coefficient_tables;
+static const BYTE *movie_media_luma_delta_entries() {
+  return reinterpret_cast<const BYTE *>(
+      movie_media_coefficient_tables.words) +
+      offsetof(MediaCoefficientPredictorViewLayout, luma_delta_entries);
+}
+static const BYTE *movie_media_chroma_delta_entries() {
+  return reinterpret_cast<const BYTE *>(
+      movie_media_coefficient_tables.words) +
+      offsetof(MediaCoefficientPredictorViewLayout, chroma_delta_entries);
+}
 
 // Composite source storage for windows used by 5D35B0, 5D2E70 and the row
 // packer. The first two byte windows are fully covered by observed producer
@@ -71,6 +87,12 @@ typedef char media_transform_workspace_window_size_check[
     sizeof(MediaTransformWorkspace) == 0x81c ? 1 : -1];
 typedef char media_coefficient_access_window_size_check[
     sizeof(MediaCoefficientTableStorage) == 0x514 ? 1 : -1];
+typedef char media_predictor_luma_view_offset_check[
+    offsetof(MediaCoefficientPredictorViewLayout, luma_delta_entries) == 0x394 ? 1 : -1];
+typedef char media_predictor_chroma_view_offset_check[
+    offsetof(MediaCoefficientPredictorViewLayout, chroma_delta_entries) == 0x414 ? 1 : -1];
+typedef char media_predictor_views_size_check[
+    sizeof(MediaCoefficientPredictorViewLayout) == 0x514 ? 1 : -1];
 typedef char media_decoder_process_access_window_size_check[
     sizeof(MediaDecoderProcessStorage) == 0x60c ? 1 : -1];
 typedef char media_decoder_table_access_window_size_check[
@@ -147,7 +169,16 @@ extern "C" void __cdecl sub_5d29e1(int *source, int *destination);
 extern "C" void __cdecl sub_5d2c0a(int *destination, int *source);
 
 // Existing product helper ABIs. Their definitions stay in the current owners.
-int __cdecl sub_5cf150();
+struct MediaTransformRegisterContinuation {
+  const BYTE *esi_cursor;       // 005CF150's shared reader cursor on return
+  DWORD ebp_accumulator;        // shared bit accumulator returned in EBP
+  LONG ecx_available_bits;     // shared bit count returned in ECX
+  int edi_coefficient_index;   // local transform index returned in EDI
+};
+MediaTransformRegisterContinuation __cdecl sub_5cf150();
+MediaTransformRegisterContinuation __cdecl sub_5cf2f0(
+    const BYTE *bit_buffer, DWORD bit_position,
+    MediaDecoderContext &context);
 extern "C" void __cdecl sub_5d29e1(int *source, int *destination);
 extern "C" void __cdecl sub_5d2b20(int *destination, int *source);
 

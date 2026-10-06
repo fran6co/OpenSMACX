@@ -29,8 +29,11 @@ def test_mapped_transform_reader_updates_its_own_source_storage(
     compiler = shutil.which("g++") or shutil.which("clang++")
     if compiler is None:
         return
-    leaf = (SRC / "leaf_recoveries.cpp").read_text()
-    body = _function(leaf, "int __cdecl sub_5cf150()")
+    owner = (SRC / "movie_media_decoder.cpp").read_text()
+    signature = "MediaTransformRegisterContinuation\n__cdecl sub_5cf150()"
+    helpers_start = owner.index("static LONG movie_media_add_ecx(")
+    function_start = owner.index(signature, helpers_start)
+    body = owner[helpers_start:function_start] + _function(owner, signature)
     source = r'''#include <cassert>
 #include <cstdint>
 #include <cstring>
@@ -39,6 +42,12 @@ def test_mapped_transform_reader_updates_its_own_source_storage(
 typedef unsigned char BYTE;
 typedef unsigned int DWORD;
 typedef int LONG;
+struct MediaTransformRegisterContinuation {
+  const BYTE *esi_cursor;
+  DWORD ebp_accumulator;
+  LONG ecx_available_bits;
+  int edi_coefficient_index;
+};
 struct MediaTransformBitState {
   const BYTE *cursor;
   LONG available_bits;
@@ -70,10 +79,14 @@ int main() {
   state.cursor = packet;
   state.available_bits = 32;
   state.accumulator = 0;
-  assert(sub_5cf150() == 0);
+  const MediaTransformRegisterContinuation continuation = sub_5cf150();
   assert(state.cursor == packet + 22);
   assert(state.available_bits == 11);
   assert(state.accumulator == 0);
+  assert(continuation.esi_cursor == state.cursor);
+  assert(continuation.ebp_accumulator == state.accumulator);
+  assert(continuation.ecx_available_bits == state.available_bits);
+  assert(continuation.edi_coefficient_index == 0);
   for (int i = 0; i != 64; ++i)
     assert(movie_media_transform_workspace.row_and_butterfly_words[i] == 0);
   for (int i = 64; i != 135; ++i)
