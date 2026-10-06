@@ -213,6 +213,10 @@ void *__cdecl caviar_memset_call(void *dst, int value, unsigned count) {
 // whole body is one `ret`. close_class calls it, so a body that does nothing
 // is the faithful spelling; kept out of line so the call survives.
 OPENSMACX_NOINLINE
+// ORIGINAL: 0x00639380 nullsub_16 0x00639380-0x00639381 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:0x00639380-0x00639381 is a single RET", "source:src/caviar.cpp Caviar::close_class calls vox_engine_close for the original shutdown hook", "pinned/current owner facts identify one original caller; the source body remains deliberately empty"], "reason": "Rehome the no-op shutdown-hook identity onto the already-called, out-of-line vox_engine_close owner; no separate adapter body is retained."}
+// symbol    ?vox_engine_close@?%src/caviar.cpp@@YAXXZ
+// kind      game
 void vox_engine_close() {
 }
 
@@ -260,6 +264,15 @@ void CaviarData::close() {
         caviar_free_record(record_);
         record_ = nullptr;
     }
+}
+
+// ORIGINAL: 0x00616B20 sub_616b20 0x00616B20-0x00616B2D BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:0x00616B20-0x00616B2D returns ECX in EAX after zeroing dwords +0/+4/+8", "source:src/caviar.h VoxInstance is exactly 0xC with three pointer members and RECOVERY_MEMBER anchors at +4/+8", "pinned:0x00616DA0 initializes 200 twelve-byte slot records inline at Caviar+0x74C; it does not directly call 0x00616B20"], "reason": "Own the three pointer-zeroing stores on the existing 0xC VoxInstance type. Moving its inline constructor out of the header exposes this source definition but changes the Caviar array-construction code shape; constructor return-register/ABI and all callers remain native-review obligations."}
+// symbol    ??0VoxInstance@@QAE@XZ
+// kind      game
+VoxInstance::VoxInstance()
+    : instance_colour_(0), instance_vector_(0),
+      instance_matrix_(0) {
 }
 
 /*

@@ -1252,6 +1252,7 @@ Purpose: Switch the wrapped device to another output. Every sound on the
          appended to the resume list keeps whatever its next link held until
          the replay clears it.
 // ORIGINAL: 0x004C5030 ?select@Wave_Device@@QAEHK@Z 0x004C5030-0x004C50EF BYTE_EXACT
+// symbol    ?select@Wave_Device@@UAEHK@Z
 // LEVER: declare-before-the-guard `Wave *resume_tail = nullptr;` above the
 //   `if (!device_14_) return 2;` early exit, not below it. The image zeroes edi
 //   at 0x004C503B - BEFORE the guard's compare - and pops it again inside the

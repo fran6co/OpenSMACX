@@ -1,35 +1,8 @@
 #include "stdafx.h"
 #include "field_accessors.h"
 
-/*
-Purpose: Return the constant 0x1.
-         Emitted by tools/generate_field_accessors.py from
 
-             mov eax, 1 / ret
 
-         The name is the ADDRESS, not an invention, and `self` is a void
-         pointer because this body needs `this` to be nothing more than a
-         pointer and an offset - the class it belongs to is not established.
-         The adapter declares 0 stack dword(s) so it
-         cleans 0 bytes, taken from the body's own `ret` -
-         the only statement of this function's arity that exists, since it has
-         no mangled name. Declaring fewer would leave them on the caller's
-         stack.
-// RECOVERY_ROLE: SCAFFOLD Untyped raw-field or constant adapter; real method ownership and named member relationships remain recovery obligations.
-// ORIGINAL: 0x00406840 sub_406840 0x00406840-0x00406846 BYTE_EXACT
-// symbol    ?field_accessor_00406840_redirect@@YIIPAX0@Z
-// size      6 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     (none)
-Return Value: the value described above
-Status: Complete
-*/
-uint32_t __fastcall field_accessor_00406840_redirect(void *, void *) {
-    return 0x1U;
-}
 
 
 
@@ -297,39 +270,8 @@ uint32_t __fastcall field_accessor_00600320_redirect(void *self, void *) {
         & 0x1U;
 }
 
-/*
-Purpose: Set 3 field(s) to constants.
-         Emitted by tools/generate_field_accessors.py from
 
-             mov eax, ecx / xor ecx, ecx / mov dword ptr [eax], ecx / mov dword ptr [eax + 4], ecx / mov dword ptr [eax + 8], ecx / ret
 
-         The name is the ADDRESS, not an invention, and `self` is a void
-         pointer because this body needs `this` to be nothing more than a
-         pointer and an offset - the class it belongs to is not established.
-         The adapter declares 0 stack dword(s) so it
-         cleans 0 bytes, taken from the body's own `ret` -
-         the only statement of this function's arity that exists, since it has
-         no mangled name. Declaring fewer would leave them on the caller's
-         stack.
-// RECOVERY_ROLE: SCAFFOLD Untyped raw-field or constant adapter; real method ownership and named member relationships remain recovery obligations.
-// ORIGINAL: 0x00616B20 sub_616b20 0x00616B20-0x00616B2D BYTE_EXACT
-// symbol    ?field_accessor_00616b20_redirect@@YIPAXPAX0@Z
-// size      13 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the value described above
-Status: Complete
-*/
-void * __fastcall field_accessor_00616b20_redirect(void *self, void *) {
-    uint8_t *const bytes = static_cast<uint8_t *>(self);
-    *reinterpret_cast<uint32_t *>(bytes + 0x0) = 0x0U;
-    *reinterpret_cast<uint32_t *>(bytes + 0x4) = 0x0U;
-    *reinterpret_cast<uint32_t *>(bytes + 0x8) = 0x0U;
-    return self;
-}
 
 /*
 Purpose: Set 9 field(s) to constants.
@@ -458,35 +400,8 @@ void * __fastcall field_accessor_00634b70_redirect(void *self, void *) {
 
 
 
-/*
-Purpose: Do nothing; the original body is only its `ret`.
-         Emitted by tools/generate_field_accessors.py from
 
-             ret 0xc
 
-         The name is the ADDRESS, not an invention, and `self` is a void
-         pointer because this body needs `this` to be nothing more than a
-         pointer and an offset - the class it belongs to is not established.
-         The adapter declares 3 stack dword(s) so it
-         cleans 12 bytes, taken from the body's own `ret` -
-         the only statement of this function's arity that exists, since it has
-         no mangled name. Declaring fewer would leave them on the caller's
-         stack.
-// RECOVERY_ROLE: SCAFFOLD Untyped raw-field or constant adapter; real method ownership and named member relationships remain recovery obligations.
-// ORIGINAL: 0x00406B20 nullsub_27 0x00406B20-0x00406B23 BYTE_EXACT
-// symbol    ?field_accessor_00406b20_redirect@@YIXPAX0HHH@Z
-// size      3 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall field_accessor_00406b20_redirect(void *, void *, int stack0, int stack1, int stack2) {
-
-}
 
 /*
 Purpose: Return the constant 0x0.
@@ -578,68 +493,11 @@ void __fastcall field_accessor_0050f640_redirect(void *, void *, int stack0) {
 
 }
 
-/*
-Purpose: Copy 1 argument(s) into field(s) of `this`.
-         Emitted by tools/generate_field_accessors.py from
 
-             push ebp / mov ebp, esp / mov eax, dword ptr [ebp + 8] / mov dword ptr [ecx + 0xa34], eax / pop ebp / ret 4
 
-         The name is the ADDRESS, not an invention, and `self` is a void
-         pointer because this body needs `this` to be nothing more than a
-         pointer and an offset - the class it belongs to is not established.
-         The adapter declares 1 stack dword(s) so it
-         cleans 4 bytes, taken from the body's own `ret` -
-         the only statement of this function's arity that exists, since it has
-         no mangled name. Declaring fewer would leave them on the caller's
-         stack.
-// RECOVERY_ROLE: SCAFFOLD Untyped raw-field or constant adapter; real method ownership and named member relationships remain recovery obligations.
-// ORIGINAL: 0x00589750 sub_589750 0x00589750-0x00589760 BYTE_EXACT
-// symbol    ?field_accessor_00589750_redirect@@YIXPAX0H@Z
-// size      16 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall field_accessor_00589750_redirect(void *self, void *, int stack0) {
-    uint8_t *const bytes = static_cast<uint8_t *>(self);
-    *reinterpret_cast<uint32_t *>(bytes + 0xa34) = static_cast<uint32_t>(stack0);
-}
 
-/*
-Purpose: Copy 2 argument(s) into field(s) of `this`.
-         Emitted by tools/generate_field_accessors.py from
 
-             push ebp / mov ebp, esp / mov eax, dword ptr [ebp + 8] / mov edx, dword ptr [ebp + 0xc] / mov dword ptr [ecx], eax / mov dword ptr [ecx + 4], edx / pop ebp / ret 8
 
-         The name is the ADDRESS, not an invention, and `self` is a void
-         pointer because this body needs `this` to be nothing more than a
-         pointer and an offset - the class it belongs to is not established.
-         The adapter declares 2 stack dword(s) so it
-         cleans 8 bytes, taken from the body's own `ret` -
-         the only statement of this function's arity that exists, since it has
-         no mangled name. Declaring fewer would leave them on the caller's
-         stack.
-// RECOVERY_ROLE: SCAFFOLD Untyped raw-field or constant adapter; real method ownership and named member relationships remain recovery obligations.
-// ORIGINAL: 0x00590CB0 sub_590cb0 0x00590CB0-0x00590CC2 BYTE_EXACT
-// symbol    ?field_accessor_00590cb0_redirect@@YIXPAX0HH@Z
-// size      18 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall field_accessor_00590cb0_redirect(void *self, void *, int stack0, int stack1) {
-    uint8_t *const bytes = static_cast<uint8_t *>(self);
-    *reinterpret_cast<uint32_t *>(bytes + 0x0) = static_cast<uint32_t>(stack0);
-    *reinterpret_cast<uint32_t *>(bytes + 0x4) = static_cast<uint32_t>(stack1);
-}
 
 /*
 Purpose: Copy 1 argument(s) into field(s) of `this`.

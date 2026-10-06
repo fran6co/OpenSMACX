@@ -83,6 +83,5 @@ void __fastcall nullsub_0062ee80_redirect(void *self, void *);
 void __fastcall nullsub_0062ee90_redirect(void *self, void *);
 void __fastcall nullsub_00631a10_redirect(void *self, void *);
 int __fastcall video_unk7_redirect(void *self, void *, int, int);
-void __fastcall nullsub_00639380_redirect(void *self, void *);
 void __fastcall nullsub_0063c500_redirect(void *self, void *, int);
 void __fastcall nullsub_0063c9c0_redirect(void *self, void *);

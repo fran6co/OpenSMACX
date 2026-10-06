@@ -25,7 +25,8 @@ def actual_source():
     signatures={"model_close":"void CaviarData::close()",
         "model_init":"int CaviarData::init(char *name)","renderer_ctor":"Caviar::Caviar()",
         "renderer_close":"void Caviar::close()",
-        "renderer_init":"void Caviar::init()", "normalise":"void __cdecl vox_normalise_vector("}
+        "renderer_init":"void Caviar::init()", "instance_ctor":"VoxInstance::VoxInstance()",
+        "normalise":"void __cdecl vox_normalise_vector("}
     return {"header":header,
             "model_dtor":braced(header,header.index("~CaviarData()")),
             "renderer_dtor":braced(header,header.index("~Caviar()")),
@@ -99,6 +100,8 @@ def run_host(tmp_path,parts):
             static_assert(!std::is_trivially_destructible<CaviarData>::value,"loaded models own records");
             static_assert(std::is_same<decltype(CaviarData().record()),const CvrRecord*>::value,"read-only model accessor");
             static_assert(std::is_same<decltype(CaviarData().fileDescriptor_),int>::value,"integer CRT descriptor");
+            VoxInstance blank_instance;
+            require(!blank_instance.instance_colour_ && !blank_instance.instance_vector_ && !blank_instance.instance_matrix_);
             CvrRecord first={},second={},third={};models={&first,&second,&third};
             char name[]="model.cvr";
             {
@@ -172,7 +175,7 @@ def test_actual_model_and_instance_lifetimes(tmp_path):
     result=run_host(tmp_path,actual_source());assert result.returncode==0,result.stderr
 
 
-@pytest.mark.parametrize("damage",["no_model_dtor","no_renderer_dtor","short_array","wrong_release","model_clear","model_fd_close","wrong_owner"])
+@pytest.mark.parametrize("damage",["no_model_dtor","no_renderer_dtor","short_array","wrong_release","model_clear","model_fd_close","wrong_owner","instance_vector_not_zero"])
 def test_lifetime_damage_controls(tmp_path,damage):
     parts=actual_source()
     if damage=="no_model_dtor":parts["model_dtor"]=parts["model_dtor"].replace("close();","")
@@ -181,6 +184,7 @@ def test_lifetime_damage_controls(tmp_path,damage):
     elif damage=="wrong_release":parts["renderer_close"]=parts["renderer_close"].replace("free(slots_[index].instance_colour_)","free(slots_[index].instance_vector_)")
     elif damage=="model_clear":parts["model_close"]=parts["model_close"].replace("record_ = nullptr;","record_ = nullptr; field_0_ = 0;")
     elif damage=="model_fd_close":parts["model_dtor"]=parts["model_dtor"].replace("close();","close(); _close(fileDescriptor_);")
+    elif damage=="instance_vector_not_zero":parts["instance_ctor"]=parts["instance_ctor"].replace("instance_vector_(0)","instance_vector_(reinterpret_cast<VOX_Vect *>(1))")
     else:parts["renderer_dtor"]=parts["renderer_dtor"].replace("close();","caviar_free_record(reinterpret_cast<CvrRecord*>(slots_[0].instance_matrix_)); close();")
     result=run_host(tmp_path,parts);assert result.returncode==42
 

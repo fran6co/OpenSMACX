@@ -11,6 +11,7 @@
 class FactionProfileWin : public GraphicWin {
  public:
   void initialize(int faction_id, int profile_mode);
+  void set_faction_id(int faction_id);
   int show_profile();
 
  private:

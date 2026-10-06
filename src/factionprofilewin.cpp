@@ -9,6 +9,14 @@
 
 #include <string.h>
 
+// ORIGINAL: 0x00589750 sub_589750 0x00589750-0x00589760 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:0x00589750-0x00589760 stores its argument at receiver+0xA34", "source:src/factionprofilewin.h RECOVERY_MEMBER faction_id_ at +0xA34, anchored by 0x00589760", "pinned/current owner:0x00589760 initialize writes faction_id_ and profile_mode_ at +0xA34/+0xA38"], "reason": "Carry the one-word receiver store into the existing FactionProfileWin member that owns the anchored faction_id_ field; class role and method spelling remain provisional."}
+// symbol    ?set_faction_id@FactionProfileWin@@QAEXH@Z
+// kind      game
+void FactionProfileWin::set_faction_id(int faction_id) {
+  faction_id_ = faction_id;
+}
+
 // ORIGINAL: 0x00589760 sub_589760 0x00589760-0x0058986A;0x00660240-0x00660255
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x00589760-0x0058986A stores the arguments at receiver+0xA34/+0xA38, frame fields and RECT, then calls GraphicWin initialization/fill and the slot-1 show dispatch", "image:0x00660240-0x00660255 is the local Buffer unwind funclet and remains the stack lifetime in the source body"], "reason": "Carry the complete seed identity and both image spans into the typed initialize member. FactionProfileWin remains a provisional role name; original class identity and allocation/caller registration are unproved."}
 // symbol    ?initialize@FactionProfileWin@@QAEXHH@Z

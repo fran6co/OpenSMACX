@@ -37,11 +37,28 @@ int main() {
   callbacks.invoke_text(&output_storage, 23, 29);
   assert(help_calls == 0 && text_calls == 0);
 
-  callbacks.help = record_help;
-  callbacks.append_text = record_text;
+  callbacks.set_callbacks(record_help, record_text);
   callbacks.invoke_help(-17);
   callbacks.invoke_text(&output_storage, 41, 53);
   assert(help_calls == 1 && help_value == -17);
   assert(text_calls == 1 && text_output == &output_storage);
   assert(text_value == 41 && text_extra == 53);
+
+  // Each field is updated independently; null resets must clear a
+  // previously installed callback rather than preserve stale state.
+  callbacks.set_callbacks(0, record_text);
+  callbacks.invoke_help(61);
+  callbacks.invoke_text(&output_storage, 67, 71);
+  assert(help_calls == 1 && help_value == -17);
+  assert(text_calls == 2 && text_value == 67 && text_extra == 71);
+  callbacks.set_callbacks(record_help, 0);
+  callbacks.invoke_help(73);
+  callbacks.invoke_text(&output_storage, 79, 83);
+  assert(help_calls == 2 && help_value == 73);
+  assert(text_calls == 2);
+  callbacks.set_callbacks(0, 0);
+  assert(callbacks.help == 0 && callbacks.append_text == 0);
+  callbacks.invoke_help(89);
+  callbacks.invoke_text(&output_storage, 97, 101);
+  assert(help_calls == 2 && text_calls == 2);
 }

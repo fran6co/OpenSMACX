@@ -396,6 +396,8 @@ struct DatalinkEntryCallbacks {
   DatalinkHelpCallback help;
   DatalinkTextCallback append_text;
 
+  void set_callbacks(DatalinkHelpCallback help_callback,
+                     DatalinkTextCallback text_callback);
   void invoke_help(int value) const;
   void invoke_text(void *output, int value, int extra) const;
 };

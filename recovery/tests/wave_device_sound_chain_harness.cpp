@@ -10,11 +10,13 @@ typedef unsigned char uint8_t;
 class OriginalObject {};
 #define ORIGINAL(object) reinterpret_cast<OriginalObject *>(object)
 #define protected public
+// LIVE_DEVICE_BASE_DECL
 // LIVE_FADE_DECLARATION
 // LIVE_SOUND_DECLARATION
 #undef protected
 // LIVE_CHAIN_STORAGE
 // LIVE_SOUND_DOUBLES
+// LIVE_FADE_CONSTRUCTOR
 // LIVE_ATTACH
 // LIVE_DETACH
 // LIVE_DESTRUCTOR
@@ -28,8 +30,16 @@ struct EAX_REVERB_PROPERTIES;
 // LIVE_DEVICE_DECLARATION
 #undef private
 // LIVE_SLOT_DISPATCH
-Wave_Device::Wave_Device() : device_14_(0) {}
+SoundDeviceBase::SoundDeviceBase()
+    : field_4_(0), volume_8_(0), field_C_(0), field_10_(0), device_14_(0),
+      field_18_(0), field_1C_(0) {}
+SoundDeviceBase::~SoundDeviceBase() {}
+Wave_Device::Wave_Device() { device_14_ = 0; }
 Wave_Device::~Wave_Device() {}
+int Wave_Device::init(void *, unsigned long) { return 0; }
+int Wave_Device::release() { return 0; }
+int Wave_Device::get_ndevices() { return 0; }
+int Wave_Device::get_description(unsigned long, char *, unsigned long) { return 0; }
 int Wave_Device::create_device(unsigned long) { assert(false); return 0; }
 int Wave_Device::delete_device() { assert(false); return 0; }
 void Wave_Device::unk_slot2() { assert(false); }

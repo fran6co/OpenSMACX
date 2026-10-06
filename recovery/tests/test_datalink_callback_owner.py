@@ -13,6 +13,10 @@ from recovery.tests.test_pact_ascent import ROOT, definition
     ("help(value);", "help(value + 1);"),
     ("append_text(output, value, extra);", "append_text(output, extra, value);"),
     ("help(value);", "(void)value;"),
+    ("help = help_callback;", "help = 0;"),
+    ("append_text = text_callback;", "append_text = 0;"),
+    ("help = help_callback;", "if (help_callback != 0) help = help_callback;"),
+    ("append_text = text_callback;", "if (text_callback != 0) append_text = text_callback;"),
 ])
 def test_actual_callback_row_methods(tmp_path, mutant):
     source_root = ROOT
@@ -23,6 +27,8 @@ def test_actual_callback_row_methods(tmp_path, mutant):
 
     source = (source_root / "src/datalink.cpp").read_text()
     bodies = definition(
+        source, r"void DatalinkEntryCallbacks::set_callbacks\([^)]*\)"
+    ) + "\n" + definition(
         source, r"void DatalinkEntryCallbacks::invoke_help\([^)]*\) const"
     )
     bodies += "\n" + definition(

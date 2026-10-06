@@ -23,17 +23,20 @@ def test_typed_switch_matches_complete_original_body_and_chain_target(chain):
                               tuple(Span(a, b) for a, b in row.image_spans),
                               row.symbol or row.name, "src/wave_device.cpp")
     passed = []
+    reports = []
     for flags, owners in zip(settings.flag_sets, trials):
         objects = {**owners, "src/wave_device.cpp": Coff(compiler(path, (), flags + settings.layout_flags))}
         targets, _ = object_targets(storage, objects)
         assert targets == {HEAD: 0x90DB20, TAIL: 0x90DB1C}
         result, = check_objects([binding], objects, image, external_targets=targets)
-        passed.append(result["boundary"] == result["bytes"] == result["references"] == "pass")
+        reports.append(result)
+        passed.append(all(result.get(dimension) == "pass"
+                          for dimension in ("result", "boundary", "bytes", "references")))
         if passed[-1]:
             damaged, = check_objects([binding], objects, image,
                                      external_targets={HEAD: targets[TAIL], TAIL: targets[HEAD]})
             assert damaged["references"] == "fail", damaged
-    assert any(passed), "no fixed compiler trial reproduces the complete typed switch"
+    assert any(passed), reports
 
 
 def test_wave_attribute_override_occupies_the_original_sound_slot(family):
@@ -67,9 +70,10 @@ def run_switch(tmp_path, monkeypatch):
     run_recovered_harness(tmp_path, monkeypatch, "wave_device_sound_chain_harness.cpp",
         [*CHAIN_HANDLERS, ("// LIVE_SELECT", "src/wave_device.cpp", 0x4C5030)], declarations=[
             *CHAIN_DECLARATIONS,
+            ("// LIVE_DEVICE_BASE_DECL", "src/sounddevice.h", "class SoundDeviceBase {", "static_assert(sizeof(SoundDeviceBase)"),
             ("// LIVE_SOUND_DOUBLES", "recovery/tests/sound_chain_storage_harness.cpp", "// SOUND_LINK_DOUBLES_BEGIN", "// SOUND_LINK_DOUBLES_END"),
             ("// LIVE_GROUP_TYPES", "src/wave_device.h", "struct WaveGroupNode {", " /*\n  * Wave_Device class"),
-            ("// LIVE_DEVICE_DECLARATION", "src/wave_device.h", "class Wave_Device {", "// THE OBJECT, at 0x0090D978"),
+            ("// LIVE_DEVICE_DECLARATION", "src/wave_device.h", "class Wave_Device : public SoundDeviceBase {", "// THE OBJECT, at 0x0090D978"),
             ("// LIVE_SLOT_DISPATCH", "src/original_seam.h", "template <class Fn>\nFn &vtable_slot", "/*\n * The same slot as a POINTER-TO-MEMBER REFERENCE"),
         ])
 

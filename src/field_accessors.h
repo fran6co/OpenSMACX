@@ -1,7 +1,6 @@
 #pragma once
 #include "stdafx.h"
 
-uint32_t __fastcall field_accessor_00406840_redirect(void *, void *);
 void __fastcall field_accessor_00447ab0_redirect(void *, void *);
 uint32_t __fastcall field_accessor_004c75a0_redirect(void *, void *);
 void * __fastcall field_accessor_004c8090_redirect(void *, void *);
@@ -11,16 +10,12 @@ uint32_t __fastcall field_accessor_005da6b0_redirect(void *, void *, int, int, i
 uint32_t __fastcall field_accessor_005e2460_redirect(void *, void *, int, int, int, int, int);
 uint32_t __fastcall field_accessor_005e2470_redirect(void *, void *, int, int, int, int, int);
 uint32_t __fastcall field_accessor_00600320_redirect(void *, void *);
-void * __fastcall field_accessor_00616b20_redirect(void *, void *);
 void * __fastcall field_accessor_006346c0_redirect(void *, void *);
 void __fastcall field_accessor_006346f0_redirect(void *, void *);
 void * __fastcall field_accessor_00634b70_redirect(void *, void *);
-void __fastcall field_accessor_00406b20_redirect(void *, void *, int, int, int);
 uint32_t __fastcall field_accessor_00616d80_redirect(void *, void *, int, int, int);
 void __fastcall field_accessor_0061f785_redirect(void *, void *, int, int, int, int, int, int, int);
 void __fastcall field_accessor_0050f640_redirect(void *, void *, int);
-void __fastcall field_accessor_00589750_redirect(void *, void *, int);
-void __fastcall field_accessor_00590cb0_redirect(void *, void *, int, int);
 void __fastcall field_accessor_005f05c0_redirect(void *, void *, int);
 void __fastcall field_accessor_005d4540_redirect(void *, void *);
 void __fastcall field_accessor_004c80c0_redirect(void *, void *, int);

@@ -4173,3 +4173,15 @@ int __cdecl sub_48cf00(BasePop *owner, int vehicle) {
     owner->set_redraw_callback(veh_sprite_draw);
     return result;
 }
+
+// ORIGINAL: 0x00406B20 nullsub_27 0x00406B20-0x00406B23 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:0x00406B20-0x00406B23 is ret 0xC, consuming three stack arguments", "source:src/basepop.h BasePop::on_adjust_button_placement has three pointer parameters and an empty body", "RECOVERY_SHARED rows in basepop.h, basewin.cpp and diplowin.cpp preserve distinct folded identities"], "reason": "Map the existing BasePop no-op virtual default body, preserving the shared 0x406B20 slot and the other class-specific folded owners."}
+// symbol    ?on_adjust_button_placement@BasePop@@UAEXPAH00@Z
+// kind      game
+// body      src/basepop.h
+
+// ORIGINAL: 0x00406840 sub_406840 0x00406840-0x00406846 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:0x00406840-0x00406846 returns constant 1", "source:src/basepop.h BasePop::on_exec is the typed virtual returning 1", "source:src/basepop.h RECOVERY_SHARED preserves the folded BasePop identity with evidence address 0x00602600; the pinned BasePop primary table is 0x006698D4"], "reason": "Map the existing BasePop virtual default body, not the raw-this adapter; retain the shared vtable identity and every other folded owner."}
+// symbol    ?on_exec@BasePop@@UAEHXZ
+// kind      game
+// body      src/basepop.h

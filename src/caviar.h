@@ -204,7 +204,7 @@ struct CaviarData;
 // 1/12/36 bytes per entry; Caviar::close releases all three. The renderer's
 // destructor tails close without a second array-destructor traversal.
 struct VoxInstance {
-  VoxInstance() : instance_colour_(0), instance_vector_(0), instance_matrix_(0) { }
+  VoxInstance();
   uint8_t *instance_colour_;
   // RECOVERY_MEMBER: v3 VoxInstance instance_vector_ VOX_Vect* 0x4 0x00616DE0
   VOX_Vect *instance_vector_;
