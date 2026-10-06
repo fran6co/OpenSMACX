@@ -1067,7 +1067,6 @@ int __cdecl veh_unmoved(int veh_id);                          // 0x005C1AB0 ?veh
 char *__cdecl get_pact_hood(int faction_id, int faction_id_with);              // 0x0058FB00 ?get_pact_hood@@YAPADHH@Z
 void __cdecl diplomacy_ends(int faction_id, int faction_id_with);              // 0x0053E470 ?diplomacy_ends@@YAXHH@Z
 int __cdecl diplo_lock(int faction_id);                           // 0x00539820 ?diplo_lock@@YAHH@Z
-int __cdecl break_treaty(int faction_id, int faction_id_with, int treaty);         // 0x0055F770 ?break_treaty@@YAHHHH@Z
 void __cdecl double_cross(int faction_id, int faction_id_with, int treaty);        // 0x0050BCC0 ?double_cross@@YAXHHH@Z
 int __cdecl upgrade_cost(int facility_id, int base_id, int flags);         // 0x004EFD50 ?upgrade_cost@@YAHHHH@Z
 int __cdecl resource_yield(int x, int y, int resource_kind, int faction_id, int a5); // 0x004E7DC0 ?resource_yield@@YAHHHHHH@Z
@@ -2721,14 +2720,10 @@ static int *const EditorBrushButtonGroupSelection = (int *)0x007CD2D8;
 // it is clear. The object is source-owned in game.cpp.
 // Source-owned session flag is declared in game.h.
 
-// break_treaty (0x0055F770) and action_destroy (0x004CAA50) are still
-// original and have no pending_bodies forwarder yet, so destroy reaches them
-// through local __cdecl seams - plain function pointers, since no receiver is
-// involved (original_seam.h's member-pointer machinery is for __thiscall).
+// action_destroy (0x004CAA50) is still original and has no current
+// source definition, so this Console call keeps its local __cdecl seam.
 typedef void (__cdecl *func_action_destroy)(int veh_id, int choice, int a3, int a4);
 static func_action_destroy ActionDestroy = (func_action_destroy)0x004CAA50;
-typedef int (__cdecl *func_break_treaty)(int faction_id, int faction_id_with, int treaty);
-static func_break_treaty BreakTreaty = (func_break_treaty)0x0055F770;
 
 // BaseWin::on_redraw (0x0041E790) and BaseWin::exit (0x0041A4C0) are declared
 // in basewin.h but not recovered - like its draw_facilities/garrison_click
@@ -6374,7 +6369,7 @@ void Console::destroy(int veh_id) {
     int owner;
     const int territory = whose_territory(faction, vx, vy, &owner, 0);
     if ((territory >= 0) && (territory != faction)) {
-        if (BreakTreaty(faction, territory, 7) != 0) {
+        if (break_treaty(faction, territory, 7) != 0) {
             NetDaemonNet.unlock_veh();
             return;
         }

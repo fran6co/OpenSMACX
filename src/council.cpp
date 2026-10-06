@@ -18,6 +18,7 @@
 #include "stdafx.h"
 #include "temp.h"
 #include "council.h"
+#include "councwin.h"
 #include "base.h"
 #include "alpha.h"
 #include "console.h"
@@ -32,9 +33,9 @@
 #include "sprite.h"
 #include "strings.h"
 #include "technology.h"
+#include "veh.h"
 #include <string.h>
 
-int __cdecl wants_prop(int, int, int);
 int __cdecl diplo_lock(int);
 void __cdecl diplo_unlock();
 
@@ -66,6 +67,13 @@ int CouncilNotifyPluralSlots[8];
 // proposal and selected faction in that order; keep the existing shared array.
 // RECOVERY_OBJECT: v1 0x0068BF38 ?CouncilPendingMessageArgs@@3PAHA
 int CouncilPendingMessageArgs[3] = {-1, -1, -1};
+
+// Original .data text, as bounded by the pinned image's terminating NULs.
+static const char CouncilSunspotPcx[] = "solar_sm.pcx";
+static const char CouncilSunspotLabel[] = "SUNSPOTSNO2";
+static const char CouncilPbemLabel[] = "COUNCILHOT";
+static const char CouncilBlockedPcx[] = "council_sm.pcx";
+static const char CouncilBlockedLabel[] = "COUNCILNEEDALL";
 
 // ORIGINAL: 0x0052C880 ?call_council@@YAXH@Z 0x0052C880-0x0052DA98;0x0065DB70-0x0065DF45
 // RECOVERY_BINDING: v1 {"reason":"Recover the complete faction-taking council dialog in its existing owner with genuine automatic Popup and Sprite lifetimes, typed game/faction storage and live post-modal reads.","evidence":["Pinned52C880 and its65DB70 lifetime tail establish the proposal selection, cooldown and network dispatch paths.","Existing Rules.min_turns_councils and Players/PlayersData members account for the observed storage; no executable-address aliases or manual vtable writes.","The original s14 local is initialized only on eligible proposal1 paths; alternate_selection retains that unresolved stack-residue obligation rather than inventing a default."]}
@@ -549,6 +557,858 @@ council_resolution:
         return;
     }
 }
+
+/*
+Purpose: Say whether a faction may call the planetary council this turn:
+         alien factions never, the scenario flag pair (GameState's two
+         council bits) gates, an active sunspot blocks, the PBEM pair
+         blocks, the currently-spying base's owner is always admitted, and
+         otherwise some other live non-alien faction must share a
+         treaty-or-vendetta status bit with the caller.
+
+// ORIGINAL: 0x0052C670 ?can_call_council@@YAHHH@Z 0x0052C670-0x0052C87D
+// RECOVERY_BINDING: v1 {"evidence": ["pinned 0x52C670..0x52C87D council caller and message paths", "source:src/council.h already declares can_call_council and src/council.cpp owns CouncilPbemGate", "0x009A64E9 is byte 1 of GameDataStateStorage.fields_.lock_masks_.enable_mask_; use its named alive_mask_ view", "0x00939284 is ConsoleGlobal.faction_id_ at member offset 0x23BD4", "pinned PE .data bounded literals including NUL: 0x68C020 solar_sm.pcx through 0x68C02D; 0x68C030 SUNSPOTSNO2 through 0x68C03B; 0x68C03C COUNCILHOT through 0x68C046; 0x68C048 council_sm.pcx through 0x68C056; 0x68C058 COUNCILNEEDALL through 0x68C066. No emitted C++ data symbol is asserted before root's fresh physical-symbol observation."], "reason": "council admission query in the existing council owner"}
+// TRIED: MISMATCH #41 'mov' vs 'and', not chased further. The loop's triple early-exit (0x93f660==0 / two bit-mask misses) is a `goto blocked;` out of the for-loop rather than a `continue`, matching that all three targets jump clean out of the scan (not to its per-iteration increment).
+// size      525 bytes
+// prototype int (__cdecl ?can_call_council@@YAHHH@Z)(int32 factionID, int32 announce)
+// callers   3   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005D9610
+// notes     Seed provenance (TRIED): MISMATCH #41 'mov' vs 'and' was not
+//           chased further; the scan's triple early-exit is a goto out of
+//           the faction walk, whose exit test stays an address compare
+//           against Players[8].rule_flags - not measured exact.
+Return Value: 1 the council may be called, 0 not
+Status: Coverage transcription - unclaimed body, seed
+        git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/0052c670.cpp retained.
+*/
+int __cdecl can_call_council(int faction_id, int announce) {
+    if ((Players[faction_id].rule_flags & 0x80) != 0) {
+        return 0;
+    }
+
+    if ((static_cast<unsigned char>(GameDataStateStorage.fields_.net_turn_flags_) & 4) != 0) {
+        const unsigned char state =
+            static_cast<unsigned char>(GameDataStateStorage.fields_.game_state_);
+        if ((state & 0x40) == 0 || (state & 0x80) == 0) {
+            return 0;
+        }
+    }
+
+    if (GameDataStateStorage.fields_.sunspot_duration_ > 0) {
+        if (announce != 0 && faction_id == ConsoleGlobal.faction_id_ &&
+            ((1 << (faction_id & 0x1F)) &
+             static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_)) != 0) {
+            NetMsgPrimary.pop(CouncilSunspotLabel, 0xffffec78, 0,
+                             CouncilSunspotPcx);
+        }
+        return 0;
+    }
+
+    if (IsMultiplayerPBEM != 0 && CouncilPbemGate != 0) {
+        if (announce != 0 && faction_id == ConsoleGlobal.faction_id_ &&
+            ((1 << (faction_id & 0x1F)) &
+             static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_)) != 0) {
+            NetMsgPrimary.pop(CouncilPbemLabel, 0xffffec78, 0,
+                             static_cast<const char *>(0));
+        }
+        return 0;
+    }
+
+    const int spy_index = GameDataStateStorage.fields_.secret_project_.empath_guild();
+    if (spy_index >= 0 &&
+        Bases[spy_index].faction_id_current == faction_id) {
+        return 1;
+    }
+
+    {
+        const unsigned char *rec = reinterpret_cast<const unsigned char *>(
+            &Players[1].rule_flags);
+        int i = 1;
+        for (;;) {
+            if ((*rec & 0x80) == 0) {
+                const unsigned int bit_i = 1u << (i & 0x1F);
+                if ((static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_) &
+                     static_cast<unsigned char>(bit_i)) != 0 &&
+                    i != faction_id) {
+                    if ((PlayersData[faction_id].diplo_treaties[i] & 0x8000008) == 0) {
+                        bool check_more = true;
+                        if ((static_cast<unsigned char>(GameDataStateStorage.fields_.game_state_) & 0x80) !=
+                            0) {
+                            const unsigned int bit_a1 = 1u << (faction_id & 0x1F);
+                            if ((static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) &
+                                 bit_a1) != 0) {
+                                if (faction_id == ConsoleGlobal.faction_id_) {
+                                    check_more = false;
+                                }
+                            }
+                        }
+                        if (check_more) {
+                            if (IsMultiplayerNet == 0) {
+                                goto blocked;
+                            }
+                            const unsigned int mask =
+                                GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFF;
+                            const unsigned int bit_a1b =
+                                1u << (faction_id & 0x1F);
+                            if ((mask & bit_a1b) == 0) {
+                                goto blocked;
+                            }
+                            if ((mask & bit_i) == 0) {
+                                goto blocked;
+                            }
+                        }
+                    }
+                }
+            }
+            rec += 0x59C;
+            ++i;
+            if (rec >= reinterpret_cast<const unsigned char *>(
+                           &Players[8].rule_flags)) {
+                break;
+            }
+        }
+        return 1;
+    blocked:
+        if (announce != 0 && faction_id == ConsoleGlobal.faction_id_ &&
+            (static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) &
+             (1 << (faction_id & 0x1F))) != 0) {
+            NetMsgPrimary.pop(CouncilBlockedLabel, 0xffffec78, 0,
+                             CouncilBlockedPcx);
+        }
+        return 0;
+    }
+}
+
+/*
+Purpose: Score one council proposal for a faction: proposal 0 (propose
+         anything) picks the option the faction wants most via wants_prop
+         and keeps it unless the council's vote row is empty or the target
+         faction's treaty word flags an obstruction; a numbered proposal
+         adjusts wants_prop's base by the target faction's treaty bits and
+         falls back to the seated vote row, a against/for verdict, or a
+         deterministic turn-based abstention.
+
+// ORIGINAL: 0x0052BE60 ?council_get_vote@@YAHHHH@Z 0x0052BE60-0x0052BF58
+// RECOVERY_BINDING: v1 {"evidence": ["pinned 0x52BE60..0x52BF58 and callers from call_council/CouncWin/faction vote paths", "source:src/council.h already declares council_get_vote", "source:PlayerData exposes the three original vote/treaty rows; typed lookup already preserves the 0x833 index relation"], "reason": "council vote query in the existing council owner"}
+// TRIED: `result < votes` for the loop-max compare (jle/jge polarity flip at #18) - flipped to `votes > result` to match, fixed. The surviving gap is a shared-epilogue layout choice, not semantics: the original falls through to `return a3` and jumps away to the shared tail for `return TableC[idx]`; every source order tried (plain if, inverted if, goto to a shared label) makes VC6 pick the opposite layout. Best reached is 96.3% mnemonic similarity (#32 je vs jne). 0x0096C9F8/0x0096CDE0/0x0096CE0C are indexed by `faction*2099+idx` (0x833 = 2099, matching spying_recovery.h's SpyingStatusTable stride at the same 0x0096C9F8 base) so they are `extern T name[]`, not the scaffold's folded `static T *const`, per the indexed-table-base lever.
+// size      248 bytes
+// callers   5   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0052AEB0
+// notes     Seed provenance (TRIED): `votes > result` (not `result < votes`)
+//           for the loop-max compare, and the surviving gap is the shared
+//           epilogue layout (je vs jne at #32, 96.3% similarity) - the
+//           original falls through to `return a3` and jumps away for the
+//           row read; every source order tried picks the opposite layout.
+Return Value: the voting faction id (or -3 for none), -1 against, -2 for,
+              or the seated vote row's faction
+Status: Coverage transcription - unclaimed body; the seed
+        git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/0052be60.cpp is retained until this product
+        definition measures fresh BYTE_EXACT.
+*/
+int __cdecl council_get_vote(int faction, int proposal, int target_faction) {
+    int result;
+
+    if (proposal == 0) {
+        result = 0;
+        target_faction = -3;
+        int i = 1;
+        do {
+            int votes = wants_prop(faction, 0, i);
+            if (votes > result) {
+                result = votes;
+                target_faction = i;
+            }
+            ++i;
+        } while (i < 8);
+
+        if (PlayersData[faction].unk_29[0] == 0) {
+            return target_faction;
+        }
+        result = PlayersData[faction].unk_30[0];
+        if ((PlayersData[faction].diplo_treaties[result] & 0x40c30) != 0) {
+            return target_faction;
+        }
+    } else {
+        result = wants_prop(faction, proposal, target_faction);
+        unsigned int status = PlayersData[faction].diplo_treaties[target_faction];
+        if ((status & 0x10) != 0) {
+            --result;
+        }
+        if ((status & 0x20) != 0) {
+            --result;
+        }
+        if ((status & 1) != 0) {
+            ++result;
+        }
+        int direct = PlayersData[faction].unk_29[proposal];
+        if (direct != 0) {
+            return direct;
+        }
+        if (result > 0) {
+            return -1;
+        }
+        if (result < 0) {
+            return -2;
+        }
+        result = -1 - (GameDataStateStorage.fields_.turn_current_num_ + faction) % 3;
+    }
+    return result;
+}
+
+static int wants_prop_signed_difference(int left, uint32_t right) {
+    const uint32_t bits = static_cast<uint32_t>(left) - right;
+    int result;
+    std::memcpy(&result, &bits, sizeof(result));
+    return result;
+}
+
+static int wants_prop_signed_sum(int left, uint32_t right) {
+    const uint32_t bits = static_cast<uint32_t>(left) + right;
+    int result;
+    std::memcpy(&result, &bits, sizeof(result));
+    return result;
+}
+
+static int wants_prop_signed_product(int left, int right) {
+    const uint32_t bits = static_cast<uint32_t>(left) *
+                          static_cast<uint32_t>(right);
+    int result;
+    std::memcpy(&result, &bits, sizeof(result));
+    return result;
+}
+
+static int wants_prop_signed_add(int left, int right) {
+    const uint32_t bits = static_cast<uint32_t>(left) +
+                          static_cast<uint32_t>(right);
+    int result;
+    std::memcpy(&result, &bits, sizeof(result));
+    return result;
+}
+
+// Score council proposal alternatives through the native ten-case dispatch.
+// ORIGINAL: 0x0052AEB0 ?wants_prop@@YAHHHH@Z 0x0052AEB0-0x0052BE32
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/0052aeb0.cpp original entry and complete span; pinned instruction review of all proposal blocks and common leader tail", "Native actor-row offset plus 96CA14 resolves to the low bytes of diplo_treaties[7..0], with an early break at the first unmarked rank; altitude threshold belongs to AltNatural[3]", "recovery/tests/test_wants_prop_behavior.py actual-source proposal controls; original seed preserved", "pinned original 0x52AEB0..0x52BE31 full dispatch and common leader tail; preserve case grouping and selector >10 behavior", "Pinned 0x52AEBC zeroes EDX; 0x52AEC1 stores it in the return local; unsigned 0x52AEC4 branches selectors >10 to 0x52BE28, whose common epilogue returns that local. Jump-table selector 10 alone targets 0x52BE21, stores -9, then joins the epilogue.", "At 0x52BA12 the climate loop cursor is 0x0097D042 (Bases+2, the y member); bitmask(26) supplies offset 3/mask 4, and 0x52BAAB reads cursor+0x8A+3 = record+0x8F, matching Base.facilities_built[3] at +0x8C plus index 3; current `(facilities_built[3] & 4)` is equivalent.", "source:src/council.cpp owns council vote, proposal, base, faction and map dependencies; councwin.h declares CouncilWindow", "the four static wants_prop_signed_* helpers move unchanged with their sole consumer", "retained TRIED text is historical and remains intact; fresh pinned clarification and original default/case-10 behavior are recorded here"], "reason": "source-owned council proposal evaluator with the original ten-case dispatch, shared scoring helpers and selector default"}
+// TRIED: only case 0 (propose alliance) is transcribed with real fidelity, and only through the point the original reaches a shared continuation at 0x52B3C2 that this body does not chase further - the remaining ~2/3 of that case (great_satan rivalry, per-faction relationship-table gating via the `esi*65+esi`-stride tables seen in propose_treaty) is not modelled. Cases 1/2/3-4/5-7/8/9 are short plausible stand-ins using the same six callees (council_votes/wants_to_attack/great_satan/has_tech/bit_count/ bitmask) with invented scoring, not transcriptions - each real case is itself a dense multi-hundred-instruction block this pass did not read in full. Jump-table case grouping (3/4 and 5/6/7 share a target; case 10 and >10 both fall to the -9 default) is read from the image and correct. MISMATCH #2 (prologue, sub vs push - the SEH/frame shape here isn't modelled either).
+int __cdecl wants_prop(int faction, int proposal, int option) {
+    int score = 0;
+
+    switch (proposal) {
+    case 0: {
+        // Native 0x52AED1..0x52AF5A rejects a dead option, applies the
+        // expansion/alien filter, then rejects options below two or more
+        // living factions by council votes. The live-byte mask is byte 1
+        // of LockEnableMask, matching the native read at 0x009A64E9.
+        const uint32_t living = (GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8) & 0xFFu;
+        if ((living & (1u << option)) == 0) {
+            return -9;
+        }
+        if (ExpansionEnabled != 0 &&
+            (Players[option].rule_flags & RFLAG_ALIEN) != 0) {
+            return -9;
+        }
+
+        const int option_votes = council_votes(option);
+        int factions_above_option = 0;
+        for (int other = 1; other < MaxPlayerNum; ++other) {
+            if (other == option ||
+                (((GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8) & 0xFFu) & (1u << other)) == 0) {
+                continue;
+            }
+            if (council_votes(other) > option_votes) {
+                ++factions_above_option;
+            }
+        }
+        if (factions_above_option >= 2) {
+            return -9;
+        }
+
+        bool score_flag = false;
+        bool bypass_governor_tail = false;
+        int factions_above_actor = 0;
+        for (int actor_peer = 1; actor_peer < MaxPlayerNum; ++actor_peer) {
+            if (actor_peer != faction) {
+                const int peer_votes = council_votes(actor_peer);
+                const int actor_votes = council_votes(faction);
+                if (actor_votes <= peer_votes) ++factions_above_actor;
+            }
+        }
+        if (option == faction) {
+            score = factions_above_actor > 1 ? 5 : 6;
+            if (factions_above_actor == 0) {
+                ++score;
+            }
+            if (GameDataStateStorage.fields_.governor_faction_ < 0) {
+                score = score * 2 - 1;
+            } else if (GameDataStateStorage.fields_.governor_faction_ == faction) {
+                score += 2;
+            } else if ((PlayersData[faction].diplo_treaties[GameDataStateStorage.fields_.governor_faction_] &
+                        0x70u) != 0) {
+                ++score;
+            }
+        } else {
+            const uint32_t actor_to_option =
+                PlayersData[faction].diplo_treaties[option];
+            const bool direct_surrender =
+                (actor_to_option & (DTREATY_PACT | DTREATY_HAVE_SURRENDERED)) ==
+                (DTREATY_PACT | DTREATY_HAVE_SURRENDERED);
+            if (direct_surrender) {
+                score = 99;
+                bypass_governor_tail = true;
+            } else {
+                for (int leader = 1; leader < MaxPlayerNum; ++leader) {
+                    if (leader != faction &&
+                        (PlayersData[faction].diplo_treaties[leader] &
+                         (DTREATY_PACT | DTREATY_HAVE_SURRENDERED)) ==
+                            (DTREATY_PACT | DTREATY_HAVE_SURRENDERED) &&
+                        CouncilWindow.leader_label_kind_[leader] == option) {
+                        score = 999;
+                    }
+                }
+                if (GameDataStateStorage.fields_.governor_faction_ == faction) {
+                    score -= 2;
+                }
+                if ((actor_to_option & DTREATY_VENDETTA) != 0) {
+                    --score;
+                }
+                if ((actor_to_option & 0x60u) != 0) {
+                    --score;
+                }
+                if ((actor_to_option & DTREATY_ATROCITY_VICTIM) != 0) {
+                    --score;
+                }
+
+                if (score != 0) {
+                    bypass_governor_tail = true;
+                } else if ((actor_to_option & DTREATY_PACT) != 0) {
+                    score = 1;
+                    if (wants_to_attack(faction, option, 0) == 0 &&
+                        wants_to_attack(option, faction, 0) == 0) {
+                        score = 2;
+                    }
+                } else {
+                    const int negated_option_fight = wants_prop_signed_difference(
+                        0, static_cast<uint32_t>(PlayersData[option].ai_fight));
+                    if (PlayersData[faction].ai_fight == negated_option_fight) {
+                        --score;
+                    }
+                    if (Players[faction].soc_ideology_category >= 0) {
+                        const int model = static_cast<int>(
+                            PlayersData[option].soc_category_pending.models_[
+                                Players[faction].soc_ideology_category]);
+                        if (model != 0) {
+                            if (model == Players[faction].soc_ideology_model) {
+                                ++score;
+                            } else {
+                                --score;
+                                score_flag = true;
+                            }
+                        }
+                    }
+                    if (Players[faction].soc_anti_ideology_category >= 0) {
+                        const int model = static_cast<int>(
+                            PlayersData[option].soc_category_pending.models_[
+                                Players[faction].soc_anti_ideology_category]);
+                        if (model != 0 &&
+                            model == Players[faction].soc_anti_ideology_model) {
+                            --score;
+                            score_flag = true;
+                        }
+                    }
+                    if (Players[faction].soc_ideology_category ==
+                            Players[option].soc_anti_ideology_category &&
+                        Players[faction].soc_ideology_model ==
+                            Players[option].soc_anti_ideology_model) {
+                        score -= 2;
+                        score_flag = true;
+                    }
+                    if ((PlayersData[faction].diplo_treaties[option] & 2u) != 0 &&
+                        wants_to_attack(faction, option, 0) == 0 &&
+                        wants_to_attack(option, faction, 0) == 0) {
+                        ++score;
+                    }
+                    if (great_satan(option, 0) != 0) {
+                        --score;
+                    } else {
+                        const uint32_t humans = GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFu;
+                        const uint32_t option_bit = 1u << option;
+                        if ((humans & option_bit) != 0) {
+                            if (IsMultiplayerNet != 0 &&
+                                option == static_cast<int>(GameDataStateStorage.fields_.ranking_faction_id_unk1_) &&
+                                static_cast<int>(PlayersData[option].ranking) >= 5) {
+                                --score;
+                            } else if (option != static_cast<int>(GameDataStateStorage.fields_.ranking_faction_id_unk1_) ||
+                                       PlayersData[option].diff_level < 2) {
+                                ++score;
+                            }
+                        } else {
+                            int selected_rank = 7;
+                            for (int rank = 7; rank >= 0; --rank) {
+                                const int ranked_faction =
+                                    static_cast<int>(GameDataStateStorage.fields_.faction_rankings_[rank]);
+                                const uint8_t relation_flags = static_cast<uint8_t>(
+                                    PlayersData[faction].diplo_treaties[rank]);
+                                if ((humans & (1u << ranked_faction)) == 0 &&
+                                    (relation_flags & 0x70u) == 0) {
+                                    break;
+                                }
+                                --selected_rank;
+                            }
+                            if (option == selected_rank) {
+                                ++score;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Native 0x52B2E4..0x52B3BF applies the elected-governor relation,
+        // human/AI difficulty and treaty gates before the shared label tail.
+        if (option != faction && !bypass_governor_tail && GameDataStateStorage.fields_.governor_faction_ >= 0 &&
+            GameDataStateStorage.fields_.governor_faction_ != option && GameDataStateStorage.fields_.governor_faction_ != faction) {
+            const uint32_t governor_treaty =
+                PlayersData[faction].diplo_treaties[GameDataStateStorage.fields_.governor_faction_];
+            const uint32_t actor_to_option = PlayersData[faction].diplo_treaties[option];
+            if ((governor_treaty & DTREATY_PACT) != 0 &&
+                (actor_to_option & DTREATY_PACT) == 0) {
+                score -= 2;
+            }
+            if ((governor_treaty & 2u) != 0 &&
+                (actor_to_option & 2u) == 0) {
+                --score;
+            }
+            if ((governor_treaty & DTREATY_VENDETTA) != 0) {
+                ++score;
+            }
+            if ((governor_treaty & 0x60u) != 0) {
+                score += 2;
+            }
+        }
+        if (option != faction && !bypass_governor_tail && score >= 0 &&
+            factions_above_actor <= 1) {
+            ++score;
+        }
+        if (option != faction && !bypass_governor_tail && score == 0 &&
+            GameDataStateStorage.fields_.governor_faction_ == option) {
+            score = 1;
+        }
+        if (option != faction && !bypass_governor_tail &&
+            (PlayersData[faction].diplo_treaties[option] & DTREATY_PACT) == 0) {
+            const uint32_t humans = GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFu;
+            const uint32_t option_bit = 1u << option;
+            if ((humans & option_bit) != 0 &&
+                PlayersData[option].diff_level >= 3 && score > -2) {
+                --score;
+            }
+            if ((humans & option_bit) != 0 && (GameDataStateStorage.fields_.game_rules_ & 0x40u) != 0 &&
+                score > -2) {
+                --score;
+            }
+        }
+
+        // The common 0x52B3C2 tail first adjusts for a selected leader, then
+        // handles the self-option floor and the flag set by ideology scoring.
+        const int selected_leader = CouncilWindow.leader_label_kind_[option];
+        if (selected_leader > 0 && selected_leader != option) {
+            if (option == faction) {
+                return score >= 1 ? score : 1;
+            }
+            --score;
+            if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u << option)) == 0) {
+                score /= 2;
+            }
+        }
+        if (option == faction) {
+            return score >= 1 ? score : 1;
+        }
+        if (score_flag &&
+            (PlayersData[faction].diplo_treaties[option] & DTREATY_PACT) == 0 &&
+            score > 0) {
+            score = 0;
+        }
+        const uint32_t current_humans = GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFu;
+        if ((current_humans & (1u << faction)) == 0 &&
+            (current_humans & (1u << option)) == 0) {
+            return score;
+        }
+        if ((PlayersData[faction].diplo_treaties[option] & 0x08000000u) != 0) {
+            return score;
+        }
+        if (score > 0) {
+            score = 0;
+        }
+        return score;
+    }
+
+    case PROP_SALVAGE_UNITY_CORE: {
+        // Native 0x52B724 initializes the owner's score from the live player
+        // record, then compares energy and maintenance/commercial positions
+        // against every other numbered faction. The signed division at
+        // 0x52B7D3..0x52B7D9 truncates toward zero.
+        const PlayerData &owner = PlayersData[faction];
+        if (owner.ai_power != 0) {
+            ++score;
+        }
+        if (owner.ai_fight < 0) {
+            --score;
+        }
+        if (owner.energy_reserves >= 500) {
+            --score;
+        }
+        if (owner.energy_reserves < 100) {
+            ++score;
+        }
+        if (owner.energy_reserves < 200) {
+            ++score;
+        }
+
+        int relative_energy = 0;
+        for (int other = 1; other < MaxPlayerNum; ++other) {
+            if (other == faction) {
+                continue;
+            }
+            const PlayerData &peer = PlayersData[other];
+            if (peer.energy_reserves > owner.energy_reserves) {
+                ++relative_energy;
+            } else {
+                --relative_energy;
+            }
+
+            const int peer_net = wants_prop_signed_difference(
+                peer.unk_13, peer.maint_cost_total);
+            const int owner_net = wants_prop_signed_difference(
+                owner.unk_13, owner.maint_cost_total);
+            if (peer_net > owner_net) {
+                ++relative_energy;
+            } else {
+                --relative_energy;
+            }
+        }
+        if (relative_energy <= 0) {
+            return score;
+        }
+        score += relative_energy / 2;
+        return score;
+    }
+
+    case PROP_UNITE_SUPREME_LEADER: {
+        const uint32_t living = (GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8) & 0xFFu;
+        if ((living & (1u << option)) == 0) {
+            return -9;
+        }
+        if (ExpansionEnabled &&
+            (Players[option].rule_flags & RFLAG_ALIEN) != 0) {
+            return -9;
+        }
+
+        const int option_votes = council_votes(option);
+        int higher_vote_factions = 0;
+        for (int other = 1; other < MaxPlayerNum; ++other) {
+            if (other == option ||
+                (((GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8) & 0xFFu) & (1u << other)) == 0) {
+                continue;
+            }
+            if (council_votes(other) > option_votes) {
+                ++higher_vote_factions;
+            }
+        }
+        if (higher_vote_factions >= 2) {
+            return -9;
+        }
+
+        if (option == faction) {
+            return PlayersData[faction].ranking == 7 ? 5 : 0;
+        }
+
+        const uint32_t treaty = PlayersData[faction].diplo_treaties[option];
+        if ((treaty & DTREATY_PACT) != 0) {
+            if ((treaty & DTREATY_HAVE_SURRENDERED) != 0) {
+                return 2;
+            }
+            if ((GameDataStateStorage.fields_.game_rules_ & RULES_VICTORY_COOPERATIVE) == 0) {
+                return 0;
+            }
+
+            const PlayerData &actor = PlayersData[faction];
+            const PlayerData &candidate = PlayersData[option];
+            if (candidate.ranking > actor.ranking &&
+                candidate.pop_total > actor.pop_total &&
+                GameDataStateStorage.fields_.turn_current_num_ > 200) {
+                return 1;
+            }
+            if (actor.ranking > candidate.ranking &&
+                actor.pop_total > candidate.pop_total) {
+                return -2;
+            }
+            return GameDataStateStorage.fields_.turn_current_num_ > 200 ? 0 : -1;
+        }
+
+        if ((treaty & DTREATY_ATROCITY_VICTIM) != 0) {
+            return -5;
+        }
+        if ((treaty & (DTREATY_VENDETTA | DTREATY_WANT_REVENGE)) != 0) {
+            return -4;
+        }
+
+        const PlayerData &actor = PlayersData[faction];
+        const PlayerData &candidate = PlayersData[option];
+        if (candidate.ranking != 7 || actor.ranking > 5 ||
+            GameDataStateStorage.fields_.turn_current_num_ < 200 ||
+            candidate.mil_strength_1 < wants_prop_signed_sum(
+                actor.mil_strength_1,
+                static_cast<uint32_t>(actor.mil_strength_1)) ||
+            candidate.mil_strength_2 < wants_prop_signed_sum(
+                actor.mil_strength_2,
+                static_cast<uint32_t>(actor.mil_strength_2)) ||
+            candidate.pop_total < wants_prop_signed_sum(
+                actor.pop_total, static_cast<uint32_t>(actor.pop_total))) {
+            return -4;
+        }
+        return -2;
+    }
+
+    case PROP_GLOBAL_TRADE_PACT:
+    case PROP_REPEAL_GLOBAL_TRADE_PACT: {
+        const PlayerData &owner = PlayersData[faction];
+        for (int other = 1; other < MaxPlayerNum; ++other) {
+            if (other == faction) {
+                continue;
+            }
+            const PlayerData &peer = PlayersData[other];
+            if (peer.tech_commerce_bonus > owner.tech_commerce_bonus) {
+                --score;
+            }
+            score += bit_count(static_cast<int>(
+                owner.diplo_treaties[other] & 3u));
+        }
+
+        if (owner.ai_wealth != 0) {
+            ++score;
+        }
+        if (owner.ai_power != 0) {
+            --score;
+        }
+        if (owner.ai_fight > 0) {
+            --score;
+        }
+        if (owner.soc_effect_pending.values_[SocialEffect::ECONOMY] > 1) {
+            ++score;
+        }
+        if (owner.soc_effect_pending.values_[SocialEffect::ECONOMY] < 0) {
+            --score;
+        }
+        if (proposal == PROP_REPEAL_GLOBAL_TRADE_PACT) {
+            score = -score;
+        }
+        return score;
+    }
+
+    case PROP_REPEAL_UN_CHARTER:
+    case PROP_REINSTATE_UN_CHARTER: {
+        const bool repeal = proposal == PROP_REPEAL_UN_CHARTER;
+        const int chassis_technology = Chassis[8].preq_tech;
+        const int weapon_technology = Weapon[16].preq_tech;
+        const bool actor_has_chassis =
+            has_tech(chassis_technology, faction) != 0;
+        bool actor_has_weapon = false;
+        if (actor_has_chassis) {
+            actor_has_weapon = has_tech(weapon_technology, faction) != 0;
+        }
+
+        // A rival with either technology supplies the initial signed score;
+        // it does not bypass the subsequent faction-policy adjustments.
+        int charter_score = 0;
+        if (!actor_has_chassis || !actor_has_weapon) {
+            for (int other = 1; other < MaxPlayerNum; ++other) {
+                if (has_tech(weapon_technology, other) ||
+                    has_tech(chassis_technology, other)) {
+                    charter_score = repeal ? -2 : 2;
+                    break;
+                }
+            }
+        }
+
+        const PlayerData &owner = PlayersData[faction];
+        if (owner.planet_busters == 0) {
+            if ((repeal && charter_score < 0) ||
+                (!repeal && charter_score > 0)) {
+                charter_score += repeal ? -1 : 1;
+            }
+            for (int other = 1; other < MaxPlayerNum; ++other) {
+                if (PlayersData[other].planet_busters != 0) {
+                    charter_score += repeal ? -1 : 1;
+                }
+            }
+        }
+
+        if (repeal) {
+            if (owner.ai_fight < 0) {
+                --charter_score;
+            }
+            if (owner.ai_tech != 0 && owner.ai_growth != 0) {
+                charter_score -= 2;
+            }
+            charter_score = wants_prop_signed_add(charter_score, owner.atrocities);
+            if (charter_score < 0) {
+                return charter_score;
+            }
+            if (owner.ai_fight > 0) {
+                ++charter_score;
+            }
+            if (owner.ai_power == 0) {
+                return charter_score;
+            }
+            return charter_score + 1;
+        }
+
+        if (owner.ai_fight < 0) {
+            ++charter_score;
+        }
+        if (owner.ai_tech != 0 && owner.ai_growth != 0) {
+            charter_score += 2;
+        }
+        charter_score = wants_prop_signed_difference(
+            charter_score, static_cast<uint32_t>(owner.atrocities));
+        if (charter_score > 0) {
+            return charter_score;
+        }
+        if (owner.ai_fight > 0) {
+            --charter_score;
+        }
+        if (owner.ai_power == 0) {
+            return charter_score;
+        }
+        return charter_score - 1;
+    }
+
+    case PROP_LAUNCH_SOLAR_SHADE:
+    case PROP_INCREASE_SOLAR_SHADE:
+    case PROP_MELT_POLAR_CAPS: {
+        const PlayerData &owner = PlayersData[faction];
+        const int proposal_direction =
+            proposal == PROP_MELT_POLAR_CAPS ? 1 : -1;
+        int climate_score = 0;
+
+        // Native 0x52B8FA..0x52B9F3 sets the initial proposal pressure from
+        // current council sea-level direction, the faction's psi rule, and
+        // the sign of its social-growth setting. These are ordered tests,
+        // not a normalized policy score.
+        if (owner.ai_growth != 0 || Players[faction].rule_psi != 0) {
+            if (MapSeaLevelCouncil == 0 ||
+                ((MapSeaLevelCouncil > 0) == (proposal_direction > 0))) {
+                climate_score = -2;
+                if (Players[faction].rule_psi != 0) {
+                    climate_score = -4;
+                }
+            } else {
+                climate_score = 2;
+                if (Players[faction].rule_psi != 0) {
+                    climate_score = 4;
+                }
+            }
+        }
+
+        if ((MapSeaLevelCouncil > 0) == (proposal_direction > 0) &&
+            MapSeaLevelCouncil != 0) {
+            climate_score -= 2;
+        } else if (MapSeaLevelCouncil == 0) {
+            // Native 0x52B99C goes straight to the decrement at 0x52B9EF.
+            --climate_score;
+        } else {
+            if (MapSeaLevel >= 0) {
+                ++climate_score;
+            }
+            if (owner.ai_power != 0) {
+                climate_score += proposal_direction > 0 ? -1 : 1;
+            }
+            if (owner.ai_wealth != 0) {
+                climate_score += proposal_direction > 0 ? 1 : -1;
+            }
+            if (owner.ai_tech != 0) {
+                climate_score += proposal_direction > 0 ? 1 : -1;
+            }
+        }
+
+        int base_weight_sum = 0;
+        for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
+            const Base &base = Bases[base_id];
+            const Map &tile = map_tiles()[(base.x >> 1) +
+                                          base.y * static_cast<int>(MapLongitude)];
+            const int altitude = tile.climate & 0xE0;
+            int terrain_weight = 0;
+            const int depth = wants_prop_signed_difference(
+                tile.contour, static_cast<uint32_t>(MapSeaLevel));
+
+            if (altitude < 0x60) {
+                if (proposal_direction < 0) {
+                    const int cutoff = wants_prop_signed_difference(
+                        static_cast<int>(AltNatural[3]),
+                        WorldBuilder.sea_level_rises);
+                    terrain_weight = depth < cutoff ? 1 : 2;
+                } else {
+                    terrain_weight = -1;
+                }
+            } else if (proposal_direction < 0) {
+                if (altitude > 0x60) {
+                    terrain_weight = -1;
+                }
+            } else if ((base.facilities_built[3] & 4) == 0 ||
+                       altitude != 0x60) {
+                const int cutoff = wants_prop_signed_sum(
+                    static_cast<int>(AltNatural[3]),
+                    WorldBuilder.sea_level_rises);
+                if (depth <= cutoff) {
+                    terrain_weight = -3;
+                } else if (altitude == 0x60) {
+                    terrain_weight = -1;
+                } else {
+                    terrain_weight = 1;
+                }
+            }
+
+            int contribution = wants_prop_signed_product(
+                static_cast<int>(base.population_size), terrain_weight);
+            contribution = wants_prop_signed_product(contribution, 2);
+            // Native loop cursor starts at Bases + 2 (the y member), so
+            // byte [cursor + 2] is the base owner, not the map's val2.
+            if (base.faction_id_current == faction) {
+                base_weight_sum = wants_prop_signed_add(base_weight_sum,
+                    wants_prop_signed_product(contribution, 2));
+            } else {
+                const int treaty_weight = bit_count(static_cast<int>(
+                    owner.diplo_treaties[base.faction_id_current] & 0x00C0030u));
+                const int penalty = wants_prop_signed_product(contribution,
+                                                              treaty_weight);
+                base_weight_sum = wants_prop_signed_difference(base_weight_sum,
+                                                               static_cast<uint32_t>(penalty));
+            }
+        }
+
+        int population_divisor = owner.pop_total;
+        if (population_divisor < 1) {
+            population_divisor = 1;
+        } else if (population_divisor > 0x1869F) {
+            population_divisor = 0x1869F;
+        }
+        climate_score = wants_prop_signed_add(
+            climate_score, base_weight_sum / population_divisor);
+        return climate_score;
+    }
+
+    case 10:
+        // Jump-table entry 10 selects the explicit rejection block.
+        return -9;
+    default:
+        // The unsigned selector guard returns the zero-initialized score.
+        return 0;
+    }
+    return score;
+}
+
 
 
 /*

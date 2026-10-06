@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def source_body(signature: str) -> str:
-    source = (ROOT / "src/leaf_recoveries.cpp").read_text()
+    source = (ROOT / "src/council.cpp").read_text()
     start = source.index(signature)
     brace = source.index("{", start)
     depth = 0
@@ -123,22 +123,29 @@ struct Map {
 struct RulesWorldbuilder { uint32_t sea_level_rises; };
 Player Players[MaxPlayerNum] = {};
 int ExpansionEnabled = 0;
-uint32_t LockEnableMask = 0;
-int GovernorFaction = -1;
+struct GameDataLockMaskView { uint32_t enable_mask_; };
+struct GameDataStateFields {
+    GameDataLockMaskView lock_masks_;
+    int governor_faction_;
+    uint32_t ranking_faction_id_unk1_;
+    uint32_t faction_rankings_[MaxPlayerNum];
+    uint32_t game_rules_;
+    int turn_current_num_;
+    int base_current_count_;
+};
+struct GameDataStateWindowStub {
+    GameDataStateFields fields_;
+    GameDataStateWindowStub() : fields_{} { fields_.governor_faction_ = -1; }
+} GameDataStateStorage;
 int IsMultiplayerNet = 0;
-uint32_t RankingFactionIDUnk1 = 0;
-uint32_t FactionRankings[MaxPlayerNum] = {};
-int TurnCurrentNum = 0;
 Base Bases[512] = {};
 Map map_storage[256] = {};
 Map *MapTiles = map_storage;
 Map *&map_tiles() { return MapTiles; }
-int BaseCurrentCount = 0;
 uint32_t MapLongitude = 16;
 int MapSeaLevel = 0, MapSeaLevelCouncil = 0;
 uint32_t AltNatural[11] = {};
 RulesWorldbuilder WorldBuilder = {};
-uint32_t GameRules = 0;
 int vote_counts[MaxPlayerNum] = {};
 int council_vote_calls = 0;
 int council_votes(int faction) { ++council_vote_calls; return vote_counts[faction]; }
@@ -150,7 +157,7 @@ int attack_mutates_human_mask = 0;
 int wants_to_attack(int faction, int target, int) {
     ++wants_to_attack_calls;
     if (attack_mutates_human_mask != 0 && faction == 0 && target == 1) {
-        LockEnableMask |= 1u << target;
+        GameDataStateStorage.fields_.lock_masks_.enable_mask_ |= 1u << target;
     }
     if (attack_mutates_great_satan != 0 && faction == 0 && target == 1) {
         great_satan_result[target] = 1;
@@ -224,12 +231,12 @@ int main() {
 
     // Proposal 0's early native gates reject before relationship scoring.
     std::memset(vote_counts, 0, sizeof(vote_counts));
-    LockEnableMask = 0;
+    GameDataStateStorage.fields_.lock_masks_.enable_mask_ = 0;
     council_vote_calls = 0;
     assert(wants_prop(0, 0, 1) == -9);
     assert(council_vote_calls == 0);
 
-    LockEnableMask = ((1u << 1) | (1u << 2) | (1u << 3)) << 8;
+    GameDataStateStorage.fields_.lock_masks_.enable_mask_ = ((1u << 1) | (1u << 2) | (1u << 3)) << 8;
     ExpansionEnabled = 1;
     Players[1].rule_flags = RFLAG_ALIEN;
     council_vote_calls = 0;
@@ -239,7 +246,7 @@ int main() {
 
     // With expansion disabled the native branch skips the alien test and
     // proceeds to council_votes; it does not compare the flag to option id.
-    LockEnableMask = ((1u << 1) | (1u << 2) | (1u << 3)) << 8;
+    GameDataStateStorage.fields_.lock_masks_.enable_mask_ = ((1u << 1) | (1u << 2) | (1u << 3)) << 8;
     council_vote_calls = 0;
     (void)wants_prop(0, 0, 1);
     assert(council_vote_calls == 17);
@@ -258,11 +265,11 @@ int main() {
 
     // Native 0x52AF52..5A rejects when at least two living factions have
     // more votes than the option; zero higher-vote factions proceeds.
-    LockEnableMask = ((1u << 1) | (1u << 2) | (1u << 3)) << 8 | (1u << 1);
+    GameDataStateStorage.fields_.lock_masks_.enable_mask_ = ((1u << 1) | (1u << 2) | (1u << 3)) << 8 | (1u << 1);
     vote_counts[1] = 5;
     vote_counts[2] = 1;
     vote_counts[3] = 1;
-    GovernorFaction = -1;
+    GameDataStateStorage.fields_.governor_faction_ = -1;
     assert(wants_prop(1, 0, 1) == 13);
     vote_counts[1] = 1;
     vote_counts[2] = 2;
@@ -275,11 +282,11 @@ int main() {
     std::memset(vote_counts, 0, sizeof(vote_counts));
     std::memset(CouncilWindow.leader_label_kind_, 0,
                 sizeof(CouncilWindow.leader_label_kind_));
-    LockEnableMask = (1u << 1) << 8 | (1u << 1);
+    GameDataStateStorage.fields_.lock_masks_.enable_mask_ = (1u << 1) << 8 | (1u << 1);
     vote_counts[1] = 1;
     vote_counts[2] = 2;
     vote_counts[3] = 3;
-    GovernorFaction = -1;
+    GameDataStateStorage.fields_.governor_faction_ = -1;
     assert(wants_prop(1, 0, 1) == 9); // self-option: five, then native 2*x-1
     CouncilWindow.leader_label_kind_[1] = 2;
     assert(wants_prop(1, 0, 1) == 9); // self leader returns before decrement
@@ -288,7 +295,7 @@ int main() {
     // Native computes this actor-relative count before the self/nonself split.
     // Candidate screening costs three vote calls here; actor comparison then
     // reads both votes for all seven numbered factions because actor is 0.
-    LockEnableMask = ((1u << 1) | (1u << 2) | (1u << 3)) << 8 | 1u;
+    GameDataStateStorage.fields_.lock_masks_.enable_mask_ = ((1u << 1) | (1u << 2) | (1u << 3)) << 8 | 1u;
     vote_counts[0] = 1;
     vote_counts[1] = 0;
     vote_counts[2] = 0;
@@ -323,23 +330,23 @@ int main() {
     Players[0].soc_anti_ideology_category = -1;
     Players[1].soc_ideology_category = -1;
     Players[1].soc_anti_ideology_category = 1;
-    LockEnableMask = ((1u << 1) | (1u << 2) | (1u << 3)) << 8 | (1u << 1);
+    GameDataStateStorage.fields_.lock_masks_.enable_mask_ = ((1u << 1) | (1u << 2) | (1u << 3)) << 8 | (1u << 1);
     vote_counts[0] = 1;
     PlayersData[0].ai_fight = 0;
     PlayersData[1].ai_fight = 0;
     PlayersData[1].diff_level = 3;
-    RankingFactionIDUnk1 = 1;
-    GameRules = 0;
+    GameDataStateStorage.fields_.ranking_faction_id_unk1_ = 1;
+    GameDataStateStorage.fields_.game_rules_ = 0;
     assert(wants_prop(0, 0, 1) == -2);
     PlayersData[1].diff_level = 0;
-    GameRules = 0x40;
+    GameDataStateStorage.fields_.game_rules_ = 0x40;
     assert(wants_prop(0, 0, 1) == 0);
-    GameRules = 0;
-    RankingFactionIDUnk1 = 0;
+    GameDataStateStorage.fields_.game_rules_ = 0;
+    GameDataStateStorage.fields_.ranking_faction_id_unk1_ = 0;
 
     // The pact score begins at one. A nonzero first attack result jumps past
     // the non-pact great_satan check; the callback mutation must not be read.
-    LockEnableMask = ((1u << 1) | (1u << 2) | (1u << 3)) << 8;
+    GameDataStateStorage.fields_.lock_masks_.enable_mask_ = ((1u << 1) | (1u << 2) | (1u << 3)) << 8;
     PlayersData[0].diplo_treaties[1] = DTREATY_PACT;
     PlayersData[1].diplo_treaties[0] = 0;
     great_satan_result[1] = 0;
@@ -363,7 +370,7 @@ int main() {
     attack_mutates_human_mask = 1;
     assert(wants_prop(0, 0, 1) == 0);
     attack_mutates_human_mask = 0;
-    LockEnableMask &= ~(1u << 1);
+    GameDataStateStorage.fields_.lock_masks_.enable_mask_ &= ~(1u << 1);
     PlayersData[0].diplo_treaties[1] = 0;
 
     // 0x52AF85 increments on other_votes >= actor_votes, including ties.
@@ -375,7 +382,7 @@ int main() {
     std::memset(PlayersData, 0, sizeof(PlayersData));
     Players[0].soc_ideology_category = -1;
     Players[0].soc_anti_ideology_category = -1;
-    LockEnableMask = ((1u << 1) | (1u << 2) | (1u << 3)) << 8 | 1u;
+    GameDataStateStorage.fields_.lock_masks_.enable_mask_ = ((1u << 1) | (1u << 2) | (1u << 3)) << 8 | 1u;
     vote_counts[0] = 0;
     vote_counts[1] = 5;
     vote_counts[2] = 2;
@@ -388,15 +395,15 @@ int main() {
     great_satan_result[1] = 0;
 
     std::memset(PlayersData, 0, sizeof(PlayersData));
-    std::memset(FactionRankings, 0, sizeof(FactionRankings));
+    std::memset(GameDataStateStorage.fields_.faction_rankings_, 0, sizeof(GameDataStateStorage.fields_.faction_rankings_));
     for (int rank = 0; rank < MaxPlayerNum; ++rank) {
-        FactionRankings[rank] = static_cast<uint32_t>(rank);
+        GameDataStateStorage.fields_.faction_rankings_[rank] = static_cast<uint32_t>(rank);
     }
     Players[0].soc_ideology_category = -1;
     Players[0].soc_anti_ideology_category = -1;
     PlayersData[0].ai_fight = -1;
     PlayersData[6].ai_fight = 1;
-    LockEnableMask = ((1u << 2) | (1u << 3) | (1u << 6)) << 8 | 1u;
+    GameDataStateStorage.fields_.lock_masks_.enable_mask_ = ((1u << 2) | (1u << 3) | (1u << 6)) << 8 | 1u;
     vote_counts[6] = 5;
     vote_counts[2] = 2;
     vote_counts[3] = 3;
@@ -407,7 +414,7 @@ int main() {
 
     std::memset(PlayersData, 0, sizeof(PlayersData));
     std::memset(vote_counts, 0, sizeof(vote_counts));
-    LockEnableMask = (1u << 1 | 1u << 2 | 1u << 3) << 8;
+    GameDataStateStorage.fields_.lock_masks_.enable_mask_ = (1u << 1 | 1u << 2 | 1u << 3) << 8;
     vote_counts[1] = 1; vote_counts[2] = 2; vote_counts[3] = 3;
     PlayersData[0].ranking = 0;
     PlayersData[0].pop_total = 100;
@@ -417,7 +424,7 @@ int main() {
     PlayersData[1].pop_total = 200;
     PlayersData[1].mil_strength_1 = 20;
     PlayersData[1].mil_strength_2 = 10;
-    TurnCurrentNum = 200;
+    GameDataStateStorage.fields_.turn_current_num_ = 200;
     // 0x52AF??'s second vote-count gate likewise rejects two or more
     // living factions above the option before relationship scoring.
     council_vote_calls = 0;
@@ -431,10 +438,10 @@ int main() {
     assert(wants_prop(0, PROP_UNITE_SUPREME_LEADER, 1) == 2);
     PlayersData[0].diplo_treaties[1] = DTREATY_PACT;
     assert(wants_prop(0, PROP_UNITE_SUPREME_LEADER, 1) == 0);
-    GameRules = RULES_VICTORY_COOPERATIVE;
-    TurnCurrentNum = 200;
+    GameDataStateStorage.fields_.game_rules_ = RULES_VICTORY_COOPERATIVE;
+    GameDataStateStorage.fields_.turn_current_num_ = 200;
     assert(wants_prop(0, PROP_UNITE_SUPREME_LEADER, 1) == -1);
-    TurnCurrentNum = 201;
+    GameDataStateStorage.fields_.turn_current_num_ = 201;
     assert(wants_prop(0, PROP_UNITE_SUPREME_LEADER, 1) == 1);
     PlayersData[1].diplo_treaties[0] = 0;
     assert(wants_prop(1, PROP_UNITE_SUPREME_LEADER, 1) == 5);
@@ -447,7 +454,7 @@ int main() {
     assert(council_vote_calls == 0);
     ExpansionEnabled = 0;
     Players[1].rule_flags = 0;
-    GameRules = 0;
+    GameDataStateStorage.fields_.game_rules_ = 0;
 
     std::memset(PlayersData, 0, sizeof(PlayersData));
     std::memset(known_tech, 0, sizeof(known_tech));
@@ -490,7 +497,7 @@ int main() {
     AltNatural[3] = 10;
     WorldBuilder.sea_level_rises = 5;
     MapSeaLevelCouncil = 0;
-    BaseCurrentCount = 1;
+    GameDataStateStorage.fields_.base_current_count_ = 1;
     Bases[0].population_size = 3;
     Bases[0].faction_id_current = 0;
     MapTiles[0].climate = 0;
@@ -515,13 +522,13 @@ int main() {
     MapSeaLevelCouncil = 1;
     PlayersData[0].ai_growth = 0;
     Players[0].rule_psi = 0;
-    BaseCurrentCount = 0;
+    GameDataStateStorage.fields_.base_current_count_ = 0;
     assert(wants_prop(0, PROP_MELT_POLAR_CAPS, 0) == -2);
     PlayersData[0].ai_growth = 1;
     assert(wants_prop(0, PROP_MELT_POLAR_CAPS, 0) == -4);
     PlayersData[0].ai_growth = 0;
     MapSeaLevelCouncil = 0;
-    BaseCurrentCount = 1;
+    GameDataStateStorage.fields_.base_current_count_ = 1;
 
     MapTiles[0].climate = 0x60;
     MapTiles[0].contour = 0;
@@ -563,9 +570,10 @@ def test_native_proposal_scoring_phases():
 
 
 def test_controls_reject_stale_callback_state():
-    damaged = BODY.replace("LockEnableMask", "frozen_mask").replace(
+    mask = "GameDataStateStorage.fields_.lock_masks_.enable_mask_"
+    damaged = BODY.replace(mask, "frozen_mask").replace(
         "    int score = 0;",
-        "    const uint32_t frozen_mask = LockEnableMask;\n    int score = 0;",
+        f"    const uint32_t frozen_mask = {mask};\n    int score = 0;",
         1,
     )
     with pytest.raises(subprocess.CalledProcessError) as rejected:

@@ -64,7 +64,6 @@ void __cdecl clear_bunglist(int faction);
 int __cdecl veh_init(int prototype, int faction, int x, int y);
 void __cdecl veh_kill(int vehicle);
 int __cdecl veh_find(int x, int y, int faction, int exclude);
-int __cdecl wants_prop(int faction, int proposal, int option);
 static int diplo_add(int a, int b);
 static int diplo_sub(int a, int b);
 static int diplo_mul(int a, int b);
@@ -18456,6 +18455,283 @@ static void tech_trade_handle_pre_offer_rejection(
         return;
     }
 }
+
+/*
+Purpose: Should faction a1 refuse to honour faction a2's withdrawal
+         demand: gate on the pair's 0x800000 treaty word, then scan the
+         vehicles a2 runs toward a1's territory - skipping probe-plan
+         prototypes, ocean tiles and unplaced units - and return the
+         third faction that both holds the captured base chain and keeps
+         the treaties that make the hand-back profitable.
+
+// ORIGINAL: 0x00548DD0 ?dont_withdrawal@@YAHHH@Z 0x00548DD0-0x00548F7D
+// RECOVERY_BINDING: v1 {"evidence": ["pinned 0x548DD0 full body: faction treaty/prototype/vehicle and base state walk", "source:src/faction.h existing dont_withdrawal declaration and faction diplomacy callers", "source:src/faction.cpp owns the adjacent do_withdrawal and faction diplomacy logic"], "reason": "SRC faction diplomacy"}
+// TRIED: the per-base coordinate walk was spelled with a 0x9A stride; the image scales Bases by 0x134 (0x00548E94..0x548EA0), so the typed Bases[] walk replaces it.
+// size      429 bytes
+// prototype int (__cdecl ?dont_withdrawal@@YAHHH@Z)(int, int)
+// callers   ?   call targets   6
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004E3A50 0x004E3C60 0x004E3EF0 0x00628A50 0x00644F3A 0x0064FD20
+Return Value: the blocking faction id, or 0 to honour the demand
+Status: Coverage transcription - unclaimed body
+*/
+int __cdecl dont_withdrawal(int faction_id, int against_id) {
+    PopupDialogFactionID = against_id;
+    if ((PlayersData[faction_id].diplo_treaties[against_id] & 0x800000) == 0) {
+        return 0;
+    }
+    if (*ConsoleGroupCount <= 0) {
+        return 0;
+    }
+    for (int index = 0; index < *ConsoleGroupCount; ++index) {
+        const Veh &veh = Vehs[index];
+        if (veh.faction_id != against_id) {
+            continue;
+        }
+        if (VehPrototypes[veh.proto_id].plan == 0xB) {
+            continue;
+        }
+        const int x = veh.x;
+        const int y = veh.y;
+        const Map *tile = map_tiles() + MapLongitude * y + (x >> 1);
+        if ((tile->climate & 0xE0) < 0x60) {
+            continue;
+        }
+        const int base_idx = base_find(x, y, faction_id);
+        if (base_idx < 0) {
+            continue;
+        }
+        const int target_x = Bases[base_idx].x;
+        const int target_y = Bases[base_idx].y;
+        // The image computes both distances and reads nothing back.
+        abs(target_x - x);
+        abs(target_y - y);
+        if (whose_territory(faction_id, x, y, 0, 0) != against_id) {
+            continue;
+        }
+        if (veh.order != ORDER_MOVE_TO) {
+            continue;
+        }
+        const int base2 = base_at(veh.waypoint_x[1], veh.waypoint_y[1]);
+        if (base2 < 0) {
+            continue;
+        }
+        const uint8_t owner = Bases[base2].faction_id_current;
+        if (owner == faction_id || owner == against_id || owner == 0) {
+            continue;
+        }
+        if ((PlayersData[against_id].diplo_treaties[owner] & 0x10) == 0) {
+            continue;
+        }
+        const uint32_t pair = PlayersData[faction_id].diplo_treaties[owner];
+        if ((pair & 1) != 0) {
+            return owner;
+        }
+        if ((pair & 2) != 0 && DiplomacyProposalGateCount > 0) {
+            return owner;
+        }
+    }
+    return 0;
+}
+
+/*
+Purpose: Wait out the diplomatic lock: announce it, clamp the caller's
+         patience to ten seconds, and spin on the daemon's global-lock
+         request - pumping spock checks and re-asking NEEDGLOBAL after
+         each ten-second/count timeout - until the lock lands or the turn
+         loop is told to exit.
+
+// ORIGINAL: 0x00539820 ?diplo_lock@@YAHH@Z 0x00539820-0x005398BF BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned 0x539820..0x5398BF and original callers across faction, council, report and windows", "source:src/faction.cpp diplo_unlock owns the paired genuine NetDaemonNet unlock operation", "source:src/faction.h already declares diplo_lock; diplo_unlock remains unchanged"], "reason": "source-owned faction network diplomacy lock"}
+// size      159 bytes
+// prototype int (__cdecl ?diplo_lock@@YAHH@Z)(int a1)
+// callers   ?   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0051F1B0 0x00530AA0 0x005BF310 0x006262F0
+Return Value: 1 when the caller must back off (NEEDGLOBAL refused), else 0
+Status: Coverage transcription - claim pending re-measurement
+*/
+int __cdecl diplo_lock(int patience) {
+    int retry_count = 0;
+    log_say(DiploLabelGettingDIPLOMATICLOCK, 0, 0, 0);
+    if (patience != 0 && patience < 100) {
+        patience = 100;
+    }
+    DWORD(WINAPI *const get_time)() = timeGetTime;
+    DWORD start_time = get_time();
+    while (ExitTurnLoop == 0 && NetDaemonNet.add_global() != 0) {
+        check_spock();
+        const DWORD now = get_time();
+        if (patience != 0
+            && (now - start_time >= 10000
+                || (++retry_count, retry_count >= 10000))) {
+            if (X_pop(DiploLabelNEEDGLOBAL, 0) != 0) {
+                return 1;
+            }
+            retry_count = 0;
+            start_time = get_time();
+        }
+    }
+    return 0;
+}
+
+/*
+Purpose: Break a treaty between two factions and play the consequence:
+         stage the leader's name, title, faction noun and adjective through
+         parse_says with the record's own gender/plurality defaults, then
+         return which unilateral reaction applies - vendetta announcement
+         through the popup singleton, or the BREAKINGPACT/BREAKINGTREATY/
+         BREAKINGTRUCE warning pop when the pact, treaty or truce bit (and
+         not its already-broken shadow) is set in the spy-status flags.
+
+// ORIGINAL: 0x0055F770 ?break_treaty@@YAHHHH@Z 0x0055F770-0x0055F923
+// RECOVERY_BINDING: v1 {"evidence": ["pinned 0x55F770..0x55F923 and callers in Console, vehicle actions and ReportWin", "source:src/faction.h owns the existing diplomacy globals and player records used by this body", "source:src/console.cpp's former BreakTreaty pointer was an absolute call to this identity and is changed to the declaration below"], "reason": "source-owned faction treaty consequence operation"}
+// TRIED: byte-record table (stride 0x59c) plus extern uint32 flags array for the a2+a1*0x833 index; reaches #23 before a push/mov split in the parse_says argument staging
+// size      435 bytes
+// prototype int (__cdecl ?break_treaty@@YAHHHH@Z)(int32 factionID, int32 targetFactionID, int32 treatyBits)
+// callers   7   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0047A890 0x0048C0A0 0x0058FB00 0x00625EC0
+// notes     Seed provenance (TRIED): reaches #23, a push/mov split in the
+//           parse_says argument staging, so this body is not measured
+//           exact; the byte-record walk (Players' 0x59C stride) and the
+//           a2 + a1*0x833 spy-status index are the seed's proven shapes.
+Return Value: 1 a unilateral reaction fired, 0 otherwise
+Status: Coverage transcription - unclaimed body, seed
+        git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/0055f770.cpp retained.
+*/
+int __cdecl break_treaty(int faction_id, int target_faction_id,
+                         int treaty_bits) {
+    uint32_t flags = PlayersData[faction_id].diplo_treaties[target_faction_id];
+    if ((flags & 0x10) == 0 && (treaty_bits & flags) != 0) {
+        const Player &player = Players[target_faction_id];
+
+        PluralityDefault = 0;
+        GenderDefault = player.is_leader_female;
+        parse_says(0, player.title_leader, -1, -1);
+
+        GenderDefault = player.is_leader_female;
+        PluralityDefault = 0;
+        parse_says(1, player.name_leader, -1, -1);
+
+        GenderDefault = player.noun_gender;
+        PluralityDefault = player.is_noun_plural;
+        parse_says(2, player.noun_faction, -1, -1);
+
+        char *hood = get_pact_hood(faction_id, target_faction_id);
+        parse_says(3, hood, -1, -1);
+        parse_says(4, player.adj_name_faction, -1, -1);
+
+        flags = PlayersData[faction_id].diplo_treaties[target_faction_id];
+        if ((flags & 1) != 0) {
+            NetMsgPrimary.pop(DiploLabelBREAKINGPACT, 0xffffec78, 0,
+                             DiploLabelBreakSmPcx);
+            return 1;
+        }
+        if ((flags & 2) != 0) {
+            return popp(reinterpret_cast<const char *>(*ClimatePopupTitle),
+                        DiploLabelBREAKINGTREATY, 0,
+                        DiploLabelBreakSmPcx_7C0,
+                        reinterpret_cast<int (__cdecl *)()>(0)) == 0;
+        }
+        if ((flags & 4) != 0 && (flags & 0x10000) == 0) {
+            return popp(reinterpret_cast<const char *>(*ClimatePopupTitle),
+                        DiploLabelBREAKINGTRUCE, 0,
+                        DiploLabelBreakSmPcx_7E0,
+                        reinterpret_cast<int (__cdecl *)()>(0)) == 0;
+        }
+        if ((treaty_bits & 0x10000) == 0) {
+            return popp(reinterpret_cast<const char *>(*ClimatePopupTitle),
+                        DiploLabelBEGINVENDETTA, 0,
+                        DiploLabelBreakSmPcx_800,
+                        reinterpret_cast<int (__cdecl *)()>(0)) == 0;
+        }
+    }
+    return 0;
+}
+
+/*
+Purpose: Test whether two factions' territories are contiguous in one map
+         region: both must hold offensive vehicles there, the path scratch
+         flag clears across the map, and every pair of the two factions'
+         bases on same-region land tiles gets a Path::find probe with the
+         region/contiguity flags until one connects.
+
+// ORIGINAL: 0x0053A780 ?contiguous@@YAHHHHH@Z 0x0053A780-0x0053A97C
+// RECOVERY_BINDING: v1 {"evidence": ["pinned 0x53A780..0x53A97C reads faction regional vehicle counts, Bases, Map tiles and Paths", "source:src/faction.h already declares contiguous; source:src/path.h declares the actual Paths owner", "original seed TRIED prologue ordering is retained; no new byte claim is made"], "reason": "faction territory/path operation"}
+// TRIED: prologue register order (mov ecx,[ebp+0x10] before pushes vs a push earlier) - not chased; while/if structure matches disasm.
+// size      508 bytes
+// prototype int (__cdecl ?contiguous@@YAHHHHH@Z)(int32 factionID1, int32 factionID2, int32 region, int32 flag)
+// callers   5   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005B9F20 0x00625EC0
+// notes     Seed provenance (TRIED): the surviving gap is the prologue
+//           register order (mov ecx,[ebp+0x10] before the pushes), not the
+//           while/flag structure - not measured exact.
+Return Value: 1 a connecting path exists, 0 otherwise
+Status: Coverage transcription - unclaimed body, seed
+        git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/0053a780.cpp retained.
+*/
+int __cdecl contiguous(int faction_id1, int faction_id2, int region,
+                       int flag) {
+    if (region != 0) {
+        if (PlayersData[faction_id1].region_total_offensive_vehs[region] == 0) {
+            return 0;
+        }
+        if (PlayersData[faction_id2].region_total_offensive_vehs[region] == 0) {
+            return 0;
+        }
+    }
+
+    for (uint32_t fill_idx = 0; fill_idx < MapArea; ++fill_idx) {
+        map_tiles()[fill_idx].unk_1 = 0;
+    }
+
+    int outer_idx = 0;
+    while (outer_idx < GameDataStateStorage.fields_.base_current_count_) {
+        const Base &base1 = Bases[outer_idx];
+        if (base1.faction_id_current == faction_id1) {
+            const int y1 = base1.y;
+            const int x1 = base1.x;
+            const Map *tile1 =
+                map_tiles() + y1 * MapLongitude + (x1 >> 1);
+            const uint8_t type = tile1->region;
+            if ((region == 0 || type == region) && tile1->unk_1 == 0) {
+                Paths.territory(x1, y1, type, faction_id1);
+
+                int inner_idx = 0;
+                while (inner_idx < GameDataStateStorage.fields_.base_current_count_) {
+                    const Base &base2 = Bases[inner_idx];
+                    if (base2.faction_id_current == faction_id2) {
+                        const int y2 = base2.y;
+                        const int x2 = base2.x;
+                        const Map *tile2 =
+                            map_tiles() + y2 * MapLongitude + (x2 >> 1);
+                        if (tile2->region == type && tile2->unk_1 == 0) {
+                            Paths.territory(x2, y2, type, faction_id2);
+
+                            const int flags = (flag != 0 ? 0xc00 : 0) | 0x201;
+                            const int result =
+                                Paths.find(x1, y1, x2, y2, faction_id1,
+                                           faction_id2, flags, -1);
+                            if (result >= 0) {
+                                return 1;
+                            }
+                        }
+                    }
+                    ++inner_idx;
+                }
+            }
+        }
+        ++outer_idx;
+    }
+    return 0;
+}
+
 static TechTradePolicyDecision tech_trade_policy_prefix(
     Popup &popup, int actor, int partner, int request_mode, int action,
     int context, bool first_entry) {
