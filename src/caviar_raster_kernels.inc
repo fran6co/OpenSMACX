@@ -25,6 +25,7 @@ struct CaviarRasterKernelViewCandidate {
     const uint8_t *colour_table_;
     uint8_t *colour_lane_base_[4];
     uint16_t *depth_lane_base_[4];
+    uint16_t *const *depth_rows_;
     int pixel_size_bytes_;
     int depth_greater_wins_;
     int shadow_target_;
@@ -148,9 +149,19 @@ static int caviar_kernel_clip_coordinate(int &x, int &y,
 }
 
 static void caviar_kernel_store_lane(CaviarRasterKernelViewCandidate *view,
-                                     int lane, int pixel_index,
+                                     int lane, int screen_x, int screen_y, int pixel_index,
                                      uint16_t depth, uint16_t colour) {
-    uint16_t *depth_at = view->depth_lane_base_[lane] + pixel_index;
+    uint16_t *depth_at;
+    if (view->pixel_size_bytes_ == 1) {
+        // Pinned size-1 path: Ramp-B contributes a word-index row offset;
+        // the descriptor-owned lane base is scaled by the native [ECX*2].
+        depth_at = view->depth_lane_base_[lane] + pixel_index;
+    } else {
+        // Pinned size-2 path: Ramp-A[screenY] is the row address; X is in
+        // bytes and its even lane adjustment is represented in uint16_t units.
+        depth_at = view->depth_rows_[screen_y + lane / 2] +
+            screen_x + lane % 2;
+    }
     if (view->depth_greater_wins_) {
         if (depth <= *depth_at) return; // odd-alignment native JBE skip
     } else if (depth >= *depth_at) {
@@ -217,7 +228,7 @@ static void caviar_kernel_draw_pixel(CaviarRasterKernelViewCandidate *view,
         // Each native lane has a separately patched base operand. The setup
         // producers populate those four source views; all lanes share the
         // same row-table-adjusted pixel index and no second clip guard occurs.
-        caviar_kernel_store_lane(view, i, pixel_index,
+        caviar_kernel_store_lane(view, i, screen_x, screen_y, pixel_index,
                                  candidate_depth, colour);
     }
 }
@@ -293,7 +304,7 @@ static CaviarRasterKernelViewCandidate caviar_make_kernel_view_candidate(
     const int32_t *destination_row_offsets,
     const uint8_t *colour_table, uint8_t *const colour_lane_base[4],
     uint16_t *const depth_lane_base[4],
-    int depth_greater_wins, const int clip[4]) {
+    int depth_greater_wins, uint16_t *const *depth_rows, const int clip[4]) {
     CaviarRasterKernelViewCandidate view;
     view.angle_rows_ = angle_rows;
     view.step_rows_ = step_rows;
@@ -306,6 +317,7 @@ static CaviarRasterKernelViewCandidate caviar_make_kernel_view_candidate(
     }
     view.pixel_size_bytes_ = pixel_size;
     view.depth_greater_wins_ = depth_greater_wins;
+    view.depth_rows_ = depth_rows;
     view.shadow_target_ = shadow;
     view.clipped_ = clipped;
     view.clip_[0] = clip[0]; view.clip_[1] = clip[1];
@@ -324,12 +336,12 @@ static void caviar_kernel_contained_scalar_candidate(
     const int32_t *destination_row_offsets,
     const uint8_t *colour_table, uint8_t *const colour_lane_base[4],
     uint16_t *const depth_lane_base[4],
-    int depth_greater_wins) {
+    int depth_greater_wins, uint16_t *const *depth_rows) {
     const int no_clip[4] = {0, 0, 0, 0};
     CaviarRasterKernelViewCandidate view = caviar_make_kernel_view_candidate(
         pixel_size, shadow, 0, angle_rows, step_rows, destination_row_offsets,
         colour_table, colour_lane_base, depth_lane_base,
-        depth_greater_wins, no_clip);
+        depth_greater_wins, depth_rows, no_clip);
     caviar_kernel_walk_stream(&view, x, y, z, static_cast<uint32_t>(count),
                               stream, flags, vox_projection_octant_mask_, no_clip);
 }
@@ -342,13 +354,13 @@ static void caviar_kernel_clipped_scalar_candidate(
     const int32_t *destination_row_offsets,
     const uint8_t *colour_table, uint8_t *const colour_lane_base[4],
     uint16_t *const depth_lane_base[4],
-    int depth_greater_wins) {
+    int depth_greater_wins, uint16_t *const *depth_rows) {
     const int clip[4] = {rectangle[0], rectangle[1],
                          rectangle[2], rectangle[3]};
     CaviarRasterKernelViewCandidate view = caviar_make_kernel_view_candidate(
         pixel_size, shadow, 1, angle_rows, step_rows, destination_row_offsets,
         colour_table, colour_lane_base, depth_lane_base,
-        depth_greater_wins, clip);
+        depth_greater_wins, depth_rows, clip);
     caviar_kernel_walk_stream(&view, x, y, z, static_cast<uint32_t>(count),
                               stream, flags, vox_projection_octant_mask_, clip);
 }
@@ -556,6 +568,7 @@ struct CaviarPreparedKernelBindingsCandidate {
     const uint8_t *angle_rows_;
     const uint8_t *colour_table_;
     const uint8_t *active_size_;
+    uint16_t *const *depth_rows_;
     uint8_t *colour_lane_base_[4];
     uint16_t *depth_lane_base_[4];
     uint8_t *shadow_lane_base_[4];
@@ -564,8 +577,8 @@ static CaviarPreparedKernelBindingsCandidate caviar_prepared_kernel_bindings_can
 
 static void caviar_part_output_bases_candidate(
     int pixel_size, uint8_t *colour_base[4], uint16_t *depth_base[4]) {
-    uint8_t *const colour = static_cast<uint8_t *>(Caviar::render_color_dib_bits());
-    uint16_t *const depth = reinterpret_cast<uint16_t *>(CaviarSceneMemory);
+    uint8_t *const colour = reinterpret_cast<uint8_t *>(static_cast<uintptr_t>(vox_setup_copy_[1]));
+    uint16_t *const depth = reinterpret_cast<uint16_t *>(static_cast<uintptr_t>(vox_setup_copy_[0]));
     // The setup records row width in pixels; size-2 kernels use SHL-by-one
     // before patching color row addresses, while size-1 uses it unchanged.
     const uint32_t colour_pitch =
@@ -582,7 +595,7 @@ static void caviar_part_output_bases_candidate(
 }
 
 static void caviar_shadow_output_bases_candidate(uint8_t *shadow_base[4]) {
-    uint8_t *const shadow = static_cast<uint8_t *>(Caviar::render_shadow_dib_bits());
+    uint8_t *const shadow = reinterpret_cast<uint8_t *>(static_cast<uintptr_t>(vox_setup_copy_[2]));
     const uint32_t pitch = vox_setup_copy_[5];
     shadow_base[0] = shadow;
     shadow_base[1] = shadow + 1;
@@ -598,7 +611,7 @@ static const int32_t *caviar_kernel_row_offsets_candidate() {
     return static_cast<const int32_t *>(vox_active_ramp_b_);
 }
 
-static void caviar_prepare_kernel_bindings_candidate(int pixel_size) {
+static void caviar_prepare_part_source_bindings_candidate() {
     caviar_prepared_kernel_bindings_candidate.step_rows_ =
         caviar_kernel_steps_candidate();
     caviar_prepared_kernel_bindings_candidate.row_offsets_ =
@@ -609,25 +622,33 @@ static void caviar_prepare_kernel_bindings_candidate(int pixel_size) {
         static_cast<const uint8_t *>(vox_active_colour_table_);
     caviar_prepared_kernel_bindings_candidate.active_size_ =
         &vox_active_size_code_;
+}
+
+static void caviar_prepare_part_destination_bindings_candidate(int pixel_size) {
+    caviar_prepared_kernel_bindings_candidate.depth_rows_ =
+        reinterpret_cast<uint16_t *const *>(vox_active_ramp_a_);
     caviar_part_output_bases_candidate(
         pixel_size,
         caviar_prepared_kernel_bindings_candidate.colour_lane_base_,
         caviar_prepared_kernel_bindings_candidate.depth_lane_base_);
+}
+
+static void caviar_prepare_shadow_bindings_candidate() {
     caviar_shadow_output_bases_candidate(
         caviar_prepared_kernel_bindings_candidate.shadow_lane_base_);
 }
 
 static void __cdecl caviar_setup_size1_aligned_candidate() {
-    caviar_prepare_kernel_bindings_candidate(1);
+    caviar_original_664d51(); caviar_original_6646fb(); caviar_original_666f68();
 }
 static void __cdecl caviar_setup_size1_odd_candidate() {
-    caviar_prepare_kernel_bindings_candidate(1);
+    caviar_original_665ba1(); caviar_original_66554b(); caviar_original_666f68();
 }
 static void __cdecl caviar_setup_size2_aligned_candidate() {
-    caviar_prepare_kernel_bindings_candidate(2);
+    caviar_original_666989(); caviar_original_66638f(); caviar_original_666f68();
 }
 static void __cdecl caviar_setup_size2_odd_candidate() {
-    caviar_prepare_kernel_bindings_candidate(2);
+    caviar_original_668069(); caviar_original_667a6f(); caviar_original_666f68();
 }
 
 static void caviar_part_kernel_candidate(
@@ -642,14 +663,14 @@ static void caviar_part_kernel_candidate(
             caviar_kernel_i32_from_bits(raw_count), stream, flags, pixel_size, 0,
             bindings.angle_rows_, bindings.step_rows_, bindings.row_offsets_,
             bindings.colour_table_, bindings.colour_lane_base_,
-            bindings.depth_lane_base_, depth_greater_wins);
+            bindings.depth_lane_base_, depth_greater_wins, bindings.depth_rows_);
     } else {
         caviar_kernel_contained_scalar_candidate(
             x, y, z, caviar_kernel_i32_from_bits(raw_count), stream, flags,
             pixel_size, 0, bindings.angle_rows_, bindings.step_rows_,
             bindings.row_offsets_, bindings.colour_table_,
             bindings.colour_lane_base_, bindings.depth_lane_base_,
-            depth_greater_wins);
+            depth_greater_wins, bindings.depth_rows_);
     }
 }
 

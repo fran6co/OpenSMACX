@@ -53,21 +53,7 @@ CaviarOutputMessageWindowCandidate CaviarOutputMessageWindow = {};
 uint32_t vox_setup_copy_[6] = {};
 int32_t vox_projection_octant_mask_ = 1;
 
-struct CaviarRasterKernelViewCandidate {
-  const uint8_t *angle_rows_; const CaviarKernelStepRowCandidate *step_rows_;
-  const int32_t *destination_row_offsets_; const uint8_t *colour_table_;
-  uint8_t *colour_lane_base_[4]; uint16_t *depth_lane_base_[4];
-  int pixel_size_bytes_, depth_greater_wins_, shadow_target_, clipped_, clip_[4];
-};
-struct CaviarShadowKernelViewCandidate {
-  const CaviarKernelStepRowCandidate *step_rows_; const int32_t *destination_row_offsets_;
-  uint8_t *shadow_lane_base_[4]; uint8_t value_; int clipped_, has_rectangle_, rectangle_[4];
-};
-struct CaviarPreparedKernelBindingsCandidate {
-  const CaviarKernelStepRowCandidate *step_rows_; const int32_t *row_offsets_;
-  const uint8_t *angle_rows_; const uint8_t *colour_table_; const uint8_t *active_size_;
-  uint8_t *colour_lane_base_[4]; uint16_t *depth_lane_base_[4]; uint8_t *shadow_lane_base_[4];
-};
+/* CURRENT KERNEL VIEW DECLARATIONS */
 static CaviarPreparedKernelBindingsCandidate caviar_prepared_kernel_bindings_candidate = {};
 
 typedef void (__cdecl *PartContained)(int32_t,int32_t,int32_t,uint32_t,const uint8_t*,int32_t);
@@ -190,6 +176,8 @@ static CaviarKernelStepRowCandidate steps[32];
 static int32_t row_offsets[16];
 static uint8_t colours[4][128];
 static uint16_t depths[4][128];
+static uint16_t ramp_depth_storage[16][16];
+static uint16_t *ramp_depth_rows[16];
 static uint8_t shadow[4][128];
 static uint8_t palette8[0x10000];
 static uint16_t palette16[0x10000];
@@ -203,6 +191,9 @@ static void prepare(int size, int odd) {
   caviar_prepared_kernel_bindings_candidate.colour_table_ =
       size == 1 ? palette8 : reinterpret_cast<const uint8_t *>(palette16);
   caviar_prepared_kernel_bindings_candidate.active_size_ = &active_size;
+  for (int row=0; row<16; ++row)
+    ramp_depth_rows[row] = ramp_depth_storage[row];
+  caviar_prepared_kernel_bindings_candidate.depth_rows_ = ramp_depth_rows;
   for (int i=0; i<4; ++i) {
     caviar_prepared_kernel_bindings_candidate.colour_lane_base_[i] = colours[i];
     caviar_prepared_kernel_bindings_candidate.depth_lane_base_[i] = depths[i];
@@ -215,7 +206,8 @@ static void assert_color_pixel(int size, int idx, uint16_t value, uint16_t depth
   for (int i=0; i<4; ++i) {
     if (size == 1) assert(colours[i][idx] == (uint8_t)value);
     else assert(reinterpret_cast<uint16_t *>(colours[i])[idx] == value);
-    assert(depths[i][idx] == depth);
+    if (size == 1) assert(depths[i][idx] == depth);
+    else assert(ramp_depth_rows[i / 2][idx + i % 2] == depth);
   }
 }
 int main() {
@@ -232,6 +224,9 @@ int main() {
       prepare(size, odd); clear_stream(); stream[8]=0; stream[11]=5;
       for (int i=0; i<4; ++i) { memset(colours[i],0,sizeof(colours[i]));
         for (int j=0;j<128;++j) depths[i][j] = odd ? 50 : 150; }
+      for (int row=0; row<16; ++row)
+        for (int col=0; col<16; ++col)
+          ramp_depth_storage[row][col] = odd ? 50 : 150;
       VoxRenderRecord record = {};
       // The pinned 0x63E950 record dispatch selects one of the eight part
       // entry roots listed in the module evidence note.
@@ -311,7 +306,14 @@ def assembled(kernels: str, product: str) -> str:
             "      if (size == %d && odd == %d) assert(record.setup_callback_ == &%s);" %
             (size, odd, callback))
     main = MAIN.replace("/* CHECK_SETUP_CALLBACK */", "\n".join(setup_asserts))
-    return PREAMBLE + "\n".join(defs) + main
+    view_declarations = "\n".join(
+        extract_definition(kernels, "struct " + name) + ";"
+        for name in ("CaviarRasterKernelViewCandidate",
+                     "CaviarShadowKernelViewCandidate",
+                     "CaviarPreparedKernelBindingsCandidate"))
+    preamble = PREAMBLE.replace("/* CURRENT KERNEL VIEW DECLARATIONS */",
+                                view_declarations)
+    return preamble + "\n".join(defs) + main
 
 
 def run(compiler: str, source: str, success: bool):

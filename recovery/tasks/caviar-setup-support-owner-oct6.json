@@ -1,0 +1,98 @@
+{
+  "schema_version": 1,
+  "task_id": "caviar-setup-support-owner-oct6",
+  "author": "framework-coordinator",
+  "target": "opensmacx",
+  "base_revision": "926bd6330c12bd778e6bf28844d701d356f44a0b",
+  "intent": "Recover the nine mode-specific setup helper identities in the genuine Caviar renderer, preserving four ordered setup callback chains and distinct Ramp-A/Ramp-B depth addressing; retire superseded seed bodies only after mapping/history readback.",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6711689
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6710159
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6702843
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6704465
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6717545
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6716015
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6708129
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6706507
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6713192
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6532832
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6532864
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6532896
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6532928
+    }
+  ],
+  "editable_files": [
+    "src/caviar.cpp",
+    "src/caviar_raster_kernels.inc",
+    "recovery/tests/test_caviar_setup_helpers_actual_source.py",
+    "recovery/tests/test_caviar_raster_kernels_actual_source.py",
+    "recovery/tests/fixtures/caviar_setup_helpers_actual_source.cpp.in",
+    "src/unrecovered/006646fb.cpp",
+    "src/unrecovered/00664d51.cpp",
+    "src/unrecovered/0066554b.cpp",
+    "src/unrecovered/00665ba1.cpp",
+    "src/unrecovered/0066638f.cpp",
+    "src/unrecovered/00666989.cpp",
+    "src/unrecovered/00666f68.cpp",
+    "src/unrecovered/00667a6f.cpp",
+    "src/unrecovered/00668069.cpp"
+  ],
+  "evidence": [
+    "Pinned size-1 path uses descriptor depth base plus Ramp-B index scaled by two; size-2 path uses Ramp-A row addresses plus even byte-X offset after the separate phase Y step.",
+    "Setup stages consume actual descriptor-selected colour/depth/shadow destinations and preserve destination/source/shadow call order for each size/alignment profile; no executable-page writes or original-address forwarding remain.",
+    "Native source writer/readback preserves all 109 existing owner identities and all nine moved original identities, complete spans, historical claims and parsed lessons. Prior excluded classification is retained as seed history, not justified by proximity to funclets.",
+    "Actual-source C++98 controls cover all four profiles and reject wrong-mode, omitted-Y-step and setup-order mutations. Controls remain bounded; native compile/link and identity checks are required before coordinator integration.",
+    "Self-modifying original spans, complete angle/store and exceptional x87 behavior, strict matching and linked/runtime/game acceptance remain open. No new byte or semantic claim or full acceptance is asserted."
+  ]
+}

@@ -1,0 +1,198 @@
+#include <assert.h>
+#include <stdint.h>
+#include <string.h>
+#include <math.h>
+#include <limits.h>
+#include <fenv.h>
+#include <stdio.h>
+
+/* TRACE_SETUP */
+#ifndef __cdecl
+#define __cdecl
+#endif
+struct Caviar {
+  static void *render_color_dib_bits();
+  static void *render_shadow_dib_bits();
+};
+static uint8_t decoy_colour[1024];
+static uint8_t decoy_shadow[1024];
+void *Caviar::render_color_dib_bits() { return decoy_colour; }
+void *Caviar::render_shadow_dib_bits() { return decoy_shadow; }
+
+struct CaviarKernelStepRowCandidate { int32_t x_, y_, z_; uint32_t spare_; };
+struct CaviarProjectionCell { int32_t x_, y_, z_; uint32_t spare_; };
+struct CaviarKernelAliasTailCandidate {
+  float scratch_e0_, scratch_e4_, scratch_e8_, scratch_ec_;
+  float scratch_f0_, scratch_f4_; uint32_t vox_scene_extent_; float scratch_fc_;
+  float scratch_a00_, scratch_a04_; uint8_t spare_[0x38];
+};
+struct CaviarKernelViews {
+  CaviarProjectionCell cells_[26]; CaviarKernelAliasTailCandidate tail_;
+};
+union CaviarKernelProjectionWindowCandidate {
+  CaviarKernelViews current_views_;
+  CaviarKernelStepRowCandidate raster_step_rows_[32];
+};
+CaviarKernelProjectionWindowCandidate CaviarKernelProjectionWindow = {};
+struct CaviarOutputMessageWindowCandidate {
+  uint32_t projection_words_[0x6b]; uint8_t gap_[0x24]; char message_[0x100];
+};
+CaviarOutputMessageWindowCandidate CaviarOutputMessageWindow = {};
+uintptr_t vox_setup_copy_[6] = {};
+int32_t vox_projection_octant_mask_ = 1;
+void *vox_active_ramp_a_ = 0;
+void *vox_active_ramp_b_ = 0;
+void *vox_active_colour_table_ = 0;
+uint8_t vox_active_size_code_ = 0;
+const uint8_t *vox_projection_selected_angle_ = 0;
+
+struct CaviarRasterKernelViewCandidate {
+  const uint8_t *angle_rows_; const CaviarKernelStepRowCandidate *step_rows_;
+  const int32_t *destination_row_offsets_; const uint8_t *colour_table_;
+  uint8_t *colour_lane_base_[4]; uint16_t *depth_lane_base_[4];
+  uint16_t *const *depth_rows_;
+  int pixel_size_bytes_, depth_greater_wins_, shadow_target_, clipped_, clip_[4];
+};
+struct CaviarShadowKernelViewCandidate {
+  const CaviarKernelStepRowCandidate *step_rows_;
+  const int32_t *destination_row_offsets_;
+  uint8_t *shadow_lane_base_[4]; uint8_t value_;
+  int clipped_, has_rectangle_, rectangle_[4];
+};
+struct CaviarPreparedKernelBindingsCandidate {
+  const CaviarKernelStepRowCandidate *step_rows_; const int32_t *row_offsets_;
+  const uint8_t *angle_rows_; const uint8_t *colour_table_; const uint8_t *active_size_;
+  uint16_t *const *depth_rows_;
+  uint8_t *colour_lane_base_[4]; uint16_t *depth_lane_base_[4];
+  uint8_t *shadow_lane_base_[4];
+};
+static CaviarPreparedKernelBindingsCandidate caviar_prepared_kernel_bindings_candidate = {};
+
+typedef void (__cdecl *PartContained)(int32_t,int32_t,int32_t,uint32_t,const uint8_t*,int32_t);
+typedef void (__cdecl *PartClipped)(int32_t,int32_t,int32_t,const int32_t*,uint32_t,const uint8_t*,int32_t);
+typedef void (__cdecl *ShadowContained)(int32_t,int32_t,uint32_t,const uint8_t*,int32_t);
+typedef void (__cdecl *ShadowClipped)(int32_t,int32_t,const int32_t*,uint32_t,const uint8_t*,int32_t);
+typedef void (__cdecl *SetupCallback)();
+struct VoxRenderRecord {
+  PartContained part_contained_; PartClipped part_clipped_;
+  ShadowContained shadow_contained_; ShadowClipped shadow_clipped_;
+  SetupCallback setup_callback_;
+};
+void __cdecl caviar_original_666fd0(int32_t,int32_t,uint32_t,const uint8_t*,int32_t);
+void __cdecl caviar_original_666a80(int32_t,int32_t,const int32_t*,uint32_t,const uint8_t*,int32_t);
+void __cdecl caviar_original_6647f0(int32_t,int32_t,int32_t,uint32_t,const uint8_t*,int32_t);
+void __cdecl caviar_original_664000(int32_t,int32_t,int32_t,const int32_t*,uint32_t,const uint8_t*,int32_t);
+void __cdecl caviar_original_665640(int32_t,int32_t,int32_t,uint32_t,const uint8_t*,int32_t);
+void __cdecl caviar_original_664e50(int32_t,int32_t,int32_t,const int32_t*,uint32_t,const uint8_t*,int32_t);
+void __cdecl caviar_original_666440(int32_t,int32_t,int32_t,uint32_t,const uint8_t*,int32_t);
+void __cdecl caviar_original_665ca0(int32_t,int32_t,int32_t,const int32_t*,uint32_t,const uint8_t*,int32_t);
+void __cdecl caviar_original_667b20(int32_t,int32_t,int32_t,uint32_t,const uint8_t*,int32_t);
+void __cdecl caviar_original_667380(int32_t,int32_t,int32_t,const int32_t*,uint32_t,const uint8_t*,int32_t);
+void __cdecl caviar_original_63aee0(); void __cdecl caviar_original_63af00();
+void __cdecl caviar_original_63af20(); void __cdecl caviar_original_63af40();
+void __cdecl caviar_original_666989(); void __cdecl caviar_original_66638f();
+void __cdecl caviar_original_6646fb(); void __cdecl caviar_original_664d51();
+void __cdecl caviar_original_668069(); void __cdecl caviar_original_667a6f();
+void __cdecl caviar_original_665ba1(); void __cdecl caviar_original_66554b();
+void __cdecl caviar_original_666f68();
+
+/* ACTUAL_CAVIAR_DEFINITIONS */
+
+static uint8_t angle_rows[0x800];
+static int32_t row_offsets[32];
+static uint8_t palette8[0x10000];
+static uint16_t palette16[0x10000];
+static uint8_t active_size = 0x5a;
+static uint8_t stream[64];
+static uint8_t descriptor_colour[1024], descriptor_shadow[1024];
+static uint16_t descriptor_depth[512];
+static uint16_t depth_row0[64], depth_row1[64], depth_row2[64];
+static uint16_t *depth_rows[32];
+
+static void reset_mode(int size, int odd) {
+  memset(&caviar_prepared_kernel_bindings_candidate, 0,
+         sizeof(caviar_prepared_kernel_bindings_candidate));
+  memset(descriptor_colour, 0, sizeof(descriptor_colour));
+  memset(descriptor_shadow, 0, sizeof(descriptor_shadow));
+  for (int i=0; i<512; ++i) descriptor_depth[i]=odd ? 50 : 200;
+  for (int i=0; i<64; ++i) {
+    depth_row0[i]=odd ? 50 : 200;
+    depth_row1[i]=odd ? 50 : 200;
+    depth_row2[i]=odd ? 50 : 200;
+  }
+  depth_rows[0]=depth_row0; depth_rows[1]=depth_row1; depth_rows[2]=depth_row2;
+  for (int i=3; i<32; ++i) depth_rows[i]=depth_row2;
+  for (int i=0; i<32; ++i) row_offsets[i]=i*8;
+  // The first pixel consumes phase zero; the native 9C0844 Y-step changes
+  // the row before the Ramp-A or Ramp-B destination lookup.
+  memset(&CaviarKernelProjectionWindow, 0, sizeof(CaviarKernelProjectionWindow));
+  CaviarKernelProjectionWindow.raster_step_rows_[0].y_ = 0x100;
+  memset(stream,0,sizeof(stream)); stream[0]=1; stream[8]=1; stream[11]=5;
+  angle_rows[0]=3; palette8[0x305]=0x6c; palette16[0x305]=0x7b2d;
+  vox_active_ramp_a_=depth_rows;
+  vox_active_ramp_b_=row_offsets;
+  vox_active_colour_table_=size==1 ? static_cast<void *>(palette8)
+      : static_cast<void *>(palette16);
+  vox_projection_selected_angle_=angle_rows;
+  vox_active_size_code_=active_size;
+  vox_setup_copy_[0]=reinterpret_cast<uintptr_t>(descriptor_depth);
+  vox_setup_copy_[1]=reinterpret_cast<uintptr_t>(descriptor_colour);
+  vox_setup_copy_[2]=reinterpret_cast<uintptr_t>(descriptor_shadow);
+  vox_setup_copy_[3]=8; vox_setup_copy_[4]=8; vox_setup_copy_[5]=8;
+}
+
+#ifdef TRACE_SETUP
+static void require_trace(const int expected[3]) {
+  assert(setup_trace_count == 3);
+  for (int i=0; i<3; ++i) assert(setup_trace[i] == expected[i]);
+}
+int main() {
+  const int a[3]={1,2,9}, b[3]={4,3,9}, c[3]={5,6,9}, d[3]={7,8,9};
+  setup_trace_count=0; caviar_original_63aee0(); require_trace(a);
+  setup_trace_count=0; caviar_original_63af00(); require_trace(b);
+  setup_trace_count=0; caviar_original_63af20(); require_trace(c);
+  setup_trace_count=0; caviar_original_63af40(); require_trace(d);
+  return 0;
+}
+#else
+static void exercise_mode(int size, int odd, SetupCallback expected_setup) {
+  reset_mode(size,odd);
+  VoxRenderRecord record = {};
+  caviar_install_record_kernels_candidate(&record,(uint8_t)size,odd);
+  assert(record.setup_callback_ == expected_setup);
+  record.setup_callback_();
+  assert(caviar_prepared_kernel_bindings_candidate.depth_rows_ == depth_rows);
+  assert(caviar_prepared_kernel_bindings_candidate.colour_lane_base_[0] == descriptor_colour);
+  assert(caviar_prepared_kernel_bindings_candidate.shadow_lane_base_[0] == descriptor_shadow);
+
+  record.part_contained_(256,0,0x6400,1,stream,0);
+  const uint16_t wanted = size==1 ? 0x6c : 0x7b2d;
+  const int depth_indices[4] = {9,10,17,18}; // Ramp-B row(8) + X(1), then 2x2 lanes.
+  if (size == 1) {
+    for (int i=0; i<4; ++i) assert(descriptor_depth[depth_indices[i]]==100);
+    for (int i=0; i<64; ++i) assert(depth_row1[i]==(odd ? 50 : 200));
+    for (int i=0; i<64; ++i) assert(depth_row2[i]==(odd ? 50 : 200));
+    for (int i=0; i<4; ++i) assert(descriptor_colour[depth_indices[i]]==(uint8_t)wanted);
+  } else {
+    assert(depth_row1[1]==100 && depth_row1[2]==100);
+    assert(depth_row2[1]==100 && depth_row2[2]==100);
+    for (int i=0; i<512; ++i) assert(descriptor_depth[i]==(odd ? 50 : 200));
+    uint16_t *colour16 = reinterpret_cast<uint16_t *>(descriptor_colour);
+    const int colour_indices[4] = {9,10,17,18};
+    for (int i=0; i<4; ++i) assert(colour16[colour_indices[i]]==wanted);
+  }
+
+  memset(stream,0,sizeof(stream)); stream[0]=1; stream[8]=1; stream[11]=0;
+  caviar_original_666fd0(256,0,1,stream,0);
+  assert(descriptor_shadow[9]==active_size && descriptor_shadow[10]==active_size);
+  assert(descriptor_shadow[17]==active_size && descriptor_shadow[18]==active_size);
+  assert(decoy_colour[2]==0 && decoy_shadow[1]==0);
+}
+int main() {
+  exercise_mode(1,0,&caviar_original_63af00);
+  exercise_mode(1,1,&caviar_original_63af40);
+  exercise_mode(2,0,&caviar_original_63aee0);
+  exercise_mode(2,1,&caviar_original_63af20);
+  return 0;
+}
+#endif
