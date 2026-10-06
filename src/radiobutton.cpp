@@ -812,3 +812,75 @@ int RadioButton::on_key_down(int key) {
     soft_update();
     return 1;
 }
+
+/*
+Purpose: Adjust the receiver from RadioButton's thunk1 subobject to the one
+         RadioButton::on_redraw expects, then forward unchanged.
+// ORIGINAL: 0x00406FF0 ?on_redraw@thunk1_RadioButton@@QAEXXZ 0x00406FF0-0x00406FF8 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned constructor ??0RadioButton@@QAE@H@Z at 0x0060D0E0 at 0x0060D138 installs table 0x00669A6C through the thunk1 vbtable-derived view installs table 0x00669A6C; the pinned slot at table+0x30 contains 0x00406FF0. Original thunk receiver adjustment and tail target were checked against the pinned image: sub ecx,[ecx-4]; jmp 0x0060E220.", "Current genuine owner is src/radiobutton.cpp; retained owner-object vftable ??_7RadioButton@@6BWin@@@ has an absolute relocation at +0x30 to ?on_redraw@RadioButton@@$4PPPPPPPM@A@AEXXZ, whose COMDAT preserves the pinned receiver-adjustment bytes and whose terminal relative relocation selects the source-owned ?on_redraw@RadioButton@@UAEXXZ method. This source binding records the measured generated owner identity; its physical relocation must be rechecked after source changes."], "reason": "Bind the full original identity and spans to the existing compiler-generated class-view adjustor selected by the constructor-installed original slot; retain its historical claims and lessons unchanged."}
+// symbol    ?on_redraw@RadioButton@@$4PPPPPPPM@A@AEXXZ
+// size      8 bytes
+// prototype void (__thiscall ?on_redraw@thunk1_RadioButton@@QAEXXZ)(RadioButton* this)
+// callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
+// TRIED 2026-09-26 (Win slot-12 on_redraw rename batch): with Win slot12 renamed
+//            on_redraw, RadioButton::on_redraw overrides that slot through GraphicWin as
+//            well as Dialog slot2, so the qualified call's receiver fold moved from
+//            the Dialog offset 0xA30 to the GraphicWin offset 0x18. The walk now
+//            pre-subtracts 0x18 to cancel it, leaving the image's bare vtordisp thunk;
+//            the old 0xA30 walk emitted an extra `sub ecx, 0xa18` here. The compiler
+//            now emits its own vtordisp thunk for this slot; this handwritten walk
+//            stays the claim host pending coordinated retirement onto it.
+Return Value: n/a
+Status: Complete
+*/
+
+/*
+Purpose: Adjust the receiver from RadioButton's thunk1 subobject to the one
+         RadioButton::on_mouse_move expects, then forward unchanged.
+// ORIGINAL: 0x00407000 ?on_mouse_move@thunk1_RadioButton@@QAEXHH@Z 0x00407000-0x00407008 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned constructor ??0RadioButton@@QAE@H@Z at 0x0060D0E0 at 0x0060D138 installs table 0x00669A6C through the thunk1 vbtable-derived view installs table 0x00669A6C; the pinned slot at table+0x44 contains 0x00407000. Original thunk receiver adjustment and tail target were checked against the pinned image: sub ecx,[ecx-4]; jmp 0x0060E320.", "Current genuine owner is src/radiobutton.cpp; retained owner-object vftable ??_7RadioButton@@6BWin@@@ has an absolute relocation at +0x44 to ?on_mouse_move@RadioButton@@$4PPPPPPPM@A@AEXHH@Z, whose COMDAT preserves the pinned receiver-adjustment bytes and whose terminal relative relocation selects the source-owned ?on_mouse_move@RadioButton@@UAEXHH@Z method. This source binding records the measured generated owner identity; its physical relocation must be rechecked after source changes."], "reason": "Bind the full original identity and spans to the existing compiler-generated class-view adjustor selected by the constructor-installed original slot; retain its historical claims and lessons unchanged."}
+// symbol    ?on_mouse_move@RadioButton@@$4PPPPPPPM@A@AEXHH@Z
+// size      8 bytes
+// prototype void (__thiscall ?on_mouse_move@thunk1_RadioButton@@QAEXHH@Z)(RadioButton* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+
+/*
+Purpose: Adjust the receiver from RadioButton's thunk1 subobject to the one
+         RadioButton::on_left_down expects, then forward unchanged.
+// ORIGINAL: 0x00407020 ?on_left_down@thunk1_RadioButton@@QAEXHH@Z 0x00407020-0x00407028 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned constructor ??0RadioButton@@QAE@H@Z at 0x0060D0E0 at 0x0060D138 installs table 0x00669A6C through the thunk1 vbtable-derived view installs table 0x00669A6C; the pinned slot at table+0x50 contains 0x00407020. Original thunk receiver adjustment and tail target were checked against the pinned image: sub ecx,[ecx-4]; jmp 0x0060DE10.", "Current genuine owner is src/radiobutton.cpp; retained owner-object vftable ??_7RadioButton@@6BWin@@@ has an absolute relocation at +0x50 to ?on_left_down@RadioButton@@$4PPPPPPPM@A@AEXHH@Z, whose COMDAT preserves the pinned receiver-adjustment bytes and whose terminal relative relocation selects the source-owned ?on_left_down@RadioButton@@UAEXHH@Z method. This source binding records the measured generated owner identity; its physical relocation must be rechecked after source changes."], "reason": "Bind the full original identity and spans to the existing compiler-generated class-view adjustor selected by the constructor-installed original slot; retain its historical claims and lessons unchanged."}
+// symbol    ?on_left_down@RadioButton@@$4PPPPPPPM@A@AEXHH@Z
+// size      8 bytes
+// prototype void (__thiscall ?on_left_down@thunk1_RadioButton@@QAEXHH@Z)(RadioButton* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+
+/*
+Purpose: Adjust the receiver from RadioButton's thunk1 subobject to the one
+         RadioButton::on_left_double_click expects, then forward unchanged.
+// ORIGINAL: 0x00407040 ?on_left_double_click@thunk1_RadioButton@@QAEXHH@Z 0x00407040-0x00407048 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned constructor ??0RadioButton@@QAE@H@Z at 0x0060D0E0 at 0x0060D138 installs table 0x00669A6C through the thunk1 vbtable-derived view installs table 0x00669A6C; the pinned slot at table+0x70 contains 0x00407040. Original thunk receiver adjustment and tail target were checked against the pinned image: sub ecx,[ecx-4]; jmp 0x0060E1E0.", "Current genuine owner is src/radiobutton.cpp; retained owner-object vftable ??_7RadioButton@@6BWin@@@ has an absolute relocation at +0x70 to ?on_left_double_click@RadioButton@@$4PPPPPPPM@A@AEXHH@Z, whose COMDAT preserves the pinned receiver-adjustment bytes and whose terminal relative relocation selects the source-owned ?on_left_double_click@RadioButton@@UAEXHH@Z method. This source binding records the measured generated owner identity; its physical relocation must be rechecked after source changes."], "reason": "Bind the full original identity and spans to the existing compiler-generated class-view adjustor selected by the constructor-installed original slot; retain its historical claims and lessons unchanged."}
+// symbol    ?on_left_double_click@RadioButton@@$4PPPPPPPM@A@AEXHH@Z
+// size      8 bytes
+// prototype void (__thiscall ?on_left_double_click@thunk1_RadioButton@@QAEXHH@Z)(RadioButton* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/

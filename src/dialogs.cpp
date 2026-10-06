@@ -796,6 +796,181 @@ void Dialogs::on_left_click(int a, int b) {
     }
 }
 
+/*
+Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
+         Dialogs::on_redraw expects, then forward unchanged.
+// ORIGINAL: 0x00407170 ?on_redraw@thunk1_Dialogs@@QAEXXZ 0x00407170-0x00407178 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned Dialogs constructor ??0Dialogs@@QAE@H@Z at 0x00612830 captures incoming this in esi at 0x0061284D and installs table 0x00669BE8 at 0x0061290A through the constructor's resolved subobject view; the pinned slot +0x30 contains 0x00407170. Original thunk behavior: sub ecx, dword ptr [ecx - 4]; jmp 0x612e00; tail target 0x00612E00.", "Current genuine owner is src/dialogs.cpp; retained owner-object vftable ??_7Dialogs@@6BWin@@@ has an absolute relocation at +0x30 to ?on_redraw@Dialogs@@$4PPPPPPPM@A@AEXXZ, whose COMDAT preserves the pinned receiver-adjustment bytes and whose terminal relative relocation selects the source-owned ?on_redraw@Dialogs@@UAEXXZ method. This source binding records the measured generated owner identity; its physical relocation must be rechecked after source changes."], "reason": "Bind the full original identity and spans to the existing compiler-generated class-view adjustor selected by the constructor-installed original slot; retain its historical claims and lessons unchanged."}
+// symbol    ?on_redraw@Dialogs@@$4PPPPPPPM@A@AEXXZ
+// size      8 bytes
+// prototype void (__thiscall ?on_redraw@thunk1_Dialogs@@QAEXXZ)(Dialogs* this)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// TRIED 2026-09-26 (Win slot-12 on_redraw rename batch): with Win slot12 renamed
+//            on_redraw, Dialogs::on_redraw overrides that slot through GraphicWin as
+//            well as Dialog slot2, so the qualified call's receiver fold moved from
+//            the Dialog offset 0xBA0 to the GraphicWin offset 0x188. The walk now
+//            pre-subtracts 0x188 to cancel it, leaving the image's bare vtordisp thunk;
+//            the old 0xBA0 walk emitted an extra `sub ecx, 0xa18` here. The compiler
+//            now emits its own vtordisp thunk for this slot; this handwritten walk
+//            stays the claim host pending coordinated retirement onto it.
+Return Value: n/a
+Status: Complete
+*/
+
+/*
+Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
+         Dialogs::on_mouse_move expects, then forward unchanged.
+// ORIGINAL: 0x00407190 ?on_mouse_move@thunk1_Dialogs@@QAEXHH@Z 0x00407190-0x00407198 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned Dialogs constructor ??0Dialogs@@QAE@H@Z at 0x00612830 captures incoming this in esi at 0x0061284D and installs table 0x00669BE8 at 0x0061290A through the constructor's resolved subobject view; the pinned slot +0x44 contains 0x00407190. Original thunk behavior: sub ecx, dword ptr [ecx - 4]; jmp 0x612b80; tail target 0x00612B80.", "Current genuine owner is src/dialogs.cpp; retained owner-object vftable ??_7Dialogs@@6BWin@@@ has an absolute relocation at +0x44 to ?on_mouse_move@Dialogs@@$4PPPPPPPM@A@AEXHH@Z, whose COMDAT preserves the pinned receiver-adjustment bytes and whose terminal relative relocation selects the source-owned ?on_mouse_move@Dialogs@@UAEXHH@Z method. This source binding records the measured generated owner identity; its physical relocation must be rechecked after source changes."], "reason": "Bind the full original identity and spans to the existing compiler-generated class-view adjustor selected by the constructor-installed original slot; retain its historical claims and lessons unchanged."}
+// symbol    ?on_mouse_move@Dialogs@@$4PPPPPPPM@A@AEXHH@Z
+// size      8 bytes
+// prototype void (__thiscall ?on_mouse_move@thunk1_Dialogs@@QAEXHH@Z)(Dialogs* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+
+/*
+Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
+         Dialogs::on_mouse_leave expects, then forward unchanged.
+// ORIGINAL: 0x004071A0 ?on_mouse_leave@thunk1_Dialogs@@QAEXHH@Z 0x004071A0-0x004071A8 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned Dialogs constructor ??0Dialogs@@QAE@H@Z at 0x00612830 captures incoming this in esi at 0x0061284D and installs table 0x00669BE8 at 0x0061290A through the constructor's resolved subobject view; the pinned slot +0x48 contains 0x004071A0. Original thunk behavior: sub ecx, dword ptr [ecx - 4]; jmp 0x612ae0; tail target 0x00612AE0.", "Current genuine owner is src/dialogs.cpp; retained owner-object vftable ??_7Dialogs@@6BWin@@@ has an absolute relocation at +0x48 to ?on_mouse_leave@Dialogs@@$4PPPPPPPM@A@AEXHH@Z, whose COMDAT preserves the pinned receiver-adjustment bytes and whose terminal relative relocation selects the source-owned ?on_mouse_leave@Dialogs@@UAEXHH@Z method. This source binding records the measured generated owner identity; its physical relocation must be rechecked after source changes."], "reason": "Bind the full original identity and spans to the existing compiler-generated class-view adjustor selected by the constructor-installed original slot; retain its historical claims and lessons unchanged."}
+// symbol    ?on_mouse_leave@Dialogs@@$4PPPPPPPM@A@AEXHH@Z
+// size      8 bytes
+// prototype void (__thiscall ?on_mouse_leave@thunk1_Dialogs@@QAEXHH@Z)(Dialogs* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+
+/*
+Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
+         Dialogs::on_left_down expects, then forward unchanged.
+// ORIGINAL: 0x004071C0 ?on_left_down@thunk1_Dialogs@@QAEXHH@Z 0x004071C0-0x004071C8 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned Dialogs constructor ??0Dialogs@@QAE@H@Z at 0x00612830 captures incoming this in esi at 0x0061284D and installs table 0x00669BE8 at 0x0061290A through the constructor's resolved subobject view; the pinned slot +0x50 contains 0x004071C0. Original thunk behavior: sub ecx, dword ptr [ecx - 4]; jmp 0x612c20; tail target 0x00612C20.", "Current genuine owner is src/dialogs.cpp; retained owner-object vftable ??_7Dialogs@@6BWin@@@ has an absolute relocation at +0x50 to ?on_left_down@Dialogs@@$4PPPPPPPM@A@AEXHH@Z, whose COMDAT preserves the pinned receiver-adjustment bytes and whose terminal relative relocation selects the source-owned ?on_left_down@Dialogs@@UAEXHH@Z method. This source binding records the measured generated owner identity; its physical relocation must be rechecked after source changes."], "reason": "Bind the full original identity and spans to the existing compiler-generated class-view adjustor selected by the constructor-installed original slot; retain its historical claims and lessons unchanged."}
+// symbol    ?on_left_down@Dialogs@@$4PPPPPPPM@A@AEXHH@Z
+// size      8 bytes
+// prototype void (__thiscall ?on_left_down@thunk1_Dialogs@@QAEXHH@Z)(Dialogs* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+
+/*
+Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
+         Dialogs::on_left_up expects, then forward unchanged.
+// ORIGINAL: 0x004071D0 ?on_left_up@thunk1_Dialogs@@QAEXHH@Z 0x004071D0-0x004071D8 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned Dialogs constructor ??0Dialogs@@QAE@H@Z at 0x00612830 captures incoming this in esi at 0x0061284D and installs table 0x00669BE8 at 0x0061290A through the constructor's resolved subobject view; the pinned slot +0x54 contains 0x004071D0. Original thunk behavior: sub ecx, dword ptr [ecx - 4]; jmp 0x612f10; tail target 0x00612F10.", "Current genuine owner is src/dialogs.cpp; retained owner-object vftable ??_7Dialogs@@6BWin@@@ has an absolute relocation at +0x54 to ?on_left_up@Dialogs@@$4PPPPPPPM@A@AEXHH@Z, whose COMDAT preserves the pinned receiver-adjustment bytes and whose terminal relative relocation selects the source-owned ?on_left_up@Dialogs@@UAEXHH@Z method. This source binding records the measured generated owner identity; its physical relocation must be rechecked after source changes."], "reason": "Bind the full original identity and spans to the existing compiler-generated class-view adjustor selected by the constructor-installed original slot; retain its historical claims and lessons unchanged."}
+// symbol    ?on_left_up@Dialogs@@$4PPPPPPPM@A@AEXHH@Z
+// size      8 bytes
+// prototype void (__thiscall ?on_left_up@thunk1_Dialogs@@QAEXHH@Z)(Dialogs* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+
+/*
+Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
+         Dialogs::on_right_down expects, then forward unchanged.
+// ORIGINAL: 0x004071F0 ?on_right_down@thunk1_Dialogs@@QAEXHH@Z 0x004071F0-0x004071F8 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned Dialogs constructor ??0Dialogs@@QAE@H@Z at 0x00612830 captures incoming this in esi at 0x0061284D and installs table 0x00669BE8 at 0x0061290A through the constructor's resolved subobject view; the pinned slot +0x5C contains 0x004071F0. Original thunk behavior: sub ecx, dword ptr [ecx - 4]; jmp 0x612ed0; tail target 0x00612ED0.", "Current genuine owner is src/dialogs.cpp; retained owner-object vftable ??_7Dialogs@@6BWin@@@ has an absolute relocation at +0x5C to ?on_right_down@Dialogs@@$4PPPPPPPM@A@AEXHH@Z, whose COMDAT preserves the pinned receiver-adjustment bytes and whose terminal relative relocation selects the source-owned ?on_right_down@Dialogs@@UAEXHH@Z method. This source binding records the measured generated owner identity; its physical relocation must be rechecked after source changes."], "reason": "Bind the full original identity and spans to the existing compiler-generated class-view adjustor selected by the constructor-installed original slot; retain its historical claims and lessons unchanged."}
+// symbol    ?on_right_down@Dialogs@@$4PPPPPPPM@A@AEXHH@Z
+// size      8 bytes
+// prototype void (__thiscall ?on_right_down@thunk1_Dialogs@@QAEXHH@Z)(Dialogs* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+
+/*
+Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
+         Dialogs::on_left_double_click expects, then forward unchanged.
+// ORIGINAL: 0x00407220 ?on_left_double_click@thunk1_Dialogs@@QAEXHH@Z 0x00407220-0x00407228 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned Dialogs constructor ??0Dialogs@@QAE@H@Z at 0x00612830 captures incoming this in esi at 0x0061284D and installs table 0x00669BE8 at 0x0061290A through the constructor's resolved subobject view; the pinned slot +0x70 contains 0x00407220. Original thunk behavior: sub ecx, dword ptr [ecx - 4]; jmp 0x612d60; tail target 0x00612D60.", "Current genuine owner is src/dialogs.cpp; retained owner-object vftable ??_7Dialogs@@6BWin@@@ has an absolute relocation at +0x70 to ?on_left_double_click@Dialogs@@$4PPPPPPPM@A@AEXHH@Z, whose COMDAT preserves the pinned receiver-adjustment bytes and whose terminal relative relocation selects the source-owned ?on_left_double_click@Dialogs@@UAEXHH@Z method. This source binding records the measured generated owner identity; its physical relocation must be rechecked after source changes."], "reason": "Bind the full original identity and spans to the existing compiler-generated class-view adjustor selected by the constructor-installed original slot; retain its historical claims and lessons unchanged."}
+// symbol    ?on_left_double_click@Dialogs@@$4PPPPPPPM@A@AEXHH@Z
+// size      8 bytes
+// prototype void (__thiscall ?on_left_double_click@thunk1_Dialogs@@QAEXHH@Z)(Dialogs* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+
+/*
+Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
+         Dialogs::on_dialog_focus expects, then forward unchanged.
+// ORIGINAL: 0x00407260 ?on_dialog_focus@thunk1_Dialogs@@QAEXH@Z 0x00407260-0x00407268 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned Dialogs constructor ??0Dialogs@@QAE@H@Z at 0x00612830 captures incoming this in esi at 0x0061284D and installs table 0x00669BE8 at 0x0061290A through the constructor's resolved subobject view; the pinned slot +0xCC contains 0x00407260. Original thunk behavior: sub ecx, dword ptr [ecx - 4]; jmp 0x6130e0; tail target 0x006130E0.", "Current genuine owner is src/dialogs.cpp; retained owner-object vftable ??_7Dialogs@@6BWin@@@ has an absolute relocation at +0xCC to ?on_dialog_focus@Dialogs@@$4PPPPPPPM@A@AEXH@Z, whose COMDAT preserves the pinned receiver-adjustment bytes and whose terminal relative relocation selects the source-owned ?on_dialog_focus@Dialogs@@UAEXH@Z method. This source binding records the measured generated owner identity; its physical relocation must be rechecked after source changes."], "reason": "Bind the full original identity and spans to the existing compiler-generated class-view adjustor selected by the constructor-installed original slot; retain its historical claims and lessons unchanged."}
+// symbol    ?on_dialog_focus@Dialogs@@$4PPPPPPPM@A@AEXH@Z
+// size      8 bytes
+// prototype void (__thiscall ?on_dialog_focus@thunk1_Dialogs@@QAEXH@Z)(Dialogs* this, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+
+/*
+Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
+         Dialogs::pass_dialog_focus expects, then forward unchanged.
+// ORIGINAL: 0x00407270 ?pass_dialog_focus@thunk1_Dialogs@@QAEXXZ 0x00407270-0x00407278 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned Dialogs constructor ??0Dialogs@@QAE@H@Z at 0x00612830 captures incoming this in esi at 0x0061284D and installs table 0x00669BE8 at 0x0061290A through the constructor's resolved subobject view; the pinned slot +0x100 contains 0x00407270. Original thunk behavior: sub ecx, dword ptr [ecx - 4]; jmp 0x613180; tail target 0x00613180.", "Current genuine owner is src/dialogs.cpp; retained owner-object vftable ??_7Dialogs@@6BWin@@@ has an absolute relocation at +0x100 to ?pass_dialog_focus@Dialogs@@$4PPPPPPPM@A@AEXXZ, whose COMDAT preserves the pinned receiver-adjustment bytes and whose terminal relative relocation selects the source-owned ?pass_dialog_focus@Dialogs@@UAEXXZ method. This source binding records the measured generated owner identity; its physical relocation must be rechecked after source changes."], "reason": "Bind the full original identity and spans to the existing compiler-generated class-view adjustor selected by the constructor-installed original slot; retain its historical claims and lessons unchanged."}
+// symbol    ?pass_dialog_focus@Dialogs@@$4PPPPPPPM@A@AEXXZ
+// size      8 bytes
+// prototype void (__thiscall ?pass_dialog_focus@thunk1_Dialogs@@QAEXXZ)(Dialogs* this)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+
+/*
+Purpose: Adjust the receiver from Dialogs's thunk3 subobject to the one
+         Dialogs::on_redraw expects, then forward unchanged.
+// ORIGINAL: 0x004072C0 ?on_redraw@thunk3_Dialogs@@QAEXXZ 0x004072C0-0x004072CE FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned Dialogs constructor ??0Dialogs@@QAE@H@Z at 0x00612830 captures incoming this in esi at 0x0061284D and installs table 0x00669BD4 at 0x00612926 through the constructor's resolved subobject view; the pinned slot +0x8 contains 0x004072C0. Original thunk behavior: sub ecx, dword ptr [ecx - 4]; sub ecx, 0xa18; jmp 0x612e00; tail target 0x00612E00.", "Current genuine owner is src/dialogs.cpp; retained owner-object vftable ??_7Dialogs@@6B@ has an absolute relocation at +0x8 to ?on_redraw@Dialogs@@$4PPPPPPPM@KBI@AEXXZ, whose COMDAT preserves the pinned receiver-adjustment bytes and whose terminal relative relocation selects the source-owned ?on_redraw@Dialogs@@UAEXXZ method. This source binding records the measured generated owner identity; its physical relocation must be rechecked after source changes."], "reason": "Bind the full original identity and spans to the existing compiler-generated class-view adjustor selected by the constructor-installed original slot; retain its historical claims and lessons unchanged."}
+// symbol    ?on_redraw@Dialogs@@$4PPPPPPPM@KBI@AEXXZ
+// size      14 bytes
+// prototype void (__thiscall ?on_redraw@thunk3_Dialogs@@QAEXXZ)(Dialogs* this)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// TRIED 2026-09-26 (Win slot-12 on_redraw rename batch): the receiver fold is now
+//            +0x188 (GraphicWin), so the walk keeps only the Dialog offset 0xBA0; the
+//            net adjustment is the image's `sub ecx, 0xa18` (the family-wide
+//            Dialog-to-GraphicWin gap 0xBA0 - 0x188). The pre-rename spelling also
+//            pre-subtracted 2584 and emitted `sub ecx, 0x1430` after the rename.
+//            The compiler now emits its own two-step thunk for this slot; this
+//            handwritten walk stays the claim host pending coordinated retirement.
+Return Value: n/a
+Status: Complete
+*/
+
 // ORIGINAL: 0x00613180 ?pass_dialog_focus@Dialogs@@QAEXXZ 0x00613180-0x006131F5
 // RECOVERY_BINDING: v1 {"reason":"Recover the complete body in its genuine C++ owner, with real embedded members, shared virtual bases, lifecycle and parent operations. Compiler-generated overrides/adjustors replace executable-address or vbtable stand-ins; no current matching claim is granted.","evidence":["git:de91fffe:src/recovered/units/00613180.cpp","image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","recovery/tasks/ui-eight-owner-coverage.json","Original entry 0x00613180; physical VC6 COFF emitted symbol ?pass_dialog_focus@Dialogs@@UAEXXZ."]}
 // symbol    ?pass_dialog_focus@Dialogs@@UAEXXZ

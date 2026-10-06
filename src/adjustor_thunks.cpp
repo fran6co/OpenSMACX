@@ -156,82 +156,9 @@ func_adjustor_p_u MapWinScalarDeleteTarget =
 func_adjustor_p_u PlanWinScalarDeleteTarget =
     original_method<func_adjustor_p_u>(0x0048BF20);
 
-/*
-Purpose: Adjust the receiver from RadioButton's thunk1 subobject to the one
-         RadioButton::on_redraw expects, then forward unchanged.
-// RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
-// ORIGINAL: 0x00406FF0 ?on_redraw@thunk1_RadioButton@@QAEXXZ 0x00406FF0-0x00406FF8 BYTE_EXACT
-// symbol    ?adjust_radio_button1_on_redraw@@YIXPAX0@Z
-// size      8 bytes
-// prototype void (__thiscall ?on_redraw@thunk1_RadioButton@@QAEXXZ)(RadioButton* this)
-// callers   0   call targets   0
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     (none)
-// TRIED 2026-09-26 (Win slot-12 on_redraw rename batch): with Win slot12 renamed
-//            on_redraw, RadioButton::on_redraw overrides that slot through GraphicWin as
-//            well as Dialog slot2, so the qualified call's receiver fold moved from
-//            the Dialog offset 0xA30 to the GraphicWin offset 0x18. The walk now
-//            pre-subtracts 0x18 to cancel it, leaving the image's bare vtordisp thunk;
-//            the old 0xA30 walk emitted an extra `sub ecx, 0xa18` here. The compiler
-//            now emits its own vtordisp thunk for this slot; this handwritten walk
-//            stays the claim host pending coordinated retirement onto it.
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_radio_button1_on_redraw(void *self, void *) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<RadioButton *>(object - vtordisp - 0x18)->RadioButton::on_redraw();
-}
-
-/*
-Purpose: Adjust the receiver from RadioButton's thunk1 subobject to the one
-         RadioButton::on_mouse_move expects, then forward unchanged.
-// RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
-// ORIGINAL: 0x00407000 ?on_mouse_move@thunk1_RadioButton@@QAEXHH@Z 0x00407000-0x00407008
-// symbol    ?adjust_radio_button1_on_mouse_move@@YIXPAX0HH@Z
-// size      8 bytes
-// prototype void (__thiscall ?on_mouse_move@thunk1_RadioButton@@QAEXHH@Z)(RadioButton* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_radio_button1_on_mouse_move(void *self, void *,
-                                                   int arg0, int arg1) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<RadioButton *>(object - vtordisp)->RadioButton::on_mouse_move(arg0, arg1);
-}
 
 
-/*
-Purpose: Adjust the receiver from RadioButton's thunk1 subobject to the one
-         RadioButton::on_left_down expects, then forward unchanged.
-// RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
-// ORIGINAL: 0x00407020 ?on_left_down@thunk1_RadioButton@@QAEXHH@Z 0x00407020-0x00407028
-// symbol    ?adjust_radio_button1_on_left_down@@YIXPAX0HH@Z
-// size      8 bytes
-// prototype void (__thiscall ?on_left_down@thunk1_RadioButton@@QAEXHH@Z)(RadioButton* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_radio_button1_on_left_down(void *self, void *,
-                                                  int arg0, int arg1) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<RadioButton *>(object - vtordisp)->RadioButton::on_left_down(arg0, arg1);
-}
+
 
 /*
 Purpose: Adjust the receiver from RadioButton's thunk1 subobject to the one
@@ -255,28 +182,6 @@ int __fastcall adjust_radio_button1_on_key_down(void *self, void *, int arg0) {
     return reinterpret_cast<RadioButton *>(object - vtordisp)->RadioButton::on_key_down(arg0);
 }
 
-/*
-Purpose: Adjust the receiver from RadioButton's thunk1 subobject to the one
-         RadioButton::on_left_double_click expects, then forward unchanged.
-// RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
-// ORIGINAL: 0x00407040 ?on_left_double_click@thunk1_RadioButton@@QAEXHH@Z 0x00407040-0x00407048
-// symbol    ?adjust_radio_button1_on_left_double_click@@YIXPAX0HH@Z
-// size      8 bytes
-// prototype void (__thiscall ?on_left_double_click@thunk1_RadioButton@@QAEXHH@Z)(RadioButton* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_radio_button1_on_left_double_click(void *self, void *,
-                                                          int arg0, int arg1) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<RadioButton *>(object - vtordisp)->RadioButton::on_left_double_click(arg0, arg1);
-}
 
 /*
 Purpose: Adjust the receiver from RadioButton's thunk3 subobject to the one
@@ -375,35 +280,6 @@ int __fastcall adjust_dialogs1_on_scroll_delete(void *self, void *,
     return reinterpret_cast<Dialogs *>(object - vtordisp)->Dialogs::on_scroll_delete(static_cast<Scroll *>(arg0));
 }
 
-/*
-Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
-         Dialogs::on_redraw expects, then forward unchanged.
-// RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
-// ORIGINAL: 0x00407170 ?on_redraw@thunk1_Dialogs@@QAEXXZ 0x00407170-0x00407178 BYTE_EXACT
-// symbol    ?adjust_dialogs1_on_redraw@@YIXPAX0@Z
-// size      8 bytes
-// prototype void (__thiscall ?on_redraw@thunk1_Dialogs@@QAEXXZ)(Dialogs* this)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-// TRIED 2026-09-26 (Win slot-12 on_redraw rename batch): with Win slot12 renamed
-//            on_redraw, Dialogs::on_redraw overrides that slot through GraphicWin as
-//            well as Dialog slot2, so the qualified call's receiver fold moved from
-//            the Dialog offset 0xBA0 to the GraphicWin offset 0x188. The walk now
-//            pre-subtracts 0x188 to cancel it, leaving the image's bare vtordisp thunk;
-//            the old 0xBA0 walk emitted an extra `sub ecx, 0xa18` here. The compiler
-//            now emits its own vtordisp thunk for this slot; this handwritten walk
-//            stays the claim host pending coordinated retirement onto it.
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_dialogs1_on_redraw(void *self, void *) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<Dialogs *>(object - vtordisp - 0x188)->Dialogs::on_redraw();
-}
 
 /*
 Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
@@ -427,51 +303,7 @@ void __fastcall adjust_dialogs1_on_mousewheel(void *self, void *, int arg0) {
     reinterpret_cast<Dialogs *>(object - vtordisp)->Dialogs::on_mousewheel(arg0);
 }
 
-/*
-Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
-         Dialogs::on_mouse_move expects, then forward unchanged.
-// RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
-// ORIGINAL: 0x00407190 ?on_mouse_move@thunk1_Dialogs@@QAEXHH@Z 0x00407190-0x00407198
-// symbol    ?adjust_dialogs1_on_mouse_move@@YIXPAX0HH@Z
-// size      8 bytes
-// prototype void (__thiscall ?on_mouse_move@thunk1_Dialogs@@QAEXHH@Z)(Dialogs* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_dialogs1_on_mouse_move(void *self, void *, int arg0,
-                                              int arg1) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<Dialogs *>(object - vtordisp)->Dialogs::on_mouse_move(arg0, arg1);
-}
 
-/*
-Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
-         Dialogs::on_mouse_leave expects, then forward unchanged.
-// RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
-// ORIGINAL: 0x004071A0 ?on_mouse_leave@thunk1_Dialogs@@QAEXHH@Z 0x004071A0-0x004071A8
-// symbol    ?adjust_dialogs1_on_mouse_leave@@YIXPAX0HH@Z
-// size      8 bytes
-// prototype void (__thiscall ?on_mouse_leave@thunk1_Dialogs@@QAEXHH@Z)(Dialogs* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_dialogs1_on_mouse_leave(void *self, void *, int arg0,
-                                               int arg1) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<Dialogs *>(object - vtordisp)->Dialogs::on_mouse_leave(arg0, arg1);
-}
 
 /*
 Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
@@ -496,51 +328,7 @@ void __fastcall adjust_dialogs1_on_left_click(void *self, void *, int arg0,
     reinterpret_cast<Dialogs *>(object - vtordisp)->Dialogs::on_left_click(arg0, arg1);
 }
 
-/*
-Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
-         Dialogs::on_left_down expects, then forward unchanged.
-// RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
-// ORIGINAL: 0x004071C0 ?on_left_down@thunk1_Dialogs@@QAEXHH@Z 0x004071C0-0x004071C8
-// symbol    ?adjust_dialogs1_on_left_down@@YIXPAX0HH@Z
-// size      8 bytes
-// prototype void (__thiscall ?on_left_down@thunk1_Dialogs@@QAEXHH@Z)(Dialogs* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_dialogs1_on_left_down(void *self, void *, int arg0,
-                                             int arg1) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<Dialogs *>(object - vtordisp)->Dialogs::on_left_down(arg0, arg1);
-}
 
-/*
-Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
-         Dialogs::on_left_up expects, then forward unchanged.
-// RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
-// ORIGINAL: 0x004071D0 ?on_left_up@thunk1_Dialogs@@QAEXHH@Z 0x004071D0-0x004071D8
-// symbol    ?adjust_dialogs1_on_left_up@@YIXPAX0HH@Z
-// size      8 bytes
-// prototype void (__thiscall ?on_left_up@thunk1_Dialogs@@QAEXHH@Z)(Dialogs* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_dialogs1_on_left_up(void *self, void *, int arg0,
-                                           int arg1) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<Dialogs *>(object - vtordisp)->Dialogs::on_left_up(arg0, arg1);
-}
 
 /*
 Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
@@ -565,28 +353,6 @@ void __fastcall adjust_dialogs1_on_right_click(void *self, void *, int arg0,
     reinterpret_cast<Dialogs *>(object - vtordisp)->Dialogs::on_right_click(arg0, arg1);
 }
 
-/*
-Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
-         Dialogs::on_right_down expects, then forward unchanged.
-// RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
-// ORIGINAL: 0x004071F0 ?on_right_down@thunk1_Dialogs@@QAEXHH@Z 0x004071F0-0x004071F8
-// symbol    ?adjust_dialogs1_on_right_down@@YIXPAX0HH@Z
-// size      8 bytes
-// prototype void (__thiscall ?on_right_down@thunk1_Dialogs@@QAEXHH@Z)(Dialogs* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_dialogs1_on_right_down(void *self, void *, int arg0,
-                                              int arg1) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<Dialogs *>(object - vtordisp)->Dialogs::on_right_down(arg0, arg1);
-}
 
 /*
 Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
@@ -633,28 +399,6 @@ int __fastcall adjust_dialogs1_on_key_down(void *self, void *, int arg0) {
     return reinterpret_cast<Dialogs *>(object - vtordisp)->Dialogs::on_key_down(arg0);
 }
 
-/*
-Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
-         Dialogs::on_left_double_click expects, then forward unchanged.
-// RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
-// ORIGINAL: 0x00407220 ?on_left_double_click@thunk1_Dialogs@@QAEXHH@Z 0x00407220-0x00407228
-// symbol    ?adjust_dialogs1_on_left_double_click@@YIXPAX0HH@Z
-// size      8 bytes
-// prototype void (__thiscall ?on_left_double_click@thunk1_Dialogs@@QAEXHH@Z)(Dialogs* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_dialogs1_on_left_double_click(void *self, void *,
-                                                     int arg0, int arg1) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<Dialogs *>(object - vtordisp)->Dialogs::on_left_double_click(arg0, arg1);
-}
 
 /*
 Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
@@ -725,53 +469,7 @@ void __fastcall adjust_dialogs1_on_scrolling(void *self, void *, int arg0,
     reinterpret_cast<Dialogs *>(object - vtordisp)->Dialogs::on_scrolling(arg0, arg1);
 }
 
-/*
-Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
-         Dialogs::on_dialog_focus expects, then forward unchanged.
-// RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
-// ORIGINAL: 0x00407260 ?on_dialog_focus@thunk1_Dialogs@@QAEXH@Z 0x00407260-0x00407268
-// symbol    ?adjust_dialogs1_on_dialog_focus@@YIXPAX0H@Z
-// size      8 bytes
-// prototype void (__thiscall ?on_dialog_focus@thunk1_Dialogs@@QAEXH@Z)(Dialogs* this, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_dialogs1_on_dialog_focus(void *self, void *, int arg0) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<Dialogs *>(object - vtordisp)->Dialogs::on_dialog_focus(arg0);
-}
 
-/*
-Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
-         Dialogs::pass_dialog_focus expects, then forward unchanged.
-// RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
-// ORIGINAL: 0x00407270 ?pass_dialog_focus@thunk1_Dialogs@@QAEXXZ 0x00407270-0x00407278 BYTE_EXACT
-// symbol    ?adjust_dialogs1_pass_dialog_focus@@YIXPAX0@Z
-// size      8 bytes
-// prototype void (__thiscall ?pass_dialog_focus@thunk1_Dialogs@@QAEXXZ)(Dialogs* this)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_dialogs1_pass_dialog_focus(void *self, void *) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    // CAST TO Win, NOT TO THE DERIVED CLASS. `pass_dialog_focus` is Win's
-    // virtual; reaching it through the derived type makes the compiler add
-    // the subobject adjustment on top of the vtordisp one, and the image
-    // emits only the vtordisp adjust.
-    reinterpret_cast<Win *>(object - vtordisp)->Win::pass_dialog_focus();
-}
 
 /*
 Purpose: Adjust the receiver from Dialogs's thunk2 subobject to the one
@@ -843,34 +541,6 @@ int __fastcall adjust_dialogs1_attach(void *self, void *, void *arg0,
         ->Dialogs::attach(static_cast<GraphicWin *>(arg0), arg1, arg2, arg3);
 }
 
-/*
-Purpose: Adjust the receiver from Dialogs's thunk3 subobject to the one
-         Dialogs::on_redraw expects, then forward unchanged.
-// RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
-// ORIGINAL: 0x004072C0 ?on_redraw@thunk3_Dialogs@@QAEXXZ 0x004072C0-0x004072CE BYTE_EXACT
-// symbol    ?adjust_dialogs3_on_redraw@@YIXPAX0@Z
-// size      14 bytes
-// prototype void (__thiscall ?on_redraw@thunk3_Dialogs@@QAEXXZ)(Dialogs* this)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-// TRIED 2026-09-26 (Win slot-12 on_redraw rename batch): the receiver fold is now
-//            +0x188 (GraphicWin), so the walk keeps only the Dialog offset 0xBA0; the
-//            net adjustment is the image's `sub ecx, 0xa18` (the family-wide
-//            Dialog-to-GraphicWin gap 0xBA0 - 0x188). The pre-rename spelling also
-//            pre-subtracted 2584 and emitted `sub ecx, 0x1430` after the rename.
-//            The compiler now emits its own two-step thunk for this slot; this
-//            handwritten walk stays the claim host pending coordinated retirement.
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_dialogs3_on_redraw(void *self, void *) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<Dialogs *>(object - vtordisp - 0xBA0)->Dialogs::on_redraw();
-}
 
 /*
 Purpose: Adjust the receiver from MapWin's thunk1 subobject to the one

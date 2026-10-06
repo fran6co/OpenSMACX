@@ -27,7 +27,7 @@
         "vtable address constant": 0,
         "short-named fixed-address binding": 0,
         "anonymous fixed-address global": 0,
-        "adjustor_thunks.cpp markers": 84,
+        "adjustor_thunks.cpp markers": 70,
         "field_accessors.cpp markers": 18,
         "leaf_recoveries.cpp markers": 135,
         "nullsub_thunks.cpp markers": 47,

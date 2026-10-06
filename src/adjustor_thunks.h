@@ -49,56 +49,33 @@ extern func_adjustor_p_u DialogsScalarDeleteTarget;   // 0x00407100
 extern func_adjustor_p_u MapWinScalarDeleteTarget;   // 0x00421830
 extern func_adjustor_p_u PlanWinScalarDeleteTarget;   // 0x0048BF20
 
-void __fastcall adjust_radio_button1_on_redraw(void *self, void *);
-void __fastcall adjust_radio_button1_on_mouse_move(void *self, void *,
-                                                   int arg0, int arg1);
-void __fastcall adjust_radio_button1_on_left_down(void *self, void *,
-                                                  int arg0, int arg1);
 int __fastcall adjust_radio_button1_on_key_down(void *self, void *, int arg0);
-void __fastcall adjust_radio_button1_on_left_double_click(void *self, void *,
-                                                          int arg0, int arg1);
 void __fastcall adjust_radio_button3_on_redraw(void *self, void *);
 void * __fastcall adjust_dialogs1_scalar_delete(void *self, void *,
                                                 unsigned int arg0);
 void __fastcall adjust_dialogs1_on_scroll_create(void *self, void *);
 int __fastcall adjust_dialogs1_on_scroll_delete(void *self, void *,
                                                 void *arg0);
-void __fastcall adjust_dialogs1_on_redraw(void *self, void *);
 void __fastcall adjust_dialogs1_on_mousewheel(void *self, void *, int arg0);
-void __fastcall adjust_dialogs1_on_mouse_move(void *self, void *, int arg0,
-                                              int arg1);
-void __fastcall adjust_dialogs1_on_mouse_leave(void *self, void *, int arg0,
-                                               int arg1);
 void __fastcall adjust_dialogs1_on_left_click(void *self, void *, int arg0,
                                               int arg1);
-void __fastcall adjust_dialogs1_on_left_down(void *self, void *, int arg0,
-                                             int arg1);
-void __fastcall adjust_dialogs1_on_left_up(void *self, void *, int arg0,
-                                           int arg1);
 void __fastcall adjust_dialogs1_on_right_click(void *self, void *, int arg0,
                                                int arg1);
-void __fastcall adjust_dialogs1_on_right_down(void *self, void *, int arg0,
-                                              int arg1);
 void __fastcall adjust_dialogs1_on_right_up(void *self, void *, int arg0,
                                             int arg1);
 int __fastcall adjust_dialogs1_on_key_down(void *self, void *, int arg0);
-void __fastcall adjust_dialogs1_on_left_double_click(void *self, void *,
-                                                     int arg0, int arg1);
 void __fastcall adjust_dialogs1_on_right_double_click(void *self, void *,
                                                       int arg0, int arg1);
 void __fastcall adjust_dialogs1_on_scrolled(void *self, void *, int arg0,
                                             int arg1);
 void __fastcall adjust_dialogs1_on_scrolling(void *self, void *, int arg0,
                                              int arg1);
-void __fastcall adjust_dialogs1_on_dialog_focus(void *self, void *, int arg0);
-void __fastcall adjust_dialogs1_pass_dialog_focus(void *self, void *);
 void * __fastcall adjust_dialogs2_scalar_delete(void *self, void *,
                                                 unsigned int arg0);
 void * __fastcall adjust_dialogs3_scalar_delete(void *self, void *,
                                                 unsigned int arg0);
 int __fastcall adjust_dialogs1_attach(void *self, void *, void *arg0,
                                       int arg1, int arg2, int arg3);
-void __fastcall adjust_dialogs3_on_redraw(void *self, void *);
 void * __fastcall adjust_map_win1_scalar_delete(void *self, void *,
                                                 unsigned int arg0);
 void __fastcall adjust_map_win1_on_redraw(void *self, void *);

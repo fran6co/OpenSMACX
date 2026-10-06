@@ -8,6 +8,7 @@ import re
 import subprocess
 
 import pytest
+from test_virtual_adjustor_owners_oct6 import SPECS as FOLLOW_ON_VIRTUAL_SPECS
 from match_recovery.source import Mode, read_file, read_text
 from match_recovery import binding_source
 
@@ -122,7 +123,7 @@ def test_original_identity_history_and_generated_owner(address, owner, symbol):
     assert address not in current_records("src/adjustor_thunks.cpp")
 
 def test_unmigrated_original_rows_are_retained():
-    moved = {a for a, _owner, _symbol in SPECS}
+    moved = {a for a, _owner, _symbol in SPECS + FOLLOW_ON_VIRTUAL_SPECS}
     current = {**current_records("src/deleting_thunks.cpp"),
                **current_records("src/adjustor_thunks.cpp")}
     assert set(current) == set(old_records()) - moved
