@@ -52,6 +52,17 @@ static int CouncilPbemGate;
 static int CouncilNotifyFormSlots[8];
 static int CouncilNotifyPluralSlots[8];
 static int CouncilLastResolutionTurn[32];
+// Test-only owner view: scalar scenario inputs and callback writes remain
+// aliases of the fields read by the unmodified current production methods.
+struct GameDataFieldsDouble {
+    struct LockMasksDouble { uint32_t &enable_mask_; } lock_masks_;
+    int &governor_faction_;
+    int &turn_current_num_;
+    int (&council_last_resolution_turn_)[32];
+};
+struct GameDataStorageDouble { GameDataFieldsDouble fields_; } GameDataStateStorage = {
+    {{LockEnableMask}, GovernorFaction, TurnCurrentNum, CouncilLastResolutionTurn}
+};
 struct ConsoleGlobalDouble { int faction_id_=0; };
 static ConsoleGlobalDouble ConsoleGlobal;
 struct NetState { uint32_t leading_words_[4]; union Payload { uint32_t flags; int *vehicle_selection_follow; } payload_; uint32_t trailing_words_[10]; };

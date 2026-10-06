@@ -85,16 +85,25 @@ struct SecretProjectMock { int empath_guild_;
 };
 static PlayerDataMock PlayersData[8]; static PlayerMock Players[8];
 static BaseMock Bases[134]; static ConsoleMock ConsoleGlobal;
-static SecretProjectMock SecretProject;
-static uint32_t LockEnableMask,GameRules,GameState,FactionDiplomacyFlags[8],PendingDiplomacyFlags[8][8];
-static int SunspotDuration,TurnCurrentNum,IsMultiplayerNet,IsMultiplayerPBEM;
-static int DiploFriction,DiploScratchFA60,DiploScratchFAA0,BaseCurrentCount;
+struct LockMasksMock { uint32_t enable_mask_; };
+struct GameDataFieldsMock {
+ int turn_current_num_,base_current_count_;
+ uint32_t game_rules_,game_state_;
+ int sunspot_duration_;
+ LockMasksMock lock_masks_;
+ SecretProjectMock secret_project_;
+};
+struct GameDataStateMock { GameDataFieldsMock fields_; };
+static GameDataStateMock GameDataStateStorage;
+static uint32_t FactionDiplomacyFlags[8],PendingDiplomacyFlags[8][8];
+static int IsMultiplayerNet,IsMultiplayerPBEM;
+static int DiploFriction,DiploScratchFA60,DiploScratchFAA0;
 static int territory_calls,territory_result,territory_base,territory_count;
 static int friction_calls,friction_score,communication_calls,treaty_calls;
 static int encounter_calls,trade_calls,attack_calls,attack_base[8],attack_type[8],attack_target[8];
 static int deterministic_random,reputation_result,diplomacy_check_calls;
 static int diplo_add(int,int); static int diplo_sub(int,int); static int diplo_mul(int,int);
-static bool is_alive(int faction) { return (LockEnableMask & (1u << (8+faction))) != 0; }
+static bool is_alive(int faction) { return (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u << (8+faction))) != 0; }
 static int rand() { return deterministic_random; }
 static uint32_t random(int,int) { return static_cast<uint32_t>(deterministic_random); }
 static int territory(int,int,int,int *base,int *count) {
@@ -138,10 +147,10 @@ static void reset_state() {
   for(int s=0;s<4;++s) PlayersData[f].satellites_[s]=0;
  }
  for(int b=0;b<134;++b) { Bases[b].faction_id_current=0; for(int x=0;x<12;++x) Bases[b].facilities_built[x]=0; }
- ConsoleGlobal.faction_id_=1; SecretProject.empath_guild()=-1;
- LockEnableMask=GameRules=GameState=0; SunspotDuration=TurnCurrentNum=0;
+ ConsoleGlobal.faction_id_=1; GameDataStateStorage.fields_.secret_project_.empath_guild()=-1;
+ GameDataStateStorage.fields_.lock_masks_.enable_mask_=GameDataStateStorage.fields_.game_rules_=GameDataStateStorage.fields_.game_state_=0; GameDataStateStorage.fields_.sunspot_duration_=GameDataStateStorage.fields_.turn_current_num_=0;
  IsMultiplayerNet=IsMultiplayerPBEM=0; DiploFriction=DiploScratchFA60=DiploScratchFAA0=0;
- BaseCurrentCount=territory_calls=friction_calls=communication_calls=treaty_calls=0;
+ GameDataStateStorage.fields_.base_current_count_=territory_calls=friction_calls=communication_calls=treaty_calls=0;
  territory_result=territory_base=territory_count=friction_score=0;
  encounter_calls=trade_calls=attack_calls=0; deterministic_random=0; reputation_result=5;
  diplomacy_check_calls=0;
@@ -150,37 +159,46 @@ int main() {
  reset_state(); PlayersData[0].diplo_agenda[1]=0x20; enemy_diplomacy(0);
  assert(PlayersData[0].diplo_agenda[1]==0x20 && territory_calls==0);
 
- reset_state(); LockEnableMask=1u<<2; PlayersData[2].diplo_agenda[3]=0x20;
+ reset_state(); GameDataStateStorage.fields_.lock_masks_.enable_mask_=1u<<2; PlayersData[2].diplo_agenda[3]=0x20;
  enemy_diplomacy(2);
  assert((PlayersData[2].diplo_agenda[3]&0x40)!=0 && (PlayersData[3].diplo_agenda[2]&0x40)!=0);
  assert(territory_calls==0 && friction_calls==0);
 
  // Contact score uses territory output (7), not actor index (2).
- reset_state(); LockEnableMask=(1u<<(8+3))|(1u<<3); PlayersData[2].diplo_treaties[3]=8;
- PlayersData[3].diplo_spoke[2]=0; TurnCurrentNum=10;
+ reset_state(); GameDataStateStorage.fields_.lock_masks_.enable_mask_=(1u<<(8+3))|(1u<<3); PlayersData[2].diplo_treaties[3]=8;
+ PlayersData[3].diplo_spoke[2]=0; GameDataStateStorage.fields_.turn_current_num_=10;
  territory_result=7; territory_base=11; territory_count=2; enemy_diplomacy(2);
  assert(territory_calls==1 && friction_calls==1 && friction_score==2);
 
  // 0x20000000 alone reaches encounter through the native cleanup/dispatch gate.
- reset_state(); LockEnableMask=1u<<(8+1); PlayersData[2].diplo_treaties[1]=0x20000000u;
- TurnCurrentNum=5; enemy_diplomacy(2);
+ reset_state(); GameDataStateStorage.fields_.lock_masks_.enable_mask_=1u<<(8+1); PlayersData[2].diplo_treaties[1]=0x20000000u;
+ GameDataStateStorage.fields_.turn_current_num_=5; enemy_diplomacy(2);
  assert(encounter_calls==1);
 
  // Native console-only domain rejects nonconsole-human and invalid console
  // relation-mask notification, but both still reach diplomacy_check.
- reset_state(); LockEnableMask=1u<<4; PlayersData[3].diplo_treaties[4]=8;
- PlayersData[4].diplo_spoke[3]=0; TurnCurrentNum=40;
+ reset_state(); GameDataStateStorage.fields_.lock_masks_.enable_mask_=1u<<4; PlayersData[3].diplo_treaties[4]=8;
+ PlayersData[4].diplo_spoke[3]=0; GameDataStateStorage.fields_.turn_current_num_=40;
  enemy_diplomacy_console_pair(3,4);
  assert(communication_calls==0 && diplomacy_check_calls==1);
- reset_state(); LockEnableMask=1u<<2; PlayersData[3].diplo_treaties[2]=0x10;
- PlayersData[2].diplo_spoke[3]=0; TurnCurrentNum=40;
+ reset_state(); GameDataStateStorage.fields_.lock_masks_.enable_mask_=1u<<2; PlayersData[3].diplo_treaties[2]=0x10;
+ PlayersData[2].diplo_spoke[3]=0; GameDataStateStorage.fields_.turn_current_num_=40;
  enemy_diplomacy_console_pair(3,2);
  assert(communication_calls==0 && diplomacy_check_calls==1);
+
+ // The territory phase writes pending diplomacy state as [peer][actor],
+ // unlike comm_check's opposite direction. Keep this directed-row behavior.
+ reset_state(); ConsoleGlobal.faction_id_=2; GameDataStateStorage.fields_.lock_masks_.enable_mask_=1u<<2; PlayersData[3].diplo_treaties[2]=8;
+ PlayersData[3].diplo_agenda[2]=0x800; PlayersData[2].diplo_spoke[3]=0;
+ GameDataStateStorage.fields_.turn_current_num_=10; territory_result=3; territory_count=2;
+ { int base=0; enemy_diplomacy_territory_pair(3,2,base); }
+ assert((PendingDiplomacyFlags[2][3]&0x18u)==0x18u);
+ assert(PendingDiplomacyFlags[3][2]==0);
 
  // Type-4 base selection is carried into a later type-3 fast path.
  reset_state(); PlayersData[1].satellites_[3]=3; PlayersData[1].planet_busters=1;
  PlayersData[1].diplo_treaties[2]=PlayersData[1].diplo_treaties[3]=0x810;
- PlayersData[3].satellites_[3]=1; BaseCurrentCount=3; Bases[1].faction_id_current=2;
+ PlayersData[3].satellites_[3]=1; GameDataStateStorage.fields_.base_current_count_=3; Bases[1].faction_id_current=2;
  { int byte=0,mask=0; bitmask(0x29,&byte,&mask); Bases[1].facilities_built[byte]=static_cast<uint8_t>(mask); }
  enemy_diplomacy_satellite_attacks(1,19);
  assert(attack_calls==2 && attack_type[0]==4 && attack_base[0]==1);
@@ -188,7 +206,7 @@ int main() {
 
  // Fourth-turn treaty bit subtracts one from the common score for either
  // relation kind; nonpact military ratio reads the existing mil_strength_1.
- reset_state(); TurnCurrentNum=4; PlayersData[2].diplo_treaties[3]=2;
+ reset_state(); GameDataStateStorage.fields_.turn_current_num_=4; PlayersData[2].diplo_treaties[3]=2;
  assert(enemy_diplomacy_relationship_score(2,3,0,7)==1);
  reset_state(); PlayersData[2].mil_strength_1=10; PlayersData[3].mil_strength_1=30;
  PlayersData[2].planet_busters=100;
@@ -203,8 +221,8 @@ DAMAGE_CASES = {
     "notification_domain": ("if (console_notification_domain && !has_reached_common_network_gate &&", "if (!has_reached_common_network_gate &&"),
     "dispatch_flag": ("(relation_before_callbacks & 0x20000000u) != 0", "(relation_before_callbacks & 0x20000000u) == 0"),
     "selected_base_carry": (
-        "for (; candidate < BaseCurrentCount; ++candidate) {\n                    carried_base_scan_index = candidate;",
-        "for (; candidate < BaseCurrentCount; ++candidate) {\n                    carried_base_scan_index = 0;",
+        "for (; candidate < GameDataStateStorage.fields_.base_current_count_; ++candidate) {\n                    carried_base_scan_index = candidate;",
+        "for (; candidate < GameDataStateStorage.fields_.base_current_count_; ++candidate) {\n                    carried_base_scan_index = 0;",
     ),
 }
 
