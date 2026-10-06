@@ -2144,7 +2144,7 @@ int __cdecl jackal_init_real(Palette *palette, Font *font, LPSTR window_name,
 }
 
 // SDK imports, never raw IAT pointers.
-// RECOVERY_IMPORT: v1 __imp__IntersectRect@12 USER32.dll name:IntersectRect
+// Shared IntersectRect import identity is owned by graphicwin.cpp.
 // RECOVERY_IMPORT: v1 __imp__EqualRect@8 USER32.dll name:EqualRect
 // RECOVERY_IMPORT: v1 __imp__DirectDrawEnumerateA@8 DDRAW.dll name:DirectDrawEnumerateA
 // RECOVERY_IMPORT: v1 __imp__DirectDrawCreate@12 DDRAW.dll name:DirectDrawCreate
