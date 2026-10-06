@@ -69,6 +69,115 @@ void __cdecl hall_of_fame(int add_current_player) {
   }
 }
 
+/*
+Purpose: Hall-of-fame I/O: store the read/write mode, then transfer the
+         0x1324-byte record block out in one shot; on a failed write,
+         zero the five 0x8C-stride fields of every record and return.
+
+// ORIGINAL: 0x0044AF90 sub_44af90 0x0044AF90-0x0044AFF2 FILE BYTE_EXACT
+// LEVER: write-branch-first if/else polarity (matches the original's `je` target) plus a signed (int) pointer-vs-address comparison instead of unsigned, in the zero-fill loop's exit test
+// size      98 bytes
+// prototype
+// callers   0   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0064603F 0x00646178
+Status: Structural migration to source-owned HallOfFameRecords and
+        HallOfFameIOMode. The historical byte claim remains an obligation;
+        this current spelling measures MISMATCH. The image's 0x0064603F and
+        0x00646178 are CRT fwrite/fread wrappers.
+*/
+extern "C" int __cdecl sub_44af90(FILE *a1, int a2) {
+    HallOfFameIOMode = a2;
+    int result;
+    if (a2 != 0) {
+        result = static_cast<int>(
+            fwrite(HallOfFameRecords, sizeof(HallOfFameRecords), 1, a1));
+    } else {
+        result = static_cast<int>(
+            fread(HallOfFameRecords, sizeof(HallOfFameRecords), 1, a1));
+    }
+    if (result == 0) {
+        for (int i = 0; i < HallOfFameRecordCount; ++i) {
+            HallOfFameRecords[i].present = 0;
+        }
+    }
+    return 0;
+}
+
+/*
+Purpose: Hall-of-fame save: open hallfame.jhh for writing, set the I/O mode,
+         write the whole record block, clear entry-present flags on failure,
+         close, and report the open failure.
+
+// ORIGINAL: 0x0044B000 ?hof_save@@YAHXZ 0x0044B000-0x0044B06C FILE BYTE_EXACT
+// size      108 bytes
+// prototype
+// callers   0   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00645598 0x00645646 0x0064603F
+Status: Structural migration to source-owned hall-of-fame storage. The
+        historical byte claim remains an obligation; current spelling
+        measures MISMATCH. The image's fopen is 0x00645646 and fclose is
+        0x00645598; the pinned .data bytes at 0x00684610 spell
+        "hallfame.jhh", correcting the previous product filename.
+*/
+int __cdecl hof_save() {
+    FILE *file = fopen("hallfame.jhh", "wb");
+    if (file == 0) {
+        return 1;
+    }
+    HallOfFameIOMode = 1;
+    int written = static_cast<int>(
+        fwrite(HallOfFameRecords, sizeof(HallOfFameRecords), 1, file));
+    if (written == 0) {
+        for (int i = 0; i < HallOfFameRecordCount; ++i) {
+            HallOfFameRecords[i].present = 0;
+        }
+    }
+    fclose(file);
+    return 0;
+}
+
+/*
+Purpose: Hall-of-fame load: open hallfame.jhh for reading, clear entry-present
+         flags and fail when the open misses, set the I/O mode, read the whole
+         record block (clearing flags on a short read), then close.
+
+// ORIGINAL: 0x0044B070 ?hof_load@@YAHXZ 0x0044B070-0x0044B0F8 FILE BYTE_EXACT
+// size      136 bytes
+// prototype
+// callers   0   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00645598 0x00645646 0x00646178
+Status: Structural migration to source-owned hall-of-fame storage. The
+        historical byte claim remains an obligation; current spelling
+        measures MISMATCH. The pinned .data bytes at 0x00684620/24 are
+        "rb"/"hallfame.jhh".
+*/
+int __cdecl hof_load() {
+    FILE *f = fopen("hallfame.jhh", "rb");
+    if (f == 0) {
+        for (int i = 0; i < HallOfFameRecordCount; ++i) {
+            HallOfFameRecords[i].present = 0;
+        }
+        return 1;
+    }
+    HallOfFameIOMode = 0;
+    int n = static_cast<int>(
+        fread(HallOfFameRecords, sizeof(HallOfFameRecords), 1, f));
+    if (n == 0) {
+        for (int i = 0; i < HallOfFameRecordCount; ++i) {
+            HallOfFameRecords[i].present = 0;
+        }
+    }
+    fclose(f);
+    return 0;
+}
+
+
 // hall_of_fame's receiver at 0x0074DAF8 and the original g_FAMEWIN
 // initializer/finalizer at 0x004483D0/0x004483F0 identify this as a
 // process-lifetime object. Its end is the adjacent HallOfFameIOMode slot.

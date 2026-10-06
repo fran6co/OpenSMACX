@@ -29,7 +29,7 @@
         "anonymous fixed-address global": 0,
         "adjustor_thunks.cpp markers": 32,
         "field_accessors.cpp markers": 16,
-        "leaf_recoveries.cpp markers": 74,
+        "leaf_recoveries.cpp markers": 58,
         "nullsub_thunks.cpp markers": 46,
         "hypothesis_layouts.h lines": 1610,
         "stringstruct.cpp markers": 41

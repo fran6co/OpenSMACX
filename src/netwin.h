@@ -115,6 +115,7 @@ void __cdecl send_all_player_packets(int target);
 void __cdecl send_session_packet(int slot, int target);
 void __cdecl send_session2_packet(int slot, int target);
 void __cdecl send_faction_data(int slot);
+void __cdecl sub_47b1d0(int faction_id, void *payload);
 
  /*
   * MessageFactionData

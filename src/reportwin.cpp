@@ -349,6 +349,11 @@ static void reportwin_draw_lab_unlock_sections(Buffer &canvas, int technology,
         reportwin_append_lab_entry(datalink, entries, label_get(0x120 / 4),
                                    Chassis[i_chassis].offsv_1_name, true,
                                    4, i_chassis);
+        if (draw_pass) {
+            TechnologyHelpEntryKind = 0x62;
+            TechnologyHelpEntryName = static_cast<int>(
+                reinterpret_cast<intptr_t>(Chassis[i_chassis].offsv_1_name));
+        }
         reportwin_append_chassis_lab_detail(static_cast<signed char>(Chassis[i_chassis].speed),
                                             Chassis[i_chassis].range);
     }
@@ -360,6 +365,11 @@ static void reportwin_draw_lab_unlock_sections(Buffer &canvas, int technology,
         reportwin_append_lab_entry(datalink, entries, label_get(0x124 / 4),
                                    Weapon[i_weapon].name, true,
                                    6, i_weapon);
+        if (draw_pass) {
+            TechnologyHelpEntryKind = 0x63;
+            TechnologyHelpEntryName = static_cast<int>(
+                reinterpret_cast<intptr_t>(Weapon[i_weapon].name));
+        }
         reportwin_append_weapon_lab_detail(Weapon[i_weapon].offense_rating,
                                            Weapon[i_weapon].mode);
     }
@@ -371,6 +381,11 @@ static void reportwin_draw_lab_unlock_sections(Buffer &canvas, int technology,
         reportwin_append_lab_entry(datalink, entries, label_get(0x128 / 4),
                                    Armor[i_armor].name, true,
                                    7, i_armor);
+        if (draw_pass) {
+            TechnologyHelpEntryKind = 0x64;
+            TechnologyHelpEntryName = static_cast<int>(
+                reinterpret_cast<intptr_t>(Armor[i_armor].name));
+        }
         reportwin_append_armor_lab_detail(Armor[i_armor].defense_rating);
     }
     reportwin_finish_lab_section(canvas, draw_pass, x, y, frame_width, measured_height);
@@ -436,7 +451,7 @@ static BoxSpriteParams *reportwin_lab_category_style(int category,
 }
 
 // ORIGINAL: 0x00498B30 ?draw_labs@ReportWin@@QAEXXZ 0x00498B30-0x0049B1DC
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x00498B30-0x0049B1DC", "git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00498b30.cpp", "source:src/recovered/units/00430b30.cpp"], "reason": "The ReportWin laboratory page is shared by the ordinary report and Datalink entry renderer. Recover its real Buffer hosts, FlatButton members, technology Sprite array and ReportIf fonts; original chart geometry, status rows and unlock-list scans identify these owners. Retain the historical seed for further matching and runtime verification."}
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x00498B30-0x0049B1DC", "git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00498b30.cpp", "source:src/recovered/units/00430b30.cpp", "pinned:0x0049A5FC stores kind0x62 then0x0049A606 stores the chassis name value after the link text and before chassis detail formatting", "pinned:0x0049A7CD stores kind0x63 then0x0049A7D7 stores the weapon name value after the link text and before weapon detail formatting", "pinned:0x0049A9E1 stores kind0x64 then0x0049A9EB stores the armor name value after the link text and before armor detail formatting", "source:src/datalink.h TechnologyHelpEntryName/Kind are the independently observed 4-byte shared objects; Datalink help and tech_achieved reset use the same pair", "source:src/reportwin.cpp reportwin_draw_lab_unlock_sections already traverses these same typed Chassis/Weapon/Armor rows and preserves its original lab detail and callback paths"], "reason": "The ReportWin laboratory page is shared by the ordinary report and Datalink entry renderer. Recover its real Buffer hosts, FlatButton members, technology Sprite array and ReportIf fonts; original chart geometry, status rows and unlock-list scans identify these owners. Retain the historical seed for further matching and runtime verification. Preserve the shared technology-help entry name/kind pair at the original chassis, weapon and armor emission points while keeping ReportWin's real two-pass lab/unlock rendering, existing table bounds, section order and link/detail ordering."}
 // TRIED: full pixel-geometry reconstruction of the lab-tier bar chart (labs_line/FUN_0049b450/vtable-slot draw calls with exact coordinate math across up to 15 rows and 4 switch-selected sprite tables) - this pass preserves top-level branch shape and call order, not the per-row layout arithmetic.
 void ReportWin::draw_labs() {
     const int faction = ReportIfGlobal.report_faction_id_;

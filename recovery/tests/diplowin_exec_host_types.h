@@ -152,8 +152,6 @@ extern SubInterface *InterfaceRegistry[12];
 extern BoxSpriteParams InterfaceBoxStyles[51];
 extern RECT DiploInitPanelRect, DiploInitScreenRect, DiploInitLowerRect;
 extern int DiploDefaultFlag93A968, WinScreenWidth, WinScreenHeight;
-extern int IsMultiplayerPBEM, IsMultiplayerNet, TurnControlDurationMilliseconds;
-extern uint32_t LockEnableMask;
 extern int CommlinkPending, DiploOffersDirty;
 extern uint32_t PendingDiplomacyFlags[8][8];
 extern int ChatItemIdTable[8], ChatShadowColors[8];
@@ -174,5 +172,4 @@ inline uint32_t __cdecl message_data(int opcode, int target, int, int, int, int)
 inline int __cdecl pop_expire() { return 0; }
 extern "C" void __cdecl sub_441100(int, int);
 #endif
-
 

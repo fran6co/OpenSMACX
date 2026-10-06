@@ -17,6 +17,7 @@
  */
 #include "stdafx.h"
 #include "temp.h"
+#include "datalink.h"
 #include "technology.h"
 #include "alpha.h"
 #include "base.h"
@@ -1376,6 +1377,11 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
     } else {
         player.flags |= 2;
     }
+
+    // Pinned 0x005BB71A clears this pair after prototype selection and
+    // before the technology presentation path.
+    TechnologyHelpEntryName = -1;
+    TechnologyHelpEntryKind = -1;
 
     // The presentation payload is prepared for both human and AI recipients.
     // These offsets are the typed Player fields: the native record's name

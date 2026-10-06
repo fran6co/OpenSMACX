@@ -131,10 +131,19 @@ Popup &NetMsgPrimary = popup_storage;
 FX g_FX;
 ConsoleType ConsoleGlobal;
 ParseStrType ParseStrBuffer[1];
-uint32_t LockEnableMask;
-uint32_t NetTurnFlags;
-int NetTurnFaction;
-int TurnCurrentNum;
+// Narrow behavioral double: only fields accessed by the extracted methods.
+// It models the current field path, not the complete owner layout or ABI.
+struct GameDataLockMasksHostDouble { uint32_t enable_mask_; };
+struct GameDataFieldsHostDouble {
+    int turn_control_duration_milliseconds_;
+    GameDataLockMasksHostDouble lock_masks_;
+    uint32_t net_turn_flags_;
+    int net_turn_faction_;
+    int turn_current_num_;
+};
+struct GameDataStorageHostDouble { GameDataFieldsHostDouble fields_; };
+GameDataStorageHostDouble GameDataStateStorage;
+
 int ConsoleControlTurnActive;
 int NetPlayerDropped;
 char labels_for_call[2][16];
@@ -199,8 +208,8 @@ static void reset_daemon(NetDaemon &daemon) {
     memset(&NetWinSessionOptions, 0, sizeof(NetWinSessionOptions));
     NetWinDialog.visible = 0; NetWinDialog.redraws = 0; NetWinDialog.button_calls = 0;
     NetHostChangeSlot = 998; NextTurnReady = 0; NetUpkeepPhase = 7;
-    NetTurnFlags = 0; NetTurnFaction = 0; TurnCurrentNum = 14;
-    LockEnableMask = 0; ConsoleControlTurnActive = 0; NetPlayerDropped = 0;
+    GameDataStateStorage.fields_.net_turn_flags_ = 0; GameDataStateStorage.fields_.net_turn_faction_ = 0; GameDataStateStorage.fields_.turn_current_num_ = 14;
+    GameDataStateStorage.fields_.lock_masks_.enable_mask_ = 0; ConsoleControlTurnActive = 0; NetPlayerDropped = 0;
     ConsoleGlobal.faction_id_ = 1;
     strcpy(ParseStrBuffer[0].str, "LOG");
     strcpy(incoming_name, "new-player");
@@ -280,7 +289,7 @@ int main(int argc, char **argv) {
     } else if (strcmp(scenario, "delete_inactive_lock") == 0) {
         setup_two_player_delete(daemon, 2);
         daemon.lock_state_[0].leading_words_[1] = 0;
-        LockEnableMask = 0x0808; // alive and human faction 3
+        GameDataStateStorage.fields_.lock_masks_.enable_mask_ = 0x0808; // alive and human faction 3
         daemon.locks_.records_[3].entries_[0].flag = 0;
         clear_trace();
         daemon.on_player_deleted(0, 20);
@@ -293,7 +302,7 @@ int main(int argc, char **argv) {
     } else if (strcmp(scenario, "delete_active_lock") == 0) {
         setup_two_player_delete(daemon, 2);
         daemon.lock_state_[0].leading_words_[1] = 0;
-        LockEnableMask = 0x0808;
+        GameDataStateStorage.fields_.lock_masks_.enable_mask_ = 0x0808;
         daemon.locks_.records_[3].entries_[0].flag = 1;
         clear_trace();
         daemon.on_player_deleted(0, 20);
@@ -319,7 +328,7 @@ int main(int argc, char **argv) {
             NetWinLobbyRows[row].owner_ = static_cast<uint32_t>(0x600 + row);
         }
         NetWinSessionData.mode_ = 0x11223344;
-        LockEnableMask = 0;
+        GameDataStateStorage.fields_.lock_masks_.enable_mask_ = 0;
         memset(&NetWinSessionOptions, 0xA5, sizeof(NetWinSessionOptions));
         NetWinSessionOptions.difficulty_ = 5;
         NetWinSessionOptionsState options_before = NetWinSessionOptions;

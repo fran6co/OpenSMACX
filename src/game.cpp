@@ -4860,7 +4860,6 @@ char *__cdecl get_pact_hood(int faction_id, int other_id) {
     return StringTable.get((int)labels[code]);
 }
 
-extern void __cdecl clear_hotseat_chat();
 extern int __cdecl tech_advance(int faction_id);
 extern uint32_t TerraformAnnouncedMask[2];
 extern int TutorialFlags;

@@ -398,5 +398,9 @@ class DiploWin : public GraphicWin, public SubInterface {
   EditBox editBox_;  // 0xDA7C, IDB `editBox`, size == sizeof(EditBox) == 0xB74
 };
 
+void __cdecl clear_hotseat_chat();
+extern "C" void __cdecl sub_441040(int a1, int a2);
+extern "C" void __cdecl sub_441100(int faction_id, int faction_id_with);
+
 extern DiploWin DiploWindow;
 extern StringList DiplomacyTranscriptLists[8][8];

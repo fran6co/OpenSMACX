@@ -34,11 +34,11 @@
 #include "technology.h"
 #include "alpha.h"
 #include "maininterface.h"
+#include "general.h"  // swap for the hot-seat pair callbacks
 
 void __cdecl slide_show(GraphicWin *window, int mode);
 void __cdecl slide_hide(GraphicWin *window, int mode);
 extern int DiploOffersDirty;
-extern "C" void __cdecl sub_441100(int faction_id, int faction_id_with);
 
 // Native redraw passes these distinct addresses as C strings. Both initially
 // contain NUL. Only their first byte is established; producer and full string
@@ -1876,4 +1876,150 @@ void DiploWin::on_left_click(int a1, int a2) {
         kill_offer(0, a1);
         vtable_slot<func_diplo_win_slot062>(this, 0xf8)(this);
     }
+}
+
+/*
+Purpose: Clear the hot-seat chat log: walk the eight 0x30-byte records at
+         0x00737CE0, and for each live one walk its entry chain - freeing
+         every node through the owning object's vtable-adjusted release
+         slot and each node's own scalar-deleting slot - then clear the
+         record's head, count and trailing words.
+
+// ORIGINAL: 0x00440F80 ?clear_hotseat_chat@@YAXXZ 0x00440F80-0x00441033 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["diplowin.cpp owns the genuine DiplomacyTranscriptLists[8][8] StringList array whose first head is 0x00737CE0 (+8); game.cpp is its direct caller.", "StringStruct::remove_all performs the same count-reloaded on_remove/payload-delete/entry-delete traversal. For a nonempty head it also resets head/count/position; the source body then preserves the original unconditional position and allocator clears while leaving current_ untouched."], "reason": "Move this global cleanup beside its actual 64-list owner and use StringList::remove_all rather than a hand-indexed vtable thunk; keep the empty-head conditional and all per-record resets."}
+// TRIED: member-fn-pointer+union thunk for the two vtable-adjusted "release" calls; raw pointer cast over fixed globals for record base/bound (address itself does read-modify-write via `rec += 0xc`). First divergence is #11 lea vs je.
+// size      179 bytes
+// prototype
+// callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x00440FBA 0x00440FCC 0x00440FEA
+Status: Source body moved to the DiplomacyTranscriptLists owner;
+        nonempty rows now use the real StringList::remove_all lifecycle.
+        The old union-thunk spelling remains seed history and is
+        superseded by the current source binding; its TRIED note stands.
+*/
+
+void __cdecl clear_hotseat_chat() {
+    for (int row = 0; row < 8; ++row) {
+        for (int column = 0; column < 8; ++column) {
+            StringList &list = DiplomacyTranscriptLists[row][column];
+            if (list.head_ != 0) {
+                list.remove_all();
+            }
+            list.current_position_ = 0;
+            list.allocator_ = 0;
+        }
+    }
+}
+
+/*
+Purpose: Publish the (a1,a2) id pair into the 0x30-byte dialog entry slot
+         the 0x00747BD8 list describes: order the pair, walk the entry
+         chain to the requested index (caching node and index in the
+         list's own state when the walk ran), read the node's payload and
+         its predecessor's, then stage both into the 0x00737CD8 table slot
+         and add it under the payload id through StringStruct::add.
+
+// ORIGINAL: 0x00441040 sub_441040 0x00441040-0x004410F1 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["DiploWin owns stringBox_ at +0xA388; StringBox::stringList_ is at +0x2B70, giving the exact original StringList receiver at DiploWindow+0xCEF8 = 0x00747BD0.", "The pinned words 0x747BD8/BC/E0/E4 therefore map to StringList head_/current_/entry_count_/current_position_; 0x737CD8 is the typed 8x8 destination list table."], "reason": "Move the global callback into the owner of both the observed source StringList member and destination transcript array; preserve cursor caching, pair-index arithmetic, target-field writes and add order."}
+// TRIED: void __cdecl(int a1, int a2), direct linked-list walk transcription; diverges at #29 mov vs cmp, not chased further
+// size      177 bytes
+// prototype
+// callers   0   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00401100 0x00628A50
+Status: Coverage transcription - unclaimed body; the walk now goes through
+        the tree's own StringStruct::add and the general.h swap, whose
+        measured bodies are the image's 0x00401100 and 0x00628A50.
+*/
+extern "C" void __cdecl sub_441040(int a1, int a2) {
+    StringList &source = DiploWindow.shared_string_box().strings();
+    if (a1 > a2) {
+        swap(&a1, &a2);
+    }
+    int loopBound = source.entry_count_;
+    for (int i = loopBound - 3; i < loopBound; ++i) {
+        if (i >= 0) {
+            int curCount = source.entry_count_;
+            StringStructEntry *const head = source.head_;
+            StringStructEntry *node;
+            if (i <= curCount - 1) {
+                node = head;
+                if (i > 0) {
+                    int n = i;
+                    do {
+                        node = node->next;
+                        --n;
+                    } while (n != 0);
+                }
+                source.current_ = node;
+                source.current_position_ = i;
+            } else {
+                node = source.current_;
+            }
+            int f1;
+            char *f2;
+            if (head == 0) {
+                f1 = 0;
+                f2 = 0;
+            } else {
+                f1 = node->id;
+                f2 = node->string_payload()->text;
+            }
+            int idx = (a2 + a1 * 8) * 0x30;
+            StringList *entry = reinterpret_cast<StringList *>(
+                reinterpret_cast<char *>(&DiplomacyTranscriptLists[0][0]) + idx);
+            entry->pending_text_ = f2;
+            entry->field_20_ = 0;
+            entry->field_24_ = 0;
+            entry->add(f1);
+        }
+    }
+}
+
+/*
+Purpose: Refill one hot-seat chat view: order the two record indices, clear
+         the shared StringBox and its EditBox caption, then stage the three
+         newest entries of the record's entry chain into the box - each
+         entry's payload text added under its id.
+
+// ORIGINAL: 0x00441100 sub_441100 0x00441100-0x004411EC FILE
+// RECOVERY_BINDING: v1 {"evidence": ["diplowin.cpp owns the direct DiploWin::exec caller, the shared DiploWindow StringBox/EditBox and the typed DiplomacyTranscriptLists array.", "The original implementation clears both shared controls, normalizes the pair, then reads the last three entries from the selected list in its existing order."], "reason": "Move the complete externally named callback from the catch-all leaf TU into the owning diplomacy TU; retain normalization, clear order, loop bounds and typed list/control behavior."}
+// TRIED: signature had no params in the fallback head (IDA guessed 2 stack ints, confirmed by [ebp+8]/[ebp+0xc] reads before any push, and no meaningful eax at ret so void not int - both changed). Landed at MISMATCH (90% mnemonic similarity, 11 edits).
+// size      236 bytes
+// prototype
+// callers   1   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x006151E0 0x00628A50 0x00629710 0x00629780
+Status: The body now lives beside the real DiploWindow StringBox/EditBox
+        and transcript-array owners. Its historical MISMATCH note stands;
+        the former uncertainty about shared StringBox ownership is
+        superseded by the current source binding.
+*/
+// The shared window is the typed DiploWindow object; its saved entries are
+// held in the 8x8 StringList table at the observed 0x737CD8 storage region.
+extern "C" void __cdecl sub_441100(int faction_id, int faction_id_with) {
+  if (faction_id > faction_id_with)
+    swap(&faction_id, &faction_id_with);
+
+  DiploWindow.shared_string_box().clear();
+  DiploWindow.shared_edit_box().set_text(0);
+
+  StringList &saved =
+      DiplomacyTranscriptLists[faction_id][faction_id_with];
+  const int saved_count = saved.entry_count_;
+  for (int index = saved_count - 3; index < saved_count; ++index) {
+    if (index < 0)
+      continue;
+    if (index <= saved.entry_count_ - 1) {
+      saved.seek_pos(index);
+      StringStructPayload *const payload = saved.current_entry();
+      DiploWindow.shared_string_box().add(payload != 0 ? payload->text : 0,
+                                          saved.current_id(), 1);
+    }
+  }
 }

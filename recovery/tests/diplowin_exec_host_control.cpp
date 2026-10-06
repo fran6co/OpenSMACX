@@ -10,8 +10,20 @@ SubInterface *InterfaceRegistry[12];
 BoxSpriteParams InterfaceBoxStyles[51];
 int DiploDefaultFlag93A968;
 int WinScreenWidth = 1024, WinScreenHeight = 768;
-int IsMultiplayerPBEM, IsMultiplayerNet, TurnControlDurationMilliseconds = 100;
-uint32_t LockEnableMask;
+int IsMultiplayerPBEM, IsMultiplayerNet;
+// Narrow behavioral double: only fields accessed by the extracted methods.
+// It models the current field path, not the complete owner layout or ABI.
+struct GameDataLockMasksHostDouble { uint32_t enable_mask_; };
+struct GameDataFieldsHostDouble {
+    int turn_control_duration_milliseconds_;
+    GameDataLockMasksHostDouble lock_masks_;
+    uint32_t net_turn_flags_;
+    int net_turn_faction_;
+    int turn_current_num_;
+};
+struct GameDataStorageHostDouble { GameDataFieldsHostDouble fields_; };
+GameDataStorageHostDouble GameDataStateStorage = {{100, {0}, 0, 0, 0}};
+
 int CommlinkPending, DiploOffersDirty;
 uint32_t PendingDiplomacyFlags[8][8];
 int ChatItemIdTable[8], ChatShadowColors[8];

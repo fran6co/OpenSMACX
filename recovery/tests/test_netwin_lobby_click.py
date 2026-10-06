@@ -52,6 +52,7 @@ def test_netwin_lobby_click_packets_and_branches(tmp_path: Path) -> None:
 #include <cstdint>
 #include <cstring>
 #include <vector>
+#define __fastcall
 using std::uint8_t;
 using std::uint16_t;
 using std::uint32_t;

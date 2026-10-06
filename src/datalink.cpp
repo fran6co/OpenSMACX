@@ -45,6 +45,7 @@
 #include "reportif.h"
 #include "technology.h"
 #include "console.h"
+#include "council.h"  // source-owned Proposal table and its original eleven-entry bound
 #include "terraforming.h"
 #include "texture.h"
 
@@ -3139,6 +3140,12 @@ void __cdecl help_tech_info(void (__cdecl *emit)(char *), int technology,
 // are separate literals; neither denotes a writable shared buffer.
 // RECOVERY_OBJECT: v1 0x007591BC ?TechnologyHelpPrefixEmitted@@3HA
 int TechnologyHelpPrefixEmitted;
+// Cross-reference values shared with technology help and acquisition.
+// Only the separate observed dword accesses are established; allocation extent is unknown.
+// RECOVERY_OBJECT: v1 0x007591A4 ?TechnologyHelpEntryName@@3HA
+int TechnologyHelpEntryName;
+// RECOVERY_OBJECT: v1 0x007591A8 ?TechnologyHelpEntryKind@@3HA
+int TechnologyHelpEntryKind;
 // RECOVERY_OBJECT: v1 0x00684634 ?TechnologyHelpSectionSelector@@3HA
 int TechnologyHelpSectionSelector = -1;
 // RECOVERY_OBJECT: v1 0x00684638 ?TechnologyHelpPrefixText@@3PADA
@@ -3676,9 +3683,8 @@ Purpose: The help emission gate shared by the nineteen text_get tests: the
          help prefix, later calls join with the separator; both shapes
          then hand the staged text to the caller's emitter.
 
-// RECOVERY_ROLE: SCAFFOLD The owner body is present, but original absolute data/string references remain unresolved; source placement does not close these bindings.
 // ORIGINAL: 0x0044B380 ?tech_heck@@YAXP6AXPAD@ZH@Z 0x0044B380-0x0044B9DC FILE
-// RECOVERY_BINDING: v1 {"evidence":["datalink.cpp owns the TechnologyHelpPrefix globals and includes the real text, Strings, faction, base and technology interfaces used by this body.","The existing help_tech_info body calls this helper; the unannotated emit_help helper moves with the pair."],"reason":"Move the existing helper and its paired annotated body to the datalink owner; preserve all address-derived data traversals and historical mismatch notes."}
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:0x0044B380-0x0044B9DC complete original span; source keeps its full mapped identity and historical claims", "source:src/alpha.h Rules members at +0x3C..+0x54,+0x90,+0xA4,+0xA8; src/technology.h Technology[89] stride0x2C; src/council.h Proposal[11] stride0x0C", "source:src/terraforming.h Terraforming[20] and src/veh.h Order[30]; pinned loop visits rows0..18 and Order[4..22], with duplicate land/sea prerequisites suppressed only on sea iteration", "source:src/datalink.cpp TextBufferGetPtr/StringTemp/TechnologyHelp*; former TRIED/LEVER evidence remains intact as historical notes"], "reason": "Recover the complete technology-help prefix tests through the existing Rules, Technology, Proposal, Terraforming and Order records, using the named text/string services and Datalink help state. Preserve the original negative-index behavior, duplicate sea-prerequisite test, call order and unsafe string-buffer effects."}
 // TRIED: 19 repeated "text_get(); if (cond) emit(a1);" blocks (7 direct ID compares, 8 bit-flag tests on a stride-0x2c table, 3 more ID compares, then a final ID compare) factored through a static `emit_help` helper (Ghidra's repeated if/if/call pattern makes this an exact behavioral match), plus the two trailing loops (0x691880 tech-name table, 0x9a6840 concatenation table). Compiles; diverges at instruction #3 (prologue - original reserves one local with a bare `push ecx`, rebuilt doesn't need a same-shaped stack slot since the outer scope has no locals of its own). Hoisting the loop-scratch locals to the top of the function did not change it.
 // size      1628 bytes
 // prototype
@@ -3693,6 +3699,10 @@ Status: Coverage transcription - unclaimed body; the seed's emit_help
         0x00645460/0x00645470 wrappers are of.
 */
 
+static int datalink_string_key(const void *value) {
+    return static_cast<int>(reinterpret_cast<intptr_t>(value));
+}
+
 void __cdecl tech_heck(void (__cdecl *a1)(char *), int a2) {
     if (a2 >= 0x59) {
         return;
@@ -3704,129 +3714,116 @@ void __cdecl tech_heck(void (__cdecl *a1)(char *), int a2) {
     }
 
     text_get();
-    if (a2 == *reinterpret_cast<int *>(0x00949774)) {
+    if (a2 == Rules.tech_improve_fungus_sqr) {
         emit_help(a1);
     }
     text_get();
-    if (a2 == *reinterpret_cast<int *>(0x00949778)) {
+    if (a2 == Rules.tech_ease_fungus_movement) {
         emit_help(a1);
     }
     text_get();
-    if (a2 == *reinterpret_cast<int *>(0x0094977C)) {
+    if (a2 == Rules.tech_build_roads_fungus) {
         emit_help(a1);
     }
     text_get();
-    if (a2 == *reinterpret_cast<int *>(0x00949780)) {
+    if (a2 == Rules.tech_two_spec_abilities) {
         emit_help(a1);
     }
     text_get();
-    if (a2 == *reinterpret_cast<int *>(0x00949784)) {
+    if (a2 == Rules.tech_three_nutrients_sqr) {
         emit_help(a1);
     }
     text_get();
-    if (a2 == *reinterpret_cast<int *>(0x00949788)) {
+    if (a2 == Rules.tech_three_minerals_sqr) {
         emit_help(a1);
     }
     text_get();
-    if (a2 == *reinterpret_cast<int *>(0x0094978C)) {
-        emit_help(a1);
-    }
-
-    text_get();
-    if (reinterpret_cast<unsigned char *>(0x0094F358)[a2 * 0x2C] & 1) {
-        emit_help(a1);
-    }
-    text_get();
-    if (reinterpret_cast<unsigned char *>(0x0094F358)[a2 * 0x2C] & 2) {
-        emit_help(a1);
-    }
-    text_get();
-    if (reinterpret_cast<unsigned char *>(0x0094F358)[a2 * 0x2C] & 4) {
-        emit_help(a1);
-    }
-    text_get();
-    if (reinterpret_cast<unsigned char *>(0x0094F358)[a2 * 0x2C] & 8) {
-        emit_help(a1);
-    }
-    text_get();
-    if (reinterpret_cast<unsigned char *>(0x0094F358)[a2 * 0x2C] & 0x10) {
-        emit_help(a1);
-    }
-    text_get();
-    if (reinterpret_cast<unsigned char *>(0x0094F358)[a2 * 0x2C] & 0x40) {
-        emit_help(a1);
-    }
-    text_get();
-    if (reinterpret_cast<unsigned char *>(0x0094F358)[a2 * 0x2C] & 0x80) {
-        emit_help(a1);
-    }
-    text_get();
-    if (*reinterpret_cast<unsigned int *>(0x0094F358 + a2 * 0x2C) & 0x100) {
+    if (a2 == Rules.tech_three_energy_sqr) {
         emit_help(a1);
     }
 
     text_get();
-    if (a2 == *reinterpret_cast<int *>(0x009497C8)) {
+    if (Technology[a2].flags & 1) {
         emit_help(a1);
     }
     text_get();
-    if (a2 == *reinterpret_cast<int *>(0x009497DC)) {
+    if (Technology[a2].flags & 2) {
         emit_help(a1);
     }
     text_get();
-    if (a2 == *reinterpret_cast<int *>(0x009497E0)) {
+    if (Technology[a2].flags & 4) {
         emit_help(a1);
     }
     text_get();
-    if (a2 == *reinterpret_cast<int *>(0x009A683C)) {
+    if (Technology[a2].flags & 8) {
+        emit_help(a1);
+    }
+    text_get();
+    if (Technology[a2].flags & 0x10) {
+        emit_help(a1);
+    }
+    text_get();
+    if (Technology[a2].flags & 0x40) {
+        emit_help(a1);
+    }
+    text_get();
+    if (Technology[a2].flags & 0x80) {
+        emit_help(a1);
+    }
+    text_get();
+    if (Technology[a2].flags & 0x100) {
         emit_help(a1);
     }
 
     text_get();
-    strcpy(reinterpret_cast<char *>(0x009B86A0),
-           TextBufferGetPtr);
+    if (a2 == Rules.tech_orb_insert_sans_spc_elev) {
+        emit_help(a1);
+    }
+    text_get();
+    if (a2 == Rules.tech_mining_platform_bonus) {
+        emit_help(a1);
+    }
+    text_get();
+    if (a2 == Rules.tech_economic_victory) {
+        emit_help(a1);
+    }
+    text_get();
+    if (a2 == Proposal[1].preq_tech) {
+        emit_help(a1);
+    }
+
+    text_get();
+    strcpy(StringTemp, TextBufferGetPtr);
 
     {
-        int *rec = reinterpret_cast<int *>(0x00691880);
-        int stringIdx = 0;
-        int i;
-        while (reinterpret_cast<char *>(rec) <
-               reinterpret_cast<char *>(0x00691AE0)) {
-            for (i = 0; i < 2; i++) {
-                if (a2 == rec[i] && (i != 1 || rec[0] != rec[1])) {
-                    parse_say(0, reinterpret_cast<int *>(
-                                     0x0096C8A8)[stringIdx + i], -1, -1);
-                    parse_string(reinterpret_cast<char *>(0x009B86A0),
-                                 TextBufferGetPtr);
+        for (int row = 0; row < MaxTerrainNum - 1; ++row) {
+            const int prereq[2] = {Terraforming[row].preq_tech,
+                                   Terraforming[row].preq_tech_sea};
+            for (int i = 0; i < 2; ++i) {
+                if (a2 == prereq[i] &&
+                    (i != 1 || prereq[0] != prereq[1])) {
+                    LPSTR order = i == 0 ? Order[4 + row].order
+                                         : Order[4 + row].order_sea;
+                    parse_say(0, datalink_string_key(order), -1, -1);
+                    parse_string(StringTemp, TextBufferGetPtr);
                     emit_help(a1);
                 }
             }
-            rec += 8;
-            stringIdx += 3;
         }
     }
 
     {
-        int *p = reinterpret_cast<int *>(0x009A6840);
-        while (reinterpret_cast<char *>(p) <
-               reinterpret_cast<char *>(0x009A68AC)) {
-            if (a2 == p[2]) {
-                *reinterpret_cast<char *>(0x009B86A0) = 0;
-                strcat(reinterpret_cast<char *>(0x009B86A0),
-                       TechnologyHelpSeparatorText);
-                strcat(reinterpret_cast<char *>(0x009B86A0),
-                       reinterpret_cast<Strings *>(0x009B90D8)->get(
-                           *reinterpret_cast<int *>(
-                               *reinterpret_cast<int *>(0x009B90F8) + 0x7C8)));
-                strcat(reinterpret_cast<char *>(0x009B86A0),
-                       reinterpret_cast<char *>(0x00682E94));
-                strcat(reinterpret_cast<char *>(0x009B86A0),
-                       reinterpret_cast<Strings *>(0x009B90D8)->get(p[0]));
-                strcpy(TextBufferGetPtr,
-                       reinterpret_cast<char *>(0x009B86A0));
+        for (int proposal = 2; proposal < MaxProposalNum; ++proposal) {
+            if (a2 == Proposal[proposal].preq_tech) {
+                StringTemp[0] = 0;
+                strcat(StringTemp, TechnologyHelpSeparatorText);
+                strcat(StringTemp, label_get(0x7C8 / 4));
+                strcat(StringTemp, ": ");
+                strcat(StringTemp, StringTable.get(
+                    datalink_string_key(Proposal[proposal].name)));
+                strcpy(TextBufferGetPtr, StringTemp);
                 emit_help(a1);
             }
-            p += 3;
         }
     }
 }
@@ -3843,9 +3840,8 @@ Purpose: The technology help compiler: for one id, walk the ten game-data
          a4 < 0 or a4 == 3, bracketed by the shared 0x00684634 section
          flag.
 
-// RECOVERY_ROLE: SCAFFOLD The owner body is present, but original absolute table/data traversals remain unresolved; source placement does not close these bindings.
 // ORIGINAL: 0x0044B9E0 ?help_tech_info@@YAXP6AXPAD@ZHHH@Z 0x0044B9E0-0x0044C7C9 FILE
-// RECOVERY_BINDING: v1 {"evidence":["datalink.cpp already owns other help_tech_info overloads, DatalinkHelpFile, help-link APIs, Strings and the required game tables.","This is the distinct three-integer callback overload, not a replacement for existing Popup overloads."],"reason":"Move this existing global overload into the established help owner; preserve raw table walks, branch order, secondary call facts and all original notes."}
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:0x0044B9E0-0x0044C7C9 full original function span and existing call facts", "source:src/veh.h Reactor/Chassis/Weapon/Armor/Ability/VehPrototype; src/base.h Facility/Citizen; src/faction.h SocialCategories; src/technology.h Technology", "pinned:0x007591A4/A8 are separate 4-byte name-handle/kind writes for chassis0x62, weapon0x63 and armor0x64, reset together by tech_achieved at0x005BB71A; object extents and wider allocation remain unknown", "pinned: report-page paths 0x0049A5FC/0x0049A606,0x0049A7CD/0x0049A7D7 and0x0049A9E1/0x0049A9EB also write this pair; this proposal restores those writes in ReportWin's existing typed unlock-section traversal, while broader page-layout/runtime work remains separate", "source:src/strings.h StringTemp/StringTable; src/alpha.h label_get; src/datalink.h DatalinkMain; source:src/technology.cpp reset follows prototype selection before presentation"], "reason": "Recover the ten-section technology-help builder through existing typed game tables while retaining original a4 gates, exact traversed ranges, append/flush order, callback timing and unsafe global-buffer behavior; publish all three original chassis/weapon/armor shared entry-state pairs."}
 // TRIED: exact per-record byte offsets for the 4 embedded-owner index chains (52/380/etc strides) - transcribed the strcat/get/ construct_id/help_create_link shape per loop faithfully but did not verify every offset bit-for-bit; MISMATCH #0 at prologue.
 // size      3561 bytes
 // prototype
@@ -3860,40 +3856,37 @@ Status: Coverage transcription - unclaimed body; the seed's offsets and
 */
 void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
                             int a4) {
-    char *const buf = reinterpret_cast<char *>(0x009B86A0);
+    char *const buf = StringTemp;
     char numbuf[80];
     char idbuf[64];
     bool flushed;
     int idx;
-    char *p;
 
     if (a4 < 0 || a4 == 2) {
 
-    // ---- section 1: technologies (0x9527f8, stride 0xc, match +8) ----
+    // ---- section 1: reactor records (0x9527f8, stride 0xc, match +8) ----
     flushed = false;
     idx = 0;
     *buf = 0;
-    for (p = reinterpret_cast<char *>(0x009527F8);
-         p < reinterpret_cast<char *>(0x00952828); p += 0xC, ++idx) {
-        if (*reinterpret_cast<short *>(p + 8) == a2) {
+    for (idx = 0; idx < MaxReactorNum; ++idx) {
+        const RulesReactor &record = Reactor[idx];
+        if (record.preq_tech == a2) {
             if (a4 < 0) {
                 if (flushed) {
-                    strcat(buf, reinterpret_cast<char *>(0x00682E90));
+                    strcat(buf, ", ");
                 } else {
-                    strcat(buf, reinterpret_cast<char *>(0x0068464C));
-                    char *s = reinterpret_cast<Strings *>(0x009B90D8)->get(
-                        *reinterpret_cast<int *>(
-                            *reinterpret_cast<int *>(0x009B90F8) + 0x234));
+                    strcat(buf, "^");
+                    char *s = label_get(0x234 / 4);
                     strcat(buf, s);
-                    strcat(buf, reinterpret_cast<char *>(0x00682E94));
+                    strcat(buf, ": ");
                 }
             } else {
-                strcat(buf, reinterpret_cast<char *>(0x00684650));
+                strcat(buf, "^");
             }
-            reinterpret_cast<Datalink *>(0x00703EA0)->construct_id(idbuf, 5,
+            DatalinkMain.construct_id(idbuf, 5,
                                                                   idx + 1);
-            char *link = reinterpret_cast<Strings *>(0x009B90D8)->get(
-                *reinterpret_cast<int *>(p));
+            char *link = StringTable.get(
+                datalink_string_key(record.name));
             help_create_link(buf, reinterpret_cast<char *>(link), idbuf);
             flushed = (*buf != 0);
             if (a4 >= 0 && *buf != 0) {
@@ -3905,40 +3898,37 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
     }
     if (a4 < 0 && flushed) a1(buf);
 
-    // ---- section 2: secret projects (0x94a330, stride 0x90, match +0x8e) ----
+    // ---- section 2: chassis records (0x94a330, stride 0x90, match +0x8e) ----
     flushed = false;
     idx = 0;
     *buf = 0;
-    for (p = reinterpret_cast<char *>(0x0094A330);
-         p < reinterpret_cast<char *>(0x0094A840); p += 0x90, ++idx) {
-        if (*reinterpret_cast<short *>(p + 0x8E) == a2) {
+    for (idx = 0; idx < MaxChassisNum; ++idx) {
+        const RulesChassis &record = Chassis[idx];
+        if (record.preq_tech == a2) {
             if (a4 < 0) {
                 if (flushed) {
-                    strcat(buf, reinterpret_cast<char *>(0x00682E90));
+                    strcat(buf, ", ");
                 } else {
-                    strcat(buf, reinterpret_cast<char *>(0x00684654));
-                    char *s = reinterpret_cast<Strings *>(0x009B90D8)->get(
-                        *reinterpret_cast<int *>(
-                            *reinterpret_cast<int *>(0x009B90F8) + 0x120));
+                    strcat(buf, "^");
+                    char *s = label_get(0x120 / 4);
                     strcat(buf, s);
-                    strcat(buf, reinterpret_cast<char *>(0x00682E94));
+                    strcat(buf, ": ");
                 }
             } else {
-                strcat(buf, reinterpret_cast<char *>(0x00684658));
+                strcat(buf, "^");
             }
-            reinterpret_cast<Datalink *>(0x00703EA0)->construct_id(idbuf, 4,
+            DatalinkMain.construct_id(idbuf, 4,
                                                                   idx);
-            char *link = reinterpret_cast<Strings *>(0x009B90D8)->get(
-                *reinterpret_cast<int *>(p));
+            char *link = StringTable.get(
+                datalink_string_key(record.offsv_1_name));
             help_create_link(buf, reinterpret_cast<char *>(link), idbuf);
-            *reinterpret_cast<int *>(0x007591A4) =
-                *reinterpret_cast<int *>(p);
-            *reinterpret_cast<int *>(0x007591A8) = 0x62;
-            strcat(buf, reinterpret_cast<char *>(0x00682820));
-            strcat(buf, reinterpret_cast<char *>(0x00682E9C));
-            _itoa(*reinterpret_cast<unsigned char *>(p + 0x48), numbuf, 10);
+            TechnologyHelpEntryKind = 0x62;
+            TechnologyHelpEntryName = datalink_string_key(record.offsv_1_name);
+            strcat(buf, " ");
+            strcat(buf, "(");
+            _itoa(record.speed, numbuf, 10);
             strcat(buf, numbuf);
-            strcat(buf, reinterpret_cast<char *>(0x00682E98));
+            strcat(buf, ")");
             flushed = (*buf != 0);
             if (a4 >= 0 && *buf != 0) {
                 a1(buf);
@@ -3949,64 +3939,56 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
     }
     if (a4 < 0 && flushed) a1(buf);
 
-    // ---- section 3: (0x94ae60, stride 0x10, match +0xc) ----
+    // ---- section 3: weapon records (0x94ae60, stride 0x10, match +0xc) ----
     flushed = false;
     idx = 0;
     *buf = 0;
-    for (p = reinterpret_cast<char *>(0x0094AE60);
-         p < reinterpret_cast<char *>(0x0094B000); p += 0x10, ++idx) {
-        if (*reinterpret_cast<short *>(p + 0xC) == a2) {
+    for (idx = 0; idx < MaxWeaponNum; ++idx) {
+        const RulesWeapon &record = Weapon[idx];
+        if (record.preq_tech == a2) {
             if (a4 < 0) {
                 if (flushed) {
-                    strcat(buf, reinterpret_cast<char *>(0x00682E90));
+                    strcat(buf, ", ");
                 } else {
-                    strcat(buf, reinterpret_cast<char *>(0x0068465C));
-                    char *s = reinterpret_cast<Strings *>(0x009B90D8)->get(
-                        *reinterpret_cast<int *>(
-                            *reinterpret_cast<int *>(0x009B90F8) + 0x124));
+                    strcat(buf, "^");
+                    char *s = label_get(0x124 / 4);
                     strcat(buf, s);
-                    strcat(buf, reinterpret_cast<char *>(0x00682E94));
+                    strcat(buf, ": ");
                 }
             } else {
-                strcat(buf, reinterpret_cast<char *>(0x00684660));
+                strcat(buf, "^");
             }
-            reinterpret_cast<Datalink *>(0x00703EA0)->construct_id(idbuf, 6,
+            DatalinkMain.construct_id(idbuf, 6,
                                                                   idx);
-            char *link = reinterpret_cast<Strings *>(0x009B90D8)->get(
-                *reinterpret_cast<int *>(p));
-            strcat(buf, reinterpret_cast<char *>(0x00683544));
+            char *link = StringTable.get(
+                datalink_string_key(record.name));
+            strcat(buf, "$LINK<");
             strcat(buf, link);
-            strcat(buf, reinterpret_cast<char *>(0x00683540));
+            strcat(buf, "=");
             strcat(buf, idbuf);
-            strcat(buf, reinterpret_cast<char *>(0x0068353C));
-            if (*reinterpret_cast<int *>(p) == a2) {
-                strcat(buf, reinterpret_cast<char *>(0x00682820));
-                char *s2 = reinterpret_cast<Strings *>(0x009B90D8)->get(
-                    *reinterpret_cast<int *>(
-                        *reinterpret_cast<int *>(0x009B90F8) + 0x310));
+            strcat(buf, ">");
+            TechnologyHelpEntryKind = 0x63;
+            TechnologyHelpEntryName = datalink_string_key(record.name);
+            if (datalink_string_key(record.name) == a2) {
+                strcat(buf, " ");
+                char *s2 = label_get(0x310 / 4);
                 strcat(buf, s2);
-                strcat(buf, reinterpret_cast<char *>(0x00682E9C));
+                strcat(buf, "(");
             }
-            char byteVal = *reinterpret_cast<char *>(p + 0xA);
-            (void)byteVal;
-            unsigned char kind = *reinterpret_cast<unsigned char *>(p + 8);
+            unsigned char kind = static_cast<unsigned char>(record.offense_rating);
             if (static_cast<char>(kind) >= 0) {
-                if (*reinterpret_cast<unsigned char *>(p + 0xA) < 3) {
+                if (record.mode < 3) {
                     _itoa(kind, numbuf, 10);
                     strcat(buf, numbuf);
                 } else {
-                    char *s3 = reinterpret_cast<Strings *>(0x009B90D8)->get(
-                        *reinterpret_cast<int *>(
-                            *reinterpret_cast<int *>(0x009B90F8) + 0x200));
+                    char *s3 = label_get(0x200 / 4);
                     strcat(buf, s3);
                 }
             } else {
-                char *s4 = reinterpret_cast<Strings *>(0x009B90D8)->get(
-                    *reinterpret_cast<int *>(
-                        *reinterpret_cast<int *>(0x009B90F8) + 0x310));
+                char *s4 = label_get(0x310 / 4);
                 strcat(buf, s4);
             }
-            strcat(buf, reinterpret_cast<char *>(0x00682E98));
+            strcat(buf, ")");
             flushed = (*buf != 0);
             if (a4 >= 0 && *buf != 0) {
                 a1(buf);
@@ -4017,52 +3999,47 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
     }
     if (a4 < 0 && flushed) a1(buf);
 
-    // ---- section 4: (0x94f278, stride 0x10, match +0xc) ----
+    // ---- section 4: armor records (0x94f278, stride 0x10, match +0xc) ----
     flushed = false;
     idx = 0;
     *buf = 0;
-    for (p = reinterpret_cast<char *>(0x0094F278);
-         p < reinterpret_cast<char *>(0x0094F358); p += 0x10, ++idx) {
-        if (*reinterpret_cast<short *>(p + 0xC) == a2) {
+    for (idx = 0; idx < MaxArmorNum; ++idx) {
+        const RulesArmor &record = Armor[idx];
+        if (record.preq_tech == a2) {
             if (a4 < 0) {
                 if (flushed) {
-                    strcat(buf, reinterpret_cast<char *>(0x00682E90));
+                    strcat(buf, ", ");
                 } else {
-                    strcat(buf, reinterpret_cast<char *>(0x00684664));
-                    char *s = reinterpret_cast<Strings *>(0x009B90D8)->get(
-                        *reinterpret_cast<int *>(
-                            *reinterpret_cast<int *>(0x009B90F8) + 0x128));
+                    strcat(buf, "^");
+                    char *s = label_get(0x128 / 4);
                     strcat(buf, s);
-                    strcat(buf, reinterpret_cast<char *>(0x00682E94));
+                    strcat(buf, ": ");
                 }
             } else {
-                strcat(buf, reinterpret_cast<char *>(0x00684668));
+                strcat(buf, "^");
             }
-            reinterpret_cast<Datalink *>(0x00703EA0)->construct_id(idbuf, 7,
+            DatalinkMain.construct_id(idbuf, 7,
                                                                   idx);
-            char *link = reinterpret_cast<Strings *>(0x009B90D8)->get(
-                *reinterpret_cast<int *>(p));
-            strcat(buf, reinterpret_cast<char *>(0x00683544));
+            char *link = StringTable.get(
+                datalink_string_key(record.name));
+            strcat(buf, "$LINK<");
             strcat(buf, link);
-            strcat(buf, reinterpret_cast<char *>(0x00683540));
+            strcat(buf, "=");
             strcat(buf, idbuf);
-            strcat(buf, reinterpret_cast<char *>(0x0068353C));
-            *reinterpret_cast<int *>(0x007591A4) =
-                *reinterpret_cast<int *>(p);
-            *reinterpret_cast<int *>(0x007591A8) = 0x64;
-            strcat(buf, reinterpret_cast<char *>(0x00682820));
-            strcat(buf, reinterpret_cast<char *>(0x00682E9C));
-            char kind2 = *reinterpret_cast<char *>(p + 8);
+            strcat(buf, ">");
+            TechnologyHelpEntryKind = 0x64;
+            TechnologyHelpEntryName = datalink_string_key(record.name);
+            strcat(buf, " ");
+            strcat(buf, "(");
+            char kind2 = record.defense_rating;
             if (kind2 >= 0) {
                 _itoa(static_cast<unsigned char>(kind2), numbuf, 10);
                 strcat(buf, numbuf);
             } else {
-                char *s2 = reinterpret_cast<Strings *>(0x009B90D8)->get(
-                    *reinterpret_cast<int *>(
-                        *reinterpret_cast<int *>(0x009B90F8) + 0x310));
+                char *s2 = label_get(0x310 / 4);
                 strcat(buf, s2);
             }
-            strcat(buf, reinterpret_cast<char *>(0x00682E98));
+            strcat(buf, ")");
             flushed = (*buf != 0);
             if (a4 >= 0 && *buf != 0) {
                 a1(buf);
@@ -4073,36 +4050,34 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
     }
     if (a4 < 0 && flushed) a1(buf);
 
-    // ---- section 5: (0x9ab538, stride 0x1c, match +0x18) ----
+    // ---- section 5: ability records (0x9ab538, stride 0x1c, match +0x18) ----
     flushed = false;
     idx = 0;
     *buf = 0;
-    for (p = reinterpret_cast<char *>(0x009AB538);
-         p < reinterpret_cast<char *>(0x009AB864); p += 0x1C, ++idx) {
-        if (*reinterpret_cast<short *>(p + 0x18) == a2) {
+    for (idx = 0; idx < MaxAbilityNum; ++idx) {
+        const RulesAbility &record = Ability[idx];
+        if (record.preq_tech == a2) {
             if (a4 < 0) {
                 if (flushed) {
-                    strcat(buf, reinterpret_cast<char *>(0x00682E90));
+                    strcat(buf, ", ");
                 } else {
-                    strcat(buf, reinterpret_cast<char *>(0x0068466C));
-                    char *s = reinterpret_cast<Strings *>(0x009B90D8)->get(
-                        *reinterpret_cast<int *>(
-                            *reinterpret_cast<int *>(0x009B90F8) + 0x12C));
+                    strcat(buf, "^");
+                    char *s = label_get(0x12C / 4);
                     strcat(buf, s);
-                    strcat(buf, reinterpret_cast<char *>(0x00682E94));
+                    strcat(buf, ": ");
                 }
             } else {
-                strcat(buf, reinterpret_cast<char *>(0x00684670));
+                strcat(buf, "^");
             }
-            reinterpret_cast<Datalink *>(0x00703EA0)->construct_id(idbuf, 8,
+            DatalinkMain.construct_id(idbuf, 8,
                                                                   idx);
-            char *link = reinterpret_cast<Strings *>(0x009B90D8)->get(
-                *reinterpret_cast<int *>(p));
-            strcat(buf, reinterpret_cast<char *>(0x00683544));
+            char *link = StringTable.get(
+                datalink_string_key(record.name));
+            strcat(buf, "$LINK<");
             strcat(buf, link);
-            strcat(buf, reinterpret_cast<char *>(0x00683540));
+            strcat(buf, "=");
             strcat(buf, idbuf);
-            strcat(buf, reinterpret_cast<char *>(0x0068353C));
+            strcat(buf, ">");
             flushed = (*buf != 0);
             if (a4 >= 0 && *buf != 0) {
                 a1(buf);
@@ -4113,35 +4088,33 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
     }
     if (a4 < 0 && flushed) a1(buf);
 
-    // ---- section 6: (0x9ab89a, stride 0x34, bitfield-gated) ----
+    // ---- section 6: vehicle prototypes (0x9ab89a, stride 0x34, bitfield-gated) ----
     {
         int ctr = 0;
         *buf = 0;
-        for (p = reinterpret_cast<char *>(0x009AB89A);
-             p < reinterpret_cast<char *>(0x009AC59A); p += 0x34, ++ctr) {
-            if ((*reinterpret_cast<unsigned char *>(p - 2) & 1) == 0) continue;
-            if (*reinterpret_cast<short *>(p) != a2) continue;
+        for (ctr = 0; ctr < MaxVehProtoFactionNum; ++ctr) {
+            const VehPrototype &record = VehPrototypes[ctr];
+            if ((record.flags & 1) == 0) continue;
+            if (record.preq_tech != a2) continue;
             if (a4 < 0) {
                 if (*buf != 0) {
-                    strcat(buf, reinterpret_cast<char *>(0x00682E90));
+                    strcat(buf, ", ");
                 } else {
-                    strcat(buf, reinterpret_cast<char *>(0x00684674));
-                    char *s = reinterpret_cast<Strings *>(0x009B90D8)->get(
-                        *reinterpret_cast<int *>(
-                            *reinterpret_cast<int *>(0x009B90F8) + 0x318));
+                    strcat(buf, "^");
+                    char *s = label_get(0x318 / 4);
                     strcat(buf, s);
-                    strcat(buf, reinterpret_cast<char *>(0x00682E94));
+                    strcat(buf, ": ");
                 }
             } else {
-                strcat(buf, reinterpret_cast<char *>(0x00684678));
+                strcat(buf, "^");
             }
-            reinterpret_cast<Datalink *>(0x00703EA0)->construct_id(idbuf, 3,
+            DatalinkMain.construct_id(idbuf, 3,
                                                                   ctr);
-            strcat(buf, reinterpret_cast<char *>(0x00683544));
-            strcat(buf, p - 0x32);
-            strcat(buf, reinterpret_cast<char *>(0x00683540));
+            strcat(buf, "$LINK<");
+            strcat(buf, const_cast<char *>(record.veh_name));
+            strcat(buf, "=");
             strcat(buf, idbuf);
-            strcat(buf, reinterpret_cast<char *>(0x0068353C));
+            strcat(buf, ">");
             if (a4 >= 0 && *buf != 0) {
                 a1(buf);
                 *buf = 0;
@@ -4152,50 +4125,46 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
 
     } // end sections 1-6 (a4 < 0 || a4 == 2)
 
-    // ---- section 7: faction/other, linked-record list (0x9a4bb0, stride 0x30) ----
+    // ---- section 7: facility records (0x9a4bb0, stride 0x30) ----
     if (a4 < 0 || a4 == 0) {
         int ctr = 1;
         *buf = 0;
-        for (p = reinterpret_cast<char *>(0x009A4BB0);
-             p < reinterpret_cast<char *>(0x009A64A0); p += 0x30, ++ctr) {
-            bool match = (*reinterpret_cast<int *>(p - 4) == a2) ||
-                         (*reinterpret_cast<int *>(p) == a2);
+        for (; ctr < MaxFacilityNum; ++ctr) {
+            const RulesFacility &record = Facility[ctr];
+            bool match = (record.preq_tech == a2) ||
+                         (record.free_tech == a2);
             if (!match) continue;
             if (a4 < 0) {
                 if (*buf != 0) {
-                    strcat(buf, reinterpret_cast<char *>(0x00682E90));
+                    strcat(buf, ", ");
                 } else {
-                    strcat(buf, reinterpret_cast<char *>(0x0068467C));
-                    char *s = reinterpret_cast<Strings *>(0x009B90D8)->get(
-                        *reinterpret_cast<int *>(
-                            *reinterpret_cast<int *>(0x009B90F8) + 0x110));
+                    strcat(buf, "^");
+                    char *s = label_get(0x110 / 4);
                     strcat(buf, s);
-                    strcat(buf, reinterpret_cast<char *>(0x00682E94));
+                    strcat(buf, ": ");
                 }
             } else {
-                strcat(buf, reinterpret_cast<char *>(0x00684680));
+                strcat(buf, "^");
             }
-            if (*reinterpret_cast<int *>(p) == a2) {
-                strcat(buf, reinterpret_cast<char *>(0x00682E9C));
+            if (record.free_tech == a2) {
+                strcat(buf, "(");
             }
             int category = (ctr >= 0x46) ? 0xB : 0xA;
-            reinterpret_cast<Datalink *>(0x00703EA0)->construct_id(idbuf,
+            DatalinkMain.construct_id(idbuf,
                                                                   category,
                                                                   ctr);
-            char *link = reinterpret_cast<Strings *>(0x009B90D8)->get(
-                *reinterpret_cast<int *>(p - 0x18));
-            strcat(buf, reinterpret_cast<char *>(0x00683544));
+            char *link = StringTable.get(
+                datalink_string_key(record.name));
+            strcat(buf, "$LINK<");
             strcat(buf, link);
-            strcat(buf, reinterpret_cast<char *>(0x00683540));
+            strcat(buf, "=");
             strcat(buf, idbuf);
-            strcat(buf, reinterpret_cast<char *>(0x0068353C));
-            if (*reinterpret_cast<int *>(p) == a2) {
-                strcat(buf, reinterpret_cast<char *>(0x00682820));
-                char *s2 = reinterpret_cast<Strings *>(0x009B90D8)->get(
-                    *reinterpret_cast<int *>(
-                        *reinterpret_cast<int *>(0x009B90F8) + 0x4DC));
+            strcat(buf, ">");
+            if (record.free_tech == a2) {
+                strcat(buf, " ");
+                char *s2 = label_get(0x4DC / 4);
                 strcat(buf, s2);
-                strcat(buf, reinterpret_cast<char *>(0x00682E98));
+                strcat(buf, ")");
             }
             if (a4 >= 0 && *buf != 0) {
                 a1(buf);
@@ -4207,74 +4176,65 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
         }
     }
 
-    // ---- section 8: nested loop, groups of 4 (0x94b014); section 9 follows in the same gate ----
+    // ---- section 8: social-category prerequisites, groups of 4 (0x94b014); section 9 follows in the same gate ----
     if ((a4 < 0) || (a4 == 3)) {
-        int idBase;
-        char *outer;
+        int idBase = 1;
+        int outerIndex = 0;
         *buf = 0;
-        idBase = 1;
-        outer = reinterpret_cast<char *>(0x0094B014);
         do {
-            char *inner = outer;
-            for (int j = 0; j < 4; ++j, inner += 4) {
-                if (*reinterpret_cast<int *>(inner - 0x10) == a2) {
+            for (int j = 0; j < 4; ++j) {
+                if (SocialCategories[outerIndex].preq_tech[j] == a2) {
                     if (a4 < 0) {
                         if (*buf != 0) {
-                            strcat(buf, reinterpret_cast<char *>(0x00684688));
+                            strcat(buf, "^");
                         } else {
                             strcat(buf,
-                                   reinterpret_cast<char *>(0x00684684));
-                            char *s = reinterpret_cast<Strings *>(0x009B90D8)->get(
-                                *reinterpret_cast<int *>(
-                                    *reinterpret_cast<int *>(0x009B90F8) +
-                                    0x118));
+                                   "^");
+                            char *s = label_get(0x118 / 4);
                             strcat(buf, s);
                             strcat(buf,
-                                   reinterpret_cast<char *>(0x00682E94));
+                                   ": ");
                         }
                     } else {
-                        strcat(buf, reinterpret_cast<char *>(0x00684688));
+                        strcat(buf, "^");
                     }
-                    reinterpret_cast<Datalink *>(0x00703EA0)->construct_id(
+                    DatalinkMain.construct_id(
                         idbuf, 0xC, idBase + j);
-                    char *link = reinterpret_cast<Strings *>(0x009B90D8)->get(
-                        *reinterpret_cast<int *>(inner));
-                    strcat(buf, reinterpret_cast<char *>(0x00683544));
+                    char *link = StringTable.get(datalink_string_key(
+                        SocialCategories[outerIndex].name[j]));
+                    strcat(buf, "$LINK<");
                     strcat(buf, link);
-                    strcat(buf, reinterpret_cast<char *>(0x00683540));
+                    strcat(buf, "=");
                     strcat(buf, idbuf);
-                    strcat(buf, reinterpret_cast<char *>(0x0068353C));
+                    strcat(buf, ">");
                     if (*buf != 0) {
                         a1(buf);
                     }
                 }
             }
-            outer += 0xD4;
+            ++outerIndex;
             idBase += 5;
-        } while (outer < reinterpret_cast<char *>(0x0094B364));
+        } while (outerIndex < MaxSocialCatNum);
 
-        // ---- section 9: simple id-only list (0x946020, stride 0x1c, match +8) ----
+        // ---- section 9: citizen prerequisites (0x946020, stride 0x1c, match +8) ----
         // same gate as section 8: reached only when a4 < 0 || a4 == 3.
         *buf = 0;
-        for (p = reinterpret_cast<char *>(0x00946020);
-             p < reinterpret_cast<char *>(0x009460E4); p += 0x1C) {
-            if (*reinterpret_cast<int *>(p + 8) != a2) continue;
+        for (idx = 0; idx < 7; ++idx) {
+            const RulesCitizen &record = Citizen[idx];
+            if (record.preq_tech != a2) continue;
             if (a4 < 0) {
                 if (*buf != 0) {
-                    strcat(buf, reinterpret_cast<char *>(0x00682E90));
+                    strcat(buf, ", ");
                 } else {
-                    strcat(buf, reinterpret_cast<char *>(0x0068468C));
-                    char *s = reinterpret_cast<Strings *>(0x009B90D8)->get(
-                        *reinterpret_cast<int *>(
-                            *reinterpret_cast<int *>(0x009B90F8) + 0x4CC));
+                    strcat(buf, "^");
+                    char *s = label_get(0x4CC / 4);
                     strcat(buf, s);
-                    strcat(buf, reinterpret_cast<char *>(0x00682E94));
+                    strcat(buf, ": ");
                 }
             } else {
-                strcat(buf, reinterpret_cast<char *>(0x00684690));
+                strcat(buf, "^");
             }
-            char *link = reinterpret_cast<Strings *>(0x009B90D8)->get(
-                *reinterpret_cast<int *>(p));
+            char *link = StringTable.get(datalink_string_key(record.singular_name));
             strcat(buf, link);
             if (*buf != 0) {
                 a1(buf);
@@ -4282,38 +4242,36 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
         }
     }
 
-    // ---- section 10: linked-record list (0x94f380, stride 0x2c) ----
+    // ---- section 10: technology prerequisites (0x94f380, stride 0x2c) ----
     if ((a4 < 0) || (a4 == 1)) {
         int ctr = 0;
         *buf = 0;
-        for (p = reinterpret_cast<char *>(0x0094F380);
-             p < reinterpret_cast<char *>(0x009502CC); p += 0x2C, ++ctr) {
-            bool match = (*reinterpret_cast<int *>(p - 4) == a2) ||
-                         (*reinterpret_cast<int *>(p) == a2);
+        for (ctr = 0; ctr < MaxTechnologyNum; ++ctr) {
+            const RulesTechnology &record = Technology[ctr];
+            bool match = (record.preq_tech_1 == a2) ||
+                         (record.preq_tech_2 == a2);
             if (!match) continue;
             if (a4 < 0) {
                 if (*buf != 0) {
-                    strcat(buf, reinterpret_cast<char *>(0x00682E90));
+                    strcat(buf, ", ");
                 } else {
-                    strcat(buf, reinterpret_cast<char *>(0x00684694));
-                    char *s = reinterpret_cast<Strings *>(0x009B90D8)->get(
-                        *reinterpret_cast<int *>(
-                            *reinterpret_cast<int *>(0x009B90F8) + 0x130));
+                    strcat(buf, "^");
+                    char *s = label_get(0x130 / 4);
                     strcat(buf, s);
-                    strcat(buf, reinterpret_cast<char *>(0x00682E94));
+                    strcat(buf, ": ");
                 }
             } else {
-                strcat(buf, reinterpret_cast<char *>(0x00684698));
+                strcat(buf, "^");
             }
-            reinterpret_cast<Datalink *>(0x00703EA0)->construct_id(idbuf, 0xE,
+            DatalinkMain.construct_id(idbuf, 0xE,
                                                                   ctr);
-            char *link = reinterpret_cast<Strings *>(0x009B90D8)->get(
-                *reinterpret_cast<int *>(p - 0x24));
-            strcat(buf, reinterpret_cast<char *>(0x00683544));
+            char *link = StringTable.get(
+                datalink_string_key(record.name));
+            strcat(buf, "$LINK<");
             strcat(buf, link);
-            strcat(buf, reinterpret_cast<char *>(0x00683540));
+            strcat(buf, "=");
             strcat(buf, idbuf);
-            strcat(buf, reinterpret_cast<char *>(0x0068353C));
+            strcat(buf, ">");
             if (a4 >= 0 && *buf != 0) {
                 a1(buf);
                 *buf = 0;

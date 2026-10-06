@@ -6137,3 +6137,364 @@ int __cdecl vox_read_shape_patches(int fd, CvrRecord *record, int size) {
     }
     return 0;
 }
+
+
+// Caviar projection and scaled sprite owner bodies. Their shared state is
+// defined above in this translation unit; original callers and formats stay
+// distinct. Exact x87 exceptional behavior and indirect blitter reachability
+// remain explicit restoration obligations.
+
+
+/*
+Purpose: The isometric view-matrix builder: take the caller's nine source
+         floats (a 3x3 transform), scale each by the single factor in
+         .rdata, park the scaled values in the nine-float scratch, then
+         round each back into the fixed-point view state - the first six
+         as 16-bit matrix words (the 2x3 matrix the tile projector at
+         0x006401B0 multiplies by), the next three as 32-bit words - and
+         clear the two trailing words.
+
+// RECOVERY_ROLE: SCAFFOLD Complete owner-side transcription; pinned x87 exceptional conversion behavior and complete indirect caller/physical-owner qualification remain unresolved.
+// ORIGINAL: 0x0063FA80 sub_63fa80 0x0063FA80-0x0063FC92
+// size      530 bytes
+// Deleted seed provenance: git:1ed59304110fc2098fb1dd11457fa5b0074169bd:src/unrecovered/0063fa80.cpp
+Status: Coverage transcription of the retained seed (src/unrecovered/0063fa80.cpp,
+        plain FILE). The seed's two TRIED walls stand: the do/while keeps the
+        original's single moving source pointer with the fixed scratch delta
+        (the image threads both arrays through `eax` plus one constant
+        displacement), and the four .rdata words stay bindings rather than
+        literals - their bit patterns were never read, so writing 0.5 into
+        the source would invent a value. The whole-image measurement stays a
+        documented MISMATCH for a structural reason the seed did not have to
+        face: the original is frameless (`mov eax, [esp+4]` at 0x0063FA80)
+        while this TU compiles /Oy-, so the frame and spill shape differ
+        from the prologue on. The words they feed are named from
+        the two bodies' use of the cluster: 0x009C0A40..0x4A are the six
+        matrix words 0x006401B0 multiplies by, 0x009C0A4C..0x54 the three
+        int words rounded beside them, 0x009C0A7C the float scratch, and
+        0x009C0AC4/0x009C0AC8 the two trailing words this body zeroes.
+*/
+namespace {
+// 63FAB3 and each sibling compare select 671040 (-0.5) when x87 C0
+// is set, otherwise 671044 (+0.5). The old address aliases had these
+// two names/polarities reversed; this follows the pinned instruction edges.
+int round_view_scaled(float value) {
+    return (int)(value + (value >= CaviarProjectionRoundThreshold
+                              ? CaviarProjectionRoundAbove
+                              : CaviarProjectionRoundBelow));
+}
+}  // namespace
+
+extern "C" void __cdecl sub_63fa80(float *sources) {
+    int delta = (int)((char *)CaviarProjectionScaledMatrix - (char *)sources);
+    float *cursor = sources;
+    int n = 9;
+    do {
+        *(float *)((char *)cursor + delta) = *cursor * CaviarProjectionDirectionScale;
+        cursor++;
+    } while (--n);
+
+    CaviarFixedPointProjection.word_00_ = (short)round_view_scaled(CaviarProjectionScaledMatrix[0]);
+    CaviarFixedPointProjection.word_02_ = (short)round_view_scaled(CaviarProjectionScaledMatrix[1]);
+    CaviarFixedPointProjection.word_04_ = (short)round_view_scaled(CaviarProjectionScaledMatrix[2]);
+    CaviarFixedPointProjection.word_06_ = (short)round_view_scaled(CaviarProjectionScaledMatrix[3]);
+    CaviarFixedPointProjection.word_08_ = (short)round_view_scaled(CaviarProjectionScaledMatrix[4]);
+    CaviarFixedPointProjection.word_0A_ = (short)round_view_scaled(CaviarProjectionScaledMatrix[5]);
+    CaviarFixedPointProjection.dword_0C_ = round_view_scaled(CaviarProjectionScaledMatrix[6]);
+    CaviarFixedPointProjection.dword_10_ = round_view_scaled(CaviarProjectionScaledMatrix[7]);
+    CaviarFixedPointProjection.dword_14_ = round_view_scaled(CaviarProjectionScaledMatrix[8]);
+
+    vox_projection_render_stage_ = 0;
+    vox_projection_prepared_ = 0;
+}
+
+
+/*
+Purpose: The isometric box-projector: project the caller's centre and
+         half-extent vectors through the fixed-point view matrix
+         (0x009C0A40..0x4A, the words sub_63fa80 builds) and accumulate the
+         eight corner combinations into an integer rect - left/top/right/
+         bottom in [0..3], inset by two pixels on each side, with the width
+         and height in [4..5] once the box lands on screen, or zeroes when
+         it is entirely above/left of the origin.
+
+// RECOVERY_ROLE: SCAFFOLD Complete owner-side transcription; pinned x87 exceptional conversion behavior and complete indirect caller/physical-owner qualification remain unresolved.
+// ORIGINAL: 0x006401B0 sub_6401b0 0x006401B0-0x006404E2
+// size      818 bytes
+// Deleted seed provenance: git:1ed59304110fc2098fb1dd11457fa5b0074169bd:src/unrecovered/006401b0.cpp
+Status: Coverage transcription of the retained seed (src/unrecovered/006401b0.cpp,
+        plain FILE). The seed's TRIED wall stands: the round-to-fixed helper
+        is spelled as the ordinary `+ 0x80 >> 8` form and the multiply/add
+        scheduling still diverges early (similarity ~0.6 in the seed's own
+        attempt), a compiler-scheduling divergence not chased further; this
+        TU also compiles /Oy- where the original is frameless (esp-relative
+        args at 0x006401B3), which separates the streams from the prologue
+        on. The
+        parameter reading is the seed's (three short/short/int pointers,
+        Ghidra's own), the matrix words are the CaviarFixedPointProjection binding
+        beside sub_63fa80, and the corner walk is the seed's incremental
+        add/subtract order. Matrix row 0 lands on the rect's x axis and
+        row 1 on its y axis, so the extent products are named per axis
+        (extentN_x for the row-0 product, extentN_y for the row-1 one).
+*/
+namespace {
+
+// Ghidra's bit-trick round, spelled as the arithmetic it performs: the
+// image adds 0x80 and shifts the 16.8 fixed-point product down to a short.
+short fixed8(int value) {
+    return (short)((value + 0x80) >> 8);
+}
+
+}
+
+extern "C" void __cdecl sub_6401b0(const short *centre, const short *extent,
+                                   int *out_rect) {
+    int x_walk =
+        (int)CaviarFixedPointProjection.word_00_ * (int)centre[0] +
+        (int)CaviarFixedPointProjection.word_04_ * (int)centre[2] +
+        (int)CaviarFixedPointProjection.word_02_ * (int)centre[1];
+    int y_walk =
+        (int)CaviarFixedPointProjection.word_06_ * (int)centre[0] +
+        (int)CaviarFixedPointProjection.word_0A_ * (int)centre[2] +
+        (int)CaviarFixedPointProjection.word_08_ * (int)centre[1];
+    int extent0_x = (int)extent[0] * (int)CaviarFixedPointProjection.word_00_;
+    int extent0_y = (int)extent[0] * (int)CaviarFixedPointProjection.word_06_;
+    int extent1_x = (int)extent[1] * (int)CaviarFixedPointProjection.word_02_;
+    int extent1_y = (int)extent[1] * (int)CaviarFixedPointProjection.word_08_;
+    int extent2_x = (int)extent[2] * (int)CaviarFixedPointProjection.word_04_;
+    int extent2_y = (int)extent[2] * (int)CaviarFixedPointProjection.word_0A_;
+
+    extent0_y = fixed8(extent0_y);
+    out_rect[4] = 0;
+    out_rect[5] = 0;
+    extent0_x = fixed8(extent0_x);
+    x_walk = (int)fixed8(x_walk) + extent0_x;
+    y_walk = (int)fixed8(y_walk) + extent0_y;
+    out_rect[0] = 0x7fff;
+    out_rect[1] = 0x7fff;
+    out_rect[2] = -0x7fff;
+    out_rect[3] = -0x7fff;
+    if (x_walk < 0x7fff) out_rect[0] = x_walk;
+    if (-0x7fff < x_walk) out_rect[2] = x_walk;
+    if (y_walk < 0x7fff) out_rect[1] = y_walk;
+    if (-0x7fff < y_walk) out_rect[3] = y_walk;
+    extent1_x = fixed8(extent1_x);
+    extent1_y = fixed8(extent1_y);
+    x_walk = x_walk + extent1_x;
+    y_walk = y_walk + extent1_y;
+    if (x_walk < out_rect[0]) out_rect[0] = x_walk;
+    if (out_rect[2] < x_walk) out_rect[2] = x_walk;
+    if (y_walk < out_rect[1]) out_rect[1] = y_walk;
+    if (out_rect[3] < y_walk) out_rect[3] = y_walk;
+    x_walk = x_walk - extent0_x;
+    y_walk = y_walk - extent0_y;
+    if (x_walk < out_rect[0]) out_rect[0] = x_walk;
+    if (out_rect[2] < x_walk) out_rect[2] = x_walk;
+    if (y_walk < out_rect[1]) out_rect[1] = y_walk;
+    if (out_rect[3] < y_walk) out_rect[3] = y_walk;
+    y_walk = y_walk - extent1_y;
+    x_walk = x_walk - extent1_x;
+    if (x_walk < out_rect[0]) out_rect[0] = x_walk;
+    if (out_rect[2] < x_walk) out_rect[2] = x_walk;
+    if (y_walk < out_rect[1]) out_rect[1] = y_walk;
+    if (out_rect[3] < y_walk) out_rect[3] = y_walk;
+    x_walk = x_walk + fixed8(extent2_x);
+    y_walk = y_walk + fixed8(extent2_y);
+    if (x_walk < out_rect[0]) out_rect[0] = x_walk;
+    if (out_rect[2] < x_walk) out_rect[2] = x_walk;
+    if (y_walk < out_rect[1]) out_rect[1] = y_walk;
+    if (out_rect[3] < y_walk) out_rect[3] = y_walk;
+    x_walk = x_walk + extent0_x;
+    y_walk = y_walk + extent0_y;
+    if (x_walk < out_rect[0]) out_rect[0] = x_walk;
+    if (out_rect[2] < x_walk) out_rect[2] = x_walk;
+    if (y_walk < out_rect[1]) out_rect[1] = y_walk;
+    if (out_rect[3] < y_walk) out_rect[3] = y_walk;
+    x_walk = x_walk + extent1_x;
+    y_walk = y_walk + extent1_y;
+    if (x_walk < out_rect[0]) out_rect[0] = x_walk;
+    if (out_rect[2] < x_walk) out_rect[2] = x_walk;
+    if (y_walk < out_rect[1]) out_rect[1] = y_walk;
+    if (out_rect[3] < y_walk) out_rect[3] = y_walk;
+    x_walk = x_walk - extent0_x;
+    y_walk = y_walk - extent0_y;
+    if (x_walk < out_rect[0]) out_rect[0] = x_walk;
+    if (out_rect[2] < x_walk) out_rect[2] = x_walk;
+    if (y_walk < out_rect[1]) out_rect[1] = y_walk;
+    if (out_rect[3] < y_walk) out_rect[3] = y_walk;
+
+    x_walk = out_rect[0];
+    y_walk = out_rect[1];
+    out_rect[0] = x_walk - 2;
+    out_rect[1] = y_walk - 2;
+    int bottom = out_rect[3] + 2;
+    int right = out_rect[2] + 2;
+    out_rect[3] = bottom;
+    out_rect[2] = right;
+    if ((-1 < right) && (-1 < bottom)) {
+        out_rect[4] = (right - (x_walk - 2)) + 1;
+        out_rect[5] = (bottom - (y_walk - 2)) + 1;
+        return;
+    }
+    out_rect[4] = 0;
+    out_rect[5] = 0;
+}
+
+
+/*
+Purpose: Walk a scaled sprite into a 16-bit destination through a palette:
+         for each destination pixel whose source byte is non-zero, replace
+         the existing pixel with palette[current pixel].
+
+         The destination cursor and byte stride live in the two shared
+         voxel-blit slots caviar.cpp owns; the cursor is re-read from the
+         slot every row, exactly as the original re-reads it, so anything
+         else writing the slot between rows is seen.
+
+// RECOVERY_ROLE: SCAFFOLD Complete owner-side transcription; pinned x87 exceptional conversion behavior and complete indirect caller/physical-owner qualification remain unresolved.
+// ORIGINAL: 0x0063B11C sub_63b11c 0x0063B11C-0x0063B1BF
+// symbol   _sub_63b11c
+// size      163 bytes
+// prototype
+// callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+extern "C" void __cdecl sub_63b11c(int destination_base, const char *source,
+                                   int destination_x, int destination_y,
+                                   int width, int height,
+                                   int source_x_step, int source_y_step,
+                                   int source_stride, int destination_stride,
+                                   const unsigned short *palette) {
+    if (width > 0 && height > 0) {
+        vox_blit_dst_stride = static_cast<uint32_t>(destination_stride << 1);
+        vox_blit_cursor = static_cast<uint32_t>(
+            destination_base + (destination_y * destination_stride + destination_x) * 2);
+        unsigned int carried_y = 0;
+        do {
+            unsigned int carried_x = 0;
+            int row_remaining = width;
+            unsigned short *pixel = reinterpret_cast<unsigned short *>(
+                vox_blit_cursor);
+            do {
+                if (source[carried_x >> 16] != 0) {
+                    *pixel = palette[*pixel];
+                }
+                ++pixel;
+                carried_x += static_cast<unsigned int>(source_x_step);
+                --row_remaining;
+            } while (row_remaining != 0);
+            vox_blit_cursor += vox_blit_dst_stride;
+            source += static_cast<int>((carried_y + source_y_step) >> 16) * source_stride;
+            carried_y = (carried_y + source_y_step) & 0xffff;
+            --height;
+        } while (height != 0);
+    }
+}
+
+
+/*
+Purpose: Walk a scaled sprite into an 8-bit destination, skipping the one
+         transparent source byte value.
+
+         The same shared cursor slot carries the destination pointer, and
+         is re-read every row like its 16-bit sibling above.
+
+// RECOVERY_ROLE: SCAFFOLD Complete owner-side transcription; pinned x87 exceptional conversion behavior and complete indirect caller/physical-owner qualification remain unresolved.
+// ORIGINAL: 0x0063B1BF sub_63b1bf 0x0063B1BF-0x0063B241
+// symbol   _sub_63b1bf
+// size      130 bytes
+// prototype
+// callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+extern "C" void __cdecl sub_63b1bf(char *destination_base, const char *source,
+                                   int destination_x, int destination_y,
+                                   int width, int height, int step,
+                                   int source_stride, int destination_stride,
+                                   char transparent) {
+    if (width > 0 && height > 0) {
+        vox_blit_cursor = reinterpret_cast<uint32_t>(
+            destination_base + destination_y * destination_stride + destination_x);
+        unsigned int carried = 0;
+        do {
+            unsigned int fraction = 0;
+            char *pixel = reinterpret_cast<char *>(vox_blit_cursor);
+            int row_remaining = width;
+            do {
+                const char value = source[fraction >> 16];
+                if (value != transparent) {
+                    *pixel = value;
+                }
+                ++pixel;
+                fraction += static_cast<unsigned int>(step);
+                --row_remaining;
+            } while (row_remaining != 0);
+            vox_blit_cursor = reinterpret_cast<uint32_t>(
+                reinterpret_cast<char *>(vox_blit_cursor) + destination_stride);
+            source += static_cast<int>((carried + step) >> 16) * source_stride;
+            carried = (carried + step) & 0xffff;
+            --height;
+        } while (height != 0);
+    }
+}
+
+
+/*
+Purpose: Walk a scaled sprite into an 8-bit destination through a shading
+         table: each non-zero source byte replaces the destination byte
+         with table[destination byte + table base].
+
+// RECOVERY_ROLE: SCAFFOLD Complete owner-side transcription; pinned x87 exceptional conversion behavior and complete indirect caller/physical-owner qualification remain unresolved.
+// ORIGINAL: 0x0063B241 sub_63b241 0x0063B241-0x0063B2CB
+// symbol   _sub_63b241
+// size      138 bytes
+// prototype
+// callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+extern "C" void __cdecl sub_63b241(unsigned char *destination_base,
+                                   const char *source,
+                                   int destination_x, int destination_y,
+                                   int width, int height,
+                                   int source_x_step, int source_y_step,
+                                   int source_stride, int destination_stride,
+                                   int table_base) {
+    if (width > 0 && height > 0) {
+        vox_blit_cursor = reinterpret_cast<uint32_t>(
+            destination_base + destination_y * destination_stride + destination_x);
+        unsigned int carried_y = 0;
+        do {
+            unsigned int carried_x = 0;
+            int row_remaining = width;
+            unsigned char *pixel = reinterpret_cast<unsigned char *>(
+                vox_blit_cursor);
+            do {
+                if (source[carried_x >> 16] != 0) {
+                    *pixel = *reinterpret_cast<unsigned char *>(
+                        *pixel + table_base);
+                }
+                ++pixel;
+                carried_x += static_cast<unsigned int>(source_x_step);
+                --row_remaining;
+            } while (row_remaining != 0);
+            vox_blit_cursor = reinterpret_cast<uint32_t>(
+                reinterpret_cast<unsigned char *>(vox_blit_cursor) +
+                destination_stride);
+            source += static_cast<int>((carried_y + source_y_step) >> 16) * source_stride;
+            carried_y = (carried_y + source_y_step) & 0xffff;
+            --height;
+        } while (height != 0);
+    }
+}

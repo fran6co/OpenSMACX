@@ -3456,3 +3456,211 @@ Purpose: Step the receiver back to the subobject ??_GNetWin@@UAEPAXI@Z expects,
 Return Value: the forwarded call's
 Status: Complete
 */
+
+/*
+Purpose: Send one faction's data block over the net: make sure the
+         MessageFactionData clone exists (asking the dialog to rebuild it),
+         then frame the clone with the 0xF0D header and ship it to
+         everyone or to the slot a1 names.
+
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x0047B020 ?send_faction_data@@YAXH@Z 0x0047B020-0x0047B0E1 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/netwin.h declares this network-dialog synchronization API; src/netwin.cpp owns NetWinDialog, NetWinLobbyRows, the session state, NetWinSlotRecords and the player-ID globals.", "The source body preserves the pinned same-player gate, byte count, allocation size, copy extent/order, unfreed frame and broadcast/slot destination branches."], "reason": "Move the complete existing faction-data sender to the owner of its typed dialog, record table and network globals without changing packet writes, send order, leak or historical claim."}
+// size      193 bytes
+// prototype
+// callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00481FD0 0x005D4510 0x00630080 0x00645930
+Return Value: n/a
+Status: Coverage transcription - claim pending re-measurement
+*/
+void __cdecl send_faction_data(int slot_id) {
+    if (NetWinPlayerId == NetWinOtherPlayerId) {
+        if (NetWinDialog.faction_records_ == 0) {
+            NetWinDialog.setup_faction_data(0);
+        }
+        const uint8_t count =
+            static_cast<unsigned char *>(NetWinDialog.faction_records_)[1];
+        const int records = count * 133;
+        const uint32_t size = records * 3 + 0x1A4;
+        char *frame = static_cast<char *>(mem_get(size));
+        memcpy(frame + 0x10, NetWinDialog.faction_records_, records * 3 + 0x194);
+        *reinterpret_cast<unsigned short *>(frame) = 0xF0D;
+        *reinterpret_cast<uint32_t *>(frame + 4) = 0xFFFFFFFF;
+        *reinterpret_cast<uint32_t *>(frame + 8) = 0;
+        if (slot_id < 0) {
+            NetDaemonNet.Net::send(frame, size, 0, 1);
+            return;
+        }
+        NetDaemonNet.Net::send(
+            frame, size, NetWinSlotRecords[slot_id].id, 1);
+    }
+}
+
+/*
+Purpose: Broadcast the full-state block to every player: stamp the seven
+         per-slot packet headers into one 0xA74-byte frame, copy the
+         0xA64-byte state, and send it to everyone (0x4F04) or to the slot
+         a1 names (0x1F04) once the turn hand-over allows it.
+
+// ORIGINAL: 0x0047B0F0 ?send_all_player_packets@@YAXH@Z 0x0047B0F0-0x0047B1CE FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/netwin.h declares this API and src/netwin.cpp owns the seven-row lobby payload. The destination IDs use the existing NetWinSlotRecords owner.", "The gate at 0x0093E8C0 is NetDaemonNet.lock_state_[0].leading_words_[1], already bound in netwin.cpp as NetWinRulesGate; the same storage is game.cpp's TurnsAssigned."], "reason": "Move the complete state-frame sender to netwin.cpp and use its existing typed view of the shared turn-handover word; preserve initialization-before-gate, packet copy extent and target branches."}
+// LEVER: xor/or order - writing the dword-zero field first in the record loop (matching `xor ebx,ebx` before `or ecx,-1`) reproduced the register setup order; `#pragma function(memcpy)` kept the `call _memcpy` instead of an inlined `rep movsd`.
+// size      222 bytes
+// prototype
+// callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00630080
+Return Value: n/a
+Status: Coverage transcription - claim pending re-measurement
+*/
+void __cdecl send_all_player_packets(int slot_id) {
+    char frame[0xA74];
+    char *cursor = frame + 0x10;
+    for (int slot = 7; slot != 0; --slot) {
+        *reinterpret_cast<uint32_t *>(cursor + 0x178) = 0;
+        cursor[0] = static_cast<char>(0xFF);
+        cursor[1] = 0;
+        cursor[2] = 0;
+        cursor[3] = static_cast<char>(0xFF);
+        cursor[4] = 2;
+        cursor += 0x17C;
+    }
+    if (slot_id != -1 || *NetWinRulesGate != 0) {
+        *reinterpret_cast<unsigned short *>(frame) = 0xF04;
+        *reinterpret_cast<uint32_t *>(frame + 4) = 0xFFFFFFFF;
+        *reinterpret_cast<uint32_t *>(frame + 8) = 0;
+        memcpy(frame + 0x10, &NetWinLobbyRows[1], 0xA64);
+        if (slot_id < 0) {
+            *reinterpret_cast<unsigned short *>(frame) |= 0x4000;
+            NetDaemonNet.Net::send(frame, 0xA74, 0, 1);
+            return;
+        }
+        *reinterpret_cast<unsigned short *>(frame) |= 0x1000;
+        NetDaemonNet.Net::send(
+            frame, 0xA74, NetWinSlotRecords[slot_id].id, 1);
+    }
+}
+
+/*
+Purpose: Broadcast one faction's 0x2F04 data packet to the other player:
+         shape the 0x18C-byte message (header word, faction word, zero,
+         the five-byte prefix and the 0x17C-byte copied payload - the
+         image writes the prefix before the copy overwrites it), and hand
+         it to the Net sender sized at one target.
+
+// ORIGINAL: 0x0047B1D0 sub_47b1d0 0x0047B1D0-0x0047B25C FILE
+// RECOVERY_BINDING: v1 {"evidence": ["The helper sends through NetDaemonNet to NetWinOtherPlayerId and uses the same 0x17C lobby payload/0x18C message contract as the neighboring NetWin packet senders.", "No direct mapped caller is known; this transfer retains the externally callable identity and does not infer a caller."], "reason": "Move this source-owned packet helper alongside its established NetWin senders; retain prefix-before-copy ordering, positive-faction/null-payload guard and the original unclaimed caller status."}
+// symbol    ?sub_47b1d0@@YAXHPAX@Z
+// size      140 bytes
+// prototype
+// callers   0   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00630080 0x00645930
+Return Value: n/a
+Status: Coverage transcription - unclaimed body
+*/
+void __cdecl sub_47b1d0(int faction_id, void *payload) {
+    struct {
+        short header;
+        short pad;
+        int p1;
+        int zero;
+        int gap;
+        unsigned char addr[5];
+        unsigned char tail[0x177];
+    } msg;
+    msg.addr[0] = 0xFF;
+    msg.addr[3] = 0xFF;
+    msg.addr[1] = 0;
+    msg.addr[2] = 0;
+    msg.addr[4] = 2;
+    if (faction_id > 0 && payload != 0) {
+        msg.zero = 0;
+        msg.header = 0x2F04;
+        msg.p1 = faction_id;
+        memcpy(msg.addr, payload, 0x17C);
+        NetDaemonNet.Net::send(
+            &msg, 0x18C, NetWinOtherPlayerId, 1);
+    }
+}
+
+/*
+Purpose: Broadcast the 24-byte session state words: copy them into the
+         0x28-byte frame and send it to everyone (0x4F02), to this
+         client's counterpart (0x2F02), or to the slot a2 names (0x1F02).
+
+// ORIGINAL: 0x0047B260 ?send_session_packet@@YAXHH@Z 0x0047B260-0x0047B2DE FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/netwin.h declares this API; NetWinSessionOptions, NetWinSlotRecords, NetWinOtherPlayerId and NetDaemonNet are owned/referenced in netwin.cpp.", "The first argument remains unused as in the current body; negative, zero and positive targets keep their distinct packet opcodes and destinations."], "reason": "Move the complete existing 24-byte session packet sender into netwin.cpp without changing payload, unused parameter, target comparison or header selection."}
+// size      126 bytes
+// prototype
+// callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00630080
+Return Value: n/a
+Status: Coverage transcription - claim pending re-measurement
+*/
+void __cdecl send_session_packet(int slot_id, int target) {
+    struct {
+        unsigned short header_;
+        unsigned short pad_[7];
+        uint32_t payload_[6];
+    } packet;
+    memcpy(packet.payload_, &NetWinSessionOptions, sizeof(packet.payload_));
+    if (target < 0) {
+        packet.header_ = 0x4F02;
+        NetDaemonNet.Net::send(&packet, 0x28, 0, 1);
+        return;
+    }
+    uint32_t who;
+    if (target != 0) {
+        who = NetWinSlotRecords[target].id;
+        packet.header_ = 0x1F02;
+    } else {
+        who = NetWinOtherPlayerId;
+        packet.header_ = 0x2F02;
+    }
+    NetDaemonNet.Net::send(&packet, 0x28, who, 1);
+}
+
+/*
+Purpose: Broadcast the session state blob: copy the 0x168-byte payload,
+         then send it addressed to everyone (0x4F03), to this client's
+         counterpart (0x2F03), or to the slot a2 names (0x1F03).
+
+// ORIGINAL: 0x0047B2E0 ?send_session2_packet@@YAXHH@Z 0x0047B2E0-0x0047B379 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/netwin.h owns the 0x168-byte NetWinSessionData block and declares this sender; the current file also owns NetWinSlotRecords and the daemon.", "The first argument remains unused, and packet bytes/header fields and the target==0 comparison are retained."], "reason": "Move the complete second-session sender into netwin.cpp, preserving its 0x178-byte frame, copy, opcode branches and unused first argument."}
+// size      153 bytes
+// prototype
+// callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00630080
+Return Value: n/a
+Status: Coverage transcription - unclaimed body
+*/
+void __cdecl send_session2_packet(int slot_id, int target) {
+    struct {
+        unsigned short header_[8];
+        uint32_t payload_[90];
+    } packet;
+    memcpy(packet.payload_, &NetWinSessionData, sizeof(NetWinSessionData));
+    if (target < 0) {
+        packet.header_[0] = 0x4F03;
+        NetDaemonNet.Net::send(&packet, 0x178, 0, 1);
+        return;
+    }
+    uint32_t who;
+    if (target == 0) {
+        packet.header_[0] = 0x2F03;
+        who = NetWinOtherPlayerId;
+    } else {
+        packet.header_[0] = 0x1F03;
+        who = NetWinSlotRecords[target].id;
+    }
+    NetDaemonNet.Net::send(&packet, 0x178, who, 1);
+}
