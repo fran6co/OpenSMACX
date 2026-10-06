@@ -360,9 +360,3 @@ extern uint32_t ListBoxDefault24;
 extern uint32_t ListBoxDefault2C;
 extern uint32_t ListBoxDefault10;
 extern uint32_t ListBoxDefault14;
-
-// Fixed most-derived offset from L to the controlling vftable (GraphicWin
-// subobject); the destructor is always entered at L + this adjustment.
-static const size_t ListBoxDestructorAdjustment = 0x48;
-
-uint32_t __fastcall list_box_destructor_redirect(void *adjusted, void *);

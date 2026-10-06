@@ -190,6 +190,5 @@ extern func_dialogs_teardown DialogsCheckBoxDestructor;   // 0x0060E740
 // co-located subobject); both redirects recover the allocation base B first.
 static const size_t DialogsDestructorAdjustment = 0x188;
 
-uint32_t __fastcall dialogs_destructor_redirect(void *adjusted, void *);
 void *__fastcall dialogs_scalar_dtor_redirect(void *adjusted, void *,
                                               unsigned int mode);

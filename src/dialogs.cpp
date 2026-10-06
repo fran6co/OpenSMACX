@@ -620,12 +620,6 @@ uint32_t Dialogs::destroy() {
     return reinterpret_cast<ListBox *>(base)->destroy();
 }
 
-// ~Dialogs is entered with this = B + 0x188; recover the base first.
-uint32_t __fastcall dialogs_destructor_redirect(void *adjusted, void *) {
-    Dialogs *self = reinterpret_cast<Dialogs *>(
-        static_cast<uint8_t *>(adjusted) - DialogsDestructorAdjustment);
-    return self->destroy();
-}
 
 /*
 Purpose: The compiler-generated scalar deleting destructor: run ~Dialogs, the

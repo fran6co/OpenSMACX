@@ -12,7 +12,6 @@ class GraphicWin;
 
 void *__fastcall leaf_004c8070_redirect(void *, void *);
 void __cdecl leaf_0057dee0_redirect(void *);
-void *__fastcall leaf_006252c0_redirect(void *, void *);
 int __cdecl leaf_00408470_redirect(const void *, int);
 int __stdcall leaf_005d7a10_redirect(const void *, int, int, int);
 int __fastcall leaf_005d5470_redirect(void *, void *, const void *, int, int, int);
@@ -22,17 +21,6 @@ int __cdecl leaf_00592db0_redirect(int, int, int, int, int, int);
 int __fastcall leaf_004041c0_redirect(void *, void *);
 void __cdecl leaf_0063d420_redirect(void *, uint32_t);
 
-// Seams for the two destructor chains; see src/leaf_recoveries.cpp for why.
-// Each defaults to the corresponding recovered redirect.
-typedef uint32_t(__fastcall func_leaf_adjusted_dtor)(void *, void *);
-typedef void(__fastcall func_leaf_dialog_dtor)(Dialog *, void *);
-typedef GraphicWin *(__fastcall func_leaf_graphic_dtor)(GraphicWin *, void *);
-extern func_leaf_adjusted_dtor *LeafListBoxDestructor;
-extern func_leaf_adjusted_dtor *LeafDialogsDestructor;
-extern func_leaf_dialog_dtor *LeafDialogDestructor;
-extern func_leaf_graphic_dtor *LeafGraphicWinDestructor;
-void __fastcall leaf_004080b0_redirect(void *, void *);
-void __fastcall leaf_00406af0_redirect(void *, void *);
 typedef Buffer *(__fastcall func_leaf_buffer_ctor)(Buffer *, void *);
 typedef void(__fastcall func_leaf_buffer_dtor)(Buffer *, void *);
 extern func_leaf_buffer_ctor *LeafBufferConstruct;

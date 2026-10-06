@@ -45,6 +45,39 @@ void FactionProfileWin::initialize(int faction_id, int profile_mode) {
   show(0);
 }
 
+// ORIGINAL: 0x00406AF0 sub_406af0 0x00406AF0-0x00406B16 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:0x00406AF0-0x00406B16 calls Dialogs, Dialog and GraphicWin destructor stages in that order at the evidenced subobject views", "source:src/dialogs.h Dialogs is the real class composed from declared widget bases; its virtual GraphicWin/Dialog bases are inherited through those owners", "source:src/basepop.h BasePop owns typed Dialogs dialogs_; src/factionprofilewin.h FactionProfileWin owns Popup", "build/recovery/builds/build-gyzprt2j/OpenSMACX.map selects current ??_DDialogs at 0x0040C0D0 from factionprofilewin.cpp.obj; the selected physical COFF code COMDAT is 48 bytes", "the selected Dialogs COFF relocations at +0x0D/+0x18/+0x1F resolve to ??1Dialogs@@UAE@XZ, ??1Dialog@@UAE@XZ, ??1GraphicWin@@UAE@XZ; section bytes preserve the pinned call order, +0x188 shared receiver and +0xBA0 Dialog view, followed by 10 bytes linker/compiler padding", "current MAP/COFF proves natural emission and the selected current linked copy only; it does not prove the pinned executable's original translation unit or whole-game acceptance"], "reason": "The pinned complete-object identity destroys the real Dialogs subobject and its shared virtual bases. Popup/BasePop owns a typed Dialogs member and FactionProfileWin owns Popup; the naturally emitted compiler complete-object destructor is recorded in this existing consumer TU. This is source-owner/lifetime evidence, not a claim that the historical original translation unit was factionprofilewin.cpp."}
+// kind      game
+// symbol    ??_DDialogs@@QAEXXZ
+// LEVER: same fix as leaf_004080b0_redirect above - direct calls to the named
+// TRIED: same tail-call fold on the trailing call as 004080B0 - VC6
+// RECOVERY_HISTORY: /*
+// RECOVERY_HISTORY: Purpose: Destroy the Dialogs at 0x188, the Dialog at 0xba0, and the GraphicWin
+// RECOVERY_HISTORY:          base the Dialogs shares.
+// RECOVERY_HISTORY:
+// RECOVERY_HISTORY:          The same shape as 004080B0 with different offsets and a Dialogs in
+// RECOVERY_HISTORY:          place of the ListBox. 0x188 is DialogsDestructorAdjustment, and is
+// RECOVERY_HISTORY:          likewise computed once and used twice.
+// RECOVERY_HISTORY:
+// RECOVERY_HISTORY: // RECOVERY_ROLE: SCAFFOLD Transitional leaf collection, not completed genuine owner recovery; preserve body evidence during owner migration.
+// RECOVERY_HISTORY: // original marker: 0x00406AF0 sub_406af0 0x00406AF0-0x00406B16
+// RECOVERY_HISTORY: // symbol    ?leaf_00406af0_redirect@@YIXPAX0@Z
+// RECOVERY_HISTORY: // size      38 bytes
+// RECOVERY_HISTORY: // prototype
+// RECOVERY_HISTORY: // callers   9   call targets   3
+// RECOVERY_HISTORY: // kind      game
+// RECOVERY_HISTORY: // flags     sp_ready;purged_ok
+// RECOVERY_HISTORY: // calls     0x00406910 0x005D4DD0 0x00608E10
+// RECOVERY_HISTORY: // LEVER: same fix as leaf_004080b0_redirect above - direct calls to the named
+// RECOVERY_HISTORY: // redirects, not through the `Leaf*Destructor` pointer variables, cast
+// RECOVERY_HISTORY: // through `SingleArgDtor` so nullptr's `xor edx, edx` is not paid either.
+// RECOVERY_HISTORY: // TRIED: same tail-call fold on the trailing call as 004080B0 - VC6
+// RECOVERY_HISTORY: // turns the last fastcall into `jmp` no matter which of the two spellings
+// RECOVERY_HISTORY: // reaches it; SingleArgDtor on all three still scores best (measured).
+// RECOVERY_HISTORY: Return Value: n/a
+// RECOVERY_HISTORY: Status: Complete
+// RECOVERY_HISTORY: */
+
 // ORIGINAL: 0x00589560 sub_589560 0x00589560-0x00589748
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x00589560-0x00589748 reads receiver fields and Popup at +0xA3C, builds the faction profile content and finishes through the update slot", "source:src/faction.h Player formal_name_faction is +0x384; source:src/game.cpp owns InterfaceBoxStyles[51], populated by load_box_sprites; 0x78D690 is entry 9 at 0x28 stride"], "reason": "Carry the complete seed identity and body span into the typed show_profile member, preserving fresh owner-field reads across callback-capable Popup and SpriteBox operations. The class role is provisional and does not claim original identity or allocation registration."}
 // symbol    ?show_profile@FactionProfileWin@@QAEHXZ

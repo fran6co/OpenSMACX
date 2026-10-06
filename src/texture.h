@@ -329,6 +329,7 @@ class TextureStore {
   // the two arrays through the vector-construction helper.
   TextureStore();
   ~TextureStore();
+  EdgeScan *sub_6252c0();
 
   // Source names express the cache protocol, not recovered debug names.
   // 625139/6251AC/62523B read flag bits; 6250E0..6250FA advances and wraps

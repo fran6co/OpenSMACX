@@ -117,6 +117,62 @@ Datalink DatalinkMain;  // 0x00703EA0
 // Member/base lifetimes run naturally in declaration order. The original
 // ListBox constructor's extra 1 is its hidden most-derived ABI flag, not an
 // explicit C++ parameter: the real virtual bases generate it automatically.
+// ORIGINAL: 0x004080B0 sub_4080b0 0x004080B0-0x004080D3 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:0x004080B0-0x004080D3 calls ListBox, Dialog and GraphicWin destructor stages in that order at the evidenced subobject views", "source:src/listbox.h ListBox is the genuine virtual GraphicWin/Dialog class; src/listbox.cpp ListBox::~ListBox calls close()", "source:src/datalink.h Datalink owns a typed ListBox member; src/datalink.cpp Datalink lifetime naturally emits the complete-object stage", "build/recovery/builds/build-gyzprt2j/OpenSMACX.map selects current ??_DListBox at 0x004D3740 from datalink.cpp.obj; the selected physical COFF code COMDAT is 48 bytes", "the selected ListBox COFF relocations at +0x0A/+0x15/+0x1C resolve to ??1ListBox@@UAE@XZ, ??1Dialog@@UAE@XZ, ??1GraphicWin@@UAE@XZ; section bytes preserve the pinned call order, +0x48 shared receiver and +0xA60 Dialog view, followed by 13 bytes linker/compiler padding", "current MAP/COFF proves natural emission and the selected current linked copy only; it does not prove the pinned executable's original translation unit or whole-game acceptance"], "reason": "The pinned complete-object identity destroys the real ListBox subobject and its shared virtual bases. Datalink owns a typed ListBox member; the naturally emitted compiler complete-object destructor is recorded in this existing consumer TU. This is source-owner/lifetime evidence, not a claim that the historical original translation unit was datalink.cpp."}
+// kind      game
+// symbol    ??_DListBox@@QAEXXZ
+// LEVER: the image's three calls are direct E8s to the destructors
+// LEVER: nullptr also costs the caller a `xor edx, edx` it never had to pay
+// TRIED: VC6 tail-call-folds the LAST call into `jmp` regardless of which
+// RECOVERY_HISTORY: /*
+// RECOVERY_HISTORY: Purpose: Destroy the ListBox at 0x48, the Dialog at 0xa60, and the GraphicWin
+// RECOVERY_HISTORY:          base the ListBox shares.
+// RECOVERY_HISTORY:
+// RECOVERY_HISTORY:              mov esi,ecx / lea edi,[esi+0x48] / mov ecx,edi
+// RECOVERY_HISTORY:              call ??1ListBox@@QAE@XZ / lea ecx,[esi+0xa60]
+// RECOVERY_HISTORY:              call ??1Dialog@@QAE@XZ / mov ecx,edi
+// RECOVERY_HISTORY:              call ??1GraphicWin@@QAE@XZ / ret
+// RECOVERY_HISTORY:
+// RECOVERY_HISTORY:          EDI is computed ONCE and used twice - for the ListBox and again for
+// RECOVERY_HISTORY:          the GraphicWin. They are the same subobject at 0x48, destroyed at two
+// RECOVERY_HISTORY:          levels, with an unrelated Dialog at 0xa60 in between. A body that gave
+// RECOVERY_HISTORY:          GraphicWin the outer object would be wrong only where 0x48 matters.
+// RECOVERY_HISTORY:
+// RECOVERY_HISTORY:          0x48 is ListBoxDestructorAdjustment, and list_box_destructor_redirect
+// RECOVERY_HISTORY:          takes exactly that already-adjusted pointer, so it is passed through
+// RECOVERY_HISTORY:          rather than recomputed.
+// RECOVERY_HISTORY:
+// RECOVERY_HISTORY: // RECOVERY_ROLE: SCAFFOLD Transitional leaf collection, not completed genuine owner recovery; preserve body evidence during owner migration.
+// RECOVERY_HISTORY: // original marker: 0x004080B0 sub_4080b0 0x004080B0-0x004080D3
+// RECOVERY_HISTORY: // symbol    ?leaf_004080b0_redirect@@YIXPAX0@Z
+// RECOVERY_HISTORY: // size      35 bytes
+// RECOVERY_HISTORY: // prototype
+// RECOVERY_HISTORY: // callers   3   call targets   3
+// RECOVERY_HISTORY: // kind      game
+// RECOVERY_HISTORY: // flags     hidden;sp_ready;purged_ok
+// RECOVERY_HISTORY: // calls     0x005D4DD0 0x00608E10 0x00609EC0
+// RECOVERY_HISTORY: // LEVER: the image's three calls are direct E8s to the destructors
+// RECOVERY_HISTORY: // themselves - going through the `Leaf*Destructor` pointer variables compiles
+// RECOVERY_HISTORY: // `call dword ptr [...]` and call_diff reports 0 real calls for it. Every
+// RECOVERY_HISTORY: // OTHER caller of these redirects (basebutton.cpp, dialogs.cpp, pulldown.cpp,
+// RECOVERY_HISTORY: // scroll.cpp) already calls them by name; doing the same here reaches the
+// RECOVERY_HISTORY: // image's call sequence. The `Leaf*Destructor` globals stay declared for the
+// RECOVERY_HISTORY: // fixture use the comment above describes - nothing currently reads them.
+// RECOVERY_HISTORY: // LEVER: nullptr also costs the caller a `xor edx, edx` it never had to pay
+// RECOVERY_HISTORY: // (the destructors ignore their second slot) - casting each redirect through
+// RECOVERY_HISTORY: // `SingleArgDtor` before calling drops that instruction too.
+// RECOVERY_HISTORY: // TRIED: VC6 tail-call-folds the LAST call into `jmp` regardless of which
+// RECOVERY_HISTORY: // spelling reaches it (SingleArgDtor or the plain 2-arg redirect+nullptr) -
+// RECOVERY_HISTORY: // the image has a real `call 0x5d4dd0` / `pop edi` / `pop esi` / `ret` there.
+// RECOVERY_HISTORY: // Reordering the three calls is not legal (it would call the wrong symbol
+// RECOVERY_HISTORY: // last); adding a `volatile` sink after the discarded `GraphicWin*` result
+// RECOVERY_HISTORY: // does not stop the fold either (measured). SingleArgDtor on all three scores
+// RECOVERY_HISTORY: // higher (0.880, 9/13) than nullptr-on-the-last (0.846, 11/13) despite fewer
+// RECOVERY_HISTORY: // raw agreements, so all three are cast; the trailing jmp is the residue.
+// RECOVERY_HISTORY: Return Value: n/a
+// RECOVERY_HISTORY: Status: Complete
+// RECOVERY_HISTORY: */
+
 // ORIGINAL: 0x00428FC0 ??0Datalink@@QAE@XZ 0x00428FC0-0x00429178;0x00653450-0x00653579 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:6201d294:src/unrecovered/00428fc0.cpp"], "reason": "Original construction and reverse teardown establish real Flic/Caviar, an eighteen-element FlatButton array and eleven Font members. The owner performs its scalar initialization/reset; genuine member/base lifetimes replace manual vtables and original-address teardown."}
 // Historical scaffold experiment, retained from the replaced seed:

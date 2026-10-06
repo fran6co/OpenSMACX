@@ -37,6 +37,43 @@ Heap::Heap() {
 }
 
 /*
+Purpose: Set 5 field(s) to constants.
+         Emitted by tools/generate_field_accessors.py from
+
+             xor eax, eax / mov byte ptr [ecx], al / mov dword ptr [ecx + 8], eax / mov dword ptr [ecx + 4], eax / mov dword ptr [ecx + 0x10], eax / mov dword ptr [ecx + 0xc], eax / ret
+
+         The name is the ADDRESS, not an invention, and `self` is a void
+         pointer because this body needs `this` to be nothing more than a
+         pointer and an offset - the class it belongs to is not established.
+         The adapter declares 0 stack dword(s) so it
+         cleans 0 bytes, taken from the body's own `ret` -
+         the only statement of this function's arity that exists, since it has
+         no mangled name. Declaring fewer would leave them on the caller's
+         stack.
+// HISTORICAL RECOVERY_ROLE (seed): SCAFFOLD Untyped raw-field or constant adapter; real method ownership and named member relationships remain recovery obligations.
+// ORIGINAL: 0x005D4540 Heap::Heap2 0x005D4540-0x005D4551 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/field_accessors.cpp original Heap::Heap2 mapping, complete span, and retained BYTE_EXACT claim", "source:src/heap.h named Heap fields at offsets 0x00, 0x04, 0x08, 0x0C, and 0x10; sizeof(Heap) == 0x14", "source:src/heap.cpp distinct Heap::Heap() identity at 0x005D4560"], "reason": "Attach the existing Heap::Heap2 operation to Heap because its original catalog identity names Heap and its body initializes all five declared Heap fields at their established offsets. Keep the distinct Heap::Heap identity at 0x005D4560. This establishes member ownership only; it does not assign constructor, caller, or lifetime semantics."}
+// symbol    ?Heap2@Heap@@QAEXXZ
+// historical scaffold emitted-symbol fact (not the current member symbol): ?field_accessor_005d4540_redirect@@YIXPAX0@Z
+// size      17 bytes
+// prototype
+// callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+
+void Heap::Heap2() {
+    err_flags_ = 0;
+    current_ = nullptr;
+    base_ = nullptr;
+    free_size_ = 0;
+    base_size_ = 0;
+}
+
+/*
 // ORIGINAL: 0x005D4580 ??1Heap@@QAE@XZ 0x005D4580-0x005D45AA BYTE_EXACT
 // LEVER (2026-09-03, moved out of heap.h): the in-class `MEASURED ~Heap`
 //        reproduced ITS OWN COMDAT - that claim never moved - but /Ob2 also

@@ -476,6 +476,46 @@ TextureStore::TextureStore() {
     next_record_ = 0;
 }
 
+/*
+Purpose: Hand out the next of ten 60-byte slots, wrapping back to the first.
+
+             mov edx,[ecx+4] / lea eax,[edx+edx*2] / inc edx / cmp edx,0xa
+             mov [ecx+4],edx / lea eax,[eax+eax*4] / lea eax,[ecx+eax*4+8]
+             jne end / mov dword [ecx+4],0 / end: ret
+
+         The two `lea`s multiply by 3 then by 5, and the third scales by 4:
+         60 bytes a slot, the array starting at offset 8.
+
+         The pointer handed back is the slot the counter held ON ENTRY, and
+         the counter is advanced afterwards - so the wrap to zero does not
+         affect what this call returns, only the next one. The `cmp` happens
+         before the store either way; writing the wrap first would return the
+         wrong slot on the tenth call and only then.
+
+// Historical scope note: this identity was previously kept in the transitional leaf collection; TextureStore ownership is supported by its cursor and EdgeScan layout.
+// ORIGINAL: 0x006252C0 sub_6252c0 0x006252C0-0x006252DE BYTE_EXACT
+// symbol    ?sub_6252c0@TextureStore@@QAEPAUEdgeScan@@XZ
+// Former emitted adapter symbol (not the TextureStore member): ?leaf_006252c0_redirect@@YIPAXPAX0@Z
+// size      30 bytes
+// prototype
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// Mapped-span caller search found no call site; all-image and dynamic caller evidence remain unresolved.
+Return Value: a pointer to the slot that was current on entry
+Status: Complete
+*/
+EdgeScan *TextureStore::sub_6252c0() {
+    EdgeScan *const selected = &edges_[next_record_];
+    const int next = next_record_ + 1;
+    next_record_ = next;
+    if (next == 10) {
+        next_record_ = 0;
+    }
+    return selected;
+}
+
 // ===== MANAGED GLOBALS - real objects, homed to their domain =====
 // In the shipped image these live at fixed data addresses and are
 // constructed before WinMain by the CRT's dynamic-initializer walk.
@@ -2616,8 +2656,7 @@ static int texture_cached_edge(EdgeScan &edge, int index,
         edge.counter = texture_difference(vertices[next].y, vertices[index].y);
         if (edge.counter != 0) {
             if (edge.counter < 0) return 0;
-            EdgeScan &record = cache.edges_[cache.next_record_++];
-            if (cache.next_record_ == 10) cache.next_record_ = 0;
+            EdgeScan &record = *cache.sub_6252c0();
             edge.id = next;
             edge.accumA = static_cast<int>(
                 static_cast<unsigned int>(texture_fixed(uv[index].x)) + 0x8000u);

@@ -1211,17 +1211,23 @@ void __cdecl sub_5cef8a(unsigned char *row_base, int stride_arg) {
 
 
 /*
-Purpose: The row-loader half of the same block build (coefficient fetch
-         through the incoming ESI table into the row pointer *reinterpret_cast<int *>(0x009C3004)
-         holds). Body still unrecovered - the seed stays in the catalogue;
-         this continuity definition exists so the block builder above links.
+Purpose: Apply the first IDCT pass to one 8-coefficient vector. In the
+         original, ESI supplies the vector and 0x009C3004 supplies the output
+         pointer. The typed C++ body makes both channels explicit through its
+         argument and shared MediaDecoderIdctStorage view. When input[1..7]
+         are all zero, input[0] is repeated at output offsets 0, 0x24, ...,
+         0xFC; otherwise the eight-value butterfly writes those same offsets.
+         The caller provides one vector per column and points output into the
+         nine-dword-stride intermediate block.
 // RECOVERY_ROLE: SCAFFOLD Current typed movie/media owner implementation; original receiver, shared storage, and call ordering retained. Native ABI/output and exceptional behavior remain explicit obligations.
 // ORIGINAL: 0x005CED1D sub_5ced1d 0x005CED1D-0x005CEF8A
 // symbol    ?sub_5ced1d@@YAXPAH@Z
 // size      621 bytes
 // kind      game
 // calls     (none)
-Status: Continuity placeholder - real body pending, seed preserved.
+Status: Typed semantic body present through the shared column transform.
+        External ESI-only entry ABI, x87 precision, exact output and linked
+        storage/reference behavior remain unverified; preserve those debts.
 */
 void __cdecl sub_5ced1d(int *esi_ptr) {
     movie_decoder_idct::IdctConstants constants = movie_media_idct_constants();

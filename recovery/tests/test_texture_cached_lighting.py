@@ -40,6 +40,7 @@ def actual_source():
     methods["texture_reset_fpu"] = braced(source, "static void texture_reset_fpu(")
     methods["ctor"] = braced(source, "TextureStore::TextureStore()")
     methods["dtor"] = braced(source, "TextureStore::~TextureStore()")
+    methods["select_next"] = braced(source, "EdgeScan *TextureStore::sub_6252c0()")
     for signature in re.findall(r"void Texture::draw_cached_lit\([^)]*\)", source):
         methods["draw" if signature.count(",") == 5 else "wrapper"] = braced(source, signature)
     assert "draw" in methods and "wrapper" in methods
@@ -481,8 +482,9 @@ DAMAGE = [
     ("ctor_flags","ctor","flags_ = 3;","flags_ = 0;"),
     ("ctor_tail","ctor","flags_ = 3;","memset(edges_,0,sizeof edges_); flags_ = 3;"),
     ("dtor_cursor","dtor","(&next_record_) = 0;","(&next_record_) = 1;"),
-    ("record_selection","texture_cached_edge","cache.edges_[cache.next_record_++]","cache.edges_[(cache.next_record_++ + 1) % 10]"),
-    ("record_wrap","texture_cached_edge","cache.next_record_ == 10","cache.next_record_ == 9"),
+    ("slot_selection","select_next","&edges_[next_record_]","&edges_[(next_record_+1)%10]"),
+    ("slot_wrap","select_next","if (next == 10)","if (next == 9)"),
+
     ("uv_flag","texture_cached_edge","cache.flags_ & 2","cache.flags_ & 1"),
     ("light_flag","texture_cached_edge","cache.flags_ & 1","cache.flags_ & 2"),
     ("half_texel","texture_cached_edge","+ 0x8000u","+ 0u"),

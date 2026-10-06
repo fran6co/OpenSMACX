@@ -434,17 +434,6 @@ ListBox::~ListBox() {
     close();
 }
 
-// Legacy leaf callers still use this partial-stage callback. Their enclosing
-// lifetime paths require coupled recovery; calling an explicit complete C++
-// destructor here would also destroy virtual bases which they destroy later.
-uint32_t __fastcall list_box_destructor_redirect(void *adjusted, void *) {
-    // Strip-all direction: the image's five derived-stage re-stores here -
-    // the content this BYTE_EXACT claim used to bank - are gone, as in
-    // ListBox::destroy above. What remains is the walked-back close().
-    ListBox *const self = reinterpret_cast<ListBox *>(
-        static_cast<uint8_t *>(adjusted) - ListBoxDestructorAdjustment);
-    return self->close();
-}
 
 /*
 Purpose: Clear the hover index and repaint, through the enclosing object.

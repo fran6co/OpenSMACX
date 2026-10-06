@@ -39,6 +39,8 @@ class Heap {
   // opens `push esi; mov esi, ecx; call ?0Heap`, a real call to the base.
   // Defined in-class the compiler inlines it and the caller never matches.
   Heap();   // 005D4560
+  // Distinct original operation; invocation/lifetime role unknown.
+  void Heap2();
   // OUT OF LINE, like the constructor above - and for the same reason plus
   // one: an in-class destructor is EXPANDED at every implicit base/member
   // teardown site, so `~Strings` and `~TextIndex` open-code nineteen

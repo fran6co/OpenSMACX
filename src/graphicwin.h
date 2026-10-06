@@ -277,7 +277,6 @@ extern func_subobject_close WinOriginalClose;
 // Process default copied into field_A0C_ by close().
 extern GraphicWinCaptionDraw GraphicWinFieldA0CDefault;
 
-GraphicWin *__fastcall graphic_win_destructor_redirect(GraphicWin *self, void *);
 // A GraphicWin THAT CONSTRUCTS ITSELF, for the derived classes whose image
 // constructor calls GraphicWin::construct() BEFORE its own members.
 //
