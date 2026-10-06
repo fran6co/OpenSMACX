@@ -345,8 +345,8 @@ void ProdPicker::on_button_clicked(int button_id) {
 
 // ORIGINAL: 0x00493CB0 ?on_scrolled@ProdPicker@@QAEXHH@Z 0x00493CB0-0x00493E6F
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00493cb0.cpp", "source:src/prodpicker.h", "source:src/buffer.h", "source:src/win.h", "pinned original own table 0x0066A250, pointer word at +0xC0, identifies original entry 0x00493CB0", "source:src/win.h inherited virtual interface; actual emitted method ?vslot_48@ProdPicker@@UAEXHH@Z in primary Win table ??_7ProdPicker@@6BWin@@@"], "reason": "Scroll the displayed item window using measured picker geometry, its real Buffer blit operation, draw_item, and inherited redraw virtual. The original own Win table binds this entry as virtual slot 48. Use genuine member dispatch, not an opaque redirect; retain the catalogued original spelling as historical evidence. The previous on_scrolled definition is the class slot-48 target; renaming connects the unchanged body to its real virtual slot."}
-// symbol    ?vslot_48@ProdPicker@@UAEXHH@Z
-void ProdPicker::vslot_48(int, int position) {
+// symbol    ?on_scrolled@ProdPicker@@UAEXHH@Z
+void ProdPicker::on_scrolled(int, int position) {
     const int pageSize = static_cast<int>(field_A810_);
     const int oldPosition = static_cast<int>(field_A77C_);
     const int newPosition = pageSize * position;
@@ -1249,7 +1249,7 @@ Purpose: ?on_scrolling@ProdPicker@@QAEXHH@Z - dispatch to slot 0xc0 of this obje
          vtable, forwarding 2 argument(s).
 // ORIGINAL: 0x00493E70 ?on_scrolling@ProdPicker@@QAEXHH@Z 0x00493E70-0x00493E87 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned original own table 0x0066A250, pointer word at +0xC4, identifies original entry 0x00493E70", "source:src/win.h inherited virtual interface; actual emitted method ?vslot_49@ProdPicker@@UAEXHH@Z in primary Win table ??_7ProdPicker@@6BWin@@@"], "reason": "The original own Win table binds this entry as virtual slot 49. Use genuine member dispatch, not an opaque redirect; retain the catalogued original spelling as historical evidence."}
-// symbol    ?vslot_49@ProdPicker@@UAEXHH@Z
+// symbol    ?on_scrolling@ProdPicker@@UAEXHH@Z
 // size      23 bytes
 // prototype void (__thiscall ?on_scrolling@ProdPicker@@QAEXHH@Z)(ProdPicker* this, int, int)
 // callers   0   call targets   0
@@ -1260,6 +1260,6 @@ Purpose: ?on_scrolling@ProdPicker@@QAEXHH@Z - dispatch to slot 0xc0 of this obje
 Return Value: n/a
 Status: Complete
 */
-void ProdPicker::vslot_49(int code, int position) {
-  vslot_48(code, position);
+void ProdPicker::on_scrolling(int code, int position) {
+  on_scrolled(code, position);
 }

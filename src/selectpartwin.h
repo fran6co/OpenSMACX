@@ -28,8 +28,8 @@ class SelectPartWin : public GraphicWin {
   virtual void on_mouse_move(int x, int y);
   virtual void on_left_up(int x, int y);
   int on_key_click(int unused, int key) override;
-  virtual void vslot_48(int unused, int row);
-  virtual void vslot_49(int unused, int row);
+  virtual void on_scrolled(int unused, int row);
+  virtual void on_scrolling(int unused, int row);
 
   // RECOVERY_MEMBER: v2 SelectPartWin scroll_ Scroll 0xA14 0x004328B0
   Scroll scroll_;                 // +0x0A14

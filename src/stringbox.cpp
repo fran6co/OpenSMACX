@@ -67,8 +67,9 @@ int StringBox::on_link_clicked(int id, char *link) {
 // position.
 // ORIGINAL: 0x00629D40 ?on_scrolling@StringBox@@QAEXHH@Z 0x00629D40-0x00629D55 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:93d09e9c95484465004f450350b6cffe1e09f40e:src/recovered/00629d40.cpp", "src/stringbox.h: StringBox derives directly from GraphicWin", "src/win.h: Win::vslot_48(int,int)"], "reason": "Forward StringBox scroll-in-progress events through inherited Win slot 48 using its two integer arguments."}
+// symbol    ?on_scrolling@StringBox@@UAEXHH@Z
 void StringBox::on_scrolling(int code, int position) {
-    vslot_48(code, position);
+    on_scrolled(code, position);
 }
 
 // The owned StringList handles caret parsing and ID-zero insertion; a
@@ -476,6 +477,7 @@ void StringBox::add(char *text, int index, int flag) {
 /*
 Purpose: Record the scroll position and repaint through virtual slot 62.
 // ORIGINAL: 0x00629D20 ?on_scrolled@StringBox@@QAEXHH@Z 0x00629D20-0x00629D35 BYTE_EXACT
+// symbol    ?on_scrolled@StringBox@@UAEXHH@Z
 // size      21 bytes
 // prototype void (__thiscall ?on_scrolled@StringBox@@QAEXHH@Z)(StringBox* this, int, int)
 // callers   0   call targets   0

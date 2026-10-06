@@ -1313,6 +1313,7 @@ void MainInterface::on_iface_selected(int code, int mode) {
 
 
 // ORIGINAL: 0x0045C5C0 ?on_scrolling@MainInterface@@QAEXHH@Z 0x0045C5C0-0x0045C5F4 FILE BYTE_EXACT
+// symbol    ?on_scrolling@MainInterface@@UAEXHH@Z
 // LEVER: 2026-09-04 every dispatch in this file went from a VCall shim to a
 //   named virtual - IfaceRegistryEntry (maininterface.h) declares the
 //   nineteen slots the concrete interface table at 0x66C544 installs, so
@@ -1474,6 +1475,7 @@ void MainInterface::on_left_double_click(int a1, int a2) {
 }
 
 // ORIGINAL: 0x0045C680 ?on_right_double_click@MainInterface@@QAEXHH@Z 0x0045C680-0x0045C6B4 FILE BYTE_EXACT
+// symbol    ?on_right_double_click@MainInterface@@UAEXHH@Z
 // size      52 bytes
 // prototype void (__thiscall ?on_right_double_click@MainInterface@@QAEXHH@Z)(MainInterface* this, int, int)
 // callers   0   call targets   0
@@ -2455,6 +2457,7 @@ void MainInterface::set_alert(int a1) {
 // Fixed-slot bindings carried from 0045c600.cpp
 
 // ORIGINAL: 0x0045C600 ?on_scrolled@MainInterface@@QAEXHH@Z 0x0045C600-0x0045C634 FILE BYTE_EXACT
+// symbol    ?on_scrolled@MainInterface@@UAEXHH@Z
 // size      52 bytes
 // prototype void (__thiscall ?on_scrolled@MainInterface@@QAEXHH@Z)(MainInterface* this, int, int)
 // callers   0   call targets   0

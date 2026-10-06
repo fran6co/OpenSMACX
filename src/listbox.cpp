@@ -608,6 +608,7 @@ void ListBox::on_right_down(int a1, int a2) {
 Purpose: Forward a vertical-scroll (code, pos) through GraphicWin vtable
          slot 49.
 // ORIGINAL: 0x0060C6A0 ?on_scrolled@ListBox@@QAEXHH@Z 0x0060C6A0-0x0060C6C1
+// symbol    ?on_scrolled@ListBox@@UAEXHH@Z
 // TRIED: byte-exact on promotion, same entered-adjusted receiver as
 //   on_right_down above; no guard on this one.
 // size      33 bytes
@@ -624,13 +625,14 @@ plain virtual call; the image's front-walk addressing is the entered-
 receiver relationship work (see on_right_down's note).
 */
 void ListBox::on_scrolled(int code, int pos) {
-    vslot_49(code, pos);
+    on_scrolling(code, pos);
 }
 
 /*
 Purpose: Report a right double click: raise the click guard, forward (a1, a2)
          through GraphicWin vtable slot 28, drop the guard.
 // ORIGINAL: 0x0060C6D0 ?on_right_double_click@ListBox@@QAEXHH@Z 0x0060C6D0-0x0060C702
+// symbol    ?on_right_double_click@ListBox@@UAEXHH@Z
 // TRIED: byte-exact on promotion, same entered-adjusted receiver as
 //   on_right_down above.
 // size      50 bytes
@@ -662,6 +664,7 @@ Purpose: Apply one WM_VSCROLL step to the list: publish the parent window
          two rows that scrolled plus the surface update.
 
 // ORIGINAL: 0x0060C5D0 ?on_scrolling@ListBox@@QAEXHH@Z 0x0060C5D0-0x0060C691
+// symbol    ?on_scrolling@ListBox@@UAEXHH@Z
 // size      193 bytes
 // prototype void (__thiscall ?on_scrolling@ListBox@@QAEXHH@Z)(ListBox* this, int, int)
 // callers   2   call targets   3

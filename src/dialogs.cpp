@@ -336,6 +336,7 @@ Purpose: Forward on right double click to the embedded widget, but only when the
          the discriminator sits 8 bytes before it and the target is reached by
          adjusting back 0x8C.
 // ORIGINAL: 0x00612EF0 ?on_right_double_click@Dialogs@@QAEXHH@Z 0x00612EF0-0x00612F0E BYTE_EXACT
+// symbol    ?on_right_double_click@Dialogs@@UAEXHH@Z
 // size      30 bytes
 // prototype void (__thiscall ?on_right_double_click@Dialogs@@QAEXHH@Z)(Dialogs* this, int xCoord, int yCoord)
 // callers   0   call targets   1
@@ -392,6 +393,7 @@ Purpose: Forward on right up to the embedded widget, but only when the
          the discriminator sits 8 bytes before it and the target is reached by
          adjusting back 0x8C.
 // ORIGINAL: 0x00612F40 ?on_right_up@Dialogs@@QAEXHH@Z 0x00612F40-0x00612F5E BYTE_EXACT
+// symbol    ?on_right_up@Dialogs@@UAEXHH@Z
 // size      30 bytes
 // prototype void (__thiscall ?on_right_up@Dialogs@@QAEXHH@Z)(Dialogs* this, int xCoord, int yCoord)
 // callers   0   call targets   1
@@ -440,6 +442,7 @@ Purpose: Route the scrolled event by the Dialogs kind to its declared
          ListBox base. The generated interface receiver adjustment is
          separate from this ordinary source member's complete-object this.
 // ORIGINAL: 0x00612F80 ?on_scrolled@Dialogs@@QAEXHH@Z 0x00612F80-0x00612FA0 BYTE_EXACT
+// symbol    ?on_scrolled@Dialogs@@UAEXHH@Z
 // size      32 bytes
 // prototype void (__thiscall ?on_scrolled@Dialogs@@QAEXHH@Z)(Dialogs* this, int, int)
 // callers   0   call targets   1
@@ -452,7 +455,7 @@ Status: Complete
 void Dialogs::on_scrolled(int code, int pos) {
     switch (kind_) {
         case 2:
-            static_cast<ListBox *>(this)->on_scrolling(code, pos);
+            static_cast<ListBox *>(this)->ListBox::on_scrolling(code, pos);
             break;
         default:
             break;
@@ -464,6 +467,7 @@ Purpose: Route the scrolling event by the Dialogs kind to its declared
          ListBox base. The generated interface receiver adjustment is
          separate from this ordinary source member's complete-object this.
 // ORIGINAL: 0x00612FA0 ?on_scrolling@Dialogs@@QAEXHH@Z 0x00612FA0-0x00612FC0 BYTE_EXACT
+// symbol    ?on_scrolling@Dialogs@@UAEXHH@Z
 // size      32 bytes
 // prototype void (__thiscall ?on_scrolling@Dialogs@@QAEXHH@Z)(Dialogs* this, int, int)
 // callers   0   call targets   1
@@ -476,7 +480,7 @@ Status: Complete
 void Dialogs::on_scrolling(int a, int b) {
     switch (kind_) {
         case 2:
-            static_cast<ListBox *>(this)->on_scrolling(a, b);
+            static_cast<ListBox *>(this)->ListBox::on_scrolling(a, b);
             break;
         default:
             break;

@@ -909,6 +909,7 @@ void SpriteBox::on_redraw() {
 Purpose: Same check-then-notify shape, for the right-button-up spot handler
          at this-0x10.
 // ORIGINAL: 0x00611290 ?on_right_up@SpriteBox@@QAEXHH@Z 0x00611290-0x006112E0 BYTE_EXACT
+// symbol    ?on_right_up@SpriteBox@@UAEXHH@Z
 // size      80 bytes
 // prototype void (__thiscall ?on_right_up@SpriteBox@@QAEXHH@Z)(SpriteBox* this, int xCoord, int yCoord)
 // callers   1   call targets   1
@@ -938,6 +939,7 @@ void SpriteBox::on_right_up(int x_coord, int y_coord) {
 Purpose: Same check-then-notify shape, for the right-double-click spot
          handler at this-8.
 // ORIGINAL: 0x00611330 ?on_right_double_click@SpriteBox@@QAEXHH@Z 0x00611330-0x00611380 BYTE_EXACT
+// symbol    ?on_right_double_click@SpriteBox@@UAEXHH@Z
 // size      80 bytes
 // prototype void (__thiscall ?on_right_double_click@SpriteBox@@QAEXHH@Z)(SpriteBox* this, int xCoord, int yCoord)
 // callers   1   call targets   1

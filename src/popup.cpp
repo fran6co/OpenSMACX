@@ -3314,17 +3314,17 @@ void __cdecl time_controls_dialog(Popup *popup) {
 // Superseded seed removal retains historical Git provenance below.
 // ORIGINAL: 0x00406B70 sub_406b70 0x00406B70-0x00406B9C BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["historical seed:src/recovered/units/00406b70.cpp", "task:popup-linked-dialog-helper-owners", "Pinned Popup6695C8 slot48 forwards through actual Dialogs shared GraphicWin/Win virtual base. Other observed tables66A968/66CC20/66DE44 remain unresolved cross-owner occurrences, not new owner claims."], "reason": "Recover this complete operation in its genuine C++ popup/diplomacy owner using actual members, virtual dispatch and typed shared dependencies; retain original identity, spans, claims and seed discoveries."}
-// symbol    ?vslot_48@Popup@@UAEXHH@Z
-void Popup::vslot_48(int first, int second) {
-    static_cast<GraphicWin &>(dialogs()).vslot_48(first, second);
+// symbol    ?on_scrolled@Popup@@UAEXHH@Z
+void Popup::on_scrolled(int first, int second) {
+    static_cast<GraphicWin &>(dialogs()).on_scrolled(first, second);
 }
 
 // Superseded seed removal retains historical Git provenance below.
 // ORIGINAL: 0x00406BA0 sub_406ba0 0x00406BA0-0x00406BCC BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["historical seed:src/recovered/units/00406ba0.cpp", "task:popup-linked-dialog-helper-owners", "Pinned Popup6695C8 slot49 forwards through actual Dialogs shared GraphicWin/Win virtual base. Other observed tables66A968/66CC20/66DE44 remain unresolved cross-owner occurrences, not new owner claims."], "reason": "Recover this complete operation in its genuine C++ popup/diplomacy owner using actual members, virtual dispatch and typed shared dependencies; retain original identity, spans, claims and seed discoveries."}
-// symbol    ?vslot_49@Popup@@UAEXHH@Z
-void Popup::vslot_49(int first, int second) {
-    static_cast<GraphicWin &>(dialogs()).vslot_49(first, second);
+// symbol    ?on_scrolling@Popup@@UAEXHH@Z
+void Popup::on_scrolling(int first, int second) {
+    static_cast<GraphicWin &>(dialogs()).on_scrolling(first, second);
 }
 
 // Superseded seed removal retains historical Git provenance below.

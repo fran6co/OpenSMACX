@@ -1296,6 +1296,7 @@ void PullDown::on_right_down(int x, int y) {
 }
 
 // ORIGINAL: 0x005F9570 ?on_right_up@PullDown@@QAEXHH@Z 0x005F9570-0x005F9582 BYTE_EXACT
+// symbol    ?on_right_up@PullDown@@UAEXHH@Z
 // size      18 bytes
 // prototype void (__thiscall ?on_right_up@PullDown@@QAEXHH@Z)(PullDown* this, int, int)
 // callers   0   call targets   0

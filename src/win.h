@@ -613,7 +613,7 @@ class Win : public AutoSound {
   // Win's primary slot 23 consumes two coordinates (the byte-backed target
   // at 0x00404260 is ret 8); Sound has a separate nullary slot 23 contract.
   virtual void on_right_down(int x, int y) { (void)x; (void)y; }
-  virtual void vslot_24(int = 0, int = 0) {}  // 0x00404260
+  virtual void on_right_up(int = 0, int = 0) {}  // 0x00404260
   // Existing slot 25: keyboard input dispatched by key_click_event.
   virtual int on_key_click(int = 0, int = 0);  // slot 25
   virtual int on_key_down(int = 0) { return 0; }  // 0x00404250
@@ -622,7 +622,7 @@ class Win : public AutoSound {
   // RadioButton's table at 0x00669A6C selects its receiver adjustor
   // 0x00407040 at +0x70, reaching the override at 0x0060E1E0.
   virtual void on_left_double_click(int = 0, int = 0) {}  // 0x00404260
-  virtual void vslot_29(int = 0, int = 0) {}  // 0x00404260
+  virtual void on_right_double_click(int = 0, int = 0) {}  // 0x00404260
   virtual void vslot_30(int = 0) {}  // 0x00404270
   virtual void vslot_31(int = 0, int = 0) {}  // 0x00404260
   virtual void vslot_32(int = 0, int = 0) {}  // 0x00404260
@@ -651,8 +651,8 @@ class Win : public AutoSound {
   virtual void on_button_toggled(int = 0, int = 0) {}  // slot 45  0x00404260
   virtual void vslot_46(int = 0, int = 0, int = 0) {}  // 0x00406B20
   virtual void vslot_47(int = 0, int = 0) {}  // 0x00404260
-  virtual void vslot_48(int = 0, int = 0) {}  // 0x00404260
-  virtual void vslot_49(int = 0, int = 0) {}  // 0x00404260
+  virtual void on_scrolled(int = 0, int = 0) {}  // 0x00404260
+  virtual void on_scrolling(int = 0, int = 0) {}  // 0x00404260
   virtual void vslot_50(int = 0) {}  // 0x00404270
   virtual void on_dialog_focus(int = 0) {}  // 0x00404270
   virtual void vslot_52() {}  // 0x00404280

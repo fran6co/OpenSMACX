@@ -1047,6 +1047,7 @@ void ReportWin::on_left_double_click(int x, int y) {
 
 // ORIGINAL: 0x00498180 ?on_scrolled@ReportWin@@QAEXHH@Z 0x00498180-0x004981D8
 // RECOVERY_BINDING: v1 {"reason":"Home the ReportWin scrollbar callback using its declared position member and inherited redraw virtual.","evidence":["src/recovered/units/00498180.cpp records the original 0x00498180-0x004981D8 handler and page dispatch.","src/reportwin.h places field_C0FC_ at 0xC0FC; src/graphicwin.h identifies redraw as Win slot 62."]}
+// symbol    ?on_scrolled@ReportWin@@UAEXHH@Z
 // Deleted seed provenance: git:c2e28f62c941b2012636504516275bc26988ee80:src/recovered/units/00498180.cpp
 /*
 Purpose: Track the report scrollbar's committed position and repaint the
@@ -1075,6 +1076,7 @@ void ReportWin::on_scrolled(int, int pos) {
 
 // ORIGINAL: 0x00498200 ?on_scrolling@ReportWin@@QAEXHH@Z 0x00498200-0x00498258
 // RECOVERY_BINDING: v1 {"reason":"Home the ReportWin scroll-in-progress callback using the same source-owned position and redraw behavior.","evidence":["src/recovered/units/00498200.cpp records the original 0x00498200-0x00498258 handler and page dispatch.","src/reportwin.h places field_C0FC_ at 0xC0FC; src/graphicwin.h identifies redraw as Win slot 62."]}
+// symbol    ?on_scrolling@ReportWin@@UAEXHH@Z
 // Deleted seed provenance: git:c2e28f62c941b2012636504516275bc26988ee80:src/recovered/units/00498200.cpp
 void ReportWin::on_scrolling(int, int pos) {
     field_C0FC_ = pos;

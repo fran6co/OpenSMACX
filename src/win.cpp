@@ -7526,7 +7526,7 @@ void Win::on_r_button_up(int x, int y, unsigned int keys, int dbl) {
             if (fp != 0) {
                 reinterpret_cast<void(__cdecl *)(int, int)>(fp)(x, y);
             }
-            this->vslot_24(x, y);
+            this->on_right_up(x, y);
             related2 = reinterpret_cast<Sound *>(val_13_);
         } else {
             this->vslot_37(x, y);
@@ -10274,7 +10274,7 @@ void Win::on_r_button_down(long flags, int x, int y, unsigned int keys, int dbl)
             if (fn != 0) {
                 fn(x, y);
             }
-            this->vslot_29(x, y);
+            this->on_right_double_click(x, y);
             Win *child = reinterpret_cast<Win *>(val_18_);
             if (child != 0) {
                 int r = reinterpret_cast<Sound *>(child)->is_playing();
@@ -11931,7 +11931,7 @@ void Win::dispatch_29(int a, int b, int alternate) {
         if (hook != 0) {
             hook(a, b);
         }
-        vslot_29(a, b);
+        on_right_double_click(a, b);
         Win *child = reinterpret_cast<Win *>(val_18_);
         if (child != 0) {
             if (reinterpret_cast<Sound *>(child)->is_playing() == 0) {
@@ -12151,7 +12151,7 @@ void Win::dispatch_24(int x, int y, int alternate) {
         if (callback != 0) {
             callback(x, y);
         }
-        vslot_24(x, y);
+        on_right_up(x, y);
         Sound *child = reinterpret_cast<Sound *>(val_13_);
         if (child != 0 && child->is_playing() == 0) {
             child->play();

@@ -58,8 +58,8 @@ class Popup : public BasePop {
   // 0x00404A80, homed in popup.cpp.
   void hide();
   void on_redraw();
-  void vslot_48(int first, int second) override;
-  void vslot_49(int first, int second) override;
+  void on_scrolled(int first, int second) override;
+  void on_scrolling(int first, int second) override;
   virtual void on_adjust_button_placement(int *x, int *y, int *unused);
   int on_listbox_scroll_delete(Scroll *scroll);
 

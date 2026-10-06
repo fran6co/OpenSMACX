@@ -397,7 +397,7 @@ int SelectPartWin::on_key_click(int, int key) {
 Purpose: ?on_scrolling@SelectPartWin@@QAEXHH@Z - dispatch to slot 0xc0 of this object's OWN
          vtable, forwarding 2 argument(s).
 // ORIGINAL: 0x00433F50 ?on_scrolling@SelectPartWin@@QAEXHH@Z 0x00433F50-0x00433F67 BYTE_EXACT
-// symbol    ?vslot_49@SelectPartWin@@UAEXHH@Z
+// symbol    ?on_scrolling@SelectPartWin@@UAEXHH@Z
 // size      23 bytes
 // prototype void (__thiscall ?on_scrolling@SelectPartWin@@QAEXHH@Z)(SelectPartWin* this, int, int)
 // callers   0   call targets   0
@@ -408,8 +408,8 @@ Purpose: ?on_scrolling@SelectPartWin@@QAEXHH@Z - dispatch to slot 0xc0 of this o
 Return Value: n/a
 Status: Complete
 */
-void SelectPartWin::vslot_49(int a1, int a2) {
-    vslot_48(a1, a2);
+void SelectPartWin::on_scrolling(int a1, int a2) {
+    on_scrolled(a1, a2);
 }
 
 // 0x0043EE10 destructor seed: reset and close the enclosing GraphicWin and
@@ -491,7 +491,8 @@ void SelectPartWin::on_left_up(int x, int y) {
 // Historical seed: git:08336bcc:src/recovered/00433f30.cpp (image-only exact).
 // ORIGINAL: 0x00433F30 ?vslot_48@SelectPartWin@@UAEXHH@Z 0x00433F30-0x00433F4F BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original seed at git:08336bcc:src/recovered/00433f30.cpp; its original spans and historical obligations are retained.", "SelectPartWin constructor 0x004328B0 establishes GraphicWin, Scroll+0xA14, Caviar+0x2B9C, Buffer+0x406C and Font members+0x45F4/+0x461C."], "reason": "The SelectPartWin primary vtable at 0x0066B2B8 selects this original body in slot 48; the real GraphicWin-derived override retains its provisional inherited name."}
-void SelectPartWin::vslot_48(int, int row) {
+// symbol    ?on_scrolled@SelectPartWin@@UAEXHH@Z
+void SelectPartWin::on_scrolled(int, int row) {
     field_2B60_ = field_2B6C_ * row;
     redraw();
 }

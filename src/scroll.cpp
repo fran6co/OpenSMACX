@@ -1658,7 +1658,7 @@ void Scroll::on_mouse_move(int x, int y) {
         if (range_reversed_ != 0U) {
             notified_position = (range_minimum_ - position_) + range_maximum_;
         }
-        parent->vslot_49(field_A18_, notified_position);
+        parent->on_scrolling(field_A18_, notified_position);
         if (field_2148_ != nullptr) {
             int callback_position = position_;
             if (range_reversed_ != 0U) {
@@ -1757,7 +1757,7 @@ void Scroll::on_mousewheel_down(int delta) {
         if (range_reversed_ != 0U) {
             notified_position = (range_minimum_ - position_) + range_maximum_;
         }
-        parent->vslot_48(field_A18_, notified_position);
+        parent->on_scrolled(field_A18_, notified_position);
         if (field_2144_ != nullptr) {
             field_2144_(field_A18_, notified_position);
         }
@@ -1789,7 +1789,7 @@ void Scroll::on_mousewheel_up(int delta) {
         if (range_reversed_ != 0U) {
             notified_position = (range_maximum_ - position_) + range_minimum_;
         }
-        parent->vslot_48(field_A18_, notified_position);
+        parent->on_scrolled(field_A18_, notified_position);
         if (field_2144_ != nullptr) {
             field_2144_(field_A18_, notified_position);
         }
@@ -1849,7 +1849,7 @@ int Scroll::on_key_click(int, int key) {
     if (range_reversed_ != 0U) {
         notified_position = (range_maximum_ - position_) + range_minimum_;
     }
-    parent->vslot_48(field_A18_, notified_position);
+    parent->on_scrolled(field_A18_, notified_position);
     if (field_2144_ != nullptr) {
         field_2144_(field_A18_, notified_position);
     }
@@ -1888,7 +1888,7 @@ void Scroll::on_button_clicked(int button_id) {
     if (range_reversed_ != 0U) {
         notified_position = (range_maximum_ - position_) + range_minimum_;
     }
-    parent->vslot_48(field_A18_, notified_position);
+    parent->on_scrolled(field_A18_, notified_position);
     if (field_2144_ != nullptr) {
         field_2144_(field_A18_, notified_position);
     }
@@ -1940,7 +1940,7 @@ void Scroll::on_button_pressed(int button_id) {
         if (range_reversed_ != 0U) {
             notified_position = (range_minimum_ - position_) + range_maximum_;
         }
-        parent->vslot_49(field_A18_, notified_position);
+        parent->on_scrolling(field_A18_, notified_position);
         int callback_position = position_;
         if (range_reversed_ != 0U) {
             callback_position = (range_minimum_ - position_) + range_maximum_;

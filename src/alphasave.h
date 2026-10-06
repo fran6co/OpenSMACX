@@ -30,8 +30,8 @@ class AlphaSave : public GraphicWin {
   int on_listbox_scroll_delete(Scroll *scroll);
   int on_listbox_scroll_create();
   int on_key_click(int key, int flags) override;
-  void on_scrolling(int code, int pos);
   void on_scrolled(int code, int pos);
+  void on_scrolling(int code, int pos);
   // The image's Q-spelled functions are nonvirtual; Win::show/hide are
   // virtual, so these cannot use those names without changing the vtable.
   void show_save_window(int mode);

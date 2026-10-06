@@ -3483,7 +3483,7 @@ void BaseWin::UNK2(int a1, int a2, int a3, int a4) {
 /*
 // ORIGINAL: 0x0041B4A0 ?on_scrolled@BaseWin@@QAEXHH@Z 0x0041B4A0-0x0041B4BD BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned original own table 0x0066A40C, pointer word at +0xC0, identifies original entry 0x0041B4A0", "source:src/win.h inherited virtual interface; actual emitted method ?vslot_48@BaseWin@@UAEXHH@Z in primary Win table ??_7BaseWin@@6BWin@@@"], "reason": "The original own Win table binds this entry as virtual slot 48. Use genuine member dispatch, not an opaque redirect; retain the catalogued original spelling as historical evidence. The previous on_scrolled definition is the class slot-48 target; renaming connects the unchanged body to its real virtual slot."}
-// symbol    ?vslot_48@BaseWin@@UAEXHH@Z
+// symbol    ?on_scrolled@BaseWin@@UAEXHH@Z
 // size      29 bytes
 // prototype void (__thiscall ?on_scrolled@BaseWin@@QAEXHH@Z)(BaseWin* this, int, int)
 // callers   0   call targets   1
@@ -3492,7 +3492,7 @@ void BaseWin::UNK2(int a1, int a2, int a3, int a4) {
 // calls     0x0040FCC0
 Status: Complete
 */
-void BaseWin::vslot_48(int code, int pos) {
+void BaseWin::on_scrolled(int code, int pos) {
     switch (code) {
         case 1:
             field_40B10_ = pos;
@@ -7288,7 +7288,7 @@ Purpose: ?on_scrolling@BaseWin@@QAEXHH@Z - dispatch to slot 0xc0 of this object'
          vtable, forwarding 2 argument(s).
 // ORIGINAL: 0x0041B4C0 ?on_scrolling@BaseWin@@QAEXHH@Z 0x0041B4C0-0x0041B4D7 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned original own table 0x0066A40C, pointer word at +0xC4, identifies original entry 0x0041B4C0", "source:src/win.h inherited virtual interface; actual emitted method ?vslot_49@BaseWin@@UAEXHH@Z in primary Win table ??_7BaseWin@@6BWin@@@"], "reason": "The original own Win table binds this entry as virtual slot 49. Use genuine member dispatch, not an opaque redirect; retain the catalogued original spelling as historical evidence."}
-// symbol    ?vslot_49@BaseWin@@UAEXHH@Z
+// symbol    ?on_scrolling@BaseWin@@UAEXHH@Z
 // size      23 bytes
 // prototype void (__thiscall ?on_scrolling@BaseWin@@QAEXHH@Z)(BaseWin* this, int, int)
 // callers   0   call targets   0
@@ -7299,8 +7299,8 @@ Purpose: ?on_scrolling@BaseWin@@QAEXHH@Z - dispatch to slot 0xc0 of this object'
 Return Value: n/a
 Status: Complete
 */
-void BaseWin::vslot_49(int code, int position) {
-  vslot_48(code, position);
+void BaseWin::on_scrolling(int code, int position) {
+  on_scrolled(code, position);
 }
 
 /*

@@ -225,18 +225,20 @@ int AlphaSave::on_key_click(int key, int flags) {
 
 // ORIGINAL: 0x004080E0 ?on_scrolling@AlphaSave@@QAEXHH@Z 0x004080E0-0x0040810C BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004080e0.cpp and original symbol"], "reason": "Existing AlphaSave owner forwards to its typed FileWin subobjects; original symbol and seed establish identity and extent"}
+// symbol    ?on_scrolled@AlphaSave@@UAEXHH@Z
 // Deleted seed provenance: git:8ca8dfc2805ade42b1dc4a8885fcfaaf955e75c7:src/recovered/units/004080e0.cpp
-void AlphaSave::on_scrolling(int code, int pos) {
+void AlphaSave::on_scrolled(int code, int pos) {
     // The embedded ListBox dispatches this notification through its Win base.
-    file_win_.list_box_.vslot_48(code, pos);
+    file_win_.list_box_.on_scrolled(code, pos);
 }
 
 // ORIGINAL: 0x00408110 ?on_scrolled@AlphaSave@@QAEXHH@Z 0x00408110-0x0040813C BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00408110.cpp and original symbol"], "reason": "Existing AlphaSave owner forwards to its typed FileWin subobjects; original symbol and seed establish identity and extent"}
+// symbol    ?on_scrolling@AlphaSave@@UAEXHH@Z
 // Deleted seed provenance: git:8ca8dfc2805ade42b1dc4a8885fcfaaf955e75c7:src/recovered/units/00408110.cpp
-void AlphaSave::on_scrolled(int code, int pos) {
+void AlphaSave::on_scrolling(int code, int pos) {
     // This is the next Win virtual notification, not ListBox's direct handler.
-    file_win_.list_box_.vslot_49(code, pos);
+    file_win_.list_box_.on_scrolling(code, pos);
 }
 
 // ORIGINAL: 0x00407E80 ?on_listbox_scroll_create@AlphaSave@@QAEHXZ 0x00407E80-0x00407ECA BYTE_EXACT
