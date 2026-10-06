@@ -73,8 +73,8 @@ def test_project_messages_use_existing_project_facility_and_label_owners():
 
 
 def test_raw_project_owner_offset_maps_to_universal_translator_not_network_backbone():
-    assert "SecretProject.universal_translator == base_id" in BODY
-    assert "SecretProject.network_backbone == base_id" not in BODY
+    assert "SecretProject.universal_translator() == base_id" in BODY
+    assert "SecretProject.network_backbone() == base_id" not in BODY
 
 
 def test_known_semantic_mutants_are_caught_against_actual_candidate():
@@ -165,8 +165,8 @@ def test_actual_candidate_body_in_host_projection_and_capture_mutants(tmp_path):
     # +0x54 network_backbone differ. A candidate that tests the adjacent field
     # misses the second steal_tech call in the actual extracted body fixture.
     field_mutant = host_body.replace(
-        "SecretProject.universal_translator == base_id",
-        "SecretProject.network_backbone == base_id",
+        "SecretProject.universal_translator() == base_id",
+        "SecretProject.network_backbone() == base_id",
         1,
     )
     source.write_text(prefix + "\n" + field_mutant + "\n" + runtime)

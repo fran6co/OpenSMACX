@@ -634,8 +634,11 @@ struct Base {
 struct Player { int rule_flags; };
 struct BaseSecretProject {
     int projects_before_telepathic_matrix[30];
-    int telepathic_matrix;
+    int telepathic_matrix_;
     int projects_after_telepathic_matrix[33];
+
+ int &telepathic_matrix() { return telepathic_matrix_; }
+ const int &telepathic_matrix() const { return telepathic_matrix_; }
 };
 class Sprite {};
 Base Bases[8];
@@ -688,7 +691,7 @@ static void reset_fixture() {
     BaseIDCurrentSelected = 0;
     LockEnableMask = 0;
     SecretProject = BaseSecretProject();
-    SecretProject.telepathic_matrix = -1;
+    SecretProject.telepathic_matrix() = -1;
     pop_count = pop_flags = pop_value = reset_count = draw_count = riot_count = 0;
     pop_caption = pop_picture = 0;
     draw_x = draw_y = 0;
@@ -724,7 +727,7 @@ static void test_golden_age_end_and_riot_exemption() {
     Bases[0].drone_total = 5;
     Bases[0].talent_total = 1;
     Bases[2].faction_id_current = 1;
-    SecretProject.telepathic_matrix = 2;
+    SecretProject.telepathic_matrix() = 2;
     Bases[0].state = BSTATE_DRONE_RIOTS_ACTIVE;
     base_drones();
     assert(riot_count == 0);

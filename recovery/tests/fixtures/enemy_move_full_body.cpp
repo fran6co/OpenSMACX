@@ -70,7 +70,10 @@ struct Base {
     int nutrient_intake_2,mineral_intake_2,energy_intake_2,unused_intake_2;
     int nutrient_surplus,mineral_surplus,energy_surplus,unused_surplus;
 };
-struct BaseSecretProject { int universal_translator; };
+struct BaseSecretProject { int universal_translator_;
+ int &universal_translator() { return universal_translator_; }
+ const int &universal_translator() const { return universal_translator_; }
+};
 struct Map { uint8_t climate,contour,val2,region,visibility,val3,unk; int8_t territory; uint32_t bit,bit2,bit_visible[7]; };
 struct RulesBasicHost {
     int move_rate_roads; int artillery_max_rng;

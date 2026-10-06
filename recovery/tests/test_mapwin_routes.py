@@ -142,7 +142,7 @@ void reset(int id=0){
     std::memset(Bases,0,sizeof Bases);std::memset(&SecretProject,0,sizeof SecretProject);
     std::memset(VehPrototypes,0,sizeof VehPrototypes);std::memset(Weapon,0,sizeof Weapon);std::memset(PlayersData,0,sizeof PlayersData);
     MapIsFlat=1;MapLongitude=10;MapLongitudeBounds=20;GameRules=GameState=0;MapDestinationCost=77;PlanLineCounter=6;
-    Rules.move_rate_roads=3;SecretProject.xenoempathy_dome=-1;Weapon[0].offense_rating=1;
+    Rules.move_rate_roads=3;SecretProject.xenoempathy_dome()=-1;Weapon[0].offense_rating=1;
     window.field_1DDA4_=window.field_1DDA8_=0;window.field_1DDCC_=window.field_1DDD0_=20;
     window.field_1DDD4_=window.field_1DDD8_=0;window.field_1DDBC_=3;window.field_1DDC0_=5;window.field_1DD84_=0;
 }
@@ -180,11 +180,11 @@ void connectivity(){
 }
 void flags_and_failures(){
     for(int repeat=0;repeat<2;++repeat)for(int offense:{-1,0,1})for(int ownership=0;ownership<3;++ownership){
-        reset(30);Weapon[0].offense_rating=offense;SecretProject.xenoempathy_dome=ownership?1:-1;Bases[1].faction_id_current=ownership==2?3:4;
+        reset(30);Weapon[0].offense_rating=offense;SecretProject.xenoempathy_dome()=ownership?1:-1;Bases[1].faction_id_current=ownership==2?3:4;
         route(0,repeat);for(auto&e:only('F'))require(e.args[6]==((repeat?0x80:0xc0)|(offense==0&&ownership!=2?0x10:0)));
     }
     reset(31);hook=[](char k,int n){if(k=='U'&&n==2){VehPrototypes[1].weapon_id=2;Weapon[2].offense_rating=0;}
-        if(k=='F'&&n==1){SecretProject.xenoempathy_dome=1;Bases[1].faction_id_current=3;}};
+        if(k=='F'&&n==1){SecretProject.xenoempathy_dome()=1;Bases[1].faction_id_current=3;}};
     route();require(only('F')[0].args[6]==0xd0&&only('F')[1].args[6]==0xc0);
     reset(32);route_answers={-1};route();require(counts['F']==1&&counts['C']==0&&counts['H']==0&&counts['L']==1&&MapDestinationCost==9);
     reset(33);route_answers={1,1,-1};route();require(counts['F']==3&&counts['C']==1&&counts['H']==0&&counts['L']==1&&MapDestinationCost==9);

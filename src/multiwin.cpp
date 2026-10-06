@@ -183,7 +183,7 @@ void MultiWin::draw(int draw_type) {
       if (!(LockEnableMask & (mask << 8))) continue;
       if (!(GameState & 0x80) &&
           !(PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[faction] & 8) &&
-          !(SecretProject.empath_guild >= 0 && Bases[SecretProject.empath_guild].faction_id_current == ConsoleGlobal.faction_id_) &&
+          !(SecretProject.empath_guild() >= 0 && Bases[SecretProject.empath_guild()].faction_id_current == ConsoleGlobal.faction_id_) &&
           !((LockEnableMask & mask) && auto_contact())) continue;
 
       ++row;

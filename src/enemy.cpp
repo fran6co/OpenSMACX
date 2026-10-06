@@ -3186,7 +3186,7 @@ label_56cfc1: {
     }
 
     if (f.local_50 == 12) {
-        const int project_base = SecretProject.universal_translator;
+        const int project_base = SecretProject.universal_translator();
         if ((acting.flags & 0x20u) == 0 && f.local_64 == 0) {
             const bool network_node =
                 has_fac(FAC_NETWORK_NODE, f.local_5c, 0) != 0;

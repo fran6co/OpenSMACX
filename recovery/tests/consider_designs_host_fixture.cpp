@@ -73,7 +73,13 @@ struct VehPrototype {
     int16_t preq_tech;
 };
 struct Base { int faction_id_current; };
-struct Projects { int dream_twister, neural_amplifier; };
+struct Projects { int dream_twister_, neural_amplifier_;
+ int &neural_amplifier() { return neural_amplifier_; }
+ const int &neural_amplifier() const { return neural_amplifier_; }
+
+ int &dream_twister() { return dream_twister_; }
+ const int &dream_twister() const { return dream_twister_; }
+};
 
 static RulesWeapon Weapon[MaxWeaponNum];
 static RulesArmor Armor[MaxArmorNum];
@@ -158,8 +164,8 @@ int main(int argc, char **argv) {
         PlayersData[i].integrity_blemishes = 1;
         PlayersData[i].unk_105 = PlayersData[i].unk_106 = 0;
     }
-    SecretProject.dream_twister = -1;
-    SecretProject.neural_amplifier = -1;
+    SecretProject.dream_twister() = -1;
+    SecretProject.neural_amplifier() = -1;
 
     if (prototype_plan0) {
         Weapon[2].preq_tech = 777;

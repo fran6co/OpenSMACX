@@ -86,8 +86,8 @@ static void reset_fixture() {
     GamePreferences = GameRules = GameState = UnkBitfield1 = 0;
     BaseIDCurrentSelected = 0;
     ConsoleGlobal.faction_id_ = 0;
-    SecretProject.universal_translator = -1;
-    SecretProject.network_backbone = -1;
+    SecretProject.universal_translator() = -1;
+    SecretProject.network_backbone() = -1;
     ScriptPopupFile = const_cast<char *>("popup.txt");
     BaseKillCalls = BaseResetCalls = SetBaseCalls = ComputeCalls = 0;
     OwnerSetCalls = DrawCalls = EliminateCalls = StealTechCalls = 0;
@@ -124,8 +124,8 @@ int main() {
 
     reset_fixture();
     GameRules = 0x4000;
-    SecretProject.universal_translator = 0;
-    SecretProject.network_backbone = 1;
+    SecretProject.universal_translator() = 0;
+    SecretProject.network_backbone() = 1;
     capture_base(0, 2, 1);
     if (StealTechCalls != 2) return 7;
     return 0;

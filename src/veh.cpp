@@ -3154,7 +3154,7 @@ int __cdecl drop_range(int faction_id) {
     // negated `base_id < 0 || owner != faction_id` form compiled a bare
     // `je` where the image materialises the comparison with `sete al` first.
     if (!has_tech_call(Rules.tech_orb_insert_sans_spc_elev, faction_id)) { // default 'Graviton Theory'
-        int base_id = *(&SecretProject.human_genome_project + SP_SPACE_ELEVATOR);
+        int base_id = SecretProject[SP_SPACE_ELEVATOR];
         BOOL has_orb_insert = (base_id < 0) ? false
             : (Bases[base_id].faction_id_current == faction_id);
         if (!has_orb_insert) {
@@ -3284,7 +3284,7 @@ int __cdecl action_airdrop(int veh_id, int x, int y, int mode) {
         int facility_offset, facility_mask;
         bitmask(0x1D, &facility_offset, &facility_mask);
         const bool airbase = (Bases[base_id].facilities_built[facility_offset] & facility_mask) != 0;
-        const int cloudbase = SecretProject.cloudbase_academy;
+        const int cloudbase = SecretProject.cloudbase_academy();
         const bool has_cloudbase = cloudbase >= 0 && Bases[cloudbase].faction_id_current == near_owner;
         if (!airbase && !has_cloudbase) {
             const int nearby_vehicle = veh_at(near_x, near_y);
@@ -3987,8 +3987,8 @@ int __cdecl defense_value(int faction_id, int x, int y, int veh_id_def,
     }
     uint32_t bit = bit_at(x, y);
     if (bit & BIT_FUNGUS && altitude_at(x, y) >= ALT_BIT_OCEAN_SHELF && veh_id_atk >= 0
-        && (!Vehs[veh_id_atk].faction_id 
-            || has_project(SP_PHOLUS_MUTAGEN, Vehs[veh_id_atk].faction_id) 
+        && (!Vehs[veh_id_atk].faction_id
+            || has_project(SP_PHOLUS_MUTAGEN, Vehs[veh_id_atk].faction_id)
             || (get_offense_rating(veh_id_atk) < 0
                 && Vehs[veh_id_atk].proto_id < MaxVehProtoFactionNum))) {
                 return 2;
@@ -4004,8 +4004,8 @@ int __cdecl defense_value(int faction_id, int x, int y, int veh_id_def,
             defense = is_rocky;
         } else {
             VehBattleDisplayTerrain = *((LPSTR *)Labels.strings_ptr + 338); // "Fungus"
-            defense = (has_project(SP_PHOLUS_MUTAGEN, faction_id) 
-                || (Vehs[veh_id_def].proto_id < MaxVehProtoFactionNum 
+            defense = (has_project(SP_PHOLUS_MUTAGEN, faction_id)
+                || (Vehs[veh_id_def].proto_id < MaxVehProtoFactionNum
                     && get_offense_rating(veh_id_def) < 0)) ? 2 : 1;
         }
     }
@@ -4139,11 +4139,11 @@ Purpose: Get the basic offense value for an attacking unit with an optional defe
 Return Value: Basic offense
 Status: Complete
 */
-int __cdecl get_basic_offense(int veh_id_atk, int veh_id_def, int psi_combat_type, 
+int __cdecl get_basic_offense(int veh_id_atk, int veh_id_def, int psi_combat_type,
                               BOOL is_bombard, BOOL unk_tgl) { // art/duel related? Is off of def?
     uint32_t faction_id_atk = Vehs[veh_id_atk].faction_id;
     uint32_t proto_id_atk = Vehs[veh_id_atk].proto_id;
-    uint32_t morale = faction_id_atk ? morale_veh(veh_id_atk, true, 0) 
+    uint32_t morale = faction_id_atk ? morale_veh(veh_id_atk, true, 0)
         : morale_alien(veh_id_atk, veh_id_def >= 0 ? Vehs[veh_id_def].faction_id : -1);
     int base_id_atk = base_at(Vehs[veh_id_atk].x, Vehs[veh_id_atk].y);
     if (base_id_atk >= 0) {
@@ -4267,8 +4267,8 @@ int __cdecl get_basic_defense(int veh_id_def, int veh_id_atk, int psi_combat_typ
             morale++;
         }
     }
-    if (veh_id_atk >= 0 && Vehs[veh_id_atk].faction_id && (proto_id_def >= MaxVehProtoFactionNum 
-        || (get_proto_offense_rating(proto_id_def) >= 0 && proto_id_def != BSC_SPORE_LAUNCHER)) 
+    if (veh_id_atk >= 0 && Vehs[veh_id_atk].faction_id && (proto_id_def >= MaxVehProtoFactionNum
+        || (get_proto_offense_rating(proto_id_def) >= 0 && proto_id_def != BSC_SPORE_LAUNCHER))
         && !has_abil(proto_id_def, ABL_DISSOCIATIVE_WAVE)
         && has_abil(Vehs[veh_id_atk].proto_id, ABL_SOPORIFIC_GAS)) {
         morale -= 2;
@@ -4299,7 +4299,7 @@ Purpose: Initialize or reset the battle related global variables.
 //        VehBattleModCount/VehBattleUnkTgl became real arrays (veh.h);
 //        measured 6/6, 16 bytes discounted as relocations.
 // size      23 bytes
-// prototype 
+// prototype
 // callers   0   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
@@ -4328,7 +4328,7 @@ Purpose: Add combat battle modifier for type (offense, defense).
 // LEVER: strcpy, not strcpy_s. The image's only callee here is 0x00645460, plain strcpy; the safe-CRT form does not exist in it.
 // symbol    ?add_bat@@YAXHHPBD@Z
 // size      74 bytes
-// prototype 
+// prototype
 // callers   0   call targets   1
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
@@ -4386,7 +4386,7 @@ Purpose: Calculate the battle outcome between two units.
 Return Value: n/a
 Status: Complete - testing
 */
-void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, int *defense_out, 
+void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, int *defense_out,
                             int combat_type) {
     int offense = 8;
     int defense = 8;
@@ -4414,7 +4414,7 @@ void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, in
         if (veh_id_def >= 0 && get_proto_defense_rating(proto_id_def) < 0) {
             psi_combat_type |= 2; // PSI defender
         }
-        // NOTE: PSI bonuses below are only for display purposes, actual calculation is done in 
+        // NOTE: PSI bonuses below are only for display purposes, actual calculation is done in
         //       combat morale functions.
         if (psi_combat_type) {
             // Calculate PSI attack bonus
@@ -4460,15 +4460,15 @@ void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, in
                         offense = (offense * 125) / 100;
                         add_bat(0, 25, label_get(1110)); // "Resonance Attack"
                     }
-                    if (!has_abil(proto_id_def, ABL_DISSOCIATIVE_WAVE) && psi_combat_type 
-                        && has_abil(proto_id_atk, ABL_EMPATHIC) 
+                    if (!has_abil(proto_id_def, ABL_DISSOCIATIVE_WAVE) && psi_combat_type
+                        && has_abil(proto_id_atk, ABL_EMPATHIC)
                         && Rules.combat_pct_emp_song_atk_vs_psi) {
                         offense *= ((Rules.combat_pct_emp_song_atk_vs_psi + 100) / 100);
                         add_bat(0, Rules.combat_pct_emp_song_atk_vs_psi,
                             Ability[abil_index(ABL_EMPATHIC)].name);
                     }
                 }
-                if (Vehs[veh_id_atk].state & VSTATE_MADE_AIRDROP 
+                if (Vehs[veh_id_atk].state & VSTATE_MADE_AIRDROP
                     && has_abil(proto_id_atk, ABL_DROP_POD) && Rules.combat_pen_pct_atk_airdrop) {
                     offense = (100 - Rules.combat_pct_emp_song_atk_vs_psi) * offense / 100;
                     /*
@@ -4482,7 +4482,7 @@ void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, in
                     }
                     */
                     add_bat(0, Rules.combat_pen_pct_atk_airdrop,
-                        drop_range(faction_id_atk) <= Rules.max_airdrop_sans_orb_insert 
+                        drop_range(faction_id_atk) <= Rules.max_airdrop_sans_orb_insert
                         ? label_get(437) // "Air Drop"
                         : label_get(438)); // "Orbital Insertion"
                 }
@@ -4533,33 +4533,33 @@ void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, in
                     defense *= 4;
                 } else {
                     uint32_t triad_def = get_proto_triad(proto_id_def);
-                    uint32_t terrain_def = (triad_def == TRIAD_AIR) 
+                    uint32_t terrain_def = (triad_def == TRIAD_AIR)
                         ? 2 : defense_value(faction_id_def, x_def, y_def, veh_id_def, veh_id_atk);
                     uint32_t alt_atk;
                     uint32_t alt_def;
                     if (veh_id_atk >= 0 && get_triad(veh_id_atk) == TRIAD_LAND) {
-                        if (combat_type && Rules.combat_pct_art_bonus_lvl_alt 
-                            && triad_def == TRIAD_LAND 
+                        if (combat_type && Rules.combat_pct_art_bonus_lvl_alt
+                            && triad_def == TRIAD_LAND
                             && (alt_atk = alt_at(Vehs[veh_id_atk].x, Vehs[veh_id_atk].y),
                                 alt_def = alt_at(x_def, y_def), alt_atk > alt_def)) {
-                            offense *= ((Rules.combat_pct_art_bonus_lvl_alt 
+                            offense *= ((Rules.combat_pct_art_bonus_lvl_alt
                                 * (alt_atk - alt_def) + 100) / 100);
                             // "Altitude"
                             add_bat(0, Rules.combat_pct_art_bonus_lvl_alt, label_get(576));
                         }
                         if (Rules.combat_pct_mobile_open_ground && !combat_type && base_id_def < 0
-                            && terrain_def == 2 
+                            && terrain_def == 2
                             && rocky_at(x_def, y_def) < TERRAIN_BIT_ROCKY) {
                             uint32_t speed_atk = speed_proto(proto_id_atk);
-                            if (speed_atk > Rules.move_rate_roads 
+                            if (speed_atk > Rules.move_rate_roads
                                 && speed_proto(proto_id_def) < speed_atk) {
                                 offense *= ((Rules.combat_pct_mobile_open_ground + 100) / 100);
                                 // "Mobile in open"
                                 add_bat(0, Rules.combat_pct_mobile_open_ground, label_get(611));
                             }
                         }
-                        if (Rules.combat_pct_def_vs_mobile_rough && !combat_type 
-                            && (terrain_def > 2 || base_id_def >= 0) 
+                        if (Rules.combat_pct_def_vs_mobile_rough && !combat_type
+                            && (terrain_def > 2 || base_id_def >= 0)
                             && rocky_at(x_def, y_def) < TERRAIN_BIT_ROCKY
                             && speed_proto(proto_id_atk) > Rules.move_rate_roads) {
                             defense *= ((Rules.combat_pct_def_vs_mobile_rough + 100) / 100);
@@ -4573,17 +4573,17 @@ void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, in
                             add_bat(0, Rules.combat_pct_atk_road, label_get(606)); // "Road Attack"
                         }
 
-                        if (Rules.combat_pen_pct_atk_lwr_elev && !combat_type 
-                            && altitude_at(x_def, y_def) 
+                        if (Rules.combat_pen_pct_atk_lwr_elev && !combat_type
+                            && altitude_at(x_def, y_def)
                             > altitude_at(Vehs[veh_id_atk].x, Vehs[veh_id_atk].y)
                             && !has_abil(proto_id_atk, ABL_ANTIGRAV_STRUTS)) {
                             defense *= ((Rules.combat_pen_pct_atk_lwr_elev + 100) / 100);
                             // "Uphill"
                             add_bat(1, Rules.combat_pen_pct_atk_lwr_elev, label_get(441));
                         }
-                        if (Rules.combat_pct_atk_higher_elev && !combat_type 
-                            && altitude_at(Vehs[veh_id_atk].x, Vehs[veh_id_atk].y) 
-                            > altitude_at(x_def, y_def) 
+                        if (Rules.combat_pct_atk_higher_elev && !combat_type
+                            && altitude_at(Vehs[veh_id_atk].x, Vehs[veh_id_atk].y)
+                            > altitude_at(x_def, y_def)
                             && !has_abil(proto_id_def, ABL_ANTIGRAV_STRUTS)) {
                             offense *= ((Rules.combat_pct_atk_higher_elev + 100) / 100);
                             add_bat(0, Rules.combat_pct_atk_road, label_get(330)); // "Downhill"
@@ -4656,11 +4656,11 @@ void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, in
                                 }
                                 display_def = label_get(428); // "Base vs. Blink"
                             }
-                            if (Rules.combat_pct_infantry_vs_base && !combat_type 
-                                && base_id_def >= 0 && faction_id_atk 
+                            if (Rules.combat_pct_infantry_vs_base && !combat_type
+                                && base_id_def >= 0 && faction_id_atk
                                 && proto_id_atk > MaxVehProtoFactionNum
-                                && get_proto_offense_rating(proto_id_atk) >= 0 
-                                && proto_id_atk != BSC_SPORE_LAUNCHER 
+                                && get_proto_offense_rating(proto_id_atk) >= 0
+                                && proto_id_atk != BSC_SPORE_LAUNCHER
                                 && !get_proto_triad(proto_id_atk)
                                 && Chassis[VehPrototypes[proto_id_atk].chassis_id].speed == 1) {
                                 offense *= ((Rules.combat_pct_infantry_vs_base + 100) / 100);
@@ -4672,14 +4672,14 @@ void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, in
                                 && rocky_at(x_def, y_def) < TERRAIN_BIT_ROCKY
                                 && (bit_def = bit_at(x_def, y_def),
                                     !(bit_def & BIT_FOREST)) && (bit_def & BIT_FUNGUS
-                                        || altitude_at(x_def, y_def) 
+                                        || altitude_at(x_def, y_def)
                                         < ALT_BIT_OCEAN_SHELF)) {
                                 def_multi = 3;
                                 display_def = label_get(525); // "Open Ground"
                             }
                             defense *= def_multi;
                             if (def_multi > 2) {
-                                add_bat(1, 10 * (5 * def_multi - 10), 
+                                add_bat(1, 10 * (5 * def_multi - 10),
                                     StringTable.get(int(display_def)));
                             }
                         }
@@ -4711,9 +4711,9 @@ void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, in
                                 && (sensor_status = is_sensor(x_radius, y_radius), sensor_status)) {
                                 BOOL has_sensor = false;
                                 if (!is_ocean(x_radius, y_radius)) {
-                                    int faction_id_terr = whose_territory(faction_id_def, x_radius, 
+                                    int faction_id_terr = whose_territory(faction_id_def, x_radius,
                                         y_radius, NULL, false);
-                                    if (faction_id_terr < 0 
+                                    if (faction_id_terr < 0
                                         || (uint32_t)faction_id_terr == faction_id_def) {
                                         has_sensor = true;
                                     }
@@ -4742,7 +4742,7 @@ void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, in
                         add_bat(1, Rules.combat_pct_def_range_sensor, label_get(1123)); // "GSP"
                     }
                 }
-                if (!has_abil(proto_id_atk, ABL_DISSOCIATIVE_WAVE) 
+                if (!has_abil(proto_id_atk, ABL_DISSOCIATIVE_WAVE)
                     && Rules.combat_pct_trance_def_vs_psi && veh_id_atk >= 0 && psi_combat_type & 1
                     && has_abil(proto_id_def, ABL_TRANCE)) {
                     defense *= ((Rules.combat_pct_trance_def_vs_psi + 100) / 100);
@@ -4781,8 +4781,8 @@ void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, in
                     defense *= ((Rules.combat_pct_air_supr_vs_air + 100) / 100);
                     add_bat(1, Rules.combat_pct_air_supr_vs_air, label_get(449)); // "Air-to-Air"
                 }
-                if (!get_proto_offense_rating(proto_id_def) 
-                    && get_proto_defense_rating(proto_id_def) == 1 && (faction_id_atk 
+                if (!get_proto_offense_rating(proto_id_def)
+                    && get_proto_defense_rating(proto_id_def) == 1 && (faction_id_atk
                         || base_id_def < 0) && Rules.combat_pen_pct_non_cbt_def_vs_cbt) {
                     defense *= ((100 - Rules.combat_pen_pct_non_cbt_def_vs_cbt) / 100);
                     // "Non Combat"
@@ -4790,7 +4790,7 @@ void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, in
                 }
                 if (veh_id_atk >= 0 // added veh_id_atk check
                     && get_proto_triad(proto_id_atk) == TRIAD_SEA
-                    && get_proto_triad(proto_id_def) == TRIAD_SEA && base_id_def >= 0 
+                    && get_proto_triad(proto_id_def) == TRIAD_SEA && base_id_def >= 0
                     && Rules.combat_pct_bonus_vs_ship_port) {
                     offense *= ((Rules.combat_pct_bonus_vs_ship_port + 100) / 100);
                     add_bat(0, Rules.combat_pct_bonus_vs_ship_port, label_get(335)); // "In Port"
@@ -4804,12 +4804,12 @@ void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, in
                 if (!has_abil(proto_id_atk, ABL_DISSOCIATIVE_WAVE)
                     && has_abil(proto_id_def, ABL_COMM_JAMMER)
                     && get_proto_triad(proto_id_atk) == TRIAD_LAND
-                    && Chassis[VehPrototypes[proto_id_atk].chassis_id].speed > 1 
+                    && Chassis[VehPrototypes[proto_id_atk].chassis_id].speed > 1
                     && Rules.combat_pct_com_jam_def_vs_mobl) {
                     defense *= ((Rules.combat_pct_com_jam_def_vs_mobl + 100) / 100);
                     add_bat(1, Rules.combat_pct_com_jam_def_vs_mobl, label_get(336)); // "Jammer"
                 }
-                if (!has_abil(proto_id_atk, ABL_DISSOCIATIVE_WAVE) 
+                if (!has_abil(proto_id_atk, ABL_DISSOCIATIVE_WAVE)
                     && has_abil(proto_id_def, ABL_AAA) && get_proto_triad(proto_id_atk) == TRIAD_AIR
                     && Rules.combat_pct_aaa_bonus_vs_air) {
                     defense *= ((Rules.combat_pct_aaa_bonus_vs_air + 100) / 100);
@@ -4838,7 +4838,7 @@ void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, in
                     uint32_t alt_def = alt_at(Vehs[veh_id_def].x, Vehs[veh_id_def].y);
                     if (alt_def >= alt_atk) {
                         if (alt_def > alt_atk) { // ???
-                            int alt_modifier_def = (alt_def - alt_atk) 
+                            int alt_modifier_def = (alt_def - alt_atk)
                                 * Rules.combat_pct_art_bonus_lvl_alt;
                             defense *= ((alt_modifier_def + 100) / 100);
                             add_bat(1, alt_modifier_def, label_get(576)); // "Altitude"
@@ -4885,7 +4885,7 @@ Return Value: Unit id of the best defender
 Status: Complete - testing
 */
 int __cdecl best_defender(int veh_id_def, int veh_id_atk, BOOL check_artillery) {
-    int offense = veh_id_atk >= 0 
+    int offense = veh_id_atk >= 0
         ? get_basic_offense(veh_id_atk, veh_id_def, false, false, false) : 8;
     int x_def = Vehs[veh_id_def].x;
     int y_def = Vehs[veh_id_def].y;
@@ -4910,7 +4910,7 @@ int __cdecl best_defender(int veh_id_def, int veh_id_atk, BOOL check_artillery) 
             // added veh_id_atk bounds check
             && (veh_id_atk < 0 || VehPrototypes[Vehs[veh_id_atk].proto_id].plan != PLAN_INFO_WARFARE
                 || VehPrototypes[proto_id_def].plan == PLAN_INFO_WARFARE)) {
-            uint32_t combat_type = (can_arty(proto_id_def, true) && (veh_id_atk 
+            uint32_t combat_type = (can_arty(proto_id_def, true) && (veh_id_atk
                 || can_arty(Vehs[veh_id_atk].proto_id, true))) ? 2 : 0; // added bounds?
             if (veh_id_atk >= 0 && get_triad(veh_id_atk) != TRIAD_AIR
                 && has_abil(proto_id_def, ABL_AIR_SUPERIORITY)
@@ -4936,9 +4936,9 @@ int __cdecl best_defender(int veh_id_def, int veh_id_atk, BOOL check_artillery) 
             if (plan_def < PLAN_COLONIZATION || plan_def == PLAN_TERRAFORMING) {
                 def_modifier *= 16;
             }
-            if (veh_id_atk >= 0 && get_triad(veh_id_atk) == TRIAD_AIR 
-                && has_abil(proto_id_def, ABL_AIR_SUPERIORITY) 
-                && get_proto_triad(proto_id_def) == TRIAD_AIR 
+            if (veh_id_atk >= 0 && get_triad(veh_id_atk) == TRIAD_AIR
+                && has_abil(proto_id_def, ABL_AIR_SUPERIORITY)
+                && get_proto_triad(proto_id_def) == TRIAD_AIR
                 && !is_proto_missile(proto_id_def) && !is_missile(veh_id_atk)) {
                 def_modifier += 0x80000;
             } else if (veh_id_atk >= 0 && get_triad(veh_id_atk) == TRIAD_AIR
@@ -4952,9 +4952,9 @@ int __cdecl best_defender(int veh_id_def, int veh_id_atk, BOOL check_artillery) 
                 if (can_arty(proto_id_def, true)) {
                     def_modifier += 0x80000;
                 }
-            } else if ((!stack_check(veh_id_def, 3, TRIAD_AIR, -1, -1) || base_id_def >= 0 
-                || bit_at(x_def, y_def) & BIT_AIRBASE 
-                || stack_check(veh_id_def, 6, ABL_CARRIER, -1, -1)) 
+            } else if ((!stack_check(veh_id_def, 3, TRIAD_AIR, -1, -1) || base_id_def >= 0
+                || bit_at(x_def, y_def) & BIT_AIRBASE
+                || stack_check(veh_id_def, 6, ABL_CARRIER, -1, -1))
                 && Vehs[i].state & VSTATE_DESIGNATE_DEFENDER) {
                 def_modifier += 0x80000;
             }
@@ -4969,7 +4969,7 @@ int __cdecl best_defender(int veh_id_def, int veh_id_atk, BOOL check_artillery) 
 }
 
 /*
-Purpose: Determine whether any enemy naval transports are carrying land units within range to 
+Purpose: Determine whether any enemy naval transports are carrying land units within range to
          attack the specified base. If so, set the units to move towards the base.
 // ORIGINAL: 0x00506490 ?invasions@@YAXH@Z 0x00506490-0x00506646
 // TRIED: call structure already matches exactly - `osmx calls --all`
@@ -5515,8 +5515,8 @@ void __cdecl say_offense(LPSTR stat, int proto_id) {
 }
 
 /*
-Purpose: Generate defense display string for the specified prototype. Replaced existing non-safe 
-         strcat with string. Original function took a 2nd parameter with char buffer and didn't 
+Purpose: Generate defense display string for the specified prototype. Replaced existing non-safe
+         strcat with string. Original function took a 2nd parameter with char buffer and didn't
          return anything.
 // ORIGINAL: 0x0057D6D0 ?say_defense@@YAXPADH@Z 0x0057D6D0-0x0057D7C4 BYTE_EXACT
 // size      244 bytes
@@ -5556,7 +5556,7 @@ void __cdecl say_defense(LPSTR stat, int proto_id) {
 }
 
 /*
-Purpose: Generate stats string for specified prototype. Replaced existing non-safe strcat with 
+Purpose: Generate stats string for specified prototype. Replaced existing non-safe strcat with
          string. Reworked to integrate with existing C code.
 // ORIGINAL: 0x0057D7D0 ?say_stats_3@@YAXPADH@Z 0x0057D7D0-0x0057D8D3
 // TRIED: else-if branch order off_rating<0/off_rating<99/else folded the "?"
@@ -5944,7 +5944,7 @@ int __cdecl weapon_budget(int faction_id, int condition, BOOL check_mode) {
 }
 
 /*
-Purpose: Check against the faction's available tech for the best available armor meeting the cost 
+Purpose: Check against the faction's available tech for the best available armor meeting the cost
          requirement.
 // ORIGINAL: 0x0057F150 ?armor_budget@@YAHHH@Z 0x0057F150-0x0057F1CF BYTE_EXACT
 // LEVER: has_tech_call, not has_tech - the image CALLS 0x5B9F20 in the loop,
@@ -6137,7 +6137,7 @@ int __cdecl veh_health(int veh_id) {
 }
 
 /*
-Purpose: Calculates cost of the prototype based on various factors. Optimized logic flow from 
+Purpose: Calculates cost of the prototype based on various factors. Optimized logic flow from
          the original without any differences to the final calculation.
 // ORIGINAL: 0x005A5A60 ?proto_cost@@YAHHHHHH@Z 0x005A5A60-0x005A5CE1
 // symbol    ?proto_cost@@YAIHHHHH@Z
@@ -6163,7 +6163,7 @@ Purpose: Calculates cost of the prototype based on various factors. Optimized lo
 Return Value: Cost of prototype
 Status: Complete
 */
-uint32_t __cdecl proto_cost(int chassis_id, int weapon_id, int armor_id, 
+uint32_t __cdecl proto_cost(int chassis_id, int weapon_id, int armor_id,
                             int ability, int reactor_id) {
     uint8_t weap_cost = Weapon[weapon_id].cost;
     uint8_t armor_cost = Armor[armor_id].cost;
@@ -6306,7 +6306,7 @@ Purpose: Create a new prototype. Sets initial values for everything except veh_n
 Return Value: n/a
 Status: Complete
 */
-void __cdecl make_proto(int proto_id, int chassis_id, int weapon_id, int armor_id, 
+void __cdecl make_proto(int proto_id, int chassis_id, int weapon_id, int armor_id,
                         int ability, int reactor_id) {
     int unk_local_1 = 0; // TODO: Identify
     if (proto_id >= MaxVehProtoFactionNum) {
@@ -6322,7 +6322,7 @@ void __cdecl make_proto(int proto_id, int chassis_id, int weapon_id, int armor_i
             int flags_check = VehPrototypes[proto_id_loop].flags;
             if (flags_check & PROTO_ACTIVE) {
                 if ((proto_id_loop <= MaxVehProtoFactionNum &&
-                    has_tech(VehPrototypes[proto_id_loop].preq_tech, 
+                    has_tech(VehPrototypes[proto_id_loop].preq_tech,
                         proto_id / MaxVehProtoFactionNum))
                     || (proto_id_loop > MaxVehProtoFactionNum
                         && (flags_check & PROTO_TYPED_COMPLETE))) {
@@ -6365,7 +6365,7 @@ void __cdecl make_proto(int proto_id, int chassis_id, int weapon_id, int armor_i
     VehPrototypes[proto_id].reactor_id = (uint8_t)reactor_id;
     VehPrototypes[proto_id].cost = (uint8_t)proto_cost(chassis_id, weapon_id, armor_id, ability,
         reactor_id);
-    VehPrototypes[proto_id].carry_capacity = (Weapon[weapon_id].mode == WPN_MODE_TRANSPORT) 
+    VehPrototypes[proto_id].carry_capacity = (Weapon[weapon_id].mode == WPN_MODE_TRANSPORT)
         ? (uint8_t)transport_val(chassis_id, ability, reactor_id) : 0;
     // set plan & unk1
     if (Chassis[chassis_id].missile) {
@@ -6441,7 +6441,7 @@ void __cdecl make_proto(int proto_id, int chassis_id, int weapon_id, int armor_i
     VehPrototypes[proto_id].obsolete_factions = 0;
     VehPrototypes[proto_id].combat_factions = (proto_id >= MaxVehProtoFactionNum) ?
         1 << (proto_id / MaxVehProtoFactionNum) : -1;
-    VehPrototypes[proto_id].flags = unk_local_1 
+    VehPrototypes[proto_id].flags = unk_local_1
         ? ((unk_local_1 & 2) ? 0x115 : 0x105) : PROTO_ACTIVE;
     VehPrototypes[proto_id].icon_offset = -1;
 }
@@ -6496,7 +6496,7 @@ Purpose: Reveal the specified tile to the specified faction and keep the
 // LEVER: FEWER (0 calls vs image's 1: synch_bit) at every flag set that kept a standalone symbol. /Ob0 forces the WHOLE function real, including on_map()/map_loc(), which the image folds in here; without /Ob0 the compiler inlines synch_bit() too, since it is small and `MEASURED inline` in map.h. Writing on_map()/map_loc() as bare expressions (not calls) removes them from the optimiser's inline/no-inline choice entirely, so /Ob0 only has synch_bit() left to force real.
 // symbol    ?spot_tile@@YAXHHH@Z
 // size      202 bytes
-// prototype 
+// prototype
 // callers   1   call targets   1
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
@@ -7333,7 +7333,7 @@ int __cdecl stack_check(int veh_id, int type, int cond1, int cond2, int cond3) {
             }
             break;
           case 2:
-            if ((cond2 < 0 || Vehs[i].faction_id == cond2) 
+            if ((cond2 < 0 || Vehs[i].faction_id == cond2)
                 && VehPrototypes[Vehs[i].proto_id].plan == cond1) {
                 retn_val++;
             }
@@ -7399,7 +7399,7 @@ int __cdecl stack_check(int veh_id, int type, int cond1, int cond2, int cond3) {
             if (cond1 < 0 || Vehs[i].faction_id == cond1) {
                 uint32_t faction_id = Vehs[i].faction_id;
                 int proto_id = Vehs[i].proto_id;
-                if (arm_strat(VehPrototypes[proto_id].armor_id, faction_id) 
+                if (arm_strat(VehPrototypes[proto_id].armor_id, faction_id)
                     > weap_strat(VehPrototypes[proto_id].weapon_id, faction_id)) {
                     retn_val++;
                 }
@@ -7748,7 +7748,7 @@ BOOL __cdecl has_abil(int proto_id, int ability_id) {
 }
 
 /*
-Purpose: Temporarily remove the specified unit from its current square and stack in preparation for 
+Purpose: Temporarily remove the specified unit from its current square and stack in preparation for
          another action such as interacting with the stack, moving or killing it.
 // ORIGINAL: 0x005BFFA0 ?veh_lift@@YAXH@Z 0x005BFFA0-0x005C007F
 // TRIED: swapping the x/y local declaration order - the remaining gap is which register (eax/ecx/edx) the allocator picks for x, y and the -1 constant at the join point; both orders produced the identical register assignment, so it isn't source-order controlled here. Plateau at 49/60.
@@ -7915,7 +7915,7 @@ Purpose: Move the specified unit to the top of the stack.
 // TRIED: a `veh_id_top >= 0` guard after the hand-inlined veh_top - the image has none (see BUG note below). TRIED: seeding `veh_id_top = veh_id` before vs. inside the `if` - same codegen either way. The remaining gap is the compiler proving the `prev_veh_id_stack < 0` (zero-iteration) case makes `veh_id_top != veh_id` tautologically false and skipping straight to the epilogue, where the image still materializes and compares it; not reachable by reordering statements. Plateau at 3/40.
 // TRIED: CALLEE - the tree called `veh_top()`/`veh_put()`, both inline-marked wrappers, but this call site is not one of veh_top's two real sites and veh_put did not inline here either. Hand- inlining both (veh_top's loop, and veh_put's `veh_lift(id); veh_drop(id, x, y)` - dropping veh_lift's unused return since it always returns its own argument) took call_diff from WRONG CALLEE to 0 disagreeing and 0.657 -> 0.773 similar.
 // size      110 bytes
-// prototype 
+// prototype
 // callers   6   call targets   2
 // kind      game
 // flags     frame;sp_ready;purged_ok
@@ -7993,7 +7993,7 @@ void __cdecl veh_clear(int veh_id, int proto_id, int faction_id) {
 }
 
 /*
-Purpose: Check if the prototype can perform artillery combat. The 2nd parameter determines how sea 
+Purpose: Check if the prototype can perform artillery combat. The 2nd parameter determines how sea
          units are treated.
 // ORIGINAL: 0x005C0DB0 ?can_arty@@YAHHH@Z 0x005C0DB0-0x005C0E35
 // TRIED 2026-09-03: the one remaining divergence is NOT the `mov bl/test bl`
@@ -8036,7 +8036,7 @@ BOOL __cdecl can_arty(int proto_id, BOOL sea_triad_retn) {
 }
 
 /*
-Purpose: Calculate a unit's morale. TODO: Determine if 2nd param is a toggle for display vs actual 
+Purpose: Calculate a unit's morale. TODO: Determine if 2nd param is a toggle for display vs actual
          morale.
 // ORIGINAL: 0x005C0E40 ?morale_veh@@YAHHHH@Z 0x005C0E40-0x005C1143
 // TRIED: call_diff FEWER (2 vs image's 4: morale_alien, has_tech, and
@@ -8119,7 +8119,7 @@ int __cdecl morale_veh(int veh_id, BOOL check_drone_riot, int faction_id_vs_nati
     if (morale_flag && morale_modifier < 0) {
         morale_modifier = 0;
     }
-    if (check_drone_riot && home_base_id >= 0 
+    if (check_drone_riot && home_base_id >= 0
         && Bases[home_base_id].state & BSTATE_DRONE_RIOTS_ACTIVE && !morale_flag) {
         // bug fix: removed premature range bounding negating negative morale effects
         morale_modifier--;
@@ -8128,7 +8128,7 @@ int __cdecl morale_veh(int veh_id, BOOL check_drone_riot, int faction_id_vs_nati
 }
 
 /*
-Purpose: Calculate the offense of the specified prototype. Optional param of the unit defending 
+Purpose: Calculate the offense of the specified prototype. Optional param of the unit defending
          against (-1 to ignore) as well as whether artillery or missile combat is being utilized.
 // ORIGINAL: 0x005C1150 ?offense_proto@@YAHHHH@Z 0x005C1150-0x005C128F
 // TRIED: `abs()` for the negate - same similarity as the manual ternary. The remaining gap is the same defense_rating byte-load fold as can_arty's plateau (`cmp byte ptr [x], 0` here vs the image's `mov dl, ...; test dl, dl`) plus register-naming noise past that point; not moved by source reshuffling.
@@ -8168,7 +8168,7 @@ int __cdecl offense_proto(int proto_id, int veh_id_def, BOOL is_bombard) {
 }
 
 /*
-Purpose: Calculate the defense of the specified prototype. Optional param if unit is being attacked 
+Purpose: Calculate the defense of the specified prototype. Optional param if unit is being attacked
          (-1 to ignore) as well as whether artillery or missile combat is being utilized.
 // ORIGINAL: 0x005C1290 ?armor_proto@@YAHHHH@Z 0x005C1290-0x005C13AD
 // size      285 bytes
@@ -8259,8 +8259,8 @@ int __cdecl speed_proto(int proto_id) {
 }
 
 /*
-Purpose: Calculate the speed of a unit on roads taking into consideration prototype speed, 
-         elite morale, if the unit is damaged and other factors. The skip_morale parameter seems to 
+Purpose: Calculate the speed of a unit on roads taking into consideration prototype speed,
+         elite morale, if the unit is damaged and other factors. The skip_morale parameter seems to
          only be set to true for certain combat calculations in battle_fight().
 // ORIGINAL: 0x005C1540 ?speed@@YAHHH@Z 0x005C1540-0x005C1752
 // TRIED: is called UNCONDITIONALLY in the image - `!skip_morale` is tested only AFTER the call and its MORALE_ELITE comparison, not before it (short-circuit order swapped: `morale_veh(...) == MORALE_ELITE && !skip_morale && (...)` instead of `!skip_morale && morale_veh(...) == MORALE_ELITE && (...)`). Confirmed against the disassembly: `call 0x5c0e40` at 0x5C15CB has no guard before it, and the skip_morale parameter isn't read until 0x5C15D8, after the MORALE_ELITE compare at 0x5C15D3.
@@ -8297,7 +8297,7 @@ int __cdecl speed(int veh_id, BOOL skip_morale) {
             reactor_fac = range(VehPrototypes[proto_id].reactor_id, 1, 100) * 10;
             speed_val = range(reactor_fac, 1, 99);
         }
-        speed_val = (moves 
+        speed_val = (moves
             * range(reactor_fac - Vehs[veh_id].dmg_incurred, 0, 9999) + speed_val - 1) / speed_val;
         speed_val = range(speed_val, (triad == TRIAD_SEA) ? 2 : 1, 999) * Rules.move_rate_roads;
     }
@@ -8305,7 +8305,7 @@ int __cdecl speed(int veh_id, BOOL skip_morale) {
 }
 
 /*
-Purpose: Calculate the cargo capacity of a unit. It seems Spore Launchers were considered to have 
+Purpose: Calculate the cargo capacity of a unit. It seems Spore Launchers were considered to have
          cargo capacity at one time.
 // ORIGINAL: 0x005C1760 ?veh_cargo@@YAHH@Z 0x005C1760-0x005C17C4
 // TRIED: still MISMATCH (0.853 similar) - the image computes `proto_id*sizeof(VehPrototype)` ONCE and reuses it for both the `carry_capacity` and `weapon_id` field reads (same array element, two fields); this tree recomputes it for the second read under every flag set tried. A local `VehPrototype *proto = &VehPrototypes[proto_id]` used for both field reads did not change the codegen. Also see the `add`-before-`shl` base-folding note on arm_strat (0x0057D270) - same class of divergence on the `carry_capacity` read itself.
@@ -8322,12 +8322,12 @@ Status: Complete
 int __cdecl veh_cargo(int veh_id) {
     int16_t proto_id = Vehs[veh_id].proto_id;
     uint32_t cargo = VehPrototypes[proto_id].carry_capacity;
-    return (cargo && proto_id < MaxVehProtoFactionNum && (get_proto_offense_rating(proto_id) < 0 
+    return (cargo && proto_id < MaxVehProtoFactionNum && (get_proto_offense_rating(proto_id) < 0
         || proto_id == BSC_SPORE_LAUNCHER)) ? Vehs[veh_id].morale + 1 : cargo;
 }
 
 /*
-Purpose: Determine the extra percent cost for building a prototype. Includes a check if the faction 
+Purpose: Determine the extra percent cost for building a prototype. Includes a check if the faction
          has the free prototype flag set or if the player is using one of the easier difficulties.
 // ORIGINAL: 0x005C17D0 ?prototype_factor@@YAHH@Z 0x005C17D0-0x005C184F BYTE_EXACT
 // LEVER: the `||` split into two separate guards - the image falls through to an inline `return 0` after the first test where a combined condition jumps to a shared epilogue. 18/48 -> BYTE_EXACT 48/48. Order measured: rule_flags first, `diff_level` first scores 5/48.
@@ -8461,7 +8461,7 @@ int __cdecl veh_cost(int proto_id, int base_id, BOOL *has_proto_cost) {
 }
 
 /*
-Purpose: Check if the land unit inside an air transport can disembark. The transport must be in 
+Purpose: Check if the land unit inside an air transport can disembark. The transport must be in
          either a base or an airbase to do so.
 // ORIGINAL: 0x005C1C40 ?veh_jail@@YAHH@Z 0x005C1C40-0x005C1D16
 // size      214 bytes
@@ -8564,7 +8564,7 @@ int __cdecl veh_wake(int veh_id) {
         Vehs[veh_id].moves_expended = 0;
     }
     Vehs[veh_id].order = ORDER_NONE;
-    Vehs[veh_id].state &= ~(VSTATE_UNK_200 | VSTATE_EXPLORE | VSTATE_UNK_1000000 
+    Vehs[veh_id].state &= ~(VSTATE_UNK_200 | VSTATE_EXPLORE | VSTATE_UNK_1000000
         | VSTATE_UNK_2000000 | VSTATE_UNK_8000000); // TODO: Identify VSTATE flags
     return veh_id;
 }
@@ -15286,7 +15286,7 @@ int __cdecl study_artifact(int veh_id) {
     const int tile_y = vehicle.y;
     const int faction_id = vehicle.faction_id;
     const int base_id = base_at(tile_x, tile_y);
-    if (base_id != SecretProject.universal_translator && base_id >= 0) {
+    if (base_id != SecretProject.universal_translator() && base_id >= 0) {
         Base &base = Bases[base_id];
         if ((base.state & BSTATE_ARTIFACT_LINKED) != 0) {
             if ((base.state & BSTATE_ARTIFACT_ALREADY_LINKED) == 0
@@ -17374,11 +17374,11 @@ static ConsiderDesignsTailOutput consider_designs_strategy_tail(
                 other_faction_mask |= 0x3;
                 continue;
             }
-            const int first_project_base = SecretProject.dream_twister;
+            const int first_project_base = SecretProject.dream_twister();
             if (first_project_base >= 0 &&
                 Bases[first_project_base].faction_id_current == other)
                 other_faction_mask |= 0x1;
-            const int second_project_base = SecretProject.neural_amplifier;
+            const int second_project_base = SecretProject.neural_amplifier();
             if (second_project_base >= 0 &&
                 Bases[second_project_base].faction_id_current == other)
                 other_faction_mask |= 0x2;
@@ -19329,7 +19329,7 @@ static void order_veh_artifact_dialog_rows(
     int bit_mask;
     bitmask(8, &byte_offset, &bit_mask);
     if ((base.facilities_built[byte_offset] & bit_mask) != 0 &&
-        SecretProject.universal_translator != base_id &&
+        SecretProject.universal_translator() != base_id &&
         (base.state & 0x800U) == 0) {
         StringTemp[0] = '\0';
         parse_string(row_text, StringTemp);
@@ -19341,7 +19341,7 @@ static void order_veh_artifact_dialog_rows(
     }
 
     row_text = text_get();
-    if (SecretProject.universal_translator == base_id) {
+    if (SecretProject.universal_translator() == base_id) {
         StringTemp[0] = '\0';
         parse_string(row_text, StringTemp);
         popup.dialogs().item(StringTemp, 1);
@@ -19623,8 +19623,8 @@ static OrderVeh595422Path order_veh_595422_supply_spawn(
 
     const RulesWeapon &weapon = Weapon[VehPrototypes[vehicle.proto_id].weapon_id];
     if ((weapon.offense_rating == 0 || vehicle.order == ORDER_MOVE_TO) &&
-        SecretProject.xenoempathy_dome >= 0 &&
-        Bases[SecretProject.xenoempathy_dome].faction_id_current ==
+        SecretProject.xenoempathy_dome() >= 0 &&
+        Bases[SecretProject.xenoempathy_dome()].faction_id_current ==
             action_faction) {
         return OrderVeh595422Continue59512c;
     }
@@ -26076,7 +26076,7 @@ struct BattleFightMidPreRoundInputsV7 {
 // Native 0x9A6554 is SecretProject.pholus_mutagen: a BASE ID, not a faction
 // ID. The round candidate then checks Bases[base_id].faction_id_current.
 static int battle_fight_pholus_project_base_v3() {
-    return SecretProject.pholus_mutagen;
+    return SecretProject.pholus_mutagen();
 }
 
 // All stack witnesses have already been produced at their native sites.

@@ -45,7 +45,7 @@ def actual_source():
         for name in names:
             declarations.append(braced(headers[filename],"struct "+name+" {")+";")
     for name in ("RadiusOffsetX","RadiusOffsetY"):
-        table,=re.findall(r"const int "+name+r"\[\]\s*=\s*\{[^}]*\};",headers["map.h"])
+        table,=re.findall(r"const int "+name+r"\[289\]\s*=\s*\{[^}]*\};",(ROOT/"src/map.cpp").read_text())
         declarations.append(table)
     for name in ("BasePopulationUnassigned","BaseNutrientAdequate"):
         definition,=re.findall(r"int "+name+r";",base)
@@ -60,7 +60,7 @@ def actual_source():
         definition,=re.findall(r"static const int "+name+r"\s*=\s*\d+;",headers["base.h"])
         declarations.append(definition)
     helpers=[]
-    for match in re.finditer(r"^(?:static )?(?:int|bool|void)\s*&?\s*base_yield_\w+\(",base,re.M):
+    for match in re.finditer(r"^(?:static )?(?:int|bool|void)\s*&?\s*base_yield_\w+\([^;{}]*\)\s*\{",base,re.M):
         helpers.append(braced(base,match.group()))
     for signature in ("MEASURED inline BOOL __cdecl on_map(","MEASURED inline int __cdecl xrange("):
         helpers.insert(0,braced(headers["map.h"],signature))
@@ -199,7 +199,7 @@ void satellites(){
         reset();BaseCurrent->state=0;BaseCurrent->population_size=population;BaseCurrent->specialist_total=population;
         PlayersData[3].satellites_[0]=3;PlayersData[3].satellites_[1]=4;PlayersData[3].satellites_[2]=5;
         if(full==1)Bases[0].facilities_built[29/8]|=1<<(29%8);
-        if(full>=2){Bases[1].faction_id_current=full==4?5:3;if(full==3)SecretProject.cloudbase_academy=1;else SecretProject.space_elevator=1;}
+        if(full>=2){Bases[1].faction_id_current=full==4?5:3;if(full==3)SecretProject.cloudbase_academy()=1;else SecretProject.space_elevator()=1;}
         base_yield();
         bool doubled=full>=1 && full<=3;
         require(BaseCurrent->nutrient_intake_2==std::min(population,doubled?3:2));
@@ -402,8 +402,8 @@ def test_actual_base_yield(tmp_path):
     (3,"(base->governor & 0x80000040u) == 0x80000040u","(base->governor & 0x80000000u) != 0"),
     (3,"base_yield_add(intake, 1) / 2","intake / 2"),
     (3,"if (selected->population_size < intake)","if (false)"),
-    (3,"SecretProject.cloudbase_academy >= 0","false"),
-    (3,"Bases[SecretProject.space_elevator].faction_id_current == faction","true"),
+    (3,"SecretProject.cloudbase_academy() >= 0","false"),
+    (3,"Bases[SecretProject.space_elevator()].faction_id_current == faction","true"),
     (3,"if (!automatic || UnkGlobal0093A934 == 0)","if (true)"),
     (3,"BaseCurrent->resource_sqr_radius &= ~FarmUnavailableMask | 1u;",
        "BaseCurrent->resource_sqr_radius &= ~FarmUnavailableMask;"),

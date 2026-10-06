@@ -184,8 +184,8 @@ void __cdecl base_draw(Buffer *target, int base_id, int pixel_x, int pixel_y,
     int danger = 0;
     bitmask(4, &byte_index, &bit);
     if ((base.facilities_built[byte_index] & bit)
-        || (SecretProject.citizens_defense_force >= 0
-            && Bases[SecretProject.citizens_defense_force].faction_id_current == faction)) {
+        || (SecretProject.citizens_defense_force() >= 0
+            && Bases[SecretProject.citizens_defense_force()].faction_id_current == faction)) {
         danger = 1;
     }
     bitmask(5, &byte_index, &bit);
@@ -628,11 +628,11 @@ void __cdecl base_yield() {
             base_yield_intake(*BaseCurrent, resource, true) = base_yield_satellite(faction, resource);
             const bool aerospace = base_yield_has_facility(29);
             bool full_yield = aerospace;
-            if (!full_yield && SecretProject.space_elevator >= 0) {
-                full_yield = Bases[SecretProject.space_elevator].faction_id_current == faction;
+            if (!full_yield && SecretProject.space_elevator() >= 0) {
+                full_yield = Bases[SecretProject.space_elevator()].faction_id_current == faction;
             }
-            if (!full_yield && SecretProject.cloudbase_academy >= 0) {
-                full_yield = Bases[SecretProject.cloudbase_academy].faction_id_current == faction;
+            if (!full_yield && SecretProject.cloudbase_academy() >= 0) {
+                full_yield = Bases[SecretProject.cloudbase_academy()].faction_id_current == faction;
             }
             if (!full_yield) {
                 int &intake = base_yield_intake(*BaseCurrent, resource, true);
@@ -1007,8 +1007,8 @@ int __cdecl base_init(int faction_id, int x, int y) {
     base.y = static_cast<int16_t>(y);
     base.faction_id_current = base.faction_id_former = static_cast<uint8_t>(faction_id);
     base.nerve_staple_turns_left = base.assimilation_turns_left = base.unk_1 = 0;
-    base.population_size = SecretProject.planetary_transit_system >= 0
-        && Bases[SecretProject.planetary_transit_system].faction_id_current == faction_id ? 3 : 1;
+    base.population_size = SecretProject.planetary_transit_system() >= 0
+        && Bases[SecretProject.planetary_transit_system()].faction_id_current == faction_id ? 3 : 1;
     base.visibility = static_cast<uint8_t>(tile->visibility | (1u << faction_id));
     base.name_string[0] = 0;
     name_base(faction_id, base.name_string, TRUE, (tile->climate & 0xE0) < 0x60);
@@ -1091,70 +1091,70 @@ int __cdecl base_init(int faction_id, int x, int y) {
 
 static void base_remap_projects(int removed) {
     int *projects[] = {
-        &SecretProject.human_genome_project,
-        &SecretProject.command_nexus,
-        &SecretProject.weather_paradigm,
-        &SecretProject.merchant_exchange,
-        &SecretProject.empath_guild,
-        &SecretProject.citizens_defense_force,
-        &SecretProject.virtual_world,
-        &SecretProject.planetary_transit_system,
-        &SecretProject.xenoempathy_dome,
-        &SecretProject.neural_amplifier,
-        &SecretProject.maritime_control_center,
-        &SecretProject.planetary_datalinks,
-        &SecretProject.supercollider,
-        &SecretProject.ascetic_virtues,
-        &SecretProject.longevity_vaccine,
-        &SecretProject.hunter_seeker_algorithm,
-        &SecretProject.pholus_mutagen,
-        &SecretProject.cyborg_factory,
-        &SecretProject.theory_of_everything,
-        &SecretProject.dream_twister,
-        &SecretProject.universal_translator,
-        &SecretProject.network_backbone,
-        &SecretProject.nano_factory,
-        &SecretProject.living_refinery,
-        &SecretProject.cloning_vats,
-        &SecretProject.self_aware_colony,
-        &SecretProject.clinical_immortality,
-        &SecretProject.space_elevator,
-        &SecretProject.singularity_inductor,
-        &SecretProject.bulk_matter_transmitter,
-        &SecretProject.telepathic_matrix,
-        &SecretProject.voice_of_planet,
-        &SecretProject.ascent_to_transcendence,
-        &SecretProject.manifold_harmonics,
-        &SecretProject.nethack_terminus,
-        &SecretProject.cloudbase_academy,
-        &SecretProject.planetary_energy_grid,
-        &SecretProject.user_defined_38,
-        &SecretProject.user_defined_39,
-        &SecretProject.user_defined_40,
-        &SecretProject.user_defined_41,
-        &SecretProject.user_defined_42,
-        &SecretProject.user_defined_43,
-        &SecretProject.user_defined_44,
-        &SecretProject.user_defined_45,
-        &SecretProject.user_defined_46,
-        &SecretProject.user_defined_47,
-        &SecretProject.user_defined_48,
-        &SecretProject.user_defined_49,
-        &SecretProject.user_defined_50,
-        &SecretProject.user_defined_51,
-        &SecretProject.user_defined_52,
-        &SecretProject.user_defined_53,
-        &SecretProject.user_defined_54,
-        &SecretProject.user_defined_55,
-        &SecretProject.user_defined_56,
-        &SecretProject.user_defined_57,
-        &SecretProject.user_defined_58,
-        &SecretProject.user_defined_59,
-        &SecretProject.user_defined_60,
-        &SecretProject.user_defined_61,
-        &SecretProject.user_defined_62,
-        &SecretProject.user_defined_63,
-        &SecretProject.user_defined_64,
+        &SecretProject.human_genome_project(),
+        &SecretProject.command_nexus(),
+        &SecretProject.weather_paradigm(),
+        &SecretProject.merchant_exchange(),
+        &SecretProject.empath_guild(),
+        &SecretProject.citizens_defense_force(),
+        &SecretProject.virtual_world(),
+        &SecretProject.planetary_transit_system(),
+        &SecretProject.xenoempathy_dome(),
+        &SecretProject.neural_amplifier(),
+        &SecretProject.maritime_control_center(),
+        &SecretProject.planetary_datalinks(),
+        &SecretProject.supercollider(),
+        &SecretProject.ascetic_virtues(),
+        &SecretProject.longevity_vaccine(),
+        &SecretProject.hunter_seeker_algorithm(),
+        &SecretProject.pholus_mutagen(),
+        &SecretProject.cyborg_factory(),
+        &SecretProject.theory_of_everything(),
+        &SecretProject.dream_twister(),
+        &SecretProject.universal_translator(),
+        &SecretProject.network_backbone(),
+        &SecretProject.nano_factory(),
+        &SecretProject.living_refinery(),
+        &SecretProject.cloning_vats(),
+        &SecretProject.self_aware_colony(),
+        &SecretProject.clinical_immortality(),
+        &SecretProject.space_elevator(),
+        &SecretProject.singularity_inductor(),
+        &SecretProject.bulk_matter_transmitter(),
+        &SecretProject.telepathic_matrix(),
+        &SecretProject.voice_of_planet(),
+        &SecretProject.ascent_to_transcendence(),
+        &SecretProject.manifold_harmonics(),
+        &SecretProject.nethack_terminus(),
+        &SecretProject.cloudbase_academy(),
+        &SecretProject.planetary_energy_grid(),
+        &SecretProject.user_defined_38(),
+        &SecretProject.user_defined_39(),
+        &SecretProject.user_defined_40(),
+        &SecretProject.user_defined_41(),
+        &SecretProject.user_defined_42(),
+        &SecretProject.user_defined_43(),
+        &SecretProject.user_defined_44(),
+        &SecretProject.user_defined_45(),
+        &SecretProject.user_defined_46(),
+        &SecretProject.user_defined_47(),
+        &SecretProject.user_defined_48(),
+        &SecretProject.user_defined_49(),
+        &SecretProject.user_defined_50(),
+        &SecretProject.user_defined_51(),
+        &SecretProject.user_defined_52(),
+        &SecretProject.user_defined_53(),
+        &SecretProject.user_defined_54(),
+        &SecretProject.user_defined_55(),
+        &SecretProject.user_defined_56(),
+        &SecretProject.user_defined_57(),
+        &SecretProject.user_defined_58(),
+        &SecretProject.user_defined_59(),
+        &SecretProject.user_defined_60(),
+        &SecretProject.user_defined_61(),
+        &SecretProject.user_defined_62(),
+        &SecretProject.user_defined_63(),
+        &SecretProject.user_defined_64(),
     };
     for (int project = 0; project < 64; ++project) {
         if (*projects[project] == removed) *projects[project] = -2;
@@ -1291,16 +1291,3432 @@ void __cdecl base_kill(int base_id) {
     UnkBitfield1 |= 2;
 }
 
-// These dependencies retain their complete historical seeds under
-// src/unrecovered/004f81a0.cpp and src/recovered/units/004e5a60.cpp. Their
-// owning-TU bodies remain explicitly unfinished while those independent
-// recoveries are pending.
+// Complete base_build was moved here from its retired seed:
+// src/unrecovered/004f81a0.cpp. Its original findings remain below.
+// The independent base_change seed remains retained at
+// src/recovered/units/004e5a60.cpp.
 // ORIGINAL: 0x004F81A0 ?base_build@@YAHHPAH00@Z 0x004F81A0-0x004FFFB8
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004f81a0.cpp", "source:src/base.cpp:base_reset"], "reason": "Explicitly unfinished Base-owned dependency required to link the recovered base_reset caller; full 72-arm build-selection behavior remains in its seed"}
-int __cdecl base_build(int, int *, int *, int *) {
-    // BODY GOES HERE.
-    return -1; // Seed's no-candidate sentinel; selection is still unfinished.
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004f81a0.cpp", "source:src/base.cpp:base_reset", "source:src/unrecovered/004f81a0.cpp: complete original identity/span and historical seed findings preserved", "Pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; original32280-byte span and68-selector/36-target facility dispatcher", "build/recovery/base-build-owner-resume-oct6/review-receipt-oct6.md: bounded independent review, not exhaustive or native acceptance", "recovery/tests/test_base_build_owner.py: actual-source bounded host/damage controls", "BaseSecretProject true64-word storage; historical scalar-member bindings remain unresolved primitive-array accessor interpretations"], "reason": "Recover complete build selection through real Base, faction, map, prototype, facility and project owners, preserving original unchecked indexes, arithmetic, lifecycle and output contracts. Prior source decision retained as history: Explicitly unfinished Base-owned dependency required to link the recovered base_reset caller; full 72-arm build-selection behavior remains in its seed"}
+// TRIED: mismatch #3 (call vs test) - this is the largest function in the batch (32280 bytes, a 72-entry switch reached via the jump table at 0x4FA56E documented in the brief, one arm per buildable unit/facility/project id) preceded by ~0x360 bytes of reactor/rules-bit eligibility computation and several 0x200/0x36-int array-zeroing blocks. Only the entry parameter normalization (a1<0 fold) plus set_base()/base_compute(1) are transcribed; the switch and its scoring tables are not modelled - the body returns the same -1/"no candidate" sentinel the original's accumulator starts in, rather than fabricate any of the 72 per-item eligibility rules.
+int __cdecl base_build(int base_id,int *out_secondary,int *out_tertiary,int *out_score)
+{
+  int *v1;
+  PlayerData *scan_faction;
+  Goal *scan_site;
+  Veh *scan_vehicle;
+  Base *scan_base;
+  VehPrototype *scan_prototype;
+  int scan_tech;
+  int scan_diplo_target;
+  uint32_t v10;
+  int v100;
+  int v101;
+  int v102;
+  uint32_t v103;
+  uint32_t v104;
+  int v105;
+  int v106;
+  int v107;
+  int v108;
+  int v109;
+  int v11;
+  uint32_t v110;
+  int v111;
+  uint32_t v112;
+  int v113;
+  int v114;
+  int v115;
+  int v116;
+  int v117;
+  int v118;
+  int v119;
+  int v12;
+  int v120;
+  int v121;
+  uint32_t v122;
+  int v123;
+  int v124;
+  int v125;
+  int v126;
+  int v127;
+  uint32_t v128;
+  uint32_t v129;
+  int v13;
+  int v130;
+  uint32_t v131;
+  int v132;
+  uint32_t v133;
+  uint32_t v134;
+  int v135;
+  uint32_t v136;
+  int v137;
+  uint32_t v138;
+  uint32_t v139;
+  int *v14;
+  int v140;
+  uint32_t v141;
+  int v142;
+  uint32_t v143;
+  int v144;
+  int v145;
+  int v146;
+  uint32_t v147;
+  uint32_t v148;
+  uint32_t v149;
+  uint8_t v15;
+  uint32_t v150;
+  int v151;
+  uint32_t v152;
+  int v153;
+  uint32_t v154;
+  uint32_t v155;
+  uint32_t v156;
+  uint32_t v157;
+  uint32_t v158;
+  uint32_t v159;
+  int v16;
+  uint32_t v160;
+  uint32_t v161;
+  uint32_t v162;
+  uint32_t v163;
+  uint32_t v164;
+  uint32_t v165;
+  int v166;
+  int v167;
+  uint32_t region;
+  uint32_t regional_plan;
+  uint32_t v17;
+  uint32_t faction_id;
+  int v171;
+  uint32_t v18;
+  int prototype_count_0 [512];
+  uint32_t *v2;
+  int prototype_count_1 [512];
+  int prototype_count_2 [512];
+  int plan_count_0 [54];
+  int plan_count_1 [54];
+  int plan_count_2 [54];
+  uint32_t plan_count_3 [54];
+  int plan_count_4 [54];
+  int v27;
+  int v28;
+  uint32_t v29 [8];
+  char v3;
+  uint32_t v30 [64];
+  int v31;
+  int v32;
+  int v33;
+  int v34;
+  int v35;
+  int v36;
+  int v37;
+  int v38;
+  int v39;
+  char v4;
+  int v40;
+  int v41;
+  int v42;
+  int v43;
+  int v44;
+  int v45;
+  int v46;
+  int v47;
+  int v48;
+  int v49;
+  int16_t v5;
+  int v50;
+  int v51;
+  int v52;
+  int v53;
+  int v54;
+  int v55 [3];
+  int v56;
+  int v57;
+  int v58;
+  int v59;
+  int16_t v6;
+  int v60;
+  int v61;
+  int v62;
+  int v63;
+  int selected_id [3]; // production ID array
+  int initial_facility_10_present;
+  int v65;
+  int v66;
+  int v67;
+  int v68;
+  uint16_t v7;
+  int v73 [3];
+  int selected_score [3]; // score array
+  int selection_mode;
+  int local_state_flags;
+  int best_reactor_id;
+  int v75;
+  uint32_t v76;
+  int v77;
+  int v78; // esi
+  int v79;
+  int v8;
+  uint32_t *v80;
+  Base *v82;
+  bool v83;
+  uint32_t v9;
+  int v93;
+  int v94;
+  int v95;
+  int v96;
+  int v97;
+  int v98;
+  int v99;
+
+  if (0 <= base_id)
+    selection_mode = 0;
+  else {
+    selection_mode = 1;
+    if (0 <= base_id + 1)
+      base_id = base_id + 1;
+    else {
+      base_id = 0xffffffff - base_id;
+    }
+  }
+  set_base(base_id);
+  base_compute(1);
+  v137 = (int)(int16_t)(Bases[base_id].y);
+  v151 = (int)Bases[base_id].x;
+  v15 = (uint8_t)(Bases[base_id].faction_id_current);
+  v18 = (uint32_t)v15;
+  v8 = MapLongitude * (int)v137 + ((int)v151 >> 1);
+  v158 = (uint32_t)((MapTiles[v8].climate & 0xe0) < 0x60);
+  v76 = (uint32_t)MapTiles[v8].region;
+  v75 = v18 * 0x20cc;
+  regional_plan = (uint32_t)(uint8_t)(PlayersData[v18].region_base_plan[v76]);
+  region = v76;
+  faction_id = v18;
+  v171 = v75;
+  best_reactor_id = best_reactor(v18);
+  v8 = BaseIDCurrentSelected;
+  v9 = 1 << (v15 & 0x1f);
+  if (((uint8_t)v9 & (uint8_t)LockEnableMask) && (v10 = BaseCurrent->governor, v10 & 0x80000000)) {
+    if ((!(v10 & 0xf200000)) && (8 <= BaseIDCurrentSelected)) {
+      v15 = (uint8_t)(PlayersData[0].region_base_plan[v75 + v76]);
+      if (v15 <= 2)
+        v10 |= 0x8000000;
+      if (v15 == 8)
+        v10 |= 0x1000000;
+      if (v15 == 7)
+        v10 |= 0x2000000;
+      v10 |= 0x1000000 << ((uint8_t)BaseIDCurrentSelected & 3);
+    }
+    v131 = v10 >> 0x18 & 1;
+    v150 = v10 >> 0x19 & 1;
+    v134 = v10 >> 0x1a & 1;
+    v148 = v10 >> 0x1b & 1;
+    if (v148)
+      v141 = 1;
+    else if (v131)
+      v141 = 0;
+    else if ((v150) || (v134))
+      v141 = 0xffffffff;
+    else {
+      v141 = (uint32_t)(PlayersData[v18].ai_fight);
+    }
+    v147 = v131;
+    v156 = v134;
+    v157 = v150;
+    v160 = v148;
+    if ((((v131) && (v150)) && (v134)) && (v148)) {
+      v160 = 0;
+      v156 = 0;
+      v157 = 0;
+      v147 = 0;
+    }
+  }
+  else {
+    v131 = (uint32_t)(PlayersData[v18].ai_growth);
+    v150 = (uint32_t)(PlayersData[v18].ai_tech);
+    v134 = (uint32_t)(PlayersData[v18].ai_wealth);
+    v148 = (uint32_t)(PlayersData[v18].ai_power);
+    v141 = (uint32_t)(PlayersData[v18].ai_fight);
+    v160 = 0;
+    v156 = 0;
+    v157 = 0;
+    v147 = 0;
+  }
+  v16 = 0;
+  v11 = 0;
+  do {
+    if ((char)(PlayersData[v18].region_total_bases[v11]))
+      v16 += 1;
+    v11 += 1;
+  } while (v11 < 0x80);
+  v75 = 0x200;
+  v14 = prototype_count_0;
+  while (v75) {
+    v1 = &v14[1];
+    *v14 = 0;
+    v75 -= 1;
+    v14 = v1;
+  }
+  v75 = 0x200;
+  v14 = prototype_count_1;
+  while (v75) {
+    v1 = &v14[1];
+    *v14 = 0;
+    v75 -= 1;
+    v14 = v1;
+  }
+  v75 = 0x200;
+  v14 = prototype_count_2;
+  while (v75) {
+    v1 = &v14[1];
+    *v14 = 0;
+    v75 -= 1;
+    v14 = v1;
+  }
+  v75 = 0x36;
+  v14 = plan_count_0;
+  while (v75) {
+    v1 = &v14[1];
+    *v14 = 0;
+    v75 -= 1;
+    v14 = v1;
+  }
+  v75 = 0x36;
+  v14 = plan_count_1;
+  while (v75) {
+    v1 = &v14[1];
+    *v14 = 0;
+    v75 -= 1;
+    v14 = v1;
+  }
+  v75 = 0x36;
+  v14 = plan_count_2;
+  while (v75) {
+    v1 = &v14[1];
+    *v14 = 0;
+    v75 -= 1;
+    v14 = v1;
+  }
+  v75 = 0x36;
+  v80 = plan_count_3;
+  while (v75) {
+    v2 = &v80[1];
+    *v80 = 0;
+    v75 -= 1;
+    v80 = v2;
+  }
+  v55[2] = 0;
+  v55[0] = 0;
+  v55[1] = 0;
+  v75 = 0x36;
+  v14 = plan_count_4;
+  while (v75) {
+    v1 = &v14[1];
+    *v14 = 0;
+    v75 -= 1;
+    v14 = v1;
+  }
+  v99 = 0;
+  v105 = 0;
+  v107 = 0;
+  v115 = 0;
+  v125 = 0;
+  v108 = 0;
+  v129 = 0;
+  v113 = 0;
+  local_state_flags = 0;
+  v109 = v16;
+  v165 = v9;
+  bitmask(10,&v28,&v27);
+  initial_facility_10_present = (uint32_t)(((uint8_t)(Bases[v8].facilities_built[v28]) & (uint8_t)v27) != 0);
+  v132 = 0;
+  v106 = 0;
+  v155 = 0;
+  v117 = 0;
+  v119 = 0;
+  v96 = 0;
+  v101 = 0;
+  v127 = 0;
+  v146 = 0;
+  v97 = 0;
+  v130 = 0;
+  v121 = 0;
+  v102 = 0;
+  if ((!regional_plan) || (v144 = 0, regional_plan == 2))
+    v144 = 1;
+  v76 = 1;
+  v9 = 0xffffffff;
+  do {
+    if (((v18 != v76) && ((uint8_t)(PlayersData[v18].diplo_treaties[v76]) & 1)) && (((uint8_t)LockEnableMask & (uint8_t)(1 << ((uint8_t)v76 & 0x1f)) || ((int)v9 <= -1))))
+      v9 = v76;
+    v76 += 1;
+  } while ((int)v76 < 8);
+  scan_faction = &PlayersData[1];
+  v103 = 0xffffffff;
+  v110 = 0xffffffff;
+  v111 = 0;
+  v76 = 1;
+  do {
+    if (v18 != v76) {
+      v10 = (uint32_t)(PlayersData[v18].diplo_treaties[v76]);
+      v133 = v10 & 0x10;
+      v15 = (uint8_t)v76;
+      if ((v133) || ((((uint8_t)LockEnableMask & (uint8_t)(1 << (v15 & 0x1f)) && (v10 & 8)) && (!(v10 & 1))))) {
+        v8 = 0;
+        if (1 <= BaseCurrentCount) {
+          scan_base = &Bases[0];
+          do {
+            if ((scan_base->faction_id_current == v18) && ((scan_base->faction_id_current == v76 || (scan_base->visibility & (uint8_t)(1 << (v15 & 0x1f)))))) {
+              v111 = 1;
+              break;
+            }
+            v8 += 1;
+            ++scan_base;
+          } while (v8 < BaseCurrentCount);
+
+        }
+      }
+      if (v133) {
+        if (regional_plan == 7)
+          v121 = 1;
+        if (((0 <= (int)v9) && ((uint8_t)(PlayersData[v9].diplo_treaties[v76]) & 0x10)) || ((((uint8_t)LockEnableMask & (uint8_t)(1 << (v15 & 0x1f)) && (GameRules & 0x40)) || (((v10 & 0x20 && (3 <= scan_faction->diff_level)) || (v10 & 0x40)))))) {
+label_4f86ee:
+          if (regional_plan == 7)
+            v144 = 1;
+          if (scan_faction->region_total_bases[region])
+            v103 = v76;
+          else if (regional_plan == 7)
+            v110 = v76;
+        }
+        else if ((int)(PlayersData[faction_id].ranking) < scan_faction->ranking) {
+          if (0 <= (int)v141) goto label_4f86ee;
+        }
+      }
+    }
+    ++scan_faction;
+    v76 += 1;
+
+
+  } while (scan_faction < &PlayersData[8]);
+  if (((regional_plan == 7) && (v121)) && (GameState & 0x200))
+    v144 = 2;
+  v104 = 0;
+  v12 = (PlayersData[faction_id].x_target);
+  if (0 <= (int)v12) {
+    v104 = (uint32_t)(MapTiles[(int)(PlayersData[faction_id].y_target) * MapLongitude + ((int)v12 >> 1)].region == region);
+    if ((v151 == v12) && (v137 == (PlayersData[faction_id].y_target)))
+      v104 = 2;
+  }
+  v98 = 0;
+  v135 = 0x19;
+  scan_site = &PlayersData[faction_id].sites[0];
+  do {
+    if ((scan_site->type == 3) && (1 <= scan_site->priority)) {
+      if ((MapTiles[scan_site->y * MapLongitude + (scan_site->x >> 1)].region == region) && ((v9 = whose_territory(v18,scan_site->x,scan_site->y,NULL,0), (int)v9 < 0 || (v9 == v18))))
+        v98 += 1;
+    }
+    ++scan_site;
+    v135 -= 1;
+  } while (v135);
+  v8 = BaseCurrent->drone_total;
+  v143 = 0;
+  if (v8) {
+    v83 = BaseCurrent->talent_total <= v8;
+    v143 = (uint32_t)v83;
+    v9 = (uint32_t)v83;
+    if (((!((uint8_t)v165 & (uint8_t)LockEnableMask)) || (BaseCurrent->minerals_accumulated <= (int)Rules.retool_exemption)) && ((BaseCurrent->state & 2 || ((v9 && (2 <= BaseCurrent->specialist_total - BaseCurrent->specialist_unk_1))))))
+      v143 = v9 + 1;
+  }
+  v75 = BaseCurrent->mineral_surplus;
+  v8 = BaseCurrent->mineral_intake_2 + v75 * 2;
+  if (out_score) {
+    v128 = !((-0x45 <= BaseCurrent->production_id_last) || (BaseCurrent->minerals_accumulated <= (int)Rules.retool_exemption));
+  }
+  else {
+    v128 = (uint32_t)(BaseCurrent->queue_production_id[0] <= -0x46);
+  }
+  v16 = 0;
+  v11 = 8;
+  v80 = v29;
+  while (v11) {
+    v2 = &v80[1];
+    *v80 = 0;
+    v11 -= 1;
+    v80 = v2;
+  }
+  v11 = 0x40;
+  v80 = v30;
+  while (v11) {
+    v2 = &v80[1];
+    *v80 = 0;
+    v11 -= 1;
+    v80 = v2;
+  }
+  v100 = 0;
+  do {
+    v11 = SecretProject[v16];
+    if (v11 == BaseIDCurrentSelected)
+      v100 += 1;
+    if ((0 <= v11) && ((uint8_t)(Bases[v11].faction_id_current) == v18)) {
+      v11 = (int)(v16 + (v16 >> 0x1f & 7U)) >> 3;
+      v29[v11] = v29[v11] + 1;
+    }
+    v16 += 1;
+  } while (v16 < 0x40);
+  if ((((v128) && (1 <= BaseCurrent->nutrient_surplus)) && (1 <= v75)) && (BaseCurrent->specialist_total - BaseCurrent->specialist_unk_1 <= ((int)((int)BaseCurrent->population_size + ((int)BaseCurrent->population_size >> 0x1f & 3U)) >> 2) + 1))
+    v143 = 1;
+  v75 = 0;
+  v95 = 0x18;
+  v93 = 0x18;
+  v145 = 0;
+  v120 = 0;
+  v94 = 0;
+  v123 = 0;
+  v118 = 0;
+  base_id = 0;
+  v135 = 0;
+  v116 = v8;
+  if (1 <= BaseCurrentCount) {
+    do {
+      v8 = v75 * 0x134;
+      v15 = (uint8_t)(Bases[v75].faction_id_current);
+      v9 = (uint32_t)v15;
+      if (v18 != v9) {
+        if (((int)(PlayersData[faction_id].base_id_atk_target) == v75) && ((uint8_t)(PlayersData[v18].diplo_treaties[v9]) & 0x10)) {
+          if (MapTiles[(int)(int16_t)(Bases[v75].y) * MapLongitude + ((int)Bases[v75].x >> 1)].region != region) {
+            if (regional_plan == 7)
+              local_state_flags |= 1;
+          }
+          else {
+            local_state_flags |= 2;
+          }
+        }
+        v8 = (int)(Bases[v75].queue_production_id[0]);
+        if ((v8 == -0x66) && (v146 = (int)((int)v146 + 1), (uint8_t)LockEnableMask & (uint8_t)(1 << (v15 & 0x1f))))
+          v97 += 1;
+        if (v8 == BaseCurrent->queue_production_id[0])
+          v155 += 1;
+        if (v8 <= -0x46) {
+          v80 = &v30[-v8 - 70];
+          *v80 = *v80 | 1 << (v15 & 0x1f);
+        }
+        if (((((uint8_t)LockEnableMask & (uint8_t)(1 << (v15 & 0x1f))) && ((uint8_t)(Bases[v75].faction_id_former) == faction_id)) && (MapTiles[(int)(int16_t)(Bases[v75].y) * MapLongitude + ((int)Bases[v75].x >> 1)].region == region)) && ((!((uint8_t)(PlayersData[faction_id].diplo_treaties[v9]) & 1) && (v132 = v132 + 1, (int)(1 - v141) < v132))))
+          v144 = 1;
+      }
+      else {
+        v11 = (int)(char)(Bases[v75].population_size);
+        if (v118 < v11)
+          v118 = v11;
+        v11 = (int)(int16_t)(Bases[v75].y);
+        if ((MapTiles[v11 * MapLongitude + ((int)Bases[v75].x >> 1)].climate & 0xe0) <= 0x5f)
+          v130 += 1;
+        v16 = abs((int)v151 - (int)Bases[v75].x);
+        if ((!(MapIsFlat & 1U)) && ((int)MapLongitude < v16))
+          v16 = MapLongitudeBounds - v16;
+        v11 = abs((int)v137 - v11);
+        v16 = abs(v16);
+        v77 = abs(v11);
+        v11 = v16;
+        if (v16 <= v77)
+          v11 = v77;
+        v13 = v16;
+        if (v77 <= v16)
+          v13 = v77;
+        v11 -= ((v16 + v77 >> 1) - v13) + 1 >> 1;
+        bitmask(0x1c,&v31,&v32);
+        v152 = (uint32_t)(((uint8_t)(Bases[(v8 / 0x134)].facilities_built[v31]) & (uint8_t)v32) != 0);
+        if ((v152) && (v11 < v95))
+          v95 = v11;
+        bitmask(0x1d,&v34,&v33);
+        v152 = (uint32_t)(((uint8_t)(Bases[(v8 / 0x134)].facilities_built[v34]) & (uint8_t)v33) != 0);
+        if (((v152) || ((0 <= SecretProject.cloudbase_academy() && ((char)(Bases[SecretProject.cloudbase_academy()].faction_id_current) == (char)(Bases[v75].faction_id_current))))) && (v11 < v93))
+          v93 = v11;
+        bitmask(0x21,&v36,&v35);
+        v152 = (uint32_t)(((uint8_t)(Bases[(v8 / 0x134)].facilities_built[v36]) & (uint8_t)v35) != 0);
+        if (v152)
+          v127 += 1;
+        bitmask(0x17,&v38,&v37);
+        v152 = (uint32_t)(((uint8_t)(Bases[(v8 / 0x134)].facilities_built[v38]) & (uint8_t)v37) != 0);
+        if (v152)
+          v102 += 1;
+        bitmask(1,&v40,&v39);
+        v152 = (uint32_t)(((uint8_t)(Bases[(v8 / 0x134)].facilities_built[v40]) & (uint8_t)v39) != 0);
+        if ((v152) || ((int)(Bases[v75].queue_production_id[0]) == -1))
+          v99 += 1;
+        if (base_id != BaseIDCurrentSelected) {
+          if ((uint32_t)(Bases[v75].state) & 0x100000)
+            v120 = (int)((int)v120 + 1);
+          v11 = (int)(char)(Bases[v75].population_size);
+          if (v101 < v11)
+            v101 = v11;
+          v11 = BaseCurrent->queue_production_id[0];
+          if (((int)(Bases[v75].queue_production_id[0]) == v11) && (v106 = v106 + 1, v11 <= -0x46)) {
+            if (1 <= BaseCurrent->mineral_surplus_final) {
+              if ((1 <= (int)(Bases[v75].mineral_surplus_final)) && (v16 = cost_factor((uint32_t)BaseCurrent->faction_id_current,1,-1), v16 = v16 * (int)(Facility[(v11 * -1)].cost), (v16 - (int)(Bases[v75].minerals_accumulated)) / (int)(Bases[v75].mineral_surplus_final) < (v16 - BaseCurrent->minerals_accumulated) / BaseCurrent->mineral_surplus_final)) {
+label_4f8eb5:
+                v117 += 1;
+              }
+            }
+            else if (1 <= (int)(Bases[v75].mineral_surplus_final)) goto label_4f8eb5;
+          }
+          v11 = (int)(Bases[v75].queue_production_id[0]);
+          if (v11 <= -0x46) {
+            v80 = &v30[-v11 - 70];
+            *v80 = *v80 | v165;
+          }
+          v163 = v11 * 0x34;
+          v18 = (uint32_t)(uint8_t)(VehPrototypes[v11].plan);
+          v164 = (uint32_t)(uint8_t)(Chassis[VehPrototypes[v11].chassis_id].triad);
+          if ((v18 == 7) && ((v15 = (uint8_t)(VehPrototypes[v11].carry_capacity), v15 < 2 || ((int)(uint32_t)v15 < (int)((int)(PlayersData[faction_id].unk_70) + ((int)(PlayersData[faction_id].unk_70) >> 0x1f & 0x3fffffU)) >> 0x16))))
+            v18 = 0xf;
+          if ((!v164) && (has_abil(v11,0x8000)))
+            v18 = 0x10;
+          if (0 <= v11) {
+            plan_count_3[v164 + v18 * 3] = plan_count_3[v164 + v18 * 3] + (best_reactor_id <= (int)(uint32_t)(uint8_t)(VehPrototypes[(v163 / 0x34)].reactor_id)) + 1;
+            prototype_count_1[v11] = prototype_count_1[v11] + 1;
+          }
+          if (region == MapTiles[(int)(int16_t)(Bases[v75].y) * MapLongitude + ((int)Bases[v75].x >> 1)].region) {
+            if ((uint8_t)(Bases[v75].state) & 1)
+              v145 = 0x1;
+            if ((int)(Bases[v75].queue_production_id[0]) <= -0x46)
+              v119 += 1;
+            bitmask(0x1b,&v42,&v41);
+            v152 = (uint32_t)(((uint8_t)(Bases[(v8 / 0x134)].facilities_built[v42]) & (uint8_t)v41) != 0);
+            if ((v152) || ((int)(Bases[v75].queue_production_id[0]) == -0x1b))
+              v107 = ((int)v107 + 1);
+            bitmask(0x1e,&v44,&v43);
+            v152 = (uint32_t)(((uint8_t)(Bases[(v8 / 0x134)].facilities_built[v44]) & (uint8_t)v43) != 0);
+            if ((v152) || ((int)(Bases[v75].queue_production_id[0]) == -0x1e))
+              v105 = ((int)v105 + 1);
+            bitmask(0x1c,&v46,&v45);
+            v152 = (uint32_t)(((uint8_t)(Bases[(v8 / 0x134)].facilities_built[v46]) & (uint8_t)v45) != 0);
+            if ((v152) || ((int)(Bases[v75].queue_production_id[0]) == -0x1c))
+              v108 += 1;
+            bitmask(0x1d,&v48,&v47);
+            v152 = (uint32_t)(((uint8_t)(Bases[(v8 / 0x134)].facilities_built[v48]) & (uint8_t)v47) != 0);
+            if ((v152) || ((int)(Bases[v75].queue_production_id[0]) == -0x1d))
+              v129 += 1;
+            bitmask(10,&v50,&v49);
+            v152 = (uint32_t)(((uint8_t)(Bases[(v8 / 0x134)].facilities_built[v50]) & (uint8_t)v49) != 0);
+            if ((v152) || ((int)(Bases[v75].queue_production_id[0]) == -10))
+              v113 += 1;
+            bitmask(0x1f,&v52,&v51);
+            v152 = (uint32_t)(((uint8_t)(Bases[(v8 / 0x134)].facilities_built[v52]) & (uint8_t)v51) != 0);
+            if (v152)
+              v125 = (v125 + 1);
+            bitmask(0x20,&v54,&v53);
+            v11 = BaseIDCurrentSelected;
+            v152 = (uint32_t)(((uint8_t)(Bases[(v8 / 0x134)].facilities_built[v54]) & (uint8_t)v53) != 0);
+            if (v152)
+              v115 += 1;
+            v16 = (int)(Bases[v75].queue_production_id[0]);
+            if (0 <= v16) {
+              prototype_count_0[v16] = prototype_count_0[v16] + 1;
+              v77 = v164 + v18 * 3;
+              plan_count_2[v77] = plan_count_2[v77] + (best_reactor_id <= (int)(uint32_t)(uint8_t)(VehPrototypes[(v163 / 0x34)].reactor_id)) + 1;
+              v55[v164] = v55[v164] + 1;
+              if ((0x40 <= v16) && (!((uint8_t)(VehPrototypes[v16].flags) & 4)))
+                v96 += 1;
+            }
+            bitmask(0x1b,&v57,&v56);
+            v152 = (uint32_t)(((uint8_t)(Bases[v11].facilities_built[v57]) & (uint8_t)v56) != 0);
+            if (v152) {
+              bitmask(0x1b,&v59,&v58);
+              v152 = (uint32_t)(((uint8_t)(Bases[(v8 / 0x134)].facilities_built[v59]) & (uint8_t)v58) != 0);
+              if (!v152) {
+                v5 = (int16_t)(Bases[v75].y);
+                v6 = Bases[v75].x;
+                v8 = stack_fix(veh_at((int)v6,(int)v5));
+                v112 = garrison_check(base_id);
+                v122 = defensive_check(base_id);
+                v18 = faction_id;
+                v149 = stack_check(v8,0xb,0x10000000,0x10000000,faction_id);
+                v18 = stack_check(v8,2,2,v18,-1);
+                if ((0 <= (int)v18) && (0 <= (int)v122)) {
+                  if ((int)v122 < (int)v18)
+                    v18 = v122;
+                  if ((v18) && (v149))
+                    v18 += 1;
+                }
+                else {
+                  v18 = 0;
+                }
+                v3 = (char)(PlayersData[faction_id].region_base_plan[region]);
+                if ((v3 == '\x02') || (v3 == '\b')) {
+                  v11 = stack_check(v8,2,1,faction_id,-1);
+                  v18 += v11;
+                }
+                if (2 <= (int)(PlayersData[faction_id].best_armor_value)) {
+                  if (!v18)
+                    v18 = (uint32_t)(stack_check(v8,2,3,-1,-1) != 0);
+                }
+                else {
+                  v18 += stack_check(v8,2,3,-1,-1);
+                }
+                v135 = 0;
+                if (1 <= VehCurrentCount) {
+                  scan_vehicle = &Vehs[0];
+                  v114 = VehCurrentCount;
+                  do {
+                    if ((((scan_vehicle->faction_id == faction_id) && ((((char)(VehPrototypes[scan_vehicle->proto_id].plan) == '\x02' || (scan_vehicle->state & 0x10000000)) && (v8 = (int)scan_vehicle->y * MapLongitude + ((int)scan_vehicle->x >> 1), MapTiles[v8].region == region)))) && ((!(MapTiles[v8].bit & 1) || (8 <= (MapTiles[v8].val2 & 0xf))))) && ((v8 = (int)scan_vehicle->home_base_id, v8 == base_id || (v8 == BaseIDCurrentSelected)))) {
+                      if (v8 == BaseIDCurrentSelected) {
+                        v135 += 1;
+                        if (v123 < v135) goto label_4f947a;
+                        v123 += 1;
+                      }
+                      v18 += 1;
+                    }
+label_4f947a:
+                    ++scan_vehicle;
+                    v114 -= 1;
+                  } while (v114);
+                }
+                if ((int)v18 < (int)v112) {
+                  v8 = (int)(Bases[v75].queue_production_id[0]);
+                  if ((v149) || (v112 == v122)) {
+                    if ((0 <= v8) && ((char)(VehPrototypes[v8].plan) == '\x02')) {
+label_4f94d9:
+                      if ((int)v112 <= (int)(v18 + 1)) goto label_4f94e1;
+                    }
+                  }
+                  else if ((0 <= v8) && ((uint8_t)(VehPrototypes[v8].plan) <= 1)) goto label_4f94d9;
+                  v94 += 1;
+                }
+              }
+            }
+          }
+        }
+      }
+label_4f94e1:
+      v75 = base_id + 1;
+      base_id = v75;
+      if (BaseCurrentCount <= v75) break;
+      v18 = faction_id;
+    } while( true );
+  }
+  if (BaseCurrent->state & 1)
+    v145 = 0x2;
+  v146 = 0;
+  v115 = 0;
+  v114 = 0;
+  v153 = 0;
+  if (1 <= VehCurrentCount) {
+    scan_vehicle = &Vehs[0];
+    do {
+      v8 = v153;
+      if (scan_vehicle->faction_id == faction_id) {
+        v18 = (uint32_t)(uint8_t)(VehPrototypes[scan_vehicle->proto_id].plan);
+        v146 = ((int)v146 + 1);
+        v164 = (uint32_t)(uint8_t)(Chassis[VehPrototypes[scan_vehicle->proto_id].chassis_id].triad);
+        if ((v18 == 7) && ((v75 = veh_cargo(v153), v75 <= 1 || (v8 = veh_cargo(v8), v8 < (int)((int)(PlayersData[faction_id].unk_70) + ((int)(PlayersData[faction_id].unk_70) >> 0x1f & 0x3fffffU)) >> 0x16))))
+          v18 = 0xf;
+        v9 = v164;
+        if ((!v164) && (v5 = scan_vehicle->proto_id, has_abil((int)v5,0x8000)))
+          v18 = 0x10;
+        v8 = (int)scan_vehicle->proto_id;
+        if ((char)(VehPrototypes[v8].unk_1) == '\x15')
+          v18 = 0x11;
+        if (scan_vehicle->state & 0x10000000)
+          v18 = 2;
+        v75 = v9 + v18 * 3;
+        plan_count_1[v75] = plan_count_1[v75] + (best_reactor_id <= (int)(uint32_t)(uint8_t)(VehPrototypes[v8].reactor_id)) + 1;
+        if ((((scan_vehicle->home_base_id == BaseIDCurrentSelected) && (v3 = (char)(VehPrototypes[v8].plan), plan_count_4[v75] = plan_count_4[v75] + 1, v3 == '\x03')) && (v5 = scan_vehicle->proto_id, has_abil((int)v5,0x40000))) && (region == MapTiles[(int)scan_vehicle->y * MapLongitude + ((int)scan_vehicle->x >> 1)].region))
+          v115 += 1;
+        v8 = (int)scan_vehicle->y * MapLongitude + ((int)scan_vehicle->x >> 1);
+        if (region == MapTiles[v8].region) {
+          v11 = (int)scan_vehicle->proto_id;
+          prototype_count_2[v11] = prototype_count_2[v11] + 1;
+          v9 = MapTiles[v8].bit;
+          plan_count_0[v75] = plan_count_0[v75] + (best_reactor_id <= (int)(uint32_t)(uint8_t)(VehPrototypes[v11].reactor_id)) + 1;
+          if (((!(v9 & 1)) || (8 <= (MapTiles[v8].val2 & 0xf))) && (v18 <= 3))
+            v114 += 1;
+        }
+      }
+      v153 += 1;
+      ++scan_vehicle;
+    } while (v153 < VehCurrentCount);
+  }
+  v75 = v171;
+  v8 = BaseIDCurrentSelected;
+  v11 = 0;
+  do {
+    v77 = 3;
+    v16 = v11;
+    do {
+      v11 = v16 + 4;
+      plan_count_3[v16 / 4] = plan_count_3[v16 / 4] / 2;
+      plan_count_2[v16 / 4] = plan_count_2[v16 / 4] / 2;
+      plan_count_1[v16 / 4] = plan_count_1[v16 / 4] / 2;
+      plan_count_0[v16 / 4] = plan_count_0[v16 / 4] / 2;
+      v77 -= 1;
+      v16 = v11;
+    } while (v77);
+  } while (v11 < 0xcc);
+  v11 = 0;
+  v16 = 0;
+  do {
+    if (3 <= (uint8_t)(PlayersData[faction_id].region_total_bases[v16]))
+      v11 += 1;
+    v16 += 1;
+  } while (v16 < 0x40);
+  if (10 <= (int)(PlayersData[faction_id].current_num_bases))
+    v11 += 1;
+  if (0x14 <= (int)(PlayersData[faction_id].current_num_bases))
+    v11 += 1;
+  v11 += (v130 + 2) / 3;
+  v123 = v11;
+  if ((0 <= SecretProject.maritime_control_center()) && ((uint8_t)(Bases[SecretProject.maritime_control_center()].faction_id_current) == faction_id)) {
+    v11 = v11 * 2 + 1;
+    v123 = v11;
+  }
+  bitmask(0x23,&v61,&v60);
+  v16 = BaseIDCurrentSelected;
+  if ((int)((int)(PlayersData[faction_id].soc_effect_pending.police) + (uint32_t)(((uint8_t)(Bases[v8].facilities_built[v61]) & (uint8_t)v60) != 0) * 2) <= -3) {
+    v11 = (v11 + 1) / 2;
+    v123 = v11;
+  }
+  bitmask(0x23,&v63,&v62);
+  v18 = faction_id;
+  if ((int)((int)(PlayersData[faction_id].soc_effect_pending.police) + (uint32_t)(((uint8_t)(Bases[v16].facilities_built[v63]) & (uint8_t)v62) != 0) * 2) <= -5)
+    v123 = v11 / 2;
+  v75 = 0;
+  v135 = 0;
+  v139 = 0;
+  v8 = MapLongitudeBounds;
+  do {
+    v12 = v151 + RadiusOffsetX[v75];
+    if (!(MapIsFlat & 1U)) {
+      if (0 <= (int)v12) {
+        if (v8 <= (int)v12)
+          v12 = (v12 + -v8);
+      }
+      else {
+        v12 = (v12 + v8);
+      }
+    }
+    v11 = RadiusOffsetY[v75] + (int)v137;
+    if ((((0 <= v11) && (v11 < MapLatitudeBounds)) && (0 <= (int)v12)) && ((int)v12 < v8)) {
+      if (MapTiles[v11 * MapLongitude + ((int)v12 >> 1)].bit & 0x200000)
+        v139 += ((1 << ((uint8_t)v75 & 0x1f) & BaseCurrent->resource_sqr_radius) != 0) + 1;
+      v8 = veh_at((int)v12,v11);
+      if (((0 <= v8) && (v9 = (uint32_t)(uint8_t)(Vehs[v8].faction_id), v9 != v18)) && ((uint8_t)(PlayersData[v18].diplo_treaties[v9]) & 0x30))
+        v135 += stack_check(v8,1,-1,-1,-1);
+      v8 = MapLongitudeBounds;
+    }
+    v75 += 1;
+  } while (v75 < 0x15);
+  v5 = BaseCurrent->y;
+  v6 = BaseCurrent->x;
+  v8 = stack_fix(veh_at((int)v6,(int)v5));
+  v153 = v8;
+  v112 = garrison_check(BaseIDCurrentSelected);
+  v18 = defensive_check(BaseIDCurrentSelected);
+  v122 = v18;
+  v9 = stack_check(v8,0xb,0x10000000,0x10000000,faction_id);
+  v149 = v9;
+  v76 = stack_check(v8,2,2,faction_id,-1);
+  if ((0 <= (int)v76) && (0 <= (int)v18)) {
+    if ((int)v76 <= (int)v18)
+      v18 = v76;
+    v138 = v18;
+    if ((v18) && (v9)) {
+      v18 += 1;
+      v138 = v18;
+    }
+  }
+  else {
+    v18 = 0;
+    v138 = v18;
+  }
+  if ((BaseCurrent->state & 0x4000000) && (3 <= (uint8_t)(PlayersData[faction_id].region_base_plan[region]))) {
+    v18 += 1;
+    v138 = v18;
+  }
+  v3 = (char)(PlayersData[faction_id].region_base_plan[region]);
+  if ((v3 == '\x02') || (v3 == '\b')) {
+    v75 = stack_check(v8,2,1,faction_id,-1);
+    v18 += v75;
+    v138 = v18;
+  }
+  if (2 <= (int)(PlayersData[faction_id].best_armor_value)) {
+    if (!v18) {
+      v18 = (uint32_t)(stack_check(v8,2,3,-1,-1) != 0);
+      v138 = v18;
+    }
+  }
+  else {
+    v18 += stack_check(v8,2,3,-1,-1);
+    v138 = v18;
+  }
+  v9 = faction_id;
+  stack_check(v8,2,7,faction_id,-1);
+  stack_check(v8,2,6,v9,-1);
+  if ((uint8_t)v165 & VehPrototypes[2].obsolete_factions) {
+    v8 = stack_check(v8,0,2,v9,-1);
+    if (0 <= v8) {
+      if (2 <= v8)
+        v8 = 1;
+    }
+    else {
+      v8 = 0;
+    }
+    v18 -= v8;
+    v138 = v18;
+  }
+  if ((3 <= (uint8_t)(PlayersData[faction_id].region_base_plan[region])) && (BaseCurrent->state & 0x8000000)) {
+    v18 += 1;
+    v138 = v18;
+  }
+  if (1 <= (int)v18) {
+    if ((int)(v112 + -1) <= (int)v18)
+      v18 = (uint32_t)((int)v18 < (int)v112);
+    else {
+      v18 = 2;
+    }
+  }
+  else {
+    v18 = 3;
+  }
+  v133 = LockEnableMask & 0xff & v165;
+  v162 = v18;
+  if (((v133) && ((int)Rules.retool_exemption < BaseCurrent->minerals_accumulated)) && (!(BaseCurrent->state & 8))) {
+    if (((v147) || (v157)) || (v156)) {
+      if ((!v160) && (!v147)) {
+        v162 = v147;
+        goto label_4f9e89;
+      }
+    }
+    else if (!v160) goto label_4f9c43;
+    if (2 <= v18)
+      v162 = 1;
+  }
+  else {
+label_4f9c43:
+    if (((regional_plan == 8) || ((regional_plan == 7 && (((int)(PlayersData[faction_id].current_num_bases) < 4 || (!v111)))))) || ((v133 && (!v160)))) {
+      v76 = 1;
+      scan_diplo_target = v9;
+      v159 = 1;
+
+      scan_faction = &PlayersData[1];
+
+      do {
+        if (((faction_id != v76) && ((scan_faction->region_total_combat_vehs[region] || (scan_faction->region_total_bases[region])))) && ((v9 = (uint32_t)(PlayersData[faction_id].diplo_treaties[v76]), v9 & 0x30 || (((LockEnableMask & 0xff & 1 << ((uint8_t)v76 & 0x1f) && ((uint8_t)scan_faction->diplo_treaties[scan_diplo_target] & 8)) && ((!(v9 & 2) || (scan_faction->integrity_blemishes))))))))
+          v159 = 0;
+        ++scan_faction;
+
+        v76 += 1;
+
+
+      } while (scan_faction < &PlayersData[8]);
+      if (((v18) && (v159)) && (((v133 && (!v160)) || ((BaseCurrent->population_size <= 2 && (((v131 || ((int)(PlayersData[faction_id].current_num_bases) <= 2)) && (!(BaseCurrent->state & 0x1000000))))))))) {
+        v162 = v18 - 1;
+        v133 = (uint32_t)BaseCurrent->x;
+        v154 = (uint32_t)BaseCurrent->y;
+        v8 = 0;
+        do {
+          v75 = RadiusOffsetX[v8 / 4] + v133;
+          if (!(MapIsFlat & 1U)) {
+            if (0 <= v75) {
+              if (MapLongitudeBounds <= v75)
+                v75 -= MapLongitudeBounds;
+            }
+            else {
+              v75 += MapLongitudeBounds;
+            }
+          }
+          v11 = RadiusOffsetY[v8 / 4] + v154;
+          if (((((0 <= v11) && (v11 < MapLatitudeBounds)) && ((0 <= v75 && ((v75 < MapLongitudeBounds && (v75 = v11 * MapLongitude + (v75 >> 1), MapTiles[v75].region == region)))))) && ((PlayersData[faction_id].flags & 0x200 || ((uint8_t)v165 & MapTiles[v75].visibility)))) && (MapTiles[v75].bit & 3)) {
+            v9 = MapTiles[v75].val2 & 0xf;
+            if (((v9 <= 7) && (v9 != faction_id)) && ((!(MapTiles[v75].val2 & 0xf) || ((uint8_t)(PlayersData[faction_id].diplo_treaties[v9]) & 0x30)))) {
+              v162 = v18;
+              break;
+            }
+          }
+          v8 += 4;
+        } while (v8 < 0x1e4);
+      }
+    }
+    v9 = faction_id;
+  }
+label_4f9e89:
+  v18 = 0;
+  v124 = 0;
+  v155 = 0;
+  do {
+    v8 = RadiusOffsetX[v18 / 4] + (int)BaseCurrent->x;
+    if (!(MapIsFlat & 1U)) {
+      if (0 <= v8) {
+        if (MapLongitudeBounds <= v8)
+          v8 -= MapLongitudeBounds;
+      }
+      else {
+        v8 = MapLongitudeBounds + v8;
+      }
+    }
+    v75 = RadiusOffsetY[v18 / 4] + (int)BaseCurrent->y;
+    if ((((0 <= v75) && (v75 < MapLatitudeBounds)) && (0 <= v8)) && ((v8 < MapLongitudeBounds && (v11 = v75 * MapLongitude + (v8 >> 1), MapTiles[v11].region == region)))) {
+      if ((!(PlayersData[faction_id].flags & 0x200)) && (!(MapTiles[v11].visibility & (uint8_t)v165))) {
+label_4f9fde:
+        v124 = 1;
+        break;
+      }
+      if (MapTiles[v11].bit & 3) {
+        v18 = MapTiles[v11].val2 & 0xf;
+        if (((v18 <= 7) && (MapTiles[v11].val2 & 0xf)) && (v18 != v9)) goto label_4f9fde;
+      }
+      v18 = whose_territory(v9,v8,v75,NULL,0);
+      if ((1 <= (int)v18) && (v18 != v9)) {
+        if ((uint8_t)LockEnableMask & (uint8_t)(1 << ((uint8_t)v18 & 0x1f)))
+          v15 = (uint8_t)(PlayersData[v9].diplo_treaties[v18]) & 1;
+        else {
+          v15 = (uint8_t)(PlayersData[v9].diplo_treaties[v18]) & 2;
+        }
+        if (!v15) goto label_4f9fde;
+      }
+    }
+    v18 = v155 + 4;
+    v155 = v18;
+  } while ((int)v18 <= 0xc3);
+  v8 = 0;
+  selected_score[2] = 999999;
+  selected_score[0] = 999999;
+  selected_score[1] = 999999;
+  do {
+    selected_id[v8] = (-(uint32_t)(v8 != 0) & 0x186e4) - 0x45;
+    v8 += 1;
+  } while (v8 < 3);
+  if ((int)(PlayersData[faction_id].total_mil_veh) <= 0x1ff) {
+    v133 = 999999;
+    v167 = 0;
+    do {
+      v75 = veh_avail(v167,faction_id,BaseIDCurrentSelected);
+      v8 = v167;
+      if (!v75) goto label_4fd8f6;
+      v163 = v167 * 0x34;
+      v18 = (uint32_t)(uint8_t)(Chassis[VehPrototypes[v167].chassis_id].triad);
+      v161 = (uint32_t)(uint8_t)(VehPrototypes[v167].plan);
+      v164 = v18;
+      if ((!v18) && (v75 = has_abil(v167,0x8000), v75))
+        v161 = 0x10;
+      v75 = BaseIDCurrentSelected;
+      v15 = (uint8_t)(VehPrototypes[v8].plan);
+      v142 = 0;
+      v136 = (uint32_t)(v15 < 8);
+      v9 = ((uint8_t)(VehPrototypes[v8].cost) + 2) * 0x100;
+      v159 = v9;
+      if (v18) {
+        if (v18 != 1) {
+          if (v18 != 2) {
+label_4fa54b:
+            v8 = v166;
+            goto label_4fa54e;
+          }
+          if (((regional_plan == 7) || (v158)) || ((uint16_t)((uint16_t)(uint8_t)(PlayersData[faction_id].region_total_bases[region]) * 2 + 2) <= (uint16_t)(PlayersData[faction_id].region_total_combat_vehs[region]))) {
+            v154 = plan_count_3[v161 * 3 + 2];
+            v126 = plan_count_1[v161 * 3 + 2];
+            v18 = (uint32_t)(v126 + v154 != 0);
+            v8 = v18 + 1;
+            if (((regional_plan != 7) && (v161 != 5)) && (!v158)) {
+              if (0 <= (int)(PlayersData[faction_id].x_target))
+                v8 = v18 + 2;
+              if (regional_plan == 2)
+                v8 += 1;
+              if ((uint8_t)((PlayersData[faction_id].unk_77[region] >> 8)) & 4)
+                v8 += 1;
+              v8 += v55[2];
+            }
+            v11 = v8 * v9;
+            v159 = v11;
+            bitmask(0x1d,&v66,&v65);
+            v155 = (uint32_t)(((uint8_t)(Bases[v75].facilities_built[v66]) & (uint8_t)v65) != 0);
+            if (v155) {
+              v11 = (int)((v129 + 2) * v11) / (int)(v129 + 3);
+              v159 = v11;
+            }
+            if ((!((uint8_t)v165 & (uint8_t)LockEnableMask)) && (PlayersData[faction_id].flags & 0x10000000))
+              v159 = v11 / 2;
+            v8 -= 2;
+            if (0 <= v8) {
+              if (v8 > 99)
+                v8 = 99;
+            }
+            else {
+              v8 = 0;
+            }
+            v8 = ((v161 != 4) + 1) * v154 + v8 + v126;
+            v75 = 8 - v109;
+            v75 = range(v75,4,8) * v159;
+            v78 = (int)(v75 + (v75 >> 0x1f & 7U)) >> 3;
+            v16 = v78 * 10;
+            v11 = v78;
+            v77 = veh_cost(v167,BaseIDCurrentSelected,NULL);
+            v13 = cost_factor(faction_id,1,-1);
+            v75 = BaseCurrent->mineral_surplus;
+            v9 = range((v77 * v13 * v78) / (range(v75,1,999) * 0xf),v11,v16);
+            v159 = v9;
+            v18 = v158;
+            goto label_4fa2fe;
+          }
+        }
+        else if ((((regional_plan == 7) || (v158)) || ((uint16_t)((uint16_t)(uint8_t)(PlayersData[faction_id].region_total_bases[region]) * 2 + 2) <= (uint16_t)(PlayersData[faction_id].region_total_combat_vehs[region]))) && (v5 = (int16_t)(Bases[BaseIDCurrentSelected].y), v6 = Bases[BaseIDCurrentSelected].x, is_coast((int)v6,(int)v5,0))) {
+          v18 = base_coast(BaseIDCurrentSelected);
+          if ((((v18 & 0x3f) != 0x3f) && (v18 & 0x3f)) && (((2 <= sea_coasts(v18) || (v158)) || ((v161 != 7 && (0x30 <= (int)Continents[v18].tile_count)))))) {
+            v166 = plan_count_1[v161 * 3 + 1] + plan_count_3[v161 * 3 + 1] * 2;
+            if ((regional_plan != 7) && (!v158)) {
+              if (regional_plan == 2)
+                v166 += 1;
+              if ((uint8_t)((PlayersData[faction_id].unk_77[region] >> 8)) & 4)
+                v166 += 1;
+              v166 += v55[1];
+            }
+            v18 = LockEnableMask & 0xff & v165;
+            if ((!v18) && (PlayersData[faction_id].flags & 0x8000000))
+              v9 /= 2;
+            if ((!v18) && ((uint32_t)(Players[faction_id].rule_flags) & 0x100)) {
+              v9 /= 2;
+              v109 += 1;
+            }
+            v8 = 8 - v109;
+            if (4 <= v8) {
+              if (9 <= v8)
+                v8 = 8;
+            }
+            else {
+              v8 = 4;
+            }
+            v75 = BaseCurrent->mineral_surplus;
+            v159 = (int)(v8 * v9 + ((int)(v8 * v9) >> 0x1f & 7U)) >> 3;
+            if (1 <= v75) {
+              if (1000 <= v75)
+                v75 = 999;
+            }
+            else {
+              v75 = 1;
+            }
+            v76 = v159 * 10;
+            v8 = veh_cost(v167,BaseIDCurrentSelected,NULL);
+            v11 = cost_factor(faction_id,1,-1);
+            v18 = (int)(v8 * v11 * v159) / (v75 * 0xf);
+            v9 = v159;
+            if (((int)v159 <= (int)v18) && ((int)v159 <= (int)v76)) {
+              if ((int)v76 < (int)v18)
+                v18 = v76;
+              v9 = v18;
+              v159 = v18;
+            }
+            goto label_4fa54b;
+          }
+        }
+        goto label_4fd8f6;
+      }
+      if (3 <= (uint8_t)(Weapon[VehPrototypes[v8].weapon_id].mode)) {
+        if ((((v161 != 8) || (regional_plan != 8)) || (BaseCurrent->state & 0x2000000)) || (DiffLevelCurrent <= 2)) {
+          v8 = plan_count_0[v161 * 3];
+          if ((((v161 != 8) || (regional_plan != 8)) || ((BaseCurrent->state & 0x1000000 || (DiffLevelCurrent <= 2)))) && (v8 = v8 + prototype_count_0[v167] + plan_count_2[v161 * 3], v161 == 8))
+            v8 += plan_count_3[24];
+        }
+        else {
+          v8 = 0;
+        }
+      }
+      else {
+        v8 = 99;
+        if (v15 <= 1) {
+          if ((int)(PlayersData[faction_id].unk_71)) {
+label_4fa634:
+            v8 = 1;
+          }
+          else if (regional_plan != 2) {
+            if ((uint8_t)((PlayersData[faction_id].unk_77[region] >> 8)) & 6)
+              v8 = 2;
+          }
+          else {
+            if ((uint8_t)((PlayersData[faction_id].unk_77[region] >> 8)) & 4) goto label_4fa634;
+            v8 = 2;
+          }
+        }
+        if ((regional_plan != 2) && (!((uint8_t)((PlayersData[faction_id].unk_77[region] >> 8)) & 4)))
+          v11 = plan_count_2[v161 * 3];
+        else {
+          v11 = 0;
+        }
+        v16 = prototype_count_2[v167] + plan_count_3[v161 * 3] + plan_count_0[v161 * 3];
+        if (0 <= v16) {
+          if (v8 < v16)
+            v16 = v8;
+        }
+        else {
+          v16 = 0;
+        }
+        v8 = (prototype_count_0[v167] + v16 + 1 + v11) / 2;
+        bitmask(0x1b,&v67,&v68);
+        v154 = (uint32_t)(((uint8_t)(Bases[v75].facilities_built[v67]) & (uint8_t)v68) != 0);
+        if (v154) {
+          v9 = (int)((int)((int)v107 + 2) * v9) / (int)((int)v107 + 3);
+          v159 = v9;
+        }
+        if (!((uint8_t)v165 & (uint8_t)LockEnableMask)) {
+          v18 = PlayersData[faction_id].flags & 0x4000000;
+label_4fa2fe:
+          if (v18) {
+            v9 = (int)v9 / 2;
+            v159 = v9;
+          }
+        }
+      }
+label_4fa54e:
+      v10 = faction_id;
+      v76 = region;
+      v75 = v167;
+      v18 = v164;
+      v166 = v8 + 1;
+      v17 = (uint32_t)(uint8_t)(VehPrototypes[(v163 / 0x34)].plan);
+      v152 = (v152 & 0xffffff00U) | (uint8_t)VehPrototypes[v167].plan;
+      switch(v17) {
+        case 0:
+          if ((3 <= (int)regional_plan) && (((regional_plan != 7 && (!v158)) || (!v121))))
+            v8 = 0x40;
+          else {
+            v8 = 0x20;
+          }
+          v9 *= v8;
+          if ((v138) && (!v149)) {
+            v75 = guard_check(faction_id,region);
+            v8 = v171;
+            if ((int)(uint32_t)(uint8_t)(PlayersData[faction_id].region_total_offensive_vehs[v76]) < v75)
+              v9 = (int)v9 / 2;
+          }
+          else {
+            v8 = v171;
+          }
+          if (local_state_flags & 2)
+            v9 = (int)v9 / 2;
+          else if (local_state_flags & 1)
+            v9 = (int)(v9 * 3 + ((int)(v9 * 3) >> 0x1f & 3U)) >> 2;
+          if ((v158) && (!v164))
+            v9 *= 2;
+          if ((v160) && (((v164 == 2 || (!v158)) && (v9 = (int)v9 / 2, TurnCurrentNum <= 0x31))))
+            v9 = (int)v9 / 2;
+          if ((v164 == 2) && (regional_plan != 2)) {
+            v75 = (int)(PlayersData[faction_id].unk_66);
+            v8 = (int)(PlayersData[faction_id].unk_67);
+            v11 = v75;
+            if (v75 <= v8)
+              v11 = v8;
+            if ((int)(plan_count_3[v161 * 3 + 2] + plan_count_1[v161 * 3 + 2]) < v11)
+              v9 = (int)v9 / 2;
+            if (v75 <= v8)
+              v75 = v8;
+            if ((int)(plan_count_3[v161 * 3 + 2] + plan_count_1[v161 * 3 + 2]) < v75 * 2)
+              v9 = (int)v9 / 2;
+          }
+          if (((!((uint8_t)v165 & (uint8_t)LockEnableMask)) && ((char)(Chassis[VehPrototypes[(v163 / 0x34)].chassis_id].missile))) && ((uint8_t)(PlayersData[faction_id].flags_ext) & 0x10))
+            v9 = (int)v9 / 3;
+          goto label_4fc68f;
+        case 1:
+          if ((3 <= (int)regional_plan) && (((regional_plan != 7 && (!v158)) || (!v121))))
+            v8 = 0x20;
+          else {
+            v8 = 0x18;
+          }
+          v9 *= v8;
+          if (((v138) && (!v149)) && (v8 = guard_check(faction_id,region), (int)(uint32_t)(uint8_t)(PlayersData[faction_id].region_total_offensive_vehs[v76]) < v8))
+            v9 = (int)v9 / 2;
+          if ((v158) && (!v164))
+            v9 *= 2;
+          if (((v160) && (!v158)) && (v9 = (int)v9 / 2, 0x33 <= TurnCurrentNum))
+            v9 = (int)v9 / 2;
+          goto label_4fc68f;
+        case 2:
+          v9 *= 0x10;
+          if (((v94) && (!v162)) && (has_fac_built(0x1b)))
+            v9 = (int)v9 / 2;
+          v18 = region;
+          if ((2 <= (int)v138) && (!v149)) {
+            v75 = guard_check(faction_id,region);
+            v8 = v171;
+            if ((int)(uint32_t)(uint8_t)(PlayersData[faction_id].region_total_offensive_vehs[v18]) < v75)
+              v9 *= 2;
+          }
+          else {
+            v8 = v171;
+          }
+          v75 = v167;
+          v11 = has_abil(v167,0x40000);
+          if ((((v11) && (v11 = stack_check(v153,6,0x40000,-1,-1), !v11)) && (4 <= (int)(PlayersData[faction_id].planet_ecology))) && (v9 = (int)(v9 * 2) / 3, (int)(PlayersData[faction_id].soc_effect_pending.morale) <= 0))
+            v9 = (int)(v9 * 2) / 3;
+          if (has_abil(v75,0x100)) {
+            if (BaseCurrent->state & 0x100000)
+              v9 = (int)v9 / 2;
+            else {
+              v13 = -1;
+              v77 = -1;
+              v16 = 0x100;
+              v11 = 6;
+              v75 = veh_at((int)BaseCurrent->x,(int)BaseCurrent->y);
+              if (stack_check(v75,v11,v16,v77,v13))
+                v9 *= 3;
+              if (v120)
+                v9 = (int)v9 / 2;
+              else if ((!(int)(PlayersData[faction_id].unk_66)) && (!(int)(PlayersData[faction_id].unk_68)))
+                v9 <<= 2;
+            }
+          }
+          if (((v160) || (v157)) || (v147)) {
+            if (0x1a <= TurnCurrentNum)
+              v9 *= 2;
+            if (0x4c <= TurnCurrentNum)
+              v9 *= 2;
+          }
+          goto label_4fc68f;
+        case 3:
+          v154 = has_abil(v167,0x40000);
+          v8 = v171;
+          if ((!v162) && ((v115 || (!v154)))) {
+            if ((v147) || (regional_plan)) {
+              if (regional_plan == 2) {
+label_4fac9f:
+                v142 = 1;
+              }
+              if (regional_plan != 7) goto label_4fabb2;
+              v11 = 1;
+            }
+            else {
+              if ((prototype_count_2[v75]) || (prototype_count_0[v75])) goto label_4fac9f;
+label_4fabb2:
+              v11 = (int)(Continents[region].tile_count + 199) / 200;
+            }
+            v16 = prototype_count_2[v75];
+            if ((v11 < v16 + prototype_count_0[v75] * 2) && (regional_plan != 8))
+              v142 = 1;
+            v75 = range(TurnCurrentNum / 0x32,0,(int)(PlayersData[faction_id].current_num_bases) + -1);
+            if ((int)(PlayersData[faction_id].current_num_bases) - v75 < v16)
+              v142 = 1;
+          }
+          if (((((regional_plan != 8) && (v114)) || ((int)(v98 + v147 * 2) <= v114)) || ((!v147 && (((v160 || (v156)) || (v157)))))) || (((int)(PlayersData[faction_id].current_num_bases) + 1) / (int)((v147 == 0) + 1) <= v114)) {
+            if ((v154) && (!v115)) {
+              v9 *= 0x20;
+              if (BaseCurrent->eco_damage) {
+                if (regional_plan == 2) goto label_4fad22;
+                v9 = (int)v9 / 2;
+              }
+              if ((int)regional_plan > 2)
+                v9 = (int)v9 / 2;
+            }
+            else {
+              if ((v162) || ((v147 || (v8 = 0x80, (int)(PlayersData[faction_id].best_armor_value) <= 1))))
+                v8 = 0x20;
+              v9 = v8 * v9;
+            }
+          }
+          else {
+            v9 <<= 4;
+          }
+label_4fad22:
+          if (((v160) && ((int)(PlayersData[faction_id].best_armor_value) <= 1)) && (!v158))
+            v9 = (int)v9 / 2;
+          goto label_4fc68f;
+        case 4:
+          v18 = v9 * 0x40;
+          v8 = (int)(PlayersData[faction_id].unk_106);
+          v75 = (int)(PlayersData[faction_id].unk_105);
+          if (v75 <= v8 * 2) {
+            v8 = v164 + v161 * 3;
+            v154 = plan_count_3[v8] + plan_count_1[v8];
+            if (((int)(PlayersData[faction_id].unk_66) << 2) / 3 < (int)v154)
+              v18 = v9 * 0x80;
+          }
+          else {
+            if ((v8 < v75 / 2) && (v18 = (int)v18 / 2, v8 < (int)(v75 + (v75 >> 0x1f & 3U)) >> 2))
+              v18 = (int)v18 / 2;
+          }
+          v9 = v18;
+          v8 = v164 + v161 * 3;
+          v75 = plan_count_1[v8];
+          if ((int)(plan_count_3[v8] + v75) < (int)(PlayersData[faction_id].unk_66)) {
+            if (!v75)
+              v9 = (int)v9 / 2;
+            v9 = (int)v9 / 2;
+            if (regional_plan != 2) {
+              if (!v75)
+                v9 = (int)v9 / 2;
+              if ((int)((plan_count_3[v8] + v75) * 2) <= (int)(PlayersData[faction_id].unk_66))
+                v9 = (int)v9 / 2;
+              v9 = (int)v9 / 2;
+            }
+          }
+          if ((!(BaseCurrent->state & 0x100000)) && (v120))
+            v9 = (int)v9 / 2;
+          goto label_4fc68f;
+        case 5:
+          v9 *= 0x40;
+          if ((v160) && (v9 = (int)v9 / 2, v156))
+            v9 = (int)v9 / 2;
+          v8 = v164 + v161 * 3;
+          if (plan_count_2[v8] <= 1) {
+            if ((!plan_count_3[v8]) && (plan_count_1[v8] <= 1))
+              v9 = (int)v9 / 2;
+            v151 = 0x4;
+            v155 = 0;
+            v18 = 1;
+            scan_faction = &PlayersData[1];
+            do {
+              if ((v18 != faction_id) && ((v8 = has_treaty(faction_id,v18,1), !v8 || ((uint8_t)(1 << ((uint8_t)v18 & 0x1f)) & (uint8_t)LockEnableMask)))) {
+                if ((int)v151 <= scan_faction->satellites_[3])
+                  v151 = scan_faction->satellites_[3];
+                if ((!v155) && (((v8 = has_treaty(faction_id,v18,0x30), v8 || (scan_faction->major_atrocities)) && ((int)(PlayersData[faction_id].planet_busters) < scan_faction->satellites_[3] + 1)))) {
+                  v155 = 1;
+                  v9 = (int)v9 / 2;
+                }
+              }
+              ++scan_faction;
+              v18 += 1;
+            } while (scan_faction < &PlayersData[8]);
+            if ((int)(PlayersData[faction_id].planet_busters) <= (int)v151) {
+              if (!((uint8_t)v165 & (uint8_t)LockEnableMask)) {
+                if ((uint8_t)(PlayersData[faction_id].flags_ext) & 0x10)
+                  v9 = (int)v9 / 2;
+                if (PlayersData[faction_id].flags & 0x1000000)
+                  v9 = (int)v9 / 2;
+              }
+              goto label_4fc68f;
+            }
+          }
+          break;
+        case 6:
+          v8 = naval_base(BaseIDCurrentSelected);
+          if (v8) {
+            v9 = (int)(((-(uint32_t)(v144 != 1) & 0xffffff80) + 0x100) * v9 * 0x38) / (int)MapAreaSqRoot;
+            if (regional_plan == 7)
+              v9 = (int)(v9 * 2) / 3;
+            if (has_fac_built(0x1c))
+              v9 = (int)((v108 + 2) * v9) / (v108 + 3);
+            if ((char)(VehPrototypes[(v163 / 0x34)].unk_1) != '\x15') {
+              v75 = at_goal(faction_id,6,(int)BaseCurrent->x,(int)BaseCurrent->y);
+              v8 = v171;
+              if (v75)
+                v9 = (int)v9 / 2;
+              v18 = (uint32_t)(PlayersData[faction_id].unk_64);
+              v75 = (&plan_count_1[18])[v164];
+              v11 = (int)(PlayersData[faction_id].unk_65);
+              v75 = (range(((v75 - (v18 & 0x7ff)) * 2 + 8) - v11 / 2,0,8) + 8) * v9;
+              v75 += v75 >> 0x1f & 0xfU;
+              v9 = v75 >> 4;
+              if (plan_count_1[19] + plan_count_3[19] * 2 < v123) {
+                v75 = v9 - (v75 >> 0x1f);
+                v9 = v75 >> 1;
+                if (regional_plan == 7)
+                  v9 = (int)(v9 - (v75 >> 0x1f)) >> 1;
+              }
+              if ((plan_count_3[19] + plan_count_1[19] < plan_count_3[22] + plan_count_1[22]) && (v9 = (int)v9 / 2, regional_plan == 7))
+                v9 = (int)v9 / 2;
+              if (v147)
+                v9 = (int)(v9 * 3 + ((int)(v9 * 3) >> 0x1f & 3U)) >> 2;
+              if (PlayersData[faction_id].flags & 0x80000)
+                v9 = (int)v9 / 2;
+              if ((uint32_t)(Players[faction_id].rule_flags) & 0x100)
+                v9 = (int)v9 / 2;
+              if (v158)
+                v9 = (int)v9 / 2;
+              if ((v160) && (v158))
+                v9 = (int)v9 / 2;
+            }
+            else {
+              if (v158)
+                v9 = (int)v9 / 2;
+              if (plan_count_1[22] <= (int)(plan_count_3[v161 * 3 + 1] + plan_count_1[v161 * 3 + 1]))
+                v9 *= 2;
+              if ((int)((plan_count_3[v161 * 3 + 1] + plan_count_1[v161 * 3 + 1]) * 3) / 2 < plan_count_1[22])
+                v9 = (int)v9 / 2;
+            }
+            goto label_4fc68f;
+          }
+          break;
+        case 7:
+          if ((v164 != 1) || (v8 = transport_base(BaseIDCurrentSelected), v8)) {
+            if (regional_plan != 7)
+              v8 = (-(uint32_t)(regional_plan != 8) & 0x40) + 0x40;
+            else {
+              v8 = 0x10;
+            }
+            v9 = v8 * v9;
+            if ((((v147) || ((v160 && (regional_plan == 7)))) && (v9 = (int)v9 / 2, !(&plan_count_3[18])[v18 + 3])) && ((!(char)(PlayersData[faction_id].proto_id_active[v167]) && (v161 == 7))))
+              v9 = (int)(v9 + ((int)v9 >> 0x1f & 3U)) >> 2;
+            if ((v158) && ((int)v162 <= 2)) {
+              v8 = v9 + ((int)v9 >> 0x1f & 3U);
+              v9 = v8 >> 2;
+              if (!(&plan_count_1[18])[v18 + 3])
+                v9 = (int)(v9 + (v8 >> 0x1f & 3U)) >> 2;
+            }
+            v8 = has_abil(v167,0x80000);
+            if (v8)
+              v9 = (int)(v9 * 3 + ((int)(v9 * 3) >> 0x1f & 3U)) >> 2;
+            v8 = (int)(PlayersData[faction_id].current_num_bases) / 2;
+            if (v8 <= 1)
+              v8 = 2;
+            v75 = (&plan_count_1[18])[v18 + 3];
+            if (v8 <= v75)
+              v9 *= 2;
+            if (v161 == 7) {
+              if (((&plan_count_3[18])[v18] + (&plan_count_1[18])[v18] + v75 + (&plan_count_3[18])[v18 + 3] <= 1) && (TurnCurrentNum <= 99))
+                v9 = (int)v9 / 2;
+              if ((((!v75) && (!(&plan_count_3[18])[v18 + 3])) && (((&plan_count_1[18])[v18 + 6] || ((&plan_count_3[18])[v18 + 6])))) && (3 <= (int)regional_plan))
+                v9 = (int)v9 / 2;
+            }
+            if (BaseCurrent->unk_1)
+              v9 *= 2;
+            if (regional_plan != 7) {
+              if (v144 == 1)
+                v9 *= 2;
+              if ((!((uint8_t)v165 & (uint8_t)LockEnableMask)) && (((1 < prototype_count_2[v167] || (regional_plan == 2)) || ((uint8_t)((PlayersData[faction_id].unk_77[region] >> 8)) & 4))))
+                v142 = 1;
+            }
+            else if (((int)v162 <= 1) && (v161 == 7)) {
+              v75 = 0;
+              v8 = 1;
+              do {
+                if ((char)(PlayersData[faction_id].region_total_bases[v8]))
+                  v75 += 1;
+                v8 += 1;
+              } while (v8 < 0x80);
+              v8 = (int)((uint8_t)(PlayersData[faction_id].region_total_bases[region]) + 3) >> 2;
+              if (v8 < v75)
+                v8 = v75;
+              if (((int)((&plan_count_1[18])[v18 + 3] - (uint32_t)((char)(PlayersData[faction_id].proto_id_active[13]) != '\0')) < v8) && (!(&plan_count_3[18])[v18 + 3]))
+                v9 = (int)(v9 + ((int)v9 >> 0x1f & 3U)) >> 2;
+            }
+            goto label_4fc68f;
+          }
+          break;
+        case 8:
+          v18 = LockEnableMask & 0xff & v165;
+          if ((v18) && ((BaseCurrent->governor & 0xdfbe00) == 0x20000)) goto label_4fb650;
+          if ((((v18) && (BaseCurrent->governor & 0x80000000)) || ((((!v18 && ((int)v162 < 3)) || (2 <= BaseCurrent->population_size)) && (((int)((&plan_count_2[24])[v164] + (&plan_count_0[24])[v164]) <= 1 || (regional_plan == 8)))))) && ((1 <= BaseCurrent->nutrient_surplus || ((!(&plan_count_1[18])[v164 + 6] && (!(&plan_count_2[24])[v164])))))) {
+            if (v164) {
+              if (((v158) || ((!v18 && ((uint8_t)(PlayersData[faction_id].flags_ext) & 4)))) || ((!(char)(PlayersData[faction_id].proto_id_active[v167]) && (!prototype_count_1[v167])))) {
+label_4fb650:
+                v76 = BaseCurrent->state & 0x1000000;
+                if (v76) {
+                  v10 = ((((int)(PlayersData[faction_id].current_num_bases) - TurnCurrentNum / (int)((-(uint32_t)(v18 != 0) & 0x14) + 0x14)) - v148) - v131) - 1;
+                  v166 += v10 & (uint32_t)((int)v10 < 0) - 1;
+                }
+                v10 = v9 * 5;
+                if (('\x02' <= BaseCurrent->population_size) || ((BaseCurrent->mineral_surplus <= BaseCurrent->nutrient_surplus && (1 <= BaseCurrent->nutrient_surplus)))) {
+                  if ((3 <= (int)regional_plan) && (!v76)) {
+                    if (v18) {
+                      if (((regional_plan == 7) && (BaseCurrentCount / 5 <= (int)(PlayersData[faction_id].current_num_bases))) && (10 <= (int)(PlayersData[faction_id].current_num_bases))) goto label_4fb765;
+                      if ((!v18) || (!(BaseCurrent->governor & 0x80000000))) goto label_4fb755;
+                      if (!v147) {
+                        if ((v156) || (v160))
+                          v10 = (int)v10 / 2;
+                        goto label_4fb765;
+                      }
+                      v8 = range(DiffLevelCurrent + 1,2,99);
+                    }
+                    else {
+label_4fb755:
+                      v8 = DiffLevelCurrent + 1;
+                    }
+                    v10 = (int)v10 / v8;
+                  }
+                }
+                else {
+                  v10 = v9 * 10;
+                }
+label_4fb765:
+                v76 = faction_id;
+                v18 = regional_plan;
+                v9 = v10;
+                if ((uint8_t)(PlayersData[faction_id].flags_ext) & 1)
+                  v9 = (int)v10 / 2;
+                v151 = (region + faction_id * 0x1066);
+                if ((uint8_t)((PlayersData[faction_id].unk_77[region] >> 8)) & 4) {
+                  v9 *= 2;
+                  v142 = 1;
+                }
+                if ((GameRules & 0x20000000) && (v9 = (int)v9 / 2, regional_plan == 8))
+                  v9 = (int)v9 / 2;
+                if (v164) {
+                  if (v158) {
+                    v9 = (int)v9 / 2;
+                    if ((int)(PlayersData[faction_id].current_num_bases) <= 3)
+                      v9 = (int)v9 / 2;
+                    if ((int)(PlayersData[faction_id].current_num_bases) <= 7)
+                      v9 = (int)v9 / 2;
+                    if ((uint32_t)(Players[faction_id].rule_flags) & 0x100)
+                      v9 = (int)v9 / 2;
+                  }
+                  if (((2 <= (int)MapOceanCoverage) && (v9 = (int)v9 / 2, (int)v162 <= 2)) && ((v8 = v164 + v161 * 3, !plan_count_2[v8] && ((!plan_count_0[v8] && (!(BaseCurrent->state & 0x1000000)))))))
+                    v9 = (int)v9 / 2;
+                  if ((int)Rules.nutrient_req_citizen <= BaseCurrent->nutrient_surplus) {
+                    if ((regional_plan == 7) || (v158)) {
+                      v9 = (int)v9 / 2;
+                      goto label_4fba09;
+                    }
+label_4fba0d:
+                    if ((regional_plan != 7) && (((uint8_t)LockEnableMask & (uint8_t)v165 || (!((uint8_t)(PlayersData[faction_id].flags_ext) & 4)))))
+                      v9 *= 2;
+                  }
+                  else {
+label_4fba09:
+                    if (!v158) goto label_4fba0d;
+                  }
+                  if ((!((uint8_t)v165 & (uint8_t)LockEnableMask)) && ((uint8_t)(PlayersData[faction_id].flags_ext) & 4))
+                    v9 = (int)v9 / 2;
+label_4fba4f:
+                  v76 = faction_id;
+                  if ((regional_plan != 8) || (2 <= (uint8_t)(PlayersData[faction_id].region_total_bases[region]))) goto label_4fba68;
+                }
+                else {
+                  if (((uint8_t)v165 & (uint8_t)LockEnableMask) && (100 < TurnCurrentNum)) break;
+                  if ((((regional_plan == 8) && (((plan_count_0[9] || (plan_count_2[9])) || (!(char)(PlayersData[faction_id].unk_83[region]))))) && (((plan_count_0[27] || (plan_count_2[27])) || (v8 = has_tech((int)VehPrototypes[1].preq_tech,faction_id), !v8)))) && (!((uint8_t)(PlayersData[faction_id].unk_77[region]) & 0x20)))
+                    v9 = (int)v9 / 2;
+                  if ((((!plan_count_1[v161 * 3]) && (!plan_count_3[v161 * 3])) && ((0 <= BaseCurrent->nutrient_surplus && (v18 != 2)))) && ((!((uint16_t)(PlayersData[faction_id].unk_77[region]) & 0x401) || (v18 == 7))))
+                    v9 = (int)v9 / 2;
+                  if (((3 <= (int)v162) || (plan_count_0[v161 * 3])) || (plan_count_2[v161 * 3])) goto label_4fba4f;
+                  if (v18 == 8) {
+label_4fb90c:
+                    v9 = (int)v9 / 2;
+                    if ((int)(PlayersData[faction_id].current_num_bases) == 1)
+                      v9 = (int)(v9 + ((int)v9 >> 0x1f & 3U)) >> 2;
+                    goto label_4fba4f;
+                  }
+                  if (v18 != 7) goto label_4fba4f;
+                  if ((!(BaseCurrent->state & 0x1000000)) && ((int)MapOceanCoverage <= 0)) goto label_4fb90c;
+label_4fba68:
+                  v8 = (int)(PlayersData[faction_id].current_num_bases);
+                  if ((3 <= v8) && (v116 == (int)(PlayersData[faction_id].unk_28)))
+                    v9 *= 2;
+                  if ((4 <= v8) && (v101 < BaseCurrent->population_size))
+                    v9 *= 2;
+                  if (((uint8_t)v165 & (uint8_t)LockEnableMask) && ((((int)(PlayersData[faction_id].diff_level) + 1) * TurnCurrentNum) / 0x28 <= v8))
+                    v9 *= 3;
+                }
+                if (!strcmp(Players[v76].filename,"BELIEVE")) {
+                  if ((!((uint8_t)v165 & (uint8_t)LockEnableMask)) && (!((uint8_t)(PlayersData[faction_id].unk_77[region]) & 1)))
+                    v9 = (int)v9 / 2;
+                }
+                if (v147)
+                  v9 = (int)v9 / 2;
+                goto label_4fc68f;
+              }
+            }
+            else if (((!v158) || (((int)(PlayersData[faction_id].current_num_bases) <= v130 && (3 <= v130)))) && (regional_plan != 2)) goto label_4fb650;
+          }
+          break;
+        case 9:
+          v9 *= (-(uint32_t)(v144 != 0) & 2) + 4;
+          if (v156)
+            v9 = (int)v9 / 2;
+          else if (v160)
+            v9 *= 2;
+          if ((uint8_t)(PlayersData[faction_id].flags_ext) & 2)
+            v9 = (int)v9 / 2;
+          if (v164 != 1) {
+            if (!v158) {
+              v155 = (&plan_count_0[24])[v164 + 3];
+              if ((((v155) || (prototype_count_0[v167])) || (0x19 <= TurnCurrentNum)) || ((v160 || (v147)))) {
+                if ((int)v162 <= 2) goto label_4fbceb;
+label_4fbd33:
+                if (regional_plan == 2) break;
+              }
+              else {
+                v162 = 0;
+label_4fbceb:
+                if ((v155) || (prototype_count_0[v167])) goto label_4fbd33;
+                if ((!((uint8_t)v165 & (uint8_t)LockEnableMask)) && ((regional_plan == 8 || (TurnCurrentNum <= 0x27))))
+                  v9 = (int)(v9 + ((int)v9 >> 0x1f & 0xfU)) >> 4;
+                if (regional_plan != 7) goto label_4fbd33;
+                v9 = (int)v9 / 2;
+              }
+              v7 = (uint16_t)(PlayersData[faction_id].unk_77[region]);
+              v126 = (int)(((region + faction_id * 0x1066) & 0xffff0000U) | v7);
+              if (v7 & 0x400)
+                v9 <<= 2;
+              if ((!v162) && (!v160)) {
+                v154 = BaseCurrent->state;
+                if ((!(v154 & 0x20)) && (plan_count_0[v161 * 3 + v164] < (int)(uint32_t)(uint8_t)(PlayersData[faction_id].region_total_bases[region]))) {
+                  if ((regional_plan != 2) && (((v134 || (v150)) || ((!v124 && (3 <= (int)regional_plan))))))
+                    v9 = (int)v9 / 2;
+                  if ((regional_plan == 7) || (v154 & 0x2000000)) {
+                    if ((v134) || ((v150 || (!v124))))
+                      v9 = (int)(v9 + ((int)v9 >> 0x1f & 3U)) >> 2;
+                    else {
+                      v9 = (int)v9 / 2;
+                    }
+                  }
+                }
+                if (3 <= (int)regional_plan) {
+                  v18 = (uint32_t)(uint8_t)(PlayersData[faction_id].region_total_bases[region]);
+                  if (plan_count_0[v161 * 3 + v164] <= (int)v18)
+                    v9 = (int)v9 / 2;
+                  if (((plan_count_0[v161 * 3 + v164] <= (int)((v18 + 1) / 2)) && ((!(v7 & 0x20) || (!v124)))) && ((v134 || ((v150 || (!v124))))))
+                    v9 = (int)v9 / 2;
+                }
+              }
+              if (BaseCurrent->state & 0x20)
+                v9 *= 3;
+              v18 = (uint32_t)(uint8_t)(PlayersData[faction_id].region_total_bases[region]);
+              if ((int)v155 < (int)v18) {
+                if (((int)((v18 * 2) / 3) <= (int)v155) && ((!regional_plan || (regional_plan == 2))))
+                  v9 = (int)(v9 * 3) / 2;
+                if (!MapCloudCover)
+                  v9 = (int)v9 / 2;
+                goto label_4fc68f;
+              }
+            }
+          }
+          else if (((((!prototype_count_0[v167]) && (plan_count_1[28] <= v130 / 2)) || (v158)) && (!(BaseCurrent->state & 0x80000))) && (((v158 || ((3 <= (int)regional_plan && ((regional_plan == 7 || (!plan_count_1[28])))))) && ((!v121 || ((v158 || (!plan_count_1[28])))))))) {
+            if (!v162) {
+              if ((v158) && (prototype_count_2[v167] < v130))
+                v9 = (int)v9 / 2;
+              if (prototype_count_2[v167] < v130 / 2)
+                v9 = (int)v9 / 2;
+              if ((!plan_count_1[28]) && (!v121))
+                v9 = (int)v9 / 2;
+            }
+            if (plan_count_0[28] < v130) {
+              if (v158)
+                v9 = (int)v9 / 2;
+              goto label_4fc68f;
+            }
+          }
+          break;
+        case 10:
+          if ((!((uint8_t)v165 & (uint8_t)LockEnableMask)) && (3 <= (int)regional_plan)) {
+            v8 = 0;
+            v159 = 3;
+            if (1 <= VehCurrentCount) {
+              scan_vehicle = &Vehs[0];
+              do {
+                if ((scan_vehicle->faction_id == faction_id) && ((char)(VehPrototypes[scan_vehicle->proto_id].plan) == (char)v17)) {
+                  if (scan_vehicle->home_base_id == BaseIDCurrentSelected)
+                    v9 *= 2;
+                  if (scan_vehicle->order != '\x03') goto label_4fd8f6;
+                  if (v159)
+                    v159 -= 1;
+                  v9 = (int)(v9 * 3) / 2;
+                  v17 = v152;
+                }
+                v8 += 1;
+                ++scan_vehicle;
+              } while (v8 < VehCurrentCount);
+              if (!v159) break;
+            }
+            if (((!v128) && (regional_plan == 7)) && ((int)(PlayersData[faction_id].ai_tech)))
+              v9 = (int)v9 / 2;
+            v9 = (int)(v9 * 0x300) / (int)BaseCurrent->population_size;
+            goto label_4fc68f;
+          }
+          break;
+        case 0xb:
+          v8 = v164 + v161 * 3;
+          v140 = v8 * 4;
+          if ((plan_count_0[v8] < (int)(uint32_t)(uint8_t)(PlayersData[faction_id].region_total_bases[region])) && ((!((uint8_t)v165 & (uint8_t)LockEnableMask) || ((int)(plan_count_3[v8] + plan_count_1[v8]) <= 1)))) {
+            v12 = 0;
+            v151 = 0;
+            if (((int)v162 <= 1) && ((3 <= DiffLevelCurrent && ((int)v143 <= 1)))) {
+              v8 = faction_id * 0x59c;
+              v83 = strcmp(Players[faction_id].filename,"PEACE") == 0;
+              if (v83)
+                v151 = 0x1;
+              v12 = (uint32_t)v83;
+              if (at_climax(v10)) {
+                v12 = (v12 + 1);
+                v151 = v12;
+              }
+            }
+            v18 = faction_id;
+            if ((uint8_t)(PlayersData[faction_id].flags_ext) & 8) {
+              v12 = (v12 + 2);
+              v151 = v12;
+            }
+            if (plan_count_2[v140 / 4] <= (int)v12) {
+              v76 = 0xffffffff;
+              v155 = 0;
+              v132 = 0;
+              v127 = 0;
+              v9 = 1;
+              scan_faction = &PlayersData[1];
+
+              do {
+                if (v9 != v18) {
+                  v132 += (int)(PlayersData[v18].diplo_mind_control[v9]);
+                  v155 += (int)(PlayersData[v18].stolen_data_count[v9]);
+                  if (scan_faction->region_total_bases[region]) {
+                    if (!has_project(0xf,v9)) {
+                      if (has_treaty(v18,v9,8)) {
+                        v127 += 1;
+                        if (has_treaty(v18,v9,7)) {
+                          if ((LockEnableMask & 0xff & 1 << ((uint8_t)v9 & 0x1f)) || (v165 & LockEnableMask & 0xff)) {
+                            if (v151) goto label_4fc14e;
+                            if (has_treaty(v18,v9,0x1000000)) {
+                              if (((int)(PlayersData[faction_id].ranking) <= scan_faction->ranking) && ((int)((-(uint32_t)(scan_faction->ranking != 7) & 0xfffffffd) + 6) <= (scan_faction->tech_ranking - (int)(PlayersData[faction_id].tech_ranking)) / 2)) goto label_4fc14e;
+                            }
+                            else if (((int)(PlayersData[faction_id].ranking) <= scan_faction->ranking) || ((int)(PlayersData[faction_id].tech_ranking) <= scan_faction->tech_ranking)) goto label_4fc14e;
+                          }
+                        }
+                        else {
+label_4fc14e:
+                          v76 = v9;
+                          if (((uint8_t)(1 << ((uint8_t)v9 & 0x1f)) & (uint8_t)LockEnableMask) && (!IsMultiplayerNet)) break;
+                        }
+                      }
+                    }
+                  }
+                }
+                v9 += 1;
+
+                ++scan_faction;
+              } while (scan_faction < &PlayersData[8]);
+              if ((int)v76 <= -1) {
+                if ((((regional_plan == 7) && (1 < DiffLevelCurrent)) || (v157)) && (!plan_count_0[v140 / 4]))
+                  v76 = FactionRankings[7];
+                if ((int)v76 < 0) break;
+                v18 = faction_id;
+              }
+              if (v76 != v18) {
+                if ((uint8_t)LockEnableMask & (uint8_t)v165)
+                  v126 = 0;
+                else {
+                  v8 = range((int)(PlayersData[v76].energy_reserves),100,999999);
+                  v126 = (int)(PlayersData[faction_id].energy_reserves) / v8;
+                }
+                if ((uint8_t)v165 & (uint8_t)LockEnableMask)
+                  v137 = 0;
+                else {
+                  v8 = range((int)(PlayersData[faction_id].mil_strength_1),(int)(PlayersData[faction_id].current_num_bases) + 1,999999);
+                  v137 = ((int)(PlayersData[v76].mil_strength_1) / v8);
+                }
+                if (GameRules & 0x40)
+                  v125 = 0x5;
+                else {
+                  v125 = (PlayersData[v76].diff_level);
+                }
+                v77 = 0x10;
+                v16 = 1;
+                v11 = (-(uint32_t)(((uint8_t)LockEnableMask & (uint8_t)v165) != 0) & 2) + 2;
+                v154 = v76 * 0x20cc;
+                v8 = has_treaty(faction_id,v76,7);
+                v75 = bit_count(v8);
+                v11 = ((((((int)(PlayersData[faction_id].tech_ranking) / v11 - (int)(PlayersData[v76].tech_ranking) / v11) + (int)(PlayersData[v76].soc_effect_pending.probe)) - (int)v125) - (int)v137) - v126) - (int)v151;
+                v8 = plan_count_0[v140 / 4];
+                v9 = (int)(range(v11 + 0xd + v8 + v75,v16,v77) * v159 * 3) / (int)((v150 - v148) + 3);
+                if (!((uint8_t)v165 & (uint8_t)LockEnableMask)) {
+                  v8 = (int)Chassis[5].preq_tech;
+                  if ((has_tech(v8,v76)) && (v8 = has_tech((int)Chassis[5].preq_tech,faction_id), !v8))
+                    v9 = (int)v9 / 2;
+                  v8 = has_tech((int)Chassis[8].preq_tech,v76);
+                  v18 = faction_id;
+                  if ((v8) && (v8 = has_tech((int)Chassis[8].preq_tech,faction_id), !v8))
+                    v9 = (int)v9 / 2;
+                  v8 = (int)Weapon[0x10].preq_tech;
+                  if ((has_tech(v8,v76)) && (v8 = (int)Weapon[0x10].preq_tech, !has_tech(v8,v18)))
+                    v9 = (int)v9 / 2;
+                  v8 = has_tech(Facility[0x66].preq_tech,v76);
+                  if ((v8) && (v8 = has_tech(Facility[0x66].preq_tech,v18), !v8))
+                    v9 = (int)v9 / 2;
+                  scan_tech = 1;
+                  do {
+                    v5 = Reactor[scan_tech].preq_tech;
+                    if ((has_tech((int)v5,v76)) && (v8 = has_tech((int)Reactor[scan_tech].preq_tech,faction_id), !v8))
+                      v9 = (int)v9 / 2;
+                    ++scan_tech;
+                  } while (scan_tech <= 3);
+                  if (((int)(PlayersData[faction_id].best_weapon_value) < (int)(PlayersData[v76].best_weapon_value)) || ((int)(PlayersData[faction_id].best_armor_value) < (int)(PlayersData[v76].best_armor_value)))
+                    v9 = (int)v9 / 2;
+                }
+                if (((regional_plan != 7) && ((uint8_t)(PlayersData[faction_id].unk_77[region]) & 0x20)) && (v127)) {
+                  if (((v157) && (!plan_count_1[v140 / 4])) && (!plan_count_3[v140 / 4]))
+                    v9 = (int)v9 / 2;
+                }
+                else {
+                  v8 = has_tech((int)Chassis[3].preq_tech,faction_id);
+                  if ((!v8) || ((plan_count_0[v140 / 4] && ((int)(v132 + v155) < 3)))) break;
+                  if ((uint8_t)LockEnableMask & (uint8_t)v165)
+                    v9 *= 2;
+                  if (plan_count_3[v140 / 4] + plan_count_1[v140 / 4])
+                    v9 *= 2;
+                }
+                if ((!((uint8_t)v165 & (uint8_t)LockEnableMask)) && ((uint8_t)(PlayersData[faction_id].flags_ext) & 8))
+                  v9 = (int)(v9 + ((int)v9 >> 0x1f & 3U)) >> 2;
+                if ((v144 == 1) && (1 <= (int)v141))
+                  v166 *= 2;
+                goto label_4fc68f;
+              }
+            }
+          }
+          break;
+        default:
+label_4fc68f:
+          if ((0x40 <= v167) && (!((uint8_t)(VehPrototypes[(v163 / 0x34)].flags) & 4))) {
+            v8 = 0;
+            v140 = 0;
+            v73[2] = 0;
+            v73[1] = 0;
+            v73[0] = 0;
+            v154 = 0;
+            v155 = 0;
+            v132 = 0;
+            v127 = 0;
+            do {
+              if (0x40 <= v8)
+                v75 = faction_id * 0x40 + -0x40 + v8;
+              else {
+                v75 = v8;
+              }
+              if (v75 != v167) {
+                v7 = (uint16_t)(VehPrototypes[v75].flags);
+                if ((v7 & 1) && ((v75 < 0x40 || (v7 & 4)))) {
+                  v8 = weap_val(v75,faction_id);
+                  if (v132 <= v8)
+                    v132 = weap_val(v75,faction_id);
+                  v8 = arm_val(v75,faction_id);
+                  if ((int)v155 <= v8)
+                    v155 = arm_val(v75,faction_id);
+                  v154 |= (uint32_t)(VehPrototypes[v75].ability_flags);
+                  v126 = v73[(uint8_t)(Chassis[VehPrototypes[v75].chassis_id].triad)];
+                  if (v126 <= speed_proto(v75))
+                    v8 = speed_proto(v75);
+                  else {
+                    v8 = v126;
+                  }
+                  v73[(uint8_t)(Chassis[VehPrototypes[v75].chassis_id].triad)] = v8;
+                  v8 = v127;
+                }
+              }
+              v18 = faction_id;
+              v8 += 1;
+              v127 = v8;
+            } while (v8 < 0x80);
+            v75 = weap_val(v167,faction_id);
+            v11 = arm_val(v167,v18);
+            v16 = speed_proto(v167);
+            v8 = initial_facility_10_present;
+            if (v161 != 2) {
+              if ((int)v161 <= 1) {
+                v11 = ((regional_plan != 7) || (!v111));
+                if (v132 + v11 < v75)
+                  v140 = 1;
+              }
+            }
+            else if ((((char)(Armor[VehPrototypes[(v163 / 0x34)].armor_id].defense_rating) != '\x01') && ((int)v155 < v11)) && (((int)(v155 + 1) < v11 || (regional_plan == 7)))) {
+              v9 = (int)(v9 * 2) / 3;
+              v140 = 1;
+            }
+            if (v16 <= v73[(uint8_t)(Chassis[VehPrototypes[(v163 / 0x34)].chassis_id].triad)])
+              v75 = v140;
+            else {
+              v140 = 1;
+              v75 = 1;
+            }
+            if (!initial_facility_10_present) {
+              if ((v161 != 5) || ((int)(PlayersData[faction_id].planet_busters))) {
+                if (!v75) {
+                  v11 = ((v160) || (v157));
+                  v11 = ((uint32_t)(2 < (int)regional_plan) - v11) + v131;
+                  v166 += range(v11,0,2);
+                }
+                if ((regional_plan == 8) || ((regional_plan == 7 && (!(BaseCurrent->state & 0x1000000))))) {
+                  if (v161 != 8) {
+                    if (((!v160) && (v166 = v166 + 1, !v111)) && (!((uint8_t)LockEnableMask & (uint8_t)v165)))
+                      v9 *= 2;
+                    if (!v75) {
+                      if (TurnCurrentNum <= 0x31)
+                        v9 *= 2;
+                      if ((TurnCurrentNum <= 99) && (!((uint8_t)v165 & (uint8_t)LockEnableMask)))
+                        v9 *= 2;
+                    }
+                    if (!(BaseCurrent->state & 0x1000000))
+                      v9 *= 2;
+                  }
+                  else {
+                    v9 = (int)v9 / 2;
+                  }
+                }
+              }
+              if (3 <= (int)v162)
+                v9 <<= 3;
+            }
+            if (prototype_count_1[v167]) {
+              if (!v8) break;
+            }
+            else {
+              v75 = (int)(PlayersData[faction_id].unk_28) * 3;
+              v75 = (int)(v75 + (v75 >> 0x1f & 3U)) >> 2;
+              v11 = (int)(PlayersData[faction_id].unk_28) + -1;
+              if (v11 < v75)
+                v75 = v11;
+              if ((v75 <= v116) && (-0x45 <= BaseCurrent->queue_production_id[0])) {
+                if (!v8) {
+                  if (v113 <= 1)
+                    v9 = (int)v9 / 2;
+                  v15 = (uint8_t)(PlayersData[faction_id].region_base_plan[region]);
+                  if ((uint8_t)(VehPrototypes[(v163 / 0x34)].plan) == v15)
+                    v9 = (int)v9 / 2;
+                  if (((char)(VehPrototypes[(v163 / 0x34)].plan) == '\x01') && (v15 <= 2))
+                    v9 = (int)v9 / 2;
+                  if (((v140) && (v15 == 7)) && (v111))
+                    v9 = (int)v9 / 2;
+                  if (((char)(VehPrototypes[(v163 / 0x34)].plan) == '\x01') && ((v150 || (v134))))
+                    v9 = (int)v9 / 2;
+                  if ((!(char)(VehPrototypes[(v163 / 0x34)].plan)) && ((v148 || (v131))))
+                    v9 = (int)v9 / 2;
+                  goto label_4fcb64;
+                }
+label_4fcad9:
+                v9 = (int)(v9 * 2) / 3;
+                if (!v8) goto label_4fcaf5;
+              }
+              else {
+                if (v8) goto label_4fcad9;
+label_4fcb64:
+                if (v113)
+                  v9 = (int)((v113 + 5) * v9) / 5;
+label_4fcaf5:
+                if ((int)((int)(PlayersData[faction_id].current_num_bases) + ((int)(PlayersData[faction_id].current_num_bases) >> 0x1f & 3U)) >> 2 <= v113) goto label_4fcbbf;
+              }
+              v3 = (char)(PlayersData[faction_id].region_base_plan[region]);
+              switch(v3) {
+                case 0:
+                case 2:
+                  if ((char)(VehPrototypes[(v163 / 0x34)].plan) == v3)
+                    v9 = (int)v9 / 2;
+                  if ((char)(VehPrototypes[(v163 / 0x34)].plan) == '\x01') goto label_4fcb4e;
+                  break;
+                case 7:
+                  if ((char)(VehPrototypes[(v163 / 0x34)].plan) == '\a')
+                    v9 = (int)v9 / 2;
+                  if ((char)(VehPrototypes[(v163 / 0x34)].plan) == '\x06')
+                    v9 = (int)(v9 * 3 + ((int)(v9 * 3) >> 0x1f & 3U)) >> 2;
+                  break;
+                case 8:
+label_4fcb4e:
+                  v9 = (int)(v9 * 3 + ((int)(v9 * 3) >> 0x1f & 3U)) >> 2;
+
+              }
+            }
+label_4fcbbf:
+            if ((3 <= (uint8_t)(Weapon[VehPrototypes[(v163 / 0x34)].weapon_id].mode)) && (!initial_facility_10_present))
+              v9 *= 2;
+            if ((((int)(PlayersData[faction_id].unk_28) * 2) / 3 <= v116) && (regional_plan != 8))
+              v9 = (int)(v9 * 2) / 3;
+            if ((int)(PlayersData[faction_id].unk_28) / 2 <= v116) {
+              if ((!v96) && (regional_plan != 8))
+                v9 = (int)(v9 * 3 + ((int)(v9 * 3) >> 0x1f & 3U)) >> 2;
+              if ((v157) && (!initial_facility_10_present))
+                v9 = (int)v9 / 2;
+            }
+            else if ((!initial_facility_10_present) && ((!v140 || (v161 != 2))))
+              v9 *= 2;
+          }
+          v18 = region;
+          if (v162) {
+            if (v161 != 2) {
+              if (v161 != 3) {
+                if (v161) {
+                  v76 = v162;
+                  if ((v161 != 1) || ((((v162 == 3 || (((int)v112 <= (int)(v149 + v122) && (v8 = guard_check(faction_id,region), v8 <= (int)(uint32_t)(uint8_t)(PlayersData[faction_id].region_total_offensive_vehs[v18]))))) && ((!regional_plan || (regional_plan == 7)))) && (v76 = v162, (int)v112 <= (int)(v149 + v122))))) {
+label_4fcd31:
+                    if (v76 == 3) {
+                      if ((!((uint8_t)v165 & (uint8_t)LockEnableMask)) || (BaseCurrent->governor & 0x1000))
+                        v142 = 1;
+                    }
+                    goto label_4fcf6d;
+                  }
+                }
+                else {
+                  v8 = has_abil(v167,0x8000);
+                  if ((v8) && (BaseCurrent->state & 0x200000)) {
+                    v76 = v162;
+                    goto label_4fcd31;
+                  }
+                }
+              }
+              else if ((2 <= (int)(PlayersData[faction_id].best_armor_value)) && ((int)v162 <= 2))
+                v9 *= 2;
+            }
+            v8 = v167;
+            v18 = v122;
+            if (((!v149) && ((int)v122 < (int)v112)) && (2 <= (uint8_t)(VehPrototypes[(v163 / 0x34)].plan)))
+              v9 *= 2;
+            v75 = has_abil(v167,0x40000);
+            if ((v75) && (v75 = stack_check(v153,6,0x40000,-1,-1), v75 < (int)v18 / 2 + -1))
+              v9 = (int)v9 / 2;
+            if ((has_abil(v8,0x200)) && (v8 = stack_check(v153,6,0x200,-1,-1), v8 < (int)v18 / 2 + -1))
+              v9 = (int)v9 / 2;
+            v18 = v161;
+            if (((v162 != 3) || ((v9 = v9 * (((uint8_t)(VehPrototypes[(v163 / 0x34)].cost) + 1) / 2), v161 != 2 && ((int)(PlayersData[faction_id].best_armor_value) != 1)))) || ((0x40 <= v167 && (!((uint8_t)(VehPrototypes[(v163 / 0x34)].flags) & 4))))) {
+              if ((int)v143 <= 1) {
+                v8 = 1 << (3U - (char)v162 & 0x1fU);
+                if (v8 <= v166)
+                  v166 = v8;
+              }
+            }
+            else {
+              v166 = 0;
+            }
+          }
+          else {
+            if ((((uint8_t)(VehPrototypes[(v163 / 0x34)].plan) <= 9) && (v8 = BaseCurrent->mineral_intake_2, v8)) && (((uint8_t)(VehPrototypes[(v163 / 0x34)].plan) != 7 || (regional_plan != 7)))) {
+              v75 = (int)(PlayersData[faction_id].soc_effect_pending.support);
+              v11 = BaseCurrent->mineral_consumption;
+              if (3 <= v75) {
+                v16 = (int)BaseCurrent->population_size;
+label_4fcf10:
+                v75 = 1;
+              }
+              else {
+                if (-4 < v75) {
+                  if (-2 <= v75) {
+                    v16 = 1;
+                    if (v75 != -2)
+                      v16 = v75 + 2;
+                  }
+                  else {
+                    v16 = 0;
+                  }
+                  goto label_4fcf10;
+                }
+                v16 = 0;
+                v75 = 2;
+              }
+              if (v16 <= (int)BaseCurrentForcesSupported)
+                v11 += v75;
+              v75 = ((v144) || (v121));
+              v11 = (((v134 - v75) - v148) + 3) * v11;
+              v9 = (int)(((v11 * v11) / 9 + v8) * v9) / v8;
+            }
+label_4fcf6d:
+            v18 = v161;
+          }
+          v76 = faction_id;
+          v7 = (uint16_t)(PlayersData[faction_id].unk_77[region]);
+          if ((v7 & 0x4200) && ((((((v3 = (char)(VehPrototypes[(v163 / 0x34)].plan), !v3 || (v3 == '\x01')) || (v3 == '\x04')) || ((v3 == '\v' || (v3 == '\x05')))) && (v9 = (int)v9 / 2, regional_plan == 2)) && (v7 & 0x4000))))
+            v9 = (int)v9 / 2;
+          if ((v104) && ((!regional_plan || (1 <= (int)v110)))) {
+            if (v164) {
+              if (2 <= (int)v104)
+                v9 *= 2;
+            }
+            else if ((uint8_t)(VehPrototypes[(v163 / 0x34)].plan) <= 1) {
+              v8 = (4 - v104) * v9;
+              v9 = (int)(v8 + (v8 >> 0x1f & 3U)) >> 2;
+            }
+          }
+          if (((uint8_t)(Weapon[VehPrototypes[(v163 / 0x34)].weapon_id].mode) <= 2) && (has_fac_built(0x1e)))
+            v9 = (int)((int)((int)v105 + 2) * v9) / (int)((int)v105 + 3);
+          v8 = (int)(PlayersData[faction_id].unk_66);
+          if (((v8) && ((int)(PlayersData[faction_id].unk_106) < v8)) && ((int)(PlayersData[faction_id].unk_105) < v8)) {
+            v8 = has_abil(v167,0x120);
+            if (v8)
+              v9 = (int)v9 / 2;
+            else {
+              v8 = has_abil(v167,0x8000);
+              if (v8)
+                v9 *= 2;
+              else if ((!v164) && (!v18))
+                v9 = (int)(v9 * 2) / 3;
+            }
+          }
+          v8 = has_abil(v167,0x8000);
+          if (v8) {
+            if (((!((uint8_t)(PlayersData[faction_id].flags_ext) & 0x40)) && (v5 = BaseCurrent->y, v6 = BaseCurrent->x, !at_goal(v76,0x10,(int)v6,(int)v5))) && (!(BaseCurrent->state & 0x200000))) {
+              v8 = v164 + v18 * 3;
+              v166 += plan_count_0[v8] + plan_count_2[v8];
+            }
+            v8 = stack_check(v153,0xf,-1,-1,-1);
+            if (!v8) {
+              v5 = BaseCurrent->y;
+              v6 = BaseCurrent->x;
+              if ((at_goal(v76,0x10,(int)v6,(int)v5)) || (BaseCurrent->state & 0x200000))
+                v9 = (int)v9 / 3;
+              else if (BaseCurrent->event & 0x100) {
+                v9 *= 2;
+                v9 = (int)v9 / 3;
+              }
+              if ((int)regional_plan <= 2)
+                v9 = (int)(v9 * 2) / 3;
+            }
+            if (((0 <= (int)v103) || (0 <= (int)v110)) && ((v8 = stack_check(v153,0xf,-1,-1,-1), !v8 || (!v162)))) {
+label_4fd242:
+              v9 = (int)(v9 * 2) / 3;
+            }
+          }
+          else if ((0 <= (int)v110) && (!v162)) {
+            if (v18) {
+              if (v18 == 1) {
+                v8 = (int)(v9 * 2) / 3 + ((int)(v9 * 2) >> 0x1f);
+                v9 = v8 - (v8 >> 0x1f);
+              }
+            }
+            else {
+              v9 = (int)v9 / 2;
+            }
+          }
+          else if ((0 <= (int)v103) && (!v162)) {
+            if (!v18) goto label_4fd242;
+            if (v18 == 1) {
+              v8 = (int)(v9 << 2) / 5 + ((int)(v9 << 2) >> 0x1f);
+              v9 = v8 - (v8 >> 0x1f);
+            }
+          }
+          v8 = v167;
+          v75 = has_abil(v167,8);
+          if ((v75) && ((v158 || (regional_plan == 7))))
+            v9 = (int)(v9 * 2) / 3;
+          v75 = has_abil(v8,0x10);
+          v18 = faction_id;
+          if (v75) {
+            if ((regional_plan != 7) && (regional_plan))
+              v9 = (int)(v9 * 2) / 3;
+            else {
+              v9 = (int)v9 / 2;
+              if ((!(char)(PlayersData[faction_id].proto_id_active[v8])) && (!(char)(PlayersData[faction_id].proto_id_queue[v8])))
+                v9 = (int)v9 / 2;
+            }
+          }
+          if ((char)(Weapon[VehPrototypes[(v163 / 0x34)].weapon_id].offense_rating)) {
+            v75 = worm_mod(BaseIDCurrentSelected,faction_id);
+            v8 = morale_mod(BaseIDCurrentSelected,v18,(uint32_t)(uint8_t)(Chassis[VehPrototypes[(v163 / 0x34)].chassis_id].triad));
+            v8 += (int)(PlayersData[faction_id].soc_effect_pending.morale);
+            if (v161 == 2) {
+              if (has_fac_built(2)) {
+                v11 = (v8 - (int)(PlayersData[faction_id].soc_effect_pending.morale)) + 1;
+                if (v8 <= v11)
+                  v8 = v11;
+              }
+            }
+            if (('\0' <= (char)(Weapon[VehPrototypes[(v163 / 0x34)].weapon_id].offense_rating)) || (0x40 <= v167)) {
+              if ((v164 != 2) && (v8 + 1 < v75))
+                v166 += 1;
+              v9 = (int)(v9 * 8) / range((v75 - v8) + 8,1,0x10);
+            }
+            else {
+              v77 = 2;
+              v16 = 0;
+              v11 = worm_mod(BaseIDCurrentSelected,faction_id);
+              v166 += 2U - range(v11,v16,v77);
+              if (v75 < v8)
+                v166 += v8 - v75;
+              v9 = (int)(v9 * 8) / range((v75 - v8) + 6,1,0x10);
+              v11 = (int)(Players[faction_id].rule_psi);
+              if (v11)
+                v9 = (int)(v9 * 100) / range(v11 + 100,0x32,200);
+              if ((((uint8_t)v165 & (uint8_t)LockEnableMask) && (0 <= v8)) && (v75 <= 2)) {
+                v166 += 1;
+                v9 *= 2;
+              }
+            }
+          }
+          v8 = arm_strat((uint32_t)(uint8_t)(VehPrototypes[(v163 / 0x34)].armor_id),faction_id);
+          v75 = planet_buster2(v167);
+          if (v75)
+            v75 = 0x32;
+          else {
+            v75 = weap_strat((uint32_t)(uint8_t)(VehPrototypes[(v163 / 0x34)].weapon_id),faction_id);
+          }
+          if ((v162) && (((v161 == 2 || (v161 == 3)) || ((v161 == 1 && ((regional_plan == 2 || (regional_plan == 8))))))))
+            v8 *= 2;
+          v77 = 999;
+          v16 = 1;
+          v11 = (int)(VehPrototypes[(v163 / 0x34)].ability_flags);
+          v8 = range(bit_count(v11) + v75 + v8,v16,v77);
+          v18 = v161;
+          v9 = (int)v9 / (v8 * ((int)((int)(uint8_t)(Chassis[VehPrototypes[Vehs[v153].proto_id].chassis_id].speed) / (int)Rules.move_rate_roads) + 1));
+          if ((((v121) && (regional_plan == 7)) && ((uint8_t)(VehPrototypes[(v163 / 0x34)].plan) <= 1)) && (!v162)) {
+            if (v141) {
+              if (v141 == 1)
+                v9 = (int)v9 / 2;
+            }
+            else {
+              v9 = (int)(v9 * 2) / 3;
+            }
+            if (!plan_count_2[v161 * 3 + v164])
+              v9 = (int)v9 / 2;
+          }
+          if (0x100 <= (int)v146)
+            v9 *= 2;
+          if (((v160) && ((char)(Weapon[VehPrototypes[(v163 / 0x34)].weapon_id].offense_rating))) && (v161 != 2))
+            v9 = (int)v9 / 2;
+          if (v157)
+            v9 *= 2;
+          if ((v156) && ((char)(VehPrototypes[(v163 / 0x34)].plan) != '\t'))
+            v9 *= (-(uint32_t)(v161 != 2) & 6) + 2;
+          if (v147) {
+            if ((uint8_t)(VehPrototypes[(v163 / 0x34)].plan) <= 1)
+              v9 *= 2;
+            if (3 <= (uint8_t)(VehPrototypes[(v163 / 0x34)].plan))
+              v9 = (int)v9 / 2;
+          }
+          v8 = base_lose_minerals(BaseIDCurrentSelected,v167);
+          if (1 <= v8) {
+            if (((!((uint8_t)LockEnableMask & (uint8_t)v165)) || ((!out_score && (BaseCurrent->governor & 0x80000000)))) && (regional_plan != 2)) {
+              v75 = veh_cost(v167,BaseIDCurrentSelected,NULL);
+              v11 = cost_factor(faction_id,1,-1);
+              v75 *= v11;
+              v9 = (int)((v8 + v75) * v9) / v75;
+              v18 = v161;
+            }
+          }
+          if (v145 != 0x1) {
+            if (v145) {
+label_4fd6f8:
+              if (((3 <= (int)regional_plan) && ((v15 = (uint8_t)(VehPrototypes[(v163 / 0x34)].plan), v15 != 2 || (v162)))) && ((v15 <= 3 || ((v15 == 8 || (v15 == 0xb))))))
+                v9 = (int)v9 / ((int)v145 + 1);
+              else if (((char)(VehPrototypes[(v163 / 0x34)].plan) == '\a') && (v145 == 0x2))
+                v9 *= 2;
+            }
+          }
+          else {
+            if (regional_plan == 7) goto label_4fd6f8;
+            v145 = 0;
+          }
+          v8 = v166 * v9;
+          v166 = v8;
+          if (v142) {
+            v136 = 0;
+            if (((((selected_id[1] <= 89999) && (v18 != 9)) && (v18 != 8)) || ((!(char)(VehPrototypes[(v163 / 0x34)].plan) || (v18 == 4)))) || (v18 == 6)) break;
+          }
+          else {
+            if ((uint8_t)v165 & (uint8_t)LockEnableMask) {
+              v18 = 0;
+              switch((char)(VehPrototypes[(v163 / 0x34)].plan)) {
+                case 0:
+                  v18 = 0x200;
+                  break;
+                case 1:
+                  v18 = (-(uint32_t)((BaseCurrent->governor & 0x200) != 0) & 0xfffff200) + 0x1000;
+                  break;
+                case 2:
+                  v18 = 0x1000;
+                  break;
+                case 3:
+                  v18 = 0x1000;
+                  if ((!(BaseCurrent->governor & 0x1000)) || ((char)(VehPrototypes[(v163 / 0x34)].chassis_id)))
+                    v18 = 0x400000;
+                  break;
+                case 4:
+                  v18 = 0x2000;
+                  break;
+                case 5:
+                  v18 = 0x800;
+                  break;
+                case 6:
+                  v18 = 0x400;
+                  break;
+                case 7:
+                case 10:
+                  v18 = 0x800000;
+                  break;
+                case 8:
+                  v18 = 0x20000;
+                  break;
+                case 9:
+                  v18 = 0x8000;
+                  break;
+                case 0xb:
+                  v18 = 0x100000;
+
+              }
+              if ((0x40 <= v167) && (!((uint8_t)(VehPrototypes[(v163 / 0x34)].flags) & 4)))
+                v18 |= 0x80000;
+              if ((BaseCurrent->governor & v18) != v18) break;
+            }
+            v75 = v8;
+            if ((out_score) && (v11 = base_claimed(v167,v8,v147,v157,v156,v160), v11))
+              v75 = v8 + 100000;
+            if (v75 <= selected_score[0]) {
+              if ((selected_score[0] <= v75) && (((selected_id[0] <= -1 && ((int)v162 <= 2)) || ((int)v133 <= (int)v9)))) {
+                v8 = 999999;
+                v166 = 999999;
+              }
+              else {
+                selected_id[0] = v167;
+                selected_score[0] = v75;
+                v133 = v9;
+              }
+            }
+          }
+          v75 = (v136 != 0) + 1;
+          if (v8 <= selected_score[v75]) {
+            selected_score[v75] = v8;
+            selected_id[v75] = v167;
+          }
+          break;
+        case 0xd:
+          v9 *= 0x40;
+          if (plan_count_2[v161 * 3 + v164] <= 1) {
+            if (!((uint8_t)v165 & (uint8_t)LockEnableMask)) {
+              if ((v150) && (!v148))
+                v9 = (int)v9 / 2;
+              if ((uint8_t)(PlayersData[faction_id].flags_ext) & 0x10)
+                v9 = (int)v9 / 2;
+            }
+            goto label_4fc68f;
+          }
+          break;
+        case 0xe:
+          v9 *= 0x40;
+          if (1 <= (int)(PlayersData[faction_id].soc_effect_pending.planet))
+            v9 = (int)v9 / 2;
+          if (plan_count_2[v161 * 3 + v164] <= 1) {
+            if (!((uint8_t)v165 & (uint8_t)LockEnableMask)) {
+              if ((v131) && (!v148))
+                v9 = (int)v9 / 2;
+              if ((uint8_t)(PlayersData[faction_id].flags_ext) & 0x10)
+                v9 = (int)v9 / 2;
+            }
+            goto label_4fc68f;
+          }
+
+      }
+label_4fd8f6:
+      v167 += 1;
+    } while (v167 < 0x200);
+  }
+  v164 = 1;
+  v8 = 1;
+  do {
+    v8 = facility_avail(v8,faction_id,BaseIDCurrentSelected,0);
+    v10 = faction_id;
+    v76 = regional_plan;
+    v9 = v164;
+    v18 = v156;
+    if (!v8) goto label_4ff11f;
+    v167 = 0;
+    v136 = 0;
+    v145 = (int)(BaseCurrent->specialist_total - BaseCurrent->specialist_unk_1);
+    v8 = 999;
+    v163 = 0x10000;
+    v159 = 0x100;
+    switch(v164) {
+      case 1:
+        if (((regional_plan != 2) && (-3 <= (int)(PlayersData[faction_id].soc_effect_pending.efficiency))) && ((!v99 || ((v99 == 1 && (BaseCurrent->queue_production_id[0] == -1))))))
+          v8 = 3 - (int)BaseCurrent->population_size / 5;
+        break;
+      case 2:
+        if (-3 <= (int)(PlayersData[faction_id].soc_effect_pending.efficiency))
+          v8 = BaseCurrent->energy_inefficiency;
+        else {
+          v8 = 0;
+        }
+        v75 = (int)(PlayersData[faction_id].soc_effect_pending.morale);
+        if (1 <= v75)
+          v11 = 1;
+        else {
+          v11 = (uint32_t)(0 <= v75) - 1;
+        }
+        v75 = range((v75 + 6 + v11) / 2,1,999);
+        v9 = faction_id;
+        v75 = (0xcU - v8) - (int)((int)BaseCurrent->population_size * (((int)regional_plan <= 2) + 1)) / v75;
+        v8 = has_project(0x18,faction_id);
+        if (((!v8) && (3 <= BaseCurrent->mineral_surplus)) && (5 <= v75))
+          v75 = 4;
+        if (((int)(Players[v9].rule_morale) + (int)(PlayersData[faction_id].soc_effect_pending.morale) <= -1) && (regional_plan == 2))
+          v75 /= 2;
+        v8 = range(v75,1,0xc);
+        if (((has_fac_built(3)) || (5 <= BaseCurrent->population_size)) && (((int)BaseCurrent->population_size / 2 <= BaseCurrent->energy_inefficiency || (BaseCurrent->energy_intake_2 / 2 <= BaseCurrent->energy_inefficiency))))
+          v18 = v156 * 2;
+        break;
+      case 3:
+      case 0x24:
+      case 0x25:
+      case 0x26:
+        v8 = ((v148 - v134) - v150) + 4;
+        if (v164 != 3)
+          v8 -= (uint32_t)(Players[faction_id].rule_flags) >> 7 & 2;
+        if (regional_plan != 7) {
+          v166 = v8;
+          if ((int)regional_plan <= 2) {
+            v8 += 1;
+            v166 = v8;
+          }
+        }
+        else {
+          v8 -= 1;
+          v166 = v8;
+        }
+        v9 = BaseCurrent->state;
+        v152 = v9 & 0x1000;
+        if (v152) {
+          v8 -= ResourceInfo[4].energy;
+          v166 = v8;
+        }
+        if (v9 & 0x2000) {
+          v8 -= ResourceInfo[4].minerals;
+          v166 = v8;
+        }
+        if (v158) {
+          if ((v9 & 0x4000) && (v164 == 0x24)) {
+            v8 /= 2;
+            v166 = v8;
+          }
+          if ((v9 & 0x2000) && (v164 == 0x25)) {
+            v8 /= 2;
+            v166 = v8;
+          }
+          if ((v152) && (v164 == 0x26)) {
+            v8 /= 2;
+            v166 = v8;
+          }
+        }
+        v142 = 0;
+        if (v164 != 3) {
+          v145 = 0;
+          do {
+            v8 = xrange(RadiusOffsetX[v145 / 4] + (int)BaseCurrent->x);
+            v75 = RadiusOffsetY[v145 / 4] + (int)BaseCurrent->y;
+            if ((on_map(v8,v75)) && (is_ocean(v8,v75))) {
+              if (v164 != 0x24) {
+                if (v164 != 0x25) {
+                  if (v164 != 0x26) goto label_4fdc5e;
+                  v9 = bit_at(v8,v75) & 0x40;
+                }
+                else {
+                  v9 = bit_at(v8,v75) & 0x10;
+                }
+              }
+              else {
+                v9 = bit_at(v8,v75) & 0x8000;
+              }
+              if (v9)
+                v142 += 1;
+            }
+label_4fdc5e:
+            v145 = (int)((int)v145 + 4);
+          } while ((int)v145 <= 0x53);
+          if (!v142) {
+            v8 = 999;
+            goto label_4fef49;
+          }
+          v8 = v166 - v142;
+          v166 = v8;
+        }
+        if (BaseCurrent->population_size <= 4)
+          v166 = v8 + -1;
+        v8 = range(v166,1,4);
+        v9 = BaseCurrent->state & 0x1000000;
+        if ((!v9) && ((regional_plan == 8 || ((int)((uint32_t)(uint8_t)(PlayersData[faction_id].proto_id_active[0]) + (int)(PlayersData[faction_id].current_num_bases)) <= 3))))
+          v8 *= 2;
+        if (v157) {
+          if ((!v9) && (regional_plan == 8)) goto label_4fef0c;
+          v18 = 2;
+        }
+        break;
+      case 4:
+        v75 = has_project(5,faction_id);
+        if (!v75) {
+          v75 = 1;
+          v11 = 10;
+          v8 = 1;
+          v136 = 1;
+          v8 = range((8U - (int)BaseCurrent->population_size) - (-(uint32_t)(has_fac_built(1) != 0) & 2),v8,v11);
+          scan_faction = &PlayersData[1];
+
+          do {
+            v11 = has_treaty(faction_id,v75,0x10);
+            if (!v11) {
+              v18 = has_treaty(faction_id,v75,0x40020);
+              v18 |= 6 <= scan_faction->integrity_blemishes;
+              if (v18) {
+                if ((char)scan_faction->region_total_bases[region])
+                  v11 = bit_count(v18);
+                else {
+                  v11 = 1;
+                }
+                v8 -= v11;
+                if ((char)(PlayersData[faction_id].region_total_bases[region]) == '\x01')
+                  v8 -= 1;
+              }
+            }
+            ++scan_faction;
+            v75 += 1;
+
+          } while (scan_faction < &PlayersData[8]);
+          if (4 <= (int)(PlayersData[faction_id].planet_ecology)) {
+            v75 = BaseCurrent->eco_damage;
+            v8 -= range(v75 / 10,1,4);
+          }
+          if ((v8 <= 0) && (!v162))
+            v159 = 0x80;
+          v8 = range(v8,1,10);
+          if (((!v160) || (regional_plan != 2)) || (v162)) goto label_4fec33;
+          v18 = v156 | 1;
+        }
+        break;
+      case 5:
+      case 0x27:
+        v75 = 1;
+        v16 = 10;
+        v11 = 1;
+        v136 = 1;
+        v8 = has_fac_built(1);
+        v8 = range((10U - (int)BaseCurrent->population_size / 2) - (-(uint32_t)(v8 != 0) & 2),v11,v16);
+        v18 = faction_id;
+        do {
+          if ((!has_treaty(v18,v75,0x10)) && (v11 = has_treaty(v18,v75,0x40020), v11)) {
+            if ((uint8_t)LockEnableMask & (uint8_t)(1 << ((uint8_t)v75 & 0x1f)))
+              v11 = bit_count(v11);
+            else {
+              v11 = 1;
+            }
+            v8 -= v11;
+          }
+          v75 += 1;
+        } while (v75 < 8);
+        if ((4 <= (int)(PlayersData[faction_id].planet_ecology)) && (v164 != 0x27)) {
+          v75 = BaseCurrent->eco_damage;
+          v8 -= range(v75 / 10,1,4);
+        }
+        if ((v8 <= 0) && (!v162))
+          v159 = 0x80;
+        v8 = range(v8,1,10);
+        if (((v160) && (regional_plan == 2)) && (!v162))
+          v18 = v156 | 1;
+        else {
+label_4fec33:
+          v18 = v156;
+        }
+        break;
+      case 6:
+        if (2 <= (int)v143) {
+          v163 = 0;
+          v8 = -10;
+          goto label_4fef49;
+        }
+        v8 = has_project(6,faction_id);
+        v8 = (7 - (uint32_t)(v8 != 0)) - (v143 + 2) * (int)v145;
+        v18 = v156 | v157;
+        if ((4 <= (int)(PlayersData[faction_id].diff_level)) && (v157))
+          v18 = 2;
+        if (!has_project(0x18,v10)) goto label_4fef49;
+        v8 /= 2;
+        goto label_4fef47;
+      case 7:
+        v8 = range((6 - v134) * 2 - BaseCurrent->energy_intake_2 / 2,1,10);
+        if ((has_fac_built(3)) || (5 <= BaseCurrent->population_size))
+          v18 = v156 * 2;
+        break;
+      case 8:
+        v11 = 10;
+        v75 = 1;
+        v8 = stack_check(v153,2,0xc,faction_id,-1);
+        v8 = range(((5 - v150) - v8) * 2 - BaseCurrent->energy_intake_2 / 3,v75,v11);
+        if (has_project(6,v10)) {
+          if (2 <= (int)v143) {
+            v163 = 0;
+            v8 = -10;
+          }
+          else {
+            v75 = 6 - (v143 + 2) * (int)v145;
+            if (v75 <= v8)
+              v8 = v75;
+          }
+        }
+        v18 = ((-(uint32_t)(has_project(6,v10) != 0) & 2) + 1) * v157;
+        break;
+      case 9:
+        v11 = (5 - v150) - v131;
+        v8 = v11 * 2;
+        v75 = (int)(Players[faction_id].rule_psi);
+        if (1 <= v75) {
+          v8 = (v11 * 200) / range(v75 + 100,0x32,200);
+          v167 = v144;
+        }
+        v75 = (int)(PlayersData[faction_id].soc_effect_pending.morale);
+        if (v75 <= -1) {
+          v8 = (v75 + -1) / 2 + v8 / 2;
+          v167 = v144;
+        }
+        if ((!v157) && ((((!v160 || (0 <= v75)) || (regional_plan == 2)) || ((uint8_t)((PlayersData[faction_id].unk_77[region] >> 8)) & 0x40)))) goto label_4fe410;
+        goto label_4fef0c;
+      case 10:
+        v163 = 0x90000;
+        v75 = (((v113 - v148) * 2 + 6) - (~-(uint32_t)(((uint8_t)LockEnableMask & (uint8_t)v165) != 0) & v141)) + v106;
+        if (has_fac_built(0x1b))
+          v75 -= 1;
+        if (has_fac_built(0x1e))
+          v75 -= 1;
+        v8 = range(v116,1,999);
+        v167 = 1;
+        v8 = ((int)(PlayersData[faction_id].unk_28) * v75) / v8;
+        v18 = v157;
+        break;
+      case 0xb:
+        if (2 <= (int)v143) {
+          v163 = 0;
+          v8 = -8;
+        }
+        else {
+          v8 = 8 - (v143 + 2) * (int)v145;
+          v75 = has_project(0x18,faction_id);
+          if (v75) {
+            v8 /= 2;
+            goto label_4fef47;
+          }
+        }
+        break;
+      case 0xc:
+        if (2 <= (int)v143) {
+          v163 = 0;
+          v8 = -6;
+        }
+        else {
+          v8 = 8 - (int)v145;
+        }
+        break;
+      case 0xd:
+        v8 = aah_ooga(faction_id,faction_id);
+        if (v8)
+          v139 *= 2;
+        v16 = 10;
+        v8 = 1;
+        v75 = ((-((BaseCurrent->eco_damage + 1) / 2) - ((int)(v139 + 2 + ((int)(v139 + 2) >> 0x1f & 3U)) >> 2)) - BaseCurrent->energy_intake_2 / 3) + 0xc;
+        goto label_4fef3f;
+      case 0xe:
+        v16 = 10;
+        v8 = 1;
+        v75 = ((-((BaseCurrent->eco_damage + 2) / 3) - ((int)(v139 + 2 + ((int)(v139 + 2) >> 0x1f & 3U)) >> 2)) - ((int)(BaseCurrent->energy_intake_2 + (BaseCurrent->energy_intake_2 >> 0x1f & 3U)) >> 2)) + 0xc;
+        goto label_4fef3f;
+      case 0xf:
+        v8 = (6 - v150) * 2 - BaseCurrent->energy_intake_2 / 3;
+        goto label_4fe4ee;
+      case 0x10:
+        v8 = (6 - v150) * 2 - ((int)(BaseCurrent->energy_intake_2 + (BaseCurrent->energy_intake_2 >> 0x1f & 3U)) >> 2);
+label_4fe4ee:
+        v8 = range(v8,1,0xc);
+        v18 = v156 | v157;
+        break;
+      case 0x11:
+        if (2 <= (int)v143) {
+          v163 = 0;
+          v8 = -4;
+        }
+        else {
+          v11 = 10;
+          v75 = 1;
+          v8 = stack_check(v153,2,0xc,faction_id,-1);
+          v8 = range(((5 - v150) - v8) * 2 - ((int)(BaseCurrent->energy_intake_2 + (BaseCurrent->energy_intake_2 >> 0x1f & 3U)) >> 2),v75,v11);
+          v18 = v157;
+        }
+        break;
+      case 0x12:
+        if (2 <= (int)v143) {
+          v163 = 0;
+          v8 = -2;
+        }
+        else {
+          v11 = 10;
+          v75 = 1;
+          v8 = stack_check(v153,2,0xc,faction_id,-1);
+          v8 = range(((6 - v150) - v8) * 2 - BaseCurrent->energy_intake_2 / 5,v75,v11);
+          v18 = v157;
+        }
+        break;
+      case 0x13:
+        v8 = range(10 - BaseCurrent->mineral_intake_1,1,10);
+        if ((!v160) || ((int)regional_plan <= 2)) goto label_4fec33;
+        v18 = v156 | 1;
+        break;
+      case 0x14:
+        v16 = 10;
+        v75 = 10 - BaseCurrent->mineral_intake_1 / 2;
+        v8 = 1;
+        goto label_4fef3f;
+      case 0x15:
+        v16 = 10;
+        v75 = 10 - BaseCurrent->mineral_intake_1 / 2;
+        v8 = 1;
+        goto label_4fef3f;
+      case 0x16:
+        if (!((uint8_t)v165 & (uint8_t)LockEnableMask)) {
+          v11 = 0x10;
+          v75 = 1;
+          v8 = has_fac_built(0x23);
+          v8 = range(((((BaseCurrent->drone_total - BaseCurrent->talent_total) - v8) * 2 + 0x10) - BaseCurrent->mineral_intake_1) - (int)(PlayersData[faction_id].soc_effect_pending.police),v75,v11);
+          if ((!v160) || ((int)regional_plan <= 2)) goto label_4fe410;
+          v18 = 1;
+        }
+        break;
+      case 0x17:
+        if (!((uint8_t)v165 & (uint8_t)LockEnableMask)) {
+          v75 = has_fac_built(0x23);
+          if (((((int)(PlayersData[faction_id].soc_effect_pending.police) + v75 * 2 <= 0) && (2 <= BaseCurrent->drone_total)) && ((int)regional_plan <= 2)) && ((2 <= (int)(PlayersData[faction_id].soc_effect_pending.economy) && ((BaseCurrent->assimilation_turns_left || (!v102))))))
+            v8 = range((8U - BaseCurrent->drone_total) * 2 - (int)BaseCurrent->population_size / 2,1,0x10);
+          v18 = v160;
+        }
+        break;
+      case 0x18:
+      case 0x19:
+        v18 = Rules.pop_limit_sans_hab_complex;
+        if (v164 != 0x18)
+          v18 = Rules.pop_limit_sans_hab_dome;
+        v11 = v18 - (int)(Players[faction_id].rule_population);
+        v75 = has_project(0xd,faction_id);
+        if (v75)
+          v11 += 2;
+        v75 = range(Rules.nutrient_req_citizen,1,10);
+        if (v11 <= (BaseCurrent->nutrient_surplus + 1) / v75 + (int)BaseCurrent->population_size) {
+          v16 = 10;
+          v75 = 1;
+          v8 = range(Rules.nutrient_req_citizen,1,10);
+          v8 = range(((v11 - ((int)Rules.nutrient_req_citizen / 2 + BaseCurrent->nutrient_surplus) / v8) - (int)BaseCurrent->population_size) + 4,v75,v16);
+          if (3 <= (int)regional_plan)
+            v8 /= 2;
+        }
+        if (has_project(0x18,v10))
+          v8 /= 2;
+        v18 = v156 | v147;
+        if (v11 <= BaseCurrent->population_size) {
+          if (!v160)
+            v18 *= 2;
+          v75 = aah_ooga(faction_id,faction_id);
+label_4feda1:
+          if (v75) {
+            v8 /= 2;
+            goto label_4fef47;
+          }
+        }
+        break;
+      case 0x1a:
+        v5 = BaseCurrent->y;
+        v6 = BaseCurrent->x;
+        if (alt_at((int)v6,(int)v5) == 3) {
+          v5 = BaseCurrent->y;
+          v6 = BaseCurrent->x;
+          if (ClimateSeaLevelDelta + AltNatural[3] <= alt_detail_at((int)v6,(int)v5) - MapSeaLevel) {
+            if (PlayersData[faction_id].flags & 0x80000)
+              v8 = 0;
+            else {
+              v75 = 0;
+              do {
+                if (base_project(v75) == BaseIDCurrentSelected) {
+                  v8 = alt_detail_at((int)BaseCurrent->x,(int)BaseCurrent->y);
+                  if ((int)(WorldBuilder.sea_level_rises + ClimateSeaLevelDelta + AltNatural[3]) <= v8 - MapSeaLevel) {
+                    v16 = 0xc;
+                    v8 = (-(uint32_t)(((uint8_t)LockEnableMask & (uint8_t)v165) != 0) & 2) + 4;
+                    v75 = 0x14 - (int)BaseCurrent->population_size / 2;
+                  }
+                  else {
+                    v16 = 8;
+                    v8 = (-(uint32_t)(((uint8_t)LockEnableMask & (uint8_t)v165) != 0) & 2) + 2;
+                    v75 = 8 - (int)BaseCurrent->population_size / 3;
+                  }
+                  goto label_4fef3f;
+                }
+                v75 += 1;
+              } while (v75 < 0x40);
+            }
+          }
+          else {
+            v8 = -0x10;
+          }
+        }
+        break;
+      case 0x1b:
+      case 0x1e:
+      case 0x23:
+        v163 = 0x10200;
+        v136 = 1;
+        v167 = 1;
+        v146 = (v164 != 0x1b) ? v105 : v107;
+        v8 = v106 + 5 + (v150 - v148) * 2;
+        if (v164 != 0x23)
+          v79 = ((int)v146 + v8);
+        else {
+          v79 = (v8 + 5);
+        }
+        if (!((uint8_t)v165 & (uint8_t)LockEnableMask))
+          v79 = (v79 + v141 * -2);
+        v8 = fac_maint(v164,faction_id);
+        v75 = (v8 + 4) * (int)v79;
+        v8 = (int)(Players[v10].rule_psi);
+        v75 = (int)(v75 + (v75 >> 0x1f & 3U)) >> 2;
+        if (1 <= v8)
+          v75 = ((v8 + 100) * v75) / 100;
+        if ((((v9 == 0x1b) && (!v146)) && (regional_plan != 7)) && (4 <= (uint8_t)(PlayersData[faction_id].region_total_bases[region])))
+          v75 /= 2;
+        v8 = range(v75,1,99);
+        v15 = (uint8_t)(PlayersData[faction_id].region_total_bases[region]);
+        if ((((uint16_t)(PlayersData[v10].region_total_combat_vehs[region]) < (uint16_t)((uint16_t)v15 * 2)) || ((uint8_t)((PlayersData[v10].unk_77[region] >> 8)) & 0x40)) || ((100 <= TurnCurrentNum && ((v15 <= 8 && (regional_plan != 7)))))) goto label_4fe410;
+        v18 = v160;
+        break;
+      case 0x1c:
+        v75 = naval_base(BaseIDCurrentSelected);
+        if (v75) {
+          v163 = 0x10400;
+          v136 = 1;
+          v8 = (((((((v150 - v141) - v148) + v131) * 2 + 0x18) - (int)(char)(Bases[base_id].population_size) / 3) - (int)(PlayersData[faction_id].unk_65)) - v95 / 2) + v108;
+          if (regional_plan == 7)
+            v8 /= 2;
+          v8 = range(v8,1,0x18);
+          if ((uint32_t)(Players[faction_id].rule_flags) & 0x100)
+            v8 /= 3;
+        }
+        goto label_4feef7;
+      case 0x1d:
+        v163 = 0x10800;
+        v136 = 1;
+        v167 = 1;
+        v8 = (((((((v150 - (int)(PlayersData[faction_id].unk_66)) - v141) + v131) * 2 - (int)(char)(Bases[base_id].population_size) / 3) - (int)(PlayersData[faction_id].unk_68)) + (8 - v148) * 3) - v93 / 3) + v129;
+        if (regional_plan == 7)
+          v8 /= 2;
+        if (BaseCurrent->state & 0x100000)
+          v8 /= 2;
+        if (best_reactor_id <= 1)
+          v8 *= 2;
+        v8 = range(v8,1,0x18);
+        if ((!v160) || (v76 == 2)) goto label_4fe410;
+        v83 = ((uint8_t)((PlayersData[faction_id].unk_77[region] >> 8)) & 0x40) == 0;
+        goto label_4fef06;
+      case 0x1f:
+      case 0x20:
+        v75 = 0xb - BaseCurrent->eco_damage;
+        v8 = (int)(Players[faction_id].rule_psi);
+        if (1 <= v8) {
+          v75 = (v75 * 100) / range(v8 + 100,0x32,200);
+          v167 = v144;
+        }
+        if ((int)(PlayersData[faction_id].soc_effect_pending.morale) <= -1) {
+          v75 = ((int)(PlayersData[faction_id].soc_effect_pending.morale) + -1) / 2 + v75 / 2;
+          v167 = v144;
+          if ((v160) && (!((uint8_t)((PlayersData[faction_id].unk_77[region] >> 8)) & 0x40))) {
+            v16 = 0xc;
+            v18 = v156 | 1;
+            v8 = 1;
+            goto label_4fef3f;
+          }
+          v18 = v156;
+        }
+        v16 = 0xc;
+        v8 = 1;
+        goto label_4fef3f;
+      case 0x21:
+        v16 = 4;
+        v8 = 0;
+        v75 = ((-(uint32_t)(climactic_battle() != 0) & 0xfffffffe) + 4) - v97;
+        v11 = at_climax(faction_id);
+        v75 -= v11;
+label_4fef3f:
+        v8 = range(v75,v8,v16);
+label_4fef47:
+        break;
+      case 0x22:
+        v8 = (2 - ((uint32_t)(PlayersData[faction_id].flags_ext) >> 3 & 1)) * 5;
+        break;
+      case 0x28:
+        if ((uint8_t)(Players[faction_id].rule_flags) & 0x80) {
+          v75 = generators(faction_id,NULL);
+          if (v75 < (int)Rules.subspace_generators_needed) {
+            v75 = (int)(char)(Bases[base_id].population_size);
+            if ((int)Rules.size_base_subspace_gen <= v75)
+              v8 = 1;
+            else if ((int)(Rules.size_base_subspace_gen * 4) / 5 <= v75)
+              v8 = 6;
+          }
+        }
+        break;
+      case 0x29:
+        v8 = 7;
+        if ((int)(PlayersData[faction_id].ai_growth))
+          v153 += 1;
+        if ((int)(PlayersData[faction_id].ai_tech))
+          v153 -= 1;
+        if ((int)(PlayersData[faction_id].ai_wealth))
+          v153 -= 3;
+        if ((int)(PlayersData[faction_id].ai_power))
+          v153 -= 1;
+        break;
+      case 0x41:
+      case 0x42:
+      case 0x43:
+        v75 = PlayersData[faction_id].satellites_[v164 - 0x41];
+        if (v75 < BaseCurrent->population_size) {
+          v8 = range((v75 + (4 - v134) * 2 + v148) * 2 - (int)BaseCurrent->population_size,2,0x10);
+          if (v9 == 0x41) {
+            v75 = has_project(0x18,faction_id);
+            goto label_4feda1;
+          }
+        }
+        break;
+      case 0x44:
+        v75 = 1;
+        v163 = 0x12000;
+        v136 = 1;
+        v149 = 1;
+        scan_faction = &PlayersData[1];
+        v82 = BaseCurrent;
+        do {
+          if (v149 != faction_id) {
+            v11 = has_treaty(faction_id,v149,1);
+
+            if (!v11) {
+              v11 = scan_faction->planet_busters;
+              if (scan_faction->major_atrocities)
+                v16 = v11;
+              else {
+                v16 = (v11 + 1) / 2;
+              }
+              if (v75 <= v16) {
+                if (scan_faction->major_atrocities)
+                  v75 = v11;
+                else {
+                  v75 = (v11 + 1) / 2;
+                }
+              }
+              v11 = has_treaty(faction_id,v149,0x30);
+              if (!v11) {
+                if (!((uint8_t)(1 << ((uint8_t)v149 & 0x1f)) & (uint8_t)LockEnableMask)) goto label_4fee63;
+              }
+              if (v75 <= scan_faction->satellites_[3])
+                v75 = scan_faction->satellites_[3];
+            }
+label_4fee63:
+            v82 = BaseCurrent;
+          }
+          v149 += 1;
+          ++scan_faction;
+        } while (scan_faction < &PlayersData[8]);
+        if (((((int)(PlayersData[faction_id].satellites_[3]) < v75 + 2) && (v8 = range((((int)(PlayersData[faction_id].satellites_[3]) - v75) * 2 + 0xc) - (int)v82->population_size,1,0xc), !(int)(PlayersData[RankingFactionIDUnk1].planet_busters))) && (!(int)(PlayersData[RankingFactionIDUnk1].major_atrocities))) && ((int)(PlayersData[RankingFactionIDUnk1].satellites_[3]) <= (int)(PlayersData[faction_id].satellites_[3])))
+          v8 *= 2;
+        v167 = 1;
+label_4feef7:
+        if (v160) {
+          v83 = regional_plan == 7;
+label_4fef06:
+          if (v83) {
+label_4fef0c:
+            v18 = 1;
+            break;
+          }
+        }
+label_4fe410:
+        v18 = 0;
+
+    }
+label_4fef49:
+    v75 = base_lose_minerals(BaseIDCurrentSelected,-v164);
+    if (1 <= v75) {
+      if ((!((uint8_t)v165 & (uint8_t)LockEnableMask)) || ((BaseCurrent->governor & 0x80000000 && (!out_score)))) {
+        v11 = cost_factor(faction_id,1,-1);
+        v11 *= (int)(Facility[v164].cost);
+        if (v11)
+          v159 = (int)((v75 + v11) * v159) / v11;
+      }
+    }
+    v8 = (int)(v8 * v159 * 0x20) / (int)(((v134 - v148) + 3) * (v18 + 1));
+    if (((v167 != 0) != (v144 != 0)) || ((v166 = v8, v144 && (v162)))) {
+      v8 *= 2;
+      v166 = v8;
+    }
+    if ((regional_plan == 2) || ((uint8_t)((PlayersData[faction_id].unk_77[region] >> 8)) & 0x40)) {
+      v8 *= 2;
+      v166 = v8;
+    }
+    if (((int)regional_plan <= 2) && (!v136)) {
+      v8 *= 2;
+      v166 = v8;
+    }
+    if (((0 <= (int)v110) && (!v136)) && ((1 <= (int)v141 || (((uint8_t)LockEnableMask & (uint8_t)(1 << ((uint8_t)v110 & 0x1f)) && ((0 <= (int)v141 || (v75 = has_treaty(faction_id,v110,0x20), v75))))))))
+      v166 = v8 * 2;
+    v8 = 0;
+    do {
+      v18 = v164;
+      v75 = v166;
+      if (v8) {
+        v11 = (v136 != 0) + 1;
+label_4ff0fc:
+        if (v75 < selected_score[v11]) {
+          selected_score[v11] = v75;
+          selected_id[v11] = -v18;
+        }
+      }
+      else {
+        if (!((uint8_t)v165 & (uint8_t)LockEnableMask)) {
+label_4ff0fa:
+          v11 = 0;
+          goto label_4ff0fc;
+        }
+        if (BaseCurrent->governor & 0x10000) {
+          if ((BaseCurrent->governor & v163) != v163)
+            v75 = v166 + 100000;
+          if ((out_score) && (v11 = base_claimed(-v164,v75,v147,v157,v156,v160), v11))
+            v75 += 100000;
+          goto label_4ff0fa;
+        }
+      }
+      v8 += 1;
+    } while (v8 < 2);
+label_4ff11f:
+    v8 = v164 + 1;
+    v164 = v8;
+  } while (v8 <= 0x45);
+  if (selection_mode) goto label_4ffea4;
+  if (((!v128) || ((v15 = (uint8_t)(PlayersData[faction_id].region_base_plan[region]), v15 <= 2 && ((int)((v15 != 2) + 1) <= v119)))) && ((v18 = LockEnableMask & 0xff & v165, !v18 || ((BaseCurrent->governor & 0xdfbe00) != 0x40000)))) {
+    if ((((((char)(PlayersData[faction_id].region_base_plan[region]) == '\x02') || (v4 = BaseCurrent->population_size, v4 < 3)) || (2 <= (int)v162)) || (((v162 && ((int)v138 <= 1)) && (!v18)))) || (v116 < v4 * 2)) goto label_4ffea4;
+    v8 = BaseCurrent->drone_total;
+    if (((BaseCurrent->talent_total < v8) || (BaseCurrent->state & 2)) || (((v8 && (((BaseCurrent->talent_total <= v8 && (BaseCurrent->specialist_unk_1 < BaseCurrent->specialist_total)) && (v4 < 8)))) || (((int)v4 <= (v118 + 1) / 2 && (v116 <= ((int)(PlayersData[faction_id].unk_28) + 1) / 2)))))) goto label_4ffea4;
+    if (regional_plan != 7)
+      v18 = (uint32_t)(uint8_t)(PlayersData[faction_id].region_total_bases[region]);
+    else {
+      v18 = (uint32_t)(PlayersData[faction_id].current_num_bases);
+    }
+    if ((int)(v18 + v119 * -3) < (int)((((regional_plan == 8) - v157) - v150) + 3 + v148)) goto label_4ffea4;
+  }
+  base_id = 0;
+  do {
+    v18 = faction_id;
+    v8 = base_id + 0x46;
+    v75 = facility_avail(v8,faction_id,BaseIDCurrentSelected,0);
+    if ((v75) && ((((uint8_t)v165 & (uint8_t)LockEnableMask || (3 <= DiffLevelCurrent)) || ((v75 = (int)(Facility[v8].preq_tech), v75 < 0 || ((uint8_t)(GameTechAchieved[v75]) & (uint8_t)LockEnableMask)))))) {
+      v167 = 0;
+      v139 = v30[base_id] & v165;
+      v154 = v29[(int)(base_id + (base_id >> 0x1f & 7U)) >> 3];
+      v152 = (((((((v119 * 2 + 8) - (int)(Facility[v8].sp_ai_fight) * v141) - (int)(Facility[v8].sp_ai_power) * v148) - (int)(Facility[v8].sp_ai_wealth) * v134) - (int)(Facility[v8].sp_ai_tech) * v150) - (int)(Facility[v8].sp_ai_growth) * v131) - (uint32_t)(5 <= (int)(PlayersData[faction_id].ranking))) - (int)BaseCurrent->population_size;
+      v75 = 0x100;
+      v166 = v100 / 2 + v154 + (v152 - TurnCurrentNum / 0x28) + v135;
+      selection_mode = v156;
+      if (v157)
+        selection_mode = 2;
+      if ((base_id != 7) && (base_id)) {
+label_4ff44c:
+        if ((((base_id == 8) || (base_id == 0x10)) || (base_id == 0x13)) || (base_id == 9)) {
+          v75 = ((int)(Players[v18].rule_morale) + 8 + (int)(PlayersData[faction_id].soc_effect_pending.morale)) * v75;
+          v75 = (int)(v75 + (v75 >> 0x1f & 7U)) >> 3;
+        }
+        if (((!base_id) || (base_id == 6)) || ((base_id == 0xe || ((base_id == 0x1a || (base_id == 0x1e)))))) goto label_4ff4a5;
+      }
+      else {
+        if (regional_plan == 8)
+          v75 = 0xaa;
+        if (base_id) goto label_4ff44c;
+        if (((int)(Players[v18].rule_talent)) || (1 <= (int)(PlayersData[faction_id].soc_effect_pending.talent)))
+          v75 *= 2;
+label_4ff4a5:
+        if ((int)(Players[v18].rule_talent))
+          v75 = (v75 * 3) / 2;
+        if ((int)(Players[v18].rule_drone))
+          v75 /= 2;
+      }
+      if (base_id != 5) {
+        if (base_id == 1) {
+label_4ff539:
+          v7 = (uint16_t)(PlayersData[v18].unk_77[region]);
+          if (v7 & 0x40)
+            v75 /= 2;
+          else if (v7 & 0x20)
+            v75 = (v75 * 2) / 3;
+        }
+        if (((base_id == 10) || (base_id == 2)) && (regional_plan == 7))
+          v75 /= 2;
+        if (base_id != 0xf) {
+          if (base_id != 0x22) {
+            if (((base_id == 0x24) || (base_id == 0x21)) && ((int)(PlayersData[faction_id].ai_wealth)))
+              v75 /= 2;
+            if (base_id != 0x23) {
+              if (base_id != 0xb) {
+                if (base_id == 4) {
+                  v9 = 1;
+                  v18 = faction_id;
+                  do {
+                    if (v18 != v9) {
+                      v11 = has_treaty(faction_id,v9,8);
+                      v75 = ((-(uint32_t)(v11 != 0) & 2) + 7) * v75;
+                      v75 = (int)(v75 + (v75 >> 0x1f & 7U)) >> 3;
+                      v18 = faction_id;
+                    }
+                    v9 += 1;
+                  } while ((int)v9 < 8);
+                  if (GovernorFaction == v18)
+                    v75 /= 2;
+                  if ((int)(PlayersData[faction_id].ranking) == 7)
+                    v75 /= 2;
+                  v16 = 0;
+                  v11 = (int)(Players[v18].faction_bonus_count);
+                  if (1 <= v11) {
+
+                    do {
+                      if (Players[v18].faction_bonus_id[v16] == 0xb) goto label_4ff5f6;
+                      v16 += 1;
+
+                    } while (v16 < v11);
+                  }
+                }
+              }
+              else {
+                scan_faction = &PlayersData[1];
+                do {
+                  if ((int)(PlayersData[faction_id].tech_ranking) <= scan_faction->tech_ranking)
+                    v75 = (int)(v75 * 7 + (v75 * 7 >> 0x1f & 7U)) >> 3;
+                  ++scan_faction;
+                } while (scan_faction < &PlayersData[8]);
+              }
+            }
+            else {
+              v7 = (uint16_t)(PlayersData[v18].unk_77[region]);
+              if (v7 & 0x40) goto label_4ff5f6;
+              if (v7 & 0x20)
+                v75 = (v75 * 2) / 3;
+            }
+          }
+          else if ((uint8_t)(PlayersData[faction_id].flags_ext) & 8) {
+label_4ff5f6:
+            v75 /= 2;
+          }
+        }
+        else {
+          if (!(int)(PlayersData[faction_id].ai_power))
+            v75 /= 2;
+          if ((int)(PlayersData[faction_id].ai_tech))
+            v75 /= 2;
+          if ((int)(PlayersData[faction_id].soc_effect_base.probe) <= -1)
+            v75 /= 2;
+          if (1 <= (int)(PlayersData[faction_id].soc_effect_base.probe))
+            v75 *= 2;
+        }
+        if (((!v128) && (base_id <= 0x1e)) && ((regional_plan == 2 || ((uint8_t)((PlayersData[faction_id].unk_77[region] >> 8)) & 0x40))))
+          v75 *= 2;
+        if (((base_id == 0x1f) && (!v117)) && (GameRules & 0x800)) {
+          v75 /= 2;
+          if (0 <= Facility[0x65].preq_tech) {
+            v18 = 1;
+            scan_faction = &PlayersData[1];
+            v149 = 1;
+            do {
+              if ((v18 != faction_id) && ((int)(PlayersData[faction_id].ranking) < scan_faction->ranking)) {
+                v11 = has_tech(Facility[0x65].preq_tech,v18);
+                if (v11)
+                  v75 *= 2;
+                else {
+                  v75 /= 2;
+                }
+              }
+              ++scan_faction;
+              v18 = v149 + 1;
+              v149 = v18;
+            } while (scan_faction < &PlayersData[8]);
+          }
+        }
+        if ((!v154) && (!v119))
+          v75 = (int)(v75 + (v75 >> 0x1f & 3U)) >> 2;
+        if (((base_id == 0x20) && (!v117)) && ((int)(PlayersData[faction_id].unk_28) / 2 <= v116))
+          v75 = (int)(v75 + (v75 >> 0x1f & 3U)) >> 2;
+        clear();
+        v154 = faction_id * 0x59c;
+        says(Players[faction_id].filename);
+        CharUpperA(StringTemp);
+        if ((!strcmp(StringTemp,"CARETAKE")) && (base_id == 0x20)) {
+          v166 = 99;
+          v75 = 0x400;
+        }
+        v166 = range(v166,1,99);
+        v129 = v166 * v75 * 0x20;
+        v152 = -(base_id + 0x46);
+        v11 = base_lose_minerals(BaseIDCurrentSelected,v152);
+        if (1 <= v11) {
+          if ((!((uint8_t)v165 & (uint8_t)LockEnableMask)) || ((!out_score && (BaseCurrent->governor & 0x80000000)))) {
+            v16 = cost_factor(faction_id,1,-1);
+            v16 *= (int)(Facility[v8].cost);
+            v75 = ((v11 + v16) * v75) / v16;
+          }
+        }
+        v75 = (((int)(PlayersData[faction_id].unk_28) + 8) * v166 * v75 * 0x20) / (int)(((v150 - v148) + 3) * (v116 + 8));
+        if (v167 != v144) {
+          v11 = cost_factor(faction_id,1,-1);
+          v11 = v11 * (int)(Facility[v8].cost) + 1;
+          v75 += ((v11 - BaseCurrent->minerals_accumulated) * v75) / v11;
+        }
+        if (v139)
+          v11 = 2;
+        else {
+          v11 = v117 + 1;
+        }
+        v16 = (int)(PlayersData[faction_id].energy_reserves);
+        v13 = TurnCurrentNum / 100;
+        v77 = BaseCurrent->mineral_surplus;
+        v75 = (((v75 * v11 * 0x400) / (v16 + 0x400)) * 8) / (range(v77 / (v13 + 3),0,8) + 8);
+        if (selection_mode)
+          v75 /= (int)(selection_mode + 1);
+        if ((has_fac_built(1)) && (!v139))
+          v75 = (int)(v75 * 3 + (v75 * 3 >> 0x1f & 3U)) >> 2;
+        if ((!((uint8_t)v165 & (uint8_t)LockEnableMask)) && (BaseCurrent->queue_production_id[0] == v152)) {
+          v129 = (int)(v129 + ((int)v129 >> 0x1f & 3U)) >> 2;
+          v11 = cost_factor(faction_id,1,-1);
+          if ((v11 * (int)(Facility[v8].cost) <= BaseCurrent->minerals_accumulated) && (v75 = v75 / 2, (int)v162 <= 2))
+            v162 = 0;
+        }
+        v8 = 0;
+        if (1 <= BaseCurrentCount) {
+          scan_base = &Bases[0];
+          do {
+            if (((scan_base->faction_id_current == faction_id) && (v8 != BaseIDCurrentSelected)) && (scan_base->queue_production_id[0] == -(base_id + 0x46))) {
+              v5 = scan_base->y;
+              v11 = (int)(((uint32_t)(uint16_t)scan_base->y << 16) | (uint16_t)scan_base->x);
+              if (region_at((int)(int16_t)v11,(int)v5) != region) goto label_4ffe94;
+              if ((!v139) || (v128))
+                v75 *= 2;
+            }
+            v8 += 1;
+            ++scan_base;
+          } while (v8 < BaseCurrentCount);
+        }
+        if (0 <= v75) {
+          v9 = 9999;
+          v8 = has_fac_built(0x18);
+          v18 = faction_id;
+          if ((v8) || (v8 = has_tech(Facility[0x18].preq_tech,faction_id), !v8)) {
+            if ((!has_fac_built(0x19)) && (v8 = has_tech(Facility[0x19].preq_tech,v18), v8))
+              v9 = Rules.pop_limit_sans_hab_dome;
+          }
+          else {
+            v9 = Rules.pop_limit_sans_hab_complex;
+          }
+          v76 = v139;
+          if ((int)(v9 - (int)(Players[faction_id].rule_population)) <= (int)BaseCurrent->population_size) {
+            if (!v128) goto label_4ffe94;
+label_4ffbe9:
+            v15 = (uint8_t)(PlayersData[faction_id].region_base_plan[region]);
+            if ((v15 != 2) || (!v162)) {
+              if (3 <= v15) {
+                v75 /= 3;
+                if (((((int)v162 <= 2) && ((int)v143 <= 1)) && (v75 = v75 / 2, !(BaseCurrent->state & 8))) && ((SecretProject[base_id] == -1 && (-0x45 <= selected_id[0])))) {
+                  selected_score[0] = 9999999;
+                  v143 = 0;
+                  v162 = 0;
+                }
+              }
+              else if (!v162)
+                v75 /= 2;
+            }
+          }
+          else if (v128) goto label_4ffbe9;
+          if ((!v139) || (((v119 && (v5 = BaseCurrent->y, v6 = BaseCurrent->x, !is_ocean((int)v6,(int)v5))) && (plan_count_3[30] + plan_count_1[30] <= 2)))) {
+            v118 = base_id + 0x46;
+            if (!has_fac_built(6)) {
+              if ((!((uint8_t)v165 & (uint8_t)LockEnableMask)) || (BaseCurrent->governor & 0x10000)) {
+                v8 = has_tech(Facility[6].preq_tech,v18);
+                if (!v8) goto label_4ffe94;
+                v118 = 6;
+              }
+            }
+            if ((uint8_t)v165 & (uint8_t)LockEnableMask) {
+              if (v76) goto label_4ffe94;
+            }
+            else if ((v76) && (v8 = veh_avail(5,v18,BaseIDCurrentSelected), !v8)) {
+              v76 = 0;
+              v139 = 0;
+            }
+            if ((-0x45 <= selected_id[0]) || (v76)) {
+              v8 = 0;
+              do {
+                if ((!((uint8_t)v165 & (uint8_t)LockEnableMask)) || (BaseCurrent->governor & 0x40000)) {
+                  v11 = v75;
+                  if ((out_score) && (v16 = base_claimed(-(base_id + 0x46),v75,v147,v157,v156,v160), v16))
+                    v11 = v75 + 100000;
+                  if (v11 < selected_score[v8 / 4]) {
+                    selected_score[v8 / 4] = v11;
+                    if (v139)
+                      v11 = 5;
+                    else {
+                      v11 = -v118;
+                    }
+                    selected_id[v8 / 4] = v11;
+                    v133 = v129;
+                  }
+                }
+                v8 += 4;
+              } while (v8 < 8);
+            }
+            else if ((int)v129 < (int)v133) {
+              v133 = v129;
+              v8 = 0;
+              do {
+                if ((!((uint8_t)LockEnableMask & (uint8_t)v165)) || (BaseCurrent->governor & 0x40000)) {
+                  v11 = v75;
+                  if ((out_score) && (v16 = base_claimed(-(base_id + 0x46),v75,v147,v157,v156,v160), v16))
+                    v11 = v75 + 100000;
+                  selected_id[v8 / 4] = -v118;
+                  if (v75 < selected_score[v8 / 4])
+                    selected_score[v8 / 4] = v11;
+                }
+                v8 += 4;
+              } while (v8 < 8);
+            }
+          }
+        }
+      }
+      else {
+        v16 = 0;
+        v167 = v144;
+        v11 = (int)(Players[v18].faction_bonus_count);
+        if (1 <= v11) {
+
+          do {
+            if (((Players[v18].faction_bonus_id[v16] == 2) && (Players[v18].faction_bonus_val1[v16] == 4)) || ((Players[v18].faction_bonus_id[v16] == 0xc && (Players[v18].faction_bonus_val1[v16] == 4)))) break;
+            v16 += 1;
+
+          } while (v16 < v11);
+        }
+        if (v16 >= v11) {
+          v18 = faction_id;
+          goto label_4ff539;
+        }
+      }
+    }
+label_4ffe94:
+    base_id += 1;
+  } while (base_id < 0x40);
+label_4ffea4:
+  if (out_secondary) {
+    *out_secondary = selected_id[1];
+    parse_num(1,selected_score[1]);
+  }
+  if (out_tertiary) {
+    *out_tertiary = selected_id[2];
+    parse_num(0,selected_score[2]);
+  }
+  v8 = selected_id[0];
+  if ((selected_id[0] < 0) || (!(char)(Weapon[VehPrototypes[selected_id[0]].weapon_id].offense_rating))) {
+    v5 = BaseCurrent->y;
+    v6 = BaseCurrent->x;
+    if ((veh_who((int)v6,(int)v5) <= -1) && ((int)v143 <= 1)) {
+      if ((!((uint8_t)v165 & (uint8_t)LockEnableMask)) || (BaseCurrent->governor & 0x1000)) {
+        v18 = 99999;
+        v8 = 0;
+        scan_prototype = &VehPrototypes[0];
+        do {
+          v75 = veh_avail(v8,faction_id,BaseIDCurrentSelected);
+          if (v75) {
+            v3 = scan_prototype->plan;
+            if ((v3 != '\x02') && (v3 != '\x03')) {
+              if (v3 != '\x01') goto label_4fff8e;
+            }
+            if ((uint8_t)scan_prototype->flags & 4U) {
+              if ((uint8_t)scan_prototype->cost < v18) {
+                v18 = (uint32_t)(uint8_t)scan_prototype->cost;
+                selected_id[0] = v8;
+              }
+            }
+          }
+label_4fff8e:
+          ++scan_prototype;
+          v8 += 1;
+        } while (scan_prototype < &VehPrototypes[512]);
+        v8 = selected_id[0];
+      }
+    }
+  }
+  if (out_score)
+    *out_score = selected_score[0];
+  return v8;
 }
+
+
+
+
+
+
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004E5A60 ?base_change@@YAXHH@Z 0x004E5A60-0x004E5FDC
@@ -2124,7 +5540,7 @@ Purpose: Find the best specialist available to the current base with more weight
 //   44/44 BYTE_EXACT.
 // symbol    ?best_specialist@@YAIXZ
 // size      112 bytes
-// prototype 
+// prototype
 // callers   9   call targets   1
 // kind      game
 // flags     frame;sp_ready;purged_ok
@@ -2506,7 +5922,7 @@ int __cdecl base_lose_minerals(int base_id, int UNUSED(production_id)) {
     if (Rules.retool_pct_pen_prod_chg && is_human(Bases[base_id].faction_id_current)
         && base_making(Bases[base_id].production_id_last, base_id)
         != base_making(Bases[base_id].queue_production_id[0], base_id)
-        && (min_accum = Bases[base_id].minerals_accumulated_2, 
+        && (min_accum = Bases[base_id].minerals_accumulated_2,
             min_accum > (int)Rules.retool_exemption)) {
         return min_accum - (100 - (int)Rules.retool_pct_pen_prod_chg)
             * (min_accum - (int)Rules.retool_exemption) / 100 - (int)Rules.retool_exemption;
@@ -3133,7 +6549,7 @@ void __cdecl base_hurry() {
             hurry_amount = remaining_cost;
         }
         if (hurry_amount != 0) {
-            if (SecretProject.voice_of_planet >= 0) {
+            if (SecretProject.voice_of_planet() >= 0) {
                 hurry_amount /= 2;
             } else {
                 if (strcmp(Players[faction].filename, "MORGAN") == 0) {
@@ -3159,7 +6575,7 @@ void __cdecl base_hurry() {
             if (current_base->queue_production_id[0] <= -0x46) {
                 turns_factor = base_yield_add(turns_factor, turns_factor);
             }
-            if (SecretProject.voice_of_planet >= 0) {
+            if (SecretProject.voice_of_planet() >= 0) {
                 turns_factor = base_yield_add(turns_factor, turns_factor);
             }
             int bought_turns = turns_factor != 0
@@ -4309,7 +7725,7 @@ int __cdecl energy_yield(int faction_id, int base_id, int x, int y,
         }
         int golden_age = 0;
         if (base_id >= 0) {
-            if (SecretProject.merchant_exchange == base_id) {
+            if (SecretProject.merchant_exchange() == base_id) {
                 energy++;
             }
             if (Bases[base_id].state & BSTATE_GOLDEN_AGE_ACTIVE) {
@@ -4369,7 +7785,7 @@ Purpose: Tally what the current base's forces cost it: the resources its supply
 //            identified as the source of the gap in the time spent on a
 //            465-instruction body with ~20 live locals across the veh loop.
 // size      1530 bytes
-// prototype 
+// prototype
 // callers   7   call targets   6
 // kind      game
 // flags     frame;sp_ready;purged_ok
@@ -4607,7 +8023,7 @@ Purpose: Calculate nutrients and growth for the current base.
 //   value feeds only one branch and drops the materialization. Same
 //   plateau, confirmed a second way.
 // size      317 bytes
-// prototype 
+// prototype
 // callers   7   call targets   1
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
@@ -4663,7 +8079,7 @@ Purpose: Calculate minerals and ecological damage for the current base.
 //   negligible similarity cost (0.239 -> 0.232 best-across-flags) - the
 //   correct call graph, not the highest score, so kept.
 // size      1343 bytes
-// prototype 
+// prototype
 // callers   7   call targets   2
 // kind      game
 // flags     frame;sp_ready;purged_ok
@@ -4785,7 +8201,7 @@ Purpose: Calculate the current base's energy loss/inefficiency for an amount of 
 //   moves to /O1 /Gy /GR- /Oy- /GX). Reverted to has_fac_built().
 // symbol    ?black_market@@YAIH@Z
 // size      677 bytes
-// prototype 
+// prototype
 // callers   1   call targets   2
 // kind      game
 // flags     frame;sp_ready;purged_ok
@@ -4982,17 +8398,17 @@ void __cdecl base_psych() {
         ? Rules.drones_genejack_factory : 0;
     if (has_fac(FAC_RECREATION_COMMONS, BaseIDCurrentSelected, 0)) facility_drones = base_yield_sub(facility_drones, 2);
     if ((has_fac(FAC_NETWORK_NODE, BaseIDCurrentSelected, 0)
-         && base_psych_project_owned(SecretProject.virtual_world, faction))
+         && base_psych_project_owned(SecretProject.virtual_world(), faction))
         || has_fac(FAC_HOLOGRAM_THEATRE, BaseIDCurrentSelected, 0)) {
         facility_drones = base_yield_sub(facility_drones, 2);
     }
-    if (base_psych_project_owned(SecretProject.planetary_transit_system, faction)
+    if (base_psych_project_owned(SecretProject.planetary_transit_system(), faction)
         && BaseCurrent->population_size <= 3) facility_drones = base_yield_sub(facility_drones, 1);
     const int facility_talents = has_fac(FAC_PARADISE_GARDEN, BaseIDCurrentSelected, 0) ? 2 : 0;
     if (base_yield_has_facility(FAC_RESEARCH_HOSPITAL)) facility_drones = base_yield_sub(facility_drones, 1);
     if (base_yield_has_facility(FAC_NANOHOSPITAL)) facility_drones = base_yield_sub(facility_drones, 1);
-    int project_talents = base_psych_project_owned(SecretProject.human_genome_project, faction) ? 1 : 0;
-    if (base_psych_project_owned(SecretProject.clinical_immortality, faction)) project_talents += 2;
+    int project_talents = base_psych_project_owned(SecretProject.human_genome_project(), faction) ? 1 : 0;
+    if (base_psych_project_owned(SecretProject.clinical_immortality(), faction)) project_talents += 2;
     const bool punishment = base_yield_has_facility(FAC_PUNISHMENT_SPHERE);
 
     for (int talent_case = 8; talent_case >= 0; --talent_case) {
@@ -5035,7 +8451,7 @@ void __cdecl base_psych() {
 
             if (police_limit > 0) {
                 int used = 0;
-                if (base_psych_project_owned(SecretProject.self_aware_colony, faction)) {
+                if (base_psych_project_owned(SecretProject.self_aware_colony(), faction)) {
                     used = 1;
                     base_psych_reduce_drone();
                     if (police >= 3) base_psych_reduce_drone();
@@ -5075,7 +8491,7 @@ void __cdecl base_psych() {
             base_psych_publish(3);
 
             BaseCurrent->talent_total = base_yield_add(BaseCurrent->talent_total, project_talents);
-            if (base_psych_project_owned(SecretProject.longevity_vaccine, faction)) {
+            if (base_psych_project_owned(SecretProject.longevity_vaccine(), faction)) {
                 if (PlayersData[faction].soc_category_pending.models_[SocialCategory::ECONOMICS] == 2)
                     BaseCurrent->drone_total = base_yield_sub(BaseCurrent->drone_total, 1);
                 if (PlayersData[faction].soc_category_pending.models_[SocialCategory::ECONOMICS] != 1)
@@ -5297,7 +8713,7 @@ Purpose: Check if current base has had an energy shortfall. If so, reset all exi
 //            change it (measured), so the divergence is inside the shared
 //            inline body, not this call site's source shape.
 // size      179 bytes
-// prototype 
+// prototype
 // callers   1   call targets   0
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
@@ -5311,7 +8727,7 @@ void __cdecl base_energy_costs() {
     }
     uint32_t faction_id = BaseCurrent->faction_id_current;
     for (int i = 0; i < VehCurrentCount; i++) {
-        if (Vehs[i].faction_id == faction_id 
+        if (Vehs[i].faction_id == faction_id
             && VehPrototypes[Vehs[i].proto_id].plan == PLAN_SUPPLY_CONVOY
             && Vehs[i].order == ORDER_CONVOY && Vehs[i].order_auto_type == RSC_ENERGY
             && base_who(Vehs[i].x, Vehs[i].y) >= 0) {
@@ -5377,7 +8793,7 @@ Purpose: Calculate overall maintenance cost for the currently selected base.
 //            standalone `set_fac()` call is kept. Best flag set
 //            /O2 /Gy /GR- /Oy- /GX either way.
 // size      499 bytes
-// prototype 
+// prototype
 // callers   1   call targets   5
 // kind      game
 // flags     frame;sp_ready;purged_ok
@@ -5409,7 +8825,7 @@ void __cdecl base_maint() {
                     PlayersData[faction_id].energy_reserves = 0;
                 } else {
                     set_fac(fac, BaseIDCurrentSelected, false);
-                    PlayersData[faction_id].energy_reserves 
+                    PlayersData[faction_id].energy_reserves
                         = cost_factor(faction_id, RSC_MINERALS, -1) * Facility[fac].cost;
                     parse_say(1, (int)*(&Facility[fac].name), -1, -1);
                     popb("POWERSHORT", 0x10000, 14, "genwarning_sm.pcx", NULL);
@@ -5736,7 +9152,7 @@ Purpose: Determine the value of the specified base between the requester and the
 Return Value: Value of base or -1 for invalid requests
 Status: Complete - testing
 */
-int __cdecl value_of_base(int base_id, int faction_id_req, int faction_id_res, 
+int __cdecl value_of_base(int base_id, int faction_id_req, int faction_id_res,
                           int overmatch_deg, BOOL tgl) {
     if (base_id < 0) {
         return -1;
@@ -6340,7 +9756,7 @@ Purpose: Determine if the provided faction can build a specific facility or Secr
 Return Value: Is facility or Secret Project available to faction, base and game mode? true/false
 Status: Complete
 */
-BOOL __cdecl facility_avail(int facility_id, int faction_id, int base_id, 
+BOOL __cdecl facility_avail(int facility_id, int faction_id, int base_id,
                             int queue_count) {
     // initial checks
     if (!facility_id || (facility_id == FAC_SKUNKWORKS && DiffLevelCurrent <= DLVL_SPECIALIST)
@@ -7012,7 +10428,7 @@ void __cdecl compute_score(int faction, int *total, int *items, int recursive) {
 
     TranscendenceScoreBonus = 0;
     for (int slot = 0; slot < 8; ++slot) TranscendenceScoreWeights[slot] = 0;
-    const int transcendence_base = SecretProject.ascent_to_transcendence;
+    const int transcendence_base = SecretProject.ascent_to_transcendence();
     if (transcendence_base >= 0) {
         TranscendenceScoreBonus = 300;
         const int scaled = score_word_mul(score_word_sub(1000, TurnCurrentNum), 2);
@@ -7733,7 +11149,7 @@ void __cdecl capture_base(int base_id, int faction_id, int mode) {
         PlayersData[faction_id].tech_accumulated += (techVal + ((techVal >> 0x1f) & 7)) >> 3;
     } else {
         steal_tech(faction_id, (int)local_8, 1);
-        if (base_id >= 0 && SecretProject.universal_translator == base_id) {
+        if (base_id >= 0 && SecretProject.universal_translator() == base_id) {
             steal_tech(faction_id, (int)uVar14, 1);
         }
     }
@@ -8889,13 +12305,13 @@ int __cdecl base_growth() {
         base_yield_add(static_cast<int>(BaseCurrent->population_size), 1));
     const int faction = BaseIDCurrentSelected;
 
-    if (((SecretProject.cloning_vats >= 0
-          && Bases[SecretProject.cloning_vats].faction_id_current == owner)
+    if (((SecretProject.cloning_vats() >= 0
+          && Bases[SecretProject.cloning_vats()].faction_id_current == owner)
          || BaseCurrentGrowthRate > 5)
         && Rules.nutrient_req_citizen != 0
         && static_cast<int>(Rules.nutrient_req_citizen) <= BaseCurrent->nutrient_surplus) {
-        const bool same = SecretProject.ascetic_virtues >= 0
-            && Bases[SecretProject.ascetic_virtues].faction_id_current
+        const bool same = SecretProject.ascetic_virtues() >= 0
+            && Bases[SecretProject.ascetic_virtues()].faction_id_current
                 == Bases[faction].faction_id_current;
         const int margin = same ? 2 : 0;
         const int total_population =
@@ -8929,8 +12345,8 @@ int __cdecl base_growth() {
             BaseCurrent->nutrients_accumulated = growth;
             return 0;
         }
-        const bool same = SecretProject.ascetic_virtues >= 0
-            && Bases[SecretProject.ascetic_virtues].faction_id_current
+        const bool same = SecretProject.ascetic_virtues() >= 0
+            && Bases[SecretProject.ascetic_virtues()].faction_id_current
                 == Bases[faction].faction_id_current;
         const int margin = same ? 2 : 0;
         const int total_population =
@@ -9291,70 +12707,70 @@ int production_project(int item) {
 
 void production_set_project_owner(int project_id, int base_id) {
     switch (project_id) {
-    case 0: SecretProject.human_genome_project = base_id; break;
-    case 1: SecretProject.command_nexus = base_id; break;
-    case 2: SecretProject.weather_paradigm = base_id; break;
-    case 3: SecretProject.merchant_exchange = base_id; break;
-    case 4: SecretProject.empath_guild = base_id; break;
-    case 5: SecretProject.citizens_defense_force = base_id; break;
-    case 6: SecretProject.virtual_world = base_id; break;
-    case 7: SecretProject.planetary_transit_system = base_id; break;
-    case 8: SecretProject.xenoempathy_dome = base_id; break;
-    case 9: SecretProject.neural_amplifier = base_id; break;
-    case 10: SecretProject.maritime_control_center = base_id; break;
-    case 11: SecretProject.planetary_datalinks = base_id; break;
-    case 12: SecretProject.supercollider = base_id; break;
-    case 13: SecretProject.ascetic_virtues = base_id; break;
-    case 14: SecretProject.longevity_vaccine = base_id; break;
-    case 15: SecretProject.hunter_seeker_algorithm = base_id; break;
-    case 16: SecretProject.pholus_mutagen = base_id; break;
-    case 17: SecretProject.cyborg_factory = base_id; break;
-    case 18: SecretProject.theory_of_everything = base_id; break;
-    case 19: SecretProject.dream_twister = base_id; break;
-    case 20: SecretProject.universal_translator = base_id; break;
-    case 21: SecretProject.network_backbone = base_id; break;
-    case 22: SecretProject.nano_factory = base_id; break;
-    case 23: SecretProject.living_refinery = base_id; break;
-    case 24: SecretProject.cloning_vats = base_id; break;
-    case 25: SecretProject.self_aware_colony = base_id; break;
-    case 26: SecretProject.clinical_immortality = base_id; break;
-    case 27: SecretProject.space_elevator = base_id; break;
-    case 28: SecretProject.singularity_inductor = base_id; break;
-    case 29: SecretProject.bulk_matter_transmitter = base_id; break;
-    case 30: SecretProject.telepathic_matrix = base_id; break;
-    case 31: SecretProject.voice_of_planet = base_id; break;
-    case 32: SecretProject.ascent_to_transcendence = base_id; break;
-    case 33: SecretProject.manifold_harmonics = base_id; break;
-    case 34: SecretProject.nethack_terminus = base_id; break;
-    case 35: SecretProject.cloudbase_academy = base_id; break;
-    case 36: SecretProject.planetary_energy_grid = base_id; break;
-    case 37: SecretProject.user_defined_38 = base_id; break;
-    case 38: SecretProject.user_defined_39 = base_id; break;
-    case 39: SecretProject.user_defined_40 = base_id; break;
-    case 40: SecretProject.user_defined_41 = base_id; break;
-    case 41: SecretProject.user_defined_42 = base_id; break;
-    case 42: SecretProject.user_defined_43 = base_id; break;
-    case 43: SecretProject.user_defined_44 = base_id; break;
-    case 44: SecretProject.user_defined_45 = base_id; break;
-    case 45: SecretProject.user_defined_46 = base_id; break;
-    case 46: SecretProject.user_defined_47 = base_id; break;
-    case 47: SecretProject.user_defined_48 = base_id; break;
-    case 48: SecretProject.user_defined_49 = base_id; break;
-    case 49: SecretProject.user_defined_50 = base_id; break;
-    case 50: SecretProject.user_defined_51 = base_id; break;
-    case 51: SecretProject.user_defined_52 = base_id; break;
-    case 52: SecretProject.user_defined_53 = base_id; break;
-    case 53: SecretProject.user_defined_54 = base_id; break;
-    case 54: SecretProject.user_defined_55 = base_id; break;
-    case 55: SecretProject.user_defined_56 = base_id; break;
-    case 56: SecretProject.user_defined_57 = base_id; break;
-    case 57: SecretProject.user_defined_58 = base_id; break;
-    case 58: SecretProject.user_defined_59 = base_id; break;
-    case 59: SecretProject.user_defined_60 = base_id; break;
-    case 60: SecretProject.user_defined_61 = base_id; break;
-    case 61: SecretProject.user_defined_62 = base_id; break;
-    case 62: SecretProject.user_defined_63 = base_id; break;
-    case 63: SecretProject.user_defined_64 = base_id; break;
+    case 0: SecretProject.human_genome_project() = base_id; break;
+    case 1: SecretProject.command_nexus() = base_id; break;
+    case 2: SecretProject.weather_paradigm() = base_id; break;
+    case 3: SecretProject.merchant_exchange() = base_id; break;
+    case 4: SecretProject.empath_guild() = base_id; break;
+    case 5: SecretProject.citizens_defense_force() = base_id; break;
+    case 6: SecretProject.virtual_world() = base_id; break;
+    case 7: SecretProject.planetary_transit_system() = base_id; break;
+    case 8: SecretProject.xenoempathy_dome() = base_id; break;
+    case 9: SecretProject.neural_amplifier() = base_id; break;
+    case 10: SecretProject.maritime_control_center() = base_id; break;
+    case 11: SecretProject.planetary_datalinks() = base_id; break;
+    case 12: SecretProject.supercollider() = base_id; break;
+    case 13: SecretProject.ascetic_virtues() = base_id; break;
+    case 14: SecretProject.longevity_vaccine() = base_id; break;
+    case 15: SecretProject.hunter_seeker_algorithm() = base_id; break;
+    case 16: SecretProject.pholus_mutagen() = base_id; break;
+    case 17: SecretProject.cyborg_factory() = base_id; break;
+    case 18: SecretProject.theory_of_everything() = base_id; break;
+    case 19: SecretProject.dream_twister() = base_id; break;
+    case 20: SecretProject.universal_translator() = base_id; break;
+    case 21: SecretProject.network_backbone() = base_id; break;
+    case 22: SecretProject.nano_factory() = base_id; break;
+    case 23: SecretProject.living_refinery() = base_id; break;
+    case 24: SecretProject.cloning_vats() = base_id; break;
+    case 25: SecretProject.self_aware_colony() = base_id; break;
+    case 26: SecretProject.clinical_immortality() = base_id; break;
+    case 27: SecretProject.space_elevator() = base_id; break;
+    case 28: SecretProject.singularity_inductor() = base_id; break;
+    case 29: SecretProject.bulk_matter_transmitter() = base_id; break;
+    case 30: SecretProject.telepathic_matrix() = base_id; break;
+    case 31: SecretProject.voice_of_planet() = base_id; break;
+    case 32: SecretProject.ascent_to_transcendence() = base_id; break;
+    case 33: SecretProject.manifold_harmonics() = base_id; break;
+    case 34: SecretProject.nethack_terminus() = base_id; break;
+    case 35: SecretProject.cloudbase_academy() = base_id; break;
+    case 36: SecretProject.planetary_energy_grid() = base_id; break;
+    case 37: SecretProject.user_defined_38() = base_id; break;
+    case 38: SecretProject.user_defined_39() = base_id; break;
+    case 39: SecretProject.user_defined_40() = base_id; break;
+    case 40: SecretProject.user_defined_41() = base_id; break;
+    case 41: SecretProject.user_defined_42() = base_id; break;
+    case 42: SecretProject.user_defined_43() = base_id; break;
+    case 43: SecretProject.user_defined_44() = base_id; break;
+    case 44: SecretProject.user_defined_45() = base_id; break;
+    case 45: SecretProject.user_defined_46() = base_id; break;
+    case 46: SecretProject.user_defined_47() = base_id; break;
+    case 47: SecretProject.user_defined_48() = base_id; break;
+    case 48: SecretProject.user_defined_49() = base_id; break;
+    case 49: SecretProject.user_defined_50() = base_id; break;
+    case 50: SecretProject.user_defined_51() = base_id; break;
+    case 51: SecretProject.user_defined_52() = base_id; break;
+    case 52: SecretProject.user_defined_53() = base_id; break;
+    case 53: SecretProject.user_defined_54() = base_id; break;
+    case 54: SecretProject.user_defined_55() = base_id; break;
+    case 55: SecretProject.user_defined_56() = base_id; break;
+    case 56: SecretProject.user_defined_57() = base_id; break;
+    case 57: SecretProject.user_defined_58() = base_id; break;
+    case 58: SecretProject.user_defined_59() = base_id; break;
+    case 59: SecretProject.user_defined_60() = base_id; break;
+    case 60: SecretProject.user_defined_61() = base_id; break;
+    case 61: SecretProject.user_defined_62() = base_id; break;
+    case 62: SecretProject.user_defined_63() = base_id; break;
+    case 63: SecretProject.user_defined_64() = base_id; break;
     }
 }
 
@@ -10688,7 +14104,7 @@ void __cdecl base_drones() {
 
     if (base->drone_total > base->talent_total) {
         int exempt = 0;
-        const int exemption_faction = SecretProject.telepathic_matrix;
+        const int exemption_faction = SecretProject.telepathic_matrix();
         if (exemption_faction >= 0 &&
             Bases[exemption_faction].faction_id_current == base->faction_id_current) {
             exempt = 1;

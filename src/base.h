@@ -466,76 +466,146 @@ struct RulesCitizen {
 };
 
 struct BaseSecretProject {
-    int human_genome_project;
-    int command_nexus;
-    int weather_paradigm;
-    int merchant_exchange;
+    // Historical original scalar-member interpretations remain live obligations.
+    // Primitive-array element/accessor migration is not supported by the layout
+    // binding API; these lines are not observations of current scalar storage.
     // RECOVERY_MEMBER: v1 BaseSecretProject empath_guild 0x10 0x0055BC00
-    int empath_guild;
-    int citizens_defense_force;
-    int virtual_world;
-    int planetary_transit_system;
-    int xenoempathy_dome;
-    int neural_amplifier;
-    int maritime_control_center;
-    int planetary_datalinks;
-    int supercollider;
-    int ascetic_virtues;
-    int longevity_vaccine;
-    int hunter_seeker_algorithm;
-    int pholus_mutagen;
-    int cyborg_factory;
-    int theory_of_everything;
-    int dream_twister;
-    int universal_translator;
     // RECOVERY_MEMBER: v1 BaseSecretProject network_backbone 0x54 0x004AF310
-    int network_backbone;
-    int nano_factory;
-    int living_refinery;
     // RECOVERY_MEMBER: v1 BaseSecretProject cloning_vats 0x60 0x004AF310
-    int cloning_vats;
     // RECOVERY_MEMBER: v1 BaseSecretProject self_aware_colony 0x64 0x00445130
-    int self_aware_colony;
-    int clinical_immortality;
     // RECOVERY_MEMBER: v1 BaseSecretProject space_elevator 0x6C 0x004E80B0
-    int space_elevator;
-    int singularity_inductor;
-    int bulk_matter_transmitter;
-    int telepathic_matrix;
-    int voice_of_planet;
-    int ascent_to_transcendence;
-    int manifold_harmonics; // SMACX Only
-    int nethack_terminus; // SMACX Only
     // RECOVERY_MEMBER: v1 BaseSecretProject cloudbase_academy 0x8C 0x004E80B0
-    int cloudbase_academy; // SMACX Only
-    int planetary_energy_grid; // SMACX Only
-    int user_defined_38; // no direct ref in code logic?
-    int user_defined_39;
-    int user_defined_40;
-    int user_defined_41;
-    int user_defined_42;
-    int user_defined_43;
-    int user_defined_44;
-    int user_defined_45;
-    int user_defined_46;
-    int user_defined_47;
-    int user_defined_48;
-    int user_defined_49;
-    int user_defined_50;
-    int user_defined_51;
-    int user_defined_52;
-    int user_defined_53;
-    int user_defined_54;
-    int user_defined_55;
-    int user_defined_56;
-    int user_defined_57;
-    int user_defined_58;
-    int user_defined_59;
-    int user_defined_60;
-    int user_defined_61;
-    int user_defined_62;
-    int user_defined_63;
-    int user_defined_64;
+    int project_base[64];
+    int &operator[](int project) { return project_base[project]; }
+    const int &operator[](int project) const { return project_base[project]; }
+    int &human_genome_project() { return project_base[0]; }
+    const int &human_genome_project() const { return project_base[0]; }
+    int &command_nexus() { return project_base[1]; }
+    const int &command_nexus() const { return project_base[1]; }
+    int &weather_paradigm() { return project_base[2]; }
+    const int &weather_paradigm() const { return project_base[2]; }
+    int &merchant_exchange() { return project_base[3]; }
+    const int &merchant_exchange() const { return project_base[3]; }
+    int &empath_guild() { return project_base[4]; }
+    const int &empath_guild() const { return project_base[4]; }
+    int &citizens_defense_force() { return project_base[5]; }
+    const int &citizens_defense_force() const { return project_base[5]; }
+    int &virtual_world() { return project_base[6]; }
+    const int &virtual_world() const { return project_base[6]; }
+    int &planetary_transit_system() { return project_base[7]; }
+    const int &planetary_transit_system() const { return project_base[7]; }
+    int &xenoempathy_dome() { return project_base[8]; }
+    const int &xenoempathy_dome() const { return project_base[8]; }
+    int &neural_amplifier() { return project_base[9]; }
+    const int &neural_amplifier() const { return project_base[9]; }
+    int &maritime_control_center() { return project_base[10]; }
+    const int &maritime_control_center() const { return project_base[10]; }
+    int &planetary_datalinks() { return project_base[11]; }
+    const int &planetary_datalinks() const { return project_base[11]; }
+    int &supercollider() { return project_base[12]; }
+    const int &supercollider() const { return project_base[12]; }
+    int &ascetic_virtues() { return project_base[13]; }
+    const int &ascetic_virtues() const { return project_base[13]; }
+    int &longevity_vaccine() { return project_base[14]; }
+    const int &longevity_vaccine() const { return project_base[14]; }
+    int &hunter_seeker_algorithm() { return project_base[15]; }
+    const int &hunter_seeker_algorithm() const { return project_base[15]; }
+    int &pholus_mutagen() { return project_base[16]; }
+    const int &pholus_mutagen() const { return project_base[16]; }
+    int &cyborg_factory() { return project_base[17]; }
+    const int &cyborg_factory() const { return project_base[17]; }
+    int &theory_of_everything() { return project_base[18]; }
+    const int &theory_of_everything() const { return project_base[18]; }
+    int &dream_twister() { return project_base[19]; }
+    const int &dream_twister() const { return project_base[19]; }
+    int &universal_translator() { return project_base[20]; }
+    const int &universal_translator() const { return project_base[20]; }
+    int &network_backbone() { return project_base[21]; }
+    const int &network_backbone() const { return project_base[21]; }
+    int &nano_factory() { return project_base[22]; }
+    const int &nano_factory() const { return project_base[22]; }
+    int &living_refinery() { return project_base[23]; }
+    const int &living_refinery() const { return project_base[23]; }
+    int &cloning_vats() { return project_base[24]; }
+    const int &cloning_vats() const { return project_base[24]; }
+    int &self_aware_colony() { return project_base[25]; }
+    const int &self_aware_colony() const { return project_base[25]; }
+    int &clinical_immortality() { return project_base[26]; }
+    const int &clinical_immortality() const { return project_base[26]; }
+    int &space_elevator() { return project_base[27]; }
+    const int &space_elevator() const { return project_base[27]; }
+    int &singularity_inductor() { return project_base[28]; }
+    const int &singularity_inductor() const { return project_base[28]; }
+    int &bulk_matter_transmitter() { return project_base[29]; }
+    const int &bulk_matter_transmitter() const { return project_base[29]; }
+    int &telepathic_matrix() { return project_base[30]; }
+    const int &telepathic_matrix() const { return project_base[30]; }
+    int &voice_of_planet() { return project_base[31]; }
+    const int &voice_of_planet() const { return project_base[31]; }
+    int &ascent_to_transcendence() { return project_base[32]; }
+    const int &ascent_to_transcendence() const { return project_base[32]; }
+    int &manifold_harmonics() { return project_base[33]; }
+    const int &manifold_harmonics() const { return project_base[33]; }
+    int &nethack_terminus() { return project_base[34]; }
+    const int &nethack_terminus() const { return project_base[34]; }
+    int &cloudbase_academy() { return project_base[35]; }
+    const int &cloudbase_academy() const { return project_base[35]; }
+    int &planetary_energy_grid() { return project_base[36]; }
+    const int &planetary_energy_grid() const { return project_base[36]; }
+    int &user_defined_38() { return project_base[37]; }
+    const int &user_defined_38() const { return project_base[37]; }
+    int &user_defined_39() { return project_base[38]; }
+    const int &user_defined_39() const { return project_base[38]; }
+    int &user_defined_40() { return project_base[39]; }
+    const int &user_defined_40() const { return project_base[39]; }
+    int &user_defined_41() { return project_base[40]; }
+    const int &user_defined_41() const { return project_base[40]; }
+    int &user_defined_42() { return project_base[41]; }
+    const int &user_defined_42() const { return project_base[41]; }
+    int &user_defined_43() { return project_base[42]; }
+    const int &user_defined_43() const { return project_base[42]; }
+    int &user_defined_44() { return project_base[43]; }
+    const int &user_defined_44() const { return project_base[43]; }
+    int &user_defined_45() { return project_base[44]; }
+    const int &user_defined_45() const { return project_base[44]; }
+    int &user_defined_46() { return project_base[45]; }
+    const int &user_defined_46() const { return project_base[45]; }
+    int &user_defined_47() { return project_base[46]; }
+    const int &user_defined_47() const { return project_base[46]; }
+    int &user_defined_48() { return project_base[47]; }
+    const int &user_defined_48() const { return project_base[47]; }
+    int &user_defined_49() { return project_base[48]; }
+    const int &user_defined_49() const { return project_base[48]; }
+    int &user_defined_50() { return project_base[49]; }
+    const int &user_defined_50() const { return project_base[49]; }
+    int &user_defined_51() { return project_base[50]; }
+    const int &user_defined_51() const { return project_base[50]; }
+    int &user_defined_52() { return project_base[51]; }
+    const int &user_defined_52() const { return project_base[51]; }
+    int &user_defined_53() { return project_base[52]; }
+    const int &user_defined_53() const { return project_base[52]; }
+    int &user_defined_54() { return project_base[53]; }
+    const int &user_defined_54() const { return project_base[53]; }
+    int &user_defined_55() { return project_base[54]; }
+    const int &user_defined_55() const { return project_base[54]; }
+    int &user_defined_56() { return project_base[55]; }
+    const int &user_defined_56() const { return project_base[55]; }
+    int &user_defined_57() { return project_base[56]; }
+    const int &user_defined_57() const { return project_base[56]; }
+    int &user_defined_58() { return project_base[57]; }
+    const int &user_defined_58() const { return project_base[57]; }
+    int &user_defined_59() { return project_base[58]; }
+    const int &user_defined_59() const { return project_base[58]; }
+    int &user_defined_60() { return project_base[59]; }
+    const int &user_defined_60() const { return project_base[59]; }
+    int &user_defined_61() { return project_base[60]; }
+    const int &user_defined_61() const { return project_base[60]; }
+    int &user_defined_62() { return project_base[61]; }
+    const int &user_defined_62() const { return project_base[61]; }
+    int &user_defined_63() { return project_base[62]; }
+    const int &user_defined_63() const { return project_base[62]; }
+    int &user_defined_64() { return project_base[63]; }
+    const int &user_defined_64() const { return project_base[63]; }
 };
 
 static const int MaxBaseNum = 512;
@@ -595,7 +665,7 @@ void __cdecl base_draw(Buffer *target, int base_id, int pixel_x, int pixel_y,
 int __cdecl base_find(int x, int y);
 // ?base_find@@YAHHHH@Z - three H.
 int __cdecl base_find(int x, int y, int faction_id);
-int __cdecl base_find(int x, int y, int faction_id, int region, int faction_id_2, 
+int __cdecl base_find(int x, int y, int faction_id, int region, int faction_id_2,
                                 int faction_id_3);
 uint32_t  __cdecl best_specialist();
 void __cdecl name_base(int faction_id, LPSTR name_out, BOOL is_final,
@@ -631,7 +701,9 @@ void __cdecl base_nutrient();
 void __cdecl base_minerals();
 void __cdecl base_energy();
 void __cdecl base_compute(int force);
-int __cdecl base_build(int base_id, int *arg2, int *arg3, int *arg4); // 0x004F81A0
+int __cdecl base_claimed(int x, int y, int site1_free, int site2_free,
+                         int site3_free, int site4_free);
+int __cdecl base_build(int base_id, int *out_secondary, int *out_tertiary, int *out_score); // 0x004F81A0
 void __cdecl base_change(int base_id, int production_id); // 0x004E5A60
 void __cdecl base_reset(int base_id, int force);  // 0x004E5FE0
 void __cdecl base_doctors();                     // 0x004F5F30
@@ -686,7 +758,7 @@ int __cdecl suggest_plan(int faction_id, int faction_id_2);
 void __cdecl set_base(int base_id);
 
 MEASURED inline int __cdecl base_project(int project_id) {
-    return *(&SecretProject.human_genome_project + project_id);
+    return SecretProject[project_id];
 }
 
 MEASURED inline BOOL __cdecl has_project(int project_id, int faction_id) {

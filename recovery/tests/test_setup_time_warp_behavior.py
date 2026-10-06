@@ -70,8 +70,32 @@ struct Veh { int16_t x,y; uint32_t state; uint16_t flags; int16_t proto_id; uint
              uint8_t patrol; int16_t waypoint_x[4],waypoint_y[4]; uint8_t morale; } Vehs[2049];
 struct Chassis { uint8_t pad[0x4d]; uint8_t triad; } Chassis[64];
 Player Players[8]; PlayerData PlayersData[8]; Base Bases[512]; Map Tiles[64*64];
-struct BaseSecretProject { int human_genome_project,command_nexus,weather_paradigm,merchant_exchange,
-  empath_guild,citizens_defense_force,virtual_world,planetary_transit_system; } SecretProject;
+struct BaseSecretProject { int human_genome_project_,command_nexus_,weather_paradigm_,merchant_exchange_,
+  empath_guild_,citizens_defense_force_,virtual_world_,planetary_transit_system_;
+ int &human_genome_project() { return human_genome_project_; }
+ const int &human_genome_project() const { return human_genome_project_; }
+
+ int &command_nexus() { return command_nexus_; }
+ const int &command_nexus() const { return command_nexus_; }
+
+ int &weather_paradigm() { return weather_paradigm_; }
+ const int &weather_paradigm() const { return weather_paradigm_; }
+
+ int &merchant_exchange() { return merchant_exchange_; }
+ const int &merchant_exchange() const { return merchant_exchange_; }
+
+ int &empath_guild() { return empath_guild_; }
+ const int &empath_guild() const { return empath_guild_; }
+
+ int &citizens_defense_force() { return citizens_defense_force_; }
+ const int &citizens_defense_force() const { return citizens_defense_force_; }
+
+ int &virtual_world() { return virtual_world_; }
+ const int &virtual_world() const { return virtual_world_; }
+
+ int &planetary_transit_system() { return planetary_transit_system_; }
+ const int &planetary_transit_system() const { return planetary_transit_system_; }
+} SecretProject;
 uint32_t LockEnableMask; int AiResearchBatchActive, ExpansionEnabled;
 int BaseCurrentCount, VehCurrentCount, MapLongitudeBounds=64, MapLatitudeBounds=64;
 uint32_t MapLongitude=32;
@@ -137,10 +161,10 @@ BODY
 int main() {
   for(int i=0;i<8;++i) base_by_faction[i]=-1;
   rand_index=0; rand_count=2; rand_values[0]=0; rand_values[1]=0;
-  SecretProject.human_genome_project=SecretProject.command_nexus=
-    SecretProject.weather_paradigm=SecretProject.merchant_exchange=
-    SecretProject.empath_guild=SecretProject.citizens_defense_force=
-    SecretProject.virtual_world=SecretProject.planetary_transit_system=-1;
+  SecretProject.human_genome_project()=SecretProject.command_nexus()=
+    SecretProject.weather_paradigm()=SecretProject.merchant_exchange()=
+    SecretProject.empath_guild()=SecretProject.citizens_defense_force()=
+    SecretProject.virtual_world()=SecretProject.planetary_transit_system()=-1;
   LockEnableMask=(1u<<(1+8)) | (1u<<(3+8));
   base_by_faction[1]=4; // faction 3 is alive but has no base
   Players[1].rule_talent=1; Players[1].rule_drone=0; Players[1].rule_population=0;
@@ -157,7 +181,7 @@ int main() {
   assert(facility_count==4);
   assert(facility_id[0]==FAC_RECYCLING_TANKS && facility_id[1]==FAC_RECREATION_COMMONS);
   assert(facility_id[2]==FAC_ENERGY_BANK && facility_id[3]==FAC_NETWORK_NODE);
-  assert(SecretProject.human_genome_project==4);
+  assert(SecretProject.human_genome_project()==4);
   assert(TurnCurrentNum==30);
   for(int i=0;i<facility_count;++i) assert(facility_base[i]==4);
 
@@ -184,7 +208,7 @@ int main() {
   for(int i=0;i<has_tech_count;++i) assert(has_tech_factions[i]==1);
   assert(facility_count==3 && facility_id[2]==FAC_PERIMETER_DEFENSE &&
          facility_base[2]==1 && facility_value[2]==4);
-  assert(SecretProject.command_nexus==4);
+  assert(SecretProject.command_nexus()==4);
 
   vehicle_count=0; has_tech_count=0; facility_count=0;
   rand_index=0; rand_count=2; rand_values[0]=0; rand_values[1]=2;
@@ -196,14 +220,14 @@ int main() {
   assert(vehicle_prototype[0]==6 && vehicle_prototype[1]==6 && vehicle_prototype[2]==4 &&
          vehicle_prototype[3]==7 && vehicle_prototype[4]==7);
   assert(Vehs[3].morale==1);
-  assert(SecretProject.weather_paradigm==4);
+  assert(SecretProject.weather_paradigm()==4);
 
   rand_index=0; rand_count=4;
   rand_values[0]=0; rand_values[1]=4; rand_values[2]=5; rand_values[3]=6;
   std::strcpy(Players[1].filename,"HIVE");
   time_warp();
-  assert(SecretProject.empath_guild==-1 && SecretProject.citizens_defense_force==-1 &&
-         SecretProject.virtual_world==4);
+  assert(SecretProject.empath_guild()==-1 && SecretProject.citizens_defense_force()==-1 &&
+         SecretProject.virtual_world()==4);
 
   // A single land candidate exercises site scoring, base creation, native
   // territory/base recomputation, path dispatch, and the final turn store.
@@ -219,10 +243,10 @@ int main() {
   synch_calls=goody_calls=site_calls=0; goodie_result=1; coast_result=0;
   std::memset(&Players[1],0,sizeof(Players[1]));
   std::memset(&PlayersData[1],0,sizeof(PlayersData[1]));
-  SecretProject.human_genome_project=SecretProject.command_nexus=
-    SecretProject.weather_paradigm=SecretProject.merchant_exchange=
-    SecretProject.empath_guild=SecretProject.citizens_defense_force=
-    SecretProject.virtual_world=SecretProject.planetary_transit_system=-1;
+  SecretProject.human_genome_project()=SecretProject.command_nexus()=
+    SecretProject.weather_paradigm()=SecretProject.merchant_exchange()=
+    SecretProject.empath_guild()=SecretProject.citizens_defense_force()=
+    SecretProject.virtual_world()=SecretProject.planetary_transit_system()=-1;
   PlayersData[1].ai_wealth=0; PlayersData[1].ai_power=0;
   PlayersData[1].tech_achieved=1;
   Bases[0].x=14; Bases[0].y=22; Bases[0].faction_id_current=1;
@@ -259,10 +283,10 @@ int main() {
   base_by_faction[1]=0; LockEnableMask=(1u<<(1+8));
   std::memset(&Players[1],0,sizeof(Players[1])); Players[1].rule_flags=RFLAG_AQUATIC;
   std::memset(&PlayersData[1],0,sizeof(PlayersData[1]));
-  SecretProject.human_genome_project=SecretProject.command_nexus=
-    SecretProject.weather_paradigm=SecretProject.merchant_exchange=
-    SecretProject.empath_guild=SecretProject.citizens_defense_force=
-    SecretProject.virtual_world=SecretProject.planetary_transit_system=-1;
+  SecretProject.human_genome_project()=SecretProject.command_nexus()=
+    SecretProject.weather_paradigm()=SecretProject.merchant_exchange()=
+    SecretProject.empath_guild()=SecretProject.citizens_defense_force()=
+    SecretProject.virtual_world()=SecretProject.planetary_transit_system()=-1;
   has_tech_result=0; world_site_calls=site_calls=0; world_site_result=5;
   rand_index=0; rand_count=2; rand_values[0]=0; rand_values[1]=0;
   time_warp();
@@ -271,10 +295,10 @@ int main() {
   // Native-life relocation tests native plan/chassis/terrain gates and the
   // strongest adjacent-site preference before the lift/drop pair.
   BaseCurrentCount=1; VehCurrentCount=1; vehicle_count=0;
-  SecretProject.human_genome_project=SecretProject.command_nexus=
-    SecretProject.weather_paradigm=SecretProject.merchant_exchange=
-    SecretProject.empath_guild=SecretProject.citizens_defense_force=
-    SecretProject.virtual_world=SecretProject.planetary_transit_system=-1;
+  SecretProject.human_genome_project()=SecretProject.command_nexus()=
+    SecretProject.weather_paradigm()=SecretProject.merchant_exchange()=
+    SecretProject.empath_guild()=SecretProject.citizens_defense_force()=
+    SecretProject.virtual_world()=SecretProject.planetary_transit_system()=-1;
   Bases[0].x=14; Bases[0].y=22; Bases[0].faction_id_current=1;
   Players[1].rule_flags=0;
   std::memset(Tiles,0,sizeof(Tiles));

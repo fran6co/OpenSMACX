@@ -26,7 +26,10 @@ struct Base { short x,y; unsigned char faction_id_current,faction_id_former; sig
 struct PlayerData { uint32_t flags,ranking; int energy_reserves; };
 struct Player { uint32_t rule_flags; char filename[24]; };
 struct RulesTechnology { uint32_t flags; char *name; char id[8]; int pad,growth,value,wealth,power,preq_tech_1,preq_tech_2; };
-struct BaseSecretProject { int fields[64]; int &universal_translator; BaseSecretProject() : universal_translator(fields[20]) {} };
+struct BaseSecretProject { int fields[64]; int &universal_translator_; BaseSecretProject() : universal_translator_(fields[20]) {}
+ int &universal_translator() { return universal_translator_; }
+ const int &universal_translator() const { return universal_translator_; }
+};
 struct Console { int faction_id_; };
 struct InfoWindow { void on_redraw(); };
 struct NetMsg { void pop(const char *,int,int,const char *); };
@@ -70,15 +73,15 @@ int fake_rand() { return deterministic_roll; }
 #undef __cdecl
 static void reset_calls() { call_count=0;spot_count=0; }
 static void study_linked_alert_preserves_gate_and_update_order() {
- reset_calls();BaseCurrentCount=1;ConsoleGlobal.faction_id_=2;Vehs[1].x=4;Vehs[1].y=6;Vehs[1].faction_id=2;Bases[0].x=4;Bases[0].y=6;strcpy(Bases[0].name_string,"ALPHA");Bases[0].state=BSTATE_ARTIFACT_LINKED;SecretProject.universal_translator=-1;
+ reset_calls();BaseCurrentCount=1;ConsoleGlobal.faction_id_=2;Vehs[1].x=4;Vehs[1].y=6;Vehs[1].faction_id=2;Bases[0].x=4;Bases[0].y=6;strcpy(Bases[0].name_string,"ALPHA");Bases[0].state=BSTATE_ARTIFACT_LINKED;SecretProject.universal_translator()=-1;
  assert(study_artifact(1)==0);assert((Bases[0].state&BSTATE_ARTIFACT_ALREADY_LINKED)!=0);assert(call_count==3&&calls[0]==1&&calls[1]==2&&calls[2]==3);reset_calls();assert(study_artifact(1)==0);assert(call_count==1&&calls[0]==1);
 }
 static void study_rejects_translator_base_then_consumes_artifact_and_awards() {
- reset_calls();BaseCurrentCount=1;ConsoleGlobal.faction_id_=2;Vehs[1].x=4;Vehs[1].y=6;Vehs[1].faction_id=2;Bases[0].x=4;Bases[0].y=6;Bases[0].state=0;SecretProject.universal_translator=0;
+ reset_calls();BaseCurrentCount=1;ConsoleGlobal.faction_id_=2;Vehs[1].x=4;Vehs[1].y=6;Vehs[1].faction_id=2;Bases[0].x=4;Bases[0].y=6;Bases[0].state=0;SecretProject.universal_translator()=0;
  assert(study_artifact(1)==1);assert(call_count==5);assert(calls[0]==1&&calls[1]==4&&calls[2]==5&&calls[3]==6&&calls[4]==8);
 }
 static void study_selects_only_an_available_leap_tech() {
- reset_calls();BaseCurrentCount=0;ConsoleGlobal.faction_id_=2;Vehs[1].x=4;Vehs[1].y=6;Vehs[1].faction_id=2;SecretProject.universal_translator=-1;PlayersData[2].ranking=6;tech_has[1][2]=1;tech_is_available[0][2]=1;tech_leap_valid[0][2]=1;Technology[0].preq_tech_1=1;Technology[0].preq_tech_2=-1;deterministic_roll=3;
+ reset_calls();BaseCurrentCount=0;ConsoleGlobal.faction_id_=2;Vehs[1].x=4;Vehs[1].y=6;Vehs[1].faction_id=2;SecretProject.universal_translator()=-1;PlayersData[2].ranking=6;tech_has[1][2]=1;tech_is_available[0][2]=1;tech_leap_valid[0][2]=1;Technology[0].preq_tech_1=1;Technology[0].preq_tech_2=-1;deterministic_roll=3;
  assert(study_artifact(1)==1);assert(call_count==6&&calls[5]==9);assert((PlayersData[2].flags&0x10)!=0);tech_has[1][2]=0;tech_is_available[0][2]=0;tech_leap_valid[0][2]=0;deterministic_roll=0;
 }
 static void unity_event_gates_and_spawn() {

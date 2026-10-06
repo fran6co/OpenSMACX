@@ -64,7 +64,13 @@ struct TutorialBase { void check_base(...) {} };
 struct NetMsg { void pop(...) {} };
 struct FX { void play(...) {} void engine_pitch(...) {} };
 struct RulesType { int move_rate_roads; };
-struct Projects { int xenoempathy_dome,universal_translator; };
+struct Projects { int xenoempathy_dome_,universal_translator_;
+ int &xenoempathy_dome() { return xenoempathy_dome_; }
+ const int &xenoempathy_dome() const { return xenoempathy_dome_; }
+
+ int &universal_translator() { return universal_translator_; }
+ const int &universal_translator() const { return universal_translator_; }
+};
 extern Veh Vehs[16]; extern VehPrototype VehPrototypes[512];
 extern PlayerData PlayersData[8]; extern Player Players[8];
 extern RulesChassis Chassis[16]; extern RulesWeapon Weapon[32];

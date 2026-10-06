@@ -148,7 +148,7 @@ char TechName[80];
 Purpose: Get tech string for techID and store it into stringTemp buffer.
 // ORIGINAL: 0x005591A0 ?say_tech@@YAXHH@Z 0x005591A0-0x005591BA BYTE_EXACT
 // size      26 bytes
-// prototype 
+// prototype
 // callers   2   call targets   1
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
@@ -868,7 +868,7 @@ int __cdecl tech_val(int tech_id, int faction_id, BOOL simple_calc) {
             }
         }
         int eco_dmg_unk = PlayersData[faction_id].unk_49 / range(base_count, 1, 9999);
-        if (eco_dmg_unk > ai_power 
+        if (eco_dmg_unk > ai_power
             && (tech_is_preq(tech_id, Facility[FAC_HYBRID_FOREST].preq_tech, 9999)
             || tech_is_preq(tech_id, Facility[FAC_TREE_FARM].preq_tech, 9999)
             || tech_is_preq(tech_id, Facility[FAC_CENTAURI_PRESERVE].preq_tech, 9999)
@@ -921,7 +921,7 @@ int __cdecl tech_val(int tech_id, int faction_id, BOOL simple_calc) {
                             break;
                         }
                     }
-                    if (search && PlayersData[faction_id].unk_79[region] 
+                    if (search && PlayersData[faction_id].unk_79[region]
                         >= Continents[region].tile_count) {
                         value_ret *= 3;
                         if (is_human_player) {
@@ -1014,7 +1014,7 @@ int __cdecl tech_ai(int faction_id) {
 Purpose: Get power_value from technology struct for tech id.
 // ORIGINAL: 0x005BDD70 ?tech_mil@@YAHH@Z 0x005BDD70-0x005BDD8E BYTE_EXACT
 // size      30 bytes
-// prototype 
+// prototype
 // callers   1   call targets   0
 // kind      game
 // flags     frame;sp_ready;purged_ok
@@ -1038,7 +1038,7 @@ Status: Complete
 Purpose: Get tech_value from technology struct for tech id.
 // ORIGINAL: 0x005BDD90 ?tech_tech@@YAHH@Z 0x005BDD90-0x005BDDB1 BYTE_EXACT
 // size      33 bytes
-// prototype 
+// prototype
 // callers   1   call targets   0
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
@@ -1060,7 +1060,7 @@ Purpose: Get wealth_value from technology struct for tech id.
 // spelling (`(tech_id >= Max) ? 1 : *(&Technology[tech_id].wealth_value)`)
 // was a different program, not just a different shape.
 // size      33 bytes
-// prototype 
+// prototype
 // callers   1   call targets   0
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
@@ -1078,7 +1078,7 @@ Status: Complete
 Purpose: Get growth_value from technology struct for tech id.
 // ORIGINAL: 0x005BDDF0 ?tech_colonize@@YAHH@Z 0x005BDDF0-0x005BDE11 BYTE_EXACT
 // size      33 bytes
-// prototype 
+// prototype
 // callers   1   call targets   0
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
@@ -1626,7 +1626,7 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
             interlude(2, nullptr, 1, 0);
         }
 
-        if (SecretProject.voice_of_planet != -1 && faction_id > 0 &&
+        if (SecretProject.voice_of_planet() != -1 && faction_id > 0 &&
             Technology[34].preq_tech_1 >= -1 &&
             (Technology[34].preq_tech_2 >= -1 ||
              Technology[34].preq_tech_1 == -1) &&
@@ -1650,7 +1650,7 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
         }
     }
 
-    const int chained_base = SecretProject.planetary_datalinks;
+    const int chained_base = SecretProject.planetary_datalinks();
     if (chained_base >= 0) {
         const int chained_faction = Bases[chained_base].faction_id_current;
         if (chained_faction > 0 && faction_id > 0 && technology_shareable(tech_id) &&
@@ -1683,8 +1683,8 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
                     (Players[receiver].rule_flags & RFLAG_TECHSHARE) == 0 ||
                     (PlayersData[receiver].diplo_treaties[donor] &
                      (DTREATY_HAVE_INFILTRATOR | DTREATY_PACT)) != 0 ||
-                    (SecretProject.empath_guild >= 0 &&
-                     Bases[SecretProject.empath_guild].faction_id_current == receiver) ||
+                    (SecretProject.empath_guild() >= 0 &&
+                     Bases[SecretProject.empath_guild()].faction_id_current == receiver) ||
                     (receiver == GovernorFaction &&
                      (Players[donor].rule_flags & RFLAG_ALIEN) == 0))
                     ++known_factions;

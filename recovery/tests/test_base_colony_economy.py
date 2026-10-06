@@ -393,7 +393,10 @@ struct PlayerData {
     int tech_accumulated;
 };
 struct RulesFacility { const char *name; int cost; };
-struct Projects { int voice_of_planet; int base[64]; };
+struct Projects { int voice_of_planet_; int base[64];
+ int &voice_of_planet() { return voice_of_planet_; }
+ const int &voice_of_planet() const { return voice_of_planet_; }
+};
 
 Base *BaseCurrent;
 Base Bases[MaxPlayerNum];
@@ -481,7 +484,7 @@ void clear_globals() {
     std::memset(cost_factor_args, 0, sizeof(cost_factor_args));
     parsed_names = 0; parse_say_calls = 0; popup_calls = 0;
     last_parsed_name = nullptr; project_state = SP_Unbuilt;
-    SecretProject.voice_of_planet = -1;
+    SecretProject.voice_of_planet() = -1;
 }
 
 void prepare_base(int faction, int production_id, int minerals = 20) {
@@ -503,7 +506,7 @@ void prepare_base(int faction, int production_id, int minerals = 20) {
 void callback_rebind_control() {
     clear_globals();
     prepare_base(2, 1);
-    SecretProject.voice_of_planet = 0;
+    SecretProject.voice_of_planet() = 0;
     entry_base.governor = GOV_ACTIVE | GOV_MAY_HURRY_PRODUCTION;
     after_veh_cost.minerals_accumulated = 20;
     after_cost_factor.minerals_accumulated = 20;
@@ -531,7 +534,7 @@ void voice_and_live_lock_controls() {
     clear_globals();
     prepare_base(2, 1);
     after_at_goal = after_map_loc = after_cost_factor = entry_base;
-    SecretProject.voice_of_planet = 0;
+    SecretProject.voice_of_planet() = 0;
     LockEnableMask = 0;
     mutate_lock_on_map = 1;
     PlayersData[2].energy_reserves = 1000;
@@ -549,7 +552,7 @@ void voice_and_live_lock_controls() {
     clear_globals();
     prepare_base(2, 1);
     after_at_goal = after_map_loc = after_cost_factor = entry_base;
-    SecretProject.voice_of_planet = 0;
+    SecretProject.voice_of_planet() = 0;
     LockEnableMask = 1u << 2;
     entry_base.governor = GOV_ACTIVE | GOV_MAY_HURRY_PRODUCTION;
     PlayersData[2].energy_reserves = 1000;
@@ -611,7 +614,7 @@ void facility_divisor_and_zero_turns_factor_controls() {
     after_map_loc.minerals_accumulated = 20;
     after_map_loc.queue_production_id[0] = -4;
     PlayersData[2].energy_reserves = 1500;
-    SecretProject.voice_of_planet = -1;
+    SecretProject.voice_of_planet() = -1;
     base_hurry();
     assert(after_map_loc.minerals_accumulated == 25);
 
@@ -620,7 +623,7 @@ void facility_divisor_and_zero_turns_factor_controls() {
     after_map_loc.minerals_accumulated = 20;
     after_map_loc.queue_production_id[0] = -0x21;
     PlayersData[2].energy_reserves = 1500;
-    SecretProject.voice_of_planet = -1;
+    SecretProject.voice_of_planet() = -1;
     base_hurry();
     assert(after_map_loc.minerals_accumulated == 25);
 
@@ -630,7 +633,7 @@ void facility_divisor_and_zero_turns_factor_controls() {
     after_map_loc.queue_production_id[0] = -4;
     Facility[4].cost = 43018063;
     PlayersData[2].energy_reserves = 1500;
-    SecretProject.voice_of_planet = -1;
+    SecretProject.voice_of_planet() = -1;
     base_hurry();
     assert(after_map_loc.minerals_accumulated == 1);
     assert(PlayersData[2].energy_reserves == 1470);
@@ -650,7 +653,7 @@ void current_queue_and_popup_faction_controls() {
     std::strcpy(Players[3].adj_name_faction, "pre-factor current faction");
     std::strcpy(Players[4].adj_name_faction, "post-factor current faction");
     PlayersData[2].energy_reserves = 1500;
-    SecretProject.voice_of_planet = -1;
+    SecretProject.voice_of_planet() = -1;
     base_hurry();
     assert(after_map_loc.minerals_accumulated == 25);
     assert(cost_factor_calls == 2);
@@ -668,7 +671,7 @@ void current_queue_and_popup_faction_controls() {
     after_final_cost.mineral_surplus = 200;
     Facility[0x46].cost = 100;
     PlayersData[2].energy_reserves = 1500;
-    SecretProject.voice_of_planet = -1;
+    SecretProject.voice_of_planet() = -1;
     base_hurry();
     assert(after_map_loc.minerals_accumulated == 22);
 }

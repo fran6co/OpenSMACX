@@ -205,10 +205,19 @@ def run_host(tmp_path, body):
         Player Players[8];
         RulesFacility Facility[100];
         struct TestSecretProject {
-          int voice_of_planet = -1;
-          int planetary_datalinks = -1;
-          int empath_guild = -1;
-        } SecretProject;
+          int voice_of_planet_ = -1;
+          int planetary_datalinks_ = -1;
+          int empath_guild_ = -1;
+
+ int &empath_guild() { return empath_guild_; }
+ const int &empath_guild() const { return empath_guild_; }
+
+ int &planetary_datalinks() { return planetary_datalinks_; }
+ const int &planetary_datalinks() const { return planetary_datalinks_; }
+
+ int &voice_of_planet() { return voice_of_planet_; }
+ const int &voice_of_planet() const { return voice_of_planet_; }
+} SecretProject;
         RulesTechnology Technology[89];
         struct RulesAbility { const char *name = nullptr; int16_t preq_tech = -1; };
         RulesAbility Ability[29];
@@ -621,7 +630,7 @@ def run_host(tmp_path, body):
           PlayersData[2].diff_level = 1;
           ConsoleGlobal.faction_id_ = 7;
           Facility[9].preq_tech = 0x2F;
-          SecretProject.voice_of_planet = 1;
+          SecretProject.voice_of_planet() = 1;
           GameTechAchieved[34] = 1u << 7;
           GameTechAchieved[57] = 1u << 7;
           const int interludes_before_tech47 = interlude_calls;
@@ -800,7 +809,7 @@ def run_host(tmp_path, body):
           if (tech_popup_calls != secret_popups_after_first ||
               secret_log_calls != secret_logs_after_first) return 40;
 
-          SecretProject.planetary_datalinks = 0;
+          SecretProject.planetary_datalinks() = 0;
           Bases[0].faction_id_current = 1;
           TurnCurrentNum = 0;
           const int popup_destructions_before_chain = popup_destructions;
@@ -828,7 +837,7 @@ def run_host(tmp_path, body):
 
           // Generic rule_sharetech is separate from Datalinks. Recursion
           // carries the technology as arg2 and the freebie marker as arg4.
-          SecretProject.planetary_datalinks = -1;
+          SecretProject.planetary_datalinks() = -1;
           ExpansionEnabled = 0;
           Players[2].rule_sharetech = 3;
           GameTechAchieved[26] = (1u << 1) | (1u << 4);
@@ -853,7 +862,7 @@ def run_host(tmp_path, body):
           tech_achieved(3, 29, 0, 0);
           if ((GameTechAchieved[29] & (1u << 2)) == 0) return 48;
           PlayersData[2].diplo_treaties[1] = 0;
-          SecretProject.empath_guild = 0;
+          SecretProject.empath_guild() = 0;
           GameTechAchieved[30] = (1u << 1) | (1u << 4);
           tech_achieved(3, 30, 0, 0);
           if ((GameTechAchieved[30] & (1u << 2)) == 0) return 49;

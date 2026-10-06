@@ -11,7 +11,10 @@ Base Bases[8], *BaseCurrent; int BaseIDCurrentSelected;
 struct PlayerData { int energy_reserves, hurry_cost_total; } PlayersData[8];
 struct Player { int rule_hurry; char veh_name[32]; } Players[8];
 struct RuleSet { unsigned retool_exemption; } Rules;
-struct Projects { int voice_of_planet; } SecretProject;
+struct Projects { int voice_of_planet_;
+ int &voice_of_planet() { return voice_of_planet_; }
+ const int &voice_of_planet() const { return voice_of_planet_; }
+} SecretProject;
 struct FacilityRecord { int cost, name; } Facility[128];
 struct Prototype { char veh_name[32]; } VehPrototypes[128];
 struct StringTableType { char *get(int) { return (char*)"facility"; } } StringTable;
@@ -63,7 +66,7 @@ int pop_expire(){++callback_called;if(callback_mode){if(focused_id_pointer)*focu
 
 void reset(){memset(Bases,0,sizeof(Bases));memset(PlayersData,0,sizeof(PlayersData));memset(Players,0,sizeof(Players));
   memset(ParseNumTable,0,sizeof(ParseNumTable));memset(ParseSays,0,sizeof(ParseSays));memset(ParseNums,0,sizeof(ParseNums));
-  IsMultiplayerNet=ConsoleControlTurnActive=0;GameState=0x80;CurrentFactionEnergyReserves=1000;SecretProject.voice_of_planet=-1;
+  IsMultiplayerNet=ConsoleControlTurnActive=0;GameState=0x80;CurrentFactionEnergyReserves=1000;SecretProject.voice_of_planet()=-1;
   Rules.retool_exemption=0;lock_result_count=lock_calls=unlock_calls=0;memset(lock_results,0,sizeof(lock_results));
   exec_result=1;ask_result=user_payment=text_open_result=0;callback_mode=callback_called=fail_after_exec_state=0;focused_id_pointer=0;
   base_compute_calls=0;base_compute_focus_to=-1;radius_increment_mode=0;veh_cost_switch_to=factor_switch_call=factor_switch_to=-1;

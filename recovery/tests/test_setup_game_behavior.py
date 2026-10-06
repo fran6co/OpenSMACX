@@ -47,7 +47,10 @@ struct Player {
       soc_anti_ideology_model, soc_ideology_effect, soc_anti_ideology_effect;
 } Players[8];
 struct PlayerData { int diff_level; int diplo_agenda[8]; } PlayersData[8];
-struct ProjectTable { int human_genome_project; int values[63]; } SecretProject;
+struct ProjectTable { int human_genome_project_; int values[63];
+ int &human_genome_project() { return human_genome_project_; }
+ const int &human_genome_project() const { return human_genome_project_; }
+} SecretProject;
 struct ReplayEventRecord { int a,b; } ReplayEvents[1024];
 uint16_t FactionRankingHistory[8000];
 uint32_t GameRules, GameState, GameInterludeFlags, LockEnableMask;

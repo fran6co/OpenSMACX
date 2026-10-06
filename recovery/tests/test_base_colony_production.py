@@ -60,7 +60,13 @@ struct RulesChassis { char *padding[12]; uint8_t speed, triad; };
 struct RulesBasic { uint32_t nutrient_req_citizen, padding[11], pop_limit_sans_hab_complex,
     pop_limit_sans_hab_dome; int padding2[4], tech_three_nutrients_sqr; };
 struct RulesFacility { char *name; };
-struct BaseSecretProject { int ascetic_virtues, cloning_vats; };
+struct BaseSecretProject { int ascetic_virtues_, cloning_vats_;
+ int &ascetic_virtues() { return ascetic_virtues_; }
+ const int &ascetic_virtues() const { return ascetic_virtues_; }
+
+ int &cloning_vats() { return cloning_vats_; }
+ const int &cloning_vats() const { return cloning_vats_; }
+};
 struct Map { uint8_t climate, contour, val2, region, visibility, val3, unk_1, territory;
     uint32_t bit, bit2, bit_visible[7]; };
 struct Strings { const char *get(int); };
@@ -134,7 +140,7 @@ static void reset_case() {
     BaseCurrent->faction_id_current = 2;
     BaseCurrent->population_size = 2;
     BaseCurrent->x = 2; BaseCurrent->y = 2;
-    SecretProject.ascetic_virtues = SecretProject.cloning_vats = -1;
+    SecretProject.ascetic_virtues() = SecretProject.cloning_vats() = -1;
     Rules.pop_limit_sans_hab_complex = Rules.pop_limit_sans_hab_dome = 100;
     Rules.nutrient_req_citizen = 2;
     Players[2].rule_population = 0;

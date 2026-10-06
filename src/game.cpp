@@ -5212,24 +5212,24 @@ void __cdecl time_warp() {
         do {
             starting_project = rand() % 8;
             switch (starting_project) {
-            case 0: current_project_base = SecretProject.human_genome_project; break;
-            case 1: current_project_base = SecretProject.command_nexus; break;
-            case 2: current_project_base = SecretProject.weather_paradigm; break;
-            case 3: current_project_base = SecretProject.merchant_exchange; break;
-            case 5: current_project_base = SecretProject.citizens_defense_force; break;
-            case 6: current_project_base = SecretProject.virtual_world; break;
-            default: current_project_base = SecretProject.planetary_transit_system; break;
+            case 0: current_project_base = SecretProject.human_genome_project(); break;
+            case 1: current_project_base = SecretProject.command_nexus(); break;
+            case 2: current_project_base = SecretProject.weather_paradigm(); break;
+            case 3: current_project_base = SecretProject.merchant_exchange(); break;
+            case 5: current_project_base = SecretProject.citizens_defense_force(); break;
+            case 6: current_project_base = SecretProject.virtual_world(); break;
+            default: current_project_base = SecretProject.planetary_transit_system(); break;
             }
         } while (current_project_base != SP_Unbuilt || starting_project == 4 ||
                  (starting_project == 5 && strcmp(player.filename, "HIVE") == 0));
         switch (starting_project) {
-        case 0: SecretProject.human_genome_project = starting_base_id; break;
-        case 1: SecretProject.command_nexus = starting_base_id; break;
-        case 2: SecretProject.weather_paradigm = starting_base_id; break;
-        case 3: SecretProject.merchant_exchange = starting_base_id; break;
-        case 5: SecretProject.citizens_defense_force = starting_base_id; break;
-        case 6: SecretProject.virtual_world = starting_base_id; break;
-        default: SecretProject.planetary_transit_system = starting_base_id; break;
+        case 0: SecretProject.human_genome_project() = starting_base_id; break;
+        case 1: SecretProject.command_nexus() = starting_base_id; break;
+        case 2: SecretProject.weather_paradigm() = starting_base_id; break;
+        case 3: SecretProject.merchant_exchange() = starting_base_id; break;
+        case 5: SecretProject.citizens_defense_force() = starting_base_id; break;
+        case 6: SecretProject.virtual_world() = starting_base_id; break;
+        default: SecretProject.planetary_transit_system() = starting_base_id; break;
         }
 
         // The native expansion pass considers expansion_count - 1 rounds.
@@ -6994,7 +6994,7 @@ void __cdecl alien_fauna() {
          static_cast<uint32_t>(DiffLevelCurrent)) * 2u;
     const int early_limit = alien_signed_wrap(early_limit_bits);
     const bool very_early = TurnCurrentNum < early_limit;
-    if (SecretProject.voice_of_planet != -1 || VehCurrentCount > 0x6ff) return;
+    if (SecretProject.voice_of_planet() != -1 || VehCurrentCount > 0x6ff) return;
 
     const uint32_t transport_period_bits =
         (5u - MapNativeLifeForms) * 2u;

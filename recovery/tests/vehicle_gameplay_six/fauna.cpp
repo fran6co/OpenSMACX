@@ -31,7 +31,10 @@ struct Map {
 struct PlayerData { uint32_t flags; };
 struct Base { uint8_t faction_id_current; int8_t population_size; char name_string[25]; };
 struct Veh { int faction_id; uint32_t flags; uint8_t visibility; };
-struct SecretProject { int voice_of_planet; };
+struct SecretProject { int voice_of_planet_;
+ int &voice_of_planet() { return voice_of_planet_; }
+ const int &voice_of_planet() const { return voice_of_planet_; }
+};
 struct Continent { uint32_t open_terrain; };
 struct Console { int faction_id_; };
 struct MapWindow { int focus(int, int) { ++MapWindow::focus_calls; return focus_result; }
@@ -130,7 +133,7 @@ static void reset_state() {
     GameRules = GameState = TurnCurrentNum = DiffLevelCurrent = 0;
     VehCurrentCount = BaseFindDist = MapArea = 0;
     MapNativeLifeForms = 0;
-    SecretProject.voice_of_planet = -1;
+    SecretProject.voice_of_planet() = -1;
     ConsoleGlobal.faction_id_ = 0;
     MapLongitudeBounds = MapLatitudeBounds = 8;
     MapLongitude = 4;
@@ -163,7 +166,7 @@ int main() {
     reset_state();
     // A no-spread turn reaches the life-form limit check, then the native
     // early eligibility return must avoid vehicles, callbacks and popups.
-    SecretProject.voice_of_planet = 7;
+    SecretProject.voice_of_planet() = 7;
     MapArea = 0;
     alien_fauna();
     assert(veh_init_calls == 0);

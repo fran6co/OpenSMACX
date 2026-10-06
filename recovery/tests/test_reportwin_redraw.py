@@ -484,7 +484,10 @@ int BaseCurrentCount=2;
 int MaxPlayerNum=8, LockEnableMask=0x600;
 int EnergyEconomyTotal=12, EnergyMaintenanceTotal=4, EnergyCommerceDelta=8, NetIncomeGlobal=16;
 int SecretProjectGrid=0;
-struct SecretProjectFixture { int planetary_energy_grid; } SecretProject={0};
+struct SecretProjectFixture { int planetary_energy_grid_;
+ int &planetary_energy_grid() { return planetary_energy_grid_; }
+ const int &planetary_energy_grid() const { return planetary_energy_grid_; }
+} SecretProject={0};
 int bitmask_calls;
 void bitmask(int value,int *offset,int *mask) {
     ++bitmask_calls; *offset=value/8; *mask=1<<(value%8);
@@ -555,7 +558,7 @@ int main() {
     Bases[1].faction_id_current=1;
     Bases[0].facilities_built[0] |= 1;
     Bases[1].facilities_built[0] |= 4;
-    SecretProject.planetary_energy_grid=1;
+    SecretProject.planetary_energy_grid()=1;
     if(facility_case) {
         BaseCurrentCount=67;
         for(int i=0;i<BaseCurrentCount;++i) Bases[i].faction_id_current=-1;
@@ -999,7 +1002,7 @@ struct FlatButton {
     void get_mouse_pos(int *x,int *y) {
         ++mouse_pos_calls; *x=100+mouse_pos_calls; *y=200+mouse_pos_calls;
     }
-    void on_mouse_feedback(int x,int y) {
+    void on_mouse_move(int x,int y) {
         mouse_feedback_x[mouse_feedback_calls]=x;
         mouse_feedback_y[mouse_feedback_calls]=y;
         ++mouse_feedback_calls;

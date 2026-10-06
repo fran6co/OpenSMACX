@@ -1480,7 +1480,7 @@ HurryPrice hurry_price(int base_id, int production_id, int accounting_faction) {
             cost = hurry_add(cost, cost);
     }
     if (current_minerals < static_cast<int>(Rules.retool_exemption)) cost = hurry_add(cost, cost);
-    if (SecretProject.voice_of_planet >= 0) cost = hurry_add(cost, cost);
+    if (SecretProject.voice_of_planet() >= 0) cost = hurry_add(cost, cost);
     const int hurry_percent = Players[accounting_faction].rule_hurry;
     if (hurry_percent != 100) cost = hurry_mul(hurry_percent, cost) / 100;
     HurryPrice result = {cost, gross_cost};
@@ -3395,7 +3395,7 @@ Purpose: Interface timer tick; the legacy implementation ignores it and
 // ORIGINAL: 0x0041AF40 ?timer_callback@BaseWin@@QAAXHH@Z 0x0041AF40-0x0041AF41 BYTE_EXACT
 // symbol    ?timer_callback@BaseWin@@SAXHH@Z
 // size      1 bytes
-// prototype 
+// prototype
 // callers   0   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
@@ -3506,7 +3506,7 @@ Purpose: Step the receiver back to the subobject ??_GBaseWin@@UAEPAXI@Z
 //   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
 //   and 1092 == 0x444, the constant subtracted
 // size      11 bytes
-// prototype 
+// prototype
 // callers   0   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
@@ -6384,7 +6384,7 @@ void BaseWin::base_editor_proj() {
     // Its current declaration is64 consecutive named int fields; base_project
     // uses this same indexed run. A future array migration must preserve all
     // named consumers centrally; this body introduces no independent storage.
-    *(&SecretProject.human_genome_project + project) = owner_base;
+    SecretProject[project] = owner_base;
     redraw();
     // Popup owns complete member/base teardown, including cancellation paths.
 }

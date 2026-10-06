@@ -148,7 +148,10 @@ struct Player {int is_leader_female,noun_gender,is_noun_plural;
 struct Data {uint32_t diplo_treaties[8],diplo_agenda[8],current_num_bases;
  int loan_balance[8],energy_reserves;} PlayersData[8];
 struct Base {int faction_id_current;unsigned char visibility,facilities_built[16];short x,y;} Bases[3];
-struct Projects {int empath_guild;} SecretProject;
+struct Projects {int empath_guild_;
+ int &empath_guild() { return empath_guild_; }
+ const int &empath_guild() const { return empath_guild_; }
+} SecretProject;
 int BaseCurrentCount,DiploScratchFA30,DiploScratchFA7C,PopupDialogFactionID;
 int DiplomacyProposalMode,DiploScratchFA34,DiploScratchFA5C;
 unsigned LockEnableMask,GameRules;int IsMultiplayerNet,GenderDefault,PluralityDefault;
@@ -189,7 +192,7 @@ void reset(){
  BaseCurrentCount=3;Bases[0].faction_id_current=2;Bases[0].visibility=2;
  Bases[1].faction_id_current=1;Bases[2].faction_id_current=1;
  PlayersData[1].current_num_bases=2;PlayersData[2].current_num_bases=1;
- LockEnableMask=0xfe00;GameRules=0;IsMultiplayerNet=0;SecretProject.empath_guild=-1;
+ LockEnableMask=0xfe00;GameRules=0;IsMultiplayerNet=0;SecretProject.empath_guild()=-1;
  DiploScratchFA30=DiploScratchFA7C=99;DiplomacyProposalMode=DiploScratchFA34=DiploScratchFA5C=99;
  starts=execs=destructors=callbacks=shows=closes=lines=text_lines=0;base_named=-1;
  std::memset(item_count,0,sizeof(item_count));notice[0]=fail_key[0]=0;

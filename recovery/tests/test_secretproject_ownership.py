@@ -123,15 +123,15 @@ def _compile_run(mode: str, bodies, expect_pass: bool = True) -> subprocess.Comp
 
 def test_extractor_requires_product_owners_and_full_reset() -> None:
     immune, energy, remap, reset, project_type = _actual_sources()
-    assert "SecretProject.cloning_vats" in immune
-    assert "SecretProject.network_backbone" in immune
+    assert "SecretProject.cloning_vats()" in immune
+    assert "SecretProject.network_backbone()" in immune
     assert "Bases[base_id].faction_id_current" in immune
-    assert "SecretProject.self_aware_colony" in energy
+    assert "SecretProject.self_aware_colony()" in energy
     assert "BaseCurrentCount" in energy
-    assert "&SecretProject.network_backbone" in remap
-    assert "&SecretProject.cloning_vats" in remap
-    assert "&SecretProject.self_aware_colony" in remap
-    assert "&SecretProject.empath_guild" in remap
+    assert "&SecretProject.network_backbone()" in remap
+    assert "&SecretProject.cloning_vats()" in remap
+    assert "&SecretProject.self_aware_colony()" in remap
+    assert "&SecretProject.empath_guild()" in remap
     assert reset == "memset(&SecretProject, 0xFF, sizeof SecretProject);"
     assert "RECOVERY_MEMBER: v1 BaseSecretProject empath_guild 0x10" in project_type
     assert "RECOVERY_MEMBER: v1 BaseSecretProject network_backbone 0x54" in project_type
@@ -149,13 +149,13 @@ def test_energy_selector_is_reloaded_after_base_callback() -> None:
     anchor = "int discount_carry = 0;"
     assert energy.count(anchor) == 1
     energy = energy.replace(
-        anchor, anchor + "\n    const int cached_selector = SecretProject.self_aware_colony;", 1)
-    live_guard = ("if (SecretProject.self_aware_colony >= 0 &&\n"
-                  "            SecretProject.self_aware_colony < BaseCurrentCount &&\n"
-                  "            Bases[SecretProject.self_aware_colony].faction_id_current == faction_id)")
+        anchor, anchor + "\n    const int cached_selector = SecretProject.self_aware_colony();", 1)
+    live_guard = ("if (SecretProject.self_aware_colony() >= 0 &&\n"
+                  "            SecretProject.self_aware_colony() < BaseCurrentCount &&\n"
+                  "            Bases[SecretProject.self_aware_colony()].faction_id_current == faction_id)")
     assert live_guard in energy
     energy = energy.replace(live_guard,
-                            live_guard.replace("SecretProject.self_aware_colony", "cached_selector"), 1)
+                            live_guard.replace("SecretProject.self_aware_colony()", "cached_selector"), 1)
     bodies[1] = energy
     _compile_run("cached-selector-timing-mutant", tuple(bodies), expect_pass=False)
 
@@ -163,13 +163,13 @@ def test_energy_selector_is_reloaded_after_base_callback() -> None:
 @pytest.mark.parametrize(
     "body_index,needle,replacement,mode",
     [
-        (0, "SecretProject.cloning_vats", "SecretProject.network_backbone", "immune"),
-        (0, "SecretProject.network_backbone", "SecretProject.cloning_vats", "immune"),
+        (0, "SecretProject.cloning_vats()", "SecretProject.network_backbone()", "immune"),
+        (0, "SecretProject.network_backbone()", "SecretProject.cloning_vats()", "immune"),
         (0, "== factionID_", "== factionID_ + 1", "immune"),
-        (1, "SecretProject.self_aware_colony", "SecretProject.network_backbone", "energy"),
+        (1, "SecretProject.self_aware_colony()", "SecretProject.network_backbone()", "energy"),
         (1, "discount_carry = maintenance & 1;", "discount_carry = 0;", "energy"),
-        (2, "&SecretProject.cloning_vats", "&SecretProject.network_backbone", "remap"),
-        (2, "&SecretProject.empath_guild", "&SecretProject.network_backbone", "remap"),
+        (2, "&SecretProject.cloning_vats()", "&SecretProject.network_backbone()", "remap"),
+        (2, "&SecretProject.empath_guild()", "&SecretProject.network_backbone()", "remap"),
     ],
 )
 def test_actual_source_mutants_are_detected(body_index, needle, replacement, mode) -> None:

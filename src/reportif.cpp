@@ -2135,7 +2135,7 @@ void ReportIf::draw_energy() {
         _itoa(count, number, 10); strcat(StringTemp, number); strcat(StringTemp, " ");
         strcat(StringTemp, StringTable.get(reinterpret_cast<int>(Facility[facility].name)));
         strcat(StringTemp, "|"); strcat(StringTemp, "-");
-        const int project_base = SecretProject.planetary_energy_grid;
+        const int project_base = SecretProject.planetary_energy_grid();
         if (project_base >= 0 && Bases[project_base].faction_id_current == report_faction_id_) {
             const int half = fac_maint(facility, report_faction_id_) * count;
             const int cost = fac_maint(facility, report_faction_id_) * count;

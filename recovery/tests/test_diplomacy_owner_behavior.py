@@ -127,7 +127,10 @@ struct Player {
   int noun_gender, is_noun_plural, rule_flags;
 };
 struct Base { int faction_id_current; };
-struct ProjectOwner { int empath_guild; };
+struct ProjectOwner { int empath_guild_;
+ int &empath_guild() { return empath_guild_; }
+ const int &empath_guild() const { return empath_guild_; }
+};
 struct ConsoleOwner { int faction_id_; };
 struct ParseEvent { int slot, gender, plural; const char *text; };
 struct TreatyEvent { int a, b, flag; };
@@ -262,7 +265,7 @@ static void reset_fixture() {
   memset(CommunicateArgs,0,sizeof(CommunicateArgs)); memset(RandValues,0,sizeof(RandValues));
   for (int i=0;i<MaxPlayerNum;++i) Nouns[i] = (char*)"noun";
   Nouns[1]=(char*)"actor-noun"; Nouns[2]=(char*)"peer-noun";
-  SecretProject.empath_guild=-1; ConsoleGlobal.faction_id_=0; NetMsgPrimary.count=0; NetMsgPrimary.callback=0;
+  SecretProject.empath_guild()=-1; ConsoleGlobal.faction_id_=0; NetMsgPrimary.count=0; NetMsgPrimary.callback=0;
   LockEnableMask=0; IsMultiplayerNet=IsMultiplayerPBEM=0; GameRules=GameState=GovernorFaction=0;
   TurnCurrentNum=0; DiffLevelCurrent=2; SunspotDuration=0; MapLatitudeBounds=MapLongitudeBounds=100;
   MapLongitude=50; DiploFocusX=DiploFocusY=-1; GenderDefault=PluralityDefault=0;

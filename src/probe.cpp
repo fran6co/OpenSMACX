@@ -45,7 +45,7 @@ Status: Complete
 int __cdecl steal_energy(int base_id) {
     uint32_t faction_id = Bases[base_id].faction_id_current;
     int energy = PlayersData[faction_id].energy_reserves;
-    return (energy <= 0) ? 0 
+    return (energy <= 0) ? 0
         : ((energy * Bases[base_id].population_size) / (PlayersData[faction_id].pop_total + 1));
 }
 
@@ -962,7 +962,7 @@ static void probe_native_select_target_faction(int base_id,
 // compares that base's current faction with the target. Preserve all three
 // states: -1 = unbuilt path, 0 = built but not target-owned, 1 = target-owned.
 static int probe_native_hsa_project_target_relation(int target_faction_id) {
-    const int owner_base_id = SecretProject.hunter_seeker_algorithm;
+    const int owner_base_id = SecretProject.hunter_seeker_algorithm();
     if (owner_base_id < 0) return -1;
     return Bases[owner_base_id].faction_id_current == target_faction_id ? 1 : 0;
 }
@@ -1352,7 +1352,7 @@ static BOOL probe_native_negative_selector_target_can_afford(
 // modifiers for a protected target; the earlier distance change stays.
 static int probe_native_nethack_terminus_adjust_amount(
         int amount, int actor_faction_id) {
-    const int nethack_terminus_base = SecretProject.nethack_terminus;
+    const int nethack_terminus_base = SecretProject.nethack_terminus();
     if (nethack_terminus_base >= 0 &&
         Bases[nethack_terminus_base].faction_id_current == actor_faction_id) {
         const int32_t tripled = static_cast<int32_t>(
@@ -1695,7 +1695,7 @@ int __cdecl probe(int actor_vehicle_id, int target_base_id,
     actor_has_hsa_ability = has_abil(actor_proto_id, 0x10000000) != 0;
     if (actor_has_hsa_ability) {
         ProbeHasAlgoEnhancement = 1;
-        const int hsa_owner_base = SecretProject.hunter_seeker_algorithm;
+        const int hsa_owner_base = SecretProject.hunter_seeker_algorithm();
         native_hsa_owner_mismatch = hsa_owner_base < 0 ||
             Bases[hsa_owner_base].faction_id_current != target_faction_id;
         if (native_hsa_owner_mismatch) {
@@ -2677,7 +2677,7 @@ label_5a0917_done:
             }
             control_chance = probe_native_nethack_terminus_adjust_amount(
                 control_chance, actor_faction_id);
-            const int cloudbase_academy_base = SecretProject.cloudbase_academy;
+            const int cloudbase_academy_base = SecretProject.cloudbase_academy();
             if (cloudbase_academy_base >= 0 &&
                 Bases[cloudbase_academy_base].faction_id_current ==
                     actor_faction_id) {

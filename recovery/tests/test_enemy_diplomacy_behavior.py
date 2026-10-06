@@ -79,7 +79,10 @@ struct PlayerDataMock {
 struct PlayerMock { int soc_ideology_category,soc_ideology_model; const char *filename; };
 struct BaseMock { uint8_t prefix[4],faction_id_current,pad[0x87],facilities_built[12]; };
 struct ConsoleMock { int faction_id_; };
-struct SecretProjectMock { int empath_guild; };
+struct SecretProjectMock { int empath_guild_;
+ int &empath_guild() { return empath_guild_; }
+ const int &empath_guild() const { return empath_guild_; }
+};
 static PlayerDataMock PlayersData[8]; static PlayerMock Players[8];
 static BaseMock Bases[134]; static ConsoleMock ConsoleGlobal;
 static SecretProjectMock SecretProject;
@@ -135,7 +138,7 @@ static void reset_state() {
   for(int s=0;s<4;++s) PlayersData[f].satellites_[s]=0;
  }
  for(int b=0;b<134;++b) { Bases[b].faction_id_current=0; for(int x=0;x<12;++x) Bases[b].facilities_built[x]=0; }
- ConsoleGlobal.faction_id_=1; SecretProject.empath_guild=-1;
+ ConsoleGlobal.faction_id_=1; SecretProject.empath_guild()=-1;
  LockEnableMask=GameRules=GameState=0; SunspotDuration=TurnCurrentNum=0;
  IsMultiplayerNet=IsMultiplayerPBEM=0; DiploFriction=DiploScratchFA60=DiploScratchFAA0=0;
  BaseCurrentCount=territory_calls=friction_calls=communication_calls=treaty_calls=0;

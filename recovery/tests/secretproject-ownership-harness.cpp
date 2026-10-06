@@ -29,7 +29,7 @@ static int active_base, mutate_selector_on_base, selector_after_callback;
 static void set_base(int base_id) {
     ++test_set_base_calls; active_base = base_id;
     if (base_id == mutate_selector_on_base)
-        SecretProject.self_aware_colony = selector_after_callback;
+        SecretProject.self_aware_colony() = selector_after_callback;
 }
 static void base_compute(int) { ++test_base_compute_calls; }
 static int has_fac_built(int facility, int base_id) {
@@ -58,8 +58,8 @@ static void reset_fixture() {
 static void test_immune_owners() {
     reset_fixture();
     SocialWin win; win.factionID_ = 3;
-    SecretProject.cloning_vats = 5;
-    SecretProject.network_backbone = 2;
+    SecretProject.cloning_vats() = 5;
+    SecretProject.network_backbone() = 2;
     Bases[5].faction_id_current = 3;
     Bases[2].faction_id_current = 4;
     SocialEffectTable[1 * 11 + 7 + 2 * 53] = -1;
@@ -70,8 +70,8 @@ static void test_immune_owners() {
     assert(win.immune(3, 1, 9) == 1);
     Bases[5].faction_id_current = 4;
     assert(win.immune(2, 1, 7) == 0);
-    SecretProject.cloning_vats = -1;
-    SecretProject.network_backbone = -1;
+    SecretProject.cloning_vats() = -1;
+    SecretProject.network_backbone() = -1;
     assert(win.immune(2, 1, 7) == 0 && win.immune(3, 1, 9) == 0);
 }
 static void test_energy_owner_and_carry() {
@@ -82,7 +82,7 @@ static void test_energy_owner_and_carry() {
     Bases[2].faction_id_current = 4; Bases[2].economy_total = 20; Bases[2].labs_total = 1;
     test_facility_count[0] = test_facility_count[1] = test_facility_count[2] = 1;
     test_maintenance[0] = 5;
-    SecretProject.self_aware_colony = 1;
+    SecretProject.self_aware_colony() = 1;
     energy_compute(2, 0);
     assert(EnergyBaseMaintenance[0] == 2); // first odd base truncates after halving
     assert(EnergyBaseMaintenance[1] == 3); // carried odd unit rounds the next base up
@@ -93,10 +93,10 @@ static void test_energy_owner_and_carry() {
     energy_compute(2, 0);
     assert(EnergyBaseMaintenance[0] == 5 && EnergyBaseMaintenance[1] == 0);
     assert(EnergyMaintenanceTotal == 5 && NetIncomeGlobal == 15);
-    SecretProject.self_aware_colony = 99;
+    SecretProject.self_aware_colony() = 99;
     energy_compute(2, 0);
     assert(EnergyBaseMaintenance[0] == 5 && EnergyMaintenanceTotal == 5);
-    SecretProject.self_aware_colony = -1;
+    SecretProject.self_aware_colony() = -1;
     energy_compute(2, 0);
     assert(EnergyBaseMaintenance[0] == 5 && EnergyMaintenanceTotal == 5);
 
@@ -107,7 +107,7 @@ static void test_energy_owner_and_carry() {
     Bases[0].faction_id_current = Bases[1].faction_id_current = 2;
     test_facility_count[0] = test_facility_count[1] = 1;
     test_maintenance[0] = 5;
-    SecretProject.self_aware_colony = -1;
+    SecretProject.self_aware_colony() = -1;
     mutate_selector_on_base = 1; selector_after_callback = 1;
     energy_compute(2, 1);
     assert(test_set_base_calls == 2 && test_base_compute_calls == 2);
@@ -116,21 +116,21 @@ static void test_energy_owner_and_carry() {
 static void test_reset_and_remap() {
     reset_fixture();
     assert(sizeof(SecretProject) == 64 * sizeof(int));
-    assert(offsetof(BaseSecretProject, empath_guild) == 0x10);
-    assert(offsetof(BaseSecretProject, network_backbone) == 0x54);
-    assert(offsetof(BaseSecretProject, cloning_vats) == 0x60);
-    assert(offsetof(BaseSecretProject, self_aware_colony) == 0x64);
-    assert(SecretProject.empath_guild == -1 && SecretProject.network_backbone == -1);
-    assert(SecretProject.cloning_vats == -1 && SecretProject.self_aware_colony == -1);
-    SecretProject.human_genome_project = 2;
-    SecretProject.empath_guild = 7; SecretProject.network_backbone = 4;
-    SecretProject.cloning_vats = 5; SecretProject.self_aware_colony = 6;
+    assert((reinterpret_cast<const char *>(&SecretProject.empath_guild()) - reinterpret_cast<const char *>(&SecretProject)) == 0x10);
+    assert((reinterpret_cast<const char *>(&SecretProject.network_backbone()) - reinterpret_cast<const char *>(&SecretProject)) == 0x54);
+    assert((reinterpret_cast<const char *>(&SecretProject.cloning_vats()) - reinterpret_cast<const char *>(&SecretProject)) == 0x60);
+    assert((reinterpret_cast<const char *>(&SecretProject.self_aware_colony()) - reinterpret_cast<const char *>(&SecretProject)) == 0x64);
+    assert(SecretProject.empath_guild() == -1 && SecretProject.network_backbone() == -1);
+    assert(SecretProject.cloning_vats() == -1 && SecretProject.self_aware_colony() == -1);
+    SecretProject.human_genome_project() = 2;
+    SecretProject.empath_guild() = 7; SecretProject.network_backbone() = 4;
+    SecretProject.cloning_vats() = 5; SecretProject.self_aware_colony() = 6;
     base_remap_projects(4);
-    assert(SecretProject.human_genome_project == 2);
-    assert(SecretProject.empath_guild == 6);
-    assert(SecretProject.network_backbone == -2);
-    assert(SecretProject.cloning_vats == 4);
-    assert(SecretProject.self_aware_colony == 5);
+    assert(SecretProject.human_genome_project() == 2);
+    assert(SecretProject.empath_guild() == 6);
+    assert(SecretProject.network_backbone() == -2);
+    assert(SecretProject.cloning_vats() == 4);
+    assert(SecretProject.self_aware_colony() == 5);
 }
 int main() {
     test_immune_owners();

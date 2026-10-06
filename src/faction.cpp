@@ -680,7 +680,7 @@ void __cdecl psych_check(int faction_id, int *drones, int *talents) {
 }
 
 /*
-Purpose: Check whether the primary faction has at least one of the specified treaties (bitfield) 
+Purpose: Check whether the primary faction has at least one of the specified treaties (bitfield)
          with the secondary faction.
 // ORIGINAL: 0x005002F0 ?has_treaty@@YAHHHH@Z 0x005002F0-0x00500319 BYTE_EXACT
 // size      41 bytes
@@ -747,7 +747,7 @@ Status: Complete
 Purpose: Determine whether automatic contact is enabled for net or PBEM games.
 // ORIGINAL: 0x00539160 ?auto_contact@@YAHXZ 0x00539160-0x00539193 BYTE_EXACT
 // size      51 bytes
-// prototype 
+// prototype
 // callers   3   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
@@ -823,7 +823,7 @@ Purpose: Determine if the specified faction is considered a threat based on the 
 //        test cl,al` (this tree) for is_human's bit test - register/instruction
 //        selection only, not chased per the no-register-only-diffs rule.
 // size      315 bytes
-// prototype 
+// prototype
 // callers   20   call targets   2
 // kind      game
 // flags     frame;sp_ready;purged_ok
@@ -873,7 +873,7 @@ BOOL __cdecl great_satan(int faction_id, BOOL is_aggressive) {
 }
 
 /*
-Purpose: Check whether the specified faction is nearing the diplomatic victory requirements to be 
+Purpose: Check whether the specified faction is nearing the diplomatic victory requirements to be
          able to call a Supreme Leader vote. Optional 2nd parameter (0/-1 to disable) that specifies
          a faction to skip if they have a pact with faction from the 1st parameter.
 // ORIGINAL: 0x00539D40 ?aah_ooga@@YAHHH@Z 0x00539D40-0x00539E3E BYTE_EXACT
@@ -899,7 +899,7 @@ Purpose: Check whether the specified faction is nearing the diplomatic victory r
 //   switch, which is what identified the inline as the defect.
 // symbol    ?aah_ooga@@YAIHH@Z
 // size      254 bytes
-// prototype 
+// prototype
 // callers   7   call targets   2
 // kind      game
 // flags     frame;sp_ready;purged_ok
@@ -961,7 +961,7 @@ Purpose: Check if the human controlled player is nearing the endgame.
 //        still indexes by `i` and schedules differently from instruction 0.
 //        Plateaus here after the ascending() fix; not chased further.
 // size      164 bytes
-// prototype 
+// prototype
 // callers   7   call targets   2
 // kind      game
 // flags     sp_ready;purged_ok
@@ -1033,7 +1033,7 @@ Purpose: Determine if the specified AI faction is at the game climax based on ce
 //        and loads faction_id into esi, so every later esi/edi assignment is
 //        mirrored. Not chased further - same wall as the Palette bodies.
 // size      306 bytes
-// prototype 
+// prototype
 // callers   6   call targets   3
 // kind      game
 // flags     frame;sp_ready;purged_ok
@@ -1168,7 +1168,7 @@ uint32_t __cdecl get_mood(int friction) {
 Purpose: Calculate the negative reputation the specified faction has with another.
 // ORIGINAL: 0x0053A100 ?reputation@@YAHHH@Z 0x0053A100-0x0053A14D BYTE_EXACT
 // size      77 bytes
-// prototype 
+// prototype
 // callers   4   call targets   0
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
@@ -1200,7 +1200,7 @@ int __cdecl get_patience(int faction_id_with, int faction_id) {
     if (has_treaty(faction_id, faction_id_with, DTREATY_PACT)) {
         return has_treaty(faction_id, faction_id_with, DTREATY_HAVE_SURRENDERED) ? 500 : 6;
     }
-    return (has_treaty(faction_id, faction_id_with, DTREATY_TREATY) != 0) 
+    return (has_treaty(faction_id, faction_id_with, DTREATY_TREATY) != 0)
         - ((DiploFriction + 3) / 8) + 3;
 }
 
@@ -1208,7 +1208,7 @@ int __cdecl get_patience(int faction_id_with, int faction_id) {
 Purpose: Calculate the amount of goodwill a loan will generate. This is used to reduce friction.
 // ORIGINAL: 0x0053A1C0 ?energy_value@@YAHH@Z 0x0053A1C0-0x0053A228 BYTE_EXACT
 // size      104 bytes
-// prototype 
+// prototype
 // callers   1   call targets   0
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
@@ -1642,7 +1642,7 @@ Purpose: Set or unset the diplomatic treaty for the specified faction with anoth
 //            reach from any of these source forms; the 32/36 spelling kept
 //            below is the closest of the four.
 // size      104 bytes
-// prototype 
+// prototype
 // callers   24   call targets   0
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
@@ -1758,7 +1758,7 @@ BOOL __cdecl wants_to_attack(int faction_id, int faction_id_tgt, int faction_id_
             if (has_treaty(faction_id, i, DTREATY_VENDETTA)
                 && !has_treaty(faction_id_tgt, i, DTREATY_PACT)) {
                 want_to_attack++;
-                if (PlayersData[i].mil_strength_1 
+                if (PlayersData[i].mil_strength_1
                     > ((PlayersData[faction_id_tgt].mil_strength_1 * 3) / 2)) {
                     want_to_attack++;
                 }
@@ -1768,7 +1768,7 @@ BOOL __cdecl wants_to_attack(int faction_id, int faction_id_tgt, int faction_id_
                 if (has_treaty(faction_id_tgt, i, DTREATY_VENDETTA)) {
                     want_to_attack++;
                 }
-                if (has_treaty(faction_id_tgt, i, DTREATY_COMMLINK) 
+                if (has_treaty(faction_id_tgt, i, DTREATY_COMMLINK)
                     && has_treaty(faction_id, i, DTREATY_COMMLINK)) {
                     want_to_attack++;
                 }
@@ -1835,15 +1835,15 @@ BOOL __cdecl wants_to_attack(int faction_id, int faction_id_tgt, int faction_id_
         if (!bad_reg(region)) {
             uint32_t force_rating = PlayersData[faction_id].region_force_rating[region];
             if (force_rating) {
-                uint32_t total_cmbt_vehs 
+                uint32_t total_cmbt_vehs
                     = PlayersData[faction_id_tgt].region_total_combat_vehs[region];
                 uint32_t total_bases_tgt = PlayersData[faction_id_tgt].region_total_bases[region];
                 if (total_cmbt_vehs || total_bases_tgt) {
-                    if (PlayersData[faction_id].region_total_bases[region] 
+                    if (PlayersData[faction_id].region_total_bases[region]
                         >= ((region_top_base_count[faction_id] / 4) * 3) || region == region_hq) {
                         uint32_t compare = force_rating +
                             PlayersData[faction_id].region_total_combat_vehs[region] +
-                            (faction_id_unk > 0 
+                            (faction_id_unk > 0
                                 ? PlayersData[faction_id_unk].region_force_rating[region] / 4 : 0);
                         if (PlayersData[faction_id_tgt].region_force_rating[region] > compare) {
                             return false;
@@ -1858,7 +1858,7 @@ BOOL __cdecl wants_to_attack(int faction_id, int faction_id_tgt, int faction_id_
                         factor_force_rating += force_rating + (faction_id_unk > 0
                             ? PlayersData[faction_id_unk].region_force_rating[region] / 2 : 0);
                     }
-                    factor_unk += total_cmbt_vehs 
+                    factor_unk += total_cmbt_vehs
                         + PlayersData[faction_id].region_total_bases[region]
                         ? PlayersData[faction_id_tgt].region_force_rating[region] / 2 : 0;
                     if (PlayersData[faction_id].region_total_bases[region]) {
@@ -1898,16 +1898,16 @@ BOOL __cdecl wants_to_attack(int faction_id, int faction_id_tgt, int faction_id_
         && GameRules & RULES_INTENSE_RIVALRY) {
         want_to_attack--;
     }
-    want_to_attack -= range((PlayersData[faction_id_tgt].integrity_blemishes 
+    want_to_attack -= range((PlayersData[faction_id_tgt].integrity_blemishes
         - PlayersData[faction_id].integrity_blemishes + 2) / 3, 0, 2);
-    int morale_factor = range(PlayersData[faction_id].soc_effect_pending.morale, -4, 4) 
+    int morale_factor = range(PlayersData[faction_id].soc_effect_pending.morale, -4, 4)
         + Players[faction_id].rule_morale + 16;
-    int morale_factor_target 
+    int morale_factor_target
         = range(PlayersData[faction_id_tgt].soc_effect_pending.morale, -4, 4)
         + Players[faction_id_tgt].rule_morale + 16;
     if ((factor_count || want_to_attack > 0
         || has_treaty(faction_id, faction_id_tgt, DTREATY_UNK_20000000)) &&
-        ((morale_factor * factor_force_rating * 6) / (morale_factor_target * factor_unk)) 
+        ((morale_factor * factor_force_rating * 6) / (morale_factor_target * factor_unk))
         < (want_to_attack + 6)) {
         return false;
     }
@@ -2490,7 +2490,7 @@ Purpose: Validate whether each faction meets the requirements to have the Map re
 // ORIGINAL: 0x005A96D0 ?see_map_check@@YAXXZ 0x005A96D0-0x005A9753 BYTE_EXACT
 // LEVER: the image runs BOTH loops unconditionally, every time - no early `break` out of the 4-satellite loop (it always checks all four, re-OR-ing the same bit), and no `if (!PFLAG_MAP_REVEALED)` guard skipping the tech loop once the satellites already set it. Removing both "optimisations" (which changed nothing observable, only the instruction count) reached BYTE_EXACT.
 // size      131 bytes
-// prototype 
+// prototype
 // callers   2   call targets   1
 // kind      game
 // flags     frame;sp_ready;purged_ok
@@ -2659,7 +2659,7 @@ void __cdecl rankings(int apply_ranks) {
                         : 4;
                 }
             }
-            const int *projects = reinterpret_cast<const int *>(&SecretProject);
+            const int *projects = SecretProject.project_base;
             for (int i = 0; i < MaxSecretProjectNum; i++) {
                 if (projects[i] >= 0
                     && Bases[projects[i]].faction_id_current == (uint8_t)faction_id) {
@@ -2873,7 +2873,7 @@ void __cdecl social_calc(SocialCategory *category, SocialEffect *effect, int fac
                             effect_val = 0;
                         }
                     }
-                } else if (cat == SOCIAL_CAT_VALUES && model == SE_POWER 
+                } else if (cat == SOCIAL_CAT_VALUES && model == SE_POWER
                     && has_project(SP_CLONING_VATS, faction_id)) {
                     effect_val = 0;
                 }
@@ -2913,11 +2913,11 @@ void __cdecl social_calc(SocialCategory *category, SocialEffect *effect, int fac
         }
         for (int i = 0; i < Players[faction_id].faction_bonus_count; i++) {
             if (Players[faction_id].faction_bonus_id[i] == RULE_IMMUNITY) { // cancels neg effects
-                int *eff_faction_mod 
+                int *eff_faction_mod
                     = (&effect->economy + Players[faction_id].faction_bonus_val1[i]);
                 *eff_faction_mod = range(*eff_faction_mod, 0, 999);
             } else if (Players[faction_id].faction_bonus_id[i] == RULE_ROBUST) {
-                int *eff_faction_mod 
+                int *eff_faction_mod
                     = (&effect->economy + Players[faction_id].faction_bonus_val1[i]);
                 if (*eff_faction_mod < 0) {
                     *eff_faction_mod /= 2; // halves neg effects
@@ -3040,7 +3040,7 @@ Purpose: Calculate an AI faction's social engineering.
 Return Value: n/a
 Status: Complete - testing (likely has multiple issues due to length + complexity)
 */
-void __cdecl social_ai(int faction_id, int growth_val, int tech_val, int wealth_val, 
+void __cdecl social_ai(int faction_id, int growth_val, int tech_val, int wealth_val,
                        int power_val, SocialCategory *output) {
     // setup
     int fight_val;
@@ -3105,8 +3105,8 @@ void __cdecl social_ai(int faction_id, int growth_val, int tech_val, int wealth_
                     for (uint32_t f = 1; f < MaxPlayerNum; f++) {
                         if (f != faction_id) {
                             if (has_treaty(faction_id, f, DTREATY_VENDETTA | DTREATY_WANT_REVENGE)
-                                && PlayersData[f].enemy_best_psi_offense 
-                                >= PlayersData[f].enemy_best_weapon_value 
+                                && PlayersData[f].enemy_best_psi_offense
+                                >= PlayersData[f].enemy_best_weapon_value
                                 && PlayersData[f].proto_id_active[BSC_MIND_WORMS] > 1) {
                                 unk_sum2 += base_count; // not used
                             }
@@ -3199,7 +3199,7 @@ void __cdecl social_ai(int faction_id, int growth_val, int tech_val, int wealth_
                         for (int region = 0; region < MaxContinentNum; region++) {
                             econ_weight -= (soc_eff.economy + 1)
                                 * PlayersData[faction_id].region_total_bases[region]
-                                * ((PlayersData[faction_id].region_base_plan[region] 
+                                * ((PlayersData[faction_id].region_base_plan[region]
                                     != PLAN_DEFENSIVE) + 1);
                         }
                         econ_weight /= (unk_sum1 + 1);
@@ -3209,7 +3209,7 @@ void __cdecl social_ai(int faction_id, int growth_val, int tech_val, int wealth_
                 } else {
                     for (int region = 0; region < MaxContinentNum; region++) {
                         econ_weight += PlayersData[faction_id].region_total_bases[region]
-                            * ((PlayersData[faction_id].region_base_plan[region] != PLAN_DEFENSIVE) 
+                            * ((PlayersData[faction_id].region_base_plan[region] != PLAN_DEFENSIVE)
                                 + 1);
                     }
                     econ_weight /= (unk_sum1 + 1);
@@ -3228,7 +3228,7 @@ void __cdecl social_ai(int faction_id, int growth_val, int tech_val, int wealth_
             if (!unk_sum1) {
                 econ_weight *= 2;
             }
-            econ_weight *= ((PlayersData[faction_id].ai_fight < 0 && unk_sum1 < 2) 
+            econ_weight *= ((PlayersData[faction_id].ai_fight < 0 && unk_sum1 < 2)
                 + tech_val * 2 + wealth_val + 1);
             if (output) {
                 if (wealth_val || tech_val) {
@@ -3351,7 +3351,7 @@ void __cdecl social_ai(int faction_id, int growth_val, int tech_val, int wealth_
             }
             unk_val6 -= effic_weight;
             // growth
-            int growth_weight = (soc_eff.growth * (unk_count1 + 1) 
+            int growth_weight = (soc_eff.growth * (unk_count1 + 1)
                 * ((growth_val + 1) * 2 - wealth_val)
                 * (pop_goal_growth + PlayersData[faction_id].nutrient_surplus_total)) / 5;
             if (aah_ooga(faction_id, faction_id)) {
@@ -3374,15 +3374,15 @@ void __cdecl social_ai(int faction_id, int growth_val, int tech_val, int wealth_
             }
             unk_val6 += growth_weight;
             // police
-            int police_weight 
-                = range(soc_eff.police, -2, 2) * PlayersData[faction_id].current_num_bases 
+            int police_weight
+                = range(soc_eff.police, -2, 2) * PlayersData[faction_id].current_num_bases
                 * (unk_count2 * 2 + 1);
-            if (PlayersData[faction_id].tech_ranking 
+            if (PlayersData[faction_id].tech_ranking
                 < PlayersData[RankingFactionIDUnk2].tech_ranking
                 && PlayersData[faction_id].ranking < PlayersData[RankingFactionIDUnk2].ranking) {
                 police_weight *= 2;
             }
-            if (PlayersData[faction_id].tech_ranking 
+            if (PlayersData[faction_id].tech_ranking
                 < PlayersData[RankingFactionIDUnk1].tech_ranking
                 && PlayersData[faction_id].ranking < PlayersData[RankingFactionIDUnk1].ranking) {
                 police_weight /= 2;
@@ -3416,7 +3416,7 @@ void __cdecl social_ai(int faction_id, int growth_val, int tech_val, int wealth_
             // planet
             int planet_weight = (4 - soc_eff.planet) * PlayersData[faction_id].unk_49 * 4 / 4; // ?
             if (PlayersData[faction_id].soc_effect_base.planet > 0
-                || PlayersData[faction_id].best_psi_offense 
+                || PlayersData[faction_id].best_psi_offense
                 > PlayersData[faction_id].best_weapon_value) {
                 planet_weight += PlayersData[faction_id].total_mil_veh;
             } else if (unk_val3 > 1) {
@@ -3457,7 +3457,7 @@ void __cdecl social_ai(int faction_id, int growth_val, int tech_val, int wealth_
                 }
                 unk_val6 -= planet_weight;
                 // research
-                int research_weight = range(soc_eff.research, -5, 5) 
+                int research_weight = range(soc_eff.research, -5, 5)
                     * PlayersData[faction_id].labs_total / 10;
                 if (!unk_sum1) {
                     research_weight *= 2;
@@ -3547,9 +3547,9 @@ void __cdecl social_ai(int faction_id, int growth_val, int tech_val, int wealth_
             }
             if (!no_cat_change) {
                 social_set(faction_id);
-                uint32_t cost 
+                uint32_t cost
                     = social_upheaval(faction_id, &PlayersData[faction_id].soc_category_pending);
-                PlayersData[faction_id].energy_reserves 
+                PlayersData[faction_id].energy_reserves
                     = range(PlayersData[faction_id].energy_reserves - cost, 0, 999999999);
                 PlayersData[faction_id].soc_upheaval_cost_paid += cost;
                 if (!is_human(faction_id)) {
@@ -3721,7 +3721,7 @@ void __cdecl enemy_capabilities_t(uint32_t faction_id) {
             //if (Weapon[i].offense_rating < 0 && weap_val > PlayersData[faction_id].bestPsiAtkVal) {
             //    PlayersData[faction_id].bestPsiAtkVal = weap_val;
             //}
-            if (Weapon[i].offense_rating >= 0 && weap_val 
+            if (Weapon[i].offense_rating >= 0 && weap_val
                 > PlayersData[faction_id].best_weapon_value) {
                 PlayersData[faction_id].best_weapon_value = weap_val;
             }
@@ -3735,7 +3735,7 @@ void __cdecl enemy_capabilities_t(uint32_t faction_id) {
             //if (Armor[i].defense_rating < 0 && arm_val > PlayersData[faction_id].bestPsiDefVal) {
             //    PlayersData[faction_id].bestPsiDefVal = arm_val;
             //}
-            if (Armor[i].defense_rating >= 0 
+            if (Armor[i].defense_rating >= 0
                 && arm_val > PlayersData[faction_id].best_armor_value) {
                 PlayersData[faction_id].best_armor_value = arm_val;
             }
@@ -3766,17 +3766,17 @@ void __cdecl enemy_capabilities_t(uint32_t faction_id) {
                     && treaties & DTREATY_COMMLINK)
                     || (i == 1 && !(treaties & DTREATY_TREATY) && treaties & DTREATY_COMMLINK)
                     || (i == 2 && treaties & DTREATY_COMMLINK) || (i == 3))) {
-                if (PlayersData[faction_id].enemy_best_weapon_value 
+                if (PlayersData[faction_id].enemy_best_weapon_value
                     < PlayersData[j].best_weapon_value) {
-                    PlayersData[faction_id].enemy_best_weapon_value 
+                    PlayersData[faction_id].enemy_best_weapon_value
                         = PlayersData[j].best_weapon_value;
                 }
-                if (PlayersData[faction_id].enemy_best_armor_value 
+                if (PlayersData[faction_id].enemy_best_armor_value
                     < PlayersData[j].best_armor_value) {
                     PlayersData[faction_id].enemy_best_armor_value
                         = PlayersData[j].best_armor_value;
                 }
-                if (PlayersData[faction_id].enemy_best_land_speed 
+                if (PlayersData[faction_id].enemy_best_land_speed
                     < PlayersData[j].best_land_speed) {
                     PlayersData[faction_id].enemy_best_land_speed = PlayersData[j].best_land_speed;
                 }
@@ -3793,18 +3793,18 @@ void __cdecl enemy_capabilities_t(uint32_t faction_id) {
     }
     // PSI
     BOOL has_worms = veh_avail(BSC_MIND_WORMS, faction_id, -1);
-    PlayersData[faction_id].best_psi_offense = has_worms 
+    PlayersData[faction_id].best_psi_offense = has_worms
         ? weap_strat(WPN_PSI_ATTACK, faction_id) : 0;
     for (i = 0; i < MaxWeaponNum; i++) {
         if (has_tech(Weapon[i].preq_tech, faction_id) && Weapon[i].offense_rating < 99) {
             int weap_val = weap_strat(i, faction_id);
-            if (Weapon[i].offense_rating < 0 && weap_val 
+            if (Weapon[i].offense_rating < 0 && weap_val
                 > PlayersData[faction_id].best_psi_offense) {
                 PlayersData[faction_id].best_psi_offense = weap_val;
             }
         }
     }
-    PlayersData[faction_id].best_psi_defense = has_worms 
+    PlayersData[faction_id].best_psi_defense = has_worms
         ? arm_strat(ARM_PSI_DEFENSE, faction_id) : 0;
     for (i = 0; i < MaxArmorNum; i++) {
         if (has_tech(Armor[i].preq_tech, faction_id)) {
@@ -3828,14 +3828,14 @@ void __cdecl enemy_capabilities_t(uint32_t faction_id) {
                     && treaties & DTREATY_COMMLINK)
                     || (i == 1 && !(treaties & DTREATY_TREATY) && treaties & DTREATY_COMMLINK)
                     || (i == 2 && treaties & DTREATY_COMMLINK) || (i == 3))) {
-                if (PlayersData[faction_id].enemy_best_psi_offense 
+                if (PlayersData[faction_id].enemy_best_psi_offense
                     < PlayersData[j].best_psi_offense) {
-                    PlayersData[faction_id].enemy_best_psi_offense 
+                    PlayersData[faction_id].enemy_best_psi_offense
                         = PlayersData[j].best_psi_offense;
                 }
                 if (PlayersData[faction_id].enemy_best_psi_defense
                     < PlayersData[j].best_psi_defense) {
-                    PlayersData[faction_id].enemy_best_psi_defense 
+                    PlayersData[faction_id].enemy_best_psi_defense
                         = PlayersData[j].best_psi_defense;
                 }
             }
@@ -7415,7 +7415,7 @@ void __cdecl enemies_unpact(int faction_id, int faction_id_with) {
     bool show_notice =
         (PlayersData[current_faction_id].diplo_treaties[faction_id]
          & protected_diplomacy_bits) != 0;
-    const int empath_guild_base = SecretProject.empath_guild;
+    const int empath_guild_base = SecretProject.empath_guild();
     if (!show_notice && empath_guild_base >= 0) {
         show_notice =
             Bases[empath_guild_base].faction_id_current == current_faction_id;
@@ -7742,7 +7742,7 @@ evaluate_existing_state:
                             (PlayersData[current_faction_id].diplo_treaties[
                                  faction_id] & 0x1000u) == 0;
                         const int empath_guild_base =
-                            SecretProject.empath_guild;
+                            SecretProject.empath_guild();
                         if (suppress_message && empath_guild_base >= 0) {
                             suppress_message =
                                 Bases[empath_guild_base].faction_id_current !=
@@ -8693,7 +8693,7 @@ static void enemy_diplomacy_pair_dispatch(int faction_id, int other_id) {
             (GameState & 0x200u) != 0) {
             open_encounter = true;
         } else {
-            const int empath_guild_owner = SecretProject.empath_guild;
+            const int empath_guild_owner = SecretProject.empath_guild();
             if (empath_guild_owner >= 0) {
                 const int project_base_owner =
                     Bases[empath_guild_owner].faction_id_current;
@@ -12665,8 +12665,8 @@ int __cdecl proposal_menu(int faction_id, int faction_id_with) {
             const uint32_t candidate_treaty =
                 PlayersData[candidate].diplo_treaties[faction_id];
             if ((candidate_treaty & 8u) == 0 &&
-                (SecretProject.empath_guild < 0 ||
-                 Bases[SecretProject.empath_guild].faction_id_current ==
+                (SecretProject.empath_guild() < 0 ||
+                 Bases[SecretProject.empath_guild()].faction_id_current ==
                      faction_id)) {
                 ++eligible_other_factions;
             }
@@ -12841,8 +12841,8 @@ int __cdecl proposal_menu(int faction_id, int faction_id_with) {
                 (alive_mask & (1 << (candidate & 0x1f))) != 0;
             if (candidate_is_alive && candidate != faction_id &&
                 candidate != faction_id_with && (target_flags & 8u) == 0 &&
-                (SecretProject.empath_guild < 0 ||
-                 Bases[SecretProject.empath_guild].faction_id_current !=
+                (SecretProject.empath_guild() < 0 ||
+                 Bases[SecretProject.empath_guild()].faction_id_current !=
                      faction_id_with)) {
                 GenderDefault = Players[candidate].is_leader_female;
                 PluralityDefault = 0;
@@ -12869,8 +12869,8 @@ int __cdecl proposal_menu(int faction_id, int faction_id_with) {
             PlayersData[faction_id_with]
                 .diplo_treaties[DiploScratchFA5C];
         if ((target_flags & 8u) == 0 &&
-            (SecretProject.empath_guild < 0 ||
-             Bases[SecretProject.empath_guild].faction_id_current !=
+            (SecretProject.empath_guild() < 0 ||
+             Bases[SecretProject.empath_guild()].faction_id_current !=
                  faction_id_with)) {
             const int target = DiploScratchFA5C;
             GenderDefault = Players[target].is_leader_female;

@@ -83,7 +83,10 @@ def harness(bodies, api=None):
         int IsMultiplayerNet, NetTurnFlags, NetTurnFaction;
         struct PlayerData { uint32_t diplo_treaties[8]; } PlayersData[8];
         struct Base { unsigned char faction_id_current; } Bases[3];
-        struct ProjectLocations { int empath_guild; } SecretProject;
+        struct ProjectLocations { int empath_guild_;
+ int &empath_guild() { return empath_guild_; }
+ const int &empath_guild() const { return empath_guild_; }
+} SecretProject;
         int GovernorFaction;
         enum { RFLAG_ALIEN = 16 };
         struct Player { uint32_t rule_flags; } Players[8];
@@ -127,19 +130,19 @@ def harness(bodies, api=None):
                 std::memset(PlayersData, 0, sizeof(PlayersData));
                 std::memset(Bases, 0xff, sizeof(Bases));
                 std::memset(Players, 0, sizeof(Players));
-                SecretProject.empath_guild = -1;
+                SecretProject.empath_guild() = -1;
                 GovernorFaction = -1;
                 require(spying(subject) == 0);
                 PlayersData[faction].diplo_treaties[subject] = 0x1000;
                 require(spying(subject) == 1);
                 PlayersData[faction].diplo_treaties[subject] = 0x800;
                 require(spying(subject) == 0);
-                SecretProject.empath_guild = 2;
+                SecretProject.empath_guild() = 2;
                 Bases[2].faction_id_current = static_cast<unsigned char>(faction);
                 require(spying(subject) == 1);
                 Bases[2].faction_id_current = static_cast<unsigned char>((faction + 1) % 8);
                 require(spying(subject) == 0);
-                SecretProject.empath_guild = -1;
+                SecretProject.empath_guild() = -1;
                 GovernorFaction = faction;
                 require(spying(subject) == 1);
                 Players[subject].rule_flags = RFLAG_ALIEN;

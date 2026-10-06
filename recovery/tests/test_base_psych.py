@@ -234,17 +234,17 @@ void project_controls(){
     reset();facilities[12]=true;base_psych();expect_stage(2,2,2,0);
     reset();built(17);built(18);base_psych();expect_stage(2,0,0,0);
     reset();facilities[22]=true;Rules.drones_genejack_factory=2;base_psych();expect_stage(0,0,2,0);expect_stage(2,0,4,0);
-    reset();SecretProject.human_genome_project=0;SecretProject.clinical_immortality=0;
+    reset();SecretProject.human_genome_project()=0;SecretProject.clinical_immortality()=0;
     base_psych();expect_stage(3,0,2,0);expect_stage(4,3,2,0);
-    for(int economy=0;economy<3;++economy){reset();SecretProject.longevity_vaccine=0;
+    for(int economy=0;economy<3;++economy){reset();SecretProject.longevity_vaccine()=0;
         PlayersData[3].soc_category_pending.models_[SocialCategory::ECONOMICS]=economy;base_psych();expect_stage(4,0,economy==1?2:economy==2?0:1,0);}
     reset();built(23);PlayersData[3].soc_effect_pending.talent=1;base_psych();expect_stage(3,1,2,0);expect_stage(4,0,0,0);
-    reset();PlayersData[3].soc_effect_pending.police=-1;SecretProject.self_aware_colony=0;
+    reset();PlayersData[3].soc_effect_pending.police=-1;SecretProject.self_aware_colony()=0;
     base_psych();expect_stage(3,0,1,0);require(veh_calls==0);
     reset();built(35);PlayersData[3].soc_effect_pending.police=-3;unit();base_psych();expect_stage(3,0,1,0);
-    reset();facilities[8]=true;SecretProject.virtual_world=0;base_psych();expect_stage(2,0,0,0);
+    reset();facilities[8]=true;SecretProject.virtual_world()=0;base_psych();expect_stage(2,0,0,0);
     require(std::count(facility_calls.begin(),facility_calls.end(),11)==0);
-    reset();facilities[8]=true;SecretProject.virtual_world=1;Bases[1].faction_id_current=7;
+    reset();facilities[8]=true;SecretProject.virtual_world()=1;Bases[1].faction_id_current=7;
     base_psych();expect_stage(2,0,2,0);
     // bitmask may move the selected global; the current lookup keeps its prior ID.
     reset();built(17);change_selected=1;base_psych();expect_stage(2,0,1,0);
@@ -265,7 +265,7 @@ void initial_controls(){
     reset();PlayersData[3].soc_effect_pending.police=-5;BaseCurrentVehPacifismCount=0x80000000u;
     base_psych();expect_stage(3,0,2,0);
     reset();BaseCurrent->population_size=3;PlayersData[3].soc_effect_pending.talent=-2;
-    SecretProject.planetary_transit_system=0;base_psych();expect_stage(0,0,2,0);expect_stage(2,0,1,0);
+    SecretProject.planetary_transit_system()=0;base_psych();expect_stage(0,0,2,0);expect_stage(2,0,1,0);
     reset();MapAreaSqRoot=28;PlayersData[3].current_num_bases=10;PlayersData[3].soc_effect_pending.talent=-5;
     built(23);base_psych();expect_stage(3,0,5,1);expect_stage(4,0,0,1);
 }

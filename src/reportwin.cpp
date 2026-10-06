@@ -1157,7 +1157,7 @@ Purpose: Step the receiver back to the subobject ??_GReportWin@@UAEPAXI@Z
 //   and the receiver stays in ECX. `WEEE@` re-demangles to
 //   adjustor{1092} and 1092 == 0x444, the constant subtracted
 // size      11 bytes
-// prototype 
+// prototype
 // callers   0   call targets   0
 // kind      game
 // flags     sp_ready;purged_ok
@@ -1648,7 +1648,7 @@ void ReportWin::draw_energy() {
             say_base(StringTemp, base_id);
             strcat(StringTemp, "|");
             const int maintenance = fac_maint(facility, viewer);
-            const int project_base = SecretProject.planetary_energy_grid;
+            const int project_base = SecretProject.planetary_energy_grid();
             const bool halved = project_base >= 0
                 && Bases[project_base].faction_id_current == viewer;
             maintenance_total += maintenance;
@@ -1665,7 +1665,7 @@ void ReportWin::draw_energy() {
         strcat(StringTemp, label_get(0xA9C / 4));
         strcat(StringTemp, ": ");
         strcat(StringTemp, "|");
-        const int project_base = SecretProject.planetary_energy_grid;
+        const int project_base = SecretProject.planetary_energy_grid();
         const bool halved = project_base >= 0
             && Bases[project_base].faction_id_current == viewer;
         if (halved) {
@@ -1701,7 +1701,7 @@ void ReportWin::draw_energy() {
             say_facility(StringTemp, facility, 0);
             strcat(StringTemp, "|");
             const int maintenance = fac_maint(facility, viewer);
-            const int project_base = SecretProject.planetary_energy_grid;
+            const int project_base = SecretProject.planetary_energy_grid();
             const bool halved = project_base >= 0
                 && Bases[project_base].faction_id_current == viewer;
             maintenance_total += maintenance;
@@ -1718,7 +1718,7 @@ void ReportWin::draw_energy() {
         strcat(StringTemp, label_get(0xA9C / 4));
         strcat(StringTemp, ": ");
         strcat(StringTemp, "|");
-        const int project_base = SecretProject.planetary_energy_grid;
+        const int project_base = SecretProject.planetary_energy_grid();
         const bool halved = project_base >= 0
             && Bases[project_base].faction_id_current == viewer;
         if (halved) {

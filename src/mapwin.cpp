@@ -1008,7 +1008,7 @@ Purpose: The radius-1 sibling of draw_tile - the identical 70-byte broadcast,
 // LEVER: same as draw_tile above - `window->draw_radius(...)` in place of
 //        the `MapWinOriginalDrawRadius` seam dispatch.
 // size      70 bytes
-// prototype 
+// prototype
 // callers   10   call targets   1
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
@@ -1717,7 +1717,7 @@ void MapWin::dest_line(int x1, int y1, int x2, int y2, int proto_id,
             Win::update_cursor(0, 1);
             int flags = repeat != 0 ? 0x80 : 0xc0;
             if (Weapon[VehPrototypes[proto_id].weapon_id].offense_rating == 0) {
-                const int project_base = SecretProject.xenoempathy_dome;
+                const int project_base = SecretProject.xenoempathy_dome();
                 if (project_base < 0 || Bases[project_base].faction_id_current != faction) {
                     flags |= 0x10;
                 }
@@ -2512,7 +2512,7 @@ Purpose: Step the receiver back to the subobject ??_GMainInterface@@UAEPAXI@Z
 //   access and the receiver stays in ECX. `WEEE@` re-demangles to
 //   adjustor{1092} and 1092 == 0x444, the constant subtracted
 // size      11 bytes
-// prototype 
+// prototype
 // callers   0   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
@@ -6825,7 +6825,7 @@ void MapWin::tile_to_pixel(int tile_x, int tile_y, int *pixel_x, int *pixel_y) {
 // TRIED: hoisting `base = owned_+offset` into its own statement before the `j = j+1` increment, to force add-before-inc ordering - same MISMATCH #30 'add' vs 'inc' either way (/O2 schedules inc first regardless of source order). similarity 0.9667, rebuilt_bytes == original_bytes (155).
 // working copy - scaffold materialised by --work
 // size      155 bytes
-// prototype 
+// prototype
 // callers   1   call targets   2
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
@@ -6969,7 +6969,7 @@ void MapWin::UNK8(int x, int y, int radius) {
 //
 // address        0x0046FCE0
 // measured tier  NO_COMPILE
-// refusal        u0046fce0.cpp(1) : error C2653: 'MapWin' : is not a class or namespace name u0046fce0.cpp(2) : error C2065: 'owned_' : undeclared identifier u0046fce0.cpp(3) : 
+// refusal        u0046fce0.cpp(1) : error C2653: 'MapWin' : is not a class or namespace name u0046fce0.cpp(2) : error C2065: 'owned_' : undeclared identifier u0046fce0.cpp(3) :
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the

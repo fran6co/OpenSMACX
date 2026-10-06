@@ -7372,9 +7372,9 @@ void Console::go_to(int subject, int order, int grouped) {
                 strcat(StringTemp, Players[base.faction_id_current].noun_faction); strcat(StringTemp, ")");
             }
             if (cargo && base.faction_id_current == faction) {
-                if (id == SecretProject.universal_translator || (has_fac(8, id, 0) && !(base.state & 0x400))) {
+                if (id == SecretProject.universal_translator() || (has_fac(8, id, 0) && !(base.state & 0x400))) {
                     strcat(StringTemp, " (");
-                    strcat(StringTemp, id == SecretProject.universal_translator
+                    strcat(StringTemp, id == SecretProject.universal_translator()
                         ? StringTable.get(reinterpret_cast<int>(Facility[90].name)) : label_get(0x4c4 / 4));
                     strcat(StringTemp, ")");
                 }
