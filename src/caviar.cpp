@@ -14,6 +14,7 @@
 #include "caviar.h"
 #include "basepop.h"
 #include "buffer.h"
+#include "palette.h"
 #include "general.h"    // mem_get
 #include "stringstruct.h"
 #include "strings.h"    // StringTemp
@@ -1411,6 +1412,48 @@ inline int vox_alloc_typed(int size, T **out) {
         return -1;
     }
     return 0;
+}
+
+
+// Original616C80. The second stack argument is present but unused.
+// ORIGINAL: 0x00616C80 sub_616c80 0x00616C80-0x00616D33
+// symbol    ?apply_palette@CaviarData@@QAEHPAVPalette@@H@Z
+// kind      game
+int CaviarData::apply_palette(Palette *destination, int) {
+    CvrRecord *record = record_;
+    if (record == 0) return 7;
+    if (destination == 0) return 0x10;
+    if (record->palette_ == 0) return 0x10;
+
+    const int first = record->palette_[0];
+    const int count = record->palette_[1] - first;
+    RGBQUAD colours[256];
+    if (count > 0) {
+        RGBQUAD *output = colours;
+        int source_index = first * 3;
+        int remaining = count;
+        do {
+            output->rgbRed = record->palette_[source_index + 2];
+            output->rgbGreen = record->palette_[source_index + 3];
+            output->rgbBlue = record->palette_[source_index + 4];
+            // rgbReserved remains unwritten, as in the pinned original.
+            source_index += 3;
+            ++output;
+        } while (--remaining != 0);
+    }
+    return destination->set_rgbquad(colours, first, count);
+}
+
+// Original616D40. This releases one optional chunk, not the loaded record.
+// ORIGINAL: 0x00616D40 sub_616d40 0x00616D40-0x00616D66 BYTE_EXACT
+// symbol    ?release_palette_chunk@CaviarData@@QAEXXZ
+// kind      game
+void CaviarData::release_palette_chunk() {
+    if (record_ != 0 && record_->field_18_ != 0) {
+        free(record_->field_18_);
+        // The original reloads the owner's record after the free call.
+        record_->field_18_ = 0;
+    }
 }
 // Old CVR palettes contain sixteen 256-byte shade rows after a two-byte
 // prefix and RGB table. Expand them to twenty-four rows, in column-first

@@ -334,3 +334,6 @@ void __cdecl time_controls_dialog(Popup *popup);
 // Provisional behavior names; original helper identities remain source mapped.
 void __cdecl popup_pending_link_dialog(const char *label);
 int __cdecl popup_faction_datalinks(int faction_id);
+
+// Set the saved coordinates consumed and reset by pops(); native 0x627110.
+int __cdecl set_popup_saved_location(int x, int y);

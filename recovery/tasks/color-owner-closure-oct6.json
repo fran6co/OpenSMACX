@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "task_id": "color-owner-closure-oct6",
+  "author": "framework-coordinator",
+  "target": "opensmacx",
+  "base_revision": "adbd246932a9f6200c303cfb304c69e64f7f5d49",
+  "intent": "Recover the complete loaded-palette conversion, nested-chunk release and existing saved-popup-location setter with actual typed owners and retire all three seeds.",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6384768
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6384960
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6451472
+    }
+  ],
+  "editable_files": [
+    "src/caviar.h",
+    "src/caviar.cpp",
+    "src/popup.cpp",
+    "src/popup.h",
+    "recovery/tests/fixtures/color_owner_control.cpp",
+    "recovery/tests/test_color_owner_source.py",
+    "src/unrecovered/00616c80.cpp",
+    "src/recovered/00616d40.cpp",
+    "src/recovered/00627110.cpp",
+    "recovery/tasks/color-owner-closure-oct6.json"
+  ],
+  "evidence": [
+    "Coordinator-reviewed manual coverage integration with independent full pinned-span review; no automatic or game acceptance claim.",
+    "Existing CaviarData/CvrRecord layout and Palette::set_rgbquad establish actual data ownership; conversion retains unsigned endpoints, uninitialized reserved bytes, nonpositive-count calls and the unused explicit parameter.",
+    "Release frees only the optional nested chunk, reloads the record after free and clears that nested pointer. It never substitutes full record or owner destruction.",
+    "The setter reuses existing TU-private PopupSavedLocX/Y; fresh native observations identify _PopupSavedLocX/_PopupSavedLocY and pinned four-byte initial windows of8192. Start-only bindings do not assert independent allocation bounds.",
+    "All three original identities/spans/seed lessons and both historical byte claims remain. No claim is created or demoted; temporary matching regressions retain restoration obligations.",
+    "Names are descriptive and original spelling/indirect invocation coverage remain unproved. Native compile/layout/storage and bounded host controls are not full linked preservation or runtime acceptance."
+  ]
+}

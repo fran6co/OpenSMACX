@@ -12,6 +12,7 @@
 // caviar.cpp includes buffer.h; this forward declaration is only for the
 // renderer's own Buffer-taking members declared below.
 class Buffer;
+class Palette;
 
 // Shared renderer camera scale, independently read from original readonly data.
 extern const float CaviarCameraDistance;
@@ -402,6 +403,9 @@ struct CaviarData {
   // it still holds, opens the file, hands the descriptor to the loader and
   // closes it again once the record is built.
   int init(char *name);
+  // Loaded palette conversion and optional chunk release; names are descriptive.
+  int apply_palette(Palette *destination, int unused);
+  void release_palette_chunk();
   const CvrRecord *record() const { return record_; }
 
  private:

@@ -1250,7 +1250,9 @@ int __cdecl popp(LPCSTR caption, LPCSTR label, int flags, LPCSTR picture,
 // next, then reset to the sentinel 0x2000 (BasePop::set_loc's own "let the
 // popup centre itself" value elsewhere in this file). The image's .data
 // carries 0x2000 in both dwords, so the objects initialise from it.
+// RECOVERY_OBJECT: v1 0x006973DC _PopupSavedLocX
 static int PopupSavedLocX = 0x2000;  // 0x006973DC
+// RECOVERY_OBJECT: v1 0x006973E0 _PopupSavedLocY
 static int PopupSavedLocY = 0x2000;  // 0x006973E0
 
 // Read before write_check() and overwritten from read_check()'s result at
@@ -3332,3 +3334,14 @@ int __cdecl popb(LPCSTR text_label, int warning_mask, int sound_id,
 
 // Historical seed lifetime hypotheses used duplicate locals and raw placement storage.
 // Native receiver evidence supersedes those models; genuine embedded member lifetimes now own cleanup.
+
+
+// Original627110, alongside the existing saved-location objects in popup.cpp.
+// ORIGINAL: 0x00627110 sub_627110 0x00627110-0x00627124 BYTE_EXACT
+// symbol    ?set_popup_saved_location@@YAHHH@Z
+// kind      game
+int __cdecl set_popup_saved_location(int x, int y) {
+    PopupSavedLocX = x;
+    PopupSavedLocY = y;
+    return x;
+}
