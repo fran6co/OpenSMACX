@@ -1104,23 +1104,6 @@ uint32_t Sound::get_type() {
 int Sound::unk_slot24() {
     return (flags_40_ & 1) ? -1 : 0;
 }
-int Sound::set_attrib(unsigned long) {
-    // BODY GOES HERE.
-    // The original base is pure. Remaining family overrides are unfinished;
-    // this definition provides build continuity, not recovered behavior.
-    return 0;
-}
-int Sound::get_attrib() {
-    // BODY GOES HERE.
-    // The original base is pure; this only keeps still-incomplete derived
-    // classes linkable until their attribute overrides are recovered.
-    return 0;
-}
-
-// Slot 15: pure in the image's Sound vftable, overridden per derived class
-// (Wave's override is get_game_hwnd). This tree defines the base slot so the
-// vftable links; the per-class overrides carry the real behavior.
-int Sound::get_game_hwnd() { return 0; }
 
 // ORIGINAL: 0x004C83F0 sub_4c83f0 0x004C83F0-0x004C840F BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["task:typed-ui-sound-helper-owner", "Pinned4C83F0..4C840F loads source-owned SoundChainHead90DB20, dispatches Sound virtual unload slot5 and reloads the shared head after callbacks; preserve return11.", "historical seed:src/recovered/004c83f0.cpp"], "reason": "Rehome genuine typed helper into its existing source owner, preserving original spans, historical claims and useful discoveries. No fixed executable address or manual virtual-call model."}

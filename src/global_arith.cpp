@@ -43,18 +43,43 @@ int32_t PrefWinToggleWidth = 120;
 // RECOVERY_OBJECT: v2 0x00686B90 0x00686B94 ?PrefWinToggleHeight@@3HA 0x0048D840
 int32_t PrefWinToggleHeight = 20;
 
+// RECOVERY_OBJECT: v1 0x007591C4 ?SharedWordValue@@3HA
+int32_t SharedWordValue;
+
+/*
+// ORIGINAL: 0x0044C860 sub_44c860 0x0044C860-0x0044C86D BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x0044C860-0x0044C86D reads one int argument and stores its full dword to 0x007591C4", "pinned:terranx_original.exe:0x0044C870-0x0044C878 directly XORs bit zero of the same dword and returns", "pinned PE virtual .data section contains 0x007591C4; read_initial(0x007591C4..0x007591C8) is four zero bytes", "pinned base-relocation table identifies absolute operand sites in both original instructions; no relocation is claimed inside the target word", "src/global_arith.cpp owns the named SharedWordValue storage plus both original operations; no class, domain-level field meaning, or caller/lifetime relation is asserted"], "reason": "Own the original setter in the same C++ translation unit as the real shared word it writes and the paired toggle operation. The original class/domain meaning and caller set remain unknown."}
+// symbol    ?set_shared_word@@YAXH@Z
+// size      13 bytes
+// prototype
+// callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+
+void set_shared_word(int value) {
+    SharedWordValue = value;
+}
+
+
 /*
  * PrefWin geometry outputs are natural dynamic initializers owned in
- * prefwin_geometry.cpp. This file retains the shared geometry inputs and the unrelated
- * fixed-pointer toggle at 0x0044C870.
+ * prefwin_geometry.cpp. This TU retains the shared geometry inputs and owns the
+ * paired setter/toggle on a source word with unknown domain-level meaning.
  */
 
 
 /*
 Purpose: sub_44c870 - arithmetic over 1 fixed global(s), one
          statement per original instruction.
-// RECOVERY_ROLE: SCAFFOLD Transitional address-named arithmetic/initializer adapter; preserve behavior while recovering genuine startup ownership.
 // ORIGINAL: 0x0044C870 sub_44c870 0x0044C870-0x0044C878
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:0x0044C870-0x0044C878 is the direct memory-form XOR `xor dword ptr [0x7591c4], 1; ret`", "pinned:terranx_original.exe:0x0044C860-0x0044C86D independently stores the caller-supplied dword at the same address", "pinned PE virtual .data section contains 0x007591C4; read_initial(0x007591C4..0x007591C8) is four zero bytes", "src/global_arith.cpp defines SharedWordValue and contains both paired source operations; no class or domain label is inferred"], "reason": "Own the original toggle operation beside the shared C++ word it mutates; use the same real storage as the original setter while leaving the state domain and callers unnamed."}
+// Historical note: these spelling tests predate the paired setter and
+// the parsed PE virtual zero-fill proof; retain their experiments, but
+// the conclusion that 0x7591C4 has no named source object is superseded.
 // TRIED 2026-09-03: five spellings for the single statement, scored with
 // tools/try_spellings.py - `*p ^= 1`, `*p = *p ^ 1` (as committed), a
 // `uint32_t *const p` local, `volatile int32_t *const p` read-modify-write
@@ -74,7 +99,7 @@ Purpose: sub_44c870 - arithmetic over 1 fixed global(s), one
 // body lacks is an object at 0x7591c4. That is an EVIDENCE lever, not a
 // spelling lever: leaf_recoveries.cpp documents 0x7591C4 as evidence-free
 // ("a named global here would be invention"), so it stays bound.
-// symbol    ?global_arith_0044c870_redirect@@YIXPAX0@Z
+// symbol    ?toggle_shared_word@@YAXXZ
 // size      8 bytes
 // prototype 
 // callers   0   call targets   0
@@ -84,6 +109,6 @@ Purpose: sub_44c870 - arithmetic over 1 fixed global(s), one
 Return Value: n/a
 Status: Complete
 */
-void __fastcall global_arith_0044c870_redirect(void *, void *) {
-    *GlobalSlot007591C4 = *GlobalSlot007591C4 ^ 1;
+void toggle_shared_word() {
+    SharedWordValue = SharedWordValue ^ 1;
 }

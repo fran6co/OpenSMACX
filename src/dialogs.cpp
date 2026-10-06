@@ -435,10 +435,9 @@ void Dialogs::on_right_click(int a, int b) {
 }
 
 /*
-Purpose: Forward on scrolled to the embedded widget, but only when the
-         active dialog is the list-box kind (2). `this` arrives at the interface subobject, so
-         the discriminator sits 8 bytes before it and the target is reached by
-         adjusting back 0x140.
+Purpose: Route the scrolled event by the Dialogs kind to its declared
+         ListBox base. The generated interface receiver adjustment is
+         separate from this ordinary source member's complete-object this.
 // ORIGINAL: 0x00612F80 ?on_scrolled@Dialogs@@QAEXHH@Z 0x00612F80-0x00612FA0 BYTE_EXACT
 // size      32 bytes
 // prototype void (__thiscall ?on_scrolled@Dialogs@@QAEXHH@Z)(Dialogs* this, int, int)
@@ -450,15 +449,9 @@ Return Value: n/a
 Status: Complete
 */
 void Dialogs::on_scrolled(int code, int pos) {
-    uint8_t *const bytes = reinterpret_cast<uint8_t *>(this);
-    int discriminator;
-    std::memcpy(&discriminator, bytes - 8, sizeof(discriminator));
-    // A SWITCH, NOT AN `if`: the image is `sub eax, 2; jne`, which is
-    // what VC6 emits for a one-case switch. An equality test compiles
-    // `cmp dword ptr [ecx-8], 2` and reads the field a second time.
-    switch (discriminator) {
+    switch (kind_) {
         case 2:
-            reinterpret_cast<ListBox *>(bytes - 0x140)->on_scrolling(code, pos);
+            static_cast<ListBox *>(this)->on_scrolling(code, pos);
             break;
         default:
             break;
@@ -466,10 +459,9 @@ void Dialogs::on_scrolled(int code, int pos) {
 }
 
 /*
-Purpose: Forward on scrolling to the embedded widget, but only when the
-         active dialog is the list-box kind (2). `this` arrives at the interface subobject, so
-         the discriminator sits 8 bytes before it and the target is reached by
-         adjusting back 0x140.
+Purpose: Route the scrolling event by the Dialogs kind to its declared
+         ListBox base. The generated interface receiver adjustment is
+         separate from this ordinary source member's complete-object this.
 // ORIGINAL: 0x00612FA0 ?on_scrolling@Dialogs@@QAEXHH@Z 0x00612FA0-0x00612FC0 BYTE_EXACT
 // size      32 bytes
 // prototype void (__thiscall ?on_scrolling@Dialogs@@QAEXHH@Z)(Dialogs* this, int, int)
@@ -481,15 +473,9 @@ Return Value: n/a
 Status: Complete
 */
 void Dialogs::on_scrolling(int a, int b) {
-    uint8_t *const bytes = reinterpret_cast<uint8_t *>(this);
-    int discriminator;
-    std::memcpy(&discriminator, bytes - 8, sizeof(discriminator));
-    // A SWITCH, NOT AN `if`: the image is `sub eax, 2; jne`, which is
-    // what VC6 emits for a one-case switch. An equality test compiles
-    // `cmp dword ptr [ecx-8], 2` and reads the field a second time.
-    switch (discriminator) {
+    switch (kind_) {
         case 2:
-            reinterpret_cast<ListBox *>(bytes - 0x140)->on_scrolling(a, b);
+            static_cast<ListBox *>(this)->on_scrolling(a, b);
             break;
         default:
             break;

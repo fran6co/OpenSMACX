@@ -216,14 +216,14 @@ class ListBox : public virtual GraphicWin, public virtual Dialog {
   int attach(GraphicWin * a1, int a2, int a3, int a4);
 
  public:
-  // 0x0060C5D0, homed in leaf_recoveries.cpp (2026-09-27): the entered-
-  // receiver WM_VSCROLL step over the Dialog entry list.
+  // 0x0060C5D0, implemented in listbox.cpp as an ordinary ListBox-front
+  // member; its GraphicWin view is obtained by the declared base conversion.
   void on_scrolling(int a, int b);
   // 0x0060CB70, homed in leaf_recoveries.cpp (2026-09-27): the wheel-notch
   // loop over the Win virtual base's two scrollbar clicks.
   void on_mousewheel(int a);
-  // 0x0060B530 ?draw_item@ListBox@@QAEXH@Z (3240 bytes), source-owned in
-  // leaf_recoveries.cpp. on_scrolling reaches it twice on the front receiver.
+  // 0x0060B530 ?draw_item@ListBox@@QAEXH@Z (3240 bytes), implemented in
+  // listbox.cpp. on_scrolling reaches it twice on the ListBox front.
   // The original raw-offset transcription survives in Git history at
   // e853f54d^:src/unrecovered/0060b530.cpp for restoration work.
   void draw_item(int index);

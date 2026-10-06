@@ -28,78 +28,20 @@
  * reader not to touch this file in the only way it can now be touched.
  *
  *
- * 56 functions whose entire body is a return, optionally zeroing EAX first,
- * optionally popping arguments. They read nothing and write nothing.
+ * Transitional no-op/constant adapters remain pending real source owners.
+ * Their bodies are bounded return/zero leaves, not original ABI evidence.
+ * The wrapper's register and stack-pop effects describe only this adapter.
  *
- * These are free redirects over opaque storage. None of these functions
- * carries a mangled name, so nothing in the image declares a calling
- * convention for them - and none is needed: the only observable facts are the
- * pop count, which the `ret N` states outright, and EAX. A __fastcall
- * redirect with N trailing stack parameters is byte-identical to __thiscall
- * and to __stdcall for a body that reads neither ECX nor EDX.
+ * The pinned image associates some targets with typed virtual methods and
+ * direct callbacks; identical code bodies can belong to unrelated owners.
+ * The old 406B30 finding records many distinct virtual-slot signatures.
+ * Resolve each remaining identity from its own caller/table/source evidence
+ * instead of inferring a prototype from this adapter.
  */
 
-/*
-Purpose: sub_406a80 - a do-nothing leaf. The whole body is a return
-         popping 8 bytes after zeroing EAX.
-// RECOVERY_ROLE: SCAFFOLD Generic no-op or constant adapter; genuine original behavior and source owner remain to be established.
-// ORIGINAL: 0x00406A80 sub_406a80 0x00406A80-0x00406A85 BYTE_EXACT
-// symbol    ?nullsub_00406a80_redirect@@YIHPAX0HH@Z
-// size      5 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: 0
-Status: Complete
-*/
-int __fastcall nullsub_00406a80_redirect(void *, void *, int, int) {
-    return 0;
-}
 
-/*
-Purpose: sub_406b30 - a do-nothing leaf. The whole body is a return
-         popping 0 bytes after zeroing EAX.
 
-         AND IT IS AN EMPTY VIRTUAL, reached from 129 vtable slots across 70
-         classes - `tools/derive_class_vtables.py` counts them - which is
-         also why `callers 0` below is true: nothing calls it directly.
-         `/Gy` gives every function its own COMDAT and the linker folded
-         every identical empty override in the program onto this one copy.
 
-         THE REDIRECT BELOW IS NOT THAT FUNCTION'S SHAPE. Those 129 slots
-         have different arities - slot 1 of Buffer, slot 6 of AlphaMovie,
-         slot 103 of something else - and a single
-         `int __fastcall(void *, void *)` models none of them; it produces
-         the right three bytes by ignoring everything it is handed. Nothing
-         calls it either, here or anywhere: all 56 redirects in this file are
-         annotation carriers.
-
-         `Buffer::get_graphic_win` in src/buffer.cpp is a declaration in
-         this tree that is actually TRUE about one of those slots - a virtual
-         returning 0 - and it emits the identical `33 c0 c3`. As more classes
-         declare their real virtuals, each empty override folds here too, and
-         the claim on this address should move to whichever class declares
-         the base virtual. Note that `span_classes` records `shared=0`:
-         `byte_match.shared_span_index` detects folding between two
-         catalogued FUNCTIONS, and one function reached from 129 vtable slots
-         is not that case.
-// RECOVERY_ROLE: SCAFFOLD Generic no-op or constant adapter; genuine original behavior and source owner remain to be established.
-// ORIGINAL: 0x00406B30 sub_406b30 0x00406B30-0x00406B33 BYTE_EXACT
-// symbol    ?nullsub_00406b30_redirect@@YIHPAX0@Z
-// size      3 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: 0
-Status: Complete
-*/
-int __fastcall nullsub_00406b30_redirect(void *, void *) {
-    return 0;
-}
 
 
 
@@ -609,24 +551,7 @@ Status: Complete
 void __fastcall nullsub_004c8140_redirect(void *, void *) {
 }
 
-/*
-Purpose: sub_4c8950 - a do-nothing leaf. The whole body is a return
-         popping 0 bytes after zeroing EAX.
-// RECOVERY_ROLE: SCAFFOLD Generic no-op or constant adapter; genuine original behavior and source owner remain to be established.
-// ORIGINAL: 0x004C8950 sub_4c8950 0x004C8950-0x004C8953 BYTE_EXACT
-// symbol    ?nullsub_004c8950_redirect@@YIHPAX0@Z
-// size      3 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: 0
-Status: Complete
-*/
-int __fastcall nullsub_004c8950_redirect(void *, void *) {
-    return 0;
-}
+
 
 /*
 Purpose: nullsub_220 - a do-nothing leaf. The whole body is a return

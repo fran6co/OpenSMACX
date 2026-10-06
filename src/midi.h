@@ -143,6 +143,11 @@ class Midi : public Sound {
  public:
   Midi();
   ~Midi();
+  // Concrete implementation of the three Sound slots selected by the
+  // pinned Midi and Ambience tables.
+  virtual int get_game_hwnd();
+  virtual int set_attrib(unsigned long);
+  virtual int get_attrib();
   int play();
   void set_volume(int volume);
   int unload();

@@ -34,7 +34,6 @@ extern int32_t PrefWinButtonWidth;
 extern int32_t PrefWinTitleButtonHeight;
 extern int32_t PrefWinToggleWidth;
 extern int32_t PrefWinToggleHeight;
-int32_t *const GlobalSlot007591C4 = (int32_t *)0x007591C4;
 extern int32_t PrefWinGeometryValue_8577D8;
 extern int32_t PrefWinGeometryValue_8577DC;
 extern int32_t PrefWinGeometryValue_8577E0;
@@ -61,5 +60,3 @@ extern int32_t PrefWinGeometryValue_8578C4;
 extern int32_t PrefWinGeometryValue_8578C8;
 extern int32_t PrefWinGeometryValue_8578CC;
 extern int32_t PrefWinGeometryValue_8578D0;
-
-void __fastcall global_arith_0044c870_redirect(void *self, void *);

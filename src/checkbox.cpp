@@ -267,9 +267,8 @@ void CheckBox::draw_item(int position, int state, int) {
         ? 2
         : (Dialog::field_F0_ == static_cast<uint32_t>(position) ? 1 : 0);
     const int callback_result = parent->vslot_11(
-        reinterpret_cast<int>(static_cast<GraphicWin *>(this)),
-        Dialog::pos_to_id(position), callback_state,
-        reinterpret_cast<int>(&area));
+        static_cast<GraphicWin *>(this), Dialog::pos_to_id(position),
+        callback_state, &area);
     if (callback_result == 0) {
         static_cast<GraphicWin *>(parent)->copy(
             this, Dialog::field_24_ + original_x,
@@ -868,4 +867,176 @@ void CheckBox::on_left_double_click(int x_coord, int y_coord) {
     if (callback != 0) {
         callback(Dialog::selected_position_);
     }
+}
+
+/*
+Purpose: Add one item to a check box: reject a null label, set or clear this
+         item's state bit (the ordinal the new entry is about to take) in the
+         shared state word, publish the borrowed label for the insertion hook
+         to copy, and append the entry under `id`.
+
+// ORIGINAL: 0x0060E980 ?item@CheckBox@@QAEHPADHH@Z 0x0060E980-0x0060EA0D
+// RECOVERY_BINDING: v1 {"evidence": ["pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; original identity 0x0060E980 retains name and all original spans/claims", "src/checkbox.h declares the actual CheckBox::item class member; body uses that existing owner API", "original source was FILE-mode in src/leaf_recoveries.cpp; this transfer places the unchanged C++ member definition in its actual owner TU and changes measurement mode to BODY explicitly; it does not assert historical recipe equality", "the complete source body and existing TRIED/LEVER/DEFERRED history are carried forward unchanged; only annotation mode/location and transitional SCAFFOLD classification change"], "reason": "Transfer the complete CheckBox::item definition to its existing source owner without changing its C++ body. Keep the original FILE spans and historical claim state; BODY is the new per-member measurement scope, not a claim that the old whole-TU recipe is equivalent."}
+// size      141 bytes
+// prototype int (__thiscall ?item@CheckBox@@QAEHPADHH@Z)(CheckBox* this, int8*, int, int)
+// callers   2   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00401100
+// TRIED (forwarder): DipEdit::init adds one item per treaty flag.
+Status: Source-owned member body; behavior retained, exactness not measured
+*/
+int CheckBox::item(char *text, int id, int state) {
+    if (text == 0) {
+        return 3;
+    }
+    const uint32_t mask = 1u << (static_cast<uint32_t>(
+                                     item_list_.entry_count_) & 31u);
+    if (state == 0) {
+        selected_position_ &= ~mask;
+    } else {
+        selected_position_ |= mask;
+    }
+    item_list_.pending_text_ = text;
+    item_list_.field_20_ = 0;
+    item_list_.field_24_ = 0;
+    return -((item_list_.add(id) != 0) ? 1 : 0) & 4;
+}
+
+/*
+Purpose: A check box key press: publish the parent window as the callback
+         window, repaint the current row unselected, run the arrow/page/space
+         navigation over the item list, notify the box's callback with the
+         state word, and repaint the new row selected.
+
+// ORIGINAL: 0x0060F8B0 ?on_key_down@CheckBox@@QAEHH@Z 0x0060F8B0-0x0060FA18
+// RECOVERY_BINDING: v1 {"evidence": ["pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; original identity 0x0060F8B0 retains name and all original spans/claims", "src/checkbox.h declares the actual CheckBox::on_key_down class member; body uses that existing owner API", "original source was FILE-mode in src/leaf_recoveries.cpp; this transfer places the unchanged C++ member definition in its actual owner TU and changes measurement mode to BODY explicitly; it does not assert historical recipe equality", "the complete source body and existing TRIED/LEVER/DEFERRED history are carried forward unchanged; only annotation mode/location and transitional SCAFFOLD classification change"], "reason": "Transfer the complete CheckBox::on_key_down definition to its existing source owner without changing its C++ body. Keep the original FILE spans and historical claim state; BODY is the new per-member measurement scope, not a claim that the old whole-TU recipe is equivalent."}
+// size      360 bytes
+// prototype int (__thiscall ?on_key_down@CheckBox@@QAEHH@Z)(CheckBox* this, int)
+// callers   1   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D5890 0x0060F030
+// indirect  0x0060F9D1
+// TRIED (seed): the entry convention and field walks - the body is entered on
+//         the GraphicWin subobject and reaches CheckBox's own start as
+//         `this-0x1c`; the count and column fields ride the runtime vbtable
+//         (entry_count_ and field_58_ through the Dialog base) while the bit
+//         index (field_4_), the callback (field_8_) and the state word ride
+//         direct fields; the real virtual entry lets the compiler supply the
+//         adjustments. The seed guessed its switch labels from a range check;
+//         the jump tables pinned the real keys: VK_SPACE toggles the row's
+//         bit, VK_LEFT/NUMPAD4 and VK_RIGHT/NUMPAD6 page by field_58_ columns,
+//         VK_UP/NUMPAD8 and VK_DOWN/NUMPAD2 step one row.
+Status: Source-owned member body; behavior retained, exactness not measured
+*/
+int CheckBox::on_key_down(int key) {
+    WinCallbackWindow = win_parent_;
+    draw_item(static_cast<int>(field_4_),
+              static_cast<int>((1u << (field_4_ & 31u)) & selected_position_),
+              0);
+
+    switch (key) {
+    case 0x20: {
+        const uint32_t mask = 1u << (field_4_ & 31u);
+        if ((mask & selected_position_) != 0) {
+            selected_position_ &= ~mask;
+        } else {
+            selected_position_ |= mask;
+        }
+        break;
+    }
+    case 0x25:
+    case 0x64: {
+        int position = static_cast<int>(field_4_) +
+                       static_cast<int>(Dialog::field_58_);
+        field_4_ = static_cast<uint32_t>(position);
+        if (position >= Dialog::item_list_.entry_count_) {
+            position -= static_cast<int>(Dialog::field_58_);
+            field_4_ = static_cast<uint32_t>(position);
+        }
+        break;
+    }
+    case 0x26:
+    case 0x68: {
+        int position = static_cast<int>(field_4_) - 1;
+        if (position <= 0) {
+            position = 0;
+        }
+        field_4_ = static_cast<uint32_t>(position);
+        break;
+    }
+    case 0x27:
+    case 0x66: {
+        int position = static_cast<int>(field_4_) -
+                       static_cast<int>(Dialog::field_58_);
+        field_4_ = static_cast<uint32_t>(position);
+        if (position < 0) {
+            position += static_cast<int>(Dialog::field_58_);
+            field_4_ = static_cast<uint32_t>(position);
+        }
+        break;
+    }
+    case 0x28:
+    case 0x62: {
+        int position = static_cast<int>(field_4_) + 1;
+        const int last = Dialog::item_list_.entry_count_ - 1;
+        if (position >= last) {
+            position = last;
+        }
+        field_4_ = static_cast<uint32_t>(position);
+        break;
+    }
+    default:
+        return 0;
+    }
+
+    WinNotificationCallback callback =
+        reinterpret_cast<WinNotificationCallback>(field_8_);
+    if (callback != 0) {
+        callback(static_cast<int>(selected_position_));
+    }
+    draw_item(static_cast<int>(field_4_),
+              static_cast<int>((1u << (field_4_ & 31u)) & selected_position_),
+              1);
+    soft_update();
+    return 1;
+}
+
+/*
+Purpose: A check box mouse move: locate the row under the cursor from the
+         Dialog's column geometry, and park that row's ordinal in the hover
+         field unless the row is selected, then repaint.
+
+// ORIGINAL: 0x0060FBB0 ?on_mouse_move@CheckBox@@QAEXHH@Z 0x0060FBB0-0x0060FC2B
+// RECOVERY_BINDING: v1 {"evidence": ["pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; original identity 0x0060FBB0 retains name and all original spans/claims", "src/checkbox.h declares the actual CheckBox::on_mouse_move class member; body uses that existing owner API", "original source was FILE-mode in src/leaf_recoveries.cpp; this transfer places the unchanged C++ member definition in its actual owner TU and changes measurement mode to BODY explicitly; it does not assert historical recipe equality", "the complete source body and existing TRIED/LEVER/DEFERRED history are carried forward unchanged; only annotation mode/location and transitional SCAFFOLD classification change"], "reason": "Transfer the complete CheckBox::on_mouse_move definition to its existing source owner without changing its C++ body. Keep the original FILE spans and historical claim state; BODY is the new per-member measurement scope, not a claim that the old whole-TU recipe is equivalent."}
+// symbol    ?on_mouse_move@CheckBox@@UAEXHH@Z
+// size      123 bytes
+// prototype void (__thiscall ?on_mouse_move@CheckBox@@QAEXHH@Z)(CheckBox* this, int, int)
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// indirect  0x0060FC25
+// TRIED (forwarder): the entry convention and field walks are the sibling
+//         on_key_down's - the seed's outer/base pointers were the runtime
+//         vbtable walk the compiler now owns; the hover field is Dialog's
+//         field_F0_ and the geometry fields are field_44_/field_58_/
+//         field_64_/field_68_, the same quartet draw_item places rows with.
+Status: Source-owned member body; behavior retained, exactness not measured
+*/
+void CheckBox::on_mouse_move(int x_coord, int y_coord) {
+    const int columns = Dialog::field_58_;
+    const int cell_width = static_cast<int>(Dialog::field_64_ +
+                                            Dialog::field_44_);
+    const int cell_height = static_cast<int>(Dialog::field_68_ +
+                                             Dialog::field_44_);
+    const int position = x_coord / cell_width + (y_coord * columns) / cell_height;
+    if (((1u << (position & 31u)) & selected_position_) != 0) {
+        if (Dialog::field_F0_ != 0xFFFFFFFFu) {
+            Dialog::field_F0_ = 0xFFFFFFFFu;
+        }
+    } else {
+        Dialog::field_F0_ = static_cast<uint32_t>(position);
+    }
+    redraw();
 }

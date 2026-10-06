@@ -703,3 +703,39 @@ int __fastcall leaf_006161a0_redirect(void *self, void *) {
     }
     return 1;
 }
+
+/*
+Purpose: Replace one edit box's text: clear the cursor; if the input exceeds
+         the character limit, strip the caller's mutable input to empty,
+         then append it and recompute the text length before repainting.
+
+// ORIGINAL: 0x006151E0 ?set_text@EditBox@@QAEXPAD@Z 0x006151E0-0x0061526A
+// RECOVERY_BINDING: v1 {"evidence": ["pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; original identity 0x006151E0 retains name and all original spans/claims", "src/editbox.h declares the actual EditBox::set_text class member; body uses that existing owner API", "original source was FILE-mode in src/leaf_recoveries.cpp; this transfer places the unchanged C++ member definition in its actual owner TU and changes measurement mode to BODY explicitly; it does not assert historical recipe equality", "the complete source body and existing TRIED/LEVER/DEFERRED history are carried forward unchanged; only annotation mode/location and transitional SCAFFOLD classification change"], "reason": "Transfer the complete EditBox::set_text definition to its existing source owner without changing its C++ body. Keep the original FILE spans and historical claim state; BODY is the new per-member measurement scope, not a claim that the old whole-TU recipe is equivalent."}
+// size      138 bytes
+// prototype void (__thiscall ?set_text@EditBox@@QAEXPAD@Z)(EditBox* this, int8*)
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// indirect  0x00615264
+// TRIED (forwarder): reached from `EditGroup::set_text` - see the note in
+//         `editbox.h`.
+Status: Source-owned member body; behavior retained, exactness not measured
+*/
+void EditBox::set_text(char *text) {
+    field_B18_ = 0;
+    text_[0] = 0;
+    if (text != 0) {
+        if (strlen(text) != 0) {
+            const unsigned int limit = field_B14_;
+            if (strlen(text) > limit) {
+                do {
+                    text[strlen(text) - 1] = 0;
+                } while (strlen(text) != 0);
+            }
+        }
+        strcat(text_, text);
+    }
+    field_B40_ = 0;
+    field_B44_ = static_cast<uint32_t>(strlen(text_));
+    redraw();
+}

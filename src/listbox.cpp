@@ -646,6 +646,387 @@ void ListBox::on_right_double_click(int a1, int a2) {
     ListBoxClickGuard = 0;
 }
 
+/*
+Purpose: Apply one WM_VSCROLL step to the list: publish the parent window
+         as the callback window, keep the old top-entry position, apply the
+         code (SB_THUMBTRACK sets the position directly, SB_LINEUP/DOWN
+         scale the delta by the Dialog's row stride), re-select through
+         set_selected_pos when the notify global is armed, and repaint -
+         only the redraw slot when the position did not move, otherwise the
+         two rows that scrolled plus the surface update.
+
+// ORIGINAL: 0x0060C5D0 ?on_scrolling@ListBox@@QAEXHH@Z 0x0060C5D0-0x0060C691
+// size      193 bytes
+// prototype void (__thiscall ?on_scrolling@ListBox@@QAEXHH@Z)(ListBox* this, int, int)
+// callers   2   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D5890 0x0060A020 0x0060B530
+// indirect  0x0060C645
+// TRIED (seed): the entered receiver is the GraphicWin virtual base
+//         (dialogs.cpp dispatches by kind through the Win table), so every
+//         access folds the walk back to the front - the same idiom the
+//         homed on_left_double_click (listbox.cpp) spells. The seed's
+//         displacements are image-exact: the scroll-position slot is
+//         `esi - 0x30` at all five sites (disp8 0xD0 sign-extended - the
+//         ListBox's field_18_ at front+0x18, the slot ListBox::close
+//         resets), the row stride Dialog+0x10 and the top-entry index
+//         Dialog+0xA4 through the vbtable walks, and the redraw/soft_update
+//         dispatches anchor on the entered receiver, spelled as raw
+//         GraphicWin * casts here exactly as on_left_double_click does.
+Status: Typed ListBox scroll handler; exactness and runtime acceptance remain unmeasured.
+*/
+void ListBox::on_scrolling(int a, int b) {
+    // This ordinary member receives the ListBox front. Convert to the
+    // GraphicWin virtual base through the declared hierarchy.
+    ListBox *front = this;
+    GraphicWin *entered = static_cast<GraphicWin *>(front);
+    Dialog &dialog = *front;
+    WinCallbackWindow = entered->parent_window();
+
+    const int top_entry = dialog.selected_position_;
+    const int old_position = static_cast<int>(front->field_18_);
+    if (a == -2) {
+        front->field_18_ = static_cast<uint32_t>(
+            static_cast<int>(dialog.field_58_) * b);
+    } else if (a == -1) {
+        front->field_18_ = static_cast<uint32_t>(b);
+    }
+
+    if (ListBoxGlobalDDC != 0) {
+        front->set_selected_pos(static_cast<int>(front->field_18_), 1);
+    }
+
+    if (static_cast<int>(front->field_18_) == old_position) {
+        entered->redraw();
+    } else {
+        if (top_entry != dialog.selected_position_) {
+            front->draw_item(top_entry);
+        }
+        front->draw_item(dialog.selected_position_);
+        entered->soft_update();
+    }
+}
+/*
+Purpose: Draw one list row: the highlighted/normal text-draw tails over the
+         style-descriptor fields, reached by on_scrolling for the row the
+         scroll left and the row it landed on.
+
+// ORIGINAL: 0x0060B530 ?draw_item@ListBox@@QAEXH@Z 0x0060B530-0x0060C1D8
+// RECOVERY_BINDING: v1 {"evidence": ["retired seed git:e853f54d^:src/unrecovered/0060b530.cpp preserves the 3240-byte raw-offset transcription and VC6 prologue mismatch", "ListBox::on_scrolling at 0x0060C5D0 calls this row renderer twice by name; source draw callbacks at 0x004072D0 and 0x00614C50 need its draw-context write"], "reason": "Replace the empty linked placeholder with typed ListBox/Dialog/StringList row rendering while preserving historical restoration evidence."}
+// size      3240 bytes
+// prototype void (__thiscall ?draw_item@ListBox@@QAEXH@Z)(ListBox* this, int)
+// callers   4   call targets   17
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D5250 0x005D5350 0x005D8000 0x005DAC70 0x005DACB0 0x005DACE0 0x005DAD10 0x005DCF40 0x005DD450 0x005DD530 0x005DFF00 0x005E3203 0x005F2CA0 0x00609B50 0x00644F3A 0x006453E0 0x00645DD0
+// indirect  0x0060B857 0x0060BB58 0x0060BCDF 0x0060BD2D
+Status: Source-owned typed row renderer. The body follows the pinned
+        parent callback, parent-to-child surface copy, and circular StringList
+        cursor branches; exactness and runtime acceptance remain unmeasured.
+*/
+void ListBox::draw_item(int index) {
+    if (index < 0) {
+        return;
+    }
+
+    Dialog &dialog = *this;
+    StringList &items = dialog.item_list_;
+    GraphicWin *window = this;
+    Buffer *canvas = static_cast<Buffer *>(window);
+
+    RECT row;
+    row.left = static_cast<int>(dialog.field_38_);
+    row.top = static_cast<int>(dialog.field_40_);
+    row.right = row.left + static_cast<int>(dialog.field_68_);
+    row.bottom = static_cast<int>(dialog.field_64_) + row.top
+        + static_cast<int>(dialog.field_40_) * -2;
+
+    if (dialog.field_4C_ == 1) {
+        int scroll = static_cast<int>(field_18_) - 1;
+        if (scroll <= items.entry_count_ - 1) {
+            items.current_ = items.head_;
+            if (scroll < 0) {
+                typedef int (__cdecl * AbsFunction)(int);
+                AbsFunction abs_function = reinterpret_cast<AbsFunction>(&abs);
+                if (abs_function(scroll) > items.entry_count_) {
+                    goto after_scroll_position;
+                }
+                int steps = abs_function(scroll);
+                while (steps > 0) {
+                    --steps;
+                    items.current_ = items.current_->previous;
+                }
+                scroll += items.entry_count_;
+            } else {
+                int steps = scroll;
+                while (steps > 0) {
+                    --steps;
+                    items.current_ = items.current_->next;
+                }
+            }
+            items.current_position_ = scroll;
+        }
+after_scroll_position:
+        int count = index - static_cast<int>(field_18_);
+        int occupied = 0;
+        while (count > 0) {
+            StringStructEntry *const list_head = items.head_;
+            if (list_head != 0) {
+                items.current_ = items.current_->next;
+                int position = items.current_position_ + 1;
+                items.current_position_ = position;
+                if (position == items.entry_count_) {
+                    items.current_position_ = 0;
+                }
+            }
+            StringStructEntry *const entry = items.current_;
+            int span = 0;
+            if (entry != 0) {
+                if (list_head != 0) {
+                    span = static_cast<int>(entry->string_payload()->field_C_);
+                } else {
+                    // The pinned malformed-state path loads the word at
+                    // null+0x0c; retain the faulting volatile read rather
+                    // than turn an inconsistent stale cursor into span 0.
+                    volatile StringStructEntry *const null_entry = 0;
+                    span = static_cast<int>(reinterpret_cast<uintptr_t>(
+                        null_entry->next));
+                }
+            }
+            occupied += span;
+            --count;
+        }
+        row.left += (static_cast<int>(dialog.field_68_)
+                     + static_cast<int>(dialog.field_44_)) * occupied;
+
+        StringStructEntry *const list_head = items.head_;
+        if (list_head != 0) {
+            StringStructEntry *const next = items.current_->next;
+            int position = items.current_position_ + 1;
+            items.current_position_ = position;
+            items.current_ = next;
+            if (position == items.entry_count_) {
+                items.current_position_ = 0;
+            }
+        }
+        StringStructEntry *const entry = items.current_;
+        int span = 0;
+        if (entry != 0) {
+            if (list_head != 0) {
+                span = static_cast<int>(entry->string_payload()->field_C_);
+            } else {
+                volatile StringStructEntry *const null_entry = 0;
+                span = static_cast<int>(reinterpret_cast<uintptr_t>(
+                    null_entry->next));
+            }
+        }
+        const int gap = static_cast<int>(dialog.field_44_);
+        row.bottom = (static_cast<int>(dialog.field_68_) + gap) * span
+            - gap + row.left;
+    } else {
+        const int relative = index - static_cast<int>(field_18_);
+        const int columns = static_cast<int>(dialog.field_58_);
+        const int along = (static_cast<int>(dialog.field_64_)
+                           + static_cast<int>(dialog.field_44_))
+            * (relative / columns);
+        const int across = (static_cast<int>(dialog.field_68_)
+                            + static_cast<int>(dialog.field_44_))
+            * (relative % columns);
+        row.right += along;
+        row.top += along;
+        row.left += across;
+        row.bottom += across;
+    }
+
+    if (items.entry_count_ <= index) {
+        return;
+    }
+
+    int selected = 0;
+    if (field_4_ == 0) {
+        selected = dialog.selected_position_ == index;
+    } else {
+        items.current_ = items.head_;
+        int steps = index;
+        while (steps > 0) {
+            --steps;
+            items.current_ = items.current_->next;
+        }
+        items.current_position_ = index;
+        selected = static_cast<int>(items.current_->string_payload()->field_8_);
+    }
+
+    canvas->set_clip(&row);
+    int callback_result = 0;
+    if (fill_callback_ != 0) {
+        callback_result = fill_callback_(window, index,
+            static_cast<int>(field_18_) + ListBoxDrawOffset, &row);
+    }
+
+    canvas->set_text_color(dialog.text_color_a_, dialog.text_color_b_,
+                           dialog.text_color_c_, dialog.text_color_d_);
+    canvas->set_text_color2(dialog.text_color_2a_, dialog.text_color_2b_,
+                            dialog.text_color_2c_, dialog.text_color_2d_);
+    canvas->set_text_color3(dialog.text_color_3a_, dialog.text_color_3b_,
+                            dialog.text_color_3c_, dialog.text_color_3d_);
+    canvas->set_font(dialog.font1_, dialog.font2_, dialog.font3_, 0);
+
+    int color3_a;
+    int color3_b = static_cast<int>(dialog.text_color_3b_);
+    int color3_c = static_cast<int>(dialog.text_color_3c_);
+    int color3_d = static_cast<int>(dialog.text_color_3d_);
+    if (selected == 0) {
+        // The pinned body repeats these two state setters on the unselected
+        // branch before installing the reversed fourth color tuple.
+        canvas->set_text_color(dialog.text_color_a_, dialog.text_color_b_,
+                               dialog.text_color_c_, dialog.text_color_d_);
+        canvas->set_text_color2(dialog.text_color_2a_, dialog.text_color_2b_,
+                                dialog.text_color_2c_, dialog.text_color_2d_);
+        color3_a = static_cast<int>(dialog.text_color_3a_);
+        color3_b = static_cast<int>(dialog.text_color_3b_);
+        color3_c = static_cast<int>(dialog.text_color_3c_);
+        color3_d = static_cast<int>(dialog.text_color_3d_);
+    } else {
+        canvas->set_clip(&row);
+        const int emphasis = field_10_ == static_cast<uint32_t>(-1)
+            ? static_cast<int>(dialog.field_6C_)
+            : static_cast<int>(field_10_);
+        canvas->set_text_color(emphasis, dialog.text_color_b_,
+                               dialog.text_color_c_, dialog.text_color_d_);
+        canvas->set_text_color2(emphasis, dialog.text_color_2b_,
+                                dialog.text_color_2c_, dialog.text_color_2d_);
+        color3_a = emphasis;
+    }
+    canvas->set_text_color3(color3_a, color3_b, color3_c, color3_d);
+
+    if (callback_result == 0) {
+        Win *const parent = window->parent_window();
+        if (parent != 0) {
+            int state = 2;
+            if (selected == 0) {
+                state = dialog.field_F0_ == static_cast<uint32_t>(index) ? 1 : 0;
+            }
+            callback_result = parent->vslot_11(window, index, state, &row);
+            if (callback_result == 0) {
+                if (window->has_listbox_backfill_flag()) {
+                    GraphicWin *const live_parent =
+                        static_cast<GraphicWin *>(window->parent_window());
+                    if (live_parent != 0) {
+                        Buffer *const parent_canvas =
+                            static_cast<Buffer *>(live_parent);
+                        parent_canvas->copy(canvas, row.left, row.top, 0, 0,
+                                            canvas->pixel_width(),
+                                            canvas->pixel_height());
+                    } else {
+                        window->fill(static_cast<int>(dialog.field_6C_));
+                    }
+                } else {
+                    window->fill(static_cast<int>(dialog.field_6C_));
+                }
+            }
+        }
+
+        RECT border = *window->buffer_working_rect();
+        const int border_count = static_cast<int>(dialog.field_B4_);
+        if (border_count > 0) {
+            for (int edge = 0; edge < border_count; ++edge) {
+                canvas->box(&border, static_cast<int>(dialog.field_AC_),
+                            static_cast<int>(dialog.field_B0_));
+                ++border.left;
+                --border.bottom;
+                ++border.top;
+                --border.right;
+            }
+        }
+    }
+
+    // The original resets the StringList cursor to this row after frame
+    // callbacks and before the draw callback; later callbacks may mutate it.
+    items.current_ = items.head_;
+    int steps = index;
+    while (steps > 0) {
+        --steps;
+        items.current_ = items.current_->next;
+    }
+    items.current_position_ = index;
+
+    if (draw_callback_ != 0) {
+        CurrentListBoxDraw = this;
+        draw_callback_(window, dialog.pos_to_id(index),
+                       static_cast<int>(field_18_) + ListBoxDrawOffset,
+                       row.left, row.top, row.bottom - row.top);
+    }
+
+    if (write_callback_ != 0) {
+        char *callback_text = items.head_ == 0
+            ? 0 : items.current_->string_payload()->text;
+        const int written = write_callback_(window, dialog.pos_to_id(index),
+                                            index, &row, callback_text);
+        if (written != 0) {
+            return;
+        }
+    }
+
+    row.right = row.right - (static_cast<int>(field_2C_) + 1);
+    row.left = row.left + static_cast<int>(dialog.field_34_)
+        + static_cast<int>(field_2C_) + 1;
+    canvas->set_clip(&row);
+
+    char *text = items.head_ == 0
+        ? 0 : items.current_->string_payload()->text;
+    char *separator = strchr(text, '|');
+    if (separator == 0) {
+        if (items.head_ == 0) {
+            text = 0;
+        } else if (items.current_->string_payload()->field_C_ > 1) {
+            canvas->wrap(items.current_->string_payload()->text, &row);
+            goto text_tail;
+        } else {
+            text = items.current_->string_payload()->text;
+        }
+        if (text != 0) {
+            canvas->write_l(text, &row, static_cast<int>(strlen(text)));
+        }
+        goto text_tail;
+    }
+
+    *separator = 0;
+    if (items.head_ != 0) {
+        if (items.current_->string_payload()->field_C_ < 2) {
+            char *left_text = items.current_->string_payload()->text;
+            if (left_text != 0) {
+                canvas->write_l(left_text, &row,
+                                static_cast<int>(strlen(left_text)));
+            }
+        } else {
+            canvas->wrap(items.current_->string_payload()->text, &row);
+        }
+    }
+    *separator = '|';
+    ++separator;
+    if (separator != 0) {
+        canvas->write_right_l(separator, &row,
+                              static_cast<int>(strlen(separator)));
+    }
+
+text_tail:
+    row.left += static_cast<int>(field_2C_) + 1;
+    row.right = (row.right - (static_cast<int>(field_2C_) + 1))
+        - static_cast<int>(dialog.field_34_);
+    canvas->set_clip(&row);
+    if (callback_result == 0 && selected != 0 && field_2C_ > 0) {
+        for (int edge = 0; edge < static_cast<int>(field_2C_); ++edge) {
+            canvas->box(&row, static_cast<int>(field_24_),
+                        static_cast<int>(field_28_));
+            ++row.left;
+            --row.right;
+            ++row.top;
+            --row.bottom;
+        }
+    }
+}
+
 // Shared ListBox globals the 0060c9b0/0060c920/0060a1e0 bodies read. The
 // 0x009B8DD4 word remains an unresolved fixed alias; 0x009B8DDC is the
 // shared scroll-notify gate used by these ListBox bodies and Scroll events.

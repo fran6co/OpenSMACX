@@ -237,9 +237,8 @@ void RadioButton::draw_item(int position, int state) {
         ? 2
         : (Dialog::field_F0_ == static_cast<uint32_t>(position) ? 1 : 0);
     const int callback_result = parent->vslot_11(
-        reinterpret_cast<int>(static_cast<GraphicWin *>(this)),
-        Dialog::pos_to_id(position), callback_state,
-        reinterpret_cast<int>(&area));
+        static_cast<GraphicWin *>(this), Dialog::pos_to_id(position),
+        callback_state, &area);
     if (callback_result == 0) {
         static_cast<GraphicWin *>(parent)->copy(
             this, Dialog::field_24_ + original_x,
@@ -731,4 +730,85 @@ void RadioButton::on_left_double_click(int x_coord, int y_coord) {
     if (double_click_callback_ != 0) {
         double_click_callback_(Dialog::get_selected_id());
     }
+}
+
+/*
+Purpose: A radio button key press: publish the parent window as the callback
+         window, move the selection with the arrows and page keys over the
+         item list, drop the hover index, and repaint the previous and the
+         new selection.
+
+// ORIGINAL: 0x0060E020 ?on_key_down@RadioButton@@QAEHH@Z 0x0060E020-0x0060E183
+// RECOVERY_BINDING: v1 {"evidence": ["pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; original identity 0x0060E020 retains name and all original spans/claims", "src/radiobutton.h declares the actual RadioButton::on_key_down class member; body uses that existing owner API", "original source was FILE-mode in src/leaf_recoveries.cpp; this transfer places the unchanged C++ member definition in its actual owner TU and changes measurement mode to BODY explicitly; it does not assert historical recipe equality", "the complete source body and existing TRIED/LEVER/DEFERRED history are carried forward unchanged; only annotation mode/location and transitional SCAFFOLD classification change"], "reason": "Transfer the complete RadioButton::on_key_down definition to its existing source owner without changing its C++ body. Keep the original FILE spans and historical claim state; BODY is the new per-member measurement scope, not a claim that the old whole-TU recipe is equivalent."}
+// size      355 bytes
+// prototype int (__thiscall ?on_key_down@RadioButton@@QAEHH@Z)(RadioButton* this, int)
+// callers   1   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D5890 0x0060D750
+// indirect  0x0060E145
+// TRIED (seed): the entry convention is the CheckBox sibling's (entered on
+//         the GraphicWin subobject, runtime vbtable for the Dialog fields);
+//         the seed guessed its switch labels from a range check, and the
+//         jump tables pinned the real keys: VK_LEFT/NUMPAD4 pages forward by
+//         field_58_ columns, VK_UP/NUMPAD8 steps back one, VK_RIGHT/NUMPAD6
+//         pages back, VK_DOWN/NUMPAD2 steps forward one.
+Status: Source-owned member body; behavior retained, exactness not measured
+*/
+int RadioButton::on_key_down(int key) {
+    WinCallbackWindow = win_parent_;
+    const int previous = static_cast<int>(selected_position_);
+
+    switch (key) {
+    case 0x25:
+    case 0x64: {
+        int position = previous + static_cast<int>(Dialog::field_58_);
+        selected_position_ = static_cast<uint32_t>(position);
+        if (position >= Dialog::item_list_.entry_count_) {
+            position -= static_cast<int>(Dialog::field_58_);
+            selected_position_ = static_cast<uint32_t>(position);
+        }
+        break;
+    }
+    case 0x26:
+    case 0x68: {
+        int position = previous - 1;
+        selected_position_ = static_cast<uint32_t>(position);
+        if (position <= 0) {
+            selected_position_ = 0;
+        }
+        break;
+    }
+    case 0x27:
+    case 0x66: {
+        int position = previous - static_cast<int>(Dialog::field_58_);
+        selected_position_ = static_cast<uint32_t>(position);
+        if (position < 0) {
+            position += static_cast<int>(Dialog::field_58_);
+            selected_position_ = static_cast<uint32_t>(position);
+        }
+        break;
+    }
+    case 0x28:
+    case 0x62: {
+        int position = previous + 1;
+        selected_position_ = static_cast<uint32_t>(position);
+        const int last = Dialog::item_list_.entry_count_ - 1;
+        if (position >= last) {
+            selected_position_ = static_cast<uint32_t>(last);
+        }
+        break;
+    }
+    default:
+        return 0;
+    }
+
+    Dialog::field_F0_ = 0xFFFFFFFFu;
+    draw_item(previous, 0);
+    if (double_click_callback_ != 0) {
+        double_click_callback_(static_cast<int>(selected_position_));
+    }
+    draw_item(static_cast<int>(selected_position_), 1);
+    soft_update();
+    return 1;
 }

@@ -45,7 +45,6 @@ int Sound::fade_in() { assert(false); return 0; }
 void Sound::fade_in(unsigned int) { assert(false); }
 void Sound::ramp(int, int, unsigned int) { assert(false); }
 int Sound::release() { assert(false); return 0; }
-int Sound::get_game_hwnd() { assert(false); return 0; }
 void Sound::set_volume(int) { assert(false); }
 void Sound::set_pan(int) { assert(false); }
 void Sound::set_loop_state(long) { assert(false); }
@@ -55,8 +54,6 @@ int Sound::set_fade_in(unsigned int) { assert(false); return 0; }
 int Sound::is_looping() { assert(false); return 0; }
 int Sound::is_playing() { assert(false); return 0; }
 int Sound::unk_slot24() { assert(false); return 0; }
-int Sound::set_attrib(unsigned long) { assert(false); return 0; }
-int Sound::get_attrib() { assert(false); return 0; }
 int Sound::get_time() { assert(false); return 0; }
 uint32_t Sound::get_type() { assert(false); return 0; }
 void Wave::set_volume(int) { assert(false); }
@@ -127,6 +124,13 @@ inline func_wave_device_release *&WaveDeviceReleaseSlot() { return release_hook;
 // LIVE_SOUND_DESTRUCTOR
 // LIVE_WAVE_DESTRUCTOR
 
+class TestSound : public Sound {
+ public:
+    int get_game_hwnd() { return 0; }
+    int set_attrib(unsigned long) { return 11; }
+    int get_attrib() { return 0; }
+};
+
 int main() {
     // Normal, no-group, guard-off, no-device, group-exception, and release-exception.
     for (int scenario = 0; scenario != 6; ++scenario) {
@@ -136,7 +140,7 @@ int main() {
         WaveDeviceReleaseGuard = scenario == 2 ? 0 : 1;
         initial_name = malloc(8); callback_name = malloc(8);
         assert(initial_name && callback_name);
-        Sound before, after;
+        TestSound before, after;
         Wave *wave = new Wave;
         destroying = wave;
         wave->fname_ = initial_name;

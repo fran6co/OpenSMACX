@@ -847,6 +847,43 @@ void SpriteBox::on_right_click(int x_coord, int y_coord) {
 }
 
 /*
+Purpose: Repaint a sprite box: blit the box's own surface onto the parent
+         window's at the Dialog's scroll offset, then draw every sprite row.
+
+// ORIGINAL: 0x00611380 ?on_redraw@SpriteBox@@QAEXXZ 0x00611380-0x006113F9
+// RECOVERY_BINDING: v1 {"evidence": ["pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; original identity 0x00611380 retains name and all original spans/claims", "src/spritebox.h declares the actual SpriteBox::on_redraw class member; body uses that existing owner API", "original source was FILE-mode in src/leaf_recoveries.cpp; this transfer places the unchanged C++ member definition in its actual owner TU and changes measurement mode to BODY explicitly; it does not assert historical recipe equality", "the complete source body and existing TRIED/LEVER/DEFERRED history are carried forward unchanged; only annotation mode/location and transitional SCAFFOLD classification change"], "reason": "Transfer the complete SpriteBox::on_redraw definition to its existing source owner without changing its C++ body. Keep the original FILE spans and historical claim state; BODY is the new per-member measurement scope, not a claim that the old whole-TU recipe is equivalent."}
+// symbol    ?on_redraw@SpriteBox@@UAEXXZ
+// size      121 bytes
+// prototype void (__thiscall ?on_redraw@SpriteBox@@QAEXXZ)(SpriteBox* this)
+// callers   4   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// indirect  0x006113EA
+// TRIED (seed): the entry convention is the control-family's (entered on the
+//         GraphicWin subobject; the compiler's vtordisp owns the receiver) -
+//         the seed's info/base pointers were the runtime vbtable walk the
+//         real virtual entry replaces. The parent's buffer receives the blit
+//         and the row painter (0x00610C50) is unhomed, so it goes through the
+//         original's address with this as its receiver.
+Status: Source-owned member body; behavior retained, exactness not measured
+*/
+void SpriteBox::on_redraw() {
+    Win *parent = win_parent_;
+    if (parent != 0) {
+        static_cast<GraphicWin *>(parent)->copy(
+            this, Dialog::field_24_, Dialog::field_28_, 0, 0,
+            dib_.bmiHeader.biWidth, -dib_.bmiHeader.biHeight);
+    }
+    if (list_.entry_count_ > 0) {
+        int index = 0;
+        do {
+            draw_item(index);
+            ++index;
+        } while (index < list_.entry_count_);
+    }
+}
+
+/*
 Purpose: Same check-then-notify shape, for the right-button-up spot handler
          at this-0x10.
 // ORIGINAL: 0x00611290 ?on_right_up@SpriteBox@@QAEXHH@Z 0x00611290-0x006112E0 BYTE_EXACT

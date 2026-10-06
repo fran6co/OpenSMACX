@@ -34,8 +34,6 @@ struct _MMIOINFO;
 // These definitions only make the actual declaration's vtable linkable.
 Sound::~Sound() {}
 int Sound::unk_slot24() { return 0; }
-int Sound::set_attrib(unsigned long) { assert(false); return 0; }
-int Sound::get_attrib() { assert(false); return 0; }
 int Sound::UNK1(int) { assert(false); return 0; }
 int Sound::load(const char *) { assert(false); return 0; }
 int Sound::unload() { assert(false); return 0; }
@@ -48,7 +46,6 @@ int Sound::fade_in() { assert(false); return 0; }
 void Sound::fade_in(unsigned int) { assert(false); }
 void Sound::ramp(int, int, unsigned int) { assert(false); }
 int Sound::release() { assert(false); return 0; }
-int Sound::get_game_hwnd() { assert(false); return 0; }
 void Sound::set_volume(int) { assert(false); }
 void Sound::set_pan(int) { assert(false); }
 void Sound::set_loop_state(long) { assert(false); }
@@ -69,10 +66,18 @@ int VoiceTx::return_buffer(struct _MMIOINFO *) { assert(false); return 0; }
 int VoiceTx::start() { assert(false); return 0; }
 int VoiceTx::get_nbuffers() { assert(false); return 0; }
 
+class TestSound : public Sound {
+ public:
+    int get_game_hwnd() { return 0; }
+    int set_attrib(unsigned long) { return 11; }
+    int get_attrib() { return 0; }
+};
+
 int main() {
     union Storage { double alignment; unsigned char bytes[sizeof(Sound) + 8]; } storage;
     memset(storage.bytes, 0xA5, sizeof(storage.bytes));
-    Sound *sound = new (storage.bytes) Sound;
+    TestSound *test_sound = new (storage.bytes) TestSound;
+    Sound *sound = test_sound;
     assert(sizeof(SoundFadeState) == 0x3C && sizeof(Sound) == 0x54);
     assert(sound->volume_ == 127 && sound->pan_8_ == 0);
     for (int i = 0; i < 9; ++i) assert(sound->state_C_[i] == 0);
@@ -90,7 +95,7 @@ int main() {
     assert(sound->SoundFadeState::set_fade(0) == 10 && sound->fade_38_ == 0xFFFFFFFFUL);
     assert(sound->SoundFadeState::set_fade(17) == 0 && sound->fade_38_ == 17);
     assert(sound->set_fade(23) == 0 && sound->fade_38_ == 23);
-    sound->~Sound();
+    test_sound->~TestSound();
 
     union VoiceStorage { double alignment; unsigned char bytes[sizeof(VoiceTx) + 8]; } voice_storage;
     memset(voice_storage.bytes, 0xA5, sizeof(voice_storage.bytes));

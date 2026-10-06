@@ -1105,6 +1105,23 @@ int Midi::set_play_type(unsigned int type) {
 }
 
 
+// RECOVERY_SHARED: v1 0x00406B30 0x00406B33 ?get_game_hwnd@Midi@@UAEHXZ 0x004C75B0
+int Midi::get_game_hwnd() { return 0; }
+
+// RECOVERY_SHARED: v1 0x00406B30 0x00406B33 ?get_attrib@Midi@@UAEHXZ 0x004C75B0
+int Midi::get_attrib() { return 0; }
+
+// ORIGINAL: 0x004C93E0 sub_4c93e0 0x004C93E0-0x004C93E8 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:Sound table 0x0066E3C0 slot 27 at 0x0066E42C selects 0x00645844, the pure-call path", "pinned:Midi table 0x0066E538 slot 27 at 0x0066E5A4 selects 0x004C93E0", "pinned:Ambience table 0x0066E664 preserves the Midi slot-27 selection at 0x004C93E0", "pinned:0x004C93E0 is mov eax,0x0b; ret 4; the source method has the observed one-dword thiscall stack cleanup and integer result", "source:Midi derives from Sound; Ambience derives from Midi; global Ambience g_AMBIENCE and faction ambience objects require a concrete Midi contract", "history:the complete existing 0x004C93E0 identity, original span, claim and adapter-origin note are transferred from src/field_accessors.cpp; no new claim is granted"], "reason": "Transfer the existing constant-return identity to Midi's real inherited virtual override. Sound's original table is pure; Midi and Ambience tables select this ABI-compatible method. The source API name is the current genuine owner, not a claim about the original undecorated catalog spelling."}
+// symbol    ?set_attrib@Midi@@UAEHK@Z
+// size      8 bytes
+// prototype
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+int Midi::set_attrib(unsigned long) { return 0x0B; }
+
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // Historical seed observations (not fresh measurements or acceptance):
 // `mov ecx, dword ptr[0x9bc074]`-free entry, but the body reads `[ecx+N]`

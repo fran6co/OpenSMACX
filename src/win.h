@@ -371,6 +371,8 @@ class Win : public AutoSound {
   void client_to_screen(int *x, int *y);
   Win *parent_window() const { return win_parent_; }
   bool has_dialog_focus_flag() const { return (iFlags_ & 0x1000) != 0; }
+  // ListBox row painting tests this existing Win flag to select parent-surface copying.
+  bool has_listbox_backfill_flag() const { return (iFlags_ & 0x80000u) != 0; }
   Win *event_window() const { return event_window_; }
   // ?client_to_screen@Win@@QAEXPAURECT@@@Z at 0x005ECFE0 - the RECT
   // overload, distinct from the (int*, int*) one above. Not yet recovered,
@@ -559,19 +561,21 @@ class Win : public AutoSound {
   virtual int vslot_05(int = 0, int = 0, int = 0) { return 0; }  // 0x00404220
   // Win::init asks slot 6 for an external buffer before allocating its
   // own Scroll fallback. The default original body returns zero.
+  // RECOVERY_SHARED: v1 0x00406B30 0x00406B33 ?on_scroll_create@Win@@UAEHXZ 0x005EB3D0
   virtual int on_scroll_create() { return 0; }  // slot 6, 0x00406B30
   // Win::close passes the exact Scroll* being removed. The default
   // original body returns that pointer unchanged (0x00404230, ret 4).
   virtual int on_scroll_delete(Scroll *scroll) {
     return reinterpret_cast<int>(scroll);
   }  // slot 7
+  // RECOVERY_SHARED: v1 0x00406B30 0x00406B33 ?vslot_08@Win@@UAEHXZ 0x005EB3D0
   virtual int vslot_08() { return 0; }  // 0x00406B30
   // The parameter is the POINTER the image's one call site passes through
   // it (Dialogs::on_scroll_delete hands a Scroll* over this slot); typed as
   // such rather than as the int the shim era spelled.
   virtual void *vslot_09(void *value = 0) { return value; }  // 0x00404230
   virtual int vslot_10(int = 0) { return 0; }  // 0x00404250
-  virtual int vslot_11(int = 0, int = 0, int = 0, int = 0) { return 0; }  // 0x00404240
+  virtual int vslot_11(GraphicWin *, int, int, RECT *) { return 0; }  // 0x00404240
   // Slot 12 paints the contents; redraw() at slot 62 drives this callback.
   // Constructor 5EB3D0 installs table66FDD0, selecting the shared empty body.
   // The virtual is spelled on_redraw like every original derived override
@@ -611,7 +615,7 @@ class Win : public AutoSound {
   virtual void on_right_down(int x, int y) { (void)x; (void)y; }
   virtual void vslot_24(int = 0, int = 0) {}  // 0x00404260
   // Existing slot 25: keyboard input dispatched by key_click_event.
-  virtual int on_key_click(int = 0, int = 0) { return 0; }  // slot 25
+  virtual int on_key_click(int = 0, int = 0);  // slot 25
   virtual int vslot_26(int = 0) { return 0; }  // 0x00404250
   virtual int vslot_27(int = 0) { return 0; }  // 0x00404250
   // Slot 28: Win dispatches left double-clicks here (0x005EE570).
@@ -662,7 +666,7 @@ class Win : public AutoSound {
   // Border-paint notification receives the source Buffer and quadrant.
   virtual void vslot_60(Buffer * = 0, int = 0) {}  // 0x00404260
   // Slot 61 (0xF4): ordinary windows have no GraphicWin surface.
-  virtual GraphicWin *get_graphic_win() { return nullptr; }  // 0x00406B30
+  virtual GraphicWin *get_graphic_win();  // original shared no-op target
   // Slot 62: plain Win has no surface; GraphicWin supplies the redraw.
   virtual void redraw() {}  // 0x00404280
   // Slot 63: no surface in plain Win; GraphicWin supplies the update.

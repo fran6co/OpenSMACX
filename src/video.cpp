@@ -102,7 +102,10 @@ int VideoSoundState::get_attrib() {
   return 0;
 }
 
-// RECOVERY_SHARED: v1 0x4c8950 0x4c8953 ?get_time@VideoSoundState@@UAEHXZ 0x4c8620
+// ORIGINAL: 0x004C8950 sub_4c8950 0x004C8950-0x004C8953 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned image SHA-256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; VideoSoundState primary table 0x0066E790 slot 29 at 0x0066E804 relocates to 0x004C8950", "the pre-proposal src/video.cpp RECOVERY_SHARED record already bound this exact span to VideoSoundState::get_time; this replaces that one shared record with the canonical identity", "src/video.cpp owns the actual int VideoSoundState::get_time() method body returning zero; no Time class or global timer ownership is inferred", "historical catalog facts retained: sub_4c8950 is a three-byte zero-return leaf; its name, span and claim state are carried from the parsed source record by the native writer", "retired source symbol retained as historical evidence: ?nullsub_004c8950_redirect@@YIHPAX0@Z"], "reason": "Promote the existing VideoSoundState::get_time shared-body mapping to the unique canonical identity. Keep its real typed method and avoid a duplicate annotation or adapter."}
+// symbol    ?get_time@VideoSoundState@@UAEHXZ
+// kind      game
 int VideoSoundState::get_time() {
   return 0;
 }

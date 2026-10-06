@@ -119,7 +119,7 @@ class Wave : public Sound {
   // Original Wave (0x0066E44C) and Effect (0x0066B7A4) tables agree on
   // this derived virtual sequence, slots 33..56. In particular FX::init
   // calls set_pitch through slot 38, and Effect::init calls load at 35.
-  // The inherited Sound placeholders remain separate recovery obligations.
+  // Wave's concrete implementations override Sound's pure slots.
   virtual int reload();                            // 33
   // `K`, not `I`. MSVC decorates `unsigned long` K and `unsigned int` I,
   // and this tree spells uint32_t as unsigned int - same width, different

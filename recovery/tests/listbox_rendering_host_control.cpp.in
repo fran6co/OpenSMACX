@@ -1,0 +1,254 @@
+#include <cassert>
+#include <cstdint>
+#include <cstdlib>
+#include <cstring>
+
+struct RECT { int left, top, right, bottom; };
+struct Win;
+struct GraphicWin;
+struct ListBox;
+using uint32_t = unsigned int;
+
+struct StringStructPayload {
+    unsigned int field_C_;
+    unsigned int field_8_;
+    char *text;
+};
+
+struct StringStructEntry {
+    StringStructEntry *next;
+    StringStructEntry *previous;
+    StringStructPayload payload;
+    StringStructPayload *string_payload() { return &payload; }
+};
+
+struct StringList {
+    int entry_count_;
+    StringStructEntry *head_;
+    StringStructEntry *current_;
+    int current_position_;
+    StringList() : entry_count_(0), head_(0), current_(0), current_position_(0) {}
+};
+
+struct Buffer {
+    int copies;
+    Buffer *copy_destination;
+    int sx, sy, dx, dy, width, height;
+    int clips, boxes, wraps, writes;
+    RECT last_clip;
+    Buffer() : copies(0), copy_destination(0), sx(0), sy(0), dx(0), dy(0),
+               width(0), height(0), clips(0), boxes(0), wraps(0), writes(0) {}
+    int pixel_width() const { return 37; }
+    int pixel_height() const { return 19; }
+    int copy(Buffer *source, int x, int y, int to_x, int to_y, int w, int h) {
+        ++copies; copy_destination = source; sx=x; sy=y; dx=to_x; dy=to_y;
+        width=w; height=h; return 1; // original ignores this result
+    }
+    void set_clip(RECT *r) { ++clips; last_clip = *r; }
+    void set_text_color(int, int, int, int) {}
+    void set_text_color2(int, int, int, int) {}
+    void set_text_color3(int, int, int, int) {}
+    void set_font(void *, void *, void *, int) {}
+    int box(RECT *, int, int) { ++boxes; return 0; }
+    void wrap(char *, RECT *) { ++wraps; }
+    void write_l(char *, RECT *, int) { ++writes; }
+    void write_right_l(char *, RECT *, int) { ++writes; }
+};
+
+struct Win {
+    Win *parent_;
+    unsigned int iFlags_;
+    int slot_calls;
+    GraphicWin *slot_window;
+    int slot_index, slot_state;
+    RECT *slot_rect;
+    int slot_result;
+    ListBox *mutate_child;
+    Win *mutate_parent;
+    Win() : parent_(0), iFlags_(0), slot_calls(0), slot_window(0),
+            slot_index(0), slot_state(0), slot_rect(0), slot_result(0),
+            mutate_child(0), mutate_parent(0) {}
+    Win *parent_window() { return parent_; }
+    bool has_listbox_backfill_flag() const { return (iFlags_ & 0x80000u) != 0; }
+    virtual int vslot_11(GraphicWin *window, int index, int state, RECT *rect);
+};
+
+struct GraphicWin : Win, Buffer {
+    RECT work;
+    int fills, fill_value, redraws, updates;
+    GraphicWin() : fills(0), fill_value(0), redraws(0), updates(0) {
+        work.left=1; work.top=2; work.right=40; work.bottom=22;
+    }
+    void fill(int value) { ++fills; fill_value=value; }
+    RECT *buffer_working_rect() { return &work; }
+    void redraw() { ++redraws; }
+    void soft_update() { ++updates; }
+};
+
+struct Dialog {
+    StringList item_list_;
+    int selected_position_;
+    uint32_t field_4C_, field_58_, field_64_, field_44_, field_68_;
+    uint32_t field_38_, field_40_, field_6C_, field_F0_;
+    uint32_t field_B4_, field_AC_, field_B0_, field_34_;
+    uint32_t text_color_a_, text_color_b_, text_color_c_, text_color_d_;
+    uint32_t text_color_2a_, text_color_2b_, text_color_2c_, text_color_2d_;
+    uint32_t text_color_3a_, text_color_3b_, text_color_3c_, text_color_3d_;
+    void *font1_, *font2_, *font3_;
+    Dialog() : selected_position_(0), field_4C_(0), field_58_(2), field_64_(8),
+        field_44_(1), field_68_(6), field_38_(0), field_40_(0), field_6C_(9),
+        field_F0_(~0u), field_B4_(1), field_AC_(3), field_B0_(4), field_34_(0),
+        text_color_a_(1), text_color_b_(2), text_color_c_(3), text_color_d_(4),
+        text_color_2a_(5), text_color_2b_(6), text_color_2c_(7), text_color_2d_(8),
+        text_color_3a_(9), text_color_3b_(10), text_color_3c_(11), text_color_3d_(12),
+        font1_(0), font2_(0), font3_(0) {}
+    int pos_to_id(int position) { return 1000 + position; }
+};
+
+using DrawCallback = void (*)(GraphicWin *, int, int, int, int, int);
+using WriteCallback = int (*)(GraphicWin *, int, int, RECT *, char *);
+using FillCallback = int (*)(GraphicWin *, int, int, RECT *);
+
+struct ListBox : virtual GraphicWin, virtual Dialog {
+    uint32_t field_4_, field_10_, field_18_, field_24_, field_28_, field_2C_;
+    FillCallback fill_callback_;
+    DrawCallback draw_callback_;
+    WriteCallback write_callback_;
+    ListBox() : field_4_(0), field_10_(~0u), field_18_(0), field_24_(0), field_28_(0),
+                field_2C_(0), fill_callback_(0), draw_callback_(0),
+                write_callback_(0) {}
+    void set_draw_callback(DrawCallback callback) { draw_callback_=callback; }
+    void set_selected_pos(int position, int) { selected_position_ = position; }
+    void on_scrolling(int, int);
+    void draw_item(int);
+};
+
+struct Dialogs : ListBox {
+    int kind_;
+    Dialogs() : kind_(0) {}
+    void on_scrolled(int, int);
+    void on_scrolling(int, int);
+};
+
+int Win::vslot_11(GraphicWin *window, int index, int state, RECT *rect) {
+    ++slot_calls; slot_window=window; slot_index=index; slot_state=state;
+    slot_rect=rect;
+    if (mutate_child != 0) mutate_child->parent_ = mutate_parent;
+    return slot_result;
+}
+
+static Win *WinCallbackWindow;
+static int ListBoxGlobalDDC;
+static int ListBoxDrawOffset;
+static ListBox *CurrentListBoxDraw;
+
+#include "actual_listbox_rendering.inc"
+
+static int fill_calls;
+static RECT fill_rect;
+static int fill_cursor_position;
+static StringStructEntry *fill_cursor;
+static int fill_result;
+static ListBox *fill_target;
+static int fill(GraphicWin *window, int, int, RECT *rect) {
+    ++fill_calls; fill_rect=*rect;
+    assert(window == static_cast<GraphicWin *>(fill_target));
+    fill_cursor_position = fill_target->item_list_.current_position_;
+    fill_cursor = fill_target->item_list_.current_;
+    return fill_result;
+}
+
+static int bridge_draw_calls;
+static GraphicWin *bridge_draw_window;
+static int bridge_draw_ids[8];
+static void bridge_draw_with_id(GraphicWin *window, int item_id, int, int, int, int) {
+    bridge_draw_ids[bridge_draw_calls]=item_id;
+    ++bridge_draw_calls; bridge_draw_window=window;
+}
+
+static void link_rows(StringStructEntry *rows, int count, unsigned int *spans) {
+    for (int i=0; i<count; ++i) {
+        rows[i].next=&rows[(i+1)%count];
+        rows[i].previous=&rows[(i+count-1)%count];
+        rows[i].payload.field_C_=spans[i];
+        rows[i].payload.field_8_=0;
+        rows[i].payload.text=(char *)"row";
+    }
+}
+
+int main() {
+    StringStructEntry rows[4];
+    unsigned int spans[4] = {2, 3, 4, 5};
+    link_rows(rows, 4, spans);
+    ListBox box;
+    box.item_list_.entry_count_=4; box.item_list_.head_=&rows[0];
+    box.item_list_.current_=&rows[0]; box.item_list_.current_position_=0;
+    box.fill_callback_=&fill;
+    box.field_4C_=1; // variable-height rows: exercise circular cursor path
+    box.field_4_=0;  // selection comes from Dialog, so callback observes layout cursor
+    box.field_18_=0; box.selected_position_=3;
+    fill_target=&box; box.draw_item(1);
+    assert(fill_calls==1);
+    assert(fill_cursor==&rows[1] && fill_cursor_position==1);
+    assert(fill_rect.left==(6+1)*2);
+    assert(fill_rect.bottom==(6+1)*3-1+fill_rect.left);
+    assert(box.item_list_.current_==&rows[1]);
+
+    // Initial parent-null branch skips fallback fill/copy but still draws the
+    // descriptor frame border after the callback path.
+    ListBox orphan;
+    orphan.item_list_.entry_count_=1; orphan.item_list_.head_=&rows[0];
+    orphan.item_list_.current_=&rows[0]; orphan.fill_callback_=&fill;
+    fill_target=&orphan; fill_calls=0; orphan.draw_item(0);
+    assert(fill_calls==1 && orphan.fills==0 && orphan.copies==0);
+    assert(orphan.boxes==1);
+
+    // Parent's backfill flag is irrelevant: the flag belongs to child Win.
+    GraphicWin first_parent, replacement_parent;
+    ListBox child;
+    child.item_list_.entry_count_=1; child.item_list_.head_=&rows[0];
+    child.item_list_.current_=&rows[0]; child.fill_callback_=&fill;
+    child.parent_=&first_parent; first_parent.iFlags_=0x80000u;
+    child.iFlags_=0; fill_target=&child; fill_calls=0; child.draw_item(0);
+    assert(first_parent.slot_calls==1 && child.fills==1 && first_parent.copies==0);
+    assert(first_parent.slot_window==static_cast<GraphicWin *>(&child));
+
+    // Backfill selection reads the child flag, not the parent's flag.
+    first_parent.iFlags_=0; first_parent.slot_calls=0; child.fills=0;
+    child.iFlags_=0x80000u; fill_target=&child; child.draw_item(0);
+    assert(first_parent.copies==1 && first_parent.copy_destination==static_cast<Buffer *>(static_cast<GraphicWin *>(&child)));
+
+    // A callback-mutated parent is reloaded. Child flag enables a copy from
+    // the replacement parent into the child's Buffer; copy result is ignored.
+    child.parent_=&first_parent; first_parent.slot_calls=0; first_parent.copies=0;
+    first_parent.mutate_child=&child; first_parent.mutate_parent=&replacement_parent;
+    child.iFlags_=0x80000u; child.fills=0; replacement_parent.copies=0;
+    fill_target=&child; child.draw_item(0);
+    assert(first_parent.slot_calls==1 && replacement_parent.copies==1);
+    assert(replacement_parent.copy_destination==static_cast<Buffer *>(static_cast<GraphicWin *>(&child)));
+    assert(replacement_parent.sx==fill_rect.left && replacement_parent.sy==fill_rect.top);
+    assert(replacement_parent.dx==0 && replacement_parent.dy==0);
+    assert(replacement_parent.width==37 && replacement_parent.height==19);
+    assert(child.fills==0);
+
+    // Complete-object Dialogs receivers reach their first declared ListBox
+    // base; callbacks see its compiler-converted GraphicWin virtual base.
+    Dialogs dialog;
+    GraphicWin bridge_parent;
+    dialog.kind_=2; dialog.item_list_.entry_count_=1;
+    dialog.item_list_.head_=&rows[0]; dialog.item_list_.current_=&rows[0];
+    dialog.parent_=&bridge_parent;
+    dialog.set_draw_callback(&bridge_draw_with_id);
+    dialog.on_scrolled(-1, 7);
+    assert(dialog.field_18_==7 && bridge_draw_calls==1 && bridge_draw_ids[0]==1000);
+    assert(bridge_draw_window==static_cast<GraphicWin *>(static_cast<ListBox *>(&dialog)));
+    assert(WinCallbackWindow==&bridge_parent && dialog.updates==1);
+    int previous_draw_calls=bridge_draw_calls;
+    dialog.on_scrolling(42, 999);
+    assert(dialog.field_18_==7 && dialog.redraws==1);
+    assert(bridge_draw_calls==previous_draw_calls);
+    dialog.kind_=1; dialog.field_18_=7;
+    dialog.on_scrolling(-1, 3);
+    assert(dialog.field_18_==7); // non-list kind is not forwarded
+    return 0;
+}

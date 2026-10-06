@@ -48,6 +48,7 @@ SPECS = (
     (0x004B3F50, 'src/socialwin.cpp', '??_GSocialWin@@UAEPAXI@Z'),
     (0x004BE9F0, 'src/tutwin.cpp', '??_GTutWin@@UAEPAXI@Z'),
     (0x004C9330, 'src/ambience.cpp', '??_GAmbience@@UAEPAXI@Z'),
+    (0x00448390, 'src/ambience.cpp', '??_GAmbience@@UAEPAXI@Z'),
     (0x005D7140, 'src/graphicwin.cpp', '??_GGraphicWin@@UAEPAXI@Z'),
     (0x005E3610, 'src/buffer.cpp', '??_GBuffer@@UAEPAXI@Z'),
     (0x005FA770, 'src/pulldown.cpp', '??_GPullDown@@UAEPAXI@Z'),
@@ -115,6 +116,17 @@ def test_deleting_owner_rationale_uses_constructor_virtual_address_not_file_offs
         rows = list(current_records(owner).values())
         rationale = binding_source.parse((ROOT / owner).read_text(), rows)[current_records(owner)[address].line]
         evidence = "\n".join(rationale["evidence"])
+        if owner == 'src/ambience.cpp':
+            # Require the final derived table, not the intermediate Midi view.
+            assert re.search(
+                r"final (?:Ambience )?table 0x66E664 at 0x004C850F", evidence), owner
+            assert re.search(
+                r"(?:intermediate base table 0x66E538 at 0x004C84EF|"
+                r"0x004C84EF stores intermediate base table 0x66E538)", evidence), owner
+            assert re.search(
+                r"slot 2 at 0x66E66C selects (?:the original deleting entry )?0x00448390",
+                evidence), owner
+            continue
         witness = re.search(
             r"stores original class/view table VA (0x[0-9A-Fa-f]+) at "
             r"0x[0-9A-Fa-f]+ \(mov .*?, (0x[0-9A-Fa-f]+)\);", evidence)

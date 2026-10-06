@@ -19,8 +19,6 @@ int SoundFadeState::set_fade(unsigned long) { assert(false); return 0; }
 int SoundFadeState::set_fade_interval(unsigned long) { assert(false); return 0; }
 int Sound::set_fade(unsigned long) { assert(false); return 0; }
 int Sound::unk_slot24() { assert(false); return 0; }
-int Sound::set_attrib(unsigned long) { assert(false); return 0; }
-int Sound::get_attrib() { assert(false); return 0; }
 int Sound::UNK1(int) { assert(false); return 0; }
 int Sound::load(const char *) { assert(false); return 0; }
 int Sound::unload() { assert(false); return 0; }
@@ -33,7 +31,6 @@ int Sound::fade_in() { assert(false); return 0; }
 void Sound::fade_in(unsigned int) { assert(false); }
 void Sound::ramp(int, int, unsigned int) { assert(false); }
 int Sound::release() { assert(false); return 0; }
-int Sound::get_game_hwnd() { assert(false); return 0; }
 void Sound::set_volume(int) { assert(false); }
 void Sound::set_pan(int) { assert(false); }
 void Sound::set_loop_state(long) { assert(false); }
@@ -62,12 +59,16 @@ inline func_wave_device_release *&WaveDeviceReleaseSlot() { return release_hook;
 // LIVE_NEXT
 // LIVE_PREV
 
-class OtherSound : public Sound {};
+class OtherSound : public Sound {
+ public:
+    int get_game_hwnd() { return 0; }
+    int set_attrib(unsigned long) { return 11; }
+    int get_attrib() { return 0; }
+};
 
 int main() {
     assert(SoundChainHead == 0 && SoundChainTail == 0);
-    Sound first;
-    OtherSound middle, last;
+    OtherSound first, middle, last;
     first.flags_40_ = middle.flags_40_ = last.flags_40_ = 0x81;
     assert(first.attach() == 0 && SoundChainHead == &first && SoundChainTail == &first);
     assert(first.flags_40_ == 0x83 && first.get_next() == 0 && first.get_prev() == 0);

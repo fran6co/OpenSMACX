@@ -27,19 +27,17 @@
  * reader not to touch this file in the only way it can now be touched.
  *
  *
- * 56 functions whose entire body is a return, optionally zeroing EAX first,
- * optionally popping arguments. They read nothing and write nothing.
+ * Transitional no-op/constant adapters remain pending real source owners.
+ * Their bodies are bounded return/zero leaves, not original ABI evidence.
+ * The wrapper's register and stack-pop effects describe only this adapter.
  *
- * These are free redirects over opaque storage. None of these functions
- * carries a mangled name, so nothing in the image declares a calling
- * convention for them - and none is needed: the only observable facts are the
- * pop count, which the `ret N` states outright, and EAX. A __fastcall
- * redirect with N trailing stack parameters is byte-identical to __thiscall
- * and to __stdcall for a body that reads neither ECX nor EDX.
+ * The pinned image associates some targets with typed virtual methods and
+ * direct callbacks; identical code bodies can belong to unrelated owners.
+ * The old 406B30 finding records many distinct virtual-slot signatures.
+ * Resolve each remaining identity from its own caller/table/source evidence
+ * instead of inferring a prototype from this adapter.
  */
 
-int __fastcall nullsub_00406a80_redirect(void *self, void *, int, int);
-int __fastcall nullsub_00406b30_redirect(void *self, void *);
 void __fastcall nullsub_0044c850_redirect(void *self, void *);
 void __fastcall nullsub_0044c8a0_redirect(void *self, void *);
 void __fastcall nullsub_0044c8b0_redirect(void *self, void *);
@@ -68,7 +66,6 @@ void __fastcall mapwin_nullsub4_redirect(void *self, void *, int, int);
 void __fastcall vehdraw_nullsub1_redirect(void *self, void *);
 void __fastcall vehdraw_nullsub2_redirect(void *self, void *);
 void __fastcall nullsub_004c8140_redirect(void *self, void *);
-int __fastcall nullsub_004c8950_redirect(void *self, void *);
 void __fastcall nullsub_004e9b60_redirect(void *self, void *);
 void __fastcall nullsub_00515760_redirect(void *self, void *);
 void __fastcall nullsub_0051d9d0_redirect(void *self, void *);

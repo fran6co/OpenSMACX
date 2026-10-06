@@ -65,7 +65,7 @@ def test_attribute_setter_is_the_original_wave_and_effect_override(family):
     for objects in trials:
         for table in observations(objects, image):
             if table["symbol"] == "??_7Sound@@6B@":
-                continue  # Base is originally pure; its link placeholder is not recovery.
+                continue  # The base is pure in both source and image.
             entry = table["diagnostic"]["entries"][27]
             assert entry["original_absolute_relocation"]
             assert entry["observation"] == "target_word_agrees", entry
@@ -78,7 +78,7 @@ def test_attribute_setter_is_the_original_wave_and_effect_override(family):
 def test_restoring_old_setter_placeholder_breaks_table_contract(family):
     compiler, settings, trials, image = family
     header = (ROOT / "src/sound.h").read_bytes()
-    before = b"virtual int set_attrib(unsigned long attrib);"
+    before = b"virtual int set_attrib(unsigned long attrib) = 0;"
     assert header.count(before) == 1
     for flags, objects in zip(settings.flag_sets, trials):
         changed = Coff(compiler.overlay(ROOT / "src/wave.cpp", {

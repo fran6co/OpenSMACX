@@ -68,8 +68,8 @@ class Sound : public SoundFadeState {
   Sound();
   // THE VIRTUAL SET, in the image's own vftable slot order (0x0066E3C0).
   // The compiler now owns the vftable these slots name; Sound's storage no
-  // longer carries a hand-rolled table. Slot 24 and some derived
-  // implementations of the attribute setter/query remain unfinished.
+  // longer carries a hand-rolled table. Slots 15, 27 and 28 remain pure
+  // here and are supplied by real derived owners.
   virtual int set_fade(unsigned long fade);        // slot 0 (0x4C6580)
   // Slot 1 is inherited from SoundFadeState (0x4482F0).
   virtual ~Sound();                                // slot 2 (0x4C92D0 ??_GSound)
@@ -87,7 +87,7 @@ class Sound : public SoundFadeState {
   virtual void fade_in(unsigned int a1);           // slot 11 (0x4C6660)
   virtual void ramp(int a1, int a2, unsigned int a3);  // slot 13 (0x4C6640)
   virtual int release();                           // slot 14 (0x4C64F0)
-  virtual int get_game_hwnd();                     // slot 15 (pure in image; Wave implements)
+  virtual int get_game_hwnd() = 0;                 // slot 15 is pure in the pinned Sound table
   virtual void set_volume(int volume);             // slot 16 (0x4C6510)
   virtual void set_pan(int pan);                   // slot 17 (0x4C66B0)
   virtual void set_loop_state(long loop_state);    // slot 18 (0x4C6540)
@@ -101,10 +101,10 @@ class Sound : public SoundFadeState {
   virtual Sound *get_prev();                       // slot 26 (0x448320)
   // Pure in the original base; Wave/Effect select 0x004C6F20, whose
   // stack argument is the mask and whose common return clears eax.
-  virtual int set_attrib(unsigned long attrib);    // slot 27
+  virtual int set_attrib(unsigned long attrib) = 0; // slot 27 is pure in the pinned Sound table
   // Pure in the original base table. Wave's table selects get_attrib at
   // 0x004C6F80; Wave_Device::select consumes the integer result twice.
-  virtual int get_attrib();                       // slot 28
+  virtual int get_attrib() = 0;                   // slot 28 is pure in the pinned Sound table
   // THE TAIL, corrected 2026-08-29 against the family tables: the image's
   // Sound table runs to slot 32 with get_time VIRTUAL at 29 (?get_time@@QAEHXZ
   // at 0x4C66A0 sits between the pure pair and get_type in 0x0066E3C0,

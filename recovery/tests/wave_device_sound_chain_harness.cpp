@@ -50,6 +50,8 @@ class TestSound : public Sound {
         first_attributes(first), later_attributes(later), queries(0), unloads(0), loads(0),
         rename_on_previous(false) { fname_ = const_cast<char *>(normal_name); }
     ~TestSound() { fname_ = 0; } // Names are borrowed by this test double.
+    int get_game_hwnd() { return 0; }
+    int set_attrib(unsigned long) { return 11; }
     int get_attrib() {
         event(10 + id);
         return ++queries == 1 ? first_attributes : later_attributes;

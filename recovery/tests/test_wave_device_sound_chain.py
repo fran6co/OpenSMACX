@@ -43,7 +43,7 @@ def test_wave_attribute_override_occupies_the_original_sound_slot(family):
         rows = observations(objects, image)
         for row in rows:
             if row["symbol"] == "??_7Sound@@6B@":
-                continue  # The original base is pure; its current placeholder is not accepted.
+                continue  # The base is pure in both source and image; it has no owned body.
             entry = row["diagnostic"]["entries"][28]
             assert entry["original_absolute_relocation"]
             assert entry["observation"] == "target_word_agrees", (row["symbol"], entry)
@@ -52,10 +52,10 @@ def test_wave_attribute_override_occupies_the_original_sound_slot(family):
 def test_reverting_attribute_query_to_nonvirtual_breaks_table_contract(family):
     compiler, settings, trials, image = family
     header = (ROOT / "src/sound.h").read_bytes()
-    assert header.count(b"virtual int get_attrib();") == 1
+    assert header.count(b"virtual int get_attrib() = 0;") == 1
     for flags, objects in zip(settings.flag_sets, trials):
         changed = Coff(compiler.overlay(ROOT / "src/wave.cpp", {
-            "src/sound.h": header.replace(b"virtual int get_attrib();", b"int get_attrib();")
+            "src/sound.h": header.replace(b"virtual int get_attrib() = 0;", b"int get_attrib();")
         }, (), flags + settings.layout_flags))
         rows = observations({**objects, "src/wave.cpp": changed}, image)
         wave, = (row for row in rows if row["symbol"] == "??_7Wave@@6B@")
