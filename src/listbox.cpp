@@ -303,8 +303,36 @@ uint32_t ListBox::close() {
 // Original 609DB0 conditionally constructs GraphicWin and Dialog using the
 // compiler's most-derived flag, then initializes the ListBox-owned fields.
 // Superseded seed deleted; seed paths below are historical Git provenance.
+/*
+Purpose: Return the configured recipient's slot-8 value under the
+         original AutoSound flag and recipient guards.
+*/
+// ORIGINAL: 0x0060CED0 sub_60ced0 0x0060CED0-0x0060CF01 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["pinned image SHA-256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "ListBox constructor at 0x00609DB0 installs Win-view table address point 0x0067041C; slots 6/7 at +0x18/+0x1C select 0x0060CED0/0x0060CF10", "original code reads Win/AutoSound val_20_ at +0x50 and val_31_ at +0x7C; current AutoSound layout maps those fields and types val_31_ as Win*", "original 0x005EB640 close body pushes scroll_vert_ before the slot-7 call and pushes scroll_horz_ before the matching horizontal call; both return paths are ret 4"], "reason": "Move the pinned ListBox Win-view callback into a genuine owner method; retain the original guard order and delegated slot behavior. Compiler-generated receiver adjustment and exact COFF target still require fresh native verification."}
+// symbol    ?on_scroll_create@ListBox@@$4PPPPPPPM@A@AEHXZ
+int ListBox::on_scroll_create() {
+    if ((val_20_ & 0x40) != 0 && val_31_ != 0) {
+        return val_31_->vslot_08();
+    }
+    return 0;
+}
+
+/*
+Purpose: Forward the exact Scroll being removed through recipient slot 9
+         under the original guards, otherwise return the argument.
+*/
+// ORIGINAL: 0x0060CF10 sub_60cf10 0x0060CF10-0x0060CF4D FILE
+// RECOVERY_BINDING: v1 {"evidence": ["pinned image SHA-256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "ListBox constructor at 0x00609DB0 installs Win-view table address point 0x0067041C; slots 6/7 at +0x18/+0x1C select 0x0060CED0/0x0060CF10", "original code reads Win/AutoSound val_20_ at +0x50 and val_31_ at +0x7C; current AutoSound layout maps those fields and types val_31_ as Win*", "original 0x005EB640 close body pushes scroll_vert_ before the slot-7 call and pushes scroll_horz_ before the matching horizontal call; both return paths are ret 4"], "reason": "Move the pinned ListBox Win-view callback into a genuine owner method; retain the original guard order and delegated slot behavior. Compiler-generated receiver adjustment and exact COFF target still require fresh native verification."}
+// symbol    ?on_scroll_delete@ListBox@@$4PPPPPPPM@A@AEHPAVScroll@@@Z
+int ListBox::on_scroll_delete(Scroll *scroll) {
+    if ((val_20_ & 0x40) != 0 && val_31_ != 0) {
+        return reinterpret_cast<int>(val_31_->vslot_09(scroll));
+    }
+    return reinterpret_cast<int>(scroll);
+}
+
 // ORIGINAL: 0x00609DB0 ??0ListBox@@QAE@H@Z 0x00609DB0-0x00609EB7;0x00662EF0-0x00662F14 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00609db0.cpp", "Original constructor/destructor direct-call receivers and unwind stages"], "reason": "609DB0 calls GraphicWin and Dialog constructors only for the hidden most-derived ABI flag, then stores own defaults. Genuine virtual bases synthesize this flag; it is not an explicit int source parameter."}
+// RECOVERY_BINDING: v1 {"evidence": ["promoted historical seed src/recovered/units/00609db0.cpp", "Original constructor/destructor direct-call receivers and unwind stages"], "reason": "609DB0 calls GraphicWin and Dialog constructors only for the hidden most-derived ABI flag, then stores own defaults. Genuine virtual bases synthesize this flag; it is not an explicit int source parameter."}
 // symbol    ??0ListBox@@QAE@XZ
 ListBox::ListBox() {
     field_4_ = 0;

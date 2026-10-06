@@ -75,11 +75,21 @@ def test_netwin_exec_and_row_actual_bodies(compiler_name: str) -> None:
     helper = extract_function(source, "static void netwin_set_rect(")
     exec_body = extract_function(source, "int NetWin::exec()")
     row_body = extract_function(source, "void NetWinLobbyRow::initialize_empty_slot()")
+    row_callback = extract_function(
+        (root / "src/netwin.h").read_text(encoding="utf-8"),
+        "static void __fastcall initialize_empty_slot_callback(void *element)",
+    )
+    initializer = extract_function(
+        (root / "src/vector_teardown.cpp").read_text(encoding="utf-8"),
+        'extern "C" void __stdcall sub_402ee0(',
+    )
     assert fixture.count("/* ROW_BODY_INSERTION */") == 1
     assert fixture.count("/* EXEC_BODY_INSERTION */") == 1
     generated = fixture.replace("/* ROW_BODY_INSERTION */", row_body)
+    assert fixture.count("/* ROW_CALLBACK_INSERTION */") == 1
+    generated = generated.replace("/* ROW_CALLBACK_INSERTION */", row_callback)
     generated = generated.replace(
-        "/* EXEC_BODY_INSERTION */", helper + "\n\n" + exec_body
+        "/* EXEC_BODY_INSERTION */", initializer + "\n\n" + helper + "\n\n" + exec_body
     )
 
     with tempfile.TemporaryDirectory(prefix="netwin-exec-test-") as directory:

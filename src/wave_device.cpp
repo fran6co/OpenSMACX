@@ -1619,13 +1619,6 @@ Return Value: n/a (the redirect answers the object pointer)
 Status: Complete
 */
 Wave_Device::Wave_Device() {
-    field_4_ = 0;
-    volume_8_ = 0x7F;
-    field_C_ = 0;
-    field_18_ = 0;
-    field_1C_ = 0;
-    field_10_ = 0;
-    device_14_ = nullptr;
     (*VectorCtorIterator)(groups_, 0x18, 0x10, WaveControlGroupOriginalCtor,
                           WaveControlGroupOriginalDtor);
     field_20_ = 0;
@@ -1653,13 +1646,6 @@ Wave_Device::~Wave_Device() {
     Wave_Device volatile *const self = this;
     VectorDtorIterator(const_cast<WaveControlGroup *>(self->groups_), 0x18,
                        0x10, WaveControlGroupOriginalDtor);
-    {
-        void *const device = self->device_14_;
-        if (device) {
-            typedef void(__fastcall *device_down_fn)(void *);
-            vtable_slot<device_down_fn>(device, 0x10)(device);
-        }
-    }
 }
 
 // ====================

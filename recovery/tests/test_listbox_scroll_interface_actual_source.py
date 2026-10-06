@@ -1,0 +1,207 @@
+import re
+import shutil
+import subprocess
+from pathlib import Path
+
+import pytest
+
+from match_recovery.source import read_text
+
+
+ROOT = Path(__file__).resolve().parents[2]
+
+
+def actual_sources():
+    paths = ("src/listbox.cpp", "src/listbox.h", "src/win.cpp",
+             "src/win.h", "src/dialogs.cpp", "src/dialogs.h")
+    return {path: (ROOT / path).read_text() for path in paths}
+
+
+def extract_function(text, signature):
+    start = text.index(signature)
+    opening = text.index("{", start + len(signature))
+    depth = 0
+    state = "code"
+    escaped = False
+    index = opening
+    while index < len(text):
+        ch = text[index]
+        nxt = text[index + 1] if index + 1 < len(text) else ""
+        if state == "line_comment":
+            if ch == "\n":
+                state = "code"
+        elif state == "block_comment":
+            if ch == "*" and nxt == "/":
+                state = "code"
+                index += 1
+        elif state in ("string", "char"):
+            if escaped:
+                escaped = False
+            elif ch == "\\":
+                escaped = True
+            elif (state == "string" and ch == '"') or (state == "char" and ch == "'"):
+                state = "code"
+        else:
+            if ch == "/" and nxt == "/":
+                state = "line_comment"
+                index += 1
+            elif ch == "/" and nxt == "*":
+                state = "block_comment"
+                index += 1
+            elif ch == '"':
+                state = "string"
+            elif ch == "'":
+                state = "char"
+            elif ch == "{":
+                depth += 1
+            elif ch == "}":
+                depth -= 1
+                if depth == 0:
+                    return text[start:index + 1]
+        index += 1
+    raise AssertionError(f"unterminated C++ function {signature}")
+
+
+def actual_listbox_methods(sources):
+    source = sources["src/listbox.cpp"]
+    methods = [
+        extract_function(source, "int ListBox::on_scroll_create()"),
+        extract_function(source, "int ListBox::on_scroll_delete(Scroll *scroll)"),
+    ]
+    combined = "\n\n".join(methods)
+    # The only source adaptation is the target's 32-bit pointer-to-int cast;
+    # host uintptr_t preserves the explicit low-32-bit conversion behavior.
+    combined = combined.replace(
+        "reinterpret_cast<int>(val_31_->vslot_09(scroll))",
+        "host_pointer_to_int(val_31_->vslot_09(scroll))",
+    )
+    combined = combined.replace(
+        "reinterpret_cast<int>(scroll)", "host_pointer_to_int(scroll)"
+    )
+    return combined
+
+
+def close_contract_error(source):
+    close = extract_function(source, "void Win::close()")
+    for member in ("scroll_vert_", "scroll_horz_"):
+        guard = rf"if\s*\(\s*\({member}\s*!=\s*0\)\s*&&\s*\(\(iFlags_\s*&\s*0x40\)\s*!=\s*0\)\s*\)"
+        if not re.search(guard, close):
+            return f"missing original flag/nonnull guard for {member}"
+        store = rf"{member}\s*=\s*reinterpret_cast<Scroll\s*\*>\s*\(\s*this->on_scroll_delete\(\s*{member}\s*\)\s*\)"
+        if not re.search(store, close):
+            return f"missing matching argument/result store for {member}"
+    return None
+
+
+def test_actual_source_retains_both_original_identities_and_spans():
+    list_cpp = actual_sources()["src/listbox.cpp"]
+    constructor_marker = list_cpp.index("// ORIGINAL: 0x00609DB0")
+    assert constructor_marker > list_cpp.index("int ListBox::on_scroll_delete(Scroll *scroll)")
+    constructor_prefix = list_cpp[constructor_marker:list_cpp.index("ListBox::ListBox() {")]
+    assert "// symbol    ??0ListBox@@QAE@XZ" in constructor_prefix
+    assert "// ORIGINAL: 0x0060CED0" not in constructor_prefix
+    assert "// ORIGINAL: 0x0060CF10" not in constructor_prefix
+    records = {record.address: record for record in read_text(list_cpp, "src/listbox.cpp")
+               if record.address in (0x60CED0, 0x60CF10)}
+    assert records[0x60CED0].image_spans == ((0x60CED0, 0x60CF01),)
+    assert records[0x60CF10].image_spans == ((0x60CF10, 0x60CF4D),)
+    assert records[0x60CED0].recipe.value == "verbatim"
+    assert records[0x60CF10].recipe.value == "verbatim"
+    assert "0x0060CED0 sub_60ced0" in list_cpp
+    assert "0x0060CF10 sub_60cf10" in list_cpp
+
+
+def test_slot_bindings_and_argument_order():
+    sources = actual_sources()
+    win_h = sources["src/win.h"]
+    win_cpp = sources["src/win.cpp"]
+    list_h = sources["src/listbox.h"]
+    list_cpp = sources["src/listbox.cpp"]
+    dialogs_h = sources["src/dialogs.h"]
+    dialogs_cpp = sources["src/dialogs.cpp"]
+
+    assert "virtual int on_scroll_create() { return 0; }" in win_h
+    assert "virtual int on_scroll_delete(Scroll *scroll)" in win_h
+    assert "this->on_scroll_delete(scroll_vert_));" in win_cpp
+    assert "this->on_scroll_delete(scroll_horz_));" in win_cpp
+    assert "scroll_vert_ = reinterpret_cast<Scroll *>" in win_cpp
+    assert "scroll_horz_ = reinterpret_cast<Scroll *>" in win_cpp
+    assert "this->vslot_07();" not in win_cpp
+    assert "virtual int on_scroll_create();" in list_h
+    assert "virtual int on_scroll_delete(Scroll *scroll);" in list_h
+    assert "val_20_ & 0x40" in list_cpp and "val_31_->vslot_08()" in list_cpp
+    assert "val_31_->vslot_09(scroll)" in list_cpp
+    assert "virtual int on_scroll_delete(Scroll *scroll);" in dialogs_h
+    assert "virtual int on_scroll_create();" in dialogs_h
+    assert "int Dialogs::on_scroll_delete(Scroll *scroll)" in dialogs_cpp
+    assert "kind_ == 2" in dialogs_cpp
+
+    assert "0x005EB73E" in win_cpp and "scroll_vert_" in win_cpp
+    assert "0x005EB774" in win_cpp and "scroll_horz_" in win_cpp
+
+
+def test_host_behavior_control_extracts_actual_listbox_bodies(tmp_path):
+    compiler = shutil.which("c++") or shutil.which("g++") or shutil.which("clang++")
+    if compiler is None:
+        pytest.skip("no host C++ compiler available")
+    sources = actual_sources()
+    methods = actual_listbox_methods(sources)
+    (tmp_path / "actual_listbox_methods.inc").write_text(
+        "static int host_pointer_to_int(const void *value) {\n"
+        "    return static_cast<int>(reinterpret_cast<std::uintptr_t>(value));\n"
+        "}\n\n" + methods
+    )
+    source = Path(__file__).with_name("listbox_scroll_host_control.cpp")
+    binary = tmp_path / "win_slot67_control"
+    subprocess.run([compiler, "-std=c++11", "-Wall", "-Wextra", "-Werror",
+                    "-I", str(tmp_path), str(source), "-o", str(binary)], check=True)
+    subprocess.run([str(binary)], check=True)
+
+
+def test_listbox_mutations_are_exercised_against_extracted_bodies(tmp_path):
+    compiler = shutil.which("c++") or shutil.which("g++") or shutil.which("clang++")
+    if compiler is None:
+        pytest.skip("no host C++ compiler available")
+    original = actual_listbox_methods(actual_sources())
+    mutants = (
+        original.replace("0x40", "0x20"),
+        original.replace("&& val_31_ != 0", "", 1),
+        original.replace("vslot_09(scroll)", "vslot_09(nullptr)", 1),
+    )
+    assert all(mutant != original for mutant in mutants)
+    template = Path(__file__).with_name("listbox_scroll_host_control.cpp").read_text()
+    for index, mutant in enumerate(mutants):
+        with (tmp_path / "actual_listbox_methods.inc").open("w") as out:
+            out.write(
+                "static int host_pointer_to_int(const void *value) {\n"
+                "    return static_cast<int>(reinterpret_cast<std::uintptr_t>(value));\n"
+                "}\n\n" + mutant
+            )
+        source = tmp_path / f"mutant_{index}.cpp"
+        source.write_text(template)
+        binary = tmp_path / f"mutant_{index}"
+        built = subprocess.run(
+            [compiler, "-std=c++11", "-Wall", "-Wextra", "-Werror",
+             "-I", str(tmp_path), str(source), "-o", str(binary)],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+        )
+        assert built.returncode == 0, built.stderr
+        ran = subprocess.run([str(binary)], stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE, text=True)
+        assert ran.returncode != 0, f"mutant {index} unexpectedly passed"
+
+
+def test_win_close_argument_and_result_stores_come_from_actual_source():
+    source = actual_sources()["src/win.cpp"]
+    assert close_contract_error(source) is None
+    close = extract_function(source, "void Win::close()")
+    mutants = (
+        close.replace("(iFlags_ & 0x40)", "(iFlags_ & 0x20)", 1),
+        close.replace("on_scroll_delete(scroll_vert_)",
+                      "on_scroll_delete(scroll_horz_)", 1),
+        re.sub(r"scroll_vert_\s*=\s*reinterpret_cast<Scroll\s*\*>\s*\(\s*this->on_scroll_delete\(scroll_vert_\)\s*\)",
+               "this->on_scroll_delete(scroll_vert_)", close, count=1),
+    )
+    assert all(mutant != close for mutant in mutants)
+    for mutant in mutants:
+        assert close_contract_error("void Win::close() {" + mutant.split("{", 1)[1]) is not None

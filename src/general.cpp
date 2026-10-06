@@ -32,7 +32,6 @@
 // close_class methods, homed to checkbox.cpp / radiobutton.cpp
 void __cdecl teardown_0060fd60();
 void __cdecl teardown_0060e5d0();
-extern Sprite g_BLANK_SPRITE;
 #include "temp.h"
 #include "general.h"
 #include "movie_media.h"
@@ -2527,7 +2526,7 @@ Return Value: n/a
 Status: Complete
 */
 void Sprite::close_class() {
-    g_BLANK_SPRITE.close();
+    blank_sprite().close();
 }
 
 void __cdecl jackal_close() {

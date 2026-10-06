@@ -45,13 +45,12 @@ class Dialogs : public ListBox,
   void pass_dialog_focus();
 
  public:
-  // 0x00613260, recovered in dialogs.cpp. The catalogued name spells the
-  // parameter Scroll *; this tree spells it void * - the bytes are the same.
-  int on_scroll_delete(void *scroll);
+  // Explicit Win slot-7/slot-6 overrides. Dialogs' kind/parent behavior
+  // remains distinct from ListBox's AutoSound-recipient implementation.
+  virtual int on_scroll_delete(Scroll *scroll);
 
  public:
-  // 0x00613220: kind2/flag40 forwards to the real parent's vslot_08.
-  int on_scroll_create();
+  virtual int on_scroll_create();
 
  public:
   // 0x00612E00, kind-dispatched through typed widget base views in dialogs.cpp.

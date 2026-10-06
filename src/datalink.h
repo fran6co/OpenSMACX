@@ -300,6 +300,13 @@ static_assert(sizeof(Datalink) == 0x1B394,
 // exec` here set a receiver that pointed outside this binary. The object
 // keeps the folded receiver (`mov ecx, 0x703ea0` becomes
 // `mov ecx, <reloc>`) and `->` becomes `.`.
+extern char *DatalinkHelpFile;
+extern int TechnologyHelpPrefixEmitted;
+extern int TechnologyHelpSectionSelector;
+extern char TechnologyHelpPrefixText[];
+extern char TechnologyHelpSectionName[];
+extern char TechnologyHelpSeparatorText[];
+
 extern Datalink DatalinkMain;  // 0x00703EA0
 
 // Append the original help markup to an existing caller-owned text buffer.

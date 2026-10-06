@@ -8356,7 +8356,7 @@ int Win::init(int x, int y, int width, int height, char * caption,
 
     if ((this->iFlags_ & 4) != 0) {
         if ((this->iFlags_ & 0x40) != 0) {
-            this->buffer4_ = reinterpret_cast<Buffer *>(this->vslot_06());
+            this->buffer4_ = reinterpret_cast<Buffer *>(this->on_scroll_create());
         }
         if (this->buffer4_ == 0) {
             void *raw = operator new(0x214C);
@@ -8374,7 +8374,7 @@ int Win::init(int x, int y, int width, int height, char * caption,
 
         if ((this->iFlags_ & 8) != 0) {
             if ((this->iFlags_ & 0x40) != 0) {
-                this->buffer3_ = reinterpret_cast<Buffer *>(this->vslot_06());
+                this->buffer3_ = reinterpret_cast<Buffer *>(this->on_scroll_create());
             }
             if (this->buffer3_ == 0) {
                 void *raw = operator new(0x214C);
@@ -10807,22 +10807,19 @@ void Win::close() {
     this->hide();
 
     if ((scroll_vert_ != 0) && ((iFlags_ & 0x40) != 0)) {
-        // ARITY: the two CLAIMED bodies that reach slot 7 push nothing, and the
-        // image agrees; this transcription passed one argument. The claims
-        // decide. If a later measurement shows the argument is real, the
-        // slot needs splitting, not a default.
-        this->vslot_07();
+        // Historical no-argument reading withdrawn: pinned 0x005EB73E
+        // pushes [this+0x43C] immediately before the slot-7 call.
+        scroll_vert_ = reinterpret_cast<Scroll *>(
+            this->on_scroll_delete(scroll_vert_));
     }
     if (scroll_vert_ != 0) {
         delete scroll_vert_;
         scroll_vert_ = 0;
     }
     if ((scroll_horz_ != 0) && ((iFlags_ & 0x40) != 0)) {
-        // ARITY: the two CLAIMED bodies that reach slot 7 push nothing, and the
-        // image agrees; this transcription passed one argument. The claims
-        // decide. If a later measurement shows the argument is real, the
-        // slot needs splitting, not a default.
-        this->vslot_07();
+        // The paired horizontal arm pushes [this+0x440] at 0x005EB774.
+        scroll_horz_ = reinterpret_cast<Scroll *>(
+            this->on_scroll_delete(scroll_horz_));
     }
     if (scroll_horz_ != 0) {
         delete scroll_horz_;

@@ -19,6 +19,7 @@
 
 #include "original_seam.h"
 #include "vector_teardown.h"
+#include "sounddevice.h"
 
 class Wave;
 struct EAX_REVERB_PROPERTIES;
@@ -69,7 +70,7 @@ struct WaveControlGroup {
   * dwords at +4 are the 0x28-based table get_group_volume reads), taking the
   * extent to at least 0x1A4. That is still a floor, not a size.
   */
-class Wave_Device {
+class Wave_Device : public SoundDeviceBase {
  public:
   // THE VIRTUAL SET, in the image's own vftable slot order (0x0066E0E8).
 
@@ -125,13 +126,6 @@ class Wave_Device {
   int get_listener_zpos(float *z);
 
  private:
-  uint32_t field_4_;         // 0x04, zeroed at construction
-  uint32_t volume_8_;        // 0x08, 0x7F at construction
-  uint32_t field_C_;
-  uint32_t field_10_;
-  void *device_14_;       // 0x14, the wrapped device the forwarders consult
-  uint32_t field_18_;
-  uint32_t field_1C_;
   uint32_t field_20_;        // 0x20, zeroed at construction
   // Original4C4DD0 passes this+24, stride24 and count16 to the CRT
   // constructor iterator. Extent is independent of today's C++ sizeof.

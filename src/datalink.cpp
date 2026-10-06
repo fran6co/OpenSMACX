@@ -3133,6 +3133,29 @@ Popup *TechnologyHelpPopup;
 void __cdecl help_tech_info(void (__cdecl *emit)(char *), int technology,
                             int faction, int link_mode);
 
+// These are independent source-owned data objects. The two caret strings
+// are separate literals; neither denotes a writable shared buffer.
+// RECOVERY_OBJECT: v1 0x007591BC ?TechnologyHelpPrefixEmitted@@3HA
+int TechnologyHelpPrefixEmitted;
+// RECOVERY_OBJECT: v1 0x00684634 ?TechnologyHelpSectionSelector@@3HA
+int TechnologyHelpSectionSelector = -1;
+// RECOVERY_OBJECT: v1 0x00684638 ?TechnologyHelpPrefixText@@3PADA
+char TechnologyHelpPrefixText[] = "^";
+// RECOVERY_OBJECT: v1 0x0068463C ?TechnologyHelpSectionName@@3PADA
+char TechnologyHelpSectionName[] = "TECHHECK";
+// RECOVERY_OBJECT: v1 0x00684648 ?TechnologyHelpSeparatorText@@3PADA
+char TechnologyHelpSeparatorText[] = "^";
+
+// ORIGINAL: 0x0044B340 sub_44b340 0x0044B340-0x0044B37B BYTE_EXACT
+// symbol    ?sub_44b340@@YAXP6AXH@Z@Z
+void __cdecl sub_44b340(void (__cdecl *callback)(int)) {
+    if (TechnologyHelpPrefixEmitted == 0 && TechnologyHelpSectionSelector == -1) {
+        TechnologyHelpPrefixEmitted = 1;
+        callback(static_cast<int>(reinterpret_cast<long>(TechnologyHelpPrefixText)));
+    }
+    callback(static_cast<int>(reinterpret_cast<long>(TextBufferGetPtr)));
+}
+
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0044C7D0 ?help_info_pop@@YAXPAD@Z 0x0044C7D0-0x0044C7E4 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned44C7D0..44C7E4 loads7591B0 and calls601980; src/recovered/0044c7d0.cpp preserves the historical exact candidate and original identity."], "reason": "Plain cdecl text callback loads the shared typed Popup receiver and invokes its inherited BasePop::string method. No runtime executable address, manual vtable or invented null guard."}

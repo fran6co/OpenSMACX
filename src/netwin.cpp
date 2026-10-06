@@ -31,6 +31,7 @@
 #include "general.h"   // checksum_password, parse_says and shared helpers
 #include "netdaemon.h" // NetDaemonNet, message_chat - the pump and the chat send
 #include "original_seam.h"  // vtable_slot - the unmodelled virtual slots
+#include "vector_teardown.h"  // generic strided member-callback initializer
 #include "popmenu.h"   // PopMenu - the pickers' popup and its exec
 #include "popup.h"     // Popup - the password modal and typed teardown
 #include "pulldown.h"  // PullDown - the pickers' second pane
@@ -2475,7 +2476,7 @@ static void netwin_set_rect(RECT *rect, int left, int top, int right, int bottom
 }
 
 // ORIGINAL: 0x00482490 ?exec@NetWin@@QAEHXZ 0x00482490-0x00482D84
-// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00482490.cpp; original identity and primary482490..482D84 span retained", "Pinned4824C2 calls402EE0 with483820 for seven17C-byte stack rows; callback stores482A16 and modal setup identify static cdecl receivers", "recovery/tasks/netwin-owner-coverage.json; revisions1-3 authorize coupled ownership and consumer changes; no matching or runtime acceptance implied."], "reason": "Recover the complete lobby window lifecycle with typed setup rectangles, existing controls, stack-local lobby rows and real receiver-free callbacks."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00482490.cpp; original identity and primary482490..482D84 span retained", "Pinned original 0x004824C2 pushes callback 0x00483820, count 7, stride 0x17C and the stack array at EBP-0xAB0 before calling 0x00402EE0; originally the helper calls the callback with each element as ECX. Current source passes the typed __fastcall NetWinLobbyRow::initialize_empty_slot_callback bridge, which forwards to the existing row member. 0x00483820 writes offsets 0, 1, 2, 3, 4 and 0x178, matching that preserved member owner.", "recovery/tasks/netwin-owner-coverage.json; revisions1-3 authorize coupled ownership and consumer changes; no matching or runtime acceptance implied."], "reason": "Recover the complete lobby window lifecycle with typed setup rectangles, existing controls, stack-local lobby rows and real receiver-free callbacks."}
 // TRIED: full transcription treating `self` as `int *` (matches the original's word-indexed field layout exactly); vtable slot057 retyped to (int,int,int) in this file's VCall, verified against raw disasm; UnionRect/CharUpperA reached via the IAT slot pattern. Reaches MISMATCH #6 'xor' vs 'mov' (register allocation), not chased further given size (2292 bytes).
 int NetWin::exec() {
     if (ExitTurnLoop != 0) {
@@ -2499,9 +2500,8 @@ int NetWin::exec() {
     lobby_message.header_.field_2_ = 0;
     lobby_message.header_.slot_ = -1;
     lobby_message.header_.field_8_ = 0;
-    for (int row_index = 0; row_index < 7; ++row_index) {
-        lobby_message.rows_[row_index].initialize_empty_slot();
-    }
+    sub_402ee0(&lobby_message.rows_[0], sizeof(NetWinLobbyRow), 7,
+                &NetWinLobbyRow::initialize_empty_slot_callback);
     // 0x483820 is the scoped NetWinLobbyRow reset identity (re-homed from the
     // old, incorrect NetWin::UNK5 owner); do not mutate process-global rows.
     if (NetDaemonNet.lock_state_[0].leading_words_[1] != 0) {

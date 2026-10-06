@@ -228,6 +228,30 @@ class Sprite {
 
 static_assert(sizeof(Sprite) == 0x2C, "Sprite layout must match the legacy ABI");
 
+// The real blank Sprite storage begins at 0x009BEAE8. Keep its once-byte
+// guard as the independent global immediately before it (0x009BEAE0); do not
+// model unknown neighboring padding as part of a parent allocation.
+union BlankSpriteStorage {
+  char bytes[sizeof(Sprite)];
+  uint32_t alignment_[sizeof(Sprite) / sizeof(uint32_t)];
+};
+static_assert(sizeof(BlankSpriteStorage) == sizeof(Sprite),
+              "blank Sprite raw-storage extent");
+
+struct BlankSpriteStorageOwner {
+  BlankSpriteStorage rawstorage_;
+
+  BlankSpriteStorageOwner();
+  ~BlankSpriteStorageOwner();
+  Sprite &sprite();
+};
+static_assert(sizeof(BlankSpriteStorageOwner) == sizeof(Sprite),
+              "blank Sprite owner must retain the original object extent");
+
+extern uint8_t BlankSpriteCleanupGuard;
+extern BlankSpriteStorageOwner g_BLANK_SPRITE_OWNER;
+Sprite &blank_sprite();
+
 // Vehicle and project icon tables used by ProdPicker. Definitions and their
 // bounded extents are owned by sprite.cpp.
 extern Sprite g_FACILITY_ICON_SPRITES[70];

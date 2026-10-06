@@ -203,7 +203,7 @@ void Wave_In_Device::restart() {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 0.
 // ORIGINAL: 0x004C5840 ?select@Midi_Device@@QAEHI@Z 0x004C5840-0x004C5845 BYTE_EXACT
-// symbol    ?select@Midi_Device@@UAEHI@Z
+// symbol    ?select@Midi_Device@@UAEHK@Z
 // size      5 bytes
 // prototype int (__thiscall ?select@Midi_Device@@QAEHI@Z)(Midi_Device* this, unsigned int)
 // callers   0   call targets   0
@@ -213,7 +213,7 @@ Purpose: Unknown; the legacy implementation ignores its arguments and returns 0.
 Return Value: 0, always
 Status: Complete
 */
-int Midi_Device::select(unsigned int) {
+int Midi_Device::select(unsigned long) {
     return 0;
 }
 
@@ -286,7 +286,7 @@ void Midi_Device::set_rate(unsigned int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 0.
 // ORIGINAL: 0x004C5AD0 ?select@Wave_In_Device@@QAEHI@Z 0x004C5AD0-0x004C5AD5 BYTE_EXACT
-// symbol    ?select@Wave_In_Device@@UAEHI@Z
+// symbol    ?select@Wave_In_Device@@UAEHK@Z
 // size      5 bytes
 // prototype int (__thiscall ?select@Wave_In_Device@@QAEHI@Z)(Wave_In_Device* this, unsigned int)
 // callers   0   call targets   0
@@ -296,7 +296,7 @@ Purpose: Unknown; the legacy implementation ignores its arguments and returns 0.
 Return Value: 0, always
 Status: Complete
 */
-int Wave_In_Device::select(unsigned int) {
+int Wave_In_Device::select(unsigned long) {
     return 0;
 }
 
@@ -337,7 +337,7 @@ void Wave_In_Device::set_rate(unsigned int) {
 /*
 Purpose: Report no device description; the legacy implementation returns 0.
 // ORIGINAL: 0x004C5850 ?get_description@Midi_Device@@QAEHIPADI@Z 0x004C5850-0x004C5855 BYTE_EXACT
-// symbol    ?get_description@Midi_Device@@UAEHIPADI@Z
+// symbol    ?get_description@Midi_Device@@UAEHKPADK@Z
 // size      5 bytes
 // prototype int (__thiscall ?get_description@Midi_Device@@QAEHIPADI@Z)(Midi_Device* this, unsigned int, int8*, unsigned int)
 // callers   0   call targets   0
@@ -347,7 +347,7 @@ Purpose: Report no device description; the legacy implementation returns 0.
 Return Value: 0, always
 Status: Complete
 */
-int Midi_Device::get_description(unsigned int, char *, unsigned int) {
+int Midi_Device::get_description(unsigned long, char *, unsigned long) {
     return 0;
 }
 
@@ -355,7 +355,7 @@ int Midi_Device::get_description(unsigned int, char *, unsigned int) {
 /*
 Purpose: Report no device description; the legacy implementation returns 0.
 // ORIGINAL: 0x004C5AE0 ?get_description@Wave_In_Device@@QAEHIPADI@Z 0x004C5AE0-0x004C5AE5 BYTE_EXACT
-// symbol    ?get_description@Wave_In_Device@@UAEHIPADI@Z
+// symbol    ?get_description@Wave_In_Device@@UAEHKPADK@Z
 // size      5 bytes
 // prototype int (__thiscall ?get_description@Wave_In_Device@@QAEHIPADI@Z)(Wave_In_Device* this, unsigned int, int8*, unsigned int)
 // callers   0   call targets   0
@@ -365,7 +365,7 @@ Purpose: Report no device description; the legacy implementation returns 0.
 Return Value: 0, always
 Status: Complete
 */
-int Wave_In_Device::get_description(unsigned int, char *, unsigned int) {
+int Wave_In_Device::get_description(unsigned long, char *, unsigned long) {
     return 0;
 }
 
@@ -505,6 +505,32 @@ typedef void (OriginalObject::*midi_device_vfn)();
 
 }  // namespace
 
+// Disassembly at 0x004C4D70 enters with ECX as the receiver, has no stack
+// argument reads, and returns ESI in EAX. The original class name is absent;
+// SoundDeviceBase is a provisional source-owner name only. The same common
+// initialization is inlined by each of the three concrete constructors.
+// Retained seed facts: 54 original bytes at 0x004C4D70..0x004C4DA6, one call
+// to the original four-byte memset helper 0x006465F0, no mapped callers.
+// ORIGINAL: 0x004C4D70 sub_4c4d70 0x004C4D70-0x004C4DA6 BYTE_EXACT
+// symbol    ??0SoundDeviceBase@@QAE@XZ
+SoundDeviceBase::SoundDeviceBase() {
+    memset(&field_4_, 0, 4);
+    field_C_ = 0;
+    field_18_ = 0;
+    field_1C_ = 0;
+    field_10_ = 0;
+    device_14_ = nullptr;
+    volume_8_ = 0x7F;
+}
+
+SoundDeviceBase::~SoundDeviceBase() {
+    void *const device = device_14_;
+    if (device) {
+        vtable_slot<device_release_fn>(device, 0x10)(device);
+    }
+}
+
+
 /*
 Purpose: Enable the wrapped device, if there is one, through vtable slot 0x54.
 // ORIGINAL: 0x004C5900 ?enable@Midi_Device@@QAEXXZ 0x004C5900-0x004C590F BYTE_EXACT
@@ -520,7 +546,7 @@ Return Value: n/a
 Status: Complete
 */
 int Midi_Device::enable() {
-    void *device = device_;
+    void *device = device_14_;
     if (device) {
         vtable_slot<device_query_fn>(device, 0x54)(device);
     }
@@ -545,7 +571,7 @@ Return Value: n/a
 Status: Complete
 */
 int Midi_Device::disable() {
-    void *device = device_;
+    void *device = device_14_;
     if (device) {
         vtable_slot<device_query_fn>(device, 0x58)(device);
     }
@@ -576,7 +602,7 @@ Return Value: the device's answer, or 1 when none is wrapped
 Status: Complete
 */
 int Midi_Device::is_disabled() {
-    void *device = device_;
+    void *device = device_14_;
     // THE DEVICE PATH FIRST AND THE DEFAULT LAST, which is the opposite of
     // what a guard clause writes: the image does `je` FORWARD to the
     // `mov eax, 1` and falls through into the call.
@@ -601,7 +627,7 @@ Return Value: 0, always
 Status: Complete
 */
 int Wave_In_Device::start_record() {
-    void *device = device_;
+    void *device = device_14_;
     if (device) {
         vtable_slot<device_query_fn>(device, 0x58)(device);
     }
@@ -623,7 +649,7 @@ Return Value: 0, always
 Status: Complete
 */
 int Wave_In_Device::end_record() {
-    void *device = device_;
+    void *device = device_14_;
     if (device) {
         vtable_slot<device_query_fn>(device, 0x5C)(device);
     }
@@ -661,20 +687,6 @@ int Wave_In_Device::end_record() {
 */
 
 Midi_Device::Midi_Device() {
-    // THE BASE VTABLE FIRST, THE DERIVED ONE LAST, with every scalar settled
-    // in between - the same shape `Wave_Device::Wave_Device` next door already
-    // reproduces. The image writes 0x0066E098, then the fields OUT of
-    // declaration order, then 0x0066E190 over the top.
-    // A REAL `memset` CALL, not a store: the image emits
-    // `push 4; push 0; push esi+4; call 0x6465f0` at 0x004C5753. The same
-    // shape `Wave::init` needed for its own flag field.
-    memset(&field_4_, 0, 4);
-    field_C_ = 0;
-    field_18_ = 0;
-    field_1C_ = 0;
-    field_10_ = 0;
-    device_ = nullptr;
-    field_8_ = 0x7F;
 }
 
 /*
@@ -694,13 +706,6 @@ Midi_Device::Midi_Device() {
 // `memset(&field_4_, 0, 4)` is a real `memset` CALL in the image
 // (`push 4; push 0; push esi+4; call 0x6465f0`), not a store.
 Wave_In_Device::Wave_In_Device() {
-    memset(&field_4_, 0, 4);
-    field_C_ = 0;
-    field_18_ = 0;
-    field_1C_ = 0;
-    field_10_ = 0;
-    device_ = nullptr;
-    field_8_ = 0x7F;
 }
 
 /*
@@ -718,10 +723,6 @@ Wave_In_Device::Wave_In_Device() {
 // the wrapped device's own slot 4 - the dispatch is the destructor's last
 // act. Promoted from src/recovered/004c5780.cpp.
 Midi_Device::~Midi_Device() {
-    void *device = device_;
-    if (device) {
-        vtable_slot<device_release_fn>(device, 0x10)(device);
-    }
 }
 
 /*
@@ -737,10 +738,6 @@ Midi_Device::~Midi_Device() {
 */
 // Same shape as ~Midi_Device() above. Promoted from src/recovered/004c5980.cpp.
 Wave_In_Device::~Wave_In_Device() {
-    void *device = device_;
-    if (device) {
-        vtable_slot<device_release_fn>(device, 0x10)(device);
-    }
 }
 
 // The unrecovered vftable slots (a bare `ret` stub at 0x00404280 in the
@@ -758,16 +755,16 @@ void Wave_In_Device::unk_slot2() {}
 // the callers may read. Left as the image has it; noted rather than fixed.
 // ORIGINAL: 0x004C56D0 ?create_device@Midi_Device@@QAEHK@Z 0x004C56D0-0x004C5707 BYTE_EXACT
 // LEVER: the artifact's `char *self = reinterpret_cast<char *>(this); ... self +
-//   0x14` pun became `void **slot = &device_;` - the member form reproduces the
+//   0x14` pun became `void **slot = &device_14_;` - the member form reproduces the
 //   image's `lea eax, [ecx + 0x14]` at 0x004C56D3, which is the address the open
 //   call needs, not a value read.
 // symbol    ?create_device@Midi_Device@@UAEHK@Z
 int Midi_Device::create_device(unsigned long flags) {
-    // The image takes `&device_` into eax first (0x004C56D3 `lea eax,
+    // The image takes `&device_14_` into eax first (0x004C56D3 `lea eax,
     // [ecx + 0x14]`), then loads the field for the test - the wrapped device
     // is opened INTO this slot, so the address outlives the null check.
-    void **slot = &device_;
-    if (device_ == 0) {
+    void **slot = &device_14_;
+    if (device_14_ == 0) {
         MidiDeviceOpen *const open = MidiDeviceOpenSlot();
         if (open != 0) {
             return open(slot, flags);
@@ -780,9 +777,9 @@ int Midi_Device::create_device(unsigned long flags) {
 // ORIGINAL: 0x004C5710 ?delete_device@Midi_Device@@QAEHXZ 0x004C5710-0x004C5738 BYTE_EXACT
 // symbol    ?delete_device@Midi_Device@@UAEHXZ
 int Midi_Device::delete_device() {
-    if (device_ != 0 && MidiDeviceCloseSlot() != 0) {
+    if (device_14_ != 0 && MidiDeviceCloseSlot() != 0) {
         MidiDeviceCloseSlot()();
-        device_ = 0;
+        device_14_ = 0;
         return 0;
     }
     return 0x14;
@@ -791,15 +788,15 @@ int Midi_Device::delete_device() {
 // ORIGINAL: 0x004C57F0 ?release@Midi_Device@@QAEXXZ 0x004C57F0-0x004C5823 BYTE_EXACT
 // symbol    ?release@Midi_Device@@UAEHXZ
 int Midi_Device::release() {
-    if (device_ != 0) {
-        vtable_slot<device_release_fn>(device_, 0x10)(device_);
-        if (device_ != 0) {
+    if (device_14_ != 0) {
+        vtable_slot<device_release_fn>(device_14_, 0x10)(device_14_);
+        if (device_14_ != 0) {
             if (MidiDeviceCloseSlot() != 0) {
                 MidiDeviceCloseSlot()();
-                device_ = 0;
+                device_14_ = 0;
             }
         }
-        device_ = 0;
+        device_14_ = 0;
     }
     return 0;
 }
@@ -807,8 +804,8 @@ int Midi_Device::release() {
 // ORIGINAL: 0x004C59A0 ?create_device@Wave_In_Device@@QAEHK@Z 0x004C59A0-0x004C59C5 BYTE_EXACT
 // symbol    ?create_device@Wave_In_Device@@UAEHK@Z
 int Wave_In_Device::create_device(unsigned long flags) {
-    void **slot = &device_;
-    if (device_ == 0) {
+    void **slot = &device_14_;
+    if (device_14_ == 0) {
         WaveInDeviceOpen *const open = WaveInDeviceOpenSlot();
         if (open != 0) {
             return open(slot, flags);
@@ -821,9 +818,9 @@ int Wave_In_Device::create_device(unsigned long flags) {
 // ORIGINAL: 0x004C59E0 ?delete_device@Wave_In_Device@@QAEHXZ 0x004C59E0-0x004C5A08 BYTE_EXACT
 // symbol    ?delete_device@Wave_In_Device@@UAEHXZ
 int Wave_In_Device::delete_device() {
-    if (device_ != 0 && WaveInDeviceCloseSlot() != 0) {
+    if (device_14_ != 0 && WaveInDeviceCloseSlot() != 0) {
         WaveInDeviceCloseSlot()();
-        device_ = 0;
+        device_14_ = 0;
         return 0;
     }
     return 0x14;
@@ -832,10 +829,10 @@ int Wave_In_Device::delete_device() {
 // ORIGINAL: 0x004C5A50 ?release@Wave_In_Device@@QAEXXZ 0x004C5A50-0x004C5A71 BYTE_EXACT
 // symbol    ?release@Wave_In_Device@@UAEHXZ
 int Wave_In_Device::release() {
-    if (device_ != 0) {
-        vtable_slot<device_release_fn>(device_, 0x10)(device_);
+    if (device_14_ != 0) {
+        vtable_slot<device_release_fn>(device_14_, 0x10)(device_14_);
         delete_device();
-        device_ = 0;
+        device_14_ = 0;
     }
     return 0;
 }

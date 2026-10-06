@@ -4155,3 +4155,21 @@ void BasePop::on_redraw() {
         BasePopDrawnBottom = field_30DC_ + own_bottom;
     }
 }
+// ORIGINAL: 0x0048CF00 sub_48cf00 0x0048CF00-0x0048CF4A BYTE_EXACT
+// symbol    ?sub_48cf00@@YAHPAVBasePop@@H@Z
+
+// 0x0048CF00 is a cdecl operation with an explicit BasePop receiver, not a
+// member call. Its old exact seed and complete span remain in the mapping.
+// Retained seed facts: 74 bytes at 0x0048CF00..0x0048CF4A, zero mapped
+// callers, one direct target 0x006108E0; SpriteBox is the real +0x2240
+// subobject and the redraw callback slot is BasePop +0x3168.
+int __cdecl sub_48cf00(BasePop *owner, int vehicle) {
+    Sprite *const first_vehicle_sprite = &g_VEH_SPRITES[0];
+    owner->set_caller_picture(owner->picture_enabled()
+                                  ? nullptr
+                                  : first_vehicle_sprite);
+    const int result = owner->dialogs().SpriteBox::sprite(
+        first_vehicle_sprite, nullptr, vehicle);
+    owner->set_redraw_callback(veh_sprite_draw);
+    return result;
+}

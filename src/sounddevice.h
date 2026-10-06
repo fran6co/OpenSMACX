@@ -33,10 +33,34 @@
   * write, so the object extends at least to 0x20; g_MIDI_DEVICE's global slot
   * bounds Midi_Device above at 0x28, which is a bound and not a size. Nothing
   * pins their sizeof and no field may be appended without deriving it first.
-  * The vtable pointer at offset zero is held as opaque storage so no C++
-  * vtable is generated that could disagree with the original's.
+  * SoundDeviceBase now owns the original pure interface table and its
+  * shared fields, so each concrete device has one real C++ base subobject.
   */
-class Midi_Device {
+class SoundDeviceBase {
+ public:
+  virtual int create_device(unsigned long) = 0;
+  virtual int delete_device() = 0;
+  virtual void unk_slot2() = 0;
+  virtual int init(void *, unsigned long) = 0;
+  virtual int release() = 0;
+  virtual int get_ndevices() = 0;
+  virtual int select(unsigned long) = 0;
+  virtual int get_description(unsigned long, char *, unsigned long) = 0;
+  SoundDeviceBase();
+ protected:
+  ~SoundDeviceBase();
+  uint32_t field_4_;
+  uint32_t volume_8_;
+  uint32_t field_C_;
+  uint32_t field_10_;
+  void *device_14_;
+  uint32_t field_18_;
+  uint32_t field_1C_;
+};
+static_assert(sizeof(SoundDeviceBase) == 0x20,
+              "original common sound-device prefix");
+
+class Midi_Device : public SoundDeviceBase {
  public:
   // THE VIRTUAL SET, in the image's own vftable slot order (0x0066E190).
   // The base-interface table (0x0066E098) is all-pure: the original compiled
@@ -47,8 +71,8 @@ class Midi_Device {
   virtual int init(void *window, unsigned long backends);  // slot 3
   virtual int release();                            // slot 4 (0x4C57F0)
   virtual int get_ndevices();                       // slot 5 (0x4C5830)
-  virtual int select(unsigned int a1);              // slot 6 (0x4C5840)
-  virtual int get_description(unsigned int a1, char *a2, unsigned int a3);  // slot 7
+  virtual int select(unsigned long a1);              // slot 6 (0x4C5840)
+  virtual int get_description(unsigned long a1, char *a2, unsigned long a3);  // slot 7
   // DEFINED IN sounddevice.cpp, not empty. Its marker claims 60 image bytes
   // and the body was `{ ; }` - the image writes nine fields and both vtable
   // pointers. Promoted from src/recovered/units/004c5740.cpp.
@@ -72,20 +96,12 @@ class Midi_Device {
   int enable();
   int disable();
   int is_disabled();
- private:
-  uint32_t field_4_;  // 0x0004
-  uint32_t field_8_;
-  uint32_t field_C_;
-  uint32_t field_10_;
-  void *device_;  // 0x14, the wrapped device this forwards to
-  uint32_t field_18_;
-  uint32_t field_1C_;
 };  // vptr at 0x00 replaces the retired vtable_storage_
 
 static_assert(sizeof(Midi_Device) == 0x20,
               "Midi_Device layout must match the original executable");
 
-class Wave_In_Device {
+class Wave_In_Device : public SoundDeviceBase {
  public:
   // THE VIRTUAL SET, in the image's own vftable slot order (0x0066E1F0).
   virtual int create_device(unsigned long a1);      // slot 0 (0x4C59A0)
@@ -94,8 +110,8 @@ class Wave_In_Device {
   virtual int init(void *window, unsigned long backends);  // slot 3
   virtual int release();                            // slot 4 (0x4C5A50)
   virtual int get_ndevices();                       // slot 5 (0x4C5AC0)
-  virtual int select(unsigned int a1);              // slot 6 (0x4C5AD0)
-  virtual int get_description(unsigned int a1, char *a2, unsigned int a3);  // slot 7
+  virtual int select(unsigned long a1);              // slot 6 (0x4C5AD0)
+  virtual int get_description(unsigned long a1, char *a2, unsigned long a3);  // slot 7
   // DEFINED IN sounddevice.cpp, not empty - the same shape as
   // Midi_Device::Midi_Device() next door.
   Wave_In_Device();
@@ -112,14 +128,6 @@ class Wave_In_Device {
   int get_rate();
   int start_record();
   int end_record();
- private:
-  uint32_t field_4_;  // 0x0004
-  uint32_t field_8_;
-  uint32_t field_C_;
-  uint32_t field_10_;
-  void *device_;  // 0x14, the wrapped device this forwards to
-  uint32_t field_18_;
-  uint32_t field_1C_;
 };  // vptr at 0x00 replaces the retired vtable_storage_
 
 static_assert(sizeof(Wave_In_Device) == 0x20,
@@ -151,4 +159,3 @@ inline MidiDeviceOpen *&MidiDeviceOpenSlot() { return *reinterpret_cast<MidiDevi
 inline MidiDeviceClose *&MidiDeviceCloseSlot() { return *reinterpret_cast<MidiDeviceClose **>(0x0090DB40); }
 inline WaveInDeviceOpen *&WaveInDeviceOpenSlot() { return *reinterpret_cast<WaveInDeviceOpen **>(0x0090DB44); }
 inline WaveInDeviceClose *&WaveInDeviceCloseSlot() { return *reinterpret_cast<WaveInDeviceClose **>(0x0090DB48); }
-

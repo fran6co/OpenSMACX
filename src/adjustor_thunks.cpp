@@ -372,7 +372,7 @@ int __fastcall adjust_dialogs1_on_scroll_delete(void *self, void *,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    return reinterpret_cast<Dialogs *>(object - vtordisp)->Dialogs::on_scroll_delete(arg0);
+    return reinterpret_cast<Dialogs *>(object - vtordisp)->Dialogs::on_scroll_delete(static_cast<Scroll *>(arg0));
 }
 
 /*

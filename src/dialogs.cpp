@@ -16,6 +16,7 @@
 #include "worldwin.h"
 #include "spritebox.h"
 #include "net_class.h"
+#include "scroll.h"
 #include <cstring>
 
 /*
@@ -734,7 +735,7 @@ Purpose: Hand a closing scroll control to the list box: only when the active
          8 bytes below `this` and the ListBox's vbtable names where its
          scroll machinery sits.
 // ORIGINAL: 0x00613260 ?on_scroll_delete@Dialogs@@QAEHPAUScroll@@@Z 0x00613260-0x0061329F BYTE_EXACT
-// symbol    ?on_scroll_delete@Dialogs@@QAEHPAX@Z
+// symbol    ?on_scroll_delete@Dialogs@@UAEHPAVScroll@@@Z
 // size      63 bytes
 // prototype int (__thiscall ?on_scroll_delete@Dialogs@@QAEHPAUScroll@@@Z)(Dialogs* this, Scroll*)
 // callers   0   call targets   0
@@ -748,7 +749,7 @@ Purpose: Hand a closing scroll control to the list box: only when the active
 Return Value: the scroll, or the slot's answer
 Status: Complete
 */
-int Dialogs::on_scroll_delete(void *scroll) {
+int Dialogs::on_scroll_delete(Scroll *scroll) {
     char *self = reinterpret_cast<char *>(this);
     // A SWITCH, NOT AN `if`: the image is `sub eax, 2; jne`, which is what
     // VC6 emits for a one-case switch; an equality test folds to a fused
@@ -828,6 +829,7 @@ void Dialogs::pass_dialog_focus() {
 
 // ORIGINAL: 0x00613220 ?on_scroll_create@Dialogs@@QAEHXZ 0x00613220-0x00613254
 // RECOVERY_BINDING: v1 {"reason":"Recover the complete body in its genuine C++ owner, with real embedded members, shared virtual bases, lifecycle and parent operations. Compiler-generated overrides/adjustors replace executable-address or vbtable stand-ins; no current matching claim is granted.","evidence":["git:de91fffe:src/recovered/units/00613220.cpp","image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","recovery/tasks/ui-eight-owner-coverage.json","Original entry 0x00613220; physical VC6 COFF emitted symbol ?on_scroll_create@Dialogs@@QAEHXZ."]}
+// symbol    ?on_scroll_create@Dialogs@@UAEHXZ
 int Dialogs::on_scroll_create() {
     if (kind_ == 2 && (iFlags_ & 0x40) != 0 && win_parent_ != 0) {
         return win_parent_->vslot_08();

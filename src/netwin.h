@@ -44,6 +44,11 @@ struct NetWinLobbyRow {
 
   // Native 0x483820 reset, rehomed from the former NetWin::UNK5 owner.
   void initialize_empty_slot();
+  // Typed callback adapter for the generic strided helper; the existing
+  // row initializer remains the sole owner of the row's field writes.
+  static void __fastcall initialize_empty_slot_callback(void *element) {
+    static_cast<NetWinLobbyRow *>(element)->initialize_empty_slot();
+  }
 };
 static_assert(sizeof(NetWinLobbyRow) == 0x17C, "lobby row stride");
 static_assert(offsetof(NetWinLobbyRow, leader_name_) == 5,

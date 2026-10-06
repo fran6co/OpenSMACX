@@ -557,9 +557,14 @@ class Win : public AutoSound {
   // RECOVERY_SHARED: v1 0x00404280 0x00404281 ?on_lose_mouse_capture@Win@@UAEXXZ 0x005EB3D0
   virtual void on_lose_mouse_capture() {}
   virtual int vslot_05(int = 0, int = 0, int = 0) { return 0; }  // 0x00404220
-  virtual int vslot_06() { return 0; }  // 0x00406B30
-  virtual int vslot_07() { return 0; }  // 21 call sites pass nothing and
-                                      // the image pushes nothing  // 0x00404230
+  // Win::init asks slot 6 for an external buffer before allocating its
+  // own Scroll fallback. The default original body returns zero.
+  virtual int on_scroll_create() { return 0; }  // slot 6, 0x00406B30
+  // Win::close passes the exact Scroll* being removed. The default
+  // original body returns that pointer unchanged (0x00404230, ret 4).
+  virtual int on_scroll_delete(Scroll *scroll) {
+    return reinterpret_cast<int>(scroll);
+  }  // slot 7
   virtual int vslot_08() { return 0; }  // 0x00406B30
   // The parameter is the POINTER the image's one call site passes through
   // it (Dialogs::on_scroll_delete hands a Scroll* over this slot); typed as

@@ -36,6 +36,12 @@ typedef void(__fastcall *func_vector_element_callback)(void *element);
 void __stdcall VectorDtorIterator(void *array, unsigned int element_size, int count,
                                   func_vector_element_callback teardown);
 
+// The 0x00402EE0 game helper is distinct from the five-argument CRT ??_L
+// iterator above: it receives one typed element callback and performs no array
+// unwind/cleanup if a callback throws.
+extern "C" void __stdcall sub_402ee0(void *array, unsigned int element_size,
+                                      int count, func_vector_element_callback callback);
+
 // Its construction-side companion: walk an array calling one constructor per
 // element, with the destructor along for exception unwind (unreachable here,
 // but passed faithfully).

@@ -9,6 +9,9 @@
 #include <vector>
 
 #define __cdecl
+#define __stdcall
+#define __fastcall
+typedef void (*func_vector_element_callback)(void *);
 typedef unsigned int uint32_t;
 typedef unsigned char uint8_t;
 typedef signed char int8_t;
@@ -81,6 +84,7 @@ struct NetWinLobbyRow {
         }
     }
     void initialize_empty_slot();
+    /* ROW_CALLBACK_INSERTION */
 };
 static_assert(sizeof(NetWinLobbyRow) == 0x17C, "row stride");
 static NetWinLobbyRow NetWinLobbyRows[8];

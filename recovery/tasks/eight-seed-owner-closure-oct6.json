@@ -1,0 +1,106 @@
+{
+  "schema_version": 1,
+  "task_id": "eight-seed-owner-closure-oct6",
+  "author": "framework-coordinator",
+  "target": "opensmacx",
+  "base_revision": "319cfc1269f4fc08baf5102e2d71d07ec268bcda",
+  "intent": "Replace eight legacy seeds with compiling genuine owner lifetimes, typed virtual callbacks, shared help state and strided initialization, preserving every original identity/span and historical obligation. Expand only the dependent interfaces and callers needed for these closures.",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4206304
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4771584
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5000560
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4502336
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6344400
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6344464
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6535904
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6540736
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6535936
+    }
+  ],
+  "editable_files": [
+    "recovery/tests/netwin_exec_host_control.cpp",
+    "recovery/tests/test_netwin_exec_behavior.py",
+    "src/adjustor_thunks.cpp",
+    "src/basepop.cpp",
+    "src/datalink.cpp",
+    "src/datalink.h",
+    "src/dialogs.cpp",
+    "src/dialogs.h",
+    "src/general.cpp",
+    "src/leaf_recoveries.cpp",
+    "src/listbox.cpp",
+    "src/listbox.h",
+    "src/netwin.cpp",
+    "src/netwin.h",
+    "src/recovered/00402ee0.cpp",
+    "src/recovered/0048cf00.cpp",
+    "src/recovered/004c4d70.cpp",
+    "src/recovered/units/0044b340.cpp",
+    "src/recovered/units/0060ced0.cpp",
+    "src/recovered/units/0060cf10.cpp",
+    "src/recovered/units/0063bae0.cpp",
+    "src/recovered/units/0063cdc0.cpp",
+    "src/sounddevice.cpp",
+    "src/sounddevice.h",
+    "src/sprite.cpp",
+    "src/sprite.h",
+    "src/vector_teardown.cpp",
+    "src/vector_teardown.h",
+    "src/wave_device.cpp",
+    "src/wave_device.h",
+    "src/win.cpp",
+    "src/win.h",
+    "recovery/tests/listbox_scroll_host_control.cpp",
+    "recovery/tests/test_datalink_techhelp_actual_source.py",
+    "recovery/tests/test_listbox_scroll_interface_actual_source.py",
+    "recovery/tests/test_sounddevice_interface_actual_source.py",
+    "recovery/tests/test_sounddevice_owner_actual_source.py",
+    "recovery/tests/test_sprite_blank_helper_actual_source.py",
+    "recovery/tests/test_sprite_blank_lifetime_actual_source.py",
+    "recovery/tests/test_strided_callback_initializer_actual_source.py"
+  ],
+  "evidence": [
+    "The pinned common sound-device constructor and concrete table transitions establish one provisional eight-slot base with shared fields at +4..+1C; genuine inheritance replaces repeated scalar initialization. Backend globals and complete sound-engine ownership remain separate debt. Concrete Wave constructor vptr staging remains a matching/observable-context obligation.",
+    "ListBox's original Win-view slots 6 and 7 perform recipient dispatch under AutoSound flag 0x40. Win::close pushes the actual Scroll argument and stores the returned pointer before deletion; correct this coupled interface in Win, ListBox and Dialogs, preserving all existing claims. Original entry/full-span bindings include receiver adjustment; native compiler-generated adjustors are not handwritten coverage adapters.",
+    "Blank Sprite startup constructs one Sprite at 0x009BEAE8 and registers a cleanup that sets separate byte 0x009BEAE0 bit 0 before destruction. Genuine aligned raw-storage ownership avoids duplicate implicit teardown. The new 0x0063BB00 cleanup identity is unclaimed. The draw helper uses the real GraphicWin/Buffer base and this Sprite; its gate context type remains unresolved.",
+    "The 0x00402EE0 helper has four stdcall arguments, ECX element callbacks and wrapped DEC/sign-test count behavior including INT_MIN. Its genuine NetWin row bridge preserves original partial writes and propagation without inventing constructed-prefix unwind. Pre-existing NetWin packet/header initialization changes require later fidelity audit; this batch does not claim the whole NetWin owner faithful.",
+    "The Datalink technology helper uses a separate prefix latch, section selector and writable literals, not fields of the nearby Popup pointer. Retain existing selector-reset and text-open failure behavior; unowned technology/rules tables are not assigned invented extents.",
+    "Coordinator authorizes bounded temporary matching regressions for these evidence-backed structural closures; all historical claims remain restoration obligations. No demotion, fresh byte claim, linked outside-scope preservation, whole-game acceptance or intentional behavior fix is granted.",
+    "Delete only the eight superseded seeds after compiled owners retain their complete identities, spans and useful findings. Actual-source controls and fresh native build/link and claim/reference checks are required for the coordinator checkpoint; the broad suite remains failing and is not acceptance."
+  ]
+}
