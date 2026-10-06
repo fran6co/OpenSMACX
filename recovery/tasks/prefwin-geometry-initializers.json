@@ -2,16 +2,32 @@
   "author": "framework-coordinator",
   "base_revision": "e2ca5ba3613267d15cc4f38371f75210beab8047",
   "editable_files": [
+    "CMakeLists.txt",
+    "recovery/tests/test_shared_word_actual_source.py",
     "src/global_arith.cpp",
-    "src/global_arith.h"
+    "src/global_arith.h",
+    "src/prefwin.cpp",
+    "src/prefwin_geometry.cpp",
+    "src/prefwin_geometry.h",
+    "src/shared_word.cpp",
+    "src/shared_word.h"
   ],
   "evidence": [
-    "Pinned PE ordered CRT slots68257C..6825E0 reference the geometry initializer family48D550..48D820. Independently read geometry constants686B6C..90 are4,4,3,3,700,390,220,20,120,20; BSS outputs8577D8..EC and857884..D0 initially zero. Current global_arith fixed-address aliases are invalid runtime storage for reconstructed PrefWin.",
-    "Worker edits only global_arith.cpp/h; PrefWin owner edits separate files, coordinator integrates API centrally without merging frozen worker journals or resetting baselines. Preserve original identities/claims, no original-address calls, manual CRT registration, fabricated exactness or synthetic acceptances. Independently resolve dynamic initialization and original output stores before selecting names."
+    "Superseded historical task evidence retained verbatim (not current owner/status): Pinned PE ordered CRT slots68257C..6825E0 reference the geometry initializer family48D550..48D820. Independently read geometry constants686B6C..90 are4,4,3,3,700,390,220,20,120,20; BSS outputs8577D8..EC and857884..D0 initially zero. Current global_arith fixed-address aliases are invalid runtime storage for reconstructed PrefWin.",
+    "Superseded historical task evidence retained verbatim (not current owner/status): Worker edits only global_arith.cpp/h; PrefWin owner edits separate files, coordinator integrates API centrally without merging frozen worker journals or resetting baselines. Preserve original identities/claims, no original-address calls, manual CRT registration, fabricated exactness or synthetic acceptances. Independently resolve dynamic initialization and original output stores before selecting names.",
+    "Pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: ordered CRT entries select the existing geometry initializer identities 0x48D550..0x48D820; the ten independent input dwords occupy 0x686B6C..0x686B94, and the existing outputs occupy 0x8577D8..0x8578D4. Current source already expresses the outputs as namespace-scope initializers in prefwin_geometry.cpp.",
+    "The ten PrefWin input values are literal scalar initializers (4,4,3,3,700,390,220,20,120,20), while the 26 existing output expressions and source order remain unchanged. The inputs are constant-initialized objects; their move must not add or reorder a dynamic initializer. The coordinator will freshly measure all 26 initializer identities after the TU move.",
+    "Pinned 0x44C860 stores its complete argument dword at 0x7591C4 and 0x44C870 XORs bit zero of that same word. The source-owned SharedWordValue object is four-byte zero-initialized storage. Keep both function identities and the object together in shared_word.cpp; the state domain, caller/lifetime relation, and whole-image reachability remain unknown.",
+    "Move existing annotation/object bindings without changing original spans, exactness claims, object identity/extent/evidence, or historical LEVER/TRIED notes. Keep the task's existing base_revision and all existing subjects unchanged; the added 0x44C860 subject covers the paired setter needed for the owner split. No claim, acceptance state, or historical baseline is reset by this scope update."
   ],
-  "intent": "Replace PrefWin geometry fixed-address storage with genuine source-owned globals and compiler-owned scalar initialization, preserving every historical initializer identity and claim.",
+  "intent": "Own PrefWin geometry inputs and the existing ordered compiler-generated geometry initializers in their natural global owner; move the unrelated SharedWordValue object and its paired setter/toggle into a separate explicit source owner. Preserve original identities, spans, claims, evidence and history without asserting a semantic domain or caller set for SharedWordValue.",
   "schema_version": 1,
   "subjects": [
+    {
+      "address": 4507744,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
     {
       "address": 4507760,
       "address_space": "pe:va",

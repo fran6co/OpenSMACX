@@ -14,8 +14,8 @@ def test_setter_and_toggle_use_the_same_zero_initialized_word(tmp_path):
     compiler = shutil.which("c++")
     if compiler is None:
         pytest.skip("host C++ compiler unavailable")
-    text = (ROOT / "src/global_arith.cpp").read_text()
-    records = {r.address: r for r in read_text(text, "src/global_arith.cpp")}
+    text = (ROOT / "src/shared_word.cpp").read_text()
+    records = {r.address: r for r in read_text(text, "src/shared_word.cpp")}
     setter, toggle = records[0x44C860], records[0x44C870]
     assert setter.image_spans == ((0x44C860, 0x44C86D),)
     assert toggle.image_spans == ((0x44C870, 0x44C878),)

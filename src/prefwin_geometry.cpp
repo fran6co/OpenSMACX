@@ -1,5 +1,31 @@
 #include "stdafx.h"
-#include "global_arith.h"
+#include "prefwin_geometry.h"
+
+// PrefWin geometry constants observed in the pinned image. Roles are named
+// only where the PrefWin/GraphicWin initialization call arguments establish
+// them; the remaining four retain address-bearing provisional names.
+
+// RECOVERY_OBJECT: v2 0x00686B6C 0x00686B70 ?PrefWinGeometryConstant_686B6C@@3HA 0x0048D550
+int32_t PrefWinGeometryConstant_686B6C = 4;
+// RECOVERY_OBJECT: v2 0x00686B70 0x00686B74 ?PrefWinGeometryConstant_686B70@@3HA 0x0048D560
+int32_t PrefWinGeometryConstant_686B70 = 4;
+// RECOVERY_OBJECT: v2 0x00686B74 0x00686B78 ?PrefWinGeometryConstant_686B74@@3HA 0x0048D5B0
+int32_t PrefWinGeometryConstant_686B74 = 3;
+// RECOVERY_OBJECT: v2 0x00686B78 0x00686B7C ?PrefWinGeometryConstant_686B78@@3HA 0x0048D5D0
+int32_t PrefWinGeometryConstant_686B78 = 3;
+// RECOVERY_OBJECT: v2 0x00686B7C 0x00686B80 ?PrefWinDisplayWidth@@3HA 0x0048D570
+int32_t PrefWinDisplayWidth = 700;
+// RECOVERY_OBJECT: v2 0x00686B80 0x00686B84 ?PrefWinDisplayHeight@@3HA 0x0048D590
+int32_t PrefWinDisplayHeight = 390;
+// RECOVERY_OBJECT: v2 0x00686B84 0x00686B88 ?PrefWinButtonWidth@@3HA 0x0048D610
+int32_t PrefWinButtonWidth = 220;
+// RECOVERY_OBJECT: v2 0x00686B88 0x00686B8C ?PrefWinTitleButtonHeight@@3HA 0x0048D840
+int32_t PrefWinTitleButtonHeight = 20;
+// RECOVERY_OBJECT: v2 0x00686B8C 0x00686B90 ?PrefWinToggleWidth@@3HA 0x0048D820
+int32_t PrefWinToggleWidth = 120;
+// RECOVERY_OBJECT: v2 0x00686B90 0x00686B94 ?PrefWinToggleHeight@@3HA 0x0048D840
+int32_t PrefWinToggleHeight = 20;
+
 
 /*
 Purpose: sub_48d550 - arithmetic over 2 fixed global(s), one
@@ -173,7 +199,7 @@ int32_t PrefWinGeometryValue_857898 = static_cast<int32_t>(static_cast<uint32_t>
 // 0x48D670 entries in the pinned CRT initializer array.
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0048D650 sub_48d650 0x0048D650-0x0048D66E FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Original CRT table entry selects 0048D650, whose typed arithmetic and output store were independently decoded from the pinned executable.", "recovery/tasks/prefwin-geometry-initializers.json", "src/global_arith.h", "pinned .CRT$XCU slot 0x0068257C + 4*9 points to original 0x0048D650; full original span writes output object 0x8578A8", "prefwin_geometry.cpp namespace-scope initializer for PrefWinGeometryValue_8578A8; this is the candidate source owner, not a generated-symbol qualification", "recovery/tasks/prefwin-geometry-initializers.json"], "reason": "Bind original initializer identity 0x0048D650 to the natural C++ dynamic initializer of PrefWinGeometryValue_8578A8. The source-owned variable declaration is the owner; generated symbol and exact table occurrence remain subject to fresh native COFF/link qualification."}
+// RECOVERY_BINDING: v1 {"evidence": ["Original CRT table entry selects 0048D650, whose typed arithmetic and output store were independently decoded from the pinned executable.", "recovery/tasks/prefwin-geometry-initializers.json", "src/prefwin_geometry.h", "pinned .CRT$XCU slot 0x0068257C + 4*9 points to original 0x0048D650; full original span writes output object 0x8578A8", "prefwin_geometry.cpp namespace-scope initializer for PrefWinGeometryValue_8578A8; this is the candidate source owner, not a generated-symbol qualification", "recovery/tasks/prefwin-geometry-initializers.json"], "reason": "Bind original initializer identity 0x0048D650 to the natural C++ dynamic initializer of PrefWinGeometryValue_8578A8. The source-owned variable declaration is the owner; generated symbol and exact table occurrence remain subject to fresh native COFF/link qualification."}
 // former symbol _sub_48d650
 // RECOVERY_OBJECT: v2 0x008578A8 0x008578AC ?PrefWinGeometryValue_8578A8@@3HA 0x0048D650
 int32_t PrefWinGeometryValue_8578A8 = static_cast<int32_t>(static_cast<uint32_t>(PrefWinGeometryValue_8578AC) - 3u * static_cast<uint32_t>(PrefWinGeometryConstant_686B74) - static_cast<uint32_t>(PrefWinButtonWidth));
@@ -460,7 +486,7 @@ int32_t PrefWinGeometryValue_8578D0 = static_cast<int32_t>(static_cast<uint32_t>
 // Original final initializer in the pinned geometry family.
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0048D820 sub_48d820 0x0048D820-0x0048D83E FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Original CRT table entry selects 0048D820, whose typed arithmetic and output store were independently decoded from the pinned executable.", "recovery/tasks/prefwin-geometry-initializers.json", "src/global_arith.h", "pinned .CRT$XCU slot 0x0068257C + 4*25 points to original 0x0048D820; full original span writes output object 0x8578B8", "prefwin_geometry.cpp namespace-scope initializer for PrefWinGeometryValue_8578B8; this is the candidate source owner, not a generated-symbol qualification", "recovery/tasks/prefwin-geometry-initializers.json"], "reason": "Bind original initializer identity 0x0048D820 to the natural C++ dynamic initializer of PrefWinGeometryValue_8578B8. The source-owned variable declaration is the owner; generated symbol and exact table occurrence remain subject to fresh native COFF/link qualification."}
+// RECOVERY_BINDING: v1 {"evidence": ["Original CRT table entry selects 0048D820, whose typed arithmetic and output store were independently decoded from the pinned executable.", "recovery/tasks/prefwin-geometry-initializers.json", "src/prefwin_geometry.h", "pinned .CRT$XCU slot 0x0068257C + 4*25 points to original 0x0048D820; full original span writes output object 0x8578B8", "prefwin_geometry.cpp namespace-scope initializer for PrefWinGeometryValue_8578B8; this is the candidate source owner, not a generated-symbol qualification", "recovery/tasks/prefwin-geometry-initializers.json"], "reason": "Bind original initializer identity 0x0048D820 to the natural C++ dynamic initializer of PrefWinGeometryValue_8578B8. The source-owned variable declaration is the owner; generated symbol and exact table occurrence remain subject to fresh native COFF/link qualification."}
 // former symbol _sub_48d820
 // RECOVERY_OBJECT: v2 0x008578B8 0x008578BC ?PrefWinGeometryValue_8578B8@@3HA 0x0048D820
 int32_t PrefWinGeometryValue_8578B8 = static_cast<int32_t>(static_cast<uint32_t>(PrefWinGeometryValue_8577E4) - 3u * static_cast<uint32_t>(PrefWinGeometryConstant_686B74) - static_cast<uint32_t>(PrefWinToggleWidth));

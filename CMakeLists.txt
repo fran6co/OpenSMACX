@@ -129,7 +129,7 @@ set(OPENSMACX_SOURCES
     src/filebox.cpp
     src/leaf_recoveries.cpp
     src/selectpartwin.cpp
-    src/global_arith.cpp
+    src/shared_word.cpp
     src/fx.cpp
     src/vector_teardown.cpp
     src/alphanet.cpp

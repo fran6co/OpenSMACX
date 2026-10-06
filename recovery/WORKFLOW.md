@@ -25,8 +25,12 @@ Build/link, source identity continuity and relevant behavioral checks still appl
 neither placeholders nor forwarding into the old executable count as recovery.
 Coverage reports must distinguish source placement and body-text presence from
 genuine owner implementation. Manual adapters in `adjustor_thunks.*`,
-`field_accessors.*`, `nullsub_thunks.*`, and transitional `global_arith.*` are scaffolding, not
-finished implementation coverage. `leaf_recoveries.*` remains transitional
+`field_accessors.*`, and `nullsub_thunks.*` remain scaffolding, not finished
+implementation coverage. The former `global_arith.*` collection is retired:
+PrefWin geometry storage/initializers are owned in `prefwin_geometry.*`, and
+the real `SharedWordValue` object with its paired setter/toggle is owned in
+`shared_word.*`. That is genuine source ownership, not evidence for the
+word's semantic domain, caller set or lifetime. `leaf_recoveries.*` remains transitional
 material rather than final owner coverage. Superseded source files are
 removed only after their owners retain identity, claims and useful
 findings. Preserve useful behavior, original
@@ -45,9 +49,12 @@ method machinery and the transitional declarations/storage in `temp.*`.
 The retired `spying_recovery.h` fixed-address view is now represented by named
 `PlayersData` members and the genuine faction API. These are not all empty files:
 move genuine behavior and storage to evidence-backed owners before retiring
-them. `vector_teardown.*` mixes a genuine game helper with incomplete CRT
-iterator substitutes; recover or verify the exception-unwind behavior before
-treating the latter as complete. Raw dispatch and unfinished bodies inside
+them. `vector_teardown.*` retains a genuine game array-initializer helper.
+The handwritten CRT iterator substitutes are removed; real Wave control-group
+members now own construction, reverse destruction and prefix unwind. Their CRT
+identities and dependency-verification obligations remain recorded in the source;
+removing substitutes does not prove runtime-provider equivalence.
+Raw dispatch and unfinished bodies inside
 ordinary owner files remain recovery debt after dedicated scaffold files vanish.
 A compiling body or a temporary matching regression is not completion of the
 eventual byte-exact milestone. Recover the original branch ordering,

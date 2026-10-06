@@ -20,9 +20,9 @@
 
 #include <cstdint>
 
-/* PrefWin geometry storage declarations. Natural dynamic initializer
- * definitions and original initializer mappings live in prefwin_geometry.cpp.
- */
+/* PrefWin geometry input/output storage. The literal inputs are
+ * constant-initialized; the ordered dynamic output initializers are
+ * defined by their source owner in prefwin_geometry.cpp. */
 
 extern int32_t PrefWinGeometryConstant_686B6C;
 extern int32_t PrefWinGeometryConstant_686B70;

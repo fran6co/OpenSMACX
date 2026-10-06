@@ -28,7 +28,7 @@
 #include "faction.h"
 #include "game.h"
 #include "gamma.h"
-#include "global_arith.h"
+#include "prefwin_geometry.h"
 #include "main.h"
 #include "mapwin.h"
 #include "palette.h"

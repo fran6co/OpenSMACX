@@ -567,197 +567,17 @@ void * __fastcall adjust_map_win1_scalar_delete(void *self, void *,
 
 
 
-/*
-Purpose: Adjust the receiver from MapWin's thunk1 subobject to the one
-         MapWin::on_redraw expects, then forward unchanged.
-// RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
-// ORIGINAL: 0x00421880 ?on_redraw@thunk1_MapWin@@QAEXXZ 0x00421880-0x00421888 BYTE_EXACT
-// symbol    ?adjust_map_win1_on_redraw@@YIXPAX0@Z
-// size      8 bytes
-// prototype void (__thiscall ?on_redraw@thunk1_MapWin@@QAEXXZ)(MapWin* this)
-// callers   0   call targets   0
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     (none)
-// TRIED 2026-09-26 (Win slot-12 on_redraw rename batch): MapWin::on_redraw
-//            previously overrode nothing (Win slot12 was draw_contents), so the
-//            qualified call carried no receiver fold. The rename makes it a genuine
-//            Win slot12 override through the virtual GraphicWin base, and VC6 folds
-//            `add ecx, 0x21a6c` into the qualified call; the walk pre-subtracts that
-//            GraphicWin offset so the image's bare vtordisp thunk survives.
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_map_win1_on_redraw(void *self, void *) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<MapWin *>(object - vtordisp - 0x21A6C)->MapWin::on_redraw();
-}
 
 
 
-/*
-Purpose: Adjust the receiver from MapWin's thunk1 subobject to the one
-         MapWin::on_sys_close expects, then forward unchanged.
-// RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
-// ORIGINAL: 0x004218A0 ?on_sys_close@thunk1_MapWin@@QAEXXZ 0x004218A0-0x004218A8 BYTE_EXACT
-// symbol    ?adjust_map_win1_on_sys_close@@YIXPAX0@Z
-// size      8 bytes
-// prototype void (__thiscall ?on_sys_close@thunk1_MapWin@@QAEXXZ)(MapWin* this)
-// callers   0   call targets   0
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_map_win1_on_sys_close(void *self, void *) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<MapWin *>(object - vtordisp)->MapWin::on_sys_close();
-}
 
 
 
-/*
-Purpose: Adjust the receiver from MapWin's thunk1 subobject to the one
-         MapWin::on_left_click expects, then forward unchanged.
-// RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
-// ORIGINAL: 0x004218C0 ?on_left_click@thunk1_MapWin@@QAEXHH@Z 0x004218C0-0x004218C8
-// symbol    ?adjust_map_win1_on_left_click@@YIXPAX0HH@Z
-// size      8 bytes
-// prototype void (__thiscall ?on_left_click@thunk1_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_map_win1_on_left_click(void *self, void *, int arg0,
-                                              int arg1) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<MapWin *>(object - vtordisp)->MapWin::on_left_click(arg0, arg1);
-}
 
-/*
-Purpose: Adjust the receiver from MapWin's thunk1 subobject to the one
-         MapWin::on_left_down expects, then forward unchanged.
-// RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
-// ORIGINAL: 0x004218D0 ?on_left_down@thunk1_MapWin@@QAEXHH@Z 0x004218D0-0x004218D8
-// symbol    ?adjust_map_win1_on_left_down@@YIXPAX0HH@Z
-// size      8 bytes
-// prototype void (__thiscall ?on_left_down@thunk1_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_map_win1_on_left_down(void *self, void *, int arg0,
-                                             int arg1) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<MapWin *>(object - vtordisp)->MapWin::on_left_down(arg0, arg1);
-}
 
-/*
-Purpose: Adjust the receiver from MapWin's thunk1 subobject to the one
-         MapWin::on_left_up expects, then forward unchanged.
-// RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
-// ORIGINAL: 0x004218E0 ?on_left_up@thunk1_MapWin@@QAEXHH@Z 0x004218E0-0x004218E8
-// symbol    ?adjust_map_win1_on_left_up@@YIXPAX0HH@Z
-// size      8 bytes
-// prototype void (__thiscall ?on_left_up@thunk1_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_map_win1_on_left_up(void *self, void *, int arg0,
-                                           int arg1) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<MapWin *>(object - vtordisp)->MapWin::on_left_up(arg0, arg1);
-}
 
-/*
-Purpose: Adjust the receiver from MapWin's thunk1 subobject to the one
-         MapWin::on_right_click expects, then forward unchanged.
-// RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
-// ORIGINAL: 0x004218F0 ?on_right_click@thunk1_MapWin@@QAEXHH@Z 0x004218F0-0x004218F8
-// symbol    ?adjust_map_win1_on_right_click@@YIXPAX0HH@Z
-// size      8 bytes
-// prototype void (__thiscall ?on_right_click@thunk1_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_map_win1_on_right_click(void *self, void *, int arg0,
-                                               int arg1) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<MapWin *>(object - vtordisp)->MapWin::on_right_click(arg0, arg1);
-}
 
-/*
-Purpose: Adjust the receiver from MapWin's thunk1 subobject to the one
-         MapWin::on_right_down expects, then forward unchanged.
-// RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
-// ORIGINAL: 0x00421900 ?on_right_down@thunk1_MapWin@@QAEXHH@Z 0x00421900-0x00421908
-// symbol    ?adjust_map_win1_on_right_down@@YIXPAX0HH@Z
-// size      8 bytes
-// prototype void (__thiscall ?on_right_down@thunk1_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_map_win1_on_right_down(void *self, void *, int arg0,
-                                              int arg1) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<MapWin *>(object - vtordisp)->MapWin::on_right_down(arg0, arg1);
-}
 
-/*
-Purpose: Adjust the receiver from MapWin's thunk1 subobject to the one
-         MapWin::on_left_double_click expects, then forward unchanged.
-// RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
-// ORIGINAL: 0x00421910 ?on_left_double_click@thunk1_MapWin@@QAEXHH@Z 0x00421910-0x00421918
-// symbol    ?adjust_map_win1_on_left_double_click@@YIXPAX0HH@Z
-// size      8 bytes
-// prototype void (__thiscall ?on_left_double_click@thunk1_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_map_win1_on_left_double_click(void *self, void *,
-                                                     int arg0, int arg1) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<MapWin *>(object - vtordisp)->MapWin::on_left_double_click(arg0, arg1);
-}
 
 /*
 Purpose: Adjust the receiver from MapWin's thunk1 subobject to the one
@@ -782,51 +602,7 @@ void __fastcall adjust_map_win1_on_nc_left_down(void *self, void *, int arg0,
     reinterpret_cast<MapWin *>(object - vtordisp)->MapWin::on_nc_left_down(arg0, arg1);
 }
 
-/*
-Purpose: Adjust the receiver from MapWin's thunk1 subobject to the one
-         MapWin::on_button_clicked expects, then forward unchanged.
-// RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
-// ORIGINAL: 0x00421930 ?on_button_clicked@thunk1_MapWin@@QAEXH@Z 0x00421930-0x00421938
-// symbol    ?adjust_map_win1_on_button_clicked@@YIXPAX0H@Z
-// size      8 bytes
-// prototype void (__thiscall ?on_button_clicked@thunk1_MapWin@@QAEXH@Z)(MapWin* this, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_map_win1_on_button_clicked(void *self, void *,
-                                                  int arg0) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<MapWin *>(object - vtordisp)->MapWin::on_button_clicked(arg0);
-}
 
-/*
-Purpose: Adjust the receiver from MapWin's thunk1 subobject to the one
-         MapWin::on_nc_hittest expects, then forward unchanged.
-// RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
-// ORIGINAL: 0x00421940 ?on_nc_hittest@thunk1_MapWin@@QAEXHH@Z 0x00421940-0x00421948
-// symbol    ?adjust_map_win1_on_nc_hittest@@YIXPAX0HH@Z
-// size      8 bytes
-// prototype void (__thiscall ?on_nc_hittest@thunk1_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_map_win1_on_nc_hittest(void *self, void *, int arg0,
-                                              int arg1) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<MapWin *>(object - vtordisp)->MapWin::on_nc_hittest(arg0, arg1);
-}
 
 /*
 Purpose: Adjust the receiver from MapWin's thunk2 subobject to the one
@@ -853,197 +629,17 @@ void * __fastcall adjust_map_win2_scalar_delete(void *self, void *,
 
 
 
-/*
-Purpose: Adjust the receiver from PlanWin's thunk1 subobject to the one
-         PlanWin::on_redraw expects, then forward unchanged.
-// RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
-// ORIGINAL: 0x0048BF70 ?on_redraw@thunk1_PlanWin@@QAEXXZ 0x0048BF70-0x0048BF78 BYTE_EXACT
-// symbol    ?adjust_plan_win1_on_redraw@@YIXPAX0@Z
-// size      8 bytes
-// prototype void (__thiscall ?on_redraw@thunk1_PlanWin@@QAEXXZ)(PlanWin* this)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-// TRIED 2026-09-26 (Win slot-12 on_redraw rename batch): PlanWin::on_redraw
-//            previously overrode nothing (Win slot12 was draw_contents), so the
-//            qualified call carried no receiver fold. The rename makes it a genuine
-//            Win slot12 override, and VC6 folds `add ecx, 0x22050` into the qualified
-//            call; the walk pre-subtracts that offset so the image's bare vtordisp
-//            thunk survives.
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_plan_win1_on_redraw(void *self, void *) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<PlanWin *>(object - vtordisp - 0x22050)->PlanWin::on_redraw();
-}
 
 
 
-/*
-Purpose: Adjust the receiver from MapWin's thunk5 subobject to the one
-         MapWin::on_sys_close expects, then forward unchanged.
-// RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
-// ORIGINAL: 0x0048BF90 ?on_sys_close@thunk5_MapWin@@QAEXXZ 0x0048BF90-0x0048BF9E BYTE_EXACT
-// symbol    ?adjust_map_win5_on_sys_close@@YIXPAX0@Z
-// size      14 bytes
-// prototype void (__thiscall ?on_sys_close@thunk5_MapWin@@QAEXXZ)(MapWin* this)
-// callers   0   call targets   0
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_map_win5_on_sys_close(void *self, void *) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<MapWin *>(object - vtordisp - 1508)->MapWin::on_sys_close();
-}
 
 
 
-/*
-Purpose: Adjust the receiver from MapWin's thunk5 subobject to the one
-         MapWin::on_left_click expects, then forward unchanged.
-// RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
-// ORIGINAL: 0x0048BFB0 ?on_left_click@thunk5_MapWin@@QAEXHH@Z 0x0048BFB0-0x0048BFBE
-// symbol    ?adjust_map_win5_on_left_click@@YIXPAX0HH@Z
-// size      14 bytes
-// prototype void (__thiscall ?on_left_click@thunk5_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_map_win5_on_left_click(void *self, void *, int arg0,
-                                              int arg1) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<MapWin *>(object - vtordisp - 1508)->MapWin::on_left_click(arg0, arg1);
-}
 
-/*
-Purpose: Adjust the receiver from MapWin's thunk5 subobject to the one
-         MapWin::on_left_down expects, then forward unchanged.
-// RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
-// ORIGINAL: 0x0048BFC0 ?on_left_down@thunk5_MapWin@@QAEXHH@Z 0x0048BFC0-0x0048BFCE
-// symbol    ?adjust_map_win5_on_left_down@@YIXPAX0HH@Z
-// size      14 bytes
-// prototype void (__thiscall ?on_left_down@thunk5_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_map_win5_on_left_down(void *self, void *, int arg0,
-                                             int arg1) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<MapWin *>(object - vtordisp - 1508)->MapWin::on_left_down(arg0, arg1);
-}
 
-/*
-Purpose: Adjust the receiver from MapWin's thunk5 subobject to the one
-         MapWin::on_left_up expects, then forward unchanged.
-// RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
-// ORIGINAL: 0x0048BFD0 ?on_left_up@thunk5_MapWin@@QAEXHH@Z 0x0048BFD0-0x0048BFDE
-// symbol    ?adjust_map_win5_on_left_up@@YIXPAX0HH@Z
-// size      14 bytes
-// prototype void (__thiscall ?on_left_up@thunk5_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_map_win5_on_left_up(void *self, void *, int arg0,
-                                           int arg1) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<MapWin *>(object - vtordisp - 1508)->MapWin::on_left_up(arg0, arg1);
-}
 
-/*
-Purpose: Adjust the receiver from MapWin's thunk5 subobject to the one
-         MapWin::on_right_click expects, then forward unchanged.
-// RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
-// ORIGINAL: 0x0048BFE0 ?on_right_click@thunk5_MapWin@@QAEXHH@Z 0x0048BFE0-0x0048BFEE
-// symbol    ?adjust_map_win5_on_right_click@@YIXPAX0HH@Z
-// size      14 bytes
-// prototype void (__thiscall ?on_right_click@thunk5_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_map_win5_on_right_click(void *self, void *, int arg0,
-                                               int arg1) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<MapWin *>(object - vtordisp - 1508)->MapWin::on_right_click(arg0, arg1);
-}
 
-/*
-Purpose: Adjust the receiver from MapWin's thunk5 subobject to the one
-         MapWin::on_right_down expects, then forward unchanged.
-// RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
-// ORIGINAL: 0x0048BFF0 ?on_right_down@thunk5_MapWin@@QAEXHH@Z 0x0048BFF0-0x0048BFFE
-// symbol    ?adjust_map_win5_on_right_down@@YIXPAX0HH@Z
-// size      14 bytes
-// prototype void (__thiscall ?on_right_down@thunk5_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_map_win5_on_right_down(void *self, void *, int arg0,
-                                              int arg1) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<MapWin *>(object - vtordisp - 1508)->MapWin::on_right_down(arg0, arg1);
-}
 
-/*
-Purpose: Adjust the receiver from MapWin's thunk5 subobject to the one
-         MapWin::on_left_double_click expects, then forward unchanged.
-// RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
-// ORIGINAL: 0x0048C000 ?on_left_double_click@thunk5_MapWin@@QAEXHH@Z 0x0048C000-0x0048C00E
-// symbol    ?adjust_map_win5_on_left_double_click@@YIXPAX0HH@Z
-// size      14 bytes
-// prototype void (__thiscall ?on_left_double_click@thunk5_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_map_win5_on_left_double_click(void *self, void *,
-                                                     int arg0, int arg1) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<MapWin *>(object - vtordisp - 1508)->MapWin::on_left_double_click(arg0, arg1);
-}
 
 /*
 Purpose: Adjust the receiver from MapWin's thunk5 subobject to the one
@@ -1068,51 +664,7 @@ void __fastcall adjust_map_win5_on_nc_left_down(void *self, void *, int arg0,
     reinterpret_cast<MapWin *>(object - vtordisp - 1508)->MapWin::on_nc_left_down(arg0, arg1);
 }
 
-/*
-Purpose: Adjust the receiver from MapWin's thunk5 subobject to the one
-         MapWin::on_button_clicked expects, then forward unchanged.
-// RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
-// ORIGINAL: 0x0048C020 ?on_button_clicked@thunk5_MapWin@@QAEXH@Z 0x0048C020-0x0048C02E
-// symbol    ?adjust_map_win5_on_button_clicked@@YIXPAX0H@Z
-// size      14 bytes
-// prototype void (__thiscall ?on_button_clicked@thunk5_MapWin@@QAEXH@Z)(MapWin* this, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_map_win5_on_button_clicked(void *self, void *,
-                                                  int arg0) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<MapWin *>(object - vtordisp - 1508)->MapWin::on_button_clicked(arg0);
-}
 
-/*
-Purpose: Adjust the receiver from MapWin's thunk5 subobject to the one
-         MapWin::on_nc_hittest expects, then forward unchanged.
-// RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
-// ORIGINAL: 0x0048C030 ?on_nc_hittest@thunk5_MapWin@@QAEXHH@Z 0x0048C030-0x0048C03E
-// symbol    ?adjust_map_win5_on_nc_hittest@@YIXPAX0HH@Z
-// size      14 bytes
-// prototype void (__thiscall ?on_nc_hittest@thunk5_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_map_win5_on_nc_hittest(void *self, void *, int arg0,
-                                              int arg1) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<MapWin *>(object - vtordisp - 1508)->MapWin::on_nc_hittest(arg0, arg1);
-}
 
 /*
 Purpose: Adjust the receiver from PlanWin's thunk2 subobject to the one
@@ -1162,31 +714,6 @@ void * __fastcall adjust_console1_scalar_delete(void *self, void *,
 
 
 
-/*
-Purpose: Adjust the receiver from MapWin's thunk4 subobject to the one
-         MapWin::on_redraw expects, then forward unchanged.
-// RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
-// ORIGINAL: 0x0051DE40 ?on_redraw@thunk4_MapWin@@QAEXXZ 0x0051DE40-0x0051DE4E BYTE_EXACT
-// symbol    ?adjust_map_win4_on_redraw@@YIXPAX0@Z
-// size      14 bytes
-// prototype void (__thiscall ?on_redraw@thunk4_MapWin@@QAEXXZ)(MapWin* this)
-// callers   0   call targets   0
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     (none)
-// TRIED 2026-09-26 (Win slot-12 on_redraw rename batch): same rename, now the
-//            qualified call folds `add ecx, 0x21a6c`, so the walk cancels it on top
-//            of the static 9000 Console-to-MapWin delta; the emitted body stays the
-//            image's `sub ecx,[ecx-4]; sub ecx, 0x2328`.
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_map_win4_on_redraw(void *self, void *) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<MapWin *>(object - vtordisp - 9000 - 0x21A6C)->MapWin::on_redraw();
-}
 
 
 
@@ -1214,120 +741,10 @@ void __fastcall adjust_console1_on_sys_close(void *self, void *) {
 
 
 
-/*
-Purpose: Adjust the receiver from MapWin's thunk4 subobject to the one
-         MapWin::on_left_click expects, then forward unchanged.
-// RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
-// ORIGINAL: 0x0051DE80 ?on_left_click@thunk4_MapWin@@QAEXHH@Z 0x0051DE80-0x0051DE8E
-// symbol    ?adjust_map_win4_on_left_click@@YIXPAX0HH@Z
-// size      14 bytes
-// prototype void (__thiscall ?on_left_click@thunk4_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_map_win4_on_left_click(void *self, void *, int arg0,
-                                              int arg1) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<MapWin *>(object - vtordisp - 9000)->MapWin::on_left_click(arg0, arg1);
-}
 
-/*
-Purpose: Adjust the receiver from MapWin's thunk4 subobject to the one
-         MapWin::on_left_down expects, then forward unchanged.
-// RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
-// ORIGINAL: 0x0051DE90 ?on_left_down@thunk4_MapWin@@QAEXHH@Z 0x0051DE90-0x0051DE9E
-// symbol    ?adjust_map_win4_on_left_down@@YIXPAX0HH@Z
-// size      14 bytes
-// prototype void (__thiscall ?on_left_down@thunk4_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_map_win4_on_left_down(void *self, void *, int arg0,
-                                             int arg1) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<MapWin *>(object - vtordisp - 9000)->MapWin::on_left_down(arg0, arg1);
-}
 
-/*
-Purpose: Adjust the receiver from MapWin's thunk4 subobject to the one
-         MapWin::on_left_up expects, then forward unchanged.
-// RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
-// ORIGINAL: 0x0051DEA0 ?on_left_up@thunk4_MapWin@@QAEXHH@Z 0x0051DEA0-0x0051DEAE
-// symbol    ?adjust_map_win4_on_left_up@@YIXPAX0HH@Z
-// size      14 bytes
-// prototype void (__thiscall ?on_left_up@thunk4_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_map_win4_on_left_up(void *self, void *, int arg0,
-                                           int arg1) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<MapWin *>(object - vtordisp - 9000)->MapWin::on_left_up(arg0, arg1);
-}
 
-/*
-Purpose: Adjust the receiver from MapWin's thunk4 subobject to the one
-         MapWin::on_right_click expects, then forward unchanged.
-// RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
-// ORIGINAL: 0x0051DEB0 ?on_right_click@thunk4_MapWin@@QAEXHH@Z 0x0051DEB0-0x0051DEBE
-// symbol    ?adjust_map_win4_on_right_click@@YIXPAX0HH@Z
-// size      14 bytes
-// prototype void (__thiscall ?on_right_click@thunk4_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_map_win4_on_right_click(void *self, void *, int arg0,
-                                               int arg1) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<MapWin *>(object - vtordisp - 9000)->MapWin::on_right_click(arg0, arg1);
-}
 
-/*
-Purpose: Adjust the receiver from MapWin's thunk4 subobject to the one
-         MapWin::on_right_down expects, then forward unchanged.
-// RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
-// ORIGINAL: 0x0051DEC0 ?on_right_down@thunk4_MapWin@@QAEXHH@Z 0x0051DEC0-0x0051DECE
-// symbol    ?adjust_map_win4_on_right_down@@YIXPAX0HH@Z
-// size      14 bytes
-// prototype void (__thiscall ?on_right_down@thunk4_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_map_win4_on_right_down(void *self, void *, int arg0,
-                                              int arg1) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<MapWin *>(object - vtordisp - 9000)->MapWin::on_right_down(arg0, arg1);
-}
 
 /*
 Purpose: Adjust the receiver from Console's thunk1 subobject to the one
@@ -1352,28 +769,6 @@ int __fastcall adjust_console1_on_key_click(void *self, void *, int arg0,
     return reinterpret_cast<Console *>(object - vtordisp)->Console::on_key_click(arg0, arg1);
 }
 
-/*
-Purpose: Adjust the receiver from MapWin's thunk4 subobject to the one
-         MapWin::on_left_double_click expects, then forward unchanged.
-// RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
-// ORIGINAL: 0x0051DEE0 ?on_left_double_click@thunk4_MapWin@@QAEXHH@Z 0x0051DEE0-0x0051DEEE
-// symbol    ?adjust_map_win4_on_left_double_click@@YIXPAX0HH@Z
-// size      14 bytes
-// prototype void (__thiscall ?on_left_double_click@thunk4_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_map_win4_on_left_double_click(void *self, void *,
-                                                     int arg0, int arg1) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<MapWin *>(object - vtordisp - 9000)->MapWin::on_left_double_click(arg0, arg1);
-}
 
 /*
 Purpose: Adjust the receiver from Console's thunk1 subobject to the one
@@ -1444,28 +839,6 @@ void __fastcall adjust_console1_on_nc_left_up(void *self, void *, int arg0,
     reinterpret_cast<Console *>(object - vtordisp)->Console::on_nc_left_up(arg0, arg1);
 }
 
-/*
-Purpose: Adjust the receiver from MapWin's thunk4 subobject to the one
-         MapWin::on_button_clicked expects, then forward unchanged.
-// RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
-// ORIGINAL: 0x0051DF20 ?on_button_clicked@thunk4_MapWin@@QAEXH@Z 0x0051DF20-0x0051DF2E
-// symbol    ?adjust_map_win4_on_button_clicked@@YIXPAX0H@Z
-// size      14 bytes
-// prototype void (__thiscall ?on_button_clicked@thunk4_MapWin@@QAEXH@Z)(MapWin* this, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_map_win4_on_button_clicked(void *self, void *,
-                                                  int arg0) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<MapWin *>(object - vtordisp - 9000)->MapWin::on_button_clicked(arg0);
-}
 
 /*
 Purpose: Adjust the receiver from Console's thunk1 subobject to the one
