@@ -15,6 +15,9 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
+// ORIGINAL: 0x005E3610 ??_GBuffer@@UAEPAXI@Z 0x005E3610-0x005E362E FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["historical deleting-thunk source src/deleting_thunks.cpp; original full spans retained: 0x005E3610-0x005E362E", "Pinned class constructor ??0Buffer@@QAE@XZ at 0x005D7210 stores original class/view table VA 0x66fdbc at 0x005D7248 (mov dword ptr [esi], 0x66fdbc); the current genuine owner vftable ??_7Buffer@@6B@ selects generated ??_GBuffer@@UAEPAXI@Z in slot 0 (+0x0) through weak entry ??_EBuffer@@UAEPAXI@Z (mode 2).", "Pinned ??_GBuffer@@UAEPAXI@Z at 0x005E3610 calls the source-mapped ??1Buffer@@QAE@XZ at 0x005D7410, then tests byte ptr [esp + 8], 1; je 0x5e3628 bypasses scalar delete when bit 0 is clear, while bit 0 set calls 0x0064557F; it save original this; call destructor; delete only when flags bit 0 is set; return saved this with ret 4.", "The real class lifetime is owned by src/buffer.cpp; its compiler-emitted deleting symbol and vftable slot carry this original identity. Hand-written adapter bodies with live adjustor callers remain until those callers are independently qualified and transferred. The linked weak/COMDAT copy is not used to choose source ownership.", "the source writer preserves the historical mapping's exactness state (historical exactness obligation retained); current compiler extent is not asserted equal to the original span"], "reason": "Bind the original Buffer scalar deleting-destructor identity to the actual compiler-emitted class deleting destructor in its genuine owner translation unit. The original constructor's pinned vptr store and the current owner's physical table slot identify this class/view; no callback/thunk body is hand-authored here."}
+// symbol    ??_GBuffer@@UAEPAXI@Z
 #include "stdafx.h"
 #include "original_seam.h"
 #include "buffer.h"

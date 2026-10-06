@@ -17,6 +17,14 @@
  */
 
 /*
+ * CURRENT PINNED-VIEW QUALIFICATION (2026-10-06).
+ * Eighteen ListBox, CheckBox and SpriteBox callbacks below have pinned
+ * constructor-installed table/slot proof, matching receiver arithmetic,
+ * and the same original/current method tail target. The dated sections
+ * that follow are retained as historical experiment notes, not as
+ * universal compiler-output rules. All other manual rows stay pending.
+ */
+/*
  * WHY 92 OF THESE 116 ARE UNCLAIMED, MEASURED 2026-08-26.
  *
  * They are not 92 problems and they are not a byte grind. Every one
@@ -1791,7 +1799,6 @@ void * __fastcall adjust_console2_scalar_delete(void *self, void *,
 /*
 Purpose: Adjust the receiver from ListBox's thunk1 subobject to the one
          ListBox::on_redraw expects, then forward unchanged.
-// ORIGINAL: 0x0060CF50 ?on_redraw@thunk1_ListBox@@QAEXXZ 0x0060CF50-0x0060CF58 BYTE_EXACT
 // symbol    ?adjust_list_box1_on_redraw@@YIXPAX0@Z
 // size      8 bytes
 // prototype void (__thiscall ?on_redraw@thunk1_ListBox@@QAEXXZ)(ListBox* this)
@@ -1810,19 +1817,6 @@ Purpose: Adjust the receiver from ListBox's thunk1 subobject to the one
 Return Value: n/a
 Status: Complete
 */
-void __fastcall adjust_list_box1_on_redraw(void *self, void *) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    // MINUS THE BASE OFFSET, so the compiler's own adjustment nets to zero.
-    // on_redraw now overrides Win slot12 through GraphicWin as well, so a
-    // qualified call on a ListBox* emits `add ecx, 0x48` to reach the
-    // GraphicWin subobject - an instruction the image's two-instruction
-    // thunk does not have. Handing it a pointer already 0x48 low lets it
-    // fold the pair away.
-    reinterpret_cast<ListBox *>(object - vtordisp - 0x48)->ListBox::on_redraw();
-}
-
 /*
 Purpose: Adjust the receiver from ListBox's thunk1 subobject to the one
          ListBox::on_mousewheel expects, then forward unchanged.
@@ -1847,7 +1841,6 @@ void __fastcall adjust_list_box1_on_mousewheel(void *self, void *, int arg0) {
 /*
 Purpose: Adjust the receiver from ListBox's thunk1 subobject to the one
          ListBox::on_mouse_move expects, then forward unchanged.
-// ORIGINAL: 0x0060CF70 ?on_mouse_move@thunk1_ListBox@@QAEXHH@Z 0x0060CF70-0x0060CF78
 // symbol    ?adjust_list_box1_on_mouse_move@@YIXPAX0HH@Z
 // size      8 bytes
 // prototype void (__thiscall ?on_mouse_move@thunk1_ListBox@@QAEXHH@Z)(ListBox* this, int, int)
@@ -1858,19 +1851,9 @@ Purpose: Adjust the receiver from ListBox's thunk1 subobject to the one
 Return Value: n/a
 Status: Complete
 */
-void __fastcall adjust_list_box1_on_mouse_move(void *self, void *, int arg0,
-                                               int arg1) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<ListBox *>(object - vtordisp)->ListBox::on_mouse_move(arg0, arg1);
-}
-
-
 /*
 Purpose: Adjust the receiver from ListBox's thunk1 subobject to the one
          ListBox::on_left_down expects, then forward unchanged.
-// ORIGINAL: 0x0060CF90 ?on_left_down@thunk1_ListBox@@QAEXHH@Z 0x0060CF90-0x0060CF98
 // symbol    ?adjust_list_box1_on_left_down@@YIXPAX0HH@Z
 // size      8 bytes
 // prototype void (__thiscall ?on_left_down@thunk1_ListBox@@QAEXHH@Z)(ListBox* this, int, int)
@@ -1881,18 +1864,9 @@ Purpose: Adjust the receiver from ListBox's thunk1 subobject to the one
 Return Value: n/a
 Status: Complete
 */
-void __fastcall adjust_list_box1_on_left_down(void *self, void *, int arg0,
-                                              int arg1) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<ListBox *>(object - vtordisp)->ListBox::on_left_down(arg0, arg1);
-}
-
 /*
 Purpose: Adjust the receiver from ListBox's thunk1 subobject to the one
          ListBox::on_right_down expects, then forward unchanged.
-// ORIGINAL: 0x0060CFA0 ?on_right_down@thunk1_ListBox@@QAEXHH@Z 0x0060CFA0-0x0060CFA8
 // symbol    ?adjust_list_box1_on_right_down@@YIXPAX0HH@Z
 // size      8 bytes
 // prototype void (__thiscall ?on_right_down@thunk1_ListBox@@QAEXHH@Z)(ListBox* this, int, int)
@@ -1903,14 +1877,6 @@ Purpose: Adjust the receiver from ListBox's thunk1 subobject to the one
 Return Value: n/a
 Status: Complete
 */
-void __fastcall adjust_list_box1_on_right_down(void *self, void *, int arg0,
-                                               int arg1) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<ListBox *>(object - vtordisp)->ListBox::on_right_down(arg0, arg1);
-}
-
 /*
 Purpose: Adjust the receiver from ListBox's thunk1 subobject to the one
          ListBox::on_key_down expects, then forward unchanged.
@@ -1935,7 +1901,6 @@ void __fastcall adjust_list_box1_on_key_down(void *self, void *, int arg0) {
 /*
 Purpose: Adjust the receiver from ListBox's thunk1 subobject to the one
          ListBox::on_left_double_click expects, then forward unchanged.
-// ORIGINAL: 0x0060CFC0 ?on_left_double_click@thunk1_ListBox@@QAEXHH@Z 0x0060CFC0-0x0060CFC8
 // symbol    ?adjust_list_box1_on_left_double_click@@YIXPAX0HH@Z
 // size      8 bytes
 // prototype void (__thiscall ?on_left_double_click@thunk1_ListBox@@QAEXHH@Z)(ListBox* this, int, int)
@@ -1946,14 +1911,6 @@ Purpose: Adjust the receiver from ListBox's thunk1 subobject to the one
 Return Value: n/a
 Status: Complete
 */
-void __fastcall adjust_list_box1_on_left_double_click(void *self, void *,
-                                                      int arg0, int arg1) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<ListBox *>(object - vtordisp)->ListBox::on_left_double_click(arg0, arg1);
-}
-
 /*
 Purpose: Adjust the receiver from ListBox's thunk1 subobject to the one
          ListBox::on_right_double_click expects, then forward unchanged.
@@ -2025,7 +1982,6 @@ void __fastcall adjust_list_box1_on_scrolling(void *self, void *, int arg0,
 /*
 Purpose: Adjust the receiver from ListBox's thunk3 subobject to the one
          ListBox::on_redraw expects, then forward unchanged.
-// ORIGINAL: 0x0060D050 ?on_redraw@thunk3_ListBox@@QAEXXZ 0x0060D050-0x0060D05E BYTE_EXACT
 // symbol    ?adjust_list_box3_on_redraw@@YIXPAX0@Z
 // size      14 bytes
 // prototype void (__thiscall ?on_redraw@thunk3_ListBox@@QAEXXZ)(ListBox* this)
@@ -2043,17 +1999,9 @@ Purpose: Adjust the receiver from ListBox's thunk3 subobject to the one
 Return Value: n/a
 Status: Complete
 */
-void __fastcall adjust_list_box3_on_redraw(void *self, void *) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<ListBox *>(object - vtordisp - 0xA60)->ListBox::on_redraw();
-}
-
 /*
 Purpose: Adjust the receiver from CheckBox's thunk1 subobject to the one
          CheckBox::on_redraw expects, then forward unchanged.
-// ORIGINAL: 0x0060FE40 ?on_redraw@thunk1_CheckBox@@QAEXXZ 0x0060FE40-0x0060FE48 BYTE_EXACT
 // symbol    ?adjust_check_box1_on_redraw@@YIXPAX0@Z
 // size      8 bytes
 // prototype void (__thiscall ?on_redraw@thunk1_CheckBox@@QAEXXZ)(CheckBox* this)
@@ -2072,17 +2020,9 @@ Purpose: Adjust the receiver from CheckBox's thunk1 subobject to the one
 Return Value: n/a
 Status: Complete
 */
-void __fastcall adjust_check_box1_on_redraw(void *self, void *) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<CheckBox *>(object - vtordisp - 0x1C)->CheckBox::on_redraw();
-}
-
 /*
 Purpose: Adjust the receiver from CheckBox's thunk1 subobject to the one
          CheckBox::on_mouse_move expects, then forward unchanged.
-// ORIGINAL: 0x0060FE50 ?on_mouse_move@thunk1_CheckBox@@QAEXHH@Z 0x0060FE50-0x0060FE58
 // symbol    ?adjust_check_box1_on_mouse_move@@YIXPAX0HH@Z
 // size      8 bytes
 // prototype void (__thiscall ?on_mouse_move@thunk1_CheckBox@@QAEXHH@Z)(CheckBox* this, int, int)
@@ -2093,19 +2033,9 @@ Purpose: Adjust the receiver from CheckBox's thunk1 subobject to the one
 Return Value: n/a
 Status: Complete
 */
-void __fastcall adjust_check_box1_on_mouse_move(void *self, void *, int arg0,
-                                                int arg1) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<CheckBox *>(object - vtordisp)->CheckBox::on_mouse_move(arg0, arg1);
-}
-
-
 /*
 Purpose: Adjust the receiver from CheckBox's thunk1 subobject to the one
          CheckBox::on_left_down expects, then forward unchanged.
-// ORIGINAL: 0x0060FE70 ?on_left_down@thunk1_CheckBox@@QAEXHH@Z 0x0060FE70-0x0060FE78
 // symbol    ?adjust_check_box1_on_left_down@@YIXPAX0HH@Z
 // size      8 bytes
 // prototype void (__thiscall ?on_left_down@thunk1_CheckBox@@QAEXHH@Z)(CheckBox* this, int, int)
@@ -2116,14 +2046,6 @@ Purpose: Adjust the receiver from CheckBox's thunk1 subobject to the one
 Return Value: n/a
 Status: Complete
 */
-void __fastcall adjust_check_box1_on_left_down(void *self, void *, int arg0,
-                                               int arg1) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<CheckBox *>(object - vtordisp)->CheckBox::on_left_down(arg0, arg1);
-}
-
 /*
 Purpose: Adjust the receiver from CheckBox's thunk1 subobject to the one
          CheckBox::on_key_down expects, then forward unchanged.
@@ -2148,7 +2070,6 @@ int __fastcall adjust_check_box1_on_key_down(void *self, void *, int arg0) {
 /*
 Purpose: Adjust the receiver from CheckBox's thunk1 subobject to the one
          CheckBox::on_left_double_click expects, then forward unchanged.
-// ORIGINAL: 0x0060FE90 ?on_left_double_click@thunk1_CheckBox@@QAEXHH@Z 0x0060FE90-0x0060FE98
 // symbol    ?adjust_check_box1_on_left_double_click@@YIXPAX0HH@Z
 // size      8 bytes
 // prototype void (__thiscall ?on_left_double_click@thunk1_CheckBox@@QAEXHH@Z)(CheckBox* this, int, int)
@@ -2159,20 +2080,9 @@ Purpose: Adjust the receiver from CheckBox's thunk1 subobject to the one
 Return Value: n/a
 Status: Complete
 */
-void __fastcall adjust_check_box1_on_left_double_click(void *self, void *,
-                                                       int arg0, int arg1) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<CheckBox *>(object - vtordisp)->CheckBox::on_left_double_click(arg0, arg1);
-}
-
-
-
 /*
 Purpose: Adjust the receiver from CheckBox's thunk3 subobject to the one
          CheckBox::on_redraw expects, then forward unchanged.
-// ORIGINAL: 0x0060FEF0 ?on_redraw@thunk3_CheckBox@@QAEXXZ 0x0060FEF0-0x0060FEFE BYTE_EXACT
 // symbol    ?adjust_check_box3_on_redraw@@YIXPAX0@Z
 // size      14 bytes
 // prototype void (__thiscall ?on_redraw@thunk3_CheckBox@@QAEXXZ)(CheckBox* this)
@@ -2190,17 +2100,9 @@ Purpose: Adjust the receiver from CheckBox's thunk3 subobject to the one
 Return Value: n/a
 Status: Complete
 */
-void __fastcall adjust_check_box3_on_redraw(void *self, void *) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<CheckBox *>(object - vtordisp - 0xA34)->CheckBox::on_redraw();
-}
-
 /*
 Purpose: Adjust the receiver from SpriteBox's thunk1 subobject to the one
          SpriteBox::on_redraw expects, then forward unchanged.
-// ORIGINAL: 0x00611820 ?on_redraw@thunk1_SpriteBox@@QAEXXZ 0x00611820-0x00611828 BYTE_EXACT
 // symbol    ?adjust_sprite_box1_on_redraw@@YIXPAX0@Z
 // size      8 bytes
 // prototype void (__thiscall ?on_redraw@thunk1_SpriteBox@@QAEXXZ)(SpriteBox* this)
@@ -2219,17 +2121,9 @@ Purpose: Adjust the receiver from SpriteBox's thunk1 subobject to the one
 Return Value: n/a
 Status: Complete
 */
-void __fastcall adjust_sprite_box1_on_redraw(void *self, void *) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<SpriteBox *>(object - vtordisp - 0x8C)->SpriteBox::on_redraw();
-}
-
 /*
 Purpose: Adjust the receiver from SpriteBox's thunk1 subobject to the one
          SpriteBox::on_mouse_move expects, then forward unchanged.
-// ORIGINAL: 0x00611830 ?on_mouse_move@thunk1_SpriteBox@@QAEXHH@Z 0x00611830-0x00611838
 // symbol    ?adjust_sprite_box1_on_mouse_move@@YIXPAX0HH@Z
 // size      8 bytes
 // prototype void (__thiscall ?on_mouse_move@thunk1_SpriteBox@@QAEXHH@Z)(SpriteBox* this, int, int)
@@ -2240,15 +2134,6 @@ Purpose: Adjust the receiver from SpriteBox's thunk1 subobject to the one
 Return Value: n/a
 Status: Complete
 */
-void __fastcall adjust_sprite_box1_on_mouse_move(void *self, void *, int arg0,
-                                                 int arg1) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<SpriteBox *>(object - vtordisp)->SpriteBox::on_mouse_move(arg0, arg1);
-}
-
-
 /*
 Purpose: Adjust the receiver from SpriteBox's thunk1 subobject to the one
          SpriteBox::on_left_click expects, then forward unchanged.
@@ -2274,7 +2159,6 @@ void __fastcall adjust_sprite_box1_on_left_click(void *self, void *, int arg0,
 /*
 Purpose: Adjust the receiver from SpriteBox's thunk1 subobject to the one
          SpriteBox::on_left_down expects, then forward unchanged.
-// ORIGINAL: 0x00611860 ?on_left_down@thunk1_SpriteBox@@QAEXHH@Z 0x00611860-0x00611868
 // symbol    ?adjust_sprite_box1_on_left_down@@YIXPAX0HH@Z
 // size      8 bytes
 // prototype void (__thiscall ?on_left_down@thunk1_SpriteBox@@QAEXHH@Z)(SpriteBox* this, int, int)
@@ -2285,18 +2169,9 @@ Purpose: Adjust the receiver from SpriteBox's thunk1 subobject to the one
 Return Value: n/a
 Status: Complete
 */
-void __fastcall adjust_sprite_box1_on_left_down(void *self, void *, int arg0,
-                                                int arg1) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<SpriteBox *>(object - vtordisp)->SpriteBox::on_left_down(arg0, arg1);
-}
-
 /*
 Purpose: Adjust the receiver from SpriteBox's thunk1 subobject to the one
          SpriteBox::on_left_up expects, then forward unchanged.
-// ORIGINAL: 0x00611870 ?on_left_up@thunk1_SpriteBox@@QAEXHH@Z 0x00611870-0x00611878
 // symbol    ?adjust_sprite_box1_on_left_up@@YIXPAX0HH@Z
 // size      8 bytes
 // prototype void (__thiscall ?on_left_up@thunk1_SpriteBox@@QAEXHH@Z)(SpriteBox* this, int, int)
@@ -2307,14 +2182,6 @@ Purpose: Adjust the receiver from SpriteBox's thunk1 subobject to the one
 Return Value: n/a
 Status: Complete
 */
-void __fastcall adjust_sprite_box1_on_left_up(void *self, void *, int arg0,
-                                              int arg1) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<SpriteBox *>(object - vtordisp)->SpriteBox::on_left_up(arg0, arg1);
-}
-
 /*
 Purpose: Adjust the receiver from SpriteBox's thunk1 subobject to the one
          SpriteBox::on_right_click expects, then forward unchanged.
@@ -2340,7 +2207,6 @@ void __fastcall adjust_sprite_box1_on_right_click(void *self, void *,
 /*
 Purpose: Adjust the receiver from SpriteBox's thunk1 subobject to the one
          SpriteBox::on_right_down expects, then forward unchanged.
-// ORIGINAL: 0x00611890 ?on_right_down@thunk1_SpriteBox@@QAEXHH@Z 0x00611890-0x00611898
 // symbol    ?adjust_sprite_box1_on_right_down@@YIXPAX0HH@Z
 // size      8 bytes
 // prototype void (__thiscall ?on_right_down@thunk1_SpriteBox@@QAEXHH@Z)(SpriteBox* this, int, int)
@@ -2351,14 +2217,6 @@ Purpose: Adjust the receiver from SpriteBox's thunk1 subobject to the one
 Return Value: n/a
 Status: Complete
 */
-void __fastcall adjust_sprite_box1_on_right_down(void *self, void *, int arg0,
-                                                 int arg1) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<SpriteBox *>(object - vtordisp)->SpriteBox::on_right_down(arg0, arg1);
-}
-
 /*
 Purpose: Adjust the receiver from SpriteBox's thunk1 subobject to the one
          SpriteBox::on_right_up expects, then forward unchanged.
@@ -2405,7 +2263,6 @@ int __fastcall adjust_sprite_box1_on_key_down(void *self, void *, int arg0) {
 /*
 Purpose: Adjust the receiver from SpriteBox's thunk1 subobject to the one
          SpriteBox::on_left_double_click expects, then forward unchanged.
-// ORIGINAL: 0x006118C0 ?on_left_double_click@thunk1_SpriteBox@@QAEXHH@Z 0x006118C0-0x006118C8
 // symbol    ?adjust_sprite_box1_on_left_double_click@@YIXPAX0HH@Z
 // size      8 bytes
 // prototype void (__thiscall ?on_left_double_click@thunk1_SpriteBox@@QAEXHH@Z)(SpriteBox* this, int, int)
@@ -2416,14 +2273,6 @@ Purpose: Adjust the receiver from SpriteBox's thunk1 subobject to the one
 Return Value: n/a
 Status: Complete
 */
-void __fastcall adjust_sprite_box1_on_left_double_click(void *self, void *,
-                                                        int arg0, int arg1) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<SpriteBox *>(object - vtordisp)->SpriteBox::on_left_double_click(arg0, arg1);
-}
-
 /*
 Purpose: Adjust the receiver from SpriteBox's thunk1 subobject to the one
          SpriteBox::on_right_double_click expects, then forward unchanged.
@@ -2451,7 +2300,6 @@ void __fastcall adjust_sprite_box1_on_right_double_click(void *self, void *,
 /*
 Purpose: Adjust the receiver from SpriteBox's thunk3 subobject to the one
          SpriteBox::on_redraw expects, then forward unchanged.
-// ORIGINAL: 0x00611930 ?on_redraw@thunk3_SpriteBox@@QAEXXZ 0x00611930-0x0061193E BYTE_EXACT
 // symbol    ?adjust_sprite_box3_on_redraw@@YIXPAX0@Z
 // size      14 bytes
 // prototype void (__thiscall ?on_redraw@thunk3_SpriteBox@@QAEXXZ)(SpriteBox* this)
@@ -2469,14 +2317,6 @@ Purpose: Adjust the receiver from SpriteBox's thunk3 subobject to the one
 Return Value: n/a
 Status: Complete
 */
-void __fastcall adjust_sprite_box3_on_redraw(void *self, void *) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<SpriteBox *>(object - vtordisp - 0xAA4)->SpriteBox::on_redraw();
-}
-
-
 /*
 Purpose: Adjust the receiver from EditGroup's thunk1 subobject to the one
          EditGroup::pass_dialog_focus expects, then forward unchanged.

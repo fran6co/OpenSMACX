@@ -7,6 +7,9 @@
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  */
+// ORIGINAL: 0x004923E0 ??_GPrefWin@@UAEPAXI@Z 0x004923E0-0x00492401 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["historical deleting-thunk source src/deleting_thunks.cpp; original full spans retained: 0x004923E0-0x00492401", "Pinned class constructor ??0PrefWin@@QAE@XZ at 0x004921E0 stores original class/view table VA 0x66d424 at 0x004923BC (mov dword ptr [esi], 0x66d424); the current genuine owner vftable ??_7PrefWin@@6BWin@@@ selects generated ??_GPrefWin@@UAEPAXI@Z in slot 0 (+0x0) through weak entry ??_EPrefWin@@UAEPAXI@Z (mode 2).", "Pinned ??_GPrefWin@@UAEPAXI@Z at 0x004923E0 calls the source-mapped ??1PrefWin@@QAE@XZ at 0x00491DF0, then tests byte ptr [ebp + 8], 1; je 0x4923fa bypasses scalar delete when bit 0 is clear, while bit 0 set calls 0x0064557F; it save original this; call destructor; delete only when flags bit 0 is set; return saved this with ret 4.", "The real class lifetime is owned by src/prefwin.cpp; its compiler-emitted deleting symbol and vftable slot carry this original identity. Hand-written adapter bodies with live adjustor callers remain until those callers are independently qualified and transferred. The linked weak/COMDAT copy is not used to choose source ownership.", "the source writer preserves the historical mapping's exactness state (historical exactness obligation retained); current compiler extent is not asserted equal to the original span"], "reason": "Bind the original PrefWin scalar deleting-destructor identity to the actual compiler-emitted class deleting destructor in its genuine owner translation unit. The original constructor's pinned vptr store and the current owner's physical table slot identify this class/view; no callback/thunk body is hand-authored here."}
+// symbol    ??_GPrefWin@@UAEPAXI@Z
 #include "stdafx.h"
 #include "prefwin.h"
 

@@ -7,6 +7,9 @@
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  */
+// ORIGINAL: 0x00408140 ??_GAlphaSave@@UAEPAXI@Z 0x00408140-0x00408161 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["historical deleting-thunk source src/deleting_thunks.cpp; original full spans retained: 0x00408140-0x00408161", "Pinned class constructor ??0AlphaSave@@QAE@XZ at 0x00407350 stores original class/view table VA 0x669ec8 at 0x004073F2 (mov dword ptr [esi], 0x669ec8); the current genuine owner vftable ??_7AlphaSave@@6BWin@@@ selects generated ??_GAlphaSave@@UAEPAXI@Z in slot 0 (+0x0) through weak entry ??_EAlphaSave@@UAEPAXI@Z (mode 2).", "Pinned ??_GAlphaSave@@UAEPAXI@Z at 0x00408140 calls the source-mapped ??1AlphaSave@@QAE@XZ at 0x00408170, then tests byte ptr [ebp + 8], 1; je 0x40815a bypasses scalar delete when bit 0 is clear, while bit 0 set calls 0x0064557F; it save original this; call destructor; delete only when flags bit 0 is set; return saved this with ret 4.", "The real class lifetime is owned by src/alphasave.cpp; its compiler-emitted deleting symbol and vftable slot carry this original identity. Hand-written adapter bodies with live adjustor callers remain until those callers are independently qualified and transferred. The linked weak/COMDAT copy is not used to choose source ownership.", "the source writer preserves the historical mapping's exactness state (historical exactness obligation retained); current compiler extent is not asserted equal to the original span"], "reason": "Bind the original AlphaSave scalar deleting-destructor identity to the actual compiler-emitted class deleting destructor in its genuine owner translation unit. The original constructor's pinned vptr store and the current owner's physical table slot identify this class/view; no callback/thunk body is hand-authored here."}
+// symbol    ??_GAlphaSave@@UAEPAXI@Z
 #include "stdafx.h"
 #include "alphasave.h"
 #include "console.h"

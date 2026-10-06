@@ -123,119 +123,19 @@ checks; none alone establishes complete game acceptance.
 func_deleting_dtor PopupDtorTarget =
     original_method<func_deleting_dtor>(0x00406C00);
 
-/*
-Purpose: The compiler-generated scalar deleting destructor at
-         ??_GAlphaMovie@@UAEPAXI@Z: run the complete destructor, then release
-         the storage through the executable's operator delete only when bit 0
-         of the flags asks.
-// ORIGINAL: 0x004043A0 ??_GAlphaMovie@@UAEPAXI@Z 0x004043A0-0x004043C1 BYTE_EXACT
-// symbol    ?scalar_delete_alpha_movie@@YIPAXPAX0I@Z
-// size      33 bytes
-// prototype 
-// callers   0   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x00404310 0x0064557F
-Return Value: the object pointer
-Status: Complete
-*/
-void *__fastcall scalar_delete_alpha_movie(void *self, void *,
-                                           unsigned int arg0) {
-    static_cast<AlphaMovie *>(self)->AlphaMovie::~AlphaMovie();
-    if (arg0 & 1) {
-        operator delete(self);
-    }
-    return self;
-}
 
 
-/*
-Purpose: The compiler-generated scalar deleting destructor at
-         ??_GFlatButton@@UAEPAXI@Z: run the complete destructor, then release
-         the storage through the executable's operator delete only when bit 0
-         of the flags asks.
-// ORIGINAL: 0x004068E0 ??_GFlatButton@@UAEPAXI@Z 0x004068E0-0x00406901 BYTE_EXACT
-// symbol    ?scalar_delete_flat_button@@YIPAXPAX0I@Z
-// size      33 bytes
-// prototype void* (__thiscall ??_GFlatButton@@UAEPAXI@Z)(FlatButton* this, unsigned int)
-// callers   0   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x00406880 0x0064557F
-Return Value: the object pointer
-Status: Complete
-*/
-void *__fastcall scalar_delete_flat_button(void *self, void *,
-                                           unsigned int arg0) {
-    // THE METHOD, not the redirect: `nullptr` for the redirect's unused
-    // second argument materialises `xor edx, edx`, which the image does not
-    // emit. Same fix as SelectPartWin::close.
-    reinterpret_cast<FlatButton *>(self)->destroy();
-    if (arg0 & 1) {
-        operator delete(self);
-    }
-    return self;
-}
 
-/*
-Purpose: The compiler-generated scalar deleting destructor at
-         ??_GBasePop@@UAEPAXI@Z: run the complete destructor, then release the
-         storage through the executable's operator delete only when bit 0 of
-         the flags asks.
-// ORIGINAL: 0x00406B40 ??_GBasePop@@UAEPAXI@Z 0x00406B40-0x00406B61 BYTE_EXACT
-// symbol    ?scalar_delete_base_pop@@YIPAXPAX0I@Z
-// size      33 bytes
-// prototype 
-// callers   0   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x004064D0 0x0064557F
-Return Value: the object pointer
-Status: Complete
-*/
-void *__fastcall scalar_delete_base_pop(void *self, void *,
-                                        unsigned int arg0) {
-    static_cast<BasePop *>(self)->BasePop::~BasePop();
-    if (arg0 & 1) {
-        operator delete(self);
-    }
-    return self;
-}
 
-/*
-Purpose: The compiler-generated scalar deleting destructor at
-         ??_GPopup@@UAEPAXI@Z: run the complete destructor, then release the
-         storage through the executable's operator delete only when bit 0 of
-         the flags asks.
-// ORIGINAL: 0x00406BD0 ??_GPopup@@UAEPAXI@Z 0x00406BD0-0x00406BF1 BYTE_EXACT
-// symbol    ?scalar_delete_popup@@YIPAXPAX0I@Z
-// size      33 bytes
-// prototype 
-// callers   0   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x00406C00 0x0064557F
-Return Value: the object pointer
-Status: Complete
-*/
-void *__fastcall scalar_delete_popup(void *self, void *, unsigned int arg0) {
-    // A NAMED DESTRUCTOR, not the seam - the image emits `call rel32`.
-    reinterpret_cast<Popup *>(self)->Popup::~Popup();
-    if (arg0 & 1) {
-        operator delete(self);
-    }
-    return self;
-}
 
 /*
 Purpose: The compiler-generated scalar deleting destructor at
          ??_GEditBox@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-// ORIGINAL: 0x00408080 ??_GEditBox@@UAEPAXI@Z 0x00408080-0x004080A1 BYTE_EXACT
 // symbol    ?scalar_delete_edit_box@@YIPAXPAX0I@Z
 // size      33 bytes
-// prototype 
+// prototype
 // callers   0   call targets   2
 // kind      game
 // flags     hidden;sp_ready;purged_ok
@@ -257,10 +157,9 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GAlphaSave@@UAEPAXI@Z: run the complete destructor, then release
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
-// ORIGINAL: 0x00408140 ??_GAlphaSave@@UAEPAXI@Z 0x00408140-0x00408161 BYTE_EXACT
 // symbol    ?scalar_delete_alpha_save@@YIPAXPAX0I@Z
 // size      33 bytes
-// prototype 
+// prototype
 // callers   0   call targets   2
 // kind      game
 // flags     hidden;sp_ready;purged_ok
@@ -288,7 +187,7 @@ Purpose: Step the receiver back to the subobject ??_GAlphaSave@@UAEPAXI@Z
 //   and the receiver stays in ECX. `WEEE@` re-demangles to
 //   adjustor{1092} and 1092 == 0x444, the constant subtracted
 // size      11 bytes
-// prototype 
+// prototype
 // callers   0   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
@@ -313,7 +212,7 @@ Purpose: Step the receiver back to the subobject ??_GEditBox@@UAEPAXI@Z
 //   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
 //   and 1092 == 0x444, the constant subtracted
 // size      11 bytes
-// prototype 
+// prototype
 // callers   0   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
@@ -326,55 +225,7 @@ void *__fastcall adjust_this_edit_box(void *self, void *, unsigned int arg0) {
     return scalar_delete_edit_box(object - 0x444, nullptr, arg0);
 }
 
-/*
-Purpose: The compiler-generated scalar deleting destructor at
-         ??_GProdPicker@@UAEPAXI@Z: run the complete destructor, then release
-         the storage through the executable's operator delete only when bit 0
-         of the flags asks.
-// ORIGINAL: 0x004213A0 ??_GProdPicker@@UAEPAXI@Z 0x004213A0-0x004213C1 BYTE_EXACT
-// symbol    ?scalar_delete_prod_picker@@YIPAXPAX0I@Z
-// size      33 bytes
-// prototype 
-// callers   0   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x00421100 0x0064557F
-Return Value: the object pointer
-Status: Complete
-*/
-void *__fastcall scalar_delete_prod_picker(void *self, void *,
-                                           unsigned int arg0) {
-    static_cast<ProdPicker *>(self)->ProdPicker::~ProdPicker();
-    if (arg0 & 1) {
-        operator delete(self);
-    }
-    return self;
-}
 
-/*
-Purpose: The compiler-generated scalar deleting destructor at
-         ??_GBaseWin@@UAEPAXI@Z: run the complete destructor, then release the
-         storage through the executable's operator delete only when bit 0 of
-         the flags asks.
-// ORIGINAL: 0x004213D0 ??_GBaseWin@@UAEPAXI@Z 0x004213D0-0x004213F1 BYTE_EXACT
-// symbol    ?scalar_delete_base_win@@YIPAXPAX0I@Z
-// size      33 bytes
-// prototype 
-// callers   0   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x00420A70 0x0064557F
-Return Value: the object pointer
-Status: Complete
-*/
-void *__fastcall scalar_delete_base_win(void *self, void *,
-                                        unsigned int arg0) {
-    static_cast<BaseWin *>(self)->BaseWin::~BaseWin();
-    if (arg0 & 1) {
-        operator delete(self);
-    }
-    return self;
-}
 
 /*
 Purpose: The compiler-generated scalar deleting destructor at
@@ -384,7 +235,7 @@ Purpose: The compiler-generated scalar deleting destructor at
 // ORIGINAL: 0x00421640 ??_GPopMenu@@UAEPAXI@Z 0x00421640-0x00421661 BYTE_EXACT
 // symbol    ?scalar_delete_pop_menu@@YIPAXPAX0I@Z
 // size      33 bytes
-// prototype 
+// prototype
 // callers   0   call targets   2
 // kind      game
 // flags     hidden;sp_ready;purged_ok
@@ -407,7 +258,7 @@ Purpose: Step the receiver back to the subobject ??_GPopMenu@@UAEPAXI@Z
 // ORIGINAL: 0x00421980 PopMenu::delete1 0x00421980-0x0042198B
 // symbol    ?adjust_this_pop_menu_delete1@@YIPAXPAX0I@Z
 // size      11 bytes
-// prototype 
+// prototype
 // callers   0   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
@@ -427,7 +278,7 @@ Purpose: Step the receiver back to the subobject ??_GPopMenu@@UAEPAXI@Z
 // ORIGINAL: 0x00421990 PopMenu::delete2 0x00421990-0x0042199B
 // symbol    ?adjust_this_pop_menu_delete2@@YIPAXPAX0I@Z
 // size      11 bytes
-// prototype 
+// prototype
 // callers   0   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
@@ -447,7 +298,7 @@ Purpose: Step the receiver back to the subobject ??_GPopMenu@@UAEPAXI@Z
 // ORIGINAL: 0x004219A0 PopMenu::delete3 0x004219A0-0x004219AB
 // symbol    ?adjust_this_pop_menu_delete3@@YIPAXPAX0I@Z
 // size      11 bytes
-// prototype 
+// prototype
 // callers   0   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
@@ -461,203 +312,13 @@ void *__fastcall adjust_this_pop_menu_delete3(void *self, void *,
     return scalar_delete_pop_menu(object - 0x57C0, nullptr, arg0);
 }
 
-/*
-Purpose: The compiler-generated scalar deleting destructor at
-         ??_GCouncWin@@UAEPAXI@Z: run the complete destructor, then release the
-         storage through the executable's operator delete only when bit 0 of
-         the flags asks.
-// ORIGINAL: 0x00428710 ??_GCouncWin@@UAEPAXI@Z 0x00428710-0x00428731 BYTE_EXACT
-// symbol    ?scalar_delete_counc_win@@YIPAXPAX0I@Z
-// size      33 bytes
-// prototype void* (__thiscall ??_GCouncWin@@UAEPAXI@Z)(CouncWin* this, unsigned int)
-// callers   0   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x00428550 0x0064557F
-Return Value: the object pointer
-Status: Complete
-*/
-void *__fastcall scalar_delete_counc_win(void *self, void *,
-                                         unsigned int arg0) {
-    static_cast<CouncWin *>(self)->CouncWin::~CouncWin();
-    if (arg0 & 1) {
-        operator delete(self);
-    }
-    return self;
-}
 
-/*
-Purpose: The compiler-generated scalar deleting destructor at
-         ??_GCredits@@UAEPAXI@Z: run the complete destructor, then release the
-         storage through the executable's operator delete only when bit 0 of
-         the flags asks.
-// ORIGINAL: 0x00428E60 ??_GCredits@@UAEPAXI@Z 0x00428E60-0x00428E81 BYTE_EXACT
-// symbol    ?scalar_delete_credits@@YIPAXPAX0I@Z
-// size      33 bytes
-// prototype 
-// callers   0   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x00428E90 0x0064557F
-Return Value: the object pointer
-Status: Complete
-*/
-void *__fastcall scalar_delete_credits(void *self, void *, unsigned int arg0) {
-    static_cast<Credits *>(self)->Credits::~Credits();
-    if (arg0 & 1) {
-        operator delete(self);
-    }
-    return self;
-}
 
-/*
-Purpose: The compiler-generated scalar deleting destructor at
-         ??_GStringBox@@UAEPAXI@Z: run the complete destructor, then release
-         the storage through the executable's operator delete only when bit 0
-         of the flags asks.
-// ORIGINAL: 0x00432770 ??_GStringBox@@UAEPAXI@Z 0x00432770-0x00432791 BYTE_EXACT
-// symbol    ?scalar_delete_string_box@@YIPAXPAX0I@Z
-// size      33 bytes
-// prototype void* (__thiscall ??_GStringBox@@UAEPAXI@Z)(StringBox* this, unsigned int)
-// callers   0   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x004325C0 0x0064557F
-Return Value: the object pointer
-Status: Complete
-*/
-void *__fastcall scalar_delete_string_box(void *self, void *,
-                                          unsigned int arg0) {
-    static_cast<StringBox *>(self)->StringBox::~StringBox();
-    if (arg0 & 1) {
-        operator delete(self);
-    }
-    return self;
-}
 
-/*
-Purpose: The compiler-generated scalar deleting destructor at
-         ??_GDatalink@@UAEPAXI@Z: run the complete destructor, then release the
-         storage through the executable's operator delete only when bit 0 of
-         the flags asks.
-// ORIGINAL: 0x00432800 ??_GDatalink@@UAEPAXI@Z 0x00432800-0x00432821 BYTE_EXACT
-// symbol    ?scalar_delete_datalink@@YIPAXPAX0I@Z
-// size      33 bytes
-// prototype void* (__thiscall ??_GDatalink@@UAEPAXI@Z)(Datalink* this, unsigned int)
-// callers   0   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x00432290 0x0064557F
-Return Value: the object pointer
-Status: Complete
-*/
-void *__fastcall scalar_delete_datalink(void *self, void *,
-                                        unsigned int arg0) {
-    static_cast<Datalink *>(self)->Datalink::~Datalink();
-    if (arg0 & 1) {
-        operator delete(self);
-    }
-    return self;
-}
 
-/*
-Purpose: The compiler-generated scalar deleting destructor at
-         ??_GDesignWin@@UAEPAXI@Z: run the complete destructor, then release
-         the storage through the executable's operator delete only when bit 0
-         of the flags asks.
-// ORIGINAL: 0x0043EDB0 ??_GDesignWin@@UAEPAXI@Z 0x0043EDB0-0x0043EDD1 BYTE_EXACT
-// symbol    ?scalar_delete_design_win@@YIPAXPAX0I@Z
-// size      33 bytes
-// prototype 
-// callers   0   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x0043ECB0 0x0064557F
-Return Value: the object pointer
-Status: Complete
-*/
-void *__fastcall scalar_delete_design_win(void *self, void *,
-                                          unsigned int arg0) {
-    static_cast<DesignWin *>(self)->DesignWin::~DesignWin();
-    if (arg0 & 1) {
-        operator delete(self);
-    }
-    return self;
-}
 
-/*
-Purpose: The compiler-generated scalar deleting destructor at
-         ??_GDiploPop@@UAEPAXI@Z: run the complete destructor, then release the
-         storage through the executable's operator delete only when bit 0 of
-         the flags asks.
-// ORIGINAL: 0x00440EC0 ??_GDiploPop@@UAEPAXI@Z 0x00440EC0-0x00440EE1 BYTE_EXACT
-// symbol    ?scalar_delete_diplo_pop@@YIPAXPAX0I@Z
-// size      33 bytes
-// prototype void* (__thiscall ??_GDiploPop@@UAEPAXI@Z)(DiploPop* this, unsigned int)
-// callers   0   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x00440D50 0x0064557F
-Return Value: the object pointer
-Status: Complete
-*/
-void *__fastcall scalar_delete_diplo_pop(void *self, void *,
-                                         unsigned int arg0) {
-    static_cast<DiploPop *>(self)->DiploPop::~DiploPop();
-    if (arg0 & 1) {
-        operator delete(self);
-    }
-    return self;
-}
 
-/*
-Purpose: The compiler-generated scalar deleting destructor at
-         ??_GDiploWin@@UAEPAXI@Z: run the complete destructor, then release the
-         storage through the executable's operator delete only when bit 0 of
-         the flags asks.
-// ORIGINAL: 0x00445080 ??_GDiploWin@@UAEPAXI@Z 0x00445080-0x004450A1 BYTE_EXACT
-// symbol    ?scalar_delete_diplo_win@@YIPAXPAX0I@Z
-// size      33 bytes
-// prototype void* (__thiscall ??_GDiploWin@@UAEPAXI@Z)(DiploWin* this, unsigned int)
-// callers   0   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x00444DB0 0x0064557F
-Return Value: the object pointer
-Status: Complete
-*/
-void *__fastcall scalar_delete_diplo_win(void *self, void *,
-                                         unsigned int arg0) {
-    static_cast<DiploWin *>(self)->DiploWin::~DiploWin();
-    if (arg0 & 1) {
-        operator delete(self);
-    }
-    return self;
-}
 
-/*
-Purpose: The compiler-generated scalar deleting destructor at
-         ??_GEffect@@UAEPAXI@Z: run the complete destructor, then release the
-         storage through the executable's operator delete only when bit 0 of
-         the flags asks.
-// ORIGINAL: 0x00448350 ??_GEffect@@UAEPAXI@Z 0x00448350-0x00448371 BYTE_EXACT
-// symbol    ?scalar_delete_effect@@YIPAXPAX0I@Z
-// size      33 bytes
-// prototype void* (__thiscall ??_GEffect@@UAEPAXI@Z)(Effect* this, unsigned int)
-// callers   0   call targets   2
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     0x004482C0 0x0064557F
-Return Value: the object pointer
-Status: Complete
-*/
-void *__fastcall scalar_delete_effect(void *self, void *, unsigned int arg0) {
-    static_cast<Effect *>(self)->Effect::~Effect();
-    if (arg0 & 1) {
-        operator delete(self);
-    }
-    return self;
-}
 
 /*
 Purpose: The compiler-generated scalar deleting destructor at sub_448390: run
@@ -666,7 +327,7 @@ Purpose: The compiler-generated scalar deleting destructor at sub_448390: run
 // ORIGINAL: 0x00448390 sub_448390 0x00448390-0x004483B1 BYTE_EXACT
 // symbol    ?scalar_delete_sub_448390@@YIPAXPAX0I@Z
 // size      33 bytes
-// prototype 
+// prototype
 // callers   0   call targets   2
 // kind      game
 // flags     sp_ready;purged_ok
@@ -695,10 +356,9 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GFameWin@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-// ORIGINAL: 0x0044B300 ??_GFameWin@@UAEPAXI@Z 0x0044B300-0x0044B321 BYTE_EXACT
 // symbol    ?scalar_delete_fame_win@@YIPAXPAX0I@Z
 // size      33 bytes
-// prototype 
+// prototype
 // callers   0   call targets   2
 // kind      game
 // flags     hidden;sp_ready;purged_ok
@@ -726,7 +386,7 @@ Purpose: Step the receiver back to the subobject ??_GFameWin@@UAEPAXI@Z
 //   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
 //   and 1092 == 0x444, the constant subtracted
 // size      11 bytes
-// prototype 
+// prototype
 // callers   0   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
@@ -739,54 +399,7 @@ void *__fastcall adjust_this_fame_win(void *self, void *, unsigned int arg0) {
     return scalar_delete_fame_win(object - 0x444, nullptr, arg0);
 }
 
-/*
-Purpose: The compiler-generated scalar deleting destructor at
-         ??_GGamma@@UAEPAXI@Z: run the complete destructor, then release the
-         storage through the executable's operator delete only when bit 0 of
-         the flags asks.
-// ORIGINAL: 0x00456280 ??_GGamma@@UAEPAXI@Z 0x00456280-0x004562A1 BYTE_EXACT
-// symbol    ?scalar_delete_gamma@@YIPAXPAX0I@Z
-// size      33 bytes
-// prototype void* (__thiscall ??_GGamma@@UAEPAXI@Z)(Gamma* this, unsigned int)
-// callers   0   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x00456110 0x0064557F
-Return Value: the object pointer
-Status: Complete
-*/
-void *__fastcall scalar_delete_gamma(void *self, void *, unsigned int arg0) {
-    static_cast<Gamma *>(self)->Gamma::~Gamma();
-    if (arg0 & 1) {
-        operator delete(self);
-    }
-    return self;
-}
 
-/*
-Purpose: The compiler-generated scalar deleting destructor at
-         ??_GMainInterface@@UAEPAXI@Z: run the complete destructor, then
-         release the storage through the executable's operator delete only when
-         bit 0 of the flags asks.
-// ORIGINAL: 0x0045F1C0 ??_GMainInterface@@UAEPAXI@Z 0x0045F1C0-0x0045F1E1 BYTE_EXACT
-// symbol    ?scalar_delete_main_interface@@YIPAXPAX0I@Z
-// size      33 bytes
-// prototype 
-// callers   0   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x0045EB80 0x0064557F
-Return Value: the object pointer
-Status: Complete
-*/
-void *__fastcall scalar_delete_main_interface(void *self, void *,
-                                              unsigned int arg0) {
-    static_cast<MainInterface *>(self)->MainInterface::~MainInterface();
-    if (arg0 & 1) {
-        operator delete(self);
-    }
-    return self;
-}
 
 // Interlude members and compiler-generated lifetime code are owned by interlude.cpp.
 
@@ -797,7 +410,6 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GMonuWin@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-// ORIGINAL: 0x00477DD0 ??_GMonuWin@@UAEPAXI@Z 0x00477DD0-0x00477DF1 BYTE_EXACT
 // symbol    ?scalar_delete_monu_win@@YIPAXPAX0I@Z
 // size      33 bytes
 // prototype void* (__thiscall ??_GMonuWin@@UAEPAXI@Z)(MonuWin* this, unsigned int)
@@ -828,7 +440,7 @@ Purpose: Step the receiver back to the subobject ??_GMonuWin@@UAEPAXI@Z
 //   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
 //   and 1092 == 0x444, the constant subtracted
 // size      11 bytes
-// prototype 
+// prototype
 // callers   0   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
@@ -846,7 +458,6 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GMultiWin@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-// ORIGINAL: 0x0047A6C0 ??_GMultiWin@@UAEPAXI@Z 0x0047A6C0-0x0047A6E1 BYTE_EXACT
 // symbol    ?scalar_delete_multi_win@@YIPAXPAX0I@Z
 // size      33 bytes
 // prototype void* (__thiscall ??_GMultiWin@@UAEPAXI@Z)(MultiWin* this, unsigned int)
@@ -877,7 +488,7 @@ Purpose: Step the receiver back to the subobject ??_GMultiWin@@UAEPAXI@Z
 //   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
 //   and 1092 == 0x444, the constant subtracted
 // size      11 bytes
-// prototype 
+// prototype
 // callers   0   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
@@ -890,85 +501,14 @@ void *__fastcall adjust_this_multi_win(void *self, void *, unsigned int arg0) {
     return scalar_delete_multi_win(object - 0x444, nullptr, arg0);
 }
 
-/*
-Purpose: The compiler-generated scalar deleting destructor at
-         ??_GNetMsg@@UAEPAXI@Z: run the complete destructor, then release the
-         storage through the executable's operator delete only when bit 0 of
-         the flags asks.
-// ORIGINAL: 0x0047AD70 ??_GNetMsg@@UAEPAXI@Z 0x0047AD70-0x0047AD91 BYTE_EXACT
-// symbol    ?scalar_delete_net_msg@@YIPAXPAX0I@Z
-// size      33 bytes
-// prototype void* (__thiscall ??_GNetMsg@@UAEPAXI@Z)(NetMsg* this, unsigned int)
-// callers   0   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x0047ADA0 0x0064557F
-Return Value: the object pointer
-Status: Complete
-*/
-void *__fastcall scalar_delete_net_msg(void *self, void *, unsigned int arg0) {
-    static_cast<NetMsg *>(self)->NetMsg::~NetMsg();
-    if (arg0 & 1) {
-        operator delete(self);
-    }
-    return self;
-}
 
-/*
-Purpose: The compiler-generated scalar deleting destructor at
-         ??_GNetWin@@UAEPAXI@Z: run the complete destructor, then release the
-         storage through the executable's operator delete only when bit 0 of
-         the flags asks.
-// ORIGINAL: 0x004837C0 ??_GNetWin@@UAEPAXI@Z 0x004837C0-0x004837E1 BYTE_EXACT
-// symbol    ?scalar_delete_net_win@@YIPAXPAX0I@Z
-// size      33 bytes
-// prototype void* (__thiscall ??_GNetWin@@UAEPAXI@Z)(NetWin* this, unsigned int)
-// callers   0   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x004834E0 0x0064557F
-Return Value: the object pointer
-Status: Complete
-*/
-void *__fastcall scalar_delete_net_win(void *self, void *, unsigned int arg0) {
-    static_cast<NetWin *>(self)->NetWin::~NetWin();
-    if (arg0 & 1) {
-        operator delete(self);
-    }
-    return self;
-}
 
-/*
-Purpose: The compiler-generated scalar deleting destructor at
-         ??_GNewTechWin@@UAEPAXI@Z: run the complete destructor, then release
-         the storage through the executable's operator delete only when bit 0
-         of the flags asks.
-// ORIGINAL: 0x00484A80 ??_GNewTechWin@@UAEPAXI@Z 0x00484A80-0x00484AA1 BYTE_EXACT
-// symbol    ?scalar_delete_new_tech_win@@YIPAXPAX0I@Z
-// size      33 bytes
-// prototype void* (__thiscall ??_GNewTechWin@@UAEPAXI@Z)(NewTechWin* this, unsigned int)
-// callers   0   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x00484810 0x0064557F
-Return Value: the object pointer
-Status: Complete
-*/
-void *__fastcall scalar_delete_new_tech_win(void *self, void *,
-                                            unsigned int arg0) {
-    static_cast<NewTechWin *>(self)->NewTechWin::~NewTechWin();
-    if (arg0 & 1) {
-        operator delete(self);
-    }
-    return self;
-}
 
 /*
 Purpose: The compiler-generated scalar deleting destructor at
          ??_GPickTech@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-// ORIGINAL: 0x00488660 ??_GPickTech@@UAEPAXI@Z 0x00488660-0x00488681 BYTE_EXACT
 // symbol    ?scalar_delete_pick_tech@@YIPAXPAX0I@Z
 // size      33 bytes
 // prototype void* (__thiscall ??_GPickTech@@UAEPAXI@Z)(PickTech* this, unsigned int)
@@ -999,7 +539,7 @@ Purpose: Step the receiver back to the subobject ??_GPickTech@@UAEPAXI@Z
 //   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
 //   and 1092 == 0x444, the constant subtracted
 // size      11 bytes
-// prototype 
+// prototype
 // callers   0   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
@@ -1012,30 +552,6 @@ void *__fastcall adjust_this_pick_tech(void *self, void *, unsigned int arg0) {
     return scalar_delete_pick_tech(object - 0x444, nullptr, arg0);
 }
 
-/*
-Purpose: The compiler-generated scalar deleting destructor at
-         ??_GPickWin@@UAEPAXI@Z: run the complete destructor, then release the
-         storage through the executable's operator delete only when bit 0 of
-         the flags asks.
-// ORIGINAL: 0x0048ADC0 ??_GPickWin@@UAEPAXI@Z 0x0048ADC0-0x0048ADE1 BYTE_EXACT
-// symbol    ?scalar_delete_pick_win@@YIPAXPAX0I@Z
-// size      33 bytes
-// prototype void* (__thiscall ??_GPickWin@@UAEPAXI@Z)(PickWin* this, unsigned int)
-// callers   0   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x0048A8E0 0x0064557F
-Return Value: the object pointer
-Status: Complete
-*/
-void *__fastcall scalar_delete_pick_win(void *self, void *,
-                                        unsigned int arg0) {
-    static_cast<PickWin *>(self)->PickWin::~PickWin();
-    if (arg0 & 1) {
-        operator delete(self);
-    }
-    return self;
-}
 
 /*
 Purpose: Step the receiver back by the vtordisp stored ahead of it to the one
@@ -1048,7 +564,7 @@ Purpose: Step the receiver back by the vtordisp stored ahead of it to the one
 //   demangles to vtordisp{-4, 0} - the field at -4 and no further
 //   adjustment, which is exactly the one subtraction the body performs
 // size      8 bytes
-// prototype 
+// prototype
 // callers   0   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
@@ -1068,7 +584,6 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GPrefWin@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-// ORIGINAL: 0x004923E0 ??_GPrefWin@@UAEPAXI@Z 0x004923E0-0x00492401 BYTE_EXACT
 // symbol    ?scalar_delete_pref_win@@YIPAXPAX0I@Z
 // size      33 bytes
 // prototype void* (__thiscall ??_GPrefWin@@UAEPAXI@Z)(PrefWin* this, unsigned int)
@@ -1099,7 +614,7 @@ Purpose: Step the receiver back to the subobject ??_GPrefWin@@UAEPAXI@Z
 //   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
 //   and 1092 == 0x444, the constant subtracted
 // size      11 bytes
-// prototype 
+// prototype
 // callers   0   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
@@ -1117,7 +632,6 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GQuayleWin@@UAEPAXI@Z: run the complete destructor, then release
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
-// ORIGINAL: 0x004968C0 ??_GQuayleWin@@UAEPAXI@Z 0x004968C0-0x004968E1 BYTE_EXACT
 // symbol    ?scalar_delete_quayle_win@@YIPAXPAX0I@Z
 // size      33 bytes
 // prototype void* (__thiscall ??_GQuayleWin@@UAEPAXI@Z)(QuayleWin* this, unsigned int)
@@ -1148,7 +662,7 @@ Purpose: Step the receiver back to the subobject ??_GQuayleWin@@UAEPAXI@Z
 //   and the receiver stays in ECX. `WEEE@` re-demangles to
 //   adjustor{1092} and 1092 == 0x444, the constant subtracted
 // size      11 bytes
-// prototype 
+// prototype
 // callers   0   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
@@ -1162,161 +676,11 @@ void *__fastcall adjust_this_quayle_win(void *self, void *,
     return scalar_delete_quayle_win(object - 0x444, nullptr, arg0);
 }
 
-/*
-Purpose: The compiler-generated scalar deleting destructor at
-         ??_GReportWin@@UAEPAXI@Z: run the complete destructor, then release
-         the storage through the executable's operator delete only when bit 0
-         of the flags asks.
-// ORIGINAL: 0x004AD840 ??_GReportWin@@UAEPAXI@Z 0x004AD840-0x004AD861 BYTE_EXACT
-// symbol    ?scalar_delete_report_win@@YIPAXPAX0I@Z
-// size      33 bytes
-// prototype void* (__thiscall ??_GReportWin@@UAEPAXI@Z)(ReportWin* this, unsigned int)
-// callers   0   call targets   2
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     0x004AD3B0 0x0064557F
-Return Value: the object pointer
-Status: Complete
-*/
-void *__fastcall scalar_delete_report_win(void *self, void *,
-                                          unsigned int arg0) {
-    static_cast<ReportWin *>(self)->ReportWin::~ReportWin();
-    if (arg0 & 1) {
-        operator delete(self);
-    }
-    return self;
-}
 
-/*
-Purpose: The compiler-generated scalar deleting destructor at
-         ??_GSetupWin@@UAEPAXI@Z: run the complete destructor, then release the
-         storage through the executable's operator delete only when bit 0 of
-         the flags asks.
-// ORIGINAL: 0x004AE760 ??_GSetupWin@@UAEPAXI@Z 0x004AE760-0x004AE781 BYTE_EXACT
-// symbol    ?scalar_delete_setup_win@@YIPAXPAX0I@Z
-// size      33 bytes
-// prototype void* (__thiscall ??_GSetupWin@@UAEPAXI@Z)(SetupWin* this, unsigned int)
-// callers   0   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x004AE790 0x0064557F
-Return Value: the object pointer
-Status: Complete
-*/
-void *__fastcall scalar_delete_setup_win(void *self, void *,
-                                         unsigned int arg0) {
-    static_cast<SetupWin *>(self)->SetupWin::~SetupWin();
-    if (arg0 & 1) {
-        operator delete(self);
-    }
-    return self;
-}
 
-/*
-Purpose: The compiler-generated scalar deleting destructor at
-         ??_GCheckButton@@UAEPAXI@Z: run the complete destructor, then release
-         the storage through the executable's operator delete only when bit 0
-         of the flags asks.
-// ORIGINAL: 0x004B3F20 ??_GCheckButton@@UAEPAXI@Z 0x004B3F20-0x004B3F41 BYTE_EXACT
-// symbol    ?scalar_delete_check_button@@YIPAXPAX0I@Z
-// size      33 bytes
-// prototype void* (__thiscall ??_GCheckButton@@UAEPAXI@Z)(CheckButton* this, unsigned int)
-// callers   0   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x004B3EC0 0x0064557F
-Return Value: the object pointer
-Status: Complete
-*/
-void *__fastcall scalar_delete_check_button(void *self, void *,
-                                            unsigned int arg0) {
-    static_cast<CheckButton *>(self)->CheckButton::~CheckButton();
-    if (arg0 & 1) {
-        operator delete(self);
-    }
-    return self;
-}
 
-/*
-Purpose: The compiler-generated scalar deleting destructor at
-         ??_GSocialWin@@UAEPAXI@Z: run the complete destructor, then release
-         the storage through the executable's operator delete only when bit 0
-         of the flags asks.
-// ORIGINAL: 0x004B3F50 ??_GSocialWin@@UAEPAXI@Z 0x004B3F50-0x004B3F71 BYTE_EXACT
-// symbol    ?scalar_delete_social_win@@YIPAXPAX0I@Z
-// size      33 bytes
-// prototype 
-// callers   0   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x004B3C80 0x0064557F
-Return Value: the object pointer
-Status: Complete
-*/
-void *__fastcall scalar_delete_social_win(void *self, void *,
-                                          unsigned int arg0) {
-    static_cast<SocialWin *>(self)->SocialWin::~SocialWin();
-    if (arg0 & 1) {
-        operator delete(self);
-    }
-    return self;
-}
 
-/*
-Purpose: The compiler-generated scalar deleting destructor at
-         ??_GTutWin@@UAEPAXI@Z: run the complete destructor, then release the
-         storage through the executable's operator delete only when bit 0 of
-         the flags asks.
-// ORIGINAL: 0x004BE9F0 ??_GTutWin@@UAEPAXI@Z 0x004BE9F0-0x004BEA11 BYTE_EXACT
-// symbol    ?scalar_delete_tut_win@@YIPAXPAX0I@Z
-// size      33 bytes
-// prototype void* (__thiscall ??_GTutWin@@UAEPAXI@Z)(TutWin* this, unsigned int)
-// callers   0   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x004BE7D0 0x0064557F
-Return Value: the object pointer
-Status: Complete
-*/
-void *__fastcall scalar_delete_tut_win(void *self, void *, unsigned int arg0) {
-    static_cast<TutWin *>(self)->TutWin::~TutWin();
-    if (arg0 & 1) {
-        operator delete(self);
-    }
-    return self;
-}
 
-/*
-Purpose: The compiler-generated scalar deleting destructor at
-         ??_GAmbience@@UAEPAXI@Z: run the complete destructor, then release the
-         storage through the executable's operator delete only when bit 0 of
-         the flags asks.
-// ORIGINAL: 0x004C9330 ??_GAmbience@@UAEPAXI@Z 0x004C9330-0x004C9351 BYTE_EXACT
-// symbol    ?scalar_delete_ambience@@YIPAXPAX0I@Z
-// size      33 bytes
-// prototype void* (__thiscall ??_GAmbience@@UAEPAXI@Z)(Ambience* this, unsigned int)
-// callers   0   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x004C7670 0x0064557F
-Return Value: the object pointer
-Status: Complete
-*/
-void *__fastcall scalar_delete_ambience(void *self, void *,
-                                        unsigned int arg0) {
-    // THE METHOD, not the redirect: `nullptr` for the redirect's unused
-    // second argument materialises `xor edx, edx`, which the image does not
-    // emit. Same fix as SelectPartWin::close.
-    // QUALIFIED: Sound's destructor is virtual since the sound family
-    // declared its real virtual set, so the unqualified `~Ambience()`
-    // dispatched through the vtable (a `push 0` and an indirect call the
-    // image's direct `call` to the complete destructor never has).
-    reinterpret_cast<Ambience *>(self)->Ambience::~Ambience();
-    if (arg0 & 1) {
-        operator delete(self);
-    }
-    return self;
-}
 
 
 
@@ -1360,7 +724,7 @@ Purpose: Step the receiver back to the subobject ??_GAlphaMenu@@UAEPAXI@Z
 //   and the receiver stays in ECX. `WEEE@` re-demangles to
 //   adjustor{1092} and 1092 == 0x444, the constant subtracted
 // size      11 bytes
-// prototype 
+// prototype
 // callers   0   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
@@ -1399,57 +763,7 @@ void *__fastcall scalar_delete_replay_win(void *self, void *,
     return self;
 }
 
-/*
-Purpose: The compiler-generated scalar deleting destructor at
-         ??_GGraphicWin@@UAEPAXI@Z: run the complete destructor, then release
-         the storage through the executable's operator delete only when bit 0
-         of the flags asks.
-// ORIGINAL: 0x005D7140 ??_GGraphicWin@@UAEPAXI@Z 0x005D7140-0x005D715E
-// symbol    ?scalar_delete_graphic_win@@YIPAXPAX0I@Z
-// size      30 bytes
-// prototype void* (__thiscall ??_GGraphicWin@@UAEPAXI@Z)(GraphicWin* this, unsigned int)
-// callers   0   call targets   2
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     0x005D4DD0 0x0064557F
-Return Value: the object pointer
-Status: Complete
-*/
-void *__fastcall scalar_delete_graphic_win(void *self, void *,
-                                           unsigned int arg0) {
-    reinterpret_cast<GraphicWin *>(self)->~GraphicWin();
-    if (arg0 & 1) {
-        operator delete(self);
-    }
-    return self;
-}
 
-/*
-Purpose: The compiler-generated scalar deleting destructor at
-         ??_GBuffer@@UAEPAXI@Z: run the complete destructor, then release the
-         storage through the executable's operator delete only when bit 0 of
-         the flags asks.
-// ORIGINAL: 0x005E3610 ??_GBuffer@@UAEPAXI@Z 0x005E3610-0x005E362E BYTE_EXACT
-// symbol    ?scalar_delete_buffer@@YIPAXPAX0I@Z
-// size      30 bytes
-// prototype void* (__thiscall ??_GBuffer@@UAEPAXI@Z)(Buffer* this, int8)
-// callers   0   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x005D7410 0x0064557F
-Return Value: the object pointer
-Status: Complete
-*/
-void *__fastcall scalar_delete_buffer(void *self, void *, unsigned int arg0) {
-    // THE METHOD, not the redirect: `nullptr` for the redirect's unused
-    // second argument materialises `xor edx, edx`, which the image does not
-    // emit. Same fix as SelectPartWin::close.
-    reinterpret_cast<Buffer *>(self)->Buffer::~Buffer();
-    if (arg0 & 1) {
-        operator delete(self);
-    }
-    return self;
-}
 
 /*
 Purpose: The compiler-generated scalar deleting destructor at
@@ -1477,134 +791,7 @@ void *__fastcall scalar_delete_win(void *self, void *, unsigned int arg0) {
     return self;
 }
 
-/*
-Purpose: The compiler-generated scalar deleting destructor at
-         ??_GPullDown@@UAEPAXI@Z: run the complete destructor, then release the
-         storage through the executable's operator delete only when bit 0 of
-         the flags asks.
-// ORIGINAL: 0x005FA770 ??_GPullDown@@UAEPAXI@Z 0x005FA770-0x005FA78E BYTE_EXACT
-// symbol    ?scalar_delete_pull_down@@YIPAXPAX0I@Z
-// size      30 bytes
-// prototype void* (__thiscall ??_GPullDown@@UAEPAXI@Z)(PullDown* this, unsigned int)
-// callers   0   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x005F88A0 0x0064557F
-Return Value: the object pointer
-Status: Complete
-*/
-void *__fastcall scalar_delete_pull_down(void *self, void *,
-                                         unsigned int arg0) {
-    // THE METHOD, not the redirect: `nullptr` for the redirect's unused
-    // second argument materialises `xor edx, edx`, which the image does not
-    // emit. Same fix as SelectPartWin::close.
-    static_cast<PullDown *>(self)->PullDown::~PullDown();
-    if (arg0 & 1) {
-        operator delete(self);
-    }
-    return self;
-}
 
-/*
-Purpose: The compiler-generated scalar deleting destructor at
-         ??_GMenu@@UAEPAXI@Z: run the complete destructor, then release the
-         storage through the executable's operator delete only when bit 0 of
-         the flags asks.
-// ORIGINAL: 0x005FC6D0 ??_GMenu@@UAEPAXI@Z 0x005FC6D0-0x005FC6EE BYTE_EXACT
-// symbol    ?scalar_delete_menu@@YIPAXPAX0I@Z
-// size      30 bytes
-// prototype void* (__thiscall ??_GMenu@@UAEPAXI@Z)(Menu* this, unsigned int)
-// callers   0   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x005FAD00 0x0064557F
-Return Value: the object pointer
-Status: Complete
-*/
-void *__fastcall scalar_delete_menu(void *self, void *, unsigned int arg0) {
-    static_cast<Menu *>(self)->Menu::~Menu();
-    if (arg0 & 1) {
-        operator delete(self);
-    }
-    return self;
-}
 
-/*
-Purpose: The compiler-generated scalar deleting destructor at
-         ??_GBaseButton@@UAEPAXI@Z: run the complete destructor, then release
-         the storage through the executable's operator delete only when bit 0
-         of the flags asks.
-// ORIGINAL: 0x00607CC0 ??_GBaseButton@@UAEPAXI@Z 0x00607CC0-0x00607CDE BYTE_EXACT
-// symbol    ?scalar_delete_base_button@@YIPAXPAX0I@Z
-// size      30 bytes
-// prototype void* (__thiscall ??_GBaseButton@@UAEPAXI@Z)(BaseButton* this, unsigned int)
-// callers   0   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x00607040 0x0064557F
-Return Value: the object pointer
-Status: Complete
-*/
-void *__fastcall scalar_delete_base_button(void *self, void *,
-                                           unsigned int arg0) {
-    // THE METHOD, not the redirect: `nullptr` for the redirect's unused
-    // second argument materialises `xor edx, edx`, which the image does not
-    // emit. Same fix as SelectPartWin::close.
-    reinterpret_cast<BaseButton *>(self)->destroy();
-    if (arg0 & 1) {
-        operator delete(self);
-    }
-    return self;
-}
 
 // EditGroup deletion and receiver adjustment are compiler-owned in editgroup.cpp.
-
-/*
-Purpose: The compiler-generated scalar deleting destructor at
-         ??_GImageButton@@UAEPAXI@Z: run the complete destructor, then release
-         the storage through the executable's operator delete only when bit 0
-         of the flags asks.
-// ORIGINAL: 0x006256D0 ??_GImageButton@@UAEPAXI@Z 0x006256D0-0x006256EE BYTE_EXACT
-// symbol    ?scalar_delete_image_button@@YIPAXPAX0I@Z
-// size      30 bytes
-// prototype void* (__thiscall ??_GImageButton@@UAEPAXI@Z)(ImageButton* this, unsigned int)
-// callers   0   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x00625310 0x0064557F
-Return Value: the object pointer
-Status: Complete
-*/
-void *__fastcall scalar_delete_image_button(void *self, void *,
-                                            unsigned int arg0) {
-    static_cast<ImageButton *>(self)->ImageButton::~ImageButton();
-    if (arg0 & 1) {
-        operator delete(self);
-    }
-    return self;
-}
-
-/*
-Purpose: The compiler-generated scalar deleting destructor at
-         ??_GPushButton@@UAEPAXI@Z: run the complete destructor, then release
-         the storage through the executable's operator delete only when bit 0
-         of the flags asks.
-// ORIGINAL: 0x0062C830 ??_GPushButton@@UAEPAXI@Z 0x0062C830-0x0062C84E BYTE_EXACT
-// symbol    ?scalar_delete_push_button@@YIPAXPAX0I@Z
-// size      30 bytes
-// prototype void* (__thiscall ??_GPushButton@@UAEPAXI@Z)(PushButton* this, unsigned int)
-// callers   0   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x0062C010 0x0064557F
-Return Value: the object pointer
-Status: Complete
-*/
-void *__fastcall scalar_delete_push_button(void *self, void *,
-                                           unsigned int arg0) {
-    static_cast<PushButton *>(self)->PushButton::~PushButton();
-    if (arg0 & 1) {
-        operator delete(self);
-    }
-    return self;
-}

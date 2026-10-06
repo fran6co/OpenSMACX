@@ -87,14 +87,8 @@ typedef void (OriginalObject::*func_deleting_dtor)();
 extern func_deleting_dtor PopupDtorTarget;   // 0x00406C00
 
 
-void *__fastcall scalar_delete_alpha_movie(void *self, void *,
-                                           unsigned int arg0);
 void *__fastcall adjust_this_alpha_movie(void *self, void *,
                                          unsigned int arg0);
-void *__fastcall scalar_delete_flat_button(void *self, void *,
-                                           unsigned int arg0);
-void *__fastcall scalar_delete_base_pop(void *self, void *, unsigned int arg0);
-void *__fastcall scalar_delete_popup(void *self, void *, unsigned int arg0);
 void *__fastcall adjust_this_base_pop(void *self, void *, unsigned int arg0);
 void *__fastcall adjust_this_scroll(void *self, void *, unsigned int arg0);
 void *__fastcall adjust_this_popup(void *self, void *, unsigned int arg0);
@@ -105,9 +99,6 @@ void *__fastcall scalar_delete_alpha_save(void *self, void *,
                                           unsigned int arg0);
 void *__fastcall adjust_this_alpha_save(void *self, void *, unsigned int arg0);
 void *__fastcall adjust_this_edit_box(void *self, void *, unsigned int arg0);
-void *__fastcall scalar_delete_prod_picker(void *self, void *,
-                                           unsigned int arg0);
-void *__fastcall scalar_delete_base_win(void *self, void *, unsigned int arg0);
 void *__fastcall scalar_delete_pop_menu(void *self, void *, unsigned int arg0);
 void *__fastcall adjust_this_base_win(void *self, void *, unsigned int arg0);
 void *__fastcall adjust_this_prod_picker(void *self, void *,
@@ -118,34 +109,18 @@ void *__fastcall adjust_this_pop_menu_delete2(void *self, void *,
                                               unsigned int arg0);
 void *__fastcall adjust_this_pop_menu_delete3(void *self, void *,
                                               unsigned int arg0);
-void *__fastcall scalar_delete_counc_win(void *self, void *,
-                                         unsigned int arg0);
 void *__fastcall adjust_this_counc_win(void *self, void *, unsigned int arg0);
-void *__fastcall scalar_delete_credits(void *self, void *, unsigned int arg0);
 void *__fastcall adjust_this_credits(void *self, void *, unsigned int arg0);
-void *__fastcall scalar_delete_string_box(void *self, void *,
-                                          unsigned int arg0);
-void *__fastcall scalar_delete_datalink(void *self, void *, unsigned int arg0);
 void *__fastcall adjust_this_string_box(void *self, void *, unsigned int arg0);
 void *__fastcall adjust_this_datalink(void *self, void *, unsigned int arg0);
-void *__fastcall scalar_delete_design_win(void *self, void *,
-                                          unsigned int arg0);
 void *__fastcall adjust_this_design_win(void *self, void *, unsigned int arg0);
-void *__fastcall scalar_delete_diplo_pop(void *self, void *,
-                                         unsigned int arg0);
 void *__fastcall adjust_this_diplo_pop(void *self, void *, unsigned int arg0);
-void *__fastcall scalar_delete_diplo_win(void *self, void *,
-                                         unsigned int arg0);
 void *__fastcall adjust_this_diplo_win(void *self, void *, unsigned int arg0);
-void *__fastcall scalar_delete_effect(void *self, void *, unsigned int arg0);
 void *__fastcall scalar_delete_sub_448390(void *self, void *,
                                           unsigned int arg0);
 void *__fastcall scalar_delete_fame_win(void *self, void *, unsigned int arg0);
 void *__fastcall adjust_this_fame_win(void *self, void *, unsigned int arg0);
-void *__fastcall scalar_delete_gamma(void *self, void *, unsigned int arg0);
 void *__fastcall adjust_this_gamma(void *self, void *, unsigned int arg0);
-void *__fastcall scalar_delete_main_interface(void *self, void *,
-                                              unsigned int arg0);
 void *__fastcall adjust_this_main_interface(void *self, void *,
                                             unsigned int arg0);
 void *__fastcall scalar_delete_monu_win(void *self, void *, unsigned int arg0);
@@ -153,18 +128,13 @@ void *__fastcall adjust_this_monu_win(void *self, void *, unsigned int arg0);
 void *__fastcall scalar_delete_multi_win(void *self, void *,
                                          unsigned int arg0);
 void *__fastcall adjust_this_multi_win(void *self, void *, unsigned int arg0);
-void *__fastcall scalar_delete_net_msg(void *self, void *, unsigned int arg0);
 void *__fastcall adjust_this_net_msg(void *self, void *, unsigned int arg0);
-void *__fastcall scalar_delete_net_win(void *self, void *, unsigned int arg0);
 void *__fastcall adjust_this_net_win(void *self, void *, unsigned int arg0);
-void *__fastcall scalar_delete_new_tech_win(void *self, void *,
-                                            unsigned int arg0);
 void *__fastcall adjust_this_new_tech_win(void *self, void *,
                                           unsigned int arg0);
 void *__fastcall scalar_delete_pick_tech(void *self, void *,
                                          unsigned int arg0);
 void *__fastcall adjust_this_pick_tech(void *self, void *, unsigned int arg0);
-void *__fastcall scalar_delete_pick_win(void *self, void *, unsigned int arg0);
 void *__fastcall adjust_this_pick_win(void *self, void *, unsigned int arg0);
 void *__fastcall adjust_this_plan_win(void *self, void *, unsigned int arg0);
 void *__fastcall scalar_delete_pref_win(void *self, void *, unsigned int arg0);
@@ -172,22 +142,12 @@ void *__fastcall adjust_this_pref_win(void *self, void *, unsigned int arg0);
 void *__fastcall scalar_delete_quayle_win(void *self, void *,
                                           unsigned int arg0);
 void *__fastcall adjust_this_quayle_win(void *self, void *, unsigned int arg0);
-void *__fastcall scalar_delete_report_win(void *self, void *,
-                                          unsigned int arg0);
 void *__fastcall adjust_this_report_win(void *self, void *, unsigned int arg0);
-void *__fastcall scalar_delete_setup_win(void *self, void *,
-                                         unsigned int arg0);
 void *__fastcall adjust_this_setup_win(void *self, void *, unsigned int arg0);
-void *__fastcall scalar_delete_check_button(void *self, void *,
-                                            unsigned int arg0);
-void *__fastcall scalar_delete_social_win(void *self, void *,
-                                          unsigned int arg0);
 void *__fastcall adjust_this_check_button(void *self, void *,
                                           unsigned int arg0);
 void *__fastcall adjust_this_social_win(void *self, void *, unsigned int arg0);
-void *__fastcall scalar_delete_tut_win(void *self, void *, unsigned int arg0);
 void *__fastcall adjust_this_tut_win(void *self, void *, unsigned int arg0);
-void *__fastcall scalar_delete_ambience(void *self, void *, unsigned int arg0);
 void *__fastcall scalar_delete_dip_edit(void *self, void *, unsigned int arg0);
 void *__fastcall adjust_this_dip_edit(void *self, void *, unsigned int arg0);
 void *__fastcall scalar_delete_alpha_menu(void *self, void *,
@@ -196,26 +156,14 @@ void *__fastcall adjust_this_alpha_menu(void *self, void *, unsigned int arg0);
 void *__fastcall scalar_delete_replay_win(void *self, void *,
                                           unsigned int arg0);
 void *__fastcall adjust_this_replay_win(void *self, void *, unsigned int arg0);
-void *__fastcall scalar_delete_graphic_win(void *self, void *,
-                                           unsigned int arg0);
 void *__fastcall adjust_this_graphic_win(void *self, void *,
                                          unsigned int arg0);
-void *__fastcall scalar_delete_buffer(void *self, void *, unsigned int arg0);
 void *__fastcall scalar_delete_win(void *self, void *, unsigned int arg0);
-void *__fastcall scalar_delete_pull_down(void *self, void *,
-                                         unsigned int arg0);
 void *__fastcall adjust_this_pull_down(void *self, void *, unsigned int arg0);
-void *__fastcall scalar_delete_menu(void *self, void *, unsigned int arg0);
 void *__fastcall adjust_this_menu(void *self, void *, unsigned int arg0);
-void *__fastcall scalar_delete_base_button(void *self, void *,
-                                           unsigned int arg0);
 void *__fastcall adjust_this_base_button(void *self, void *,
                                          unsigned int arg0);
-void *__fastcall scalar_delete_image_button(void *self, void *,
-                                            unsigned int arg0);
 void *__fastcall adjust_this_image_button(void *self, void *,
                                           unsigned int arg0);
-void *__fastcall scalar_delete_push_button(void *self, void *,
-                                           unsigned int arg0);
 void *__fastcall adjust_this_push_button(void *self, void *,
                                          unsigned int arg0);
