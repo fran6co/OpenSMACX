@@ -219,16 +219,17 @@ class ListBox : public virtual GraphicWin, public virtual Dialog {
   // 0x0060C5D0, implemented in listbox.cpp as an ordinary ListBox-front
   // member; its GraphicWin view is obtained by the declared base conversion.
   void on_scrolling(int a, int b);
-  // 0x0060CB70, homed in leaf_recoveries.cpp (2026-09-27): the wheel-notch
-  // loop over the Win virtual base's two scrollbar clicks.
+  // 0x0060CB70, implemented below in listbox.cpp: repeat the original Win
+  // base wheel-down/up calls once per signed notch through the real bases.
   void on_mousewheel(int a) override;
   // 0x0060B530 ?draw_item@ListBox@@QAEXH@Z (3240 bytes), implemented in
   // listbox.cpp. on_scrolling reaches it twice on the ListBox front.
   // The original raw-offset transcription survives in Git history at
   // e853f54d^:src/unrecovered/0060b530.cpp for restoration work.
   void draw_item(int index);
-  // 0x0060C7D0 ?UNK2@ListBox@@QAEHPAD@Z (336 bytes), source-owned in
-  // leaf_recoveries.cpp. Its retired seed is retrievable from Git history.
+  // 0x0060C7D0 ?UNK2@ListBox@@QAEHPAD@Z (336 bytes), implemented in
+  // listbox.cpp using Dialog::item_list_ and StringStructEntry's real links.
+  // Its malformed head-null/current-nonnull arm retains the pinned [4] read.
   int UNK2(char *text);
   // 0x0060C1E0, the four-way row-surface scroll/copy operation retained in
   // the seed-only unit. Its direction is 0..3 as dispatched by the list
@@ -237,9 +238,8 @@ class ListBox : public virtual GraphicWin, public virtual Dialog {
  public:
   // 0x0060C920, still a pending_bodies forwarder.
   int item(char *text, int index);
-  // 0x00609FA0, homed in leaf_recoveries.cpp (2026-09-27). DipEdit::init
-  // adds one item per rival faction and then lands the selection on the
-  // matching one through this id walk.
+  // 0x00609FA0, implemented below in listbox.cpp. DipEdit::init adds one
+  // item per rival faction, then lands selection through this ID walk.
   void set_selected_id(int id);
   // 0x0060A020 ?set_selected_pos@ListBox@@QAEXHH@Z, the sibling of the above
   // and the only one of the pair BasePop::calculate_dimensions reaches (it

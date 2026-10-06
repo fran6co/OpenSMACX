@@ -77,6 +77,9 @@ static bool technology_shareable(int tech_id) {
 // dword; the adjacent945F44 AI batch latch and945F48 phase are distinct.
 // RECOVERY_OBJECT: v2 0x00945F40 0x00945F44 ?TechAchievedGate@@3HA 0x005BB000
 int TechAchievedGate = 0;
+// The original 0x00945F44 zero-filled latch is raised by time_warp's AI research batch; tech_advance and base_change read it. Keep it distinct from TechAchievedGate (0x00945F40) and the upkeep phase at 0x00945F48.
+// RECOVERY_OBJECT: v1 0x00945F44 ?AiResearchBatchActive@@3HA
+int AiResearchBatchActive = 0;
 
 // Per-technology faction-ownership bitsets, populated by the rules/game data
 // loaders and changed as scenario-editor ownership is edited.
@@ -1736,8 +1739,83 @@ static int tech_research_mul(int left, int right) {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
+/*
+Purpose: Finish one faction's research turn: log the tech being researched,
+         or when the faction finishes (no PBEM/human gate applies) commit
+         the researched tech, reset the faction's bases through bases_reset
+         with the selected base preserved, re-select the next tech when the
+         gates allow, and count the faction's earned-tech bookkeeping.
+
+// ORIGINAL: 0x005BE530 ?tech_advance@@YAHH@Z 0x005BE530-0x005BE6A5 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned image full span and eight mapped caller owners", "0x00946A84 + faction*0x59C is Players[faction].name_leader; 0x00939284 is ConsoleGlobal.faction_id_", "0x00691818 and 0x00691828 are the two original research log strings", "PlayersData, GameDataStateStorage and technology callbacks are existing typed owners", "0x00945F44 is the AI batch latch distinct from TechAchievedGate at 0x00945F40 and upkeep phase 0x00945F48"], "reason": "Home original research advancement flow in technology.cpp, retaining arithmetic, branch order, callbacks and historical exactness obligation."}
+// TRIED: masking the shift count with `& 0x1f` explicitly (hardware already masks CL); dropping the mask reached mismatch #76 (was #44 with the mask present).
+// size      373 bytes
+// prototype int (__cdecl ?tech_advance@@YAHH@Z)(int factionID)
+// callers   8   call targets   6
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004E39D0 0x004E6300 0x004EC3B0 0x005BB000 0x005BE380 0x00626250
+// notes     Seed provenance (TRIED): masking the shift count with `& 0x1f`
+//           explicitly loses - the hardware already masks CL; dropping the
+//           mask reached mismatch #76 (was #44 with the mask present). The
+//           0x20CC-stride slots are PlayersData fields: 0x0096CDAC is
+//           tech_id_researching (0x3CC) and 0x0096CDB4 is earned_techs_saved
+//           (0x3D4).
+Return Value: the selection the faction advanced on, or the negative
+              re-selection result
+Status: Measured BYTE_EXACT here in place (wave 7 record-then-retire); the
+        seed git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/005be530.cpp is retired and its claim lives on
+        the marker above.
+*/
+int __cdecl tech_advance(int faction) {
+    int *researching = &PlayersData[faction].tech_id_researching;
+    int *earned = &PlayersData[faction].earned_techs_saved;
+    char *tech_name = Players[faction].name_leader;
+
+    log_say("Earning a Tech", tech_name, *researching, 0, 0);
+
+    int selection;
+    if (IsMultiplayerNet == 0 || TurnUpkeepPhase != 1) {
+        if (IsMultiplayerPBEM == 0 ||
+            (((1 << faction) &
+              *reinterpret_cast<const unsigned char *>(&GameDataStateStorage.fields_.lock_masks_.enable_mask_)) == 0) ||
+            faction == ConsoleGlobal.faction_id_) {
+            selection = *researching;
+            if (selection < 0) {
+                selection = tech_selection(faction);
+                if (selection < 0) {
+                    return selection;
+                }
+            }
+            *researching = -1;
+            tech_achieved(faction, selection, 0, 0);
+            if (((1 << faction) &
+                 *reinterpret_cast<const unsigned char *>(&GameDataStateStorage.fields_.lock_masks_.enable_mask_)) == 0) {
+                int saved_base = BaseIDCurrentSelected;
+                bases_reset(-1, faction, 0);
+                if (GameDataStateStorage.fields_.turn_current_num_ != 0 && saved_base >= 0 &&
+                    saved_base < GameDataStateStorage.fields_.base_current_count_) {
+                    set_base(BaseIDCurrentSelected);
+                    base_compute(0);
+                }
+            }
+            if ((IsMultiplayerNet != 0 || faction == ConsoleGlobal.faction_id_) &&
+                TechAchievedGate == 0 && AiResearchBatchActive == 0 &&
+                *researching < 0) {
+                *researching = tech_selection(faction);
+            }
+            return selection;
+        }
+    } else {
+        log_say("Saving Earned Tech for Later", tech_name, faction, 0, 0);
+    }
+    ++*earned;
+    return -1;
+}
+
+
 // ORIGINAL: 0x005BE940 ?tech_research@@YAXHH@Z 0x005BE940-0x005BEB70
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/005be940.cpp", "recovery/tasks/base-colony-economy-coverage-wave.json", "recovery/tests/test_base_colony_economy.py", "Pinned original 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; complete original extent reviewed against native instructions and measured VC6 owner layouts.", "Original5BE940..5BEB70 uses Facility33/102 prerequisites, low-byte LockEnableMask, tech_cost=-1 before recomputation, and shared945F48 phase distinct from9B2070 UI phase."], "reason": "Recover complete research accumulation, climactic prerequisite decisions, advances and selection through real faction/technology storage and shared TurnUpkeepPhase. Preserve native byte-width human mask, callback-owned selection and wrap. Seed retained; no new byte or runtime claim."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:9f6ee90ae7baa6354fcca006def5561fb956792b:src/recovered/units/005be940.cpp", "recovery/tasks/base-colony-economy-coverage-wave.json", "recovery/tests/test_base_colony_economy.py", "Pinned original 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; complete original extent reviewed against native instructions and measured VC6 owner layouts.", "Original5BE940..5BEB70 uses Facility33/102 prerequisites, low-byte LockEnableMask, tech_cost=-1 before recomputation, and shared945F48 phase distinct from9B2070 UI phase."], "reason": "Recover complete research accumulation, climactic prerequisite decisions, advances and selection through real faction/technology storage and shared TurnUpkeepPhase. Preserve native byte-width human mask, callback-owned selection and wrap. Seed retained; no new byte or runtime claim."}
 // symbol    ?tech_research@@YAXHH@Z
 void __cdecl tech_research(int faction, int points) {
     if (points <= 0) {

@@ -5983,8 +5983,51 @@ static char TamperReadClass[1];
 static char TamperWriteClass[1];
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
+/*
+Purpose: The install tamper check's registry half: open the game's
+         DirectPlay Applications key, read the "MVM" dword and the "MVB"
+         string into the tamper slots, and close the key.
+
+// ORIGINAL: 0x0051E000 ?read_tamper@@YAXXZ 0x0051E000-0x0051E087
+// RECOVERY_BINDING: v1 {"evidence": ["pinned image 0x0051E000 full span", "game.cpp owns matching registry strings and storage"], "reason": "Home the original unguarded registry-read body beside its real shared tamper records and strings; retain ignored query statuses."}
+// size      135 bytes
+// prototype
+// callers   0   call targets   3
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00669000 0x00669004 0x00669010
+// The image reaches ADVAPI32 through its own IAT slots (0x00669000
+// RegQueryValueExA, 0x00669004 RegCreateKeyExA, 0x00669010 RegCloseKey -
+// the same trio game.cpp's directplay_install_is_complete documents);
+// this build calls the same three functions through its import library.
+// The subkey is the image's 0x0068AD88 literal, lpClass is the empty
+// string at 0x0093A9FC, and the value names are 0x0068ADD0 "MVM" and
+// 0x0068ADD4 "MVB".
+Return Value: n/a
+Status: Coverage transcription - unclaimed body
+*/
+void __cdecl read_tamper() {
+    HKEY key;
+    LONG status = RegCreateKeyExA(HKEY_LOCAL_MACHINE,
+        TamperReadApplicationKey, 0, TamperReadClass, 0, 0xf003f, 0, &key, 0);
+    if (status == 0) {
+        DWORD value_type;
+        DWORD byte_count = 4;
+        RegQueryValueExA(key, TamperReadValueMVM, 0, &value_type,
+                         reinterpret_cast<LPBYTE>(&TamperRegistryCursor),
+                         &byte_count);
+        byte_count = 0x4B0;
+        RegQueryValueExA(key, TamperReadValueMVB, 0, &value_type,
+                         reinterpret_cast<LPBYTE>(TamperRegistryRecords),
+                         &byte_count);
+        RegCloseKey(key);
+    }
+}
+
+
+
 // ORIGINAL: 0x0051E110 ?check_tamper@@YAXXZ 0x0051E110-0x0051E38B
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0051e110.cpp", "recovery/tasks/game-save-load-owner-coverage.json"], "reason": "Recover the full PBEM tamper check using shared typed registry records and cursor, faction state, direct registry APIs and the original unguarded corrupt-cursor/error behavior."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:9f6ee90ae7baa6354fcca006def5561fb956792b:src/recovered/units/0051e110.cpp", "recovery/tasks/game-save-load-owner-coverage.json"], "reason": "Recover the full PBEM tamper check using shared typed registry records and cursor, faction state, direct registry APIs and the original unguarded corrupt-cursor/error behavior."}
 // symbol    ?check_tamper@@YAXXZ
 void __cdecl check_tamper() {
     if (IsMultiplayerPBEM == 0 || TamperState93A9AC == 0) {

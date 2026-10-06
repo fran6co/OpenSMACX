@@ -81,6 +81,9 @@ class NetSessionPickerWin : public GraphicWin {
   // Original 0x63BF10. Name and virtual slot identity remain unresolved.
   int initialize(Net *network, char *caption, Font *font,
                  int width, int height, int rows);
+  // Descriptive helpers for pinned fields +0x3798/+0x379C.
+  int scale_client_width(int factor);
+  int scale_client_height(int factor);
   // Original 0x63BD10 reusable UI close/reset; not the complete destructor.
   void close();
   // Original 0x63C510 interactive create/join helper.

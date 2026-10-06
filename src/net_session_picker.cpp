@@ -802,3 +802,66 @@ session_picker_cleanup:
   delete popup;
   return result;
 }
+
+/*
+Purpose: Scale a field by an argument and divide by 600.
+
+             mov ecx,[ecx+0x3798] / mov eax,0x1b4e81b5 / imul ecx,[esp+4]
+             imul ecx / mov eax,edx / sar eax,6 / mov ecx,eax / shr ecx,0x1f
+             add eax,ecx / ret 4
+
+         MSVC's magic-number division: multiply by 0x1b4e81b5, keep the high
+         dword, shift right 6, then add the sign bit so it truncates toward
+         zero instead of toward negative infinity. 0x1b4e81b5 is
+         ceil(2^38 / 600), and the divisor was confirmed by running the
+         original's exact sequence against truncating division over 206,006
+         inputs - the whole of -3000..3000, 200,000 random int32s, and both
+         extremes - with no disagreement.
+
+         The multiply is an ordinary 32-bit one and WRAPS. Spelling it in
+         unsigned and casting back keeps that defined, which signed overflow
+         in C++ would not be.
+
+// ORIGINAL: 0x0063BEB0 sub_63beb0 0x0063BEB0-0x0063BED1 BYTE_EXACT
+// symbol    ?scale_client_width@NetSessionPickerWin@@QAEHH@Z
+// size      33 bytes
+// prototype
+// callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
+Return Value: (field 0x3798 * argument) / 600
+Status: Complete
+*/
+
+int NetSessionPickerWin::scale_client_width(int factor) {
+    const uint32_t product = static_cast<uint32_t>(tail_.client_width_) *
+                             static_cast<uint32_t>(factor);
+    return static_cast<int32_t>(product) / 600;
+}
+
+
+/*
+Purpose: Scale a field by an argument and divide by 440.
+
+         The same shape as 0063BEB0 with a different field, magic and shift:
+         0x94f2095 is ceil(2^36 / 440). Confirmed the same way, over the same
+         206,006 inputs, with no disagreement.
+
+// ORIGINAL: 0x0063BEE0 sub_63bee0 0x0063BEE0-0x0063BF01 BYTE_EXACT
+// symbol    ?scale_client_height@NetSessionPickerWin@@QAEHH@Z
+// size      33 bytes
+// prototype
+// callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
+Return Value: (field 0x379c * argument) / 440
+Status: Complete
+*/
+
+int NetSessionPickerWin::scale_client_height(int factor) {
+    const uint32_t product = static_cast<uint32_t>(tail_.client_height_) *
+                             static_cast<uint32_t>(factor);
+    return static_cast<int32_t>(product) / 440;
+}

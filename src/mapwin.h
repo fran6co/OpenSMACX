@@ -122,6 +122,7 @@ class MapWin : public virtual GraphicWin {
  public:
   // homed from 00462980.cpp
   void calculate_dimensions();
+  void UNK5(int panel);
 
  public:
   // homed from 0046fe00.cpp

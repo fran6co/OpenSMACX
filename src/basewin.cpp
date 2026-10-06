@@ -7307,9 +7307,9 @@ void BaseWin::on_scrolling(int code, int position) {
 Purpose: Map a click on the base screen's farm panel back to the tile it
          picks: unproject the 0x60-by-0x30 half-scale sprite pixel through
          rect1_'s placement and report the move offset of that radius.
-// RECOVERY_ROLE: SCAFFOLD The genuine buffer2_ receiver is typed, but the per-radius tables and radius_move call-shape remain unresolved.
+// RECOVERY_ROLE: SCAFFOLD The receiver and diagonal table owners are typed; the pixel-derived index domain is still unproved, so unchecked out-of-range behavior remains an explicit obligation.
 // ORIGINAL: 0x00409100 ?farm_get@BaseWin@@QAEHHH@Z 0x00409100-0x004091FB FILE
-// RECOVERY_BINDING: v1 {"evidence":["basewin.h declares farm_get and the real Buffer member buffer2_ at +0x40ECC; basewin.cpp owns its callers and BaseWin rendering methods.","Pinned 0x409164 computes the get_pixel receiver as this+0x40ECC, matching buffer2_; the body must call buffer2_.get_pixel, not reinterpret BaseWin itself as Buffer.","The per-radius tables 0x66EF24/0x66EF38 and inline radius_move expansion remain unresolved."],"reason":"Move farm_get into BaseWin's actual owner and use its evidenced buffer2_ subobject for the pinned pixel read. Keep the radius tables unresolved and the function SCAFFOLD; this is not full reference or matching proof."}
+// RECOVERY_BINDING: v1 {"evidence": ["pinned 0x00409100 reads 0x0066EF24 + 4*idx and 0x0066EF38 + 4*idx only when idx != 0", "pinned 0x0066EF28..0x0066EF38 signed-dword data is {1,1,-1,-1}; 0x0066EF3C..0x0066EF4C is {-1,1,1,-1}", "src/map.h records RiverStepX/RiverStepY as the same paired diagonal values and src/map.cpp is their common owner", "src/map.h MEASURED inline radius_move(int,int,int) remains the real map owner; no replacement helper is introduced"], "reason": "Use BaseWin::buffer2_ for the pixel read. For every nonzero idx, RiverStepX[idx - 1] and RiverStepY[idx - 1] have the same effective addresses as the pinned loads from 0x0066EF24 + 4*idx and 0x0066EF38 + 4*idx, provided their bounded source objects bind at 0x0066EF28 and 0x0066EF3C. Do not add index guards: the palette-derived domain and original unchecked outside-object accesses remain unresolved; byte matching is not claimed."}
 // TRIED: the two field reads (0x40b8c, 0x40b94) as named int locals - compiles with an extra `push`/register spill the original (which keeps the value live in a register, never re-materialised) doesn't have. `get_pixel` called through `reinterpret_cast<Buffer*>(this)` since `ecx` (this) is never reassigned before that call in the original either. `extern int g_66ef24[]/g_66ef38[]` for the two lookup tables so indexing compiles as scaled-index addressing instead of folding the base.
 // SUPERSEDED_BINDING_HISTORY: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/unrecovered/00409100.cpp"], "reason": "Retain the existing source implementation and complete original mapping. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
 // kind      game
@@ -7340,8 +7340,8 @@ int BaseWin::farm_get(int a1, int a2) {
             int idx = (p - 10) / 16;
             if (idx != 0) {
                 return radius_move(
-                    col + reinterpret_cast<const int *>(0x0066EF24)[idx],
-                    row + reinterpret_cast<const int *>(0x0066EF38)[idx],
+                    col + RiverStepX[idx - 1],
+                    row + RiverStepY[idx - 1],
                     0x15);
             }
             return radius_move(col, row, 0x15);

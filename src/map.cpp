@@ -144,6 +144,14 @@ static_assert(sizeof(AltNaturalDefault) == 44, "default altitude table extent");
 static_assert(sizeof(AltContour) == 44, "river contour table extent");
 static_assert(sizeof(AltNatural) == 44, "mutable altitude table extent");
 
+// The paired diagonal steps are also the farm raster's one-based lookup
+// data at 0x66EF28/0x66EF3C. farm_get skips index zero and uses [index - 1].
+// Keep the two measured four-dword windows independently source-owned.
+// RECOVERY_OBJECT: v2 0x0066EF28 0x0066EF38 ?RiverStepX@@3QBHB 0x00409100
+const int RiverStepX[4] = { 1, 1, -1, -1 };
+// RECOVERY_OBJECT: v2 0x0066EF3C 0x0066EF4C ?RiverStepY@@3QBHB 0x00409100
+const int RiverStepY[4] = { -1, 1, 1, -1 };
+
 // Nine original direction indices, bounded by the next RadiusOffsetX
 // table at 0x0066EFBC. MapWin's legend and tutorial navigation consume
 // this permutation; it is independent data, not a callable/address alias.

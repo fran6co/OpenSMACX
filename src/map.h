@@ -248,8 +248,8 @@ const int RadiusBaseY[] = { -1, 0, 1, 2,  1,  0, -1, -2, 0 };
 extern const int MapDirectionPermutation[9];
 // THE FOUR DIAGONALS, at 0x0066EF28 / 0x0066EF3C - what world_rivers
 // (0x005C38B0) steps along when it walks a channel, paired by index.
-const int RiverStepX[4] = { 1, 1, -1, -1 };
-const int RiverStepY[4] = { -1, 1, 1, -1 };
+extern const int RiverStepX[4];
+extern const int RiverStepY[4];
 
 // WHERE THESE TABLES LIVE IN THE SHIPPED IMAGE, read off the .data run at
 // 0x0066EF28 (image_data.py). The world-builder family walks them with a raw

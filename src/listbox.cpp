@@ -1983,3 +1983,179 @@ void ListBox::on_redraw() {
 // RECOVERY_BINDING: v1 {"evidence": ["pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: ListBox constructor 0x00609DB0 installs Win view 0x0067041C; slot +0x68 points to original identity 0x0060CFB0", "retained build/recovery/builds/build-rosw1myy: build/recovery/builds/build-rosw1myy/CMakeFiles/OpenSMACX.dir/src/listbox.cpp.obj has matching source-input closure and physical table relocation to ?on_key_down@ListBox@@$4PPPPPPPM@A@AEHH@Z", "retained COFF ?on_key_down@ListBox@@$4PPPPPPPM@A@AEHH@Z has the 8-byte vtordisp subtraction shape and tail relocation to real method symbol ?on_key_down@ListBox@@UAEHH@Z", "the exact legacy kind fact `game` is copied verbatim from the source envelope and parser-read back; it is existing catalogue classification, not a newly granted kind", "this evidence establishes a current owner-TU/compiler-thunk correspondence only; no fresh build, linked retained-table selection, body-byte match, or whole-game acceptance is claimed"], "reason": "The ListBox Win-view constructor-installed table selects this original receiver adjustor at byte offset 0x68; the retained owner COFF physically emits the corresponding compiler vtordisp thunk and its relocation tails to ListBox::on_key_down. This FILE marker remains with the actual class owner TU; it does not prove final linked table selection or full acceptance."}
 // kind      game
 // symbol    ?on_key_down@ListBox@@$4PPPPPPPM@A@AEHH@Z
+
+/*
+Purpose: Land the list selection on the row whose id matches: reset the
+         Dialog entry list to its head, walk forward comparing ids, and
+         select the position the walk reached - or position -1 when the id
+         is absent or the list is empty.
+
+// ORIGINAL: 0x00609FA0 ?set_selected_id@ListBox@@QAEXH@Z 0x00609FA0-0x0060A013 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["The pinned body at 0x609FAB forms the Dialog virtual-base list at Dialog+0xBC; loads/stores at +0xC4/+0xC8/+0xCC/+0xD0 correspond to declared StringList head/current/count/position fields.", "Pinned branches 0x609FBB/0x609FC8 and 0x609FD4/0x609FE8 preserve the empty-list, count-bounded ID walk, selection-on-hit and -1 selection-on-miss paths; the successful call is 0x60A020.", "ListBox already declares set_selected_id; src/listbox.cpp owns its sibling set_selected_pos and src/listbox.h owns the real virtual Dialog inheritance. No guessed class or layout is introduced."], "reason": "Transfer the existing ListBox method into its class implementation TU and retain its complete list walk and set_selected_pos calls. This source binding records owner placement and field provenance, not a byte-exact or linked-selection verdict."}
+// size      115 bytes
+// prototype void (__thiscall ?set_selected_id@ListBox@@QAEXH@Z)(ListBox* this, int)
+// callers   17   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0060A020
+// Homed from src/recovered/units/00609fa0.cpp. The image resets
+// item_list_.current_ to head_ through the Dialog virtual base and selects
+// through Dialog::item_list_.current_position_ (the seed's Dialog+0xBC
+// list and +0xD0 position), tail-falling into set_selected_pos(-1, 1).
+Status: Coverage transcription - unclaimed body
+*/
+void ListBox::set_selected_id(int id) {
+    if (Dialog::item_list_.head_ != 0) {
+        const int count = Dialog::item_list_.entry_count_;
+        Dialog::item_list_.current_position_ = 0;
+        Dialog::item_list_.current_ = Dialog::item_list_.head_;
+        int index = 0;
+        do {
+            StringStructEntry *entry = Dialog::item_list_.current_;
+            if (entry->id == id) {
+                set_selected_pos(Dialog::item_list_.current_position_, 1);
+                return;
+            }
+            ++index;
+            Dialog::item_list_.current_position_ =
+                Dialog::item_list_.current_position_ + 1;
+            Dialog::item_list_.current_ = entry->next;
+        } while (index < count);
+    }
+    set_selected_pos(-1, 1);
+}
+
+/*
+Purpose: Turn a mouse-wheel step count into that many scroll clicks: the
+         negative direction fires the vertical scrollbar's wheel-down, the
+         non-negative its wheel-up, once per notch, on the Win virtual
+         base the list's vbtable names.
+
+// ORIGINAL: 0x0060CB70 ?on_mousewheel@ListBox@@QAEXH@Z 0x0060CB70-0x0060CBBA FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned 0x60CB84..0x60CB98 repeats Win::on_mousewheel_down(1) once per negated notch; 0x60CBA1..0x60CBB3 repeats Win::on_mousewheel_up(1) for nonnegative input.", "The original obtains the Win receiver by following ListBox's GraphicWin virtual-base vbtable adjustment (-0x48 plus vbtable[1]); ListBox genuinely inherits GraphicWin and GraphicWin genuinely derives from Win.", "ListBox::on_mousewheel is already declared override in src/listbox.h; the projected qualified Win member calls let the declared C++ base conversion supply that receiver without raw-vtable dispatch."], "reason": "Transfer the declared ListBox override into its class implementation TU. Preserve the original notch loops and route through the genuine Win base methods; no manual slot or receiver adapter is introduced."}
+// symbol    ?on_mousewheel@ListBox@@UAEXH@Z
+// size      74 bytes
+// prototype void (__thiscall ?on_mousewheel@ListBox@@QAEXH@Z)(ListBox* this, int)
+// callers   1   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005F85B0 0x005F85E0
+// Homed from src/recovered/units/0060cb70.cpp, displacements re-taken from
+// the image (the seed's own note records its register-allocation wall; the
+// two callees are Win::on_mousewheel_down / Win::on_mousewheel_up, reached
+// on the Win virtual base through the front's vbtable).
+Status: Coverage transcription - unclaimed body
+*/
+void ListBox::on_mousewheel(int delta) {
+    if (delta < 0) {
+        int count = -delta;
+        if (count > 0) {
+            do {
+                Win::on_mousewheel_down(1);
+            } while (--count);
+        }
+    } else {
+        int count = delta;
+        if (count > 0) {
+            do {
+                Win::on_mousewheel_up(1);
+            } while (--count);
+        }
+    }
+}
+
+/*
+Purpose: Find the list entry whose text case-insensitively matches the given
+         string and re-position the entry list cursor to it: reset the cursor
+         to the head, walk next links forward for a non-negative target or
+         previous links for a negative one (wrapping through the entry count),
+         and report the matched position, or -1 when nothing matched.
+
+// ORIGINAL: 0x0060C7D0 ?UNK2@ListBox@@QAEHPAD@Z 0x0060C7D0-0x0060C920 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned 0x60C7D4..0x60C7DC obtains the Dialog virtual-base view and tests its StringList count at Dialog+0xCC; subsequent head/current/position accesses are +0xC4/+0xC8/+0xD0.", "StringStructEntry declares next at +0x0C, previous at +0x10 and payload at +0x08; StringStructEntry::string_payload()->text is the declared payload path for the original [entry+8][+4] text read.", "Pinned 0x60C867..0x60C86C explicitly zeroes EAX then loads [EAX+4] when current is nonnull but head is null. The source keeps the original absolute address-4 read in that malformed-state branch; it is not normalized or claimed as a source-owned global.", "Pinned calls 0x644F3A and 0x64FD20 are the original abs and _strcmpi callees; loop count reloads, cursor order, early returns and current-position restoration are retained.", "ListBox already declares UNK2 and genuinely virtually inherits Dialog; src/listbox.cpp is the existing implementation TU for ListBox list behavior."], "reason": "Transfer the existing ListBox member into its implementation TU, replacing verified Dialog/StringList/entry/payload offset accesses with the declared owners while retaining original branches, reload order, CRT calls and address-4 malformed-state behavior. The retained MISMATCH remains an exactness obligation."}
+// size      336 bytes
+// prototype int (__thiscall ?UNK2@ListBox@@QAEHPAD@Z)(ListBox* this, char*)
+// callers   2   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00644F3A 0x0064FD20
+Status: Coverage transcription - body rehomed from the retired seed
+        (src/unrecovered/0060c7d0.cpp), freshly measured MISMATCH (divergence
+        #1, similarity 0.86, 109 compiled vs 119 original instructions - the
+        remaining gap is this spelling caching the entry count in a local
+        where the original re-reads dlg+0xcc at each use). The cursor
+        walk is the recovered Dialog::get_selected_id shape on the same
+        item_list_ fields seen through ListBox's vbtable displacement, with
+        raw dlg offsets per the landed ListBox::calculate_dimensions above;
+        the advance target compares the PRE-search cursor, and the search
+        arm keeps the original's head==0 read through address 4. The callees
+        are the image's real abs (0x00644F3A) and _strcmpi (0x0064FD20),
+        called through the public CRT names per the map.cpp treaty.
+*/
+int ListBox::UNK2(char *text) {
+    StringList &items = Dialog::item_list_;
+    if (items.entry_count_ == 0) {
+        return -1;
+    }
+    if (text == 0) {
+        return -1;
+    }
+
+    int result = -1;
+    int position = items.current_position_;
+    int n = 0;
+    if (items.entry_count_ > 0) {
+        do {
+            StringStructEntry *head = items.head_;
+            if (head != 0) {
+                StringStructEntry *current = items.current_;
+                current = current->next;
+                items.current_ = current;
+                int pos = items.current_position_ + 1;
+                items.current_position_ = pos;
+                if (pos == items.entry_count_) {
+                    items.current_position_ = 0;
+                }
+            }
+            char *name;
+            if (items.current_ == 0) {
+                name = 0;
+            } else if (head == 0) {
+                name = *reinterpret_cast<char **>(4);
+            } else {
+                name = items.current_->string_payload()->text;
+            }
+            if (_strcmpi(name, text) == 0) {
+                result = items.current_position_;
+                break;
+            }
+            ++n;
+        } while (n < items.entry_count_);
+    }
+
+    // Keep the original count reloads and negative-distance CRT calls.
+    if (position <= items.entry_count_ - 1) {
+        items.current_ = items.head_;
+        if (position < 0) {
+            if (abs(position) > items.entry_count_) {
+                return result;
+            }
+            int distance = abs(position);
+            while (distance > 0) {
+                StringStructEntry *current = items.current_;
+                items.current_ = current->previous;
+                distance--;
+            }
+            position += items.entry_count_;
+        } else {
+            int distance = position;
+            while (distance > 0) {
+                StringStructEntry *current = items.current_;
+                items.current_ = current->next;
+                distance--;
+            }
+        }
+        items.current_position_ = position;
+    }
+    return result;
+}

@@ -147,6 +147,14 @@ MapPanelRect MapPanelRects[2];
 // RECOVERY_OBJECT: v2 0x00939EDC 0x00939EE0 ?MapPanelDirtyMask@@3IA 0x0046FA20
 uint32_t MapPanelDirtyMask;
 
+// Distinct original zero-filled words consumed by MapWin::UNK5. Their
+// domain names and other writers are not yet established; retain
+// address-derived names rather than aliasing them to screen metrics.
+// RECOVERY_OBJECT: v1 0x008EA0B0 ?MapPanelGeometryWord008EA0B0@@3HA
+int MapPanelGeometryWord008EA0B0;
+// RECOVERY_OBJECT: v1 0x008EA0B8 ?MapPanelGeometryWord008EA0B8@@3HA
+int MapPanelGeometryWord008EA0B8;
+
 // 0x007D3C28..0x007D3C38 - rectangle published by calculate_dimensions for
 // the primary window: west/north/east/south map-view bounds, also consumed by
 // MapWin::focus's base-window hit test.
@@ -156,7 +164,6 @@ uint32_t MapPanelDirtyMask;
 // RECOVERY_OBJECT: v2 0x007D3C28 0x007D3C38 ?MapWinPrimaryCorner@@3UtagRECT@@A 0x00462980
 RECT MapWinPrimaryCorner;
 
-void __fastcall MapWin_UNK5(MapWin *window, void *, int panel);
 int __cdecl veh_find(int x, int y, int faction_id, int skip_vehicle_id);
 int __cdecl veh_ready(int vehicle_id);
 void __cdecl help_any();
@@ -172,8 +179,70 @@ int mapwin_dest_mul(int left, int right);
 // The active map bounds, panel layouts, faction caption records and tutorial
 // base rectangle all have source-owned receivers below.
 // Superseded seed deleted; seed paths below are historical Git provenance.
+/*
+Purpose: Fill one map panel's sub-rectangle record from the Console window's
+         DIB dimensions and latch the panel's dirty bit: a non-zero panel
+         index gets the width split into quarters around the record's thirds
+         slot plus a half-centred remainder, while panel zero writes the
+         whole record itself, taking three quarters of the width in
+         multiplayer and the full width otherwise.
+
+// ORIGINAL: 0x0046FA20 ?UNK5@MapWin@@QAEXH@Z 0x0046FA20-0x0046FB10
+// RECOVERY_BINDING: v1 {"evidence":["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x0046FA20-0x0046FB10","pinned Console constructor 0x0050F460 installs vbtable 0x0066EF04 at the complete-object start; its second entry is 0x23D94, the Console virtual GraphicWin base","GraphicWin is the virtual base of MapWin and inherits Win then Buffer; sizeof(Win)=0x444 and Buffer::dib_ is +0x7C, so DIB header biWidth/biHeight are +0x4C4/+0x4C8 within GraphicWin","original 0x0046FA4B/51 and 0x0046FAA2/BF access ConsoleGlobal plus the loaded virtual-base displacement plus 0x4C8/0x4C4; explicit source conversion names that actual GraphicWin/Buffer member path","original 0x0046FA34/40/AC/D3 reads distinct dwords 0x008EA0B8 and 0x008EA0B0; both are zero in pinned initial image storage and the original body reads each twice","pinned caller search finds the direct MapWin::init call at 0x00470BA1; caller search covers mapped spans only"],"reason":"Move the original nonvirtual MapWin layout writer into its genuine class owner. Access Console's live DIB through its measured virtual GraphicWin base and Buffer member, while keeping the two separately owned address-bound geometry words and every original panel calculation/latch operation. This is a source-ownership proposal only: current VC6 emitted-member lowering and the unknown writers/semantic names of the two zero-filled geometry words still require native/reference qualification."}
+// symbol    ?UNK5@MapWin@@QAEXH@Z
+// TRIED: nothing yet - MISMATCH #5 xor/push (78% mnemonic sim). `this` is unused throughout (thiscall receiver never touched).
+// TRIED: 0x00915B74/0x00915B78/0x00939F48 are all used as index-table bases (`[reg + addr]`), so declared as `extern int Table[]`/`extern Rec4 OutputTable[]` rather than fixed-address globals, matching the lever note.
+// Historical scaffold emission (superseded by typed member owner): ?MapWin_UNK5@@YIXPAVMapWin@@PAXH@Z
+// size      240 bytes
+// prototype void (__thiscall ?UNK5@MapWin@@QAEXH@Z)(MapWin* this, int)
+// callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Seed provenance (TRIED): the receiver is never touched - the
+//           records hang off fixed slots and the DIB reads walk
+//           ConsoleGlobal's virtual GraphicWin base through the object's own
+//           vbtable, so the receiver stays an unused thiscall parameter.
+//           TRIED 2026-09-27 (this transcription): the member spelling
+//           ConsoleGlobal.dib_.bmiHeader.biWidth measured 5/75 - the walk is
+//           right but the tree's Console declaration enters it at a
+//           different dword than the image ([obj+0] here) - and the raw
+//           offset spelling of the same reads (ConsoleGlobal+0x24258, the
+//           pixel_to_tile idiom) measured 0/75 because it drops the vbtable
+//           walk entirely. The member spelling stands as the honest model;
+//           the remaining gap is the source Console layout's vbptr slot.
+Return Value: n/a
+Status: Coverage transcription - unclaimed body, seed
+        git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/0046fa20.cpp retained.
+*/
+void MapWin::UNK5(int panel) {
+    if (panel != 0) {
+        const int width = static_cast<GraphicWin &>(ConsoleGlobal).Buffer::dib_.bmiHeader.biWidth;
+        const int height = static_cast<GraphicWin &>(ConsoleGlobal).Buffer::dib_.bmiHeader.biHeight;
+        MapPanelRects[panel].top = 0;
+        const int three_quarters = (width * 3) / 4;
+        MapPanelRects[panel].left = three_quarters;
+        MapPanelRects[panel].right = width / 4 + three_quarters;
+        MapPanelRects[panel].bottom =
+            (MapPanelGeometryWord008EA0B0 - height - MapPanelGeometryWord008EA0B8) / 2;
+    } else {
+        if (IsMultiplayerNet != 0) {
+            MapPanelRects[0].right =
+                (static_cast<GraphicWin &>(ConsoleGlobal).Buffer::dib_.bmiHeader.biWidth * 3) / 4;
+        } else {
+            MapPanelRects[0].right = static_cast<GraphicWin &>(ConsoleGlobal).Buffer::dib_.bmiHeader.biWidth;
+        }
+        MapPanelRects[0].bottom = MapPanelGeometryWord008EA0B0 -
+                             static_cast<GraphicWin &>(ConsoleGlobal).Buffer::dib_.bmiHeader.biHeight -
+                             MapPanelGeometryWord008EA0B8;
+        MapPanelRects[0].left = 0;
+        MapPanelRects[0].top = 0;
+    }
+    MapPanelDirtyMask |= 1 << panel;
+}
+
 // ORIGINAL: 0x00470A90 ?init@MapWin@@QAEXHH@Z 0x00470A90-0x00470EC2
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00470a90.cpp retains the complete 1074-byte seed; mode zero uses MapWin_UNK5 panels and Players records, mode two uses BaseWin::rect1_, and mode three selects label 0x204.", "src/recovered/units/00588aa0.cpp stores find_font(10, 1) at the original display-font slot."], "reason": "Home the map modes through typed source owners; resolve the font through its real lookup while its startup cache remains unowned."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:9f6ee90ae7baa6354fcca006def5561fb956792b:src/recovered/units/00470a90.cpp retains the complete 1074-byte seed; mode zero uses MapWin_UNK5 panels and Players records, mode two uses BaseWin::rect1_, and mode three selects label 0x204.", "git:9f6ee90ae7baa6354fcca006def5561fb956792b:src/recovered/units/00588aa0.cpp stores find_font(10, 1) at the original display-font slot."], "reason": "Home the map modes through typed source owners; resolve the font through its real lookup while its startup cache remains unowned."}
 void MapWin::init(int mode, int update) {
     buffer_a_.init(100, 50, 0, 0);
     field_1DD74_ = 1;
@@ -186,7 +255,7 @@ void MapWin::init(int mode, int update) {
         const int panel_count = IsMultiplayerNet ? 2 : 1;
         if (index < static_cast<unsigned int>(panel_count)) {
             if ((MapPanelDirtyMask & (1U << index)) == 0) {
-                MapWin_UNK5(this, 0, index);
+                UNK5(index);
             }
             bounds.left = MapPanelRects[index].left;
             bounds.top = MapPanelRects[index].top;

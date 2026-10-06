@@ -161,6 +161,7 @@ struct MediaRuntime {
   int release_session_interfaces();    // 005CE450
   int release_playback_buffer();       // 005CE620
   int __fastcall parse_initial_format(int byte_count); // 005CA6C0; byte count in EDX
+  int __fastcall sub_5ca230(int payload_bytes, int record_kind);
 
   // Existing mapped/seed dependencies, deliberately declarations only here.
   // Their original identities and current source homes are listed in the
@@ -170,6 +171,7 @@ struct MediaRuntime {
   int sub_5ce2f0();
   int sub_5cae00();
   void sub_5cbe30();
+  void sub_5cbbc0();
   void sub_5cc710();
 
   MediaDescriptor *descriptor;                   // +000

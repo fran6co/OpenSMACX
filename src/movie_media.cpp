@@ -22,7 +22,6 @@ extern "C" int __fastcall sub_5ca310(MediaRuntime *runtime, int payload_bytes);
 // payload byte count retained from the just-read header, and one stack
 // argument selects the record kind. Preserve the product declaration's
 // C++ linkage until an authorized identity migration says otherwise.
-int __fastcall sub_5ca230(int *runtime, int payload_bytes, int record_kind);
 extern "C" int __fastcall sub_5cbae0(int *wrapper, int fill);
 extern "C" char *__fastcall sub_5cf120(int code);
 
@@ -510,7 +509,7 @@ extern "C" int __fastcall sub_5cc860(IDirectDraw2 *provider,
   return 0;
 }
 
-int __fastcall sub_5cdad0(int *, int *, int, int, int);
+int __fastcall sub_5cdad0(IDirectDraw2 *, IDirectDrawSurface2 **, int, int, int);
 void __cdecl sub_5cd3b0(char, char, char, char, char, char,
                         int *, unsigned int);
 extern "C" void __cdecl sub_5cd560(signed char, signed char, signed char,
@@ -707,8 +706,8 @@ extern "C" int __fastcall sub_5cc940(MediaRuntime *runtime,
     memset(fourcc_codes, 0, sizeof(fourcc_codes));
     if (d.draw_device_10->GetFourCCCodes(&fourcc_count, fourcc_codes) == DD_OK) {
       if (runtime->queue_record_kind == 4) {
-        if (sub_5cdad0((int *)d.draw_device_10,
-                       (int *)&d.surface_1c,
+        if (sub_5cdad0(d.draw_device_10,
+                       &d.surface_1c,
                        (int)d.output_width_64, (int)d.output_height_60,
                        0x32595559) != 0)
           runtime->queue_record_kind = 1;
@@ -923,6 +922,41 @@ extern "C" int __fastcall sub_5cc940(MediaRuntime *runtime,
   return 0;
 }
 
+/*
+Purpose: Count the set bits in the low THIRTY-ONE bits of ECX.
+
+             mov edx,ecx / xor eax,eax / xor ecx,ecx
+             mov esi,1 / shl esi,cl / test edx,esi / je / inc eax
+             inc ecx / cmp ecx,0x1f / jl / ret
+
+         `cmp ecx,0x1f / jl` runs the body for bit indices 0 through 30. BIT 31
+         IS NEVER TESTED, so this is not a population count - it agrees with
+         one on every value with the top bit clear, which is most of them.
+
+         ECX carries a VALUE here, not a `this` pointer, which is why this one
+         does not take the (void *, void *) shape the rest of these do.
+
+// ORIGINAL: 0x005CC430 sub_5cc430 0x005CC430-0x005CC44B FILE BYTE_EXACT
+// symbol    ?media_component_mask_bits_31@@YIHI@Z
+// size      27 bytes
+// prototype
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: how many of bits 0..30 are set
+Status: Complete
+*/
+int __fastcall media_component_mask_bits_31(uint32_t value) {
+    int count = 0;
+    for (int bit = 0; bit < 0x1F; ++bit) {
+        if (value & (1U << bit)) {
+            ++count;
+        }
+    }
+    return count;
+}
+
 // Native receiver is MediaRuntime; its first pointer is MediaDescriptor*.
 // ORIGINAL: 0x005CBE30 sub_5cbe30 0x005CBE30-0x005CC14A
 // symbol    ?sub_5cbe30@MediaRuntime@@QAEXXZ
@@ -988,7 +1022,7 @@ void MediaRuntime::sub_5cbe30() {
         d.pixel_format.red_bits = red_bits;
         d.pixel_format.green_bits = green_bits;
         d.pixel_format.blue_bits =
-            (DWORD)leaf_005cc430_redirect(pixel_format.dwBBitMask);
+            (DWORD)media_component_mask_bits_31(pixel_format.dwBBitMask);
 
         int red_shift = 0;
         DWORD red_mask = pixel_format.dwRBitMask;
@@ -1341,25 +1375,25 @@ extern "C" int __fastcall sub_5c9ec0(MediaRuntime *runtime, void *) {
   switch (type) {
   case 0x66325655: // bytes: 66 32 56 55
   case 0x54514970: // bytes: 54 51 49 70
-    return sub_5ca230((int *)runtime, (int)payload_bytes, 4);
+    return runtime->sub_5ca230((int)payload_bytes, 4);
   case 0x6544414d:
   case 0x4d414465:
-    return sub_5ca230((int *)runtime, (int)payload_bytes, 7);
+    return runtime->sub_5ca230((int)payload_bytes, 7);
   case 0x66564754:
   case 0x54475666:
-    return sub_5ca230((int *)runtime, (int)payload_bytes, 2);
+    return runtime->sub_5ca230((int)payload_bytes, 2);
   case 0x6b44414d:
   case 0x4d41446b:
-    return sub_5ca230((int *)runtime, (int)payload_bytes, 5);
+    return runtime->sub_5ca230((int)payload_bytes, 5);
   case 0x6656554d:
   case 0x54475170:
-    return sub_5ca230((int *)runtime, (int)payload_bytes, 3);
+    return runtime->sub_5ca230((int)payload_bytes, 3);
   case 0x6b564754:
   case 0x5447566b:
-    return sub_5ca230((int *)runtime, (int)payload_bytes, 1);
+    return runtime->sub_5ca230((int)payload_bytes, 1);
   case 0x6d44414d:
   case 0x4d41446d:
-    return sub_5ca230((int *)runtime, (int)payload_bytes, 6);
+    return runtime->sub_5ca230((int)payload_bytes, 6);
   case 0x684e5331:
   case 0x6c484353:
   case 0x5343486c:
@@ -2002,6 +2036,65 @@ void MediaRuntime::sub_5cb6c0() {
   }
 }
 
+/*
+Purpose: After a read-record event, update the associated media descriptor.
+
+             mov eax,[ecx] / mov edx,[eax+0x20] / test edx,edx / je second
+             cmp [ecx+0x4c],1 / jne second
+             mov esi,[eax+0x1c] / mov [eax+0x1c],edx / mov eax,[ecx]
+             mov [eax+0x20],esi
+     second: mov eax,[ecx] / mov edx,[eax+4] / test dh,8 / je end
+             mov esi,[eax+0x4c] / mov edx,[eax+0x50] / mov [eax+0x50],esi
+             mov ecx,[ecx] / mov [ecx+0x4c],edx / ret
+
+         ECX is MediaRuntime* and [ECX] is its MediaDescriptor*. The first
+         swap is gated by descriptor+0x20 being nonzero and runtime+0x4c
+         equaling one; the second independently tests descriptor flags bit
+         11, then swaps the pointer-shaped +0x4c and DWORD +0x50 values.
+
+         The original reloads [ECX] between stores in both groups. The typed
+         owner keeps a descriptor reload at each corresponding point.
+
+// ORIGINAL: 0x005CBBC0 sub_5cbbc0 0x005CBBC0-0x005CBBF5 FILE SEMANTIC
+// TRIED: plateaus at MNEMONIC_ONLY 13/22 - re-reading `load32(node, 0x20)`
+//            inside the guard instead of caching it in `moved` scores the
+//            same (measured); the divergence is edx-vs-esi register choice
+//            at the very first load, before any branch, so it is register
+//            allocation rather than a source shape this tree controls.
+// symbol    ?sub_5cbbc0@MediaRuntime@@QAEXXZ
+// size      53 bytes
+// prototype
+// callers   2   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void MediaRuntime::sub_5cbbc0() {
+    // The first word of MediaRuntime is its descriptor pointer. Pinned
+    // 0x5CBBC0 swaps descriptor +0x1c/+0x20 only when queue kind is 1,
+    // then independently swaps +0x4c/+0x50 when descriptor flags contain
+    // bit 11. The latter deliberately exchanges pointer bits and a DWORD.
+    MediaDescriptor *view = descriptor;
+    if (view->surface_20 != 0 && queue_record_kind == 1) {
+        IDirectDrawSurface2 *previous = view->surface_1c;
+        view->surface_1c = view->surface_20;
+        view = descriptor;
+        view->surface_20 = previous;
+    }
+    view = descriptor;
+    if ((view->flags & 0x800U) != 0) {
+        const DWORD previous_pitch = view->provided_output_pitch_50;
+        const DWORD previous_base = static_cast<DWORD>(
+            reinterpret_cast<uintptr_t>(view->provided_output_base_4c));
+        view->provided_output_pitch_50 = previous_base;
+        view = descriptor;
+        view->provided_output_base_4c = reinterpret_cast<BYTE *>(
+            static_cast<uintptr_t>(previous_pitch));
+    }
+}
+
 // ORIGINAL: 0x005CB220 sub_5cb220 0x005CB220-0x005CB60B
 // symbol    ?sub_5cb220@MediaDescriptor@@QAEXXZ
 // kind      game
@@ -2088,7 +2181,7 @@ process_stream:
     record->field_04 = 0;
     InterlockedIncrement(&r->read_consumer_cursor);
     InterlockedDecrement(&r->pending_read_records);
-    leaf_005cbbc0_redirect(r, 0);
+    r->sub_5cbbc0();
   }
 
   InterlockedIncrement(&progress_counter);
@@ -2258,7 +2351,7 @@ thread_loop:
       record->field_04 = 0;
       InterlockedIncrement(&r->read_consumer_cursor);
       InterlockedDecrement(&r->pending_read_records);
-      leaf_005cbbc0_redirect(r, 0);
+      r->sub_5cbbc0();
     }
 
     InterlockedIncrement(&d->progress_counter);
@@ -2495,4 +2588,247 @@ void __cdecl sub_5d02cc(BYTE *compressed, void *destination,
     movie_media_transform_block_pair(phase);
   movie_media_write_macroblock_rows(
       reinterpret_cast<unsigned char *>(destination), row_pitch_bytes, 1);
+}
+
+
+/*
+Purpose: Advance the mmio ring buffer by one read: when the pending offset
+         plus this request would run past the 1200000-byte window the offset
+         wraps to the window base, mmioRead fills the caller's buffer at the
+         current offset, a 0/−1 result reports EOF/error through the +0x398
+         flag slot, and a real read publishes (offset, size, sibling count)
+         into the 24-entry history ring at +0x1e4 before the offset advances
+         and the three counters (ring cursor at +0x37c, sibling at +0x380,
+         history count at +0x388) go up through InterlockedIncrement.
+
+// RECOVERY_ROLE: SCAFFOLD Current typed movie/media owner implementation; original receiver, shared storage, and call ordering retained. Native ABI/output and exceptional behavior remain explicit obligations.
+// ORIGINAL: 0x005CA230 sub_5ca230 0x005CA230-0x005CA308
+// symbol    ?sub_5ca230@MediaRuntime@@QAIHHH@Z
+// size      216 bytes
+// prototype int (__fastcall sub_5ca230)(int *ring, int size, int kind)
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x005CA25F 0x005CA2ED 0x005CA2F6 0x005CA2F9
+Status: Coverage transcription - unclaimed body (the entry `push ecx` dummy
+        slot idiom ahead of the callee-saved pushes is not reproducible,
+        seed TRIED).
+*/
+int __fastcall MediaRuntime::sub_5ca230(int size, int kind) {
+  const DWORD current = static_cast<DWORD>(reinterpret_cast<uintptr_t>(input_ring_current));
+  const DWORD base = static_cast<DWORD>(reinterpret_cast<uintptr_t>(input_ring_base));
+  if (static_cast<DWORD>(current + static_cast<DWORD>(size)) >=
+      static_cast<DWORD>(base + 1200000U)) input_ring_current = input_ring_base;
+
+  const LONG read = mmioRead(descriptor->stream,
+                             reinterpret_cast<HPSTR>(input_ring_current), size);
+  if (read == 0) { stream_eof = 1; return -1; }
+  if (read == -1) return -2;
+
+  const int slot = read_producer_cursor % 0x18;
+  read_records[slot].payload = input_ring_current;
+  read_records[slot].field_0c = static_cast<DWORD>(kind);
+  read_records[slot].field_08 = static_cast<DWORD>(read_counter);
+  input_ring_current = reinterpret_cast<BYTE *>(
+      static_cast<uintptr_t>(static_cast<DWORD>(
+          reinterpret_cast<uintptr_t>(input_ring_current) + static_cast<DWORD>(size))));
+  InterlockedIncrement(&read_producer_cursor);
+  InterlockedIncrement(&pending_read_records);
+  InterlockedIncrement(&read_counter);
+  return 1;
+}
+
+
+// Transferred typed media owners. The historical seed prose and ORIGINAL
+// records below remain attached to their complete C++ implementations.
+
+
+/*
+Purpose: Fill one 8x8-block-pair frame fragment with the flat color the six
+         packed char channels name: each channel is scaled through the word
+         at 0x009C5820 with the image's round-half-up idiom -
+         ((product >> 16) + bit 15 of the product) >> 1, then & 0x7f - to
+         index the luma table, and channels 6 and 5 likewise index the two
+         chroma tables whose sum is shared by every block. The luma planes
+         are written at `plane` and `plane`+8 ints, the chroma plane at
+         `plane` + 2*stride ints, each as 8 rows of 8 ints stepped by the
+         stride (masked to whole ints).
+
+// RECOVERY_ROLE: SCAFFOLD Current typed movie/media owner implementation; original receiver, shared storage, and call ordering retained. Native ABI/output and exceptional behavior remain explicit obligations.
+// ORIGINAL: 0x005CD3B0 sub_5cd3b0 0x005CD3B0-0x005CD556
+// symbol    ?sub_5cd3b0@@YAXDDDDDDPAHI@Z
+// size      422 bytes
+// prototype void (__cdecl sub_5cd3b0)(char, char, char, char, char, char, int *, unsigned int)
+// callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+Status: Coverage transcription - unclaimed body (register allocation for the
+        four fill loops differs past instruction 3; seed TRIED).
+*/
+void __cdecl sub_5cd3b0(char param_1, char param_2, char param_3, char param_4,
+                        char param_5, char param_6, int *plane,
+                        unsigned int stride_arg) {
+    MediaConversionTableStorage &conversion_tables =
+        movie_media_conversion_tables;
+    const int scale = conversion_tables.block_scale_entries[0];
+    __int64 product;
+    int chroma_a;
+    int chroma_b;
+    int chroma;
+    unsigned int row_step;
+    int luma_1;
+    int luma_2;
+    int luma_3;
+    int luma_4;
+
+    // The image's scale idiom rounds half up before the sar 1: add bit 15
+    // of the product to the shifted-down word.
+    product = static_cast<__int64>(scale) *
+              static_cast<__int64>(static_cast<int>(param_6));
+    chroma_a = ((static_cast<int>(product >> 16) +
+                 static_cast<int>((product >> 15) & 1)) >>
+                1);
+    product = static_cast<__int64>(scale) *
+              static_cast<__int64>(static_cast<int>(param_5));
+    chroma_b = ((static_cast<int>(product >> 16) +
+                 static_cast<int>((product >> 15) & 1)) >>
+                1);
+    chroma = conversion_tables.packed_component_words[128 + (chroma_a & 0x7f)] +
+             conversion_tables.packed_component_words[256 + (chroma_b & 0x7f)];
+
+    row_step = stride_arg & 0xfffffffcu;
+
+    product = static_cast<__int64>(scale) *
+              static_cast<__int64>(static_cast<int>(param_1));
+    luma_1 = conversion_tables.packed_component_words[((static_cast<int>(product >> 16) +
+                                                   static_cast<int>((product >> 15) & 1)) >>
+                                                  1) &
+                                                 0x7f];
+    {
+        int *row = plane;
+        int outer = 8;
+        do {
+            int *out = row;
+            for (int inner = 8; inner != 0; --inner) {
+                *out = luma_1 + chroma;
+                ++out;
+            }
+            row = reinterpret_cast<int *>(reinterpret_cast<char *>(row) +
+                                          row_step);
+            --outer;
+        } while (outer != 0);
+    }
+
+    product = static_cast<__int64>(scale) *
+              static_cast<__int64>(static_cast<int>(param_2));
+    luma_2 = conversion_tables.packed_component_words[((static_cast<int>(product >> 16) +
+                                                   static_cast<int>((product >> 15) & 1)) >>
+                                                  1) &
+                                                 0x7f];
+    {
+        int *row = plane + 8;
+        int outer = 8;
+        do {
+            int *out = row;
+            for (int inner = 8; inner != 0; --inner) {
+                *out = luma_2 + chroma;
+                ++out;
+            }
+            row = reinterpret_cast<int *>(reinterpret_cast<char *>(row) +
+                                          row_step);
+            --outer;
+        } while (outer != 0);
+    }
+
+    product = static_cast<__int64>(scale) *
+              static_cast<__int64>(static_cast<int>(param_3));
+    luma_3 = conversion_tables.packed_component_words[((static_cast<int>(product >> 16) +
+                                                   static_cast<int>((product >> 15) & 1)) >>
+                                                  1) &
+                                                 0x7f];
+    {
+        int *row = plane + stride_arg * 2;
+        int outer = 8;
+        do {
+            int *out = row;
+            for (int inner = 8; inner != 0; --inner) {
+                *out = luma_3 + chroma;
+                ++out;
+            }
+            row = reinterpret_cast<int *>(reinterpret_cast<char *>(row) +
+                                          row_step);
+            --outer;
+        } while (outer != 0);
+    }
+
+    product = static_cast<__int64>(scale) *
+              static_cast<__int64>(static_cast<int>(param_4));
+    luma_4 = conversion_tables.packed_component_words[((static_cast<int>(product >> 16) +
+                                                   static_cast<int>((product >> 15) & 1)) >>
+                                                  1) &
+                                                 0x7f];
+    {
+        int *row = plane + stride_arg * 2 + 8;
+        int outer = 8;
+        do {
+            int *out = row;
+            for (int inner = 8; inner != 0; --inner) {
+                *out = luma_4 + chroma;
+                ++out;
+            }
+            row = reinterpret_cast<int *>(reinterpret_cast<char *>(row) +
+                                          row_step);
+            --outer;
+        } while (outer != 0);
+    }
+}
+/*
+Purpose: Create the codec's draw/audio surface through COM: QueryInterface
+         slot 6 on the provider with a 0x6c-byte format block (0x1007 tag,
+         0x4040 tail, 0x20/4 pair and the caller's fifth argument at its
+         end), then QueryInterface slot 0 of the created object for the
+         interface at 0x0066FC28 - success stores the interface through the
+         out pointer and returns 0, any failure Releases (slot 2) the created
+         object and returns 1.
+
+// RECOVERY_ROLE: SCAFFOLD Current typed movie/media owner implementation; original receiver, shared storage, and call ordering retained. Native ABI/output and exceptional behavior remain explicit obligations.
+// ORIGINAL: 0x005CDAD0 sub_5cdad0 0x005CDAD0-0x005CDB83
+// symbol    ?sub_5cdad0@@YIHPAUIDirectDraw2@@PAPAUIDirectDrawSurface2@@HHH@Z
+// size      179 bytes
+// prototype int (__fastcall sub_5cdad0)(int *, int *, int, int, int)
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x005CDB3E 0x005CDB56 0x005CDB73
+Status: Coverage transcription - unclaimed body (prologue register-save order
+        diverges at instruction 3; seed TRIED).
+*/
+int __fastcall sub_5cdad0(IDirectDraw2 *provider,
+                          IDirectDrawSurface2 **out_slot,
+                          int width, int height, int format_tail) {
+  DDSURFACEDESC description;
+  memset(&description, 0, 0x6c);
+  description.dwSize = 0x6c;
+  description.dwFlags = 0x1007;
+  description.dwHeight = static_cast<DWORD>(height);
+  description.dwWidth = static_cast<DWORD>(width);
+  description.ddpfPixelFormat.dwSize = 0x20;
+  description.ddpfPixelFormat.dwFlags = DDPF_FOURCC;
+  description.ddpfPixelFormat.dwFourCC = static_cast<DWORD>(format_tail);
+  description.ddsCaps.dwCaps = 0x4040;
+
+  IDirectDrawSurface *created = 0;
+  if (provider->CreateSurface(&description, &created, 0) == DD_OK) {
+    IDirectDrawSurface2 *queried = 0;
+    if (created->QueryInterface(IID_IDirectDrawSurface2,
+                                reinterpret_cast<void **>(&queried)) == DD_OK) {
+      *out_slot = queried;
+      return 0; // Preserve the original success-path reference/leak behavior.
+    }
+    created->Release();
+  }
+  return 1;
 }

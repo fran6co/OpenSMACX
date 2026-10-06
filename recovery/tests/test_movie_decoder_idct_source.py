@@ -34,17 +34,17 @@ def test_mapped_idct_bodies_compile_and_execute_from_product_owner(
     compiler = shutil.which("g++") or shutil.which("clang++")
     if compiler is None:
         return
-    leaf = _without_comments((SRC / "leaf_recoveries.cpp").read_text())
+    decoder = _without_comments((SRC / "movie_media_decoder.cpp").read_text())
     signatures = (
-        "static int *leaf_idct_output_pointer()",
-        "static void leaf_idct_set_output_pointer(int *value)",
-        "static float leaf_idct_float_constant(int index)",
-        "static movie_decoder_idct::IdctConstants leaf_idct_constants()",
+        "static int *movie_media_idct_output_pointer()",
+        "static void movie_media_idct_set_output_pointer(int *value)",
+        "static float movie_media_idct_float_constant(int index)",
+        "static movie_decoder_idct::IdctConstants movie_media_idct_constants()",
         "void __cdecl sub_5ced1d(int *esi_ptr)",
         "void __cdecl sub_5cee80(int *src)",
         "void __cdecl sub_5cef8a(unsigned char *row_base, int stride_arg)",
     )
-    owners = "\n\n".join(_function(leaf, signature) for signature in signatures)
+    owners = "\n\n".join(_function(decoder, signature) for signature in signatures)
     owner_header = (SRC / "movie_decoder_owner.h").read_text()
     assert "extern MediaDecoderTableStorage movie_media_decoder_tables;" in owner_header
     source = r'''#include <cassert>

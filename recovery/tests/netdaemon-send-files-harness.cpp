@@ -124,6 +124,8 @@ public:
 
 class NetDaemon : public Net {
 public:
+    // Host-only view of the source-owned transfer pointer, not an ABI witness.
+    struct SaveStorage { void *file_index_records_; } save_storage_;
     void process_message(char *, unsigned long, int) { ++g_process_count; }
     void send_message(char *bytes, unsigned long size, int target);
     int send_files();
@@ -159,7 +161,7 @@ static void do_draw();
 static void do_all_draws() {}
 static void pop_close() {}
 
-int sub_634280(unsigned char *out, unsigned long *out_size,
+int netdaemon_deflate_buffer(unsigned char *out, unsigned long *out_size,
                unsigned char *, unsigned int) {
     if (*out_size < g_compressed_size) return -5;
     memset(out, 0xA5, g_compressed_size);

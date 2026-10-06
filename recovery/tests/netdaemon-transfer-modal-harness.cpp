@@ -79,7 +79,9 @@ unsigned char *NetDaemonFileTransferReceiveBuffer;
 char NetDaemonFileTransferPath[260];
 int PopupModalState;
 static void *mem_get(int size) { return malloc((size_t)size); }
-static int uncompress(unsigned char *, uLongf *, unsigned char *, uLong) {
+// This modal control doubles the transfer operation; the separate actual-body
+// owner controls exercise the recovered wrapper's statuses and size writeback.
+static int netdaemon_inflate_buffer(unsigned char *, unsigned long *, unsigned char *, unsigned int) {
     return 0;
 }
 static void parse_says(int, const char *, int, int) {}

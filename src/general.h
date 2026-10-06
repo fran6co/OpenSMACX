@@ -343,3 +343,6 @@ void __cdecl read_and_parse_text_line();
 
 int __cdecl set_scale_adjustment(int value);
 int __cdecl apply_scale_adjustment(int value);
+
+// Fixed-point companion to sin(angle, scale), recovered at 0x0063BAC0.
+int __cdecl cos(int angle, int scale);

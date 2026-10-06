@@ -18,6 +18,7 @@
 #include "stdafx.h"
 #include "council.h"
 #include <math.h> // sin(double), lowered to the CRT's _sin
+#include <cstring>
 #include <ddraw.h>  // IDirectDraw::Release in the DirectDraw teardown stage
 // _disable / _enable for sub_5d4240, the VGA DAC loader - real VC6 intrinsics
 // reproducing the image's cli/sti, not inline assembly.
@@ -5220,4 +5221,22 @@ int __cdecl apply_scale_adjustment(int value) {
     int product;
     memcpy(&product, &bits, sizeof(product));
     return product / 16;
+}
+
+/*
+// ORIGINAL: 0x0063BAC0 ?cos@@YAHHH@Z 0x0063BAC0-0x0063BAD9 BYTE_EXACT
+// symbol    ?cos@@YAHHH@Z
+// size      25 bytes
+// prototype
+// callers   0   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x0063B9B0
+Status: Complete
+*/
+int __cdecl cos(int a1, int a2) {
+    uint32_t wrapped = static_cast<uint32_t>(a1) + 0x3fffffffU;
+    int32_t biased_angle;
+    std::memcpy(&biased_angle, &wrapped, sizeof(biased_angle));
+    return sin(biased_angle, a2);
 }

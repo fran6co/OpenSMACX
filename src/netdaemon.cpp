@@ -45,6 +45,12 @@
 #include "general.h"
 #include "filemap.h"
 #include "zlib.h"
+
+// Original mapped file-transfer wrappers, now implemented in this owner TU.
+int __cdecl netdaemon_deflate_buffer(unsigned char *, unsigned long *,
+                                      unsigned char *, unsigned int);
+int __cdecl netdaemon_inflate_buffer(unsigned char *, unsigned long *,
+                                      unsigned char *, unsigned int);
 #include <direct.h>
 #include <new>
 #include "replaywin.h"     // ReplayEventBytes: replay recorder's byte length
@@ -3598,7 +3604,6 @@ fail:
 
 extern char NetDaemonFileTransferPath[0x104];
 
-extern int __cdecl sub_634280(unsigned char *, unsigned long *, unsigned char *, unsigned int);
 
 struct NetDaemonFileIndexRecord {
     uint16_t opcode;          // +0
@@ -3894,12 +3899,9 @@ bool NetDaemon::process_file_transfer_message(char *message,
             unsigned char *const mapped = static_cast<unsigned char *>(
                 filemap.create(records[file_index].filename,
                                decompressed_size, 1));
-            // Native 0x00634330 is the zlib 1.0.2 one-shot uncompress API:
-            // dest, in/out destLen, source, sourceLen. The project already
-            // links that genuine vendor component; do not recover a duplicate.
-            uncompress(mapped, &decompressed_size,
-                       NetDaemonFileTransferReceiveBuffer,
-                       compressed_size);
+            netdaemon_inflate_buffer(mapped, &decompressed_size,
+                                    NetDaemonFileTransferReceiveBuffer,
+                                    static_cast<unsigned int>(compressed_size));
             filemap.close();
             if (NetDaemonFileTransferReceiveBuffer != 0) {
                 free(NetDaemonFileTransferReceiveBuffer);
@@ -4120,7 +4122,7 @@ int NetDaemon::send_files() {
                     static_cast<double>(compressed_capacity_ratio));
                 void *compressed = mem_get(static_cast<int>(compressed_capacity));
                 const DWORD input_size = GetFileSize(filemap.get_handle(), 0);
-                sub_634280(static_cast<unsigned char *>(compressed),
+                netdaemon_deflate_buffer(static_cast<unsigned char *>(compressed),
                     reinterpret_cast<unsigned long *>(&compressed_capacity),
                     static_cast<unsigned char *>(filemap.get_view()), input_size);
                 send_buffer->compressed_size = compressed_capacity;
@@ -5831,4 +5833,91 @@ void NetDaemon::reset() {
 
     locks_.clear();
     AlphaNet::close();
+}
+
+/*
+Purpose: Deflate one buffer in a single shot: build the z_stream over the
+         caller's in/out pointers, deflate at the default level to the finish
+         mark, and hand the produced size back through the out-size slot. A
+         dry deflate answers Z_BUF_ERROR; any other non-stream-end answer
+         comes back as itself.
+
+// ORIGINAL: 0x00634280 sub_634280 0x00634280-0x00634326 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["git:c96a47e3f89e8792c8514ac2ca79259ab6f42c3e:src/unrecovered/00634280.cpp", "Historical seed spelling sub_634280; current source mapping sub_634280; emitted symbol ?sub_634280@@YAHPAEPAK0I@Z."], "reason": "Retain the original function mapping on its compiled C++ owner. Superseded seed retired after owner review; original spans, existing claims and useful seed findings remain in source. This cleanup grants no new match or acceptance claim."}
+// TRIED: `if (dr == 1) { ...; return deflateEnd(); } else {...}` flipped je/jne against the original (0.78 sim); the `if (dr != 1) cleanup ... success falls through` polarity matched (0.95 sim); the remaining diff was the duplicated epilogue the compiler did not share between the two returns.
+// TRIED: `if (dr == 1) { ...; return deflateEnd_real(); } else {...}` flipped je/jne against the original (0.78 sim). `if (dr != 1) {cleanup path} ...; success path falls through` matches polarity (0.95 sim); the remaining diff is a duplicated epilogue the compiler didn't share between the two returns.
+// symbol    ?netdaemon_deflate_buffer@@YAHPAEPAK0I@Z
+// size      166 bytes
+// callers   1   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0063CF00 0x0063D1A0 0x0063D4D0
+Status: Coverage transcription - unclaimed body
+*/
+
+int __cdecl netdaemon_deflate_buffer(unsigned char *next_out,
+                                      unsigned long *out_size,
+                                      unsigned char *next_in,
+                                      unsigned int avail_in) {
+    z_stream stream;
+    stream.next_in = next_in;
+    stream.avail_in = static_cast<uInt>(avail_in);
+    stream.next_out = next_out;
+    stream.avail_out = static_cast<uInt>(*out_size);
+    stream.zalloc = Z_NULL; stream.zfree = Z_NULL;
+    const int init_status = deflateInit_(&stream, -1, ZLIB_VERSION,
+                                       static_cast<int>(sizeof(z_stream)));
+    if (init_status != 0) return init_status;
+    const int status = deflate(&stream, Z_FINISH);
+    if (status != Z_STREAM_END) {
+        deflateEnd(&stream);
+        return status != 0 ? status : Z_BUF_ERROR;
+    }
+    *out_size = stream.total_out;
+    return deflateEnd(&stream);
+}
+
+
+/*
+Purpose: Inflate compressed input into next_out with *out_size as the
+         output capacity, writing total_out back only on stream end.
+         On other inflate statuses, call inflateEnd and return the
+         original inflate status unchanged.
+
+// ORIGINAL: 0x00634330 sub_634330 0x00634330-0x006343BD FILE
+// RECOVERY_BINDING: v1 {"evidence": ["git:c96a47e3f89e8792c8514ac2ca79259ab6f42c3e:src/unrecovered/00634330.cpp", "Historical seed spelling sub_634330; current source mapping sub_634330; emitted symbol ?sub_634330@@YAHPAEHPAKI@Z.", "Pinned caller 0x00534C81 pushes destination, destination-size pointer, compressed input pointer and compressed byte count in cdecl order.", "Pinned callee 0x00634330 loads *arg2 into avail_out, arg3 into next_in, arg4 into avail_in, and stores total_out through arg2 only on Z_STREAM_END; the old seed second-argument-unused transcription is false.", "Pinned stream initialization zeros zalloc and zfree but leaves opaque untouched; preserve this original stack-field quirk."], "reason": "Recover the original four-argument inflate wrapper on the NetDaemon transfer path, preserving its size-write and error/cleanup order. Correct the old seed's disproven argument interpretation; this grants no new byte or ABI match."}
+// TRIED: the wrapper's second argument is never read - the in-place work pointer (third argument) carries both the input and the output-size handback, which the seed's dword-indexed reading had assigned to the wrong slot.
+// symbol    ?netdaemon_inflate_buffer@@YAHPAEPAK0I@Z
+// size      141 bytes
+// callers   1   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// indirect  0x0063436D 0x00634380 0x00634394 0x006343AF
+// Pinned correction: 0x00534C81 passes dest, &file_size, compressed source, source size; 0x00634330 reads capacity from arg2 and input from arg3.
+Status: Coverage transcription - unclaimed body
+*/
+
+int __cdecl netdaemon_inflate_buffer(unsigned char *next_out,
+                                      unsigned long *out_size,
+                                      unsigned char *next_in,
+                                      unsigned int avail_in) {
+    z_stream stream;
+    stream.next_in = next_in;
+    stream.avail_in = static_cast<uInt>(avail_in);
+    stream.next_out = next_out;
+    stream.avail_out = static_cast<uInt>(*out_size);
+    stream.zalloc = Z_NULL;
+    stream.zfree = Z_NULL;
+    const int init_status = inflateInit_(&stream, ZLIB_VERSION,
+                                         static_cast<int>(sizeof(z_stream)));
+    if (init_status != 0) {
+        return init_status;
+    }
+    const int inflate_status = inflate(&stream, Z_FINISH);
+    if (inflate_status != Z_STREAM_END) {
+        inflateEnd(&stream);
+        return inflate_status;
+    }
+    *out_size = stream.total_out;
+    return inflateEnd(&stream);
 }

@@ -7,6 +7,7 @@
 #include "movie_decoder_owner.h"
 #include "movie_decoder_frame.h"
 #include "movie_decoder_huffman.h"
+#include "movie_decoder_idct.h"
 
 #include <cstring>
 #include <stdlib.h>
@@ -1014,4 +1015,217 @@ void movie_media_write_macroblock_rows(unsigned char *destination,
                      reinterpret_cast<const uint32_t *>(chroma));
     }
   }
+}
+
+
+// Mapped IDCT block pipeline owned beside its shared decoder workspace.
+/*
+Purpose: One 8-point inverse DCT row, the butterfly half of the movie codec's
+         IDCT: reads the eight coefficients through the incoming ESI table
+         pointer, mixes them through the fixed constants at 0x009C3018..28,
+         and writes the eight spatial samples to the row pointer that
+         *reinterpret_cast<int *>(0x009C3004) currently holds.
+
+         The register channel: the source pointer arrives in ESI with no
+         stack or register-argument convention behind it (the sibling
+         0x005D2B20/0x5D2C0A finding), so the parameter here is that value
+         made explicit - the caller below passes its own table literals.
+         The two fp sums are stored as doubles into the scratch slots at
+         0x009C3008/0x009C3010 exactly as the image does, and their low
+         dwords are what feed the integer butterfly.
+*/
+
+static int *movie_media_idct_output_pointer() {
+    int *result;
+    std::memcpy(&result,
+                &movie_media_idct_storage.current_output_pointer_bits,
+                sizeof(result));
+    return result;
+}
+
+static void movie_media_idct_set_output_pointer(int *value) {
+    std::memcpy(&movie_media_idct_storage.current_output_pointer_bits,
+                &value, sizeof(value));
+}
+
+static float movie_media_idct_float_constant(int index) {
+    float value;
+    std::memcpy(&value, &movie_media_idct_storage.constant_words[index],
+                sizeof(value));
+    return value;
+}
+
+static movie_decoder_idct::IdctConstants movie_media_idct_constants() {
+    movie_decoder_idct::IdctConstants values;
+    std::memcpy(&values.rotation_multiplier,
+                &movie_media_idct_storage.constant_words[0], sizeof(LONG));
+    std::memcpy(&values.first_difference_scale,
+                &movie_media_idct_storage.constant_words[1], sizeof(float));
+    std::memcpy(&values.second_difference_scale,
+                &movie_media_idct_storage.constant_words[2], sizeof(float));
+    std::memcpy(&values.cross_scale,
+                &movie_media_idct_storage.constant_words[3], sizeof(float));
+    std::memcpy(&values.bias, &movie_media_idct_storage.constant_words[4],
+                sizeof(float));
+    return values;
+}
+
+
+
+/*
+// RECOVERY_ROLE: SCAFFOLD Current typed movie/media owner implementation; original receiver, shared storage, and call ordering retained. Native ABI/output and exceptional behavior remain explicit obligations.
+// ORIGINAL: 0x005CEE80 sub_5cee80 0x005CEE80-0x005CEF8A
+// symbol    ?sub_5cee80@@YAXPAH@Z
+// size      266 bytes
+// prototype void (__cdecl sub_5cee80)(int *src)
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Status: Coverage transcription - unclaimed body (explicit-source spelling;
+        MISMATCH from instruction 0 is the documented ESI channel, see the
+        seed's TRIED note; the fstp-qword/low-dword scratch reuse is
+        reproduced, not truncated).
+*/
+void __cdecl sub_5cee80(int *src) {
+    int *dst;
+    int sum_lo;
+    int sum_hi;
+    float diff_a;
+    float diff_b;
+    float mid;
+    int rot;
+    int out_a;
+    int out_b;
+
+    dst = movie_media_idct_output_pointer();
+    sum_lo = src[3] + src[5];
+    sum_hi = src[7] + src[1];
+    diff_a = static_cast<float>(src[5] - src[3]);
+    diff_b = static_cast<float>(src[1] - src[7]);
+    mid = (diff_b + diff_a) * movie_media_idct_float_constant(3);
+    rot = static_cast<int>((static_cast<__int64>(sum_hi - sum_lo) *
+                            static_cast<__int64>(movie_media_idct_storage.constant_words[0])) >>
+                           32) *
+          2;
+    // The image rounds these two sums to double inside the x87 stack and
+    // fstp qword's them into the scratch slots; the INTEGER pipeline then
+    // re-reads the slots' LOW dwords, so the bit pattern - not the numeric
+    // value - is what flows into the eight writes.
+    const double scratch_a = static_cast<double>(
+        diff_a * movie_media_idct_float_constant(1) + mid +
+        movie_media_idct_float_constant(4));
+    const double scratch_b = static_cast<double>(
+        (diff_b * movie_media_idct_float_constant(2) - mid) +
+        movie_media_idct_float_constant(4));
+    std::memcpy(&movie_media_idct_storage.butterfly_fp_scratch_words[0],
+                &scratch_a, sizeof(scratch_a));
+    std::memcpy(&movie_media_idct_storage.butterfly_fp_scratch_words[2],
+                &scratch_b, sizeof(scratch_b));
+    out_a = static_cast<int>(
+        movie_media_idct_storage.butterfly_fp_scratch_words[0]);
+    out_b = static_cast<int>(
+        movie_media_idct_storage.butterfly_fp_scratch_words[2]);
+    int sum_lo2;
+    int diff_c;
+    int rot2;
+    int rot2x2;
+    int sum_hi2;
+    int diff_d;
+    int diff_e;
+    int tail_a;
+    int tail_b;
+    int half_a;
+
+    half_a = out_a + rot;
+    rot = rot + out_b;
+    out_b = out_b + sum_lo + sum_hi;
+
+    sum_lo2 = src[4] + src[0];
+    diff_c = src[0] - src[4];
+    rot2 = static_cast<int>((static_cast<__int64>(src[2] - src[6]) *
+                             static_cast<__int64>(movie_media_idct_storage.constant_words[0])) >>
+                            32);
+    rot2x2 = rot2 * 2;
+    sum_hi2 = src[6] + src[2] + rot2x2;
+    diff_d = rot2x2 + diff_c;
+    diff_e = diff_c + rot2 * -2;
+    tail_a = sum_hi2 + sum_lo2;
+    tail_b = sum_lo2 - sum_hi2;
+
+    dst[2] = diff_e + half_a;
+    dst[5] = diff_e - half_a;
+    dst[3] = tail_b + out_a;
+    dst[4] = tail_b - out_a;
+    dst[0] = tail_a + out_b;
+    dst[1] = rot + diff_d;
+    dst[6] = diff_d - rot;
+    dst[7] = tail_a - out_b;
+}
+
+
+/*
+Purpose: Build one 8x8 coefficient block for the movie decoder: eight
+         row-loaders (sub_5ced1d, one per destination row at 0x009C302C..48)
+         pull the coefficient rows through their own ESI tables at
+         0x009C314C + i*0x20, then eight IDCT rows (sub_5cee80) walk the
+         source tables at 0x009C302C + i*0x24, publishing each destination
+         row pointer through *reinterpret_cast<int *>(0x009C3004) and advancing it by the stride that
+         `stride_arg << 2` leaves in 0x009C3000.
+
+// RECOVERY_ROLE: SCAFFOLD Current typed movie/media owner implementation; original receiver, shared storage, and call ordering retained. Native ABI/output and exceptional behavior remain explicit obligations.
+// ORIGINAL: 0x005CEF8A sub_5cef8a 0x005CEF8A-0x005CF11D
+// symbol    ?sub_5cef8a@@YAXPAEH@Z
+// size      403 bytes
+// prototype void (__cdecl sub_5cef8a)(int, int)
+// callers   1   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005CED1D 0x005CEE80
+Status: Coverage transcription - unclaimed body (hidden-ESI callees reached
+        with their table channels made explicit; the ESI loads are the one
+        deliberate divergence, seed TRIED 0.51).
+*/
+void __cdecl sub_5cef8a(unsigned char *row_base, int stride_arg) {
+    movie_media_idct_storage.output_pitch_bytes =
+        static_cast<DWORD>(stride_arg << 2);
+    for (int column = 0; column != 8; ++column) {
+        int *const destination =
+            &movie_media_idct_storage.intermediate_words[column];
+        movie_media_idct_set_output_pointer(destination);
+        int *const input =
+            movie_media_decoder_tables.decoded_coefficient_words + column * 8;
+        sub_5ced1d(input);
+    }
+
+    movie_media_idct_set_output_pointer(reinterpret_cast<int *>(row_base));
+    for (int row = 0; row != 8; ++row) {
+        int *const source =
+            &movie_media_idct_storage.intermediate_words[row * 9];
+        sub_5cee80(source);
+        BYTE *destination = reinterpret_cast<BYTE *>(movie_media_idct_output_pointer());
+        destination += movie_media_idct_storage.output_pitch_bytes;
+        movie_media_idct_set_output_pointer(reinterpret_cast<int *>(destination));
+    }
+}
+
+
+/*
+Purpose: The row-loader half of the same block build (coefficient fetch
+         through the incoming ESI table into the row pointer *reinterpret_cast<int *>(0x009C3004)
+         holds). Body still unrecovered - the seed stays in the catalogue;
+         this continuity definition exists so the block builder above links.
+// RECOVERY_ROLE: SCAFFOLD Current typed movie/media owner implementation; original receiver, shared storage, and call ordering retained. Native ABI/output and exceptional behavior remain explicit obligations.
+// ORIGINAL: 0x005CED1D sub_5ced1d 0x005CED1D-0x005CEF8A
+// symbol    ?sub_5ced1d@@YAXPAH@Z
+// size      621 bytes
+// kind      game
+// calls     (none)
+Status: Continuity placeholder - real body pending, seed preserved.
+*/
+void __cdecl sub_5ced1d(int *esi_ptr) {
+    movie_decoder_idct::IdctConstants constants = movie_media_idct_constants();
+    movie_decoder_idct::transform_idct_column(
+        reinterpret_cast<const int32_t *>(esi_ptr),
+        reinterpret_cast<int32_t *>(movie_media_idct_output_pointer()), constants);
 }

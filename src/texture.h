@@ -205,6 +205,9 @@ class Texture {
                   int param_6, uint32_t param_7, int param_8);
   void sub_620a10(Buffer *bufParam, int vertsParam, int countParam,
                   int edgeVerts, int *outFlag);
+  // 0x0061D090: receiver loads and RET 0x10 establish Texture this + four
+  // stack arguments; this replaces the old free-function catalogue shape.
+  void sub_61d090(Buffer *buffer, int *vertices, int *zvals, unsigned int flag);
   void sub_622200(int a2, int a3, int a4, int a5, int a6, int a7, int a8,
                   int a9);
   // 0x00623F50. Seven ints, the seventh the -1 sentinel that selects the
