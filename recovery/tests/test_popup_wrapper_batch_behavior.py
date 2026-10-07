@@ -72,7 +72,11 @@ struct Interface {
 static const int RFLAG_ALIEN=0x80; static const int PlayerMax=8;
 Player Players[PlayerMax] = {}; Console ConsoleGlobal={0};
 int ExpansionEnabled=0, PopupDialogFactionID=0, IsMultiplayerPBEM=0;
-unsigned int LockEnableMask=0; int MapLongitudeBounds=20, MapLatitudeBounds=10;
+struct GameDataLockMaskView { unsigned int enable_mask_; };
+struct GameDataStateWindowFields { GameDataLockMaskView lock_masks_; };
+struct GameDataStateWindow { GameDataStateWindowFields fields_; };
+GameDataStateWindow GameDataStateStorage = {};
+int MapLongitudeBounds=20, MapLatitudeBounds=10;
 typedef const char *LPCSTR; char *PopupStartAltFile1=const_cast<char *>("ALIENTXT1");
 char *PopupStartAltFile2=const_cast<char *>("ALIENTXT2");
 char PopupStartCaption[256]="SCRIPT"; char *ScriptPopupFile=const_cast<char *>("SCRIPT.txt");
@@ -137,7 +141,8 @@ int main() {
     assert(std::strcmp(StringTemp,"first last")==0);
     assert(Popup::constructed==Popup::destroyed);
     Popup::populate_history=0; IsMultiplayerPBEM=1;
-    LockEnableMask=(0xFFu<<8)|(1u<<2)|(1u<<4);
+    GameDataStateStorage.fields_.lock_masks_.enable_mask_=
+        (0xFFu<<8)|(1u<<2)|(1u<<4);
     POP3("SECTION",0,12,3);
     assert(MessageWinDeferredBaseMessages[2].added_id==static_cast<int>((20*3+12)|0x80000000u));
     assert(MessageWinDeferredBaseMessages[4].added_id==static_cast<int>((20*3+12)|0x80000000u));
