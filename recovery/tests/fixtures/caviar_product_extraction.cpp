@@ -150,8 +150,8 @@ static void vector_add(const float *left, const float *right, float *out) {
     float result[3] = {left[0] + right[0], left[1] + right[1], left[2] + right[2]};
     memcpy(out, result, sizeof(result));
 }
-static void leaf_00628180_redirect(const float *left, const float *right,
-                                   float *out) {
+static void __cdecl vec3_subtract(const float *left, const float *right,
+                                 float *out) {
     float result[3] = {left[0] - right[0], left[1] - right[1], left[2] - right[2]};
     memcpy(out, result, sizeof(result));
 }

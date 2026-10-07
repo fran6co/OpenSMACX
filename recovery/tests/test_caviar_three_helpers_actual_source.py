@@ -32,7 +32,7 @@ const float CaviarProjectionRoundAbove = 0.5f;
 const float CaviarBoundsRadiusScale = 128.0f;
 float vox_lod_cut_ = 1.0f;
 void vox_normalise_vector(const float *, float *);
-void leaf_006281b0_redirect(const float *, float, float *);
+void __cdecl vec3_scale(const float *, float, float *);
 void vox_matrix_inverse(const float (*)[3], float (*)[3]);
 '''
 
@@ -67,7 +67,7 @@ void vox_normalise_vector(const float *s, float *o) {
     const float n = (float)sqrt(s[0]*s[0] + s[1]*s[1] + s[2]*s[2]);
     o[0] = s[0]/n; o[1] = s[1]/n; o[2] = s[2]/n;
 }
-void leaf_006281b0_redirect(const float *s, float k, float *o) {
+void __cdecl vec3_scale(const float *s, float k, float *o) {
     o[0]=s[0]*k; o[1]=s[1]*k; o[2]=s[2]*k;
 }
 void vox_matrix_inverse(const float (*s)[3], float (*o)[3]) {

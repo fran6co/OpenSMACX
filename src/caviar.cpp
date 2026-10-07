@@ -22,6 +22,7 @@
 
 #include <io.h>        // _read/_write/_lseek/_tell - the vx_* IO shims
 #include <new>
+#include <stddef.h>
 
 // Forward declaration: the record dispatchers precede the retained kernel
 // definition in this translation unit.
@@ -29,6 +30,44 @@ static void caviar_install_record_kernels_candidate(
     VoxRenderRecord *, uint8_t, int);
 void __cdecl caviar_original_666fd0(
     int32_t, int32_t, uint32_t, const uint8_t *, int32_t);
+
+// These three contiguous dword slots form a useful typed source grouping.
+// All four blitters share the destination cursor. Only the transparent and
+// 16-bit scaled loops share destination_stride_bytes_; the two 8-bit scaled
+// loops use their stride parameters. Only the transparent loop consumes
+// source_row_bytes_. This does not assert original extent or class.
+struct CaviarBlitStateCandidate {
+    unsigned char * volatile destination_cursor_; // 0x00698B70
+    uint32_t source_row_bytes_;                   // 0x00698B74
+    uint32_t destination_stride_bytes_;           // 0x00698B78
+};
+typedef char CaviarBlitStateCandidate_is_12_bytes[
+    sizeof(CaviarBlitStateCandidate) == 12 ? 1 : -1];
+typedef char CaviarBlitStateCandidate_cursor_at_0[
+    offsetof(CaviarBlitStateCandidate, destination_cursor_) == 0 ? 1 : -1];
+typedef char CaviarBlitStateCandidate_source_pitch_at_4[
+    offsetof(CaviarBlitStateCandidate, source_row_bytes_) == 4 ? 1 : -1];
+typedef char CaviarBlitStateCandidate_destination_pitch_at_8[
+    offsetof(CaviarBlitStateCandidate, destination_stride_bytes_) == 8 ? 1 : -1];
+
+static uint32_t caviar_blit_offset(int x, int y, int stride) {
+    return static_cast<uint32_t>(y) * static_cast<uint32_t>(stride) +
+           static_cast<uint32_t>(x);
+}
+
+static unsigned char *caviar_blit_address(unsigned char *base,
+                                           uint32_t offset) {
+    const uint32_t address =
+        static_cast<uint32_t>(reinterpret_cast<uintptr_t>(base)) + offset;
+    return reinterpret_cast<unsigned char *>(static_cast<uintptr_t>(address));
+}
+
+static const char *caviar_blit_source_address(const char *base,
+                                              uint32_t offset) {
+    const uint32_t address =
+        static_cast<uint32_t>(reinterpret_cast<uintptr_t>(base)) + offset;
+    return reinterpret_cast<const char *>(static_cast<uintptr_t>(address));
+}
 
 // Original readonly IEEE754 scalar is0xC61C4000 (-10000.0f), with no relocation.
 // Datalink and SelectPartWin both multiply their camera vectors by this storage.
@@ -1366,17 +1405,20 @@ static const float vox_sqrt_two = 1.4142f;       // 0x00670FE8
 // choose between loading the 0x1020000 chunk and expanding it in place.
 static const float vox_threshold_seven = 7.0f;   // 0x00670FEC
 
-// The transparent blit's three scratch slots, .data 0x00698B70..0x00698B78,
-// all zero in the image: vox_blit_transparent fills the cursor, writes the
-// scene through it, and steps it by the destination stride per row.
+// The contiguous .data window at 0x00698B70..0x00698B78 is zero in the image.
+// vox_blit_transparent initializes and consumes all three words; the three
+// scaled blitters all share the cursor; only the 16-bit scaled blitter shares
+// the destination-stride word. The two 8-bit loops use their stride parameters.
+// The source-row-byte word is used only by vox_blit_transparent.
 // The record's clip bounds as the engine hands them to its callers, .data
 // 0x009B96A0..0x009B96AC. Named 2026-09-04 from the two bodies that fill it:
 // all four come off the created VoxRenderRecord's own clip fields
 // (+0x8/+0xc/+0x10/+0x14), the min edges incremented by one.
 uint32_t vox_clip_rect[4];     // 0x009B96A0
-uint32_t vox_blit_cursor;      // 0x00698B70
-uint32_t vox_blit_row_bytes;   // 0x00698B74
-uint32_t vox_blit_dst_stride;  // 0x00698B78
+// RECOVERY_OBJECT: v3 0x00698B70 0x00698B74 ?vox_blit_cursor@@3IA 0x0063B11C member ?CaviarBlitState@@3UCaviarBlitStateCandidate@@A destination_cursor_
+// RECOVERY_OBJECT: v3 0x00698B74 0x00698B78 ?vox_blit_row_bytes@@3IA 0x0063B072 member ?CaviarBlitState@@3UCaviarBlitStateCandidate@@A source_row_bytes_
+// RECOVERY_OBJECT: v3 0x00698B78 0x00698B7C ?vox_blit_dst_stride@@3IA 0x0063B11C member ?CaviarBlitState@@3UCaviarBlitStateCandidate@@A destination_stride_bytes_
+CaviarBlitStateCandidate CaviarBlitState = {0, 0, 0};
 
 // The three engine callees, all HOMED to the foot of this file. The forward
 // declarations keep the call sites above them compiling; being same-file
@@ -2632,22 +2674,26 @@ Purpose: Blit a 16-bit source rectangle into the scene, skipping the
 Return Value: n/a
 */
 extern "C" void __cdecl vox_blit_transparent(
-    int framebuffer, const unsigned short *source, int dest_x, int dest_y,
+    unsigned char *framebuffer, const unsigned short *source, int dest_x, int dest_y,
     int count_x, int count_y, unsigned source_step, int source_width,
     int dest_width, short transparent_key) {
     if (count_x > 0) {
         if (count_y > 0) {
-            vox_blit_row_bytes = source_width << 1;
-            vox_blit_dst_stride = dest_width << 1;
-            vox_blit_cursor = framebuffer +
-                              (dest_y * dest_width + dest_x) * 2;
+            CaviarBlitState.source_row_bytes_ =
+                static_cast<uint32_t>(source_width) << 1;
+            CaviarBlitState.destination_stride_bytes_ =
+                static_cast<uint32_t>(dest_width) << 1;
+            CaviarBlitState.destination_cursor_ =
+                caviar_blit_address(
+                    framebuffer,
+                    caviar_blit_offset(dest_x, dest_y, dest_width) << 1);
             unsigned acc_y = 0;
             do {
                 // The cursor is re-read at each row start and the stores run
                 // through the local copy; the global only takes the stride
                 // step at the row's end.
-                unsigned short *destination =
-                    (unsigned short *)vox_blit_cursor;
+                unsigned short *destination = reinterpret_cast<unsigned short *>(
+                    CaviarBlitState.destination_cursor_);
                 int row = count_x;
                 unsigned acc_x = 0;
                 do {
@@ -2659,11 +2705,15 @@ extern "C" void __cdecl vox_blit_transparent(
                     acc_x += source_step;
                     --row;
                 } while (row != 0);
-                vox_blit_cursor += vox_blit_dst_stride;
+                CaviarBlitState.destination_cursor_ = caviar_blit_address(
+                    CaviarBlitState.destination_cursor_,
+                    CaviarBlitState.destination_stride_bytes_);
                 acc_y += source_step;
-                source = (const unsigned short *)((const char *)source +
-                                                  (acc_y >> 16) *
-                                                  vox_blit_row_bytes);
+                const uint32_t source_rows = acc_y >> 16;
+                source = reinterpret_cast<const unsigned short *>(
+                    caviar_blit_source_address(
+                        reinterpret_cast<const char *>(source),
+                        source_rows * CaviarBlitState.source_row_bytes_));
                 acc_y &= 0xffff;
                 --count_y;
             } while (count_y != 0);
@@ -6363,22 +6413,26 @@ Purpose: Walk a scaled sprite into a 16-bit destination through a palette:
 Return Value: n/a
 Status: Complete
 */
-extern "C" void __cdecl sub_63b11c(int destination_base, const char *source,
+extern "C" void __cdecl sub_63b11c(unsigned short *destination_base,
+                                   const char *source,
                                    int destination_x, int destination_y,
                                    int width, int height,
                                    int source_x_step, int source_y_step,
                                    int source_stride, int destination_stride,
                                    const unsigned short *palette) {
     if (width > 0 && height > 0) {
-        vox_blit_dst_stride = static_cast<uint32_t>(destination_stride << 1);
-        vox_blit_cursor = static_cast<uint32_t>(
-            destination_base + (destination_y * destination_stride + destination_x) * 2);
+        CaviarBlitState.destination_stride_bytes_ =
+            static_cast<uint32_t>(destination_stride) << 1;
+        CaviarBlitState.destination_cursor_ = caviar_blit_address(
+            reinterpret_cast<unsigned char *>(destination_base),
+            caviar_blit_offset(destination_x, destination_y,
+                               destination_stride) << 1);
         unsigned int carried_y = 0;
         do {
             unsigned int carried_x = 0;
             int row_remaining = width;
             unsigned short *pixel = reinterpret_cast<unsigned short *>(
-                vox_blit_cursor);
+                CaviarBlitState.destination_cursor_);
             do {
                 if (source[carried_x >> 16] != 0) {
                     *pixel = palette[*pixel];
@@ -6387,8 +6441,13 @@ extern "C" void __cdecl sub_63b11c(int destination_base, const char *source,
                 carried_x += static_cast<unsigned int>(source_x_step);
                 --row_remaining;
             } while (row_remaining != 0);
-            vox_blit_cursor += vox_blit_dst_stride;
-            source += static_cast<int>((carried_y + source_y_step) >> 16) * source_stride;
+            CaviarBlitState.destination_cursor_ = caviar_blit_address(
+                CaviarBlitState.destination_cursor_,
+                CaviarBlitState.destination_stride_bytes_);
+            const uint32_t source_rows =
+                (carried_y + static_cast<uint32_t>(source_y_step)) >> 16;
+            source = caviar_blit_source_address(
+                source, source_rows * static_cast<uint32_t>(source_stride));
             carried_y = (carried_y + source_y_step) & 0xffff;
             --height;
         } while (height != 0);
@@ -6415,18 +6474,21 @@ Purpose: Walk a scaled sprite into an 8-bit destination, skipping the one
 Return Value: n/a
 Status: Complete
 */
-extern "C" void __cdecl sub_63b1bf(char *destination_base, const char *source,
+extern "C" void __cdecl sub_63b1bf(unsigned char *destination_base,
+                                   const char *source,
                                    int destination_x, int destination_y,
                                    int width, int height, int step,
                                    int source_stride, int destination_stride,
                                    char transparent) {
     if (width > 0 && height > 0) {
-        vox_blit_cursor = reinterpret_cast<uint32_t>(
-            destination_base + destination_y * destination_stride + destination_x);
+        CaviarBlitState.destination_cursor_ = caviar_blit_address(
+            destination_base, caviar_blit_offset(destination_x, destination_y,
+                                                 destination_stride));
         unsigned int carried = 0;
         do {
             unsigned int fraction = 0;
-            char *pixel = reinterpret_cast<char *>(vox_blit_cursor);
+            char *pixel = reinterpret_cast<char *>(
+                CaviarBlitState.destination_cursor_);
             int row_remaining = width;
             do {
                 const char value = source[fraction >> 16];
@@ -6437,9 +6499,13 @@ extern "C" void __cdecl sub_63b1bf(char *destination_base, const char *source,
                 fraction += static_cast<unsigned int>(step);
                 --row_remaining;
             } while (row_remaining != 0);
-            vox_blit_cursor = reinterpret_cast<uint32_t>(
-                reinterpret_cast<char *>(vox_blit_cursor) + destination_stride);
-            source += static_cast<int>((carried + step) >> 16) * source_stride;
+            CaviarBlitState.destination_cursor_ = caviar_blit_address(
+                CaviarBlitState.destination_cursor_,
+                static_cast<uint32_t>(destination_stride));
+            const uint32_t source_rows =
+                (carried + static_cast<uint32_t>(step)) >> 16;
+            source = caviar_blit_source_address(
+                source, source_rows * static_cast<uint32_t>(source_stride));
             carried = (carried + step) & 0xffff;
             --height;
         } while (height != 0);
@@ -6472,14 +6538,14 @@ extern "C" void __cdecl sub_63b241(unsigned char *destination_base,
                                    int source_stride, int destination_stride,
                                    int table_base) {
     if (width > 0 && height > 0) {
-        vox_blit_cursor = reinterpret_cast<uint32_t>(
-            destination_base + destination_y * destination_stride + destination_x);
+        CaviarBlitState.destination_cursor_ = caviar_blit_address(
+            destination_base, caviar_blit_offset(destination_x, destination_y,
+                                                 destination_stride));
         unsigned int carried_y = 0;
         do {
             unsigned int carried_x = 0;
             int row_remaining = width;
-            unsigned char *pixel = reinterpret_cast<unsigned char *>(
-                vox_blit_cursor);
+            unsigned char *pixel = CaviarBlitState.destination_cursor_;
             do {
                 if (source[carried_x >> 16] != 0) {
                     *pixel = *reinterpret_cast<unsigned char *>(
@@ -6489,10 +6555,13 @@ extern "C" void __cdecl sub_63b241(unsigned char *destination_base,
                 carried_x += static_cast<unsigned int>(source_x_step);
                 --row_remaining;
             } while (row_remaining != 0);
-            vox_blit_cursor = reinterpret_cast<uint32_t>(
-                reinterpret_cast<unsigned char *>(vox_blit_cursor) +
-                destination_stride);
-            source += static_cast<int>((carried_y + source_y_step) >> 16) * source_stride;
+            CaviarBlitState.destination_cursor_ = caviar_blit_address(
+                CaviarBlitState.destination_cursor_,
+                static_cast<uint32_t>(destination_stride));
+            const uint32_t source_rows =
+                (carried_y + static_cast<uint32_t>(source_y_step)) >> 16;
+            source = caviar_blit_source_address(
+                source, source_rows * static_cast<uint32_t>(source_stride));
             carried_y = (carried_y + source_y_step) & 0xffff;
             --height;
         } while (height != 0);

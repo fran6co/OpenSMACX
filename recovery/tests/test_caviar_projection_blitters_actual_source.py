@@ -39,8 +39,13 @@ HARNESS = r'''#include <stdint.h>
 #define __cdecl
 typedef struct { int16_t word_00_,word_02_,word_04_,word_06_,word_08_,word_0A_;
   int32_t dword_0C_,dword_10_,dword_14_; } CaviarFixedPointProjectionMatrix;
-#define uint32_t uintptr_t
-uintptr_t vox_blit_cursor=0, vox_blit_dst_stride=0;
+// Host-width state fixture: typed source shape, not a 32-bit ABI/layout test.
+struct CaviarBlitStateCandidate {
+  unsigned char * volatile destination_cursor_;
+  uint32_t source_row_bytes_;
+  uint32_t destination_stride_bytes_;
+};
+CaviarBlitStateCandidate CaviarBlitState={0,0,0};
 CaviarFixedPointProjectionMatrix CaviarFixedPointProjection={};
 float *CaviarProjectionScaledMatrix=0;
 int32_t vox_projection_render_stage_=9, vox_projection_prepared_=7;
@@ -83,30 +88,35 @@ int main(){
      "independent eight-corner projection oracle");
   unsigned short *dst16=(unsigned short*)low_map(4096); unsigned char *dst8=(unsigned char*)low_map(4096);
   unsigned char *shade=(unsigned char*)low_map(4096); ck(dst16&&dst8&&shade,"pixel mappings");
-  char src[24]={1,2,77,0,5,99,11,0,13,14,15,99,21,22,23,24,25,99,31,0,33,34,35,99};
+  char *src=(char*)low_map(4096); ck(src!=0,"low source mapping");
+  const char source_bytes[24]={1,2,77,0,5,99,11,0,13,14,15,99,21,22,23,24,25,99,31,0,33,34,35,99};
+  for(int i=0;i<24;++i)src[i]=source_bytes[i];
   unsigned short pal[256]; for(int i=0;i<256;++i){pal[i]=(unsigned short)(1000+i);shade[i]=(unsigned char)(i^0x5a);}
   for(int i=0;i<24;++i) dst16[i]=(unsigned short)(10+i);
-  sub_63b11c((int)(uintptr_t)dst16,(char*)src,0,0,4,3,0x18000,0x18000,6,8,pal);
+  sub_63b11c(dst16,src,0,0,4,3,0x18000,0x18000,6,8,pal);
   ck(dst16[0]==1010&&dst16[1]==1011&&dst16[2]==12&&dst16[3]==1013&&
      dst16[8]==1018&&dst16[9]==19&&dst16[10]==1020&&dst16[11]==1021&&
      dst16[16]==1026&&dst16[17]==27&&dst16[18]==1028&&dst16[19]==1029,
      "16-bit independent pitches/fractional carry/source gate");
-  ck(dst16[4]==14&&dst16[12]==22&&dst16[20]==30&&vox_blit_cursor==(uintptr_t)(dst16+24),
+  ck(dst16[4]==14&&dst16[12]==22&&dst16[20]==30&&
+     (uintptr_t)CaviarBlitState.destination_cursor_==(uintptr_t)(dst16+24),
      "16-bit padded columns/final cursor");
   for(int i=0;i<24;++i) dst8[i]=(unsigned char)(50+i);
-  sub_63b1bf((char*)dst8,(char*)src,0,0,4,3,0x18000,6,8,0);
+  sub_63b1bf(dst8,src,0,0,4,3,0x18000,6,8,0);
   ck(dst8[0]==1&&dst8[1]==2&&dst8[2]==52&&dst8[3]==5&&dst8[8]==11&&dst8[9]==59&&
      dst8[10]==14&&dst8[11]==15&&dst8[16]==31&&dst8[17]==67&&dst8[18]==34&&dst8[19]==35,
      "transparent walker fractional carry/pitches");
-  ck(dst8[4]==54&&dst8[12]==62&&dst8[20]==70&&vox_blit_cursor==(uintptr_t)(dst8+24),
+  ck(dst8[4]==54&&dst8[12]==62&&dst8[20]==70&&
+     (uintptr_t)CaviarBlitState.destination_cursor_==(uintptr_t)(dst8+24),
      "transparent padded columns/final cursor");
   for(int i=0;i<24;++i)dst8[i]=(unsigned char)(60+i);
-  sub_63b241(dst8,(char*)src,0,0,4,3,0x18000,0x18000,6,8,(int)(uintptr_t)shade);
+  sub_63b241(dst8,src,0,0,4,3,0x18000,0x18000,6,8,(int)(uintptr_t)shade);
   ck(dst8[0]==shade[60]&&dst8[1]==shade[61]&&dst8[2]==62&&dst8[3]==shade[63]&&
      dst8[8]==shade[68]&&dst8[9]==69&&dst8[10]==shade[70]&&dst8[11]==shade[71]&&
      dst8[16]==shade[76]&&dst8[17]==77&&dst8[18]==shade[78]&&dst8[19]==shade[79],
      "shade walker raw destination-index lookup");
-  ck(dst8[4]==64&&dst8[12]==72&&dst8[20]==80&&vox_blit_cursor==(uintptr_t)(dst8+24),
+  ck(dst8[4]==64&&dst8[12]==72&&dst8[20]==80&&
+     (uintptr_t)CaviarBlitState.destination_cursor_==(uintptr_t)(dst8+24),
      "shade padded columns/final cursor");
   return 0;
 }
@@ -114,6 +124,9 @@ int main(){
 
 DEFS = (
     ("int round_view_scaled(", "helper"), ("short fixed8(", "helper"),
+    ("static uint32_t caviar_blit_offset(", "helper"),
+    ("static unsigned char *caviar_blit_address(", "helper"),
+    ("static const char *caviar_blit_source_address(", "helper"),
     ("void __cdecl sub_63fa80(", "body"), ("void __cdecl sub_6401b0(", "body"),
     ("void __cdecl sub_63b11c(", "body"), ("void __cdecl sub_63b1bf(", "body"),
     ("void __cdecl sub_63b241(", "body"),
@@ -130,10 +143,11 @@ def compile_run(compiler, definitions, expected):
         assert (result.returncode==0)==expected, result.stdout.decode(errors="replace")
 
 def test_actual_caviar_projection_and_blitters_gcc_clang():
-    source=PRODUCT.read_text(); defs=[extract(source,sig) for sig,_ in DEFS]
+    source=PRODUCT.read_text(); defs={sig:extract(source,sig) for sig,_ in DEFS}
     compilers=[shutil.which("g++"),shutil.which("clang++")]
     assert all(compilers),"GCC and Clang required"
-    for compiler in compilers: compile_run(compiler,defs,True)
+    ordered=[defs[sig] for sig,_ in DEFS]
+    for compiler in compilers: compile_run(compiler,ordered,True)
 
 def test_extract_masks_whole_translation_unit_comments_and_literals():
     signature = "void __cdecl sub_63fa80("
@@ -148,33 +162,47 @@ def test_moved_records_and_bodies_retain_pinned_source_history():
     old=subprocess.check_output(
         ["git","show",baseline+":src/leaf_recoveries.cpp"],cwd=ROOT,text=True)
     current=PRODUCT.read_text()
+    owner_history=subprocess.check_output(
+        ["git","show","2fa8557f4:src/caviar.cpp"],cwd=ROOT,text=True)
     old_rows={row.address:row for row in reader.read_text(old,"src/leaf_recoveries.cpp")}
     current_rows={row.address:row for row in reader.read_text(current,PRODUCT)}
     addresses=(0x63FA80,0x6401B0,0x63B11C,0x63B1BF,0x63B241)
     fields=tuple(field.name for field in dataclasses.fields(next(iter(old_rows.values())))
                  if field.name not in {"mode","path","line","region","recipe",
                                        "extract_error","origin","source_role_reason"})
+    unchanged_bodies = {0x63FA80, 0x6401B0}
     for address in addresses:
         assert address in old_rows and address in current_rows,hex(address)
         before,after=old_rows[address],current_rows[address]
         assert all(getattr(before,name)==getattr(after,name) for name in fields),hex(address)
         signature="void __cdecl "+before.name+"("
-        assert extract(old,signature)==extract(current,signature),hex(address)
+        if address in unchanged_bodies:
+            assert extract(old,signature)==extract(current,signature),hex(address)
+        else:
+            def envelope(text):
+                marker=f"// ORIGINAL: 0x{address:08X}"
+                marker_at=text.index(marker)
+                start=text.rfind("/*",0,marker_at)
+                body_at=text.index(signature,marker_at)
+                lines=text[start:body_at].splitlines()
+                return "\n".join(lines)
+            assert envelope(owner_history)==envelope(current),hex(address)
 
 def test_actual_body_mutants_are_rejected_by_bounded_oracle():
-    source=PRODUCT.read_text(); defs=[extract(source,sig) for sig,_ in DEFS]
+    source=PRODUCT.read_text(); defs={sig:extract(source,sig) for sig,_ in DEFS}
     mutations=(
-      (4,"if (source[carried_x >> 16] != 0)","if (source[carried_x >> 16] == 0)"),
-      (5,"if (value != transparent)","if (value == transparent)"),
-      (6,"*pixel + table_base);","*pixel + table_base + 1);"),
-      (4,"* source_stride;","* destination_stride;"),
-      (4,"carried_x += static_cast<unsigned int>(source_x_step);","carried_x += 0x10000U;"),
-      (5,"carried = (carried + step) & 0xffff;","carried = 0;"),
-      (3,"x_walk = x_walk - extent0_x;","x_walk = x_walk + extent0_x;"),
+      ("void __cdecl sub_63b11c(","if (source[carried_x >> 16] != 0)","if (source[carried_x >> 16] == 0)"),
+      ("void __cdecl sub_63b1bf(","if (value != transparent)","if (value == transparent)"),
+      ("void __cdecl sub_63b241(","*pixel + table_base);","*pixel + table_base + 1);"),
+      ("void __cdecl sub_63b11c(","source_rows * static_cast<uint32_t>(source_stride)","source_rows * static_cast<uint32_t>(destination_stride)"),
+      ("void __cdecl sub_63b11c(","carried_x += static_cast<unsigned int>(source_x_step);","carried_x += 0x10000U;"),
+      ("void __cdecl sub_63b1bf(","carried = (carried + step) & 0xffff;","carried = 0;"),
+      ("void __cdecl sub_6401b0(","x_walk = x_walk - extent0_x;","x_walk = x_walk + extent0_x;"),
     )
     compilers=(shutil.which("g++"),shutil.which("clang++"))
     assert all(compilers),"GCC and Clang required"
-    for index,before,after in mutations:
-        mutant=list(defs); assert before in mutant[index],before
-        mutant[index]=mutant[index].replace(before,after,1)
-        for compiler in compilers: compile_run(compiler,mutant,False)
+    for signature,before,after in mutations:
+        mutant=dict(defs); assert before in mutant[signature],before
+        mutant[signature]=mutant[signature].replace(before,after,1)
+        ordered=[mutant[sig] for sig,_ in DEFS]
+        for compiler in compilers: compile_run(compiler,ordered,False)
