@@ -360,9 +360,11 @@ class BasePop : public GraphicWin {
   virtual void on_post_window_init() {}
   // RECOVERY_SHARED: v1 0x00404280 0x00404281 ?on_adjust_button_width@BasePop@@UAEXXZ 0x00603800
   virtual void on_adjust_button_width() {}
-  // RECOVERY_SHARED: v1 0x00406B20 0x00406B23 ?on_adjust_button_placement@BasePop@@UAEXPAH00@Z 0x00602600
+  // Primary original 0x00406B20 is bound in basepop.cpp to this definition.
+  // Other classes retain their independently bound folded bodies.
   virtual void on_adjust_button_placement(int *, int *, int *) {}
-  // RECOVERY_SHARED: v1 0x00406840 0x00406846 ?on_exec@BasePop@@UAEHXZ 0x00602600
+  // Primary original 0x00406840 is bound in basepop.cpp to this definition.
+  // Its BasePop table/lifecycle evidence anchor remains 0x00602600.
   virtual int on_exec() { return 1; }
   // RECOVERY_SHARED: v1 0x00406B30 0x00406B33 ?on_draw_background@BasePop@@UAEHXZ 0x00604AB0
   virtual int on_draw_background() { return 0; }
