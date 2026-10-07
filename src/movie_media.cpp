@@ -2601,7 +2601,8 @@ Purpose: Advance the mmio ring buffer by one read: when the pending offset
          and the three counters (ring cursor at +0x37c, sibling at +0x380,
          history count at +0x388) go up through InterlockedIncrement.
 
-// RECOVERY_ROLE: SCAFFOLD Current typed movie/media owner implementation; original receiver, shared storage, and call ordering retained. Native ABI/output and exceptional behavior remain explicit obligations.
+// Typed owner implementation; native ABI/output, original reference targets
+// and exceptional behavior remain restoration obligations, not owner stubs.
 // ORIGINAL: 0x005CA230 sub_5ca230 0x005CA230-0x005CA308
 // symbol    ?sub_5ca230@MediaRuntime@@QAIHHH@Z
 // size      216 bytes
@@ -2655,7 +2656,8 @@ Purpose: Fill one 8x8-block-pair frame fragment with the flat color the six
          `plane` + 2*stride ints, each as 8 rows of 8 ints stepped by the
          stride (masked to whole ints).
 
-// RECOVERY_ROLE: SCAFFOLD Current typed movie/media owner implementation; original receiver, shared storage, and call ordering retained. Native ABI/output and exceptional behavior remain explicit obligations.
+// Typed owner implementation; native ABI/output, original reference targets
+// and exceptional behavior remain restoration obligations, not owner stubs.
 // ORIGINAL: 0x005CD3B0 sub_5cd3b0 0x005CD3B0-0x005CD556
 // symbol    ?sub_5cd3b0@@YAXDDDDDDPAHI@Z
 // size      422 bytes
@@ -2793,7 +2795,8 @@ Purpose: Create the codec's draw/audio surface through COM: QueryInterface
          out pointer and returns 0, any failure Releases (slot 2) the created
          object and returns 1.
 
-// RECOVERY_ROLE: SCAFFOLD Current typed movie/media owner implementation; original receiver, shared storage, and call ordering retained. Native ABI/output and exceptional behavior remain explicit obligations.
+// Typed owner implementation; native ABI/output, original reference targets
+// and exceptional behavior remain restoration obligations, not owner stubs.
 // ORIGINAL: 0x005CDAD0 sub_5cdad0 0x005CDAD0-0x005CDB83
 // symbol    ?sub_5cdad0@@YIHPAUIDirectDraw2@@PAPAUIDirectDrawSurface2@@HHH@Z
 // size      179 bytes

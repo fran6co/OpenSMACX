@@ -161,7 +161,8 @@ Purpose: Retain the original CRT vector-destructor runtime identity ??_M:
          to a typed WaveControlGroup member array. Runtime-provider
          equivalence to the pinned image remains unqualified.
 
-// RECOVERY_ROLE: SCAFFOLD Transitional leaf collection, not completed genuine owner recovery; preserve body evidence during owner migration.
+// Dependency-owned iterator identity, not a project leaf implementation.
+// Preserve provider selection, relocation closure and unwind-equivalence debt.
 // ORIGINAL: 0x006456E4 ??_M@YGXPAXIHP6EX0@Z@Z 0x006456E4-0x00645764 FILE
 // Historical project symbol: ?VectorDtorIterator@@YGXPAXIHP6IX0@Z@Z
 // Historical project-loop location: src/vector_teardown.cpp; no active
@@ -188,7 +189,8 @@ Purpose: Retain the original CRT vector-constructor runtime identity ??_L:
          WaveControlGroup member array. Runtime-provider equivalence to
          the pinned image remains unqualified.
 
-// RECOVERY_ROLE: SCAFFOLD Transitional leaf collection, not completed genuine owner recovery; preserve body evidence during owner migration.
+// Dependency-owned iterator identity, not a project leaf implementation.
+// Preserve provider selection, relocation closure and unwind-equivalence debt.
 // ORIGINAL: 0x006457C2 ??_L@YGXPAXIHP6EX0@Z1@Z 0x006457C2-0x00645844 FILE
 // Historical project symbol: ?VectorCtorIterator@@YGXPAXIHP6IX0@Z1@Z
 // Historical project-loop location: src/vector_teardown.cpp; no active

@@ -191,7 +191,7 @@ def _run(source: str, compiler: str, tmp_path: Path) -> int:
     return subprocess.run([str(exe)], capture_output=True, text=True).returncode
 
 
-def test_idct_scaffold_identity_and_full_spans_are_continuous() -> None:
+def test_idct_owner_identity_and_full_spans_are_continuous() -> None:
     expected = {
         0x005CED1D: ("sub_5ced1d", ((0x005CED1D, 0x005CEF8A),)),
         0x005CEE80: ("sub_5cee80", ((0x005CEE80, 0x005CEF8A),)),
@@ -202,7 +202,9 @@ def test_idct_scaffold_identity_and_full_spans_are_continuous() -> None:
         row = rows[address]
         assert row.name == name
         assert row.image_spans == spans
-        assert row.source_role is SourceRole.SCAFFOLD
+        # Complete typed owner bodies are not scaffolds. Unclassified does
+        # not assert exact native ABI, x87 fidelity or game acceptance.
+        assert row.source_role is SourceRole.UNCLASSIFIED
     header = (SRC / "movie_decoder_idct.h").read_text()
     assert header.count("int32_t *scratch_words") == 4
     assert "scratch_words = nullptr" not in header

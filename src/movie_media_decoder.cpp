@@ -1154,7 +1154,8 @@ static movie_decoder_idct::IdctConstants movie_media_idct_constants() {
 
 
 /*
-// RECOVERY_ROLE: SCAFFOLD Current typed movie/media owner implementation; original receiver, shared storage, and call ordering retained. Native ABI/output and exceptional behavior remain explicit obligations.
+// Typed owner implementation; native ABI/output, original reference targets
+// and exceptional behavior remain restoration obligations, not owner stubs.
 // ORIGINAL: 0x005CEE80 sub_5cee80 0x005CEE80-0x005CEF8A
 // symbol    ?sub_5cee80@@YAXPAH@Z
 // size      266 bytes
@@ -1271,7 +1272,8 @@ Purpose: Build one 8x8 coefficient block for the movie decoder: eight
          row pointer through *reinterpret_cast<int *>(0x009C3004) and advancing it by the stride that
          `stride_arg << 2` leaves in 0x009C3000.
 
-// RECOVERY_ROLE: SCAFFOLD Current typed movie/media owner implementation; original receiver, shared storage, and call ordering retained. Native ABI/output and exceptional behavior remain explicit obligations.
+// Typed owner implementation; native ABI/output, original reference targets
+// and exceptional behavior remain restoration obligations, not owner stubs.
 // ORIGINAL: 0x005CEF8A sub_5cef8a 0x005CEF8A-0x005CF11D
 // symbol    ?sub_5cef8a@@YAXPAEH@Z
 // size      403 bytes
@@ -1317,7 +1319,8 @@ Purpose: Apply the first IDCT pass to one 8-coefficient vector. In the
          0xFC; otherwise the eight-value butterfly writes those same offsets.
          The caller provides one vector per column and points output into the
          nine-dword-stride intermediate block.
-// RECOVERY_ROLE: SCAFFOLD Current typed movie/media owner implementation; original receiver, shared storage, and call ordering retained. Native ABI/output and exceptional behavior remain explicit obligations.
+// Typed owner implementation; native ABI/output, original reference targets
+// and exceptional behavior remain restoration obligations, not owner stubs.
 // ORIGINAL: 0x005CED1D sub_5ced1d 0x005CED1D-0x005CEF8A
 // symbol    ?sub_5ced1d@@YAXPAH@Z
 // size      621 bytes
