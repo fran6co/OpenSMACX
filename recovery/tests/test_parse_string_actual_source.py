@@ -101,10 +101,10 @@ typedef const char *LPCSTR;
 #define MEASURED
 #define __cdecl
 struct char256 { char str[256]; };
-static int ParseNumTable[10];
-static int ParseStrPlurality[10];
-static int ParseStrGender[10];
-static char256 ParseStrBuffer[10];
+extern int ParseNumTable[10];
+extern int ParseStrPlurality[10];
+extern int ParseStrGender[10];
+extern char256 ParseStrBuffer[10];
 static uint32_t Language;
 static char findnum_digits[] = "09";
 static void strcat_s(char *dst, size_t, const char *src) { std::strcat(dst, src); }
@@ -203,7 +203,12 @@ def compile_and_run(compiler, parser_override=None, expect_success=True):
         parser = parser_override
     finder = extract_function(source_text, r"char\s*\*\s*__cdecl\s+findnum\s*\(")
     purger = extract_function(source_text, r"MEASURED\s+inline\s+LPSTR\s+__cdecl\s+purge_leading\s*\(")
-    source = PREAMBLE + "\n" + purger + "\n" + finder + "\n" + parser + "\n" + MAIN
+    definitions = []
+    for name in ("ParseNumTable", "ParseStrPlurality", "ParseStrGender", "ParseStrBuffer"):
+        ctype = "char256" if name == "ParseStrBuffer" else "int"
+        line, = re.findall(r"^" + ctype + " " + name + r"\[10\];[^\n]*$", source_text, re.M)
+        definitions.append(line)
+    source = PREAMBLE + "\n" + "\n".join(definitions) + "\n" + purger + "\n" + finder + "\n" + parser + "\n" + MAIN
     with tempfile.TemporaryDirectory(prefix="osmx-parse-string-") as temp:
         source_path = Path(temp) / "parse_string.cpp"
         binary_path = Path(temp) / "parse_string"

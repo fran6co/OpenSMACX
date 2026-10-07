@@ -23,7 +23,7 @@
 #include "flatbutton.h"
 #include "win.h"
 #include "palette.h"
-#include "temp.h"
+
 #include "sprite.h"
 #include <cstring>
 extern void __cdecl fn_00607b10(int, BaseButton*);

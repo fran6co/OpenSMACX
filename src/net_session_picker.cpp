@@ -12,7 +12,7 @@
 #include "main.h"
 #include "popup.h"
 #include "strings.h"
-#include "temp.h"
+
 #include "win.h"
 #include "xpops.h"
 

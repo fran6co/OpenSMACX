@@ -25,9 +25,10 @@
 // Table start is observed in the original constructor; full extent remains unknown.
 // RECOVERY_GENERATED: v1 vtable 0x0066FC50 ? ??_7GraphicWin@@6BWin@@@ 0x005D4CF0
 #include "graphicwin.h"
+#include "general.h"  // bit_count_signed, used by the resize policy
 #include "buffer.h"
 #include "scroll.h"
-#include "temp.h"  // HandleMain, the window the invalidate targets
+
 #include "statuswin.h"
 #include "dialog.h"
 #include "sounddevice.h"

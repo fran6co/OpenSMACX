@@ -39,7 +39,7 @@ def compiled():
         unit: [Coff(compiler(ROOT / unit, (), flags + settings.layout_flags))
                for flags in settings.flag_sets]
         for unit in ("src/infowin.cpp", "src/pulldown.cpp", "src/graphicwin.cpp",
-                     "src/menu.cpp", "src/popmenu.cpp", "src/temp.cpp", "src/console.cpp",
+                     "src/menu.cpp", "src/popmenu.cpp", "src/console.cpp",
                      "src/netdaemon.cpp", "src/statuswin.cpp", "src/popup.cpp", "src/scroll.cpp",
                      "src/base.cpp", "src/basewin.cpp", "src/net_class.cpp", "src/general.cpp",
                      "src/win.cpp", "src/alphanet.cpp")
@@ -474,7 +474,7 @@ def test_menu_candidates_use_typed_source_definitions(compiled):
     for unit, address in (("src/pulldown.cpp", 0x5F9170),
                           ("src/menu.cpp", 0x5FB830),
                           ("src/popmenu.cpp", 0x59D250),
-                          ("src/temp.cpp", 0x5FC9F0)):
+                          ("src/win.cpp", 0x5FC9F0)):
         for obj in compiled[unit]:
             targets = references(obj, symbol_at(unit, address))
             assert not any("Original" in target or "pending" in target.lower()

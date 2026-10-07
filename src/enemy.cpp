@@ -10,7 +10,7 @@
 #include "path.h"
 #include "probe.h"
 #include "technology.h"
-#include "temp.h"
+#include "win.h"
 #include "terraforming.h"
 #include "veh.h"
 #include "xpops.h"

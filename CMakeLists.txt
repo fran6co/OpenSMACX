@@ -253,7 +253,6 @@ set(OPENSMACX_SOURCES
     src/name_table.cpp
     src/strings.cpp
     src/technology.cpp
-    src/temp.cpp
     src/terraforming.cpp
     src/text.cpp
     src/textindex.cpp

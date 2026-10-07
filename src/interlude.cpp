@@ -14,7 +14,7 @@
 #include "base.h"
 #include "alpha.h"
 #include "strings.h"
-#include "temp.h"
+#include "win.h"
 #include "xpops.h"
 #include "font.h"
 

@@ -27,7 +27,7 @@
 #include "alpha.h"
 #include "log.h"
 #include "console.h"
-#include "temp.h"  // save_daemon, load_daemon and do_all_draws
+
 
 void __cdecl fn_005adbd0(ReplayWin *window);
 

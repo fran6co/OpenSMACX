@@ -38,7 +38,7 @@ def one(pattern, text):
 
 def actual():
     headers = {n: (ROOT / "src" / (n + ".h")).read_text() for n in
-               ("win", "buffer", "graphicwin", "basebutton", "imagebutton", "sprite", "palette", "temp")}
+               ("win", "buffer", "graphicwin", "basebutton", "imagebutton", "sprite", "palette")}
     cpp = (ROOT / "src/imagebutton.cpp").read_text()
     parts = {"BODY": braced(cpp, "void ImageButton::on_redraw()")}
     parts["HELPERS"] = "\n".join(braced(cpp, signature) for signature in (
@@ -66,7 +66,7 @@ def actual():
         ("unsigned char transparent_index() const", "int width() const", "int height() const", "int source_width() const"))
     parts["SPRITE_DRAW"] = one(r"  int draw\(Buffer \*destination, int transparent, int x, int y,\s*int numerator, int denominator\);", headers["sprite"])
     parts["GLOBALS"] = "\n".join(one(pattern, (ROOT / "src" / unit).read_text()) for unit, pattern in
-        (("temp.cpp", r"^HWND HandleMain;"), ("win.cpp", r"^Win \*WinCallbackWindow;"),
+        (("win.cpp", r"^HWND HandleMain;"), ("win.cpp", r"^Win \*WinCallbackWindow;"),
          ("palette.cpp", r"^Palette \*PaletteActive;")))
     return parts
 

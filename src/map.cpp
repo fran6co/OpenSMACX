@@ -16,7 +16,9 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
-#include "temp.h"
+#include "popup.h"
+#include "general.h"
+#include "win.h"
 #include "map.h"
 #include "fractal.h"  // Fractal - world_erosion / world_fungus build one on the stack
 #include "alpha.h"

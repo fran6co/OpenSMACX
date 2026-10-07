@@ -29,7 +29,7 @@ def timer_objects():
     compiler = Compiler(ROOT, profile=settings.compiler_profile)
     return compiler, settings, {unit: [Coff(compiler(ROOT / unit, (), flags + settings.layout_flags))
                                       for flags in settings.flag_sets]
-        for unit in ("src/time.cpp", "src/time_lifecycle.cpp", "src/temp.cpp",
+        for unit in ("src/time.cpp", "src/time_lifecycle.cpp", "src/win.cpp",
                      "src/editbox.cpp", "src/flatbutton.cpp", "src/netmsg.cpp", "src/console.cpp")}
 
 

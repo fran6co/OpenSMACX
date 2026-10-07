@@ -26,11 +26,12 @@
 typedef signed char int8;  // a scaffold spelling the artifacts use
 #include "scroll.h"
 #include "win.h"
+#include "game.h"  // ExpansionEnabled, passed to the CD setup provider
 #include "imagebutton.h"
 #include <cstring>
 #include "palette.h"
 #include "general.h"
-#include "temp.h"
+
 #include "dialog.h"
 #include "sounddevice.h"
 #include "sound.h"
@@ -47,6 +48,10 @@ int MenuPullDownInputOrigin;
 
 // The Win message-status word shares the owner of its message-pump consumers.
 uint32_t MsgStatus;  // 0x009B7B9C
+// The process window handle is produced by Win::open's CreateWindowExA
+// and consumed by the window/message-pump and DirectDraw owners.
+// RECOVERY_OBJECT: v1 0x009B7B28 ?HandleMain@@3PAUHWND__@@A
+HWND HandleMain;  // 0x009B7B28
 // `DirectDrawCreate` (DDInit::init) is the one symbol this tree needs out of
 // ddraw.lib; it is on the CMake link line now, where dxguid already was.
 

@@ -34,7 +34,7 @@
 #include "palette.h"
 #include "popup.h"
 #include "text.h"
-#include "temp.h"
+
 #include "tutwin.h"
 #include "wave_device.h"
 

@@ -25,7 +25,7 @@
 #include "basewin.h"
 #include "infowin.h"
 #include "popup.h"
-#include "temp.h"
+#include "mapwin.h"
 #include "reportwin.h"
 #include "reportif.h"  // ReportIfGlobal - the singleton on_key_click re-reports
 #include "menu.h"

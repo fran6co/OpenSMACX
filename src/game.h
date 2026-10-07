@@ -35,6 +35,9 @@ class GraphicWin;
 int __cdecl game_data_transfer_block(FILE *file, void *buffer, unsigned int size);
 int __cdecl game_data_plain_transfer(FILE *file, void *buffer, unsigned int byte_count, int write_mode);
 
+// Original save/load daemon entry points, implemented in game.cpp.
+int __cdecl save_daemon(char *save_path);
+int __cdecl load_daemon(const char *save_path, int linearize_contours);
  /*
   * Game related objects, variables and functions.
   */
@@ -546,3 +549,4 @@ struct SaveNameDefaultStorage {
     char save_equal_default_[1];
 };
 extern SaveNameDefaultStorage SaveNameDefaultStorageGlobal;
+extern uint32_t UnkBitfield1;  // 0x0090D91C, shared game-state change bits

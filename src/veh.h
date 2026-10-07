@@ -46,6 +46,8 @@ int __cdecl shoot_it(int attacker_faction, int defender_faction,
                      int x, int y, int fungal_attack);
 int __cdecl veh_init(int prototype, int faction, int x, int y);
 int __cdecl veh_find(int x, int y, int faction, int exclude);
+// Automatic prototype chooser, implemented in veh.cpp.
+void __cdecl consider_designs(int faction_id);
 
 struct VOX_Vect;
 struct VOX_Matrix;

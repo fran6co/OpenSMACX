@@ -12,7 +12,8 @@
 // symbol    ??_GPullDown@@UAEPAXI@Z
 // kind      game
 #include "stdafx.h"
-#include "temp.h"  // do_all_draws
+#include "general.h"
+#include "win.h"
 #include "pulldown.h"
 #include "menu.h"
 #include "checkbox.h"

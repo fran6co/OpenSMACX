@@ -16,7 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
-#include "temp.h"
+#include "popup.h"
 #include "base.h"
 #include "council.h"
 #include "alpha.h"
@@ -13090,7 +13090,7 @@ int __cdecl upgrade_prototype(int faction_id, int proto_id_new,
 #include "mapwin.h"
 #include "popup.h"
 #include "strings.h"
-#include "temp.h"
+
 #include "technology.h"
 #include "veh.h"
 #include "wave.h"

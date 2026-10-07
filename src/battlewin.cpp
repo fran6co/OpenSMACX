@@ -532,7 +532,7 @@ int BattleWin::on_iface_dialog_item_back_draw(GraphicWin *, int, int, RECT *) {
 #include "messagewin.h"
 #include "sprite.h"
 #include "strings.h"
-#include "temp.h"
+
 #include "veh.h"
 
 #include <stdlib.h>

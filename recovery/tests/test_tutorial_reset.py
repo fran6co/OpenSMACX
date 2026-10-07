@@ -53,7 +53,7 @@ def actual_source(social=False):
         one(header, r"int reset\(\);"), members, "};",
         one(header, r"^extern TutWin TutorialWindow;"),
         one(header, r"^extern uint32_t TutWinShownFlag;"),
-        one((ROOT / "src/temp.h").read_text(), r"void __cdecl do_all_draws\(\);")))
+        one((ROOT / "src/win.h").read_text(), r"void __cdecl do_all_draws\(\);")))
     body = braced(source, "int TutWin::reset()")
     reset = {"field_537C_", "field_5380_", "field_539C_", "field_53A4_", "field_53A8_", "field_53AC_", "field_53B8_", "field_53C4_"}
     scalars = re.findall(r"(?:int32_t|uint32_t) (field_[0-9A-F]+_);", members)

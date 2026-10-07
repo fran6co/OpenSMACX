@@ -16,7 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
-#include "temp.h" // BufferStrHeight
+#include "buffer.h"
 #include "font.h"
 #include "general.h"
 #include "dialog.h"

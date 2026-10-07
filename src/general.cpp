@@ -37,8 +37,19 @@
 // close_class methods, homed to checkbox.cpp / radiobutton.cpp
 void __cdecl teardown_0060fd60();
 void __cdecl teardown_0060e5d0();
-#include "temp.h"
+
 #include "general.h"
+// Source-owned Filefind storage; original last_path immediates identify
+// &FilefindPath.last_path at 0x009B8198 + 0x200, not a pointer variable.
+// RECOVERY_OBJECT: v1 0x009B8198 ?FilefindPath@@3UFilefind@@A
+Filefind FilefindPath;  // 0x009B8198
+
+// Parse-family tables, zero initialized as in the original .data. Preserve
+// the ten-entry extents and existing symbol/type spellings.
+int ParseStrPlurality[10];  // 0x009BB570
+int ParseNumTable[10];      // 0x009BB598
+int ParseStrGender[10];     // 0x009BB5C0
+char256 ParseStrBuffer[10]; // 0x009BB5E8
 #include "movie_media.h"
 #include "alpha.h"
 #include "game.h"

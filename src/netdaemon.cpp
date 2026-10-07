@@ -43,7 +43,8 @@
 #include "reportif.h"      // report_intel: actual report command owner
 #include "console.h"
 #include "fx.h"
-#include "temp.h"
+#include "popup.h"
+#include "win.h"
 #include "alpha.h"
 #include "council.h"
 #include "terraforming.h"

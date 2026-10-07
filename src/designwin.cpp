@@ -36,7 +36,7 @@
 #include "strings.h"
 #include "text.h"       // the design preset labels are read from its script
 #include "technology.h"
-#include "temp.h"
+
 #include "general.h"
 #include "veh.h"
 #include "selectpartwin.h"
@@ -597,7 +597,7 @@ void DesignWin::setup_veh(int proto_id, int automatic) {
 }
 
 // ORIGINAL: 0x0043BE30 ?select_name@DesignWin@@QAEXXZ 0x0043BE30-0x0043BF4C
-// RECOVERY_BINDING: v1 {"evidence": ["git:3f6ab06bdf3b791aa23454e19f71b4e8b5935caf:src/recovered/units/0043be30.cpp;ParseStrBuffer in src/temp.h;image:0x6838F4 DESIGNNAME;typed32-byte prototype name"], "reason": "Prompt for the prototype name through the shared popup helper, preserve cancellation and unchanged-name paths, update its custom-name flag and redraw through the genuine virtual update slot."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:3f6ab06bdf3b791aa23454e19f71b4e8b5935caf:src/recovered/units/0043be30.cpp;ParseStrBuffer in src/general.h;image:0x6838F4 DESIGNNAME;typed32-byte prototype name"], "reason": "Prompt for the prototype name through the shared popup helper, preserve cancellation and unchanged-name paths, update its custom-name flag and redraw through the genuine virtual update slot."}
 void DesignWin::select_name() {
     char name[80];
     strcpy(name, prototype_name_);

@@ -27,7 +27,7 @@
 #include "popup.h"
 #include "xpops.h"
 #include "netmsg.h"
-#include "temp.h"
+
 #include "console.h"
 #include "faction.h"
 #include "game.h"

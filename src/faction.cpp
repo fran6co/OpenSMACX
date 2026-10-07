@@ -19,7 +19,8 @@
 #include "worldwin.h"
 #include "general.h"
 
-#include "temp.h"
+#include "time.h"
+#include "win.h"
 #include "faction.h"
 #include "tutwin.h"
 #include "alpha.h"

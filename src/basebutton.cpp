@@ -21,7 +21,7 @@
 // kind      game
 #include "stdafx.h"
 #include "original_seam.h"
-#include "temp.h"
+#include "general.h"
 #include "basebutton.h"
 #include "worldwin.h"
 #include "dialog.h"

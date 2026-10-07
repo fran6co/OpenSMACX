@@ -18,7 +18,7 @@
 #include "alpha.h"
 #include "messagewin.h"
 #include "mapwin.h"
-#include "temp.h"
+#include "win.h"
 #include "terraforming.h"
 #include "popup.h"
 #include "random.h"

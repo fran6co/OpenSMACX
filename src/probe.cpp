@@ -16,7 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
-#include "temp.h"
+
 #include "probe.h"
 #include "base.h"
 #include "game.h"
@@ -295,7 +295,7 @@ int __cdecl success_rates(int id, int morale, int diff_modifier, int base_id) {
 #include "infowin.h"
 #include "buffer.h"
 #include "sprite.h"
-#include "temp.h"
+
 #include "netmsg.h"
 #include "xpops.h"
 #include "general.h"

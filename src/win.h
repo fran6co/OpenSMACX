@@ -25,6 +25,7 @@
 #include "sprite.h"
 
 class Menu; // forward declaration
+extern HWND HandleMain;
 class ImageButton;
 // The ninth Win::init / GraphicWin::init argument, spelled PAUBorderSizing@@
 // in both mangled names - a struct, hence the tag.

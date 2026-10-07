@@ -73,7 +73,7 @@
 #include "xpops.h"
 #include "main.h"
 #include "alpha.h"
-#include "temp.h"
+
 #include "text.h"
 #include "console.h"
 #include "game.h"

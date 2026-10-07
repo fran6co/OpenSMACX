@@ -72,7 +72,7 @@
 #include "base.h"
 #include "spritebox.h"
 #include "net_class.h"
-#include "temp.h"
+#include "time.h"
 #include <cstring>
 
 // Original CRT slot 0x00682570 selects the PlanWin initializer at 0x0048AE00.

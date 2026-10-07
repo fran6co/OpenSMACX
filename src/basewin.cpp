@@ -40,7 +40,7 @@
 #include "netdaemon.h"
 #include "popup.h"
 #include "pulldown.h"
-#include "temp.h"
+#include "mapwin.h"
 #include "technology.h"
 #include "text.h"
 #include "tutwin.h"
@@ -6776,7 +6776,7 @@ int BaseWin::on_iface_dialog_item_back_draw(GraphicWin *, int, int, RECT *) {
 #include "faction.h"
 #include "strings.h"
 #include "xpops.h"
-#include "temp.h"
+
 #include <cstring>
 
 

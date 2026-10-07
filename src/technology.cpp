@@ -16,7 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
-#include "temp.h"
+#include "time.h"
 #include "datalink.h"
 #include "technology.h"
 #include "alpha.h"

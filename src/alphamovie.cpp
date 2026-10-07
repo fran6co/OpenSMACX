@@ -35,7 +35,7 @@
 #include "uv2player.h"  // amovie_project's player
 #include "mapwin.h"  // MainInterfaceGlobal, the owner passed to GraphicWin::init
 #include "console.h"  // flush_input
-#include "temp.h"  // do_all_non_input
+#include "win.h"
 #include "text.h"
 #include "wave_device.h"  // WaveDeviceGlobal
 #include <mmsystem.h>

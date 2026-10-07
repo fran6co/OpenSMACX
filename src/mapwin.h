@@ -574,6 +574,9 @@ int __cdecl gen_window_terrain(MapWin *window, int zoom, int faction,
 // rather than bound as a pointer in temp.h so its callers emit the `E8` the
 // image emits; defined at the end of src/mapwin.cpp.
 void __cdecl draw_map(int draw_type);
+// Free helpers implemented in mapwin.cpp (distinct from MapWin::draw_radius).
+void __cdecl draw_radius(int x_coord, int y_coord, int a3, int draw_type);
+void __cdecl mapwin_terrain_fixup();
 
 // ?terrain_fixup@@YAXPAUMapWin@@@Z at 0x004711A0 - not yet recovered, a
 // pending_bodies forwarder. mapwin_terrain_fixup (end of mapwin.cpp) calls

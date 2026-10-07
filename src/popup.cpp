@@ -34,7 +34,7 @@
 #include "win.h"
 #include "spritebox.h"
 #include "net_class.h"
-#include "temp.h"
+#include "time.h"
 #include "strings.h"    // StringTemp - the shared 0x1032 scratch buffer at 0x009B86A0
 #include "mapwin.h"     // MainInterfaceGlobal - the iface window at 0x007AE820
 #include "messagewin.h" // InterfaceMessageWin - the desktop window at 0x007F67F8

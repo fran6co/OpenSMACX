@@ -14,7 +14,7 @@
 #include "game.h"
 #include "map.h"
 #include "maininterface.h"
-#include "temp.h"
+
 #include "veh.h"
 
 #include <cerrno>

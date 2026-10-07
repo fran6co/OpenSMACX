@@ -45,13 +45,13 @@
 // kind      game
 #include "stdafx.h"
 #include "spritebox.h"
-#include "temp.h" // HandleMain
+#include "general.h"
 #include "dialog.h"
 #include "sounddevice.h"
 #include "menu.h"
 #include "win.h"
 #include "spot.h"
-#include "temp.h"  // HandleMain
+
 #include "buffer.h"
 // DWORD loaded by the SpriteBox constructor and written by popups_normal.
 // RECOVERY_OBJECT: v1 0x009B8FC4 ?SpriteBoxDefaultField8@@3IA

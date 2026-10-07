@@ -8,7 +8,7 @@
 #include "faction.h"  // pop_wait is the typed modal pump at 0x005398E0
 #include "game.h"
 #include "strings.h"
-#include "temp.h"       // do_all_draws
+#include "win.h"
 #include <cstring>
 
 // These image-owned tables have not yet been given C++ data owners. Their use

@@ -29,7 +29,7 @@
 TutWin TutorialWindow;
 #include "win.h"
 #include "mapwin.h"
-#include "temp.h"     // do_all_draws
+
 #include "game.h"     // IsMultiplayerNet, GamePreferences - tut_check's gates
 #include "faction.h"  // Players/LocalFaction/RFLAG_ALIEN - the expansion gate
 #include "console.h"  // ConsoleGlobal.faction_id_ supplies the active faction

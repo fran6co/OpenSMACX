@@ -16,7 +16,8 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
-#include "temp.h"
+#include "general.h"
+#include "win.h"
 #include "path.h"
 #include "alpha.h"
 #include "game.h"

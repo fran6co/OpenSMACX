@@ -25,7 +25,7 @@ class Palette;
 // The two bits of `Time::oneshot_state_`. See the member for what forces
 // them to exist: `SetTimer` cannot do one-shot, so it is emulated.
 // WHAT THE IN-CLASS BODIES BELOW REACH FOR. `flush_timer` is declared at
-// the foot of this header and `HandleMain` in temp.h, both of them after
+// the foot of this header and `HandleMain` in win.h, both of them after
 // the point `Time::stop` needs them - and `stop` has to be in-class,
 // because the image inlines it into `close` and `close` into `~Time`. A
 // second declaration is safe: the compiler rejects one that disagrees.
@@ -183,6 +183,15 @@ extern Time ConsoleTimer; // 0x00939E88
 
 void __cdecl start_timers();
 void __cdecl flush_timer();
+// Original global timer callbacks and their shared state, all owned by time.cpp.
+void __cdecl blink_timer(int a1);
+void __cdecl blink2_timer(int a1);
+void __cdecl line_timer(int a1);
+void __cdecl turn_timer(int a1);
+extern int TimerHoldFlag;      // 0x00915620
+extern int Blink2Counter;      // 0x009392B4
+extern int PlanLineCounter;    // 0x00939FD4
+extern int TurnRedrawPending;  // 0x00703DE0
 // 0x0050EF50, homed into time.cpp - it closes GoTimer and sits in the same
 // original address run as the timer family (0x50EE30 blink2_timer,
 // 0x50EE80 line_timer, 0x50EF10 turn_timer, then this, then start_timers

@@ -40,6 +40,18 @@ struct Filefind {
     char exe_dir[256];
     char relative_path[256];
 };
+// The original takes the address of last_path as an immediate 0x009B8398
+// in filefind_get: it belongs to this real object, not a fixed-address pointer.
+extern Filefind FilefindPath;  // 0x009B8198
+
+typedef struct char256 { char str[256]; } char256;
+// Ten-entry parse tables in observed order: plurality 0x009BB570,
+// numbers 0x009BB598, gender 0x009BB5C0, text 0x009BB5E8. The original
+// family guards id > 9; its text storage ends at GenderDefault 0x009BBFEC.
+extern int ParseStrPlurality[10];
+extern int ParseNumTable[10];
+extern int ParseStrGender[10];
+extern char256 ParseStrBuffer[10];
 
 extern uint32_t ScenEditorUndoPosition;
 

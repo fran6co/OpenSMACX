@@ -27,7 +27,7 @@
 #include "gamma.h"
 #include "worldwin.h"
 #include "basepop.h"
-#include "temp.h"
+#include "win.h"
 #include <math.h>
 
 namespace {

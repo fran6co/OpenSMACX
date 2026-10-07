@@ -118,7 +118,7 @@
 #include "map.h"       // MapLongitudeBounds / MapLatitudeBounds / MapIsFlat / map_tiles
 #include "general.h"   // mem_get, and the game-state flags the painters read
 #include "strings.h"   // StringTemp is also the shared main-caption scratch buffer.
-#include "temp.h"      // PlanLineCounter controls the patterned-line phase.
+#include "win.h"
 #include "alpha.h"     // Rules movement rate and label_get text lookup.
 #include "pulldown.h"  // The context menu owns its live item and submenu rows.
 #include "xpops.h"     // right_menu confirms the original whole-stack order.

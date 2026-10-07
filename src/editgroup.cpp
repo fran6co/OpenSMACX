@@ -34,7 +34,7 @@
 #include "editgroup.h"
 #include "editbox.h"
 #include "general.h"  // mem_get, for the two coverage bodies below
-#include "temp.h" // HandleMain
+
 
 namespace {
 struct WinNodeListFocusEntry {

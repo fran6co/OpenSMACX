@@ -457,6 +457,9 @@ void __cdecl world_erosion();                  // 0x005C2CB0
 int __cdecl world_site(int x, int y, BOOL is_ocean_site);
 void __cdecl world_analysis();
 void __cdecl world_polar_caps();
+// Original world-builder helpers implemented in map.cpp.
+void __cdecl fixup_landmarks();
+void __cdecl world_rainfall();
 // Not yet recovered - pending_bodies forwarders. world_climate calls each
 // BY NAME.
 //

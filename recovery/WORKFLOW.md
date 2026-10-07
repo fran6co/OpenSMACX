@@ -53,7 +53,9 @@ The deleting/delegation adapter collections and pending-body collection are
 retired. Their identities and remaining obligations live with the actual owners;
 retiring a collection does not qualify every body previously stored there.
 The retirement inventory also includes `original_seam.h`'s original-address
-method machinery and the transitional declarations/storage in `temp.*`.
+method machinery. The transitional `temp.*` files are retired: real Buffer,
+General, Win and Game storage and Time/application declarations live with
+their existing owners; uncalled developer diagnostics are removed.
 The retired `spying_recovery.h` fixed-address view is now represented by named
 `PlayersData` members and the genuine faction API. These are not all empty files:
 move genuine behavior and storage to evidence-backed owners before retiring

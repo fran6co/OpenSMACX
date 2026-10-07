@@ -16,7 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
-#include "temp.h" // MsgStatus, HandleMain
+
 #include "time.h"
 #include "mapwin.h"      // MapWinTable, go_reset's window walk
 #include "console.h"     // ConsoleStatusWin
@@ -29,7 +29,7 @@
 #include "multiwin.h"
 #include "councwin.h"      // CouncilWindow, the turn redraw receiver
 
-// The timer callbacks' shared state; declarations in temp.h beside the
+// The timer callbacks' shared state; declarations in time.h beside the
 // callbacks themselves. All four are zero-initialised .data in the image.
 int TimerHoldFlag;      // 0x00915620
 int Blink2Counter;      // 0x009392B4

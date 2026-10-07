@@ -28,7 +28,7 @@
 #include "general.h"   // mem_get, for the link labels this owns
 #include "palette.h"
 #include "spot.h"
-#include "temp.h"      // BufferStrHeight, which the wrap family scales by
+
 #include "alpha.h"     // Language, the write/wrap text-selection switch
 
 #include <new>
@@ -8425,6 +8425,11 @@ int BufferFlyingX;
 int BufferFlyingY;
 // RECOVERY_OBJECT: v1 0x009B3A98 ?BufferFlyingWidth@@3HA
 int BufferFlyingWidth;
+// Historical name: the wrap/flying-text family uses this as its running
+// width accumulator. The original storage start does not independently
+// establish allocation extent, initialization or lifetime.
+// RECOVERY_OBJECT: v1 0x009B3A9C ?BufferStrHeight@@3HA
+int BufferStrHeight;  // 0x009B3A9C
 // RECOVERY_OBJECT: v1 0x00682820 ?BufferJoinSpace@@3QBDB
 extern const char BufferJoinSpace[] = " ";
 // RECOVERY_OBJECT: v1 0x00696CD8 ?BufferMeasureSpace@@3QBDB
@@ -8523,7 +8528,7 @@ int __stdcall Buffer::probe_pcx(const char *filename, Palette *palette,
 #include "buffer.h"
 #include "win.h"
 #include "palette.h"
-#include "temp.h"
+
 
 // Original696BF4 stores the initial palette-selection policy value1.
 // RECOVERY_OBJECT: v1 0x00696BF4 ?BufferPreferActivePalette@@3HA
@@ -8683,7 +8688,7 @@ void Buffer::set_dc_text_color(unsigned int color) {
 // capacity remains unverified; its source array is explicitly provisional.
 #include "buffer.h"
 #include "font.h"
-#include "temp.h"
+
 #include <string.h>
 
 #ifdef _MSC_VER
@@ -9501,7 +9506,7 @@ int Buffer::write_raw_l(char *text, int x, int y, int length) {
 #include "buffer.h"
 #include "stringstruct.h"
 #include "font.h"
-#include "temp.h"
+
 
 extern char BufferFlyingText[];
 extern int BufferFlyingX, BufferFlyingY, BufferFlyingWidth;

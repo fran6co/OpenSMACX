@@ -26,7 +26,7 @@
 #include "popup.h"     // the local Popup, PopupStartCaption, PopupModalState
 #include "random.h"    // random()
 #include "strings.h"   // StringTemp, StringTable
-#include "temp.h"      // ParseNumTable, ParseStrBuffer
+#include "general.h"
 #include "xpops.h"     // X_pop_ask_number
 
 /*

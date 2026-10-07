@@ -16,7 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
-#include "temp.h"
+
 #include "xpops.h"  // X_pop
 #include "alpha.h"
 #include "base.h"

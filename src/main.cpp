@@ -26,7 +26,7 @@
 #include "palette.h"  // g_PALETTE1
 #include "popup.h"     // Popup::alloc
 #include "sound.h"    // init_sound
-#include "temp.h"     // HandleMain
+#include "win.h"
 
 /*
  * NOTHING SUPPRESSES THE `strcat` INTRINSIC HERE, and nothing needs to. This

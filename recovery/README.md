@@ -813,9 +813,12 @@ the same with per-owner replica controls and the complete proposed overlay.
 Reports expose this read-only dependency scope; it grants no editing permission
 and proves neither initialization nor lifetime. GraphicWin's recovered cursor
 override uses the real `HandleMain` and `Win::OnSetCursor`; its strict check now
-compiles `temp.cpp` to validate the declared handle definition instead of borrowing
+compiles `win.cpp` to validate the declared handle definition instead of borrowing
 the fixed address from its old seed. The seed scaffold is removed, with original
 mapping/provenance beside the method and the global identity beside its definition.
+The transitional `temp.cpp` and `temp.h` are retired: their genuine storage
+and declarations now belong to Buffer, General, Win, Game and Time. Retained
+task history may name the old files; it is not a current compilation recipe.
 
 The resize path now distinguishes GraphicWin's Buffer base from its optional
 `Buffer *owned_buffer_`. Buffer's resize uses the typed owner query and virtual

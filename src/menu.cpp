@@ -27,7 +27,7 @@
 #include "pulldown.h"
 #include "filewin.h"
 #include "win.h"
-#include "temp.h"
+
 #include "console.h"
 #include "general.h"  // mem_get for Menu's owned label copies
 

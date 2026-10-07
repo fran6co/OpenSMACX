@@ -20,7 +20,7 @@
 #include <mmsystem.h>
 #include "alpha.h"
 #include "palette.h"
-#include "temp.h"
+
 #include "win.h"
 #include "text.h"
 #include "stringstruct.h"

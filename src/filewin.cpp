@@ -25,7 +25,7 @@
 #include "buffer.h"
 #include "general.h"
 #include "popup.h"
-#include "temp.h"  // HandleMain
+#include "win.h"
 
 // RECOVERY_OBJECT: v2 0x009B90AC 0x009B90B0 ?ActiveFileWin@@3PAVFileWin@@A 0x00613D50
 FileWin *ActiveFileWin = 0;

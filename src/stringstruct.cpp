@@ -477,7 +477,7 @@ Status: Complete
 #include "strings.h"   // StringTable
 #include "faction.h"   // Players
 #include "game.h"      // PronounBuffer
-#include "temp.h"      // BufferStrHeight
+
 
 /*
 Purpose: Paint a window caption's text through the caller's canvas, honouring
@@ -1499,7 +1499,7 @@ extern int PullDownBorderPadding;  // 0x00696E1C, pulldown.cpp's definition
 /*
 Purpose: Close the pulled-down menu when the click lands outside it.
 // ORIGINAL: 0x005F93C0 ?on_left_down@PullDown@@QAEXHH@Z 0x005F93C0-0x005F945B FILE
-// RECOVERY_BINDING: v1 {"evidence": ["Original5F93C0..5F945B; retired seed git:117282ee:src/unrecovered/005f93c0.cpp records the same identity and spans.", "The hit test runs against buffer.h's rect2_ (0x474, the offset ten classes' bodies pass), the hide is Win slot 2 and the menu hand-off is the owner Menu's slot 20 with the two outer-rect deltas - left 0x13C and top 0x140, menu value subtracted from the receiver's on each axis before the click coordinate is added (0x005F9414 loads menu_ from +0xF30; the call target is [eax+0x50]) - dispatched through member-fn-pointer unions because neither slot is declared.", "flush_input is console.h's own and do_all_tasks is temp.h's; selected_ and menu_ are pulldown.h's own members."], "reason": "Coverage transcription of the outside-click close on the typed PullDown receiver."}
+// RECOVERY_BINDING: v1 {"evidence": ["Original5F93C0..5F945B; retired seed git:117282ee:src/unrecovered/005f93c0.cpp records the same identity and spans.", "The hit test runs against buffer.h's rect2_ (0x474, the offset ten classes' bodies pass), the hide is Win slot 2 and the menu hand-off is the owner Menu's slot 20 with the two outer-rect deltas - left 0x13C and top 0x140, menu value subtracted from the receiver's on each axis before the click coordinate is added (0x005F9414 loads menu_ from +0xF30; the call target is [eax+0x50]) - dispatched through member-fn-pointer unions because neither slot is declared.", "flush_input is console.h's own and do_all_tasks is win.h's; selected_ and menu_ are pulldown.h's own members."], "reason": "Coverage transcription of the outside-click close on the typed PullDown receiver."}
 Status: Coverage transcription - unclaimed body
 */
 namespace {

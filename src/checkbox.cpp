@@ -55,7 +55,7 @@
 #include "checkbox.h"
 #include "vtable_shim.h"
 #include "win.h"  // WinCallbackWindow
-#include "temp.h" // HandleMain
+
 
 // The constructor loads these rebindable pointer cells, not sprite contents.
 // init_class passes their original targets to Sprite::extract.

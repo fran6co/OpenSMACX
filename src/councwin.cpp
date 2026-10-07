@@ -23,7 +23,7 @@
 #include "councwin.h"
 #include "mapwin.h"   // MainInterfaceGlobal - the interface owner on_status drives
 #include "subinterface.h"
-#include "temp.h"     // do_all_draws
+#include "win.h"
 #include "worldwin.h"
 #include "menu.h"
 #include "alpha.h"       // label_get and the source-owned council label table
@@ -936,7 +936,7 @@ int CouncWin::council_visible() {
 // express the embedded windows, fonts, Spot, and local faction by owner.
 
 // ORIGINAL: 0x004271C0 ?arrived@CouncWin@@QAEXH@Z 0x004271C0-0x0042722D
-// RECOVERY_BINDING: v1 {"evidence": ["src/councwin.h CouncWin::field_A44_; src/temp.h TurnRedrawPending; src/faction.h LockEnableMask; src/graphicwin.h GraphicWin::redraw; src/netmsg.h NetMsgPrimary; image data at 0x00683228 identifies the label VOTINGOPEN"], "reason": "Track faction arrival on the CouncWin receiver, redraw through GraphicWin, and signal the voting-open label when all active humans have arrived."}
+// RECOVERY_BINDING: v1 {"evidence": ["src/councwin.h CouncWin::field_A44_; src/time.h TurnRedrawPending; src/faction.h LockEnableMask; src/graphicwin.h GraphicWin::redraw; src/netmsg.h NetMsgPrimary; image data at 0x00683228 identifies the label VOTINGOPEN"], "reason": "Track faction arrival on the CouncWin receiver, redraw through GraphicWin, and signal the voting-open label when all active humans have arrived."}
 void CouncWin::arrived(int faction_id) {
     field_A44_ |= (1 << faction_id);
     if (TurnRedrawPending != 0) {

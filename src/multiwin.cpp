@@ -30,7 +30,8 @@
 #include "general.h"
 #include "statuswin.h"  // Shared source-owned layout initialization flags.
 #include "fx.h"
-#include "temp.h"       // TurnRedrawPending and wave_it
+#include "time.h"
+#include "popup.h"
 #include <stdlib.h>     // _itoa
 
 // Existing source-owned storage, defined in netdaemon.cpp/game.cpp. The

@@ -18,7 +18,7 @@ def test_turn_timer_uses_council_owner_and_original_guards(tmp_path, compiler):
     source = (ROOT / "src/time.cpp").read_text()
     body = source.split("void __cdecl turn_timer(int a1) {", 1)[1].split("\n}\n", 1)[0]
     assert "CouncilWindow.GraphicWin::redraw();" in body
-    assert "TurnRedrawWindow" not in (ROOT / "src/temp.h").read_text()
+    assert "extern int TurnRedrawPending;" in (ROOT / "src/time.h").read_text()
     fixture = r'''
 #include <cassert>
 int IsMultiplayerNet, TimerHoldFlag, TurnRedrawPending;

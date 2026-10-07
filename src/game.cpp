@@ -16,11 +16,15 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+// Shared game-state change bits, written by base/vehicle/faction/technology
+// operations. Preserve the existing spelling and zero initialization: the
+// full original meaning, extent and persistence contract remain unresolved.
+uint32_t UnkBitfield1;  // 0x0090D91C
 #include <shellapi.h>
 #include <ctype.h> // yearmotize uses the original unsigned-char CRT classification.
 #include <stddef.h>
 #include <mmsystem.h>
-#include "temp.h"
+#include "win.h"
 #include "xpops.h"  // X_pop
 #include "popup.h"  // Existing POP2 owner interface.
 #include "ambience.h"  // load_music, the startup faction ambience owner.

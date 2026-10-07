@@ -41,8 +41,8 @@ def _one_body(name, signature, paths):
 
 
 def _actual_pump_bodies():
-    cpp_paths = [ROOT / "src/temp.cpp", ROOT / "src/win.cpp"]
-    header_paths = [ROOT / "src/temp.h", ROOT / "src/win.h"]
+    cpp_paths = [ROOT / "src/win.cpp"]
+    header_paths = [ROOT / "src/win.h"]
     return "\n".join([
         _one_body("do_draw", "MEASURED inline BOOL __cdecl do_draw()", header_paths),
         _one_body("do_keyboard", "MEASURED inline BOOL __cdecl do_keyboard()", header_paths),
