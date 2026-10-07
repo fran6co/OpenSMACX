@@ -903,13 +903,15 @@ namespace {
 
 // The original repeats this choice in each direction of its worker/specialist
 // search. Keep the scoring and packed storage in Base's own representation.
-int base_doctors_best_specialist(const Base &base) {
+int base_doctors_best_specialist() {
     int best = CITIZEN_TECHNICIAN;
     int best_score = -999;
     for (int type = 0; type < MaxSpecialistNum; ++type) {
-        if (!has_tech(Citizen[type].preq_tech, base.faction_id_current)) continue;
+        Base *base = BaseCurrent;
+        if (!has_tech(Citizen[type].preq_tech, base->faction_id_current)) continue;
+        base = BaseCurrent;
         int score = Citizen[type].psych_bonus * 3;
-        if (base.population_size >= static_cast<int>(Rules.min_base_size_specialists)) {
+        if (base->population_size >= static_cast<int>(Rules.min_base_size_specialists)) {
             score += Citizen[type].ops_bonus + Citizen[type].research_bonus;
         }
         if (score > best_score) {
@@ -920,69 +922,158 @@ int base_doctors_best_specialist(const Base &base) {
     return best;
 }
 
-void base_doctors_add_specialist(Base &base) {
-    const unsigned int slot = static_cast<unsigned int>(base.specialist_total++);
+void base_doctors_add_specialist() {
+    const int best = base_doctors_best_specialist();
+    Base *base = BaseCurrent;
+    const int slot = base->specialist_total++;
     if (slot < 16) {
-        const unsigned int shift = (slot & 7u) * 4;
-        uint32_t &word = base.spec[slot >> 3];
+        const unsigned int shift = (static_cast<unsigned int>(slot) & 7u) * 4;
+        const int word_index = slot >> 3;
+        uint32_t &word = base->spec[word_index];
         word = (word & ~(15u << shift))
-             | (static_cast<uint32_t>(base_doctors_best_specialist(base)) << shift);
+             | (static_cast<uint32_t>(best) << shift);
     }
-}
-
-void base_doctors_recompute() {
-    BaseComputedID = BaseIDCurrentSelected;
-    base_support();
-    base_yield();
-    base_nutrient();
-    base_minerals();
-    base_energy();
-}
-
-bool base_doctors_project_owned(int project, int faction) {
-    const int owner = base_project(project);
-    return owner >= 0 && Bases[owner].faction_id_current == faction;
 }
 
 } // namespace
 
 // ORIGINAL: 0x004F5F30 ?base_doctors@@YAXXZ 0x004F5F30-0x004F650C
-// RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/unrecovered/004f5f30.cpp", "source:src/base.h"], "reason": "Recover the selected Base's specialist/worker adjustment and repeated resource recomputation through typed Base, citizen and project state. Riot surcharge and warning popup paths remain unresolved; this is not a byte or behavioral claim. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/unrecovered/004f5f30.cpp", "source:src/base.h"], "reason": "Recover the selected Base's complete specialist/worker adjustment, riot eligibility, Matrix-gated removal and console warning paths through typed Base, citizen, Rules and project state. Preserve selected-base versus entry-faction distinctions and live BaseCurrent reloads across callbacks. Original unsafe accesses, full identity, seed history and matching/restoration obligations remain; no byte, ABI or runtime acceptance is implied."}
 // kind      game
 // TRIED: near-verbatim transcription of the (clean, non-SEH) Ghidra output with DAT_/FUN_ substituted for the catalogued globals and callees, and `*(char**)g_0090ea30` for the base-pointer dereference; the two duplicated "pick best doctor" loops are written out twice (matching the original's own duplication) rather than factored into a helper, to avoid the one-external-symbol risk seen on 0x00405140. Reaches MISMATCH #6 ('xor' vs 'push'); did not chase the exact register/stack layout further given the function's size.
 void __cdecl base_doctors() {
-    Base &base = *BaseCurrent;
-    const int faction = base.faction_id_current;
-    const bool matrix = base_doctors_project_owned(SP_TELEPATHIC_MATRIX, faction);
+    Base *base = BaseCurrent;
+    const int faction = base->faction_id_current;
+    int riot_doctor_adjustment = 0;
 
-    // A human governor only changes citizen allocation when both its citizen
-    // option and active state are set. The nutrient flag is published by
-    // base_yield and can survive a cached allocation.
-    if ((static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & (1u << faction))
-        && (base.governor & (GOV_MANAGES_CITIZENS_SPECS | GOV_ACTIVE))
-            != (GOV_MANAGES_CITIZENS_SPECS | GOV_ACTIVE)) return;
+    if ((base->state & BSTATE_DRONE_RIOTS_ACTIVE) != 0) {
+        const int brood_pit = has_fac(FAC_BROOD_PIT, BaseIDCurrentSelected, 0) ? 1 : 0;
+        const int police = PlayersData[faction].soc_effect_pending.values_[SocialEffect::POLICE]
+                         + brood_pit * 2;
+        if (police < -1) {
+            const int selected_base_id = BaseIDCurrentSelected;
+            Base *selected_base = &Bases[selected_base_id];
+            const int selected_faction = selected_base->faction_id_current;
+            const int ascetic_owner = base_project(SP_ASCETIC_VIRTUES);
+            const int ascetic_reduction = ascetic_owner >= 0
+                && Bases[ascetic_owner].faction_id_current == selected_faction ? 2 : 0;
+            const int population_pressure = static_cast<int>(selected_base->population_size)
+                - ascetic_reduction + Players[selected_faction].rule_population;
+            if ((population_pressure < static_cast<int>(Rules.pop_limit_sans_hab_complex)
+                 || has_fac(FAC_HAB_COMPLEX, selected_base_id, 0))
+                && (population_pressure < static_cast<int>(Rules.pop_limit_sans_hab_dome)
+                    || has_fac(FAC_HABITATION_DOME, selected_base_id, 0))) {
+                const int cloning_vats_owner = base_project(SP_CLONING_VATS);
+                const bool cloning_vats_for_faction = cloning_vats_owner >= 0
+                    && Bases[cloning_vats_owner].faction_id_current == faction;
+                bool eligible = false;
+                if ((cloning_vats_for_faction || BaseCurrentGrowthRate > 5)
+                    && Rules.nutrient_req_citizen != 0
+                    && static_cast<int>(Rules.nutrient_req_citizen)
+                        <= BaseCurrent->nutrient_surplus) {
+                    eligible = true;
+                    base = BaseCurrent;
+                } else {
+                    const int nutrient_cost = cost_factor(
+                        faction, 0, BaseIDCurrentSelected);
+                    base = BaseCurrent;
+                    if (nutrient_cost * (static_cast<int>(base->population_size) + 1)
+                        <= base->nutrients_accumulated + base->nutrient_surplus) {
+                        eligible = true;
+                    }
+                }
+                if (eligible) riot_doctor_adjustment = 1;
+            }
+        }
+    }
+    // Native branch setup reloads the current Base after each callback-bearing
+    // riot path, including the failed-pressure and failed-facility branches.
+    base = BaseCurrent;
 
-    for (int attempt = 0; attempt < 9; ++attempt) {
-        const bool needs_psych = BaseNutrientAdequate != 0
-            && base.drone_total > base.talent_total && !matrix;
-        if (needs_psych) {
-            base_doctors_add_specialist(base);
-            base_doctors_recompute();
-            if (base.drone_total <= base.talent_total || matrix) return;
-            continue;
+    const unsigned int faction_bit = 1u << (static_cast<unsigned int>(faction) & 0x1Fu);
+    if ((static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_)
+         & faction_bit) != 0
+        && (base->governor & (GOV_MANAGES_CITIZENS_SPECS | GOV_ACTIVE))
+            != (GOV_MANAGES_CITIZENS_SPECS | GOV_ACTIVE)) {
+        return;
+    }
+
+    int loop_counter = 1;
+    for (;;) {
+        if ((static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_)
+             & faction_bit) != 0) {
+            if ((base->governor & GOV_MANAGES_CITIZENS_SPECS) == 0) return;
+            if ((base->governor & GOV_ACTIVE) == 0) return;
         }
 
-        // A non-psych specialist can return to the fields only if there is
-        // an allocated slot beyond the protected specialist count. Recompute
-        // the yields after each removal, as the original does.
-        if (base.specialist_total <= base.specialist_unk_1
-            || (base.state & BSTATE_DRONE_RIOTS_ACTIVE)) return;
-        --base.specialist_total;
-        base_doctors_recompute();
-        if (base.drone_total > base.talent_total && !matrix) {
-            base_doctors_add_specialist(base);
-            return;
+        const int matrix_owner = base_project(SP_TELEPATHIC_MATRIX);
+        const bool matrix_for_faction = matrix_owner >= 0
+            && Bases[matrix_owner].faction_id_current == faction;
+        if (BaseNutrientAdequate == 0
+            || base->drone_total + riot_doctor_adjustment <= base->talent_total
+            || matrix_for_faction) {
+            const int old_specialist_total = base->specialist_total;
+            if (old_specialist_total == base->specialist_unk_1
+                || old_specialist_total - base->specialist_unk_1 < 0) return;
+            if ((base->state & BSTATE_DRONE_RIOTS_ACTIVE) != 0) return;
+
+            if (base->drone_total != 0
+                && base->talent_total <= base->drone_total + riot_doctor_adjustment) {
+                const int removal_matrix_owner = base_project(SP_TELEPATHIC_MATRIX);
+                if (removal_matrix_owner < 0
+                    || Bases[removal_matrix_owner].faction_id_current != faction) return;
+            }
+
+            base->specialist_total = old_specialist_total - 1;
+            BaseComputedID = BaseIDCurrentSelected;
+            base_support();
+            base_yield();
+            base_nutrient();
+            base_minerals();
+            base_energy();
+            base = BaseCurrent;
+            const int post_removal_matrix_owner = base_project(SP_TELEPATHIC_MATRIX);
+            if (base->drone_total + riot_doctor_adjustment > base->talent_total
+                && (post_removal_matrix_owner < 0
+                    || Bases[post_removal_matrix_owner].faction_id_current != faction)) {
+                base_doctors_add_specialist();
+                return;
+            }
+            if (old_specialist_total <= base->specialist_total) return;
+        } else {
+            base_doctors_add_specialist();
+            BaseComputedID = BaseIDCurrentSelected;
+            base_support();
+            base_yield();
+            base_nutrient();
+            base_minerals();
+            base_energy();
+            base = BaseCurrent;
+
+            if (base->drone_total + riot_doctor_adjustment <= base->talent_total) {
+                if (UnkGlobal0093A934 == 0) return;
+                if (faction != ConsoleGlobal.faction_id_) return;
+                if (PlayersData[faction].se_alloc_psych > 1) return;
+                if (base->specialist_total - base->specialist_unk_1 < 2) return;
+                const int production = base->queue_production_id[0];
+                if (production == -6 || production == -11 || production == -12
+                    || production == -17 || production == -18) return;
+                if (production == 8) {
+                    const int virtual_world_owner = base_project(SP_VIRTUAL_WORLD);
+                    if (virtual_world_owner >= 0
+                        && Bases[virtual_world_owner].faction_id_current == faction) return;
+                }
+                if ((Players[faction].rule_flags & RFLAG_ALIEN) != 0) {
+                    popb("PSYCHREQUEST", 0, -1, "Alopdir.pcx", 0);
+                } else {
+                    popb("PSYCHREQUEST", 0, -1, "talent_sm.pcx", 0);
+                }
+                return;
+            }
         }
+
+        ++loop_counter;
+        if (loop_counter > 9) return;
     }
 }
 
