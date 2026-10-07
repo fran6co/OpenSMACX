@@ -2910,6 +2910,8 @@ Purpose: Route one dialog key press: Enter sends the chat line the edit box
          else goes to the edit box's own slot-26 key handling.
 // ORIGINAL: 0x00483310 ?on_key_down@NetWin@@QAEHH@Z 0x00483310-0x00483414 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/00483310.cpp"], "reason": "Retain the existing source implementation and complete original mapping. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// symbol    ?on_key_down@NetWin@@UAEHH@Z
+// Current virtual override emits UAE; retain the catalogued QAE identity above.
 // size      260 bytes
 // prototype int (__thiscall ?on_key_down@NetWin@@QAEHH@Z)(NetWin* this, int)
 // callers   1   call targets   8
