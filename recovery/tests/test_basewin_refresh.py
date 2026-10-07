@@ -64,10 +64,11 @@ def actual():
         one(win, r'\bWin \*win_parent_;'),
         one(win, r'\bint is_visible\(\);'),
         braced(win, 'virtual void redraw()'), '};',
-        'struct Buffer {}; struct IfaceRegistryEntry {};',
+        # Storage/lifetime of the secondary interface is outside this refresh
+        # control; retain its real inheritance clause with a service double.
+        'struct Buffer {}; struct IfaceRegistryEntry {}; struct SubInterface {};',
         one(graphic, r'class GraphicWin :[^\n]+\{') + ' public:',
         one(graphic, r'virtual void redraw\(\);'), '};',
-        braced(graphic, 'struct ConstructedGraphicWin :') + ';',
         one(basewin, r'class BaseWin :[^\n]+\{') + ' public:',
         one(basewin, r'\buint32_t focusedBaseID_;'),
         one(basewin, r'\bvoid check_base\(int base_id\);'),

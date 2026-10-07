@@ -30,15 +30,16 @@ struct Base;
  /*
   * ProdPicker class
   *
-  * Uses ConstructedGraphicWin to express the image's explicit GraphicWin
-  * construction before the real embedded members. GraphicWin's base region is
-  * pinned; ProdPicker's member extent is now layout-asserted at 0xA840.
+  * Derives directly from GraphicWin, whose base region is pinned; the image
+  * constructs it before the real embedded members. ProdPicker's member extent
+  * is layout-asserted at 0xA840.
   *
   * Several methods remain simple stubs, while close and lifecycle now use
   * source-owned state. The member map is based on the constructor/destructor
   * sequence and methods that reach those offsets.
   */
-class ProdPicker : public ConstructedGraphicWin {
+// RECOVERY_BASE: v1 ProdPicker GraphicWin 0x0 0x00492420
+class ProdPicker : public GraphicWin {
  public:
   ProdPicker();
   int queue_change_blocked() const { return static_cast<int>(field_B68_); }
@@ -79,7 +80,7 @@ class ProdPicker : public ConstructedGraphicWin {
   // stronger member evidence.
 
   // Real members keep the image's address layout and, with
-  // ConstructedGraphicWin as the base, construct after the GraphicWin base.
+  // GraphicWin as the base, construct after the GraphicWin base.
   // Their declaration order matches the observed constructor order. This
   // intentionally replaces raw storage/placement-new with C++ lifetime.
   Sprite sprites_[3];  // 0xA18

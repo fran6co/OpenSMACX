@@ -178,7 +178,7 @@ struct PlayerData;
  /*
   * NetWin class
   *
-  * Derives from GraphicWin in the original by ordinary single inheritance -
+  * Derives directly from GraphicWin in the original by ordinary single inheritance -
   * its constructor calls GraphicWin's on an unadjusted `this` - so unlike the
   * virtually-derived windows this one is written as the original wrote it and
   * needs no ABI workaround.
@@ -189,7 +189,8 @@ struct PlayerData;
   * methods recovered here are bare returns that touch no field, which is why
   * they can be replaced ahead of that mapping.
   */
-class NetWin : public ConstructedGraphicWin {
+// RECOVERY_BASE: v1 NetWin GraphicWin 0x0 0x00481C50
+class NetWin : public GraphicWin {
  public:
   NetWin();
   // 0x004834E0 explicit cleanup recovered; nested member/base teardown is

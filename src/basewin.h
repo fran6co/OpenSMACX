@@ -35,9 +35,10 @@
  /*
   * BaseWin class
   *
- * ConstructedGraphicWin is the primary window base at zero; SubInterface is
- * its real secondary base at +0xA14. Both use ordinary multiple inheritance,
- * with no registry wrapper or hand-built vtable.
+ * GraphicWin is the primary window base at zero; SubInterface is its real
+ * secondary base at +0xA14. Both use ordinary multiple inheritance, with no
+ * registry wrapper or hand-built vtable. The pinned constructor calls the
+ * real GraphicWin constructor on the complete receiver before member setup.
   *
  * DERIVED 2026-09-06 directly from SubInterface, as the +0xA14 subobject
  * requires. ??0BaseWin@@QAE@XZ writes the all-pure base table
@@ -71,11 +72,12 @@
 extern const int BaseRadiusOffsetX[21];  // 0x0066A1A0
 extern const int BaseRadiusOffsetY[21];  // 0x0066A1F4
 
+// RECOVERY_BASE: v1 BaseWin GraphicWin 0x0 0x00408490
 // RECOVERY_BASE: v1 BaseWin SubInterface 0xA14 0x00408490
 // Constructor installs this original interface table at the declared base.
 // Its nineteen observed slots do not independently establish its end bound.
 // RECOVERY_GENERATED: v1 vtable 0x0066A3B8 ? ??_7BaseWin@@6B@ 0x00408490
-class BaseWin : public ConstructedGraphicWin, public SubInterface {
+class BaseWin : public GraphicWin, public SubInterface {
  public:
   // homed from 004103b0.cpp
   void draw_garrison(int a1);

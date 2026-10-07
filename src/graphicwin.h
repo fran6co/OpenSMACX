@@ -257,34 +257,6 @@ static_assert(sizeof(GraphicWin) == 0xA14,
 // Process default copied into field_A0C_ by close().
 extern GraphicWinCaptionDraw GraphicWinFieldA0CDefault;
 
-// A GraphicWin THAT CONSTRUCTS ITSELF, for the derived classes whose image
-// constructor calls GraphicWin::construct() BEFORE its own members.
-//
-// C++ runs member constructors before the constructor BODY, so
-// `GraphicWin::construct()` written in the body of a class that has members
-// emits AFTER them - the call targets match the image and the call ORDER does
-// not, and no amount of spelling inside the body can fix it. Base subobjects,
-// however, ARE constructed before members. Deriving from this instead of from
-// GraphicWin directly puts the call where the image has it, using the language
-// rule rather than raw storage and placement-new.
-//
-// Adds no data and no virtual of its own, so every derived layout is
-// unchanged - which each class's own static_assert on sizeof is what checks.
-// Measured on Scroll (scroll.cpp) 2026-08-22: 21 -> 81 of 83, and the reorder
-// was worth 1 instruction by itself. What it bought was VISIBILITY of two more
-// levers underneath, the larger worth 55, which were unreachable until the
-// order was right. Expect the same shape here: re-measure and look again after
-// switching a class over, do not stop at the first number.
-//
-// Use it ONLY where the image really does construct first - check with
-// `uv run recover inspect <ctor> --image <original>`: the call to 0x005D4CF0
-// should come before the first `lea ecx, [esi + N]`. Establish this order from
-// original constructor/caller evidence before choosing a candidate class.
-struct ConstructedGraphicWin : public GraphicWin {
-  // Empty: GraphicWin::GraphicWin() is a REAL constructor now, so the
-  // base runs implicitly and calling it again would double-construct.
-  ConstructedGraphicWin() { ; }
-};
 
 
 // Borrowed process colour-map pointer, initially null in the pinned image.

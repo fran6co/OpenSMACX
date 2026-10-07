@@ -1084,7 +1084,7 @@ void ProdPicker::on_right_click(int x, int y) {
 // flags     frame;sp_ready;purged_ok
 // calls     0x005D4CF0 0x006051D0 0x006161D0 0x00616DA0 0x00618EA0 0x006456E4 0x006457C2
 */
-// C++ constructs ConstructedGraphicWin/GraphicWin before these typed members;
+// C++ constructs the GraphicWin base before these typed members;
 // declaration order follows the image's subobject order. Their destructors
 // similarly own teardown after this destructor body.
 ProdPicker::ProdPicker() {
