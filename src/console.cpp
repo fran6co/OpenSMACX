@@ -1043,7 +1043,6 @@ void Console::chat(int target_faction) {
 // header lands, delete the line here. Their forwarders are at the end of
 // src/pending_bodies.cpp.
 int __cdecl veh_ready(int veh_id);                        // 0x005C1B70 ?veh_ready@@YAHH@Z
-void __cdecl action_destroy(int veh_id, int choice, int a3, int a4);  // 0x004CAA50 ?action_destroy@@YAXHHHH@Z
 int __cdecl tut_check(int veh_id);                            // 0x004BA5F0 ?tut_check@@YAHH@Z
 int __cdecl tut_check2(int veh_id);                           // 0x004BA650 ?tut_check2@@YAHH@Z
 int __cdecl save_game(int save_slot);                            // 0x005A9EB0 ?save_game@@YAHH@Z
@@ -2718,20 +2717,8 @@ static int *const EditorBrushButtonGroupSelection = (int *)0x007CD2D8;
 // it is clear. The object is source-owned in game.cpp.
 // Source-owned session flag is declared in game.h.
 
-// action_destroy (0x004CAA50) is still original and has no current
-// source definition, so this Console call keeps its local __cdecl seam.
-typedef void (__cdecl *func_action_destroy)(int veh_id, int choice, int a3, int a4);
-static func_action_destroy ActionDestroy = (func_action_destroy)0x004CAA50;
-
-// BaseWin::on_redraw (0x0041E790) and BaseWin::exit (0x0041A4C0) are declared
-// in basewin.h but not recovered - like its draw_facilities/garrison_click
-// stand-ins, they are reached through the pinned member-pointer form until
-// their bodies land.
-typedef void (OriginalObject::*func_base_win_on_redraw)(void);
-static func_base_win_on_redraw BaseWinOnRedraw =
-    original_method<func_base_win_on_redraw>(0x0041E790);
-typedef void (OriginalObject::*func_base_win_exit)(void);
-static func_base_win_exit BaseWinExit = original_method<func_base_win_exit>(0x0041A4C0);
+// Historical direct-address callers are retired now that action_destroy and
+// the BaseWin methods have typed source-owned implementations.
 
 // ORIGINAL: 0x004DBB40 ?editor_reset_faction@Console@@QAEXXZ 0x004DBB40-0x004DBC32 FILE
 // TRIED: nothing yet - MISMATCH #16 mov/push (94% mnemonic sim), a push/store reordering around the `compute_faction_modifiers` call; not chased further. `this` is unused throughout (thiscall receiver never touched).
@@ -4989,7 +4976,7 @@ void Console::editor_energy() {
             (NullCallback)0);
         if (answer == 0) {
             PlayersData[faction].energy_reserves = ParseNumTable[0];
-            (ORIGINAL(&TutWinBaseWindow)->*BaseWinOnRedraw)();
+            TutWinBaseWindow.on_redraw();
             ConsoleGlobal.update_data(0);
         }
     }
@@ -5116,7 +5103,7 @@ Purpose: Load a saved game: leave the base window, refuse outside an active
 // calls     0x0041A4C0 0x00460DD0 0x0046B190 0x0058EE60 0x0058F450 0x005AAAB0 0x005D5A70 0x005FCBB0 0x00644DFF
 */
 void Console::load_proc(int save_slot, int faction_id) {
-    (ORIGINAL(&TutWinBaseWindow)->*BaseWinExit)();
+    TutWinBaseWindow.exit();
     if (IsMultiplayerNet != 0 && (GameDataStateStorage.fields_.game_state_ & 0x1000) == 0) {
         return;
     }
@@ -6387,7 +6374,7 @@ void Console::destroy(int veh_id) {
         message_veh(0x2406, veh_id, result, 0);
         NetDaemonNet.await_exec(1);
     } else {
-        ActionDestroy(veh_id, result, -1, -1);
+        action_destroy(veh_id, result, -1, -1);
     }
 }
 
