@@ -39,6 +39,7 @@ HARNESS = r'''#include <stdint.h>
 #define __cdecl
 typedef struct { int16_t word_00_,word_02_,word_04_,word_06_,word_08_,word_0A_;
   int32_t dword_0C_,dword_10_,dword_14_; } CaviarFixedPointProjectionMatrix;
+struct VOX_Matrix { float values[3][3]; };
 // Host-width state fixture: typed source shape, not a 32-bit ABI/layout test.
 struct CaviarBlitStateCandidate {
   unsigned char * volatile destination_cursor_;
@@ -63,9 +64,10 @@ static void ck(bool b,const char *s){if(!b){fprintf(stderr,"FAIL %s\n",s);exit(1
 int main(){
   float *mem=(float*)low_map(4096); ck(mem!=0,"low mapping");
   CaviarProjectionScaledMatrix=mem+16;
+  VOX_Matrix *matrix=reinterpret_cast<VOX_Matrix *>(mem);
   const float in[9]={.10f,-.10f,0,.25f,-.25f,.5f,1,-1,2};
-  for(int i=0;i<9;++i)mem[i]=in[i];
-  sub_63fa80(mem);
+  for(int i=0;i<3;++i)for(int j=0;j<3;++j)matrix->values[i][j]=in[i*3+j];
+  sub_63fa80(matrix);
   ck(CaviarFixedPointProjection.word_00_==26 && CaviarFixedPointProjection.word_02_==-26,
      "scaled rounded words");
   ck(CaviarFixedPointProjection.word_06_==64 && CaviarFixedPointProjection.word_08_==-64 &&
@@ -195,18 +197,23 @@ def test_moved_records_and_bodies_retain_pinned_source_history():
     fields=tuple(field.name for field in dataclasses.fields(next(iter(old_rows.values())))
                  if field.name not in {"mode","path","line","region","recipe",
                                        "extract_error","origin","source_role_reason"})
-    unchanged_bodies = {0x63FA80}
     for address in addresses:
         assert address in old_rows and address in current_rows,hex(address)
         before,after=old_rows[address],current_rows[address]
         assert all(getattr(before,name)==getattr(after,name) for name in fields
-                   if not (address == 0x6401B0 and name == "source_role")),hex(address)
+                   if not (address in (0x63FA80, 0x6401B0) and name == "source_role")),hex(address)
         if address == 0x6401B0:
             assert after.source_role == "unclassified"
             assert "Ownership: Global three-pointer __cdecl helper" in current
         signature="void __cdecl "+before.name+"("
-        if address in unchanged_bodies:
-            assert extract(old,signature)==extract(current,signature),hex(address)
+        if address == 0x63FA80:
+            assert after.source_role == "unclassified"
+            old_body, new_body = extract(old, signature), extract(current, signature)
+            assert "const VOX_Matrix *sources" in new_body
+            assert "const float *cursor = &sources->values[0][0];" in new_body
+            # The reviewed change types the input, not the scaling, rounding,
+            # output writes or stage resets that follow the cursor setup.
+            assert old_body[old_body.index("    int n = 9;"):] == new_body[new_body.index("    int n = 9;"):]
         else:
             def envelope(text):
                 marker=f"// ORIGINAL: 0x{address:08X}"

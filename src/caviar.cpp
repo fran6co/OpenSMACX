@@ -3809,7 +3809,7 @@ OPENSMACX_NOINLINE
 
 // Candidate source body for 0x63F5E0. Uses the real record/shape/vector
 // owners plus a non-owning variable-tail view; not product source yet.
-extern "C" void __cdecl sub_63fa80(float *);
+extern "C" void __cdecl sub_63fa80(const VOX_Matrix *);
 extern "C" void __cdecl sub_6401b0(const short *, const short *, int *);
 // ORIGINAL: 0x0063F5E0 sub_63f5e0 0x0063F5E0-0x0063F9A8
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original identity/name/span and complete historical lesson run are transported from the matching seed record by match_recovery.source.", "The staged typed definition is uniquely found by match_recovery.source.reader.function_line and compiles in the coordinator's three-TU VC6 overlay.", "The emitted symbol is read from the coordinator's fresh native COFF observation log; it is not inferred from the C++ spelling.", "Caviar data access windows and initialization remain separate coordinator-owned object-mapping obligations; this transfer creates no allocation-bound or initializer claim."], "reason": "Rehome this complete pinned original identity from its generated seed file to the typed Caviar renderer owner; preserve the original span and seed lesson history without asserting BYTE_EXACT. The old FILE interpretation is converted to a function BODY because the new owner contains multiple original identities."}
@@ -3828,9 +3828,8 @@ void __cdecl caviar_clip_shape(VoxRenderRecord *record,
     output[2] = -0x7fff;
     output[3] = -0x7fff;
 
-    // The existing C ABI declaration lacks const; its recovered body only
-    // reads the nine source matrix cells into separate projection storage.
-    sub_63fa80(const_cast<float *>(&orientation->values[0][0]));
+    // The helper reads the source matrix and writes separate projection state.
+    sub_63fa80(orientation);
 
     int local_box[6];
     local_box[0] = record->draw_left_;
@@ -4620,7 +4619,7 @@ void __cdecl vox_draw_part(
     int item_box[6];
     int flags = visible != 0;
 
-    sub_63fa80(&part_matrix->values[0][0]);
+    sub_63fa80(part_matrix);
     caviar_direction_to_projection_index(part_matrix, state_direction,
                                          shape_scale, camera_rotation);
     caviar_clip_record_box(record, &scratch.part_clip_, clip);
@@ -4719,7 +4718,7 @@ void __cdecl vox_draw_shadow(
     int flags = camera_nonnull != 0;
     int item_box[6];
 
-    sub_63fa80(&part_matrix->values[0][0]);
+    sub_63fa80(part_matrix);
     caviar_clip_record_box(record, &scratch.shadow_clip_, clip);
     caviar_build_projection_tables();
     vox_projection_prepared_ = 0;
@@ -6376,7 +6375,9 @@ Purpose: The isometric view-matrix builder: take the caller's nine source
          0x006401B0 multiplies by), the next three as 32-bit words - and
          clear the two trailing words.
 
-// RECOVERY_ROLE: SCAFFOLD Complete owner-side transcription; pinned x87 exceptional conversion behavior and complete indirect caller/physical-owner qualification remain unresolved.
+// The three mapped callers supply VOX_Matrix owners at 63F611, 63E95C and
+// 63F00C. Native x87 exceptional conversion behavior and complete executable
+// caller/reference qualification remain explicit fidelity obligations.
 // ORIGINAL: 0x0063FA80 sub_63fa80 0x0063FA80-0x0063FC92
 // size      530 bytes
 // Deleted seed provenance: git:1ed59304110fc2098fb1dd11457fa5b0074169bd:src/unrecovered/0063fa80.cpp
@@ -6407,9 +6408,9 @@ int round_view_scaled(float value) {
 }
 }  // namespace
 
-extern "C" void __cdecl sub_63fa80(float *sources) {
-    int delta = (int)((char *)CaviarProjectionScaledMatrix - (char *)sources);
-    float *cursor = sources;
+extern "C" void __cdecl sub_63fa80(const VOX_Matrix *sources) {
+    const float *cursor = &sources->values[0][0];
+    int delta = (int)((char *)CaviarProjectionScaledMatrix - (char *)cursor);
     int n = 9;
     do {
         *(float *)((char *)cursor + delta) = *cursor * CaviarProjectionDirectionScale;

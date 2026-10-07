@@ -134,7 +134,7 @@ static void __cdecl shadow_contained(int32_t x,int32_t y,uint32_t n,const uint8_
 static void __cdecl shadow_clipped(int32_t x,int32_t y,const int32_t*r,uint32_t n,const uint8_t*s,int32_t f) {
   remember(4,x,y,0,r,n,s,f);
 }
-static void __cdecl sub_63fa80(float *matrix) { (void)matrix; }
+static void __cdecl sub_63fa80(const VOX_Matrix *matrix) { (void)matrix; }
 static void __cdecl caviar_direction_to_projection_index(const VOX_Matrix*m,const VOX_Vect*d,float e,const VOX_Matrix*c) {
   (void)m;(void)d;(void)e;(void)c;
 }

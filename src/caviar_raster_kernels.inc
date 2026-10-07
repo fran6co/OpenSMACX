@@ -781,7 +781,7 @@ extern const float CaviarProjectionDirectionScale;
 extern const float CaviarProjectionRoundThreshold;
 extern const float CaviarProjectionRoundBelow;
 extern const float CaviarProjectionRoundAbove;
-void __cdecl sub_63fa80(float *);
+extern "C" void __cdecl sub_63fa80(const VOX_Matrix *);
 void __cdecl caviar_direction_to_projection_index(
     const VOX_Matrix *, const VOX_Vect *, float, const VOX_Matrix *);
 void __cdecl sub_6401b0(const int16_t *, const int16_t *, int *);

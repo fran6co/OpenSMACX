@@ -160,7 +160,7 @@ static void vox_matrix_inverse(const float source[3][3], float output[3][3]) {
     memcpy(copy, source, sizeof(copy));
     memcpy(output, copy, sizeof(copy));
 }
-static void sub_63fa80(float *) { }
+static void sub_63fa80(const VOX_Matrix *) { }
 static unsigned char *__cdecl vox_walk_scaled_chain(unsigned char *node, float) {
     return node;
 }
