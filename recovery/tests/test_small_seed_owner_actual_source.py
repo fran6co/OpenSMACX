@@ -89,7 +89,7 @@ def test_installed_slot24_source_closure_and_mapping_transfer():
     sound_h = source("src/sound.h")
     voice_h = source("src/voice.h")
     wave_h = source("src/wave.h")
-    effect_h = source("src/hypothesis_layouts.h")
+    effect_h = wave_h
     assert "virtual int unk_slot24();" in sound_h
     assert "virtual int unk_slot24() = 0;" in voice_h
     assert "virtual int unk_slot24();" in wave_h

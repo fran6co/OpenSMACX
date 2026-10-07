@@ -235,7 +235,6 @@ def test_group_walks_execute_actual_wave_apis() -> None:
     wave_header = (root / "src/wave.h").read_text()
     sound_header = (root / "src/sound.h").read_text()
     device_header = (root / "src/wave_device.h").read_text()
-    hypothesis = (root / "src/hypothesis_layouts.h").read_text()
     assert "class Wave : public Sound" in wave_header
     assert "void set_volume(int volume);" in wave_header
     assert "virtual int load();" in wave_header
@@ -244,7 +243,7 @@ def test_group_walks_execute_actual_wave_apis() -> None:
     assert "friend class Wave_Device;" in sound_header
     assert "uint32_t volume_;       // 0x04" in sound_header
     assert "Wave *wave;" in device_header
-    assert "class Effect : public Wave" in hypothesis
+    assert "class Effect : public Wave" in wave_header
     source = harness(bodies)
     compilers = host_compilers()
     assert compilers, "g++ or clang++ host compiler required"

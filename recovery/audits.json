@@ -22,7 +22,7 @@
         "VCall shim": 1,
         "ORIGINAL() vtable-slot dispatch": 0,
         "ORIGINAL() named-pointer seam": 39,
-        "vtable-as-member": 3,
+        "vtable-as-member": 0,
         "vtable-initialiser store": 0,
         "vtable address constant": 0,
         "short-named fixed-address binding": 0,
@@ -32,7 +32,6 @@
         "span_math.cpp markers": 1,
         "table_storage.cpp markers": 1,
         "nullsub_thunks.cpp markers": 46,
-        "hypothesis_layouts.h lines": 1604,
         "stringstruct.cpp markers": 40
       },
       "counters": [
@@ -65,11 +64,6 @@
           "kind": "text",
           "path": "src/nullsub_thunks.cpp",
           "pattern": "ORIGINAL: 0x"
-        },
-        {
-          "name": "hypothesis_layouts.h lines",
-          "kind": "lines",
-          "path": "src/hypothesis_layouts.h"
         },
         {
           "name": "stringstruct.cpp markers",

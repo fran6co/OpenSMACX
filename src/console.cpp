@@ -28,6 +28,8 @@
 // symbol    ?on_nc_hittest@Console@@$4PPPPPPPM@A@AEHHH@Z
 // kind game
 #include "stdafx.h"
+#include "prefwin.h"  // Console owns preference-window calls.
+#include "interlude.h"  // interlude is declared by its owner.
 #include "text.h" // TextBufferGetPtr is reloaded after parser callbacks.
 #include "alphamovie.h"
 
@@ -55,7 +57,6 @@
 #include "reportwin.h"  // veh_turn observes the real report window's visibility
 #include "temp.h"
 #include "fx.h"
-#include "hypothesis_layouts.h"
 #include "graphicwin.h"
 #include "spritebox.h"
 #include "net_class.h"

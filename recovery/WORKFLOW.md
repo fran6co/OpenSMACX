@@ -45,8 +45,10 @@ erase a sole mapping or replace recovered behavior with an empty body.
 A genuine original no-op, accessor, initializer or compiler-generated thunk
 can qualify in its real owner with supporting evidence. Merely compiling an
 adapter, lacking source callers, or retaining a historical exactness token
-does not qualify it. Provisional declarations in `hypothesis_layouts.h` are
-structural recovery debt, not verified layout or function coverage.
+does not qualify it. The obsolete hypothesis-layout umbrella is retired: its
+only live class, Effect, is owned with Wave; unused speculative declarations
+remain in Git history. Removing those declarations does not prove the remaining
+provisional layouts in genuine owner headers or increase function coverage.
 The deleting/delegation adapter collections and pending-body collection are
 retired. Their identities and remaining obligations live with the actual owners;
 retiring a collection does not qualify every body previously stored there.

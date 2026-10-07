@@ -24,6 +24,7 @@
 #include "battlewin.h"
 #include "map.h"
 #include "terraforming.h"
+#include "technology.h"  // has_tech is declared by its technology owner.
 #include "original_seam.h"
 #include "strings.h"  // StringTemp, 0x009B86A0
 #include "statuswin.h"

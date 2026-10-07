@@ -1341,7 +1341,7 @@ int NetIncomeGlobal;
 // project locations. A separate initialized scalar severed that lifetime.
 
 // ORIGINAL: 0x00445130 ?energy_compute@@YAXHH@Z 0x00445130-0x00445433
-// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00445130.cpp", "src/base.h", "src/faction.h", "src/hypothesis_layouts.h"], "reason": "Recover the shared energy accounting pass through Base and PlayerData fields, owning its report totals and per-base/facility tables instead of calling a fixed executable address."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00445130.cpp", "src/base.h", "src/faction.h", "git:473ce2ca11640abd42ebc67fa21e4d7e81c82a01:src/hypothesis_layouts.h"], "reason": "Recover the shared energy accounting pass through Base and PlayerData fields, owning its report totals and per-base/facility tables instead of calling a fixed executable address."}
 // TRIED: translated per-instruction against the disasm (cross-checked against the Ghidra hypothesis for the per-base accumulation, tech-level clamp, and pairwise unit-bonus loop) rather than reusing ghidra's `(int*)param_1` pointer-cast style; the neg/sbb/neg boolean idiom collapsed to a plain `(a&b)!=0` comparison, the cdq/sar halving collapsed to `/2`. MISMATCH #10 mov/xor in the zero-fill prologue; compiles and follows the disasm's three sections (per-base loop, tech-rate energy cost, cross-faction facility bonus loop) in order.
 void __cdecl energy_compute(int faction_id, int recompute_bases) {
     memset(EnergyFacilityCounts, 0, sizeof(EnergyFacilityCounts));

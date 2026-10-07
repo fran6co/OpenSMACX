@@ -26,7 +26,7 @@
 #include "game.h"          // ExitTurnLoop, IsMultiplayerNet
 #include "map.h"           // WorldClimateSkipTerrainClear
 #include "planwin.h"       // PlanWin::on_redraw, MapWinTable
-#include "hypothesis_layouts.h"  // MultiWin::draw
+#include "multiwin.h"
 
 // The timer callbacks' shared state; declarations in temp.h beside the
 // callbacks themselves. All four are zero-initialised .data in the image.

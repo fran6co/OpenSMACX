@@ -41,11 +41,12 @@
 #include "fx.h"  // g_FX
 #include "general.h"
 #include "filebox.h"
+#include "prefwin.h"  // ConsolePrefWin.init needs the complete owner declaration.
 #include "lock.h"
 #include "map.h"
 #include "main.h"  // CommandLineText
 #include "mapwin.h" // draw_tile, mapwin_system_shutdown
-#include "hypothesis_layouts.h"  // MultiWin, for MultiWindow
+#include "multiwin.h"
 #include "log.h"  // log_set_state
 #include "random.h"  // random_reseed
 #include "battlewin.h"  // the standing battle window

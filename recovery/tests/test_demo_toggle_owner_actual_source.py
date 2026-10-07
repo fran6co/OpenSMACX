@@ -47,7 +47,7 @@ def test_known_demo_owner_retains_original_identity_and_drops_fake_layout():
     assert row.image_spans == ((0x524320, 0x52433B),)
     assert row.symbol == "?toggle_and_repaint@Demo@@QAEXXZ"
     assert "RECOVERY_MEMBER: v1 Demo timer_phase_ 0xA18 0x00524340" in source
-    assert "struct Base524320" not in (ROOT / "src/hypothesis_layouts.h").read_text()
+    assert not (ROOT / "src/hypothesis_layouts.h").exists()
     body = extract(source, "void Demo::toggle_and_repaint()")
     assert "reinterpret_cast" not in body
     assert "Slot524320" not in source

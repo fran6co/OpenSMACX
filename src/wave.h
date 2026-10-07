@@ -162,6 +162,16 @@ class Wave : public Sound {
   uint32_t group_slot_;          // 0x68, pulled from its device group when < 0x10
 };
 
+// Effect has the genuine Wave base and no additional storage. Its original
+// destructor tail-calls Wave destruction; the FX bank owns 97 such objects
+// at the same 0x6C stride. The definitions and original identities live in
+// wave.cpp, with the bank's construction evidence in fx.cpp.
+class Effect : public Wave {
+ public:
+  ~Effect();
+  void init(char *fname, long flags);  // original mangled parameter J
+};
+
 // Owned by the original process at 0x007FFF00, directly after MultiWindow.
 extern Wave g_MULTIWIN_WAVE;
 

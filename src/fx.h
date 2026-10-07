@@ -16,7 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
-#include "hypothesis_layouts.h"
+#include "wave.h"
 
  /*
   * FX class - the sound-effect bank.

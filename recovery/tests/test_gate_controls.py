@@ -404,7 +404,7 @@ def test_damage_anchor_still_applies_and_restores_private_source(case, tmp_path)
     # source. A legitimate rename/rehoming should update its dependent control
     # before an hours-long full-gate run discovers the stale anchor.
     names = ["src/palette.cpp", "src/palette.h", "src/caviar.cpp", "src/radiobutton.cpp",
-             "src/radiobutton.h", "src/basewin.h", "src/hypothesis_layouts.h", "src/spritebox.h", "src/sprite.cpp", "src/IMAGE_PIN", "README.md",
+             "src/radiobutton.h", "src/basewin.h", "src/spritebox.h", "src/sprite.cpp", "src/IMAGE_PIN", "README.md",
              "recovery/audits.json", "packages/match-recovery/src/match_recovery/source/writer.py"]
     original = {}
     for name in names:

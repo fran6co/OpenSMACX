@@ -40,7 +40,7 @@
 #include "designwin.h"
 #include "tutwin.h"
 #include "worldwin.h"
-#include "hypothesis_layouts.h"
+#include "multiwin.h"
 #include "maininterface.h"
 #include "mapwin.h"
 #include "veh.h"
