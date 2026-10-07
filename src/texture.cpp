@@ -6963,7 +6963,6 @@ void __cdecl sub_620640(int param_1, int param_2) {
 // ORIGINAL: 0x0061F0D0 sub_61f0d0 0x0061F0D0-0x0061F785 FILE
 // symbol    ?sub_61f0d0@Texture@@QAEXPAVBuffer@@HHHHIH@Z
 // TRIED: literal Ghidra-derived transcription (EdgeScan DDA struct, param_2 as Buffer*, CONCAT/CARRY helpers for the dither table lookups) compiles and matches the outer control flow, but MSVC's register allocation for the two 300-line unrolled scanline loops diverges from instruction #5 on; did not attempt hand-tuning further given the size.
-// working copy - scaffold materialised by --work
 // size      1717 bytes
 // prototype 
 // callers   0   call targets   4
@@ -6971,19 +6970,10 @@ void __cdecl sub_620640(int param_1, int param_2) {
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x005E3373 0x005E34A3 0x0061FC90 0x00620100
 
-// GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: sub_61f0d0  at 0x0061F0D0  (1717 bytes)
-//
-// A VERIFICATION ARTIFACT, not product source: classes are opaque and
-// globals are bound to fixed addresses, because both are byte-visible
-// and both differ from the style src/ is written in.
-//
-// The VC6 dialect limits and the source-form rules used to live here.
-// They are knowledge, not scaffolding, so they now live in the agent
-// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
-// where they can be edited without regenerating anything and are in
-// context from the first token rather than behind a file read. This
-// emitter computes declarations; it does not carry lessons.
+// The pinned entry reads Texture's pixels/width/height at +0/+4/+8,
+// selects the embedded UV arrays at +0x0C/+0x2C, and reads Buffer's
+// current rectangle at +0x20..+0x2C. Use those existing members; the
+// raster scratch cells below still retain their separately mapped storage.
 
 // The retained 0x61F785 nullsub_259 identity is the terminal ret 0x1C instruction reached by fallthrough from Texture::sub_61f0d0 at the common epilogue (pinned 0x61F771-0x61F788; member decoration and source declaration independently establish the parent Texture method). This does not exclude a separate interior-entry call path. The source map has no validated contained-fragment-to-parent-body binding or emitted-symbol offset, so keep the original fragment identity and BYTE_EXACT obligation as FILE-scoped source evidence and leave its independent measurement explicitly unresolved; do not emit a callable null stub.
 // RECOVERY_ROLE: SCAFFOLD The original identity is a terminal instruction fragment in the Texture::sub_61f0d0 epilogue, not a standalone recovered C++ body. FILE keeps the full historical identity and claim visible, but the native source grammar cannot bind its interior image span to a parent method symbol plus offset; fragment measurement remains unresolved.
@@ -6991,8 +6981,6 @@ void __cdecl sub_620640(int param_1, int param_2) {
 // kind      game
 void Texture::sub_61f0d0(Buffer *param_2, int param_3, int param_4, int param_5,
                              int param_6, uint32_t param_7, int param_8) {
-    int32_t *param_1 = (int32_t *)this;
-
     ulonglong uVar1;
     ulonglong uVar2;
     int32_t iVar3;
@@ -7018,35 +7006,36 @@ void Texture::sub_61f0d0(Buffer *param_2, int param_3, int param_4, int param_5,
     if (param_2 == 0) {
       return;
     }
-    if (((((*param_1 != 0) && (param_4 != 0)) && (param_6 != 0)) &&
+    if (((((pixels_ != 0) && (param_4 != 0)) && (param_6 != 0)) &&
         ((param_5 != 0 && (param_7 != 0)))) &&
        ((*blit_pixel_base) = param_2->get_data(), (*blit_pixel_base) != 0)) {
       *blit_z_values = reinterpret_cast<int *>(param_4);
       *blit_edge_uvs_b = reinterpret_cast<int *>(param_3);
-      (*blit_texture_pixels) = *param_1;
-      (TextureRowPitchScratch) = param_1[1];
-      (*blit_texture_height) = param_1[2];
+      (*blit_texture_pixels) = static_cast<int>(reinterpret_cast<intptr_t>(pixels_));
+      (TextureRowPitchScratch) = static_cast<int>(iWidth_);
+      (*blit_texture_height) = static_cast<int>(iHeight_);
       if (param_8 == 0) {
         iVar10 = 4;
-        *blit_edge_uvs_a = reinterpret_cast<int *>((int32_t)(param_1 + 3));
+        *blit_edge_uvs_a = reinterpret_cast<int *>(corners_);
         (*blit_vertex_count) = 4;
       }
       else {
         iVar10 = 8;
-        *blit_edge_uvs_a = reinterpret_cast<int *>((int32_t)(param_1 + 0xb));
+        *blit_edge_uvs_a = reinterpret_cast<int *>(cornersAndMids_);
         (*blit_vertex_count) = 8;
       }
       (*blit_buffer_stride) = param_2->stride_;
-      (*blit_texture_width) = param_1[1];
+      (*blit_texture_width) = static_cast<int>(iWidth_);
       (*blit_slot_55c) = param_7;
       (*blit_remap_table) = param_6;
       (*blit_shade_table) = *(int32_t *)param_5;
-      if (((*blit_shade_table) != 0) && ((reinterpret_cast<RECT *>(reinterpret_cast<char *>(param_2) + 0x20)) != (RECT *)0x0)) {
-        (*blit_clip_right) = *reinterpret_cast<int *>(reinterpret_cast<char *>(param_2) + 0x28);
+      RECT *clip = &param_2->rect1_;
+      if (((*blit_shade_table) != 0) && (clip != 0)) {
+        (*blit_clip_right) = clip->right;
         iVar13 = -0x7ffd;
-        (*blit_clip_left) = *reinterpret_cast<int *>(reinterpret_cast<char *>(param_2) + 0x20);
-        (*blit_clip_bottom) = *reinterpret_cast<int *>(reinterpret_cast<char *>(param_2) + 0x2c);
-        (*blit_clip_top) = *reinterpret_cast<int *>(reinterpret_cast<char *>(param_2) + 0x24);
+        (*blit_clip_left) = clip->left;
+        (*blit_clip_bottom) = clip->bottom;
+        (*blit_clip_top) = clip->top;
         iVar3 = 0;
         iVar7 = 0x7fff;
         if (iVar10 != 0) {
