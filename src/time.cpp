@@ -1108,6 +1108,7 @@ public:
     unsigned int unknown_dword_C_;
 };
 
+// RECOVERY_ROLE: SCAFFOLD Provisional four-word initialization view; original containing class, complete extent and constructor-to-instance lifetime flow remain unproved. Matching the endpoint views' offsets is not a receiver ownership link.
 // ORIGINAL: 0x004C8110 sub_4c8110 0x004C8110-0x004C813B BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x004C8110-0x004C813B: complete thiscall constructor first zeroes four bytes [this+4] through memset, then stores dword [this], dword [this+8], and dword [this+0xC] in this order; [this+4] is zeroed by the actual four-byte memset call at 0x004C811B to 0x006465F0", "git:aee589a5dd0fca997773070668af4e1ff9026684:src/recovered/004c8110.cpp: historical-only seed hint // symbol ??0LegacyBlock@@QAE@XZ; this deleted seed-file spelling is not emitted as the current symbol and is not independently established as the original class", "pinned scan: no direct caller edge or absolute-address data reference to 4C8110 was found"], "reason": "Cover only the constructor's concrete four-dword initialization through a typed source view. Preserve its original span and claim; keep field roles, complete original class name, allocation extent and runtime lifetime unknown. The view is not merged with the separate time-range receiver."}
 // symbol    ??0RangePrefixInitializationView@@QAE@XZ

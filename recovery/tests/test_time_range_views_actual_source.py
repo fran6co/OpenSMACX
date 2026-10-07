@@ -23,6 +23,8 @@ def actual_view_source() -> tuple[str, Path]:
     assert set(records) == {0x004C8110, 0x004C8350}
     assert records[0x004C8110].mode is Mode.BODY
     assert records[0x004C8110].byte_exact
+    assert records[0x004C8110].source_role.value == "scaffold"
+    assert "constructor-to-instance lifetime flow remain unproved" in records[0x004C8110].source_role_reason
     assert records[0x004C8110].image_spans == ((0x004C8110, 0x004C813B),)
     assert records[0x004C8350].mode is Mode.FILE
     assert not records[0x004C8350].byte_exact
