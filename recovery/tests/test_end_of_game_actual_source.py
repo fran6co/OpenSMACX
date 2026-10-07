@@ -8,6 +8,7 @@ from pathlib import Path
 import os
 import subprocess
 import tempfile
+from current_game_storage_fixture import current_game_storage_fixture
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -67,24 +68,14 @@ PlayerData PlayersData[8];
 Base Bases[512];
 RulesFixture Rules = {10, 6};
 NetDaemon NetDaemonNet;
-uint32_t GameState;
-uint32_t GamePreferences;
-uint32_t GameRules;
-uint32_t MissionYearCurrent;
-uint32_t EndingMissionYear;
-uint32_t NetTurnFlags;
-uint32_t LockEnableMask;
-uint32_t FactionRankings[8];
-int ObjectiveReqVictory;
-uint32_t ObjectivesSuddenDeathVictory;
-int BaseCurrentCount;
+/* ACTUAL_GAME_STORAGE */
 int GameRestartQueued;
 int EndgameExitReason;
 int ExitTurnLoop;
 int IsMultiplayerNet;
 int ConsoleFaction = 1;
 struct ConsoleFixture { int faction_id_; } ConsoleGlobal = {1};
-int TurnCurrentNum;
+
 int Language;
 int MessageWinNetworkMessageCount;
 int GenderDefault;
@@ -142,15 +133,15 @@ static void reset_fixture() {
     memset(Players, 0, sizeof(Players));
     memset(PlayersData, 0, sizeof(PlayersData));
     memset(Bases, 0, sizeof(Bases));
-    memset(FactionRankings, 0, sizeof(FactionRankings));
+
     NetDaemonNet = NetDaemon();
-    GameState = GamePreferences = GameRules = 0;
-    MissionYearCurrent = 0; EndingMissionYear = 2500;
-    NetTurnFlags = LockEnableMask = 0;
-    ObjectiveReqVictory = 0; ObjectivesSuddenDeathVictory = 0;
-    BaseCurrentCount = 0; GameRestartQueued = EndgameExitReason = 0;
+    GameDataStateStorage = GameDataStateWindow();
+    ScenarioSave = ScenarioSaveState();
+    ScenarioSave.ending_mission_year = 2500;
+    GameRestartQueued = EndgameExitReason = 0;
     ExitTurnLoop = IsMultiplayerNet = 0;
-    ConsoleGlobal.faction_id_ = 1; TurnCurrentNum = 1; Language = 0;
+    ConsoleGlobal.faction_id_ = 1;
+    GameDataStateStorage.fields_.turn_current_num_ = 1; Language = 0;
     MessageWinNetworkMessageCount = GenderDefault = PluralityDefault = 0;
     memset(StringTemp, 0, sizeof(StringTemp));
     popup_calls = xpopup_calls = parse_calls = credits_calls = score_calls = 0;
@@ -171,7 +162,7 @@ int main() {
         ++failures;
 
     reset_fixture();
-    GameState = STATE_UNK_1;
+    GameDataStateStorage.fields_.game_state_ = STATE_UNK_1;
     EndgameExitReason = 1;
     if (end_of_game(0) != 1 || credits_calls != 1 || score_calls != 1 ||
         hall_calls != 1 || quayle_calls != 1 || replay_calls != 1 ||
@@ -181,18 +172,18 @@ int main() {
         ++failures;
 
     reset_fixture();
-    MissionYearCurrent = EndingMissionYear - 20;
+    GameDataStateStorage.fields_.mission_year_current_ = ScenarioSave.ending_mission_year - 20;
     if (end_of_game(1) != 0 || strcmp(last_xpopup, "RETIREWARNING") != 0 ||
-        GameState != 0) ++failures;
+        GameDataStateStorage.fields_.game_state_ != 0) ++failures;
 
     reset_fixture();
-    GameState = STATE_IS_SCENARIO;
-    MissionYearCurrent = EndingMissionYear - 10;
+    GameDataStateStorage.fields_.game_state_ = STATE_IS_SCENARIO;
+    GameDataStateStorage.fields_.mission_year_current_ = ScenarioSave.ending_mission_year - 10;
     if (end_of_game(1) != 0 || strcmp(last_xpopup, "SCENARIOWARNING") != 0 ||
-        GameState != STATE_IS_SCENARIO) ++failures;
+        GameDataStateStorage.fields_.game_state_ != STATE_IS_SCENARIO) ++failures;
 
     reset_fixture();
-    GameState = STATE_UNK_1;
+    GameDataStateStorage.fields_.game_state_ = STATE_UNK_1;
     EndgameExitReason = 11;
     PlayersData[2].flags = 0x00020000u;
     PlayersData[2].diplo_treaties[ConsoleGlobal.faction_id_] = 0x00040020u;
@@ -200,7 +191,7 @@ int main() {
         strcmp(first_popp_label, "DIPLOMATICLOSE2") != 0) ++failures;
 
     reset_fixture();
-    GameState = STATE_UNK_1;
+    GameDataStateStorage.fields_.game_state_ = STATE_UNK_1;
     EndgameExitReason = 1;
     IsMultiplayerNet = 1;
     if (end_of_game(0) != 1 || NetDaemonNet.hangs != 1 ||
@@ -231,7 +222,9 @@ def extract_braced(source: str, signature: str) -> str:
 
 def compile_and_run(body: str, helpers: str) -> subprocess.CompletedProcess:
     compiler = os.environ.get("CXX", "g++")
-    source = FIXTURE.replace("/* ACTUAL_CANDIDATE_HELPERS */", helpers)
+    source = FIXTURE.replace(
+        "/* ACTUAL_GAME_STORAGE */", current_game_storage_fixture(scenario=True))
+    source = source.replace("/* ACTUAL_CANDIDATE_HELPERS */", helpers)
     source = source.replace("/* ACTUAL_END_OF_GAME_BODY */", body)
     with tempfile.TemporaryDirectory(prefix="osmx-endgame-host-") as temp_dir:
         source_path = Path(temp_dir) / "control.cpp"
@@ -261,11 +254,11 @@ def test_actual_endgame_source_and_presented_state_mutant():
     assert result.returncode == 0, result.stdout + result.stderr
 
     mutant = body.replace(
-        "if ((GameState & EndgameRecorded) != 0 &&\n        (GameState & EndgamePresented) != 0)",
-        "if ((GameState & EndgameRecorded) != 0 && false)",
+        "if ((GameDataStateStorage.fields_.game_state_ & EndgameRecorded) != 0 &&\n        (GameDataStateStorage.fields_.game_state_ & EndgamePresented) != 0)",
+        "if ((GameDataStateStorage.fields_.game_state_ & EndgameRecorded) != 0 && false)",
         1,
     ).replace(
-        "if ((GameState & EndgamePresented) != 0) return 0;",
+        "if ((GameDataStateStorage.fields_.game_state_ & EndgamePresented) != 0) return 0;",
         "if (false) return 0;",
         1,
     )

@@ -11,6 +11,7 @@ import shutil
 import subprocess
 
 import pytest
+from current_game_storage_fixture import current_game_storage_fixture
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -473,9 +474,7 @@ Style InterfaceBoxStyles[19] = {
     {10},{11},{12},{13},{14},{15},{16},{17},{18}
 };
 
-int GamePreferences = 0;
-int GameMorePreferences = 0;
-int GameWarnings = 0;
+/* ACTUAL_GAME_STORAGE */
 int DialogDefaultStyle = 0;
 int GamePreferencesAfterModal = -1;
 const int PrefWinDisplayWidth = 700, PrefWinDisplayHeight = 390;
@@ -519,7 +518,7 @@ struct PrefWin : GraphicWin {
     int set_modal(int mode, int (*callback)(), Win *owner) {
         event("modal", mode, callback == pop_wait, owner);
         if (GamePreferencesAfterModal != -1)
-            GamePreferences = GamePreferencesAfterModal;
+            GameDataStateStorage.fields_.game_preferences_ = GamePreferencesAfterModal;
         return 0;
     }
     void display(int page);
@@ -539,7 +538,7 @@ void assert_tags(const std::vector<std::string> &expected) {
 void run_case(int page, int preferences, int post_modal_preferences,
               int initial_style, int expected_style) {
     events.clear(); drawn_rects.clear(); drawn_styles.clear();
-    GamePreferences = preferences;
+    GameDataStateStorage.fields_.game_preferences_ = preferences;
     GamePreferencesAfterModal = post_modal_preferences;
     DialogDefaultStyle = initial_style;
     ConsolePrefWin.field_A14_ = 4;
@@ -601,7 +600,8 @@ def display_source(*, mutations=()):
     for old, new in mutations.items():
         assert old in display, f"mutant anchor not found: {old}"
         display = display.replace(old, new, 1)
-    return (DISPLAY_FIXTURE
+    return (DISPLAY_FIXTURE.replace(
+            "/* ACTUAL_GAME_STORAGE */", current_game_storage_fixture())
             .replace("PREFERENCE_WINDOW_HELPER", extract_function(source, "Win *preference_window()"))
             .replace("REDRAW_OPTION", extract_function(source, "void PrefWin::redraw_option()"))
             .replace("REDRAW_VOLUME", extract_function(source, "void PrefWin::redraw_volume()"))
@@ -620,7 +620,8 @@ def test_display_draw_order_focus_modal_and_postmodal_preferences(tmp_path):
     ("Win::set_def_focus(preference_window());", "Win::set_def_focus(nullptr);"),
     ("  show(3);\n  Win::set_def_focus(preference_window());",
      "  Win::set_def_focus(preference_window());\n  show(3);"),
-    ("if (!(GamePreferences & 0x20000000))", "if (GamePreferences & 0x20000000)"),
+    ("if (!(GameDataStateStorage.fields_.game_preferences_ & 0x20000000))",
+     "if (GameDataStateStorage.fields_.game_preferences_ & 0x20000000)"),
 ])
 def test_display_behavior_mutants_are_detected(tmp_path, mutation):
     result = compile_and_run(

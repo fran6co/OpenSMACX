@@ -11,6 +11,7 @@ import subprocess
 import tempfile
 
 import pytest
+from current_game_storage_fixture import current_game_storage_fixture
 
 ROOT = Path(__file__).resolve().parents[2]
 OWNER = ROOT / "src" / "veh.cpp"
@@ -102,23 +103,22 @@ RulesTechnology Technology[89];
 int MapLongitude = 50, MapLongitudeBounds = 100, MapLatitudeBounds = 100, MapIsFlat = 1;
 int RadiusBaseX[9] = {0}, RadiusBaseY[9] = {0};
 int RadiusOffsetX[289] = {0}, RadiusOffsetY[289] = {0};
-int TurnCurrentNum, DiffLevelCurrent, BaseFindDist;
+int BaseFindDist;
 int IsMultiplayerNet, ExpansionEnabled, ConsoleIdUnused;
-uint32_t GameRules, GameState, LockEnableMask, StartingMissionYear;
-uint32_t NetTurnFlags;
+/* ACTUAL_GAME_STORAGE */
 uint32_t MapNativeLifeForms;
 int GenderDefault, PluralityDefault;
 Console ConsoleGlobal;
 MapWin MainMapWin;
 MapWin *MapWinTable[8] = { &MainMapWin };
-int BaseCurrentCount, RankingFactionIDUnk2;
+
 NetMsg NetMsgPrimary;
 FX g_FX;
 InfoWin ConsoleInfoWin;
 TutWin TutWinObject;
 TutWin *TutWinGlobal = &TutWinObject;
 enum { TECH_FOSSIL = 38, TECH_BRAIN = 48, TECH_ORBITAL = 77 };
-uint8_t GameTechAchieved[89];
+
 
 static int random_values[128], random_count, random_cursor;
 static int spot_calls, map_draws, world_raises, rocky_calls, play_calls;
@@ -178,9 +178,11 @@ static void reset(int climate, int event_roll, int tectonic_roll) {
     PlayersData[0].current_num_bases = 2;
     ConsoleGlobal.faction_id_ = 0;
     IsMultiplayerNet = 0; ExpansionEnabled = 0;
-    GameRules = GameState = LockEnableMask = StartingMissionYear = 0;
+    GameDataStateStorage = GameDataStateWindow();
+    ScenarioSave = ScenarioSaveState();
     Rules.move_rate_roads = 0;
-    TurnCurrentNum = 0; DiffLevelCurrent = 3; BaseFindDist = 13;
+    GameDataStateStorage.fields_.turn_current_num_ = 0;
+    GameDataStateStorage.fields_.diff_level_current_ = 3; BaseFindDist = 13;
     random_values[0] = event_roll; random_values[1] = tectonic_roll;
     random_count = 2; random_cursor = 0;
     spot_calls = map_draws = world_raises = rocky_calls = play_calls = 0;
@@ -217,7 +219,7 @@ static void reset(int climate, int event_roll, int tectonic_roll) {
     for (int i = 0; i < 8; ++i) cargo_values[i] = veh_cargo_limit;
     mutate_console_on_spot = 0;
     last_stack_x = last_stack_y = -1;
-    BaseCurrentCount = 0; RankingFactionIDUnk2 = 0;
+
     trace_length = 0; trace[0] = 0;
     last_popup_title = last_popup_icon = 0;
     last_popup_duration = 0;
@@ -318,7 +320,7 @@ int veh_init(int proto, int, int x, int y) {
         && mutate_initialized_proto >= 0)
         Vehs[veh_init_value].proto_id = mutate_initialized_proto;
     if (veh_init_calls == mutate_turn_after_init_call)
-        TurnCurrentNum = mutated_turn_value;
+        GameDataStateStorage.fields_.turn_current_num_ = mutated_turn_value;
     if (veh_init_calls == mutate_tile_after_init_call)
         MapTiles[mutate_tile_index].bit &= ~3u;
     return veh_init_value;
@@ -444,14 +446,26 @@ def _compile_run(compiler, namespace, owner, main, expected_run=0):
     with tempfile.TemporaryDirectory(prefix="osmx-goody-actual-source-") as temp:
         cpp = Path(temp) / "goody_actual_source.cpp"
         exe = Path(temp) / "goody_actual_source"
-        cpp.write_text(FIXTURE_CPP + namespace + chr(10) + owner + chr(10) + main)
+        fixture = FIXTURE_CPP.replace(
+            "/* ACTUAL_GAME_STORAGE */", current_game_storage_fixture(scenario=True))
+        # Keep the product's signed faction / unsigned ranking equality intact.
+        # The former signed fixture global hid these two host diagnostics.
+        # Observe and whitelist only these warnings below, not future warnings.
+        cpp.write_text(fixture + namespace + chr(10) + owner + chr(10) + main)
         built = subprocess.run(
             [compiler, "-std=c++14", "-Wall", "-Wextra", "-Werror",
-             "-Wno-parentheses", "-O0", str(cpp), "-o", str(exe)],
+             "-Wno-parentheses", "-Wno-error=sign-compare", "-O0", str(cpp), "-o", str(exe)],
             text=True, capture_output=True, check=False,
         )
         assert built.returncode == 0, (compiler + " compile rc="
             + str(built.returncode) + chr(10) + built.stdout + built.stderr)
+        signedness = re.findall(r"warning:[^\n]*\[-Wsign-compare\]", built.stderr)
+        assert len(signedness) == 2, built.stderr
+        assert owner.count(
+            "faction_id == GameDataStateStorage.fields_.ranking_faction_id_unk2_") == 2
+        diagnostics = built.stderr.split("warning:")[1:]
+        assert len(diagnostics) == 2 and all(
+            "ranking_faction_id_unk2_" in diagnostic for diagnostic in diagnostics), built.stderr
         ran = subprocess.run([str(exe)], check=False)
         if expected_run is None:
             assert ran.returncode != 0, compiler + " mutant unexpectedly passed"
@@ -482,7 +496,8 @@ SPAWN_MAIN = r'''
 int main() {
     reset(0x20, 9, 0);
     random_values[0] = 9; random_values[1] = 1; random_values[2] = 0;
-    random_count = 3; veh_init_value = 3; TurnCurrentNum = 50;
+    random_count = 3; veh_init_value = 3;
+    GameDataStateStorage.fields_.turn_current_num_ = 50;
     track_spawn_callbacks = 1; mutate_initialized_proto = 14;
     VehPrototypes[13].chassis_id = 0;
     VehPrototypes[14].chassis_id = 1;
@@ -499,7 +514,7 @@ int main() {
 RELOCATION_MAIN = r'''
 int main() {
     reset(0x60, 4, 0);
-    TurnCurrentNum = 0x32;
+    GameDataStateStorage.fields_.turn_current_num_ = 0x32;
     random_values[0] = 4; random_values[1] = 46; random_values[2] = 54;
     random_count = 3;
     MapTiles[54 * MapLongitude + 23].climate = 0x60;
