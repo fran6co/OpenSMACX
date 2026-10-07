@@ -34,7 +34,6 @@ BufferFree,crt_ownership,replace_after_ownership_boundary,Buffer allocations com
 BufferHLine,ui_dependency,recover_buffer_hline,Temporary dependency for the recovered two-color box outline until the clipped horizontal line primitive is source-owned
 BufferOriginalFill,ui_dependency,recover_buffer_fill,Temporary dependency for the recovered GraphicWin fill until Buffer fill is source-owned
 BufferOriginalFillColor,ui_dependency,recover_buffer_fill,Buffer::fill(int) at 0x005DFB50, the whole-surface paint the recovered GraphicWin::fill(int) uses on its opaque path; recovering Buffer's fill retires this
-BufferOriginalInit,ui_dependency,recover_owning_class,Buffer::init at 0x005D7670; 847 bytes of DirectDraw and GDI surface creation GraphicWin::init hands its computed size to
 BufferOriginalMapColors,ui_dependency,recover_buffer_map_colors,Buffer::map_colors at 0x005DA330, the table remap the recovered GraphicWin::fill(int) runs after a transparent copy; bounds are inclusive
 BufferTextWidthMeasured,ui_dependency,recover_buffertextwidthmeasured_body,Temporary dependency for the recovered null-terminated text-width wrapper until the measured overload and its three call targets are source-owned
 BufferVLine,ui_dependency,recover_buffer_vline,Temporary dependency for the recovered two-color box outline until the clipped vertical line primitive is source-owned
@@ -374,11 +373,7 @@ WaveOperatorNew,crt_ownership,replace_after_ownership_boundary,The game CRT oper
 WaveOriginalDestructor,ui_dependency,recover_wave_destructor,Temporary dependency for the recovered Wave atexit thunks until the Wave destructor is source-owned
 WaveOriginalLoad,ui_dependency,recover_wave_load,Temporary dependency for the recovered Wave play until the no-argument Wave::load is source-owned
 WinFlipOriginal,ui_dependency,recover_winfliporiginal_body,Temporary dependency for the recovered bubble dismissal until the flip and its fourteen call targets are source-owned
-WinOriginalClose,ui_dependency,recover_win_close,Temporary dependency for recovered GraphicWin close until Win teardown is source-owned
-WinOriginalDestructor,ui_dependency,recover_win_close,Temporary dependency for the recovered GraphicWin destructor until the Buffer and Win teardown closure is source-owned
 WinOriginalHide,ui_dependency,recover_owning_class,Temporary dependency for the recovered forwarders until Win::hide is source-owned
-WinOriginalInit,ui_dependency,recover_owning_class,The 2285-byte Win::init window-creation closure GraphicWin::init delegates to at 0x005EBD80; retires when Win::init is recovered
-WinOriginalNonclientToClient,ui_dependency,recover_owning_class,Win::nonclient_to_client at 0x005EEF60; converts an outer size to a client size in place on the non-0x800 arm of GraphicWin::init
 WinOriginalOnMouseMove,ui_dependency,recover_owning_class,Temporary dependency for the recovered forwarders until Win::on_mouse_move is source-owned
 WinOriginalOnNcHittest,ui_dependency,recover_owning_class,Temporary dependency for the recovered forwarders until Win::on_nc_hittest is source-owned
 WinOriginalReleaseModal,ui_dependency,recover_owning_class,Temporary dependency for the recovered forwarders until Win::release_modal is source-owned

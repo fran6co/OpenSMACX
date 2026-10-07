@@ -24,7 +24,6 @@
 // GraphicWin constructor-installed Win branch: capture slot4, update slot63.
 // Table start is observed in the original constructor; full extent remains unknown.
 // RECOVERY_GENERATED: v1 vtable 0x0066FC50 ? ??_7GraphicWin@@6BWin@@@ 0x005D4CF0
-#include "original_seam.h"
 #include "graphicwin.h"
 #include "buffer.h"
 #include "scroll.h"
@@ -47,32 +46,6 @@
 // RECOVERY_IMPORT: v1 __imp__IntersectRect@12 USER32.dll name:IntersectRect
 // RECOVERY_IMPORT: v1 __imp__BitBlt@36 GDI32.dll name:BitBlt
 
-void __fastcall buffer_subobject_destructor(void *self) {
-    // Source-owned: dispatches to the recovered Buffer destructor rather than
-    // the original body at 0x005D7410.
-    buffer_destructor_redirect(reinterpret_cast<Buffer *>(self), nullptr);
-}
-
-void __fastcall buffer_subobject_close(void *self) {
-    reinterpret_cast<Buffer *>(self)->close();
-}
-
-void __fastcall win_subobject_destructor(void *self) {
-    // Source-owned since the body homed into win.cpp: dispatches to the
-    // recovered Win destructor rather than the raw image address 0x005EBC90,
-    // which is unmapped in a standalone build. Same move the Buffer
-    // subobject destructor above made when its body landed.
-    reinterpret_cast<Win *>(self)->Win::~Win();
-}
-
-func_subobject_destructor BufferSubobjectDestructor = original_method<func_subobject_destructor>(
-    reinterpret_cast<unsigned long>(&buffer_subobject_destructor));
-func_subobject_destructor WinOriginalDestructor =
-    original_method<func_subobject_destructor>(
-        reinterpret_cast<unsigned long>(&win_subobject_destructor));
-func_subobject_close BufferSubobjectClose = original_method<func_subobject_close>(
-    reinterpret_cast<unsigned long>(&buffer_subobject_close));
-func_subobject_close WinOriginalClose = original_method<func_subobject_close>(0x005EB640);
 // RECOVERY_OBJECT: v1 0x009B33C0 ?GraphicWinFieldA0CDefault@@3P6AHPAVGraphicWin@@PADPAVBuffer@@@ZA
 GraphicWinCaptionDraw GraphicWinFieldA0CDefault;  // 0x009B33C0
 
@@ -157,50 +130,6 @@ GraphicWin::GraphicWin() {
 }
 
 
-namespace {
-
-struct DestructorProbe {
-    int buffer_calls;
-    int win_calls;
-    void *buffer_target;
-    void *win_target;
-    int order;
-};
-
-DestructorProbe Probe = {0};
-
-}  // namespace
-
-void graphic_win_destructor_probe_reset() {
-    Probe = DestructorProbe();
-}
-
-int graphic_win_destructor_probe_buffer_calls() { return Probe.buffer_calls; }
-int graphic_win_destructor_probe_win_calls() { return Probe.win_calls; }
-void *graphic_win_destructor_probe_buffer_target() { return Probe.buffer_target; }
-void *graphic_win_destructor_probe_win_target() { return Probe.win_target; }
-int graphic_win_destructor_probe_order() { return Probe.order; }
-
-namespace {
-
-typedef uint32_t (OriginalObject::*func_scalar_deleting_destructor)(uint32_t);
-
-}  // namespace
-
-// Win::close is not source-owned yet (0x005EB640, still 1610 bytes of
-// verbatim teardown). The image's own GraphicWin::close calls it with a
-// plain `call rel32` and no null check, so the null-checked runtime seam has
-// to move OFF the call site and into a one-argument `__fastcall` forwarder:
-// a single-parameter `__fastcall` receives its argument in ECX only, which
-// is the same encoding as a zero-argument `__thiscall`, so the call site
-// itself compiles to the direct, unconditional call the image has. The
-// pointer stays bindable inside the forwarder for hybrid-process tests.
-void __fastcall win_close_original(Win *self) {
-    if (WinOriginalClose) {
-        (ORIGINAL(self)->*WinOriginalClose)();
-    }
-}
-
 /*
 Purpose: Close a GraphicWin by closing its Win base and Buffer subobject,
          resetting its window-specific state, and deleting the trailing
@@ -218,10 +147,10 @@ Purpose: Close a GraphicWin by closing its Win base and Buffer subobject,
 // notes     Runtime redirect installed by DllMain after byte-signature validation; calls the temporary original Win close dependency
 Return Value: field_A0C_ default when no interface is present; otherwise the
               scalar-deleting virtual call's return residue
-Status: Complete with temporary Win close dependency
+Status: Source-owned base calls; explicit deleting-return contract below.
 */
 uint32_t GraphicWin::close() {
-    win_close_original(this);
+    Win::close();
     Buffer::close();
 
     // Win's own field_134_/field_138_ are named now that the base's fields
@@ -252,15 +181,16 @@ uint32_t GraphicWin::close() {
         return field_A0C_value();
     }
 
-    // Slot 0, called where it lives: `vtable_method` leaves the call operand
-    // at `[vtable]` so VC6 emits one `call dword ptr [reg]` rather than
-    // loading the slot into a register first.
+    // Original init allocates a Buffer (0x005D4FA6..0x005D4FD6). Its scalar
+    // deleting destructor at 0x005E3610 destroys/frees that allocation and
+    // returns the saved receiver at 0x005E3628. Capture that numeric return
+    // before genuine virtual deletion, then clear ownership after callbacks.
+    // Historical slot-spelling experiment, superseded by genuine deletion:
     // TRIED: inlining the `vtable_method<...>(...)` call directly into
     // the `->*` expression instead of naming it `deleting_destructor` first -
     // no change, still `eax` where the image has `edx` for this one slot.
-    func_scalar_deleting_destructor &deleting_destructor =
-        vtable_method<func_scalar_deleting_destructor>(release_target, 0);
-    const uint32_t result = (ORIGINAL(release_target)->*deleting_destructor)(1);
+    const uint32_t result = reinterpret_cast<uint32_t>(release_target);
+    delete release_target;
     owned_buffer_ = 0;
     return result;
 }
@@ -279,7 +209,7 @@ Purpose: Destroy a GraphicWin by installing the original virtual tables,
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005D7410 0x005EBC90
 // notes     Runtime redirect installed by DllMain after byte-signature validation
-Status: Complete with temporary Buffer and Win subobject dependencies
+Status: Complete; compiler-generated Buffer and Win base destruction.
 */
 // A REAL DESTRUCTOR. Its own TRIED lesson named the precondition - Buffer
 // and Win as a real base - and both are, so VC6 generates the SEH unwind

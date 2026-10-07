@@ -17,7 +17,6 @@
  */
 #pragma once
 
-#include "original_seam.h"
 #include "buffer.h"
 #include "win.h"
 
@@ -235,7 +234,7 @@ class GraphicWin : public Win, public Buffer {
   // RECOVERY_MEMBER: v3 GraphicWin overlay_bottom_right_ Sprite* 0xA04 0x005D6AC0
   Sprite *overlay_bottom_right_;
   // Optional separately allocated Buffer, distinct from the Buffer base.
-  // init creates it; on_size resizes it; close releases it through slot 0.
+  // init creates it; on_size resizes it; close performs virtual scalar delete.
   // Original init calls Buffer's constructor at 0x005D4FC5, then stores
   // its returned pointer at 0x005D4FD6. on_size loads that receiver at
   // 0x005D628D before calling Buffer::resize at 0x005D6299.
@@ -250,29 +249,10 @@ class GraphicWin : public Win, public Buffer {
 
 // Buffer::fill is not recovered yet, so it is reached through a seam on the
 // window's own buffer at 0x444.
-typedef int (OriginalObject::*func_buffer_fill)(int, int, int, int, int);
 
 
 static_assert(sizeof(GraphicWin) == 0xA14,
               "GraphicWin layout must match the legacy ABI");
-
-typedef void (OriginalObject::*func_subobject_destructor)();
-typedef void (OriginalObject::*func_subobject_close)();
-
-// The Buffer subobject destructor is source-owned; the seam stays bindable so
-// tests outside the hybrid process can substitute it. The Win subobject
-// destructor is still a temporary original dependency.
-// tear down GDI and DirectDraw resources through the executable's own CRT and
-// stay at their original addresses until that closure is source-owned. Tests
-// outside the hybrid process rebind them.
-extern func_subobject_destructor BufferSubobjectDestructor;
-extern func_subobject_destructor WinOriginalDestructor;
-
-// GraphicWin::close keeps Win::close as a temporary original dependency;
-// Buffer::close is source-owned. Both remain bindable so source-level tests
-// can verify delegation order without entering process-owned teardown code.
-extern func_subobject_close BufferSubobjectClose;
-extern func_subobject_close WinOriginalClose;
 
 // Process default copied into field_A0C_ by close().
 extern GraphicWinCaptionDraw GraphicWinFieldA0CDefault;
@@ -307,32 +287,11 @@ struct ConstructedGraphicWin : public GraphicWin {
 };
 
 
-// Test seams: the subobject destructors are original dependencies, so tests
-// substitute recording stubs to observe delegation targets and ordering.
-void graphic_win_destructor_probe_reset();
-int graphic_win_destructor_probe_buffer_calls();
-int graphic_win_destructor_probe_win_calls();
-void *graphic_win_destructor_probe_buffer_target();
-void *graphic_win_destructor_probe_win_target();
-int graphic_win_destructor_probe_order();
-
 // Borrowed process colour-map pointer, initially null in the pinned image.
 // Both transparent fill overloads consult it after copying the parent surface.
 // A null pointer leaves the copied pixels unchanged.
 extern unsigned char *GraphicWinColorMapTable;
 
-
-// Historical seam declarations for GraphicWin::init dependencies. Win::init at
-// 0x005EBD80 (ret 0x24) is the 2285-byte window-creation body,
-// Win::nonclient_to_client at 0x005EEF60 (ret 8) converts an outer
-// size to a client size in place, and Buffer::init at 0x005D7670 (ret 0x10) is
-// the 847-byte DirectDraw/GDI surface creator. Frame minima use real sprites.
-typedef int (OriginalObject::*func_win_init)(int, int, int, int, LPSTR, int, Win *, Menu *, BorderSizing *);
-typedef void (OriginalObject::*func_win_nonclient_to_client)(int *, int *);
-typedef int (OriginalObject::*func_buffer_init)(int, int, int, void *);
-extern func_win_init WinOriginalInit;
-extern func_win_nonclient_to_client WinOriginalNonclientToClient;
-extern func_buffer_init BufferOriginalInit;
 
 // The eleven process window defaults init republishes, at 0x009B3394 - one
 // contiguous block between the colour-map slot GraphicWinColorMapTable
