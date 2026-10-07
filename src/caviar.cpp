@@ -6268,7 +6268,12 @@ Purpose: The isometric box-projector: project the caller's centre and
          and height in [4..5] once the box lands on screen, or zeroes when
          it is entirely above/left of the origin.
 
-// RECOVERY_ROLE: SCAFFOLD Complete owner-side transcription; complete indirect caller and physical-owner qualification remain unresolved.
+Ownership: Global three-pointer __cdecl helper, not an invented class method.
+           Original part calls 0x0063EB24/0x0063EEDB, shadow calls
+           0x0063F1CA/0x0063F4C4 and clip calls 0x0063F758/0x0063F8C7
+           all target this entry. Typed renderer paths supply their actual
+           signed-short centres/extents and six-int result storage; the
+           source-owned projection matrix supplies its six coefficients.
 // ORIGINAL: 0x006401B0 sub_6401b0 0x006401B0-0x006404E2
 // size      818 bytes
 // Deleted seed provenance: git:1ed59304110fc2098fb1dd11457fa5b0074169bd:src/unrecovered/006401b0.cpp
