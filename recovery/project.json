@@ -6,6 +6,9 @@
   "components": {
     "toolchain_archives": {
       "vc6-runtime": "/home/fran6co/opt/vc6/LIB/LIBCMT.LIB"
+    },
+    "system_import_archives": {
+      "winmm-timegettime-thunk": "/home/fran6co/opt/vc6/LIB/WINMM.LIB"
     }
   },
   "audits": "recovery/audits.json",

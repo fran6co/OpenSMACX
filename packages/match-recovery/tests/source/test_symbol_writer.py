@@ -184,6 +184,69 @@ def test_line_splice_affected_source_refuses(splice, location):
         write_symbol(raw, records(raw)[0], SYMBOL)
 
 
+@pytest.mark.parametrize("splice", [b"\\", b"??/"])
+@pytest.mark.parametrize("newline", [b"\n", b"\r\n"])
+def test_ordinary_continued_define_is_preserved_while_unrelated_symbol_is_written(splice, newline):
+    macro = b"#define COPY_EDGE(a) "+ splice + newline + b"    do { (a)++; } while (0)" + newline
+    raw = macro + MARKER + newline + b"int f() {}" + newline
+    row, = records(raw)
+    result = write_symbol(raw, row, SYMBOL)
+    assert result == macro + MARKER + newline + b"// symbol    " + SYMBOL.encode() + newline + b"int f() {}" + newline
+    assert write_symbol(result, records(result)[0], SYMBOL) == result
+
+
+@pytest.mark.parametrize("macro", [
+    b"#define RATIO(x) ((x) / 2)\n",
+    b'#define TEXT "quoted / text"\n',
+    b"#define SELECT(x) ((x) ? 1 : 0)\n",
+])
+def test_unspliced_define_with_ordinary_tokens_remains_supported(macro):
+    raw = macro + MARKER + b"\nint f() {}\n"
+    row, = records(raw)
+    result = write_symbol(raw, row, SYMBOL)
+    assert result == macro + MARKER + b"\n// symbol    " + SYMBOL.encode() + b"\nint f() {}\n"
+
+
+def test_marker_inside_continued_define_refuses_symbol_insertion():
+    raw = (b"#define FOO \\\n" + MARKER + b"\n    body\n")
+    row, = records(raw)
+    with pytest.raises(ValueError, match="ambiguous comment/literal|inside a #define directive"):
+        write_symbol(raw, row, SYMBOL)
+
+
+def test_split_raw_string_opener_inside_continued_define_still_refuses():
+    raw = (b"#define TEXT R\\\n\"tag(payload)tag\"\n" + MARKER + b"\n")
+    row, = records(raw)
+    with pytest.raises(ValueError, match="raw-string source"):
+        write_symbol(raw, row, SYMBOL)
+
+
+def test_fake_define_inside_block_comment_does_not_authorize_splice():
+    raw = b"/*\n#define FAKE \\\nvalue\n*/\n" + MARKER + b"\n"
+    row, = records(raw)
+    with pytest.raises(ValueError, match="line-spliced"):
+        write_symbol(raw, row, SYMBOL)
+
+
+@pytest.mark.parametrize("macro", [
+    b"#define SPLIT_COMMENT /\\\n* not a real directive comment */\n",
+    b"#define SPLIT_LITERAL \\\n\"literal spills from macro\"\n",
+])
+def test_ambiguous_comment_or_literal_spillover_in_macro_refuses(macro):
+    raw = macro + MARKER + b"\n"
+    row, = records(raw)
+    with pytest.raises(ValueError, match="ambiguous comment/literal/trigraph"):
+        write_symbol(raw, row, SYMBOL)
+
+
+def test_existing_marker_and_symbol_fact_inside_continued_macro_refuses():
+    raw = (b"#define FACT \\\n" + MARKER + b"\n// symbol _old\n")
+    row, = records(raw)
+    assert row.symbol == "_old"
+    with pytest.raises(ValueError):
+        write_symbol(raw, row, SYMBOL)
+
+
 @pytest.mark.parametrize("separator", [b"\v", b"\f", b"\x1c", "\u2028".encode()])
 def test_unsupported_line_separators_refuse(separator):
     raw = MARKER + b"\n// prose" + separator + b"// more\nint f() {}\n"

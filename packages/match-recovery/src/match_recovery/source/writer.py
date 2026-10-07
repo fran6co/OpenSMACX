@@ -73,6 +73,41 @@ _SYMBOL_SOURCE_TOKENS = re.compile(
     re.DOTALL | re.VERBOSE,
 )
 
+
+def _define_directive_lines(text: str) -> set[int]:
+    """Physical lines in the narrow, lexically unambiguous macro subset."""
+    opaque_lines: set[int] = set()
+    for token in _SYMBOL_SOURCE_TOKENS.finditer(text):
+        if (token.group().startswith(("//", "/*"))
+                or re.match(r'(?:u8|u|U|L)?["\']', token.group())):
+            opaque_lines.update(range(text.count("\n", 0, token.start()),
+                                      text.count("\n", 0, token.end()) + 1))
+    macro_lines: set[int] = set()
+    continuing = False
+    splice = re.compile(r"(?:\\|\?\?/)[ \t]*$")
+    define = re.compile(r"^[ \t]*#[ \t]*define\b")
+    for offset, line in enumerate(text.splitlines()):
+        is_define = (not continuing and offset not in opaque_lines
+                     and define.match(line) is not None)
+        if continuing:
+            macro_lines.add(offset)
+            tail = splice.search(line)
+            body = line[:tail.start()] if tail else line
+            if re.search(r"[\"'/?]", body):
+                raise ValueError("symbol rewriting does not support ambiguous comment/literal/trigraph syntax in a continued #define")
+            continuing = tail is not None
+        elif is_define and splice.search(line):
+            macro_lines.add(offset)
+            tail = splice.search(line)
+            if re.search(r"[\"'/?]", line[:tail.start()]):
+                raise ValueError("symbol rewriting does not support ambiguous comment/literal/trigraph syntax in a continued #define")
+            continuing = True
+        elif splice.search(line):
+            raise ValueError("symbol rewriting does not support line-spliced source outside a continued #define")
+    if continuing:
+        raise ValueError("symbol rewriting does not support unterminated line-spliced source")
+    return macro_lines
+
 # ------------------------------------------------------------------ spelling
 
 
@@ -479,15 +514,19 @@ def write_symbol(raw: bytes, record: DecompilationState, symbol: str) -> bytes:
     text = raw.decode("utf-8", errors="replace").replace("\r\n", "\n").replace("\r", "\n")
     if re.search(r"[\v\f\x1c-\x1e\x85\u2028\u2029]", text):
         raise ValueError("unsupported source line separator")
-    if re.search(r"(?:\\|\?\?/)[ \t]*\n", text):
-        raise ValueError("symbol rewriting does not support line-spliced source")
+    # Preprocessing removes splices before C++ tokenization. Check that logical
+    # spelling too, so a split raw-string opener cannot evade the guard.
+    logical_text = re.sub(r"(?:\\|\?\?/)[ \t]*\n", "", text)
     if any(re.fullmatch(r'(?:u8|u|U|L)?R"', token.group())
-           for token in _SYMBOL_SOURCE_TOKENS.finditer(text)):
+           for token in _SYMBOL_SOURCE_TOKENS.finditer(logical_text)):
         raise ValueError("symbol rewriting does not support raw-string source")
+    macro_lines = _define_directive_lines(text)
     records = read_text(text, record.path)
     selected = [i for i, row in enumerate(records) if row.line == record.line]
     if len(selected) != 1 or asdict(records[selected[0]]) != asdict(record):
         raise ValueError("source symbol update requires a current record snapshot")
+    if record.line - 1 in macro_lines:
+        raise ValueError("symbol annotation is inside a #define directive")
     bindings = binding_source.parse(text, records)
     position = selected[0]
     lines, source_lines = text.splitlines(), raw.splitlines(keepends=True)
@@ -502,6 +541,8 @@ def write_symbol(raw: bytes, record: DecompilationState, symbol: str) -> bytes:
                 facts.append((offset, match, value))
     if len(facts) > 1:
         raise ValueError("ambiguous duplicate emitted-symbol facts")
+    if facts and facts[0][0] in macro_lines:
+        raise ValueError("emitted-symbol fact is inside a #define directive")
     output = list(source_lines)
     if facts:
         offset, match, value = facts[0]

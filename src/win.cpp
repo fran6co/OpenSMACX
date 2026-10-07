@@ -6443,6 +6443,16 @@ void Win::on_l_button_down(long double_click, int x, int y, unsigned int, int fr
 
 // ===== homed from src/recovered/units/005f6550.cpp =====
 
+// ORIGINAL: 0x005F6550 ?on_l_button_up@Win@@QAEXHHIH@Z 0x005F6550-0x005F670D FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned terranx_original.exe SHA-256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: Win primary virtual table slot 82 at cell 0x0066FF18 selects original entry 0x005F6550.", "src/win.h declares the corresponding Win virtual contract and slot; the unique typed definition in src/win.cpp is the source owner: Win::on_l_button_up is the slot-82 Win virtual.", "The complete preserved seed identity, span, formal facts, claim state, and useful historical notes are restored from 3cb99d431^:src/recovered/units/005f6550.cpp; see the digest-bound inert archive below.", "The existing typed Win body is retained unchanged. This restores source identity and evidence only; it grants no byte/semantic claim or original-TU provenance."], "reason": "Restore the preserved original Win method identity to its existing genuine Win definition using the observed current compiler symbol; retain the old source evidence and claims unchanged."}
+// symbol    ?on_l_button_up@Win@@UAEXHHIH@Z
+// size      445 bytes
+// prototype void (__thiscall ?on_l_button_up@Win@@QAEXHHIH@Z)(Win* this, int, int, unsigned int, int)
+// callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005F7E90 0x005FA7E0
+// indirect  0x005F660C 0x005F6617 0x005F6625 0x005F6630 0x005F663B 0x005F664C 0x005F6657 0x005F66AD 0x005F66B8 0x005F66C6 0x005F66D1 0x005F66E4 0x005F66F5 0x005F6700
 void Win::on_l_button_up(int x, int y, unsigned int keys, int dbl) {
     Win *captured = WinPointerOwner1;
     if (captured == nullptr) {
@@ -8782,6 +8792,17 @@ void Win::nonclient_to_client(RECT * rect) {
 // ===== homed from src/unrecovered/005f2cf0.cpp =====
 typedef int (__stdcall *IntersectRectFn)(RECT *, const RECT *, const RECT *);
 
+// ORIGINAL: 0x005F2CF0 ?on_redraw_nc@Win@@QAEXPAURECT@@H@Z 0x005F2CF0-0x005F37BA FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned terranx_original.exe SHA-256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: Win primary virtual table slot 67 at cell 0x0066FEDC selects original entry 0x005F2CF0.", "src/win.h declares the corresponding Win virtual contract and slot; the unique typed definition in src/win.cpp is the source owner: Win::on_redraw_nc is the slot-67 Win virtual.", "The complete preserved seed identity, span, formal facts, claim state, and useful historical notes are restored from 3cb99d431^:src/unrecovered/005f2cf0.cpp; see the digest-bound inert archive below.", "The existing typed Win body is retained unchanged. This restores source identity and evidence only; it grants no byte/semantic claim or original-TU provenance."], "reason": "Restore the preserved original Win method identity to its existing genuine Win definition using the observed current compiler symbol; retain the old source evidence and claims unchanged."}
+// symbol    ?on_redraw_nc@Win@@UAEXPAUtagRECT@@H@Z
+// size      2762 bytes
+// prototype void (__thiscall ?on_redraw_nc@Win@@QAEXPAURECT@@H@Z)(Win* this, RECT*, int)
+// callers   1   call targets   10
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D8000 0x005DA860 0x005DAC70 0x005DACB0 0x005DCF40 0x005DD130 0x005DD450 0x005DFB50 0x005E3203 0x006453E0
+// indirect  0x005F2E85 0x005F30E4 0x005F319C 0x005F332B 0x005F33D3 0x005F3544 0x005F35FC 0x005F37AA
+// TRIED: first 9 instructions match (prologue, flag tests); diverges at instr #10 (je vs mov). Field map (buffer1_..4_ at 0xB4/0xB8/0xBC/0xC0, heap_.base_ at 0xE0 as the title char*, client_rect_/outer_rect_ at 0x14C/0x13C) cross-checked against param_1[N]*4 in the Ghidra listing and is consistent across all 4 near-identical edge blocks.
 void Win::on_redraw_nc(RECT * area, int flags) {
     if ((*(unsigned char *)&this->iSomeFlag_ & 2) == 0) return;
     unsigned int win_flags = this->iFlags_;
@@ -13102,3 +13123,31 @@ void __cdecl Win::display_action(int action) {
         return;
     }
 }
+
+/*
+ * RECOVERY_HISTORY: v1 address=0x005F6550 source_sha256=1ed623f7637b0127fa933752dc4300808d1f154d1f65db9ddd17ec984b87bc50 envelope_sha256=28a9214a68bad9b535d59a754ce033808a762889451fa64730a701117e25ff12
+ * [ARCHIVE] // original marker: 0x005F6550 ?on_l_button_up@Win@@QAEXHHIH@Z 0x005F6550-0x005F670D FILE
+ * [ARCHIVE] // size      445 bytes
+ * [ARCHIVE] // prototype void (__thiscall ?on_l_button_up@Win@@QAEXHHIH@Z)(Win* this, int, int, unsigned int, int)
+ * [ARCHIVE] // callers   0   call targets   2
+ * [ARCHIVE] // kind      game
+ * [ARCHIVE] // flags     hidden;sp_ready;purged_ok
+ * [ARCHIVE] // calls     0x005F7E90 0x005FA7E0
+ * [ARCHIVE] // indirect  0x005F660C 0x005F6617 0x005F6625 0x005F6630 0x005F663B 0x005F664C 0x005F6657 0x005F66AD 0x005F66B8 0x005F66C6 0x005F66D1 0x005F66E4 0x005F66F5 0x005F6700
+ * [ARCHIVE] // PRESERVED UNIT - measured MISMATCH.
+ * [ARCHIVE] // address        0x005F6550
+ * [ARCHIVE] // measured tier  MISMATCH
+ * [ARCHIVE] // divergence     0
+ */
+/*
+ * RECOVERY_HISTORY: v1 address=0x005F2CF0 source_sha256=637a3f724425acd63ef14a648514bf1d6f492554c38089a14343e1300c53fea0 envelope_sha256=2390024b1ad89d1f466eb52814880906e5f0bdb5050835f2bd7c7d9e19067c2e
+ * [ARCHIVE] // original marker: 0x005F2CF0 ?on_redraw_nc@Win@@QAEXPAURECT@@H@Z 0x005F2CF0-0x005F37BA FILE
+ * [ARCHIVE] // TRIED: first 9 instructions match (prologue, flag tests); diverges at instr #10 (je vs mov). Field map (buffer1_..4_ at 0xB4/0xB8/0xBC/0xC0, heap_.base_ at 0xE0 as the title char*, client_rect_/outer_rect_ at 0x14C/0x13C) cross-checked against param_1[N]*4 in the Ghidra listing and is consistent across all 4 near-identical edge blocks.
+ * [ARCHIVE] // size      2762 bytes
+ * [ARCHIVE] // prototype void (__thiscall ?on_redraw_nc@Win@@QAEXPAURECT@@H@Z)(Win* this, RECT*, int)
+ * [ARCHIVE] // callers   1   call targets   10
+ * [ARCHIVE] // kind      game
+ * [ARCHIVE] // flags     hidden;sp_ready;purged_ok
+ * [ARCHIVE] // calls     0x005D8000 0x005DA860 0x005DAC70 0x005DACB0 0x005DCF40 0x005DD130 0x005DD450 0x005DFB50 0x005E3203 0x006453E0
+ * [ARCHIVE] // indirect  0x005F2E85 0x005F30E4 0x005F319C 0x005F332B 0x005F33D3 0x005F3544 0x005F35FC 0x005F37AA
+ */
