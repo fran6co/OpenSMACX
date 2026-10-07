@@ -2,7 +2,6 @@
 #include "selectpartwin.h"
 #include "technology.h"
 #include "general.h"
-#include "leaf_recoveries.h"
 #include "console.h"  // ConsoleGlobal.faction_id_ owns old 0x00939284
 #include "veh.h"
 #include "alpha.h"

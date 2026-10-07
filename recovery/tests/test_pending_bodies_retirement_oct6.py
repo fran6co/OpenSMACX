@@ -28,18 +28,20 @@ def test_pending_translation_unit_is_retired_only_after_owners_are_present():
     assert not (ROOT / "src/pending_bodies.cpp").exists()
 
     leaf = {row.address: row for row in read_file(ROOT / "src/leaf_recoveries.cpp")}
+    runtime = {row.address: row for row in read_file(ROOT / "src/vendor/vc6-runtime.recovery.h")}
+    assert 0x006456E4 not in leaf and 0x006457C2 not in leaf
     for address, name, spans in (
         (0x006456E4, "??_M@YGXPAXIHP6EX0@Z@Z", ((0x006456E4, 0x00645764),)),
         (0x006457C2, "??_L@YGXPAXIHP6EX0@Z1@Z", ((0x006457C2, 0x00645844),)),
     ):
-        row = leaf[address]
+        row = runtime[address]
         assert row.mode is Mode.FILE and row.name == name
         assert row.image_spans == spans and not row.byte_exact and not row.semantic
         assert not row.body and not row.symbol and row.kind == "library"
-    assert "MISMATCH #12" in leaf[0x006456E4].ruled_out[0]
-    assert "Historical project-loop location" in (ROOT / "src/leaf_recoveries.cpp").read_text()
-    assert leaf[0x006456E4].image_spans == ((0x006456E4, 0x00645764),)
-    assert leaf[0x006457C2].image_spans == ((0x006457C2, 0x00645844),)
+    assert "MISMATCH #12" in runtime[0x006456E4].ruled_out[0]
+    runtime_text = (ROOT / "src/vendor/vc6-runtime.recovery.h").read_text()
+    assert runtime_text.count("Historical project-loop location: src/vector_teardown.cpp") == 2
+    assert "Historical project-loop location" not in (ROOT / "src/leaf_recoveries.cpp").read_text()
     vector = (ROOT / "src/vector_teardown.cpp").read_text()
     assert "extern \"C\" void __stdcall sub_402ee0(" in vector
     assert "VectorDtorIterator" not in vector

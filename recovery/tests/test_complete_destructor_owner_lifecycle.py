@@ -119,7 +119,8 @@ def test_natural_typed_owners_and_only_superseded_seams_are_removed():
     active_dialogs = re.sub(r"/\*[\s\S]*?\*/", "", source("src/dialogs.cpp"))
     assert "dialogs_scalar_dtor_redirect" not in active_dialogs
 
-    for rel in ("src/leaf_recoveries.cpp", "src/leaf_recoveries.h",
+    assert not (ROOT / "src/leaf_recoveries.h").exists()
+    for rel in ("src/leaf_recoveries.cpp",
                 "src/listbox.cpp", "src/listbox.h", "src/dialogs.cpp",
                 "src/dialogs.h", "src/graphicwin.cpp", "src/graphicwin.h"):
         text = source(rel)

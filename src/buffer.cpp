@@ -326,10 +326,6 @@ Buffer::Buffer() {
     }
 }
 
-Buffer *__fastcall buffer_construct_redirect(Buffer *self, void *) {
-    new (self) Buffer();
-    return self;
-}
 
 /*
 Purpose: Set the four fonts used by the buffer.
@@ -1920,11 +1916,6 @@ Status: Complete
 
 MEASURED Buffer::~Buffer() { close(); }
 
-void __fastcall buffer_destructor_redirect(Buffer *self, void *) {
-    // QUALIFIED, so it is the direct `call ??1Buffer@@QAE@XZ` the image makes
-    // and not a dispatch through the vtable slot.
-    self->Buffer::~Buffer();
-}
 
 /*
 Purpose: Acquire the device context, taking one reference on the shared handle.

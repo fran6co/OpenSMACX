@@ -120,9 +120,7 @@ def test_current_owner_mappings_preserve_full_durable_history() -> None:
     remaining = {r.address for r in read_text(seed_path.read_text(encoding="utf-8"),
                                              seed_path.resolve())}
     assert not set(OWNERS) & remaining, "migrated identities remain in leaf owner"
-    leaf_header = (ROOT / "src/leaf_recoveries.h").read_text(encoding="utf-8")
-    assert "DialogsItemText6900C4" not in leaf_header
-    assert not re.search(r"\(char\s*\*\)\s*0x006900C4", leaf_header)
+    assert not (ROOT / "src/leaf_recoveries.h").exists()
 
 
 HOST = r'''#include <cassert>

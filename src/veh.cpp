@@ -61,7 +61,6 @@
 #include <mmsystem.h>
 #include "designwin.h" // Crawler animation advances while the design window is visible.
 #include "vector.h"  // vector_add operates on actual three-float arrays.
-#include "leaf_recoveries.h"  // The source-owned vector-length operation.
 
 int __cdecl popp(const char *title, const char *label, int channel,
                  const char *picture, int(__cdecl *callback)());

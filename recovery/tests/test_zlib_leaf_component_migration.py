@@ -184,11 +184,10 @@ def test_zlib_component_keeps_exactly_the_nine_reviewed_provider_bindings():
 
 def test_no_application_standin_or_declaration_remains_and_cmake_keeps_zlib():
     leaf = (ROOT / LEAF).read_text(encoding="utf-8")
-    header = (ROOT / "src/leaf_recoveries.h").read_text(encoding="utf-8")
+    assert not (ROOT / "src/leaf_recoveries.h").exists()
     cmake = (ROOT / "CMakeLists.txt").read_text(encoding="utf-8")
     for name in ("sub_640a80", "sub_644930"):
         assert not re.search(rf"\b{re.escape(name)}\s*\(", leaf)
-        assert not re.search(rf"\b{re.escape(name)}\s*\(", header)
     assert "src/vendor/zlib-1.0.2/adler32.c" in cmake
     assert "src/vendor/zlib-1.0.2/infutil.c" in cmake
     assert "src/vendor/zlib-1.0.2/deflate.c" in cmake

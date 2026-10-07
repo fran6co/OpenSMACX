@@ -71,7 +71,6 @@
 #include "palette.h"
 #include "caviar.h"
 #include "vector.h"  // free three-float operations
-#include "leaf_recoveries.h"
 #include "newtechwin.h"  // Existing technology-popup sprite assets.
 #include "infowin.h"  // Shared faction text/shadow colors.
 #include "maininterface.h"  // Shared chat foreground/shadow colors.
@@ -3121,6 +3120,7 @@ void __cdecl load_cycling() {
 // Construct and destroy the fixed-art loader's genuine local Buffer.
 // ORIGINAL: 0x00455E50 ?load_deswin_sprites@@YAXXZ 0x00455E50-0x00455E73 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned 0x00455E80 load_fixed_sprites calls 0x00455E50 in its documented fixed-art call order", "the pinned body invokes only Buffer construction then destruction on the same local object; the projected source uses Buffer automatic storage", "src/game.cpp already owns load_fixed_sprites and includes buffer.h"], "reason": "Move the helper beside the startup loader that directly calls it and express its single Buffer object's original construction/destruction lifetime through automatic storage; no DesignWin instance or sprite state is inferred."}
+// Historical spelling experiments before the automatic-storage recovery:
 // direct calls to the named redirects, not through the
 // `LeafBufferConstruct`/`LeafBufferDestruct` pointer variables (an indirect
 // `call dword ptr [...]` where the image has a direct `call rel32`, since

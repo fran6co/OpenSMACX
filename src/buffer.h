@@ -1044,8 +1044,6 @@ extern Buffer g_IFACE_STD_POPUPS_MIDDLE_BUFFER;
 extern Buffer g_VEHDRAW_BUFFER;  // 0x008CC298
 
 
-void __fastcall buffer_destructor_redirect(Buffer *self, void *);
-Buffer *__fastcall buffer_construct_redirect(Buffer *self, void *);
 
 // Selects the DirectDraw teardown path over the GDI device-context path.
 // 0x009BC494. Non-zero while DirectDraw owns the screen, so the GDI paths
