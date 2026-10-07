@@ -2121,7 +2121,7 @@ BasePop::BasePop() {
     field_31B4_ = BasePopDefaultField31B0[1];
     field_322C_ = 0;
     field_322C_ = BasePopDefaultField322C;
-    external_window_ = (Win *)BasePopDefaultLayout[0];
+    external_window_ = reinterpret_cast<GraphicWin *>(BasePopDefaultLayout[0]);
     default_loc_a_ = BasePopDefaultLayout[1];
     default_loc_b_ = BasePopDefaultLayout[2];
     dialog_width_ = BasePopDefaultDialogSize[0];
@@ -2168,9 +2168,6 @@ BasePop::BasePop() {
 // calls     0x005D4580 0x005D4E40 0x005E3820 0x00609F20 0x0060D1B0 0x0060E7C0 0x00610280 0x00611A90 0x00644EF2
 // indirect  0x00601070 0x00601082 0x006010B4 0x006010C7 0x006010E3 0x00601133 0x00601148 0x00601163 0x0060119C
 
-// The generic signature below is still used by the separate slot58 calls
-// in exec. Button cleanup itself now uses the real BaseButton slot90.
-typedef void (__fastcall *func_basepop_slot090)(void *);
 typedef void (OriginalObject::*func_basepop_list_destroy_dtor)(int);
 
 void BasePop::close() {
@@ -2338,7 +2335,7 @@ void BasePop::close() {
     field_322C_ = BasePopDefaultField322C;
     *(unsigned char *)(self + 0x31a0) = (uint8_t)BasePopDefaultField31A0[0];
 
-    *(int *)(self + 0xa14) = BasePopDefaultLayout[0];
+    external_window_ = reinterpret_cast<GraphicWin *>(BasePopDefaultLayout[0]);
     *(int *)(self + 0xa18) = BasePopDefaultLayout[1];
     *(int *)(self + 0xa1c) = BasePopDefaultLayout[2];
     *(int *)(self + 0xa20) = BasePopDefaultDialogSize[0];
@@ -2492,9 +2489,10 @@ int BasePop::on_key_down(int key) {
 // calls     0x00609A50
 // indirect  0x0060455D 0x00604569 0x0060457B
 
-typedef void (__fastcall *func_basepop_slot058)(void *);
-typedef void (__fastcall *func_basepop_slot002)(void *);
-
+// Constructor-installed BasePop table 0x006698D4 has Win::release_modal
+// at +0xE8 (0x005EE280) and Win::hide at +0x8 (0x005EDCD0).
+// Popup's table 0x006695C8 retains release_modal but overrides hide with
+// 0x00404A80. Use real virtual calls so the dynamic popup lifetime is kept.
 void __cdecl BasePop::double_click(int button_id) {
     // THE MODAL-FOCUS POPUP, not this one: the handler runs for whichever
     // window holds modal focus, and every field it touches belongs to that
@@ -2518,18 +2516,16 @@ void __cdecl BasePop::double_click(int button_id) {
             }
             pop->field_3100_ = 0;
             if ((flags & 0x100) == 0) {
-                // The redraw slot runs on the external window when one is
-                // attached and on the popup itself when not - vtable slot 0xe8
-                // either way.
+                // Release the modal receiver: an attached external window,
+                // or the popup itself. This is not a redraw or teardown.
                 if (pop->external_window_ != 0) {
-                    vtable_slot<func_basepop_slot058>(pop->external_window_,
-                                                      0xe8)(pop->external_window_);
+                    pop->external_window_->release_modal();
                 } else {
-                    vtable_slot<func_basepop_slot058>(pop, 0xe8)(pop);
+                    pop->release_modal();
                 }
             }
             if ((flags & 0x4000) != 0) {
-                vtable_slot<func_basepop_slot002>(pop, 0x8)(pop);
+                pop->hide();
             }
         }
     }
@@ -2793,6 +2789,9 @@ int BasePop::init(int flags, long heap_base) {
 //         parked in field_3100_.
 // LEVER: the redraw slot (0xe8) runs on external_window_ when one is
 //         attached, on the popup itself when not - the double_click tail.
+// Correction to that historical label: the installed tables select
+// Win::release_modal at +0xE8, not redraw. The subsequent +0x8 dispatch
+// is virtual hide, including Popup's override; it must not call close.
 
 
 void BasePop::on_button_clicked(int button_id) {
@@ -2816,14 +2815,13 @@ void BasePop::on_button_clicked(int button_id) {
     }
     if ((field_30A8_ & 0x100) == 0) {
         if (external_window_ == 0) {
-            vtable_slot<func_basepop_slot090>(this, 0xe8)(this);
+            release_modal();
         } else {
-            vtable_slot<func_basepop_slot090>(external_window_,
-                                              0xe8)(external_window_);
+            external_window_->release_modal();
         }
     }
     if ((field_30A8_ & 0x4000) != 0) {
-        vtable_slot<func_basepop_slot002>(this, 0x8)(this);
+        hide();
     }
 }
 

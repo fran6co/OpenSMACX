@@ -379,7 +379,10 @@ class BasePop : public GraphicWin {
   // GraphicWin * stored here) and dispatched through by double_click's
   // vtable call. A pointer, not the uint32_t it was typed before: the
   // image calls its vtable slot 0xe8 with this slot as the receiver.
-  Win *external_window_;  // 0x0a14
+  // Both setter APIs receive GraphicWin*, retained directly or through the
+  // default-layout slot; the observed Diplopop caller supplies that base.
+  // GraphicWin's primary Win view supplies modal and visibility dispatch.
+  GraphicWin *external_window_;  // 0x0a14
   // The STARTING loc_a_/loc_b_ pair: copied over them unless the value is
   // 0x2000, the keep-current sentinel set_loc uses too.
   uint32_t default_loc_a_;  // 0x0a18
