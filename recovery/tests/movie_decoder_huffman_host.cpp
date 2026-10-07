@@ -20,6 +20,16 @@ int idct_calls;
 int last_stride_arg;
 std::uint8_t *last_idct_target;
 
+const std::uint8_t *active_byte_remap;
+
+void pack_rows(const std::uint8_t *component_rows,
+               const std::uint8_t *chroma_rows,
+               std::uint8_t *destination, int row_pitch_bytes) {
+  transform_sixteen(component_rows, chroma_rows,
+                    reinterpret_cast<std::uint32_t *>(destination),
+                    row_pitch_bytes, active_byte_remap);
+}
+
 void idct(std::uint8_t *target, int stride_arg) {
   ++idct_calls;
   last_idct_target = target;
@@ -143,7 +153,8 @@ void test_six_block_native_dispatch_and_fill() {
 
   SixBlockArgs args{coefficient_plane, reinterpret_cast<std::uint8_t *>(output),
                     16, false, {luma, chroma}, &bits, primary, &coeff_state,
-                    idct, remap};
+                    idct, remap, pack_rows};
+  active_byte_remap = remap;
   decode_six_blocks(args);
   assert(idct_calls == 0);
   const std::int32_t filled = 0;
@@ -195,7 +206,8 @@ void test_six_block_idct_route() {
   last_idct_target = nullptr;
   SixBlockArgs args{coefficient_plane, reinterpret_cast<std::uint8_t *>(output),
                     16, false, {luma, chroma}, &bits, primary, &coeff_state,
-                    idct, remap};
+                    idct, remap, pack_rows};
+  active_byte_remap = remap;
   decode_six_blocks(args);
   assert(idct_calls == 1);
   assert(last_idct_target == luma);
@@ -228,7 +240,8 @@ void test_six_flagged_delta_dispatch() {
   for (int i = 0; i != 256; ++i) remap[i] = static_cast<std::uint8_t>(i);
   SixBlockArgs args{coefficient_plane, reinterpret_cast<std::uint8_t *>(output),
                     half_width, true, {luma, chroma}, &bits, block_table,
-                    &coeff_state, idct, remap};
+                    &coeff_state, idct, remap, pack_rows};
+  active_byte_remap = remap;
   decode_six_blocks(args);
   assert(idct_calls == 0);
   for (int block = 0; block != 4; ++block) {

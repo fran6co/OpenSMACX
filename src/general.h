@@ -318,9 +318,16 @@ void __cdecl sub_5d1466(unsigned char *base, int stride, MediaDecoderContext *co
 void __cdecl sub_5d1654(unsigned char *base, int stride, MediaDecoderContext *context);
 void __cdecl sub_5d1842(unsigned char *base, int stride, MediaDecoderContext *context);
 void __cdecl sub_5d1a30(unsigned char *base, int stride, MediaDecoderContext *context);
-void __cdecl sub_5d1b88(unsigned int *outp, int *srcESI, int *srcEDI);
-void __cdecl sub_5d2037(int *data, int *tables, unsigned int *out);
-void __cdecl sub_5d2536(int *coeff_a, int *coeff_b, int *out_words);
+// Normalized from pinned caller reaching definitions: ESI is data/coefficient
+// row, EDI is the paired selector row (streams at DWORD offsets 0 and 64),
+// and EBP is packed output. These are semantic C++ contracts, not the
+// original register-only internal ABI.
+void __cdecl sub_5d1b88(unsigned int *packed_output, int *data_row,
+                        int *selector_pair);
+void __cdecl sub_5d2037(int *data_row, int *selector_pair,
+                        unsigned int *packed_output);
+void __cdecl sub_5d2536(int *coefficient_row, int *selector_pair,
+                        int *packed_output);
 int __cdecl sub_5d2761(unsigned int *src, unsigned int *dst, int count);
 int __cdecl sub_5d2834(unsigned int *param_1, int *param_2, int param_3);
 int __cdecl sub_5d2901(int *param_1, int *param_2, int *param_3, int param_4);

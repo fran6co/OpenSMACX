@@ -757,6 +757,13 @@ static void movie_decoder_idct_rows(uint8_t *output, int stride_arg) {
   sub_5cef8a(reinterpret_cast<BYTE *>(output), stride_arg);
 }
 
+static void movie_decoder_pack_rows(const uint8_t *component_rows,
+                                    const uint8_t *chroma_rows,
+                                    uint8_t *destination,
+                                    int row_pitch_bytes) {
+  sub_5cea09(component_rows, chroma_rows, destination, row_pitch_bytes);
+}
+
 // Mapped original owner 005D2E70. The body below is the typed adapter from
 // the native block interface to the mapped Huffman implementation; callers
 // must retain this owner edge rather than bypassing the helper.
@@ -808,6 +815,7 @@ void __fastcall sub_5d2e70(BYTE *coefficient_block,
   args.idct_rows = movie_decoder_idct_rows;
   args.byte_remap = reinterpret_cast<const uint8_t *>(
       movie_media_conversion_tables.remap_or_lookup_storage.words);
+  args.pack_rows = movie_decoder_pack_rows;
 
   movie_decoder_huffman::decode_six_blocks(args);
   movie_media_decoder_tables.frame_bit_state.cursor = bits.cursor;

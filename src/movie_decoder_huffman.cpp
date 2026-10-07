@@ -249,9 +249,8 @@ void decode_six_blocks(SixBlockArgs &args) {
     }
   }
 
-  transform_sixteen(args.scratch.luma_16x16, args.scratch.chroma_16x8,
-                    reinterpret_cast<uint32_t *>(args.destination),
-                    half_width * 4, args.byte_remap);
+  args.pack_rows(args.scratch.luma_16x16, args.scratch.chroma_16x8,
+                 args.destination, half_width * 4);
 }
 
 void transform_sixteen(const uint8_t *source_a,

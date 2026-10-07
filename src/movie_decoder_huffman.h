@@ -68,6 +68,9 @@ struct SixBlockArgs {
   State *coefficient_state;
   void (*idct_rows)(uint8_t *row_base, int stride_arg);
   const uint8_t *byte_remap;
+  void (*pack_rows)(const uint8_t *component_rows,
+                    const uint8_t *chroma_rows,
+                    uint8_t *destination, int row_pitch_bytes);
 };
 
 // A typed host representation of the observed six-block path in 0x005D2E70.

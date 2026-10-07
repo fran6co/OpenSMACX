@@ -62,6 +62,14 @@ static void idct_rows(std::uint8_t *output, int stride_arg) {
       active_context->idct_scratch_words);
 }
 
+static void pack_rows(const std::uint8_t *component_rows,
+                      const std::uint8_t *chroma_rows,
+                      std::uint8_t *destination, int row_pitch_bytes) {
+  movie_decoder_huffman::transform_sixteen(
+      component_rows, chroma_rows, reinterpret_cast<std::uint32_t *>(destination),
+      row_pitch_bytes, active_context->remap);
+}
+
 static void decode_six_blocks(void *opaque, std::uint8_t *coefficient_block,
                               std::uint8_t *destination_block, int width) {
   CombinedContext *context = static_cast<CombinedContext *>(opaque);
@@ -88,6 +96,7 @@ static void decode_six_blocks(void *opaque, std::uint8_t *coefficient_block,
   args.coefficient_state = &coefficient_state;
   args.idct_rows = idct_rows;
   args.byte_remap = context->remap;
+  args.pack_rows = pack_rows;
   movie_decoder_huffman::decode_six_blocks(args);
   context->frame_bit_state.cursor = context->bit_state.cursor;
   context->frame_bit_state.accumulator = context->bit_state.accumulator;

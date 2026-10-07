@@ -4868,19 +4868,29 @@ int __fastcall sub_5d3980(int *param_1, unsigned int *param_2) {
 // context from the first token rather than behind a file read. This
 // emitter computes declarations; it does not carry lessons.
 
-void __cdecl sub_5d1b88(unsigned int *outp, int *srcESI, int *srcEDI) {
-    int i;
-    for (i = 0; i < 8; i++) {
-        int iVar1 = ((int *)MovieBlendTableQuant)[srcEDI[i]];
-        int iVar2 = ((int *)MovieBlendTableQuant2)[srcEDI[0x40 + i]];
-        unsigned int uVar4 = (unsigned int)(iVar1 + ((int *)MovieBlendTableData)[srcESI[2 * i]] + iVar2);
-        outp[2 * i] = ((unsigned int *)MovieBlendTableMid)[(uVar4 & 0xff800) >> 0xb] |
-                      ((unsigned int *)MovieBlendTableHi)[uVar4 >> 0x17] |
-                      ((unsigned int *)MovieBlendTableLow)[uVar4 & 0x1ff];
-        uVar4 = (unsigned int)(((int *)MovieBlendTableData)[srcESI[2 * i + 1]] + iVar2 + iVar1);
-        outp[2 * i + 1] = ((unsigned int *)MovieBlendTableHi)[uVar4 >> 0x17] |
-                          ((unsigned int *)MovieBlendTableLow)[uVar4 & 0x1ff] |
-                          ((unsigned int *)MovieBlendTableMid)[(uVar4 & 0xff800) >> 0xb];
+// ESI holds 16 data indices, EDI holds two 8-DWORD selector streams at
+// offsets 0 and 64, and EBP receives 16 output DWORDs. DWORD accumulation
+// preserves the original x86 modulo-2^32 additions after the LUT reads.
+void __cdecl sub_5d1b88(unsigned int *packed_output, int *data_row,
+                        int *selector_pair) {
+    for (int i = 0; i < 8; ++i) {
+        const int data_even_index = data_row[2 * i];
+        const int selector_0_index = selector_pair[i];
+        const int selector_1_index = selector_pair[0x40 + i];
+        const DWORD data_even = MovieBlendTableData[data_even_index];
+        const DWORD selector_0 = MovieBlendTableQuant[selector_0_index];
+        const DWORD selector_1 = MovieBlendTableQuant2[selector_1_index];
+        const DWORD even_sum = selector_0 + data_even + selector_1;
+        packed_output[2 * i] = MovieBlendTableMid[(even_sum & 0xff800) >> 0xb] |
+                               MovieBlendTableHi[even_sum >> 0x17] |
+                               MovieBlendTableLow[even_sum & 0x1ff];
+
+        const int data_odd_index = data_row[2 * i + 1];
+        const DWORD data_odd = MovieBlendTableData[data_odd_index];
+        const DWORD odd_sum = data_odd + selector_1 + selector_0;
+        packed_output[2 * i + 1] = MovieBlendTableHi[odd_sum >> 0x17] |
+                                   MovieBlendTableLow[odd_sum & 0x1ff] |
+                                   MovieBlendTableMid[(odd_sum & 0xff800) >> 0xb];
     }
 }
 
@@ -4916,24 +4926,38 @@ void __cdecl sub_5d1b88(unsigned int *outp, int *srcESI, int *srcEDI) {
 // emitter computes declarations; it does not carry lessons.
 
 static DWORD movie_coefficient_pack_word(int index) {
-    DWORD value;
-    const BYTE *owner = reinterpret_cast<const BYTE *>(
-        &movie_media_conversion_tables);
-    const DWORD byte_offset = 0x90c + (DWORD)index * 8;
-    memcpy(&value, owner + byte_offset, sizeof(value));
-    return value;
+    // Pinned 5D2536 indexes DWORDs at 9C672C + index*8: this is word 512
+    // in the source-owned remap/lookup window at 9C5F2C.
+    // Preserve flat x86 address arithmetic, including unchecked indices;
+    // indexing the declared subarray would introduce an unproved bound.
+    const DWORD displacement = (DWORD)index * 8u;
+    const uintptr_t address = reinterpret_cast<uintptr_t>(
+        &movie_media_conversion_tables.remap_or_lookup_storage.words[512])
+        + static_cast<int32_t>(displacement);
+    return *reinterpret_cast<const volatile DWORD *>(address);
 }
 
-void __cdecl sub_5d2536(int *coeff_a, int *coeff_b, int *out_words) {
+// ESI supplies 16 coefficient indices; EDI supplies 8 lower and 8 upper
+// selector indices at offsets 0 and 64; EBP receives eight packed DWORDs.
+void __cdecl sub_5d2536(int *coefficient_row, int *selector_pair,
+                        int *packed_output) {
+    const volatile int *const coefficient_indices = coefficient_row;
+    const volatile int *const selector_indices = selector_pair;
     for (int index = 0; index != 8; ++index) {
-        const DWORD upper_left = movie_coefficient_pack_word(coeff_a[0x40 + index]);
-        const DWORD upper_right = movie_coefficient_pack_word(coeff_b[1 + index * 2]);
-        const DWORD lower_left = movie_coefficient_pack_word(coeff_a[index]);
-        const DWORD lower_right = movie_coefficient_pack_word(coeff_b[index * 2]);
-        const DWORD upper = (upper_left << 8) | upper_right;
-        const DWORD lower = (lower_left << 8) | lower_right;
+        // The image loads all four indices before its LUT reads, whose order
+        // remains significant on unchecked invalid inputs.
+        const int upper_selector_index = selector_indices[0x40 + index];
+        const int lower_selector_index = selector_indices[index];
+        const int even_coefficient_index = coefficient_indices[2 * index];
+        const int odd_coefficient_index = coefficient_indices[2 * index + 1];
+        const DWORD upper_selector = movie_coefficient_pack_word(upper_selector_index);
+        const DWORD lower_selector = movie_coefficient_pack_word(lower_selector_index);
+        const DWORD upper_coefficient = movie_coefficient_pack_word(odd_coefficient_index);
+        const DWORD lower_coefficient = movie_coefficient_pack_word(even_coefficient_index);
+        const DWORD upper = (upper_selector << 8) | upper_coefficient;
+        const DWORD lower = (lower_selector << 8) | lower_coefficient;
         const DWORD result = (upper << 16) | lower;
-        memcpy(&out_words[index], &result, sizeof(result));
+        memcpy(&packed_output[index], &result, sizeof(result));
     }
 }
 
