@@ -2057,6 +2057,7 @@ void NetWin::pick_diff(int slot) {
 void NetWin::pick_map() {
     PopMenu menu;
     Buffer faction_art;
+    const uint32_t initial_mode = field_7728_;
     menu.init();
     menu.dialogs().item(label_get(0x107C / 4), 0);
     menu.dialogs().item(label_get(0x0FD8 / 4), 1);
@@ -2096,23 +2097,20 @@ void NetWin::pick_map() {
                 if (load_map() != 0) {
                     return;
                 }
-            } else if (choice == 2) {
-                if (load_game(1, 0) != 0) {
-                    return;
-                }
-                const int scenario_factions = bit_count(
-                    static_cast<int>((GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8) & 0xFEu));
-                if (scenario_factions < NetDaemonNet.player_count_) {
-                    parse_num(scenario_factions, 0);
-                    X_pop("TOOMANYFORSCENARIO", 0);
-                    return;
-                }
-            } else if (choice == 3) {
-                if (load_game(0, 0) != 0) {
-                    return;
-                }
             } else {
-                return;
+                const int is_host = choice == 2;
+                if (load_game(is_host, 0) != 0) {
+                    return;
+                }
+                if (is_host) {
+                    const int scenario_factions = bit_count(
+                        static_cast<int>((GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8) & 0xFEu));
+                    if (scenario_factions < NetDaemonNet.player_count_) {
+                        parse_num(scenario_factions, 0);
+                        X_pop("TOOMANYFORSCENARIO", 0);
+                        return;
+                    }
+                }
             }
 
             GameDataLoadRequest = 0;
@@ -2208,7 +2206,7 @@ void NetWin::pick_map() {
         }
         send_faction_data(-1);
     } else {
-        if (faction_records_copy_ != nullptr) {
+        if (initial_mode != 0 && initial_mode != 1) {
             const NetWinFactionRecord *const source_records =
                 static_cast<const NetWinFactionRecord *>(
                     faction_records_copy_);

@@ -1883,8 +1883,8 @@ void Datalink::on_selected(int index) {
 Status: Complete
 */
 void Datalink::show(int visible) {
-    if (!reinterpret_cast<Win *>(this)->is_visible()) {
-        reinterpret_cast<SubInterface *>(reinterpret_cast<char *>(this) + 0xa14)->set_iface_mode();
+    if (!Win::is_visible()) {
+        SubInterface::set_iface_mode();
     }
 }
 
@@ -1900,8 +1900,8 @@ void Datalink::show(int visible) {
 Status: Complete
 */
 void Datalink::hide() {
-    if (reinterpret_cast<Win *>(this)->is_visible()) {
-        reinterpret_cast<SubInterface *>(reinterpret_cast<char *>(this) + 0xa14)->release_iface_mode();
+    if (Win::is_visible()) {
+        SubInterface::release_iface_mode();
     }
 }
 

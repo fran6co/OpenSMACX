@@ -729,12 +729,11 @@ void DiploPop::draw_hq() {
 Status: Complete
 */
 void DiploPop::hide() {
-    Win *self = reinterpret_cast<Win *>(this);
-    if (self->is_visible()) {
+    if (Win::is_visible()) {
         // QUALIFIED: the image emits a direct `call 0x5edcd0`, not a vtable
         // dispatch. `Win::hide` is virtual now, so an unqualified call would
         // go through slot 2 - which is what made this claim regress.
-        self->Win::hide();
+        Win::hide();
     }
 }
 
@@ -837,7 +836,7 @@ void DiploPop::on_button_clicked(int button_id) {
 // instead of a carried g_ binding.
 */
 int DiploPop::set_modal(int flag, int (__cdecl *poll)(), Win *owner) {
-    return reinterpret_cast<Win *>(this)->Win::set_modal(
+    return Win::set_modal(
         flag | 1, poll, &MainInterfaceGlobal);
 }
 
@@ -858,7 +857,7 @@ int DiploPop::set_modal(int flag, int (__cdecl *poll)(), Win *owner) {
 //        faithful 5-byte tail call.
 */
 void DiploPop::release_modal() {
-    reinterpret_cast<Win *>(this)->Win::release_modal();
+    Win::release_modal();
 }
 
 // ORIGINAL: 0x0043F190 ?portrait_anim@DiploPop@@QAEXXZ 0x0043F190-0x0043F1BF FILE BYTE_EXACT

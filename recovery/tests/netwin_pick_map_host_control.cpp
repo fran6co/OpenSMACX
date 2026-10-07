@@ -123,9 +123,13 @@ static int bit_count(int value) {
 static void parse_num(int value, int) { ++parses; parse_value = value; }
 static void X_pop(const char *, int) { ++pops; }
 static int MapLongitudeBounds = 48, MapLatitudeBounds = 32;
-static uint32_t LockEnableMask = 0x700u, GameState = 0x01800040u;
-static uint32_t GameRules = 0x13572468u, NetTurnFlags = 0x10u;
-static uint32_t DiffLevelCurrent = 4;
+struct GameDataFields {
+    struct { uint32_t enable_mask_; } lock_masks_;
+    uint32_t net_turn_flags_, diff_level_current_, game_rules_, game_state_;
+};
+struct GameDataStorage { GameDataFields fields_; };
+static GameDataStorage GameDataStateStorage =
+    {{{0x700u}, 0x10u, 4u, 0x13572468u, 0x01800040u}};
 static int GameDataLoadRequest = 0;
 static DefaultPreferences DefaultPrefs;
 static AlphaIniPreference AlphaIniPrefs = {0, 0, 0, 0xA5A55A5Au, 0};
@@ -164,7 +168,7 @@ static void reset_case() {
     NetWinSessionData.state_[0x20] = 0xA5;
     NetWinScenarioStorage[0] = 0;
     GameDataLoadRequest = 0;
-    LockEnableMask = 0x700u;
+    GameDataStateStorage.fields_.lock_masks_.enable_mask_ = 0x700u;
     netwin_rules_gate = 1;
 }
 
@@ -191,6 +195,7 @@ int main() {
         assert(win.field_7728_ == 0);
         assert(NetWinSessionData.state_[0x20] == 0);
         assert(NetDaemonNet.sends == 3 && NetDaemonNet.pid_calls == 2);
+        assert(faction_sends == 0);
         assert(NetDaemonNet.sizes[0] == 0x28 && NetDaemonNet.sizes[1] == 0xA74);
         assert(NetDaemonNet.sizes[2] == 0x178);
         assert(reinterpret_cast<NetWinSessionOptionsPacket *>(NetDaemonNet.payloads[0])->opcode_ == 0x2F02);
@@ -220,7 +225,7 @@ int main() {
     }
     {
         reset_case();
-        LockEnableMask = 0x300u;
+        GameDataStateStorage.fields_.lock_masks_.enable_mask_ = 0x300u;
         NetDaemonNet.player_count_ = 3;
         NetWin win;
         scripted_choice = 2;
@@ -231,7 +236,7 @@ int main() {
     }
     {
         reset_case();
-        LockEnableMask = 0xF00u;
+        GameDataStateStorage.fields_.lock_masks_.enable_mask_ = 0xF00u;
         NetWin win;
         NetWinFactionRecord scenario_records[10] = {};
         win.faction_records_ = scenario_records;
@@ -243,6 +248,44 @@ int main() {
         assert(NetWinSessionData.state_[0x20] == 0);
         assert(std::strcmp(NetWinScenarioStorage, "scenario.scn") == 0);
         assert(NetDaemonNet.sends == 4);
+    }
+    {
+        reset_case();
+        uint8_t source[0x194 + 8 * 399] = {};
+        uint8_t destination[sizeof(source)] = {};
+        source[1] = 8;
+        NetWin win;
+        win.faction_records_copy_ = source;
+        win.faction_records_ = destination;
+        win.field_7728_ = 1;
+        scripted_choice = 0;
+        win.pick_map();
+        assert(win.field_7728_ == 0);
+        assert(faction_sends == 0);
+    }
+    {
+        reset_case();
+        uint8_t source[0x194 + 8 * 399] = {};
+        uint8_t destination[sizeof(source)] = {};
+        source[1] = 8;
+        NetWin win;
+        win.faction_records_copy_ = source;
+        win.faction_records_ = destination;
+        win.field_7728_ = 2;
+        scripted_choice = 0;
+        win.pick_map();
+        assert(win.field_7728_ == 0);
+        assert(faction_sends == 1);  // tail tests entry mode, not mutated mode
+    }
+    {
+        reset_case();
+        NetWin win;
+        scripted_choice = 4;  // original tests only choices 0/1/2 specially
+        win.pick_map();
+        assert(game_loads == 1 && last_game_host == 0);
+        assert(GameDataLoadRequest == 0);
+        assert(parses == 0 && pops == 0);
+        assert(NetDaemonNet.sends == 3);
     }
     {
         reset_case();

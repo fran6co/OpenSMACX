@@ -42,7 +42,7 @@
 #include "technology.h"
 #include "terraforming.h"
 #include "deletionlist.h"  // VehDeletionList - the multiplayer deletion queue
-#include "tutwin.h"  // TutWinBaseWindow - every removal's check_base/check_loc
+#include "tutwin.h"  // TutWinBaseWindow, TutorialWindow
 #include "mapwin.h"  // draw_tile - the free single-tile redraw the removals end on
 #include "netmsg.h"  // NetMsgPrimary - the promote family reports through it
 #include "xpops.h"  // X_pop - transferred-unit single-player notifications.
@@ -62,7 +62,6 @@
 #include "designwin.h" // Crawler animation advances while the design window is visible.
 #include "vector.h"  // vector_add operates on actual three-float arrays.
 #include "leaf_recoveries.h"  // The source-owned vector-length operation.
-#include "original_seam.h"  // ORIGINAL / original_method - the two BaseWin repaint seams
 
 int __cdecl popp(const char *title, const char *label, int channel,
                  const char *picture, int(__cdecl *callback)());
@@ -10915,23 +10914,6 @@ static Sprite *const VehSpriteSOIL = &g_TER1_SOIL_ENRICHER_SPRITES[3];
 static Sprite *const VehSpriteMINE = &g_TER1_MINE_SPRITE;
 static Sprite *const VehSpriteSOLAR = &g_TER1_SOLAR_COLLECTOR_SPRITE;
 
-// The remaining unrecovered BaseWin repaint hook:
-// recompute the one vehicle's defenders and garrison after its tile changed.
-typedef void (OriginalObject::*func_base_win_check_veh)(int veh_id);
-func_base_win_check_veh BaseWinOriginalCheckVeh =
-    original_method<func_base_win_check_veh>(0x0041A8B0);
-
-// TutWin::tut_map (0x004BE650) is not recovered and tutwin.h declares no such
-// member; the terraform epilogue is the tree's first caller. This still uses
-// a member-pointer call into the original, with receiver TutWinGlobal.
-typedef void (OriginalObject::*func_tut_win_tut_map)(const char *msg, int x,
-                                                    int y, int noun,
-                                                    void *sprite,
-                                                    int tut_win_arg6,
-                                                    int arrow_x, int arrow_y);
-func_tut_win_tut_map TutWinOriginalTutMap =
-    original_method<func_tut_win_tut_map>(0x004BE650);
-
 /*
 Purpose: Perform one terraforming action on a unit's tile, over its stack.
 // ORIGINAL: 0x004C9B00 ?action_terraform@@YAHHHH@Z 0x004C9B00-0x004CA76B
@@ -11127,7 +11109,7 @@ int __cdecl action_terraform(int veh_id, int action, int do_it) {
     }
     if ((int)(uint8_t)(progress_before + (uint8_t)turns_accum) < base_time * 2) {
         draw_tile(x, y, 2);
-        (ORIGINAL(&TutWinBaseWindow)->*BaseWinOriginalCheckVeh)(veh_id);
+        TutWinBaseWindow.check_veh(veh_id);
         return 0;
     }
     Vehs[veh_id].terraforming_turns = 0;
@@ -11272,7 +11254,7 @@ forest_shared:
     synch_bit(x, y, faction);
     draw_tiles(x, y, 2);
     if (veh_count_before == GameDataStateStorage.fields_.vehicle_current_count_) {
-        (ORIGINAL(&TutWinBaseWindow)->*BaseWinOriginalCheckVeh)(veh_id);
+        TutWinBaseWindow.check_veh(veh_id);
         TutWinBaseWindow.check_loc(x, y, 2);
     } else {
         TutWinBaseWindow.GraphicWin::redraw();
@@ -11289,7 +11271,7 @@ forest_shared:
         if ((bit & seen) == 0) {
             const uint32_t new_mask = seen | bit;
             GameDataStateStorage.fields_.terraform_announced_mask_[not_ocean] = new_mask;
-            const void *sprite = 0;
+            Sprite *sprite = 0;
             const char *msg = 0;
             int noun = veh_id;
             bool do_popup = true;
@@ -11358,8 +11340,7 @@ forest_shared:
                 do_popup = false;
             }
             if (do_popup) {
-                (ORIGINAL(TutWinGlobal)->*TutWinOriginalTutMap)(
-                    msg, x, y, noun, const_cast<void *>(sprite), 1, -1, -1);
+                TutorialWindow.tut_map(msg, x, y, noun, sprite, 1, -1, -1);
             }
         }
     }

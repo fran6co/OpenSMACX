@@ -61,7 +61,9 @@ class SetupWin : public GraphicWin {
   // Extent only - this class carries no size assertion, and the bound is a floor.
   // 2 member(s) from the IDA database, 0 named; it starts a member at 0xA14, which is where src/ ends.
 
+  // RECOVERY_MEMBER: v1 SetupWin field_A14_ 0xA14 0x004ADA80
   uint32_t field_A14_;  // 0xA14
+  // RECOVERY_MEMBER: v1 SetupWin field_A18_ 0xA18 0x004ADAA0
   uint32_t field_A18_;  // 0xA18
 
   // Storage the image proves is here: its own methods reach 0x11A0.

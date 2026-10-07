@@ -102,9 +102,14 @@ Purpose: Scale the argument by the field at 0xA14 and divide by 1024.
          The multiply is a 32-bit `imul`, so an overflowing product wraps and
          the division sees the wrapped value; `int` arithmetic reproduces that.
 
-         SetupWin models no fields - it derives from GraphicWin, which ends at
-         0xA14 - so this is its first own field, reached through a documented
-         raw offset as BasePop::UNK3 does.
+         RECOVERY_HISTORY: The former offset-based version said SetupWin
+         RECOVERY_HISTORY: models no fields - it derives from GraphicWin,
+         RECOVERY_HISTORY: which ends at 0xA14 - so this is its first own field,
+         RECOVERY_HISTORY: reached through a documented raw offset as
+         RECOVERY_HISTORY: BasePop::UNK3 does.
+
+         The owner header declares field_A14_ and field_A18_ at these offsets.
+         This body reads field_A14_ directly; its semantic name remains unknown.
 // ORIGINAL: 0x004ADA80 ?UNK1@SetupWin@@QAEHH@Z 0x004ADA80-0x004ADA9D BYTE_EXACT
 // size      29 bytes
 // prototype int (__thiscall ?UNK1@SetupWin@@QAEHH@Z)(SetupWin* this, int)
@@ -116,8 +121,7 @@ Return Value: (field_A14 * a1) / 1024, truncated toward zero
 Status: Complete
 */
 int SetupWin::UNK1(int pos) {
-    const int32_t scale = *reinterpret_cast<const int32_t *>(
-        reinterpret_cast<const uint8_t *>(this) + 0xA14);
+    const int32_t scale = static_cast<int32_t>(field_A14_);
     return static_cast<int32_t>(static_cast<uint32_t>(scale)
                                 * static_cast<uint32_t>(pos)) / 1024;
 }
@@ -149,8 +153,7 @@ Return Value: (field_A18 * a1) / 768, truncated toward zero
 Status: Complete
 */
 int SetupWin::UNK2(int pos) {
-    const int32_t scale = *reinterpret_cast<const int32_t *>(
-        reinterpret_cast<const uint8_t *>(this) + 0xA18);
+    const int32_t scale = static_cast<int32_t>(field_A18_);
     return static_cast<int32_t>(static_cast<uint32_t>(scale)
                                 * static_cast<uint32_t>(pos)) / 768;
 }
