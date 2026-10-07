@@ -5654,7 +5654,13 @@ void __cdecl sub_61f800(void *param_1, void *param_2) {
 }
 
 // ORIGINAL: 0x0061CB50 sub_61cb50 0x0061CB50-0x0061D08F FILE
-// symbol    ?sub_61cb50@Texture@@QAEHHHHHH@Z
+// Historical synthetic seed symbol: ?sub_61cb50@Texture@@QAEHHHHHH@Z
+// symbol    ?sub_61cb50@Texture@@QAEXPAVBuffer@@PAUVert@@PAV1@PAEH@Z
+// The entry receives this Texture plus Buffer, Vert, second Texture, remap
+// and perimeter-mode arguments (RET 0x14). The pinned cleanup establishes no
+// common EAX result; Kuna also labels it void. No external result contract or
+// original caller is established. The seed int-return hint remains historical
+// evidence, not permission to fabricate a successful return value.
 // TRIED: the brief's parameterless/no-this contract - `mov esi,ecx` at entry and later `[esi+0x6c]` (borrowed_) dereferenced prove a Texture* receiver; the a1 checked/stored throughout is a Buffer* (get_data()/free_data(1) called on it, field +0x4a8 read as a row stride, +0x20 as a 4-int clip rect). Faithful through the guard chain, global setup and the point-array min/max scan; the perspective-correct x87 divide, the two setup_edge() edge-delta calls and the colour-keyed scanline inner loop are reproduced only in shape (right calls, right globals touched, a loop) not by value - this is a sibling of 0x006202E0/0x0061F800's rasterizers and shares their fixed point stepping, which was already not chased to the byte there either.
 // working copy - scaffold materialised by --work
 // size      1343 bytes
@@ -5678,126 +5684,179 @@ void __cdecl sub_61f800(void *param_1, void *param_2) {
 // context from the first token rather than behind a file read. This
 // emitter computes declarations; it does not carry lessons.
 
-int Texture::sub_61cb50(int a1, int a2, int a3, int a4, int a5) {
-    char *self = reinterpret_cast<char *>(this);
+static int texture_sub61cb50_advance_edge(EdgeScan &edge) {
+    if (--edge.counter == 0)
+        return Texture::setup_edge(&edge, edge.id);
+    edge.accumA = static_cast<int>(static_cast<unsigned int>(edge.accumA) +
+                                   static_cast<unsigned int>(edge.deltaA));
+    edge.accumB = static_cast<int>(static_cast<unsigned int>(edge.accumB) +
+                                   static_cast<unsigned int>(edge.deltaB));
+    edge.accumC = static_cast<int>(static_cast<unsigned int>(edge.accumC) +
+                                   static_cast<unsigned int>(edge.deltaC));
+    edge.fracAccum = static_cast<int>(static_cast<unsigned int>(edge.fracAccum) +
+                                      static_cast<unsigned int>(edge.fracDelta));
+    if (edge.fracAccum > 0) {
+        edge.accumC = static_cast<int>(static_cast<unsigned int>(edge.accumC) +
+                                       static_cast<unsigned int>(edge.extraDeltaC));
+        edge.fracAccum = texture_difference(edge.fracAccum, edge.fracSub);
+    }
+    return 1;
+}
 
-    if (a2 == 0) {
-        goto cleanup;
-    }
-    if (a1 == 0) {
-        goto skip_cleanup;
-    }
-    if (*reinterpret_cast<int *>(self) == 0) {
-        goto cleanup;
-    }
-    if (a4 == 0) {
-        goto cleanup;
-    }
-    if (a3 == 0) {
-        goto cleanup;
-    }
+void Texture::sub_61cb50(Buffer *buffer, Vert *vertices, Texture *shade,
+                        unsigned char *remap, int use_eight_vertices) {
+    // The image tests vertices before Buffer, then skips release only when
+    // Buffer itself is null. Keep the shared cleanup edge and its FINIT.
+    if (vertices == 0) goto cleanup;
+    if (buffer == 0) goto finish;
+    if (pixels_ == 0) goto cleanup;
+    if (remap == 0) goto cleanup;
+    if (shade == 0) goto cleanup;
 
     {
-        Buffer *dest = reinterpret_cast<Buffer *>(a1);
-        *blit_pixel_base = dest->get_data();
-        *blit_remap_table = a4;
-        *blit_edge_uvs_b = a2;
-        *blit_texture_pixels = *reinterpret_cast<int *>(self);
-        TextureRowPitchScratch = *reinterpret_cast<int *>(self + 4);
-        *blit_texture_height = *reinterpret_cast<int *>(self + 8);
+        *blit_pixel_base = buffer->get_data();
+        texture_reset_fpu();
 
-        if (a5 != 0) {
+        *blit_remap_table = static_cast<int>(reinterpret_cast<intptr_t>(remap));
+        *blit_edge_uvs_b = static_cast<int>(reinterpret_cast<intptr_t>(vertices));
+        *blit_texture_pixels = static_cast<int>(reinterpret_cast<intptr_t>(pixels_));
+        TextureRowPitchScratch = static_cast<int>(iWidth_);
+        *blit_texture_height = static_cast<int>(iHeight_);
+        if (use_eight_vertices != 0) {
             *blit_vertex_count = 8;
-            *blit_edge_uvs_a = reinterpret_cast<int>(self + 0x2c);
+            *blit_edge_uvs_a = static_cast<int>(reinterpret_cast<intptr_t>(cornersAndMids_));
         } else {
             *blit_vertex_count = 4;
-            *blit_edge_uvs_a = reinterpret_cast<int>(self + 0xc);
+            *blit_edge_uvs_a = static_cast<int>(reinterpret_cast<intptr_t>(corners_));
         }
+        *blit_buffer_stride = static_cast<int>(buffer->stride_);
+        *blit_texture_width = static_cast<int>(iWidth_);
+        const unsigned char *shade_pixels =
+            static_cast<const unsigned char *>(shade->pixels_);
+        *blit_shade_table = static_cast<int>(reinterpret_cast<intptr_t>(shade_pixels));
+        if (shade_pixels == 0) goto cleanup;
 
-        *blit_buffer_stride = *reinterpret_cast<int *>(a1 + 0x4a8);
-        *blit_texture_width = *reinterpret_cast<int *>(self + 4);
+        *blit_clip_right = buffer->rect1_.right;
+        *blit_clip_left = buffer->rect1_.left;
+        *blit_clip_bottom = buffer->rect1_.bottom;
+        *blit_clip_top = buffer->rect1_.top;
 
-        int a3_pixels = *reinterpret_cast<int *>(a3);
-        *blit_shade_table = a3_pixels;
-        if (a3_pixels == 0) {
-            goto cleanup;
+        int min_y = 0x7fff;
+        int max_y = -32765;
+        int min_x = 0x7fff;
+        int max_x = -32765;
+        int min_y_index = 0;
+        int max_y_index = 0;
+        const int count = *blit_vertex_count;
+        for (int i = 0; i < count; ++i) {
+            const int y = vertices[i].y;
+            if (y < min_y) { min_y = y; min_y_index = i; }
+            if (y > max_y) { max_y = y; max_y_index = i; }
+            const int x = vertices[i].x;
+            if (x < min_x) min_x = x;
+            if (x > max_x) max_x = x;
         }
-
-        int *clip_rect = reinterpret_cast<int *>(a1 + 0x20);
-        *blit_clip_right = clip_rect[2];
-        *blit_clip_left = clip_rect[0];
-        *blit_clip_bottom = clip_rect[3];
-        *blit_clip_top = clip_rect[1];
-
-        int min_y = 0x7fff, max_y = -32765;
-        int min_x = 0x7fff, max_x = -32765;
-        int min_y_index = 0, max_y_index = 0;
-        char *point = reinterpret_cast<char *>(*blit_edge_uvs_a);
-        int point_count = *blit_vertex_count;
-
-        for (int i = 0; i < point_count; ++i, point += 8) {
-            int y = *reinterpret_cast<int *>(point + 4);
-            if (y < min_y) {
-                min_y = y;
-                min_y_index = i;
-            }
-            if (y > max_y) {
-                max_y = y;
-                max_y_index = i;
-            }
-            int x = *reinterpret_cast<int *>(point);
-            if (x < min_x) {
-                min_x = x;
-            }
-            if (x > max_x) {
-                max_x = x;
-            }
-        }
+        (void)min_x;
+        (void)max_x;
         *blit_max_y_index = max_y_index;
+        if (min_y >= max_y) goto cleanup;
 
-        if (min_y >= max_y) {
-            goto cleanup;
-        }
+        const int base = *blit_pixel_base;
+        const int stride = *blit_buffer_stride;
+        *blit_row_offset = static_cast<int>(static_cast<unsigned int>(base) +
+            static_cast<unsigned int>(stride) * static_cast<unsigned int>(min_y));
+        *blit_clip_top = static_cast<int>(static_cast<unsigned int>(base) +
+            static_cast<unsigned int>(stride) * static_cast<unsigned int>(buffer->rect1_.top));
+        *blit_clip_bottom = static_cast<int>(static_cast<unsigned int>(base) +
+            static_cast<unsigned int>(stride) * static_cast<unsigned int>(buffer->rect1_.bottom));
 
-        EdgeScan edge_a;
-        EdgeScan edge_b;
-        if (!setup_edge(&edge_a, min_y_index)) {
-            goto cleanup;
-        }
-        if (!setup_edge(&edge_b, min_y_index)) {
-            goto cleanup;
-        }
+        EdgeScan left;
+        left.f0 = -1;
+        if (setup_edge(&left, min_y_index) == 0) goto cleanup;
+        EdgeScan right;
+        right.f0 = 1;
+        if (setup_edge(&right, min_y_index) == 0) goto cleanup;
+        if (borrowed_ == 0 || shade->borrowed_ == 0) goto cleanup;
 
+        // The original selects 24-bit precision and chop before its x87
+        // reciprocal/multiply sequence; exact x87 spill/rounding is retained
+        // as a restoration obligation, while this body preserves its row and
+        // pixel decisions.
+        _control87(_PC_24 | _RC_CHOP, _MCW_PC | _MCW_RC);
+        int du = *blit_slot_4e4;
+        int dv = *blit_slot_4c8;
         int row = *blit_row_offset;
         while (row < *blit_clip_bottom) {
-            if (row >= *blit_clip_top) {
-                int left = *blit_span_left;
-                int right = *blit_span_right;
-                if (left > *blit_clip_left && right < *blit_clip_right && right - left > 0) {
-                    unsigned char *dst = reinterpret_cast<unsigned char *>(
-                        *blit_row_offset + right - left);
-                    unsigned char *src = reinterpret_cast<unsigned char *>(*blit_shade_table);
-                    unsigned char *remap = reinterpret_cast<unsigned char *>(*blit_remap_table);
-                    for (int px = left; px < right; ++px) {
-                        unsigned char texel = remap[src[px & 0xff]];
-                        if (texel != 0 && texel != 1) {
-                            *dst = texel;
-                        }
-                        ++dst;
-                    }
+            const EdgeScan row_left = left;
+            const EdgeScan row_right = right;
+            const int span_left = row_left.accumC;
+            const int span_right = row_right.accumC;
+            const int span = texture_difference(span_right, span_left);
+            // These are the raw 0x9BB4F0/4CC span endpoints, the paired edge
+            // UVs, and the third (uninitialized by setup_edge) edge word.
+            // memcpy preserves the original stack object's representation
+            // rather than imposing an invented zero initializer.
+            memcpy(blit_slot_498, &left.accumD, sizeof(*blit_slot_498));
+            *blit_slot_4c4 = row_right.accumA;
+            *blit_slot_530 = row_right.accumB;
+            *blit_span_left = span_right;  // native 0x9BB4F0
+            *blit_slot_4f8 = row_left.accumA;
+            *blit_slot_53c = row_left.accumB;
+            *blit_span_right = span_left;  // native 0x9BB4CC
+            if (span > 0) {
+                du = texture_span_step(texture_difference(row_right.accumA, row_left.accumA), span);
+                dv = texture_span_step(texture_difference(row_right.accumB, row_left.accumB), span);
+                *blit_slot_4e4 = du;
+                *blit_slot_4c8 = dv;
+            }
+
+            const int left_done = !texture_sub61cb50_advance_edge(left);
+            const int right_done = left_done ? 1 :
+                !texture_sub61cb50_advance_edge(right);
+
+            if (row >= *blit_clip_top && span_right > *blit_clip_left &&
+                span_left < *blit_clip_right && span_right > span_left) {
+                int x = span_left;
+                int end = span_right;
+                if (end > *blit_clip_right) end = *blit_clip_right;
+                int u = row_left.accumA;
+                int v = row_left.accumB;
+                if (x < *blit_clip_left) {
+                    const int skip = texture_difference(*blit_clip_left, x);
+                    u = static_cast<int>(static_cast<unsigned int>(u) +
+                        static_cast<unsigned int>(static_cast<int64_t>(du) * skip));
+                    v = static_cast<int>(static_cast<unsigned int>(v) +
+                        static_cast<unsigned int>(static_cast<int64_t>(dv) * skip));
+                    x = *blit_clip_left;
+                }
+                unsigned char *destination = reinterpret_cast<unsigned char *>(
+                    static_cast<intptr_t>(*blit_row_offset)) + x;
+                const unsigned char *base_pixels =
+                    static_cast<const unsigned char *>(pixels_);
+                const unsigned char *lookup_pixels = shade_pixels;
+                for (int px = x; px < end; ++px, ++destination) {
+                    const unsigned int tx = (static_cast<unsigned int>(u) >> 16) & 0xffu;
+                    const unsigned int ty = (static_cast<unsigned int>(v) >> 16) & 0xffu;
+                    const unsigned int index = (ty << 8) | tx;
+                    const unsigned char original = base_pixels[index];
+                    const unsigned char mapped = remap[lookup_pixels[index]];
+                    *destination = (mapped == 0 || mapped == 1) ? original : mapped;
+                    u = static_cast<int>(static_cast<unsigned int>(u) + static_cast<unsigned int>(du));
+                    v = static_cast<int>(static_cast<unsigned int>(v) + static_cast<unsigned int>(dv));
                 }
             }
-            *blit_row_offset = *blit_row_offset + *blit_buffer_stride;
-            row = *blit_row_offset;
+
+            if (left_done || right_done) break;
+            row = static_cast<int>(static_cast<unsigned int>(row) +
+                                  static_cast<unsigned int>(stride));
+            *blit_row_offset = row;
         }
     }
 
 cleanup:
-    if (a1 != 0) {
-        reinterpret_cast<Buffer *>(a1)->free_data(1);
-    }
-skip_cleanup:
-    return 1;
+    if (buffer != 0) buffer->free_data(1);
+finish:
+    texture_reset_fpu();
 }
 
 // ORIGINAL: 0x0061FDF0 sub_61fdf0 0x0061FDF0-0x0061FE68 FILE

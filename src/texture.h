@@ -187,7 +187,8 @@ class Texture {
   //   sub_61b780  gouraud affine rasteriser; `mode` picks the 4- or
   //               8-vertex vertex-array base at 0x0c / 0x2c
   //   sub_61c630  per-span fill across two textures with a shade table
-  //   sub_61cb50  setup_edge family, five ints, no Buffer of its own
+  //   sub_61cb50  dual-texture remap raster over Buffer rows; mode selects
+  //               the four-corner or eight-point UV perimeter.
   //   sub_61d990  gouraud-lit draw over a second texture's shade table
   //   sub_61df60  nine ints, gouraud family, depth-tested
   //   sub_61f0d0  gouraud family, hands each span to sub_620100
@@ -196,7 +197,8 @@ class Texture {
   void sub_61b780(Buffer *bufParam, int *verts, int zvals, int mode);
   void sub_61c630(Buffer *bufIn, int *verts, Texture *texB, uint8_t *shadeTable,
                   int vertCount, int unusedIn);
-  int sub_61cb50(int a1, int a2, int a3, int a4, int a5);
+  void sub_61cb50(Buffer *buffer, Vert *vertices, Texture *shade,
+                 unsigned char *remap, int use_eight_vertices);
   int sub_61d990(Buffer *buffer, int *vertArray, int zvals, Texture *texB,
                  uint8_t *table, int wideFlag);
   int sub_61df60(int a1, int a2, int a3, int a4, int a5, int a6, int a7,
