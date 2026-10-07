@@ -11,8 +11,8 @@ import pytest
 
 
 ROOT = next(parent for parent in Path(__file__).resolve().parents
-            if (parent / "src/general.cpp").is_file())
-SOURCE = ROOT / "src/general.cpp"
+            if (parent / "src/matrix3.cpp").is_file())
+SOURCE = ROOT / "src/matrix3.cpp"
 
 
 def _method(text: str, signature: str) -> str:
@@ -86,18 +86,12 @@ def _method(text: str, signature: str) -> str:
     raise AssertionError(f"unterminated actual definition of {signature!r}")
 
 
-def _run(tmp_path: Path, compiler_name: str, methods: str, main: str) -> None:
+def _run(tmp_path: Path, compiler_name: str, main: str) -> None:
     compiler = shutil.which(compiler_name)
     if compiler is None:
         pytest.skip(f"{compiler_name} is not installed")
     translation_unit = tmp_path / "actual_general_matrix_methods.cpp"
-    translation_unit.write_text(
-        """
-#include <limits>
-struct Mat3 { float v[9]; bool equals(const float *other); };
-struct Matrix3 { float v[9]; void transform(float *out, const float *in); };
-""" + methods + "\n" + main
-    )
+    translation_unit.write_text("#include <limits>\n" + SOURCE.read_text() + "\n" + main)
     executable = tmp_path / f"actual-general-{compiler_name}"
     subprocess.run(
         [compiler, "-std=c++98", "-Wall", "-Wextra", "-Werror", "-pedantic",
@@ -115,17 +109,15 @@ def test_host_mat3_nan_result_is_not_an_x87_equivalence_oracle(
 ) -> None:
     # This extracts the installed definition, but host NaN behavior is only
     # characterized here; the VC6 runtime test owns x87 boolean behavior.
-    text = SOURCE.read_text()
-    method = _method(text, "bool Mat3::equals(")
-    _run(tmp_path, compiler_name, method, r"""
+    _run(tmp_path, compiler_name, r"""
 int main() {
-    Mat3 matrix = {{1,2,3,4,5,6,7,8,9}};
+    Matrix3ReceiverView matrix = {{1,2,3,4,5,6,7,8,9}};
     float other[9] = {1,2,3,4,5,6,7,8,9};
     if (!matrix.equals(other)) return 1;
     other[4] = 50;
     if (matrix.equals(other)) return 2;
     other[4] = 5;
-    matrix.v[0] = std::numeric_limits<float>::quiet_NaN();
+    matrix.cells[0] = std::numeric_limits<float>::quiet_NaN();
     if (matrix.equals(other)) return 3;
     return 0;
 }
@@ -135,11 +127,9 @@ int main() {
 def test_actual_matrix_transform_stages_all_reads_and_preserves_order(
     tmp_path: Path, compiler_name: str
 ) -> None:
-    text = SOURCE.read_text()
-    method = _method(text, "void Matrix3::transform(")
-    _run(tmp_path, compiler_name, method, r"""
+    _run(tmp_path, compiler_name, r"""
 int main() {
-    Matrix3 matrix = {{1,2,3,4,5,6,7,8,9}};
+    Matrix3ReceiverView matrix = {{1,2,3,4,5,6,7,8,9}};
     const float input[3] = {2,3,4};
     float output[3] = {-1,-1,-1};
     matrix.transform(output, input);
@@ -149,12 +139,12 @@ int main() {
     matrix.transform(aliased, aliased);
     if (aliased[0] != 20 || aliased[1] != 47 || aliased[2] != 74) return 2;
 
-    Matrix3 matrix_output = {{1,2,3,4,5,6,7,8,9}};
-    matrix_output.transform(matrix_output.v, input);
-    if (matrix_output.v[0] != 20 || matrix_output.v[1] != 47 ||
-        matrix_output.v[2] != 74) return 3;
+    Matrix3ReceiverView matrix_output = {{1,2,3,4,5,6,7,8,9}};
+    matrix_output.transform(matrix_output.cells, input);
+    if (matrix_output.cells[0] != 20 || matrix_output.cells[1] != 47 ||
+        matrix_output.cells[2] != 74) return 3;
 
-    Matrix3 rounding = {{1.0e20f,-1.0e20f,3.0f,0,0,0,0,0,0}};
+    Matrix3ReceiverView rounding = {{1.0e20f,-1.0e20f,3.0f,0,0,0,0,0,0}};
     const float ones[3] = {1,1,1};
     float rounded[3] = {-1,-1,-1};
     rounding.transform(rounded, ones);

@@ -13,8 +13,8 @@ import pytest
 
 
 ROOT = next(parent for parent in Path(__file__).resolve().parents
-            if (parent / "src/general.cpp").is_file())
-SOURCE = ROOT / "src/general.cpp"
+            if (parent / "src/matrix3.cpp").is_file())
+SOURCE = ROOT / "src/matrix3.cpp"
 PIN = "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
 
 
@@ -103,8 +103,11 @@ def test_actual_installed_matrix_methods_on_vc6_both_configured_flags(
         pytest.skip("VC6 and Wine32 are required")
 
     text = SOURCE.read_text()
-    methods = _definition(text, "bool Mat3::equals(")
-    methods += "\n" + _definition(text, "void Matrix3::transform(")
+    owner_start = text.index("struct Matrix3ReceiverView {")
+    owner_end = text.index("\n};", owner_start) + len("\n};")
+    methods = text[owner_start:owner_end]
+    methods += "\n" + _definition(text, "bool Matrix3ReceiverView::equals(")
+    methods += "\n" + _definition(text, "void Matrix3ReceiverView::transform(")
     if damage == "unordered_comparison":
         old = "mine[row * 3 + col] != other[row * 3 + col]"
         assert methods.count(old) == 1
@@ -117,11 +120,9 @@ def test_actual_installed_matrix_methods_on_vc6_both_configured_flags(
         methods = methods.replace(old, "    out[0] = result[0];\n" + old, 1)
     harness = r"""
 #include <cstring>
-struct Mat3 { float v[9]; bool equals(const float *other); };
-struct Matrix3 { float v[9]; void transform(float *out, const float *in); };
 """ + methods + r"""
 int main() {
-    Mat3 matrix = {{1,2,3,4,5,6,7,8,9}};
+    Matrix3ReceiverView matrix = {{1,2,3,4,5,6,7,8,9}};
     float other[9] = {1,2,3,4,5,6,7,8,9};
     if (!matrix.equals(other)) return 1;
     other[4] = 50;
@@ -130,13 +131,13 @@ int main() {
     unsigned int qnan_bits = 0x7fc00000u;
     float qnan;
     memcpy(&qnan, &qnan_bits, sizeof(qnan));
-    matrix.v[0] = qnan;
+    matrix.cells[0] = qnan;
     if (!matrix.equals(other)) return 3;
-    matrix.v[0] = 1;
+    matrix.cells[0] = 1;
     other[8] = qnan;
     if (!matrix.equals(other)) return 4;
 
-    Matrix3 matrix3 = {{1,2,3,4,5,6,7,8,9}};
+    Matrix3ReceiverView matrix3 = {{1,2,3,4,5,6,7,8,9}};
     const float input[3] = {2,3,4};
     float output[3] = {-1,-1,-1};
     matrix3.transform(output, input);

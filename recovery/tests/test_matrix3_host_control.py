@@ -1,8 +1,7 @@
-"""Compile and mutation-check the actual FloatMatrix3 implementation.
+"""Compile and mutation-check the actual bounded Matrix3ReceiverView source.
 
-This test belongs in recovery/tests after the source candidate is integrated.
-It reads only the repository's tracked src/matrix3.cpp and src/matrix3.h; it
-has no ignored candidate, emitted source, or manifest fallback.
+This test reads the product-owned matrix3.cpp implementation and appends a
+host harness to that actual source text; it has no emitted-source fallback.
 """
 
 from __future__ import annotations
@@ -17,28 +16,25 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "src/matrix3.cpp"
-HEADER = ROOT / "src/matrix3.h"
 
 HARNESS = r"""
-#include MATRIX3_HEADER
-
 struct GuardedMatrix {
     unsigned int before;
-    FloatMatrix3 value;
+    Matrix3ReceiverView value;
     unsigned int after;
 };
 
-static void fill(FloatMatrix3 *matrix, float first) {
+static void fill(Matrix3ReceiverView *matrix, float first) {
     for (int row = 0; row < 3; ++row) {
         for (int column = 0; column < 3; ++column) {
-            matrix->values[row][column] = first + (float)(row * 3 + column);
+            matrix->cells[row * 3 + column] = first + (float)(row * 3 + column);
         }
     }
 }
 
-static int equals(const FloatMatrix3 *matrix, const float expected[9]) {
+static int equals(const Matrix3ReceiverView *matrix, const float expected[9]) {
     for (int index = 0; index < 9; ++index) {
-        if (matrix->values[index / 3][index % 3] != expected[index]) return 0;
+        if (matrix->cells[index] != expected[index]) return 0;
     }
     return 1;
 }
@@ -112,7 +108,7 @@ int main() {
     fill(&left.value, 1.0f);
     fill(&right.value, 9.0f);
     for (int index = 0; index < 9; ++index) {
-        right.value.values[index / 3][index % 3] = 9.0f - (float)index;
+        right.value.cells[index] = 9.0f - (float)index;
     }
     left.value.sub_6347f0(&right.value);
     if (!equals(&left.value, product)) return 18;
@@ -135,9 +131,11 @@ def _compiler(name: str) -> str:
 
 
 def _compile_and_run(compiler: str, source: Path, harness: Path, output: Path) -> subprocess.CompletedProcess[str]:
+    unit = harness.with_name("matrix3_actual_source_unit.cpp")
+    unit.write_text(source.read_text() + "\n" + harness.read_text())
     subprocess.run(
         [compiler, "-std=c++98", "-Wall", "-Wextra", "-Werror", "-pedantic",
-         "-iquote", str(ROOT / "src"), str(source), str(harness), "-o", str(output)],
+         str(unit), "-o", str(output)],
         check=True, cwd=ROOT, text=True, capture_output=True,
     )
     return subprocess.run([str(output)], cwd=ROOT, text=True, capture_output=True)
@@ -205,7 +203,7 @@ def _code_mask(text: str) -> str:
 
 def _method_body(text: str, name: str) -> tuple[int, int]:
     masked = _code_mask(text)
-    hits = list(re.finditer(r"FloatMatrix3\s*::\s*" + re.escape(name) + r"\s*\(", masked))
+    hits = list(re.finditer(r"Matrix3ReceiverView\s*::\s*" + re.escape(name) + r"\s*\(", masked))
     if len(hits) != 1:
         raise AssertionError(f"expected one code definition for {name}, found {len(hits)}")
     opening = masked.find("{", hits[0].end())
@@ -239,9 +237,8 @@ COMPILERS = ("g++", "clang++")
 @pytest.mark.parametrize("compiler_name", COMPILERS)
 def test_actual_tracked_source_host_control(tmp_path: Path, compiler_name: str) -> None:
     assert SOURCE.is_file(), "integrate src/matrix3.cpp before promoting this control"
-    assert HEADER.is_file(), "integrate src/matrix3.h before promoting this control"
     harness = tmp_path / "matrix3_host_control.cpp"
-    harness.write_text(HARNESS.replace("MATRIX3_HEADER", f'"{HEADER.as_posix()}"'))
+    harness.write_text(HARNESS)
     result = _compile_and_run(_compiler(compiler_name), SOURCE, harness,
                               tmp_path / f"matrix3-{compiler_name}")
     assert result.returncode == 0, result.stdout + result.stderr
@@ -251,13 +248,11 @@ def test_actual_tracked_source_host_control(tmp_path: Path, compiler_name: str) 
 @pytest.mark.parametrize(
     "method,before,after",
     (
-        ("sub_6346c0", "values[1][1] = 1.0f", "values[1][1] = 0.0f"),
-        ("sub_6347c0", "other->values[row][column] +", "other->values[row][column] -"),
-        ("sub_6348f0", "values[row][column] -", "values[row][column] +"),
-        ("sub_6348c0", "scale * values[row][column]", "scale + values[row][column]"),
-        ("sub_6347f0", "other->values[depth][column]", "other->values[column][depth]"),
-        ("sub_634720", "scratch[row][column] = values[row][column] +",
-         "scratch[row][column] = values[row][column] -"),
+        ("sub_6346c0", "cells[4] = 1.0f", "cells[4] = 0.0f"),
+        ("sub_6347c0", "other->cells[row * 3 + column] +", "other->cells[row * 3 + column] -"),
+        ("sub_6348f0", "cells[row * 3 + column] -", "cells[row * 3 + column] +"),
+        ("sub_6348c0", "scale * cells[row * 3 + column]", "scale + cells[row * 3 + column]"),
+        ("sub_6347f0", "other->cells[depth * 3 + column]", "other->cells[column * 3 + depth]"),
     ),
 )
 def test_meaningful_source_mutants_fail(
@@ -268,16 +263,28 @@ def test_meaningful_source_mutants_fail(
     mutant_source = tmp_path / f"{method}-mutant.cpp"
     mutant_source.write_text(mutated)
     harness = tmp_path / "matrix3_host_control.cpp"
-    harness.write_text(HARNESS.replace("MATRIX3_HEADER", f'"{HEADER.as_posix()}"'))
+    harness.write_text(HARNESS)
     result = _compile_and_run(_compiler(compiler_name), mutant_source, harness,
                               tmp_path / f"mutant-{method}-{compiler_name}")
     assert result.returncode != 0, f"the {method} source mutant escaped the harness"
 
 
+def test_add_source_order_is_part_of_original_witness() -> None:
+    text = SOURCE.read_text()
+    body_start, body_end = _method_body(text, "sub_634720")
+    body = text[body_start + 1:body_end]
+    source_order = r"other->cells\[row \* 3 \+ column\]\s*\+\s*cells\[row \* 3 \+ column\]"
+    reversed_order = r"cells\[row \* 3 \+ column\]\s*\+\s*other->cells\[row \* 3 \+ column\]"
+    assert len(re.findall(source_order, body)) == 1
+    assert not re.search(reversed_order, body)
+    mutated = re.sub(source_order, "cells[row * 3 + column] + other->cells[row * 3 + column]", body)
+    assert not re.search(source_order, mutated)
+
+
 def test_mutation_anchors_ignore_lexical_decoys() -> None:
-    decoy = "/* lexical decoy: FloatMatrix3::sub_6348f0() { values[row][column] + other->values[row][column]; } */\n"
+    decoy = "/* lexical decoy: Matrix3ReceiverView::sub_6348f0() { cells[i] + other->cells[i]; } */\n"
     source = decoy + SOURCE.read_text()
-    mutated = _mutate(source, "sub_6348f0", "values[row][column] -",
-                      "values[row][column] +")
+    mutated = _mutate(source, "sub_6348f0", "cells[row * 3 + column] -",
+                      "cells[row * 3 + column] +")
     assert mutated.startswith(decoy), "the lexical decoy must remain untouched"
     assert mutated != source
