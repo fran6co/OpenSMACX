@@ -42,13 +42,6 @@ struct NetWinLobbyRow {
   uint8_t tail_[3];                // +0x175..+0x177
   uint32_t owner_;                  // +178
 
-  // Native 0x483820 reset, rehomed from the former NetWin::UNK5 owner.
-  void initialize_empty_slot();
-  // Typed callback adapter for the generic strided helper; the existing
-  // row initializer remains the sole owner of the row's field writes.
-  static void __fastcall initialize_empty_slot_callback(void *element) {
-    static_cast<NetWinLobbyRow *>(element)->initialize_empty_slot();
-  }
 };
 static_assert(sizeof(NetWinLobbyRow) == 0x17C, "lobby row stride");
 static_assert(offsetof(NetWinLobbyRow, leader_name_) == 5,
@@ -65,6 +58,18 @@ static_assert(offsetof(NetWinLobbyRow, adjective_leader_) == 0xF5,
               "lobby leader-adjective offset");
 static_assert(offsetof(NetWinLobbyRow, owner_) == 0x178, "lobby owner slot");
 extern NetWinLobbyRow NetWinLobbyRows[8]; // 0x0090DB98
+
+// Only NetWin::exec constructs these stack-local rows. The passive wire/global
+// record above must not acquire this constructor or a dynamic initializer.
+// Composition names the observed payload, not an inferred class hierarchy.
+struct NetWinConstructedLobbyRow {
+  NetWinLobbyRow payload_;
+  NetWinConstructedLobbyRow();  // 0x00483820
+};
+static_assert(sizeof(NetWinConstructedLobbyRow) == 0x17C,
+              "constructed lobby row stride");
+static_assert(offsetof(NetWinConstructedLobbyRow, payload_) == 0,
+              "constructed lobby payload begins at receiver");
 // send_session2_packet copies this whole 0x168-byte block; the first dword
 // is the mode tested by the setup dialog.
 struct NetWinSessionBlock {

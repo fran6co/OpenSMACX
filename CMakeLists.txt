@@ -135,7 +135,6 @@ set(OPENSMACX_SOURCES
     src/selectpartwin.cpp
     src/shared_word.cpp
     src/fx.cpp
-    src/array_initialization.cpp
     src/alphanet.cpp
     src/ambience.cpp
     src/autosound.cpp

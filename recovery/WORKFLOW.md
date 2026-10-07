@@ -56,10 +56,10 @@ The retired `spying_recovery.h` fixed-address view is now represented by named
 `PlayersData` members and the genuine faction API. These are not all empty files:
 move genuine behavior and storage to evidence-backed owners before retiring
 them. The misleading `vector_teardown.*` files are retired;
-`array_initialization.*` represents the mapped four-argument strided array
-initializer. Its behavior and callback ABI are established; application versus
-compiler/runtime ownership remains unresolved (the shape also fits MSVC's
-non-EH `??_H` iterator). This descriptive source home does not settle provenance.
+The subsequent `array_initialization.*` substitute is retired too: ordinary
+stack-row construction in NetWin now owns the compiler-generated non-EH `??_H`
+iterator mapping. Passive global wire rows do not acquire constructors. Physical
+body equivalence does not establish the original provider or linked selection.
 The handwritten CRT iterator substitutes are removed; real Wave control-group
 members now own construction, reverse destruction and prefix unwind. Their CRT
 identities and dependency-verification obligations remain recorded in the source;

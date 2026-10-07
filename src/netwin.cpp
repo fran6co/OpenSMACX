@@ -31,7 +31,6 @@
 #include "game.h"      // ExitTurnLoop, the modal callbacks' stop flag
 #include "general.h"   // checksum_password, parse_says and shared helpers
 #include "netdaemon.h" // NetDaemonNet, message_chat - the pump and the chat send
-#include "array_initialization.h"  // strided array element initializer
 #include "popmenu.h"   // PopMenu - the pickers' popup and its exec
 #include "popup.h"     // Popup - the password modal and typed teardown
 #include "pulldown.h"  // PullDown - the pickers' second pane
@@ -42,8 +41,26 @@
 #include "xpops.h"     // x_pop_caption_label for lobby validation prompts
 #include <stdlib.h>      // _itoa
 
-// These application entry points are source-owned in pending_bodies.cpp and
-// are also used by Console. Their implementations remain preserved forwarders.
+// Compiler-generated non-EH array-constructor iterator for the stack-local
+// NetWinConstructedLobbyRow array. The original callback returns its receiver;
+// ordinary constructor/array controls reproduce both original bodies.
+// Decrement/sign-test count wrap, ECX element callback and lack of unwind
+// are preserved by compiler construction, not a handwritten callback loop.
+// This binds current physical COFF output, not retained linked selection.
+// ORIGINAL: 0x00402EE0 sub_402ee0 0x00402EE0-0x00402F08 FILE BYTE_EXACT
+// symbol    ??_H@YGXPAXIHP6EX0@Z@Z
+// size      40 bytes
+// prototype
+// callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x00402EF7
+// Historical source mapping: 0x00402EE0 sub_402ee0 -> _sub_402ee0
+
+
+// These application entry points are implemented in game.cpp and are also
+// used by Console.
 int __cdecl load_game(int save_slot, int faction_id);
 int __cdecl load_map();
 
@@ -2470,7 +2487,7 @@ static void netwin_set_rect(RECT *rect, int left, int top, int right, int bottom
 }
 
 // ORIGINAL: 0x00482490 ?exec@NetWin@@QAEHXZ 0x00482490-0x00482D84
-// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00482490.cpp; original identity and primary482490..482D84 span retained", "Pinned original 0x004824C2 pushes callback 0x00483820, count 7, stride 0x17C and the stack array at EBP-0xAB0 before calling 0x00402EE0; originally the helper calls the callback with each element as ECX. Current source passes the typed __fastcall NetWinLobbyRow::initialize_empty_slot_callback bridge, which forwards to the existing row member. 0x00483820 writes offsets 0, 1, 2, 3, 4 and 0x178, matching that preserved member owner.", "recovery/tasks/netwin-owner-coverage.json; revisions1-3 authorize coupled ownership and consumer changes; no matching or runtime acceptance implied."], "reason": "Recover the complete lobby window lifecycle with typed setup rectangles, existing controls, stack-local lobby rows and real receiver-free callbacks."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00482490.cpp; original identity and primary482490..482D84 span retained", "Pinned original 0x004824C2 pushes callback 0x00483820, count 7, stride 0x17C and the stack array at EBP-0xAB0 before calling 0x00402EE0; originally the helper calls the callback with each element as ECX. Current source uses a seven-element array of constructed payload wrappers; VC6 supplies its non-EH ??_H iterator and the wrapper constructor returns the receiver, matching the original 0x483820 ABI. 0x00483820 writes offsets 0, 1, 2, 3, 4 and 0x178, matching the constructed row payload. Global wire rows remain passive; this composition does not assert an original class hierarchy.", "recovery/tasks/netwin-owner-coverage.json; revisions1-3 authorize coupled ownership and consumer changes; no matching or runtime acceptance implied."], "reason": "Recover the complete lobby window lifecycle with typed setup rectangles, existing controls, stack-local lobby rows and real receiver-free callbacks."}
 // TRIED: full transcription treating `self` as `int *` (matches the original's word-indexed field layout exactly); vtable slot057 retyped to (int,int,int) in this file's VCall, verified against raw disasm; UnionRect/CharUpperA reached via the IAT slot pattern. Reaches MISMATCH #6 'xor' vs 'mov' (register allocation), not chased further given size (2292 bytes).
 int NetWin::exec() {
     if (ExitTurnLoop != 0) {
@@ -2482,25 +2499,23 @@ int NetWin::exec() {
 
     struct ExecLobbyPacket {
         NetWinLobbyPacketHeader header_;
-        NetWinLobbyRow rows_[7];
+        NetWinConstructedLobbyRow rows_[7];
     } lobby_message;
     static_assert(sizeof(ExecLobbyPacket) == 0xA74, "exec lobby message size");
-    // The only sent branch overwrites the full payload; deterministic zeroing
-    // of the otherwise unwritten header tail avoids reading indeterminate C++
-    // storage while preserving every pinned field and payload byte.
-    memset(&lobby_message, 0, sizeof(lobby_message));
-    lobby_message.header_.opcode_ = 0x04;
-    lobby_message.header_.flags_ = 0x0F;
-    lobby_message.header_.field_2_ = 0;
-    lobby_message.header_.slot_ = -1;
-    lobby_message.header_.field_8_ = 0;
-    initialize_strided_array(&lobby_message.rows_[0], sizeof(NetWinLobbyRow), 7,
-                &NetWinLobbyRow::initialize_empty_slot_callback);
-    // 0x483820 is the scoped NetWinLobbyRow reset identity (re-homed from the
-    // old, incorrect NetWin::UNK5 owner); do not mutate process-global rows.
+    static_assert(offsetof(ExecLobbyPacket, rows_) == 0x10,
+                  "exec lobby payload offset");
+    // Ordinary array construction owns the original 0x402EE0 iterator and
+    // 0x483820 callback. It runs after enable_join even on the no-send path;
+    // process-global rows remain passive storage with no startup constructor.
     if (NetDaemonNet.lock_state_[0].leading_words_[1] != 0) {
-        lobby_message.header_.flags_ |= 0x40;
+        lobby_message.header_.opcode_ = 0x04;
+        lobby_message.header_.flags_ = 0x0F;
+        lobby_message.header_.slot_ = -1;
+        lobby_message.header_.field_8_ = 0;
+        // Preserve the original untouched header bytes +2..3 and +C..F.
+        // Whole-packet zeroing would deliberately change the wire behavior.
         memcpy(lobby_message.rows_, &NetWinLobbyRows[1], 0xA64);
+        lobby_message.header_.flags_ |= 0x40;
         NetDaemonNet.send(&lobby_message, 0xA74, 0, 1);
     }
 
@@ -3205,13 +3220,15 @@ void NetWin::on_mouse_leave(int, int) {
 
 
 /*
-Purpose: Initialize a lobby row, not the GraphicWin base. Native4824C2
+Purpose: Construct a lobby row, not the GraphicWin base. Native4824C2
          passes483820 to the402EE0 iterator for seven stack-local17C-byte
          rows. Owner178 and the five leading bytes are the only writes;
-         remaining row storage stays untouched. Historical catalogue owner
+         remaining row storage stays untouched; EAX returns the receiver.
+         Passive global wire rows do not run this constructor.
+         Historical catalogue owner
          NetWin::UNK5 is retained as identity, not a receiver interpretation.
-// ORIGINAL: 0x00483820 ?UNK5@NetWin@@QAEXXZ 0x00483820-0x0048383C
-// symbol    ?initialize_empty_slot@NetWinLobbyRow@@QAEXXZ
+// ORIGINAL: 0x00483820 ?UNK5@NetWin@@QAEXXZ 0x00483820-0x0048383C BYTE_EXACT
+// symbol    ??0NetWinConstructedLobbyRow@@QAE@XZ
 // size      28 bytes
 // prototype void (__thiscall ?UNK5@NetWin@@QAEXXZ)(NetWin* this)
 // callers   0   call targets   0
@@ -3221,13 +3238,13 @@ Purpose: Initialize a lobby row, not the GraphicWin base. Native4824C2
 Return Value: n/a
 Status: Complete
 */
-void NetWinLobbyRow::initialize_empty_slot() {
-    owner_ = 0;
-    prefix_ = 0xFF;
-    ready_or_occupied_ = 0;
-    field_2_ = 0;
-    faction_or_color_ = -1;
-    field_4_ = 2;
+NetWinConstructedLobbyRow::NetWinConstructedLobbyRow() {
+    payload_.owner_ = 0;
+    payload_.prefix_ = 0xFF;
+    payload_.ready_or_occupied_ = 0;
+    payload_.field_2_ = 0;
+    payload_.faction_or_color_ = -1;
+    payload_.field_4_ = 2;
 }
 
 

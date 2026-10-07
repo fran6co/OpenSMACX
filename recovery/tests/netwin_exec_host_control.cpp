@@ -2,16 +2,17 @@
 // These exercise source control flow only; they do not prove target ABI or
 // runtime behavior.
 #include <cassert>
+#include <cstddef>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
+#include <type_traits>
 #include <string>
 #include <vector>
 
 #define __cdecl
 #define __stdcall
 #define __fastcall
-typedef void (*ArrayElementCallback)(void *);
 typedef unsigned int uint32_t;
 typedef unsigned char uint8_t;
 typedef signed char int8_t;
@@ -56,7 +57,6 @@ struct NetWinSessionOptionsPacket {
 static void *observed_packet_rows = nullptr;
 static void *observed_row_addresses[7];
 static int observed_row_constructions = 0;
-static int observed_row_destructions = 0;
 static uint8_t observed_row_bytes[7][0x17C];
 struct NetWinLobbyRow {
     uint8_t prefix_, ready_or_occupied_, field_2_;
@@ -64,30 +64,30 @@ struct NetWinLobbyRow {
     uint8_t field_4_;
     char other_[0x173];
     uint32_t owner_;
-    NetWinLobbyRow() {
-        if (observed_row_constructions < 7) {
-            if (observed_row_constructions == 0) observed_packet_rows = this;
-            observed_row_addresses[observed_row_constructions] = this;
-        }
-        ++observed_row_constructions;
-    }
-    ~NetWinLobbyRow() {
-        const uintptr_t start = reinterpret_cast<uintptr_t>(observed_packet_rows);
-        const uintptr_t current = reinterpret_cast<uintptr_t>(this);
-        if (observed_packet_rows && current >= start &&
-            current < start + sizeof(observed_row_bytes)) {
-            const size_t row = (current - start) / sizeof(NetWinLobbyRow);
-            if (row < 7) {
-                std::memcpy(observed_row_bytes[row], this, sizeof(*this));
-                ++observed_row_destructions;
-            }
-        }
-    }
-    void initialize_empty_slot();
-    /* ROW_CALLBACK_INSERTION */
 };
 static_assert(sizeof(NetWinLobbyRow) == 0x17C, "row stride");
+static_assert(std::is_trivial<NetWinLobbyRow>::value, "passive wire storage");
 static NetWinLobbyRow NetWinLobbyRows[8];
+struct NetWinConstructedLobbyRow {
+    NetWinLobbyRow payload_;
+    NetWinConstructedLobbyRow() {
+        // Host-only canaries make untouched bytes observable; product code
+        // does not initialize these bytes.
+        std::memset(&payload_, 0xA5, sizeof(payload_));
+        /* ROW_CTOR_BODY_INSERTION */
+        if (observed_row_constructions < 7) {
+            if (observed_row_constructions == 0) observed_packet_rows = &payload_;
+            observed_row_addresses[observed_row_constructions] = &payload_;
+            std::memcpy(observed_row_bytes[observed_row_constructions],
+                        &payload_, sizeof(payload_));
+        }
+        ++observed_row_constructions;
+        trace.push_back("row-constructor");
+    }
+};
+static_assert(sizeof(NetWinConstructedLobbyRow) == 0x17C, "constructed row stride");
+static_assert(std::is_trivially_destructible<NetWinConstructedLobbyRow>::value,
+              "original non-EH array has no destructor cleanup");
 
 struct AlphaIniPref { uint32_t preferences, more_preferences, announce, rules, semaphore; };
 struct DefaultPref { uint32_t difficulty; };
@@ -176,6 +176,9 @@ struct NetDaemon {
         if (size == 0xA74) {
             const uint8_t *bytes = static_cast<const uint8_t *>(data);
             assert(bytes[0] == 0x04 && bytes[1] == 0x4F);
+            assert(*reinterpret_cast<const int32_t *>(bytes + 4) == -1);
+            assert(*reinterpret_cast<const int32_t *>(bytes + 8) == 0);
+            // The pinned image does not initialize header +2..3 or +C..F.
             assert(observed_packet_rows == bytes + 0x10);
             assert(std::memcmp(bytes + 0x10, &NetWinLobbyRows[1], 0xA64) == 0);
             ++initial_sends; trace.push_back("send-lobby");
@@ -213,7 +216,6 @@ static int UnionRect(RECT *out, const RECT *a, const RECT *b) {
     return 1;
 }
 
-/* ROW_BODY_INSERTION */
 /* EXEC_BODY_INSERTION */
 
 static int index_of(const char *name) {
@@ -223,7 +225,7 @@ static int index_of(const char *name) {
 static void reset_fixture() {
     trace.clear(); task_runs = 0; text_reads = 0;
     observed_packet_rows = nullptr;
-    observed_row_constructions = observed_row_destructions = 0;
+    observed_row_constructions = 0;
     std::memset(observed_row_addresses, 0, sizeof(observed_row_addresses));
     std::memset(observed_row_bytes, 0, sizeof(observed_row_bytes));
     NetWinPlanetSizeLabelCount = 0; NetWinExecAdjacentState = -1;
@@ -238,10 +240,8 @@ static void reset_fixture() {
     registered_callback_state = &NetWinDialog.stringBox_.callback_installed;
 }
 static void test_row_initializer() {
-    NetWinLobbyRow row;
-    std::memset(&row, 0xA5, sizeof(row));
-    row.initialize_empty_slot();
-    const uint8_t *bytes = reinterpret_cast<const uint8_t *>(&row);
+    NetWinConstructedLobbyRow row;
+    const uint8_t *bytes = reinterpret_cast<const uint8_t *>(&row.payload_);
     assert(bytes[0] == 0xFF && bytes[1] == 0 && bytes[2] == 0);
     assert(bytes[3] == 0xFF && bytes[4] == 2);
     for (size_t i = 5; i < 0x178; ++i) assert(bytes[i] == 0xA5);
@@ -283,7 +283,8 @@ static void test_exec_packet_rows_are_payload() {
     std::memset(NetWinLobbyRows, 0x5A, sizeof(NetWinLobbyRows));
     NetDaemonNet.lock_state_[0].leading_words_[1] = 0;
     assert(NetWinDialog.exec() == 0);
-    assert(observed_row_constructions == 7 && observed_row_destructions == 7);
+    assert(observed_row_constructions == 7);
+    assert(index_of("enable-join") < index_of("row-constructor"));
     assert(observed_packet_rows == observed_row_addresses[0]);
     const uintptr_t base = reinterpret_cast<uintptr_t>(observed_packet_rows);
     for (int row = 0; row < 7; ++row) {
@@ -292,9 +293,14 @@ static void test_exec_packet_rows_are_payload() {
         const uint8_t *bytes = observed_row_bytes[row];
         assert(bytes[0] == 0xFF && bytes[1] == 0 && bytes[2] == 0);
         assert(bytes[3] == 0xFF && bytes[4] == 2);
-        for (size_t offset = 5; offset < 0x178; ++offset) assert(bytes[offset] == 0);
+        for (size_t offset = 5; offset < 0x178; ++offset) assert(bytes[offset] == 0xA5);
         for (size_t offset = 0x178; offset < 0x17C; ++offset) assert(bytes[offset] == 0);
     }
     assert(NetDaemonNet.initial_sends == 0);
 }
-int main() { test_row_initializer(); test_exec(); test_exec_packet_rows_are_payload(); }
+int main() {
+    const uint8_t *global = reinterpret_cast<const uint8_t *>(NetWinLobbyRows);
+    for (size_t i = 0; i < sizeof(NetWinLobbyRows); ++i) assert(global[i] == 0);
+    assert(observed_row_constructions == 0);
+    test_row_initializer(); test_exec(); test_exec_packet_rows_are_payload();
+}

@@ -8,10 +8,36 @@ from pathlib import Path
 
 import pytest
 
+from match_recovery.source import Mode, read_file
+
 
 def project_root() -> Path:
     override = os.environ.get("NETWIN_SOURCE_ROOT")
     return Path(override).resolve() if override else Path(__file__).resolve().parents[2]
+
+
+def test_compiler_array_mapping_and_passive_wire_storage():
+    root = project_root()
+    header = (root / "src/netwin.h").read_text()
+    wire = header[header.index("struct NetWinLobbyRow {"):]
+    wire = wire[:wire.index("};")]
+    assert "NetWinLobbyRow(" not in wire and "virtual " not in wire
+    assert "initialize_empty_slot" not in header
+    source = (root / "src/netwin.cpp").read_text()
+    assert "NetWinLobbyRow NetWinLobbyRows[8];" in source
+    assert "initialize_strided_array" not in source
+    assert not (root / "src/array_initialization.cpp").exists()
+    assert not (root / "src/array_initialization.h").exists()
+    rows = {row.address: row for row in read_file(root / "src/netwin.cpp")}
+    helper = rows[0x00402EE0]
+    assert helper.name == "sub_402ee0" and helper.mode is Mode.FILE
+    assert helper.symbol == "??_H@YGXPAXIHP6EX0@Z@Z"
+    assert helper.image_spans == ((0x00402EE0, 0x00402F08),)
+    assert helper.byte_exact
+    ctor = rows[0x00483820]
+    assert ctor.name == "?UNK5@NetWin@@QAEXXZ"
+    assert ctor.symbol == "??0NetWinConstructedLobbyRow@@QAE@XZ"
+    assert ctor.image_spans == ((0x00483820, 0x0048383C),)
 
 
 def extract_function(source: str, signature: str) -> str:
@@ -74,22 +100,13 @@ def test_netwin_exec_and_row_actual_bodies(compiler_name: str) -> None:
 
     helper = extract_function(source, "static void netwin_set_rect(")
     exec_body = extract_function(source, "int NetWin::exec()")
-    row_body = extract_function(source, "void NetWinLobbyRow::initialize_empty_slot()")
-    row_callback = extract_function(
-        (root / "src/netwin.h").read_text(encoding="utf-8"),
-        "static void __fastcall initialize_empty_slot_callback(void *element)",
-    )
-    initializer = extract_function(
-        (root / "src/array_initialization.cpp").read_text(encoding="utf-8"),
-        'extern "C" void __stdcall initialize_strided_array(',
-    )
-    assert fixture.count("/* ROW_BODY_INSERTION */") == 1
+    row_ctor = extract_function(source, "NetWinConstructedLobbyRow::NetWinConstructedLobbyRow()")
+    ctor_body = row_ctor[row_ctor.index("{") + 1:row_ctor.rfind("}")]
+    assert fixture.count("/* ROW_CTOR_BODY_INSERTION */") == 1
     assert fixture.count("/* EXEC_BODY_INSERTION */") == 1
-    generated = fixture.replace("/* ROW_BODY_INSERTION */", row_body)
-    assert fixture.count("/* ROW_CALLBACK_INSERTION */") == 1
-    generated = generated.replace("/* ROW_CALLBACK_INSERTION */", row_callback)
+    generated = fixture.replace("/* ROW_CTOR_BODY_INSERTION */", ctor_body)
     generated = generated.replace(
-        "/* EXEC_BODY_INSERTION */", initializer + "\n\n" + helper + "\n\n" + exec_body
+        "/* EXEC_BODY_INSERTION */", helper + "\n\n" + exec_body
     )
 
     with tempfile.TemporaryDirectory(prefix="netwin-exec-test-") as directory:

@@ -43,10 +43,12 @@ def test_pending_translation_unit_is_retired_only_after_owners_are_present():
     assert "MISMATCH #12" in runtime[0x006456E4].ruled_out[0]
     runtime_text = (ROOT / "src/vendor/vc6-runtime.recovery.h").read_text()
     assert runtime_text.count("Historical project-loop location: git:4ba53acef56137f1aa04151f648ea360681ee511:src/vector_teardown.cpp") == 2
-    vector = (ROOT / "src/array_initialization.cpp").read_text()
-    assert "extern \"C\" void __stdcall initialize_strided_array(" in vector
-    assert "VectorDtorIterator" not in vector
-    assert "VectorCtorIterator" not in vector
+    assert not (ROOT / "src/array_initialization.cpp").exists()
+    assert not (ROOT / "src/array_initialization.h").exists()
+    netwin = {row.address: row for row in read_file(ROOT / "src/netwin.cpp")}
+    assert netwin[0x00402EE0].mode is Mode.FILE
+    assert netwin[0x00402EE0].symbol == "??_H@YGXPAXIHP6EX0@Z@Z"
+    assert netwin[0x00402EE0].byte_exact
 
     group_rows = {row.address: row for row in read_file(ROOT / "src/wave_device.cpp")}
     for address, span in ((0x004C5490, (0x004C5490, 0x004C54AB)),
