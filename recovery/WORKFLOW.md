@@ -55,7 +55,11 @@ method machinery and the transitional declarations/storage in `temp.*`.
 The retired `spying_recovery.h` fixed-address view is now represented by named
 `PlayersData` members and the genuine faction API. These are not all empty files:
 move genuine behavior and storage to evidence-backed owners before retiring
-them. `vector_teardown.*` retains a genuine game array-initializer helper.
+them. The misleading `vector_teardown.*` files are retired;
+`array_initialization.*` represents the mapped four-argument strided array
+initializer. Its behavior and callback ABI are established; application versus
+compiler/runtime ownership remains unresolved (the shape also fits MSVC's
+non-EH `??_H` iterator). This descriptive source home does not settle provenance.
 The handwritten CRT iterator substitutes are removed; real Wave control-group
 members now own construction, reverse destruction and prefix unwind. Their CRT
 identities and dependency-verification obligations remain recorded in the source;

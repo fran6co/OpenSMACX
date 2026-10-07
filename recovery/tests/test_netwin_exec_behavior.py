@@ -80,8 +80,8 @@ def test_netwin_exec_and_row_actual_bodies(compiler_name: str) -> None:
         "static void __fastcall initialize_empty_slot_callback(void *element)",
     )
     initializer = extract_function(
-        (root / "src/vector_teardown.cpp").read_text(encoding="utf-8"),
-        'extern "C" void __stdcall sub_402ee0(',
+        (root / "src/array_initialization.cpp").read_text(encoding="utf-8"),
+        'extern "C" void __stdcall initialize_strided_array(',
     )
     assert fixture.count("/* ROW_BODY_INSERTION */") == 1
     assert fixture.count("/* EXEC_BODY_INSERTION */") == 1

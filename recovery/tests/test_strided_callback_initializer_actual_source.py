@@ -1,7 +1,7 @@
 """Host control for the installed 0x402EE0 source body (not a proposal copy).
 
 The host substitutes only the platform calling-convention spellings. The
-loop is extracted from src/vector_teardown.cpp and its typed row bridge from
+loop is extracted from src/array_initialization.cpp and its typed row bridge from
 src/netwin.h on every run, then compiled and executed.
 """
 from __future__ import annotations
@@ -14,14 +14,14 @@ import tempfile
 import pytest
 
 
-SIGNATURE = 'extern "C" void __stdcall sub_402ee0('
+SIGNATURE = 'extern "C" void __stdcall initialize_strided_array('
 BRIDGE_SIGNATURE = "static void __fastcall initialize_empty_slot_callback(void *element)"
 CALL_SITE = "callback(element);"
 
 
 def repo_root() -> Path:
     for parent in Path(__file__).resolve().parents:
-        if (parent / "src/vector_teardown.cpp").is_file() and (parent / "CMakeLists.txt").is_file():
+        if (parent / "src/array_initialization.cpp").is_file() and (parent / "CMakeLists.txt").is_file():
             return parent
     raise AssertionError("could not locate the OpenSMACX source tree")
 
@@ -72,7 +72,9 @@ def extract_function(source: str, signature: str) -> str:
 @pytest.fixture(scope="module")
 def host_binary(tmp_path_factory: pytest.TempPathFactory) -> Path:
     root = repo_root()
-    owner = root / "src/vector_teardown.cpp"
+    owner = root / "src/array_initialization.cpp"
+    assert not (root / "src/vector_teardown.cpp").exists()
+    assert not (root / "src/vector_teardown.h").exists()
     row_header = root / "src/netwin.h"
     function = extract_function(owner.read_text(encoding="utf-8"), SIGNATURE)
     assert function.count(CALL_SITE) == 1, "installed typed callback callsite changed"
@@ -88,7 +90,7 @@ def host_binary(tmp_path_factory: pytest.TempPathFactory) -> Path:
     harness.write_text(
         r"""
 #include <stdexcept>
-typedef void (*func_vector_element_callback)(void *);
+typedef void (*ArrayElementCallback)(void *);
 #define __stdcall
 #define __fastcall
 static void *seen[8];
@@ -107,7 +109,7 @@ static_assert(sizeof(NetWinLobbyRow) == 0x17C, "host row stride");
 #include <cassert>
 int main() {
     NetWinLobbyRow rows[3] = {};
-    sub_402ee0(rows, sizeof(NetWinLobbyRow), 3,
+    initialize_strided_array(rows, sizeof(NetWinLobbyRow), 3,
                &NetWinLobbyRow::initialize_empty_slot_callback);
     assert(seen_count == 3);
     assert(seen[0] == rows);
@@ -115,16 +117,16 @@ int main() {
     assert(seen[2] == rows + 2);
 
     seen_count = 0;
-    sub_402ee0(rows, sizeof(NetWinLobbyRow), 0,
+    initialize_strided_array(rows, sizeof(NetWinLobbyRow), 0,
                &NetWinLobbyRow::initialize_empty_slot_callback);
-    sub_402ee0(rows, sizeof(NetWinLobbyRow), -1,
+    initialize_strided_array(rows, sizeof(NetWinLobbyRow), -1,
                &NetWinLobbyRow::initialize_empty_slot_callback);
     assert(seen_count == 0);
 
     should_throw = true;
     bool propagated = false;
     try {
-        sub_402ee0(rows, sizeof(NetWinLobbyRow), 3,
+        initialize_strided_array(rows, sizeof(NetWinLobbyRow), 3,
                    &NetWinLobbyRow::initialize_empty_slot_callback);
     } catch (const std::runtime_error &) {
         propagated = true;
@@ -138,7 +140,7 @@ int main() {
     seen_count = 0;
     propagated = false;
     try {
-        sub_402ee0(rows, sizeof(NetWinLobbyRow), (-2147483647 - 1),
+        initialize_strided_array(rows, sizeof(NetWinLobbyRow), (-2147483647 - 1),
                    &NetWinLobbyRow::initialize_empty_slot_callback);
     } catch (const std::runtime_error &) {
         propagated = true;

@@ -19,7 +19,6 @@
 
 #include "wave_device.h"
 #include "sound.h"
-#include "vector_teardown.h"
 
  /*
   * Wave class

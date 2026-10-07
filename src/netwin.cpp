@@ -31,7 +31,7 @@
 #include "game.h"      // ExitTurnLoop, the modal callbacks' stop flag
 #include "general.h"   // checksum_password, parse_says and shared helpers
 #include "netdaemon.h" // NetDaemonNet, message_chat - the pump and the chat send
-#include "vector_teardown.h"  // generic strided member-callback initializer
+#include "array_initialization.h"  // strided array element initializer
 #include "popmenu.h"   // PopMenu - the pickers' popup and its exec
 #include "popup.h"     // Popup - the password modal and typed teardown
 #include "pulldown.h"  // PullDown - the pickers' second pane
@@ -2494,7 +2494,7 @@ int NetWin::exec() {
     lobby_message.header_.field_2_ = 0;
     lobby_message.header_.slot_ = -1;
     lobby_message.header_.field_8_ = 0;
-    sub_402ee0(&lobby_message.rows_[0], sizeof(NetWinLobbyRow), 7,
+    initialize_strided_array(&lobby_message.rows_[0], sizeof(NetWinLobbyRow), 7,
                 &NetWinLobbyRow::initialize_empty_slot_callback);
     // 0x483820 is the scoped NetWinLobbyRow reset identity (re-homed from the
     // old, incorrect NetWin::UNK5 owner); do not mutate process-global rows.

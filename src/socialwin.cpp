@@ -24,7 +24,6 @@ extern const char BufferJoinSpace[];
 #include "socialwin.h"
 #include "win.h"
 #include "subinterface.h"
-#include "vector_teardown.h"
 #include "game.h"
 #include "strings.h"
 #include "text.h"

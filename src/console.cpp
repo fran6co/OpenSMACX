@@ -64,7 +64,6 @@
 #include "time.h"
 #include "texture.h"
 #include "strings.h"  // StringTemp - scenario-objective text scratch buffer
-#include "vector_teardown.h"
 #include "veh.h"  // Vehs - the group table is the Vehs[i].state run
 #include "faction.h"  // Players/PlayersData - the per-faction records editor_energy and set_ai walk
 #include "xpops.h"  // X_pop - editor_on and friends raise the message pops

@@ -222,7 +222,6 @@ class FontQueue {
 static_assert(sizeof(FontQueue) == 0x9C, "FontQueue layout must match the legacy ABI");
 #endif
 
-#include "vector_teardown.h"
 extern const void *const FontQueueElementTeardown;
 extern FontQueue g_FONTQUEUE_VAL1;
 extern FontQueue g_FONTQUEUE_VAL2;

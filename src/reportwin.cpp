@@ -34,7 +34,6 @@
 #include "datalink.h"  // DatalinkMain - the research screen's host window
 #include "maininterface.h"  // MainInterfaceGlobal - the set_modal owner
 #include "tutwin.h"  // TutWinBaseWindow - the report's base-map zoom target
-#include "vector_teardown.h"
 #include "alpha.h"
 #include "socialwin.h"
 #include "console.h"

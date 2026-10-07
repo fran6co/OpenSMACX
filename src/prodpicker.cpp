@@ -38,7 +38,6 @@
 #include "netdaemon.h" // synch_proto
 #include "strings.h"  // StringTemp, StringTable
 #include "buffer.h"   // BoxSpriteParams, InterfaceBoxStyles
-#include "vector_teardown.h"
 #include <cstring>
 
 void __cdecl slide_show(GraphicWin *window, int mode);

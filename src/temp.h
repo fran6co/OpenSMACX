@@ -146,11 +146,8 @@ void __cdecl tech_calc_output();
 
 
 
-// DECLARED, NOT BOUND. A `T *const` binding compiles `call dword ptr [...]` at
-// every call site where the image emits `call rel32`, which costs the CALLER
-// its claim - see the pump family in this file, and the vector iterators in
-// `vector_teardown.h`. Each of these is forwarded in `pending_bodies.cpp`
-// until its body lands.
+// Historical transitional declarations were retired to their real owners;
+// this header no longer declares pending bodies or vector iterator helpers.
 void __cdecl wave_it(int a1);
 void __cdecl fixup_landmarks();
 void __cdecl mapwin_terrain_fixup();

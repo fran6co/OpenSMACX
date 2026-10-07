@@ -11,7 +11,7 @@
 #define __cdecl
 #define __stdcall
 #define __fastcall
-typedef void (*func_vector_element_callback)(void *);
+typedef void (*ArrayElementCallback)(void *);
 typedef unsigned int uint32_t;
 typedef unsigned char uint8_t;
 typedef signed char int8_t;

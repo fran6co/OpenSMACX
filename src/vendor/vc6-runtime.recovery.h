@@ -165,7 +165,7 @@ Purpose: Retain the original CRT vector-destructor runtime identity ??_M:
 // Preserve provider selection, relocation closure and unwind-equivalence debt.
 // ORIGINAL: 0x006456E4 ??_M@YGXPAXIHP6EX0@Z@Z 0x006456E4-0x00645764 FILE
 // Historical project symbol: ?VectorDtorIterator@@YGXPAXIHP6IX0@Z@Z
-// Historical project-loop location: src/vector_teardown.cpp; no active
+// Historical project-loop location: git:4ba53acef56137f1aa04151f648ea360681ee511:src/vector_teardown.cpp; no active
 // project-defined VectorDtorIterator implementation remains.
 // TRIED: explicit __thiscall keyword on a free-function-pointer typedef
 //            (C4234 reserved keyword); member-function-pointer/union shim
@@ -193,7 +193,7 @@ Purpose: Retain the original CRT vector-constructor runtime identity ??_L:
 // Preserve provider selection, relocation closure and unwind-equivalence debt.
 // ORIGINAL: 0x006457C2 ??_L@YGXPAXIHP6EX0@Z1@Z 0x006457C2-0x00645844 FILE
 // Historical project symbol: ?VectorCtorIterator@@YGXPAXIHP6IX0@Z1@Z
-// Historical project-loop location: src/vector_teardown.cpp; no active
+// Historical project-loop location: git:4ba53acef56137f1aa04151f648ea360681ee511:src/vector_teardown.cpp; no active
 // project-defined VectorCtorIterator implementation remains.
 // size      130 bytes
 // prototype void (__stdcall ??_L@YGXPAXIHP6EX0@Z1@Z)(void*, unsigned int size, int count, void (__thiscall *)(void*), void (__thiscall *)(void*))

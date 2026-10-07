@@ -37,7 +37,6 @@
 #include "game.h"  // say_year
 #include "technology.h"  // has_tech_call
 #include "strings.h"  // StringTable, StringTemp
-#include "vector_teardown.h"
 #include "basewin.h"
 #include "veh.h"
 #include "font.h"

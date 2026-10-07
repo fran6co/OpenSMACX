@@ -42,9 +42,9 @@ def test_pending_translation_unit_is_retired_only_after_owners_are_present():
         assert not row.body and not row.symbol and row.kind == "library"
     assert "MISMATCH #12" in runtime[0x006456E4].ruled_out[0]
     runtime_text = (ROOT / "src/vendor/vc6-runtime.recovery.h").read_text()
-    assert runtime_text.count("Historical project-loop location: src/vector_teardown.cpp") == 2
-    vector = (ROOT / "src/vector_teardown.cpp").read_text()
-    assert "extern \"C\" void __stdcall sub_402ee0(" in vector
+    assert runtime_text.count("Historical project-loop location: git:4ba53acef56137f1aa04151f648ea360681ee511:src/vector_teardown.cpp") == 2
+    vector = (ROOT / "src/array_initialization.cpp").read_text()
+    assert "extern \"C\" void __stdcall initialize_strided_array(" in vector
     assert "VectorDtorIterator" not in vector
     assert "VectorCtorIterator" not in vector
 

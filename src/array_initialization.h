@@ -17,14 +17,16 @@
  */
 #pragma once
 
-// 0x00402EE0 takes the element callback in ECX and walks the byte-strided
-// region without adding constructor-prefix unwind behavior.
-typedef void(__fastcall *func_vector_element_callback)(void *element);
+// The 0x00402EE0 helper passes the current element to its callback in ECX
+// and walks the byte-strided region without constructor-prefix unwind.
+typedef void(__fastcall *ArrayElementCallback)(void *element);
 
-// The 0x00402EE0 game helper is distinct from the five-argument CRT ??_L
-// iterator above: it receives one typed element callback and performs no array
+// The mapped 0x00402EE0 helper is distinct from the five-argument CRT ??_L
+// iterator: it receives one typed element callback and performs no array
 // unwind/cleanup if a callback throws.
-extern "C" void __stdcall sub_402ee0(void *array, unsigned int element_size,
-                                      int count, func_vector_element_callback callback);
-
-// Audio and wave owners use the configured runtime's direct global operator new, matching the calls already present in Midi.
+// This shape is also consistent with MSVC's non-EH ??_H constructor iterator.
+// Compiler/runtime provenance is unproved; this component name describes the
+// observed operation, not an established original application-owned utility.
+extern "C" void __stdcall initialize_strided_array(
+    void *array, unsigned int element_size, int count,
+    ArrayElementCallback callback);
