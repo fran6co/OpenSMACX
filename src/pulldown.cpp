@@ -1128,59 +1128,75 @@ int PullDown::compute_length(char *text) {
             int measured = PullDownDefaultFont->width(text);
             if (current <= measured) {
                 measured = PullDownDefaultFont->width(text);
+            } else {
+                measured = current;
             }
             width_ = measured;
             return width_;
         }
 
         const int previous = width_;
-        if (previous <= 2 * PullDownDefaultFont->width("  ")
-                            + PullDownDefaultFont->width(text, separator - text)
-                            + PullDownDefaultFont->width(separator + 1)) {
-            width_ = 2 * PullDownDefaultFont->width("  ")
-                     + PullDownDefaultFont->width(text, separator - text)
-                     + PullDownDefaultFont->width(separator + 1);
-        } else {
+        int left_width = PullDownDefaultFont->width(text, separator - text);
+        int separator_width = PullDownDefaultFont->width("  ");
+        int right_width = PullDownDefaultFont->width(separator + 1);
+        int total = static_cast<int32_t>(static_cast<uint32_t>(left_width)
+                    + 2U * static_cast<uint32_t>(separator_width)
+                    + static_cast<uint32_t>(right_width));
+        if (previous > total) {
             width_ = previous;
             return width_;
         }
+        separator_width = PullDownDefaultFont->width("  ");
+        left_width = PullDownDefaultFont->width(text, separator - text);
+        right_width = PullDownDefaultFont->width(separator + 1);
+        width_ = static_cast<int32_t>(static_cast<uint32_t>(left_width)
+                 + 2U * static_cast<uint32_t>(separator_width)
+                 + static_cast<uint32_t>(right_width));
+        // 0x005F9DF9 leaves the final right-side measurement in EAX.
+        // This is deliberately not the aggregate stored in width_.
+        return right_width;
     } else {
         width_ = 0;
         for (int i = 0; i < 64; ++i) {
-            if (items_[i].text == nullptr) {
+            char *const item_text = items_[i].text;
+            if (item_text == nullptr) {
                 continue;
             }
+            char *const first_right_text = items_[i].right_text;
             const int current = width_;
-            if (items_[i].right_text == nullptr) {
-                int measured = PullDownDefaultFont->width(items_[i].text);
+            if (first_right_text == nullptr) {
+                int measured = PullDownDefaultFont->width(item_text);
                 if (current <= measured) {
                     measured = PullDownDefaultFont->width(items_[i].text);
+                } else {
+                    measured = current;
                 }
                 width_ = measured;
             } else {
-                int total = 2 * PullDownDefaultFont->width("  ")
-                            + PullDownDefaultFont->width(items_[i].text)
-                            + PullDownDefaultFont->width(items_[i].right_text);
+                int separator_width = PullDownDefaultFont->width("  ");
+                int left_width = PullDownDefaultFont->width(items_[i].text);
+                int right_width = PullDownDefaultFont->width(first_right_text);
+                int total = static_cast<int32_t>(2U * static_cast<uint32_t>(separator_width)
+                            + static_cast<uint32_t>(left_width)
+                            + static_cast<uint32_t>(right_width));
                 if (current > total) {
                     total = current;
                 } else {
-                    total = 2 * PullDownDefaultFont->width("  ")
-                            + PullDownDefaultFont->width(items_[i].text)
-                            + PullDownDefaultFont->width(items_[i].right_text);
+                    separator_width = PullDownDefaultFont->width("  ");
+                    right_width = PullDownDefaultFont->width(items_[i].right_text);
+                    left_width = PullDownDefaultFont->width(items_[i].text);
+                    total = static_cast<int32_t>(2U * static_cast<uint32_t>(separator_width)
+                            + static_cast<uint32_t>(left_width)
+                            + static_cast<uint32_t>(right_width));
                 }
                 width_ = total;
             }
         }
     }
 
-    // BUG IN THE ORIGINAL: neither the whole-table walk above nor the
-    // split-text branch falls through to a `return`, though the function is
-    // declared int. The shipped bytes confirm it - the walk's epilogue leaves
-    // EAX holding the exhausted loop counter (so it answers 0) and the split
-    // branch's leaves EAX holding the last width() result - while the two
-    // early exits do return width_ properly. Reproduced as written; adding
-    // the missing return would be a different program.
-    // (add_item and rename_item, its only callers, discard the result.)
+    // 0x005F9F21 exhausts the 64-entry loop counter in EAX before RET.
+    // Encode the emitted result instead of falling off an int function.
+    return 0;
 }
 
 
