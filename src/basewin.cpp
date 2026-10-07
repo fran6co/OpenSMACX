@@ -4215,9 +4215,9 @@ int BaseWin::UNK1(int a1) {
 // interleaving.
 */
 void BaseWin::bubble_me_elmo2(char *text, int x, int y) {
-    reinterpret_cast<Win *>(this)->client_to_screen(&x, &y);
+    client_to_screen(&x, &y);
     RECT rect = { x, y, x, y };
-    reinterpret_cast<Win *>(this)->set_bubble_text(text, &rect);
+    set_bubble_text(text, &rect);
 }
 
 /*
@@ -4458,18 +4458,12 @@ void BaseWin::hide() {
 // flags     frame;sp_ready;purged_ok
 // calls     0x005F5AD0
 // 0x00420A40  ?on_nc_hittest@BaseWin@@QAEHHH@Z  ->  ?on_nc_hittest@BaseWin@@QAEHHH@Z
-//
-// A byte-exact Mizuchi match that no file in the tree owns yet. NOT in
-// OPENSMACX_SOURCES and not compiled: it is the emitter's verification style,
-// and rewriting it in the tree's own style is a later phase. See README.md
-// beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
-
-
+// GraphicWin's Buffer base is at +0x444; its DIB biWidth is at +0x80,
+// explaining the original +0x4C4 read. Keep the qualified Win dispatch.
 int BaseWin::on_nc_hittest(int a1, int a2) {
-    char *self = reinterpret_cast<char *>(this);
     if (a1 >= 0x17 &&
-        a1 <= *reinterpret_cast<int *>(self + 0x4c4) - 0x37) {
-        return reinterpret_cast<Win *>(this)->Win::on_nc_hittest(a1, a2);
+        a1 <= pixel_width() - 0x37) {
+        return Win::on_nc_hittest(a1, a2);
     }
     return 2;
 }
