@@ -105,15 +105,24 @@ public:
 };
 static int slot_values[32] = {0};
 #define SLOT(name, index) static int *const name = &slot_values[index]
-SLOT(blit_pixel_base, 0); SLOT(blit_z_values, 1); SLOT(blit_edge_uvs_b, 2);
+static int *z_values_cell = 0;
+static int **blit_z_values = &z_values_cell;
+static int *edge_uvs_b_cell = 0;
+static int **blit_edge_uvs_b = &edge_uvs_b_cell;
+SLOT(blit_pixel_base, 0);
 SLOT(blit_remap_table, 3); SLOT(blit_texture_pixels, 4); SLOT(blit_texture_height, 5);
-SLOT(blit_texture_width, 6); SLOT(blit_edge_uvs_a, 7); SLOT(blit_vertex_count, 8);
+SLOT(blit_texture_width, 6);
+static int *edge_uvs_a_cell = 0;
+static int **blit_edge_uvs_a = &edge_uvs_a_cell;
+SLOT(blit_vertex_count, 8);
 SLOT(blit_buffer_stride, 9); SLOT(blit_shade_table, 10); SLOT(blit_clip_right, 11);
 SLOT(blit_clip_left, 12); SLOT(blit_clip_bottom, 13); SLOT(blit_clip_top, 14);
 SLOT(blit_max_y_index, 15); SLOT(blit_row_offset, 16); SLOT(blit_slot_4c4, 17);
 SLOT(blit_slot_530, 18); SLOT(blit_span_left, 19); SLOT(blit_slot_4f8, 20);
 SLOT(blit_slot_53c, 21); SLOT(blit_span_right, 22); SLOT(blit_slot_498, 23);
-SLOT(blit_slot_4e4, 24); SLOT(blit_slot_4c8, 25); SLOT(blit_light_pack_a, 26);
+SLOT(blit_slot_4e4, 24); SLOT(blit_slot_4c8, 25);
+static unsigned short light_pack_words[2] = {};
+static unsigned short *blit_light_pack_a = &light_pack_words[0];
 #undef SLOT
 static int TextureRowPitchScratch = 0;
 static int texture_difference(int a, int b) {
@@ -158,10 +167,10 @@ int main() {
     assert(*blit_vertex_count == 4);
     assert(*blit_row_offset == *blit_clip_bottom);
     assert(*blit_clip_top == *blit_clip_bottom);
-    assert(*blit_z_values == static_cast<int>(reinterpret_cast<intptr_t>(z_values)));
+    assert(*blit_z_values == z_values);
     assert(*blit_slot_4e4 == 0x10000);
     assert(*blit_slot_4c8 == 0);
-    assert(*reinterpret_cast<unsigned short *>(blit_light_pack_a) == 0x100);
+    assert(*blit_light_pack_a == 0x100);
     owner.sub_61d990(0, vertices, z_values, &shade, remap, 0);
     assert(fpu_reset_count == 3);
     assert(buffer.free_count == 1);
@@ -276,7 +285,7 @@ def _assert_owner_shape(source: str, header: str) -> None:
     body = _member(source)
     assert "Texture *shade_texture, unsigned char *remap" in body
     assert "int *zvals" in body
-    assert "*blit_z_values = static_cast<int>(reinterpret_cast<intptr_t>(zvals))" in body
+    assert "*blit_z_values = reinterpret_cast<int *>(zvals)" in body
     assert "wide_flag != 0 ? cornersAndMids_ : corners_" in body
     assert "wide_flag != 0 ? 8 : 4" in body
     acquired = body.index("buffer->get_data()")
@@ -301,7 +310,7 @@ def _assert_owner_shape(source: str, header: str) -> None:
     gradient_store = body.index("texture_raster_gradient_span_admitted(span)", span_begin)
     row_clip = body.index("if (*blit_clip_top <= *blit_row_offset", span_begin)
     assert gradient_store < row_clip
-    assert "*reinterpret_cast<unsigned short *>(blit_light_pack_a) =" in body
+    assert "*blit_light_pack_a =" in body
     assert body.index("*blit_slot_4f8 = u") < body.index("*blit_slot_498 = light >> 8")
     assert "if (done) break;" in body
     assert "void sub_61d990(Buffer *buffer, int *vertArray, int *zvals, Texture *texB," in header

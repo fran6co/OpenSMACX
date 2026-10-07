@@ -103,10 +103,11 @@ static float scale_65536 = 65536.0f;
 static float scale_256 = 256.0f;
 static float *const blit_scale_65536f = &scale_65536;
 static float *const blit_scale_256f = &scale_256;
-static int slot_u, slot_v, light_word;
+static int slot_u, slot_v;
+static unsigned short light_words[2];
 static int *const blit_slot_4e4 = &slot_u;
 static int *const blit_slot_4c8 = &slot_v;
-static int *const blit_light_pack_a = &light_word;
+static unsigned short *const blit_light_pack_a = &light_words[0];
 
 static void run(int edgeSpan, int u_delta, int v_delta, int z_delta) {
     EdgeScan left, right;
@@ -121,23 +122,24 @@ static void run(int edgeSpan, int u_delta, int v_delta, int z_delta) {
 
 int main() {
     const int positive_span = 4 * 0x10000;
-    slot_u = slot_v = 0; light_word = 0x5a5a0000;
+    slot_u = slot_v = 0; light_words[0] = 0; light_words[1] = 0x5a5a;
     run(positive_span, 1030, 407, 803);
     assert(slot_u == 200); // dZ * reciprocal * 65536, truncate
     assert(slot_v == 101); // dV * reciprocal * 65536, truncate
-    assert(static_cast<short>(light_word) == 1); // dU * reciprocal * 256
-    assert((static_cast<unsigned int>(light_word) >> 16) == 0x5a5au);
+    assert(static_cast<short>(light_words[0]) == 1); // dU * reciprocal * 256
+    assert(light_words[1] == 0x5a5au);
 
-    slot_u = slot_v = 0; light_word = 0x5a5a0000;
+    slot_u = slot_v = 0; light_words[0] = 0; light_words[1] = 0x5a5a;
     run(positive_span, -1030, -407, -803);
     assert(slot_u == -200);
     assert(slot_v == -101);
-    assert(static_cast<short>(light_word) == -1);
-    assert((static_cast<unsigned int>(light_word) >> 16) == 0x5a5au);
+    assert(static_cast<short>(light_words[0]) == -1);
+    assert(light_words[1] == 0x5a5au);
 
-    slot_u = 701; slot_v = 702; light_word = 703;
+    slot_u = 701; slot_v = 702; light_words[0] = 703; light_words[1] = 0;
     run(0, 1024, 512, 256);
-    assert(slot_u == 701 && slot_v == 702 && light_word == 703);
+    assert(slot_u == 701 && slot_v == 702 && light_words[0] == 703 &&
+           light_words[1] == 0);
 }
 """
 
@@ -151,9 +153,9 @@ def test_actual_sub622200_gradient_store_mapping(tmp_path: Path, compiler: str, 
     blocks = gradient_blocks(owner_body())
     block = blocks[0][2] + "\n" + blocks[1][2]
     if damage_word_store:
-        old = "*reinterpret_cast<short *>(blit_light_pack_a)"
+        old = "*blit_light_pack_a = static_cast<unsigned short>("
         assert old in block
-        block = block.replace(old, "*blit_light_pack_a", 1)
+        block = block.replace(old, "*reinterpret_cast<unsigned int *>(blit_light_pack_a) = static_cast<unsigned int>(", 1)
     source = tmp_path / "sub_622200_gradient.cpp"
     executable = tmp_path / "sub_622200_gradient"
     source.write_text(harness(block))

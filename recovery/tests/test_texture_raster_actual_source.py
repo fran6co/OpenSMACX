@@ -50,23 +50,57 @@ def _mask_comments_and_literals(source):
 
 
 def _extract_definition(source, signature):
-    """Extract one actual C++ definition; comment/string decoys are invisible."""
+    """Extract one actual C++ definition, skipping declarations and decoys."""
     masked = _mask_comments_and_literals(source)
-    start = masked.find(signature)
-    if start < 0 or masked.find(signature, start + 1) >= 0:
-        raise AssertionError(f"expected one code definition for {signature!r}")
-    brace = masked.find("{", start)
-    if brace < 0:
-        raise AssertionError(f"body not found for {signature!r}")
-    depth = 0
-    for end in range(brace, len(masked)):
-        if masked[end] == "{":
-            depth += 1
-        elif masked[end] == "}":
-            depth -= 1
-            if depth == 0:
-                return source[start:end + 1]
-    raise AssertionError(f"unterminated C++ definition for {signature!r}")
+    occurrence = 0
+    definitions = []
+    while True:
+        start = masked.find(signature, occurrence)
+        if start < 0:
+            break
+        opening_paren = masked.find("(", start + len(signature) - 1)
+        depth = 0
+        close_paren = -1
+        for index in range(opening_paren, len(masked)):
+            if masked[index] == "(":
+                depth += 1
+            elif masked[index] == ")":
+                depth -= 1
+                if depth == 0:
+                    close_paren = index
+                    break
+        if close_paren >= 0:
+            next_token = close_paren + 1
+            while next_token < len(masked) and masked[next_token].isspace():
+                next_token += 1
+            if next_token < len(masked) and masked[next_token] == "{":
+                brace = next_token
+                body_depth = 0
+                for end in range(brace, len(masked)):
+                    if masked[end] == "{":
+                        body_depth += 1
+                    elif masked[end] == "}":
+                        body_depth -= 1
+                        if body_depth == 0:
+                            definitions.append(source[start:end + 1])
+                            break
+                else:
+                    raise AssertionError(f"unterminated C++ definition for {signature!r}")
+        occurrence = start + len(signature)
+    assert len(definitions) == 1, f"expected one code definition for {signature!r}"
+    return definitions[0]
+
+
+def test_definition_extractor_skips_forward_declaration():
+    body = "static int probe(int value) { return value; }"
+    source = '/* static int probe(int); */\nstatic int probe(int value);\n' + body
+    assert _extract_definition(source, "static int probe(") == body
+
+
+def test_definition_extractor_rejects_duplicate_bodies():
+    body = "static int probe(int value) { return value; }"
+    with pytest.raises(AssertionError, match="expected one code definition"):
+        _extract_definition(body + "\n" + body, "static int probe(")
 
 
 def _record_map(text):
@@ -189,4 +223,3 @@ def test_behavioral_mutant_in_actual_helper_fails_pixel_assertions(compiler, tmp
     ran = subprocess.run([str(binary)], check=False, capture_output=True,
                          text=True, timeout=45)
     assert ran.returncode != 0, "pixel behavior mutant escaped fixture assertions"
-

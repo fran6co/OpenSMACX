@@ -31,10 +31,13 @@ public:
 
 static int slots[64];
 static int *blit_pixel_base = &slots[0];
-static int *blit_edge_uvs_a = &slots[1];
-static int *blit_edge_uvs_b = &slots[2];
+static int *uv_a_cell = 0;
+static int **blit_edge_uvs_a = &uv_a_cell;
+static int *uv_b_cell = 0;
+static int **blit_edge_uvs_b = &uv_b_cell;
 static int *blit_vertex_count = &slots[3];
-static int *blit_z_values = &slots[4];
+static int *z_values_cell = 0;
+static int **blit_z_values = &z_values_cell;
 static int *blit_texture_pixels = &slots[5];
 static int *blit_buffer_stride = &slots[6];
 static int *blit_texture_width = &slots[7];
@@ -46,7 +49,8 @@ static int *blit_max_y_index = &slots[12];
 static int *blit_row_offset = &slots[13];
 static int *blit_slot_4e4 = &slots[14];
 static int *blit_slot_4c8 = &slots[15];
-static int *blit_light_pack_a = &slots[16];
+static unsigned short light_pack_words[2] = {};
+static unsigned short *blit_light_pack_a = &light_pack_words[0];
 static int TextureLightCeiling = 0x70000000;
 static int TextureLightFloor = -0x70000000;
 static int texture_raster_key;

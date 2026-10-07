@@ -101,7 +101,7 @@ def _contract(body: str) -> None:
     assert body.index("a1->free_data(1)") < body.index("epilogue_only:\n    texture_reset_fpu();")
     assert body.index("*blit_slot_504 = reinterpret_cast<int>(src);") < body.index("texture_draw_keyed_coast_fill_span(")
     assert body.index("*blit_slot_504 = reinterpret_cast<int>(src);") < body.index("*blit_slot_558 = reinterpret_cast<int>(src)")
-    assert body.index("*blit_slot_498 = row_light >> 8;") < body.index("*blit_alt_slot_524 =")
+    assert body.index("*blit_slot_498 = row_light >> 8;") < body.index("TextureRasterAlternateRowNext.value =")
     assert body.index("span_result.prefetched_source =") < body.index("if ((*blit_dither & 1) == 0)")
 
 

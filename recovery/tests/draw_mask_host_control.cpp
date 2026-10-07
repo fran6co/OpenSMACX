@@ -32,7 +32,8 @@ public:
 };
 
 static int slots[64];
-static int *blit_edge_uvs_a = &slots[0];
+static int *edge_uvs_a_cell = 0;
+static int **blit_edge_uvs_a = &edge_uvs_a_cell;
 static int *blit_slot_498 = &slots[1];
 static int *blit_buffer_stride = &slots[2];
 static int *blit_slot_4a4 = &slots[3];
@@ -48,13 +49,17 @@ static int *blit_clip_top = &slots[12];
 static int *blit_slot_4e4 = &slots[13];
 static int *blit_pixel_base = &slots[14];
 static int *blit_span_left = &slots[15];
-static int *blit_edge_uvs_b = &slots[16];
+static int *edge_uvs_b_cell = 0;
+static int **blit_edge_uvs_b = &edge_uvs_b_cell;
 static int *blit_slot_4f8 = &slots[17];
 static int *blit_slot_4fa = &slots[18];
-static int *blit_z_values = &slots[19];
+static int *z_values_cell = 0;
+static int **blit_z_values = &z_values_cell;
 static int *blit_row_offset = &slots[20];
-static int *blit_alt_slot_520 = &slots[21];
-static int *blit_alt_slot_524 = &slots[22];
+union TextureRasterRelocatedRowCell { int *initial_target; int value; };
+static int alternate_row_520, alternate_row_524;
+static TextureRasterRelocatedRowCell TextureRasterAlternateRowBase = { &alternate_row_520 };
+static TextureRasterRelocatedRowCell TextureRasterAlternateRowNext = { &alternate_row_524 };
 static int *blit_slot_528 = &slots[23];
 static int *blit_clip_right = &slots[24];
 static int *blit_clip_bottom = &slots[25];
@@ -65,7 +70,8 @@ static int *blit_slot_534 = &slots[29];
 static int *blit_slot_538 = &slots[30];
 static int *blit_slot_53c = &slots[31];
 static int *blit_slot_564 = &slots[32];
-static int *blit_light_pack_a = &slots[33];
+static unsigned short light_pack_words[2] = {};
+static unsigned short *blit_light_pack_a = &light_pack_words[0];
 static int TextureRowPitchScratch;
 static int ambient_z[4];
 static int edge_setup_calls;
@@ -126,7 +132,7 @@ int Texture::setup_edge_gouraud(EdgeScan *edge, int index) {
     edge_directions[edge_setup_calls] = edge->f0;
     ++edge_setup_calls;
     assert(*blit_max_y_index == 2);
-    int *z = reinterpret_cast<int *>(*blit_z_values);
+    int *z = *blit_z_values;
     assert(z == ambient_z);
     (void)z[index]; // The untouched ambient pointer is consumed by setup.
     if (edge_mode == 4 && index != 0) {
@@ -172,7 +178,7 @@ int Texture::setup_edge_gouraud(EdgeScan *edge, int index) {
 
 static void reset_case_state() {
     memset(slots, 0, sizeof(slots));
-    slots[19] = static_cast<int>(reinterpret_cast<intptr_t>(ambient_z));
+    z_values_cell = ambient_z;
     edge_setup_calls = 0;
     edge_refreshes = 0;
     observed_gradient_before_row2 = 0;
@@ -206,7 +212,7 @@ int main() {
     for (int i = 0; i < 256; ++i)
         palette[768 + i] = static_cast<unsigned char>(i + 3);
     memset(ambient_z, 0, sizeof(ambient_z));
-    slots[19] = static_cast<int>(reinterpret_cast<intptr_t>(ambient_z));
+    z_values_cell = ambient_z;
     surface = storage;
     Buffer buffer = {};
     buffer.rect1_ = RECT{0, 0, 4, 4};
