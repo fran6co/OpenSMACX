@@ -6896,18 +6896,10 @@ void Console::on_nc_mouse_move(int x_coord, int y_coord) {
         return;
     }
 
-    // The five-argument GraphicWin::update (0x005D55D0) has no declaration on
-    // the class, so the two surface invalidations go through the original.
-    typedef void(__fastcall *UpdateRectSeam)(void *, void *, int, int, int,
-                                             int, GraphicWin *);
-    reinterpret_cast<UpdateRectSeam>(
-        static_cast<unsigned long>(0x005D55D0))(
-        this, nullptr, 0, ConsoleDragLineY,
-        static_cast<int>(dib_.bmiHeader.biWidth), 1, nullptr);
-    reinterpret_cast<UpdateRectSeam>(
-        static_cast<unsigned long>(0x005D55D0))(
-        this, nullptr, ConsoleDragLineX, 0, 1,
-        -static_cast<int>(dib_.bmiHeader.biHeight), nullptr);
+    GraphicWin::update(0, ConsoleDragLineY,
+                       static_cast<int>(dib_.bmiHeader.biWidth), 1, nullptr);
+    GraphicWin::update(ConsoleDragLineX, 0, 1,
+                       -static_cast<int>(dib_.bmiHeader.biHeight), nullptr);
     window_line_raw(static_cast<int>(dib_.bmiHeader.biWidth), line_y,
                     static_cast<int>(dib_.bmiHeader.biWidth), 0, 0, 1, 0);
     window_line_raw(line_x, -static_cast<int>(dib_.bmiHeader.biHeight),

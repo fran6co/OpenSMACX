@@ -4226,13 +4226,9 @@ void DesignWin::draw_stack() {
             RECT stats_rect = rc;
             stats_rect.top = rc.bottom - font.line_advance();
             StringTemp[0] = '\0';
-            // say_stats_3 (0x0057D7D0) is declared in veh.h but not homed.
-            typedef void(__cdecl *say_stats_3_seam)(char *, unsigned int);
-            reinterpret_cast<say_stats_3_seam>(
-                static_cast<unsigned long>(0x0057D7D0))(
-                StringTemp,
-                *reinterpret_cast<const short *>(ProtoAbilityIdBase
-                                                 + unit_id * 0x34));
+            say_stats_3(StringTemp,
+                        *reinterpret_cast<const short *>(ProtoAbilityIdBase
+                                                         + unit_id * 0x34));
             if ((*InterfaceFlagByte & 0x40) != 0
                 && (*InterfaceFlagTail & 0x10) != 0) {
                 strcat(StringTemp, SpaceText);
@@ -4636,10 +4632,7 @@ void DesignWin::draw_flash() {
         strcat(StringTemp, EditorOpenParen);
         int ability_id = *reinterpret_cast<const short *>(
             ProtoAbilityIdBase + shown * 0x34);
-        // Unhomed say_stats_3 (0x0057D7D0) - see draw_stack.
-        typedef void(__cdecl *say_stats_3_seam)(char *, unsigned int);
-        reinterpret_cast<say_stats_3_seam>(static_cast<unsigned long>(0x0057D7D0))(
-            StringTemp, static_cast<unsigned int>(ability_id));
+        say_stats_3(StringTemp, ability_id);
         int ability_bit = 0;
         for (int *label = AbilityLabelIds; label < AbilityLabelIdsEnd;
              ++label, ++ability_bit) {

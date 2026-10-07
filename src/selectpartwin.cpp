@@ -6,21 +6,19 @@
 #include "console.h"  // ConsoleGlobal.faction_id_ owns old 0x00939284
 #include "veh.h"
 #include "alpha.h"
+#include "faction.h"  // pop_wait is the typed modal pump at 0x005398E0
 #include "game.h"
 #include "strings.h"
 #include "temp.h"       // do_all_draws
 #include <cstring>
 
-// These image-owned tables and callbacks have not yet been given C++ data
-// owners. Their use here is limited to the picker background,
-// renderer origin, and modal pump protocol established by the retained exec
-// seed at 0x00433F70.
+// These image-owned tables have not yet been given C++ data owners. Their use
+// here is limited to the picker background, renderer origin, and colour data
+// established by the retained exec seed at 0x00433F70.
 static Sprite *const SelectPartTile = (Sprite *)0x006B33F8;
 static const unsigned char *const SelectPartTileColour =
     (const unsigned char *)0x006B3400;
 static VOX_Vect *const SelectPartCameraOrigin = (VOX_Vect *)0x00687AD8;
-static int (*const SelectPartModalPump)() =
-    (int (*)())0x005398E0;
 
 void __cdecl scroll_show(GraphicWin *window, Scroll *scroll);
 void __cdecl scroll_hide(GraphicWin *window, Scroll *scroll);
@@ -149,7 +147,7 @@ int SelectPartWin::exec(int x, int y, int value0, int kind, int selected,
     if (field_2B64_ < field_2B74_) {
         scroll_show(this, &scroll_);
     }
-    set_modal(1, SelectPartModalPump, 0);
+    set_modal(1, pop_wait, 0);
     if (field_2B64_ < field_2B74_) {
         scroll_hide(this, &scroll_);
     }

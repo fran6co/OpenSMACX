@@ -159,22 +159,6 @@ struct NetWinSlotRecord {
 static NetWinSlotRecord *const NetWinSlotRecords = (NetWinSlotRecord *)0x0093D51C;
 
 
-// The two control bodies the dialog's teardown paths reach that are still
-// their own preserved seeds in the StringBox / EditBox groups. The same
-// shape pick_pass carries below: the forwarder keeps the image's callee
-// without claiming the seed, and faults loudly if the body is gone.
-static void string_box_close(StringBox *box) {
-    typedef void (__fastcall *pending)(StringBox *, void *);
-    reinterpret_cast<pending>(static_cast<unsigned long>(0x00629210))(box,
-                                                                      nullptr);
-}
-
-static void edit_box_set_text(EditBox *box, char *text) {
-    typedef void (__fastcall *pending)(EditBox *, void *, char *);
-    reinterpret_cast<pending>(static_cast<unsigned long>(0x006151E0))(
-        box, nullptr, text);
-}
-
 /*
 // ORIGINAL: 0x00481FD0 ?setup_faction_data@NetWin@@QAEXPAUMessageFactionData@@@Z 0x00481FD0-0x00482488;0x006574E9-0x006574FE FILE
 // size      1229 bytes
@@ -528,7 +512,7 @@ void NetWin::close() {
     field_761C_ = 0xFFFFFFFF;
     field_7620_ = 0xFFFFFFFF;
     spot_.shutdown();
-    string_box_close(&stringBox_);
+    stringBox_.close();
     editBox_.close();
     checkBox_.close();
     typedef void (__fastcall *flat_button_slot_fn)(void *);
@@ -2968,7 +2952,7 @@ int NetWin::on_key_down(int key) {
         field_761C_ = 0xFFFFFFFF;
         field_7620_ = 0xFFFFFFFF;
         spot_.shutdown();
-        string_box_close(&stringBox_);
+        stringBox_.close();
         editBox_.close();
         checkBox_.close();
         typedef void (__fastcall *flat_button_slot_fn)(void *);
@@ -2978,7 +2962,7 @@ int NetWin::on_key_down(int key) {
     NetDaemonNet.pid_2_idx(NetWinPlayerId);
     message_chat(0x1E00, 0,
                  reinterpret_cast<char *>(this) + 0x42F4);
-    edit_box_set_text(&editBox_, 0);
+    editBox_.set_text(0);
     return 1;
 }
 
