@@ -21,6 +21,7 @@
 #include "wave.h"
 #include "base.h"
 #include "council.h"
+#include "councwin.h"  // CouncilWindow's existing +0xA24/+0xA3C/+0xA54 storage
 #include "lock.h"
 #include "strings.h"
 #include "alpha.h"
@@ -28,6 +29,16 @@
 #include "maininterface.h"
 #include "general.h"
 #include "statuswin.h"  // Shared source-owned layout initialization flags.
+#include "fx.h"
+#include "temp.h"       // TurnRedrawPending and wave_it
+#include <stdlib.h>     // _itoa
+
+// Existing source-owned storage, defined in netdaemon.cpp/game.cpp. The
+// original body reads the wait accumulator and turn-control word directly.
+extern int NetDaemonWaitTicks;
+extern int TurnControlWord93A954;
+extern int MultiWinState7FFF78;
+extern uint32_t MultiWinState7FFF7C;
 
 static_assert(offsetof(PlayerData, time_bonus_count) == 0x2054,
               "MultiWin time-bonus source offset");
@@ -108,7 +119,7 @@ void MultiWin::draw_player(int faction_id, int row, RECT *bounds) {
 }
 
 // ORIGINAL: 0x00478BE0 ?draw_time@MultiWin@@QAEXPAURECT@@H@Z 0x00478BE0-0x00479269
-// RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/unrecovered/00478be0.cpp", "src/multiwin.h", "src/console.h", "src/game.h", "src/alpha.h"], "reason": "Recover the clock region's owned hotspot, font and visible turn-state label; the countdown value and timer side effects await binding of the original shared time-control globals. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// RECOVERY_BINDING: v1 {"evidence": ["historical rationale retained verbatim: Recover the clock region's owned hotspot, font and visible turn-state label; the countdown value and timer side effects await binding of the original shared time-control globals. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations.", "pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: draw_time performs the timer, council, multiplayer-label, warning, timeout, wave and FX paths over 0x00478BE0..0x00479269.", "source owners: existing NetDaemonWaitTicks, TurnRedrawPending, CouncilWindow fields +0xA24/+0xA3C/+0xA54, NetDaemonProgressInterval, NetDaemonNet lock-state words, Console, GameDataStateStorage, NetMsg and FX APIs.", "the 0x007FFF78 and 0x007FFF7C source objects retain separate original dword spans; no larger allocation or semantic-name claim."], "reason": "Recover the original clock, turn-control, countdown and timeout paths through existing typed state plus the shared NetDaemonProgressInterval and two original-span MultiWin state words. This updates the superseded scaffold rationale only; it grants no BYTE_EXACT or SEMANTIC claim, matching/restoration result, native build result or whole-project acceptance."}
 // kind      game
 // TRIED: transcribed from Ghidra's decompilation (which resolved the dataflow cleanly) with member calls fixed up (Spot::add, Buffer::set_font/set_text_color/write_cent_l, Strings::get, AlphaNet::who_2_pid, Net::get_player_name, NetMsg::pop, FX::play, message_data, wave_it) and the two `(x<0)?0:x` clamp bit-tricks written as plain clamps rather than neg/sbb/and. Compiles; diverges at instruction #3 (prologue - local frame size/shape, not chased further).
 // symbol    ?draw_time@MultiWin@@QAEXPAUtagRECT@@H@Z
@@ -118,20 +129,194 @@ void MultiWin::draw_time(RECT *bounds, int draw_type) {
             bounds->right - bounds->left, bounds->bottom - bounds->top);
   canvas->set_font(&font2_, 0, 0, 0);
 
-  StringTemp[0] = 0;
-  if (ConsoleControlTurnActive) {
-    strcat(StringTemp, label_get(0x410 / 4));
-  } else if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10) &&
-             GameDataStateStorage.fields_.net_turn_faction_ != ConsoleGlobal.faction_id_) {
-    strcat(StringTemp, label_get(0x444 / 4));
-  } else {
-    strcat(StringTemp, label_get(0x40c / 4));
+  // These locals are written only on the draw_type path in the original.
+  // Keep the original uninitialized read behavior on the other path.
+  int local_14;
+  unsigned int local_10;
+  int local_c;
+  int minutes;
+  unsigned int countdown_ms;
+  char number[80];
+
+  if (draw_type != 0) {
+    ++MultiWinState7FFF7C;
+    if (NetBusyCount == 0 &&
+        NetDaemonNet.lock_state_[0].trailing_words_[4] == 0 &&
+        NetDaemonProgressInterval == 0) {
+      if (TurnRedrawPending == 0) {
+        local_14 = 0;
+        local_10 = NetDaemonWaitTicks > 0 ? 1u : 0u;
+        union SignedDword {
+          uint32_t bits;
+          int32_t value;
+        } after_tick;
+        after_tick.bits = static_cast<uint32_t>(NetDaemonWaitTicks) - 500u;
+        NetDaemonWaitTicks = after_tick.value < 0 ? 0 : after_tick.value;
+      } else {
+        local_14 = 0;
+        const int council_time = static_cast<int32_t>(CouncilWindow.field_A3C_);
+        local_10 = council_time > 0 ? 1u : 0u;
+        union SignedDword {
+          uint32_t bits;
+          int32_t value;
+        } after_tick;
+        after_tick.bits = CouncilWindow.field_A3C_ - 500u;
+        CouncilWindow.field_A3C_ = static_cast<uint32_t>(
+            after_tick.value < 0 ? 0 : after_tick.value);
+      }
+    } else {
+      local_14 = 1;
+      if (static_cast<int32_t>(NetDaemonProgressInterval) > 0) {
+        --NetDaemonProgressInterval;
+      }
+    }
   }
-  canvas->set_text_color(0xe4, -1, 1, 1);
-  canvas->write_cent_l(StringTemp, bounds, strlen(StringTemp));
-  // Pending: draw_type advances the clock in the original. Its
-  // 0x0093A960/0x006FF6BC counters and timeout effects have no typed owner.
-  (void)draw_type;
+
+  int signed_time;
+  if (TurnRedrawPending == 0) {
+    signed_time = NetDaemonWaitTicks;
+  } else {
+    signed_time = static_cast<int32_t>(CouncilWindow.field_A3C_);
+  }
+  countdown_ms = signed_time < 0 ? 0u : static_cast<uint32_t>(signed_time);
+  union RoundedTime {
+    uint32_t bits;
+    int32_t value;
+  } rounded_seconds;
+  rounded_seconds.bits = countdown_ms + 999u;
+  const int total_seconds = rounded_seconds.value / 1000;
+  minutes = total_seconds / 60;
+  local_c = total_seconds % 60;
+
+  if (TurnRedrawPending != 0) {
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0x7e8 / 4));
+    CharUpperA(StringTemp);
+    strcat(StringTemp, ": ");
+    _itoa(minutes, number, 10);
+    strcat(StringTemp, number);
+    strcat(StringTemp, ":");
+    if (local_c < 10) strcat(StringTemp, "0");
+    _itoa(local_c, number, 10);
+    strcat(StringTemp, number);
+    canvas->set_text_color(0xe4, -1, 1, 1);
+    canvas->write_cent_l(StringTemp, bounds, strlen(StringTemp));
+    if (local_10 == 0) {
+      MultiWinState7FFF78 = local_c;
+      return;
+    }
+    if (countdown_ms != 0) {
+      MultiWinState7FFF78 = local_c;
+      return;
+    }
+    if (CouncilWindow.field_A24_ != 0) {
+      MultiWinState7FFF78 = local_c;
+      return;
+    }
+    if (CouncilDialogActive == 0) {
+      MultiWinState7FFF78 = local_c;
+      return;
+    }
+    if (CouncilWindow.leader_label_kind_[ConsoleGlobal.faction_id_] != 0) {
+      MultiWinState7FFF78 = local_c;
+      return;
+    }
+    message_data(0x2601, 0, ConsoleGlobal.faction_id_, -3, 0, 0);
+    MultiWinState7FFF78 = local_c;
+    return;
+  }
+
+  int text_length;
+  if (ConsoleControlTurnActive != 0) {
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0x410 / 4));
+    CharUpperA(StringTemp);
+    strcat(StringTemp, " ");
+    _itoa(NetUpkeepPhase, number, 10);
+    strcat(StringTemp, number);
+    text_length = static_cast<int>(strlen(StringTemp));
+    goto write_clock_text;
+  }
+
+  if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10) != 0 &&
+      (GameDataStateStorage.fields_.net_turn_faction_ !=
+           ConsoleGlobal.faction_id_ || TurnControlWord93A954 != 0)) {
+    const uint32_t faction_bit =
+        1u << (GameDataStateStorage.fields_.net_turn_faction_ & 0x1f);
+    if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &
+         faction_bit) == 0) {
+      MultiWinState7FFF78 = local_c;
+      return;
+    }
+    StringTemp[0] = 0;
+    const int player_id = NetDaemonNet.who_2_pid(
+        GameDataStateStorage.fields_.net_turn_faction_);
+    strcat(StringTemp, NetDaemonNet.get_player_name(player_id));
+    canvas->set_text_color(0xe4, -1, 1, 1);
+    text_length = static_cast<int>(strlen(StringTemp));
+    goto write_clock_text;
+  }
+
+  if (draw_type != 0 &&
+      NetDaemonNet.lock_state_[0].trailing_words_[1] != 0 &&
+      NetDaemonNet.lock_state_[0].trailing_words_[4] == 0 &&
+      GameDataStateStorage.fields_.time_controls_selection_ != 0) {
+    const uint32_t local_faction_bit =
+        1u << (ConsoleGlobal.faction_id_ & 0x1f);
+    if (countdown_ms == 0 &&
+        (ConsoleFactionsWaitingMask & local_faction_bit) == 0 &&
+        MultiWinState7FFF78 != 0) {
+      GameDataStateStorage.fields_.game_state_ |= 0x800;
+      if (local_10 != 0) wave_it(0x21);
+    }
+    if (minutes == 0 && local_c != 0 && local_c < 0x10 &&
+        local_c != MultiWinState7FFF78 && ConsoleControlTurnActive == 0 &&
+        (GameDataStateStorage.fields_.game_state_ & 0x800) == 0 &&
+        (ConsoleFactionsWaitingMask & local_faction_bit) == 0) {
+      if (local_c == 0x0f) {
+        NetMsgPrimary.pop("TIMEWARNING", -5000, 0, 0);
+      }
+      g_FX.play(0x23);
+    }
+  }
+
+  StringTemp[0] = 0;
+  strcat(StringTemp, label_get(0x40c / 4));
+  strcat(StringTemp, ": ");
+  if (NetDaemonNet.lock_state_[0].trailing_words_[4] == 0) {
+    if (ConsoleControlTurnActive != 0) {
+      StringTemp[0] = 0;
+      strcat(StringTemp, label_get(0x988 / 4));
+      strcat(StringTemp, ": ");
+      strcat(StringTemp, label_get(0x410 / 4));
+    } else if (GameDataStateStorage.fields_.time_controls_selection_ == 0) {
+      StringTemp[0] = 0;
+      strcat(StringTemp, label_get(0xa04 / 4));
+    } else {
+      _itoa(minutes, number, 10);
+      strcat(StringTemp, number);
+      strcat(StringTemp, ":");
+      if (local_c < 10) strcat(StringTemp, "0");
+      _itoa(local_c, number, 10);
+      strcat(StringTemp, number);
+    }
+  } else {
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0x988 / 4));
+    strcat(StringTemp, ": ");
+    strcat(StringTemp, label_get(0x444 / 4));
+  }
+
+  if (local_14 == 0 || (MultiWinState7FFF7C & 1u) == 0) {
+    canvas->set_text_color(0xe4, -1, 1, 1);
+  } else {
+    canvas->set_text_color(0, -1, 1, 1);
+  }
+  text_length = static_cast<int>(strlen(StringTemp));
+
+write_clock_text:
+  canvas->write_cent_l(StringTemp, bounds, text_length);
+  MultiWinState7FFF78 = local_c;
 }
 
 // ORIGINAL: 0x00479330 ?draw@MultiWin@@QAEXH@Z 0x00479330-0x004798EC
@@ -260,6 +445,16 @@ int WindowAnimationFrameDelay = 20;
 // MultiWin::draw at 0x00479330 reads it before soft_update.
 // RECOVERY_OBJECT: v2 0x007FFF70 0x007FFF74 ?MultiWindowRedrawSuppressed@@3HA 0x00479970
 int MultiWindowRedrawSuppressed;
+
+// NetDaemonProgressInterval is the shared 0x93F668 dword, declared and
+// defined once by netdaemon. These two independent MultiWin latch/frame dwords
+// are address-reflecting provisional identities, not semantic names or a
+// larger allocation claim. Original PE initial data is four zero bytes at
+// each address; the frame test uses only its low bit.
+// RECOVERY_OBJECT: v2 0x007FFF78 0x007FFF7C ?MultiWinState7FFF78@@3HA 0x00478BE0
+int MultiWinState7FFF78;
+// RECOVERY_OBJECT: v2 0x007FFF7C 0x007FFF80 ?MultiWinState7FFF7C@@3IA 0x00478BE0
+uint32_t MultiWinState7FFF7C;
 
 // 0x0047A590 and 0x0047A430. The compiler owns construction, exception
 // cleanup and reverse destruction of the subobjects declared in multiwin.h.

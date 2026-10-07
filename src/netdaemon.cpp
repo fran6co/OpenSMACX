@@ -78,6 +78,14 @@ int NetPeerTurnChecksums[NetTurnChecksumPeerSlots][NetTurnChecksumWords];
 // is zero - so it counts the network exchanges currently in flight.
 // RECOVERY_OBJECT: v2 0x0093F664 0x0093F668 ?NetBusyCount@@3HA 0x00592DE0
 int NetBusyCount;  // 0x0093F664
+// Independently addressed shared dword. process_message writes the interval
+// (1000/5000), and MultiWin::draw_time consumes/decrements it. Adjacency to
+// NetBusyCount does not establish a larger allocation or exclusive owner.
+// Evidence: pinned 0x00534E3F/0x00534EEF write this word;
+// 0x00478C48/0x00478CC3 read/decrement it with a signed positivity test.
+// Its original PE .data zero-fill tail gives zero image-load state.
+// RECOVERY_OBJECT: v2 0x0093F668 0x0093F66C ?NetDaemonProgressInterval@@3IA 0x00534400
+unsigned int NetDaemonProgressInterval;
 // Original 0x0093A960 accumulates the wait durations returned by the daemon's
 // map-order callbacks. Other writers/extent are not yet assigned to an owner.
 // The pinned loader initializes this observed dword to zero; its containing

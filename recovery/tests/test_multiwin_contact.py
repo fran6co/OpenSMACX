@@ -167,9 +167,19 @@ Console ConsoleGlobal;
 InfoWin ConsoleInfoWin, ConsoleStatusWin;
 Wave g_MULTIWIN_WAVE;
 Sprite *FactionDiplomacyPortraits[8] = {};
-uint32_t LockEnableMask, GameState;
+// Minimal fixture projection of the real shared owner used by
+// commlink_attempt; this is a host model, not a native layout assertion.
+struct GameDataLockMasksFixture { uint32_t enable_mask_; };
+struct GameDataFieldsFixture {
+    GameDataLockMasksFixture lock_masks_;
+    int sunspot_duration_;
+    uint32_t game_state_;
+};
+struct GameDataStorageFixture { GameDataFieldsFixture fields_; };
+GameDataStorageFixture GameDataStateStorage;
+uint32_t GameState;
 int PopupDialogFactionID, ExitTurnLoop, IsMultiplayerNet, IsMultiplayerPBEM;
-int SunspotDuration, GenderDefault, PluralityDefault, ExpansionEnabled;
+int GenderDefault, PluralityDefault, ExpansionEnabled;
 int StatusFlags, WinScreenWidth=800, WinScreenHeight=600;
 int MultiWindowContactStatusMask;
 int CommlinkPending, CommlinkFaction;
@@ -240,7 +250,9 @@ uint32_t timeGetTime() {
 }
 int diplo_add(int a, int b) { return static_cast<int>(static_cast<uint32_t>(a)+static_cast<uint32_t>(b)); }
 bool is_alive(uint32_t faction) { return (alive_mask_for_ui & (1u<<faction))!=0; }
-BOOL is_human(uint32_t faction) { return (LockEnableMask & (1u<<faction))!=0; }
+BOOL is_human(uint32_t faction) {
+    return (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u<<faction)) != 0;
+}
 char *label_get(int) { return const_cast<char *>("label"); }
 unsigned char WinFillColour=9;
 struct MainInterfaceFixture : Win {} MainInterfaceGlobal;
@@ -279,8 +291,11 @@ void __cdecl renounce_pact(int faction_id, int faction_id_with);
 
 static void reset_all() {
     std::memset(Players,0,sizeof(Players)); std::memset(PlayersData,0,sizeof(PlayersData));
-    LockEnableMask=GameState=0; PopupDialogFactionID=ExitTurnLoop=0;
-    IsMultiplayerNet=IsMultiplayerPBEM=SunspotDuration=0;
+    GameDataStateStorage.fields_.lock_masks_.enable_mask_ = 0;
+    GameDataStateStorage.fields_.game_state_ = 0;
+    GameDataStateStorage.fields_.sunspot_duration_ = 0;
+    GameState=0; PopupDialogFactionID=ExitTurnLoop=0;
+    IsMultiplayerNet=IsMultiplayerPBEM=0;
     GenderDefault=PluralityDefault=ExpansionEnabled=StatusFlags=0;
     NetMsgPrimary=NetMsg(); ConsoleGlobal=Console();
     ConsoleInfoWin.resets=ConsoleStatusWin.resets=0;
@@ -313,7 +328,9 @@ int main() {
     assert(MultiWindowContactStatusMask==0&&NetDaemonNet.lock_state_[2].trailing_words_[6]==(1u<<3));
 
     reset_all(); win.spot_.rc=0; win.spot_.faction=3; win.spot_.kind=1;
-    alive_mask_for_ui=1<<3; LockEnableMask=1u<<(8+3); IsMultiplayerNet=0;
+    alive_mask_for_ui=1<<3;
+    GameDataStateStorage.fields_.lock_masks_.enable_mask_ = 1u << (8+3);
+    IsMultiplayerNet=0;
     win.on_left_click(0,0);
     assert(communicate_calls==1&&treaty_on_calls==1);
 
@@ -363,17 +380,25 @@ int main() {
     ExpansionEnabled=1; ConsoleGlobal.faction_id_=2; Players[2].rule_flags=RFLAG_ALIEN; win.init();
     assert(win.flat_button2_.init_calls==1&&win.flat_button1_.init_calls==0&&win.shown==0);
 
-    reset_all(); ConsoleGlobal.faction_id_=2; LockEnableMask=1u<<11;
+    reset_all(); ConsoleGlobal.faction_id_=2;
+    GameDataStateStorage.fields_.lock_masks_.enable_mask_ = 1u<<11;
     commlink_attempt(3); assert(NetMsgPrimary.calls==0);
-    reset_all(); ConsoleGlobal.faction_id_=2; LockEnableMask=1u<<3;
-    commlink_attempt(3); assert(NetMsgPrimary.calls==0&&NetDaemonNet.open_calls==0);
-    reset_all(); ConsoleGlobal.faction_id_=2; SunspotDuration=1; LockEnableMask=1u<<11;
+    reset_all(); ConsoleGlobal.faction_id_=2;
+    GameDataStateStorage.fields_.lock_masks_.enable_mask_ = 1u<<3;
+    commlink_attempt(3);
+    assert(NetMsgPrimary.calls==0&&NetDaemonNet.open_calls==0);
+    assert(communicate_calls==0&&diplo_calls==0);
+    reset_all(); ConsoleGlobal.faction_id_=2;
+    GameDataStateStorage.fields_.sunspot_duration_=1;
+    GameDataStateStorage.fields_.lock_masks_.enable_mask_ = 1u<<11;
     commlink_attempt(3); assert(std::strcmp(NetMsgPrimary.label,"SUNSPOTSNO")==0);
     reset_all(); ConsoleGlobal.faction_id_=2; IsMultiplayerPBEM=1;
-    LockEnableMask=(1u<<11)|(1u<<3); commlink_attempt(3);
+    GameDataStateStorage.fields_.lock_masks_.enable_mask_ = (1u<<11)|(1u<<3);
+    commlink_attempt(3);
     assert(diplo_calls==1&&communicate_calls==0);
     reset_all(); ConsoleGlobal.faction_id_=2; IsMultiplayerNet=1;
-    LockEnableMask=1u<<11; NetDaemonNet.open_result=1; commlink_attempt(3);
+    GameDataStateStorage.fields_.lock_masks_.enable_mask_ = 1u<<11;
+    NetDaemonNet.open_result=1; commlink_attempt(3);
     assert(std::strcmp(NetMsgPrimary.label,"NOCHANNEL")==0&&communicate_calls==0);
 
     reset_all(); timer_constant(100); NetDaemonNet.add_stop_after=1; timeout_pop_result=1;
@@ -427,7 +452,9 @@ def test_five_actual_owners_and_native_dispatch_damage(compiler_name):
             "demands_withdrawal(faction, ConsoleGlobal.faction_id_);"),
         (1, "PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[faction]",
             "PlayersData[faction].diplo_treaties[ConsoleGlobal.faction_id_]"),
-        (3, "(LockEnableMask >> 8) & 0xFFu", "LockEnableMask & 0xFFu"),
+        (3,
+         "(GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8) & 0xFFu",
+         "GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFu"),
         (4, "treaty_off(faction_id_with, faction_id, 1);",
             "treaty_off(faction_id, faction_id_with, 1);"),
     ):
@@ -448,4 +475,3 @@ def test_five_actual_owners_and_native_dispatch_damage(compiler_name):
             run = subprocess.run([str(binary)], capture_output=True, text=True, timeout=15)
             assert (run.returncode == 0) == (variant_index == 0), (
                 compiler_name, variant_index, run.returncode, run.stdout, run.stderr)
-

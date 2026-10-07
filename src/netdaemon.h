@@ -349,6 +349,7 @@ class NetDaemon : public AlphaNet {
 // relocated, and `->` becomes `.`.
 extern NetDaemon NetDaemonNet;  // 0x0093CD90
 extern int NetBusyCount;  // 0x0093F664, network exchanges currently in flight
+extern unsigned int NetDaemonProgressInterval;  // distinct 0x0093F668 dword
 extern int CommlinkPending;     // 0x007492CC
 extern int CommlinkFaction;     // 0x0073B790
 
