@@ -5503,10 +5503,11 @@ int Win::on_sys_key(unsigned int vkey, long is_down, int repeat_count,
 }
 
 // A one-character glyph `set_bubble_text` measures the width of to compute
-// each line's padding. Named, not `g_`-prefixed; the exact string is not
-// independently confirmed, so the fixed address is kept rather than a
-// literal.
-static char *const WinBubblePrefixGlyph = reinterpret_cast<char *>(0x00696E00);
+// each line's padding. The pinned bytes at 0x00696E00 are a space and NUL;
+// Font::width only reads them. Preserve its existing LPSTR interface and
+// original writable storage without a pointer into the old executable.
+// RECOVERY_OBJECT: v2 0x00696E00 0x00696E02 _WinBubblePrefixGlyph 0x005F83D0
+static char WinBubblePrefixGlyph[] = " ";
 
 // ORIGINAL: 0x005F83D0 ?set_bubble_text@Win@@QAEXPADPAURECT@@@Z 0x005F83D0-0x005F84FB FILE
 // symbol    ?set_bubble_text@Win@@QAEXPADPAUtagRECT@@@Z
