@@ -890,7 +890,7 @@ void Wave::set_volume(int volume) {
         // 26/33 MISMATCH.
         const double scaled = static_cast<double>(volume) * (1.0 / 127.0);
         level = static_cast<int>(static_cast<int64_t>(
-            scaled * static_cast<double>(WaveDeviceGroupVolumes[group_slot_ * 6])));
+            scaled * static_cast<double>(WaveDeviceGlobal.groups_[group_slot_].volume)));
     }
     if (device_) {
         typedef void (OriginalObject::*device_fn)(int level);

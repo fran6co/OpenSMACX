@@ -17,7 +17,6 @@
  */
 #pragma once
 
-#include "original_seam.h"
 #include "wave_device.h"
 #include "sound.h"
 #include "vector_teardown.h"
@@ -97,6 +96,7 @@
   */
 class Wave : public Sound {
   friend class FX;
+  friend class Wave_Device;
  public:
   Wave();
   ~Wave();
@@ -188,9 +188,7 @@ void *__fastcall wave_scalar_dtor_redirect(Wave *self, void *,
 // operator delete, and its wrapped device through the loader-owned release
 // hook while the guard says it is live. The common Sound chain is declared
 // in sound.h; Wave does not allocate separate ends or narrow its neighbors.
-typedef int (OriginalObject::*func_wave_device_pull_from_group)(Wave *wave);
 typedef void(__cdecl func_wave_device_release)(void *device);
-extern func_wave_device_pull_from_group WaveDevicePullFromGroup;
 // The process Wave_Device and its release-hook guard are REAL OBJECTS - the
 // device defined in wave_device.cpp (it was `Wave_Device *const
 // WaveDeviceGlobal = (Wave_Device *)0x0090D978` there and a `g_WAVE_DEVICE`
@@ -205,19 +203,11 @@ extern func_wave_device_pull_from_group WaveDevicePullFromGroup;
 inline func_wave_device_release *&WaveDeviceReleaseSlot() { return *reinterpret_cast<func_wave_device_release **>(&SoundDllProcs[1]); }
 extern int WaveDeviceReleaseGuard;  // 0x0090DB7C
 
-// The rest of the Wave dependency surface. The filename copy is allocated on
-// the game CRT heap (the destructor and set_fname free it there, so the new
-// must match); the per-group volume table lives inside the device singleton,
-// one dword every 24 bytes from 0x0090D9A0; is_group_disabled is the device
-// singleton method play consults before starting; and the no-argument load
-// is the not-yet-recovered Wave::load() that play falls back to.
+// Filename allocations use the game CRT heap. Group volume and disabled
+// state belong to WaveDeviceGlobal's real group records; play falls back
+// to the implemented no-argument Wave::load().
 // Filename and group allocations use the configured CRT operator new,
 // shared with the existing MIDI allocation path.
-uint32_t *const WaveDeviceGroupVolumes = (uint32_t *)0x0090D9A0;
-typedef int (OriginalObject::*func_wave_device_is_group_disabled)(uint32_t slot);
-typedef int (OriginalObject::*func_wave_original_load)();
-extern func_wave_device_is_group_disabled WaveDeviceIsGroupDisabled;
-extern func_wave_original_load WaveOriginalLoad;
 
 // load()'s remaining surface: the device-creation hook lives in the slot
 // right beside the release hook, behind the same guard dword, and builds the
@@ -228,9 +218,6 @@ typedef int(__cdecl func_wave_device_create)(void **device_slot,
 // Ordinal 1 has the matching creation signature; both roles use the same
 // loader-owned array so clearing or reloading the DLL updates their targets.
 inline func_wave_device_create *&WaveDeviceCreateSlot() { return *reinterpret_cast<func_wave_device_create **>(&SoundDllProcs[0]); }
-typedef int (OriginalObject::*func_sound_original_load)(const char *fname);
-extern func_sound_original_load SoundOriginalLoad;
-typedef void (OriginalObject::*func_sound_set_type)(uint32_t type);
 
 // Movement sound, owned and initialized with the other Wave objects.
 extern Wave g_SCOOT_WAVE;  // 0x00749C18

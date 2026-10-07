@@ -490,9 +490,7 @@ int Wave_Device::get_group_volume(unsigned int group) {
         return 0;
     }
     int value;
-    std::memcpy(&value,
-                reinterpret_cast<uint8_t *>(this) + 0x28 + group * 24,
-                sizeof(value));
+    std::memcpy(&value, &groups_[group].volume, sizeof(value));
     return value;
 }
 
@@ -524,10 +522,7 @@ int Wave_Device::add_to_group(unsigned int group, Wave *wave) {
         return 0xA;
     }
     reinterpret_cast<WaveGroupList *>(&groups_[group].head)->insert(wave);
-    // The slot field is private to Wave and written here by offset, exactly
-    // as the original stores through [wave+0x68].
-    *reinterpret_cast<uint32_t *>(reinterpret_cast<uint8_t *>(wave) + 0x68) =
-        group;
+    wave->group_slot_ = group;
     return 0;
 }
 
@@ -556,12 +551,10 @@ int Wave_Device::pull_from_group(Wave *a1) {
     // and the out-of-range-slot check to the SAME `mov eax, 0xa; ret`, which
     // a merged `||` condition reproduces; two separate early-return `if`s
     // each got their own inline epilogue instead.
-    uint32_t *const slot_field =
-        reinterpret_cast<uint32_t *>(reinterpret_cast<uint8_t *>(a1) + 0x68);
-    if (!a1 || *slot_field >= 0x10) {
+    if (!a1 || a1->group_slot_ >= 0x10) {
         return 0xA;
     }
-    const uint32_t slot = *slot_field;
+    const uint32_t slot = a1->group_slot_;
     // THE HEAD-RELATIVE VIEW, NOT THE WHOLE STRUCT. The image computes its
     // group pointer straight to `&groups_[slot].head`
     // (`lea esi, [ecx + eax*8 + 0x2c]`) and addresses head/tail/cursor/count
@@ -606,7 +599,7 @@ int Wave_Device::pull_from_group(Wave *a1) {
         operator delete(node);
         group.count -= 1;
     }
-    *slot_field = 0x10;
+    a1->group_slot_ = 0x10;
     return 0;
 }
 
@@ -1042,7 +1035,7 @@ int Wave_Device::get_listener_zpos(float *z) {
 Purpose: Set a group's volume scale and replay every member wave's own
          stored volume through its vtable slot 0x40, so the new scale takes
          effect. Bad slots and volumes above 0x7F answer 0xA.
-// ORIGINAL: 0x004C5320 ?set_group_volume@Wave_Device@@QAEHII@Z 0x004C5320-0x004C537F
+// ORIGINAL: 0x004C5320 ?set_group_volume@Wave_Device@@QAEHII@Z 0x004C5320-0x004C537F BYTE_EXACT
 // TRIED: inlining the walk - EARLIER CONCLUSION DISPROVEN 2026-09-18. An
 //   earlier round measured spelled-out walks "hundreds of bytes further"
 //   and concluded the image calls a shared walk out-of-line; decoded image
@@ -1087,10 +1080,9 @@ int Wave_Device::set_group_volume(unsigned int a1, unsigned int a2) {
     if (first) {
         Wave *wave = first->wave;
         while (wave) {
-            typedef void (OriginalObject::*wave_volume_fn)(uint32_t volume);
-            uint32_t vol;
-            std::memcpy(&vol, reinterpret_cast<uint8_t *>(wave) + 4, 4);
-            (ORIGINAL(wave)->*vtable_slot<wave_volume_fn>(wave, 0x40))(vol);
+            int volume;
+            std::memcpy(&volume, &wave->volume_, sizeof(volume));
+            wave->set_volume(volume);
             WaveGroupNode *const cursor = list.cursor;
             if (!cursor) {
                 break;
@@ -1112,7 +1104,7 @@ Purpose: Enable a group. Only a disabled one does any work: every member
          wave resumes through its vtable slot 0x8C, and the enabled byte is
          written AFTER the walk. An already-enabled group is left exactly as
          it is, nonzero byte and all.
-// ORIGINAL: 0x004C53A0 ?enable_group@Wave_Device@@QAEHI@Z 0x004C53A0-0x004C5400
+// ORIGINAL: 0x004C53A0 ?enable_group@Wave_Device@@QAEHI@Z 0x004C53A0-0x004C5400 BYTE_EXACT
 // LEVER: early-return-0 the already-enabled case is an EARLY `return 0`,
 //   not the walk nested inside `if (!enabled)`: the range guard, the
 //   enabled test and the walk sit at function level in sequence. That
@@ -1159,8 +1151,7 @@ int Wave_Device::enable_group(unsigned int a1) {
     if (first) {
         Wave *wave = first->wave;
         while (wave) {
-            typedef void(__fastcall *wave_vfn)(void *);
-            vtable_slot<wave_vfn>(wave, 0x8C)(wave);
+            wave->load();
             WaveGroupNode *const cursor = list.cursor;
             if (!cursor) {
                 break;
@@ -1182,7 +1173,7 @@ int Wave_Device::enable_group(unsigned int a1) {
 Purpose: Disable a group. Only an enabled one does any work: every member
          wave halts through its vtable slot 0x14, and the enabled byte is
          cleared AFTER the walk.
-// ORIGINAL: 0x004C5400 ?disable_group@Wave_Device@@QAEHI@Z 0x004C5400-0x004C545D
+// ORIGINAL: 0x004C5400 ?disable_group@Wave_Device@@QAEHI@Z 0x004C5400-0x004C545D BYTE_EXACT
 // LEVER: early-return-0 the halt twin of enable_group's winning spelling:
 //   the not-enabled case is an EARLY `return 0`, the walk sits at function
 //   level, and the enabled byte is cleared AFTER the walk. This layout is
@@ -1219,8 +1210,7 @@ int Wave_Device::disable_group(unsigned int a1) {
     if (first) {
         Wave *wave = first->wave;
         while (wave) {
-            typedef void(__fastcall *wave_vfn)(void *);
-            vtable_slot<wave_vfn>(wave, 0x14)(wave);
+            wave->unload();
             WaveGroupNode *const cursor = list.cursor;
             if (!cursor) {
                 break;

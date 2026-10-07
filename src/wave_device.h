@@ -74,6 +74,7 @@ struct WaveControlGroup {
   * extent to at least 0x1A4. That is still a floor, not a size.
   */
 class Wave_Device : public SoundDeviceBase {
+  friend class Wave;
  public:
   // THE VIRTUAL SET, in the image's own vftable slot order (0x0066E0E8).
 
