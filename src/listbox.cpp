@@ -1277,7 +1277,7 @@ Purpose: Attach the list to a parent window rectangle: run the layout pass,
          metrics, land the scroll position, and copy the Dialog's colours and
          fonts into the window's buffer.
 // ORIGINAL: 0x0060A670 ?attach@ListBox@@QAEHPAUGraphicWin@@HHH@Z 0x0060A670-0x0060AA15 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0060a670.cpp", "source:src/listbox.h"], "reason": "Map the declared dependency to its seed identity in the owning product TU; the retained seed stays beside the landed transcription."}
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/listbox.h", "source:src/dialog.h", "source:src/graphicwin.h", "Pinned 0x0060A670..0x0060AA15 enters on the Dialog virtual-base view; its field arithmetic identifies the ListBox front, both virtual bases and the GraphicWin Buffer base."], "reason": "Recover attachment through the real ListBox override and declared base members. Preserve the original fallback, signed arithmetic, failure propagation and scroll/color/font sequence; compiler-generated receiver adjustments replace manual subobject arithmetic."}
 // symbol    ?attach@ListBox@@UAEHPAVGraphicWin@@HHH@Z
 // TRIED: raw self+/-offset pointer chasing throughout (this points 0xa60 into
 //        the ListBox object; base=self-0xa60 is the real ListBox start reached
@@ -1500,92 +1500,83 @@ Purpose: Refresh the list after its entries changed: run the layout pass and
          notification slots. Returns 7 when there is no main window, or the
          attach result on failure.
 // ORIGINAL: 0x0060C9B0 ?update_changes@ListBox@@QAEHXZ 0x0060C9B0-0x0060CB63 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0060c9b0.cpp", "source:src/listbox.h"], "reason": "Map the declared dependency to its seed identity in the owning product TU; the retained seed stays beside the landed transcription."}
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/listbox.h", "source:src/dialog.h", "source:src/win.h", "source:src/autosound.h", "Pinned 0x0060CA20..0x0060CA2B directly calls ListBox::attach; subsequent notifications reload the parent after callbacks."], "reason": "Recover refresh through real virtual bases, list state, callback and parent members, retaining the concrete attach target and original notification ordering. The AutoSound child storage is identified, but its nullary slot-23/slot-7 dynamic receiver type remains unresolved."}
 // size      435 bytes
 // prototype int (__thiscall ?update_changes@ListBox@@QAEHXZ)(ListBox* this)
 // calls     0x005ED9D0 0x005EE0B0 0x005EE0D0 0x005EE0F0 0x005EE110 0x005F7E90 0x00609A50 0x0060A020 0x0060A1E0 0x0060A670
 // indirect  0x0060CA47 0x0060CAF0 0x0060CB15 0x0060CB39 0x0060CB44 0x0060CB56
 */
 int ListBox::update_changes() {
-    typedef void (__cdecl *callback_fn)(int);
-
-    char *self = reinterpret_cast<char *>(this);
     if (HandleMain == 0) {
         return 7;
     }
 
-    int *vbt = *reinterpret_cast<int **>(self);
-    char *gw_base = self + vbt[1];
-    char *dlg_base = self + vbt[2];
-    int was_visible = reinterpret_cast<Win *>(gw_base)->is_visible();
+    GraphicWin *graphic = static_cast<GraphicWin *>(this);
+    Win *window = graphic;
+    Dialog *dialog = static_cast<Dialog *>(this);
+    int was_visible = window->is_visible();
 
-    reinterpret_cast<Dialog *>(dlg_base)->get_selected_id();
+    dialog->get_selected_id();
 
     int old_child_count = field_C_;
-    int old_selected = *reinterpret_cast<int *>(dlg_base + 0xEC);
+    int old_selected = dialog->selected_position_;
     calculate_dimensions();
 
     if (old_child_count == field_C_) {
         set_selected_pos(old_selected, 1);
     } else {
-        int a4 = *reinterpret_cast<int *>(gw_base + 0x98);
-        int a1 = *reinterpret_cast<int *>(gw_base + 0xC4);
-        int a2 = *reinterpret_cast<int *>(dlg_base + 0x24);
-        int a3 = *reinterpret_cast<int *>(dlg_base + 0x28);
+        int a4 = static_cast<int>(iFlags_);
+        GraphicWin *a1 = static_cast<GraphicWin *>(window->parent_window());
+        int a2 = static_cast<int>(dialog->field_24_);
+        int a3 = static_cast<int>(dialog->field_28_);
         int result = this->ListBox::attach(
-            reinterpret_cast<GraphicWin *>(a1), a2, a3, a4);
+            a1, a2, a3, a4);
         if (result != 0) {
             return result;
         }
         set_selected_pos((old_selected == -1) ? -1 : 0, 1);
         ::ReleaseCapture();
         if (was_visible != 0) {
-            reinterpret_cast<Win *>(gw_base)->show(0);
+            window->show(0);
         }
     }
 
     {
-        unsigned int win_flags = *reinterpret_cast<unsigned int *>(gw_base + 0x98);
+        unsigned int win_flags = iFlags_;
         if (win_flags & 8) {
-            Win *win = reinterpret_cast<Win *>(gw_base);
-            win->set_vert_range(0,
-                *reinterpret_cast<int *>(dlg_base + 0xCC) - 1);
-            win->set_vert_paging(
-                *reinterpret_cast<int *>(dlg_base + 0x58) - 1);
+            window->set_vert_range(0, dialog->item_list_.entry_count_ - 1);
+            window->set_vert_paging(static_cast<int>(dialog->field_58_) - 1);
         } else if (win_flags & 4) {
-            Win *win = reinterpret_cast<Win *>(gw_base);
-            win->set_horz_range(0,
-                *reinterpret_cast<int *>(dlg_base + 0xCC)
-                    / *reinterpret_cast<int *>(dlg_base + 0x58) - 1);
-            win->set_horz_paging(*reinterpret_cast<int *>(dlg_base + 0x54));
+            window->set_horz_range(0,
+                dialog->item_list_.entry_count_
+                    / static_cast<int>(dialog->field_58_) - 1);
+            window->set_horz_paging(static_cast<int>(dialog->field_54_));
         }
     }
 
     {
-        callback_fn cb = *reinterpret_cast<callback_fn *>(self + 0x3C);
+        WinNotificationCallback cb = selection_callback_;
         if (cb != 0) {
-            cb(reinterpret_cast<Dialog *>(dlg_base)->get_selected_id());
+            cb(dialog->get_selected_id());
         }
     }
 
     {
-        Win *target = *reinterpret_cast<Win **>(gw_base + 0xC4);
+        Win *target = window->parent_window();
         if (target != 0) {
-            target->vslot_54(
-                reinterpret_cast<Dialog *>(dlg_base)->get_selected_id());
+            target->vslot_54(dialog->get_selected_id());
         }
     }
 
     {
-        Win *target = *reinterpret_cast<Win **>(gw_base + 0xC4);
+        Win *target = window->parent_window();
         if (target != 0) {
             // The pinned child sequence is slot 23 (nullary int result),
             // then slot 7 (nullary side effect). This does not match Win's
             // declared slot-23 coordinate callback, and no physical owner
             // view proves Sound or another typed receiver here; retain the
             // distinct unresolved view instead of guessing its class.
-            Win *child = *reinterpret_cast<Win **>(
-                reinterpret_cast<char *>(target) + 0x90);
+            Win *child = target->legacy_window_36();
             if (child != 0) {
                 typedef int (OriginalObject::*slot023_fn)();
                 if ((ORIGINAL(child)->*vtable_method<slot023_fn>(child, 23 * 4))()
