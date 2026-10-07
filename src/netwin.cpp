@@ -887,10 +887,6 @@ static unsigned int *const NetWinRulesGate =
 static BoxSpriteParams *const NetWinReadyPanels =
     (BoxSpriteParams *)0x0078DCA8;
 
-// 0x00669328 - the runtime three-rectangle slot StatusWin::redraw also goes
-// through; its target is still the original body's to name. Stdcall with
-// three rectangle pointers.
-static void *const NetWinRectSlot = (void *)0x00669328;
 
 // 0x0093D494 - the char * slot the joined session's name is read from for
 // the session-info title (empty until a session names itself).
@@ -1389,9 +1385,7 @@ void NetWin::draw_player_names() {
         }
         buffer->restore_clip();
 
-        typedef void(__stdcall *rect_slot_fn)(void *, void *, void *);
-        reinterpret_cast<rect_slot_fn *>(NetWinRectSlot)[0](
-            name_rect, row_rect, &field);
+        ::UnionRect(name_rect, row_rect, &field);
 
         spot_.add(row, 2, row_rect->left, row_rect->top,
                   row_rect->right - row_rect->left,

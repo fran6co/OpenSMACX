@@ -20417,7 +20417,7 @@ static OrderVeh5976d6Path order_veh_5976d6_terrain_delay(
     }
 
     if (action_faction == ConsoleGlobal.faction_id_ && vehicle.order == ORDER_NONE &&
-        (ConsoleEditKeyStateSlot()(VK_SHIFT) & 0xff00) == 0 &&
+        (::GetKeyState(VK_SHIFT) & 0xff00) == 0 &&
         (NetDaemonNet.lock_state_[1].leading_words_[3] & 1U) != 0 &&
         (vehicle.state & 0x0200U) == 0 &&
         (GameDataStateStorage.fields_.game_more_preferences_ & 0x80U) == 0) {

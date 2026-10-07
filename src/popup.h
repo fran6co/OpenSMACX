@@ -166,14 +166,7 @@ extern char PopupLinkTarget[128];     // 0x006827C4
 extern char PopupPendingLink[256];    // 0x007591C8
 extern int PopupPendingLinkFlag;      // 0x007592C8
 
-// shell32 is not in this build's link set, so the one ShellExecuteA call
-// stays a separate fixed-address import seam requiring recovery.
-typedef long (__stdcall *func_popup_shell_execute)(void *, const char *,
-                                                   const char *, const char *,
-                                                   const char *, int);
-inline func_popup_shell_execute &PopupShellExecuteSlot() {
-    return *reinterpret_cast<func_popup_shell_execute *>(0x00669268);
-}
+// ShellExecuteA is a Windows API import; popup.cpp uses the SDK declaration.
 
 // 0x006A721C. Set to 6 before a popup is started or exec'd and cleared to 0
 // as soon as exec returns, on every site that drives a modal popup

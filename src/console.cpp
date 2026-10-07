@@ -1374,7 +1374,7 @@ int Console::edit_lock() {
     if (!(GameDataStateStorage.fields_.game_state_ & STATE_SCENARIO_EDITOR)) {
         return 0;
     }
-    if (((ConsoleEditKeyStateSlot())(VK_SCROLL) & 1) ||
+    if ((::GetKeyState(VK_SCROLL) & 1) ||
         (GameDataStateStorage.fields_.game_state_ & STATE_EDITOR_ONLY_MODE)) {
         return 1;
     }

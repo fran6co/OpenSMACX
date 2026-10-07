@@ -2855,15 +2855,9 @@ int MapWinCaptionScale = -1;
 int MapWinCaptionDivisor = -1;
 static const unsigned char *const AltStepY = (const unsigned char *)0x00685EE0;
 
-// 0x0066932C / 0x00669330 - the USER32 import-table slots the tree reads as
-// `int (__stdcall *)(int)` and calls with a virtual key:
-//   GetKeyState(0x91)     (VK_SCROLL) - is Scroll Lock latched
-//   GetAsyncKeyState(0x10)(VK_SHIFT)  - the high byte is the pressed bit
-// Named for the import `iat_names.py` resolves each address to, because a
-// fixed-address binding to an IAT slot is a function pointer and the tree has
-// no other spelling for one.
-static int *const IAT_GetKeyState = (int *)0x0066932C;
-static int *const IAT_GetAsyncKeyState = (int *)0x00669330;
+// GetAsyncKeyState is intentionally snapshotted once in MapWin's input path;
+// keep that load site and reuse timing. GetKeyState is sampled only once at
+// its original call point and uses the SDK's SHORT return type.
 
 // ====================
 // STORAGE gen_terrain_poly READS. Bounded source-owned tables below carry
@@ -8176,7 +8170,7 @@ void MapWin::on_right_down(int x_coord, int y_coord) {
         return;
     }
 
-    KeyStateFn get_key_state = *reinterpret_cast<KeyStateFn *>(IAT_GetAsyncKeyState);
+    KeyStateFn get_key_state = &::GetAsyncKeyState;
 
     uint8_t shift_down = 0;
     shift_down = static_cast<uint8_t>(static_cast<uint16_t>(get_key_state(0x10)) >> 8);
@@ -8188,7 +8182,7 @@ void MapWin::on_right_down(int x_coord, int y_coord) {
         }
     }
 
-    if (!((*reinterpret_cast<KeyStateFn *>(IAT_GetKeyState))(0x91) & 1)) {
+    if (!(::GetKeyState(0x91) & 1)) {
         goto abort;
     }
 

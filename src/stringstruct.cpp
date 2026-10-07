@@ -1407,18 +1407,11 @@ Purpose: Step one faction's satellite count for a body, with the shift-key
 // RECOVERY_BINDING: v1 {"evidence": ["Original4A0810..4A08D2; retired seed git:117282ee:src/unrecovered/004a0810.cpp records the same identity and spans.", "The three per-faction fields are PlayerData (faction.h, the 0x833-dword stride the header pins) at +0x808 (the satellite count stepped by body), +0x814 (the seen-map target) and +0x364 (the seen-map floor); the shift state comes through the USER32 GetAsyncKeyState import slot 0x00669330 that mapwin.cpp binds the same way.", "The repaint is see_map_check (faction.h's own) and redraw on the source-owned ReportWinGlobal (reportwin.h, original 0x00876478) through its inherited virtual slot."], "reason": "Coverage transcription of the satellite editor click with the PlayerData offsets documented and the repaint through the tree's own names."}
 Status: Coverage transcription - unclaimed body
 */
-namespace {
-// The USER32 GetAsyncKeyState import slot, the same one mapwin.cpp binds.
-static int *const IAT_GetAsyncKeyState = (int *)0x00669330;
-}
 
 void __cdecl sat_edit(int body, int faction_id, int type) {
     if (type < 4 && body != 0) {
-        typedef short (__stdcall *AsyncKeyStateFn)(int);
-        AsyncKeyStateFn get_async_key_state =
-            reinterpret_cast<AsyncKeyStateFn>(*IAT_GetAsyncKeyState);
         const unsigned char shift_high = static_cast<unsigned char>(
-            get_async_key_state(0x10) >> 8);
+            ::GetAsyncKeyState(0x10) >> 8);
         if (shift_high == 0) {
             reinterpret_cast<int *>(&PlayersData[faction_id])[0x808 / 4 + type]
                 = reinterpret_cast<int *>(&PlayersData[faction_id])[0x808 / 4 + type]

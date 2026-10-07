@@ -20,6 +20,7 @@
 // symbol    ??_GPopup@@UAEPAXI@Z
 // kind      game
 #include "stdafx.h"
+#include <shellapi.h>
 #include <mmsystem.h>
 #include <cstring>
 #include "original_seam.h"
@@ -1814,8 +1815,7 @@ int Popup::on_link_clicked(int id, char *link) {
         ExitTurnLoop = 1;
         fallout();
         ShowWindow(HandleMain, 0);
-        PopupShellExecuteSlot()(0, PopupLinkOpenVerb, PopupLinkTarget, 0, 0,
-                               1);
+        ::ShellExecuteA(0, PopupLinkOpenVerb, PopupLinkTarget, 0, 0, 1);
         return 1;
     }
     PopupPendingLink[0] = 0;

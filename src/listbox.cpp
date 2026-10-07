@@ -1595,7 +1595,6 @@ Purpose: Refresh the list after its entries changed: run the layout pass and
 // indirect  0x0060CA47 0x0060CAF0 0x0060CB15 0x0060CB39 0x0060CB44 0x0060CB56
 */
 int ListBox::update_changes() {
-    typedef int (__stdcall *release_capture_fn)();
     typedef void (__cdecl *callback_fn)(int);
 
     char *self = reinterpret_cast<char *>(this);
@@ -1627,7 +1626,7 @@ int ListBox::update_changes() {
             return result;
         }
         set_selected_pos((old_selected == -1) ? -1 : 0, 1);
-        (*reinterpret_cast<release_capture_fn>(0x006692E0))();
+        ::ReleaseCapture();
         if (was_visible != 0) {
             reinterpret_cast<Win *>(gw_base)->show(0);
         }

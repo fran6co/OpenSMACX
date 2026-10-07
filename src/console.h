@@ -678,12 +678,8 @@ extern PrefWin ConsolePrefWin;  // 0x008578D8
 int32_t *const ConsoleGroupCount = (int32_t *)0x009A64C8;
 
 
-// edit_lock consults the Scroll Lock key through the game's imported
-// GetKeyState. The seam is the address of that import slot (the IAT entry the
-// original calls indirectly), so it reads the live pointer at run time and
-// stays rebindable for tests.
-typedef SHORT(__stdcall func_get_key_state)(int virtual_key);
-inline func_get_key_state *&ConsoleEditKeyStateSlot() { return *reinterpret_cast<func_get_key_state **>(0x0066932C); }
+// Console and Veh call USER32's typed GetKeyState API; its signed SHORT result
+// is retained at the existing call sites.
 
 
 // update_data drives the three fixed windows the original reaches by absolute
@@ -692,9 +688,7 @@ inline func_get_key_state *&ConsoleEditKeyStateSlot() { return *reinterpret_cast
 // and the StatusWin at 0x008C5568 are the objects themselves (loaded as
 // immediates); 0x007D3C3C is a slot holding the current MapWin pointer
 // (loaded with `mov ecx, dword ptr [0x7d3c3c]`), published once at startup by
-// 0x0058F1C1, so it is read at call time exactly like ConsoleEditKeyStateSlot
-// above. All four bindings are rebindable so tests can substitute local
-// objects and probes.
+// 0x0058F1C1, so the current primary MapWin pointer is read at call time.
 //
 // InfoWin::change (0x00458900) and MapWin::main_caption (0x0046FB10) are
 // source_complete and are called directly; StatusWin::redraw (0x004B9EA0) is

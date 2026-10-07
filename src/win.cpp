@@ -11668,13 +11668,8 @@ typedef int(__stdcall *PeekMessageProc)(MSG *, HWND, unsigned int, unsigned int,
                                        unsigned int);
 typedef int(__stdcall *TranslateMessageProc)(const MSG *);
 typedef LRESULT(__stdcall *DispatchMessageProc)(const MSG *);
-
-// The import-table slots those three live in, read by name rather than left
-// as `g_006693xx`: tools/iat_names.py names each address, and reading the slot
-// through a named pointer is what keeps the loads in the prologue.
-static void *const IatDispatchMessage = (void *) 0x00669340;
-static void *const IatPeekMessage = (void *) 0x00669358;
-static void *const IatTranslateMessage = (void *) 0x0066935C;
+// Keep one typed imported-function pointer snapshot per API, in the same
+// capture order and location as the original entry-point slot reads.
 // ORIGINAL: 0x005FCEC0 sub_5fcec0 0x005FCEC0-0x005FCF8C FILE
 // symbol    ?pump_mouse_messages@@YAXXZ
 // size      204 bytes
@@ -11692,6 +11687,8 @@ static void *const IatTranslateMessage = (void *) 0x0066935C;
 // VOID, not the scaffold's `int` + `return 0`: the image's epilogue sets no
 // eax after the do_net call, and an int return would have to zero it.
 //
+// Historical experiment below used the retired raw-IAT aliases. The current
+// source instead takes typed API addresses; load timing needs fresh evidence.
 // LEVER: the three USER32 entry points are read out of this module's own
 // import table - `*(TranslateMessageProc *) IatTranslateMessage` - which is
 // what makes VC6 hoist all three loads into the prologue, before the
@@ -11710,9 +11707,12 @@ static void *const IatTranslateMessage = (void *) 0x0066935C;
 // the image's own registers. 39 of 68, similarity 0.910, and the divergence
 // is that merge and nothing else.
 void __cdecl pump_mouse_messages() {
-    TranslateMessageProc translate = *(TranslateMessageProc *) IatTranslateMessage;
-    PeekMessageProc peek = *(PeekMessageProc *) IatPeekMessage;
-    DispatchMessageProc dispatch = *(DispatchMessageProc *) IatDispatchMessage;
+    // Capture each imported target before the first loop callbacks. VC6 can
+    // sink ordinary import-address locals to their first use; observable
+    // local stores retain this capture epoch without original IAT addresses.
+    DispatchMessageProc const volatile dispatch = &::DispatchMessageA;
+    PeekMessageProc const volatile peek = &::PeekMessageA;
+    TranslateMessageProc const volatile translate = &::TranslateMessage;
 
     MSG msg;
     for (;;) {
