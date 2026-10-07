@@ -58,10 +58,20 @@ def record_claims(selected, *, measure, validate, staging_directory: Path) -> Re
     if any(item.state is State.PLACEHOLDER for item in selected):
         raise ValueError("cannot record an unfinished placeholder; implement its body and remove the body-slot sentinel first")
     groups = defaultdict(list)
+    attached_fragment_parents = {
+        (path, native.function_fragment.parent_address,
+         native.function_fragment.parent_symbol)
+        for (path, _line), native in lossless.items()
+        if native.function_fragment is not None
+    }
     for key, item in zip(keys, selected):
         native = lossless[key]
         if native.name != item.name or native.symbol != item.symbol:
             raise ValueError("source symbol cannot be measured losslessly")
+        if native.function_fragment is not None:
+            raise ValueError("cannot independently record a non-callable function fragment")
+        if (item.path, native.address, native.symbol or native.name) in attached_fragment_parents:
+            raise ValueError("cannot record a parent with an attached function fragment before combined-parent publication support")
         groups[item.path].append(native)
     if any(write_bytes(expected[path], group) != expected[path] for path, group in groups.items()):
         raise ValueError("source annotations require a lossless no-op rewrite before recording")

@@ -975,6 +975,30 @@ or the explicit scope-expansion workflow. Recheck the affected TU. Only `record`
 can bank freshly measured historical byte claims; successful binding is not a
 measurement or acceptance result.
 
+## Non-callable terminal fragments
+
+Source may preserve a separately catalogued terminal instruction span without
+inventing another callable function. A strict `RECOVERY_FRAGMENT: v1` JSON
+comment immediately follows its `FILE` marker and supplies `parent_address`,
+`parent_symbol`, `reason` and nonempty `evidence`. The parent is one earlier
+non-fragment `FILE` mapping in the same TU; version 1 supports one adjacent
+terminal child and one parent entry span. Both original markers and claims stay
+unchanged. The relation is ownership evidence, not a new function, symbol or
+relocation target.
+
+`measure`, historical matching and scoped restoration resolve the parent from
+the same captured source view. They compile its actual symbol, validate exclusive
+physical ownership and combined extent, and measure the complete child slice.
+Child success requires parent-wide success; mismatched/unsupported layouts remain
+unknown. Parent-only measurement uses the combined extent without rewriting its
+source span. Legacy masked matching does not establish strict reference agreement.
+`source.asm.resolve_fragment_pairs` is an internal source-view binding helper:
+its input must be the complete captured inventory, not caller-invented support.
+
+Claim recording currently refuses both fragments and parents with attached
+fragments. Combined-extent publication is unfinished. No relation waives layout,
+preservation, linked-selection or runtime proof requirements.
+
 ## Whole-project gate
 
 `recover check --root <project> --image <original> --jobs 1 --summary` runs the

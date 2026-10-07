@@ -6877,9 +6877,9 @@ void __cdecl sub_620640(int param_1, int param_2) {
 // current rectangle at +0x20..+0x2C. Use those existing members; the
 // raster scratch cells below still retain their separately mapped storage.
 
-// The retained 0x61F785 nullsub_259 identity is the terminal ret 0x1C instruction reached by fallthrough from Texture::sub_61f0d0 at the common epilogue (pinned 0x61F771-0x61F788; member decoration and source declaration independently establish the parent Texture method). This does not exclude a separate interior-entry call path. The source map has no validated contained-fragment-to-parent-body binding or emitted-symbol offset, so keep the original fragment identity and BYTE_EXACT obligation as FILE-scoped source evidence and leave its independent measurement explicitly unresolved; do not emit a callable null stub.
-// RECOVERY_ROLE: SCAFFOLD The original identity is a terminal instruction fragment in the Texture::sub_61f0d0 epilogue, not a standalone recovered C++ body. FILE keeps the full historical identity and claim visible, but the native source grammar cannot bind its interior image span to a parent method symbol plus offset; fragment measurement remains unresolved.
+// The retained nullsub_259 identity is the terminal ret 0x1C reached by fallthrough from Texture::sub_61f0d0's common epilogue. The source-owned relation below preserves its distinct span and historical claim without inventing a callable null stub or counting another recovered function. This does not exclude an interior-entry path; restoration must establish the complete parent extent as well as the fragment, rather than locating a convenient RET in the compiled body.
 // ORIGINAL: 0x0061F785 nullsub_259 0x0061F785-0x0061F788 FILE BYTE_EXACT
+// RECOVERY_FRAGMENT: v1 {"evidence":["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x0061F771-0x0061F788","source:src/texture.cpp:Texture::sub_61f0d0"],"parent_address":"0x0061F0D0","parent_symbol":"?sub_61f0d0@Texture@@QAEXPAVBuffer@@HHHHIH@Z","reason":"terminal return reached by fallthrough from the mapped Texture method epilogue"}
 // kind      game
 void Texture::sub_61f0d0(Buffer *param_2, int param_3, int param_4, int param_5,
                              int param_6, uint32_t param_7, int param_8) {

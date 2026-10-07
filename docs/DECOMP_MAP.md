@@ -75,6 +75,39 @@ explains the coordinator decision. Request hashes, impact counts, permission
 checks and compiler-run diagnostics belong to the latter, not the source comment.
 Neither evidence channel substitutes for the other.
 
+## Non-callable function fragments
+
+A separately catalogued terminal span can belong to an existing source method
+instead of an independent function. Preserve both original identities, spans and
+historical claims; immediately after the child's `FILE` marker, record:
+
+```cpp
+// RECOVERY_FRAGMENT: v1 {"parent_address":"0x00401200","parent_symbol":"_parent","reason":"verified fallthrough into the parent epilogue","evidence":["pinned:epilogue-reference"]}
+```
+
+The parent must be one earlier, non-fragment `FILE` mapping in the same TU,
+with the explicit emitted symbol and an adjacent span. Version 1 supports one
+terminal child and one contiguous parent entry span. Ambiguous, seed-only,
+component-owned, nested or unsupported relations refuse. Evidence must establish
+the relationship; adjacency alone does not. The child is not a callable symbol
+or relocation target, and must not be counted as another recovered function.
+
+Native measurement resolves support from the captured source inventory and
+compiles the real parent. Selecting the parent compares the combined extent;
+selecting the child reports its complete slice with a separate parent result.
+No guessed instruction search or offset is used. Child success requires the
+whole parent to match. Missing physical ownership, changed layout or unsupported
+relocations stay unknown. Legacy masked-byte matching remains distinct from
+strict reference-aware verification. Every declared byte, including terminal
+NOP/INT3 bytes, participates; only independently bounded COFF alignment padding
+outside the mapped span can be omitted.
+
+The reader/writer, inventory, task context and restoration preserve this relation.
+Removing a parent while retaining its fragment refuses. Recording a child or its
+parent currently refuses before measurement/publication: combined-extent claim
+publication is not implemented. Read-only measurement does not grant claims or
+prove original class layout, lifetime, linked selection or executable acceptance.
+
 ## Compact object bindings
 
 `RECOVERY_OBJECT: v1 <start> <emitted-symbol>` binds an original object start

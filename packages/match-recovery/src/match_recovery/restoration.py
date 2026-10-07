@@ -41,9 +41,19 @@ def _binary_outcome(row):
     for trial in row["variants"]:
         refs = trial.get("references", Result.UNKNOWN)
         fragments = trial.get("spans", [trial])
+        is_fragment = ("fragment_result" in trial or trial.get("fragment") is True
+                       or trial.get("callable") is False)
+        parent_result = trial.get("parent_whole_body_result",
+                                  Result.UNKNOWN if is_fragment else Result.PASS)
+        fragment_result = trial.get("fragment_result",
+                                    Result.UNKNOWN if is_fragment else Result.PASS)
         unresolved = any(relocation["result"] == Result.UNKNOWN
                          for fragment in fragments for relocation in fragment.get("relocations", []))
-        if unresolved or any(fragment.get("bytes", Result.UNKNOWN) == Result.UNKNOWN
+        if parent_result != Result.PASS or fragment_result != Result.PASS:
+            # A passing child slice cannot discharge its mapped obligation
+            # unless the complete containing source body/section also passed.
+            result = Result.UNKNOWN
+        elif unresolved or any(fragment.get("bytes", Result.UNKNOWN) == Result.UNKNOWN
                              and fragment.get("boundary") != Result.FAIL for fragment in fragments):
             result = Result.UNKNOWN
         elif trial.get("boundary") == Result.FAIL:

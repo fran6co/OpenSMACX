@@ -16,22 +16,25 @@ from .mapping_check import build_units
 from .measurement import Measurement
 from .model import digest
 from .records import read_json
-from .source import read_file
-from .source.asm import AsmComparison, compare_unit, shared_spans
+from .source_selection import snapshot_mappings, selected_source_records
+from .source.asm import (AsmComparison, compare_unit, resolve_fragment_pairs,
+                         shared_spans)
 from .source.model import Tier
 from .source_history import git
 from .source_inventory import image_pin
 from .source_inventory import source_snapshot
 from .component_original_routing import (component_claim_result, component_function_observations,
+                                         component_record_identity_candidates,
                                          exact_component_record_bindings)
 from .components import SystemImportManifest
 from .model import Origin
 
 
 def _unit(job):
-    root, profile, path, records, image, flags, shared = job
+    root, profile, path, records, image, flags, shared, fragment_pairs = job
     return compare_unit(records, image, path, (), flags, shared,
-                        compiler=Compiler(root, profile=profile))
+                        compiler=Compiler(root, profile=profile),
+                        fragment_pairs=fragment_pairs)
 
 
 def _key(record):
@@ -46,6 +49,16 @@ def _observation(root, record, observed, *, built, source):
            "byte_obligation": record.byte_exact, "shape_obligation": record.semantic}
     row["seed"] = source.is_seed(row["path"])
     row["built"] = row["path"] in built
+    if record.function_fragment is not None and isinstance(observed, str):
+        detail = observed
+        row.update(verdict="UNMEASURED_FRAGMENT",
+                   diagnostic="non-callable fragment is not independently measurable by historical matching; "
+                              + detail,
+                   matching_instructions=0, original_instructions=0,
+                   compiled_instructions=0, mnemonic_similarity=0.0,
+                   allocation_only=False,
+                   result="unknown" if record.byte_exact or record.semantic else None)
+        return row
     if isinstance(observed, str):
         row.update(verdict="UNRESOLVED", diagnostic=observed)
         held, unmeasured = False, True
@@ -64,7 +77,9 @@ def _observation(root, record, observed, *, built, source):
             not record.byte_exact and record.semantic and observed.allocation_only == "")
         unmeasured = observed.verdict in (Tier.NO_COMPILE, Tier.SHARED_TAIL, Tier.REFUSED)
     claimed = record.byte_exact or record.semantic
-    row["result"] = ("pass" if held else "fail" if not unmeasured or row["built"] else "unknown") if claimed else None
+    unresolved_fragment = (record.function_fragment is not None and unmeasured)
+    row["result"] = ("pass" if held else "unknown" if unresolved_fragment
+                      else "fail" if not unmeasured or row["built"] else "unknown") if claimed else None
     return row
 
 
@@ -111,26 +126,61 @@ def check_matches(root: Path, image: Path, *, jobs: int = 1) -> dict:
     built, external = build_units(root, database_bytes)
     source_index = source_snapshot(root, image)
     component_owners = exact_component_record_bindings(source_index)
-    records = [row for path in settings.source.files(root) for row in read_file(path)]
+    source_mappings = snapshot_mappings(root, source_index)
+    records = selected_source_records(root, source_index, source_mappings)
     shared = shared_spans(records)
-    groups, unsupported, component_selected = defaultdict(list), [], {}
+    eligible = []
     for record in records:
         claimed = record.byte_exact or record.semantic
         name = record.path.relative_to(root).as_posix()
         if not claimed and not (name in built and record.name and record.image_spans):
             continue
+        eligible.append(record)
+    component_candidates = component_record_identity_candidates(source_index)
+    component_keys = set()
+    for record in records:
+        name = record.path.relative_to(root).as_posix()
+        entity = Origin(image_pin(root, settings.source), settings.source.address_space, record.address).entity_id
+        if (name, entity) in component_candidates:
+            component_keys.add((record.path.resolve(), record.address, record.line))
+    fragment_pairs, fragment_refused = resolve_fragment_pairs(
+        records, eligible, component_keys=frozenset(component_keys),
+        is_seed=lambda row: settings.source.is_seed(row.path.relative_to(root).as_posix()))
+    pair_by_record = {}
+    for pair in fragment_pairs:
+        child, parent = pair
+        pair_by_record[(child.path.resolve(), child.address, child.line)] = pair
+        pair_by_record[(parent.path.resolve(), parent.address, parent.line)] = pair
+    groups, unsupported, component_selected, pairs_by_path = defaultdict(list), [], {}, defaultdict(list)
+    for record in eligible:
+        name = record.path.relative_to(root).as_posix()
         entity = Origin(image_pin(root, settings.source), settings.source.address_space, record.address).entity_id
         owner = component_owners.get((name, entity))
-        if owner is not None:
+        record_key = (record.path.resolve(), record.address, record.line)
+        if record_key in fragment_refused:
+            row = _observation(root, record, "fragment parent/child ownership is ambiguous or conflicts with a component",
+                               built=built, source=settings.source)
+            row["result"] = "unknown" if (record.byte_exact or record.semantic) else None
+            unsupported.append(row)
+        elif record.function_fragment is not None and record_key not in pair_by_record:
+            row = _observation(root, record, "fragment has no unambiguous same-TU parent support",
+                               built=built, source=settings.source)
+            row["result"] = "unknown" if (record.byte_exact or record.semantic) else None
+            unsupported.append(row)
+        elif owner is not None:
             component_selected[(name, record.line)] = (record, owner)
         elif record.path.suffix not in settings.unit_extensions:
             row = _observation(root, record, "mapping host is not a configured translation unit",
                                built=built, source=settings.source)
-            row["result"] = "unknown" if claimed else None
+            row["result"] = "unknown" if (record.byte_exact or record.semantic) else None
             unsupported.append(row)
         else:
             groups[record.path].append(record)
-    work = [(root, settings.compiler_profile, path, group, image, settings.flag_sets, shared)
+            pair = pair_by_record.get(record_key)
+            if pair is not None and pair not in pairs_by_path[record.path]:
+                pairs_by_path[record.path].append(pair)
+    work = [(root, settings.compiler_profile, path, group, image, settings.flag_sets, shared,
+             tuple(pairs_by_path[path]))
             for path, group in sorted(groups.items())]
     if inputs() != before:
         raise ValueError("match inputs changed before compilation")

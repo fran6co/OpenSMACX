@@ -24,6 +24,7 @@ class Candidate:
     component: str | None = None
     owner_hint_basis: str = "supplied"
     catalogued_owner_hint: str | None = None
+    function_fragment: dict | None = None
 
     def __post_init__(self):
         relative_path(self.path)
@@ -39,6 +40,10 @@ class Candidate:
             raise ValueError("source-symbol ownership needs a current source member hint")
         if self.component is not None:
             require_text(self.component, "component binding")
+        if self.function_fragment is not None:
+            required = {"parent_address", "parent_symbol", "reason", "evidence"}
+            if type(self.function_fragment) is not dict or set(self.function_fragment) != required:
+                raise ValueError("invalid function-fragment relation")
 
 
 def partition(candidates: Iterable[Candidate]) -> dict:

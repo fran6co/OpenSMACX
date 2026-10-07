@@ -44,10 +44,42 @@ def exact_component_record_bindings(snapshot: dict) -> dict[tuple[str, str], tup
             candidates = records.get(key, [])
             expected = [[span.start, span.end] for span in binding.spans]
             matches = [row for row in candidates
-                       if not row["invalid_spans"] and row["spans"] == expected]
+                       if not row["invalid_spans"] and row["spans"] == expected
+                       and row.get("function_fragment") is None]
             if len(candidates) == len(matches) == 1 and key not in output:
                 output[key] = (manifest.component.component_id, manifest, binding)
     return output
+
+
+def component_record_identity_candidates(snapshot: dict) -> frozenset[tuple[str, str]]:
+    """Raw manifest origin/span candidates, including non-callable fragments.
+
+    This is deliberately not a callable-owner join. Consumers use it only to
+    refuse a source-TU shortcut when a component manifest also claims the same
+    exact mapped identity; fragment rows remain excluded from the callable join.
+    """
+    configuration = SourceConfiguration.from_dict(snapshot["source_configuration"])
+    records: dict[tuple[str, str], list[dict]] = {}
+    for row in snapshot["records"]:
+        records.setdefault((row["path"], row["entity_id"]), []).append(row)
+    entries = parse_component_entries({
+        name: base64.b64decode(file["content_base64"]).decode("utf-8")
+        for name, file in snapshot["files"].items()
+        if name.endswith(".recovery.h") and not configuration.is_seed(name)
+    })
+    candidates = set()
+    for companion, manifest in entries:
+        if not isinstance(companion, str) or not companion.endswith(".recovery.h"):
+            continue
+        for binding in manifest.bindings:
+            if (binding.origin.image_sha256 != snapshot["image_sha256"]
+                    or binding.origin.address_space != configuration.address_space):
+                continue
+            expected = [[span.start, span.end] for span in binding.spans]
+            for row in records.get((companion, binding.origin.entity_id), ()):
+                if not row["invalid_spans"] and row["spans"] == expected:
+                    candidates.add((companion, binding.origin.entity_id))
+    return frozenset(candidates)
 
 
 def component_function_observations(root: Path, image: Path, owners: dict) -> tuple[dict, list]:

@@ -24,9 +24,11 @@ from .grammar import (DEFINITION_HEAD, DEFINITION_KEYWORDS,
                       MARKER, MARKER_KEYWORD, MARKER_MATCHED,
                       MARKER_SEMANTIC, MARKER_TAIL,
                       NEXT_MARKER, SENTINEL, SOURCE_ROLE,
-                      SOURCE_ROLE_DIRECTIVE, _MANGLED_BASE)
-from .model import (DecompilationState, Lesson, Mode, Recipe, SourceRole,
+                      SOURCE_ROLE_DIRECTIVE, FUNCTION_FRAGMENT_DIRECTIVE,
+                      _MANGLED_BASE)
+from .model import (DecompilationState, FunctionFragmentRelation, Lesson, Mode, Recipe, SourceRole,
                     State, validate_source_role)
+from ..records import parse_json_value
 
 
 
@@ -748,6 +750,7 @@ def _read_text(text: str, path: Path | str,
     in_block = False
     raw_delimiter: str | None = None
     pending_role: tuple[int, SourceRole, str] | None = None
+    last_record_marker_line: int | None = None
     for index, line in enumerate(lines):
         # Parse with the state the line OPENS in, then advance the state, so
         # a marker on the line that opens a comment is still inside it.
@@ -765,6 +768,50 @@ def _read_text(text: str, path: Path | str,
                 raise ValueError(
                     f"orphan RECOVERY_ROLE directive at line {pending_role[0] + 1}")
             pending_role = (index, role[0], role[1])
+            continue
+        fragment = (FUNCTION_FRAGMENT_DIRECTIVE.fullmatch(line)
+                    if not saw_raw and not marker_in_block else None)
+        if (not saw_raw and not marker_in_block
+                and line.lstrip().startswith("// RECOVERY_FRAGMENT:")
+                and fragment is None):
+            raise ValueError("malformed RECOVERY_FRAGMENT directive")
+        if fragment is not None:
+            if pending_role is not None or not found or last_record_marker_line != index - 1:
+                raise ValueError("RECOVERY_FRAGMENT must immediately follow its child ORIGINAL marker")
+            record = found[-1]
+            if record.mode is not Mode.FILE or record.function_fragment is not None:
+                raise ValueError("RECOVERY_FRAGMENT requires one FILE child mapping")
+            try:
+                payload = parse_json_value(fragment.group("json"))
+            except (TypeError, ValueError) as error:
+                raise ValueError("malformed RECOVERY_FRAGMENT JSON") from error
+            if type(payload) is not dict or set(payload) != {
+                    "parent_address", "parent_symbol", "reason", "evidence"}:
+                raise ValueError("RECOVERY_FRAGMENT v1 has unexpected fields")
+            parent_address = payload["parent_address"]
+            if (not isinstance(parent_address, str)
+                    or not re.fullmatch(r"0x[0-9A-Fa-f]{8}", parent_address)):
+                raise ValueError("RECOVERY_FRAGMENT parent_address must be an eight-digit PE VA")
+            if type(payload["evidence"]) is not list or any(
+                    type(item) is not str for item in payload["evidence"]):
+                raise ValueError("RECOVERY_FRAGMENT evidence must be a string array")
+            relation = FunctionFragmentRelation(
+                int(parent_address, 16), payload["parent_symbol"],
+                payload["reason"], tuple(payload["evidence"]))
+            parents = [item for item in found[:-1] if item.address == relation.parent_address]
+            if (len(parents) != 1 or parents[0].mode is not Mode.FILE
+                    or parents[0].function_fragment is not None):
+                raise ValueError("RECOVERY_FRAGMENT parent must be one earlier non-fragment FILE mapping")
+            parent = parents[0]
+            if (not parent.symbol or parent.symbol != relation.parent_symbol
+                    or len(parent.image_spans) != 1 or len(record.image_spans) != 1
+                    or parent.image_spans[0][0] != parent.address
+                    or record.address != record.image_spans[0][0]
+                    or record.image_spans[0][1] <= record.image_spans[0][0]
+                    or parent.image_spans[0][1] != record.image_spans[0][0]):
+                raise ValueError("RECOVERY_FRAGMENT parent identity or adjacent extent is not proven")
+            record.function_fragment = relation
+            last_record_marker_line = None
             continue
         if pending_role is None:
             source_role, source_role_reason = SourceRole.UNCLASSIFIED, ""
@@ -798,6 +845,7 @@ def _read_text(text: str, path: Path | str,
                 ruled_out=found_ruled, unrecoverable=found_dead,
                 deferred=found_later, origin=found_run,
                 source_role=source_role, source_role_reason=source_role_reason))
+            last_record_marker_line = index
         elif keyword == "EXCLUDED":
             found.append(DecompilationState(
                 address=address, mode=Mode.BODY, state=State.EXCLUDED,
@@ -809,6 +857,7 @@ def _read_text(text: str, path: Path | str,
                 unrecoverable=found_dead, deferred=found_later,
                 origin=found_run, source_role=source_role,
                 source_role_reason=source_role_reason))
+            last_record_marker_line = index
         else:
             if proved:
                 # Proved bodies keep the writeback semantics even once an
@@ -834,6 +883,7 @@ def _read_text(text: str, path: Path | str,
                 unrecoverable=found_dead, deferred=found_later,
                 origin=found_run, source_role=source_role,
                 source_role_reason=source_role_reason))
+            last_record_marker_line = index
 
     if pending_role is not None:
         raise ValueError(

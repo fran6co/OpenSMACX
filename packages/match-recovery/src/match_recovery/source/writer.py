@@ -53,6 +53,7 @@ Its caller supplies compiler evidence, authorization and guarded publication.
 from __future__ import annotations
 
 import re
+import json
 from dataclasses import asdict
 from difflib import SequenceMatcher
 from pathlib import Path
@@ -60,7 +61,8 @@ from pathlib import Path
 from .. import binding_source
 from .grammar import (FACT_LINE, LESSON_CONTINUED, LESSON_DEFERRED,
                       LESSON_LEVER, LESSON_RULED_OUT, LESSON_UNRECOVERABLE,
-                      MARKER, NEXT_MARKER, SOURCE_ROLE_DIRECTIVE)
+                      MARKER, NEXT_MARKER, SOURCE_ROLE_DIRECTIVE,
+                      FUNCTION_FRAGMENT_DIRECTIVE)
 from .model import (DecompilationState, Mode, SourceRole, State,
                     validate_source_role)
 from .reader import _fact_lines, _lesson_run, read_text
@@ -357,6 +359,17 @@ def _holds_marker(line: str, record: DecompilationState) -> bool:
     return match is not None and int(match.group("addr"), 16) == record.address
 
 
+def _fragment_line(record: DecompilationState) -> str | None:
+    relation = record.function_fragment
+    if relation is None:
+        return None
+    payload = {"parent_address": f"0x{relation.parent_address:08X}",
+               "parent_symbol": relation.parent_symbol,
+               "reason": relation.reason, "evidence": list(relation.evidence)}
+    return "// RECOVERY_FRAGMENT: v1 " + json.dumps(
+        payload, sort_keys=True, separators=(",", ":"))
+
+
 def write(text: str, records: list[DecompilationState]) -> str:
     """The text with each of `records` written at its own line.
 
@@ -404,6 +417,13 @@ def write(text: str, records: list[DecompilationState]) -> str:
             drop |= gone
             if index > 0 and SOURCE_ROLE_DIRECTIVE.fullmatch(lines[index - 1]):
                 drop.add(index - 1)
+            fragment_line = _fragment_line(record)
+            if index + 1 < len(lines) and FUNCTION_FRAGMENT_DIRECTIVE.fullmatch(lines[index + 1]):
+                if fragment_line is None:
+                    raise ValueError("cannot drop a fragment relation while its child mapping remains")
+                drop.add(index + 1)
+            if fragment_line is not None:
+                add_after.setdefault(index, []).insert(0, fragment_line)
             respell.update(spelled)
             if additions:
                 add_after.setdefault(after, []).extend(additions)
@@ -431,6 +451,9 @@ def write(text: str, records: list[DecompilationState]) -> str:
             if role_line is not None:
                 out.append(role_line)
             out.append(_marker_line(record))
+            fragment_line = _fragment_line(record)
+            if fragment_line is not None:
+                out.append(fragment_line)
             out.extend(_lesson_lines(record))
         out.append(respell.get(index, line))
         if index in add_after:
@@ -446,6 +469,9 @@ def write(text: str, records: list[DecompilationState]) -> str:
         if role_line is not None:
             out.append(role_line)
         out.append(_marker_line(record))
+        fragment_line = _fragment_line(record)
+        if fragment_line is not None:
+            out.append(fragment_line)
         out.extend(_lesson_lines(record))
 
     joined = "\n".join(out)
@@ -600,6 +626,13 @@ def remove(text: str, records: list[DecompilationState]) -> str:
     """
     lines = text.splitlines()
 
+    removed_addresses = {record.address for record in records}
+    parsed = read_text(text, records[0].path) if records else []
+    if any(row.function_fragment is not None
+           and row.function_fragment.parent_address in removed_addresses
+           and row.address not in removed_addresses for row in parsed):
+        raise ValueError("cannot remove a fragment parent while its child relation remains")
+
     drop: set[int] = set()
     for record in records:
         if record.line > len(lines):
@@ -612,6 +645,8 @@ def remove(text: str, records: list[DecompilationState]) -> str:
             drop.add(index - 1)
         if index + 1 < len(lines) and lines[index + 1].strip().startswith(
                 "// RECOVERY_BINDING:"):
+            drop.add(index + 1)
+        if index + 1 < len(lines) and FUNCTION_FRAGMENT_DIRECTIVE.fullmatch(lines[index + 1]):
             drop.add(index + 1)
         drop.update(_lesson_drop(lines, index))
 

@@ -5,10 +5,12 @@ This is a scoped diagnostic, not the full build/ownership/runtime admission gate
 """
 
 from collections import Counter, defaultdict
+from dataclasses import replace
 from pathlib import Path
 from typing import Callable
 
-from match_recovery.bound_objects import FunctionBinding, check_objects
+from match_recovery.bound_objects import (FunctionBinding, FunctionFragmentBinding,
+                                          check_objects)
 from match_recovery.generated_source import read_generated
 from match_recovery.model import Origin, Result, Span, digest
 from match_recovery.object_source import (emitted_object_symbols, object_targets,
@@ -53,12 +55,17 @@ def select_bindings(view: dict, selected: frozenset[str], component_targets: dic
             for item in candidates:
                 if item["component"] is not None:
                     reserved[item["symbol"]].add(entity["origin"]["address"])
-            if candidate is not None and candidate["component"] is None:
+            if (candidate is not None and candidate["component"] is None
+                    and candidate.get("function_fragment") is None):
                 # Exact source spelling only. Ambiguous external names are
                 # removed below; static definitions never become external COFF
                 # symbols and so cannot borrow this table during resolution.
                 targets[candidate["symbol"]].add(entity["origin"]["address"])
             if key not in selected:
+                continue
+            if candidate is not None and candidate.get("function_fragment") is not None:
+                # This identity is verified as a slice of its parent COMDAT,
+                # never selected as an independent COFF function symbol.
                 continue
             reason = None
             if candidate is None:
@@ -109,16 +116,195 @@ def select_bindings(view: dict, selected: frozenset[str], component_targets: dic
     return accepted, refused, externals
 
 
+def select_fragment_bindings(view: dict, selected: frozenset[str], bindings: list[FunctionBinding]):
+    """Resolve validated source relations into parent support + child slices.
+
+    Parent bindings are expanded to the exact contiguous union. A child-only
+    task compiles that parent TU as support but only returns the child's mapped
+    result as selected work. Ambiguous/missing source parents remain UNKNOWN.
+    """
+    entities = {entity["entity_id"]: entity for group in view["groups"]
+                for entity in group["entities"]}
+    existing = {binding.origin.entity_id: binding for binding in bindings}
+    fragments, support, refused = [], set(), []
+    relation_rows = []
+    untrusted_relation_children = set()
+    component_relation_children = set()
+    for child_id, entity in entities.items():
+        current = [row for row in entity["candidates"] if not row["seed"]]
+        relations = [row for row in entity["candidates"]
+                     if not row["seed"] and row.get("function_fragment") is not None]
+        if relations and (len(current) != 1 or entity["conflicts"]):
+            untrusted_relation_children.add(child_id)
+        for candidate in relations:
+            if candidate.get("component") is not None:
+                # A fragment identity cannot bypass the separate component
+                # verifier or become a callable dependency binding.
+                untrusted_relation_children.add(child_id)
+                component_relation_children.add(child_id)
+            relation = candidate["function_fragment"]
+            relation_rows.append((child_id, entity, candidate, relation))
+    expanded = dict(existing)
+    relation_counts = Counter(relation.get("parent_address")
+                              for _, _, _candidate, relation in relation_rows)
+    ambiguous_relations = untrusted_relation_children | {
+        child_id for child_id, _, _candidate, relation in relation_rows
+        if relation_counts[relation.get("parent_address")] != 1}
+    ambiguous_parent_ids = set()
+    for child_id, _entity, candidate, relation in relation_rows:
+        potential = [(parent_id, parent) for parent_id, parent in entities.items()
+                     if parent["origin"]["address"] == relation.get("parent_address")]
+        qualified = []
+        for parent_id, parent in potential:
+            current = [row for row in parent["candidates"] if not row["seed"]]
+            if (not parent["conflicts"] and len(current) == 1
+                    and current[0].get("function_fragment") is None
+                    and current[0]["path"] == candidate["path"]
+                    and current[0]["symbol"] == relation.get("parent_symbol")
+                    and current[0]["component"] is None):
+                qualified.append(parent_id)
+        if len(potential) != 1 or len(qualified) != 1:
+            ambiguous_relations.add(child_id)
+            ambiguous_parent_ids.update(parent_id for parent_id, _ in potential)
+    fragment_ids = {child_id for child_id, *_ in relation_rows}
+    ambiguous_relations.update(fragment_ids & ambiguous_parent_ids)
+    for child_id, _entity, candidate, relation in relation_rows:
+        if (relation_counts[relation.get("parent_address")] == 1
+                and child_id not in untrusted_relation_children):
+            continue
+        parent_ids = [parent_id for parent_id, parent in entities.items()
+                      if parent["origin"]["address"] == relation.get("parent_address")]
+        ambiguous_parent_ids.update(parent_ids)
+        if child_id in selected:
+            refused.append({"entity_id": child_id, "result": Result.UNKNOWN,
+                            "reason": ("component-owned mapping cannot be a non-callable fragment"
+                                       if child_id in component_relation_children else
+                                       "multiple fragment relations claim one parent extent"),
+                            "fragment": True})
+        for parent_id in parent_ids:
+            if parent_id in selected:
+                refused.append({"entity_id": parent_id, "result": Result.UNKNOWN,
+                                "reason": "parent extent has multiple competing fragment relations",
+                                "fragment_parent": True})
+    refused_ids = {row["entity_id"] for row in refused}
+    for child_id in ambiguous_relations:
+        if child_id in selected and child_id not in refused_ids:
+            refused.append({"entity_id": child_id, "result": Result.UNKNOWN,
+                            "reason": ("component-owned mapping cannot be a non-callable fragment"
+                                       if child_id in component_relation_children else
+                                       "fragment relation has an ambiguous or conflicted parent"),
+                            "fragment": True})
+            refused_ids.add(child_id)
+    for parent_id in ambiguous_parent_ids:
+        if parent_id in selected and parent_id not in refused_ids:
+            refused.append({"entity_id": parent_id, "result": Result.UNKNOWN,
+                            "reason": "fragment parent has conflicting source candidates",
+                            "fragment_parent": True})
+            refused_ids.add(parent_id)
+    for parent_id in ambiguous_parent_ids:
+        expanded.pop(parent_id, None)
+        support.discard(parent_id)
+    for child_id, child_entity, child_candidate, relation in relation_rows:
+        if child_id in ambiguous_relations:
+            continue
+        parent_address = relation.get("parent_address")
+        parent_symbol = relation.get("parent_symbol")
+        child_spans = child_candidate.get("spans", [])
+        parents = []
+        for parent_id, parent_entity in entities.items():
+            if parent_entity["origin"]["address"] != parent_address:
+                continue
+            current = [row for row in parent_entity["candidates"] if not row["seed"]]
+            if parent_entity["conflicts"] or len(current) != 1:
+                continue
+            candidate = current[0]
+            if (candidate.get("function_fragment") is None
+                    and candidate["path"] == child_candidate["path"]
+                    and candidate["symbol"] == parent_symbol
+                    and candidate["component"] is None):
+                parents.append((parent_id, parent_entity, candidate))
+        is_selected = child_id in selected
+        selected_parent_ids = [parent_id for parent_id, parent in entities.items()
+                               if parent_id in selected
+                               and parent["origin"]["address"] == parent_address]
+        parent_selected = bool(selected_parent_ids)
+        if not is_selected and not parent_selected:
+            continue
+        reason = None
+        if (len(child_spans) != 1 or len(parents) != 1
+                or relation.get("reason") is None or not relation.get("evidence")):
+            reason = "fragment relation has no unique same-file parent or contiguous child span"
+        if reason is None:
+            parent_id, parent_entity, parent_candidate = parents[0]
+            parent_spans = parent_candidate.get("spans", [])
+            parent_span = parent_spans[0] if parent_spans else None
+            child_span = child_spans[0] if child_spans else None
+            pstart, pend = ((parent_span["start"], parent_span["end"])
+                            if isinstance(parent_span, dict) else parent_span or (None, None))
+            child_start, child_end = ((child_span["start"], child_span["end"])
+                                      if isinstance(child_span, dict) else child_span or (None, None))
+            if (len(parent_spans) != 1 or pstart != parent_entity["origin"]["address"]
+                    or pend != child_start or child_end is None or child_start is None
+                    or child_end <= child_start):
+                reason = "fragment relation does not describe one adjacent parent/child extent"
+        if reason is not None:
+            if is_selected:
+                refused.append({"entity_id": child_id, "result": Result.UNKNOWN,
+                                "reason": reason, "fragment": True})
+            refused_ids = {row["entity_id"] for row in refused}
+            for selected_parent_id in selected_parent_ids:
+                expanded.pop(selected_parent_id, None)
+                support.discard(selected_parent_id)
+                if selected_parent_id not in refused_ids:
+                    refused.append({"entity_id": selected_parent_id, "result": Result.UNKNOWN,
+                                    "reason": reason, "fragment_parent": True})
+            continue
+        parent_origin = Origin(**parent_entity["origin"])
+        pstart, pend = ((parent_spans[0]["start"], parent_spans[0]["end"])
+                        if isinstance(parent_spans[0], dict) else parent_spans[0])
+        combined = Span(pstart, child_end)
+        parent_binding = expanded.get(parent_id)
+        if parent_binding is not None:
+            if (parent_binding.unit != parent_candidate["path"]
+                    or parent_binding.symbol != parent_symbol):
+                expanded.pop(parent_id, None)
+                support.discard(parent_id)
+                if is_selected:
+                    refused.append({"entity_id": child_id, "result": Result.UNKNOWN,
+                                    "reason": "selected parent binding disagrees with fragment relation",
+                                    "fragment": True})
+                refused_ids = {row["entity_id"] for row in refused}
+                for selected_parent_id in selected_parent_ids:
+                    if selected_parent_id not in refused_ids:
+                        refused.append({"entity_id": selected_parent_id, "result": Result.UNKNOWN,
+                                        "reason": "selected parent binding disagrees with fragment relation",
+                                        "fragment_parent": True})
+                continue
+            source_spans = parent_binding.source_spans or parent_binding.spans
+            expanded[parent_id] = replace(parent_binding, spans=(combined,),
+                                          source_spans=source_spans)
+        else:
+            expanded[parent_id] = FunctionBinding(
+                parent_origin, (combined,), parent_symbol, parent_candidate["path"],
+                source_spans=(Span(pstart, pend),))
+            support.add(parent_id)
+        if is_selected:
+            fragments.append(FunctionFragmentBinding(
+                Origin(**child_entity["origin"]), Span(child_start, child_end),
+                parent_id, parent_symbol, Span(pstart, pend), child_candidate["path"]))
+    return list(expanded.values()), fragments, support, refused
+
+
 def check_compiled(bindings, object_bindings, generated_bindings, objects, image, externals, *, errors=None,
-                   import_bindings=(), shared_bindings=(), literal_bindings=()):
+                   import_bindings=(), shared_bindings=(), literal_bindings=(), fragments=()):
     """Same strict target resolution for ordinary measurements and source trials."""
     return _compiled_evidence(bindings, object_bindings, generated_bindings, objects, image, externals,
                               errors=errors, import_bindings=import_bindings, shared_bindings=shared_bindings,
-                              literal_bindings=literal_bindings)[0]
+                              literal_bindings=literal_bindings, fragments=fragments)[0]
 
 
 def _compiled_evidence(bindings, object_bindings, generated_bindings, objects, image, externals, *, errors=None,
-                       import_bindings=(), shared_bindings=(), literal_bindings=()):
+                       import_bindings=(), shared_bindings=(), literal_bindings=(), fragments=()):
     """Resolve targets from product objects, never from a retention probe."""
     data_targets, checked_objects = object_targets(object_bindings, objects)
     object_symbols = set(require_disjoint_object_symbols(
@@ -150,7 +336,8 @@ def _compiled_evidence(bindings, object_bindings, generated_bindings, objects, i
     targets = {**externals, **data_targets, **generated_targets}
     rows = check_objects(bindings, objects, image,
                          external_targets=targets,
-                         import_targets=imports, literal_targets=literal_targets, errors=errors)
+                         import_targets=imports, literal_targets=literal_targets, errors=errors,
+                         fragments=fragments)
     return (rows, checked_objects, checked_generated, checked_imports, checked_shared, checked_literals), targets, imports
 
 
@@ -197,6 +384,9 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
     except ValueError as error:
         raise ValueError(f"component dependency verification refused: {error}") from error
     bindings, refused, externals = select_bindings(view, selected, component_targets=dependency_targets)
+    bindings, fragment_bindings, support_entities, fragment_refused = select_fragment_bindings(
+        view, selected, bindings)
+    refused.extend(fragment_refused)
     # Build-only definitions are deliberately unfinished. Their emitted RET
     # may match an empty original, but cannot establish task completion until
     # the source body-slot sentinel is deliberately removed. Keep reference
@@ -212,6 +402,16 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
     refused.extend({"entity_id": item.origin.entity_id, "result": Result.UNKNOWN, "symbol": item.symbol,
                     "reason": "source definition is not in a configured translation unit"} for item in unsupported)
     bindings = [item for item in bindings if item not in unsupported]
+    valid_binding_ids = {item.origin.entity_id for item in bindings}
+    active_fragments = []
+    for fragment in fragment_bindings:
+        if fragment.parent_entity_id not in valid_binding_ids:
+            refused.append({"entity_id": fragment.origin.entity_id, "result": Result.UNKNOWN,
+                            "reason": "fragment parent support binding is unavailable",
+                            "fragment": True})
+        else:
+            active_fragments.append(fragment)
+    fragment_bindings = active_fragments
     require_disjoint_object_symbols(object_bindings,
         set(externals) | {item.symbol for item in bindings},
         {item.symbol for item in generated_bindings}, {item.symbol for item in import_bindings},
@@ -272,7 +472,8 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
         active_shared = [item for item in shared_bindings if item.unit in objects or item.unit in errors]
         checked, product_targets, product_imports = _compiled_evidence(
             bindings, object_bindings, generated_bindings, objects, image, externals, errors=errors,
-            import_bindings=import_bindings, shared_bindings=active_shared, literal_bindings=literal_bindings)
+            import_bindings=import_bindings, shared_bindings=active_shared, literal_bindings=literal_bindings,
+            fragments=fragment_bindings)
         checked_functions, checked_objects, checked_generated, checked_imports, checked_shared, checked_literals = checked
         if retained_diagnostics:
             from .function_witness import retained_definition
@@ -319,6 +520,8 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
         generated_observations.extend({**item, "flags": list(flags)}
                                       for item in generated_coverage(generated_bindings, objects))
         for row in checked_functions:
+            if row["entity_id"] in support_entities:
+                continue
             variants[row["entity_id"]].append({**row, "flags": list(flags)})
     rows = list(refused)
     for key, candidates in sorted(variants.items()):

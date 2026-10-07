@@ -92,6 +92,30 @@ class SourceRole(StrEnum):
     SCAFFOLD = "scaffold"
 
 
+@dataclass(frozen=True)
+class FunctionFragmentRelation:
+    """A non-callable mapped span owned by a source-mapped parent body.
+
+    This relation records source ownership only. It does not turn the child
+    span into an independently callable function or establish linker layout.
+    """
+    parent_address: int
+    parent_symbol: str
+    reason: str
+    evidence: tuple[str, ...]
+
+    def __post_init__(self):
+        if type(self.parent_address) is not int or not 0 <= self.parent_address <= 0xFFFFFFFF:
+            raise ValueError("fragment parent address must be a PE VA")
+        for value, label in ((self.parent_symbol, "parent symbol"), (self.reason, "reason")):
+            if not isinstance(value, str) or not value.strip() or any(ord(c) < 32 for c in value):
+                raise ValueError(f"fragment {label} must be nonblank single-line text")
+        if (not isinstance(self.evidence, tuple) or not self.evidence
+                or any(not isinstance(item, str) or not item.strip()
+                       or any(ord(c) < 32 for c in item) for item in self.evidence)):
+            raise ValueError("fragment evidence must be nonempty single-line text")
+
+
 def validate_source_role(role: SourceRole, reason: str) -> None:
     """Validate a durable single-line role rationale before it meets C++ text."""
     if not isinstance(role, SourceRole):
@@ -228,6 +252,7 @@ class DecompilationState:
                                  # do NOT delete one.
     source_role: SourceRole = SourceRole.UNCLASSIFIED
     source_role_reason: str = ""
+    function_fragment: FunctionFragmentRelation | None = None
 
     def __post_init__(self) -> None:
         validate_source_role(self.source_role, self.source_role_reason)

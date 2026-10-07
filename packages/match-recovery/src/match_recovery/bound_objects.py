@@ -56,15 +56,40 @@ class FunctionBinding:
     spans: tuple[Span, ...]
     symbol: str
     unit: str
+    source_spans: tuple[Span, ...] = ()
 
     def __post_init__(self):
         require_text(self.symbol, "emitted symbol")
         require_text(self.unit, "function binding unit")
         if not self.spans or self.spans[0].start != self.origin.address:
             raise ValueError("function requires an independently mapped entry span")
+        if self.source_spans and (not self.source_spans
+                                  or self.source_spans[0].start != self.origin.address):
+            raise ValueError("function source spans must retain the mapped entry")
         ordered = sorted(self.spans)
         if any(left.end > right.start for left, right in zip(ordered, ordered[1:])):
             raise ValueError("function image spans overlap")
+
+
+@dataclass(frozen=True)
+class FunctionFragmentBinding:
+    """A mapped child byte span inside one source parent's complete body."""
+    origin: Origin
+    span: Span
+    parent_entity_id: str
+    parent_symbol: str
+    parent_primary_span: Span
+    unit: str
+
+    def __post_init__(self):
+        require_text(self.parent_entity_id, "fragment parent identity")
+        require_text(self.parent_symbol, "fragment parent symbol")
+        relative_path(self.unit)
+        if self.origin.address != self.span.start:
+            raise ValueError("fragment origin must name its first byte")
+        if (self.parent_primary_span.end != self.span.start
+                or self.parent_primary_span.start >= self.parent_primary_span.end):
+            raise ValueError("fragment must immediately follow its source parent's primary extent")
 
 
 def check_objects(bindings: Sequence[FunctionBinding], objects: Mapping[str, Coff],
@@ -72,7 +97,8 @@ def check_objects(bindings: Sequence[FunctionBinding], objects: Mapping[str, Cof
                   import_targets: Mapping[str, int] | None = None,
                   literal_targets: Mapping[tuple[str, str], BoundedTarget | None] | None = None,
                   errors: Mapping[str, str] | None = None, member_functions: bool = False,
-                  section_bases: Mapping[tuple[str, int], int] | None = None) -> list[dict]:
+                  section_bases: Mapping[tuple[str, int], int] | None = None,
+                  fragments: Sequence[FunctionFragmentBinding] = ()) -> list[dict]:
     """One report per selected binding, including missing objects and symbols.
 
     External targets must be unambiguous source-owned mappings supplied by the
@@ -86,6 +112,20 @@ def check_objects(bindings: Sequence[FunctionBinding], objects: Mapping[str, Cof
     pin = hashlib.sha256(image.data).hexdigest()
     if any(item.origin.image_sha256 != pin or item.origin.address_space != "pe:va" for item in bindings):
         raise ValueError("function binding refers to a different image/address space")
+    if len({item.origin.entity_id for item in fragments}) != len(fragments):
+        raise ValueError("ambiguous original fragment selection")
+    parents = {item.origin.entity_id: item for item in bindings}
+    for fragment in fragments:
+        if fragment.origin.image_sha256 != pin or fragment.origin.address_space != "pe:va":
+            raise ValueError("fragment binding refers to a different image/address space")
+        parent = parents.get(fragment.parent_entity_id)
+        if (parent is None or parent.symbol != fragment.parent_symbol
+                or parent.unit != fragment.unit or len(parent.spans) != 1
+                or parent.origin.address != fragment.parent_primary_span.start
+                or parent.spans[0] != Span(fragment.parent_primary_span.start, fragment.span.end)
+                or (parent.source_spans and parent.source_spans != (fragment.parent_primary_span,))
+                or fragment.span.start != fragment.origin.address):
+            raise ValueError("fragment requires one same-TU parent binding covering the exact combined extent")
     externals = dict(external_targets or {})
     imports = dict(import_targets or {})
     literals = dict(literal_targets or {})
@@ -111,6 +151,13 @@ def check_objects(bindings: Sequence[FunctionBinding], objects: Mapping[str, Cof
         else:
             relative_path(binding.unit)
     sections, subjects, layouts = {}, {}, {}
+    fragment_parent_ids = {item.parent_entity_id for item in fragments}
+    # Parent-only selection still expands the exact source span through its
+    # attached fragment. Preserve the root-COMDAT ownership guard even when no
+    # child slice was selected as a separate report row.
+    fragment_parent_ids.update(
+        binding.origin.entity_id for binding in bindings
+        if binding.source_spans and binding.source_spans != binding.spans)
     for key, base in (section_bases or {}).items():
         if (not isinstance(key, tuple) or len(key) != 2 or not isinstance(key[0], str)
                 or not key[0] or type(key[1]) is not int or key[1] < 1
@@ -129,6 +176,9 @@ def check_objects(bindings: Sequence[FunctionBinding], objects: Mapping[str, Cof
             continue
         try:
             symbol = obj.function(binding.symbol, comdat=not member_functions)
+            if (binding.origin.entity_id in fragment_parent_ids
+                    and symbol.section in obj.associations):
+                raise ValueError("fragment parent must own an independent root code COMDAT")
         except ValueError as error:
             subjects[binding.origin.entity_id] = str(error)
             continue
@@ -154,9 +204,16 @@ def check_objects(bindings: Sequence[FunctionBinding], objects: Mapping[str, Cof
             externals[symbol.name] = binding.origin.address
         subjects[binding.origin.entity_id] = symbol
     rows = []
+    measured = {}
     for binding in bindings:
         row = {"entity_id": binding.origin.entity_id, "address": f"0x{binding.origin.address:08X}",
                "symbol": binding.symbol, "unit": binding.unit}
+        if binding.source_spans and binding.source_spans != binding.spans:
+            row["source_spans"] = [{"start": span.start, "end": span.end}
+                                   for span in binding.source_spans]
+            row["comparison_spans"] = [{"start": span.start, "end": span.end}
+                                        for span in binding.spans]
+            row["comparison_extent_includes_fragment"] = True
         try:
             if binding.unit not in objects:
                 raise ValueError((errors or {}).get(binding.unit, "translation unit was not compiled"))
@@ -220,7 +277,73 @@ def check_objects(bindings: Sequence[FunctionBinding], objects: Mapping[str, Cof
                 row["spans"] = proofs
                 row["relocations"] = [{**item, "span_start": proof["span"]["start"]}
                                       for proof in proofs for item in proof.get("relocations", [])]
+            if len(layout) == 1:
+                number, span = layout[0]
+                code, relocations, alignment = obj.section_subject(number)
+                measured[binding.origin.entity_id] = {
+                    "span": span, "code": code, "relocations": relocations,
+                    "alignment": alignment, "targets": targets,
+                    "result": row.get("result", Result.UNKNOWN),
+                    "source_spans": binding.source_spans or binding.spans,
+                    "section": number,
+                }
         except ValueError as error:
             row.update(result=Result.UNKNOWN, reason=str(error))
         rows.append(row)
+    for fragment in fragments:
+        parent = measured.get(fragment.parent_entity_id)
+        child_row = {"entity_id": fragment.origin.entity_id,
+                     "address": f"0x{fragment.origin.address:08X}",
+                     "symbol": None, "unit": fragment.unit,
+                     "callable": False, "link_target": False}
+        if parent is None:
+            child_row.update(result=Result.UNKNOWN, fragment_result=Result.UNKNOWN,
+                             parent_whole_body_result=Result.UNKNOWN,
+                             reason="parent section extent or layout is unmeasured")
+            rows.append(child_row)
+            continue
+        child_span, combined = fragment.span, parent["span"]
+        offset = child_span.start - combined.start
+        size = child_span.end - child_span.start
+        code, relocations = parent["code"], parent["relocations"]
+        if offset < 0 or offset + size > combined.end - combined.start or offset + size > len(code):
+            child_row.update(result=Result.UNKNOWN, fragment_result=Result.UNKNOWN,
+                             parent_whole_body_result=parent["result"],
+                             reason="child lies outside the proved parent section extent")
+            rows.append(child_row)
+            continue
+        touching = [item for item in relocations
+                    if item.offset < offset + size and offset < item.offset + 4]
+        if any(item.offset < offset or item.offset + 4 > offset + size for item in touching):
+            child_proof = {"result": Result.UNKNOWN, "boundary": Result.UNKNOWN,
+                           "bytes": Result.UNKNOWN, "references": Result.UNKNOWN,
+                           "reason": "relocation crosses the child-fragment boundary"}
+        else:
+            try:
+                original = image.read(child_span)
+                absolute = image.absolute_sites(child_span)
+                child_relocations = tuple(type(item)(item.offset - offset, item.kind, item.target)
+                                          for item in touching)
+                child_proof = compare_bound_code(
+                    child_span, original, code[offset:offset + size], child_relocations,
+                    parent["targets"], original_absolute_sites=absolute, alignment=1)
+            except ValueError as error:
+                child_proof = {"result": Result.UNKNOWN, "boundary": Result.UNKNOWN,
+                               "bytes": Result.UNKNOWN, "references": Result.UNKNOWN,
+                               "reason": str(error)}
+        parent_result = parent["result"]
+        final = (Result.PASS if parent_result == Result.PASS and child_proof["result"] == Result.PASS
+                 else Result.FAIL if parent_result == Result.PASS and child_proof["result"] == Result.FAIL
+                 else Result.UNKNOWN)
+        child_row.update({**child_proof, "result": final,
+                          "fragment_result": child_proof["result"],
+                          "parent_whole_body_result": parent_result,
+                          "parent_primary_spans": [
+                              {"start": span.start, "end": span.end}
+                              for span in parent["source_spans"]],
+                          "parent_comparison_span": {
+                              "start": combined.start, "end": combined.end},
+                          "parent_section_offset": offset,
+                          "callable": False, "link_target": False})
+        rows.append(child_row)
     return rows

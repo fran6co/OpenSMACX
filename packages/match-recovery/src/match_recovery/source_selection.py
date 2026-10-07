@@ -21,6 +21,7 @@ class SnapshotMapping:
     name: str
     symbol: str
     image_spans: tuple[tuple[int, int], ...]
+    function_fragment: dict | None = None
 
     @property
     def address_hex(self):
@@ -45,7 +46,8 @@ def snapshot_mappings(root, snapshot):
             hosts[name] = (root / name).resolve()
         records.append(SnapshotMapping(fact["origin"]["address"], hosts[name], fact["line"],
                                        fact["catalogued_symbol"], fact["emitted_symbol_hint"],
-                                       tuple(tuple(pair) for pair in fact["spans"])))
+                                       tuple(tuple(pair) for pair in fact["spans"]),
+                                       fact.get("function_fragment")))
     return records
 
 
@@ -70,7 +72,12 @@ def selected_source_records(root, snapshot, selected_mappings):
             parsed[mapping.path] = {row.line: row for row in read_text(text, mapping.path)}
         record = parsed[mapping.path].get(mapping.line)
         if record is None or SnapshotMapping(record.address, record.path, record.line, record.name,
-                                             record.symbol or record.name, record.image_spans) != mapping:
+                                             record.symbol or record.name, record.image_spans,
+                                             ({"parent_address": record.function_fragment.parent_address,
+                                               "parent_symbol": record.function_fragment.parent_symbol,
+                                               "reason": record.function_fragment.reason,
+                                               "evidence": list(record.function_fragment.evidence)}
+                                              if record.function_fragment is not None else None)) != mapping:
             raise ValueError("selected source mapping differs from freshly parsed captured source")
         selected.append(record)
     return selected

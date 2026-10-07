@@ -17,6 +17,7 @@ import re
 import shlex
 import struct
 from dataclasses import dataclass, field, replace
+from enum import Enum
 from pathlib import Path
 
 from capstone import CS_ARCH_X86, CS_MODE_32, Cs, x86
@@ -1072,6 +1073,96 @@ def shared_spans(records) -> frozenset:
     return frozenset(shared)
 
 
+class _FragmentAdmission(Enum):
+    RESOLVED = 1
+
+
+_FRAGMENT_ADMISSION = _FragmentAdmission.RESOLVED
+
+
+@dataclass(frozen=True)
+class ResolvedFragmentPair:
+    """Opaque pair resolved from one captured source inventory."""
+    child: object
+    parent: object
+    _admission: object = field(repr=False, compare=False)
+
+    def __iter__(self):
+        yield self.child
+        yield self.parent
+
+
+def resolve_fragment_pairs(records, selected, *, component_keys=frozenset(),
+                           is_seed=lambda _record: False, bind=lambda row: row):
+    """Resolve selected fragment/parent rows against one captured inventory.
+
+    Returns ``(pairs, refused)``. A pair is ``(child, parent)``; the parent
+    is support only unless it is itself selected. Ambiguity is explicit and
+    fail-closed: callers must report every refused selected row UNKNOWN.
+    ``component_keys`` uses the source record identity tuple
+    ``(resolved_path, address, line)``.
+    """
+    records, selected = tuple(records), tuple(selected)
+
+    def key(record):
+        return record.path.resolve(), record.address, record.line
+
+    def emitted(record):
+        return record.symbol or record.name
+
+    def relation(record):
+        value = record.function_fragment
+        if isinstance(value, dict):
+            try:
+                return value["parent_address"], value["parent_symbol"]
+            except KeyError:
+                return None
+        if value is None:
+            return None
+        return value.parent_address, value.parent_symbol
+
+    selected_keys = {key(row) for row in selected}
+    pairs, refused, owners = [], set(), {}
+    children = [row for row in records if relation(row) is not None]
+    for child in children:
+        parent_address, parent_symbol = relation(child)
+        address_candidates = [row for row in records if row.address == parent_address]
+        parents = [row for row in address_candidates if emitted(row) == parent_symbol]
+        # A seed or another source host is still a competing identity, not a
+        # reason to prefer the convenient product-file candidate.
+        valid = (len(address_candidates) == 1 and len(parents) == 1
+                 and not is_seed(parents[0])
+                 and parents[0].path.resolve() == child.path.resolve()
+                 and parents[0].function_fragment is None
+                 and len(parents[0].image_spans) == 1
+                 and len(child.image_spans) == 1
+                 and child.address == child.image_spans[0][0]
+                 and child.image_spans[0][1] > child.image_spans[0][0]
+                 and parents[0].image_spans[0][1] == child.image_spans[0][0]
+                 and parents[0].image_spans[0][0] == parent_address
+                 and key(child) not in component_keys
+                 and (len(parents) != 1 or key(parents[0]) not in component_keys))
+        if not valid:
+            if key(child) in selected_keys:
+                refused.add(key(child))
+            for parent in address_candidates:
+                if key(parent) in selected_keys:
+                    refused.add(key(parent))
+            continue
+        parent = parents[0]
+        # This legacy path deliberately supports one adjacent fragment only.
+        if key(parent) in owners:
+            refused.update((key(child), key(parent), key(owners[key(parent)])))
+            continue
+        owners[key(parent)] = child
+        if key(child) in selected_keys or key(parent) in selected_keys:
+            pairs.append(ResolvedFragmentPair(bind(child), bind(parent),
+                                              _FRAGMENT_ADMISSION))
+    pairs = [pair for pair in pairs
+             if key(pair.child) not in refused and key(pair.parent) not in refused]
+    return tuple(pairs), frozenset(refused)
+
+
 def _better(candidate: AsmComparison, incumbent: AsmComparison) -> bool:
     """Is `candidate` the more useful of two measurements of one record?
 
@@ -1118,7 +1209,7 @@ class UnitComparison:
 def compare_unit(records, exe: Path | str, source: Path | str,
                  command: list[str], flags: tuple | str,
                  shared: frozenset = frozenset(), *, compiler,
-                 retry_compile=None) -> UnitComparison:
+                 retry_compile=None, fragment_pairs=()) -> UnitComparison:
     """Measure one TU's selected mappings with one compile per flag trial.
 
     Use the same per-function selection, span refusals, missing-symbol retries
@@ -1140,7 +1231,10 @@ def compare_unit(records, exe: Path | str, source: Path | str,
     if not attempts:
         raise ValueError("no flag sets to try")
     source = Path(source)
-    inputs = {path: path.read_bytes() for path in {source, *(item.path for item in records)}}
+    fragment_pairs = tuple(fragment_pairs)
+    inputs = {path: path.read_bytes() for path in {
+        source, *(item.path for item in records),
+        *(item.path for pair in fragment_pairs for item in pair)}}
     objects, failures = {}, {}
     count, reused = 0, 0
 
@@ -1171,13 +1265,182 @@ def compare_unit(records, exe: Path | str, source: Path | str,
         objects[key] = data
         return data
 
+    def key(record):
+        return record.path.resolve(), record.address, record.line
+
+    selected_by_key = {key(record): record for record in records}
+    selected = set(selected_by_key)
+    parent_to_pair, child_to_parent, pair_errors = {}, {}, {}
+    parent_counts, child_counts = {}, {}
+    for candidate_pair in fragment_pairs:
+        if not isinstance(candidate_pair, ResolvedFragmentPair):
+            continue
+        try:
+            candidate_child, candidate_parent = candidate_pair
+            candidate_ck, candidate_pk = key(candidate_child), key(candidate_parent)
+        except (AttributeError, TypeError):
+            continue
+        parent_counts[candidate_pk] = parent_counts.get(candidate_pk, 0) + 1
+        child_counts[candidate_ck] = child_counts.get(candidate_ck, 0) + 1
+    for candidate_pair in fragment_pairs:
+        if (not isinstance(candidate_pair, ResolvedFragmentPair)
+                or candidate_pair._admission is not _FRAGMENT_ADMISSION):
+            try:
+                endpoints = tuple(candidate_pair)
+            except TypeError:
+                endpoints = ()
+            for endpoint in endpoints:
+                try:
+                    endpoint_key = key(endpoint)
+                except AttributeError:
+                    continue
+                if endpoint_key in selected_by_key:
+                    pair_errors[endpoint_key] = (
+                        "fragment support was not resolved by the package source-view binder")
+            for record in records:
+                if record.function_fragment is not None:
+                    pair_errors[key(record)] = (
+                        "fragment support was not resolved by the package source-view binder")
+            continue
+        child, parent = candidate_pair
+        ck = pk = None
+        try:
+            ck, pk = key(child), key(parent)
+            if parent_counts.get(pk, 0) > 1 or child_counts.get(ck, 0) > 1:
+                raise ValueError("duplicate fragment relation is ambiguous")
+            if child.function_fragment is None:
+                raise ValueError("fragment support row has no fragment relation")
+            relation = child.function_fragment
+            if (parent.function_fragment is not None
+                    or parent.path.resolve() != child.path.resolve()
+                    or child.path.resolve() != source.resolve()
+                    or parent.address != relation.parent_address
+                    or (parent.symbol or parent.name) != relation.parent_symbol
+                    or len(parent.image_spans) != 1 or len(child.image_spans) != 1
+                    or parent.image_spans[0][0] != parent.address
+                    or child.image_spans[0][0] != child.address
+                    or parent.image_spans[0][1] != child.image_spans[0][0]
+                    or child.image_spans[0][1] <= child.image_spans[0][0]):
+                raise ValueError("fragment parent identity or contiguous extent is unsupported")
+            if ((ck in selected and child != selected_by_key[ck])
+                    or (pk in selected and parent != selected_by_key[pk])):
+                raise ValueError("fragment support differs from the selected source mapping")
+            parent_to_pair[pk] = (child, parent)
+            child_to_parent[ck] = pk
+        except (AttributeError, IndexError, TypeError, ValueError) as error:
+            if ck is not None and ck in selected:
+                pair_errors[ck] = str(error)
+            if pk is not None and pk in selected:
+                pair_errors[pk] = str(error)
+
+    pair_results = {}
+    for child, parent in parent_to_pair.values():
+        ck, pk = key(child), key(parent)
+        refusal = (span_refusal(parent, exe, shared)
+                   or span_refusal(child, exe, shared))
+        if refusal is not None:
+            pair_results[pk] = pair_results[ck] = AsmComparison(verdict=refusal)
+            continue
+        best_parent, best_child, diagnostic, missing = None, None, "", None
+        for attempt in attempts:
+            try:
+                label = attempt if isinstance(attempt, str) else shlex.join(tuple(attempt))
+                arguments = tuple(shlex.split(attempt)) if isinstance(attempt, str) else tuple(attempt)
+                raw = shared_compile(source, tuple(command), arguments)
+                obj = Coff(raw)
+                symbol = obj.function(parent.symbol or parent.name)
+                if (symbol.section in obj.associations
+                        or obj.code_sections(symbol) != (symbol.section,)):
+                    raise ValueError("fragment parent is not one exclusive code COMDAT")
+                section = obj.sections[symbol.section - 1]
+                if any(kind not in (0x0006, 0x0014)
+                       for _offset, _symbol, kind in section.relocations):
+                    raise ValueError("unsupported COFF relocation kind in fragment parent")
+                code, relocations, alignment = obj.subject(symbol)
+                child_offset = child.image_spans[0][0] - parent.image_spans[0][0]
+                child_size = child.image_spans[0][1] - child.image_spans[0][0]
+                child_end = child_offset + child_size
+                parent_size = child_end
+                if len(code) < parent_size:
+                    raise ValueError("fragment parent COMDAT extent differs from the captured contiguous span")
+                if alignment <= 0:
+                    raise ValueError("fragment parent COMDAT has invalid section alignment")
+                aligned_extent = ((parent_size + alignment - 1) // alignment) * alignment
+                if len(code) > aligned_extent:
+                    raise ValueError("fragment parent COMDAT exceeds its bounded section-alignment padding")
+                if any(byte not in (0x90, 0xCC) for byte in code[parent_size:]):
+                    raise ValueError("fragment parent COMDAT has non-padding bytes beyond the captured span")
+                if any(relocation.offset >= parent_size
+                       or relocation.offset + 4 > parent_size
+                       for relocation in relocations):
+                    raise ValueError("COFF relocation lies outside the captured fragment parent span")
+                if any(relocation.offset < boundary < relocation.offset + 4
+                       for relocation in relocations
+                       for boundary in (child_offset, child_end)):
+                    raise ValueError("COFF relocation crosses a fragment slice boundary")
+                compiled_mask = frozenset(
+                    relocation.offset + byte
+                    for relocation in relocations for byte in range(4)
+                    if relocation.offset + byte < parent_size)
+                compiled = Listing(code=code[:parent_size], base=parent.address,
+                                   mask=compiled_mask, flags=label)
+                image_code = _pe_bytes(Path(exe), parent.address, parent_size)
+                original_parent = Listing(
+                    code=image_code, base=parent.address,
+                    mask=_image_mask(Path(exe), parent.address,
+                                     parent.address + parent_size))
+                parent_result = compare_asm(original_parent, compiled)
+                child_listing = Listing(
+                    code=compiled.code[child_offset:child_end], base=child.address,
+                    mask=frozenset(offset - child_offset for offset in compiled.mask
+                                   if child_offset <= offset < child_end),
+                    flags=compiled.flags)
+                child_original = Listing(
+                    code=image_code[child_offset:child_end], base=child.address,
+                    mask=frozenset(offset - child_offset
+                                   for offset in original_parent.mask
+                                   if child_offset <= offset < child_end))
+                child_result = compare_asm(child_original, child_listing)
+                if parent_result.verdict is not Tier.BYTE_EXACT:
+                    child_result = AsmComparison(
+                        verdict=Tier.REFUSED,
+                        diagnostic="fragment slice is not claimable until the complete parent extent matches",
+                        flags=label)
+                if best_parent is None or _better(parent_result, best_parent):
+                    best_parent, best_child = parent_result, child_result
+                if parent_result.verdict is Tier.BYTE_EXACT:
+                    best_parent, best_child = parent_result, child_result
+                    break
+            except CompileFailed as error:
+                diagnostic = diagnostic or str(error)
+                if retry_compile is None or retry_compile(str(error)):
+                    continue
+                break
+            except ValueError as error:
+                missing = missing or error
+                continue
+        if best_parent is None:
+            outcome = (str(missing) if missing is not None and not diagnostic else
+                       AsmComparison(verdict=Tier.NO_COMPILE, diagnostic=diagnostic))
+            pair_results[pk] = pair_results[ck] = outcome
+        else:
+            pair_results[pk], pair_results[ck] = best_parent, best_child
+
     results = []
     for record in records:
-        try:
-            result = compare_source(record, exe, source, command, attempts, shared,
-                                    compiler=shared_compile, retry_compile=retry_compile)
-        except (OSError, ValueError) as error:
-            result = str(error)
+        record_key = key(record)
+        if record_key in pair_errors:
+            result = pair_errors[record_key]
+        elif record.function_fragment is not None:
+            result = pair_results.get(record_key, "fragment has no resolved same-TU parent support")
+        elif record_key in parent_to_pair:
+            result = pair_results[record_key]
+        else:
+            try:
+                result = compare_source(record, exe, source, command, attempts, shared,
+                                        compiler=shared_compile, retry_compile=retry_compile)
+            except (OSError, ValueError) as error:
+                result = str(error)
         results.append((record, result))
     current()
     return UnitComparison(tuple(results), count, reused)
@@ -1238,6 +1501,8 @@ def compare_source(record: DecompilationState, exe: Path | str,
     `retry_compile(diagnostic)` says they cannot help. No compiler error codes
     or process-management policy live in this comparer.
     """
+    if record.function_fragment is not None:
+        raise ValueError("non-callable function fragment requires compare_unit parent support")
     attempts = (flags,) if isinstance(flags, str) else tuple(flags)
     if not attempts:
         raise ValueError("no flag sets to try")

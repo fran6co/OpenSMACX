@@ -63,6 +63,11 @@ SOURCE_ROLE_DIRECTIVE = re.compile(
 SOURCE_ROLE = re.compile(
     r"^\s*:\s*(?P<role>[A-Z_]+)(?:\s+(?P<reason>\S(?:.*\S)?))?\s*$")
 
+# Explicit source-owned relation for a mapped non-callable tail. JSON is
+# validated by the reader; this only anchors a standalone directive line.
+FUNCTION_FRAGMENT_DIRECTIVE = re.compile(
+    r"^\s*//\s*RECOVERY_FRAGMENT:\s*v1\s+(?P<json>\{.*\})\s*$")
+
 # -------------------------------------------------------- exclusion citations
 
 # The citation token after EXCLUDED is a section reference, not free prose.

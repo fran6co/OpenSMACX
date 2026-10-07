@@ -15,20 +15,25 @@ from .compiler import Compiler
 from .measurement import Measurement
 from .model import digest
 from .source import State
-from .source.asm import AsmComparison, compare_unit, shared_spans
+from .source.asm import (AsmComparison, compare_unit, resolve_fragment_pairs,
+                         shared_spans)
 from .source.model import Tier
 from .source_history import git
 from .source_inventory import image_pin, source_snapshot
-from .source_selection import select_records, snapshot_mappings, selected_source_records
+from .source_selection import (select_records, snapshot_mappings,
+                               selected_source_records)
 from .component_original_routing import (component_claim_result, component_function_observations,
+                                         component_record_identity_candidates,
                                          exact_component_record_bindings)
 from .components import SystemImportManifest
 from .model import Origin
 
 
 def _unit(job):
-    root, profile, path, records, image, flags, shared = job
-    return compare_unit(records, image, path, (), flags, shared, compiler=Compiler(root, profile=profile))
+    root, profile, path, records, image, flags, shared, fragment_pairs = job
+    return compare_unit(records, image, path, (), flags, shared,
+                        compiler=Compiler(root, profile=profile),
+                        fragment_pairs=fragment_pairs)
 
 
 def measure_source(root: Path, targets, *, image: Path, in_file=None, jobs=1):
@@ -64,16 +69,43 @@ def measure_source(root: Path, targets, *, image: Path, in_file=None, jobs=1):
     # hosts need complete body/lesson parsing; shared spans still use EVERY
     # mapping, including unselected seed alternatives.
     snapshot = source_snapshot(root, allow_empty=True)
-    records = snapshot_mappings(root, snapshot)
+    mappings = snapshot_mappings(root, snapshot)
     host = settings.source.path(root, in_file) if in_file is not None else None
-    selected = selected_source_records(root, snapshot, select_records(records, targets, host, settings.source.symbol_format))
+    selected_mappings = select_records(mappings, targets, host, settings.source.symbol_format)
+    selected_paths = {row.path for row in selected_mappings}
+    typed_hosts = selected_source_records(
+        root, snapshot, [row for row in mappings if row.path in selected_paths])
+    typed_by_key = {(row.path.resolve(), row.address, row.line): row for row in typed_hosts}
+    selected = [typed_by_key[(row.path.resolve(), row.address, row.line)]
+                for row in selected_mappings]
     component_owners = exact_component_record_bindings(snapshot)
-    groups, unavailable, component_selected = defaultdict(list), [], {}
+    component_candidates = component_record_identity_candidates(snapshot)
+    component_keys = set()
+    for record in mappings:
+        relative = record.path.relative_to(root).as_posix()
+        entity = Origin(image_pin(root, settings.source), settings.source.address_space, record.address).entity_id
+        if (relative, entity) in component_candidates:
+            component_keys.add((record.path.resolve(), record.address, record.line))
+    fragment_pairs, fragment_refused = resolve_fragment_pairs(
+        mappings, selected_mappings, component_keys=frozenset(component_keys),
+        is_seed=lambda row: settings.source.is_seed(row.path.relative_to(root).as_posix()),
+        bind=lambda row: typed_by_key[(row.path.resolve(), row.address, row.line)])
+    pair_by_record = {}
+    for pair in fragment_pairs:
+        child, parent = pair
+        pair_by_record[(child.path.resolve(), child.address, child.line)] = pair
+        pair_by_record[(parent.path.resolve(), parent.address, parent.line)] = pair
+    groups, unavailable, component_selected, pairs_by_path = defaultdict(list), [], {}, defaultdict(list)
     for record in selected:
         relative = record.path.relative_to(root).as_posix()
         entity = Origin(image_pin(root, settings.source), settings.source.address_space, record.address).entity_id
         owner = component_owners.get((relative, entity))
-        if owner is not None:
+        key = (record.path.resolve(), record.address, record.line)
+        if key in fragment_refused:
+            unavailable.append((record, "fragment parent/child ownership is ambiguous or conflicts with a component"))
+        elif record.function_fragment is not None and key not in pair_by_record:
+            unavailable.append((record, "fragment has no unambiguous same-TU parent support"))
+        elif owner is not None:
             component_selected[(relative, record.line)] = (record, owner)
         elif record.path.suffix not in settings.unit_extensions:
             unavailable.append((record, "mapping host is not a configured translation unit"))
@@ -81,8 +113,12 @@ def measure_source(root: Path, targets, *, image: Path, in_file=None, jobs=1):
             unavailable.append((record, "unfinished source placeholder; matching an empty body is not recovery"))
         else:
             groups[record.path].append(record)
-    shared = shared_spans(records)
-    work = [(root, settings.compiler_profile, path, rows, image, settings.flag_sets, shared)
+            pair = pair_by_record.get(key)
+            if pair is not None and pair not in pairs_by_path[record.path]:
+                pairs_by_path[record.path].append(pair)
+    shared = shared_spans(mappings)
+    work = [(root, settings.compiler_profile, path, rows, image, settings.flag_sets, shared,
+             tuple(pairs_by_path[path]))
             for path, rows in sorted(groups.items())]
     if inputs() != before:
         raise ValueError("measurement inputs changed before compilation")
