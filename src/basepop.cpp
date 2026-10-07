@@ -777,15 +777,10 @@ Purpose: Run the popup modally: size and position it, lay out its two caption
 */
 typedef void (__fastcall *func_basepop_slot062)(void *);
 
-// THE FLAT BUTTON'S OWN SLOT 1, called with 0 after each button is configured
-// (0x00602F9A, 0x00603331, 0x00603677).
-class VCallSlot001 {
- public:
-    virtual void slot000();
-    virtual void slot001(int);
-};
-
-
+// FlatButton's constructor installs primary table 0x00669754; its slot 1
+// targets Win::show at 0x005ED9D0. The calls at 0x00602F9A, 0x00603331 and
+// 0x00603677 dispatch through that inherited virtual member with argument 0.
+// Preserve virtual dispatch through the real FlatButton/BaseButton/Win chain.
 int BasePop::exec(int flags, int (__cdecl *callback)()) {
     int pump_result = 0;
 
@@ -1057,7 +1052,7 @@ int BasePop::exec(int flags, int (__cdecl *callback)()) {
     flat_button1_.set_text_color3(button_color_3a_, button_color_3b_,
                                   button_color_3c_, button_color_3d_);
     apply_button_bevel(&flat_button1_);
-    reinterpret_cast<VCallSlot001 *>(&flat_button1_)->slot001(0);
+    flat_button1_.show(0);
 
     // THE ITEM ROWS ALWAYS RESTART FROM THE ORIGIN, never from where the OK
     // row was left: the image keeps the slot-0x178 value live in a register
@@ -1094,7 +1089,7 @@ rows:
             button->set_text_color3(button_color_3a_, button_color_3b_,
                                     button_color_3c_, button_color_3d_);
             apply_button_bevel(button);
-            reinterpret_cast<VCallSlot001 *>(button)->slot001(0);
+            button->show(0);
 
             row += pitch;
         }
@@ -1142,7 +1137,7 @@ rows:
     flat_button2_.set_text_color3(button_color_3a_, button_color_3b_,
                                   button_color_3c_, button_color_3d_);
     apply_button_bevel(&flat_button2_);
-    reinterpret_cast<VCallSlot001 *>(&flat_button2_)->slot001(0);
+    flat_button2_.show(0);
 
 pump:
     // THE CONFIG CALLBACK, once per caption block, only when the popup has
