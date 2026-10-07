@@ -23,7 +23,10 @@ def harness(body):
 typedef unsigned int uint32_t;
 struct RECT {};
 int IfaceIdToSlotStorage[30], ActiveIfaceIdStorage;
-int GameState, IsMultiplayerNet, NetTurnFlags, NetTurnFaction;
+int IsMultiplayerNet;
+struct GameDataStateFields { uint32_t game_state_, net_turn_flags_; int net_turn_faction_; };
+struct GameDataStateWindow { GameDataStateFields fields_; };
+GameDataStateWindow GameDataStateStorage;
 int MainInterfaceEndTurnAnimation, MainInterfaceRedrawCount;
 struct Lock { uint32_t leading_words_[4]; union Payload { uint32_t flags; int *vehicle_selection_follow; } payload_; uint32_t trailing_words_[10]; };
 struct Daemon { Lock lock_state_[24]; } NetDaemonNet;
@@ -69,10 +72,10 @@ int main() {
     for(int after=0;after<4;++after) {
         IfaceIdToSlotStorage[0]=mode;
         MainInterfaceGlobal.field_4_=front ? 10 : 0;
-        GameState=game ? 2 : 0;
+        GameDataStateStorage.fields_.game_state_=game ? 2u : 0u;
         IsMultiplayerNet=net;
-        NetTurnFlags=simultaneous ? 16 : 0;
-        NetTurnFaction=same ? 2 : 3;
+        GameDataStateStorage.fields_.net_turn_flags_=simultaneous ? 16u : 0u;
+        GameDataStateStorage.fields_.net_turn_faction_=same ? 2 : 3;
         ConsoleGlobal.field_23BE4_=console_ready;
         NetDaemonNet.lock_state_[0].trailing_words_[7]=readiness[before];
         callback_ready=readiness[after];
@@ -107,11 +110,12 @@ def test_product_maininterface_redraw_complete(tmp_path, damage):
         pytest.skip("host C++ compiler unavailable")
     body = product_body()
     mutations = {
-        "flag": ("|| !(NetTurnFlags & 0x10)", "|| (NetTurnFlags & 0x10)"),
+        "flag": ("|| !(GameDataStateStorage.fields_.net_turn_flags_ & 0x10)",
+                 "|| (GameDataStateStorage.fields_.net_turn_flags_ & 0x10)"),
         "stale_readiness": (
             "const uint32_t label_ready = NetDaemonNet.lock_state_[0].trailing_words_[7];",
             "const uint32_t label_ready = ready;"),
-        "game": ("(GameState & 2) &&", "true &&"),
+        "game": ("(GameDataStateStorage.fields_.game_state_ & 2) &&", "true &&"),
         "state": ("MainInterfaceEndTurnAnimation = 1;", "MainInterfaceEndTurnAnimation = 0;"),
     }
     if damage is not None:

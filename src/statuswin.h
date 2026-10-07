@@ -104,7 +104,8 @@ class StatusWin {
   Font font2_;  // 0x1558
   Font font3_;  // 0x1580
   uint32_t field_15A8_;  // 0x15A8
-  int32_t field_15AC_;  // 0x15AC
+  // Cached height passed to all three Font::init calls; -1 forces refresh.
+  int32_t font_size_;  // 0x15AC
   uint8_t field_15B0_[0x4];  // 0x15B0
   int32_t iTileX_;
   int32_t iTileY_;

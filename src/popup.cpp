@@ -1043,8 +1043,8 @@ Purpose: Reset the button width to 20 unless the field at 0x30AC scales to
          truncating division over 200,000 random dividends and the boundaries.
          0x3E8 is 1000 and 0x14 is 20.
 
-         Popup models fields only as far as its Scroll member, so both offsets
-         are reached through documented raw offsets, as BasePop::UNK3 does.
+         Both values are existing BasePop members. The original signed
+         quotient is preserved explicitly despite their unsigned storage.
 // ORIGINAL: 0x00405020 ?on_adjust_button_width@Popup@@QAEXXZ 0x00405020-0x0040504A BYTE_EXACT
 // symbol    ?on_adjust_button_width@Popup@@UAEXXZ
 // size      42 bytes
@@ -1057,11 +1057,9 @@ Return Value: n/a
 Status: Complete
 */
 void Popup::on_adjust_button_width() {
-    uint8_t *const self = reinterpret_cast<uint8_t *>(this);
-    const int32_t scaled =
-        *reinterpret_cast<const int32_t *>(self + 0x30AC) / 10000;
+    const int32_t scaled = static_cast<int32_t>(field_30AC_) / 10000;
     if (scaled != 1000) {
-        *reinterpret_cast<int32_t *>(self + 0x30D0) = 20;
+        field_30D0_ = 20;
     }
 }
 
@@ -1078,7 +1076,7 @@ void Popup::on_adjust_button_width() {
 Status: Complete
 */
 int Popup::on_nc_hittest(int x, int y) {
-    return reinterpret_cast<Win *>(this)->Win::on_nc_hittest(x, y);
+    return Win::on_nc_hittest(x, y);
 }
 
 /*

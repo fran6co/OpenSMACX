@@ -467,13 +467,13 @@ void SocialWin::on_iface_button_clicked(int button_id) {
 
     allocate_energy(index, static_cast<int>(allocation));
 
-    economyAlloc3_ = economyAllocPending_;
-    psychAlloc3_ = psychAllocPending_;
-    labsAlloc3_ = labsAllocPending_;
+    economyAlloc3_ = pendingAlloc_[0];
+    psychAlloc3_ = pendingAlloc_[1];
+    labsAlloc3_ = pendingAlloc_[2];
 
     PlayerData &player = PlayersData[factionID_];
-    player.se_alloc_psych = static_cast<int>(psychAllocPending_);
-    player.se_alloc_labs = static_cast<int>(labsAllocPending_);
+    player.se_alloc_psych = static_cast<int>(pendingAlloc_[1]);
+    player.se_alloc_labs = static_cast<int>(pendingAlloc_[2]);
     social_set(factionID_);
 
     social_calc(&socCategory_, &socEffect_, factionID_, 0, 0);
@@ -552,7 +552,7 @@ void SocialWin::on_iface_mouse_leave(int, int) {
 Status: Complete
 */
 void SocialWin::show(int visible) {
-    if (!reinterpret_cast<Win *>(this)->is_visible()) {
+    if (!is_visible()) {
         SubInterface::set_iface_mode();
     }
 }
@@ -569,7 +569,7 @@ void SocialWin::show(int visible) {
 Status: Complete
 */
 void SocialWin::hide() {
-    if (reinterpret_cast<Win *>(this)->is_visible()) {
+    if (is_visible()) {
         SubInterface::release_iface_mode();
     }
 }
@@ -1234,22 +1234,18 @@ void SocialWin::draw_faction_basal() {
 
 
 void SocialWin::allocate_energy(int a1, int a2) {
-    char *self = reinterpret_cast<char *>(this);
-    int limit = energy_limit(*reinterpret_cast<int *>(self + 0xCF4));
-    *reinterpret_cast<int *>(self + 0x2C50 + a1 * 4) = a2;
+    int limit = energy_limit(static_cast<int>(factionID_));
+    pendingAlloc_[a1] = static_cast<uint32_t>(a2);
 
-    while (*reinterpret_cast<int *>(self + 0x2C58) +
-               *reinterpret_cast<int *>(self + 0x2C50) +
-               *reinterpret_cast<int *>(self + 0x2C54) <
-           10) {
+    while (static_cast<int32_t>(pendingAlloc_[2] + pendingAlloc_[0] + pendingAlloc_[1]) < 10) {
         int idx = a1 + 1;
         int attempts = 0;
         do {
             int candidate = idx % 3;
             if (a1 == candidate ||
-                (*reinterpret_cast<int *>(self + 0x1780 + candidate * 0xA2C) == 0 &&
-                 *reinterpret_cast<int *>(self + 0x2C50 + candidate * 4) < limit)) {
-                ++*reinterpret_cast<int *>(self + 0x2C50 + candidate * 4);
+                (energyLockButtons_[candidate].checked_ == 0 &&
+                 static_cast<int32_t>(pendingAlloc_[candidate]) < limit)) {
+                ++pendingAlloc_[candidate];
                 break;
             }
             ++attempts;
@@ -1257,18 +1253,15 @@ void SocialWin::allocate_energy(int a1, int a2) {
         } while (attempts < 3);
     }
 
-    while (*reinterpret_cast<int *>(self + 0x2C58) +
-               *reinterpret_cast<int *>(self + 0x2C50) +
-               *reinterpret_cast<int *>(self + 0x2C54) >
-           10) {
+    while (static_cast<int32_t>(pendingAlloc_[2] + pendingAlloc_[0] + pendingAlloc_[1]) > 10) {
         int idx = a1 + 1;
         int attempts = 0;
         do {
             int candidate = idx % 3;
             if (a1 == candidate ||
-                (*reinterpret_cast<int *>(self + 0x1780 + candidate * 0xA2C) == 0 &&
-                 *reinterpret_cast<int *>(self + 0x2C50 + candidate * 4) != 0)) {
-                --*reinterpret_cast<int *>(self + 0x2C50 + candidate * 4);
+                (energyLockButtons_[candidate].checked_ == 0 &&
+                 pendingAlloc_[candidate] != 0)) {
+                --pendingAlloc_[candidate];
                 break;
             }
             ++attempts;
@@ -1884,9 +1877,9 @@ void SocialWin::reset() {
     psychAllocOrig_ = static_cast<uint32_t>(player.se_alloc_psych);
     labsAllocOrig_ = static_cast<uint32_t>(player.se_alloc_labs);
 
-    economyAllocPending_ = economyAllocOrig_;
-    psychAllocPending_ = psychAllocOrig_;
-    labsAllocPending_ = labsAllocOrig_;
+    pendingAlloc_[0] = economyAllocOrig_;
+    pendingAlloc_[1] = psychAllocOrig_;
+    pendingAlloc_[2] = labsAllocOrig_;
 
     if (allocations_changed) {
         social_set(factionID_);
@@ -1990,16 +1983,12 @@ int SocialWin::on_button_text_draw(GraphicWin *window, char *text, int button_id
         ++effect;
     }
 
-    char *win = reinterpret_cast<char *>(window);
-    Buffer *win_buffer = reinterpret_cast<Buffer *>(win + 0x444);
 
     // The buffer's own working rectangle (Buffer::rect2_, 0x474).
-    RECT rect;
-    RECT *source = reinterpret_cast<RECT *>(win + 0x474);
-    rect.left = source->left;
-    rect.top = source->top;
-    rect.right = source->right;
-    rect.bottom = source->bottom;
+    // The original reads window+0x474 before its later destination-null test.
+    // Call the inherited member before the nullable Buffer pointer conversion.
+    RECT rect = window->clip_rect();
+    Buffer *win_buffer = static_cast<Buffer *>(window);
     int line_base = effectIcons_[0].height();
     int y_center = (rect.bottom - line_base - rect.top) / 2;
 
@@ -2016,12 +2005,10 @@ int SocialWin::on_button_text_draw(GraphicWin *window, char *text, int button_id
     }
 
     Buffer *icon_buffer = (window != 0) ? win_buffer : 0;
-    int sprite_index = flag + button_id * 3;
-    unsigned char sprite_frame = *reinterpret_cast<unsigned char *>(
-        reinterpret_cast<char *>(this) + 0x13D4 + sprite_index * 0x84);
-    Sprite *sprite = reinterpret_cast<Sprite *>(
-        reinterpret_cast<char *>(this) + 0x13CC + sprite_index * 0x84);
-    sprite->draw(icon_buffer, sprite_frame, 5, y_center, 1, 1);
+    // Original stride 0x84 is three 0x2C-byte Sprites, not one Sprite.
+    int sprite_index = (button_id - 0x11) * 9 + flag * 3;
+    Sprite *sprite = &effectIcons_[sprite_index];
+    sprite->draw(icon_buffer, sprite->transparent_index(), 5, y_center, 1, 1);
 
     win_buffer->set_text_color(0, -1, 1, 1);
     rect.left += 0x25;
@@ -2788,15 +2775,15 @@ void SocialWin::init(int faction_id) {
         int stride = factionID_ * 2099;
         int net_min = 10 - SocialAllocTable[stride + 1] - SocialAllocTable[stride];
         economyAllocOrig_ = net_min;
-        economyAllocPending_ = net_min;
+        pendingAlloc_[0] = net_min;
         economyAlloc3_ = net_min;
         int lo = SocialAllocTable[stride];
         psychAllocOrig_ = lo;
-        psychAllocPending_ = lo;
+        pendingAlloc_[1] = lo;
         psychAlloc3_ = lo;
         int hi = SocialAllocTable[stride + 1];
         labsAllocOrig_ = hi;
-        labsAllocPending_ = hi;
+        pendingAlloc_[2] = hi;
         labsAlloc3_ = hi;
     }
     reset();

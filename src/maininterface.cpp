@@ -1132,97 +1132,61 @@ void MainInterface::chat(char *text, int channel) {
     InterfaceMessageWin.add_message(text, ChatItemIdTable[channel]);
 }
 
-// Fixed-slot bindings carried from 0045c290.cpp
-static int *const InterfaceBuffer = (int *)0x007AEC64;
-static int *const InterfaceClipRect = (int *)0x007AEC94;
 // RECOVERY_OBJECT: v2 0x007D3930 0x007D3934 ?MainInterfaceTileFlag@@3HA 0x0045C290
 int MainInterfaceTileFlag;
 
 // ORIGINAL: 0x0045C290 ?restore_back@MainInterface@@QAEXH@Z 0x0045C290-0x0045C393 FILE
+// RECOVERY_BINDING: v1 {"reason":"The receiver owns the six frame RECTs; drawing uses the separate process-global MainInterfaceGlobal Buffer, not the receiver's Buffer.","evidence":["pinned:0x0045C290 reads receiver+D80/D90/DA0/DB0/DC0/DD0","src/maininterface.h:rect4_,right_frame_rect_,info_panel_frame_,lower_frame_rect_,rect1_,lower_animation_bounds_","src/maininterface.h:MainInterfaceGlobal;src/buffer.h:restore_clip uses rect2_; global+444 is Buffer and global+474 is rect2_"]}
 // size      259 bytes
 // prototype void (__thiscall ?restore_back@MainInterface@@QAEXH@Z)(MainInterface* this, int)
 // callers   12   call targets   2
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x005D8000 0x005DA860
-// PRESERVED UNIT - measured MISMATCH.
-//
-// Kept for COVERAGE. This directory IS on the ratchet: every file here
-// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
-// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
-// quarter of the project's total. It is still in no build; the earlier
-// header said "on no ratchet", which stopped being true when the map
-// moved into src/ and was still being written into new files.
-//
-// address        0x0045C290
-// measured tier  MISMATCH
-// divergence     4
-//
-// The WHOLE unit as measured, scaffolding included: for the units
-// that are byte-exact yet refuse extraction, the agent tuned the
-// emitted scaffolding and the body alone will not reproduce the
-// verdict. To resume, copy everything below back over
-//   build/byte-match/0045c290/unit.cpp
-// and score it with tools/agent_brief.py.
-// GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?restore_back@MainInterface@@QAEXH@Z  at 0x0045C290  (259 bytes)
-//
-// A VERIFICATION ARTIFACT, not product source: classes are opaque and
-// globals are bound to fixed addresses, because both are byte-visible
-// and both differ from the style src/ is written in.
-//
-// The VC6 dialect limits and the source-form rules used to live here.
-// They are knowledge, not scaffolding, so they now live in the agent
-// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
-// where they can be edited without regenerating anything and are in
-// context from the first token rather than behind a file read. This
-// emitter computes declarations; it does not carry lessons.
-
 
 void MainInterface::restore_back(int a1) {
-    char *self = reinterpret_cast<char *>(this);
     if (a1 != 0) {
-        reinterpret_cast<Buffer *>(InterfaceBuffer)->set_clip(reinterpret_cast<RECT *>(InterfaceClipRect));
+        static_cast<Buffer *>(&MainInterfaceGlobal)->restore_clip();
     }
 
     {
-        int *r = reinterpret_cast<int *>(self + 0xd80);
-        int x = r[0] + 1;
-        int y = r[1] + 1;
-        int w = (r[2] - 1) - x;
-        int h = (r[3] - 1) - y;
-        reinterpret_cast<Buffer *>(InterfaceBuffer)->tile(InterfaceBoxStyles[9].mask_, x, y, x, y, w, h);
+        RECT &r = rect4_;
+        int x = static_cast<int32_t>(static_cast<uint32_t>(r.left) + 1u);
+        int y = static_cast<int32_t>(static_cast<uint32_t>(r.top) + 1u);
+        int w = static_cast<int32_t>(static_cast<uint32_t>(r.right) - 1u - static_cast<uint32_t>(x));
+        int h = static_cast<int32_t>(static_cast<uint32_t>(r.bottom) - 1u - static_cast<uint32_t>(y));
+        static_cast<Buffer *>(&MainInterfaceGlobal)->tile(InterfaceBoxStyles[9].mask_, x, y, x, y, w, h);
     }
 
     {
-        int *r = MainInterfaceTileFlag != 0
-            ? reinterpret_cast<int *>(self + 0xdd0)
-            : reinterpret_cast<int *>(self + 0xdb0);
-        int x = r[0];
-        int y = r[1] + 1;
-        int w = (r[2] - 1) - x;
-        int h = (r[3] - 1) - y;
-        reinterpret_cast<Buffer *>(InterfaceBuffer)->tile(InterfaceBoxStyles[9].mask_, x, y, x, y, w, h);
+        RECT &r = MainInterfaceTileFlag != 0
+            ? lower_animation_bounds_
+            : lower_frame_rect_;
+        int x = r.left;
+        int y = static_cast<int32_t>(static_cast<uint32_t>(r.top) + 1u);
+        int w = static_cast<int32_t>(static_cast<uint32_t>(r.right) - 1u - static_cast<uint32_t>(x));
+        int h = static_cast<int32_t>(static_cast<uint32_t>(r.bottom) - 1u - static_cast<uint32_t>(y));
+        static_cast<Buffer *>(&MainInterfaceGlobal)->tile(InterfaceBoxStyles[9].mask_, x, y, x, y, w, h);
     }
 
     {
-        int *r = MainInterfaceTileFlag != 0
-            ? reinterpret_cast<int *>(self + 0xdc0)
-            : reinterpret_cast<int *>(self + 0xda0);
-        int x = r[0] + 1;
-        int y = r[1] + 1;
-        int w = (r[2] - 1) - x;
-        int h = (r[3] - 1) - y;
-        reinterpret_cast<Buffer *>(InterfaceBuffer)->tile(InterfaceBoxStyles[9].mask_, x, y, x, y, w, h);
+        RECT &r = MainInterfaceTileFlag != 0
+            ? rect1_
+            : info_panel_frame_;
+        int x = static_cast<int32_t>(static_cast<uint32_t>(r.left) + 1u);
+        int y = static_cast<int32_t>(static_cast<uint32_t>(r.top) + 1u);
+        int w = static_cast<int32_t>(static_cast<uint32_t>(r.right) - 1u - static_cast<uint32_t>(x));
+        int h = static_cast<int32_t>(static_cast<uint32_t>(r.bottom) - 1u - static_cast<uint32_t>(y));
+        static_cast<Buffer *>(&MainInterfaceGlobal)->tile(InterfaceBoxStyles[9].mask_, x, y, x, y, w, h);
     }
 
     {
-        int *r = reinterpret_cast<int *>(self + 0xd90);
-        int x = r[0] + 1;
-        int y = r[1] + 1;
-        int w = (r[2] - 1) - x;
-        int h = (r[3] - 1) - y;
-        reinterpret_cast<Buffer *>(InterfaceBuffer)->tile(InterfaceBoxStyles[9].mask_, x, y, x, y, w, h);
+        RECT &r = right_frame_rect_;
+        int x = static_cast<int32_t>(static_cast<uint32_t>(r.left) + 1u);
+        int y = static_cast<int32_t>(static_cast<uint32_t>(r.top) + 1u);
+        int w = static_cast<int32_t>(static_cast<uint32_t>(r.right) - 1u - static_cast<uint32_t>(x));
+        int h = static_cast<int32_t>(static_cast<uint32_t>(r.bottom) - 1u - static_cast<uint32_t>(y));
+        static_cast<Buffer *>(&MainInterfaceGlobal)->tile(InterfaceBoxStyles[9].mask_, x, y, x, y, w, h);
     }
 }
 
@@ -2430,28 +2394,22 @@ void MainInterface::on_selected(int a1, int a2) {
 }
 
 // ORIGINAL: 0x0045D2A0 ?set_alert@MainInterface@@QAEXH@Z 0x0045D2A0-0x0045D2D1 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason":"Alert state and timer are owned by this MainInterface instance, not fixed image-address views.","evidence":["pinned:0x0045D2A0 writes receiver+216F0 before Time::start on receiver+25068","src/maininterface.h:alert_,time2_;src/maininterface.cpp:timer_callback_daemon"]}
 // size      49 bytes
 // prototype void (__thiscall ?set_alert@MainInterface@@QAEXH@Z)(MainInterface* this, int)
 // callers   1   call targets   1
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x00616650
-// 0x0045D2A0  ?set_alert@MainInterface@@QAEXH@Z  ->  ?set_alert@MainInterface@@QAEXH@Z
-//
-// A byte-exact Mizuchi match that no file in the tree owns yet. NOT in
-// OPENSMACX_SOURCES and not compiled: it is the emitter's verification style,
-// and rewriting it in the tree's own style is a later phase. See README.md
-// beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
 
 
 void MainInterface::set_alert(int a1) {
-    char *self = reinterpret_cast<char *>(this);
     if (a1 != 0) {
-        *reinterpret_cast<int *>(self + 0x216f0) = 0;
-        reinterpret_cast<Time *>(self + 0x25068)->start();
+        alert_ = 0;
+        time2_.start();
         return;
     }
-    *reinterpret_cast<int *>(self + 0x216f0) = -1;
+    alert_ = -1;
 }
 
 // Fixed-slot bindings carried from 0045c600.cpp

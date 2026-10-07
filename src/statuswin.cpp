@@ -343,8 +343,8 @@ Status: Complete
 */
 void StatusWin::redraw() {
     int sizeVal = (WinScreenWidth != 0x320) ? 0xC : 0xA;
-    if (sizeVal != field_15AC_) {
-        field_15AC_ = sizeVal;
+    if (sizeVal != font_size_) {
+        font_size_ = sizeVal;
         font1_.init(DefaultFontFace, sizeVal, 0);
         font2_.init(DefaultFontFace, sizeVal, 2);
         font3_.init(DefaultFontFace, sizeVal, 1);
@@ -1679,18 +1679,17 @@ void StatusWin::on_left_double_click(int x, int y) {
 // calls     0x00618F40
 
 void StatusWin::UNK1() {
-    char *self = reinterpret_cast<char *>(this);
     int size = (WinScreenWidth != 800) ? 12 : 10;
-    if (size != *reinterpret_cast<int *>(self + 0x15ac)) {
-        *reinterpret_cast<int *>(self + 0x15ac) = size;
-        reinterpret_cast<Font *>(self + 0x1530)->init((char *)DefaultFontFace, size, 0);
-        reinterpret_cast<Font *>(self + 0x1558)->init((char *)DefaultFontFace, size, 2);
-        reinterpret_cast<Font *>(self + 0x1580)->init((char *)DefaultFontFace, size, 1);
+    if (size != font_size_) {
+        font_size_ = size;
+        font1_.init(DefaultFontFace, size, 0);
+        font2_.init(DefaultFontFace, size, 2);
+        font3_.init(DefaultFontFace, size, 1);
     }
     if (WinScreenWidth != 800) {
-        *reinterpret_cast<int *>(self + 0x1530) = 4;
-        *reinterpret_cast<int *>(self + 0x1558) = 4;
-        *reinterpret_cast<int *>(self + 0x1580) = 4;
+        font1_.unk_1_ = 4;
+        font2_.unk_1_ = 4;
+        font3_.unk_1_ = 4;
     }
 }
 
@@ -1713,23 +1712,22 @@ typedef int (__stdcall *UnionRectFn)(RECT *, const RECT *, const RECT *);
 
 
 void StatusWin::on_redraw() {
-    char *self = reinterpret_cast<char *>(this);
     int fontSize = ((WinScreenWidth != 0x320) ? 2 : 0) + 10;
 
-    if (fontSize != *reinterpret_cast<int *>(self + 0x15ac)) {
-        *reinterpret_cast<int *>(self + 0x15ac) = fontSize;
-        reinterpret_cast<Font *>(self + 0x1530)->init(DefaultFontFace, fontSize, 0);
-        reinterpret_cast<Font *>(self + 0x1558)->init(DefaultFontFace, fontSize, 2);
-        reinterpret_cast<Font *>(self + 0x1580)->init(DefaultFontFace, fontSize, 1);
+    if (fontSize != font_size_) {
+        font_size_ = fontSize;
+        font1_.init(DefaultFontFace, fontSize, 0);
+        font2_.init(DefaultFontFace, fontSize, 2);
+        font3_.init(DefaultFontFace, fontSize, 1);
     }
 
     if (WinScreenWidth != 0x320) {
-        *reinterpret_cast<int *>(self + 0x1530) = 4;
-        *reinterpret_cast<int *>(self + 0x1558) = 4;
-        *reinterpret_cast<int *>(self + 0x1580) = 4;
+        font1_.unk_1_ = 4;
+        font2_.unk_1_ = 4;
+        font3_.unk_1_ = 4;
     }
 
-    reinterpret_cast<StatusWin *>(self)->draw_status(-1, -1, -1, -1, 0);
+    draw_status(-1, -1, -1, -1, 0);
 
     RECT rect;
     UnionRect(&rect, &MainInterfaceGlobal.status_hit_rect(),
@@ -1800,8 +1798,8 @@ void StatusWin::arrow_left() {
     }
 
     const int font_height = WinScreenWidth == 0x320 ? 10 : 12;
-    if (font_height != field_15AC_) {
-        field_15AC_ = font_height;
+    if (font_height != font_size_) {
+        font_size_ = font_height;
         font1_.init(DefaultFontFace, font_height, 0);
         font2_.init(DefaultFontFace, font_height, 2);
         font3_.init(DefaultFontFace, font_height, 1);
@@ -1844,8 +1842,8 @@ void StatusWin::arrow_right() {
     }
 
     const int font_height = WinScreenWidth == 0x320 ? 10 : 12;
-    if (font_height != field_15AC_) {
-        field_15AC_ = font_height;
+    if (font_height != font_size_) {
+        font_size_ = font_height;
         font1_.init(DefaultFontFace, font_height, 0);
         font2_.init(DefaultFontFace, font_height, 2);
         font3_.init(DefaultFontFace, font_height, 1);
@@ -1878,7 +1876,7 @@ void StatusWin::init() {
     field_15C4_ = -1;
     field_15D0_ = -1;
     field_15CC_ = -1;
-    field_15AC_ = -1;
+    font_size_ = -1;
     field_15D4_ = 0;
 
     if ((StatusFlags & 0x20u) == 0) {

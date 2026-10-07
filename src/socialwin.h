@@ -396,9 +396,8 @@ class SocialWin : public GraphicWin, public SubInterface {
   uint32_t economyAlloc3_;  // 0x2C44
   uint32_t psychAlloc3_;  // 0x2C48
   uint32_t labsAlloc3_;  // 0x2C4C
-  uint32_t economyAllocPending_;  // 0x2C50
-  uint32_t psychAllocPending_;  // 0x2C54
-  uint32_t labsAllocPending_;  // 0x2C58
+  // Indexed economy/psych/labs run in allocate_energy, original +0x2C50.
+  uint32_t pendingAlloc_[3];  // 0x2C50..0x2C5B
   uint32_t field_2C5C_;  // 0x2C5C
   Sprite socEngModifierNums_[0xA];   // 0x2C60, 0x2C * 0xA == 0x1B8
   Sprite effectIcons_[0x5A];         // 0x2E18, 0x2C * 0x5A == 0xF78

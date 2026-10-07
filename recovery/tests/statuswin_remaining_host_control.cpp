@@ -116,14 +116,14 @@ struct StatusWin {
     VOX_Vect camera_angles_;
     VOX_Matrix camera_rotation_;
     Font font1_, font2_, font3_;
-    int field_15A8_, field_15AC_;
+    int field_15A8_, font_size_;
     char field_15B0_[4];
     int iTileX_, iTileY_, iUnitIndex_, iCityIndex_;
     int field_15C4_, field_15C8_, field_15CC_, field_15D0_, field_15D4_;
     int fInOnClick_, field_15DC_;
     Spot spot_;
     int draw_count;
-    StatusWin() : field_15A8_(0), field_15AC_(0), iTileX_(0), iTileY_(0),
+    StatusWin() : field_15A8_(0), font_size_(0), iTileX_(0), iTileY_(0),
                   iUnitIndex_(-1), iCityIndex_(-1), field_15C4_(0),
                   field_15C8_(0), field_15CC_(0), field_15D0_(0),
                   field_15D4_(0), fInOnClick_(0), field_15DC_(0),
@@ -162,7 +162,7 @@ int main() {
     // UI rectangles, while same-size fonts remain untouched at 800px.
     status.iUnitIndex_ = 1;
     Vehs[1].prev_veh_id_stack = 0;
-    status.field_15AC_ = 10;
+    status.font_size_ = 10;
     status.arrow_left();
     assert(status.iUnitIndex_ == 0 && status.iCityIndex_ == -1);
     assert(status.draw_count == 1 && MainInterfaceGlobal.soft_update_count == 1);
