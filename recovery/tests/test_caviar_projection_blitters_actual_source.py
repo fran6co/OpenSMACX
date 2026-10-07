@@ -201,7 +201,11 @@ def test_moved_records_and_bodies_retain_pinned_source_history():
         assert address in old_rows and address in current_rows,hex(address)
         before,after=old_rows[address],current_rows[address]
         assert all(getattr(before,name)==getattr(after,name) for name in fields
-                   if not (address in (0x63FA80, 0x6401B0) and name == "source_role")),hex(address)
+                   if not (address in (0x63FA80, 0x6401B0, 0x63B11C, 0x63B1BF,
+                                       0x63B241) and name == "source_role")),hex(address)
+        if address in (0x63B11C, 0x63B1BF, 0x63B241):
+            assert after.source_role == "unclassified"
+            assert after.region.count("RECOVERY_BINDING: v1") == 1
         if address == 0x6401B0:
             assert after.source_role == "unclassified"
             assert "Ownership: Global three-pointer __cdecl helper" in current
@@ -225,6 +229,9 @@ def test_moved_records_and_bodies_retain_pinned_source_history():
                 # all original comment text except these two documented edits.
                 block="\n".join(line for line in lines
                                  if not line.startswith("// RECOVERY_ROLE:"))
+                if address in (0x63B11C, 0x63B1BF, 0x63B241):
+                    block="\n".join(line for line in block.splitlines()
+                                      if not line.startswith("// RECOVERY_BINDING:"))
                 if address == 0x6401B0 and "Ownership:" in block:
                     # The reviewed six-caller qualification adds ownership
                     # evidence; the historical projector envelope is retained.

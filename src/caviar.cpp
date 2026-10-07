@@ -6611,8 +6611,8 @@ Purpose: Walk a scaled sprite into a 16-bit destination through a palette:
          slot every row, exactly as the original re-reads it, so anything
          else writing the slot between rows is seen.
 
-// RECOVERY_ROLE: SCAFFOLD Typed loop transcription; complete indirect caller and physical-owner qualification remain unresolved.
 // ORIGINAL: 0x0063B11C sub_63b11c 0x0063B11C-0x0063B1BF
+// RECOVERY_BINDING: v1 {"evidence":["pinned:0x0063B11C-0x0063B1BF:four callee-saved pushes then plain RET; after saves stack +0x14/+0x18 are destination/source, +0x1C/+0x20 x/y, +0x24/+0x28 width/height, +0x2C/+0x30 16.16 x/y steps, +0x34/+0x38 source-byte/destination-word pitches, +0x3C palette","pinned:0x0063B11C:nonzero source-byte gate; reads destination word, indexes palette by that word, stores the result","pinned:0x0063B11C:reads/writes 0x00698B70 cursor and 0x00698B78 stride; 0x0063B072 uses the same state words","source:src/caviar.cpp:CaviarBlitStateCandidate and vox_blit_transparent own the typed shared state"],"reason":"Own this standalone global C-ABI 16-bit blitter in the Caviar renderer component based on its stack contract and shared-state effects; leave incoming selector/caller routes unresolved and claim no C++ class or complete caller domain."}
 // symbol   _sub_63b11c
 // size      163 bytes
 // prototype
@@ -6672,8 +6672,8 @@ Purpose: Walk a scaled sprite into an 8-bit destination, skipping the one
          The same shared cursor slot carries the destination pointer, and
          is re-read every row like its 16-bit sibling above.
 
-// RECOVERY_ROLE: SCAFFOLD Typed loop transcription; complete indirect caller and physical-owner qualification remain unresolved.
 // ORIGINAL: 0x0063B1BF sub_63b1bf 0x0063B1BF-0x0063B241
+// RECOVERY_BINDING: v1 {"evidence":["pinned:0x0063B1BF-0x0063B241:four callee-saved pushes then plain RET; after saves stack +0x14/+0x18 are destination/source, +0x1C/+0x20 x/y, +0x24/+0x28 width/height, +0x2C fixed-point step, +0x30/+0x34 source/destination byte pitches, +0x38 transparent byte","pinned:0x0063B1BF:loads source byte, preserves destination for transparent matches, otherwise stores the source byte","pinned:0x0063B1BF:reads/writes 0x00698B70 cursor; sibling 0x0063B072 initializes and consumes the same cursor state","source:src/caviar.cpp:CaviarBlitStateCandidate and vox_blit_transparent own the typed shared state"],"reason":"Own this standalone global C-ABI 8-bit keyed blitter in the Caviar renderer component based on its stack contract and shared-state effects; leave incoming selector/caller routes unresolved and claim no C++ class or complete caller domain."}
 // symbol   _sub_63b1bf
 // size      130 bytes
 // prototype
@@ -6728,8 +6728,8 @@ Purpose: Walk a scaled sprite into an 8-bit destination through a shading
          table: each non-zero source byte replaces the destination byte
          with table[destination byte].
 
-// RECOVERY_ROLE: SCAFFOLD Typed loop transcription; complete indirect caller and physical-owner qualification remain unresolved.
 // ORIGINAL: 0x0063B241 sub_63b241 0x0063B241-0x0063B2CB
+// RECOVERY_BINDING: v1 {"evidence":["pinned:0x0063B241-0x0063B2CB:four callee-saved pushes then plain RET; after saves stack +0x14/+0x18 are destination/source, +0x1C/+0x20 x/y, +0x24/+0x28 width/height, +0x2C/+0x30 16.16 x/y steps, +0x34/+0x38 source/destination byte pitches, +0x3C lookup table","pinned:0x0063B241:nonzero source-byte gate; reads destination byte, indexes table by that byte, stores the result","pinned:0x0063B241:reads/writes 0x00698B70 cursor; 0x0063B072 initializes and consumes the cursor and pitch words","source:src/caviar.cpp:CaviarBlitStateCandidate and vox_blit_transparent own the typed shared state"],"reason":"Own this standalone global C-ABI 8-bit table blitter in the Caviar renderer component based on its stack contract and shared-state effects; leave incoming selector/caller routes unresolved and claim no C++ class or complete caller domain."}
 // symbol   _sub_63b241
 // size      138 bytes
 // prototype
