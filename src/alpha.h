@@ -436,7 +436,7 @@ struct RulesBasic { // Alpha(x).txt
 
     // #RULES: Retool strictness
     // (0 = Always Free, 1 = Free in Category, 2 = Free if Project, 3 = Never Free)
-    // Original bounds: 0 to 2 (Bug Fix: Should be 0 to 3)
+    // Original bounds: 0 to 2; permitting 3 is a post-recovery improvement.
     // Default value: 2
     uint32_t retool_strictness;
 
@@ -451,17 +451,17 @@ struct RulesBasic { // Alpha(x).txt
     uint32_t retool_exemption;
 
     // #RULES: If non-zero, probe teams can steal technologies
-    // Original bounds: 0, 1 or -1 (Changed to 0 or 1 since -1 is treated same as 1)
+    // Original bounds: -1 to 1; retain the signed value in storage.
     // Default value: 1
     BOOL tgl_probe_can_steal_tech;
 
     // #RULES: If non-zero, humans can always contact each other in net games
-    // Original bounds: 0, 1 or -1 (Changed to 0 or 1 since -1 is treated same as 1)
+    // Original bounds: -1 to 1; retain the signed value in storage.
     // Default value: 1
     BOOL tgl_human_always_contact_net;
 
     // #RULES: If non-zero, humans can always contact each other in hotseat/email games
-    // Original bounds: 0, 1 or -1 (Changed to 0 or 1 since -1 is treated same as 1)
+    // Original bounds: -1 to 1; retain the signed value in storage.
     // Default value: 1
     BOOL tgl_humans_always_contact_pbem;
 
@@ -506,7 +506,7 @@ struct RulesBasic { // Alpha(x).txt
     uint32_t normal_end_year_high_three_diff;
 
     // #RULES: If non-zero, obliterating a base counts as an atrocity
-    // Original bounds: 0, 1 or -1 (Changed to 0 or 1 since -1 is treated same as 1)
+    // Original bounds: -1 to 1; retain the signed value in storage.
     // Default value: 1
     BOOL tgl_oblit_base_atrocity;
 

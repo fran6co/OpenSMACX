@@ -496,7 +496,8 @@ BOOL __cdecl read_basic_rules() {
     text_get();
     Rules.retool_pct_pen_prod_chg = range(text_item_number(), 0, 100);
     text_get();
-    Rules.retool_strictness = range(text_item_number(), 0, 3); // Bug fix: increased max param to 3
+    // Pinned 0x005856C2 passes upper bound 2; allowing 3 is a later fix.
+    Rules.retool_strictness = range(text_item_number(), 0, 2);
     text_get();
     Rules.retool_exemption = range(text_item_number(), 0, 1000);
     text_get();
@@ -518,11 +519,13 @@ BOOL __cdecl read_basic_rules() {
     Rules.tech_mining_platform_bonus = tech_item();
     Rules.tech_economic_victory = tech_item();
     text_get();
-    Rules.tgl_probe_can_steal_tech = range(text_item_number(), 0, 1); // Fix: Set min param to 0
+    // Preserve the signed -1..1 values, not merely their boolean meaning:
+    // pinned stores at 0x0058585B/7E/A1 retain -1 after signed clamping.
+    Rules.tgl_probe_can_steal_tech = range(text_item_number(), -1, 1);
     text_get();
-    Rules.tgl_human_always_contact_net = range(text_item_number(), 0, 1); // Fix: Set min param to 0
+    Rules.tgl_human_always_contact_net = range(text_item_number(), -1, 1);
     text_get();
-    Rules.tgl_humans_always_contact_pbem = range(text_item_number(), 0, 1); // Fix: Set min param to 0
+    Rules.tgl_humans_always_contact_pbem = range(text_item_number(), -1, 1);
     text_get();
     Rules.max_pct_dmg_art_vs_unit_base_bnkr = range(text_item_number(), 10, 100);
     text_get();
@@ -539,7 +542,8 @@ BOOL __cdecl read_basic_rules() {
     text_get();
     Rules.normal_end_year_high_three_diff = range(text_item_number(), 0, 999999);
     text_get();
-    Rules.tgl_oblit_base_atrocity = range(text_item_number(), 0, 1); // Fix: Set min param to 0
+    // Pinned 0x005859D9..ED uses the same signed -1..1 clamp.
+    Rules.tgl_oblit_base_atrocity = range(text_item_number(), -1, 1);
     text_get();
     Rules.size_base_subspace_gen = range(text_item_number(), 1, 999); // SMACX only
     text_get();
