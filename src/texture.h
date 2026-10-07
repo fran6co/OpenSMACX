@@ -199,7 +199,7 @@ class Texture {
                   int vertCount, int unusedIn);
   void sub_61cb50(Buffer *buffer, Vert *vertices, Texture *shade,
                  unsigned char *remap, int use_eight_vertices);
-  int sub_61d990(Buffer *buffer, int *vertArray, int zvals, Texture *texB,
+  void sub_61d990(Buffer *buffer, int *vertArray, int *zvals, Texture *texB,
                  uint8_t *table, int wideFlag);
   int sub_61df60(int a1, int a2, int a3, int a4, int a5, int a6, int a7,
                  int a8, int a9);

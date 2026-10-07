@@ -4865,10 +4865,85 @@ void Texture::sub_61c630(Buffer * bufIn, int * verts, Texture * texB, unsigned c
     }
 }
 
+// Original 0x61DE5A..0x61DF1D pixel path: the base texel is read from the
+// receiver Texture, the second Texture is addressed by the low 16-bit source
+// offset and supplies a shade selector, and the byte table maps that selector.
+static int texture_raster_step_gouraud(EdgeScan &edge, Texture *texture);
+
+static int texture_raster_gradient_span_admitted(int span) {
+    const int scaled = static_cast<int>(
+        static_cast<unsigned int>(span) << 16);
+    return scaled > 0;
+}
+
+static void texture_draw_shade_span(unsigned char *destination,
+                                    const unsigned char *pixels,
+                                    const unsigned char *shade_pixels,
+                                    const unsigned char *remap, int width,
+                                    int u, int v, int du, int dv,
+                                    int light, unsigned short light_step,
+                                    int pixel_count) {
+    (void)width;
+    uintptr_t source_base = reinterpret_cast<uintptr_t>(pixels);
+    uintptr_t shade_base = reinterpret_cast<uintptr_t>(shade_pixels);
+    unsigned char source_u = static_cast<unsigned char>(
+        (source_base + static_cast<unsigned int>(u) / 0x10000u) & 0xffu);
+    unsigned char source_v = static_cast<unsigned char>(
+        (static_cast<unsigned int>(v) >> 16) & 0xffu);
+    unsigned int packed_uv =
+        (static_cast<unsigned int>(u) << 16) |
+        (((static_cast<unsigned int>(dv) >> 16) & 0xffu) << 8) |
+        ((static_cast<unsigned int>(du) >> 16) & 0xffu);
+    const unsigned int packed_u_step = static_cast<unsigned int>(du) << 16;
+    unsigned int packed_v = static_cast<unsigned int>(v) << 16;
+    const unsigned int packed_v_step = static_cast<unsigned int>(dv) << 16;
+    unsigned short light_accumulator = static_cast<unsigned short>(
+        static_cast<unsigned int>(light) >> 8);
+    const unsigned int count = texture_span_pixels(pixel_count);
+    for (unsigned int pixel = 0; pixel < count; ++pixel) {
+        const uintptr_t source_address =
+            (source_base & ~static_cast<uintptr_t>(0xffffu)) |
+            (static_cast<uintptr_t>(source_v) << 8) | source_u;
+        const uintptr_t shade_address =
+            (shade_base & ~static_cast<uintptr_t>(0xffffu)) |
+            (source_address & 0xffffu);
+        const unsigned char base = *reinterpret_cast<const unsigned char *>(
+            source_address);
+        const unsigned char selector = *reinterpret_cast<const unsigned char *>(
+            shade_address);
+        const unsigned char mapped = remap[selector];
+        if (selector >= 5) {
+            destination[0] = mapped;
+        } else {
+            destination[0] = static_cast<unsigned char>(
+                static_cast<unsigned int>(base) +
+                static_cast<unsigned int>(light_accumulator >> 8) +
+                static_cast<unsigned int>(mapped));
+        }
+        const unsigned int old_packed_uv = packed_uv;
+        packed_uv += packed_u_step;
+        source_u = static_cast<unsigned char>(source_u +
+            static_cast<unsigned char>(packed_uv) +
+            static_cast<unsigned int>(packed_uv < old_packed_uv));
+        const unsigned int old_packed_v = packed_v;
+        packed_v += packed_v_step;
+        source_v = static_cast<unsigned char>(source_v +
+            static_cast<unsigned char>(packed_uv >> 8) +
+            static_cast<unsigned int>(packed_v < old_packed_v));
+        light_accumulator = static_cast<unsigned short>(
+            light_accumulator + light_step);
+        ++destination;
+    }
+}
+
 // ORIGINAL: 0x0061D990 sub_61d990 0x0061D990-0x0061DF5C FILE
-// symbol    ?sub_61d990@Texture@@QAEHPAVBuffer@@PAHHPAV1@PAEH@Z
+// symbol    ?sub_61d990@Texture@@QAEXPAVBuffer@@PAH1PAV1@PAEH@Z
+// Historical synthetic seed symbol: ?sub_61d990@Texture@@QAEHPAVBuffer@@PAHHPAV1@PAEH@Z
+// Original ECX receiver and RET 18h establish six stack arguments; the third
+// argument is the per-vertex light array consumed by setup_edge_gouraud.
+// No stable EAX result is established by the original exits. The void interface
+// avoids inventing a zero result; indirect/external caller contracts are unknown.
 // TRIED: __stdcall free function (receiver is really `this` via ECX, recast as Texture::draw_gouraud_lit); byte-exact EdgeScan field indices for the per-scanline u/v/light stepper (packed 16.16 multiply/carry chain, x87 rounding-mode divide) - not reachable from portable C++, see 0061c090.cpp's own precedent for the same call chain.
-// working copy - scaffold materialised by --work
 // size      1484 bytes
 // prototype 
 // callers   0   call targets   3
@@ -4876,180 +4951,177 @@ void Texture::sub_61c630(Buffer * bufIn, int * verts, Texture * texB, unsigned c
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x005E3373 0x005E34A3 0x0061FC90
 
-// GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: sub_61d990  at 0x0061D990  (1484 bytes)
-//
-// A VERIFICATION ARTIFACT, not product source: classes are opaque and
-// globals are bound to fixed addresses, because both are byte-visible
-// and both differ from the style src/ is written in.
-//
-// The VC6 dialect limits and the source-form rules used to live here.
-// They are knowledge, not scaffolding, so they now live in the agent
-// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
-// where they can be edited without regenerating anything and are in
-// context from the first token rather than behind a file read. This
-// emitter computes declarations; it does not carry lessons.
-
-int Texture::sub_61d990(Buffer *a1, int *vertArray, int a3, Texture *a4,
-                               unsigned char *table, int a6) {
-    if (vertArray == 0) {
-        if (a1 != 0) a1->free_data(1);
-        return 0;
+void Texture::sub_61d990(Buffer *buffer, int *vertices, int *zvals,
+                         Texture *shade_texture, unsigned char *remap,
+                         int wide_flag) {
+    if (vertices == 0) {
+        if (buffer != 0) buffer->free_data(1);
+        texture_reset_fpu();
+        return;
     }
-    if (a1 == 0) {
-        return 0;
+    if (buffer == 0) {
+        texture_reset_fpu();
+        return;
     }
-    if (pixels_ != 0 && a3 != 0 && table != 0 && a4 != 0) {
-        *blit_pixel_base = a1->get_data();
+    if (pixels_ == 0 || zvals == 0 || remap == 0 || shade_texture == 0) {
+        buffer->free_data(1);
+        texture_reset_fpu();
+        return;
+    }
 
-        *blit_z_values = a3;
-        *blit_edge_uvs_b = reinterpret_cast<int>(vertArray);
-        *blit_remap_table = reinterpret_cast<int>(table);
-        *blit_texture_pixels = *reinterpret_cast<int *>(this);
-        TextureRowPitchScratch = iWidth_;
-        *blit_texture_height = iHeight_;
+    *blit_pixel_base = buffer->get_data();
+    texture_reset_fpu();
+    *blit_z_values = static_cast<int>(reinterpret_cast<intptr_t>(zvals));
+    *blit_edge_uvs_b = static_cast<int>(reinterpret_cast<intptr_t>(vertices));
+    *blit_remap_table = static_cast<int>(reinterpret_cast<intptr_t>(remap));
+    *blit_texture_pixels = static_cast<int>(reinterpret_cast<intptr_t>(pixels_));
+    TextureRowPitchScratch = static_cast<int>(iWidth_);
+    *blit_texture_height = static_cast<int>(iHeight_);
+    *blit_texture_width = static_cast<int>(iWidth_);
+    *blit_edge_uvs_a = static_cast<int>(reinterpret_cast<intptr_t>(
+        wide_flag != 0 ? cornersAndMids_ : corners_));
+    *blit_vertex_count = wide_flag != 0 ? 8 : 4;
+    *blit_buffer_stride = static_cast<int>(buffer->stride_);
+    *blit_shade_table = static_cast<int>(reinterpret_cast<intptr_t>(
+        shade_texture->pixels_));
 
-        int vertCount;
-        int *litArray;
-        if (a6 != 0) {
-            vertCount = 8;
-            litArray = reinterpret_cast<int *>(reinterpret_cast<char *>(this) + 0x2c);
-        } else {
-            vertCount = 4;
-            litArray = reinterpret_cast<int *>(reinterpret_cast<char *>(this) + 0xc);
+    if (shade_texture->pixels_ != 0) {
+        const RECT &clip = buffer->rect1_;
+        *blit_clip_right = clip.right;
+        *blit_clip_left = clip.left;
+        *blit_clip_bottom = clip.bottom;
+        *blit_clip_top = clip.top;
+
+        const int count = *blit_vertex_count;
+        int min_y = 0x7fff;
+        int max_y = static_cast<int>(0xffff8003u);
+        int min_x = 0x7fff;
+        int max_x = static_cast<int>(0xffff8003u);
+        int top_index = 0;
+        for (int index = 0; index < count; ++index) {
+            const int y = vertices[index * 2 + 1];
+            if (y < min_y) {
+                min_y = y;
+                top_index = index;
+            }
+            if (max_y < y) {
+                max_y = y;
+                *blit_max_y_index = index;
+            }
+            const int x = vertices[index * 2];
+            if (x < min_x) min_x = x;
+            if (max_x < x) max_x = x;
         }
-        *blit_vertex_count = vertCount;
-        *blit_edge_uvs_a = reinterpret_cast<int>(litArray);
+        (void)min_x;
+        (void)max_x;
 
-        *blit_buffer_stride = *reinterpret_cast<int *>(reinterpret_cast<char *>(a1) + 0x4a8);
-        *blit_texture_width = iWidth_;
-        *blit_shade_table = *reinterpret_cast<int *>(a4);
+        if (min_y < max_y) {
+            const int stride = buffer->stride_;
+            const int base = *blit_pixel_base;
+            *blit_row_offset = stride * min_y + base;
+            *blit_clip_bottom = stride * *blit_clip_bottom + base;
+            *blit_clip_top = stride * *blit_clip_top + base;
 
-        if (*blit_shade_table != 0 && reinterpret_cast<char *>(a1) + 0x20 != 0) {
-            *blit_clip_right = *reinterpret_cast<int *>(reinterpret_cast<char *>(a1) + 0x28);
-            int minY = 0x7fff;
-            *blit_clip_left = *reinterpret_cast<int *>(reinterpret_cast<char *>(a1) + 0x20);
-            *blit_clip_bottom = *reinterpret_cast<int *>(reinterpret_cast<char *>(a1) + 0x2c);
-            *blit_clip_top = *reinterpret_cast<int *>(reinterpret_cast<char *>(a1) + 0x24);
-            int maxY = -0x7ffd;
-            int maxX = -0x7ffd;
-            int minX = 0x7fff;
-            int topVert = 0;
+            EdgeScan left;
+            EdgeScan right;
+            left.f0 = -1;
+            right.f0 = 1;
+            if (setup_edge_gouraud(&left, top_index) != 0 &&
+                setup_edge_gouraud(&right, top_index) != 0 &&
+                borrowed_ != 0 && shade_texture->borrowed_ != 0) {
+                _control87(_PC_24 | _RC_CHOP, _MCW_PC | _MCW_RC);
+                bool done = false;
 
-            int count = *blit_vertex_count;
-            if (count > 0) {
-                int *vp = vertArray;
-                for (int i = 0; i < count; ++i) {
-                    int y = vp[1];
-                    if (y < minY) { minY = y; topVert = i; }
-                    if (maxY < y) { maxY = y; *blit_max_y_index = i; }
-                    int x = vp[0];
-                    if (x < minX) minX = x;
-                    if (maxX < x) maxX = x;
-                    vp += 2;
-                }
-
-                if (minY < maxY) {
-                    int pitch = *blit_buffer_stride;
-                    int base = *blit_pixel_base;
-                    *blit_row_offset = pitch * minY + base;
-                    *blit_clip_bottom = pitch * (*blit_clip_bottom) + base;
-                    *blit_clip_top = pitch * (*blit_clip_top) + base;
-
-                    // EdgeScan is opaque to this unit; the original's setup call
-                    // takes a pointer to 0x3C bytes (15 ints, from the stack
-                    // offsets the two calls actually touch: -0x80..-0x48 and
-                    // -0x44..-0xc), so that is what is reserved for each edge.
-                    int edge1[15];
-                    int edge2[15];
-                    for (int z = 0; z < 15; ++z) { edge1[z] = 0; edge2[z] = 0; }
-                    edge1[0] = -1;
-                    int r1 = setup_edge_gouraud(reinterpret_cast<EdgeScan *>(edge1), topVert);
-                    if (r1 != 0) {
-                        edge2[0] = 1;
-                        int r2 = setup_edge_gouraud(reinterpret_cast<EdgeScan *>(edge2), topVert);
-                        if (r2 != 0 && borrowed_ != 0 && a4->borrowed_ != 0) {
-                            // Per-scanline reciprocal-slope setup for the u/v/light
-                            // deltas across the edge segment, and the per-pixel
-                            // fixed-point (u, v, light) stepper that follows, are
-                            // an x87 rounding-mode-adjusted divide feeding a 64-bit
-                            // multiply/carry-chain in the original. That exact
-                            // instruction sequence is not reachable from
-                            // inline-asm-free C++; this reproduces the same
-                            // algorithm - two edges walked scanline by scanline,
-                            // each refreshed via setup_edge_gouraud when its
-                            // segment runs out, and a textured span filled through
-                            // the shading-ramp table - with ordinary arithmetic.
-                            int edge1Steps = edge1[1];
-                            int edge2Steps = edge2[1];
-                            bool doneFlag = false;
-
-                            while (*blit_row_offset < *blit_clip_bottom) {
-                                *blit_slot_4c4 = edge1[3];
-                                *blit_slot_4f8 = edge1[13];
-                                *blit_slot_530 = edge1[4];
-                                *blit_slot_53c = edge1[7];
-                                *blit_span_right = edge1[9];
-                                *blit_slot_498 = edge1[13];
-                                *blit_span_left = edge1[3];
-
-                                if (--edge1Steps == 0) {
-                                    int r = setup_edge_gouraud(
-                                        reinterpret_cast<EdgeScan *>(edge1), edge1[2]);
-                                    if (r == 0) {
-                                        doneFlag = true;
-                                    } else {
-                                        edge1Steps = edge1[1];
-                                    }
-                                } else {
-                                    edge1[3] += edge1[6];
-                                    edge1[4] += edge1[5];
-                                    edge1[9] += edge1[8];
-                                }
-
-                                if (--edge2Steps == 0) {
-                                    int r = setup_edge_gouraud(
-                                        reinterpret_cast<EdgeScan *>(edge2), edge2[2]);
-                                    if (r == 0) {
-                                        doneFlag = true;
-                                    } else {
-                                        edge2Steps = edge2[1];
-                                    }
-                                } else {
-                                    edge2[3] += edge2[6];
-                                    edge2[4] += edge2[5];
-                                    edge2[9] += edge2[8];
-                                }
-
-                                if (*blit_clip_bottom <= *blit_row_offset) break;
-
-                                if (*blit_clip_top <= *blit_row_offset && *blit_clip_left < *blit_span_left &&
-                                    *blit_span_right < *blit_clip_right && *blit_span_right < *blit_span_left) {
-                                    int xEnd = *blit_span_left < *blit_clip_right ? *blit_span_left : *blit_clip_right;
-                                    unsigned char *dst = reinterpret_cast<unsigned char *>(
-                                        *blit_row_offset + *blit_span_right);
-                                    unsigned char *src = reinterpret_cast<unsigned char *>(*blit_shade_table);
-                                    for (int x = *blit_span_right; x < xEnd; ++x) {
-                                        unsigned char idx = src[x];
-                                        dst[x - *blit_span_right] = table[idx];
-                                    }
-                                }
-
-                                if (doneFlag) break;
-                                *blit_row_offset = *blit_row_offset + *blit_buffer_stride;
-                            }
-                        }
+                while (*blit_row_offset < *blit_clip_bottom) {
+                    *blit_slot_4c4 = right.accumA;
+                    *blit_slot_530 = right.accumB;
+                    *blit_span_left = right.accumC;
+                    *blit_slot_4f8 = left.accumA;
+                    *blit_slot_53c = left.accumB;
+                    *blit_span_right = left.accumC;
+                    *blit_slot_498 = left.accumD;
+                    const EdgeScan row_left = left;
+                    const EdgeScan row_right = right;
+                    if (!texture_raster_step_gouraud(left, this)) {
+                        done = true;
+                    } else if (!texture_raster_step_gouraud(right, this)) {
+                        done = true;
                     }
+                    if (*blit_clip_bottom <= *blit_row_offset) break;
+                    const int span = texture_difference(
+                        row_right.accumC, row_left.accumC);
+                    if (texture_raster_gradient_span_admitted(span)) {
+                        *blit_slot_4e4 = texture_span_step(
+                            texture_difference(row_right.accumA,
+                                               row_left.accumA), span);
+                        *blit_slot_4c8 = texture_span_step(
+                            texture_difference(row_right.accumB,
+                                               row_left.accumB), span);
+                        *reinterpret_cast<unsigned short *>(blit_light_pack_a) =
+                            texture_light_step(
+                                texture_difference(row_right.accumD,
+                                                   row_left.accumD), span);
+                    }
+                    const int du = *blit_slot_4e4;
+                    const int dv = *blit_slot_4c8;
+                    const unsigned short light_step =
+                        *reinterpret_cast<unsigned short *>(blit_light_pack_a);
+                    if (*blit_clip_top <= *blit_row_offset &&
+                        row_right.accumC > *blit_clip_left &&
+                        row_left.accumC < *blit_clip_right &&
+                        span > 0) {
+                        int left_x = row_left.accumC;
+                        int right_x = row_right.accumC;
+                        if (right_x > *blit_clip_right)
+                            right_x = *blit_clip_right;
+                        if (left_x < *blit_clip_left)
+                            left_x = *blit_clip_left;
+
+                        const int clipped_pixels = texture_difference(
+                            left_x, row_left.accumC);
+                        int u = static_cast<int>(
+                            static_cast<unsigned int>(row_left.accumA) +
+                            static_cast<unsigned int>(
+                                static_cast<int64_t>(du) * clipped_pixels));
+                        int v = static_cast<int>(
+                            static_cast<unsigned int>(row_left.accumB) +
+                            static_cast<unsigned int>(
+                                static_cast<int64_t>(dv) * clipped_pixels));
+                        int light = static_cast<int>(
+                            static_cast<unsigned int>(row_left.accumD) +
+                            (static_cast<unsigned int>(light_step) *
+                             static_cast<unsigned int>(clipped_pixels) << 8));
+                        if (clipped_pixels != 0) {
+                            *blit_slot_4f8 = u;
+                            *blit_slot_53c = v;
+                            *blit_slot_498 = light;
+                            *blit_span_right = left_x;
+                        }
+                        *blit_slot_498 = light >> 8;
+                        const int clipped_span = texture_difference(
+                            right_x, left_x);
+                        texture_draw_shade_span(
+                            reinterpret_cast<unsigned char *>(
+                                *blit_row_offset + left_x),
+                            static_cast<const unsigned char *>(pixels_),
+                            static_cast<const unsigned char *>(shade_texture->pixels_),
+                            remap, static_cast<int>(iWidth_), u, v, du, dv,
+                            light, light_step,
+                            clipped_span);
+                    }
+
+                    if (done) break;
+                    *blit_row_offset = texture_difference(
+                        *blit_row_offset, -stride);
                 }
             }
         }
     }
 
-    if (a1 != 0) {
-        a1->free_data(1);
-    }
-    return 0;
+    buffer->free_data(1);
+    texture_reset_fpu();
 }
+
 
 // Fixed-slot bindings carried from 0061b780.cpp
 static int *const blit_colour_step = (int *)0x009BB4B8;
