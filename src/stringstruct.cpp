@@ -1123,60 +1123,6 @@ extern "C" void __fastcall sub_447d20(void *self_raw, void *) {
 
 
 // ---------------------------------------------------------------------------
-// DiploPop::on_redraw, 0x004402A0. The diplomacy pop's repaint: restore the
-// desktop backdrop, frame the union of the desktop, list and panel
-// rectangles with the shared panel styles, then run the four sub-drawers.
-// The member is undeclared in diplopop.h, so the receiver travels
-// explicitly; the original is a __thiscall member.
-/*
-Purpose: Repaint the diplomacy pop's backdrop and framed panel.
-// ORIGINAL: 0x004402A0 ?on_redraw@DiploPop@@QAEXXZ 0x004402A0-0x00440379 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["Original4402A0..440379; retired seed git:117282ee:src/unrecovered/004402a0.cpp records the same identity and spans with its RECT-local TRIED note kept below.", "The opener is maininterface.h's restore_back on mapwin.h's MainInterfaceGlobal (0x007AE820); the frame styles are buffer.h's InterfaceBoxStyles[3] (0x0078D5A0) and [21] (0x0078D870) against the interface Buffer 0x007AEC64; the UnionRect slot 0x00669328 is the runtime import slot console.h documents.", "The four sub-drawers are the seed's measured call targets 0x0043F5F0/0x0043F790/0x0043FA90/0x00440080 in the body's call order (bioscan/portrait/info/hq); 0x00440080 is now the source-owned DiploPop::draw_hq body, while the first three helper bodies remain outside this task's source ownership. The receiver's panel rect at +0x2144 remains the seed's measured walk."], "reason": "Recover the diplomacy pop repaint through its typed interface state and panel members, including the now-source-owned HQ drawer; the first three helper bodies remain an explicit outside-owner dependency."}
-Status: Coverage transcription - unclaimed body
-*/
-namespace {
-// The desktop rectangle block the interface layer keeps beside the
-// interface Buffer: the desktop edges and the two panel rectangles the
-// pop's union walks.
-static int *const DesktopRectBlock = (int *)0x007AF5E0;
-static RECT *const DiplomacyListRect = (RECT *)0x007AF2AC;
-static RECT *const DiplomacyPanelRect = (RECT *)0x007AF2BC;
-}
-
-extern "C" void __fastcall DiploPop_on_redraw(DiploPop *self, void *) {
-    RECT rc;
-    char *const base = reinterpret_cast<char *>(self);
-
-    MainInterfaceGlobal.restore_back(1);
-
-    rc.left = DesktopRectBlock[0] + 4;
-    rc.top = DesktopRectBlock[1] + 4;
-    rc.right = DesktopRectBlock[2] - 4;
-    rc.bottom = DesktopRectBlock[3] - 4;
-    reinterpret_cast<Buffer *>(0x007AEC64)->box_sprite(
-        &rc, &InterfaceBoxStyles[3]);
-
-    typedef int (__stdcall *UnionRectFn)(RECT *, RECT *, RECT *);
-    UnionRectFn union_rect = *reinterpret_cast<UnionRectFn *>(0x00669328);
-    union_rect(&rc, DiplomacyListRect, DiplomacyPanelRect);
-    union_rect(&rc, &rc, reinterpret_cast<RECT *>(base + 0x2144));
-
-    rc.left -= 3;
-    rc.right += 3;
-    rc.bottom += 3;
-    rc.top -= 3;
-
-    reinterpret_cast<Buffer *>(0x007AEC64)->box_sprite(
-        &rc, &InterfaceBoxStyles[21]);
-
-    typedef void (__fastcall *PopDraw)(DiploPop *, void *);
-    reinterpret_cast<PopDraw>(0x0043F5F0)(self, nullptr);  // draw_bioscan
-    reinterpret_cast<PopDraw>(0x0043F790)(self, nullptr);  // draw_portrait
-    reinterpret_cast<PopDraw>(0x0043FA90)(self, nullptr);  // draw_info
-    self->draw_hq();
-}
-
-// ---------------------------------------------------------------------------
 // SetupWin::close, 0x004AD9C0. The setup window's teardown: clear the
 // per-window state words, close the owned buffer, shut the hotspot array
 // down, then walk the interface-mode list releasing every entry's payload

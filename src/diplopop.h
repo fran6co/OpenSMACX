@@ -35,6 +35,9 @@
 // Constructor installs this original interface table at the declared base.
 // Its nineteen observed slots do not independently establish its end bound.
 // RECOVERY_GENERATED: v1 vtable 0x0066B424 ? ??_7DiploPop@@6B@ 0x0043EFF0
+// Primary Win table installed at 0x0043F0AE; slot12 (+0x30) selects
+// the original repaint at 0x004402A0. Full table end remains unbounded.
+// RECOVERY_GENERATED: v1 vtable 0x0066B478 ? ??_7DiploPop@@6BWin@@@ 0x0043EFF0
 class DiploPop : public GraphicWin, public SubInterface {
  public:
   // 0x004406D0. `poll` is the Win32 modal-pump callback Win::set_modal stores.
@@ -62,6 +65,7 @@ class DiploPop : public GraphicWin, public SubInterface {
   DiploPop();
   ~DiploPop();
   void init();
+  void on_redraw() override;
   void draw_bioscan();
   void draw_portrait();
   void draw_hq();

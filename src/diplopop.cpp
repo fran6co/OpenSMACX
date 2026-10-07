@@ -33,6 +33,9 @@
 #include "faction.h"  // spying() is owned by the faction API
 #include "console.h"
 
+// SDK import identity; the pinned original IAT cell is 0x00669328.
+// RECOVERY_IMPORT: v1 __imp__UnionRect@12 USER32.dll name:UnionRect
+
 void __cdecl report_intel(int selection);
 void __cdecl slide_show(GraphicWin *window, int mode);
 void __cdecl slide_hide(GraphicWin *window, int mode);
@@ -1050,4 +1053,33 @@ void __cdecl sub_539970() {
         popup.draw_info();
         static_cast<GraphicWin &>(popup).soft_update(&popup.rect1_);
     }
+}
+
+// ORIGINAL: 0x004402A0 ?on_redraw@DiploPop@@QAEXXZ 0x004402A0-0x00440379 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Historical source binding before owner migration: Recover the diplomacy pop repaint through its typed interface state and panel members, including the now-source-owned HQ drawer; the first three helper bodies remain an explicit outside-owner dependency.", "Historical source evidence: Original4402A0..440379; retired seed git:117282ee:src/unrecovered/004402a0.cpp records the same identity and spans with its RECT-local TRIED note kept below.", "Historical source evidence: The opener is maininterface.h's restore_back on mapwin.h's MainInterfaceGlobal (0x007AE820); the frame styles are buffer.h's InterfaceBoxStyles[3] (0x0078D5A0) and [21] (0x0078D870) against the interface Buffer 0x007AEC64; the UnionRect slot 0x00669328 is the runtime import slot console.h documents.", "Historical source evidence: The four sub-drawers are the seed's measured call targets 0x0043F5F0/0x0043F790/0x0043FA90/0x00440080 in the body's call order (bioscan/portrait/info/hq); 0x00440080 is now the source-owned DiploPop::draw_hq body, while the first three helper bodies remain outside this task's source ownership. The receiver's panel rect at +0x2144 remains the seed's measured walk.", "Pinned constructor 43EFF0 installs primary vfptr 66B478 at 43F0AE; table cell66B4A8 (+30, inherited Win slot12) contains4402A0, establishing the real on_redraw override.", "MainInterfaceGlobal7AE820 owns Buffer base+444=7AEC64 and RECT members rect2_+A8C=7AF2AC, rect3_+A9C=7AF2BC, rect1_+DC0=7AF5E0. Existing getters expose those real members; DiploPop right_panel_button_rect_ is+2144.", "Pinned USER32 import IAT669328 is UnionRect. The original calls shared-canvas box_sprite with styles3 then21, unions the interface panels then the receiver panel, and invokes source-owned bioscan/portrait/info/HQ painters in that order."], "reason": "Recover the complete repaint as the genuine DiploPop virtual member, using existing interface and receiver rectangles, the actual Buffer secondary base, imported UnionRect and source-owned painter methods. Historical outside-owner seam notes are superseded, not erased."}
+// symbol    ?on_redraw@DiploPop@@UAEXXZ
+void DiploPop::on_redraw() {
+    MainInterfaceGlobal.restore_back(1);
+    RECT rc = MainInterfaceGlobal.main_layout_rect();
+    rc.left += 4;
+    rc.top += 4;
+    rc.right -= 4;
+    rc.bottom -= 4;
+    Buffer &canvas = static_cast<Buffer &>(MainInterfaceGlobal);
+    canvas.box_sprite(&rc, &InterfaceBoxStyles[3]);
+
+    ::UnionRect(&rc, &MainInterfaceGlobal.rect2(),
+                &MainInterfaceGlobal.rect3());
+    ::UnionRect(&rc, &rc, &right_panel_button_rect_);
+
+    rc.left -= 3;
+    rc.right += 3;
+    rc.bottom += 3;
+    rc.top -= 3;
+    canvas.box_sprite(&rc, &InterfaceBoxStyles[21]);
+
+    draw_bioscan();
+    draw_portrait();
+    draw_info();
+    draw_hq();
 }
