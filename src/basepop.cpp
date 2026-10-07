@@ -1064,7 +1064,7 @@ int BasePop::exec(int flags, int (__cdecl *callback)()) {
     }
 
 rows:
-    // ONE ROW PER ITEM. zero_block_ is the row the ctor clears with its one
+    // ONE ROW PER ITEM. item_buttons_ is the row the ctor clears with its one
     // rep stosd; the image walks it with the same four-byte step and no bound
     // of its own.
     if (item_ids_.entry_count_ > 0) {
@@ -1072,7 +1072,7 @@ rows:
         int index = 0;
         for (; index < item_ids_.entry_count_; index++) {
             FlatButton *button = new FlatButton();
-            zero_block_[index] = reinterpret_cast<uint32_t>(button);
+            item_buttons_[index] = button;
 
             StringStructPayload *payload = item_ids_.next_entry();
             char *text = payload != 0 ? payload->text : 0;
@@ -2037,7 +2037,7 @@ BasePop::BasePop() {
     field_30AC_ = 0;
     value_ = -1;
     // Eight contiguous dwords: the image fills them with one `rep stosd`.
-    memset(zero_block_, 0, 8 * sizeof(uint32_t));
+    memset(item_buttons_, 0, sizeof(item_buttons_));
     owned_text_ = 0;
     field_21B8_ = BasePopDefaultField21B0[3];
     field_21BC_ = BasePopDefaultField21B0[2];
@@ -2168,8 +2168,6 @@ BasePop::BasePop() {
 // calls     0x005D4580 0x005D4E40 0x005E3820 0x00609F20 0x0060D1B0 0x0060E7C0 0x00610280 0x00611A90 0x00644EF2
 // indirect  0x00601070 0x00601082 0x006010B4 0x006010C7 0x006010E3 0x00601133 0x00601148 0x00601163 0x0060119C
 
-typedef void (OriginalObject::*func_basepop_list_destroy_dtor)(int);
-
 void BasePop::close() {
     char *self = (char *)this;
     int i, off;
@@ -2243,12 +2241,10 @@ void BasePop::close() {
 
 
     for (i = 0; i < 8; i++) {
-        int item = zero_block_[i];
+        FlatButton *item = item_buttons_[i];
         if (item != 0) {
-            OriginalObject *entry = reinterpret_cast<OriginalObject *>(item);
-            (entry->*original_method<func_basepop_list_destroy_dtor>(
-                *(unsigned long *)item))(1);
-            zero_block_[i] = 0;
+            delete item;
+            item_buttons_[i] = 0;
         }
     }
 

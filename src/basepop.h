@@ -125,7 +125,7 @@ class BasePop : public GraphicWin {
    *   0x0A4C..0x0A58  four dwords no body in the tree reaches
    *   0x0A5C  flat_button1_ (0xB4C) / 0x15A8 flat_button2_  the two rows
    *   0x20F4  a dword close() zeroes beside sprite_
-   *   0x20F8  zero_block_[8]           eight slots the ctor rep-stosd's clear
+   *   0x20F8  item_buttons_[8]         eight owned FlatButton pointers
    *   0x2118  sprite_ (0x2C)           the popup's own picture
    *   0x2144  caller_sprite_           pops()' sprite argument, or 0
    *   0x2148  two dwords from BasePopDefaultField2148
@@ -432,7 +432,11 @@ class BasePop : public GraphicWin {
   // (0x006018xx), so this is a block the class clears, not eight separate
   // flags. Typed 2026-09-04; the eight offset names it replaces said nothing
   // the memset does not.
-  uint32_t zero_block_[8];  // 0x20F8
+  // Original exec allocates FlatButton at 0x0060303B/0x00603051 and stores
+  // the result into this run at 0x0060305A. Close walks eight slots at
+  // 0x00601187, invokes virtual scalar deletion with flag 1 at 0x0060119C,
+  // then clears each slot. The earlier zero_block_ spelling hid ownership.
+  FlatButton *item_buttons_[8];  // 0x20F8
   Sprite sprite_;
   // THE CALLER'S SPRITE, or 0. pops() (popup.cpp) stores its `Sprite *`
   // argument here when the popup's own item list is empty and 0 when it is
