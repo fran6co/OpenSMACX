@@ -6635,6 +6635,9 @@ LRESULT Win::on_window_pos_changed(WINDOWPOS* pos) {
 
 // ===== homed from src/recovered/units/005f4ab0.cpp =====
 
+// ORIGINAL: 0x005F4AB0 ?bring_to_top@Win@@QAEXXZ 0x005F4AB0-0x005F4C24 FILE
+// symbol    ?bring_to_top@Win@@QAEXXZ
+// kind game
 void Win::bring_to_top() {
     Win *parent = win_parent_;
     if (parent != 0) {
@@ -7156,6 +7159,9 @@ typedef int (__stdcall *DeleteObjectProc)(void *);
 
 // The pair ORDER is the image's: lineTo takes (a1,a2) and moveTo takes
 // (a3,a4), so the first pair is the END of the segment.
+// ORIGINAL: 0x005F2AC0 ?window_line_raw@Win@@QAEXHHHHHHI@Z 0x005F2AC0-0x005F2C37 FILE
+// symbol    ?window_line_raw@Win@@QAEXHHHHHHI@Z
+// kind game
 void Win::window_line_raw(int x2, int y2, int x1, int y1, int colour,
                           int width, unsigned int style) {
     if (WinHdcRefCount != 0) {
@@ -7229,6 +7235,9 @@ void __cdecl Win::update() {
 
 // ===== homed from src/recovered/units/005f4c30.cpp =====
 
+// ORIGINAL: 0x005F4C30 ?redraw_nc_buffer@Win@@QAEHH@Z 0x005F4C30-0x005F4C82 FILE
+// symbol    ?redraw_nc_buffer@Win@@QAEPAVBuffer@@H@Z
+// kind game
 Buffer *Win::redraw_nc_buffer(int index) {
     this->on_redraw_nc(0, index);
     switch (index) {
@@ -7366,6 +7375,9 @@ int Win::on_redraw(int, int) {
 // ===== homed from src/recovered/units/005f5810.cpp =====
 typedef unsigned int uint32_t;
 
+// ORIGINAL: 0x005F5810 ?on_nc_paint@Win@@QAEXPAURECT@@H@Z 0x005F5810-0x005F5ACA FILE
+// symbol    ?on_nc_paint@Win@@UAEXPAUtagRECT@@H@Z
+// kind game
 void Win::on_nc_paint(RECT * area, int flags) {
 
     if ((iFlags_ & 0x11) != 0 &&
@@ -7462,6 +7474,9 @@ void Win::on_nc_paint(RECT * area, int flags) {
 
 // ===== homed from src/recovered/units/005f5270.cpp =====
 
+// ORIGINAL: 0x005F5270 ?remove_child@Win@@QAEXPAUWin@@@Z 0x005F5270-0x005F52D1 FILE
+// symbol    ?remove_child@Win@@QAEXPAV1@@Z
+// kind game
 void Win::remove_child(Win *child) {
     if (child == 0) return;
 
@@ -7487,6 +7502,9 @@ void Win::remove_child(Win *child) {
 
 // ===== homed from src/recovered/units/005f6880.cpp =====
 
+// ORIGINAL: 0x005F6880 ?on_r_button_up@Win@@QAEXHHIH@Z 0x005F6880-0x005F6A21 FILE
+// symbol    ?on_r_button_up@Win@@UAEXHHIH@Z
+// kind game
 void Win::on_r_button_up(int x, int y, unsigned int keys, int dbl) {
 
     Win *captured = WinPointerOwner1;
@@ -7550,6 +7568,9 @@ void Win::on_r_button_up(int x, int y, unsigned int keys, int dbl) {
 
 // ===== homed from src/recovered/units/005f25c0.cpp =====
 
+// ORIGINAL: 0x005F25C0 ?OnRButtonDown@Win@@QAAXPAXJHHI@Z 0x005F25C0-0x005F261F FILE
+// symbol    ?OnRButtonDown@Win@@QAAXPAXJHHI@Z
+// kind game
 void __cdecl Win::OnRButtonDown(void * hwnd, long flags, int x, int y, unsigned int keys) {
     int result = reinterpret_cast<int>(get_mouse_window(
         reinterpret_cast<int *>(&flags), reinterpret_cast<int *>(&x)));
@@ -7573,6 +7594,9 @@ void __cdecl Win::OnRButtonDown(void * hwnd, long flags, int x, int y, unsigned 
 
 // ===== homed from src/recovered/units/005f2620.cpp =====
 
+// ORIGINAL: 0x005F2620 ?OnRButtonUp@Win@@QAAXPAXHHI@Z 0x005F2620-0x005F2661 FILE
+// symbol    ?OnRButtonUp@Win@@QAAXPAXHHI@Z
+// kind game
 void __cdecl Win::OnRButtonUp(void * hwnd, int x, int y, unsigned int keys) {
     WinTrackingWindow = nullptr;
     Win *win = reinterpret_cast<Win *>(get_mouse_window(&x, &y));
@@ -7794,6 +7818,9 @@ void Win::show(int visible) {
 // ===== homed from src/recovered/units/005f7ec0.cpp =====
 typedef unsigned short uint16_t;
 
+// ORIGINAL: 0x005F7EC0 ?update_back_to_window@Win@@QAEXPAUBuffer@@@Z 0x005F7EC0-0x005F813F FILE
+// symbol    ?update_back_to_window@Win@@QAEXPAVBuffer@@@Z
+// kind game
 void Win::update_back_to_window(Buffer * buffer) {
     if (buffer == 0) {
         return;
@@ -10142,6 +10169,7 @@ int __cdecl Win::OnSysCommand(HWND hwnd, unsigned int command, int x,
 }
 
 // ORIGINAL: 0x005EF050 ?client_to_nonclient@Win@@QAEXPAURECT@@@Z 0x005EF050-0x005EF10D FILE
+// symbol    ?client_to_nonclient@Win@@QAEXPAUtagRECT@@@Z
 // kind game
 // TRIED: __thiscall fn-ptr typedef for slot 91 (C4234); own VCall2 class (91 void slots + int slot091) reaches #24 sub-vs-mov, deep in the border-adjust arithmetic
 // ===== homed from src/unrecovered/005ef050.cpp =====
@@ -10216,6 +10244,9 @@ void Win::nonclient_to_client(int * x, int * y) {
 
 // ===== homed from src/recovered/units/005f8140.cpp =====
 
+// ORIGINAL: 0x005F8140 ?update_window_to_buffer@Win@@QAEXPAUBuffer@@@Z 0x005F8140-0x005F83B0 FILE
+// symbol    ?update_window_to_buffer@Win@@QAEXPAVBuffer@@@Z
+// kind game
 void Win::update_window_to_buffer(Buffer * buffer) {
     if (buffer != 0) {
 
@@ -10392,6 +10423,9 @@ void Win::on_r_button_down(long flags, int x, int y, unsigned int keys, int dbl)
 
 // ===== homed from src/recovered/units/005f2570.cpp =====
 
+// ORIGINAL: 0x005F2570 ?OnLButtonUp@Win@@QAAXPAXHHI@Z 0x005F2570-0x005F25B1 FILE
+// symbol    ?OnLButtonUp@Win@@QAEXPAXHHI@Z
+// kind game
 void Win::OnLButtonUp(void *hwnd, int x, int y, unsigned int keys) {
     WinTrackingWindow = nullptr;
     // get_mouse_window already RETURNS Win *, and win.h declares slot 82 as

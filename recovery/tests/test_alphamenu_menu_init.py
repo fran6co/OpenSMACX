@@ -41,7 +41,9 @@ def test_alphamenu_menu_init_population():
     #include <vector>
     using BOOL = int;
     static const unsigned int RULES_IRONMAN = 0x400;
-    unsigned int GameRules = 0;
+    struct GameDataStateFields { unsigned int game_rules_; };
+    struct GameDataStateWindow { GameDataStateFields fields_; };
+    GameDataStateWindow GameDataStateStorage = {};
     struct RulesTerraforming { char *name; char *name_sea; int req; int req_sea;
       unsigned int bit; unsigned int incompatible; int rate; char *shortcuts; };
     RulesTerraforming Terraforming[20]{};
@@ -103,7 +105,7 @@ def test_alphamenu_menu_init_population():
     };
     void success_control(bool ironman) {
       fail_section_index = -1; opened_sections.clear(); text_index = 0;
-      read_rules_calls = 0; GameRules = ironman ? RULES_IRONMAN : 0;
+      read_rules_calls = 0; GameDataStateStorage.fields_.game_rules_ = ironman ? RULES_IRONMAN : 0;
       AlphaMenu menu;
       for (int i = 0; i != 20; ++i) {
         Terraforming[i].shortcuts = const_cast<char *>("shortcut");
@@ -160,4 +162,3 @@ def test_alphamenu_menu_init_population():
             raise SystemExit(result.stdout + result.stderr or f"host control exited {result.returncode}")
         print("PASS: extracted AlphaMenu::menu_init ordered success/early-failure controls")
     
-

@@ -54,7 +54,7 @@ def test_native_workshop_uses_real_members_and_owner_dependencies():
         design = class_layout(obj, 'DesignWin')
         assert design['members']['field_CDC_'] == 0xCDC
         assert design['members']['field_CE4_'] == 0xCE4
-        assert '?consider_designs@@YAXI@Z' in targets  # still unfinished dependency
+        assert '?consider_designs@@YAXH@Z' in targets
         assert not any('0x00438460' in line for line in _body().splitlines())
 
 

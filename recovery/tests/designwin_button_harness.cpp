@@ -37,7 +37,9 @@ static Player Players[MaxPlayerNum];
 static PlayerData PlayersData[MaxPlayerNum];
 static int ProtoSortCount;
 static int ProtoSortIds[128];
-static uint32_t GameState;
+struct GameDataStateFields { uint32_t game_state_; };
+struct GameDataStateWindow { GameDataStateFields fields_; };
+static GameDataStateWindow GameDataStateStorage;
 static int IsMultiplayerNet;
 static uint32_t UpgradePromptAnswered;
 static char StringTemp[1032];
@@ -143,7 +145,7 @@ static uint32_t message_data(int, int, int, int, int, int) {
 static void synch_obs(int) { event("synch-obs"); }
 static void say_stats_3(char *, int) { event("say-stats"); }
 static int upgrade_prototype(int, int, int, int) { event("upgrade"); return 1; }
-static void consider_designs(uint32_t) { event("consider"); }
+static void consider_designs(int) { event("consider"); }
 
 int __cdecl diplo_lock(int patience);
 void __cdecl diplo_unlock();
@@ -163,7 +165,7 @@ static void reset_state() {
     events.clear(); item_ids.clear(); last_popup_label.clear();
     last_popup_picture.clear();
     ProtoSortCount = 1; ProtoSortIds[0] = 0;
-    GameState = 0x40; IsMultiplayerNet = 0;
+    GameDataStateStorage.fields_.game_state_ = 0x40; IsMultiplayerNet = 0;
     popup_answer = 0; popup_selection = 1;
     DesignConsiderOverride = 0;
 }
@@ -234,7 +236,7 @@ static int test_retire_all_variant() {
     assert(last_popup_picture == "unit_sm.pcx");
     reset_state();
     window.factionID_ = 3;
-    GameState = 0x40;
+    GameDataStateStorage.fields_.game_state_ = 0x40;
     popup_answer = 2;
     for (int i = 0; i < 512; ++i) {
         VehPrototypes[i].obsolete_factions = 0xFF;

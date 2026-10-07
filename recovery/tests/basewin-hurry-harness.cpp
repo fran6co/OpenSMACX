@@ -14,11 +14,14 @@ struct RuleSet { unsigned retool_exemption; } Rules;
 struct Projects { int voice_of_planet_;
  int &voice_of_planet() { return voice_of_planet_; }
  const int &voice_of_planet() const { return voice_of_planet_; }
-} SecretProject;
+};
+struct GameDataStateFields { uint32_t game_state_; Projects secret_project_; };
+struct GameDataStateWindow { GameDataStateFields fields_; };
+GameDataStateWindow GameDataStateStorage;
 struct FacilityRecord { int cost, name; } Facility[128];
 struct Prototype { char veh_name[32]; } VehPrototypes[128];
 struct StringTableType { char *get(int) { return (char*)"facility"; } } StringTable;
-int IsMultiplayerNet, ConsoleControlTurnActive; uint32_t GameState;
+int IsMultiplayerNet, ConsoleControlTurnActive;
 int CurrentFactionEnergyReserves, ParseNumTable[8], ParseSays[8], ParseNums[8], ParseNumCalls;
 char StringTemp[1032], *ScriptPopupFile=(char*)"SCRIPT", PopupStartCaption[256];
 char *test_dialog_text=(char*)"dialog";
@@ -60,13 +63,13 @@ void InfoWin::on_redraw(){} int NetDaemon::lock_base(int,int,int,int){int i=lock
 void NetDaemon::unlock_base(int){++unlock_calls;} int Popup::exec(int,int(__cdecl*c)()){if(c)c();return exec_result;}
 void Popup::start(char*,const char*,int,char*,int,GraphicWin*){++popup_start_calls;}
 void Popup::start(char*,const char*,int,char*,int,int){++popup_start_calls;}
-int pop_expire(){++callback_called;if(callback_mode){if(focused_id_pointer)*focused_id_pointer=1;BaseIDCurrentSelected=1;BaseCurrent=&Bases[1];if(fail_after_exec_state)GameState|=0x800;}return 0;}
+int pop_expire(){++callback_called;if(callback_mode){if(focused_id_pointer)*focused_id_pointer=1;BaseIDCurrentSelected=1;BaseCurrent=&Bases[1];if(fail_after_exec_state)GameDataStateStorage.fields_.game_state_|=0x800;}return 0;}
 
 /* RECOVERED_SOURCE_INSERTION_POINT */
 
 void reset(){memset(Bases,0,sizeof(Bases));memset(PlayersData,0,sizeof(PlayersData));memset(Players,0,sizeof(Players));
   memset(ParseNumTable,0,sizeof(ParseNumTable));memset(ParseSays,0,sizeof(ParseSays));memset(ParseNums,0,sizeof(ParseNums));
-  IsMultiplayerNet=ConsoleControlTurnActive=0;GameState=0x80;CurrentFactionEnergyReserves=1000;SecretProject.voice_of_planet()=-1;
+  memset(&GameDataStateStorage,0,sizeof(GameDataStateStorage));IsMultiplayerNet=ConsoleControlTurnActive=0;GameDataStateStorage.fields_.game_state_=0x80;CurrentFactionEnergyReserves=1000;GameDataStateStorage.fields_.secret_project_.voice_of_planet()=-1;
   Rules.retool_exemption=0;lock_result_count=lock_calls=unlock_calls=0;memset(lock_results,0,sizeof(lock_results));
   exec_result=1;ask_result=user_payment=text_open_result=0;callback_mode=callback_called=fail_after_exec_state=0;focused_id_pointer=0;
   base_compute_calls=0;base_compute_focus_to=-1;radius_increment_mode=0;veh_cost_switch_to=factor_switch_call=factor_switch_to=-1;

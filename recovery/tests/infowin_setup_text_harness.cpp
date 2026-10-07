@@ -33,7 +33,9 @@ struct Buffer {
     RECT work;
     std::vector<RECT> boxes;
     std::vector<RECT> writes;
+    std::vector<int> box_first_colors, box_second_colors, fill_colors;
     std::vector<int> line_colors;
+    std::vector<int> line_from_x, line_to_x;
     std::vector<int> line_from_y;
     std::vector<int> line_to_y;
     int frame_calls;
@@ -61,9 +63,13 @@ struct Buffer {
         }
         return 1;
     }
-    int box(RECT *r, int, int) { boxes.push_back(*r); return 1; }
-    int fill(RECT *, int) { return 1; }
-    int line(int, int y0, int, int y1, int color) {
+    int box(RECT *r, int first, int second) {
+        boxes.push_back(*r); box_first_colors.push_back(first);
+        box_second_colors.push_back(second); return 1;
+    }
+    int fill(RECT *, int color) { fill_colors.push_back(color); return 1; }
+    int line(int x0, int y0, int x1, int y1, int color) {
+        line_from_x.push_back(x0); line_to_x.push_back(x1);
         line_colors.push_back(color); line_from_y.push_back(y0);
         line_to_y.push_back(y1); return 1;
     }
@@ -92,9 +98,25 @@ struct RuleItem { int name; };
 struct EnergyItem { int abbrev; };
 struct MightItem { int adj; };
 struct NaturalItem { int name_short; };
+struct GameDataLockMaskView { uint32_t enable_mask_; };
+struct GameDataStateWindowFields {
+    uint32_t game_state_, game_rules_;
+    int turn_current_num_;
+    GameDataLockMaskView lock_masks_;
+    uint32_t faction_rankings_[8];
+    uint32_t ranking_faction_id_unk1_;
+};
+struct GameDataStateWindow { GameDataStateWindowFields fields_; };
+struct ScenarioSaveState {
+    int objective_req_victory;
+    uint32_t objectives_sudden_death_victory;
+    uint32_t objective_achieve_points;
+};
 
 static Player Players[MaxPlayerNum];
 static PlayerData PlayersData[MaxPlayerNum];
+static GameDataStateWindow GameDataStateStorage;
+static ScenarioSaveState ScenarioSave;
 static RuleItem Technology[MaxTechnologyNum];
 static EnergyItem Energy[3];
 static int Repute[8];
@@ -102,19 +124,15 @@ static MightItem Might[8];
 static int Mood[16];
 static NaturalItem Natural[16];
 static RuleItem Terraforming[64];
-static uint32_t FactionRankings[8];
 static uint16_t FactionRankingHistory[MaxPlayerNum * MaxRankingHistoryTurns];
 static uint32_t FactionRankingsUnk[8];
 static int InfoFactionTextColors[8], InfoFactionShadowColors[8];
 static int ChatItemIdTable[8], ChatShadowColors[8];
-static int ObjectiveReqVictory, ObjectivesSuddenDeathVictory, ObjectiveAchievePts;
-static int TurnCurrentNum, RankingFactionIDUnk1;
 static int MapWinCaptionScale, MapWinCaptionDivisor, Language;
 static int EnergyEconomyTotal, NetIncomeGlobal, BreakthroughTurnsGlobal;
 static int MapEditorPaintId, MapEditorBrushId, MapLongitudeBounds, MapLatitudeBounds;
 static int MapIsFlat, MapCloudCover;
 static char MapFilePath[80];
-static uint32_t LockEnableMask, GameState, GameRules;
 static uint32_t DiploFrictionFactionID;
 static int DiploFriction;
 static int GenderDefault, PluralityDefault;
@@ -185,12 +203,19 @@ static void reset_fixture(InfoWin &win, int kind) {
     memset(&win, 0, sizeof(win));
     memset(Players, 0, sizeof(Players));
     memset(PlayersData, 0, sizeof(PlayersData));
-    memset(FactionRankings, 0, sizeof(FactionRankings));
+    memset(&GameDataStateStorage, 0, sizeof(GameDataStateStorage));
+    memset(&ScenarioSave, 0, sizeof(ScenarioSave));
+    memset(GameDataStateStorage.fields_.faction_rankings_, 0, sizeof(GameDataStateStorage.fields_.faction_rankings_));
     memset(FactionRankingHistory, 0, sizeof(FactionRankingHistory));
     memset(FactionRankingsUnk, 0, sizeof(FactionRankingsUnk));
     MainInterfaceGlobal.boxes.clear();
     MainInterfaceGlobal.writes.clear();
     MainInterfaceGlobal.line_colors.clear();
+    MainInterfaceGlobal.line_from_x.clear();
+    MainInterfaceGlobal.line_to_x.clear();
+    MainInterfaceGlobal.box_first_colors.clear();
+    MainInterfaceGlobal.box_second_colors.clear();
+    MainInterfaceGlobal.fill_colors.clear();
     MainInterfaceGlobal.line_from_y.clear();
     MainInterfaceGlobal.line_to_y.clear();
     MainInterfaceGlobal.frame_calls = 0;
@@ -224,15 +249,15 @@ static void reset_fixture(InfoWin &win, int kind) {
     last_special_plurality = -1;
     last_council_faction = -1;
     MapWinCaptionScale = MapWinCaptionDivisor = 0;
-    ObjectiveReqVictory = 9000;
-    ObjectivesSuddenDeathVictory = 9000;
-    ObjectiveAchievePts = 0;
-    TurnCurrentNum = 0;
-    RankingFactionIDUnk1 = 0;
+    ScenarioSave.objective_req_victory = 9000;
+    ScenarioSave.objectives_sudden_death_victory = 9000;
+    ScenarioSave.objective_achieve_points = 0;
+    GameDataStateStorage.fields_.turn_current_num_ = 0;
+    GameDataStateStorage.fields_.ranking_faction_id_unk1_ = 0;
     EnergyEconomyTotal = 40; NetIncomeGlobal = 70; BreakthroughTurnsGlobal = 2;
     Language = 1;
-    GameState = 0x80; GameRules = 0;
-    LockEnableMask = 0xFE00u;
+    GameDataStateStorage.fields_.game_state_ = 0x80; GameDataStateStorage.fields_.game_rules_ = 0;
+    GameDataStateStorage.fields_.lock_masks_.enable_mask_ = 0xFE00u;
     MapEditorPaintId = 0; MapEditorBrushId = 0;
     MapLongitudeBounds = 128; MapLatitudeBounds = 64; MapIsFlat = 0; MapCloudCover = 2;
     strcpy(MapFilePath, "fixture.sav");
@@ -245,7 +270,7 @@ static void reset_fixture(InfoWin &win, int kind) {
         Players[i].noun_gender = i;
         Players[i].is_noun_plural = i & 1;
         Players[i].is_leader_female = i & 1;
-        FactionRankings[i] = static_cast<uint32_t>(i);
+        GameDataStateStorage.fields_.faction_rankings_[i] = static_cast<uint32_t>(i);
         InfoFactionTextColors[i] = 20 + i;
         InfoFactionShadowColors[i] = 40 + i;
         ChatItemIdTable[i] = 60 + i;
@@ -490,7 +515,7 @@ static void test_case_six_uses_fresh_live_faction_fallback() {
 
 static void test_chart_counts_and_index_seven() {
     InfoWin win; reset_fixture(win, 4);
-    TurnCurrentNum = 300;
+    GameDataStateStorage.fields_.turn_current_num_ = 300;
     FactionRankingHistory[3 * MaxPlayerNum + 1] = 0xFF9C;
     win.setup_text();
     assert(win.row_count_[1] == 8);
@@ -499,6 +524,11 @@ static void test_chart_counts_and_index_seven() {
     assert(win.row_text_[1][0][0] != 0);
     assert(!MainInterfaceGlobal.line_from_y.empty());
     assert(MainInterfaceGlobal.line_colors[0] == InfoFactionShadowColors[1]);
+    assert(MainInterfaceGlobal.line_from_x.size() == 1043);
+    assert(MainInterfaceGlobal.line_from_x[0] == 3);
+    assert(MainInterfaceGlobal.line_to_x[0] == 4);
+    assert(MainInterfaceGlobal.line_from_y[0] == 126);
+    assert(MainInterfaceGlobal.line_to_y[0] == 226);
     assert(win.row_text_[1][1][0] != 0 && win.row_text_[1][7][0] != 0);
     assert(strcmp(win.row_text_[1][1], "Noun7") == 0);
     assert(strcmp(win.row_text_[1][7], "Noun1") == 0);
@@ -510,6 +540,15 @@ static void test_chart_counts_and_index_seven() {
     assert(win.row_count_[1] == 1);
     assert(rankings_calls == 1 && last_rankings_arg == 0);
     assert(MainInterfaceGlobal.boxes.size() == 7);
+    assert(MainInterfaceGlobal.boxes[0].left == 9);
+    assert(MainInterfaceGlobal.boxes[0].right == 32);
+    assert(MainInterfaceGlobal.boxes[0].bottom == 125);
+    assert(MainInterfaceGlobal.box_first_colors[0] == InfoFactionShadowColors[1]);
+    assert(MainInterfaceGlobal.box_second_colors[0] == InfoFactionShadowColors[1]);
+    assert(MainInterfaceGlobal.fill_colors.size() == 7);
+    assert(MainInterfaceGlobal.fill_colors[0] == InfoFactionTextColors[1]);
+    assert(MainInterfaceGlobal.boxes[6].left == 147);
+    assert(MainInterfaceGlobal.boxes[6].right == 170);
     assert(MainInterfaceGlobal.boxes[6].top < MainInterfaceGlobal.boxes[0].top);
     assert(MainInterfaceGlobal.writes.size() == 7);
     for (int i = 0; i < 7; ++i) {
@@ -537,7 +576,7 @@ static void test_kind_six_typed_winners_and_region_range() {
     PlayersData[2].tech_ranking = 35000;
     PlayersData[3].tech_ranking = -4;
     PlayersData[4].tech_ranking = 100000;
-    LockEnableMask &= ~(1u << (8 + 4)); // Inactive leader must not win.
+    GameDataStateStorage.fields_.lock_masks_.enable_mask_ &= ~(1u << (8 + 4)); // Inactive leader must not win.
     PlayersData[2].mil_strength_1 = 77;
     PlayersData[3].mil_strength_1 = 77; // Later equal candidate wins.
     PlayersData[2].pop_total = 100;
@@ -563,11 +602,11 @@ static void test_kind_six_typed_winners_and_region_range() {
     assert(strstr(win.row_text_[1][4], "L607") != 0);
     assert_row_aggregation(win, 1);
 
-    RankingFactionIDUnk1 = 2;
+    GameDataStateStorage.fields_.ranking_faction_id_unk1_ = 2;
     reset_fixture(win, 6);
-    RankingFactionIDUnk1 = 2;
-    FactionRankings[6] = 3;
-    FactionRankings[7] = 6;
+    GameDataStateStorage.fields_.ranking_faction_id_unk1_ = 2;
+    GameDataStateStorage.fields_.faction_rankings_[6] = 3;
+    GameDataStateStorage.fields_.faction_rankings_[7] = 6;
     win.setup_text();
     assert(win.row_count_[1] == 6);
     assert(strstr(win.row_text_[1][5], "Leader6") != 0);

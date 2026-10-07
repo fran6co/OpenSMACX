@@ -164,6 +164,7 @@ static void reset_case() {
     parse_value = -1;
     NetDaemonNet.sends = NetDaemonNet.pid_calls = 0;
     NetWinSessionOptions = {};
+    NetWinSessionOptions.rule_bits_b_ = 0x76543210u;
     NetWinSessionData = {};
     NetWinSessionData.state_[0x20] = 0xA5;
     NetWinScenarioStorage[0] = 0;
@@ -198,6 +199,11 @@ int main() {
         assert(faction_sends == 0);
         assert(NetDaemonNet.sizes[0] == 0x28 && NetDaemonNet.sizes[1] == 0xA74);
         assert(NetDaemonNet.sizes[2] == 0x178);
+        const NetWinSessionOptionsState &early =
+            reinterpret_cast<const NetWinSessionOptionsPacket *>(
+                NetDaemonNet.payloads[0])->options_;
+        assert(early.status_ == 0xFF && early.difficulty_ == 5);
+        assert(early.rule_bits_a_ == 0xA5A55A5Au);
         assert(reinterpret_cast<NetWinSessionOptionsPacket *>(NetDaemonNet.payloads[0])->opcode_ == 0x2F02);
         assert(reinterpret_cast<NetWinLobbyFullPacket *>(NetDaemonNet.payloads[1])->header_.flags_ == 0x4F);
         assert(reinterpret_cast<NetWinSessionPacket *>(NetDaemonNet.payloads[2])->header_.opcode_ == 3);
@@ -248,6 +254,14 @@ int main() {
         assert(NetWinSessionData.state_[0x20] == 0);
         assert(std::strcmp(NetWinScenarioStorage, "scenario.scn") == 0);
         assert(NetDaemonNet.sends == 4);
+        const NetWinSessionOptionsState &published =
+            reinterpret_cast<const NetWinSessionOptionsPacket *>(
+                NetDaemonNet.payloads[0])->options_;
+        assert(published.status_ == 0x0F);
+        assert(published.difficulty_ == 4);
+        assert(published.rule_bits_a_ == 0x13572468u);
+        assert(published.rule_bits_c_ == 0x10u);
+        assert(published.rule_bits_b_ == 0x76543210u);
     }
     {
         reset_case();

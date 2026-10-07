@@ -287,7 +287,9 @@ typedef unsigned int DWORD;
 struct RECT { int left, top, right, bottom; };
 int WinScreenWidth = 800;
 int WinScreenHeight = 600;
-int GamePreferences = 0x8000400;
+struct GameDataStateFields { int game_preferences_; };
+struct GameDataStateWindow { GameDataStateFields fields_; };
+GameDataStateWindow GameDataStateStorage = {{0x8000400}};
 int IsMultiplayerNet = 0;
 int MenuSelection = 8;
 int WinFlipClipped = 0;
@@ -393,7 +395,7 @@ int main() {
   // The original disabled/networked path branches around clip restoration and
   // WinFlipClipped clearing; hide still closes buffers and the owner window.
   AlphaMenu networked;
-  GamePreferences = 0;
+  GameDataStateStorage.fields_.game_preferences_ = 0;
   IsMultiplayerNet = 1;
   WinFlipClipped = 7;
   const int clips_before = ScreenBuffer.clip_count;

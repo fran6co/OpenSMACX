@@ -1784,7 +1784,8 @@ static_assert(sizeof(NetWinLobbySinglePacket) == 0x18C,
 
 // The pickers send the complete 0x18-byte ninth-slot state after a 16-byte
 // message header. The protocol leaves the intervening header words reserved;
-// the coordinator-approved packet form initializes those bytes to zero.
+// the pinned pick_map paths assign only opcode/options and send those reserved
+// bytes uninitialized. Other picker initialization is a separate obligation.
 struct NetWinSessionOptionsPacket {
     uint16_t opcode_;
     uint8_t reserved_[0x0E];
@@ -2107,7 +2108,6 @@ void NetWin::pick_map() {
 
             NetDaemonNet.pid_2_idx(NetWinPlayerId);
             NetWinSessionOptionsPacket options_packet;
-            memset(&options_packet, 0, sizeof(options_packet));
             options_packet.opcode_ = 0x2F02;
             options_packet.options_ = NetWinSessionOptions;
             NetDaemonNet.Net::send(&options_packet, sizeof(options_packet),
@@ -2171,11 +2171,9 @@ void NetWin::pick_map() {
             NetWinSessionOptions.status_ =
                 static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8);
             NetWinSessionOptions.rule_bits_a_ = GameDataStateStorage.fields_.game_rules_;
-            NetWinSessionOptions.rule_bits_b_ = GameDataStateStorage.fields_.game_state_ & 0x01800000u;
 
             NetDaemonNet.pid_2_idx(NetWinPlayerId);
             NetWinSessionOptionsPacket options_packet;
-            memset(&options_packet, 0, sizeof(options_packet));
             options_packet.opcode_ = 0x2F02;
             options_packet.options_ = NetWinSessionOptions;
             NetDaemonNet.Net::send(&options_packet, sizeof(options_packet),

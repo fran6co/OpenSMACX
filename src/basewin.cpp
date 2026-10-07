@@ -6421,6 +6421,7 @@ void BaseWin::draw_commerce(int update_mode) {
 
             StringTemp[0] = 0;
             const int detail_y = row_y + font.line_advance();
+            int text_end;
             if (own_sanctions != 0 || partner_sanctions != 0) {
                 canvas->set_text_color(TextColourTable[110], TextColourTable[111], 1, 1);
                 strcat(StringTemp, label_get(450));
@@ -6431,24 +6432,24 @@ void BaseWin::draw_commerce(int update_mode) {
                 strcat(StringTemp, turns);
                 strcat(StringTemp, ")");
                 CharUpperA(StringTemp);
-                canvas->write_l(StringTemp, report.left + 5, detail_y,
-                                strlen(StringTemp));
+                text_end = canvas->write_l(StringTemp, report.left + 5,
+                                           detail_y, strlen(StringTemp));
             } else {
                 strcat(StringTemp, label_get((PlayersData[owner].diplo_treaties[partner]
                                               & DTREATY_PACT) != 0 ? 645 : 644));
-                int text_end = canvas->write_l(StringTemp, report.left + 5,
-                                               detail_y, strlen(StringTemp));
-                if (BaseCommercePartnerReceipts[slot] != BaseCommerceReceipts[slot]) {
-                    StringTemp[0] = 0;
-                    strcat(StringTemp, " (");
-                    strcat(StringTemp, label_get(648));
-                    strcat(StringTemp, " +");
-                    char partner_amount[32];
-                    _itoa(BaseCommercePartnerReceipts[slot], partner_amount, 10);
-                    strcat(StringTemp, partner_amount);
-                    strcat(StringTemp, ")");
-                    canvas->write_l(StringTemp, text_end, detail_y, strlen(StringTemp));
-                }
+                text_end = canvas->write_l(StringTemp, report.left + 5,
+                                           detail_y, strlen(StringTemp));
+            }
+            if (BaseCommercePartnerReceipts[slot] != BaseCommerceReceipts[slot]) {
+                StringTemp[0] = 0;
+                strcat(StringTemp, " (");
+                strcat(StringTemp, label_get(648));
+                strcat(StringTemp, " +");
+                char partner_amount[32];
+                _itoa(BaseCommercePartnerReceipts[slot], partner_amount, 10);
+                strcat(StringTemp, partner_amount);
+                strcat(StringTemp, ")");
+                canvas->write_l(StringTemp, text_end, detail_y, strlen(StringTemp));
             }
             row_y += row_pitch;
         }

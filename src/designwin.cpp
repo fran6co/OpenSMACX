@@ -2800,60 +2800,96 @@ void DesignWin::suggest_abil(int ability) {
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00434BC0 ?draw_chassis@DesignWin@@QAEXH@Z 0x00434BC0-0x00434F36
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00434bc0.cpp", "docs/recovery/member-accesses.csv"], "reason": "Partial typed recovery draws the chassis panel caption, selected chassis name and model preview; the seed retains unresolved specification text and palette behavior."}
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:434BC0..434F36", "historical seed git:20b88b523:src/recovered/units/00434bc0.cpp preserves the full renderer, palette sequence, imported uppercase call, title/name wrap branch, unchecked triad lookup and exact 0x90 chassis stride", "src/designwin.h:chassis_panel_rect_, component fields, font1_/font2_, caviar_; src/veh.h:RulesChassis/Chassis/Triad; src/palette.cpp:TextColourTable; src/strings.h:StringTemp/StringTable"], "reason": "Restore the complete chassis editor panel through the real DesignWin, Caviar, RulesChassis, string and palette owners. Preserve native callback order, line geometry, width-dependent wrapping and unchecked localized triad indexing; retain the original identity and span without a new byte claim."}
+static int designwin_panel_signed(uint32_t bits);
+static int designwin_panel_add(int left, int right);
+static int designwin_panel_subtract(int left, int right);
+static int designwin_panel_font_height(int extra, int line_height, int height);
+static void designwin_panel_append_label(char *output, int label_id);
+extern int TextColourTable[195];
+
 void DesignWin::draw_chassis(int redraw) {
     (void)redraw;
-    Buffer *canvas = static_cast<Buffer *>(this);
-    RECT preview = chassis_panel_rect_;
-    canvas->set_clip(&preview);
-    buffer_.copy(canvas, &preview);
+    Buffer *const canvas = static_cast<Buffer *>(this);
+    RECT rect = chassis_panel_rect_;
+    canvas->set_clip(&rect);
+    buffer_.copy(canvas, &rect);
 
-    const int title_height = font2_.unk_1_ < 0
-        ? font2_.line_height_ : font2_.height_ + font2_.unk_1_;
-    RECT title = preview;
-    title.bottom = title.top + title_height;
-    canvas->set_text_color(0xE0, -1, 1, 1);
-    char *caption = label_get(0x140 / 4);
-    canvas->write_cent_l(&font2_, caption, &title,
-                         static_cast<int>(strlen(caption)));
+    RECT rect2;
+    rect2.left = rect.left;
+    rect2.right = rect.right;
 
+    const int title_height = designwin_panel_font_height(
+        font2_.unk_1_, font2_.line_height_, font2_.height_);
+    rect.top = designwin_panel_add(rect.top, title_height);
+    // Native initializes only left/right/top here; rect2.bottom remains the
+    // original stack value passed through the Buffer call.
+    rect2.top = designwin_panel_subtract(rect.top, title_height);
+
+    StringTemp[0] = '\0';
+    designwin_panel_append_label(StringTemp, 0x140);
+    CharUpperA(StringTemp);
+    canvas->set_text_color(TextColourTable[156], TextColourTable[157], 1, 1);
+    canvas->write_cent_l(&font2_, StringTemp, &rect2,
+                         static_cast<int>(strlen(StringTemp)));
+
+    caviar_.reset_objects();
     const int chassis = static_cast<int>(protoChassisType_);
-    preview.top += title_height + font1_.height_;
-    preview.bottom -= static_cast<int>(font1_.height_) * 2 + 5;
+    const int model_bottom = designwin_panel_subtract(
+        rect.bottom,
+        designwin_panel_add(
+            designwin_panel_signed(static_cast<uint32_t>(font1_.height_) * 2u),
+            5));
+    rect.bottom = model_bottom;
     vehdraw_construct_chassis(static_cast<int>(factionID_), chassis,
                               static_cast<int>(protoWeaponType_), 0,
                               static_cast<int>(protoReactorType_), &caviar_);
     caviar_.set_scaling(0.05f);
-    caviar_.set_scene_rotation(0.5233333706855774f, 0, 0);
-    caviar_.render(canvas, (preview.left + preview.right) / 2,
-                   (preview.top + preview.bottom) / 2, 2);
+    caviar_.set_scene_rotation(0.5233333706855774f, 0.0f, 0.0f);
+    caviar_.render(canvas,
+        designwin_panel_add(rect.right, rect.left) / 2,
+        designwin_panel_add(rect.bottom, rect.top) / 2, 2);
 
     canvas->set_font(&font1_, 0, 0, 0);
-    RECT detail = preview;
-    detail.top = preview.bottom;
-    detail.bottom = detail.top + font1_.height_;
-    char *name = StringTable.get(
-        reinterpret_cast<int>(Chassis[chassis].offsv_1_name));
-    if (name != 0) {
-        canvas->write_cent_l(name, &detail, static_cast<int>(strlen(name)));
-    }
+    rect2.top = rect.bottom;
+    rect.bottom = designwin_panel_add(rect.bottom, font1_.height_);
+    canvas->set_text_color(TextColourTable[158], TextColourTable[159], 1, 1);
 
-    detail.top += font1_.height_ + 3;
-    detail.bottom += font1_.height_ + 3;
-    const int triad = Chassis[chassis].triad;
-    if (triad < MaxTriadNum) {
-        StringTemp[0] = '\0';
-        char *triad_name = StringTable.get(reinterpret_cast<int>(Triad[triad]));
-        if (triad_name != 0) {
-            strcat(StringTemp, triad_name);
-            strcat(StringTemp, SpaceText);
-        }
-        char speed[16];
-        _itoa(static_cast<int>(Chassis[chassis].speed), speed, 10);
-        strcat(StringTemp, speed);
-        canvas->write_cent_l(StringTemp, &detail,
+    StringTemp[0] = '\0';
+    strcat(StringTemp, StringTable.get(static_cast<int>(
+        reinterpret_cast<intptr_t>(Chassis[chassis].offsv_1_name))));
+    CharUpperA(StringTemp);
+
+    const int available_width = designwin_panel_subtract(rect.right, rect.left);
+    const int required_width = font1_.width(StringTemp);
+    if (available_width < required_width) {
+        const int line_height = designwin_panel_font_height(
+            font2_.unk_1_, font2_.line_height_, font2_.height_);
+        rect.bottom = designwin_panel_subtract(rect.bottom, line_height);
+        rect2.top = designwin_panel_subtract(rect2.top, line_height);
+        canvas->wrap_cent(StringTemp, &rect);
+        rect2.top = designwin_panel_add(rect2.top, line_height);
+        rect.bottom = designwin_panel_add(rect.bottom, line_height);
+    } else {
+        canvas->write_cent_l(StringTemp, &rect,
                              static_cast<int>(strlen(StringTemp)));
     }
+
+    const int detail_advance = designwin_panel_add(font1_.height_, 3);
+    rect2.top = designwin_panel_add(rect2.top, detail_advance);
+    rect.bottom = designwin_panel_add(rect.bottom, detail_advance);
+    canvas->set_text_color(TextColourTable[160], TextColourTable[161], 1, 1);
+
+    StringTemp[0] = '\0';
+    const unsigned char triad = Chassis[chassis].triad;
+    strcat(StringTemp, StringTable.get(static_cast<int>(
+        reinterpret_cast<intptr_t>(Triad[triad]))));
+    strcat(StringTemp, SpaceText);
+    char speed[80];
+    _itoa(static_cast<int>(Chassis[chassis].speed), speed, 10);
+    strcat(StringTemp, speed);
+    canvas->write_cent_l(StringTemp, &rect,
+                         static_cast<int>(strlen(StringTemp)));
 }
 
 // Palette storage is owned by palette.cpp; VW00 is owned by caviar.cpp.
@@ -4256,16 +4292,8 @@ void DesignWin::draw_stack() {
 // un-obsoleted), otherwise the current slot is rebuilt, a free one is taken,
 // or an occupied one is overwritten behind its confirmation popup.
 int DesignWin::design_it() {
-    // Unhomed callees, called through the original bodies' addresses like the
-    // other pending seams: name_proto (0x0057E040), retire_proto (0x0057F1D0)
-    // and prune_protos (0x0057F4B0) have no tree homes yet (their sibling
-    // make_proto is veh.h's).
-    typedef void(__cdecl *name_proto_seam)(char *, int, int, int, int, int, int, int);
-    typedef void(__cdecl *retire_proto_seam)(int, int);
-    typedef void(__cdecl *prune_protos_seam)(int, int, int);
-    typedef int(__cdecl *diplo_lock_seam)(int);
-    typedef void(__cdecl *diplo_unlock_seam)();
-
+    // The vehicle owner supplies these cdecl APIs for naming, retirement,
+    // and pruning; calls below use their source-owned declarations.
     char *name = prototype_name_;
 
     // ---- scan all 128 slots (own 64 + up to 64 borrowed) ------------------
@@ -4434,19 +4462,14 @@ int DesignWin::design_it() {
                     return 0;
                 }
                 if (!IsMultiplayerNet) {
-                    reinterpret_cast<retire_proto_seam>(static_cast<unsigned long>(
-                        0x0057F1D0))(protoID_, factionID_);
+                    retire_proto(static_cast<int>(protoID_), static_cast<int>(factionID_));
                 } else {
-                    typedef int(__cdecl *diplo_lock_seam)(int);
-                    if (reinterpret_cast<diplo_lock_seam>(
-                            static_cast<unsigned long>(0x00539820))(0x32)
-                        != 0) {
+                    if (diplo_lock(0x32) != 0) {
                         return 0;
                     }
                     message_data(0x2415, 0, protoID_, factionID_, 0, 0);
                     NetDaemonNet.await_exec(0);
-                    reinterpret_cast<diplo_unlock_seam>(
-                        static_cast<unsigned long>(0x005398C0))();
+                    diplo_unlock();
                 }
             }
         }
@@ -4459,24 +4482,30 @@ settled:
     if (strlen(name) == 0) {
         // No name typed: generate one straight into the name buffer and trim
         // it to the field's 31 characters.
-        reinterpret_cast<name_proto_seam>(static_cast<unsigned long>(0x0057E040))(
-            name, protoID_, factionID_, protoChassisType_, protoWeaponType_,
-            protoArmorType_, protoAbilityFlags_, protoReactorType_);
+        name_proto(name, static_cast<int>(protoID_), static_cast<int>(factionID_),
+                   static_cast<int>(protoChassisType_),
+                   static_cast<int>(protoWeaponType_),
+                   static_cast<int>(protoArmorType_),
+                   static_cast<int>(protoAbilityFlags_),
+                   static_cast<int>(protoReactorType_));
         name[0x1F] = '\0';
         VehPrototypes[protoID_].flags &= 0xFD;
     } else {
         char generated[256];
-        reinterpret_cast<name_proto_seam>(static_cast<unsigned long>(0x0057E040))(
-            generated, protoID_, factionID_, protoChassisType_, protoWeaponType_,
-            protoArmorType_, protoAbilityFlags_, protoReactorType_);
+        name_proto(generated, static_cast<int>(protoID_),
+                   static_cast<int>(factionID_),
+                   static_cast<int>(protoChassisType_),
+                   static_cast<int>(protoWeaponType_),
+                   static_cast<int>(protoArmorType_),
+                   static_cast<int>(protoAbilityFlags_),
+                   static_cast<int>(protoReactorType_));
         if (strcmp(generated, name) != 0) {
             VehPrototypes[protoID_].flags |= PROTO_CUSTOM_NAME_SET;
         }
     }
     strcpy(VehPrototypes[protoID_].veh_name, name);
     synch_proto(protoID_);
-    reinterpret_cast<prune_protos_seam>(static_cast<unsigned long>(0x0057F4B0))(
-        factionID_, protoID_, 1);
+    prune_protos(static_cast<int>(factionID_), static_cast<int>(protoID_), 1);
     return 1;
 }
 
@@ -4570,14 +4599,12 @@ void DesignWin::draw_flash() {
         StringTemp[0] = '\0';
         if (shown == 0x3F) {
             if (strlen(name) == 0) {
-                // Unhomed name_proto (0x0057E040) - see design_it.
-                typedef void(__cdecl *name_proto_seam)(char *, int, int, int,
-                                                       int, int, int, int);
-                reinterpret_cast<name_proto_seam>(
-                    static_cast<unsigned long>(0x0057E040))(
-                    StringTemp, 0x3F, factionID_, protoChassisType_,
-                    protoWeaponType_, protoArmorType_, protoAbilityFlags_,
-                    protoReactorType_);
+                name_proto(StringTemp, 0x3F, static_cast<int>(factionID_),
+                           static_cast<int>(protoChassisType_),
+                           static_cast<int>(protoWeaponType_),
+                           static_cast<int>(protoArmorType_),
+                           static_cast<int>(protoAbilityFlags_),
+                           static_cast<int>(protoReactorType_));
             } else {
                 strcat(StringTemp, name);
             }

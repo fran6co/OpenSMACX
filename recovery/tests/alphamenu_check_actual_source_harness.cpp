@@ -1,13 +1,13 @@
-// Host fixture for the assembled source-shaped AlphaMenu::check candidate.
-// This includes the candidate definition directly (not the retired seed).
-// It is intentionally ignored and uncompiled here; root must replace this
-// include with its source-extraction fixture when the candidate is reviewed.
+// Host fixture for the current source-extracted AlphaMenu::check definition.
+// Service doubles test bounded behavior, not native layout or game runtime.
 #include <cassert>
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
 #include <string>
 #include <vector>
+
+static const uint32_t BIT_FARM = 0x8000u;
 
 struct Op { char kind; int menu; int item; std::string text; };
 static std::vector<Op> operations;
@@ -149,12 +149,13 @@ static void plan_nine_uses_cost_and_turn_label_without_false_guard_fallback() {
     ConsoleGlobal.faction_id_ = 0; Vehs[0].x = 2; Vehs[0].y = 1;
     Vehs[0].proto_id = 0; Vehs[0].faction_id = 0;
     VehPrototypes[0].plan = 9; VehPrototypes[0].chassis_id = 0;
-    Chassis[0].triad = TRIAD_LAND; MapStorage[9].bit = 0x80000000u | 4u;
+    Chassis[0].triad = TRIAD_LAND; MapStorage[9].bit = BIT_FARM | 4u;
     operations.clear(); StringTable.calls = 0; AlphaMenu menu; menu.check(0);
     const int row = find('R', 9, 0x901);
     assert(row >= 0 && operations[row].text.find("Order (2 turns)|Key") != std::string::npos);
     assert(has('E', 3, 0x313) && !has('D', 3, 0x312));
     assert(has('S', 9, 0x9F8) && has('E', 9, 0x9F9));
+    assert(find('T', 9, 1) >= 0); // The farm row uses BIT_FARM.
 }
 
 static void inactive_cursor_or_negative_vehicle_uses_native_fallback_join() {
@@ -273,7 +274,7 @@ static void native_terrain_plan_technology_and_final_gates_are_independent() {
     ConsoleGlobal.faction_id_ = 0; Vehs[0].x = 2; Vehs[0].y = 1;
     Vehs[0].proto_id = 0; Vehs[0].faction_id = 0;
     VehPrototypes[0].plan = 9; VehPrototypes[0].chassis_id = 0;
-    Chassis[0].triad = TRIAD_LAND; MapStorage[9].bit = 0x80000000u | 4u;
+    Chassis[0].triad = TRIAD_LAND; MapStorage[9].bit = BIT_FARM | 4u;
     has_tech_result = 0; forced_unavailable_row = 2;
     operations.clear(); StringTable.calls = 0; AlphaMenu menu; menu.check(0);
     assert(has('E', 6, 0x601) && has('E', 6, 0x61B));

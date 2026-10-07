@@ -30,7 +30,8 @@ extern uint32_t VehTerraformStingLatch;
 extern int TerraformDrownedBaseId;
 int __cdecl shoot(int attacker_faction, int defender_faction, int x, int y);
 int __cdecl planet_busting(int vehicle_id, int x, int y);
-// Prototype naming is mapped but unfinished; retained seed owns the behavior lead.
+// Prototype naming, retirement, and pruning are source-owned in veh.cpp;
+// these cdecl declarations close the DesignWin editor call paths.
 void __cdecl name_proto(char *name, int prototype, int faction, int chassis,
                        int weapon, int armor, int abilities, int reactor);
 int __cdecl propose_proto(int faction_id, int chassis, int weapon, int armor,

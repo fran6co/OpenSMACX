@@ -362,7 +362,7 @@ if (selected_proto.plan != 9) {
     for (int terraform_id = 0; terraform_id != 19; ++terraform_id) {
         const bool row_action_flag =
             (terraform_id != 1 && terraform_id != 6) ||
-            (terraform_id == 1 && (selected_tile->bit & 0x80000000u) != 0) ||
+            (terraform_id == 1 && (selected_tile->bit & BIT_FARM) != 0) ||
             (terraform_id == 6 && (selected_tile->bit & 0x4u) != 0);
         const bool can_build_here = row_action_flag && terrain_avail(
             terraform_id, sea_order_labels, ConsoleGlobal.faction_id_);

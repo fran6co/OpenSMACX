@@ -36,6 +36,10 @@ def test_netwin_color_uses_lobby_and_clone_members(tmp_path: Path) -> None:
 using std::uint8_t;
 using std::uint32_t;
 using std::int8_t;
+// Host behavior control only; native callback calling convention is not tested.
+#ifndef __fastcall
+#define __fastcall
+#endif
 """ + structs + r"""
 NetWinLobbyRow NetWinLobbyRows[8] = {};
 int player_count = 3;
