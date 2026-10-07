@@ -200,8 +200,8 @@ def test_actual_caller_closure_and_argument_contracts() -> None:
 
     flat = extract(kernels, "static int caviar_flat_raster_box(")
     item = extract(kernels, "static int caviar_raster_item_box(")
-    part = extract(kernels, "void __cdecl caviar_draw_part_candidate(")
-    shadow = extract(kernels, "void __cdecl caviar_draw_shadow_candidate(")
+    part = extract(source, "void __cdecl vox_draw_part(")
+    shadow = extract(source, "void __cdecl vox_draw_shadow(")
     clip = extract(source, "void __cdecl caviar_clip_shape(")
     assert "sub_6401b0(&shape->offset_x_," in flat
     assert "&shape->axis_x_, box" in flat

@@ -163,7 +163,8 @@ def test_original_data_origins_and_existing_owner_roles_survive():
     functions = {row.address: row for row in read_file(PRODUCT)}
     for address in (0x63FA80, 0x6401B0, 0x63B11C, 0x63B1BF, 0x63B241):
         row = functions[address]
-        assert row.source_role == "scaffold"
+        assert row.source_role == ("unclassified" if address == 0x6401B0
+                                   else "scaffold")
         assert row.image_spans and row.image_spans[0][0] == address
         assert not row.byte_exact and not row.semantic
 

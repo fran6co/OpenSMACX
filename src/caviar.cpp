@@ -4601,21 +4601,106 @@ void __cdecl caviar_original_666a80(
 }
 
 // 0x0063E950. Eight arguments: the record, the walked node, the part's
-// position and its scaled matrix, both callers' clip blocks, the node's extent
-// and the visibility flag the draw computed.
+// position and its scaled matrix, camera rotation, state direction, shape scale
+// and the visibility flag the draw computed. The matrix/direction inputs are
+// not a pair of clip rectangles.
 OPENSMACX_NOINLINE
 // SEED HISTORY: archived draw seed mapping used FILE mode; current source ownership is a BODY mapping.
 // ORIGINAL: 0x0063E950 sub_63e950 0x0063E950-0x0063EFFF
 // symbol    ?vox_draw_part@@YAXPAUVoxRenderRecord@@PBUCvrShape@@PBUVOX_Vect@@PAUVOX_Matrix@@32MH@Z
 // kind      game
 // TRIED: 8-int __cdecl signature transcribed faithfully from both branches (bit2==0 single-shot with nested bit4 split vs bit2-set do/while loop over pbVar7), following the sibling 0x0063F000's shape; prologue diverges at instr #11 (sub esp/push framing) - not chased further, large FP-heavy function, landed for coverage.
-void __cdecl vox_draw_part(VoxRenderRecord *record, const CvrShape *node,
-                           const VOX_Vect *position, VOX_Matrix *matrix,
-                           VOX_Matrix *camera_rotation,
-                           const VOX_Vect *state_direction, float extent,
-                           int visible) {
-    caviar_draw_part_candidate(record, node, position, matrix,
-                               camera_rotation, state_direction, extent, visible);
+void __cdecl vox_draw_part(
+    VoxRenderRecord *record, const CvrShape *shape,
+    const VOX_Vect *position, VOX_Matrix *part_matrix,
+    VOX_Matrix *camera_rotation, const VOX_Vect *state_direction,
+    float shape_scale, int visible) {
+    CaviarSceneProjectionScratchCandidate &scratch = CaviarSceneProjectionScratch;
+    int clip[4];
+    int item_box[6];
+    int flags = visible != 0;
+
+    sub_63fa80(&part_matrix->values[0][0]);
+    caviar_direction_to_projection_index(part_matrix, state_direction,
+                                         shape_scale, camera_rotation);
+    caviar_clip_record_box(record, &scratch.part_clip_, clip);
+    caviar_build_projection_tables();
+    vox_projection_prepared_ = 0;
+
+    if ((shape->field_0_ & 2) == 0) {
+        int projected[3];
+        caviar_flat_raster_box(shape, position, part_matrix, item_box);
+        if ((shape->field_0_ & 4) != 0) {
+            projected[0] = caviar_round_projection_coordinate(position->values[0]);
+            projected[1] = caviar_round_projection_coordinate(position->values[1]);
+            projected[2] = caviar_round_projection_coordinate(position->values[2]);
+            vox_direction_to_octant(record);
+            flags |= 0x10;
+        } else {
+            const float anchor[3] = {
+                static_cast<float>(shape->raster_origin_[0]),
+                static_cast<float>(shape->raster_origin_[1]),
+                static_cast<float>(shape->raster_origin_[2])
+            };
+            int ignored_offset[2];
+            caviar_project_raster_point(position, part_matrix, anchor, projected,
+                                        ignored_offset);
+        }
+        if (!caviar_intersect_raster_box(item_box, clip)) return;
+        const int contained = caviar_box_is_inside(item_box, clip);
+        if ((shape->field_0_ & 8) != 0) flags |= 0x20;
+        VoxRenderRecord *dispatch =
+            record;
+        if (contained) {
+            dispatch->part_contained_(projected[0], projected[1], projected[2],
+                static_cast<int>(shape->item_count_), shape->item_stream_, flags);
+        } else {
+            dispatch->part_clipped_(projected[0], projected[1], projected[2],
+                clip, static_cast<int>(shape->item_count_), shape->item_stream_, flags);
+        }
+        return;
+    }
+
+    uint32_t visited_items = 0;
+    const CvrRasterItemHeaderCandidate *item =
+        reinterpret_cast<const CvrRasterItemHeaderCandidate *>(shape->item_stream_);
+    if (shape->item_count_ == 0) return;
+    do {
+        int projected[3];
+        int box_offset[2];
+        caviar_raster_item_box(item, position, part_matrix, item_box,
+                               projected, box_offset);
+        if (item_box[4] != 0 && item_box[5] != 0)
+            caviar_apply_projected_offset(item_box, box_offset);
+        if ((item->flags_ & 1) == 0) {
+            flags &= ~0x10;
+        } else {
+            if (vox_projection_prepared_ == 0) vox_direction_to_octant(record);
+            flags |= 0x10;
+        }
+        if (caviar_intersect_raster_box(item_box, clip)) {
+            const int contained = caviar_box_is_inside(item_box, clip);
+            if ((shape->field_0_ & 8) != 0)
+                flags |= 0x20;
+            else
+                flags &= ~0x20;
+            VoxRenderRecord *dispatch =
+                record;
+            if (contained) {
+                dispatch->part_contained_(projected[0], projected[1], projected[2],
+                    static_cast<int>(item->item_count_), item->inline_payload_, flags);
+            } else {
+                dispatch->part_clipped_(projected[0], projected[1], projected[2],
+                    clip, static_cast<int>(item->item_count_), item->inline_payload_, flags);
+            }
+        }
+        visited_items += item->item_count_;
+        const uint32_t extent = (item->flags_ & 1) == 0
+            ? item->item_count_ * 3u
+            : *reinterpret_cast<const uint32_t *>(item->inline_payload_);
+        item = reinterpret_cast<const CvrRasterItemHeaderCandidate *>(
+            item->inline_payload_ + extent);
+    } while (visited_items < shape->item_count_);
 }
 
 // 0x0063F000. Five arguments: the shadow branch's counterpart of the above.
@@ -4625,10 +4710,97 @@ OPENSMACX_NOINLINE
 // symbol    ?vox_draw_shadow@@YAXPAUVoxRenderRecord@@PBUCvrShape@@PBUVOX_Vect@@PAUVOX_Matrix@@PBX@Z
 // kind      game
 // TRIED: 5-int __cdecl signature transcribed faithfully from the two branches (bit2==0 single-shot vs bit2-set do/while loop over pbVar6); prologue diverges at instr #0 (sub esp,0x58 vs push) - not chased further, large FP-heavy function, landed for coverage.
-void __cdecl vox_draw_shadow(VoxRenderRecord *record, const CvrShape *node,
-                             const VOX_Vect *position,
-                             VOX_Matrix *matrix, const void *camera_nonnull) {
-    caviar_draw_shadow_candidate(record, node, position, matrix, camera_nonnull);
+void __cdecl vox_draw_shadow(
+    VoxRenderRecord *record, const CvrShape *shape,
+    const VOX_Vect *position, VOX_Matrix *part_matrix,
+    const void *camera_nonnull) {
+    CaviarSceneProjectionScratchCandidate &scratch = CaviarSceneProjectionScratch;
+    int clip[4];
+    int flags = camera_nonnull != 0;
+    int item_box[6];
+
+    sub_63fa80(&part_matrix->values[0][0]);
+    caviar_clip_record_box(record, &scratch.shadow_clip_, clip);
+    caviar_build_projection_tables();
+    vox_projection_prepared_ = 0;
+
+    if ((shape->field_0_ & 2) == 0) {
+        int projected[3] = {0, 0, 0};
+        if ((shape->field_0_ & 4) != 0) {
+            projected[0] = caviar_round_projection_coordinate(position->values[0]);
+            projected[1] = caviar_round_projection_coordinate(position->values[1]);
+            vox_inverse_direction_to_octant(part_matrix);
+            flags |= 0x10;
+        } else {
+            const float anchor[3] = {
+                static_cast<float>(shape->raster_origin_[0]),
+                static_cast<float>(shape->raster_origin_[1]),
+                static_cast<float>(shape->raster_origin_[2])
+            };
+            int ignored_offset[2];
+            caviar_project_raster_point(position, part_matrix, anchor, projected,
+                                        ignored_offset);
+        }
+        caviar_flat_raster_box(shape, position, part_matrix, item_box);
+        if (!caviar_intersect_raster_box(item_box, clip)) return;
+        const int contained = caviar_box_is_inside(item_box, clip);
+        if ((shape->field_0_ & 8) != 0)
+            flags |= 0x20;
+        else
+            flags &= ~0x20;
+        VoxRenderRecord *dispatch =
+            record;
+        if (contained) {
+            dispatch->shadow_contained_(projected[0], projected[1],
+                static_cast<int>(shape->item_count_), shape->item_stream_, flags);
+        } else {
+            dispatch->shadow_clipped_(projected[0], projected[1], clip,
+                static_cast<int>(shape->item_count_), shape->item_stream_, flags);
+        }
+        return;
+    }
+
+    uint32_t visited_items = 0;
+    const CvrRasterItemHeaderCandidate *item =
+        reinterpret_cast<const CvrRasterItemHeaderCandidate *>(shape->item_stream_);
+    if (shape->item_count_ == 0) return;
+    do {
+        int projected[3];
+        int box_offset[2];
+        caviar_raster_item_box(item, position, part_matrix, item_box,
+                               projected, box_offset);
+        if (item_box[4] != 0 && item_box[5] != 0)
+            caviar_apply_projected_offset(item_box, box_offset);
+        if ((item->flags_ & 1) == 0) {
+            flags &= ~0x10;
+        } else {
+            if (vox_projection_prepared_ == 0)
+                vox_inverse_direction_to_octant(part_matrix);
+            flags |= 0x10;
+        }
+        if (caviar_intersect_raster_box(item_box, clip)) {
+            const int contained = caviar_box_is_inside(item_box, clip);
+            if ((shape->field_0_ & 8) != 0)
+                flags |= 0x20;
+            else
+                flags &= ~0x20;
+            VoxRenderRecord *dispatch =
+                record;
+            if (contained) {
+                dispatch->shadow_contained_(projected[0], projected[1],
+                    static_cast<int>(item->item_count_), item->inline_payload_, flags);
+            } else {
+                dispatch->shadow_clipped_(projected[0], projected[1], clip,
+                    static_cast<int>(item->item_count_), item->inline_payload_, flags);
+            }
+        }
+        visited_items += item->item_count_;
+        const uint32_t extent = (item->flags_ & 1) == 0
+            ? item->item_count_ * 3u
+            : *reinterpret_cast<const uint32_t *>(item->inline_payload_);
+        item = reinterpret_cast<const CvrRasterItemHeaderCandidate *>(
+            item->inline_payload_ + extent);
+    } while (visited_items < shape->item_count_);
 }
 
 /*
