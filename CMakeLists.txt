@@ -122,7 +122,6 @@ set(OPENSMACX_SOURCES
     src/factionprofilewin.cpp
     src/main.cpp
     src/multiwin.cpp
-    src/adjustor_thunks.cpp
     src/midi.cpp
     src/nullsub_thunks.cpp
     src/field_accessors.cpp

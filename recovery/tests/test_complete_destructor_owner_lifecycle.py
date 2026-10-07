@@ -113,7 +113,11 @@ def test_natural_typed_owners_and_only_superseded_seams_are_removed():
     assert re.search(r"class Dialogs\s*:\s*public ListBox,.*?public EditGroup", dialogs_h, re.S)
     assert re.search(r"\bDialogs\s+dialogs_\s*;", basepop_h)
     assert re.search(r"\bPopup\s+popup_\s*;", profile_h)
-    assert not re.search(r"~Dialogs\s*\(", dialogs_h + source("src/dialogs.cpp"))
+    assert re.search(r"virtual\s+~Dialogs\s*\(\s*\)\s*;", dialogs_h)
+    assert "Dialogs::~Dialogs()" in source("src/dialogs.cpp")
+    # Archived seed symbols remain provenance, not active implementations.
+    active_dialogs = re.sub(r"/\*[\s\S]*?\*/", "", source("src/dialogs.cpp"))
+    assert "dialogs_scalar_dtor_redirect" not in active_dialogs
 
     for rel in ("src/leaf_recoveries.cpp", "src/leaf_recoveries.h",
                 "src/listbox.cpp", "src/listbox.h", "src/dialogs.cpp",

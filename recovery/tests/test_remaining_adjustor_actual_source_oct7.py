@@ -81,10 +81,10 @@ def test_all_twelve_full_seed_comment_envelopes_are_archived_in_owners():
 
 
 def test_each_adjustor_identity_has_one_real_class_owner_and_original_member():
-    shim = ROOT / "src/adjustor_thunks.cpp"
+    assert not (ROOT / "src/adjustor_thunks.cpp").exists()
+    assert not (ROOT / "src/adjustor_thunks.h").exists()
     for address, owner, target, _method in EXPECTED:
         owner_path = ROOT / f"src/{owner}.cpp"
-        assert not find_record(shim, address), f"{address:08X} remains in the shim"
         owner_record = find_record(owner_path, address)
         assert len(owner_record) == 1, f"{address:08X} must have one owner mapping"
         assert owner_record[0].mode is Mode.FILE
@@ -117,10 +117,10 @@ def test_radio_and_dialogs_express_the_real_virtual_owner_contracts():
 
 
 def test_scalar_deleting_adjustors_stay_with_real_destructor_owners():
-    shim = ROOT / "src/adjustor_thunks.cpp"
+    assert not (ROOT / "src/adjustor_thunks.cpp").exists()
+    assert not (ROOT / "src/adjustor_thunks.h").exists()
     for address, owner, primary, _helper in DELETING:
         owner_path = ROOT / f"src/{owner}.cpp"
-        assert not find_record(shim, address), f"{address:08X} remains in the shim"
         owner_record = find_record(owner_path, address)
         assert len(owner_record) == 1, f"{address:08X} must have one owner mapping"
         assert owner_record[0].mode is Mode.FILE

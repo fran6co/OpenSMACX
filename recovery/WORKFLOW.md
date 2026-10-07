@@ -24,9 +24,11 @@ and defer prolonged spelling/layout restoration until coverage is complete.
 Build/link, source identity continuity and relevant behavioral checks still apply;
 neither placeholders nor forwarding into the old executable count as recovery.
 Coverage reports must distinguish source placement and body-text presence from
-genuine owner implementation. Manual adapters in `adjustor_thunks.*`,
-`field_accessors.*`, and `nullsub_thunks.*` remain scaffolding, not finished
-implementation coverage. The former `global_arith.*` collection is retired:
+genuine owner implementation. The `adjustor_thunks.*` scaffold collection has been retired after its
+source identities were transferred to genuine class owners; compiler-generated
+entries are annotated in those owners, not in a shared adapter unit. The
+remaining `field_accessors.*` and `nullsub_thunks.*` collections are
+scaffolding, not finished implementation coverage. The former `global_arith.*` collection is retired:
 PrefWin geometry storage/initializers are owned in `prefwin_geometry.*`, and
 the real `SharedWordValue` object with its paired setter/toggle is owned in
 `shared_word.*`. That is genuine source ownership, not evidence for the

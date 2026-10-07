@@ -66,18 +66,30 @@ def test_generated_owner_retains_original_identity_and_history(address, owner, s
             row.levers, row.ruled_out, row.unrecoverable, row.deferred) == (
         old.name, old.image_spans, old.byte_exact, old.semantic, old.kind,
         old.levers, old.ruled_out, old.unrecoverable, old.deferred)
-    assert address not in {r.address for r in read_file(ROOT / "src/adjustor_thunks.cpp")}
     evidence = binding_source.parse((ROOT / owner).read_text(), rows)[row.line]
     assert symbol in "\n".join(evidence["evidence"])
     assert "constructor" in "\n".join(evidence["evidence"]).lower()
 
-@pytest.mark.parametrize("path", ("src/dialogs.cpp", "src/radiobutton.cpp",
-                                   "src/adjustor_thunks.cpp"))
-def test_unmigrated_bodies_keep_their_actual_extraction(path):
-    old = before(path)
+def current_source_records():
+    result = {}
+    for path in (ROOT / "src").rglob("*.cpp"):
+        for row in read_file(path):
+            result.setdefault(row.address, []).append((path, row))
+    return result
+
+
+@pytest.mark.parametrize("path", ("src/dialogs.cpp", "src/radiobutton.cpp"))
+def test_unmigrated_bodies_keep_actual_dialogs_and_radio_extraction(path):
+    # Check this lifecycle migration against its fixed pre-change checkpoint.
+    # BASE remains the original seed-identity reference in the other controls;
+    # intervening reviewed migrations legitimately changed symbols/extraction.
+    raw = subprocess.check_output([
+        "git", "show", "55195bdb7:" + path], cwd=ROOT).decode()
+    old = {row.address: row for row in read_text(raw, ROOT / path)}
     moved = ({address for address, _, _ in SPECS} | MAPWIN_MIGRATED_ADDRESSES
-             | FOLLOW_ON_MIGRATED_ADDRESSES)
-    current = {r.address: r for r in read_file(ROOT / path)}
+             | FOLLOW_ON_MIGRATED_ADDRESSES
+             | {0x406910, 0x407100, 0x4070F0, 0x407280, 0x4072A0})
+    current = {row.address: row for row in read_file(ROOT / path)}
     for address, prior in old.items():
         if address in moved:
             continue
@@ -86,6 +98,28 @@ def test_unmigrated_bodies_keep_their_actual_extraction(path):
                 row.semantic, row.mode, row.extract_error) == (
             prior.name, prior.image_spans, prior.byte_exact,
             prior.semantic, prior.mode, prior.extract_error)
-        assert row.symbol == CURRENT_CALLBACK_SYMBOLS.get(address, prior.symbol)
+        assert row.symbol == prior.symbol
+        if prior.mode is Mode.BODY:
+            assert row.body == prior.body
+
+
+def test_retired_collection_preserves_all_unmigrated_source_identities():
+    assert not (ROOT / "src/adjustor_thunks.cpp").exists()
+    assert not (ROOT / "src/adjustor_thunks.h").exists()
+    old = before("src/adjustor_thunks.cpp")
+    moved = ({address for address, _, _ in SPECS} | MAPWIN_MIGRATED_ADDRESSES
+             | FOLLOW_ON_MIGRATED_ADDRESSES)
+    current = current_source_records()
+    for address, prior in old.items():
+        if address in moved:
+            continue
+        hits = current.get(address, [])
+        assert len(hits) == 1, f"{address:08X} lost or duplicated after owner transfer"
+        _path, row = hits[0]
+        # Original identities/claims survive, while the explicit adapter body
+        # and its extraction mode legitimately become a generated owner entry.
+        assert (row.name, row.image_spans, row.byte_exact, row.semantic, row.kind) == (
+            prior.name, prior.image_spans, prior.byte_exact, prior.semantic, prior.kind)
+        assert row.symbol and "adjust_" not in row.symbol
         if prior.mode is Mode.BODY:
             assert row.body == prior.body

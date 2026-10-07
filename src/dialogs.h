@@ -9,7 +9,6 @@
  */
 #pragma once
 
-#include "original_seam.h"
 #include "dialog.h"
 #include "graphicwin.h"
 #include "listbox.h"
@@ -106,6 +105,7 @@ class Dialogs : public ListBox,
   // run with a cleared flag - which is what the image's body spends its
   // 0x2B0 bytes on. kind_ is not initialized here; sizeof stays 0xC94.
   Dialogs();
+  virtual ~Dialogs();
   void close();  // hides ListBox::close; the image's body is one `ret`
   // Four recovered initialization overloads. Each initializes the same
   // shared virtual Dialog after closing the widget-specific state.
@@ -115,11 +115,9 @@ class Dialogs : public ListBox,
   int init(RECT *rect, Heap *heap);
   int init(int x, int y, int width, int height, Heap *heap);
   int init(Heap *heap);
-  // The recovered complete-object destructor body (0x00406910), modelled on
-  // the primary this (the allocation base); the original enters at
-  // this + 0x188 and the redirect recovers the base, as ListBox's does. The
-  // uint32_t return preserves the EAX residue (ListBox::destroy's constant 0).
-  uint32_t destroy();
+  // Historical recovery represented 0x00406910 as an explicit destroy()
+  // method with a receiver-adjusting redirect. The real destructor above
+  // now owns reverse direct-base and shared virtual-base destruction.
   int item(char *text, int index);
   int get_num_items();
   // 0x006132A0, homed in dialogs.cpp (BYTE_EXACT 24 of 24). It dispatches on
@@ -165,30 +163,3 @@ class Dialogs : public ListBox,
 
 static_assert(sizeof(Dialogs) == 0xC94,
               "Dialogs ends where its vbtable puts Dialog: 0xBA0 + 0xF4");
-
-// Neither delegate target is recovered yet.
-
-
-
-// The SpriteBox and ListBox handlers these forward to are not recovered.
-typedef void (OriginalObject::*func_dialogs_fwd2)(int a1, int a2);
-typedef void (OriginalObject::*func_dialogs_fwd1)(int a1);
-
-
-// ~Dialogs tears down the EditGroup, SpriteBox and CheckBox members through
-// still-original destructors; each is bound rebindably. The embedded
-// RadioButton, ListBox, trailing Dialog and the GraphicWin virtual base are
-// torn down through their recovered bodies directly. operator delete is used
-// only by the scalar deleting destructor; func_operator_delete comes from
-// dialog.h.
-typedef void (OriginalObject::*func_dialogs_teardown)();
-extern func_dialogs_teardown DialogsEditGroupDestructor;  // 0x00611A20
-extern func_dialogs_teardown DialogsSpriteBoxDestructor;  // 0x00610120
-extern func_dialogs_teardown DialogsCheckBoxDestructor;   // 0x0060E740
-
-// ~Dialogs and ??_GDialogs are entered at B + 0x188 (the GraphicWin
-// co-located subobject); both redirects recover the allocation base B first.
-static const size_t DialogsDestructorAdjustment = 0x188;
-
-void *__fastcall dialogs_scalar_dtor_redirect(void *adjusted, void *,
-                                              unsigned int mode);

@@ -6009,7 +6009,11 @@ void MapWin::draw_wars() {
 // cursor mode is captured before Console::selected clears it; this is also
 // the value consumed by the order dispatch near the end of the original.
 // ORIGINAL: 0x0046D5D0 ?click@MapWin@@QAEXHHH@Z 0x0046D5D0-0x0046EB68;0x00655959-0x00655E92 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/0046d5d0.cpp", "Pinned original image review controls route precedence, cursor sprite dispatch, signed zoom, actual API imports and original member/data dependencies. Bounded compile and host controls do not establish game acceptance."], "reason": "Recover the genuine MapWin/Console owner operation using typed members, actual shared storage, virtual base APIs and full original branch evidence; keep seed and historical obligations."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/0046d5d0.cpp", "Pinned original image review controls route precedence, cursor sprite dispatch, signed zoom, actual API imports and original member/data dependencies. Bounded compile and host controls do not establish game acceptance.", "Pinned 0x0046DB35..48 dereferences base_find's result without a sign/range check; pinned 0x0046DC14 tests only negative dialog results; 0x0046DD67..76 writes Base + 0x110 + 2*selected_triad without a bounds check. src/base.h owns auto-forward words at 0x110, 0x112, 0x114 and padding_0 at 0x116."], "reason": "Recover the genuine MapWin/Console owner operation using typed members, actual shared storage, virtual base APIs and full original branch evidence; preserve unchecked original lookup/index paths and retain seed/historical obligations."}
+// Historical seed status only: the following TRIED text describes the old
+// 0x0046D5D0 leaf transcription, which ended at 0x0046DD86. It is not a claim
+// that the complete owner body below remains partial; retain the detailed seed
+// observations and their obligations as history.
 // TRIED: GENUINELY PARTIAL - literal register-machine transliteration (same technique as 0x00547C10/0x00448D90: raw EBP(n)-mapped buffer standing in for the Popup/Scroll/2xFlatButton ensemble, original_method<> calls for their lifecycle, goto per basic block) but covers roughly the first ~1/4 of the function only (asm 0x0046D5D0-0x0046DD86 of a 0x46D5D0-0x46EB38+ span: the SEH-free prologue, the AlphaMenu/InfoWin/StatusWin/TutWin reset calls, the editor-mode/key-state checks, Console::edit_lock gate, pixel_to_tile click resolution, the world-climate redraw dispatch, and the NetDaemon base-lock + Dialogs base-picker + port_to_port confirmation flow, each with its own full Popup-cleanup early-exit). Every remaining branch (unit orders, right-click menu, build/terraform dispatch, and the shared tail at 0x46EB38) is UNWRITTEN - the two forward labels it would reach (LAB_0046eac4, LAB_0046eb38) are stubbed empty and the function returns there instead. Left this way rather than guessing the remaining ~3/4: every call/branch actually present above is a faithful, push-order- verified transcription, not invented filler. 1643 rebuilt bytes against 5528 scored original bytes.
 void MapWin::click(int pixel_x, int pixel_y, int button) {
     Popup popup;
@@ -6086,10 +6090,6 @@ void MapWin::click(int pixel_x, int pixel_y, int button) {
 
             const int target_base = base_find(tile_x, tile_y, local_faction,
                                               -1, -2, -1);
-            if (target_base < 0) {
-                NetDaemonNet.unlock_base(BaseIDCurrentSelected);
-                return;
-            }
             parse_says(0, source.name_string, -1, -1);
             parse_says(1, Bases[target_base].name_string, -1, -1);
             popup.start(PopupStartCaption, "DESTTRIAD2", -1, nullptr,
@@ -6109,7 +6109,7 @@ void MapWin::click(int pixel_x, int pixel_y, int button) {
                 popup.dialogs().item(StringTemp, triad);
             }
             const int selected_triad = popup.exec(0, nullptr);
-            if (selected_triad >= 0 && selected_triad < MaxTriadNum) {
+            if (selected_triad >= 0) {
                 int destination = target_base;
                 bool valid = true;
                 if (target_base == editor_tool) {
@@ -6126,11 +6126,13 @@ void MapWin::click(int pixel_x, int pixel_y, int button) {
                             map_tile_bytes()[target_offset * 4 + 3];
                 }
                 if (valid) {
-                    int16_t *route = selected_triad == 0
-                        ? &Bases[editor_tool].auto_forward_land_base_id
-                        : selected_triad == 1
-                            ? &Bases[editor_tool].auto_forward_sea_base_id
-                            : &Bases[editor_tool].auto_forward_air_base_id;
+                    static_assert(offsetof(Base, auto_forward_land_base_id) == 0x110 &&
+                                  offsetof(Base, padding_0) == 0x116,
+                                  "base route slots and adjacent word layout");
+                    int16_t *route = reinterpret_cast<int16_t *>(
+                        reinterpret_cast<unsigned char *>(&Bases[editor_tool]) +
+                        offsetof(Base, auto_forward_land_base_id) +
+                        static_cast<size_t>(selected_triad) * sizeof(int16_t));
                     *route = static_cast<int16_t>(destination);
                 } else {
                     parse_say(2, reinterpret_cast<int>(Triad[selected_triad]),

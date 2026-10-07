@@ -99,9 +99,9 @@
 //   at 0x00670408; its entries point back into ListBox code through ADJUSTOR
 //   THUNKS, and 0x0060D030 opens `sub ecx, dword ptr [ecx - 4]` - which IS the
 //   vtordisp adjustment, reading the displacement stored four bytes before the
-//   base and subtracting it from `this`. adjustor_thunks.cpp catalogues them
-//   as `?on_redraw@thunk3_ListBox@@` and `?attach@thunk1_ListBox@@`, so those
-//   are the overridden slots.
+//   base and subtracting it from `this`. These historical thunk identities now
+//   live beside ListBox's genuine virtual owner in listbox.cpp; the retired
+//   shared adapter catalogue is not a source of current ownership.
 //
 //   Declaring either `virtual` on Dialog was measured and BREAKS THE SIBLINGS:
 //   CheckBox, RadioButton, SpriteBox and EditGroup all declare on_redraw and

@@ -83,15 +83,13 @@ def archived_history(path: Path, address: int, expected_digest: str):
 
 def test_three_original_identities_live_once_in_the_real_console_owner():
     owner = ROOT / "src/console.cpp"
-    shim = ROOT / "src/adjustor_thunks.cpp"
-    header = ROOT / "src/adjustor_thunks.h"
+    assert not (ROOT / "src/adjustor_thunks.cpp").exists()
+    assert not (ROOT / "src/adjustor_thunks.h").exists()
     for address, _slot, method, _target, history_digest in SPECS:
         row = record(owner, address)
         assert row.mode is Mode.FILE
         assert row.source_role is not SourceRole.SCAFFOLD
         assert not row.symbol or "adjust_" not in row.symbol
-        assert not [r for r in rows(shim) if r.address == address]
-        assert method not in header.read_text()
         archived_history(owner, address, history_digest)
     source = owner.read_text()
     assert "RECOVERY_GENERATED: v1 vtable 0x0066EC18" in source
@@ -169,4 +167,4 @@ def test_api_behavior_is_virtual_dispatch_not_a_manual_receiver_callback():
     assert "virtual void on_post_redraw_nc_buffer(Buffer * = 0, int = 0) {}" in win_h
     for method in ("on_nc_mouse_move", "on_nc_left_up", "on_post_redraw_nc_buffer"):
         assert re.search(rf"\b{method}\b[^;]*override\s*;", console_h)
-    assert "reinterpret_cast<Console *>" not in (ROOT / "src/adjustor_thunks.cpp").read_text()
+    assert not (ROOT / "src/adjustor_thunks.cpp").exists()

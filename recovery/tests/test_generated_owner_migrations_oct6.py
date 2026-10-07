@@ -127,6 +127,8 @@ PRIOR_MAINLINE_MIGRATIONS = {
     0x0051DF30: "src/console.cpp",
     0x0060CFE0: "src/listbox.cpp", 0x0060CFF0: "src/listbox.cpp",
     0x006118A0: "src/spritebox.cpp", 0x006118D0: "src/spritebox.cpp",
+    0x004070F0: "src/dialogs.cpp", 0x00407280: "src/dialogs.cpp",
+    0x004072A0: "src/dialogs.cpp",
 }
 HISTORICAL_FIELDS = (
     "name", "image_spans", "byte_exact", "semantic", "levers", "ruled_out",
@@ -162,20 +164,25 @@ def test_original_identity_history_and_generated_owner(address, owner, symbol):
     for field in ("name", "image_spans", "byte_exact", "semantic", "levers",
                   "ruled_out", "unrecoverable", "deferred"):
         assert getattr(after, field) == getattr(before, field), field
-    assert address not in current_records("src/deleting_thunks.cpp")
-    assert address not in current_records("src/adjustor_thunks.cpp")
+    assert not (ROOT / "src/adjustor_thunks.cpp").exists()
+    assert not (ROOT / "src/adjustor_thunks.h").exists()
 
-def test_unmigrated_original_rows_are_retained():
+def test_unmigrated_original_rows_are_retained_by_real_owners():
+    assert not (ROOT / "src/deleting_thunks.cpp").exists()
+    assert not (ROOT / "src/deleting_thunks.h").exists()
+    assert not (ROOT / "src/adjustor_thunks.cpp").exists()
+    assert not (ROOT / "src/adjustor_thunks.h").exists()
     moved = ({a for a, _owner, _symbol in SPECS + FOLLOW_ON_VIRTUAL_SPECS}
              | MAPWIN_MIGRATED_ADDRESSES | FOLLOW_ON_MIGRATED_ADDRESSES
              | set(PRIOR_MAINLINE_MIGRATIONS))
-    current = {**current_records("src/deleting_thunks.cpp"),
-               **current_records("src/adjustor_thunks.cpp")}
-    assert set(current) == set(old_records()) - moved
-    for address, after in current.items():
+    current = all_current_source_records()
+    for address in set(old_records()) - moved:
+        hits = current.get(address, [])
+        assert len(hits) == 1, f"{address:08X} lost or duplicated after owner transfer"
+        _path, after = hits[0]
         before = old_records()[address]
         for field in HISTORICAL_FIELDS:
-            assert getattr(after, field) == getattr(before, field), field
+            assert getattr(after, field) == getattr(before, field), (hex(address), field)
 
 @pytest.mark.parametrize("address,owner", sorted(PRIOR_MAINLINE_MIGRATIONS.items()))
 def test_prior_mainline_migrations_have_positive_file_owners_and_full_history(address, owner):
@@ -310,17 +317,22 @@ def test_deleting_adapter_translation_unit_is_retired_and_only_dialogs_target_re
         assert "PopupDtorTarget" not in text, path
         assert "func_deleting_dtor" not in text, path
 
-    # Dialogs' original scalar adapters still use their one target. Console,
-    # MapWin and PlanWin use generated class-view entries instead.
-    adjustor_header = (ROOT / "src/adjustor_thunks.h").read_text()
-    adjustors = (ROOT / "src/adjustor_thunks.cpp").read_text()
-    for unused in ("ConsoleScalarDeleteTarget", "MapWinScalarDeleteTarget",
-                   "PlanWinScalarDeleteTarget"):
-        assert unused not in adjustor_header
-        assert unused not in adjustors
-    assert "extern func_adjustor_p_u DialogsScalarDeleteTarget;" in adjustor_header
-    assert "original_method<func_adjustor_p_u>(0x00407100)" in adjustors
-    assert adjustors.count("->*DialogsScalarDeleteTarget") == 3
+    assert not (ROOT / "src/adjustor_thunks.h").exists()
+    assert not (ROOT / "src/adjustor_thunks.cpp").exists()
+    obsolete = ("ConsoleScalarDeleteTarget", "MapWinScalarDeleteTarget",
+                "PlanWinScalarDeleteTarget", "DialogsScalarDeleteTarget")
+    for path in (ROOT / "src").rglob("*"):
+        if path.suffix not in (".cpp", ".h"):
+            continue
+        active = re.sub(r"/\*\n \* RECOVERY_HISTORY: v1 .*?\n \*/", "",
+                        path.read_text(errors="surrogateescape"), flags=re.S)
+        for symbol in obsolete:
+            assert symbol not in active, (path, symbol)
+    for address in (0x004070F0, 0x00407280, 0x004072A0):
+        row = current_records("src/dialogs.cpp")[address]
+        assert row.mode is Mode.FILE and row.symbol
+        assert address not in current_records("src/adjustor_thunks.cpp")
+        assert address in (0x004070F0, 0x00407280, 0x004072A0)
 
     planwin_row = current_records("src/planwin.cpp")[0x0048C040]
     assert planwin_row.mode is Mode.FILE
@@ -328,7 +340,6 @@ def test_deleting_adapter_translation_unit_is_retired_and_only_dialogs_target_re
     before = old_records()[0x0048C040]
     for field in HISTORICAL_FIELDS:
         assert getattr(planwin_row, field) == getattr(before, field), field
-    assert 0x0048C040 not in current_records("src/adjustor_thunks.cpp")
     assert_archived_history(ROOT / "src/planwin.cpp", 0x0048C040)
 
 

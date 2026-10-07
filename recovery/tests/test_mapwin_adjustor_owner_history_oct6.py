@@ -107,6 +107,8 @@ def emitted_symbol(target_symbol, tag, method):
 
 
 def test_cohort_addresses_match_the_28_manifest_rows():
+    assert not (ROOT / "src/adjustor_thunks.cpp").exists()
+    assert not (ROOT / "src/adjustor_thunks.h").exists()
     assert len(MAPWIN_MIGRATED_ADDRESSES) == 28
     all_current = {
         row.address: row
@@ -146,7 +148,6 @@ def test_cohort_addresses_match_the_28_manifest_rows():
 def test_migrated_rows_retain_original_identity_claims_and_history(view):
     old = before_adjustors()
     rows = read_file(ROOT / view["owner"])
-    remaining = {row.address for row in read_file(ROOT / "src/adjustor_thunks.cpp")}
     for method in view["methods"]:
         target_va, target_symbol, _slot = METHODS[method]
         tag = "A" if view["name"] == "PlanWin" and method == "plan_redraw" else view["tag"]
@@ -154,11 +155,7 @@ def test_migrated_rows_retain_original_identity_claims_and_history(view):
         current, = (row for row in rows if row.symbol == symbol)
         prior = old[current.address]
         assert current.mode is Mode.FILE
-        assert current.address not in remaining
         assert _is_migrated_adapter(prior.symbol)
         for field in ("name", "image_spans", "byte_exact", "semantic", "kind",
                       "levers", "ruled_out", "unrecoverable", "deferred"):
             assert getattr(current, field) == getattr(prior, field), (hex(current.address), field)
-        assert current.address not in {
-            row.address for row in read_file(ROOT / "src/adjustor_thunks.cpp")
-        }

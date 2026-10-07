@@ -11,7 +11,6 @@
 #include "dialogs.h"
 #include "listbox.h"      // ListBox::destroy (source-owned)
 #include "spritebox.h"    // the SpriteBox handlers this dispatches to
-#include "original_seam.h"
 #include "radiobutton.h"  // RadioButton::close (source-owned)
 #include "worldwin.h"
 #include "spritebox.h"
@@ -527,131 +526,60 @@ void Dialogs::on_mousewheel(int a) {
 
 
 
-func_dialogs_teardown DialogsEditGroupDestructor =
-    original_method<func_dialogs_teardown>(0x00611A20);
-func_dialogs_teardown DialogsSpriteBoxDestructor =
-    original_method<func_dialogs_teardown>(0x00610120);
-func_dialogs_teardown DialogsCheckBoxDestructor =
-    original_method<func_dialogs_teardown>(0x0060E740);
-
-
-namespace {
-
-// stage_virtual_tables and its six function-local constants are gone: the
-// two staging rounds (Dialogs' own GraphicWin/Win virtual base at 0x188/0xBA0
-// and the embedded RadioButton at 0x18/0xA30) were the derived-stage overlay
-// idiom - hand writes the image itself performs - and they left with the
-// strip-all direction, exactly as the AlphaMovie and Ambience overlays did.
-
-// A member's entry address, guarded the way the original guards it. A plain
-// function rather than the lambda this was: VC6 has no lambdas, and the
-// capture was one value. Integer arithmetic, so the unreachable null branch
-// stays exactly the original's `0 + adjust`.
-void *guarded_member(uintptr_t guard, uintptr_t member, uintptr_t adjust) {
-    return reinterpret_cast<void *>((guard ? guard + member : 0) + adjust);
-}
-
-}  // namespace
 
 /*
-Purpose: Destroy a Dialogs. Stage the Dialogs tables into the GraphicWin/Win
-         virtual base through that base's own vbtable, run the empty close,
-         destroy the EditGroup, SpriteBox and CheckBox members through their
-         original destructors, stage the embedded RadioButton's tables through
-         ITS own vbtable and run its recovered close, then run the embedded
-         ListBox's recovered teardown - whose base coincides with the
-         allocation base, so each staging overwrites the previous tables in
-         the original's exact order. The original's C++ exception frame
-         targets __CxxFrameHandler and is omitted as unreachable per policy.
-// ORIGINAL: 0x00406910 ??1Dialogs@@QAE@XZ 0x00406910-0x00406A74;0x006509C0-0x00650AAA
-// symbol    ?destroy@Dialogs@@QAEIXZ
-// TRIED: 3/92 - same SEH-frame symptom as `Dialog::~Dialog()` (this
-//            file's sibling class in dialog.cpp) and FlatButton's own
-//            constructor/destructor pair. Not attempted: the comment
-//            above claims the frame is "unreachable, omitted per policy",
-//            which is UNVERIFIED here (flagged, not trusted - see the
-//            note on Dialog::~Dialog for why). This body is the most
-//            complex of the three (six member teardowns across five
-//            classes chained together); reproducing the frame plus
-//            whatever member-destruction reordering it would take is out
-//            of scope for this pass's budget.
-// size      590 bytes
-// prototype void (__thiscall ??1Dialogs@@QAE@XZ)(Dialogs* this)
-// callers   72   call targets   6
+ * RECOVERY_HISTORY: v1 address=0x00406910 source_sha256=b9ca59ee315f7c22463bf4789d49e0ed78c55d78f6773313c380cdddcd2de80a envelope_sha256=825c7a3f5bdb2b6a203f894fe3864115c7aeccdbeb950a4d203646540761b48f
+ * [ARCHIVE] /*
+ * [ARCHIVE] Purpose: Destroy a Dialogs. Stage the Dialogs tables into the GraphicWin/Win
+ * [ARCHIVE]          virtual base through that base's own vbtable, run the empty close,
+ * [ARCHIVE]          destroy the EditGroup, SpriteBox and CheckBox members through their
+ * [ARCHIVE]          original destructors, stage the embedded RadioButton's tables through
+ * [ARCHIVE]          ITS own vbtable and run its recovered close, then run the embedded
+ * [ARCHIVE]          ListBox's recovered teardown - whose base coincides with the
+ * [ARCHIVE]          allocation base, so each staging overwrites the previous tables in
+ * [ARCHIVE]          the original's exact order. The original's C++ exception frame
+ * [ARCHIVE]          targets __CxxFrameHandler and is omitted as unreachable per policy.
+ * [ARCHIVE] // original marker: 0x00406910 ??1Dialogs@@QAE@XZ 0x00406910-0x00406A74;0x006509C0-0x00650AAA
+ * [ARCHIVE] // symbol    ?destroy@Dialogs@@QAEIXZ
+ * [ARCHIVE] // TRIED: 3/92 - same SEH-frame symptom as `Dialog::~Dialog()` (this
+ * [ARCHIVE] //            file's sibling class in dialog.cpp) and FlatButton's own
+ * [ARCHIVE] //            constructor/destructor pair. Not attempted: the comment
+ * [ARCHIVE] //            above claims the frame is "unreachable, omitted per policy",
+ * [ARCHIVE] //            which is UNVERIFIED here (flagged, not trusted - see the
+ * [ARCHIVE] //            note on Dialog::~Dialog for why). This body is the most
+ * [ARCHIVE] //            complex of the three (six member teardowns across five
+ * [ARCHIVE] //            classes chained together); reproducing the frame plus
+ * [ARCHIVE] //            whatever member-destruction reordering it would take is out
+ * [ARCHIVE] //            of scope for this pass's budget.
+ * [ARCHIVE] // size      590 bytes
+ * [ARCHIVE] // prototype void (__thiscall ??1Dialogs@@QAE@XZ)(Dialogs* this)
+ * [ARCHIVE] // callers   72   call targets   6
+ * [ARCHIVE] // kind      game
+ * [ARCHIVE] // flags     frame;hidden;sp_ready;purged_ok
+ * [ARCHIVE] // calls     0x00609EC0 0x0060D1B0 0x0060E740 0x00610120 0x00611A20 0x00612960
+ * [ARCHIVE] Return Value: EAX residue (ListBox::destroy's constant 0); declared void in
+ * [ARCHIVE]               the mangled name, modelled as uint32_t like ListBox::destroy.
+ * [ARCHIVE] Status: Complete with temporary EditGroup, SpriteBox and CheckBox destructor
+ * [ARCHIVE]         dependencies
+ * [ARCHIVE] Verification note: every member teardown is guarded on the allocation base
+ * [ARCHIVE] being non-null (the original tests edi after `lea edi,[esi-0x188]`); the null
+ * [ARCHIVE] branch feeds the bare adjustment offset and is unreachable for any real
+ * [ARCHIVE] object, so no test drives it, and the sweep's surviving constant mutants in
+ * [ARCHIVE] that branch are equivalent by unreachability. The surviving drop of the
+ * [ARCHIVE] close() call is equivalent by construction: Dialogs::close is an empty body.
+ * [ARCHIVE] * /
+ */
+// HISTORICAL NOTE: the archived TRIED text predates the real Dialogs base/member ownership. SpriteBox::close and its Spot/SpriteList members now own this teardown; the old manual member calls are retired.
+// ORIGINAL: 0x00406910 ??1Dialogs@@QAE@XZ 0x00406910-0x00406A74;0x006509C0-0x00650AAA FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original complete-object destructor identity 0x00406910 has full spans (4221200, 4221556) and (6621632, 6621866).", "Current genuine owner has the five real direct Dialogs bases and shared virtual Dialog/GraphicWin bases; normal destruction runs reverse direct-base order and one virtual-base chain.", "Fresh baseline `dialogs.cpp.obj` emits the natural non-deleting destructor as ??1Dialogs@@UAE@XZ; adding the explicit close() body requires a fresh post-edit emitted-symbol and body check."], "reason": "Transfer the complete original Dialogs destructor identity to the actual class destructor. Preserve the original close() call; let real C++ bases and virtual bases own their destruction."}
+// symbol    ??1Dialogs@@UAE@XZ
 // kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x00609EC0 0x0060D1B0 0x0060E740 0x00610120 0x00611A20 0x00612960
-Return Value: EAX residue (ListBox::destroy's constant 0); declared void in
-              the mangled name, modelled as uint32_t like ListBox::destroy.
-Status: Complete with temporary EditGroup, SpriteBox and CheckBox destructor
-        dependencies
-Verification note: every member teardown is guarded on the allocation base
-being non-null (the original tests edi after `lea edi,[esi-0x188]`); the null
-branch feeds the bare adjustment offset and is unreachable for any real
-object, so no test drives it, and the sweep's surviving constant mutants in
-that branch are equivalent by unreachability. The surviving drop of the
-close() call is equivalent by construction: Dialogs::close is an empty body.
-*/
-uint32_t Dialogs::destroy() {
-    uint8_t *const base = reinterpret_cast<uint8_t *>(this);
-
-    // Both staging rounds left (see stage_virtual_tables' note above): the
-    // object runs on whatever its constructing chain installed.
-
+// HISTORICAL TRIED (superseded by recovered Dialogs/SpriteBox ownership): same SEH-frame symptom as `Dialog::~Dialog()` (this file's sibling class in dialog.cpp) and FlatButton's own constructor/destructor pair. Not attempted: the comment above claims the frame is "unreachable, omitted per policy", which is UNVERIFIED here (flagged, not trusted - see the note on Dialog::~Dialog for why). This body is the most complex of the three (six member teardowns across five classes chained together); reproducing the frame plus whatever member-destruction reordering it would take is out of scope for this pass's budget.
+Dialogs::~Dialogs() {
     close();
-
-    // The three widget members, each entered at its fixed adjustment past the
-    // member base, guarded as the original guards them. Integer arithmetic so
-    // the unreachable null branch stays exactly the original's `0 + adjust`.
-    const uintptr_t guard =
-        base != nullptr ? reinterpret_cast<uintptr_t>(base) : 0;
-    (ORIGINAL(guarded_member(guard, 0xF8, 0x8C))->*DialogsEditGroupDestructor)();
-    (ORIGINAL(guarded_member(guard, 0x70, 0x8C))->*DialogsSpriteBoxDestructor)();
-    (ORIGINAL(guarded_member(guard, 0x58, 0x1C))->*DialogsCheckBoxDestructor)();
-
-    // The embedded RadioButton at base+0x44: its recovered close walks the
-    // shared virtual bases through its own vbtable.
-    uint8_t *const radio = static_cast<uint8_t *>(guarded_member(guard, 0x44, 0));
-    reinterpret_cast<RadioButton *>(radio)->close();
-
-    // The embedded ListBox's base coincides with the allocation base; its
-    // recovered destroy closes both shared bases. Unguarded, as the original
-    // left it.
-    return reinterpret_cast<ListBox *>(base)->destroy();
 }
 
 
-/*
-Purpose: The compiler-generated scalar deleting destructor: run ~Dialogs, the
-         trailing Dialog's recovered destructor, and the GraphicWin virtual
-         base's recovered destructor, then free the allocation base through
-         the executable's operator delete only when bit 0 of the mode asks.
-         Always returns the allocation base (this - 0x188), the original's
-         EAX. The fixed +0xBA0/+0x188 subobject offsets are complete-object
-         facts: this thunk is only ever entered on a most-derived Dialogs.
-// ORIGINAL: 0x00407100 ??_GDialogs@@UAEPAXI@Z 0x00407100-0x00407141
-// symbol    ?dialogs_scalar_dtor_redirect@@YIPAXPAX0I@Z
-// size      65 bytes
-// prototype void* (__thiscall ??_GDialogs@@UAEPAXI@Z)(Dialogs* this, unsigned int)
-// callers   0   call targets   4
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x00406910 0x005D4DD0 0x00608E10 0x0064557F
-Return Value: the allocation base
-Status: Complete
-*/
-void *__fastcall dialogs_scalar_dtor_redirect(void *adjusted, void *,
-                                              unsigned int mode) {
-    uint8_t *const base =
-        static_cast<uint8_t *>(adjusted) - DialogsDestructorAdjustment;
-    reinterpret_cast<Dialogs *>(base)->destroy();
-    reinterpret_cast<Dialog *>(base + 0xBA0)->Dialog::~Dialog();
-    reinterpret_cast<GraphicWin *>(base + 0x188)->~GraphicWin();
-    if (mode & 1) {
-        operator delete(base);
-    }
-    return base;
-}
 
 /*
 Purpose: Route mouse move by the owned kind_ through qualified widget bases.
@@ -1394,4 +1322,100 @@ void Dialogs::on_redraw() {
 // ORIGINAL: 0x004072B0 ?attach@thunk1_Dialogs@@QAEHPAUGraphicWin@@HHH@Z 0x004072B0-0x004072B8 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: constructor-installed class table cell binds 0x004072B0 to the complete original thunk span.", "The retained terminal artifact set at build/recovery/builds/build-8b7ms_6y recorded the observed compiler symbol ?attach@Dialogs@@$4PPPPPPPM@A@AEHPAVGraphicWin@@HHH@Z in the class owner's physical COFF vftable relocation.", "That artifact set's MAP/PE cell selects the thunk and its PDB XFIXUP plus linked tail resolve to the mapped typed method.", "The original identity, spans, catalog purpose, source kind, claim state and formal lessons are retained; this binding is not a new byte claim."], "reason": "Bind the preserved original receiver-adjustor identity to the compiler-emitted class-view entry observed in the actual owner object and linked table."}
 // symbol    ?attach@Dialogs@@$4PPPPPPPM@A@AEHPAVGraphicWin@@HHH@Z
+// kind      game
+
+/*
+ * RECOVERY_HISTORY: v1 address=0x00407100 source_sha256=b9ca59ee315f7c22463bf4789d49e0ed78c55d78f6773313c380cdddcd2de80a envelope_sha256=f6c92f763fd2071956b26fc3f28fe0498d7ac5e2e01b32f42563ad5d7993cc09
+ * [ARCHIVE] /*
+ * [ARCHIVE] Purpose: The compiler-generated scalar deleting destructor: run ~Dialogs, the
+ * [ARCHIVE]          trailing Dialog's recovered destructor, and the GraphicWin virtual
+ * [ARCHIVE]          base's recovered destructor, then free the allocation base through
+ * [ARCHIVE]          the executable's operator delete only when bit 0 of the mode asks.
+ * [ARCHIVE]          Always returns the allocation base (this - 0x188), the original's
+ * [ARCHIVE]          EAX. The fixed +0xBA0/+0x188 subobject offsets are complete-object
+ * [ARCHIVE]          facts: this thunk is only ever entered on a most-derived Dialogs.
+ * [ARCHIVE] // original marker: 0x00407100 ??_GDialogs@@UAEPAXI@Z 0x00407100-0x00407141
+ * [ARCHIVE] // symbol    ?dialogs_scalar_dtor_redirect@@YIPAXPAX0I@Z
+ * [ARCHIVE] // size      65 bytes
+ * [ARCHIVE] // prototype void* (__thiscall ??_GDialogs@@UAEPAXI@Z)(Dialogs* this, unsigned int)
+ * [ARCHIVE] // callers   0   call targets   4
+ * [ARCHIVE] // kind      game
+ * [ARCHIVE] // flags     frame;hidden;sp_ready;purged_ok
+ * [ARCHIVE] // calls     0x00406910 0x005D4DD0 0x00608E10 0x0064557F
+ * [ARCHIVE] Return Value: the allocation base
+ * [ARCHIVE] Status: Complete
+ * [ARCHIVE] * /
+ */
+
+/*
+ * RECOVERY_HISTORY: v1 address=0x004070F0 source_sha256=1f689b45149ddffc4ecf76f0f96de5afd71750e7583a10b2280e620778ea1744 envelope_sha256=b867910ad5b2481ef1c45a4fc9b3bec9c5dcebb3918f46b1aaabe77bf098b580
+ * [ARCHIVE] /*
+ * [ARCHIVE] Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
+ * [ARCHIVE]          Dialogs::scalar_delete expects, then forward unchanged.
+ * [ARCHIVE] // RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
+ * [ARCHIVE] // original marker: 0x004070F0 ??_Gthunk1_Dialogs@@UAEPAXI@Z 0x004070F0-0x004070F8
+ * [ARCHIVE] // symbol    ?adjust_dialogs1_scalar_delete@@YIPAXPAX0I@Z
+ * [ARCHIVE] // size      8 bytes
+ * [ARCHIVE] // prototype void* (__thiscall ??_Gthunk1_Dialogs@@UAEPAXI@Z)(Dialogs* this, unsigned int)
+ * [ARCHIVE] // callers   0   call targets   0
+ * [ARCHIVE] // kind      game
+ * [ARCHIVE] // flags     hidden;sp_ready;purged_ok
+ * [ARCHIVE] // calls     (none)
+ * [ARCHIVE] Return Value: the forwarded call's
+ * [ARCHIVE] Status: Complete
+ * [ARCHIVE] * /
+ */
+
+/*
+ * RECOVERY_HISTORY: v1 address=0x00407280 source_sha256=1f689b45149ddffc4ecf76f0f96de5afd71750e7583a10b2280e620778ea1744 envelope_sha256=55cd2124c2bfa6ec11be5acbd66ee4fdda7f5704e6167015c2942ef1c466bd5f
+ * [ARCHIVE] /*
+ * [ARCHIVE] Purpose: Adjust the receiver from Dialogs's thunk2 subobject to the one
+ * [ARCHIVE]          Dialogs::scalar_delete expects, then forward unchanged.
+ * [ARCHIVE] // RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
+ * [ARCHIVE] // original marker: 0x00407280 ??_Gthunk2_Dialogs@@UAEPAXI@Z 0x00407280-0x00407291
+ * [ARCHIVE] // symbol    ?adjust_dialogs2_scalar_delete@@YIPAXPAX0I@Z
+ * [ARCHIVE] // size      17 bytes
+ * [ARCHIVE] // prototype void* (__thiscall ??_Gthunk2_Dialogs@@UAEPAXI@Z)(Dialogs* this, unsigned int)
+ * [ARCHIVE] // callers   0   call targets   0
+ * [ARCHIVE] // kind      game
+ * [ARCHIVE] // flags     hidden;sp_ready;purged_ok
+ * [ARCHIVE] // calls     (none)
+ * [ARCHIVE] Return Value: the forwarded call's
+ * [ARCHIVE] Status: Complete
+ * [ARCHIVE] * /
+ */
+
+/*
+ * RECOVERY_HISTORY: v1 address=0x004072A0 source_sha256=1f689b45149ddffc4ecf76f0f96de5afd71750e7583a10b2280e620778ea1744 envelope_sha256=98cca5e449d7b140cf58b902a229006cfdc9e9b39c5699a1b1fe0d4df3abfa8a
+ * [ARCHIVE] /*
+ * [ARCHIVE] Purpose: Adjust the receiver from Dialogs's thunk3 subobject to the one
+ * [ARCHIVE]          Dialogs::scalar_delete expects, then forward unchanged.
+ * [ARCHIVE] // RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
+ * [ARCHIVE] // original marker: 0x004072A0 ??_Gthunk3_Dialogs@@UAEPAXI@Z 0x004072A0-0x004072AE
+ * [ARCHIVE] // symbol    ?adjust_dialogs3_scalar_delete@@YIPAXPAX0I@Z
+ * [ARCHIVE] // size      14 bytes
+ * [ARCHIVE] // prototype void* (__thiscall ??_Gthunk3_Dialogs@@UAEPAXI@Z)(Dialogs* this, unsigned int)
+ * [ARCHIVE] // callers   0   call targets   0
+ * [ARCHIVE] // kind      game
+ * [ARCHIVE] // flags     hidden;sp_ready;purged_ok
+ * [ARCHIVE] // calls     (none)
+ * [ARCHIVE] Return Value: the forwarded call's
+ * [ARCHIVE] Status: Complete
+ * [ARCHIVE] * /
+ */
+// ORIGINAL: 0x00407100 ??_GDialogs@@UAEPAXI@Z 0x00407100-0x00407141 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: the primary Dialogs deleting-entry identity is 0x00407100.", "Fresh baseline build `build-cwf5qovz` owner COFF emits ??_GDialogs@@UAEPAXI@Z as the Dialogs primary deleting entry.", "This generated symbol is a baseline expectation only; the post-edit build must reselect the actual current symbol and linked target."], "reason": "Bind the preserved primary scalar-deleting identity to the real Dialogs compiler deleting owner; current emitted identity is provisional until the post-edit native check."}
+// symbol    ??_GDialogs@@UAEPAXI@Z
+// kind      game
+// ORIGINAL: 0x004070F0 ??_Gthunk1_Dialogs@@UAEPAXI@Z 0x004070F0-0x004070F8 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: constructor-installed table address point 0x00669BE8 selects original deleting thunk 0x004070F0.", "Fresh baseline `dialogs.cpp.obj` table ??_7Dialogs@@6BWin@@@ first absolute relocation selects ??_EDialogs@@$4PPPPPPPM@A@AEPAXI@Z; that E COMDAT's terminal REL32 selects ??_GDialogs@@UAEPAXI@Z.", "The generated E COMDAT is a baseline expectation; re-read post-edit COFF/MAP/PE/PDB before treating ??_EDialogs@@$4PPPPPPPM@A@AEPAXI@Z as current."], "reason": "Bind this complete original adjustor identity to the genuine Dialogs class-view deleting entry selected by its constructor-installed table; refresh the emitted-symbol fact after the post-edit build."}
+// symbol    ??_EDialogs@@$4PPPPPPPM@A@AEPAXI@Z
+// kind      game
+// ORIGINAL: 0x00407280 ??_Gthunk2_Dialogs@@UAEPAXI@Z 0x00407280-0x00407291 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: constructor-installed table address point 0x00669BE0 selects original deleting thunk 0x00407280.", "Fresh baseline `dialogs.cpp.obj` table ??_7Dialogs@@6BBuffer@@@ first absolute relocation selects ??_EDialogs@@$4PPPPPLLI@EEE@AEPAXI@Z; that E COMDAT's terminal REL32 selects ??_GDialogs@@UAEPAXI@Z.", "The generated E COMDAT is a baseline expectation; re-read post-edit COFF/MAP/PE/PDB before treating ??_EDialogs@@$4PPPPPLLI@EEE@AEPAXI@Z as current."], "reason": "Bind this complete original adjustor identity to the genuine Dialogs class-view deleting entry selected by its constructor-installed table; refresh the emitted-symbol fact after the post-edit build."}
+// symbol    ??_EDialogs@@$4PPPPPLLI@EEE@AEPAXI@Z
+// kind      game
+// ORIGINAL: 0x004072A0 ??_Gthunk3_Dialogs@@UAEPAXI@Z 0x004072A0-0x004072AE FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: constructor-installed table address point 0x00669BD4 selects original deleting thunk 0x004072A0.", "Fresh baseline `dialogs.cpp.obj` table ??_7Dialogs@@6B@ first absolute relocation selects ??_EDialogs@@$4PPPPPPPM@KBI@AEPAXI@Z; that E COMDAT's terminal REL32 selects ??_GDialogs@@UAEPAXI@Z.", "The generated E COMDAT is a baseline expectation; re-read post-edit COFF/MAP/PE/PDB before treating ??_EDialogs@@$4PPPPPPPM@KBI@AEPAXI@Z as current."], "reason": "Bind this complete original adjustor identity to the genuine Dialogs class-view deleting entry selected by its constructor-installed table; refresh the emitted-symbol fact after the post-edit build."}
+// symbol    ??_EDialogs@@$4PPPPPPPM@KBI@AEPAXI@Z
 // kind      game

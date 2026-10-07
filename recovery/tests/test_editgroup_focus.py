@@ -198,99 +198,45 @@ def test_actual_constructor_and_virtual_focus(tmp_path):
     assert result.returncode == 0, result.stderr
 
 
-def adjustor_bodies(text=None):
-    """The remaining handwritten adjustor walks, extracted from the actual source.
-
-    The two EditGroup on_redraw adjustors (0x006127B0, 0x00612820) were
-    RETIRED onto VC6's own vtordisp thunks after the tree-wide Win slot-12
-    rename to on_redraw: one virtual EditGroup::on_redraw declaration now
-    overrides Win slot12 through GraphicWin as well as Dialog slot2, and the
-    compiler emits both receiver thunks byte-exactly. Their claims live in
-    src/editgroup.cpp beside the attach/on_dialog_focus thunk claims. The
-    pass_dialog_focus and SpriteBox walks below remain handwritten claim
-    hosts pending the coordinated family retirement.
-    """
-    source = text if text is not None else (ROOT / 'src/adjustor_thunks.cpp').read_text()
-    return {
-        'FOCUS1': braced(source, 'void __fastcall adjust_edit_group1_pass_dialog_focus(void *self, void *) {'),
-        'SPRITE3': braced(source, 'void __fastcall adjust_sprite_box3_on_redraw(void *self, void *) {'),
-    }
+def generated_adjustor_records(source=None):
+    """Return the compiler-generated EditGroup thunk identities from their owner."""
+    from match_recovery.source import Mode, read_file, read_text
+    path = ROOT / "src/editgroup.cpp"
+    rows = read_file(path) if source is None else read_text(source, path)
+    return {row.address: row for row in rows if row.address in (0x006127B0, 0x00612820)}
 
 
-FOCUS1_WALK = 'reinterpret_cast<Win *>(object - vtordisp)->Win::pass_dialog_focus();'
-SPRITE3_WALK = 'reinterpret_cast<SpriteBox *>(object - vtordisp - 0xAA4)->SpriteBox::on_redraw();'
-THUNK1_CLAIM = (r'^// ORIGINAL: 0x006127B0 \?on_redraw@thunk1_EditGroup@@QAEXXZ '
-                r'.*\bBYTE_EXACT$')
-THUNK3_CLAIM = (r'^// ORIGINAL: 0x00612820 \?on_redraw@thunk3_EditGroup@@QAEXXZ '
-                r'.*\bBYTE_EXACT$')
-
-
-def assert_neighbor_walks(bodies):
-    # pass_dialog_focus stays Win-qualified: no fold, vtordisp only (8 bytes).
-    assert FOCUS1_WALK in bodies['FOCUS1']
-    # The SpriteBox sibling keeps the family shape that still measures
-    # BYTE_EXACT at 0x00611930: the Dialog offset with the GraphicWin fold.
-    assert SPRITE3_WALK in bodies['SPRITE3']
-
-
-def assert_retirement(source=None, claims=None):
-    """The two EditGroup on_redraw adjustors are compiler-generated now."""
-    source = (ROOT / 'src/adjustor_thunks.cpp').read_text() if source is None else source
-    claims = (ROOT / 'src/editgroup.cpp').read_text() if claims is None else claims
-    assert 'adjust_edit_group1_on_redraw' not in source
-    assert 'adjust_edit_group3_on_redraw' not in source
-    assert re.search(THUNK1_CLAIM, claims, re.M)
-    assert re.search(THUNK3_CLAIM, claims, re.M)
-    # The rehomed claims name the compiler's own $4 vtordisp thunks.
-    assert '?on_redraw@EditGroup@@$4PPPPPPPM@A@AEXXZ' in claims
-    assert '?on_redraw@EditGroup@@$4PPPPPPPM@KBI@AEXXZ' in claims
-
-
-def test_retired_editgroup_adjustors_are_gone_and_claims_rehomed():
-    assert_retirement()
-    assert_neighbor_walks(adjustor_bodies())
-
-
-ADJUSTOR_MUTATIONS = {
-    # Reintroducing a handwritten EditGroup on_redraw adjustor must fail the
-    # retirement control.
-    'handwritten_body_reintroduced': ('adjust_edit_group1_pass_dialog_focus',
-                                      'adjust_edit_group1_on_redraw'),
-    # Pointing a rehomed claim back at a handwritten spelling must fail it.
-    'rehomed_symbol_reverted': ('?on_redraw@EditGroup@@$4PPPPPPPM@A@AEXXZ',
-                                '?adjust_edit_group1_on_redraw@@YIXPAX0@Z'),
-    # Dropping the rehomed thunk1 marker must fail the claim control.
-    'rehomed_claim_dropped': ('// ORIGINAL: 0x006127B0 ?on_redraw@thunk1_EditGroup@@QAEXXZ',
-                              '// ORIGINAL: 0x006127B0 ?on_redraw@thunk9_EditGroup@@QAEXXZ'),
-    # A wrong Dialog offset breaks the SpriteBox 0xA18 immediate.
-    'wrong_dialog_offset': (SPRITE3_WALK, SPRITE3_WALK.replace('- 0xAA4', '- 0xAA5')),
-    # The pre-rename 2584 spelling doubles the SpriteBox delta (0x1430).
-    'stale_pre_rename_delta': (SPRITE3_WALK, SPRITE3_WALK.replace('- 0xAA4', '- 2584 - 0xAA4')),
-    # Losing the Win qualification adds a receiver fold to pass_dialog_focus.
-    'focus_receiver_fold': (FOCUS1_WALK,
-                            'reinterpret_cast<EditGroup *>(object - vtordisp)->EditGroup::pass_dialog_focus();'),
+EXPECTED_EDITGROUP_THUNKS = {
+    0x006127B0: "?on_redraw@EditGroup@@$4PPPPPPPM@A@AEXXZ",
+    0x00612820: "?on_redraw@EditGroup@@$4PPPPPPPM@KBI@AEXXZ",
 }
 
 
-@pytest.mark.parametrize('name', tuple(ADJUSTOR_MUTATIONS))
-def test_adjustor_retirement_and_walk_damage_is_rejected(name):
-    before, after = ADJUSTOR_MUTATIONS[name]
-    if name == 'handwritten_body_reintroduced':
-        source = (ROOT / 'src/adjustor_thunks.cpp').read_text()
-        assert source.count(before) >= 1, name
-        with pytest.raises(AssertionError):
-            assert_retirement(source=source.replace(before, after))
-    elif name in ('wrong_dialog_offset', 'stale_pre_rename_delta',
-                  'focus_receiver_fold'):
-        source = (ROOT / 'src/adjustor_thunks.cpp').read_text()
-        assert source.count(before) >= 1, name
-        with pytest.raises(AssertionError):
-            assert_neighbor_walks(adjustor_bodies(source.replace(before, after)))
-    else:
-        claims = (ROOT / 'src/editgroup.cpp').read_text()
-        assert claims.count(before) >= 1, name
-        with pytest.raises(AssertionError):
-            assert_retirement(claims=claims.replace(before, after))
+def assert_generated_editgroup_thunks(source=None):
+    from match_recovery.source import Mode
+    rows = generated_adjustor_records(source)
+    assert set(rows) == set(EXPECTED_EDITGROUP_THUNKS)
+    for address, symbol in EXPECTED_EDITGROUP_THUNKS.items():
+        # These two historical BODY-mode bindings were already retained in
+        # the genuine owner; collection retirement must not rewrite them.
+        assert rows[address].mode is Mode.BODY
+        assert rows[address].byte_exact
+        assert rows[address].symbol == symbol
+
+
+def test_retired_adjustor_collection_and_real_editgroup_claims():
+    assert not (ROOT / "src/adjustor_thunks.cpp").exists()
+    assert not (ROOT / "src/adjustor_thunks.h").exists()
+    assert_generated_editgroup_thunks()
+
+
+@pytest.mark.parametrize("address,symbol", EXPECTED_EDITGROUP_THUNKS.items())
+def test_editgroup_generated_owner_identity_damage_is_rejected(address, symbol):
+    source = (ROOT / "src/editgroup.cpp").read_text()
+    damaged = source.replace(symbol, "?adjust_retired_handwalk@@YIXPAX0@Z", 1)
+    assert damaged != source
+    with pytest.raises(AssertionError):
+        assert_generated_editgroup_thunks(damaged)
 
 
 MUTATIONS = {

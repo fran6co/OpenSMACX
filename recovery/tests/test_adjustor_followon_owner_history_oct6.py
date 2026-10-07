@@ -50,7 +50,6 @@ def test_ten_transfer_records_preserve_full_identity_and_history(address, owner,
     for field in ("name", "image_spans", "kind", "byte_exact", "semantic",
                   "levers", "ruled_out", "unrecoverable", "deferred"):
         assert getattr(current, field) == getattr(prior, field), (hex(address), field)
-    assert address not in {row.address for row in read_file(ROOT / "src/adjustor_thunks.cpp")}
     binding = binding_source.parse((ROOT / owner).read_text(), rows)[current.line]
     text = "\n".join(binding["evidence"])
     assert "constructor" in text.lower()
@@ -77,5 +76,17 @@ def test_superseded_ten_adapter_helpers_are_absent_and_other_rows_remain():
         text = path.read_text(errors="surrogateescape")
         for helper in helpers:
             assert not re.search(r"\b" + re.escape(helper) + r"\s*\(", text), (path, helper)
-    current = {row.address: row for row in read_file(ROOT / "src/adjustor_thunks.cpp")}
-    assert set(current) == set(old) - MIGRATED
+    assert not (ROOT / "src/adjustor_thunks.cpp").exists()
+    assert not (ROOT / "src/adjustor_thunks.h").exists()
+    current = {}
+    for path in (ROOT / "src").rglob("*.cpp"):
+        for row in read_file(path):
+            current.setdefault(row.address, []).append(row)
+    for address in set(old) - MIGRATED:
+        hits = current.get(address, [])
+        assert len(hits) == 1, f"{address:08X} lost or duplicated after owner transfer"
+        row = hits[0]
+        prior = old[address]
+        for field in ("name", "image_spans", "byte_exact", "semantic",
+                      "kind", "levers", "ruled_out", "unrecoverable", "deferred"):
+            assert getattr(row, field) == getattr(prior, field), (hex(address), field)
