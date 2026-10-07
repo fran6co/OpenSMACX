@@ -8,6 +8,7 @@ import os
 
 from match_recovery.component_source import parse_component
 from match_recovery.source import read_text
+from owner_transfer_test_support import assert_current_owner, assert_leaf_collection_retired
 
 
 BASELINE = "948389543e746ff061ab04cb86e839fdc3600146"
@@ -94,16 +95,15 @@ def _raw_block(text, address):
 
 def test_zlib_original_records_move_with_full_catalogue_and_lesson_history():
     baseline_text = _git_text(LEAF)
-    active_leaf = (ROOT / LEAF).read_text(encoding="utf-8")
+    assert_leaf_collection_retired(ROOT)
     active_component = (ROOT / COMPONENT).read_text(encoding="utf-8")
     baseline = _states(baseline_text, LEAF)
-    current_leaf = _states(active_leaf, LEAF)
     current_component = _states(active_component, COMPONENT)
 
     for address, expected in EXPECTED.items():
+        assert_current_owner(ROOT, address, COMPONENT.as_posix())
         before = baseline[address]
         after = current_component[address]
-        assert address not in current_leaf
         assert before.name == after.name == expected["name"]
         assert before.image_spans == after.image_spans == (expected["span"],)
         assert _facts(after) == _facts(before)
@@ -183,11 +183,14 @@ def test_zlib_component_keeps_exactly_the_nine_reviewed_provider_bindings():
 
 
 def test_no_application_standin_or_declaration_remains_and_cmake_keeps_zlib():
-    leaf = (ROOT / LEAF).read_text(encoding="utf-8")
+    assert_leaf_collection_retired(ROOT)
+    component = (ROOT / COMPONENT).read_text(encoding="utf-8")
+    for address in EXPECTED:
+        assert_current_owner(ROOT, address, COMPONENT.as_posix())
     assert not (ROOT / "src/leaf_recoveries.h").exists()
     cmake = (ROOT / "CMakeLists.txt").read_text(encoding="utf-8")
     for name in ("sub_640a80", "sub_644930"):
-        assert not re.search(rf"\b{re.escape(name)}\s*\(", leaf)
+        assert not re.search(rf"\b{re.escape(name)}\s*\(", component)
     assert "src/vendor/zlib-1.0.2/adler32.c" in cmake
     assert "src/vendor/zlib-1.0.2/infutil.c" in cmake
     assert "src/vendor/zlib-1.0.2/deflate.c" in cmake

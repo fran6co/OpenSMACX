@@ -1203,10 +1203,9 @@ Purpose: Flood the whole buffer with one colour - through DirectDraw when
 //
 // The loop is written in C. NOT EXCLUDED AND NOT FINISHED - a body that does
 // not match yet, to be iterated on. The comment here used to say AGENTS.md
-// bars `__asm` from recovered bodies; that reading looks stale, because
-// `__declspec(naked)` blocks are in use in alphanet.cpp, leaf_recoveries.cpp
-// and scroll.cpp today. Whether one belongs HERE is a separate question from
-// whether they are allowed at all.
+// bars `__asm` from recovered bodies; that reading was historically stale,
+// when naked blocks were present in other source files. That old state is not
+// evidence about whether one belongs HERE or is allowed now.
 // EVERY REMAINING DIVERGENCE IS DOWNSTREAM OF THAT ONE DECISION, which is
 // why it is worth having measured rather than argued:
 //

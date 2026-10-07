@@ -202,11 +202,7 @@ def test_actual_source_owns_all_eight_functions_and_preserves_committed_history(
         relative, _pattern = OWNER[address]
         active = (ROOT / relative).read_text(encoding="utf-8")
         parse_bindings(active, read_text(active, (ROOT / relative).resolve()))
-    leaf_path = ROOT / SEED_SOURCE
-    leaf = read_text(leaf_path.read_text(encoding="utf-8"), leaf_path.resolve())
-    assert not (set(OWNER) & {row.address for row in leaf}), (
-        "superseded identities remain active in leaf_recoveries.cpp"
-    )
+    assert not (ROOT / SEED_SOURCE).exists(), "retired leaf owner source reappeared"
 
 
 def test_full_translation_unit_mask_rejects_comment_hidden_definition() -> None:
@@ -290,4 +286,3 @@ def test_actual_source_owner_behaviors_and_compiling_mutant(tmp_path: Path,
     convoy_changed = HOST + "\n".join(convoy_mutant.values()) + "\nint main(){\n" + main + "\n}\n"
     failed = _compile_run(tmp_path, convoy_changed, compiler)
     assert failed.returncode != 0, "the convoy predicate mutation survived"
-

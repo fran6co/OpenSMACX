@@ -87,9 +87,7 @@ def test_original_complete_destructor_identities_are_rehomed_without_claim_loss(
         assert annotation_digest(row) == expected["identity_sha256"]
         assert "historical original translation unit" in row.region.lower()
 
-    leaf_rows = [row for row in read_file(SOURCE / "src/leaf_recoveries.cpp")
-                 if row.address in EXPECTED]
-    assert leaf_rows == []
+    assert not (SOURCE / "src/leaf_recoveries.cpp").exists(), "retired leaf owner source reappeared"
     for address, expected in EXPECTED.items():
         body = source("src/datalink.cpp" if address == 0x4080B0
                       else "src/factionprofilewin.cpp")
@@ -120,8 +118,7 @@ def test_natural_typed_owners_and_only_superseded_seams_are_removed():
     assert "dialogs_scalar_dtor_redirect" not in active_dialogs
 
     assert not (ROOT / "src/leaf_recoveries.h").exists()
-    for rel in ("src/leaf_recoveries.cpp",
-                "src/listbox.cpp", "src/listbox.h", "src/dialogs.cpp",
+    for rel in ("src/listbox.cpp", "src/listbox.h", "src/dialogs.cpp",
                 "src/dialogs.h", "src/graphicwin.cpp", "src/graphicwin.h"):
         text = source(rel)
         for obsolete in ("LeafListBoxDestructor", "LeafDialogsDestructor",

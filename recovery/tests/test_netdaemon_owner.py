@@ -6,6 +6,7 @@ import shutil
 import subprocess
 
 import pytest
+from owner_transfer_test_support import assert_current_owner, assert_leaf_collection_retired
 
 _HERE = Path(__file__).resolve()
 _configured_root = os.environ.get("OPENSMACX_ROOT")
@@ -94,7 +95,9 @@ def product_source():
     game = (ROOT / "src/game.cpp").read_text()
     netclass = (ROOT / "src/net_class.cpp").read_text()
     netwin_header = (ROOT / "src/netwin.h").read_text()
-    leaf = (ROOT / "src/leaf_recoveries.cpp").read_text()
+    assert_leaf_collection_retired(ROOT)
+    assert_current_owner(ROOT, 0x0052E160, "src/netdaemon.cpp")
+    assert_current_owner(ROOT, 0x0052E370, "src/netdaemon.cpp")
 
     callback_bodies = [
         definition(netdaemon,

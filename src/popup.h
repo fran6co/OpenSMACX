@@ -318,7 +318,7 @@ int __cdecl pop_ask(char *text_file, char *section, int value,
 int __cdecl pop_ask_number(char *caption, char *label,
                            int (__cdecl *callback)());
 
-// Existing source owner: leaf_recoveries.cpp, original 0x00405140.
+// Existing source owner: popup.cpp, original 0x00405140.
 int __cdecl POP2(const char *caption, const char *image, int base_id);
 
 // Source-owned original helper; descriptive name, not original debug spelling.

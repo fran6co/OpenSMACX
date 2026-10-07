@@ -1164,9 +1164,9 @@ void __cdecl make_a_proposal(int faction_id, int other_faction_id, int selection
 
 // Communicate product declaration closure; existing identities unchanged.
 // Proposed faction.h closure; all names below already have genuine definitions
-// in faction.cpp or leaf_recoveries.cpp, except newly proposed neutral F7B4.
+// in faction.cpp or veh.cpp, except newly proposed neutral F7B4.
 // Keep the existing object identity, type, array extent and binding unchanged.
-int __cdecl diplo_lock(int patience); // existing leaf owner, native 539820
+int __cdecl diplo_lock(int patience); // existing faction owner, native 539820
 int __cdecl break_treaty(int faction_id, int target_faction_id, int treaty_bits);
 void __cdecl diplo_unlock();         // existing faction owner, native 5398C0
 extern uint32_t FactionDiplomacyFlags[MaxPlayerNum]; // native 93F678

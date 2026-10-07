@@ -14,6 +14,7 @@ from match_recovery.source.model import Mode
 from test_application_link_recovery import run_recovered_harness, references
 from capstone import Cs, CS_ARCH_X86, CS_MODE_32
 from capstone.x86 import X86_OP_IMM
+from owner_transfer_test_support import assert_current_owner, assert_leaf_collection_retired
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -67,6 +68,8 @@ def test_real_tables_dispatch_to_both_erased_hooks(objects):
 
 
 def test_complete_destructor_is_generated_and_destroys_virtual_base(objects):
+    assert_leaf_collection_retired(ROOT)
+    assert_current_owner(ROOT, 0x00401520, "src/stringstruct.cpp")
     record, = (r for r in read_file(ROOT / "src/dialog.cpp") if r.address == 0x406820)
     assert record.mode is Mode.FILE
     for obj in objects["src/dialog.cpp"]:
@@ -123,7 +126,6 @@ def test_scalar_deleting_entries_inherit_owner_aware_deallocation(objects, unit,
     record, = (r for r in read_file(ROOT / "src/stringstruct.cpp") if r.address == 0x401520)
     assert record.mode is Mode.FILE
     assert record.symbol == "??_GStringAllocationBase@@UAEPAXI@Z"
-    assert not any(r.address == 0x401520 for r in read_file(ROOT / "src/leaf_recoveries.cpp"))
 
 
 def test_live_hooks_preserve_null_failure_and_heap_ownership(tmp_path, monkeypatch):

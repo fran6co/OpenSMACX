@@ -635,7 +635,7 @@ extern VehPrototype VehPrototypes[MaxVehProtoNum];  // 0x009AB868, 0x34 stride
 // bounds the table - 2049 * 0x34 ends at 0x0096C85C, the largest slot count
 // that fits before it.
 extern Veh Vehs[2049];  // 0x00952828, 0x34 stride
-// Original sprite-picker item hooks, owned by leaf_recoveries.cpp.
+// Original sprite-picker item hooks, owned by veh.cpp.
 int __cdecl veh_sprite_click(int veh_id);
 int __cdecl veh_sprite_double_click(int veh_id);
 int __cdecl can_convoy(int x, int y);

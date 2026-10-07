@@ -235,7 +235,9 @@ def test_typed_members_restore_the_original_body_without_raw_offset_redirects(fa
     binding = local_binding(image, address)
     rows = [check_objects([binding], objects, image)[0] for objects in trials]
     assert any(row["boundary"] == row["bytes"] == row["references"] == "pass" for row in rows), rows
-    for unit in ("field_accessors", "leaf_recoveries"):
+    assert not (ROOT / "src/leaf_recoveries.cpp").exists()
+    assert not (ROOT / "src/leaf_recoveries.h").exists()
+    for unit in ("field_accessors",):
         assert all(r.address != address for r in read_file(ROOT / f"src/{unit}.cpp"))
         assert f"{address:08x}_redirect" not in (ROOT / f"src/{unit}.h").read_text()
 

@@ -58,8 +58,7 @@ def _current_records():
         assert not row.extract_error, (relative, row.extract_error)
         records[address] = row
     # These identities must no longer also be carried by the transitional leaf.
-    leaf = ROOT / "src/leaf_recoveries.cpp"
-    assert not (set(row.address for row in read_file(leaf)) & set(ADDRESSES))
+    assert not (ROOT / "src/leaf_recoveries.cpp").exists(), "retired leaf owner source reappeared"
     return records
 
 
@@ -341,4 +340,3 @@ def test_installed_definitions_retain_reviewed_semantic_choices():
     assert "netdaemon_inflate_buffer(mapped, &decompressed_size," in _function_body(
         "src/netdaemon.cpp", "NetDaemon::process_file_transfer_message"
     )
-

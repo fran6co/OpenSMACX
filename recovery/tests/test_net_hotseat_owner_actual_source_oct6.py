@@ -14,6 +14,7 @@ from pathlib import Path
 
 import pytest
 from match_recovery.source import read_text
+from owner_transfer_test_support import assert_current_owner, assert_leaf_collection_retired
 from match_recovery.includes import COMMENTS_OR_STRINGS
 
 
@@ -66,18 +67,17 @@ def extract_definition(source: str, signature: str) -> str:
 
 def installed_sources() -> tuple[Path, dict[int, str], dict[int, object]]:
     root = repository_root()
+    assert_leaf_collection_retired(root)
     texts = {rel: (root / rel).read_text(encoding="utf-8")
-             for rel in ("src/netwin.cpp", "src/diplowin.cpp", "src/leaf_recoveries.cpp")}
+             for rel in ("src/netwin.cpp", "src/diplowin.cpp")}
     bodies = {}
     current_rows = {}
-    leaf_active = mask_comments_and_strings(texts["src/leaf_recoveries.cpp"])
     for address, (owner, signature) in OWNERS.items():
         definition = extract_definition(texts[owner], signature)
         marker = f"// ORIGINAL: 0x{address:08X}"
         if texts[owner].count(marker) != 1:
             raise AssertionError(f"installed owner mapping missing/ambiguous: {address:08X}")
-        if mask_comments_and_strings(signature) in leaf_active:
-            raise AssertionError(f"superseded active leaf definition remains: {address:08X}")
+        assert_current_owner(root, address, owner)
         bodies[address] = definition
         rows = [row for row in read_text(texts[owner], owner) if row.address == address]
         if len(rows) != 1:

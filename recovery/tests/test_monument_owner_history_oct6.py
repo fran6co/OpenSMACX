@@ -42,7 +42,7 @@ def test_monument_transfer_retains_body_identity_and_seed_history(address, name,
     for field in ("name", "image_spans", "kind", "byte_exact", "semantic",
                   "levers", "ruled_out", "unrecoverable", "deferred"):
         assert getattr(current, field) == getattr(before[address], field), (hex(address), field)
-    assert address not in {r.address for r in read_file(ROOT / "src/leaf_recoveries.cpp")}
+    assert not (ROOT / "src/leaf_recoveries.cpp").exists(), "retired leaf owner source reappeared"
     signature = f"void __cdecl {name}({parameters}) {{"
     raw = prior_source()
     start = raw.index(signature)

@@ -47,4 +47,4 @@ def test_transfer_preserves_original_obligations_and_lessons(address, owner):
     for field in ("name", "image_spans", "kind", "byte_exact", "semantic",
                   "levers", "ruled_out", "unrecoverable", "deferred"):
         assert getattr(current, field) == getattr(prior_rows()[address], field), (hex(address), field)
-    assert address not in {r.address for r in read_file(ROOT / "src/leaf_recoveries.cpp")}
+    assert not (ROOT / "src/leaf_recoveries.cpp").exists(), "retired leaf owner source reappeared"

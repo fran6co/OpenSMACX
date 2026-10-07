@@ -338,7 +338,7 @@ def test_moved_annotations_preserve_full_baseline_metadata_and_file_mode():
 def test_unresolved_mappings_keep_identity_claims_and_lessons():
     for path, baseline_path, addresses in (
         ("src/texture.cpp", "src/leaf_recoveries.cpp", (0x006252C0,)),
-        ("src/leaf_recoveries.cpp", "src/leaf_recoveries.cpp", (0x00616B40,)),
+        ("src/table_storage.cpp", "src/leaf_recoveries.cpp", (0x00616B40,)),
         ("src/vendor/zlib.recovery.h", "src/leaf_recoveries.cpp",
          (0x00640A80, 0x00644930)),
         ("src/field_accessors.cpp", "src/field_accessors.cpp", (0x005DA6A0, 0x005DA6B0,

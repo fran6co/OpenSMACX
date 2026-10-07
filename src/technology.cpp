@@ -468,7 +468,7 @@ Status: Complete
 // units (facility_avail in base.cpp) got a real out-of-line call where the
 // image open-codes the whole preq_tech walk at all 109 call sites.
 
-// has_tech_call's DEFINITION LIVES IN leaf_recoveries.cpp, not here, and the
+// has_tech_call's DEFINITION LIVES IN technology_queries.cpp, not here, and the
 // distance is the whole point. `/O2` implies `/Ob2`, which inlines any
 // suitable function and not merely `inline`-marked ones - so a forwarder
 // defined in THIS file gets folded straight back into every caller in this

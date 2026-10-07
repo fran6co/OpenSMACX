@@ -75,7 +75,7 @@ int FileWin::add_def_ext(char *extension) {
 }
 
 // ORIGINAL: 0x006141C0 ?set_def_name@FileWin@@QAEHPAD@Z 0x006141C0-0x006142C9
-// RECOVERY_BINDING: v1 {"evidence": ["src/leaf_recoveries.cpp", "recovery/tasks/game-save-load-owner-coverage.json", "pinned image sha256:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tests/test_filewin_default_name_behavior.py"], "reason": "Home the default-name split to the actual FileWin buffers and preserve null, overlength, root, drive, and original boundary behavior."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:046fda9333f026b13fbc66d5bddc44e59e705e25:src/leaf_recoveries.cpp", "recovery/tasks/game-save-load-owner-coverage.json", "pinned image sha256:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tests/test_filewin_default_name_behavior.py"], "reason": "Home the default-name split to the actual FileWin buffers and preserve null, overlength, root, drive, and original boundary behavior."}
 // TRIED: plain strlen/strcat declarations get inlined by /O2, which the original does not do at this call site; the function-pointer cast idiom forces a real call and got the prologue and the backslash-search loop byte-exact. Still MISMATCH on the drive-letter append block's fall-through layout.
 int FileWin::set_def_name(char *name) {
     if (name == 0) {

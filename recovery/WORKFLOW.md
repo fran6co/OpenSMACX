@@ -32,8 +32,12 @@ scaffolding, not finished implementation coverage. The former `global_arith.*` c
 PrefWin geometry storage/initializers are owned in `prefwin_geometry.*`, and
 the real `SharedWordValue` object with its paired setter/toggle is owned in
 `shared_word.*`. That is genuine source ownership, not evidence for the
-word's semantic domain, caller set or lifetime. `leaf_recoveries.*` remains transitional
-material rather than final owner coverage. Superseded source files are
+word's semantic domain, caller set or lifetime. The `leaf_recoveries.*` collection
+has been retired after its identities were transferred to current source homes.
+The remaining bounded state, span arithmetic and table cleanup bodies live in
+`word_state.*`, `span_math.*` and `table_storage.*`; all five mappings retain
+explicit structural obligations. Their provisional types do not establish
+original class identity, complete layout or lifetime. Superseded source files are
 removed only after their owners retain identity, claims and useful
 findings. Preserve useful behavior, original
 identities, spans, historical claims and findings while migrating them; do not

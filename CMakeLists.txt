@@ -127,7 +127,10 @@ set(OPENSMACX_SOURCES
     src/field_accessors.cpp
     src/matrix3.cpp
     src/filebox.cpp
-    src/leaf_recoveries.cpp
+    src/word_state.cpp
+    src/table_storage.cpp
+    src/span_math.cpp
+    src/technology_queries.cpp
     src/byte_utilities.cpp
     src/selectpartwin.cpp
     src/shared_word.cpp

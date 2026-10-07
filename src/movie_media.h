@@ -307,7 +307,7 @@ typedef char media_runtime_decoder_state_offsets_check[
 typedef char media_record_extent_check[
     sizeof(MediaQueueRecord) == 0x10 ? 1 : -1];
 
-// Existing product-owned mapped callees in src/leaf_recoveries.cpp.
+// Existing product-owned mapped callees implemented in movie_media.cpp.
 extern "C" int __fastcall sub_5c9ec0(MediaRuntime *runtime, void *unused);
 extern "C" int __fastcall sub_5ca970(MediaRuntime *runtime, void *unused);
 

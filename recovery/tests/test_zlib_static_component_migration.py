@@ -6,6 +6,7 @@ import re
 
 from match_recovery.component_source import parse_component
 from match_recovery.source import read_file, read_text
+from owner_transfer_test_support import assert_current_owner, assert_leaf_collection_retired
 from match_recovery.source.writer import write
 
 
@@ -63,12 +64,14 @@ def test_migrated_history_identity_and_native_writer_roundtrip():
     pin_path = ROOT / "src/IMAGE_PIN"
     assert pin_path.is_file()
     assert pin_path.read_text(encoding="utf-8").split()[-1] == PIN
-    leaf = (ROOT / "src/leaf_recoveries.cpp").read_text(encoding="utf-8")
+    assert_leaf_collection_retired(ROOT)
     header = (ROOT / "src/vendor/zlib.recovery.h").read_text(encoding="utf-8")
-    assert all(f"ORIGINAL: 0x{address:08X}" not in leaf for address in EXPECTED)
+    for address in EXPECTED:
+        assert_current_owner(ROOT, address, "src/vendor/zlib.recovery.h")
     assert all(f"ORIGINAL: 0x{address:08X}" in header for address in EXPECTED)
-    assert "leaf_00642940_redirect" not in leaf
-    assert "leaf_0063d420_redirect" not in leaf
+    # Historical symbol comments are provenance, not active substitute bodies.
+    assert "leaf_00642940_redirect(" not in header
+    assert "leaf_0063d420_redirect(" not in header
     rows = {row.address: row for row in read_file(ROOT / "src/vendor/zlib.recovery.h")}
     manifest = parse_component(header)
     bindings = {binding.origin.address: binding for binding in manifest.bindings}

@@ -195,8 +195,7 @@ def test_identity_claims_history_and_real_owner_transport():
     assert len(init_records) == 1
     assert re.search(r"\b(?:this\s*->\s*)?UNK5\s*\(\s*index\s*\)",
                      _blank_noncode(init_records[0].region))
-    leaf = (ROOT / "src/leaf_recoveries.cpp").read_text(encoding="utf-8")
-    assert not _definitions(leaf)
+    assert not (ROOT / "src/leaf_recoveries.cpp").exists(), "retired leaf owner source reappeared"
 
     objects = parse_objects(text, "src/mapwin.cpp", PIN, address_space="pe:va")
     geometry = [row for row in objects if row.origin.address in (0x008EA0B0, 0x008EA0B8)]
@@ -226,4 +225,3 @@ def test_full_tu_lexical_mask_and_four_behavior_mutants(tmp_path):
     for mutant in mutants:
         result = _compile_run(tmp_path, mutant)
         assert result.returncode != 0, mutant
-

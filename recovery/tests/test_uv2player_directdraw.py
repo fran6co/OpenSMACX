@@ -6,6 +6,7 @@ import shutil
 import subprocess
 
 import pytest
+from owner_transfer_test_support import assert_current_owner, assert_leaf_collection_retired
 
 HERE = Path(__file__).resolve()
 ROOT = Path(os.environ.get("OPENSMACX_ROOT", str(HERE.parents[2]))).resolve()
@@ -77,7 +78,9 @@ def definition(text, signature):
 def product_source():
     source = (ROOT / "src/uv2player.cpp").read_text()
     header = (ROOT / "src/uv2player.h").read_text()
-    leaf = (ROOT / "src/leaf_recoveries.cpp").read_text()
+    assert_leaf_collection_retired(ROOT)
+    assert_current_owner(ROOT, 0x004BF400, "src/uv2player.cpp")
+    assert_current_owner(ROOT, 0x004BF4B0, "src/uv2player.cpp")
 
     code = mask_comments(header)
     for field_decl in (
@@ -89,7 +92,7 @@ def product_source():
     ):
         assert re.search(field_decl, code), "missing typed member: " + field_decl
     assert re.search(r"int\s+play\(int\s+width,\s*int\s+height\)\s*;", code)
-    assert "ComVCall" not in mask_comments(leaf)
+    assert "ComVCall" not in mask_comments(source)
 
     active = re.search(
         r"^UV2Player\s*\*\s*UV2PlayerActive\s*;\s*$",

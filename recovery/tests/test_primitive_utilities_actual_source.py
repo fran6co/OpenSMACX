@@ -7,6 +7,7 @@ import subprocess
 
 import pytest
 from match_recovery import source
+from owner_transfer_test_support import assert_current_owner, assert_leaf_collection_retired
 
 ROOT = None
 for parent in Path(__file__).resolve().parents:
@@ -129,7 +130,8 @@ def compile_and_run(tmp_path: Path, definitions: str) -> subprocess.CompletedPro
 
 
 def test_migrated_source_has_complete_historical_identity_and_comment_continuity() -> None:
-    assert GENERAL.is_file() and LEAF.is_file()
+    assert GENERAL.is_file()
+    assert_leaf_collection_retired(ROOT)
     current_text = GENERAL.read_text(encoding="utf-8")
     old_text = baseline_source()
     old_rows = {row.address: row for row in source.read_text(old_text, LEAF)
@@ -137,6 +139,8 @@ def test_migrated_source_has_complete_historical_identity_and_comment_continuity
     current_rows = {row.address: row for row in source.read(GENERAL)
                     if row.address in SIGNATURES}
     assert set(old_rows) == set(SIGNATURES) == set(current_rows)
+    for address in SIGNATURES:
+        assert_current_owner(ROOT, address, "src/general.cpp")
     continuity_fields = ("name", "state", "mode", "image_spans", "kind",
                          "byte_exact", "semantic", "exclusion", "levers",
                          "ruled_out", "unrecoverable", "deferred")
@@ -153,8 +157,6 @@ def test_migrated_source_has_complete_historical_identity_and_comment_continuity
         old_body = definition(old_text, OLD_SIGNATURES[address])
         new_body = definition(current_text, SIGNATURES[address])
         assert old_body.replace(OLD_SIGNATURES[address], SIGNATURES[address], 1) == new_body
-    leaf_rows = source.read(LEAF)
-    assert not [row for row in leaf_rows if row.address in SIGNATURES]
     for address in SIGNATURES:
         assert "build/recovery/" not in current_rows[address].region
 

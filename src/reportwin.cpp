@@ -53,8 +53,8 @@
 #include "text.h"
 
 // Shared dependencies identified by the original animation calls. The daemon
-// owners already live in leaf_recoveries.cpp; action_sat_attack and the colour
-// table require coordinator-owned publication before a complete link.
+// implementations live in reportwin.cpp; action_sat_attack is implemented in
+// veh.cpp. The colour table remains an external dependency.
 void __cdecl sat_anim_daemon(ReportWin *win);
 void __cdecl sat_expl_daemon(ReportWin *win);
 void __cdecl bl_daemon(ReportIf *report);

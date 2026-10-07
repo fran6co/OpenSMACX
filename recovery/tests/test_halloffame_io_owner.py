@@ -81,8 +81,7 @@ def test_famewin_io_migration_retains_original_history():
              if record.address in TARGETS}
     assert set(before) == set(TARGETS)
     assert set(after) == set(TARGETS)
-    leaf = read_text((ROOT / "src/leaf_recoveries.cpp").read_text(), "src/leaf_recoveries.cpp")
-    assert not any(record.address in TARGETS for record in leaf)
+    assert not (ROOT / "src/leaf_recoveries.cpp").exists(), "retired leaf owner source reappeared"
     for address in TARGETS:
         old, current = before[address], after[address]
         for field in ("name", "image_spans", "mode", "byte_exact", "semantic",

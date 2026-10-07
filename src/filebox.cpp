@@ -160,7 +160,7 @@ int FileBox::add_filter(char *pattern, char *label) {
 /*
 Purpose: Set the default extension passed to the common dialog.
 // ORIGINAL: 0x00634E80 ?set_def_ext@FileBox@@QAEHPAD@Z 0x00634E80-0x00634ECC FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"reason":"The source member is the four-byte inline extension buffer at +0x414, not an executable pointer or a dword value.","evidence":["Original 0x00634E80-0x00634ECC clears byte +0x414 on null and otherwise checks strlen against three before appending to that byte address.","The save/load dialog bodies in src/leaf_recoveries.cpp pass +0x414 to the common-dialog API; git:fee2514f:src/recovered/units/00634e80.cpp retains the historical candidate."]}
+// RECOVERY_BINDING: v1 {"reason":"The source member is the four-byte inline extension buffer at +0x414, not an executable pointer or a dword value.","evidence":["Original 0x00634E80-0x00634ECC clears byte +0x414 on null and otherwise checks strlen against three before appending to that byte address.","The save/load dialog bodies in src/filebox.cpp pass +0x414 to the common-dialog API; git:fee2514f:src/recovered/units/00634e80.cpp retains the historical candidate."]}
 // symbol    ?set_def_ext@FileBox@@QAEHPBD@Z
 */
 int FileBox::set_def_ext(const char *extension) {
@@ -179,7 +179,7 @@ int FileBox::set_def_ext(const char *extension) {
 /*
 Purpose: Set the filename shown when the common dialog opens.
 // ORIGINAL: 0x00634ED0 ?set_def_name@FileBox@@QAEHPAD@Z 0x00634ED0-0x00634F1E FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"reason":"The body writes the inline default-name buffer at +0x104, preserving the image's length comparison and null handling.","evidence":["Original 0x00634ED0-0x00634F1E checks strlen against 0x104, clears byte +0x104 and appends the argument there.","src/leaf_recoveries.cpp passes that buffer as OPENFILENAMEA.lpstrFileTitle; git:fee2514f:src/recovered/units/00634ed0.cpp retains the historical exact seed."]}
+// RECOVERY_BINDING: v1 {"reason":"The body writes the inline default-name buffer at +0x104, preserving the image's length comparison and null handling.","evidence":["Original 0x00634ED0-0x00634F1E checks strlen against 0x104, clears byte +0x104 and appends the argument there.","src/filebox.cpp passes that buffer as OPENFILENAMEA.lpstrFileTitle; git:fee2514f:src/recovered/units/00634ed0.cpp retains the historical exact seed."]}
 // symbol    ?set_def_name@FileBox@@QAEHPBD@Z
 */
 int FileBox::set_def_name(const char *name) {
@@ -200,7 +200,7 @@ int FileBox::set_def_name(const char *name) {
 /*
 Purpose: Set the initial directory for FileBox's common dialogs.
 // ORIGINAL: 0x00634F20 ?UNK1@FileBox@@QAEHPAD@Z 0x00634F20-0x00634F6E FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"reason":"The unnamed member writes the inline initial-directory buffer at +0x418; the dialog consumers use that buffer as lpstrInitialDir.","evidence":["Original 0x00634F20-0x00634F6E clears +0x418 on null and otherwise checks strlen against 0x104 before appending to +0x418.","src/leaf_recoveries.cpp uses that address as OPENFILENAMEA.lpstrInitialDir; git:fee2514f:src/recovered/00634f20.cpp preserves the historical exact seed."]}
+// RECOVERY_BINDING: v1 {"reason":"The unnamed member writes the inline initial-directory buffer at +0x418; the dialog consumers use that buffer as lpstrInitialDir.","evidence":["Original 0x00634F20-0x00634F6E clears +0x418 on null and otherwise checks strlen against 0x104 before appending to +0x418.","src/filebox.cpp uses that address as OPENFILENAMEA.lpstrInitialDir; git:fee2514f:src/recovered/00634f20.cpp preserves the historical exact seed."]}
 // symbol    ?set_initial_dir@FileBox@@QAEHPBD@Z
 */
 int FileBox::set_initial_dir(const char *directory) {

@@ -16,6 +16,7 @@ import pytest
 
 from match_recovery.includes import COMMENTS_OR_STRINGS
 from match_recovery.source import SourceRole, read_text
+from owner_transfer_test_support import assert_current_owner, assert_leaf_collection_retired
 
 
 ROOT = next(p for p in Path(__file__).resolve().parents
@@ -116,10 +117,9 @@ def test_current_owner_mappings_preserve_full_durable_history() -> None:
             f"0x{address:08X}: full historical lesson prose changed")
         assert row.source_role is SourceRole.UNCLASSIFIED, (
             f"0x{address:08X}: no genuine-owner classification")
-    seed_path = ROOT / SEED
-    remaining = {r.address for r in read_text(seed_path.read_text(encoding="utf-8"),
-                                             seed_path.resolve())}
-    assert not set(OWNERS) & remaining, "migrated identities remain in leaf owner"
+    assert_leaf_collection_retired(ROOT)
+    for address, (relative, _signature) in OWNERS.items():
+        assert_current_owner(ROOT, address, relative)
     assert not (ROOT / "src/leaf_recoveries.h").exists()
 
 

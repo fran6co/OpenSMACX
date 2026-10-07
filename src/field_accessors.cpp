@@ -1,108 +1,11 @@
 #include "stdafx.h"
 #include "field_accessors.h"
 
-namespace {
-// Accessed prefixes only. These offset names do not establish an original
-// class, allocation extent, producer, or connection to another nearby leaf.
-struct Fields4C8090View {
-    uint32_t dword_00_;
-    uint32_t dword_04_;
-    uint32_t dword_08_;
-    uint32_t dword_0C_;
-    uint32_t dword_10_;
-    uint32_t dword_14_;
-    uint32_t dword_18_;
-    uint32_t dword_1C_;
-    uint32_t dword_20_;
-};
-
-struct Fields4C8100View {
-    uint32_t untouched_00_;
-    uint32_t dword_04_;
-    uint32_t dword_08_;
-};
-}
 
 
 
 
 
-
-
-
-
-/*
-Purpose: Set 9 field(s) to constants.
-         Emitted by tools/generate_field_accessors.py from
-
-             mov eax, ecx / xor ecx, ecx / mov dword ptr [eax + 4], ecx / mov dword ptr [eax + 8], ecx / mov dword ptr [eax + 0xc], ecx / mov dword ptr [eax + 0x10], ecx / mov dword ptr [eax], ecx / mov dword ptr [eax + 0x14], ecx / mov dword ptr [eax + 0x18], ecx / mov dword ptr [eax + 0x1c], ecx / mov dword ptr [eax + 0x20], 0xffffffff / ret
-
-         The name is the ADDRESS, not an invention, and `self` is a void
-         pointer because this body needs `this` to be nothing more than a
-         pointer and an offset - the class it belongs to is not established.
-         The adapter declares 0 stack dword(s) so it
-         cleans 0 bytes, taken from the body's own `ret` -
-         the only statement of this function's arity that exists, since it has
-         no mangled name. Declaring fewer would leave them on the caller's
-         stack.
-// RECOVERY_ROLE: SCAFFOLD Untyped raw-field or constant adapter; real method ownership and named member relationships remain recovery obligations.
-// ORIGINAL: 0x004C8090 sub_4c8090 0x004C8090-0x004C80B3 BYTE_EXACT
-// symbol    ?field_accessor_004c8090_redirect@@YIPAXPAX0@Z
-// size      35 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the value described above
-Status: Complete
-*/
-void * __fastcall field_accessor_004c8090_redirect(void *self, void *) {
-    Fields4C8090View *const receiver = static_cast<Fields4C8090View *>(self);
-    receiver->dword_04_ = 0;
-    receiver->dword_08_ = 0;
-    receiver->dword_0C_ = 0;
-    receiver->dword_10_ = 0;
-    receiver->dword_00_ = 0;
-    receiver->dword_14_ = 0;
-    receiver->dword_18_ = 0;
-    receiver->dword_1C_ = 0;
-    receiver->dword_20_ = 0xFFFFFFFFU;
-    return self;
-}
-
-/*
-Purpose: Set 2 field(s) to constants.
-         Emitted by tools/generate_field_accessors.py from
-
-             mov eax, ecx / xor ecx, ecx / mov dword ptr [eax + 4], ecx / mov dword ptr [eax + 8], ecx / ret
-
-         The name is the ADDRESS, not an invention, and `self` is a void
-         pointer because this body needs `this` to be nothing more than a
-         pointer and an offset - the class it belongs to is not established.
-         The adapter declares 0 stack dword(s) so it
-         cleans 0 bytes, taken from the body's own `ret` -
-         the only statement of this function's arity that exists, since it has
-         no mangled name. Declaring fewer would leave them on the caller's
-         stack.
-// RECOVERY_ROLE: SCAFFOLD Untyped raw-field or constant adapter; real method ownership and named member relationships remain recovery obligations.
-// ORIGINAL: 0x004C8100 sub_4c8100 0x004C8100-0x004C810B BYTE_EXACT
-// symbol    ?field_accessor_004c8100_redirect@@YIPAXPAX0@Z
-// size      11 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the value described above
-Status: Complete
-*/
-void * __fastcall field_accessor_004c8100_redirect(void *self, void *) {
-    Fields4C8100View *const receiver = static_cast<Fields4C8100View *>(self);
-    receiver->dword_04_ = 0;
-    receiver->dword_08_ = 0;
-    return self;
-}
 
 
 

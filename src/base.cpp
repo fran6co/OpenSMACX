@@ -6359,8 +6359,8 @@ int __cdecl base_lose_minerals(int base_id, int UNUSED(production_id)) {
 }
 
 
-// POP2 has an owning implementation in leaf_recoveries.cpp; the public
-// xpops header currently omits its declaration.
+// POP2 is implemented by the owning Popup API in popup.cpp and declared in
+// popup.h.
 int __cdecl POP2(const char *caption, const char *image, int base_id);
 
 static int ecology_wrap_int(uint32_t bits) {

@@ -2,6 +2,7 @@
 
 import subprocess
 from pathlib import Path
+from owner_transfer_test_support import assert_current_owner, assert_leaf_collection_retired
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -23,7 +24,8 @@ def _braced(source: str, prefix: str) -> str:
 
 def test_netwin_lobby_click_packets_and_branches(tmp_path: Path) -> None:
     header = (ROOT / "src/netwin.h").read_text()
-    leaf = (ROOT / "src/leaf_recoveries.cpp").read_text()
+    assert_leaf_collection_retired(ROOT)
+    assert_current_owner(ROOT, 0x0047B450, "src/netwin.cpp")
     source = (ROOT / "src/netwin.cpp").read_text()
     declarations = "\n".join(
         _braced(header, name) + ";"
@@ -44,7 +46,6 @@ def test_netwin_lobby_click_packets_and_branches(tmp_path: Path) -> None:
         )
     )
     body = _braced(source, "void NetWin::on_button_clicked(int clicked_id)")
-    assert leaf.count("ORIGINAL: 0x0047B450") == 0
     assert source.count("ORIGINAL: 0x0047B450") == 1
     harness = r"""
 #include <cassert>

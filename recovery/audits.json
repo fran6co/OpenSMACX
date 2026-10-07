@@ -27,8 +27,10 @@
         "vtable address constant": 0,
         "short-named fixed-address binding": 0,
         "anonymous fixed-address global": 0,
-        "field_accessors.cpp markers": 8,
-        "leaf_recoveries.cpp markers": 3,
+        "field_accessors.cpp markers": 6,
+        "word_state.cpp markers": 3,
+        "span_math.cpp markers": 1,
+        "table_storage.cpp markers": 1,
         "nullsub_thunks.cpp markers": 46,
         "hypothesis_layouts.h lines": 1604,
         "stringstruct.cpp markers": 40
@@ -41,9 +43,21 @@
           "pattern": "ORIGINAL: 0x"
         },
         {
-          "name": "leaf_recoveries.cpp markers",
+          "name": "word_state.cpp markers",
           "kind": "text",
-          "path": "src/leaf_recoveries.cpp",
+          "path": "src/word_state.cpp",
+          "pattern": "ORIGINAL: 0x"
+        },
+        {
+          "name": "span_math.cpp markers",
+          "kind": "text",
+          "path": "src/span_math.cpp",
+          "pattern": "ORIGINAL: 0x"
+        },
+        {
+          "name": "table_storage.cpp markers",
+          "kind": "text",
+          "path": "src/table_storage.cpp",
           "pattern": "ORIGINAL: 0x"
         },
         {

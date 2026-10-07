@@ -281,8 +281,7 @@ def test_all_eight_installed_mappings_preserve_reader_history():
             f"0x{address:08X} changed original lesson prose"
         )
         assert f"ORIGINAL: 0x{address:08X}" in after.region
-    leaf = read_file(ROOT / "src/leaf_recoveries.cpp")
-    assert not ({row.address for row in leaf} & set(OWNERS))
+    assert not (ROOT / "src/leaf_recoveries.cpp").exists(), "retired leaf owner source reappeared"
 
 
 @pytest.mark.parametrize("compiler", ["g++", "clang++"])

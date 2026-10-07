@@ -253,9 +253,7 @@ def test_owner_transfer_preserves_original_mappings_and_lessons_from_history():
                               __import__("match_recovery.includes", fromlist=["COMMENTS_OR_STRINGS"])
                               .COMMENTS_OR_STRINGS.sub(lambda m: re.sub(r"[^\n]", " ", m[0]), current_text))) >= 1
         source_body(owner_path(filename), function)
-    for address in destinations:
-        assert all(r.address != address for r in read_text(
-            (ROOT / "src/leaf_recoveries.cpp").read_text(), "src/leaf_recoveries.cpp"))
+    assert not (ROOT / "src/leaf_recoveries.cpp").exists(), "retired leaf owner source reappeared"
 
 
 def test_farm_get_table_bindings_match_current_source_and_pinned_data():
@@ -360,4 +358,3 @@ def test_current_farm_get_tables_and_index_domain_controls(tmp_path, compiler):
         assert mutant != farm
         with tempfile.TemporaryDirectory(dir=tmp_path) as td:
             assert compile_status(Path(td), compiler, farm_fixture(mutant, radius, tables)) != 0
-

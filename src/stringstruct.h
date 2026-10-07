@@ -135,7 +135,7 @@ class ListPayloadBase : public virtual StringAllocationBase {};
 // virtual base at +0x14 - and the base's vftable (0x006693AC, then the
 // derived 0x006693C4 through the vbtable walk) plus the owner capture live
 // inside that subobject. The declaration owns the vbptr and the vbase pair;
-// the raw tearing-down walks (spritebox.cpp, leaf_recoveries.cpp) index the
+// the raw tearing-down walk (spritebox.cpp) indexes the
 // words numerically and are untouched by the spelling.
 struct StringStructEntry : public virtual StringAllocationBase {
   // RECOVERY_MEMBER: v1 StringStructEntry id 0x04 0x00402550

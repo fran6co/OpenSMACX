@@ -87,7 +87,7 @@ def test_identity_claims_and_history_survive_the_owner_transfer():
     utility_path = ROOT / "src/byte_utilities.cpp"
     leaf_path = ROOT / "src/leaf_recoveries.cpp"
     utility_text = utility_path.read_text(encoding="utf-8")
-    leaf_text = leaf_path.read_text(encoding="utf-8")
+    assert not leaf_path.exists(), "retired leaf owner source reappeared"
     rows = {row.address: row for row in source.read_text(utility_text, utility_path)}
     expected = {0x0057DEE0: ("sub_57dee0", ((0x0057DEE0, 0x0057DEFC),))}
     assert set(rows) == set(expected)
@@ -103,16 +103,12 @@ def test_identity_claims_and_history_survive_the_owner_transfer():
             utility_text.index(f"// ORIGINAL: 0x{address:08X}"):
             utility_text.index(f"// ORIGINAL: 0x{address:08X}") + 1000]
         assert f"// historical original marker: 0x{address:08X}" in utility_text
-        assert f"// ORIGINAL: 0x{address:08X}" not in leaf_text
+        assert utility_text.count(f"// ORIGINAL: 0x{address:08X}") == 1
     assert utility_text.count("// HISTORICAL scaffold role: SCAFFOLD") == 1
-    leaf_rows = {row.address for row in source.read_text(leaf_text, leaf_path)}
-    assert not (set(expected) & leaf_rows)
-    assert 0x00408470 in leaf_rows
-    assert all(next(row for row in source.read_text(leaf_text, leaf_path)
-                    if row.address == address).source_role is source.SourceRole.SCAFFOLD
-               for address in (0x00408470,))
+    span_rows = {row.address: row for row in source.read_file(ROOT / "src/span_math.cpp")}
+    assert 0x00408470 in span_rows
+    assert span_rows[0x00408470].source_role is source.SourceRole.SCAFFOLD
     # The input-status helper and secondary-base wrapper now have real owners.
-    assert 0x005D7A10 not in leaf_rows and 0x005D5470 not in leaf_rows
     assert any(row.address == 0x005D7A10 and row.byte_exact
                for row in source.read_file(ROOT / "src/buffer.cpp"))
     assert any(row.address == 0x005D5470

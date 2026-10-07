@@ -8,6 +8,7 @@ import re
 from pathlib import Path
 
 from match_recovery.source import Mode, read_file
+from owner_transfer_test_support import assert_current_owner, assert_leaf_collection_retired
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -27,9 +28,10 @@ def _definition(source, signature):
 def test_pending_translation_unit_is_retired_only_after_owners_are_present():
     assert not (ROOT / "src/pending_bodies.cpp").exists()
 
-    leaf = {row.address: row for row in read_file(ROOT / "src/leaf_recoveries.cpp")}
+    assert_leaf_collection_retired(ROOT)
+    assert_current_owner(ROOT, 0x006456E4, "src/vendor/vc6-runtime.recovery.h")
+    assert_current_owner(ROOT, 0x006457C2, "src/vendor/vc6-runtime.recovery.h")
     runtime = {row.address: row for row in read_file(ROOT / "src/vendor/vc6-runtime.recovery.h")}
-    assert 0x006456E4 not in leaf and 0x006457C2 not in leaf
     for address, name, spans in (
         (0x006456E4, "??_M@YGXPAXIHP6EX0@Z@Z", ((0x006456E4, 0x00645764),)),
         (0x006457C2, "??_L@YGXPAXIHP6EX0@Z1@Z", ((0x006457C2, 0x00645844),)),
@@ -41,7 +43,6 @@ def test_pending_translation_unit_is_retired_only_after_owners_are_present():
     assert "MISMATCH #12" in runtime[0x006456E4].ruled_out[0]
     runtime_text = (ROOT / "src/vendor/vc6-runtime.recovery.h").read_text()
     assert runtime_text.count("Historical project-loop location: src/vector_teardown.cpp") == 2
-    assert "Historical project-loop location" not in (ROOT / "src/leaf_recoveries.cpp").read_text()
     vector = (ROOT / "src/vector_teardown.cpp").read_text()
     assert "extern \"C\" void __stdcall sub_402ee0(" in vector
     assert "VectorDtorIterator" not in vector

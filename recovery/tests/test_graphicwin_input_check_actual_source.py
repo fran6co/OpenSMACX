@@ -103,12 +103,11 @@ def test_identity_claims_and_complete_history_survive_transfer():
     leaf_path = ROOT / "src/leaf_recoveries.cpp"
     buffer_path = ROOT / "src/buffer.cpp"
     graphicwin_path = ROOT / "src/graphicwin.cpp"
-    leaf_text = leaf_path.read_text(encoding="utf-8")
+    assert not leaf_path.exists(), "retired leaf source collection reappeared"
     buffer_text = buffer_path.read_text(encoding="utf-8")
     graphicwin_text = graphicwin_path.read_text(encoding="utf-8")
     buffer_rows = {row.address: row for row in source.read_text(buffer_text, buffer_path)}
     graphicwin_rows = {row.address: row for row in source.read_text(graphicwin_text, graphicwin_path)}
-    leaf_rows = {row.address: row for row in source.read_text(leaf_text, leaf_path)}
 
     helper = buffer_rows[0x005D7A10]
     wrapper = graphicwin_rows[0x005D5470]
@@ -120,7 +119,8 @@ def test_identity_claims_and_complete_history_survive_transfer():
     assert wrapper.image_spans == ((0x005D5470, 0x005D5492),)
     assert wrapper.byte_exact is False and wrapper.semantic is False
     assert wrapper.symbol == "?check_pcx_input_data@GraphicWin@@QAEHPAUPcxInputView@@HHH@Z"
-    assert 0x005D7A10 not in leaf_rows and 0x005D5470 not in leaf_rows
+    assert helper.source_role is source.SourceRole.UNCLASSIFIED
+    assert wrapper.source_role is source.SourceRole.UNCLASSIFIED
     assert "leaf_005d7a10_redirect" in buffer_text
     assert "leaf_005d5470_redirect" in graphicwin_text
     assert "0x444" in graphicwin_text[graphicwin_text.index("0x005D5470"):]

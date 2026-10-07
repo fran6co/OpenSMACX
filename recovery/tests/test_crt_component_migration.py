@@ -93,15 +93,13 @@ def _manifest(text: str):
 
 def test_original_iterator_annotations_are_rehomed_without_losing_identity_or_history():
     baseline_leaf = _git_text(LEAF)
-    active_leaf = (ROOT / LEAF).read_text(encoding="utf-8")
+    assert not (ROOT / LEAF).exists(), "retired leaf owner source reappeared"
     active_component = (ROOT / COMPONENT).read_text(encoding="utf-8")
-    active_states = _states(active_leaf, LEAF)
     component_states = _states(active_component, COMPONENT)
     baseline_states = _states(baseline_leaf, LEAF)
 
     for address in EXPECTED:
         original = baseline_states[address]
-        assert address not in active_states
         assert address in component_states
         assert _preservation_view(component_states[address]) == _preservation_view(original)
         assert _raw_original_block(active_component, address) == _raw_original_block(
