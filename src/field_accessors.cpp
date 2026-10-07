@@ -1,6 +1,27 @@
 #include "stdafx.h"
 #include "field_accessors.h"
 
+namespace {
+// Accessed prefixes only. These offset names do not establish an original
+// class, allocation extent, producer, or connection to another nearby leaf.
+struct Fields4C8090View {
+    uint32_t dword_00_;
+    uint32_t dword_04_;
+    uint32_t dword_08_;
+    uint32_t dword_0C_;
+    uint32_t dword_10_;
+    uint32_t dword_14_;
+    uint32_t dword_18_;
+    uint32_t dword_1C_;
+    uint32_t dword_20_;
+};
+
+struct Fields4C8100View {
+    uint32_t untouched_00_;
+    uint32_t dword_04_;
+    uint32_t dword_08_;
+};
+}
 
 
 
@@ -37,16 +58,16 @@ Return Value: the value described above
 Status: Complete
 */
 void * __fastcall field_accessor_004c8090_redirect(void *self, void *) {
-    uint8_t *const bytes = static_cast<uint8_t *>(self);
-    *reinterpret_cast<uint32_t *>(bytes + 0x4) = 0x0U;
-    *reinterpret_cast<uint32_t *>(bytes + 0x8) = 0x0U;
-    *reinterpret_cast<uint32_t *>(bytes + 0xc) = 0x0U;
-    *reinterpret_cast<uint32_t *>(bytes + 0x10) = 0x0U;
-    *reinterpret_cast<uint32_t *>(bytes + 0x0) = 0x0U;
-    *reinterpret_cast<uint32_t *>(bytes + 0x14) = 0x0U;
-    *reinterpret_cast<uint32_t *>(bytes + 0x18) = 0x0U;
-    *reinterpret_cast<uint32_t *>(bytes + 0x1c) = 0x0U;
-    *reinterpret_cast<uint32_t *>(bytes + 0x20) = 0xffffffffU;
+    Fields4C8090View *const receiver = static_cast<Fields4C8090View *>(self);
+    receiver->dword_04_ = 0;
+    receiver->dword_08_ = 0;
+    receiver->dword_0C_ = 0;
+    receiver->dword_10_ = 0;
+    receiver->dword_00_ = 0;
+    receiver->dword_14_ = 0;
+    receiver->dword_18_ = 0;
+    receiver->dword_1C_ = 0;
+    receiver->dword_20_ = 0xFFFFFFFFU;
     return self;
 }
 
@@ -77,9 +98,9 @@ Return Value: the value described above
 Status: Complete
 */
 void * __fastcall field_accessor_004c8100_redirect(void *self, void *) {
-    uint8_t *const bytes = static_cast<uint8_t *>(self);
-    *reinterpret_cast<uint32_t *>(bytes + 0x4) = 0x0U;
-    *reinterpret_cast<uint32_t *>(bytes + 0x8) = 0x0U;
+    Fields4C8100View *const receiver = static_cast<Fields4C8100View *>(self);
+    receiver->dword_04_ = 0;
+    receiver->dword_08_ = 0;
     return self;
 }
 
