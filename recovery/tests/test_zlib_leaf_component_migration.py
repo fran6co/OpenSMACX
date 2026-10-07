@@ -48,6 +48,13 @@ EXPECTED_FILES = {
     "inftrees.c", "inftrees.h", "infutil.c", "infutil.h", "trees.c",
     "uncompr.c", "zconf.h", "zlib.h", "zutil.c", "zutil.h",
 }
+RESTORED = {
+    0x0063CF00: (0x0063CF25, "_deflateInit_", "deflate.c"),
+    0x0063D4D0: (0x0063D55F, "_deflateEnd", "deflate.c"),
+    0x0063DF90: (0x0063DFDD, "_inflateEnd", "inflate.c"),
+    0x0063E0F0: (0x0063E10A, "_inflateInit_", "inflate.c"),
+    0x0063D450: (0x0063D4C2, "_flush_pending", "deflate.c"),
+}
 
 
 def _git_text(path):
@@ -115,7 +122,7 @@ def test_zlib_original_records_move_with_full_catalogue_and_lesson_history():
         assert actual_block == expected_block
 
 
-def test_zlib_component_keeps_exactly_the_four_reviewed_provider_bindings():
+def test_zlib_component_keeps_exactly_the_nine_reviewed_provider_bindings():
     manifest = parse_component((ROOT / COMPONENT).read_text(encoding="utf-8"))
     assert manifest.component.component_id == "zlib"
     assert manifest.component.ownership.value == "third_party"
@@ -131,12 +138,19 @@ def test_zlib_component_keeps_exactly_the_four_reviewed_provider_bindings():
     assert "517f7df278536bf9b91bb14104fcb4b13ce7b3c791d174195fec1618621b24e6" in provenance
     assert "license notice in `zlib.h`" in provenance
     assert {item.path for item in manifest.files} == EXPECTED_FILES
-    assert set(manifest.units) == {"adler32.c", "deflate.c", "infutil.c", "trees.c"}
+    assert set(manifest.units) == {"adler32.c", "deflate.c", "inflate.c", "infutil.c", "trees.c"}
     assert manifest.flags == ("/c", "/O2", "/Gy", "/GR-", "/GX")
 
-    assert len(manifest.bindings) == 4, "do not revive the retired broad zlib mapping"
-    assert {binding.origin.address for binding in manifest.bindings} == set(EXPECTED)
+    assert len(manifest.bindings) == 9, "do not revive the retired broad zlib mapping"
+    assert {binding.origin.address for binding in manifest.bindings} == set(EXPECTED) | set(RESTORED)
     for binding in manifest.bindings:
+        if binding.origin.address in RESTORED:
+            end, symbol, unit = RESTORED[binding.origin.address]
+            assert [(span.start, span.end) for span in binding.spans] == [(binding.origin.address, end)]
+            assert (binding.symbol, binding.unit) == (symbol, unit)
+            assert "Source correspondence only" in binding.evidence
+            assert "retained selection" in binding.evidence
+            continue
         expected = EXPECTED[binding.origin.address]
         assert binding.origin.image_sha256 == "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
         assert binding.origin.address_space == "pe:va"

@@ -72,8 +72,9 @@ def test_migrated_history_identity_and_native_writer_roundtrip():
     rows = {row.address: row for row in read_file(ROOT / "src/vendor/zlib.recovery.h")}
     manifest = parse_component(header)
     bindings = {binding.origin.address: binding for binding in manifest.bindings}
-    assert set(bindings) == {0x00640A80, 0x00644930, *EXPECTED}
-    assert set(manifest.units) == {"adler32.c", "deflate.c", "infutil.c", "trees.c"}
+    assert set(bindings) == {0x00640A80, 0x00644930, *EXPECTED,
+                            0x0063CF00, 0x0063D4D0, 0x0063DF90, 0x0063E0F0, 0x0063D450}
+    assert set(manifest.units) == {"adler32.c", "deflate.c", "inflate.c", "infutil.c", "trees.c"}
     for address, (end, symbol, unit, claimed, history_digest) in EXPECTED.items():
         row = rows[address]
         assert row.name == symbol
@@ -87,7 +88,6 @@ def test_migrated_history_identity_and_native_writer_roundtrip():
         assert "Whole-library version uniqueness and runtime equivalence are unproved" in binding.evidence
         assert "expected one defined COFF function" not in binding.evidence
         assert "Pinned zlib 1.0.2 source correspondence" in binding.evidence
-        assert "Whole-library version uniqueness and runtime equivalence are unproved" in binding.evidence
         assert "ignored owner proposal" not in binding.evidence
         if address == 0x00642940:
             assert "tr_static_init" in binding.evidence and "gen_codes" in binding.evidence
