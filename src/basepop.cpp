@@ -778,7 +778,7 @@ Purpose: Run the popup modally: size and position it, lay out its two caption
 typedef void (__fastcall *func_basepop_slot062)(void *);
 
 // THE FLAT BUTTON'S OWN SLOT 1, called with 0 after each button is configured
-// (0x00602F9A, 0x00603331, 0x00603677). The VCall1 shape already in this file.
+// (0x00602F9A, 0x00603331, 0x00603677).
 class VCallSlot001 {
  public:
     virtual void slot000();
@@ -2540,12 +2540,6 @@ void __cdecl BasePop::double_click(int button_id) {
     }
 }
 
-// Fixed-slot bindings carried from 00604680.cpp
-
-class VCall1 { public:
-    virtual void slot0(int);
-};
-
 // ORIGINAL: 0x00604680 ?close_class@BasePop@@QAAXXZ 0x00604680-0x006046ED FILE BYTE_EXACT
 // symbol    ?close_class@BasePop@@SAXXZ
 // The image spells QAAX - a receiver - while nothing passes one; this tree
@@ -2599,6 +2593,11 @@ class VCall1 { public:
 // emitter computes declarations; it does not carry lessons.
 
 
+// PopupAllocHook constructs Win-derived popups. Original 0x006046CD and
+// 0x006046E3 invoke their primary virtual scalar deleting destructor with
+// flag 1; Win inherits AutoSound's virtual destructor. Native delete retains
+// that lifetime operation rather than inventing a one-slot receiver class.
+// Reload B after destroying A: destruction may change the second global.
 void __cdecl BasePop::close_class() {
     char *ok_text = BasePopDefaultOkText;
     BasePopDefaultStringFonts[0] = 0;
@@ -2613,11 +2612,11 @@ void __cdecl BasePop::close_class() {
         BasePopDefaultCancelText = 0;
     }
     if (PopupInstanceSlotA != 0) {
-        reinterpret_cast<VCall1 *>(PopupInstanceSlotA)->slot0(1);
+        delete PopupInstanceSlotA;
         PopupInstanceSlotA = 0;
     }
     if (PopupInstanceSlotB != 0) {
-        reinterpret_cast<VCall1 *>(PopupInstanceSlotB)->slot0(1);
+        delete PopupInstanceSlotB;
         PopupInstanceSlotB = 0;
     }
 }
