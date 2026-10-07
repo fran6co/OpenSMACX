@@ -42,6 +42,15 @@ int32_t arithmetic_shift_right(uint32_t value, unsigned shift) {
   return -1 - static_cast<int32_t>((~value) >> shift);
 }
 
+// IMUL retains the low dword, including overflow, in the original decoder.
+int32_t low32_product(int32_t left, int32_t right) {
+  const uint32_t product = static_cast<uint32_t>(left) *
+                           static_cast<uint32_t>(right);
+  int32_t result;
+  std::memcpy(&result, &product, sizeof(result));
+  return result;
+}
+
 uint32_t consume_block_code(BitState &bits,
                                  const uint32_t table[64]) {
   const uint32_t entry = table[bits.accumulator >> 26];
@@ -119,14 +128,14 @@ int decode_coefficients(State &state) {
   BitState &bits = state.bits;
   uint32_t accumulator = bits.accumulator << 8;
   int count = bits.available_bits - 8;
-  state.fill_value = static_cast<int32_t>(bits.accumulator >> 24) *
-                     state.scale_factor;
+  state.fill_value = low32_product(
+      arithmetic_shift_right(bits.accumulator, 24), state.scale_factor);
 
   if (count < 0x10) {
     const uint16_t word = static_cast<uint16_t>(pull_word(bits));
     accumulator |= static_cast<uint32_t>(word)
                    << ((0x10 - static_cast<int8_t>(count)) & 0x1f);
-    count += 8;
+    count += 0x10;
   }
 
   std::memset(state.coefficients, 0, 63 * sizeof(*state.coefficients));

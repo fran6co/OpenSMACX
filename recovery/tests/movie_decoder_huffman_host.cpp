@@ -131,6 +131,39 @@ void test_value_then_terminal_entry() {
   assert(state.bits.cursor == stream);
 }
 
+void test_signed_fill_byte() {
+  std::uint32_t primary[512] = {};
+  std::uint32_t secondary_a[256] = {};
+  std::uint32_t secondary_b[256] = {};
+  std::int32_t offsets[64] = {};
+  std::int32_t scales[64] = {};
+  std::int32_t coefficients[63] = {};
+  const std::uint8_t stream[] = {0, 0};
+  primary[0] = 0x30;
+  Tables tables{primary, secondary_a, secondary_b, offsets, scales};
+  State state{{stream, 0xff000000u, 32}, 0, 3, coefficients, &tables};
+  assert(decode_coefficients(state) == 1);
+  assert(state.fill_value == -3);
+  assert(state.bits.cursor == stream);
+}
+
+void test_initial_refill_restores_sixteen_bits() {
+  std::uint32_t primary[512] = {};
+  std::uint32_t secondary_a[256] = {};
+  std::uint32_t secondary_b[256] = {};
+  std::int32_t offsets[64] = {};
+  std::int32_t scales[64] = {};
+  std::int32_t coefficients[63] = {};
+  const std::uint8_t stream[] = {0x00, 0x40, 0x00, 0x00};
+  primary[128] = 0x30;
+  Tables tables{primary, secondary_a, secondary_b, offsets, scales};
+  State state{{stream, 0, 8}, 0, 1, coefficients, &tables};
+  assert(decode_coefficients(state) == 1);
+  assert(state.bits.cursor == stream + 4);
+  assert(state.bits.available_bits == 30);
+  assert(state.bits.accumulator == 0);
+}
+
 void test_six_block_native_dispatch_and_fill() {
   idct_calls = 0;
   std::uint8_t stream[16] = {};
@@ -341,6 +374,8 @@ int main() {
   test_block_header_paths();
   test_terminal_huffman_entry();
   test_value_then_terminal_entry();
+  test_signed_fill_byte();
+  test_initial_refill_restores_sixteen_bits();
   test_six_block_native_dispatch_and_fill();
   test_six_block_idct_route();
   test_six_flagged_delta_dispatch();

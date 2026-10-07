@@ -136,7 +136,8 @@ int main() {
   assert(pack_component==movie_media_decoder_process_storage.wide_block_output_bytes);
   assert(pack_chroma==movie_media_decoder_process_storage.narrow_block_output_bytes);
   assert(pack_destination==output && pack_pitch==32);
-  assert(movie_media_decoder_tables.frame_bit_state.cursor==packet+10);
+  // Six terminal blocks consume ten bits each, with three 16-bit refills.
+  assert(movie_media_decoder_tables.frame_bit_state.cursor==packet+6);
   assert(movie_media_decoder_tables.frame_bit_state.available_bits==20);
   for(int i=0;i!=512;++i) assert(output[i]==0);
   for(int i=512;i!=528;++i) assert(output[i]==0xa5);
