@@ -1147,6 +1147,8 @@ static int mineral_calls;
 static int energy_calls;
 static int support_calls;
 static int yield_calls;
+static int resource_order[5];
+static int resource_order_count;
 static int reset_calls;
 static int kill_calls;
 static MapWin test_map_win;
@@ -1226,11 +1228,11 @@ int __cdecl propose_proto(int, int, int, int, int, int, int, char *) {
     return -1;
 }
 void __cdecl reset_territory() { ++reset_calls; }
-void __cdecl base_nutrient() { ++nutrient_calls; }
-void __cdecl base_minerals() { ++mineral_calls; }
-void __cdecl base_energy() { ++energy_calls; }
-void __cdecl base_support() { ++support_calls; }
-void __cdecl base_yield() { ++yield_calls; }
+void __cdecl base_nutrient() { ++nutrient_calls; resource_order[resource_order_count++] = 3; }
+void __cdecl base_minerals() { ++mineral_calls; resource_order[resource_order_count++] = 4; }
+void __cdecl base_energy() { ++energy_calls; resource_order[resource_order_count++] = 5; }
+void __cdecl base_support() { ++support_calls; resource_order[resource_order_count++] = 1; }
+void __cdecl base_yield() { ++yield_calls; resource_order[resource_order_count++] = 2; }
 void __cdecl draw_map(int) { ++map_draw_calls; }
 
 static void set_random_values(const int *values, int count) {
@@ -1315,6 +1317,7 @@ static void reset_fixture() {
     map_center_calls = map_draw_calls = parse_text_calls = 0;
     nutrient_calls = mineral_calls = energy_calls = 0;
     support_calls = yield_calls = reset_calls = kill_calls = 0;
+    resource_order_count = 0;
     const int values[] = { 0 };
     set_random_values(values, 1);
 }
@@ -1354,6 +1357,9 @@ static void test_weighted_threshold_and_radius_transfer() {
         assert(using_calls == 2);
         assert(nutrient_calls == 1 && mineral_calls == 1 && energy_calls == 1);
         assert(support_calls == 1 && yield_calls == 1);
+        const int expected_order[] = { 1, 2, 3, 4, 5 };
+        assert(resource_order_count == 5);
+        for (int i = 0; i < 5; ++i) assert(resource_order[i] == expected_order[i]);
     }
 
     reset_fixture();
@@ -1515,8 +1521,29 @@ static void test_visibility_gate_and_specialist_prerequisite() {
     assert(replay_calls == 0);
 }
 
+static void test_bonus_facilities_come_only_from_both_participants() {
+    reset_fixture();
+    Bases[0].faction_id_former = 2;
+    Players[1].faction_bonus_count = 2;
+    Players[1].faction_bonus_id[1] = 2;
+    Players[1].faction_bonus_val1[1] = 5;
+    Players[2].faction_bonus_count = 2;
+    Players[2].faction_bonus_id[1] = 2;
+    Players[2].faction_bonus_val1[1] = 6;
+    Players[3].faction_bonus_count = 2;
+    Players[3].faction_bonus_id[1] = 2;
+    Players[3].faction_bonus_val1[1] = 7;
+    timer_value = 1041; // retain the original former-faction fallback
+    drone_riot();
+    assert(Bases[0].faction_id_current == 2);
+    assert((Bases[0].facilities_built[0] & (1 << 5)) != 0);
+    assert((Bases[0].facilities_built[0] & (1 << 6)) != 0);
+    assert((Bases[0].facilities_built[0] & (1 << 7)) == 0);
+}
+
 int main() {
     test_weighted_threshold_and_radius_transfer();
+    test_bonus_facilities_come_only_from_both_participants();
     test_signed_former_faction_sentinel();
     test_nearest_fallback_treaty_weight();
     test_initial_treaty_index_reads_last_turn_member();
@@ -1827,3 +1854,36 @@ def test_drone_riot_actual_body_embedded_cpp98_controls(
     harness = harness.replace('#include "api.h"\n#include "../drone_riot.v2.cpp"', "")
     harness = DRONE_API_FIXTURE + "\n" + body + "\n" + harness
     compile_run(tmp_path, "actual_drone_riot", harness)
+
+def test_drone_riot_old_resource_order_mutation_is_rejected(tmp_path: Path) -> None:
+    body = owner_section("0x004F4FB0", "void __cdecl drone_riot()", "src/base.cpp")
+    expected = """base_support();
+                    base_yield();
+                    base_nutrient();
+                    base_minerals();
+                    base_energy();"""
+    old_order = """base_nutrient();
+                    base_minerals();
+                    base_energy();
+                    base_support();
+                    base_yield();"""
+    assert expected in body
+    damaged = body.replace(expected, old_order, 1)
+    harness = DRONE_RIOT_FIXTURE.replace('#include "api.h"\n#include "../drone_riot.v2.cpp"', "")
+    harness = DRONE_API_FIXTURE + "\n" + damaged + "\n" + harness
+    with pytest.raises(AssertionError):
+        compile_run(tmp_path, "old_resource_order", harness)
+
+def test_drone_riot_intervening_faction_bonus_mutation_is_rejected(tmp_path: Path) -> None:
+    body = owner_section("0x004F4FB0", "void __cdecl drone_riot()", "src/base.cpp")
+    participants = """for (int bonus_pass = 0; bonus_pass < 2; ++bonus_pass) {
+                        const int bonus_player_id =
+                            bonus_pass == 0 ? faction_id : best_faction;"""
+    all_later_players = """for (int bonus_player_id = faction_id;
+                         bonus_player_id < MaxPlayerNum; ++bonus_player_id) {"""
+    assert participants in body
+    damaged = body.replace(participants, all_later_players, 1)
+    harness = DRONE_RIOT_FIXTURE.replace('#include "api.h"\n#include "../drone_riot.v2.cpp"', "")
+    harness = DRONE_API_FIXTURE + "\n" + damaged + "\n" + harness
+    with pytest.raises(AssertionError):
+        compile_run(tmp_path, "intervening_bonus_owner", harness)

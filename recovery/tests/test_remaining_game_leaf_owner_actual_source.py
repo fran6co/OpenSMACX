@@ -19,10 +19,9 @@ CASES = (
     (0x0046B040, "src/mapwin.cpp", "void __cdecl draw_tile_fixup(int x_coord, int y_coord, int second_x_coord,"),
     (0x004C96E0, "src/map.cpp", "int __cdecl action_build(int veh_id, char *base_name)"),
     (0x00405B20, "src/popup.cpp", "int Popup::on_dialog_item_back_draw(GraphicWin *a1, int, int a3, RECT *a4)"),
-    (0x005F2830, "src/win.cpp", "void __cdecl Win::display_action(int action)"),
+    (0x005F2830, "src/win.cpp", "int __cdecl Win::display_action(int action)"),
 )
 EXPECTED_ROLES = {
-    0x005F2830: "SCAFFOLD",
 }
 
 
@@ -120,15 +119,16 @@ def test_callback_offset_binding_uses_supported_source_grammar():
     assert row.class_type is None and row.class_pointer_type is None
 
 
-def test_win_return_residue_is_not_claimed_as_a_source_result():
+def test_win_return_paths_are_explicit_in_the_owner():
     header = (ROOT / "src/win.h").read_text()
     source = (ROOT / "src/win.cpp").read_text()
-    assert "static void __cdecl display_action(int action);" in header
-    assert "void __cdecl Win::display_action(int action)" in source
-    body = function(source, "void __cdecl Win::display_action(int action)")
-    assert "return 0;" not in body
-    role_line = next(line for line in source.splitlines()
-                     if line.startswith("// RECOVERY_ROLE: SCAFFOLD") and
-                     "path-dependent EAX result" in line)
-    assert "Caller/result contract remains unresolved" in role_line
-    assert "not semantic completion" in role_line
+    assert "static int __cdecl display_action(int action);" in header
+    assert "typedef int (__cdecl *WinDisplayActionHookFn)();" in header
+    body = function(source, "int __cdecl Win::display_action(int action)")
+    assert "return ShowWindow(HandleMain, SW_MAXIMIZE);" in body
+    assert "return ShowWindow(HandleMain, SW_MINIMIZE);" in body
+    assert "result = hook();" in body
+    assert "return child->play();" in body
+    assert "static_cast<uint32_t>(action) - 2u" in body
+    assert "RECOVERY_ROLE: SCAFFOLD" not in source[
+        source.index("// ORIGINAL: 0x005F2830"):source.index("// size      267 bytes")]

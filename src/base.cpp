@@ -14919,8 +14919,10 @@ after_popup:
                             kill(vehicle_id);
                     }
 
-                    for (int bonus_player_id = faction_id;
-                         bonus_player_id < MaxPlayerNum; ++bonus_player_id) {
+                    // Native reapplies only actor and selected-recipient rows.
+                    for (int bonus_pass = 0; bonus_pass < 2; ++bonus_pass) {
+                        const int bonus_player_id =
+                            bonus_pass == 0 ? faction_id : best_faction;
                         const Player &player = Players[bonus_player_id];
                         for (int k = 0; k < player.faction_bonus_count; ++k) {
                             const int bonus_id = player.faction_bonus_id[k];
@@ -14939,11 +14941,11 @@ after_popup:
                     }
                     owner_set(old_x, old_y, best_faction);
                     BaseComputedID = BaseIDCurrentSelected;
+                    base_support();
+                    base_yield();
                     base_nutrient();
                     base_minerals();
                     base_energy();
-                    base_support();
-                    base_yield();
 
                     const int reloaded_base_owner =
                         Bases[BaseIDCurrentSelected].faction_id_current;

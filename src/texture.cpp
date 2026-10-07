@@ -289,13 +289,27 @@ static void texture_draw_keyed_lit_span(unsigned char *destination,
                                light, light_step, pixel_count, true, key);
 }
 
+struct TextureDrawSpanResult {
+    bool has_pixel;
+    unsigned int last_source_offset;
+    unsigned int next_source_offset;
+    unsigned int last_packed_uv;
+    unsigned int next_packed_uv;
+    unsigned short last_light;
+    unsigned short next_light;
+    int *packed_uv_sink;
+    volatile const unsigned char *preload_pixels;
+    unsigned char prefetched_source;
+};
+
 static void texture_draw_coast_span(unsigned char *destination,
                                     const unsigned char *pixels,
                                     const unsigned char *coast_pixels,
                                     const unsigned char *remap, int width,
                                     int u, int v, int du, int dv,
                                     int light, unsigned short light_step,
-                                    int pixel_count) {
+                                    int pixel_count,
+                                    TextureDrawSpanResult *result = 0) {
     unsigned int source_offset = texture_draw_source_index(width, u, v);
     unsigned short u_fraction = static_cast<unsigned short>(u);
     unsigned int v_fraction_and_du_fraction =
@@ -308,13 +322,25 @@ static void texture_draw_coast_span(unsigned char *destination,
         static_cast<unsigned int>(light) >> 8);
     const unsigned short du_fraction = static_cast<unsigned short>(du);
 
+    if (result != 0) result->has_pixel = false;
     for (int pixel = 0; pixel < pixel_count; ++pixel) {
+        if (result != 0) {
+            result->has_pixel = true;
+            result->last_source_offset = source_offset;
+            result->last_packed_uv = v_fraction_and_du_fraction;
+            result->last_light = light_accumulator;
+            if (result->packed_uv_sink != 0)
+                *result->packed_uv_sink =
+                    static_cast<int>(v_fraction_and_du_fraction);
+        }
+        const unsigned char base_texel = result != 0
+            ? result->prefetched_source : pixels[source_offset];
         const unsigned char mapped = remap[coast_pixels[source_offset]];
         if (mapped != 0) {
             if (mapped == 1) {
                 const unsigned int shade = (light_accumulator >> 8) & 0xffu;
                 destination[0] = static_cast<unsigned char>(
-                    static_cast<unsigned int>(pixels[source_offset]) + shade);
+                    static_cast<unsigned int>(base_texel) + shade);
             } else {
                 destination[0] = mapped;
             }
@@ -324,14 +350,22 @@ static void texture_draw_coast_span(unsigned char *destination,
             dv_fraction, du_fraction, source_step, width);
         light_accumulator = static_cast<unsigned short>(
             light_accumulator + light_step);
+        if (result != 0) {
+            result->next_source_offset = source_offset;
+            result->next_packed_uv = v_fraction_and_du_fraction;
+            result->next_light = light_accumulator;
+        }
         ++destination;
+        if (result != 0 && result->preload_pixels != 0)
+            result->prefetched_source = result->preload_pixels[source_offset];
     }
 }
 
 static void texture_draw_keyed_coast_fill_span(
     unsigned char *destination, const unsigned char *coast_pixels,
     const unsigned char *remap, int width, int u, int v, int du, int dv,
-    unsigned char fill_color, int pixel_count) {
+    unsigned char fill_color, int pixel_count,
+    TextureDrawSpanResult *result = 0) {
     unsigned int source_offset = texture_draw_source_index(width, u, v);
     unsigned short u_fraction = static_cast<unsigned short>(u);
     unsigned int v_fraction_and_du_fraction =
@@ -342,13 +376,30 @@ static void texture_draw_keyed_coast_fill_span(
     const unsigned int source_step = texture_draw_source_step(du, dv, width);
     const unsigned short du_fraction = static_cast<unsigned short>(du);
 
+    if (result != 0) result->has_pixel = false;
     for (int pixel = 0; pixel < pixel_count; ++pixel) {
+        if (result != 0) {
+            result->has_pixel = true;
+            result->last_source_offset = source_offset;
+            result->last_packed_uv = v_fraction_and_du_fraction;
+            result->last_light = 0;
+            if (result->packed_uv_sink != 0)
+                *result->packed_uv_sink =
+                    static_cast<int>(v_fraction_and_du_fraction);
+        }
         if (remap[coast_pixels[source_offset]] != 0)
             destination[0] = fill_color;
         source_offset = texture_draw_next_source_index(
             source_offset, v_fraction_and_du_fraction, u_fraction,
             dv_fraction, du_fraction, source_step, width);
+        if (result != 0) {
+            result->next_source_offset = source_offset;
+            result->next_packed_uv = v_fraction_and_du_fraction;
+            result->next_light = 0;
+        }
         ++destination;
+        if (result != 0 && result->preload_pixels != 0)
+            result->prefetched_source = result->preload_pixels[source_offset];
     }
 }
 
@@ -762,14 +813,15 @@ Texture g_FOREST_TEXTURES[16];
 Texture g_RAINFALL_SINGLE_TILE_TEXTURE;
 
 // Fixed-slot bindings carried from 0061ead0.cpp
-static int *const blit_scale_65536f = (int *)0x00670A84;
-static int *const blit_scale_256f = (int *)0x00670A88;
+static float *const blit_scale_65536f = (float *)0x00670A84;
+static float *const blit_scale_256f = (float *)0x00670A88;
 static int *const blit_alt_slot_520 = (int *)0x006972C4;
 static int *const blit_alt_slot_524 = (int *)0x006972C8;
 static int *const blit_edge_uvs_a = (int *)0x009BB490;
 static int *const blit_slot_498 = (int *)0x009BB498;
 static int *const blit_buffer_stride = (int *)0x009BB49C;
 static int *const blit_slot_4a4 = (int *)0x009BB4A4;
+static int *const blit_slot_504 = (int *)0x009BB504;
 static int *const blit_texture_width = (int *)0x009BB4A8;
 static int *const blit_vertex_count = (int *)0x009BB4B0;
 static int *const blit_max_y_index = (int *)0x009BB4B4;
@@ -805,6 +857,21 @@ static int *const blit_remap_table = (int *)0x009BB550;
 static int *const blit_shade_table = (int *)0x009BB554;
 static int *const blit_slot_558 = (int *)0x009BB558;
 
+static int texture_coast_advance_edge(EdgeScan &edge) {
+    if (--edge.counter == 0)
+        return Texture::setup_edge_gouraud(&edge, edge.id);
+    edge.accumA = static_cast<int>(static_cast<unsigned int>(edge.accumA) + edge.deltaA);
+    edge.accumB = static_cast<int>(static_cast<unsigned int>(edge.accumB) + edge.deltaB);
+    edge.accumC = static_cast<int>(static_cast<unsigned int>(edge.accumC) + edge.deltaC);
+    edge.accumD = static_cast<int>(static_cast<unsigned int>(edge.accumD) + edge.deltaD);
+    edge.fracAccum = static_cast<int>(static_cast<unsigned int>(edge.fracAccum) + edge.fracDelta);
+    if (edge.fracAccum > 0) {
+        edge.accumC = static_cast<int>(static_cast<unsigned int>(edge.accumC) + edge.extraDeltaC);
+        edge.fracAccum = texture_difference(edge.fracAccum, edge.fracSub);
+    }
+    return 1;
+}
+
 // ORIGINAL: 0x0061EAD0 ?draw_coast@Texture@@QAEXPAUBuffer@@PAUVert@@PAHPAUTexture@@PAEH1@Z 0x0061EAD0-0x0061F0C6 FILE
 // symbol    ?draw_coast@Texture@@QAEXPAVBuffer@@PAUVert@@PAHPAV1@PAEH1@Z
 //            the image spells `Buffer` and `Texture` as structs (PAU) and the
@@ -821,120 +888,195 @@ static int *const blit_slot_558 = (int *)0x009BB558;
 // calls     0x005E3373 0x005E34A3 0x0061FC90
 
 void Texture::draw_coast(Buffer * a1, Vert * a2, int * a3, Texture * a4, unsigned char * a5, int a6, Vert * a7) {
-    // Transcribed from 0x0061EAD0. The guard chain is the image's own order -
-    // six separate tests, each jumping straight to the shared epilogue at
-    // 0x0061F0AC, which is why there is no early `return` per arm.
-    char *self = reinterpret_cast<char *>(this);
-    int *self_int = reinterpret_cast<int *>(this);
-
-    if (a2 == 0 || a1 == 0 || self_int[0] == 0 || a3 == 0 || a5 == 0 || a4 == 0) {
-        if (a1 != 0) {
-            a1->free_data(1);
-        }
-        return;
-    }
+    // 0x61EAD0..0x61F0C6 takes every guard through the common epilogue.
+    do {
+    if (a2 == 0 || a1 == 0 || pixels_ == 0 || a3 == 0 || a5 == 0 || a4 == 0)
+        break;
 
     blit_pixel_base[0] = a1->get_data();
-    blit_edge_uvs_b[0] = reinterpret_cast<int>(a2);
-    blit_z_values[0] = reinterpret_cast<int>(a3);
-    blit_remap_table[0] = reinterpret_cast<int>(a5);
-    blit_texture_pixels[0] = self_int[0];
-    TextureRowPitchScratch = self_int[1];
-    blit_texture_height[0] = self_int[2];
+    texture_reset_fpu();
+    blit_edge_uvs_b[0] = static_cast<int>(reinterpret_cast<intptr_t>(a2));
+    blit_z_values[0] = static_cast<int>(reinterpret_cast<intptr_t>(a3));
+    blit_remap_table[0] = static_cast<int>(reinterpret_cast<intptr_t>(a5));
+    blit_texture_pixels[0] = static_cast<int>(reinterpret_cast<intptr_t>(pixels_));
+    TextureRowPitchScratch = static_cast<int>(iWidth_);
+    blit_texture_height[0] = static_cast<int>(iHeight_);
     blit_vertex_count[0] = a6;
-    blit_edge_uvs_a[0] = reinterpret_cast<int>(a7);
-    blit_buffer_stride[0] = *reinterpret_cast<int *>(reinterpret_cast<char *>(a1) + 0x4a8);
-    blit_texture_width[0] = self_int[1];
-    blit_shade_table[0] = *reinterpret_cast<int *>(a4);
+    blit_edge_uvs_a[0] = static_cast<int>(reinterpret_cast<intptr_t>(a7));
+    blit_buffer_stride[0] = static_cast<int>(a1->stride_);
+    blit_texture_width[0] = static_cast<int>(iWidth_);
+    blit_shade_table[0] = static_cast<int>(reinterpret_cast<intptr_t>(a4->pixels_));
+    if (*blit_shade_table == 0) break;
 
-    RECT *clip = reinterpret_cast<RECT *>(reinterpret_cast<char *>(a1) + 0x20);
-    if (clip == 0) {
-        a1->free_data(1);
-        return;
-    }
+    RECT *clip = &a1->rect1_;
     blit_clip_right[0] = clip->right;
     blit_clip_left[0] = clip->left;
     blit_clip_bottom[0] = clip->bottom;
     blit_clip_top[0] = clip->top;
 
-    // The min/max vertex scan. minX and maxX are tracked but never read
-    // back - only min_y and max_y reach the row computation - so they are
-    // kept as the image keeps them, in locals the loop writes.
-    int min_y = 0x7fff, max_y = -0x7ffd, min_x = 0x7fff, max_x = -0x7ffd;
-    int min_y_index = 0;
-    unsigned char *walk = reinterpret_cast<unsigned char *>(a2);
-    for (int i = 0; i < a6; ++i, walk += 8) {
-        int y = reinterpret_cast<int *>(walk)[1];
-        int x = reinterpret_cast<int *>(walk)[0];
+    int min_y = 0x7fff, max_y = static_cast<int>(0xffff8003u);
+    int min_x = 0x7fff, max_x = static_cast<int>(0xffff8003u);
+    int min_y_index = a6;
+    for (int i = 0; i < a6; ++i) {
+        const int y = a2[i].y;
         if (y < min_y) { min_y = y; min_y_index = i; }
         if (y > max_y) { max_y = y; blit_max_y_index[0] = i; }
+        const int x = a2[i].x;
         if (x < min_x) min_x = x;
         if (x > max_x) max_x = x;
     }
-    if (min_y >= max_y) {
-        a1->free_data(1);
-        return;
-    }
+    (void)min_x;
+    (void)max_x;
+    if (min_y >= max_y) break;
 
-    int stride = blit_buffer_stride[0];
-    int base = blit_pixel_base[0];
-    blit_row_offset[0] = stride * min_y + base;
-    blit_clip_bottom[0] = stride * max_y + base;
-    blit_clip_top[0] = stride * min_y + base;
+    const int stride = blit_buffer_stride[0];
+    const int destination_base = blit_pixel_base[0];
+    blit_row_offset[0] = static_cast<int>(static_cast<unsigned int>(stride) *
+                                           static_cast<unsigned int>(min_y) +
+                                           static_cast<unsigned int>(destination_base));
+    blit_clip_bottom[0] = static_cast<int>(static_cast<unsigned int>(stride) *
+                                            static_cast<unsigned int>(clip->bottom) +
+                                            static_cast<unsigned int>(destination_base));
+    blit_clip_top[0] = static_cast<int>(static_cast<unsigned int>(stride) *
+                                         static_cast<unsigned int>(clip->top) +
+                                         static_cast<unsigned int>(destination_base));
 
     EdgeScan edge_left;
     edge_left.f0 = -1;
-    if (setup_edge_gouraud(&edge_left, min_y_index) == 0) {
-        a1->free_data(1);
-        return;
-    }
+    if (setup_edge_gouraud(&edge_left, min_y_index) == 0) break;
     EdgeScan edge_right;
     edge_right.f0 = 1;
-    if (setup_edge_gouraud(&edge_right, min_y_index) == 0) {
-        a1->free_data(1);
-        return;
-    }
+    if (setup_edge_gouraud(&edge_right, min_y_index) == 0) break;
 
-    // 0x0061EC99: the rounding control bits are forced to 53-bit precision
-    // before the gradient divides, then restored by the fninit in the
-    // epilogue. The three per-channel deltas are divided by the same
-    // span height, which is what the original's single reciprocal buys.
-    int span = (edge_right.accumA - edge_left.accumA) << 0x10;
-    if (span > 0) {
-        double du = static_cast<double>(edge_right.accumB - edge_left.accumB);
-        double dv = static_cast<double>(edge_right.accumC - edge_left.accumC);
-        double dw = static_cast<double>(edge_right.accumD - edge_left.accumD);
-        volatile double height = static_cast<double>(span);
-        du /= height;
-        dv /= height;
-        dw /= height;
-    }
+    _control87(_PC_24 | _RC_CHOP, _MCW_PC | _MCW_RC);
+    int gradient_span = static_cast<int>(static_cast<unsigned int>(
+        texture_difference(edge_right.accumC, edge_left.accumC)) << 16);
+    // The native path rejects an initially clipped-away first row after
+    // setting up both edges but before its first row snapshot/advance.
+    if (blit_row_offset[0] >= blit_clip_bottom[0]) break;
 
-    // TRIED: the inner scanline blit loop hijacks ESP as a plain data
-    // register, with the real stack pointer saved to blit_saved_esp and
-    // manually restored - not something any C source construct can force:
-    //   0x0061F016  mov dword ptr [0x9bb4ac], esp   ; save real esp
-    //   0x0061F01C  mov esp, ecx                    ; esp := packed loop
-    //                                               ;   counter/accumulator
-    //   0x0061F06D  add sp, dx                      ; 16-bit arithmetic on it
-    //   0x0061F07B  sub esp, 0x10000                ; esp counts down as the
-    //   0x0061F081  jns 0x61f028                    ;   loop's own counter
-    //   0x0061F083  mov esp, dword ptr [0x9bb4ac]   ; restore real esp
-    // No call/push/pop happens between the save and the restore, which is
-    // why the original could get away with it; no C body can request this
-    // register allocation, so the loop is walked as a plain scanline copy.
-    for (int row = blit_row_offset[0]; row < blit_clip_bottom[0];
-         row += blit_buffer_stride[0]) {
-        unsigned char *dst = reinterpret_cast<unsigned char *>(base) + row;
-        unsigned char *src = reinterpret_cast<unsigned char *>(
-            blit_shade_table[0]);
-        for (int x = blit_clip_left[0]; x < blit_clip_right[0]; ++x) {
-            dst[x - blit_clip_left[0]] = src[x];
+    int du = *blit_slot_4e4;
+    int dv = *blit_slot_4c8;
+    unsigned short light_step = static_cast<unsigned short>(*blit_light_pack_a);
+    for (;;) {
+        *blit_slot_4c4 = edge_right.accumA;
+        *blit_slot_4f8 = edge_left.accumA;
+        *blit_slot_530 = edge_right.accumB;
+        *blit_slot_53c = edge_left.accumB;
+        *blit_span_right = edge_left.accumC;
+        *blit_slot_498 = edge_left.accumD;
+        *blit_span_left = edge_right.accumC;
+        const int left_x = edge_left.accumC;
+        const int right_x = edge_right.accumC;
+        int u = *blit_slot_4f8;
+        int v = *blit_slot_53c;
+        int light = edge_left.accumD;
+        const bool update_steps = gradient_span > 0;
+        int row_du = du, row_dv = dv;
+        unsigned short row_light_step = light_step;
+        if (update_steps) {
+            row_du = texture_span_step(
+                texture_difference(edge_right.accumA, edge_left.accumA), gradient_span >> 16);
+            row_dv = texture_span_step(
+                texture_difference(edge_right.accumB, edge_left.accumB), gradient_span >> 16);
+            row_light_step = texture_light_step(
+                texture_difference(edge_right.accumD, edge_left.accumD), gradient_span >> 16);
         }
-    }
+        bool done_edges = false;
+        if (texture_coast_advance_edge(edge_left) != 0) {
+            if (texture_coast_advance_edge(edge_right) == 0) done_edges = true;
+        } else {
+            done_edges = true;
+        }
 
-    a1->free_data(1);
+        // The assembly snapshots this row's endpoints and derives its channel
+        // gradients from those values, then advances edges before publishing
+        // the gradients. The updated horizontal span feeds the next row.
+        if (update_steps) {
+            du = row_du;
+            dv = row_dv;
+            light_step = row_light_step;
+            *blit_slot_4e4 = du;
+            *blit_slot_4c8 = dv;
+            *blit_light_pack_a = static_cast<int>(light_step);
+        }
+        gradient_span = static_cast<int>(static_cast<unsigned int>(
+            texture_difference(edge_right.accumC, edge_left.accumC)) << 16);
+
+        const int row = blit_row_offset[0];
+        if (row >= blit_clip_bottom[0]) break;
+        if (row >= blit_clip_top[0] && right_x > blit_clip_left[0] &&
+            left_x < blit_clip_right[0] && right_x > left_x) {
+            int clipped_right = right_x;
+            if (clipped_right > blit_clip_right[0]) clipped_right = blit_clip_right[0];
+            int clipped_left = left_x;
+            if (clipped_left < blit_clip_left[0]) {
+                const int skip = static_cast<int>(static_cast<unsigned int>(
+                    texture_difference(blit_clip_left[0], clipped_left)) << 16);
+                u = static_cast<int>(static_cast<unsigned int>(u) +
+                    static_cast<unsigned int>((static_cast<int64_t>(du) * skip) >> 16));
+                v = static_cast<int>(static_cast<unsigned int>(v) +
+                    static_cast<unsigned int>((static_cast<int64_t>(dv) * skip) >> 16));
+                light = static_cast<int>(static_cast<unsigned int>(light) +
+                    static_cast<unsigned int>((static_cast<int64_t>(light_step) * skip) >> 8));
+                *blit_slot_4f8 = u;
+                *blit_slot_53c = v;
+                *blit_slot_498 = light;
+                clipped_left = blit_clip_left[0];
+            }
+            *blit_slot_498 = light >> 8;
+            unsigned char *out = reinterpret_cast<unsigned char *>(
+                static_cast<intptr_t>(row)) + clipped_left;
+            const unsigned int pixel_count = texture_span_pixels(
+                texture_difference(clipped_right, clipped_left));
+            const unsigned int row_source_offset = texture_draw_source_index(
+                blit_texture_width[0], u, v);
+            *blit_slot_504 = static_cast<int>(
+                static_cast<unsigned int>(blit_texture_pixels[0]) + row_source_offset);
+            *blit_slot_558 = static_cast<int>(
+                static_cast<unsigned int>(*blit_shade_table) + row_source_offset);
+            TextureDrawSpanResult span_result;
+            span_result.packed_uv_sink = blit_slot_4a4;
+            span_result.preload_pixels = reinterpret_cast<volatile const unsigned char *>(
+                static_cast<intptr_t>(blit_texture_pixels[0]));
+            span_result.prefetched_source =
+                span_result.preload_pixels[row_source_offset];
+            texture_draw_coast_span(out, reinterpret_cast<const unsigned char *>(
+                static_cast<intptr_t>(blit_texture_pixels[0])),
+                reinterpret_cast<const unsigned char *>(static_cast<intptr_t>(*blit_shade_table)),
+                reinterpret_cast<const unsigned char *>(static_cast<intptr_t>(*blit_remap_table)),
+                blit_texture_width[0], u, v, du, dv, light, light_step,
+                static_cast<int>(pixel_count), &span_result);
+        }
+        if (done_edges) break;
+        blit_row_offset[0] = static_cast<int>(static_cast<unsigned int>(row) +
+                                               static_cast<unsigned int>(stride));
+    }
+    } while (false);
+    if (a1 != 0) a1->free_data(1);
+    texture_reset_fpu();
 }
+
+// Historical register-allocation evidence from the superseded translation:
+// TRIED: the inner scanline blit loop hijacks ESP as a plain data
+// register, with the real stack pointer saved to blit_saved_esp and
+// manually restored - not something any C source construct can force:
+//   0x0061F016  mov dword ptr [0x9bb4ac], esp   ; save real esp
+//   0x0061F01C  mov esp, ecx                    ; esp := packed loop
+//                                               ;   counter/accumulator
+//   0x0061F06D  add sp, dx                      ; 16-bit arithmetic on it
+//   0x0061F07B  sub esp, 0x10000                ; esp counts down as the
+//   0x0061F081  jns 0x61f028                    ;   loop's own counter
+//   0x0061F083  mov esp, dword ptr [0x9bb4ac]   ; restore real esp
+// No call/push/pop happens between the save and the restore, which is
+// why the original could get away with it; no C body can request this
+// register allocation, so the loop is walked as a plain scanline copy.
+
+// The native inner loop reads the next source texel at 0x61F078 after every
+// visible pixel, including the last. The span helper models that volatile
+// prefetch without a bounds check; instruction-level fault timing remains a
+// restoration obligation.
+
 
 // ORIGINAL: 0x0061FC90 ?setup_edge_gouraud@Texture@@QAAHPAUEdgeScan@@H@Z 0x0061FC90-0x0061FDEA FILE
 // symbol    ?setup_edge_gouraud@Texture@@SAHPAUEdgeScan@@H@Z
@@ -2387,6 +2529,7 @@ void Texture::draw(Buffer *buffer, Vert *vertices, int *zvals, int count,
 //            declares both classes `class` and both setups `static`, so VC6
 //            mangles them PAV and SA. Same bytes, differing name.
 // TRIED: same shape as 0x00622200 (Gouraud-textured coastline scanline fill): guard chain, bbox scan, two setup_edge_gouraud edge records ported as flat int[14] with field indices verified against the raw ebp-relative disassembly (not Ghidra's shifted local_XX offsets, which mislabeled the struct-address operand in two calls), FPU gradients as plain long double, and a best-effort port of the inner span loop, which the original spells with `mov esp, ecx` / `add sp, dx` - ESP used as a general-purpose accumulator, not expressible as portable C. Compiles and reaches instruction #4 before diverging.
+// Correction from the pinned 0x623F80 frame: these locals are the full 15-word EdgeScan records; the former flat-array field-index interpretation is retained as history, not current layout evidence.
 // working copy - scaffold materialised by --work
 // size      1702 bytes
 // prototype 
@@ -2407,8 +2550,9 @@ void Texture::draw_coast(Buffer * a1, Vert * a2, int * a3, Texture * a4, unsigne
         goto cleanup;
     if (a1 == 0)
         goto epilogue_only;
-    if (self[0] != 0 && a3 != 0 && a5 != 0 && a4 != 0) {
+    if (self[0] != 0 && a3 != 0 && a5 != 0) {
         *blit_pixel_base = a1->get_data();
+        texture_reset_fpu();
         *reinterpret_cast<char *>(blit_slot_494) = static_cast<char>(a8);
         *blit_edge_uvs_b = reinterpret_cast<int>(a2);
         *blit_z_values = reinterpret_cast<int>(a3);
@@ -2433,7 +2577,7 @@ void Texture::draw_coast(Buffer * a1, Vert * a2, int * a3, Texture * a4, unsigne
             int minY = 0x7fff;
             int minX = 0x7fff;
             int idx = 0;
-            int minYIdx = a6;
+            int minYIdx = a8;
             int *verts = reinterpret_cast<int *>(a2);
 
             if (0 < a6) {
@@ -2461,69 +2605,68 @@ void Texture::draw_coast(Buffer * a1, Vert * a2, int * a3, Texture * a4, unsigne
                     *blit_dither = minY & 1;
                     *blit_clip_bottom = *blit_clip_bottom * *blit_buffer_stride + *blit_pixel_base;
 
-                    // Two edge-scan records, each filled in by
-                    // setup_edge_gouraud: [0]=state, [2..13]=stepped fields
-                    // (index 1/0x74 is unread by this function).
-                    int edge1[14] = {0};
-                    int edge2[14] = {0};
-                    edge1[0] = -1;
-                    if (this->setup_edge_gouraud(reinterpret_cast<EdgeScan *>(edge1), a8) != 0) {
-                        edge2[0] = 1;
-                        if (this->setup_edge_gouraud(reinterpret_cast<EdgeScan *>(edge2), a8) != 0) {
+                    // Two complete EdgeScan records: f0 is traversal direction, followed by
+                    // counter/id and the stepped A/B/C/D channels.
+                    EdgeScan edge1;
+                    EdgeScan edge2;
+                    edge1.f0 = -1;
+                    if (this->setup_edge_gouraud(&edge1, minYIdx) != 0) {
+                        edge2.f0 = 1;
+                        if (this->setup_edge_gouraud(&edge2, minYIdx) != 0) {
+                            // The native path selects round-toward-zero after both edge setups.
+                            _control87(_PC_24 | _RC_CHOP, _MCW_PC | _MCW_RC);
                             long double invDx = 1.0;
                             long double dA = 1.0, dB = 1.0, dC = 1.0;
-                            long edgeSpan = (edge2[6] - edge1[6]) * 0x10000;
+                            long edgeSpan = (edge2.accumC - edge1.accumC) * 0x10000;
                             if (0 < edgeSpan) {
-                                dA = static_cast<long double>(edge2[12] - edge1[12]);
-                                dB = static_cast<long double>(edge2[3] - edge1[3]);
-                                dC = static_cast<long double>(edge2[2] - edge1[2]);
+                                dA = static_cast<long double>(edge2.accumA - edge1.accumA);
+                                dB = static_cast<long double>(edge2.accumB - edge1.accumB);
+                                dC = static_cast<long double>(edge2.accumD - edge1.accumD);
                                 invDx = 1.0 / static_cast<long double>(edgeSpan);
                             }
 
                             if (*blit_row_offset < *blit_clip_bottom) {
                                 bool doneEdges = false;
                                 do {
-                                    *blit_slot_4c4 = edge2[2];
-                                    *blit_slot_4f8 = edge1[2];
-                                    *blit_slot_530 = edge2[3];
-                                    *blit_slot_53c = edge1[3];
-                                    *blit_span_right = edge1[6];
-                                    *blit_slot_498 = edge1[12];
-                                    *blit_span_left = edge2[6];
+                                    *blit_slot_4c4 = edge2.accumA;
+                                    *blit_slot_4f8 = edge1.accumA;
+                                    *blit_slot_530 = edge2.accumB;
+                                    *blit_slot_53c = edge1.accumB;
+                                    *blit_span_right = edge1.accumC;
+                                    *blit_slot_498 = edge1.accumD;
+                                    *blit_span_left = edge2.accumC;
 
-                                    --edge1[0];
-                                    if (edge1[0] == 0) {
-                                        if (this->setup_edge_gouraud(reinterpret_cast<EdgeScan *>(edge1),
-                                                                      edge1[2]) != 0) {
+                                    --edge1.counter;
+                                    if (edge1.counter == 0) {
+                                        if (this->setup_edge_gouraud(&edge1, edge1.id) != 0) {
                                             goto edge2_step;
                                         }
                                         doneEdges = true;
                                     } else {
-                                        edge1[2] += edge1[4];
-                                        edge1[3] += edge1[5];
-                                        edge1[12] += edge1[13];
-                                        edge1[6] += edge1[7];
-                                        edge1[9] += edge1[10];
-                                        if (0 < edge1[9]) {
-                                            edge1[6] += edge1[8];
-                                            edge1[9] -= edge1[11];
+                                        edge1.accumA += edge1.deltaA;
+                                        edge1.accumB += edge1.deltaB;
+                                        edge1.accumD += edge1.deltaD;
+                                        edge1.accumC += edge1.deltaC;
+                                        edge1.fracAccum += edge1.fracDelta;
+                                        if (0 < edge1.fracAccum) {
+                                            edge1.accumC += edge1.extraDeltaC;
+                                            edge1.fracAccum -= edge1.fracSub;
                                         }
                                     edge2_step:
-                                        --edge2[0];
-                                        if (edge2[0] == 0) {
-                                            if (this->setup_edge_gouraud(reinterpret_cast<EdgeScan *>(edge2),
-                                                                          edge2[2]) == 0) {
+                                        --edge2.counter;
+                                        if (edge2.counter == 0) {
+                                            if (this->setup_edge_gouraud(&edge2, edge2.id) == 0) {
                                                 doneEdges = true;
                                             }
                                         } else {
-                                            edge2[2] += edge2[4];
-                                            edge2[3] += edge2[5];
-                                            edge2[6] += edge2[7];
-                                            edge2[12] += edge2[13];
-                                            edge2[9] += edge2[10];
-                                            if (0 < edge2[9]) {
-                                                edge2[6] += edge2[8];
-                                                edge2[9] -= edge2[11];
+                                            edge2.accumA += edge2.deltaA;
+                                            edge2.accumB += edge2.deltaB;
+                                            edge2.accumC += edge2.deltaC;
+                                            edge2.accumD += edge2.deltaD;
+                                            edge2.fracAccum += edge2.fracDelta;
+                                            if (0 < edge2.fracAccum) {
+                                                edge2.accumC += edge2.extraDeltaC;
+                                                edge2.fracAccum -= edge2.fracSub;
                                             }
                                         }
                                     }
@@ -2537,11 +2680,11 @@ void Texture::draw_coast(Buffer * a1, Vert * a2, int * a3, Texture * a4, unsigne
                                             invDx * dC * static_cast<long double>(*blit_scale_256f));
                                     }
 
-                                    edgeSpan = (edge2[6] - edge1[6]) * 0x10000;
+                                    edgeSpan = (edge2.accumC - edge1.accumC) * 0x10000;
                                     if (0 < edgeSpan) {
-                                        dA = static_cast<long double>(edge2[12] - edge1[12]);
-                                        dB = static_cast<long double>(edge2[3] - edge1[3]);
-                                        dC = static_cast<long double>(edge2[2] - edge1[2]);
+                                        dA = static_cast<long double>(edge2.accumA - edge1.accumA);
+                                        dB = static_cast<long double>(edge2.accumB - edge1.accumB);
+                                        dC = static_cast<long double>(edge2.accumD - edge1.accumD);
                                         invDx = 1.0 / static_cast<long double>(edgeSpan);
                                     }
 
@@ -2564,81 +2707,53 @@ void Texture::draw_coast(Buffer * a1, Vert * a2, int * a3, Texture * a4, unsigne
                                             *blit_span_right = *blit_clip_left;
                                         }
 
-                                        char *src = reinterpret_cast<char *>(*blit_texture_pixels +
-                                                                              *blit_texture_width * (*blit_slot_53c >> 16) +
-                                                                              (*blit_slot_4f8 >> 16));
+                                        const unsigned int base_source_offset = texture_draw_source_index(
+                                            *blit_texture_width, *blit_slot_4f8,
+                                            *blit_slot_53c);
+                                        char *src = reinterpret_cast<char *>(
+                                            static_cast<uintptr_t>(
+                                                static_cast<unsigned int>(*blit_texture_pixels) +
+                                                base_source_offset));
+                                        *blit_slot_504 = reinterpret_cast<int>(src);
                                         *blit_slot_558 = reinterpret_cast<int>(src) + (*blit_shade_table - *blit_texture_pixels);
                                         char *dst = reinterpret_cast<char *>(*blit_span_right + *blit_row_offset);
-                                        int shade = *blit_slot_498 >> 8;
+                                        const int row_light = *blit_slot_498;
+                                        *blit_slot_498 = row_light >> 8;
                                         *blit_alt_slot_524 =
                                             (*blit_slot_4c8 >> 16) * *blit_texture_width + (*blit_slot_4e4 >> 16);
                                         *blit_alt_slot_520 = *blit_alt_slot_524 + *blit_texture_width;
                                         *blit_slot_528 = *blit_slot_4c8 << 16;
 
-                                        unsigned int uAccum = static_cast<unsigned int>(
-                                            (*blit_slot_53c & 0xffff0000) | (static_cast<unsigned short>(*blit_slot_4e4)));
-                                        int count = ((static_cast<short>(rightX) -
-                                                      static_cast<short>(*blit_span_right)) - 1) << 16;
-                                        count |= static_cast<unsigned short>(*blit_slot_4f8);
-
-                                        int texOff = 0;
-                                        char texel = *src;
+                                        const int pixel_count = static_cast<int>(
+                                            texture_span_pixels(static_cast<short>(rightX) -
+                                                                static_cast<short>(*blit_span_right)));
+                                        TextureDrawSpanResult span_result;
+                                        span_result.packed_uv_sink = blit_slot_4a4;
+                                        span_result.preload_pixels =
+                                            reinterpret_cast<volatile const unsigned char *>(
+                                                static_cast<uintptr_t>(
+                                                    static_cast<unsigned int>(*blit_texture_pixels)));
+                                        span_result.prefetched_source =
+                                            span_result.preload_pixels[base_source_offset];
                                         if ((*blit_dither & 1) == 0) {
-                                            do {
-                                                if (*reinterpret_cast<char *>(
-                                                        *reinterpret_cast<unsigned char *>(
-                                                            reinterpret_cast<char *>(blit_slot_558) + texOff) +
-                                                        *blit_remap_table) != 0) {
-                                                    *dst = static_cast<char>(*blit_slot_494);
-                                                }
-                                                bool carry = carry4(uAccum, *reinterpret_cast<unsigned int *>(blit_slot_528));
-                                                unsigned int next = uAccum + *reinterpret_cast<unsigned int *>(blit_slot_528);
-                                                int texOffHi = texOff >> 16;
-                                                int texOffLo =
-                                                    (static_cast<unsigned short>(texOff) +
-                                                     static_cast<unsigned short>(next));
-                                                texOff = (texOffHi << 16) | (texOffLo & 0xffff);
-                                                texOff += carry ? *blit_alt_slot_520 : *blit_alt_slot_524;
-                                                uAccum = next;
-                                                ++dst;
-                                                count = ((count >> 16) << 16) |
-                                                        (static_cast<unsigned short>(count + *blit_light_pack_a));
-                                                count -= 0x10000;
-                                            } while (count >= 0);
+                                            texture_draw_keyed_coast_fill_span(
+                                                reinterpret_cast<unsigned char *>(dst),
+                                                reinterpret_cast<const unsigned char *>(*blit_shade_table),
+                                                reinterpret_cast<const unsigned char *>(*blit_remap_table),
+                                                *blit_texture_width, *blit_slot_4f8, *blit_slot_53c,
+                                                *blit_slot_4e4, *blit_slot_4c8,
+                                                static_cast<unsigned char>(*blit_slot_494), pixel_count,
+                                                &span_result);
                                         } else {
-                                            short lightHi = static_cast<short>(
-                                                static_cast<unsigned int>(*blit_slot_498) >> 8);
-                                            short lightLo = static_cast<short>(*blit_slot_498);
-                                            (void)lightHi;
-                                            short accum = static_cast<short>(shade << 8);
-                                            (void)lightLo;
-                                            do {
-                                                texel = *reinterpret_cast<char *>(
-                                                    *reinterpret_cast<unsigned char *>(
-                                                        reinterpret_cast<char *>(blit_slot_558) + texOff) +
-                                                    *blit_remap_table);
-                                                if (texel != 0) {
-                                                    char base = static_cast<char>(accum >> 8);
-                                                    char shaded = texel;
-                                                    if (texel != 1) {
-                                                        shaded = static_cast<char>(texel - base);
-                                                    }
-                                                    *dst = static_cast<char>(shaded + base);
-                                                }
-                                                accum = static_cast<short>(accum + *blit_light_pack_a);
-                                                bool carry = carry4(uAccum, *reinterpret_cast<unsigned int *>(blit_slot_528));
-                                                unsigned int next = uAccum + *reinterpret_cast<unsigned int *>(blit_slot_528);
-                                                int texOffHi = texOff >> 16;
-                                                int texOffLo =
-                                                    (static_cast<unsigned short>(texOff) +
-                                                     static_cast<unsigned short>(next));
-                                                texOff = (texOffHi << 16) | (texOffLo & 0xffff);
-                                                texOff += carry ? *blit_alt_slot_520 : *blit_alt_slot_524;
-                                                uAccum = next;
-                                                ++dst;
-                                                texel = src[texOff];
-                                                count -= 0x10000;
-                                            } while (count >= 0);
+                                            texture_draw_coast_span(
+                                                reinterpret_cast<unsigned char *>(dst),
+                                                reinterpret_cast<const unsigned char *>(*blit_texture_pixels),
+                                                reinterpret_cast<const unsigned char *>(*blit_shade_table),
+                                                reinterpret_cast<const unsigned char *>(*blit_remap_table),
+                                                *blit_texture_width, *blit_slot_4f8, *blit_slot_53c,
+                                                *blit_slot_4e4, *blit_slot_4c8, row_light,
+                                                static_cast<unsigned short>(*blit_light_pack_a),
+                                                pixel_count, &span_result);
                                         }
                                     }
                                     if (doneEdges)
@@ -2659,6 +2774,7 @@ cleanup:
         a1->free_data(1);
     }
 epilogue_only:
+    texture_reset_fpu();
     return;
 }
 

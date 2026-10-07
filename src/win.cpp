@@ -13157,10 +13157,10 @@ Purpose: The main-window display dispatch behind the interface's
          window at +0x8c answers slot 23 with zero - the child's slot 7.
 
 // HISTORICAL SCAFFOLD ROLE: SCAFFOLD Transitional leaf collection, not completed genuine owner recovery; preserve body evidence during owner migration.
-// RECOVERY_ROLE: SCAFFOLD The typed Win side effects are retained, but the source void API does not express the original path-dependent EAX result: action 0/1 retain ShowWindow results, action 2 exposes virtual-call residue, and unknown actions leave action-2. Caller/result contract remains unresolved; this body is not semantic completion.
 // ORIGINAL: 0x005F2830 sub_5f2830 0x005F2830-0x005F293B FILE
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/win.cpp WinCallbackWindow and WinPointerOwner1..4 owners", "source:src/win.h Win::on_lose_mouse_capture and vslot_52 declarations", "source:src/win.cpp field_438_ zero writers in Win construction and close", "source:src/sound.h Sound::is_playing slot 23 and Sound::play slot 7", "source:src/autosound.cpp AutoSoundDefaults[34] copied into AutoSound offset 0x8C", "pinned original 0x005F2830 leaves branch-dependent EAX values; mapped caller inspection has no resolved edges"], "reason": "Own the main-window display side effects on Win. Its original EAX is a path-dependent residual (ShowWindow or a virtual callee, or action-2 on the unknown-action path), and no mapped caller establishes a result contract; do not claim the source void API reproduces an int result."}
-// symbol    ?display_action@Win@@SAXH@Z
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/win.cpp WinCallbackWindow and WinPointerOwner1..4 owners", "source:src/win.h Win::on_lose_mouse_capture and vslot_52 declarations", "source:src/win.cpp field_438_ zero writers in Win construction and close", "source:src/sound.h Sound::is_playing slot 23 and Sound::play slot 7", "source:src/autosound.cpp AutoSoundDefaults[34] copied into AutoSound offset 0x8C", "pinned original 0x005F2830 leaves branch-dependent EAX values; mapped caller inspection has no resolved edges", "pinned 0x005F2830 action 0 ends with ShowWindow(HandleMain, 3), whose EAX survives the common epilogue; action 1 ends with ShowWindow(HandleMain, 6) and returns the same result", "pinned action 2 calls Win slot 52, loads/calls field +0x438 if nonzero, then returns Sound slot 23's nonzero result or Sound slot 7's result; with no child, the hook-call EAX or loaded zero survives", "pinned unknown action leaves the unsigned 32-bit EAX value action-2 after two DEC instructions", "Win owns WinCallbackWindow, pointer-owner globals, field_438_ and the Sound child; the existing Sound declarations expose int results for slots 7 and 23", "field_438_ has no known nonzero source writer and no mapped direct caller is established; this binding does not invent either"], "reason": "Return the original EAX path from the genuine Win owner. Type the callback return as int only to expose the machine-level register result that escapes when action 2 has no child; its semantic meaning and any external caller remain unresolved. Remove the scaffold because the source now represents all observed result paths as well as the retained side effects."}
+// Historical emitted source symbol (void API): ?display_action@Win@@SAXH@Z
+// symbol    ?display_action@Win@@SAHH@Z
 // size      267 bytes
 // Deleted seed provenance: git:1ed59304110fc2098fb1dd11457fa5b0074169bd:src/unrecovered/005f2830.cpp
 Status: Coverage transcription of the retained seed (src/unrecovered/005f2830.cpp,
@@ -13178,10 +13178,10 @@ Status: Coverage transcription of the retained seed (src/unrecovered/005f2830.cp
         267-byte original instead of byte-shaped.
 */
 
-void __cdecl Win::display_action(int action) {
+int __cdecl Win::display_action(int action) {
     Win *self = WinCallbackWindow;
     if (action == 0) {
-        int zoomed = IsZoomed(HandleMain);
+        const int zoomed = IsZoomed(HandleMain);
         WinPointerOwner1 = nullptr;
         WinPointerOwner2 = nullptr;
         if (zoomed != 0) {
@@ -13198,8 +13198,10 @@ void __cdecl Win::display_action(int action) {
         if (WinPointerOwner4 == self) {
             WinPointerOwner4 = nullptr;
         }
-        ShowWindow(HandleMain, SW_MAXIMIZE);
-    } else if (action == 1) {
+        return ShowWindow(HandleMain, SW_MAXIMIZE);
+    }
+
+    if (action == 1) {
         WinPointerOwner1 = nullptr;
         WinPointerOwner2 = nullptr;
         if (WinPointerOwner3 == self) {
@@ -13209,22 +13211,30 @@ void __cdecl Win::display_action(int action) {
         if (WinPointerOwner4 == self) {
             WinPointerOwner4 = nullptr;
         }
-        ShowWindow(HandleMain, SW_MINIMIZE);
-        return;
-    } else if (action == 2) {
+        return ShowWindow(HandleMain, SW_MINIMIZE);
+    }
+
+    if (action == 2) {
         self->vslot_52();
         WinDisplayActionHookFn hook = self->field_438_;
+        int result = 0;
         if (hook != 0) {
-            hook();
+            result = hook();
         }
         Sound *child = self->val_35_;
         if (child != 0) {
-            if (child->is_playing() == 0) {
-                child->play();
+            const int playing = child->is_playing();
+            if (playing != 0) {
+                return playing;
             }
+            return child->play();
         }
-        return;
+        return result;
     }
+
+    // The original DEC/DEC dispatch returns the wrapped EAX value for every
+    // action other than 0, 1, or 2.
+    return static_cast<int32_t>(static_cast<uint32_t>(action) - 2u);
 }
 
 /*

@@ -73,7 +73,9 @@ typedef void (__cdecl *WinNotificationCallback)(int selected_id);
 // resize_event's installable width/height callback, stored in Win::field_400_.
 typedef void (__cdecl *WinResizeCallback)(int width, int height);
 typedef int (__cdecl *WinKeyHookFn)(int key);
-typedef void (__cdecl *WinDisplayActionHookFn)();
+// The hook's EAX value becomes display_action's result when no child sound
+// follows; this is a register-return contract, not a semantic hook result.
+typedef int (__cdecl *WinDisplayActionHookFn)();
 
 class Win : public AutoSound {
  public:
@@ -116,7 +118,7 @@ class Win : public AutoSound {
   // argument-offset shift that made OnPaletteChanged, init_class and
   // set_display_mode statics above.
   static bool __cdecl OnPaint(HWND hwnd);
-  static void __cdecl display_action(int action);
+  static int __cdecl display_action(int action);
 
  public:
   // homed from 005ee330.cpp

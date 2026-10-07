@@ -9,6 +9,7 @@
 
 #define __cdecl
 using uint32_t = unsigned int;
+using int32_t = int;
 using uint8_t = unsigned char;
 using BOOL = int;
 using LPCSTR = const char *;
@@ -22,6 +23,7 @@ static int rocky_value = 0;
 static int is_human_values[8] = {};
 static int zoomed_value = 0;
 static int show_window_mode = -1;
+static int show_window_result = 0;
 static int is_zoomed_calls = 0;
 static int last_focus_x = -1;
 static int last_focus_y = -1;
@@ -31,7 +33,9 @@ static int mutate_faction_after_draws = 0;
 static int capture_lost_calls = 0;
 static int slot52_calls = 0;
 static int display_hook_calls = 0;
+static int display_hook_result = 0;
 static int sound_play_calls = 0;
+static int sound_play_result = 0;
 static int sound_is_playing = 0;
 static int box_calls = 0;
 static int close_sprite_draws = 0;
@@ -278,15 +282,15 @@ int __cdecl action_build(int veh_id, char *base_name) {
 
 struct Sound {
     int is_playing() { events.push_back("sound-query"); return sound_is_playing; }
-    void play() { ++sound_play_calls; events.push_back("sound-play"); }
+    int play() { ++sound_play_calls; events.push_back("sound-play"); return sound_play_result; }
 };
-typedef void (__cdecl *WinDisplayActionHookFn)();
+typedef int (__cdecl *WinDisplayActionHookFn)();
 struct AutoSound { Sound *val_35_ = 0; };
 struct Win : AutoSound {
     WinDisplayActionHookFn field_438_ = 0;
     virtual void on_lose_mouse_capture() { ++capture_lost_calls; }
     virtual void vslot_52() { ++slot52_calls; events.push_back("slot52"); }
-    static void __cdecl display_action(int action);
+    static int __cdecl display_action(int action);
 };
 static Win *WinCallbackWindow = 0;
 static Win *WinPointerOwner1 = 0;
@@ -295,7 +299,7 @@ static Win *WinPointerOwner3 = 0;
 static Win *WinPointerOwner4 = 0;
 static void *HandleMain = reinterpret_cast<void *>(1);
 static int IsZoomed(void *) { ++is_zoomed_calls; return zoomed_value; }
-static int ShowWindow(void *, int mode) { show_window_mode = mode; return 0; }
+static int ShowWindow(void *, int mode) { show_window_mode = mode; return show_window_result; }
 
 struct BoxSpriteParams {};
 static BoxSpriteParams InterfaceBoxStyles[64];
@@ -370,10 +374,10 @@ int Popup::on_dialog_item_back_draw(GraphicWin *a1, int, int a3, RECT *a4) {
     return 1;
 }
 
-void __cdecl Win::display_action(int action) {
+int __cdecl Win::display_action(int action) {
     Win *self = WinCallbackWindow;
     if (action == 0) {
-        int zoomed = IsZoomed(HandleMain);
+        const int zoomed = IsZoomed(HandleMain);
         WinPointerOwner1 = nullptr;
         WinPointerOwner2 = nullptr;
         if (zoomed != 0) {
@@ -390,8 +394,10 @@ void __cdecl Win::display_action(int action) {
         if (WinPointerOwner4 == self) {
             WinPointerOwner4 = nullptr;
         }
-        ShowWindow(HandleMain, SW_MAXIMIZE);
-    } else if (action == 1) {
+        return ShowWindow(HandleMain, SW_MAXIMIZE);
+    }
+
+    if (action == 1) {
         WinPointerOwner1 = nullptr;
         WinPointerOwner2 = nullptr;
         if (WinPointerOwner3 == self) {
@@ -401,29 +407,38 @@ void __cdecl Win::display_action(int action) {
         if (WinPointerOwner4 == self) {
             WinPointerOwner4 = nullptr;
         }
-        ShowWindow(HandleMain, SW_MINIMIZE);
-        return;
-    } else if (action == 2) {
+        return ShowWindow(HandleMain, SW_MINIMIZE);
+    }
+
+    if (action == 2) {
         self->vslot_52();
         WinDisplayActionHookFn hook = self->field_438_;
+        int result = 0;
         if (hook != 0) {
-            hook();
+            result = hook();
         }
         Sound *child = self->val_35_;
         if (child != 0) {
-            if (child->is_playing() == 0) {
-                child->play();
+            const int playing = child->is_playing();
+            if (playing != 0) {
+                return playing;
             }
+            return child->play();
         }
-        return;
+        return result;
     }
+
+    // The original DEC/DEC dispatch returns the wrapped EAX value for every
+    // action other than 0, 1, or 2.
+    return static_cast<int32_t>(static_cast<uint32_t>(action) - 2u);
 }
 
 static void reset_observations() {
     events.clear(); draws.clear(); box_calls = close_sprite_draws = 0;
     color_a = color_b = -1; focus_calls = capture_lost_calls = 0;
     slot52_calls = display_hook_calls = sound_play_calls = 0;
-    show_window_mode = -1; is_zoomed_calls = 0;
+    show_window_mode = -1; show_window_result = 0; is_zoomed_calls = 0;
+    display_hook_result = sound_play_result = 0;
 }
 
 static void reset_map_slots() {
@@ -590,7 +605,8 @@ static void test_win_display_action() {
     WinCallbackWindow = &win;
     WinPointerOwner1 = WinPointerOwner2 = WinPointerOwner3 = WinPointerOwner4 = &win;
     zoomed_value = 1;
-    Win::display_action(0);
+    show_window_result = 0x1234;
+    assert(Win::display_action(0) == 0x1234);
     assert(is_zoomed_calls == 1 && show_window_mode == SW_MAXIMIZE);
     assert(WinPointerOwner1 == nullptr && WinPointerOwner2 == nullptr);
     assert(WinPointerOwner3 == nullptr && WinPointerOwner4 == nullptr);
@@ -600,22 +616,26 @@ static void test_win_display_action() {
     WinPointerOwner1 = WinPointerOwner2 = WinPointerOwner4 = &win;
     WinPointerOwner3 = nullptr;
     zoomed_value = 0;
-    Win::display_action(0);
+    show_window_result = -7;
+    assert(Win::display_action(0) == -7);
     assert(is_zoomed_calls == 1 && show_window_mode == SW_MAXIMIZE);
     assert(capture_lost_calls == 0 && WinPointerOwner4 == nullptr);
 
     reset_observations();
     WinPointerOwner1 = WinPointerOwner2 = WinPointerOwner3 = WinPointerOwner4 = &win;
-    Win::display_action(1);
+    show_window_result = -9;
+    assert(Win::display_action(1) == -9);
     assert(is_zoomed_calls == 0 && show_window_mode == SW_MINIMIZE);
     assert(capture_lost_calls == 1 && WinPointerOwner3 == nullptr);
 
     reset_observations();
     Sound sound;
     win.val_35_ = &sound;
-    win.field_438_ = []() { ++display_hook_calls; events.push_back("display-hook"); };
+    win.field_438_ = []() -> int { ++display_hook_calls; events.push_back("display-hook"); return display_hook_result; };
+    display_hook_result = 37;
     sound_is_playing = 0;
-    Win::display_action(2);
+    sound_play_result = -3;
+    assert(Win::display_action(2) == -3);
     assert(slot52_calls == 1 && display_hook_calls == 1);
     assert(sound_play_calls == 1);
     assert(events[0] == "slot52" && events[1] == "display-hook" &&
@@ -623,7 +643,7 @@ static void test_win_display_action() {
 
     reset_observations();
     sound_is_playing = 1;
-    Win::display_action(2);
+    assert(Win::display_action(2) == 1);
     assert(slot52_calls == 1 && display_hook_calls == 1);
     assert(sound_play_calls == 0);
     assert(events[0] == "slot52" && events[1] == "display-hook" &&
@@ -631,13 +651,15 @@ static void test_win_display_action() {
 
     reset_observations();
     win.val_35_ = nullptr;
-    Win::display_action(2);
+    display_hook_result = 37;
+    assert(Win::display_action(2) == 37);
     assert(slot52_calls == 1 && display_hook_calls == 1 &&
            sound_play_calls == 0);
     assert(events[0] == "slot52" && events[1] == "display-hook");
 
     reset_observations();
-    Win::display_action(9);
+    assert(Win::display_action(9) == 7);
+    assert(Win::display_action(-2147483647 - 1) == 0x7ffffffe);
     assert(slot52_calls == 0 && display_hook_calls == 0 && sound_play_calls == 0);
 }
 
