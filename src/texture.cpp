@@ -4385,6 +4385,7 @@ void Texture::sub_622200(int a2, int a3, int a4, int a5, int a6, int a7, int a8,
         if (self[0] != 0 && a4 != 0 && a6 != 0 && a5 != 0 && a9 != 0) {
             *reinterpret_cast<int *>(a9 + 4) = 0;
             *blit_pixel_base = reinterpret_cast<Buffer *>(a2)->get_data();
+            texture_reset_fpu();
             *blit_z_values = a4;
             *blit_edge_uvs_b = a3;
             *blit_remap_table = a6;
@@ -4444,15 +4445,18 @@ void Texture::sub_622200(int a2, int a3, int a4, int a5, int a6, int a7, int a8,
                             right.f0 = 1;
                             if (sub_625080(&right, minYIdx, reinterpret_cast<TextureStore *>(a9)) != 0 && self[0x1b] != 0 &&
                                 reinterpret_cast<int *>(a5)[0x1b] != 0) {
-                                // Two real 0x3C-byte edge records; remaining raster
-                                // arithmetic is retained incomplete recovery work.
+                                // 0x622443 selects 24-bit precision and chop for
+                                // the x87 gradient conversion; FNINIT is at exit.
+                                _control87(_PC_24 | _RC_CHOP, _MCW_PC | _MCW_RC);
                                 long double invDx = 1.0;
                                 long double dU = 1.0, dV = 1.0, dZ = 1.0;
-                                long edgeSpan = (right.accumC - left.accumC) * 0x10000;
+                                int edgeSpan = static_cast<int>(
+                                    static_cast<unsigned int>(texture_difference(
+                                        right.accumC, left.accumC)) << 16);
                                 if (0 < edgeSpan) {
-                                    dU = static_cast<long double>(right.accumD - left.accumD);
-                                    dV = static_cast<long double>(right.accumB - left.accumB);
-                                    dZ = static_cast<long double>(right.accumA - left.accumA);
+                                    dU = static_cast<long double>(texture_difference(right.accumD, left.accumD));
+                                    dV = static_cast<long double>(texture_difference(right.accumB, left.accumB));
+                                    dZ = static_cast<long double>(texture_difference(right.accumA, left.accumA));
                                     invDx = 1.0 / static_cast<long double>(edgeSpan);
                                 }
 
@@ -4501,11 +4505,24 @@ void Texture::sub_622200(int a2, int a3, int a4, int a5, int a6, int a7, int a8,
                                             }
                                         }
 
-                                        edgeSpan = (right.accumC - left.accumC) * 0x10000;
+                                        // 0x6225C3 publishes the gradient captured
+                                        // before this row's edge advance. Keep the
+                                        // old span/operands until those stores finish.
                                         if (0 < edgeSpan) {
-                                            dU = static_cast<long double>(right.accumD - left.accumD);
-                                            dV = static_cast<long double>(right.accumB - left.accumB);
-                                            dZ = static_cast<long double>(right.accumA - left.accumA);
+                                            *blit_slot_4e4 = static_cast<int>(
+                                                dZ * invDx * static_cast<long double>(*blit_scale_65536f));
+                                            *blit_slot_4c8 = static_cast<int>(
+                                                dV * invDx * static_cast<long double>(*blit_scale_65536f));
+                                            *reinterpret_cast<short *>(blit_light_pack_a) = static_cast<short>(
+                                                dU * invDx * static_cast<long double>(*blit_scale_256f));
+                                        }
+                                        edgeSpan = static_cast<int>(
+                                            static_cast<unsigned int>(texture_difference(
+                                                right.accumC, left.accumC)) << 16);
+                                        if (0 < edgeSpan) {
+                                            dU = static_cast<long double>(texture_difference(right.accumD, left.accumD));
+                                            dV = static_cast<long double>(texture_difference(right.accumB, left.accumB));
+                                            dZ = static_cast<long double>(texture_difference(right.accumA, left.accumA));
                                             invDx = 1.0 / static_cast<long double>(edgeSpan);
                                         }
 
@@ -4635,6 +4652,7 @@ free_and_finish:
     if (local_8 == 0) {
         *reinterpret_cast<int *>(a9) = 0;
     }
+    texture_reset_fpu();
 }
 
 // ORIGINAL: 0x0061C630 sub_61c630 0x0061C630-0x0061CB4E FILE
