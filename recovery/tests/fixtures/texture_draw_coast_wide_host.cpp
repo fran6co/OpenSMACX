@@ -6,7 +6,9 @@ typedef long long __int64;
 typedef unsigned short ushort;
 typedef unsigned char byte;
 static int ptr32(const void *pointer) {
-    return static_cast<int>(reinterpret_cast<intptr_t>(pointer));
+    const uintptr_t address = reinterpret_cast<uintptr_t>(pointer);
+    assert(address <= 0xffffffffu);
+    return static_cast<int>(address);
 }
 static const unsigned int _PC_24 = 0x0000;
 static const unsigned int _PC_64 = 0x0200;
@@ -98,8 +100,12 @@ static int *const blit_dither = &dither;
 static float *const blit_scale_65536f = &scale_65536;
 static float *const blit_scale_256f = &scale_256;
 
+struct RECT { int left, top, right, bottom; };
 struct Buffer {
-    unsigned char storage[0x4ac];
+    unsigned char prefix[0x20];
+    RECT rect1_;
+    unsigned char reserved[0x4a8 - 0x30];
+    unsigned int stride_;
     unsigned char *pixels;
     int freed;
     unsigned char *get_data() { return pixels; }
@@ -109,9 +115,9 @@ struct Buffer {
 static int setup_calls;
 static int setup_selectors[16];
 struct Texture {
-    int pixels_;
-    int width_;
-    int height_;
+    void *pixels_;
+    uint32_t iWidth_;
+    uint32_t iHeight_;
     void draw_coast(Buffer *, Vert *, int *, Texture *, unsigned char *, int, Vert *);
     void draw_coast(Buffer *, Vert *, int *, Texture *, unsigned char *, int, Vert *, int);
     int setup_edge_gouraud(EdgeScan *, int);
@@ -195,17 +201,17 @@ int main() {
     coast_pixels[10] = 2;  // even row: nonzero fill
     coast_pixels[9] = 3;   // odd row: direct mapped byte
     coast_pixels[14] = 1;  // odd row: uses the unconditional next-source preload
-    texture.pixels_ = ptr32(base_pixels);
-    texture.width_ = 4;
-    texture.height_ = 4;
-    shade_owner.pixels_ = ptr32(coast_pixels);
+    texture.pixels_ = base_pixels;
+    texture.iWidth_ = 4;
+    texture.iHeight_ = 4;
+    shade_owner.pixels_ = coast_pixels;
     buffer.pixels = destination;
     buffer.freed = 0;
-    *reinterpret_cast<int *>(reinterpret_cast<char *>(&buffer) + 0x20) = 1;
-    *reinterpret_cast<int *>(reinterpret_cast<char *>(&buffer) + 0x24) = 0;
-    *reinterpret_cast<int *>(reinterpret_cast<char *>(&buffer) + 0x28) = 3;
-    *reinterpret_cast<int *>(reinterpret_cast<char *>(&buffer) + 0x2c) = 2;
-    *reinterpret_cast<int *>(reinterpret_cast<char *>(&buffer) + 0x4a8) = 8;
+    buffer.rect1_.left = 1;
+    buffer.rect1_.top = 0;
+    buffer.rect1_.right = 3;
+    buffer.rect1_.bottom = 2;
+    buffer.stride_ = 8;
 
     texture.draw_coast(&buffer, screen, z_values, &shade_owner, remap, 3, uv, 0x31);
 
@@ -225,10 +231,20 @@ int main() {
     buffer.freed = 0;
     screen[0] = Vert{0, 32767};
     screen[1] = Vert{3, 32768};
-    *reinterpret_cast<int *>(reinterpret_cast<char *>(&buffer) + 0x24) = 32767;
-    *reinterpret_cast<int *>(reinterpret_cast<char *>(&buffer) + 0x2c) = 32767;
+    buffer.rect1_.top = 32767;
+    buffer.rect1_.bottom = 32767;
     texture.draw_coast(&buffer, screen, z_values, &shade_owner, remap, 2, uv, 0x31);
     assert(setup_calls == 2);
     assert(setup_selectors[0] == 0x31 && setup_selectors[1] == 0x31);
     assert(buffer.freed == 1);
+
+    // Preserve the original distinction between a missing shade owner
+    // (not guarded here) and a live shade Texture with no pixel storage.
+    reset_slots();
+    std::memset(destination, 0x7e, sizeof destination);
+    buffer.freed = 0;
+    shade_owner.pixels_ = 0;
+    texture.draw_coast(&buffer, screen, z_values, &shade_owner, remap, 2, uv, 0x31);
+    assert(setup_calls == 0 && buffer.freed == 1);
+    for (unsigned int i = 0; i < sizeof destination; ++i) assert(destination[i] == 0x7e);
 }

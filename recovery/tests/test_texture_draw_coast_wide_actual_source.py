@@ -92,6 +92,9 @@ def _contract(body: str) -> None:
     assert "reinterpret_cast<char *>(blit_slot_558) + texOff" not in body
     assert "texOffHi" not in body and "texOffLo" not in body
     assert "a3 != 0 && a5 != 0 && a4 != 0" not in body
+    assert "if (pixels_ != 0 && a3 != 0 && a5 != 0)" in body
+    assert "reinterpret_cast<int *>(this)" not in body
+    assert "reinterpret_cast<intptr_t>(a4->pixels_)" in body
     assert body.count("edge2.accumC - edge1.accumC") == 2
     assert body.count("edge2.accumA - edge1.accumA") == 2
     assert body.count("edge2.accumB - edge1.accumB") == 2
@@ -149,8 +152,8 @@ def test_actual_kernels_keep_unconditional_volatile_next_source_loads() -> None:
          "base_source_offset = texture_draw_source_index_signed("),
         ("*blit_slot_504 = reinterpret_cast<int>(src);",
          "*blit_slot_504 = reinterpret_cast<int>(src + 1);"),
-        ("if (self[0] != 0 && a3 != 0 && a5 != 0)",
-         "if (self[0] != 0 && a3 != 0 && a5 != 0 && a4 != 0)"),
+        ("if (pixels_ != 0 && a3 != 0 && a5 != 0)",
+         "if (pixels_ != 0 && a3 != 0 && a5 != 0 && a4 != 0)"),
         ("_control87(_PC_24 | _RC_CHOP, _MCW_PC | _MCW_RC);",
          "_control87(_PC_64 | _RC_NEAR, _MCW_PC | _MCW_RC);"),
     ),

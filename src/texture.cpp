@@ -1732,43 +1732,9 @@ int TextureLightCeiling = 256;
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x005E3373 0x005E34A3 0x0061FC90
-// PRESERVED UNIT - measured MISMATCH.
-//
-// Kept for COVERAGE. This directory IS on the ratchet: every file here
-// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
-// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
-// quarter of the project's total. It is still in no build; the earlier
-// header said "on no ratchet", which stopped being true when the map
-// moved into src/ and was still being written into new files.
-//
-// address        0x0061B1F0
-// measured tier  MISMATCH
-// divergence     0
-//
-// The WHOLE unit as measured, scaffolding included: for the units
-// that are byte-exact yet refuse extraction, the agent tuned the
-// emitted scaffolding and the body alone will not reproduce the
-// verdict. To resume, copy everything below back over
-//   build/byte-match/0061b1f0/unit.cpp
-// and score it with tools/agent_brief.py.
-// GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?draw@Texture@@QAEXPAUBuffer@@PAUVert@@PAHHPAUVert@@@Z  at 0x0061B1F0  (1416 bytes)
-//
-// A VERIFICATION ARTIFACT, not product source: classes are opaque and
-// globals are bound to fixed addresses, because both are byte-visible
-// and both differ from the style src/ is written in.
-//
-// The VC6 dialect limits and the source-form rules used to live here.
-// They are knowledge, not scaffolding, so they now live in the agent
-// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
-// where they can be edited without regenerating anything and are in
-// context from the first token rather than behind a file read. This
-// emitter computes declarations; it does not carry lessons.
 
 
 void Texture::draw(Buffer *a1, Vert *a2, int *a3, int a4, Vert *a5) {
-    char *self = reinterpret_cast<char *>(this);
-
     *blit_pixel_base = a1->get_data();
     *blit_light_threshold = *blit_light_threshold_2;
 
@@ -1776,11 +1742,12 @@ void Texture::draw(Buffer *a1, Vert *a2, int *a3, int a4, Vert *a5) {
     *blit_edge_uvs_b = reinterpret_cast<int *>(a2);
     *blit_vertex_count = a4;
     *blit_z_values = reinterpret_cast<int *>(a3);
-    *blit_texture_pixels = *reinterpret_cast<int *>(self);
-    *blit_buffer_stride = *reinterpret_cast<int *>(reinterpret_cast<char *>(a1) + 0x4a8);
-    *blit_texture_width = *reinterpret_cast<int *>(self + 4);
+    *blit_texture_pixels = static_cast<int>(reinterpret_cast<intptr_t>(pixels_));
+    *blit_buffer_stride = a1->stride_;
+    *blit_texture_width = static_cast<int>(iWidth_);
 
-    if (reinterpret_cast<char *>(a1) + 0x20 != 0) {
+    RECT *clip = &a1->rect1_;
+    if (clip != 0) {
         int *p = a3;
         int n = a4;
         if (n > 0) {
@@ -1795,11 +1762,11 @@ void Texture::draw(Buffer *a1, Vert *a2, int *a3, int a4, Vert *a5) {
             } while (n != 0);
         }
 
-        *blit_clip_right = *reinterpret_cast<int *>(reinterpret_cast<char *>(a1) + 0x28);
+        *blit_clip_right = clip->right;
         int minY = 0x7fff;
-        *blit_clip_left = *reinterpret_cast<int *>(reinterpret_cast<char *>(a1) + 0x20);
-        *blit_clip_bottom = *reinterpret_cast<int *>(reinterpret_cast<char *>(a1) + 0x2c);
-        *blit_clip_top = *reinterpret_cast<int *>(reinterpret_cast<char *>(a1) + 0x24);
+        *blit_clip_left = clip->left;
+        *blit_clip_bottom = clip->bottom;
+        *blit_clip_top = clip->top;
         int maxY = -0x7ffd;
         int maxX = 0xffff8003;
         int topVert = 0;
@@ -2680,8 +2647,6 @@ void Texture::draw(Buffer *buffer, Vert *vertices, int *zvals, int count,
 
 
 void Texture::draw_coast(Buffer * a1, Vert * a2, int * a3, Texture * a4, unsigned char * a5, int a6, Vert * a7, int a8) {
-    int *self = reinterpret_cast<int *>(this);
-
     if (a8 == -1) {
         this->draw_coast(a1, a2, a3, a4, a5, a6, a7);
         return;
@@ -2690,27 +2655,27 @@ void Texture::draw_coast(Buffer * a1, Vert * a2, int * a3, Texture * a4, unsigne
         goto cleanup;
     if (a1 == 0)
         goto epilogue_only;
-    if (self[0] != 0 && a3 != 0 && a5 != 0) {
+    if (pixels_ != 0 && a3 != 0 && a5 != 0) {
         *blit_pixel_base = a1->get_data();
         texture_reset_fpu();
         *reinterpret_cast<char *>(blit_slot_494) = static_cast<char>(a8);
         *blit_edge_uvs_b = reinterpret_cast<int *>(a2);
         *blit_z_values = reinterpret_cast<int *>(a3);
         *blit_remap_table = reinterpret_cast<int>(a5);
-        *blit_texture_pixels = self[0];
-        TextureRowPitchScratch = self[1];
-        *blit_texture_height = self[2];
+        *blit_texture_pixels = static_cast<int>(reinterpret_cast<intptr_t>(pixels_));
+        TextureRowPitchScratch = static_cast<int>(iWidth_);
+        *blit_texture_height = static_cast<int>(iHeight_);
         *blit_vertex_count = a6;
         *blit_edge_uvs_a = reinterpret_cast<int *>(a7);
-        *blit_buffer_stride = *reinterpret_cast<int *>(reinterpret_cast<char *>(a1) + 0x4a8);
-        *blit_texture_width = self[1];
-        *blit_shade_table = *reinterpret_cast<int *>(a4);
+        *blit_buffer_stride = a1->stride_;
+        *blit_texture_width = static_cast<int>(iWidth_);
+        *blit_shade_table = static_cast<int>(reinterpret_cast<intptr_t>(a4->pixels_));
 
         if (*blit_shade_table != 0) {
-            *blit_clip_right = *reinterpret_cast<int *>(reinterpret_cast<char *>(a1) + 0x28);
-            *blit_clip_left = *reinterpret_cast<int *>(reinterpret_cast<char *>(a1) + 0x20);
-            *blit_clip_bottom = *reinterpret_cast<int *>(reinterpret_cast<char *>(a1) + 0x2c);
-            *blit_clip_top = *reinterpret_cast<int *>(reinterpret_cast<char *>(a1) + 0x24);
+            *blit_clip_right = a1->rect1_.right;
+            *blit_clip_left = a1->rect1_.left;
+            *blit_clip_bottom = a1->rect1_.bottom;
+            *blit_clip_top = a1->rect1_.top;
 
             int maxY = 0xffff8003;
             int maxX = 0xffff8003;
@@ -2945,44 +2910,30 @@ struct EdgeLocal {
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x005E3373 0x005E34A3 0x00624D80
 
-// GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: Texture::draw_trans2  at 0x00619D80  (1215 bytes)
-//
-// A VERIFICATION ARTIFACT, not product source: classes are opaque and
-// globals are bound to fixed addresses, because both are byte-visible
-// and both differ from the style src/ is written in.
-//
-// The VC6 dialect limits and the source-form rules used to live here.
-// They are knowledge, not scaffolding, so they now live in the agent
-// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
-// where they can be edited without regenerating anything and are in
-// context from the first token rather than behind a file read. This
-// emitter computes declarations; it does not carry lessons.
 
 int Texture::draw_trans2(Buffer *a1, int *a2, int a3) {
-    char *thisBytes = reinterpret_cast<char *>(this);
-
     *blit_pixel_base = a1->get_data();
     *blit_edge_uvs_b = reinterpret_cast<int *>(a2);
-    *blit_texture_pixels = *reinterpret_cast<int *>(thisBytes);
-    TextureRowPitchScratch = *reinterpret_cast<int *>(thisBytes + 4);
-    *blit_texture_height = *reinterpret_cast<int *>(thisBytes + 8);
+    *blit_texture_pixels = static_cast<int>(reinterpret_cast<intptr_t>(pixels_));
+    TextureRowPitchScratch = static_cast<int>(iWidth_);
+    *blit_texture_height = static_cast<int>(iHeight_);
 
     if (a3 == 0) {
-        *blit_edge_uvs_a = reinterpret_cast<int *>(thisBytes + 0xc);
+        *blit_edge_uvs_a = reinterpret_cast<int *>(corners_);
         *blit_vertex_count = 4;
     } else {
-        *blit_edge_uvs_a = reinterpret_cast<int *>(thisBytes + 0x2c);
+        *blit_edge_uvs_a = reinterpret_cast<int *>(cornersAndMids_);
         *blit_vertex_count = 8;
     }
-    *blit_buffer_stride = *reinterpret_cast<int *>(reinterpret_cast<char *>(a1) + 0x4a8);
-    *blit_texture_width = *reinterpret_cast<int *>(thisBytes + 4);
+    *blit_buffer_stride = a1->stride_;
+    *blit_texture_width = static_cast<int>(iWidth_);
 
-    if (reinterpret_cast<char *>(a1) + 0x20 != 0) {
-        *blit_clip_right = *reinterpret_cast<int *>(reinterpret_cast<char *>(a1) + 0x28);
-        *blit_clip_left = *reinterpret_cast<int *>(reinterpret_cast<char *>(a1) + 0x20);
-        *blit_clip_bottom = *reinterpret_cast<int *>(reinterpret_cast<char *>(a1) + 0x2c);
-        *blit_clip_top = *reinterpret_cast<int *>(reinterpret_cast<char *>(a1) + 0x24);
+    RECT *clip = &a1->rect1_;
+    if (clip != 0) {
+        *blit_clip_right = clip->right;
+        *blit_clip_left = clip->left;
+        *blit_clip_bottom = clip->bottom;
+        *blit_clip_top = clip->top;
 
         int minY = 0x7fff;
         int maxY = -0x7ffd;
@@ -3179,19 +3130,6 @@ int Texture::draw_trans2(Buffer *a1, int *a2, int a3) {
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x005E3373 0x005E34A3 0x0061C090 0x0061FC90
 
-// GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: Texture::draw_trans_3  at 0x00622DB0  (1552 bytes)
-//
-// A VERIFICATION ARTIFACT, not product source: classes are opaque and
-// globals are bound to fixed addresses, because both are byte-visible
-// and both differ from the style src/ is written in.
-//
-// The VC6 dialect limits and the source-form rules used to live here.
-// They are knowledge, not scaffolding, so they now live in the agent
-// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
-// where they can be edited without regenerating anything and are in
-// context from the first token rather than behind a file read. This
-// emitter computes declarations; it does not carry lessons.
 
 int Texture::draw_trans_3(Buffer *a1, Vert *a2, int *a3, int a4, Vert *a5, int a6) {
     if (a6 == -1) {
@@ -3207,11 +3145,12 @@ int Texture::draw_trans_3(Buffer *a1, Vert *a2, int *a3, int a4, Vert *a5, int a
     *blit_edge_uvs_b = reinterpret_cast<int *>(a2);
     *blit_edge_uvs_a = reinterpret_cast<int *>(a5);
     *blit_z_values = reinterpret_cast<int *>(a3);
-    *blit_texture_pixels = *reinterpret_cast<int *>(this);
-    *blit_buffer_stride = *reinterpret_cast<int *>(reinterpret_cast<char *>(a1) + 0x4a8);
+    *blit_texture_pixels = static_cast<int>(reinterpret_cast<intptr_t>(pixels_));
+    *blit_buffer_stride = a1->stride_;
     *blit_texture_width = iWidth_;
 
-    if (reinterpret_cast<char *>(a1) + 0x20 != 0) {
+    RECT *clip = &a1->rect1_;
+    if (clip != 0) {
         for (int i = 0; i < a4; ++i) {
             int v = a3[i];
             if (v >= TextureLightCeiling) v = TextureLightCeiling;
@@ -3220,11 +3159,11 @@ int Texture::draw_trans_3(Buffer *a1, Vert *a2, int *a3, int a4, Vert *a5, int a
             a3[i] = v;
         }
 
-        *blit_clip_right = *reinterpret_cast<int *>(reinterpret_cast<char *>(a1) + 0x28);
+        *blit_clip_right = clip->right;
         int minY = 0x7fff;
-        *blit_clip_left = *reinterpret_cast<int *>(reinterpret_cast<char *>(a1) + 0x20);
-        *blit_clip_bottom = *reinterpret_cast<int *>(reinterpret_cast<char *>(a1) + 0x2c);
-        *blit_clip_top = *reinterpret_cast<int *>(reinterpret_cast<char *>(a1) + 0x24);
+        *blit_clip_left = clip->left;
+        *blit_clip_bottom = clip->bottom;
+        *blit_clip_top = clip->top;
         int maxY = -0x7ffd;
         int maxX = -0x7ffd;
         int minX = 0x7fff;
@@ -4586,49 +4525,38 @@ void Texture::sub_622810(Buffer *buf, Vert *verts, int *zvals, int count,
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x005E3373 0x005E34A3 0x00625080
 
-// GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: sub_622200  at 0x00622200  (1548 bytes)
-//
-// A VERIFICATION ARTIFACT, not product source: classes are opaque and
-// globals are bound to fixed addresses, because both are byte-visible
-// and both differ from the style src/ is written in.
-//
-// The VC6 dialect limits and the source-form rules used to live here.
-// They are knowledge, not scaffolding, so they now live in the agent
-// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
-// where they can be edited without regenerating anything and are in
-// context from the first token rather than behind a file read. This
-// emitter computes declarations; it does not carry lessons.
 
 void Texture::sub_622200(int a2, int a3, int a4, int a5, int a6, int a7, int a8, int a9) {
-    int *self = reinterpret_cast<int *>(this);
     int *piVar3 = reinterpret_cast<int *>(a3);
     int local_8 = 1;
 
     if (a3 != 0) {
         if (a2 == 0)
             goto free_and_finish;
-        if (self[0] != 0 && a4 != 0 && a6 != 0 && a5 != 0 && a9 != 0) {
+        if (pixels_ != 0 && a4 != 0 && a6 != 0 && a5 != 0 && a9 != 0) {
             *reinterpret_cast<int *>(a9 + 4) = 0;
             *blit_pixel_base = reinterpret_cast<Buffer *>(a2)->get_data();
             texture_reset_fpu();
             *blit_z_values = reinterpret_cast<int *>(a4);
             *blit_edge_uvs_b = reinterpret_cast<int *>(a3);
             *blit_remap_table = a6;
-            *blit_texture_pixels = self[0];
-            TextureRowPitchScratch = self[1];
-            *blit_texture_height = self[2];
+            *blit_texture_pixels = static_cast<int>(reinterpret_cast<intptr_t>(pixels_));
+            TextureRowPitchScratch = static_cast<int>(iWidth_);
+            *blit_texture_height = static_cast<int>(iHeight_);
             *blit_vertex_count = a7;
             *blit_edge_uvs_a = reinterpret_cast<int *>(a8);
-            *blit_buffer_stride = *reinterpret_cast<int *>(a2 + 0x4a8);
-            *blit_texture_width = self[1];
-            *blit_shade_table = *reinterpret_cast<int *>(a5);
-            if (*blit_shade_table != 0 && a2 + 0x20 != 0) {
-                *blit_clip_right = *reinterpret_cast<int *>(a2 + 0x28);
+            Buffer *buffer = reinterpret_cast<Buffer *>(a2);
+            *blit_buffer_stride = buffer->stride_;
+            *blit_texture_width = static_cast<int>(iWidth_);
+            *blit_shade_table = static_cast<int>(reinterpret_cast<intptr_t>(
+                reinterpret_cast<Texture *>(a5)->pixels_));
+            RECT *clip = &buffer->rect1_;
+            if (*blit_shade_table != 0 && clip != 0) {
+                *blit_clip_right = clip->right;
                 int minY = 0x7fff;
-                *blit_clip_left = *reinterpret_cast<int *>(a2 + 0x20);
-                *blit_clip_bottom = *reinterpret_cast<int *>(a2 + 0x2c);
-                *blit_clip_top = *reinterpret_cast<int *>(a2 + 0x24);
+                *blit_clip_left = clip->left;
+                *blit_clip_bottom = clip->bottom;
+                *blit_clip_top = clip->top;
                 int idx = 0;
                 int maxY = 0xffff8003;
                 int maxX = -0x7ffd;
@@ -4669,8 +4597,8 @@ void Texture::sub_622200(int a2, int a3, int a4, int a5, int a6, int a7, int a8,
                         if (sub_625080(&left, minYIdx, reinterpret_cast<TextureStore *>(a9)) != 0) {
                             EdgeScan right;
                             right.f0 = 1;
-                            if (sub_625080(&right, minYIdx, reinterpret_cast<TextureStore *>(a9)) != 0 && self[0x1b] != 0 &&
-                                reinterpret_cast<int *>(a5)[0x1b] != 0) {
+                            if (sub_625080(&right, minYIdx, reinterpret_cast<TextureStore *>(a9)) != 0 && borrowed_ != 0 &&
+                                reinterpret_cast<Texture *>(a5)->borrowed_ != 0) {
                                 // 0x622443 selects 24-bit precision and chop for
                                 // the x87 gradient conversion; FNINIT is at exit.
                                 _control87(_PC_24 | _RC_CHOP, _MCW_PC | _MCW_RC);
@@ -5537,19 +5465,6 @@ static void texture_raster_plain_rows(Texture *texture, Buffer *buffer,
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x005E3373 0x005E34A3 0x0061FC90
 
-// GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: sub_61b780  at 0x0061B780  (2318 bytes)
-//
-// A VERIFICATION ARTIFACT, not product source: classes are opaque and
-// globals are bound to fixed addresses, because both are byte-visible
-// and both differ from the style src/ is written in.
-//
-// The VC6 dialect limits and the source-form rules used to live here.
-// They are knowledge, not scaffolding, so they now live in the agent
-// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
-// where they can be edited without regenerating anything and are in
-// context from the first token rather than behind a file read. This
-// emitter computes declarations; it does not carry lessons.
 
 void Texture::sub_61b780(Buffer *buffer, int *vertices, int zvals, int mode) {
     const int count = mode == 0 ? 4 : 8;
@@ -5561,7 +5476,7 @@ void Texture::sub_61b780(Buffer *buffer, int *vertices, int zvals, int mode) {
     *blit_pixel_base = static_cast<int>(reinterpret_cast<intptr_t>(destination));
     *blit_light_threshold = *blit_light_threshold_2;
     *blit_edge_uvs_b = reinterpret_cast<int *>(vertices);
-    *blit_edge_uvs_a = reinterpret_cast<int *>(reinterpret_cast<char *>(this) + (mode == 0 ? 0x0c : 0x2c));
+    *blit_edge_uvs_a = reinterpret_cast<int *>(mode == 0 ? corners_ : cornersAndMids_);
     *blit_vertex_count = count;
     *blit_z_values = reinterpret_cast<int *>(zvals);
     *blit_texture_pixels = static_cast<int>(reinterpret_cast<intptr_t>(pixels_));
@@ -5698,19 +5613,6 @@ void Texture::sub_620a10(Buffer *buffer, int vertices_arg, int count,
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x005E3373 0x005E34A3 0x0061FC90
 
-// GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: sub_61d090  at 0x0061D090  (2298 bytes)
-//
-// A VERIFICATION ARTIFACT, not product source: classes are opaque and
-// globals are bound to fixed addresses, because both are byte-visible
-// and both differ from the style src/ is written in.
-//
-// The VC6 dialect limits and the source-form rules used to live here.
-// They are knowledge, not scaffolding, so they now live in the agent
-// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
-// where they can be edited without regenerating anything and are in
-// context from the first token rather than behind a file read. This
-// emitter computes declarations; it does not carry lessons.
 
 void Texture::sub_61d090(Buffer *buffer, int *vertices, int *zvals,
                          unsigned int flag) {
@@ -5722,7 +5624,7 @@ void Texture::sub_61d090(Buffer *buffer, int *vertices, int *zvals,
         reinterpret_cast<unsigned char *>(buffer->get_data())));
     texture_reset_fpu();
     *blit_edge_uvs_b = reinterpret_cast<int *>(vertices);
-    *blit_edge_uvs_a = reinterpret_cast<int *>(reinterpret_cast<char *>(this) + (flag == 0 ? 0x0c : 0x2c));
+    *blit_edge_uvs_a = reinterpret_cast<int *>(flag == 0 ? corners_ : cornersAndMids_);
     *blit_vertex_count = count;
     *blit_z_values = reinterpret_cast<int *>(zvals);
     *blit_texture_pixels = static_cast<int>(reinterpret_cast<intptr_t>(pixels_));

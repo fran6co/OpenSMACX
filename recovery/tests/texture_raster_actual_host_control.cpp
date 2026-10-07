@@ -5,6 +5,7 @@
 #include <sys/mman.h>
 
 struct RECT { int left, top, right, bottom; };
+struct EdgePoint { int a, b; };
 struct EdgeScan {
     int f0, counter, id, accumA, accumB, deltaA, deltaB, accumC, deltaC,
         extraDeltaC, fracAccum, fracDelta, fracSub, accumD, deltaD;
@@ -22,7 +23,10 @@ public:
 class Texture {
 public:
     void *pixels_;
-    uint32_t iWidth_, iHeight_, borrowed_;
+    uint32_t iWidth_, iHeight_;
+    EdgePoint corners_[4];
+    EdgePoint cornersAndMids_[8];
+    uint32_t borrowed_;
     int setup_edge_gouraud(EdgeScan *, int);
     int setup_edge(EdgeScan *, int);
     void sub_61b780(Buffer *, int *, int, int);
