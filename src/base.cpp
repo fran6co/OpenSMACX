@@ -453,19 +453,25 @@ int base_yield_wrap_x(int x, int map_width) {
 
 } // namespace
 
-// The seed shows a selected-base energy pass: convoys and inefficiency first,
-// then commerce, allocation, specialists and facility multipliers. The first
-// and last stages below use their owning C++ objects. Pending: faction trade
-// credits, Planetary Energy Grid, specialist upgrades, research allocation
-// effects and the final energy-production special case still need translation
-// from the preserved seed before this is a complete behavioral recovery.
+// The selected-base energy pass owns convoy/commerce accounting, upkeep-stage
+// reserve transfer, allocation and specialist yields, facility/project multipliers,
+// faction efficiency adjustment, Network Backbone research credits and the final
+// energy-production special case. Historical byte and restoration obligations
+// remain attached to the complete original span.
 // ORIGINAL: 0x004EB560 ?base_energy@@YAXXZ 0x004EB560-0x004EC3A6
-// RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/unrecovered/004eb560.cpp", "image:0x004EB560-0x004EC3A6 ranks the selected base and publishes seven commerce pairs at 0x0090EA10/0x0090E964; its commerce base doubles when 0x009A6628 is below 0x009A6624", "source:src/base.h", "source:src/faction.h"], "reason": "Recover selected-base convoy, commerce rank/ledger and rate modifier, inefficiency, allocation, specialist and facility stages through typed owners. Several late modifiers remain pending; this binding makes no exactness claim. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/unrecovered/004eb560.cpp", "image:0x004EB560-0x004EC3A6 ranks the selected base and publishes seven commerce pairs at 0x0090EA10/0x0090E964; its commerce base doubles when 0x009A6628 is below 0x009A6624", "source:src/base.h", "source:src/faction.h"], "reason": "Recover the selected-base energy pass through typed Base, PlayerData, Player, Citizen, secret-project and shared-ledger owners, including trade, upkeep, specialist, facility, research-efficiency and final production stages. This source mapping makes no exactness claim; preserve historical claims and seed findings as restoration obligations."}
 // kind      game
+// Historical scaffold-era TRIED note follows; it records the earlier offset-transliteration attempt, not this typed owner body.
 // TRIED: void return confirmed - the function's only exit is the fall- through after `call base_psych` (itself void, ?base_psych@@YAXXZ) with no eax write in between, so it is a real `ret`, not a status. The 6/40/80/99999 constants the audit flagged are all clamp bounds (min/max against a computed value that is then stored into a per-base or per-faction field) or array strides, never delivered to the caller. Body is a direct, offset-checked transcription of the Ghidra decompilation with DAT_ globals replaced by explicit fixed-address casts (BASE macro re-reads [0x90ea30] at each use rather than caching it, matching the repeated `mov eax,[0x90ea30]` in the disassembly) and callee names resolved to the scaffold's declared black_market/ base_rank/best_specialist/has_tech/bitmask/base_psych. Compiles and preserves every branch, loop and goto (LAB_004ebbde, LAB_004ec1f6, LAB_004ebddd); did not chase the early-prologue register-scheduling divergence given the size already spent.
 void __cdecl base_energy() {
     Base &base = *BaseCurrent;
     const int faction = base.faction_id_current;
+    // Deliberately assigned only by a successful treaty/base-rank path below.
+    // The original later reads this stack local even when no path assigned it.
+    int base_energy_alien_receipt_subtotal;
+    // The independent ordinal is set only when the scan encounters BaseCurrent;
+    // retain the native local's unset no-match path.
+    int base_energy_selected_ordinal;
     base.energy_intake_2 += BaseCurrentConvoyTo[2];
     base.energy_consumption = BaseCurrentConvoyFrom[2];
     int available = base.energy_intake_2 - base.energy_consumption;
@@ -478,10 +484,10 @@ void __cdecl base_energy() {
     int commerce_rank = 0;
     for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
         const Base &candidate = Bases[base_id];
-        if (candidate.faction_id_current == faction &&
-            base.energy_intake_1 * 512 + BaseIDCurrentSelected <
-                candidate.energy_intake_1 * 512 + base_id) {
-            ++commerce_rank;
+        if (candidate.faction_id_current == faction) {
+            if (&candidate == BaseCurrent) base_energy_selected_ordinal = base_id;
+            if (base.energy_intake_1 * 512 + BaseIDCurrentSelected <
+                candidate.energy_intake_1 * 512 + base_id) ++commerce_rank;
         }
     }
     for (int partner = 1; partner < MaxPlayerNum; ++partner) {
@@ -501,7 +507,6 @@ void __cdecl base_energy() {
         if (GameDataStateStorage.fields_.council_resolution_count_[PROP_REPEAL_GLOBAL_TRADE_PACT] <
             GameDataStateStorage.fields_.council_resolution_count_[PROP_GLOBAL_TRADE_PACT]) commerce_base *= 2;
         const int divisor = TechCommerceCount + 1;
-        if (divisor <= 0) continue;
         int partner_receipt = ((PlayersData[partner].tech_commerce_bonus + 1) *
                                commerce_base + divisor / 2) / divisor;
         int receipt = ((PlayersData[faction].tech_commerce_bonus + 1) *
@@ -521,7 +526,27 @@ void __cdecl base_energy() {
         }
         BaseCommerceReceipts[slot] = receipt;
         BaseCommercePartnerReceipts[slot] = partner_receipt;
+        base_energy_alien_receipt_subtotal = receipt;
         base.energy_intake_2 += receipt;
+    }
+    if (ExpansionEnabled != 0 && (Players[faction].rule_flags & RFLAG_ALIEN) != 0) {
+        for (int facility = 0; facility < 0x46; ++facility) {
+            if ((base.facilities_built[facility >> 3] & (1u << (facility & 7))) != 0)
+                ++base_energy_alien_receipt_subtotal;
+        }
+        for (int project = 0; project < 64; ++project) {
+            if (GameDataStateStorage.fields_.secret_project_[project] == base_energy_selected_ordinal)
+                base_energy_alien_receipt_subtotal += 5;
+        }
+        base_energy_alien_receipt_subtotal /= 2;
+        if (PlayersData[faction].sanction_turns != 0) base_energy_alien_receipt_subtotal = 0;
+        base.energy_intake_2 += base_energy_alien_receipt_subtotal;
+    }
+    if (BaseUpkeepStage == 1) {
+        int reserve_credit = base.energy_surplus;
+        if (reserve_credit < 0) reserve_credit = 0;
+        else if (reserve_credit > 99999) reserve_credit = 99999;
+        PlayersData[faction].unk_13 += reserve_credit;
     }
     available = base.energy_intake_2 - base.energy_consumption;
     base.energy_inefficiency = black_market(available);
@@ -554,8 +579,23 @@ void __cdecl base_energy() {
             : static_cast<int>(best_specialist());
         if (specialist < 0) specialist = 0;
         if (specialist > 6) specialist = 6;
-        // Pending: obsolete specialists are promoted according to the seed's
-        // technology and yield comparison, updating the stored nibble.
+        if (has_tech(Citizen[specialist].obsol_tech, faction)) {
+            for (int candidate = 0; candidate < 7; ++candidate) {
+                if (has_tech(Citizen[candidate].preq_tech, faction)
+                    && !has_tech(Citizen[candidate].obsol_tech, faction)
+                    && Citizen[specialist].ops_bonus <= Citizen[candidate].ops_bonus
+                    && Citizen[specialist].psych_bonus <= Citizen[candidate].psych_bonus
+                    && Citizen[specialist].research_bonus <= Citizen[candidate].research_bonus) {
+                    specialist = candidate;
+                    if (citizen < 16) {
+                        const int shift = (citizen & 7) * 4;
+                        base.spec[citizen >> 3] &= ~(0xFu << shift);
+                        base.spec[citizen >> 3] |= specialist << shift;
+                    }
+                    break;
+                }
+            }
+        }
         base.economy_total += Citizen[specialist].ops_bonus;
         base.psych_total += Citizen[specialist].psych_bonus;
         base.labs_total += Citizen[specialist].research_bonus;
@@ -566,8 +606,10 @@ void __cdecl base_energy() {
 
     int psych_multiplier = 4;
     if (has_fac(FAC_HOLOGRAM_THEATRE, BaseIDCurrentSelected, 0)) psych_multiplier = 6;
-    int labs_multiplier = has_fac(FAC_NETWORK_NODE, BaseIDCurrentSelected, 0) ? 6 : 4;
-    int economy_multiplier = has_fac(FAC_ENERGY_BANK, BaseIDCurrentSelected, 0) ? 6 : 4;
+    int labs_multiplier = (has_fac(FAC_NETWORK_NODE, BaseIDCurrentSelected, 0)
+        || GameDataStateStorage.fields_.secret_project_[SP_VIRTUAL_WORLD] == BaseIDCurrentSelected) ? 6 : 4;
+    int economy_multiplier = (has_fac(FAC_ENERGY_BANK, BaseIDCurrentSelected, 0)
+        || GameDataStateStorage.fields_.secret_project_[SP_PLANETARY_ENERGY_GRID] == BaseIDCurrentSelected) ? 6 : 4;
     if (has_fac(FAC_RESEARCH_HOSPITAL, BaseIDCurrentSelected, 0)) {
         psych_multiplier += 1;
         labs_multiplier += 2;
@@ -597,8 +639,72 @@ void __cdecl base_energy() {
     base.economy_total = (base.economy_total * economy_multiplier + 3) / 4;
     base.unk_10 = (base.unk_10 * economy_multiplier + 3) / 4;
 
-    // Pending: Secret Project, faction efficiency, Network Backbone and
-    // research-allocation modifiers follow these multipliers in the seed.
+    if (GameDataStateStorage.fields_.secret_project_[SP_SUPERCOLLIDER] == BaseIDCurrentSelected)
+        base.labs_total *= 2;
+    if (GameDataStateStorage.fields_.secret_project_[SP_THEORY_OF_EVERYTHING] == BaseIDCurrentSelected)
+        base.labs_total *= 2;
+    if (GameDataStateStorage.fields_.secret_project_[SP_SPACE_ELEVATOR] == BaseIDCurrentSelected)
+        base.economy_total *= 2;
+    if (GameDataStateStorage.fields_.secret_project_[SP_LONGEVITY_VACCINE] == BaseIDCurrentSelected
+        && PlayersData[faction].soc_category_pending.models_[SocialCategory::ECONOMICS] == 1)
+        base.economy_total += base.economy_total / 2;
+
+    if (GameDataStateStorage.fields_.secret_project_[SP_NETWORK_BACKBONE] == BaseIDCurrentSelected) {
+        for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
+            if ((Bases[base_id].facilities_built[FAC_NETWORK_NODE >> 3]
+                 & (1u << (FAC_NETWORK_NODE & 7))) != 0)
+                ++base.labs_total;
+        }
+        if ((Players[faction].rule_flags & RFLAG_ALIEN) != 0)
+            base.labs_total += base_energy_alien_receipt_subtotal;
+        if (PlayersData[faction].sanction_turns == 0) {
+            for (int partner = 1; partner < MaxPlayerNum; ++partner) {
+                if (PlayersData[partner].sanction_turns == 0
+                    && (Players[partner].rule_flags & RFLAG_ALIEN) == 0
+                    && (Players[faction].rule_flags & RFLAG_ALIEN) == 0)
+                    base.labs_total += BaseCommerceReceipts[partner - 1];
+            }
+        }
+    }
+
+    int commerce_delta = psych_share + 2 * labs_share - 10;
+    if (commerce_delta < 0) commerce_delta = (5 - labs_share) * 2 - psych_share;
+    commerce_delta /= 2;
+    const int raw_efficiency = PlayersData[faction].soc_effect_pending.values_[SocialEffect::EFFICIENCY];
+    int clamped_efficiency = raw_efficiency;
+    if (clamped_efficiency < -4) clamped_efficiency = -4;
+    if (clamped_efficiency > 4) clamped_efficiency = 4;
+    int efficiency_factor = (4 - clamped_efficiency) * 2;
+    if (commerce_delta != 0 && efficiency_factor != 0) {
+        int penalty;
+        if ((10 - labs_share) - psych_share < labs_share) {
+            penalty = efficiency_factor * commerce_delta;
+            if (penalty < 0) penalty = 0;
+            else if (penalty > 40) penalty = 40;
+            base.labs_total = ((100 - penalty) * base.labs_total + 50) / 100;
+            penalty *= 2;
+            if (penalty < 0) penalty = 0;
+            else if (penalty > 80) penalty = 80;
+            base.economy_total = ((100 - penalty) * base.economy_total + 50) / 100;
+        } else {
+            penalty = efficiency_factor * commerce_delta * 2;
+            if (penalty < 0) penalty = 0;
+            else if (penalty > 80) penalty = 80;
+            base.labs_total = ((100 - penalty) * base.labs_total + 50) / 100;
+            penalty = efficiency_factor * commerce_delta;
+            if (penalty < 0) penalty = 0;
+            else if (penalty > 40) penalty = 40;
+            base.economy_total = ((100 - penalty) * base.economy_total + 50) / 100;
+        }
+    }
+    if (base.queue_production_id[0] == -0x45 && base.mineral_surplus > 0
+        && base.production_id_last == -0x45) {
+        int special_energy = (base.mineral_surplus + 1) / 2;
+        const int grid_base = GameDataStateStorage.fields_.secret_project_[SP_PLANETARY_ENERGY_GRID];
+        if (grid_base >= 0 && Bases[grid_base].faction_id_current == faction)
+            special_energy = (special_energy * 5 + 3) / 4;
+        base.economy_total += special_energy;
+    }
     base_psych();
 }
 
