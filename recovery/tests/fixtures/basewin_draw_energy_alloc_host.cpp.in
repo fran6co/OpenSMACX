@@ -1,0 +1,237 @@
+#include <cctype>
+#include <cstdint>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <string>
+#include <vector>
+
+struct RECT { int left, top, right, bottom; };
+struct BoxSpriteParams { int slot; };
+extern BoxSpriteParams InterfaceBoxStyles[51];
+struct Base;
+extern Base *BaseCurrent;
+static Base *callback_replacement_base;
+static bool switch_base_on_economy_caption;
+struct Event {
+    std::string kind;
+    std::string text;
+    RECT rect;
+    int a, b, c, d;
+    int style;
+};
+static std::vector<Event> events;
+static int font_ctors, font_dtors, font_inits, updates, soft_updates;
+
+struct Font {
+    Font() { ++font_ctors; }
+    ~Font() { ++font_dtors; }
+    int init(const char *, int, int) { ++font_inits; return 1; }
+};
+
+class Buffer {
+public:
+    RECT rect1_;
+    RECT rect2_;
+    Buffer() : rect1_{1, 2, 300, 200}, rect2_{10, 20, 790, 580} {}
+    const RECT &current_clip() const { return rect1_; }
+    int set_clip(RECT *rect) {
+        Event event = {"clip", "", *rect, 0, 0, 0, 0, -1};
+        events.push_back(event);
+        rect1_ = *rect;
+        return 0;
+    }
+    int set_font(Font *, int, int, int) {
+        events.push_back(Event{"font", "", RECT{0,0,0,0}, 0,0,0,0,-1});
+        return 0;
+    }
+    void set_text_color(int a, int b, int c, int d) {
+        events.push_back(Event{"color", "", RECT{0,0,0,0}, a,b,c,d,-1});
+    }
+    int box_sprite(RECT *rect, BoxSpriteParams *style) {
+        events.push_back(Event{"box", "", *rect, 0,0,0,0,
+                               static_cast<int>(style - InterfaceBoxStyles)});
+        return 0;
+    }
+    int write_l(char *text, RECT *rect, int) { return write("left", text, rect); }
+    int write_cent_l(char *text, RECT *rect, int) { return write("center", text, rect); }
+    int write_right_l(char *text, RECT *rect, int) { return write("right", text, rect); }
+private:
+    int write(const char *kind, char *text, RECT *rect) {
+        events.push_back(Event{kind, text, *rect, 0,0,0,0,-1});
+        if (switch_base_on_economy_caption && std::strcmp(kind, "left") == 0
+            && std::strcmp(text, " ECONOMY  +") == 0) {
+            BaseCurrent = callback_replacement_base;
+            switch_base_on_economy_caption = false;
+        }
+        return rect->left + static_cast<int>(std::strlen(text)) + 2;
+    }
+};
+
+class GraphicWin : public Buffer {
+public:
+    RECT *buffer_working_rect() { return &rect2_; }
+    int update(RECT *area, void *) {
+        ++updates;
+        events.push_back(Event{"update", "", *area, 0,0,0,0,-1});
+        return 0;
+    }
+    void soft_update(RECT *area) {
+        ++soft_updates;
+        events.push_back(Event{"soft", "", *area, 0,0,0,0,-1});
+    }
+};
+
+class BaseWin : public GraphicWin {
+public:
+    RECT production_content_rect_;
+    RECT expenses_help_rects_[6];
+    BaseWin() : production_content_rect_{50, 20, 500, 400} {
+        for (int i = 0; i < 6; ++i) expenses_help_rects_[i] = RECT{0,0,0,0};
+    }
+    void draw_energy_alloc(int a1);
+};
+
+struct Base {
+    unsigned char faction_id_current;
+    int energy_surplus;
+    int economy_total;
+    int psych_total;
+    int labs_total;
+    int mineral_surplus;
+    int queue_production_id[10];
+};
+struct PlayerData { int se_alloc_psych, se_alloc_labs; };
+static Base base_current;
+static Base replacement_base;
+Base *BaseCurrent = &base_current;
+PlayerData PlayersData[8];
+int WinScreenWidth = 800;
+const char *DefaultFontFace = "face";
+int TextColourTable[195];
+BoxSpriteParams InterfaceBoxStyles[51];
+char StringTemp[1024];
+
+static char *label_get(int label) {
+    static char strings[700][24];
+    const char *source = "label";
+    if (label == 36) source = "economy";
+    if (label == 60) source = "labs";
+    if (label == 95) source = "total";
+    if (label == 318) source = "psych";
+    if (label == 366) source = "allocation";
+    if (label == 654) source = "base";
+    std::strncpy(strings[label], source, sizeof(strings[label]) - 1);
+    return strings[label];
+}
+static char *CharUpperA(char *text) {
+    for (char *p = text; *p; ++p)
+        *p = static_cast<char>(std::toupper(static_cast<unsigned char>(*p)));
+    return text;
+}
+static char *_itoa(int value, char *buffer, int radix) {
+    if (radix != 10) return buffer;
+    std::sprintf(buffer, "%d", value);
+    return buffer;
+}
+static int psych_display_signed(uint32_t value) {
+    return value <= 0x7FFFFFFFu ? static_cast<int>(value)
+        : -1 - static_cast<int>(0xFFFFFFFFu - value);
+}
+static int psych_display_add(int left, int right) {
+    return psych_display_signed(static_cast<uint32_t>(left) + static_cast<uint32_t>(right));
+}
+static int psych_display_sub(int left, int right) {
+    return psych_display_signed(static_cast<uint32_t>(left) - static_cast<uint32_t>(right));
+}
+
+// ACTUAL_FUNCTION_INSERTION_POINT
+
+static bool same_rect(RECT a, RECT b) {
+    return a.left == b.left && a.top == b.top && a.right == b.right && a.bottom == b.bottom;
+}
+static int find_event(const char *kind, const char *text, int after = -1) {
+    for (int i = after + 1; i < static_cast<int>(events.size()); ++i)
+        if (events[i].kind == kind && (text == 0 || events[i].text == text)) return i;
+    return -1;
+}
+static int count_kind(const char *kind) {
+    int count = 0;
+    for (size_t i = 0; i < events.size(); ++i) if (events[i].kind == kind) ++count;
+    return count;
+}
+static int run_case(int width, int update_mode, int star,
+                    int switch_base_after_economy_caption = 0) {
+    events.clear(); font_ctors = font_dtors = font_inits = updates = soft_updates = 0;
+    WinScreenWidth = width;
+    BaseCurrent = &base_current;
+    base_current = Base{0, 101, 200, 75, 100, star ? 1 : 0, {star ? -69 : 0}};
+    replacement_base = Base{0, 101, 200, 75, 100, 1, {-69}};
+    callback_replacement_base = &replacement_base;
+    switch_base_on_economy_caption = switch_base_after_economy_caption != 0;
+    PlayersData[0] = PlayerData{2, 3};
+    for (int i = 0; i < 195; ++i) TextColourTable[i] = 1000 + i;
+    BaseWin win;
+    const RECT original_clip = win.rect1_;
+    win.draw_energy_alloc(update_mode);
+
+    if (font_ctors != 1 || font_dtors != 1 || font_inits != 1) return 1;
+    if (!same_rect(win.rect1_, original_clip)) return 2;
+    if (updates != (update_mode != 0) || soft_updates != (update_mode == 0)) return 3;
+    if (count_kind("box") != 10) return 4;
+    const int wide_delta = width != 800 ? win.rect2_.bottom - win.rect2_.top + 3 : 0;
+    if (!same_rect(win.expenses_help_rects_[5], RECT{0xA9, 0x107 + wide_delta + 0x15,
+                                                     0x2B8, 0x11B + wide_delta + 0x15})) return 5;
+    if (!same_rect(win.expenses_help_rects_[4], RECT{0xA9, 0x107 + wide_delta + 0x2A,
+                                                     0x2B8, 0x11B + wide_delta + 0x2A})) return 6;
+    if (!same_rect(win.expenses_help_rects_[3], RECT{0xA9, 0x107 + wide_delta + 0x3F,
+                                                     0x2B8, 0x11B + wide_delta + 0x3F})) return 7;
+    const int expected_colors[][2] = {
+        {1086,1087},
+        {1128,1129}, {1084,1085}, {1128,1129}, {1084,1085}, {1128,1129},
+        {1130,1131}, {1084,1085}, {1130,1131}, {1084,1085}, {1130,1131},
+        {1132,1133}, {1084,1085}, {1132,1133}, {1084,1085}, {1132,1133}
+    };
+    int color_index = 0;
+    for (size_t i = 0; i < events.size(); ++i) {
+        if (events[i].kind != "color") continue;
+        if (color_index >= static_cast<int>(sizeof(expected_colors) / sizeof(expected_colors[0]))) return 17;
+        if (events[i].a != expected_colors[color_index][0]
+            || events[i].b != expected_colors[color_index][1]) return 18;
+        ++color_index;
+    }
+    if (color_index != static_cast<int>(sizeof(expected_colors) / sizeof(expected_colors[0]))) return 19;
+    if (find_event("center", "ALLOCATION") < 0) return 8;
+    if (find_event("center", "LABS") < 0 || find_event("center", "PSYCH") < 0) return 8;
+    if (find_event("right", "50%") < 0 || find_event("right", "30%") < 0
+        || find_event("right", "20%") < 0) return 9;
+    if (find_event("right", "50") < 0 || find_event("right", "31") < 0
+        || find_event("right", "20") < 0) return 9;
+    if (find_event("right", (star || switch_base_after_economy_caption) ? "150*" : "150") < 0
+        || find_event("right", "69") < 0 || find_event("right", "55") < 0) return 9;
+    if ((find_event("right", "150*") >= 0)
+        != (star != 0 || switch_base_after_economy_caption != 0)) return 10;
+    if (find_event("right", "2") < 0) return 11; // saved Buffer rect1.top quirk
+    const int labels = find_event("left", " TOTAL =");
+    if (labels < 0) return 12;
+    int total_value = find_event("right", "200", labels);
+    if (total_value < 0) return 13;
+    int labs_label = find_event("left", " TOTAL =", total_value);
+    if (labs_label < 0) return 14;
+    int saved_top = find_event("right", "2", labs_label);
+    if (saved_top < 0) return 15;
+    int psych_label = find_event("left", " TOTAL =", saved_top);
+    if (psych_label < 0 || find_event("right", "75", psych_label) < 0) return 16;
+    return 0;
+}
+
+int main() {
+    int status = run_case(800, 1, 0);
+    if (status) return status;
+    status = run_case(1024, 0, 1);
+    if (status) return 20 + status;
+    status = run_case(800, 0, 0, 1);
+    if (status) return 40 + status;
+    if (find_event("right", "150*") < 0) return 60;
+    return 0;
+}

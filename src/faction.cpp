@@ -7885,11 +7885,11 @@ if ((dialogue_flags & 0x40) == 0) {
 if (DiploScratchF7E8 == 0 || wants_to_speak(faction_id, peer_id) == 0) {
     goto communicate_tech_greeting_done; // native 0x0055362D
 }
-// INCOMPLETE BOUNDARY: the greeting/UI body beginning at 0x550EB3 remains
-// untranslated. Callback results and later pair-state reloads must stay live.
+// Native 0x00550EB3..0x00551168 continuation: strength/reserve gates,
+// plea parser and popup, then the accepted-response lock wait. The callback
+// result and later pair-state reads remain in their original order.
 }
-// Private typed translation of the post-introduction strength/energy gate,
-// PLEA popup, and accepted-response lock wait, native 0x00550EAD..0x00551168.
+// Private typed source candidate for native 0x00550EB3..0x00551168.
 // This joins the already recovered phrase block at 0x005513CA for a failed
 // gate or a zero popup result, and enters no-pact/pact handling at 0x00551168
 // after a nonzero result and the native lock wait.
@@ -7900,9 +7900,6 @@ int communicate_plea_amount;
 int communicate_plea_result;
 int communicate_plea_tech;
 int communicate_plea_payment;
-if (wants_to_speak(faction_id, peer_id) == 0) {
-    goto communicate_post_ransom_call_gates; // native 0x00550EAD -> 0x0055362D
-}
 if (PlayersData[DiploScratchF7E8].mil_strength_1 <
     communicate_wrapped_mul(PlayersData[peer_id].mil_strength_1, 2)) {
     goto communicate_treaty_topic_phrases; // native 0x00550EEE -> 0x005513CA
@@ -7911,7 +7908,7 @@ communicate_peer_reserves = PlayersData[peer_id].energy_reserves;
 if (communicate_peer_reserves < 10) {
     goto communicate_treaty_topic_phrases; // native 0x00550EFD -> 0x005513CA
 }
-communicate_plea_amount = communicate_peer_reserves / 50;
+communicate_plea_amount = communicate_peer_reserves / 50 * 25;
 if (communicate_plea_amount < 25) {
     communicate_plea_amount = communicate_peer_reserves < 25
         ? communicate_peer_reserves : 25;

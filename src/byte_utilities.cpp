@@ -40,4 +40,3 @@ void __cdecl fill_eight_bytes_ff(void *target) {
     bytes[6] = fill;
     bytes[7] = fill;
 }
-

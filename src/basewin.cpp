@@ -3559,28 +3559,327 @@ BaseWin TutWinBaseWindow;  // 0x006A7628
 // indirect  0x00411D58 0x00411E7B 0x00411FE5 0x0041213C 0x004122C9 0x00412433 0x00412561 0x004126EF 0x00412855 0x0041297F
 
 void BaseWin::draw_energy_alloc(int a1) {
-    // Real local matching the single `call ??0Font@@QAE@XZ` in the
-    // disassembly; RAII covers its destructor at the return below.
+    Buffer *canvas = static_cast<Buffer *>(this);
     Font font;
 
-    // The GraphicWin subobject's own Buffer at +0x444 - the front's second
-    // base, reachable as the base it is now that the members are declared.
-    Buffer *canvas = this;
-
-    RECT clipRect = garrison_rect_;
-    canvas->set_clip(&clipRect);
-
-    font.init(DefaultFontFace, 0xc, 1);
+    const int faction_id = BaseCurrent->faction_id_current;
+    const int wide_mode = WinScreenWidth != 0x320;
+    RECT clip_target = production_content_rect_;
+    RECT saved_clip = canvas->current_clip();
+    canvas->set_clip(&clip_target);
+    font.init(DefaultFontFace, 0xC, 1);
     canvas->set_font(&font, 0, 0, 0);
 
-    // Time-boxed: draw_energy_alloc renders the psych/labs/econ
-    // allocation-slider bar chart via a long sequence of box_sprite
-    // calls, per-slider RECT arithmetic driven by the current
-    // allocation at 0x474+0xc..0x474+0x30-ish, and a faction
-    // colour-table lookup (stride 0x59c) - not transcribed beyond the
-    // clip/font setup above. See the TRIED note.
-    (void)a1;
+    RECT outer_frame = *static_cast<GraphicWin *>(this)->buffer_working_rect();
+    outer_frame.left = psych_display_add(outer_frame.left, 0x17);
+    outer_frame.right = psych_display_sub(outer_frame.right, 0x37);
+    canvas->box_sprite(&outer_frame, &InterfaceBoxStyles[9]);
+    canvas->box_sprite(&production_content_rect_, &InterfaceBoxStyles[3]);
+
+    int frame_delta = 0;
+    if (wide_mode) {
+        RECT working_frame = *static_cast<GraphicWin *>(this)->buffer_working_rect();
+        frame_delta = psych_display_add(
+            psych_display_sub(working_frame.bottom, working_frame.top), 3);
+    }
+    RECT chart_frame = {0x15A, psych_display_add(0x11C, frame_delta),
+                        0x2B8, psych_display_add(0x15A, frame_delta)};
+    canvas->box_sprite(&chart_frame, &InterfaceBoxStyles[0]);
+
+    int row_delta = 0;
+    if (wide_mode) {
+        RECT working_rows = *static_cast<GraphicWin *>(this)->buffer_working_rect();
+        row_delta = psych_display_add(
+            psych_display_sub(working_rows.bottom, working_rows.top), 3);
+    }
+    RECT row_bounds = {0xA9, psych_display_add(0x107, row_delta),
+                       0x2B8, psych_display_add(0x11B, row_delta)};
+    canvas->set_font(&font, 0, 0, 0);
+
+    const int psych_percent = PlayersData[faction_id].se_alloc_psych;
+    const int labs_percent = PlayersData[faction_id].se_alloc_labs;
+    const int economy_percent = psych_display_sub(
+        psych_display_sub(10, psych_percent), labs_percent);
+
+    int energy = BaseCurrent->energy_surplus;
+    if (energy < 0) energy = 0;
+    else if (energy > 0x270F) energy = 0x270F;
+
+    const int psych_product = psych_display_signed(
+        static_cast<uint32_t>(psych_percent) * static_cast<uint32_t>(energy) + 4u);
+    int psych_share = psych_product / 10;
+    if (psych_share < 0 || energy < 0) psych_share = 0;
+    else if (psych_share > energy) psych_share = energy;
+
+    const int after_psych = psych_display_sub(energy, psych_share);
+    const int economy_product = psych_display_signed(
+        static_cast<uint32_t>(economy_percent) * static_cast<uint32_t>(energy) + 4u);
+    int economy_share = economy_product / 10;
+    if (economy_share < 0 || after_psych < 0) economy_share = 0;
+    else if (economy_share > after_psych) economy_share = after_psych;
+
+    const int labs_share = psych_display_sub(after_psych, economy_share);
+
+    Base *totals_base = BaseCurrent;
+    const int economy_total = totals_base->economy_total;
+    const int economy_residual = psych_display_sub(economy_total, economy_share);
+    const int labs_total = totals_base->labs_total;
+    const int labs_residual = psych_display_sub(labs_total, labs_share);
+    const int psych_total = totals_base->psych_total;
+    const int psych_residual = psych_display_sub(psych_total, psych_share);
+
+    RECT title_rect = {wide_mode ? psych_display_add(production_content_rect_.left, 3) : 0xBF,
+                       row_bounds.top, row_bounds.right, row_bounds.bottom};
+    canvas->box_sprite(&title_rect, &InterfaceBoxStyles[6]);
+    title_rect.left = psych_display_add(title_rect.left, 3);
+    title_rect.top = psych_display_add(title_rect.top, 3);
+    title_rect.right = psych_display_sub(title_rect.right, 3);
+    title_rect.bottom = psych_display_sub(title_rect.bottom, 3);
+    canvas->set_text_color(TextColourTable[86], TextColourTable[87], 1, 1);
+    StringTemp[0] = '\0';
+    strcat(StringTemp, label_get(0x90 / 4));
+    strcat(StringTemp, " ");
+    strcat(StringTemp, label_get(0xA38 / 4));
+    CharUpperA(StringTemp);
+    if (wide_mode == 0)
+        canvas->write_l(StringTemp, &title_rect, strlen(StringTemp));
+    else
+        canvas->write_cent_l(StringTemp, &title_rect, strlen(StringTemp));
+
+    RECT hit_rect = {row_bounds.left, psych_display_add(row_bounds.top, 0x15),
+                     row_bounds.right, psych_display_add(row_bounds.bottom, 0x15)};
+    expenses_help_rects_[5].left = hit_rect.left;
+    expenses_help_rects_[5].top = hit_rect.top;
+    expenses_help_rects_[5].right = hit_rect.right;
+    expenses_help_rects_[5].bottom = hit_rect.bottom;
+    canvas->set_text_color(TextColourTable[128], TextColourTable[129], 1, 1);
+    RECT graph_rect = {hit_rect.left, hit_rect.top, 0x129, hit_rect.bottom};
+    canvas->box_sprite(&graph_rect, &InterfaceBoxStyles[6]);
+    graph_rect.left = psych_display_add(graph_rect.left, 3);
+    graph_rect.top = psych_display_add(graph_rect.top, 3);
+    graph_rect.right = psych_display_sub(graph_rect.right, 3);
+    graph_rect.bottom = psych_display_sub(graph_rect.bottom, 3);
+    StringTemp[0] = '\0';
+    strcat(StringTemp, label_get(0x5B8 / 4));
+    CharUpperA(StringTemp);
+    canvas->write_cent_l(StringTemp, &graph_rect, strlen(StringTemp));
+
+    RECT value_cell = {0x12B, hit_rect.top, 0x158, hit_rect.bottom};
+    canvas->box_sprite(&value_cell, &InterfaceBoxStyles[6]);
+    value_cell.right = 0x150;
+    char number[16];
+    StringTemp[0] = '\0';
+    _itoa(psych_display_signed(static_cast<uint32_t>(economy_percent) * 10u),
+          number, 10);
+    strcat(StringTemp, number);
+    strcat(StringTemp, "%");
+    canvas->write_right_l(StringTemp, &value_cell, strlen(StringTemp));
+    value_cell.right = 0x178;
+    StringTemp[0] = '\0';
+    _itoa(economy_share, number, 10);
+    strcat(StringTemp, number);
+    canvas->write_right_l(StringTemp, &value_cell, strlen(StringTemp));
+
+    RECT label_value = {0x178, hit_rect.top, hit_rect.right, hit_rect.bottom};
+    StringTemp[0] = '\0';
+    strcat(StringTemp, " ");
+    strcat(StringTemp, label_get(0x90 / 4));
+    CharUpperA(StringTemp);
+    strcat(StringTemp, "  +");
+    canvas->set_text_color(TextColourTable[84], TextColourTable[85], 1, 1);
+    const int economy_label_end = canvas->write_l(
+        StringTemp, &label_value, strlen(StringTemp));
+    label_value.left = economy_label_end;
+    value_cell.right = psych_display_add(economy_label_end, 0x1A);
+
+    canvas->set_text_color(TextColourTable[128], TextColourTable[129], 1, 1);
+    StringTemp[0] = '\0';
+    _itoa(economy_residual, number, 10);
+    strcat(StringTemp, number);
+    Base *marker_base = BaseCurrent;
+    if (marker_base->queue_production_id[0] == -69
+        && marker_base->mineral_surplus > 0)
+        strcat(StringTemp, "*");
+    canvas->write_right_l(StringTemp, &value_cell, strlen(StringTemp));
+
+    canvas->set_text_color(TextColourTable[84], TextColourTable[85], 1, 1);
+    StringTemp[0] = '\0';
+    strcat(StringTemp, " ");
+    strcat(StringTemp, label_get(0x17C / 4));
+    CharUpperA(StringTemp);
+    strcat(StringTemp, " ");
+    strcat(StringTemp, "=");
+    const int economy_total_label_end = canvas->write_l(
+        StringTemp, &label_value, strlen(StringTemp));
+    label_value.left = economy_total_label_end;
+    value_cell.right = psych_display_add(economy_total_label_end, 0x1D);
+    canvas->set_text_color(TextColourTable[128], TextColourTable[129], 1, 1);
+    StringTemp[0] = '\0';
+    _itoa(economy_total, number, 10);
+    strcat(StringTemp, number);
+    canvas->write_right_l(StringTemp, &value_cell, strlen(StringTemp));
+
+    hit_rect.left = row_bounds.left;
+    hit_rect.top = psych_display_add(row_bounds.top, 0x2A);
+    hit_rect.right = row_bounds.right;
+    hit_rect.bottom = psych_display_add(row_bounds.bottom, 0x2A);
+    expenses_help_rects_[4].left = hit_rect.left;
+    expenses_help_rects_[4].top = hit_rect.top;
+    expenses_help_rects_[4].right = hit_rect.right;
+    expenses_help_rects_[4].bottom = hit_rect.bottom;
+    canvas->set_text_color(TextColourTable[130], TextColourTable[131], 1, 1);
+    graph_rect = hit_rect;
+    graph_rect.right = 0x129;
+    canvas->box_sprite(&graph_rect, &InterfaceBoxStyles[6]);
+    graph_rect.left = psych_display_add(graph_rect.left, 3);
+    graph_rect.top = psych_display_add(graph_rect.top, 3);
+    graph_rect.right = psych_display_sub(graph_rect.right, 3);
+    graph_rect.bottom = psych_display_sub(graph_rect.bottom, 3);
+    StringTemp[0] = '\0';
+    strcat(StringTemp, label_get(0xF0 / 4));
+    CharUpperA(StringTemp);
+    canvas->write_cent_l(StringTemp, &graph_rect, strlen(StringTemp));
+
+    value_cell.left = 0x12B;
+    value_cell.top = hit_rect.top;
+    value_cell.right = 0x158;
+    value_cell.bottom = hit_rect.bottom;
+    canvas->box_sprite(&value_cell, &InterfaceBoxStyles[6]);
+    value_cell.right = 0x150;
+    StringTemp[0] = '\0';
+    _itoa(psych_display_signed(static_cast<uint32_t>(labs_percent) * 10u),
+          number, 10);
+    strcat(StringTemp, number);
+    strcat(StringTemp, "%");
+    canvas->write_right_l(StringTemp, &value_cell, strlen(StringTemp));
+    value_cell.right = 0x178;
+    StringTemp[0] = '\0';
+    _itoa(labs_share, number, 10);
+    strcat(StringTemp, number);
+    canvas->write_right_l(StringTemp, &value_cell, strlen(StringTemp));
+
+    label_value.left = 0x178;
+    label_value.top = hit_rect.top;
+    label_value.right = hit_rect.right;
+    label_value.bottom = hit_rect.bottom;
+    StringTemp[0] = '\0';
+    strcat(StringTemp, " ");
+    strcat(StringTemp, label_get(0x90 / 4));
+    CharUpperA(StringTemp);
+    strcat(StringTemp, "  +");
+    canvas->set_text_color(TextColourTable[84], TextColourTable[85], 1, 1);
+    const int labs_label_end = canvas->write_l(
+        StringTemp, &label_value, strlen(StringTemp));
+    label_value.left = labs_label_end;
+    value_cell.right = psych_display_add(labs_label_end, 0x1A);
+
+    canvas->set_text_color(TextColourTable[130], TextColourTable[131], 1, 1);
+    StringTemp[0] = '\0';
+    _itoa(labs_residual, number, 10);
+    strcat(StringTemp, number);
+    canvas->write_right_l(StringTemp, &value_cell, strlen(StringTemp));
+
+    canvas->set_text_color(TextColourTable[84], TextColourTable[85], 1, 1);
+    StringTemp[0] = '\0';
+    strcat(StringTemp, " ");
+    strcat(StringTemp, label_get(0x17C / 4));
+    CharUpperA(StringTemp);
+    strcat(StringTemp, " ");
+    strcat(StringTemp, "=");
+    const int saved_top_label_end = canvas->write_l(
+        StringTemp, &label_value, strlen(StringTemp));
+    label_value.left = saved_top_label_end;
+    value_cell.right = psych_display_add(saved_top_label_end, 0x1D);
+    canvas->set_text_color(TextColourTable[130], TextColourTable[131], 1, 1);
+    StringTemp[0] = '\0';
+    _itoa(saved_clip.top, number, 10);
+    strcat(StringTemp, number);
+    canvas->write_right_l(StringTemp, &value_cell, strlen(StringTemp));
+
+    hit_rect.left = row_bounds.left;
+    hit_rect.top = psych_display_add(row_bounds.top, 0x3F);
+    hit_rect.right = row_bounds.right;
+    hit_rect.bottom = psych_display_add(row_bounds.bottom, 0x3F);
+    expenses_help_rects_[3].left = hit_rect.left;
+    expenses_help_rects_[3].top = hit_rect.top;
+    expenses_help_rects_[3].right = hit_rect.right;
+    expenses_help_rects_[3].bottom = hit_rect.bottom;
+    canvas->set_text_color(TextColourTable[132], TextColourTable[133], 1, 1);
+    graph_rect = hit_rect;
+    graph_rect.right = 0x129;
+    canvas->box_sprite(&graph_rect, &InterfaceBoxStyles[6]);
+    graph_rect.left = psych_display_add(graph_rect.left, 3);
+    graph_rect.top = psych_display_add(graph_rect.top, 3);
+    graph_rect.right = psych_display_sub(graph_rect.right, 3);
+    graph_rect.bottom = psych_display_sub(graph_rect.bottom, 3);
+    StringTemp[0] = '\0';
+    strcat(StringTemp, label_get(0x4F8 / 4));
+    CharUpperA(StringTemp);
+    canvas->write_cent_l(StringTemp, &graph_rect, strlen(StringTemp));
+
+    value_cell.left = 0x12B;
+    value_cell.top = hit_rect.top;
+    value_cell.right = 0x158;
+    value_cell.bottom = hit_rect.bottom;
+    canvas->box_sprite(&value_cell, &InterfaceBoxStyles[6]);
+    value_cell.right = 0x150;
+    StringTemp[0] = '\0';
+    _itoa(psych_display_signed(static_cast<uint32_t>(psych_percent) * 10u),
+          number, 10);
+    strcat(StringTemp, number);
+    strcat(StringTemp, "%");
+    canvas->write_right_l(StringTemp, &value_cell, strlen(StringTemp));
+    value_cell.right = 0x178;
+    StringTemp[0] = '\0';
+    _itoa(psych_share, number, 10);
+    strcat(StringTemp, number);
+    canvas->write_right_l(StringTemp, &value_cell, strlen(StringTemp));
+
+    label_value.left = 0x178;
+    label_value.top = hit_rect.top;
+    label_value.right = hit_rect.right;
+    label_value.bottom = hit_rect.bottom;
+    StringTemp[0] = '\0';
+    strcat(StringTemp, " ");
+    strcat(StringTemp, label_get(0x90 / 4));
+    CharUpperA(StringTemp);
+    strcat(StringTemp, "  +");
+    canvas->set_text_color(TextColourTable[84], TextColourTable[85], 1, 1);
+    const int psych_label_end = canvas->write_l(
+        StringTemp, &label_value, strlen(StringTemp));
+    label_value.left = psych_label_end;
+    value_cell.right = psych_display_add(psych_label_end, 0x1A);
+
+    canvas->set_text_color(TextColourTable[132], TextColourTable[133], 1, 1);
+    StringTemp[0] = '\0';
+    _itoa(psych_residual, number, 10);
+    strcat(StringTemp, number);
+    canvas->write_right_l(StringTemp, &value_cell, strlen(StringTemp));
+
+    canvas->set_text_color(TextColourTable[84], TextColourTable[85], 1, 1);
+    StringTemp[0] = '\0';
+    strcat(StringTemp, " ");
+    strcat(StringTemp, label_get(0x17C / 4));
+    CharUpperA(StringTemp);
+    strcat(StringTemp, " ");
+    strcat(StringTemp, "=");
+    const int psych_total_label_end = canvas->write_l(
+        StringTemp, &label_value, strlen(StringTemp));
+    label_value.left = psych_total_label_end;
+    value_cell.right = psych_display_add(psych_total_label_end, 0x1D);
+    canvas->set_text_color(TextColourTable[132], TextColourTable[133], 1, 1);
+    StringTemp[0] = '\0';
+    _itoa(psych_total, number, 10);
+    strcat(StringTemp, number);
+    canvas->write_right_l(StringTemp, &value_cell, strlen(StringTemp));
+
+    if (a1 != 0)
+        static_cast<GraphicWin *>(this)->update(&production_content_rect_, 0);
+    else
+        static_cast<GraphicWin *>(this)->soft_update(&production_content_rect_);
+    canvas->set_clip(&saved_clip);
 }
+
 
 // Fixed-slot bindings carried from 0041afd0.cpp
 static int *const InterfaceClipRect = (int *)0x007AEC94;
