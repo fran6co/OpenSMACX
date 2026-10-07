@@ -150,6 +150,8 @@ int draw(Buffer *, int, int, int, int, int, unsigned char *);
 int draw_dest_unk2(Buffer *, int, int, int, int, int, unsigned char *);
 // Names provisional; no direct original symbol names recovered for utilities.
 int probe_image_file(const char *, Palette *, int, int);
+// Provisional name; trailing words are unused, with no known semantic types.
+int check_pcx_input_data(PcxInputView *, int, int, int);
 int load_pcx_from_source(PcxInputView *, Palette *, int, int);
 static int __stdcall probe_pcx(const char *, Palette *, int, int);
 int copy_scaled(Buffer *, RECT *, RECT *);

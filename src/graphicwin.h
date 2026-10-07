@@ -95,6 +95,7 @@ typedef int (__cdecl *GraphicWinCaptionDraw)(GraphicWin *, char *, Buffer *);
 class GraphicWin : public Win, public Buffer {
  public:
   int probe_image_file(const char *, Palette *, int, int);
+  int check_pcx_input_data(PcxInputView *, int, int, int);
   int load_pcx_from_source(PcxInputView *, Palette *, int, int);
   int resize_screen_and_sync_palette();
   // Provisional descriptive names; native name/dispatch evidence is incomplete.

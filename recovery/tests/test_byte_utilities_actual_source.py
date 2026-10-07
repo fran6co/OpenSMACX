@@ -107,8 +107,13 @@ def test_identity_claims_and_history_survive_the_owner_transfer():
     assert utility_text.count("// HISTORICAL scaffold role: SCAFFOLD") == 1
     leaf_rows = {row.address for row in source.read_text(leaf_text, leaf_path)}
     assert not (set(expected) & leaf_rows)
-    assert {0x00408470, 0x005D7A10}.issubset(leaf_rows)
+    assert 0x00408470 in leaf_rows
     assert all(next(row for row in source.read_text(leaf_text, leaf_path)
                     if row.address == address).source_role is source.SourceRole.SCAFFOLD
-               for address in (0x00408470, 0x005D7A10))
-    assert 0x005D5470 in leaf_rows  # keep the receiver-shaped thunk unresolved
+               for address in (0x00408470,))
+    # The input-status helper and secondary-base wrapper now have real owners.
+    assert 0x005D7A10 not in leaf_rows and 0x005D5470 not in leaf_rows
+    assert any(row.address == 0x005D7A10 and row.byte_exact
+               for row in source.read_file(ROOT / "src/buffer.cpp"))
+    assert any(row.address == 0x005D5470
+               for row in source.read_file(ROOT / "src/graphicwin.cpp"))

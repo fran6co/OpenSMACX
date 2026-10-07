@@ -1553,3 +1553,41 @@ void GraphicWin::update(int x, int y, int width, int height,
         flip(&rect);
     }
 }
+
+// Historical adapter reasoning is retained below. The recovered method
+// now expresses the genuine Buffer-base call rather than dropping its receiver.
+/*
+Purpose: Forward all four arguments to 005D7A10.
+
+             mov eax,[esp+0x10] / mov edx,[esp+0xc] / push eax
+             mov eax,[esp+0xc] / push edx / mov edx,[esp+0xc]
+             push eax / push edx / add ecx,0x444 / call 005D7A10 / ret 0x10
+
+         The interleaved reads and pushes look like a shuffle and are not: each
+         `[esp+0xc]` is read AFTER a push has moved ESP, so they walk backwards
+         through the arguments and re-push them in the same order.
+
+         `add ecx,0x444` computes a subobject pointer that 005D7A10 never
+         reads - it takes everything from the stack. The adjustment is
+         therefore unobservable, and reproducing it would be copying a leftover
+         rather than the function. That is a claim about the callee, and it is
+         checked: see its recovery above, which reads `[esp+4]` and nothing
+         else.
+
+// ORIGINAL: 0x005D5470 sub_5d5470 0x005D5470-0x005D5492
+// RECOVERY_BINDING: v1 {"reason":"Recover the status helper and its paired forwarding method in the existing genuine Buffer/GraphicWin owners; retain original results, stack arguments, mappings and historical obligations.","evidence":["Pinned 5D5470 preserves four stack arguments, adjusts ECX by +0x444 and directly calls 5D7A10.","The existing 5D54A0/5D54D0 GraphicWin wrapper family uses the same secondary Buffer base and four-word stack shape.","Buffer's mapped 5D7AE0 loader independently observes PcxInputView data at +0x0C; 5D7A10 tests only that field.","Source names are provisional descriptions; the three unused trailing machine words remain opaque int parameters, not inferred Palette or color semantics."]}
+// Historical project symbol: ?leaf_005d5470_redirect@@YIHPAX0PBXHHH@Z
+// symbol    ?check_pcx_input_data@GraphicWin@@QAEHPAUPcxInputView@@HHH@Z
+// size      34 bytes
+// prototype
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D7A10
+Return Value: whatever 005D7A10 returns
+Status: Complete
+*/
+int GraphicWin::check_pcx_input_data(PcxInputView *source,
+                                    int second, int third, int fourth) {
+    return Buffer::check_pcx_input_data(source, second, third, fourth);
+}

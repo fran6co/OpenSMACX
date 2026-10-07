@@ -7158,6 +7158,40 @@ tail:
     }
 }
 
+/*
+Purpose: Three when there is no structure, otherwise zero or seven.
+
+             mov eax,[esp+4] / test eax,eax / jne have / mov eax,3 / ret 0x10
+       have: mov eax,[eax+0xc] / neg eax / sbb eax,eax / and al,0xf9
+             add eax,7 / ret 0x10
+
+         `neg / sbb eax,eax` is the idiom for "0 if the value was zero, -1
+         otherwise". Then `and al,0xf9` masks only AL - so -1 becomes
+         0xfffffff9, and adding 7 WRAPS to zero. Zero stays zero and becomes
+         7. The wrap is the mechanism, not an accident, and a body that masked
+         the whole register would give 7 in both cases.
+
+         `ret 0x10` cleans four dwords while only the first is read; the other
+         three are declared so the adapter cleans what the original cleans.
+
+// ORIGINAL: 0x005D7A10 sub_5d7a10 0x005D7A10-0x005D7A2F BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason":"Recover the status helper and its paired forwarding method in the existing genuine Buffer/GraphicWin owners; retain original results, stack arguments, mappings and historical obligations.","evidence":["Pinned 5D5470 preserves four stack arguments, adjusts ECX by +0x444 and directly calls 5D7A10.","The existing 5D54A0/5D54D0 GraphicWin wrapper family uses the same secondary Buffer base and four-word stack shape.","Buffer's mapped 5D7AE0 loader independently observes PcxInputView data at +0x0C; 5D7A10 tests only that field.","Source names are provisional descriptions; the three unused trailing machine words remain opaque int parameters, not inferred Palette or color semantics."]}
+// Historical project symbol: ?leaf_005d7a10_redirect@@YGHPBXHHH@Z
+// symbol    ?check_pcx_input_data@Buffer@@QAEHPAUPcxInputView@@HHH@Z
+// size      31 bytes
+// prototype
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: 3 with no structure, 0 when field 0xc is set, 7 when it is not
+Status: Complete
+*/
+int Buffer::check_pcx_input_data(PcxInputView *source, int, int, int) {
+    if (source == 0) return 3;
+    return source->data_ != 0 ? 0 : 7;
+}
+
 // ORIGINAL: 0x005D93C0 ?draw_multi_table_dest@Buffer@@QAEHPAVBuffer@@HHHH@Z 0x005D93C0-0x005D94AE BYTE_EXACT
 // LEVER: same shape and same landing as draw_dest above - the descriptor is
 //        the Sprite at 0x009B3A50, the release is surface_->Unlock, and the
