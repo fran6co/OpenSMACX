@@ -22,6 +22,7 @@ struct CombinedContext {
   std::int32_t scale_source[64];
   std::int32_t scale_output[64];
   std::int32_t transform_products[65];
+  std::int32_t idct_scratch_words[4];
   std::uint8_t remap[256];
   std::uint8_t luma_scratch[0x400];
   std::uint8_t chroma_scratch[0x200];
@@ -57,7 +58,8 @@ static void idct_rows(std::uint8_t *output, int stride_arg) {
       active_context->coefficient_words,
       active_context->idct_intermediate,
       reinterpret_cast<std::int32_t *>(output),
-      static_cast<std::size_t>(stride_arg), active_context->idct_constants);
+      static_cast<std::size_t>(stride_arg), active_context->idct_constants,
+      active_context->idct_scratch_words);
 }
 
 static void decode_six_blocks(void *opaque, std::uint8_t *coefficient_block,
@@ -188,7 +190,8 @@ int main() {
   std::int32_t intermediate[135] = {};
   std::int32_t idct_output[64] = {};
   movie_decoder_idct::transform_idct_block(
-      input, intermediate, idct_output, 8, context.idct_constants);
+      input, intermediate, idct_output, 8, context.idct_constants,
+      context.idct_scratch_words);
   for (int i = 0; i != 64; ++i) assert(idct_output[i] == 0);
   return 0;
 }

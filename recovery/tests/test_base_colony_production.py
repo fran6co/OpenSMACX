@@ -14,6 +14,31 @@ GROWTH_HARNESS = r"""
 #include <cstring>
 
 #define __cdecl
+
+struct GameDataSecretProject {
+    int cloning_vats_value_;
+    int ascetic_virtues_value_;
+    int cloning_vats() const { return cloning_vats_value_; }
+    int &cloning_vats() { return cloning_vats_value_; }
+    int ascetic_virtues() const { return ascetic_virtues_value_; }
+    int &ascetic_virtues() { return ascetic_virtues_value_; }
+};
+struct GameDataLockMaskView { uint32_t enable_mask_; };
+struct GameDataStateWindowFields {
+    uint32_t game_state_, game_rules_, game_warnings_, game_preferences_;
+    uint32_t game_interlude_flags_;
+    int ecology_event_accumulator_;
+    int climate_rise_step_, climate_rise_limit_, climate_rise_accum_;
+    int climate_sea_level_delta_;
+    int diff_level_current_, vehicle_current_count_, base_current_count_;
+    int turn_current_num_;
+    uint32_t ranking_faction_id_unk1_, ranking_faction_id_unk2_;
+    GameDataLockMaskView lock_masks_;
+    GameDataSecretProject secret_project_;
+    char legacy_game_save_name_[256];
+};
+struct GameDataStateWindow { GameDataStateWindowFields fields_; };
+static GameDataStateWindow GameDataStateStorage;
 const int MaxAbilityNum = 29;
 const int RFLAG_ALIEN = 0x80;
 struct Base {
@@ -76,17 +101,17 @@ struct Console { int faction_id_; };
 Base base_storage[512]; Base *BaseCurrent;
 Base Bases[512];
 Player Players[8]; PlayerData PlayersData[8];
-Veh Vehs[2049]; int VehCurrentCount;
+Veh Vehs[2049];
 VehPrototype VehPrototypes[64];
 RulesAbility Ability[MaxAbilityNum]; RulesChassis Chassis[16];
 RulesFacility Facility[64]; RulesBasic Rules;
-BaseSecretProject SecretProject; Map MapTiles[4096];
+Map MapTiles[4096];
 uint32_t MapLongitude = 32, MapIsFlat;
 int MapLongitudeBounds = 64, MapLatitudeBounds = 64;
 int RadiusOffsetX[289], RadiusOffsetY[289];
-int GameState, BaseIDCurrentSelected, BaseCurrentGrowthRate, BaseComputedID;
-uint32_t BaseCurrentConvoyFrom[4], LockEnableMask, GameWarnings;
-int BasePsychDrones[5], DiffLevelCurrent, RankingFactionIDUnk1, RankingFactionIDUnk2;
+int BaseIDCurrentSelected, BaseCurrentGrowthRate, BaseComputedID;
+uint32_t BaseCurrentConvoyFrom[4];
+int BasePsychDrones[5];
 int IsMultiplayerNet, UpgradePromptAnswered;
 char StringTemp[1032]; char *ScriptPopupFile = const_cast<char *>("popup.txt");
 Strings StringTable; NetDaemon NetDaemonNet;
@@ -140,18 +165,18 @@ static void reset_case() {
     BaseCurrent->faction_id_current = 2;
     BaseCurrent->population_size = 2;
     BaseCurrent->x = 2; BaseCurrent->y = 2;
-    SecretProject.ascetic_virtues() = SecretProject.cloning_vats() = -1;
+    GameDataStateStorage.fields_.secret_project_.ascetic_virtues() = GameDataStateStorage.fields_.secret_project_.cloning_vats() = -1;
     Rules.pop_limit_sans_hab_complex = Rules.pop_limit_sans_hab_dome = 100;
     Rules.nutrient_req_citizen = 2;
     Players[2].rule_population = 0;
-    GameState = BaseCurrentGrowthRate = popb_calls = kill_calls = objective_result = has_fac_calls = 0;
+    GameDataStateStorage.fields_.game_state_ = BaseCurrentGrowthRate = popb_calls = kill_calls = objective_result = has_fac_calls = 0;
     popup_replacement = 0;
 }
 int main() {
     reset_case();
     BaseCurrent->nutrients_accumulated = -1;
     BaseCurrent->nutrient_surplus = 3;
-    GameState = 1; // Native disallows starvation behavior, but resets subtotal.
+    GameDataStateStorage.fields_.game_state_ = 1; // Native disallows starvation behavior, but resets subtotal.
     assert(base_growth() == 0);
     assert(BaseCurrent->nutrients_accumulated == 3 && popb_calls == 0);
     assert(BaseCurrent->population_size == 2);
@@ -215,7 +240,7 @@ int main() {
     reset_case();
     BaseCurrent->nutrients_accumulated = -1;
     BaseCurrentConvoyFrom[0] = 1;
-    VehCurrentCount = 2;
+    GameDataStateStorage.fields_.vehicle_current_count_ = 2;
     VehPrototypes[0].plan = 10;
     for (int i=0; i<2; ++i) {
         Vehs[i].x=2; Vehs[i].y=2; Vehs[i].proto_id=0;
@@ -234,6 +259,31 @@ UPGRADE_HARNESS = r"""
 #include <initializer_list>
 
 #define __cdecl
+
+struct GameDataSecretProject {
+    int cloning_vats_value_;
+    int ascetic_virtues_value_;
+    int cloning_vats() const { return cloning_vats_value_; }
+    int &cloning_vats() { return cloning_vats_value_; }
+    int ascetic_virtues() const { return ascetic_virtues_value_; }
+    int &ascetic_virtues() { return ascetic_virtues_value_; }
+};
+struct GameDataLockMaskView { uint32_t enable_mask_; };
+struct GameDataStateWindowFields {
+    uint32_t game_state_, game_rules_, game_warnings_, game_preferences_;
+    uint32_t game_interlude_flags_;
+    int ecology_event_accumulator_;
+    int climate_rise_step_, climate_rise_limit_, climate_rise_accum_;
+    int climate_sea_level_delta_;
+    int diff_level_current_, vehicle_current_count_, base_current_count_;
+    int turn_current_num_;
+    uint32_t ranking_faction_id_unk1_, ranking_faction_id_unk2_;
+    GameDataLockMaskView lock_masks_;
+    GameDataSecretProject secret_project_;
+    char legacy_game_save_name_[256];
+};
+struct GameDataStateWindow { GameDataStateWindowFields fields_; };
+static GameDataStateWindow GameDataStateStorage;
 const int MaxAbilityNum = 29;
 const int RFLAG_ALIEN = 0x80;
 struct Player { uint32_t rule_flags; };
@@ -248,8 +298,8 @@ struct Console { int faction_id_; };
 Player Players[8]; PlayerData PlayersData[8];
 VehPrototype VehPrototypes[64]; RulesAbility Ability[MaxAbilityNum];
 RulesChassis Chassis[16]; Strings StringTable; NetDaemon NetDaemonNet;
-uint32_t LockEnableMask, GameWarnings; int GameState, DiffLevelCurrent;
-int RankingFactionIDUnk1, RankingFactionIDUnk2, IsMultiplayerNet;
+
+int IsMultiplayerNet;
 int UpgradePromptAnswered; Console ConsoleGlobal;
 char StringTemp[1032]; char *ScriptPopupFile = const_cast<char *>("popup.txt");
 int popp_result, popp_calls; const char *last_label, *last_picture; int last_string_id;
@@ -273,9 +323,9 @@ SAR_HELPER
 BODY
 
 static void set_popup_case(int flags, bool alien, const char *label, const char *picture) {
-    GameState = 0;
-    LockEnableMask = 1u << 2;
-    GameWarnings = 4;
+    GameDataStateStorage.fields_.game_state_ = 0;
+    GameDataStateStorage.fields_.lock_masks_.enable_mask_ = 1u << 2;
+    GameDataStateStorage.fields_.game_warnings_ = 4;
     ConsoleGlobal.faction_id_ = 2;
     Players[2].rule_flags = alien ? RFLAG_ALIEN : 0;
     PlayersData[2].energy_reserves = 50;
@@ -291,8 +341,8 @@ static void set_popup_case(int flags, bool alien, const char *label, const char 
 }
 
 int main() {
-    LockEnableMask = 1u << 2;
-    GameWarnings = 4;
+    GameDataStateStorage.fields_.lock_masks_.enable_mask_ = 1u << 2;
+    GameDataStateStorage.fields_.game_warnings_ = 4;
     ConsoleGlobal.faction_id_ = 2;
     PlayersData[2].energy_reserves = 100;
     PlayersData[2].proto_id_active[3] = 1;
@@ -302,7 +352,7 @@ int main() {
 
     // Native gate: only (bit 1 set, bit 8 clear) returns before the popup.
     for (int state = 0; state < 16; ++state) {
-        GameState = state;
+        GameDataStateStorage.fields_.game_state_ = state;
         popp_result = 0;
         popp_calls = 0;
         const int before = do_upgrade_calls;
@@ -320,7 +370,7 @@ int main() {
     // The free-energy path reaches the final prompt: bit 4 controls label,
     // the chassis triad/faction controls the image, and label/image stay apart.
     PlayersData[2].energy_reserves = 1000;
-    LockEnableMask = 1u << 2;
+    GameDataStateStorage.fields_.lock_masks_.enable_mask_ = 1u << 2;
     for (int flags : {0, 4}) {
         for (int alien = 0; alien < 2; ++alien) {
             VehPrototypes[4].flags = static_cast<uint16_t>(flags);
@@ -386,6 +436,31 @@ VEH_INIT_HARNESS = r"""
 
 #define __cdecl
 
+struct GameDataSecretProject {
+    int cloning_vats_value_;
+    int ascetic_virtues_value_;
+    int cloning_vats() const { return cloning_vats_value_; }
+    int &cloning_vats() { return cloning_vats_value_; }
+    int ascetic_virtues() const { return ascetic_virtues_value_; }
+    int &ascetic_virtues() { return ascetic_virtues_value_; }
+};
+struct GameDataLockMaskView { uint32_t enable_mask_; };
+struct GameDataStateWindowFields {
+    uint32_t game_state_, game_rules_, game_warnings_, game_preferences_;
+    uint32_t game_interlude_flags_;
+    int ecology_event_accumulator_;
+    int climate_rise_step_, climate_rise_limit_, climate_rise_accum_;
+    int climate_sea_level_delta_;
+    int diff_level_current_, vehicle_current_count_, base_current_count_;
+    int turn_current_num_;
+    uint32_t ranking_faction_id_unk1_, ranking_faction_id_unk2_;
+    GameDataLockMaskView lock_masks_;
+    GameDataSecretProject secret_project_;
+    char legacy_game_save_name_[256];
+};
+struct GameDataStateWindow { GameDataStateWindowFields fields_; };
+static GameDataStateWindow GameDataStateStorage;
+
 typedef const char *LPCSTR;
 typedef int BOOL;
 
@@ -429,8 +504,8 @@ static RulesChassis Chassis[19];
 static Base Bases[128];
 static Map MapStorage[128];
 static Map *MapTiles = MapStorage;
-static int VehCurrentCount;
-static int GameState;
+
+
 static int BaseIDCurrentSelected;
 static int BaseComputedID;
 static int BaseFindDist;
@@ -495,8 +570,8 @@ static void reset_controls() {
     memset(Chassis, 0, sizeof(Chassis));
     memset(Bases, 0, sizeof(Bases));
     memset(MapStorage, 0, sizeof(MapStorage));
-    VehCurrentCount = 0;
-    GameState = 0;
+    GameDataStateStorage.fields_.vehicle_current_count_ = 0;
+    GameDataStateStorage.fields_.game_state_ = 0;
     BaseIDCurrentSelected = -1;
     BaseComputedID = -1;
     BaseFindDist = 0;
@@ -515,9 +590,9 @@ static void reset_controls() {
 
 int main() {
     reset_controls();
-    VehCurrentCount = 2048;
+    GameDataStateStorage.fields_.vehicle_current_count_ = 2048;
     assert(veh_init(0, 0, 0, 0) == -1);
-    assert(VehCurrentCount == 2048 && clear_calls == 0 && drop_calls == 0);
+    assert(GameDataStateStorage.fields_.vehicle_current_count_ == 2048 && clear_calls == 0 && drop_calls == 0);
 
     reset_controls();
     VehPrototypes[3].plan = 1;
@@ -527,7 +602,7 @@ int main() {
     BaseIDCurrentSelected = 9;
     BaseComputedID = 0;
     assert(veh_init(3, 0, 2, 1) == 0);
-    assert(VehCurrentCount == 1 && PlayersData[0].total_mil_veh == 1);
+    assert(GameDataStateStorage.fields_.vehicle_current_count_ == 1 && PlayersData[0].total_mil_veh == 1);
     assert(PlayersData[0].proto_id_active[3] == 1);
     assert(Vehs[0].home_base_id == 0 && BaseComputedID == -1);
     assert(BaseIDCurrentSelected == 9);
@@ -536,7 +611,7 @@ int main() {
     reset_controls();
     VehPrototypes[4].plan = PLAN_ALIEN_ARTIFACT;
     PlayersData[0].x_target = -1;
-    GameState = 0x40000;
+    GameDataStateStorage.fields_.game_state_ = 0x40000;
     base_find_result = 0;
     Bases[0].faction_id_current = 0;
     assert(veh_init(4, 0, 2, 1) == 0);
@@ -781,6 +856,31 @@ PRODUCTION_HARNESS = r"""#include <assert.h>
 #include <vector>
 
 #define __cdecl
+
+struct GameDataSecretProject {
+    int cloning_vats_value_;
+    int ascetic_virtues_value_;
+    int cloning_vats() const { return cloning_vats_value_; }
+    int &cloning_vats() { return cloning_vats_value_; }
+    int ascetic_virtues() const { return ascetic_virtues_value_; }
+    int &ascetic_virtues() { return ascetic_virtues_value_; }
+};
+struct GameDataLockMaskView { uint32_t enable_mask_; };
+struct GameDataStateWindowFields {
+    uint32_t game_state_, game_rules_, game_warnings_, game_preferences_;
+    uint32_t game_interlude_flags_;
+    int ecology_event_accumulator_;
+    int climate_rise_step_, climate_rise_limit_, climate_rise_accum_;
+    int climate_sea_level_delta_;
+    int diff_level_current_, vehicle_current_count_, base_current_count_;
+    int turn_current_num_;
+    uint32_t ranking_faction_id_unk1_, ranking_faction_id_unk2_;
+    GameDataLockMaskView lock_masks_;
+    GameDataSecretProject secret_project_;
+    char legacy_game_save_name_[256];
+};
+struct GameDataStateWindow { GameDataStateWindowFields fields_; };
+static GameDataStateWindow GameDataStateStorage;
 #define TRUE 1
 #define RSC_MINERALS 1
 #define FAC_STOCKPILE_ENERGY 69
@@ -921,10 +1021,10 @@ Base Bases[16];
 Base *BaseCurrent = &Bases[0];
 PlayerData PlayersData[8];
 Player Players[8];
-int BaseIDCurrentSelected, BaseCurrentCount, BaseComputedID, LockEnableMask;
-int GameState;
-uint32_t GameInterludeFlags, GamePreferences;
-int DiffLevelCurrent, BaseProductionZoomRequested;
+int BaseIDCurrentSelected, BaseComputedID;
+
+
+int BaseProductionZoomRequested;
 char StringTemp[1024];
 char *ClimatePopupTitle[1];
 int IsMultiplayerNet, BaseProductionUnitCreationDisabled;
@@ -985,7 +1085,7 @@ int veh_init(int prototype, int faction, int x, int y) {
     return production_test_vehicle_id;
 }
 bool production_faction_human(int faction) {
-    return (LockEnableMask & (1u << faction)) != 0;
+    return (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u << faction)) != 0;
 }
 bool is_objective(int) { return production_test_objective != 0; }
 void base_kill(int) { ++base_kill_calls; call_order.push_back(30); }
@@ -1098,14 +1198,14 @@ static void reset_case() {
     memset(MapTiles, 0, sizeof(MapTiles));
     memset(Facility, 0, sizeof(Facility));
     memset(&MapProbe, 0, sizeof(MapProbe));
-    BaseCurrent = &Bases[0]; BaseCurrentCount = 2;
+    BaseCurrent = &Bases[0]; GameDataStateStorage.fields_.base_current_count_ = 2;
     BaseIDCurrentSelected = 0; BaseComputedID = -1;
     Bases[0].faction_id_current = 1; Bases[0].queue_production_id[0] = 3;
     Bases[0].nutrients_accumulated = 10; Bases[0].minerals_accumulated = 100;
     Bases[0].population_size = 3; Bases[0].state = 0x80000000u;
     strcpy(Bases[0].name_string, "Primary"); Bases[0].x = 5; Bases[0].y = 6;
     Bases[1].faction_id_current = 1; strcpy(Bases[1].name_string, "Other");
-    LockEnableMask = 1 << 1; production_test_vehicle_cost = 20;
+    GameDataStateStorage.fields_.lock_masks_.enable_mask_ = 1 << 1; production_test_vehicle_cost = 20;
     production_test_cost_factor = 1; production_test_vehicle_id = 0;
     production_test_colony_prompt = production_test_objective = 0;
     production_test_ascending = 1; production_test_project_base = -1;
@@ -1114,9 +1214,9 @@ static void reset_case() {
     production_test_first_queue_result = production_test_second_queue_result = 0;
     production_test_first_queue_replacement = production_test_use_first_queue = 0;
     BaseProductionUnitCreationDisabled = 0; BaseProductionZoomRequested = 0;
-    GameState = 0; DiffLevelCurrent = 0; StringTemp[0] = '\0';
+    GameDataStateStorage.fields_.game_state_ = 0; GameDataStateStorage.fields_.diff_level_current_ = 0; StringTemp[0] = '\0';
     parse_says_calls = parse_num_calls = parsed_num = 0;
-    GameInterludeFlags = GamePreferences = 0; IsMultiplayerNet = 0;
+    GameDataStateStorage.fields_.game_interlude_flags_ = GameDataStateStorage.fields_.game_preferences_ = 0; IsMultiplayerNet = 0;
     Rules.retool_exemption = 999; Popup::constructors = Popup::destructors = 0;
     base_reset_calls = base_queue_calls = base_support_calls = base_yield_calls = 0;
     base_nutrient_calls = base_minerals_calls = base_energy_calls = 0;
@@ -1171,8 +1271,8 @@ static void test_unit_paths() {
 }
 static void test_wrapped_overflow_helpers() {
     reset_case();
-    LockEnableMask = 1 << 1;
-    DiffLevelCurrent = INT_MAX;
+    GameDataStateStorage.fields_.lock_masks_.enable_mask_ = 1 << 1;
+    GameDataStateStorage.fields_.diff_level_current_ = INT_MAX;
     Bases[0].nutrients_accumulated = INT_MAX;
     assert(!production_colony_abandon_prompt(2, 3));
     assert(Bases[0].nutrients_accumulated == -4);
@@ -1369,6 +1469,31 @@ ECOLOGY_HARNESS = r"""
 #include <string>
 #include <vector>
 #define __cdecl
+
+struct GameDataSecretProject {
+    int cloning_vats_value_;
+    int ascetic_virtues_value_;
+    int cloning_vats() const { return cloning_vats_value_; }
+    int &cloning_vats() { return cloning_vats_value_; }
+    int ascetic_virtues() const { return ascetic_virtues_value_; }
+    int &ascetic_virtues() { return ascetic_virtues_value_; }
+};
+struct GameDataLockMaskView { uint32_t enable_mask_; };
+struct GameDataStateWindowFields {
+    uint32_t game_state_, game_rules_, game_warnings_, game_preferences_;
+    uint32_t game_interlude_flags_;
+    int ecology_event_accumulator_;
+    int climate_rise_step_, climate_rise_limit_, climate_rise_accum_;
+    int climate_sea_level_delta_;
+    int diff_level_current_, vehicle_current_count_, base_current_count_;
+    int turn_current_num_;
+    uint32_t ranking_faction_id_unk1_, ranking_faction_id_unk2_;
+    GameDataLockMaskView lock_masks_;
+    GameDataSecretProject secret_project_;
+    char legacy_game_save_name_[256];
+};
+struct GameDataStateWindow { GameDataStateWindowFields fields_; };
+static GameDataStateWindow GameDataStateStorage;
 #ifndef nullptr
 #define nullptr 0
 #endif
@@ -1417,15 +1542,15 @@ Base Bases[16], *BaseCurrent;
 Player Players[8]; PlayerData PlayersData[8]; Map Tiles[128];
 RulesTerraforming Terraforming[20]; WorldRules WorldBuilder; BasicRules Rules;
 Console ConsoleGlobal; Window MainMap; Window *MapWinTable[8];
-uint32_t GameState, GameRules, LockEnableMask, MapTileFlagClearMask;
-int BaseIDCurrentSelected, BaseCurrentCount, BaseFindDist, MapLongitudeBounds, MapLatitudeBounds, MapSeaLevel, TurnCurrentNum, DiffLevelCurrent, IsMultiplayerNet;
+uint32_t MapTileFlagClearMask;
+int BaseIDCurrentSelected, BaseFindDist, MapLongitudeBounds, MapLatitudeBounds, MapSeaLevel, IsMultiplayerNet;
 int MapSeaLevelCouncil;
 int MapWinSelectedSlot=0;
 uint32_t MapLongitude; int MapIsFlat, ExpansionEnabled;
-int EcologyEventAccumulator, ClimateRiseStep, ClimateRiseLimit, ClimateRiseAccum, ClimateSeaLevelDelta;
+
 int GenderDefault, PluralityDefault; int ParseNum[2];
 char climate_title[]="CLIMATE"; char *ClimatePopupTitle[1]={climate_title};
-int VehCurrentCount;
+
 struct Vehicle { uint8_t faction_id; uint8_t pad[25]; uint8_t order_auto_type; } Vehs[32];
 int radius_x[289], radius_y[289];
 const int *RadiusOffsetX = radius_x, *RadiusOffsetY = radius_y;
@@ -1483,7 +1608,7 @@ int veh_init(int kind,int,int,int) {
         PlayersData[BaseCurrent->faction_id_current].planet_ecology=spore_vehicle_ecology_mutation;
         spore_vehicle_ecology_mutation=-1;
     }
-    return VehCurrentCount++;
+    return GameDataStateStorage.fields_.vehicle_current_count_++;
 }
 int GetAsyncKeyState(int) { calls.push_back("shift"); return 0; }
 int base_project(int project) { assert(project==31); calls.push_back("project"); return -1; }
@@ -1500,8 +1625,8 @@ int Console::focus(int,int,int faction) {
     return 0;
 }
 int Window::set_center(int,int,int) { calls.push_back("center"); return 0; }
-int is_human(uint32_t faction) { return (LockEnableMask & (1u<<faction)) != 0; }
-int is_alive(uint32_t faction) { return (LockEnableMask & (1u<<(8+faction))) != 0; }
+int is_human(uint32_t faction) { return (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u<<faction)) != 0; }
+int is_alive(uint32_t faction) { return (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u<<(8+faction))) != 0; }
 
 HELPERS
 BODY
@@ -1513,13 +1638,13 @@ static void reset_case() {
     std::memset(&WorldBuilder,0,sizeof(WorldBuilder)); std::memset(&Rules,0,sizeof(Rules));
     BaseCurrent=&Bases[0]; BaseCurrent->faction_id_current=1; BaseCurrent->x=2; BaseCurrent->y=2;
     BaseCurrent->eco_damage=120; BaseCurrent->name_string[0]='B'; BaseCurrent->name_string[1]=0;
-    BaseIDCurrentSelected=0; BaseCurrentCount=1; BaseFindDist=0; MapLongitudeBounds=8; MapLatitudeBounds=8; MapLongitude=4; MapIsFlat=1;
-    GameState=0; GameRules=0; LockEnableMask=1u<<1; TurnCurrentNum=5; DiffLevelCurrent=0; IsMultiplayerNet=0; ExpansionEnabled=0;
-    MapTileFlagClearMask=4; MapSeaLevel=0; EcologyEventAccumulator=0; ClimateRiseStep=0; ClimateRiseLimit=0; ClimateRiseAccum=0; ClimateSeaLevelDelta=0;
+    BaseIDCurrentSelected=0; GameDataStateStorage.fields_.base_current_count_=1; BaseFindDist=0; MapLongitudeBounds=8; MapLatitudeBounds=8; MapLongitude=4; MapIsFlat=1;
+    GameDataStateStorage.fields_.game_state_=0; GameDataStateStorage.fields_.game_rules_=0; GameDataStateStorage.fields_.lock_masks_.enable_mask_=1u<<1; GameDataStateStorage.fields_.turn_current_num_=5; GameDataStateStorage.fields_.diff_level_current_=0; IsMultiplayerNet=0; ExpansionEnabled=0;
+    MapTileFlagClearMask=4; MapSeaLevel=0; GameDataStateStorage.fields_.ecology_event_accumulator_=0; GameDataStateStorage.fields_.climate_rise_step_=0; GameDataStateStorage.fields_.climate_rise_limit_=0; GameDataStateStorage.fields_.climate_rise_accum_=0; GameDataStateStorage.fields_.climate_sea_level_delta_=0;
     PlayersData[1].ranking=1; PlayersData[1].region_total_bases[0]=1; ConsoleGlobal.faction_id_=1;
     Rules.freq_global_warming_num=1; Rules.freq_global_warming_denom=1; WorldBuilder.sea_level_rises=1; MapSeaLevelCouncil=0;
     Terraforming[5].bit=4; Terraforming[5].name="ROAD"; MapWinTable[0]=&MainMap;
-    VehCurrentCount=0; random_value=1; calls.clear(); vehicle_kinds.clear(); interlude_ids.clear(); sync_viewers.clear();
+    GameDataStateStorage.fields_.vehicle_current_count_=0; random_value=1; calls.clear(); vehicle_kinds.clear(); interlude_ids.clear(); sync_viewers.clear();
     focus_ecology_mutation=-1; focus_viewer_mutation=-1; interlude_8_ecology_mutation=-1;
     report_ecology_mutation=-1; spore_vehicle_ecology_mutation=-1;
     rand_calls=0; rand_calls_at_report=-1;
@@ -1553,7 +1678,7 @@ int main() {
     assert(PlayersData[1].unk_49==0 && PlayersData[1].planet_ecology==0);
     assert(calls.size()==1 && calls[0]=="rand");
 
-    reset_case(); GameRules=0x200000;
+    reset_case(); GameDataStateStorage.fields_.game_rules_=0x200000;
     base_ecology();
     assert(PlayersData[1].unk_49==120 && PlayersData[1].planet_ecology==0);
     assert(calls.size()==1 && calls[0]=="rand");
@@ -1686,10 +1811,10 @@ int main() {
     BaseCurrent->population_size=0;
     Rules.freq_global_warming_num=0x80000000u;
     Rules.freq_global_warming_denom=1u;
-    EcologyEventAccumulator=2;
+    GameDataStateStorage.fields_.ecology_event_accumulator_=2;
     base_ecology();
-    assert(EcologyEventAccumulator==3);
-    assert(MapSeaLevelCouncil==0 && ClimateRiseLimit==0);
+    assert(GameDataStateStorage.fields_.ecology_event_accumulator_==3);
+    assert(MapSeaLevelCouncil==0 && GameDataStateStorage.fields_.climate_rise_limit_==0);
 
     // A negative signed denominator and negative product yield +10 natively;
     // unsigned C++ division would instead produce zero and miss warming.
@@ -1698,10 +1823,10 @@ int main() {
     BaseCurrent->population_size=0;
     Rules.freq_global_warming_num=0xFFFFFFFFu;
     Rules.freq_global_warming_denom=0xFFFFFFFEu;
-    EcologyEventAccumulator=19;
+    GameDataStateStorage.fields_.ecology_event_accumulator_=19;
     base_ecology();
-    assert(EcologyEventAccumulator==0);
-    assert(ClimateRiseLimit==20 && MapSeaLevelCouncil==1);
+    assert(GameDataStateStorage.fields_.ecology_event_accumulator_==0);
+    assert(GameDataStateStorage.fields_.climate_rise_limit_==20 && MapSeaLevelCouncil==1);
 
     // The native accumulator increment wraps at 32 bits rather than relying
     // on C++ signed-overflow behavior.
@@ -1710,10 +1835,10 @@ int main() {
     BaseCurrent->population_size=0;
     Rules.freq_global_warming_num=0u;
     Rules.freq_global_warming_denom=1u;
-    EcologyEventAccumulator=0x7FFFFFFF;
+    GameDataStateStorage.fields_.ecology_event_accumulator_=0x7FFFFFFF;
     base_ecology();
-    assert(EcologyEventAccumulator==static_cast<int32_t>(0x80000000u));
-    assert(ClimateRiseLimit==0);
+    assert(GameDataStateStorage.fields_.ecology_event_accumulator_==static_cast<int32_t>(0x80000000u));
+    assert(GameDataStateStorage.fields_.climate_rise_limit_==0);
 
     // Council, raw rise multiplication, delta addition, wrapped absolute
     // value, and the later x1000 scaling all exercise native 32-bit arithmetic.
@@ -1723,15 +1848,15 @@ int main() {
     Rules.freq_global_warming_num=6u;
     Rules.freq_global_warming_denom=1u;
     WorldBuilder.sea_level_rises=0x7FFFFFFFu;
-    EcologyEventAccumulator=0;
+    GameDataStateStorage.fields_.ecology_event_accumulator_=0;
     MapSeaLevelCouncil=0x7FFFFFFE;
-    ClimateSeaLevelDelta=2000000000;
+    GameDataStateStorage.fields_.climate_sea_level_delta_=2000000000;
     base_ecology();
-    assert(EcologyEventAccumulator==0);
+    assert(GameDataStateStorage.fields_.ecology_event_accumulator_==0);
     assert(MapSeaLevelCouncil==static_cast<int32_t>(0x80000001u));
-    assert(ClimateSeaLevelDelta==-1579139415);
-    assert(ClimateRiseStep==1579139415);
-    assert(ClimateRiseLimit==20 && ClimateRiseAccum==0);
+    assert(GameDataStateStorage.fields_.climate_sea_level_delta_==-1579139415);
+    assert(GameDataStateStorage.fields_.climate_rise_step_==1579139415);
+    assert(GameDataStateStorage.fields_.climate_rise_limit_==20 && GameDataStateStorage.fields_.climate_rise_accum_==0);
     assert(ParseNum[0]==20 && ParseNum[1]==-93903328);
 }
 
@@ -1758,3 +1883,24 @@ def test_actual_colony_ecology(compiler, tmp_path):
         capture_output=True, text=True)
     assert compiled.returncode == 0, compiled.stderr
     subprocess.run([str(binary)], check=True, capture_output=True, text=True)
+
+
+def test_colony_harnesses_track_typed_game_data_owner():
+    owner = (ROOT / "src/game_data_state_window.h").read_text()
+    for declaration in (
+        "uint32_t game_state_;", "uint32_t game_rules_;",
+        "uint32_t game_warnings_;", "uint32_t game_preferences_;",
+        "uint32_t game_interlude_flags_;", "int ecology_event_accumulator_;",
+        "int vehicle_current_count_;", "int base_current_count_;",
+        "int diff_level_current_;", "GameDataLockMaskView lock_masks_;",
+    ):
+        assert declaration in owner
+    for harness in (GROWTH_HARNESS, UPGRADE_HARNESS, VEH_INIT_HARNESS,
+                    PRODUCTION_HARNESS, ECOLOGY_HARNESS):
+        assert "struct GameDataStateWindowFields" in harness
+        assert "GameDataStateWindow GameDataStateStorage" in harness
+        assert "GameDataStateStorage.fields_." in harness
+        assert "int GameState;" not in harness
+        assert "uint32_t GameState" not in harness
+        assert "LockEnableMask" not in harness
+        assert "DiffLevelCurrent" not in harness

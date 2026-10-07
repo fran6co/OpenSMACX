@@ -1114,19 +1114,28 @@ void __cdecl sub_5cee80(int *src) {
     int *dst;
     int sum_lo;
     int sum_hi;
-    float diff_a;
-    float diff_b;
-    float mid;
+    int diff_a;
+    int diff_b;
+    double diff_a_fp;
+    double diff_b_fp;
+    double mid;
     int rot;
     int out_a;
     int out_b;
+    int src_two;
+    int src_six;
 
-    dst = movie_media_idct_output_pointer();
     sum_lo = movie_media_add32(src[3], src[5]);
     sum_hi = movie_media_add32(src[7], src[1]);
-    diff_a = static_cast<float>(movie_media_sub32(src[5], src[3]));
-    diff_b = static_cast<float>(movie_media_sub32(src[1], src[7]));
-    mid = (diff_b + diff_a) * movie_media_idct_float_constant(3);
+    diff_a = movie_media_sub32(src[5], src[3]);
+    diff_b = movie_media_sub32(src[1], src[7]);
+    movie_media_idct_storage.butterfly_fp_scratch_words[0] =
+        movie_media_int_bits(diff_a);
+    movie_media_idct_storage.butterfly_fp_scratch_words[1] =
+        movie_media_int_bits(diff_b);
+    diff_a_fp = static_cast<double>(diff_a);
+    diff_b_fp = static_cast<double>(diff_b);
+    mid = (diff_b_fp + diff_a_fp) * movie_media_idct_float_constant(3);
     rot = movie_media_mul2(movie_media_signed_high_product(
         movie_media_sub32(sum_hi, sum_lo),
         movie_media_signed32(movie_media_idct_storage.constant_words[0])));
@@ -1135,15 +1144,17 @@ void __cdecl sub_5cee80(int *src) {
     // re-reads the slots' LOW dwords, so the bit pattern - not the numeric
     // value - is what flows into the eight writes.
     const double scratch_a = static_cast<double>(
-        diff_a * movie_media_idct_float_constant(1) + mid +
+        diff_a_fp * movie_media_idct_float_constant(1) + mid +
         movie_media_idct_float_constant(4));
     const double scratch_b = static_cast<double>(
-        (diff_b * movie_media_idct_float_constant(2) - mid) +
+        (diff_b_fp * movie_media_idct_float_constant(2) - mid) +
         movie_media_idct_float_constant(4));
-    std::memcpy(&movie_media_idct_storage.butterfly_fp_scratch_words[0],
-                &scratch_a, sizeof(scratch_a));
+    src_two = src[2];
+    src_six = src[6];
     std::memcpy(&movie_media_idct_storage.butterfly_fp_scratch_words[2],
                 &scratch_b, sizeof(scratch_b));
+    std::memcpy(&movie_media_idct_storage.butterfly_fp_scratch_words[0],
+                &scratch_a, sizeof(scratch_a));
     out_a = movie_media_signed32(
         movie_media_idct_storage.butterfly_fp_scratch_words[0]);
     out_b = movie_media_signed32(
@@ -1162,14 +1173,21 @@ void __cdecl sub_5cee80(int *src) {
     half_a = movie_media_add32(out_a, rot);
     rot = movie_media_add32(rot, out_b);
     out_b = movie_media_add32(movie_media_add32(out_b, sum_lo), sum_hi);
+    movie_media_idct_storage.butterfly_fp_scratch_words[1] =
+        movie_media_int_bits(half_a);
+    movie_media_idct_storage.butterfly_fp_scratch_words[2] =
+        movie_media_int_bits(rot);
+    movie_media_idct_storage.butterfly_fp_scratch_words[3] =
+        movie_media_int_bits(out_b);
 
     sum_lo2 = movie_media_add32(src[4], src[0]);
     diff_c = movie_media_sub32(src[0], src[4]);
     rot2 = movie_media_signed_high_product(
-        movie_media_sub32(src[2], src[6]),
+        movie_media_sub32(src_two, src_six),
         movie_media_signed32(movie_media_idct_storage.constant_words[0]));
     rot2x2 = movie_media_mul2(rot2);
-    sum_hi2 = movie_media_add32(movie_media_add32(src[6], src[2]), rot2x2);
+    dst = movie_media_idct_output_pointer();
+    sum_hi2 = movie_media_add32(movie_media_add32(src_six, src_two), rot2x2);
     diff_d = movie_media_add32(rot2x2, diff_c);
     diff_e = movie_media_sub32(diff_c, movie_media_mul2(rot2));
     tail_a = movie_media_add32(sum_hi2, sum_lo2);
@@ -1253,7 +1271,20 @@ Status: Typed semantic body present through the shared column transform.
 */
 void __cdecl sub_5ced1d(int *esi_ptr) {
     movie_decoder_idct::IdctConstants constants = movie_media_idct_constants();
-    movie_decoder_idct::transform_idct_column(
-        reinterpret_cast<const int32_t *>(esi_ptr),
-        reinterpret_cast<int32_t *>(movie_media_idct_output_pointer()), constants);
+    int32_t transformed[8];
+    const bool dc_only = movie_decoder_idct::transform_idct_column_values(
+        reinterpret_cast<const int32_t *>(esi_ptr), transformed, constants,
+        reinterpret_cast<int32_t *>(movie_media_idct_storage.butterfly_fp_scratch_words));
+    int32_t *const dst = movie_media_idct_output_pointer();
+    if (dc_only) {
+        for (int row = 0; row != 8; ++row) {
+            dst[row * 9] = transformed[row];
+        }
+    } else {
+        const int store_order[8] = {2, 5, 3, 4, 0, 1, 6, 7};
+        for (int index = 0; index != 8; ++index) {
+            const int row = store_order[index];
+            dst[row * 9] = transformed[row];
+        }
+    }
 }

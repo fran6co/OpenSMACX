@@ -99,3 +99,20 @@ def test_save_game_actual_product_body_and_mutant_controls(tmp_path):
             "save-game-auto-path-mutant-" + pathlib.Path(compiler).name,
             False,
         )
+
+
+def test_save_game_fixture_tracks_typed_game_data_owner():
+    owner = (ROOT / "src/game_data_state_window.h").read_text()
+    fixture = FIXTURE.read_text()
+    for declaration in (
+        "uint32_t game_state_;", "uint32_t game_rules_;",
+        "char legacy_game_save_name_[256];",
+        "struct GameDataStateWindow {", "GameDataStateWindowFields fields_;",
+    ):
+        assert declaration in owner
+    assert "GameDataStateWindowFields" in fixture
+    assert "GameDataStateStorage.fields_.game_state_" in fixture
+    assert "GameDataStateStorage.fields_.game_rules_" in fixture
+    assert "GameDataStateStorage.fields_.legacy_game_save_name_" in fixture
+    assert "LegacyGameSaveName" not in fixture
+    assert "static unsigned GameState" not in fixture

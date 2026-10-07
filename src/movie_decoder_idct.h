@@ -21,14 +21,23 @@ struct IdctConstants {
 // signed dwords. This is the arithmetic body used by native 0x005CEE80.
 void transform_idct_row(const int32_t *input,
                         int32_t *output,
-                        const IdctConstants &constants);
+                        const IdctConstants &constants,
+                        int32_t *scratch_words);
 
 // Input is one 8-dword coefficient vector from an 0x20-byte native table
 // record. Output is eight coefficients written at a nine-dword block pitch,
 // as observed in 0x005CED1D's stores (+0,+0x24,...,+0xFC).
+// Computes column values without resolving the destination address early.
+// Returns true for all-DC input; that shortcut does not modify scratch.
+bool transform_idct_column_values(const int32_t *input,
+                                  int32_t *transformed,
+                                  const IdctConstants &constants,
+                                  int32_t *scratch_words);
+
 void transform_idct_column(const int32_t *input,
                            int32_t *block_column,
-                           const IdctConstants &constants);
+                           const IdctConstants &constants,
+                           int32_t *scratch_words);
 
 // The eight input vectors are contiguous 8-dword records, matching the native
 // 0x20-byte-spaced loader tables. The intermediate block has a nine-dword row
@@ -40,6 +49,7 @@ void transform_idct_block(const int32_t *eight_input_vectors,
                           int32_t *intermediate_block,
                           int32_t *output,
                           size_t output_pitch_dwords,
-                          const IdctConstants &constants);
+                          const IdctConstants &constants,
+                          int32_t *scratch_words);
 
 } // namespace movie_decoder_idct

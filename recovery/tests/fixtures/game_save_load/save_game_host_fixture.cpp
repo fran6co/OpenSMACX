@@ -3,6 +3,7 @@
 #include <cassert>
 #include <cstring>
 #include <string>
+#include <stdint.h>
 
 #define __cdecl
 #define _stricmp strcasecmp
@@ -16,6 +17,31 @@ struct Player {
     int is_noun_plural;
 };
 struct PlayerData { int unk_102; };
+
+struct GameDataSecretProject {
+    int cloning_vats_value_;
+    int ascetic_virtues_value_;
+    int cloning_vats() const { return cloning_vats_value_; }
+    int &cloning_vats() { return cloning_vats_value_; }
+    int ascetic_virtues() const { return ascetic_virtues_value_; }
+    int &ascetic_virtues() { return ascetic_virtues_value_; }
+};
+struct GameDataLockMaskView { uint32_t enable_mask_; };
+struct GameDataStateWindowFields {
+    uint32_t game_state_, game_rules_, game_warnings_, game_preferences_;
+    uint32_t game_interlude_flags_;
+    int ecology_event_accumulator_;
+    int climate_rise_step_, climate_rise_limit_, climate_rise_accum_;
+    int climate_sea_level_delta_;
+    int diff_level_current_, vehicle_current_count_, base_current_count_;
+    int turn_current_num_;
+    uint32_t ranking_faction_id_unk1_, ranking_faction_id_unk2_;
+    GameDataLockMaskView lock_masks_;
+    GameDataSecretProject secret_project_;
+    char legacy_game_save_name_[256];
+};
+struct GameDataStateWindow { GameDataStateWindowFields fields_; };
+static GameDataStateWindow GameDataStateStorage;
 struct SaveNameDefaultStorage {
     char game_data_migration_default_[1];
     char unassigned_1_[3];
@@ -64,13 +90,11 @@ static Player Players[MaxPlayerNum];
 static PlayerData PlayersData[MaxPlayerNum];
 static NetMock NetDaemonNet;
 static char StringTemp[1032];
-static char LegacyGameSaveName[256];
 static char ScenarioSaveNameBuffer[256];
 static SaveNameDefaultStorage SaveNameDefaultStorageGlobal;
 static const char *SaveGameFileExtension = "SAV";
 static const char *ScenarioFileExtension = "SC";
 static int GenderDefault, PluralityDefault;
-static unsigned GameState, GameRules;
 static int IsMultiplayerPBEM, IsMultiplayerNet, ExitTurnLoop;
 static int pref_value, save_status, error_count, ironman_count, draw_count;
 static int autosave_count;
@@ -107,7 +131,7 @@ static void initialize() {
     std::memset(Players, 0, sizeof Players);
     std::memset(PlayersData, 0, sizeof PlayersData);
     std::memset(StringTemp, 0, sizeof StringTemp);
-    std::memset(LegacyGameSaveName, 0, sizeof LegacyGameSaveName);
+    std::memset(GameDataStateStorage.fields_.legacy_game_save_name_, 0, sizeof GameDataStateStorage.fields_.legacy_game_save_name_);
     std::memset(ScenarioSaveNameBuffer, 0, sizeof ScenarioSaveNameBuffer);
     std::memset(&SaveNameDefaultStorageGlobal, 0,
                 sizeof SaveNameDefaultStorageGlobal);
@@ -117,7 +141,7 @@ static void initialize() {
     std::strcpy(Players[0].noun_faction, "Faction");
     ConsoleGlobal.visible = ConsoleGlobal.faction_id_ = 0;
     WorldClimateSkipTerrainClear = 0;
-    GameState = GameRules = 0;
+    GameDataStateStorage.fields_.game_state_ = GameDataStateStorage.fields_.game_rules_ = 0;
     IsMultiplayerPBEM = IsMultiplayerNet = ExitTurnLoop = 0;
     pref_value = save_status = error_count = ironman_count = draw_count = 0;
     autosave_count = 0;
@@ -133,7 +157,7 @@ int main() {
     save_status = 1;
     assert(save_game(0) == 1);
     assert(saved_path == selection && error_count == 1 && draw_count == 2);
-    assert(std::strcmp(LegacyGameSaveName, "chosen") == 0);
+    assert(std::strcmp(GameDataStateStorage.fields_.legacy_game_save_name_, "chosen") == 0);
 
     initialize();
     FileBox::box_selection = selection;
@@ -142,7 +166,7 @@ int main() {
     PlayersData[0].unk_102 = 44;
     assert(save_game(1) == 0);
     assert(std::strcmp(ScenarioSaveNameBuffer, "chosen") == 0);
-    assert((GameState & 0x10) != 0 && PlayersData[0].unk_102 == 0);
+    assert((GameDataStateStorage.fields_.game_state_ & 0x10) != 0 && PlayersData[0].unk_102 == 0);
 
     initialize();
     char matching_selection[] = "C:\\saves\\Leader Title Faction,2150.SAV";
@@ -152,13 +176,13 @@ int main() {
     PlayersData[0].unk_102 = 44;
     assert(save_game(1) == 0);
     assert(ScenarioSaveNameBuffer[0] == 0);
-    assert((GameState & 0x10) == 0 && PlayersData[0].unk_102 == 44);
+    assert((GameDataStateStorage.fields_.game_state_ & 0x10) == 0 && PlayersData[0].unk_102 == 44);
 
     initialize();
     FileBox::box_selection = matching_selection;
     save_status = 0;
     assert(save_game(0) == 0);
-    assert(LegacyGameSaveName[0] == 0);
+    assert(GameDataStateStorage.fields_.legacy_game_save_name_[0] == 0);
     assert(latest_save == "Leader Title Faction,2150");
 
     initialize();
@@ -168,20 +192,20 @@ int main() {
     PlayersData[0].unk_102 = 44;
     assert(save_game(1) == 0);
     assert(saved_path == "auto\\");
-    assert((GameState & 0x10) == 0 && PlayersData[0].unk_102 == 44);
+    assert((GameDataStateStorage.fields_.game_state_ & 0x10) == 0 && PlayersData[0].unk_102 == 44);
 
     initialize();
     FileBox::box_selection = selection;
     save_status = 0;
     IsMultiplayerPBEM = 1;
-    GameRules = RULES_IRONMAN;
+    GameDataStateStorage.fields_.game_rules_ = RULES_IRONMAN;
     assert(save_game(0) == 0);
     assert(ExitTurnLoop == 1 && error_count == 0);
 
     initialize();
     FileBox::box_selection = selection;
     save_status = 0;
-    GameRules = RULES_IRONMAN;
+    GameDataStateStorage.fields_.game_rules_ = RULES_IRONMAN;
     IsMultiplayerNet = 1;
     std::memset(NetDaemonNet.lock_state_, 0x78,
                 sizeof NetDaemonNet.lock_state_);

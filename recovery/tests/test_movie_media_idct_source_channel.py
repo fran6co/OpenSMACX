@@ -43,7 +43,9 @@ def source_unit(mutant: str | None = None) -> str:
             1,
         )
     elif mutant == "destination_stride":
-        raise AssertionError("stride belongs to the shared transform helper")
+        needle = "dst[row * 9] = transformed[row];"
+        assert bodies[2].count(needle) == 2
+        bodies[2] = bodies[2].replace(needle, "dst[row * 8] = transformed[row];")
 
     harness = r'''#include <cassert>
 #include <cstdint>
@@ -131,24 +133,6 @@ def test_installed_transform_stride_mutant(compiler_name, tmp_path):
     compiler = shutil.which(compiler_name)
     if compiler is None:
         pytest.skip(f"{compiler_name} unavailable")
-    helper = (ROOT / "src/movie_decoder_idct.cpp").read_text(encoding="utf-8")
-    needle = "block_column[row * 9] = transformed[row];"
-    assert helper.count(needle) == 1
-    mutated = helper.replace(needle, "block_column[row * 8] = transformed[row];", 1)
-    original_path = ROOT / "src/movie_decoder_idct.cpp"
-    unit = source_unit()
-    source = tmp_path / "actual_5ced1d.cpp"
-    binary = tmp_path / "actual_5ced1d"
-    source.write_text(unit, encoding="utf-8")
-    alternate = tmp_path / "mutated_movie_decoder_idct.cpp"
-    alternate.write_text(mutated, encoding="utf-8")
-    subprocess.run(
-        [compiler, "-std=c++17", "-Wall", "-Wextra", "-Werror", "-pedantic",
-         "-iquote", str(ROOT / "src"), str(alternate), str(source), "-o", str(binary)],
-        check=True,
-        capture_output=True,
-        text=True,
+    compile_and_run(
+        compiler, tmp_path, source_unit("destination_stride"), success=False
     )
-    ran = subprocess.run([str(binary)], capture_output=True, text=True, timeout=10)
-    assert ran.returncode != 0, "mutated nine-dword stride unexpectedly passed"
-    assert original_path.is_file()

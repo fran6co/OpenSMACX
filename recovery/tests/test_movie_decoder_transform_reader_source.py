@@ -30,10 +30,21 @@ def test_mapped_transform_reader_updates_its_own_source_storage(
     if compiler is None:
         return
     owner = (SRC / "movie_media_decoder.cpp").read_text()
+    helper_signatures = (
+        "static LONG movie_media_add_ecx(",
+        "static int movie_media_low32(",
+        "static int movie_media_low32_after_arithmetic_shift16(",
+        "static int movie_media_negate32(",
+        "static int movie_media_signed32(",
+        "static DWORD movie_media_raw_word_at(",
+        "static void movie_media_raw_workspace_store(",
+        "static DWORD movie_media_int_bits(",
+        "static MediaTransformRegisterContinuation movie_media_transform_return(",
+    )
+    helpers = "\n\n".join(_function(owner, helper)
+                          for helper in helper_signatures)
     signature = "MediaTransformRegisterContinuation\n__cdecl sub_5cf150()"
-    helpers_start = owner.index("static LONG movie_media_add_ecx(")
-    function_start = owner.index(signature, helpers_start)
-    body = owner[helpers_start:function_start] + _function(owner, signature)
+    body = helpers + "\n\n" + _function(owner, signature)
     source = r'''#include <cassert>
 #include <cstdint>
 #include <cstring>

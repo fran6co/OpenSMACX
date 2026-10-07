@@ -13,7 +13,7 @@ PRODUCT = ROOT.parent
 
 def test_existing_terrain_hook_retains_all_calls_and_project_hook_extends_it() -> None:
     namespace = run_path(str(ROOT / "terrain_data.py"))
-    calls: list[str] = []
+    calls: list[str | tuple[str, Path]] = []
     functions = namespace["terrain_initializers"].__globals__
     for name in (
         "terrain_coast_initializer",
@@ -41,9 +41,14 @@ def test_existing_terrain_hook_retains_all_calls_and_project_hook_extends_it() -
     functions["terrain_initializers"] = lambda *args: calls.append("terrain")
     functions["movie_decoder_initializers"] = lambda *args: calls.append("decoder")
     functions["graphicwin_palette_initializer"] = lambda *args: calls.append("graphicwin")
+    functions["caviar_projection_rows_initializer"] = (
+        lambda root, original, output: calls.append(("caviar", output)))
     namespace["project_initializers"](Path("/irrelevant"), Path("/irrelevant"),
                                        Path("/irrelevant"))
-    assert calls == ["terrain", "decoder", "graphicwin"]
+    assert calls == [
+        "terrain", "decoder", "graphicwin",
+        ("caviar", Path("/irrelevant") / "caviar_angle_rows.inc"),
+    ]
 
 
 def test_cmake_configure_uses_extended_hook_without_replacing_legacy_entry() -> None:
