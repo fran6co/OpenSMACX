@@ -52,10 +52,12 @@ extern int NetPeerTurnChecksums[NetTurnChecksumPeerSlots][NetTurnChecksumWords];
 // The lock-table entry (0x158C in NetDaemon) and its parallel state entry.
 struct LockTableEntry {
   uint8_t flag_;        // the constructor sets this byte to 0xFF
-  uint8_t pad_1_[7];
+  uint8_t pad_1_[3];
+  uint32_t field_4_;  // compared with message sequence at +0x0C
   uint16_t word_8_;
   uint8_t pad_A_[0x32];
 };
+static_assert(offsetof(LockTableEntry, field_4_) == 4, "lock-table sequence field offset");
 static_assert(sizeof(LockTableEntry) == 0x3C, "lock table stride");
 
 // ONE LOCK-STATE ENTRY, 0x3C bytes. Which entry and which dword a NetDaemon
@@ -350,6 +352,7 @@ class NetDaemon : public AlphaNet {
 extern NetDaemon NetDaemonNet;  // 0x0093CD90
 extern int NetBusyCount;  // 0x0093F664, network exchanges currently in flight
 extern unsigned int NetDaemonProgressInterval;  // distinct 0x0093F668 dword
+extern unsigned int NetDaemonProgressLastTick;  // distinct 0x0093F66C dword
 extern int CommlinkPending;     // 0x007492CC
 extern int CommlinkFaction;     // 0x0073B790
 

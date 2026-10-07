@@ -70,6 +70,7 @@ extern NetWinLobbyRow NetWinLobbyRows[8]; // 0x0090DB98
 struct NetWinSessionBlock {
   uint32_t mode_;
   uint8_t state_[0x164];
+  void receive_wire_block(const unsigned char *bytes);
 
   // The native missing-player tail addresses lobby row 8, which begins
   // inside this live session object. These views do not create a ninth row.
@@ -103,6 +104,7 @@ struct NetWinSessionOptionsState {
   uint32_t rule_bits_a_; // +0xC, 0x0090E8EC
   uint32_t rule_bits_b_; // +0x10, 0x0090E8F0
   uint32_t rule_bits_c_; // +0x14, 0x0090E8F4
+  void receive_wire_block(const unsigned char *bytes);
 };
 static_assert(sizeof(NetWinSessionOptionsState) == 0x18,
               "session option extent");

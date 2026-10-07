@@ -5947,6 +5947,12 @@ static void contact_dialog_arguments(int other_faction_id) {
     parse_num(0, random(0, 10) + 1);
     parse_says(3, get_him_her(other_faction_id, 0), -1, -1);
 }
+// This preserves its single implementation while giving NetDaemon a genuine
+// source API for the original 1501 prompt preparation.
+void __cdecl prepare_contact_dialog_arguments(int faction_id) {
+    contact_dialog_arguments(faction_id);
+}
+
 
 // ORIGINAL: 0x0053DCE0 ?wants_to_speak@@YAHHH@Z 0x0053DCE0-0x0053E46C;0x0065E622-0x0065E75A FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/0053dce0.cpp", "image:terranx_original.exe:0x0053DCE0"], "reason": "Recover the genuine faction contact/introduction owner using Popup lifetime, typed Player/PlayerData, real diplomacy state and portrait storage; native guards and callee order correct retained seed contradictions."}

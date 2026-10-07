@@ -8,6 +8,9 @@
 #include "spot.h"
 
 extern int MultiWindowRedrawSuppressed;
+// Shared contact state owned by multiwin.cpp.
+extern int MultiWindowContactStatusMask;
+
 
 // The constructor at 0x0047A590 constructs GraphicWin first, then Buffer,
 // two three-element Sprite arrays, five more Sprites, two FlatButtons, two

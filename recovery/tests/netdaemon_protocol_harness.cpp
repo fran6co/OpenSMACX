@@ -71,7 +71,11 @@ static VehPrototype VehPrototypes[64];
 static int VehMoveDeltaX[9], VehMoveDeltaY[9];
 static int RadiusOffsetX[289], RadiusOffsetY[289];
 static int IsMultiplayerNet, NetBusyCount, NetDaemonWaitTicks, ExitTurnLoop;
-static uint32_t LockEnableMask;
+// Host projection of the actual game-data owner, not a target ABI model.
+struct GameDataLockMasksHost { uint32_t enable_mask_; };
+struct GameDataFieldsHost { GameDataLockMasksHost lock_masks_; };
+struct GameDataStorageHost { GameDataFieldsHost fields_; };
+static GameDataStorageHost GameDataStateStorage;
 static int MapLongitudeBounds, MapLatitudeBounds, MapLongitude, MapIsFlat;
 static Console ConsoleGlobal;
 static NetMsg NetMsgPrimary;
@@ -186,7 +190,8 @@ static void reset_fixture(NetDaemon *receiver = 0) {
     if (receiver) memset(receiver->lock_state_, 0, sizeof(receiver->lock_state_));
     NetDaemonNet.gets = 0; NetDaemonNet.next_message = 0;
     IsMultiplayerNet = 1; NetBusyCount = 0; NetDaemonWaitTicks = 0; ExitTurnLoop = 0;
-    LockEnableMask = 0xff00u; MapLongitudeBounds = 128; MapLatitudeBounds = 64;
+    GameDataStateStorage.fields_.lock_masks_.enable_mask_ = 0xff00u;
+    MapLongitudeBounds = 128; MapLatitudeBounds = 64;
     MapLongitude = 64; MapIsFlat = 0; ConsoleGlobal.faction_id_ = 2;
     active_receiver = 0; auto_lock_result = auto_lock_calls = auto_lock_category = 0;
     mutate_order_on_auto_lock = 0; order_after_callback = 0;
@@ -297,7 +302,7 @@ static void test_order_asymmetric_treaty_and_radius_loop() {
     free_order_result = 1; planet_buster_result = 0;
     PlayersData[2].diplo_treaties[3] = 0;
     PlayersData[3].diplo_treaties[2] = 0x10;
-    LockEnableMask |= 1u << 3;
+    GameDataStateStorage.fields_.lock_masks_.enable_mask_ |= 1u << 3;
     for (int i = 0; i < MapCellCount; ++i) { MapTiles[i].bit = 3; MapTiles[i].val2 = 3; }
     vehicle_at_result = 1; Vehs[1].faction_id = 3; Vehs[1].moves_expended = 1;
     speed_values[1] = 2;

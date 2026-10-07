@@ -235,6 +235,7 @@ extern int PopupThemeTextShadow;
 extern int PopupThemeSurfaceColor;
 extern int PopupThemeBevelUpper;
 extern int PopupThemeBevelLower;
+extern int TurnControlWord93A954;  // 0x0093A954, lock admission gate
 extern BOOL IsMultiplayerNet;
 extern BOOL IsMultiplayerPBEM;
 

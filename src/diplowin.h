@@ -62,6 +62,10 @@ class DiploWin : public GraphicWin, public SubInterface {
  public:
   // homed from 004413f0.cpp
   void kill_offer(int a1, int a2);
+  void receive_clear_offer();
+  void receive_channel_status(int status);
+  void receive_no_deal(int field_A24_value, int field_A28_value);
+  void receive_maybe_deal(int sender);
 
  public:
   void hide();

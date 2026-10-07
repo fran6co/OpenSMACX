@@ -65,6 +65,14 @@ NetWinSessionBlock NetWinSessionData;
 // RECOVERY_OBJECT: v2 0x0090E8E0 0x0090E8F8 ?NetWinSessionOptions@@3UNetWinSessionOptionsState@@A 0x0047B450
 NetWinSessionOptionsState NetWinSessionOptions;
 
+void NetWinSessionBlock::receive_wire_block(const unsigned char *bytes) {
+    std::memcpy(this, bytes, sizeof(*this));
+}
+
+void NetWinSessionOptionsState::receive_wire_block(const unsigned char *bytes) {
+    std::memcpy(this, bytes, sizeof(*this));
+}
+
 void NetWinSessionBlock::write_row8_prefix(uint8_t value) {
     unsigned char *bytes = reinterpret_cast<unsigned char *>(this);
     std::memcpy(bytes + offsetof(NetWinLobbyRow, prefix_), &value, sizeof(value));
@@ -1892,71 +1900,84 @@ void NetWin::on_left_click(int x, int y) {
     }
 }
 
-// A picker edits a temporary row and publishes it through the same single-row
-// lobby packet as the faction and difficulty pickers. EditGroup owns its text
-// while the modal window is open, so copy it before the popup is destroyed.
-static void netwin_copy_lobby_text(char *destination, size_t capacity,
-                                   const char *source) {
-    if (source == 0 || capacity == 0) {
-        return;
-    }
-    strncpy(destination, source, capacity - 1);
-    destination[capacity - 1] = 0;
-}
-
 // ORIGINAL: 0x0047BBF0 ?pick_player@NetWin@@QAEXXZ 0x0047BBF0-0x0047C527;0x00656740-0x006568F9
-// RECOVERY_BINDING: v1 {"evidence": ["git:0db4f0dc:src/unrecovered/0047bbf0.cpp", "source:src/netwin.h:NetWinLobbyRow"], "reason": "Retain the substantive typed lobby-name editor and its complete original primary/exceptional mapping; retire the unannotated generated duplicate, not its unresolved radio/default-faction and seventh gender-field behavior. The seed's synthetic stack frame and manual widget teardown are hypotheses, not additional source owners or proof of native lifetime fidelity."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:0db4f0dc:src/unrecovered/0047bbf0.cpp", "pinned:0x0047BBF0-0x0047C527 reads Popup/BasePop +0x3100 input-poll state, copies the 0x17c row, selects the source row's faction byte, copies Player fields or ParseStrBuffer strings, and reaches packet construction only when signed slot >= 1", "source:src/netwin.h:NetWinLobbyRow and NetWinSessionData", "source:src/faction.h:Players and Player fields", "source:src/temp.h:ParseStrBuffer", "source:src/basepop.h:Popup::input_poll_state and dialogs"], "reason": "Retain the substantive typed lobby-name editor and its complete original primary/exceptional mapping; retire the unannotated generated duplicate, not its unresolved radio/default-faction and seventh gender-field behavior. The seed's synthetic stack frame and manual widget teardown are hypotheses, not additional source owners or proof of native lifetime fidelity. Complete the native custom-name modal through the existing Popup, EditGroup, lobby-row, Player, ParseStrBuffer and typed single-row packet owners. Preserve the signed faction selector, unbounded strcpy operations, one-character case-insensitive gender test, accepted/cancel paths, and native signed slot >= 1 packet condition; retain the full original primary and exceptional spans."}
 // TRIED: historical scaffold git:0db4f0dc:src/unrecovered/0047bbf0.cpp mixes an approximate
 // stack-frame reconstruction with untyped widget cleanup and custom/default
 // radio selection. This source recovers the typed six-field edit and outgoing
 // lobby update; its radio/default-faction branch still needs restoration.
+// RECOVERY_NOTE: The pinned modal branch, default/player copies, seventh gender
+// field, and signed-positive packet condition are now represented below using
+// the existing Popup, Player, ParseStrBuffer, and lobby packet owners.
 void NetWin::pick_player() {
     if (NetWinSessionData.mode_ == 2 || NetWinSessionData.mode_ == 3) {
         return;
     }
     const int slot = NetDaemonNet.pid_2_idx(NetWinPlayerId);
-    if (slot < 0 || slot >= 8) {
-        return;
-    }
 
-    NetWinLobbyRow updated = NetWinLobbyRows[slot];
+    char gender_text[0x18];
+    strcpy(gender_text,
+           label_get((NetWinLobbyRows[slot].tail_[0] == 0 ? 0xB88 : 0xB8C) /
+                     4));
     Popup popup;
     popup.start(PopupStartCaption, "CUSTOMNAMES", -1, 0, 0x200044, 0);
     EditGroup &fields = static_cast<EditGroup &>(popup.dialogs());
-    fields.edit(label_get(0x2B8 / 4), updated.leader_name_, 0x17);
-    fields.edit(label_get(0x2BC / 4), updated.formal_faction_name_, 0x27);
-    fields.edit(label_get(0x2C0 / 4), updated.noun_faction_, 0x17);
-    fields.edit(label_get(0x2C4 / 4), updated.adjective_faction_, 0x17);
-    fields.edit(label_get(0x78C / 4), updated.leader_title_, 0x17);
-    fields.edit(label_get(0x790 / 4), updated.adjective_leader_, 0x17);
+    fields.edit(label_get(0x2B8 / 4), NetWinLobbyRows[slot].leader_name_, 0x17);
+    fields.edit(label_get(0x2BC / 4), NetWinLobbyRows[slot].formal_faction_name_, 0x27);
+    fields.edit(label_get(0x2C0 / 4), NetWinLobbyRows[slot].noun_faction_, 0x17);
+    fields.edit(label_get(0x2C4 / 4), NetWinLobbyRows[slot].adjective_faction_, 0x17);
+    fields.edit(label_get(0x78C / 4), NetWinLobbyRows[slot].leader_title_, 0x17);
+    fields.edit(label_get(0x790 / 4), NetWinLobbyRows[slot].adjective_leader_, 0x17);
+    fields.edit(label_get(0x794 / 4), gender_text, 0x17);
     popup.set_loc(0x1000, 0x1000);
     if (popup.exec(0, pick_daemon_callback) < 0) {
         return;
     }
 
-    netwin_copy_lobby_text(updated.leader_name_,
-                           sizeof(updated.leader_name_), fields.get_text(0));
-    netwin_copy_lobby_text(updated.formal_faction_name_,
-                           sizeof(updated.formal_faction_name_), fields.get_text(1));
-    netwin_copy_lobby_text(updated.noun_faction_,
-                           sizeof(updated.noun_faction_), fields.get_text(2));
-    netwin_copy_lobby_text(updated.adjective_faction_,
-                           sizeof(updated.adjective_faction_), fields.get_text(3));
-    netwin_copy_lobby_text(updated.leader_title_,
-                           sizeof(updated.leader_title_), fields.get_text(4));
-    netwin_copy_lobby_text(updated.adjective_leader_,
-                           sizeof(updated.adjective_leader_), fields.get_text(5));
+    NetWinLobbyRow updated = NetWinLobbyRows[slot];
+    if (popup.input_poll_state() == 1) {
+        const int faction = updated.faction_or_color_;
+        if (faction == -1) {
+            char *const default_faction = label_get(0xFE4 / 4);
+            strcpy(updated.leader_name_, default_faction);
+            strcpy(updated.formal_faction_name_, default_faction);
+            strcpy(updated.noun_faction_, default_faction);
+            strcpy(updated.adjective_faction_, default_faction);
+            strcpy(updated.leader_title_, default_faction);
+            strcpy(updated.adjective_leader_, default_faction);
+        } else {
+            const Player &player = Players[faction];
+            strcpy(updated.leader_name_, player.name_leader);
+            strcpy(updated.formal_faction_name_, player.formal_name_faction);
+            strcpy(updated.noun_faction_, player.noun_faction);
+            strcpy(updated.adjective_faction_, player.adj_name_faction);
+            strcpy(updated.leader_title_, player.title_leader);
+            strcpy(updated.adjective_leader_, player.adj_leader);
+            updated.tail_[0] =
+                static_cast<uint8_t>(player.is_leader_female);
+        }
+    } else {
+        strcpy(updated.leader_name_, ParseStrBuffer[0].str);
+        strcpy(updated.formal_faction_name_, ParseStrBuffer[1].str);
+        strcpy(updated.noun_faction_, ParseStrBuffer[2].str);
+        strcpy(updated.adjective_faction_, ParseStrBuffer[3].str);
+        strcpy(updated.leader_title_, ParseStrBuffer[4].str);
+        strcpy(updated.adjective_leader_, ParseStrBuffer[5].str);
+        updated.tail_[0] = static_cast<uint8_t>(
+            _strnicmp(gender_text, label_get(0xB8C / 4), 1) == 0);
+    }
 
-    if (slot == 0) {
-        NetWinLobbyRows[0] = updated;
+    if (slot < 1) {
         return;
     }
 
     NetWinLobbySinglePacket packet;
-    memset(&packet, 0, sizeof(packet));
+    // The original writes only these header fields; +2 and +0xC remain
+    // uninitialized and are sent along with the complete copied row.
     packet.header_.opcode_ = 0x04;
     packet.header_.flags_ = 0x2F;
     packet.header_.slot_ = slot;
+    packet.header_.field_8_ = 0;
     packet.row_ = updated;
     NetDaemonNet.Net::send(&packet, sizeof(packet), NetWinOtherPlayerId, 1);
 }

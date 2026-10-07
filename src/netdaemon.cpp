@@ -33,6 +33,14 @@
 #include "map.h"           // the map bounds, PlayersData and Bases it sums
 #include "technology.h"    // GameTechAchieved
 #include "game.h"          // IsMultiplayerNet: the application's shared flag
+#include "strings.h"      // StringTemp shared chat buffer
+#include "multiwin.h"
+#include "diplowin.h"
+#include "faction.h"
+#include "councwin.h"
+#include "mapwin.h"
+#include "maininterface.h"
+#include "reportif.h"      // report_intel: actual report command owner
 #include "console.h"
 #include "fx.h"
 #include "temp.h"
@@ -53,6 +61,7 @@ int __cdecl netdaemon_inflate_buffer(unsigned char *, unsigned long *,
                                       unsigned char *, unsigned int);
 #include <direct.h>
 #include <new>
+#include <cstring>
 #include "replaywin.h"     // ReplayEventBytes: replay recorder's byte length
 
 // do_checksums(4), original 51E760, copies 0x54 bytes from its calculated
@@ -86,6 +95,13 @@ int NetBusyCount;  // 0x0093F664
 // Its original PE .data zero-fill tail gives zero image-load state.
 // RECOVERY_OBJECT: v2 0x0093F668 0x0093F66C ?NetDaemonProgressInterval@@3IA 0x00534400
 unsigned int NetDaemonProgressInterval;
+// Independent zero-initialized DWORD at 0x93F66C. The dispatcher clears it,
+// samples timeGetTime when zero, and records the sample; this is separate
+// storage from the shared interval at 0x93F668.
+// Evidence: pinned 0x00534E45 clears this independently; 0x00534E6D and
+// 0x00534EC9 read/sample/write this word. No containing allocation is inferred.
+// RECOVERY_OBJECT: v1 0x0093F66C ?NetDaemonProgressLastTick@@3IA
+unsigned int NetDaemonProgressLastTick;
 // Original 0x0093A960 accumulates the wait durations returned by the daemon's
 // map-order callbacks. Other writers/extent are not yet assigned to an owner.
 // The pinned loader initializes this observed dword to zero; its containing
@@ -4195,7 +4211,1880 @@ cleanup:
     return result;
 }
 
+// Source-projected candidates for selected original
+// NetDaemon::process_message arms. These helpers are not separately mapped
+// original identities; they keep recovered arm operations inside the real
+// NetDaemon owner.
+// 0x538266 is shared by flagged routed messages. C++ scope cleanup supplies
+// Filemap/Popup lifetimes; retain its separate conditional marker clear before
+// handlers return from the real process_message scope.
+static void netdaemon_process_message_marker_tail(NetDaemon &daemon,
+                                                   unsigned char *message) {
+    const uint32_t pending = daemon.lock_state_[2].leading_words_[1];
+    if (pending != 0) {
+        const unsigned short type =
+            *reinterpret_cast<unsigned short *>(message);
+        if ((message[1] & 0x40u) != 0 && (type & 0x4000u) != 0 &&
+            static_cast<uint32_t>(type | 0x4000u) == pending &&
+            *reinterpret_cast<uint32_t *>(message + 4) ==
+                static_cast<uint32_t>(ConsoleGlobal.faction_id_)) {
+            daemon.lock_state_[2].leading_words_[1] = 0;
+        }
+    }
+}
+
+
+static void netdaemon_process_sync_request(NetDaemon *daemon,
+                                            unsigned char *message) {
+    const uint32_t sender = *reinterpret_cast<uint32_t *>(message + 4);
+    uint32_t &pending = daemon->lock_state_[2].trailing_words_[1];
+    const uint32_t old_pending = pending;
+    pending |= static_cast<uint32_t>(1) << (sender & 0x1F);
+
+    daemon->synch(
+        *reinterpret_cast<int16_t *>(message + 0x10),
+        *reinterpret_cast<int *>(message + 0x14),
+        *reinterpret_cast<int *>(message + 0x18),
+        *reinterpret_cast<int *>(message + 0x1C),
+        reinterpret_cast<char *>(message), 0, 0x2101);
+
+    if (old_pending != 0) return;
+
+    while (pending != 0) {
+        unsigned long packet_sender;
+        unsigned long packet_size;
+        const int packet = NetDaemonNet.Net::get(&packet_sender, &packet_size);
+        if (packet != 0) {
+            daemon->process_message(reinterpret_cast<char *>(packet),
+                                    packet_size,
+                                    static_cast<int>(packet_sender));
+        }
+    }
+
+    if (sender == static_cast<uint32_t>(ConsoleGlobal.faction_id_))
+        daemon->lock_state_[2].trailing_words_[0] = 0;
+}
+
+// 0x2301/0x8301 share the native DONE TURN body at 0x537FD0. Keep the two
+// daemon masks, peer notification order, and the separate assigned-turn and
+// local slowpoke/UI paths source-owned in the existing receiver.
+static void netdaemon_handle_client_done_turn(NetDaemon *daemon,
+                                              int resolved_sender) {
+    const int faction = resolved_sender;
+    const uint32_t faction_bit = static_cast<uint32_t>(1) << (faction & 0x1F);
+    uint32_t &turn_waiters = daemon->lock_state_[0].trailing_words_[7];
+    uint32_t &turn_info = daemon->lock_state_[1].leading_words_[0];
+    turn_waiters |= faction_bit;
+    turn_info |= faction_bit;
+
+    if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10u) == 0) {
+        for (int notify_slot = 1; notify_slot <= daemon->player_count_; ++notify_slot) {
+            const int target = daemon->process_slots_[notify_slot].identity_;
+            if (target != ConsoleGlobal.faction_id_) {
+                message_data(0x1301, target, faction, 1,
+                             GameDataStateStorage.fields_.turn_current_num_, 0);
+            }
+        }
+    }
+
+    MultiWindow.draw(0);
+    log_say("From Client: DONE TURN", faction,
+            static_cast<int>(turn_waiters), 0);
+
+    if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10u) != 0) {
+        if (daemon->lock_state_[0].leading_words_[1] == 0) return;
+
+        int assigned_next_faction =
+            GameDataStateStorage.fields_.net_turn_faction_ + 1;
+        const uint32_t alive =
+            GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8;
+        const uint32_t humans =
+            GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFu;
+        while (assigned_next_faction < 8) {
+            const uint32_t assigned_bit =
+                static_cast<uint32_t>(1) << (assigned_next_faction & 0x1F);
+            if ((alive & assigned_bit) != 0 && (humans & assigned_bit) != 0) break;
+            ++assigned_next_faction;
+        }
+        if (assigned_next_faction >= 8) {
+            NextTurnReady = 1;
+        } else {
+            message_data(0x4309, 0, assigned_next_faction, 0, 0, 0);
+        }
+        return;
+    }
+
+    const uint32_t enabled =
+        GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFu;
+    const uint32_t outstanding = enabled & ~turn_info;
+    if (bit_count(static_cast<int>(outstanding)) != 1) return;
+    if (bit_count(static_cast<int>(enabled)) <= 2) return;
+
+    const uint32_t alive =
+        GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8;
+    int slowpoke_next_faction = 1;
+    for (; slowpoke_next_faction < 8; ++slowpoke_next_faction) {
+        const uint32_t slowpoke_bit =
+            static_cast<uint32_t>(1) << (slowpoke_next_faction & 0x1F);
+        if ((alive & slowpoke_bit) != 0 && (enabled & slowpoke_bit) != 0 &&
+            (turn_info & slowpoke_bit) == 0) break;
+    }
+    if (slowpoke_next_faction >= 8) return;
+
+    Player &faction_data = Players[slowpoke_next_faction];
+    GenderDefault = faction_data.is_leader_female;
+    PluralityDefault = 0;
+    parse_says(0, faction_data.title_leader, -1, -1);
+    parse_says(1, faction_data.name_leader, -1, -1);
+    GenderDefault = faction_data.noun_gender;
+    PluralityDefault = faction_data.is_noun_plural;
+    parse_says(2, faction_data.noun_faction, -1, -1);
+
+    for (int name_slot = 1; name_slot <= daemon->player_count_; ++name_slot) {
+        if (daemon->process_slots_[name_slot].identity_ == slowpoke_next_faction) {
+            parse_says(3, daemon->process_slots_[name_slot].name_, -1, -1);
+        }
+    }
+    NetMsgPrimary.pop("SLOWPOKE", 5000, 0, 0);
+}
+
+// Pinned direct target 0x53511E handles Server TURN INFO. It first records
+// the log, then honors simultaneous/assigned-turn gates and the current-turn
+// match before mutating the faction wait mask. Player and process-slot scans
+// intentionally retain the original unchecked faction and repeated-name
+// behavior; return through process_message so its real local cleanup runs.
+static void netdaemon_handle_server_turn_info(NetDaemon *daemon,
+                                               unsigned char *message) {
+    const int faction = *reinterpret_cast<int *>(message + 0x10);
+    const int acknowledged = *reinterpret_cast<int *>(message + 0x14);
+    const int turn = *reinterpret_cast<int *>(message + 0x18);
+    log_say("From Server: TURN INFO", faction, acknowledged, turn);
+
+    if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10u) != 0) return;
+    if (daemon->lock_state_[0].leading_words_[1] != 0) return;
+    if (turn != GameDataStateStorage.fields_.turn_current_num_) {
+        MultiWindow.draw(0);
+        return;
+    }
+
+    const uint32_t faction_bit =
+        static_cast<uint32_t>(1) << (static_cast<uint32_t>(faction) & 31u);
+    uint32_t &turn_info = daemon->lock_state_[1].leading_words_[0];
+    if (acknowledged == 0) {
+        turn_info &= ~faction_bit;
+        MultiWindow.draw(0);
+        return;
+    }
+
+    turn_info |= faction_bit;
+    const uint32_t enabled =
+        GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFu;
+    if (bit_count(static_cast<int>(enabled & ~turn_info)) != 1) {
+        MultiWindow.draw(0);
+        return;
+    }
+    if (bit_count(static_cast<int>(enabled)) <= 2) {
+        MultiWindow.draw(0);
+        return;
+    }
+
+    const uint32_t alive =
+        (GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8) & 0xFFu;
+    int next_faction = 1;
+    for (; next_faction < 8; ++next_faction) {
+        const uint32_t bit = static_cast<uint32_t>(1) << next_faction;
+        if ((alive & bit) != 0 && (enabled & bit) != 0 &&
+            (turn_info & bit) == 0) break;
+    }
+    if (next_faction >= 8) {
+        MultiWindow.draw(0);
+        return;
+    }
+
+    Player &player = Players[next_faction];
+    GenderDefault = player.is_leader_female;
+    PluralityDefault = 0;
+    parse_says(0, player.title_leader, -1, -1);
+    parse_says(1, player.name_leader, -1, -1);
+    GenderDefault = player.noun_gender;
+    PluralityDefault = player.is_noun_plural;
+    parse_says(2, player.noun_faction, -1, -1);
+
+    for (int slot = 1; slot <= daemon->player_count_; ++slot) {
+        if (daemon->process_slots_[slot].identity_ == next_faction)
+            parse_says(3, daemon->process_slots_[slot].name_, -1, -1);
+    }
+    MultiWindow.draw(0);
+    NetMsgPrimary.pop("SLOWPOKE", 5000, 0, 0);
+}
+
+// Original 0x534E23..0x534FD9.  The two timing words are separate global
+// dwords: 0x93F66C is the first timeGetTime sample, and 0x93F668 is the
+// selected 1000/5000 ms interval.  Do not fold them into NetBusyCount's owner.
+static void netdaemon_handle_server_lock_status(NetDaemon *daemon,
+                                                 unsigned short type,
+                                                 unsigned char *message,
+                                                 int sender_id = 0) {
+    switch (type) {
+    case 0x4301: {
+        my_srand(*reinterpret_cast<int *>(message + 8));
+        daemon->lock_state_[1].leading_words_[0] = 0xFF;
+        daemon->lock_state_[0].trailing_words_[7] = 0xFF;
+        MultiWindow.draw(0);
+        log_say("From Server: NEXT TURN",
+                GameDataStateStorage.fields_.turn_current_num_,
+                static_cast<int>(daemon->lock_state_[0].trailing_words_[7]), 0);
+        NetDaemonProgressInterval = 0;
+        NetDaemonProgressLastTick = 0;
+        if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10u) != 0) {
+            GameDataStateStorage.fields_.game_state_ |= 0x800u;
+            NextTurnReady = 1;
+        }
+        return;
+    }
+    case 0x4303: {
+        const int phase = *reinterpret_cast<int *>(message + 0x10);
+        const int turn = *reinterpret_cast<int *>(message + 0x14);
+        log_say("From Server: NEXT UPKEEP", phase, turn, 0);
+        if (phase != NetUpkeepPhase) {
+            log_say("(Upkeep instruction for wrong phase!)",
+                    phase, NetUpkeepPhase, 0);
+        } else if (turn != GameDataStateStorage.fields_.turn_current_num_) {
+            log_say("(Upkeep instruction for wrong turn!)",
+                    turn, GameDataStateStorage.fields_.turn_current_num_, 0);
+        }
+        my_srand(*reinterpret_cast<int *>(message + 8));
+        daemon->lock_state_[1].leading_words_[1] = 0xFF;
+        daemon->lock_state_[0].trailing_words_[9] = 0xFF;
+        MultiWindow.draw(0);
+        NetDaemonProgressInterval = 0;
+        NetDaemonProgressLastTick = 0;
+        return;
+    }
+    case 0x1201:
+        log_say("From Server: LOCK OK", 0, 0, 0);
+        daemon->lock_state_[1].leading_words_[2] = 1;
+        NetDaemonProgressInterval = 0;
+        NetDaemonProgressLastTick = 0;
+        return;
+    case 0x1202:
+        log_say("From Server: LOCK FAILED", 0, 0, 0);
+        daemon->lock_state_[1].leading_words_[2] = 2;
+        break;
+    case 0x1203:
+        log_say("From Server: LOCK FAILED GLOBAL", 0, 0, 0);
+        daemon->lock_state_[1].leading_words_[2] = 3;
+        break;
+    case 0x1204:
+        log_say("From Server: LOCK FAILED UPKEEP", 0, 0, 0);
+        daemon->lock_state_[1].leading_words_[2] = 4;
+        break;
+    case 0x1205:
+        log_say("From Server: GLOBAL LOCK READY", 0, 0, 0);
+        daemon->locks_.field_E8_ = 1;
+        return;
+    case 0x1206: {
+        const uint32_t remaining = daemon->lock_state_[2].trailing_words_[2];
+        log_say("From Server: EXEC DONE", 0, 0,
+                static_cast<int>(remaining));
+        if (remaining != 0) {
+            log_say("Remaining locked", 0, 0, 0);
+            daemon->lock_state_[2].trailing_words_[2] = 0;
+            message_data(0x2214, 0, 0, 0, 0, 0);
+        } else {
+            daemon->lock_state_[2].leading_words_[3] = 0;
+        }
+        return;
+    }
+    case 0x1207:
+        log_say("From Server: ADD LOCK FAIL", 0, 0, 0);
+        daemon->lock_state_[1].leading_words_[2] = 2;
+        return;
+    case 0x1208:
+        log_say("From Server: ADD LOCK OK", 0, 0, 0);
+        daemon->lock_state_[1].leading_words_[2] = 1;
+        return;
+    case 0x1240:
+        if (*reinterpret_cast<uint32_t *>(message + 0x10)) {
+            daemon->lock_state_[2].leading_words_[0] = 1;
+            log_say("Received OPEN CHANNEL SUCCESS", 0, 0, 0);
+        } else {
+            daemon->lock_state_[2].leading_words_[0] = 2;
+            log_say("Received OPEN CHANNEL FAILED", 0, 0, 0);
+        }
+        return;
+    case 0x2308:
+        log_say("From Client: HELP ME SPOCK",
+                daemon->AlphaNet::pid_2_who(static_cast<uint32_t>(sender_id)),
+                0, 0);
+        SpockNotifyPending = 1;
+        return;
+    default:
+        return;
+    }
+
+    if (NetDaemonProgressLastTick == 0)
+        NetDaemonProgressLastTick = timeGetTime();
+    const unsigned int now = timeGetTime();
+    const unsigned int elapsed = now - NetDaemonProgressLastTick;
+    NetDaemonProgressInterval = elapsed > 5000 ? 5000 : 1000;
+}
+
+// 0x536037 is opcode 0x2303, "From Client: DONE UPKEEP". The wait words are
+// existing NetDaemon lock-state members and the player identities are the
+// actual AlphaNet process slots. The sender argument is a process ID; the
+// dispatcher converts it through the same AlphaNet lookup as the native EDI.
+static void netdaemon_handle_client_done_upkeep(NetDaemon *daemon,
+                                                 unsigned char *message,
+                                                 int sender_id) {
+    const int sender = daemon->AlphaNet::pid_2_who(
+        static_cast<uint32_t>(sender_id));
+    const uint32_t sender_bit = static_cast<uint32_t>(1) << (sender & 0x1F);
+    const int phase = *reinterpret_cast<int *>(message + 0x10);
+    const int turn = *reinterpret_cast<int *>(message + 0x14);
+
+    if (phase != NetUpkeepPhase) {
+        log_say("(Upkeep acknowledgement for wrong phase!)",
+                phase, NetUpkeepPhase, 0);
+    } else if (turn != GameDataStateStorage.fields_.turn_current_num_) {
+        log_say("(Upkeep ack for wrong turn!)", turn,
+                GameDataStateStorage.fields_.turn_current_num_, 0);
+    }
+
+    daemon->lock_state_[1].leading_words_[1] |= sender_bit;
+    uint32_t &already_notified = daemon->lock_state_[0].trailing_words_[8];
+    if ((already_notified & sender_bit) == 0) {
+        already_notified |= sender_bit;
+        for (int slot = 1; slot <= daemon->player_count_; ++slot) {
+            const int target = daemon->process_slots_[slot].identity_;
+            if (target != ConsoleGlobal.faction_id_) {
+                message_data(0x1303, target, sender, 1,
+                             GameDataStateStorage.fields_.turn_current_num_, 0);
+            }
+        }
+        MultiWindow.draw(0);
+    }
+
+    log_say("From Client: DONE UPKEEP", sender, phase,
+            static_cast<int>(already_notified));
+}
+
+// 0x53611D is opcode 0x2302, "From Client: WITHDRAW END-OF-TURN". It
+// acknowledges the matching waiting faction, then sends TURN INFO to the
+// other active process identities. Every non-early native path reaches draw.
+static void netdaemon_handle_withdraw_end_turn(NetDaemon *daemon,
+                                                unsigned char *message,
+                                                int sender_id) {
+    const int sender = daemon->AlphaNet::pid_2_who(
+        static_cast<uint32_t>(sender_id));
+    const uint32_t sender_bit = static_cast<uint32_t>(1) << (sender & 0x1F);
+    const uint32_t waiting = static_cast<uint32_t>(ConsoleFactionsWaitingMask);
+    log_say("From Client: WITHDRAW END-OF-TURN", sender, 0, 0);
+
+    if (waiting != 0xFF && (waiting & sender_bit) != 0 &&
+        *reinterpret_cast<int *>(message + 0x10) ==
+            GameDataStateStorage.fields_.turn_current_num_) {
+        ConsoleFactionsWaitingMask = static_cast<int>(waiting & ~sender_bit);
+        message_data(0x1302, sender,
+                     GameDataStateStorage.fields_.turn_current_num_, 0, 0, 0);
+        for (int slot = 1; slot <= daemon->player_count_; ++slot) {
+            const int target = daemon->process_slots_[slot].identity_;
+            if (target != sender && target != ConsoleGlobal.faction_id_) {
+                message_data(0x1301, target, sender, 0,
+                             GameDataStateStorage.fields_.turn_current_num_, 0);
+            }
+        }
+    }
+    MultiWindow.draw(0);
+}
+
+// 0x1302 WITHDRAW APPROVED has the local matching-turn wait-clear behavior.
+// 0x1303 UPKEEP INFO is a separate packet-selected wait-mask update below.
+static void netdaemon_complete_local_turn_wait(NetDaemon *daemon,
+                                                unsigned char *message) {
+    const int faction = ConsoleGlobal.faction_id_;
+    const uint32_t faction_bit =
+        static_cast<uint32_t>(1) << (faction & 0x1F);
+
+    const uint32_t state = GameDataStateStorage.fields_.game_state_;
+    const uint32_t waiting = static_cast<uint32_t>(ConsoleFactionsWaitingMask);
+    const uint32_t assigned =
+        daemon->lock_state_[0].leading_words_[1]; // 0x93E8C0, existing shared word
+    if ((state & 2u) != 0 && waiting != 0xFF &&
+        (((waiting & faction_bit) != 0) || assigned != 0) &&
+        *reinterpret_cast<int *>(message + 0x10) ==
+            GameDataStateStorage.fields_.turn_current_num_) {
+        ConsoleFactionsWaitingMask = static_cast<int>(waiting & ~faction_bit);
+        daemon->lock_state_[1].leading_words_[0] &= ~faction_bit;
+        GameDataStateStorage.fields_.game_state_ = state & ~2u;
+    }
+    MultiWindow.draw(0);
+}
+
+// 0x535048 is opcode 0x1303, "From Server: UPKEEP INFO".
+static void netdaemon_handle_server_upkeep_info(NetDaemon *daemon,
+                                                 unsigned char *message) {
+    log_say("From Server: UPKEEP INFO",
+            *reinterpret_cast<int *>(message + 0x10),
+            *reinterpret_cast<int *>(message + 0x14),
+            *reinterpret_cast<int *>(message + 0x18));
+    if (daemon->lock_state_[0].leading_words_[1] != 0) return;
+    const unsigned int faction =
+        *reinterpret_cast<uint32_t *>(message + 0x10);
+    daemon->lock_state_[1].leading_words_[1] |=
+        static_cast<uint32_t>(1) << (faction & 0x1Fu);
+    MultiWindow.draw(0);
+}
+
+// 0x535097 is opcode 0x1302, "From Server: WITHDRAW APPROVED".
+static void netdaemon_handle_withdraw_approved(NetDaemon *daemon,
+                                               unsigned char *message) {
+    log_say("From Server: WITHDRAW APPROVED", 0, 0, 0);
+    netdaemon_complete_local_turn_wait(daemon, message);
+}
+
+// Diplomacy-channel messages run after the dispatcher's 0x1500 modal
+// prelude, before its shared marker/Filemap/Popup tail.
+static bool netdaemon_handle_diplo_cd_message(unsigned short type,
+                                               unsigned char *message) {
+    switch (type) {
+    case 0x1505: {
+        log_say("Received CLOSE CHAN",
+                *reinterpret_cast<int *>(message + 4), 0, 0);
+        if (CommlinkPending == 0) return true;
+
+        DiploWindow.release_modal();
+        const uint32_t language = Language;
+        CommlinkPending = 0;
+        if (language != 0) return true;
+
+        const int faction = *reinterpret_cast<int *>(message + 4);
+        PluralityDefault = 0;
+        GenderDefault = Players[faction].is_leader_female;
+        parse_says(0, Players[faction].title_leader, -1, -1);
+        PluralityDefault = 0;
+        GenderDefault = Players[faction].is_leader_female;
+        parse_says(1, Players[faction].name_leader, -1, -1);
+        NetMsgPrimary.pop("DIPLOCLOSE", 5000, 0, 0);
+        return true;
+    }
+    case 0x1506:
+        log_say("Received OPEN OFFER",
+                *reinterpret_cast<int *>(message + 4),
+                *reinterpret_cast<int *>(message + 0x10),
+                *reinterpret_cast<int *>(message + 0x14));
+        DiploWindow.add_offer(1,
+                              *reinterpret_cast<int *>(message + 0x10),
+                              *reinterpret_cast<int *>(message + 0x14));
+        DiploWindow.redraw();
+        return true;
+    case 0x1507:
+        log_say("Received KILL OFFER",
+                *reinterpret_cast<int *>(message + 4),
+                *reinterpret_cast<int *>(message + 0x10), 0);
+        DiploWindow.kill_offer(*reinterpret_cast<int *>(message + 0x10), 1);
+        DiploWindow.redraw();
+        return true;
+    case 0x1508:
+        log_say("Received CLEAR OFFER",
+                *reinterpret_cast<int *>(message + 4), 0, 0);
+        DiploWindow.receive_clear_offer();
+        return true;
+    case 0x1509:
+        log_say("Received CHANNEL STATUS",
+                *reinterpret_cast<int *>(message + 4),
+                *reinterpret_cast<int *>(message + 0x10), 0);
+        DiploWindow.receive_channel_status(
+            *reinterpret_cast<int *>(message + 0x10));
+        return true;
+    case 0x150B:
+        log_say("Received YES DEAL",
+                *reinterpret_cast<int *>(message + 4), 0, 0);
+        DiploWindow.do_it();
+        return true;
+    case 0x150C:
+        log_say("Received NO DEAL",
+                *reinterpret_cast<int *>(message + 4), 0, 0);
+        DiploWindow.receive_no_deal(
+            *reinterpret_cast<int *>(message + 0x14),
+            *reinterpret_cast<int *>(message + 0x10));
+        return true;
+    case 0x150D:
+        log_say("Received DONE DEAL",
+                *reinterpret_cast<int *>(message + 4), 0, 0);
+        DiploWindow.done_deal();
+        return true;
+    case 0x150E:
+        log_say("Received DEMAND WITHDRAWAL",
+                *reinterpret_cast<int *>(message + 4), 0, 0);
+        return true;
+    case 0x150F: {
+        const int faction = *reinterpret_cast<int *>(message + 4);
+        log_say("Received VENDETTA WARNING", faction, 0, 0);
+        PluralityDefault = 0;
+        GenderDefault = Players[faction].is_leader_female;
+        parse_says(0, Players[faction].title_leader, -1, -1);
+        PluralityDefault = 0;
+        GenderDefault = Players[faction].is_leader_female;
+        parse_says(1, Players[faction].name_leader, -1, -1);
+        GenderDefault = Players[faction].noun_gender;
+        PluralityDefault = Players[faction].is_noun_plural;
+        parse_says(2, Players[faction].noun_faction, -1, -1);
+        NetMsgPrimary.pop("VENDETTAWARNING", 5000, 0, 0);
+        return true;
+    }
+    default:
+        return false;
+    }
+}
+
+// Source-only implementation candidate for the five concrete 0x2212..0x2216
+// arms in NetDaemon::process_message. The caller retains the real dispatcher
+// scope and invokes its shared 0x538266 marker tail after this returns true.
+// Several packet indices are intentionally unchecked: the original indexes
+// the eight PlayerLock records directly from message words/sender identity.
+static bool netdaemon_process_table_e(NetDaemon &daemon,
+                                      unsigned char *message,
+                                      unsigned short opcode,
+                                      int sender_identity) {
+    switch (opcode) {
+    case 0x2212:
+        log_say("From Client: Ready to unlock", sender_identity, 0, 0);
+        daemon.locks_.unlock(sender_identity);
+        return true;
+
+    case 0x2213: {
+        const int player_index =
+            *reinterpret_cast<int *>(message + 0x10);
+        const int sequence = *reinterpret_cast<int *>(message + 0x0C);
+        const int identity = *reinterpret_cast<int *>(message + 0x10);
+        log_say("From Client: ACKNOWLEDGE", sender_identity, identity, 0);
+
+        // The original performs this one-based lookup but discards EAX before
+        // selecting the PlayerLock from the unmodified packet word at +0x10.
+        (void)daemon.AlphaNet::who_2_idx(identity);
+
+        for (int table_index = 0; table_index < 24; ++table_index) {
+            LockTableEntry &entry = daemon.lock_table_[table_index];
+            const uint8_t enabled = static_cast<uint8_t>(
+                GameDataStateStorage.fields_.lock_masks_.enable_mask_);
+            if ((enabled & entry.flag_) == enabled ||
+                entry.field_4_ != static_cast<uint32_t>(sequence)) {
+                continue;
+            }
+
+            const uint8_t sender_bit = static_cast<uint8_t>(
+                static_cast<uint32_t>(1u) <<
+                (static_cast<uint32_t>(sender_identity) & 31u));
+            entry.flag_ = static_cast<uint8_t>(entry.flag_ | sender_bit);
+            if ((entry.flag_ & enabled) == enabled) {
+                entry.flag_ = 0xFF;
+            }
+            break;
+        }
+
+        PlayerLock &record = daemon.locks_.records_[player_index];
+        if (record.active() == 0) return true;
+        if ((record.active_ & 1u) != 0) return true;
+
+        const uint8_t sender_bit = static_cast<uint8_t>(
+            1u << (static_cast<uint32_t>(sender_identity) & 31u));
+        record.active_ = static_cast<uint8_t>(record.active_ | sender_bit);
+        const uint8_t enabled = static_cast<uint8_t>(
+            GameDataStateStorage.fields_.lock_masks_.enable_mask_);
+        if ((record.active_ & enabled) != enabled) return true;
+
+        log_say("Sending EXEC DONE to", player_index, 0, 0);
+        message_data(0x1206, player_index, 0, 0, 0, 0);
+        // The native store is after message_data, not before the callback.
+        record.active_ = static_cast<uint8_t>(record.active_ | 1u);
+        return true;
+    }
+
+    case 0x2214:
+        log_say("From Client: RELOCK", sender_identity, 0, 0);
+        daemon.locks_.records_[sender_identity].active_ = 0;
+        return true;
+
+    case 0x2215: {
+        if (SpockHelpActive != 0 || TurnControlWord93A954 != 0) {
+            log_say("(Sending: Lock failed -- REJECT)", 0, 0, 0);
+            message_data(0x1208, sender_identity, 0, 0, 0, 0);
+            return true;
+        }
+
+        const int first = *reinterpret_cast<int *>(message + 0x10);
+        const int second = *reinterpret_cast<int *>(message + 0x14);
+        const int third = *reinterpret_cast<int *>(message + 0x18);
+        log_say("From Client: ADD LOCK", sender_identity, first, second);
+
+        // Stack push order at 0x535F64 passes slot, +0x18, +0x10, +0x14
+        // to Lock::add_lock; preserve that non-obvious wire/ABI permutation.
+        if (daemon.locks_.add_lock(sender_identity, third, first, second) != 0) {
+            log_say("(Sending: Add failed)", 0, 0, 0);
+            message_data(0x1208, sender_identity, 0, 0, 0, 0);
+        } else {
+            log_say("(Sending: Add OK)", 0, 0, 0);
+            message_data(0x1207, sender_identity, 0, 0, 0, 0);
+        }
+        return true;
+    }
+
+    case 0x2216:
+        log_say("From Server: LOCK OK GLOBAL", 0, 0, 0);
+        daemon.lock_state_[1].leading_words_[2] = 1;
+        NetDaemonProgressInterval = 0;
+        NetDaemonProgressLastTick = 0;
+        daemon.locks_.field_E8_ = 1;
+        return true;
+
+    default:
+        return false;
+    }
+}
+
+// Pinned process_message table F (0x4304..0x4309). This helper is source
+// material for the real process_message owner; it is not an original identity.
+// The caller retains the common marker-tail and normal C++ scope cleanup.
+extern int MessageWinNetworkMessageCount;
+
+static bool netdaemon_handle_table_f(NetDaemon *daemon, unsigned short type,
+                                     unsigned char *message, int sender_id) {
+    switch (type) {
+    case 0x4304:
+        log_say("From Server: UPKEEP_BASE", 0, 0, 0);
+        daemon->lock_state_[0].trailing_words_[9] = 1;
+        return true;
+
+    case 0x4305: {
+        const int incoming = *reinterpret_cast<int *>(message + 0x10);
+        log_say("From Server: MSG_EVENTS", 0, incoming, 0);
+        if (MessageWinNetworkMessageCount <= incoming)
+            MessageWinNetworkMessageCount = incoming;
+        return true;
+    }
+
+    case 0x4306: {
+        const int faction_id = *reinterpret_cast<int *>(message + 4);
+        const int event_value = *reinterpret_cast<int *>(message + 0x10);
+        log_say("From Server: MSG_TIME_BONUS", faction_id, event_value, 0);
+        if (ConsoleControlTurnActive != 0) return true;
+
+        if (PlayersData[faction_id].time_bonus_count > 0)
+            --PlayersData[faction_id].time_bonus_count;
+
+        const int selection =
+            GameDataStateStorage.fields_.time_controls_selection_;
+        const int duration = TimeControl[selection].event * 1000;
+        NetDaemonWaitTicks += duration;
+        GameDataStateStorage.fields_.turn_control_duration_milliseconds_ +=
+            duration;
+        MultiWindow.draw(0);
+
+        parse_says(0, daemon->get_player_name(
+                          static_cast<unsigned long>(sender_id)), -1, -1);
+        parse_num(0, TimeControl[selection].event);
+        NetMsgPrimary.pop(
+            faction_id == ConsoleGlobal.faction_id_ ? "WEBONUSED" : "HEBONUSED",
+            5000, 0, nullptr);
+        return true;
+    }
+
+    case 0x4307: {
+        // The pinned loop indexes by the packet faction without a range check.
+        int *destination = NetPeerTurnChecksums[
+            *reinterpret_cast<int *>(message + 4)];
+        const int *source = reinterpret_cast<int *>(message + 0x10);
+        for (int index = 0; index < NetTurnChecksumWords; ++index)
+            destination[index] = source[index];
+        return true;
+    }
+
+    case 0x4309: {
+        const int faction_id = *reinterpret_cast<int *>(message + 0x10);
+        log_say("From Server: NEXT PLAYER TURN", faction_id, 0, 0);
+        GameDataStateStorage.fields_.net_turn_faction_ = faction_id;
+
+        Player &player = Players[faction_id];
+        PluralityDefault = 0;
+        GenderDefault = player.is_leader_female;
+        parse_says(0, player.title_leader, -1, -1);
+        PluralityDefault = 0;
+        GenderDefault = player.is_leader_female;
+        parse_says(1, player.name_leader, -1, -1);
+        GenderDefault = player.noun_gender;
+        PluralityDefault = player.is_noun_plural;
+        parse_says(2, player.noun_faction, -1, -1);
+        const int player_pid = daemon->who_2_pid(faction_id);
+        parse_says(3, daemon->get_player_name(
+                          static_cast<unsigned long>(player_pid)), -1, -1);
+
+        if (faction_id == ConsoleGlobal.faction_id_) {
+            char year_text[0x194];
+            year_text[0] = 0;
+            say_year(year_text);
+            parse_says(4, year_text, -1, -1);
+            X_pop("SIMULYOU", pop_wait);
+        } else {
+            NetMsgPrimary.pop("SIMULWHOSE", 5000, 0, nullptr);
+        }
+        return true;
+    }
+
+    // Table F's fifth slot (0x4308) points to the dispatcher default at
+    // 0x537F7A; it has no specialized handler here.
+    default:
+        return false;
+    }
+}
+
+// Proposal-only helper for the 0x4405..0x4418 dispatch table.
+// Include in netdaemon.cpp after its existing game-owner headers.
+// Returns true only for a concrete Table G arm; the six default slots remain
+// with process_message's existing fixup/rebroadcast path.
+static int netdaemon_table_g_word(unsigned char *msg, int offset) {
+    return *reinterpret_cast<int *>(msg + offset);
+}
+
+static bool netdaemon_process_table_g(NetDaemon &daemon, unsigned char *msg,
+                                      unsigned short type) {
+    // These three native tails are intentionally distinct: the original
+    // dispatch arms enter them at different addresses and 0x4411 bypasses
+    // sequence/local-owner processing altogether.
+    const int TailDispatch = 0;
+    const int TailSequence = 1;
+    const int TailUpgrade = 2;
+    int tail;
+
+    switch (type) {
+    case 0x4405:
+        log_say("From Server: SPECIAL TERRAFORM", netdaemon_table_g_word(msg, 4),
+                netdaemon_table_g_word(msg, 0x10), netdaemon_table_g_word(msg, 0x14));
+        my_srand(netdaemon_table_g_word(msg, 8));
+        action_terraform(netdaemon_table_g_word(msg, 0x10),
+                         netdaemon_table_g_word(msg, 0x14) - 4, 1);
+        Vehs[netdaemon_table_g_word(msg, 0x10)].order = *reinterpret_cast<int8_t *>(msg + 0x18);
+        tail = TailDispatch;
+        break;
+    case 0x4406:
+        log_say("From Server: DESTROY TERRAIN", netdaemon_table_g_word(msg, 4),
+                netdaemon_table_g_word(msg, 0x10), netdaemon_table_g_word(msg, 0x14));
+        my_srand(netdaemon_table_g_word(msg, 8));
+        action_destroy(netdaemon_table_g_word(msg, 0x10),
+                       netdaemon_table_g_word(msg, 0x14), -1, -1);
+        tail = TailSequence;
+        break;
+    case 0x4407:
+        log_say("From Server: KILL VEH", netdaemon_table_g_word(msg, 4),
+                netdaemon_table_g_word(msg, 0x10), 0);
+        my_srand(netdaemon_table_g_word(msg, 8));
+        if (netdaemon_table_g_word(msg, 0x14) != 0) {
+            action_destruct(netdaemon_table_g_word(msg, 0x10));
+        } else {
+            kill(netdaemon_table_g_word(msg, 0x10));
+        }
+        Vehs[netdaemon_table_g_word(msg, 0x10)].order = *reinterpret_cast<int8_t *>(msg + 0x18);
+        tail = TailDispatch;
+        break;
+    case 0x4408:
+    case 0x4416:
+        log_say("From Server: GIVE VEH", netdaemon_table_g_word(msg, 4),
+                netdaemon_table_g_word(msg, 0x10), netdaemon_table_g_word(msg, 0x14));
+        my_srand(netdaemon_table_g_word(msg, 8));
+        action_give(netdaemon_table_g_word(msg, 0x10), netdaemon_table_g_word(msg, 0x14));
+        tail = TailSequence;
+        break;
+    case 0x4409:
+        log_say("From Server: BUILD BASE",
+                reinterpret_cast<char *>(msg + 0x14), netdaemon_table_g_word(msg, 4),
+                netdaemon_table_g_word(msg, 0x10), 0);
+        my_srand(netdaemon_table_g_word(msg, 8));
+        action_build(netdaemon_table_g_word(msg, 0x10), reinterpret_cast<char *>(msg + 0x14));
+        tail = TailSequence;
+        break;
+    case 0x4410:
+        log_say("From Server: GATE", netdaemon_table_g_word(msg, 4),
+                netdaemon_table_g_word(msg, 0x10), netdaemon_table_g_word(msg, 0x14));
+        action_gate(netdaemon_table_g_word(msg, 0x10), netdaemon_table_g_word(msg, 0x14));
+        log_say("Acknowledging GATE", 0, 0, 0);
+        tail = TailSequence;
+        break;
+    case 0x4411:
+        log_say("From Server: UPGRADE UNIT", netdaemon_table_g_word(msg, 4),
+                netdaemon_table_g_word(msg, 0x10), netdaemon_table_g_word(msg, 0x14));
+        my_srand(netdaemon_table_g_word(msg, 8));
+        do_upgrade(netdaemon_table_g_word(msg, 0x10), netdaemon_table_g_word(msg, 0x14),
+                   netdaemon_table_g_word(msg, 0x18));
+        tail = TailUpgrade;
+        break;
+    case 0x4412:
+        log_say("From Server: SATELLITE ATTACK", netdaemon_table_g_word(msg, 0x10),
+                netdaemon_table_g_word(msg, 0x14), netdaemon_table_g_word(msg, 0x18));
+        log_say("From Server: SMACX SAT ATTACK:  GSP Base Target",
+                netdaemon_table_g_word(msg, 0x1c), 0, 0);
+        my_srand(netdaemon_table_g_word(msg, 8));
+        action_sat_attack(netdaemon_table_g_word(msg, 0x10), netdaemon_table_g_word(msg, 0x14),
+                          netdaemon_table_g_word(msg, 0x18), netdaemon_table_g_word(msg, 0x1c));
+        log_say("Acknowledging SATELLITE ATTACK", 0, 0, 0);
+        tail = TailDispatch;
+        break;
+    case 0x4413:
+        log_say("From Server: DESTROY TERRAIN2", netdaemon_table_g_word(msg, 0x10),
+                netdaemon_table_g_word(msg, 0x14), netdaemon_table_g_word(msg, 0x18));
+        my_srand(netdaemon_table_g_word(msg, 8));
+        action_destroy(netdaemon_table_g_word(msg, 0x10), 0,
+                       netdaemon_table_g_word(msg, 0x14), netdaemon_table_g_word(msg, 0x18));
+        tail = TailSequence;
+        break;
+    case 0x4414:
+        log_say("From Server: NERVE STAPLE", netdaemon_table_g_word(msg, 0x10), 0, 0);
+        my_srand(netdaemon_table_g_word(msg, 8));
+        action_staple(netdaemon_table_g_word(msg, 0x10));
+        log_say("Acknowledging NERVE STAPLE", 0, 0, 0);
+        tail = TailSequence;
+        break;
+    case 0x4415:
+        log_say("From Server: RETIRE PROTO", netdaemon_table_g_word(msg, 4),
+                netdaemon_table_g_word(msg, 0x10), netdaemon_table_g_word(msg, 0x14));
+        my_srand(netdaemon_table_g_word(msg, 8));
+        retire_proto(netdaemon_table_g_word(msg, 0x10), netdaemon_table_g_word(msg, 0x14));
+        tail = TailSequence;
+        break;
+    case 0x4417:
+        my_srand(netdaemon_table_g_word(msg, 8));
+        action_tectonic(netdaemon_table_g_word(msg, 0x10), netdaemon_table_g_word(msg, 0x14),
+                        netdaemon_table_g_word(msg, 0x18));
+        log_say("Acknowledging TECTONIC", 0, 0, 0);
+        tail = TailDispatch;
+        break;
+    case 0x4418:
+        my_srand(netdaemon_table_g_word(msg, 8));
+        action_fungal(netdaemon_table_g_word(msg, 0x10), netdaemon_table_g_word(msg, 0x14),
+                      netdaemon_table_g_word(msg, 0x18));
+        log_say("Acknowledging FUNGAL", 0, 0, 0);
+        tail = TailDispatch;
+        break;
+    default:
+        return false;
+    }
+
+    if (tail != TailUpgrade) {
+        if (daemon.lock_state_[0].leading_words_[1] == 0) {
+            daemon.lock_state_[0].leading_words_[0] = netdaemon_table_g_word(msg, 0x0c);
+        }
+    }
+
+    if (tail == TailSequence) {
+        if (netdaemon_table_g_word(msg, 4) == ConsoleGlobal.faction_id_) {
+            // 0x536D5E local-owner tail, including its original clear/callback
+            // order. The notification branch observes and clears dword 0x1BC0
+            // before broadcasting 0x2214; the other arm only clears 0x1BB0.
+            if (daemon.lock_state_[2].leading_words_[7] != 0) {
+                log_say("Remaining Locked2", 0, 0, 0);
+                daemon.lock_state_[2].leading_words_[7] = 0;
+                message_data(0x2214, 0, 0, 0, 0, 0);
+            } else {
+                daemon.lock_state_[2].leading_words_[3] = 0;
+            }
+        }
+    } else if (tail == TailDispatch &&
+               netdaemon_table_g_word(msg, 4) == ConsoleGlobal.faction_id_) {
+        if (daemon.lock_state_[2].leading_words_[7] != 0) {
+            log_say("Remaining Locked2", 0, 0, 0);
+            daemon.lock_state_[2].leading_words_[7] = 0;
+            message_data(0x2214, 0, 0, 0, 0, 0);
+        } else {
+            daemon.lock_state_[2].leading_words_[3] = 0;
+        }
+    }
+
+    // 0x538266 is the actual shared exit of all these arms, including 4411.
+    // It clears the await marker only for a matching marked opcode addressed
+    // to this faction; retain the native marker/indexing rather than assigning
+    // a new semantic member name.
+    const uint32_t pending_opcode = daemon.lock_state_[2].leading_words_[1];
+    const unsigned short final_type =
+        *reinterpret_cast<unsigned short *>(msg);
+    if (pending_opcode != 0 && (msg[1] & 0x40) != 0 &&
+        (final_type & 0x4000) != 0 &&
+        final_type == static_cast<unsigned short>(pending_opcode | 0x4000) &&
+        netdaemon_table_g_word(msg, 4) == ConsoleGlobal.faction_id_) {
+        daemon.lock_state_[2].leading_words_[1] = 0;
+    }
+    return true;
+}
+
+// Source-only implementation candidate for Table H inside the existing
+// NetDaemon::process_message owner. These opcode labels are not independent
+// ORIGINAL identities. Return true after handling so the caller continues
+// through process_message's actual shared tail (including the conditional
+// lock-word clear and ordinary C++ scope cleanup); never return from the
+// dispatcher itself here.
+static void netdaemon_table_h_add_energy(int &energy, int delta) {
+    // The pinned instruction is a 32-bit ADD. Express its low-dword result
+    // without invoking C++ signed-overflow undefined behavior.
+    uint32_t bits;
+    memcpy(&bits, &energy, sizeof(bits));
+    bits += static_cast<uint32_t>(delta);
+    memcpy(&energy, &bits, sizeof(bits));
+}
+
+static bool netdaemon_handle_table_h(char *message) {
+    const unsigned short opcode =
+        *reinterpret_cast<const unsigned short *>(message);
+    switch (opcode) {
+    case 0x4441: {
+        const int actor = *reinterpret_cast<int *>(message + 0x10);
+        const int other = *reinterpret_cast<int *>(message + 0x14);
+        const int flags = *reinterpret_cast<int *>(message + 0x18);
+        log_say_hex("Received TREATY ON", actor, other, flags);
+        treaty_on(actor, other, flags);
+
+        if (actor == ConsoleGlobal.faction_id_ ||
+            other == ConsoleGlobal.faction_id_)
+            break;
+        if (!spying(actor) && !spying(other) &&
+            (GameDataStateStorage.fields_.game_state_ & 0x80u) == 0)
+            break;
+
+        GenderDefault = Players[actor].noun_gender;
+        PluralityDefault = Players[actor].is_noun_plural;
+        parse_says(0, Players[actor].noun_faction, -1, -1);
+        GenderDefault = Players[other].noun_gender;
+        PluralityDefault = Players[other].is_noun_plural;
+        parse_says(1, Players[other].noun_faction, -1, -1);
+        parse_says(2, get_pact_hood(actor, other), -1, -1);
+
+        if (flags & 1) {
+            NetMsgPrimary.pop("ENEMIESTEAMUP2", 0, 0, 0);
+        } else if (flags & 2) {
+            NetMsgPrimary.pop("ENEMYTREATY", 0, 0, 0);
+        } else if ((flags & 4) && (flags & 0x10000) &&
+                   has_treaty(actor, other, 0x10)) {
+            NetMsgPrimary.pop("ENEMYTRUCE", 0, 0, 0);
+        } else if (flags & 0x10) {
+            NetMsgPrimary.pop("ENEMYWAR", 0, 0, 0);
+        }
+        break;
+    }
+    case 0x4442: {
+        const int actor = *reinterpret_cast<int *>(message + 0x10);
+        const int other = *reinterpret_cast<int *>(message + 0x14);
+        const int flags = *reinterpret_cast<int *>(message + 0x18);
+        log_say_hex("Received TREATY OFF", actor, other, flags);
+        treaty_off(actor, other, flags);
+        break;
+    }
+    case 0x4443: {
+        const int actor = *reinterpret_cast<int *>(message + 0x10);
+        const int other = *reinterpret_cast<int *>(message + 0x14);
+        const int treaty = *reinterpret_cast<int *>(message + 0x18);
+        const int set = *reinterpret_cast<int *>(message + 0x1C);
+        log_say_hex("Received SET TREATY", actor, other, treaty);
+        set_treaty(actor, other, treaty, set);
+        break;
+    }
+    case 0x4444: {
+        const int actor = *reinterpret_cast<int *>(message + 0x10);
+        const int other = *reinterpret_cast<int *>(message + 0x14);
+        const int agenda = *reinterpret_cast<int *>(message + 0x18);
+        log_say_hex("Received AGENDA ON", actor, other, agenda);
+        agenda_on(actor, other, agenda);
+        break;
+    }
+    case 0x4445: {
+        const int actor = *reinterpret_cast<int *>(message + 0x10);
+        const int other = *reinterpret_cast<int *>(message + 0x14);
+        const int agenda = *reinterpret_cast<int *>(message + 0x18);
+        log_say_hex("Received AGENDA OFF", actor, other, agenda);
+        agenda_off(actor, other, agenda);
+        break;
+    }
+    case 0x4446: {
+        const int actor = *reinterpret_cast<int *>(message + 0x10);
+        const int other = *reinterpret_cast<int *>(message + 0x14);
+        const int agenda = *reinterpret_cast<int *>(message + 0x18);
+        const int set = *reinterpret_cast<int *>(message + 0x1C);
+        log_say_hex("Received SET AGENDA", actor, other, agenda);
+        set_agenda(actor, other, agenda, set);
+        break;
+    }
+    case 0x4447: {
+        const int actor = *reinterpret_cast<int *>(message + 0x10);
+        const int amount = *reinterpret_cast<int *>(message + 0x14);
+        const int other = *reinterpret_cast<int *>(message + 0x18);
+        const int other_amount = *reinterpret_cast<int *>(message + 0x1C);
+        log_say("Received ENERGY", actor, amount, other);
+        if (actor != 0)
+            netdaemon_table_h_add_energy(PlayersData[actor].energy_reserves,
+                                         amount);
+        if (other != 0)
+            netdaemon_table_h_add_energy(PlayersData[other].energy_reserves,
+                                         other_amount);
+        break;
+    }
+    case 0x4448: {
+        const int actor = *reinterpret_cast<int *>(message + 0x10);
+        const int other = *reinterpret_cast<int *>(message + 0x14);
+        log_say("Received TRADE MAPS", actor, other, 0);
+        trade_maps(actor, other);
+        break;
+    }
+    case 0x4449: {
+        const int actor = *reinterpret_cast<int *>(message + 0x10);
+        const int other = *reinterpret_cast<int *>(message + 0x14);
+        log_say("Received CEDE BASE", actor, other, 0);
+        my_srand(*reinterpret_cast<int *>(message + 8));
+        give_a_base(actor, other);
+        break;
+    }
+    case 0x444A: {
+        const int actor = *reinterpret_cast<int *>(message + 0x10);
+        const int other = *reinterpret_cast<int *>(message + 0x14);
+        log_say("Received WITHDRAWAL", actor, other, 0);
+        my_srand(*reinterpret_cast<int *>(message + 8));
+        do_withdrawal(actor, other);
+        break;
+    }
+    case 0x444B:
+    case 0x444C: {
+        const int actor = *reinterpret_cast<int *>(message + 0x10);
+        const int tech = *reinterpret_cast<int *>(message + 0x14);
+        const int recipient = *reinterpret_cast<int *>(message + 0x18);
+        log_say("From Server: TECH", actor, tech, recipient);
+        my_srand(*reinterpret_cast<int *>(message + 8));
+        tech_achieved(actor, tech, recipient, 0);
+
+        // The two opcodes share the original target; only 444C may announce
+        // the tech to the local recipient.
+        if (opcode == 0x444C && recipient == ConsoleGlobal.faction_id_) {
+            GenderDefault = Players[actor].noun_gender;
+            PluralityDefault = Players[actor].is_noun_plural;
+            parse_says(0, Players[actor].noun_faction, -1, -1);
+            StringTemp[0] = 0;
+            say_tech(StringTemp, tech, 0);
+            parse_says(1, StringTemp, -1, -1);
+            NetMsgPrimary.pop("STOLETECH", 0, 0, 0);
+        }
+        break;
+    }
+    case 0x444D: {
+        const int actor = *reinterpret_cast<int *>(message + 0x10);
+        const int other = *reinterpret_cast<int *>(message + 0x14);
+        log_say("Received PACT ENDS", actor, other, 0);
+        my_srand(*reinterpret_cast<int *>(message + 8));
+        pact_ends(actor, other);
+        break;
+    }
+    case 0x444E: {
+        const int actor = *reinterpret_cast<int *>(message + 0x10);
+        const int other = *reinterpret_cast<int *>(message + 0x14);
+        const int balance = *reinterpret_cast<int *>(message + 0x18);
+        const int payment = *reinterpret_cast<int *>(message + 0x1C);
+        log_say("Received LOAN", actor, other, balance);
+        // The pinned body performs both stores unconditionally and addresses
+        // both fields in the p10 PlayerData row; preserve the unchecked access.
+        PlayersData[actor].loan_balance[other] = balance;
+        PlayersData[actor].loan_payment[other] = payment;
+        break;
+    }
+    case 0x444F: {
+        const int actor = *reinterpret_cast<int *>(message + 0x10);
+        const int year = *reinterpret_cast<int *>(message + 0x14);
+        const int other = *reinterpret_cast<int *>(message + 0x18);
+        log_say_hex("Received CORNERING", actor, year, other);
+        if (actor != ConsoleGlobal.faction_id_) {
+            GenderDefault = 0;
+            PluralityDefault = 0;
+            parse_says(0, Players[actor].title_leader, -1, -1);
+            parse_says(1, Players[actor].name_leader, -1, -1);
+            GenderDefault = Players[actor].noun_gender;
+            PluralityDefault = Players[actor].is_noun_plural;
+            parse_says(2, Players[actor].noun_faction, -1, -1);
+            parse_says(3, &Players[actor].adj_name_faction[4], -1, -1);
+            parse_num(0, static_cast<int>(game_year(year)));
+            popp(ScriptPopupFile, "CORNERWARNING", 0, "econwin_sm.pcx", 0);
+        }
+        break;
+    }
+    default:
+        return false;
+    }
+    return true;
+}
+
+// Proposal fragment only. Include in NetDaemon's source owner after its
+// project headers. The request-mask reference deliberately keeps the 0x7FFF74
+// owner/layout unresolved rather than inventing an address-backed C++ alias.
+static int netdaemon_run_contact_prompt(Popup &popup, int faction_id) {
+    popup.start(PopupStartCaption, "COMMDIPLO", -1, 0, 0, 0);
+    popup.dialogs().SpriteBox::sprite(
+        FactionDiplomacyPortraits[faction_id], 0, 0);
+    return popup.exec(0, pop_expire);
+}
+
+static bool netdaemon_handle_direct_diplomacy_complete(
+    unsigned short type, unsigned char *message, Popup &popup,
+    int &contact_response_mask) {
+    switch (type) {
+    case 0x1501: {
+        const int sender = *reinterpret_cast<int *>(message + 4);
+        const uint32_t sender_bit =
+            1u << (static_cast<uint32_t>(sender) & 31u);
+        log_say("Received OPEN CHAN", sender, 0, 0);
+
+        if ((static_cast<uint32_t>(contact_response_mask) & sender_bit) != 0) {
+            message_data(0x1503, sender, 0, 0, 0, 0);
+            return true;
+        }
+        if (NetDaemonNet.lock_state_[2].leading_words_[2] != 0) {
+            message_data(0x1504, sender, 0, 0, 0, 0);
+            return true;
+        }
+        if (CommlinkPending != 0) {
+            if (sender == CommlinkFaction &&
+                DiploWindow.is_visible() == 0) {
+                message_data(0x1502, sender, 0, 0, 0, 0);
+                CommlinkPending = 1;
+                diplo(ConsoleGlobal.faction_id_, sender);
+            } else {
+                message_data(0x1504, sender, 0, 0, 0, 0);
+            }
+            return true;
+        }
+        if (DiplomacyActive != 0) {
+            message_data(0x1504, sender, 0, 0, 0, 0);
+            return true;
+        }
+        if (PopupWaitActive != 0) {
+            message_data(0x1504, sender, 0, 0, 1, 0);
+            return true;
+        }
+
+        for (;;) {
+            prepare_contact_dialog_arguments(sender);
+            const int response = netdaemon_run_contact_prompt(popup, sender);
+            if ((GameDataStateStorage.fields_.game_state_ & 0x800u) != 0) {
+                message_data(0x1503, sender, response == 2, 0, 0, 0);
+                return true;
+            }
+            if (response == 0) {
+                message_data(0x1502, sender, 0, 0, 0, 0);
+                CommlinkPending = 1;
+                diplo(ConsoleGlobal.faction_id_, sender);
+                return true;
+            }
+            if (response == 4) {
+                report_intel(sender);
+                continue;
+            }
+            if (response == 3) {
+                contact_response_mask = static_cast<int>(
+                    static_cast<uint32_t>(contact_response_mask) | sender_bit);
+            }
+            message_data(0x1503, sender, response == 2, 0, 0, 0);
+            return true;
+        }
+    }
+    case 0x1502: {
+        const int sender = *reinterpret_cast<int *>(message + 4);
+        log_say("Received OPEN ACKNOWLEDGE", sender, 0, 0);
+        if (CommlinkPending != 0 && sender != CommlinkFaction) {
+            message_data(0x1505, sender, 0, 0, 0, 0);
+            return true;
+        }
+        if (DiploWindow.is_visible() != 0) return true;
+        message_data(0x2441, 0, ConsoleGlobal.faction_id_, sender, 8, 0);
+        diplo(ConsoleGlobal.faction_id_, sender);
+        return true;
+    }
+    case 0x1503: {
+        const int sender = *reinterpret_cast<int *>(message + 4);
+        CommlinkPending = 0;
+        log_say("Received OPEN REFUSE", sender, 0, 0);
+        GenderDefault = Players[sender].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(0, Players[sender].title_leader, -1, -1);
+        GenderDefault = Players[sender].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(1, Players[sender].name_leader, -1, -1);
+        const int response = *reinterpret_cast<int *>(message + 0x10);
+        if (response == 0)
+            NetMsgPrimary.pop("DIPLOREFUSE", 5000, 0, 0);
+        else if (response == 1)
+            NetMsgPrimary.pop("DIPLOREFUSE1", 5000, 0, 0);
+        return true;
+    }
+    case 0x1504: {
+        const int sender = *reinterpret_cast<int *>(message + 4);
+        CommlinkPending = 0;
+        log_say("Received OPEN BUSY", sender, 0, 0);
+        GenderDefault = Players[sender].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(0, Players[sender].title_leader, -1, -1);
+        GenderDefault = Players[sender].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(1, Players[sender].name_leader, -1, -1);
+        const int response = *reinterpret_cast<int *>(message + 0x10);
+        if (response == 0)
+            NetMsgPrimary.pop("DIPLOBUSY", 5000, 0, 0);
+        else if (response == 1)
+            NetMsgPrimary.pop("DIPLOBUSY1", 5000, 0, 0);
+        return true;
+    }
+    case 0x150A: {
+        const int sender = *reinterpret_cast<int *>(message + 4);
+        log_say("Received MAYBE DEAL", sender, 0, 0);
+        DiploWindow.receive_maybe_deal(sender);
+        return true;
+    }
+    default:
+        return false;
+    }
+}
+
+// Pinned direct targets 0x535BDB (LOCK) and 0x535D07 (LOCK GLOBAL). The
+// original Lock methods own their record/global-lock mutation; preserve the
+// packet argument order and the separate global-lock release test.
+static bool netdaemon_handle_client_lock_message(NetDaemon *daemon,
+                                                  unsigned short type,
+                                                  unsigned char *message,
+                                                  int sender_identity) {
+    const int sender = sender_identity;
+    if (type == 0x2210) {
+        const int field_10 = *reinterpret_cast<int *>(message + 0x10);
+        const int field_14 = *reinterpret_cast<int *>(message + 0x14);
+        log_say("From Client: LOCK", sender, field_10, field_14);
+
+        if ((SpockHelpActive != 0 || TurnControlWord93A954 != 0) &&
+            sender != ConsoleGlobal.faction_id_) {
+            log_say("(Sending: Lock failed -- REJECT)", 0, 0, 0);
+            message_data(0x1203, sender, 0, 0, 0, 0);
+            return true;
+        }
+        if (ConsoleControlTurnActive != 0) {
+            log_say("(Sending: Lock failed -- UPKEEP)", 0, 0, 0);
+            message_data(0x1203, sender, 0, 0, 0, 0);
+            return true;
+        }
+
+        const int result = daemon->locks_.lock(
+            sender, *reinterpret_cast<int *>(message + 0x18),
+            field_10, field_14,
+            *reinterpret_cast<int *>(message + 0x1C),
+            *reinterpret_cast<int *>(message + 0x24),
+            *reinterpret_cast<int *>(message + 0x20));
+        if (result != 0) {
+            log_say("(Sending: Lock Failed)", 0, 0, 0);
+            message_data(0x1201 +
+                         static_cast<int>(daemon->locks_.field_E0_ != 0),
+                         sender, 0, 0, 0, 0);
+            return true;
+        }
+
+        log_say("(Sending: Lock OK)", 0, 0, 0);
+        if ((*reinterpret_cast<unsigned char *>(message + 0x18) & 2u) != 0 &&
+            daemon->locks_.check_global_2(sender) != 0) {
+            message_data(0x2216, sender, 0, 0, 0, 0);
+        } else {
+            message_data(0x1201, sender, 0, 0, 0, 0);
+        }
+        return true;
+    }
+
+    if (type == 0x2211) {
+        log_say("From Client: LOCK GLOBAL", sender, 0, 0);
+        if (daemon->locks_.check_global_2(sender) != 0) {
+            message_data(0x1201 +
+                         static_cast<int>(daemon->locks_.field_E0_ != 0),
+                         sender, 0, 0, 0, 0);
+        }
+        daemon->locks_.check_global();
+        return true;
+    }
+    return false;
+}
+
+// The session packets carry opaque fixed-size records already owned by NetWin.
+// Keep the original bulk-copy extents and post-copy opcode reread/rebroadcast
+// order; these are not a new packet-shaped global or a second storage owner.
+static void netdaemon_rebroadcast_session_packet(NetDaemon *daemon,
+                                                  char *message,
+                                                  unsigned long message_size) {
+    unsigned short type = *reinterpret_cast<unsigned short *>(message);
+    if ((type & 0x2000u) != 0) {
+        type = static_cast<unsigned short>((type & 0xDFFFu) | 0x4000u);
+        *reinterpret_cast<unsigned short *>(message) = type;
+        daemon->send_message(message, message_size, 0);
+    }
+}
+
+static void netdaemon_handle_session_options(NetDaemon *daemon,
+                                              char *message,
+                                              unsigned long message_size) {
+    NetWinSessionOptions.receive_wire_block(
+        reinterpret_cast<const unsigned char *>(message + 0x10));
+    netdaemon_rebroadcast_session_packet(daemon, message, message_size);
+}
+
+static void netdaemon_handle_session_block(NetDaemon *daemon,
+                                            char *message,
+                                            unsigned long message_size) {
+    NetWinSessionData.receive_wire_block(
+        reinterpret_cast<const unsigned char *>(message + 0x10));
+    unsigned short type = *reinterpret_cast<unsigned short *>(message);
+    if ((type & 0x2000u) != 0) {
+        type = static_cast<unsigned short>((type & 0xDFFFu) | 0x4000u);
+        *reinterpret_cast<unsigned short *>(message) = type;
+        daemon->send_message(message, message_size, 0);
+    } else {
+        NetWinDialog.on_redraw();
+    }
+}
+
+static void netdaemon_handle_session_status(NetDaemon *daemon,
+                                             unsigned short type,
+                                             char *message,
+                                             unsigned long message_size) {
+    const int faction = *reinterpret_cast<int *>(message + 4);
+    if (type == 0x1F00 || type == 0x4E03 || type == 0x4F00)
+        daemon->lock_state_[0].leading_words_[2] = 1;
+
+    unsigned char *status = daemon->process_slots_[faction].status_bytes_;
+    status[0] = static_cast<unsigned char>(message[0x18]);
+    status[2] = static_cast<unsigned char>(message[0x14]);
+    status[1] = static_cast<unsigned char>(message[0x10]);
+    netdaemon_rebroadcast_session_packet(daemon, message, message_size);
+}
+
+// The three lobby-state targets 1F04/2F04/4F04 share the body at 0x537D62;
+// 1F04 and 4F04 additionally set NetDaemon+0x1B34 before entering it.
+// EDX is the dispatcher sentinel -1; EDI is reloaded from packet +4. Do not
+// replace that sentinel with a snapshot of the packet sender.
+static void netdaemon_handle_session_lobby(NetDaemon &daemon,
+                                           unsigned char *message,
+                                           unsigned short type,
+                                           unsigned long message_size) {
+    if (type == 0x1F04 || type == 0x4F04)
+        daemon.lock_state_[0].leading_words_[2] = 1;
+
+    unsigned short &wire_type = *reinterpret_cast<unsigned short *>(message);
+    const uint32_t sender = *reinterpret_cast<uint32_t *>(message + 4);
+    const uint32_t no_sender_sentinel = 0xFFFFFFFFu;
+    const bool has_sender = sender != no_sender_sentinel;
+
+    if ((wire_type & 0x2000u) != 0) {
+        wire_type = static_cast<unsigned short>(
+            (wire_type & static_cast<unsigned short>(~0x2000u)) | 0x4000u);
+
+        if (!has_sender) {
+            daemon.send_message(reinterpret_cast<char *>(message),
+                                message_size, 0);
+            return;
+        }
+
+        // EBP-0x14 begins as the saved NetDaemon `this` from 0x53442D. For
+        // any non-sentinel sender, 0x537D80 overwrites it with the old signed
+        // faction byte in that sender's row before any selection update. The
+        // sentinel paths return above without observing the saved-this value.
+        const intptr_t previous_faction =
+            NetWinLobbyRows[sender].faction_or_color_;
+
+        const unsigned int mode = NetWinSessionData.mode_;
+        if (mode == 2 || mode == 3) {
+            const int faction = static_cast<int8_t>(message[0x13]);
+            if (faction != -1) {
+                const NetWinFactionRecord *const records =
+                    static_cast<const NetWinFactionRecord *>(
+                        NetWinDialog.faction_records_);
+                if (records[faction].owner_ != 0 &&
+                    records[faction].owner_ !=
+                        *reinterpret_cast<uint32_t *>(message + 0x188)) {
+                    return;
+                }
+
+                for (int row_index = 1;
+                     row_index <= NetDaemonNet.player_count_; ++row_index) {
+                    if (static_cast<uint32_t>(row_index) == sender) continue;
+                    const int row_faction =
+                        NetWinLobbyRows[row_index].faction_or_color_;
+                    if (row_faction != -1 && row_faction == faction) return;
+                }
+
+            }
+            // The native -1 branch skips ownership/duplicate validation but
+            // still reaches the shared selected-row stores at 0x537E3C/48.
+            NetWinLobbyRows[sender].faction_or_color_ =
+                static_cast<int8_t>(faction);
+            NetWinLobbyRows[sender].owner_ =
+                *reinterpret_cast<uint32_t *>(message + 0x188);
+        }
+
+        // This comparison runs for every non-sentinel sender, even when the
+        // packet carries faction -1 or the dialog mode skipped selection.
+        const int current_faction =
+            NetWinLobbyRows[sender].faction_or_color_;
+        const int faction = static_cast<int8_t>(message[0x13]);
+        if (current_faction != faction ||
+            previous_faction != current_faction) {
+            NetWinDialog.fill_player(
+                reinterpret_cast<PlayerData *>(message + 0x10), faction);
+        }
+
+        daemon.send_message(reinterpret_cast<char *>(message),
+                            message_size, 0);
+        // The marked-bit branch jumps directly to the common process_message
+        // tail at 0x537E91/0x538266 after send_message; it does not notify or
+        // redraw here.
+        return;
+    }
+
+    if (!has_sender) {
+        std::memcpy(&NetWinLobbyRows[1], message + 0x10, 0xA64);
+        NetWinDialog.on_redraw();
+        return;
+    }
+
+    std::memcpy(&NetWinLobbyRows[sender], message + 0x10,
+                sizeof(NetWinLobbyRow));
+    if (daemon.lock_state_[0].leading_words_[1] != 0) {
+        const unsigned int tail_mode = NetWinSessionData.mode_;
+        if (tail_mode == 2 || tail_mode == 3) {
+            unsigned char notification[0x20];
+            *reinterpret_cast<unsigned short *>(notification) = 0x0F0E;
+            NetDaemonNet.Net::send(
+                notification,
+                sizeof(notification),
+                static_cast<unsigned long>(daemon.process_slots_[sender].pid_),
+                1);
+        }
+    }
+    NetWinDialog.on_redraw();
+}
+
+// Pinned process_message targets 0x536781, 0x536835, 0x536874, 0x5368E0,
+// and 0x536D0F, projected as source-owned routes on the existing daemon.
+// Preserve the distinct checksum source and local-completion branch.
+static void netdaemon_process_local_player_completion(NetDaemon &daemon) {
+    const uint32_t remaining = daemon.lock_state_[2].trailing_words_[2];
+    if (remaining != 0) {
+        log_say("Remaining Locked2", 0, 0, 0);
+        daemon.lock_state_[2].trailing_words_[2] = 0;
+        message_data(0x2214, 0, 0, 0, 0, 0);
+    } else {
+        daemon.lock_state_[2].leading_words_[3] = 0;
+    }
+}
+
+static bool netdaemon_handle_five_message_routes(
+        NetDaemon &daemon, unsigned short type, unsigned char *message,
+        unsigned long message_size) {
+    const int packet_faction = *reinterpret_cast<int *>(message + 4);
+    switch (type) {
+    case 0x4401: {
+        const int vehicle_id = *reinterpret_cast<int *>(message + 0x10);
+        const int direction = *reinterpret_cast<int *>(message + 0x14);
+        log_say("From Server: MOVE VEH", packet_faction, vehicle_id, direction);
+        my_srand(*reinterpret_cast<int *>(message + 8));
+        if (Vehs[vehicle_id].faction_id != packet_faction) {
+            if (daemon.lock_state_[0].leading_words_[1] != 0) {
+                SpockNotifyPending = 1;
+            } else {
+                message_data(0x2308, 0, 0, 0, 0, 0);
+            }
+        }
+        ::order_veh(vehicle_id, direction, 2);
+        log_say("Acknowledging MOVE VEH", packet_faction, 0, 0);
+        if (daemon.lock_state_[0].leading_words_[1] == 0)
+            daemon.lock_state_[0].leading_words_[0] =
+                static_cast<uint32_t>(message_size);
+        if (packet_faction == ConsoleGlobal.faction_id_)
+            netdaemon_process_local_player_completion(daemon);
+        return true;
+    }
+    case 0x4402: {
+        const int vehicle_id = *reinterpret_cast<int *>(message + 0x10);
+        const int direction = *reinterpret_cast<int *>(message + 0x14);
+        log_say("From Server: ARTY", packet_faction, vehicle_id, direction);
+        my_srand(*reinterpret_cast<int *>(message + 8));
+        daemon.lock_state_[1].leading_words_[3] = 2;
+        battle_fight(vehicle_id, direction, 1, 1, nullptr);
+        log_say("Acknowledging ARTY", packet_faction, 0, 0);
+        if (daemon.lock_state_[0].leading_words_[1] == 0)
+            daemon.lock_state_[0].leading_words_[0] =
+                static_cast<uint32_t>(message_size);
+        if (packet_faction == ConsoleGlobal.faction_id_)
+            netdaemon_process_local_player_completion(daemon);
+        return true;
+    }
+    case 0x4403: {
+        const int vehicle_id = *reinterpret_cast<int *>(message + 0x10);
+        const int x = *reinterpret_cast<int *>(message + 0x14);
+        const int y = *reinterpret_cast<int *>(message + 0x18);
+        my_srand(*reinterpret_cast<int *>(message + 8));
+        action_airdrop(vehicle_id, x, y, 2);
+        log_say("Acknowledging AIRDROP", packet_faction, 0, 0);
+        if (daemon.lock_state_[0].leading_words_[1] == 0)
+            daemon.lock_state_[0].leading_words_[0] =
+                static_cast<uint32_t>(message_size);
+        if (packet_faction == ConsoleGlobal.faction_id_)
+            netdaemon_process_local_player_completion(daemon);
+        return true;
+    }
+    case 0x4404: {
+        const int vehicle_id = *reinterpret_cast<int *>(message + 0x10);
+        const int order = Vehs[vehicle_id].order;
+        log_say("From Server: ACTION", packet_faction, vehicle_id, order);
+        my_srand(*reinterpret_cast<int *>(message + 8));
+        ::action(vehicle_id);
+        if (daemon.lock_state_[0].leading_words_[1] == 0)
+            daemon.lock_state_[0].leading_words_[0] =
+                static_cast<uint32_t>(message_size);
+        if (packet_faction == ConsoleGlobal.faction_id_)
+            netdaemon_process_local_player_completion(daemon);
+        return true;
+    }
+    case 0x4440: {
+        const int faction = *reinterpret_cast<int *>(message + 0x10);
+        const int partner = *reinterpret_cast<int *>(message + 0x14);
+        const int victim = *reinterpret_cast<int *>(message + 0x18);
+        log_say("From Server: DOUBLE CROSS", faction, partner, victim);
+        my_srand(*reinterpret_cast<int *>(message + 8));
+        double_cross(faction, partner, victim);
+        if (daemon.lock_state_[0].leading_words_[1] == 0)
+            daemon.lock_state_[0].leading_words_[0] =
+                *reinterpret_cast<uint32_t *>(message + 0x0C);
+        if (packet_faction == ConsoleGlobal.faction_id_)
+            netdaemon_process_local_player_completion(daemon);
+        return true;
+    }
+    default:
+        return false;
+    }
+}
+
+// Candidate helper for the four pinned Council message routes in
+// NetDaemon::process_message. Keep the caller's existing early file-transfer
+// and 0x1101 returns ahead of this dispatch; false leaves the old default
+// forwarding path untouched.
+static bool process_council_message(unsigned char *msg,
+                                    unsigned short type) {
+    // The original uses direct x86 dword reads from these wire offsets; keep
+    // that unchecked access/extent behavior instead of adding packet guards.
+    const int *const words = reinterpret_cast<const int *>(msg);
+    switch (type) {
+    case 0x4600:
+        log_say("Received CONVENE COUNCIL", words[4], words[5], words[6]);
+        my_srand(words[2]);
+        council(words[4], words[5], words[6]);
+        return true;
+    case 0x4601:
+        log_say("Received COUNCIL VOTE", words[4], 0, 0);
+        my_srand(words[2]);
+        CouncilWindow.set_vote(words[4], words[5]);
+        return true;
+    case 0x4602:
+        log_say("Received COUNCIL ARRIVE", 0, 0, 0);
+        CouncilWindow.arrived(words[4]);
+        return true;
+    case 0x4603:
+        log_say("Received COUNCIL RESOLUTION", 0, 0, 0);
+        CouncilWindow.make_resolution(1);
+        return true;
+    default:
+        return false;
+    }
+}
+
+// Pinned process_message targets 0x537CE9 (0x8240) and 0x537F35
+// (0x8241). The 0x1B7C word is lock_state_[1].leading_words_[5], and the
+// indexed 0x1B80 words are lock_state_[1].leading_words_[6..9]. `identity`
+// is the resolved EDI faction value used by the native dispatcher, not the
+// transport process ID passed to process_message.
+static bool netdaemon_handle_lock_mask_residual(NetDaemon &daemon,
+                                                 unsigned short type,
+                                                 unsigned char *message,
+                                                 int identity) {
+    if (type == 0x8240) {
+        const int first = *reinterpret_cast<int *>(message + 0x10);
+        const int second = *reinterpret_cast<int *>(message + 0x14);
+        const uint32_t mask =
+            (uint32_t(1) << (static_cast<uint32_t>(first) & 31u)) |
+            (uint32_t(1) << (static_cast<uint32_t>(second) & 31u));
+        uint32_t &aggregate = daemon.lock_state_[1].leading_words_[5];
+        const bool newly_acquired = (mask & aggregate) == 0;
+        if (newly_acquired) {
+            daemon.lock_state_[1].leading_words_[6 + identity] = mask;
+            aggregate |= mask;
+        }
+        log_say("Received OPEN CHANNEL request", identity, first, second);
+        message_data(0x1240, identity, newly_acquired, 0, 0, 0);
+        return true;
+    }
+
+    if (type == 0x8241) {
+        uint32_t &peer_mask =
+            daemon.lock_state_[1].leading_words_[6 + identity];
+        const uint32_t remaining =
+            daemon.lock_state_[1].leading_words_[5] & ~peer_mask;
+        daemon.lock_state_[1].leading_words_[5] = remaining;
+        log_say("Received CLOSE CHANNEL", identity, peer_mask, remaining);
+        peer_mask = 0;
+        return true;
+    }
+    return false;
+}
+
+// Pinned direct process_message routes 0x4B00, 0x4C00, and 0x4C01. These
+// compose existing NetMsg, FX, Net, and NetDaemon owners; the neighboring
+// 0x4C02 time-control route has additional branches and is not covered here.
+static bool netdaemon_handle_server_change_pause(NetDaemon &daemon,
+                                                 unsigned short type,
+                                                 int sender_id,
+                                                 int identity) {
+    if (type == 0x4B00) {
+        log_say("Received SERVER CHANGE message", 0, 0, 0);
+        NetMsgPrimary.pop("CHANGINGSERVERS", 0, 2, nullptr);
+        return true;
+    }
+    if (type == 0x4C00) {
+        uint32_t &paused = daemon.lock_state_[0].trailing_words_[4];
+        if (paused == 0) {
+            daemon.lock_state_[0].trailing_words_[5] =
+                static_cast<uint32_t>(timeGetTime()) -
+                static_cast<uint32_t>(NetDaemonWaitTicks);
+            g_FX.play(21);
+        }
+        const uint32_t sender_bit =
+            uint32_t(1) << (static_cast<uint32_t>(identity) & 31u);
+        paused |= sender_bit;
+        log_say("Received PAUSE message", identity,
+                static_cast<int>(paused), 0);
+        parse_says(0, daemon.get_player_name(
+                          static_cast<unsigned long>(sender_id)), -1, -1);
+        NetMsgPrimary.pop("PAUSED", 0, 2, nullptr);
+        return true;
+    }
+    if (type == 0x4C01) {
+        const uint32_t sender_bit =
+            uint32_t(1) << (static_cast<uint32_t>(identity) & 31u);
+        uint32_t &paused = daemon.lock_state_[0].trailing_words_[4];
+        paused &= ~sender_bit;
+        log_say("Received UNPAUSE message", identity,
+                static_cast<int>(paused), 0);
+        if (paused == 0) g_FX.play(21);
+        parse_says(0, daemon.get_player_name(
+                          static_cast<unsigned long>(sender_id)), -1, -1);
+        NetMsgPrimary.pop("UNPAUSED", 0, 2, nullptr);
+        return true;
+    }
+    return false;
+}
+
+// Positive pinned process_message routes using the current AlphaNet, Win,
+// Player, map and Console owners. Packet reads deliberately retain the native
+// unchecked offsets and ordering.
+static bool netdaemon_handle_chat_landmark_message(NetDaemon &daemon,
+                                                   unsigned char *msg,
+                                                   unsigned short type,
+                                                   int sender_id) {
+    const int *const words = reinterpret_cast<const int *>(msg);
+    const int faction = words[1];
+    if (type == 0x1E00 || type == 0x4E00) {
+        log_say("Received CHAT", StringTemp, faction, 0, 0);
+        if ((uint32_t(1) << (static_cast<uint32_t>(faction) & 31u)) &
+            static_cast<uint32_t>(MultiWindowContactStatusMask)) {
+            return true;
+        }
+        if (daemon.lock_state_[0].trailing_words_[0] == 1) {
+            const int slot = daemon.pid_2_idx(
+                static_cast<uint32_t>(sender_id));
+            if (slot < 0) return true;
+            NetWinDialog.new_chat(reinterpret_cast<char *>(msg + 0x10), slot);
+            return true;
+        }
+        if (CommlinkPending != 0) {
+            DiploWindow.new_chat(reinterpret_cast<char *>(msg + 0x10),
+                                 sender_id);
+            return true;
+        }
+
+        StringTemp[0] = '\0';
+        if (daemon.lock_state_[0].trailing_words_[0] < 2) {
+            strcat(StringTemp, daemon.get_player_name(
+                static_cast<unsigned long>(sender_id)));
+        } else {
+            const Player &player = Players[faction];
+            PluralityDefault = 0;
+            GenderDefault = player.is_leader_female;
+            strcat(StringTemp, player.title_leader);
+            strcat(StringTemp, " ");
+            PluralityDefault = 0;
+            GenderDefault = player.is_leader_female;
+            strcat(StringTemp, player.name_leader);
+        }
+        strcat(StringTemp, ": ");
+        strcat(StringTemp, reinterpret_cast<char *>(msg + 0x10));
+        MainInterfaceGlobal.chat(StringTemp, faction);
+        return true;
+    }
+
+    const int x = words[4];
+    const int y = words[5];
+    const char *const name = reinterpret_cast<const char *>(msg + 0x20);
+    if (type == 0x4E01) {
+        log_say("Received LANDMARK", name, x, y, 0);
+        new_landmark(x, y, name);
+        if (faction == ConsoleGlobal.faction_id_) draw_map(1);
+        return true;
+    }
+    if (type == 0x4E02) {
+        log_say("Received KILL LANDMARK", x, y, 0);
+        kill_landmark(x, y);
+        if (faction == ConsoleGlobal.faction_id_) draw_map(1);
+        return true;
+    }
+    if (type == 0x4E03) {
+        log_say("Received RENAME LANDMARK", name, x, y, 0);
+        const int landmark = find_landmark(x, y, 1);
+        if (landmark >= 0) strcpy(MapLandmark[landmark].name, name);
+        if (faction == ConsoleGlobal.faction_id_) draw_map(1);
+        return true;
+    }
+    return false;
+}
+
+// Pinned NetDaemon::process_message route for opcode 0x4C02. Call this after
+// the preceding specialized routes and before the default message forwarding
+// path. It returns true only for 0x4C02 and preserves the original unchecked
+// packet/state behavior.
+static int netdaemon_subtract_i32_bits(int left, int right) {
+    const uint32_t bits = static_cast<uint32_t>(left) -
+                          static_cast<uint32_t>(right);
+    int result;
+    memcpy(&result, &bits, sizeof result);
+    return result;
+}
+
+static bool netdaemon_handle_time_control(NetDaemon &daemon,
+                                          unsigned char *msg,
+                                          unsigned short type,
+                                          int sender_id,
+                                          int sender_identity) {
+    if (type != 0x4C02) {
+        return false;
+    }
+
+    log_say("Received TIME CONTROL message", sender_identity, 0, 0);
+
+    const int *const message_words = reinterpret_cast<const int *>(msg);
+    const int elapsed_ticks = netdaemon_subtract_i32_bits(
+        GameDataStateStorage.fields_.turn_control_duration_milliseconds_,
+        NetDaemonWaitTicks);
+    GameDataStateStorage.fields_.time_controls_selection_ = message_words[4];
+    set_time_controls();
+    NetDaemonWaitTicks = netdaemon_subtract_i32_bits(
+        GameDataStateStorage.fields_.turn_control_duration_milliseconds_,
+        elapsed_ticks);
+
+    if (sender_identity == ConsoleGlobal.faction_id_) {
+        NetMsgPrimary.pop("WECHANGEDTIME", 5000, 0, 0);
+        return true;
+    }
+
+    parse_says(0, daemon.Net::get_player_name(
+                      static_cast<uint32_t>(sender_id)), -1, -1);
+    const RulesTimeControl &control =
+        TimeControl[GameDataStateStorage.fields_.time_controls_selection_];
+    parse_num(0, control.turn);
+    parse_num(1, control.base);
+    parse_num(2, control.unit);
+    parse_num(3, control.extra);
+    parse_num(4, control.refresh);
+    parse_num(5, control.accumulated);
+
+    StringTemp[0] = 0;
+    strcat(StringTemp, "HECHANGEDTIME");
+    say_num(GameDataStateStorage.fields_.time_controls_selection_ != 0);
+    log_say("He Changed:", StringTemp, 0, 0, 0);
+    NetMsgPrimary.pop(StringTemp, 5000, 0, 0);
+    return true;
+}
+
+// Pinned NetDaemon::process_message arm 0x4D00 -> 0x537775. This is a
+// proposal fragment for insertion in the existing owner, not a new identity.
+// Keep packet-derived project and faction indices unchecked as in the image.
+static void netdaemon_process_project_4d00(unsigned char *message) {
+    const int project_id = *reinterpret_cast<int *>(message + 0x10);
+    const int project_status = *reinterpret_cast<int *>(message + 0x14);
+    const int related_project_id = *reinterpret_cast<int *>(message + 0x18);
+    const int faction_id = *reinterpret_cast<int *>(message + 0x04);
+
+    const RulesFacility &project = Facility[FacilitySPStart + project_id];
+    const int project_name_id =
+        static_cast<int>(reinterpret_cast<intptr_t>(project.name));
+    const char *project_name = StringTable.get(project_name_id);
+    log_say("Received PROJECT", project_name, faction_id, project_status,
+            related_project_id);
+
+    if (faction_id == ConsoleGlobal.faction_id_) {
+        return;
+    }
+    if (project_status < 0) {
+        NetMsgPrimary.pop("HALTPROJECT", 5000, 2, nullptr);
+        return;
+    }
+    if (project_status > 2) {
+        return;
+    }
+
+    const Player &faction = Players[faction_id];
+    if (project_status == 2) {
+        // The original leaves both parser defaults untouched for slots 0/1.
+        parse_says(0, faction.adj_name_faction, -1, -1);
+        const int related_name_id = static_cast<int>(
+            reinterpret_cast<intptr_t>(
+                Facility[FacilitySPStart + related_project_id].name));
+        parse_say(1, related_name_id, -1, -1);
+
+        GenderDefault = faction.noun_gender;
+        PluralityDefault = faction.is_noun_plural;
+        parse_says(2, faction.noun_faction, -1, -1);
+        parse_say(3, project_name_id, -1, -1);
+        NetMsgPrimary.pop("CHANGEPROJECT", 5000, 2, nullptr);
+        return;
+    }
+
+    PluralityDefault = 0;
+    GenderDefault = faction.is_leader_female;
+    parse_says(0, faction.title_leader, -1, -1);
+
+    GenderDefault = faction.is_leader_female;
+    PluralityDefault = 0;
+    parse_says(1, faction.name_leader, -1, -1);
+
+    GenderDefault = faction.noun_gender;
+    PluralityDefault = faction.is_noun_plural;
+    parse_says(2, faction.noun_faction, -1, -1);
+    parse_say(3, project_name_id, -1, -1);
+
+    if (project_status == 0) {
+        NetMsgPrimary.pop("BEGINPROJECT", 5000, 2, nullptr);
+        return;
+    }
+
+    const int base_id = base_project(project_id);
+    if (base_id >= 0 && Bases[base_id].faction_id_current == faction_id) {
+        return;
+    }
+    NetMsgPrimary.pop("HALTPROJECT", 5000, 2, nullptr);
+}
+
 // ORIGINAL: 0x00534400 ?process_message@NetDaemon@@QAEXPADKH@Z 0x00534400-0x005388B9;0x0065E0C2-0x0065E442 FILE
+// Historical seed status: the following TRIED describes the superseded
+// first-band-only body, not the dispatch arms now implemented below.
+// The cold span is the same frame's compiler-generated exception cleanup;
+// automatic Popup/Filemap and nested modal objects own normal/unwind teardown.
 // TRIED: no Ghidra hypothesis was available for this one (raw asm only). The real dispatcher spans ~67 distinct message-type case bodies across several chained range checks up to type 0x1300+; only the first band (0xF05-0xF0F, 11 cases) and the shared default "fixup_message + send_message" forwarding path (the target of the large majority of jump-table slots) were read from the disassembly and modelled. Everything above type 0x1101 is unimplemented.
 // working copy - scaffold materialised by --work
 // size      18489 bytes
@@ -4210,11 +6099,12 @@ void NetDaemon::process_message(char *message, unsigned long message_size, int s
     Popup popup;
     NetDaemonTransferModalCloseGuard guard(popup);
     Filemap filemap;
-    // process_message reaches three daemon fields by offset - 0x1B30 is
-    // lock_state_[0].dword_[1], named below; 0x1B74 is lock_state_[1].dword_[3]
-    // and 0x1BB8 is lock_state_[2].dword_[5], both in parts of the dispatcher
-    // this transcription does not reach - and one per-slot byte table at
-    // 0x794, the first player's status byte at record offset +0x28.
+    // The acknowledged-sync request uses lock_state_[2].trailing_words_[1]
+    // at +0x1BBC; its local completion clears trailing_words_[0] at +0x1BB8.
+    // The DONE UPKEEP handshake uses lock_state_[0].trailing_words_[8]
+    // and lock_state_[1].leading_words_[1]; peer identities come from
+    // AlphaNet::process_slots_. The UPKEEP INFO response updates the
+    // existing GameDataStateStorage wait bit and faction masks.
 
     unsigned char *msg = reinterpret_cast<unsigned char *>(message);
     unsigned short type = *reinterpret_cast<unsigned short *>(message);
@@ -4242,8 +6132,151 @@ void NetDaemon::process_message(char *message, unsigned long message_size, int s
         }
     }
 
-    if (type == 0x1101) {
-        // TODO: 0x53624a - not reconstructed (schedule/ready-state update).
+    if (netdaemon_handle_diplo_cd_message(type, msg)) {
+        netdaemon_process_message_marker_tail(*this, msg);
+        return;
+    }
+
+    if ((type >= 0x1201 && type <= 0x1208) ||
+        type == 0x1240 || type == 0x4301 ||
+        type == 0x4303 || type == 0x2308) {
+        netdaemon_handle_server_lock_status(this, type, msg, sender_id);
+        netdaemon_process_message_marker_tail(*this, msg);
+        return;
+    }
+
+    if (type == 0x1101 || type == 0x4101) {
+        netdaemon_process_sync_request(this, msg);
+        netdaemon_process_message_marker_tail(*this, msg);
+        return;
+    }
+
+    if (type == 0x2302) {
+        netdaemon_handle_withdraw_end_turn(this, msg, sender_id);
+        netdaemon_process_message_marker_tail(*this, msg);
+        return;
+    }
+    if (type == 0x2303) {
+        netdaemon_handle_client_done_upkeep(this, msg, sender_id);
+        netdaemon_process_message_marker_tail(*this, msg);
+        return;
+    }
+    if (type == 0x2301 || type == 0x8301) {
+        netdaemon_handle_client_done_turn(this,
+            this->AlphaNet::pid_2_who(static_cast<unsigned long>(sender_id)));
+        netdaemon_process_message_marker_tail(*this, msg);
+        return;
+    }
+    if (type == 0x1303) {
+        netdaemon_handle_server_upkeep_info(this, msg);
+        netdaemon_process_message_marker_tail(*this, msg);
+        return;
+    }
+    if (type == 0x1302) {
+        netdaemon_handle_withdraw_approved(this, msg);
+        netdaemon_process_message_marker_tail(*this, msg);
+        return;
+    }
+    if (type == 0x1301) {
+        netdaemon_handle_server_turn_info(this, msg);
+        netdaemon_process_message_marker_tail(*this, msg);
+        return;
+    }
+
+    if (netdaemon_handle_direct_diplomacy_complete(
+            type, msg, popup, MultiWindowContactStatusMask)) {
+        netdaemon_process_message_marker_tail(*this, msg);
+        return;
+    }
+
+    if (type == 0x1F04 || type == 0x2F04 || type == 0x4F04) {
+        netdaemon_handle_session_lobby(*this, msg, type, message_size);
+        netdaemon_process_message_marker_tail(*this, msg);
+        return;
+    }
+
+    if (type == 0x1F02 || type == 0x2F02 || type == 0x4F02) {
+        netdaemon_handle_session_options(this, message, message_size);
+        netdaemon_process_message_marker_tail(*this, msg);
+        return;
+    }
+    if (type == 0x1F03 || type == 0x2F03 || type == 0x4F03) {
+        netdaemon_handle_session_block(this, message, message_size);
+        netdaemon_process_message_marker_tail(*this, msg);
+        return;
+    }
+    if (type == 0x1F00 || type == 0x2F00 || type == 0x4F00) {
+        netdaemon_handle_session_status(this, type, message, message_size);
+        netdaemon_process_message_marker_tail(*this, msg);
+        return;
+    }
+
+    if (type >= 0x2212 && type <= 0x2216) {
+        if (netdaemon_process_table_e(*this, msg, type,
+                this->AlphaNet::pid_2_who(static_cast<unsigned long>(sender_id)))) {
+            netdaemon_process_message_marker_tail(*this, msg);
+            return;
+        }
+    }
+
+    if (type == 0x2210 || type == 0x2211) {
+        netdaemon_handle_client_lock_message(this, type, msg,
+            this->AlphaNet::pid_2_who(static_cast<unsigned long>(sender_id)));
+        netdaemon_process_message_marker_tail(*this, msg);
+        return;
+    }
+
+    if (type >= 0x4304 && type <= 0x4309) {
+        if (netdaemon_handle_table_f(this, type, msg, sender_id)) {
+            netdaemon_process_message_marker_tail(*this, msg);
+            return;
+        }
+    }
+
+    if (netdaemon_process_table_g(*this, msg, type)) {
+        return;
+    }
+
+    if (netdaemon_handle_table_h(message)) {
+        netdaemon_process_message_marker_tail(*this, msg);
+        return;
+    }
+
+    if (netdaemon_handle_five_message_routes(
+            *this, type, msg, message_size)) {
+        netdaemon_process_message_marker_tail(*this, msg);
+        return;
+    }
+    if (process_council_message(msg, type)) {
+        netdaemon_process_message_marker_tail(*this, msg);
+        return;
+    }
+    if (netdaemon_handle_lock_mask_residual(
+            *this, type, msg,
+            this->AlphaNet::pid_2_who(static_cast<unsigned long>(sender_id)))) {
+        netdaemon_process_message_marker_tail(*this, msg);
+        return;
+    }
+    if (netdaemon_handle_server_change_pause(
+            *this, type, sender_id,
+            this->AlphaNet::pid_2_who(static_cast<unsigned long>(sender_id)))) {
+        netdaemon_process_message_marker_tail(*this, msg);
+        return;
+    }
+    if (netdaemon_handle_time_control(
+            *this, msg, type, sender_id,
+            this->AlphaNet::pid_2_who(static_cast<unsigned long>(sender_id)))) {
+        netdaemon_process_message_marker_tail(*this, msg);
+        return;
+    }
+    if (netdaemon_handle_chat_landmark_message(
+            *this, msg, type, sender_id)) {
+        netdaemon_process_message_marker_tail(*this, msg);
+        return;
+    }
+    if (type == 0x4D00) {
+        netdaemon_process_project_4d00(msg);
+        netdaemon_process_message_marker_tail(*this, msg);
         return;
     }
 
@@ -4262,6 +6295,7 @@ void NetDaemon::process_message(char *message, unsigned long message_size, int s
         }
     }
 
+    netdaemon_process_message_marker_tail(*this, msg);
 }
 
 // ORIGINAL: 0x0051F1B0 ?check_spock@@YAXXZ 0x0051F1B0-0x0051F1F2 BYTE_EXACT
