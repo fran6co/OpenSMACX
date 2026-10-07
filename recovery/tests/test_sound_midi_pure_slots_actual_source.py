@@ -7,6 +7,7 @@ audio behavior; those remain coordinator/native-build obligations.
 from __future__ import annotations
 
 import os
+import hashlib
 from pathlib import Path
 import shutil
 import subprocess
@@ -134,6 +135,52 @@ def test_pinned_sound_midi_ambience_and_wave_slot_targets_without_native_tools()
         ("xor", "eax, eax"), ("ret", "")]
     assert [(op.mnemonic, op.op_str) for op in setter_body] == [
         ("mov", "eax, 0xb"), ("ret", "4")]
+
+
+def test_pinned_play_type_null_path_returns_before_the_adjacent_initializer():
+    """Decode from the real entry, not from its overlapping historical end.
+
+    This proves the original control-flow/register observation only. A missing
+    C++ return does not prove that VC6 preserves the incoming EAX value.
+    """
+    assert image_pin(ROOT) == PIN
+    path = Path(os.environ.get("OPENSMACX_IMAGE",
+                              ROOT / ".opensmacx/game/terranx_original.exe"))
+    if not path.is_file():
+        pytest.skip("pinned original image is not installed")
+    raw = path.read_bytes()
+    assert hashlib.sha256(raw).hexdigest() == PIN
+    image = PeImage(raw, PIN)
+    decoder = Cs(CS_ARCH_X86, CS_MODE_32)
+    decoder.detail = True
+    ops = list(decoder.disasm(image.read(Span(0x4C8050, 0x4C8072)),
+                             0x4C8050))
+    by_address = {op.address: op for op in ops}
+    assert [(by_address[address].mnemonic, by_address[address].op_str)
+            for address in (0x4C8050, 0x4C8051, 0x4C8053, 0x4C8056,
+                            0x4C8058, 0x4C8066, 0x4C8067)] == [
+        ("push", "ebp"), ("mov", "ebp, esp"),
+        ("mov", "ecx, dword ptr [ecx + 0x3c]"),
+        ("test", "ecx, ecx"), ("je", "0x4c8066"),
+        ("pop", "ebp"), ("ret", "4")]
+    null_path = (0x4C8050, 0x4C8051, 0x4C8053, 0x4C8056,
+                 0x4C8058, 0x4C8066, 0x4C8067)
+    for address in null_path:
+        _, written = by_address[address].regs_access()
+        assert "eax" not in [decoder.reg_name(reg) for reg in written]
+    assert by_address[0x4C8067].address + by_address[0x4C8067].size == 0x4C806A
+    assert all(by_address[address].mnemonic == "nop"
+               for address in range(0x4C806A, 0x4C8070))
+    assert (by_address[0x4C8070].mnemonic,
+            by_address[0x4C8070].op_str) == ("mov", "eax, ecx")
+    assert by_address[0x4C8060].mnemonic == "call"
+    assert by_address[0x4C8060].op_str == "dword ptr [eax + 0x11c]"
+    midi = next(row for row in read_file(ROOT / "src/midi.cpp")
+                if row.address == 0x4C8050)
+    adjacent = next(row for row in read_file(ROOT / "src/word_state.cpp")
+                    if row.address == 0x4C8070)
+    assert midi.image_spans == ((0x4C8050, 0x4C8072),)
+    assert adjacent.image_spans == ((0x4C8070, 0x4C8089),)
 
 
 def test_product_contract_is_pure_on_sound_and_concrete_on_midi():

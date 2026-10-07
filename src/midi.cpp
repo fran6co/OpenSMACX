@@ -1088,15 +1088,24 @@ bool Midi::is_trackset_playing(unsigned int trackset) {
 
 // ORIGINAL: 0x004C8050 ?set_play_type@Midi@@QAEHI@Z 0x004C8050-0x004C8072
 // symbol    ?set_play_type@Midi@@UAEHI@Z
+// Historical TRIED interpretation below is disproven by entry-based decoding:
+// the null-delegate branch reaches pop ebp / ret 4 at 0x004C8066/0x004C8067.
+// Six padding NOPs follow; mov eax, ecx at 0x004C8070 belongs to the separate
+// mapped initializer, and is never reached by this forwarder's null path.
+// On that path this method does not write EAX: its result depends on incoming
+// register state, not this or a defined zero. The missing C++ return remains an
+// unresolved compiler-effects obligation, not proof of faithful reproduction.
+// Keep the historical span/claim obligations; this correction does not change
+// the original marker or pretend to resolve its overlap with the next entry.
 // TRIED: the guarded forwarder is byte-identical for 11 instructions and then
 //   the image has six `nop`s and `mov eax, ecx` - on the null delegate path the
 //   original returns `this` in eax, not an unset eax, so the artifact's "no
 //   return, the original leaves eax untouched" note is wrong about what the
 //   caller sees. Spelling that needs `return (int)this;`, a pointer-as-int
 //   cast the class-debt ratchet holds at zero. Left at 11 of 18.
-// BUG IN THE ORIGINAL: the shipped body leaves eax = `this` on the null path
+// Historical incorrect conclusion: the shipped body leaves eax = `this` on the null path
       //   because ecx still holds it, so callers read a pointer as the int result.
-//   Reproduced as-is; not corrected.
+//   Historical reproduction claim is unverified; see the correction above.
 int Midi::set_play_type(unsigned int type) {
     MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
     if (delegate != nullptr) {
