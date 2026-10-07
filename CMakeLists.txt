@@ -128,6 +128,7 @@ set(OPENSMACX_SOURCES
     src/matrix3.cpp
     src/filebox.cpp
     src/leaf_recoveries.cpp
+    src/byte_utilities.cpp
     src/selectpartwin.cpp
     src/shared_word.cpp
     src/fx.cpp
