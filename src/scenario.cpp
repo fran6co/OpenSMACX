@@ -25,31 +25,16 @@ extern "C" void __cdecl scenario_human_turn_ready(Console *self);
 
 namespace {
 
-static const uintptr_t TopMenuAddress = 0x0058E360;
-static const uintptr_t OpeningMovieAddress = 0x00403BE0;
-static const uintptr_t LoadFlagsAddress = 0x00453F70;
 // Historical finding (superseded): the 2026-09-05 absolute-reference
 // scan missed MainInterface's array constructor because it searched for an
 // immediate-address vptr store. Pinned constructor 0x0045EF10 builds the
 // 42-element FlatButton member array at this+0xE00, stride 0xB4C; element
 // 2 is 0x007B0CB8. Keep the same object's behavior through that owner.
-static const uintptr_t ActionGoToAddress = 0x004CB310;
 static const uintptr_t TurnUpkeepCallerReturn = 0x0052768F;
 // The turn-loop exit flag and the turn phase are named globals now - see
 // game.h (ExitTurnLoop, ControlTurnPhase); the raw uintptr_t bindings that
 // stood here were retired when control_game was homed into game.cpp on
 // 2026-08-29 and both addresses gained real definitions.
-
-typedef int (__cdecl *TopMenuFunction)(int);
-typedef void (__cdecl *OpeningMovieFunction)(char *);
-typedef void (__cdecl *LoadFlagsFunction)();
-typedef void (__cdecl *ActionGoToFunction)(int);
-
-TopMenuFunction OriginalTopMenu = reinterpret_cast<TopMenuFunction>(TopMenuAddress);
-OpeningMovieFunction OriginalOpeningMovie =
-    reinterpret_cast<OpeningMovieFunction>(OpeningMovieAddress);
-LoadFlagsFunction LoadFlags = reinterpret_cast<LoadFlagsFunction>(LoadFlagsAddress);
-ActionGoToFunction ActionGoTo = reinterpret_cast<ActionGoToFunction>(ActionGoToAddress);
 
 // A namespaced plain enum rather than `enum class`, which VC6 does not have.
 // It keeps every `ScenarioPhase::Finished` at the sixteen use sites spelt
@@ -178,7 +163,7 @@ void refresh_loaded_game() {
     for (int faction = 1; faction < 8; faction++) {
         load_faction_art(faction);
     }
-    LoadFlags();
+    load_flags();
     GameDataStateStorage.fields_.game_state_ &= 0xF79FCF16;
 
     // Original slot 2 on this selected FlatButton view is its hide action.
@@ -327,7 +312,7 @@ void execute_commands(Console *self) {
         && Vehs[State.vehicle_id].waypoint_y[0] == State.target_y;
     if (State.resolve_movement && movement_ordered) {
         write_progress("before_move_resolution");
-        ActionGoTo(State.vehicle_id);
+        action_go_to(State.vehicle_id);
         write_progress("after_move_resolution");
     }
     int movement_cost = static_cast<int>(Vehs[State.vehicle_id].moves_expended)
@@ -396,22 +381,15 @@ void __cdecl scenario_opening_movie(char *movie_name) {
     // (docs/RETIRED_ROUTES.md); the hook point is recorded in case it returns.
     if (GetEnvironmentVariableA("OPENSMACX_SCENARIO_SAVE", nullptr, 0) == 0
         || GetEnvironmentVariableA("OPENSMACX_SCENARIO_RESULT", nullptr, 0) == 0) {
-        OriginalOpeningMovie(movie_name);
+        amovie_project(movie_name);
     }
 }
 
-extern "C" {
-volatile int ScenarioTrampolineAction = 0;
-volatile int ScenarioTurnAdvanceAction = 0;
-}
-
 extern "C" void __cdecl scenario_human_turn_ready(Console *self) {
-    ScenarioTrampolineAction = 0;
     if (State.phase == ScenarioPhase::Inactive
         || State.phase == ScenarioPhase::AwaitingAdvance) {
         return;
     }
-    ScenarioTrampolineAction = 2;
     if (State.phase == ScenarioPhase::Finished) {
         ExitTurnLoop = 1;
         return;
@@ -432,11 +410,9 @@ extern "C" void __cdecl scenario_human_turn_ready(Console *self) {
 }
 
 extern "C" void __cdecl scenario_turn_advanced(uintptr_t caller_return) {
-    ScenarioTurnAdvanceAction = 0;
     if (State.phase != ScenarioPhase::AwaitingAdvance) {
         return;
     }
-    ScenarioTurnAdvanceAction = 1;
     int advanced_turn = GameDataStateStorage.fields_.turn_current_num_;
     uint32_t expected_year = game_year(advanced_turn);
     bool turn_advanced = caller_return == TurnUpkeepCallerReturn
@@ -500,54 +476,9 @@ extern "C" void __cdecl scenario_turn_advanced(uintptr_t caller_return) {
     }
 }
 
-__declspec(naked) void scenario_human_turn_trampoline() {
-    __asm {
-        mov dword ptr [esi + 023D24h], edi
-        pushfd
-        pushad
-        push esi
-        call scenario_human_turn_ready
-        add esp, 4
-        cmp ScenarioTrampolineAction, 0
-        jne exit_human_turn
-        popad
-        popfd
-        push 0051418Fh
-        ret
-    exit_human_turn:
-        popad
-        popfd
-        push 005147B9h
-        ret
-    }
-}
-
-__declspec(naked) void scenario_turn_advance_trampoline() {
-    __asm {
-        pushfd
-        pushad
-        push dword ptr [ebp + 4]
-        call scenario_turn_advanced
-        add esp, 4
-        cmp ScenarioTurnAdvanceAction, 0
-        jne exit_upkeep
-        popad
-        popfd
-        push 00525AF9h
-        push 0046FB10h
-        ret
-    exit_upkeep:
-        popad
-        popfd
-        mov dword ptr [ebp + 4], 005282CEh
-        push 00526026h
-        ret
-    }
-}
-
 int __cdecl scenario_top_menu(int mode) {
     if (!configure_scenario()) {
-        return OriginalTopMenu(mode);
+        return top_menu(mode);
     }
     if (State.phase == ScenarioPhase::Finished) {
         return 1;

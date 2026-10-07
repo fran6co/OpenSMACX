@@ -13,5 +13,3 @@ class Console;
 
 int __cdecl scenario_top_menu(int mode);
 void __cdecl scenario_opening_movie(char *movie_name);
-void scenario_human_turn_trampoline();
-void scenario_turn_advance_trampoline();
