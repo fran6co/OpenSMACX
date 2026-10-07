@@ -1120,6 +1120,10 @@ RangePrefixInitializationView::RangePrefixInitializationView() {
 
 class TimeRangeReceiverView {
 public:
+    // Endpoint operations and sample share only the observed fields;
+    // original class and lifetime ownership are not established.
+    void set_lower_endpoint(int value);
+    void set_upper_endpoint(int value);
     int sample();
 private:
     unsigned char unobserved_prefix_0_[4];
@@ -1128,6 +1132,91 @@ private:
     int lower_bound_8_;
     int upper_bound_C_;
 };
+
+
+// The paired operations update the two bounds in their original order. Their
+// unsigned comparisons are pinned behavior, not a claim about endpoint meaning.
+/*
+ * RECOVERY_HISTORY: v1 address=0x004C80C0 source_sha256=e7103f386f51cc4338c932611b975da2e3655a90005600cdac86173b07d8c0ee envelope_sha256=e0d6eb0a4d32e64334cc1f4cded43e7d701b510f32d7a1a14fb4d75f7ad5a11f
+ * [ARCHIVE] /*
+ * [ARCHIVE] Purpose: Clamp field 0xc against an argument, then store unconditionally.
+ * [ARCHIVE]          Emitted by tools/generate_field_accessors.py from
+ * [ARCHIVE]
+ * [ARCHIVE]              push ebp / mov ebp, esp / mov eax, dword ptr [ebp + 8] / mov edx, dword ptr [ecx + 0xc] / cmp edx, eax / jae 0x4c80d0 / mov dword ptr [ecx + 0xc], eax / mov dword ptr [ecx + 8], eax / pop ebp / ret 4
+ * [ARCHIVE]
+ * [ARCHIVE]          The name is the ADDRESS, not an invention, and `self` is a void
+ * [ARCHIVE]          pointer because this body needs `this` to be nothing more than a
+ * [ARCHIVE]          pointer and an offset - the class it belongs to is not established.
+ * [ARCHIVE]          The adapter declares 1 stack dword(s) so it
+ * [ARCHIVE]          cleans 4 bytes, taken from the body's own `ret` -
+ * [ARCHIVE]          the only statement of this function's arity that exists, since it has
+ * [ARCHIVE]          no mangled name. Declaring fewer would leave them on the caller's
+ * [ARCHIVE]          stack.
+ * [ARCHIVE] // RECOVERY_ROLE: SCAFFOLD Untyped raw-field or constant adapter; real method ownership and named member relationships remain recovery obligations.
+ * [ARCHIVE] // original marker: 0x004C80C0 sub_4c80c0 0x004C80C0-0x004C80D7 BYTE_EXACT
+ * [ARCHIVE] // symbol    ?field_accessor_004c80c0_redirect@@YIXPAX0H@Z
+ * [ARCHIVE] // size      23 bytes
+ * [ARCHIVE] // prototype
+ * [ARCHIVE] // callers   0   call targets   0
+ * [ARCHIVE] // kind      game
+ * [ARCHIVE] // flags     frame;hidden;sp_ready;purged_ok
+ * [ARCHIVE] // calls     (none)
+ * [ARCHIVE] Return Value: n/a
+ * [ARCHIVE] Status: Complete
+ * [ARCHIVE] * /
+ */
+// RECOVERY_ROLE: SCAFFOLD Provisional TimeRangeReceiverView member/layout: pinned endpoint operations write the same +8/+C fields read by mapped 0x004C8350, supporting one observed-state API. The original complete class identity, object extent, construction, caller set, and lifetime remain unproved.
+// ORIGINAL: 0x004C80C0 sub_4c80c0 0x004C80C0-0x004C80D7 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x004C80C0-0x004C80D7: ECX receiver, one stack dword, unsigned endpoint compare and ordered stores at +8/+C", "source:src/time.cpp mapped 0x004C8350 reads the same +8/+C signed bounds and byte +4 flag through TimeRangeReceiverView", "pinned-analysis limitation: no caller, constructor, allocation extent, or runtime lifetime witness is available for these endpoints"], "reason": "Place the paired endpoint operation in the same provisional observed-field view as 0x004C8350 because the pinned endpoint stores and mapped sample reads address the same +8/+C fields, while the sample also reads the +4 flag. This supports shared field API closure, not original complete class identity, object extent, constructor, caller set, or lifetime. Preserve the pinned unsigned comparisons and store order."}
+// symbol    ?set_lower_endpoint@TimeRangeReceiverView@@QAEXH@Z
+// kind      game
+void TimeRangeReceiverView::set_lower_endpoint(int value) {
+    if (static_cast<DWORD>(upper_bound_C_) < static_cast<DWORD>(value)) {
+        upper_bound_C_ = value;
+    }
+    lower_bound_8_ = value;
+}
+
+/*
+ * RECOVERY_HISTORY: v1 address=0x004C80E0 source_sha256=e7103f386f51cc4338c932611b975da2e3655a90005600cdac86173b07d8c0ee envelope_sha256=8c15061494d8d9b690e02e41f5aa7054bafa4a713979ab8f6841a65deb438b95
+ * [ARCHIVE] /*
+ * [ARCHIVE] Purpose: Clamp field 0x8 against an argument, then store unconditionally.
+ * [ARCHIVE]          Emitted by tools/generate_field_accessors.py from
+ * [ARCHIVE]
+ * [ARCHIVE]              push ebp / mov ebp, esp / mov eax, dword ptr [ebp + 8] / mov edx, dword ptr [ecx + 8] / cmp edx, eax / jbe 0x4c80f0 / mov dword ptr [ecx + 8], eax / mov dword ptr [ecx + 0xc], eax / pop ebp / ret 4
+ * [ARCHIVE]
+ * [ARCHIVE]          The name is the ADDRESS, not an invention, and `self` is a void
+ * [ARCHIVE]          pointer because this body needs `this` to be nothing more than a
+ * [ARCHIVE]          pointer and an offset - the class it belongs to is not established.
+ * [ARCHIVE]          The adapter declares 1 stack dword(s) so it
+ * [ARCHIVE]          cleans 4 bytes, taken from the body's own `ret` -
+ * [ARCHIVE]          the only statement of this function's arity that exists, since it has
+ * [ARCHIVE]          no mangled name. Declaring fewer would leave them on the caller's
+ * [ARCHIVE]          stack.
+ * [ARCHIVE] // RECOVERY_ROLE: SCAFFOLD Untyped raw-field or constant adapter; real method ownership and named member relationships remain recovery obligations.
+ * [ARCHIVE] // original marker: 0x004C80E0 sub_4c80e0 0x004C80E0-0x004C80F7 BYTE_EXACT
+ * [ARCHIVE] // symbol    ?field_accessor_004c80e0_redirect@@YIXPAX0H@Z
+ * [ARCHIVE] // size      23 bytes
+ * [ARCHIVE] // prototype
+ * [ARCHIVE] // callers   0   call targets   0
+ * [ARCHIVE] // kind      game
+ * [ARCHIVE] // flags     frame;hidden;sp_ready;purged_ok
+ * [ARCHIVE] // calls     (none)
+ * [ARCHIVE] Return Value: n/a
+ * [ARCHIVE] Status: Complete
+ * [ARCHIVE] * /
+ */
+// RECOVERY_ROLE: SCAFFOLD Provisional TimeRangeReceiverView member/layout: pinned endpoint operations write the same +8/+C fields read by mapped 0x004C8350, supporting one observed-state API. The original complete class identity, object extent, construction, caller set, and lifetime remain unproved.
+// ORIGINAL: 0x004C80E0 sub_4c80e0 0x004C80E0-0x004C80F7 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x004C80E0-0x004C80F7: ECX receiver, one stack dword, unsigned endpoint compare and ordered stores at +8/+C", "source:src/time.cpp mapped 0x004C8350 reads the same +8/+C signed bounds and byte +4 flag through TimeRangeReceiverView", "pinned-analysis limitation: no caller, constructor, allocation extent, or runtime lifetime witness is available for these endpoints"], "reason": "Place the paired endpoint operation in the same provisional observed-field view as 0x004C8350 because the pinned endpoint stores and mapped sample reads address the same +8/+C fields, while the sample also reads the +4 flag. This supports shared field API closure, not original complete class identity, object extent, constructor, caller set, or lifetime. Preserve the pinned unsigned comparisons and store order."}
+// symbol    ?set_upper_endpoint@TimeRangeReceiverView@@QAEXH@Z
+// kind      game
+void TimeRangeReceiverView::set_upper_endpoint(int value) {
+    if (static_cast<DWORD>(lower_bound_8_) > static_cast<DWORD>(value)) {
+        lower_bound_8_ = value;
+    }
+    upper_bound_C_ = value;
+}
 
 // Historical TRIED: the seed candidate calculated range before the clock call;
 // the compiler scheduled the call earlier, retaining both endpoints and using
@@ -1144,8 +1233,9 @@ static int range_view_wrapped_upper_add(int upper, DWORD remainder) {
 
 // Historical seed called this an unknown Subject::roll and kept an IAT alias;
 // that is not pinned class/API evidence. The actual source uses the SDK clock.
-// ORIGINAL: 0x004C8350 sub_4c8350 0x004C8350-0x004C8396
-// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x004C8350-0x004C8396: thiscall reads byte[this+4]&1; signed-compares dwords+8/+C; forms a wrapped unsigned inclusive difference before timeGetTime; divides unsigned; reloads +C after the call and adds the remainder", "pinned calls at 0x004C836D and 0x004C8384 target PE import slot 0x00669368, which uniquely resolves to WINMM timeGetTime; the normal SDK API is used, not an executable-address alias", "promoted historical seed src/recovered/units/004c8350.cpp retained the complete70-byte span and MISMATCH state; prior range-before-clock source-shape observation is preserved here for later restoration", "pinned scan: no direct caller edge or absolute-address data reference to 4C8350 was found"], "reason": "Implement the observed time-based range read through a separate provisional receiver view. Preserve signed branch comparison, unsigned 32-bit range wrap, zero-divisor failure, the post-clock upper-field reload, and wrapped return addition. Do not claim a shared class/lifetime with the adjacent reset view or infer storage beyond accessed bytes."}
+// RECOVERY_ROLE: SCAFFOLD Provisional TimeRangeReceiverView member/layout: pinned endpoint operations write the same +8/+C fields read by mapped 0x004C8350, supporting one observed-state API. The original complete class identity, object extent, construction, caller set, and lifetime remain unproved.
+// ORIGINAL: 0x004C8350 sub_4c8350 0x004C8350-0x004C8396 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x004C8350-0x004C8396: thiscall reads byte[this+4]&1; signed-compares dwords+8/+C; forms a wrapped unsigned inclusive difference before timeGetTime; divides unsigned; reloads +C after the call and adds the remainder", "pinned calls at 0x004C836D and 0x004C8384 target PE import slot 0x00669368, which uniquely resolves to WINMM timeGetTime; the normal SDK API is used, not an executable-address alias", "promoted historical seed src/recovered/units/004c8350.cpp retained the complete70-byte span and MISMATCH state; prior range-before-clock source-shape observation is preserved here for later restoration", "pinned scan: no direct caller edge or absolute-address data reference to 4C8350 was found", "source:src/time.cpp provisional endpoint member operations at 0x004C80C0/0x004C80E0 update the same +8/+C fields read by sample"], "reason": "Implement the observed time-based range read through a provisional receiver view, paired with 0x004C80C0/0x004C80E0 because those endpoint operations write the same +8/+C fields this body reads. Keep the separate RangePrefixInitializationView at 0x004C8110 unmerged. Preserve signed branch comparison, unsigned 32-bit range wrap, zero-divisor failure, the post-clock upper-field reload, and wrapped return addition. This relation does not prove original complete class identity, object extent, constructor, callers, or lifetime."}
 // symbol    ?sample@TimeRangeReceiverView@@QAEHXZ
 int TimeRangeReceiverView::sample() {
     if ((enabled_flags_4_ & 1) == 0) {

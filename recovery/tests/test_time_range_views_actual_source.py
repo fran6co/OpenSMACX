@@ -24,7 +24,7 @@ def actual_view_source() -> tuple[str, Path]:
     assert records[0x004C8110].mode is Mode.BODY
     assert records[0x004C8110].byte_exact
     assert records[0x004C8110].image_spans == ((0x004C8110, 0x004C813B),)
-    assert records[0x004C8350].mode is Mode.BODY
+    assert records[0x004C8350].mode is Mode.FILE
     assert not records[0x004C8350].byte_exact
     assert records[0x004C8350].image_spans == ((0x004C8350, 0x004C8396),)
     assert begin_marker in text and end_marker in text

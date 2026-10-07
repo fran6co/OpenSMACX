@@ -24,10 +24,22 @@ EXPECTED = {
     0x00640A80: {
         "name": "sub_640a80", "span": (0x00640A80, 0x00640BAE),
         "symbol": "_adler32", "unit": "adler32.c",
+        "old_symbol": "_sub_640a80", "annotation_symbol": "_adler32",
     },
     0x00644930: {
         "name": "sub_644930", "span": (0x00644930, 0x00644A62),
         "symbol": "_inflate_flush", "unit": "infutil.c",
+        "old_symbol": "_sub_644930", "annotation_symbol": "_inflate_flush",
+    },
+    0x00642940: {
+        "name": "_bi_reverse", "span": (0x00642940, 0x0064295F),
+        "symbol": "_bi_reverse", "unit": "trees.c",
+        "old_symbol": "?leaf_00642940_redirect@@YAIIH@Z", "annotation_symbol": "",
+    },
+    0x0063D420: {
+        "name": "_putShortMSB", "span": (0x0063D420, 0x0063D44F),
+        "symbol": "_putShortMSB", "unit": "deflate.c",
+        "old_symbol": "?leaf_0063d420_redirect@@YAXPAXI@Z", "annotation_symbol": "",
     },
 }
 EXPECTED_FILES = {
@@ -88,13 +100,14 @@ def test_zlib_original_records_move_with_full_catalogue_and_lesson_history():
         assert before.name == after.name == expected["name"]
         assert before.image_spans == after.image_spans == (expected["span"],)
         assert _facts(after) == _facts(before)
-        assert before.symbol == f"_sub_{address:06x}"
-        assert after.symbol == expected["symbol"]
+        assert before.symbol == expected["old_symbol"]
+        assert after.symbol == expected["annotation_symbol"]
         old_block = _raw_block(baseline_text, address)
+        symbol_match = re.search(r"^// symbol\s+([^\n]+)\n", old_block, flags=re.M)
+        assert symbol_match and symbol_match.group(1) == expected["old_symbol"]
         expected_block = old_block.replace(ROLE, HISTORICAL_ROLE, 1)
         expected_block = expected_block.replace(
-            f"// symbol   _sub_{address:06x}",
-            HISTORICAL_SYMBOL + f"_sub_{address:06x}", 1,
+            symbol_match.group(0), HISTORICAL_SYMBOL + symbol_match.group(1) + "\n", 1,
         )
         actual_block = _raw_block(active_component, address)
         actual_block = re.sub(r"^// symbol\s+_[^\n]+\n", "", actual_block, flags=re.M)
@@ -102,7 +115,7 @@ def test_zlib_original_records_move_with_full_catalogue_and_lesson_history():
         assert actual_block == expected_block
 
 
-def test_zlib_component_keeps_exactly_the_two_reviewed_provider_bindings():
+def test_zlib_component_keeps_exactly_the_four_reviewed_provider_bindings():
     manifest = parse_component((ROOT / COMPONENT).read_text(encoding="utf-8"))
     assert manifest.component.component_id == "zlib"
     assert manifest.component.ownership.value == "third_party"
@@ -118,10 +131,11 @@ def test_zlib_component_keeps_exactly_the_two_reviewed_provider_bindings():
     assert "517f7df278536bf9b91bb14104fcb4b13ce7b3c791d174195fec1618621b24e6" in provenance
     assert "license notice in `zlib.h`" in provenance
     assert {item.path for item in manifest.files} == EXPECTED_FILES
-    assert set(manifest.units) == {"adler32.c", "infutil.c"}
+    assert set(manifest.units) == {"adler32.c", "deflate.c", "infutil.c", "trees.c"}
     assert manifest.flags == ("/c", "/O2", "/Gy", "/GR-", "/GX")
 
-    assert len(manifest.bindings) == 2, "do not revive the retired broad zlib mapping"
+    assert len(manifest.bindings) == 4, "do not revive the retired broad zlib mapping"
+    assert {binding.origin.address for binding in manifest.bindings} == set(EXPECTED)
     for binding in manifest.bindings:
         expected = EXPECTED[binding.origin.address]
         assert binding.origin.image_sha256 == "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
@@ -129,8 +143,29 @@ def test_zlib_component_keeps_exactly_the_two_reviewed_provider_bindings():
         assert [(span.start, span.end) for span in binding.spans] == [expected["span"]]
         assert binding.symbol == expected["symbol"]
         assert binding.unit == expected["unit"]
-        assert "COFF bytes/boundary/references pass" in binding.evidence
-        assert "final-link selection remains unknown" in binding.evidence
+        if binding.origin.address in (0x00640A80, 0x00644930):
+            assert "COFF bytes/boundary/references pass" in binding.evidence
+            assert "final-link selection remains unknown" in binding.evidence
+        elif binding.origin.address == 0x00642940:
+            assert "trees.c" in binding.evidence
+            assert "tr_static_init" in binding.evidence and "gen_codes" in binding.evidence
+            assert "legal Huffman lengths 1..15" in binding.evidence
+            assert "This records source ownership only, not a current byte claim" in binding.evidence
+            assert "Component-binary bytes, boundary, and references require a fresh configured component-verifier measurement" in binding.evidence
+            assert "Application retained-selection status is UNKNOWN" in binding.evidence
+            assert "Whole-library version uniqueness and runtime equivalence are unproved" in binding.evidence
+            assert "expected one defined COFF function" not in binding.evidence
+        elif binding.origin.address == 0x0063D420:
+            assert "deflate.c" in binding.evidence
+            assert "zlib header" in binding.evidence and "Adler-32 trailer" in binding.evidence
+            assert "pending_buf at +0x08 and pending at +0x10" in binding.evidence
+            assert "This records source ownership only, not a current byte claim" in binding.evidence
+            assert "Component-binary bytes, boundary, and references require a fresh configured component-verifier measurement" in binding.evidence
+            assert "Application retained-selection status is UNKNOWN" in binding.evidence
+            assert "Whole-library version uniqueness and runtime equivalence are unproved" in binding.evidence
+            assert "expected one defined COFF function" not in binding.evidence
+        else:
+            raise AssertionError(f"unreviewed zlib binding 0x{binding.origin.address:08X}")
 
 
 def test_no_application_standin_or_declaration_remains_and_cmake_keeps_zlib():
@@ -142,6 +177,8 @@ def test_no_application_standin_or_declaration_remains_and_cmake_keeps_zlib():
         assert not re.search(rf"\b{re.escape(name)}\s*\(", header)
     assert "src/vendor/zlib-1.0.2/adler32.c" in cmake
     assert "src/vendor/zlib-1.0.2/infutil.c" in cmake
+    assert "src/vendor/zlib-1.0.2/deflate.c" in cmake
+    assert "src/vendor/zlib-1.0.2/trees.c" in cmake
     assert "target_link_libraries(OpenSMACX PRIVATE zlib" in cmake
 
     for path in (ROOT / "src").rglob("*"):

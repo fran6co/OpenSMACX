@@ -58,6 +58,82 @@ Status: Complete
 // Original-image bindings for this dependency.
 // These are verification obligations, not claims of current matching.
 // Dependency inputs are unmodified; this companion owns its recovery metadata.
+/*
+Purpose: Reverse the low `count` bits of a value.
+
+             xor eax,eax / loop: mov esi,ecx / and esi,1 / or eax,esi
+             shr ecx,1 / shl eax,1 / dec edx / test edx,edx / jg loop
+             shr eax,1 / ret
+
+         The loop is a DO-WHILE: the body runs once before the counter is
+         tested, so a count of zero or a negative one still moves one bit
+         through and the answer is bit 0 rather than nothing. Writing it as a
+         `for` would return 0 for those, which is a different function.
+
+         The trailing `shr eax,1` undoes the last of the `shl`s, which is why
+         the shift happens after the OR rather than before it.
+
+// Historical source-role note: SCAFFOLD Transitional leaf collection, not completed genuine owner recovery; preserve body evidence during owner migration.
+// ORIGINAL: 0x00642940 _bi_reverse 0x00642940-0x0064295F BYTE_EXACT
+// Historical emitted symbol: ?leaf_00642940_redirect@@YAIIH@Z
+// CORRECTED from sub_642940
+//   zlib 1.0.2 trees.c, 31 bytes, byte-exact from upstream
+// size      31 bytes
+// prototype
+// callers   2   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: the low `count` bits, reversed
+Status: Complete
+*/
+
+/*
+Purpose: Append a 16-bit value to a byte stream, most significant byte first.
+
+             mov esi,[eax+8] / mov edi,[eax+0x10] / mov edx,ecx / shr edx,8
+             mov byte [esi+edi],dl / mov edx,[eax+0x10] / mov esi,[eax+8]
+             inc edx / mov [eax+0x10],edx / mov byte [esi+edx],cl
+             mov ecx,[eax+0x10] / inc ecx / mov [eax+0x10],ecx / ret
+
+         BIG-endian: the high byte goes first. The cursor at 0x10 is advanced
+         between the two stores and again after the second, so it ends two
+         past where it started, and the second byte lands at the position the
+         FIRST advance produced.
+
+         Both the base at 0x8 and the cursor at 0x10 are RE-READ from the
+         stream between the stores rather than kept in registers, so a stream
+         that overlapped its own descriptor would see the updated values.
+         Preserved for the same reason as in 005CBBC0 - and reached through
+         load32/store32 so the compiler cannot cache what the original
+         re-reads.
+
+         The CURSOR re-read is pinned by a fixture that points the stream at
+         its own descriptor. The BASE re-read is not: separating it needs the
+         first byte store to land on the descriptor's own pointer field at
+         0x8, and what the corrupted pointer then addresses depends on the
+         arena's absolute address, so the outcome could not be asserted
+         portably. Two mutants of that line survive the sweep for that reason
+         and are left alone rather than papered over.
+
+// Historical source-role note: SCAFFOLD Transitional leaf collection, not completed genuine owner recovery; preserve body evidence during owner migration.
+// ORIGINAL: 0x0063D420 _putShortMSB 0x0063D420-0x0063D44F
+// Historical emitted symbol: ?leaf_0063d420_redirect@@YAXPAXI@Z
+// CORRECTED from sub_63d420
+//   zlib 1.0.2 deflate.c, 47 bytes, byte-exact from upstream
+// size      47 bytes
+// prototype
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+
+// Original-image bindings for this dependency.
+// These are verification obligations, not claims of current matching.
+// Dependency inputs are unmodified; this companion owns its recovery metadata.
 // RECOVERY_COMPONENT_BEGIN v1
 // {
 //   "archive_sha256": "517f7df278536bf9b91bb14104fcb4b13ce7b3c791d174195fec1618621b24e6",
@@ -87,7 +163,9 @@ Status: Complete
 //   "source_root": "src/vendor/zlib-1.0.2",
 //   "units": [
 //     "adler32.c",
-//     "infutil.c"
+//     "deflate.c",
+//     "infutil.c",
+//     "trees.c"
 //   ],
 //   "image": {
 //     "sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
@@ -117,7 +195,9 @@ Status: Complete
 //   ],
 //   "bindings": [
 //     {"evidence": "src/vendor/zlib-1.0.2/adler32.c source definition and pinned upstream zlib 1.0.2 provenance; physical COFF build/recovery/builds/build-gyzprt2j/CMakeFiles/zlib.dir/src/vendor/zlib-1.0.2/adler32.c.obj defines _adler32 at section 2 (.text); installed strict comparator: COFF bytes/boundary/references pass for 0x00640A80-0x00640BAE; final-link selection remains unknown.", "origin": "0x00640A80", "spans": ["0x00640A80-0x00640BAE"], "symbol": "_adler32", "unit": "adler32.c"},
-//     {"evidence": "src/vendor/zlib-1.0.2/infutil.c source definition and pinned upstream zlib 1.0.2 provenance; physical COFF build/recovery/builds/build-gyzprt2j/CMakeFiles/zlib.dir/src/vendor/zlib-1.0.2/infutil.c.obj defines _inflate_flush at section 3 (.text); installed strict comparator: COFF bytes/boundary/references pass for 0x00644930-0x00644A62; final-link selection remains unknown.", "origin": "0x00644930", "spans": ["0x00644930-0x00644A62"], "symbol": "_inflate_flush", "unit": "infutil.c"}
+//     {"evidence": "src/vendor/zlib-1.0.2/infutil.c source definition and pinned upstream zlib 1.0.2 provenance; physical COFF build/recovery/builds/build-gyzprt2j/CMakeFiles/zlib.dir/src/vendor/zlib-1.0.2/infutil.c.obj defines _inflate_flush at section 3 (.text); installed strict comparator: COFF bytes/boundary/references pass for 0x00644930-0x00644A62; final-link selection remains unknown.", "origin": "0x00644930", "spans": ["0x00644930-0x00644A62"], "symbol": "_inflate_flush", "unit": "infutil.c"},
+//     {"evidence": "Pinned zlib 1.0.2 source correspondence: upstream trees.c defines static bi_reverse with the mapped do-while bit-reversal algorithm. Its callers are tr_static_init with fixed length 5 and gen_codes, which skips zero lengths and passes legal Huffman lengths 1..15. This records source ownership only, not a current byte claim. Component-binary bytes, boundary, and references require a fresh configured component-verifier measurement. Application retained-selection status is UNKNOWN. Whole-library version uniqueness and runtime equivalence are unproved.", "origin": "0x00642940", "spans": ["0x00642940-0x0064295F"], "symbol": "_bi_reverse", "unit": "trees.c"},
+//     {"evidence": "Pinned zlib 1.0.2 source correspondence: upstream deflate.c defines static putShortMSB as high-byte then low-byte stores through put_byte. Its five deflate() call sites emit the zlib header, optional preset-dictionary Adler-32, and Adler-32 trailer. In deflate.h internal_state, leading 32-bit i386 fields place pending_buf at +0x08 and pending at +0x10, matching the mapped accesses. This records source ownership only, not a current byte claim. Component-binary bytes, boundary, and references require a fresh configured component-verifier measurement. Application retained-selection status is UNKNOWN. Whole-library version uniqueness and runtime equivalence are unproved.", "origin": "0x0063D420", "spans": ["0x0063D420-0x0063D44F"], "symbol": "_putShortMSB", "unit": "deflate.c"}
 //   ]
 // }
 // RECOVERY_COMPONENT_END

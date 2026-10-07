@@ -101,6 +101,40 @@ class Midi_Device : public SoundDeviceBase {
 static_assert(sizeof(Midi_Device) == 0x20,
               "Midi_Device layout must match the original executable");
 
+// Non-owning call view for the two observed methods on objects returned by
+// soundx.dll. The 24 preceding declarations retain ordinal positions only;
+// their placeholder C++ signatures are not claims about the DLL API. This
+// view does not establish the external class extent or full ABI.
+class WaveInDeviceDispatchView {
+ public:
+  virtual void ordinal_placeholder_00() = 0;
+  virtual void ordinal_placeholder_01() = 0;
+  virtual void ordinal_placeholder_02() = 0;
+  virtual void ordinal_placeholder_03() = 0;
+  virtual void ordinal_placeholder_04() = 0;
+  virtual void ordinal_placeholder_05() = 0;
+  virtual void ordinal_placeholder_06() = 0;
+  virtual void ordinal_placeholder_07() = 0;
+  virtual void ordinal_placeholder_08() = 0;
+  virtual void ordinal_placeholder_09() = 0;
+  virtual void ordinal_placeholder_10() = 0;
+  virtual void ordinal_placeholder_11() = 0;
+  virtual void ordinal_placeholder_12() = 0;
+  virtual void ordinal_placeholder_13() = 0;
+  virtual void ordinal_placeholder_14() = 0;
+  virtual void ordinal_placeholder_15() = 0;
+  virtual void ordinal_placeholder_16() = 0;
+  virtual void ordinal_placeholder_17() = 0;
+  virtual void ordinal_placeholder_18() = 0;
+  virtual void ordinal_placeholder_19() = 0;
+  virtual void ordinal_placeholder_20() = 0;
+  virtual void ordinal_placeholder_21() = 0;
+  virtual void ordinal_placeholder_22() = 0;
+  virtual void ordinal_placeholder_23() = 0;
+  virtual int set_codec(unsigned long codec) = 0;
+  virtual int set_vxw_key(signed char *key) = 0;
+};
+
 class Wave_In_Device : public SoundDeviceBase {
  public:
   // THE VIRTUAL SET, in the image's own vftable slot order (0x0066E1F0).
@@ -129,9 +163,8 @@ class Wave_In_Device : public SoundDeviceBase {
   int start_record();
   int end_record();
 
-  // Original wrappers moved here from delegation_thunks.cpp. Their
-  // backend slot calls remain SCAFFOLD until the external interface
-  // is represented by a verified typed declaration.
+  // These wrappers borrow the backend returned by the soundx.dll factory in
+  // SoundDeviceBase::device_14_; the DLL owns its creation and destruction.
   int set_codec(unsigned long codec);
   int set_vxw_key(signed char *key);
 };  // vptr at 0x00 replaces the retired vtable_storage_

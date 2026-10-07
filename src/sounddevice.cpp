@@ -619,10 +619,9 @@ int Midi_Device::is_disabled() {
 // frame;hidden;sp_ready;purged_ok; calls none; indirect at
 // 0x004C5A90. Historical seed Status: Complete was not
 // acceptance. Former source shim: ?wave_in_device_set_codec_redirect@@YIHPAX0I@Z.
-// The still-untyped external call keeps this SCAFFOLD.
-typedef int (OriginalObject::*WaveInCodecMethod)(unsigned long);
-// RECOVERY_ROLE: SCAFFOLD Owner is Wave_In_Device::device_14_. Pinned soundx.dll SHA-256 ac272e244b3f1339d9ce63bc2e7acf76605c6ac2695bba3230e72ea59039a3f5: exports 9/10 create/delete Dll_Wave_In_Device; factory installs its 26-entry table; entries 24/25 match the nested +0x60 result-forwarder and +0x64 zero-return bodies. Other private slots/API contract remain untyped (no PDB/SDK); raw dispatch therefore remains SCAFFOLD.
+// RECOVERY_ROLE: SCAFFOLD Owner is Wave_In_Device::device_14_. Pinned soundx.dll SHA-256 ac272e244b3f1339d9ce63bc2e7acf76605c6ac2695bba3230e72ea59039a3f5: exports 9/10 create/delete Dll_Wave_In_Device; factory installs its 26-entry table; entries 24/25 match the nested +0x60 result-forwarder and +0x64 zero-return bodies. This non-owning view covers only the two observed calls; 24 preceding ordinal placeholders are not recovered signatures. SDK/PDB contract, complete external class extent and lifetime remain unknown, so both wrappers remain SCAFFOLD.
 // ORIGINAL: 0x004C5A80 ?set_codec@Wave_In_Device@@QAEHK@Z 0x004C5A80-0x004C5AA0
+// RECOVERY_BINDING: v1 {"evidence": ["soundx.dll SHA-256 ac272e244b3f1339d9ce63bc2e7acf76605c6ac2695bba3230e72ea59039a3f5 exports ordinal 9 create_device and ordinal 10 delete_device for Dll_Wave_In_Device.", "Pinned DLL factory installs a 26-entry table; nested entries 24 and 25 match the observed +0x60 result-forwarder and +0x64 zero-return bodies.", "Pinned game span 0x004C5A80-0x004C5AA0 reads the delegate from inherited device_14_ storage at +0x14, null-returns 0x13, passes one unsigned value to slot 24, and returns that slot result.", "The factory stores its returned object in device_14_; the DLL close/teardown path owns destruction. Only these two observed methods are represented by this non-owning call view.", "The 24 preceding view ordinals are unused void declarations, not recovered DLL signatures; SDK/PDB contract, complete class extent, other slot signatures, and object lifetime details remain unknown."], "reason": "The non-owning view replaces raw dispatch for the two observed game wrapper calls only; the object is created and destroyed by soundx.dll, and its complete API and extent remain unverified."}
 // symbol    ?set_codec@Wave_In_Device@@QAEHK@Z
 // size      32 bytes
 // prototype int (__thiscall ?set_codec@Wave_In_Device@@QAEHK@Z)(Wave_In_Device* this, unsigned int)
@@ -632,13 +631,12 @@ typedef int (OriginalObject::*WaveInCodecMethod)(unsigned long);
 // calls     (none)
 // indirect  0x004C5A90
 int Wave_In_Device::set_codec(unsigned long codec) {
-    void *const delegate = device_14_;
+    WaveInDeviceDispatchView *const delegate =
+        static_cast<WaveInDeviceDispatchView *>(device_14_);
     if (delegate == 0) {
         return 0x13;
     }
-    void **const vtable = *reinterpret_cast<void ***>(delegate);
-    return (ORIGINAL(delegate)->*original_method<WaveInCodecMethod>(
-        reinterpret_cast<unsigned long>(vtable[0x60 / sizeof(void *)])))(codec);
+    return delegate->set_codec(codec);
 }
 
 // Original behavior: return 0x13 when the DLL-owned delegate is null;
@@ -648,10 +646,9 @@ int Wave_In_Device::set_codec(unsigned long codec) {
 // frame;hidden;sp_ready;purged_ok; calls none; indirect at
 // 0x004C5AB0. Historical seed Status: Complete was not
 // acceptance. Former source shim: ?wave_in_device_set_vxw_key_redirect@@YIHPAX0H@Z.
-// The still-untyped external call keeps this SCAFFOLD.
-typedef int (OriginalObject::*WaveInKeyMethod)(signed char *);
-// RECOVERY_ROLE: SCAFFOLD Owner is Wave_In_Device::device_14_. Pinned soundx.dll SHA-256 ac272e244b3f1339d9ce63bc2e7acf76605c6ac2695bba3230e72ea59039a3f5: exports 9/10 create/delete Dll_Wave_In_Device; factory installs its 26-entry table; entries 24/25 match the nested +0x60 result-forwarder and +0x64 zero-return bodies. Other private slots/API contract remain untyped (no PDB/SDK); raw dispatch therefore remains SCAFFOLD.
+// RECOVERY_ROLE: SCAFFOLD Owner is Wave_In_Device::device_14_. Pinned soundx.dll SHA-256 ac272e244b3f1339d9ce63bc2e7acf76605c6ac2695bba3230e72ea59039a3f5: exports 9/10 create/delete Dll_Wave_In_Device; factory installs its 26-entry table; entries 24/25 match the nested +0x60 result-forwarder and +0x64 zero-return bodies. This non-owning view covers only the two observed calls; 24 preceding ordinal placeholders are not recovered signatures. SDK/PDB contract, complete external class extent and lifetime remain unknown, so both wrappers remain SCAFFOLD.
 // ORIGINAL: 0x004C5AA0 ?set_vxw_key@Wave_In_Device@@QAEHPAC@Z 0x004C5AA0-0x004C5AC0
+// RECOVERY_BINDING: v1 {"evidence": ["soundx.dll SHA-256 ac272e244b3f1339d9ce63bc2e7acf76605c6ac2695bba3230e72ea59039a3f5 exports ordinal 9 create_device and ordinal 10 delete_device for Dll_Wave_In_Device.", "Pinned DLL factory installs a 26-entry table; nested entries 24 and 25 match the observed +0x60 result-forwarder and +0x64 zero-return bodies.", "Pinned game span 0x004C5AA0-0x004C5AC0 reads the delegate from inherited device_14_ storage at +0x14, null-returns 0x13, passes one signed-byte pointer to slot 25, and returns that slot result.", "The factory stores its returned object in device_14_; the DLL close/teardown path owns destruction. Only these two observed methods are represented by this non-owning call view.", "The 24 preceding view ordinals are unused void declarations, not recovered DLL signatures; SDK/PDB contract, complete class extent, other slot signatures, and object lifetime details remain unknown."], "reason": "The non-owning view replaces raw dispatch for the two observed game wrapper calls only; the object is created and destroyed by soundx.dll, and its complete API and extent remain unverified."}
 // symbol    ?set_vxw_key@Wave_In_Device@@QAEHPAC@Z
 // size      32 bytes
 // prototype int (__thiscall ?set_vxw_key@Wave_In_Device@@QAEHPAC@Z)(Wave_In_Device* this, int8*)
@@ -661,13 +658,12 @@ typedef int (OriginalObject::*WaveInKeyMethod)(signed char *);
 // calls     (none)
 // indirect  0x004C5AB0
 int Wave_In_Device::set_vxw_key(signed char *key) {
-    void *const delegate = device_14_;
+    WaveInDeviceDispatchView *const delegate =
+        static_cast<WaveInDeviceDispatchView *>(device_14_);
     if (delegate == 0) {
         return 0x13;
     }
-    void **const vtable = *reinterpret_cast<void ***>(delegate);
-    return (ORIGINAL(delegate)->*original_method<WaveInKeyMethod>(
-        reinterpret_cast<unsigned long>(vtable[0x64 / sizeof(void *)])))(key);
+    return delegate->set_vxw_key(key);
 }
 
 /*
