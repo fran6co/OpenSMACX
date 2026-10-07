@@ -195,10 +195,10 @@ def test_actual_shared_fields_and_lifecycle_order_are_consistent():
     base_text = class_body(sound, "SoundDeviceBase")
     expected_fields = (
         "uint32_t field_4_;", "uint32_t volume_8_;", "uint32_t field_C_;",
-        "uint32_t field_10_;", "SoundDeviceBase *device_14_;", "uint32_t field_18_;",
+        "uint32_t field_10_;", "void *device_14_;", "uint32_t field_18_;",
         "uint32_t field_1C_;",
     )
-    assert "SoundDeviceBase *device_14_;" in base_text
+    assert "void *device_14_;" in base_text
     positions = [base_text.index(field) for field in expected_fields]
     assert positions == sorted(positions)
     for owner, text in (("Midi_Device", sound), ("Wave_In_Device", sound),
@@ -223,7 +223,9 @@ def test_actual_shared_fields_and_lifecycle_order_are_consistent():
         "volume_8_ = 0x7F;",
     ):
         assert statement in base_ctor
-    assert "if (device)" in base_dtor and "vtable_slot<device_release_fn>(device, 0x10)(device);" in base_dtor
+    assert "void *const device = device_14_;" in base_dtor
+    assert "if (device)" in base_dtor
+    assert "SoundXDeviceAbi::release_device(device);" in base_dtor
     assert "VectorCtorIterator" not in wave_ctor
     assert "field_20_ = 0" in wave_ctor
     assert "VectorDtorIterator" not in wave_dtor

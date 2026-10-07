@@ -21,6 +21,7 @@
 #include "wave_device.h"
 #include "dialog.h"
 #include "sounddevice.h"
+#include "soundx_device_abi.h"
 #include "basepop.h"
 #include <cstring>
 
@@ -1456,7 +1457,7 @@ Purpose: Release the wrapped device: its own vtable slot 0x10 winds it down,
 //   same treatment as WaveDeviceGlobal and the release guard. The relocation
 //   itself verifies as unknown rather than pass: the shipped image has no
 //   symbol on that dword, so nothing can prove link selection.
-// symbol    ?release@Wave_Device@@QAEHXZ
+// symbol    ?release@Wave_Device@@UAEHXZ
 // size      51 bytes
 // prototype void (__thiscall ?release@Wave_Device@@QAEXXZ)(Wave_Device* this)
 // callers   1   call targets   0
@@ -1469,10 +1470,7 @@ Status: Complete
 */
 int Wave_Device::release() {
     if (device_14_) {
-        {
-            typedef void(__fastcall *device_down_fn)(void *);
-            vtable_slot<device_down_fn>(device_14_, 0x10)(device_14_);
-        }
+        SoundXDeviceAbi::release_device(device_14_);
         if (device_14_) {
             func_wave_device_destroy *const hook =
                 reinterpret_cast<func_wave_device_destroy *>(SoundDllProcs[5]);

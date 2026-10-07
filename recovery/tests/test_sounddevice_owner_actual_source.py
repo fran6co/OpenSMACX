@@ -45,7 +45,9 @@ def test_basepop_helper_uses_typed_owner_members_in_original_order():
 def test_sound_owner_note_does_not_claim_backend_closure_complete():
     source = (ROOT / "src/basepop.cpp").read_text()
     assert "int __cdecl sub_48cf00(BasePop *owner, int vehicle)" in source
-    # Backend/singleton consumers and Datalink bindings are separate owners;
-    # the helper's source binding does not state those fixed-address surfaces
-    # have been replaced.
-    assert "0x0090DB3C" in (ROOT / "src/sounddevice.h").read_text()
+    # Loader export cells now have a source owner; that does not resolve the
+    # separate singleton extents or the backend's higher virtual interface.
+    header = (ROOT / "src/sounddevice.h").read_text()
+    assert "WaveInDeviceDispatchView" not in header
+    assert "void *device_14_;" in header
+    assert "Wave_In_Device *const WaveInDeviceGlobal" in header

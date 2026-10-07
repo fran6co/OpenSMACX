@@ -37,11 +37,11 @@ def test_init_owner_bodies_are_extracted_from_installed_source(tmp_path):
 
     midi, wave = bodies["Midi_Device"], bodies["Wave_In_Device"]
     header = (ROOT / "src/sounddevice.h").read_text()
-    assert "SoundDeviceBase *device_14_;" in header
-    assert "void *device_14_;" not in header
+    assert "void *device_14_;" in header
+    assert "SoundDeviceBase *device_14_;" not in header
     for body in (midi, wave):
         assert "create_device(backends)" in body
-        assert "device_14_->init(window, backends)" in body
+        assert "SoundXDeviceAbi::init_device(device_14_, window, backends)" in body
         assert "delete_device();" in body
         assert "DeviceVCall" not in body
         assert "reinterpret_cast<uint8_t *>(this) + 0x14" not in body
@@ -63,7 +63,7 @@ def test_init_owner_bodies_are_extracted_from_installed_source(tmp_path):
     harness = r'''
 #include <cassert>
 struct SoundDeviceBase {
-  SoundDeviceBase *device_14_ = 0;
+  void *device_14_ = 0;
   virtual int create_device(unsigned long) = 0;
   virtual int delete_device() = 0;
   virtual int init(void *, unsigned long) = 0;
@@ -74,15 +74,18 @@ struct Midi_Device : SoundDeviceBase {
 struct Wave_In_Device : SoundDeviceBase {
   int init(void *window, unsigned long backends) override;
 };
-struct FakeBackend : SoundDeviceBase {
+struct FakeBackend {
   int result;
   void *window = 0;
   unsigned long backends = 0;
   explicit FakeBackend(int r) : result(r) {}
-  int create_device(unsigned long) override { return 0; }
-  int delete_device() override { return 0; }
-  int init(void *w, unsigned long b) override { window = w; backends = b; return result; }
+  int init(void *w, unsigned long b) { window = w; backends = b; return result; }
 };
+namespace SoundXDeviceAbi {
+int init_device(void *device, void *window, unsigned long backends) {
+  return static_cast<FakeBackend *>(device)->init(window, backends);
+}
+}
 struct MidiProbe : Midi_Device {
   int make_result = 0, delete_result = 0;
   int creates = 0, deletes = 0;

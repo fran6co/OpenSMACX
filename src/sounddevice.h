@@ -53,9 +53,9 @@ class SoundDeviceBase {
   uint32_t volume_8_;
   uint32_t field_C_;
   uint32_t field_10_;
-  // Non-owning pointer to the DLL object's observed shared virtual-call prefix.
-  // Creation/destruction remain DLL-owned; no external class extent is claimed.
-  SoundDeviceBase *device_14_;
+  // Opaque DLL-owned provider. Its observed call ABI does not establish that
+  // it inherits the game's SoundDeviceBase wrapper or shares its field layout.
+  void *device_14_;
   uint32_t field_18_;
   uint32_t field_1C_;
 };
@@ -103,40 +103,6 @@ class Midi_Device : public SoundDeviceBase {
 static_assert(sizeof(Midi_Device) == 0x20,
               "Midi_Device layout must match the original executable");
 
-// Non-owning call view for the two observed methods on objects returned by
-// soundx.dll. The 24 preceding declarations retain ordinal positions only;
-// their placeholder C++ signatures are not claims about the DLL API. This
-// view does not establish the external class extent or full ABI.
-class WaveInDeviceDispatchView {
- public:
-  virtual void ordinal_placeholder_00() = 0;
-  virtual void ordinal_placeholder_01() = 0;
-  virtual void ordinal_placeholder_02() = 0;
-  virtual void ordinal_placeholder_03() = 0;
-  virtual void ordinal_placeholder_04() = 0;
-  virtual void ordinal_placeholder_05() = 0;
-  virtual void ordinal_placeholder_06() = 0;
-  virtual void ordinal_placeholder_07() = 0;
-  virtual void ordinal_placeholder_08() = 0;
-  virtual void ordinal_placeholder_09() = 0;
-  virtual void ordinal_placeholder_10() = 0;
-  virtual void ordinal_placeholder_11() = 0;
-  virtual void ordinal_placeholder_12() = 0;
-  virtual void ordinal_placeholder_13() = 0;
-  virtual void ordinal_placeholder_14() = 0;
-  virtual void ordinal_placeholder_15() = 0;
-  virtual void ordinal_placeholder_16() = 0;
-  virtual void ordinal_placeholder_17() = 0;
-  virtual void ordinal_placeholder_18() = 0;
-  virtual void ordinal_placeholder_19() = 0;
-  virtual void ordinal_placeholder_20() = 0;
-  virtual void ordinal_placeholder_21() = 0;
-  virtual void ordinal_placeholder_22() = 0;
-  virtual void ordinal_placeholder_23() = 0;
-  virtual int set_codec(unsigned long codec) = 0;
-  virtual int set_vxw_key(signed char *key) = 0;
-};
-
 class Wave_In_Device : public SoundDeviceBase {
  public:
   // THE VIRTUAL SET, in the image's own vftable slot order (0x0066E1F0).
@@ -165,8 +131,8 @@ class Wave_In_Device : public SoundDeviceBase {
   int start_record();
   int end_record();
 
-  // These calls use a separate bounded view of the DLL backend's higher
-  // ordinals; its unknown prefix/API remains recovery debt.
+  // Observed external operations; no placeholder provider class or invented
+  // earlier virtual signatures. Complete provider API remains unverified.
   int set_codec(unsigned long codec);
   int set_vxw_key(signed char *key);
 };  // vptr at 0x00 replaces the retired vtable_storage_
@@ -185,18 +151,9 @@ Wave_In_Device *const WaveInDeviceGlobal = (Wave_In_Device *)0x0090DB50;
 // above.
 Midi_Device *const MidiDeviceGlobal = (Midi_Device *)0x0090D950;
 
-// THE MIDI AND WAVE-IN BACKEND PROC SLOTS. The sound DLL's proc table lives
-// at 0x0090DB28 in the shipped image and wave.h / wave_device.h already name
-// its wave entries by role; these are the three the device objects use, named
-// the same way. Each accessor is a single dereference of a fixed address -
-// `mov eax, [0x0090DB3C]` - which is exactly what Midi_Device::create_device
-// and friends (0x004C56D0, 0x004C5710, 0x004C57F0) and their Wave_In_Device
-// counterparts perform.
+// MIDI and Wave-In callback ABIs. The implementation reads loader-owned
+// SoundDllProcs entries 6/7 and 8/9 (original 0x0090DB3C..0x0090DB48).
 typedef int(__cdecl MidiDeviceOpen)(void *slot, unsigned long flags);
 typedef void(__cdecl MidiDeviceClose)(void);
 typedef int(__cdecl WaveInDeviceOpen)(void *slot, unsigned long flags);
 typedef void(__cdecl WaveInDeviceClose)(void);
-inline MidiDeviceOpen *&MidiDeviceOpenSlot() { return *reinterpret_cast<MidiDeviceOpen **>(0x0090DB3C); }
-inline MidiDeviceClose *&MidiDeviceCloseSlot() { return *reinterpret_cast<MidiDeviceClose **>(0x0090DB40); }
-inline WaveInDeviceOpen *&WaveInDeviceOpenSlot() { return *reinterpret_cast<WaveInDeviceOpen **>(0x0090DB44); }
-inline WaveInDeviceClose *&WaveInDeviceCloseSlot() { return *reinterpret_cast<WaveInDeviceClose **>(0x0090DB48); }
