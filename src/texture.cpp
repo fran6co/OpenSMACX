@@ -5495,11 +5495,10 @@ int __cdecl sub_61f790(Texture *tex) {
 //            two machine-code functions back to back and this row now covers
 //            only the first; `ret` at 0x0061FA23, twelve `nop` of alignment,
 //            then a clean `push ebp; mov ebp, esp; sub esp,0x24` at
-//            0x0061FA30. The second function is NOT yet catalogued - see the
-//            note in docs/recovery/ - so those 598 bytes are honestly
-//            uncovered rather than folded into a row no body can reproduce.
-//            tools/verify_span_termination.py --check-split now fails on any
-//            span holding a second prologue; this was the only one.
+//            0x0061FA30. That second 598-byte function now has its own
+//            source-owned identity below; never fold it into this first span.
+//            Historical split verification used the retired span-termination
+//            script; the separate prologue/return evidence remains relevant.
 // working copy - scaffold materialised by --work
 // size      548 bytes
 // prototype 
@@ -5651,6 +5650,172 @@ void __cdecl sub_61f800(void *param_1, void *param_2) {
             --count;
         } while (count != 0);
     }
+}
+
+// The distinct keyed-span entry consumes two EdgeScan pointers and shared
+// raster context through the existing blit slots. No direct original caller,
+// historical translation unit or unique class ownership is established.
+// This context preserves the packed arithmetic without an executable forwarder.
+struct TextureKeyedEdgeSpanState {
+    unsigned char *destination_row;
+    const unsigned char *pixels;
+    int pitch;
+    int clip_left;
+    int clip_right;
+    unsigned char key;
+    int *signed_pitch_slot;
+    int *packed_step_slot;
+    int *colour_step_slot;
+};
+
+static unsigned int texture_keyed_shift_product(int slope, int pixel_offset) {
+    const int scaled_offset = static_cast<int>(
+        static_cast<unsigned int>(pixel_offset) << 16);
+    const int64_t product = static_cast<int64_t>(slope) *
+                            static_cast<int64_t>(scaled_offset);
+    return static_cast<unsigned int>(static_cast<uint64_t>(product) >> 16);
+}
+
+static int texture_keyed_wrap_add(int value, unsigned int delta) {
+    return static_cast<int>(static_cast<unsigned int>(value) + delta);
+}
+
+// The original shifts the signed pixel span left before IDIV. Keep its
+// 32-bit wrap instead of dividing by the unshifted width.
+static int texture_keyed_span_quotient(int delta, int pixel_span) {
+    const unsigned int divisor_bits =
+        static_cast<unsigned int>(pixel_span) << 16;
+    const int divisor = static_cast<int>(divisor_bits);
+    const int64_t numerator = static_cast<int64_t>(delta) * 0x10000;
+    return static_cast<int>(numerator / divisor);
+}
+
+static unsigned int texture_keyed_initial_source_index(int pitch, int u, int v) {
+    const unsigned short v_integer = static_cast<unsigned short>(
+        static_cast<unsigned int>(v) >> 16);
+    const unsigned short u_integer = static_cast<unsigned short>(
+        static_cast<unsigned int>(u) >> 16);
+    const unsigned short pitch_word = static_cast<unsigned short>(pitch);
+    const unsigned short row_product = static_cast<unsigned short>(
+        static_cast<unsigned int>(v_integer) * pitch_word);
+    return static_cast<unsigned int>(row_product) + u_integer;
+}
+
+static void texture_draw_keyed_edge_span(EdgeScan *left, EdgeScan *right,
+                                         TextureKeyedEdgeSpanState &state) {
+    const int left_x = left->accumC;
+    const int right_x = right->accumC;
+    const int span = texture_difference(right_x, left_x);
+    if (right_x <= state.clip_left || left_x >= state.clip_right ||
+        span <= 0) {
+        return;
+    }
+
+    const int raw_du = texture_keyed_span_quotient(
+        texture_difference(right->accumA, left->accumA), span);
+    const int raw_dv = texture_keyed_span_quotient(
+        texture_difference(right->accumB, left->accumB), span);
+    const int u_direction = raw_du < 0 ? -1 : 1;
+    int du = raw_du;
+    if (du < 0 && (static_cast<unsigned int>(du) & 0xffffu) != 0)
+        du = texture_difference(du, -0x10000);
+    int dv = raw_dv;
+    if (dv < 0 && (static_cast<unsigned int>(dv) & 0xffffu) != 0)
+        dv = texture_difference(dv, -0x10000);
+
+    int u = texture_keyed_wrap_add(left->accumA,
+        static_cast<unsigned int>(du >> 1) + 0x8000u);
+    int v = texture_keyed_wrap_add(left->accumB,
+        static_cast<unsigned int>(dv >> 1) + 0x8000u);
+
+    *state.signed_pitch_slot = raw_dv < 0 ? -state.pitch : state.pitch;
+    const int source_row_step = static_cast<int>(
+        static_cast<unsigned int>(du >> 16) +
+        static_cast<unsigned int>(dv >> 16) *
+            static_cast<unsigned int>(state.pitch));
+
+    int clipped_left = left_x;
+    int clipped_right = right_x;
+    if (clipped_right > state.clip_right) clipped_right = state.clip_right;
+    if (clipped_left < state.clip_left) {
+        const int skipped = texture_difference(state.clip_left, clipped_left);
+        u = texture_keyed_wrap_add(u, texture_keyed_shift_product(raw_du, skipped));
+        v = texture_keyed_wrap_add(v, texture_keyed_shift_product(raw_dv, skipped));
+        clipped_left = state.clip_left;
+    }
+
+    unsigned char *destination = state.destination_row + clipped_left;
+    unsigned int source_offset = texture_keyed_initial_source_index(
+        state.pitch, u, v);
+    const bool reverse_v = raw_dv < 0;
+    unsigned short raw_v_fraction = static_cast<unsigned short>(raw_dv);
+    unsigned short v_fraction = static_cast<unsigned short>(v);
+    if (*state.signed_pitch_slot < 0) {
+        raw_v_fraction = static_cast<unsigned short>(
+            0u - static_cast<unsigned int>(raw_v_fraction));
+        v_fraction = static_cast<unsigned short>(~v_fraction);
+    }
+    const unsigned short dv_fraction_15 = static_cast<unsigned short>(
+        raw_v_fraction >> 1);
+    const unsigned int packed_u = u_direction < 0
+        ? static_cast<unsigned int>(~u) : static_cast<unsigned int>(u);
+    unsigned int packed_uv = packed_u << 16;
+    packed_uv |= u_direction < 0 ? v_fraction
+        : static_cast<unsigned short>(v_fraction >> 1);
+    const unsigned int packed_uv_step =
+        (static_cast<unsigned int>(u_direction < 0
+            ? texture_difference(0, raw_du) : raw_du) << 16) |
+        dv_fraction_15;
+    *state.packed_step_slot = static_cast<int>(
+        packed_uv_step);
+    *state.colour_step_slot = u_direction < 0
+        ? texture_difference(0, source_row_step) : source_row_step;
+    const int v_wrap_pitch = reverse_v ? -state.pitch : state.pitch;
+
+    // The original DEC/JNZ loop consumes the unsigned 32-bit span count. Do
+    // not turn a zero/wrapped count after clipping into an empty-span return.
+    unsigned int remaining = static_cast<unsigned int>(
+        texture_difference(clipped_right, clipped_left));
+    do {
+        const unsigned char texel = state.pixels[source_offset];
+        if (texel != state.key) destination[0] = texel;
+        const unsigned int previous_packed_uv = packed_uv;
+        packed_uv += packed_uv_step;
+        const bool packed_carry = packed_uv < previous_packed_uv;
+        source_offset = static_cast<unsigned int>(source_offset +
+            static_cast<unsigned int>(u_direction < 0
+                ? source_row_step - static_cast<int>(packed_carry)
+                : source_row_step + static_cast<int>(packed_carry)));
+        if ((packed_uv & 0x8000u) != 0) {
+            source_offset = static_cast<unsigned int>(source_offset +
+                static_cast<unsigned int>(v_wrap_pitch));
+            packed_uv &= ~0x8000u;
+        }
+        ++destination;
+        --remaining;
+    } while (remaining != 0);
+}
+
+// The offset-derived name does not invent a caller or a Texture receiver:
+// the entry takes two stack EdgeScan pointers and reads shared raster slots.
+// ORIGINAL: 0x0061FA30 sub_61fa30 0x0061FA30-0x0061FC86 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned image SHA-256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; raw 61FA30 prologue, 61FC85 RET and alignment through 61FC8F, next mapped entry 61FC90.", "Raw entry loads two stack EdgeScan records at offsets 0C/10/1C and uses shared clip, source, destination, key and packed-step storage; original source ownership and reachability remain unknown.", "Full raw dataflow preserves wrapped shifted divisor, clipped multiply, low-word source-row product, initial lookup before signed-pitch NEG/NOT transformation, both packed U-direction loops and scratch publications. Exceptional IDIV and native fault timing remain restoration work."], "reason": "Distinct two-stack-edge keyed raster entry has an independent prologue and RET between the preceding completed span and the next Gouraud edge setup entry. Its offset-derived name and source home expose shared raster dependencies without claiming a Texture receiver, historical TU or original caller."}
+// symbol    ?sub_61fa30@@YAXPAUEdgeScan@@0@Z
+void __cdecl sub_61fa30(EdgeScan *left, EdgeScan *right) {
+    TextureKeyedEdgeSpanState state;
+    const unsigned int destination = static_cast<unsigned int>(*blit_pixel_base) +
+        static_cast<unsigned int>(*blit_row_offset) *
+        static_cast<unsigned int>(*blit_buffer_stride);
+    state.destination_row = reinterpret_cast<unsigned char *>(destination);
+    state.pixels = reinterpret_cast<const unsigned char *>(*blit_texture_pixels);
+    state.pitch = TextureRowPitchScratch;
+    state.clip_left = *blit_clip_left;
+    state.clip_right = *blit_clip_right;
+    state.key = static_cast<unsigned char>(*blit_light_threshold);
+    state.signed_pitch_slot = blit_slot_4e8;
+    state.packed_step_slot = blit_slot_51c;
+    state.colour_step_slot = blit_colour_step;
+    texture_draw_keyed_edge_span(left, right, state);
 }
 
 // ORIGINAL: 0x0061CB50 sub_61cb50 0x0061CB50-0x0061D08F FILE
