@@ -274,9 +274,7 @@ Purpose: Do nothing; the original body is only its `ret`.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-// RECOVERY_ROLE: SCAFFOLD Untyped raw-field or constant adapter; real method ownership and named member relationships remain recovery obligations.
-// ORIGINAL: 0x0061F785 nullsub_259 0x0061F785-0x0061F788 BYTE_EXACT
-// symbol    ?field_accessor_0061f785_redirect@@YIXPAX0HHHHHHH@Z
+// RECOVERY_HISTORY: retired redirect had emitted fact ?field_accessor_0061f785_redirect@@YIXPAX0HHHHHHH@Z
 // size      3 bytes
 // prototype 
 // callers   0   call targets   0
@@ -286,9 +284,7 @@ Purpose: Do nothing; the original body is only its `ret`.
 Return Value: n/a
 Status: Complete
 */
-void __fastcall field_accessor_0061f785_redirect(void *, void *, int stack0, int stack1, int stack2, int stack3, int stack4, int stack5, int stack6) {
 
-}
 
 /*
 Purpose: Do nothing; the original body is only its `ret`.

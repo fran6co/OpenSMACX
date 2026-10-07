@@ -6985,6 +6985,10 @@ void __cdecl sub_620640(int param_1, int param_2) {
 // context from the first token rather than behind a file read. This
 // emitter computes declarations; it does not carry lessons.
 
+// The retained 0x61F785 nullsub_259 identity is the terminal ret 0x1C instruction reached by fallthrough from Texture::sub_61f0d0 at the common epilogue (pinned 0x61F771-0x61F788; member decoration and source declaration independently establish the parent Texture method). This does not exclude a separate interior-entry call path. The source map has no validated contained-fragment-to-parent-body binding or emitted-symbol offset, so keep the original fragment identity and BYTE_EXACT obligation as FILE-scoped source evidence and leave its independent measurement explicitly unresolved; do not emit a callable null stub.
+// RECOVERY_ROLE: SCAFFOLD The original identity is a terminal instruction fragment in the Texture::sub_61f0d0 epilogue, not a standalone recovered C++ body. FILE keeps the full historical identity and claim visible, but the native source grammar cannot bind its interior image span to a parent method symbol plus offset; fragment measurement remains unresolved.
+// ORIGINAL: 0x0061F785 nullsub_259 0x0061F785-0x0061F788 FILE BYTE_EXACT
+// kind      game
 void Texture::sub_61f0d0(Buffer *param_2, int param_3, int param_4, int param_5,
                              int param_6, uint32_t param_7, int param_8) {
     int32_t *param_1 = (int32_t *)this;

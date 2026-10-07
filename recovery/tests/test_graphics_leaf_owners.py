@@ -336,14 +336,33 @@ def test_moved_annotations_preserve_full_baseline_metadata_and_file_mode():
 
 
 def test_unresolved_mappings_keep_identity_claims_and_lessons():
-    for path, addresses in (
-        ("src/leaf_recoveries.cpp", (0x006252C0, 0x00616B40,
-                                      0x00640A80, 0x00644930)),
-        ("src/field_accessors.cpp", (0x005DA6A0, 0x005DA6B0,
+    for path, baseline_path, addresses in (
+        ("src/texture.cpp", "src/leaf_recoveries.cpp", (0x006252C0,)),
+        ("src/leaf_recoveries.cpp", "src/leaf_recoveries.cpp", (0x00616B40,)),
+        ("src/vendor/zlib.recovery.h", "src/leaf_recoveries.cpp",
+         (0x00640A80, 0x00644930)),
+        ("src/field_accessors.cpp", "src/field_accessors.cpp", (0x005DA6A0, 0x005DA6B0,
                                       0x005E2460, 0x005E2470,
-                                      0x00616D80, 0x0061F785)),
+                                      0x00616D80)),
     ):
         candidate = (ROOT / path).read_text()
         for address in addresses:
             assert metadata(record_in(candidate, path, address)) == metadata(
-                baseline_record(path, address))
+                baseline_record(baseline_path, address))
+
+
+def test_texture_terminal_fragment_keeps_identity_without_callable_stub():
+    from dataclasses import replace
+    from match_recovery.source import Mode, SourceRole
+
+    before = baseline_record("src/field_accessors.cpp", 0x0061F785)
+    after = actual_record("src/texture.cpp", 0x0061F785)
+    assert metadata(after) == metadata(replace(before, mode=Mode.FILE))
+    assert after.source_role is SourceRole.SCAFFOLD
+    assert not after.symbol
+    assert "fragment measurement remains unresolved" in after.source_role_reason
+    assert not any(r.address == 0x0061F785
+                   for r in source.read_file(ROOT / "src/field_accessors.cpp"))
+    for path in ("src/field_accessors.cpp", "src/field_accessors.h"):
+        assert "field_accessor_0061f785_redirect" not in code_only(
+            (ROOT / path).read_text())
