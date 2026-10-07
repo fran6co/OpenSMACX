@@ -15,8 +15,6 @@ void __cdecl leaf_0057dee0_redirect(void *);
 int __cdecl leaf_00408470_redirect(const void *, int);
 int __stdcall leaf_005d7a10_redirect(const void *, int, int, int);
 int __fastcall leaf_005d5470_redirect(void *, void *, const void *, int, int, int);
-int __stdcall leaf_00532a50_redirect(int, int *, int *, int);
-int __cdecl leaf_00592db0_redirect(int, int, int, int, int, int);
 int __fastcall leaf_004041c0_redirect(void *, void *);
 
 typedef Buffer *(__fastcall func_leaf_buffer_ctor)(Buffer *, void *);

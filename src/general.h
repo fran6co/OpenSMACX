@@ -19,6 +19,13 @@
 
 // Source-owned file checksum used by the network transfer protocol (538FE0).
 unsigned char __cdecl checksum_file(char *file_path);
+// Primitive utility: IDIV truncates, then increments the quotient if the remainder is nonzero.
+int __stdcall divide_and_increment_quotient_if_remainder(
+    int value, int *quotient_out, int *remainder_out, int divisor);
+// Signed point-in-rectangle query with inclusive edges and x/y-first argument order.
+int __cdecl point_in_inclusive_rect(
+    int x, int y, int left, int top, int right, int bottom);
+
 
 class Font;     // forward declaration
 class Palette;  // forward declaration

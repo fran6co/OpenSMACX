@@ -75,6 +75,100 @@ uint32_t ScenEditorUndoPosition = 1; // 0x00690D7C
 int GenderDefault;       // 0x009BBFEC
 BOOL PluralityDefault;   // 0x009BBFF0
 
+/*
+Purpose: Divide, rounding the quotient AWAY from zero when there is a
+         remainder, and report both.
+
+             mov eax,ecx / cdq / idiv esi / mov edx,eax / imul edx,esi
+             sub ecx,edx / mov [edx],ecx / je zero / inc eax / mov [ecx],eax
+             ret 0x10   zero: mov [edx],eax / ret 0x10
+
+         The `je` is three instructions after the `sub` that sets it, with two
+         `mov`s and a `pop` in between - none of which touch flags. It tests
+         whether the REMAINDER was zero, not anything nearer to it.
+
+         `idiv` truncates toward zero, so the +1 rounds away from zero rather
+         than up: -7 by 2 gives a remainder of -1 and a quotient of -3, which
+         becomes -2. Both traps of the original are kept, because both
+         spellings go through one division: a zero divisor and INT_MIN / -1.
+
+// HISTORICAL scaffold role: SCAFFOLD Transitional leaf collection, not completed genuine owner recovery; preserve body evidence during owner migration.
+// ORIGINAL: 0x00532A50 sub_532a50 0x00532A50-0x00532A81 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned terranx_original.exe SHA-256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf at 0x00532A50: decoded complete span accesses only explicit stack arguments, without an ECX receiver or object storage.", "Source-owned general utility implementation; current source family placement does not establish the original translation unit.", "Whole file-backed PE examination found no HIGHLOW operand or raw E8-relative target for this entry; indirect calls and non-relocated references remain unresolved."], "reason": "Own the primitive-only operation as a complete source-level general utility. No class, global, object layout, or original source-TU identity is claimed."}
+// symbol    ?divide_and_increment_quotient_if_remainder@@YGHHPAH0H@Z
+// historical original marker: 0x00532A50 sub_532a50 0x00532A50-0x00532A81 BYTE_EXACT
+// historical scaffold emitted-symbol hint: ?leaf_00532a50_redirect@@YGHHPAH0H@Z
+// size      49 bytes
+// prototype
+// callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: the quotient that was stored
+Status: Complete
+*/
+// HISTORICAL correction: the former prose called this away-from-zero; that label was inaccurate.
+// Preserve the exact operation below: truncating IDIV quotient, remainder store, then quotient increment on any nonzero remainder.
+
+
+int __stdcall divide_and_increment_quotient_if_remainder(int value, int *quotient_out,
+                                     int *remainder_out, int divisor) {
+    // Increment the quotient IN PLACE. A `rounded` temp - whether built by a
+    // ternary or by an `if` - keeps one more value live, and VC6 then stops
+    // spilling the divisor to esi, which is the `push` at index 3.
+    int quotient = value / divisor;
+    const int remainder = value - quotient * divisor;
+    *remainder_out = remainder;
+    if (remainder != 0) {
+        ++quotient;
+    }
+    *quotient_out = quotient;
+    return quotient;
+}
+
+/*
+Purpose: Is a point inside an inclusive rectangle?
+
+             mov eax,[ebp+8] / mov ecx,[ebp+0x10] / cmp eax,ecx / jl no
+             cmp eax,[ebp+0x18] / jg no / mov eax,[ebp+0xc]
+             mov ecx,[ebp+0x14] / cmp eax,ecx / jl no / cmp eax,[ebp+0x1c]
+             jg no / mov eax,1 / ret     no: xor eax,eax / ret
+
+         Six arguments in the order x, y, left, top, right, bottom - the two
+         coordinates first and the bounds interleaved after, which is not the
+         (left, top, right, bottom, x, y) an eye expects.
+
+         `jl` and `jg` are SIGNED, and both bounds are INCLUSIVE: a point
+         exactly on an edge is inside.
+
+// HISTORICAL scaffold role: SCAFFOLD Transitional leaf collection, not completed genuine owner recovery; preserve body evidence during owner migration.
+// ORIGINAL: 0x00592DB0 sub_592db0 0x00592DB0-0x00592DDC BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned terranx_original.exe SHA-256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf at 0x00592DB0: decoded complete span accesses only explicit stack arguments, without an ECX receiver or object storage.", "Source-owned general utility implementation; current source family placement does not establish the original translation unit.", "Whole file-backed PE examination found no HIGHLOW operand or raw E8-relative target for this entry; indirect calls and non-relocated references remain unresolved."], "reason": "Own the primitive-only operation as a complete source-level general utility. No class, global, object layout, or original source-TU identity is claimed."}
+// symbol    ?point_in_inclusive_rect@@YAHHHHHHH@Z
+// historical original marker: 0x00592DB0 sub_592db0 0x00592DB0-0x00592DDC BYTE_EXACT
+// historical scaffold emitted-symbol hint: ?leaf_00592db0_redirect@@YAHHHHHHH@Z
+// size      44 bytes
+// prototype
+// callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: 1 when inside, 0 otherwise
+Status: Complete
+*/
+
+int __cdecl point_in_inclusive_rect(int x, int y, int left, int top,
+                                   int right, int bottom) {
+    if (x < left || x > right) {
+        return 0;
+    }
+    if (y < top || y > bottom) {
+        return 0;
+    }
+    return 1;
+}
+
+
 // Read a script section into the shared substitution buffer. The text
 // reader owns TextBufferGetPtr; parse_string supplies the substitutions.
 // Superseded seed deleted; seed paths below are historical Git provenance.
