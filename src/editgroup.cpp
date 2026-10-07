@@ -280,45 +280,27 @@ Purpose: Tear down all ten controls - close each one, free its heap text - then
 Return Value: n/a
 Status: Complete
 */
-namespace {
-// A LOCAL SHIM, not vtable_shim.h's VCall. Only DECLARATION ORDER fixes a
-// slot; a slot's signature is chosen to match the call site, and the shared
-// VCall spells slot000 with no arguments where this one pushes an int.
-class CloseVCall { public:
-    virtual void slot000(int);
-};
-}  // namespace
-
+// Historical spelling notes above describe the superseded raw-access body.
+// attach constructs owned EditBox children; close deletes each before reading
+// its independently allocated text buffer. Original vbtable entry +8 selects
+// the genuine Dialog virtual base, whose adjustment is now compiler-owned.
 void EditGroup::close() {
-    char *self = reinterpret_cast<char *>(this);
-    char *esi = self + 4;
-    int ebx = 10;
-    do {
-        int *slot_a = reinterpret_cast<int *>(esi);
-        int ctrl = *slot_a;
-        if (ctrl != 0) {
-            reinterpret_cast<CloseVCall *>(ctrl)->slot000(1);
-            *slot_a = 0;
-            *reinterpret_cast<int *>(esi + 0x50) = 10;
+    for (int index = 0; index < 10; ++index) {
+        if (boxes_[index] != nullptr) {
+            delete boxes_[index];
+            boxes_[index] = nullptr;
+            limits_[index] = 10;
         }
-        int *slot_b = reinterpret_cast<int *>(esi + 0x28);
-        int freeable = *slot_b;
-        if (freeable != 0) {
-            free(reinterpret_cast<void *>(freeable));
-            *slot_b = 0;
+        if (text_buffers_[index] != nullptr) {
+            free(text_buffers_[index]);
+            text_buffers_[index] = nullptr;
         }
-        esi += 4;
-    } while (--ebx != 0);
+    }
 
-    // THE RAW OFFSET, not `field_84_ = EditGroupDefault`. Both read the
-    // same global into the same slot, but a member access keeps `this`
-    // live differently and VC6 then holds it in ebx where the image uses
-    // ebp - 25 of 34 instead of 34 of 34.
+    // Preserve the late default read after all child/callback work. The
+    // compiler owns both virtual child deletion and the Dialog-base adjustment.
     field_84_ = EditGroupDefault;
-
-    char *vtable = *reinterpret_cast<char **>(self);
-    int voffset = *reinterpret_cast<int *>(vtable + 8);
-    reinterpret_cast<Dialog *>(self + voffset)->close();
+    Dialog::close();
 }
 
 // ====================
