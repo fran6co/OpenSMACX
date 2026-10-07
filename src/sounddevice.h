@@ -53,7 +53,9 @@ class SoundDeviceBase {
   uint32_t volume_8_;
   uint32_t field_C_;
   uint32_t field_10_;
-  void *device_14_;
+  // Non-owning pointer to the DLL object's observed shared virtual-call prefix.
+  // Creation/destruction remain DLL-owned; no external class extent is claimed.
+  SoundDeviceBase *device_14_;
   uint32_t field_18_;
   uint32_t field_1C_;
 };
@@ -163,8 +165,8 @@ class Wave_In_Device : public SoundDeviceBase {
   int start_record();
   int end_record();
 
-  // These wrappers borrow the backend returned by the soundx.dll factory in
-  // SoundDeviceBase::device_14_; the DLL owns its creation and destruction.
+  // These calls use a separate bounded view of the DLL backend's higher
+  // ordinals; its unknown prefix/API remains recovery debt.
   int set_codec(unsigned long codec);
   int set_vxw_key(signed char *key);
 };  // vptr at 0x00 replaces the retired vtable_storage_

@@ -68,7 +68,10 @@ def test_reverting_attribute_query_to_nonvirtual_breaks_table_contract(family):
 
 def run_switch(tmp_path, monkeypatch):
     run_recovered_harness(tmp_path, monkeypatch, "wave_device_sound_chain_harness.cpp",
-        [*CHAIN_HANDLERS, ("// LIVE_SELECT", "src/wave_device.cpp", 0x4C5030)], declarations=[
+        [*CHAIN_HANDLERS,
+         ("// LIVE_GROUP_CONSTRUCTOR", "src/wave_device.cpp", 0x4C5490),
+         ("// LIVE_GROUP_DESTRUCTOR", "src/wave_device.cpp", 0x4C5B80),
+         ("// LIVE_SELECT", "src/wave_device.cpp", 0x4C5030)], declarations=[
             *CHAIN_DECLARATIONS,
             ("// LIVE_DEVICE_BASE_DECL", "src/sounddevice.h", "class SoundDeviceBase {", "static_assert(sizeof(SoundDeviceBase)"),
             ("// LIVE_SOUND_DOUBLES", "recovery/tests/sound_chain_storage_harness.cpp", "// SOUND_LINK_DOUBLES_BEGIN", "// SOUND_LINK_DOUBLES_END"),

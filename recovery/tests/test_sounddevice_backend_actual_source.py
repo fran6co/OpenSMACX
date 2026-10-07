@@ -63,7 +63,8 @@ def dispatch_surface_is_valid(header: str, cpp: str) -> bool:
         ("int", "set_codec", "unsigned long codec"),
         ("int", "set_vxw_key", "signed char *key"),
     ]
-    if slots != expected or "sizeof(WaveInDeviceDispatchView)" in header:
+    if (slots != expected or "sizeof(WaveInDeviceDispatchView)" in header
+            or "SoundDeviceBase *device_14_;" not in header):
         return False
     for signature, call in (
         ("int Wave_In_Device::set_codec(unsigned long codec)",
@@ -78,7 +79,7 @@ def dispatch_surface_is_valid(header: str, cpp: str) -> bool:
             body = extract_braced(cpp, start)
         except AssertionError:
             return False
-        if "static_cast<WaveInDeviceDispatchView *>(device_14_)" not in body:
+        if "reinterpret_cast<WaveInDeviceDispatchView *>(device_14_)" not in body:
             return False
         if "if (delegate == 0)" not in body or "return 0x13;" not in body:
             return False
@@ -188,19 +189,27 @@ def test_backend_calls_use_the_actual_typed_interface_and_source_bodies(tmp_path
         cpp_source.replace("if (delegate == 0)", "if (delegate != 0)", 1),
         cpp_source.replace("delegate->set_codec(codec)",
                            "delegate->set_codec(codec + 1)", 1),
+        header.replace("SoundDeviceBase *device_14_;", "void *device_14_;", 1),
+        cpp_source.replace("reinterpret_cast<WaveInDeviceDispatchView *>(device_14_)",
+                           "static_cast<WaveInDeviceDispatchView *>(device_14_)", 1),
         cpp_source.replace("return delegate->set_codec(codec);",
                            "delegate->set_codec(codec); return 0;", 1),
     )
     for mutant in mutations:
-        mutated_header = mutant if "class WaveInDeviceDispatchView" in mutant else header
-        mutated_cpp = mutant if "Wave_In_Device::set_codec" in mutant or "Wave_In_Device::set_vxw_key" in mutant else cpp_source
+        mutated_header = mutant if ("class WaveInDeviceDispatchView" in mutant
+                              or "SoundDeviceBase *device_14_" in mutant
+                              or "void *device_14_" in mutant) else header
+        mutated_cpp = mutant if ("Wave_In_Device::set_codec" in mutant
+                                 or "Wave_In_Device::set_vxw_key" in mutant
+                                 or "reinterpret_cast<WaveInDeviceDispatchView" in mutant) else cpp_source
         assert not dispatch_surface_is_valid(mutated_header, mutated_cpp)
 
     assert re.search(r"int\s+set_codec\(unsigned long\s+codec\)\s*;", header)
     assert re.search(r"int\s+set_vxw_key\(signed char\s*\*\s*key\)\s*;", header)
     owner = """
+struct SoundDeviceBase { virtual int init(void *, unsigned long) = 0; };
 struct Wave_In_Device {
-  void *device_14_;
+  SoundDeviceBase *device_14_;
   int set_codec(unsigned long codec);
   int set_vxw_key(signed char *key);
 };
@@ -214,7 +223,8 @@ struct Wave_In_Device {
         "  assert(device.set_codec(5) == 0x13);",
         "  signed char key[] = {1, 2, 0};",
         "  assert(device.set_vxw_key(key) == 0x13);",
-        "  FakeWaveInBackend backend; device.device_14_ = &backend;",
+        "  FakeWaveInBackend backend;",
+        "  device.device_14_ = reinterpret_cast<SoundDeviceBase *>(&backend);",
         "  assert(device.set_codec(0x1234) == 47);",
         "  assert(backend.codec == 0x1234);",
         "  assert(device.set_vxw_key(key) == -9);",

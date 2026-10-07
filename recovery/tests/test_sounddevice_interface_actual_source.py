@@ -195,17 +195,18 @@ def test_actual_shared_fields_and_lifecycle_order_are_consistent():
     base_text = class_body(sound, "SoundDeviceBase")
     expected_fields = (
         "uint32_t field_4_;", "uint32_t volume_8_;", "uint32_t field_C_;",
-        "uint32_t field_10_;", "void *device_14_;", "uint32_t field_18_;",
+        "uint32_t field_10_;", "SoundDeviceBase *device_14_;", "uint32_t field_18_;",
         "uint32_t field_1C_;",
     )
+    assert "SoundDeviceBase *device_14_;" in base_text
     positions = [base_text.index(field) for field in expected_fields]
     assert positions == sorted(positions)
     for owner, text in (("Midi_Device", sound), ("Wave_In_Device", sound),
                         ("Wave_Device", wave)):
         body = class_body(text, owner)
         for field in expected_fields:
-            field_name = field.split()[-1].rstrip(";")
-            declaration = rf"^\s*(?:uint32_t|void\s*\*)\s+{re.escape(field_name)}\s*;"
+            field_name = field.split()[-1].rstrip(";").lstrip("*")
+            declaration = rf"^\s*(?:uint32_t\s+|(?:void|SoundDeviceBase)\s*\*\s*){re.escape(field_name)}\s*;"
             assert not re.search(declaration, body, re.MULTILINE), (
                 f"{owner} duplicates shared {field_name}"
             )

@@ -30,6 +30,8 @@ struct EAX_REVERB_PROPERTIES;
 // LIVE_DEVICE_DECLARATION
 #undef private
 // LIVE_SLOT_DISPATCH
+// LIVE_GROUP_CONSTRUCTOR
+// LIVE_GROUP_DESTRUCTOR
 SoundDeviceBase::SoundDeviceBase()
     : field_4_(0), volume_8_(0), field_C_(0), field_10_(0), device_14_(0),
       field_18_(0), field_1C_(0) {}
@@ -74,7 +76,9 @@ class TestSound : public Sound {
     }
     int unload() {
         event(30 + id); ++unloads;
-        if (id == 4) switching_device->device_14_ = replacement_device;
+        // Raw mock driver uses the observed call prefix, not DLL inheritance.
+        if (id == 4) switching_device->device_14_ =
+            reinterpret_cast<SoundDeviceBase *>(replacement_device);
         return Sound::detach();
     }
     int load(const char *name) {
@@ -113,7 +117,7 @@ int main() {
     WrappedDevice driver, replacement;
     switching_device = &device;
     replacement_device = &replacement;
-    device.device_14_ = &driver;
+    device.device_14_ = reinterpret_cast<SoundDeviceBase *>(&driver);
     TestSound first(1, 1, 1), protected_sound(2, 1, 5);
     AnotherSound idle(3, 0, 0), last(4, 1, 1);
     last.rename_on_previous = true;

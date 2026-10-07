@@ -20,26 +20,13 @@
 #include "sounddevice.h"
 #include "dialog.h"
 
-// init() for both device classes is reached by init_sound().
-//
-// A REAL local vtable, not the vtable_method/ORIGINAL seam used elsewhere in
-// this file: the seam's extra indirection left window/backends and the
-// vtable read on the OPPOSITE registers from the image (mnemonic-identical,
-// byte-different). This class is never instantiated, so its own
-// VC6-synthesised vtable dispatch is exactly the image's `call [reg+N]`.
-namespace {
-class DeviceVCall { public:
-    virtual int slot000(unsigned long);
-    virtual void slot001();
-    virtual void slot002();
-    virtual int slot003(void *, unsigned long);
-};
-}  // namespace
+// init_sound() directly calls these concrete init methods. Each body invokes
+// wrapper slots 0/1 and delegate slot 3 through their observed interfaces.
 
 /*
 Purpose: Select the device (vtable slot 0), then open the wrapped device at
          this+0x14 (vtable slot 0xC) with the given window and backends. On
-         failure to open, restart (vtable slot 4) and clear the wrapped
+         failure to open, call delete_device (vtable slot 1) and clear the wrapped
          device pointer before reporting the failure.
 // ORIGINAL: 0x004C57A0 ?init@Midi_Device@@QAEHPAXK@Z 0x004C57A0-0x004C57E4 BYTE_EXACT
 // symbol    ?init@Midi_Device@@UAEHPAXK@Z
@@ -54,17 +41,14 @@ Return Value: 0 on success; the failing call's own non-zero result otherwise
 Status: Complete
 */
 int Midi_Device::init(void *window, unsigned long backends) {
-    int result = reinterpret_cast<DeviceVCall *>(this)->slot000(backends);
+    int result = create_device(backends);
     if (result != 0) {
         return result;
     }
-    DeviceVCall *sub = *reinterpret_cast<DeviceVCall **>(
-        reinterpret_cast<uint8_t *>(this) + 0x14);
-    int result2 = sub->slot003(window, backends);
+    int result2 = device_14_->init(window, backends);
     if (result2 != 0) {
-        reinterpret_cast<DeviceVCall *>(this)->slot001();
-        *reinterpret_cast<DeviceVCall **>(
-            reinterpret_cast<uint8_t *>(this) + 0x14) = 0;
+        delete_device();
+        device_14_ = nullptr;
         return result2;
     }
     return 0;
@@ -73,7 +57,7 @@ int Midi_Device::init(void *window, unsigned long backends) {
 /*
 Purpose: Select the device (vtable slot 0), then open the wrapped device at
          this+0x14 (vtable slot 0xC) with the given window and backends. On
-         failure to open, restart (vtable slot 4) and report the failure -
+         failure to open, call delete_device (vtable slot 1) and report the failure -
          unlike Midi_Device::init above, the wrapped device pointer is left
          alone.
 // ORIGINAL: 0x004C5A10 ?init@Wave_In_Device@@QAEHPAXK@Z 0x004C5A10-0x004C5A4D BYTE_EXACT
@@ -89,15 +73,13 @@ Return Value: 0 on success; the failing call's own non-zero result otherwise
 Status: Complete
 */
 int Wave_In_Device::init(void *window, unsigned long backends) {
-    int result = reinterpret_cast<DeviceVCall *>(this)->slot000(backends);
+    int result = create_device(backends);
     if (result != 0) {
         return result;
     }
-    DeviceVCall *sub = *reinterpret_cast<DeviceVCall **>(
-        reinterpret_cast<uint8_t *>(this) + 0x14);
-    int result2 = sub->slot003(window, backends);
+    int result2 = device_14_->init(window, backends);
     if (result2 != 0) {
-        reinterpret_cast<DeviceVCall *>(this)->slot001();
+        delete_device();
         return result2;
     }
     return 0;
@@ -632,7 +614,7 @@ int Midi_Device::is_disabled() {
 // indirect  0x004C5A90
 int Wave_In_Device::set_codec(unsigned long codec) {
     WaveInDeviceDispatchView *const delegate =
-        static_cast<WaveInDeviceDispatchView *>(device_14_);
+        reinterpret_cast<WaveInDeviceDispatchView *>(device_14_);
     if (delegate == 0) {
         return 0x13;
     }
@@ -659,7 +641,7 @@ int Wave_In_Device::set_codec(unsigned long codec) {
 // indirect  0x004C5AB0
 int Wave_In_Device::set_vxw_key(signed char *key) {
     WaveInDeviceDispatchView *const delegate =
-        static_cast<WaveInDeviceDispatchView *>(device_14_);
+        reinterpret_cast<WaveInDeviceDispatchView *>(device_14_);
     if (delegate == 0) {
         return 0x13;
     }
@@ -817,7 +799,7 @@ int Midi_Device::create_device(unsigned long flags) {
     // The image takes `&device_14_` into eax first (0x004C56D3 `lea eax,
     // [ecx + 0x14]`), then loads the field for the test - the wrapped device
     // is opened INTO this slot, so the address outlives the null check.
-    void **slot = &device_14_;
+    void **slot = reinterpret_cast<void **>(&device_14_);
     if (device_14_ == 0) {
         MidiDeviceOpen *const open = MidiDeviceOpenSlot();
         if (open != 0) {
@@ -858,7 +840,7 @@ int Midi_Device::release() {
 // ORIGINAL: 0x004C59A0 ?create_device@Wave_In_Device@@QAEHK@Z 0x004C59A0-0x004C59C5 BYTE_EXACT
 // symbol    ?create_device@Wave_In_Device@@UAEHK@Z
 int Wave_In_Device::create_device(unsigned long flags) {
-    void **slot = &device_14_;
+    void **slot = reinterpret_cast<void **>(&device_14_);
     if (device_14_ == 0) {
         WaveInDeviceOpen *const open = WaveInDeviceOpenSlot();
         if (open != 0) {
