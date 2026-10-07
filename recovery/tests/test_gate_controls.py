@@ -94,11 +94,12 @@ def damage(root):
 
 def slack(edits):
     name = "recovery/audits.json"
-    text = edits.read(name)
-    pattern = r'("artifact files \(recovered/\)": )(\d+)'
-    match = re.search(pattern, text)
-    assert match, "the recovered-seed counter is gone; retire or replace its control"
-    edits.replace(name, match[0], match[1] + str(int(match[2]) + 5))
+    config = json.loads(edits.read(name))
+    audit = config["audits"]["compiler-work"]
+    counter = next(row["name"] for row in audit["counters"]
+                   if row["name"] == "field_accessors.cpp markers")
+    audit["ceilings"][counter] += 5
+    edits.write(name, json.dumps(config, indent=2) + "\n")
 
 
 def wrong_image_pin(edits):
@@ -119,10 +120,8 @@ def swap_claim(edits):
 
 
 def conflicting_map(edits):
-    paths = sorted((edits.root / "src/unrecovered").glob("*.cpp"))
-    assert paths, "no seed hosts remain; retire or replace the alternative-host control"
-    name = paths[0].relative_to(edits.root).as_posix()
-    edits.write(name, edits.claim() + "\n" + edits.read(name))
+    # Conflict across compiled owners, rather than a retired seed directory.
+    edits.append("src/caviar.cpp", "\n" + edits.claim() + "\n")
 
 
 def symbol(edits, name):
@@ -179,9 +178,10 @@ CASES = (
                             "uint32_t field_1D04C_;  // 0x1D0FC"),
          layout_subject=("BaseWin", "field_1D04C_")),
     Case("unobserved_offset_disagrees", "layout", "fail",
-         lambda e: e.replace("src/hypothesis_layouts.h", "class SpriteList {\n public:\n  uint8_t field_0_[0x28];  // 0x0",
-                             "class SpriteList {\n public:\n  uint8_t field_0_[0x28];  // 0x4"),
-         layout_subject=("SpriteList", "field_0_")),
+         lambda e: e.replace("src/spritebox.h",
+                             "RECOVERY_MEMBER: v1 SpriteList field_24_ 0x24 0x005EB29F",
+                             "RECOVERY_MEMBER: v1 SpriteList field_24_ 0x28 0x005EB29F"),
+         layout_subject=("SpriteList", "field_24_")),
     Case("source_layout_expectation", "layout", "fail",
          lambda e: e.replace("src/radiobutton.h",
                             "RECOVERY_MEMBER: v3 RadioButton unchecked_sprite_ Sprite* 0x4 0x0060D750",
@@ -404,11 +404,8 @@ def test_damage_anchor_still_applies_and_restores_private_source(case, tmp_path)
     # source. A legitimate rename/rehoming should update its dependent control
     # before an hours-long full-gate run discovers the stale anchor.
     names = ["src/palette.cpp", "src/palette.h", "src/caviar.cpp", "src/radiobutton.cpp",
-             "src/radiobutton.h", "src/basewin.h", "src/hypothesis_layouts.h", "src/sprite.cpp", "src/IMAGE_PIN", "README.md",
+             "src/radiobutton.h", "src/basewin.h", "src/hypothesis_layouts.h", "src/spritebox.h", "src/sprite.cpp", "src/IMAGE_PIN", "README.md",
              "recovery/audits.json", "packages/match-recovery/src/match_recovery/source/writer.py"]
-    seed = next(iter(sorted((ROOT / "src/unrecovered").glob("*.cpp"))), None)
-    if seed is not None:
-        names.append(seed.relative_to(ROOT).as_posix())
     original = {}
     for name in names:
         path = tmp_path / name
