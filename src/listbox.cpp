@@ -1296,194 +1296,106 @@ int ListBox::attach(GraphicWin *a1, int a2, int a3, int a4) {
         return 7;
     }
 
-    char *self = reinterpret_cast<char *>(this);
-    // attach is entered on the Dialog virtual base: the ListBox front is
-    // 0xA60 below.
-    char *front = self - 0xA60;
+    GraphicWin &graphic = *this;
+    Dialog &dialog = *this;
+    Win &window = graphic;
+    Buffer &buffer = graphic;
 
     int flags = (a4 & 0xfffffff3) | 0x20;
-    {
-        int *vbt = *reinterpret_cast<int **>(front);
-        *reinterpret_cast<int *>(self + vbt[1] - 0x9C8) = flags;
-    }
+    iFlags_ = static_cast<uint32_t>(flags);
 
-    int dim_result = reinterpret_cast<ListBox *>(front)->calculate_dimensions();
+    int dim_result = calculate_dimensions();
     if (dim_result != 0) {
         if (dim_result != 7) {
             return dim_result;
         }
-        {
-            int *vbt = *reinterpret_cast<int **>(front);
-            char *dlg_base = self + vbt[2];
-            *reinterpret_cast<int *>(dlg_base - 0xA04)
-                = *reinterpret_cast<int *>(dlg_base - 0xA34);
-        }
-        {
-            int *vbt = *reinterpret_cast<int **>(front);
-            char *dlg_base = self + vbt[2];
-            *reinterpret_cast<int *>(dlg_base - 0xA00)
-                = *reinterpret_cast<int *>(dlg_base - 0xA30);
-        }
-        {
-            int *vbt = *reinterpret_cast<int **>(front);
-            char *dlg_base = self + vbt[2];
-            *reinterpret_cast<int *>(dlg_base - 0xA0C) = 1;
-        }
-        {
-            int *vbt = *reinterpret_cast<int **>(front);
-            char *dlg_base = self + vbt[2];
-            *reinterpret_cast<int *>(dlg_base - 0xA08) = 1;
-        }
+        dialog.field_5C_ = dialog.field_2C_;
+        dialog.field_60_ = dialog.field_30_;
+        dialog.field_54_ = 1;
+        dialog.field_58_ = 1;
     }
 
-    {
-        int *vbt = *reinterpret_cast<int **>(front);
-        char *dlg_base = self + vbt[2];
-        *reinterpret_cast<int *>(dlg_base - 0xA3C) = a2;
-    }
-    {
-        int *vbt = *reinterpret_cast<int **>(front);
-        char *dlg_base = self + vbt[2];
-        *reinterpret_cast<int *>(dlg_base - 0xA38) = a3;
-    }
+    dialog.field_24_ = static_cast<uint32_t>(a2);
+    dialog.field_28_ = static_cast<uint32_t>(a3);
 
-    if (*reinterpret_cast<int *>(front + 0x20) > *reinterpret_cast<int *>(front + 0x1C)) {
-        int *vbt = *reinterpret_cast<int **>(front);
-        char *dlg_base = self + vbt[2];
-        if (*reinterpret_cast<int *>(dlg_base - 0xA0C) > 1) {
+    if (static_cast<int32_t>(field_20_) > static_cast<int32_t>(field_1C_)) {
+        if (static_cast<int32_t>(dialog.field_54_) > 1) {
             flags |= 4;
         } else {
             flags |= 8;
         }
     }
 
-    {
-        int a1_flags = *reinterpret_cast<int *>(
-            reinterpret_cast<char *>(a1) + 0x98);
-        if ((a1_flags & 0x1000) == 0) {
-            flags |= 0x100000;
-        }
+    if (!a1->has_dialog_focus_flag()) {
+        flags |= 0x100000;
     }
     if (flags & 0x40) {
         flags |= 0x800;
     }
 
-    {
-        int *vbt = *reinterpret_cast<int **>(front);
-        char *dlg_base = self + vbt[2];
-        char *gw_base = self + vbt[1] - 0xA60;
-        int init_result = reinterpret_cast<GraphicWin *>(gw_base)->init(
-            a2, a3,
-            *reinterpret_cast<int *>(dlg_base - 0xA00),
-            *reinterpret_cast<int *>(dlg_base - 0xA04),
-            0, flags, reinterpret_cast<Win *>(a1), 0, 0);
-        if (init_result != 0) {
-            return init_result;
-        }
+    int init_result = graphic.init(
+        a2, a3,
+        static_cast<int32_t>(dialog.field_60_),
+        static_cast<int32_t>(dialog.field_5C_),
+        0, flags, a1, 0, 0);
+    if (init_result != 0) {
+        return init_result;
     }
 
     if (flags & 8) {
-        int *vbt = *reinterpret_cast<int **>(front);
-        Win *win = reinterpret_cast<Win *>(self + vbt[1] - 0xA60);
-        win->set_vert_range(0,
-            *reinterpret_cast<int *>(self + vbt[2] - 0x994) - 1);
-        vbt = *reinterpret_cast<int **>(front);
-        win = reinterpret_cast<Win *>(self + vbt[1] - 0xA60);
-        win->set_vert_paging(
-            *reinterpret_cast<int *>(self + vbt[2] - 0xA08) - 1);
+        window.set_vert_range(0, dialog.item_list_.entry_count_ - 1);
+        window.set_vert_paging(static_cast<int32_t>(dialog.field_58_) - 1);
     } else if (flags & 4) {
-        int *vbt = *reinterpret_cast<int **>(front);
-        int numerator = *reinterpret_cast<int *>(self + vbt[2] - 0x994);
-        char *dlg_base = self + vbt[2];
-        int quotient = numerator / *reinterpret_cast<int *>(dlg_base - 0xA08);
-        Win *win = reinterpret_cast<Win *>(self + vbt[1] - 0xA60);
-        win->set_horz_range(0, quotient - 1);
-        vbt = *reinterpret_cast<int **>(front);
-        win = reinterpret_cast<Win *>(self + vbt[1] - 0xA60);
-        win->set_horz_paging(*reinterpret_cast<int *>(self + vbt[2] - 0xA0C));
+        int numerator = dialog.item_list_.entry_count_;
+        int quotient = numerator / static_cast<int32_t>(dialog.field_58_);
+        window.set_horz_range(0, quotient - 1);
+        window.set_horz_paging(static_cast<int32_t>(dialog.field_54_));
     }
 
-    {
-        int *vbt = *reinterpret_cast<int **>(front);
-        char *dlg_base = self + vbt[2];
-        if (*reinterpret_cast<int *>(dlg_base - 0x994) == 0) {
-            *reinterpret_cast<int *>(front + 0x18) = 0;
-        } else {
-            while (*reinterpret_cast<int *>(dlg_base - 0x974)
-                   >= *reinterpret_cast<int *>(front + 0x1C)
-                       + *reinterpret_cast<int *>(front + 0x18)) {
-                int step;
-                if (*reinterpret_cast<int *>(dlg_base - 0xA0C) > 1) {
-                    step = *reinterpret_cast<int *>(dlg_base - 0xA08);
-                } else {
-                    step = 1;
-                }
-                *reinterpret_cast<int *>(front + 0x18) += step;
-
-                vbt = *reinterpret_cast<int **>(front);
-                dlg_base = self + vbt[2];
+    if (dialog.item_list_.entry_count_ == 0) {
+        field_18_ = 0;
+    } else {
+        while (static_cast<int32_t>(dialog.selected_position_)
+               >= static_cast<int32_t>(field_1C_ + field_18_)) {
+            int step;
+            if (static_cast<int32_t>(dialog.field_54_) > 1) {
+                step = static_cast<int32_t>(dialog.field_58_);
+            } else {
+                step = 1;
             }
+            field_18_ += static_cast<uint32_t>(step);
         }
     }
 
-    if (*reinterpret_cast<int *>(front + 0x20) > *reinterpret_cast<int *>(front + 0x1C)) {
-        int *vbt = *reinterpret_cast<int **>(front);
-        Win *win = reinterpret_cast<Win *>(self + vbt[1] - 0xA60);
-        if (*reinterpret_cast<int *>(self + vbt[2] - 0xA0C) > 1) {
-            win->set_horz_pos(*reinterpret_cast<int *>(front + 0x18));
+    if (static_cast<int32_t>(field_20_) > static_cast<int32_t>(field_1C_)) {
+        if (static_cast<int32_t>(dialog.field_54_) > 1) {
+            window.set_horz_pos(static_cast<int32_t>(field_18_));
         } else {
-            win->set_vert_pos(*reinterpret_cast<int *>(front + 0x18));
+            window.set_vert_pos(static_cast<int32_t>(field_18_));
         }
     }
 
-    {
-        int *vbt = *reinterpret_cast<int **>(front);
-        char *dlg_base = self + vbt[2];
-        Buffer *buf = reinterpret_cast<Buffer *>(self + vbt[1] - 0x61C);
-        buf->set_text_color(*reinterpret_cast<int *>(dlg_base - 0x9E4),
-                            *reinterpret_cast<int *>(dlg_base - 0x9D8),
-                            *reinterpret_cast<int *>(dlg_base - 0x9CC),
-                            *reinterpret_cast<int *>(dlg_base - 0x9C0));
-    }
-    {
-        int *vbt = *reinterpret_cast<int **>(front);
-        char *dlg_base = self + vbt[2];
-        Buffer *buf = reinterpret_cast<Buffer *>(self + vbt[1] - 0x61C);
-        buf->set_text_color2(*reinterpret_cast<int *>(dlg_base - 0x9E0),
-                             *reinterpret_cast<int *>(dlg_base - 0x9D4),
-                             *reinterpret_cast<int *>(dlg_base - 0x9C8),
-                             *reinterpret_cast<int *>(dlg_base - 0x9BC));
-    }
-    {
-        int *vbt = *reinterpret_cast<int **>(front);
-        char *dlg_base = self + vbt[2];
-        Buffer *buf = reinterpret_cast<Buffer *>(self + vbt[1] - 0x61C);
-        buf->set_text_color3(*reinterpret_cast<int *>(dlg_base - 0x9DC),
-                             *reinterpret_cast<int *>(dlg_base - 0x9D0),
-                             *reinterpret_cast<int *>(dlg_base - 0x9C4),
-                             *reinterpret_cast<int *>(dlg_base - 0x9B8));
-    }
-    {
-        int *vbt = *reinterpret_cast<int **>(front);
-        char *dlg_base = self + vbt[2];
-        Buffer *buf = reinterpret_cast<Buffer *>(self + vbt[1] - 0x61C);
-        buf->set_font(*reinterpret_cast<Font **>(dlg_base - 0x9F0),
-                      *reinterpret_cast<Font **>(dlg_base - 0x9EC),
-                      *reinterpret_cast<Font **>(dlg_base - 0x9E8), 0);
-    }
+    buffer.set_text_color(
+        static_cast<int>(dialog.text_color_a_),
+        static_cast<int>(dialog.text_color_b_),
+        static_cast<int>(dialog.text_color_c_),
+        static_cast<int>(dialog.text_color_d_));
+    buffer.set_text_color2(
+        static_cast<int>(dialog.text_color_2a_),
+        static_cast<int>(dialog.text_color_2b_),
+        static_cast<int>(dialog.text_color_2c_),
+        static_cast<int>(dialog.text_color_2d_));
+    buffer.set_text_color3(
+        static_cast<int>(dialog.text_color_3a_),
+        static_cast<int>(dialog.text_color_3b_),
+        static_cast<int>(dialog.text_color_3c_),
+        static_cast<int>(dialog.text_color_3d_));
+    buffer.set_font(dialog.font1_, dialog.font2_, dialog.font3_, 0);
 
-    {
-        int *vbt = *reinterpret_cast<int **>(front);
-        Win *win = reinterpret_cast<Win *>(self + vbt[1] - 0xA60);
-        win->set_vert_pos(*reinterpret_cast<int *>(front + 0x18));
-    }
-    {
-        int *vbt = *reinterpret_cast<int **>(front);
-        int position = *reinterpret_cast<int *>(front + 0x18);
-        int quotient = position / *reinterpret_cast<int *>(self + vbt[2] - 0xA0C);
-        Win *win = reinterpret_cast<Win *>(self + vbt[1] - 0xA60);
-        win->set_horz_pos(quotient);
-    }
+    window.set_vert_pos(static_cast<int32_t>(field_18_));
+    int position = static_cast<int32_t>(field_18_);
+    int quotient = position / static_cast<int32_t>(dialog.field_54_);
+    window.set_horz_pos(quotient);
 
     return 0;
 }
@@ -1620,7 +1532,7 @@ int ListBox::update_changes() {
         int a1 = *reinterpret_cast<int *>(gw_base + 0xC4);
         int a2 = *reinterpret_cast<int *>(dlg_base + 0x24);
         int a3 = *reinterpret_cast<int *>(dlg_base + 0x28);
-        int result = reinterpret_cast<ListBox *>(self + 0xA60)->attach(
+        int result = this->ListBox::attach(
             reinterpret_cast<GraphicWin *>(a1), a2, a3, a4);
         if (result != 0) {
             return result;
