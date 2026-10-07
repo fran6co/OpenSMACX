@@ -986,9 +986,9 @@ void __cdecl read_faction(Player *player, int toggle) {
         LPSTR soc_effect = text_item();
         for (j = 0; j < MaxSocialEffectNum; j++) {
             if (!_stricmp(SocialEffects[j].set1, soc_effect)) {
-                // Bug fix: Original code sets this value to -1, disabling AI faction "Emphasis"
-                // value. No indication this was intentional.
-                *(&player->soc_ideology_effect + i) = j;
+                // Pinned 0x00586DF7 writes -1 even after a matching effect.
+                // Activating that effect is a post-recovery improvement.
+                *(&player->soc_ideology_effect + i) = -1;
                 break;
             }
         }
@@ -1477,10 +1477,10 @@ BOOL __cdecl read_rules(BOOL tgl_all_rules) {
         text_get();
         Reactor[i].name = text_item_string();
         Reactor[i].name_short = text_item_string();
-        // Bug fix/Enhancement: original function skips this value and is left as zero, isn't
-        // referenced elsewhere in code. Likely because default power value is sequential.
-        // This will allow future modifications.
-        Reactor[i].power = (uint16_t)text_item_number();
+        // Pinned 0x005878CE consumes the power token as text, without a
+        // numeric conversion or write. Keep existing power storage unchanged,
+        // including across reloads; static initialization supplies its first zero.
+        text_item();
         Reactor[i].preq_tech = (int16_t)tech_name(text_item());
     }
     if (text_open(AlphaxFileID, "WEAPONS")) {
@@ -1569,24 +1569,13 @@ BOOL __cdecl read_rules(BOOL tgl_all_rules) {
         Facility[i].cost = text_item_number();
         Facility[i].maint = text_item_number();
         Facility[i].preq_tech = tech_name(text_item());
-        /*
-        Enhancement: The original code explicitly sets this value to disabled (-2) overriding
-        alpha/x.txt.  It states in #FACILITIES alpha/x.txt: "Free  = No longer supported". The
-        original AC manual in Appendix 2 and official strategy guide both list the specific
-        facilities being free with certain tech.  However, this mechanic could have been removed
-        for balance reasons. Or maybe was dropped due to time constraints. There is code that
-        checks this value and sets the free facility only for new bases built after discovering the
-        tech. It looks like existing bases do not get it. Will have to review this more. For now,
-        this mechanic will be included as is. You can revert to vanilla behavior by modifying the
-        four entries below in alpha/x.txt #FACILITIES with free parameter set to Disabled.
-
-        Recycling Tanks, 4, 0, Biogen, EcoEng2,   > free with "Adv.Ecological Engineering"
-        Recreation Commons, 4, 1, Psych, SentEco, > free with "Sentient Econometrics"
-        Energy Bank, 8, 1, IndEcon, QuanMac,      > free with "Quantum Machinery"
-        Network Node, 8, 1, InfNet, HAL9000,      > free with "Self - Aware Machines"
-        */
+        // Preserve the parsed value through the effect-string callback, then
+        // disable it as the original does. Enabling free facilities is a later
+        // improvement, not the original alpha/x.txt interpretation.
         Facility[i].free_tech = tech_name(text_item());
         Facility[i].effect = text_item_string();
+        // Pinned 0x00587BC6..D7: parsed store, effect read/store, then -2.
+        Facility[i].free_tech = -2;
         if (i >= FacilitySPStart) {
             Facility[i].sp_ai_fight = text_item_number();
             Facility[i].sp_ai_power = text_item_number();
