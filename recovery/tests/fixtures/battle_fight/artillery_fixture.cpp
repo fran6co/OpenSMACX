@@ -30,7 +30,13 @@ static int status_flushes;
 static RulesBasic Rules; static Veh Vehs[8]; static VehPrototype VehPrototypes[8];
 static RulesChassis Chassis[8]; static Map TestTile; static PlayerData PlayersData[8];
 static Base Bases[8]; static TestConsole ConsoleGlobal; static TestBattleWin g_BattleWin;
-static TestStatusWin ConsoleStatusWin; static uint32_t LockEnableMask,GameMorePreferences,GamePreferences,GameState;
+static TestStatusWin ConsoleStatusWin;
+struct TestGameDataStateFields {
+    uint32_t game_state_, game_more_preferences_, game_preferences_;
+    struct { uint32_t enable_mask_; } lock_masks_;
+};
+struct TestGameDataState { TestGameDataStateFields fields_; };
+static TestGameDataState GameDataStateStorage;
 static int IsMultiplayerNet,ConsoleGroupAction,VehDrawSelection689F28,VehDrawSelection689F2C;
 static char *ScriptPopupFile=0; static int target_stack_root,draw_count,goal_calls,compute_calls,skip_id,fixups;
 static int range(int v,int lo,int hi){return v<lo?lo:v>hi?hi:v;}
