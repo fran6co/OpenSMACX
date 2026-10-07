@@ -300,6 +300,10 @@ def test_wrong_owned_buffer_type_at_identical_offset_fails_native_layout_check(c
     assert before.count(anchor) == 1
     # Compile the actual declaration with a layout witness. The original
     # method bodies need not type-check under deliberately wrong member types.
+    getter = b"Buffer *owned_buffer() const { return owned_buffer_; }"
+    getter_declaration = b"Buffer *owned_buffer() const;"
+    assert before.count(getter) == 1
+    projected = before.replace(getter, getter_declaration, 1)
     witness = b'#include "stdafx.h"\n#include "graphicwin.h"\nint layout_witness(GraphicWin *p) { return sizeof(*p); }\n'
     item, = (item for item in read_members(ROOT, image_pin(ROOT))
               if item.class_name == "GraphicWin" and item.member == "owned_buffer_")
@@ -309,9 +313,13 @@ def test_wrong_owned_buffer_type_at_identical_offset_fails_native_layout_check(c
                                          {"src/graphicwin.cpp": witness, "src/graphicwin.h": text},
                                          (), flags + settings.layout_flags))
             return class_layout(obj, "GraphicWin")
-        control = layout(before)
+        # Project out the unused inline getter for both witnesses. Its return
+        # expression is not part of this member-layout control; retaining it
+        # would make a wrong member type fail compilation before layout checks.
+        control = layout(projected)
         assert check_member(item, control)["result"] == "pass"
-        damaged = layout(before.replace(anchor, replacement + b"owned_buffer_;"))
+        damaged_header = projected.replace(anchor, replacement + b"owned_buffer_;")
+        damaged = layout(damaged_header)
         assert damaged["size"] == control["size"] == 0xA14
         row = check_member(item, damaged)
         assert row["actual_offset"] == 0xA08 and row["offset_result"] == "pass"

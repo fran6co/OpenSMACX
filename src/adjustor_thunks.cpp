@@ -299,78 +299,10 @@ void * __fastcall adjust_dialogs3_scalar_delete(void *self, void *,
 
 
 
-/*
-Purpose: Adjust the receiver from Console's thunk1 subobject to the one
-         Console::on_nc_mouse_move expects, then forward unchanged.
-// RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
-// ORIGINAL: 0x0051DEF0 ?on_nc_mouse_move@thunk1_Console@@QAEXHH@Z 0x0051DEF0-0x0051DEF8
-// symbol    ?adjust_console1_on_nc_mouse_move@@YIXPAX0HH@Z
-// size      8 bytes
-// prototype void (__thiscall ?on_nc_mouse_move@thunk1_Console@@QAEXHH@Z)(Console* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_console1_on_nc_mouse_move(void *self, void *, int arg0,
-                                                 int arg1) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<Console *>(object - vtordisp)->Console::on_nc_mouse_move(arg0, arg1);
-}
 
 
-/*
-Purpose: Adjust the receiver from Console's thunk1 subobject to the one
-         Console::on_nc_left_up expects, then forward unchanged.
-// RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
-// ORIGINAL: 0x0051DF10 ?on_nc_left_up@thunk1_Console@@QAEXHH@Z 0x0051DF10-0x0051DF18
-// symbol    ?adjust_console1_on_nc_left_up@@YIXPAX0HH@Z
-// size      8 bytes
-// prototype void (__thiscall ?on_nc_left_up@thunk1_Console@@QAEXHH@Z)(Console* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_console1_on_nc_left_up(void *self, void *, int arg0,
-                                              int arg1) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<Console *>(object - vtordisp)->Console::on_nc_left_up(arg0, arg1);
-}
 
 
-/*
-Purpose: Adjust the receiver from Console's thunk1 subobject to the one
-         Console::on_post_redraw_nc_buffer expects, then forward unchanged.
-// RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
-// ORIGINAL: 0x0051DF30 ?on_post_redraw_nc_buffer@thunk1_Console@@QAEXPAUBuffer@@H@Z 0x0051DF30-0x0051DF38
-// symbol    ?adjust_console1_on_post_redraw_nc_buffer@@YIXPAX00H@Z
-// size      8 bytes
-// prototype void (__thiscall ?on_post_redraw_nc_buffer@thunk1_Console@@QAEXPAUBuffer@@H@Z)(Console* this, Buffer*, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_console1_on_post_redraw_nc_buffer(void *self, void *,
-                                                         void *arg0,
-                                                         int arg1) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<Console *>(object - vtordisp)->Console::on_post_redraw_nc_buffer(
-        static_cast<Buffer *>(arg0), arg1);
-}
 
 
 

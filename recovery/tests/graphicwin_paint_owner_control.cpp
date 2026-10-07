@@ -59,7 +59,7 @@ public:
         std::sprintf(text, "BASE%d", side);
         events.push_back(text);
     }
-    virtual void vslot_60(Buffer *, int side) {
+    virtual void on_post_redraw_nc_buffer(Buffer *, int side) {
         char text[30];
         std::sprintf(text, "V%d", side);
         events.push_back(text);

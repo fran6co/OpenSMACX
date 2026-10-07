@@ -564,7 +564,7 @@ void GraphicWin::on_redraw_nc(RECT *area, int side) {
             }
             on_draw_caption(caption, buffer);
         }
-        vslot_60(buffer, 0);
+        on_post_redraw_nc_buffer(buffer, 0);
     }
 
     // Quadrant 2: bottom strip.
@@ -591,7 +591,7 @@ void GraphicWin::on_redraw_nc(RECT *area, int side) {
                     frame_bottom_left_->width(),
                 frame_bottom_->height());
         }
-        vslot_60(buffer, 2);
+        on_post_redraw_nc_buffer(buffer, 2);
     }
 
     // Quadrant 3: right strip.
@@ -618,7 +618,7 @@ void GraphicWin::on_redraw_nc(RECT *area, int side) {
                   frame_bottom_left_->height()) - top_left->height()) +
                     top_inset);
         }
-        vslot_60(buffer, 3);
+        on_post_redraw_nc_buffer(buffer, 3);
     }
 
     // Quadrant 1: left strip.
@@ -648,7 +648,7 @@ void GraphicWin::on_redraw_nc(RECT *area, int side) {
                   frame_bottom_right_->height()) - top_right->height()) +
                     top_inset);
         }
-        vslot_60(buffer, 1);
+        on_post_redraw_nc_buffer(buffer, 1);
     }
 }
 

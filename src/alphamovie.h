@@ -47,7 +47,7 @@ class MCIVideo {
   // Extent only - this class carries no size assertion, and the bound is a floor.
   // 7 member(s) from the IDA database, 2 named; it starts a member at 0x0, which is where src/ ends.
 
-  // RECOVERY_MEMBER: v1 MCIVideo field_0_ uint32_t 0x0 0x00600320
+  // RECOVERY_MEMBER: v1 MCIVideo field_0_ 0x0 0x00600320
   uint32_t field_0_;  // 0x0
   // The constructor only zeroes the LOW 16 bits at this offset
   // (`mov word ptr [esi+4], ax`), not the whole dword, so `mciId_` is

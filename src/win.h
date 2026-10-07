@@ -627,10 +627,10 @@ class Win : public AutoSound {
   virtual void on_left_double_click(int = 0, int = 0) {}  // 0x00404260
   virtual void on_right_double_click(int = 0, int = 0) {}  // 0x00404260
   virtual void vslot_30(int = 0) {}  // 0x00404270
-  virtual void vslot_31(int = 0, int = 0) {}  // 0x00404260
+  virtual void on_nc_mouse_move(int = 0, int = 0) {}  // 0x00404260
   virtual void vslot_32(int = 0, int = 0) {}  // 0x00404260
   virtual void on_nc_left_down(int = 0, int = 0) {}  // slot 33, 0x00404260
-  virtual void vslot_34(int = 0, int = 0) {}  // 0x00404260
+  virtual void on_nc_left_up(int = 0, int = 0) {}  // 0x00404260
   virtual void vslot_35(int = 0, int = 0) {}  // 0x00404260
   virtual void vslot_36(int = 0, int = 0) {}  // 0x00404260
   virtual void vslot_37(int = 0, int = 0) {}  // 0x00404260
@@ -667,7 +667,7 @@ class Win : public AutoSound {
   virtual void release_modal();  // slot 58  0x005EE280
   virtual int vslot_59() { return 1; }  // 0x00406840
   // Border-paint notification receives the source Buffer and quadrant.
-  virtual void vslot_60(Buffer * = 0, int = 0) {}  // 0x00404260
+  virtual void on_post_redraw_nc_buffer(Buffer * = 0, int = 0) {}  // 0x00404260
   // Slot 61 (0xF4): ordinary windows have no GraphicWin surface.
   virtual GraphicWin *get_graphic_win();  // original shared no-op target
   // Slot 62: plain Win has no surface; GraphicWin supplies the redraw.

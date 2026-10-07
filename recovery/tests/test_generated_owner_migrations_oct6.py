@@ -123,6 +123,8 @@ PRIOR_MAINLINE_MIGRATIONS = {
     0x0048C010: "src/planwin.cpp", 0x0048C040: "src/planwin.cpp",
     0x0051DDE0: "src/console.cpp", 0x0051DF00: "src/console.cpp",
     0x0051DF50: "src/console.cpp", 0x0060CFD0: "src/listbox.cpp",
+    0x0051DEF0: "src/console.cpp", 0x0051DF10: "src/console.cpp",
+    0x0051DF30: "src/console.cpp",
     0x0060CFE0: "src/listbox.cpp", 0x0060CFF0: "src/listbox.cpp",
     0x006118A0: "src/spritebox.cpp", 0x006118D0: "src/spritebox.cpp",
 }

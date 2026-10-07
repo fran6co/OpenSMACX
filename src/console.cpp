@@ -6643,7 +6643,7 @@ int Console::on_nc_hittest(int x_coord, int y_coord) {
 
 // ORIGINAL: 0x0050F960 ?on_post_redraw_nc_buffer@Console@@QAEXPAUBuffer@@H@Z 0x0050F960-0x0050FB08
 // RECOVERY_BINDING: v1 {"evidence": ["The original 0x0050F960..0x0050FB08 draws two splitter handles per orientation; its retired transcription remains in Git history."], "reason": "Render the two Console non-client splitter handles with their owned Sprite members and the Window client/outer geometry; the archived scaffold confirms two handles per orientation and the image buffer dimensions."}
-// symbol    ?on_post_redraw_nc_buffer@Console@@QAEXPAVBuffer@@H@Z
+// symbol    ?on_post_redraw_nc_buffer@Console@@UAEXPAVBuffer@@H@Z
 void Console::on_post_redraw_nc_buffer(Buffer *buffer, int which) {
     if (buffer == nullptr) {
         return;
@@ -6791,6 +6791,7 @@ Purpose: A non-client mouse move while a splitter drag is armed: whichever of
          line, and the crossing drag line is drawn at the new position.
 
 // ORIGINAL: 0x00510110 ?on_nc_mouse_move@Console@@QAEXHH@Z 0x00510110-0x005103FF FILE
+// symbol    ?on_nc_mouse_move@Console@@UAEXHH@Z
 // size      751 bytes
 // prototype void (__thiscall ?on_nc_mouse_move@Console@@QAEXHH@Z)(Console* this, int, int)
 // callers   0   call targets   4
@@ -10640,6 +10641,7 @@ int ConsoleFactionsWaitingMask;
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0050FE70 ?on_nc_left_up@Console@@QAEXHH@Z 0x0050FE70-0x0051010A
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0050fe70.cpp: retained complete original identity/spans and seed evidence", "recovery/tasks/console-scenario-owner-wave.json; native scope expansions through sequence27", "Source owner interpretation preserves mapped original accesses, lifetime calls and branch roles; source-bound members and globals replace the seed offsets/address aliases. Historical seeds and claims remain independent restoration obligations."], "reason": "Recover splitter release into the genuine Console owner using source Win capture owners, real Win inheritance, embedded Sprite geometry and named splitter members. Preserve signed sentinel ordering and the original update operations; no fixed executable calls or self-offset access."}
+// symbol    ?on_nc_left_up@Console@@UAEXHH@Z
 void Console::on_nc_left_up(int x, int y) {
     Win *const window = static_cast<Win *>(this);
     if (WinPointerOwner3 == window) {
@@ -13722,4 +13724,71 @@ return 1;
 // ORIGINAL: 0x0051DF50 ??_Gthunk2_Console@@UAEPAXI@Z 0x0051DF50-0x0051DF61 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: constructor-installed class-view slot 0 selects the complete original scalar deleting adjustor at 0x0051DF50.", "The retained terminal artifact set at build/recovery/builds/build-8b7ms_6y recorded ??_EConsole@@$4PPPPPLLI@EEE@AEPAXI@Z in the actual console.cpp COFF view-table relocation; its adjustment prefix is byte-identical to the pinned thunk.", "That build's selected linked MAP/PE cell and PDB XFIXUP resolve the generated entry to ??_GConsole@@UAEPAXI@Z at 0x00407ED0; the physical COFF E primary is a per-class weak fallback to its G primary (search mode 2).", "That linked primary tests mode bit 0, conditionally calls ??3@YAXPAX@Z, returns the saved object pointer in EAX, and uses ret 4.", "The original identity, spans, catalog purpose, source kind, claim state and formal lessons are retained; this binding is not a new byte claim."], "reason": "Bind the preserved scalar deleting-adjustor identity to the compiler-emitted class-view entry whose actual per-class E-to-G fallback and linked G body preserve the original receiver adjustment, deletion-flag contract, object return and stack cleanup."}
 // symbol    ??_EConsole@@$4PPPPPLLI@EEE@AEPAXI@Z
+// kind      game
+
+/*
+ * RECOVERY_HISTORY: v1 address=0x0051DEF0 source_sha256=15413b6171d7e5cbcaf410d7d03726fa38f9c79dfd96425413bdb2063b85d20f envelope_sha256=7937cba18d6e8aac8c8591100a989f43fdd77ca7f84573d36a51b64fa5368e86
+ * [ARCHIVE] /*
+ * [ARCHIVE] Purpose: Adjust the receiver from Console's thunk1 subobject to the one
+ * [ARCHIVE]          Console::on_nc_mouse_move expects, then forward unchanged.
+ * [ARCHIVE] // RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
+ * [ARCHIVE] // original marker: 0x0051DEF0 ?on_nc_mouse_move@thunk1_Console@@QAEXHH@Z 0x0051DEF0-0x0051DEF8
+ * [ARCHIVE] // symbol    ?adjust_console1_on_nc_mouse_move@@YIXPAX0HH@Z
+ * [ARCHIVE] // size      8 bytes
+ * [ARCHIVE] // prototype void (__thiscall ?on_nc_mouse_move@thunk1_Console@@QAEXHH@Z)(Console* this, int, int)
+ * [ARCHIVE] // callers   0   call targets   0
+ * [ARCHIVE] // kind      game
+ * [ARCHIVE] // flags     hidden;sp_ready;purged_ok
+ * [ARCHIVE] // calls     (none)
+ * [ARCHIVE] Return Value: n/a
+ * [ARCHIVE] Status: Complete
+ * [ARCHIVE] * /
+ */
+/*
+ * RECOVERY_HISTORY: v1 address=0x0051DF10 source_sha256=15413b6171d7e5cbcaf410d7d03726fa38f9c79dfd96425413bdb2063b85d20f envelope_sha256=37ddaa38b6a53d790767396d5fc2a32d2594f42d6df20cf9c5b4b9f51becf7f8
+ * [ARCHIVE] /*
+ * [ARCHIVE] Purpose: Adjust the receiver from Console's thunk1 subobject to the one
+ * [ARCHIVE]          Console::on_nc_left_up expects, then forward unchanged.
+ * [ARCHIVE] // RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
+ * [ARCHIVE] // original marker: 0x0051DF10 ?on_nc_left_up@thunk1_Console@@QAEXHH@Z 0x0051DF10-0x0051DF18
+ * [ARCHIVE] // symbol    ?adjust_console1_on_nc_left_up@@YIXPAX0HH@Z
+ * [ARCHIVE] // size      8 bytes
+ * [ARCHIVE] // prototype void (__thiscall ?on_nc_left_up@thunk1_Console@@QAEXHH@Z)(Console* this, int, int)
+ * [ARCHIVE] // callers   0   call targets   0
+ * [ARCHIVE] // kind      game
+ * [ARCHIVE] // flags     hidden;sp_ready;purged_ok
+ * [ARCHIVE] // calls     (none)
+ * [ARCHIVE] Return Value: n/a
+ * [ARCHIVE] Status: Complete
+ * [ARCHIVE] * /
+ */
+/*
+ * RECOVERY_HISTORY: v1 address=0x0051DF30 source_sha256=15413b6171d7e5cbcaf410d7d03726fa38f9c79dfd96425413bdb2063b85d20f envelope_sha256=44e403a97bb3aef98912293e94a5ac00a173c73c97f77849f3d6bbfdba9f9e09
+ * [ARCHIVE] /*
+ * [ARCHIVE] Purpose: Adjust the receiver from Console's thunk1 subobject to the one
+ * [ARCHIVE]          Console::on_post_redraw_nc_buffer expects, then forward unchanged.
+ * [ARCHIVE] // RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
+ * [ARCHIVE] // original marker: 0x0051DF30 ?on_post_redraw_nc_buffer@thunk1_Console@@QAEXPAUBuffer@@H@Z 0x0051DF30-0x0051DF38
+ * [ARCHIVE] // symbol    ?adjust_console1_on_post_redraw_nc_buffer@@YIXPAX00H@Z
+ * [ARCHIVE] // size      8 bytes
+ * [ARCHIVE] // prototype void (__thiscall ?on_post_redraw_nc_buffer@thunk1_Console@@QAEXPAUBuffer@@H@Z)(Console* this, Buffer*, int)
+ * [ARCHIVE] // callers   0   call targets   0
+ * [ARCHIVE] // kind      game
+ * [ARCHIVE] // flags     hidden;sp_ready;purged_ok
+ * [ARCHIVE] // calls     (none)
+ * [ARCHIVE] Return Value: n/a
+ * [ARCHIVE] Status: Complete
+ * [ARCHIVE] * /
+ */
+// ORIGINAL: 0x0051DEF0 ?on_nc_mouse_move@thunk1_Console@@QAEXHH@Z 0x0051DEF0-0x0051DEF8 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: Console constructor 0x0050F460 installs Win address point 0x0066EC18 at 0x0050F562; slot 31 cell selects original identity 0x0051DEF0.", "Pinned Win primary table 0x0066FDD0 has the matching shared callback at slot 31; Win's named contract retains the original parameter shape.", "Pinned original thunk 0x0051DEF0 is `sub ecx,[ecx-4]; jmp 0x00510110`; the typed Console member is source-owned in src/console.cpp.", "The complete seed comment envelope, including original marker/name/spans/prototype/callers/kind/flags/calls/return/status/purpose/role and prose, is inertly archived in RECOVERY_HISTORY with source and envelope SHA-256 15413b6171d7e5cbcaf410d7d03726fa38f9c79dfd96425413bdb2063b85d20f/7937cba18d6e8aac8c8591100a989f43fdd77ca7f84573d36a51b64fa5368e86.", "The real Win virtual contract and Console override emit a compiler-owned vtordisp tail to the typed Console implementation, rather than a handwritten receiver-adjustment adapter. Source emitted-symbol facts identify the actual thunk and target separately; linked selection and matching require fresh verification."], "reason": "Bind the preserved Console Win-view callback identity to its pinned constructor-installed virtual slot and the natural compiler-generated entry for the typed Console override."}
+// symbol    ?on_nc_mouse_move@Console@@$4PPPPPPPM@A@AEXHH@Z
+// kind      game
+// ORIGINAL: 0x0051DF10 ?on_nc_left_up@thunk1_Console@@QAEXHH@Z 0x0051DF10-0x0051DF18 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: Console constructor 0x0050F460 installs Win address point 0x0066EC18 at 0x0050F562; slot 34 cell selects original identity 0x0051DF10.", "Pinned Win primary table 0x0066FDD0 has the matching shared callback at slot 34; Win's named contract retains the original parameter shape.", "Pinned original thunk 0x0051DF10 is `sub ecx,[ecx-4]; jmp 0x0050FE70`; the typed Console member is source-owned in src/console.cpp.", "The complete seed comment envelope, including original marker/name/spans/prototype/callers/kind/flags/calls/return/status/purpose/role and prose, is inertly archived in RECOVERY_HISTORY with source and envelope SHA-256 15413b6171d7e5cbcaf410d7d03726fa38f9c79dfd96425413bdb2063b85d20f/37ddaa38b6a53d790767396d5fc2a32d2594f42d6df20cf9c5b4b9f51becf7f8.", "The real Win virtual contract and Console override emit a compiler-owned vtordisp tail to the typed Console implementation, rather than a handwritten receiver-adjustment adapter. Source emitted-symbol facts identify the actual thunk and target separately; linked selection and matching require fresh verification."], "reason": "Bind the preserved Console Win-view callback identity to its pinned constructor-installed virtual slot and the natural compiler-generated entry for the typed Console override."}
+// symbol    ?on_nc_left_up@Console@@$4PPPPPPPM@A@AEXHH@Z
+// kind      game
+// ORIGINAL: 0x0051DF30 ?on_post_redraw_nc_buffer@thunk1_Console@@QAEXPAUBuffer@@H@Z 0x0051DF30-0x0051DF38 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: Console constructor 0x0050F460 installs Win address point 0x0066EC18 at 0x0050F562; slot 60 cell selects original identity 0x0051DF30.", "Pinned Win primary table 0x0066FDD0 has the matching shared callback at slot 60; Win's named contract retains the original parameter shape.", "Pinned original thunk 0x0051DF30 is `sub ecx,[ecx-4]; jmp 0x0050F960`; the typed Console member is source-owned in src/console.cpp.", "The complete seed comment envelope, including original marker/name/spans/prototype/callers/kind/flags/calls/return/status/purpose/role and prose, is inertly archived in RECOVERY_HISTORY with source and envelope SHA-256 15413b6171d7e5cbcaf410d7d03726fa38f9c79dfd96425413bdb2063b85d20f/44e403a97bb3aef98912293e94a5ac00a173c73c97f77849f3d6bbfdba9f9e09.", "The real Win virtual contract and Console override emit a compiler-owned vtordisp tail to the typed Console implementation, rather than a handwritten receiver-adjustment adapter. Source emitted-symbol facts identify the actual thunk and target separately; linked selection and matching require fresh verification."], "reason": "Bind the preserved Console Win-view callback identity to its pinned constructor-installed virtual slot and the natural compiler-generated entry for the typed Console override."}
+// symbol    ?on_post_redraw_nc_buffer@Console@@$4PPPPPPPM@A@AEXPAVBuffer@@H@Z
 // kind      game

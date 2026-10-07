@@ -12,7 +12,13 @@ import subprocess
 import pytest
 
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = None
+for parent in Path(__file__).resolve().parents:
+    if (parent / "src/console.cpp").is_file():
+        ROOT = parent
+        break
+if ROOT is None:
+    raise RuntimeError("cannot locate actual OpenSMACX checkout")
 
 
 def test_actual_console_capture_release_and_end_turn(tmp_path):
@@ -52,8 +58,19 @@ struct Console : MapWin {
   int selected_vehicle_=12,focus_vehicle_=-1;
 } ConsoleGlobal;
 Win *WinPointerOwner3=0,*WinPointerOwner4=0;
-uint32_t ConsoleDragLineX=20,ConsoleDragLineY=30,GameState=2,NetTurnFlags=0;
-int ConsoleControlTurnActive=0,IsMultiplayerNet=0,NetTurnFaction=2,TurnCurrentNum=30;
+struct GameDataStateFields {
+  uint32_t game_state_=2; int turn_current_num_=30;
+  uint32_t net_turn_flags_=0; int net_turn_faction_=2;
+  uint8_t game_tech_achieved_[89]={};
+  struct { uint32_t enable_mask_=0; } lock_masks_;
+};
+struct GameDataStateFixture { GameDataStateFields fields_; } GameDataStateStorage;
+uint32_t &GameState=GameDataStateStorage.fields_.game_state_;
+uint32_t &NetTurnFlags=GameDataStateStorage.fields_.net_turn_flags_;
+int &NetTurnFaction=GameDataStateStorage.fields_.net_turn_faction_;
+int &TurnCurrentNum=GameDataStateStorage.fields_.turn_current_num_;
+uint32_t ConsoleDragLineX=20,ConsoleDragLineY=30;
+int ConsoleControlTurnActive=0,IsMultiplayerNet=0;
 int GenderDefault=0,PluralityDefault=0,ConsoleFactionsWaitingMask=0;
 struct InfoWin { int field_A8_=9,redraw_phase=7;
   void clear_pending_timer() { field_A8_=0; events.push_back(1); }
@@ -182,7 +199,10 @@ char PopupStartCaption[256], StringTemp[1024], StrEditorWhoListTitle[32];
 int PopupModalState=0, GenderDefault=0, PluralityDefault=0;
 int ScenarioVehicleFaction=1, ScenarioVehicleMorale=2, ScenarioVehicleMode=0,
     ScenarioPreviousPrototype=19;
-int LockEnableMask=0;
+struct GameDataLockMaskFixture { uint32_t enable_mask_=0; } GameDataLockMask;
+struct GameDataStateFields { GameDataLockMaskFixture lock_masks_; } ;
+struct GameDataStateFixture { GameDataStateFields fields_; } GameDataStateStorage;
+uint32_t &LockEnableMask=GameDataStateStorage.fields_.lock_masks_.enable_mask_;
 const int MaxVehProtoNum=512, MaxPlayerNum=8, MaxMoraleNum=7;
 void auto_undo() { events.push_back("undo"); }
 void Console::auto_undo() { ::auto_undo(); }
@@ -261,7 +281,10 @@ struct Console:GraphicWin { int faction_id_=1; void editor_tech(); } ConsoleGlob
 struct Player { int noun_gender=0,is_noun_plural=0; char noun_faction[16]="Faction"; } Players[8];
 struct PlayerData { uint32_t tech_ranking=0; } PlayersData[8];
 struct RulesTechnology { int preq_tech_1=-2,preq_tech_2=-2; } Technology[89];
-uint8_t GameTechAchieved[89]={}; char StringTemp[1024]; char PopupStartCaption[256];
+struct GameDataStateFields { uint8_t game_tech_achieved_[89]={}; };
+struct GameDataStateFixture { GameDataStateFields fields_; } GameDataStateStorage;
+uint8_t (&GameTechAchieved)[89]=GameDataStateStorage.fields_.game_tech_achieved_;
+char StringTemp[1024]; char PopupStartCaption[256];
 int PopupModalState=0, ScenarioTechFaction=-1,ScenarioTechSelection=-1;
 int GenderDefault=0,PluralityDefault=0; char StrEditorWhoListTitle[32];
 const int MaxTechnologyNum=89,MaxPlayerNum=8,TechNone=-1;

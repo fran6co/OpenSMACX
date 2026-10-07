@@ -3783,7 +3783,7 @@ void Win::on_mouse_move(int x, int y, unsigned int keys, int from_parent) {
             }
         }
     } else {
-        this->vslot_31(x, y);
+        this->on_nc_mouse_move(x, y);
         Win *const child = val_19_;
         if (child != 0) {
             if (reinterpret_cast<Sound *>(child)->is_playing() == 0) {
@@ -6503,7 +6503,7 @@ void Win::on_l_button_up(int x, int y, unsigned int keys, int dbl) {
                     reinterpret_cast<Sound *>(child)->play();
                 }
             } else {
-                this->vslot_34(x, y);
+                this->on_nc_left_up(x, y);
                 Win *child = reinterpret_cast<Win *>(val_22_);
                 if (child != 0 && reinterpret_cast<Sound *>(child)->is_playing() == 0) {
                     reinterpret_cast<Sound *>(child)->play();
@@ -8870,7 +8870,7 @@ void Win::on_redraw_nc(RECT * area, int flags) {
                 }
                 buf->set_clip(&buf->rect2_);
             }
-            this->vslot_60(buf, 0);
+            this->on_post_redraw_nc_buffer(buf, 0);
         }
     }
 
@@ -8909,7 +8909,7 @@ void Win::on_redraw_nc(RECT * area, int flags) {
                 }
                 buf->set_clip(&buf->rect2_);
             }
-            this->vslot_60(buf, 2);
+            this->on_post_redraw_nc_buffer(buf, 2);
         }
     }
 
@@ -8949,7 +8949,7 @@ void Win::on_redraw_nc(RECT * area, int flags) {
                 }
                 buf->set_clip(&buf->rect2_);
             }
-            this->vslot_60(buf, 3);
+            this->on_post_redraw_nc_buffer(buf, 3);
         }
     }
 
@@ -8996,7 +8996,7 @@ void Win::on_redraw_nc(RECT * area, int flags) {
                 }
                 buf->set_clip(&buf->rect2_);
             }
-            this->vslot_60(buf, 1);
+            this->on_post_redraw_nc_buffer(buf, 1);
         }
     }
 }
@@ -11844,7 +11844,7 @@ void Win::dispatch_17(int a, int b, int alternate) {
             }
         }
     } else {
-        vslot_31(a, b);
+        on_nc_mouse_move(a, b);
         Win *child = reinterpret_cast<Win *>(val_19_);
         if (child != 0) {
             if (reinterpret_cast<Sound *>(child)->is_playing() == 0) {
@@ -12041,7 +12041,7 @@ void Win::dispatch_21(int a, int b, int alternate) {
             }
         }
     } else {
-        vslot_34(a, b);
+        on_nc_left_up(a, b);
         Win *child = reinterpret_cast<Win *>(val_22_);
         if (child != 0) {
             if (reinterpret_cast<Sound *>(child)->is_playing() == 0) {

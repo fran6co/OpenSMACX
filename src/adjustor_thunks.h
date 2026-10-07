@@ -52,9 +52,3 @@ void * __fastcall adjust_dialogs2_scalar_delete(void *self, void *,
                                                 unsigned int arg0);
 void * __fastcall adjust_dialogs3_scalar_delete(void *self, void *,
                                                 unsigned int arg0);
-void __fastcall adjust_console1_on_nc_mouse_move(void *self, void *, int arg0,
-                                                 int arg1);
-void __fastcall adjust_console1_on_nc_left_up(void *self, void *, int arg0,
-                                              int arg1);
-void __fastcall adjust_console1_on_post_redraw_nc_buffer(void *self, void *,
-                                                         void *arg0, int arg1);

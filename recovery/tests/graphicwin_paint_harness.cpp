@@ -21,6 +21,7 @@ struct Surface {
         source = from; blit_area = *area; route = 5; finish_draw(); return -1;
     }
 };
+typedef Surface IDirectDrawSurface2;
 Surface *DirectDrawBackBuffer;
 struct Buffer {
     Surface *surface_;

@@ -422,15 +422,15 @@ class Console : public MapWin {
 
  public:
   // 0x0050F960, draws Console's splitter sprites into the non-client buffer.
-  void on_post_redraw_nc_buffer(Buffer *buffer, int which);
+  void on_post_redraw_nc_buffer(Buffer *buffer, int which) override;
 
  public:
-  // 0x00510110, a pending_bodies forwarder.
-  void on_nc_mouse_move(int a1, int a2);
+  // 0x00510110: move the captured splitter while retaining the original clamps.
+  void on_nc_mouse_move(int a1, int a2) override;
 
  public:
   // 0x0050FE70: commit the dragged splitter and release Win capture.
-  void on_nc_left_up(int a1, int a2);
+  void on_nc_left_up(int a1, int a2) override;
 
  public:
   // 0x0050FB10, a pending_bodies forwarder.
