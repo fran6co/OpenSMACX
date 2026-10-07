@@ -775,11 +775,11 @@ Purpose: Run the popup modally: size and position it, lay out its two caption
 //        measured MISMATCH at instruction 0 for the reason above, so the
 //        in-class form wins on call fidelity alone.
 */
-typedef void (__fastcall *func_basepop_slot062)(void *);
-
 // FlatButton's constructor installs primary table 0x00669754; its slot 1
 // targets Win::show at 0x005ED9D0. The calls at 0x00602F9A, 0x00603331 and
 // 0x00603677 dispatch through that inherited virtual member with argument 0.
+// The same table's slot 62 (+0xF8) targets GraphicWin::redraw at 0x005D5A70;
+// the button setup invokes that inherited virtual member after set_font.
 // Preserve virtual dispatch through the real FlatButton/BaseButton/Win chain.
 int BasePop::exec(int flags, int (__cdecl *callback)()) {
     int pump_result = 0;
@@ -1044,7 +1044,7 @@ int BasePop::exec(int flags, int (__cdecl *callback)()) {
                        static_cast<int>(field_30D0_), this, row_style);
     apply_button_config(&flat_button1_);
     flat_button1_.set_font(button_font1_, button_font2_, button_font3_, 0);
-    vtable_slot<func_basepop_slot062>(&flat_button1_, 0xf8)(&flat_button1_);
+    flat_button1_.redraw();
     flat_button1_.set_text_color(button_color_a_, button_color_b_,
                                  button_color_c_, button_color_d_);
     flat_button1_.set_text_color2(button_color_2a_, button_color_2b_,
@@ -1081,7 +1081,7 @@ rows:
                          static_cast<int>(field_30D0_), this, row_style);
             apply_button_config(button);
             button->set_font(button_font1_, button_font2_, button_font3_, 0);
-            vtable_slot<func_basepop_slot062>(button, 0xf8)(button);
+            button->redraw();
             button->set_text_color(button_color_a_, button_color_b_,
                                    button_color_c_, button_color_d_);
             button->set_text_color2(button_color_2a_, button_color_2b_,
@@ -1129,7 +1129,7 @@ rows:
     apply_button_config(&flat_button2_);
     row -= pitch;
     flat_button2_.set_font(button_font1_, button_font2_, button_font3_, 0);
-    vtable_slot<func_basepop_slot062>(&flat_button2_, 0xf8)(&flat_button2_);
+    flat_button2_.redraw();
     flat_button2_.set_text_color(button_color_a_, button_color_b_,
                                  button_color_c_, button_color_d_);
     flat_button2_.set_text_color2(button_color_2a_, button_color_2b_,
