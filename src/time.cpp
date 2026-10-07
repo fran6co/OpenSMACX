@@ -27,6 +27,7 @@
 #include "map.h"           // WorldClimateSkipTerrainClear
 #include "planwin.h"       // PlanWin::on_redraw, MapWinTable
 #include "multiwin.h"
+#include "councwin.h"      // CouncilWindow, the turn redraw receiver
 
 // The timer callbacks' shared state; declarations in temp.h beside the
 // callbacks themselves. All four are zero-initialised .data in the image.
@@ -898,7 +899,7 @@ void __cdecl turn_timer(int a1) {
     if (IsMultiplayerNet != 0) {
         if (TimerHoldFlag == 0) {
             if (TurnRedrawPending != 0) {
-                TurnRedrawWindow->GraphicWin::redraw();
+                CouncilWindow.GraphicWin::redraw();
             }
             MultiWindow.draw(1);
         }

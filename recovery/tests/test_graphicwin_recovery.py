@@ -357,10 +357,12 @@ def test_original_direct_redraw_call_survives_virtual_recovery(compiled):
         assert redraw in calls(obj, timer)
 
     # The original timer calls GraphicWin directly at 0x0050EF30. Dropping
-    # qualification still compiles, but changes it into virtual dispatch.
-    anchor = b"TurnRedrawWindow->GraphicWin::redraw();"
+    # qualification through a runtime pointer changes it into virtual dispatch.
+    # A direct object expression can be devirtualized by VC6, so it is not
+    # a useful negative control after recovering the actual global owner.
+    anchor = b"CouncilWindow.GraphicWin::redraw();"
     assert before.count(anchor) == 1
-    damaged = before.replace(anchor, b"TurnRedrawWindow->redraw();")
+    damaged = before.replace(anchor, b"{ GraphicWin * volatile window = &CouncilWindow; window->redraw(); }")
     obj = Coff(compiler.overlay(source, {"src/time.cpp": damaged}, (), settings.flag_sets[0]))
     assert redraw not in calls(obj, timer)
     assert source.read_bytes() == before

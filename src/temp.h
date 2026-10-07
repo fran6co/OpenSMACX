@@ -102,7 +102,6 @@ extern int PlanLineCounter;   // 0x00939FD4
 extern int TurnRedrawPending;  // 0x00703DE0
 // The window TurnRedrawPending gates: turn_timer redraws it (GraphicWin::redraw
 // at 0x005D5A70) before MultiWin::draw on 0x007FD648.
-GraphicWin *const TurnRedrawWindow = (GraphicWin *)0x006FEC80;
 
 // testing
 typedef int *func8(LPSTR, LPSTR);
