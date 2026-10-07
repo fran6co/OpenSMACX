@@ -190,7 +190,7 @@ class Texture {
   //   sub_61cb50  dual-texture remap raster over Buffer rows; mode selects
   //               the four-corner or eight-point UV perimeter.
   //   sub_61d990  gouraud-lit draw over a second texture's shade table
-  //   sub_61df60  nine ints, gouraud family, depth-tested
+  //   sub_61df60  per-vertex Gouraud light, mask/remap and palette compositor
   //   sub_61f0d0  gouraud family, hands each span to sub_620100
   //   sub_620a10  affine rasteriser, setup_edge family + sub_624eb0
   //   sub_622200  cached-edge family: four sub_625080 setup call sites
@@ -201,8 +201,9 @@ class Texture {
                  unsigned char *remap, int use_eight_vertices);
   void sub_61d990(Buffer *buffer, int *vertArray, int *zvals, Texture *texB,
                  uint8_t *table, int wideFlag);
-  int sub_61df60(int a1, int a2, int a3, int a4, int a5, int a6, int a7,
-                 int a8, int a9);
+  void sub_61df60(Buffer *buffer, Vert *vertices, int *zvals,
+                 Texture *mask_texture, unsigned char *remap, int count,
+                 Vert *uv, int threshold, unsigned char *palette);
   void sub_61f0d0(Buffer *param_2, int param_3, int param_4, int param_5,
                   int param_6, uint32_t param_7, int param_8);
   void sub_620a10(Buffer *bufParam, int vertsParam, int countParam,
@@ -251,8 +252,9 @@ class Texture {
   void sub_624d40(Buffer *buf, Vert *verts, int *zvals, int count,
                   int edgeVerts, int light_thresh,
                   int *out_flag, int sentinel);                  // 0x00624D40
-  void sub_624630(int a1, int a2, int a3, int a4, int a5, int a6, int a7,
-                  int a8, int a9, int sentinel);                 // 0x00624630
+  void sub_624630(Buffer *buffer, Vert *vertices, int *zvals,
+                 Texture *mask_texture, unsigned char *remap, int count,
+                 Vert *uv, int threshold, unsigned char *palette, int sentinel);
   // 0x00621870: cached Gouraud polygon, keyed borrowed storage and
   // unkeyed owned storage with the original integer-light arithmetic.
   void draw_cached_lit(Buffer *buffer, Vert *vertices, int *light, int count,

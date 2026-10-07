@@ -3589,8 +3589,28 @@ int __cdecl sub_624eb0(int *param_1, int param_2, unsigned char *param_3) {
 // Fixed-slot bindings carried from 0061df60.cpp
 static int *const blit_slot_560 = (int *)0x009BB560;
 
+static int texture_raster_gradient_span_admitted(int span);
+static unsigned char *texture_sub61df60_page_address(void *base,
+                                                       int u, int v) {
+    const uintptr_t base_bits = reinterpret_cast<uintptr_t>(base);
+    const unsigned int x =
+        static_cast<unsigned char>(static_cast<unsigned int>(base_bits) +
+                                   (static_cast<unsigned int>(u) >> 16));
+    const unsigned int y = static_cast<unsigned char>(
+        static_cast<unsigned int>(v) >> 16);
+    const uintptr_t offset = (static_cast<uintptr_t>(y) << 8) | x;
+    return reinterpret_cast<unsigned char *>(
+        (base_bits & ~static_cast<uintptr_t>(0xffffu)) | offset);
+}
+
 // ORIGINAL: 0x0061DF60 sub_61df60 0x0061DF60-0x0061E538 FILE
-// symbol    ?sub_61df60@Texture@@QAEHHHHHHHHHH@Z
+// symbol    ?sub_61df60@Texture@@QAEXPAVBuffer@@PAUVert@@PAHPAV1@PAEH1H4@Z
+// Historical synthetic seed symbol: ?sub_61df60@Texture@@QAEHHHHHHHHHH@Z
+// ECX receiver and RET 24h establish nine stack arguments. Buffer/Vert/light,
+// mask/remap, vertex count/UV, threshold and palette uses establish their types.
+// The mapped sentinel caller discards EAX; no original result contract is proved.
+// Both Gouraud edge records are the observed 15-word EdgeScan, not the older
+// undersized ten-word right-edge scratch. Pending gradients apply one row later.
 // TRIED: byte-exact register-packed inner blit loop (bl/bh texel pointer, ebp repurposed as scratch, cx/ax half-register Bresenham counters); landed as a __thiscall member with two EdgeScan scratch blocks (edge0[15]/edge1[10]) and a plain per-pixel loop instead - correct shape, not byte-identical.
 // working copy - scaffold materialised by --work
 // size      1496 bytes
@@ -3600,231 +3620,301 @@ static int *const blit_slot_560 = (int *)0x009BB560;
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x005E3373 0x005E34A3 0x0061FC90
 
-// GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: sub_61df60  at 0x0061DF60  (1496 bytes)
-//
-// A VERIFICATION ARTIFACT, not product source: classes are opaque and
-// globals are bound to fixed addresses, because both are byte-visible
-// and both differ from the style src/ is written in.
-//
-// The VC6 dialect limits and the source-form rules used to live here.
-// They are knowledge, not scaffolding, so they now live in the agent
-// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
-// where they can be edited without regenerating anything and are in
-// context from the first token rather than behind a file read. This
-// emitter computes declarations; it does not carry lessons.
-
-int Texture::sub_61df60(int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8, int a9) {
-    int *self = reinterpret_cast<int *>(this);
-
-    if (a2 == 0) {
-        return 0;
-    }
-    if (a1 == 0) {
-        return 0;
-    }
-    if (self[0] == 0) goto cleanup;
-    if (a3 == 0) goto cleanup;
-    if (a5 == 0) goto cleanup;
-    if (a4 == 0) goto cleanup;
-    if (a9 == 0) goto cleanup;
+void Texture::sub_61df60(Buffer *buffer, Vert *vertices, int *zvals,
+                         Texture *mask_texture, unsigned char *remap,
+                         int count, Vert *uv, int threshold,
+                         unsigned char *palette) {
+    if (vertices == 0) goto cleanup;
+    if (buffer == 0) goto epilogue_only;
+    if (pixels_ == 0) goto cleanup;
+    if (zvals == 0) goto cleanup;
+    if (remap == 0) goto cleanup;
+    if (mask_texture == 0) goto cleanup;
+    if (palette == 0) goto cleanup;
 
     {
-        Buffer *srcBuf = reinterpret_cast<Buffer *>(a1);
-        *blit_pixel_base = srcBuf->get_data();
-        *reinterpret_cast<unsigned char *>(blit_slot_560) = (unsigned char)a8;
-        *blit_slot_564 = a9;
-        *blit_edge_uvs_b = a2;
-        *blit_z_values = a3;
-        *blit_remap_table = a5;
-        *blit_texture_pixels = self[0];
-        TextureRowPitchScratch = self[1];
-        *blit_texture_height = self[2];
-        *blit_edge_uvs_a = a7;
-        *blit_vertex_count = a6;
-        *blit_buffer_stride = (int)srcBuf->stride_;
-        *blit_texture_width = self[1];
-        *blit_shade_table = *reinterpret_cast<int *>(a4);
+        unsigned char *destination = reinterpret_cast<unsigned char *>(
+            static_cast<intptr_t>(buffer->get_data()));
+        *blit_pixel_base = static_cast<int>(
+            reinterpret_cast<intptr_t>(destination));
+        texture_reset_fpu();
+        *reinterpret_cast<unsigned char *>(blit_slot_560) =
+            static_cast<unsigned char>(threshold);
+        *blit_slot_564 = static_cast<int>(reinterpret_cast<intptr_t>(palette));
+        *blit_edge_uvs_b = static_cast<int>(reinterpret_cast<intptr_t>(vertices));
+        *blit_z_values = static_cast<int>(reinterpret_cast<intptr_t>(zvals));
+        *blit_remap_table = static_cast<int>(reinterpret_cast<intptr_t>(remap));
+        *blit_texture_pixels = static_cast<int>(
+            reinterpret_cast<intptr_t>(pixels_));
+        TextureRowPitchScratch = static_cast<int>(iWidth_);
+        *blit_texture_height = static_cast<int>(iHeight_);
+        *blit_edge_uvs_a = static_cast<int>(reinterpret_cast<intptr_t>(uv));
+        *blit_vertex_count = count;
+        *blit_buffer_stride = static_cast<int>(buffer->stride_);
+        *blit_texture_width = static_cast<int>(iWidth_);
+        *blit_shade_table = static_cast<int>(
+            reinterpret_cast<intptr_t>(mask_texture->pixels_));
+
         if (*blit_shade_table == 0) goto cleanup;
+        *blit_clip_right = buffer->rect1_.right;
+        *blit_clip_left = buffer->rect1_.left;
+        *blit_clip_bottom = buffer->rect1_.bottom;
+        *blit_clip_top = buffer->rect1_.top;
+        if (count <= 0) goto cleanup;
 
-        // rect1_ starts at +0x20: left/top/right/bottom
-        *blit_clip_right = (int)*reinterpret_cast<int *>(reinterpret_cast<char *>(srcBuf) + 0x28);
-        *blit_clip_left = (int)*reinterpret_cast<int *>(reinterpret_cast<char *>(srcBuf) + 0x20);
-        *blit_clip_bottom = (int)*reinterpret_cast<int *>(reinterpret_cast<char *>(srcBuf) + 0x2c);
-        *blit_clip_top = (int)*reinterpret_cast<int *>(reinterpret_cast<char *>(srcBuf) + 0x24);
-
-        if (a6 <= 0) goto cleanup;
-
-        // Bounding box over the a6 vertices at a2, 8 bytes apart (x,y ints).
-        int minY = 0x7fff;
-        int idx = 0;
-        int maxY = (int)0xffff8003;
-        int maxX = (int)0xffff8003;
-        int minX = 0x7fff;
-        int *vp = reinterpret_cast<int *>(a2);
+        int min_y = 0x7fff;
+        int min_x = 0x7fff;
+        int max_x = static_cast<int>(0xffff8003u);
+        int max_y = static_cast<int>(0xffff8003u);
+        int top_index = 0;
+        int index = 0;
         do {
-            int vy = vp[1];
-            if (vy < minY) { minY = vy; a8 = idx; }
-            if (maxY < vy) { *blit_max_y_index = idx; maxY = vy; }
-            int vx = vp[0];
-            if (vx < minX) { minX = vx; }
-            if (maxX < vx) { maxX = vx; }
-            idx = idx + 1;
-            vp = vp + 2;
-        } while (idx < a6);
-        if (minY >= maxY) goto cleanup;
+            const int y = vertices[index].y;
+            if (y < min_y) {
+                min_y = y;
+                top_index = index;
+            }
+            if (max_y < y) {
+                max_y = y;
+                *blit_max_y_index = index;
+            }
+            const int x = vertices[index].x;
+            if (x < min_x) min_x = x;
+            if (max_x < x) max_x = x;
+            ++index;
+        } while (index < count);
+        (void)min_x;
+        (void)max_x;
+        if (min_y >= max_y) goto cleanup;
 
-        int stride = *blit_buffer_stride;
-        int bufBase = *blit_pixel_base;
-        *blit_row_offset = stride * minY + bufBase;
-        *blit_clip_bottom = *blit_clip_bottom * stride + bufBase;
-        *blit_clip_top = *blit_clip_top * stride + bufBase;
+        const int stride = *blit_buffer_stride;
+        const unsigned int base = static_cast<unsigned int>(*blit_pixel_base);
+        *blit_row_offset = static_cast<int>(
+            static_cast<unsigned int>(stride) * static_cast<unsigned int>(min_y) +
+            base);
+        *blit_clip_bottom = static_cast<int>(
+            static_cast<unsigned int>(*blit_clip_bottom) *
+                static_cast<unsigned int>(stride) + base);
+        *blit_clip_top = static_cast<int>(
+            static_cast<unsigned int>(*blit_clip_top) *
+                static_cast<unsigned int>(stride) + base);
 
-        Texture *tex = reinterpret_cast<Texture *>(bufBase);
+        EdgeScan left;
+        EdgeScan right;
+        left.f0 = -1;
+        if (Texture::setup_edge_gouraud(&left, top_index) == 0) goto cleanup;
+        right.f0 = 1;
+        if (Texture::setup_edge_gouraud(&right, top_index) == 0) goto cleanup;
+        if (borrowed_ == 0) goto cleanup;
+        if (mask_texture->borrowed_ == 0) goto cleanup;
 
-        // Two 15-int/10-int scratch blocks the callee fills through the
-        // EdgeScan* it is handed; only the first field is set by the caller.
-        int edge0[15];
-        int edge1[10];
-        edge0[0] = -1;
-        if (tex->setup_edge_gouraud(reinterpret_cast<EdgeScan *>(edge0), a8) == 0) goto cleanup;
-        edge1[0] = 1;
-        if (tex->setup_edge_gouraud(reinterpret_cast<EdgeScan *>(edge1), a8) == 0) goto cleanup;
+        _control87(_PC_24 | _RC_CHOP, _MCW_PC | _MCW_RC);
+        int du = *blit_slot_4e4;
+        int dv = *blit_slot_4c8;
+        unsigned short light_step = static_cast<unsigned short>(
+            *reinterpret_cast<unsigned short *>(blit_light_pack_a));
+        int pending_du = du;
+        int pending_dv = dv;
+        unsigned short pending_light_step = light_step;
 
-        if (self[0x1b] == 0) goto cleanup;
-        if (*(reinterpret_cast<int *>(a4) + 0x1b) == 0) goto cleanup;
+        int initial_span = texture_difference(right.accumC, left.accumC);
+        bool pending_gradient =
+            texture_raster_gradient_span_admitted(initial_span) != 0;
+        if (pending_gradient) {
+            pending_du = texture_span_step(
+                texture_difference(right.accumA, left.accumA), initial_span);
+            pending_dv = texture_span_step(
+                texture_difference(right.accumB, left.accumB), initial_span);
+            pending_light_step = texture_light_step(
+                texture_difference(right.accumD, left.accumD), initial_span);
+        }
 
-        a6 = 0;  // doneFlag, reused from the a6 stack slot in the original
-
+        if (*blit_row_offset >= *blit_clip_bottom) goto cleanup;
         for (;;) {
-            *blit_slot_4c4 = edge1[3];
-            *blit_slot_4f8 = edge0[3];
-            *blit_slot_530 = edge1[4];
-            *blit_slot_53c = edge0[4];
-            *blit_span_right = edge0[7];
-            *blit_slot_498 = edge0[13];
-            *blit_span_left = edge1[7];
+            const int left_x = left.accumC;
+            const int right_x = right.accumC;
+            int u = left.accumA;
+            int v = left.accumB;
+            int light = left.accumD;
+            *blit_slot_4c4 = right.accumA;
+            *blit_slot_4f8 = u;
+            *blit_slot_530 = right.accumB;
+            *blit_slot_53c = v;
+            *blit_span_right = left_x;   // Native slot 9BB4CC is the LEFT x.
+            *blit_slot_498 = light;
+            *blit_span_left = right_x;  // Native slot 9BB4F0 is the RIGHT x.
 
-            edge0[1]--;
-            if (edge0[1] != 0) {
-                edge0[3] += edge0[5];
-                edge0[4] += edge0[6];
-                edge0[13] += edge0[14];
-                edge0[7] += edge0[8];
-                edge0[10] += edge0[11];
-                if (edge0[10] > 0) {
-                    edge0[7] += edge0[9];
-                    edge0[10] -= edge0[12];
-                }
+            bool done = false;
+            if (--left.counter == 0) {
+                if (Texture::setup_edge_gouraud(&left, left.id) == 0)
+                    done = true;
             } else {
-                if (tex->setup_edge_gouraud(reinterpret_cast<EdgeScan *>(edge0), edge0[2]) == 0) {
-                    a6 = 1;
-                    goto edges_done;
+                left.accumA = static_cast<int>(
+                    static_cast<unsigned int>(left.accumA) +
+                    static_cast<unsigned int>(left.deltaA));
+                left.accumB = static_cast<int>(
+                    static_cast<unsigned int>(left.accumB) +
+                    static_cast<unsigned int>(left.deltaB));
+                left.accumC = static_cast<int>(
+                    static_cast<unsigned int>(left.accumC) +
+                    static_cast<unsigned int>(left.deltaC));
+                left.accumD = static_cast<int>(
+                    static_cast<unsigned int>(left.accumD) +
+                    static_cast<unsigned int>(left.deltaD));
+                left.fracAccum = static_cast<int>(
+                    static_cast<unsigned int>(left.fracAccum) +
+                    static_cast<unsigned int>(left.fracDelta));
+                if (left.fracAccum > 0) {
+                    left.accumC = static_cast<int>(
+                        static_cast<unsigned int>(left.accumC) +
+                        static_cast<unsigned int>(left.extraDeltaC));
+                    left.fracAccum = texture_difference(left.fracAccum,
+                                                        left.fracSub);
                 }
             }
-
-            edge1[1]--;
-            if (edge1[1] != 0) {
-                edge1[4] += edge1[6];
-                edge1[3] += edge1[5];
-                edge1[7] += edge1[8];
-                a3 += a2;              // scratch reuse of the a2/a3 stack slots
-                a5 += a4;              // scratch reuse of the a4/a5 stack slots
-                if (a5 > 0) {
-                    edge1[7] += edge1[9];
-                    a5 -= a1;          // scratch reuse of the a1 stack slot
-                }
-            } else {
-                if (tex->setup_edge_gouraud(reinterpret_cast<EdgeScan *>(edge1), edge1[2]) == 0) {
-                    a6 = 1;
-                    goto edges_done;
-                }
-            }
-
-        edges_done:
-            {
-                int denom = (edge1[7] - edge0[7]) << 16;
-                if (denom > 0) {
-                    double dz = (double)(a3 - edge0[13]);
-                    double dy2 = (double)(edge1[4] - edge0[4]);
-                    double dx2 = (double)(edge1[3] - edge0[3]);
-                    double recip = 1.0 / (double)denom;
-                    *blit_slot_4e4 = (int)(dx2 * recip * (*(double *)blit_scale_65536f));
-                    *blit_slot_4c8 = (int)(dy2 * recip * (*(double *)blit_scale_65536f));
-                    *reinterpret_cast<unsigned short *>(blit_light_pack_a) =
-                        (unsigned short)(int)(recip * dz * (*(double *)blit_scale_256f));
-                }
-            }
-
-            if (*blit_row_offset >= *blit_clip_bottom) goto cleanup;
-
-            if ((*blit_row_offset >= *blit_clip_top) && (*blit_clip_left < *blit_span_left) &&
-                (*blit_span_right < *blit_clip_right) && (*blit_span_right < *blit_span_left)) {
-                int rightX = *blit_span_left;
-                if (*blit_clip_right <= *blit_span_left) rightX = *blit_clip_right;
-
-                if (*blit_span_right < *blit_clip_left) {
-                    int clip = (*blit_clip_left - *blit_span_right) << 16;
-                    __int64 adj = (__int64)(*blit_slot_4e4) * (__int64)clip;
-                    *blit_slot_4f8 = *blit_slot_4f8 + (int)(adj >> 16);
-                    __int64 adj2 = (__int64)(*blit_slot_4c8) * (__int64)clip;
-                    *blit_slot_53c = *blit_slot_53c + (int)(adj2 >> 16);
-                    __int64 adj3 = (__int64)(short)(*reinterpret_cast<unsigned short *>(blit_light_pack_a)) *
-                                     (__int64)clip;
-                    *blit_slot_498 = *blit_slot_498 + (int)(adj3 >> 8);
-                    *blit_span_right = *blit_clip_left;
-                }
-
-                int width = rightX - *blit_span_right;
-                unsigned char *destPtr = reinterpret_cast<unsigned char *>(*blit_row_offset + *blit_span_right);
-                unsigned int uv = (unsigned int)*blit_texture_pixels;
-                int zAcc = *blit_slot_4f8;
-                int z2Acc = *blit_slot_53c;
-                int lightAcc = *blit_slot_498;
-                unsigned short stepUV = *reinterpret_cast<unsigned short *>(blit_light_pack_a);
-                int stepZ = *blit_slot_4e4;
-                int stepZ2 = *blit_slot_4c8;
-                int col;
-                for (col = 0; col < width; ++col) {
-                    unsigned char texel = *reinterpret_cast<unsigned char *>(uv & 0xffff);
-                    unsigned char kind = *reinterpret_cast<unsigned char *>(
-                        *reinterpret_cast<unsigned char *>((*blit_shade_table) + ((uv >> 8) & 0xff)) + *blit_remap_table);
-                    if (kind != 0) {
-                        if (kind == 1) {
-                            unsigned char light = (unsigned char)(lightAcc >> 8);
-                            if ((signed char)light < *reinterpret_cast<signed char *>(blit_slot_560)) {
-                                texel = *reinterpret_cast<unsigned char *>(
-                                    (unsigned int)((light << 8) | texel) + *blit_slot_564);
-                            } else {
-                                texel = (unsigned char)(light + texel);
-                            }
-                        } else {
-                            texel = kind;
-                        }
-                        *destPtr = texel;
+            if (!done) {
+                if (--right.counter == 0) {
+                    if (Texture::setup_edge_gouraud(&right, right.id) == 0)
+                        done = true;
+                } else {
+                    right.accumA = static_cast<int>(
+                        static_cast<unsigned int>(right.accumA) +
+                        static_cast<unsigned int>(right.deltaA));
+                    right.accumB = static_cast<int>(
+                        static_cast<unsigned int>(right.accumB) +
+                        static_cast<unsigned int>(right.deltaB));
+                    right.accumC = static_cast<int>(
+                        static_cast<unsigned int>(right.accumC) +
+                        static_cast<unsigned int>(right.deltaC));
+                    right.accumD = static_cast<int>(
+                        static_cast<unsigned int>(right.accumD) +
+                        static_cast<unsigned int>(right.deltaD));
+                    right.fracAccum = static_cast<int>(
+                        static_cast<unsigned int>(right.fracAccum) +
+                        static_cast<unsigned int>(right.fracDelta));
+                    if (right.fracAccum > 0) {
+                        right.accumC = static_cast<int>(
+                            static_cast<unsigned int>(right.accumC) +
+                            static_cast<unsigned int>(right.extraDeltaC));
+                        right.fracAccum = texture_difference(right.fracAccum,
+                                                            right.fracSub);
                     }
-                    uv = uv + (unsigned int)stepUV;
-                    zAcc += stepZ;
-                    z2Acc += stepZ2;
-                    lightAcc += 0; // running light delta folded above
-                    ++destPtr;
                 }
-                *blit_slot_4f8 = zAcc;
-                *blit_slot_53c = z2Acc;
-                *blit_slot_498 = lightAcc;
             }
 
-            if (a6 != 0) goto cleanup;
+            if (pending_gradient) {
+                du = pending_du;
+                dv = pending_dv;
+                light_step = pending_light_step;
+                *blit_slot_4e4 = du;
+                *blit_slot_4c8 = dv;
+                *reinterpret_cast<unsigned short *>(blit_light_pack_a) =
+                    light_step;
+            }
 
-            *blit_row_offset = *blit_row_offset + *blit_buffer_stride;
+            const int next_span = texture_difference(right.accumC, left.accumC);
+            pending_gradient =
+                texture_raster_gradient_span_admitted(next_span) != 0;
+            if (pending_gradient) {
+                pending_du = texture_span_step(
+                    texture_difference(right.accumA, left.accumA), next_span);
+                pending_dv = texture_span_step(
+                    texture_difference(right.accumB, left.accumB), next_span);
+                pending_light_step = texture_light_step(
+                    texture_difference(right.accumD, left.accumD), next_span);
+            }
+
+            if (*blit_row_offset >= *blit_clip_bottom) break;
+            if (*blit_row_offset >= *blit_clip_top &&
+                right_x > *blit_clip_left && left_x < *blit_clip_right &&
+                right_x > left_x) {
+                int clipped_right = right_x;
+                if (*blit_clip_right <= clipped_right)
+                    clipped_right = *blit_clip_right;
+                int clipped_left = left_x;
+                if (clipped_left < *blit_clip_left) {
+                    const int skip = static_cast<int>(
+                        static_cast<unsigned int>(texture_difference(
+                            *blit_clip_left, clipped_left)) << 16);
+                    u = static_cast<int>(static_cast<unsigned int>(u) +
+                        static_cast<unsigned int>((static_cast<int64_t>(du) * skip) >> 16));
+                    v = static_cast<int>(static_cast<unsigned int>(v) +
+                        static_cast<unsigned int>((static_cast<int64_t>(dv) * skip) >> 16));
+                    light = static_cast<int>(static_cast<unsigned int>(light) +
+                        static_cast<unsigned int>((static_cast<int64_t>(
+                            static_cast<unsigned short>(light_step)) * skip) >> 8));
+                    *blit_slot_4f8 = u;
+                    *blit_slot_53c = v;
+                    *blit_slot_498 = light;
+                    clipped_left = *blit_clip_left;
+                }
+                *blit_span_right = clipped_left;
+
+                const unsigned int out_address =
+                    static_cast<unsigned int>(*blit_row_offset) +
+                    static_cast<unsigned int>(clipped_left);
+                unsigned char *out = reinterpret_cast<unsigned char *>(
+                    static_cast<intptr_t>(out_address));
+                const unsigned int pixel_count = texture_span_pixels(
+                    texture_difference(clipped_right, clipped_left));
+                // The original shifts the published light scratch in place
+                // before loading the per-pixel WORD accumulator.
+                *blit_slot_498 = light >> 8;
+                unsigned short light_accumulator = static_cast<unsigned short>(
+                    static_cast<unsigned int>(light) >> 8);
+                int pixel;
+                for (pixel = 0; pixel < static_cast<int>(pixel_count); ++pixel) {
+                    unsigned char *source = texture_sub61df60_page_address(
+                        pixels_, u, v);
+                    // Raw E49E loads [EBX] before touching the mask/remap
+                    // path, even when that path will preserve destination.
+                    const unsigned char base_texel =
+                        *reinterpret_cast<volatile const unsigned char *>(source);
+                    const uintptr_t mask_base = reinterpret_cast<uintptr_t>(
+                        mask_texture->pixels_);
+                    const uintptr_t source_offset =
+                        reinterpret_cast<uintptr_t>(source) & 0xffffu;
+                    const unsigned char mask = *reinterpret_cast<const unsigned char *>(
+                        (mask_base & ~static_cast<uintptr_t>(0xffffu)) |
+                        source_offset);
+                    const unsigned char mapped = remap[mask];
+                    if (mapped != 0) {
+                        if (mapped == 1) {
+                            const unsigned char shade = static_cast<unsigned char>(
+                                light_accumulator >> 8);
+                            unsigned char value = static_cast<unsigned char>(
+                                static_cast<unsigned int>(base_texel) + shade);
+                            if (static_cast<signed char>(shade) <
+                                static_cast<signed char>(threshold)) {
+                                const unsigned int table_index =
+                                    (static_cast<unsigned int>(shade) << 8) | out[0];
+                                value = palette[table_index];
+                            }
+                            out[0] = value;
+                        } else {
+                            out[0] = mapped;
+                        }
+                    }
+                    u = static_cast<int>(static_cast<unsigned int>(u) +
+                                         static_cast<unsigned int>(du));
+                    v = static_cast<int>(static_cast<unsigned int>(v) +
+                                         static_cast<unsigned int>(dv));
+                    light_accumulator = static_cast<unsigned short>(
+                        light_accumulator + light_step);
+                    ++out;
+                }
+            }
+            if (done) goto cleanup;
+            *blit_row_offset = static_cast<int>(
+                static_cast<unsigned int>(*blit_row_offset) +
+                static_cast<unsigned int>(*blit_buffer_stride));
         }
     }
 
 cleanup:
-    if (a1 != 0) {
-        reinterpret_cast<Buffer *>(a1)->free_data(1);
-    }
-    return 0;
+    if (buffer != 0) buffer->free_data(1);
+epilogue_only:
+    texture_reset_fpu();
 }
 
 // Local Gouraud helpers shared with draw2; their definitions follow the
@@ -7340,7 +7430,10 @@ void Texture::sub_624d40(Buffer *buf, Vert *verts, int *zvals, int count,
 
 /*
 // ORIGINAL: 0x00624630 sub_624630 0x00624630-0x0062466C BYTE_EXACT
-// symbol    ?sub_624630@Texture@@QAEXHHHHHHHHHH@Z
+// symbol    ?sub_624630@Texture@@QAEXPAVBuffer@@PAUVert@@PAHPAV1@PAEH1H4H@Z
+// Historical synthetic seed symbol: ?sub_624630@Texture@@QAEXHHHHHHHHHH@Z
+// Nine forwarded stack slots use the recovered callee's types; the tenth is
+// the -1 sentinel. Preserve the historical byte obligation through API repair.
 // size      60 bytes
 // callers   0   call targets   1
 // kind      game
@@ -7351,10 +7444,13 @@ void Texture::sub_624d40(Buffer *buf, Vert *verts, int *zvals, int count,
 Return Value: void
 Status: Complete
 */
-void Texture::sub_624630(int a1, int a2, int a3, int a4, int a5, int a6,
-                         int a7, int a8, int a9, int sentinel) {
+void Texture::sub_624630(Buffer *buffer, Vert *vertices, int *zvals,
+                         Texture *mask_texture, unsigned char *remap,
+                         int count, Vert *uv, int threshold,
+                         unsigned char *palette, int sentinel) {
     if (sentinel == -1) {
-        sub_61df60(a1, a2, a3, a4, a5, a6, a7, a8, a9);
+        sub_61df60(buffer, vertices, zvals, mask_texture, remap, count, uv,
+                   threshold, palette);
     }
 }
 
