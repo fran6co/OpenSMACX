@@ -17,7 +17,6 @@
  */
 #pragma once
 
-#include "original_seam.h"
 #include "caviar.h"
 #include "subinterface.h"
 #include "font.h"
@@ -135,16 +134,10 @@ void say_orders(int veh_id);
 // statuswin.cpp so the int form can call it by name.
 void say_orders(char *text, int veh_id);
 
-// SubInterface::release_iface_mode is not recovered, and the interface it
-// acts on is a global the original reaches at a fixed address. Both are
-// rebindable so the reset can be observed without either being present.
-typedef void (OriginalObject::*func_release_iface_mode)();
-// The process-wide SubInterface at 0x006EEED8, as a CONSTANT rather than a
-// pointer variable: the image's `mov ecx, 0x6eeed8` is an immediate, and a
-// variable costs the load it does not make. Same object as `g_BattleWin`.
-inline SubInterface *sub_interface_global() {
-  return reinterpret_cast<SubInterface *>(0x006EEED8);
-}
+// The process-wide SubInterface view is BattleWin's real global object.
+// Defined by its owner in battlewin.cpp to keep this header's dependency
+// direction acyclic.
+SubInterface *sub_interface_global();
 
 
 // The process-wide status/layout initialization bits at original 0x00939ED8.

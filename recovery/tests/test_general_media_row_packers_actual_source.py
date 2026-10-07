@@ -154,6 +154,10 @@ int main() {
 
 def harness(source: str) -> str:
     bodies = [
+        definition(source, "static int movie_blend_read_index("),
+        definition(source, "static DWORD movie_blend_read_word("),
+        definition(source, "static DWORD movie_blend_low_half_ordered("),
+        definition(source, "static DWORD movie_blend_high_half_ordered("),
         definition(source, "void __cdecl sub_5d1b88("),
         definition(source, "void __cdecl sub_5d2037("),
         definition(source, "static DWORD movie_coefficient_pack_word("),

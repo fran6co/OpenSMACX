@@ -2094,11 +2094,11 @@ void Datalink::set_cat(unsigned int category, int index) {
     // The topic panel's report window - the fixed 0x00876478 object
     // reportif.cpp names ReportIfModalWindow.
     if (field_29DC_ == 0xE) {
-        reinterpret_cast<ReportWin *>(0x876478)->reset();
+        ReportWinGlobal.reset();
     }
 
     field_29DC_ = category;
-    reinterpret_cast<ReportWin *>(0x876478)->reset();
+    ReportWinGlobal.reset();
 
     listBox_.item_list_.remove_all();
     listBox_.selected_position_ = 0;

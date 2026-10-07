@@ -1173,7 +1173,6 @@ int __cdecl filefind_init(LPCSTR file_check, BOOL is_complete) {
     strcat(saved_dir, FilefindPath.exe_dir);
     strcat(FilefindPath.exe_dir, "\\");
 
-    typedef void *(OriginalObject::*delete_popup_fn)(unsigned int);
     char root_path[5];
     WIN32_FIND_DATAA find_file_data;
     HANDLE file_found;
@@ -1192,20 +1191,20 @@ int __cdecl filefind_init(LPCSTR file_check, BOOL is_complete) {
                     FilefindPath.cd_path[0] = 0;
                     strcat(FilefindPath.cd_path, root_path);
                     SetCurrentDirectoryA(saved_dir);
-                    (ORIGINAL(popup)->*vtable_method<delete_popup_fn>(popup, 0))(1);
+                    delete popup;
                     return 0;
                 }
             }
             root_path[0]++;
         }
         if (is_complete) {
-            (ORIGINAL(popup)->*vtable_method<delete_popup_fn>(popup, 0))(1);
+            delete popup;
             return 0;
         }
         // send FILEFIND_NOCD message -> if doesn't exist (removed from jackal.txt) -> exit
         const int response = popup->start(const_cast<LPSTR>("jackal"), "FILEFIND_NOCD", -1, 0, 0, 0);
         if (response) {
-            (ORIGINAL(popup)->*vtable_method<delete_popup_fn>(popup, 0))(1);
+            delete popup;
             return response;
         }
         // field_3100_ (BasePop, private): the popup's own response code.
@@ -1217,7 +1216,7 @@ int __cdecl filefind_init(LPCSTR file_check, BOOL is_complete) {
         }
         // if user response is "ok", exit loop
         SetCurrentDirectoryA(saved_dir);
-        (ORIGINAL(popup)->*vtable_method<delete_popup_fn>(popup, 0))(1);
+        delete popup;
         return 0;
     }
 }
@@ -4267,6 +4266,37 @@ int __cdecl sub_5ceb12(const unsigned char *srcA, const unsigned char *srcB, uns
     return 0;
 }
 
+// Volatile accesses preserve the pinned order on unchecked indices. On the
+// 32-bit target uintptr_t addition supplies native modulo-2^32 addressing;
+// no bounds check/clamp is introduced. Host controls exercise valid indices.
+static int movie_blend_read_index(const int *base, DWORD word_offset) {
+    const uintptr_t address = reinterpret_cast<uintptr_t>(base) +
+                              static_cast<uintptr_t>(word_offset) * 4u;
+    return *reinterpret_cast<const volatile int *>(address);
+}
+
+static DWORD movie_blend_read_word(const DWORD *base, DWORD word_index) {
+    const uintptr_t address = reinterpret_cast<uintptr_t>(base) +
+                              static_cast<uintptr_t>(word_index) * 4u;
+    return *reinterpret_cast<const volatile DWORD *>(address);
+}
+
+static DWORD movie_blend_low_half_ordered(DWORD sum) {
+    const DWORD high = movie_blend_read_word(MovieBlendTableHi, sum >> 0x17);
+    const DWORD middle = movie_blend_read_word(
+        MovieBlendTableMid, (sum & 0x000ff800u) >> 0x0b);
+    const DWORD low = movie_blend_read_word(MovieBlendTableLow, sum & 0x1ffu);
+    return (high | middle | low) & 0xffffu;
+}
+
+static DWORD movie_blend_high_half_ordered(DWORD sum) {
+    const DWORD high = movie_blend_read_word(MovieBlendTableHi, sum >> 0x17);
+    const DWORD low = movie_blend_read_word(MovieBlendTableLow, sum & 0x1ffu);
+    const DWORD middle = movie_blend_read_word(
+        MovieBlendTableMid, (sum & 0x000ff800u) >> 0x0b);
+    return (high | low | middle) & 0xffff0000u;
+}
+
 // ORIGINAL: 0x005D2037 sub_5d2037 0x005D2037-0x005D2536 FILE
 // symbol    ?sub_5d2037@@YAXPAH0PAI@Z
 // TRIED: nullary per the contract head - no [esp+N]/[ebp+N] read exists anywhere in the body, but esi/edi/ebp are read from the very first instruction with no prologue and no assignment into them first, so nullary leaves the data unreachable. Proposed a 3-pointer signature (data/tables/out standing in for esi/edi/ebp) so the 8 unrolled DES-style S-box rounds compile and read correctly; this is a PROPOSAL, not decoded evidence - no standard calling convention passes 3 live registers with zero prologue, so BYTE_EXACT is structurally unreachable here short of __asm (refused). MISMATCH #0 is the prologue itself.
@@ -4292,19 +4322,34 @@ int __cdecl sub_5ceb12(const unsigned char *srcA, const unsigned char *srcB, uns
 // context from the first token rather than behind a file read. This
 // emitter computes declarations; it does not carry lessons.
 
-void __cdecl sub_5d2037(int *data, int *tables, unsigned int *out) {
-    for (int i = 0; i < 8; i++) {
-        unsigned int left = MovieBlendTableQuant[tables[i]] + MovieBlendTableData[data[i * 2]] +
-                             MovieBlendTableQuant2[tables[0x40 + i]];
-        unsigned int right = MovieBlendTableData[data[i * 2 + 1]] + MovieBlendTableQuant2[tables[0x40 + i]] +
-                              MovieBlendTableQuant[tables[i]];
+void __cdecl sub_5d2037(int *data_row, int *selector_pair,
+                        unsigned int *packed_output) {
+    for (int index = 0; index < 8; ++index) {
+        const DWORD source_offset_0 = static_cast<DWORD>(index) * 2u;
+        const int source_index_0 = movie_blend_read_index(data_row, source_offset_0);
+        const int selector_index_0 = movie_blend_read_index(
+            selector_pair, static_cast<DWORD>(index));
+        const int selector_index_1 = movie_blend_read_index(
+            selector_pair, 0x40u + static_cast<DWORD>(index));
+        const DWORD source_value_0 = movie_blend_read_word(
+            MovieBlendTableData, static_cast<DWORD>(source_index_0));
+        const DWORD selector_value_0 = movie_blend_read_word(
+            MovieBlendTableQuant, static_cast<DWORD>(selector_index_0));
+        const DWORD selector_value_1 = movie_blend_read_word(
+            MovieBlendTableQuant2, static_cast<DWORD>(selector_index_1));
+        const DWORD low_sum = (source_value_0 + selector_value_1) +
+                              selector_value_0;
+        const DWORD low_half = movie_blend_low_half_ordered(low_sum);
 
-        out[i] = ((MovieBlendTableHi[right >> 0x17] | MovieBlendTableLow[right & 0x1ff] |
-                   MovieBlendTableMid[(right & 0xff800) >> 0xb]) &
-                  0xffff0000) |
-                 ((MovieBlendTableMid[(left & 0xff800) >> 0xb] | MovieBlendTableHi[left >> 0x17] |
-                   MovieBlendTableLow[left & 0x1ff]) &
-                  0xffff);
+        const int source_index_1 = movie_blend_read_index(
+            data_row, source_offset_0 + 1u);
+        const DWORD source_value_1 = movie_blend_read_word(
+            MovieBlendTableData, static_cast<DWORD>(source_index_1));
+        const DWORD high_sum = (source_value_1 + selector_value_1) +
+                               selector_value_0;
+        const DWORD high_half = movie_blend_high_half_ordered(high_sum);
+        const DWORD packed = high_half | low_half;
+        memcpy(&packed_output[index], &packed, sizeof(packed));
     }
 }
 
@@ -4442,7 +4487,9 @@ int __cdecl sub_5d2901(int *param_1, int *param_2, int *param_3, int param_4) {
         int iVar1 = *param_1;
         int iVar2 = *param_2;
         param_1 = param_1 + 1;
-        uVar3 = (unsigned int)(iVar1 + iVar2) >> 1;
+        // Original ADD wraps at 32 bits before logical SHR, including overflow.
+        uVar3 = (static_cast<unsigned int>(iVar1) +
+                 static_cast<unsigned int>(iVar2)) >> 1;
         param_2 = param_2 + 1;
         uVar4 = uVar3 & 0x7f7f7f7f;
 

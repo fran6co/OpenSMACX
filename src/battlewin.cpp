@@ -363,6 +363,12 @@ Status: Complete
 // startup, and the matching destructors close them at exit. Addresses of
 // the ones documented individually live beside their definitions.
 BattleWin g_BattleWin;  // 0x006EEED8
+
+// The original fixed receiver at 0x006EEED8 is the source-owned BattleWin
+// object above, whose primary SubInterface base begins at offset zero.
+SubInterface *sub_interface_global() {
+    return &g_BattleWin;
+}
 // ===== MANAGED GLOBALS - real objects, homed to their domain =====
 // In the shipped image these live at fixed data addresses and are
 // constructed before WinMain by the CRT's dynamic-initializer walk

@@ -199,6 +199,8 @@ def test_macroblock_bodies_initialize_shared_reader_and_emit_six_phases(
     helpers = "\n".join(
         _function(owner, signature)
         for signature in (
+            "static DWORD movie_pixel_read_dword_address(",
+            "static DWORD movie_pixel_read_dword_at(",
             "void __cdecl OutputPixelRow(MediaConversionTableStorage &tables,",
             "void __cdecl OutputPixelRow16(MediaConversionTableStorage &tables,",
             "void __cdecl sub_5cea09(",
@@ -269,15 +271,17 @@ int main() {
   // Exercise the real row converters with one nonzero table row and source
   // indexes. Signed workspace words are the corresponding unsigned int view.
   for (int i = 0; i < 384; ++i)
-    movie_media_conversion_tables.packed_component_words[i] = i;
+    movie_media_conversion_tables.packed_component_words[i] = i * i + 17;
   movie_media_transform_workspace.block_and_intermediate_words[0] = 3 << 17;
   movie_media_transform_workspace.block_and_intermediate_words[1] = 4 << 17;
   movie_media_transform_workspace.block_and_intermediate_words[256] = 5 << 17;
   movie_media_transform_workspace.block_and_intermediate_words[320] = 6 << 17;
   int pixels[256] = {};
   movie_media_write_macroblock_rows(reinterpret_cast<BYTE *>(pixels), 64, 0);
-  assert(pixels[0] == (3 + (128 + 5) + (256 + 6)));
-  assert(pixels[1] == (4 + (128 + 5) + (256 + 6)));
+  assert(pixels[0] == (3 * 3 + (256 + 5) * (256 + 5) +
+                       (128 + 6) * (128 + 6) + 3 * 17));
+  assert(pixels[1] == (4 * 4 + (256 + 5) * (256 + 5) +
+                       (128 + 6) * (128 + 6) + 3 * 17));
 
   BYTE component_rows[16 * 0x40] = {};
   BYTE chroma_rows[8 * 0x20 + 0x120] = {};

@@ -922,6 +922,19 @@ int __fastcall sub_5d35b0(MediaRuntime *runtime,
 // Source-owned 005CF5C7 and 005CF852 row converters. Their table slices are
 // the three observed 128-DWORD banks at the front of the shared conversion
 // owner; the source indices select entries using bits 17..23.
+// Preserve the pinned access sequence with volatile loads. The destination
+// read is a native, redundant DWORD read; it is intentionally retained.
+static DWORD movie_pixel_read_dword_address(uintptr_t address) {
+  const volatile DWORD *const word =
+      reinterpret_cast<const volatile DWORD *>(address);
+  return *word;
+}
+
+static DWORD movie_pixel_read_dword_at(const void *base, DWORD byte_offset) {
+  const uintptr_t address = reinterpret_cast<uintptr_t>(base) + byte_offset;
+  return movie_pixel_read_dword_address(address);
+}
+
 // ORIGINAL: 0x005CF5C7 OutputPixelRow 0x005CF5C7-0x005CF852
 // RECOVERY_BINDING: v1 {"evidence": ["recovery/tasks/movie-decoder-owner-oct5.json", "pinned caller/body and shared-storage review; fresh VC6 public symbol", "Use the single MediaConversionTableStorage owner and its observed three 128-DWORD output banks; preserve the row's 8-pair lookup order. No independent table copy."], "reason": "Faithful semantic media decoder owner recovery with normalized custom-register helper interfaces. Original identities, spans and historical findings retained; no matching, runtime or game acceptance granted."}
 // symbol    ?OutputPixelRow@@YAXAAUMediaConversionTableStorage@@PAHPBI2@Z
@@ -932,18 +945,34 @@ void __cdecl OutputPixelRow(MediaConversionTableStorage &tables,
                             const uint32_t *component_source,
                             const uint32_t *chroma_source) {
   const DWORD *component = tables.packed_component_words;
-  const DWORD *chroma_blue = tables.packed_component_words + 128;
-  const DWORD *chroma_red = tables.packed_component_words + 256;
+  const DWORD *selector_zero = tables.packed_component_words + 256;
+  const DWORD *selector_one = tables.packed_component_words + 128;
   for (int pair = 0; pair < 8; ++pair) {
-    const DWORD second_chroma =
-        chroma_blue[(chroma_source[pair] >> 17) & 0x7f] +
-        chroma_red[(chroma_source[0x40 + pair] >> 17) & 0x7f];
-    destination[pair * 2] =
-        component[(component_source[pair * 2] >> 17) & 0x7f] +
-        second_chroma;
-    destination[pair * 2 + 1] =
-        component[(component_source[pair * 2 + 1] >> 17) & 0x7f] +
-        second_chroma;
+    if (pair == 0 || pair == 4) {
+      const DWORD discarded_destination = movie_pixel_read_dword_at(
+          destination, static_cast<DWORD>(pair) * 8u);
+      (void)discarded_destination;
+    }
+    const DWORD component_index_0 = movie_pixel_read_dword_at(
+        component_source, static_cast<DWORD>(pair) * 8u) >> 17 & 0x7fu;
+    const DWORD component_index_1 = movie_pixel_read_dword_at(
+        component_source, static_cast<DWORD>(pair) * 8u + 4u) >> 17 & 0x7fu;
+    const DWORD selector_index_0 = movie_pixel_read_dword_at(
+        chroma_source, static_cast<DWORD>(pair) * 4u) >> 17 & 0x7fu;
+    const DWORD selector_index_1 = movie_pixel_read_dword_at(
+        chroma_source, 0x100u + static_cast<DWORD>(pair) * 4u) >> 17 & 0x7fu;
+    const DWORD component_0 = movie_pixel_read_dword_at(
+        component, component_index_0 * 4u);
+    const DWORD component_1 = movie_pixel_read_dword_at(
+        component, component_index_1 * 4u);
+    const DWORD selector_0 = movie_pixel_read_dword_at(
+        selector_zero, selector_index_0 * 4u);
+    const DWORD selector_1 = movie_pixel_read_dword_at(
+        selector_one, selector_index_1 * 4u);
+    const DWORD pixel_0 = (component_0 + selector_0) + selector_1;
+    const DWORD pixel_1 = (component_1 + selector_0) + selector_1;
+    memcpy(&destination[pair * 2], &pixel_0, sizeof(pixel_0));
+    memcpy(&destination[pair * 2 + 1], &pixel_1, sizeof(pixel_1));
   }
 }
 
@@ -957,18 +986,39 @@ void __cdecl OutputPixelRow16(MediaConversionTableStorage &tables,
                               const uint32_t *component_source,
                               const uint32_t *chroma_source) {
   const DWORD *component = tables.packed_component_words;
-  const DWORD *chroma_blue = tables.packed_component_words + 128;
-  const DWORD *chroma_red = tables.packed_component_words + 256;
+  const DWORD *selector_zero = tables.packed_component_words + 256;
+  const DWORD *selector_one = tables.packed_component_words + 128;
   for (int pair = 0; pair < 8; ++pair) {
-    const DWORD second_chroma =
-        chroma_blue[(chroma_source[pair] >> 17) & 0x7f] +
-        chroma_red[(chroma_source[0x40 + pair] >> 17) & 0x7f];
-    destination[pair * 2] = static_cast<short>(
-        component[(component_source[pair * 2] >> 17) & 0x7f] +
-        second_chroma);
-    destination[pair * 2 + 1] = static_cast<short>(
-        component[(component_source[pair * 2 + 1] >> 17) & 0x7f] +
-        second_chroma);
+    if (pair == 0 || pair == 4) {
+      const uintptr_t destination_address =
+          reinterpret_cast<uintptr_t>(destination) +
+          static_cast<uintptr_t>(pair) * 8u;
+      const DWORD discarded_destination =
+          movie_pixel_read_dword_address(destination_address);
+      (void)discarded_destination;
+    }
+    const DWORD component_index_0 = movie_pixel_read_dword_at(
+        component_source, static_cast<DWORD>(pair) * 8u) >> 17 & 0x7fu;
+    const DWORD component_index_1 = movie_pixel_read_dword_at(
+        component_source, static_cast<DWORD>(pair) * 8u + 4u) >> 17 & 0x7fu;
+    const DWORD selector_index_0 = movie_pixel_read_dword_at(
+        chroma_source, static_cast<DWORD>(pair) * 4u) >> 17 & 0x7fu;
+    const DWORD selector_index_1 = movie_pixel_read_dword_at(
+        chroma_source, 0x100u + static_cast<DWORD>(pair) * 4u) >> 17 & 0x7fu;
+    const DWORD component_0 = movie_pixel_read_dword_at(
+        component, component_index_0 * 4u);
+    const DWORD component_1 = movie_pixel_read_dword_at(
+        component, component_index_1 * 4u);
+    const DWORD selector_0 = movie_pixel_read_dword_at(
+        selector_zero, selector_index_0 * 4u);
+    const DWORD selector_1 = movie_pixel_read_dword_at(
+        selector_one, selector_index_1 * 4u);
+    const unsigned short pixel_0 =
+        static_cast<unsigned short>((component_0 + selector_0) + selector_1);
+    const unsigned short pixel_1 =
+        static_cast<unsigned short>((component_1 + selector_0) + selector_1);
+    memcpy(&destination[pair * 2], &pixel_0, sizeof(pixel_0));
+    memcpy(&destination[pair * 2 + 1], &pixel_1, sizeof(pixel_1));
   }
 }
 
