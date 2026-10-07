@@ -123,13 +123,13 @@ int main() {
     for(int i=0;i<32;++i) shade[i]=(unsigned char)(i^0x5a);
     source[65536]=1; source[1]=1;
     sub_63b241(dst8,source+65536,0,0,1,2,0x10000,-0x10000,-1,2,
-               (int)(uintptr_t)shade);
+               shade);
     assert(dst8[0]==shade[0] && dst8[2]==shade[0]);
     assert((uintptr_t)CaviarBlitState.destination_cursor_==(uintptr_t)(dst8+4));
 
     for(int i=0;i<8;++i) { dst8[i]=(unsigned char)(40+i); source[i]=(char)(i?1:0); }
     sub_63b241(dst8,source,0,0,4,1,0x10000,0x10000,4,8,
-               (int)(uintptr_t)shade);
+               shade);
     assert(dst8[0]==40 && dst8[1]==shade[41] && dst8[2]==shade[42]);
 
     for(int i=0;i<16;++i) { dst16[i]=0; source16[i]=(unsigned short)(i+1); }

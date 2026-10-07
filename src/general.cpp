@@ -3473,7 +3473,9 @@ extern "C" void __cdecl sub_5d4448(
     } while (p9 > 0);
 }
 
+// RECOVERY_ROLE: SCAFFOLD Mat3, Matrix3 and Mat3x3 are provisional 3x3 numerical views; original class identity, complete extent, callers, lifetime and x87 equivalence remain unresolved.
 // ORIGINAL: 0x00634980 sub_634980 0x00634980-0x00634A50 FILE
+// symbol    ?multiply@Mat3@@QAEXPAM0@Z
 // TRIED: `extern "C" int __stdcall sub_634980(int a1, int a2)` per the given def head - disasm reads *ecx directly as a float* with no matching stack slot (a 3x3 matrix "this"), so the receiver is a __thiscall member, not a 2-arg __stdcall free function; changed to a `Mat3::multiply` member. `dst`/`a` tracked as independent incrementing pointers gives a MISMATCH at the prologue (#4, 87% similarity); an `int off = dst - a` delta recomputed each outer iteration (matching the original's spill of that delta to `[esp+0x14]` and its `add esi, ebx` re-derivation) gets to 89.5% similarity, 7 edits, all register-allocation choices (which callee-saved reg holds which pointer) rather than control-flow shape.
 // working copy - scaffold materialised by --work
 // size      208 bytes
@@ -3569,6 +3571,7 @@ void Mat3::multiply(float *out, float *other) {
     }
 }
 
+// RECOVERY_ROLE: SCAFFOLD Mat3, Matrix3 and Mat3x3 are provisional 3x3 numerical views; original class identity, complete extent, callers, lifetime and x87 equivalence remain unresolved.
 // ORIGINAL: 0x00634920 sub_634920 0x00634920-0x00634975 BYTE_EXACT
 // symbol    ?equals@Mat3@@QAE_NPBM@Z
 // LEVER: two indexed reads, not a hoisted difference. The image keeps `this`
@@ -3588,7 +3591,9 @@ bool Mat3::equals(const float *other) {
     return true;
 }
 
+// RECOVERY_ROLE: SCAFFOLD Mat3, Matrix3 and Mat3x3 are provisional 3x3 numerical views; original class identity, complete extent, callers, lifetime and x87 equivalence remain unresolved.
 // ORIGINAL: 0x00634A50 sub_634a50 0x00634A50-0x00634AC9 FILE
+// symbol    ?transform@Matrix3@@QAEXPAMPBM@Z
 // working copy - scaffold materialised by --work
 // size      121 bytes
 // prototype 
@@ -3635,13 +3640,19 @@ class Matrix3 { public:
 };
 
 void Matrix3::transform(float *out, const float *in) {
-    float *m = v;
-    out[0] = m[0] * in[0] + m[1] * in[1] + m[2] * in[2];
-    out[1] = m[3] * in[0] + m[4] * in[1] + m[5] * in[2];
-    out[2] = m[6] * in[0] + m[7] * in[1] + m[8] * in[2];
+    const float *m = v;
+    float result[3];
+    result[0] = m[1] * in[1] + m[2] * in[2] + m[0] * in[0];
+    result[1] = m[4] * in[1] + m[3] * in[0] + m[5] * in[2];
+    result[2] = m[7] * in[1] + m[6] * in[0] + m[8] * in[2];
+    out[0] = result[0];
+    out[1] = result[1];
+    out[2] = result[2];
 }
 
+// RECOVERY_ROLE: SCAFFOLD Mat3, Matrix3 and Mat3x3 are provisional 3x3 numerical views; original class identity, complete extent, callers, lifetime and x87 equivalence remain unresolved.
 // ORIGINAL: 0x00634AD0 sub_634ad0 0x00634AD0-0x00634B67 FILE
+// symbol    ?scale_into@Mat3x3@@QAEXPAMM@Z
 // TRIED: extern "C" __stdcall(int,int) contract head - disasm reads ecx as an implicit receiver (thiscall) into a 3x3 float matrix, not a stack int; rewrote as Mat3x3::scale_into(float*,float). MISMATCH #1 push/lea, prologue layout only, structure otherwise matches Ghidra's nested-loop scale+copy.
 // working copy - scaffold materialised by --work
 // size      151 bytes

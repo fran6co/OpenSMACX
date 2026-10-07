@@ -6268,7 +6268,7 @@ Purpose: The isometric box-projector: project the caller's centre and
          and height in [4..5] once the box lands on screen, or zeroes when
          it is entirely above/left of the origin.
 
-// RECOVERY_ROLE: SCAFFOLD Complete owner-side transcription; pinned x87 exceptional conversion behavior and complete indirect caller/physical-owner qualification remain unresolved.
+// RECOVERY_ROLE: SCAFFOLD Complete owner-side transcription; complete indirect caller and physical-owner qualification remain unresolved.
 // ORIGINAL: 0x006401B0 sub_6401b0 0x006401B0-0x006404E2
 // size      818 bytes
 // Deleted seed provenance: git:1ed59304110fc2098fb1dd11457fa5b0074169bd:src/unrecovered/006401b0.cpp
@@ -6291,22 +6291,54 @@ namespace {
 
 // Ghidra's bit-trick round, spelled as the arithmetic it performs: the
 // image adds 0x80 and shifts the 16.8 fixed-point product down to a short.
-short fixed8(int value) {
-    return (short)((value + 0x80) >> 8);
+static int32_t caviar_i32_from_bits(uint32_t bits) {
+    if (bits <= 0x7fffffffu) return (int32_t)bits;
+    return -1 - (int32_t)(0xffffffffu - bits);
+}
+
+// The pinned code adds in a 32-bit register and uses x86 arithmetic SAR.
+static uint32_t caviar_sar8_bits(uint32_t bits) {
+    const uint32_t biased = bits + 0x80u;
+    uint32_t shifted = biased >> 8;
+    if ((biased & 0x80000000u) != 0) shifted |= 0xff000000u;
+    return shifted;
+}
+
+// Extent reductions are written through AX in the original. Center reductions
+// use the full EAX/EDX value and must not pass through this low-word helper.
+static int32_t caviar_fixed8_low16(uint32_t bits) {
+    const uint16_t low = (uint16_t)caviar_sar8_bits(bits);
+    return (low & 0x8000u) != 0
+        ? (int32_t)low - 0x10000
+        : (int32_t)low;
+}
+
+static int32_t caviar_add_i32(int32_t a, int32_t b) {
+    return caviar_i32_from_bits((uint32_t)a + (uint32_t)b);
+}
+
+static int32_t caviar_sub_i32(int32_t a, int32_t b) {
+    return caviar_i32_from_bits((uint32_t)a - (uint32_t)b);
+}
+
+int32_t fixed8(uint32_t value_bits) {
+    return caviar_fixed8_low16(value_bits);
 }
 
 }
 
 extern "C" void __cdecl sub_6401b0(const short *centre, const short *extent,
                                    int *out_rect) {
-    int x_walk =
-        (int)CaviarFixedPointProjection.word_00_ * (int)centre[0] +
-        (int)CaviarFixedPointProjection.word_04_ * (int)centre[2] +
-        (int)CaviarFixedPointProjection.word_02_ * (int)centre[1];
-    int y_walk =
-        (int)CaviarFixedPointProjection.word_06_ * (int)centre[0] +
-        (int)CaviarFixedPointProjection.word_0A_ * (int)centre[2] +
-        (int)CaviarFixedPointProjection.word_08_ * (int)centre[1];
+    uint32_t x_centre_bits =
+        (uint32_t)((int32_t)CaviarFixedPointProjection.word_00_ * (int32_t)centre[0]);
+    x_centre_bits += (uint32_t)((int32_t)CaviarFixedPointProjection.word_04_ * (int32_t)centre[2]);
+    x_centre_bits += (uint32_t)((int32_t)CaviarFixedPointProjection.word_02_ * (int32_t)centre[1]);
+    int x_walk;
+    uint32_t y_centre_bits =
+        (uint32_t)((int32_t)CaviarFixedPointProjection.word_06_ * (int32_t)centre[0]);
+    y_centre_bits += (uint32_t)((int32_t)CaviarFixedPointProjection.word_0A_ * (int32_t)centre[2]);
+    y_centre_bits += (uint32_t)((int32_t)CaviarFixedPointProjection.word_08_ * (int32_t)centre[1]);
+    int y_walk;
     int extent0_x = (int)extent[0] * (int)CaviarFixedPointProjection.word_00_;
     int extent0_y = (int)extent[0] * (int)CaviarFixedPointProjection.word_06_;
     int extent1_x = (int)extent[1] * (int)CaviarFixedPointProjection.word_02_;
@@ -6314,12 +6346,12 @@ extern "C" void __cdecl sub_6401b0(const short *centre, const short *extent,
     int extent2_x = (int)extent[2] * (int)CaviarFixedPointProjection.word_04_;
     int extent2_y = (int)extent[2] * (int)CaviarFixedPointProjection.word_0A_;
 
-    extent0_y = fixed8(extent0_y);
+    extent0_y = fixed8((uint32_t)extent0_y);
     out_rect[4] = 0;
     out_rect[5] = 0;
-    extent0_x = fixed8(extent0_x);
-    x_walk = (int)fixed8(x_walk) + extent0_x;
-    y_walk = (int)fixed8(y_walk) + extent0_y;
+    extent0_x = fixed8((uint32_t)extent0_x);
+    x_walk = caviar_add_i32(caviar_i32_from_bits(caviar_sar8_bits(x_centre_bits)), extent0_x);
+    y_walk = caviar_add_i32(caviar_i32_from_bits(caviar_sar8_bits(y_centre_bits)), extent0_y);
     out_rect[0] = 0x7fff;
     out_rect[1] = 0x7fff;
     out_rect[2] = -0x7fff;
@@ -6328,46 +6360,46 @@ extern "C" void __cdecl sub_6401b0(const short *centre, const short *extent,
     if (-0x7fff < x_walk) out_rect[2] = x_walk;
     if (y_walk < 0x7fff) out_rect[1] = y_walk;
     if (-0x7fff < y_walk) out_rect[3] = y_walk;
-    extent1_x = fixed8(extent1_x);
-    extent1_y = fixed8(extent1_y);
-    x_walk = x_walk + extent1_x;
-    y_walk = y_walk + extent1_y;
+    extent1_x = fixed8((uint32_t)extent1_x);
+    extent1_y = fixed8((uint32_t)extent1_y);
+    x_walk = caviar_add_i32(x_walk, extent1_x);
+    y_walk = caviar_add_i32(y_walk, extent1_y);
     if (x_walk < out_rect[0]) out_rect[0] = x_walk;
     if (out_rect[2] < x_walk) out_rect[2] = x_walk;
     if (y_walk < out_rect[1]) out_rect[1] = y_walk;
     if (out_rect[3] < y_walk) out_rect[3] = y_walk;
-    x_walk = x_walk - extent0_x;
-    y_walk = y_walk - extent0_y;
+    x_walk = caviar_sub_i32(x_walk, extent0_x);
+    y_walk = caviar_sub_i32(y_walk, extent0_y);
     if (x_walk < out_rect[0]) out_rect[0] = x_walk;
     if (out_rect[2] < x_walk) out_rect[2] = x_walk;
     if (y_walk < out_rect[1]) out_rect[1] = y_walk;
     if (out_rect[3] < y_walk) out_rect[3] = y_walk;
-    y_walk = y_walk - extent1_y;
-    x_walk = x_walk - extent1_x;
+    y_walk = caviar_sub_i32(y_walk, extent1_y);
+    x_walk = caviar_sub_i32(x_walk, extent1_x);
     if (x_walk < out_rect[0]) out_rect[0] = x_walk;
     if (out_rect[2] < x_walk) out_rect[2] = x_walk;
     if (y_walk < out_rect[1]) out_rect[1] = y_walk;
     if (out_rect[3] < y_walk) out_rect[3] = y_walk;
-    x_walk = x_walk + fixed8(extent2_x);
-    y_walk = y_walk + fixed8(extent2_y);
+    x_walk = caviar_add_i32(x_walk, fixed8((uint32_t)extent2_x));
+    y_walk = caviar_add_i32(y_walk, fixed8((uint32_t)extent2_y));
     if (x_walk < out_rect[0]) out_rect[0] = x_walk;
     if (out_rect[2] < x_walk) out_rect[2] = x_walk;
     if (y_walk < out_rect[1]) out_rect[1] = y_walk;
     if (out_rect[3] < y_walk) out_rect[3] = y_walk;
-    x_walk = x_walk + extent0_x;
-    y_walk = y_walk + extent0_y;
+    x_walk = caviar_add_i32(x_walk, extent0_x);
+    y_walk = caviar_add_i32(y_walk, extent0_y);
     if (x_walk < out_rect[0]) out_rect[0] = x_walk;
     if (out_rect[2] < x_walk) out_rect[2] = x_walk;
     if (y_walk < out_rect[1]) out_rect[1] = y_walk;
     if (out_rect[3] < y_walk) out_rect[3] = y_walk;
-    x_walk = x_walk + extent1_x;
-    y_walk = y_walk + extent1_y;
+    x_walk = caviar_add_i32(x_walk, extent1_x);
+    y_walk = caviar_add_i32(y_walk, extent1_y);
     if (x_walk < out_rect[0]) out_rect[0] = x_walk;
     if (out_rect[2] < x_walk) out_rect[2] = x_walk;
     if (y_walk < out_rect[1]) out_rect[1] = y_walk;
     if (out_rect[3] < y_walk) out_rect[3] = y_walk;
-    x_walk = x_walk - extent0_x;
-    y_walk = y_walk - extent0_y;
+    x_walk = caviar_sub_i32(x_walk, extent0_x);
+    y_walk = caviar_sub_i32(y_walk, extent0_y);
     if (x_walk < out_rect[0]) out_rect[0] = x_walk;
     if (out_rect[2] < x_walk) out_rect[2] = x_walk;
     if (y_walk < out_rect[1]) out_rect[1] = y_walk;
@@ -6375,10 +6407,10 @@ extern "C" void __cdecl sub_6401b0(const short *centre, const short *extent,
 
     x_walk = out_rect[0];
     y_walk = out_rect[1];
-    out_rect[0] = x_walk - 2;
-    out_rect[1] = y_walk - 2;
-    int bottom = out_rect[3] + 2;
-    int right = out_rect[2] + 2;
+    out_rect[0] = caviar_sub_i32(x_walk, 2);
+    out_rect[1] = caviar_sub_i32(y_walk, 2);
+    int bottom = caviar_add_i32(out_rect[3], 2);
+    int right = caviar_add_i32(out_rect[2], 2);
     out_rect[3] = bottom;
     out_rect[2] = right;
     if ((-1 < right) && (-1 < bottom)) {
@@ -6401,7 +6433,7 @@ Purpose: Walk a scaled sprite into a 16-bit destination through a palette:
          slot every row, exactly as the original re-reads it, so anything
          else writing the slot between rows is seen.
 
-// RECOVERY_ROLE: SCAFFOLD Complete owner-side transcription; pinned x87 exceptional conversion behavior and complete indirect caller/physical-owner qualification remain unresolved.
+// RECOVERY_ROLE: SCAFFOLD Typed loop transcription; complete indirect caller and physical-owner qualification remain unresolved.
 // ORIGINAL: 0x0063B11C sub_63b11c 0x0063B11C-0x0063B1BF
 // symbol   _sub_63b11c
 // size      163 bytes
@@ -6462,7 +6494,7 @@ Purpose: Walk a scaled sprite into an 8-bit destination, skipping the one
          The same shared cursor slot carries the destination pointer, and
          is re-read every row like its 16-bit sibling above.
 
-// RECOVERY_ROLE: SCAFFOLD Complete owner-side transcription; pinned x87 exceptional conversion behavior and complete indirect caller/physical-owner qualification remain unresolved.
+// RECOVERY_ROLE: SCAFFOLD Typed loop transcription; complete indirect caller and physical-owner qualification remain unresolved.
 // ORIGINAL: 0x0063B1BF sub_63b1bf 0x0063B1BF-0x0063B241
 // symbol   _sub_63b1bf
 // size      130 bytes
@@ -6516,9 +6548,9 @@ extern "C" void __cdecl sub_63b1bf(unsigned char *destination_base,
 /*
 Purpose: Walk a scaled sprite into an 8-bit destination through a shading
          table: each non-zero source byte replaces the destination byte
-         with table[destination byte + table base].
+         with table[destination byte].
 
-// RECOVERY_ROLE: SCAFFOLD Complete owner-side transcription; pinned x87 exceptional conversion behavior and complete indirect caller/physical-owner qualification remain unresolved.
+// RECOVERY_ROLE: SCAFFOLD Typed loop transcription; complete indirect caller and physical-owner qualification remain unresolved.
 // ORIGINAL: 0x0063B241 sub_63b241 0x0063B241-0x0063B2CB
 // symbol   _sub_63b241
 // size      138 bytes
@@ -6536,7 +6568,7 @@ extern "C" void __cdecl sub_63b241(unsigned char *destination_base,
                                    int width, int height,
                                    int source_x_step, int source_y_step,
                                    int source_stride, int destination_stride,
-                                   int table_base) {
+                                   const unsigned char *table) {
     if (width > 0 && height > 0) {
         CaviarBlitState.destination_cursor_ = caviar_blit_address(
             destination_base, caviar_blit_offset(destination_x, destination_y,
@@ -6548,8 +6580,7 @@ extern "C" void __cdecl sub_63b241(unsigned char *destination_base,
             unsigned char *pixel = CaviarBlitState.destination_cursor_;
             do {
                 if (source[carried_x >> 16] != 0) {
-                    *pixel = *reinterpret_cast<unsigned char *>(
-                        *pixel + table_base);
+                    *pixel = table[*pixel];
                 }
                 ++pixel;
                 carried_x += static_cast<unsigned int>(source_x_step);

@@ -79,6 +79,25 @@ int main(){
   sub_6401b0(zero_centre,zero_extent,zero_rect);
   ck(zero_rect[0]==254&&zero_rect[1]==510&&zero_rect[2]==258&&zero_rect[3]==514&&
      zero_rect[4]==5&&zero_rect[5]==5,"identity projection with zero extent");
+  CaviarFixedPointProjection.word_00_=127; CaviarFixedPointProjection.word_02_=0;
+  CaviarFixedPointProjection.word_04_=0; CaviarFixedPointProjection.word_06_=0;
+  CaviarFixedPointProjection.word_08_=0; CaviarFixedPointProjection.word_0A_=0;
+  short bias_centre[3]={1,0,0}, bias_extent[3]={0,0,0}; int bias_rect[6]={};
+  ck(caviar_sar8_bits(0x7fu)==0,"+0x80/SAR boundary bit pattern");
+  ck(caviar_sar8_bits(0xffffff00u)==0xffffffffu,"negative SAR sign fill");
+  sub_6401b0(bias_centre,bias_extent,bias_rect);
+  ck(bias_rect[0]==-2&&bias_rect[2]==2&&bias_rect[4]==5,
+     "bias boundary through center projection");
+  CaviarFixedPointProjection.word_00_=32767; CaviarFixedPointProjection.word_02_=0;
+  CaviarFixedPointProjection.word_04_=0; CaviarFixedPointProjection.word_06_=0;
+  CaviarFixedPointProjection.word_08_=0; CaviarFixedPointProjection.word_0A_=0;
+  short low16_centre[3]={0,0,0}, low16_extent[3]={32767,0,0}; int low16_rect[6]={};
+  ck(fixed8((uint32_t)(32767*32767))==-256,
+     "extent full SAR then original AX low16 sign extension");
+  sub_6401b0(low16_centre,low16_extent,low16_rect);
+  ck(low16_rect[0]==-258&&low16_rect[1]==-2&&low16_rect[2]==2&&
+     low16_rect[3]==2&&low16_rect[4]==261&&low16_rect[5]==5,
+     "nonzero extent low16 end-to-end projection");
   CaviarFixedPointProjection.word_00_=256; CaviarFixedPointProjection.word_02_=-256;
   CaviarFixedPointProjection.word_04_=128; CaviarFixedPointProjection.word_06_=-128;
   CaviarFixedPointProjection.word_08_=256; CaviarFixedPointProjection.word_0A_=256;
@@ -110,7 +129,7 @@ int main(){
      (uintptr_t)CaviarBlitState.destination_cursor_==(uintptr_t)(dst8+24),
      "transparent padded columns/final cursor");
   for(int i=0;i<24;++i)dst8[i]=(unsigned char)(60+i);
-  sub_63b241(dst8,src,0,0,4,3,0x18000,0x18000,6,8,(int)(uintptr_t)shade);
+  sub_63b241(dst8,src,0,0,4,3,0x18000,0x18000,6,8,shade);
   ck(dst8[0]==shade[60]&&dst8[1]==shade[61]&&dst8[2]==62&&dst8[3]==shade[63]&&
      dst8[8]==shade[68]&&dst8[9]==69&&dst8[10]==shade[70]&&dst8[11]==shade[71]&&
      dst8[16]==shade[76]&&dst8[17]==77&&dst8[18]==shade[78]&&dst8[19]==shade[79],
@@ -123,7 +142,13 @@ int main(){
 '''
 
 DEFS = (
-    ("int round_view_scaled(", "helper"), ("short fixed8(", "helper"),
+    ("int round_view_scaled(", "helper"),
+    ("static int32_t caviar_i32_from_bits(", "helper"),
+    ("static uint32_t caviar_sar8_bits(", "helper"),
+    ("static int32_t caviar_fixed8_low16(", "helper"),
+    ("static int32_t caviar_add_i32(", "helper"),
+    ("static int32_t caviar_sub_i32(", "helper"),
+    ("int32_t fixed8(uint32_t value_bits)", "helper"),
     ("static uint32_t caviar_blit_offset(", "helper"),
     ("static unsigned char *caviar_blit_address(", "helper"),
     ("static const char *caviar_blit_source_address(", "helper"),
@@ -170,7 +195,7 @@ def test_moved_records_and_bodies_retain_pinned_source_history():
     fields=tuple(field.name for field in dataclasses.fields(next(iter(old_rows.values())))
                  if field.name not in {"mode","path","line","region","recipe",
                                        "extract_error","origin","source_role_reason"})
-    unchanged_bodies = {0x63FA80, 0x6401B0}
+    unchanged_bodies = {0x63FA80}
     for address in addresses:
         assert address in old_rows and address in current_rows,hex(address)
         before,after=old_rows[address],current_rows[address]
@@ -183,9 +208,18 @@ def test_moved_records_and_bodies_retain_pinned_source_history():
                 marker=f"// ORIGINAL: 0x{address:08X}"
                 marker_at=text.index(marker)
                 start=text.rfind("/*",0,marker_at)
-                body_at=text.index(signature,marker_at)
-                lines=text[start:body_at].splitlines()
-                return "\n".join(lines)
+                end=text.index("*/",marker_at)+2
+                lines=text[start:end].splitlines()
+                # Helpers are outside the original comment envelope. Retain
+                # all original comment text except these two documented edits.
+                block="\n".join(line for line in lines
+                                 if not line.startswith("// RECOVERY_ROLE:"))
+                if address == 0x63B241:
+                    old_phrase="with table[destination byte + table base]."
+                    new_phrase="with table[destination byte]."
+                    assert block.count(new_phrase) + block.count(old_phrase) == 1
+                    block=block.replace(new_phrase,old_phrase,1)
+                return block
             assert envelope(owner_history)==envelope(current),hex(address)
 
 def test_actual_body_mutants_are_rejected_by_bounded_oracle():
@@ -193,11 +227,20 @@ def test_actual_body_mutants_are_rejected_by_bounded_oracle():
     mutations=(
       ("void __cdecl sub_63b11c(","if (source[carried_x >> 16] != 0)","if (source[carried_x >> 16] == 0)"),
       ("void __cdecl sub_63b1bf(","if (value != transparent)","if (value == transparent)"),
-      ("void __cdecl sub_63b241(","*pixel + table_base);","*pixel + table_base + 1);"),
+      ("void __cdecl sub_63b241(","*pixel = table[*pixel];",
+       "*pixel = table[(unsigned char)(*pixel + 1)];"),
+      ("static uint32_t caviar_sar8_bits(","bits + 0x80u","bits + 0x81u"),
+      ("static uint32_t caviar_sar8_bits(","shifted |= 0xff000000u;",
+       "shifted |= 0x00000000u;"),
+      ("static int32_t caviar_fixed8_low16(",
+       "const uint16_t low = (uint16_t)caviar_sar8_bits(bits);",
+       "const uint16_t low = 0;"),
       ("void __cdecl sub_63b11c(","source_rows * static_cast<uint32_t>(source_stride)","source_rows * static_cast<uint32_t>(destination_stride)"),
       ("void __cdecl sub_63b11c(","carried_x += static_cast<unsigned int>(source_x_step);","carried_x += 0x10000U;"),
       ("void __cdecl sub_63b1bf(","carried = (carried + step) & 0xffff;","carried = 0;"),
-      ("void __cdecl sub_6401b0(","x_walk = x_walk - extent0_x;","x_walk = x_walk + extent0_x;"),
+      ("void __cdecl sub_6401b0(",
+       "x_walk = caviar_sub_i32(x_walk, extent0_x);",
+       "x_walk = caviar_add_i32(x_walk, extent0_x);"),
     )
     compilers=(shutil.which("g++"),shutil.which("clang++"))
     assert all(compilers),"GCC and Clang required"
