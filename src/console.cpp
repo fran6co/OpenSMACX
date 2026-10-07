@@ -10137,16 +10137,20 @@ void Console::terraform(int vehicle_id, int requested_terraform) { // 0x004D3470
 
         int steps = 1;
         if (terraform_id == TERRA_RAISE_LAND) {
-            const int level = (tile->climate >> 5) + 1;
-            if (level >= 4 && level < 7) {
-                steps = RadiusRange[level - 4];
-            } else if (level >= 7) {
-                steps = RadiusRange[2];
+            int level = (tile->climate >> 5) + 1;
+            if (level > 6) {
+                level = 6;
+                steps = RadiusRange[level - 3];
+            } else if (level > 3) {
+                steps = RadiusRange[level - 3];
             }
         } else {
-            const int level = (tile->climate >> 5) - 1;
-            if (level >= 0 && level <= 3) {
-                steps = RadiusRange[3 - level];
+            int level = (tile->climate >> 5) - 1;
+            if (level < 0) {
+                level = 0;
+            }
+            if (level < 3) {
+                steps = RadiusRange[4 - level];
             }
         }
 

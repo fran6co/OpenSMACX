@@ -58,6 +58,8 @@ struct Caviar {
     char prefix_[0x60];
     VOX_Vect light_vector_;
     VOX_Vect shadow_vector_;
+    VOX_Vect &light_vector() { return light_vector_; }
+    VOX_Vect &shadow_vector() { return shadow_vector_; }
     char through_A3_[0xA4 - 0x78];
     uint8_t field_A4_;
     char tail_[0x13D0 - 0xA5];

@@ -325,6 +325,18 @@ def body_for(signature: str) -> str:
     raise AssertionError(f"unterminated production body: {signature}")
 
 
+GAME_DATA_STATE_FIXTURE = r"""
+struct GameDataFixtureFields {
+  unsigned int game_preferences_=0, game_rules_=0, game_state_=0;
+  int vehicle_current_count_=0, base_current_count_=0, turn_current_num_=0;
+  int diff_level_current_=1, ranking_faction_id_unk1_=0, ranking_faction_id_unk2_=1;
+  struct LockMasks { unsigned int enable_mask_=0; } lock_masks_;
+};
+struct GameDataFixtureWindow { GameDataFixtureFields fields_; } GameDataStateStorage;
+"""
+
+
+
 GOVERNOR_HARNESS = r'''
 #define __cdecl
 #include <cassert>
@@ -339,7 +351,7 @@ struct Base { uint8_t faction_id_current=0; uint32_t governor=0; } Bases[8];
 struct PlayerData { uint32_t base_governor_adv=0; } PlayersData[8];
 struct Player { int is_leader_female=0, noun_gender=0, is_noun_plural=0;
   char title_leader[24]{}, name_leader[24]{}, noun_faction[24]{}; } Players[8];
-int BaseCurrentCount=0, ConsoleControlTurnActive=0, GenderDefault=0;
+int ConsoleControlTurnActive=0, GenderDefault=0;
 int PluralityDefault=0, Directive=0, HumanMask=0xff, LockResult=0;
 int SetBaseCalls=0, GovernorCalls=0, UnlockCalls=0;
 char StringTemp[2048];
@@ -382,7 +394,7 @@ def test_governor_directives_preserves_faction_scoping_and_lock_order(tmp_path):
 static void reset() {
   events.clear(); for(auto &base:Bases) base=Base{};
   for(auto &data:PlayersData) data=PlayerData{};
-  BaseCurrentCount=4; ConsoleControlTurnActive=0; Directive=2; LockResult=0;
+  GameDataStateStorage.fields_.base_current_count_=4; ConsoleControlTurnActive=0; Directive=2; LockResult=0;
   SetBaseCalls=GovernorCalls=UnlockCalls=0; StringTemp[0]=0;
   ConsoleGlobal.faction_id_=1; ConsoleGlobal.field_23BE8_=1;
   Receiver.faction_id_=3; Receiver.field_23BE8_=1; BaseCurrent=&Bases[2];
@@ -411,7 +423,7 @@ int main() {
 }
 '''
     unit = tmp_path / "console_governor.cpp"
-    unit.write_text(harness)
+    unit.write_text(GAME_DATA_STATE_FIXTURE + harness)
     executable = tmp_path / "console_governor"
     subprocess.run([compiler, "-std=c++17", "-Wall", "-Wextra", "-Werror",
                     str(unit), "-o", str(executable)], check=True,
@@ -455,7 +467,7 @@ struct PlayerData { int energy_reserves=100;
   uint32_t diplo_treaties[8]{}; } PlayersData[8];
 struct RulesRecord { int tech_improve_fungus_sqr=-1,tech_build_roads_fungus=-1; } Rules;
 char StringTemp[2048], PopupStartCaption[]="caption", TutorialPopupCaption[]="tutorial";
-int faction_id_=0, GameRules=0, IsMultiplayerNet=0, MapIsFlat=1;
+int faction_id_=0, IsMultiplayerNet=0, MapIsFlat=1;
 int bore_seen=0, do_tech=1, avail_result=1, energy_result=1, cost_result=0;
 int stack_result=0, target_faction=-1, break_result=0, speed_result=3;
 int lock_mode0_result=0, lock_mode2_result=0, clear_lock_in_log=0;
@@ -527,7 +539,7 @@ def test_actual_terraform_source_control_paths(tmp_path):
     compiler = shutil.which("g++")
     if not compiler:
         pytest.skip("host C++ compiler unavailable")
-    unit_text = TERRAFORM_HARNESS + body_for("void Console::terraform(int vehicle_id") + r'''
+    unit_text = GAME_DATA_STATE_FIXTURE + TERRAFORM_HARNESS + body_for("void Console::terraform(int vehicle_id") + r'''
 static void reset_state() {
   events.clear();
   for(auto &v:Vehs) v=Veh{};
@@ -538,7 +550,7 @@ static void reset_state() {
   for(auto &o:Order) o=OrderRecord{};
   for(auto &p:Players) p=Player{};
   for(auto &p:PlayersData) p=PlayerData{};
-  faction_id_=0; GameRules=0; IsMultiplayerNet=0; MapIsFlat=1;
+  faction_id_=0; GameDataStateStorage.fields_.game_rules_=0; IsMultiplayerNet=0; MapIsFlat=1;
   avail_result=1; do_tech=1; energy_result=1; cost_result=0; stack_result=0;
   target_faction=-1; break_result=0; speed_result=3;
   lock_mode0_result=lock_mode2_result=0; clear_lock_in_log=0;
@@ -805,7 +817,7 @@ struct Console { int selected_vehicle_=0,cursor_active_=0,field_23BE4_=0,field_2
   void give_hints() { events.push_back("hints"); }
   int veh_turn(); };
 Console ConsoleGlobal;
-uint32_t GamePreferences=0,GameState=0;
+
 int ExitTurnLoop=0,IsMultiplayerNet=0,NetBusyCount=0,TutWinTourPending=0;
 int Ready=1,Selectable=1,EndGame=0,WaitCalls=0,ActionResult=0,AutomatedLockResult=0;
 int AutomatedLockCalls=0,EnemyCalls=0;
@@ -871,7 +883,7 @@ int main() {
 }
 '''
     unit = tmp_path / "console_veh_turn.cpp"
-    unit.write_text(harness)
+    unit.write_text(GAME_DATA_STATE_FIXTURE + harness)
     executable = tmp_path / "console_veh_turn"
     subprocess.run([compiler, "-std=c++17", "-Wall", "-Wextra", "-Werror",
                     str(unit), "-o", str(executable)], check=True,
@@ -976,10 +988,10 @@ int _itoa(int value,char *buffer,int radix) { assert(radix==10); std::sprintf(bu
 struct Dialogs { int item(char *text,int id) {
   events.push_back(std::string("item:")+std::to_string(id)+":"+text); return 0;
 } };
-uint32_t LockEnableMask=0;
+
 int IsMultiplayerNet=0;
-int DiffLevelCurrent=1;
-uint32_t RankingFactionIDUnk1=0,RankingFactionIDUnk2=1;
+
+
 int LockResult=0, RewriteId=-1, Unlocks=0, ExecResult=-1, ExecCalls=0;
 int UnlockMutationProto=-1, UnlockMutationChassis=-1, UnlockMutationFlags=-1;
 int UnlockMutationPlayerFlags=-1;
@@ -1023,20 +1035,20 @@ int main() {
   events.clear(); assert(c.upgrade(-1)==0);
   assert((events==std::vector<std::string>{"popup-ctor","popup-close","popup-close"}));
   events.clear(); Vehs[2].faction_id=0; Vehs[2].moves_expended=1;
-  LockEnableMask=1U<<0; IsMultiplayerNet=0; Unlocks=0; LockResult=0; RewriteId=-1;
+  GameDataStateStorage.fields_.lock_masks_.enable_mask_=1U<<0; IsMultiplayerNet=0; Unlocks=0; LockResult=0; RewriteId=-1;
   assert(c.upgrade(2)==0);
   assert((events==std::vector<std::string>{"popup-ctor","message:UNITMOVED2","popup-close","popup-close"}));
   assert(Unlocks==0);
-  events.clear(); Vehs[2].moves_expended=0; LockEnableMask=1U<<0; LockResult=1;
+  events.clear(); Vehs[2].moves_expended=0; GameDataStateStorage.fields_.lock_masks_.enable_mask_=1U<<0; LockResult=1;
   assert(c.upgrade(2)==0);
   assert((events==std::vector<std::string>{"popup-ctor","lock","popup-close","popup-close"}));
   assert(Unlocks==0);
   events.clear(); Vehs[2].moves_expended=0; Vehs[3].moves_expended=1;
-  RewriteId=3; LockResult=0; IsMultiplayerNet=1; LockEnableMask=1U<<0;
+  RewriteId=3; LockResult=0; IsMultiplayerNet=1; GameDataStateStorage.fields_.lock_masks_.enable_mask_=1U<<0;
   assert(c.upgrade(2)==0);
   assert((events==std::vector<std::string>{"popup-ctor","lock","message:UNITMOVED","unlock","popup-close","popup-close"}));
   assert(Unlocks==1);
-  events.clear(); RewriteId=-1; LockResult=0; Unlocks=0; LockEnableMask=1U<<0;
+  events.clear(); RewriteId=-1; LockResult=0; Unlocks=0; GameDataStateStorage.fields_.lock_masks_.enable_mask_=1U<<0;
   for(auto &p:VehPrototypes) p.flags=0;
   assert(c.upgrade(2)==0);
   assert((events==std::vector<std::string>{"popup-ctor","lock","parse: ( 0)","start","message:NOUPGRADE",
@@ -1058,7 +1070,7 @@ int main() {
     "message:NOUPGRADE","unlock","popup-close","popup-close"}));
 
   events.clear(); RewriteId=-1; Vehs[2].proto_id=0; Vehs[2].faction_id=0;
-  Vehs[2].moves_expended=0; LockEnableMask=1U<<0; UpgradeCostCalls=AbilityChecks=0;
+  Vehs[2].moves_expended=0; GameDataStateStorage.fields_.lock_masks_.enable_mask_=1U<<0; UpgradeCostCalls=AbilityChecks=0;
   for(auto &p:VehPrototypes) p=VehPrototype{};
   VehPrototypes[0].flags=1; VehPrototypes[0].chassis_id=1;
   VehPrototypes[0].weapon_id=1; VehPrototypes[0].armor_id=1;
@@ -1152,7 +1164,7 @@ int main() {
   Weapon[1].offense_rating=4;
   Armor[1].defense_rating=2; Armor[2].defense_rating=1;
   VehPrototypes[6].flags=5; // AI cannot downgrade armor
-  LockEnableMask=0;
+  GameDataStateStorage.fields_.lock_masks_.enable_mask_=0;
   assert(c.upgrade(2)==0);
   assert((events==std::vector<std::string>{"popup-ctor","popup-close","popup-close"}));
   assert(UpgradeCostCalls==0);
@@ -1221,7 +1233,7 @@ int main() {
   ExpectedFaction=1; ExpectedOldProto=64; ExpectedPriceProto=64;
   PlayersData[1].energy_reserves=100000;
   PlayersData[1].proto_id_active[64]=1; PlayersData[1].proto_id_active[70]=0;
-  ConfirmationResult=1; LockEnableMask=1U<<1;
+  ConfirmationResult=1; GameDataStateStorage.fields_.lock_masks_.enable_mask_=1U<<1;
   assert(c.upgrade(2)==1 && UpgradeCostCalls==2 && Vehs[2].proto_id==70);
   assert(std::find(events.begin(),events.end(),"item:70:NEGATIVE ( 70)|ENERGY: 800*") != events.end());
   assert(std::find(events.begin(),events.end(),"skip:2")!=events.end());
@@ -1229,7 +1241,7 @@ int main() {
   // Native caption text uses Ability.abbreviation (+8), then probes the
   // current prototype's artwork and reloads the prototype after that call
   // before initializing the popup's owned Sprite.
-  events.clear(); LockEnableMask=1U<<0; Vehs[2].faction_id=0; Vehs[2].proto_id=0;
+  events.clear(); GameDataStateStorage.fields_.lock_masks_.enable_mask_=1U<<0; Vehs[2].faction_id=0; Vehs[2].proto_id=0;
   Players[0].rule_flags=RFLAG_ALIEN;
   for(auto &p:VehPrototypes) p=VehPrototype{};
   VehPrototypes[0].chassis_id=1; VehPrototypes[0].ability_flags=1U|(1U<<28);
@@ -1270,7 +1282,7 @@ int main() {
   Weapon[1].offense_rating=4; Weapon[2].offense_rating=5;
   Armor[1].defense_rating=2; Armor[3].defense_rating=4;
   Chassis[1].triad=TRIAD_SEA; Players[0].rule_flags=RFLAG_ALIEN;
-  PlayersData[0].energy_reserves=100000; LockEnableMask=1U<<0;
+  PlayersData[0].energy_reserves=100000; GameDataStateStorage.fields_.lock_masks_.enable_mask_=1U<<0;
   ExpectedFaction=0; ExpectedOldProto=0; ExpectedPriceProto=0; UpgradeCostCalls=0;
   ExecResult=6; ConfirmationResult=1; VehPrototypes[6].flags=1;
   assert(c.upgrade(2)==1 && LastPoppPicture=="navun_sm.pcx");
@@ -1289,7 +1301,7 @@ int main() {
   Weapon[1].offense_rating=4; Weapon[2].offense_rating=5;
   Armor[1].defense_rating=2; Armor[3].defense_rating=4;
   Chassis[2].triad=TRIAD_SEA; Players[0].rule_flags=0;
-  PlayersData[0].energy_reserves=1000; LockEnableMask=1U<<0;
+  PlayersData[0].energy_reserves=1000; GameDataStateStorage.fields_.lock_masks_.enable_mask_=1U<<0;
   ExpectedFaction=0; ExpectedOldProto=0; ExpectedPriceProto=0;
   UpgradeCostCalls=0;
   ExecResult=6; UnlockMutationProto=6; UnlockMutationChassis=2;
@@ -1305,7 +1317,7 @@ int main() {
 }
 '''
     unit = tmp_path / "console_upgrade_entry.cpp"
-    unit.write_text(harness)
+    unit.write_text(GAME_DATA_STATE_FIXTURE + harness)
     executable = tmp_path / "console_upgrade_entry"
     subprocess.run([compiler, "-std=c++17", "-Wall", "-Wextra", "-Werror",
                     str(unit), "-o", str(executable)], check=True,
@@ -1334,8 +1346,8 @@ struct Prototype { char name[32]{}; uint32_t ability_flags=0; uint8_t chassis_id
   armor_id=0,reactor_id=0,carry_capacity=0,cost=0,plan=0; int8_t unk=0; };
 using Veh=Vehicle; using VehPrototype=Prototype;
 struct RulesChassis { int triad=0; } Chassis[32];
-Vehicle Vehs[16]; Prototype VehPrototypes[32]; int VehCurrentCount=0;
-int32_t *const ConsoleGroupCount=&VehCurrentCount;
+Vehicle Vehs[16]; Prototype VehPrototypes[32];
+int32_t *const ConsoleGroupCount=&GameDataStateStorage.fields_.vehicle_current_count_;
 int PopupWriteCheckState=0, ConsoleGroupAction=1;
 int MapIsFlat=1; uint32_t MapLongitude=100,MapLongitudeBounds=200;
 int PrefValue=0, PopupChoice=0, LastPrefsPut=-1, DrawCalls=0, GroupCalls=0;
@@ -1364,7 +1376,7 @@ void Console::group(int id) { ++GroupCalls; events.push_back("group:"+std::to_st
 static void reset() {
   events.clear(); for(auto &v:Vehs) v=Vehicle{}; for(auto &p:VehPrototypes) p=Prototype{};
   for(auto &c:Chassis) c=RulesChassis{};
-  VehCurrentCount=3; PrefValue=1; PopupChoice=0; PopupWriteCheckState=0;
+  GameDataStateStorage.fields_.vehicle_current_count_=3; PrefValue=1; PopupChoice=0; PopupWriteCheckState=0;
   ConsoleGroupAction=1; MapIsFlat=1; DrawCalls=GroupCalls=0; LastPrefsPut=-1;
   ConsoleGlobal.faction_id_=1; ConsoleGlobal.field_23D1C_=0;
   ConsoleGlobal.cursor_history_index_=0; ConsoleGlobal.cursor_history_x_[0]=10;
@@ -1395,7 +1407,7 @@ int main() {
 }
 '''
     unit = tmp_path / "console_assemble.cpp"
-    unit.write_text(harness)
+    unit.write_text(GAME_DATA_STATE_FIXTURE + harness)
     executable = tmp_path / "console_assemble"
     subprocess.run([compiler, "-std=c++17", "-Wall", "-Wextra", "-Werror",
                     str(unit), "-o", str(executable)], check=True,
@@ -1416,12 +1428,12 @@ def test_turn_hints_uses_typed_faction_tutorial_and_vehicle_state(tmp_path):
 #define __cdecl
 std::vector<std::string> events;
 const uint32_t PREF_BSC_TUTORIAL_MSGS=0x20;
-uint32_t GamePreferences=PREF_BSC_TUTORIAL_MSGS; int IsMultiplayerNet=0,TurnCurrentNum=1;
+int IsMultiplayerNet=0;
 int GenderDefault=0,PluralityDefault=0,BaseFound=0,TutMask=0,PopupCalls=0;
 const int MaxPlayerNum=8,DTREATY_COMMLINK=8,DTREATY_VENDETTA=0x10;
 char *TutorialPopupCaption=const_cast<char*>("TUTOR");
 struct Base { int16_t x=0,y=0; uint8_t faction_id_current=0; char name_string[25]{}; } Bases[8];
-int BaseCurrentCount=8;
+
 struct Veh { int16_t x=0,y=0; uint32_t state=0; uint16_t flags=0,proto_id=0,unk=0;
   uint8_t faction_id=0; } Vehs[8];
 struct VehPrototype { char veh_name[32]{}; } VehPrototypes[8];
@@ -1457,7 +1469,7 @@ static void reset() {
   for(auto &p:PlayersData) p=PlayerData{};
   for(auto &v:Vehs) v=Veh{};
   for(auto &v:VehPrototypes) v=VehPrototype{};
-  GamePreferences=PREF_BSC_TUTORIAL_MSGS; IsMultiplayerNet=0; TurnCurrentNum=1;
+  GameDataStateStorage.fields_.game_preferences_=PREF_BSC_TUTORIAL_MSGS; IsMultiplayerNet=0; GameDataStateStorage.fields_.turn_current_num_=1;
   GenderDefault=PluralityDefault=BaseFound=TutMask=PopupCalls=0;
   Tutorial.blocked=false; Tutorial.stages=Tutorial.maps=0; ConsoleGlobal.focus_calls=0;
   ConsoleGlobal.faction_id_=1; ConsoleGlobal.selected_vehicle_=0;
@@ -1470,14 +1482,14 @@ int main() {
   assert(Tutorial.stages==1 && Tutorial.maps==1 &&
          events[2]=="parse:0:Alpha" && events[3]=="parse:1:Scout" &&
          events[4]=="stage" && events[5]=="map:LANDFALL:12:14:-1:256");
-  reset(); TurnCurrentNum=20; TutMask=0x100000; BaseFound=2;
+  reset(); GameDataStateStorage.fields_.turn_current_num_=20; TutMask=0x100000; BaseFound=2;
   PlayersData[1].current_num_bases=1; PlayersData[1].pop_total=2;
   Bases[2].x=30; Bases[2].y=32; std::strcpy(Bases[2].name_string,"Beta");
   ConsoleGlobal.turn_hints();
   assert(ConsoleGlobal.focus_calls==1 && PlayersData[1].last_turn_new_base==20 &&
          events.back()=="map:SECONDBASE:30:32:-4:0");
   reset(); Tutorial.blocked=true; ConsoleGlobal.turn_hints(); assert(events.empty());
-  reset(); TurnCurrentNum=30; TutMask=0x80; PlayersData[1].diplo_treaties[4]=0x18;
+  reset(); GameDataStateStorage.fields_.turn_current_num_=30; TutMask=0x80; PlayersData[1].diplo_treaties[4]=0x18;
   std::strcpy(Players[4].title_leader,"Leader"); std::strcpy(Players[4].name_leader,"Morgan");
   std::strcpy(Players[4].noun_faction,"Faction");
   ConsoleGlobal.turn_hints();
@@ -1485,7 +1497,7 @@ int main() {
 }
 '''
     unit = tmp_path / "console_turn_hints.cpp"
-    unit.write_text(harness)
+    unit.write_text(GAME_DATA_STATE_FIXTURE + harness)
     executable = tmp_path / "console_turn_hints"
     subprocess.run([compiler, "-std=c++17", "-Wall", "-Wextra", "-Werror",
                     str(unit), "-o", str(executable)], check=True,
@@ -1582,7 +1594,7 @@ def test_corner_market_parses_before_exits_and_reloads_after_callbacks(tmp_path)
 #include <string>
 #include <vector>
 #define __cdecl
-std::vector<std::string> events; int GameRules=4,TurnCurrentNum=30,BaseCurrentCount=1;
+std::vector<std::string> events;
 int IsMultiplayerNet=0,PopupAnswer=1,LockResult=0,Amount=40,UpdateTurn=44,UpdateActive=12;
 const int FAC_HEADQUARTERS=1; char *ScriptPopupFile=const_cast<char*>("SCRIPT");
 struct RuleSet { int tech_economic_victory=9,turns_corner_gbl_energy_mrkt=5; } Rules;
@@ -1617,7 +1629,7 @@ void Console::update_data(int value) { assert(value==0); events.push_back("updat
 '''
     harness += body_for("void Console::corner_the_market()")
     harness += r'''
-static void reset() { events.clear(); GameRules=4; TurnCurrentNum=30; PopupAnswer=1; LockResult=0;
+static void reset() { events.clear(); GameDataStateStorage.fields_.game_rules_=4; GameDataStateStorage.fields_.turn_current_num_=30; GameDataStateStorage.fields_.base_current_count_=1; PopupAnswer=1; LockResult=0;
   Amount=40; UpdateTurn=44; UpdateActive=12; Rules.turns_corner_gbl_energy_mrkt=5;
   Bases[0].faction_id_current=2; PlayersData[2]=PlayerData{}; }
 int main() {
@@ -1636,7 +1648,7 @@ int main() {
 }
 '''
     unit = tmp_path / "console_corner_market.cpp"
-    unit.write_text(harness)
+    unit.write_text(GAME_DATA_STATE_FIXTURE + harness)
     executable = tmp_path / "console_corner_market"
     subprocess.run([compiler, "-std=c++17", "-Wall", "-Wextra", "-Werror",
                     str(unit), "-o", str(executable)], check=True,
@@ -1895,8 +1907,8 @@ def test_retire_game_handles_prompt_pbem_and_network_restart(tmp_path):
 #define __cdecl
 std::vector<std::string> events;
 const int RULES_IRONMAN=0x400,STATE_IS_SCENARIO=0x10;
-int GameRules=0,GameState=0,IsMultiplayerNet=0,IsMultiplayerPBEM=0;
-uint32_t LockEnableMask=1; int ExitTurnLoop=0,GameRestartQueued=0,PromptResult=1;
+int IsMultiplayerNet=0,IsMultiplayerPBEM=0;
+int ExitTurnLoop=0,GameRestartQueued=0,PromptResult=1;
 int SavedFaction=0,QuayleFaction=-1,SaveCalls=0,AutoSaveCalls=0,KillAutoSaveCalls=0;
 int ReportCalls=0,HallCalls=0,ReplayCalls=0;
 int bit_count(unsigned int bits) { int count=0; while(bits) { count+=bits&1; bits>>=1; } return count; }
@@ -1920,19 +1932,19 @@ struct Console { int faction_id_=3; void retire_game(); } ConsoleGlobal;
     harness += body_for("inline void console_close_network(unsigned int final_channel_mask)")
     harness += body_for("void Console::retire_game()")
     harness += r'''
-static void reset() { events.clear(); GameRules=GameState=0; IsMultiplayerNet=IsMultiplayerPBEM=0;
-  LockEnableMask=1; ExitTurnLoop=GameRestartQueued=0; PromptResult=1; SaveCalls=AutoSaveCalls=0;
+static void reset() { events.clear(); GameDataStateStorage.fields_.game_rules_=GameDataStateStorage.fields_.game_state_=0; IsMultiplayerNet=IsMultiplayerPBEM=0;
+  GameDataStateStorage.fields_.lock_masks_.enable_mask_=1; ExitTurnLoop=GameRestartQueued=0; PromptResult=1; SaveCalls=AutoSaveCalls=0;
   KillAutoSaveCalls=ReportCalls=HallCalls=ReplayCalls=0; QuayleFaction=-1; }
 int main() {
-  reset(); GameRules=RULES_IRONMAN; PromptResult=0; ConsoleGlobal.retire_game();
+  reset(); GameDataStateStorage.fields_.game_rules_=RULES_IRONMAN; PromptResult=0; ConsoleGlobal.retire_game();
   assert((events==std::vector<std::string>{"auto_save","prompt:REALLYRETIRE2"}));
   assert(GameRestartQueued==0&&KillAutoSaveCalls==0);
-  reset(); GameRules=RULES_IRONMAN; IsMultiplayerPBEM=1; LockEnableMask=0xD;
+  reset(); GameDataStateStorage.fields_.game_rules_=RULES_IRONMAN; IsMultiplayerPBEM=1; GameDataStateStorage.fields_.lock_masks_.enable_mask_=0xD;
   ConsoleGlobal.retire_game();
   assert((events==std::vector<std::string>{"auto_save","prompt:REALLYWIMPOUT","save",
     "kill_auto_save","score","quayle","hall","replay","log"}));
-  assert(SaveCalls==1&&LockEnableMask==5&&QuayleFaction==3&&ExitTurnLoop==1&&GameRestartQueued==1);
-  reset(); IsMultiplayerNet=1; GameState=STATE_IS_SCENARIO; LockEnableMask=1;
+  assert(SaveCalls==1&&GameDataStateStorage.fields_.lock_masks_.enable_mask_==5&&QuayleFaction==3&&ExitTurnLoop==1&&GameRestartQueued==1);
+  reset(); IsMultiplayerNet=1; GameDataStateStorage.fields_.game_state_=STATE_IS_SCENARIO; GameDataStateStorage.fields_.lock_masks_.enable_mask_=1;
   ConsoleGlobal.retire_game();
   assert((events==std::vector<std::string>{"prompt:REALLYRETIRE","hang_up","clear_locks",
     "close","score","log"}));
@@ -1941,7 +1953,7 @@ int main() {
 }
 '''
     unit = tmp_path / "console_retire_game.cpp"
-    unit.write_text(harness)
+    unit.write_text(GAME_DATA_STATE_FIXTURE + harness)
     executable = tmp_path / "console_retire_game"
     subprocess.run([compiler, "-std=c++17", "-Wall", "-Wextra", "-Werror",
                     str(unit), "-o", str(executable)], check=True,

@@ -1052,7 +1052,7 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
     const int title_offset = MapWinCaptionScale < 1 ? 56
         : MapWinCaptionScale * 75 / MapWinCaptionDivisor;
 
-    if (base_id < 0 && vehicle_id >= 0 && vehicle_id < GameDataStateStorage.fields_.vehicle_current_count_) {
+    if (base_id < 0 && vehicle_id >= 0) {
         Veh &vehicle = Vehs[vehicle_id];
         screen->set_clip(&area);
         veh_draw(screen, vehicle_id, sprite_x, content_y, -4, 0x48, 0);
@@ -1080,7 +1080,7 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
 
         StringTemp[0] = '\0';
         strcat(StringTemp, "(");
-        say_orders(StringTemp, vehicle_id);
+        say_stats_3(StringTemp, vehicle.proto_id);
         if (vehicle.state & VSTATE_DESIGNATE_DEFENDER) {
             strcat(StringTemp, "#");
         }
@@ -1114,7 +1114,7 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
         }
         if (own_or_omniscient) {
             StringTemp[0] = '\0';
-            if (vehicle.home_base_id >= 0 && vehicle.home_base_id < GameDataStateStorage.fields_.base_current_count_) {
+            if (vehicle.home_base_id >= 0) {
                 strcat(StringTemp, Bases[vehicle.home_base_id].name_string);
             } else {
                 strcat(StringTemp, label_get(0x308 / 4));
@@ -1272,7 +1272,7 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
     }
 
     screen->restore_clip();
-    if (base_id >= 0 && base_id < GameDataStateStorage.fields_.base_current_count_) {
+    if (base_id >= 0) {
         Base &base = Bases[base_id];
         base_draw(screen, base_id, sprite_x, content_y, -4, 0x40);
         base_draw(screen, base_id, sprite_x, content_y, 0, 0x1800);

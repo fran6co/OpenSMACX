@@ -7652,6 +7652,10 @@ void Win::set_caption_height(int height) {
     }
 }
 
+// ORIGINAL: 0x005F6A50 ?get_key_window@Win@@QAGHXZ 0x005F6A50-0x005F6AB0 FILE
+// kind game
+// symbol    ?get_key_window@Win@@SAPAV1@XZ
+// TRIED: direct transcription only tried once; diverges at #0 (push vs mov) in the prologue register-save pattern
 // ===== homed from src/unrecovered/005f6a50.cpp =====
 
 // CORRECTED: the catalogue spells `?get_key_window@Win@@QAGHXZ` - `H`,
@@ -7882,6 +7886,10 @@ after_offset_fixup:;
     }
 }
 
+// ORIGINAL: 0x005EE190 ?set_modal@Win@@QAEHHP6AHXZPAVWin@@@Z 0x005EE190-0x005EE27B FILE
+// kind game
+// symbol    ?set_modal@Win@@UAEHHP6AHXZPAV1@@Z
+// TRIED: 0.90 mnemonic similarity - the original keeps a register pinned to 0 across the whole function (xor ebx,ebx once, reused for every zero-store and the two early-return `xor eax,eax`s); writing plain `0` literals throughout lets the compiler re-derive zero per site instead, which is a register-allocation choice not reachable from source form.
 // ===== homed from src/unrecovered/005ee190.cpp =====
 typedef void *(__stdcall *PFN_LoadCursorA)(void *, const char *);
 typedef void *(__stdcall *PFN_SetCursor)(void *);
@@ -7941,6 +7949,10 @@ int Win::set_modal(int flags, int (__cdecl *callback)(), Win * owner) {
     return result;
 }
 
+// ORIGINAL: 0x005EF310 sub_5ef310 0x005EF310-0x005EF63B FILE
+// kind game
+// symbol    ?draw_rect_border@Win@@QAEXHHHHPAX0H@Z
+// TRIED: signature is __thiscall Win::draw_rect_border(int,int, int,int,HGDIOBJ,HGDIOBJ,int) - `this` receiver is edi (from ecx), field_184_ is a Win member, and the 7th stack slot (esp+0x30) is read by nothing, matching `ret 0x1c`=7 dwords but only 6 used fields, not IDA's flat 7-int __stdcall guess or Ghidra's own param_1..7 listing. Divergence is #2, a `sub esp,N` frame the original never builds (no `mov ebp,esp` at all, pure register+esp addressing); ruled out trimming the local `pal`/`hdc`/`prev` temporaries without moving it, so left for the next pass. The 4x repeated HDC-acquire/refcount block and the rectangle math (4 MoveToEx/LineTo edges, two alternating pens) were hand-traced from the raw disasm stack offsets, not Ghidra's decompile.
 // ===== homed from src/unrecovered/005ef310.cpp =====
 
 void Win::draw_rect_border(int x1, int y1, int x2, int y2, HGDIOBJ pen1, HGDIOBJ pen2, int unused7) {
@@ -8003,6 +8015,9 @@ void Win::draw_rect_border(int x1, int y1, int x2, int y2, HGDIOBJ pen1, HGDIOBJ
     }
 }
 
+// ORIGINAL: 0x005EEDC0 ?key_up_event@Win@@QAEHH@Z 0x005EEDC0-0x005EEE67 FILE
+// kind game
+// TRIED: `int result = 0;` declared after the recursion block (0.944 sim, edi push/xor split from the prologue) vs hoisted to the top before the flags check (0.96 sim, matches original's push-edi-then-xor ordering more closely, one push/xor pair still swapped). Landed the hoisted form. Recursive call's `this` is a COMPUTED pointer (field_D0->field_4, or 0), not the same `this` - matches the disassembly's explicit ecx reload, which ghidra's decompilation silently dropped.
 // ===== homed from src/unrecovered/005eedc0.cpp =====
 
 int Win::key_up_event(int key) {
@@ -8037,6 +8052,9 @@ int Win::key_up_event(int key) {
     return result;
 }
 
+// ORIGINAL: 0x005EEB90 ?key_down_event@Win@@QAEHH@Z 0x005EEB90-0x005EEDB9 FILE
+// kind game
+// TRIED: ebx used as a single dual-purpose local (focus ptr, then the 0x430-hook return accumulator, matching the real register reuse and the leading `xor ebx,ebx`) got closest (#5/xor vs test); hoisting it before the 0x98/0x9c early-return check regressed prologue push order (#4) so it stayed after that check.
 // ===== homed from src/unrecovered/005eeb90.cpp =====
 
 int Win::key_down_event(int key) {
@@ -8613,6 +8631,9 @@ lab_default_cursor:
     }
 }
 
+// ORIGINAL: 0x005ED5C0 ?center@Win@@QAEHXZ 0x005ED5C0-0x005ED6F7 FILE
+// kind game
+// TRIED: named `parent` local for win_parent_ (extra register pressure, forces a 4th callee-save + frame pointer); computing both local_8 and local_4 divisions fully inside each if/else branch (extra register); calling screen_to_client() on win_parent_ itself instead of win_parent_->win_parent_ (asm's ecx at the call site is loaded from [win_parent_+0xc4], i.e. the grandparent, reused straight from the preceding null check). Best reached: MISMATCH, edit_count 10/95 mnemonics, 312 bytes vs 311 - a register-colouring difference only (rebuilt keeps `this` in esi where the original keeps it in ebx).
 // ===== homed from src/unrecovered/005ed5c0.cpp =====
 
 int Win::center() {
@@ -9231,6 +9252,8 @@ shared:
     return 0;
 }
 
+// ORIGINAL: 0x005EDF50 ?set_caption@Win@@QAEXPAD@Z 0x005EDF50-0x005EDFD5 FILE
+// kind game
 // ===== homed from src/unrecovered/005edf50.cpp =====
 
 void Win::set_caption(char * text) {
@@ -9432,6 +9455,10 @@ int Win::key_click_event(int key, int flags) {
     return result + r2;
 }
 
+// ORIGINAL: 0x005F74A0 ?update_window@Win@@QAEHPAURECT@@@Z 0x005F74A0-0x005F757F FILE
+// kind game
+// symbol    ?update_window@Win@@QAEHPAUtagRECT@@@Z
+// TRIED: `if (a1 != 0) { big-block } return simple();` puts the branches in the wrong order (`je` skipping the block where the original has `jne` falling into the simple case first) - an early-return guard `if (a1 == 0) return simple(); big-block;` fixes that. update_screen is __cdecl per win.h (func_win_update_screen), not the scaffold's implicit-thiscall class member, so it's called through a separately-declared `extern "C"` free function of the real signature. Remaining: the original spends two extra callee-saved registers (ebx, ebp) holding self[0x140]/self[0x13c] before the adds; this form only needed one (ebx). 62/73 shared.
 // ===== homed from src/unrecovered/005f74a0.cpp =====
 
 int Win::update_window(RECT * area) {
@@ -9457,6 +9484,10 @@ int Win::update_window(RECT * area) {
     return update_screen(&r, this);
 }
 
+// ORIGINAL: 0x005F52E0 ?bring_child_to_top@Win@@QAEXPAVWin@@@Z 0x005F52E0-0x005F539C FILE
+// kind game
+// symbol    ?bring_child_to_top@Win@@QAEXPAV1@@Z
+// TRIED: MISMATCH, closest at 193/188 bytes (mnemonic_similarity 0.90). An extra `push ebx` appears (register pressure from 4 live locals in the z-order loop: entry/cur/j plus the 'this'-Win receiver) that the original avoids; tried both a direct `(*entry)->iSomeFlag_ & 1` and a cached `Win *w = *entry;` form, no difference. `g_win_zorder_list` as its own `extern Win *[]` (not the fixed-address alias) for the indexed array walk, per the indexed-table-base lever.
 // ===== homed from src/unrecovered/005f52e0.cpp =====
 
 void Win::bring_child_to_top(Win * child) {
@@ -9541,6 +9572,9 @@ int Win::minimize() {
     return 0;
 }
 
+// ORIGINAL: 0x005F7580 ?do_tracking@Win@@QAEXHH@Z 0x005F7580-0x005F7E47 FILE
+// kind game
+// TRIED: Ghidra's pseudocode was unsafe here in three separate ways, all fixed from raw disasm: (1) the client_to_screen/nonclient_to_screen "vacuous test" branches Ghidra rendered as a no-op `if(&stack!=0x20){FUN();}` actually apply the screen origin to a size-rect afterward - Ghidra dropped that entirely; (2) the slot003 vtable call takes 3 args (width,height,0), Ghidra showed only 1; (3) two of the screen_to_client/client_to_screen calls are on win_parent_, not `this` (ecx is never reloaded to esi before them). The switch-case clamp arithmetic itself did match Ghidra once independently checked against raw disasm. Compiles; original is frameless (sub esp direct), rebuilt took a framed prologue - not chased given size (2247 bytes).
 // ===== homed from src/unrecovered/005f7580.cpp =====
 
 void Win::do_tracking(int x, int y) {
@@ -9798,6 +9832,10 @@ void Win::do_tracking(int x, int y) {
     flip(&unioned);
 }
 
+// ORIGINAL: 0x005EF1E0 sub_5ef1e0 0x005EF1E0-0x005EF310 FILE
+// kind game
+// symbol    ?sub_5ef1e0@Win@@QAEXHHHHPAXH@Z
+// TRIED: the scaffold's own Win/Palette classes cannot be reused (they are fully defined already, and body-mode's brace-counted extractor would stop at the first balanced `{}` - our own helper class - before reaching the function), so this stays FILE mode with its own minimal Win/Palette. A plain `*(FuncPtr*)addr` call for GetDC/SelectObject/etc. always loaded the pointer into a register first (mov+call reg); declaring them `__declspec(dllimport)` gets the single `call dword ptr [addr]` form the original uses. Landed at MISMATCH #29 (a `push edi` the original hoists earlier, before the palette-sync compare, that this body only emits once `oldPen` is first needed).
 // ===== homed from src/unrecovered/005ef1e0.cpp =====
 
 void Win::sub_5ef1e0(int x1, int y1, int x2, int y2, void *pen, int unused6) {
@@ -9850,6 +9888,10 @@ void Win::sub_5ef1e0(int x1, int y1, int x2, int y2, void *pen, int unused6) {
     }
 }
 
+// ORIGINAL: 0x005F7320 ?update_screen@Win@@QAAHPAURECT@@PAVWin@@@Z 0x005F7320-0x005F749F FILE
+// kind game
+// symbol    ?update_screen@Win@@SAHPAUtagRECT@@PAV1@@Z
+// TRIED: none confirmed byte-exact; MISMATCH #9 'test' vs 'mov' - the [0x669338] seam is modelled as a raw IntersectRect-shaped __stdcall function pointer with a guessed (dest, src1, src2) argument order; the real signature at that seam is unconfirmed, and the down-counting child-window loop's register pressure does not match the original's.
 // ===== homed from src/unrecovered/005f7320.cpp =====
 
 int __cdecl Win::update_screen(RECT *area, Win *window) {
@@ -10099,6 +10141,9 @@ int __cdecl Win::OnSysCommand(HWND hwnd, unsigned int command, int x,
     return 0;
 }
 
+// ORIGINAL: 0x005EF050 ?client_to_nonclient@Win@@QAEXPAURECT@@@Z 0x005EF050-0x005EF10D FILE
+// kind game
+// TRIED: __thiscall fn-ptr typedef for slot 91 (C4234); own VCall2 class (91 void slots + int slot091) reaches #24 sub-vs-mov, deep in the border-adjust arithmetic
 // ===== homed from src/unrecovered/005ef050.cpp =====
 
 void Win::client_to_nonclient(RECT * rect) {
@@ -10358,6 +10403,9 @@ void Win::OnLButtonUp(void *hwnd, int x, int y, unsigned int keys) {
     }
 }
 
+// ORIGINAL: 0x005F15C0 ?OnKey@Win@@QAAXPAXIJHI@Z 0x005F15C0-0x005F1657 FILE
+// kind game
+// TRIED: MISMATCH #1 test/push at the ternary-vs-if for the first global select; body verified structurally correct otherwise
 // ===== homed from src/unrecovered/005f15c0.cpp =====
 
 void __cdecl Win::OnKey(void * hwnd, unsigned int key, long flags, int repeat, unsigned int scan) {
@@ -10551,6 +10599,10 @@ void __cdecl Win::update_zorder() {
     }
 }
 
+// ORIGINAL: 0x005F53A0 ?on_window_pos_changing@Win@@QAEJPAUWINDOWPOS@@@Z 0x005F53A0-0x005F5480 FILE
+// kind game
+// symbol    ?on_window_pos_changing@Win@@UAEJPAUtagWINDOWPOS@@@Z
+// TRIED: MNEMONIC_ONLY (all 73 mnemonics match, rebuilt is 2 bytes short); own extra slot061-returning-int shim over the scaffold's void-only VCall; hoisting the second field_98 read into a named local (to match the original's `test ah,0x40` register form vs the first occurrence's `test [mem],imm32`) didn't move the byte count.
 // ===== homed from src/unrecovered/005f53a0.cpp =====
 
 long Win::on_window_pos_changing(WINDOWPOS * pos) {
@@ -10589,6 +10641,10 @@ long Win::on_window_pos_changing(WINDOWPOS * pos) {
     return DefWindowProcA(HandleMain, 0x46, 0, reinterpret_cast<int>(pos));
 }
 
+// ORIGINAL: 0x005EF950 sub_5ef950 0x005EF950-0x005EFB99 FILE
+// kind game
+// symbol    ?paint_tiled@Win@@QAEXPAVBuffer@@HHHHHHH@Z
+// TRIED: __stdcall(int a1..a8) reading ecx nowhere - the brief's IDA hypothesis; disasm dereferences the entering ecx at [ecx+0x184] (Win::field_184_) and later passes it unchanged as the Win* argument to Buffer::copy_to_window, so it is really a __thiscall Win member with 7 used stack ints + 1 unused pad. Palette::set_active_window is caller-cleaned (add esp,4 after the call) so it is invoked as a free __cdecl function pointer, not through the declared (thiscall-shaped) member.
 // ===== homed from src/unrecovered/005ef950.cpp =====
 typedef int (__stdcall *ComSlot017)(void *self, void *out_hdc);
 typedef int (__stdcall *ComSlot026)(void *self, void *hdc);
@@ -10682,6 +10738,9 @@ void Win::paint_tiled(Buffer *tile, int x_origin, int y_origin, int clip_left,
     }
 }
 
+// ORIGINAL: 0x005ECD20 ?pass_dialog_focus@Win@@QAEXXZ 0x005ECD20-0x005ECDBA FILE
+// kind game
+// symbol    ?pass_dialog_focus@Win@@UAEXXZ
 // ===== homed from src/unrecovered/005ecd20.cpp =====
 
 void Win::pass_dialog_focus() {
@@ -11128,6 +11187,8 @@ Win::~Win() {
     close();
 }
 
+// ORIGINAL: 0x005F2290 ?OnMouseMove@Win@@QAAXPAXHHI@Z 0x005F2290-0x005F232D FILE
+// kind game
 // ===== homed from src/unrecovered/005f2290.cpp =====
 
 void __cdecl Win::OnMouseMove(void * hwnd, int x, int y, unsigned int keys) {
@@ -11249,6 +11310,10 @@ int __cdecl Win::OnQueryNewPalette(void * hwnd) {
     return 0;
 }
 
+// ORIGINAL: 0x005ECC40 ?set_dialog_focus@Win@@QAEXPAVWin@@@Z 0x005ECC40-0x005ECD1B FILE
+// kind game
+// symbol    ?set_dialog_focus@Win@@UAEXPAV1@@Z
+// TRIED: for(;;)/break loop shape for the list search instead of a do/while counted against field_D4_
 // ===== homed from src/unrecovered/005ecc40.cpp =====
 
 void Win::set_dialog_focus(Win * window) {
@@ -11311,6 +11376,10 @@ void Win::set_dialog_focus(Win * window) {
     }
 }
 
+// ORIGINAL: 0x005F1480 ?OnActivate@Win@@QAAJPAXIPAXJ@Z 0x005F1480-0x005F15B6 FILE
+// kind game
+// symbol    ?OnActivate@Win@@QAAJPAXI0J@Z
+// TRIED: testing `a2 == 0` first (zero-set branch as the `if`) compiled to `test;jne`; testing `a2 != 0` first (zero-set branch as the `else`) matches the original's `test;je` polarity. Landed at MISMATCH #42 (up from #10) - same HDC acquire/release idiom as 0x5EF1E0's sub_5ef1e0.
 // ===== homed from src/unrecovered/005f1480.cpp =====
 
 long __cdecl Win::OnActivate(void *hwnd, unsigned int state, void *other,

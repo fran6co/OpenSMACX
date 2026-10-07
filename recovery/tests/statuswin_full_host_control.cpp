@@ -119,7 +119,15 @@ struct BattleWin {
 };
 static BattleWin g_BattleWin;
 
-static int GameState, TurnCurrentNum, MainInterfaceStatusRedrawFlag;
+static int MainInterfaceStatusRedrawFlag;
+struct GameDataStateFields {
+    uint32_t game_state_;
+    int turn_current_num_;
+    int climate_sea_level_delta_;
+    uint32_t game_more_preferences_;
+};
+struct GameDataStateWindow { GameDataStateFields fields_; };
+static GameDataStateWindow GameDataStateStorage;
 static int MapWinCaptionScale = -1, MapWinCaptionDivisor = -1;
 static int ExpansionEnabled, ClimateSeaLevelDelta, MapSeaLevel;
 static int MapIsFlat, MapLongitudeBounds = 16, MapLatitudeBounds = 16;
@@ -251,7 +259,7 @@ int main() {
     win.iTileX_=4; win.iTileY_=4; win.iUnitIndex_=-1; win.iCityIndex_=-1;
     ConsoleGlobal.faction_id_=0; ConsoleGlobal.selected_vehicle_=-1;
     const int selected_tile = 4*MapLongitude+2;
-    TurnCurrentNum=0; MapTiles[selected_tile].visibility=1;
+    GameDataStateStorage.fields_.turn_current_num_=0; MapTiles[selected_tile].visibility=1;
     MapTiles[4*MapLongitudeBounds+2].visibility=0;
     MapTiles[selected_tile].climate=0x60;
     GenTerrainPolyCalls=0;
@@ -274,7 +282,7 @@ int main() {
     Vehs[0].next_veh_id_stack=-1; VehCurrentCount=1;
     PlayersData[1].flags=0; PlayersData[1].diplo_treaties[0]=1;
     ConsoleGlobal.selected_vehicle_=-1; ConsoleGlobal.cursor_active_=0;
-    TurnCurrentNum=1; win.iUnitIndex_=-1; win.iCityIndex_=-1;
+    GameDataStateStorage.fields_.turn_current_num_=1; win.iUnitIndex_=-1; win.iCityIndex_=-1;
     MapTiles[selected_tile].visibility=1;
     win.draw_status(-1,-1,-1,-1,0);
     assert(win.last_vehicle==0);
@@ -284,7 +292,7 @@ int main() {
 
     // Land rockiness and rainfall share one output row; water omits that row.
     win.field_15A8_=0; win.iUnitIndex_=-1; win.iCityIndex_=-1;
-    ConsoleGlobal.selected_vehicle_=-1; TurnCurrentNum=0;
+    ConsoleGlobal.selected_vehicle_=-1; GameDataStateStorage.fields_.turn_current_num_=0;
     MapTiles[selected_tile].visibility=1; MapTiles[selected_tile].bit=0;
     MapTiles[selected_tile].bit2=0; MapTiles[selected_tile].val3=0x40;
     MapTiles[selected_tile].climate=0x60; MainInterfaceGlobal.writes=0;
@@ -326,18 +334,18 @@ int main() {
     assert(MainInterfaceGlobal.wrap_rect.top>6);
 
     // Debug output uses the signed region byte and original "x , y" punctuation.
-    GameState=STATE_SCENARIO_EDITOR|STATE_DEBUG_MODE;
+    GameDataStateStorage.fields_.game_state_=STATE_SCENARIO_EDITOR|STATE_DEBUG_MODE;
     MapTiles[selected_tile].bit=0; MapTiles[selected_tile].region=0xfe;
     MainInterfaceGlobal.writes=0; win.draw_status(-1,-1,-1,-1,0);
     assert(find_write(MainInterfaceGlobal,"(-2)")>=0);
     assert(find_write(MainInterfaceGlobal,"(4 , 4)")>=0);
-    GameState=0;
+    GameDataStateStorage.fields_.game_state_=0;
 
     Bases[0].x=4; Bases[0].y=4; Bases[0].faction_id_current=0;
     Bases[0].visibility=1; BaseCurrentCount=1; VehCurrentCount=0;
     ConsoleGlobal.selected_vehicle_=-1; ConsoleGlobal.cursor_active_=0;
     win.iCityIndex_=0;
-    TurnCurrentNum=1;
+    GameDataStateStorage.fields_.turn_current_num_=1;
     win.iCityIndex_=0; win.iUnitIndex_=-1;
     base_draw_calls=0;
     win.draw_status(-1,-1,-1,-1,0);

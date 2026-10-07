@@ -645,3 +645,96 @@ def remove_file(records: list[DecompilationState]) -> None:
         by_path.setdefault(Path(record.path), []).append(record)
     for path, group in by_path.items():
         path.write_text(remove(path.read_text(), group))
+
+
+def write_kind(raw: bytes, record: DecompilationState, kind: str) -> bytes:
+    """Return source with one guarded catalogue-kind fact updated or inserted.
+
+    This is the kind analogue of ``source.writer.write_symbol``. It checks a
+    complete reader snapshot, edits only the value token, preserves bindings
+    and every unrelated byte/fact/lesson, and never grants a match claim.
+    """
+    if not isinstance(raw, bytes):
+        raise ValueError("kind rewriting requires original source bytes")
+    if (not isinstance(kind, str) or not kind
+            or any(c.isspace() or ord(c) < 32 or ord(c) == 127 for c in kind)
+            or any(token in kind for token in ("/*", "*/", "//", "\\", "??/"))):
+        raise ValueError("catalogue kind must be one annotation-safe token")
+    encoded = kind.encode("utf-8")
+    text = raw.decode("utf-8", errors="replace").replace("\r\n", "\n").replace("\r", "\n")
+    if re.search(r"[\v\f\x1c-\x1e\x85\u2028\u2029]", text):
+        raise ValueError("unsupported source line separator")
+    logical_text = re.sub(r"(?:\\|\?\?/)[ \t]*\n", "", text)
+    if any(re.fullmatch(r'(?:u8|u|U|L)?R"', token.group())
+           for token in _SYMBOL_SOURCE_TOKENS.finditer(logical_text)):
+        raise ValueError("kind rewriting does not support raw-string source")
+    macro_lines = _define_directive_lines(text)
+    records = read_text(text, record.path)
+    selected = [i for i, row in enumerate(records) if row.line == record.line]
+    if len(selected) != 1 or asdict(records[selected[0]]) != asdict(record):
+        raise ValueError("source kind update requires a current record snapshot")
+    if record.line - 1 in macro_lines:
+        raise ValueError("kind annotation is inside a #define directive")
+    bindings = binding_source.parse(text, records)
+    position = selected[0]
+    lines, source_lines = text.splitlines(), raw.splitlines(keepends=True)
+    if len(lines) != len(source_lines):
+        raise ValueError("unsupported source line separator")
+
+    facts = []
+    for offset, stripped in _fact_lines(lines, record.line - 1):
+        match = FACT_LINE.fullmatch(stripped)
+        if match and match.group(1) == "kind":
+            value = match.group(2) or ""
+            # The reader accepts only a one-token kind. A malformed or
+            # wrapped line is ambiguous evidence, not permission to insert a
+            # second fact or rewrite prose.
+            if (not value or any(c.isspace() for c in value)
+                    or any(token in value for token in ("/*", "*/", "//", "\\", "??/"))):
+                raise ValueError("existing catalogue kind is not one annotation-safe token")
+            facts.append((offset, match, value))
+    if len(facts) > 1:
+        raise ValueError("ambiguous duplicate catalogue-kind facts")
+    if facts and facts[0][0] in macro_lines:
+        raise ValueError("catalogue-kind fact is inside a #define directive")
+
+    output = list(source_lines)
+    if facts:
+        offset, match, value = facts[0]
+        line = source_lines[offset]
+        leading = len(line) - len(line.lstrip(b" \t"))
+        start = leading + match.start(2)
+        old = value.encode("utf-8")
+        if line[start:start + len(old)] != old:
+            raise ValueError("kind fact cannot be rewritten byte-for-byte")
+        output[offset] = line[:start] + encoded + line[start + len(old):]
+    else:
+        index = record.line - 1
+        line = source_lines[index]
+        newline = b"\r\n" if line.endswith(b"\r\n") else b"\r" if line.endswith(b"\r") else b"\n"
+        if record.line in bindings:
+            index += 1
+            line = source_lines[index]
+        if not line.endswith((b"\n", b"\r")):
+            output[index] += newline
+        output.insert(index + 1, b"// kind " + encoded + newline)
+
+    result = b"".join(output)
+    reread = read_text(result.decode("utf-8", errors="replace").replace("\r\n", "\n").replace("\r", "\n"), record.path)
+    if len(reread) != len(records):
+        raise ValueError("kind rewrite changed annotation coverage")
+    rebound = binding_source.parse(result.decode("utf-8", errors="replace"), reread)
+    if [bindings.get(row.line) for row in records] != [rebound.get(row.line) for row in reread]:
+        raise ValueError("kind rewrite changed original binding rationale")
+    for i, (before, after) in enumerate(zip(records, reread)):
+        left, right = asdict(before), asdict(after)
+        left["kind"] = kind if i == position else before.kind
+        for field in ("line", "region", "origin"):
+            left.pop(field)
+            right.pop(field)
+        provenance = lambda row: tuple(
+            (x.kind, x.key, x.prose, tuple(t for _, t in x.lines))
+            for x in row.origin or ())
+        if left != right or provenance(before) != provenance(after):
+            raise ValueError("kind rewrite changed other source facts or lessons")
+    return result

@@ -216,6 +216,15 @@ or shadowed facts and stale snapshots refuse; facts never belong to a neighborin
 source rather than guessing its lexical context. Recompile after publication:
 adding a physical annotation line can affect uses of `__LINE__`.
 
+`match_recovery.source.write_kind` provides the corresponding guarded update
+for an existing catalogue `// kind` fact. It takes original bytes, a current
+reader record and one annotation-safe token; it preserves identity, spans,
+claims, lessons, bindings and neighboring facts. Duplicate or malformed facts
+and stale snapshots refuse. This preserves historical application/dependency
+classification during migration; it does not infer ownership, verify behavior,
+authorize a migration or grant matching. Ordinary `write` still leaves existing
+fact blocks untouched.
+
 An adjacent `// body` fact names the source file containing a definition hosted
 elsewhere, for example `// body src/stringstruct.h` for a header-defined method.
 Keep the canonical original marker in its owning TU, not a duplicate per emitted
