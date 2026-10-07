@@ -1639,13 +1639,6 @@ Purpose: Close the design window: dismiss all 25 palette buttons, release the
 Return Value: n/a
 Status: Complete
 */
-namespace {
-
-// Slot 2, the DesignWin front vtable's own second entry.
-typedef void (__fastcall *func_design_win_slot002)(void *);
-
-}
-
 void DesignWin::close() {
     // A do/while counting DOWN from 25 over a walking pointer - the image
     // keeps `mov ebx, 0x19` and steps `add edi, 0xb4c` (sizeof FlatButton).
@@ -2459,7 +2452,10 @@ void __cdecl DesignWin::timer_function(int) {
 
 void DesignWin::shut_that_badboy_down() {
     if (DesignTutorState != 1) {
-        vtable_slot<func_design_win_slot002>(this, 0x8)(this);
+        // Constructor 0x0043454C installs front table 0x0066B148;
+        // its slot 2 is DesignWin::hide (0x0043D0F0). Preserve virtual
+        // dispatch, including a further-derived override, on the real owner.
+        hide();
         do_all_draws();
         Time *modal = &time_;
         DesignWindowSelf = 0;
