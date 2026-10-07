@@ -1278,7 +1278,7 @@ Purpose: Attach the list to a parent window rectangle: run the layout pass,
          fonts into the window's buffer.
 // ORIGINAL: 0x0060A670 ?attach@ListBox@@QAEHPAUGraphicWin@@HHH@Z 0x0060A670-0x0060AA15 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0060a670.cpp", "source:src/listbox.h"], "reason": "Map the declared dependency to its seed identity in the owning product TU; the retained seed stays beside the landed transcription."}
-// symbol    ?attach@ListBox@@UAEHPAXHHH@Z
+// symbol    ?attach@ListBox@@UAEHPAVGraphicWin@@HHH@Z
 // TRIED: raw self+/-offset pointer chasing throughout (this points 0xa60 into
 //        the ListBox object; base=self-0xa60 is the real ListBox start reached
 //        via calculate_dimensions()); re-deriving the vbtable-style P1/P2

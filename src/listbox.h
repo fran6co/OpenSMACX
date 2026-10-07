@@ -183,23 +183,23 @@ class ListBox : public virtual GraphicWin, public virtual Dialog {
   void on_scrolled(int code, int pos);
 
  public:
-  // 0x0060AA20, a pending_bodies forwarder.
+  // 0x0060AA20, implemented in listbox.cpp.
   void on_right_down(int a, int b);
 
  public:
-  // 0x0060C6D0, a pending_bodies forwarder.
+  // 0x0060C6D0, implemented in listbox.cpp.
   void on_right_double_click(int a, int b);
 
  public:
-  // 0x0060C350, a pending_bodies forwarder.
+  // 0x0060C350, implemented in listbox.cpp.
   void on_redraw();
 
  public:
-  // 0x0060CBC0, a pending_bodies forwarder.
+  // 0x0060CBC0, implemented in listbox.cpp.
   void on_mouse_move(int a1, int a2);
 
  public:
-  // 0x0060AA60, a pending_bodies forwarder.
+  // 0x0060AA60, implemented in listbox.cpp.
   void on_left_down(int a1, int a2);
 
  public:
@@ -212,7 +212,8 @@ class ListBox : public virtual GraphicWin, public virtual Dialog {
   int on_key_down(int a) override;
 
  public:
-  // 0x0060A670, a pending_bodies forwarder.
+  // 0x0060A670, implemented in listbox.cpp. The receiver/layout spelling
+  // remains a structural recovery obligation; this is not a seed forwarder.
   int attach(GraphicWin * a1, int a2, int a3, int a4);
 
  public:
@@ -231,12 +232,11 @@ class ListBox : public virtual GraphicWin, public virtual Dialog {
   // listbox.cpp using Dialog::item_list_ and StringStructEntry's real links.
   // Its malformed head-null/current-nonnull arm retains the pinned [4] read.
   int UNK2(char *text);
-  // 0x0060C1E0, the four-way row-surface scroll/copy operation retained in
-  // the seed-only unit. Its direction is 0..3 as dispatched by the list
-  // layout code.
+  // 0x0060C1E0, implemented in listbox.cpp. Direction 0..3 selects the
+  // four-way row-surface scroll/copy operation.
   void UNK1(int direction);
  public:
-  // 0x0060C920, still a pending_bodies forwarder.
+  // 0x0060C920, implemented in listbox.cpp.
   int item(char *text, int index);
   // 0x00609FA0, implemented below in listbox.cpp. DipEdit::init adds one
   // item per rival faction, then lands selection through this ID walk.
@@ -249,14 +249,14 @@ class ListBox : public virtual GraphicWin, public virtual Dialog {
   // nonzero makes the body run the item's three notify slots (0x54, 0x53
   // and the 0x23/0x07 pair) after the scroll position is settled.
   void set_selected_pos(int position, int notify);
-  // 0x0060C9B0 ?update_changes@ListBox@@QAEHXZ, unrecovered. DECLARATION
-  // ONLY: Datalink::set_cat re-reads the entry list through it (and through
-  // StringList::sort) once the category's own filler has run.
+  // 0x0060C9B0 ?update_changes@ListBox@@QAEHXZ, implemented in listbox.cpp.
+  // Datalink::set_cat re-reads the entry list through it (and through
+  // StringList::sort) once the category's own filler has run. The child
+  // dispatch's concrete receiver type remains unresolved.
   int update_changes();
-  // 0x0060A1E0 ?calculate_dimensions@ListBox@@QAEHXZ, still FILE-only in
-  // src/unrecovered/0060a1e0.cpp. DECLARATION ONLY, added because Dialogs
-  // ::calculate_dimensions (0x006132A0) tail-calls it for kind 2 - the access
-  // costs nothing and the definition stays where it is.
+  // 0x0060A1E0 ?calculate_dimensions@ListBox@@QAEHXZ, implemented in
+  // listbox.cpp. Dialogs::calculate_dimensions (0x006132A0) calls it for
+  // kind 2. Its raw layout accesses remain structural recovery debt.
   int calculate_dimensions();
 
  public:
