@@ -152,6 +152,29 @@ static DWORD movie_media_int_bits(int value) {
     return bits;
 }
 
+// The pinned x86 ADD/SUB/SHL operations wrap as 32-bit bit patterns.
+// Avoid relying on signed-overflow behavior in the translated row path.
+static int movie_media_add32(int left, int right) {
+    return movie_media_signed32(movie_media_int_bits(left) +
+                                 movie_media_int_bits(right));
+}
+
+static int movie_media_sub32(int left, int right) {
+    return movie_media_signed32(movie_media_int_bits(left) -
+                                 movie_media_int_bits(right));
+}
+
+static int movie_media_mul2(int value) {
+    return movie_media_signed32(movie_media_int_bits(value) << 1);
+}
+
+static int movie_media_signed_high_product(int left, int right) {
+    const __int64 product = static_cast<__int64>(left) * right;
+    uint64_t bits;
+    std::memcpy(&bits, &product, sizeof(bits));
+    return movie_media_signed32(static_cast<DWORD>(bits >> 32));
+}
+
 static MediaTransformRegisterContinuation movie_media_transform_return(
     MediaTransformBitState &reader, const BYTE *cursor, DWORD accumulator,
     LONG available_bits, int coefficient_index) {
@@ -1099,15 +1122,14 @@ void __cdecl sub_5cee80(int *src) {
     int out_b;
 
     dst = movie_media_idct_output_pointer();
-    sum_lo = src[3] + src[5];
-    sum_hi = src[7] + src[1];
-    diff_a = static_cast<float>(src[5] - src[3]);
-    diff_b = static_cast<float>(src[1] - src[7]);
+    sum_lo = movie_media_add32(src[3], src[5]);
+    sum_hi = movie_media_add32(src[7], src[1]);
+    diff_a = static_cast<float>(movie_media_sub32(src[5], src[3]));
+    diff_b = static_cast<float>(movie_media_sub32(src[1], src[7]));
     mid = (diff_b + diff_a) * movie_media_idct_float_constant(3);
-    rot = static_cast<int>((static_cast<__int64>(sum_hi - sum_lo) *
-                            static_cast<__int64>(movie_media_idct_storage.constant_words[0])) >>
-                           32) *
-          2;
+    rot = movie_media_mul2(movie_media_signed_high_product(
+        movie_media_sub32(sum_hi, sum_lo),
+        movie_media_signed32(movie_media_idct_storage.constant_words[0])));
     // The image rounds these two sums to double inside the x87 stack and
     // fstp qword's them into the scratch slots; the INTEGER pipeline then
     // re-reads the slots' LOW dwords, so the bit pattern - not the numeric
@@ -1122,9 +1144,9 @@ void __cdecl sub_5cee80(int *src) {
                 &scratch_a, sizeof(scratch_a));
     std::memcpy(&movie_media_idct_storage.butterfly_fp_scratch_words[2],
                 &scratch_b, sizeof(scratch_b));
-    out_a = static_cast<int>(
+    out_a = movie_media_signed32(
         movie_media_idct_storage.butterfly_fp_scratch_words[0]);
-    out_b = static_cast<int>(
+    out_b = movie_media_signed32(
         movie_media_idct_storage.butterfly_fp_scratch_words[2]);
     int sum_lo2;
     int diff_c;
@@ -1137,30 +1159,30 @@ void __cdecl sub_5cee80(int *src) {
     int tail_b;
     int half_a;
 
-    half_a = out_a + rot;
-    rot = rot + out_b;
-    out_b = out_b + sum_lo + sum_hi;
+    half_a = movie_media_add32(out_a, rot);
+    rot = movie_media_add32(rot, out_b);
+    out_b = movie_media_add32(movie_media_add32(out_b, sum_lo), sum_hi);
 
-    sum_lo2 = src[4] + src[0];
-    diff_c = src[0] - src[4];
-    rot2 = static_cast<int>((static_cast<__int64>(src[2] - src[6]) *
-                             static_cast<__int64>(movie_media_idct_storage.constant_words[0])) >>
-                            32);
-    rot2x2 = rot2 * 2;
-    sum_hi2 = src[6] + src[2] + rot2x2;
-    diff_d = rot2x2 + diff_c;
-    diff_e = diff_c + rot2 * -2;
-    tail_a = sum_hi2 + sum_lo2;
-    tail_b = sum_lo2 - sum_hi2;
+    sum_lo2 = movie_media_add32(src[4], src[0]);
+    diff_c = movie_media_sub32(src[0], src[4]);
+    rot2 = movie_media_signed_high_product(
+        movie_media_sub32(src[2], src[6]),
+        movie_media_signed32(movie_media_idct_storage.constant_words[0]));
+    rot2x2 = movie_media_mul2(rot2);
+    sum_hi2 = movie_media_add32(movie_media_add32(src[6], src[2]), rot2x2);
+    diff_d = movie_media_add32(rot2x2, diff_c);
+    diff_e = movie_media_sub32(diff_c, movie_media_mul2(rot2));
+    tail_a = movie_media_add32(sum_hi2, sum_lo2);
+    tail_b = movie_media_sub32(sum_lo2, sum_hi2);
 
-    dst[2] = diff_e + half_a;
-    dst[5] = diff_e - half_a;
-    dst[3] = tail_b + out_a;
-    dst[4] = tail_b - out_a;
-    dst[0] = tail_a + out_b;
-    dst[1] = rot + diff_d;
-    dst[6] = diff_d - rot;
-    dst[7] = tail_a - out_b;
+    dst[2] = movie_media_add32(diff_e, half_a);
+    dst[5] = movie_media_sub32(diff_e, half_a);
+    dst[3] = movie_media_add32(tail_b, out_a);
+    dst[4] = movie_media_sub32(tail_b, out_a);
+    dst[0] = movie_media_add32(tail_a, out_b);
+    dst[1] = movie_media_add32(rot, diff_d);
+    dst[6] = movie_media_sub32(diff_d, rot);
+    dst[7] = movie_media_sub32(tail_a, out_b);
 }
 
 
@@ -1188,7 +1210,7 @@ Status: Coverage transcription - unclaimed body (hidden-ESI callees reached
 */
 void __cdecl sub_5cef8a(unsigned char *row_base, int stride_arg) {
     movie_media_idct_storage.output_pitch_bytes =
-        static_cast<DWORD>(stride_arg << 2);
+        static_cast<DWORD>(stride_arg) << 2;
     for (int column = 0; column != 8; ++column) {
         int *const destination =
             &movie_media_idct_storage.intermediate_words[column];
