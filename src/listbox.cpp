@@ -1659,8 +1659,7 @@ int ListBox::update_changes() {
     {
         Win *target = *reinterpret_cast<Win **>(gw_base + 0xC4);
         if (target != 0) {
-            typedef void (OriginalObject::*slot054_fn)(int);
-            (ORIGINAL(target)->*vtable_method<slot054_fn>(target, 54 * 4))(
+            target->vslot_54(
                 reinterpret_cast<Dialog *>(dlg_base)->get_selected_id());
         }
     }

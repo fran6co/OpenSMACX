@@ -1419,10 +1419,10 @@ int Wave_Device::delete_device() {
 
 /*
 Purpose: Initialise the device stack: the Wave_Device's OWN virtual slot 0
-         takes the mode first (the class does have a vtable, held opaque at
-         offset zero), then the wrapped device initialises through its slot
+         takes the mode first through create_device(), then the wrapped
+         device initialises through its slot
          0xC with both arguments, and a failure there runs the Wave_Device's
-         own virtual slot 4 before the error propagates.
+         own slot-1 delete_device method before the error propagates.
 // ORIGINAL: 0x004C4F40 ?init@Wave_Device@@QAEHPAXK@Z 0x004C4F40-0x004C4F7D BYTE_EXACT
 // size      61 bytes
 // prototype int (__thiscall ?init@Wave_Device@@QAEHPAXK@Z)(Wave_Device* this, void*, unsigned int)
@@ -1435,8 +1435,7 @@ Return Value: 0, or whichever stage's error came first
 Status: Complete
 */
 int Wave_Device::init(void *group_id, unsigned long flags) {
-    typedef int (OriginalObject::*own_mode_fn)(unsigned long mode);
-    const int staged = (ORIGINAL(this)->*(*reinterpret_cast<own_mode_fn **>(this))[0])(flags);
+    const int staged = create_device(flags);
     if (staged) {
         return staged;
     }
@@ -1444,8 +1443,7 @@ int Wave_Device::init(void *group_id, unsigned long flags) {
     void *device = device_14_;
     const int result = (ORIGINAL(device)->*(*reinterpret_cast<device_init_fn **>(device))[3])(group_id, flags);
     if (result) {
-        typedef void (OriginalObject::*own_fail_fn)();
-        (ORIGINAL(this)->*(*reinterpret_cast<own_fail_fn **>(this))[1])();
+        delete_device();
         return result;
     }
     return 0;

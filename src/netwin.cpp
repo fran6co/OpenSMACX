@@ -31,7 +31,6 @@
 #include "game.h"      // ExitTurnLoop, the modal callbacks' stop flag
 #include "general.h"   // checksum_password, parse_says and shared helpers
 #include "netdaemon.h" // NetDaemonNet, message_chat - the pump and the chat send
-#include "original_seam.h"  // vtable_slot - the unmodelled virtual slots
 #include "vector_teardown.h"  // generic strided member-callback initializer
 #include "popmenu.h"   // PopMenu - the pickers' popup and its exec
 #include "popup.h"     // Popup - the password modal and typed teardown
@@ -515,8 +514,7 @@ void NetWin::close() {
     stringBox_.close();
     editBox_.close();
     checkBox_.close();
-    typedef void (__fastcall *flat_button_slot_fn)(void *);
-    vtable_slot<flat_button_slot_fn>(&flatButton1_, 0x168)(&flatButton1_);
+    flatButton1_.close();
 }
 
 /*
@@ -1411,8 +1409,7 @@ void NetWin::draw_player_names() {
             : reinterpret_cast<const char *>(Labels.strings_ptr + 0x1050);
         flatButton1_.set_name(const_cast<char *>(StringTable.get(
             *reinterpret_cast<const int *>(label))));
-        typedef void (__fastcall *button_slot_fn)(void *);
-        vtable_slot<button_slot_fn>(&flatButton1_, 0xF8)(&flatButton1_);
+        flatButton1_.redraw();
     }
 }
 
@@ -2801,8 +2798,7 @@ int NetWin::modal_callback() {
             do {
             } while (NetDaemonNet.receive() != 0);
         }
-        typedef void (__fastcall *self_slot_fn)(void *);
-        vtable_slot<self_slot_fn>(this, 0x30)(this);
+        on_redraw();
     }
     int result = 1;
     if (field_7614_ == 0) {
@@ -2929,12 +2925,9 @@ Status: Coverage transcription - unclaimed body (the preserved seed keeps its
 int NetWin::on_key_down(int key) {
     if (key != 0xD) {
         if (key != 0x1B) {
-            typedef int (__fastcall *edit_box_key_fn)(void *, int);
-            return vtable_slot<edit_box_key_fn>(&editBox_, 0x68)(&editBox_,
-                                                                 key);
+            return editBox_.on_key_down(key);
         }
-        typedef void (__fastcall *self_slot_fn)(void *);
-        vtable_slot<self_slot_fn>(this, 0xE8)(this);
+        release_modal();
         if (faction_records_ != 0) {
             free(faction_records_);
             faction_records_ = 0;
@@ -2949,8 +2942,7 @@ int NetWin::on_key_down(int key) {
         stringBox_.close();
         editBox_.close();
         checkBox_.close();
-        typedef void (__fastcall *flat_button_slot_fn)(void *);
-        vtable_slot<flat_button_slot_fn>(&flatButton1_, 0x168)(&flatButton1_);
+        flatButton1_.close();
         return 1;
     }
     NetDaemonNet.pid_2_idx(NetWinPlayerId);

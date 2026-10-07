@@ -945,11 +945,8 @@ void DiploWin::new_chat(char *text, int faction_id) {
     DiploOffersDirty = 1;
 }
 
-// Slot 62, 0xF8 - the DiploWin front vtable's update entry, the one
-// done_deal tails into with the image's own `jmp dword ptr [eax + 0xf8]`.
-namespace {
-typedef void (__fastcall *func_diplo_win_slot062)(void *);
-}
+// Slot 62 (+0xF8) is inherited GraphicWin::redraw(); source calls retain
+// the pinned receiver and virtual dispatch.
 
 // ORIGINAL: 0x00442560 ?on_key_down@DiploWin@@QAEHH@Z 0x00442560-0x0044258A BYTE_EXACT
 // symbol    ?on_key_down@DiploWin@@UAEHH@Z
@@ -1386,7 +1383,7 @@ void DiploWin::kill_offer(int a1, int a2) {
         DiploOffersDirty = 1;
         *reinterpret_cast<int *>(self + 0xA24) = 0;
         *reinterpret_cast<int *>(self + 0xA28) = 0;
-        vtable_slot<func_diplo_win_slot062>(this, 0xf8)(this);
+        redraw();
     }
 
 }
@@ -1513,7 +1510,7 @@ found:
             message_data(0x1506, *reinterpret_cast<int *>(self + 0xab8),
                         a2, a3, a1, a1);
         }
-        vtable_slot<func_diplo_win_slot062>(this, 0xf8)(this);
+        redraw();
     }
 }
 
@@ -1900,7 +1897,7 @@ void DiploWin::on_left_click(int a1, int a2) {
     // names come back carrying the spot position and the button kind.
     if (spot_.check(a1, a2, &a1, &a2) >= 0 && a2 == 0) {
         kill_offer(0, a1);
-        vtable_slot<func_diplo_win_slot062>(this, 0xf8)(this);
+        redraw();
     }
 }
 

@@ -76,15 +76,11 @@ Return Value: n/a
 Status: Complete
 */
 void Sound::fade(unsigned long a1) {
-    // The object's own vtable is read at run time rather than declaring these
-    // virtual, so the dispatch cannot disagree with the original's layout.
-    // `vtable_method` leaves the call operand where it lives - the image's
-    // `call dword ptr [eax]` / `call dword ptr [edx + 0x28]` - where
-    // `original_slot` read the slot into a register first.
-    typedef int (OriginalObject::*fade_fn)(int a1);
-    typedef void (OriginalObject::*fallback_fn)();
-    if ((ORIGINAL(this)->*vtable_method<fade_fn>(this, 0))(a1) == 0) {
-        (ORIGINAL(this)->*vtable_method<fallback_fn>(this, 0x28))();
+    // The source-owned virtual APIs occupy original slots 0 and 10.
+    // Historical seam spelling used vtable_method to emit the pinned calls;
+    // the source calls retain virtual dispatch, with matching still owed.
+    if (set_fade(a1) == 0) {
+        fade();
     }
 }
 
@@ -534,7 +530,7 @@ int Sound::load(const char *fname) {
     if (result == 0) {
         if (!(flags_40_ & 1)) {
             flags_40_ |= 1;
-            (ORIGINAL(this)->*original_method<void (OriginalObject::*)() >(*reinterpret_cast<unsigned long *>(*reinterpret_cast<uint8_t **>(this) + 0x7C)))();
+            attach();
             if (loop_flag_30_) {
                 typedef void (OriginalObject::*device_loop_fn)(int on);
                 (ORIGINAL(device_)->*original_slot<device_loop_fn>(*reinterpret_cast<uint8_t **>(device_) + 0x48))(
@@ -665,9 +661,7 @@ void Sound::fade_in(unsigned int a1) {
     // Both dispatches go to the slot WHERE IT LIVES - `call [eax+0x54]` and
     // `call [edx+0x28]` - the same shape the byte-exact fade(unsigned long)
     // uses, not the slot-read-then-call the original_slot idiom emits.
-    typedef int (OriginalObject::*own_time_fn)(unsigned int t);
-    typedef void (OriginalObject::*own_fade_fn)();
-    if ((ORIGINAL(this)->*vtable_method<own_time_fn>(this, 0x54))(a1) == 0) {
+    if (set_fade_in(a1) == 0) {
         // Slot 0x28 is this class's own fade() - a REAL virtual call, which
         // reads the vtable into edx exactly as the hand dispatch does.
         fade();
@@ -745,8 +739,7 @@ int Sound::unload() {
         typedef int (__fastcall *device_fn)(void *self);
         result = vtable_slot<device_fn>(device, 0x14)(device);
     }
-    typedef void (OriginalObject::*own_fn)();
-    (ORIGINAL(this)->*vtable_method<own_fn>(this, 0x80))();
+    detach();
     device_ = nullptr;
     flags_40_ &= ~1u;
     return result;
