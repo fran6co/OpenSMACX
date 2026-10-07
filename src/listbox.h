@@ -256,7 +256,7 @@ class ListBox : public virtual GraphicWin, public virtual Dialog {
   int update_changes();
   // 0x0060A1E0 ?calculate_dimensions@ListBox@@QAEHXZ, implemented in
   // listbox.cpp. Dialogs::calculate_dimensions (0x006132A0) calls it for
-  // kind 2. Its raw layout accesses remain structural recovery debt.
+  // kind 2. The typed body preserves the original malformed-list error path.
   int calculate_dimensions();
 
  public:

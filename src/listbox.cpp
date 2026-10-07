@@ -56,6 +56,7 @@
 #include "sound.h"
 #include "original_seam.h"
 #include "listbox.h"
+#include "scroll.h"
 #include "vtable_shim.h"
 #include "spritebox.h"
 #include "net_class.h"
@@ -1025,10 +1026,9 @@ text_tail:
     }
 }
 
-// Shared ListBox globals the 0060c9b0/0060c920/0060a1e0 bodies read. The
-// 0x009B8DD4 word remains an unresolved fixed alias; 0x009B8DDC is the
-// shared scroll-notify gate used by these ListBox bodies and Scroll events.
-static int *const ListBoxGlobalDD4 = (int *)0x009B8DD4;
+// Scroll owns the shared thickness at 0x009B8DD4. List layout and item
+// measurement use that source-owned default, not the old executable's data.
+// 0x009B8DDC is the shared ListBox/Scroll notification gate.
 // ORIGINAL storage binding: Scroll input methods clear the gate before
 // notifying their parent; the ListBox scrolled path reads it before changing
 // selection.
@@ -1041,7 +1041,7 @@ Purpose: Recompute the list's layout metrics from the Dialog entry list: the
          follow, and the two overflow bits in field_C_ report a column or row
          shortfall the caller reacts to.
 // ORIGINAL: 0x0060A1E0 ?calculate_dimensions@ListBox@@QAEHXZ 0x0060A1E0-0x0060A66B FILE
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0060a1e0.cpp", "source:src/listbox.h"], "reason": "Map the declared dependency to its seed identity in the owning product TU; the retained seed stays beside the landed transcription."}
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/listbox.h", "source:src/dialog.h", "source:src/stringstruct.h", "source:src/scroll.cpp:ScrollDefaultThickness", "Pinned 0x0060A2A6..0x0060A2AD loads Dialog fonts at +0x78/+0x74/+0x70; 0x0060A650..0x0060A659 divides the signed shared thickness by Dialog +0x54."], "reason": "Recover layout through real ListBox virtual bases, Buffer, Dialog metrics and circular StringList storage. Correct the old font-offset transcription and use the source-owned shared thickness; preserve dword wraparound, signed comparisons/division, count reloads and the malformed absolute address-4 read."}
 // TRIED: direct named-member access on dialog_/virtual_base_ instead of the
 //        original's dynamic vbtable-index lookup (vtable[8]=dialog_
 //        displacement, vtable[4]=GraphicWin displacement, confirmed by
@@ -1053,218 +1053,166 @@ Purpose: Recompute the list's layout metrics from the Dialog entry list: the
 // calls     0x005DAC70 0x005DACB0 0x005DACE0 0x005DAD10 0x005DC790 0x005DCAB0
 */
 int ListBox::calculate_dimensions() {
-    char *self = reinterpret_cast<char *>(this);
-    int *vbt = *reinterpret_cast<int **>(self);
-    char *gw_base = self + vbt[1];
-    char *dlg_base = self + vbt[2];
-    Buffer *buf = reinterpret_cast<Buffer *>(gw_base + 0x444);
+    Dialog &dialog = *this;
+    GraphicWin &graphic = *this;
+    Buffer &buffer = graphic;
+    StringList &entries = dialog.item_list_;
 
-    if (*reinterpret_cast<uint32_t *>(dlg_base + 0xcc) == 0) {
-        return 7;
-    }
+    if (entries.entry_count_ == 0) return 7;
     field_C_ = 0;
 
-    buf->set_text_color(*reinterpret_cast<int *>(dlg_base + 0x7c),
-                        *reinterpret_cast<int *>(dlg_base + 0x88),
-                        *reinterpret_cast<int *>(dlg_base + 0x94),
-                        *reinterpret_cast<int *>(dlg_base + 0xa0));
-    buf->set_text_color2(*reinterpret_cast<int *>(dlg_base + 0x80),
-                         *reinterpret_cast<int *>(dlg_base + 0x8c),
-                         *reinterpret_cast<int *>(dlg_base + 0x98),
-                         *reinterpret_cast<int *>(dlg_base + 0xa4));
-    buf->set_text_color3(*reinterpret_cast<int *>(dlg_base + 0x84),
-                         *reinterpret_cast<int *>(dlg_base + 0x90),
-                         *reinterpret_cast<int *>(dlg_base + 0x9c),
-                         *reinterpret_cast<int *>(dlg_base + 0xa8));
-    buf->set_font(*reinterpret_cast<Font **>(dlg_base + 0xac),
-                  *reinterpret_cast<Font **>(dlg_base + 0xb0),
-                  *reinterpret_cast<Font **>(dlg_base + 0xb4), 0);
+    buffer.set_text_color(dialog.text_color_a_, dialog.text_color_b_,
+                          dialog.text_color_c_, dialog.text_color_d_);
+    buffer.set_text_color2(dialog.text_color_2a_, dialog.text_color_2b_,
+                           dialog.text_color_2c_, dialog.text_color_2d_);
+    buffer.set_text_color3(dialog.text_color_3a_, dialog.text_color_3b_,
+                           dialog.text_color_3c_, dialog.text_color_3d_);
+    buffer.set_font(dialog.font1_, dialog.font2_, dialog.font3_, 0);
 
-    int visible_rows = *reinterpret_cast<int *>(dlg_base + 0x50);
-    int rows = *reinterpret_cast<int *>(dlg_base + 0xcc);
-    if (visible_rows <= rows) {
-        rows = visible_rows;
-    }
-    *reinterpret_cast<int *>(dlg_base + 0x58) = rows;
+    int visible_rows = static_cast<int>(dialog.field_50_);
+    int rows = entries.entry_count_;
+    if (visible_rows <= rows) rows = visible_rows;
+    dialog.field_58_ = static_cast<uint32_t>(rows);
 
     int max_width = 0;
     int n = 0;
-    if (*reinterpret_cast<int *>(dlg_base + 0xcc) > 0) {
+    if (entries.entry_count_ > 0) {
         do {
             char *name;
-            int head = *reinterpret_cast<int *>(dlg_base + 0xc4);
+            StringStructEntry *head = entries.head_;
             if (head != 0) {
-                int current = *reinterpret_cast<int *>(dlg_base + 0xc8);
-                current = *reinterpret_cast<int *>(current + 0xc);
-                *reinterpret_cast<int *>(dlg_base + 0xc8) = current;
-                int pos = *reinterpret_cast<int *>(dlg_base + 0xd0) + 1;
-                *reinterpret_cast<int *>(dlg_base + 0xd0) = pos;
-                if (pos == *reinterpret_cast<int *>(dlg_base + 0xcc)) {
-                    *reinterpret_cast<int *>(dlg_base + 0xd0) = 0;
-                }
+                entries.current_ = entries.current_->next;
+                entries.current_position_ = static_cast<int32_t>(
+                    static_cast<uint32_t>(entries.current_position_) + 1u);
+                if (entries.current_position_ == entries.entry_count_)
+                    entries.current_position_ = 0;
             }
-            if (*reinterpret_cast<int *>(dlg_base + 0xc8) == 0) {
+            if (entries.current_ == 0) {
                 name = 0;
             } else if (head == 0) {
+                // Preserve the pinned malformed-list absolute [4] read.
                 name = *reinterpret_cast<char **>(4);
             } else {
-                name = *reinterpret_cast<char **>(
-                    *reinterpret_cast<int *>(
-                        *reinterpret_cast<int *>(dlg_base + 0xc8) + 8)
-                    + 4);
+                name = entries.current_->string_payload()->text;
             }
-            int width = buf->text_width(name);
-            if (max_width < width) {
-                max_width = width;
-            }
+            int width = buffer.text_width(name);
+            if (max_width < width) max_width = width;
             ++n;
-        } while (n < *reinterpret_cast<int *>(dlg_base + 0xcc));
-        if (max_width != 0) {
-            goto have_width;
-        }
+        } while (n < entries.entry_count_);
+        if (max_width != 0) goto have_width;
     }
-    max_width = *reinterpret_cast<int *>(dlg_base + 0x2c);
+    max_width = static_cast<int>(dialog.field_2C_);
 
 have_width:
-    *reinterpret_cast<int *>(dlg_base + 0x64) =
-        *reinterpret_cast<int *>(dlg_base + 0x44) + 2 + field_2C_ * 2
-        + *reinterpret_cast<int *>(dlg_base + 0x34) + max_width;
-
-    if (*reinterpret_cast<int *>(dlg_base + 0x48) == -1) {
-        *reinterpret_cast<int *>(dlg_base + 0x68) =
-            buf->text_line_height() + *reinterpret_cast<int *>(dlg_base + 0x44);
-    } else {
-        *reinterpret_cast<int *>(dlg_base + 0x68) =
-            *reinterpret_cast<int *>(dlg_base + 0x48);
-    }
+    // Use unsigned intermediates for the original x86 dword wraparound.
+    dialog.field_64_ = dialog.field_44_ + 2u + field_2C_ * 2u
+                     + dialog.field_34_ + static_cast<uint32_t>(max_width);
+    if (static_cast<int32_t>(dialog.field_48_) == -1)
+        dialog.field_68_ = static_cast<uint32_t>(buffer.text_line_height())
+                         + dialog.field_44_;
+    else
+        dialog.field_68_ = dialog.field_48_;
 
     int tmp;
-    if ((*reinterpret_cast<unsigned char *>(dlg_base + 0x20) & 2) == 0
-        || (tmp = *reinterpret_cast<int *>(dlg_base + 0x2c), tmp == 0)) {
-        int divisor = *reinterpret_cast<int *>(dlg_base + 0x4c);
+    if ((dialog.field_20_ & 2) == 0
+        || (tmp = static_cast<int>(dialog.field_2C_), tmp == 0)) {
+        int divisor = static_cast<int>(dialog.field_4C_);
         if (divisor == 1) {
-            int width = *reinterpret_cast<int *>(dlg_base + 0x64)
-                + *reinterpret_cast<int *>(dlg_base + 0x40) * 2;
-            int min_width = *reinterpret_cast<int *>(dlg_base + 0x2c);
-            if (width < min_width) {
-                width = min_width;
-            }
-            *reinterpret_cast<int *>(dlg_base + 0x5c) = width;
-            *reinterpret_cast<int *>(dlg_base + 0x64) =
-                *reinterpret_cast<int *>(dlg_base + 0x5c)
-                - *reinterpret_cast<int *>(dlg_base + 0x40) * 2;
+            uint32_t width_bits = dialog.field_64_ + dialog.field_40_ * 2u;
+            int width = static_cast<int32_t>(width_bits);
+            int min_width = static_cast<int32_t>(dialog.field_2C_);
+            if (width < min_width) width = min_width;
+            dialog.field_5C_ = static_cast<uint32_t>(width);
+            dialog.field_64_ = dialog.field_5C_ - dialog.field_40_ * 2u;
         } else {
-            int margin = *reinterpret_cast<int *>(dlg_base + 0x44);
-            *reinterpret_cast<int *>(dlg_base + 0x64) =
-                (*reinterpret_cast<int *>(dlg_base + 0x5c)
-                 - *reinterpret_cast<int *>(dlg_base + 0x40) * 2 + margin)
-                / divisor - margin;
-            int width = *reinterpret_cast<int *>(dlg_base + 0x44);
-            width = ((*reinterpret_cast<int *>(dlg_base + 0x64) + width)
-                     * *reinterpret_cast<int *>(dlg_base + 0x4c)
-                     + *reinterpret_cast<int *>(dlg_base + 0x40) * 2) - width;
-            int min_width = *reinterpret_cast<int *>(dlg_base + 0x2c);
-            if (width < min_width) {
-                width = min_width;
-            }
-            *reinterpret_cast<int *>(dlg_base + 0x5c) = width;
+            uint32_t numerator = dialog.field_5C_ - dialog.field_40_ * 2u
+                               + dialog.field_44_;
+            dialog.field_64_ = static_cast<uint32_t>(
+                static_cast<int32_t>(numerator) / divisor)
+                - dialog.field_44_;
+            uint32_t width_bits = (dialog.field_64_ + dialog.field_44_)
+                                * dialog.field_4C_
+                                + dialog.field_40_ * 2u - dialog.field_44_;
+            int width = static_cast<int32_t>(width_bits);
+            int min_width = static_cast<int32_t>(dialog.field_2C_);
+            if (width < min_width) width = min_width;
+            dialog.field_5C_ = static_cast<uint32_t>(width);
         }
-        *reinterpret_cast<int *>(dlg_base + 0x54) =
-            *reinterpret_cast<int *>(dlg_base + 0x4c);
+        dialog.field_54_ = dialog.field_4C_;
     } else {
-        *reinterpret_cast<int *>(dlg_base + 0x5c) = tmp;
-        *reinterpret_cast<int *>(dlg_base + 0x54) =
-            *reinterpret_cast<int *>(dlg_base + 0x4c);
-        if (*reinterpret_cast<int *>(dlg_base + 0x54) == 1) {
-            *reinterpret_cast<int *>(dlg_base + 0x64) =
-                *reinterpret_cast<int *>(dlg_base + 0x5c)
-                - *reinterpret_cast<int *>(dlg_base + 0x40) * 2;
-        } else {
-            *reinterpret_cast<int *>(dlg_base + 0x64) =
-                *reinterpret_cast<int *>(dlg_base + 0x64)
-                - *reinterpret_cast<int *>(dlg_base + 0x44);
-        }
+        dialog.field_5C_ = static_cast<uint32_t>(tmp);
+        dialog.field_54_ = dialog.field_4C_;
+        if (dialog.field_54_ == 1)
+            dialog.field_64_ = dialog.field_5C_ - dialog.field_40_ * 2u;
+        else
+            dialog.field_64_ -= dialog.field_44_;
     }
 
-    if ((*reinterpret_cast<unsigned char *>(dlg_base + 0x20) & 1) == 0
-        || (tmp = *reinterpret_cast<int *>(dlg_base + 0x30), tmp == 0)) {
-        *reinterpret_cast<int *>(dlg_base + 0x60) =
-            (*reinterpret_cast<int *>(dlg_base + 0x68)
-             * *reinterpret_cast<int *>(dlg_base + 0x58)
-             - *reinterpret_cast<int *>(dlg_base + 0x44))
-            + *reinterpret_cast<int *>(dlg_base + 0x3c)
-            + *reinterpret_cast<int *>(dlg_base + 0x38);
+    if ((dialog.field_20_ & 1) == 0
+        || (tmp = static_cast<int>(dialog.field_30_), tmp == 0)) {
+        dialog.field_60_ = dialog.field_68_ * dialog.field_58_
+                         - dialog.field_44_ + dialog.field_3C_
+                         + dialog.field_38_;
     } else {
-        *reinterpret_cast<int *>(dlg_base + 0x60) = tmp;
-        *reinterpret_cast<int *>(dlg_base + 0x58) =
-            ((*reinterpret_cast<int *>(dlg_base + 0x60)
-              - *reinterpret_cast<int *>(dlg_base + 0x3c))
-             - *reinterpret_cast<int *>(dlg_base + 0x38)
-             + *reinterpret_cast<int *>(dlg_base + 0x44))
-            / *reinterpret_cast<int *>(dlg_base + 0x68);
-        if ((*reinterpret_cast<uint32_t *>(gw_base + 0x98) & 0x40) == 0) {
-            int columns = *reinterpret_cast<int *>(dlg_base + 0x54);
-            if (*reinterpret_cast<int *>(dlg_base + 0x58) * columns
-                < static_cast<int>(field_20_)) {
+        dialog.field_60_ = static_cast<uint32_t>(tmp);
+        uint32_t rows_numerator = dialog.field_60_ - dialog.field_3C_
+                                - dialog.field_38_ + dialog.field_44_;
+        dialog.field_58_ = static_cast<uint32_t>(
+            static_cast<int32_t>(rows_numerator)
+            / static_cast<int32_t>(dialog.field_68_));
+        if ((iFlags_ & 0x40) == 0) {
+            int columns = static_cast<int32_t>(dialog.field_54_);
+            uint32_t product = dialog.field_58_ * dialog.field_54_;
+            if (static_cast<int32_t>(product) < static_cast<int32_t>(field_20_)) {
                 if (columns < 2) {
-                    *reinterpret_cast<int *>(dlg_base + 0x5c) =
-                        *reinterpret_cast<int *>(dlg_base + 0x2c) - *ListBoxGlobalDD4;
-                    *reinterpret_cast<int *>(dlg_base + 0x54) = 1;
+                    dialog.field_5C_ = dialog.field_2C_ - ScrollDefaultThickness;
+                    dialog.field_54_ = 1;
                 } else {
-                    *reinterpret_cast<int *>(dlg_base + 0x60) =
-                        *reinterpret_cast<int *>(dlg_base + 0x30) - *ListBoxGlobalDD4;
-                    *reinterpret_cast<int *>(dlg_base + 0x58) =
-                        *reinterpret_cast<int *>(dlg_base + 0x60)
-                        / *reinterpret_cast<int *>(dlg_base + 0x68);
+                    dialog.field_60_ = dialog.field_30_ - ScrollDefaultThickness;
+                    dialog.field_58_ = static_cast<uint32_t>(
+                        static_cast<int32_t>(dialog.field_60_)
+                        / static_cast<int32_t>(dialog.field_68_));
                 }
             }
         }
     }
 
-    *reinterpret_cast<int *>(dlg_base + 0x68) =
-        *reinterpret_cast<int *>(dlg_base + 0x68)
-        - *reinterpret_cast<int *>(dlg_base + 0x44);
-    int margin = *reinterpret_cast<int *>(dlg_base + 0x44);
-    if (*reinterpret_cast<int *>(dlg_base + 0xcc)
-        <= ((*reinterpret_cast<int *>(dlg_base + 0x60)
-             - *reinterpret_cast<int *>(dlg_base + 0x3c))
-            - *reinterpret_cast<int *>(dlg_base + 0x38) + margin)
-        / (*reinterpret_cast<int *>(dlg_base + 0x68) + margin)) {
-        if ((*reinterpret_cast<unsigned char *>(dlg_base + 0x20) & 2) == 0) {
-            *reinterpret_cast<int *>(dlg_base + 0x64) =
-                *reinterpret_cast<int *>(dlg_base + 0x5c)
-                - *reinterpret_cast<int *>(dlg_base + 0x40) * 2;
+    dialog.field_68_ -= dialog.field_44_;
+    int margin = static_cast<int32_t>(dialog.field_44_);
+    uint32_t height_numerator = dialog.field_60_ - dialog.field_3C_
+                              - dialog.field_38_ + dialog.field_44_;
+    uint32_t height_denominator = dialog.field_68_ + dialog.field_44_;
+    if (static_cast<int32_t>(entries.entry_count_)
+        <= static_cast<int32_t>(height_numerator)
+           / static_cast<int32_t>(height_denominator)) {
+        if ((dialog.field_20_ & 2) == 0) {
+            dialog.field_64_ = dialog.field_5C_ - dialog.field_40_ * 2u;
         } else {
-            *reinterpret_cast<int *>(dlg_base + 0x64) =
-                (*reinterpret_cast<int *>(dlg_base + 0x5c)
-                 - *reinterpret_cast<int *>(dlg_base + 0x40) * 2 + margin)
-                / *reinterpret_cast<int *>(dlg_base + 0x54) - margin;
+            uint32_t width_numerator = dialog.field_5C_
+                                     - dialog.field_40_ * 2u
+                                     + static_cast<uint32_t>(margin);
+            dialog.field_64_ = static_cast<uint32_t>(
+                static_cast<int32_t>(width_numerator)
+                / static_cast<int32_t>(dialog.field_54_))
+                - static_cast<uint32_t>(margin);
         }
     }
 
-    int total = *reinterpret_cast<int *>(dlg_base + 0x58)
-        * *reinterpret_cast<int *>(dlg_base + 0x54);
-    field_1C_ = static_cast<uint32_t>(total);
-    if (total < static_cast<int>(field_20_)) {
-        if (1 < *reinterpret_cast<int *>(dlg_base + 0x54)) {
-            Win *win = reinterpret_cast<Win *>(gw_base);
-            if ((*reinterpret_cast<uint32_t *>(gw_base + 0x98) & 0x40) == 0) {
-                *reinterpret_cast<int *>(dlg_base + 0x60) =
-                    *reinterpret_cast<int *>(dlg_base + 0x60) + *ListBoxGlobalDD4;
-            }
-            field_C_ = field_C_ | 1;
+    uint32_t total_bits = dialog.field_58_ * dialog.field_54_;
+    field_1C_ = total_bits;
+    int total = static_cast<int32_t>(total_bits);
+    if (total < static_cast<int32_t>(field_20_)) {
+        if (1 < static_cast<int32_t>(dialog.field_54_)) {
+            if ((iFlags_ & 0x40) == 0)
+                dialog.field_60_ += ScrollDefaultThickness;
+            field_C_ |= 1;
             return 0;
         }
-        if ((*reinterpret_cast<uint32_t *>(gw_base + 0x98) & 0x40) == 0) {
-            *reinterpret_cast<int *>(dlg_base + 0x5c) =
-                *reinterpret_cast<int *>(dlg_base + 0x5c) + *ListBoxGlobalDD4;
-        }
-        if ((*reinterpret_cast<unsigned char *>(dlg_base + 0x20) & 2) != 0) {
-            *reinterpret_cast<int *>(dlg_base + 0x64) =
-                *reinterpret_cast<int *>(dlg_base + 0x64)
-                - *ListBoxGlobalDD4 / *reinterpret_cast<int *>(dlg_base + 0x54);
-        }
-        field_C_ = field_C_ | 2;
+        if ((iFlags_ & 0x40) == 0)
+            dialog.field_5C_ += ScrollDefaultThickness;
+        if ((dialog.field_20_ & 2) != 0)
+            dialog.field_64_ -= ScrollDefaultThickness / static_cast<int32_t>(dialog.field_54_);
+        field_C_ |= 2;
     }
     return 0;
 }
@@ -1449,47 +1397,39 @@ Purpose: Add one entry: measure the string at the current width, grow the
          list height, remember the string in the entry table and append the
          id. Returns whatever the entry append reports.
 // ORIGINAL: 0x0060C920 ?item@ListBox@@QAEHPADH@Z 0x0060C920-0x0060C9A9 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/0060c920.cpp", "source:src/listbox.h"], "reason": "Map the declared dependency to its seed identity in the owning product TU; the retained seed stays beside the landed transcription."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/0060c920.cpp", "source:src/listbox.h", "source:src/buffer.h", "source:src/stringstruct.h", "source:src/scroll.cpp:ScrollDefaultThickness", "Pinned 0x0060C920..0x0060C9A9 measures positive available width, reads Buffer +0x18, updates ListBox +0x20, then publishes StringList text/metadata before add."], "reason": "Recover item insertion through the real Dialog list and GraphicWin Buffer base, including the shared Scroll thickness. The measured height is Buffer state, not wrap_height's return or ListBox's same-offset scroll state; preserve modulo-word accumulation and insertion result."}
 // size      137 bytes
 // prototype int (__thiscall ?item@ListBox@@QAEHPADH@Z)(ListBox* this, int8* lpString, int)
 // calls     0x00401100 0x005DC360
 */
 int ListBox::item(char *text, int id) {
-    char *self = reinterpret_cast<char *>(this);
     if (text == 0) {
         return 3;
     }
 
-    int *vbt = *reinterpret_cast<int **>(self);
-    char *dlg_base = self + vbt[2];
-    int count = *reinterpret_cast<int *>(dlg_base + 0x2C) - *ListBoxGlobalDD4;
+    Dialog &dialog = *this;
+    Buffer &buffer = static_cast<GraphicWin &>(*this);
+    int count = static_cast<int32_t>(
+        dialog.field_2C_ - static_cast<uint32_t>(ScrollDefaultThickness));
 
     if (count > 0) {
-        vbt = *reinterpret_cast<int **>(self);
-        Buffer *buf = reinterpret_cast<Buffer *>(self + vbt[1] + 0x444);
-        buf->wrap_height(text, count);
+        buffer.wrap_height(text, count);
     }
 
     int height;
     if (count > 0) {
-        vbt = *reinterpret_cast<int **>(self);
-        char *gw_base = self + vbt[1];
-        height = *reinterpret_cast<int *>(gw_base + 0x45C);
+        height = static_cast<int32_t>(Buffer::field_18_);
     } else {
         height = 1;
     }
 
     field_20_ += height;
 
-    vbt = *reinterpret_cast<int **>(self);
-    char *dlg_walk = self + vbt[2];
-    *reinterpret_cast<char **>(dlg_walk + 0xD8) = text;
-
-    StringStruct *entries = reinterpret_cast<StringStruct *>(dlg_walk + 0xBC);
-    *reinterpret_cast<int *>(reinterpret_cast<char *>(entries) + 0x20) = 0;
-    *reinterpret_cast<int *>(reinterpret_cast<char *>(entries) + 0x24) = height;
-
-    return entries->add(id);
+    StringList &entries = dialog.item_list_;
+    entries.pending_text_ = text;
+    entries.field_20_ = 0;
+    entries.field_24_ = static_cast<uint32_t>(height);
+    return entries.add(id);
 }
 
 /*
