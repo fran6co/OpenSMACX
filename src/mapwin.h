@@ -322,16 +322,15 @@ class MapWin : public virtual GraphicWin {
   void on_left_up(int, int);
   void close();
   int UNK2();
-  // Resets the "this window is live" flag (MapWinActiveOffset) and other
+  // Resets the "this window is live" flag (field_1DD74_) and other
   // per-window state; reached from this class's destructor, including the
   // compiler-generated MapWin destruction within Console and PlanWin.
   void clear(int index);
 
   // THE FIELD BLOCK IS PUBLIC, deliberately. go_reset (time.cpp, a free
   // function) resets several of these dwords on every window of the table,
-  // and the mapwin_terrain_fixup / draw_map family reads 0x1DD74 from
-  // outside through the documented raw-offset idiom; the offsets are
-  // already carved members, so hiding the reset targets behind raw-offset
+  // and the mapwin_terrain_fixup / draw_map family reads field_1DD74_ from
+  // outside. These offsets are already carved members, so hiding them behind raw-offset
   // writes would model the same bytes twice. Access changes no offset; the
   // static_assert below still pins the layout.
   // RECOVERY_MEMBER: v3 MapWin owned_ TerrainCacheEntry* 0x4 0x0046FD90
@@ -557,9 +556,7 @@ extern int MapWinCaptionDivisor;  // 0x00691E70, initially -1
 // Per-window "this window is live" dword. The MapWin constructor clears it
 // (0x00462822), MapWin::clear writes it (0x004628AF), and mapwin_system_init
 // sets it per slot (0x00471090, 0x0047109E). Every free drawing helper gates
-// on it for slots 1..7. MapWin now declares this as field_1DD74_; the offset
-// remains for older, not-yet-migrated consumers. New code uses the member.
-static const size_t MapWinActiveOffset = 0x1DD74;
+// on field_1DD74_ for slots 1..7; the primary slot is exempt.
 
 // Original4712D0 performs a nullable MapWin-to-Buffer base conversion before
 // entering the common terrain renderer. It does not own another canvas.
@@ -627,8 +624,8 @@ MEASURED inline void __cdecl draw_tile(int x_coord, int y_coord, int draw_type) 
         // is exactly "is this slot index 0?" - the primary map window is
         // exempt from the activity gate.
         if (slot != 0) {
-            const uint32_t active = *reinterpret_cast<const volatile uint32_t *>(
-                reinterpret_cast<const uint8_t *>(window) + MapWinActiveOffset);
+            const uint32_t active =
+                static_cast<const volatile MapWin *>(window)->field_1DD74_;
             if (active == 0) {
                 continue;
             }
@@ -655,8 +652,8 @@ MEASURED inline void __cdecl draw_tiles(int x_coord, int y_coord, int draw_type)
         }
         // 0x0046B157 `cmp esi, 0x7d3c3c` / 0x0046B15D je.
         if (slot != 0) {
-            const uint32_t active = *reinterpret_cast<const volatile uint32_t *>(
-                reinterpret_cast<const uint8_t *>(window) + MapWinActiveOffset);
+            const uint32_t active =
+                static_cast<const volatile MapWin *>(window)->field_1DD74_;
             if (active == 0) {
                 continue;
             }

@@ -863,15 +863,12 @@ void __cdecl line_timer(int a1) {
             continue;
         }
         if (slot != &MapWinTable[0]) {
-            const uint32_t active = *reinterpret_cast<const uint32_t *>(
-                reinterpret_cast<const uint8_t *>(window) +
-                MapWinActiveOffset);
+            const uint32_t active = window->field_1DD74_;
             if (active == 0) {
                 continue;
             }
         }
-        const uint32_t draw_flags = *reinterpret_cast<const uint32_t *>(
-            reinterpret_cast<const uint8_t *>(window) + 0x1DD70);
+        const uint32_t draw_flags = window->field_1DD70_;
         if ((draw_flags & 0xC40000) != 0) {
             window->draw_base_dest(1);
         }

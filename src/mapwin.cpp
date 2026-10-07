@@ -2537,7 +2537,7 @@ void MapWin::draw_radius(int x, int y, int draw_type) {
 Purpose: Repaint every live MapWin slot - the FREE draw_map, not the method
          above. Mirrors draw_tile/draw_tiles in mapwin.h: slot 0 is exempt
          from the activity gate, every other slot only draws when its
-         MapWinActiveOffset dword is non-zero.
+         field_1DD74_ dword is non-zero.
 // ORIGINAL: 0x0046B190 ?draw_map@@YAXH@Z 0x0046B190-0x0046B1CA BYTE_EXACT
 // size      58 bytes
 // prototype void (__cdecl ?draw_map@@YAXH@Z)(int)
@@ -2562,9 +2562,7 @@ void __cdecl draw_map(int draw_type) {
         MapWin *const window = *reinterpret_cast<MapWin *const *>(cursor);
         if (window != nullptr) {
             if (cursor == reinterpret_cast<int>(MapWinTable) ||
-                *reinterpret_cast<const volatile uint32_t *>(
-                    reinterpret_cast<const uint8_t *>(window) +
-                    MapWinActiveOffset) != 0) {
+                static_cast<const volatile MapWin *>(window)->field_1DD74_ != 0) {
                 // THE METHOD, not the seam directly: `window->draw_map(...)`
                 // compiles the image's `call rel32` to
                 // `?draw_map@MapWin@@QAEXH@Z`, where dispatching through
@@ -2598,9 +2596,7 @@ void __cdecl draw_radius(int x_coord, int y_coord, int a3, int draw_type) {
         MapWin *const window = *reinterpret_cast<MapWin *const *>(cursor);
         if (window != nullptr) {
             if (cursor == reinterpret_cast<int>(MapWinTable) ||
-                *reinterpret_cast<const volatile uint32_t *>(
-                    reinterpret_cast<const uint8_t *>(window) +
-                    MapWinActiveOffset) != 0) {
+                static_cast<const volatile MapWin *>(window)->field_1DD74_ != 0) {
                 window->draw_radius(x_coord, y_coord, a3, draw_type);
             }
         }

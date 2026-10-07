@@ -20,10 +20,14 @@ enum { GWL_HINSTANCE = -6 };
 
 uint32_t WorldClimateSkipTerrainClear;
 int TimerHoldFlag;
-uint32_t GameState;
+struct GameDataStateFields {
+    uint32_t game_state_, game_preferences_;
+};
+struct GameDataState {
+    GameDataStateFields fields_;
+} GameDataStateStorage;
 int IsMultiplayerNet;
 int ExitTurnLoop;
-uint32_t GamePreferences;
 int WinModalDepth;
 int WinScreenWidth = 800, WinScreenHeight = 600;
 int MapLongitudeBounds = 64, MapLatitudeBounds = 64;
@@ -111,7 +115,7 @@ int main(int argc, char **argv) {
     ConsoleGlobal.field_23BE4_ = 1;
     ConsoleGlobal.field_23D80_ = ConsoleGlobal.field_23D84_ =
         ConsoleGlobal.field_23D88_ = ConsoleGlobal.field_23D8C_ = 0;
-    GamePreferences = 0x1000;
+    GameDataStateStorage.fields_.game_preferences_ = 0x1000;
     MapWin window = {};
     window.field_1DDCC_ = 10;
     window.field_1DDD0_ = 1;

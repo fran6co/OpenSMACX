@@ -716,8 +716,8 @@ inline MapWin *&console_map_win() {
 // runs the console cursor and the survey-overlay latch first. Four of its
 // callees are still original bodies, so each gets a rebindable seam. Nothing
 // here binds an address that is already bound: the table is mapwin.h's
-// MapWinTable at 0x007D3C3C (which also carries MapWinTableSlots and
-// MapWinActiveOffset) and the faction id is ConsoleGlobal.faction_id_.
+// MapWinTable at 0x007D3C3C (with MapWinTableSlots and the real MapWin
+// activity member field_1DD74_) and the faction id is ConsoleGlobal.faction_id_.
 //
 // Console::cursor_next (0x005109B0, ret 8) is entered on the process-wide
 // Console the original names with `mov ecx, 0x9156b0` at 0x00510921 - never on

@@ -1608,20 +1608,19 @@ int Console::focus(int x_coord, int y_coord, int faction_id) {
             continue;
         }
         if (slot != 0) {
-            const uint32_t active = *reinterpret_cast<const volatile uint32_t *>(
-                reinterpret_cast<const uint8_t *>(window) + MapWinActiveOffset);
+            const uint32_t active =
+                static_cast<const volatile MapWin *>(window)->field_1DD74_;
             if (active == 0) {
                 continue;
             }
         }
         // 0x00510902 reads the window's wide flag dword, one dword ahead of the
-        // activity field mapwin.h already names. Kept as a documented literal
-        // rather than a constant in another class's header: MapWin owns the
-        // field, and console.h is not the place to name it. 0x00510908
+        // activity field mapwin.h already names. MapWin owns both members;
+        // retain the volatile read on the actual window receiver. 0x00510908
         // `test ecx, edx` is a bitwise AND against the tag bits, not an
         // equality, so a window carrying 0x60000000 matches either mask.
-        const uint32_t flags = *reinterpret_cast<const volatile uint32_t *>(
-            reinterpret_cast<const uint8_t *>(window) + 0x1DD70);
+        const uint32_t flags =
+            static_cast<const volatile MapWin *>(window)->field_1DD70_;
         // 0x00510908 `test ecx, edx` is ONE test with two consumers: the
         // image branches on the tag FIRST and only then on the slot, which is
         // this chained guard and not an `if (slot == 0)` outer test. Written
@@ -3069,19 +3068,19 @@ int Console::selected() {
 // calls     0x00467970 0x0046A550
 
 void Console::toggle_patrol() {
-    int first = reinterpret_cast<int>(MapWinTable[0]);
-    int mask = *reinterpret_cast<int *>(first + 0x1dd70) & 0x400000;
+    MapWin *const first = MapWinTable[0];
+    int mask = first->field_1DD70_ & 0x400000;
     int *p = reinterpret_cast<int *>(MapWinTable);
     do {
-        int obj = *p;
-        if (obj != 0 && (p == reinterpret_cast<int *>(MapWinTable) ||
-                         *reinterpret_cast<int *>(obj + MapWinActiveOffset) != 0)) {
+        MapWin *const window = *reinterpret_cast<MapWin *const *>(p);
+        if (window != nullptr && (p == reinterpret_cast<int *>(MapWinTable) ||
+                                 window->field_1DD74_ != 0)) {
             if (mask == 0) {
-                *reinterpret_cast<unsigned int *>(obj + 0x1dd70) |= 0x400000;
-                reinterpret_cast<MapWin *>(obj)->draw_base_dest(1);
+                window->field_1DD70_ |= 0x400000;
+                window->draw_base_dest(1);
             } else {
-                *reinterpret_cast<unsigned int *>(obj + 0x1dd70) &= 0xffbfffff;
-                reinterpret_cast<MapWin *>(obj)->draw_map(1);
+                window->field_1DD70_ &= 0xffbfffff;
+                window->draw_map(1);
             }
         }
         p = p + 1;

@@ -4232,8 +4232,7 @@ void __cdecl world_climate() {
         const int end = cursor + static_cast<int>(MapWinTableSlots) * 4;
         do {
             MapWin *const window = *reinterpret_cast<MapWin *const *>(cursor);
-            if (*reinterpret_cast<int *>(
-                    reinterpret_cast<char *>(window) + 0x1DD74) != 0) {
+            if (window->field_1DD74_ != 0) {
                 window->clear_terrain();
             }
             cursor += 4;
