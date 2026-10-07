@@ -149,12 +149,6 @@ struct BItem {
   uint32_t energy_;  // 0x14
 };
 
-/* 0xA1C bytes, 2 member(s), 1 named. From bodies proved byte-identical. */
-struct Base524320 {
-  uint8_t field_0_[0xA18];  // 0x0
-  uint32_t field_a18_;  // 0xA18; 0x00524320 drives slot 62 through it
-  int toggle_and_repaint(); };
-
 /* 0x1E674 bytes, 410 member(s), 0 named. From Thinker. */
 struct BaseWindow {
   uint8_t field_0_[0xA14];  // 0x0

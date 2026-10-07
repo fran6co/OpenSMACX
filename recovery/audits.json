@@ -15,23 +15,23 @@
       "ceilings": {
         "vtable": 0,
         "construct": 1,
-        "free-function destructor": 5,
+        "free-function destructor": 1,
         "explicit base construct/destroy": 1,
         "placement new on a subobject": 1,
         "hand-walked vbtable": 0,
         "VCall shim": 1,
         "ORIGINAL() vtable-slot dispatch": 0,
-        "ORIGINAL() named-pointer seam": 72,
+        "ORIGINAL() named-pointer seam": 39,
         "vtable-as-member": 3,
         "vtable-initialiser store": 0,
         "vtable address constant": 0,
         "short-named fixed-address binding": 0,
         "anonymous fixed-address global": 0,
-        "field_accessors.cpp markers": 16,
-        "leaf_recoveries.cpp markers": 38,
+        "field_accessors.cpp markers": 8,
+        "leaf_recoveries.cpp markers": 3,
         "nullsub_thunks.cpp markers": 46,
-        "hypothesis_layouts.h lines": 1610,
-        "stringstruct.cpp markers": 41
+        "hypothesis_layouts.h lines": 1604,
+        "stringstruct.cpp markers": 40
       },
       "counters": [
         {

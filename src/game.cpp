@@ -3682,6 +3682,7 @@ class Demo : public GraphicWin { public:
     int init();
     virtual void redraw();
     virtual void on_left_down(int x, int y);
+    void toggle_and_repaint();
     static void __cdecl timer_callback(int self);
 
     // RECOVERY_MEMBER: v1 Demo selected_link_ 0xA14 0x005243A0
@@ -4045,7 +4046,9 @@ int Widget::on_key(int, int a2) {
 }
 
 // ORIGINAL: 0x00524320 sub_524320 0x00524320-0x0052433B BYTE_EXACT
-// symbol    ?toggle_and_repaint@Base524320@@QAEHXZ
+// RECOVERY_BINDING: v1 {"evidence":["Pinned 0x00524320-0x0052433B toggles receiver+0xA18 through a zero test and tail-dispatches virtual slot62 at +0xF8.","Pinned 0x00524340-0x00524363 independently toggles the same receiver field and dispatches the same slot; Demo::timer_callback owns this operation through Demo::timer_phase_.","Demo::init at 0x00524460 initializes this phase field and registers the callback with its receiver; Demo::redraw at 0x005242C0 reads that field and draws the two embedded splash sprites.","GraphicWin/Win declare slot62 as void redraw(); no original class spelling, complete allocation extent, historical TU or result-consuming caller is inferred."],"reason":"Express the phase toggle through the existing splash-window Demo source owner and genuine redraw virtual; remove the fabricated Base524320 prefix and raw member-pointer dispatch, retaining the unresolved original result contract."}
+// symbol    ?toggle_and_repaint@Demo@@QAEXXZ
+// RECOVERY_HISTORY: Previous bounded adapter symbol ?toggle_and_repaint@Base524320@@QAEHXZ returned the residue of a raw slot-62 dispatch; no original result-consuming caller is established.
 // size      27 bytes
 // prototype
 // callers   0   call targets   0
@@ -4054,41 +4057,26 @@ int Widget::on_key(int, int a2) {
 // calls     (none)
 // 0x00524320  sub_524320  ->  _sub_524320
 //
-// A byte-exact Mizuchi match that no file in the tree owns yet. NOT in
-// OPENSMACX_SOURCES and not compiled: it is the emitter's verification style,
-// and rewriting it in the tree's own style is a later phase. See README.md
-// beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
+// Historical emitter note (superseded): this was reported as unowned and
+// not compiled. The ordinary Demo member below is now compiled by game.cpp;
+// the earlier adapter and its matching history remain in Git.
 
 
 /*
 Purpose: Toggle the flag and repaint through virtual slot 62.
 Original Offset: 00524320
-Return Value: the slot's result
+Return Value: no established result-consuming caller; redraw is a void virtual
 Status: Complete
 */
 // Catalogued `extern "C" int __cdecl sub_524320()`, and the disassembly
 // disagrees: no stack frame at all, ecx read directly as `this`, and the body
 // ends in `jmp [edx+0xf8]` rather than `ret`.
 //
-// The dispatch goes through a POINTER-TO-MEMBER-FUNCTION rather than a plain
-// function pointer: VC6 rejects an explicit `__thiscall` function-pointer
-// typedef with C4234, while a pointer-to-member is implicitly thiscall and
-// reproduces the tail jump exactly.
-class Slot524320 {
- public:
-    int slot062();
-};
-typedef int (Slot524320::*Slot062Fn524320)();
-
-// `Base524320` is already in hypothesis_layouts.h (0xA1C bytes, field_a18_ at
-// 0xA18), which game.cpp includes - so the body reaches the flag through that
-// layout instead of declaring a second one.
-int Base524320::toggle_and_repaint() {
-    field_a18_ = (field_a18_ == 0);
-    return (reinterpret_cast<Slot524320 *>(this)
-            ->*(*reinterpret_cast<Slot062Fn524320 *>(
-                reinterpret_cast<char *>(*reinterpret_cast<void **>(this))
-                + 0xf8)))();
+// Preserve the zero-test toggle and genuine slot-62 virtual dispatch. The
+// tail call's original register residue remains an open ABI obligation.
+void Demo::toggle_and_repaint() {
+    timer_phase_ = (timer_phase_ == 0);
+    redraw();
 }
 
 // ===== homed out of the archive 2026-09-04 =====
