@@ -6253,13 +6253,16 @@ int Buffer::wrap_flying(char *a1, int a2, int a3, int a4) {
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
 // indirect  0x005E23C3 0x005E243F
-
+// The TRIED raw-vtable/descriptor spelling above is historical seed evidence.
+// The live SDK declares IDirectDrawSurface::Lock/Unlock and DDSURFACEDESC.
+// Initialize only dwSize, and preserve the cleanup decrement on Lock failure;
+// an ignored HRESULT from Unlock is not permission to change those paths.
 
 int Buffer::put_pixel(int a1, int a2, int a3) {
   char *local_48;
   int result;
   DDSURFACEDESC description;
-  void *surface;
+  IDirectDrawSurface *surface;
 
   int cur = reinterpret_cast<int>(dib_bits_);
   if (cur == 0 && surface_ == 0) {
@@ -6278,7 +6281,7 @@ int Buffer::put_pixel(int a1, int a2, int a3) {
     return 0;
   }
 
-  surface = (void *)surface_;
+  surface = surface_;
   if (surface == 0) {
     locked_bits_ = (void *)cur;
     if (cur == 0) {
@@ -6287,11 +6290,8 @@ int Buffer::put_pixel(int a1, int a2, int a3) {
     surface_lock_count_ = surface_lock_count_ + 1;
     local_48 = (char *)cur;
   } else if (locked_bits_ == 0) {
-    typedef int(__stdcall * LockFn)(void *, void *, void *, int, int);
-    LockFn lock;
     description.dwSize = sizeof(description);
-    lock = (LockFn)(*(void ***)surface)[0x64 / 4];
-    result = lock(surface, 0, &description, 1, 0);
+    result = surface->Lock(nullptr, &description, 1, nullptr);
     if (result != 0) {
       goto after_write;
     }
@@ -6312,7 +6312,7 @@ int Buffer::put_pixel(int a1, int a2, int a3) {
   }
 
 after_write:
-  surface = (void *)surface_;
+  surface = surface_;
   if (surface == 0) {
     int n = surface_lock_count_ - 1;
     surface_lock_count_ = n;
@@ -6325,9 +6325,7 @@ after_write:
     int n = surface_lock_count_ - 1;
     surface_lock_count_ = n;
     if (locked_bits_ != 0 && n < 1) {
-      typedef int(__stdcall * UnlockFn)(void *, int);
-      UnlockFn unlock = (UnlockFn)(*(void ***)surface)[0x80 / 4];
-      unlock(surface, (int)(uintptr_t)locked_bits_);
+      surface->Unlock(locked_bits_);
       locked_bits_ = nullptr;
       surface_lock_count_ = 0;
     }
@@ -7287,7 +7285,7 @@ int Buffer::draw_dest(Buffer * a1, int a2, int a3, int a4, int a5, int a6, unsig
         g_BUFFER_SPRITE.cTransparentIndex_ = static_cast<char>(transparentIndex);
         g_BUFFER_SPRITE.fObj1Exists_ = 0;
 
-        void *surface = reinterpret_cast<void *>(surface_);
+        IDirectDrawSurface *surface = surface_;
         if (surface == 0) {
             int count = static_cast<int>(surface_lock_count_) - 1;
             surface_lock_count_ = count;
@@ -7301,10 +7299,7 @@ int Buffer::draw_dest(Buffer * a1, int a2, int a3, int a4, int a5, int a6, unsig
             if (cachedBits == 0 || count > 0) {
                 goto forward;
             }
-            typedef void(__stdcall * UnlockFn)(void *, void *);
-            UnlockFn unlock = *reinterpret_cast<UnlockFn *>(
-                *reinterpret_cast<int *>(surface) + 0x80);
-            unlock(surface, reinterpret_cast<void *>(cachedBits));
+            surface->Unlock(reinterpret_cast<void *>(cachedBits));
         }
         locked_bits_ = nullptr;
         surface_lock_count_ = 0;
@@ -7362,7 +7357,7 @@ int Buffer::draw_multi_table_dest(Buffer * a1, int a2, int a3, int a4, int a5, i
         g_BUFFER_SPRITE.cTransparentIndex_ = static_cast<char>(transparentIndex);
         g_BUFFER_SPRITE.fObj1Exists_ = 0;
 
-        void *surface = reinterpret_cast<void *>(surface_);
+        IDirectDrawSurface *surface = surface_;
         if (surface == 0) {
             int count = static_cast<int>(surface_lock_count_) - 1;
             surface_lock_count_ = count;
@@ -7376,10 +7371,7 @@ int Buffer::draw_multi_table_dest(Buffer * a1, int a2, int a3, int a4, int a5, i
             if (cachedBits == 0 || count > 0) {
                 goto forward;
             }
-            typedef void(__stdcall * UnlockFn)(void *, void *);
-            UnlockFn unlock = *reinterpret_cast<UnlockFn *>(
-                *reinterpret_cast<int *>(surface) + 0x80);
-            unlock(surface, reinterpret_cast<void *>(cachedBits));
+            surface->Unlock(reinterpret_cast<void *>(cachedBits));
         }
         locked_bits_ = nullptr;
         surface_lock_count_ = 0;
