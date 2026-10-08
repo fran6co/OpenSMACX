@@ -1287,10 +1287,11 @@ Purpose: Clear one entry of the array at 0xA1C, then clear the two words at
          `eax*4` whatever the caller passed - so this does not add a guard the
          program does not have.
 
-         Note the array at 0xA1C overlaps the two words cleared afterwards:
-         index 2 IS the word at 0xA24, and index 3 the one at 0xA28. So calling
-         with 2 or 3 writes the same slot twice, which is visible only because
-         the fixture checks exact bytes rather than the cleared entry alone.
+         Original indices 2/3 reach the following words at 0xA24/0xA28;
+         they are not additional offer_count_ elements. The indexed store
+         and both unconditional clears retain their order. Invalid-index
+         compiler effects remain a restoration obligation, not a valid
+         C++ array-domain claim.
 // ORIGINAL: 0x004413C0 ?UNK3@DiploWin@@QAEXH@Z 0x004413C0-0x004413E2
 // size      34 bytes
 // prototype void (__thiscall ?UNK3@DiploWin@@QAEXH@Z)(DiploWin* this, int)
@@ -1302,11 +1303,9 @@ Return Value: n/a
 Status: Complete
 */
 void DiploWin::UNK3(int a1) {
-    uint8_t *const self = reinterpret_cast<uint8_t *>(this);
-    *reinterpret_cast<int32_t *>(self + 0xA1C + a1 * 4) = 0;
-    int32_t *const pair = reinterpret_cast<int32_t *>(self + 0xA24);
-    pair[0] = 0;
-    pair[1] = 0;
+    offer_count_[a1] = 0;
+    field_A24_ = 0;
+    field_A28_ = 0;
 }
 
 
@@ -1351,7 +1350,6 @@ void DiploWin::hide() {
 
 // ORIGINAL: 0x004413F0 ?kill_offer@DiploWin@@QAEXHH@Z 0x004413F0-0x0044148C FILE
 // TRIED: `int idx = a2;` declared inside the inner `if (a2 < count - 1)` (mismatch, idx assign shifted 5 instructions late) and hoisted above it with a separate `countMinus1` temp (MNEMONIC_ONLY, worse). Landed the inner-if placement: MISMATCH #23, mnemonic similarity 0.98, same byte count (156/156).
-// working copy - scaffold materialised by --work
 // size      156 bytes
 // prototype void (__thiscall ?kill_offer@DiploWin@@QAEXHH@Z)(DiploWin* this, int, int)
 // callers   3   call targets   1
@@ -1361,28 +1359,29 @@ void DiploWin::hide() {
 // indirect  0x0044147F
 
 void DiploWin::kill_offer(int a1, int a2) {
-    char *self = reinterpret_cast<char *>(this);
     if (a1 == 0) {
-        message_data(0x1507, *reinterpret_cast<int *>(self + 0xAB8), a2, 0, 0, 0);
+        message_data(0x1507, faction_id_with_, a2, 0, 0, 0);
     }
-    int count = *reinterpret_cast<int *>(self + 0xA1C + a1 * 4);
+    int count = offer_count_[a1];
     if (a2 < count) {
         if (a2 < count - 1) {
-            char *rec = self + 0xA2C + a1 * 32 + a2 * 4;
+            int *type = &offer_type_[a1][a2];
+            int *value = &offer_value_[a1][a2];
             int idx = a2;
             do {
                 idx = idx + 1;
-                *reinterpret_cast<int *>(rec) = *reinterpret_cast<int *>(rec + 4);
-                *reinterpret_cast<int *>(rec + 0x40) = *reinterpret_cast<int *>(rec + 0x44);
-                rec += 4;
-                count = *reinterpret_cast<int *>(self + 0xA1C + a1 * 4);
+                *type = type[1];
+                *value = value[1];
+                ++type;
+                ++value;
+                count = offer_count_[a1];
             } while (idx < count - 1);
         }
-        count = *reinterpret_cast<int *>(self + 0xA1C + a1 * 4) - 1;
-        *reinterpret_cast<int *>(self + 0xA1C + a1 * 4) = count;
+        count = offer_count_[a1] - 1;
+        offer_count_[a1] = count;
         DiploOffersDirty = 1;
-        *reinterpret_cast<int *>(self + 0xA24) = 0;
-        *reinterpret_cast<int *>(self + 0xA28) = 0;
+        field_A24_ = 0;
+        field_A28_ = 0;
         redraw();
     }
 
@@ -1422,57 +1421,23 @@ void DiploWin::receive_maybe_deal(int sender) {
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x004413F0 0x00592EE0
 // indirect  0x00441598
-// PRESERVED UNIT - measured MISMATCH.
-//
-// Kept for COVERAGE. This directory IS on the ratchet: every file here
-// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
-// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
-// quarter of the project's total. It is still in no build; the earlier
-// header said "on no ratchet", which stopped being true when the map
-// moved into src/ and was still being written into new files.
-//
-// address        0x00441490
-// measured tier  MISMATCH
-// divergence     2
-//
-// The WHOLE unit as measured, scaffolding included: for the units
-// that are byte-exact yet refuse extraction, the agent tuned the
-// emitted scaffolding and the body alone will not reproduce the
-// verdict. To resume, copy everything below back over
-//   build/byte-match/00441490/unit.cpp
-// and score it with tools/agent_brief.py.
-// GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?add_offer@DiploWin@@QAEXHHH@Z  at 0x00441490  (297 bytes)
-//
-// A VERIFICATION ARTIFACT, not product source: classes are opaque and
-// globals are bound to fixed addresses, because both are byte-visible
-// and both differ from the style src/ is written in.
-//
-// The VC6 dialect limits and the source-form rules used to live here.
-// They are knowledge, not scaffolding, so they now live in the agent
-// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
-// where they can be edited without regenerating anything and are in
-// context from the first token rather than behind a file read. This
-// emitter computes declarations; it does not carry lessons.
+// Historical seed: the complete unit measured MISMATCH; its scaffolding
+// influenced emission. This compiled owner retains the body and original
+// mapping, not the retired unit-generation and scoring route.
 
 
 void DiploWin::add_offer(int a1, int a2, int a3) {
-    char *self = reinterpret_cast<char *>(this);
-    int *count_arr = reinterpret_cast<int *>(self + 0xa1c);
-    int *type_arr = reinterpret_cast<int *>(self + 0xa2c);
-    int *val_arr = reinterpret_cast<int *>(self + 0xa6c);
-
     DiploOffersDirty = 1;
 
     int i;
-    for (i = 0; i < count_arr[a1]; i++) {
+    for (i = 0; i < offer_count_[a1]; i++) {
         if (a2 == 4 || a2 == 2 || a2 == 3) {
-            int existing = type_arr[i + a1 * 8];
+            int existing = offer_type_[a1][i];
             if (existing == 4 || existing == 2 || existing == 3) {
                 goto found;
             }
         } else if (a2 == 1) {
-            if (type_arr[i + a1 * 8] == 1) {
+            if (offer_type_[a1][i] == 1) {
                 if (a3 <= 0) {
                     kill_offer(a1, i);
                     return;
@@ -1480,34 +1445,33 @@ void DiploWin::add_offer(int a1, int a2, int a3) {
                 goto found;
             }
         } else if (a2 == 0) {
-            if (type_arr[i + a1 * 8] == 0 && val_arr[i + a1 * 8] == a3) {
+            if (offer_type_[a1][i] == 0 && offer_value_[a1][i] == a3) {
                 return;
             }
         } else if (a2 == 5) {
-            if (type_arr[i + a1 * 8] == 5 && val_arr[i + a1 * 8] == a3) {
+            if (offer_type_[a1][i] == 5 && offer_value_[a1][i] == a3) {
                 return;
             }
         }
     }
 
     {
-        int count = count_arr[a1];
+        int count = offer_count_[a1];
         if (count >= 8) {
             return;
         }
-        count_arr[a1] = count + 1;
+        offer_count_[a1] = count + 1;
         i = count;
     }
 
 found:
     {
-        int slot = i + a1 * 8;
-        type_arr[slot] = a2;
-        val_arr[slot] = a3;
-        *reinterpret_cast<int *>(self + 0xa24) = 0;
-        *reinterpret_cast<int *>(self + 0xa28) = 0;
+        offer_type_[a1][i] = a2;
+        offer_value_[a1][i] = a3;
+        field_A24_ = 0;
+        field_A28_ = 0;
         if (a1 == 0) {
-            message_data(0x1506, *reinterpret_cast<int *>(self + 0xab8),
+            message_data(0x1506, faction_id_with_,
                         a2, a3, a1, a1);
         }
         redraw();

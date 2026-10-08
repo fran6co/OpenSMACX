@@ -100,17 +100,15 @@ class DiploWin : public GraphicWin, public SubInterface {
   int on_iface_dialog_back_draw(int a1);
 
  private:
-  // UNK2 zeroes the two dwords at 0xA24 and 0xA28, just past the
-  // GraphicWin base; everything between is unmapped.
+  // UNK2/UNK3 clear the two party-status dwords at 0xA24 and 0xA28.
   // SubInterface occupies 0xA14..0xA1B; these are not two scalar members.
   int offer_count_[2];  // 0xA1C: one count for each party
   int32_t field_A24_;
   int32_t field_A28_;
 
-  // Storage the image proves is here: its own methods reach 0xDA80.
-  // Extent only - this class carries no size assertion, and the bound is a floor.
-  // 418 member(s) from the IDA database, 5 named; it starts a member at 0xA2C, which is where src/ ends.
-
+  // add_offer/kill_offer and exchange execution share these parallel lanes.
+  // Their two-party/eight-offer shape does not validate unchecked indices
+  // or establish the complete original class extent/lifetime.
   int offer_type_[2][8];  // 0xA2C
   int offer_value_[2][8];  // 0xA6C
   uint32_t field_AAC_;  // 0xAAC
