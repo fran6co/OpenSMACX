@@ -65,6 +65,7 @@ def extract_edgescan_declaration(header):
 
 
 FIXTURE = r'''#include <assert.h>
+#include <limits.h>
 #include <stdint.h>
 
 #ifndef __cdecl
@@ -100,6 +101,8 @@ int fixed_div(int numerator, int denominator) {
 }
 
 // ACTUAL_EDGE_SCAN_METHODS
+
+// ACTUAL_EDGE_STEP_HELPERS
 
 static void set_sentinels(EdgeScan &edge) {
     edge.f0 = 1;
@@ -223,6 +226,101 @@ int main() {
     assert(Texture::setup_edge_gouraud(&edge, 0) == 0);
     assert(edge.counter == -4);
     assert_non_counter_fields_unchanged(edge);
+
+    // Exercise nonzero post-decrement behavior for ordinary zero/negative
+    // counters and native signed wrap at INT_MIN. Conversion of out-of-range
+    // unsigned bits to int is implementation-defined; these assertions state
+    // the pinned x86 two's-complement target behavior explicitly.
+    int (*steppers[2])(EdgeScan *) = {sub_61f790, sub_61fdf0};
+    const int input_counters[3] = {0, -1, INT_MIN};
+    const int expected_counters[3] = {-1, -2, INT_MAX};
+    for (int stepper = 0; stepper < 2; ++stepper) {
+        for (int index = 0; index < 3; ++index) {
+            edge.f0 = 1;
+            edge.counter = input_counters[index];
+            edge.id = 0;
+            edge.accumA = 1; edge.deltaA = 2;
+            edge.accumB = 3; edge.deltaB = 4;
+            edge.accumC = 5; edge.deltaC = 6;
+            edge.extraDeltaC = 7;
+            edge.fracAccum = -10; edge.fracDelta = 0; edge.fracSub = 2;
+            edge.accumD = 20; edge.deltaD = 4;
+            assert(steppers[stepper](&edge) == 1);
+            assert(edge.counter == expected_counters[index]);
+            assert(edge.accumA == 3 && edge.accumB == 7);
+            assert(edge.accumC == 11 && edge.fracAccum == -10);
+            assert(edge.accumD == (stepper == 0 ? 20 : 24));
+        }
+    }
+
+    // Positive carry, exactly-zero sum, negative sum, and both signed
+    // comparison outcomes after 32-bit addition overflow. Run all cases
+    // through both extracted step bodies.
+    for (int stepper = 0; stepper < 2; ++stepper) {
+        edge.counter = 2;
+        edge.accumA = 1; edge.deltaA = 2;
+        edge.accumB = 3; edge.deltaB = 4;
+        edge.accumC = 100; edge.deltaC = -2; edge.extraDeltaC = 7;
+        edge.fracAccum = 3; edge.fracDelta = 2; edge.fracSub = 4;
+        edge.accumD = INT_MAX; edge.deltaD = 1;
+        assert(steppers[stepper](&edge) == 1);
+        assert(edge.accumC == 105 && edge.fracAccum == 1);
+        assert(edge.accumD == (stepper == 0 ? INT_MAX : INT_MIN));
+
+        // 0 is not positive; leave the incremented C value and fraction alone.
+        edge.counter = 2; edge.accumC = 10; edge.deltaC = 2;
+        edge.extraDeltaC = 99; edge.fracAccum = -2; edge.fracDelta = 2;
+        edge.fracSub = 4;
+        assert(steppers[stepper](&edge) == 1);
+        assert(edge.accumC == 12 && edge.fracAccum == 0);
+
+        // Negative fractional sum also bypasses correction.
+        edge.counter = 2; edge.accumC = 10; edge.deltaC = 2;
+        edge.fracAccum = -3; edge.fracDelta = -2; edge.fracSub = 4;
+        assert(steppers[stepper](&edge) == 1);
+        assert(edge.accumC == 12 && edge.fracAccum == -5);
+
+        // INT_MAX + 1 wraps to INT_MIN and fails the signed `> 0` test.
+        edge.counter = 2; edge.accumC = 10; edge.deltaC = 2;
+        edge.extraDeltaC = 99;
+        edge.fracAccum = INT_MAX; edge.fracDelta = 1; edge.fracSub = 4;
+        assert(steppers[stepper](&edge) == 1);
+        assert(edge.accumC == 12 && edge.fracAccum == INT_MIN);
+
+        // INT_MIN - 1 wraps to INT_MAX, takes the correction, then subtracts
+        // fracSub from that wrapped positive value.
+        edge.counter = 2; edge.accumC = 10; edge.deltaC = 2;
+        edge.extraDeltaC = 99;
+        edge.fracAccum = INT_MIN; edge.fracDelta = -1; edge.fracSub = 1;
+        assert(steppers[stepper](&edge) == 1);
+        assert(edge.accumC == 111 && edge.fracAccum == INT_MAX - 1);
+    }
+
+    // Counter refresh: a zero after decrement calls the corresponding real
+    // static setup on this same record/id and returns its normalized result.
+    uv_b[0] = 10; uv_b[1] = 0;
+    uv_b[2] = 31; uv_b[3] = 4;
+    uv_b[4] = 50; uv_b[5] = 8;
+    vertex_count = 3;
+    max_y_index = 2;
+    for (int stepper = 0; stepper < 2; ++stepper) {
+        edge.f0 = 1; edge.counter = 1; edge.id = 0;
+        assert(steppers[stepper](&edge) == 1);
+        assert(edge.counter == 4 && edge.id == 1);
+    }
+
+    // The same callback paths return false when the endpoint already equals
+    // max-y; only the stepper's initial counter decrement has taken effect.
+    max_y_index = 0;
+    for (int stepper = 0; stepper < 2; ++stepper) {
+        edge.f0 = 1; edge.counter = 1; edge.id = 0;
+        edge.accumA = 303; edge.accumB = 304; edge.accumC = 307;
+        edge.accumD = 313; edge.fracAccum = 310;
+        assert(steppers[stepper](&edge) == 0);
+        assert(edge.counter == 0 && edge.accumA == 303 && edge.accumB == 304);
+        assert(edge.accumC == 307 && edge.accumD == 313);
+        assert(edge.fracAccum == 310);
+    }
 }
 '''
 
@@ -235,11 +333,15 @@ def host_source():
     bodies = (
         extract_braced(cpp, "int __cdecl Texture::setup_edge_gouraud("),
         extract_braced(cpp, "int __cdecl Texture::setup_edge("),
+        extract_braced(cpp, "int __cdecl sub_61f790(EdgeScan *edge)"),
+        extract_braced(cpp, "int __cdecl sub_61fdf0(EdgeScan *edge)"),
     )
     assert FIXTURE.count("// ACTUAL_EDGESCAN_DECLARATION") == 1
     assert FIXTURE.count("// ACTUAL_EDGE_SCAN_METHODS") == 1
+    assert FIXTURE.count("// ACTUAL_EDGE_STEP_HELPERS") == 1
     return (FIXTURE.replace("// ACTUAL_EDGESCAN_DECLARATION", edge_scan)
-            .replace("// ACTUAL_EDGE_SCAN_METHODS", "\n\n".join(bodies)))
+            .replace("// ACTUAL_EDGE_SCAN_METHODS", "\n\n".join(bodies[:2]))
+            .replace("// ACTUAL_EDGE_STEP_HELPERS", "\n\n".join(bodies[2:])))
 
 
 @pytest.mark.parametrize("compiler_name", ["g++", "clang++"])
@@ -258,3 +360,25 @@ def test_actual_edgescan_owners_on_bounded_walk_and_sign_cases(
         check=True,
     )
     subprocess.run([str(exe)], check=True)
+
+
+def test_actual_step_bodies_keep_native_field_store_order():
+    cpp = CPP_SOURCE.read_text(encoding="utf-8")
+    plain = extract_braced(cpp, "int __cdecl sub_61f790(EdgeScan *edge)")
+    gouraud = extract_braced(cpp, "int __cdecl sub_61fdf0(EdgeScan *edge)")
+
+    def stores(body):
+        return re.findall(
+            r"edge->(counter|accumA|accumB|accumC|accumD|fracAccum)\s*=(?!=)",
+            masked(body),
+        )
+
+    assert stores(plain) == [
+        "counter", "accumB", "accumA", "accumC", "fracAccum", "accumC", "fracAccum"
+    ]
+    assert stores(gouraud) == [
+        "counter", "accumB", "accumA", "accumC", "accumD", "fracAccum",
+        "accumC", "fracAccum"
+    ]
+    assert "Texture::setup_edge(edge, edge->id)" in masked(plain)
+    assert "Texture::setup_edge_gouraud(edge, edge->id)" in masked(gouraud)

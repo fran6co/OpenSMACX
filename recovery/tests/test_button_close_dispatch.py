@@ -80,6 +80,7 @@ def actual():
         # Full actual storage run, not a hand-spelled offset simulation.
         start = whole.index('  uint32_t field_A14_;' if name == 'BaseButton' else
                             '  Sprite *sprite_;' if name == 'ImageButton' else
+                            '  Sprite *field_AB8_;' if name == 'PushButton' else
                             '  uint32_t field_AB8_;')
         members = whole[start:-1]
         members = re.sub(r'\b(?:private|protected):', 'public:', members)
@@ -96,8 +97,8 @@ def actual():
         one(c['basebutton'], r'^uint32_t BaseButtonA98Default;'),
         one(h['basebutton'], r'^extern Font \*BaseButtonDefaultFonts\[3\];'),
         one(c['basebutton'], r'^Font \*BaseButtonDefaultFonts\[3\];'),
-        one(h['pushbutton'], r'^extern uint32_t PushButtonDefaults\[18\];'),
-        one(c['gamma'], r'^uint32_t PushButtonDefaults\[18\];'),
+        one(h['pushbutton'], r'^extern Sprite \*PushButtonDefaults\[18\];'),
+        one(c['gamma'], r'^Sprite \*PushButtonDefaults\[18\];'),
         one(h['dialog'], r'^extern uint32_t DialogDefaults\[37\];'),
         'uint32_t DialogDefaults[37];',
         one(h['general'], r'^LPVOID __cdecl mem_get_old\(size_t size\);'),
@@ -117,7 +118,7 @@ def actual():
     parts['sprite'] += '\n' + braced(h['sprite'], 'int width() const') + '\n' + braced(h['sprite'], 'int height() const')
     # Original 18 consecutive destinations AB8..AFC; not parsed from candidate assignments.
     names = [f'field_{offset:X}_' for offset in range(0xAB8, 0xB00, 4)]
-    parts['push_seed'] = '\n'.join(f'p.{name}=800+{i};' for i, name in enumerate(names))
+    parts['push_seed'] = '\n'.join(f'p.{name}=&push_seed_sprites[{i}];' for i, name in enumerate(names))
     parts['push_values'] = ','.join(f'p.{name}' for name in names)
     return parts
 
@@ -149,6 +150,7 @@ DECLARATIONS
 OWNERS
 uint32_t *const BaseButtonDefaultTextColors=DialogDefaults+5;
 Sprite flat_default_sprites[81];
+Sprite push_default_sprites[36], push_seed_sprites[18];
 Sprite *flat_defaults[27];Sprite **const FlatButtonDefaultsTable=flat_defaults;
 BaseButton *active;Font fonts[6]={{true},{true},{true},{true},{false},{true}};
 void Time::close(){require(!observing||this==&active->time1_);event('T');}
@@ -195,7 +197,7 @@ template<class T>struct Probe:T{
 void defaults(){
     for(int i=0;i<37;++i)DialogDefaults[i]=1000+i*17;
     for(int i=0;i<27;++i)flat_defaults[i]=&flat_default_sprites[i];
-    for(int i=0;i<18;++i)PushButtonDefaults[i]=3000+i*31;
+    for(int i=0;i<18;++i)PushButtonDefaults[i]=&push_default_sprites[i];
     BaseButtonA94Default=401;BaseButtonA98Default=402;
     BaseButtonDefaultFonts[0]=&fonts[0];BaseButtonDefaultFonts[1]=&fonts[1];BaseButtonDefaultFonts[2]=&fonts[2];
 }
@@ -228,7 +230,7 @@ void flat_cleared(FlatButton&f){base_cleared(f);require(f.field_A14_==0&&f.field
     for(int i=0;i<27;++i)require(f.config[i]==flat_defaults[i]);
 }
 void push_poison(PushButton&p){poison(p);PUSH_SEED}
-std::vector<uint32_t> push_values(PushButton&p){return {PUSH_VALUES};}
+std::vector<Sprite*> push_values(PushButton&p){return {PUSH_VALUES};}
 void push_cleared(PushButton&p){base_cleared(p);auto values=push_values(p);
     for(int i=0;i<18;++i)require(values[i]==PushButtonDefaults[i]);}
 void closes(){
@@ -261,7 +263,7 @@ void closes(){
     image.ImageButton::close();require(events=="G"&&image.sprite_==&replacement_sprite);end();
     defaults();push_poison(push);begin(push);const auto before=push_values(push);
     hook=[&](char k){if(k=='G'){require(push_values(push)==before);
-        for(int i=0;i<18;++i)PushButtonDefaults[i]=6000+i*13;}};
+        for(int i=0;i<18;++i)PushButtonDefaults[i]=&push_default_sprites[18+i];}};
     static_cast<BaseButton*>(&push)->close();require(events=="QG");push_cleared(push);
     events.clear();hook=nullptr;push.PushButton::close();require(events=="G");end();
 }

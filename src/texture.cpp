@@ -5659,8 +5659,8 @@ void Texture::sub_61d090(Buffer *buffer, int *vertices, int *zvals,
 }
 
 // ORIGINAL: 0x0061F790 sub_61f790 0x0061F790-0x0061F7FD FILE
-// symbol    ?sub_61f790@@YAHPAVTexture@@@Z
-// working copy - scaffold materialised by --work
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:0x0061f790: sole stack argument supplies counter+4, endpoint+8 and the interpolant words; zero after decrement calls static setup with that same pointer", "src/texture.h: EdgeScan fields and 0x3C stride; pinned setup 0x00624D80/0x0061FC90 writes those exact words", "Original signed branch and 32-bit wrapping arithmetic retained; unsigned-to-int conversion is target-specific, not a portability claim"], "reason": "The free cdecl edge stepper consumes the same EdgeScan record as its static setup callback, not a Texture receiver or integer address."}
+// symbol    ?sub_61f790@@YAHPAUEdgeScan@@@Z
 // size      109 bytes
 // prototype 
 // callers   0   call targets   1
@@ -5668,39 +5668,36 @@ void Texture::sub_61d090(Buffer *buffer, int *vertices, int *zvals,
 // flags     hidden;sp_ready;purged_ok
 // calls     0x00624D80
 
-// GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: sub_61f790  at 0x0061F790  (109 bytes)
-//
-// A VERIFICATION ARTIFACT, not product source: classes are opaque and
-// globals are bound to fixed addresses, because both are byte-visible
-// and both differ from the style src/ is written in.
-//
-// The VC6 dialect limits and the source-form rules used to live here.
-// They are knowledge, not scaffolding, so they now live in the agent
-// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
-// where they can be edited without regenerating anything and are in
-// context from the first token rather than behind a file read. This
-// emitter computes declarations; it does not carry lessons.
-
-int __cdecl sub_61f790(Texture *tex) {
-    char *self = reinterpret_cast<char *>(tex);
-    int refcount = *reinterpret_cast<int *>(self + 4) - 1;
-    *reinterpret_cast<int *>(self + 4) = refcount;
-    if (refcount == 0) {
-        int count = *reinterpret_cast<int *>(self + 8);
-        int hr = tex->setup_edge(reinterpret_cast<EdgeScan *>(tex), count);
-        return hr != 0;
+int __cdecl sub_61f790(EdgeScan *edge) {
+    edge->counter = static_cast<int>(
+        static_cast<unsigned int>(edge->counter) - 1u);
+    if (edge->counter == 0) {
+        return Texture::setup_edge(edge, edge->id) != 0;
     }
 
-    *reinterpret_cast<int *>(self + 0x10) += *reinterpret_cast<int *>(self + 0x18);
-    int sum1c = *reinterpret_cast<int *>(self + 0x1c) + *reinterpret_cast<int *>(self + 0x20);
-    *reinterpret_cast<int *>(self + 0xc) += *reinterpret_cast<int *>(self + 0x14);
-    *reinterpret_cast<int *>(self + 0x1c) = sum1c;
-    int sum28 = *reinterpret_cast<int *>(self + 0x28) + *reinterpret_cast<int *>(self + 0x2c);
-    *reinterpret_cast<int *>(self + 0x28) = sum28;
-    if (sum28 > 0) {
-        *reinterpret_cast<int *>(self + 0x1c) = *reinterpret_cast<int *>(self + 0x24) + sum1c;
-        *reinterpret_cast<int *>(self + 0x28) = sum28 - *reinterpret_cast<int *>(self + 0x30);
+    const int accum_a = static_cast<int>(
+        static_cast<unsigned int>(edge->accumA) +
+        static_cast<unsigned int>(edge->deltaA));
+    const int accum_b = static_cast<int>(
+        static_cast<unsigned int>(edge->accumB) +
+        static_cast<unsigned int>(edge->deltaB));
+    const int accum_c = static_cast<int>(
+        static_cast<unsigned int>(edge->accumC) +
+        static_cast<unsigned int>(edge->deltaC));
+    edge->accumB = accum_b;
+    edge->accumA = accum_a;
+    edge->accumC = accum_c;
+    const int frac_accum = static_cast<int>(
+        static_cast<unsigned int>(edge->fracAccum) +
+        static_cast<unsigned int>(edge->fracDelta));
+    edge->fracAccum = frac_accum;
+    if (frac_accum > 0) {
+        edge->accumC = static_cast<int>(
+            static_cast<unsigned int>(edge->accumC) +
+            static_cast<unsigned int>(edge->extraDeltaC));
+        edge->fracAccum = static_cast<int>(
+            static_cast<unsigned int>(edge->fracAccum) -
+            static_cast<unsigned int>(edge->fracSub));
     }
     return 1;
 }
@@ -6242,9 +6239,9 @@ finish:
 }
 
 // ORIGINAL: 0x0061FDF0 sub_61fdf0 0x0061FDF0-0x0061FE68 FILE
-// symbol    ?sub_61fdf0@@YAHH@Z
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:0x0061fdf0: sole stack argument supplies counter+4, endpoint+8 and the interpolant words; zero after decrement calls static setup with that same pointer", "src/texture.h: EdgeScan fields and 0x3C stride; pinned setup 0x00624D80/0x0061FC90 writes those exact words", "Original signed branch and 32-bit wrapping arithmetic retained; unsigned-to-int conversion is target-specific, not a portability claim"], "reason": "The free cdecl edge stepper consumes the same EdgeScan record as its static setup callback, not a Texture receiver or integer address."}
+// symbol    ?sub_61fdf0@@YAHPAUEdgeScan@@@Z
 // TRIED: calling through the scaffold's `Texture::setup_edge_gouraud` member (thiscall, this-in-ECX) - the disasm shows two bare pushes and no ECX setup, so a free __cdecl decl was used instead; MISMATCH is at #20 (near the tail), not tried further.
-// working copy - scaffold materialised by --work
 // size      120 bytes
 // prototype 
 // callers   0   call targets   1
@@ -6252,38 +6249,40 @@ finish:
 // flags     hidden;sp_ready;purged_ok
 // calls     0x0061FC90
 
-// GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: sub_61fdf0  at 0x0061FDF0  (120 bytes)
-//
-// A VERIFICATION ARTIFACT, not product source: classes are opaque and
-// globals are bound to fixed addresses, because both are byte-visible
-// and both differ from the style src/ is written in.
-//
-// The VC6 dialect limits and the source-form rules used to live here.
-// They are knowledge, not scaffolding, so they now live in the agent
-// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
-// where they can be edited without regenerating anything and are in
-// context from the first token rather than behind a file read. This
-// emitter computes declarations; it does not carry lessons.
-
-int __cdecl sub_61fdf0(int param_1) {
-    int *base = reinterpret_cast<int *>(param_1);
-    int count = base[1] - 1;
-    base[1] = count;
-    if (count == 0) {
-        int result = Texture::setup_edge_gouraud(reinterpret_cast<EdgeScan *>(param_1), base[2]);
-        return result != 0;
+int __cdecl sub_61fdf0(EdgeScan *edge) {
+    edge->counter = static_cast<int>(
+        static_cast<unsigned int>(edge->counter) - 1u);
+    if (edge->counter == 0) {
+        return Texture::setup_edge_gouraud(edge, edge->id) != 0;
     }
-    base[4] += base[6];
-    int t = base[7] + base[8];
-    base[3] += base[5];
-    base[7] = t;
-    base[0xd] += base[0xe];
-    int t2 = base[0xa] + base[0xb];
-    base[0xa] = t2;
-    if (t2 > 0) {
-        base[7] = base[9] + t;
-        base[0xa] = t2 - base[0xc];
+
+    const int accum_a = static_cast<int>(
+        static_cast<unsigned int>(edge->accumA) +
+        static_cast<unsigned int>(edge->deltaA));
+    const int accum_b = static_cast<int>(
+        static_cast<unsigned int>(edge->accumB) +
+        static_cast<unsigned int>(edge->deltaB));
+    const int accum_c = static_cast<int>(
+        static_cast<unsigned int>(edge->accumC) +
+        static_cast<unsigned int>(edge->deltaC));
+    const int accum_d = static_cast<int>(
+        static_cast<unsigned int>(edge->accumD) +
+        static_cast<unsigned int>(edge->deltaD));
+    edge->accumB = accum_b;
+    edge->accumA = accum_a;
+    edge->accumC = accum_c;
+    edge->accumD = accum_d;
+    const int frac_accum = static_cast<int>(
+        static_cast<unsigned int>(edge->fracAccum) +
+        static_cast<unsigned int>(edge->fracDelta));
+    edge->fracAccum = frac_accum;
+    if (frac_accum > 0) {
+        edge->accumC = static_cast<int>(
+            static_cast<unsigned int>(edge->accumC) +
+            static_cast<unsigned int>(edge->extraDeltaC));
+        edge->fracAccum = static_cast<int>(
+            static_cast<unsigned int>(edge->fracAccum) -
+            static_cast<unsigned int>(edge->fracSub));
     }
     return 1;
 }
