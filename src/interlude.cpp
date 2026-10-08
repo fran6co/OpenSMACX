@@ -17,6 +17,7 @@
 #include "win.h"
 #include "xpops.h"
 #include "font.h"
+#include "popup_fonts.h"
 
 // Shared storage closure belongs to the coordinator's original owners.
 // The pointer cell selects this observed NUL-terminated text-file identifier.

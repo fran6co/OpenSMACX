@@ -3,6 +3,7 @@
 
 #include "faction.h"
 #include "font.h"
+#include "popup_fonts.h"
 #include "game.h"
 #include "sprite.h"
 #include "text.h"

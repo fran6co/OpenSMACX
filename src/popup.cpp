@@ -25,6 +25,7 @@
 #include <cstring>
 #include "original_seam.h"
 #include "popup.h"
+#include "popup_fonts.h"
 #include "buffer.h"
 #include "diplopop.h"
 #include "main.h"  // PopupModalActive, shared modal width override.
@@ -50,6 +51,49 @@
 #include "palette.h"
 #include "general.h"
 #include "faction.h"
+
+// Borrowed FontTable entries selected by application popup policy.
+// config_popups publishes these pointers; they own no Font lifetime.
+// RECOVERY_OBJECT: v1 0x009403D8 ?PopupMainFont@@3PAVFont@@A
+Font *PopupMainFont;          // 0x009403D8
+// RECOVERY_OBJECT: v1 0x0094575C ?PopupMainBoldFont@@3PAVFont@@A
+Font *PopupMainBoldFont;      // 0x0094575C
+// RECOVERY_OBJECT: v1 0x00945760 ?PopupMainItalicFont@@3PAVFont@@A
+Font *PopupMainItalicFont;    // 0x00945760
+// RECOVERY_OBJECT: v1 0x009403DC ?PopupSmallFont@@3PAVFont@@A
+Font *PopupSmallFont;         // 0x009403DC
+// RECOVERY_OBJECT: v1 0x009457F4 ?PopupSmallBoldFont@@3PAVFont@@A
+Font *PopupSmallBoldFont;     // 0x009457F4
+// RECOVERY_OBJECT: v1 0x009457F0 ?PopupSmallItalicFont@@3PAVFont@@A
+Font *PopupSmallItalicFont;   // 0x009457F0
+// RECOVERY_OBJECT: v1 0x009457EC ?PopupMenuFont@@3PAVFont@@A
+Font *PopupMenuFont;          // 0x009457EC
+// RECOVERY_OBJECT: v1 0x00945764 ?PopupMenuBoldFont@@3PAVFont@@A
+Font *PopupMenuBoldFont;      // 0x00945764
+// RECOVERY_OBJECT: v1 0x00945768 ?PopupMenuItalicFont@@3PAVFont@@A
+Font *PopupMenuItalicFont;    // 0x00945768
+// RECOVERY_OBJECT: v1 0x0094576C ?PopupMediumFont@@3PAVFont@@A
+Font *PopupMediumFont;        // 0x0094576C
+// RECOVERY_OBJECT: v1 0x0094580C ?PopupMediumBoldFont@@3PAVFont@@A
+Font *PopupMediumBoldFont;    // 0x0094580C
+// RECOVERY_OBJECT: v1 0x00945808 ?PopupMediumItalicFont@@3PAVFont@@A
+Font *PopupMediumItalicFont;  // 0x00945808
+// RECOVERY_OBJECT: v1 0x00945770 ?InterludeNormalFont@@3PAVFont@@A
+Font *InterludeNormalFont;    // 0x00945770
+// RECOVERY_OBJECT: v1 0x009457FC ?InterludeSecondFont@@3PAVFont@@A
+Font *InterludeSecondFont;    // 0x009457FC
+// RECOVERY_OBJECT: v1 0x009457F8 ?InterludeThirdFont@@3PAVFont@@A
+Font *InterludeThirdFont;     // 0x009457F8
+// RECOVERY_OBJECT: v1 0x00945774 ?PopupLargeFont@@3PAVFont@@A
+Font *PopupLargeFont;         // 0x00945774
+// RECOVERY_OBJECT: v1 0x00945804 ?PopupLargeBoldFont@@3PAVFont@@A
+Font *PopupLargeBoldFont;     // 0x00945804
+// RECOVERY_OBJECT: v1 0x00945800 ?PopupLargeItalicFont@@3PAVFont@@A
+Font *PopupLargeItalicFont;   // 0x00945800
+// RECOVERY_OBJECT: v1 0x00945778 ?PopupMapLabelFont@@3PAVFont@@A
+Font *PopupMapLabelFont;      // 0x00945778
+// RECOVERY_OBJECT: v1 0x00945810 ?PopupDefaultWindowFont@@3PAVFont@@A
+Font *PopupDefaultWindowFont; // 0x00945810
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0048C320 ?popt@@YAHPADPBDHPADH@Z 0x0048C320-0x0048C353 FILE BYTE_EXACT

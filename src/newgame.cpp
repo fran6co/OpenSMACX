@@ -33,6 +33,7 @@
 #include "setupwin.h"
 #include "pickwin.h"
 #include "font.h"
+#include "popup_fonts.h"
 #include "basepop.h"
 #include "graphicwin.h"
 #include "palette.h"

@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include "popup_fonts.h"
 #include "alphamenu.h"
 #include "alpha.h"
 #include "strings.h"
