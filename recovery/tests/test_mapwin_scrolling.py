@@ -69,7 +69,7 @@ def actual_source():
         headers["buffer"], re.M)
     parts["COPY_DECL"] += ";"
     globals_ = []
-    for unit, name in (("map", "MapLongitudeBounds"), ("map", "MapIsFlat"), ("game", "GameState")):
+    for unit, name in (("map", "MapLongitudeBounds"), ("map", "MapIsFlat")):
         declaration, = re.findall(r"^extern \w+ " + name + r";", headers[unit], re.M)
         globals_.append(declaration.removeprefix("extern "))
     parts["GLOBALS"] = "\n".join(globals_)
@@ -125,6 +125,8 @@ CONSOLE_BASES public:FACTION_FIELD};
 Console ConsoleGlobal;
 struct Observed:MapWin {void on_mouse_move(int,int) override;void on_update() override;} window;
 CORNERS
+struct GameDataStateFieldsProjection { uint32_t game_state_; };
+struct GameDataStateProjection { GameDataStateFieldsProjection fields_; } GameDataStateStorage;
 GLOBALS
 struct Event {char kind;int a,b,c,d,e,f;RECT clip;MapTileDamageRect h,v;};
 std::vector<Event> seen;
@@ -141,7 +143,7 @@ int IsRectEmpty(const RECT *r){note('E',r->left,r->top,r->right,r->bottom);retur
 void MapWin::calculate_dimensions(){
     require(this==&window);note('D',field_21A44_);
     field_1DDA4_=next_x;field_1DDA8_=next_y;
-    if(scenario==5){GameState=0x80;ConsoleGlobal.faction_id_=17;}
+    if(scenario==5){GameDataStateStorage.fields_.game_state_=0x80;ConsoleGlobal.faction_id_=17;}
 }
 void MapWin::tile_to_pixel(int x,int y,int *px,int *py){
     require(this==&window);note('P',x,y);++projection_calls;
@@ -173,7 +175,7 @@ int GraphicWin::fill(int x,int y,int w,int h,int colour){
 int Buffer::set_clip(RECT *r){
     require(this==static_cast<Buffer*>(&window));live_clip=*r;++clip_calls;
     note(r==&rect2_?'Z':'C',r->left,r->top,r->right,r->bottom);
-    if(scenario==3 && r!=&rect2_){ConsoleGlobal.faction_id_=5+clip_calls;if(clip_calls==2)GameState=0x80;}
+    if(scenario==3 && r!=&rect2_){ConsoleGlobal.faction_id_=5+clip_calls;if(clip_calls==2)GameDataStateStorage.fields_.game_state_=0x80;}
     if(scenario==10 && clip_calls==1){window.vertical_damage_={81,82,83,84};}
     return -17;
 }
@@ -203,7 +205,7 @@ void reset(){
     projection_calls=alt_calls=gen_calls=clip_calls=0;
     old_px=old_py=0;new_px=20;new_py=12;scenario=0;
     for(int i=0;i<4;++i){old_alt[i]=new_alt[i]=0;MapCornerCopy[i]={10+i*3,20+i*5};MapCornerScratch[i]={-30-i,50+i};}
-    MapLongitudeBounds=100;MapIsFlat=0;GameState=0;ConsoleGlobal.faction_id_=3;
+    MapLongitudeBounds=100;MapIsFlat=0;GameDataStateStorage.fields_.game_state_=0;ConsoleGlobal.faction_id_=3;
 }
 std::vector<Event> events(char kind){std::vector<Event> out;for(const auto&e:seen)if(e.kind==kind)out.push_back(e);return out;}
 void kinds(const char *expected){size_t i=0;for(const auto&e:seen){require(expected[i]&&e.kind==expected[i]);++i;}require(!expected[i]);}
@@ -357,9 +359,9 @@ MUTATIONS = [
     ("lost_vertical_restore", "vertical_damage_ = saved_vertical;", ";"),
     ("wrong_horizontal_exclusion", "horizontal_damage_.left = horizontal_damage_.right;", "horizontal_damage_.right = horizontal_damage_.left;"),
     ("wrong_vertical_exclusion", "vertical_damage_.left = horizontal_damage_.right;", "vertical_damage_.right = horizontal_damage_.right;"),
-    ("ignore_state_faction", "(GameState & 0x80) != 0", "false"),
+    ("ignore_state_faction", "(GameDataStateStorage.fields_.game_state_ & 0x80) != 0", "false"),
     ("cached_second_faction",
-     "faction = (GameState & 0x80) != 0\n                          ? -1 : ConsoleGlobal.faction_id_;",
+     "faction = (GameDataStateStorage.fields_.game_state_ & 0x80) != 0\n                          ? -1 : ConsoleGlobal.faction_id_;",
      "faction = faction;"),
     ("wrong_draw_only", "draw_type < 0", "draw_type > 0"),
     ("no_mouse_feedback", "if (field_1DD80_ != 0)", "if (false)"),

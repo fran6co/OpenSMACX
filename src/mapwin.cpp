@@ -7232,6 +7232,7 @@ void MapWin::UNK7() {
 }
 
 // ORIGINAL: 0x0046FE00 ?get_relative_alt@MapWin@@QAEHHHH@Z 0x0046FE00-0x0046FE67 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason":"Read the named terrain detail word with the original full-width row stride and x86 masked shift semantics.","evidence":["Pinned46FE39 loads949870 (MapLongitudeBounds), then arithmetic-halves it; MapLongitude is already a half-width stride and is not this operand.","Pinned46FE4D reads word at record+0A;46FE52..46FE5B reduces detail-derived shift through CL and x86 count masking. Preserve direct unchecked row access after get_alt."]}
 // working copy - scaffold materialised by --work
 // size      103 bytes
 // prototype int (__thiscall ?get_relative_alt@MapWin@@QAEHHHH@Z)(MapWin* this, int, int, int)
@@ -7248,9 +7249,14 @@ int MapWin::get_relative_alt(int x, int y, int detail) {
     if (detail == 0) {
         return 4;
     }
-    int row = (static_cast<int>(MapLongitude) >> 1) * y + (x >> 1);
-    unsigned short val = *reinterpret_cast<unsigned short *>((char *)owned_ + 10 + row * 12);
-    int shift = (detail - 1) * 4;
+    const uint32_t row_bits = static_cast<uint32_t>(MapLongitudeBounds >> 1) *
+                             static_cast<uint32_t>(y) +
+                             static_cast<uint32_t>(x >> 1);
+    int32_t row;
+    memcpy(&row, &row_bits, sizeof(row));
+    const unsigned short val = owned_[row].altitude_detail;
+    const unsigned int shift =
+        ((static_cast<uint32_t>(detail) - 1U) * 4U) & 31U;
     return (val >> shift) & 0xf;
 }
 
@@ -7576,6 +7582,7 @@ int MapWin::get_point_light(int x, int y, int corner) {
 // Fixed-slot bindings carried from 00462980.cpp
 
 // ORIGINAL: 0x00462980 ?calculate_dimensions@MapWin@@QAEXXZ 0x00462980-0x00462EFA FILE
+// RECOVERY_BINDING: v1 {"reason":"Invalidate the existing cache through named brightness/altitude fields while retaining the original shared signed area-count flow.","evidence":["Pinned462D82/462DB1 load initial or bypass count;462DA2/462DEB/462E1A reload after each row. Third pass keeps the prior count and retests owned_ at462DF8.","Pinned stores brightness0..3 and altitude4..8; terrain/detail9..11 remain untouched. No allocation, range guard or safety fix is introduced."]}
 // size      1402 bytes
 // prototype void (__thiscall ?calculate_dimensions@MapWin@@QAEXXZ)(MapWin* this)
 // callers   3   call targets   1
@@ -7762,34 +7769,49 @@ void MapWin::calculate_dimensions() {
         field_1DDE0_ = fogH / 3;
     }
 
+    int32_t cache_area = 0;
     if (field_1DD6C_ != field_1EEC4_) {
         field_1EEC4_ = field_1DD6C_;
-        if ((int)(intptr_t)owned_ != 0) {
-            int32_t count = (int32_t)MapArea;
-            char *base = reinterpret_cast<char *>(owned_);
-            for (int32_t ia = 0; ia < count; ++ia) {
-                for (int32_t ja = 0; ja < 5; ++ja) {
-                    base[ia * 0xc + ja + 4] = static_cast<char>(0xff);
-                }
+        if (owned_ != 0) {
+            cache_area = static_cast<int32_t>(MapArea);
+            if (cache_area > 0) {
+                int32_t ia = 0;
+                do {
+                    for (int32_t ja = 0; ja < 5; ++ja) {
+                        owned_[ia].altitude[ja] = static_cast<signed char>(0xff);
+                    }
+                    ++ia;
+                    cache_area = static_cast<int32_t>(MapArea);
+                } while (ia < cache_area);
             }
+        } else {
+            cache_area = static_cast<int32_t>(MapArea);
         }
+    } else {
+        cache_area = static_cast<int32_t>(MapArea);
     }
 
     if (field_1DD98_ != field_1EEC0_) {
-        if ((int)(intptr_t)owned_ != 0) {
-            int32_t count = (int32_t)MapArea;
-            char *base = reinterpret_cast<char *>(owned_);
-            for (int32_t ib = 0; ib < count; ++ib) {
-                for (int32_t jb = 0; jb < 4; ++jb) {
-                    base[ib * 0xc + jb] = static_cast<char>(0xff);
-                }
+        if (owned_ != 0) {
+            if (cache_area > 0) {
+                int32_t ib = 0;
+                do {
+                    for (int32_t jb = 0; jb < 4; ++jb) {
+                        owned_[ib].brightness[jb] = static_cast<unsigned char>(0xff);
+                    }
+                    ++ib;
+                    cache_area = static_cast<int32_t>(MapArea);
+                } while (ib < cache_area);
             }
-            count = (int32_t)MapArea;
-            base = reinterpret_cast<char *>(owned_);
-            for (int32_t ic = 0; ic < count; ++ic) {
-                for (int32_t jc = 0; jc < 5; ++jc) {
-                    base[ic * 0xc + jc + 4] = static_cast<char>(0xff);
-                }
+            if (owned_ != 0 && cache_area > 0) {
+                int32_t ic = 0;
+                do {
+                    for (int32_t jc = 0; jc < 5; ++jc) {
+                        owned_[ic].altitude[jc] = static_cast<signed char>(0xff);
+                    }
+                    ++ic;
+                    cache_area = static_cast<int32_t>(MapArea);
+                } while (ic < cache_area);
             }
         }
         field_1EEC0_ = field_1DD98_;
