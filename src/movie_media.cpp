@@ -10,6 +10,51 @@
 #include <stdlib.h>
 #include <string.h>
 
+// ORIGINAL: 0x005CBAE0 sub_5cbae0 0x005CBAE0-0x005CBBB6 FILE
+// RECOVERY_BINDING: v1 {"reason":"Recover the runtime-owned DirectDraw overlay operation and its actual source/destination interfaces, rectangles and failure-path receiver; update_overlay is a descriptive recovered name, not an original debug-symbol claim.","evidence":["Pinned5CBAE0..5CBBB6 passes runtime in ECX and mode in EDX;5CBB6C calls Surface2 slot33(+84), the installed DDRAW.H UpdateOverlay contract, with DDOVERLAYFX size38 and DDFX at30.","MediaRuntime descriptor+0 and rectangle fields+0C/+10/+14/+18; MediaDescriptor Surface2 pointers+14/+1C and dimensions+60/+64 have existing typed producers in movie_media.cpp and UV2Player::exec.","Pinned5CBB5E..6B passes distinct source and destination RECTs; destination is0,0,width-1,height-1. Flags200/84000 mean hide/show|DDFX, not DDBLT_WAIT or rotation.","Pinned5CBB7F writes runtime queue_record_kind+4C on E_INVALIDARG;5CBB98..A0 reloads runtime->descriptor->surface_1c after UpdateOverlay before Restore, ignoring its return.","Original identity/span and seed provenance retained from git:36d19d9ef:src/stringstruct.cpp and retired seed git:117282ee:src/unrecovered/005cbae0.cpp; prior Blt and descriptor-Restore interpretation is superseded, not original behavior."]}
+// symbol    ?update_overlay@MediaRuntime@@QAIHH@Z
+
+int __fastcall MediaRuntime::update_overlay(int show) {
+  DDOVERLAYFX effects;
+  memset(&effects, 0, sizeof(effects));
+  effects.dwSize = sizeof(effects);
+  DWORD flags;
+  if (show == 0) {
+    flags = DDOVER_HIDE;
+  } else {
+    flags = DDOVER_SHOW | DDOVER_DDFX;
+    effects.dwDDFX = DDOVERFX_ARITHSTRETCHY;
+  }
+
+  RECT source_rectangle;
+  source_rectangle.left = static_cast<LONG>(output_rect_left_14);
+  source_rectangle.top = static_cast<LONG>(output_rect_top_18);
+  source_rectangle.right = static_cast<LONG>(output_rect_left_14 + output_rect_extent_0c);
+  source_rectangle.bottom = static_cast<LONG>(output_rect_top_18 + output_rect_or_draw2_bits_10);
+
+  MediaDescriptor *const output = descriptor;
+  RECT destination_rectangle;
+  destination_rectangle.left = 0;
+  destination_rectangle.top = 0;
+  destination_rectangle.right = static_cast<LONG>(output->output_width_64 - 1U);
+  destination_rectangle.bottom = static_cast<LONG>(output->output_height_60 - 1U);
+
+  const HRESULT result = output->surface_1c->UpdateOverlay(
+      &source_rectangle, output->surface_14, &destination_rectangle, flags, &effects);
+  if (result != DD_OK) {
+    if (result == E_INVALIDARG) {
+      queue_record_kind = 1;
+      return 1;
+    }
+    if (result == DDERR_SURFACELOST) {
+      // Original reloads both pointers after the COM callback, not a cached receiver.
+      descriptor->surface_1c->Restore();
+    }
+    return 1;
+  }
+  return 0;
+}
+
 // Typed dispatcher/waiter contracts owned by this translation unit.
 extern "C" int __fastcall sub_5c9ec0(MediaRuntime *runtime, void *unused);
 extern "C" int __fastcall sub_5ca970(MediaRuntime *runtime, void *unused);
@@ -21,7 +66,6 @@ extern "C" int __fastcall sub_5ca310(MediaRuntime *runtime, int payload_bytes);
 // payload byte count retained from the just-read header, and one stack
 // argument selects the record kind. Preserve the product declaration's
 // C++ linkage until an authorized identity migration says otherwise.
-extern "C" int __fastcall sub_5cbae0(int *wrapper, int fill);
 extern "C" char *__fastcall sub_5cf120(int code);
 
 // Seed-only output worker. This declaration must bind to its original-mapped
@@ -1857,7 +1901,7 @@ void MediaRuntime::sub_5cc710() {
     if (owned_heap_640 != 0) { free(owned_heap_640); owned_heap_640 = 0; }
 
     if (queue_record_kind == 2 && output_handle_candidate != 0)
-      output_handle_candidate = (DWORD)sub_5cbae0((int *)this, 0);
+      output_handle_candidate = (DWORD)update_overlay(0);
 
     DWORD flags = descriptor->flags;
     if (descriptor->palette_24 != 0 && (flags & 0x04000000) == 0) {
@@ -1964,7 +2008,7 @@ void MediaRuntime::sub_5cb6c0() {
   } else if (queue_record_kind == 2) {
     if (d.surface_1c != 0) {
       if (saved_output != 0)
-        output_handle_candidate = (DWORD)sub_5cbae0((int *)this, 1);
+        output_handle_candidate = (DWORD)update_overlay(1);
 
       DDSURFACEDESC locked;
       memset(&locked, 0, 0x6c);

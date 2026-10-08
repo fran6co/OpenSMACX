@@ -162,6 +162,8 @@ struct MediaRuntime {
   int release_playback_buffer();       // 005CE620
   int __fastcall parse_initial_format(int byte_count); // 005CA6C0; byte count in EDX
   int __fastcall sub_5ca230(int payload_bytes, int record_kind);
+  // Original 005CBAE0: runtime in ECX, show/hide selection in EDX.
+  int __fastcall update_overlay(int show);
 
   // Existing mapped/seed dependencies, deliberately declarations only here.
   // Their original identities and current source homes are listed in the

@@ -779,77 +779,7 @@ class ModeReleaseObj { public: void release(void *); };
 
 // Interlude members and compiler-generated lifetime code are owned by interlude.cpp.
 
-// ---------------------------------------------------------------------------
-// sub_5cbae0, 0x005CBAE0. The DirectDraw primary-surface blit wrapper: build
-// the DDBLTFX record, then the surface's slot-33 blit, mapping the two
-// documented COM failure codes onto the caller's retry/lost-surface flags.
-/*
-Purpose: Blit the frame through the primary surface's blit slot, translating
-         the two failure codes the device reports back into caller flags.
-// ORIGINAL: 0x005CBAE0 sub_5cbae0 0x005CBAE0-0x005CBBB6 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["Original5CBAE0..5CBBB6; retired seed git:117282ee:src/unrecovered/005cbae0.cpp records the same identity and spans.", "The receiver table is the wrapper block the window layer keeps: slot 0 is the primary surface, words 3..6 the destination rectangle; the DDBLTFX-shaped stack record carries dwSize 0x38 and, on the fill path, DDBLT_DDFX 0x84000 with rotation flag word 14.", "0x80070057 (E_INVALIDARG) latches the wrapper's +0x4C error word and 0x887601c2 (DDERR_SURFACELOST) restores through the device's slot-27 restore before returning 1; both dispatches run through member-fn-pointer unions."], "reason": "Coverage transcription of the primary-surface blit wrapper with the COM failure mapping the seed measures."}
-Status: Coverage transcription - unclaimed body
-*/
-namespace {
-class BltSlotObj { public: int blit(RECT *, int, RECT *, int, void *); };
-union BltSlotShim {
-    int (BltSlotObj::*fn)(RECT *, int, RECT *, int, void *);
-    void *raw;
-};
-class RestoreSlotObj { public: void restore(); };
-union RestoreSlotShim {
-    void (RestoreSlotObj::*fn)();
-    void *raw;
-};
-}
-
-extern "C" int __fastcall sub_5cbae0(int *wrapper, int fill) {
-    int fx[16] = {0};
-    fx[2] = 0x38;  // DDBLTFX.dwSize
-
-    int mode;
-    if (fill == 0) {
-        mode = 0x200;  // DDBLT_WAIT
-    } else {
-        mode = 0x84000;  // DDBLT_DDFX
-        fx[14] = 1;      // DDBLTFX.dwDDFX rotation flag
-    }
-
-    const int y = wrapper[6];
-    const int x = wrapper[5];
-    RECT rect;
-    rect.left = x;
-    rect.top = y;
-    rect.right = wrapper[3] + x;
-    rect.bottom = wrapper[4] + y;
-
-    int *const device = reinterpret_cast<int *>(wrapper[0]);
-    fx[0] = device[25] - 1;
-    fx[1] = device[24] - 1;
-    void *const surface = reinterpret_cast<void *>(device[7]);
-    const int fill_color = device[5];
-
-    void **const surface_vtable =
-        *reinterpret_cast<void ***>(surface);
-    BltSlotShim blit;
-    blit.raw = surface_vtable[33];
-    const int result = (reinterpret_cast<BltSlotObj *>(surface)->*blit.fn)(
-        &rect, fill_color, &rect, mode, &fx[2]);
-    if (result != 0) {
-        if (result == static_cast<int>(0x80070057)) {  // E_INVALIDARG
-            wrapper[0x13] = 1;
-            return 1;
-        }
-        if (result == static_cast<int>(0x887601c2)) {  // DDERR_SURFACELOST
-            void *const device_iface = reinterpret_cast<void *>(wrapper[0]);
-            RestoreSlotShim restore;
-            restore.raw = (*reinterpret_cast<void ***>(device_iface))[27];
-            (reinterpret_cast<RestoreSlotObj *>(device_iface)->*restore.fn)();
-        }
-        return 1;
-    }
-    return 0;
-}
+// Media overlay update is owned by MediaRuntime in movie_media.cpp.
 
 
 // ---------------------------------------------------------------------------
