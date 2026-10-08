@@ -8,16 +8,16 @@ struct Matrix3ReceiverView {
 
   Matrix3ReceiverView *sub_6346c0();
   void sub_6346f0();
-  void sub_634720(Matrix3ReceiverView *destination,
-                  const Matrix3ReceiverView *other);
+  void *sub_634720(Matrix3ReceiverView *destination,
+                   const Matrix3ReceiverView *other);
   void sub_6347c0(const Matrix3ReceiverView *other);
   void sub_6347f0(const Matrix3ReceiverView *other);
   void sub_6348c0(float scale);
   void sub_6348f0(const Matrix3ReceiverView *other);
   bool equals(const float *other);
-  void multiply(float *out, float *other);
+  void *multiply(float *out, float *other);
   void transform(float *out, const float *in);
-  void scale_into(float *dest, float scale);
+  void *scale_into(float *dest, float scale);
   Matrix3ReceiverView *sub_634b70();
 };
 
@@ -105,19 +105,20 @@ Purpose: Add another matrix into this one through an identity scratch
 // containing owner, lifecycle, callers, TU, and x87 precision remain unknown.
 // RECOVERY_ROLE: SCAFFOLD Bounded numerical receiver view only; shared original object ownership, containing class, full extent, callers and lifetime remain unproved. Source consolidation and complete arithmetic bodies do not resolve this structural obligation.
 // ORIGINAL: 0x00634720 sub_634720 0x00634720-0x006347BE FILE
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x006347A3/0x006347B2/0x006347BB: load first entry stack argument into EAX, copy nine dwords to it, retain EAX through ret 8", "source:the bounded receiver view does not assert an original complete class, allocation size, constructor or lifetime"], "reason": "Model the observed output-buffer address return with an explicit output argument and opaque pointer result; original hidden-class-result semantics and receiver ownership remain unresolved."}
 // TRIED: nothing yet; the nested row/column countdown pair is the original's own shape.
-// symbol   ?sub_634720@Matrix3ReceiverView@@QAEXPAU1@PBU1@@Z
+// symbol   ?sub_634720@Matrix3ReceiverView@@QAEPAXPAU1@PBU1@@Z
 // size      158 bytes
 // prototype
 // callers   0   call targets   0
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     (none)
-Return Value: n/a
+Return Value: the supplied output-buffer address
 Status: Complete
 */
-void Matrix3ReceiverView::sub_634720(Matrix3ReceiverView *destination,
-                                     const Matrix3ReceiverView *other) {
+void *Matrix3ReceiverView::sub_634720(Matrix3ReceiverView *destination,
+                                      const Matrix3ReceiverView *other) {
     float scratch[9] = {1.0f, 0.0f, 0.0f,
                         0.0f, 1.0f, 0.0f,
                         0.0f, 0.0f, 1.0f};
@@ -128,6 +129,7 @@ void Matrix3ReceiverView::sub_634720(Matrix3ReceiverView *destination,
         }
     }
     std::memcpy(destination->cells, scratch, sizeof(scratch));
+    return destination;
 }
 
 /*
@@ -309,18 +311,19 @@ Matrix3ReceiverView *Matrix3ReceiverView::sub_634b70() {
 // traversal, not promoted as an ABI or matching claim.
 // RECOVERY_ROLE: SCAFFOLD Bounded numerical receiver view only; shared original object ownership, containing class, full extent, callers and lifetime remain unproved. Source consolidation and complete arithmetic bodies do not resolve this structural obligation.
 // ORIGINAL: 0x00634980 sub_634980 0x00634980-0x00634A50 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x00634A35/0x00634A44/0x00634A4D: load first entry stack argument into EAX, copy nine dwords to it, retain EAX through ret 8", "source:the bounded receiver view does not assert an original complete class, allocation size, constructor or lifetime"], "reason": "Model the observed output-buffer address return with an explicit output argument and opaque pointer result; original hidden-class-result semantics and receiver ownership remain unresolved."}
 // Historical source symbol hypothesis: ?multiply@Mat3@@QAEXPAM0@Z
-// symbol    ?multiply@Matrix3ReceiverView@@QAEXPAM0@Z
+// symbol    ?multiply@Matrix3ReceiverView@@QAEPAXPAM0@Z
 // TRIED: `extern "C" int __stdcall sub_634980(int a1, int a2)` per the given def head - disasm reads *ecx directly as a float* with no matching stack slot (a 3x3 matrix "this"), so the receiver is a __thiscall member, not a 2-arg __stdcall free function; changed to a `Mat3::multiply` member. `dst`/`a` tracked as independent incrementing pointers gives a MISMATCH at the prologue (#4, 87% similarity); an `int off = dst - a` delta recomputed each outer iteration (matching the original's spill of that delta to `[esp+0x14]` and its `add esi, ebx` re-derivation) gets to 89.5% similarity, 7 edits, all register-allocation choices (which callee-saved reg holds which pointer) rather than control-flow shape. Pointer-to-int delta form is retired here; the observation remains historical, not an implementation requirement.
 // size      208 bytes
 // callers   0   call targets   0
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     (none)
-Return Value: n/a
+Return Value: the supplied output-buffer address
 Status: Complete
 */
-void Matrix3ReceiverView::multiply(float *out, float *other) {
+void *Matrix3ReceiverView::multiply(float *out, float *other) {
     float local[9] = {
         1.0f, 0.0f, 0.0f,
         0.0f, 1.0f, 0.0f,
@@ -346,6 +349,7 @@ void Matrix3ReceiverView::multiply(float *out, float *other) {
     for (int i = 0; i < 9; ++i) {
         out[i] = local[i];
     }
+    return out;
 }
 
 /*
@@ -407,18 +411,19 @@ void Matrix3ReceiverView::transform(float *out, const float *in) {
 // pointer-to-int scratch delta with flat indexing for host-width safety.
 // RECOVERY_ROLE: SCAFFOLD Bounded numerical receiver view only; shared original object ownership, containing class, full extent, callers and lifetime remain unproved. Source consolidation and complete arithmetic bodies do not resolve this structural obligation.
 // ORIGINAL: 0x00634AD0 sub_634ad0 0x00634AD0-0x00634B67 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x00634B4E/0x00634B5D/0x00634B64: load first entry stack argument into EAX, copy nine dwords to it, retain EAX through ret 8", "source:the bounded receiver view does not assert an original complete class, allocation size, constructor or lifetime"], "reason": "Model the observed output-buffer address return with an explicit output argument and opaque pointer result; original hidden-class-result semantics and receiver ownership remain unresolved."}
 // Historical source symbol hypothesis: ?scale_into@Mat3x3@@QAEXPAMM@Z
-// symbol    ?scale_into@Matrix3ReceiverView@@QAEXPAMM@Z
+// symbol    ?scale_into@Matrix3ReceiverView@@QAEPAXPAMM@Z
 // TRIED: extern "C" __stdcall(int,int) contract head - disasm reads ecx as an implicit receiver (thiscall) into a 3x3 float matrix, not a stack int; rewrote as Mat3x3::scale_into(float*,float). MISMATCH #1 push/lea, prologue layout only, structure otherwise matches Ghidra's nested-loop scale+copy. The old pointer-to-int delta is retired; preserve this as historical source-form evidence.
 // size      151 bytes
 // callers   0   call targets   0
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     (none)
-Return Value: n/a
+Return Value: the supplied output-buffer address
 Status: Complete
 */
-void Matrix3ReceiverView::scale_into(float *dest, float scale) {
+void *Matrix3ReceiverView::scale_into(float *dest, float scale) {
     float tmp[9] = {
         1.0f, 0.0f, 0.0f,
         0.0f, 1.0f, 0.0f,
@@ -430,4 +435,5 @@ void Matrix3ReceiverView::scale_into(float *dest, float scale) {
     for (int output_index = 0; output_index < 9; ++output_index) {
         dest[output_index] = tmp[output_index];
     }
+    return dest;
 }
