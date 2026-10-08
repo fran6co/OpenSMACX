@@ -315,6 +315,14 @@ endif()
 # in src/main.cpp - and calls the game's own startup sequence from it. It is
 # not yet a recovered or accepted game. But the artifact is the program
 # being recovered rather than a probe, and its name should say so.
+# The confirmed Jackal lifecycle/version owner is a distinct library. All
+# three entry points are explicitly referenced by WinMain; its one archive
+# member must therefore be selected without a synthetic retention anchor.
+# Other drawing subsystems remain direct application inputs until their
+# membership is established. This is not a claim of complete JACKAL.LIB recovery.
+add_library(jackal STATIC src/jackal.cpp)
+target_compile_definitions(jackal PRIVATE $<$<CONFIG:Debug>:BUILD_DEBUG>)
+target_compile_options(jackal PRIVATE /W4 "--repro-root=${CMAKE_CURRENT_SOURCE_DIR}")
 add_executable(OpenSMACX ${OPENSMACX_SOURCES})
 
 # Terrain, media decoder and GraphicWin lookup data remain local derivatives of
@@ -372,7 +380,7 @@ target_compile_options(OpenSMACX PRIVATE "--repro-root=${CMAKE_CURRENT_SOURCE_DI
 # the build.
 
 # FileBox owns the open/save dialog imports from comdlg32.
-target_link_libraries(OpenSMACX PRIVATE zlib user32 gdi32 winmm dxguid ddraw vfw32 dsound comdlg32)
+target_link_libraries(OpenSMACX PRIVATE jackal zlib user32 gdi32 winmm dxguid ddraw vfw32 dsound comdlg32)
 
 # `/MAP /MAPINFO:LINES` is the only debug format in this toolchain that gdb can
 # be taught to read. VC6's own three cannot be: the PDB is 2.0 (`JG`, which

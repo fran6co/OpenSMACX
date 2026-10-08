@@ -31,6 +31,7 @@ typedef signed char int8;  // a scaffold spelling the artifacts use
 #include <cstring>
 #include "palette.h"
 #include "general.h"
+#include "jackal.h" // JackalInitFlags lifecycle state
 
 #include "dialog.h"
 #include "sounddevice.h"

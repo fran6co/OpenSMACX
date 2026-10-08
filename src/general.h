@@ -113,22 +113,6 @@ int __cdecl parse_say(int id, int input, int gender, int pluralality);
 int __cdecl parse_says(int id, LPCSTR input, int gender, int pluralality);
 int __cdecl stoi(LPCSTR str);
 LPSTR __cdecl findnum(LPSTR str);
-BOOL __cdecl jackal_version_check(LPCSTR version);
-// The Jackal engine's bring-up and teardown, called once each from WinMain.
-// `jackal_init_real` returns ZERO on success - WinMain's `test eax, eax` at
-// 0x0045FA50 jumps INTO the game when the result is zero and returns 0 from
-// WinMain when it is not, which is the opposite sense of every neighbouring
-// call and the one thing the first transcription of that body got backwards.
-// `LPSTR` rather than `LPCSTR` for the window title because the image's own
-// name for it - ?jackal_init_real@@YAHPAUPalette@@PAUFont@@PADHHHH@Z - spells
-// that parameter `PAD`, and the mangling is what the byte match will look the
-// body up by when 0x0062D3A0 lands.
-int __cdecl jackal_init_real(Palette *palette, Font *font,
-                                       LPSTR window_name, int tgl_direct_draw,
-                                       int display_width, int display_height,
-                                       int colour_depth);
-void __cdecl jackal_close();
-
 // The fixed-point trig table bring-up (0x0063B940, BYTE_EXACT - marker and
 // body in general.cpp). Builds SinTable below, then exercises the image's
 // own int sin(angle, scale) twice for its return value.
@@ -143,10 +127,6 @@ extern int SinTable[256]; // 0x009BE6DC
 // The remaining free-function teardown callees are declared here;
 // FileWin and BasePop cleanup use their real source-owned class operations.
 
-// 0x009BC4B0. jackal_init_real stores its `tgl_direct_draw` argument here on
-// entry and sets bit 0 once every subsystem has come up, so it is the engine's
-// own state word: the mode it was asked for, plus "initialised".
-extern int JackalInitFlags;
 int __cdecl filefind_cd_drive_letter();
 void __cdecl filefind_set_alternative(LPCSTR path);
 LPSTR __cdecl filefind_get(LPCSTR file_name);

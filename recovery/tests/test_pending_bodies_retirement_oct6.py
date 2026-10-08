@@ -78,14 +78,14 @@ def test_pending_translation_unit_is_retired_only_after_owners_are_present():
     assert allocation < initialize < tail_test < old_next < reread
     assert "else {" in append and "node = 0;" in append
 
-    general = (ROOT / "src/general.cpp").read_text()
-    jackal = [row for row in read_file(ROOT / "src/general.cpp")
+    jackal_source = (ROOT / "src/jackal.cpp").read_text()
+    jackal = [row for row in read_file(ROOT / "src/jackal.cpp")
               if row.address == 0x0062D500]
     assert len(jackal) == 1 and jackal[0].mode is Mode.BODY
-    close = _definition(general, r"void __cdecl jackal_close\(\)")
+    close = _definition(jackal_source, r"void __cdecl jackal_close\(\)")
     assert "FileWin::close_class();" in close
     assert "BasePop::close_class();" in close
-    assert "filewin_close_class" not in general and "basepop_close_class" not in general
+    assert "filewin_close_class" not in jackal_source and "basepop_close_class" not in jackal_source
     general_header = (ROOT / "src/general.h").read_text()
     assert "filewin_close_class" not in general_header
     assert "basepop_close_class" not in general_header

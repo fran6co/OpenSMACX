@@ -21,7 +21,8 @@
 #include "caviar.h"
 #include "font.h"
 #include "game.h"     // control_game
-#include "general.h"  // jackal_version_check, jackal_init_real, jackal_close
+#include "general.h"
+#include "jackal.h" // version check and lifecycle library interface
 #include "basepop.h"   // BasePop::basepop_alloc
 #include "palette.h"  // g_PALETTE1
 #include "popup.h"     // Popup::alloc
