@@ -641,11 +641,6 @@ void InfoWin::setup_text() {
     }
 }
 
-// The four animation counters have not yet been given source-owned storage.
-// Keep their binding explicit until that owner is migrated; pane state and
-// drawing work below use real InfoWin members.
-static int *const InfoAnimationCounters = (int *)0x007AF174;
-
 // Shared information-panel extent, immediately preceding WorldMapBounds in
 // the original zero-filled layout block. The four stores at 0x00458D8A-DA9
 // establish RECT field order, and InfoWin::init consumes the same extent.
@@ -754,7 +749,7 @@ void InfoWin::timer_proc(int a1) {
 // Advance the selected information pane through its valid display states,
 // then repaint the newly selected pane.
 // ORIGINAL: 0x00458FF0 ?timer_change@InfoWin@@QAEXH@Z 0x00458FF0-0x00459141
-// RECOVERY_BINDING: v1 {"evidence": ["git:caf4963a:src/recovered/units/00458ff0.cpp", "source:src/infowin.h", "source:src/game.cpp:InterfaceBoxStyles"], "reason": "Home the timed pane transition with the owned InfoWin state, real pane rectangle and source-owned box style; retain the unresolved active-interface and animation-counter storage bindings as explicit dependencies."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:caf4963a:src/recovered/units/00458ff0.cpp", "source:src/infowin.h", "source:src/game.cpp:InterfaceBoxStyles", "pinned:0x004590C7-0x004590DF clears 0x007AF174, 0x007AF17C, 0x007AF178 and 0x007AF180 after successful state_valid", "source:MainInterfaceGlobal at 0x007AE820 has its GraphicWin Buffer subobject at +0x444; those destinations are Buffer +0x510, +0x518, +0x514 and +0x51C", "source:Buffer::reset_text_state clears the existing fields in that original order; InfoWin::draw_text uses the same owner operation"], "reason": "Home the timed pane transition with owned InfoWin state, pane rectangle and box style. The former animation-counter alias actually addressed MainInterfaceGlobal's Buffer text state; reset those members after the successful validity loop, preserving the original store order and callbacks."}
 void InfoWin::timer_change(int) {
     if (active_interface_slot_occupied()) return;
 
@@ -772,7 +767,7 @@ void InfoWin::timer_change(int) {
         if (state_valid(pane_states_[active_pane_])) break;
     }
 
-    for (int index = 0; index != 4; ++index) InfoAnimationCounters[index] = 0;
+    MainInterfaceGlobal.reset_text_state();
     visible_characters_[0] = 0;
     visible_characters_[1] = 0;
     field_A8_ = 0;
