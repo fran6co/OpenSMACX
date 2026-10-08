@@ -12832,7 +12832,9 @@ static int relocate_vehicle(int veh_id, int x, int y, int faction_id,
 
         int x_distance = abs(x - target_x);
         if (!(MapIsFlat & 1) && MapLongitude < x_distance)
-            x_distance = MapLongitude - x_distance;
+            // Pinned57B6B8/57B6FE subtract from949870 full map width;
+            // the preceding68FAF0 comparison uses only the half-width stride.
+            x_distance = MapLongitudeBounds - x_distance;
         const int manhattan_distance = abs(y - target_y) + x_distance;
         // Native first rejects a close site using the even-rounded full
         // Manhattan sum, then independently halves that sum for radius.

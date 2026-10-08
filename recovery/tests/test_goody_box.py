@@ -101,7 +101,8 @@ RulesBasic Rules;
 RulesFacility Facility[128];
 RulesTechnology Technology[89];
 int MapLongitude = 50, MapLongitudeBounds = 100, MapLatitudeBounds = 100, MapIsFlat = 1;
-int RadiusBaseX[9] = {0}, RadiusBaseY[9] = {0};
+// Controlled direction-table doubles; product storage lives in veh.cpp.
+int VehMoveDeltaX[9] = {0}, VehMoveDeltaY[9] = {0};
 int RadiusOffsetX[289] = {0}, RadiusOffsetY[289] = {0};
 int BaseFindDist;
 int IsMultiplayerNet, ExpansionEnabled, ConsoleIdUnused;
@@ -169,7 +170,7 @@ static void reset(int climate, int event_roll, int tectonic_roll) {
     for (int i = 0; i < 32; ++i) Bases[i] = Base();
     for (int i = 0; i < 32; ++i) VehPrototypes[i] = VehiclePrototype();
     for (int i = 0; i < 20; ++i) Chassis[i] = RulesChassis();
-    for (int i = 0; i < 9; ++i) RadiusBaseX[i] = RadiusBaseY[i] = 0;
+    for (int i = 0; i < 9; ++i) VehMoveDeltaX[i] = VehMoveDeltaY[i] = 0;
     for (int i = 0; i < 289; ++i) RadiusOffsetX[i] = RadiusOffsetY[i] = 0;
     Vehs[0].x = 40; Vehs[0].y = 50; Vehs[0].faction_id = 0; Vehs[0].proto_id = 0;
     MapTiles[50 * MapLongitude + 20].climate = (uint8_t)climate;

@@ -7261,6 +7261,7 @@ int MapWin::get_relative_alt(int x, int y, int detail) {
 }
 
 // ORIGINAL: 0x0046AE00 ?draw_cursor@@YAXXZ 0x0046AE00-0x0046AEED FILE
+// RECOVERY_BINDING: v1 {"reason":"Use full map longitude bounds for viewport seam adjustments while retaining cursor gating and arrow dispatch.","evidence":["Pinned46AE80 adds949870 MapLongitudeBounds to tile X;46AE9A subtracts the same full-width object.68FAF0 MapLongitude is a different half-width row stride."]}
 // NOTE ON THE HANDOFF: this was queued as "declare it on MapWin", but the
 // image's mangled name is ?draw_cursor@@YAXXZ - a FREE function taking
 // nothing, not a member. It walks every slot of the map-window table rather
@@ -7298,12 +7299,12 @@ void __cdecl draw_cursor() {
                     int wrapped_x = tile_x;
                     if ((MapIsFlat & 1) == 0) {
                         if (tile_x < window->field_1DDA4_) {
-                            wrapped_x = MapLongitude + tile_x;
+                            wrapped_x = MapLongitudeBounds + tile_x;
                         }
                         if (window->field_1DDD4_ +
                             window->field_1DDCC_ +
                             window->field_1DDA4_ <= wrapped_x) {
-                            wrapped_x = wrapped_x - MapLongitude;
+                            wrapped_x = wrapped_x - MapLongitudeBounds;
                         }
                     }
                     if (window->field_1DDA4_ <= wrapped_x &&

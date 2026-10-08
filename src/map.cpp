@@ -2653,7 +2653,8 @@ int __cdecl radius_move(int x_src, int y_src, int x_dst, int y_dst, int range) {
 /*
 Purpose: Determine if the specified two tiles are within the radius directionally of each other.
 // ORIGINAL: 0x005A6630 ?compass_move@@YAHHHHH@Z 0x005A6630-0x005A66E0 BYTE_EXACT
-// LEVER: this body had been copy-adapted from radius_move's wraparound test (compare against MapLongitude, adjust by MapLongitudeBounds), but the image never loads MapLongitudeBounds here at all - it computes `MapLongitude / 2` (a signed `cdq; sub; sar` halving, done twice) as the threshold AND adjusts by the un-halved `MapLongitude` itself. Matching that literally (`x_radius_off < -(ML/2)` / `+= ML`, and the mirrored upper bound) is BYTE_EXACT.
+// RECOVERY_BINDING: v1 {"reason":"Use the original full longitude bound for signed half-width thresholds and wrap adjustments, not the half-width tile-row stride.","evidence":["Pinned5A663A loads949870 MapLongitudeBounds into ESI; subsequent thresholds halve this register and wrapping adds/subtracts its unhalved value.","MapLongitude is the distinct68FAF0 packed-row stride; the historical LEVER below incorrectly interpreted the masked relocation target."]}
+// Historical LEVER (superseded wrong-global interpretation): this body had been copy-adapted from radius_move's wraparound test (compare against MapLongitude, adjust by MapLongitudeBounds), but the image never loads MapLongitudeBounds here at all - it computes `MapLongitude / 2` (a signed `cdq; sub; sar` halving, done twice) as the threshold AND adjusts by the un-halved `MapLongitude` itself. Matching that literally (`x_radius_off < -(ML/2)` / `+= ML`, and the mirrored upper bound) is BYTE_EXACT.
 // size      176 bytes
 // prototype int (__cdecl ?compass_move@@YAHHHHH@Z)(int xCoordSrc, int yCoordSrc, int xCoordDst, int yCoordDst)
 // callers   1   call targets   0
@@ -2665,11 +2666,11 @@ Status: Complete
 */
 int __cdecl compass_move(int x_src, int y_src, int x_dst, int y_dst) {
     int x_radius_off = x_dst - x_src;
-    if (x_radius_off < -((int)MapLongitude / 2)) {
-        x_radius_off += MapLongitude;
+    if (x_radius_off < -((int)MapLongitudeBounds / 2)) {
+        x_radius_off += MapLongitudeBounds;
     }
-    if (x_radius_off > ((int)MapLongitude / 2)) {
-        x_radius_off -= MapLongitude;
+    if (x_radius_off > ((int)MapLongitudeBounds / 2)) {
+        x_radius_off -= MapLongitudeBounds;
     }
     int y_radius_off = y_dst - y_src;
     int direction_x = (x_radius_off > 0) ? 1 : (x_radius_off >= 0) - 1;
@@ -5602,7 +5603,8 @@ void __cdecl world_geothermal(int x, int y) {
 
 /*
 Purpose: Set up all the landmarks.
-// ORIGINAL: 0x005C8630 ?world_landmarks@@YAXXZ 0x005C8630-0x005C86DC
+// ORIGINAL: 0x005C8630 ?world_landmarks@@YAXXZ 0x005C8630-0x005C86DC BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason":"Preserve the original landmark generation sequence without the later Nessus Canyon addition.","evidence":["Pinned5C8630..5C86DC calls fifteen landmark generators and tail-jumps592940 fixup_landmarks; no world_canyon call follows world_geothermal.","Pinned5C8671..5C8690 tests ExpansionEnabled before unity and reloads it before fossil only within the enabled path."]}
 // BUG IN THE RECOVERY: the two ExpansionEnabled guards were dropped from here
 //            ("removed redundant check") but the image performs BOTH -
 //            `mov eax,[0x9a6488]; test eax,eax; je` before world_unity and
@@ -5615,7 +5617,7 @@ Purpose: Set up all the landmarks.
 //            Canyon"): it is one more `push -1 / push -1 / call` block plus
 //            8 bytes of stack the image's `add esp, 0x30` does not account
 //            for, so no byte-exact match is reachable while that landmark is
-//            generated. Left as a documented behaviour change.
+//            generated. Historical deviation, not the current faithful sequence.
 // size      172 bytes
 // prototype 
 // callers   0   call targets   15
@@ -5635,9 +5637,9 @@ void __cdecl world_landmarks() {
     world_ruin(-1, -1);
     if (ExpansionEnabled) {
         world_unity(-1, -1);
-    }
-    if (ExpansionEnabled) {
-        world_fossil(-1, -1);
+        if (ExpansionEnabled) {
+            world_fossil(-1, -1);
+        }
     }
     world_temple(-1, -1);
     world_borehole(-1, -1);
@@ -5645,7 +5647,6 @@ void __cdecl world_landmarks() {
     world_dune(-1, -1);
     world_fresh(-1, -1);
     world_geothermal(-1, -1);
-    world_canyon(-1, -1); // Change: add "Nessus Canyon" to random map generation
     fixup_landmarks();
 }
 
