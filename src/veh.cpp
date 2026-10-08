@@ -4340,6 +4340,7 @@ int __cdecl get_basic_offense(int veh_id_atk, int veh_id_def, int psi_combat_typ
 /*
 Purpose: Get the basic defense value for a defending unit with an optional attacker unit parameter.
 // ORIGINAL: 0x00501940 ?get_basic_defense@@YAHHHHH@Z 0x00501940-0x00501D26
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:501B3C-501B5D increments only for pending morale2..3; no Headquarters check before501B5E attacker path", "pinned:501C4C-501C79 defender plan11 path reads attacker prototype/plan without new negative-ID guard; earlier501C03 join does not protect it"], "reason": "Restore original defense morale and information-warfare predicate. The manual Headquarters bonus and added attacker-index short-circuit are not present in the pinned body. Preserve existing earlier attacker guards; invalid-index effects, full matching and runtime remain unverified."}
 // LEVER: same asymmetric crèche/brood-pit fix as get_basic_offense above -
 //        see its comment for the disassembly evidence.
 // LEVER: same `bitmask_call` split as get_basic_offense - nested and
@@ -4390,9 +4391,6 @@ int __cdecl get_basic_defense(int veh_id_def, int veh_id_atk, int psi_combat_typ
             }
             morale -= morale_active;
         }
-        if (has_fac_built(FAC_HEADQUARTERS, base_id_def)) { // bug fix: per manual
-            morale++; // "Units in a headquarters base automatically gain +1 Morale when defending."
-        }
         int morale_pending = PlayersData[faction_id_def].soc_effect_pending.values_[SocialEffect::MORALE];
         if (morale_pending >= 2 && morale_pending <= 3) {
             morale++;
@@ -4415,8 +4413,8 @@ int __cdecl get_basic_defense(int veh_id_def, int veh_id_atk, int psi_combat_typ
         return 1;
     }
     if (plan_def == PLAN_INFO_WARFARE && get_proto_defense_rating(proto_id_def) == 1
-        // bug fix: added veh_id_atk bounds check to prevent potential arbitrary memory read
-        && (veh_id_atk < 0 || VehPrototypes[Vehs[veh_id_atk].proto_id].plan != PLAN_INFO_WARFARE)) {
+        // The original reads the attacker prototype here without an ID guard.
+        && VehPrototypes[Vehs[veh_id_atk].proto_id].plan != PLAN_INFO_WARFARE) {
         return 1;
     }
     uint32_t defense = armor_proto(proto_id_def, veh_id_atk, is_bombard);
@@ -5820,6 +5818,7 @@ Purpose: Generate verbose stats string for specified prototype. Used by Design W
          Command Nexus. Replaced existing non-safe strcat with string. Reworked to integrate with
          existing C code.
 // ORIGINAL: 0x0057DAA0 ?say_stats@@YAXPADHPAD@Z 0x0057DAA0-0x0057DED8
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:57DCEA-57DCF0 strcat references682E90 comma-space-NUL", "pinned:57DDF0 triad arms separately append682820 space-NUL before localized Sea/Air labels"], "reason": "Retain the original comma-space separator followed by the separate triad space. The visible doubled space is original formatting, not a new output correction. Complete formatter matching and runtime remain obligations."}
 // symbol    ?say_stats@@YAXPADH0@Z
 // TRIED: std::string body called 82 vs the image's 44 (call_diff); rebuilt
 //            as char pointer + strcat/sprintf in the image's own branch shape (goto
@@ -5907,7 +5906,7 @@ append_defense_tail:
             strcat(stat, ")");
         }
         if (triad) { // sea, air
-            strcat(stat, ","); // Bug fix: removed extra space
+            strcat(stat, ", "); // Original separator; the later triad space remains.
         }
     }
     if (triad == TRIAD_SEA) {
@@ -8173,6 +8172,7 @@ BOOL __cdecl can_arty(int proto_id, BOOL sea_triad_retn) {
 Purpose: Calculate a unit's morale. TODO: Determine if 2nd param is a toggle for display vs actual
          morale.
 // ORIGINAL: 0x005C0E40 ?morale_veh@@YAHHHH@Z 0x005C0E40-0x005C1143
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:5C10DF-5C1100 checks riot flag, faction/home base and morale exemption", "pinned:5C1101-5C1112 decrements/clamps modifier0..6;5C1114-5C1142 then adds vehicle morale and clamps total0..6"], "reason": "Restore the original drone-riot modifier clamp before adding stored vehicle morale, retaining the separate final clamp. Noneligible and morale-exempt paths do not gain this intermediate clamp; complete matching and runtime remain obligations."}
 // TRIED: call_diff FEWER (2 vs image's 4: morale_alien, has_tech, and
 //        `bitmask` TWICE) - the two `has_fac_built(FAC_CHILDREN_CRECHE/
 //        FAC_BROOD_PIT, home_base_id)` calls each keep `bitmask()` as a real
@@ -8255,8 +8255,8 @@ int __cdecl morale_veh(int veh_id, BOOL check_drone_riot, int faction_id_vs_nati
     }
     if (check_drone_riot && home_base_id >= 0
         && Bases[home_base_id].state & BSTATE_DRONE_RIOTS_ACTIVE && !morale_flag) {
-        // bug fix: removed premature range bounding negating negative morale effects
         morale_modifier--;
+        morale_modifier = range(morale_modifier, 0, 6);
     }
     return range(Vehs[veh_id].morale + morale_modifier, 0, 6);
 }
