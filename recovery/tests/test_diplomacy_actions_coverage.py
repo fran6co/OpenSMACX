@@ -683,15 +683,16 @@ int main() {
  reset(); std::strcpy(Players[2].filename,"UNIV"); DiploScratchFAA8=4; assert(!run() && !pops);
  reset(); assert(!run(4,1) && !pops);
  reset(); scan_result=-1; assert(!run(5) && scans==1 && !pops);
+ // Scan writes pseudo-tech F800=97; action==1 exits before native bitmap load.
+ reset(); scan_result=0; assert(!run(5,1) && scans==1 && DiploScratchF800==97 && !pops);
  reset(); assert(run() && price==425 && tech_calls==1 && purchased==3 && PlayersData[1].energy_reserves==9575 && PlayersData[2].energy_reserves==425 && redraws==11 && !std::strcmp(key,"BUYTECH1"));
  reset(); GameTechAchieved[3]=15; assert(run() && price==150);
  reset(); PlayersData[1].diplo_treaties[2]=1; PlayersData[1].ranking=1; PlayersData[2].ranking=2; PlayersData[2].tech_ranking=9; assert(run() && price==125);
  reset(); unit_value=999; PlayersData[1].diplo_treaties[2]=1; PlayersData[1].ranking=1; PlayersData[2].ranking=2; PlayersData[2].tech_ranking=9; assert(run() && price==250);
  reset(); PlayersData[1].energy_reserves=0; assert(!run() && !pops);
  reset(); PlayersData[1].energy_reserves=0; assert(run(4,5) && !tech_calls && !std::strcmp(key,"BUYTECHHIGH1"));
- reset(); PlayersData[1].energy_reserves=0; assert(run(5) && scans==1 && DiploScratchF800==97 && !tech_calls && !std::strcmp(key,"BUYPROTOHIGH0"));
- reset(); assert(run(5) && scans==1 && purchased==97 && BestProtoForTrade==-1 && !randoms && price==425);
- reset(); DiploScratchF800=96; unit_value=25; assert(run(13) && price==50 && !randoms && !std::strcmp(key,"BUYCOMMLINK0"));
+ // Keep the commlink/key branch on a valid ordinary technology identifier.
+ reset(); DiploScratchF800=3; unit_value=25; assert(run(13) && price==50 && !randoms && !std::strcmp(key,"BUYCOMMLINK0"));
  reset(); popup_answer=0; assert(run() && !tech_calls && !redraws);
  reset(); IsMultiplayerNet=1; assert(run() && money_messages==1 && tech_messages==1 && awaits==1 && !tech_calls && redraws==10);
  reset(); IsMultiplayerNet=1; mutate=1; assert(run() && money_messages==1 && !tech_messages && tech_calls==1 && purchased==6 && !awaits);
@@ -701,7 +702,9 @@ int main() {
     variants = {'actual': body}
     for name, old, new in (
         ('wrong_discount', 'value /= 4;', 'value = diplo_add(value, 3) / 4;'),
-        ('unsafe_pseudo_lookup', 'DiploScratchF800 < 89', 'DiploScratchF800 < 700'),
+        ('wrong_bitmap_divisor',
+         'game_tech_achieved_[DiploScratchF800]) - 1;',
+         'game_tech_achieved_[DiploScratchF800]);'),
         ('wrong_tech_receiver', 'tech_achieved(faction_id, purchased_tech, other_faction_id, 0)',
          'tech_achieved(other_faction_id, purchased_tech, faction_id, 0)'),
     ):
@@ -2496,7 +2499,7 @@ void reset(int mode=4) {
  std::memset(Players,0,sizeof(Players)); std::memset(PlayersData,0,sizeof(PlayersData));
  std::memset(GameTechAchieved,0,sizeof(GameTechAchieved));
  for(int i=0;i<8;++i) { FactionDiplomacyPortraits[i]=&portraits[i]; responses[i]=1; }
- DiplomacyProposalMode=mode; DiploScratchFAA8=3; DiploScratchFA18=5; DiploScratchF800=-1;
+ DiplomacyProposalMode=mode; DiploScratchFAA8=3; DiploScratchFA18=5; DiploScratchF800=3;
  DiploScratchFA78=2; TurnCurrentNum=8; IsMultiplayerNet=0;
  response_count=pops=helps=satan=money_messages=tech_messages=loan_messages=tech_calls=awaits=redraws=mutate=0;
  first_value=300; second_value=200; purchased=-1; transferred=loan_balance=loan_periods=0;
@@ -2513,6 +2516,8 @@ int main() {
  reset(); assert(run() && purchased==3 && tech_calls==1 && nums[0]==250 && PlayersData[1].energy_reserves==350 && PlayersData[2].energy_reserves==250 && DiploScratchFAA8==5 && DiploScratchFA18==-1 && redraws==11);
  reset(); DiploScratchFA18=-1; assert(run() && !std::strcmp(key,"ENERGYTECH1"));
  reset(); first_value=120; second_value=80; satan=1; assert(run() && nums[0]==75);
+ reset(); GameTechAchieved[3]=15; first_value=800;
+ assert(run() && nums[0]==250); // valid-index bit_count-minus-one divisor (3)
  reset(); responses[0]=3; assert(run() && helps==1 && pops==2);
  reset(); responses[0]=0; assert(!run() && !tech_calls && !redraws);
  reset(); std::strcpy(Players[2].filename,"BELIEVE"); assert(!run() && !std::strcmp(key,"REJSELLNONE"));
@@ -2541,7 +2546,9 @@ int main() {
         ('wrong_freebie_row', 'PlayersData[other].diplo_treaties[faction] & 1u', 'PlayersData[faction].diplo_treaties[other] & 1u'),
         ('wrong_sale_scale', 'diplo_mul(scale, 3) / 4', 'diplo_mul(scale, 3) / 32'),
         ('wrong_loan_field', 'loan_payment[other] = periods', 'loan_payment[other] = payment'),
-        ('unsafe_bitmap', 'DiploScratchF800 >= 0 && DiploScratchF800 < 89', 'DiploScratchF800 < 89'),
+        ('wrong_bitmap_divisor',
+         'game_tech_achieved_[DiploScratchF800]) - 1, 1, 99)',
+         'game_tech_achieved_[DiploScratchF800]), 1, 99)'),
         ('unsigned_repayment', 'diplo_mul(diplo_add(surcharge, 100), principal) / 100',
          'static_cast<int>(static_cast<uint32_t>(diplo_mul(diplo_add(surcharge, 100), principal)) / 100u)'),
     ):

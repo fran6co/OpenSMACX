@@ -15926,7 +15926,7 @@ int __cdecl demand_withdrawal(int faction_id, int against_id) {
 }
 
 // ORIGINAL: 0x005401A0 ?buy_tech@@YAHHHHHH@Z 0x005401A0-0x00540626
-// RECOVERY_BINDING: v1 {"evidence": ["task:diplomacy-actions-owner-coverage", "Pinned5401A0-540626 complete native instructions;540322/540328 tech_ranking35C;540335-54033B truncating divide4;54059C reloads multiplayer and selected tech after money callback", "Pinned5402A0 reads beyond independently bounded GameTechAchieved9A6670-9A66C9 for pseudo IDs; user2026-10-04 approves coverage-first regressions", "historical seed:src/unrecovered/005401a0.cpp"], "reason": "Recover technology, prototype and commlink purchase as genuine faction C++ with typed faction/global storage and source-owned literal keys. Preserve native ordinary pricing, signed technology-rank discounts, live post-callback transfer state and network argument direction. Pseudo-tech bitmap reads use a documented provisional divisor1 under the user coverage-first regression approval; this is not original behavior or an exactness claim."}
+// RECOVERY_BINDING: v1 {"evidence": ["task:diplomacy-actions-owner-coverage", "Pinned5401A0-540626 complete native instructions;540322/540328 tech_ranking35C;540335-54033B truncating divide4;54059C reloads multiplayer and selected tech after money callback", "historical seed:src/unrecovered/005401a0.cpp", "Pinned540298/5402A0/5402A7: load F800, unguarded byte at GameTechAchieved9A6670+F800, bit_count;5402AF..5402CF: subtract1, clamp1..999, signed divide. Pseudo IDs may read adjacent storage; original runtime effects remain unverified."], "reason": "Recover technology, prototype and commlink purchase as genuine faction C++ with typed faction/global storage and source-owned literal keys. Preserve native pricing, signed technology-rank discounts, live post-callback transfer state and network argument direction, including the original unguarded selected-ID bitmap lookup. Invalid-index runtime effects and complete matching remain obligations."}
 // symbol    ?buy_tech@@YAHHHHHH@Z
 // TRIED: direct transcription of the Ghidra decompile (tech-cost computation, string message build via say_tech/parse_says/ parse_num/strcat, X_pops purchase gate, energy/tech transfer with Console/NetDaemon dispatch); diverges at insn #5 in the prologue register-save order, not in control flow
 int __cdecl buy_tech(int faction_id, int other_faction_id, int action,
@@ -15956,14 +15956,11 @@ int __cdecl buy_tech(int faction_id, int other_faction_id, int action,
     if (DiploScratchFA3C != 0) value = diplo_mul(value, 2);
     if (is_commlink != 0) value = diplo_mul(value, 3) / 2;
 
-    // Coverage-first safety decision: pseudo-tech IDs are not members of the
-    // independently bounded 89-byte ownership bitmap. The original reads
-    // unrelated adjacent globals here. Use divisor1 provisionally for those
-    // items; ordinary technology pricing keeps the original population rule.
-    int divisor = 1;
-    if (DiploScratchF800 >= 0 && DiploScratchF800 < 89) {
-        divisor = bit_count(GameDataStateStorage.fields_.game_tech_achieved_[DiploScratchF800]) - 1;
-    }
+    // The original does not bound the selected ID before this byte read,
+    // including pseudo-tech IDs. Preserve that lookup and its subsequent
+    // clamp; do not substitute a divisor for an invalid array index.
+    int divisor = bit_count(
+        GameDataStateStorage.fields_.game_tech_achieved_[DiploScratchF800]) - 1;
     if (divisor < 1) divisor = 1;
     if (divisor > 999) divisor = 999;
     value /= divisor;
@@ -16051,7 +16048,7 @@ int __cdecl buy_tech(int faction_id, int other_faction_id, int action,
 }
 
 // ORIGINAL: 0x00540630 ?energy_trade@@YAHHH@Z 0x00540630-0x005410F3
-// RECOVERY_BINDING: v1 {"evidence": ["task:diplomacy-actions-owner-coverage", "Pinned540630-5410F3 full decoded instructions and verified literal keys68D74C-68D7CC", "Native54067D other-to-actor pact row;5406F1 tech_ranking35C;540D81/540D93 commerce304;54093B/54094A scaled3/4;540F15 wrapped signed product divided100;54106D storesperiodcount", "historical seed:src/unrecovered/00540630.cpp", "User2026-10-04 coverage-first regression approval; bounded89-byte GameTechAchieved leavesF800=-1 reachable fromindependent outgoingFAA8 selection"], "reason": "Recover complete faction freebie, energy-for-technology and loan flows through existing typed faction/global owners and real popup/parser/network services. Preserve directed treaty rows, technology versus commerce ranking, wrapped signed valuation, live modal selections, network transfer order and the native period-count loan field. The selected-technology bitmap lookup uses the documented coverage-first divisor1 safety fallback outside its proven bounds; no byte or game acceptance claim."}
+// RECOVERY_BINDING: v1 {"evidence": ["task:diplomacy-actions-owner-coverage", "Pinned540630-5410F3 full decoded instructions and verified literal keys68D74C-68D7CC", "Native54067D other-to-actor pact row;5406F1 tech_ranking35C;540D81/540D93 commerce304;54093B/54094A scaled3/4;540F15 wrapped signed product divided100;54106D storesperiodcount", "historical seed:src/unrecovered/00540630.cpp", "Pinned540958/540960/540967: load F800, unguarded byte at GameTechAchieved9A6670+F800, bit_count;54096F..54098F: subtract1, clamp1..99, signed divide. Independent outgoing FAA8 may be valid when F800=-1; neighboring-storage runtime effects remain unverified."], "reason": "Recover complete faction freebie, energy-for-technology and loan flows through existing typed faction/global owners and real popup/parser/network services. Preserve directed treaty rows, technology versus commerce ranking, wrapped signed valuation, live modal selections, network transfer order, native period-count loan field and the original unguarded selected-technology bitmap read. Invalid-index runtime effects, matching and game acceptance remain unproved."}
 // symbol    ?energy_trade@@YAHHH@Z
 // TRIED: full goto/label transcription mirroring Ghidra's control flow 1:1 (verified array strides/index scaling against raw disasm at the entry points); diverges at insn #11, near the DAT_0093fab0 tech-stage dispatch (call vs mov) - likely bVar2 computed via a branchy compare sequence in the original rather than a plain OR.
 int __cdecl energy_trade(int faction, int other) {
@@ -16112,12 +16109,11 @@ int __cdecl energy_trade(int faction, int other) {
         const char *other_filename = Players[other].filename;
         int scale = diplo_mul(diplo_add(GameDataStateStorage.fields_.turn_current_num_, 7) / 8, 32);
         if (great_satan(faction, 0)) scale = diplo_mul(scale, 3) / 4;
-        // Use the same provisional divisor1 safety policy as buy_tech for
-        // a selected ID outside the independently bounded ownership bitmap.
-        // tech_analysis can leave F800=-1 while outgoing FAA8 is valid.
-        int divisor = 1;
-        if (DiploScratchF800 >= 0 && DiploScratchF800 < 89)
-            divisor = diplo_clamp(bit_count(GameDataStateStorage.fields_.game_tech_achieved_[DiploScratchF800]) - 1, 1, 99);
+        // F800 can remain -1 while the independent outgoing FAA8 is valid.
+        // The original still reads at F800 relative to the bitmap before
+        // clamping the population divisor; retain that original quirk.
+        int divisor = diplo_clamp(bit_count(
+            GameDataStateStorage.fields_.game_tech_achieved_[DiploScratchF800]) - 1, 1, 99);
         scale /= divisor;
         int amount = diplo_mul(tech_val(DiploScratchFAA8, other, 1), scale) / 32;
         int second_value = 0;
