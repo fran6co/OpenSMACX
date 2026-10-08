@@ -237,8 +237,8 @@ void check_ideology_loop() {
     std::vector<std::vector<std::string> > input;
     for (int i = 0; i < 2; ++i) {
         std::vector<std::string> row;
-        row.push_back("category0");
-        row.push_back("model0_0");
+        row.push_back(i == 0 ? "category0" : "category1");
+        row.push_back(i == 0 ? "model0_0" : "model1_1");
         row.push_back("effect0");
         input.push_back(row);
     }
@@ -246,11 +246,11 @@ void check_ideology_loop() {
     StringTable.calls = 0;
     run_ideology_loop(&player);
     check(text_get_calls == 2 && text_item_calls == 6);
-    check(StringTable.calls == 4);
+    check(StringTable.calls == 6);
     check(player.soc_ideology_category == 0);
-    check(player.soc_anti_ideology_category == 0);
+    check(player.soc_anti_ideology_category == 1);
     check(player.soc_ideology_model == 0);
-    check(player.soc_anti_ideology_model == 0);
+    check(player.soc_anti_ideology_model == 1);
     check(player.soc_ideology_effect == -1);
     check(player.soc_anti_ideology_effect == -1);
 }
@@ -340,11 +340,16 @@ int main() {
 
 def harness_text(mutations=()):
     ideology, reactor, facility = product_loops()
+    for field in ("category", "model", "effect"):
+        if "alias_anti_" + field in mutations:
+            old = "player->soc_anti_ideology_" + field
+            assert ideology.count(old) == 1
+            ideology = ideology.replace(old, "player->soc_ideology_" + field, 1)
     if "current_effect_index" in mutations:
-        old = "*(&player->soc_ideology_effect + i) = -1;"
+        old = "soc_effect_value = -1;"
         assert ideology.count(old) == 2
         pos = ideology.rfind(old)
-        ideology = ideology[:pos] + ideology[pos:].replace(old, "*(&player->soc_ideology_effect + i) = j;", 1)
+        ideology = ideology[:pos] + ideology[pos:].replace(old, "soc_effect_value = j;", 1)
     if "store_reactor_power" in mutations:
         old = "text_item();"
         assert reactor.count(old) == 1
@@ -418,6 +423,9 @@ def test_actual_alpha_loops_preserve_pinned_effect_and_rule_storage(tmp_path):
     "store_reactor_power",
     "retain_facility_free_tech",
     "overwrite_facility_before_effect",
+    "alias_anti_category",
+    "alias_anti_model",
+    "alias_anti_effect",
 ])
 def test_original_improvement_mutants_are_rejected(tmp_path, mutation):
     result = run_host(tmp_path, (mutation,))

@@ -957,28 +957,36 @@ void __cdecl read_faction(Player *player, int toggle) {
         len = strlen(parse_rule_check);
     }
     // Societal Ideology + Anti-Ideology
+    // Pinned 0x00586C7B..0x00586E08 selects the ordinary fields, then their
+    // adjacent anti fields. These are named scalar members, not C++ arrays.
     for (int i = 0; i < 2; i++) {
-        *(&player->soc_ideology_category + i) = -1;
-        *(&player->soc_ideology_model + i) = 0;
-        *(&player->soc_ideology_effect + i) = -1;
+        int& soc_category_value = i == 0
+            ? player->soc_ideology_category : player->soc_anti_ideology_category;
+        int& soc_model_value = i == 0
+            ? player->soc_ideology_model : player->soc_anti_ideology_model;
+        int& soc_effect_value = i == 0
+            ? player->soc_ideology_effect : player->soc_anti_ideology_effect;
+        soc_category_value = -1;
+        soc_model_value = 0;
+        soc_effect_value = -1;
         text_get();
         LPSTR soc_category = text_item();
         for (int j = 0; j < MaxSocialCatNum; j++) {
             LPSTR check_cat_type = StringTable.get((int)SocialCategories[j].type);
-            if (Language ? !_strnicmp(soc_category, check_cat_type, 4) 
+            if (Language ? !_strnicmp(soc_category, check_cat_type, 4)
                 : !_stricmp(soc_category, check_cat_type)) {
-                *(&player->soc_ideology_category + i) = j;
+                soc_category_value = j;
                 break;
             }
         }
         LPSTR soc_model = text_item();
-        int soc_cat_num = *(&player->soc_ideology_category + i);
+        int soc_cat_num = soc_category_value;
         if (soc_cat_num >= 0) {
             for (int j = 0; j < MaxSocialModelNum; j++) {
                 LPSTR check_model = StringTable.get((int)SocialCategories[soc_cat_num].name[j]);
                 if (Language ?
                     !_strnicmp(soc_model, check_model, 4) : !_stricmp(soc_model, check_model)) {
-                    *(&player->soc_ideology_model + i) = j;
+                    soc_model_value = j;
                     break;
                 }
             }
@@ -988,7 +996,7 @@ void __cdecl read_faction(Player *player, int toggle) {
             if (!_stricmp(SocialEffects[j].set1, soc_effect)) {
                 // Pinned 0x00586DF7 writes -1 even after a matching effect.
                 // Activating that effect is a post-recovery improvement.
-                *(&player->soc_ideology_effect + i) = -1;
+                soc_effect_value = -1;
                 break;
             }
         }
