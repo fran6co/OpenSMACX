@@ -27,7 +27,9 @@ struct PlayerData {
 
 Player Players[MaxPlayerNum];
 PlayerData PlayersData[MaxPlayerNum];
-unsigned int LockEnableMask;
+struct GameDataStateProjection {
+  struct Fields { struct LockMasks { unsigned int enable_mask_; } lock_masks_; } fields_;
+} GameDataStateStorage;
 int IsMultiplayerNet;
 int IsMultiplayerPBEM;
 int Language;
@@ -160,7 +162,7 @@ int has_tech(int tech_id, int faction_id) {
 }
 
 int is_alive(uint32_t faction_id) {
-  return (LockEnableMask >> 8) & (1u << faction_id);
+  return (GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8) & (1u << faction_id);
 }
 
 void say_tech(char *output, int tech_id, int) {
@@ -231,7 +233,7 @@ static void reset_controls(DiploWin &window) {
   std::memset(last_popup_label, 0, sizeof(last_popup_label));
   std::memset(last_x_pop_label, 0, sizeof(last_x_pop_label));
   dialog_rows.clear();
-  LockEnableMask = 0;
+  GameDataStateStorage.fields_.lock_masks_.enable_mask_ = 0;
   IsMultiplayerNet = IsMultiplayerPBEM = Language = 0;
   GenderDefault = PluralityDefault = 0;
   DiploOffersDirty = 0;
@@ -361,7 +363,7 @@ static void controls_header_literals_and_popup_return() {
   assert(window.offer_type_[0][0] == 5 && window.offer_value_[0][0] == 2);
 
   reset_controls(window);
-  LockEnableMask = 1u << 2;
+  GameDataStateStorage.fields_.lock_masks_.enable_mask_ = 1u << 2;
   Players[2].title_leader[0] = 'T';
   Players[2].name_leader[0] = 'N';
   Players[2].noun_faction[0] = 'F';
@@ -393,7 +395,7 @@ static void controls_header_literals_and_popup_return() {
 static void controls_automatic_offer_receiver_and_energy_return() {
   DiploWin window;
   reset_controls(window);
-  LockEnableMask = 1u << (8 + 2);
+  GameDataStateStorage.fields_.lock_masks_.enable_mask_ = 1u << (8 + 2);
   selected_tech[0][3] = 1;
   PlayersData[0].diplo_treaties[2] = 8;
   PlayersData[2].diplo_treaties[0] = 0;
