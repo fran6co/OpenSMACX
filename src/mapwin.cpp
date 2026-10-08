@@ -7074,6 +7074,7 @@ void MapWin::tile_to_pixel(int tile_x, int tile_y, int *pixel_x, int *pixel_y) {
 }
 
 // ORIGINAL: 0x004711A0 ?terrain_fixup@@YAXPAUMapWin@@@Z 0x004711A0-0x0047123B FILE
+// RECOVERY_BINDING: v1 {"reason":"Initialize the existing twelve-byte terrain cache through its named fields; preserve signed area tests and the first-tile climate source.","evidence":["Pinned4711F5/471206 write offsets0..3/4..8;47120F..471229 clears then masks first MapTiles climate into offset9; offsets10..11 are untouched.","Pinned4711E1..4711E3 uses signed JLE;47122B..471234 reloads MapArea and uses signed JL. Allocation remains unchecked."]}
 // symbol    ?terrain_fixup@@YAXPAVMapWin@@@Z
 // MapWin is a class here and a struct in the image, so the tag differs.
 // TRIED: hoisting `base = owned_+offset` into its own statement before the `j = j+1` increment, to force add-before-inc ordering - same MISMATCH #30 'add' vs 'inc' either way (/O2 schedules inc first regardless of source order). similarity 0.9667, rebuilt_bytes == original_bytes (155).
@@ -7092,25 +7093,23 @@ void __cdecl terrain_fixup(MapWin * window) {
             window->owned_ = 0;
         }
         window->owned_ = static_cast<TerrainCacheEntry *>(mem_get(MapArea * 0xc));
-        if (MapArea > 0) {
-            int offset = 0;
+        if (static_cast<int32_t>(MapArea) > 0) {
             do {
                 int j = 0;
                 do {
                     j = j + 1;
-                    *(reinterpret_cast<unsigned char *>(window->owned_) + offset - 1 + j) = 0xff;
+                    window->owned_[count2].brightness[j - 1] = 0xff;
                 } while (j < 4);
                 j = 0;
                 do {
                     j = j + 1;
-                    *(reinterpret_cast<unsigned char *>(window->owned_) + offset + 3 + j) = 0xff;
+                    window->owned_[count2].altitude[j - 1] = static_cast<signed char>(0xff);
                 } while (j < 5);
-                *(reinterpret_cast<unsigned char *>(window->owned_) + 9 + offset) = 0;
-                unsigned char *record = reinterpret_cast<unsigned char *>(window->owned_) + 9 + offset;
-                offset = offset + 0xc;
-                *record = *record | (*map_tile_bytes() & 0xd0);
+                window->owned_[count2].terrain_bits = 0;
+                const unsigned char first_climate = map_tiles()[0].climate;
+                window->owned_[count2].terrain_bits |= first_climate & 0xd0;
                 count2 = count2 + 1;
-            } while (count2 < MapArea);
+            } while (count2 < static_cast<int32_t>(MapArea));
         }
     }
 }
