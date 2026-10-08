@@ -9564,6 +9564,7 @@ int __cdecl attack_from(int base_id_to_atk, int faction_id) {
 Purpose: Determine the value of the specified base between the requester and the respondent faction.
          This valuation could be triggered either from a gift, a threat or a base swap.
 // ORIGINAL: 0x0054CB50 ?value_of_base@@YAHHHHHH@Z 0x0054CB50-0x0054CF39
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:0x54CD1A-0x54CD30 signed population compare and MOVSX; Base.population_size is signed byte at +6", "pinned:0x54CD33-0x54CD4F wrapped numerator, signed IDIV and signed valuation clamp at100", "pinned:0x54CD8F-0x54CD96,0x54CDE4-0x54CDEB,0x54CDF4-0x54CDFB use CDQ/SUB/SAR for signed half toward zero", "historical TRIED unsigned spelling remains experiment history, not current behavior policy"], "reason": "Restore original signed population, valuation clamps and truncating halves while preserving modulo-32-bit accumulation. This corrects a prior unsigned behavior change, not an original game bug. Exceptional signed division faults, runtime reachability and complete matching remain unverified."}
 // size      1001 bytes
 // prototype int (__cdecl ?value_of_base@@YAHHHHHH@Z)(int baseID, int factionIDReq, int factionIDRes, int baseIDCounter, int tgl)
 // callers   3   call targets   7
@@ -9622,17 +9623,21 @@ int __cdecl value_of_base(int base_id, int faction_id_req, int faction_id_res,
     if (PlayersData[faction_id_req].energy_reserves > most_reserves) {
         most_reserves = PlayersData[faction_id_req].energy_reserves;
     }
-    uint32_t base_pop_factor = Bases[base_id].population_size;
+    int base_pop_factor = Bases[base_id].population_size;
     if (base_pop_factor < 3) {
         base_pop_factor = 3;
     }
-    // Bug fix: treat value as unsigned, original uses signed which could cause incorrect valuation
-    uint32_t value = ((most_reserves + 1000) / (dist_factor + 4)) * base_pop_factor;
-    if (value < 100) {
+    const uint32_t numerator_bits = static_cast<uint32_t>(most_reserves) + 1000u;
+    const uint32_t denominator_bits = static_cast<uint32_t>(dist_factor) + 4u;
+    const int quotient = base_yield_signed_bits(numerator_bits) /
+                         base_yield_signed_bits(denominator_bits);
+    uint32_t value = static_cast<uint32_t>(quotient) *
+                     static_cast<uint32_t>(base_pop_factor);
+    if (base_yield_signed_bits(value) < 100) {
         value = 100;
     }
     if (veh_who(x, y) < 0) {
-        value /= 2;
+        value = static_cast<uint32_t>(base_yield_signed_bits(value) / 2);
     }
     uint32_t res_base_count_region = PlayersData[faction_id_res].region_total_bases[region_base];
     if (!res_base_count_region) {
@@ -9652,10 +9657,10 @@ int __cdecl value_of_base(int base_id, int faction_id_req, int faction_id_res,
     }
     if (res_base_count_region && req_base_count_region) {
         if (res_base_count_region >= req_base_count_region * 5) {
-            value /= 2;
+            value = static_cast<uint32_t>(base_yield_signed_bits(value) / 2);
         }
         if (overmatch_deg) {
-            value /= 2;
+            value = static_cast<uint32_t>(base_yield_signed_bits(value) / 2);
         }
     }
     uint32_t facil_count = 0;
@@ -9667,12 +9672,12 @@ int __cdecl value_of_base(int base_id, int faction_id_req, int faction_id_res,
     }
     for (uint32_t proj = 0; proj < MaxSecretProjectNum; proj++) {
         if (base_project(proj) == base_id) {
-            value += (Facility[FacilitySPStart + proj].cost * 25);
+            value += static_cast<uint32_t>(Facility[FacilitySPStart + proj].cost) * 25u;
         }
     }
     for (i = veh_top(veh_id); i >= 0; i = Vehs[i].next_veh_id_stack) {
         if (Vehs[i].faction_id == faction_id_req) {
-            value += (VehPrototypes[Vehs[i].proto_id].cost * 2);
+            value += static_cast<uint32_t>(VehPrototypes[Vehs[i].proto_id].cost) * 2u;
         }
     }
     if (!_stricmp(Players[faction_id_req].filename, "BELIEVE")) {
@@ -9681,7 +9686,7 @@ int __cdecl value_of_base(int base_id, int faction_id_req, int faction_id_res,
     if (is_objective(base_id)) {
         value *= 4;
     }
-    return value;
+    return base_yield_signed_bits(value);
 }
 
 /*
@@ -10162,6 +10167,7 @@ Purpose: Determine if the provided faction can build a specific facility or Secr
          specified base. Checks are included to prevent SMACX specific facilities from being built
          in SMAC mode.
 // ORIGINAL: 0x005BA0E0 ?facility_avail@@YAHHHHH@Z 0x005BA0E0-0x005BA90A
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:0x5BA123-0x5BA138 early Ascent102 branch checks Voice slot and victory bit0x800 before filename normalization", "pinned:0x5BA1E2-0x5BA23B clears StringTemp9B86A0, strcat Player.filename+4, CharUpperA import66931C, strcmp CARETAKE literal6916E4; rejects IDs101/102", "pinned:0x5BA749-0x5BA7A5 Sphere23 checks Garden12 built/queued; complete span5BA0E0-5BA90A has no reciprocal Garden gate"], "reason": "Preserve original asymmetric Garden/Sphere availability, early Ascent project/rule return and shared filename normalization before late Caretaker rejection. No symmetric restriction or Caretaker Ascent fix is introduced. Full native matching and runtime behavior remain obligations."}
 // size      2090 bytes
 // prototype int (__cdecl ?facility_avail@@YAHHHHH@Z)(int facilityID, int factionID, int baseID, int queueCount)
 // callers   5   call targets   6
@@ -10192,8 +10198,7 @@ BOOL __cdecl facility_avail(int facility_id, int faction_id, int base_id,
         return false; // Skunkworks removed if there are no prototype costs
     }
     if (facility_id == FAC_ASCENT_TO_TRANSCENDENCE) { // at top since anyone can build it
-        return ascending(faction_id) && GameDataStateStorage.fields_.game_rules_ & RULES_VICTORY_TRANSCENDENCE
-            && _stricmp(Players[faction_id].filename, "CARETAKE"); // bug fix for Caretakers
+        return ascending(faction_id) && GameDataStateStorage.fields_.game_rules_ & RULES_VICTORY_TRANSCENDENCE;
     }
     if (!has_tech(Facility[facility_id].preq_tech, faction_id)) { // Check tech for facility + SP
         return false;
@@ -10204,8 +10209,15 @@ BOOL __cdecl facility_avail(int facility_id, int faction_id, int base_id,
         || facility_id == FAC_PLANETARY_ENERGY_GRID)) {
         return false;
     }
-    if (facility_id == FAC_VOICE_OF_PLANET && !_stricmp(Players[faction_id].filename, "CARETAKE")) {
-        return false; // shifted Caretaker Ascent check to top (never reached here)
+    // The original normalizes the filename in shared scratch storage here;
+    // the early Ascent return above bypasses this later Caretaker check.
+    StringTemp[0] = 0;
+    strcat(StringTemp, Players[faction_id].filename);
+    CharUpperA(StringTemp);
+    if (!strcmp(StringTemp, "CARETAKE")
+        && (facility_id == FAC_VOICE_OF_PLANET
+            || facility_id == FAC_ASCENT_TO_TRANSCENDENCE)) {
+        return false;
     }
     if (facility_id >= FAC_HUMAN_GENOME_PROJ) {
         return base_project(facility_id - FAC_HUMAN_GENOME_PROJ) == SP_Unbuilt;
@@ -10237,8 +10249,6 @@ BOOL __cdecl facility_avail(int facility_id, int faction_id, int base_id,
         return has_fac(FAC_FUSION_LAB, base_id, queue_count); // Cumulative
       case FAC_NANOHOSPITAL:
         return has_fac(FAC_RESEARCH_HOSPITAL, base_id, queue_count); // Cumulative
-      case FAC_PARADISE_GARDEN: // bug fix: added check
-        return !has_fac(FAC_PUNISHMENT_SPHERE, base_id, queue_count); // antithetical
       case FAC_PUNISHMENT_SPHERE:
         return !has_fac(FAC_PARADISE_GARDEN, base_id, queue_count); // antithetical
       case FAC_NANOREPLICATOR:

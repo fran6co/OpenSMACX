@@ -1,5 +1,6 @@
 #ifndef CAPTURE_BASE_HOST_PROJECTION_HPP
 #define CAPTURE_BASE_HOST_PROJECTION_HPP
+#include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -49,80 +50,55 @@ struct Veh {
     short x, y;
 };
 struct RulesFacility { char *name; int preq_tech; };
+
 struct BaseSecretProject {
-    int human_genome_project_, command_nexus_, weather_paradigm_, merchant_exchange_;
-    int empath_guild_, citizens_defense_force_, virtual_world_, planetary_transit_system_;
-    int xenoempathy_dome_, neural_amplifier_, maritime_control_center_, planetary_datalinks_;
-    int supercollider_, ascetic_virtues_, longevity_vaccine_, hunter_seeker_algorithm_;
-    int pholus_mutagen_, cyborg_factory_, theory_of_everything_, dream_twister_;
-    int universal_translator_, network_backbone_;
-
- int &human_genome_project() { return human_genome_project_; }
- const int &human_genome_project() const { return human_genome_project_; }
-
- int &command_nexus() { return command_nexus_; }
- const int &command_nexus() const { return command_nexus_; }
-
- int &weather_paradigm() { return weather_paradigm_; }
- const int &weather_paradigm() const { return weather_paradigm_; }
-
- int &merchant_exchange() { return merchant_exchange_; }
- const int &merchant_exchange() const { return merchant_exchange_; }
-
- int &empath_guild() { return empath_guild_; }
- const int &empath_guild() const { return empath_guild_; }
-
- int &citizens_defense_force() { return citizens_defense_force_; }
- const int &citizens_defense_force() const { return citizens_defense_force_; }
-
- int &virtual_world() { return virtual_world_; }
- const int &virtual_world() const { return virtual_world_; }
-
- int &planetary_transit_system() { return planetary_transit_system_; }
- const int &planetary_transit_system() const { return planetary_transit_system_; }
-
- int &xenoempathy_dome() { return xenoempathy_dome_; }
- const int &xenoempathy_dome() const { return xenoempathy_dome_; }
-
- int &neural_amplifier() { return neural_amplifier_; }
- const int &neural_amplifier() const { return neural_amplifier_; }
-
- int &maritime_control_center() { return maritime_control_center_; }
- const int &maritime_control_center() const { return maritime_control_center_; }
-
- int &planetary_datalinks() { return planetary_datalinks_; }
- const int &planetary_datalinks() const { return planetary_datalinks_; }
-
- int &supercollider() { return supercollider_; }
- const int &supercollider() const { return supercollider_; }
-
- int &ascetic_virtues() { return ascetic_virtues_; }
- const int &ascetic_virtues() const { return ascetic_virtues_; }
-
- int &longevity_vaccine() { return longevity_vaccine_; }
- const int &longevity_vaccine() const { return longevity_vaccine_; }
-
- int &hunter_seeker_algorithm() { return hunter_seeker_algorithm_; }
- const int &hunter_seeker_algorithm() const { return hunter_seeker_algorithm_; }
-
- int &pholus_mutagen() { return pholus_mutagen_; }
- const int &pholus_mutagen() const { return pholus_mutagen_; }
-
- int &cyborg_factory() { return cyborg_factory_; }
- const int &cyborg_factory() const { return cyborg_factory_; }
-
- int &theory_of_everything() { return theory_of_everything_; }
- const int &theory_of_everything() const { return theory_of_everything_; }
-
- int &dream_twister() { return dream_twister_; }
- const int &dream_twister() const { return dream_twister_; }
-
- int &universal_translator() { return universal_translator_; }
- const int &universal_translator() const { return universal_translator_; }
-
- int &network_backbone() { return network_backbone_; }
- const int &network_backbone() const { return network_backbone_; }
+    int project_base[64];
+    int &operator[](int project) { return project_base[project]; }
+    const int &operator[](int project) const { return project_base[project]; }
+    int &universal_translator() { return project_base[20]; }
+    const int &universal_translator() const { return project_base[20]; }
+    int &network_backbone() { return project_base[21]; }
+    const int &network_backbone() const { return project_base[21]; }
 };
+
+struct GameDataLockMaskBytes {
+    uint8_t human_mask_, alive_mask_, unassigned_[2];
+};
+union GameDataLockMaskView {
+    uint32_t enable_mask_;
+    GameDataLockMaskBytes bytes_;
+};
+// Source-shaped GameDataStateWindowFields prefix through the project owner.
+// Types/order are copied from src/game_data_state_window.h; this fixture does
+// not claim to define or verify the full enclosing object.
+struct GameDataStateWindowFields {
+    uint32_t game_preferences_, game_more_preferences_, game_warnings_, game_rules_;
+    uint8_t game_wire_opaque_9a64a0_[4];
+    uint32_t game_interlude_flags_;
+    uint8_t game_wire_opaque_9a64a8_[4];
+    int tutorial_flags_, tutorial_flags_2_;
+    uint32_t terraform_announced_mask_[2];
+    int tutwin_flags_9a64bc_;
+    uint32_t game_state_;
+    int diff_level_current_, vehicle_current_count_, base_current_count_;
+    int game_setup_reset_word_, turn_current_num_;
+    uint32_t mission_year_current_;
+    int vehicle_selection_follow_limit_, time_controls_selection_;
+    int turn_control_duration_milliseconds_;
+    GameDataLockMaskView lock_masks_;
+    uint32_t faction_rankings_[8];
+    uint32_t ranking_faction_id_unk1_, ranking_faction_id_unk2_;
+    BaseSecretProject secret_project_;
+};
+struct GameDataStateWindow { GameDataStateWindowFields fields_; };
+extern GameDataStateWindow GameDataStateStorage;
+typedef char game_state_field_offset[(offsetof(GameDataStateWindowFields, game_state_) == 0x30) ? 1 : -1];
+typedef char vehicle_count_field_offset[(offsetof(GameDataStateWindowFields, vehicle_current_count_) == 0x38) ? 1 : -1];
+typedef char base_count_field_offset[(offsetof(GameDataStateWindowFields, base_current_count_) == 0x3c) ? 1 : -1];
+typedef char turn_field_offset[(offsetof(GameDataStateWindowFields, turn_current_num_) == 0x44) ? 1 : -1];
+typedef char locks_field_offset[(offsetof(GameDataStateWindowFields, lock_masks_) == 0x58) ? 1 : -1];
+typedef char project_field_offset[(offsetof(GameDataStateWindowFields, secret_project_) == 0x84) ? 1 : -1];
+typedef char project_array_size[(sizeof(BaseSecretProject) == 0x100) ? 1 : -1];
 
 struct Console {
     int faction_id_;
@@ -139,15 +115,12 @@ extern Player Players[8];
 extern Veh Vehs[8192];
 extern RulesFacility Facility[134];
 extern Map MapTiles[4096];
-extern int BaseCurrentCount, VehCurrentCount, TurnCurrentNum;
-extern unsigned int MapLongitude, LockEnableMask, GamePreferences, GameRules,
-    GameState, UnkBitfield1;
+extern unsigned int MapLongitude, UnkBitfield1;
 extern int MapLongitudeBounds, MapLatitudeBounds, MapIsFlat, IsMultiplayerNet,
     BaseIDCurrentSelected;
 extern Console ConsoleGlobal;
 extern NetMessage NetMsgPrimary;
 extern Window WorldClimateWorldWin, TutWinBaseWindow;
-extern BaseSecretProject SecretProject;
 extern char *ScriptPopupFile;
 extern int GenderDefault, PluralityDefault;
 extern int BaseKillCalls, BaseResetCalls, SetBaseCalls, ComputeCalls;
@@ -170,7 +143,6 @@ void draw_tile(int, int, int); void interlude(int, char *, int, int); void veh_i
 void steal_tech(int, int, int); void bases_reset(int, int, int);
 void mon_conquer_base(int, char *); void make_base_unique(int); void text_close();
 void eliminate_player(int, int); void set_base(int); void base_compute(int);
-void draw_tile(int, int, int);
 char *label_get(int);
 
 extern "C" void capture_base(int, int, int);

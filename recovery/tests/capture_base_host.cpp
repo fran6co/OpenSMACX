@@ -4,24 +4,23 @@ Player Players[8];
 Veh Vehs[8192];
 RulesFacility Facility[134];
 Map MapTiles[4096];
-int BaseCurrentCount, VehCurrentCount, TurnCurrentNum;
-unsigned int MapLongitude, LockEnableMask, GamePreferences, GameRules,
-    GameState, UnkBitfield1;
+GameDataStateWindow GameDataStateStorage;
+unsigned int MapLongitude, UnkBitfield1;
 int MapLongitudeBounds, MapLatitudeBounds, MapIsFlat, IsMultiplayerNet,
     BaseIDCurrentSelected;
 Console ConsoleGlobal;
 NetMessage NetMsgPrimary;
 Window WorldClimateWorldWin, TutWinBaseWindow;
-BaseSecretProject SecretProject;
 char *ScriptPopupFile;
 int GenderDefault, PluralityDefault;
 int BaseKillCalls, BaseResetCalls, SetBaseCalls, ComputeCalls;
 int OwnerSetCalls, DrawCalls, EliminateCalls, StealTechCalls;
 const int RadiusOffsetX[289] = {0};
 const int RadiusOffsetY[289] = {0};
-static int ProjectBaseIds[64];
 
-int base_project(int id) { return (id < 0 || id >= 64) ? -1 : ProjectBaseIds[id]; }
+int base_project(int id) {
+    return GameDataStateStorage.fields_.secret_project_[id];
+}
 void treaty_off(int, int, int) {}
 void treaty_on(int, int, int) {}
 void log_say(const char *, const char *, int, int, int) {}
@@ -73,21 +72,26 @@ static void reset_fixture() {
     memset(Vehs, 0, sizeof(Vehs));
     memset(Facility, 0, sizeof(Facility));
     memset(MapTiles, 0, sizeof(MapTiles));
-    memset(ProjectBaseIds, 0xff, sizeof(ProjectBaseIds));
-    BaseCurrentCount = 2;
-    VehCurrentCount = 0;
-    TurnCurrentNum = 0;
+    memset(&GameDataStateStorage, 0, sizeof(GameDataStateStorage));
+    memset(&GameDataStateStorage.fields_.secret_project_, 0xff,
+           sizeof(GameDataStateStorage.fields_.secret_project_));
+    GameDataStateStorage.fields_.base_current_count_ = 2;
+    GameDataStateStorage.fields_.vehicle_current_count_ = 0;
+    GameDataStateStorage.fields_.turn_current_num_ = 0;
     MapLongitude = 16;
     MapLongitudeBounds = 32;
     MapLatitudeBounds = 32;
     MapIsFlat = 0;
     IsMultiplayerNet = 0;
-    LockEnableMask = 7;
-    GamePreferences = GameRules = GameState = UnkBitfield1 = 0;
+    GameDataStateStorage.fields_.lock_masks_.enable_mask_ = 7;
+    GameDataStateStorage.fields_.game_preferences_ = 0;
+    GameDataStateStorage.fields_.game_rules_ = 0;
+    GameDataStateStorage.fields_.game_state_ = 0;
+    UnkBitfield1 = 0;
     BaseIDCurrentSelected = 0;
     ConsoleGlobal.faction_id_ = 0;
-    SecretProject.universal_translator() = -1;
-    SecretProject.network_backbone() = -1;
+    GameDataStateStorage.fields_.secret_project_.universal_translator() = -1;
+    GameDataStateStorage.fields_.secret_project_.network_backbone() = -1;
     ScriptPopupFile = const_cast<char *>("popup.txt");
     BaseKillCalls = BaseResetCalls = SetBaseCalls = ComputeCalls = 0;
     OwnerSetCalls = DrawCalls = EliminateCalls = StealTechCalls = 0;
@@ -123,9 +127,9 @@ int main() {
     if (OwnerSetCalls != 1 || EliminateCalls != 1 || SetBaseCalls != 0) return 6;
 
     reset_fixture();
-    GameRules = 0x4000;
-    SecretProject.universal_translator() = 0;
-    SecretProject.network_backbone() = 1;
+    GameDataStateStorage.fields_.game_rules_ = 0x4000;
+    GameDataStateStorage.fields_.secret_project_.universal_translator() = 0;
+    GameDataStateStorage.fields_.secret_project_.network_backbone() = 1;
     capture_base(0, 2, 1);
     if (StealTechCalls != 2) return 7;
     return 0;
