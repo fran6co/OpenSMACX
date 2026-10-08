@@ -7853,6 +7853,7 @@ static void world_rainfall_pass2(int saved_faction) {
     int rain_carry = 0;
     int cloud_count = 0;
     int y = 0;
+    Map *tile_cursor = MapTiles;
 
     for (y = 0; y < MapLatitudeBounds; ++y) {
         int x = y & 1;
@@ -7860,16 +7861,14 @@ static void world_rainfall_pass2(int saved_faction) {
             int rainfall_class = 0;
             int adjustment = 0;
             int tile_baseline = 0;
-            Map *tile = &MapTiles[MapLongitude * y + (x >> 1)];
-            const uint8_t climate = tile->climate;
-            const uint32_t flags = tile->bit2;
-            const int rainfall_level = climate & 7;
-            const int altitude = climate >> 5;
-            const int cloud_cover = static_cast<int>(MapCloudCover);
-            const uint8_t scratch = tile->unk_1;
-            const uint32_t coastal = flags & 0x80000040u;
-
             if (y > 0 && y < MapLatitudeBounds - 1) {
+                Map *tile = &MapTiles[MapLongitude * y + (x >> 1)];
+                const uint8_t climate = tile->climate;
+                const uint32_t flags = tile->bit2;
+                const int rainfall_level = climate & 7;
+                const int altitude = climate >> 5;
+                const uint8_t scratch = tile_cursor->unk_1;
+                const uint32_t coastal = flags & 0x80000040u;
                 if (coastal == 0x40u || (flags & 0x80000100u) == 0x100u)
                     rain_carry = 1;
 
@@ -7878,6 +7877,7 @@ static void world_rainfall_pass2(int saved_faction) {
                     cloud_count = 0;
                 }
 
+                const int cloud_cover = static_cast<int>(MapCloudCover);
                 if (scratch & 0x80) {
                     rain_carry = rainfall_level > 1 ? 1 : 0;
                     pass2_count = 0;
@@ -7907,9 +7907,16 @@ static void world_rainfall_pass2(int saved_faction) {
                         * cloud_cover * 4 + 1;
                     if (pass2_count > pass_limit && rain_carry != 0)
                         --rain_carry;
-                } else if (altitude < 0) {
+                } else if (altitude < 3) {
                     cloud_count = 0;
                     rain_carry = 1;
+                    if (pass2_count != 0) {
+                        pass2_count += -1 - cloud_cover;
+                        if (pass2_count < 1) {
+                            pass2_count = 0;
+                            cloud_count = 0;
+                        }
+                    }
                 } else if (rain_carry == 0) {
                     if (pass2_count != 0) {
                         pass2_count += -1 - cloud_cover;
@@ -7938,7 +7945,7 @@ static void world_rainfall_pass2(int saved_faction) {
                 }
 
                 if (tile->bit & BIT_RIVER) {
-                    if ((cloud_cover % 3) != 0 && adjustment < 0)
+                    if (((x >> 1) % 3) != 0 && adjustment < 0)
                         adjustment = 0;
                     rain_carry = 1;
                     cloud_count = 0;
@@ -7991,32 +7998,35 @@ static void world_rainfall_pass2(int saved_faction) {
                         ++rainfall_class;
                 }
 
-                const int old_class = (climate >> 3) & 3;
-                if (GameDataStateStorage.fields_.turn_current_num_ != 0 && old_class != rainfall_class
-                    && TerraformDrownedBaseId < 0) {
-                    if (old_class > rainfall_class) {
-                        bool search = true;
-                        if (TerraformTileFaction >= 0
-                            && (GameDataStateStorage.fields_.lock_masks_.enable_mask_
-                                & (1u << (TerraformTileFaction & 0x1F))))
-                            search = false;
-                        if (search) {
-                            const int found = base_find(x, y);
-                            if (found >= 0)
-                                TerraformTileFaction =
-                                    Bases[found].faction_id_current;
+                if (GameDataStateStorage.fields_.turn_current_num_ != 0) {
+                    const int old_class = (tile_cursor->climate >> 3) & 3;
+                    if (old_class != rainfall_class && TerraformDrownedBaseId < 0) {
+                        if (old_class > rainfall_class) {
+                            bool search = true;
+                            if (TerraformTileFaction >= 0
+                                && (static_cast<uint8_t>(
+                                        GameDataStateStorage.fields_.lock_masks_.enable_mask_)
+                                    & (1u << (TerraformTileFaction & 0x1F))))
+                                search = false;
+                            if (search) {
+                                const int found = base_find(x, y);
+                                if (found >= 0)
+                                    TerraformTileFaction =
+                                        Bases[found].faction_id_current;
+                            }
                         }
+                        const int found = base_find(x, y, saved_faction);
+                        if (found >= 0 && BaseFindDist <= 2)
+                            TerraformDrownedBaseId = found;
                     }
-                    const int found = base_find(x, y, saved_faction);
-                    if (found >= 0 && BaseFindDist <= 2)
-                        TerraformDrownedBaseId = found;
                 }
 
-                tile->climate = static_cast<uint8_t>(
-                    (climate & 0xE7) | (rainfall_class << 3));
+                tile_cursor->climate = static_cast<uint8_t>(
+                    (tile_cursor->climate & 0xE7) | (rainfall_class << 3));
             } else {
-                tile->climate = static_cast<uint8_t>(climate & 0xE7);
+                tile_cursor->climate = static_cast<uint8_t>(tile_cursor->climate & 0xE7);
             }
+            ++tile_cursor;
         }
         do_all_non_input();
     }
@@ -8042,17 +8052,16 @@ static int world_rainfall_xrange(int x, int width, int flat) {
 //   unblocked world_erosion and world_fungus leaves this one where it was.
 //   Its frame is `sub esp, 0x38` with no stack object.
 // ORIGINAL: 0x005C4470 ?world_rainfall@@YAXXZ 0x005C4470-0x005C4FC1
-// RECOVERY_BINDING: v1 {"reason":"Recover the complete three-pass rainfall algorithm through existing Map storage, WorldBuilder terrain parameters and real base/climate APIs. The common land-terrain join and west-to-east scan continuation come from the original control flow, not the old condensed seed.","evidence":["original:0x005C4470-0x005C4FC1; image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","git:8ebd9101:src/unrecovered/005c4470.cpp","Original0x5C45AD joins at0x5C47DB before all-tile altitude processing; original0x5C499D/0x5C49A7 join at0x5C49E5 before the east scan.","src/map.h Map and radius tables; src/alpha.h RulesWorldbuilder; src/base.h base_find; src/console.h ConsoleGlobal; existing src/veh.cpp terraform results."]}
+// RECOVERY_BINDING: v1 {"reason":"Recover the complete three-pass rainfall algorithm through existing Map storage, WorldBuilder terrain parameters and real base/climate APIs. The common land-terrain join and west-to-east scan continuation come from the original control flow, not the old condensed seed. Restore these original state, callback-read and column-arithmetic effects without normalizing the zero-carry, lock-byte or persistent-cursor quirks. The retained TRIED condensation describes seed history; these branch corrections do not establish full-game or linked-preservation acceptance.","evidence":["original:0x005C4470-0x005C4FC1; image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","git:8ebd9101:src/unrecovered/005c4470.cpp","Original0x5C45AD joins at0x5C47DB before all-tile altitude processing; original0x5C499D/0x5C49A7 join at0x5C49E5 before the east scan.","src/map.h Map and radius tables; src/alpha.h RulesWorldbuilder; src/base.h base_find; src/console.h ConsoleGlobal; existing src/veh.cpp terraform results.","Pinned5C4665/46F3/4774 and4919/49BB/49EB/4A86 reload cloud cover at the consumer and cloudmass scan tails; row callbacks service networking. Entry5C4487/448C resets drowned-base then tile-faction.","Pinned5C4C2A/57/5D/6B separates altitude0..2 carry/reset/counter decay from exactly3;5C4CE2 reaches4C6B without forcing carry.5C4B33 preserves x>>1 through river IDIV3 at4CA3.","Pinned5C4ACF/4B84/4DD7/4E61/4E89 retains a separate Map cursor for scratch, live old/final climate and each processed record, while4B27..49 indexes live terrain storage. Base callbacks may alter climate;5C4DFE tests only the lock-mask low byte."]}
 // TRIED: no Ghidra hypothesis was available for this address, so this is a from-scratch disassembly transcription (three map passes: windward-hint marking, 2-bit rainfall-class finalization with base_find caching, moderate-rain propagation). Pass 2's middle heuristic (unk_1 bit cascade feeding the 0-3 class value) is a best-effort condensation of ~80 instructions, not a literal register replay - the surrounding loop bounds, byte-merge write and base_find call sites are transcribed directly.
 void __cdecl world_rainfall() {
     const int saved_faction = ConsoleGlobal.faction_id_;
-    TerraformTileFaction = -1;
     TerraformDrownedBaseId = -1;
+    TerraformTileFaction = -1;
     int i;
     for (i = 0; i < static_cast<int>(MapArea); ++i)
         MapTiles[i].unk_1 = 0;
 
-    const int cloud_cover = static_cast<int>(MapCloudCover);
     int y;
     for (y = 0; y < MapLatitudeBounds; ++y) {
         int x = y & 1;
@@ -8089,7 +8098,7 @@ void __cdecl world_rainfall() {
                         Map *center = &MapTiles[
                             MapLongitude * y + (center_x >> 1)];
                         if ((left->climate >> 5) >= (center->climate >> 5)
-                            && step_west <= cloud_cover)
+                            && step_west <= static_cast<int>(MapCloudCover))
                             left->unk_1 &= 0xEF;
                     }
                     west -= 2;
@@ -8100,15 +8109,16 @@ void __cdecl world_rainfall() {
                 if (east_x >= 0 && east_x < MapLongitudeBounds)
                     MapTiles[MapLongitude * y + (east_x >> 1)].unk_1 |= 0x80;
 
-                if (cloud_cover > 0) {
+                const int x4_cloud_cover = static_cast<int>(MapCloudCover);
+                if (x4_cloud_cover > 0) {
                     const int x4 = world_rainfall_xrange(
                         x + 4, MapLongitudeBounds, MapIsFlat);
                     if (x4 >= 0 && x4 < MapLongitudeBounds) {
                         Map *tile4 = &MapTiles[
                             MapLongitude * y + (x4 >> 1)];
-                        if ((tile4->climate & 7) > 1 || cloud_cover > 1) {
+                        if ((tile4->climate & 7) > 1 || x4_cloud_cover > 1) {
                             tile4->unk_1 |= 0x80;
-                            if (cloud_cover > 1) {
+                            if (static_cast<int>(MapCloudCover) > 1) {
                                 const int x6 = world_rainfall_xrange(
                                     x + 6, MapLongitudeBounds, MapIsFlat);
                                 if (x6 >= 0 && x6 < MapLongitudeBounds
@@ -8146,7 +8156,7 @@ void __cdecl world_rainfall() {
                 const int cloudmass = static_cast<int>(
                     altitude <= 5 ? WorldBuilder.cloudmass_hills
                                   : WorldBuilder.cloudmass_peaks);
-                const int west_limit = (cloud_cover - 1)
+                int west_limit = (static_cast<int>(MapCloudCover) - 1)
                     * static_cast<int>(WorldBuilder.rainfall_coeff)
                     + cloudmass;
                 if (west_limit >= 1) {
@@ -8167,11 +8177,14 @@ void __cdecl world_rainfall() {
                             neighbor->unk_1 |= 0x20;
                         }
                         col -= 2;
+                        west_limit = (static_cast<int>(MapCloudCover) - 1)
+                            * static_cast<int>(WorldBuilder.rainfall_coeff)
+                            + cloudmass;
                     }
                 }
 
-                const int east_limit = cloudmass
-                    - (cloud_cover - 1)
+                int east_limit = cloudmass
+                    - (static_cast<int>(MapCloudCover) - 1)
                       * static_cast<int>(WorldBuilder.rainfall_coeff);
                 if (east_limit >= 1) {
                     int col = x + 2;
@@ -8189,6 +8202,9 @@ void __cdecl world_rainfall() {
                             neighbor->unk_1 |= 0x10;
                         }
                         col += 2;
+                        east_limit = cloudmass
+                            - (static_cast<int>(MapCloudCover) - 1)
+                              * static_cast<int>(WorldBuilder.rainfall_coeff);
                     }
                 }
             }
