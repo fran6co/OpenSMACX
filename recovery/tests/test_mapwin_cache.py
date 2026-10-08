@@ -61,6 +61,7 @@ void check(bool ok,int line){if(!ok){std::fprintf(stderr,"assertion line %d\n",l
 ACTUAL_POD
 ACTUAL_TABLES
 uint32_t MapArea,MapLongitude;
+int MapLongitudeBounds;
 struct MapWin {
     ACTUAL_POINTER
     void clear_terrain();
@@ -81,12 +82,12 @@ void expect_clear(int count){
     for(int entry=0;entry<count;++entry)
         for(int byte=0;byte<9;++byte)expected[(centre+entry)*12+byte]=255;
 }
-void expect_radius(int radius,int longitude){
+void expect_radius(int radius,int full_width){
     // Independent diagonal coordinates (u,v), not RadiusOffset/Range reads.
     int extent=radius+1;
     for(int u=-extent;u<=extent;++u)for(int v=-extent;v<=extent;++v){
         int x=u+v,y=u-v;
-        int entry=centre+y*floor_half(longitude)+floor_half(x);
+        int entry=centre+y*floor_half(full_width)+floor_half(x);
         require(entry>=0 && entry<4096);
         for(int byte=0;byte<4;++byte)expected[entry*12+byte]=255;
     }
@@ -111,11 +112,14 @@ int main(){
     window.owned_=backing+centre;
     for(int longitude : {0,1,2,7,32,129})for(int radius=-1;radius<=7;++radius){
         for(int args : {0,1,2}){
-            poison();MapLongitude=longitude;MapArea=args==0 ? 0 : 1;
+            poison();MapLongitudeBounds=longitude;
+            MapLongitude=static_cast<uint32_t>(floor_half(longitude));
+            MapArea=args==0 ? 0 : 1;
             expect_radius(radius,longitude);
             window.UNK6(args==0 ? 0 : args==1 ? 101 : -37,
                         args==0 ? 0 : args==1 ? -205 : 81,radius);
-            unchanged();require(window.owned_==backing+centre && MapLongitude==uint32_t(longitude));
+            unchanged();require(window.owned_==backing+centre &&
+                MapLongitudeBounds==longitude && MapLongitude==uint32_t(floor_half(longitude)));
             window.UNK6(911,-733,radius);unchanged();
         }
     }
@@ -159,7 +163,8 @@ def test_actual_mapwin_cache(tmp_path):
 @pytest.mark.parametrize("before,after", [
     ("RadiusRange[radius + 1]", "RadiusRange[radius == -1 ? 0 : radius]"),
     ("int i = 0;", "int i = 1;"),
-    ("static_cast<int>(MapLongitude) >> 1", "static_cast<int>(MapLongitude)"),
+    ("RadiusOffsetY[i] * (MapLongitudeBounds >> 1)",
+     "RadiusOffsetY[i] * (static_cast<int>(MapLongitude) >> 1)"),
     ("(RadiusOffsetX[i] >> 1)", "(RadiusOffsetX[i] / 2)"),
     ("owned_[idx].brightness[corner]", "owned_[idx + 1].brightness[corner]"),
     ("owned_[idx].brightness[corner] = 0xFF;",

@@ -7144,7 +7144,9 @@ void MapWin::UNK6(int UNUSED(x) x, int UNUSED(y) y, int radius) {
                 // owned_, not around a selected tile. They can be negative,
                 // so an ordinary allocation starting at owned_ is unsafe
                 // for such radii. No centering, wrapping or guard is added.
-                int idx = RadiusOffsetY[i] * (static_cast<int>(MapLongitude) >> 1)
+                // Original 0x0046FC9C reloads the full-width word at
+                // 0x00949870 here, not the half-width MapLongitude stride.
+                int idx = RadiusOffsetY[i] * (MapLongitudeBounds >> 1)
                         + (RadiusOffsetX[i] >> 1);
                 i++;
                 for (int corner = 0; corner < 4; ++corner) {
@@ -7173,7 +7175,9 @@ void MapWin::clear_alt(int x, int y, int radius) {
         int i = 0;
         int count = RadiusRange[radius + 1];
         if (count > 0) {
-            int width = MapLongitude;
+            // Original 0x0046FBB2 loads full x bounds, halved only for
+            // cache indexing; wrapping and coordinate gates use full width.
+            int width = MapLongitudeBounds;
             do {
                 int dx = RadiusOffsetX[i] + x;
                 if ((MapIsFlat & 1) == 0) {
@@ -7185,11 +7189,14 @@ void MapWin::clear_alt(int x, int y, int radius) {
                 }
                 int dy = RadiusOffsetY[i] + y;
                 if (dy >= 0 && dy < MapLatitudeBounds && dx >= 0 && dx < width) {
-                    char *rec = reinterpret_cast<char *>(owned_)
-                                + ((width >> 1) * dy + (dx >> 1)) * 0xc + 4;
-                    *reinterpret_cast<int32_t *>(rec) = -1;
-                    *reinterpret_cast<uint8_t *>(rec + 4) = 0xff;
-                    width = MapLongitude;
+                    TerrainCacheEntry &cell =
+                        owned_[(width >> 1) * dy + (dx >> 1)];
+                    const int32_t unknown_altitude = -1;
+                    memcpy(cell.altitude, &unknown_altitude,
+                           sizeof(unknown_altitude));
+                    cell.altitude[4] = -1;
+                    // The original reloads width only after a valid store.
+                    width = MapLongitudeBounds;
                 }
                 i++;
             } while (i < count);
@@ -7212,45 +7219,14 @@ void MapWin::UNK8(int x, int y, int radius) {
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
-// PRESERVED UNIT - measured NO_COMPILE.
-//
-// Kept for COVERAGE. This directory IS on the ratchet: every file here
-// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
-// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
-// quarter of the project's total. It is still in no build; the earlier
-// header said "on no ratchet", which stopped being true when the map
-// moved into src/ and was still being written into new files.
-//
-// address        0x0046FCE0
-// measured tier  NO_COMPILE
-// refusal        u0046fce0.cpp(1) : error C2653: 'MapWin' : is not a class or namespace name u0046fce0.cpp(2) : error C2065: 'owned_' : undeclared identifier u0046fce0.cpp(3) :
-//
-// The WHOLE unit as measured, scaffolding included: for the units
-// that are byte-exact yet refuse extraction, the agent tuned the
-// emitted scaffolding and the body alone will not reproduce the
-// verdict. To resume, copy everything below back over
-//   build/byte-match/0046fce0/unit.cpp
-// and score it with tools/agent_brief.py.
-// GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?UNK7@MapWin@@QAEXXZ  at 0x0046FCE0  (58 bytes)
-//
-// A VERIFICATION ARTIFACT, not product source: classes are opaque and
-// globals are bound to fixed addresses, because both are byte-visible
-// and both differ from the style src/ is written in.
-//
-// The VC6 dialect limits and the source-form rules used to live here.
-// They are knowledge, not scaffolding, so they now live in the agent
-// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
-// where they can be edited without regenerating anything and are in
-// context from the first token rather than behind a file read. This
-// emitter computes declarations; it does not carry lessons.
-
-
+// Original 0x0046FCE8/0x0046FD09 tests and reloads signed MapArea.
+// Only brightness bytes 0..3 are reset; the five altitude bytes and
+// terrain/detail fields remain untouched.
 void MapWin::UNK7() {
     if (owned_ != 0) {
         for (int i = 0; i < static_cast<int>(MapArea); ++i) {
             for (int j = 0; j < 4; ++j) {
-                reinterpret_cast<char *>(owned_)[i * 0xC + j] = static_cast<char>(0xFF);
+                owned_[i].brightness[j] = 0xFF;
             }
         }
     }
