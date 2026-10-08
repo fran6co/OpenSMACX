@@ -216,7 +216,8 @@ uint32_t BrushVal1;  // 0x009B22B0
 uint32_t BrushVal2;  // 0x009B22B8
 uint32_t WorldBuildVal1;  // 0x009B22B4
 
-uint32_t MapLongitude = 1;  // 0x0068FAF0 // default set to 1
+// RECOVERY_OBJECT: v1 0x0068FAF0 ?MapLongitude@@3IA
+uint32_t MapLongitude = 1;  // half-width tile-row stride; original default is 1
 LPCSTR MapExtension = "MP";
 
 /*

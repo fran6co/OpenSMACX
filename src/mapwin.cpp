@@ -2687,12 +2687,9 @@ void MapWin::on_lose_mouse_capture() {
 }
 
 // ====================
-// 0x0068FAF0 - THE TILE ARRAY'S ROW STRIDE, the multiplier in every
-// `x + stride * y` tile lookup this file does. A named binding rather than an
-// object, the same convention map.h's AltNatural uses for its neighbour at
-// 0x0068FB4C: the image holds it at this fixed address and nothing here maps
-// that storage.
-static int *const MapRowStride = (int *)0x0068FAF0;
+// MapLongitude in map.h/map.cpp owns the map tile row stride (original
+// 0x0068FAF0). Cast it to int at each legacy index use to retain the
+// signed dword arithmetic of the original loads.
 
 // 0x00939E5C - the main interface's own copy of the screen width, taken when
 // the main window is sized: the setter at 0x0051D760 does
@@ -2820,9 +2817,8 @@ static __forceinline signed char corner_light_value(int biased_index) {
 // `get_alt` walks. 0x00685684 is the direction table (five bytes a direction,
 // the first naming it and the four after it the neighbours it fans out to);
 // the other five are the per-terrain bonus rows that direction's byte is
-// indexed into. Named bindings, not objects, for the same reason as
-// MapRowStride above: the image holds them at these fixed addresses and
-// nothing here maps that storage.
+// indexed into. These tables remain fixed-address data bindings; no
+// typed storage owner for them is established here.
 // 0x00685EA0 / 0x00685EE0 - the two coordinate-stride tables the same walk
 // adds to a tile's x and y as it steps outward, indexed by byte offset.
 // THE VIRTUAL-BASE DISPLACEMENT the compiler lays MapWin down with: the
@@ -3302,7 +3298,7 @@ int __cdecl gen_terrain_poly(Buffer *buffer, MapWin *window, int a3, int a4,
         return 0;
     }
     local_14 = a7 >> 1;
-    iVar5 = *MapRowStride * a8 + local_14;
+    iVar5 = static_cast<int>(MapLongitude) * a8 + local_14;
     Map *const tile = &map_tiles()[iVar5];
     uint32_t *const tile_bit2_ptr = &tile->bit2;
     local_34 = tile->bit2;
@@ -3347,7 +3343,7 @@ int __cdecl gen_terrain_poly(Buffer *buffer, MapWin *window, int a3, int a4,
          (bVar10 & 7) == 0)) {
         territory_faction = (uint32_t)ConsoleGlobal.faction_id_;
     }
-    iVar5 = *MapRowStride * a8 + local_14;
+    iVar5 = static_cast<int>(MapLongitude) * a8 + local_14;
     pbVar18 = reinterpret_cast<uint8_t *>(&map_tiles()[iVar5]);
     local_84 = (tile->climate & 0x18) >> 3;
     local_8c = (uint32_t)(tile->climate >> 5);
@@ -3404,7 +3400,7 @@ int __cdecl gen_terrain_poly(Buffer *buffer, MapWin *window, int a3, int a4,
             if (iVar5 > -1 && iVar5 < MapLatitudeBounds &&
                 (int)local_20 > -1 && (int)local_20 < MapLongitudeBounds) {
                 if ((int)local_40 < 0x24) {
-                    iVar19 = *MapRowStride * iVar5 + ((int)local_20 >> 1);
+                    iVar19 = static_cast<int>(MapLongitude) * iVar5 + ((int)local_20 >> 1);
                     Map *const ntile = &map_tiles()[iVar19];
                     if ((ntile->bit & 3) == 0) {
                         uVar12 = 0xffffffff;
@@ -3447,11 +3443,11 @@ int __cdecl gen_terrain_poly(Buffer *buffer, MapWin *window, int a3, int a4,
                 iVar19 = VehDrawPositionVehicle;
                 iVar7 = (int)uVar12 >> 1;
                 if (iVar6 != 0 &&
-                    map_tiles()[*MapRowStride * iVar5 + iVar7].territory ==
+                    map_tiles()[static_cast<int>(MapLongitude) * iVar5 + iVar7].territory ==
                         a4) {
                     goto LAB_00463b55;
                 }
-                iVar6 = *MapRowStride * iVar5 + iVar7;
+                iVar6 = static_cast<int>(MapLongitude) * iVar5 + iVar7;
                 Map *const stile = &map_tiles()[iVar6];
                 if ((stile->bit & 1) == 0) {
                     uVar16b = 0xffffffff;
@@ -3533,7 +3529,7 @@ LAB_00463a11:
                         iVar6 = iVar6 + a8;
                         if (iVar6 > -1 && iVar6 < MapLatitudeBounds &&
                             iVar19 > -1 && iVar19 < MapLongitudeBounds) {
-                            iVar7 = *MapRowStride * iVar6 + (iVar19 >> 1);
+                            iVar7 = static_cast<int>(MapLongitude) * iVar6 + (iVar19 >> 1);
                             Map *const ntile = &map_tiles()[iVar7];
                             if ((ntile->bit & 1) == 0) {
                                 uVar12 = 0xffffffff;
@@ -3610,7 +3606,7 @@ LAB_00463603:
                 iVar19 = RadiusBaseY[uVar12] + a8;
                 if (iVar19 > -1 && iVar19 < MapLatitudeBounds &&
                     iVar5 > -1 && iVar5 < MapLongitudeBounds &&
-                    (map_tiles()[*MapRowStride * iVar19 + (iVar5 >> 1)]
+                    (map_tiles()[static_cast<int>(MapLongitude) * iVar19 + (iVar5 >> 1)]
                          .climate &
                      0xe0) < 0x60) {
                     iVar5 = (int)uVar12 >> 1;
@@ -3645,7 +3641,7 @@ LAB_00463603:
                     if (iVar6 > -1 && iVar6 < MapLatitudeBounds &&
                         iVar19 > -1 && iVar19 < MapLongitudeBounds) {
                         pbVar18 = reinterpret_cast<uint8_t *>(
-                            &map_tiles()[*MapRowStride * iVar6 +
+                            &map_tiles()[static_cast<int>(MapLongitude) * iVar6 +
                                          (iVar19 >> 1)]);
                         bVar11 = (uint8_t)iVar5;
                         if ((*(uint32_t *)(pbVar18 + 8) & 0x20) != 0 &&
@@ -3684,7 +3680,7 @@ LAB_00463603:
                 if (iVar6 > -1 && iVar6 < MapLatitudeBounds &&
                     iVar19 > -1 && iVar19 < MapLongitudeBounds) {
                     pbVar18 = reinterpret_cast<uint8_t *>(
-                        &map_tiles()[*MapRowStride * iVar6 + (iVar19 >> 1)]);
+                        &map_tiles()[static_cast<int>(MapLongitude) * iVar6 + (iVar19 >> 1)]);
                     if ((*(uint32_t *)(pbVar18 + 8) & 0x20) != 0 &&
                         0x3f < (*pbVar18 & 0xe0)) {
                         local_40 = local_40 | 1 << ((uint8_t)iVar5 & 0x1f);
@@ -4132,7 +4128,7 @@ landmark_chain:;
                 iVar19 = a8 + -1;
                 if (iVar19 > -1 && iVar19 < MapLatitudeBounds &&
                     iVar5 > -1 && iVar5 < MapLongitudeBounds) {
-                    bVar11 = map_tiles()[*MapRowStride * iVar19 +
+                    bVar11 = map_tiles()[static_cast<int>(MapLongitude) * iVar19 +
                                          (iVar5 >> 1)]
                                  .climate &
                              0xe0;
@@ -4221,7 +4217,7 @@ border_dim:
                 if (ny > -1 && ny < MapLatitudeBounds && nx > -1 &&
                     nx < MapLongitudeBounds) {
                     Map *const ntile =
-                        &map_tiles()[*MapRowStride * ny + (nx >> 1)];
+                        &map_tiles()[static_cast<int>(MapLongitude) * ny + (nx >> 1)];
                     if ((ntile->bit2 & 0x80000004) == 4 &&
                         0x5f < (ntile->climate & 0xe0)) {
                         a5 |= 1 << k;
@@ -4265,7 +4261,7 @@ border_dim:
                 if (ny > -1 && ny < MapLatitudeBounds && nx > -1 &&
                     nx < MapLongitudeBounds) {
                     Map *const ntile =
-                        &map_tiles()[*MapRowStride * ny + (nx >> 1)];
+                        &map_tiles()[static_cast<int>(MapLongitude) * ny + (nx >> 1)];
                     if ((ntile->bit & 0x200000) != 0) {
                         uVar12 |= 1u << k;
                     }
@@ -4347,11 +4343,11 @@ border_dim:
                     iVar19 = RadiusBaseY[k] + a8;
                     if (iVar19 > -1 && iVar19 < MapLatitudeBounds &&
                         iVar5 > -1 && iVar5 < MapLongitudeBounds &&
-                        (map_tiles()[*MapRowStride * iVar19 + (iVar5 >> 1)]
+                        (map_tiles()[static_cast<int>(MapLongitude) * iVar19 + (iVar5 >> 1)]
                              .climate &
                          0xe0) < 0x60 ==
                             (tile->climate & 0xe0) < 0x60 &&
-                        map_tiles()[*MapRowStride * iVar19 + (iVar5 >> 1)]
+                        map_tiles()[static_cast<int>(MapLongitude) * iVar19 + (iVar5 >> 1)]
                                 .contour == local_c0) {
                         uVar12 = whose_territory(
                             ConsoleGlobal.faction_id_, iVar5, iVar19, 0,
@@ -4457,7 +4453,7 @@ LAB_004652ed:;
                 const int ny = RiverStepY[k] + a8;
                 if (ny > -1 && ny < MapLatitudeBounds && nx > -1 &&
                     nx < MapLongitudeBounds &&
-                    (map_tiles()[*MapRowStride * ny + (nx >> 1)].bit &
+                    (map_tiles()[static_cast<int>(MapLongitude) * ny + (nx >> 1)].bit &
                      0x80) != 0) {
                     uVar12 |= 1u << k;
                 }
@@ -4553,7 +4549,7 @@ LAB_00465605:;
             if ((int)local_34b > -1 && (int)local_34b < MapLatitudeBounds &&
                 iVar5 > -1 && iVar5 < MapLongitudeBounds) {
                 uVar17 = (uint32_t)(
-                    map_tiles()[*MapRowStride * (int)local_34b + (iVar5 >> 1)]
+                    map_tiles()[static_cast<int>(MapLongitude) * (int)local_34b + (iVar5 >> 1)]
                         .val3 &
                     7);
                 if (a4 > -1 && uVar17 != (uint32_t)a4 &&
@@ -4648,7 +4644,7 @@ LAB_00465605:;
                     if ((int)local_34b > -1 &&
                         (int)local_34b < MapLatitudeBounds && iVar5 > -1 &&
                         iVar5 < MapLongitudeBounds) {
-                        iVar19 = *MapRowStride * (int)local_34b + (iVar5 >> 1);
+                        iVar19 = static_cast<int>(MapLongitude) * (int)local_34b + (iVar5 >> 1);
                         road_neighbor = &map_tiles()[iVar19];
                         if (0x5f < (road_neighbor->climate & 0xe0)) {
                             if (a4 < 0) {
@@ -6446,7 +6442,6 @@ void MapWin::draw_base_dest(int draw_type) {
 
 
 int MapWin::compute_clip(int a1, int a2, int a3, RECT * a4) {
-    int *self = reinterpret_cast<int *>(this);
     RECT rect;
     int px, py;
     int count;
@@ -6524,7 +6519,7 @@ int MapWin::compute_clip(int a1, int a2, int a3, RECT * a4) {
     rect.bottom = 0;
     int bottomRow = a2 + 2 + a3 * 2;
     if (bottomRow < 0 || MapLatitudeBounds <= bottomRow || a1 < 0 || MapLongitudeBounds <= a1) {
-        rect.bottom = -*reinterpret_cast<int *>(*reinterpret_cast<int *>(*self + 4) + 0x4c8 + reinterpret_cast<int>(self));
+        rect.bottom = mapwin_dest_sub(0, dib_.bmiHeader.biHeight);
     } else if (a3 >= 0) {
         int col = a1 - a3 * 2;
         count = a3 * 2 + 1;
@@ -6538,7 +6533,7 @@ int MapWin::compute_clip(int a1, int a2, int a3, RECT * a4) {
         } while (count != 0);
     }
 
-    rect.top = rect.top - self[0x7770];
+    rect.top = mapwin_dest_sub(rect.top, map_dest_signed(field_1DDC0_));
 
     int hit = IntersectRect(a4, &rect, &rect2_);
     if (hit != 0) {

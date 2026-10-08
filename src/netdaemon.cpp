@@ -159,10 +159,9 @@ int NetDaemon::lock_base(int base_id, int target, int payload_1C, int payload_20
     return lock(target | 4, base.x, base.y, 0, payload_1C, payload_20);
 }
 
-// The map row stride in dwords, read as a value. mapwin.cpp keeps the same
-// fixed-address binding file-local and no header exports it; game_checksum's
-// per-row walk multiplies it by the row index to reach a tile record.
-static int *const MapRowStride = (int *)0x0068FAF0;
+// MapLongitude is the source-owned half-width tile-row stride, already
+// declared by map.h with original binding 0x0068FAF0. game_checksum's
+// per-row walk uses its signed value to reach a tile record.
 
 // Derived player lifecycle callbacks. Retained seeds supply historical hints;
 // the original missing-player tail and its unresolved index domain are kept.
@@ -1523,7 +1522,7 @@ void NetDaemon::game_checksum(int *results) {
             {
                 int innerCount = (MapLongitudeBounds >> 1) * div;
                 if (div != 0 && innerCount > 0) {
-                    char *p5 = (char *)(map_tile_bytes() + (*MapRowStride) * recIdx * 0x2c);
+                    char *p5 = (char *)(map_tile_bytes() + static_cast<int>(MapLongitude) * recIdx * 0x2c);
                     char *p6 = p5 + 8;
                     int idxE;
                     for (idxE = 0; idxE < innerCount; ++idxE) {
