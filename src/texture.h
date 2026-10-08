@@ -211,8 +211,9 @@ class Texture {
   // 0x0061D090: receiver loads and RET 0x10 establish Texture this + four
   // stack arguments; this replaces the old free-function catalogue shape.
   void sub_61d090(Buffer *buffer, int *vertices, int *zvals, unsigned int flag);
-  void sub_622200(int a2, int a3, int a4, int a5, int a6, int a7, int a8,
-                  int a9);
+  void sub_622200(Buffer *buffer, Vert *vertices, int *zvals,
+                  Texture *shade_texture, unsigned char *remap, int count,
+                  Vert *edge_vertices, TextureStore *cache);
   // 0x00623F50. Seven ints, the seventh the -1 sentinel that selects the
   // forward into the span filler - the same idiom `draw2` carries.
   void sub_623f50(Buffer *buffer, int *verts, Texture *texB,
@@ -223,10 +224,10 @@ class Texture {
   void sub_624ca0(Buffer *buffer, int verts, int count, int a4,
                   int *outFlag, int sentinel);
   void sub_6212b0(Buffer *buf, Vert *verts, int *zvals, int count,
-                  int edgeVerts, int *out_flag);                                // 0x006212B0
+                  Vert *edgeVerts, TextureStore *cache);                       // 0x006212B0
   void sub_622810(Buffer *buf, Vert *verts, int *zvals, int count,
-                  int edgeVerts, int light_thresh,
-                  int *out_flag);                                // 0x00622810
+                  Vert *edgeVerts, int light_thresh,
+                  TextureStore *cache);                              // 0x00622810
 
   // ===== THE -1 SENTINEL WRAPPERS =====
   // Five thin members that all read the same way: the LAST argument is a
@@ -240,18 +241,20 @@ class Texture {
   // (sub_6212b0 ret 0x18 for sub_624c70's 7, sub_622200's 8 for
   // sub_624d00's 9, and so on), so the two ends agree for the first time.
   void sub_624c70(Buffer *buf, Vert *verts, int *zvals, int count,
-                  int edgeVerts, int *out_flag,
+                  Vert *edgeVerts, TextureStore *cache,
                   int sentinel);                                 // 0x00624C70
   // The sentinel overload forwards only for -1; the cache owns ten
   // lazily populated edge records, not a scalar output flag.
   void draw_cached_lit(Buffer *buf, Vert *verts, int *zvals, int count,
                         Vert *edgeVerts, TextureStore *cache,
                         int sentinel);                                 // 0x00624CD0
-  void sub_624d00(int a1, int a2, int a3, int a4, int a5, int a6, int a7,
-                  int a8, int sentinel);                         // 0x00624D00
+  void sub_624d00(Buffer *buffer, Vert *vertices, int *zvals,
+                  Texture *shade_texture, unsigned char *remap, int count,
+                  Vert *edge_vertices, TextureStore *cache,
+                  int sentinel);                                  // 0x00624D00
   void sub_624d40(Buffer *buf, Vert *verts, int *zvals, int count,
-                  int edgeVerts, int light_thresh,
-                  int *out_flag, int sentinel);                  // 0x00624D40
+                  Vert *edgeVerts, int light_thresh,
+                  TextureStore *cache, int sentinel);            // 0x00624D40
   void sub_624630(Buffer *buffer, Vert *vertices, int *zvals,
                  Texture *mask_texture, unsigned char *remap, int count,
                  Vert *uv, int threshold, unsigned char *palette, int sentinel);

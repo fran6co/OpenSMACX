@@ -4114,7 +4114,7 @@ void Texture::draw_below_cutoff(Buffer *buffer, Vert *vertices, int *zvals, int 
 }
 
 // ORIGINAL: 0x006212B0 sub_6212b0 0x006212B0-0x00621868 FILE
-// symbol    ?sub_6212b0@Texture@@QAEXPAVBuffer@@PAUVert@@PAHHH2@Z
+// symbol    ?sub_6212b0@Texture@@QAEXPAVBuffer@@PAUVert@@PAHH1PAVTextureStore@@@Z
 // TRIED: MISMATCH #5. Same ESP-as-counter inner blitter family as 0x006239E0/0x0061AC60/0x00622810 - not reproducible without __asm. This variant has no zval-vs-threshold guard scan (unlike 0x00622810's sibling); instead it clamps every zvals[i] into [DAT_006972cc, DAT_006972d0] before the min/max-vertex scan, and DAT_009bb514 (the per-pixel light threshold) comes from the global DAT_009bb548 rather than a call argument.
 // working copy - scaffold materialised by --work
 // size      1464 bytes
@@ -4139,8 +4139,11 @@ void Texture::draw_below_cutoff(Buffer *buffer, Vert *vertices, int *zvals, int 
 // emitter computes declarations; it does not carry lessons.
 
 void Texture::sub_6212b0(Buffer *buf, Vert *verts, int *zvals, int count,
-                         int edgeVerts, int *out_flag) {
-    out_flag[1] = 0;
+                         Vert *edgeVerts, TextureStore *cache) {
+    // The last slot is the edge cache: 0x625080 consumes TextureStore*, +4
+    // is its ring cursor, and +0 is the channel-validity mask. The old int*
+    // spelling hid that shared cache object from this owner.
+    cache->next_record_ = 0;
 
     *blit_pixel_base = buf->get_data();
     *blit_light_threshold = *blit_light_threshold_2;
@@ -4161,10 +4164,10 @@ void Texture::sub_6212b0(Buffer *buf, Vert *verts, int *zvals, int count,
             zvals[i] = v;
         }
 
-        *blit_clip_right = *reinterpret_cast<int *>(reinterpret_cast<char *>(buf) + 0x28);
-        *blit_clip_left = *reinterpret_cast<int *>(reinterpret_cast<char *>(buf) + 0x20);
-        *blit_clip_bottom = *reinterpret_cast<int *>(reinterpret_cast<char *>(buf) + 0x2c);
-        *blit_clip_top = *reinterpret_cast<int *>(reinterpret_cast<char *>(buf) + 0x24);
+        *blit_clip_right = buf->rect1_.right;
+        *blit_clip_left = buf->rect1_.left;
+        *blit_clip_bottom = buf->rect1_.bottom;
+        *blit_clip_top = buf->rect1_.top;
 
         int min_y = 0x7fff, min_y_idx = 0;
         int max_y = (int)0xffff8003, max_y_idx = 0;
@@ -4173,10 +4176,10 @@ void Texture::sub_6212b0(Buffer *buf, Vert *verts, int *zvals, int count,
         int clip_flag = 1;
         if (count > 0) {
             for (int i = 0; i < count; ++i) {
-                int y = reinterpret_cast<int *>(verts)[i * 2 + 1];
+                int y = verts[i].y;
                 if (y < min_y) { min_y_idx = i; min_y = y; }
                 if (max_y < y) { max_y_idx = i; max_y = y; *blit_max_y_index = i; }
-                int x = reinterpret_cast<int *>(verts)[i * 2];
+                int x = verts[i].x;
                 if (x < min_x) min_x = x;
                 if (max_x < x) max_x = x;
             }
@@ -4193,9 +4196,9 @@ void Texture::sub_6212b0(Buffer *buf, Vert *verts, int *zvals, int count,
 
                 EdgeScan e1, e2;
                 e1.f0 = -1;
-                if (sub_625080(&e1, min_y_idx, reinterpret_cast<TextureStore *>(out_flag)) != 0) {
+                if (sub_625080(&e1, min_y_idx, cache) != 0) {
                     e2.counter = 1;
-                    if (sub_625080(&e2, min_y_idx, reinterpret_cast<TextureStore *>(out_flag)) != 0 && borrowed_ != 0) {
+                    if (sub_625080(&e2, min_y_idx, cache) != 0 && borrowed_ != 0) {
                         double dy = (double)((e2.accumC - e1.accumC) << 16);
                         double du = 0, dv = 0, dw = 0, inv_dy = 1;
                         if (dy > 0) {
@@ -4217,7 +4220,7 @@ void Texture::sub_6212b0(Buffer *buf, Vert *verts, int *zvals, int count,
 
                             e1.counter -= 1;
                             if (e1.counter == 0) {
-                                if (sub_625080(&e1, e1.id, reinterpret_cast<TextureStore *>(out_flag)) == 0) {
+                                if (sub_625080(&e1, e1.id, cache) == 0) {
                                     done = true;
                                     goto per_scanline_tail;
                                 }
@@ -4226,7 +4229,7 @@ void Texture::sub_6212b0(Buffer *buf, Vert *verts, int *zvals, int count,
                             }
                             e2.counter -= 1;
                             if (e2.counter == 0) {
-                                if (sub_625080(&e2, e2.id, reinterpret_cast<TextureStore *>(out_flag)) == 0) {
+                                if (sub_625080(&e2, e2.id, cache) == 0) {
                                     done = true;
                                 }
                             } else {
@@ -4304,7 +4307,7 @@ void Texture::sub_6212b0(Buffer *buf, Vert *verts, int *zvals, int count,
             }
         }
         if (clip_flag == 0) {
-            *out_flag = 0;
+            cache->flags_ = 0;
         }
     }
 
@@ -4314,7 +4317,7 @@ void Texture::sub_6212b0(Buffer *buf, Vert *verts, int *zvals, int count,
 }
 
 // ORIGINAL: 0x00622810 sub_622810 0x00622810-0x00622DAE FILE
-// symbol    ?sub_622810@Texture@@QAEXPAVBuffer@@PAUVert@@PAHHHH2@Z
+// symbol    ?sub_622810@Texture@@QAEXPAVBuffer@@PAUVert@@PAHH1HPAVTextureStore@@@Z
 // TRIED: MISMATCH #6. Same ESP-as-counter inner blitter family as 0x006239E0/0x0061AC60 - not reproducible without __asm. Confirmed sub_625080 is a free function (EdgeScan*, int, int*), not a Texture member, from the missing `mov ecx, this` before its call sites; confirmed the min/max-vertex scan reuses a2/a4/a5/a6's own stack slots as min_x/min_y_idx/max_x/ max_y scratch, same pattern as the other two rasterizers.
 // working copy - scaffold materialised by --work
 // size      1438 bytes
@@ -4339,9 +4342,11 @@ void Texture::sub_6212b0(Buffer *buf, Vert *verts, int *zvals, int count,
 // emitter computes declarations; it does not carry lessons.
 
 void Texture::sub_622810(Buffer *buf, Vert *verts, int *zvals, int count,
-                         int edgeVerts, int light_thresh,
-                         int *out_flag) {
-    out_flag[1] = 0;
+                         Vert *edgeVerts, int light_thresh,
+                         TextureStore *cache) {
+    // The sentinel wrapper supplies the same TextureStore used by 0x625080;
+    // preserve the original cursor and validity-flag writes as member stores.
+    cache->next_record_ = 0;
 
     *blit_pixel_base = buf->get_data();
     *blit_light_threshold = light_thresh;
@@ -4361,10 +4366,10 @@ void Texture::sub_622810(Buffer *buf, Vert *verts, int *zvals, int count,
 
     int clip_flag = 1;
     if (guard_i != count && buf != 0) {
-        *blit_clip_right = *reinterpret_cast<int *>(reinterpret_cast<char *>(buf) + 0x28);
-        *blit_clip_left = *reinterpret_cast<int *>(reinterpret_cast<char *>(buf) + 0x20);
-        *blit_clip_bottom = *reinterpret_cast<int *>(reinterpret_cast<char *>(buf) + 0x2c);
-        *blit_clip_top = *reinterpret_cast<int *>(reinterpret_cast<char *>(buf) + 0x24);
+        *blit_clip_right = buf->rect1_.right;
+        *blit_clip_left = buf->rect1_.left;
+        *blit_clip_bottom = buf->rect1_.bottom;
+        *blit_clip_top = buf->rect1_.top;
 
         int min_y = 0x7fff, min_y_idx = 0;
         int max_y = (int)0xffff8003, max_y_idx = 0;
@@ -4372,10 +4377,10 @@ void Texture::sub_622810(Buffer *buf, Vert *verts, int *zvals, int count,
         int max_x = (int)0xffff8003;
         if (count > 0) {
             for (int i = 0; i < count; ++i) {
-                int y = reinterpret_cast<int *>(verts)[i * 2 + 1];
+                int y = verts[i].y;
                 if (y < min_y) { min_y_idx = i; min_y = y; }
                 if (max_y < y) { max_y_idx = i; max_y = y; *blit_max_y_index = i; }
-                int x = reinterpret_cast<int *>(verts)[i * 2];
+                int x = verts[i].x;
                 if (x < min_x) min_x = x;
                 if (max_x < x) max_x = x;
             }
@@ -4392,9 +4397,9 @@ void Texture::sub_622810(Buffer *buf, Vert *verts, int *zvals, int count,
 
                 EdgeScan e1, e2;
                 e1.f0 = -1;
-                if (sub_625080(&e1, min_y_idx, reinterpret_cast<TextureStore *>(out_flag)) != 0) {
+                if (sub_625080(&e1, min_y_idx, cache) != 0) {
                     e2.counter = 1;
-                    if (sub_625080(&e2, min_y_idx, reinterpret_cast<TextureStore *>(out_flag)) != 0 && borrowed_ != 0) {
+                    if (sub_625080(&e2, min_y_idx, cache) != 0 && borrowed_ != 0) {
                         double dy = (double)((e2.accumC - e1.accumC) << 16);
                         double du = 0, dv = 0, dw = 0, inv_dy = 1;
                         if (dy > 0) {
@@ -4416,7 +4421,7 @@ void Texture::sub_622810(Buffer *buf, Vert *verts, int *zvals, int count,
 
                             e1.counter -= 1;
                             if (e1.counter == 0) {
-                                if (sub_625080(&e1, e1.id, reinterpret_cast<TextureStore *>(out_flag)) == 0) {
+                                if (sub_625080(&e1, e1.id, cache) == 0) {
                                     done = true;
                                     goto per_scanline_tail;
                                 }
@@ -4425,7 +4430,7 @@ void Texture::sub_622810(Buffer *buf, Vert *verts, int *zvals, int count,
                             }
                             e2.counter -= 1;
                             if (e2.counter == 0) {
-                                if (sub_625080(&e2, e2.id, reinterpret_cast<TextureStore *>(out_flag)) == 0) {
+                                if (sub_625080(&e2, e2.id, cache) == 0) {
                                     done = true;
                                 }
                             } else {
@@ -4508,12 +4513,12 @@ void Texture::sub_622810(Buffer *buf, Vert *verts, int *zvals, int count,
         buf->free_data(1);
     }
     if (clip_flag == 0) {
-        *out_flag = 0;
+        cache->flags_ = 0;
     }
 }
 
 // ORIGINAL: 0x00622200 sub_622200 0x00622200-0x0062280C FILE
-// symbol    ?sub_622200@Texture@@QAEXHHHHHHHH@Z
+// symbol    ?sub_622200@Texture@@QAEXPAVBuffer@@PAUVert@@PAHPAV1@PAEH1PAVTextureStore@@@Z
 // TRIED: __thiscall-receiver rewrite of Ghidra's decode (guard chain, bbox min/max scan, sub_625080 edge-walk setup, then a plain-C long-double port of the FPU gradient section and a byte-macro (concat31/21/22/11, carry4) port of the CONCAT/CARRY inner pixel-blend loop) compiles but diverges at instruction #0 (push vs sub - no local-var-count/register-allocation match is plausible for a function this size without a register-literal transcription of all ~470 instructions, not attempted here).
 // working copy - scaffold materialised by --work
 // size      1548 bytes
@@ -4524,30 +4529,32 @@ void Texture::sub_622810(Buffer *buf, Vert *verts, int *zvals, int count,
 // calls     0x005E3373 0x005E34A3 0x00625080
 
 
-void Texture::sub_622200(int a2, int a3, int a4, int a5, int a6, int a7, int a8, int a9) {
-    int *piVar3 = reinterpret_cast<int *>(a3);
+void Texture::sub_622200(Buffer *a2, Vert *a3, int *a4, Texture *a5,
+                         unsigned char *a6, int a7, Vert *a8,
+                         TextureStore *a9) {
     int local_8 = 1;
 
     if (a3 != 0) {
         if (a2 == 0)
             goto free_and_finish;
         if (pixels_ != 0 && a4 != 0 && a6 != 0 && a5 != 0 && a9 != 0) {
-            *reinterpret_cast<int *>(a9 + 4) = 0;
-            *blit_pixel_base = reinterpret_cast<Buffer *>(a2)->get_data();
+            a9->next_record_ = 0;
+            *blit_pixel_base = a2->get_data();
             texture_reset_fpu();
-            *blit_z_values = reinterpret_cast<int *>(a4);
+            *blit_z_values = a4;
             *blit_edge_uvs_b = reinterpret_cast<int *>(a3);
-            *blit_remap_table = a6;
+            *blit_remap_table = static_cast<int>(reinterpret_cast<intptr_t>(a6));
             *blit_texture_pixels = static_cast<int>(reinterpret_cast<intptr_t>(pixels_));
             TextureRowPitchScratch = static_cast<int>(iWidth_);
             *blit_texture_height = static_cast<int>(iHeight_);
             *blit_vertex_count = a7;
             *blit_edge_uvs_a = reinterpret_cast<int *>(a8);
-            Buffer *buffer = reinterpret_cast<Buffer *>(a2);
+            Buffer *buffer = a2;
             *blit_buffer_stride = buffer->stride_;
             *blit_texture_width = static_cast<int>(iWidth_);
+            Texture *shade_texture = a5;
             *blit_shade_table = static_cast<int>(reinterpret_cast<intptr_t>(
-                reinterpret_cast<Texture *>(a5)->pixels_));
+                shade_texture->pixels_));
             RECT *clip = &buffer->rect1_;
             if (*blit_shade_table != 0 && clip != 0) {
                 *blit_clip_right = clip->right;
@@ -4563,7 +4570,7 @@ void Texture::sub_622200(int a2, int a3, int a4, int a5, int a6, int a7, int a8,
 
                 if (0 < a7) {
                     do {
-                        int y = piVar3[1];
+                        int y = a3[idx].y;
                         if (y < minY) {
                             minY = y;
                             minYIdx = idx;
@@ -4572,13 +4579,12 @@ void Texture::sub_622200(int a2, int a3, int a4, int a5, int a6, int a7, int a8,
                             *blit_max_y_index = idx;
                             maxY = y;
                         }
-                        int x = *piVar3;
+                        int x = a3[idx].x;
                         if (x < minX)
                             minX = x;
                         if (maxX < x)
                             maxX = x;
                         ++idx;
-                        piVar3 += 2;
                     } while (idx < a7);
 
                     if (minY < maxY) {
@@ -4592,11 +4598,11 @@ void Texture::sub_622200(int a2, int a3, int a4, int a5, int a6, int a7, int a8,
 
                         EdgeScan left;
                         left.f0 = -1;
-                        if (sub_625080(&left, minYIdx, reinterpret_cast<TextureStore *>(a9)) != 0) {
+                        if (sub_625080(&left, minYIdx, a9) != 0) {
                             EdgeScan right;
                             right.f0 = 1;
-                            if (sub_625080(&right, minYIdx, reinterpret_cast<TextureStore *>(a9)) != 0 && borrowed_ != 0 &&
-                                reinterpret_cast<Texture *>(a5)->borrowed_ != 0) {
+                            if (sub_625080(&right, minYIdx, a9) != 0 && borrowed_ != 0 &&
+                                a5->borrowed_ != 0) {
                                 // 0x622443 selects 24-bit precision and chop for
                                 // the x87 gradient conversion; FNINIT is at exit.
                                 _control87(_PC_24 | _RC_CHOP, _MCW_PC | _MCW_RC);
@@ -4624,7 +4630,7 @@ void Texture::sub_622200(int a2, int a3, int a4, int a5, int a6, int a7, int a8,
                                         *blit_span_right = left.accumC;
                                         --left.counter;
                                         if (left.counter == 0) {
-                                            if (sub_625080(&left, left.id, reinterpret_cast<TextureStore *>(a9)) != 0) {
+                                            if (sub_625080(&left, left.id, a9) != 0) {
                                                 goto scan_edge_b;
                                             }
                                             doneEdges = true;
@@ -4641,7 +4647,7 @@ void Texture::sub_622200(int a2, int a3, int a4, int a5, int a6, int a7, int a8,
                                         scan_edge_b:
                                             --right.counter;
                                             if (right.counter == 0) {
-                                                if (sub_625080(&right, right.id, reinterpret_cast<TextureStore *>(a9)) == 0) {
+                                                if (sub_625080(&right, right.id, a9) == 0) {
                                                     doneEdges = true;
                                                 }
                                             } else {
@@ -4799,10 +4805,10 @@ void Texture::sub_622200(int a2, int a3, int a4, int a5, int a6, int a7, int a8,
 
 free_and_finish:
     if (a2 != 0) {
-        reinterpret_cast<Buffer *>(a2)->free_data(1);
+        a2->free_data(1);
     }
     if (local_8 == 0) {
-        *reinterpret_cast<int *>(a9) = 0;
+        a9->flags_ = 0;
     }
     texture_reset_fpu();
 }
@@ -4846,16 +4852,16 @@ void Texture::sub_61c630(Buffer * bufIn, int * verts, Texture * texB, unsigned c
         *blit_texture_height = static_cast<int>(iHeight_);
         *blit_vertex_count = vertCount;
         *blit_edge_uvs_a = reinterpret_cast<int *>(unusedIn);
-        *blit_buffer_stride = *reinterpret_cast<int *>(reinterpret_cast<char *>(bufIn) + 0x4a8);
+        *blit_buffer_stride = static_cast<int>(bufIn->stride_);
         *blit_texture_width = static_cast<int>(iWidth_);
-        *blit_shade_table = *reinterpret_cast<int *>(texB);
+        *blit_shade_table = static_cast<int>(reinterpret_cast<intptr_t>(
+            texB->pixels_));
 
         if (*blit_shade_table != 0) {
-            char *rectBase = reinterpret_cast<char *>(bufIn) + 0x20;
-            *blit_clip_right = *reinterpret_cast<int *>(rectBase + 8);
-            *blit_clip_left = *reinterpret_cast<int *>(rectBase);
-            *blit_clip_bottom = *reinterpret_cast<int *>(rectBase + 0xc);
-            *blit_clip_top = *reinterpret_cast<int *>(rectBase + 4);
+            *blit_clip_right = bufIn->rect1_.right;
+            *blit_clip_left = bufIn->rect1_.left;
+            *blit_clip_bottom = bufIn->rect1_.bottom;
+            *blit_clip_top = bufIn->rect1_.top;
 
             int minY = 0x7fff, maxY = -0x7ffd, minX = 0x7fff, maxX = -0x7ffd;
             int minYIdx = 0, maxYIdx = 0;
@@ -7380,7 +7386,7 @@ void Texture::sub_624ca0(Buffer *a1, int a2, int a3, int a4, int *a5,
 
 /*
 // ORIGINAL: 0x00624C70 sub_624c70 0x00624C70-0x00624C9D BYTE_EXACT
-// symbol    ?sub_624c70@Texture@@QAEXPAVBuffer@@PAUVert@@PAHHH2H@Z
+// symbol    ?sub_624c70@Texture@@QAEXPAVBuffer@@PAUVert@@PAHH1PAVTextureStore@@H@Z
 // size      45 bytes
 // callers   0   call targets   1
 // kind      game
@@ -7390,9 +7396,9 @@ Return Value: whatever sub_6212b0 leaves in EAX
 Status: Complete
 */
 void Texture::sub_624c70(Buffer *buf, Vert *verts, int *zvals, int count,
-                         int edgeVerts, int *out_flag, int sentinel) {
+                         Vert *edgeVerts, TextureStore *cache, int sentinel) {
     if (sentinel == -1) {
-        sub_6212b0(buf, verts, zvals, count, edgeVerts, out_flag);
+        sub_6212b0(buf, verts, zvals, count, edgeVerts, cache);
     }
 }
 
@@ -7420,7 +7426,7 @@ void Texture::draw_cached_lit(Buffer *buf, Vert *verts, int *zvals, int count,
 
 /*
 // ORIGINAL: 0x00624D00 sub_624d00 0x00624D00-0x00624D37 BYTE_EXACT
-// symbol    ?sub_624d00@Texture@@QAEXHHHHHHHHH@Z
+// symbol    ?sub_624d00@Texture@@QAEXPAVBuffer@@PAUVert@@PAHPAV1@PAEH1PAVTextureStore@@H@Z
 // size      55 bytes
 // callers   0   call targets   1
 // kind      game
@@ -7429,16 +7435,19 @@ void Texture::draw_cached_lit(Buffer *buf, Vert *verts, int *zvals, int count,
 Return Value: whatever sub_622200 leaves in EAX
 Status: Complete
 */
-void Texture::sub_624d00(int a1, int a2, int a3, int a4, int a5, int a6,
-                         int a7, int a8, int sentinel) {
+void Texture::sub_624d00(Buffer *buffer, Vert *vertices, int *zvals,
+                         Texture *shade_texture, unsigned char *remap,
+                         int count, Vert *edge_vertices, TextureStore *cache,
+                         int sentinel) {
     if (sentinel == -1) {
-        sub_622200(a1, a2, a3, a4, a5, a6, a7, a8);
+        sub_622200(buffer, vertices, zvals, shade_texture, remap, count,
+                   edge_vertices, cache);
     }
 }
 
 /*
 // ORIGINAL: 0x00624D40 sub_624d40 0x00624D40-0x00624D72 BYTE_EXACT
-// symbol    ?sub_624d40@Texture@@QAEXPAVBuffer@@PAUVert@@PAHHHH2H@Z
+// symbol    ?sub_624d40@Texture@@QAEXPAVBuffer@@PAUVert@@PAHH1HPAVTextureStore@@H@Z
 // size      50 bytes
 // callers   0   call targets   1
 // kind      game
@@ -7448,10 +7457,11 @@ Return Value: whatever sub_622810 leaves in EAX
 Status: Complete
 */
 void Texture::sub_624d40(Buffer *buf, Vert *verts, int *zvals, int count,
-                         int a5, int light_thresh, int *out_flag,
+                         Vert *edgeVerts, int light_thresh,
+                         TextureStore *cache,
                          int sentinel) {
     if (sentinel == -1) {
-        sub_622810(buf, verts, zvals, count, a5, light_thresh, out_flag);
+        sub_622810(buf, verts, zvals, count, edgeVerts, light_thresh, cache);
     }
 }
 
