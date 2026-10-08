@@ -5447,8 +5447,8 @@ search:
                     site_set(rx, ry, quality);
                 }
                 for (int neighbor = 0; neighbor < 8; ++neighbor) {
-                    int nx = lifecycle_wrap_x(rx + RadiusBaseX[neighbor]);
-                    int ny = ry + RadiusBaseY[neighbor];
+                    int nx = lifecycle_wrap_x(rx + VehMoveDeltaX[neighbor]);
+                    int ny = ry + VehMoveDeltaY[neighbor];
                     if (nx < 0 || nx >= MapLongitudeBounds || ny < 0 || ny >= MapLatitudeBounds) continue;
                     int altitude2 = map_loc(nx, ny)->climate >> 5;
                     if (!(definition.rule_flags & 0x100)) {
@@ -6433,13 +6433,13 @@ int __cdecl do_withdrawal(int faction_id, int other_faction_id) {
         if (Chassis[VehPrototypes[proto_id].chassis_id].triad == TRIAD_LAND &&
             veh_cargo(veh_id) != 0) {
             for (int neighbor = 0; neighbor < 8; ++neighbor) {
-                int dest_x = RadiusBaseX[neighbor] + x;
+                int dest_x = VehMoveDeltaX[neighbor] + x;
                 if ((MapIsFlat & 1) == 0) {
                     if (dest_x < 0) dest_x += MapLongitudeBounds;
                     else if (dest_x >= MapLongitudeBounds)
                         dest_x -= MapLongitudeBounds;
                 }
-                const int dest_y = RadiusBaseY[neighbor] + y;
+                const int dest_y = VehMoveDeltaY[neighbor] + y;
                 if (dest_y < 0 || dest_y >= MapLatitudeBounds || dest_x < 0 ||
                     dest_x >= MapLongitudeBounds) continue;
 

@@ -7,18 +7,21 @@ Base Bases[32];
 PlayerData PlayersData[8];
 VehPrototype VehPrototypes[32];
 RulesBasic Rules;
-unsigned char LockEnableMask;
-uint32_t GameRules;
-int BaseCurrentCount, VehCurrentCount, TurnCurrentNum;
+GameDataStateWindow GameDataStateStorage = {};
+uint32_t &LockEnableMask = GameDataStateStorage.fields_.lock_masks_.enable_mask_;
+uint32_t &GameRules = GameDataStateStorage.fields_.game_rules_;
+int &BaseCurrentCount = GameDataStateStorage.fields_.base_current_count_;
+int &VehCurrentCount = GameDataStateStorage.fields_.vehicle_current_count_;
+int &TurnCurrentNum = GameDataStateStorage.fields_.turn_current_num_;
+int (&CouncilResolutionCount)[11] = GameDataStateStorage.fields_.council_resolution_count_;
 int MapIsFlat, MapLongitude, MapLongitudeBounds, MapLatitudeBounds;
-int RadiusOffsetX[16], RadiusOffsetY[16], RadiusBaseX[8], RadiusBaseY[8];
+int RadiusOffsetX[16], RadiusOffsetY[16], VehMoveDeltaX[8], VehMoveDeltaY[8];
 int RadiusRange[4];
 int mock_at_climax_calls, mock_lift_calls, mock_drop_calls;
 int mock_drop_x, mock_drop_y, mock_stack_value;
 int mock_veh_at[16][16];
 int mock_base_at[16][16];
 Map MockMap[16][16];
-int CouncilResolutionCount[11];
 int SecretProject[MaxSecretProjectNum];
 
 // PRODUCT_BODY: enemy_planet_buster
@@ -35,8 +38,8 @@ static void reset_fixture() {
     memset(MockMap, 0, sizeof(MockMap));
     memset(RadiusOffsetX, 0, sizeof(RadiusOffsetX));
     memset(RadiusOffsetY, 0, sizeof(RadiusOffsetY));
-    memset(RadiusBaseX, 0, sizeof(RadiusBaseX));
-    memset(RadiusBaseY, 0, sizeof(RadiusBaseY));
+    memset(VehMoveDeltaX, 0, sizeof(VehMoveDeltaX));
+    memset(VehMoveDeltaY, 0, sizeof(VehMoveDeltaY));
     memset(RadiusRange, 0, sizeof(RadiusRange));
     LockEnableMask = 0;
     GameRules = 0;
@@ -129,7 +132,7 @@ static void test_pass0_adjacent_reposition_callback_order() {
     PlayersData[0].ranking = 7;
     VehPrototypes[0].cost = 1;
     RadiusRange[0] = 1;
-    RadiusBaseX[0] = 1; RadiusBaseY[0] = 0;
+    VehMoveDeltaX[0] = 1; VehMoveDeltaY[0] = 0;
     Vehs[1].faction_id = 1;
     VehCurrentCount = 2;
     PlayersData[1].ranking = 1;

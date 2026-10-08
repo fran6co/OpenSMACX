@@ -8113,7 +8113,7 @@ int __cdecl energy_yield(int faction_id, int base_id, int x, int y,
             BOOL is_flat = MapIsFlat & 1;
             int longitude_bounds = MapLongitudeBounds;
             for (int i = 0; i < 8; i++) {
-                int x_adj = x + RadiusBaseX[i];
+                int x_adj = x + VehMoveDeltaX[i];
                 if (!is_flat) {
                     if (x_adj < 0) {
                         x_adj += longitude_bounds;
@@ -8121,7 +8121,7 @@ int __cdecl energy_yield(int faction_id, int base_id, int x, int y,
                         x_adj -= longitude_bounds;
                     }
                 }
-                int y_adj = y + RadiusBaseY[i];
+                int y_adj = y + VehMoveDeltaY[i];
                 if (y_adj < 0 || y_adj >= MapLatitudeBounds) {
                     continue;
                 }
@@ -11737,12 +11737,12 @@ int __cdecl base_connect(int priority) {
                                    0, -1, path_guard, -1);
         int path_length = 0;
         while (direction >= 0) {
-            path_x += RadiusBaseX[direction];
+            path_x += VehMoveDeltaX[direction];
             if (!(MapIsFlat & 1)) {
                 if (path_x < 0) path_x += MapLongitudeBounds;
                 else if (path_x >= MapLongitudeBounds) path_x -= MapLongitudeBounds;
             }
-            path_y += RadiusBaseY[direction];
+            path_y += VehMoveDeltaY[direction];
             if (path_y < 0 || path_y >= MapLatitudeBounds || path_x < 0 ||
                 path_x >= MapLongitudeBounds)
                 break;
@@ -12255,13 +12255,13 @@ void __cdecl base_terraform(int force_improve) {
             bool shallow_neighbor = false;
             for (int sensor_direction = 0; sensor_direction < 8;
                  ++sensor_direction) {
-                int neighbor_x = x + RadiusBaseX[sensor_direction];
+                int neighbor_x = x + VehMoveDeltaX[sensor_direction];
                 if ((MapIsFlat & 1) == 0) {
                     if (neighbor_x < 0) neighbor_x += MapLongitudeBounds;
                     else if (neighbor_x >= MapLongitudeBounds)
                         neighbor_x -= MapLongitudeBounds;
                 }
-                const int neighbor_y = y + RadiusBaseY[sensor_direction];
+                const int neighbor_y = y + VehMoveDeltaY[sensor_direction];
                 if (neighbor_y < 0 || neighbor_y >= MapLatitudeBounds ||
                     neighbor_x < 0 || neighbor_x >= MapLongitudeBounds)
                     continue;
@@ -12453,13 +12453,13 @@ void __cdecl base_terraform(int force_improve) {
             if ((flags & 0x01E00050u) != 0) thermal_score -= 8;
             for (int thermal_direction = 0; thermal_direction < 8;
                  ++thermal_direction) {
-                int neighbor_x = x + RadiusBaseX[thermal_direction];
+                int neighbor_x = x + VehMoveDeltaX[thermal_direction];
                 if ((MapIsFlat & 1) == 0) {
                     if (neighbor_x < 0) neighbor_x += MapLongitudeBounds;
                     else if (neighbor_x >= MapLongitudeBounds)
                         neighbor_x -= MapLongitudeBounds;
                 }
-                const int neighbor_y = y + RadiusBaseY[thermal_direction];
+                const int neighbor_y = y + VehMoveDeltaY[thermal_direction];
                 if (neighbor_y < 0 || neighbor_y >= MapLatitudeBounds ||
                     neighbor_x < 0 || neighbor_x >= MapLongitudeBounds)
                     continue;

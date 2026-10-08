@@ -30,8 +30,8 @@ struct ConsoleGlobalFixture { int faction_id_; };
 enum { BIT_RIVER = 0x80, BIT_FOREST = 0x200000, BIT_CONDENSER = 0x400000 };
 const int RadiusOffsetX[9] = {0,1,2,1,0,-1,-2,-1,0};
 const int RadiusOffsetY[9] = {0,-1,0,1,2,1,0,-1,0};
-const int RadiusBaseX[9] = {1,2,1,0,-1,-2,-1,0,0};
-const int RadiusBaseY[9] = {-1,0,1,2,1,0,-1,-2,0};
+const int VehMoveDeltaX[9] = {1,2,1,0,-1,-2,-1,0,0};
+const int VehMoveDeltaY[9] = {-1,0,1,2,1,0,-1,-2,0};
 #define __cdecl
 extern int TerraformTileFaction;
 extern int TerraformDrownedBaseId;
@@ -43,9 +43,12 @@ extern uint32_t MapLongitude;
 extern int MapLongitudeBounds;
 extern int MapLatitudeBounds;
 extern uint32_t MapCloudCover;
-extern int TurnCurrentNum;
+struct GameDataLockMasks { uint32_t enable_mask_; };
+struct GameDataFields { int turn_current_num_; GameDataLockMasks lock_masks_; };
+struct GameDataState { GameDataFields fields_; };
+extern GameDataState GameDataStateStorage;
 extern int BaseFindDist;
-extern uint32_t LockEnableMask;
+extern uint32_t &LockEnableMask;
 extern RulesWorldbuilder WorldBuilder;
 extern Base Bases[];
 int base_find(int, int);
@@ -69,9 +72,9 @@ int MapLatitudeBounds = 5;
 uint32_t MapArea = 15;
 int MapIsFlat = 1;
 uint32_t MapCloudCover = 0;
-int TurnCurrentNum = 0;
+GameDataState GameDataStateStorage = {{0, {0}}};
 int BaseFindDist = 1;
-uint32_t LockEnableMask = 0;
+uint32_t &LockEnableMask = GameDataStateStorage.fields_.lock_masks_.enable_mask_;
 int TerraformTileFaction = -7;
 int TerraformDrownedBaseId = -8;
 RulesWorldbuilder WorldBuilder = {{0}, 5, 3, 1};
@@ -119,7 +122,7 @@ static void reset_world() {
     WorldBuilder.cloudmass_peaks = 5;
     WorldBuilder.cloudmass_hills = 3;
     WorldBuilder.rainfall_coeff = 1;
-    TurnCurrentNum = 0;
+    GameDataStateStorage.fields_.turn_current_num_ = 0;
     BaseFindDist = 1;
     LockEnableMask = 0;
     TerraformTileFaction = -7;
@@ -189,7 +192,7 @@ int main() {
     reset_world();
     Tiles[7].climate = 0x70; // old class 2: row 2, logical x 2
     Tiles[8].climate = 0x70; // old class 2: row 2, logical x 4
-    TurnCurrentNum = 1;
+    GameDataStateStorage.fields_.turn_current_num_ = 1;
     BaseFindDist = 3; // ensure found base is not retained as drowned
     LockEnableMask = 1u << 3;
     Bases[1].faction_id_current = 3;

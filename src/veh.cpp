@@ -3445,12 +3445,12 @@ int __cdecl action_airdrop(int veh_id, int x, int y, int mode) {
                      ((GameDataStateStorage.fields_.game_state_ & 0x80) != 0);
         if (!local_seen) {
             for (int neighbor = 0; neighbor < 8; ++neighbor) {
-                int near_x = x + RadiusBaseX[neighbor];
+                int near_x = x + VehMoveDeltaX[neighbor];
                 if (!(MapIsFlat & 1)) {
                     if (near_x < 0) near_x += MapLongitudeBounds;
                     else if (near_x >= MapLongitudeBounds) near_x -= MapLongitudeBounds;
                 }
-                const int near_y = y + RadiusBaseY[neighbor];
+                const int near_y = y + VehMoveDeltaY[neighbor];
                 if (near_x >= 0 && near_x < MapLongitudeBounds && near_y >= 0 &&
                     near_y < MapLatitudeBounds) {
                     const Map *adjacent = map_loc(near_x, near_y);
@@ -3474,12 +3474,12 @@ int __cdecl action_airdrop(int veh_id, int x, int y, int mode) {
     int best_score = 999999;
     int landing_slot = -1;
     for (int neighbor = 0; neighbor < 8; ++neighbor) {
-        int near_x = x + RadiusBaseX[neighbor];
+        int near_x = x + VehMoveDeltaX[neighbor];
         if (!(MapIsFlat & 1)) {
             if (near_x < 0) near_x += MapLongitudeBounds;
             else if (near_x >= MapLongitudeBounds) near_x -= MapLongitudeBounds;
         }
-        const int near_y = y + RadiusBaseY[neighbor];
+        const int near_y = y + VehMoveDeltaY[neighbor];
         if (near_x < 0 || near_x >= MapLongitudeBounds || near_y < 0 || near_y >= MapLatitudeBounds)
             continue;
         const int random = rand();
@@ -3518,13 +3518,13 @@ int __cdecl action_airdrop(int veh_id, int x, int y, int mode) {
     if (Weapon[VehPrototypes[vehicle.proto_id].weapon_id].offense_rating == 0) veh_skip(veh_id);
     const int from_x = vehicle.x;
     const int from_y = vehicle.y;
-    const int destination_x_unwrapped = x + RadiusBaseX[landing_slot];
+    const int destination_x_unwrapped = x + VehMoveDeltaX[landing_slot];
     int destination_x = destination_x_unwrapped;
     if (!(MapIsFlat & 1)) {
         if (destination_x < 0) destination_x += MapLongitudeBounds;
         else if (destination_x >= MapLongitudeBounds) destination_x -= MapLongitudeBounds;
     }
-    const int destination_y = y + RadiusBaseY[landing_slot];
+    const int destination_y = y + VehMoveDeltaY[landing_slot];
     stack_veh(veh_id, 1);
     draw_tile(from_x, from_y, 2);
     if (local_seen && allied_local)
@@ -5276,8 +5276,8 @@ void __cdecl set_course(int veh_id, char type, int x, int y) {
         }
         int frontage = 0;
         for (int j = 0; j < 8; j++) {
-            int x_adj = course_xrange(x_radius + RadiusBaseX[j]);
-            int y_adj = y_radius + RadiusBaseY[j];
+            int x_adj = course_xrange(x_radius + VehMoveDeltaX[j]);
+            int y_adj = y_radius + VehMoveDeltaY[j];
             if (!on_map(x_adj, y_adj)) {
                 continue;
             }
@@ -9100,8 +9100,8 @@ int __cdecl compute_odds(int odds, int faction_id, int veh_id_atk, int veh_id_de
         if (base_id >= 0) {
             for (int i = 0; i < 8; i++) {
                 // The ninth RadiusBase entry is the tile itself and is never reached.
-                const int x_radius = course_xrange(x_def + RadiusBaseX[i]);
-                const int y_radius = y_def + RadiusBaseY[i];
+                const int x_radius = course_xrange(x_def + VehMoveDeltaX[i]);
+                const int y_radius = y_def + VehMoveDeltaY[i];
                 if (!on_map(x_radius, y_radius)) {
                     continue;
                 }
@@ -9145,8 +9145,8 @@ int __cdecl compute_odds(int odds, int faction_id, int veh_id_atk, int veh_id_de
     } else if (base_id >= 0) {
         int attackers = 0;
         for (int i = 0; i < 8; i++) {
-            const int x_radius = course_xrange(x_def + RadiusBaseX[i]);
-            const int y_radius = y_def + RadiusBaseY[i];
+            const int x_radius = course_xrange(x_def + VehMoveDeltaX[i]);
+            const int y_radius = y_def + VehMoveDeltaY[i];
             if (!on_map(x_radius, y_radius)) {
                 continue;
             }
@@ -10249,14 +10249,12 @@ void __cdecl veh_battle_msg(char *label, char *icon) {
     NetMsgPrimary.pop(label, 5000, 0, icon);
 }
 
-// The eight per-direction map deltas battle_fight adds to a vehicle's x and y
-// before wrapping the result into the map. Which pair applies is chosen by the
-// caller's triad/mode flag - the two Alt runs are its alternate - and the x
-// result is wrapped by MapLongitudeBounds exactly as an x coordinate is, which
-// is what makes them coordinate deltas rather than costs. All four are
-// file-backed .data, not .bss: the eight ints of each are the compass deltas
-// (X runs +1,+2,+1,0,-1,-2,-1,0; the Alt runs are the same wheel turned one
-// step), which is why they are initialised here rather than left to a loader.
+// The ordinary direction rows are shared by map and vehicle consumers.
+// battle_fight uses these when mode is zero; nonzero mode selects the full
+// RadiusOffsetX/Y owners in map.cpp, not separate eight-element Alt arrays.
+// The pinned bases are 66EF50/66EF74 versus 66EFBC/66F440. action_destroy
+// passes radius indices 1..24, so the latter must retain their 289 entries.
+// These are file-backed initial values rather than independent BSS storage.
 // The ordinary tables also contain the stationary centre at index eight.
 // Eight directions followed by the centre, sampled by scoot setup's nine
 // iterations. Both complete initial runs are present in original .rdata.
@@ -10264,8 +10262,6 @@ void __cdecl veh_battle_msg(char *label, char *icon) {
 int VehMoveDeltaX[9] = {1, 2, 1, 0, -1, -2, -1, 0, 0};
 // RECOVERY_OBJECT: v2 0x0066EF74 0x0066EF98 ?VehMoveDeltaY@@3PAHA 0x004BFE00
 int VehMoveDeltaY[9] = {-1, 0, 1, 2, 1, 0, -1, -2, 0};
-int VehMoveDeltaXAlt[8] = {0, 1, 2, 1, 0, -1, -2, -1};     // 0x0066EFBC
-int VehMoveDeltaYAlt[8] = {0, -1, 0, 1, 2, 1, 0, -1};      // 0x0066F440
 
 /*
 Purpose: Report the feature at a site, multiplayer only.
@@ -10460,6 +10456,7 @@ void __cdecl action_gate(int veh_id, int base_id) {
 /*
 Purpose: Add a direction's tile offset to a vehicle's coordinates.
 // ORIGINAL: 0x00506A60 ?battle_fight@@YAHHHHHPAH@Z 0x00506A60-0x00506AEB
+// RECOVERY_BINDING: v1 {"reason":"Use the complete shared radius-offset owners for nonzero mode rather than truncated eight-element duplicates.","evidence":["Pinned506A70/506AB8 index66EFBC/66F440 directly; these are the existing289-dword RadiusOffsetX/Y owners in map.cpp.","Pinned action_destroy4CABEF..4CACFD supplies mode1 indices1..24; preserve unchecked direct indexing and the original single-wrap coordinate adjustment."]}
 // size      139 bytes
 // prototype int (__cdecl ?battle_fight@@YAHHHHHPAH@Z)(int vehID, int dir, int mode, int allow_interceptor, int *odds_out)
 // callers   6   call targets   1
@@ -10469,7 +10466,7 @@ Purpose: Add a direction's tile offset to a vehicle's coordinates.
 // HOMED from src/unrecovered/00506a60.cpp, 2026-09-04. Its `g_00952828`
 // short views are Vehs[].x (+0x00) and Vehs[].y (+0x02).
 // `mode` is named from what it does here and in the seven-parameter body:
-// a 0/1 flag that swaps in the Alt delta run. `allow_interceptor` and
+// a zero/nonzero flag selecting ordinary directions or full radius offsets. `allow_interceptor` and
 // `odds_out` are named from the seven-parameter body - the first gates its
 // call to interceptor (0x00506650), the second is the null-tested pointer it
 // stores the odds word through at 0x005070A2.
@@ -10486,7 +10483,7 @@ int __cdecl battle_fight(int veh_id, int dir, int mode, int allow_interceptor,
                          int *odds_out) {
     int x;
     if (mode != 0) {
-        x = VehMoveDeltaXAlt[dir];
+        x = RadiusOffsetX[dir];
     } else {
         x = VehMoveDeltaX[dir];
     }
@@ -10501,7 +10498,7 @@ int __cdecl battle_fight(int veh_id, int dir, int mode, int allow_interceptor,
         }
     }
 
-    const int y = mode != 0 ? VehMoveDeltaYAlt[dir] : VehMoveDeltaY[dir];
+    const int y = mode != 0 ? RadiusOffsetY[dir] : VehMoveDeltaY[dir];
     const int val_y = Vehs[veh_id].y + y;
 
     return battle_fight(veh_id, dir, val_x, val_y, mode, allow_interceptor,
@@ -13306,8 +13303,8 @@ dispatch_event:
                     for (int radius = 0; radius < 8; ++radius) {
                         const int index = radius;
                         const int nx = goody_box_detail::wrap_x(
-                            x + RadiusBaseX[index]);
-                        const int ny = y + RadiusBaseY[index];
+                            x + VehMoveDeltaX[index]);
+                        const int ny = y + VehMoveDeltaY[index];
                         if (!goody_box_detail::on_map(nx, ny)) continue;
                         Map *nearby_tile = goody_box_detail::tile_at(nx, ny);
                         if ((nearby_tile->climate & 0xE0u) <= 0x5Fu
@@ -13534,8 +13531,8 @@ dispatch_event:
                 const int radius = goody_box_detail::rotated_spawn_index(
                     location, GameDataStateStorage.fields_.turn_current_num_);
                 const int nx = goody_box_detail::wrap_x(
-                    x + RadiusBaseX[radius]);
-                const int ny = y + RadiusBaseY[radius];
+                    x + VehMoveDeltaX[radius]);
+                const int ny = y + VehMoveDeltaY[radius];
                 if (goody_box_detail::on_map(nx, ny)) {
                     Map *nearby_tile = goody_box_detail::tile_at(nx, ny);
                     const int climate_matches =
@@ -19261,12 +19258,12 @@ int __cdecl enemy_planet_buster(int vehicle_id) {
             if (threshold <= best_score && best_target_base >= 0) {
                 const Base &target = Bases[best_target_base];
                 for (int direction = 0; direction < 8; ++direction) {
-                    int x = target.x + RadiusBaseX[direction];
+                    int x = target.x + VehMoveDeltaX[direction];
                     if (!(MapIsFlat & 1)) {
                         if (x < 0) x = MapLongitudeBounds + x;
                         else if (MapLongitudeBounds <= x) x -= MapLongitudeBounds;
                     }
-                    const int y = target.y + RadiusBaseY[direction];
+                    const int y = target.y + VehMoveDeltaY[direction];
                     if (y < 0 || y >= MapLatitudeBounds
                         || x < 0 || x >= MapLongitudeBounds) continue;
                     const Map *tile = map_loc(x, y);

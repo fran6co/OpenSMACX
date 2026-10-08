@@ -46,8 +46,8 @@ Console ConsoleGlobal = {0};
 MapWindow PrimaryMapWindow;
 MapWindow *MapWinTable[8] = {&PrimaryMapWindow};
 NetMsg NetMsgPrimary;
-int RadiusBaseX[9] = {0};
-int RadiusBaseY[9] = {0};
+int VehMoveDeltaX[9] = {0};
+int VehMoveDeltaY[9] = {0};
 int RadiusOffsetX[289] = {0};
 int RadiusOffsetY[289] = {0};
 
@@ -144,8 +144,8 @@ int main() {
     GameDataStateStorage.fields_.game_rules_ = 0x200000;
     ConsoleGlobal.faction_id_ = 1;
     MapArea = 33;
-    RadiusBaseX[0] = 2;
-    RadiusBaseY[0] = 0;
+    VehMoveDeltaX[0] = 2;
+    VehMoveDeltaY[0] = 0;
     rand_values[0] = 2;
     rand_values[1] = 2;
     rand_count = 2;

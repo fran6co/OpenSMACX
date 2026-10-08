@@ -76,8 +76,9 @@ static Base Bases[32];
 static Veh Vehs[32];
 static VehPrototype VehPrototypes[32];
 static RulesChassis Chassis[32];
-static int BaseCurrentCount;
-static int VehCurrentCount;
+struct GameDataFields { int base_current_count_; int vehicle_current_count_; };
+struct GameDataState { GameDataFields fields_; };
+static GameDataState GameDataStateStorage;
 static uint32_t MapArea;
 static uint32_t MapLongitude;
 static int MapLongitudeBounds;
@@ -87,8 +88,8 @@ static uint32_t UnkBitfield1;
 static int DiplomacyMapTransferChanged;
 static Console ConsoleGlobal;
 static WorldWindow WorldClimateWorldWin;
-static int RadiusBaseX[9] = {1, 2, 1, 0, -1, -2, -1, 0, 0};
-static int RadiusBaseY[9] = {-1, 0, 1, 2, 1, 0, -1, -2, 0};
+static int VehMoveDeltaX[9] = {1, 2, 1, 0, -1, -2, -1, 0, 0};
+static int VehMoveDeltaY[9] = {-1, 0, 1, 2, 1, 0, -1, -2, 0};
 
 static int spot_calls;
 static int spot_base_ids[32];
@@ -117,7 +118,7 @@ void __cdecl spot_base(int base_id, int faction_id) {
     }
     ++spot_calls;
     if (grow_base_count_on_spot && spot_calls == 1)
-        BaseCurrentCount += grow_base_count_on_spot;
+        GameDataStateStorage.fields_.base_current_count_ += grow_base_count_on_spot;
 }
 void __cdecl draw_map(int) {}
 int __cdecl veh_cargo(int) { return 1; }
@@ -138,7 +139,7 @@ int __cdecl veh_drop(int id, int x, int y) {
     Vehs[id].x = static_cast<int16_t>(x);
     Vehs[id].y = static_cast<int16_t>(y);
     if (mutate_proto_on_drop) Vehs[mutate_proto_slot].proto_id = proto_after_drop;
-    if (change_vehicle_count_on_drop) VehCurrentCount = vehicle_count_after_drop;
+    if (change_vehicle_count_on_drop) GameDataStateStorage.fields_.vehicle_current_count_ = vehicle_count_after_drop;
     return id;
 }
 void __cdecl draw_tiles(int, int, int) { ++tile_draw_calls; }
@@ -173,7 +174,7 @@ static void reset_all() {
     memset(Vehs, 0, sizeof(Vehs));
     memset(VehPrototypes, 0, sizeof(VehPrototypes));
     memset(Chassis, 0, sizeof(Chassis));
-    BaseCurrentCount = VehCurrentCount = 0;
+    GameDataStateStorage.fields_.base_current_count_ = GameDataStateStorage.fields_.vehicle_current_count_ = 0;
     MapArea = MapLongitude = 0;
     MapLongitudeBounds = MapLatitudeBounds = MapIsFlat = 0;
     UnkBitfield1 = 0;
@@ -244,7 +245,7 @@ static void control_trade_direction_and_visibility() {
 
     // The first base count is snapshotted; callback growth is not rescanned.
     reset_all();
-    BaseCurrentCount = 3;
+    GameDataStateStorage.fields_.base_current_count_ = 3;
     Bases[0].visibility = 3; // actor-known wins and spots the partner
     Bases[1].visibility = 4; // partner-known spots the actor
     Bases[2].faction_id_current = 1; // actor-owned also spots the partner
@@ -273,7 +274,7 @@ static void control_withdrawal_moves_cleans_and_updates_treaty() {
     MapLongitude = 8;
     MapLongitudeBounds = 16;
     MapLatitudeBounds = 6;
-    VehCurrentCount = 2;
+    GameDataStateStorage.fields_.vehicle_current_count_ = 2;
     Vehs[0].x = 4; Vehs[0].y = 2;
     Vehs[0].faction_id = 2; Vehs[0].proto_id = 0;
     Vehs[0].state = 0xFFFFFFFFu; Vehs[0].order = 7; Vehs[0].visibility = 0xFF;
@@ -294,8 +295,8 @@ static void control_withdrawal_moves_cleans_and_updates_treaty() {
 
     const int moved = do_withdrawal(1, 2);
     assert(moved == 1);
-    assert(drop_calls == 1); // live VehCurrentCount reload stops second record
-    assert(VehCurrentCount == 1);
+    assert(drop_calls == 1); // live owner vehicle-count reload stops second record
+    assert(GameDataStateStorage.fields_.vehicle_current_count_ == 1);
     assert(Vehs[0].x == 4 && Vehs[0].y == 2); // drop uses lift return, not source id
     assert(Vehs[1].x == 4 && Vehs[1].y == 2);
     assert(Vehs[2].x == destination_x && Vehs[2].y == destination_y);
@@ -314,7 +315,7 @@ static void control_withdrawal_base_callback_reads() {
     MapLongitude = 8;
     MapLongitudeBounds = 16;
     MapLatitudeBounds = 6;
-    VehCurrentCount = 1;
+    GameDataStateStorage.fields_.vehicle_current_count_ = 1;
     Vehs[0].x = 4; Vehs[0].y = 2;
     Vehs[0].faction_id = 2; Vehs[0].proto_id = 0;
     Vehs[0].state = 0xFFFFFFFFu; Vehs[0].order = 7; Vehs[0].visibility = 0xFF;

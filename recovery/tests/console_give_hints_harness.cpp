@@ -35,7 +35,7 @@ WeaponRule Weapon[64]; ArmorRule Armor[64]; Base Bases[64];
 Base *BaseCurrent; PlayerData PlayersData[16]; Player Players[16];
 MapWin HostMapWin; MapWin *MapWinTable[1]; WindowStub TutWinBaseWindow,TutWinSocWindow;
 TutorialStub TutorialWindow; ConsoleGlobalStub ConsoleGlobal; Map MapTiles[64][64];
-int RadiusBaseX[9]={1,2,1,0,-1,-2,-1,0,0},RadiusBaseY[9]={-1,0,1,2,1,0,-1,-2,0};
+int VehMoveDeltaX[9]={1,2,1,0,-1,-2,-1,0,0},VehMoveDeltaY[9]={-1,0,1,2,1,0,-1,-2,0};
 int RadiusOffsetX[289],RadiusOffsetY[289]; int MapLongitudeBounds=64,MapLatitudeBounds=64,MapIsFlat=1;
 struct GameDataStateFieldsStub {
     uint32_t game_state_;

@@ -28,8 +28,8 @@ def scanner_source(damage: bool = False) -> str:
     )
     body = extract_body(BODY.read_text())
     if damage:
-        old = "int next_x =\n                                    ray_x + RadiusBaseX[outer_direction];"
-        new = "int next_x =\n                                    ray_x + RadiusBaseX[inner_direction];"
+        old = "int next_x =\n                                    ray_x + VehMoveDeltaX[outer_direction];"
+        new = "int next_x =\n                                    ray_x + VehMoveDeltaX[inner_direction];"
         assert body.count(old) == 1
         body = body.replace(old, new, 1)
     return stubs + "\n" + body + r'''

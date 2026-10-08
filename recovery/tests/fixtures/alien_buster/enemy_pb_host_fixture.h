@@ -35,9 +35,17 @@ extern Base Bases[32];
 extern PlayerData PlayersData[8];
 extern VehPrototype VehPrototypes[32];
 extern RulesBasic Rules;
-extern unsigned char LockEnableMask;
-extern uint32_t GameRules;
-extern int BaseCurrentCount, VehCurrentCount, TurnCurrentNum;
+struct GameDataLockMaskView { uint32_t enable_mask_; };
+struct GameDataStateWindowFields {
+    int base_current_count_, vehicle_current_count_, turn_current_num_;
+    uint32_t game_rules_; GameDataLockMaskView lock_masks_;
+    int council_resolution_count_[11];
+};
+struct GameDataStateWindow { GameDataStateWindowFields fields_; };
+extern GameDataStateWindow GameDataStateStorage;
+extern uint32_t &LockEnableMask, &GameRules;
+extern int &BaseCurrentCount, &VehCurrentCount, &TurnCurrentNum;
+extern int (&CouncilResolutionCount)[11];
 extern int MapIsFlat, MapLongitude, MapLongitudeBounds, MapLatitudeBounds;
 extern int RadiusOffsetX[16], RadiusOffsetY[16], RadiusBaseX[8], RadiusBaseY[8];
 extern int RadiusRange[4];
@@ -58,8 +66,7 @@ enum {
 enum { PFLAG_COMMIT_ATROCIT_WANTONLY = 0x1000000 };
 enum { RULES_INTENSE_RIVALRY = 0x40 };
 
-extern int CouncilResolutionCount[11];
-extern int TurnCurrentNum;
+
 extern int SecretProject[MaxSecretProjectNum];
 
 inline int get_proto_offense_rating(uint32_t) { return 'a'; }

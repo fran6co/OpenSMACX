@@ -85,8 +85,8 @@ struct PathFixture { void continents(); };
 struct Fractal { void init(); int sample(int, int); };
 
 #define __cdecl
-const int RadiusBaseX[9] = {1,2,1,0,-1,-2,-1,0,0};
-const int RadiusBaseY[9] = {-1,0,1,2,1,0,-1,-2,0};
+const int VehMoveDeltaX[9] = {1,2,1,0,-1,-2,-1,0,0};
+const int VehMoveDeltaY[9] = {-1,0,1,2,1,0,-1,-2,0};
 const int RadiusOffsetX[25] = {
     0,1,2,1,0,-1,-2,-1,0,2,2,-2,-2,1,3,3,1,-1,-3,-3,-1,4,-4,0,0
 };

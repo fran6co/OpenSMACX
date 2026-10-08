@@ -105,8 +105,8 @@ def test_wrong_stack_faction_is_rejected(tmp_path, actual_bodies, compiler):
 @pytest.mark.parametrize("compiler", compilers())
 def test_cached_vehicle_count_is_rejected(tmp_path, actual_bodies, compiler):
     body = actual_bodies["do_withdrawal"]
-    changed, count = re.subn(r"for\s*\(([^;]*);([^;]*?)VehCurrentCount([^;]*);", r"const int cached_vehicle_count = VehCurrentCount;\n    for (\1;\2cached_vehicle_count\3;", body, count=1)
-    assert count == 1, "actual do_withdrawal no longer has a live VehCurrentCount loop"
+    changed, count = re.subn(r"for\s*\(([^;]*);([^;]*?)GameDataStateStorage\.fields_\.vehicle_current_count_([^;]*);", r"const int cached_vehicle_count = GameDataStateStorage.fields_.vehicle_current_count_;\n    for (\1;\2cached_vehicle_count\3;", body, count=1)
+    assert count == 1, "actual do_withdrawal no longer has a live vehicle-count field loop"
     bodies = dict(actual_bodies)
     bodies["do_withdrawal"] = changed
     binary = executable(tmp_path, bodies, compiler)

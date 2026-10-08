@@ -756,8 +756,8 @@ static SeaScoringExit enemy_move_sea_scoring(SeaScoringState &s) {
     if (s.unavailable < s.available && acting.move_to_ai_type != 'E') {
         for (s.scratch58 = 0; s.scratch58 < 32; s.scratch58 += 4) {
             const int n = s.scratch58 / 4;
-            s.scan_x = xrange(s.x + RadiusBaseX[n]);
-            s.scan_y = s.y + RadiusBaseY[n];
+            s.scan_x = xrange(s.x + VehMoveDeltaX[n]);
+            s.scan_y = s.y + VehMoveDeltaY[n];
             if (!on_map(s.scan_x, s.scan_y)) continue;
             Map *tile = map_loc(s.scan_x, s.scan_y);
             if ((tile->climate & 0xe0) < 0x60) continue;
@@ -1184,8 +1184,8 @@ sea576daf:
                 if(tile.bit&0x2000u)++s.scratch20;
             }
             for(int n=0;n<8;++n){
-                const int x=xrange(s.scan_x+RadiusBaseX[n]);
-                const int y=s.scan_y+RadiusBaseY[n];
+                const int x=xrange(s.scan_x+VehMoveDeltaX[n]);
+                const int y=s.scan_y+VehMoveDeltaY[n];
                 if(!on_map(x,y))continue;
                 if(!(player.flags&0x20000000u)||(map_loc(x,y)->bit&0x100000u)){
                     if(is_known(x,y,s.faction))continue;
@@ -1308,12 +1308,12 @@ static int enemy_move_tactical_action_tail(TacticalFrame &s) {
         (s.plan != 8 && s.plan != 9)) return 0;
     const int direction=Paths.move(s.vehicle,(v.order & 0x40)?-1:v.faction_id);
     if (direction<0) { v.order=0; return 0; }
-    const int x=xrange(s.x+RadiusBaseX[direction]);
-    const int y=s.y+RadiusBaseY[direction];
+    const int x=xrange(s.x+VehMoveDeltaX[direction]);
+    const int y=s.y+VehMoveDeltaY[direction];
     if (base_who(x,y)>=0) return 0;
     for (int n=0;n<8;++n) {
-        const int nx=xrange(x+RadiusBaseX[n]);
-        const int ny=y+RadiusBaseY[n];
+        const int nx=xrange(x+VehMoveDeltaX[n]);
+        const int ny=y+VehMoveDeltaY[n];
         if (!on_map(nx,ny) || tactical_low(nx,ny)!=tactical_low(x,y)) continue;
         if (((abs(ny-s.y)+x_dist(nx,s.x)) & ~1)<3) continue;
         const int enemy=stack_fix(veh_at(nx,ny));
@@ -1584,7 +1584,7 @@ tactical_finish_score:
                 const int ry=y+RadiusOffsetY[pos]*step;
                 if(!on_map(rx,ry)||(s.triad!=2&&tactical_low(rx,ry)!=(s.triad==1)))continue;
                 for(int n=0;n<8;++n){
-                    const int nx=xrange(rx+RadiusBaseX[n]);const int ny=ry+RadiusBaseY[n];
+                    const int nx=xrange(rx+VehMoveDeltaX[n]);const int ny=ry+VehMoveDeltaY[n];
                     if(!on_map(nx,ny))continue;
                     const Map &tile=*map_loc(nx,ny);
                     if((player.flags&0x20000000u)&&!(tile.bit&0x100000u)){
@@ -1642,8 +1642,8 @@ static int enemy_move_tactical_postscan(TacticalFrame &s,int combat_choice) {
     }
     v.move_to_ai_type='x';
     if(s.direction>=0){
-        const int x=xrange(s.x+RadiusBaseX[s.direction]);
-        const int y=s.y+RadiusBaseY[s.direction];
+        const int x=xrange(s.x+VehMoveDeltaX[s.direction]);
+        const int y=s.y+VehMoveDeltaY[s.direction];
         v.order=0x58;v.waypoint_x[0]=(short)x;v.waypoint_y[0]=(short)y;
     } else {
         //578B34 falls through here after the absent direction.
@@ -1661,7 +1661,7 @@ static void enemy_move_prepare_empty_region_goal(TacticalFrame &s,bool skip_tria
         (player.unk_77[s.region]&6u)||player.region_base_plan[s.region]<3||
         ((s.y<1||s.y>=MapLatitudeBounds-1)&&s.plan!=12))return;
     for(int n=0;n<8;++n){
-        const int x=xrange(s.x+RadiusBaseX[n]);const int y=s.y+RadiusBaseY[n];
+        const int x=xrange(s.x+VehMoveDeltaX[n]);const int y=s.y+VehMoveDeltaY[n];
         if(on_map(x,y)&&(map_loc(x,y)->climate&0xe0)<0x60){
             add_goal(s.faction,7,1,x,y,-1);s.center_bias=1;return;
         }
@@ -2083,8 +2083,8 @@ static NonseaExit enemy_move_nonsea(NonseaState &s,
         !s.low_altitude) {
         if (coast_or_border(s.x,s.y,s.x,s.y,s.faction)) {
             int direction = (Vehs[s.vehicle].facing + 4) % 8;
-            s.scan_x = xrange(s.x + RadiusBaseX[direction]);
-            s.scan_y = s.y + RadiusBaseY[direction];
+            s.scan_x = xrange(s.x + VehMoveDeltaX[direction]);
+            s.scan_y = s.y + VehMoveDeltaY[direction];
             if (!coast_or_border(s.scan_x,s.scan_y,s.scan_x,s.scan_y,s.faction)) {
                 if (s.vehicle & 1) Vehs[s.vehicle].state |= 0x80000000u;
                 else Vehs[s.vehicle].state &= 0x7fffffffu;
@@ -2097,8 +2097,8 @@ static NonseaExit enemy_move_nonsea(NonseaState &s,
                 if (Vehs[s.vehicle].state & 0x80000000u)
                     rotation = s.available - 3;
                 direction = (rotation + Vehs[s.vehicle].facing + 8) % 8;
-                s.scan_x = xrange(s.x + RadiusBaseX[direction]);
-                s.scan_y = s.y + RadiusBaseY[direction];
+                s.scan_x = xrange(s.x + VehMoveDeltaX[direction]);
+                s.scan_y = s.y + VehMoveDeltaY[direction];
                 if (s.mode) {
                     if (on_map(s.scan_x,s.scan_y) &&
                         map_loc(s.scan_x,s.scan_y)->region == s.region &&
@@ -2484,8 +2484,8 @@ static SelectedExit enemy_move_selected(EnemyMoveFullFrame &f) {
         f.local_28 = 0;
         f.local_2c = 0;
         do {
-            f.local_4 = xrange(f.local_18 + RadiusBaseX[f.local_2c]);
-            f.local_8 = f.local_14 + RadiusBaseY[f.local_2c];
+            f.local_4 = xrange(f.local_18 + VehMoveDeltaX[f.local_2c]);
+            f.local_8 = f.local_14 + VehMoveDeltaY[f.local_2c];
             if (on_map(f.local_4,f.local_8) &&
                 (map_loc(f.local_4,f.local_8)->climate & 0xe0) >= 0x60) {
                 const int dy = abs(f.local_8-target.y);
@@ -2530,16 +2530,16 @@ selected_second_next:
     f.local_28 = -9999;
     f.local_2c = 0;
     do {
-        f.local_4 = xrange(f.local_18 + RadiusBaseX[f.local_2c]);
-        f.local_8 = f.local_14 + RadiusBaseY[f.local_2c];
+        f.local_4 = xrange(f.local_18 + VehMoveDeltaX[f.local_2c]);
+        f.local_8 = f.local_14 + VehMoveDeltaY[f.local_2c];
         if (on_map(f.local_4,f.local_8) &&
             (map_loc(f.local_4,f.local_8)->climate & 0xe0) >= 0x60) {
             const int dy = abs(f.local_8-target.y);
             if (((dy + x_dist(f.local_4,target.x)) & ~1) == 2) {
                 f.local_20 = (int)((unsigned int)defense_value(f.local_c,f.local_4,f.local_8,actor,-1) << 3);
                 for (int direction = 0; direction < 8; ++direction) {
-                    const int xx = xrange(f.local_4 + RadiusBaseX[direction]);
-                    const int yy = f.local_8 + RadiusBaseY[direction];
+                    const int xx = xrange(f.local_4 + VehMoveDeltaX[direction]);
+                    const int yy = f.local_8 + VehMoveDeltaY[direction];
                     if (on_map(xx,yy) && (xx != target.x || yy != target.y)) {
                         f.local_1c = stack_fix(veh_at(xx,yy));
                         if (f.local_1c >= 0 && Vehs[f.local_1c].faction_id != f.local_c &&
@@ -2676,8 +2676,8 @@ enemy_move_upstream_56dc96_low_stack(EnemyMoveFullFrame &f) {
         return ENEMY_MOVE_UPSTREAM_LOW_STACK_CONTINUE_56DDD7;
 
     for (int direction = 0; direction < 8; ++direction) {
-        const int x = xrange(f.local_18 + RadiusBaseX[direction]);
-        const int y = f.local_14 + RadiusBaseY[direction];
+        const int x = xrange(f.local_18 + VehMoveDeltaX[direction]);
+        const int y = f.local_14 + VehMoveDeltaY[direction];
         f.local_4 = x;
         f.local_8 = y;
         if (!on_map(x, y) || (map_loc(x, y)->climate & 0xe0u) > 0x5fu)
@@ -3018,8 +3018,8 @@ label_56c35d:
                         road_mode = 0;
                     f.local_80 = Paths.find(path_x,path_y,base_x,f.local_58,0,-1,road_mode,-1);
                     if (f.local_80 < 0) break;
-                    path_x = xrange(path_x+RadiusBaseX[f.local_80]);
-                    path_y += RadiusBaseY[f.local_80];
+                    path_x = xrange(path_x+VehMoveDeltaX[f.local_80]);
+                    path_y += VehMoveDeltaY[f.local_80];
                     ++f.local_38;
                     if (path_x == base_x && path_y == f.local_58) break;
                     const Map &tile = *map_loc(path_x,path_y);
@@ -3128,8 +3128,8 @@ label_56cc2f: {
     const int chassis = VehPrototypes[acting.proto_id].chassis_id;
     if (Chassis[chassis].triad != 0) goto label_56cd0c;
     for (int direction = 0; direction < 8; ++direction) {
-        const int x = xrange(f.local_18 + RadiusBaseX[direction]);
-        const int y = f.local_14 + RadiusBaseY[direction];
+        const int x = xrange(f.local_18 + VehMoveDeltaX[direction]);
+        const int y = f.local_14 + VehMoveDeltaY[direction];
         f.local_4 = x;
         f.local_8 = y;
         if (!on_map(x, y) || (map_loc(x, y)->climate & 0xe0u) >= 0x60u)
@@ -3921,8 +3921,8 @@ if (GameDataStateStorage.fields_.base_current_count_ > 0) {
         f.local_2c = 0;
         for (; f.local_2c < 0x20; f.local_2c += 4) {
             const int direction = static_cast<int>(f.local_2c / 4);
-            const int neighbor_x = xrange(f.local_4 + RadiusBaseX[direction]);
-            const int neighbor_y = f.local_8 + RadiusBaseY[direction];
+            const int neighbor_x = xrange(f.local_4 + VehMoveDeltaX[direction]);
+            const int neighbor_y = f.local_8 + VehMoveDeltaY[direction];
             if (!on_map(neighbor_x, neighbor_y)) continue;
             const int neighbor_owner = whose_territory(f.local_c, neighbor_x,
                                                        neighbor_y, NULL, 0);
@@ -4962,8 +4962,8 @@ label_57717f:
               x_dist(f.local_18,Vehs[f.vehicle_id].waypoint_x[0])) & ~1) > 2) {
             f.local_80 = Paths.move(f.vehicle_id,f.local_c);
             if (f.local_80 >= 0) {
-                f.local_4 = xrange(f.local_18+RadiusBaseX[f.local_80]);
-                f.local_8 = f.local_14+RadiusBaseY[f.local_80];
+                f.local_4 = xrange(f.local_18+VehMoveDeltaX[f.local_80]);
+                f.local_8 = f.local_14+VehMoveDeltaY[f.local_80];
                 f.local_70 = zoc_sea(f.local_4,f.local_8,f.local_c);
                 bool cancel_path = f.local_70 == 1;
                 if (f.local_70 > 1 &&
@@ -4993,8 +4993,8 @@ label_577361:
 label_578b26:
 label_578b29:
     if (f.local_80 < 0) goto label_578b34;
-    f.local_4 = xrange(f.local_18+RadiusBaseX[f.local_80]);
-    f.local_8 = f.local_14+RadiusBaseY[f.local_80];
+    f.local_4 = xrange(f.local_18+VehMoveDeltaX[f.local_80]);
+    f.local_8 = f.local_14+VehMoveDeltaY[f.local_80];
     Vehs[f.vehicle_id].order = 0x58;
     Vehs[f.vehicle_id].waypoint_x[0] = static_cast<short>(f.local_4);
     Vehs[f.vehicle_id].waypoint_y[0] = static_cast<short>(f.local_8);

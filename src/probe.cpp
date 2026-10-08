@@ -1193,7 +1193,7 @@ static void probe_native_atrocity_followup(int actor_faction_id,
 
 // Native 0x5A26F2..0x5A27CA traverses the first 21 entries of the existing
 // paired RadiusOffsetX/RadiusOffsetY owners in order, stepping four bytes
-// until offset 0x54. Keep this distinct from the nine-entry RadiusBaseX/Y.
+// until offset 0x54. Keep this distinct from the nine-entry VehMoveDeltaX/Y.
 
 // Native relocation selector 0x5A4331 / 0x5A4494. Sea chassis retain the
 // original nearest-base test, then the actor-owned port scan and sea-region

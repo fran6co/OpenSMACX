@@ -243,8 +243,10 @@ extern const int RadiusRange[9];
 // Both live in the image at 0x0066EF50 / 0x0066EF74 - see the .data walk
 // below. world_erosion (0x005C2CB0) reads them directly as its four- and
 // eight-neighbour erosion steps.
-const int RadiusBaseX[] = {  1, 2, 1, 0, -1, -2, -1,  0, 0 };
-const int RadiusBaseY[] = { -1, 0, 1, 2,  1,  0, -1, -2, 0 };
+// The same direction rows are already mapped and defined in veh.cpp.
+// Map clients share that storage; the former RadiusBase spelling duplicated it.
+extern int VehMoveDeltaX[9];
+extern int VehMoveDeltaY[9];
 // Original 0x0066EF98..0x0066EFBC, nine direction indices.
 extern const int MapDirectionPermutation[9];
 // THE FOUR DIAGONALS, at 0x0066EF28 / 0x0066EF3C - what world_rivers
@@ -253,7 +255,7 @@ extern const int RiverStepX[4];
 extern const int RiverStepY[4];
 
 // WHERE THESE TABLES LIVE IN THE SHIPPED IMAGE, read off the .data run at
-// 0x0066EF28 (image_data.py). The world-builder family walks them with a raw
+// 0x0066EF28 in the pinned executable. The world-builder family walks them with a raw
 // index and no symbol, so this is the note that stops the next pass
 // re-deriving the layout from the addressing:
 //
@@ -262,10 +264,10 @@ extern const int RiverStepY[4];
 //               paired up they are the four diagonals, which is what
 //               world_rivers (0x005C38B0) steps along; the fifth dword at
 //               0x0066EF4C is zero padding.
-//   0x0066EF50  RadiusBaseX (9 ints)
-//   0x0066EF74  RadiusBaseY (9 ints)   <- the two rows below
+//   0x0066EF50  VehMoveDeltaX (9 ints)
+//   0x0066EF74  VehMoveDeltaY (9 ints)
 //   0x0066EF98  { 9, 6, 3, 2, 1, 4, 7, 8, 5 } - a 9-int permutation of 1..8,
-//               nothing in the tree reads it yet, so it keeps no name.
+//               owned as MapDirectionPermutation in map.cpp.
 //   0x0066EFBC  RadiusOffsetX (289 ints)
 //   0x0066F440  RadiusOffsetY (289 ints) - the second base is exactly
 //               0x484 = 289*4 past the first, which is what says "two
@@ -789,8 +791,8 @@ MEASURED inline BOOL __cdecl port_to_port(int base_id_src, int base_id_dst) {
     int y = Bases[base_id_src].y;
     int last_region = -1;
     for (uint32_t i = 0; i < 8; i++) { // is_coast()
-        int x_radius = xrange(x + RadiusBaseX[i]);
-        int y_radius = y + RadiusBaseY[i];
+        int x_radius = xrange(x + VehMoveDeltaX[i]);
+        int y_radius = y + VehMoveDeltaY[i];
         if (on_map(x_radius, y_radius) && is_ocean(x_radius, y_radius)) {
             int region_src = region_at(x_radius, y_radius);
             if (region_src != last_region) { // reduce redundant checks especially sea bases
@@ -802,8 +804,8 @@ MEASURED inline BOOL __cdecl port_to_port(int base_id_src, int base_id_dst) {
                     int x_dst = Bases[base_id_dst].x;
                     int y_dst = Bases[base_id_dst].y;
                     for (uint32_t j = 0; j < 8; j++) {
-                        int x_radius_dst = xrange(x_dst + RadiusBaseX[j]);
-                        int y_radius_dst = y_dst + RadiusBaseY[j];
+                        int x_radius_dst = xrange(x_dst + VehMoveDeltaX[j]);
+                        int y_radius_dst = y_dst + VehMoveDeltaY[j];
                         if (on_map(x_radius_dst, y_radius_dst) && is_ocean(x_radius_dst, y_radius_dst)
                             && (region_at(x_radius_dst, y_radius_dst) & RegionBounds) == region_sea) {
                             return true;

@@ -523,8 +523,8 @@ BOOL __cdecl base_on_sea(int base_id, int region_sea) {
     int x = Bases[base_id].x;
     int y = Bases[base_id].y;
     for (uint32_t i = 0; i < 8; i++) {
-        int x_radius = xrange(x + RadiusBaseX[i]);
-        int y_radius = y + RadiusBaseY[i];
+        int x_radius = xrange(x + VehMoveDeltaX[i]);
+        int y_radius = y + VehMoveDeltaY[i];
         if (on_map(x_radius, y_radius) && is_ocean(x_radius, y_radius)
             && (region_at(x_radius, y_radius) & RegionBounds) == region_sea) {
             return true;
@@ -570,8 +570,8 @@ int __cdecl base_coast(int base_id) {
     int x = Bases[base_id].x;
     int y = Bases[base_id].y;
     for (uint32_t i = 0; i < 8; i++) { // is_coast()
-        int x_radius = xrange(x + RadiusBaseX[i]);
-        int y_radius = y + RadiusBaseY[i];
+        int x_radius = xrange(x + VehMoveDeltaX[i]);
+        int y_radius = y + VehMoveDeltaY[i];
         if (on_map(x_radius, y_radius) && is_ocean(x_radius, y_radius)) {
             region = region_at(x_radius, y_radius);
             int compare = (region >= 127) ? 1 : Continents[region].tile_count;
@@ -612,8 +612,8 @@ BOOL __cdecl port_to_coast(int base_id, int region) {
         return true;
     }
     for (uint32_t i = 0; i < 8; i++) { // is_coast()
-        int x_radius = xrange(x + RadiusBaseX[i]);
-        int y_radius = y + RadiusBaseY[i];
+        int x_radius = xrange(x + VehMoveDeltaX[i]);
+        int y_radius = y + VehMoveDeltaY[i];
         if (on_map(x_radius, y_radius) && is_ocean(x_radius, y_radius)) {
             // sea_coast() (0x0050DDC0, BYTE_EXACT as its own out-of-line
             // function) is hand-inlined here: the image writes its body out
@@ -2556,8 +2556,8 @@ void __cdecl quick_zoc(uint32_t x_src, uint32_t y_src, uint32_t faction_id, int 
     BOOL is_src_ocean = is_ocean(x_src, y_src);
     int search_zoc = -1;
     for (uint32_t i = 0; i < 8; i++) {
-        int x_radius = xrange(x_src + RadiusBaseX[i]);
-        int y_radius = y_src + RadiusBaseY[i];
+        int x_radius = xrange(x_src + VehMoveDeltaX[i]);
+        int y_radius = y_src + VehMoveDeltaY[i];
         if (on_map(x_radius, y_radius)) {
             int owner = veh_who(x_radius, y_radius);
             if (owner >= 0 && (uint32_t)owner != faction_id 
@@ -2675,8 +2675,8 @@ int __cdecl compass_move(int x_src, int y_src, int x_dst, int y_dst) {
     int direction_x = (x_radius_off > 0) ? 1 : (x_radius_off >= 0) - 1;
     int direction_y = (y_radius_off > 0) ? 1 : (y_radius_off >= 0) - 1;
     for (int i = 0; i < 9; i++) {
-        if (direction_x == (RadiusBaseX[i] > 0 ? 1 : (RadiusBaseX[i] >= 0) - 1)
-            && direction_y == (RadiusBaseY[i] > 0 ? 1 : (RadiusBaseY[i] >= 0) - 1)) {
+        if (direction_x == (VehMoveDeltaX[i] > 0 ? 1 : (VehMoveDeltaX[i] >= 0) - 1)
+            && direction_y == (VehMoveDeltaY[i] > 0 ? 1 : (VehMoveDeltaY[i] >= 0) - 1)) {
             return i;
         }
     }
@@ -3106,8 +3106,8 @@ void __cdecl brush(int x, int y, int altitude) {
             if (on_map(x_radius, y_radius) && alt_at(x_radius, y_radius) != altitude) {
                 BOOL skip = false;
                 for (uint32_t j = 0; j < 8; j++) {
-                    int x_rad_base = xrange(x_radius + RadiusBaseX[j]);
-                    int y_rad_base = y_radius + RadiusBaseY[j];
+                    int x_rad_base = xrange(x_radius + VehMoveDeltaX[j]);
+                    int y_rad_base = y_radius + VehMoveDeltaY[j];
                     if (on_map(x_rad_base, y_rad_base) && !is_ocean(x_rad_base, y_rad_base)
                         && !region_at(x_rad_base, y_rad_base)) {
                         skip = true;
@@ -3116,14 +3116,14 @@ void __cdecl brush(int x, int y, int altitude) {
                 if (!skip) {
                     if (altitude != 3) {
                         for (uint32_t j = 0, k = 0; j < 7; j += 3, k += 2) {
-                            int x_rad_base = xrange(x_radius + RadiusBaseX[k + 1]);
-                            int y_rad_base = y_radius + RadiusBaseY[k + 1];
+                            int x_rad_base = xrange(x_radius + VehMoveDeltaX[k + 1]);
+                            int y_rad_base = y_radius + VehMoveDeltaY[k + 1];
                             if (on_map(x_rad_base, y_rad_base)
                                 && altitude_at(x_rad_base, y_rad_base) == ALT_BIT_SHORE_LINE) {
-                                int x_rad_base2 = xrange(x_radius + RadiusBaseX[(k + 2) % 8]);
-                                int y_rad_base2 = y_radius + RadiusBaseY[(k + 2) % 8];
-                                int x_rad_base3 = xrange(x_radius + RadiusBaseX[k % 8]);
-                                int y_rad_base3 = y_radius + RadiusBaseY[k % 8];
+                                int x_rad_base2 = xrange(x_radius + VehMoveDeltaX[(k + 2) % 8]);
+                                int y_rad_base2 = y_radius + VehMoveDeltaY[(k + 2) % 8];
+                                int x_rad_base3 = xrange(x_radius + VehMoveDeltaX[k % 8]);
+                                int y_rad_base3 = y_radius + VehMoveDeltaY[k % 8];
                                 if (on_map(x_rad_base2, y_rad_base2) 
                                     && on_map(x_rad_base3, y_rad_base3)
                                     && altitude_at(x_rad_base2, y_rad_base2) < ALT_BIT_SHORE_LINE
@@ -3158,9 +3158,9 @@ Purpose: Paint land to assist in the creation of the world terrain.
 // ORIGINAL: 0x005C27F0 ?paint_land@@YAXHHHH@Z 0x005C27F0-0x005C28E6
 // LEVER: two fixes, 0.849 -> 0.904 similar (9/89). (1) `x_rad_base`/
 //        `y_rad_base` are a CUMULATIVE random walk - the image's inlined
-//        `xrange()` adds `RadiusBaseX[offset]` to the PREVIOUS `esi`
+//        `xrange()` adds `VehMoveDeltaX[offset]` to the PREVIOUS `esi`
 //        (`x_rad_base`), and `edi` (`y_rad_base`) is a plain running
-//        `add edi, RadiusBaseY[offset]` with no reset - not an offset from
+//        `add edi, VehMoveDeltaY[offset]` with no reset - not an offset from
 //        the fixed `x`/`y` parameters every iteration, which is a BUG this
 //        recovery had (paints a single-tile-radius dot around the start
 //        instead of wandering). (2) `offset` as `int`: the image's
@@ -3197,8 +3197,8 @@ void __cdecl paint_land(int x, int y, int altitude, int radius) {
                 search = offset;
                 unk_val = 0;
             }
-            x_rad_base = xrange(x_rad_base + RadiusBaseX[offset]);
-            y_rad_base += RadiusBaseY[offset];
+            x_rad_base = xrange(x_rad_base + VehMoveDeltaX[offset]);
+            y_rad_base += VehMoveDeltaY[offset];
             i++;
         } while (i < 2000 && on_map(x_rad_base, y_rad_base) && BrushVal2 < radius);
     }
@@ -5677,8 +5677,8 @@ Status: Complete
 */
 int __cdecl zoc_any(int x, int y, int faction_id) {
     for (uint32_t i = 0; i < 8; i++) {
-        int x_radius = xrange(x + RadiusBaseX[i]);
-        int y_radius = y + RadiusBaseY[i];
+        int x_radius = xrange(x + VehMoveDeltaX[i]);
+        int y_radius = y + VehMoveDeltaY[i];
         if (on_map(x_radius, y_radius)) {
             // Inlined anything_at(x_radius, y_radius): the image writes its
             // body out at this call site rather than calling 0x005798E0.
@@ -5716,8 +5716,8 @@ Status: Complete
 int __cdecl zoc_veh(int x, int y, int faction_id) {
     uint32_t ret = 0;
     for (uint32_t i = 0; i < 8; i++) {
-        int x_radius = xrange(x + RadiusBaseX[i]);
-        int y_radius = y + RadiusBaseY[i];
+        int x_radius = xrange(x + VehMoveDeltaX[i]);
+        int y_radius = y + VehMoveDeltaY[i];
         if (on_map(x_radius, y_radius)) {
             int owner = veh_who(x_radius, y_radius);
             if (owner >= 0 && (uint32_t)owner != faction_id
@@ -5752,8 +5752,8 @@ Status: Complete
 int __cdecl zoc_sea(int x, int y, int faction_id) {
     BOOL is_ocean_tile = is_ocean(x, y);
     for (uint32_t i = 0; i < 8; i++) {
-        int x_radius = xrange(x + RadiusBaseX[i]);
-        int y_radius = y + RadiusBaseY[i];
+        int x_radius = xrange(x + VehMoveDeltaX[i]);
+        int y_radius = y + VehMoveDeltaY[i];
         if (on_map(x_radius, y_radius)) {
             int owner = veh_who(x_radius, y_radius);
             if (owner >= 0 && (uint32_t)owner != faction_id
@@ -5832,7 +5832,7 @@ Purpose: Is any of the eight tiles a tile's odd-q ring holds land?
 // symbol    ?is_land_near@@YAHHH@Z
 // NO IMAGE CALLER AND NO IMAGE REFERENCE AT ALL, so the name is derived from
 //        the body, not from a catalogue entry. The eight offsets it walks are
-//        the first eight entries of map.h's RadiusBaseX/RadiusBaseY - the
+//        the first eight entries of map.h's VehMoveDeltaX/VehMoveDeltaY - the
 //        image's own copies of those tables are 0x0066EF50 and 0x0066EF74,
 //        and the ninth entry is the tile itself, which this skips. "Land" is
 //        the altitude nibble of `climate` reaching ALT_BIT_SHORE_LINE, the
@@ -5863,8 +5863,8 @@ BOOL __cdecl is_land_near(int x, int y) {
         return false;
     }
     for (int i = 0; i < 8; i++) {
-        int x_radius = xrange(x + RadiusBaseX[i]);
-        int y_radius = y + RadiusBaseY[i];
+        int x_radius = xrange(x + VehMoveDeltaX[i]);
+        int y_radius = y + VehMoveDeltaY[i];
         if (on_map(x_radius, y_radius)
             && (map_loc(x_radius, y_radius)->climate & 0xE0) >= ALT_BIT_SHORE_LINE) {
             return true;
@@ -5978,8 +5978,8 @@ int __cdecl alt_get_ocean_detail(int x, int y, int corner, int point) {
     } else if (point & 1) {
         // An edge midpoint: this tile averaged with the one across that edge.
         int dir = (point + corner * 2 + 3) & 7;
-        int x_edge = site_xrange(x + RadiusBaseX[dir]);
-        int y_edge = y + RadiusBaseY[dir];
+        int x_edge = site_xrange(x + VehMoveDeltaX[dir]);
+        int y_edge = y + VehMoveDeltaY[dir];
         detail = site_tile(x, y)->contour;
         if (detail < 0) {
             detail = 0;
@@ -6032,8 +6032,8 @@ int __cdecl alt_get_ocean_detail(int x, int y, int corner, int point) {
         // Water looking for land.
         int dir = corner * 2 - 4;
         for (int i = 0; i < 3; i++, dir++) {
-            int x_scan = site_xrange(x + RadiusBaseX[dir & 7]);
-            int y_scan = y + RadiusBaseY[dir & 7];
+            int x_scan = site_xrange(x + VehMoveDeltaX[dir & 7]);
+            int y_scan = y + VehMoveDeltaY[dir & 7];
             if (!on_map(x_scan, y_scan)
                 || (site_tile(x_scan, y_scan)->climate & 0xE0) < ALT_BIT_SHORE_LINE) {
                 continue;
@@ -6049,8 +6049,8 @@ int __cdecl alt_get_ocean_detail(int x, int y, int corner, int point) {
         // Land looking for water.
         int dir = corner * 2 - 4;
         for (int i = 0; i < 3; i++, dir++) {
-            int x_scan = site_xrange(x + RadiusBaseX[dir & 7]);
-            int y_scan = y + RadiusBaseY[dir & 7];
+            int x_scan = site_xrange(x + VehMoveDeltaX[dir & 7]);
+            int y_scan = y + VehMoveDeltaY[dir & 7];
             if (!on_map(x_scan, y_scan)
                 || (site_tile(x_scan, y_scan)->climate & 0xE0) >= ALT_BIT_SHORE_LINE) {
                 continue;
@@ -7325,7 +7325,7 @@ void __cdecl world_rivers() {
 //   through a pending_bodies.cpp forwarder. Everything this body needs is now
 //   NAMED, which was the only thing missing: Fractal is src/fractal.h
 //   (char grid_[2][19][19], 722 bytes - this body's `sub esp, 0x314` is that
-//   plus its fourteen stack locals), RadiusBaseX/RadiusBaseY are map.h's
+//   plus its fourteen stack locals), VehMoveDeltaX/VehMoveDeltaY are map.h's
 //   tables at 0x0066EF50/0x0066EF74, 0x0066EFE0/0x0066F464 are
 //   RadiusOffsetX[9]/RadiusOffsetY[9], 0x0068FB50 is &AltNatural[1],
 //   0x00945B00 is path.cpp's Paths (Paths.continents() at 0x005C2D0F), and the
@@ -7389,14 +7389,14 @@ void __cdecl world_erosion() {
                     local_8 = 0;
                     for (neighbor_index = 0; neighbor_index < 8;
                          ++neighbor_index) {
-                        int nx = x + RadiusBaseX[neighbor_index];
+                        int nx = x + VehMoveDeltaX[neighbor_index];
                         if (!(MapIsFlat & 1)) {
                             if (nx < 0)
                                 nx += MapLongitudeBounds;
                             else if (nx >= MapLongitudeBounds)
                                 nx -= MapLongitudeBounds;
                         }
-                        const int ny = y + RadiusBaseY[neighbor_index];
+                        const int ny = y + VehMoveDeltaY[neighbor_index];
                         if (ny >= 0 && ny < MapLatitudeBounds
                             && nx >= 0 && nx < MapLongitudeBounds) {
                             const Map *const neighbor = &map_tiles()[
@@ -7411,14 +7411,14 @@ void __cdecl world_erosion() {
                         region = -1;
                         for (neighbor_index = 0; neighbor_index < 8;
                              ++neighbor_index) {
-                            int nx = x + RadiusBaseX[neighbor_index];
+                            int nx = x + VehMoveDeltaX[neighbor_index];
                             if (!(MapIsFlat & 1)) {
                                 if (nx < 0)
                                     nx += MapLongitudeBounds;
                                 else if (nx >= MapLongitudeBounds)
                                     nx -= MapLongitudeBounds;
                             }
-                            const int ny = y + RadiusBaseY[neighbor_index];
+                            const int ny = y + VehMoveDeltaY[neighbor_index];
                             if (ny < 0 || ny >= MapLatitudeBounds
                                 || nx < 0 || nx >= MapLongitudeBounds)
                                 continue;
@@ -8206,9 +8206,9 @@ void __cdecl world_rainfall() {
                     for (int dir_neighbor = 0; dir_neighbor < 8;
                          ++dir_neighbor) {
                         const int nx = world_rainfall_xrange(
-                            x + RadiusBaseX[dir_neighbor], MapLongitudeBounds,
+                            x + VehMoveDeltaX[dir_neighbor], MapLongitudeBounds,
                             MapIsFlat);
-                        const int ny = y + RadiusBaseY[dir_neighbor];
+                        const int ny = y + VehMoveDeltaY[dir_neighbor];
                         if (ny < 0 || ny >= MapLatitudeBounds
                             || nx < 0 || nx >= MapLongitudeBounds)
                             continue;

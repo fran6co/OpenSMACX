@@ -177,8 +177,8 @@ int Path::zoc_path(int x, int y, int faction_id) {
     }
     BOOL is_ocean_tile = (tile->climate & 0xE0) < ALT_BIT_SHORE_LINE;
     for (uint32_t i = 0; i < 8; i++) {
-        int x_radius = xrange(x + RadiusBaseX[i]);
-        int y_radius = y + RadiusBaseY[i];
+        int x_radius = xrange(x + VehMoveDeltaX[i]);
+        int y_radius = y + VehMoveDeltaY[i];
         if (on_map(x_radius, y_radius)) {
             int owner = veh_who(x_radius, y_radius);
             if (owner >= 0 && (uint32_t)owner != faction_id 
@@ -469,8 +469,8 @@ int Path::find(int x_src, int y_src, int x_dst, int y_dst, int proto_id, int fac
                 }
             }
             for (int i = 0; i < 8; i++) {
-                int x_next = xrange(x_cur + RadiusBaseX[i]);
-                int y_next = y_cur + RadiusBaseY[i];
+                int x_next = xrange(x_cur + VehMoveDeltaX[i]);
+                int y_next = y_cur + VehMoveDeltaY[i];
                 if (!on_map(x_next, y_next)) {
                     continue;
                 }
@@ -496,8 +496,8 @@ int Path::find(int x_src, int y_src, int x_dst, int y_dst, int proto_id, int fac
                     if (faction_id >= 0) {
                         BOOL unexplored = FALSE;
                         for (int j = 0; j < 8; j++) {
-                            int x_adj = xrange(x_next + RadiusBaseX[j]);
-                            int y_adj = y_next + RadiusBaseY[j];
+                            int x_adj = xrange(x_next + VehMoveDeltaX[j]);
+                            int y_adj = y_next + VehMoveDeltaY[j];
                             if (on_map(x_adj, y_adj)
                                 && !(PlayersData[faction_id].flags & RFLAG_FREEPROTO)
                                 && !(map_loc(x_adj, y_adj)->visibility & (1 << faction_id))) {
@@ -751,8 +751,8 @@ int Path::find(int x_src, int y_src, int x_dst, int y_dst, int proto_id, int fac
     int best_dir = -1;
     int best_score = 2000000000;
     for (int i = 0; i < 8; i++) {
-        int x_next = xrange(x_src + RadiusBaseX[i]);
-        int y_next = y_src + RadiusBaseY[i];
+        int x_next = xrange(x_src + VehMoveDeltaX[i]);
+        int y_next = y_src + VehMoveDeltaY[i];
         if (!on_map(x_next, y_next)) {
             continue;
         }
@@ -1039,8 +1039,8 @@ int Path::move(int veh_id, int faction_id) {
     int best_cost = 99999;
     int best_dir = -1;
     for (int i = 0; i < 8; i++) {
-        int x_scan = xrange(veh_x + RadiusBaseX[i]);
-        int y_scan = veh_y + RadiusBaseY[i];
+        int x_scan = xrange(veh_x + VehMoveDeltaX[i]);
+        int y_scan = veh_y + VehMoveDeltaY[i];
         if (!on_map(x_scan, y_scan)) {
             continue;
         }
@@ -1249,8 +1249,8 @@ void Path::territory(int x, int y, int UNUSED(region), int faction_id) {
         int x_it = x_table_[index2_];
         int y_it = y_table_[index2_++];
         for (uint32_t i = 0; i < 8; i++) {
-            int x_radius = xrange(x_it + RadiusBaseX[i]);
-            int y_radius = y_it + RadiusBaseY[i];
+            int x_radius = xrange(x_it + VehMoveDeltaX[i]);
+            int y_radius = y_it + VehMoveDeltaY[i];
             Map *tile;
             if (on_map(x_radius, y_radius) && y_it && y_it != ((int)MapLatitudeBounds - 1)
                 && (tile = map_loc(x_radius, y_radius),
@@ -1318,8 +1318,8 @@ void Path::continent(int x, int y, int region) {
         int16_t y_it = y_table_[index2_++];
         Continents[region].tile_count++;
         for (uint32_t i = 0; i < 8; i++) {
-            int x_radius = xrange(x_it + RadiusBaseX[i]);
-            int y_radius = y_it + RadiusBaseY[i];
+            int x_radius = xrange(x_it + VehMoveDeltaX[i]);
+            int y_radius = y_it + VehMoveDeltaY[i];
             BOOL is_ocean_rad;
             if (on_map(x_radius, y_radius) && y_it && y_it != ((int)MapLatitudeBounds - 1)
                 && (is_ocean_rad = is_ocean(x_radius, y_radius), is_ocean_rad == is_ocean_tile 
@@ -1475,8 +1475,8 @@ void Path::continents() {
             uint32_t region = region_at(x, y);
             if (region < MaxRegionLandNum) {
                 for (int i = 0; i < 8; i++) {
-                    int x_radius = xrange(x + RadiusBaseX[i]);
-                    int y_radius = y + RadiusBaseY[i];
+                    int x_radius = xrange(x + VehMoveDeltaX[i]);
+                    int y_radius = y + VehMoveDeltaY[i];
                     if (on_map(x_radius, y_radius)) {
                         uint32_t region_rad = region_at(x_radius, y_radius);
                         if (region_rad >= MaxRegionLandNum) {

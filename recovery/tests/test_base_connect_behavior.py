@@ -50,13 +50,25 @@ struct PlayerData { uint32_t diplo_treaties[8]; };
 struct RulesBasic { int tech_build_roads_fungus; } Rules;
 struct RulesTerraforming { int name,name_sea,preq_tech,preq_tech_sea; uint32_t bit,bit_incompatible; int rate,shortcuts; };
 RulesTerraforming Terraforming[20];
-Base Bases[512]; Base *BaseCurrent; int BaseCurrentCount, BaseIDCurrentSelected;
+Base Bases[512]; Base *BaseCurrent; int BaseIDCurrentSelected;
+// Minimal host owner only; this does not model native offsets or allocation.
+struct HostGameDataLockMasks { uint32_t enable_mask_; };
+struct HostGameDataFields {
+  int base_current_count_;
+  HostGameDataLockMasks lock_masks_;
+  uint32_t game_more_preferences_;
+};
+struct HostGameDataStorage { HostGameDataFields fields_; };
+HostGameDataStorage GameDataStateStorage{};
+int &BaseCurrentCount = GameDataStateStorage.fields_.base_current_count_;
+uint32_t &LockEnableMask = GameDataStateStorage.fields_.lock_masks_.enable_mask_;
+uint32_t &GameMorePreferences = GameDataStateStorage.fields_.game_more_preferences_;
 PlayerData PlayersData[8];
 Map Tiles[64*64];
 int MapLongitudeBounds=64, MapLatitudeBounds=64, MapIsFlat=1;
-uint32_t MapLongitude=32, LockEnableMask, GameMorePreferences;
-const int RadiusBaseX[8]={1,2,1,0,-1,-2,-1,0};
-const int RadiusBaseY[8]={-1,0,1,2,1,0,-1,-2};
+uint32_t MapLongitude=32;
+const int VehMoveDeltaX[8]={1,2,1,0,-1,-2,-1,0};
+const int VehMoveDeltaY[8]={-1,0,1,2,1,0,-1,-2};
 Map *map_loc(int x,int y) { return &Tiles[y*32+(x>>1)]; }
 int territory_override=-2;
 int whose_territory(int,int x,int y,int*,int) {

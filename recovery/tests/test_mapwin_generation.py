@@ -691,6 +691,10 @@ int MapLongitudeBounds = 8, MapLatitudeBounds = 8, MapIsFlat = 1;
 unsigned int MapLongitude = 4;
 const int RadiusBaseX[8] = {1, 2, 1, 0, -1, -2, -1, 0};
 const int RadiusBaseY[8] = {-1, 0, 1, 2, 1, 0, -1, -2};
+// The actual body now shares the already mapped direction objects. Retain
+// the old arrays above only as decoys for RiverStep damage controls below.
+int VehMoveDeltaX[9] = {1, 2, 1, 0, -1, -2, -1, 0, 0};
+int VehMoveDeltaY[9] = {-1, 0, 1, 2, 1, 0, -1, -2, 0};
 const int RiverStepX[4] = {1, 1, -1, -1};
 const int RiverStepY[4] = {-1, 1, 1, -1};
 int RadiusOffsetX[289];

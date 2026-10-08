@@ -3594,7 +3594,7 @@ LAB_00463603:
         if (local_18 == 0) {
             uVar12 = 0;
             do {
-                iVar5 = RadiusBaseX[uVar12] + a7;
+                iVar5 = VehMoveDeltaX[uVar12] + a7;
                 if ((MapIsFlat & 1) == 0) {
                     if (iVar5 < 0) {
                         iVar5 = MapLongitudeBounds + iVar5;
@@ -3602,7 +3602,7 @@ LAB_00463603:
                         iVar5 = iVar5 - MapLongitudeBounds;
                     }
                 }
-                iVar19 = RadiusBaseY[uVar12] + a8;
+                iVar19 = VehMoveDeltaY[uVar12] + a8;
                 if (iVar19 > -1 && iVar19 < MapLatitudeBounds &&
                     iVar5 > -1 && iVar5 < MapLongitudeBounds &&
                     (map_tiles()[static_cast<int>(MapLongitude) * iVar19 + (iVar5 >> 1)]
@@ -3628,7 +3628,7 @@ LAB_00463603:
                 iVar5 = 0;
                 do {
                     uVar12 = iVar5 - 1U & 7;
-                    iVar19 = RadiusBaseX[uVar12] + a7;
+                    iVar19 = VehMoveDeltaX[uVar12] + a7;
                     if ((MapIsFlat & 1) == 0) {
                         if (iVar19 < 0) {
                             iVar19 = iVar19 + MapLongitudeBounds;
@@ -3636,7 +3636,7 @@ LAB_00463603:
                             iVar19 = iVar19 - MapLongitudeBounds;
                         }
                     }
-                    iVar6 = RadiusBaseY[uVar12] + a8;
+                    iVar6 = VehMoveDeltaY[uVar12] + a8;
                     if (iVar6 > -1 && iVar6 < MapLatitudeBounds &&
                         iVar19 > -1 && iVar19 < MapLongitudeBounds) {
                         pbVar18 = reinterpret_cast<uint8_t *>(
@@ -3667,7 +3667,7 @@ LAB_00463603:
             iVar5 = 0;
             do {
                 uVar12 = iVar5 - 1U & 7;
-                iVar19 = RadiusBaseX[uVar12] + a7;
+                iVar19 = VehMoveDeltaX[uVar12] + a7;
                 if ((MapIsFlat & 1) == 0) {
                     if (iVar19 < 0) {
                         iVar19 = iVar19 + MapLongitudeBounds;
@@ -3675,7 +3675,7 @@ LAB_00463603:
                         iVar19 = iVar19 - MapLongitudeBounds;
                     }
                 }
-                iVar6 = RadiusBaseY[uVar12] + a8;
+                iVar6 = VehMoveDeltaY[uVar12] + a8;
                 if (iVar6 > -1 && iVar6 < MapLatitudeBounds &&
                     iVar19 > -1 && iVar19 < MapLongitudeBounds) {
                     pbVar18 = reinterpret_cast<uint8_t *>(
@@ -4331,7 +4331,7 @@ border_dim:
                 territory_mask[9] = 0;
                 local_c0 = (uint32_t)tile->contour;
                 for (int k = 0; k < 8; k++) {
-                    iVar5 = RadiusBaseX[k] + a7;
+                    iVar5 = VehMoveDeltaX[k] + a7;
                     if ((MapIsFlat & 1) == 0) {
                         if (iVar5 < 0) {
                             iVar5 = MapLongitudeBounds + iVar5;
@@ -4339,7 +4339,7 @@ border_dim:
                             iVar5 = iVar5 - MapLongitudeBounds;
                         }
                     }
-                    iVar19 = RadiusBaseY[k] + a8;
+                    iVar19 = VehMoveDeltaY[k] + a8;
                     if (iVar19 > -1 && iVar19 < MapLatitudeBounds &&
                         iVar5 > -1 && iVar5 < MapLongitudeBounds &&
                         (map_tiles()[static_cast<int>(MapLongitude) * iVar19 + (iVar5 >> 1)]
@@ -4631,7 +4631,7 @@ LAB_00465605:;
             {
                 int k = 0;
                 do {
-                    iVar5 = RadiusBaseX[k] + a7;
+                    iVar5 = VehMoveDeltaX[k] + a7;
                     if ((MapIsFlat & 1) == 0) {
                         if (iVar5 < 0) {
                             iVar5 = MapLongitudeBounds + iVar5;
@@ -4639,7 +4639,7 @@ LAB_00465605:;
                             iVar5 = iVar5 - MapLongitudeBounds;
                         }
                     }
-                    local_34b = RadiusBaseY[k] + a8;
+                    local_34b = VehMoveDeltaY[k] + a8;
                     if ((int)local_34b > -1 &&
                         (int)local_34b < MapLatitudeBounds && iVar5 > -1 &&
                         iVar5 < MapLongitudeBounds) {

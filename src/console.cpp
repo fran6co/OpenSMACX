@@ -8706,7 +8706,7 @@ proto_id = Vehs[selected_vehicle_].proto_id;
 if (Chassis[VehPrototypes[proto_id].chassis_id].triad == TRIAD_LAND &&
     (map_loc(cursor_x, cursor_y)->climate & 0xE0u) >= 0x60u) {
     for (int offset = 0; offset < 0x20; offset += 4) {
-            int x = cursor_x + RadiusBaseX[offset / 4];
+            int x = cursor_x + VehMoveDeltaX[offset / 4];
             if ((MapIsFlat & 1) == 0) {
                 if (x < 0) {
                     x += MapLongitudeBounds;
@@ -8714,7 +8714,7 @@ if (Chassis[VehPrototypes[proto_id].chassis_id].triad == TRIAD_LAND &&
                     x -= MapLongitudeBounds;
                 }
             }
-            const int y = cursor_y + RadiusBaseY[offset / 4];
+            const int y = cursor_y + VehMoveDeltaY[offset / 4];
             if (y < 0 || y >= MapLatitudeBounds || x < 0 ||
                 x >= MapLongitudeBounds) {
                 continue;
@@ -8923,7 +8923,7 @@ if (tut_check2(0x20000) != 0) {
 // first eight entries; a successful checker draws and returns, otherwise the
 // loop continues and falls through to 0x512D4E.
 for (int offset = 0; offset < 0x20; offset += 4) {
-    int x = cursor_x + RadiusBaseX[offset / 4];
+    int x = cursor_x + VehMoveDeltaX[offset / 4];
     if ((MapIsFlat & 1) == 0) {
         if (x < 0) {
             x += MapLongitudeBounds;
@@ -8931,7 +8931,7 @@ for (int offset = 0; offset < 0x20; offset += 4) {
             x -= MapLongitudeBounds;
         }
     }
-    const int y = cursor_y + RadiusBaseY[offset / 4];
+    const int y = cursor_y + VehMoveDeltaY[offset / 4];
     if (y < 0 || y >= MapLatitudeBounds || x < 0 ||
         x >= MapLongitudeBounds) {
         continue;
@@ -8959,8 +8959,8 @@ for (int offset = 0; offset < 0x20; offset += 4) {
     // exclusions, goody suppression, bonus lookup, checker, second bonus_at
     // read, then sprite selection. Tut-map returns immediately in each case.
     for (int radius = 0; radius < 8; ++radius) {
-        const int x = give_hints_wrap_x(cursor_x + RadiusBaseX[radius]);
-        const int y = cursor_y + RadiusBaseY[radius];
+        const int x = give_hints_wrap_x(cursor_x + VehMoveDeltaX[radius]);
+        const int y = cursor_y + VehMoveDeltaY[radius];
         if (!give_hints_in_map(x, y)) continue;
         Map &tile = *map_loc(x, y);
         if ((tile.bit & 3u) != 0 && (tile.val2 & 0x0Fu) < 8) continue;
@@ -9136,8 +9136,8 @@ for (int offset = 0; offset < 0x20; offset += 4) {
     int pod_y = cursor_y;
     if ((GameDataStateStorage.fields_.tutorial_flags_ & 0x2000) == 0) {
         for (int i = 0; i < 8; ++i) {
-            const int x = give_hints_wrap_x(cursor_x + RadiusBaseX[i]);
-            const int y = cursor_y + RadiusBaseY[i];
+            const int x = give_hints_wrap_x(cursor_x + VehMoveDeltaX[i]);
+            const int y = cursor_y + VehMoveDeltaY[i];
             if (!give_hints_in_map(x, y) || goody_at(x, y) == 0) continue;
             const bool shallow_or_land = (map_loc(x, y)->climate & 0xE0u) < 0x60u;
             if (shallow_or_land == selected_is_sea) {
@@ -9166,8 +9166,8 @@ for (int offset = 0; offset < 0x20; offset += 4) {
     // but still proceeds to the same enemy-vehicle scan.
     if ((GameDataStateStorage.fields_.tutorial_flags_ & 0x8000000) == 0) {
         for (int i = 0; i < 8; ++i) {
-            const int x = give_hints_wrap_x(cursor_x + RadiusBaseX[i]);
-            const int y = cursor_y + RadiusBaseY[i];
+            const int x = give_hints_wrap_x(cursor_x + VehMoveDeltaX[i]);
+            const int y = cursor_y + VehMoveDeltaY[i];
             if (!give_hints_in_map(x, y)) continue;
             const int base_id = base_at(x, y);
             if (base_id < 0) continue;
@@ -9185,8 +9185,8 @@ for (int offset = 0; offset < 0x20; offset += 4) {
     // scan or the pre-set base-hint bit. Its own independent flag controls it.
     if ((GameDataStateStorage.fields_.tutorial_flags_ & 0x10000000) == 0) {
         for (int i = 0; i < 8; ++i) {
-            const int x = give_hints_wrap_x(cursor_x + RadiusBaseX[i]);
-            const int y = cursor_y + RadiusBaseY[i];
+            const int x = give_hints_wrap_x(cursor_x + VehMoveDeltaX[i]);
+            const int y = cursor_y + VehMoveDeltaY[i];
             if (!give_hints_in_map(x, y)) continue;
             Map &tile = *map_loc(x, y);
             if ((tile.bit & 1u) != 0 && (tile.val2 & 0x0Fu) < 8) continue;
@@ -9206,8 +9206,8 @@ for (int offset = 0; offset < 0x20; offset += 4) {
     // first edge faction meeting the two comparisons.
     if ((GameDataStateStorage.fields_.tutorial_flags_ & 0x20000000) == 0) {
         for (int i = 0; i < 8; ++i) {
-            const int x = give_hints_wrap_x(cursor_x + RadiusBaseX[i]);
-            const int y = cursor_y + RadiusBaseY[i];
+            const int x = give_hints_wrap_x(cursor_x + VehMoveDeltaX[i]);
+            const int y = cursor_y + VehMoveDeltaY[i];
             if (!give_hints_in_map(x, y)) continue;
             const Map &tile = *map_loc(x, y);
             if ((tile.bit & 3u) != 0 && (tile.val2 & 0x0Fu) < 8) continue;
@@ -9451,8 +9451,8 @@ void Console::new_base(int vehicle_id) { // 0x004CF7C0
     if (existing_base < 0) {
         bool adjacent_base = false;
         for (int direction = 0; direction < 8; ++direction) {
-            int adjacent_x = x + RadiusBaseX[direction];
-            const int adjacent_y = y + RadiusBaseY[direction];
+            int adjacent_x = x + VehMoveDeltaX[direction];
+            const int adjacent_y = y + VehMoveDeltaY[direction];
             if ((MapIsFlat & 1) == 0) {
                 if (adjacent_x < 0) {
                     adjacent_x += MapLongitudeBounds;
@@ -9700,8 +9700,8 @@ void Console::new_base(int vehicle_id) { // 0x004CF7C0
 
     bool locked_adjacent_base = false;
     for (int direction = 0; direction < 8; ++direction) {
-        int adjacent_x = x + RadiusBaseX[direction];
-        const int adjacent_y = y + RadiusBaseY[direction];
+        int adjacent_x = x + VehMoveDeltaX[direction];
+        const int adjacent_y = y + VehMoveDeltaY[direction];
         if ((MapIsFlat & 1) == 0) {
             if (adjacent_x < 0) {
                 adjacent_x += MapLongitudeBounds;
@@ -9998,14 +9998,14 @@ void Console::terraform(int vehicle_id, int requested_terraform) { // 0x004D3470
         const int own_altitude_level = tile->climate >> 5;
         for (int borehole_direction = 0; borehole_direction < 8;
              ++borehole_direction) {
-            int adjacent_x = x + RadiusBaseX[borehole_direction];
+            int adjacent_x = x + VehMoveDeltaX[borehole_direction];
             if ((MapIsFlat & 1) == 0) {
                 if (adjacent_x < 0) adjacent_x += MapLongitudeBounds;
                 else if (adjacent_x >= MapLongitudeBounds) {
                     adjacent_x -= MapLongitudeBounds;
                 }
             }
-            const int adjacent_y = y + RadiusBaseY[borehole_direction];
+            const int adjacent_y = y + VehMoveDeltaY[borehole_direction];
             if (adjacent_y < 0 || adjacent_y >= MapLatitudeBounds ||
                 adjacent_x < 0 || adjacent_x >= MapLongitudeBounds) {
                 continue;
@@ -10039,14 +10039,14 @@ void Console::terraform(int vehicle_id, int requested_terraform) { // 0x004D3470
         int aquifer_direction;
         for (aquifer_direction = 0; aquifer_direction < 8;
              ++aquifer_direction) {
-            int adjacent_x = x + RadiusBaseX[aquifer_direction];
+            int adjacent_x = x + VehMoveDeltaX[aquifer_direction];
             if ((MapIsFlat & 1) == 0) {
                 if (adjacent_x < 0) adjacent_x += MapLongitudeBounds;
                 else if (adjacent_x >= MapLongitudeBounds) {
                     adjacent_x -= MapLongitudeBounds;
                 }
             }
-            const int adjacent_y = y + RadiusBaseY[aquifer_direction];
+            const int adjacent_y = y + VehMoveDeltaY[aquifer_direction];
             if (adjacent_y < 0 || adjacent_y >= MapLatitudeBounds ||
                 adjacent_x < 0 || adjacent_x >= MapLongitudeBounds) {
                 continue;

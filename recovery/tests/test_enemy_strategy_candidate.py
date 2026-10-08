@@ -28,8 +28,24 @@ static const int AI_GOAL_ATTACK=0, AI_GOAL_DEFEND=2, AI_GOAL_SCOUT=3;
 static const int AI_GOAL_COLONIZE=8, AI_GOAL_TERRAFORM_LAND=9;
 static const int AI_GOAL_PRIORITY_COMBAT=16, AI_GOAL_LANDING_SITE=41;
 static const uint32_t BIT_BASE_IN_TILE=1u;
-int TurnCurrentNum=40, LockEnableMask=0, GamePreferences=0, MapIsFlat=1;
-uint32_t GameState=0; int DiffLevelCurrent=0, MapArea=1000;
+
+struct GameDataLockMaskView { uint32_t enable_mask_; };
+struct GameDataStateWindowFields {
+    uint32_t game_state_, game_preferences_; int diff_level_current_, turn_current_num_;
+    int base_current_count_, vehicle_current_count_;
+    GameDataLockMaskView lock_masks_; uint32_t faction_rankings_[8];
+};
+struct GameDataStateWindow { GameDataStateWindowFields fields_; };
+static GameDataStateWindow GameDataStateStorage = {{0,0,0,40,0,0,{0},{0}}};
+int &TurnCurrentNum = GameDataStateStorage.fields_.turn_current_num_;
+int &BaseCurrentCount = GameDataStateStorage.fields_.base_current_count_;
+int &VehCurrentCount = GameDataStateStorage.fields_.vehicle_current_count_;
+int &DiffLevelCurrent = GameDataStateStorage.fields_.diff_level_current_;
+uint32_t &GameState = GameDataStateStorage.fields_.game_state_;
+uint32_t &LockEnableMask = GameDataStateStorage.fields_.lock_masks_.enable_mask_;
+uint32_t &GamePreferences = GameDataStateStorage.fields_.game_preferences_;
+
+int MapIsFlat=1, MapArea=1000;
 struct Goal { int16_t type,priority; int x,y,base_id; };
 struct PlayerData {
     int total_mil_veh; uint32_t current_num_bases; int mil_strength_1,mil_strength_2,pop_total;
@@ -69,12 +85,12 @@ struct ConsoleType { int faction_id_; int upgrade(int) { return 1; } };
 ConsoleType ConsoleGlobal;
 PlayerData PlayersData[8]; Base Bases[128]; Map MapTiles[32*24]; Veh Vehs[128];
 VehPrototype VehPrototypes[512]; RulesChassis Chassis[256]; Continent Continents[128];
-uint32_t FactionRankings[8]; int BaseCurrentCount=0,VehCurrentCount=0;
+uint32_t FactionRankings[8];
 int goal_calls=0,wipe_calls=0,reset_calls=0;
 int stack_check_result=1,veh_kill_calls=0,sleep_calls=0;
 static inline Map *map_loc(int x,int y) { return &MapTiles[(x>>1)+y*16]; }
-static const int RadiusBaseX[8]={0,1,1,1,0,-1,-1,-1};
-static const int RadiusBaseY[8]={-1,-1,0,1,1,1,0,-1};
+static const int VehMoveDeltaX[8]={0,1,1,1,0,-1,-1,-1};
+static const int VehMoveDeltaY[8]={-1,-1,0,1,1,1,0,-1};
 static int BaseFindDist=9999;
 static inline int abstract_at(int x,int y) { return map_loc(x,y)->region; }
 static inline int x_dist(int a,int b) { int d=abs(a-b); if (!(MapIsFlat&1) && d>16) d=32-d; return d; }

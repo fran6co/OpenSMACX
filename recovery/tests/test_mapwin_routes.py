@@ -35,7 +35,7 @@ def braced(source, signature):
 
 def actual_source():
     headers = {name: (ROOT / "src" / (name + ".h")).read_text() for name in
-               ("mapwin", "map", "veh", "base", "alpha", "faction", "game", "temp", "path", "win", "buffer", "graphicwin")}
+               ("mapwin", "map", "veh", "base", "alpha", "faction", "game", "time", "path", "win", "buffer", "graphicwin")}
     cpp = (ROOT / "src/mapwin.cpp").read_text()
     parts = {}
     parts["STRUCTURES"] = "\n".join(braced(headers[unit], "struct " + name + " {") + ";" for unit, name in
@@ -54,7 +54,7 @@ def actual_source():
         parts[cls.upper() + "_BASES"], = re.findall(r"^class " + cls + r"\s*:[^{]+\{", headers[unit], re.M)
     globals_ = []
     for unit, names in (("map", ("MapIsFlat", "MapLongitude", "MapLongitudeBounds")),
-                        ("game", ("GameState", "GameRules")), ("mapwin", ("MapDestinationCost",)), ("temp", ("PlanLineCounter",))):
+                        ("mapwin", ("MapDestinationCost",)), ("time", ("PlanLineCounter",))):
         for name in names:
             decl, = re.findall(r"^extern (?:int|uint32_t|BOOL) " + name + r";", headers[unit], re.M)
             globals_.append(decl.removeprefix("extern "))
@@ -90,6 +90,8 @@ typedef int BOOL;typedef char *LPSTR;
 struct AutoSound {virtual ~AutoSound(){}};
 STRUCTURES
 struct RulesProjection {RULE_FIELD} Rules;
+struct GameDataStateFieldsProjection { uint32_t game_rules_, game_state_; BaseSecretProject secret_project_; int base_current_count_, vehicle_current_count_; };
+struct GameDataStateProjection { GameDataStateFieldsProjection fields_; } GameDataStateStorage;
 struct PlayerProjection {PLAYER_FIELD} PlayersData[8];
 WIN_BASES public: WIN_METHODS};
 struct Buffer {BUFFER_METHODS};
@@ -139,10 +141,10 @@ void reset(int id=0){
     connected=1;speed_result=3;cost_result=2;direction=1;screen_dx=-7;screen_dy=-11;
     std::memset(map_a,0,sizeof map_a);std::memset(map_b,0,sizeof map_b);active_map=map_a;
     for(auto &tile:map_a){tile.region=4;tile.visibility=8;}for(auto &tile:map_b){tile.region=9;tile.visibility=8;}
-    std::memset(Bases,0,sizeof Bases);std::memset(&SecretProject,0,sizeof SecretProject);
+    std::memset(Bases,0,sizeof Bases);std::memset(&GameDataStateStorage.fields_.secret_project_,0,sizeof GameDataStateStorage.fields_.secret_project_);
     std::memset(VehPrototypes,0,sizeof VehPrototypes);std::memset(Weapon,0,sizeof Weapon);std::memset(PlayersData,0,sizeof PlayersData);
-    MapIsFlat=1;MapLongitude=10;MapLongitudeBounds=20;GameRules=GameState=0;MapDestinationCost=77;PlanLineCounter=6;
-    Rules.move_rate_roads=3;SecretProject.xenoempathy_dome()=-1;Weapon[0].offense_rating=1;
+    MapIsFlat=1;MapLongitude=10;MapLongitudeBounds=20;GameDataStateStorage.fields_.game_rules_=GameDataStateStorage.fields_.game_state_=0;MapDestinationCost=77;PlanLineCounter=6;
+    Rules.move_rate_roads=3;GameDataStateStorage.fields_.secret_project_.xenoempathy_dome()=-1;Weapon[0].offense_rating=1;
     window.field_1DDA4_=window.field_1DDA8_=0;window.field_1DDCC_=window.field_1DDD0_=20;
     window.field_1DDD4_=window.field_1DDD8_=0;window.field_1DDBC_=3;window.field_1DDC0_=5;window.field_1DD84_=0;
 }
@@ -180,11 +182,11 @@ void connectivity(){
 }
 void flags_and_failures(){
     for(int repeat=0;repeat<2;++repeat)for(int offense:{-1,0,1})for(int ownership=0;ownership<3;++ownership){
-        reset(30);Weapon[0].offense_rating=offense;SecretProject.xenoempathy_dome()=ownership?1:-1;Bases[1].faction_id_current=ownership==2?3:4;
+        reset(30);Weapon[0].offense_rating=offense;GameDataStateStorage.fields_.secret_project_.xenoempathy_dome()=ownership?1:-1;Bases[1].faction_id_current=ownership==2?3:4;
         route(0,repeat);for(auto&e:only('F'))require(e.args[6]==((repeat?0x80:0xc0)|(offense==0&&ownership!=2?0x10:0)));
     }
     reset(31);hook=[](char k,int n){if(k=='U'&&n==2){VehPrototypes[1].weapon_id=2;Weapon[2].offense_rating=0;}
-        if(k=='F'&&n==1){SecretProject.xenoempathy_dome()=1;Bases[1].faction_id_current=3;}};
+        if(k=='F'&&n==1){GameDataStateStorage.fields_.secret_project_.xenoempathy_dome()=1;Bases[1].faction_id_current=3;}};
     route();require(only('F')[0].args[6]==0xd0&&only('F')[1].args[6]==0xc0);
     reset(32);route_answers={-1};route();require(counts['F']==1&&counts['C']==0&&counts['H']==0&&counts['L']==1&&MapDestinationCost==9);
     reset(33);route_answers={1,1,-1};route();require(counts['F']==3&&counts['C']==1&&counts['H']==0&&counts['L']==1&&MapDestinationCost==9);
@@ -196,7 +198,7 @@ void flags_and_failures(){
 void fog_and_live_map(){
     for(int exception=0;exception<5;++exception){
         reset(40+exception);map_loc(4,4)->visibility=0;map_loc(4,4)->val2=8;
-        if(exception==1)PlayersData[3].flags=0x200;if(exception==2)GameState=0x80;if(exception==3)GameRules=0x100;
+        if(exception==1)PlayersData[3].flags=0x200;if(exception==2)GameDataStateStorage.fields_.game_state_=0x80;if(exception==3)GameDataStateStorage.fields_.game_rules_=0x100;
         if(exception==4)map_loc(4,4)->visibility=8;
         route();require(counts['H']==(exception?3:0)&&counts['L']==(exception?3:1));
     }
@@ -287,8 +289,8 @@ MUTANTS = [
     ("visibility-field", "map_loc(next_x, next_y)->visibility", "map_loc(next_x, next_y)->val2"),
     ("visibility-bit", "static_cast<uint32_t>(faction) & 31", "static_cast<uint32_t>(faction + 1) & 31"),
     ("player-visibility", "(PlayersData[faction].flags & 0x200) == 0", "true"),
-    ("editor-visibility", "(GameState & 0x80) == 0", "true"),
-    ("rules-visibility", "(GameRules & 0x100) == 0", "true"),
+    ("editor-visibility", "(GameDataStateStorage.fields_.game_state_ & 0x80) == 0", "true"),
+    ("rules-visibility", "(GameDataStateStorage.fields_.game_rules_ & 0x100) == 0", "true"),
     ("step-strict-limit", "steps > mapwin_dest_mul(MapLongitudeBounds, 2)", "steps >= mapwin_dest_mul(MapLongitudeBounds, 2)"),
     ("both-endpoints", "map_dest_in_view(*this, current_x, current_y) ||", "map_dest_in_view(*this, current_x, current_y) &&"),
     ("exclusive-bottom", "if (y >= bottom)", "if (y > bottom)"),
@@ -337,7 +339,7 @@ ROUTES = r'''
 #include <cstdint>
 struct Base {int faction_id_current,x,y;int auto_forward_land_base_id,auto_forward_sea_base_id,auto_forward_air_base_id;};
 struct Veh {int faction_id,proto_id,x,y,order;uint32_t state;unsigned char waypoint_count;short waypoint_x[4],waypoint_y[4];};
-Base Bases[2];Veh Vehs[2];int BaseCurrentCount,VehCurrentCount;
+Base Bases[2];Veh Vehs[2];struct GameDataStateFieldsProjection { int base_current_count_, vehicle_current_count_; };struct GameDataStateProjection { GameDataStateFieldsProjection fields_; } GameDataStateStorage;
 int MapIsFlat=1,MapLongitudeBounds=100;struct {int faction_id_;}ConsoleGlobal;
 const int ORDER_MOVE_TO=0x18;const uint32_t VSTATE_UNK_2000000=0x2000000;
 int mapwin_dest_add(int a,int b){return a+b;}int mapwin_dest_sub(int a,int b){return a-b;}
@@ -351,7 +353,7 @@ struct MapWin {
  void on_update(){++updates;}
 };
 BODY
-void reset(){count=updates=BaseCurrentCount=0;VehCurrentCount=1;Vehs[0]=Veh{};
+void reset(){count=updates=0;GameDataStateStorage.fields_.base_current_count_=0;GameDataStateStorage.fields_.vehicle_current_count_=1;Vehs[0]=Veh{};
  Vehs[0].order=ORDER_MOVE_TO;Vehs[0].state=0x1000200;
  for(int i=0;i<4;++i){Vehs[0].waypoint_x[i]=10+i;Vehs[0].waypoint_y[i]=20+i;}}
 int main(){MapWin w;w.field_1DD70_=0xC00000;
@@ -376,10 +378,9 @@ struct Font {void init(const char*,int height,int style){assert(height==12&&styl
 const char*DefaultFontFace="Arial";
 struct {int cursor_history_index_;int cursor_history_x_[32],cursor_history_y_[32];}ConsoleGlobal;
 int MapLongitudeBounds=100,MapLatitudeBounds=100,MapIsFlat=1;
-int VehMoveDeltaX[9]={-1,0,1,2,1,0,-1,-2,0};
-int VehMoveDeltaY[9]={-1,-2,-1,0,1,2,1,0,0};
-const int RadiusBaseX[9]={-1,0,1,2,1,0,-1,-2,0};
-const int RadiusBaseY[9]={-1,-2,-1,0,1,2,1,0,0};
+DIRECTIONS
+const int RadiusBaseX[9]={1,2,1,0,-1,-2,-1,0,0};
+const int RadiusBaseY[9]={-1,0,1,2,1,0,-1,-2,0};
 const int MapDirectionPermutation[9]={9,6,3,2,1,4,7,8,5};char StringTemp[256];
 char*_itoa(int n,char*p,int base){assert(base==10);std::sprintf(p,"%d",n);return p;}
 int calls,xs[8],ys[8],digits[8];
@@ -418,8 +419,9 @@ def test_route_precedence_and_zero_waypoint_refresh(tmp_path):
 def test_legend_reads_live_delta_owners(tmp_path):
     # Original469787/4697AF read66EF50/66EF74, not immutable radius tables.
     candidate = body("void MapWin::draw_legend() {")
-    assert execute(tmp_path, LEGEND, candidate, "legend") == 0
+    legend = LEGEND.replace("DIRECTIONS", actual_source()["DIRECTIONS"])
+    assert execute(tmp_path, legend, candidate, "legend") == 0
     damaged = candidate.replace("VehMoveDeltaX[direction]", "RadiusBaseX[direction]")
     damaged = damaged.replace("VehMoveDeltaY[direction]", "RadiusBaseY[direction]")
     assert damaged != candidate
-    assert execute(tmp_path, LEGEND, damaged, "wrong_owner") != 0
+    assert execute(tmp_path, legend, damaged, "wrong_owner") != 0

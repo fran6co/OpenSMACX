@@ -1738,8 +1738,8 @@ void __cdecl reset_territory() {
             }
             if (is_ocean_tile) {
                 for (int i = 0; i < 9; i++) {
-                    int x_adj = territory_xrange(x + RadiusBaseX[i]);
-                    int y_adj = y + RadiusBaseY[i];
+                    int x_adj = territory_xrange(x + VehMoveDeltaX[i]);
+                    int y_adj = y + VehMoveDeltaY[i];
                     if (!on_map(x_adj, y_adj)) {
                         continue;
                     }
@@ -7834,8 +7834,8 @@ void __cdecl alien_fauna() {
         int best_y = -1;
         int best_score = 0;
         for (int direction = 0; direction < 8; ++direction) {
-            const int candidate_x = alien_normalize_x(x + RadiusBaseX[direction]);
-            const int candidate_y = y + RadiusBaseY[direction];
+            const int candidate_x = alien_normalize_x(x + VehMoveDeltaX[direction]);
+            const int candidate_y = y + VehMoveDeltaY[direction];
             if (candidate_y < 0 || candidate_y >= MapLatitudeBounds ||
                 candidate_x < 0 || candidate_x >= MapLongitudeBounds) {
                 continue;

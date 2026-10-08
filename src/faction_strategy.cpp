@@ -978,9 +978,9 @@ void __cdecl enemy_strategy(int faction_id) {
                     for (int outer_direction = 0; outer_direction < 8;
                          ++outer_direction) {
                         int neighbor_x =
-                            abstract_x + RadiusBaseX[outer_direction];
+                            abstract_x + VehMoveDeltaX[outer_direction];
                         const int neighbor_y =
-                            abstract_y + RadiusBaseY[outer_direction];
+                            abstract_y + VehMoveDeltaY[outer_direction];
                         if ((MapIsFlat & 1) == 0) {
                             if (neighbor_x < 0) {
                                 neighbor_x += MapAbstractLongBounds;
@@ -1001,9 +1001,9 @@ void __cdecl enemy_strategy(int faction_id) {
                         for (int inner_direction = 0; inner_direction < 8;
                              ++inner_direction) {
                             int site_x = abstract_x * 5
-                                + RadiusBaseX[inner_direction];
+                                + VehMoveDeltaX[inner_direction];
                             const int site_y = abstract_y * 5
-                                + RadiusBaseY[inner_direction];
+                                + VehMoveDeltaY[inner_direction];
                             if ((MapIsFlat & 1) == 0) {
                                 if (site_x < 0) site_x += MapLongitudeBounds;
                                 else if (site_x >= MapLongitudeBounds) {
@@ -1025,9 +1025,9 @@ void __cdecl enemy_strategy(int faction_id) {
                             int edge_y = -1;
                             for (; land_steps < 100; ++land_steps) {
                                 int next_x =
-                                    ray_x + RadiusBaseX[outer_direction];
+                                    ray_x + VehMoveDeltaX[outer_direction];
                                 const int next_y =
-                                    ray_y + RadiusBaseY[outer_direction];
+                                    ray_y + VehMoveDeltaY[outer_direction];
                                 if ((MapIsFlat & 1) == 0) {
                                     if (next_x < 0) next_x += MapLongitudeBounds;
                                     else if (next_x >= MapLongitudeBounds) {

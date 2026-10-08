@@ -477,7 +477,7 @@ int popup_exec_result=1, xpop_result=1, parse_says_mode0_seen=0;
 string parsed_mode0, popup_label;
 char sea_name[]="SEA NAME", land_name[]="LAND NAME";
 const int RadiusRange[9]={1,9,25,49,81,121,169,225,289};
-int RadiusBaseX[8]={1,1,0,-1,-1,-1,0,1}, RadiusBaseY[8]={0,1,1,1,0,-1,-1,-1};
+int VehMoveDeltaX[8]={1,1,0,-1,-1,-1,0,1}, VehMoveDeltaY[8]={0,1,1,1,0,-1,-1,-1};
 int RadiusOffsetX[289]{}, RadiusOffsetY[289]{};
 struct NetPopup { void pop(const char *s,int timeout,int flags,const char *arg) {
   assert(timeout==5000&&flags==0&&arg==nullptr); events.push_back(string("msg:")+s);

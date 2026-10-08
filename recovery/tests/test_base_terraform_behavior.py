@@ -74,19 +74,35 @@ struct RulesBasic { int tech_three_nutrients_sqr,tech_build_roads_fungus,
 struct RulesTerraforming { int name,name_sea,preq_tech,preq_tech_sea; uint32_t bit,bit_incompatible; int rate,shortcuts; };
 struct RulesAbility { int name,preq_tech; } Ability[29];
 struct Continent { uint32_t tile_count,open_terrain,unk_3,pods,unk_5; uint8_t sea_coasts[8]; };
-Base Bases[512], *BaseCurrent; int BaseCurrentCount,BaseIDCurrentSelected;
+Base Bases[512], *BaseCurrent; int BaseIDCurrentSelected;
+// Minimal host owner only; this does not model native offsets or allocation.
+struct HostGameDataLockMasks { uint32_t enable_mask_; };
+struct HostGameDataFields {
+  int base_current_count_;
+  HostGameDataLockMasks lock_masks_;
+  uint32_t game_more_preferences_;
+  uint32_t game_preferences_;
+  int turn_current_num_;
+};
+struct HostGameDataStorage { HostGameDataFields fields_; };
+HostGameDataStorage GameDataStateStorage{};
+int &BaseCurrentCount = GameDataStateStorage.fields_.base_current_count_;
+uint32_t &LockEnableMask = GameDataStateStorage.fields_.lock_masks_.enable_mask_;
+uint32_t &GameMorePreferences = GameDataStateStorage.fields_.game_more_preferences_;
+uint32_t &GamePreferences = GameDataStateStorage.fields_.game_preferences_;
+int &TurnCurrentNum = GameDataStateStorage.fields_.turn_current_num_;
 PlayerData PlayersData[32]; Player Players[32]; Map Tiles[64*32]; Continent Continents[128];
 RulesTerraforming Terraforming[20];
 int MapLongitudeBounds=64,MapLatitudeBounds=64; uint32_t MapLongitude=32; int MapIsFlat=1;
-uint32_t LockEnableMask,GameMorePreferences,GameState,GamePreferences; int BaseSquareEnergy;
-int ExpansionEnabled,TurnCurrentNum;
+uint32_t GameState; int BaseSquareEnergy;
+int ExpansionEnabled;
 uint32_t timeGetTime() { return 0; }
 uint32_t MapCloudCover;
 const int RadiusOffsetX[21]={0,1,2,1,0,-1,-2,-1,0,2,2,-2,-2,1,3,3,1,-1,-3,-3,-1};
 const int RadiusOffsetY[21]={0,-1,0,1,2,1,0,-1,-2,2,-2,2,-2,3,3,1,-1,-3,-3,-1,-3};
 const int RadiusRange[9]={0,1,9,21,37,57,81,109,141};
-const int RadiusBaseX[9]={1,2,1,0,-1,-2,-1,0,0};
-const int RadiusBaseY[9]={0,0,1,2,1,0,-1,-2,0};
+const int VehMoveDeltaX[9]={1,2,1,0,-1,-2,-1,0,0};
+const int VehMoveDeltaY[9]={0,0,1,2,1,0,-1,-2,0};
 Map *map_loc(int x,int y) { return &Tiles[y*32+(x>>1)]; }
 int territory_calls,sensor_calls,goal_calls,action_goal_calls,landing_goal_calls,condenser_goal_calls,
     thermal_goal_calls,thermal_goal_x,thermal_goal_y;
