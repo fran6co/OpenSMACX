@@ -5281,23 +5281,35 @@ static unsigned int texture_raster_pixel_count(int width) {
     return width > 0 ? static_cast<unsigned int>(width) : 0u;
 }
 
-static int texture_raster_advance_light(int light, unsigned short amount,
-                                        int borrowed) {
-    const unsigned int value = static_cast<unsigned int>(light);
-    if (borrowed) {
-        const unsigned int channel =
-            (((value >> 8) & 0xffffu) + static_cast<unsigned int>(amount)) & 0xffffu;
-        return static_cast<int>((value & 0xff0000ffu) | (channel << 8));
-    }
-    return static_cast<int>((value & 0xffff0000u) |
-        ((value + static_cast<unsigned int>(amount)) & 0xffffu));
+static uint32_t texture_raster_advance_light(uint32_t light,
+                                            unsigned short amount) {
+    // 61D869 / 61BEEF add AX only; wrapping texture coordinates do not
+    // change this accumulator's format or propagate carry into its high word.
+    return (light & 0xffff0000u) |
+        ((light + static_cast<uint32_t>(amount)) & 0xffffu);
+}
+
+static uint32_t texture_raster_skip_light(uint32_t light,
+                                         unsigned short amount,
+                                         uint32_t skipped_pixels) {
+    // Original: (skip << 16) is a 32-bit operand to signed IMUL, so only
+    // the low 16 bits of skip survive and are interpreted as signed. The
+    // product by zero-extended WORD amount fits signed 32-bit; SHRD by 16
+    // then yields that product's bit pattern.
+    // 61D724..61D738 / 61BE28..61BE3C add it to the full DWORD, unlike
+    // the per-pixel low-word update above.
+    int signed_skip = static_cast<int>(skipped_pixels & 0xffffu);
+    if (signed_skip >= 0x8000) signed_skip -= 0x10000;
+    const int product = signed_skip * static_cast<int>(amount);
+    const uint32_t increment = static_cast<uint32_t>(product);
+    return light + increment;
 }
 
 static void texture_raster_span(unsigned char *destination,
                                 const unsigned char *pixels, int source_pitch,
                                 int row, int stride, int left, int right,
                                 int clip_left, int clip_right, int u, int v,
-                                int phase_u, int phase_v, int light,
+                                int phase_u, int phase_v, uint32_t light,
                                 int du, int dv, unsigned short dlight,
                                 unsigned char key, int keyed, int wrap_source) {
     if (left < clip_left) {
@@ -5306,9 +5318,8 @@ static void texture_raster_span(unsigned char *destination,
             static_cast<unsigned int>(static_cast<int64_t>(du) * skip));
         v = static_cast<int>(static_cast<unsigned int>(v) +
             static_cast<unsigned int>(static_cast<int64_t>(dv) * skip));
-        light = texture_raster_advance_light(light,
-            static_cast<unsigned short>(static_cast<unsigned int>(dlight) * skip),
-            wrap_source);
+        light = texture_raster_skip_light(
+            light, dlight, static_cast<uint32_t>(skip));
         left = clip_left;
     }
     u = static_cast<int>(static_cast<unsigned int>(u) +
@@ -5327,14 +5338,12 @@ static void texture_raster_span(unsigned char *destination,
         const unsigned int sy = wrap_source ? (source_y & 0xffu) : source_y;
         const unsigned char texel = pixels[static_cast<int64_t>(sy) * source_pitch + sx];
         if (!keyed || texel != key) {
-            const unsigned int shade = wrap_source
-                ? ((static_cast<unsigned int>(light) >> 16) & 0xffu)
-                : ((static_cast<unsigned int>(light) >> 8) & 0xffu);
+            const unsigned int shade = (light >> 8) & 0xffu;
             out[column] = static_cast<unsigned char>(texel + shade);
         }
         u = static_cast<int>(static_cast<unsigned int>(u) + static_cast<unsigned int>(du));
         v = static_cast<int>(static_cast<unsigned int>(v) + static_cast<unsigned int>(dv));
-        light = texture_raster_advance_light(light, dlight, wrap_source);
+        light = texture_raster_advance_light(light, dlight);
     }
 }
 

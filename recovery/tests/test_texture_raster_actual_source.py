@@ -31,7 +31,8 @@ SOURCE_IDS = (
 )
 HELPERS = (
     ("static unsigned int texture_raster_pixel_count(",),
-    ("static int texture_raster_advance_light(",),
+    ("static uint32_t texture_raster_advance_light(",),
+    ("static uint32_t texture_raster_skip_light(",),
     ("static void texture_raster_span(",),
     ("static int texture_raster_step_gouraud(",),
     ("static int texture_raster_step_plain(",),

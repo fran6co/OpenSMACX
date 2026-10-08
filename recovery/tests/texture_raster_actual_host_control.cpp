@@ -153,9 +153,62 @@ int main() {
     texture_raster_span(borrowed_light_output, source, 4, 0, 3, 0, 3,
                         0, 3, 0, 0, 0, 0, 0xff00, 1 << 16, 0, 1,
                         0, 0, 1);
-    assert(borrowed_light_output[0] == 0);
-    assert(borrowed_light_output[1] == 6);
-    assert(borrowed_light_output[2] == 11);
+    assert(borrowed_light_output[0] == 255);
+    assert(borrowed_light_output[1] == 4);
+    assert(borrowed_light_output[2] == 9);
+
+    assert(texture_raster_advance_light(0x0000ffffu, 1) == 0x00000000u);
+    assert(texture_raster_advance_light(0x0001ffffu, 1) == 0x00010000u);
+    assert(texture_raster_skip_light(0x0000ffffu, 1, 1) == 0x00010000u);
+    assert(texture_raster_skip_light(0x12340000u, 0x8000, 3) == 0x12358000u);
+    // Preserve signed IMUL behavior of the 32-bit 16.16 skip operand.
+    assert(texture_raster_skip_light(0, 1, 32768) == 0xffff8000u);
+    assert(texture_raster_skip_light(0, 1, 65535) == 0xffffffffu);
+    assert(texture_raster_skip_light(0, 1, 65536) == 0x00000000u);
+    // Independently model native signed IMUL's 64-bit product and SHRD.
+    // Exercise every retained skip word, not just ordinary screen widths.
+    const unsigned short clip_steps[] = {0, 1, 0x7fff, 0x8000, 0xffff};
+    for (uint32_t skip = 0; skip < 0x10000u; ++skip) {
+        const uint32_t fixed_bits = skip << 16;
+        const int64_t signed_fixed = static_cast<int64_t>(fixed_bits) -
+            ((fixed_bits & 0x80000000u) ? (static_cast<int64_t>(1) << 32) : 0);
+        for (unsigned int n = 0; n < sizeof(clip_steps)/sizeof(clip_steps[0]); ++n) {
+            const uint64_t product_bits = static_cast<uint64_t>(
+                signed_fixed * static_cast<int64_t>(clip_steps[n]));
+            const uint32_t increment = static_cast<uint32_t>(product_bits >> 16);
+            const uint32_t expected = 0xfffffff0u + increment;
+            assert(texture_raster_skip_light(0xfffffff0u, clip_steps[n], skip) == expected);
+            assert(texture_raster_skip_light(0xfffffff0u, clip_steps[n], skip + 0x10000u) == expected);
+        }
+    }
+
+    unsigned char borrowed_signed_light[2] = {77, 77};
+    const unsigned char one_texel[1] = {1};
+    texture_raster_span(borrowed_signed_light, one_texel, 1, 0, 2, 0, 2,
+                        0, 2, 0, 0, 0, 0, 0x00018000, 0, 0, 0xffff,
+                        0, 0, 1);
+    assert(borrowed_signed_light[0] == 129);
+    assert(borrowed_signed_light[1] == 128);
+
+    unsigned char clipped_light[2] = {77, 77};
+    texture_raster_span(clipped_light, one_texel, 1, 0, 1, 0, 2,
+                        1, 2, 0, 0, 0, 0, 0x0000ff00, 0, 0, 1,
+                        0, 0, 1);
+    assert(clipped_light[0] == 77);
+    assert(clipped_light[1] == 0);
+
+    unsigned char wrapped_source[1] = {7};
+    unsigned char wrapped_output[1] = {77};
+    texture_raster_span(wrapped_output, wrapped_source, 1, 0, 1, 0, 1,
+                        0, 1, 256 << 16, 0, 0, 0, 0x00018000, 0, 0, 0,
+                        0, 0, 1);
+    assert(wrapped_output[0] == 135);
+    unsigned char unwrapped_output[1] = {77};
+    const unsigned char unwrapped_source[257] = {0};
+    texture_raster_span(unwrapped_output, unwrapped_source, 257, 0, 1, 0, 1,
+                        0, 1, 256 << 16, 0, 0, 0, 0x00018000, 0, 0, 0,
+                        0, 0, 0);
+    assert(unwrapped_output[0] == 128);
 
     unsigned char owned_light_output[2] = {77, 77};
     texture_raster_span(owned_light_output, source, 4, 0, 2, 0, 2,
@@ -200,9 +253,9 @@ int main() {
     assert(buffer.frees_ == 1);
     for (int y = 0; y < 3; ++y) {
         assert(surface[y * 4] == 77); // borrowed float path compares the texture key
-        assert(surface[y * 4 + 1] == 6);
-        assert(surface[y * 4 + 2] == 11);
-        assert(surface[y * 4 + 3] == 0);
+        assert(surface[y * 4 + 1] == 5);
+        assert(surface[y * 4 + 2] == 10);
+        assert(surface[y * 4 + 3] == 255);
     }
     texture.borrowed_ = 0;
     texture.pixels_ = owned_source;
@@ -220,6 +273,21 @@ int main() {
 
     memset(surface, 77, 16);
     buffer.frees_ = 0;
+    texture.borrowed_ = 1;
+    texture.pixels_ = borrowed_source;
+    texture.sub_61d090(&buffer, points, shade, 0);
+    assert(buffer.frees_ == 1 && fpu_resets == 8);
+    for (int y = 0; y < 3; ++y) {
+        assert(surface[y * 4] == 0);
+        assert(surface[y * 4 + 1] == 5);
+        assert(surface[y * 4 + 2] == 10);
+        assert(surface[y * 4 + 3] == 255);
+    }
+    texture.borrowed_ = 0;
+    texture.pixels_ = owned_source;
+
+    memset(surface, 77, 16);
+    buffer.frees_ = 0;
     int out_flags[256] = {0};
     out_flags[1] = 9;
     expected_edge_cache = out_flags;
@@ -229,7 +297,7 @@ int main() {
     memcpy(points_low, points, sizeof(points));
     texture.sub_620a10(&buffer, static_cast<int>(reinterpret_cast<intptr_t>(points_low)), 4,
                        static_cast<int>(reinterpret_cast<intptr_t>(points_low)), out_flags);
-    assert(buffer.frees_ == 1 && fpu_resets == 8);
+    assert(buffer.frees_ == 1 && fpu_resets == 10);
     assert(out_flags[1] == 0);
     for (int y = 0; y < 3; ++y) {
         assert(surface[y * 4] == 77); // 0x620a10 keys in owned and borrowed modes
@@ -248,7 +316,7 @@ int main() {
     texture.pixels_ = borrowed_source;
     texture.sub_620a10(&buffer, static_cast<int>(reinterpret_cast<intptr_t>(points_low)), 4,
                        static_cast<int>(reinterpret_cast<intptr_t>(points_low)), out_flags);
-    assert(buffer.frees_ == 1 && fpu_resets == 10);
+    assert(buffer.frees_ == 1 && fpu_resets == 12);
     assert(edge_helper_calls == 4);
     for (int y = 0; y < 3; ++y) {
         assert(surface[y * 4] == 77); // borrowed path compares the texture key
@@ -267,7 +335,7 @@ int main() {
     edge_helper_fail_at = 3;
     texture.sub_620a10(&buffer, static_cast<int>(reinterpret_cast<intptr_t>(points_low)), 4,
                        static_cast<int>(reinterpret_cast<intptr_t>(points_low)), out_flags);
-    assert(buffer.frees_ == 1 && edge_helper_calls == 3 && fpu_resets == 12);
+    assert(buffer.frees_ == 1 && edge_helper_calls == 3 && fpu_resets == 14);
     assert(edge_helper_direction[0] == -1 && edge_helper_direction[1] == 1 &&
            edge_helper_direction[2] == -1);
     edge_helper_fail_at = 0;
