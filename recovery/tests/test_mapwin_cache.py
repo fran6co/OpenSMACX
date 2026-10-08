@@ -36,10 +36,10 @@ def actual_source():
     header = (ROOT / "src/mapwin.h").read_text()
     pod = braced(header, "struct TerrainCacheEntry") + ";"
     pointer, = re.findall(r"TerrainCacheEntry\s*\*\s*owned_\s*;", header)
-    map_header = (ROOT / "src/map.h").read_text()
+    map_source = (ROOT / "src/map.cpp").read_text()
     tables = []
     for name in ("RadiusRange", "RadiusOffsetX", "RadiusOffsetY"):
-        declaration, = re.findall(r"const int " + name + r"\[\]\s*=\s*\{[^}]*\};", map_header)
+        declaration, = re.findall(r"const int " + name + r"\[\d*\]\s*=\s*\{[^}]*\};", map_source)
         tables.append(declaration)
     source = (ROOT / "src/mapwin.cpp").read_text()
     bodies = "\n".join(braced(source, signature) for signature in

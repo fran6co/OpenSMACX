@@ -6927,7 +6927,7 @@ int MapWin::get_alt(int a1, int a2, int a3) {
     int iVar6 = iVar9;
     for (;;) {
         int nx = *(int32_t *)((char *)AltStepX + iVar6) + a1;
-        if ((*(unsigned char *)MapIsFlat & 1) == 0) {
+        if ((MapIsFlat & 1) == 0) {
             if (nx < 0) {
                 nx = MapLongitudeBounds + nx;
             } else if (MapLongitudeBounds <= nx) {
@@ -6978,7 +6978,7 @@ merge:
         int loopCheck;
         do {
             int nx = *(int32_t *)((char *)AltStepX + iVar9) + a1;
-            if ((*(unsigned char *)MapIsFlat & 1) == 0) {
+            if ((MapIsFlat & 1) == 0) {
                 if (nx < 0) {
                     nx = nx + width;
                 } else if (width <= nx) {
