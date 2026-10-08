@@ -154,6 +154,7 @@ set(OPENSMACX_SOURCES
     src/flatbutton.cpp
     src/flic.cpp
     src/font.cpp
+    src/font_queue.cpp
     src/game.cpp
     src/newgame.cpp
     src/general.cpp

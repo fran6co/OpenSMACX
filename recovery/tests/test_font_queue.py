@@ -30,12 +30,13 @@ def braced(text, signature):
 
 
 def actual_source():
-    header = (ROOT / "src/font.h").read_text()
-    source = (ROOT / "src/font.cpp").read_text()
+    header = (ROOT / "src/font_queue.h").read_text()
+    source = (ROOT / "src/font_queue.cpp").read_text()
+    font = (ROOT / "src/font.cpp").read_text()
     mapwin = (ROOT / "src/mapwin.cpp").read_text()
     globals_ = []
     for text, pattern in (
-        (source, r'^LPCSTR DefaultFontFace\s*=\s*[^;]+;'),
+        (font, r'^LPCSTR DefaultFontFace\s*=\s*[^;]+;'),
         (mapwin, r'^int MapWinCaptionScale\s*=\s*[^;]+;'),
         (mapwin, r'^int MapWinCaptionDivisor\s*=\s*[^;]+;'),
     ):

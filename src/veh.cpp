@@ -53,6 +53,7 @@
 #include "statuswin.h"  // ConsoleStatusWin owns its hovered vehicle selection.
 #include "caviar.h"
 #include "font.h"
+#include "font_queue.h"
 #include "infowin.h"
 #include "worldwin.h"
 #include "reportif.h"

@@ -33,6 +33,7 @@
 #include "xpops.h"
 #include "buffer.h"
 #include "font.h"
+#include "font_queue.h"
 #include "infowin.h"
 #include "maininterface.h"
 #include "mapwin.h"
