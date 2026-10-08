@@ -31,14 +31,21 @@ struct ConsoleGlobalStub { int faction_id_; void focus(int,int,int); };
 class Console { public: int selected_vehicle_,faction_id_; void give_hints(); };
 
 Veh Vehs[64]; VehPrototype VehPrototypes[128]; ChassisRule Chassis[64];
-WeaponRule Weapon[64]; ArmorRule Armor[64]; Base Bases[64]; int BaseCurrentCount;
+WeaponRule Weapon[64]; ArmorRule Armor[64]; Base Bases[64];
 Base *BaseCurrent; PlayerData PlayersData[16]; Player Players[16];
 MapWin HostMapWin; MapWin *MapWinTable[1]; WindowStub TutWinBaseWindow,TutWinSocWindow;
 TutorialStub TutorialWindow; ConsoleGlobalStub ConsoleGlobal; Map MapTiles[64][64];
 int RadiusBaseX[9]={1,2,1,0,-1,-2,-1,0,0},RadiusBaseY[9]={-1,0,1,2,1,0,-1,-2,0};
 int RadiusOffsetX[289],RadiusOffsetY[289]; int MapLongitudeBounds=64,MapLatitudeBounds=64,MapIsFlat=1;
-int IsMultiplayerNet,TurnCurrentNum,GameState,GamePreferences,TutWinFlags9A64BC,DesignTutorState;
-int TutorialFlags,TutorialFlags2,GenderDefault,PluralityDefault,BaseFindDist; char StringTemp[1024];
+struct GameDataStateFieldsStub {
+    uint32_t game_state_;
+    int tutorial_flags_, tutorial_flags_2_, tutwin_flags_9a64bc_;
+    int turn_current_num_, base_current_count_;
+};
+struct GameDataStateStorageStub { GameDataStateFieldsStub fields_; };
+GameDataStateStorageStub GameDataStateStorage;
+int IsMultiplayerNet,DesignTutorState;
+int GenderDefault,PluralityDefault,BaseFindDist; char StringTemp[1024];
 Sprite g_TER1_FARM_SPRITES[5],g_TER1_MINE_SPRITE,g_TER1_SOLAR_COLLECTOR_SPRITE;
 Sprite g_TER1_SEA_LAND_RESOURCE_SPRITES[12],g_TER1_UNITY_POD_SPRITES[6];
 int calls[32],focus_count,map_count,map_flag,map_x,map_y,map_state,map_arrow_x,map_arrow_y; const char *map_text; Sprite *map_sprite;
@@ -55,15 +62,15 @@ int veh_at(int x,int y) { return enemy_vehicle_on&&x==enemy_vehicle_x&&y==enemy_
 int base_at(int x,int y) { return enemy_base_on&&x==enemy_base_x&&y==enemy_base_y?0:-1; }
 int tut_check(int f) { int i=0;while(i<32&&static_cast<unsigned int>(f)!=(1u<<i))++i;if(i<32)++calls[i];
     if(f==mutate_mask){Vehs[0].proto_id=mutate_proto;Chassis[VehPrototypes[mutate_proto].chassis_id].triad=mutate_triad;return 0;}
-    if(f==reject_mask||(TutorialFlags&f)) return 0;
-    TutorialFlags|=f;return 1; }
-int tut_check2(int f) { if(TutorialFlags2&f)return 0;TutorialFlags2|=f;return 1; }
+    if(f==reject_mask||(GameDataStateStorage.fields_.tutorial_flags_&f)) return 0;
+    GameDataStateStorage.fields_.tutorial_flags_|=f;return 1; }
+int tut_check2(int f) { if(GameDataStateStorage.fields_.tutorial_flags_2_&f)return 0;GameDataStateStorage.fields_.tutorial_flags_2_|=f;return 1; }
 int whose_territory(int f,int,int,int *,int *) { return territory_result==-999?f:territory_result; }
 int world_site(int,int,int) { return site_value; } void site_set(int x,int y,int s){MapTiles[y][x].val2=s<<4;}
 int bonus_at(int,int,int){return bonus_value;} int goody_at(int x,int y){return goody_on&&x==goody_x&&y==goody_y;}
 int base_find(int,int,int){BaseFindDist=0;BaseCurrent=&Bases[0];return 0;}
 int can_terraform(int,int,int,int,int){return 0;} int at_goal(int,int,int,int){return 0;} int good_sensor(int,int,int){return 0;}
-int TutorialStub::tut_map(const char *s,int x,int y,int,Sprite *p,int f,int ax,int ay){++count;++map_count;text=s;map_text=s;sprite=p;map_sprite=p;flag=f;map_flag=f;map_x=x;map_y=y;map_arrow_x=ax;map_arrow_y=ay;game_state_at_map=GameState;map_state=GameState;return 0;}
+int TutorialStub::tut_map(const char *s,int x,int y,int,Sprite *p,int f,int ax,int ay){++count;++map_count;text=s;map_text=s;sprite=p;map_sprite=p;flag=f;map_flag=f;map_x=x;map_y=y;map_arrow_x=ax;map_arrow_y=ay;game_state_at_map=GameDataStateStorage.fields_.game_state_;map_state=GameDataStateStorage.fields_.game_state_;return 0;}
 void ConsoleGlobalStub::focus(int,int,int){++focus_count;}
 
 /* __EXTRACTED_GIVE_HINTS_SOURCE__ */
@@ -73,9 +80,9 @@ static void reset_case(Console &c) {
     memset(Weapon,0,sizeof(Weapon));memset(Armor,0,sizeof(Armor));memset(Bases,0,sizeof(Bases));
     memset(PlayersData,0,sizeof(PlayersData));memset(Players,0,sizeof(Players));memset(MapTiles,0,sizeof(MapTiles));
     memset(RadiusOffsetX,0,sizeof(RadiusOffsetX));memset(RadiusOffsetY,0,sizeof(RadiusOffsetY));memset(calls,0,sizeof(calls));
-    MapLongitudeBounds=MapLatitudeBounds=64;MapIsFlat=1;IsMultiplayerNet=TurnCurrentNum=GameState=0;GamePreferences=0x20;
-    TutWinFlags9A64BC=TutorialFlags=TutorialFlags2=0;DesignTutorState=77;TutorialWindow.tour_stage=0;
-    BaseCurrentCount=0;BaseCurrent=&Bases[0];BaseFindDist=0;ConsoleGlobal.faction_id_=0;map_count=focus_count=map_flag=map_x=map_y=map_state=map_arrow_x=map_arrow_y=0;
+    MapLongitudeBounds=MapLatitudeBounds=64;MapIsFlat=1;IsMultiplayerNet=0;memset(&GameDataStateStorage,0,sizeof(GameDataStateStorage));
+    GameDataStateStorage.fields_.tutwin_flags_9a64bc_=GameDataStateStorage.fields_.tutorial_flags_=GameDataStateStorage.fields_.tutorial_flags_2_=0;DesignTutorState=77;TutorialWindow.tour_stage=0;
+    GameDataStateStorage.fields_.base_current_count_=0;BaseCurrent=&Bases[0];BaseFindDist=0;ConsoleGlobal.faction_id_=0;map_count=focus_count=map_flag=map_x=map_y=map_state=map_arrow_x=map_arrow_y=0;
     map_text=0;map_sprite=0;reject_mask=mutate_mask=mutate_proto=mutate_triad=0;goody_on=enemy_vehicle_on=enemy_base_on=0;
     goody_x=goody_y=enemy_vehicle_x=enemy_vehicle_y=enemy_base_x=enemy_base_y=0;bonus_value=0;site_value=1;territory_result=-999;
     HostMapWin.field_1DDA4_=HostMapWin.field_1DDA8_=0;HostMapWin.field_1DDCC_=64;HostMapWin.field_1DDD0_=64;
@@ -90,21 +97,29 @@ static void run_case(const char *name) {
     if(eq(name,"state-clear")){VehPrototypes[0].plan=PLAN_COLONIZATION;Vehs[0].dmg_incurred=1;c.give_hints();assert(focus_count==0&&map_count==1&&eq(map_text,"DAMAGED"));}
     else if(eq(name,"colonist")){Vehs[0].state=0x2000;VehPrototypes[0].plan=PLAN_COLONIZATION;Players[0].rule_flags=0x100;Vehs[0].dmg_incurred=1;c.give_hints();assert(focus_count==1&&map_count==0&&calls[21]==0);}
     else if(eq(name,"stage-owner")){Vehs[0].state=0x2000;VehPrototypes[0].plan=PLAN_TERRAFORMING;PlayersData[1].proto_id_active[0]=1;c.give_hints();assert(map_count==1&&eq(map_text,"NEWTERRAFORMER")&&TutorialWindow.tour_stage==2&&DesignTutorState==77);}
-    else if(eq(name,"game-state-order")){Vehs[0].state=0x2000;VehPrototypes[0].plan=PLAN_TERRAFORMING;PlayersData[1].proto_id_active[0]=1;c.give_hints();assert(map_count==1&&map_state==0&&(GameState&0x400));}
+    else if(eq(name,"game-state-order")){Vehs[0].state=0x2000;VehPrototypes[0].plan=PLAN_TERRAFORMING;PlayersData[1].proto_id_active[0]=1;c.give_hints();assert(map_count==1&&map_state==0&&(GameDataStateStorage.fields_.game_state_&0x400));}
     else if(eq(name,"site-owner")){Vehs[0].state=0x2000;VehPrototypes[0].plan=PLAN_COLONIZATION;Chassis[0].triad=TRIAD_LAND;RadiusOffsetX[49]=1;RadiusOffsetY[49]=0;territory_result=2;c.give_hints();assert(map_count==1&&eq(map_text,"NEWCOLONIST")&&map_arrow_x==-1&&map_arrow_y==-1);}
     else if(eq(name,"no-base-check")){Vehs[1].faction_id=2;Vehs[1].proto_id=1;Chassis[0].triad=TRIAD_LAND;MapTiles[10][10].climate=0x40;enemy_vehicle_on=1;enemy_vehicle_x=11;enemy_vehicle_y=9;c.give_hints();assert(map_count==1&&eq(map_text,"ENEMYVEH")&&calls[13]==0);}
     else if(eq(name,"valid-unity")){
-        const int tx[6]={11,12,11,10,9,8},ty[6]={9,10,11,12,11,10};
+        const int tx[6]={11,11,10,11,11,10},ty[6]={9,11,12,9,11,12};
+        int seen[6]={0,0,0,0,0,0};
         for(int sea=0;sea<2;++sea)for(int rem=0;rem<3;++rem){
             reset_case(c);Chassis[0].triad=sea?TRIAD_SEA:TRIAD_LAND;
-            if(sea)TutorialFlags|=0x20;
+            if(sea)GameDataStateStorage.fields_.tutorial_flags_|=0x20;
             const int k=sea*3+rem;Vehs[0].x=10;Vehs[0].y=10;
             goody_on=1;goody_x=tx[k];goody_y=ty[k];
             MapTiles[ty[k]][tx[k]].climate=sea?0:0x60;
             c.give_hints();
             const int expected=sea+2*((5*ty[k]+7*tx[k])%3);
             assert(map_count==1&&eq(map_text,"EXPLORATION")&&map_sprite==&g_TER1_UNITY_POD_SPRITES[expected]);
+            ++seen[expected];
         }
+        for(int i=0;i<6;++i)assert(seen[i]>0);
+    }
+    else if(eq(name,"unity-checker-reject")){
+        Chassis[0].triad=TRIAD_LAND;goody_on=1;goody_x=11;goody_y=11;
+        MapTiles[11][11].climate=0x60;reject_mask=0x2000;c.give_hints();
+        assert(calls[13]==1&&map_count==0);
     }
     else {fprintf(stderr,"unknown host scenario: %s\n",name);abort();}
 }

@@ -8513,7 +8513,7 @@ static void give_hints_map(const char *text, int x, int y, int vehicle,
 }
 
 // ORIGINAL: 0x00511BB0 ?give_hints@Console@@QAEXXZ 0x00511BB0-0x00513B85
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned511BB0..513B85; retained git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00511bb0.cpp; original vehicle-turn caller513BD5", "Initial state2000 branch511C37 encloses early cards and colonist scan; clearstate enters51222C. Tutorial stage511E71 is TutorialWindow+53C0 via set_tour_stage, not separate DesignTutorState73396C. Colonist tail uses ConsoleGlobal faction and always returns; scan ownership uses faction snapshot across whose_territory.", "Native51318A..197 evaluates unowned or own-faction candidate sites, skips hostile-owned ones. Enemy-base scan exhaustion5136AE..B7 continues enemyvehicle/territory hints, never explorationchecker. Matchingpod513596 enters5135E6; valid six-sprite index uses captured triad and bounded coordinates. Defensive bounds check follows checker under explicit user permission.", "Shared terra epilogue5134E1..F5 calls tut_map then GameState|400; farm writes before its call. All33 distinct original caption literals independently read bounded from pinned data. Actual Sprite sizeof2C and existing banks govern indices; no fixed executable data/function aliases.", "recovery/tasks/console-scenario-owner-wave.json; complete-owner expansion and corrected native-flow history retained; actual-source host controls required"], "reason": "Recover the complete Console tutorial-hint owner using typed vehicle/design/rules/map/faction storage, real tutorial windows and source-owned sprite banks. Preserve original identity, seed and historical obligations; no matching or runtime acceptance is implied."}
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned511BB0..513B85; retained git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00511bb0.cpp; original vehicle-turn caller513BD5", "Initial state2000 branch511C37 encloses early cards and colonist scan; clearstate enters51222C. Tutorial stage511E71 is TutorialWindow+53C0 via set_tour_stage, not separate DesignTutorState73396C. Colonist tail uses ConsoleGlobal faction and always returns; scan ownership uses faction snapshot across whose_territory.", "Native51318A..197 evaluates unowned or own-faction candidate sites, skips hostile-owned ones. Enemy-base scan exhaustion5136AE..B7 continues enemyvehicle/territory hints, never explorationchecker. Matchingpod513596 enters5135E6; valid six-sprite index uses captured triad and bounded coordinates. Historical intermediate source added a defensive bounds check under an earlier permission; faithful-milestone recovery supersedes that deviation and restores the unchecked original dispatch.", "Shared terra epilogue5134E1..F5 calls tut_map then GameState|400; farm writes before its call. All33 distinct original caption literals independently read bounded from pinned data. Actual Sprite sizeof2C and existing banks govern indices; no fixed executable data/function aliases.", "recovery/tasks/console-scenario-owner-wave.json; complete-owner expansion and corrected native-flow history retained; actual-source host controls required", "Pinned 0x5134xx..0x5135E6 predecessor walks the eight RadiusBase offsets, wraps longitude on round maps, rejects y outside [0,MapLatitudeBounds) and x outside [0,MapLongitudeBounds), requires goody_at, and retains the first candidate whose terrain triad matches the selected vehicle.", "Pinned 0x5135E6 calls tut_check(0x2000) before any Unity sprite-index arithmetic; rejection returns immediately. On acceptance, 0x5135FB..0x513623 computes (5*y+7*x) / 3 with signed idiv and forms the captured sea/land discriminator plus 2*remainder; 0x513628..0x513639 performs the indexed table-address calculation and draw call with no intervening range branch.", "Current source's matching-pod inputs are captured only after give_hints_in_map accepts bounded coordinates; selected_is_sea is the captured sea/land discriminator and the native modulo result selects one of the six existing g_TER1_UNITY_POD_SPRITES. Preserve callback/checker ordering and the unchecked native indexed dispatch; do not add an invalid-index runtime scenario."], "reason": "Recover the complete Console tutorial-hint owner using typed vehicle/design/rules/map/faction storage, real tutorial windows and source-owned sprite banks. Preserve original identity, seed and historical obligations; no matching or runtime acceptance is implied. Restore the original unchecked Unity-pod dispatch after the checker; earlier behavior-fix permission is superseded by the faithful milestone."}
 // TRIED: literal per-instruction register simulation (eax/ebx/ecx/edx/esi/edi as locals) with goto-labeled control flow matching every branch target; not tried: reconstructing idiomatic per-block source (member/local variable reuse) that would let the compiler's CSE match the original's code size - rebuilt is 4555 bytes against 8149 original, same first divergence at the prologue (push vs sub), so the whole body likely needs restructuring, not a single-instruction fix.
 void Console::give_hints() {
 // 0x511BBE tests the selected vehicle's state before any other work.
@@ -9156,18 +9156,14 @@ for (int offset = 0; offset < 0x20; offset += 4) {
     }
 
     // A matching goody is the only route to LAB_005135E6 / EXPLORATION.
-    // Preserve the native checker-before-index/draw order; the approved bound
-    // check retains its side effect if a future source-owned bank is shorter.
+    // Preserve the native checker-before-index/draw order and unchecked
+    // computed sprite-table access.
     if (matching_pod) {
         if (!tut_check(0x2000)) return;
         const int remainder = (5 * pod_y + 7 * pod_x) % 3;
         const int sprite_index = static_cast<int>(selected_is_sea) + remainder * 2;
-        if (sprite_index >= 0 &&
-            sprite_index < static_cast<int>(sizeof(g_TER1_UNITY_POD_SPRITES) /
-                                           sizeof(g_TER1_UNITY_POD_SPRITES[0]))) {
-            give_hints_map("EXPLORATION", pod_x, pod_y, -1,
-                 &g_TER1_UNITY_POD_SPRITES[sprite_index], 0, -1, -1);
-        }
+        give_hints_map("EXPLORATION", pod_x, pod_y, -1,
+             &g_TER1_UNITY_POD_SPRITES[sprite_index], 0, -1, -1);
         return;
     }
 

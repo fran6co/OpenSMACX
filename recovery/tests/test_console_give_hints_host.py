@@ -103,9 +103,17 @@ def host_binary(tmp_path_factory):
     return _compile(tmp_path_factory.mktemp("give-hints"), _actual_source())
 
 
+def _assert_unity_dispatch_unchecked(method):
+    checker = method.index("if (!tut_check(0x2000)) return;")
+    calculation = method.index("const int remainder = (5 * pod_y + 7 * pod_x) % 3;")
+    dispatch = method.index("&g_TER1_UNITY_POD_SPRITES[sprite_index]")
+    assert checker < calculation < dispatch
+    assert "if (sprite_index" not in method
+
+
 @pytest.mark.parametrize("scenario", [
     "state-clear", "colonist", "stage-owner", "game-state-order",
-    "site-owner", "no-base-check", "valid-unity",
+    "site-owner", "no-base-check", "valid-unity", "unity-checker-reject",
 ])
 def test_actual_source_scenarios(host_binary, scenario):
     env = dict(os.environ, ASAN_OPTIONS="detect_leaks=0", UBSAN_OPTIONS="halt_on_error=1")
@@ -114,13 +122,32 @@ def test_actual_source_scenarios(host_binary, scenario):
     assert result.returncode == 0, result.stdout + result.stderr
 
 
+def test_guard_mutation_is_rejected_without_invalid_index_execution():
+    method = _definition(
+        _actual_source(), "Console::give_hints",
+        r"void\s+Console::give_hints\s*\(\s*\)",
+    )
+    _assert_unity_dispatch_unchecked(method)
+    direct = """        give_hints_map("EXPLORATION", pod_x, pod_y, -1,
+             &g_TER1_UNITY_POD_SPRITES[sprite_index], 0, -1, -1);"""
+    guarded = """        if (sprite_index >= 0 && sprite_index < 6) {
+            give_hints_map("EXPLORATION", pod_x, pod_y, -1,
+                 &g_TER1_UNITY_POD_SPRITES[sprite_index], 0, -1, -1);
+        }"""
+    assert direct in method
+    mutated = method.replace(direct, guarded, 1)
+    with pytest.raises(AssertionError):
+        _assert_unity_dispatch_unchecked(mutated)
+
+
 @pytest.mark.parametrize("name,scenario,old,new", [
+
     ("state-bit enclosure", "state-clear",
      "if ((Vehs[selected_vehicle_].state & 0x2000u) != 0)", "if (true)"),
     ("stage owner", "stage-owner",
      "TutorialWindow.set_tour_stage(2);", "DesignTutorState = 2;"),
     ("GameState timing", "game-state-order",
-     "GameState |= 0x400;", "GameState |= 0x400; /* timing control */"),
+     "GameDataStateStorage.fields_.game_state_ |= 0x400;", "GameDataStateStorage.fields_.game_state_ |= 0x400; /* timing control */"),
     ("site-owner exclusion", "site-owner",
      "!= candidate_faction", "== candidate_faction"),
     ("no-base exploration suppression", "no-base-check",
@@ -131,13 +158,19 @@ def test_damage_controls_are_detected(tmp_path, name, scenario, old, new):
     if name == "GameState timing":
         # Move the state update before the map callback: the fixture records
         # GameState at callback entry, so this should violate the oracle.
-        source = source.replace(old, "", 1)
-        source = source.replace('TutorialWindow.tut_map("NEWTERRAFORMER"',
-                                "GameState |= 0x400;\n" +
-                                'TutorialWindow.tut_map("NEWTERRAFORMER"', 1)
+        anchor = """                TutorialWindow.tut_map("NEWTERRAFORMER", cursor_x, cursor_y,
+                                       selected_vehicle_, 0, 0x100,
+                                       -1, -1);
+                GameDataStateStorage.fields_.game_state_ |= 0x400;"""
+        moved = """                GameDataStateStorage.fields_.game_state_ |= 0x400;
+                TutorialWindow.tut_map("NEWTERRAFORMER", cursor_x, cursor_y,
+                                       selected_vehicle_, 0, 0x100,
+                                       -1, -1);"""
+        assert anchor in source
+        source = source.replace(anchor, moved, 1)
     elif name == "no-base exploration suppression":
         # Inject the erroneous no-goody checker into the base-scan path.
-        anchor = "if ((TutorialFlags & 0x8000000) == 0)"
+        anchor = "if ((GameDataStateStorage.fields_.tutorial_flags_ & 0x8000000) == 0)"
         assert anchor in source
         source = source.replace(anchor, "(void)tut_check(0x2000);\n    " + anchor, 1)
     else:
