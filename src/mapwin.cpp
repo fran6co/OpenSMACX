@@ -2805,23 +2805,6 @@ static __forceinline signed char corner_light_value(int biased_index) {
 // objects retain start-only bindings where original allocation bounds are unknown.
 // CornerOffsetX/Y in map.cpp own the coordinate tables at 0x00685EA0 / 0x00685EE0;
 // each corner row supplies four signed neighbor offsets to the same walk.
-// THE VIRTUAL-BASE DISPLACEMENT the compiler lays MapWin down with: the
-// vbtable it emits holds {0, 0x21A6C} (mapwin.h), so every handler the
-// image enters on the GraphicWin base walks `entered - 0x21A6C` to get to
-// the front, and every vbase-relative field sits at front + 0x21A6C + N.
-// Held as a constant rather than read back out of the vbtable: the table
-// is the compiler's, and reading it costs a this-pun at each site.
-static const int32_t MapWinEnteredOffset = 0x21A6C;
-
-// The receiver the image hands every Q-spelled MapWin handler: the GraphicWin
-// virtual base, not the front. Named once here because four recovered bodies
-// walk it once by name rather than re-deriving the displacement at each
-// call site, where it reads as four unrelated puns instead of the one
-// documented walk.
-static char *entered_receiver(MapWin *window) {
-    return reinterpret_cast<char *>(window) + MapWinEnteredOffset;
-}
-
 // The pinned image initializes both signed zoom-override words to -1.
 // FontQueue::get_zoom at 0x005592D0 uses the first only when positive;
 // otherwise it derives the scale from its explicit zoom argument.
@@ -7568,47 +7551,13 @@ int MapWin::get_point_light(int x, int y, int corner) {
 // Fixed-slot bindings carried from 00462980.cpp
 
 // ORIGINAL: 0x00462980 ?calculate_dimensions@MapWin@@QAEXXZ 0x00462980-0x00462EFA FILE
-// RECOVERY_BINDING: v1 {"reason":"Invalidate the existing cache through named brightness/altitude fields while retaining the original shared signed area-count flow.","evidence":["Pinned462D82/462DB1 load initial or bypass count;462DA2/462DEB/462E1A reload after each row. Third pass keeps the prior count and retests owned_ at462DF8.","Pinned stores brightness0..3 and altitude4..8; terrain/detail9..11 remain untouched. No allocation, range guard or safety fix is introduced."]}
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned462D82/462DB1 load initial or bypass count;462DA2/462DEB/462E1A reload after each row. Third pass keeps the prior count and retests owned_ at462DF8.", "Pinned stores brightness0..3 and altitude4..8; terrain/detail9..11 remain untouched. No allocation, range guard or safety fix is introduced.", "GraphicWin inherits Win then Buffer; Win size0x444 and Buffer DIB biWidth/biHeight0x80/0x84 identify GraphicWin offsets0x4C4/0x4C8. MapWin virtually inherits GraphicWin and Console inherits MapWin.", "Pinned462A23/462A57/462B23 read width and462A3E/462A77/462B6A read stored signed height independently. Pinned463058 onward compares pixel width before negative stored height; the short circuit and output-write paths are retained.", "Pinned Font init calls462E5D/462E9C/462EE1 load the LPCSTR global691B2C for fonts A/C/B with styles0/2/1. font.h declares LPCSTR DefaultFontFace and Font::init(LPCSTR,int,int); each call reloads the global pointer."], "reason": "Invalidate the existing cache through named brightness/altitude fields while retaining the original shared signed area-count flow. Use the genuine virtual GraphicWin/Buffer DIB members rather than a fixed MapWin base displacement; preserve original read points and signed-height arithmetic. Restore Font::init pointer arguments rather than treating a font-name character as an address."}
 // size      1402 bytes
 // prototype void (__thiscall ?calculate_dimensions@MapWin@@QAEXXZ)(MapWin* this)
 // callers   3   call targets   1
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x00618F40
-// PRESERVED UNIT - measured MISMATCH.
-//
-// Kept for COVERAGE. This directory IS on the ratchet: every file here
-// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
-// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
-// quarter of the project's total. It is still in no build; the earlier
-// header said "on no ratchet", which stopped being true when the map
-// moved into src/ and was still being written into new files.
-//
-// address        0x00462980
-// measured tier  MISMATCH
-// divergence     1
-//
-// The WHOLE unit as measured, scaffolding included: for the units
-// that are byte-exact yet refuse extraction, the agent tuned the
-// emitted scaffolding and the body alone will not reproduce the
-// verdict. To resume, copy everything below back over
-//   build/byte-match/00462980/unit.cpp
-// and score it with tools/agent_brief.py.
-// GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?calculate_dimensions@MapWin@@QAEXXZ  at 0x00462980  (1402 bytes)
-//
-// A VERIFICATION ARTIFACT, not product source: classes are opaque and
-// globals are bound to fixed addresses, because both are byte-visible
-// and both differ from the style src/ is written in.
-//
-// The VC6 dialect limits and the source-form rules used to live here.
-// They are knowledge, not scaffolding, so they now live in the agent
-// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
-// where they can be edited without regenerating anything and are in
-// context from the first token rather than behind a file read. This
-// emitter computes declarations; it does not carry lessons.
-
-
 void MapWin::calculate_dimensions() {
     field_1DDAC_ = 0;
     field_1DDB0_ = 0;
@@ -7634,16 +7583,12 @@ void MapWin::calculate_dimensions() {
     field_1DDB4_ = c8;
     field_1DDB8_ = T * 4;
 
-    char *const entered = entered_receiver(this);
-    int32_t w = *reinterpret_cast<int32_t *>(entered + 0x4c4);
-    int32_t h = *reinterpret_cast<int32_t *>(entered + 0x4c8);
+    field_1DDCC_ = (pixel_width() + c8 - 1) / c8;
+    field_1DDD0_ = ((T * 4 - dib_.bmiHeader.biHeight) + c2 - 1) / (T * 4);
+    field_1DDD4_ = (pixel_width() + T * 4 + c8 - 1) / c8;
+    field_1DDD8_ = ((T * 4 - dib_.bmiHeader.biHeight) + c2 - 1) / (T * 4);
 
-    field_1DDCC_ = (w + c8 - 1) / c8;
-    field_1DDD0_ = ((T * 4 - h) + c2 - 1) / (T * 4);
-    field_1DDD4_ = (w + T * 4 + c8 - 1) / c8;
-    field_1DDD8_ = ((T * 4 - h) + c2 - 1) / (T * 4);
-
-    if (this == reinterpret_cast<MapWin *>(&ConsoleGlobal)) {
+    if (this == static_cast<MapWin *>(&ConsoleGlobal)) {
         int32_t a = field_1DDA0_;
         int32_t b = field_1DD9C_;
         MapWinPrimaryCorner.left = b;
@@ -7667,14 +7612,14 @@ void MapWin::calculate_dimensions() {
         field_1DDCC_ = halfW;
         int32_t tileProduct = field_1DDCC_ * field_1DDB4_;
         field_1DDD4_ = halfW + 1;
-        field_1DDAC_ = (w - tileProduct) / 2;
+        field_1DDAC_ = (pixel_width() - tileProduct) / 2;
     }
     int32_t halfH = MapLatitudeBounds / 2;
     if (field_1DDD0_ > halfH) {
         field_1DDD0_ = halfH;
         int32_t tileProduct2 = field_1DDD0_ * field_1DDB8_;
         field_1DDD8_ = halfH + 1;
-        field_1DDB0_ = -((h + tileProduct2) / 2);
+        field_1DDB0_ = -((dib_.bmiHeader.biHeight + tileProduct2) / 2);
     }
 
     int32_t halfW2 = MapLongitudeBounds / 2;
@@ -7808,7 +7753,7 @@ void MapWin::calculate_dimensions() {
         }
         if (field_1EEF0_ != fs1) {
             field_1EEF0_ = fs1;
-            font_a_.init(reinterpret_cast<char *>(*DefaultFontFace), fs1, 0);
+            font_a_.init(DefaultFontFace, fs1, 0);
         }
         int32_t fs2 = (field_1DDB8_ * 5) / 16;
         if (fs2 > 0xc) {
@@ -7816,7 +7761,7 @@ void MapWin::calculate_dimensions() {
         }
         if (field_1EF48_ != fs2) {
             field_1EF48_ = fs2;
-            font_c_.init(reinterpret_cast<char *>(*DefaultFontFace), fs2, 2);
+            font_c_.init(DefaultFontFace, fs2, 2);
         }
         int32_t fs3 = (field_1DDB8_ * 2) / 5;
         if (fs3 > 0xc) {
@@ -7824,7 +7769,7 @@ void MapWin::calculate_dimensions() {
         }
         if (field_1EF1C_ != fs3) {
             field_1EF1C_ = fs3;
-            font_b_.init(reinterpret_cast<char *>(*DefaultFontFace), fs3, 1);
+            font_b_.init(DefaultFontFace, fs3, 1);
         }
     }
 
@@ -7832,6 +7777,7 @@ void MapWin::calculate_dimensions() {
 }
 
 // ORIGINAL: 0x00463040 ?pixel_to_tile@MapWin@@QAEHHHPAHPAH@Z 0x00463040-0x004632CC FILE
+// RECOVERY_BINDING: v1 {"evidence": ["GraphicWin inherits Win then Buffer; Win size0x444 and Buffer DIB biWidth/biHeight0x80/0x84 identify GraphicWin offsets0x4C4/0x4C8. MapWin virtually inherits GraphicWin and Console inherits MapWin.", "Pinned462A23/462A57/462B23 read width and462A3E/462A77/462B6A read stored signed height independently. Pinned463058 onward compares pixel width before negative stored height; the short circuit and output-write paths are retained."], "reason": "Use the genuine virtual GraphicWin/Buffer DIB members rather than a fixed MapWin base displacement; preserve original read points and signed-height arithmetic."}
 // symbol    ?pixel_to_tile@MapWin@@QAEHHHPAH0@Z
 //           VC6 merges the two identical `int *` argument types into the
 //           back-reference `0`, so the definition emits `PAH0` where the
@@ -7847,10 +7793,7 @@ void MapWin::calculate_dimensions() {
 
 int MapWin::pixel_to_tile(int x_pixel, int y_pixel, int *out_tile_x,
                           int *out_tile_y) {
-    // The GraphicWin virtual base's client width (0x4C4) and height (0x4C8).
-    char *const entered = entered_receiver(this);
-    if ((x_pixel < *reinterpret_cast<int *>(entered + 0x4C4)) &&
-        (y_pixel < -*reinterpret_cast<int *>(entered + 0x4C8))) {
+    if ((x_pixel < pixel_width()) && (y_pixel < pixel_height())) {
         x_pixel = x_pixel - field_1DDAC_;
         y_pixel = y_pixel - field_1DDB0_;
         if ((-1 < x_pixel) && (-1 < y_pixel)) {
