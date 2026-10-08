@@ -966,10 +966,10 @@ int __cdecl init_sound(void *window, unsigned long backends) {
         // (`call 0x4c57a0` / `call 0x4c5a10`, receiver in ecx), not through
         // the vtables - an unqualified call virtual-dispatches and the
         // shapes diverge.
-        MidiDeviceGlobal->Midi_Device::init(window, 2);
+        g_MIDI_DEVICE.Midi_Device::init(window, 2);
     }
     if ((backends & 8) != 0) {
-        WaveInDeviceGlobal->Wave_In_Device::init(window, backends);
+        g_WAVE_IN_DEVICE.Wave_In_Device::init(window, backends);
     }
     WaveDeviceReleaseGuard = 1;
     return 0;

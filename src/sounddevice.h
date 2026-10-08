@@ -75,14 +75,10 @@ class Midi_Device : public SoundDeviceBase {
   virtual int get_ndevices();                       // slot 5 (0x4C5830)
   virtual int select(unsigned long a1);              // slot 6 (0x4C5840)
   virtual int get_description(unsigned long a1, char *a2, unsigned long a3);  // slot 7
-  // DEFINED IN sounddevice.cpp, not empty. Its marker claims 60 image bytes
-  // and the body was `{ ; }` - the image writes nine fields and both vtable
-  // pointers. Promoted from src/recovered/units/004c5740.cpp.
+  // Base construction initializes the observed fields; compiler-generated
+  // base/derived vptr transitions belong to the ordinary C++ lifetime.
   Midi_Device();
-  // DEFINED IN sounddevice.cpp, not empty: its marker claims 19 image bytes
-  // and the body was `{ ; }` - the image re-installs the shared device vtable
-  // and tears down the wrapped device through its own virtual slot 4. Promoted
-  // from src/recovered/004c5780.cpp.
+  // Base destruction releases the opaque provider through its observed ABI.
   ~Midi_Device();
   void update_sound();
   void suspend();
@@ -101,7 +97,7 @@ class Midi_Device : public SoundDeviceBase {
 };  // vptr at 0x00 replaces the retired vtable_storage_
 
 static_assert(sizeof(Midi_Device) == 0x20,
-              "Midi_Device layout must match the original executable");
+              "observed Midi_Device prefix; original full extent unresolved");
 
 class Wave_In_Device : public SoundDeviceBase {
  public:
@@ -114,11 +110,9 @@ class Wave_In_Device : public SoundDeviceBase {
   virtual int get_ndevices();                       // slot 5 (0x4C5AC0)
   virtual int select(unsigned long a1);              // slot 6 (0x4C5AD0)
   virtual int get_description(unsigned long a1, char *a2, unsigned long a3);  // slot 7
-  // DEFINED IN sounddevice.cpp, not empty - the same shape as
-  // Midi_Device::Midi_Device() next door.
+  // Ordinary base construction, as for Midi_Device.
   Wave_In_Device();
-  // DEFINED IN sounddevice.cpp, not empty - the same shape as
-  // ~Midi_Device() next door. Promoted from src/recovered/004c5980.cpp.
+  // Ordinary base destruction, as for Midi_Device.
   ~Wave_In_Device();
   void update_sound();
   void suspend();
@@ -138,18 +132,13 @@ class Wave_In_Device : public SoundDeviceBase {
 };  // vptr at 0x00 replaces the retired vtable_storage_
 
 static_assert(sizeof(Wave_In_Device) == 0x20,
-              "Wave_In_Device layout must match the original executable");
+              "observed Wave_In_Device prefix; original full extent unresolved");
 
-// The wave-in device singleton, at the fixed address init_sound binds and
-// brings up (sound.cpp) and VoiceTx's record path drives (net_class.cpp).
-// Defined HERE rather than as a per-file address binding so uses fold to the
-// immediate - the same convention as WaveDeviceGlobal in wave.h.
-Wave_In_Device *const WaveInDeviceGlobal = (Wave_In_Device *)0x0090DB50;
-
-// The MIDI device singleton, at the fixed address init_sound brings up for
-// the backend-2 path (sound.cpp) - the same convention as WaveInDeviceGlobal
-// above.
-Midi_Device *const MidiDeviceGlobal = (Midi_Device *)0x0090D950;
+// Genuine process-global objects, constructed before init_sound and destroyed
+// through compiler-generated atexit callbacks. Original starts and lifecycle
+// evidence live beside their definitions; complete original extents are unknown.
+extern Midi_Device g_MIDI_DEVICE;
+extern Wave_In_Device g_WAVE_IN_DEVICE;
 
 // MIDI and Wave-In callback ABIs. The implementation reads loader-owned
 // SoundDllProcs entries 6/7 and 8/9 (original 0x0090DB3C..0x0090DB48).

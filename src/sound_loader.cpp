@@ -283,9 +283,9 @@ int __cdecl release_sound() {
         sound->detach();
     }
 
-    MidiDeviceGlobal->release();
+    g_MIDI_DEVICE.release();
     WaveDeviceGlobal.release();
-    WaveInDeviceGlobal->release();
+    g_WAVE_IN_DEVICE.release();
     unload_sound_dll();
     return 0;
 }

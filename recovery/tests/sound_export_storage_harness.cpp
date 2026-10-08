@@ -7,7 +7,7 @@ typedef int (__stdcall *FARPROC)();
 #define MAKEINTRESOURCEA(value) reinterpret_cast<const char *>(value)
 
 // LIVE_EXPORT_TYPE
-typedef unsigned int (__cdecl *func_sound_dll_version)();
+// LIVE_EXPORT_ABIS
 HMODULE SoundDllModule;
 int WaveDeviceReleaseGuard;
 // LIVE_EXPORT_STORAGE

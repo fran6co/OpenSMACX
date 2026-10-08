@@ -93,9 +93,10 @@ def test_native_data_check_rejects_a_short_export_owner(export_storage):
 def run_loader(tmp_path, monkeypatch):
     run_recovered_harness(tmp_path, monkeypatch, "sound_export_storage_harness.cpp", [], declarations=[
         ("// LIVE_EXPORT_TYPE", "src/sound.h", "typedef void *SoundDllProcsTable[11];", "extern SoundDllProcsTable SoundDllProcs;"),
+        ("// LIVE_EXPORT_ABIS", "src/sound.h", "typedef unsigned int (__cdecl *func_sound_dll_version)();", "extern HMODULE SoundDllModule;"),
         ("// LIVE_EXPORT_STORAGE", "src/sound_loader.cpp", "SoundDllProcsTable SoundDllProcs;", "int __cdecl load_sound_dll()"),
         ("// LIVE_RELEASE_SLOT", "src/wave.h", "inline func_wave_device_release *&WaveDeviceReleaseSlot()", "extern int WaveDeviceReleaseGuard;"),
-        ("// LIVE_CREATE_SLOT", "src/wave.h", "typedef int(__cdecl func_wave_device_create)", "typedef int (OriginalObject::*func_sound_original_load)"),
+        ("// LIVE_CREATE_SLOT", "src/wave.h", "typedef int(__cdecl func_wave_device_create)", "// Movement sound, owned and initialized with the other Wave objects."),
         ("// LIVE_LOADER", "src/sound_loader.cpp", "int __cdecl load_sound_dll()", "/*\nPurpose: The sound-DLL version complaint box.")])
 
 

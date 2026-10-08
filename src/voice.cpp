@@ -302,7 +302,7 @@ int VoiceTx::start() {
     if ((flags_54_ & 1) == 0) {
         int result = WaveDeviceGlobal.disable();
         if (result != 0) return result;
-        result = WaveInDeviceGlobal->start_record();
+        result = g_WAVE_IN_DEVICE.start_record();
         if (result != 0) return result;
         if (device_ != 0) {
             result = static_cast<VoiceTxDeviceInterface *>(device_)->start();
@@ -334,7 +334,7 @@ Return Value: 0, or the failing stage's answer
 */
 int VoiceTx::stop() {
     if ((flags_54_ & 1) != 0) {
-        int result = WaveInDeviceGlobal->end_record();
+        int result = g_WAVE_IN_DEVICE.end_record();
         if (result != 0) return result;
         flags_54_ &= ~1u;
         WaveDeviceGlobal.enable();

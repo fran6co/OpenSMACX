@@ -157,11 +157,9 @@ struct Sound {
         return 0;
     }
 };
-struct MidiDevice { void release() { SoundEvents.push_back("midi-release"); } } MidiDeviceObject;
+struct Midi_Device { int release() { SoundEvents.push_back("midi-release"); return 0; } } g_MIDI_DEVICE;
 struct WaveDevice { void release() { SoundEvents.push_back("wave-release"); } } WaveDeviceGlobal;
-struct WaveInDevice { void release() { SoundEvents.push_back("wavein-release"); } } WaveInDeviceObject;
-MidiDevice *MidiDeviceGlobal = &MidiDeviceObject;
-WaveInDevice *WaveInDeviceGlobal = &WaveInDeviceObject;
+struct Wave_In_Device { int release() { SoundEvents.push_back("wavein-release"); return 0; } } g_WAVE_IN_DEVICE;
 void unload_sound_dll() {
     WaveDeviceReleaseGuard = 0;
     if (SoundDllModule) { free_library(SoundDllModule); SoundDllModule = 0; }
