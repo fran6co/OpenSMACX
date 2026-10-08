@@ -1,5 +1,6 @@
 // Bounded host control declaration surface, never application source.
 #include <stdint.h>
+#include "../vehicle_gameplay_six/game_data_state_host.h"
 #include <stdlib.h>
 #include <string.h>
 #include <cassert>
@@ -69,13 +70,6 @@ struct TutorialBase { void check_base(...) {} };
 struct NetMsg { void pop(...) {} };
 struct FX { void play(...) {} void engine_pitch(...) {} };
 struct RulesType { int move_rate_roads; };
-struct Projects { int xenoempathy_dome_,universal_translator_;
- int &xenoempathy_dome() { return xenoempathy_dome_; }
- const int &xenoempathy_dome() const { return xenoempathy_dome_; }
-
- int &universal_translator() { return universal_translator_; }
- const int &universal_translator() const { return universal_translator_; }
-};
 extern Veh Vehs[16]; extern VehPrototype VehPrototypes[512];
 extern PlayerData PlayersData[8]; extern Player Players[8];
 extern RulesChassis Chassis[16]; extern RulesWeapon Weapon[32];
@@ -84,17 +78,15 @@ extern RulesFacility Facility[128]; extern Map MapTiles[4096];
 extern Console ConsoleGlobal; extern NetDaemon NetDaemonNet;
 extern Tutorial TutorialWindow; extern TutorialBase TutWinBaseWindow;
 extern NetMsg NetMsgPrimary; extern FX g_FX; extern RulesType Rules;
-extern Projects SecretProject;
 extern char StringTemp[4096],ScriptPopupFile[64],PopupStartCaption[256],*TextBufferGetPtr;
-extern uint32_t GamePreferences,GameMorePreferences,GameRules,GameState,LockEnableMask;
 extern uint32_t VehOrderDelayCounter,MapNativeLifeForms;
 extern int OrderVehTutorialNoticeCounter;
-extern int ExpansionEnabled,ConsoleControlTurnActive,IsMultiplayerNet,TurnCurrentNum,
- BaseCurrentCount,BaseFindDist,MapLongitude,MapLatitudeBounds,MapLongitudeBounds,
+extern int ExpansionEnabled,ConsoleControlTurnActive,IsMultiplayerNet,BaseFindDist,MapLongitude,MapLatitudeBounds,MapLongitudeBounds,
  MapIsFlat,VehSelectionFollowLimit,*ConsoleGroupCount,GenderDefault,PluralityDefault;
 extern int RadiusOffsetX[289],RadiusOffsetY[289],RadiusBaseX[9],RadiusBaseY[9],
  VehMoveDeltaX[9],VehMoveDeltaY[9];
 int GetAsyncKeyState(int);
+short GetKeyState(int);
 typedef int (*KeyState)(int);
 KeyState ConsoleEditKeyStateSlot();
 Map *map_loc(int,int);

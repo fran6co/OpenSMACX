@@ -2,6 +2,8 @@
 #include <assert.h>
 #include <stdint.h>
 #include <string.h>
+#include "game_data_state_host.h"
+GameDataStateWindow GameDataStateStorage;
 
 #ifndef __cdecl
 #define __cdecl
@@ -48,12 +50,9 @@ Base Bases[128]; RulesFacility Facility[64]; MockMapWin mapwin;
 MockMapWin *MapWinTable[8] = { &mapwin };
 MockConsole ConsoleGlobal;
 void *FactionDiplomacyPortraits[MaxPlayerNum];
-int VehCurrentCount, BaseCurrentCount, TurnCurrentNum, MissionYearCurrent;
-uint32_t MapLongitude = 16, LockEnableMask;
-int VehTerraformStingLatch, ClimateSeaLevelDelta, ClimateRiseStep,
-    ClimateRiseLimit, ClimateRiseAccum, MapSeaLevel, GenderDefault,
+uint32_t MapLongitude = 16;
+int VehTerraformStingLatch, MapSeaLevel, GenderDefault,
     PluralityDefault, BaseFindDist;
-uint32_t MissionYear;
 char *ScriptPopupFile = (char *)"SCRIPT";
 char **const ClimatePopupTitle = &ScriptPopupFile;
 char StringTemp[1032];
@@ -113,9 +112,9 @@ static void clear_fixture() {
     memset(Chassis, 0, sizeof Chassis); memset(MapTiles, 0, sizeof MapTiles);
     memset(Players, 0, sizeof Players); memset(PlayersData, 0, sizeof PlayersData);
     memset(Bases, 0, sizeof Bases); memset(Facility, 0, sizeof Facility);
-    VehCurrentCount = BaseCurrentCount = TurnCurrentNum = MissionYearCurrent = 0;
-    LockEnableMask = 0; VehTerraformStingLatch = 42;
-    ClimateSeaLevelDelta = ClimateRiseStep = ClimateRiseLimit = ClimateRiseAccum = 0;
+    GameDataStateStorage.fields_.vehicle_current_count_ = GameDataStateStorage.fields_.base_current_count_ = GameDataStateStorage.fields_.turn_current_num_ = GameDataStateStorage.fields_.mission_year_current_ = 0;
+    GameDataStateStorage.fields_.lock_masks_.enable_mask_ = 0; VehTerraformStingLatch = 42;
+    GameDataStateStorage.fields_.climate_sea_level_delta_ = GameDataStateStorage.fields_.climate_rise_step_ = GameDataStateStorage.fields_.climate_rise_limit_ = GameDataStateStorage.fields_.climate_rise_accum_ = 0;
     MapSeaLevel = GenderDefault = PluralityDefault = 0; ConsoleGlobal.faction_id_ = 1;
     event_count = killed_count = setup_count = popup_count = treaty_count = agenda_count = 0;
     random_event_count = interlude_count = territory_count = non_input_count = 0;
@@ -132,27 +131,27 @@ int main() {
     clear_fixture();
     // A unit whose timer is below triad-1 returns immediately and must not
     // advance turn state or run any downstream callbacks.
-    VehCurrentCount = 1; Vehs[0].proto_id = 0; Vehs[0].x = 2; Vehs[0].y = 2;
+    GameDataStateStorage.fields_.vehicle_current_count_ = 1; Vehs[0].proto_id = 0; Vehs[0].x = 2; Vehs[0].y = 2;
     Vehs[0].moves_expended = 1; Vehs[0].terraforming_turns = 0;
     VehPrototypes[0].chassis_id = 1; VehPrototypes[0].reactor_id = 1;
     Chassis[1].speed = 2; Chassis[1].triad = 2;
     turn_upkeep();
-    assert(Vehs[0].terraforming_turns == 1 && TurnCurrentNum == 0);
+    assert(Vehs[0].terraforming_turns == 1 && GameDataStateStorage.fields_.turn_current_num_ == 0);
     assert(random_event_count == 0 && non_input_count == 0);
 
     clear_fixture();
     // The exceptional (triad byte 1, chassis id 6) damage path wraps the
     // byte exactly; it does not run the ordinary clamped repair calculation.
-    VehCurrentCount = 1; Vehs[0].proto_id = 0; Vehs[0].x = 2; Vehs[0].y = 2;
+    GameDataStateStorage.fields_.vehicle_current_count_ = 1; Vehs[0].proto_id = 0; Vehs[0].x = 2; Vehs[0].y = 2;
     Vehs[0].dmg_incurred = 250; Vehs[0].moves_expended = 0;
     VehPrototypes[0].chassis_id = 6; VehPrototypes[0].reactor_id = 2;
     Chassis[6].speed = 2; Chassis[6].triad = 1;
     turn_upkeep();
     assert(Vehs[0].dmg_incurred == 0 && (Vehs[0].state & 4) != 0);
-    assert(TurnCurrentNum == 1 && MissionYearCurrent == 2001);
+    assert(GameDataStateStorage.fields_.turn_current_num_ == 1 && GameDataStateStorage.fields_.mission_year_current_ == 2001);
 
     clear_fixture();
-    VehCurrentCount = 1; Vehs[0].proto_id = 0; Vehs[0].x = 2; Vehs[0].y = 2;
+    GameDataStateStorage.fields_.vehicle_current_count_ = 1; Vehs[0].proto_id = 0; Vehs[0].x = 2; Vehs[0].y = 2;
     Vehs[0].dmg_incurred = 1; Vehs[0].moves_expended = 1;
     Vehs[0].terraforming_turns = 1;
     VehPrototypes[0].chassis_id = 1; VehPrototypes[0].reactor_id = 4;
@@ -163,52 +162,52 @@ int main() {
     clear_fixture();
     // Climate threshold crossing mutates state before invoking climate/draw/
     // popup callbacks; the source body then completes the whole upkeep.
-    TurnCurrentNum = 10; ClimateSeaLevelDelta = 2; ClimateRiseStep = 3;
-    ClimateRiseLimit = 5; ClimateRiseAccum = 4;
+    GameDataStateStorage.fields_.turn_current_num_ = 10; GameDataStateStorage.fields_.climate_sea_level_delta_ = 2; GameDataStateStorage.fields_.climate_rise_step_ = 3;
+    GameDataStateStorage.fields_.climate_rise_limit_ = 5; GameDataStateStorage.fields_.climate_rise_accum_ = 4;
     turn_upkeep();
-    assert(TurnCurrentNum == 11 && ClimateRiseAccum == 2);
-    assert(ClimateSeaLevelDelta == 1 && MapSeaLevel == 1);
+    assert(GameDataStateStorage.fields_.turn_current_num_ == 11 && GameDataStateStorage.fields_.climate_rise_accum_ == 2);
+    assert(GameDataStateStorage.fields_.climate_sea_level_delta_ == 1 && MapSeaLevel == 1);
     assert(climate_count == 1 && redraw_count == 1 && popup_count == 1);
     assert(random_event_count == 1 && non_input_count == 1);
 
     clear_fixture();
-    TurnCurrentNum = 3;
+    GameDataStateStorage.fields_.turn_current_num_ = 3;
     random_values[0] = 1; // masked positive nonzero: no rare turn-4 setup.
     turn_upkeep();
-    assert(TurnCurrentNum == 4 && setup_count == 0 && random_index == 1);
+    assert(GameDataStateStorage.fields_.turn_current_num_ == 4 && setup_count == 0 && random_index == 1);
 
     clear_fixture();
-    TurnCurrentNum = 3;
+    GameDataStateStorage.fields_.turn_current_num_ = 3;
     random_values[0] = static_cast<int>(0x80000000u);
     strcpy(Players[1].filename, "FUNGBOY");
     strcpy(Players[1].search_key, "NOT-THE-NATIVE-NAME");
     PlayersData[1].flags = 0xfffffdffu; PlayersData[1].diff_level = -1;
     turn_upkeep();
-    assert(TurnCurrentNum == 4 && setup_count == 1 && random_index == 1);
+    assert(GameDataStateStorage.fields_.turn_current_num_ == 4 && setup_count == 1 && random_index == 1);
 
     clear_fixture();
-    TurnCurrentNum = 5;
+    GameDataStateStorage.fields_.turn_current_num_ = 5;
     random_values[0] = 1; // masked positive nonzero: no rare turn-6 setup.
     strcpy(Players[1].filename, "FUNGBOY");
     strcpy(Players[1].search_key, "NOT-THE-NATIVE-NAME");
     PlayersData[1].flags = 0xfffffdffu; PlayersData[1].diff_level = -1;
     turn_upkeep();
-    assert(TurnCurrentNum == 6 && setup_count == 0 && random_index == 1);
+    assert(GameDataStateStorage.fields_.turn_current_num_ == 6 && setup_count == 0 && random_index == 1);
 
     clear_fixture();
-    TurnCurrentNum = 5;
+    GameDataStateStorage.fields_.turn_current_num_ = 5;
     random_values[0] = 0; // turn 6's masked 0x80000001 test admits zero.
     strcpy(Players[1].filename, "FUNGBOY");
     strcpy(Players[1].search_key, "NOT-THE-NATIVE-NAME");
     PlayersData[1].flags = 0xfffffdffu; PlayersData[1].diff_level = -1;
     turn_upkeep();
-    assert(TurnCurrentNum == 6 && setup_count == 1 && random_index == 1);
+    assert(GameDataStateStorage.fields_.turn_current_num_ == 6 && setup_count == 1 && random_index == 1);
 
     clear_fixture();
     // Turn seven initializes eligible FUNGBOY/alien factions, sets only the
     // alive byte, informs on alien setup, then applies CARETAKE treaty writes
     // in the CARETAKE row and base-owner column.
-    TurnCurrentNum = 6;
+    GameDataStateStorage.fields_.turn_current_num_ = 6;
     strcpy(Players[1].filename, "fungboy"); Players[1].rule_flags = RFLAG_ALIEN;
     strcpy(Players[1].search_key, "NOT-FUNGBOY");
     strcpy(Players[2].filename, "other"); Players[2].rule_flags = RFLAG_ALIEN;
@@ -216,12 +215,12 @@ int main() {
     strcpy(Players[3].filename, "caretake");
     strcpy(Players[3].search_key, "NOT-CARETAKE");
     Players[3].rule_flags = RFLAG_ALIEN;
-    BaseCurrentCount = 1; Bases[0].faction_id_current = 1;
+    GameDataStateStorage.fields_.base_current_count_ = 1; Bases[0].faction_id_current = 1;
     Bases[0].production_id_last = -0x66;
     turn_upkeep();
-    assert(TurnCurrentNum == 7 && setup_count == 2);
-    assert((reinterpret_cast<uint8_t *>(&LockEnableMask)[1] & 0x06) == 0x06);
-    assert((reinterpret_cast<uint8_t *>(&LockEnableMask)[0] & 0x06) == 0);
+    assert(GameDataStateStorage.fields_.turn_current_num_ == 7 && setup_count == 2);
+    assert((reinterpret_cast<uint8_t *>(&GameDataStateStorage.fields_.lock_masks_.enable_mask_)[1] & 0x06) == 0x06);
+    assert((reinterpret_cast<uint8_t *>(&GameDataStateStorage.fields_.lock_masks_.enable_mask_)[0] & 0x06) == 0);
     assert(PlayersData[3].diplo_spoke[1] == 7);
     assert(spoke_12_seen_at_ordered_pair == 0);
     assert(treaty_count >= 2 && agenda_count >= 2 && popup_count >= 2);
@@ -232,10 +231,10 @@ int main() {
     // The year-75 facility prerequisite is read from the live typed rules
     // table; the ascending path sets its per-faction one-shot flag and uses
     // the native title/name inputs.
-    TurnCurrentNum = 74; ConsoleGlobal.faction_id_ = 1;
+    GameDataStateStorage.fields_.turn_current_num_ = 74; ConsoleGlobal.faction_id_ = 1;
     ascending_result = 1; Facility[FAC_BIOLOGY_LAB].preq_tech = 42;
     turn_upkeep();
-    assert(TurnCurrentNum == 75 && PlayersData[1].flags & 0x2000);
+    assert(GameDataStateStorage.fields_.turn_current_num_ == 75 && PlayersData[1].flags & 0x2000);
     assert(PlayersData[1].flags & 0x2000 && non_input_count == 1);
     assert(random_event_count == 1);
     return 0;

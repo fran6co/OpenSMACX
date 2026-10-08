@@ -2,6 +2,8 @@
 #include <assert.h>
 #include <string.h>
 #define __cdecl
+#include "game_data_state_host.h"
+GameDataStateWindow GameDataStateStorage;
 enum { MaxPlayerNum = 8, DTREATY_VENDETTA = 0x10,
        AI_GOAL_ATTACK = 0, AI_GOAL_DEFEND = 2, AI_GOAL_SCOUT = 3,
        AI_GOAL_COLONIZE = 8, AI_GOAL_UNK_3 = 11, BSTATE_UNK_1 = 1 };
@@ -21,7 +23,7 @@ struct PlayerData {
     unsigned short unk_79[128];
 };
 Base Bases[8]; PlayerData PlayersData[8]; Map Tiles[16]; Map *MapTiles = Tiles;
-int MapLongitude = 8, TurnCurrentNum = 0;
+int MapLongitude = 8;
 Map *map_loc(int x, int y) { return &MapTiles[(x >> 1) + y * MapLongitude]; }
 int goals[32][6], goal_count, stack_result, vehicle_result;
 int contiguous_calls, stack_calls, veh_calls;
@@ -35,7 +37,7 @@ void reset() {
     memset(Bases, 0, sizeof(Bases)); memset(PlayersData, 0, sizeof(PlayersData));
     memset(Tiles, 0, sizeof(Tiles)); memset(goals, 0, sizeof(goals));
     goal_count = stack_result = vehicle_result = contiguous_calls = stack_calls = veh_calls = 0;
-    MapLongitude = 8; TurnCurrentNum = 0;
+    MapLongitude = 8; GameDataStateStorage.fields_.turn_current_num_ = 0;
 }
 
 #include "actual.inc"

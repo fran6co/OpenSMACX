@@ -4,6 +4,8 @@
 #include <string.h>
 
 #define __cdecl
+#include "game_data_state_host.h"
+GameDataStateWindow GameDataStateStorage;
 
 enum { PLAN_ALIEN_ARTIFACT = 12, TRIAD_AIR = 2,
        ABL_AIR_SUPERIORITY = 0x20, ABL_CARRIER = 0x80,
@@ -40,12 +42,12 @@ struct NetMsg { int pop(const char *, int, int, const char *); };
 
 Veh Vehs[2049]; VehPrototype VehPrototypes[512]; RulesChassis Chassis[19];
 RulesWeapon Weapon[26]; Map MapTiles[32 * 64]; Player Players[8];
-PlayerData PlayersData[8]; Base Bases[64]; int VehCurrentCount;
+PlayerData PlayersData[8]; Base Bases[64];
 int MapLongitudeBounds = 32, MapLatitudeBounds = 64;
-uint32_t MapLongitude = 16; int MapIsFlat; uint32_t GamePreferences;
+uint32_t MapLongitude = 16; int MapIsFlat;
 int VehMoveDeltaX[9] = {1, 2, 1, 0, -1, -2, -1, 0, 0};
 int VehMoveDeltaY[9] = {-1, 0, 1, 2, 1, 0, -1, -2, 0};
-uint32_t FactionRankings[8]; int GenderDefault, PluralityDefault;
+int GenderDefault, PluralityDefault;
 Console ConsoleGlobal; NetMsg NetMsgPrimary;
 int lift_count, drop_count, skip_count, kill_count, scoot_count;
 int last_drop_id, last_drop_x, last_drop_y, last_focus_faction;
@@ -91,7 +93,7 @@ static void clear_state() {
     lift_count = drop_count = skip_count = kill_count = scoot_count = 0;
     last_drop_id = last_drop_x = last_drop_y = last_focus_faction = -1;
     parse_count = interlude_id = 0; last_popup = 0; base_find_result = -1;
-    GamePreferences = 0; MapIsFlat = 1; VehCurrentCount = 0;
+    GameDataStateStorage.fields_.game_preferences_ = 0; MapIsFlat = 1; GameDataStateStorage.fields_.vehicle_current_count_ = 0;
 }
 
 static void test_battle_kill_normal_and_wrap() {
@@ -143,8 +145,8 @@ static void test_battle_kill_capture_and_event_order() {
 static void test_interceptor_selection_notification_and_move() {
     clear_state();
     ConsoleGlobal.faction_id_ = 2;
-    VehCurrentCount = 2;
-    for (int i = 0; i < VehCurrentCount; ++i) {
+    GameDataStateStorage.fields_.vehicle_current_count_ = 2;
+    for (int i = 0; i < GameDataStateStorage.fields_.vehicle_current_count_; ++i) {
         Vehs[i].faction_id = 2; Vehs[i].proto_id = i;
         Vehs[i].x = static_cast<int16_t>(i * 2); Vehs[i].y = 0;
         VehPrototypes[i].chassis_id = 0; VehPrototypes[i].weapon_id = 1;
@@ -160,7 +162,7 @@ static void test_interceptor_selection_notification_and_move() {
     assert(scoot_count > 0);
 
     clear_state();
-    VehCurrentCount = 1; Vehs[0].faction_id = 2; Vehs[0].proto_id = 0;
+    GameDataStateStorage.fields_.vehicle_current_count_ = 1; Vehs[0].faction_id = 2; Vehs[0].proto_id = 0;
     Vehs[0].x = 10; Vehs[0].y = 10;
     VehPrototypes[0].chassis_id = 0; VehPrototypes[0].abilities = 0;
     Chassis[0].triad = TRIAD_AIR;

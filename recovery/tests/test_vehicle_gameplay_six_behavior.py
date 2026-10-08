@@ -49,6 +49,7 @@ def actual(case):
 def execute(tmp_path, compiler, case, body):
     (tmp_path / "actual.inc").write_text(body)
     (tmp_path / "fixture.h").write_bytes((FIXTURES / "fixture.h").read_bytes())
+    (tmp_path / "game_data_state_host.h").write_bytes((FIXTURES / "game_data_state_host.h").read_bytes())
     program = tmp_path / "control.cpp"
     program.write_bytes((FIXTURES / (case + ".cpp")).read_bytes())
     executable = tmp_path / "control"
@@ -67,7 +68,7 @@ def test_current_product_bodies(tmp_path, compiler, case):
 @pytest.mark.parametrize("compiler", COMPILERS)
 @pytest.mark.parametrize("case,before,after", [
     ("combat", "Vehs[vehicle_id].state &= 0xFCFFBDFFU;", ""),
-    ("fauna", "3u - MapNativeLifeForms", "3u - static_cast<uint32_t>(DiffLevelCurrent)"),
+    ("fauna", "3u - MapNativeLifeForms", "3u - static_cast<uint32_t>(GameDataStateStorage.fields_.diff_level_current_)"),
     ("passengers", "unk_77[region] & 0x0800", "unk_77[region] & 0x0400"),
     ("passengers", "mode < 3", "mode < 4"),
 ])

@@ -7,7 +7,7 @@ NetDaemon NetDaemonNet; NetMsg NetMsgPrimary; RulesType Rules;
 PlayerData PlayersData[8]; Player Players[8]; Base Bases[16];
 RulesFacility Facility[128];
 int GenderDefault,PluralityDefault;
-uint32_t GamePreferences,GameMorePreferences,GameState,LockEnableMask;
+GameDataStateWindow GameDataStateStorage;
 int MapLongitude=64,IsMultiplayerNet,ConsoleControlTurnActive;
 int MapIsFlat=1,MapLongitudeBounds=128,MapLatitudeBounds=64;
 int VehMoveDeltaX[9],VehMoveDeltaY[9];
@@ -55,6 +55,7 @@ int Tutorial::tut_map(const char *text,int x,int y,int pixel,Sprite *picture,int
 int random(int,int maximum) { assert(maximum>0); return maximum-1; }
 int tut_check(...) { return 1; }
 int GetAsyncKeyState(int) { return 0; }
+short GetKeyState(int) { return 0; }
 KeyState ConsoleEditKeyStateSlot() { return GetAsyncKeyState; }
 int stack_veh(...) { return 0; }
 void veh_scoot(...) {}
@@ -96,13 +97,13 @@ int main() {
  assert(monolith_calls==1);
 
  // Fatigue increment must read the live byte AFTER action_home callback.
- Chassis[0].range=8; ConsoleGlobal.faction_id_=3; GamePreferences=0x10000;
- LockEnableMask=8; Vehs[0].terraforming_turns=3; Vehs[0].state=0;
+ Chassis[0].range=8; ConsoleGlobal.faction_id_=3; GameDataStateStorage.fields_.game_preferences_=0x10000;
+ GameDataStateStorage.fields_.lock_masks_.enable_mask_=8; Vehs[0].terraforming_turns=3; Vehs[0].state=0;
  Vehs[0].order=ORDER_NONE;
  assert(!order_veh_599061_fatigue_and_damage(0,3,8,false));
  assert(home_calls==1&&Vehs[0].terraforming_turns==10);
  // Unlocked in-tile airbase reset skips/demotes rather than fuel continuation.
- LockEnableMask=0; Vehs[0].terraforming_turns=4;
+ GameDataStateStorage.fields_.lock_masks_.enable_mask_=0; Vehs[0].terraforming_turns=4;
  assert(order_veh_598e84_range_speed_gate(0,3,8,false,false,6,4)==OrderVeh598E84ContinueTo599151);
  assert(skip_calls==1&&Vehs[0].terraforming_turns==0);
 

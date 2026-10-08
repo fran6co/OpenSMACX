@@ -4,16 +4,13 @@
 #include <stdlib.h>
 #include <string.h>
 #define __cdecl
+#include "game_data_state_host.h"
+GameDataStateWindow GameDataStateStorage;
 
 const int MaxPlayerNum = 8;
 const int TECH_CENTPSI = 63;
 const int TECH_QUANTUM = 25;
 const int ExpansionEnabled = 0;
-int GameRules = 0;
-int GameState = 0;
-int TurnCurrentNum = 0;
-int DiffLevelCurrent = 0;
-int VehCurrentCount = 0;
 int BaseFindDist = 0;
 int MapLongitudeBounds = 8;
 int MapLatitudeBounds = 8;
@@ -21,7 +18,6 @@ int MapLongitude = 4;
 int MapArea = 0;
 int MapIsFlat = 1;
 uint32_t MapNativeLifeForms = 0;
-uint8_t GameTechAchieved[64] = {};
 
 struct Map {
     uint8_t climate, contour, val2, region, visibility, val3, unk_1;
@@ -31,10 +27,6 @@ struct Map {
 struct PlayerData { uint32_t flags; };
 struct Base { uint8_t faction_id_current; int8_t population_size; char name_string[25]; };
 struct Veh { int faction_id; uint32_t flags; uint8_t visibility; };
-struct SecretProject { int voice_of_planet_;
- int &voice_of_planet() { return voice_of_planet_; }
- const int &voice_of_planet() const { return voice_of_planet_; }
-};
 struct Continent { uint32_t open_terrain; };
 struct Console { int faction_id_; };
 struct MapWindow { int focus(int, int) { ++MapWindow::focus_calls; return focus_result; }
@@ -49,7 +41,6 @@ Map Tiles[64];
 PlayerData PlayersData[8];
 Base Bases[16];
 Veh Vehs[32];
-SecretProject SecretProject = {-1};
 Continent Continents[64];
 Console ConsoleGlobal = {0};
 MapWindow PrimaryMapWindow;
@@ -105,7 +96,7 @@ int veh_init(int prototype, int, int, int) {
     Vehs[id].faction_id = ConsoleGlobal.faction_id_;
     Vehs[id].flags = 0;
     Vehs[id].visibility = 1;
-    VehCurrentCount = veh_init_calls;
+    GameDataStateStorage.fields_.vehicle_current_count_ = veh_init_calls;
     return id;
 }
 int veh_cargo(int) { return cargo_capacity; }
@@ -115,12 +106,16 @@ void sleep(int) { ++sleep_calls; }
 #include "actual.inc"
 
 static void reset_state() {
+    memset(&GameDataStateStorage, 0, sizeof(GameDataStateStorage));
     memset(Tiles, 0, sizeof(Tiles));
     memset(PlayersData, 0, sizeof(PlayersData));
     memset(Bases, 0, sizeof(Bases));
     memset(Vehs, 0, sizeof(Vehs));
     memset(Continents, 0, sizeof(Continents));
-    memset(GameTechAchieved, 0, sizeof(GameTechAchieved));
+    memset(&GameDataStateStorage, 0, sizeof(GameDataStateStorage));
+    memset(GameDataStateStorage.fields_.game_tech_achieved_, 0, sizeof(GameDataStateStorage.fields_.game_tech_achieved_));
+    for (int project = 0; project < 64; ++project)
+        GameDataStateStorage.fields_.secret_project_.project_base[project] = -1;
     memset(rand_values, 0, sizeof(rand_values));
     memset(veh_prototypes, 0, sizeof(veh_prototypes));
     MapWindow::focus_calls = 0;
@@ -130,10 +125,12 @@ static void reset_state() {
     cargo_capacity = sleep_calls = 0;
     draw_tiles_calls = parse_calls = popup_calls = 0;
     life_forms_on_first_draw = -1;
-    GameRules = GameState = TurnCurrentNum = DiffLevelCurrent = 0;
-    VehCurrentCount = BaseFindDist = MapArea = 0;
+    GameDataStateStorage.fields_.game_rules_ = GameDataStateStorage.fields_.game_state_ = GameDataStateStorage.fields_.turn_current_num_ = GameDataStateStorage.fields_.diff_level_current_ = 0;
+    GameDataStateStorage.fields_.vehicle_current_count_ = BaseFindDist = MapArea = 0;
     MapNativeLifeForms = 0;
-    SecretProject.voice_of_planet() = -1;
+    for (int project = 0; project < 64; ++project) {
+        GameDataStateStorage.fields_.secret_project_[project] = -1;
+    }
     ConsoleGlobal.faction_id_ = 0;
     MapLongitudeBounds = MapLatitudeBounds = 8;
     MapLongitude = 4;
@@ -144,7 +141,7 @@ int main() {
     reset_state();
     // RULES bit 0x200000 bypasses all later turn-level fauna while still
     // allowing the one-area fungus-spread path to run.
-    GameRules = 0x200000;
+    GameDataStateStorage.fields_.game_rules_ = 0x200000;
     ConsoleGlobal.faction_id_ = 1;
     MapArea = 33;
     RadiusBaseX[0] = 2;
@@ -166,7 +163,7 @@ int main() {
     reset_state();
     // A no-spread turn reaches the life-form limit check, then the native
     // early eligibility return must avoid vehicles, callbacks and popups.
-    SecretProject.voice_of_planet() = 7;
+    GameDataStateStorage.fields_.secret_project_.voice_of_planet() = 7;
     MapArea = 0;
     alien_fauna();
     assert(veh_init_calls == 0);
@@ -177,9 +174,9 @@ int main() {
     // At turn 10 the alien transport site is selected once. A successful
     // sea transport is promoted and only then may the achieved technology
     // spawn the independent mindworm unit.
-    TurnCurrentNum = 10;
+    GameDataStateStorage.fields_.turn_current_num_ = 10;
     MapArea = 0;
-    GameTechAchieved[TECH_CENTPSI] = 1;
+    GameDataStateStorage.fields_.game_tech_achieved_[TECH_CENTPSI] = 1;
     rand_values[0] = 2;
     rand_values[1] = 2;
     rand_values[2] = 0;
@@ -198,8 +195,8 @@ int main() {
     assert(veh_prototypes[0] == 9 && veh_prototypes[1] == 10);
 
     reset_state();
-    TurnCurrentNum = 10;
-    GameTechAchieved[TECH_QUANTUM] = 1;
+    GameDataStateStorage.fields_.turn_current_num_ = 10;
+    GameDataStateStorage.fields_.game_tech_achieved_[TECH_QUANTUM] = 1;
     rand_values[0] = rand_values[1] = 2;
     rand_count = 2;
     transport_site = map_loc(2, 2);
@@ -216,8 +213,8 @@ int main() {
     // Distinct MNL, difficulty and BaseFindDist values discriminate the
     // three native rule operands. At MNL=2, difficulty=0, turn=30:
     // modulo divisor=6, early threshold=20, and cargo count=3.
-    TurnCurrentNum = 30;
-    DiffLevelCurrent = 0;
+    GameDataStateStorage.fields_.turn_current_num_ = 30;
+    GameDataStateStorage.fields_.diff_level_current_ = 0;
     BaseFindDist = 16;
     MapNativeLifeForms = 2;
     cargo_capacity = 10;
@@ -239,8 +236,8 @@ int main() {
     reset_state();
     // With MNL=0 and difficulty=4 the native signed early-turn threshold
     // classifies turn 10 as very early, reducing cargo to one.
-    TurnCurrentNum = 10;
-    DiffLevelCurrent = 4;
+    GameDataStateStorage.fields_.turn_current_num_ = 10;
+    GameDataStateStorage.fields_.diff_level_current_ = 4;
     cargo_capacity = 10;
     rand_values[0] = 2;
     rand_values[1] = 2;
@@ -260,7 +257,7 @@ int main() {
     // A wholly invalid marine-transport search consumes 1000 x/y pairs, but
     // the counter jumps before evaluating tile 1000; then come the ordinary
     // two life-form samples.
-    TurnCurrentNum = 10;
+    GameDataStateStorage.fields_.turn_current_num_ = 10;
     MapArea = 0;
     rand_count = 0;
     alien_fauna();
@@ -271,7 +268,7 @@ int main() {
     // An AI-owned highland sample spawns one visible nearby mindworm. Its
     // draw callback changes the life-form count before the dynamic threshold
     // is checked; subsequent invalid samples finish at the enlarged limit.
-    TurnCurrentNum = 1;
+    GameDataStateStorage.fields_.turn_current_num_ = 1;
     MapArea = 0;
     MapNativeLifeForms = 0;
     life_forms_on_first_draw = 2;
@@ -297,7 +294,7 @@ int main() {
     // comparisons here. Turn zero is not very-early against the negative
     // wrapped early bound, so cargo capacity three is fully used; the wrapped
     // negative life limit then exits after the first sample.
-    TurnCurrentNum = 0;
+    GameDataStateStorage.fields_.turn_current_num_ = 0;
     MapNativeLifeForms = 0x60000000u;
     cargo_capacity = 3;
     rand_values[0] = 2;

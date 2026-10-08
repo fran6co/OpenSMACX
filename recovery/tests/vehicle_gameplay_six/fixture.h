@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <string.h>
+#include "game_data_state_host.h"
 
 #define __cdecl
 static const int MaxPlayerNum = 8;
@@ -16,15 +17,11 @@ struct Console { int faction_id_; };
 extern Player Players[MaxPlayerNum];
 extern PlayerData PlayersData[MaxPlayerNum];
 extern Base Bases[16];
-extern int BaseCurrentCount;
 extern Veh Vehs[16];
-extern int VehCurrentCount;
 extern Console ConsoleGlobal;
-extern int TurnCurrentNum;
 extern int ExpansionEnabled;
 extern int IsMultiplayerPBEM;
 extern int IsMultiplayerNet;
-extern uint32_t LockEnableMask;
 extern char StringTemp[1032];
 char *CharUpperA(char *text);
 void base_kill(int id);
