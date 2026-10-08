@@ -32,8 +32,8 @@ def test_selectpartwin_keyboard_and_feedback(tmp_path: Path) -> None:
             "void SelectPartWin::on_redraw()",
             "void SelectPartWin::on_mouse_move(int x, int y)",
             "void SelectPartWin::on_left_up(int x, int y)",
-            "void SelectPartWin::vslot_48(int, int row)",
-            "void SelectPartWin::vslot_49(int a1, int a2)",
+            "void SelectPartWin::on_scrolled(int, int row)",
+            "void SelectPartWin::on_scrolling(int a1, int a2)",
         )
     )
     harness = r"""
@@ -75,8 +75,8 @@ struct SelectPartWin {
     void on_redraw();
     void on_mouse_move(int, int);
     void on_left_up(int, int);
-    void vslot_48(int, int);
-    void vslot_49(int, int);
+    void on_scrolled(int, int);
+    void on_scrolling(int, int);
 };
 SelectPartWin *WinPointerOwner3 = nullptr;
 SelectPartWin *WinPointerOwner4 = nullptr;
@@ -94,7 +94,7 @@ int main() {
     assert(win.on_key_click(0, 34) == 1);  // page down, Scroll clamps 0+3 to 2
     assert(win.scroll_.position_ == 2 && win.field_2B60_ == 8);
     assert(win.redraws == 1);
-    win.vslot_49(999, 1);  // scrolling delegates to scrolled, second arg is row
+    win.on_scrolling(999, 1);  // scrolling delegates to scrolled, second arg is row
     assert(win.field_2B60_ == 4 && win.redraws == 2);
     win.on_mouse_move(5, 5);
     assert(win.field_2B80_ == 4 && win.field_4648_ == 1);
