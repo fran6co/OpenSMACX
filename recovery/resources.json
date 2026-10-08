@@ -42,6 +42,20 @@
    "environment": {
     "VC6_PREFIX": "{resource}"
    }
+  },
+  {
+   "name": "worker-6",
+   "directory": "{env:OPENSMACX_COMPILER_POOL}/worker-6",
+   "environment": {
+    "VC6_PREFIX": "{resource}"
+   }
+  },
+  {
+   "name": "worker-7",
+   "directory": "{env:OPENSMACX_COMPILER_POOL}/worker-7",
+   "environment": {
+    "VC6_PREFIX": "{resource}"
+   }
   }
  ]
 }
