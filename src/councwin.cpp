@@ -952,7 +952,7 @@ void CouncWin::arrived(int faction_id) {
 }
 
 // ORIGINAL: 0x00427160 ?close@CouncWin@@QAEXXZ 0x00427160-0x004271BE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/councwin.h CouncWin::buttons_[6] and font1_..font5_; src/flatbutton.h FlatButton::close; src/font.h Font::close"], "reason": "Close CouncWin embedded buttons and owned fonts through their typed members."}
+// RECOVERY_BINDING: v1 {"evidence": ["src/councwin.h CouncWin::buttons_[6] and font1_..font5_; src/flatbutton.h FlatButton::close; src/jackal/font.h Font::close"], "reason": "Close CouncWin embedded buttons and owned fonts through their typed members."}
 void CouncWin::close() {
     for (int i = 0; i < 6; ++i) {
         buttons_[i].close();

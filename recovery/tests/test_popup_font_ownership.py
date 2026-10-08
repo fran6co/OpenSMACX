@@ -17,14 +17,14 @@ def test_popup_font_bindings_and_storage_are_preserved_in_application_owner():
     bindings = pattern.findall(old)
     assert len(bindings) == 20
     popup = (ROOT / 'src/popup.cpp').read_text()
-    font = (ROOT / 'src/font.cpp').read_text()
+    font = (ROOT / 'src/jackal/font.cpp').read_text()
     for binding in bindings:
         assert popup.count(binding) == 1
         assert binding not in font
 
 
 def test_generic_font_no_longer_publishes_application_policy_caches():
-    font_header = (ROOT / 'src/font.h').read_text()
+    font_header = (ROOT / 'src/jackal/font.h').read_text()
     policy = (ROOT / 'src/popup_fonts.h').read_text()
     names = re.findall(r'extern Font \*((?:Popup|Interlude)\w+);', policy)
     assert len(names) == len(set(names)) == 20

@@ -44,7 +44,7 @@ def test_palette_archive_membership_and_application_consumers_are_explicit():
     build = (ROOT / "recovery/build.json").read_text()
     assert "src/interface_palette.cpp" in root_cmake
     assert "src/palette.cpp" not in root_cmake
-    assert "add_library(jackal STATIC jackal.cpp palette.cpp)" in jackal_cmake
+    assert "add_library(jackal STATIC jackal.cpp palette.cpp font.cpp)" in jackal_cmake
     assert '"object": "src/jackal/CMakeFiles/jackal.dir/palette.cpp.obj"' in build
 
     consumers = (

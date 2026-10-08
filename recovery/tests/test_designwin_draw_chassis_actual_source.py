@@ -245,7 +245,7 @@ def test_design_it_and_preview_use_source_owned_vehicle_apis():
 
 def test_basewin_and_designwin_use_font_metric_accessors_without_friendship():
     root = _root()
-    font_header = (root / "src/font.h").read_text(encoding="utf-8")
+    font_header = (root / "src/jackal/font.h").read_text(encoding="utf-8")
     assert "friend class BaseWin;" not in font_header
     assert "friend class DesignWin;" not in font_header
     for owner in ("basewin.cpp", "designwin.cpp"):

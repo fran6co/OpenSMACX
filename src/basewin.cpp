@@ -5938,7 +5938,7 @@ void BaseWin::draw_info(int update_mode) {
 }
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00415730 ?draw_misc@BaseWin@@QAEXH@Z 0x00415730-0x00415B15
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00415730.cpp", "src/basewin.h", "src/alpha.h", "src/faction.h", "src/base.h", "src/interface_palette.cpp", "src/font.h"], "reason": "Recover the miscellaneous base panel through its owned rectangle, label and string table, live Base and PlayerData fields, font line advance, and shared palette rather than executable addresses and raw self-offsets. The retained seed remains for byte restoration."}
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00415730.cpp", "src/basewin.h", "src/alpha.h", "src/faction.h", "src/base.h", "src/interface_palette.cpp", "src/jackal/font.h"], "reason": "Recover the miscellaneous base panel through its owned rectangle, label and string table, live Base and PlayerData fields, font line advance, and shared palette rather than executable addresses and raw self-offsets. The retained seed remains for byte restoration."}
 void BaseWin::draw_misc(int update_mode) {
     Buffer *canvas = this;
     RECT panel = rect5_;

@@ -321,12 +321,12 @@ def test_source_extractor_ignores_comment_and_string_decoys():
 
 
 def test_extracted_actual_owner_methods_compile_and_preserve_runtime_branches():
-    compile_and_run((ROOT / "src/font.cpp").read_text(),
+    compile_and_run((ROOT / "src/jackal/font.cpp").read_text(),
                     (ROOT / "src/buffer.cpp").read_text())
 
 
 def test_moved_annotations_preserve_full_baseline_metadata_and_file_mode():
-    font = actual_record("src/font.cpp", 0x005E3650)
+    font = actual_record("src/jackal/font.cpp", 0x005E3650)
     buffer = actual_record("src/buffer.cpp", 0x005E07A0)
     assert metadata(font) == metadata(baseline_record("src/leaf_recoveries.cpp", 0x005E3650))
     assert metadata(buffer) == metadata(baseline_record("src/leaf_recoveries.cpp", 0x005E07A0))

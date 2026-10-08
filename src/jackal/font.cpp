@@ -19,11 +19,6 @@
 #include "buffer.h"
 #include "font.h"
 #include "general.h"
-#include "dialog.h"
-#include "sounddevice.h"
-#include "spritebox.h"
-#include "net_class.h"
-#include "basepop.h"
 
 HDC Font::FontHDC;
 int Font::FontInitCount;
@@ -40,7 +35,7 @@ Purpose: Field 0 as an offset into field 0x10, or field 0xc when it is negative.
          for any field with the top bit set.
 
 // ORIGINAL: 0x005E3650 sub_5e3650 0x005E3650-0x005E3660 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["pinned:0x005E3650-0x005E3660 reads this+0, this+0x0C, and this+0x10 with signed jl", "source:src/font.h Font::unk_1_, line_height_, and height_ are the named members at those offsets", "pinned callers in Buffer text layout invoke this metric operation"], "reason": "Bind the original signed Font metric selector to its existing named member operation, retaining native 32-bit addition wrap."}
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:0x005E3650-0x005E3660 reads this+0, this+0x0C, and this+0x10 with signed jl", "source:src/jackal/font.h Font::unk_1_, line_height_, and height_ are the named members at those offsets", "pinned callers in Buffer text layout invoke this metric operation"], "reason": "Bind the original signed Font metric selector to its existing named member operation, retaining native 32-bit addition wrap."}
 // symbol    ?line_advance@Font@@QBEHXZ
 // size      16 bytes
 // prototype
@@ -288,7 +283,7 @@ int Font::init(LPCSTR file, LPCSTR font_name, int height, int style) {
 /*
 Purpose: Close an instance of the class.
 // ORIGINAL: 0x00619230 ?close@Font@@QAEXXZ 0x00619230-0x0061927D BYTE_EXACT
-// body      src/font.h
+// body      src/jackal/font.h
 // size      77 bytes
 // prototype void (__thiscall ?close@Font@@QAEXXZ)(Font* this)
 // callers   5   call targets   1
@@ -328,7 +323,7 @@ int Font::width(LPSTR input) {
 /*
 Purpose: Get the width for the input text with a maximum length.
 // ORIGINAL: 0x006192F0 ?width@Font@@QAEHPADH@Z 0x006192F0-0x0061936B BYTE_EXACT
-// body      src/font.h
+// body      src/jackal/font.h
 // symbol    ?width@Font@@QAEHPADI@Z
 // MOVED IN-CLASS: `find_line_break_l` (0x00619370) inlines this twice -
 //        its own `calls` list never names 0x006192F0.
