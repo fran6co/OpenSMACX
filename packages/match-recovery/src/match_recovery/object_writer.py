@@ -256,8 +256,10 @@ def replace_object_records(current: Mapping[str, bytes], *,
     owner_identity = {}
     for row in tuple(remaining) + tuple(replacements):
         emitted = row.parent_symbol or row.symbol
-        identity = (("member_parent", row.unit, row.parent_symbol)
-                    if row.parent_symbol is not None else ("direct", row.unit, row.symbol))
+        # Same-unit direct parent and historical children share one emitted
+        # owner. Native object_targets must still prove their original base;
+        # this pure writer preserves identities, not compiled layout claims.
+        identity = ("owner", row.unit, emitted)
         prior = owner_identity.setdefault(emitted, identity)
         if prior != identity:
             raise ValueError("object replacement conflicts with an emitted owner binding")

@@ -187,9 +187,11 @@ def _complete_udt(index, records, seen=frozenset()):
     if size <= 0 or (field and (not 0 <= field - 0x1000 < len(records)
                                 or records[field - 0x1000][0] != 0x1203)):
         raise ValueError("member path requires a complete direct field list")
-    members, member_types, bases = _fields(records[field - 0x1000][1].data[2:]) if field else ({}, {}, [])
-    if bases:
-        raise ValueError("member path through inherited layout is unsupported")
+    members, member_types, _bases = _fields(records[field - 0x1000][1].data[2:]) if field else ({}, {}, [])
+    # A directly declared member has its own complete-object offset even if
+    # the owner also has bases. Never search those bases or infer an inherited
+    # member's placement: member_data_layout still requires a direct name at
+    # each path step and checks its full extent against that owning UDT.
     return index, size, members, member_types
 
 

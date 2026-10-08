@@ -2697,13 +2697,6 @@ inline unsigned char &console_popup_check_state() {
     return *reinterpret_cast<unsigned char *>(0x009BC06C);
 }
 
-// The scenario-editor brush is MapEditorBrushId (mapwin.cpp). 0x007CD254 is
-// the editor palette's ButtonGroup and
-// 0x007CD2D8 (group + 0x84) the id of the palette button currently checked -
-// editor_set_brush re-checks the new brush's button only when it differs.
-static ButtonGroup *const EditorBrushButtonGroup = (ButtonGroup *)0x007CD254;
-static int *const EditorBrushButtonGroupSelection = (int *)0x007CD2D8;
-
 // THE GAME-IN-PROGRESS FLAG at 0x009B2074, between game.h's ControlTurnPhase
 // (0x009B2070) and SaveNameBuffer (0x009B2078). load_proc reopens a running
 // game through game_reload when it is set and re-initialises the desktop when
@@ -5032,6 +5025,7 @@ void Console::set_ai(int faction_id) {
 Purpose: Ask which terrain-improvement brush the scenario editor paints with
          and refresh the interface panes around the answer.
 // ORIGINAL: 0x004E0EA0 ?editor_set_brush@Console@@QAEXXZ 0x004E0EA0-0x004E0F22 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["MainInterfaceGlobal original7AE820; header button_group_[4] begins1E878 with stride94. Element3 is7CD254, its selection field84 is7CD2D8, and the following MainInterface field1EAC8 is7CD2E8.", "Pinned MainInterface constructor45EF10 constructs four ButtonGroups at+1E878 with ctor62B7C0 and dtor4325B0; destructor45EB80 tears down that same owned array. Noncompact init populates group3 with brush buttons1036..1041.", "Pinned MainInterface init4596CD clears its+1EAC8 member; Console key517A0B/517A93 reads that same original cell. The former ConsoleModalState7CD2E8 symbol retains its unbounded identity as a member binding next to MainInterfaceGlobal."], "reason": "Use MainInterface's constructed editor button group and selection member rather than fixed original-address aliases, retaining dialog/redraw order, compact-view guard and conditional selection notification."}
 // size      130 bytes
 // prototype void (__thiscall ?editor_set_brush@Console@@QAEXXZ)(Console* this)
 // callers   2   call targets   4
@@ -5052,8 +5046,8 @@ void Console::editor_set_brush() {
     MainInterfaceGlobal.draw_edit_pane();
     if (WinScreenWidth != 0x320) {
         const int brush_button = MapEditorBrushId + 0x40C;
-        if (*EditorBrushButtonGroupSelection != brush_button) {
-            EditorBrushButtonGroup->set(brush_button, 1);
+        if (MainInterfaceGlobal.button_group(3).field_84_ != brush_button) {
+            MainInterfaceGlobal.button_group(3).set(brush_button, 1);
         }
     }
 }
@@ -11490,12 +11484,8 @@ int ConsoleInterludeSelection = 0;
 // RECOVERY_OBJECT: v1 0x0068A5C8 ?ConsoleKeyCycleState@@3HA
 int ConsoleKeyCycleState = -2;
 
-// Enter/Space guard dword read at 0x517A0B/0x517A93, initially zero. It starts after EditorBrushButtonGroup; semantic identity, allocation extent and other writers remain unverified.
-// RECOVERY_OBJECT: v1 0x007CD2E8 ?ConsoleModalState7CD2E8@@3HA
-int ConsoleModalState7CD2E8 = 0;
-
 // ORIGINAL: 0x005178C0 ?on_key_click@Console@@QAEHHH@Z 0x005178C0-0x0051B66F;0x0065D4D0-0x0065D4E2
-// RECOVERY_BINDING: v1 {"reason":"Recover the complete Console key/event dispatcher in its genuine virtual MapWin/GraphicWin owner, with ordinary scoped Log lifetime and typed map, player, vehicle, modal-window and editor operations.","evidence":["Pinned entry 0x005178C0-0x0051B66F and EH span 0x0065D4D0-0x0065D4E2; receiver is the Console virtual GraphicWin subobject.","Independent native entry/cursor/modal review: zero-tested mode-8 member, false-visible button handoff, normalized versus raw dispatch and unconditional confirmed single-player quit.","Current VC6 emits the UAE virtual member and its own vtordisp thunk; retain the legacy QAE interpreted original name, not a hand-coded adjustment."]}
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned entry 0x005178C0-0x0051B66F and EH span 0x0065D4D0-0x0065D4E2; receiver is the Console virtual GraphicWin subobject.", "Independent native entry/cursor/modal review: zero-tested mode-8 member, false-visible button handoff, normalized versus raw dispatch and unconditional confirmed single-player quit.", "Current VC6 emits the UAE virtual member and its own vtordisp thunk; retain the legacy QAE interpreted original name, not a hand-coded adjustment.", "MainInterfaceGlobal original7AE820; header button_group_[4] begins1E878 with stride94. Element3 is7CD254, its selection field84 is7CD2D8, and the following MainInterface field1EAC8 is7CD2E8.", "Pinned MainInterface constructor45EF10 constructs four ButtonGroups at+1E878 with ctor62B7C0 and dtor4325B0; destructor45EB80 tears down that same owned array. Noncompact init populates group3 with brush buttons1036..1041.", "Pinned MainInterface init4596CD clears its+1EAC8 member; Console key517A0B/517A93 reads that same original cell. The former ConsoleModalState7CD2E8 symbol retains its unbounded identity as a member binding next to MainInterfaceGlobal."], "reason": "Recover the complete Console key/event dispatcher in its genuine virtual MapWin/GraphicWin owner, with ordinary scoped Log lifetime and typed map, player, vehicle, modal-window and editor operations. Read the input gate from its genuine MainInterface member, not a duplicated standalone Console global; preserve independent reads, short-circuit order and clear_message behavior."}
 // kind      game
 // symbol    ?on_key_click@Console@@UAEHHH@Z
 int Console::on_key_click(int a1, int a2) {
@@ -11574,15 +11564,14 @@ if (a2 == 0x91) {
     MainInterfaceGlobal.draw_edit_pane();
 }
 
-// Native Enter/Space panel handoff (0x5179F0..0x517AB7). The scalar and
-// ButtonGroup is the real MainInterface member; the standalone modal-state
-// scalar remains provisional as described beside its definition.
+// Native Enter/Space panel handoff (0x5179F0..0x517AB7). Both the gate word
+// and ButtonGroup belong to the live MainInterface object.
 {
     bool enter_space_handoff = false;
     if (a2 == 0x0D || a1 == 0x20) {
         if (NetMsgPrimary.is_active() == 0 &&
             NetMsgSecondary.is_active() == 0 &&
-            ConsoleModalState7CD2E8 == 0 &&
+            MainInterfaceGlobal.input_gate_state() == 0 &&
             MainInterfaceGlobal.button_group(0).field_84_ == 0x3E8 &&
             TutWinBaseWindow.is_visible() == 0) {
             enter_space_handoff = true;
@@ -11602,7 +11591,7 @@ if (a2 == 0x91) {
         if (MultiWindowOpen != 0) {
             MultiWindow.hide();
         }
-        if (ConsoleModalState7CD2E8 != 0) {
+        if (MainInterfaceGlobal.input_gate_state() != 0) {
             MainInterfaceGlobal.clear_message();
         }
         if (NetMsgPrimary.is_active() != 0 ||

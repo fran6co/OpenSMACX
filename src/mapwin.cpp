@@ -785,6 +785,11 @@ void MapWin::do_image_buttons() {
 // The hit-test rectangle at 0x007AF50C is this object's +0xCEC member;
 // MapWin::main_caption also selects its complete receiver at 0x007AE820.
 // RECOVERY_OBJECT: v1 0x007AE820 ?MainInterfaceGlobal@@3VMainInterface@@A
+// The former independent Console gate identity is this embedded word:
+// 0x007AE820 + 0x1EAC8 = 0x007CD2E8. MainInterface::init clears it at
+// 0x004596CD and Console's Enter/Space paths read it at 0x00517A0B/0x00517A93.
+// Keep its historical unbounded identity without asserting a new extent.
+// RECOVERY_OBJECT: v3 0x007CD2E8 ?ConsoleModalState7CD2E8@@3HA member ?MainInterfaceGlobal@@3VMainInterface@@A field_1EAC8_
 MainInterface MainInterfaceGlobal;  // 0x007AE820
 
 /*

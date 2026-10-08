@@ -206,20 +206,23 @@ int main() {
         "TAIL", tail).replace("PBEM_VALUE", "1" if pbem else "0")
 
 
-def _netmsg_activity_harness(first_gate: str, later_gate: str) -> str:
+def _owned_netmsg_harness(first_gate, input_gate, later_gate, declaration, getter):
     return r'''
 #include <assert.h>
-int active_calls[8], active_count;
+#include <stdint.h>
+int active_calls[8], active_count, clear_message_calls;
 struct NetMsgStub {
     int id, active;
     int is_active() const { active_calls[active_count++] = id; return active; }
 } NetMsgPrimary = {1, 0}, NetMsgSecondary = {2, 0};
-int ConsoleModalState7CD2E8;
 struct ButtonGroupStub { int field_84_; };
 struct MainInterfaceStub {
-    ButtonGroupStub group;
-    ButtonGroupStub &button_group(int) { return group; }
-} MainInterfaceGlobal = {{0x3E8}};
+    ButtonGroupStub button_group_[4];
+    MEMBER_DECL
+    GETTER_BODY
+    ButtonGroupStub &button_group(int index) { return button_group_[index]; }
+    void clear_message() { ++clear_message_calls; }
+} MainInterfaceGlobal = {{{0x3E8}, {0}, {0}, {0}}, 0};
 struct TutWindowStub { int is_visible() const { return 0; } } TutWinBaseWindow;
 bool initial_gate(int a1, int a2) {
     bool enter_space_handoff = false;
@@ -227,13 +230,13 @@ FIRST_GATE
     return enter_space_handoff;
 }
 int later_gate() {
+INPUT_GATE
 LATER_GATE
     return 0;
 native_done:
     return 1;
 }
 int main() {
-    // Original order is Primary (0x80A6BC), then Secondary (0x805304).
     active_count = 0; NetMsgPrimary.active = NetMsgSecondary.active = 0;
     assert(initial_gate(0, 0x0D));
     assert(active_count == 2 && active_calls[0] == 1 && active_calls[1] == 2);
@@ -243,6 +246,23 @@ int main() {
     active_count = 0; NetMsgPrimary.active = 0; NetMsgSecondary.active = 1;
     assert(!initial_gate(0, 0x0D));
     assert(active_count == 2 && active_calls[0] == 1 && active_calls[1] == 2);
+
+    MainInterfaceGlobal.field_1EAC8_ = 0;
+    active_count = 0; NetMsgPrimary.active = NetMsgSecondary.active = 0;
+    assert(initial_gate(0, 0x0D));
+    MainInterfaceGlobal.field_1EAC8_ = 1;
+    active_count = 0; NetMsgPrimary.active = NetMsgSecondary.active = 0;
+    assert(!initial_gate(0, 0x0D));
+    assert(active_count == 2 && active_calls[0] == 1 && active_calls[1] == 2);
+
+    // Both gates are read from the member; this second block owns the
+    // clear_message side effect and must not reuse the earlier gate result.
+    MainInterfaceGlobal.field_1EAC8_ = 0;
+    clear_message_calls = 0;
+    assert(later_gate() == 0 && clear_message_calls == 0);
+    MainInterfaceGlobal.field_1EAC8_ = 1;
+    clear_message_calls = 0;
+    assert(later_gate() == 0 && clear_message_calls == 1);
 
     active_count = 0; NetMsgPrimary.active = NetMsgSecondary.active = 0;
     assert(later_gate() == 0);
@@ -255,7 +275,21 @@ int main() {
     assert(active_count == 2 && active_calls[0] == 1 && active_calls[1] == 2);
     return 0;
 }
-'''.replace("FIRST_GATE", first_gate).replace("LATER_GATE", later_gate)
+'''.replace("FIRST_GATE", first_gate).replace("INPUT_GATE", input_gate).replace(
+        "LATER_GATE", later_gate
+    ).replace("MEMBER_DECL", declaration).replace("GETTER_BODY", getter)
+
+
+def _netmsg_activity_harness(first_gate: str, later_gate: str) -> str:
+    proposal = actual_source()
+    input_gate = _selected(proposal, "if (MainInterfaceGlobal.input_gate_state() != 0) {")
+    header = (ROOT / "src/maininterface.h").read_text()
+    declaration = re.search(r"(?m)^\s*uint32_t field_1EAC8_;\s*$", header)
+    getter = re.search(
+        r"(?m)^\s*uint32_t input_gate_state\(\) const \{\s*return field_1EAC8_;\s*\}", header)
+    assert declaration and getter
+    return _owned_netmsg_harness(first_gate, input_gate, later_gate,
+                                declaration.group(0).strip(), getter.group(0).strip())
 
 
 def _y_join_harness(route: str) -> str:

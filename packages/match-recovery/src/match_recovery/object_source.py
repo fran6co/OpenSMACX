@@ -142,17 +142,26 @@ def validate_object_symbol_ownership(bindings) -> None:
         raise ValueError("duplicate original object symbol binding")
     member_ids = {row.symbol for row in rows if row.parent_symbol is not None}
     parent_units = {}
-    direct_symbols = {row.symbol for row in rows if row.parent_symbol is None}
     for row in rows:
         if row.parent_symbol is None:
             continue
         owner = parent_units.setdefault(row.parent_symbol, row.unit)
         if owner != row.unit:
             raise ValueError("member parent symbol is bound from multiple source units")
-    aliases = (member_ids | direct_symbols) & set(parent_units)
+    # A direct original identity can anchor its own emitted parent object.
+    # Historical child names still cannot alias any emitted member owner.
+    aliases = member_ids & set(parent_units)
     if aliases:
         raise ValueError("historical object identity conflicts with an emitted member owner: "
                          + sorted(aliases)[0])
+    for parent, unit in parent_units.items():
+        direct = [row for row in rows if row.parent_symbol is None and row.symbol == parent]
+        if direct and (len(direct) != 1 or direct[0].unit != unit):
+            raise ValueError("direct parent object identity must share the member owner's translation unit")
+        if direct and any((row.origin.image_sha256, row.origin.address_space) !=
+                          (direct[0].origin.image_sha256, direct[0].origin.address_space)
+                          for row in rows if row.parent_symbol == parent):
+            raise ValueError("direct parent and member identities belong to different original address domains")
 
 
 def object_targets(bindings: tuple[ObjectBinding, ...], objects: dict) -> tuple[dict, list]:
@@ -162,8 +171,7 @@ def object_targets(bindings: tuple[ObjectBinding, ...], objects: dict) -> tuple[
     emitted = {}
     for binding in bindings:
         symbol = binding.parent_symbol or binding.symbol
-        identity = (("member_parent", binding.unit, binding.parent_symbol)
-                    if binding.parent_symbol is not None else ("direct", binding.unit, binding.symbol))
+        identity = ("owner", binding.unit, symbol)
         if symbol in emitted and emitted[symbol] != identity:
             raise ValueError("one emitted object symbol is bound to multiple original object identities")
         emitted[symbol] = identity
@@ -191,6 +199,16 @@ def object_targets(bindings: tuple[ObjectBinding, ...], objects: dict) -> tuple[
             resolved_groups[(unit, parent)] = (bases[0], layouts)
         except ValueError:
             bad_groups.add((unit, parent))
+    direct_parents = {(row.unit, row.symbol): row for row in bindings
+                      if row.parent_symbol is None and any(
+                          member.unit == row.unit and member.parent_symbol == row.symbol
+                          for member in bindings)}
+    # A directly bound parent anchors the whole member group. Refuse its
+    # target too if fresh member layout is missing or implies another base.
+    for group, direct in direct_parents.items():
+        resolved = resolved_groups.get(group)
+        if group in bad_groups or resolved is None or resolved[0] != direct.origin.address:
+            bad_groups.add(group)
     for binding in bindings:
         obj = objects.get(binding.unit)
         if obj is None:
@@ -205,6 +223,9 @@ def object_targets(bindings: tuple[ObjectBinding, ...], objects: dict) -> tuple[
             valid = valid and group not in bad_groups and group in resolved_groups
             if valid:
                 address = resolved_groups[group][0]
+        elif (binding.unit, binding.symbol) in direct_parents:
+            group = (binding.unit, binding.symbol)
+            valid = valid and group not in bad_groups and group in resolved_groups
         reports.append({"symbol": binding.symbol, "unit": binding.unit,
                         "address": f"0x{binding.origin.address:08X}",
                         "definition": "pass" if valid else "unknown",

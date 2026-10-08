@@ -31,30 +31,47 @@ UNIT = "code/owner.cc"
 PARENT = "_parent"
 
 
-def udt_types(*, duplicate_field=False, omit_field=False, nested=False, member_type=0x74):
+def udt_types(*, duplicate_field=False, omit_field=False, nested=False, member_type=0x74,
+              inherited=False, truncated_base=False):
     if nested:
         inner_fields = record(0x1203, struct.pack("<HHIH", 0x1405, 0, 0x74, 0) + b"\x05value")
         inner = record(0x1005, struct.pack("<HHIIIH", 1, 0, 0x1000, 0, 0, 4) + b"\x05Inner")
         outer_fields = record(0x1203, struct.pack("<HHIH", 0x1405, 0, 0x1001, 4) + b"\x05inner")
         outer = record(0x1005, struct.pack("<HHIIIH", 1, 0, 0x1002, 0, 0, 16) + b"\x05Outer")
         return inner_fields + inner + outer_fields + outer, 0x1003, ("inner", "value")
+    if inherited:
+        base_fields = record(0x1203, struct.pack("<HHIH", 0x1405, 0, 0x74, 0) + b"\x0abase_child")
+        base = record(0x1005, struct.pack("<HHIIIH", 1, 0, 0x1000, 0, 0, 4) + b"\x04Base")
+        members = struct.pack("<HHI", 0x1400, 0, 0x1001)
+        if not truncated_base:
+            members += struct.pack("<H", 0)
+            if not omit_field:
+                members += struct.pack("<HHIH", 0x1405, 0, member_type, 4) + b"\x05child"
+                if duplicate_field:
+                    members += struct.pack("<HHIH", 0x1405, 0, member_type, 8) + b"\x05child"
+        fields = record(0x1203, members)
+        count = 1 + (not omit_field) + duplicate_field
+        parent = record(0x1005, struct.pack("<HHIIIH", count, 0, 0x1002, 0, 0, 16) + b"\x06Parent")
+        return base_fields + base + fields + parent, 0x1003, ("child",)
     members = b""
     count = 0
     if not omit_field:
-        members += record(0x1203, struct.pack("<HHIH", 0x1405, 0, member_type, 4) + b"\x05child")
+        members += struct.pack("<HHIH", 0x1405, 0, member_type, 4) + b"\x05child"
         count += 1
         if duplicate_field:
-            members += record(0x1203, struct.pack("<HHIH", 0x1405, 0, member_type, 8) + b"\x05child")
+            members += struct.pack("<HHIH", 0x1405, 0, member_type, 8) + b"\x05child"
             count += 1
     parent = record(0x1005, struct.pack("<HHIIIH", count, 0, 0x1000 if count else 0, 0, 0, 16) + b"\x06Parent")
-    return members + parent, 0x1001, ("child",)
+    return (record(0x1203, members) if count else b"") + parent, 0x1001 if count else 0x1000, ("child",)
 
 
 def owner_object(value=None, *, damage=None, duplicate_symbol=False, nested=False,
-                 field_size=4, member_type=0x74, data_relocations=()):
+                 field_size=4, member_type=0x74, data_relocations=(),
+                 inherited=False, truncated_base=False):
     value = bytes(16) if value is None else value
     types, type_index, path = udt_types(duplicate_field=damage == "duplicate_field",
                                        omit_field=damage == "missing_field", nested=nested,
+                                       inherited=inherited, truncated_base=truncated_base,
                                        member_type=member_type)
     if damage == "wrong_size":
         types = record(0x1203, struct.pack("<HHIH", 0x1405, 0, 0x71, 4) + b"\x05child") + \
@@ -141,6 +158,59 @@ def test_grouped_member_bindings_resolve_parent_base_and_addend_references():
                                struct.pack("<I", 8), (Relocation(0, RelocationKind.ABSOLUTE32, PARENT),),
                                targets, original_absolute_sites=frozenset({0}))
     assert proof["result"] == "pass"
+
+
+def test_direct_parent_and_member_bindings_resolve_one_atomic_target():
+    obj, _ = owner_object(inherited=True)
+    parent = ObjectBinding(Origin(PIN, "pe:va", 0x401000), PARENT, UNIT, 1)
+    child = bound_object(0x401004)
+    targets, reports = object_targets((parent, child), {UNIT: obj})
+    assert targets[PARENT] == 0x401000
+    assert [row["definition"] for row in reports] == ["pass", "pass"]
+    assert member_data_layout(obj, PARENT, ("child",))["member_offset"] == 4
+
+
+def test_parent_address_mismatch_and_unavailable_layout_refuse_the_whole_group():
+    obj, _ = owner_object()
+    parent = ObjectBinding(Origin(PIN, "pe:va", 0x402000), PARENT, UNIT, 1)
+    child = bound_object(0x401004)
+    targets, reports = object_targets((parent, child), {UNIT: obj})
+    assert PARENT not in targets and [row["definition"] for row in reports] == ["unknown", "unknown"]
+
+    unavailable, _ = owner_object(damage="missing_cv")
+    parent = ObjectBinding(Origin(PIN, "pe:va", 0x401000), PARENT, UNIT, 1)
+    targets, reports = object_targets((parent, child), {UNIT: unavailable})
+    assert PARENT not in targets and [row["definition"] for row in reports] == ["unknown", "unknown"]
+
+
+def test_ambiguous_or_truncated_inherited_layout_stays_unknown_for_both_identities():
+    parent = ObjectBinding(Origin(PIN, "pe:va", 0x401000), PARENT, UNIT, 1)
+    child = bound_object(0x401004)
+    for obj, _ in (owner_object(damage="duplicate_field", inherited=True),
+                   owner_object(damage="truncated_base", inherited=True, truncated_base=True)):
+        targets, reports = object_targets((parent, child), {UNIT: obj})
+        assert PARENT not in targets
+        assert [row["definition"] for row in reports] == ["unknown", "unknown"]
+
+
+def test_direct_member_lookup_never_walks_base_names_or_out_of_bounds_extents():
+    obj, _ = owner_object(inherited=True)
+    assert member_data_layout(obj, PARENT, ("child",))["member_offset"] == 4
+    with pytest.raises(ValueError, match="named CodeView member"):
+        member_data_layout(obj, PARENT, ("base_child",))
+    out_of_bounds, _ = owner_object(damage="out_of_parent")
+    with pytest.raises(ValueError, match="outside its owning UDT"):
+        member_data_layout(out_of_bounds, PARENT, ("child",))
+
+
+def test_parent_binding_requires_same_unit_and_original_address_domain():
+    child = bound_object(0x401004)
+    other_unit = ObjectBinding(Origin(PIN, "pe:va", 0x401000), PARENT, "other/owner.cc", 1)
+    with pytest.raises(ValueError, match="translation unit"):
+        object_targets((child, other_unit), {})
+    foreign = ObjectBinding(Origin("b" * 64, "pe:va", 0x401000), PARENT, UNIT, 1)
+    with pytest.raises(ValueError, match="address domains"):
+        object_targets((child, foreign), {})
 
 
 def test_disagreeing_original_parent_bases_refuse_instead_of_last_binding_wins():
@@ -401,15 +471,33 @@ def test_guarded_rehome_writer_rejects_eof_anchor_inside_open_block_comment():
             pin=PIN, address_space="pe:va")
 
 
-def test_guarded_rehome_writer_rejects_direct_member_owner_identity_collision():
+def test_guarded_rehome_writer_preserves_direct_parent_and_child_history():
     path = "src/owner.cc"
     raw = (b"// RECOVERY_OBJECT: v1 0x401000 _state\nint state;\n"
-           b"// RECOVERY_OBJECT: v1 0x401010 old_child\nint child;\n")
+           b"// RECOVERY_OBJECT: v2 0x401004 0x401008 old_child 0x401004\nint child;\n")
     expected = parse_objects(raw.decode(), path, PIN, address_space="pe:va")
-    moved = replace(expected[1], parent_symbol="_state", member_path=("child",))
-    with pytest.raises(ValueError, match="emitted member owner"):
-        replace_object_records({path: raw}, expected=expected, replacements=(moved,),
-                               destination=path, pin=PIN, address_space="pe:va")
+    moved = replace(expected[1], line=5, parent_symbol="_state", member_path=("child",))
+    result = replace_object_records({path: raw}, expected=expected, replacements=(moved,),
+                                    destination=path, pin=PIN, address_space="pe:va")
+    actual = parse_objects(result[path].decode(), path, PIN, address_space="pe:va")
+    assert len(actual) == 2
+    direct, child = actual
+    assert direct == expected[0]
+    old = expected[1]
+    assert (child.origin, child.symbol, child.span, child.evidence, child.interpretation_id) == (
+        old.origin, old.symbol, old.span, old.evidence, old.interpretation_id)
+    assert (child.parent_symbol, child.member_path) == ("_state", ("child",))
+
+
+def test_member_rehome_to_scalar_parent_does_not_publish_native_target():
+    from test_object_data import data_fixture
+
+    scalar_parent = Coff(data_fixture(bytes(4), type_index=0x74, definition=b"_state"))
+    parent = ObjectBinding(Origin(PIN, "pe:va", 0x401000), "_state", UNIT, 1)
+    child = replace(bound_object(0x401004), parent_symbol="_state")
+    targets, reports = object_targets((parent, child), {UNIT: scalar_parent})
+    assert "_state" not in targets
+    assert [row["definition"] for row in reports] == ["unknown", "unknown"]
 
 
 def test_guarded_rehome_writer_rejects_old_child_aliasing_sibling_parent():

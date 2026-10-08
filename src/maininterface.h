@@ -313,6 +313,7 @@ class MainInterface : public GraphicWin, public SubInterface {
   const RECT &status_right_rect() const { return status_right_rect_; }
   const RECT &info_panel_frame() const { return info_panel_frame_; }
   ButtonGroup &button_group(int index) { return button_group_[index]; }
+  uint32_t input_gate_state() const { return field_1EAC8_; }
 
  private:
   // 0xA14 is the real SubInterface base - its vptr and one dword occupy
@@ -400,6 +401,9 @@ class MainInterface : public GraphicWin, public SubInterface {
   // WorldWin::set_detail_map reaches element 1 at global+0x1E878+0x94.
   // RECOVERY_MEMBER: v4 MainInterface button_group_ ButtonGroup[4] 0x1E878 0x250 0x004C3950
   ButtonGroup button_group_[4];
+  // Console's Enter/Space gates read this same word; MainInterface::init
+  // clears it at pinned 0x004596CD. Its broader semantics remain unproved.
+  // RECOVERY_MEMBER: v1 MainInterface field_1EAC8_ 0x1EAC8 0x004596CD
   uint32_t field_1EAC8_;
   StringBox string_box_;
   Font font1_;
