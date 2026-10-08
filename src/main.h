@@ -58,12 +58,6 @@
 // inside this range and never show.
 extern char CommandLineText[0x108];
 
-// 0x00696ECC. Which popup allocator the game uses. See the comment in
-// src/main.cpp on why WinMain stores into it twice.
-class BasePop;
-typedef BasePop *(__cdecl func_popup_alloc)();
-extern func_popup_alloc *PopupAllocHook;
-
 // 0x009469FC. Non-zero while a modal `BasePop::exec` is on the stack;
 // `Popup::calculate_dimensions` (0x00404B10) and `thumb_routine` (0x005898A0)
 // are the other two functions in the corpus that touch it. WinMain clears it.

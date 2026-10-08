@@ -22,15 +22,10 @@
 #include "stdafx.h"
 #include "original_seam.h"
 #include "basepop.h"
-#include "main.h"  // PopupAllocHook - the tree's own 0x00696ECC slot
 #include "dialogs.h"
 #include "general.h"  // mem_get in init_class
-#include "datalink.h"
-#include "worldwin.h"
-#include "dipedit.h"
 #include "filewin.h"
 #include "stringstruct.h"  // StringAllocationHeap - the 0x009B3374 hand-off
-#include "popup.h"  // PopupStartCaption - set_def_file's 0x009B8AA8 buffer
 #include "text.h"  // text_open / text_get / text_close - start's script reader
 #include <cstring>
 
@@ -1401,13 +1396,26 @@ BasePop *BasePop::basepop_alloc() {
     return new BasePop();
 }
 
+// The image's .data initial value is the generic BasePop allocator address.
+// WinMain preserves its explicit startup registration, then installs Popup's
+// application-specific allocator over this default.
+func_popup_alloc *PopupAllocHook = &BasePop::basepop_alloc;
+
+// AN ARRAY, NOT A POINTER. 0x009B8AA8 is in .bss - zero-filled, in no
+// file section - and the image pushes its ADDRESS as an immediate
+// (`push 0x9b8aa8`), which is a decayed array. Through a `char *`
+// variable it is a load and a push instead.
+// EXTENT IS A FLOOR: nothing recovered bounds the writes into it, so
+// 256 is this tree's usual caption size rather than a measured one.
+char PopupStartCaption[256];  // 0x009B8AA8
+
 // RECOVERY_OBJECT: v1 0x009B8D80 ?BasePopDefaultOkText@@3PADA
 char *BasePopDefaultOkText;      // 0x009B8D80
 // RECOVERY_OBJECT: v1 0x009B8D84 ?BasePopDefaultCancelText@@3PADA
 char *BasePopDefaultCancelText;  // 0x009B8D84
 
 // The image reads the popup allocator through the 0x00696ECC slot; the tree
-// owns that slot as the real `PopupAllocHook` global (main.cpp), whose
+// owns that slot as the real `PopupAllocHook` global (basepop.cpp), whose
 // static initializer is the image's own .data value 0x00604E40. Calling the
 // global directly is the image's single memory-indirect `call dword ptr
 // [slot]` - spelling the call through a pointer-to-pointer makes VC6 split
@@ -4148,24 +4156,6 @@ void BasePop::on_redraw() {
     if (height <= field_30DC_ + own_bottom) {
         BasePopDrawnBottom = field_30DC_ + own_bottom;
     }
-}
-// ORIGINAL: 0x0048CF00 sub_48cf00 0x0048CF00-0x0048CF4A BYTE_EXACT
-// symbol    ?sub_48cf00@@YAHPAVBasePop@@H@Z
-
-// 0x0048CF00 is a cdecl operation with an explicit BasePop receiver, not a
-// member call. Its old exact seed and complete span remain in the mapping.
-// Retained seed facts: 74 bytes at 0x0048CF00..0x0048CF4A, zero mapped
-// callers, one direct target 0x006108E0; SpriteBox is the real +0x2240
-// subobject and the redraw callback slot is BasePop +0x3168.
-int __cdecl sub_48cf00(BasePop *owner, int vehicle) {
-    Sprite *const first_vehicle_sprite = &g_VEH_SPRITES[0];
-    owner->set_caller_picture(owner->picture_enabled()
-                                  ? nullptr
-                                  : first_vehicle_sprite);
-    const int result = owner->dialogs().SpriteBox::sprite(
-        first_vehicle_sprite, nullptr, vehicle);
-    owner->set_redraw_callback(veh_sprite_draw);
-    return result;
 }
 
 // ORIGINAL: 0x00406B20 nullsub_27 0x00406B20-0x00406B23 FILE BYTE_EXACT

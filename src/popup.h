@@ -131,9 +131,6 @@ static_assert(sizeof(Popup) == 0x537C,
 // forwards to it with a null final GraphicWin argument.
 
 
-// The two short start forms share the caption buffer at a fixed address.
-extern char PopupStartCaption[256];
-
 // Shared checkbox state read/written by popup dialogs and BaseWin::governor.
 extern int PopupWriteCheckState;
 

@@ -32,7 +32,7 @@
 #include "sprite.h"
 #include "popup.h"
 #include "buffer.h"
-#include "main.h"  // PopupAllocHook - the tree's own 0x00696ECC slot
+#include "main.h"  // legacy include; PopupAllocHook is owned by BasePop via popup.h
 
 #include "general.h"
 // Source-owned Filefind storage; original last_path immediates identify
@@ -1158,7 +1158,7 @@ int __cdecl filefind_init(LPCSTR file_check, BOOL is_complete) {
 
     // SAME HOOK AS `BasePop::init_class` (basepop.cpp): the image reaches
     // the popup allocator through the pointer at 0x00696ECC rather than by
-    // name. The tree owns the slot as the real `PopupAllocHook` global;
+    // name. The BasePop library owns the real `PopupAllocHook` global;
     // calling it directly is the image's single memory-indirect.
     BasePop *const popup = reinterpret_cast<BasePop *>(PopupAllocHook());
     if (!popup) {

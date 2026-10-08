@@ -52,6 +52,17 @@ static_assert(offsetof(BasePopTextBlock, field_114_) == 0x114,
 typedef void (__cdecl *BasePopConfigCallback)(BasePopTextBlock *, int);
 extern BasePopConfigCallback BasePopDefaultField3094;
 
+// The generic popup allocation hook is initialized by this BasePop library
+// owner, then WinMain may install the application-derived Popup allocator.
+class BasePop;
+typedef BasePop *(__cdecl func_popup_alloc)();
+extern func_popup_alloc *PopupAllocHook;
+
+// Shared startup-caption storage consumed by BasePop configuration/start and
+// Popup convenience callers. The existing name and 256-byte extent remain
+// provisional; the image proves the address and writes, not the full extent.
+extern char PopupStartCaption[256];
+
  /*
   * BasePop class
   */

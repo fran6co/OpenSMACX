@@ -353,14 +353,6 @@ void Popup::start(char *text_file, const char *text_label, int value,
 }
 
 
-// AN ARRAY, NOT A POINTER. 0x009B8AA8 is in .bss - zero-filled, in no
-// file section - and the image pushes its ADDRESS as an immediate
-// (`push 0x9b8aa8`), which is a decayed array. Through a `char *`
-// variable it is a load and a push instead.
-// EXTENT IS A FLOOR: nothing recovered bounds the writes into it, so
-// 256 is this tree's usual caption size rather than a measured one.
-char PopupStartCaption[256];  // 0x009B8AA8
-
 // Start's mod-redirection data (popup.h has the role note). As with the link
 // strings, the image's packed copies carry text this build does not ship.
 // INITIAL VALUES FROM THE IMAGE (image_data.py): these are the mod-
@@ -1149,6 +1141,25 @@ Popup::Popup() {
 extern int ConsoleGroupAction;  // 0x009BC070
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x0048CF00 sub_48cf00 0x0048CF00-0x0048CF4A BYTE_EXACT
+// symbol    ?sub_48cf00@@YAHPAVBasePop@@H@Z
+
+// 0x0048CF00 is a cdecl operation with an explicit BasePop receiver, not a
+// member call. Its old exact seed and complete span remain in the mapping.
+// Retained seed facts: 74 bytes at 0x0048CF00..0x0048CF4A, zero mapped
+// callers, one direct target 0x006108E0; SpriteBox is the real +0x2240
+// subobject and the redraw callback slot is BasePop +0x3168.
+int __cdecl sub_48cf00(BasePop *owner, int vehicle) {
+    Sprite *const first_vehicle_sprite = &g_VEH_SPRITES[0];
+    owner->set_caller_picture(owner->picture_enabled()
+                                  ? nullptr
+                                  : first_vehicle_sprite);
+    const int result = owner->dialogs().SpriteBox::sprite(
+        first_vehicle_sprite, nullptr, vehicle);
+    owner->set_redraw_callback(veh_sprite_draw);
+    return result;
+}
+
 // ORIGINAL: 0x0048CEB0 ?veh_sprite_draw@@YAHPAUSprite@@PAUGraphicWin@@HHH@Z 0x0048CEB0-0x0048CEF2 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0048ceb0.cpp: canonical original identity, complete spans and retained historical obligations", "source:src/basepop.h: real owned Dialogs, Sprite and draw callback contract", "source:src/popup.h: Popup lifetime and start interface"], "reason": "The original vehicle draw callback is installed by popv in BasePop draw callback storage3168; real Sprite and GraphicWin pointer formals, GraphicWin Buffer base and source-owned scale globals express its actual owner relationships."}
 // symbol    ?veh_sprite_draw@@YAXPAVSprite@@PAVGraphicWin@@HHH@Z
