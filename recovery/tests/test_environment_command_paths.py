@@ -68,6 +68,25 @@ def test_actual_application_compile_operand_shapes_are_lossless_without_filesyst
         (19, 'source', '/project/src/time.cpp')]
 
 
+@pytest.mark.parametrize('arguments', [
+    ['/FdZ:\\project\\build\\CMakeFiles\\jackal.dir\\jackal.pdb'],
+    ['/Fd', 'build/CMakeFiles/jackal.dir/jackal.pdb'],
+    ['-Fdbuild/CMakeFiles/jackal.dir/jackal.PDB'],
+])
+def test_explicit_compile_pdb_filename_is_not_a_directory(arguments):
+    result = validate_syntax(arguments, '/project', 'compiler-effective')
+    assert result['unsupported'] == []
+    assert len(result['operands']) == 1
+    assert result['operands'][0]['kind'] == 'output_file'
+    assert result['operands'][0]['path'].lower() == '/project/build/cmakefiles/jackal.dir/jackal.pdb'
+
+
+def test_unknown_compile_pdb_extension_refuses_instead_of_guessing():
+    result = describe_command(['/Fdbuild/jackal.unknown'], '/project', stage='compiler-effective')
+    assert result['unsupported']
+    assert result['operands'] == []
+
+
 def test_host_stage_link_paths_preserve_prefix_case_and_library_multiplicity():
     arguments = ['/nologo', 'CMakeFiles/app.dir/src/time.cpp.obj', '/out:app.exe',
                  '/implib:app.lib', '/pdb:app.pdb', '/version:0.0', '/machine:X86',

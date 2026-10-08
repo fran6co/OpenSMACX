@@ -1,8 +1,9 @@
 """Lossless path operands for this project's VC6 compiler/link command stages.
 
 This describes syntax only. It never compares commands, grants permission,
-resolves libraries or infers a path from a file's existence. In particular /Fd
-describes the directory convention used by this project's application recipes.
+resolves libraries or infers a path from a file's existence. For /Fd, explicit
+.pdb names describe files; extensionless operands and CMakeFiles/*.dir retain
+the application recipe's directory convention. Other extensions are unsupported.
 """
 
 from pathlib import PurePosixPath
@@ -34,6 +35,14 @@ def describe_command(arguments, cwd, *, stage):
     def operand(index, start, kind):
         word = arguments[index]
         spelling = word[start:]
+        if kind == 'pdb_output':
+            pdb_path = PurePosixPath(spelling.replace('\\', '/'))
+            suffix = pdb_path.suffix.lower()
+            cmake_directory = suffix == '.dir' and pdb_path.parent.name == 'CMakeFiles'
+            if suffix and suffix != '.pdb' and not cmake_directory:
+                refuse(index, 'unsupported program database output spelling')
+                return
+            kind = 'output_file' if suffix == '.pdb' else 'output_directory'
         if not spelling:
             refuse(index, 'missing path operand')
             return
@@ -59,7 +68,7 @@ def describe_command(arguments, cwd, *, stage):
                          'path': str(path), 'kind': kind, 'codec': codec})
 
     compiler_options = (('/FI', 'input_file'), ('/Fo', 'output_file'),
-                        ('/Fd', 'output_directory'), ('/I', 'input_directory'))
+                        ('/Fd', 'pdb_output'), ('/I', 'input_directory'))
     linker_options = (('/OUT:', 'output_file'), ('/IMPLIB:', 'output_file'),
                       ('/PDB:', 'output_file'), ('/MAP:', 'output_file'),
                       ('/LIBPATH:', 'input_directory'), ('/DEF:', 'input_file'))
