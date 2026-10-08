@@ -3880,12 +3880,6 @@ void BaseWin::draw_energy_alloc(int a1) {
 }
 
 
-// Fixed-slot bindings carried from 0041afd0.cpp
-static int *const InterfaceClipRect = (int *)0x007AEC94;
-static int *const MainInterfaceScreenClipTop = (int *)0x007AEC98;
-static int *const MainInterfaceScreenClipRight = (int *)0x007AEC9C;
-static int *const MainInterfaceScreenClipBottom = (int *)0x007AECA0;
-
 // Garrison frames use style3. Original 0x410485 loads style9's mask pointer
 // from 0x78D6B0; that address is a member slot, not a Buffer object itself.
 // ORIGINAL: 0x004103B0 ?draw_garrison@BaseWin@@QAEXH@Z 0x004103B0-0x00410868;0x00651B0D-0x00651B22 FILE
@@ -4017,7 +4011,7 @@ void BaseWin::draw_garrison(int update_mode) {
     canvas->set_clip(&saved_clip);
 }
 
-// ORIGINAL: 0x0041AFD0 ?on_left_up@BaseWin@@QAEXHH@Z 0x0041AFD0-0x0041B10D FILE
+// ORIGINAL: 0x0041AFD0 ?on_left_up@BaseWin@@QAEXHH@Z 0x0041AFD0-0x0041B10D FILE BYTE_EXACT
 // symbol    ?on_left_up@BaseWin@@UAEXHH@Z
 // size      317 bytes
 // prototype void (__thiscall ?on_left_up@BaseWin@@QAEXHH@Z)(BaseWin* this, int, int)
@@ -4076,10 +4070,12 @@ void BaseWin::on_left_up(int xCoord, int yCoord) {
             // a shadowed inner `RECT rect = {...}` measured WORSE (88 of 97
             // against 91), because VC6 gives the aggregate its own slot
             // instead of reusing the outer one.
-            rect.left = *InterfaceClipRect;
-            rect.top = *MainInterfaceScreenClipTop;
-            rect.right = *MainInterfaceScreenClipRight;
-            rect.bottom = *MainInterfaceScreenClipBottom;
+            // Original 0x007AEC94 is MainInterfaceGlobal + 0x474:
+            // its inherited Buffer::rect2_, not separate clip storage.
+            rect.left = MainInterfaceGlobal.Buffer::rect2_.left;
+            rect.top = MainInterfaceGlobal.Buffer::rect2_.top;
+            rect.right = MainInterfaceGlobal.Buffer::rect2_.right;
+            rect.bottom = MainInterfaceGlobal.Buffer::rect2_.bottom;
 
             if (!in_box(xCoord, yCoord, &rect)) {
                 set_cursor(0x7f00);
@@ -4508,7 +4504,7 @@ void __cdecl load_inverts() {
 }
 
 
-// ORIGINAL: 0x0041DD10 ?on_iface_left_up@BaseWin@@QAEXHH@Z 0x0041DD10-0x0041DE5B FILE
+// ORIGINAL: 0x0041DD10 ?on_iface_left_up@BaseWin@@QAEXHH@Z 0x0041DD10-0x0041DE5B FILE BYTE_EXACT
 // symbol    ?on_iface_left_up@BaseWin@@UAEXHH@Z
 //           Q->U 2026-09-06, the IfaceRegistryEntry derivation: the body is
 //           now an override of the interface base's slot, so VC6 mangles it
@@ -4579,31 +4575,12 @@ void __cdecl load_inverts() {
 // context from the first token rather than behind a file read. This
 // emitter computes declarations; it does not carry lessons.
 
-// The fixed addresses this body reads are all already named in the tree:
-// 0x007AE820 is mapwin.h's MainInterfaceGlobal and 0x006A7628 is tutwin.h's
-// TutWinBaseWindow - the other window the drag is mapped through, its
-// client_to_screen / screen_to_client pair bracketing the MainInterface one.
-// 0x006A7A9C..0x006A7AA8 are the four dwords of one RECT, so they are one
-// binding, not four. 0x009B7ABC and 0x009B7AC0 are the two slots that hold a
-// BaseWin pointer while the interface has it captured: releasing the first
-// also notifies the window (vtable slot 4), releasing the second only clears
-// it, which is enter/leave tracking against capture.
-static RECT *const IfaceDropRect = (RECT *)0x006A7A9C;
-// Spelled as references to those dwords, not as pointers to them: the image
-// compares and clears the slots in place (`cmp dword ptr [0x9b7abc], esi`),
-// so a binding the compiler has to load first costs an indirection the
-// original does not pay.
-// Accessor spellings, the same idiom base.h's BaseCurrent() uses: the image
-// compares and clears the dwords in place (`cmp dword ptr [0x9b7abc], esi`),
-// and only a folded literal address compiles to that - a pointer or a
-// reference binding costs the load of the binding first, which the original
-// does not pay.
-static inline void *&IfaceCaptureSlot() {
-    return *reinterpret_cast<void **>(0x009B7ABC);
-}
-static inline void *&IfaceEnterSlot() {
-    return *reinterpret_cast<void **>(0x009B7AC0);
-}
+// Original 0x006A7A9C is TutWinBaseWindow (0x006A7628) + 0x474:
+// GraphicWin's Buffer subobject at +0x444 and its rect2_ at +0x30.
+// It is not BaseWin::rect2_ at +0x40BAC or an independent drag rectangle.
+// The two pointer slots are the already-owned WinPointerOwner3/4 globals;
+// original 0x0041DE30 clears owner 3 before notifying capture loss, and
+// 0x0041DE41 reloads owner 4 after that callback.
 
 void BaseWin::on_iface_left_up(int xCoord, int yCoord) {
     // front + 0x474: the drawing Buffer's own rect2_, not this class's
@@ -4615,16 +4592,14 @@ void BaseWin::on_iface_left_up(int xCoord, int yCoord) {
             MainInterfaceGlobal.client_to_screen(&xCoord, &yCoord);
             TutWinBaseWindow.screen_to_client(&xCoord, &yCoord);
 
-            // Four field copies, and NOT one aggregate assignment: the image
-            // stores each dword as it loads it (`mov ecx,[0x6a7a9c] / mov
-            // [ebp-0x10],ecx`), and the aggregate spelling collapses to a
-            // load-all-then-store-all schedule that measured 37 of 99 against
-            // 93. The first copy - `RECT local_rect = Buffer::rect2_` above -
-            // is the one place the aggregate IS the image's shape.
-            local_rect.left = IfaceDropRect->left;
-            local_rect.top = IfaceDropRect->top;
-            local_rect.right = IfaceDropRect->right;
-            local_rect.bottom = IfaceDropRect->bottom;
+            // Retain four assignments to the existing local. Original
+            // 0x0041DD88..A8 loads left/top/right before storing left, then
+            // loads bottom and stores top/right/bottom. Historical spelling
+            // trials above are not a proof of the current compiler schedule.
+            local_rect.left = TutWinBaseWindow.Buffer::rect2_.left;
+            local_rect.top = TutWinBaseWindow.Buffer::rect2_.top;
+            local_rect.right = TutWinBaseWindow.Buffer::rect2_.right;
+            local_rect.bottom = TutWinBaseWindow.Buffer::rect2_.bottom;
 
             if (in_box(xCoord, yCoord, &local_rect) == 0) {
                 set_cursor(0x7f00);
@@ -4643,18 +4618,17 @@ void BaseWin::on_iface_left_up(int xCoord, int yCoord) {
         }
     }
 
-    // The capture slots hold the FRONT, and 0x41DE26 materialises it once
-    // (`add esi, 0xfffff5ec`) before both compares. A static_cast to the
-    // derived class is the same adjustment the receiver is already carrying;
-    // it replaces the `self - 0xa14` pointer arithmetic the pun needed.
-    BaseWin *const self = static_cast<BaseWin *>(this);
-    if (IfaceCaptureSlot() == self) {
-        IfaceCaptureSlot() = 0;
+    // Slots hold the primary Win base, not the SubInterface receiver.
+    // Original 0x0041DE26 adjusts the latter by -0xA14 before comparing;
+    // the declared hierarchy owns that adjustment, not a raw pointer cast.
+    Win *const self = static_cast<Win *>(this);
+    if (WinPointerOwner3 == self) {
+        WinPointerOwner3 = 0;
         // Front vtable slot 4 (0x10) - Win's on_lose_mouse_capture, the shared no-op.
         on_lose_mouse_capture();
     }
-    if (IfaceEnterSlot() == self) {
-        IfaceEnterSlot() = 0;
+    if (WinPointerOwner4 == self) {
+        WinPointerOwner4 = 0;
     }
 }
 
