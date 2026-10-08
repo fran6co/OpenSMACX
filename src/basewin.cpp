@@ -50,6 +50,7 @@
 #include "faction.h"
 #include "fx.h"
 #include "game.h"
+#include "interface_palette.h"
 #include "random.h"
 #include "log.h"
 #include "popmenu.h"
@@ -2406,7 +2407,7 @@ void BaseWin::draw_queue(int update_mode) {
 }
 
 // ORIGINAL: 0x0040E360 ?draw_production@BaseWin@@QAEXH@Z 0x0040E360-0x0040F0E5;0x00651ACD-0x00651AF8 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["git:f1948a8610bea1917865ab8599ffa231b86813d6:src/unrecovered/0040e360.cpp", "pinned:40E360..40F0E5 and651ACD..651AF8; native grid40EB3F..40EDF4", "source:src/basewin.h;src/base.h;src/caviar.h;src/palette.cpp", "source:recovery/tests/test_basewin_production_actual_source.py"], "reason": "Recover the complete production panel through genuine BaseWin members, source-owned Base/Veh/Facility records, MainInterface Buffer operations and automatic two-Font/one-Sprite lifetimes. Both primary and exception-cleanup spans and the seed transcription lessons remain historical obligations. The original nested mineral grid, signed production selection, callback-sensitive live BaseCurrent reads, caption override lifetime and unclamped-surplus numerator are retained; no intentional bug fix or byte claim is granted. The embedded Caviar count is reset through its existing owner, not a new BaseWin field. Text colours use the existing initialized palette table, not executable-address aliases."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:f1948a8610bea1917865ab8599ffa231b86813d6:src/unrecovered/0040e360.cpp", "pinned:40E360..40F0E5 and651ACD..651AF8; native grid40EB3F..40EDF4", "source:src/basewin.h;src/base.h;src/caviar.h;src/interface_palette.cpp", "source:recovery/tests/test_basewin_production_actual_source.py"], "reason": "Recover the complete production panel through genuine BaseWin members, source-owned Base/Veh/Facility records, MainInterface Buffer operations and automatic two-Font/one-Sprite lifetimes. Both primary and exception-cleanup spans and the seed transcription lessons remain historical obligations. The original nested mineral grid, signed production selection, callback-sensitive live BaseCurrent reads, caption override lifetime and unclamped-surplus numerator are retained; no intentional bug fix or byte claim is granted. The embedded Caviar count is reset through its existing owner, not a new BaseWin field. Text colours use the existing initialized palette table, not executable-address aliases."}
 // TRIED: BaseWin is opaque past field_40b10_ in this scaffold, so every `this`-relative access below 0x40C6C etc. is a raw I32/B8 cast rather than a named member; the two Font locals + one Sprite local (matching the two Font ctor calls and the single Sprite ctor/close pair in the disassembly) reproduce that RAII shape. The header/border setup and the unit-vs-facility info panel are transcribed from the disassembly; the queue-grid cell-size search and its per-item draw loop (~110 instructions) are replaced with a single representative call rather than the original's two-pass sizing + nested row/column loop, since the unnamed FUN_ callees for that section have no recovered signature to transcribe against.
 void BaseWin::draw_production(int update_mode) {
     Font unit_font;
@@ -5936,7 +5937,7 @@ void BaseWin::draw_info(int update_mode) {
 }
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00415730 ?draw_misc@BaseWin@@QAEXH@Z 0x00415730-0x00415B15
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00415730.cpp", "src/basewin.h", "src/alpha.h", "src/faction.h", "src/base.h", "src/palette.cpp", "src/font.h"], "reason": "Recover the miscellaneous base panel through its owned rectangle, label and string table, live Base and PlayerData fields, font line advance, and shared palette rather than executable addresses and raw self-offsets. The retained seed remains for byte restoration."}
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00415730.cpp", "src/basewin.h", "src/alpha.h", "src/faction.h", "src/base.h", "src/interface_palette.cpp", "src/font.h"], "reason": "Recover the miscellaneous base panel through its owned rectangle, label and string table, live Base and PlayerData fields, font line advance, and shared palette rather than executable addresses and raw self-offsets. The retained seed remains for byte restoration."}
 void BaseWin::draw_misc(int update_mode) {
     Buffer *canvas = this;
     RECT panel = rect5_;

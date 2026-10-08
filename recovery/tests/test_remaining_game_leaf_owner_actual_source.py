@@ -73,10 +73,10 @@ def test_all_five_owner_bodies_are_extracted_and_compilable(tmp_path):
 def test_popup_and_action_data_sources_are_real_owners():
     assert_leaf_collection_retired(ROOT)
     popup = (ROOT / "src/popup.cpp").read_text()
-    palette = (ROOT / "src/palette.cpp").read_text()
+    palette = (ROOT / "src/interface_palette.cpp").read_text()
     map_cpp = (ROOT / "src/map.cpp").read_text()
     for address, relative in ((0x00405B20, "src/popup.cpp"),
-                             (0x004BA220, "src/palette.cpp"),
+                             (0x004BA220, "src/interface_palette.cpp"),
                              (0x004C96E0, "src/map.cpp"),
                              (0x005F2830, "src/win.cpp")):
         assert_current_owner(ROOT, address, relative)

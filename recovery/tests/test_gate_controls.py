@@ -63,7 +63,7 @@ class Edits:
     def append(self, name, text):
         self.write(name, self.read(name) + text)
 
-    def claim(self, name="src/palette.cpp"):
+    def claim(self, name="src/jackal/palette.cpp"):
         # Derive the live marker; do not pin a former seed or a changing count.
         return next(line for line in self.read(name).splitlines()
                     if re.fullmatch(r"// ORIGINAL: 0x\w+ \S+ \S+ BYTE_EXACT", line))
@@ -113,7 +113,7 @@ def wrong_image_pin(edits):
 
 def swap_claim(edits):
     old = edits.claim()
-    edits.replace("src/palette.cpp", old, old.removesuffix(" BYTE_EXACT"))
+    edits.replace("src/jackal/palette.cpp", old, old.removesuffix(" BYTE_EXACT"))
     candidate = next(line for line in edits.read("src/caviar.cpp").splitlines()
                      if line.startswith("// ORIGINAL:") and "BYTE_EXACT" not in line and "SEMANTIC" not in line)
     edits.replace("src/caviar.cpp", candidate, candidate + " BYTE_EXACT")
@@ -126,7 +126,7 @@ def conflicting_map(edits):
 
 def symbol(edits, name):
     marker = edits.claim()
-    edits.replace("src/palette.cpp", marker + "\n", marker + "\n// symbol    " + name + "\n")
+    edits.replace("src/jackal/palette.cpp", marker + "\n", marker + "\n// symbol    " + name + "\n")
 
 
 @dataclass(frozen=True)
@@ -142,9 +142,9 @@ class Case:
 CASES = (
     Case("compiler_work_slack", "audit:compiler-work", "fail", slack),
     Case("compiler_work_growth", "audit:compiler-work", "fail",
-         lambda e: e.append("src/palette.h", "\nstatic int *const g_00dead01 = (int *)0x00DEAD01;\n")),
+         lambda e: e.append("src/jackal/palette.h", "\nstatic int *const g_00dead01 = (int *)0x00DEAD01;\n")),
     Case("compiler_work_ignores_block_comments", "audit:compiler-work", "pass",
-         lambda e: e.append("src/palette.h", "\n/*\n g_00dead02 = (int *)0x00DEAD02;\n*/\n")),
+         lambda e: e.append("src/jackal/palette.h", "\n/*\n g_00dead02 = (int *)0x00DEAD02;\n*/\n")),
     Case("bounded_pointer_initial_value", "initial-data", "fail",
          lambda e: e.replace("src/radiobutton.cpp", "Sprite *RadioButtonDefault1 = &g_RADIOBUTTON_SPRITE_1;",
                              "Sprite *RadioButtonDefault1 = 0;")),
@@ -164,14 +164,14 @@ CASES = (
          lambda e: e.append("README.md", "\nRun `uv run tools/harness_not_a_tool_9f3a.py` now.\n")),
     Case("source_mapping_conflict", "mappings", "fail", conflicting_map),
     Case("class_model_growth", "audit:class-debt", "fail",
-         lambda e: e.append("src/palette.h", "\n  void UNK99(int);\n")),
+         lambda e: e.append("src/jackal/palette.h", "\n  void UNK99(int);\n")),
     Case("storage_identity_conflict", "audit:storage", "fail",
-         lambda e: e.append("src/palette.h", "\nextern int StorageConflictControl; // 0x009BB438\n")),
+         lambda e: e.append("src/jackal/palette.h", "\nextern int StorageConflictControl; // 0x009BB438\n")),
     Case("scaled_pointer_offset", "audit:storage", "fail",
-         lambda e: e.append("src/palette.h", "\ninline int *storage_scale_control(Palette *parent) {\n"
+         lambda e: e.append("src/jackal/palette.h", "\ninline int *storage_scale_control(Palette *parent) {\n"
                             "  return reinterpret_cast<int *>(parent + 0xcc);\n}\n")),
     Case("historical_claim_removed", "claim-identities", "fail",
-         lambda e: e.replace("src/palette.cpp", e.claim(), e.claim().replace("// ORIGINAL:", "// ORIGINAl:"))),
+         lambda e: e.replace("src/jackal/palette.cpp", e.claim(), e.claim().replace("// ORIGINAL:", "// ORIGINAl:"))),
     Case("same_count_claim_swap", "claim-identities", "fail", swap_claim),
     Case("conventional_offset_disagrees", "layout", "fail",
          lambda e: e.replace("src/basewin.h", "uint32_t field_1D04C_;  // 0x1D04C",
@@ -191,9 +191,9 @@ CASES = (
                             "    if record.origin is None:\n        return False",
                             "    if True:\n        return False")),
     Case("annotation_marker_spelling", "source", "fail",
-         lambda e: e.replace("src/palette.cpp", e.claim(), e.claim().replace("// ORIGINAL: ", "// ORIGINAL:  ", 1))),
+         lambda e: e.replace("src/jackal/palette.cpp", e.claim(), e.claim().replace("// ORIGINAL: ", "// ORIGINAL:  ", 1))),
     Case("fresh_build_header_damage", "build", "fail",
-         lambda e: e.append("src/palette.h", "\n#error native_gate_header_damage_control\n")),
+         lambda e: e.append("src/jackal/palette.h", "\n#error native_gate_header_damage_control\n")),
 )
 
 
@@ -403,7 +403,7 @@ def test_damage_anchor_still_applies_and_restores_private_source(case, tmp_path)
     # Exercise every project anchor cheaply, without compiling or touching live
     # source. A legitimate rename/rehoming should update its dependent control
     # before an hours-long full-gate run discovers the stale anchor.
-    names = ["src/palette.cpp", "src/palette.h", "src/caviar.cpp", "src/radiobutton.cpp",
+    names = ["src/jackal/palette.cpp", "src/jackal/palette.h", "src/caviar.cpp", "src/radiobutton.cpp",
              "src/radiobutton.h", "src/basewin.h", "src/spritebox.h", "src/sprite.cpp", "src/IMAGE_PIN", "README.md",
              "recovery/audits.json", "packages/match-recovery/src/match_recovery/source/writer.py"]
     original = {}

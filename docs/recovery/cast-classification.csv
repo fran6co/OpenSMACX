@@ -157,7 +157,7 @@ src/net_class.cpp,86,0x00631A20,Net,MISMATCH,bytes,0x169,char *,exact-member-typ
 src/netdaemon.cpp,355,0x005310F0,NetDaemon,NO_COMPILE,this,,volatile uint32_t *,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
 src/netwin.cpp,183,0x00483820,NetWin,MISMATCH,this,,uint8_t *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
 src/netwin.cpp,184,0x00483820,NetWin,MISMATCH,self,0x178,uint32_t *,layout-unreadable,,,,,,hypothesis,"class_layouts cannot total this class, so no offset in it can be resolved"
-src/palette.cpp,48,0x005FE560,Palette,NO_COMPILE,this,,uintptr_t,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
+src/jackal/palette.cpp,48,0x005FE560,Palette,NO_COMPILE,this,,uintptr_t,whole-object-cast,,,,,,proved,"historical pre-move census (line number and verdict are not current measurements); reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
 src/popup.cpp,792,0x004456B0,,NO_COMPILE,this,,uint8_t *,unresolvable,,,,,,derived,?popup_wave_callback@@YAXPAUPopupWave@@H@Z scopes to no class
 src/popup.cpp,794,0x004456B0,,NO_COMPILE,self,0x30ac,const int32_t *,unresolvable,,,,,,derived,?popup_wave_callback@@YAXPAUPopupWave@@H@Z scopes to no class
 src/popup.cpp,796,0x004456B0,,NO_COMPILE,self,0x30d0,int32_t *,unresolvable,,,,,,derived,?popup_wave_callback@@YAXPAUPopupWave@@H@Z scopes to no class

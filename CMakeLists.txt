@@ -236,7 +236,7 @@ set(OPENSMACX_SOURCES
     src/lock.cpp
     src/texture.cpp
     src/menu.cpp
-    src/palette.cpp
+    src/interface_palette.cpp
     src/path.cpp
     src/probe.cpp
     src/pulldown.cpp
@@ -316,12 +316,15 @@ endif()
 # in src/main.cpp - and calls the game's own startup sequence from it. It is
 # not yet a recovered or accepted game. But the artifact is the program
 # being recovered rather than a probe, and its name should say so.
-# The confirmed Jackal lifecycle/version owner is a distinct library. All
-# three entry points are explicitly referenced by WinMain; its one archive
-# member must therefore be selected without a synthetic retention anchor.
-# Other drawing subsystems remain direct application inputs until their
-# membership is established. This is not a claim of complete JACKAL.LIB recovery.
+# The confirmed Jackal lifecycle/version owner is a distinct library. Its
+# referenced entry points and generic Palette implementation are explicit
+# archive inputs; there is no synthetic retention anchor. Other drawing
+# subsystems remain direct application inputs until their membership is
+# established. This is not a claim of complete JACKAL.LIB recovery.
 add_subdirectory(src/jackal)
+# Original interface palette initialization retains a frame pointer;
+# the generic Palette methods use Jackal's ordinary optimized profile.
+set_source_files_properties(src/interface_palette.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")
 add_executable(OpenSMACX ${OPENSMACX_SOURCES})
 
 # Terrain, media decoder and GraphicWin lookup data remain local derivatives of

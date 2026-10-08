@@ -17,6 +17,7 @@
  */
 #include "stdafx.h"
 #include "game.h"
+#include "interface_palette.h"
 #include "main.h"
 #include "win.h"
 #include "alpha.h"

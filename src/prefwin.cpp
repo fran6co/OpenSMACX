@@ -27,6 +27,7 @@
 #include "console.h"
 #include "faction.h"
 #include "game.h"
+#include "interface_palette.h"
 #include "gamma.h"
 #include "prefwin_geometry.h"
 #include "main.h"

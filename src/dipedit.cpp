@@ -18,6 +18,7 @@
 #include "stdafx.h"
 #include "dipedit.h"
 #include "palette.h"
+#include "interface_palette.h"
 #include "statuswin.h"
 #include "worldwin.h"
 #include "checkbox.h"

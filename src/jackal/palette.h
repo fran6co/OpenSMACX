@@ -308,24 +308,3 @@ extern int PaletteSeedCache;
  * is recovered; naming it wrongly is what made the call look arbitrary.
  */
 extern IDirectDrawPalette *DirectDrawPalette;
-
-/*
- * The process palette, at 0x0094C590 in the image. The name is the image's
- * own: its dynamic initialiser `??__Eg_PALETTE1@@YAXXZ` and teardown
- * `??__Fg_PALETTE1@@YAXXZ` were recovered and have since been retired - the
- * CRT owns both halves for the real object (construction before WinMain,
- * atexit destruction at exit).
- *
- * AN OBJECT, NOT A `Palette *` TO A FIXED ADDRESS. Both spellings name the
- * same storage while the DLL is injected into the shipped image, but they are
- * not the same C++: `WinMain` passes the palette to `jackal_init_real` as
- * `push 0x94c590`, which is the address of a global, and a `Palette *`
- * variable would compile that same source into `push dword ptr [g_PALETTE1]`
- * - a load the image does not perform. Declaring it as what it is costs
- * nothing and removes an indirection from every future call site.
- */
-extern Palette g_PALETTE1;
-extern Palette g_PALETTE2;
-
-// Shared interface swatches owned and initialized by textcolor_init.
-extern int TextColourTable[195];

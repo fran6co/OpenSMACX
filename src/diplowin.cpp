@@ -31,6 +31,7 @@
 #include "console.h"
 #include "faction.h"
 #include "game.h"
+#include "interface_palette.h"
 #include "technology.h"
 #include "alpha.h"
 #include "maininterface.h"

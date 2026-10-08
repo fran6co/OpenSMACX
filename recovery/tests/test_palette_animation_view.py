@@ -22,7 +22,7 @@ def test_animation_view_observes_live_owned_slot(tmp_path):
     compiler = shutil.which("g++")
     if not compiler:
         pytest.skip("host C++ compiler unavailable")
-    source = (ROOT / "src/palette.h").read_text()
+    source = (ROOT / "src/jackal/palette.h").read_text()
     fields = braced(source, "struct PaletteInternal {") + " internal_[5];"
     getter = braced(source, "const void *animation_colours(int slot) const")
     harness = """

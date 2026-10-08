@@ -15,10 +15,15 @@ ROOT = Path(__file__).resolve().parents[2]
 OWNERS = {
     0x00454D10: ("src/sprite.cpp", "void __cdecl load_misc()"),
     0x00455EB0: ("src/game.cpp", "void __cdecl load_sprites()"),
-    0x00451A10: ("src/palette.cpp", "void __cdecl load_palette()"),
+    0x00451A10: ("src/interface_palette.cpp", "void __cdecl load_palette()"),
 }
 
 BASE = '97ad25151bb1c72962e41f711299c54a7912ed9d'
+# Pre-Palette-boundary checkpoint for unchanged neighboring bodies. BASE above
+# remains the seed/provenance baseline. Subsequent genuine storage migrations
+# (e.g. TurnCurrentNum -> GameDataStateStorage) changed their external references;
+# comparing today's complete bodies to BASE is not an unchanged-source control.
+PALETTE_BOUNDARY_BASE = '3d36b6a854332711f5168676086cde8d58caa550'
 
 
 @pytest.mark.parametrize('address', tuple(OWNERS))
@@ -84,6 +89,8 @@ def test_native_loader_objects_references_and_layout():
     from match_recovery.object_source import read_objects, object_targets
     from match_recovery.object_data import check_initial_data
     from match_recovery.coff_replica import function_signature
+    from match_recovery.source_history import revision_files
+    from match_recovery.source_replica import replica_roots
     from recovery.environment.wine import VC6_ROOT
     if not (VC6_ROOT / 'BIN/CL.EXE').is_file() or not shutil.which('wine32'):
         pytest.skip('VC6 and Wine32 required')
@@ -91,6 +98,19 @@ def test_native_loader_objects_references_and_layout():
     assert image.read(Span(0x66C540,0x66C544)) == struct.pack('<f',0.01)
     settings = Measurement.read(ROOT)
     compiler = Compiler(ROOT, profile=settings.compiler_profile)
+    # A historical TU requires its historical headers and retired includes.
+    # Overlaying just game.cpp/sprite.h against current sources cannot preserve
+    # that context (temp.h and application palette declarations have moved).
+    roots = replica_roots((*settings.source.roots, *settings.input_roots))
+    historical = revision_files(ROOT, PALETTE_BOUNDARY_BASE, ('src', 'cmake'))
+    # Retain the current measurement recipe's generated compiler context, not
+    # current source headers. Both versions use today's compiler policy; this
+    # is a bounded body/reference comparison, not a historical build proof.
+    for name in roots:
+        if name not in ('src', 'cmake'):
+            for path in (ROOT / name).rglob('*'):
+                if path.is_file():
+                    historical[path.relative_to(ROOT).as_posix()] = path.read_bytes()
     for flags in settings.flag_sets:
         objects = {unit: Coff(compiler(ROOT / unit,(),flags+settings.layout_flags))
                    for unit in sorted({owner for owner,_ in OWNERS.values()})}
@@ -140,17 +160,15 @@ def test_native_loader_objects_references_and_layout():
         assert any('load_pcx@Buffer@@' in s for s in palette)
         assert any('copy_from@Palette@@' in s for s in palette)
         assert any('exec@Gamma@@' in s for s in palette)
-        # This prior game.cpp historical claim already misses. Compare fresh
-        # native code/external-reference signatures; not linked preservation.
-        baseline = {unit:subprocess.check_output(['git','show',BASE+':'+unit],cwd=ROOT)
-                    for unit in ('src/game.cpp','src/sprite.h')}
-        old_game = Coff(compiler.overlay(ROOT/'src/game.cpp',baseline,(),flags+settings.layout_flags))
+        # Compare fresh pre-boundary/current native code and external references.
+        # This does not discharge either body's original restoration obligation
+        # or establish linked preservation.
+        old_game = Coff(compiler.materialize(ROOT/'src/game.cpp', roots,
+                                            historical, (), flags+settings.layout_flags))
         assert function_signature(old_game,'?mon_enemy_destroyed@@YAXHH@Z') == function_signature(objects['src/game.cpp'],'?mon_enemy_destroyed@@YAXHH@Z')
-        # TexHeap::get_mem has a prior matching miss too. Observe both actual
-        # versions rather than attributing it to the appended asset loader.
-        baseline = {unit:subprocess.check_output(['git','show',BASE+':'+unit],cwd=ROOT)
-                    for unit in ('src/sprite.cpp','src/sprite.h')}
-        old_sprite = Coff(compiler.overlay(ROOT/'src/sprite.cpp',baseline,(),flags+settings.layout_flags))
+        # Observe the real TexHeap neighbor under the same bounded checkpoint.
+        old_sprite = Coff(compiler.materialize(ROOT/'src/sprite.cpp', roots,
+                                              historical, (), flags+settings.layout_flags))
         assert function_signature(old_sprite,'?get_mem@TexHeap@@QAEPAXH@Z') == function_signature(objects['src/sprite.cpp'],'?get_mem@TexHeap@@QAEPAXH@Z')
 
 from test_game_logic_seed_batch_behavior import _definition

@@ -32,10 +32,10 @@ def braced(source, signature):
 
 
 def actual_source():
-    header = (ROOT / "src/palette.h").read_text()
+    header = (ROOT / "src/jackal/palette.h").read_text()
     fields = braced(header, "struct PaletteInternal {") + " internal_[5];"
     entries, = re.findall(r"PALETTEENTRY entries_\[256\];", header)
-    body = braced((ROOT / "src/palette.cpp").read_text(), "int Palette::init_cycle(")
+    body = braced((ROOT / "src/jackal/palette.cpp").read_text(), "int Palette::init_cycle(")
     return entries + "\n" + fields, body
 
 

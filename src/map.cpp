@@ -25,6 +25,7 @@
 #include "base.h"
 #include "faction.h"
 #include "game.h"
+#include "interface_palette.h"
 #include "path.h"
 #include "random.h"
 #include "strings.h"

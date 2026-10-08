@@ -9,6 +9,7 @@
 #include "stdafx.h"
 #include "picktech.h"
 #include "palette.h"
+#include "interface_palette.h"
 #include "technology.h"
 #include "strings.h"
 #include "stringstruct.h"

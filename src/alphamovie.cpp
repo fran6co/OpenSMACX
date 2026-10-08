@@ -20,6 +20,7 @@
 // symbol    ??_GAlphaMovie@@UAEPAXI@Z
 // kind      game
 #include "stdafx.h"
+#include "interface_palette.h"
 
 // AlphaMovie constructor-installed Win branch: capture slot4, update slot63.
 // Table start is observed in the original constructor; full extent remains unknown.

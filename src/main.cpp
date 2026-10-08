@@ -21,6 +21,7 @@
 #include "caviar.h"
 #include "font.h"
 #include "game.h"     // control_game
+#include "interface_palette.h"
 #include "general.h"
 #include "jackal.h" // version check and lifecycle library interface
 #include "basepop.h"   // BasePop::basepop_alloc

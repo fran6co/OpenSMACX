@@ -18,6 +18,7 @@
 #include "stdafx.h"
 #include "replaywin.h"
 #include "palette.h"
+#include "interface_palette.h"
 #include "worldwin.h"
 #include "basebutton.h"
 #include "menu.h"

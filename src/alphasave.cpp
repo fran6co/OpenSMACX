@@ -21,6 +21,7 @@
 #include "alpha.h"
 #include "font.h"
 #include "game.h"
+#include "interface_palette.h"
 #include "netdaemon.h"
 #include "strings.h"
 #include "maininterface.h"

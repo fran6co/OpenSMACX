@@ -29,6 +29,7 @@ uint32_t UnkBitfield1;  // 0x0090D91C
 #include "popup.h"  // Existing POP2 owner interface.
 #include "ambience.h"  // load_music, the startup faction ambience owner.
 #include "game.h"
+#include "interface_palette.h"
 #include "sound.h"
 #include "netmsg.h"
 #include "alpha.h"

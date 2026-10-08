@@ -26,6 +26,7 @@
 
 #include "console.h"
 #include "game.h"
+#include "interface_palette.h"
 #include "maininterface.h"
 #include "palette.h"
 #include "pulldown.h"

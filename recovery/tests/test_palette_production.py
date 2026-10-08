@@ -41,7 +41,7 @@ def live_source():
     for name in names:
         definition, = re.findall(r"unsigned char " + name + r"(?:\[\d+\])+;",text)
         definitions.append(definition)
-    header = (ROOT / "src/palette.h").read_text()
+    header = (ROOT / "src/jackal/palette.h").read_text()
     getter = braced(header,header.index("const PALETTEENTRY *entries() const"))
     return "\n".join(definitions), "\n\n".join(bodies), getter
 

@@ -29,6 +29,7 @@
 #include "maininterface.h"
 #include "console.h"
 #include "palette.h"
+#include "interface_palette.h"
 #include "popmenu.h"
 extern int TextColourTable[195];
 
