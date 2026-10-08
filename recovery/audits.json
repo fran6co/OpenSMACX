@@ -32,7 +32,7 @@
         "span_math.cpp markers": 1,
         "table_storage.cpp markers": 1,
         "nullsub_thunks.cpp markers": 46,
-        "stringstruct.cpp markers": 40
+        "stringstruct.cpp markers": 31
       },
       "counters": [
         {
@@ -104,13 +104,13 @@
       ],
       "ceilings": {
         "unk-method": 205,
-        "evidence-free unk": 37,
-        "function-address binding": 2,
-        "orphan redirect": 186,
+        "evidence-free unk": 33,
+        "function-address binding": 0,
+        "orphan redirect": 59,
         "pointer-as-int": 0,
         "undocumented trivial body": 0,
-        "raw self-access": 85,
-        "pointer-parameter as int": 45,
+        "raw self-access": 59,
+        "pointer-parameter as int": 39,
         "scaffold name": 3168
       },
       "counters": []

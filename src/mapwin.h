@@ -137,21 +137,6 @@ class MapWin : public virtual GraphicWin {
   void on_sys_close() override;
 
  public:
-  // THE ENTERED-RECEIVER WALK. The image's Q-spelled handlers (on_sys_close,
-  // on_left_click, ...) are entered with `this` on the GraphicWin virtual
-  // base and fold the walk back to the MapWin front into every access -
-  // `mov eax, [ecx - 0x3cf4]` in on_sys_close, `add ecx, 0xfffde594` in
-  // on_left_click. A Q member's source cannot say "this arrives as the
-  // base", so the walk is spelled: pass the entered receiver, get the front.
-  // The cast lands on the PARAMETER, not on `this`, which keeps the
-  // class_debt raw-self-access census at its ceiling for a pun that is
-  // measured and load-bearing.
-  static MapWin *from_graphic_base(void *entered) {
-    return reinterpret_cast<MapWin *>(
-        static_cast<uint8_t *>(entered) - 0x21A6C);
-  };
-
- public:
   // 0x0046EC10, source-owned right-button handler.
   void on_right_down(int a, int b);
 

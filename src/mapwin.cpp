@@ -922,6 +922,7 @@ void __cdecl mapwin_activate_free_slot(int tile_x, int tile_y) {
 Purpose: Answer WM_SYSCLOSE: clear the window's per-slot state words, then run
          close() - the same owned-pointer free and vbtable walk, inlined.
 // ORIGINAL: 0x0046F880 ?on_sys_close@MapWin@@QAEXXZ 0x0046F880-0x0046F8C0 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned46F880 reads entered GraphicWin-view state at -3CF4/-3CF8, then frees owned buffer at MapWin-front+4 and closes its GraphicWin virtual base.", "Fresh VC6 comparison: old helper emits guard -25760 and front -434D8 (double conversion); typed members emit -3CF4/-3CF8 and a single -21A6C conversion to MapWin::close.", "MapWin::close owns the same free, null-before-base-close sequence. It is an ordinary nonvirtual member; compiler-owned inlining/receiver conversion replaces the raw helper. Historical LEVER below describes the old seed spelling, not current guidance."], "reason": "Recover the system-close callback with genuine MapWin state and the existing owning cleanup method; preserve the original guard, clear, free/null and GraphicWin close order. Historical matching claim remains a restoration obligation."}
 // symbol    ?on_sys_close@MapWin@@UAEXXZ
 // LEVER: byte-exact on promotion from the 0046f880 archive unit. The Q
 //   spelling enters with `this` on the GraphicWin virtual base, and the image
@@ -946,15 +947,9 @@ Return Value: n/a
 Status: Complete
 */
 void MapWin::on_sys_close() {
-    if (from_graphic_base(this)->field_1DD78_ != 0) {
-        from_graphic_base(this)->field_1DD74_ = 0;
-        MapWin *const base = from_graphic_base(this);
-        if (base->owned_ != nullptr) {
-            free(base->owned_);
-            base->owned_ = nullptr;
-        }
-        // The idiomatic spelling, by direction - see close() above.
-        base->GraphicWin::close();
+    if (field_1DD78_ != 0) {
+        field_1DD74_ = 0;
+        close();
     }
 }
 
@@ -8108,21 +8103,10 @@ void __cdecl draw_tile_fixup(int x_coord, int y_coord, int second_x_coord,
     }
 }
 
-// Fixed-slot bindings carried from 0046ec10.cpp
-
 typedef short (__stdcall *KeyStateFn)(int);
 
-class Slot17Shim { public:
-    virtual void slot00(); virtual void slot01(); virtual void slot02();
-    virtual void slot03(); virtual void slot04(); virtual void slot05();
-    virtual void slot06(); virtual void slot07(); virtual void slot08();
-    virtual void slot09(); virtual void slot10(); virtual void slot11();
-    virtual void slot12(); virtual void slot13(); virtual void slot14();
-    virtual void slot15(); virtual void slot16();
-    virtual void slot17(int, int);  // <-- used, offset 0x44
-};
-
 // ORIGINAL: 0x0046EC10 ?on_right_down@MapWin@@QAEXHH@Z 0x0046EC10-0x0046ED21 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned46EC10 has five indirect key-state API calls and one Win-slot17 callback at46ED0C, not six virtual calls.", "Win::on_mouse_move(int,int) is slot17; MapWin overrides it and on_left_down already uses the same typed operation.", "Fresh VC6 candidate calculates Win view through the real vbtable, publishes WinPointerOwner4=0 then WinPointerOwner3 only when null, reloads view/vptr and calls +44 with original x/y. No caching across callback or owner publication."], "reason": "Recover right-button input through existing MapWin/Win members and virtual dispatch rather than an invented slot class or integer-vtable receiver. Preserve original key polling, state stores, global owner publication, arguments and early exits."}
 // symbol    ?on_right_down@MapWin@@UAEXHH@Z
 // size      273 bytes
 // prototype void (__thiscall ?on_right_down@MapWin@@QAEXHH@Z)(MapWin* this, int, int)
@@ -8133,37 +8117,6 @@ class Slot17Shim { public:
 // indirect  0x0046EC76 0x0046EC82 0x0046EC91 0x0046EC9D 0x0046ED0C 0x0046ED18
 // PRESERVED UNIT - measured MNEMONIC_ONLY.
 //
-// Kept for COVERAGE. This directory IS on the ratchet: every file here
-// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
-// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
-// quarter of the project's total. It is still in no build; the earlier
-// header said "on no ratchet", which stopped being true when the map
-// moved into src/ and was still being written into new files.
-//
-// address        0x0046EC10
-// measured tier  MNEMONIC_ONLY
-//
-// The WHOLE unit as measured, scaffolding included: for the units
-// that are byte-exact yet refuse extraction, the agent tuned the
-// emitted scaffolding and the body alone will not reproduce the
-// verdict. To resume, copy everything below back over
-//   build/byte-match/0046ec10/unit.cpp
-// and score it with tools/agent_brief.py.
-// GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?on_right_down@MapWin@@QAEXHH@Z  at 0x0046EC10  (273 bytes)
-//
-// A VERIFICATION ARTIFACT, not product source: classes are opaque and
-// globals are bound to fixed addresses, because both are byte-visible
-// and both differ from the style src/ is written in.
-//
-// The VC6 dialect limits and the source-form rules used to live here.
-// They are knowledge, not scaffolding, so they now live in the agent
-// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
-// where they can be edited without regenerating anything and are in
-// context from the first token rather than behind a file read. This
-// emitter computes declarations; it does not carry lessons.
-
-
 void MapWin::on_right_down(int x_coord, int y_coord) {
     if (MapInputEnabled == 0) {
         return;
@@ -8214,19 +8167,11 @@ check_flag:
         this->field_1DD94_ = -1;
         this->field_1DD90_ = -1;
 
-        char *const entered = entered_receiver(this);
-
-        if (WinPointerOwner3 == 0) {
-            WinPointerOwner4 = 0;
-            WinPointerOwner3 = reinterpret_cast<Win *>(
-                *reinterpret_cast<int32_t *>(entered) + entered);
+        if (WinPointerOwner3 == nullptr) {
+            WinPointerOwner4 = nullptr;
+            WinPointerOwner3 = static_cast<Win *>(this);
         }
-
-        {
-            int32_t offset =
-                *reinterpret_cast<int32_t *>(entered + MapWinEnteredOffset);
-            reinterpret_cast<Slot17Shim *>(entered + offset)->slot17(x_coord, y_coord);
-        }
+        on_mouse_move(x_coord, y_coord);
         return;
     }
 
@@ -8387,55 +8332,10 @@ void __cdecl go_timer(int selection_mode) {
     window->on_mouse_move(mouse_x, mouse_y);
 }
 
-class VCallI { public:
-    virtual void slot000();
-    virtual void slot001();
-    virtual void slot002();
-    virtual void slot003();
-    virtual void slot004();
-    virtual void slot005();
-    virtual void slot006();
-    virtual void slot007();
-    virtual void slot008();
-    virtual void slot009();
-    virtual void slot010();
-    virtual void slot011();
-    virtual void slot012();
-    virtual void slot013();
-    virtual void slot014();
-    virtual void slot015();
-    virtual void slot016();
-    virtual void slot017();
-    virtual void slot018();
-    virtual void slot019();
-    virtual void slot020();
-    virtual void slot021();
-    virtual void slot022();
-    virtual void slot023();
-    virtual void slot024();
-    virtual void slot025();
-    virtual void slot026();
-    virtual void slot027();
-    virtual void slot028();
-    virtual void slot029();
-    virtual void slot030();
-    virtual void slot031();
-    virtual void slot032();
-    virtual void slot033();
-    virtual void slot034();
-    virtual void slot035();
-    virtual void slot036();
-    virtual void slot037();
-    virtual void slot038();
-    virtual void slot039();
-    virtual void slot040();
-    virtual void slot041();
-    virtual void slot042();
-    virtual void slot043();
-    virtual void slot044(int);  // <-- used, takes the region id
-};
+
 
 // ORIGINAL: 0x0046F700 ?on_nc_left_down@MapWin@@QAEXHH@Z 0x0046F700-0x0046F880 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned46F700 reads Win client_rect_.right/+154 and left/+14C, computes right-left-5B, then advances each half-open rectangle by15.", "Win::on_button_clicked(int) is virtual slot44/+B0; MapWin has the existing real override at46F8C0.", "Fresh VC6 private candidate reproduces vbtable-dependent client rectangle reads and independently reloads receiver/vptr for each +B0 call; keep the three early returns and final fallthrough."], "reason": "Recover non-client map buttons using the real Win client rectangle and MapWin virtual on_button_clicked; preserve four ordered hit tests and callbacks 3,2,1,0."}
 // symbol    ?on_nc_left_down@MapWin@@UAEXHH@Z
 // size      384 bytes
 // prototype void (__thiscall ?on_nc_left_down@MapWin@@QAEXHH@Z)(MapWin* this, int, int)
@@ -8446,88 +8346,37 @@ class VCallI { public:
 // indirect  0x0046F784 0x0046F7D3 0x0046F822 0x0046F871
 // PRESERVED UNIT - measured MISMATCH.
 //
-// Kept for COVERAGE. This directory IS on the ratchet: every file here
-// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
-// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
-// quarter of the project's total. It is still in no build; the earlier
-// header said "on no ratchet", which stopped being true when the map
-// moved into src/ and was still being written into new files.
-//
-// address        0x0046F700
-// measured tier  MISMATCH
-// divergence     11
-//
-// The WHOLE unit as measured, scaffolding included: for the units
-// that are byte-exact yet refuse extraction, the agent tuned the
-// emitted scaffolding and the body alone will not reproduce the
-// verdict. To resume, copy everything below back over
-//   build/byte-match/0046f700/unit.cpp
-// and score it with tools/agent_brief.py.
-// GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?on_nc_left_down@MapWin@@QAEXHH@Z  at 0x0046F700  (384 bytes)
-//
-// A VERIFICATION ARTIFACT, not product source: classes are opaque and
-// globals are bound to fixed addresses, because both are byte-visible
-// and both differ from the style src/ is written in.
-//
-// The VC6 dialect limits and the source-form rules used to live here.
-// They are knowledge, not scaffolding, so they now live in the agent
-// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
-// where they can be edited without regenerating anything and are in
-// context from the first token rather than behind a file read. This
-// emitter computes declarations; it does not carry lessons.
-
-
 void MapWin::on_nc_left_down(int x_coord, int y_coord) {
     RECT rect = {0, 0xe, 0x11, 0x1f};
 
-    // `entered` is the GraphicWin virtual base the image hands this
-    // handler: front + 0x21A6C. Every offset below is relative to it.
-    char *const entered = entered_receiver(this);
-
-    int32_t t1 = *reinterpret_cast<int32_t *>(
-        *reinterpret_cast<int32_t *>(entered - 0x21A6C) + 4);
-    int32_t fA = *reinterpret_cast<int32_t *>(entered + t1 - 0x21918);
-    int32_t fB = *reinterpret_cast<int32_t *>(entered + t1 - 0x21920);
-    int32_t diff = fA - fB;
+    const RECT &client = client_rect();
+    int diff = client.right - client.left;
     diff -= 0x5b;
     rect.left = diff;
     rect.right = diff + 0x11;
     if (in_box(x_coord, y_coord, &rect)) {
-        reinterpret_cast<VCallI *>(
-            entered + *reinterpret_cast<int32_t *>(*reinterpret_cast<int32_t *>(entered - 0x21A6C) + 4) -
-            0x21a6c)
-            ->slot044(3);
+        on_button_clicked(3);
         return;
     }
 
     rect.left = rect.left + 0x15;
     rect.right = rect.right + 0x15;
     if (in_box(x_coord, y_coord, &rect)) {
-        reinterpret_cast<VCallI *>(
-            entered + *reinterpret_cast<int32_t *>(*reinterpret_cast<int32_t *>(entered - 0x21A6C) + 4) -
-            0x21a6c)
-            ->slot044(2);
+        on_button_clicked(2);
         return;
     }
 
     rect.right = rect.right + 0x15;
     rect.left = rect.left + 0x15;
     if (in_box(x_coord, y_coord, &rect)) {
-        reinterpret_cast<VCallI *>(
-            entered + *reinterpret_cast<int32_t *>(*reinterpret_cast<int32_t *>(entered - 0x21A6C) + 4) -
-            0x21a6c)
-            ->slot044(1);
+        on_button_clicked(1);
         return;
     }
 
     rect.left = rect.left + 0x15;
     rect.right = rect.right + 0x15;
     if (in_box(x_coord, y_coord, &rect)) {
-        reinterpret_cast<VCallI *>(
-            entered + *reinterpret_cast<int32_t *>(*reinterpret_cast<int32_t *>(entered - 0x21A6C) + 4) -
-            0x21a6c)
-            ->slot044(0);
+        on_button_clicked(0);
     }
 }
 
