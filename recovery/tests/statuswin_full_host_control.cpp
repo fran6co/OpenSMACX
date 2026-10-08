@@ -219,7 +219,7 @@ static int find_font(int,int) { return 0; }
 struct RulesResource { };
 
 struct StatusWin {
-    Font font1_,font2_,font3_; int field_15A8_,field_15C8_,field_15C4_,field_15CC_,field_15D0_,field_15DC_;
+    Font font1_,font2_,font3_; int field_15A8_,hover_base_id_,hover_vehicle_id_,field_15CC_,field_15D0_,field_15DC_;
     int iTileX_,iTileY_,iUnitIndex_,iCityIndex_;
     Spot spot_;
     void draw_status(int,int,int,int,int);

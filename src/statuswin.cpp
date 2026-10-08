@@ -215,8 +215,8 @@ void StatusWin::on_right_click(int x, int y, int) {
         ConsoleGlobal.editor_edit_veh(object_index);
         break;
     }
-    if (selected != 5 && selected != 6 && (field_15C4_ >= 0 || field_15C8_ >= 0)) {
-        field_15C4_ = field_15C8_ = -1;
+    if (selected != 5 && selected != 6 && (hover_vehicle_id_ >= 0 || hover_base_id_ >= 0)) {
+        hover_vehicle_id_ = hover_base_id_ = -1;
         draw_active(field_15CC_, field_15D0_, 0);
     }
 }
@@ -868,8 +868,8 @@ resolve_panel_selection:
               status_right.bottom - status_right.top);
     MainInterfaceGlobal.soft_update(&status_right);
 
-    field_15C8_ = -1;
-    field_15C4_ = -1;
+    hover_base_id_ = -1;
+    hover_vehicle_id_ = -1;
     field_15CC_ = selected_vehicle;
     field_15D0_ = selected_base;
     draw_active(selected_vehicle, selected_base, 1);
@@ -1629,7 +1629,7 @@ void __cdecl say_orders(char *text, int veh_id) {
 }
 
 // ORIGINAL: 0x004B6530 ?reset_active@StatusWin@@QAEXXZ 0x004B6530-0x004B6569 BYTE_EXACT
-// LEVER: 2026-09-05 homed from 004b6530.cpp once field_15C4_/15C8_ became
+// LEVER: 2026-09-05 homed from 004b6530.cpp once hover_vehicle_id_/15C8_ became
 //   signed. The guard is `a >= 0 || b >= 0`, tested with the image's own
 //   `jge`/`jl` - unsigned members would give `jae`/`jb` and -1 would stop
 //   meaning "nothing active". field_15CC_ is read into a local BEFORE the
@@ -1641,10 +1641,10 @@ void __cdecl say_orders(char *text, int veh_id) {
 // flags     hidden;sp_ready;purged_ok
 // calls     0x004B4CF0
 void StatusWin::reset_active() {
-    if (field_15C4_ >= 0 || field_15C8_ >= 0) {
+    if (hover_vehicle_id_ >= 0 || hover_base_id_ >= 0) {
         int draw_arg = field_15CC_;
-        field_15C8_ = -1;
-        field_15C4_ = -1;
+        hover_base_id_ = -1;
+        hover_vehicle_id_ = -1;
         draw_active(draw_arg, field_15D0_, 0);
     }
 }
@@ -1872,8 +1872,8 @@ void StatusWin::init() {
     iTileY_ = 0;
     iUnitIndex_ = -1;
     iCityIndex_ = -1;
-    field_15C8_ = -1;
-    field_15C4_ = -1;
+    hover_base_id_ = -1;
+    hover_vehicle_id_ = -1;
     field_15D0_ = -1;
     field_15CC_ = -1;
     font_size_ = -1;

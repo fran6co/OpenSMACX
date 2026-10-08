@@ -730,14 +730,12 @@ static char *const StrDelConvertedIndex = (char *)0x0068C120;  // "DelConverted 
 // SpaceText, and the caret separator MultiWin's spot label builds from.
 static char *const CaretSeparator = (char *)0x006867C0;         // "^"
 
-// The local faction id the game layer keeps at 0x00939284 - base.cpp and
-// faction.cpp both reach it by address; nothing declares it yet.
-static int *const LocalFactionSlot = (int *)0x00939284;
+// The local faction at 0x00939284 is ConsoleGlobal.faction_id_:
+// source-owned ConsoleGlobal at 0x009156B0 plus member offset 0x23BD4.
 
 // The spot label is built in strings.h's StringTemp (0x009B86A0), the same
 // shared scratch the sibling alpha.cpp prefs paths fill.
 
-// The unit draw-state transparency byte the image keeps beside the wrappers.
 }
 
 // The shared surface Sprite buffer.cpp constructs at 0x009B3A50 (its own
@@ -870,6 +868,7 @@ Purpose: Draw one multiplayer window spot and centre its difficulty caret
 Status: Coverage transcription - unclaimed body
 */
 extern "C" void __fastcall MultiWin_UNK1(MultiWin *self_raw, void *, RECT *rect) {
+    // Pinned 47929D reads ConsoleGlobal +0x23BD4, not independent storage.
     char *const self = reinterpret_cast<char *>(self_raw);
     const int top = rect->top;
     const int height = rect->bottom - top;
@@ -878,7 +877,7 @@ extern "C" void __fastcall MultiWin_UNK1(MultiWin *self_raw, void *, RECT *rect)
     reinterpret_cast<Spot *>(self + 0x28AC)->add(3, 2, left, top, width, height);
 
     const int difficulty = reinterpret_cast<const int *>(
-        reinterpret_cast<const char *>(&PlayersData[*LocalFactionSlot]))[0x2054 / 4];
+        reinterpret_cast<const char *>(&PlayersData[ConsoleGlobal.faction_id_]))[0x2054 / 4];
     if (difficulty >= 0) {
         int carets = (difficulty > 3) ? 3 : difficulty;
         if (carets != 0) {
@@ -913,8 +912,7 @@ Status: Coverage transcription - unclaimed body
 // SpriteScaleNumerator/Denominator (0x00696D18/0x696D1C) and mapwin.h's
 // MapWinCaptionScale/MapWinCaptionDivisor (0x00691E6C/0x00691E70). The
 // facility tables are sprite.cpp's g_TECH_ICON_SPRITES (0x00759E28, 0x2c
-// stride) and the transparency bytes beside it (0x00759E30).
-static unsigned char *const WizardTransTable = (unsigned char *)0x00759E30;
+// stride); each Sprite owns its transparency byte at +8 (first 0x00759E30).
 
 extern "C" void __cdecl tech_wizard_unk2(int canvas, int index, int odd,
                                          int base_x, int base_y, int base_bottom) {
@@ -953,8 +951,10 @@ extern "C" void __cdecl tech_wizard_unk2(int canvas, int index, int odd,
             : reinterpret_cast<Buffer *>(0);
 
         const int entry = index * 11;
-        const unsigned char transparency = WizardTransTable[entry * 4];
         const int sprite_index = (entry * 4) / 0x2C;
+        // Pinned 5BE34F reads array base759E28 + element stride2C + member8.
+        const unsigned char transparency =
+            g_TECH_ICON_SPRITES[sprite_index].transparent_index();
         g_TECH_ICON_SPRITES[sprite_index].draw(target, transparency, x, y);
 
         SpriteScaleNumerator = 1;

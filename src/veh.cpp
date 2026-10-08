@@ -50,6 +50,7 @@
 #include "netdaemon.h"  // NetDaemonNet, synch_veh / order_veh - the action family's net half
 #include "path.h"  // Paths - the move cost table the go-to verbs consult
 #include "console.h"  // ConsoleGlobal - action_gate re-focuses the Console
+#include "statuswin.h"  // ConsoleStatusWin owns its hovered vehicle selection.
 #include "caviar.h"
 #include "font.h"
 #include "infowin.h"
@@ -9368,7 +9369,6 @@ void __cdecl stack_kill(int a1) {
 // before handing the pair to StatusWin::draw_active. 0x008C6B34 sits in the
 // same run; the whole tree reaches it exactly once, here, and re-points it
 // exactly as it re-points the hover slot, so the name records the role.
-int *const StatusHoverVehId = (int *)0x008C6B2C;
 int *const StatusHoverVehIdAlt = (int *)0x008C6B34;
 
 // 0x0093E31C. The queue the multiplayer deletion path parks a dying vehicle on
@@ -9496,10 +9496,10 @@ void __cdecl veh_kill(int veh_id) {
     } else if (veh_id < ConsoleGlobal.focus_vehicle_) {
         --ConsoleGlobal.focus_vehicle_;
     }
-    if (*StatusHoverVehId == veh_id) {
-        *StatusHoverVehId = -1;
-    } else if (veh_id < *StatusHoverVehId) {
-        --*StatusHoverVehId;
+    if (ConsoleStatusWin.hover_vehicle_id_ == veh_id) {
+        ConsoleStatusWin.hover_vehicle_id_ = -1;
+    } else if (veh_id < ConsoleStatusWin.hover_vehicle_id_) {
+        --ConsoleStatusWin.hover_vehicle_id_;
     }
     if (*StatusHoverVehIdAlt == veh_id) {
         *StatusHoverVehIdAlt = -1;
@@ -22313,7 +22313,6 @@ label_599b1a:
 #include <string.h>
 
 #include "battlewin.h"
-#include "statuswin.h"
 #include "council.h"
 
 // Retained fragment: battle-fight-nerve-cancel-v1.cpp

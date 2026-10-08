@@ -38,6 +38,8 @@
 class StatusWin {
   // MainInterface redraw completion reads the actual selected tile members.
   friend class MainInterface;
+  // Vehicle-table compaction updates the same hovered selection as the HUD.
+  friend void __cdecl veh_kill(int veh_id);
  public:
   // homed from 004b4990.cpp
   void UNK1();
@@ -113,8 +115,11 @@ class StatusWin {
   int32_t iCityIndex_;
   // Signed: reset_active tests both against zero with the image's signed
   // `jge`/`jl`, and -1 is the "nothing active" value they hold between uses.
-  int32_t field_15C4_;  // 0x15C4
-  int32_t field_15C8_;  // 0x15C8
+  // ConsoleStatusWin at8C5568 owns the absolute hover operands8C6B2C/30.
+  // RECOVERY_MEMBER: v1 StatusWin hover_vehicle_id_ 0x15C4 0x0045D000
+  int32_t hover_vehicle_id_;  // 0x15C4
+  // RECOVERY_MEMBER: v1 StatusWin hover_base_id_ 0x15C8 0x0045D000
+  int32_t hover_base_id_;  // 0x15C8
   int32_t field_15CC_;  // 0x15CC
   int32_t field_15D0_;  // 0x15D0
   int32_t field_15D4_;

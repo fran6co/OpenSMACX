@@ -80,19 +80,29 @@ def harness(bodies, api=None):
         struct Console { MEMBERS } ConsoleGlobal, other;
         static_assert(sizeof(int32_t) == 4 && sizeof(uint32_t) == 4, "host widths");
         void require(bool condition) { if (!condition) std::exit(42); }
-        int IsMultiplayerNet, NetTurnFlags, NetTurnFaction;
+        int IsMultiplayerNet;
         struct PlayerData { uint32_t diplo_treaties[8]; } PlayersData[8];
         struct Base { unsigned char faction_id_current; } Bases[3];
         struct ProjectLocations { int empath_guild_;
  int &empath_guild() { return empath_guild_; }
  const int &empath_guild() const { return empath_guild_; }
-} SecretProject;
-        int GovernorFaction;
+};
+        struct GameDataState { struct Fields {
+            int net_turn_flags_, net_turn_faction_, governor_faction_;
+            int vehicle_selection_follow_limit_;
+            ProjectLocations secret_project_;
+        } fields_; } GameDataStateStorage;
+        int &NetTurnFlags = GameDataStateStorage.fields_.net_turn_flags_;
+        int &NetTurnFaction = GameDataStateStorage.fields_.net_turn_faction_;
+        int &GovernorFaction = GameDataStateStorage.fields_.governor_faction_;
+        ProjectLocations &SecretProject = GameDataStateStorage.fields_.secret_project_;
         enum { RFLAG_ALIEN = 16 };
         struct Player { uint32_t rule_flags; } Players[8];
-        int hover, hover_alt, followed_value;
-        int *StatusHoverVehId = &hover, *StatusHoverVehIdAlt = &hover_alt;
-        int VehSelectionFollowLimit;
+        struct StatusWin { int hover_vehicle_id_; } ConsoleStatusWin;
+        int &hover = ConsoleStatusWin.hover_vehicle_id_;
+        int hover_alt, followed_value;
+        int *StatusHoverVehIdAlt = &hover_alt;
+        int &VehSelectionFollowLimit = GameDataStateStorage.fields_.vehicle_selection_follow_limit_;
         struct LockStateEntry { uint32_t leading_words_[4]; union Payload { uint32_t flags; int *vehicle_selection_follow; } payload_; uint32_t trailing_words_[10]; };
         struct NetDaemon {
             LockStateEntry lock_state_[24]{};
@@ -221,12 +231,12 @@ def test_actual_consumers_share_console_members_and_preserve_pointer_identity(tm
 
 @pytest.mark.parametrize("part,before,after,count", [
     (0, "ConsoleGlobal.faction_id_", "other.faction_id_", 1),
-    (0, "NetTurnFaction !=", "NetTurnFaction ==", 1),
+    (0, "fields_.net_turn_faction_ !=", "fields_.net_turn_faction_ ==", 1),
     (1, "ConsoleGlobal.faction_id_", "other.faction_id_", 1),
     (1, "& 0x1000U", "& 0x0800U", 1),
     (2, "slot != &ConsoleGlobal.selected_vehicle_", "true", 1),
     (2, "slot != &ConsoleGlobal.focus_vehicle_", "true", 1),
-    (2, "slot != &VehSelectionFollowLimit", "true", 1),
+    (2, "slot != &GameDataStateStorage.fields_.vehicle_selection_follow_limit_", "true", 1),
     (2, "ConsoleGlobal.selected_vehicle_ = -1;", "ConsoleGlobal.selected_vehicle_ = 0;", 1),
     (2, "ConsoleGlobal.focus_vehicle_ = -1;", "ConsoleGlobal.focus_vehicle_ = 0;", 1),
 ])

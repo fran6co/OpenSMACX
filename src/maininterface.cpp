@@ -865,15 +865,9 @@ void MainInterface::on_iface_left_double_click(int x, int y) {
 // relative offsets above, the table at 0x66C544 holds the raw bodies, and
 // .text has no `sub ecx,0xA14` thunk anywhere. See maininterface.h.
 
-// Fixed-slot bindings carried from the 0045c* artifacts, read out of the
-// shipped image. The pair 0x008C6B30 / 0x008C6B2C is the status bar's hover
-// state: veh.cpp already names 0x008C6B2C StatusHoverVehId (it is the id the
-// map cursor is over, and veh_kill compacts it), so that name is repeated here
-// rather than a second one being invented for the same dword. 0x008C6B48 is
-// the second Spot the handler tests the cursor against.
-static int *const StatusHoverBaseId = (int *)0x008C6B30;   // hovered base id
-static int *const StatusHoverVehId = (int *)0x008C6B2C;    // hovered vehicle id
-static Spot *const IfaceCursorSpot = (Spot *)0x008C6B48;   // the status Spot
+// The second cursor hit-test and hovered ids belong to ConsoleStatusWin:
+// its +0x15E0 Spot and +0x15C4/+0x15C8 ids are original 0x008C6B48 and
+// 0x008C6B2C/0x008C6B30. Vehicle removal compacts the same vehicle member.
 
 
 // ORIGINAL: 0x0045D110 ?on_iface_mouse_leave@MainInterface@@QAEXHH@Z 0x0045D110-0x0045D13F BYTE_EXACT
@@ -1037,6 +1031,7 @@ void MainInterface::on_iface_right_down(int a1, int a2) {
 }
 
 // ORIGINAL: 0x0045D000 ?on_iface_mouse_move@MainInterface@@QAEXHH@Z 0x0045D000-0x0045D10F
+// RECOVERY_BINDING: v1 {"reason":"Use the existing StatusWin hover state and embedded hit-test Spot, not executable-address aliases or separate selection storage.","evidence":["ConsoleStatusWin starts8C5568; its existing signed fields+15C4/+15C8 are8C6B2C/30, and Spot+15E0 is8C6B48.","Pinned4BA1F7 constructs Spot at StatusWin this+15E0;45D062 hit-tests8C6B48 and45D07B..45D0C7 updates the hover IDs then invokes draw_active on8C5568.","Pinned veh_kill5C0A58..5C0A6C compacts the same8C6B2C vehicle field; adjacent8C6B34 remains independently unresolved."]}
 // symbol    ?on_iface_mouse_move@MainInterface@@UAEXHH@Z
 // LEVER: 2026-09-05 the receiver map. Both spot_ and iface_redraw_pending_ are
 //   entry-relative and the two redraw_complete calls are the compiler's own
@@ -1058,17 +1053,17 @@ void MainInterface::on_iface_mouse_move(int a1, int a2) {
         return;
     }
 
-    int check2 = IfaceCursorSpot->check(a1, a2, &a2, &a1);
+    int check2 = ConsoleStatusWin.spot_.check(a1, a2, &a2, &a1);
     if (check2 >= 0 && a1 == 0xb) {
-        if (a2 != *StatusHoverBaseId) {
-            *StatusHoverBaseId = a2;
-            *StatusHoverVehId = -1;
+        if (a2 != ConsoleStatusWin.hover_base_id_) {
+            ConsoleStatusWin.hover_base_id_ = a2;
+            ConsoleStatusWin.hover_vehicle_id_ = -1;
             ConsoleStatusWin.draw_active(-1, a2, 0);
         }
     } else if (check2 >= 0 && a1 == 0) {
-        if (a2 != *StatusHoverVehId) {
-            *StatusHoverBaseId = -1;
-            *StatusHoverVehId = a2;
+        if (a2 != ConsoleStatusWin.hover_vehicle_id_) {
+            ConsoleStatusWin.hover_base_id_ = -1;
+            ConsoleStatusWin.hover_vehicle_id_ = a2;
             ConsoleStatusWin.draw_active(a2, -1, 0);
         }
     } else {

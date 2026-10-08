@@ -13,7 +13,9 @@ int menu_ids[16];
 char menu_text[16][128], labels[1200][16];
 int hit_result, hit_menu, hit_index, selected_action, display_choice, lock_result, selectable;
 int spying_result, live_menus, live_displays;
-int GameState, IsMultiplayerNet, ConsoleControlTurnActive;
+struct GameDataState { struct Fields { int game_state_; } fields_; } GameDataStateStorage;
+int &GameState = GameDataStateStorage.fields_.game_state_;
+int IsMultiplayerNet, ConsoleControlTurnActive;
 char StringTemp[1032];
 
 void event(int code, int a = 0, int b = 0, int c = 0) {
@@ -113,7 +115,7 @@ struct Spot {
 };
 struct StatusWin {
     Spot spot_;
-    int field_15A8_, iUnitIndex_, iCityIndex_, field_15C4_, field_15C8_, field_15CC_, field_15D0_;
+    int field_15A8_, iUnitIndex_, iCityIndex_, hover_vehicle_id_, hover_base_id_, field_15CC_, field_15D0_;
     void on_right_click(int, int, int);
     void draw_status(int a, int b, int c, int d, int e) {
         assert(a == -1 && b == -1 && c == -1 && d == -1 && e == 0); event(DRAW);
@@ -141,7 +143,7 @@ void reset() {
     Bases[3].queue_production_id[0] = 1;
     strcpy(VehPrototypes[1].veh_name, "Scout");
     Facility[2].name = reinterpret_cast<char *>(17);
-    status.field_15C4_ = 4; status.field_15C8_ = 8;
+    status.hover_vehicle_id_ = 4; status.hover_base_id_ = 8;
     status.field_15CC_ = 11; status.field_15D0_ = 12;
 }
 void click() {
@@ -200,7 +202,7 @@ int main() {
         else if (command == 52) assert(count(HURRY) == 1);
         else assert(only(GOVERNOR).a == (0x1000000 << (command - 53)));
         assert(only(ACTIVE).a == 11 && only(ACTIVE).b == 12 && only(ACTIVE).c == 0);
-        assert(status.field_15C4_ == -1 && status.field_15C8_ == -1);
+        assert(status.hover_vehicle_id_ == -1 && status.hover_base_id_ == -1);
         for (int block = 0; block < 4; ++block) {
             reset(); selected_action = command; IsMultiplayerNet = 1;
             if (block == 0) ConsoleControlTurnActive = 1;
@@ -211,6 +213,6 @@ int main() {
             IsMultiplayerNet = 0; event_count = 0; click(); assert(count(SOFT_ZOOM) == 1);
         }
     }
-    reset(); status.field_15C4_ = status.field_15C8_ = -1; click(); assert(!count(ACTIVE));
+    reset(); status.hover_vehicle_id_ = status.hover_base_id_ = -1; click(); assert(!count(ACTIVE));
     return 0;
 }

@@ -119,13 +119,13 @@ struct StatusWin {
     int field_15A8_, font_size_;
     char field_15B0_[4];
     int iTileX_, iTileY_, iUnitIndex_, iCityIndex_;
-    int field_15C4_, field_15C8_, field_15CC_, field_15D0_, field_15D4_;
+    int hover_vehicle_id_, hover_base_id_, field_15CC_, field_15D0_, field_15D4_;
     int fInOnClick_, field_15DC_;
     Spot spot_;
     int draw_count;
     StatusWin() : field_15A8_(0), font_size_(0), iTileX_(0), iTileY_(0),
-                  iUnitIndex_(-1), iCityIndex_(-1), field_15C4_(0),
-                  field_15C8_(0), field_15CC_(0), field_15D0_(0),
+                  iUnitIndex_(-1), iCityIndex_(-1), hover_vehicle_id_(0),
+                  hover_base_id_(0), field_15CC_(0), field_15D0_(0),
                   field_15D4_(0), fInOnClick_(0), field_15DC_(0),
                   draw_count(0) { }
     void draw_status(int, int, int, int, int) { ++draw_count; }
