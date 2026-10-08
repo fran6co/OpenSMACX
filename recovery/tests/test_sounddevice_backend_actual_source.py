@@ -22,6 +22,7 @@ def definition(text, signature):
 
 
 def test_extension_records_keep_partial_external_contract_obligations():
+    source = (ROOT / "src/sounddevice.cpp").read_text()
     records = {r.address: r for r in read_file(ROOT / "src/sounddevice.cpp")}
     header = (ROOT / "src/sounddevice.h").read_text()
     assert "WaveInDeviceDispatchView" not in header
@@ -29,11 +30,14 @@ def test_extension_records_keep_partial_external_contract_obligations():
     assert "void *device_14_;" in header
     for address in ADDRESSES:
         record = records[address]
-        assert record.source_role is SourceRole.SCAFFOLD
-        assert "Operation-specific external ABI" in record.source_role_reason
-        assert "SDK/PDB" in record.source_role_reason
+        assert record.source_role is SourceRole.UNCLASSIFIED
+        assert "Wave_In_Device" in record.symbol
+        marker = source.index(f"// ORIGINAL: 0x{address:08X}")
+        binding = source[marker:source.index("// symbol", marker)]
+        assert "SDK/PDB" in binding and "nested object lifetime remain unknown" in binding
         assert record.image_spans == ((address, address + 32),)
-        assert not record.byte_exact and not record.semantic
+        # Coverage classification neither grants nor forbids measured claims.
+        assert not record.semantic
 
 
 def test_external_boundary_has_only_observed_operations_not_prefix_methods():

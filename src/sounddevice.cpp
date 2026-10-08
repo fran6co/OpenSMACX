@@ -640,8 +640,10 @@ int Midi_Device::is_disabled() {
 // frame;hidden;sp_ready;purged_ok; calls none; indirect at
 // 0x004C5A90. Historical seed Status: Complete was not
 // acceptance. Former source shim: ?wave_in_device_set_codec_redirect@@YIHPAX0I@Z.
-// RECOVERY_ROLE: SCAFFOLD Owner is Wave_In_Device::device_14_. Pinned soundx.dll SHA-256 ac272e244b3f1339d9ce63bc2e7acf76605c6ac2695bba3230e72ea59039a3f5: exports 9/10 create/delete Dll_Wave_In_Device; factory installs its 26-entry table; entries 24/25 match the nested +0x60 result-forwarder and +0x64 zero-return bodies. Operation-specific external ABI calls replace the former 24 placeholder prefix declarations without inventing a provider class. Complete SDK/PDB contract, external class extent and nested lifetime remain unverified; retain these partial-binding obligations as SCAFFOLD.
-// ORIGINAL: 0x004C5A80 ?set_codec@Wave_In_Device@@QAEHK@Z 0x004C5A80-0x004C5AA0
+// The game wrapper owner and consumed external ABI are established. The
+// provider's unused API, complete layout and nested lifetime remain unknown;
+// those dependency obligations do not make this complete wrapper a stub.
+// ORIGINAL: 0x004C5A80 ?set_codec@Wave_In_Device@@QAEHK@Z 0x004C5A80-0x004C5AA0 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["soundx.dll SHA-256 ac272e244b3f1339d9ce63bc2e7acf76605c6ac2695bba3230e72ea59039a3f5 exports ordinal 9 create_device and ordinal 10 delete_device for Dll_Wave_In_Device.", "Pinned DLL factory installs a 26-entry table; nested entries 24 and 25 match the observed +0x60 result-forwarder and +0x64 zero-return bodies.", "Pinned game span 0x004C5A80-0x004C5AA0 reads the delegate from inherited device_14_ storage at +0x14, null-returns 0x13, passes one unsigned value to slot 24, and returns that slot result.", "The factory stores its returned object in device_14_; the DLL close/teardown path owns destruction. Only these two observed extension operations are represented by the partial external ABI boundary.", "The former 24 void prefix declarations were placeholders, not recovered DLL signatures; they are removed. SDK/PDB contract, complete class extent, other slot signatures, and nested object lifetime remain unknown."], "reason": "Use only the observed external call ABIs on the opaque DLL-owned provider; do not conflate it with the game wrapper base or invent intervening virtual methods. Its complete API and extent remain unverified."}
 // symbol    ?set_codec@Wave_In_Device@@QAEHK@Z
 // size      32 bytes
@@ -653,10 +655,10 @@ int Midi_Device::is_disabled() {
 // indirect  0x004C5A90
 int Wave_In_Device::set_codec(unsigned long codec) {
     void *const delegate = device_14_;
-    if (delegate == 0) {
-        return 0x13;
+    if (delegate != 0) {
+        return SoundXDeviceAbi::set_codec(delegate, codec);
     }
-    return SoundXDeviceAbi::set_codec(delegate, codec);
+    return 0x13;
 }
 
 // Original behavior: return 0x13 when the DLL-owned delegate is null;
@@ -666,8 +668,10 @@ int Wave_In_Device::set_codec(unsigned long codec) {
 // frame;hidden;sp_ready;purged_ok; calls none; indirect at
 // 0x004C5AB0. Historical seed Status: Complete was not
 // acceptance. Former source shim: ?wave_in_device_set_vxw_key_redirect@@YIHPAX0H@Z.
-// RECOVERY_ROLE: SCAFFOLD Owner is Wave_In_Device::device_14_. Pinned soundx.dll SHA-256 ac272e244b3f1339d9ce63bc2e7acf76605c6ac2695bba3230e72ea59039a3f5: exports 9/10 create/delete Dll_Wave_In_Device; factory installs its 26-entry table; entries 24/25 match the nested +0x60 result-forwarder and +0x64 zero-return bodies. Operation-specific external ABI calls replace the former 24 placeholder prefix declarations without inventing a provider class. Complete SDK/PDB contract, external class extent and nested lifetime remain unverified; retain these partial-binding obligations as SCAFFOLD.
-// ORIGINAL: 0x004C5AA0 ?set_vxw_key@Wave_In_Device@@QAEHPAC@Z 0x004C5AA0-0x004C5AC0
+// The game wrapper owner and consumed external ABI are established. The
+// provider's unused API, complete layout and nested lifetime remain unknown;
+// those dependency obligations do not make this complete wrapper a stub.
+// ORIGINAL: 0x004C5AA0 ?set_vxw_key@Wave_In_Device@@QAEHPAC@Z 0x004C5AA0-0x004C5AC0 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["soundx.dll SHA-256 ac272e244b3f1339d9ce63bc2e7acf76605c6ac2695bba3230e72ea59039a3f5 exports ordinal 9 create_device and ordinal 10 delete_device for Dll_Wave_In_Device.", "Pinned DLL factory installs a 26-entry table; nested entries 24 and 25 match the observed +0x60 result-forwarder and +0x64 zero-return bodies.", "Pinned game span 0x004C5AA0-0x004C5AC0 reads the delegate from inherited device_14_ storage at +0x14, null-returns 0x13, passes one signed-byte pointer to slot 25, and returns that slot result.", "The factory stores its returned object in device_14_; the DLL close/teardown path owns destruction. Only these two observed extension operations are represented by the partial external ABI boundary.", "The former 24 void prefix declarations were placeholders, not recovered DLL signatures; they are removed. SDK/PDB contract, complete class extent, other slot signatures, and nested object lifetime remain unknown."], "reason": "Use only the observed external call ABIs on the opaque DLL-owned provider; do not conflate it with the game wrapper base or invent intervening virtual methods. Its complete API and extent remain unverified."}
 // symbol    ?set_vxw_key@Wave_In_Device@@QAEHPAC@Z
 // size      32 bytes
@@ -679,10 +683,10 @@ int Wave_In_Device::set_codec(unsigned long codec) {
 // indirect  0x004C5AB0
 int Wave_In_Device::set_vxw_key(signed char *key) {
     void *const delegate = device_14_;
-    if (delegate == 0) {
-        return 0x13;
+    if (delegate != 0) {
+        return SoundXDeviceAbi::set_vxw_key(delegate, key);
     }
-    return SoundXDeviceAbi::set_vxw_key(delegate, key);
+    return 0x13;
 }
 
 /*
