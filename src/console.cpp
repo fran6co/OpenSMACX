@@ -2038,6 +2038,7 @@ Purpose: Reset the console - clear its scalar state and history slot zero,
 The historical forwarding notes below predate the separate timer lifecycle TU;
 the timer call now uses the existing Time member directly.
 // ORIGINAL: 0x0051D7D0 ?close@Console@@QAEXXZ 0x0051D7D0-0x0051D88E BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Console owns buffer_ at2247C, time_ at22A04 and alpha_menu_ at22A2C; AlphaMenu derives nonvirtually from Menu/GraphicWin.", "Pinned51D7D0 tail selects receiver+2247C for5D7470, receiver+22A04 for616780, receiver+22A2C for5D4E40, then clear(0); this closes members without substituting destruction."], "reason": "Select the constructed Console Buffer and AlphaMenu GraphicWin base through their real members; preserve scalar resets, repeated history-slot-zero writes and Buffer/Time/GraphicWin/clear ordering."}
 // LEVER: PROMOTED out of src/unrecovered/0051d7d0.cpp, whose claim proved the ARTIFACT reproduced while the program held a pending_bodies forwarder. `void close()` was not declared on Console at all - that, not the body, is what kept it in an artifact.
 // LEVER (2026-09-03): time_close_call, not `->close()` on the Time at
 //        0x22a04. The image CALLS 0x00616780 here (0x0051D873) where
@@ -2053,7 +2054,6 @@ Return Value: n/a
 Status: Complete
 */
 void Console::close() {
-    char *self = reinterpret_cast<char *>(this);
     field_23BC8_ = 0xffffffff;
     cursor_active_ = 0;
     field_23BE4_ = 0;
@@ -2081,9 +2081,9 @@ void Console::close() {
     field_23D80_ = 0;
     field_23D8C_ = 0;
     field_23D84_ = 0;
-    reinterpret_cast<Buffer *>(self + 0x2247c)->close();
+    buffer_.close();
     time_.close();
-    reinterpret_cast<GraphicWin *>(self + 0x22a2c)->close();
+    static_cast<GraphicWin &>(alpha_menu_).close();
     clear(0);
 }
 
@@ -3176,6 +3176,7 @@ void Console::show_scen_objectives() {
 // Fixed-slot bindings carried from 004dbc40.cpp
 
 // ORIGINAL: 0x004DBC40 ?editor_reset_tech@Console@@QAEXXZ 0x004DBC40-0x004DBD18 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["PlayersData96C9E0 stride20CC, rank35C:96EE08 is faction1 rank; seven advances reach97D39C, so faction0 remains untouched.", "Shared GameDataStateStorage9A6490 bitmap+1E0 is9A6670, exactly89 bytes; prototype9AB868 stride34 obsolete2C/flags30,512 records with flag-bit clearing only for IDs64..511.", "Vehs952828 stride34 signed proto_id+0A is952832; Console selected_vehicle_+23BDC is reread/decremented after veh_kill, which may clear selection and stop the walk at-2.", "Bases97D040 stride134 queue_size4C is97D08C, next dword is queue_production_id[0]; snapshot base count after the vehicle walk, clear queue_size then replace it with bit patternFFFFFFBB only for a signed queue item>=40.", "Pinned complete body4DBC40..4DBD18: popup acceptance precedes all resets; faction ranks,89-byte bitmap,512 prototypes,vehicle walk,base walk,draw_map(1) occur in that order.", "Pinned prototype loop clears flags bit0 with a byte-width AND; the named uint16_t flags expression preserves its final bits, while physical access width remains a strict compiler/matching obligation."], "reason": "Reset technology through genuine faction, shared game-state, prototype, vehicle and base owners. Preserve signed prototype tests, the kill callback's live selected-vehicle mutation, the post-kill base-count snapshot and original queue-size sentinel."}
 // TRIED: `field_23BDC_` named field is WRONG - it lands at 0x245f0, not 0x23bdc (raw `self+0x23bdc` cast is correct, per the "scaffold's named fields can be wrong" caution). `reinterpret_cast<int>` on the three pointer loop bounds gets `jl` instead of `jb` (pointer `<` compiles unsigned). Landed at MNEMONIC_ONLY: the one remaining diff is the `*p=0` store and the `p[1]` load at the very last loop swapped order (compiler schedules the independent load before the store regardless of source order) - tried a named temp, a ternary store, and an if/else split; none reproduced store-then-load.
 // working copy - scaffold materialised by --work
 // size      216 bytes
@@ -3186,41 +3187,44 @@ void Console::show_scen_objectives() {
 // calls     0x0046B190 0x005BF310 0x005C08C0
 
 void Console::editor_reset_tech() {
-    int *field23bdc = &selected_vehicle_;
     if (X_pop(StrResetAllTech, 0) != 0) {
-        for (int *p1 = reinterpret_cast<int *>(0x96ee08);
-             reinterpret_cast<int>(p1) < 0x97d39c; p1 += 0x833) {
-            *p1 = 0;
+        for (int faction_id = 1; faction_id < MaxPlayerNum; ++faction_id) {
+            PlayersData[faction_id].tech_ranking = 0;
         }
-        memset(reinterpret_cast<void *>(0x9a6670), 0, 0x59);
-        for (unsigned char *p2 = reinterpret_cast<unsigned char *>(0x9ab898);
-             reinterpret_cast<int>(p2) < 0x9b2098; p2 += 0x34) {
-            p2[-4] = 0;
-            if (reinterpret_cast<int>(p2) >= 0x9ac598) {
-                *p2 &= 0xfe;
+
+        memset(GameDataStateStorage.fields_.game_tech_achieved_, 0, MaxTechnologyNum);
+
+        for (int prototype_id = 0; prototype_id < MaxVehProtoNum; ++prototype_id) {
+            VehPrototype &prototype = VehPrototypes[prototype_id];
+            prototype.obsolete_factions = 0;
+            if (prototype_id >= MaxVehProtoFactionNum) {
+                prototype.flags &= static_cast<uint16_t>(~uint16_t(1));
             }
         }
-        *field23bdc = *reinterpret_cast<int *>(0x9a64c8) - 1;
-        if (*field23bdc >= 0) {
+
+        selected_vehicle_ = GameDataStateStorage.fields_.vehicle_current_count_ - 1;
+        if (selected_vehicle_ >= 0) {
             do {
-                if (*reinterpret_cast<short *>(0x952832 + *field23bdc * 0x34) >= 0x40) {
-                    veh_kill(*field23bdc);
+                if (Vehs[selected_vehicle_].proto_id >= 0x40) {
+                    veh_kill(selected_vehicle_);
                 }
-                *field23bdc = *field23bdc - 1;
-            } while (*field23bdc >= 0);
+                // veh_kill may clear this selection: reread the live member.
+                --selected_vehicle_;
+            } while (selected_vehicle_ >= 0);
         }
-        int count = *reinterpret_cast<int *>(0x9a64cc);
-        if (count > 0) {
-            int *p3 = reinterpret_cast<int *>(0x97d08c);
+
+        int base_count = GameDataStateStorage.fields_.base_current_count_;
+        if (base_count > 0) {
+            Base *base = Bases;
             do {
-                *p3 = 0;
-                int next = p3[1];
-                if (next >= 0x40) {
-                    *p3 = 0xffffffbb;
+                base->queue_size = 0;
+                const int next_queue_item = base->queue_production_id[0];
+                if (next_queue_item >= 0x40) {
+                    base->queue_size = 0xFFFFFFBBU;
                 }
-                p3 = reinterpret_cast<int *>(reinterpret_cast<char *>(p3) + 0x134);
-                --count;
-            } while (count != 0);
+                ++base;
+                --base_count;
+            } while (base_count != 0);
         }
         draw_map(1);
     }

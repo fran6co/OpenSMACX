@@ -15,8 +15,11 @@ typedef unsigned char uint1;
 typedef unsigned short uint2;
 typedef unsigned int uint4;
 
-struct SocialEffect { int economy, efficiency, support, talent, morale, police,
-    growth, planet, probe, industry, research; };
+struct SocialEffect {
+    enum EffectIndex { ECONOMY, EFFICIENCY, SUPPORT, TALENT, MORALE, POLICE,
+        GROWTH, PLANET, PROBE, INDUSTRY, RESEARCH };
+    int values_[11];
+};
 struct Base {
     int x, y, faction_id_current, population_size;
     char *name_string;
@@ -63,8 +66,26 @@ struct PlayerData {
     int diplo_spoke[8];
 };
 struct BaseSecretProject {
-    int hunter_seeker_algorithm, cloudbase_academy, nethack_terminus;
+    int project_base[64];
+    int &hunter_seeker_algorithm() { return project_base[15]; }
+    int &cloudbase_academy() { return project_base[35]; }
+    int &nethack_terminus() { return project_base[34]; }
 };
+struct GameDataLockMaskView { uint32_t enable_mask_; };
+struct ProbeGameDataFields {
+    uint32_t game_rules_, game_state_;
+    int base_current_count_, vehicle_current_count_;
+    GameDataLockMaskView lock_masks_;
+    uint32_t ranking_faction_id_unk1_;
+    BaseSecretProject secret_project_;
+    int council_resolution_count_[11];
+    int turn_current_num_;
+};
+struct ProbeGameDataState { ProbeGameDataFields fields_; };
+// Host-only surface, not a target ABI/layout claim. Test scenario aliases
+// below refer to these same members, so product writes and callback reads
+// cannot diverge into duplicate fixture storage.
+static ProbeGameDataState GameDataStateStorage = {};
 struct MonumentRecord { int achieved_, word_8_, year_; };
 struct MonumentFaction {
     MonumentRecord records_[21];
@@ -138,17 +159,17 @@ static char ScriptPopupFile[] = "";
 static char *TextBufferGetPtr = nullptr;
 static char *StringTemp = nullptr;
 static int ProbeTargetFactionID = 0;
-static int RankingFactionIDUnk1 = 0;
+static uint32_t &RankingFactionIDUnk1 = GameDataStateStorage.fields_.ranking_faction_id_unk1_;
 static int DiploScratchFA3C = 0, DiploScratchFA98 = 0, DiploScratchFA88 = 0;
 static char *FactionDiplomacyPortraits[8] = {};
 static int MapRandSeed = 0;
 static int TurnCurrentNum = 0;
-static int LockEnableMask = 0;
+static uint32_t &LockEnableMask = GameDataStateStorage.fields_.lock_masks_.enable_mask_;
 static int ExpansionEnabled = 0;
 static int IsMultiplayerNet = 0;
-static int GameState = 0;
-static int VehCurrentCount = 0;
-static int BaseCurrentCount = 0;
+static uint32_t &GameState = GameDataStateStorage.fields_.game_state_;
+static int &VehCurrentCount = GameDataStateStorage.fields_.vehicle_current_count_;
+static int &BaseCurrentCount = GameDataStateStorage.fields_.base_current_count_;
 static Base *BaseCurrent = nullptr;
 static int MapIsFlat = 0, MapLongitudeBounds = 64, MapLatitudeBounds = 64;
 static const int RadiusOffsetX[21] = {
@@ -189,15 +210,17 @@ static Chassis Chassis[32] = {};
 static RulesWeapon Weapon[32] = {};
 static Player Players[8] = {};
 static PlayerData PlayersData[8] = {};
-static BaseSecretProject SecretProject = {};
+static BaseSecretProject &SecretProject = GameDataStateStorage.fields_.secret_project_;
 static MonumentFaction FactionMonuments[8] = {};
 static Rules Rules = {};
 static NetDaemon NetDaemonNet = {};
 static Console ConsoleGlobal = {};
 static NetMessage NetMsgPrimary = {};
-static int CouncilResolutionCount[16] = {};
+static int (&CouncilResolutionCount)[11] = GameDataStateStorage.fields_.council_resolution_count_;
 static int GenderDefault = 0, PluralityDefault = 0;
-static int GameRules = 0, TurnCurrent = 0, Expansion = 0;
+static uint32_t &GameRules = GameDataStateStorage.fields_.game_rules_;
+static int &TurnCurrent = GameDataStateStorage.fields_.turn_current_num_;
+static int Expansion = 0;
 static MoraleRecord MoraleRecords[16] = {};
 static AbilityRecord AbilityRecords[128] = {};
 static TechnologyRecord Technology[128] = {};
@@ -207,7 +230,6 @@ static TutorialBaseWindow TutWinBaseWindow = {};
 static MoraleRecord *Morale = MoraleRecords;
 static AbilityRecord *Ability = AbilityRecords;
 static int *MapTiles = nullptr;
-
 static int abi_index(int x) { return x; }
 static int abil_index(int x) { return x; }
 static int has_abil(int, int) { return 0; }

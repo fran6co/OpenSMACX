@@ -1237,15 +1237,6 @@ static uint8_t probe_native_region_selector_byte(int faction_id,
     return PlayersData[faction_id].region_base_plan[region_id - 16];
 }
 
-// Native compares unaligned DWORDs at PlayerData+0x35C. This falls inside the
-// existing opaque tech_trade_source byte run (+0x354); preserve the exact
-// four-byte alias without assigning it an unsupported gameplay meaning.
-static int probe_native_trade_source_word(const PlayerData &data) {
-    int value;
-    memcpy(&value, data.tech_trade_source + 8, sizeof value);
-    return value;
-}
-
 // Early native selector -1 scan: the loop exits on the first target-owned
 // facility-1 base. Both an empty scan and exhaustion without a match reach the
 // shared label_5a14bf default of 12.
@@ -1617,7 +1608,7 @@ static int probe_native_automatic_faction_choice(int actor_vehicle_id,
 }
 
 // ORIGINAL: 0x0059F120 ?probe@@YAHHHHH@Z 0x0059F120-0x005A5837;0x006613D0-0x00661B3D
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned original instructions establish distinct actor, target-base and fallback-vehicle roles, genuine PlayerData/Map/Base/Veh owners and one automatic Popup with class-owned teardown.", "The actor lock/state edge skips strategy scoring and energy checks before its shared mode/selector tail. Action-six raw UI results and normalized remote bit tests have distinct threshold stores; false edges retain the original path-local value, with no eager initialization.", "Bounded actual-source controls and native compilation are not full CFG, VC6 unwind-state, linked-preservation or game-runtime proof. Ordered comparison/reload fidelity and historical matching remain restoration obligations."], "reason": "Complete typed Probe action/UI owner in its existing translation unit, retaining the four-argument ABI and both original main/unwind spans."}
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original instructions establish distinct actor, target-base and fallback-vehicle roles, genuine PlayerData/Map/Base/Veh owners and one automatic Popup with class-owned teardown.", "The actor lock/state edge skips strategy scoring and energy checks before its shared mode/selector tail. Action-six raw UI results and normalized remote bit tests have distinct threshold stores; false edges retain the original path-local value, with no eager initialization.", "Bounded actual-source controls and native compilation are not full CFG, VC6 unwind-state, linked-preservation or game-runtime proof. Ordered comparison/reload fidelity and historical matching remain restoration obligations.", "Pinned5A292F..5A2961 operands96CD3C equal PlayersData96C9E0+35C, the signed tech_ranking word; trade_source actually begins36C, so its former+8 alias selected the wrong374 word. Preserve target rank/2 > actor rank/2+4 with truncation toward zero and the existing facility/action/pact short-circuit guards."], "reason": "Complete typed Probe action/UI owner in its existing translation unit, retaining the four-argument ABI and both original main/unwind spans."}
 int __cdecl probe(int actor_vehicle_id, int target_base_id,
                   int fallback_vehicle_id, int mode) {
     // The native stack receiver at EBP-0x53FC is the one function-scope Popup.
@@ -1933,9 +1924,8 @@ label_5a2574:
             if (native_fallback_marker && action_result != 1 &&
                 target_data.ai_growth >= target_data.ai_wealth / 2 &&
                 ((native_pair_treaty & 0x30u) != 0 ||
-                 probe_native_trade_source_word(target_data) / 2 >
-                    probe_native_trade_source_word(
-                        PlayersData[actor_faction_id]) / 2 + 4)) {
+                 target_data.tech_ranking / 2 >
+                    PlayersData[actor_faction_id].tech_ranking / 2 + 4)) {
                 action_result = 5;
             }
 
