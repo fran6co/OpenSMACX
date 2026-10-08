@@ -1,8 +1,9 @@
 """Shared ocean-tail alias controls, not complete lighting/game verification.
 
 Extract the real owner, cache POD, addressing helper and complete get_brighting
-body. map_loc and get_alt are explicit service doubles; the remaining biased
-CornerLightTable is a synthetic lookup, NOT recovered storage or initialization.
+body and the real generated-table lookup helper. map_loc and get_alt are explicit
+service doubles. Table contents are independently seeded test data, not original
+initialization proof; CornerLightTable doubles the unresolved exceptional indices.
 Original 470704 selects signed bytes at 7F6680+7*v1+v2, overlapping the final
 DWORD of the sixteen-shade owner only for indices 0..3. Other cases start at
 49/98/147. Native layout, renderer publication, real get_alt and allocation
@@ -43,10 +44,12 @@ def actual_source():
     for name in ("get_brighting", "get_alt"):
         signature, = re.findall(r"int " + name + r"\([^;{}]*\);", header)
         signatures.append(signature)
-    helper = braced(source, "static __forceinline char *brighting_tile(")
+    tile_helper = braced(source, "static __forceinline char *brighting_tile(")
+    table, = re.findall(r"^signed char MapLightingTable\[4 \* 49\];", source, re.M)
+    light_helper = braced(source, "static __forceinline signed char corner_light_value(int biased_index)")
     body = braced(source, "int MapWin::get_brighting(")
-    return "\n".join((pod, owner, "struct MapWin {", pointer,
-                      *signatures, "};", helper, body))
+    return "\n".join((pod, owner, table, "struct MapWin {", pointer,
+                      *signatures, "};", tile_helper, light_helper, body))
 
 
 HARNESS = r'''
@@ -116,6 +119,7 @@ void reset(int x=2,int y=1) {
     for(int bank=0;bank<5;++bank)for(int cell=0;cell<40;++cell)
         for(int c=0;c<4;++c)banks[bank][cell].brightness[c]=255;
     for(int i=0;i<268;++i)lighting[i]=static_cast<signed char>((i*37+13)%256-128);
+    for(int i=0;i<196;++i)MapLightingTable[i]=lighting[i+8];
     for(int i=0;i<16;++i)OceanCornerShades[i]=int(0x10203000u+unsigned(i));
     for(int i=0;i<4;++i)wanted[i]=0;
 }
@@ -226,7 +230,7 @@ def test_actual_shared_shade_tail(tmp_path):
     ("0x31 + v2 * 7 + v3", "0x31 + v1 * 7 + v3"),
     ("0x62 + v3 * 7 + v4", "0x62 + v3 * 7 + v1"),
     ("0x93 + v4 * 7 + v1", "0x93 + v4 * 7 + v2"),
-    ("CornerLightTable[index]", "CornerLightTable[index + 1]"),
+    ("corner_light_value(index)", "corner_light_value(index + 1)"),
     ("if (v0 != 0xff)", "if (v0 != 0xfe)"),
     ("return (int)v0 - 0x80;", "return (int)v0 - 0x7f;"),
     ("(terrain & 0xe0) < 0x60", "(terrain & 0xe0) < 0x40"),

@@ -2733,7 +2733,6 @@ static int OceanCornerShades[16];
 // ends at the observed exclusive boundary 0x007F674C.
 // RECOVERY_OBJECT: v2 0x007F6688 0x007F674C ?MapLightingTable@@3PACA 0x00470420
 signed char MapLightingTable[4 * 49];
-static bool MapLightingTableInitialized;
 
 static void fill_map_lighting_table() {
     for (int quadrant = 0; quadrant < 4; ++quadrant) {
@@ -2773,13 +2772,6 @@ static void fill_map_lighting_table() {
             }
         }
     }
-    MapLightingTableInitialized = true;
-}
-
-static void ensure_map_lighting_table() {
-    if (!MapLightingTableInitialized) {
-        fill_map_lighting_table();
-    }
 }
 
 // 0x007F6680 is the BIASED corner slope-light lookup base, not a proved
@@ -2807,7 +2799,6 @@ static const signed char *const CornerLightTable = (const signed char *)0x007F66
 static __forceinline signed char corner_light_value(int biased_index) {
     const int generated_index = biased_index - 8;
     if (biased_index >= 8 && biased_index < 8 + 4 * 49) {
-        ensure_map_lighting_table();
         return MapLightingTable[generated_index];
     }
     return CornerLightTable[biased_index];
@@ -7388,6 +7379,7 @@ static __forceinline char *brighting_tile(void *owned, int row, int col_half) {
 // Fixed-slot bindings carried from 00470550.cpp
 
 // ORIGINAL: 0x00470550 ?get_brighting@MapWin@@QAEHHHH@Z 0x00470550-0x00470776 FILE
+// RECOVERY_BINDING: v1 {"reason":"Read current lighting storage without adding lazy initialization or table writes to brightness lookup.","evidence":["Pinned470550..470776 calls get_alt four times and dispatches its lookup through470778;470704/47071D/470736/47074C read signed table bytes directly, without calling the initializer or quick_root.","mapwin_system_init at471030 owns the explicit compute_lighting_table call;470420..470536 owns the four49-byte table writes. Lookup before startup must retain the existing zero-initialized storage rather than generate values on demand."]}
 // HOMED 2026-09-04 from the 0x00470550 artifact. 16/202 in the tree. The
 // four absolute table constants 0x7F6680/0x7F66B1/0x7F66E2/0x7F6713 are
 // spelled as ONE binding, CornerLightTable, plus the stride 0x31 - the image's
