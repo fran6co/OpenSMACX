@@ -3934,9 +3934,28 @@ remain unmeasurable. Source roots, seeds, names and TU suffixes come from config
 no application identity or branch name is required. Object annotations also use
 configured source selection/address spaces, independently of binary backend limits.
 
+An optional `measurement.unit_flag_sets` selects one global flag-set index for
+each evidence-backed translation unit, for example `{"src/library.cpp": [0]}`.
+Keys must name existing canonical project-relative source TUs; headers, aliases,
+missing units, boolean indices and multiple selections refuse. Unlisted units
+retain the global alternatives. This is a compiler-policy decision, not inferred
+library membership or permission to weaken historical restoration obligations.
+The policy participates in input fingerprints; prior reports cannot be replayed.
+
+Direct measurements and recording use that TU's selected profile. Dependency
+graphs apply each dependency's own selection, retaining the requesting profile
+for unpinned units. Reports distinguish effective physical profiles from logical
+graph trials. Repeated physical compilations may be reused only within the same
+live invocation and exact source/overlay context. Structural consumers require
+the expected graph contexts and successful compilation evidence: missing contexts
+are unresolved, duplicates/conflicts refuse, and failing contexts cannot disappear
+when a pinned physical profile is shared by several graph trials.
+
 Binary task checks follow actual COFF external references to source-declared object
-owners, compiling those TUs even when they have no selected function. Each flag
-trial gets fresh dependency objects; missing definitions, unsupported owner files
+owners, compiling those TUs even when they have no selected function. Each logical
+flag trial binds fresh dependency evidence under the effective per-unit policy;
+identical physical compilations can be reused within that live invocation.
+Missing definitions, unsupported owner files
 and compile failures remain unresolved. The `object_dependencies` report lists
 these additional inputs separately from the selected function TUs. This is read-only
 measurement scope, not permission to edit the owners or proof of object extent,

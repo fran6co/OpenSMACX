@@ -179,7 +179,7 @@ def check_matches(root: Path, image: Path, *, jobs: int = 1) -> dict:
             pair = pair_by_record.get(record_key)
             if pair is not None and pair not in pairs_by_path[record.path]:
                 pairs_by_path[record.path].append(pair)
-    work = [(root, settings.compiler_profile, path, group, image, settings.flag_sets, shared,
+    work = [(root, settings.compiler_profile, path, group, image, settings.flags_for(path.relative_to(root).as_posix()), shared,
              tuple(pairs_by_path[path]))
             for path, group in sorted(groups.items())]
     if inputs() != before:
@@ -257,7 +257,9 @@ def check_matches(root: Path, image: Path, *, jobs: int = 1) -> dict:
         "near_miss": [row for row in unclaimed if row["verdict"] != "BYTE_EXACT"
                       and 0 < row.get("original_instructions", 0) - row.get("matching_instructions", 0) <= 3],
         "allocation_only": [row for row in unclaimed if row["verdict"] != "BYTE_EXACT" and row.get("allocation_only")],
-        "measurements": rows, "translation_units": len(groups), "unsupported_hosts": unsupported,
+        "measurements": rows, "translation_units": len(groups),
+        "unit_flag_sets": settings.witness_grid(path.relative_to(root).as_posix() for path in groups),
+        "unsupported_hosts": unsupported,
         "component_checks": component_checks,
         "compile_attempts": sum(unit.compile_attempts for unit in measurements),
         "reused_attempts": sum(unit.reused_attempts for unit in measurements),

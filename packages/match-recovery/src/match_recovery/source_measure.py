@@ -117,7 +117,7 @@ def measure_source(root: Path, targets, *, image: Path, in_file=None, jobs=1):
             if pair is not None and pair not in pairs_by_path[record.path]:
                 pairs_by_path[record.path].append(pair)
     shared = shared_spans(mappings)
-    work = [(root, settings.compiler_profile, path, rows, image, settings.flag_sets, shared,
+    work = [(root, settings.compiler_profile, path, rows, image, settings.flags_for(path.relative_to(root).as_posix()), shared,
              tuple(pairs_by_path[path]))
             for path, rows in sorted(groups.items())]
     if inputs() != before:
@@ -194,7 +194,9 @@ def measure_source(root: Path, targets, *, image: Path, in_file=None, jobs=1):
             "ready_for_collection": False, "persisted": False,
             "selected": len(selected), "counts": dict(counts),
             "measurements": sorted(rows, key=lambda row: (row["path"], row["line"])),
-            "translation_units": len(units), "compile_attempts": sum(unit.compile_attempts for unit in units),
+            "translation_units": len(units),
+            "unit_flag_sets": settings.witness_grid(path.relative_to(root).as_posix() for path in groups),
+            "compile_attempts": sum(unit.compile_attempts for unit in units),
             "component_checks": component_checks,
             "reused_attempts": sum(unit.reused_attempts for unit in units), "input_fingerprint": digest(before),
             "limitations": ["selected current spellings only; no source claims are banked, demoted or reverted",

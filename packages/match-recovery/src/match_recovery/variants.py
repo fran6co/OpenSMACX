@@ -322,6 +322,26 @@ def measure_variants(root: Path, task_name: str, image_path: Path, deck: dict, *
     # Candidate overlays and per-file damage controls always compile afresh.
     support_replicas, support_locks = {}, {}
     support_index_lock = Lock()
+    overlay_cache, overlay_locks = {}, {}
+
+    def overlay_compile(unit, contents, flags):
+        key = (unit, flags, digest({name: hashlib.sha256(raw).hexdigest()
+                                   for name, raw in sorted(contents.items())}))
+        with support_index_lock:
+            lock = overlay_locks.setdefault(key, Lock())
+        with lock:
+            if key in overlay_cache:
+                raw = overlay_cache[key]
+                return Coff(raw), raw, False
+            raw = bytes(compiler.overlay(root / unit, contents, (), flags))
+            overlay_cache[key] = raw
+            return Coff(raw), raw, True
+    baseline_cache = {}
+
+    def effective(unit, requested):
+        suffix = settings.layout_flags if settings.layout_flags and requested[-len(settings.layout_flags):] == settings.layout_flags else ()
+        base = requested[:-len(suffix)] if suffix else requested
+        return settings.effective_flags(unit, base) + suffix
 
     def fresh():
         if (settings.snapshot(root, metadata) != before
@@ -341,11 +361,13 @@ def measure_variants(root: Path, task_name: str, image_path: Path, deck: dict, *
         while pending := (referenced_object_units(data_bindings, objects)
                           | referenced_shared_units(trial_shared, objects)) - objects.keys() - errors.keys():
             for unit in sorted(pending):
-                control = {"unit": unit, "result": Result.UNKNOWN}
+                control = {"unit": unit, "flags": list(effective(unit, flags)), "graph_flags": list(flags),
+                           "result": Result.UNKNOWN}
                 try:
                     if Path(unit).suffix not in settings.unit_extensions:
                         raise ValueError("object owner is not a configured translation unit")
-                    key = (unit, flags)
+                    unit_flags = effective(unit, flags)
+                    key = (unit, unit_flags)
                     with support_index_lock:
                         lock = support_locks.setdefault(key, Lock())
                     # A dependency first discovered by concurrent candidates
@@ -355,18 +377,18 @@ def measure_variants(root: Path, task_name: str, image_path: Path, deck: dict, *
                         control["replica_reused"] = replica_data is not None
                         if replica_data is None:
                             support_attempts += 1
-                            original = Coff(compiler(root / unit, (), flags))
-                            support_attempts += 1
-                            replica_data = compiler.overlay(root / unit, originals, (), flags)
-                            if object_signature(original) != object_signature(Coff(replica_data)):
+                            original = Coff(compiler(root / unit, (), unit_flags))
+                            replica_obj, replica_data, fresh_overlay = overlay_compile(unit, originals, unit_flags)
+                            support_attempts += int(fresh_overlay)
+                            if object_signature(original) != object_signature(replica_obj):
                                 raise ValueError("unchanged-source replica differs from the original compilation: " + unit)
                             support_replicas[key] = replica_data
                     control["result"] = Result.PASS
                     if contents is None:
                         objects[unit] = Coff(replica_data)
                     else:
-                        support_attempts += 1
-                        objects[unit] = Coff(compiler.overlay(root / unit, contents, (), flags))
+                        objects[unit], _, fresh_overlay = overlay_compile(unit, contents, unit_flags)
+                        support_attempts += int(fresh_overlay)
                 except (OSError, ValueError) as error:
                     errors[unit] = str(error)
                     control["reason"] = str(error)
@@ -377,17 +399,29 @@ def measure_variants(root: Path, task_name: str, image_path: Path, deck: dict, *
             measured, data_bindings, generated, objects, image, trial_externals, errors=errors,
             import_bindings=imports, shared_bindings=active_shared, literal_bindings=literal_bindings)
         selected_row = next(row for row in rows if row["entity_id"] == target.origin.entity_id)
+        neighbors = [row for row in rows if row is not selected_row]
+        selected_row = {**selected_row, "flags": list(effective(target.unit, flags)), "graph_flags": list(flags)}
+
+        def annotate(items):
+            return [{**row, **({"flags": list(effective(row["unit"], flags)), "graph_flags": list(flags)}
+                               if row.get("unit") else {})} for row in items]
+
         result = {"name": name, "flags": list(flags), "target": selected_row,
-                "neighbors": [{**row, "in_task": row["entity_id"] in selected} for row in rows if row is not selected_row],
+                "neighbors": [{**row, "in_task": row["entity_id"] in selected,
+                               "flags": list(effective(row["unit"], flags)), "graph_flags": list(flags)}
+                              for row in neighbors],
                 "compile_errors": errors or {},
                 "binding_changes": changes,
                 "object_dependencies": support_controls, "support_compile_attempts": support_attempts,
-                "object_definitions": data_rows, "generated_tables": generated_rows, "import_bindings": import_rows,
-                "shared_functions": shared_rows, "literal_definitions": literal_rows}
+                "object_definitions": annotate(data_rows), "generated_tables": annotate(generated_rows),
+                "import_bindings": annotate(import_rows), "shared_functions": annotate(shared_rows),
+                "literal_definitions": annotate(literal_rows),
+                "unit_flag_sets": {unit: [list(effective(unit, flags))]
+                                   for unit in sorted(set(objects) | set(errors))}}
         if compiled_diagnostics:
             binding = next(item for item in trial_bindings if item.origin.entity_id == target.origin.entity_id)
             result["_compiled_diagnostic"] = compiled_diagnostic(
-                objects.get(binding.unit), binding, name=name, flags=flags, budget=diagnostic_budget)
+                objects.get(binding.unit), binding, name=name, flags=effective(binding.unit, flags), budget=diagnostic_budget)
         return result
 
     # Replica and damage controls are per flag trial, not a one-time capability
@@ -399,21 +433,30 @@ def measure_variants(root: Path, task_name: str, image_path: Path, deck: dict, *
             fresh()
             baseline, replicas = {}, {}
             for unit in units:
-                attempts += 1
-                baseline[unit] = Coff(compiler(root / unit, (), flags))
-                attempts += 1
-                replicas[unit] = Coff(compiler.overlay(root / unit, originals, (), flags))
+                unit_flags = effective(unit, flags)
+                cache_key = (unit, unit_flags)
+                if cache_key not in baseline_cache:
+                    attempts += 1
+                    original = Coff(compiler(root / unit, (), unit_flags))
+                    attempts += 1
+                    replica = Coff(compiler.overlay(root / unit, originals, (), unit_flags))
+                    baseline_cache[cache_key] = original, replica
+                baseline[unit], replicas[unit] = baseline_cache[cache_key]
                 if object_signature(baseline[unit]) != object_signature(replicas[unit]):
                     raise ValueError("unchanged-source replica differs from the original compilation: " + unit)
-                row["replicas"].append({"unit": unit, "result": Result.PASS})
+                row["replicas"].append({"unit": unit, "flags": list(unit_flags),
+                                         "graph_flags": list(flags), "result": Result.PASS})
             baselines.append(score(baseline, flags, "baseline"))
             for name, (_, control) in damage_controls.items():
                 witness = witnesses[name]
-                attempts += 1
-                damaged = Coff(compiler.overlay(root / witness.unit, {**originals, name: control}, (), flags))
+                damaged, _, compiled = overlay_compile(witness.unit, {**originals, name: control},
+                                                       effective(witness.unit, flags))
+                attempts += int(compiled)
                 if function_signature(replicas[witness.unit], witness.symbol) == function_signature(damaged, witness.symbol):
                     raise ValueError("damage control did not change the selected compiled function for " + name)
-                row["files"].append({"path": name, "entity_id": witness.origin.entity_id, "unit": witness.unit, "result": Result.PASS})
+                row["files"].append({"path": name, "entity_id": witness.origin.entity_id,
+                                     "unit": witness.unit, "flags": list(effective(witness.unit, flags)),
+                                     "graph_flags": list(flags), "result": Result.PASS})
             row.update(result=Result.PASS, reason="all TU replicas agree; each file independently changes its compiled witness")
             valid.append(flags)
         except (OSError, ValueError) as error:
@@ -422,17 +465,19 @@ def measure_variants(root: Path, task_name: str, image_path: Path, deck: dict, *
     fresh()
 
     def compile_trial(item):
+        nonlocal attempts
         name, contents, flags = item
         objects, errors = {}, {}
         for unit in units:
             try:
-                objects[unit] = Coff(compiler.overlay(root / unit, contents, (), flags))
+                unit_flags = effective(unit, flags)
+                objects[unit], _, compiled = overlay_compile(unit, contents, unit_flags)
+                attempts += int(compiled)
             except (OSError, ValueError) as error:
                 errors[unit] = str(error)
         return score(objects, flags, name, errors, contents)
 
     work = [(name, contents, flags) for name, contents in candidates.items() for flags in valid]
-    attempts += len(work) * len(units)
     if jobs == 1:
         # Keep bounded-command signal cleanup on the main thread in the default
         # workflow. Wider pools require the coordinator's external job containment.

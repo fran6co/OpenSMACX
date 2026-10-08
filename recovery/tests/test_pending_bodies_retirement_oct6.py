@@ -78,8 +78,8 @@ def test_pending_translation_unit_is_retired_only_after_owners_are_present():
     assert allocation < initialize < tail_test < old_next < reread
     assert "else {" in append and "node = 0;" in append
 
-    jackal_source = (ROOT / "src/jackal.cpp").read_text()
-    jackal = [row for row in read_file(ROOT / "src/jackal.cpp")
+    jackal_source = (ROOT / "src/jackal/jackal.cpp").read_text()
+    jackal = [row for row in read_file(ROOT / "src/jackal/jackal.cpp")
               if row.address == 0x0062D500]
     assert len(jackal) == 1 and jackal[0].mode is Mode.BODY
     close = _definition(jackal_source, r"void __cdecl jackal_close\(\)")

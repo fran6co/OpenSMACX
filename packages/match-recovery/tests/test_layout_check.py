@@ -93,6 +93,25 @@ def test_each_flag_set_needs_a_witness_not_just_one_passing_spelling(layout_proj
     assert result["expectations"][0]["missing_flag_sets"] == [["second"]]
 
 
+def test_ragged_profile_trials_keep_absence_separate_from_actual_profile_witness(layout_project):
+    add_unit(layout_project)
+    config_path = layout_project / "recovery/project.json"
+    config = json.loads(config_path.read_text())
+    config["measurement"]["unit_flag_sets"] = {"code/f.cc": [0], "code/g.cc": [1]}
+    config_path.write_text(json.dumps(config))
+    calls = []
+    absent = coff(debug_types().replace(b"Widget", b"OtherX"))
+
+    def compile(path, _, flags):
+        calls.append((path.name, flags))
+        return absent if path.name == "g.cc" else coff()
+
+    result = check_layout(layout_project, compiler=compile)
+    assert result["result"] == "unknown"
+    assert calls == [("f.cc", ("first",)), ("g.cc", ("second",))]
+    assert result["expectations"][0]["missing_flag_sets"] == [["second"]]
+
+
 def test_diagnostic_selection_never_waives_omitted_product_units(layout_project):
     add_unit(layout_project)
     result = check_layout(layout_project, units=["code/f.cc"], compiler=lambda *_: coff())

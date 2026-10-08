@@ -1,6 +1,7 @@
 """Installed-style checks for an unregistered project and local compiler profile."""
 
 import base64
+from copy import deepcopy
 import hashlib
 import json
 from pathlib import Path
@@ -69,6 +70,24 @@ def test_native_checks_need_no_project_dispatcher(project, capsys, action):
         assert report["compilation"] == {"attempts": 1, "overlay_attempts": 0, "reused_objects": 1,
                                          "debug": ["-types"], "persistent_cache": False}
         assert not report["ready_for_collection"]
+
+
+def test_application_graph_reports_the_effective_profile_per_translation_unit(project, capsys):
+    path = project / "recovery/project.json"
+    config = json.loads(path.read_text())
+    config["measurement"]["flag_sets"] = [["-trial"], ["-alternate"]]
+    config["measurement"]["unit_flag_sets"] = {"code/unit.cc": [1]}
+    path.write_text(json.dumps(config))
+    compiler_path = project / "recovery/compile.py"
+    compiler_text = compiler_path.read_text()
+    compiler_path.write_text(compiler_text.replace(
+        "['-trial'], ['-trial', '-types']", "['-trial'], ['-trial', '-types'], ['-alternate'], ['-alternate', '-types']"))
+    code = main(["tasks", "check-binary", "owner", "--root", str(project), "--image", "original.exe"])
+    assert code in (0, 3)  # This control is about compiler-profile selection, not recovery acceptance.
+    report = json.loads(capsys.readouterr().out)
+    assert report["compile_attempts"] == 1
+    assert report["unit_flag_sets"] == {"code/unit.cc": [["-alternate"]]}
+    assert report["translation_units"] == ["code/unit.cc"]
 
 
 def test_strict_joint_check_runs_without_site_packages(project):
@@ -188,6 +207,56 @@ def test_native_generated_coverage_is_from_successfully_compiled_objects_only(pr
     row, = check_requirements(inventory, {"checks": {"binary": report}})
     assert row["result"] == "unknown"  # All-absent never proves the required table.
     assert row["counts"]["unknown"] == (1 if failed_trial else 0)
+
+
+def test_pinned_unit_graph_contexts_aggregate_one_structural_witness(project):
+    from match_recovery.application_binary import verify_task
+    from match_recovery.generated_source import read_generated
+    from match_recovery.structural_requirements import check_requirements
+
+    header = project / "code/unit.hpp"
+    header.write_text(header.read_text() + "// RECOVERY_GENERATED: v1 vtable 0x401010 0x401014 ??_7Widget@@6B@ 0x401000\n")
+    configuration = project / "recovery/project.json"
+    value = json.loads(configuration.read_text())
+    value["measurement"]["flag_sets"] = [["trial-a"], ["trial-b"]]
+    value["measurement"]["unit_flag_sets"] = {"code/unit.cc": [1]}
+    configuration.write_text(json.dumps(value))
+    calls = []
+
+    def compile_object(path, command, flags):
+        calls.append((path.name, flags))
+        return combined_object()
+
+    report = verify_task(project, "owner", project / "original.exe", compiler=compile_object)
+    assert calls == [("unit.cc", ("trial-b",))]
+    assert report["compile_attempts"] == 1
+    assert report["unit_flag_sets"] == {"code/unit.cc": [["trial-b"]]}
+    assert len(report["generated_coverage"]) == 2
+    binding, = read_generated(project, hashlib.sha256((project / "original.exe").read_bytes()).hexdigest())
+    inventory = {"scope": [binding.evidence.entity_id], "interpretations": [{
+        "interpretation_id": binding.interpretation_id, "entity_id": binding.evidence.entity_id,
+        "value": binding.interpretation, "current": True}]}
+    row, = check_requirements(inventory, {"checks": {"binary": report}})
+    assert row["result"] == "unknown"  # Repeated absence is one physical witness, never a table definition.
+    assert row["counts"]["pass"] == 1 and row["counts"]["unknown"] == 0
+    mutated = deepcopy(report)
+    mutated["unit_graph_trials"]["code/unit.cc"][0]["graph_flags"] = ["not-configured"]
+    with pytest.raises(ValueError, match="outside declared"):
+        check_requirements(inventory, {"checks": {"binary": mutated}})
+    co_deleted_all = deepcopy(report)
+    co_deleted_all.pop("unit_graph_trials")
+    co_deleted_all.pop("unit_graph_receipts")
+    with pytest.raises(ValueError, match="requires logical graph-trial"):
+        check_requirements(inventory, {"checks": {"binary": co_deleted_all}})
+    co_deleted = deepcopy(report)
+    co_deleted["generated_coverage"].pop()
+    co_deleted["unit_graph_trials"]["code/unit.cc"].pop()
+    with pytest.raises(ValueError, match="every logical graph"):
+        check_requirements(inventory, {"checks": {"binary": co_deleted}})
+    report["generated_coverage"].pop()
+    row, = check_requirements(inventory, {"checks": {"binary": report}})
+    assert row["result"] == "unknown" and row["counts"]["unknown"] == 1
+    assert any(context["result"] == "unknown" for context in row["trials"][0]["graph_contexts"])
 
 
 def test_non_unit_source_cannot_be_compiled_as_a_guessed_translation_unit(project, capsys):

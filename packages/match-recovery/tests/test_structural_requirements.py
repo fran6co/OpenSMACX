@@ -10,6 +10,8 @@ from match_recovery.generated_binary import check_generated, generated_coverage
 from match_recovery.layout_source import parse_bases, parse_members
 from match_recovery.model import Result
 from match_recovery.object_source import parse_objects
+from match_recovery.literal_source import parse_literals
+from match_recovery.shared_source import parse_shared
 from match_recovery.structural_requirements import check_requirements, declared_outcome, structural_outcome
 from test_generated import fixture
 
@@ -35,6 +37,25 @@ def test_controlled_absence_covers_only_the_named_tu_trial_not_full_structure():
     assert row["result"] == declared_outcome([row], {})[0] == "pass"
     assert len([trial for trial in row["trials"] if trial.get("coverage_only")]) == 2
     assert structural_outcome([row])[0] == "unknown"
+
+
+def test_layout_absence_must_match_declared_graph_context_when_present():
+    report = candidate()
+    layout = report["checks"]["layout"]
+    layout["unit_graph_trials"] = {"code/owner.cc": [
+        {"flags": flags, "graph_flags": flags} for flags in FLAGS]}
+    layout["unit_graph_receipts"] = {"code/owner.cc": [
+        {"flags": flags, "graph_flags": flags, "outcome": "compiled"} for flags in FLAGS]}
+    layout["members"] = [{**row, "graph_flags": row["flags"]} for row in layout["members"]
+                         if row["flags"] != FLAGS[0]]
+    coverage = absent_coverage("code/owner.cc", FLAGS[0])
+    coverage["graph_flags"] = FLAGS[0]
+    layout["coverage"] = [coverage]
+    row, = check_requirements(inventory((MEMBER, True)), report)
+    assert row["result"] == "unknown"  # Absence coverage cannot supply the required actual layout witness.
+    coverage["graph_flags"] = ["unconfigured"]
+    with pytest.raises(ValueError, match="outside its declared"):
+        check_requirements(inventory((MEMBER, True)), report)
 
 
 @pytest.mark.parametrize("missing", ["all", "one_trial"])
@@ -90,15 +111,96 @@ def test_object_initial_data_requires_owner_trials_not_duplicate_definitions_in_
                                     "flags": flags, "definition": "pass", "content": "pass"} for flags in FLAGS]
     row, = check_requirements(inventory((item, True)), report)
     assert row["result"] == "pass" and row["counts"]["pass"] == 2
-    binary["object_definitions"][1]["content"] = "fail"
+
+
+def test_ragged_structural_data_grid_requires_only_the_exact_owner_profiles():
+    item, = parse_objects("// RECOVERY_OBJECT: v2 0x2000 0x2004 _g 0x2010", "code/data.cc", "a" * 64,
+                          address_space="custom:offset")
+    report = candidate()
+    binary = report["checks"]["binary"]
+    binary["translation_units"] = ["code/data.cc"]
+    binary["unit_flag_sets"] = {"code/data.cc": [FLAGS[1]]}
+    binary["unit_graph_trials"] = {"code/data.cc": [
+        {"flags": FLAGS[1], "graph_flags": graph_flags} for graph_flags in FLAGS]}
+    binary["unit_graph_receipts"] = {"code/data.cc": [
+        {"flags": FLAGS[1], "graph_flags": graph_flags, "outcome": "compiled"}
+        for graph_flags in FLAGS]}
+    binary["object_owners"] = [{"interpretation_id": item.interpretation_id, "unit": item.unit}]
+    binary["object_definitions"] = [{"interpretation_id": item.interpretation_id, "unit": item.unit,
+                                    "flags": FLAGS[1], "graph_flags": graph_flags,
+                                    "definition": "pass", "content": "pass"} for graph_flags in FLAGS]
+    row, = check_requirements(inventory((item, True)), report)
+    assert row["result"] == "pass" and row["counts"]["pass"] == 1
+
+    binary["translation_units"].append("code/extra.cc")
+    binary["unit_flag_sets"]["code/extra.cc"] = deepcopy(FLAGS)
+    binary["unit_graph_trials"]["code/extra.cc"] = [
+        {"flags": graph_flags, "graph_flags": graph_flags} for graph_flags in FLAGS]
+    binary["unit_graph_receipts"]["code/extra.cc"] = [
+        {"flags": graph_flags, "graph_flags": graph_flags, "outcome": "compiled"}
+        for graph_flags in FLAGS]
+    binary["object_definitions"].extend([
+        {"interpretation_id": item.interpretation_id, "unit": "code/extra.cc", "flags": graph_flags,
+         "graph_flags": graph_flags, "definition": "fail", "content": "pass"}
+        for graph_flags in FLAGS])
+    row, = check_requirements(inventory((item, True)), report)
+    assert row["result"] == "fail" and row["counts"]["fail"] == 2
+    binary["object_definitions"][3]["content"] = "fail"
     row, = check_requirements(inventory((item, True)), report)
     assert structural_outcome([row])[0] == "fail"
-    binary["object_definitions"].pop()
+    binary["object_definitions"] = binary["object_definitions"][:2]
+    binary["translation_units"].pop()
+    binary["unit_flag_sets"].pop("code/extra.cc")
+    binary["unit_graph_trials"].pop("code/extra.cc")
+    binary["unit_graph_receipts"].pop("code/extra.cc")
     row, = check_requirements(inventory((item, True)), report)
-    assert row["result"] == "unknown" and row["counts"]["unknown"] == 1
+    assert row["result"] == "pass" and row["counts"]["pass"] == 1
     binary["object_owners"] = []
     row, = check_requirements(inventory((item, True)), report)
     assert row["result"] == "unknown"
+
+
+@pytest.mark.parametrize("kind", ["object_initial_data", "tu_private_literal", "shared_function_body"])
+def test_pinned_data_and_body_owners_require_every_declared_graph_context(kind):
+    pin = "a" * 64
+    if kind == "object_initial_data":
+        item, = parse_objects("// RECOVERY_OBJECT: v2 0x2000 0x2004 _g 0x2010", "code/data.cc", pin,
+                              address_space="custom:offset")
+        collection, owner_key = "object_definitions", "object_owners"
+    elif kind == "tu_private_literal":
+        item, = parse_literals("// RECOVERY_LITERAL: v1 0x2000 0x2004 _literal 0x2010", "code/data.cc", pin,
+                               address_space="custom:offset")
+        collection, owner_key = "literal_definitions", "literal_owners"
+    else:
+        item, = parse_shared("// RECOVERY_SHARED: v1 0x2000 0x2004 _shared 0x2010\nvoid _shared() {}",
+                             "code/data.cc", pin, address_space="custom:offset")
+        collection, owner_key = "shared_functions", "shared_owners"
+    graph_flags = [FLAGS[0], FLAGS[1]]
+    report = {"checks": {"layout": {}, "binary": {
+        "translation_units": ["code/data.cc"], "generated_units": ["code/data.cc"],
+        "flag_sets": deepcopy(FLAGS), "unit_flag_sets": {"code/data.cc": [FLAGS[0]]},
+        "unit_graph_trials": {"code/data.cc": [
+            {"flags": FLAGS[0], "graph_flags": flags} for flags in graph_flags]},
+        "unit_graph_receipts": {"code/data.cc": [
+            {"flags": FLAGS[0], "graph_flags": flags, "outcome": "compiled"}
+            for flags in graph_flags]},
+        owner_key: [{"interpretation_id": item.interpretation_id, "unit": item.unit}],
+        collection: []}}}
+    if kind == "shared_function_body":
+        report["checks"]["binary"][collection] = [
+            {"interpretation_id": item.interpretation_id, "unit": item.unit,
+             "flags": FLAGS[0], "graph_flags": flags, "result": "pass"}
+            for flags in graph_flags]
+    else:
+        report["checks"]["binary"][collection] = [
+            {"interpretation_id": item.interpretation_id, "unit": item.unit,
+             "flags": FLAGS[0], "graph_flags": flags, "definition": "pass", "content": "pass"}
+            for flags in graph_flags]
+    row, = check_requirements(inventory((item, True)), report)
+    assert row["result"] == "pass" and row["counts"]["pass"] == 1
+    report["checks"]["binary"][collection].pop()
+    row, = check_requirements(inventory((item, True)), report)
+    assert row["result"] == "unknown" and row["counts"]["unknown"] == 1
 
 
 def inventory(*items):
@@ -122,6 +224,49 @@ def test_all_declared_witnesses_pass_without_proving_complete_structure():
     assert structural_outcome([row])[0] == Result.UNKNOWN
     assert row["next_action"] == "verify_remaining_structure_and_lifetime"
     assert declared_outcome([row], {})[0] == Result.PASS
+
+
+def test_ragged_unit_profile_grid_requires_each_exact_unit_trial():
+    report = candidate(units=("code/owner.cc", "code/dependency.cc"))
+    layout = report["checks"]["layout"]
+    layout["unit_flag_sets"] = {"code/owner.cc": [FLAGS[0]],
+                                "code/dependency.cc": deepcopy(FLAGS)}
+    layout["members"] = [row for row in layout["members"]
+                         if row["unit"] != "code/owner.cc" or row["flags"] == FLAGS[0]]
+    report["checks"]["binary"]["unit_flag_sets"] = deepcopy(layout["unit_flag_sets"])
+    row, = check_requirements(inventory((MEMBER, True)), report)
+    assert row["result"] == "pass" and row["counts"]["pass"] == 3
+
+    layout["members"] = [item for item in layout["members"]
+                         if not (item["unit"] == "code/dependency.cc" and item["flags"] == FLAGS[1])]
+    row, = check_requirements(inventory((MEMBER, True)), report)
+    assert row["result"] == "unknown" and row["counts"]["unknown"] == 1
+
+    layout["members"].append({"interpretation_id": MEMBER.interpretation_id,
+                              "expectation": asdict(MEMBER), "unit": "code/dependency.cc",
+                              "flags": ["unexpected"], "result": "pass"})
+    row, = check_requirements(inventory((MEMBER, True)), report)
+    assert row["result"] == "unknown" and row["counts"]["unknown"] >= 1
+
+
+def test_graph_context_aggregation_preserves_failure_and_unknown_details():
+    report = candidate(results=("fail", "unknown"))
+    layout = report["checks"]["layout"]
+    layout["unit_flag_sets"] = {"code/owner.cc": [FLAGS[0]]}
+    for index, row in enumerate(layout["members"]):
+        row["flags"] = FLAGS[0]
+        row["graph_flags"] = FLAGS[index]
+    row, = check_requirements(inventory((MEMBER, True)), report)
+    assert row["result"] == "fail" and row["counts"] == {"pass": 0, "fail": 1, "unknown": 0}
+    contexts = row["trials"][0]["graph_contexts"]
+    assert [context["result"] for context in contexts] == ["fail", "unknown"]
+
+
+def test_malformed_per_unit_grid_is_rejected_not_treated_as_a_waiver():
+    report = candidate()
+    report["checks"]["layout"]["unit_flag_sets"] = {"code/extra.cc": deepcopy(FLAGS)}
+    with pytest.raises(ValueError, match="exactly match declared units"):
+        check_requirements(inventory((MEMBER, True)), report)
 
 
 def test_reviewed_replacement_requires_its_own_complete_measurements():

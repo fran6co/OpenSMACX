@@ -137,6 +137,35 @@ def test_selected_initializer_follows_its_data_owner_once_per_trial(project):
     assert [name for name, _ in calls] == ["global.cc", "target.cc"] * 2
 
 
+def test_graph_dependencies_use_their_own_profile_and_record_exact_receipts(project):
+    image = data_image((0x401020).to_bytes(4, "little"), absolute=0)
+    (project / "image.exe").write_bytes(image)
+    (project / "code/PIN").write_text("sha256 " + hashlib.sha256(image).hexdigest())
+    (project / "code/target.cc").write_text("// RECOVERY_OBJECT: v1 0x401020 _h\nint h;\n")
+    config_path = project / "recovery/project.json"
+    config = json.loads(config_path.read_text())
+    config["measurement"]["unit_flag_sets"] = {"code/global.cc": [0]}
+    config_path.write_text(json.dumps(config))
+    calls = []
+
+    def compile_source(path, args, flags):
+        calls.append((path.name, flags))
+        if path.name == "global.cc":
+            return data_fixture(relocations=((0, 1, 6),))
+        return data_fixture(definition=b"_h", reference=b"_unseen")
+
+    report = check_data(project, project / "image.exe", symbols=["_g"], compiler=compile_source)
+    assert report["result"] == "pass"
+    assert calls == [("global.cc", ("first", "debug-data")),
+                     ("target.cc", ("first", "debug-data")),
+                     ("target.cc", ("second", "debug-data"))]
+    assert report["trials"][0]["unit_flag_sets"] == {
+        "code/global.cc": ["first", "debug-data"],
+        "code/target.cc": ["first", "debug-data"]}
+    assert report["trials"][1]["unit_flag_sets"]["code/global.cc"] == ["first", "debug-data"]
+    assert report["trials"][1]["unit_flag_sets"]["code/target.cc"] == ["second", "debug-data"]
+
+
 def test_task_compiles_declared_data_requirement_even_without_a_code_reference(project):
     from match_recovery.application_binary import verify_task
     from match_recovery.model import Origin

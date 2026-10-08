@@ -109,7 +109,7 @@ def verify_layout(root: Path, task_name: str, *, compiler=None, command_for=None
         classes = sorted(required_classes | hints[unit].keys())
         if not classes:
             continue
-        for flags in settings.flag_sets:
+        for flags in settings.flags_for(unit):
             layouts, errors, missing, witnesses, absent = {}, {}, set(), {}, set()
             try:
                 command = tuple(command_for(root / unit))
@@ -184,15 +184,25 @@ def verify_layout(root: Path, task_name: str, *, compiler=None, command_for=None
     # Every present definition must agree. Controlled absence closes declaration
     # coverage only; each requirement still needs a real witness in every trial.
     all_rows = rows + base_rows
-    missing_witnesses = [{"interpretation_id": item.interpretation_id, "flags": list(flags)}
-                         for item in (*expected, *expected_bases) for flags in settings.flag_sets
-                         if not any(row["interpretation_id"] == item.interpretation_id
-                                    and row["flags"] == list(flags) for row in all_rows)]
+    def covered(item, unit, flags):
+        return (any(row["interpretation_id"] == item.interpretation_id and row["unit"] == unit
+                    and row["flags"] == list(flags) for row in all_rows)
+                or any(row["class_name"] == item.class_name and row["unit"] == unit
+                       and row["flags"] == list(flags)
+                       and row["observation"] in ("no_complete_definition", "not_emitted")
+                       for row in observations))
+
+    missing_witnesses = [{"interpretation_id": item.interpretation_id, "unit": unit, "flags": list(flags)}
+                         for item in (*expected, *expected_bases) for unit in units
+                         for flags in settings.flags_for(unit)
+                         if not covered(item, unit, flags)]
     result = (Result.FAIL if any(row["result"] == Result.FAIL for row in all_rows) else
               Result.UNKNOWN if not all_rows or missing_witnesses or any(row["result"] == Result.UNKNOWN for row in all_rows) else Result.PASS)
     return {"task_id": task_name, "check": "declared_member_and_base_offsets", "result": result,
             "members": rows, "bases": base_rows, "coverage": observations,
             "translation_units": units, "flag_sets": [list(flags) for flags in settings.flag_sets],
+            "unit_flag_sets": settings.witness_grid(units),
+            "layout_flags": list(settings.layout_flags),
             "counts": {state.value: sum(row["result"] == state for row in all_rows) for state in Result},
             "compile_attempts": attempts, "input_fingerprint": digest(before),
             "witness_missing": witness_missing,

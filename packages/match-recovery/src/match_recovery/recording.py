@@ -114,7 +114,8 @@ def record(root: Path, targets, *, image: Path, in_file: str | None = None,
     groups = {}
     for row in selected:
         groups.setdefault(row.path, []).append(row)
-    work = [(root, settings.compiler_profile, path, group, image, arguments, settings.flag_sets, shared)
+    work = [(root, settings.compiler_profile, path, group, image, arguments,
+             settings.flags_for(path.relative_to(root).as_posix()), shared)
             for path, group in groups.items()]
     measurements = []
 
@@ -153,6 +154,7 @@ def record(root: Path, targets, *, image: Path, in_file: str | None = None,
         "updated": [location(row) for row in publication.updated],
         "changed_files": [path.relative_to(root).as_posix() for path in publication.changed_files],
         "translation_units": len(measurements),
+        "unit_flag_sets": settings.witness_grid(path.relative_to(root).as_posix() for path in groups),
         "compile_attempts": sum(unit.compile_attempts for unit in measurements),
         "reused_attempts": sum(unit.reused_attempts for unit in measurements),
         "input_fingerprint": digest(initial)}

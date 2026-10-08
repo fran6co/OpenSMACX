@@ -10,6 +10,7 @@ from collections import Counter, defaultdict
 from contextlib import ExitStack
 from copy import deepcopy
 from dataclasses import asdict
+import hashlib
 from pathlib import Path
 import re
 from weakref import WeakKeyDictionary
@@ -307,6 +308,7 @@ def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | N
     # Only live Coff instances retain compiler bytes. Damage/replica objects
     # discarded by the existing loop do not accumulate a second object cache.
     object_trials = WeakKeyDictionary()
+    compile_cache, verified_cache, damaged_cache, observed_grid = {}, {}, {}, {}
     compare_application_object = None
 
     def fresh():
@@ -323,8 +325,22 @@ def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | N
                 root, roots, files, settings, versioned_files=build_inputs[version]))
         return contexts[key]
 
-    def compile(unit, flags, replacements=None, *, version="current"):
+    def compile(unit, flags, replacements=None, *, version="current", force=False):
         nonlocal compiler, attempts
+        suffix = ()
+        if settings.layout_flags and flags[-len(settings.layout_flags):] == settings.layout_flags:
+            suffix = settings.layout_flags
+        requested = flags[:-len(suffix)] if suffix else flags
+        unit_flags = settings.effective_flags(unit, requested) + suffix
+        observed_grid.setdefault(unit, [])
+        if list(unit_flags) not in observed_grid[unit]:
+            observed_grid[unit].append(list(unit_flags))
+        contents = replacements
+        cache_key = (version, unit, unit_flags,
+                     None if contents is None else digest({name: hashlib.sha256(data).hexdigest()
+                                                          for name, data in sorted(contents.items())}))
+        if not force and cache_key in compile_cache:
+            return compile_cache[cache_key]
         attempts += 1
         fresh()
         if compiler is None:
@@ -332,11 +348,11 @@ def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | N
         if replacements is not None and regenerated:
             files = replacements if tree_mode else {**current, **replacements}
             prepared = environment(files, version)
-            value = prepared(prepared.root / unit, (), flags)
+            value = prepared(prepared.root / unit, (), unit_flags)
         else:
-            value = (compiler(root / unit, (), flags) if replacements is None else
-                     compiler.materialize(root / unit, roots, replacements, (), flags) if tree_mode else
-                     compiler.overlay(root / unit, replacements, (), flags))
+            value = (compiler(root / unit, (), unit_flags) if replacements is None else
+                     compiler.materialize(root / unit, roots, replacements, (), unit_flags) if tree_mode else
+                     compiler.overlay(root / unit, replacements, (), unit_flags))
         fresh()
         raw = bytes(value)
         obj = Coff(raw)
@@ -348,10 +364,13 @@ def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | N
             if files == canonical:
                 object_trials[obj] = ObjectTrial(
                     raw, root, task_name, baseline_revision, authorization, source_digests[version],
-                    unit, version, tuple(flags), digest(before))
+                    unit, version, tuple(unit_flags), digest(before))
+        if not force:
+            compile_cache[cache_key] = obj
         return obj
 
     def linked_objects(unit, flags, prior, original):
+        unit_flags = settings.effective_flags(unit, flags)
         evidence = []
         for version, obj in (("baseline", prior), ("current", original)):
             if obj is None:
@@ -359,9 +378,9 @@ def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | N
             try:
                 report = compare_application_object(
                     object_trials.get(obj), obj, unit=unit, version=version,
-                    flags=flags, input_fingerprint=digest(before))
+                    flags=unit_flags, input_fingerprint=digest(before))
             except (OSError, ValueError) as error:
-                report = {"unit": unit, "version": version, "flags": list(flags),
+                report = {"unit": unit, "version": version, "flags": list(unit_flags), "graph_flags": list(flags),
                           "result": Result.UNKNOWN, "reason": str(error), "linked_effects": Result.UNKNOWN}
             evidence.append(report)
         return evidence
@@ -374,14 +393,14 @@ def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | N
             raise ValueError("authorized generated occurrence lacks its actual preservation object")
         return compare_application_object.cover_startup(
             object_trials.get(obj), obj, unit=unit, version=version,
-            flags=flags, input_fingerprint=digest(before), changes=rows)
+            flags=settings.effective_flags(unit, flags), input_fingerprint=digest(before), changes=rows)
 
     def common_coverage(unit, flags, version, obj, startup):
         if startup is None:
             return None
         return compare_application_object.cover_common_requests(
             object_trials.get(obj), obj, unit=unit, version=version,
-            flags=flags, input_fingerprint=digest(before), startup=startup)
+            flags=settings.effective_flags(unit, flags), input_fingerprint=digest(before), startup=startup)
 
     try:
         if application is not None:
@@ -410,28 +429,32 @@ def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | N
                 # Objects/witnesses are shared only within this immutable flag
                 # trial. Historical and current source versions never share a
                 # cached definition or damage result.
-                verified_objects, damaged_objects = {}, {}
+                verified_objects = {}
 
-                def version_compile(version, unit, replacements=None):
+                def version_compile(version, unit, replacements=None, *, force=False):
                     overlay = old_overlay if version == "baseline" else identity_overlay
                     return compile(unit, flags, {**overlay, **(replacements or {})} or
-                                   {unit: (baseline if version == "baseline" else current)[unit]}, version=version)
+                                   {unit: (baseline if version == "baseline" else current)[unit]},
+                                   version=version, force=force)
 
                 def verified(version, unit):
                     key = version, unit
-                    if key not in verified_objects:
+                    profile_key = (version, unit, settings.effective_flags(unit, flags))
+                    if profile_key not in verified_cache:
                         first = version_compile(version, unit)
-                        replica = version_compile(version, unit)
+                        replica = version_compile(version, unit, force=True)
                         if object_signature(first) != object_signature(replica):
                             raise ValueError("inline canonical replica does not agree")
-                        verified_objects[key] = first
+                        verified_cache[profile_key] = first
+                    if key not in verified_objects:
+                        verified_objects[key] = verified_cache[profile_key]
                     return verified_objects[key]
 
                 def damaged(version, unit, header, contents):
-                    key = version, unit, header, digest(contents.hex())
-                    if key not in damaged_objects:
-                        damaged_objects[key] = version_compile(version, unit, {header: contents})
-                    return damaged_objects[key]
+                    key = (version, unit, settings.effective_flags(unit, flags), header, digest(contents.hex()))
+                    if key not in damaged_cache:
+                        damaged_cache[key] = version_compile(version, unit, {header: contents})
+                    return damaged_cache[key]
 
                 control = {"flags": list(flags), "result": Result.UNKNOWN if diagnostic else Result.PASS, "files": [],
                            "mode": "omitted_for_diagnostics" if diagnostic else "per_file_damage",
@@ -462,6 +485,8 @@ def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | N
                                 break
                     fresh()
                     control["files"].append({"path": name, "unit": witnessed,
+                                             "flags": list(settings.effective_flags(witnessed, flags)) if witnessed else None,
+                                             "graph_flags": list(flags),
                                              "tree": "current" if name in current else "baseline",
                                              "result": Result.PASS if witnessed else Result.UNKNOWN})
                     if witnessed is None:
@@ -481,7 +506,8 @@ def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | N
                     except (OSError, ValueError) as error:
                         protection_error = str(error)
                 for unit in measured_units:
-                    row = {"unit": unit, "flags": list(flags), "result": Result.UNKNOWN}
+                    row = {"unit": unit, "flags": list(settings.effective_flags(unit, flags)),
+                           "graph_flags": list(flags), "result": Result.UNKNOWN}
                     try:
                         if unit in measured_added_units and protection_error:
                             raise ValueError("complete baseline definition coverage unavailable: " + protection_error)
@@ -595,7 +621,10 @@ def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | N
             "materialization": "fresh-prepared-project" if regenerated else "complete-tree-v5" if tree_mode else "existing-file-v4",
             "prepared_contexts": len(contexts),
             "outside_annotation_changes": annotation_changes,
-            "translation_units": measured_units, "unmeasured_units": unmeasured,
+            "translation_units": measured_units,
+            "unit_flag_sets": {unit: observed_grid.get(unit, [list(flags) for flags in settings.flags_for(unit)])
+                               for unit in measured_units},
+            "unmeasured_units": unmeasured,
             "controls": controls, "units": reports, "counts": dict(counts), "compile_attempts": attempts,
             "diagnostic_only": diagnostic,
             "input_fingerprint": digest(before), "persisted": False, "ready_for_collection": False,

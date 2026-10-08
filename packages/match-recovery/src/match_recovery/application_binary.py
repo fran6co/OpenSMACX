@@ -438,14 +438,47 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
     generated_observations = []
     retained_observations = []
     generated_units = set(units)
+    object_cache = {}
+    observed_grid = {}
+    graph_trial_grid = {}
+
+    def effective(unit, requested):
+        suffix = settings.layout_flags if settings.layout_flags and requested[-len(settings.layout_flags):] == settings.layout_flags else ()
+        base = requested[:-len(suffix)] if suffix else requested
+        return settings.effective_flags(unit, base) + suffix
+
+    def record_graph_trial(unit, unit_flags, graph_flags, outcome):
+        rows = graph_trial_grid.setdefault(unit, [])
+        receipt = {"flags": list(unit_flags), "graph_flags": list(graph_flags), "outcome": outcome}
+        if receipt not in rows:
+            rows.append(receipt)
+
     for flags in flag_sets:
         objects, errors = {}, dict(command_errors)
+        effective_by_unit = {}
         for unit, command in commands.items():
-            attempts += 1
+            unit_flags = effective(unit, flags)
+            effective_by_unit[unit] = list(unit_flags)
+            observed_grid.setdefault(unit, [])
+            if list(unit_flags) not in observed_grid[unit]:
+                observed_grid[unit].append(list(unit_flags))
             try:
-                if compiler is None:
-                    compiler = Compiler(root, profile=settings.compiler_profile)
-                objects[unit] = Coff(compiler(root / unit, command, flags))
+                cache_key = (unit, command, unit_flags)
+                if cache_key not in object_cache:
+                    attempts += 1
+                    if compiler is None:
+                        compiler = Compiler(root, profile=settings.compiler_profile)
+                    try:
+                        object_cache[cache_key] = (Coff(compiler(root / unit, command, unit_flags)), None)
+                    except (OSError, ValueError) as error:
+                        object_cache[cache_key] = (None, str(error))
+                obj, error = object_cache[cache_key]
+                if error is not None:
+                    errors[unit] = error
+                    record_graph_trial(unit, unit_flags, flags, "failed")
+                else:
+                    objects[unit] = obj
+                    record_graph_trial(unit, unit_flags, flags, "compiled")
             except (OSError, ValueError) as error:
                 errors[unit] = str(error)
         # A real global may live in a TU without any mapped task function.
@@ -459,14 +492,32 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
                 try:
                     if Path(unit).suffix not in settings.unit_extensions:
                         raise ValueError("object owner is not a configured translation unit")
+                    unit_flags = effective(unit, flags)
                     command = tuple(command_for(root / unit))
-                    attempts += 1
-                    if compiler is None:
-                        compiler = Compiler(root, profile=settings.compiler_profile)
-                    objects[unit] = Coff(compiler(root / unit, command, flags))
+                    effective_by_unit[unit] = list(unit_flags)
+                    observed_grid.setdefault(unit, [])
+                    if list(unit_flags) not in observed_grid[unit]:
+                        observed_grid[unit].append(list(unit_flags))
+                    cache_key = (unit, command, unit_flags)
+                    if cache_key not in object_cache:
+                        attempts += 1
+                        if compiler is None:
+                            compiler = Compiler(root, profile=settings.compiler_profile)
+                        try:
+                            object_cache[cache_key] = (Coff(compiler(root / unit, command, unit_flags)), None)
+                        except (OSError, ValueError) as error:
+                            object_cache[cache_key] = (None, str(error))
+                    obj, error = object_cache[cache_key]
+                    if error is not None:
+                        errors[unit] = error
+                        record_graph_trial(unit, unit_flags, flags, "failed")
+                    else:
+                        objects[unit] = obj
+                        record_graph_trial(unit, unit_flags, flags, "compiled")
                 except (OSError, ValueError) as error:
                     errors[unit] = str(error)
         dependencies.append({"flags": list(flags), "units": sorted(dependency_units),
+                             "unit_flag_sets": {unit: effective_by_unit[unit] for unit in sorted(effective_by_unit)},
                              "errors": {unit: errors[unit] for unit in sorted(dependency_units) if unit in errors}})
         generated_units.update(dependency_units)
         active_shared = [item for item in shared_bindings if item.unit in objects or item.unit in errors]
@@ -497,10 +548,11 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
                         or not any(Path(header).is_relative_to(directory) for directory in settings.source.roots)):
                     continue
                 probe, observation = retained_definition(root, binding, header, product, compiler,
-                                                        commands[binding.unit], flags, settings.source.symbol_format)
+                                                        commands[binding.unit], effective(binding.unit, flags), settings.source.symbol_format)
                 attempts += observation["compile_attempts"]
                 observation = {**observation, "entity_id": binding.origin.entity_id,
-                               "symbol": binding.symbol, "unit": binding.unit, "flags": list(flags)}
+                               "symbol": binding.symbol, "unit": binding.unit,
+                               "flags": list(effective(binding.unit, flags)), "graph_flags": list(flags)}
                 if probe is not None:
                     # Probe COFF is not the product object: re-establish every
                     # same-TU literal against these exact new emitted bytes.
@@ -512,17 +564,23 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
                         external_targets=product_targets, import_targets=product_imports,
                         literal_targets=probe_literals)
                 retained_observations.append(observation)
-        shared_checks.extend({**item, "flags": list(flags)} for item in checked_shared)
-        literal_checks.extend({**item, "flags": list(flags)} for item in checked_literals)
-        object_checks.extend({**item, "flags": list(flags)} for item in checked_objects)
-        import_checks.extend({**item, "flags": list(flags)} for item in checked_imports)
-        generated_checks.extend({**item, "flags": list(flags)} for item in checked_generated)
-        generated_observations.extend({**item, "flags": list(flags)}
+        def stamped(item):
+            unit = item.get("unit")
+            return {**item, "flags": list(effective(unit, flags)) if unit is not None else list(flags),
+                    "graph_flags": list(flags)}
+
+        shared_checks.extend(stamped(item) for item in checked_shared)
+        literal_checks.extend(stamped(item) for item in checked_literals)
+        object_checks.extend(stamped(item) for item in checked_objects)
+        import_checks.extend(stamped(item) for item in checked_imports)
+        generated_checks.extend(stamped(item) for item in checked_generated)
+        generated_observations.extend({**item, "flags": list(effective(item["unit"], flags)), "graph_flags": list(flags)}
                                       for item in generated_coverage(generated_bindings, objects))
         for row in checked_functions:
             if row["entity_id"] in support_entities:
                 continue
-            variants[row["entity_id"]].append({**row, "flags": list(flags)})
+            variants[row["entity_id"]].append({**row, "flags": list(effective(row["unit"], flags)),
+                                                "graph_flags": list(flags)})
     rows = list(refused)
     for key, candidates in sorted(variants.items()):
         results = {item["result"] for item in candidates}
@@ -547,8 +605,16 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
         overall = Result.FAIL
     return {"task_id": task_name, "check": "scoped_binary_references", "result": overall,
             "input_fingerprint": digest(before), "functions": rows, "counts": dict(sorted(counts.items())),
-            "compile_attempts": attempts, "selected_entities": len(selected), "translation_units": units,
+            "compile_attempts": attempts, "selected_entities": len(selected), "translation_units": sorted(generated_units),
             "flag_sets": [list(flags) for flags in flag_sets],
+            "unit_flag_sets": {unit: [list(profile) for profile in dict.fromkeys(
+                tuple(effective(unit, flags)) for flags in flag_sets)]
+                for unit in sorted(generated_units)},
+            "unit_graph_trials": {unit: [{"flags": list(effective(unit, flags)),
+                                           "graph_flags": list(flags)} for flags in flag_sets]
+                                  for unit in sorted(generated_units)},
+            "unit_graph_receipts": {unit: graph_trial_grid.get(unit, [])
+                                    for unit in sorted(generated_units)},
             "component_verification": component_reports,
             "object_definitions": object_checks,
             "literal_definitions": literal_checks,

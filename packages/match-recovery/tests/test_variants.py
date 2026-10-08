@@ -88,6 +88,38 @@ def test_deck_reuses_source_map_and_scores_without_writing_or_banking(project, m
     assert {p.relative_to(root): p.read_bytes() for p in root.rglob("*") if p.is_file()} == before
 
 
+def test_variant_baseline_damage_and_candidates_use_the_pinned_unit_profile(project):
+    root, _ = project
+    path = root / "recovery/project.json"
+    config = json.loads(path.read_text())
+    config["measurement"]["flag_sets"] = [["-O2"], ["-Od"]]
+    config["measurement"]["unit_flag_sets"] = {"code/unit.cc": [1]}
+    path.write_text(json.dumps(config))
+
+    class ProfileCompiler(Compiler):
+        def __init__(self):
+            self.flags = []
+
+        def __call__(self, source, command, flags):
+            self.flags.append(flags)
+            return super().__call__(source, command, flags)
+
+        def variant(self, source, contents, command, flags):
+            self.flags.append(flags)
+            return super().variant(source, contents, command, flags)
+
+        def overlay(self, source, replacements, command, flags):
+            return super().overlay(source, replacements, command, flags)
+
+    compiler = ProfileCompiler()
+    report = measure(project, compiler=compiler)
+    assert report["status"] == "scored"
+    assert compiler.flags and set(compiler.flags) == {("-Od",)}
+    assert len(compiler.flags) == report["compile_attempts"] == 5
+    assert all(row["unit_flag_sets"] == {"code/unit.cc": [["-Od"]]}
+               for row in (*report["baseline"], *report["candidates"]))
+
+
 def test_multiple_edits_use_original_byte_ranges_without_cascading(project):
     root, _ = project
     path = root / "code/unit.cc"

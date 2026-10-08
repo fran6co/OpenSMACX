@@ -69,6 +69,24 @@ def check(root, **kwargs):
     return check_preservation(root, "owner", compiler=kwargs.pop("compiler", Compiler(root)), **kwargs)
 
 
+def test_baseline_and_current_residuals_use_identical_per_unit_profiles(project):
+    config_path = project / "recovery/project.json"
+    config = json.loads(config_path.read_text())
+    config["measurement"]["flag_sets"] = [["optimize"], ["debug"]]
+    config["measurement"]["unit_flag_sets"] = {"code/owner.cc": [1]}
+    config_path.write_text(json.dumps(config))
+    (project / "code/model.h").write_text("struct Model { int field; int extra; };\n")
+    compiler = Compiler(project)
+    report = check(project, compiler=compiler)
+    observed = {}
+    for source, flags, _ in compiler.calls:
+        observed.setdefault(source.name, set()).add(flags)
+    assert observed["owner.cc"] == {("debug",)}
+    assert observed["caller.cc"] == {("optimize",), ("debug",)}
+    assert report["unit_flag_sets"] == {
+        "code/caller.cc": [["optimize"], ["debug"]], "code/owner.cc": [["debug"]]}
+
+
 @pytest.mark.parametrize("anchor,expected", [("0x00401000", "pass"), ("0x00401010", "fail")])
 def test_bounded_object_annotation_scope_follows_its_evidence_anchor(project, anchor, expected):
     header = project / "code/model.h"

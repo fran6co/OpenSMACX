@@ -320,9 +320,7 @@ endif()
 # member must therefore be selected without a synthetic retention anchor.
 # Other drawing subsystems remain direct application inputs until their
 # membership is established. This is not a claim of complete JACKAL.LIB recovery.
-add_library(jackal STATIC src/jackal.cpp)
-target_compile_definitions(jackal PRIVATE $<$<CONFIG:Debug>:BUILD_DEBUG>)
-target_compile_options(jackal PRIVATE /W4 "--repro-root=${CMAKE_CURRENT_SOURCE_DIR}")
+add_subdirectory(src/jackal)
 add_executable(OpenSMACX ${OPENSMACX_SOURCES})
 
 # Terrain, media decoder and GraphicWin lookup data remain local derivatives of

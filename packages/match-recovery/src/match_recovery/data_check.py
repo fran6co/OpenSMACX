@@ -56,16 +56,40 @@ def check_data(root: Path, image_path: Path, *, symbols=None, compiler=None):
     flags_list = tuple(flags + settings.layout_flags for flags in settings.flag_sets)
     compiler = compiler if compiler is not None else Compiler(root, profile=settings.compiler_profile)
     rows, literal_rows, dependencies, shared_checks, attempts = [], [], [], [], 0
+    object_cache = {}
+    observed_grid = {}
+
+    def effective(unit, requested):
+        suffix = settings.layout_flags if settings.layout_flags and requested[-len(settings.layout_flags):] == settings.layout_flags else ()
+        base = requested[:-len(suffix)] if suffix else requested
+        return settings.effective_flags(unit, base) + suffix
+
     for flags in flags_list:
         objects, errors = {}, {}
+        effective_by_unit = {}
         pending = {b.unit for b in selection}
         while pending:
             for unit in sorted(pending):
                 try:
                     if Path(unit).suffix not in settings.unit_extensions:
                         raise ValueError("object owner is not a configured translation unit")
-                    attempts += 1
-                    objects[unit] = Coff(compiler(root / unit, (), flags))
+                    unit_flags = effective(unit, flags)
+                    effective_by_unit[unit] = list(unit_flags)
+                    observed_grid.setdefault(unit, [])
+                    if list(unit_flags) not in observed_grid[unit]:
+                        observed_grid[unit].append(list(unit_flags))
+                    cache_key = (unit, unit_flags)
+                    if cache_key not in object_cache:
+                        attempts += 1
+                        try:
+                            object_cache[cache_key] = (Coff(compiler(root / unit, (), unit_flags)), None)
+                        except (OSError, ValueError) as error:
+                            object_cache[cache_key] = (None, str(error))
+                    obj, error = object_cache[cache_key]
+                    if error is not None:
+                        errors[unit] = error
+                    else:
+                        objects[unit] = obj
                 except (OSError, ValueError) as error:
                     errors[unit] = str(error)
             pending = (referenced_initial_object_units(selected, bindings, objects)
@@ -76,19 +100,22 @@ def check_data(root: Path, image_path: Path, *, symbols=None, compiler=None):
         active_literals = [b for b in literals if b.unit in objects or b.unit in errors]
         local_targets, checked_literals = check_literals(active_literals, objects, image, errors=errors)
         wanted_literals = {b.interpretation_id for b in selected_literals}
-        literal_rows.extend({**row, "flags": list(flags)} for row in checked_literals
-                            if row["interpretation_id"] in wanted_literals)
+        literal_rows.extend({**row, "flags": list(effective(row["unit"], flags)), "graph_flags": list(flags)}
+                            for row in checked_literals if row["interpretation_id"] in wanted_literals)
         imported, _ = import_targets(imports, objects, image)
         tables, _ = check_generated(generated, objects, image, {**functions, **targets})
         active_shared = [item for item in shared if item.unit in objects or item.unit in errors]
         shared_targets, checked_shared = check_shared(active_shared, objects, image,
             {**functions, **targets, **tables}, import_targets=imported, literal_targets=local_targets, errors=errors)
-        shared_checks.extend({**row, "flags": list(flags)} for row in checked_shared)
+        shared_checks.extend({**row, "flags": list(effective(row["unit"], flags)), "graph_flags": list(flags)}
+                             for row in checked_shared)
         measured = check_initial_data(selected, objects, image,
             {**functions, **targets, **imported, **tables, **shared_targets},
             literal_targets=local_targets, errors=errors)
-        rows.extend({**row, "flags": list(flags)} for row in measured)
-        dependencies.append({"flags": list(flags), "compiled_units": sorted(objects), "errors": errors})
+        rows.extend({**row, "flags": list(effective(row["unit"], flags)), "graph_flags": list(flags)}
+                    for row in measured)
+        dependencies.append({"flags": list(flags), "compiled_units": sorted(objects), "errors": errors,
+                             "unit_flag_sets": {unit: effective_by_unit[unit] for unit in sorted(effective_by_unit)}})
     if settings.snapshot(root, metadata) != before or image_path.read_bytes() != image_bytes:
         raise ValueError("source, compiler inputs or image changed during initial-data measurement")
     counts = Counter(row["content"] for row in (*rows, *literal_rows))
@@ -99,7 +126,9 @@ def check_data(root: Path, image_path: Path, *, symbols=None, compiler=None):
             "literals": literal_rows, "selected_literals": len(selected_literals),
             "shared_functions": shared_checks,
             "compile_attempts": attempts, "trials": dependencies,
-            "flag_sets": [list(flags) for flags in flags_list], "input_fingerprint": digest(before),
+            "flag_sets": [list(flags) for flags in flags_list],
+            "unit_flag_sets": {unit: trials for unit, trials in sorted(observed_grid.items())},
+            "input_fingerprint": digest(before),
             "persisted": False, "ready_for_collection": False,
             "structure_verification": Result.UNKNOWN, "runtime_verification": Result.UNKNOWN,
             "limitations": ["only source-bound objects; legacy trailing-address comments are not coverage",

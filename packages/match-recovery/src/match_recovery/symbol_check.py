@@ -77,7 +77,7 @@ def check_symbols(root: Path, *, files=None, compiler=None) -> dict:
             observed = [[{"result": Result.UNKNOWN, "reason": "mapping host is not a configured build translation unit"}]
                         for _ in records]
         else:
-            for flags in settings.flag_sets:
+            for flags in settings.flags_for(path):
                 # Emission trials are alternatives. One observed definition
                 # suffices for presence, but never use another TU's definition.
                 pending = [i for i, candidates in enumerate(observed)
@@ -112,7 +112,9 @@ def check_symbols(root: Path, *, files=None, compiler=None) -> dict:
     counts = Counter(row["result"] for row in rows)
     result = Result.FAIL if counts[Result.FAIL] else Result.UNKNOWN if counts[Result.UNKNOWN] else Result.PASS
     return {"schema_version": 1, "check": "source_symbol_coverage", "result": result,
-            "annotations": len(rows), "translation_units": len(groups), "compile_attempts": attempts,
+            "annotations": len(rows), "translation_units": len(groups),
+            "unit_flag_sets": settings.witness_grid(groups),
+            "compile_attempts": attempts,
             "counts": dict(sorted(counts.items())), "functions": rows, "trials": trials,
             "external_build_inputs": external, "selection": files,
             "input_fingerprint": digest({"inputs": before, "database": database_bytes.hex()}),

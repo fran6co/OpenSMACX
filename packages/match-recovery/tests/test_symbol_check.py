@@ -181,3 +181,19 @@ def test_missing_emission_is_exit_three_not_green(project, monkeypatch, capsys):
     monkeypatch.setattr(module, "Compiler", lambda *_, **__: lambda *_: b"truncated")
     assert main(["check-symbols", "--root", str(project)]) == 3
     assert json.loads(capsys.readouterr().out)["counts"] == {"unknown": 1}
+
+
+def test_sparse_unit_profile_is_the_only_symbol_trial_for_its_owner(project):
+    config_path = project / "recovery/project.json"
+    config = json.loads(config_path.read_text())
+    config["measurement"]["unit_flag_sets"] = {"code/f.cc": [1]}
+    config_path.write_text(json.dumps(config))
+    calls = []
+
+    def compiler(path, command, flags):
+        calls.append((path.name, flags))
+        return compile_source()
+
+    result = check_symbols(project, compiler=compiler)
+    assert calls == [("f.cc", ("second",))]
+    assert result["unit_flag_sets"] == {"code/f.cc": [["second"]]}

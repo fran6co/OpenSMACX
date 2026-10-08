@@ -100,9 +100,10 @@ def check_layout(root: Path, *, units=None, compiler=None, command_for=None, pro
                              "layout_basis": "same_tu_probe" if item.class_name in witnesses else "product_object",
                              **compared})
 
-    trial, total = 0, len(selected) * len(settings.flag_sets)
+    trials_by_unit = {unit: settings.flags_for(unit) for unit in selected}
+    trial, total = 0, sum(len(flags) for flags in trials_by_unit.values())
     for unit in selected:
-        for flags in settings.flag_sets:
+        for flags in trials_by_unit[unit]:
             trial += 1
             started = monotonic()
             event = {"unit": unit, "flags": list(flags), "trial": trial, "total": total}
@@ -167,7 +168,7 @@ def check_layout(root: Path, *, units=None, compiler=None, command_for=None, pro
         from .layout_witness import missing_layout_witnesses
         groups = defaultdict(list)
         for name in classes:
-            for flags in settings.flag_sets:
+            for flags in settings.flags_for(hosts[name]["unit"]):
                 if flags in observed_flags[name]:
                     continue
                 unit = hosts[name]["unit"]
@@ -221,18 +222,27 @@ def check_layout(root: Path, *, units=None, compiler=None, command_for=None, pro
     unavailable_classes = {row["class_name"] for row in errors}
     for item in expectations:
         observed = by_interpretation[item.interpretation_id]
-        missing_flags = [list(flags) for flags in settings.flag_sets
-                         if not any(row["flags"] == list(flags) for row in observed)]
+        expected_pairs = {(unit, flags) for unit in selected for flags in trials_by_unit[unit]}
+        present_pairs = {(row["unit"], tuple(row["flags"])) for row in observed}
+        present_pairs.update((row["unit"], tuple(row["flags"])) for row in observations
+                             if row["class_name"] == item.class_name
+                             and row["observation"] in ("no_complete_definition", "not_emitted"))
+        missing_pairs = expected_pairs - present_pairs
         unavailable = item.class_name in unavailable_classes
+        actual_trials = {tuple(row["flags"]) for row in observed if not row.get("coverage_only")}
+        expected_trials = {flags for _, flags in expected_pairs}
+        missing_flags = [list(flags) for flags in sorted(expected_trials - actual_trials)]
         result = (Result.FAIL if any(row["result"] == Result.FAIL for row in observed) else
-                  Result.UNKNOWN if missing_flags or unavailable or any(row["result"] == Result.UNKNOWN for row in observed)
+                  Result.UNKNOWN if expected_trials - actual_trials or missing_pairs or unavailable or any(row["result"] == Result.UNKNOWN for row in observed)
                   else Result.PASS)
         summaries.append({"expectation": asdict(item), "interpretation_id": item.interpretation_id,
                           "result": result, "observed_definitions": len(observed),
-                          "missing_flag_sets": missing_flags})
+                          "missing_flag_sets": missing_flags,
+                          "missing_unit_trials": [[unit, list(flags)] for unit, flags in sorted(missing_pairs)]})
     for item in hints:
         trial_info = hint_trials[item.interpretation_id]
-        missing_flags = [list(flags) for flags in settings.flag_sets if flags not in trial_info["flags"]]
+        expected = {flags for unit in selected for flags in trials_by_unit[unit]}
+        missing_flags = [list(flags) for flags in sorted(expected - trial_info["flags"])]
         result = (Result.FAIL if Result.FAIL in trial_info["outcomes"] else
                   Result.UNKNOWN if missing_flags or item.class_name in unavailable_classes
                   or Result.UNKNOWN in trial_info["outcomes"] else Result.PASS)
@@ -249,6 +259,8 @@ def check_layout(root: Path, *, units=None, compiler=None, command_for=None, pro
     return {"schema_version": 1, "check": "source_layout_coverage", "result": result,
             "counts": dict(sorted(counts.items())), "expectations": summaries, "observations": rows,
             "coverage": observations, "errors": errors, "translation_units": selected,
+            "unit_flag_sets": {unit: [list(flags) for flags in trials_by_unit[unit]] for unit in selected},
+            "layout_flags": list(settings.layout_flags),
             "omitted_units": omitted, "unsupported_build_inputs": unsupported, "external_build_inputs": external,
             "compile_attempts": attempts, "selection": units,
             "conventional_offsets": {"enabled": conventional_offsets, "hints": len(hints), "errors": hint_errors,

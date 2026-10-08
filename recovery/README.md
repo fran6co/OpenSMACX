@@ -62,6 +62,16 @@ that build's database. The package rejects missing/substituted observations and
 changing build evidence; extra linker inputs such as zlib remain separately visible.
 Passing this check still does not accept a changed build graph or prove retained
 sections and initialization behavior.
+
+The confirmed Jackal lifecycle/version implementation lives in `src/jackal/`,
+whose own `CMakeLists.txt` builds `src/jackal/jackal.lib`.
+Its explicit archive/member binding in `build.json` joins the fresh compiler
+receipt, unchanged physical archive contents and unique final linker member
+label. It does not prove retained sections or membership of other Jackal classes.
+`project.json` selects measurement flag-set index 0 for `src/jackal/jackal.cpp` only;
+other units retain both alternatives until their provenance is established.
+The generic package owns profile selection and mixed-profile graph verification;
+the compiler commands and this project-specific decision remain local.
 Native migration also enters paired application builds for ordinary tasks when
 compile/link observations are configured and the build policy is unchanged.
 Both ordinary and generated-change graph comparisons now observe the complete
