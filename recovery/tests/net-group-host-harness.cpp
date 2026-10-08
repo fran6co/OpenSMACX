@@ -45,12 +45,16 @@ struct FakeQueue {
         ++adds; data=d; size=s; group=g; flags=f; sequence=q;
     }
 };
+// Accessed members only: this host double does not assert native layout.
+struct NetThreadInfo {
+    HANDLE events_[5];
+};
 struct Net {
-    HANDLE events_8_[4];
     uint32_t voice_flags_D8_, field_E4_, field_6DC_, field_6E4_, field_760_;
     unsigned long field_764_;
     FakeQueue queue_10c_;
     NetPlayer players_[16];
+    NetThreadInfo thread_info_;
     int poll_count, sys_count, close_count;
     int create_group(char *);
     int send_group(void *, int, long, int);
@@ -173,8 +177,8 @@ int main() {
     std::memset(&net, 0, sizeof(net));
     net.field_6E4_ = 0x1000;
     net.field_760_ = 0x77;
-    net.events_8_[0] = reinterpret_cast<HANDLE>(1);
-    net.events_8_[1] = reinterpret_cast<HANDLE>(2);
+    net.thread_info_.events_[0] = reinterpret_cast<HANDLE>(1);
+    net.thread_info_.events_[1] = reinterpret_cast<HANDLE>(2);
     for (int i=0;i<16;++i) net.players_[i].field_0_ = 0;
     net.players_[0].field_0_ = 0x44;
     net.players_[0].flags_14_ = 2;

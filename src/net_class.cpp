@@ -2047,13 +2047,10 @@ have_lobby:
 }
 
 // ---------------------------------------------------------------------------
-// THE DIRECTPLAY GROUP CALLS. All three read the interface pointer out of
-// NetDirectPlay - the image's 0x009BE600 .bss, already modelled above - and
-// dispatch straight through its vtable, which is what vtable_method is for:
-// the call operand stays in memory, so the site keeps the image's single
-// `call dword ptr [vtable + N]`. The catalogue says nothing about which of
-// the two ids is the group and which is the member, so add_to_group's
-// parameters are named for the order the call site sends them in.
+// NetDirectPlay is populated by QueryInterface(IID_IDirectPlay2A). The SDK
+// identifies the original +0x20/+0x0C/+0x1C slots as DestroyGroup,
+// AddPlayerToGroup and DeletePlayerFromGroup. Capture the interface once,
+// as in the original; retain each wrapper's distinct null/result contract.
 // ---------------------------------------------------------------------------
 
 // ORIGINAL: 0x0062EDB0 ?delete_group@Net@@QAEXH@Z 0x0062EDB0-0x0062EDC7 BYTE_EXACT
@@ -2063,9 +2060,9 @@ have_lobby:
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 void Net::delete_group(int group) {
-  if (NetDirectPlay != 0) {
-    typedef void(__stdcall *slot_fn)(void *, int);
-    vtable_method<slot_fn>(NetDirectPlay, 0x20)(NetDirectPlay, group);
+  IDirectPlay2 *const direct_play = NetDirectPlay;
+  if (direct_play != 0) {
+    direct_play->DestroyGroup(static_cast<DPID>(group));
   }
 }
 
@@ -2076,12 +2073,13 @@ void Net::delete_group(int group) {
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 int Net::add_to_group(long group, unsigned long member) {
-  if (NetDirectPlay == 0) {
+  IDirectPlay2 *const direct_play = NetDirectPlay;
+  if (direct_play == 0) {
     return 7;
   }
-  typedef int(__stdcall *slot_fn)(void *, long, unsigned long);
-  return vtable_method<slot_fn>(NetDirectPlay, 0x0c)(NetDirectPlay, group,
-                                                     member) != 0;
+  const HRESULT result = direct_play->AddPlayerToGroup(
+      static_cast<DPID>(group), static_cast<DPID>(member));
+  return result != 0;
 }
 
 // ORIGINAL: 0x0062EE00 sub_62ee00 0x0062EE00-0x0062EE1C BYTE_EXACT
@@ -2092,18 +2090,15 @@ int Net::add_to_group(long group, unsigned long member) {
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // The catalogue has no name for this one, so the tree keeps the address name
-// and the free __stdcall spelling the call sites use. Its return is the
-// interface POINTER, not slot 7's own answer - EAX is left holding what it
-// loaded, which is what its one caller goes on to test.
+// and the free __stdcall spelling. The original returns zero for a null
+// interface, otherwise the DeletePlayerFromGroup HRESULT unchanged.
 int __stdcall sub_62ee00(int first, int second) {
-  unsigned long obj = reinterpret_cast<unsigned long>(NetDirectPlay);
-  if (obj != 0) {
-    typedef int(__stdcall *slot_fn)(void *, int, int);
-    obj = static_cast<unsigned long>(
-        vtable_method<slot_fn>(NetDirectPlay, 0x1c)(NetDirectPlay, first,
-                                                    second));
+  IDirectPlay2 *const direct_play = NetDirectPlay;
+  if (direct_play == 0) {
+    return 0;
   }
-  return static_cast<int>(obj);
+  return static_cast<int>(direct_play->DeletePlayerFromGroup(
+      static_cast<DPID>(first), static_cast<DPID>(second)));
 }
 
 // ORIGINAL: 0x0062DF70 ?start_voice@Net@@QAEHJ@Z 0x0062DF70-0x0062DFBE BYTE_EXACT

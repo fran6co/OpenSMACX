@@ -15,10 +15,36 @@ TEMPLATE = Path(__file__).with_name("net-group-host-harness.cpp")
 
 
 def extract_braced(text: str, signature: str) -> str:
-    start = text.find(signature)
-    if start < 0:
-        raise AssertionError(f"required actual definition missing: {signature}")
-    brace = text.find("{", start)
+    # Skip a matching forward declaration rather than extracting the next
+    # unrelated body. These controls require the actual product definition.
+    search_from = 0
+    while True:
+        start = text.find(signature, search_from)
+        if start < 0:
+            raise AssertionError(f"required actual definition missing: {signature}")
+        paren = text.find("(", start)
+        depth = 0
+        close = -1
+        for pos in range(paren, len(text)):
+            if text[pos] == "(":
+                depth += 1
+            elif text[pos] == ")":
+                depth -= 1
+                if depth == 0:
+                    close = pos
+                    break
+        if close < 0:
+            raise AssertionError(f"unterminated function signature: {signature}")
+        after = close + 1
+        while after < len(text) and text[after].isspace():
+            after += 1
+        if after < len(text) and text[after] == "{":
+            brace = after
+            break
+        if after < len(text) and text[after] == ";":
+            search_from = after + 1
+            continue
+        raise AssertionError(f"expected function body or declaration: {signature}")
     depth = 0
     for pos in range(brace, len(text)):
         if text[pos] == "{":
@@ -73,6 +99,11 @@ def compile_and_run(source: str, enum_source: str,
         return run
 
 
+def test_extractor_skips_forward_declaration():
+    source = "static int callback(int);\nint other() { return 8; }\nstatic int callback(int value) { return value; }"
+    assert extract_braced(source, "static int callback(") == "static int callback(int value) { return value; }"
+
+
 def test_actual_source_net_group_lifetime_and_callbacks():
     source = source_text()
     enum_source = (ROOT / "src/net_class.cpp").read_text()
@@ -88,12 +119,15 @@ def test_shared_context_and_callback_mutations_are_detected():
         ("NetPlayerTable = players_;", "NetPlayerTable = 0;"),
         ("NetDirectPlay->EnumGroupPlayers(static_cast<DPID>(group_id), 0,",
          "NetDirectPlay->EnumGroupPlayers(static_cast<DPID>(group_id), reinterpret_cast<const GUID *>(1),"),
-        ("return 1;\n}\n\n// ORIGINAL: 0x0062ED40",
-         "return 0;\n}\n\n// ORIGINAL: 0x0062ED40"),
+        ("    return 1;\n}", "    return 0;\n}"),
     )
     for old, new in mutations:
-        assert old in source, f"mutation anchor missing: {old}"
-        damaged = source.replace(old, new, 1)
+        signature = ("static int __stdcall net_group_player_callback("
+                     if old.startswith(("players[", "    return"))
+                     else "int Net::send_group(")
+        body = extract_braced(source, signature)
+        assert old in body, f"mutation anchor missing from tested body: {old}"
+        damaged = source.replace(body, body.replace(old, new, 1), 1)
         result = compile_and_run(damaged, enum_source)
         assert result.returncode != 0, f"mutation survived: {old}"
 
