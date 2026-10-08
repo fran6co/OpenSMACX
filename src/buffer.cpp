@@ -3730,8 +3730,6 @@ int Buffer::draw(Buffer *destination, int index, int x, int y) {
 // way win.cpp reaches its own: an explicit index through the interface's
 // vtable. A `VCall` shim would say the same thing in bytes and cost the
 // compiler-work ratchet a site for a call that is not a C++ virtual at all.
-typedef int(__stdcall *DDLockFn)(void *, void *, void *, int, int);
-typedef int(__stdcall *DDUnlockFn)(void *, int);
 
 /*
 Purpose: One pixel out of the surface, for the pixel-precise hit test in
@@ -6666,6 +6664,7 @@ tail_exit:
 }
 
 // ORIGINAL: 0x005DE580 ?change_color@Buffer@@QAEHHH@Z 0x005DE580-0x005DE721
+// RECOVERY_BINDING: v1 {"reason":"The whole-surface colour replacement uses Buffer's existing pixel storage, pitch and holder state, with the real DirectDraw Lock/Unlock contract. IntersectRect is an imported function, not an IAT-slot object to dereference again; preserve original clipping, failed-acquisition and last-holder behavior.","evidence":["pinned:0x005DE5D3 calls directly through import slot 0x00669338; the old source's extra dereference compiled to a call through the imported function's first word","pinned:0x005DE642 invokes surface slot +0x64 with null rectangle, descriptor, flag 1 and null event;0x005DE70A invokes +0x80 with current locked bits","source:Buffer members locked_bits_+0x50,dib_bits_+0x54,surface_+0x58,surface_lock_count_+0x6C,stride_+0x4A8","SDK:DDSURFACEDESC size 0x6C,lPitch+0x10,lpSurface+0x24; original initializes only dwSize before Lock"]}
 // TRIED: MISMATCH #7 xor/mov - get_data()/free_data() logic inlined by hand (raw uint32_t offsets, matching Buffer::get_data's own style) rather than calling the real methods, since neither is a catalogued callee of this address; register allocation differs from the original past that point.
 // size      417 bytes
 // prototype int (__thiscall ?change_color@Buffer@@QAEHHH@Z)(Buffer* this, int, int)
@@ -6678,18 +6677,15 @@ tail_exit:
 
 
 int Buffer::change_color(int a1, int a2) {
-    volatile uint32_t *const ordered = reinterpret_cast<volatile uint32_t *>(this);
-
     RECT rect;
     rect.right = dib_.bmiHeader.biWidth;
     rect.bottom = -dib_.bmiHeader.biHeight;
-    if (ordered[0x54 / 4] == 0 && ordered[0x58 / 4] == 0) {
+    if (dib_bits_ == nullptr && surface_ == nullptr) {
         return 7;
     }
     rect.left = 0;
     rect.top = 0;
-    if (!(*reinterpret_cast<int (__stdcall *const *)(RECT *, RECT *, RECT *)>(IntersectRect))(
-            &rect, &rect1_, &rect)) {
+    if (!IntersectRect(&rect, &rect1_, &rect)) {
         return 0;
     }
     if (rect.left >= dib_.bmiHeader.biWidth || rect.top >= -dib_.bmiHeader.biHeight) {
@@ -6697,46 +6693,42 @@ int Buffer::change_color(int a1, int a2) {
     }
 
     int pixel_base;
-    void *const surface = reinterpret_cast<void *>(ordered[0x58 / 4]);
+    IDirectDrawSurface *const surface = surface_;
     if (!surface) {
-        const uint32_t storage = ordered[0x54 / 4];
-        ordered[0x50 / 4] = storage;
+        const uint32_t storage = reinterpret_cast<uint32_t>(dib_bits_);
+        locked_bits_ = reinterpret_cast<void *>(storage);
         if (!storage) {
             return 7;
         }
-        ordered[0x6C / 4] = ordered[0x6C / 4] + 1;
+        surface_lock_count_ = static_cast<int32_t>(static_cast<uint32_t>(surface_lock_count_) + 1u);
         pixel_base = static_cast<int>(storage);
     } else {
-        const uint32_t existing = ordered[0x50 / 4];
+        const uint32_t existing = reinterpret_cast<uint32_t>(locked_bits_);
         if (existing) {
-            ordered[0x6C / 4] = ordered[0x6C / 4] + 1;
+            surface_lock_count_ = static_cast<int32_t>(static_cast<uint32_t>(surface_lock_count_) + 1u);
             pixel_base = static_cast<int>(existing);
         } else {
-            uint8_t descriptor[0x6C];
-            *reinterpret_cast<uint32_t *>(descriptor) = 0x6C;
-            void **const vtable = *reinterpret_cast<void ***>(surface);
-            long (__stdcall *const lock)(void *, void *, void *, uint32_t, void *) =
-                reinterpret_cast<long (__stdcall *)(void *, void *, void *, uint32_t, void *)>(
-                    vtable[0x64 / 4]);
-            if (lock(surface, 0, descriptor, 1, 0) != 0) {
+            DDSURFACEDESC descriptor;
+            descriptor.dwSize = 0x6C;
+            if (surface->Lock(nullptr, &descriptor, 1, nullptr) != 0) {
                 return 7;
             }
-            ordered[0x6C / 4] = ordered[0x6C / 4] + 1;
-            uint32_t pitch = *reinterpret_cast<uint32_t *>(descriptor + 0x10);
-            uint32_t data = *reinterpret_cast<uint32_t *>(descriptor + 0x24);
-            ordered[0x4A8 / 4] = pitch;
-            ordered[0x50 / 4] = data;
+            surface_lock_count_ = static_cast<int32_t>(static_cast<uint32_t>(surface_lock_count_) + 1u);
+            uint32_t pitch = static_cast<uint32_t>(descriptor.lPitch);
+            uint32_t data = reinterpret_cast<uint32_t>(descriptor.lpSurface);
+            stride_ = pitch;
+            locked_bits_ = reinterpret_cast<void *>(data);
             pixel_base = static_cast<int>(data);
         }
     }
 
     if (pixel_base != 0) {
         char *dest = reinterpret_cast<char *>(
-            static_cast<int32_t>(ordered[0x4A8 / 4]) * rect.top + pixel_base + rect.left);
+            static_cast<int32_t>(stride_) * rect.top + pixel_base + rect.left);
         if (dest != 0) {
             int32_t row_width = rect.right - rect.left;
             int32_t row_count = rect.bottom - rect.top;
-            int32_t stride_remainder = static_cast<int32_t>(ordered[0x4A8 / 4]) - row_width;
+            int32_t stride_remainder = static_cast<int32_t>(stride_) - row_width;
             char *p = dest;
             for (int32_t y = row_count; y != 0; --y) {
                 for (int32_t x = row_width; x != 0; --x) {
@@ -6748,24 +6740,22 @@ int Buffer::change_color(int a1, int a2) {
                 p += stride_remainder;
             }
 
-            void *const surface2 = reinterpret_cast<void *>(ordered[0x58 / 4]);
-            const int32_t remaining = static_cast<int32_t>(ordered[0x6C / 4]) - 1;
-            ordered[0x6C / 4] = static_cast<uint32_t>(remaining);
+            IDirectDrawSurface *const surface2 = surface_;
+            const int32_t remaining = static_cast<int32_t>(
+                static_cast<uint32_t>(surface_lock_count_) - 1u);
+            surface_lock_count_ = remaining;
             if (!surface2) {
                 if (remaining <= 0) {
-                    ordered[0x50 / 4] = 0;
-                    ordered[0x6C / 4] = 0;
+                    locked_bits_ = nullptr;
+                    surface_lock_count_ = 0;
                 }
                 return 0;
             }
-            const uint32_t data2 = ordered[0x50 / 4];
+            const uint32_t data2 = reinterpret_cast<uint32_t>(locked_bits_);
             if (data2 != 0 && remaining <= 0) {
-                void **const vtable2 = *reinterpret_cast<void ***>(surface2);
-                long (__stdcall *const unlock)(void *, void *) =
-                    reinterpret_cast<long (__stdcall *)(void *, void *)>(vtable2[0x80 / 4]);
-                unlock(surface2, reinterpret_cast<void *>(data2));
-                ordered[0x50 / 4] = 0;
-                ordered[0x6C / 4] = 0;
+                surface2->Unlock(reinterpret_cast<void *>(data2));
+                locked_bits_ = nullptr;
+                surface_lock_count_ = 0;
             }
             return 0;
         }
@@ -6774,6 +6764,7 @@ int Buffer::change_color(int a1, int a2) {
 }
 
 // ORIGINAL: 0x005E2070 ?change_color@Buffer@@QAEHHHHHHH@Z 0x005E2070-0x005E220D
+// RECOVERY_BINDING: v1 {"reason":"The bounded colour replacement owns the existing Buffer lock protocol and typed SDK descriptor. Keep its distinct counter publication, null-pixel failure and DIB cleanup paths rather than replacing them with a generic acquisition helper.","evidence":["pinned:0x005E212E invokes surface Lock slot +0x64 with null rectangle, descriptor, flag 1 and null event;0x005E21F6 invokes Unlock+0x80 after last-holder guards","source:Buffer surface_,locked_bits_,surface_lock_count_ and stride_ own the accessed storage","SDK:DDSURFACEDESC size 0x6C,lPitch+0x10,lpSurface+0x24; original initializes only dwSize before Lock"]}
 // TRIED: clip against rect1_, then a DirectDraw Lock/search-replace/ Unlock byte fill on the locked surface (Lock/Unlock are genuinely __stdcall COM methods - `this` is pushed as an explicit arg, not passed via ecx, confirmed by the disassembly never setting ecx before either indirect call). Landed at 0.67 similarity; diverges at #8 on the width_/ height_ range-check scheduling.
 // size      413 bytes
 // prototype int (__thiscall ?change_color@Buffer@@QAEHHHHHHH@Z)(Buffer* this, int, int, int, int, int, int)
@@ -6804,24 +6795,22 @@ int Buffer::change_color(int a1, int a2, int a3, int a4, int a5, int a6) {
         return 7;
     }
 
-    unsigned char descBuf[0x6c];
+    DDSURFACEDESC descBuf;
 
     if (surface_ != 0) {
         if (locked_bits_ != 0) {
             surface_lock_count_++;
         } else {
-            *reinterpret_cast<int *>(descBuf) = 0x6c;
+            descBuf.dwSize = 0x6c;
 
-            void *vtbl = *reinterpret_cast<void **>(surface_);
-            DDLockFn lockFn = *reinterpret_cast<DDLockFn *>(reinterpret_cast<char *>(vtbl) + 0x64);
-            long hr = lockFn(reinterpret_cast<void *>(surface_), 0, descBuf, 1, 0);
+            long hr = surface_->Lock(nullptr, &descBuf, 1, nullptr);
             if (hr != 0) {
                 return 7;
             }
 
-            stride_ = *reinterpret_cast<uint32_t *>(descBuf + 0x10);
+            stride_ = static_cast<uint32_t>(descBuf.lPitch);
             surface_lock_count_++;
-            locked_bits_ = reinterpret_cast<void *>(*reinterpret_cast<uint32_t *>(descBuf + 0x24));
+            locked_bits_ = descBuf.lpSurface;
         }
     } else {
         uint32_t bits = reinterpret_cast<uint32_t>(dib_bits_);
@@ -6882,9 +6871,7 @@ int Buffer::change_color(int a1, int a2, int a3, int a4, int a5, int a6) {
             return 0;
         }
 
-        void *vtbl = *reinterpret_cast<void **>(surface_);
-        DDUnlockFn unlockFn = *reinterpret_cast<DDUnlockFn *>(reinterpret_cast<char *>(vtbl) + 0x80);
-        unlockFn(reinterpret_cast<void *>(surface_), reinterpret_cast<int>(locked_bits_));
+        surface_->Unlock(locked_bits_);
         locked_bits_ = nullptr;
         surface_lock_count_ = 0;
         return 0;
