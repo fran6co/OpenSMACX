@@ -2177,25 +2177,24 @@ BasePop::BasePop() {
 // indirect  0x00601070 0x00601082 0x006010B4 0x006010C7 0x006010E3 0x00601133 0x00601148 0x00601163 0x0060119C
 
 void BasePop::close() {
-    char *self = (char *)this;
     int i, off;
 
-    *(int *)(self + 0x30a4) = BasePopDefaultField30A4;
+    field_30A4_ = BasePopDefaultField30A4;
     field_3094_ = BasePopDefaultField3094;
 
     memcpy(&text_block_a_, BasePopDefaultBlock2E64, sizeof(text_block_a_));
     memcpy(&text_block_b_, BasePopDefaultBlock2F7C, sizeof(text_block_b_));
 
-    if (*(void **)(self + 0x3224) != 0) {
-        free(*(void **)(self + 0x3224));
-        *(void **)(self + 0x3224) = 0;
+    if (ok_text_ != 0) {
+        free(ok_text_);
+        ok_text_ = 0;
     }
-    if (*(void **)(self + 0x3228) != 0) {
-        free(*(void **)(self + 0x3228));
-        *(void **)(self + 0x3228) = 0;
+    if (cancel_text_ != 0) {
+        free(cancel_text_);
+        cancel_text_ = 0;
     }
 
-    *(void **)(self + 0xa3c) = this;
+    owner_window_ = this;
 
     // Native600F83 increments its byte index before the later eight loads.
     // All nine rows therefore copy the same source/destination column;
@@ -2207,25 +2206,25 @@ void BasePop::close() {
         }
     }
 
-    ((ListBox *)(self + 0x21d0))->close();
-    ((CheckBox *)(self + 0x2228))->close();
-    ((RadioButton *)(self + 0x2214))->close();
-    ((SpriteBox *)(self + 0x2240))->close();
-    ((EditGroup *)(self + 0x22c8))->close();
-    ((GraphicWin *)self)->close();
+    dialogs_.ListBox::close();
+    dialogs_.CheckBox::close();
+    dialogs_.RadioButton::close();
+    dialogs_.SpriteBox::close();
+    dialogs_.EditGroup::close();
+    GraphicWin::close();
 
-    ((Sprite *)(self + 0x2118))->close();
-    *(int *)(self + 0x20f4) = 0;
-    *(Sprite **)(self + 0x2144) = 0;
-    *(int *)(self + 0xa40) = 0;
-    *(int *)(self + 0xa44) = -1;
+    sprite_.close();
+    field_20F4_ = 0;
+    caller_sprite_ = 0;
+    selected_id_ = 0;
+    value_ = -1;
 
     if (owned_text_ != 0) {
         free(owned_text_);
         owned_text_ = 0;
     }
-    *(int *)(self + 0x21c8) = 0;
-    *(int *)(self + 0x21cc) = -1;
+    field_21C8_ = 0;
+    field_21CC_ = -1;
 
     // Original601070/601082 dispatch each embedded button's close.
     flat_button1_.close();
@@ -2256,135 +2255,121 @@ void BasePop::close() {
         }
     }
 
-    *(int *)(self + 0x21b8) = BasePopDefaultField21B0[3];
-    *(int *)(self + 0x21bc) = BasePopDefaultField21B0[2];
-    *(int *)(self + 0x21b0) = BasePopDefaultField21B0[0];
-    *(int *)(self + 0x21b4) = BasePopDefaultField21B0[1];
-    *(int *)(self + 0x21c0) = BasePopDefaultField21C0[0];
-    *(int *)(self + 0x21c4) = BasePopDefaultField21C0[1];
+    field_21B8_ = BasePopDefaultField21B0[3];
+    field_21BC_ = BasePopDefaultField21B0[2];
+    field_21B0_ = BasePopDefaultField21B0[0];
+    field_21B4_ = BasePopDefaultField21B0[1];
+    field_21C0_ = BasePopDefaultField21C0[0];
+    field_21C4_ = BasePopDefaultField21C0[1];
 
-    *(int *)(self + 0x30b0) = 0;
-    *(int *)(self + 0x30b4) = 0;
-    *(int *)(self + 0x30b8) = 0;
-    *(int *)(self + 0x30bc) = 0;
-    *(int *)(self + 0x30c0) = 0;
-    *(int *)(self + 0x30c4) = 0;
-    *(int *)(self + 0x30c8) = 0;
-    *(int *)(self + 0x30cc) = 0;
-    *(int *)(self + 0x30d0) = 0;
-    *(int *)(self + 0x30d4) = 0;
-    *(int *)(self + 0x30d8) = 0;
-    *(int *)(self + 0x30dc) = 0;
-    *(int *)(self + 0x30e0) = 0;
-    *(int *)(self + 0x30e4) = 0;
-    *(int *)(self + 0x30e8) = 0;
-    *(int *)(self + 0x30ec) = 0;
-    *(int *)(self + 0x30f0) = 0;
-    *(int *)(self + 0x30f4) = 0;
-    *(int *)(self + 0x30a8) = 0;
-    *(int *)(self + 0x30ac) = 0;
-    *(int *)(self + 0x30f8) = 0x1000;
-    *(int *)(self + 0x30fc) = 0x1000;
-    *(int *)(self + 0x3100) = 0;
+    field_30B0_ = 0;
+    field_30B4_ = 0;
+    field_30B8_ = 0;
+    field_30BC_ = 0;
+    field_30C0_ = 0;
+    field_30C4_ = 0;
+    field_30C8_ = 0;
+    field_30CC_ = 0;
+    field_30D0_ = 0;
+    field_30D4_ = 0;
+    field_30D8_ = 0;
+    field_30DC_ = 0;
+    field_30E0_ = 0;
+    field_30E4_ = 0;
+    field_30E8_ = 0;
+    field_30EC_ = 0;
+    field_30F0_ = 0;
+    field_30F4_ = 0;
+    field_30A8_ = 0;
+    field_30AC_ = 0;
+    loc_a_ = 0x1000;
+    loc_b_ = 0x1000;
+    field_3100_ = 0;
 
-    *(int *)(self + 0x3104) = BasePopDefaultField3104[0];
-    *(int *)(self + 0x3108) = BasePopDefaultField3104[0];
-    *(int *)(self + 0x310c) = BasePopDefaultField3104[2];
-    *(Font **)(self + 0x3110) = BasePopDefaultStringFonts[0];
-    *(int *)(self + 0x3120) = BasePopDefaultStringColors[0][0];
-    *(int *)(self + 0x3130) = BasePopDefaultStringColors[1][0];
-    *(int *)(self + 0x3140) = BasePopDefaultStringColors[2][0];
-    *(int *)(self + 0x3150) = BasePopDefaultStringColors[3][0];
-    *(Font **)(self + 0x3114) = BasePopDefaultStringFonts[1];
-    *(int *)(self + 0x3124) = BasePopDefaultStringColors[0][1];
-    *(int *)(self + 0x3134) = BasePopDefaultStringColors[1][1];
-    *(int *)(self + 0x3144) = BasePopDefaultStringColors[2][1];
-    *(int *)(self + 0x3154) = BasePopDefaultStringColors[3][1];
-    *(Font **)(self + 0x3118) = BasePopDefaultStringFonts[2];
-    *(int *)(self + 0x3128) = BasePopDefaultStringColors[0][2];
-    *(int *)(self + 0x3138) = BasePopDefaultStringColors[1][2];
-    *(int *)(self + 0x3148) = BasePopDefaultStringColors[2][2];
-    *(int *)(self + 0x3158) = BasePopDefaultStringColors[3][2];
-    *(Font **)(self + 0x311c) = BasePopDefaultStringFonts[3];
-    *(int *)(self + 0x312c) = BasePopDefaultStringColors[0][3];
-    *(int *)(self + 0x313c) = BasePopDefaultStringColors[1][3];
-    *(int *)(self + 0x314c) = BasePopDefaultStringColors[2][3];
-    *(int *)(self + 0x315c) = BasePopDefaultStringColors[3][3];
+    field_3104_ = BasePopDefaultField3104[0];
+    field_3108_ = BasePopDefaultField3104[0];
+    field_310C_ = BasePopDefaultField3104[2];
+    string_font1_ = BasePopDefaultStringFonts[0];
+    string_color_a_ = BasePopDefaultStringColors[0][0];
+    string_color_b_ = BasePopDefaultStringColors[1][0];
+    string_color_c_ = BasePopDefaultStringColors[2][0];
+    string_color_d_ = BasePopDefaultStringColors[3][0];
+    string_font2_ = BasePopDefaultStringFonts[1];
+    string_color_2a_ = BasePopDefaultStringColors[0][1];
+    string_color_2b_ = BasePopDefaultStringColors[1][1];
+    string_color_2c_ = BasePopDefaultStringColors[2][1];
+    string_color_2d_ = BasePopDefaultStringColors[3][1];
+    string_font3_ = BasePopDefaultStringFonts[2];
+    string_color_3a_ = BasePopDefaultStringColors[0][2];
+    string_color_3b_ = BasePopDefaultStringColors[1][2];
+    string_color_3c_ = BasePopDefaultStringColors[2][2];
+    string_color_3d_ = BasePopDefaultStringColors[3][2];
+    string_font4_ = BasePopDefaultStringFonts[3];
+    string_color_hyper_a_ = BasePopDefaultStringColors[0][3];
+    string_color_hyper_b_ = BasePopDefaultStringColors[1][3];
+    string_color_hyperc_ = BasePopDefaultStringColors[2][3];
+    string_color_hyper_d_ = BasePopDefaultStringColors[3][3];
     sprite_click_callback_ = 0;
-    *(int *)(self + 0x3164) = 0;
-    *(int *)(self + 0x3168) = 0;
-    *(Font **)(self + 0x316c) = BasePopDefaultButtonFonts[0];
+    sprite_double_click_callback_ = 0;
+    redraw_callback_ = 0;
+    button_font1_ = BasePopDefaultButtonFonts[0];
 
-    *(unsigned char *)(self + 0x3178) = (uint8_t)BasePopDefaultButtonColors[0][0];
-    *(int *)(self + 0x317c) = BasePopDefaultButtonColors[1][0];
-    *(int *)(self + 0x3188) = BasePopDefaultButtonColors[2][0];
-    *(int *)(self + 0x3194) = BasePopDefaultButtonColors[3][0];
-    *(Font **)(self + 0x3170) = BasePopDefaultButtonFonts[1];
-    *(unsigned char *)(self + 0x3179) = (uint8_t)BasePopDefaultButtonColors[0][1];
-    *(int *)(self + 0x3180) = BasePopDefaultButtonColors[1][1];
-    *(int *)(self + 0x318c) = BasePopDefaultButtonColors[2][1];
-    *(int *)(self + 0x3198) = BasePopDefaultButtonColors[3][1];
-    *(Font **)(self + 0x3174) = BasePopDefaultButtonFonts[2];
-    *(unsigned char *)(self + 0x317a) = (uint8_t)BasePopDefaultButtonColors[0][2];
-    *(int *)(self + 0x3184) = BasePopDefaultButtonColors[1][2];
-    *(int *)(self + 0x3190) = BasePopDefaultButtonColors[2][2];
-    *(int *)(self + 0x319c) = BasePopDefaultButtonColors[3][2];
-    *(int *)(self + 0x31a4) = BasePopDefaultField31A0[1];
-    *(int *)(self + 0x31a8) = BasePopDefaultField31A0[2];
-    *(int *)(self + 0x31ac) = BasePopDefaultField31A0[3];
-    *(int *)(self + 0x31b0) = BasePopDefaultField31B0[0];
-    *(int *)(self + 0x31b4) = BasePopDefaultField31B0[1];
-    *(int *)(self + 0x214c) = BasePopDefaultField2148[1];
-    *(int *)(self + 0x2148) = BasePopDefaultField2148[0];
+    button_color_a_ = (uint8_t)BasePopDefaultButtonColors[0][0];
+    button_color_b_ = BasePopDefaultButtonColors[1][0];
+    button_color_c_ = BasePopDefaultButtonColors[2][0];
+    button_color_d_ = BasePopDefaultButtonColors[3][0];
+    button_font2_ = BasePopDefaultButtonFonts[1];
+    button_color_2a_ = (uint8_t)BasePopDefaultButtonColors[0][1];
+    button_color_2b_ = BasePopDefaultButtonColors[1][1];
+    button_color_2c_ = BasePopDefaultButtonColors[2][1];
+    button_color_2d_ = BasePopDefaultButtonColors[3][1];
+    button_font3_ = BasePopDefaultButtonFonts[2];
+    button_color_3a_ = (uint8_t)BasePopDefaultButtonColors[0][2];
+    button_color_3b_ = BasePopDefaultButtonColors[1][2];
+    button_color_3c_ = BasePopDefaultButtonColors[2][2];
+    button_color_3d_ = BasePopDefaultButtonColors[3][2];
+    field_31A4_ = BasePopDefaultField31A0[1];
+    field_31A8_ = BasePopDefaultField31A0[2];
+    field_31AC_ = BasePopDefaultField31A0[3];
+    field_31B0_ = BasePopDefaultField31B0[0];
+    field_31B4_ = BasePopDefaultField31B0[1];
+    field_214C_ = reinterpret_cast<Sprite *>(BasePopDefaultField2148[1]);
+    field_2148_ = reinterpret_cast<Sprite *>(BasePopDefaultField2148[0]);
     field_322C_ = BasePopDefaultField322C;
-    *(unsigned char *)(self + 0x31a0) = (uint8_t)BasePopDefaultField31A0[0];
+    field_31A0_ = (uint8_t)BasePopDefaultField31A0[0];
 
     external_window_ = reinterpret_cast<GraphicWin *>(BasePopDefaultLayout[0]);
-    *(int *)(self + 0xa18) = BasePopDefaultLayout[1];
-    *(int *)(self + 0xa1c) = BasePopDefaultLayout[2];
-    *(int *)(self + 0xa20) = BasePopDefaultDialogSize[0];
-    *(int *)(self + 0xa24) = BasePopDefaultDialogSize[1];
+    default_loc_a_ = BasePopDefaultLayout[1];
+    default_loc_b_ = BasePopDefaultLayout[2];
+    dialog_width_ = BasePopDefaultDialogSize[0];
+    dialog_height_ = BasePopDefaultDialogSize[1];
 
-    if (*(void **)(self + 0xa14) != 0) {
-        int eax, ecx, edx;
+    if (external_window_ != 0) {
+        dialogs_.Dialog::field_2C_ = dialog_width_;
 
-        ecx = *(int *)(self + 0x21d0);
-        eax = *(int *)(self + 0xa20);
-        edx = *(int *)(ecx + 8);
-        *(int *)(self + edx + 0x21fc) = eax;
-
-        ecx = *(int *)(self + 0xa14);
-        eax = *(int *)(self + 0xa24);
-        if (ecx == 0) {
-            edx = *(int *)(self + 0x30a8);
-            if ((edx & 0x400) == 0 && WinScreenWidth >= 0x400) {
-                eax = (eax * 3) / 2;
+        int height = static_cast<int>(dialog_height_);
+        if (external_window_ == 0) {
+            if ((field_30A8_ & 0x400) == 0 && WinScreenWidth >= 0x400) {
+                height = (height * 3) / 2;
             }
         }
-        ecx = *(int *)(self + 0x21d0);
-        edx = *(int *)(ecx + 8);
-        *(int *)(self + edx + 0x2200) = eax;
+        dialogs_.Dialog::field_30_ = height;
 
-        eax = *(int *)(self + 0xa18);
-        ecx = *(int *)(self + 0xa1c);
-        if (eax != 0x2000) {
-            *(int *)(self + 0x30f8) = eax;
+        if (default_loc_a_ != 0x2000) {
+            loc_a_ = default_loc_a_;
         }
-        if (ecx != 0x2000) {
-            *(int *)(self + 0x30fc) = ecx;
+        if (default_loc_b_ != 0x2000) {
+            loc_b_ = default_loc_b_;
         }
 
-        eax = *(int *)(self + 0x21d0);
-        ecx = *(int *)(eax + 8);
-        {
-            int base = ecx + (int)self + 0x21d0;
-            int val = *(int *)(self + ecx + 0x21f0);
-            val = val | 3;
-            *(int *)(base + 0x20) = val;
-        }
+        dialogs_.Dialog::field_20_ |= 3;
     }
 
-    ((Heap *)(self + 0xa28))->~Heap();
+    // Native60159F calls005D4580 on this+0xA28. The same reset body is
+    // already bound to Heap::reset for live Dialog members. close() must
+    // leave this member alive for later init(); actual destruction belongs
+    // to BasePop's compiler-owned member teardown.
+    heap_.reset();
 }
 
 // ORIGINAL: 0x00601980 ?string@BasePop@@QAEHPAD@Z 0x00601980-0x006019EE FILE
