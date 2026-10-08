@@ -113,12 +113,37 @@ def test_host_mat3_nan_result_is_not_an_x87_equivalence_oracle(
 int main() {
     Matrix3ReceiverView matrix = {{1,2,3,4,5,6,7,8,9}};
     float other[9] = {1,2,3,4,5,6,7,8,9};
-    if (!matrix.equals(other)) return 1;
-    other[4] = 50;
-    if (matrix.equals(other)) return 2;
-    other[4] = 5;
-    matrix.cells[0] = std::numeric_limits<float>::quiet_NaN();
-    if (matrix.equals(other)) return 3;
+    const float inf = std::numeric_limits<float>::infinity();
+    const float nan = std::numeric_limits<float>::quiet_NaN();
+    for (int i = 0; i < 9; ++i) {
+        if (!matrix.equals(other)) return 1;
+        other[i] = matrix.cells[i] + 1.0f;
+        if (matrix.equals(other)) return 2;
+        other[i] = matrix.cells[i];
+
+        matrix.cells[i] = 0.0f; other[i] = -0.0f;
+        if (!matrix.equals(other)) return 3;
+        matrix.cells[i] = -0.0f; other[i] = 0.0f;
+        if (!matrix.equals(other)) return 4;
+        matrix.cells[i] = 1.0f; other[i] = 1.0f;
+
+        matrix.cells[i] = inf; other[i] = inf;
+        if (!matrix.equals(other)) return 5;
+        other[i] = -inf;
+        if (matrix.equals(other)) return 6;
+        matrix.cells[i] = 1.0f; other[i] = inf;
+        if (matrix.equals(other)) return 7;
+        matrix.cells[i] = inf; other[i] = 1.0f;
+        if (matrix.equals(other)) return 8;
+
+        matrix.cells[i] = nan; other[i] = 1.0f;
+        if (!matrix.equals(other)) return 9;
+        matrix.cells[i] = 1.0f; other[i] = nan;
+        if (!matrix.equals(other)) return 10;
+        matrix.cells[i] = nan; other[i] = nan;
+        if (!matrix.equals(other)) return 11;
+        matrix.cells[i] = other[i] = (float)(i + 1);
+    }
     return 0;
 }
 """)

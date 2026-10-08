@@ -78,6 +78,18 @@ int main() {
   if (!x.value.equals(a)) return 11;
   x.value.cells[8] = 10.0f;
   if (x.value.equals(a)) return 12;
+  const float nan = std::numeric_limits<float>::quiet_NaN();
+  float with_nan[9];
+  for (int i = 0; i < 9; ++i) with_nan[i] = a[i];
+  for (int i = 0; i < 9; ++i) {
+    fill(&x.value, 1.0f);
+    x.value.cells[i] = nan;
+    if (!x.value.equals(a)) return 27;
+    with_nan[i] = nan;
+    fill(&x.value, 1.0f);
+    if (!x.value.equals(with_nan)) return 28;
+    with_nan[i] = a[i];
+  }
 
   fill(&x.value, 1.0f); fill(&y.value, 9.0f);
   y.value.cells[0] = 9; y.value.cells[1] = 8; y.value.cells[2] = 7;
@@ -201,7 +213,7 @@ def _mutate(text: str, method: str, before: str, after: str) -> str:
 def _compile_and_run(text: str, compiler: str, tmp_path: Path, label: str) -> subprocess.CompletedProcess[str]:
     unit = tmp_path / f"matrix3-{label}.cpp"
     binary = tmp_path / f"matrix3-{label}"
-    unit.write_text(text + "\n" + HARNESS)
+    unit.write_text("#include <limits>\n" + text + "\n" + HARNESS)
     subprocess.run([compiler, "-std=c++98", "-Wall", "-Wextra", "-pedantic",
                     str(unit), "-o", str(binary)], check=True, cwd=ROOT,
                    text=True, capture_output=True)
@@ -247,7 +259,7 @@ MUTANTS = (
      "scale + cells[row * 3 + column]"),
     ("sub_6348f0", "cells[row * 3 + column] -",
      "cells[row * 3 + column] +"),
-    ("equals", "!=", "=="),
+    ("equals", "left < right || left > right", "left != right"),
     ("multiply", "other[depth * 3 + column]", "other[column * 3 + depth]"),
     ("multiply", "for (int i = 0; i < 9; ++i)", "for (int i = 0; i < 8; ++i)"),
     ("multiply", "out[i] = local[i];", "out[i] = out[i];"),

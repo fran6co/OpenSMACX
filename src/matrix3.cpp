@@ -364,14 +364,20 @@ void *Matrix3ReceiverView::multiply(float *out, float *other) {
 // loop (`sub edi, ebp` at 0x634939, one per row); spelling that
 // difference out as a local lets /O2 prove it loop-invariant and hoist
 // it past the loop it belongs to, which is 69 bytes against 85.
-Return Value: true iff all nine float comparisons are equal
+Return Value: true when no cell comparison is ordered unequal; unordered passes.
 Status: Complete
 */
 bool Matrix3ReceiverView::equals(const float *other) {
     const float *mine = cells;
     for (int row = 0; row < 3; row++) {
         for (int col = 0; col < 3; col++) {
-            if (mine[row * 3 + col] != other[row * 3 + col]) {
+            const float left = mine[row * 3 + col];
+            const float right = other[row * 3 + col];
+            // The original FCOMP tests x87 C3, which is set for both equal
+            // and unordered operands. With masked x87 exceptions, ordered
+            // less/greater are the only comparisons that reject this cell.
+            // Signaling-NaN and unmasked-exception behavior is not established.
+            if (left < right || left > right) {
                 return false;
             }
         }
