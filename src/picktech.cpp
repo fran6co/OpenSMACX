@@ -296,8 +296,12 @@ static void picktech_add_label(int index) {
 int PickTech::draw_tech(int tech, RECT *rect, int) {
     int i;
     char number_buffer[80];
-    char text_buffer[300];
-    char secondary_buffer[300];
+    // The original title copy and later truncated labels share EBP-0x198.
+    // The numeric scratch starts at EBP-0x1e8, with the next proven local at
+    // EBP-0x198 leaving an 80-byte address window; its exact original bound
+    // within that window is unresolved.
+    char text_buffer[256];
+    char secondary_buffer[80];
     if (tech < 0) return 0;
 
     page_state_ = 0;
@@ -608,15 +612,15 @@ int PickTech::draw_tech(int tech, RECT *rect, int) {
             strcat(StringTemp, picktech_name(rule.name));
             strcat(StringTemp, " (");
             if (rule.offense_rating == 0) {
-                secondary_buffer[0] = '\0';
-                strcat(secondary_buffer, label_get(0x200 / 4));
+                text_buffer[0] = '\0';
+                strcat(text_buffer, label_get(0x200 / 4));
                 // Native485C81 retains only the label's first byte.
-                secondary_buffer[1] = '\0';
-                strcat(StringTemp, secondary_buffer);
+                text_buffer[1] = '\0';
+                strcat(StringTemp, text_buffer);
                 strcat(StringTemp, " ");
                 _itoa(static_cast<int>(static_cast<uint8_t>(rule.cost)),
-                      number_buffer, 10);
-                strcat(StringTemp, number_buffer);
+                      secondary_buffer, 10);
+                strcat(StringTemp, secondary_buffer);
             } else if (rule.offense_rating < 0) {
                 picktech_add_label(0x310 / 4);
             } else {
@@ -635,13 +639,13 @@ int PickTech::draw_tech(int tech, RECT *rect, int) {
             strcat(StringTemp, picktech_name(rule.name));
             strcat(StringTemp, " (");
             // Native485D8B truncates this label to one byte too.
-            secondary_buffer[0] = '\0';
-            strcat(secondary_buffer, label_get(0x13c / 4));
-            secondary_buffer[1] = '\0';
-            strcat(StringTemp, secondary_buffer);
+            text_buffer[0] = '\0';
+            strcat(text_buffer, label_get(0x13c / 4));
+            text_buffer[1] = '\0';
+            strcat(StringTemp, text_buffer);
             strcat(StringTemp, ": ");
-            _itoa(reactor_id + 1, number_buffer, 10);
-            strcat(StringTemp, number_buffer);
+            _itoa(reactor_id + 1, secondary_buffer, 10);
+            strcat(StringTemp, secondary_buffer);
             strcat(StringTemp, ")");
             UNK1(StringTemp);
         }

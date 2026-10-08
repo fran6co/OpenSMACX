@@ -1568,10 +1568,17 @@ void DiploWin::on_button_clicked(int button_id) {
         if (rand() % 3 != 0) add_offer(1, 0, rand() % 89);
       }
 
+      // The original switch deliberately falls through: rolls 0, 1 and 2
+      // add three, two and one treaty offers respectively.
       switch (rand() % 4) {
-        case 0: add_offer(1, 4, 0); break;
-        case 1: add_offer(1, 3, 0); break;
-        case 2: add_offer(1, 2, 0); break;
+        case 0:
+          add_offer(1, 4, 0);
+          // fall through
+        case 1:
+          add_offer(1, 3, 0);
+          // fall through
+        case 2: add_offer(1, 2, 0);
+        case 3: break;
       }
 
       // Preserve the final native rand()%3 side effects. The second arm is
@@ -1718,10 +1725,9 @@ void DiploWin::on_button_clicked(int button_id) {
 
       for (int faction = 1; faction < MaxPlayerNum; ++faction) {
         if (faction == faction_id_ || faction == faction_id_with_) continue;
-        if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u << faction)) == 0) continue;
-        if ((PlayersData[faction_id_].diplo_treaties[faction] & 8) != 0)
-          continue;
-        if ((PlayersData[faction_id_with_].diplo_treaties[faction] & 8) != 0)
+        if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u << faction)) == 0
+            && (PlayersData[faction_id_].diplo_treaties[faction] & 8) == 0
+            && (PlayersData[faction_id_with_].diplo_treaties[faction] & 8) == 0)
           continue;
 
         GenderDefault = Players[faction].is_leader_female;

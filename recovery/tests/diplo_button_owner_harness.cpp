@@ -76,10 +76,12 @@ int redraw_count;
 int random_values[32];
 int random_value_count;
 int random_value_index;
+int random_call_count;
 int selected_tech[MaxPlayerNum][0x59];
 std::vector<std::string> dialog_rows;
 
 int test_rand(void) {
+  ++random_call_count;
   if (random_value_index >= random_value_count) return 0;
   return random_values[random_value_index++];
 }
@@ -253,6 +255,7 @@ static void reset_controls(DiploWin &window) {
   popup_start_count = popup_exec_count = 0;
   add_offer_count = do_it_count = release_modal_count = redraw_count = 0;
   random_value_count = random_value_index = 0;
+  random_call_count = 0;
   std::memset(random_values, 0, sizeof(random_values));
   std::strcpy(PopupStartCaption, "SCRIPT");
   ScriptPopupFile = PopupStartCaption;
@@ -309,13 +312,14 @@ static void controls_dispatch_and_simple_offers() {
   reset_controls(window);
   random_values[0] = 1;  // energy offer branch
   random_values[1] = 10; // energy amount: (10*5+5)*5 = 275
-  random_values[2] = 3;  // no optional treaty offer
+  random_values[2] = 3;  // no treaty offer
   random_values[3] = 0;  // native writes field_A28_ = 1
   random_value_count = 4;
   window.on_button_clicked(3);
   assert(window.offer_count_[1] == 1 && window.offer_type_[1][0] == 1 &&
          window.offer_value_[1][0] == 275);
   assert(window.field_A28_ == 1 && redraw_count == 2);
+  assert(random_call_count == 4);
 
   reset_controls(window);
   random_values[0] = 0;  // technology offer branch
@@ -329,16 +333,39 @@ static void controls_dispatch_and_simple_offers() {
          window.offer_value_[1][0] == 5);
   assert(window.offer_count_[0] == 0 && window.offer_type_[0][0] == 2 &&
          redraw_count == 2);
+  assert(random_call_count == 5);
 
   reset_controls(window);
   random_values[0] = 1;
   random_values[1] = 0;
-  random_values[2] = 3;
-  random_values[3] = 2;  // native third arm leaves both fields unchanged
+  random_values[2] = 3;  // no treaty offer
+  random_values[3] = 2;  // third status arm leaves both fields unchanged
   random_value_count = 4;
   window.on_button_clicked(3);
   assert(window.field_A28_ == 0 && window.offer_type_[0][0] == 0 &&
          redraw_count == 2);
+  assert(random_call_count == 4);
+
+  // Native 0x441769..0x4417A4 jumps to progressively later labels and then
+  // falls through. Exercise every roll and retain the exact call count/order.
+  for (int roll = 0; roll != 4; ++roll) {
+    reset_controls(window);
+    random_values[0] = 1;  // energy offer branch
+    random_values[1] = 0;  // zero energy amount
+    random_values[2] = roll;
+    random_values[3] = 2;  // leave the final status fields unchanged
+    random_value_count = 4;
+    window.on_button_clicked(3);
+    const int expected_treaties = roll < 3 ? 3 - roll : 0;
+    assert(add_offer_count == 1 + expected_treaties);  // base energy + treaty rows
+    assert(last_offer_type[0] == 1);
+    for (int i = 0; i < expected_treaties; ++i) {
+      const int expected_type = roll == 0 ? 4 - i : roll == 1 ? 3 - i : 2;
+      assert(last_offer_side[i + 1] == 1 && last_offer_type[i + 1] == expected_type);
+      assert(last_offer_value[i + 1] == 0);
+    }
+    assert(random_call_count == 4);
+  }
 }
 
 static void controls_header_literals_and_popup_return() {
@@ -356,6 +383,15 @@ static void controls_header_literals_and_popup_return() {
 
   reset_controls(window);
   selected_tech[0][7] = 1;
+  selected_tech[1][7] = 1;
+  popup_exec_result = -1;
+  window.on_button_clicked(5);
+  assert(dialog_rows.size() == 2 && dialog_rows[0].find("7:TECH7") == 0);
+  assert(dialog_rows[0].find("*") == std::string::npos);
+  assert(dialog_rows[0].find("already has") == std::string::npos);
+
+  reset_controls(window);
+  selected_tech[0][7] = 1;
   popup_exec_result = 2;
   window.on_button_clicked(5);
   assert(std::strcmp(last_popup_label, "DIPLOTECH") == 0);
@@ -363,7 +399,6 @@ static void controls_header_literals_and_popup_return() {
   assert(window.offer_type_[0][0] == 5 && window.offer_value_[0][0] == 2);
 
   reset_controls(window);
-  GameDataStateStorage.fields_.lock_masks_.enable_mask_ = 1u << 2;
   Players[2].title_leader[0] = 'T';
   Players[2].name_leader[0] = 'N';
   Players[2].noun_faction[0] = 'F';
@@ -371,14 +406,11 @@ static void controls_header_literals_and_popup_return() {
   PlayersData[1].diplo_treaties[2] = 0;
   PlayersData[2].diplo_treaties[0] = 8;
   PlayersData[2].diplo_treaties[1] = 8;
-  popup_exec_result = 2;
   window.on_button_clicked(8);
   assert(std::strcmp(last_popup_label, "DIPLOVENDETTA") == 0);
-  assert(last_parse_file_was_script && last_parse_section_was_attack);
-  // The original tests my->faction and other->faction. Opposite directed
-  // entries are set, so a symmetric-receiver mutation would drop this row.
-  assert(window.offer_count_[0] == 1 && window.offer_type_[0][0] == 5 &&
-         window.offer_value_[0][0] == 2);
+  // Only reverse-direction relation words are set. The pinned reads use
+  // [my][faction] and [other][faction], so this target remains unavailable.
+  assert(dialog_rows.empty() && popup_exec_count == 0 && message_count == 1);
 
   reset_controls(window);
   // The chooser with no eligible rows returns before exec, but its automatic
@@ -441,6 +473,35 @@ static void controls_automatic_offer_receiver_and_energy_return() {
          last_offer_type[0] == 1 && last_offer_value[0] == 40);
 }
 
+static void controls_vendetta_visibility_sources() {
+  DiploWin window;
+  for (int source = 0; source != 3; ++source) {
+    reset_controls(window);
+    Players[2].title_leader[0] = 'T';
+    Players[2].name_leader[0] = 'N';
+    Players[2].noun_faction[0] = 'F';
+    if (source == 0)
+      PlayersData[0].diplo_treaties[2] = 8;
+    else if (source == 1)
+      PlayersData[1].diplo_treaties[2] = 8;
+    else
+      GameDataStateStorage.fields_.lock_masks_.enable_mask_ = 1u << 2;
+    popup_exec_result = 2;
+    window.on_button_clicked(8);
+    assert(dialog_rows.size() == 1);
+    assert(window.offer_count_[0] == 1 && window.offer_type_[0][0] == 5 &&
+           window.offer_value_[0][0] == 2);
+  }
+
+  reset_controls(window);
+  Players[2].title_leader[0] = 'T';
+  Players[2].name_leader[0] = 'N';
+  Players[2].noun_faction[0] = 'F';
+  window.on_button_clicked(8);
+  assert(dialog_rows.empty() && popup_exec_count == 0);
+  assert(message_count == 1);  // native no-target popup message
+}
+
 static void controls_end_treaty_confirmation_return_state() {
   DiploWin window;
   reset_controls(window);
@@ -469,6 +530,7 @@ int main() {
   controls_dispatch_and_simple_offers();
   controls_header_literals_and_popup_return();
   controls_automatic_offer_receiver_and_energy_return();
+  controls_vendetta_visibility_sources();
   controls_end_treaty_confirmation_return_state();
   return 0;
 }

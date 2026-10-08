@@ -83,15 +83,19 @@ def damage_statements(methods: str, damage: str) -> str:
     if damage == "weapon_label":
         return replace_once(
             methods,
-            "                secondary_buffer[1] = '\\0';",
+            "                strcat(text_buffer, label_get(0x200 / 4));\n"
+            "                // Native485C81 retains only the label's first byte.\n"
+            "                text_buffer[1] = '\\0';",
+            "                strcat(text_buffer, label_get(0x200 / 4));\n"
+            "                // Native485C81 retains only the label's first byte.\n"
             "                /* damaged: no one-character weapon truncation */",
         )
     if damage == "reactor_label":
         return replace_once(
             methods,
-            "            strcat(secondary_buffer, label_get(0x13c / 4));\n"
-            "            secondary_buffer[1] = '\\0';",
-            "            strcat(secondary_buffer, label_get(0x13c / 4));\n"
+            "            strcat(text_buffer, label_get(0x13c / 4));\n"
+            "            text_buffer[1] = '\\0';",
+            "            strcat(text_buffer, label_get(0x13c / 4));\n"
             "            /* damaged: no one-character reactor truncation */",
         )
     if damage == "caption_setter":

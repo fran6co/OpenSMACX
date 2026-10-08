@@ -27,8 +27,8 @@ MUTATIONS = [
     ("dispatch_offset", r"switch\s*\(\s*button_id\s*\)", "switch (button_id + 1)"),
     ("header_literal", r'"DIPLOTECH"', '"DIPLOTECH_MUTATED"'),
     ("symmetric_receiver",
-     r"if\s*\(\(PlayersData\[faction_id_with_\]\.diplo_treaties\[faction\]\s*&\s*8\)\s*!=\s*0\)",
-     "if ((PlayersData[faction].diplo_treaties[faction_id_with_] & 8) != 0)"),
+     r"(?<=&& \()PlayersData\[faction_id_with_\]\.diplo_treaties\[faction\](?= & 8\) == 0\))",
+     "PlayersData[faction].diplo_treaties[faction_id_with_]"),
     ("automatic_faction_receiver",
      r"PlayersData\[other\]\.diplo_treaties\[faction\]",
      "PlayersData[faction].diplo_treaties[other]"),
@@ -36,6 +36,15 @@ MUTATIONS = [
     ("return_state",
      r'if\s*\(X_pop\("REALLYENDPACT",\s*pop_wait\)\s*==\s*0\)\s*return;',
      'if (X_pop("REALLYENDPACT", pop_wait) != 0) return;'),
+    ("treaty_fallthrough",
+     r"case 1:\s*add_offer\(1,\s*3,\s*0\);\s*// fall through",
+     "case 1: add_offer(1, 3, 0); break;"),
+    ("known_tech_marker",
+     r"if\s*\(!counterpart_has_tech\)\s*strcat\(StringTemp,\s*\"\*\"\);",
+     'if (counterpart_has_tech) strcat(StringTemp, "*");'),
+    ("vendetta_visibility_or",
+     r"if\s*\(\(GameDataStateStorage\.fields_\.lock_masks_\.enable_mask_\s*&\s*\(1u\s*<<\s*faction\)\)\s*==\s*0\s*&&\s*\(PlayersData\[faction_id_\]\.diplo_treaties\[faction\]\s*&\s*8\)\s*==\s*0\s*&&\s*\(PlayersData\[faction_id_with_\]\.diplo_treaties\[faction\]\s*&\s*8\)\s*==\s*0\)",
+     "if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u << faction)) == 0 || ((PlayersData[faction_id_].diplo_treaties[faction] & 8) == 0 && (PlayersData[faction_id_with_].diplo_treaties[faction] & 8) == 0))"),
 ]
 
 

@@ -82,8 +82,10 @@ struct Player {
 struct PlayerData {
   int unk_107, energy_reserves, score_items_[9], diff_level, unk_109;
 } PlayersData[8];
-uint32_t GamePreferences, GameRules, MapNativeLifeForms;
-int TurnCurrentNum;
+struct GameDataState {
+  struct Fields { uint32_t game_preferences_, game_rules_, turn_current_num_; } fields_;
+} GameDataStateStorage;
+uint32_t MapNativeLifeForms;
 int compute_calls, last_gender, last_plural;
 void compute_score(int faction, int *, int *, int) {
   ++compute_calls; PlayersData[faction].unk_107 = 45;
@@ -111,8 +113,11 @@ static void reset() {
   std::memset(Players, 0, sizeof Players);
   std::memset(PlayersData, 0, sizeof PlayersData);
   std::memset(&NetDaemonNet, 0, sizeof NetDaemonNet);
-  GamePreferences = GameRules = MapNativeLifeForms = 0;
-  TurnCurrentNum = compute_calls = last_gender = last_plural = 0;
+  GameDataStateStorage.fields_.game_preferences_ = 0;
+  GameDataStateStorage.fields_.game_rules_ = 0;
+  GameDataStateStorage.fields_.turn_current_num_ = 0;
+  MapNativeLifeForms = 0;
+  compute_calls = last_gender = last_plural = 0;
   total_buffer_loads = total_buffer_writes = 0;
   StringTemp[0] = 0;
   WorldClimateWorldWin.loads = WorldClimateWorldWin.writes = 0;
@@ -162,7 +167,7 @@ int main() {
   PlayersData[1].score_items_[2] = 20; PlayersData[1].score_items_[3] = 30;
   PlayersData[1].score_items_[4] = 40; PlayersData[1].score_items_[5] = 1;
   PlayersData[1].unk_109 = 1;
-  TurnCurrentNum = 7; MapNativeLifeForms = 1;
+  GameDataStateStorage.fields_.turn_current_num_ = 7; MapNativeLifeForms = 1;
   entry.try_to_add_me();
   const HallOfFameRecord &added = HallOfFameRecords[0];
   assert(compute_calls == 1 && entry.factionID_ == 1 && entry.selectedRecord_ == 0);
@@ -325,7 +330,11 @@ struct ButtonGroup {
 };
 struct Spot {
   void init(int) {}
-  void add(int, int, int, int, int, int) { ++spot_adds; }
+  int ids[5];
+  void add(int id, int, int, int, int, int) {
+    if (spot_adds < 5) ids[spot_adds] = id;
+    ++spot_adds;
+  }
   void kill_type(int) {}
 };
 struct HallOfFameRecord {
@@ -402,6 +411,8 @@ int main() {
   win.field_A44_=12; win.field_A48_=1;
   win.clip_ready=false;
   HallOfFameRecords[0].present=1; HallOfFameRecords[0].award_flags=5;
+  HallOfFameRecords[2].present=1;
+  HallOfFameRecords[4].present=1;
 #ifdef ABSENT_RECORD_FIXTURE
   HallOfFameRecords[0].present=0;
 #endif
@@ -425,6 +436,7 @@ int main() {
   assert(wrap_calls == 0 && fill_calls == 0 && sprite_draws == 0);
   assert(copy_calls == 2 && stale_clip_copies == 0 && text_width_calls == 0);
   assert(uppercase_difficulty_writes == 0 && lowercase_difficulty_writes == 0);
+  assert(spot_adds == 2 && win.spot_.ids[0] == 2 && win.spot_.ids[1] == 4);
   assert(!win.clip_ready);
 #else
   assert(win.flatButtons2_[0].page == 2 && win.flatButtons2_[1].page == -1 &&
@@ -434,7 +446,8 @@ int main() {
   assert(copy_calls == 3 && stale_clip_copies == 0 && text_width_calls == 2);
   assert(uppercase_difficulty_writes == 1 && lowercase_difficulty_writes == 0);
   assert(win.clip_ready);
-  assert(spot_adds == 5 && center_calls >= 8);
+  assert(spot_adds == 3 && win.spot_.ids[0] == 0 &&
+         win.spot_.ids[1] == 2 && win.spot_.ids[2] == 4 && center_calls >= 8);
 #endif
   return 0;
 }
@@ -525,4 +538,24 @@ def test_famewin_damage_control_detects_lost_difficulty_uppercase(tmp_path):
     mutant = mutant.replace(
         "reinterpret_cast<int>(Facility[FAC_ASCENT_TO_TRANSCENDENCE].name)", "0"
     ).replace("reinterpret_cast<int>(Difficulty[record->field_20])", "0")
+    run_painter_host(tmp_path, (init, mutant), should_pass=False)
+
+
+def test_famewin_damage_control_detects_blank_row_hit_targets(tmp_path):
+    init = source_body(INIT)
+    redraw = source_body(REDRAW)
+    redraw = redraw.replace(
+        "reinterpret_cast<int>(Facility[FAC_ASCENT_TO_TRANSCENDENCE].name)", "0"
+    ).replace("reinterpret_cast<int>(Difficulty[record->field_20])", "0")
+    guarded_add = (
+        "      if ((entry.present & 1) != 0) {\n"
+        "        spot_.add(rank, 0, row.left, row.top, width, row.bottom - row.top);\n"
+        "      }"
+    )
+    assert guarded_add in redraw
+    # Pinned 0x448d90 disassembly tests the present bit at 0x44A20D and
+    # branches around the row paint/hit-target path when it is clear. The loop
+    # still advances rank and the row's record pointer at 0x44A46E-0x44A481.
+    mutant = redraw.replace(guarded_add,
+                            "      spot_.add(rank, 0, row.left, row.top, width, row.bottom - row.top);", 1)
     run_painter_host(tmp_path, (init, mutant), should_pass=False)

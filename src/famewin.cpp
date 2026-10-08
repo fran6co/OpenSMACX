@@ -196,6 +196,9 @@ FameWin::FameWin() {}
 // ORIGINAL: 0x0044B100 ??1FameWin@@QAE@XZ 0x0044B100-0x0044B1FF;0x00654D60-0x00654DF6
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0044b100.cpp"], "reason": "Product definition uses the typed FameWin ownership model while retaining the historical seed and its recovery obligations."}
 // symbol    ??1FameWin@@UAE@XZ
+// Member destructors expand here in reverse declaration order. In particular,
+// FlatButton's inline destructor performs close() before its BaseButton base
+// teardown, and ButtonGroup's destructor performs its own close().
 FameWin::~FameWin() {}
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
@@ -713,7 +716,9 @@ void FameWin::on_redraw() {
         canvas->write_cent_l(StringTemp, x, y + 3 * field_A44_, width,
                              static_cast<int>(strlen(StringTemp)));
       }
-      spot_.add(rank, 0, row.left, row.top, width, row.bottom - row.top);
+      if ((entry.present & 1) != 0) {
+        spot_.add(rank, 0, row.left, row.top, width, row.bottom - row.top);
+      }
       const int row_step = static_cast<int>(field_B438_ - field_B430_) + 6;
       row.top += row_step;
       row.bottom += row_step;
