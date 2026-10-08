@@ -11,7 +11,7 @@ import re
 from .compilation_database import entries
 from .compile_file_evidence import _identity, _observe, _physical, parse_compile_files
 from .compile_link_evidence import verify_compile_link_inputs
-from .components import relative_path
+from .components import archive_member_identity, relative_path
 from .link_file_evidence import parse_link_files
 from .model import digest
 from .records import parse_json_value
@@ -21,7 +21,8 @@ def validate_configuration(value, outputs):
     if value is None:
         return None
     fields = {"database", "source_extensions", "directory", "suffix", "link_files", "link_log"}
-    if not isinstance(value, dict) or not fields <= set(value) or set(value) - fields - {"command_stages"}:
+    optional = {"command_stages", "archive_members"}
+    if not isinstance(value, dict) or not fields <= set(value) or set(value) - fields - optional:
         raise ValueError("compile_link requires database, source_extensions, directory, suffix, link_files and link_log")
     for name in ("database", "directory", "link_files", "link_log"):
         relative_path(value[name])
@@ -40,7 +41,25 @@ def validate_configuration(value, outputs):
     if "command_stages" in value and (not isinstance(stages, dict) or set(stages) != {"compile", "link"}
             or any(not isinstance(stage, str) or not stage.strip() or "\0" in stage for stage in stages.values())):
         raise ValueError("command_stages requires explicit compile and link observation stages")
+    archive_members = value.get("archive_members", [])
+    if not isinstance(archive_members, list):
+        raise ValueError("compile_link archive_members must be an array")
+    archive_keys, object_paths = set(), set()
+    normalized_members = []
+    for binding in archive_members:
+        if not isinstance(binding, dict) or set(binding) != {"archive", "object", "member"}:
+            raise ValueError("archive_members entries require archive, object and member")
+        relative_path(binding["archive"])
+        relative_path(binding["object"])
+        member = archive_member_identity(binding["member"])
+        key = (binding["archive"], member)
+        if key in archive_keys or binding["object"] in object_paths:
+            raise ValueError("duplicate archive member or object binding")
+        archive_keys.add(key)
+        object_paths.add(binding["object"])
+        normalized_members.append({**binding, "member": member})
     return {**value, "source_extensions": list(extensions),
+            "archive_members": normalized_members,
             **({"command_stages": dict(stages)} if stages is not None else {})}
 
 
@@ -114,7 +133,7 @@ def _collect(root, directory, configuration, *, outputs, retain=False):
             expected.append(source)
     tree = directory / configuration["directory"]
     selected = _observations(tree, configuration["suffix"])
-    compilations = []
+    compilations, receipts, selected_data = [], {}, []
     for path in selected:
         _observe(path)  # Refuse hardlinks and nonphysical files before reading.
         data = path.read_bytes()
@@ -124,6 +143,29 @@ def _collect(root, directory, configuration, *, outputs, retain=False):
             raise ValueError("compiled output must belong to the current fresh build directory")
         observed_paths.update((path, output, *(Path(item["path"]) for item in value["inputs"])))
         compilations.append(data)
+        selected_data.append(data)
+        receipts[path] = value
+    archive_receipt_paths = tuple(sorted({
+        directory / (binding["object"] + configuration["suffix"])
+        for binding in configuration["archive_members"]}))
+    archive_receipt_membership = tuple(
+        path for path in archive_receipt_paths if os.path.lexists(path))
+    extra_receipts = {}
+    for binding in configuration["archive_members"]:
+        receipt_path = directory / (binding["object"] + configuration["suffix"])
+        if receipt_path in receipts or not receipt_path.exists():
+            continue
+        _observe(receipt_path)
+        data = receipt_path.read_bytes()
+        value = parse_compile_files(data)
+        output = Path(value["output"]["path"])
+        if not output.is_relative_to(directory):
+            raise ValueError("compiled output must belong to the current fresh build directory")
+        observed_paths.update((output, *(Path(item["path"]) for item in value["inputs"])))
+        receipts[receipt_path] = value
+        compilations.append(data)
+        extra_receipts[receipt_path] = data
+        observed_paths.add(receipt_path)
     link = parse_link_files(artifacts["link_files"])
     observed_paths.update(Path(item["path"]) for item in link["files"])
     before = {path: _observe(path) for path in sorted(observed_paths)}
@@ -131,11 +173,38 @@ def _collect(root, directory, configuration, *, outputs, retain=False):
         raise ValueError("build artifact changed before compilation correspondence verification")
     # Pin the exact metadata bytes already parsed, not a later same-path report.
     metadata = {directory / configuration[key]: data for key, data in artifacts.items()}
-    metadata.update(zip(selected, compilations, strict=True))
+    metadata.update(zip(selected, selected_data, strict=True))
+    metadata.update(extra_receipts)
     if any(before[path] != {"sha256": hashlib.sha256(raw).hexdigest(), "size": len(raw)}
            for path, raw in metadata.items()):
         raise ValueError("compiler/link observations changed before verification")
-    report = verify_compile_link_inputs(compilations, artifacts["link_files"], artifacts["link_log"], sources=expected)
+    archive_bindings, archive_receipt_rows = [], []
+    for binding in configuration["archive_members"]:
+        archive_path = directory / relative_path(binding["archive"])
+        object_path = directory / relative_path(binding["object"])
+        receipt_path = directory / (binding["object"] + configuration["suffix"])
+        receipt = receipts.get(receipt_path)
+        source = None
+        receipt_result = "unknown"
+        if receipt is not None:
+            if receipt["output"]["path"] == str(object_path) and receipt["source"] in {str(path) for path in expected}:
+                source = receipt["source"]
+                receipt_result = "pass"
+            else:
+                receipt_result = "fail"
+        archive_bindings.append({"archive": str(archive_path), "object": str(object_path),
+                                 "member": binding["member"], "source": source})
+        archive_receipt_rows.append({"archive": binding["archive"], "object": binding["object"],
+                                     "member": binding["member"], "receipt": str(receipt_path),
+                                     "result": receipt_result})
+    report = verify_compile_link_inputs(compilations, artifacts["link_files"], artifacts["link_log"],
+                                        sources=expected, archive_members=archive_bindings)
+    if archive_receipt_rows:
+        report["archive_member_receipts"] = archive_receipt_rows
+        if any(row["result"] == "fail" for row in archive_receipt_rows):
+            report["result"] = "fail"
+        elif any(row["result"] == "unknown" for row in archive_receipt_rows):
+            report["result"] = "unknown" if report["result"] == "pass" else report["result"]
     if "command_stages" in configuration:
         report["command_bindings"] = {"result": "unknown", "verification": "not_measured",
                                       "reason": "fresh compile/link file correspondence is required"}
@@ -145,12 +214,15 @@ def _collect(root, directory, configuration, *, outputs, retain=False):
                 root, directory, [parse_compile_files(raw) for raw in compilations], link, configuration["command_stages"])
             if report["command_bindings"].get("result") != "pass":
                 raise ValueError("command file bindings did not complete")
-    if (_observations(tree, configuration["suffix"]) != selected
+    if (tuple(path for path in archive_receipt_paths if os.path.lexists(path)) != archive_receipt_membership
+            or _observations(tree, configuration["suffix"]) != selected
             or {path: _observe(path) for path in sorted(observed_paths)} != before):
         raise ValueError("compiler/link files or observation membership changed during verification")
     report["evidence_fingerprint"] = digest({
         "files": {str(path): stamp for path, stamp in before.items()},
-        "observations": [str(path) for path in selected]})
+        "observations": [str(path) for path in selected],
+        "archive_member_receipts": [{"path": str(path), "present": path in archive_receipt_membership}
+                                    for path in archive_receipt_paths]})
     if not retain:
         return report
     if report["result"] != "pass":
@@ -171,7 +243,8 @@ def _collect(root, directory, configuration, *, outputs, retain=False):
                     directories.add(path.parent)
                     output_roles.add(path)
     return report, _epoch_check(before, tree, configuration["suffix"], selected,
-                                tuple(recipe_paths), tuple(sorted(directories)), tuple(sorted(output_roles)))
+                                tuple(recipe_paths), tuple(sorted(directories)), tuple(sorted(output_roles)),
+                                archive_receipt_paths, archive_receipt_membership)
 
 
 def verify_build_compilations(root, directory, configuration, *, outputs):
@@ -179,7 +252,8 @@ def verify_build_compilations(root, directory, configuration, *, outputs):
     return _collect(root, directory, configuration, outputs=outputs)
 
 
-def _epoch_check(stamps, tree, suffix, selected, recipes, directories, output_roles):
+def _epoch_check(stamps, tree, suffix, selected, recipes, directories, output_roles,
+                 archive_receipt_paths=(), archive_receipt_membership=()):
     # Immutable closure; no caller-owned mapping, mutable report, mtime cache or
     # persisted PASS can add paths, alter expected contents or refresh this epoch.
     stamps = tuple((path, stamp["sha256"], stamp["size"]) for path, stamp in sorted(stamps.items()))
@@ -188,6 +262,8 @@ def _epoch_check(stamps, tree, suffix, selected, recipes, directories, output_ro
     def paths_current():
         if tuple(_observations(tree, suffix)) != selected:
             raise ValueError("application compile/link evidence changed: observation membership")
+        if tuple(path for path in archive_receipt_paths if os.path.lexists(path)) != archive_receipt_membership:
+            raise ValueError("application compile/link evidence changed: archive receipt membership")
         for origin, source in recipes:
             if (origin.resolve() != origin or source.resolve() != source
                     or not origin.is_dir() or not source.is_file()):

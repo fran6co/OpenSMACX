@@ -123,11 +123,12 @@ or relax outside-scope preservation. Those require independently bound applicati
 build commands, source/object/link correspondence and remaining linked effects.
 
 `match_recovery.compile_link_evidence.verify_compile_link_inputs(compilations,
-link_data, log_data, sources=...)` connects those observations to the exact
-explicit linker-input files. Supply compile observation bytes, link-file and
-verbose-log bytes, and an explicit expected set of absolute source paths from
-the current build context. It freshly verifies all observations, requires unique
-source/output identities and one explicit link occurrence per compiled output,
+link_data, log_data, sources=..., archive_members=...)` connects those observations
+to exact explicit linker-input files or separately declared archive-member
+bindings. Supply compile observation bytes, link-file and verbose-log bytes, and
+an explicit expected set of absolute source paths from the current build context.
+It freshly verifies all observations, requires unique source/output identities
+and one explicit link occurrence or validated archive member per compiled output,
 and compares compilation-output and pre/post-link content stamps. Missing sources
 stay unknown; extra sources, duplicate identities and substituted objects cannot
 pass. Remaining explicit link inputs are reported separately, not claimed as
@@ -147,7 +148,12 @@ To require this evidence during every native fresh build, add an optional
   "suffix": ".compile.json",
   "link_files": "application.link.inputs.json",
   "link_log": "application.link.log",
-  "command_stages": {"compile": "compiler-effective", "link": "link-wrapper"}
+  "command_stages": {"compile": "compiler-effective", "link": "link-wrapper"},
+  "archive_members": [{
+    "archive": "jackal.lib",
+    "object": "CMakeFiles/jackal.dir/src/jackal.cpp.obj",
+    "member": "CMakeFiles/jackal.dir/src/jackal.cpp.obj"
+  }]
 }
 ```
 
@@ -164,6 +170,30 @@ builds retain artifact-only verification. This extension uses the current MSVC
 link-observation backend; it is not a universal linker parser or build-graph
 acceptance. Sources/libraries outside this declared evidence scope remain visible
 limitations, not implicit exclusions from recovery.
+
+`archive_members` is optional and declares exact relative build paths plus an
+exact COFF member identity. Its compile receipt is read from the declared object
+path with the configured suffix appended, even when that receipt is outside the
+main observation directory; that exact receipt and path are included in the
+freshness epoch. The configured archive must be an unchanged captured linker
+library search, and its unique physical member bytes must equal the fresh
+compiler output. The MSVC final-pass label omits member directories; its
+basename is therefore projected onto the archive only when enumeration proves
+exactly one physical member has that basename, and it is the explicitly
+configured full member identity. Distinct basenames in multi-member archives
+are supported; repeated records, duplicate basenames, conflicting final labels,
+or direct-plus-archive output supply refuse. No object is chosen by its basename.
+The Pass2 library label is matched to captured search spellings by ASCII
+case-insensitive basename (normalizing slash direction); every matching search
+must resolve to the one configured physical archive with passing file evidence.
+This permits an absolute search spelling with a basename-only Pass2 label, but
+same-basename libraries at multiple physical paths refuse. Repeated linker
+searches of the same exact captured archive path are allowed. Missing receipts
+or unresolved searches remain unknown, while contradictory or duplicated
+evidence refuses.
+An object supplied both directly and via an archive cannot pass. Archive
+member correspondence does not establish archive selection/retention, complete
+input coverage, or the build graph: those report fields remain `unknown`.
 
 Optional `command_stages` additionally requires the configured compiler JSON client
 to describe the freshly captured command batch. Stage names are project-defined;

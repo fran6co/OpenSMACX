@@ -16,6 +16,9 @@
     "source_extensions": [".cpp"],
     "directory": "CMakeFiles/OpenSMACX.dir",
     "suffix": ".compile.json",
+    "archive_members": [
+      {"archive": "jackal.lib", "object": "CMakeFiles/jackal.dir/src/jackal.cpp.obj", "member": "CMakeFiles/jackal.dir/src/jackal.cpp.obj"}
+    ],
     "command_stages": {"compile": "compiler-effective", "link": "link-wrapper"},
     "link_files": "OpenSMACX.link.inputs.json",
     "link_log": "OpenSMACX.link.log"

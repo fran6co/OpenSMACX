@@ -13,7 +13,8 @@ from test_link_log import LOG
 
 
 CONFIG = {"database": "compile_commands.json", "source_extensions": [".c"],
-          "directory": "compile-files", "suffix": ".json", "link_files": "link-files.json", "link_log": "link.log"}
+          "directory": "compile-files", "suffix": ".json", "link_files": "link-files.json", "link_log": "link.log",
+          "archive_members": []}
 OUTPUTS = [{"path": CONFIG[key], "format": format_name} for key, format_name in (
     ("database", "compilation-database"), ("link_files", "link-input-files"), ("link_log", "msvc-link-log"))]
 
@@ -50,6 +51,16 @@ def test_build_uses_validated_compile_link_policy_and_pins_it(project):
     assert settings.compile_link == CONFIG
     before = settings.snapshot(project)
     write_config(project, compile_link={**CONFIG, "suffix": ".receipt.json"})
+    assert Build.read(project).snapshot(project) != before
+
+
+def test_omitted_archive_bindings_normalize_to_empty_policy(project):
+    configure(project)
+    before = Build.read(project).snapshot(project)
+    policy = {key: value for key, value in CONFIG.items() if key != "archive_members"}
+    write_config(project, compile_link=policy)
+    assert Build.read(project).compile_link == CONFIG
+    # Equivalent parsed policy does not erase the actual configuration edit.
     assert Build.read(project).snapshot(project) != before
 
 
