@@ -151,10 +151,14 @@ static unsigned send_calls;
 struct Net { void send(void *data, unsigned long size, unsigned long target, int) {
   const unsigned char *p=static_cast<const unsigned char *>(data); sent.assign(p,p+size);
   sent_to=static_cast<std::uint32_t>(target); ++send_calls; } };
-struct NetDaemonNetType : Net { struct Lock { unsigned leading_words_[4]; } lock_state_[1]; } NetDaemonNet;
+struct AlphaNetProcessSlot {
+  char name_[0x20]; std::uint32_t pid_; unsigned char rest[0x19C-0x24];
+};
+struct NetDaemonNetType : Net {
+  struct Lock { unsigned leading_words_[4]; } lock_state_[1];
+  AlphaNetProcessSlot process_slots_[8];
+} NetDaemonNet;
 static unsigned *NetWinRulesGate=&NetDaemonNet.lock_state_[0].leading_words_[1];
-struct Slot { std::uint32_t id; unsigned char rest[0x19C-4]; };
-static Slot slot_storage[8]; static Slot *NetWinSlotRecords=slot_storage;
 static int NetWinPlayerId, NetWinOtherPlayerId;
 struct LobbyRow { unsigned char bytes[0x17C]; };
 static LobbyRow NetWinLobbyRows[8];
@@ -207,7 +211,7 @@ static StringStructEntry *append_entry(StringList &list,int id,const char *text)
 
 HOST_MAIN = r'''static void reset_send(){sent.clear();sent_to=0;send_calls=0;}
 int main(){
-  for(unsigned i=0;i<8;++i)slot_storage[i].id=0x1000+i;
+  for(unsigned i=0;i<8;++i)NetDaemonNet.process_slots_[i].pid_=0x1000+i;
   NetWinPlayerId=9;NetWinOtherPlayerId=99;
   for(unsigned i=0;i<sizeof(NetWinSessionOptions);++i)NetWinSessionOptions.bytes[i]=i*3+1;
   for(unsigned i=0;i<sizeof(NetWinSessionData);++i)NetWinSessionData.bytes[i]=i*5+7;
@@ -216,18 +220,18 @@ int main(){
   assert(!std::memcmp(sent.data()+0x10,NetWinSessionOptions.bytes,0x18));
   reset_send();send_session_packet(77,0);assert(send_calls==1&&sent_to==(unsigned)NetWinOtherPlayerId);
   assert(*reinterpret_cast<unsigned short*>(sent.data())==0x2F02);
-  reset_send();send_session_packet(77,3);assert(send_calls==1&&sent_to==slot_storage[3].id);
+  reset_send();send_session_packet(77,3);assert(send_calls==1&&sent_to==NetDaemonNet.process_slots_[3].pid_);
   assert(*reinterpret_cast<unsigned short*>(sent.data())==0x1F02);
   reset_send();send_session2_packet(55,-1);assert(send_calls==1&&sent.size()==0x178&&sent_to==0);
   assert(*reinterpret_cast<unsigned short*>(sent.data())==0x4F03);
   assert(!std::memcmp(sent.data()+0x10,NetWinSessionData.bytes,0x168));
   reset_send();send_session2_packet(55,0);assert(send_calls==1&&sent_to==(unsigned)NetWinOtherPlayerId);
   assert(*reinterpret_cast<unsigned short*>(sent.data())==0x2F03);
-  reset_send();send_session2_packet(55,3);assert(send_calls==1&&sent_to==slot_storage[3].id);
+  reset_send();send_session2_packet(55,3);assert(send_calls==1&&sent_to==NetDaemonNet.process_slots_[3].pid_);
   assert(*reinterpret_cast<unsigned short*>(sent.data())==0x1F03);
   for(unsigned i=0;i<sizeof(NetWinLobbyRows);++i)reinterpret_cast<unsigned char*>(NetWinLobbyRows)[i]=i*7+9;
   *NetWinRulesGate=0;reset_send();send_all_player_packets(-1);assert(send_calls==0);
-  reset_send();send_all_player_packets(2);assert(send_calls==1&&sent.size()==0xA74&&sent_to==slot_storage[2].id);
+  reset_send();send_all_player_packets(2);assert(send_calls==1&&sent.size()==0xA74&&sent_to==NetDaemonNet.process_slots_[2].pid_);
   assert(*reinterpret_cast<unsigned short*>(sent.data())==0x1F04);
   assert(!std::memcmp(sent.data()+0x10,&NetWinLobbyRows[1],0xA64));
   reset_send();*NetWinRulesGate=1;send_all_player_packets(-1);assert(send_calls==1&&sent_to==0);
@@ -237,7 +241,7 @@ int main(){
   reset_send();send_faction_data(-1);assert(send_calls==0);NetWinPlayerId=NetWinOtherPlayerId;
   reset_send();send_faction_data(-1);assert(send_calls==1&&sent_to==0);
   assert(*reinterpret_cast<unsigned short*>(sent.data())==0x0F0D);
-  reset_send();send_faction_data(2);assert(send_calls==1&&sent_to==slot_storage[2].id);
+  reset_send();send_faction_data(2);assert(send_calls==1&&sent_to==NetDaemonNet.process_slots_[2].pid_);
   assert(sent.size()==133*3+0x1A4&&*reinterpret_cast<unsigned short*>(sent.data())==0x0F0D);
   assert(!std::memcmp(sent.data()+0x10,faction,0x194+133*3));
   unsigned char payload[0x17C];for(unsigned i=0;i<sizeof(payload);++i)payload[i]=i^0x5A;

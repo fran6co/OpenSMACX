@@ -157,23 +157,15 @@ static void *memcpy_call(void *dst, const void *src, unsigned len) {
 // body writes it and no catalogue names it.
 static int *const NetWinPlayerCount = &NetDaemonNet.player_count_;
 
-// 0x0090DB9B - the static faction-record table the dialog reads directly
-// (the allocated copies live in faction_records_): the colour byte of record
-// `faction` sits at [faction * 0x17C], the record block the modal pump
-// scans starts 0x17A bytes in at 0x0090DD15, and the localized name text of
-// each record starts one byte later at 0x0090DD17. Record stride 0x17C.
-static char *const NetWinFactionTable =
-    reinterpret_cast<char *>(&NetWinLobbyRows[0].faction_or_color_);
-
-// 0x0093D51C - the per-slot records the chat line names its sender from:
-// 103 dwords (0x19C) per slot with the DirectPlay id first, indexed by the
-// slot number new_chat is handed.
-struct NetWinSlotRecord {
-    unsigned long id;
-    unsigned char tail_[0x19C - 4];
-};
-static NetWinSlotRecord *const NetWinSlotRecords = (NetWinSlotRecord *)0x0093D51C;
-
+// Original 0x0090DB98 begins the eight NetWinLobbyRows (0x17C stride).
+// Original 0x0093D51C is NetDaemonNet.process_slots_[0].pid_, not a
+// separately allocated slot table: AlphaNet starts at 0x0093CD90, its
+// process_slots_ at +0x76C and each slot's pid_ at +0x20.
+// The unchecked readiness/owner scans below can leave the eight-row array.
+// In the original, index 8's ready byte aliases session mode byte 1 at
+// 0x0090E779; its owner dword aliases options rule_bits_b_ at 0x0090E8F0.
+// Those observations do not prove a ninth row or source-object adjacency;
+// preserving the original abnormal-count effects remains a layout obligation.
 
 /*
 // ORIGINAL: 0x00481FD0 ?setup_faction_data@NetWin@@QAEXPAUMessageFactionData@@@Z 0x00481FD0-0x00482488;0x006574E9-0x006574FE FILE
@@ -629,27 +621,27 @@ void NetWin::config_players() {
     NetWinSessionOptions.native_life_ = 2;
     NetWinSessionOptions.cloud_cover_ = 2;
 
-    char *record = NetWinFactionTable + 0x17A;
+    NetWinLobbyRow *row = &NetWinLobbyRows[1];
     char *template_record = NetWinFactionTemplate;
     do {
-        *reinterpret_cast<unsigned int *>(record + 0x177) = 0;
-        record[-1] = 0xFF;
-        record[0] = 0;
-        record[1] = 2;
-        record[2] = 0xFF;
-        record[3] = 2;
-        strcpy(record + 4, template_record);
-        strcpy(record + 0x1C, template_record + 0x350);
-        strcpy(record + 0x44,
+        row->owner_ = 0;
+        row->prefix_ = 0xFF;
+        row->ready_or_occupied_ = 0;
+        row->field_2_ = 2;
+        row->faction_or_color_ = static_cast<int8_t>(0xFF);
+        row->field_4_ = 2;
+        strcpy(row->leader_name_, template_record);
+        strcpy(row->formal_faction_name_, template_record + 0x350);
+        strcpy(row->noun_faction_,
                StringTable.get(
                    *reinterpret_cast<int *>(Labels.strings_ptr + 0xFE4)));
-        strcpy(record + 0x5C, template_record + 0x31C);
-        strcpy(record + 0xDC, template_record + 0x18);
-        strcpy(record + 0xF4, template_record + 0x30);
-        record[0x174] = template_record[0xC];
-        record += 0x17C;
+        strcpy(row->adjective_faction_, template_record + 0x31C);
+        strcpy(row->leader_title_, template_record + 0x18);
+        strcpy(row->adjective_leader_, template_record + 0x30);
+        row->tail_[0] = static_cast<uint8_t>(template_record[0xC]);
+        ++row;
         template_record += 0x59C;
-    } while (record < NetWinFactionTable + 0x17A + 7 * 0x17C);
+    } while (row < &NetWinLobbyRows[8]);
 }
 
 // Private recovered body for the native 0x00482D90 roster finalizer.
@@ -1204,7 +1196,7 @@ void NetWin::draw_session_info() {
                 int seen = 0;
                 if (*NetWinPlayerCount > 0) {
                     unsigned long *scan = reinterpret_cast<unsigned long *>(
-                        NetWinFactionTable + 0x2F1);
+                        &NetWinLobbyRows[1].owner_);
                     while (seen < *NetWinPlayerCount) {
                         if (*scan == owned) {
                             break;
@@ -1288,12 +1280,11 @@ void NetWin::draw_player_names() {
                              strlen(StringTemp));
     }
 
-    unsigned char *record = reinterpret_cast<unsigned char *>(
-        NetWinFactionTable + 0x2F1);
-    NetWinSlotRecord *slot_record = NetWinSlotRecords + 1;
+    NetWinLobbyRow *lobby_row = &NetWinLobbyRows[1];
+    AlphaNetProcessSlot *slot_record = NetDaemonNet.process_slots_ + 1;
     RECT *rects = &setup_rects_[6];
-    for (int row = 0; slot_record < NetWinSlotRecords + 8;
-         ++row, record += 0x17C, slot_record += 1) {
+    for (int row = 0; slot_record < NetDaemonNet.process_slots_ + 8;
+         ++row, ++lobby_row, slot_record += 1) {
         if (*NetWinEighthSlotWord == 3 && faction_records_ != 0
             && row >= static_cast<unsigned char>(
                           static_cast<char *>(faction_records_)[0])) {
@@ -1305,29 +1296,28 @@ void NetWin::draw_player_names() {
 
         // The ready glyph: element 2 when the record block's leading byte
         // says the slot holds a player.
-        int ready = record[-0x177] != 0 ? 2 : 0;
+        int ready = lobby_row->ready_or_occupied_ != 0 ? 2 : 0;
         buffer->box_sprite(row_rect, &NetWinReadyPanels[ready]);
 
-        if (*NetWinEighthSlotWord == 3 && record[-0x178] == 0xFF) {
+        if (*NetWinEighthSlotWord == 3 && lobby_row->prefix_ == 0xFF) {
             continue;
         }
 
         // The lock chip: the chosen faction's own id field against the
         // record's claim dword, only while the eighth word is 2 or 3.
-        signed char mode = static_cast<signed char>(record[-0x175]);
+        signed char mode = lobby_row->faction_or_color_;
         int locked;
         if (*NetWinEighthSlotWord == 2 || *NetWinEighthSlotWord == 3) {
             locked = 0;
             if (mode != -1) {
-                unsigned long claimed =
-                    *reinterpret_cast<unsigned long *>(record);
+                unsigned long claimed = lobby_row->owner_;
                 unsigned long owned = *reinterpret_cast<unsigned long *>(
                     static_cast<char *>(faction_records_) + mode * 0x190
                     + 4);
                 locked = owned != 0 && owned != claimed;
             }
         } else {
-            locked = *reinterpret_cast<unsigned long *>(record) != 0;
+            locked = lobby_row->owner_ != 0;
         }
         Sprite &chip = locked ? g_IFACE_LOCK_SPRITES[1]
                               : g_IFACE_LOCK_SPRITES[0];
@@ -1355,30 +1345,28 @@ void NetWin::draw_player_names() {
         buffer->set_clip(&field);
 
         StringTemp[0] = 0;
-        if (record[-0x178] == 0xFF) {
+        if (lobby_row->prefix_ == 0xFF) {
             strcat(StringTemp, "Computer");
         } else {
             strcat(StringTemp,
-                   NetDaemonNet.get_player_name(slot_record->id));
+                   NetDaemonNet.get_player_name(slot_record->pid_));
         }
-        if (record[-0x175] != 0xFF) {
+        if (static_cast<uint8_t>(lobby_row->faction_or_color_) != 0xFF) {
             strcat(StringTemp, ": ");
             strcat(StringTemp, " ");
             strcat(StringTemp,
-                   reinterpret_cast<const char *>(record - 0x173));
-            if (slot_record > NetWinSlotRecords + 1) {
+                   lobby_row->leader_name_);
+            if (slot_record > NetDaemonNet.process_slots_ + 1) {
                 // Count the static records whose name text matches, and
                 // append the tally when there is more than one.
                 int matches = 0;
-                const char *name =
-                    reinterpret_cast<const char *>(record - 0x173);
-                const char *scan =
-                    reinterpret_cast<const char *>(NetWinFactionTable + 0x17E);
+                const char *name = lobby_row->leader_name_;
+                const NetWinLobbyRow *scan = &NetWinLobbyRows[1];
                 for (int seen = row; seen != 0; --seen) {
-                    if (strcmp(name, scan) == 0) {
+                    if (strcmp(name, scan->leader_name_) == 0) {
                         ++matches;
                     }
-                    scan += 0x17C;
+                    ++scan;
                 }
                 if (matches != 0) {
                     char tally[0xA];
@@ -1411,7 +1399,7 @@ void NetWin::draw_player_names() {
     if (*NetWinRulesGate == 0) {
         // Not connected: the left button takes the connect label.
         unsigned char color =
-            NetWinFactionTable[pid_idx * 0x17C];
+            static_cast<uint8_t>(NetWinLobbyRows[pid_idx].faction_or_color_);
         const char *label = color != 0
             ? reinterpret_cast<const char *>(Labels.strings_ptr
                                              + 0x1054)
@@ -1614,18 +1602,16 @@ void NetWin::draw_diffs() {
     spot_.kill_type(4);
     Buffer *buffer = static_cast<Buffer *>(this);
     RECT *rect = &setup_rects_[20];
-    unsigned char *record =
-        reinterpret_cast<unsigned char *>(NetWinFactionTable) + 0x179;
-    for (int index = 0; record < reinterpret_cast<unsigned char *>(NetWinFactionTable)
-                   + 0x179 + 7 * 0x17C;
-         ++index, record += 0x17C, ++rect) {
+    NetWinLobbyRow *row = &NetWinLobbyRows[1];
+    for (int index = 0; row < &NetWinLobbyRows[8];
+         ++index, ++row, ++rect) {
         if (*NetWinEighthSlotWord == 3 && faction_records_ != 0
             && index >= static_cast<unsigned char>(
                             static_cast<char *>(faction_records_)[0])) {
             break;
         }
         buffer->box_sprite(rect, &InterfaceBoxStyles[0]);
-        if (*NetWinEighthSlotWord == 3 && record[0] == 0xFF) {
+        if (*NetWinEighthSlotWord == 3 && row->prefix_ == 0xFF) {
             continue;
         }
 
@@ -1634,7 +1620,7 @@ void NetWin::draw_diffs() {
         int slot = index + 1;
         if (slot == NetDaemonNet.pid_2_idx(NetWinPlayerId)
             || (NetWinPlayerId == NetWinOtherPlayerId
-                && record[0] == 0xFF)) {
+                && row->prefix_ == 0xFF)) {
             Sprite &arrow = g_IFACE_MP_COMBO_ARROW_SPRITES[0];
             arrow.draw(buffer, arrow.transparent_index(),
                        rect->right - 0xA,
@@ -1649,7 +1635,7 @@ void NetWin::draw_diffs() {
         field.right -= 4;
         buffer->set_clip(&field);
         char *name = StringTable.get(
-            reinterpret_cast<int>(NetWinDifficultyNames[record[2]]));
+            reinterpret_cast<int>(NetWinDifficultyNames[row->field_2_]));
         if (name != 0) {
             buffer->write_l(name, &field, strlen(name));
         }
@@ -1682,27 +1668,24 @@ void NetWin::draw_factions() {
     spot_.kill_type(3);
     Buffer *buffer = static_cast<Buffer *>(this);
     RECT *rect = &setup_rects_[13];
-    unsigned char *record =
-        reinterpret_cast<unsigned char *>(NetWinFactionTable) + 0x179 + 0x45;
-    for (int index = 0;
-         record < reinterpret_cast<unsigned char *>(NetWinFactionTable)
-                   + 0x179 + 0x45 + 7 * 0x17C;
-         ++index, record += 0x17C, ++rect) {
+    NetWinLobbyRow *row = &NetWinLobbyRows[1];
+    for (int index = 0; row < &NetWinLobbyRows[8];
+         ++index, ++row, ++rect) {
         if (*NetWinEighthSlotWord == 3 && faction_records_ != 0
             && index >= static_cast<unsigned char>(
                             static_cast<char *>(faction_records_)[0])) {
             break;
         }
         buffer->box_sprite(rect, &InterfaceBoxStyles[0]);
-        if (*NetWinEighthSlotWord == 3 && record[-0x45] == 0xFF) {
+        if (*NetWinEighthSlotWord == 3 && row->prefix_ == 0xFF) {
             continue;
         }
 
         int slot = index + 1;
-        int mode = static_cast<signed char>(record[-0x42]);
+        int mode = row->faction_or_color_;
         if (slot == NetDaemonNet.pid_2_idx(NetWinPlayerId)
             || (NetWinPlayerId == NetWinOtherPlayerId
-                && record[-0x45] == 0xFF)) {
+                && row->prefix_ == 0xFF)) {
             Sprite &arrow = g_IFACE_MP_COMBO_ARROW_SPRITES[0];
             arrow.draw(buffer, arrow.transparent_index(),
                        rect->right - 0xA,
@@ -1727,10 +1710,10 @@ void NetWin::draw_factions() {
                 *reinterpret_cast<int *>(Labels.strings_ptr + 0xFE4));
         }
         strcat(StringTemp, named);
-        if (strcmp(named, reinterpret_cast<const char *>(record)) != 0) {
+        if (strcmp(named, row->noun_faction_) != 0) {
             strcat(StringTemp, ": ");
             strcat(StringTemp, " ");
-            strcat(StringTemp, reinterpret_cast<const char *>(record));
+            strcat(StringTemp, row->noun_faction_);
         }
         buffer->write_l(StringTemp, &field, strlen(StringTemp));
         buffer->restore_clip();
@@ -1855,14 +1838,14 @@ void NetWin::on_left_click(int x, int y) {
         pick_send_state();
         return;
     case 2:
-        if (NetWinSlotRecords[spot_position + 1].id ==
+        if (NetDaemonNet.process_slots_[spot_position + 1].pid_ ==
             static_cast<unsigned long>(NetWinPlayerId)) {
             pick_player();
         }
         return;
     case 3:
     case 4:
-        if (NetWinSlotRecords[spot_position + 1].id ==
+        if (NetDaemonNet.process_slots_[spot_position + 1].pid_ ==
                 static_cast<unsigned long>(NetWinPlayerId) ||
             (NetWinLobbyRows[spot_position + 1].prefix_ == 0xFF &&
              NetWinPlayerId == NetWinOtherPlayerId)) {
@@ -1875,7 +1858,7 @@ void NetWin::on_left_click(int x, int y) {
         return;
     case 5:
         if ((NetWinSessionData.mode_ == 0 || NetWinSessionData.mode_ == 1) &&
-            NetWinSlotRecords[spot_position + 1].id ==
+            NetDaemonNet.process_slots_[spot_position + 1].pid_ ==
                 static_cast<unsigned long>(NetWinPlayerId)) {
             pick_pass(0);
         }
@@ -2815,7 +2798,7 @@ int NetWin::modal_callback() {
     if (field_7614_ == 0) {
         field_7618_ = 1;
         if (*NetWinPlayerCount >= 1) {
-            char *record = NetWinFactionTable + 0x17A;
+            char *record = reinterpret_cast<char *>(&NetWinLobbyRows[1].ready_or_occupied_);
             int index = 1;
             do {
                 if (*record == 0) {
@@ -2868,7 +2851,7 @@ int __cdecl NetWin::modal_callback_daemon() {
     int count = *NetWinPlayerCount;
     if (count >= 1) {
         int all_used = 1;
-        char *record = NetWinFactionTable + 0x17A;
+        char *record = reinterpret_cast<char *>(&NetWinLobbyRows[1].ready_or_occupied_);
         do {
             if (*record == 0) {
                 all_used = 0;
@@ -2983,7 +2966,7 @@ Status: Coverage transcription - unclaimed body
 void NetWin::new_chat(char *message, int slot) {
     char text[0x100];
     text[0] = 0;
-    strcat(text, NetDaemonNet.get_player_name(NetWinSlotRecords[slot].id));
+    strcat(text, NetDaemonNet.get_player_name(NetDaemonNet.process_slots_[slot].pid_));
     CharUpperA(text);
     strcat(text, ": ");
     strcat(text, " ");
@@ -3461,7 +3444,7 @@ Purpose: Send one faction's data block over the net: make sure the
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0047B020 ?send_faction_data@@YAXH@Z 0x0047B020-0x0047B0E1 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/netwin.h declares this network-dialog synchronization API; src/netwin.cpp owns NetWinDialog, NetWinLobbyRows, the session state, NetWinSlotRecords and the player-ID globals.", "The source body preserves the pinned same-player gate, byte count, allocation size, copy extent/order, unfreed frame and broadcast/slot destination branches."], "reason": "Move the complete existing faction-data sender to the owner of its typed dialog, record table and network globals without changing packet writes, send order, leak or historical claim."}
+// RECOVERY_BINDING: v1 {"evidence": ["src/netwin.h declares this network-dialog synchronization API; src/netwin.cpp owns NetWinDialog, NetWinLobbyRows, the session state, and the player-ID globals; slot ids are NetDaemonNet AlphaNet members.", "The source body preserves the pinned same-player gate, byte count, allocation size, copy extent/order, unfreed frame and broadcast/slot destination branches."], "reason": "Move the complete existing faction-data sender to the owner of its typed dialog, record table and network globals without changing packet writes, send order, leak or historical claim."}
 // size      193 bytes
 // prototype
 // callers   0   call targets   1
@@ -3490,7 +3473,7 @@ void __cdecl send_faction_data(int slot_id) {
             return;
         }
         NetDaemonNet.Net::send(
-            frame, size, NetWinSlotRecords[slot_id].id, 1);
+            frame, size, NetDaemonNet.process_slots_[slot_id].pid_, 1);
     }
 }
 
@@ -3501,7 +3484,7 @@ Purpose: Broadcast the full-state block to every player: stamp the seven
          a1 names (0x1F04) once the turn hand-over allows it.
 
 // ORIGINAL: 0x0047B0F0 ?send_all_player_packets@@YAXH@Z 0x0047B0F0-0x0047B1CE FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/netwin.h declares this API and src/netwin.cpp owns the seven-row lobby payload. The destination IDs use the existing NetWinSlotRecords owner.", "The gate at 0x0093E8C0 is NetDaemonNet.lock_state_[0].leading_words_[1], already bound in netwin.cpp as NetWinRulesGate; the same storage is game.cpp's TurnsAssigned."], "reason": "Move the complete state-frame sender to netwin.cpp and use its existing typed view of the shared turn-handover word; preserve initialization-before-gate, packet copy extent and target branches."}
+// RECOVERY_BINDING: v1 {"evidence": ["src/netwin.h declares this API and src/netwin.cpp owns the seven-row lobby payload. The destination IDs use NetDaemonNet AlphaNet process slots.", "The gate at 0x0093E8C0 is NetDaemonNet.lock_state_[0].leading_words_[1], already bound in netwin.cpp as NetWinRulesGate; the same storage is game.cpp's TurnsAssigned."], "reason": "Move the complete state-frame sender to netwin.cpp and use its existing typed view of the shared turn-handover word; preserve initialization-before-gate, packet copy extent and target branches."}
 // LEVER: xor/or order - writing the dword-zero field first in the record loop (matching `xor ebx,ebx` before `or ecx,-1`) reproduced the register setup order; `#pragma function(memcpy)` kept the `call _memcpy` instead of an inlined `rep movsd`.
 // size      222 bytes
 // prototype
@@ -3536,7 +3519,7 @@ void __cdecl send_all_player_packets(int slot_id) {
         }
         *reinterpret_cast<unsigned short *>(frame) |= 0x1000;
         NetDaemonNet.Net::send(
-            frame, 0xA74, NetWinSlotRecords[slot_id].id, 1);
+            frame, 0xA74, NetDaemonNet.process_slots_[slot_id].pid_, 1);
     }
 }
 
@@ -3590,7 +3573,7 @@ Purpose: Broadcast the 24-byte session state words: copy them into the
          client's counterpart (0x2F02), or to the slot a2 names (0x1F02).
 
 // ORIGINAL: 0x0047B260 ?send_session_packet@@YAXHH@Z 0x0047B260-0x0047B2DE FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/netwin.h declares this API; NetWinSessionOptions, NetWinSlotRecords, NetWinOtherPlayerId and NetDaemonNet are owned/referenced in netwin.cpp.", "The first argument remains unused as in the current body; negative, zero and positive targets keep their distinct packet opcodes and destinations."], "reason": "Move the complete existing 24-byte session packet sender into netwin.cpp without changing payload, unused parameter, target comparison or header selection."}
+// RECOVERY_BINDING: v1 {"evidence": ["src/netwin.h declares this API; NetWinSessionOptions, NetWinOtherPlayerId and NetDaemonNet are owned/referenced in netwin.cpp.", "The first argument remains unused as in the current body; negative, zero and positive targets keep their distinct packet opcodes and destinations."], "reason": "Move the complete existing 24-byte session packet sender into netwin.cpp without changing payload, unused parameter, target comparison or header selection."}
 // size      126 bytes
 // prototype
 // callers   0   call targets   1
@@ -3614,7 +3597,7 @@ void __cdecl send_session_packet(int slot_id, int target) {
     }
     uint32_t who;
     if (target != 0) {
-        who = NetWinSlotRecords[target].id;
+        who = NetDaemonNet.process_slots_[target].pid_;
         packet.header_ = 0x1F02;
     } else {
         who = NetWinOtherPlayerId;
@@ -3629,7 +3612,7 @@ Purpose: Broadcast the session state blob: copy the 0x168-byte payload,
          counterpart (0x2F03), or to the slot a2 names (0x1F03).
 
 // ORIGINAL: 0x0047B2E0 ?send_session2_packet@@YAXHH@Z 0x0047B2E0-0x0047B379 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["src/netwin.h owns the 0x168-byte NetWinSessionData block and declares this sender; the current file also owns NetWinSlotRecords and the daemon.", "The first argument remains unused, and packet bytes/header fields and the target==0 comparison are retained."], "reason": "Move the complete second-session sender into netwin.cpp, preserving its 0x178-byte frame, copy, opcode branches and unused first argument."}
+// RECOVERY_BINDING: v1 {"evidence": ["src/netwin.h owns the 0x168-byte NetWinSessionData block and declares this sender; the NetDaemonNet owns AlphaNet process slots.", "The first argument remains unused, and packet bytes/header fields and the target==0 comparison are retained."], "reason": "Move the complete second-session sender into netwin.cpp, preserving its 0x178-byte frame, copy, opcode branches and unused first argument."}
 // size      153 bytes
 // prototype
 // callers   0   call targets   1
@@ -3656,7 +3639,7 @@ void __cdecl send_session2_packet(int slot_id, int target) {
         who = NetWinOtherPlayerId;
     } else {
         packet.header_[0] = 0x1F03;
-        who = NetWinSlotRecords[target].id;
+        who = NetDaemonNet.process_slots_[target].pid_;
     }
     NetDaemonNet.Net::send(&packet, 0x178, who, 1);
 }
