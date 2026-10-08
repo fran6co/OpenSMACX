@@ -99,6 +99,9 @@ class Win : public AutoSound {
   // reads the same private fields the class's own z-order code does;
   // the image treats it as part of Win even though it is not a member.
   friend void __cdecl recurse_zorder(Win *window);
+  // The original recursive hit-test is likewise a free Win-tree helper;
+  // it reads this same window layout and follows its child hierarchy.
+  friend Win *__cdecl get_mouse_window_recurse(Win *window, int *x, int *y);
   // Homed into win.cpp 2026-09-06. Walks the parent chain accumulating each
   // window's client + outer origin into the caller's pair; reads the same
   // private fields the class's own coordinate converters do.

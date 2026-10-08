@@ -3834,7 +3834,9 @@ void __cdecl recurse_zorder(Win * window) {
     // through c->win_parent_ - both the honest spellings. It collapsed the
     // body from its high-nineties agreement to 1 of 107: the typed compare
     // forces VC6 off the register pairing the image schedules, unlike
-    // get_mouse_window_recurse where the same retype held. Casts restored.
+    // get_mouse_window_recurse where the same retype held. Casts restored
+    // for that measurement; the parent field is now named for structural
+    // fidelity, without revisiting the pointer/int comparison.
     int cur;
 
     if (window->child_count_ > 0) {
@@ -3848,10 +3850,8 @@ void __cdecl recurse_zorder(Win * window) {
                     found = true;
                 }
                 if (c->iSomeFlag_ & 1) {
-                    int child_c4 = *reinterpret_cast<int *>(
-                        reinterpret_cast<char *>(c) + 0xc4);
-                    if (child_c4 == 0 ||
-                        reinterpret_cast<Win *>(child_c4)->is_visible() != 0) {
+                    Win *child_parent = c->win_parent_;
+                    if (child_parent == 0 || child_parent->is_visible() != 0) {
                         recurse_zorder(c);
                     }
                     cur = reinterpret_cast<int>(WinZOrderWindow);
@@ -3880,10 +3880,8 @@ void __cdecl recurse_zorder(Win * window) {
                 if (window->poWinBase_ == window &&
                     (c->iFlags_ & 0x20)) {
                     if (c->iSomeFlag_ & 1) {
-                        int child_c4 = *reinterpret_cast<int *>(
-                            reinterpret_cast<char *>(c) + 0xc4);
-                        if (child_c4 == 0 ||
-                            reinterpret_cast<Win *>(child_c4)->is_visible() != 0) {
+                        Win *child_parent = c->win_parent_;
+                        if (child_parent == 0 || child_parent->is_visible() != 0) {
                             recurse_zorder(c);
                         }
                         cur = reinterpret_cast<int>(WinZOrderWindow);
@@ -3899,10 +3897,10 @@ void __cdecl recurse_zorder(Win * window) {
     }
 
     if (window->iSomeFlag_ & 1) {
-        int a1_c4 = *reinterpret_cast<int *>(reinterpret_cast<char *>(window) + 0xc4);
-        if (a1_c4 == 0 || reinterpret_cast<Win *>(a1_c4)->is_visible() != 0) {
+        Win *window_parent = window->win_parent_;
+        if (window_parent == 0 || window_parent->is_visible() != 0) {
             int idx = WinZOrderCount;
-            reinterpret_cast<int *>(WinZOrderArray)[idx] = reinterpret_cast<int>(window);
+            WinZOrderArray[idx] = window;
             WinZOrderCount = idx + 1;
         }
     }
@@ -3953,27 +3951,25 @@ Purpose: The tree walk `Win::get_mouse_window` delegates to once it has a
 //   ebp,esp`) the image, which is FPO here, has no room for.
 // ALSO VISIBLE, for the next pass rather than measured: the image lowers
 //   the first guard as `test byte ptr [esi + 0x9c], 1` straight out of
-//   memory, where this body loads the byte into cl first - and it reaches
-//   0x9c/0x98/0xc4 as raw offsets only because this is a free function
-//   and Win's fields are protected. A `friend` declaration in win.h would
-//   let it name iSomeFlag_/iFlags_/win_parent_ the way recurse_zorder
-//   already may.
+//   memory, where this body loads the byte into cl first. Before the
+//   structural migration below, this free function reached Win's protected
+//   fields as offsets; the friend declaration now permits named access.
+//   The historical receiver-spill mismatch remains unaddressed.
 Win *__cdecl get_mouse_window_recurse(Win * window, int * x, int * y) {
-    char *wc = reinterpret_cast<char *>(window);
     int savedX = 0, savedY = 0;
     int i;
 
-    if ((*(unsigned char *)(wc + 0x9c) & 1) == 0) {
+    if ((window->iSomeFlag_ & 1) == 0) {
         return 0;
     }
     {
-        Win *parent = *reinterpret_cast<Win **>(wc + 0xc4);
+        Win *parent = window->win_parent_;
         if (parent != 0 && !parent->is_visible()) {
             return 0;
         }
     }
 
-    if ((*(unsigned char *)(wc + 0x98) & 0x20) == 0) {
+    if ((window->iFlags_ & 0x20) == 0) {
         savedX = *x;
         savedY = *y;
         *x = WinMouseScreenX;
@@ -3981,34 +3977,34 @@ Win *__cdecl get_mouse_window_recurse(Win * window, int * x, int * y) {
     }
 
     {
-        int childCount = *reinterpret_cast<int *>(wc + 0x3fc);
-        Win **children = reinterpret_cast<Win **>(wc + 0x1a4);
+        int childCount = window->child_count_;
+        Win **children = window->children_;
         for (i = 0; i < childCount; i++) {
             Win *child = children[i];
-            if ((*reinterpret_cast<unsigned char *>(reinterpret_cast<char *>(child) + 0x98) & 0x20) == 0) {
+            if ((child->iFlags_ & 0x20) == 0) {
                 Win *r = get_mouse_window_recurse(child, x, y);
                 if (r != 0) return r;
             }
         }
     }
 
-    if ((*(unsigned char *)(wc + 0x9c) & 2) == 0) {
+    if ((window->iSomeFlag_ & 2) == 0) {
         goto alt_path;
     }
 
-    if (!in_box(*x, *y, reinterpret_cast<RECT *>(wc + 0x14c))) {
+    if (!in_box(*x, *y, &window->client_rect_)) {
         goto tail;
     }
-    *x -= *reinterpret_cast<int *>(wc + 0x14c);
-    *y -= *reinterpret_cast<int *>(wc + 0x150);
+    *x -= window->client_rect_.left;
+    *y -= window->client_rect_.top;
 
     {
-        int childCount = *reinterpret_cast<int *>(wc + 0x3fc);
-        Win **children = reinterpret_cast<Win **>(wc + 0x1a4);
-        if (window == *reinterpret_cast<Win **>(wc + 0xa8)) {
+        int childCount = window->child_count_;
+        Win **children = window->children_;
+        if (window == window->poWinBase_) {
             for (i = 0; i < childCount; i++) {
                 Win *child = children[i];
-                unsigned int flags = *reinterpret_cast<unsigned int *>(reinterpret_cast<char *>(child) + 0x98);
+                unsigned int flags = child->iFlags_;
                 if ((flags & 0x8000) != 0 && (flags & 0x20) != 0) {
                     Win *r = get_mouse_window_recurse(child, x, y);
                     if (r != 0) return r;
@@ -4017,7 +4013,7 @@ Win *__cdecl get_mouse_window_recurse(Win * window, int * x, int * y) {
         }
     }
 
-    if (!in_box(*x, *y, reinterpret_cast<RECT *>(wc + 0x13c))) {
+    if (!in_box(*x, *y, &window->outer_rect_)) {
         // pixel-precise hit test against one of the window's four render buffers
         unsigned char key = static_cast<unsigned char>(WinFillColour);
         unsigned int flagsHere;
@@ -4026,35 +4022,35 @@ Win *__cdecl get_mouse_window_recurse(Win * window, int * x, int * y) {
         Buffer *buf;
         bool hit;
 
-        GraphicWin *slotResult = reinterpret_cast<Win *>(wc)->get_graphic_win();
-        flagsHere = *reinterpret_cast<unsigned int *>(wc + 0x98);
+        GraphicWin *slotResult = window->get_graphic_win();
+        flagsHere = window->iFlags_;
         if (slotResult == 0 || (flagsHere & 0x10000000) == 0) {
             WinMouseDirect = 1;
             return window;
         }
 
         threshold1 = ((flagsHere & 0x10) == 0 || (flagsHere & 0x400000) != 0)
-                         ? *reinterpret_cast<int *>(wc + 0x118)
-                         : *reinterpret_cast<int *>(wc + 0x114);
-        threshold2 = (*reinterpret_cast<int *>(wc + 0x11c) != -1)
-                              ? *reinterpret_cast<int *>(wc + 0x11c)
-                              : *reinterpret_cast<int *>(wc + 0x118);
+                         ? window->border_thickness_
+                         : window->caption_height_;
+        threshold2 = (window->bottom_border_thickness_ != -1)
+                              ? window->bottom_border_thickness_
+                              : window->border_thickness_;
 
         if (*y < threshold1) {
-            buf = *reinterpret_cast<Buffer **>(wc + 0xb4);
+            buf = window->buffer1_;
             pixel = (unsigned int)buf->get_pixel(*x, *y);
             hit = (pixel != key);
-        } else if (*reinterpret_cast<int *>(wc + 0x158) - *reinterpret_cast<int *>(wc + 0x150) - threshold2 < *y) {
-            buf = *reinterpret_cast<Buffer **>(wc + 0xc0);
-            pixel = (unsigned int)buf->get_pixel(*x, (*reinterpret_cast<int *>(wc + 0x150) - *reinterpret_cast<int *>(wc + 0x158)) + *y + threshold2);
+        } else if (window->client_rect_.bottom - window->client_rect_.top - threshold2 < *y) {
+            buf = window->buffer4_;
+            pixel = (unsigned int)buf->get_pixel(*x, (window->client_rect_.top - window->client_rect_.bottom) + *y + threshold2);
             hit = (pixel != key);
-        } else if (*x < *reinterpret_cast<int *>(wc + 0x118)) {
-            buf = *reinterpret_cast<Buffer **>(wc + 0xbc);
+        } else if (*x < window->border_thickness_) {
+            buf = window->buffer3_;
             pixel = (unsigned int)buf->get_pixel(*x, *y - threshold1);
             hit = (pixel != key);
         } else {
-            buf = *reinterpret_cast<Buffer **>(wc + 0xb8);
-            pixel = (unsigned int)buf->get_pixel((*reinterpret_cast<int *>(wc + 0x154) - *reinterpret_cast<int *>(wc + 0x14c)) + *reinterpret_cast<int *>(wc + 0x118) + *x, *y - threshold1);
+            buf = window->buffer2_;
+            pixel = (unsigned int)buf->get_pixel((window->client_rect_.right - window->client_rect_.left) + window->border_thickness_ + *x, *y - threshold1);
             hit = (pixel != key);
         }
 
@@ -4062,30 +4058,30 @@ Win *__cdecl get_mouse_window_recurse(Win * window, int * x, int * y) {
             WinMouseDirect = 1;
             return window;
         }
-        *x += *reinterpret_cast<int *>(wc + 0x14c);
-        *y += *reinterpret_cast<int *>(wc + 0x150);
+        *x += window->client_rect_.left;
+        *y += window->client_rect_.top;
         goto tail;
     }
 
-    *x += *reinterpret_cast<int *>(wc + 0x14c);
-    *y += *reinterpret_cast<int *>(wc + 0x150);
+    *x += window->client_rect_.left;
+    *y += window->client_rect_.top;
     return window;
 
 alt_path:
-    if (!in_box(*x, *y, reinterpret_cast<RECT *>(wc + 0x13c))) {
+    if (!in_box(*x, *y, &window->outer_rect_)) {
         goto tail;
     }
-    *x -= *reinterpret_cast<int *>(wc + 0x13c);
-    *y -= *reinterpret_cast<int *>(wc + 0x140);
+    *x -= window->outer_rect_.left;
+    *y -= window->outer_rect_.top;
     WinMouseDirect = 0;
 
     {
-        int childCount = *reinterpret_cast<int *>(wc + 0x3fc);
-        Win **children = reinterpret_cast<Win **>(wc + 0x1a4);
-        if (window == *reinterpret_cast<Win **>(wc + 0xa8)) {
+        int childCount = window->child_count_;
+        Win **children = window->children_;
+        if (window == window->poWinBase_) {
             for (i = 0; i < childCount; i++) {
                 Win *child = children[i];
-                unsigned int flags = *reinterpret_cast<unsigned int *>(reinterpret_cast<char *>(child) + 0x98);
+                unsigned int flags = child->iFlags_;
                 if ((flags & 0x8000) == 0 && (flags & 0x20) != 0) {
                     Win *r = get_mouse_window_recurse(child, x, y);
                     if (r != 0) return r;
@@ -4094,17 +4090,17 @@ alt_path:
         }
     }
 
-    if ((*(unsigned char *)(wc + 0x98) & 2) == 0) {
-        GraphicWin *slotResult = reinterpret_cast<Win *>(wc)->get_graphic_win();
-        unsigned int flagsHere = *reinterpret_cast<unsigned int *>(wc + 0x98);
-        if (slotResult == 0 || (flagsHere & 0x1000000) == 0 || (*(unsigned char *)(wc + 0x99) & 1) != 0) {
+    if ((window->iFlags_ & 2) == 0) {
+        GraphicWin *slotResult = window->get_graphic_win();
+        unsigned int flagsHere = window->iFlags_;
+        if (slotResult == 0 || (flagsHere & 0x1000000) == 0 || (window->iFlags_ & 0x100) != 0) {
             return window;
         }
         {
-            Buffer *buf = reinterpret_cast<Buffer *>(wc + 0x444);
+            Buffer *buf = static_cast<Buffer *>(slotResult);
             unsigned char pixel = (unsigned char)buf->get_pixel(*x, *y);
             if (pixel != static_cast<unsigned char>(WinFillColour)) {
-                if (*reinterpret_cast<int *>(wc + 0xa0) == 0) {
+                if (window->field_A0_ == 0) {
                     return window;
                 }
                 if (pixel != 0) {
@@ -4115,7 +4111,7 @@ alt_path:
     }
 
 tail:
-    if ((*(unsigned char *)(wc + 0x98) & 0x20) == 0) {
+    if ((window->iFlags_ & 0x20) == 0) {
         *x = savedX;
         *y = savedY;
     }
