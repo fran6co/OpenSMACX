@@ -160,8 +160,6 @@ int __cdecl size_of_planet(int mode) {
         if (mode == 2) MapSizePlanet = static_cast<uint32_t>(popup.exec(0, 0));
         else MapSizePlanet = static_cast<uint32_t>(setup.do_menu(&popup, 1, 0));
         if (static_cast<int32_t>(MapSizePlanet) < 0) {
-            setup.close();
-            popup.close();
             return 1;
         }
 
@@ -197,8 +195,6 @@ size_after_choice:
             label_get(0x110C / 4), StringTemp, 8);
 
         if (popup.exec(0, 0) < 0) {
-            setup.close();
-            popup.close();
             return 1;
         }
         int custom_width = atoi(ParseStrBuffer[0].str);
@@ -209,8 +205,6 @@ size_after_choice:
         else if (custom_height > 0x100) custom_height = 0x100;
         if (custom_width > 0x80 || custom_height > 0x80) {
             if (X_pop(VeryLargeMapLabel, 0) != 0) {
-                setup.close();
-                popup.close();
                 return 1;
             }
         }
@@ -227,9 +221,7 @@ size_complete:
         map_init();
         Paths.init();
     }
-    setup.close();
     UnkBitfield1 |= 8;
-    popup.close();
     return 0;
 }
 
@@ -352,8 +344,6 @@ int __cdecl custom_planet(int show_preview, int use_saved_choices) {
         destination = static_cast<uint32_t>(selection);
         if (selection < 0) {
             prefs_save(0);
-            setup.close();
-            popup.close();
             return 1;
         }
         if (popup.input_poll_state() != 0) {
@@ -370,8 +360,6 @@ int __cdecl custom_planet(int show_preview, int use_saved_choices) {
     }
     MapLandCoverage = 2 - MapOceanCoverage;
     prefs_save(0);
-    setup.close();
-    popup.close();
     return 0;
 }
 
@@ -529,8 +517,6 @@ top_menu_redraw:
 
     esi = setup.do_menu(&popup, 1, 0);
     if (esi < 0 || esi == 6) {
-        popup.close();
-        setup.close();
         return 1;
     }
 
@@ -683,7 +669,6 @@ top_menu_fade_music:
     g_TOP_MENU_WAVE.fade(0xBB8);
     g_TOP_MENU_WAVE.unload();
 top_menu_cleanup:
-    popup.close();
     return esi;
 }
 

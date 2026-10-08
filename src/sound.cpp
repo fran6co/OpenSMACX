@@ -94,9 +94,7 @@ namespace {
 // alone. A second would cost a `xor edx, edx` the image does not have.
 typedef int(__fastcall *sound_device_query)(void *);
 
-__forceinline int query_sound_device(Sound *self, int vtable_offset) {
-    void *device = *reinterpret_cast<void **>(
-        reinterpret_cast<uint8_t *>(self) + 0x3C);
+__forceinline int query_sound_device(void *device, int vtable_offset) {
     // THE ZERO PATH LAST, as the image lays it out: `je` jumps FORWARD to
     // `xor eax, eax; ret` at 0x004C64CC. A guard clause puts it first and
     // inverts the branch.
@@ -125,7 +123,7 @@ Return Value: the device's answer, or 0 when none is wrapped
 Status: Complete
 */
 int Sound::is_playing() {
-    return query_sound_device(this, 0x5C);
+    return query_sound_device(device_, 0x5C);
 }
 
 /*
@@ -142,7 +140,7 @@ Return Value: the device's answer, or 0 when none is wrapped
 Status: Complete
 */
 int Sound::is_looping() {
-    return query_sound_device(this, 0x58);
+    return query_sound_device(device_, 0x58);
 }
 
 /*
@@ -163,7 +161,7 @@ Return Value: the device's answer, or 0 when none is wrapped
 Status: Complete
 */
 int Sound::get_time() {
-    return query_sound_device(this, 0x74);
+    return query_sound_device(device_, 0x74);
 }
 
 

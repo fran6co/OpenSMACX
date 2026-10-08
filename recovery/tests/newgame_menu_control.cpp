@@ -242,7 +242,7 @@ public:
         for (int i=0;i<3;++i) overlay_buffers_[i]=0, overlay_x_[i]=overlay_y_[i]=0;
         event("setup.ctor");
     }
-    ~SetupWin() { buffer_.close(); event("setup.dtor"); }
+    ~SetupWin() { close(); event("setup.dtor"); }
     int do_menu(Popup *popup, int kind, int flags) {
         CHECK(kind==1 && flags==0);
         for (int i=0;i<3;++i) {
@@ -261,6 +261,7 @@ public:
             last_overlay_x[i]=overlay_x_[i]; last_overlay_y[i]=overlay_y_[i];
         }
         event("setup.close");
+        buffer_.close();
     }
 };
 class GraphicWin {};
@@ -332,7 +333,8 @@ int main() {
           strcmp(loaded[5],"moon3_800.pcx")==0);
     CHECK(strcmp(loaded[6],"S1L1C1.PCX")==0 && loaded_colours[6]==10);
     CHECK(menu_overlay_present[0] && menu_overlay_x[0]==449 && menu_overlay_y[0]==-168);
-    CHECK(strstr(events,"setup.close|popup.close|buffer.close|setup.dtor")!=0);
+    CHECK(setup_closes==1);
+    CHECK(strstr(events,"setup.close|buffer.close|setup.dtor")!=0);
     CHECK(strstr(events,"setup.dtor|buffer.close|buffer.dtor")!=0);
     CHECK(strstr(events,"popup.close|popup.dtor")!=0 && count_text(events,"buffer.dtor")==4);
 
@@ -535,6 +537,7 @@ public:
 class Popup {
     DialogsMock dialogs_;
 public:
+    ~Popup() { close(); record("popup.dtor"); }
     void start(char *, const char *label, int value, char *override_text,
                int flags, class GraphicWin *owner) {
         if (value!=-1 || override_text || owner) abort();
@@ -554,6 +557,7 @@ public:
 };
 class SetupWin {
 public:
+    ~SetupWin() { close(); record("setup.dtor"); }
     int do_menu(Popup *, int kind, int flags) {
         if (kind!=1 || flags) abort();
         record("menu");
@@ -920,15 +924,15 @@ int main() {
     check(top_menu(0) == 1, "menu cancel result");
     check(opening_change_calls == 2 && all_draws == 2,
           "native initial double opening presentation");
-    check(popup_close_calls == 2 && setup_close_calls == 2,
-          "cancel explicitly closes then naturally destroys both locals");
+    check(popup_close_calls == 1 && setup_close_calls == 1,
+          "automatic destructors close both locals exactly once");
     check(event_index("messages.clear") < event_index("prefs.load"),
           "mode-zero message clear precedes preference load");
     check(DefaultPrefs.top_menu == 2 && prefs_save_calls == 0,
           "cancel returns before saving a selected preference");
     check(event_index("popup.close") < event_index("setup.close") &&
           event_index("popup.destroy") < event_index("setup.destroy"),
-          "explicit and natural reverse-destruction order");
+          "reverse declaration-order destruction");
 
     reset_fixture();
     GamePreferences = 0x800;

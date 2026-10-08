@@ -240,5 +240,5 @@ def test_removed_setupwin_abi_shim_is_not_reintroduced(compiler, tmp_path):
     assert "extern \"C\" void __fastcall SetupWin_close" not in candidate["src/stringstruct.cpp"]
     assert "void close();" in candidate["src/setupwin.h"]
     callers = (ROOT / "src/newgame.cpp").read_text().count("setup.close();")
-    assert callers == 7
+    assert callers == 0
     assert "void SetupWin::close()" in candidate["src/setupwin.cpp"]

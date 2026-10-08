@@ -69,15 +69,10 @@ namespace {
 typedef void(__fastcall *device_vfn)(void *);
 typedef int(__fastcall *device_query_vfn)(void *);
 
-__forceinline void *wrapped_device(Wave_Device *self) {
-    return *reinterpret_cast<void **>(reinterpret_cast<uint8_t *>(self) + 0x14);
-}
-
 // `__forceinline`: the image inlines this dispatch at every call site rather
 // than making a real call to it; a plain out-of-line definition compiles a
 // call the image does not make.
-__forceinline void dispatch_wrapped_device(Wave_Device *self, int vtable_offset) {
-    void *device = wrapped_device(self);
+__forceinline void dispatch_wrapped_device(void *device, int vtable_offset) {
     if (device) {
         vtable_slot<device_vfn>(device, vtable_offset)(device);
     }
@@ -87,9 +82,8 @@ __forceinline void dispatch_wrapped_device(Wave_Device *self, int vtable_offset)
 // device's method, so that method's result is the caller's; with no device
 // wrapped the answer is whatever the original loads into eax on that path,
 // which is usually but not always zero.
-__forceinline int query_wrapped_device(Wave_Device *self, int vtable_offset,
+__forceinline int query_wrapped_device(void *device, int vtable_offset,
                          int no_device_result = 0) {
-    void *device = wrapped_device(self);
     // The zero/default path runs LAST in the image: `test ecx, ecx; je
     // <default>` falls through to the dispatch, rather than a guard clause
     // that jumps away from it.
@@ -110,9 +104,8 @@ __forceinline int query_wrapped_device(Wave_Device *self, int vtable_offset,
 // [vtable+N]` the image makes.
 typedef int (OriginalObject::*device_arg_vfn)(int a1);
 
-__forceinline int forward_to_wrapped_device(Wave_Device *self, int vtable_offset, int a1,
+__forceinline int forward_to_wrapped_device(void *device, int vtable_offset, int a1,
                               int no_device_result = 0) {
-    void *device = wrapped_device(self);
     if (!device) {
         return no_device_result;
     }
@@ -139,7 +132,7 @@ Return Value: n/a
 Status: Complete
 */
 int Wave_Device::enable() {
-    dispatch_wrapped_device(this, 0x60);
+    dispatch_wrapped_device(device_14_, 0x60);
     return 0;
 }
 
@@ -159,7 +152,7 @@ Return Value: n/a
 Status: Complete
 */
 int Wave_Device::disable() {
-    dispatch_wrapped_device(this, 0x64);
+    dispatch_wrapped_device(device_14_, 0x64);
     return 0;
 }
 
@@ -256,13 +249,14 @@ Return Value: n/a
 Status: Complete
 */
 void Wave_Device::update_sound() {
-    dispatch_wrapped_device(this, 0x34);
+    dispatch_wrapped_device(device_14_, 0x34);
 }
 
 /*
 Purpose: Ask the wrapped device how many devices it offers, through its vtable
          slot 0x14.
 // ORIGINAL: 0x004C4FF0 ?get_ndevices@Wave_Device@@QAEHXZ 0x004C4FF0-0x004C4FFF BYTE_EXACT
+// symbol    ?get_ndevices@Wave_Device@@UAEHXZ
 // size      15 bytes
 // prototype int (__thiscall ?get_ndevices@Wave_Device@@QAEHXZ)(Wave_Device* this)
 // callers   0   call targets   0
@@ -273,7 +267,7 @@ Return Value: the device's answer, or 0 when none is wrapped
 Status: Complete
 */
 int Wave_Device::get_ndevices() {
-    return query_wrapped_device(this, 0x14);
+    return query_wrapped_device(device_14_, 0x14);
 }
 
 /*
@@ -290,7 +284,7 @@ Return Value: the device's answer, or 0 when none is wrapped
 Status: Complete
 */
 int Wave_Device::get_hw_mem_size() {
-    return query_wrapped_device(this, 0x58);
+    return query_wrapped_device(device_14_, 0x58);
 }
 
 /*
@@ -307,7 +301,7 @@ Return Value: the device's answer, or 0 when none is wrapped
 Status: Complete
 */
 int Wave_Device::get_rate() {
-    return query_wrapped_device(this, 0x3C);
+    return query_wrapped_device(device_14_, 0x3C);
 }
 
 /*
@@ -324,7 +318,7 @@ Return Value: the device's answer, or 0 when none is wrapped
 Status: Complete
 */
 int Wave_Device::get_ds() {
-    return query_wrapped_device(this, 0x70);
+    return query_wrapped_device(device_14_, 0x70);
 }
 
 /*
@@ -373,7 +367,7 @@ Return Value: the device's answer, or 1 when none is wrapped
 Status: Complete
 */
 int Wave_Device::is_disabled() {
-    return query_wrapped_device(this, 0x68, 1);
+    return query_wrapped_device(device_14_, 0x68, 1);
 }
 
 /*
@@ -390,7 +384,7 @@ Return Value: the device's answer, or 3 when none is wrapped
 Status: Complete
 */
 int Wave_Device::stop_raw_dump() {
-    return query_wrapped_device(this, 0x54, 3);
+    return query_wrapped_device(device_14_, 0x54, 3);
 }
 
 /*
@@ -431,7 +425,7 @@ Return Value: n/a
 Status: Complete
 */
 void Wave_Device::set_rate(unsigned long rate) {
-    forward_to_wrapped_device(this, 0x38, static_cast<int>(rate));
+    forward_to_wrapped_device(device_14_, 0x38, static_cast<int>(rate));
 }
 
 /*
@@ -448,7 +442,7 @@ Return Value: n/a
 Status: Complete
 */
 void Wave_Device::set_volume(unsigned long volume) {
-    forward_to_wrapped_device(this, 0x20, static_cast<int>(volume));
+    forward_to_wrapped_device(device_14_, 0x20, static_cast<int>(volume));
 }
 
 /*
@@ -466,7 +460,7 @@ Return Value: the device's answer, or 0x13 when none is wrapped
 Status: Complete
 */
 int Wave_Device::set_hwnd(void *hwnd) {
-    return forward_to_wrapped_device(this, 0x6C,
+    return forward_to_wrapped_device(device_14_, 0x6C,
                                      static_cast<int>(
                                          reinterpret_cast<intptr_t>(hwnd)),
                                      0x13);
