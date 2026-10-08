@@ -188,11 +188,11 @@ struct PlayerData;
   * virtually-derived windows this one is written as the original wrote it and
   * needs no ABI workaround.
   *
-  * The layout is not established. The constructor's own fields begin at 0xA14,
-  * immediately after the base, and where the object ends is unknown, so
-  * nothing pins its sizeof and the fields between are not modelled. The
-  * methods recovered here are bare returns that touch no field, which is why
-  * they can be replaced ahead of that mapping.
+  * The constructor's own fields begin at 0xA14, immediately after GraphicWin.
+  * Recovered methods use the modeled controls, setup rectangles and inherited
+  * Buffer at +0x444; Buffer::rect2_ supplies the working rectangle at +0x474.
+  * Those relationships do not establish the complete original object extent
+  * or the interpretation of all remaining offset-named fields.
   */
 // RECOVERY_BASE: v1 NetWin GraphicWin 0x0 0x00481C50
 class NetWin : public GraphicWin {

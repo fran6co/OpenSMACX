@@ -462,8 +462,7 @@ Status: Coverage transcription; the historical claim now lives on this owner,
         not on a duplicate scaffold. Current exactness remains unproved.
 */
 void NetWin::UNK3() {
-    unsigned char *const self = reinterpret_cast<unsigned char *>(this);
-    Buffer *buffer = reinterpret_cast<Buffer *>(self + 0x444);
+    Buffer *buffer = static_cast<Buffer *>(this);
     buffer->box_sprite(&setup_rects_[45],
                        &InterfaceBoxStyles[3]);
     buffer->box_sprite(&setup_rects_[44],
@@ -833,9 +832,8 @@ void NetWin::on_redraw() {
     if (is_visible() == 0) {
         return;
     }
-    unsigned char *const self = reinterpret_cast<unsigned char *>(this);
-    Buffer *buffer = reinterpret_cast<Buffer *>(self + 0x444);
-    buffer->box_sprite(reinterpret_cast<RECT *>(self + 0x474),
+    Buffer *buffer = static_cast<Buffer *>(this);
+    buffer->box_sprite(buffer_working_rect(),
                        &InterfaceBoxStyles[3]);
 
     // The banner rectangle: painted as 0xA14 holds it, then inset by three
@@ -941,8 +939,7 @@ Status: Coverage transcription - unclaimed body
 */
 void NetWin::draw_session_info() {
     spot_.kill_type(0);
-    unsigned char *const self = reinterpret_cast<unsigned char *>(this);
-    Buffer *buffer = reinterpret_cast<Buffer *>(self + 0x444);
+    Buffer *buffer = static_cast<Buffer *>(this);
     StringStruct list;
 
     buffer->box_sprite(&setup_rects_[3],
@@ -962,7 +959,7 @@ void NetWin::draw_session_info() {
         buffer->write_cent_l(StringTemp, title_rect,
                              strlen(StringTemp));
     }
-    buffer->set_clip(reinterpret_cast<RECT *>(self + 0x474));
+    buffer->set_clip(buffer_working_rect());
 
     RECT *panel = &setup_rects_[1];
     buffer->box_sprite(panel, &InterfaceBoxStyles[0]);
@@ -1244,7 +1241,7 @@ void NetWin::draw_session_info() {
         }
     }
 
-    buffer->set_clip(reinterpret_cast<RECT *>(self + 0x474));
+    buffer->set_clip(buffer_working_rect());
     soft_update(&setup_rects_[3]);
 }
 
@@ -1273,8 +1270,7 @@ void NetWin::draw_player_names() {
     spot_.kill_type(2);
     spot_.kill_type(5);
     int pid_idx = NetDaemonNet.pid_2_idx(NetWinPlayerId);
-    unsigned char *const self = reinterpret_cast<unsigned char *>(this);
-    Buffer *buffer = reinterpret_cast<Buffer *>(self + 0x444);
+    Buffer *buffer = static_cast<Buffer *>(this);
     buffer->box_sprite(&setup_rects_[5],
                        &InterfaceBoxStyles[1]);
     RECT *title_rect = &setup_rects_[4];
@@ -1450,8 +1446,7 @@ Status: Coverage transcription - unclaimed body
 */
 void NetWin::draw_custom_rules() {
     spot_.kill_type(1);
-    unsigned char *const self = reinterpret_cast<unsigned char *>(this);
-    Buffer *buffer = reinterpret_cast<Buffer *>(self + 0x444);
+    Buffer *buffer = static_cast<Buffer *>(this);
     buffer->box_sprite(&setup_rects_[47],
                        &InterfaceBoxStyles[1]);
     RECT *title_rect = &setup_rects_[46];
@@ -1617,8 +1612,7 @@ Status: Coverage transcription - unclaimed body
 */
 void NetWin::draw_diffs() {
     spot_.kill_type(4);
-    unsigned char *const self = reinterpret_cast<unsigned char *>(this);
-    Buffer *buffer = reinterpret_cast<Buffer *>(self + 0x444);
+    Buffer *buffer = static_cast<Buffer *>(this);
     RECT *rect = &setup_rects_[20];
     unsigned char *record =
         reinterpret_cast<unsigned char *>(NetWinFactionTable) + 0x179;
@@ -1686,8 +1680,7 @@ Status: Coverage transcription - unclaimed body
 */
 void NetWin::draw_factions() {
     spot_.kill_type(3);
-    unsigned char *const self = reinterpret_cast<unsigned char *>(this);
-    Buffer *buffer = reinterpret_cast<Buffer *>(self + 0x444);
+    Buffer *buffer = static_cast<Buffer *>(this);
     RECT *rect = &setup_rects_[13];
     unsigned char *record =
         reinterpret_cast<unsigned char *>(NetWinFactionTable) + 0x179 + 0x45;
