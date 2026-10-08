@@ -170,6 +170,9 @@ struct LockState { uint32_t leading_words_[4]; struct { uint32_t flags; } payloa
 struct NetDaemon {
     LockState lock_state_[1];
     int initial_sends = 0, option_sends = 0;
+    uint16_t last_options_opcode = 0;
+    int last_options_size = 0;
+    NetWinSessionOptionsState last_options{};
     NetDaemon() { std::memset(lock_state_, 0, sizeof(lock_state_)); }
     void enable_join() { trace.push_back("enable-join"); }
     void send(void *data, int size, unsigned long, int) {
@@ -183,6 +186,11 @@ struct NetDaemon {
             assert(std::memcmp(bytes + 0x10, &NetWinLobbyRows[1], 0xA64) == 0);
             ++initial_sends; trace.push_back("send-lobby");
         } else if (size == 0x28) {
+            const uint8_t *bytes = static_cast<const uint8_t *>(data);
+            last_options_size = size;
+            std::memcpy(&last_options_opcode, bytes, sizeof(last_options_opcode));
+            std::memcpy(&last_options, bytes + 0x10, sizeof(last_options));
+            assert(last_options_opcode == 0x2F02);
             ++option_sends; trace.push_back("send-options");
         } else { assert(false); }
     }
@@ -232,6 +240,9 @@ static void reset_fixture() {
     NetDaemonNet.lock_state_[0].leading_words_[1] = 0;
     NetDaemonNet.lock_state_[0].payload_.flags = 0;
     NetDaemonNet.initial_sends = NetDaemonNet.option_sends = 0;
+    NetDaemonNet.last_options_opcode = 0;
+    NetDaemonNet.last_options_size = 0;
+    NetDaemonNet.last_options = {};
     NetWinDialog.field_7614_ = 0;
     std::free(NetWinDialog.faction_records_); NetWinDialog.faction_records_ = nullptr;
     std::free(NetWinDialog.faction_records_copy_); NetWinDialog.faction_records_copy_ = nullptr;
@@ -255,6 +266,10 @@ static void test_exec() {
     NetDaemonNet.lock_state_[0].leading_words_[1] = 1;
     assert(NetWinDialog.exec() == 0);
     assert(task_runs == 1 && NetDaemonNet.initial_sends == 1 && NetDaemonNet.option_sends == 1);
+    assert(NetDaemonNet.last_options_opcode == 0x2F02);
+    assert(NetDaemonNet.last_options_size == 0x28);
+    assert(std::memcmp(&NetDaemonNet.last_options, &NetWinSessionOptions,
+                       sizeof(NetWinSessionOptions)) == 0);
     assert(NetDaemonNet.lock_state_[0].payload_.flags == 2);
     assert(NetWinPlanetSizeLabelCount == 2);
     assert(std::strcmp(NetWinDialog.world_size_labels_[0], "Tiny world") == 0);
@@ -297,6 +312,7 @@ static void test_exec_packet_rows_are_payload() {
         for (size_t offset = 0x178; offset < 0x17C; ++offset) assert(bytes[offset] == 0);
     }
     assert(NetDaemonNet.initial_sends == 0);
+    assert(NetDaemonNet.option_sends == 0);
 }
 int main() {
     const uint8_t *global = reinterpret_cast<const uint8_t *>(NetWinLobbyRows);

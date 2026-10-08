@@ -1398,7 +1398,7 @@ int Net::create_group(char *group_name) {
 // at +8; field_C_ is the per-peer retry tick at +0xC. Existing exact 0x58
 // stride/16-slot extent is independently established by Net and player APIs.
 // ORIGINAL: 0x0062EEA0 ?send_group@Net@@QAEHPAXHJH@Z 0x0062EEA0-0x0062F38C
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned62EEA0..62F38C; retained git:b0d788d3e0ebc4d5b4c20acb834cd37455e53c67:src/unrecovered/0062eea0.cpp; genuine NetPlayer/FIFO/DirectPlay owners.", "Native62F038..62F080 initializes only the first peer, then62F14A..62F199 reads all sixteen stack entries. User approved complete active-peer acknowledgement/retry initialization, deliberately differing from original indeterminate-stack paths."], "reason": "Recover group queueing, transmission, acknowledgements, retry and timeout handling using genuine Net state and the SDK; initialize every active peer retry state as an explicitly approved behavior repair."}
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned62EEA0..62F38C; retained git:b0d788d3e0ebc4d5b4c20acb834cd37455e53c67:src/unrecovered/0062eea0.cpp; genuine NetPlayer/FIFO/DirectPlay owners.", "Native62F038..62F044 selects the first nonzero player DPID, not the group callback acknowledgement flag. Native62F06E..62F080 writes only that pending/retry slot;62F14A..62F199 later reads all sixteen entries. Native62F0A2..62F0B9 initializes every base-time slot from one tick."], "reason": "Recover the original group send and retry operation through genuine Net state and the SDK, preserving its untouched pending/retry stack entries and separate full base-time initialization. The deterministic all-peer repair remains in Git history for the later improvement milestone."}
 int Net::send_group(void *data, int size, long group_id, int flags) {
     int index;
     HANDLE wait_handles[2];
@@ -1468,14 +1468,10 @@ int Net::send_group(void *data, int size, long group_id, int flags) {
 
     const unsigned long no_deadline = 0xFFFFFFFFUL;
     unsigned long wait_timeout = no_deadline;
-    int first_pending = -1;
     for (index = 0; index < 16; ++index) {
-        if (players_[index].field_8_ != 0) {
-            first_pending = index;
-            break;
-        }
+        if (players_[index].field_0_ != 0) break;
     }
-    if (first_pending < 0) {
+    if (index == 16) {
         free(packet);
         return static_cast<int>(field_E4_);
     }
@@ -1483,23 +1479,13 @@ int Net::send_group(void *data, int size, long group_id, int flags) {
     int pending[16];
     unsigned long retry_delay[16];
     unsigned long base_time[16];
-    for (index = 0; index < 16; ++index) {
-        pending[index] = 0;
-        retry_delay[index] = 0;
-        base_time[index] = 0;
-    }
-    // Deliberate, user-approved repair: the original initializes only the
-    // first peer, then reads all sixteen stack entries. Service every selected
-    // peer with deterministic acknowledgement/retry state instead.
-    for (int peer = 0; peer < 16; ++peer) {
-        if (players_[peer].field_8_ != 0) {
-            pending[peer] = 1;
-            retry_delay[peer] = players_[peer].field_C_;
-            if (retry_delay[peer] != no_deadline &&
-                (wait_timeout == no_deadline || retry_delay[peer] < wait_timeout)) {
-                wait_timeout = retry_delay[peer];
-            }
-        }
+    // Original 0x62F06E..0x62F080 initializes only the selected row, although
+    // the retry loop later reads every pending/retry slot. Do not manufacture
+    // defaults for those indeterminate words during bug-for-bug recovery.
+    pending[index] = 1;
+    retry_delay[index] = players_[index].field_C_;
+    if (retry_delay[index] < wait_timeout) {
+        wait_timeout = retry_delay[index];
     }
 
     for (;;) {
@@ -2962,7 +2948,7 @@ static unsigned char *const NetPlayerNameRecord =
 
 // Original player insertion is bound by the coordinator's native writer.
 // ORIGINAL: 0x00632CC0 sub_632cc0 0x00632CC0-0x00632DAA
-// RECOVERY_BINDING: v1 {"evidence": ["git:c96a47e3f89e8792c8514ac2ca79259ab6f42c3e:src/unrecovered/00632cc0.cpp", "git:c96a47e3f89e8792c8514ac2ca79259ab6f42c3e:src/unrecovered/00632cc0.cpp", "Historical seed spelling sub_632cc0; current source mapping sub_632cc0; emitted symbol ?sub_632cc0@Net@@QAEHPADHE@Z."], "reason": "Typed sixteen-slot player insertion replaces executable-address forwarder; user-approved full-table rejection intentionally differs on invalid input. Seed and historical obligations retained, no exactness claim. Superseded seed retired after owner review; original spans, existing claims and useful seed findings remain in source. This cleanup grants no new match or acceptance claim."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:c96a47e3f89e8792c8514ac2ca79259ab6f42c3e:src/unrecovered/00632cc0.cpp", "Historical seed spelling sub_632cc0; current source mapping sub_632cc0; emitted symbol ?sub_632cc0@Net@@QAEHPADHE@Z.", "Pinned632CE8/632CED skips slot initialization at index16 but continues632D2B count/broadcast and632D4F callback. The attempted row ID is receiver+6D4 and name receiver+6E9, overlapping existing field_6D4_ and guid_6E8_ representation; no seventeenth player allocation exists.", "Pinned632D6E reloads the callback-visible row ID before JackalVoiceRx::add_player632D7D."], "reason": "Recover player insertion through the real sixteen-row owner, including the original full-table fallthrough and named overlapping storage rather than a fabricated extra row. Preserve the fresh ID read after the virtual callback; historical safety rejection remains in Git for the later improvement milestone. Original spans, claims and seed findings remain; no exactness or acceptance claim."}
 // TRIED: bare `strcat` intrinsic-expands to strlen(scasb)+memcpy; `#pragma function(strcat)` forces the real call. ecx is `this` (not the stdcall the IDA guess implied) - rewritten as a thiscall member of a throwaway class taking (char*, int, unsigned char), matching the "ret 0xc" 3-stack-arg cleanup. do-while / for over the 16-slot search loop UNROLLS the first iteration (duplicated body) under /O2, which the original does not show; `while(true){...; if(cond) break;}` keeps a single instance matching the original's layout, but still emits `jge` where the original has `jl` at the loop's back edge - flipping the break condition's polarity didn't change it. 84% mnemonic match, single divergence region.
 // symbol    ?sub_632cc0@Net@@QAEHPADHE@Z
 int Net::sub_632cc0(char *text, int id, unsigned char flag) {
@@ -2974,24 +2960,29 @@ int Net::sub_632cc0(char *text, int id, unsigned char flag) {
         ++index;
     }
 
-    // The image continues beyond the sixteen-slot array and aliases later
-    // Net state. The coordinator-approved recovery rejects that extra player
-    // instead; 4 is the existing allocation/capacity failure result used by
-    // the adjacent receiver-list insertion API.
-    if (index == 16) {
-        return 4;
+    if (index < 16) {
+        NetPlayer &player = players_[index];
+        player.field_0_ = static_cast<uint32_t>(id);
+        player.flags_14_ = flag;
+        player.name_and_tail_[0] = 0;
+        strcat(player.name_and_tail_, text);
+        if ((flag & 1) != 0) field_764_ = static_cast<uint32_t>(id);
     }
-    NetPlayer &player = players_[index];
-    player.field_0_ = static_cast<uint32_t>(id);
-    player.flags_14_ = flag;
-    player.name_and_tail_[0] = 0;
-    strcat(player.name_and_tail_, text);
-    if ((flag & 1) != 0) field_764_ = static_cast<uint32_t>(id);
 
     ++field_6DC_;
     if (field_760_ == field_764_) broadcast_player_table();
-    on_player_added(player.name_and_tail_, player.field_0_);
-    jackal_voice_rx_.add_player(id);
+    if (index < 16) {
+        NetPlayer &player = players_[index];
+        on_player_added(player.name_and_tail_, player.field_0_);
+    } else {
+        // Original index16 addresses +6D4/+6E9 in this same Net object.
+        // Preserve that erroneous name pointer, not a fictitious extra row or
+        // a safe substitute. It may read beyond the GUID pointer's bytes.
+        on_player_added(reinterpret_cast<char *>(&guid_6E8_) + 1, field_6D4_);
+    }
+    // The virtual notification may have changed the ID (0x632D6E).
+    jackal_voice_rx_.add_player(static_cast<int>(
+        index < 16 ? players_[index].field_0_ : field_6D4_));
 
     VoiceRxAllocation *voice = 0;
     if (jackal_voice_rx_.head_ != 0) {

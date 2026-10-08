@@ -555,11 +555,13 @@ class Net {
   // RECOVERY_MEMBER: v2 Net queue_130_ NetFifo 0x130 0x0062D6A0
   NetFifo queue_130_;  // 0x130
   NetPlayer players_[16];  // 0x154, sixteen 0x58-byte slots to 0x6D4
+  // RECOVERY_MEMBER: v1 Net field_6D4_ 0x6D4 0x00632CC0
   uint32_t field_6D4_;  // 0x6D4
   uint32_t field_6D8_;  // 0x6D8, init() sets 0xC8 here
   uint32_t field_6DC_;  // 0x6DC
   void *buffer_6E0_;  // 0x6E0, the same 0x2000-byte buffer as buffer_24_
   uint32_t field_6E4_;  // 0x6E4, its size
+  // RECOVERY_MEMBER: v1 Net guid_6E8_ 0x6E8 0x0062D8E0
   _GUID *guid_6E8_;  // 0x6E8, the session GUID init() was handed
   uint8_t field_6EC_[0x10];  // 0x6EC
   uint32_t field_6FC_;  // 0x6FC

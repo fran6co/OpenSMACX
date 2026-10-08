@@ -2646,7 +2646,8 @@ int NetWin::exec() {
         NetWinSessionOptions.rule_bits_b_ = AlphaIniPrefs.semaphore;
         NetDaemonNet.pid_2_idx(NetWinPlayerId);
         NetWinSessionOptionsPacket packet;
-        memset(&packet, 0, sizeof(packet));
+        // Original 0x482C64..0x482C88 writes only the opcode and six options
+        // words; reserved header bytes +2..+0xF retain prior stack contents.
         packet.opcode_ = 0x2F02;
         packet.options_ = NetWinSessionOptions;
         NetDaemonNet.send(&packet, 0x28, NetWinOtherPlayerId, 1);
