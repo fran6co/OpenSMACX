@@ -21703,7 +21703,7 @@ int __cdecl order_veh(int veh_id, int direction, int faction) {
     NetDaemonNet.lock_state_[1].leading_words_[3] = faction;
     if ((faction & 1) != 0) ConsoleGlobal.field_23BE4_ = 0;
     else ConsoleGlobal.vehicle_order_ui_state() = 0;
-    const int group_count_at_entry = *ConsoleGroupCount;
+    const int group_count_at_entry = GameDataStateStorage.fields_.vehicle_current_count_;
     const int source_x = Vehs[veh_id].x;
     const int source_y = Vehs[veh_id].y;
     faction = Vehs[veh_id].faction_id;
@@ -21801,7 +21801,7 @@ label_594f3c:
                 NetDaemonNet.await_synch();
                 return 1;
             }
-            if (*ConsoleGroupCount != group_count_at_entry) return 0;
+            if (GameDataStateStorage.fields_.vehicle_current_count_ != group_count_at_entry) return 0;
             if (visible_vehicle >= 0) controller = Vehs[visible_vehicle].faction_id;
         }
     }
@@ -22278,7 +22278,7 @@ label_598cb9:
         destination_y, *map_loc(destination_x, destination_y));
 
 label_599b1a:
-    if (*ConsoleGroupCount != group_count_at_entry) return 0;
+    if (GameDataStateStorage.fields_.vehicle_current_count_ != group_count_at_entry) return 0;
     if (selector == 0) {
         order_veh_finalize_unselected_action(veh_id, faction,
             NetDaemonNet.lock_state_[1].leading_words_[3]);

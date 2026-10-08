@@ -10731,7 +10731,7 @@ void __cdecl do_upgrade(int faction_id, int proto_id_new, int proto_id_old) {
     int product = cost * FactionProtoSeenCount[faction_offset + proto_id_old] * 10;
     PlayersData[faction_id].energy_reserves -= product;
 
-    if (*ConsoleGroupCount > 0) {
+    if (GameDataStateStorage.fields_.vehicle_current_count_ > 0) {
         int i = 0;
         do {
             if (Vehs[i].faction_id == faction_id && Vehs[i].proto_id == proto_id_old) {
@@ -10760,7 +10760,7 @@ void __cdecl do_upgrade(int faction_id, int proto_id_new, int proto_id_old) {
                 }
             }
             i++;
-        } while (i < *ConsoleGroupCount);
+        } while (i < GameDataStateStorage.fields_.vehicle_current_count_);
     }
 
     if (GameDataStateStorage.fields_.base_current_count_ > 0) {

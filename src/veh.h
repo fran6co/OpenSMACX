@@ -668,7 +668,6 @@ extern LPSTR PlansShortName[MaxPlanNum];  // 0x00945FE0
 extern LPSTR PlansFullName[MaxPlanNum];  // 0x00952360
 extern LPSTR Triad[MaxTriadNum];  // 0x0094F1A8
 
-extern int VehCurrentCount;
 extern int VehDropLiftVehID;
 extern int VehLiftX;
 extern int VehLiftY;

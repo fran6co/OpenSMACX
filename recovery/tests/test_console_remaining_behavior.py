@@ -1331,6 +1331,7 @@ def test_assemble_filters_faction_and_applies_selected_action(tmp_path):
         pytest.skip("host C++ compiler unavailable")
     harness = r'''
 #include <cassert>
+#include <cstddef>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
@@ -1347,7 +1348,6 @@ struct Prototype { char name[32]{}; uint32_t ability_flags=0; uint8_t chassis_id
 using Veh=Vehicle; using VehPrototype=Prototype;
 struct RulesChassis { int triad=0; } Chassis[32];
 Vehicle Vehs[16]; Prototype VehPrototypes[32];
-int32_t *const ConsoleGroupCount=&GameDataStateStorage.fields_.vehicle_current_count_;
 int PopupWriteCheckState=0, ConsoleGroupAction=1;
 int MapIsFlat=1; uint32_t MapLongitude=100,MapLongitudeBounds=200;
 int PrefValue=0, PopupChoice=0, LastPrefsPut=-1, DrawCalls=0, GroupCalls=0;
@@ -1368,6 +1368,8 @@ struct Console { uint8_t prior_group_word[0x23D1C]{}; int field_23D1C_=0;
   int faction_id_=1, cursor_history_index_=0;
   int cursor_history_x_[32]{},cursor_history_y_[32]{};
   void clear_group(); void group(int id); void assemble(); } ConsoleGlobal;
+static_assert(offsetof(Console, field_23D1C_) == 0x23D1C,
+              "Console active-group owner field offset");
 void Console::group(int id) { ++GroupCalls; events.push_back("group:"+std::to_string(id)); }
 '''
     harness += body_for("void Console::clear_group()")
@@ -1386,6 +1388,15 @@ static void reset() {
   Vehs[2].faction_id=1; Vehs[2].x=16; Vehs[2].y=10; Vehs[2].proto_id=3;
 }
 int main() {
+  reset();
+  Vehs[0].state=0x88000021u; Vehs[1].state=0x08000080u;
+  Vehs[2].state=0x98000004u; Vehs[3].state=0x88000042u;
+  ConsoleGlobal.field_23D1C_=0x1234;
+  ConsoleGlobal.clear_group();
+  assert(ConsoleGlobal.field_23D1C_==0);
+  assert(Vehs[0].state==0x80000021u && Vehs[1].state==0x00000080u);
+  assert(Vehs[2].state==0x90000004u);
+  assert(Vehs[3].state==0x88000042u); // beyond the captured count is untouched
   reset(); ConsoleGlobal.assemble();
   assert(GroupCalls==1 && events[1]=="group:0");
   assert(Vehs[0].order==0x18 && Vehs[0].waypoint_x[0]==10 && Vehs[0].waypoint_y[0]==10);

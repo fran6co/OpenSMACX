@@ -919,10 +919,6 @@ int NetWinExecAdjacentState;
 char NetWinWindowTitleInitialText;
 
 
-// 0x009B39D8 - the x coordinate wrap() finished the wrapped rules line at,
-// which the combo-arrow chip of that line is placed beside.
-static int *const NetWinWrapX = (int *)0x009B39D8;
-
 /*
 Purpose: Paint the eight session-info rows: the panel and title frames, the
          centred session name (or the connected game's), then the labelled
@@ -1083,7 +1079,7 @@ void NetWin::draw_session_info() {
                                   panel->right - panel->left - 0x1E);
         if (*NetWinRulesGate != 0) {
             Sprite &arrow = g_IFACE_MP_COMBO_ARROW_SPRITES[0];
-            arrow.draw(buffer, arrow.transparent_index(), *NetWinWrapX + 3,
+            arrow.draw(buffer, arrow.transparent_index(), BufferLastWrapWriteResult + 3,
                        bottom - buffer->text_line_height());
         }
         spot_.add(0, 0, col, row, panel->right - panel->left, bottom - row);

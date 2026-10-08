@@ -29,7 +29,7 @@
 #include "base.h"
 #include "basepop.h"       // NetMsg's base, which process_message reaches
 #include "netwin.h"        // NetWinDialog - the setup dialog process_message dispatches into
-#include "veh.h"           // Vehs / VehCurrentCount, which game_checksum walks
+#include "veh.h"           // Vehs, which game_checksum walks
 #include "map.h"           // the map bounds, PlayersData and Bases it sums
 #include "technology.h"    // GameTechAchieved
 #include "game.h"          // IsMultiplayerNet: the application's shared flag

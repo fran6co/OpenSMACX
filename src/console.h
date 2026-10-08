@@ -666,16 +666,9 @@ static_assert(sizeof(Console) == 0x247A8, "Console layout must match terranx.exe
 extern PrefWin ConsolePrefWin;  // 0x008578D8
 
 
-// clear_group masks a bit in each entry of a group table the game keeps at a
-// fixed address, counted by another fixed-address field; both are rebindable
-// so tests drive them against a local table.
-//
-// THE GROUP TABLE IS NOT SEPARATE STORAGE: 0x0095282C is Vehs + 4 - the
-// `state` field of Vehs[0], veh.cpp's Veh array (0x00952828, 0x34 stride).
-// `ConsoleGroupTable + index * 0x34` is `&Vehs[index].state`, and the bit
-// clear_group drops (0x08000000) is VSTATE_UNK_8000000 in that state dword.
-// clear_group walks it as an offset of Vehs now; no second object exists.
-int32_t *const ConsoleGroupCount = (int32_t *)0x009A64C8;
+// clear_group masks bit 0x08000000 in the genuine Veh::state words. Original
+// 0x009A64C8 is the shared GameDataStateStorage vehicle_current_count_ member,
+// not a separate group counter. All count consumers use that same owner.
 
 
 // Console and Veh call USER32's typed GetKeyState API; its signed SHORT result

@@ -1338,19 +1338,13 @@ touch disjoint state, so the order is unobservable and the mutants are
 equivalent by construction.
 */
 void Console::clear_group() {
-    const int32_t zero = 0;
-    std::memcpy(reinterpret_cast<uint8_t *>(this) + 0x23D1C, &zero, sizeof(zero));
-    const int32_t count = *ConsoleGroupCount;
+    field_23D1C_ = 0;
+    const int32_t count = GameDataStateStorage.fields_.vehicle_current_count_;
     for (int32_t index = 0; index < count; ++index) {
         // 0x0095282C is Vehs + 4: the group table is the state dword of every
         // Veh record (see console.h), so the walk is an offset of Vehs, not a
         // separate object.
-        uint8_t *const entry =
-            reinterpret_cast<uint8_t *>(&Vehs[index].state);
-        uint32_t value;
-        std::memcpy(&value, entry, sizeof(value));
-        value &= 0xF7FFFFFFu;
-        std::memcpy(entry, &value, sizeof(value));
+        Vehs[index].state &= 0xF7FFFFFFu;
     }
 }
 
@@ -5141,7 +5135,7 @@ Purpose: Play out the turn boundary until the game says to stop: drive
 */
 void Console::end_of_turn() {
     field_23BE4_ = 1;
-    const int saved_group_count = *ConsoleGroupCount;
+    const int saved_group_count = GameDataStateStorage.fields_.vehicle_current_count_;
 
     if (ConsoleGlobal.cursor_active_ == 0) {
         for (;;) {
@@ -5150,7 +5144,7 @@ void Console::end_of_turn() {
             if (ExitTurnLoop != 0) break;
 
             if (end_of_game(0) != 0) break;
-            if (saved_group_count != *ConsoleGroupCount) break;
+            if (saved_group_count != GameDataStateStorage.fields_.vehicle_current_count_) break;
 
             if (IsMultiplayerNet != 0) {
                 if ((GameDataStateStorage.fields_.game_state_ & 0x800) != 0) break;

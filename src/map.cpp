@@ -6601,11 +6601,9 @@ Purpose: Write a secret project's name, and its cost bracket when asked.
 Return Value: n/a
 Status: Complete
 */
-RulesFacility *const SecretProjectRules = (RulesFacility *)0x009A5888;
-
 void __cdecl say_project(void *text, int project_id, int with_cost) {
     char *output = static_cast<char *>(text);
-    strcat(output, StringTable.get((int)SecretProjectRules[project_id].name));
+    strcat(output, StringTable.get((int)Facility[FacilitySPStart + project_id].name));
     if (with_cost != 0) {
         strcat(output, " ");
         strcat(output, "(");

@@ -1095,6 +1095,7 @@ void __cdecl buffer_close_class_redirect();
 extern char BufferFlyingText[];
 extern int BufferFlyingX,BufferFlyingY,BufferFlyingWidth;
 extern int BufferStrHeight;  // 0x009B3A9C, shared running text-width accumulator
+extern int BufferLastWrapWriteResult;  // 0x009B39D8, shared line endpoint/fallback result
 extern const char BufferJoinSpace[],BufferMeasureSpace[],BufferWriteSpace[],BufferCenteredSpace[];
 char *__cdecl get_special(char *, int *);
 char *__cdecl get_special_link(char *, int *);

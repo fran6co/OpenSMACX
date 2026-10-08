@@ -4910,9 +4910,12 @@ struct BufferFontTriple {
   Font *third;
 };
 
-// 0x009B39D8 - where the length-limited writers leave their return code;
-// `wrap`'s no-font path stores 3 there and reads it straight back.
-static int *const BufferWriteStatus = (int *)0x009B39D8;
+// One shared result word, not separate status and NetWin X-coordinate slots.
+// Successful line writes leave their horizontal endpoint here; the original
+// fallback paths also store an input X or 3. NetWin reads it after wrap while
+// using wrap's separate return as the vertical endpoint. Preserve those quirks.
+// RECOVERY_OBJECT: v1 0x009B39D8 ?BufferLastWrapWriteResult@@3HA
+int BufferLastWrapWriteResult;
 // 0x00696C90 - the "$LINK<" header token, three copies in a row in .rdata;
 // `find_line_break_l` strncmp's the first six bytes of a '$' segment
 // against it to recognise a link.
@@ -6423,7 +6426,9 @@ int Buffer::wrap(char * a1, RECT * a2) {
         char *nextStr;
 
         do {
-            int lineResult;
+            // Original 0x005DD584/607/69C returns current x when no glyphs
+            // are drawn; this is not an uninitialized result path.
+            int lineResult = x;
             if (str == 0) {
                 nextStr = 0;
             } else {
@@ -6455,8 +6460,8 @@ int Buffer::wrap(char * a1, RECT * a2) {
                 } else {
                     unsigned int len = static_cast<unsigned int>(nextStr - str);
                     if (!hasFont) {
-                        *BufferWriteStatus = 3;
-                        lineResult = *BufferWriteStatus;
+                        BufferLastWrapWriteResult = 3;
+                        lineResult = BufferLastWrapWriteResult;
                     } else {
                         unsigned int a = strlen(str);
                         unsigned int b = len;
@@ -6473,23 +6478,23 @@ int Buffer::wrap(char * a1, RECT * a2) {
                 }
             }
 
-            *BufferWriteStatus = lineResult;
+            BufferLastWrapWriteResult = lineResult;
 
             if (font1_ == 0)
                 font1_ = reinterpret_cast<Font *>(FontDefault);
 
-            int *fontData = reinterpret_cast<int *>(font1_);
+            Font *fontData = font1_;
             int lineHeight;
-            if (*fontData < 0)
-                lineHeight = fontData[3];
+            if (fontData->unk_1_ < 0)
+                lineHeight = fontData->line_height_;
             else
-                lineHeight = fontData[4] + *fontData;
+                lineHeight = fontData->height_ + fontData->unk_1_;
             y += lineHeight;
 
-            int carry = *reinterpret_cast<int *>(0x14);
-            (*reinterpret_cast<int *>(0x18))++;
+            int carry = field_14_;
+            field_18_++;
             if (carry != 0) {
-                *reinterpret_cast<int *>(0x14) = 0;
+                field_14_ = 0;
                 width -= carry;
                 x += carry;
             }
@@ -7026,8 +7031,8 @@ int Buffer::wrap(char * a1, int a2, int a3, int a4) {
             } else {
                 unsigned int segLen = (unsigned int)(brk - cur);
                 if (font1_ == 0 || font1_->font_obj_ == 0) {
-                    *BufferWriteStatus = 3;
-                    wrapResult = *BufferWriteStatus;
+                    BufferLastWrapWriteResult = 3;
+                    wrapResult = BufferLastWrapWriteResult;
                 } else {
                     unsigned int lenA = strlen(cur);
                     unsigned int lenB = segLen;
@@ -7044,13 +7049,13 @@ int Buffer::wrap(char * a1, int a2, int a3, int a4) {
                             goto after_wrap;
                         }
                     }
-                    *BufferWriteStatus = a2;
-                    wrapResult = *BufferWriteStatus;
+                    BufferLastWrapWriteResult = a2;
+                    wrapResult = BufferLastWrapWriteResult;
                 }
             }
         }
 after_wrap:
-        *BufferWriteStatus = wrapResult;
+        BufferLastWrapWriteResult = wrapResult;
         if (font1_ == 0) {
             font1_ = FontDefault;
         }

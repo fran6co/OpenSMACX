@@ -82,7 +82,7 @@ extern char StringTemp[4096],ScriptPopupFile[64],PopupStartCaption[256],*TextBuf
 extern uint32_t VehOrderDelayCounter,MapNativeLifeForms;
 extern int OrderVehTutorialNoticeCounter;
 extern int ExpansionEnabled,ConsoleControlTurnActive,IsMultiplayerNet,BaseFindDist,MapLongitude,MapLatitudeBounds,MapLongitudeBounds,
- MapIsFlat,VehSelectionFollowLimit,*ConsoleGroupCount,GenderDefault,PluralityDefault;
+ MapIsFlat,VehSelectionFollowLimit,GenderDefault,PluralityDefault;
 extern int RadiusOffsetX[289],RadiusOffsetY[289],RadiusBaseX[9],RadiusBaseY[9],
  VehMoveDeltaX[9],VehMoveDeltaY[9];
 int GetAsyncKeyState(int);

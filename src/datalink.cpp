@@ -1208,7 +1208,6 @@ static const char *const AdvConceptFile = (const char *)0x00683310;
  *   GenderDefault / PluralityDefault pair before filing its name, and reads
  *   alpha.h's Language to decide whether the "The " article stays.
  */
-static RulesFacility *const SecretProjectRules = (RulesFacility *)0x009A5888;
 static const int *const TechRowBase = (const int *)0x0094F3A4;
 static const int *const SocialCategoryRow = (const int *)0x0094B014;
 static const char *const SocialEffectRowBase = (const char *)0x00946598;
@@ -2557,11 +2556,12 @@ Return Value: n/a
 Status: Complete
 */
 void Datalink::set_cat_project() {
+    const RulesFacility *record = &Facility[FacilitySPStart];
     for (int index = 0; index < 0x40; ++index) {
-        if (SecretProjectRules[index].preq_tech >= -1) {
+        if (record->preq_tech >= -1) {
             StringTemp[0] = '\0';
             strcat(StringTemp,
-                   StringTable.get((int)SecretProjectRules[index].name));
+                   StringTable.get((int)record->name));
             if (Language == 0 && strncmp(StringTemp, ConceptArticle, 4) == 0) {
                 char full[256];
                 strcpy(full, StringTemp);
@@ -2575,6 +2575,7 @@ void Datalink::set_cat_project() {
             }
             listBox_.item(StringTemp, index + 68534);
         }
+        ++record;
     }
 
     RECT rect = category_rect_;

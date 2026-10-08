@@ -137,6 +137,10 @@ char MapFilePath[80];                                       // 0x0094A2BC
 RulesTechnology Technology[MaxTechnologyNum];       // 0x0094F358
 RulesMandate Mandate[MaxMandateNum];                // 0x0094B4A0
 RulesTerraforming Terraforming[MaxTerrainNum];      // 0x00691878
+// Secret projects are the final 64 records, beginning at Facility[70]
+// (original 0x009A5888). The parser and consumers share this real array;
+// there is no separately allocated secret-project table.
+// RECOVERY_OBJECT: v1 0x009A4B68 ?Facility@@3PAURulesFacility@@A
 RulesFacility Facility[MaxFacilityNum];             // 0x009A4B68
 RulesCitizen Citizen[MaxCitizenNum];                // 0x00946020
 Base Bases[MaxBaseNum];                             // 0x0097D040

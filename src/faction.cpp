@@ -18481,10 +18481,10 @@ int __cdecl dont_withdrawal(int faction_id, int against_id) {
     if ((PlayersData[faction_id].diplo_treaties[against_id] & 0x800000) == 0) {
         return 0;
     }
-    if (*ConsoleGroupCount <= 0) {
+    if (GameDataStateStorage.fields_.vehicle_current_count_ <= 0) {
         return 0;
     }
-    for (int index = 0; index < *ConsoleGroupCount; ++index) {
+    for (int index = 0; index < GameDataStateStorage.fields_.vehicle_current_count_; ++index) {
         const Veh &veh = Vehs[index];
         if (veh.faction_id != against_id) {
             continue;
