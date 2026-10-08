@@ -591,66 +591,7 @@ extern "C" void __cdecl sub_4d5f70(int parallel_base, int *values, int count) {
 
 
 
-/*
-Purpose: Re-initialise a graphic window in place: close the live window,
-         install the process frame defaults when the caller asks for a frame,
-         run the base init and then size the window's own drawing surface,
-         syncing it to the active palette.
-// ORIGINAL: 0x005D50F0 sub_5d50f0 0x005D50F0-0x005D5235 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["Original5D50F0..5D5235; retired seed git:b18d3ac8:src/unrecovered/005d50f0.cpp records the same identity and spans with its receiver PROPOSAL/TRIED notes kept below.", "The receiver runs GraphicWin::close, GraphicWin::compute_min_size, Win::UNK1 (win.cpp's own stub), Win::nonclient_to_client and the Buffer base's init/sync_to_palette, all linked members; the eleven sprite stores are GraphicWinInitDefaults (0x009B3394) into GraphicWin's private frame block 0x9CC..0x9F4, matching graphicwin.h's own frame model.", "0x009B8DD4 is scroll.cpp's ScrollDefaultThickness and 0x009B8180 is palette.h's PaletteActive; the Buffer subobject is the +0x444 base."], "reason": "Coverage transcription of the in-place re-init with a typed GraphicWin receiver; the private frame block and the style word stay documented offsets."}
-// symbol    @sub_5d50f0@40
-// PROPOSAL (superseded by this coverage spelling): extern "C" int __stdcall sub_5d50f0(9 ints) -> a __thiscall member (9 forwarded ints, no separate `this`), evidence: `mov esi, ecx` at entry immediately used as the receiver for GraphicWin::close()/compute_min_size(), and `ret 0x24` (36 bytes = 9 ints) is consistent with either reading, but the raw `ecx` use at entry only makes sense for thiscall/fastcall - a free function declared `__thiscall` is refused outright by VC6 (C4234), same as a `__thiscall` function-pointer type. Expressed via an introduced `GWShim` class per the __thiscall carve-out, since the scaffold's own GraphicWin class does not declare this member. The class-close semicolon and the out-of-line definition's open brace share ONE LINE below - not style, the extractor's brace counter runs per line, and a standalone closing line for the class closes the region it is measuring before reaching the function at all, scoring the whole thing NO_COMPILE with zero .text symbols found.
-// TRIED: reading `*(uint*)(base+0x98)` twice (once per bit test) added an extra `mov` vs the original's single load reused by both `test al,N`; caching it in a local did not change the rebuilt bytes, so the remaining divergence is scheduling, not this. Best reached: MISMATCH, edit_count 5, 345 bytes vs 325, mnemonic similarity ~0.92.
-Status: Coverage transcription - unclaimed body
-*/
-extern "C" int __fastcall sub_5d50f0(GraphicWin *self, int a1, int a2, int a3,
-                                     int a4, int a5, int a6, int a7, int a8,
-                                     int a9) {
-    char *const base = reinterpret_cast<char *>(self);
 
-    self->close();
-    if ((a6 & 0x30000000) != 0) {
-        const GraphicWinFrameDefaults &defaults = GraphicWinInitDefaults;
-        *reinterpret_cast<Sprite **>(base + 0x9CC) = defaults.top_left;
-        *reinterpret_cast<Sprite **>(base + 0x9D4) = defaults.top_right;
-        *reinterpret_cast<Sprite **>(base + 0x9D0) = defaults.bottom_left;
-        *reinterpret_cast<Sprite **>(base + 0x9D8) = defaults.bottom_right;
-        *reinterpret_cast<Sprite **>(base + 0x9E8) = defaults.top;
-        *reinterpret_cast<Sprite **>(base + 0x9E4) = defaults.bottom;
-        *reinterpret_cast<Sprite **>(base + 0x9DC) = defaults.left;
-        *reinterpret_cast<Sprite **>(base + 0x9E0) = defaults.right;
-        *reinterpret_cast<Sprite **>(base + 0x9EC) = defaults.noncaption_right;
-        *reinterpret_cast<Sprite **>(base + 0x9F0) = defaults.noncaption_left;
-        *reinterpret_cast<Sprite **>(base + 0x9F4) = defaults.noncaption_middle;
-    }
-
-    int result = static_cast<Win *>(self)->UNK1(a1, a2, a3, a4, a5, a6, a7,
-                                                a8, a9);
-    if (result == 0) {
-        // GraphicWin's owned-buffer self-reference at +0x448.
-        *reinterpret_cast<int *>(base + 0x448) = reinterpret_cast<int>(base);
-        self->compute_min_size();
-        if ((a6 & 0x800) == 0) {
-            static_cast<Win *>(self)->nonclient_to_client(&a3, &a4);
-        } else {
-            const unsigned int style =
-                *reinterpret_cast<unsigned int *>(base + 0x98);
-            if ((style & 8) != 0) {
-                a3 = a3 + ScrollDefaultThickness;
-            }
-            if ((style & 4) != 0) {
-                a4 = a4 + ScrollDefaultThickness;
-            }
-        }
-        Buffer *const canvas = reinterpret_cast<Buffer *>(base + 0x444);
-        result = canvas->init(a3, a4, 0, 0);
-        if (result == 0) {
-            canvas->sync_to_palette(PaletteActive);
-            result = 0;
-        }
-    }
-    return result;
-}
 
 /*
 Purpose: The third pronoun fetcher beside game.cpp's get_his_her/get_him_her:
@@ -706,7 +647,6 @@ char *__cdecl get_he_she(int faction_id, int sentence_form) {
 // ===========================================================================
 
 #include "sprite.h"    // Sprite - the surface sprite the unit wrappers draw
-#include "spot.h"      // Spot - MultiWin's cursor-hotspot array
 #include "veh.h"       // Vehs - the deletion list walks its 0x34-stride records
 #include "lock.h"      // LockEnableMask - the deletion-record occupancy mask
 #include "log.h"       // log_say - both deletion paths report through it
@@ -728,7 +668,6 @@ static char *const StrDelConvertedIndex = (char *)0x0068C120;  // "DelConverted 
 
 // The one-space join string this file's flying-text wrapper already binds as
 // SpaceText, and the caret separator MultiWin's spot label builds from.
-static char *const CaretSeparator = (char *)0x006867C0;         // "^"
 
 // The local faction at 0x00939284 is ConsoleGlobal.faction_id_:
 // source-owned ConsoleGlobal at 0x009156B0 plus member offset 0x23BD4.
@@ -783,46 +722,6 @@ class ModeReleaseObj { public: void release(void *); };
 
 
 // ---------------------------------------------------------------------------
-// MultiWin::UNK1, 0x00479270. The multiplayer scoreboard's spot label: clip
-// the given rectangle into the window's hotspot array, then build the
-// difficulty caret row into the shared scratch and centre it over the spot.
-// MultiWin's layout is a hypothesis and the member is undeclared, so the
-// receiver travels explicitly; the original is a __thiscall member.
-/*
-Purpose: Draw one multiplayer window spot and centre its difficulty caret
-         row over it.
-// ORIGINAL: 0x00479270 ?UNK1@MultiWin@@QAEXPAURECT@@@Z 0x00479270-0x0047932C FILE
-// RECOVERY_BINDING: v1 {"evidence": ["Original4792CF pushes682820 into strcat645470 at4792E0; pinned bytes at682820 are one space followed by NUL, identical to the Buffer/SocialWin shared join object.", "This narrow reference migration leaves the existing explicit MultiWin receiver, Spot/difficulty walk and caret/text procedure ordering unchanged; it does not establish full MultiWin hierarchy or runtime acceptance."], "reason": "Replace this existing MultiWin scaffold shared-string alias with the same genuine source-owned join-space object."}
-// symbol    @MultiWin_UNK1@12
-// SUPERSEDED_BINDING_HISTORY: v1 {"evidence": ["Original479270..47932C; retired seed git:117282ee:src/unrecovered/00479270.cpp records the same identity and spans.", "The receiver's Spot subobject at +0x28AC (spot.h's own add/3,2 overload) and the +0x444 Buffer (write_cent_l is buffer.h's own) carry the walk; the difficulty table is the 0x833-dword PlayerData stride faction.h pins, read at the +0x2054 record offset through the local-faction slot 0x00939284.", "The caret row is built into strings.h's StringTemp (0x009B86A0) from the one-space and caret .rdata strings exactly as the seed strcat-walks them."], "reason": "Coverage transcription of the multiplayer spot label with the receiver spelled explicitly because MultiWin has no header declaration yet."}
-Status: Coverage transcription - unclaimed body
-*/
-extern "C" void __fastcall MultiWin_UNK1(MultiWin *self_raw, void *, RECT *rect) {
-    // Pinned 47929D reads ConsoleGlobal +0x23BD4, not independent storage.
-    char *const self = reinterpret_cast<char *>(self_raw);
-    const int top = rect->top;
-    const int height = rect->bottom - top;
-    const int left = rect->left;
-    const int width = rect->right - left;
-    reinterpret_cast<Spot *>(self + 0x28AC)->add(3, 2, left, top, width, height);
-
-    const int difficulty = reinterpret_cast<const int *>(
-        reinterpret_cast<const char *>(&PlayersData[ConsoleGlobal.faction_id_]))[0x2054 / 4];
-    if (difficulty >= 0) {
-        int carets = (difficulty > 3) ? 3 : difficulty;
-        if (carets != 0) {
-            StringTemp[0] = 0;
-            strcat(StringTemp, BufferJoinSpace);
-            for (; carets != 0; --carets) {
-                strcat(StringTemp, CaretSeparator);
-            }
-            const unsigned int len = strlen(StringTemp);
-            reinterpret_cast<Buffer *>(self + 0x444)->write_cent_l(
-                StringTemp, rect, len);
-        }
-    }
-}
-
 // ---------------------------------------------------------------------------
 // tech_wizard_unk2, 0x005BE2A0. The tech wizard's facility sprite painter:
 // convert the page's structure size into the isometric x/y offsets, publish
@@ -1416,133 +1315,16 @@ void __cdecl net_not_my_turn() {
     ConsoleGlobal.field_23BE8_ = 0;
 }
 
-// The menu border padding pulldown.cpp keeps beside its defaults; the row
-// maths of all three PullDown handlers divides by it against the font.
-extern int PullDownBorderPadding;  // 0x00696E1C, pulldown.cpp's definition
 
 // ---------------------------------------------------------------------------
-// PullDown::on_left_down, 0x005F93C0. Clicking outside the pulled-down menu
-// closes it: hide the window, flush the input queue, run the task pass, and
-// hand the click to the owner menu at its own coordinates. The member is
-// undeclared in pulldown.h, so the receiver travels explicitly; the original
-// is a __thiscall member.
-/*
-Purpose: Close the pulled-down menu when the click lands outside it.
-// ORIGINAL: 0x005F93C0 ?on_left_down@PullDown@@QAEXHH@Z 0x005F93C0-0x005F945B FILE
-// RECOVERY_BINDING: v1 {"evidence": ["Original5F93C0..5F945B; retired seed git:117282ee:src/unrecovered/005f93c0.cpp records the same identity and spans.", "The hit test runs against buffer.h's rect2_ (0x474, the offset ten classes' bodies pass), the hide is Win slot 2 and the menu hand-off is the owner Menu's slot 20 with the two outer-rect deltas - left 0x13C and top 0x140, menu value subtracted from the receiver's on each axis before the click coordinate is added (0x005F9414 loads menu_ from +0xF30; the call target is [eax+0x50]) - dispatched through member-fn-pointer unions because neither slot is declared.", "flush_input is console.h's own and do_all_tasks is win.h's; selected_ and menu_ are pulldown.h's own members."], "reason": "Coverage transcription of the outside-click close on the typed PullDown receiver."}
-Status: Coverage transcription - unclaimed body
-*/
 namespace {
 class Int2SlotObj { public: void slot(int, int); };
-class MenuClickObj { public: void slot(int, int); };
 }
 
-extern "C" void __fastcall PullDown_on_left_down(PullDown *self, void *, int x,
-                                                 int y) {
-    // The menu's working rectangle: GraphicWin's rect2_ at 0x474, the offset
-    // ten classes' bodies pass to RECT * formals (buffer.h documents it).
-    const RECT rc = *reinterpret_cast<const RECT *>(
-        reinterpret_cast<const char *>(self) + 0x474);
-    const POINT pt = {x, y};
-    if (PtInRect(&rc, pt) == 0) {
-        // Win slot 2: hide.
-        NullSlotShim hide;
-        hide.raw = (*reinterpret_cast<void ***>(self))[2];
-        (reinterpret_cast<NullSlotObj *>(self)->*hide.fn)();
-        flush_input();
-        do_all_tasks(reinterpret_cast<Win *>(self));
-        // menu_ is the pointer at +0xF30 (0x005F9414 loads [esi+0xF30]).
-        Menu *const menu = *reinterpret_cast<Menu **>(
-            reinterpret_cast<char *>(self) + 0xF30);
-        *reinterpret_cast<int *>(reinterpret_cast<char *>(self) + 0xF28) = -1;
-        if (menu != 0) {
-            void *const *menu_vtable = *reinterpret_cast<void ***>(menu);
-            // Menu slot 20 takes the outer-rect deltas: left (0x13C) first,
-            // top (0x140) last, the menu's value subtracted from this
-            // window's on each axis before the click coordinate is added.
-            typedef void (MenuClickObj::*MenuClickFn)(int, int);
-            union MenuClickShim {
-                MenuClickFn fn;
-                void *raw;
-            };
-            MenuClickShim click;
-            click.raw = menu_vtable[0x50 / 4];
-            const char *const self_base = reinterpret_cast<const char *>(self);
-            const char *const menu_base = reinterpret_cast<const char *>(menu);
-            (reinterpret_cast<MenuClickObj *>(menu)->*click.fn)(
-                (*reinterpret_cast<const int *>(self_base + 0x13C)
-                  - *reinterpret_cast<const int *>(menu_base + 0x13C))
-                    + x,
-                (*reinterpret_cast<const int *>(self_base + 0x140)
-                  - *reinterpret_cast<const int *>(menu_base + 0x140))
-                    + y);
-        }
-    }
-}
+
 
 // ---------------------------------------------------------------------------
-// PullDown::on_left_up, 0x005F9480. Releasing the button over the open menu
-// selects the row under the cursor: compute the row from the line advance,
-// walk the enabled items to its index, and redraw or hide on the empty row.
-// The member is undeclared in pulldown.h, so the receiver travels explicitly;
-// the original is a __thiscall member.
-/*
-Purpose: Select the menu row under the mouse when the button is released.
-// ORIGINAL: 0x005F9480 ?on_left_up@PullDown@@QAEXHH@Z 0x005F9480-0x005F9563 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["Original5F9480..5F9563; retired seed git:117282ee:src/unrecovered/005f9480.cpp records the same identity and spans.", "The row maths is pulldown.h's own model: items_ at 0xA24 in 0x14-byte PullDownItem records (bit 0 enabled, bit 4 disabled-for-pick), item_count_ at 0xF20 and selected_ at 0xF28, with the line advance from pulldown.h's own PullDownDefaultFont and PullDownBorderPadding (0x009B7B68/0x00696E1C).", "The empty-row path is Win slot 62 (redraw) and the hit path is slot 2 (hide), dispatched through member-fn-pointer unions."], "reason": "Coverage transcription of the row pick on the typed PullDown receiver with the item walk exactly as the seed measures it."}
-Status: Coverage transcription - unclaimed body
-*/
-extern "C" void __fastcall PullDown_on_left_up(PullDown *self, void *, int x,
-                                               int y) {
-    RECT rect = *reinterpret_cast<const RECT *>(
-        reinterpret_cast<const char *>(self) + 0x474);
-    const POINT pt = {x, y};
-    if (PtInRect(&rect, pt) != 0) {
-        // The current default font's line advance (font.h's own selection).
-        Font *const font = PullDownDefaultFont;
-        const int line_height = font->line_advance();
-        char *const base = reinterpret_cast<char *>(self);
-        int *const selected = reinterpret_cast<int *>(base + 0xF28);
-        const int count = *reinterpret_cast<const int *>(base + 0xF20);
-        *selected = (y - PullDownBorderPadding) / line_height;
-        int index = 0;
-        if (count > 0) {
-            unsigned char *item =
-                reinterpret_cast<unsigned char *>(base + 0xA24);
-            int enabled = -1;
-            do {
-                if ((*item & 1) != 0) {
-                    enabled++;
-                }
-                if (enabled == *selected) {
-                    break;
-                }
-                index++;
-                item += 0x14;
-            } while (index < count);
-        }
-        if (index == count) {
-            *selected = -1;
-        } else {
-            *selected = index;
-            if ((reinterpret_cast<unsigned char *>(base + 0xA24)
-                 + index * 0x14)[0]
-                & 4) {
-                *selected = -1;
-            }
-        }
-        void *const *vtable = *reinterpret_cast<void ***>(self);
-        if (*selected == -1) {
-            NullSlotShim redraw;
-            redraw.raw = vtable[62];
-            (reinterpret_cast<NullSlotObj *>(self)->*redraw.fn)();
-            return;
-        }
-        NullSlotShim hide;
-        hide.raw = vtable[2];
-        (reinterpret_cast<NullSlotObj *>(self)->*hide.fn)();
-    }
-}
+
 
 // ---------------------------------------------------------------------------
 

@@ -2486,6 +2486,7 @@ void MainInterface::on_scrolled(int a1, int a2) {
 
 /*
 // ORIGINAL: 0x0045C200 ?timer_callback_daemon@MainInterface@@QAAXHH@Z 0x0045C200-0x0045C273
+// RECOVERY_BINDING: v1 {"evidence":["pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: 0x45C200 reads callback parameters from [ebp+8]/[ebp+0xC], branches on mode 0/1, and accesses context+0x216F0,+0x25040,+0x25068,+0xDE0,+0xDF0","src/maininterface.h declares MainInterface at the exact receiver layout, with alert_ at +0x216F0, time1_ at +0x25040, time2_ at +0x25068, and the corresponding RECT members at +0xDE0/+0xDF0","MainInterface::init registers this exact free callback with context (int)this for both embedded Time instances; mode 0/1 selects time1_/time2_","neighboring mapped MainInterface::timer_callback_daemon(int) and set_alert(int) access the same genuine members; the callback remains a free two-argument __cdecl entry to preserve Time::init ABI"],"reason":"Keep the exact free callback ABI registered with Time, but express its context as the existing MainInterface owner and use that owner's fields. The friend declaration grants only this callback access; it does not turn it into a member or alter registration/lifetime."}
 // symbol    ?timer_callback_daemon@@YAXHH@Z
 // TRIED: both stack parameters are read directly ([ebp+8], [ebp+0xc]) with no
 //        `this` anywhere, so the scaffold's MainInterface member cannot be
@@ -2499,23 +2500,22 @@ void MainInterface::on_scrolled(int a1, int a2) {
 void __cdecl timer_callback_daemon(int a1, int a2) {
     if (a2 == 0) return;
 
-    char *self = reinterpret_cast<char *>(a2);
+    MainInterface *self = reinterpret_cast<MainInterface *>(a2);
     switch (a1) {
     case 0:
-        reinterpret_cast<Time *>(self + 0x25040)->stop();
+        self->time1_.stop();
         break;
     case 1: {
-        int *count = reinterpret_cast<int *>(self + 0x216f0);
-        if (*count == -1) {
-            reinterpret_cast<Time *>(self + 0x25068)->stop();
+        if (self->alert_ == static_cast<uint32_t>(-1)) {
+            self->time2_.stop();
             return;
         }
-        *count = *count + 1;
+        self->alert_ += 1;
 
         RECT rc;
-        UnionRect(&rc, reinterpret_cast<RECT *>(self + 0xde0),
-                  reinterpret_cast<RECT *>(self + 0xdf0));
-        reinterpret_cast<GraphicWin *>(self)->soft_update(&rc);
+        UnionRect(&rc, &self->menu_animation_bounds_,
+                  &self->multiplayer_animation_bounds_);
+        self->soft_update(&rc);
         break;
     }
     }

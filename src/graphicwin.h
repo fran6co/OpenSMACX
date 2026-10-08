@@ -164,6 +164,9 @@ class GraphicWin : public Win, public Buffer {
            Win *parent, Menu *menu, BorderSizing *border);
   int init(RECT *bounds, char *caption, int flags, Win *parent,
            Menu *menu, BorderSizing *border);
+  // Distinct original reinitialization entry at 0x005D50F0; this does not replace init().
+  int reinitialize(int a1, int a2, int width, int height, int a5,
+                   int flags, int a7, int a8, int a9);
   int fill(int x1, int y1, int x2, int y2, int color);
   int fill(RECT *area, int color);
   void fill(int color);

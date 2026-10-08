@@ -43,6 +43,8 @@ class PullDown : public GraphicWin {
  public:
   // homed from 005f9570.cpp
   void on_right_up(int x, int y);
+  void on_left_down(int x, int y) override;
+  void on_left_up(int x, int y) override;
 
  public:
   // homed from 005f9460.cpp

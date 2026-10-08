@@ -17,6 +17,7 @@
 #include "pulldown.h"
 #include "menu.h"
 #include "checkbox.h"
+#include "console.h"
 #include "font.h"
 #include "vtable_shim.h"
 #include <stdlib.h>
@@ -1330,6 +1331,68 @@ void PullDown::on_right_down(int x, int y) {
 
 void PullDown::on_right_up(int x, int y) {
     on_left_up(x, y);
+}
+
+// ORIGINAL: 0x005F93C0 ?on_left_down@PullDown@@QAEXHH@Z 0x005F93C0-0x005F945B FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Original5F93C0..5F945B; retired seed git:117282ee:src/unrecovered/005f93c0.cpp records the same identity and spans.", "Pinned image SHA-256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: PullDown constructor 0x5F8800 stores vftable 0x66FF40; its slot-20 cell 0x66FF90 contains 0x5F93C0 and slot-21 cell 0x66FF94 contains 0x5F9480.", "Pinned Menu constructor 0x5FAC94 stores vftable 0x6700B0; Menu slot-20 cell 0x670100 contains 0x5FBC20, matching PullDown's outside-click virtual call through +0x50.", "The typed owner declarations are Win::on_left_down/on_left_up, GraphicWin::buffer_working_rect (returning Buffer rect2_ at +0x474), Win::outer_rect (RECT at +0x13C), and Menu::on_left_down; PullDown already owns item_count_, selected_, menu_, PullDownDefaultFont and PullDownItem[64].", "Pinned 0x5F93C0..0x5F945B reads rect2_ +0x474; outside path calls PullDown slot 2, flush_input, do_all_tasks(this), then reads menu_ +0xF30, clears selected_ +0xF28, and calls Menu slot 20 with outer-RECT deltas plus click coordinates."], "reason": "Move the original outside-click handler into PullDown's real Win slot-20 override; preserve its hide/flush/tasks/menu-coordinate sequence."}
+// symbol    ?on_left_down@PullDown@@UAEXHH@Z
+void PullDown::on_left_down(int x, int y) {
+    const RECT rc = *buffer_working_rect();
+    const POINT pt = {x, y};
+    if (PtInRect(&rc, pt) == 0) {
+        hide();
+        flush_input();
+        do_all_tasks(static_cast<Win *>(this));
+        Menu *const menu = menu_;
+        selected_ = -1;
+        if (menu != nullptr) {
+            const RECT &self_rect = outer_rect();
+            const RECT &menu_rect = menu->outer_rect();
+            const int translated_y = (self_rect.top - menu_rect.top) + y;
+            const int translated_x = (self_rect.left - menu_rect.left) + x;
+            menu->on_left_down(translated_x, translated_y);
+        }
+    }
+}
+
+// ORIGINAL: 0x005F9480 ?on_left_up@PullDown@@QAEXHH@Z 0x005F9480-0x005F9563 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Original5F9480..5F9563; retired seed git:117282ee:src/unrecovered/005f9480.cpp retains original identity and spans.", "Pinned PullDown constructor5F8800 installs66FF40: slot21 points5F9480, slot2 hide5F93A0, slot62 GraphicWin redraw5D5A70.", "Current PullDown owns items_ at+A18 with0x14-byte rows; PullDownItem flags at+C gives the original+A24+i*14 test address. Constructor/add/redraw and native emitted member accesses agree; this is not a text-pointer tag test.", "Pinned release uses flag masks1/4, signed line-height division, count+F20 and selected+F28; preserve zero/negative counts, empty redraw and selected hide order without added guards."], "reason": "The original release selector belongs to PullDown Win slot 21; express its existing item flags and callbacks through the real owner, preserving the original count/error paths."}
+// symbol    ?on_left_up@PullDown@@UAEXHH@Z
+void PullDown::on_left_up(int x, int y) {
+    const RECT rect = *buffer_working_rect();
+    const POINT pt = {x, y};
+    if (PtInRect(&rect, pt) != 0) {
+        Font *const font = PullDownDefaultFont;
+        const int line_height = font->line_advance();
+        const int count = item_count_;
+        selected_ = (y - PullDownBorderPadding) / line_height;
+        int index = 0;
+        if (count > 0) {
+            int enabled = -1;
+            do {
+                if ((items_[index].flags & 1) != 0) {
+                    enabled++;
+                }
+                if (enabled == selected_) {
+                    break;
+                }
+                index++;
+            } while (index < count);
+        }
+        if (index == count) {
+            selected_ = -1;
+        } else {
+            selected_ = index;
+            if ((items_[index].flags & 4) != 0) {
+                selected_ = -1;
+            }
+        }
+        if (selected_ == -1) {
+            redraw();
+            return;
+        }
+        hide();
+    }
 }
 
 // ORIGINAL: 0x005F9100 ?UNK4@PullDown@@QAEXXZ 0x005F9100-0x005F9165 BYTE_EXACT

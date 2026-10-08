@@ -929,6 +929,55 @@ int GraphicWin::init(int x, int y, int width, int height, LPSTR title,
     return 0;
 }
 
+// ORIGINAL: 0x005D50F0 sub_5d50f0 0x005D50F0-0x005D5235 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Original5D50F0..5D5235; retired seed git:b18d3ac8:src/unrecovered/005d50f0.cpp records the same identity and spans with its receiver PROPOSAL/TRIED notes kept below.", "Pinned image SHA-256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: 0x5D50F2 saves ECX as the GraphicWin receiver; the routine reads its sixth explicit value from the stack, pushes all nine explicit integer values to Win::UNK1, and ends with ret 0x24. EDX is not consumed as an argument. This is a thiscall member ABI, not the current free __fastcall adapter ABI.", "Pinned 0x5D50F4 calls GraphicWin::close; 0x5D51B4 calls the mapped Win::UNK1 nine-integer body at 0x5EC680, whose complete original and current source body return zero without reading arguments. Keep this call and do not invent a replacement body or conflate it with Win::init.", "Pinned object accesses are already owned: GraphicWin frame sprites at +0x9CC..+0x9F4, Win iFlags_ at +0x98, Buffer base at +0x444 and poOwner_ at Buffer+4. GraphicWin already owns close, compute_min_size, the frame-default record, Win::nonclient_to_client, Buffer::init and Buffer::sync_to_palette.", "Pinned behavior: close first; conditional eleven frame-default assignments when flags & 0x30000000; propagate Win::UNK1 result; on zero set Buffer owner to this, compute minimum size, either convert width/height through Win::nonclient_to_client or add ScrollDefaultThickness according to iFlags_ bits 3/2 when flags & 0x800; propagate Buffer::init result; ignore sync_to_palette result and return zero after success.", "All nine explicit values remain int parameters because the original forwards their stack words unchanged to the proven int-parameter Win::UNK1 interface; only width, height and flags are named for their directly observed uses. No meanings are assigned to a1, a2, a5, a7, a8 or a9."], "reason": "Move the distinct original in-place GraphicWin reinitialization entry into its real class owner. Preserve the pinned ECX receiver plus nine-stack-integer thiscall boundary, existing Win::UNK1 no-op call, frame/default and Buffer sequencing, and return/error paths; do not alter GraphicWin::init."}
+// symbol    ?reinitialize@GraphicWin@@QAEHHHHHHHHHH@Z
+// Historical seed ABI proposal (superseded by the pinned entry/ret evidence): the old free-function spellings explored stdcall/fastcall versus a thiscall member and noted VC6's free-function __thiscall restriction. The original entry uses ECX as GraphicWin this, keeps all nine explicit integers on the stack, and returns with ret 0x24; the source member below represents that observed ABI without an adapter.
+// Historical TRIED: the prior fastcall transcription's bit-test caching experiments reached MISMATCH (5 edits, 345 emitted bytes versus 325, about 0.92 mnemonic similarity); that result is not a semantic or ABI proof.
+// TRIED: reading `*(uint*)(base+0x98)` twice (once per bit test) added an extra `mov` vs the original's single load reused by both `test al,N`; caching it in a local did not change the rebuilt bytes, so the remaining divergence is scheduling, not this. Best reached: MISMATCH, edit_count 5, 345 bytes vs 325, mnemonic similarity ~0.92.
+int GraphicWin::reinitialize(int a1, int a2, int width, int height,
+                             int a5, int flags, int a7, int a8, int a9) {
+    close();
+    if ((flags & 0x30000000) != 0) {
+        frame_top_left_ = GraphicWinInitDefaults.top_left;
+        frame_top_right_ = GraphicWinInitDefaults.top_right;
+        frame_bottom_left_ = GraphicWinInitDefaults.bottom_left;
+        frame_bottom_right_ = GraphicWinInitDefaults.bottom_right;
+        frame_top_ = GraphicWinInitDefaults.top;
+        frame_bottom_ = GraphicWinInitDefaults.bottom;
+        frame_left_ = GraphicWinInitDefaults.left;
+        frame_right_ = GraphicWinInitDefaults.right;
+        frame_noncaption_right_ = GraphicWinInitDefaults.noncaption_right;
+        frame_noncaption_left_ = GraphicWinInitDefaults.noncaption_left;
+        frame_noncaption_middle_ = GraphicWinInitDefaults.noncaption_middle;
+    }
+
+    int result = Win::UNK1(a1, a2, width, height, a5, flags, a7, a8, a9);
+    if (result == 0) {
+        poOwner_ = this;
+        compute_min_size();
+        if ((flags & 0x800) == 0) {
+            Win::nonclient_to_client(&width, &height);
+        } else {
+            const uint32_t style = iFlags_;
+            const int thickness = ScrollDefaultThickness;
+            if ((style & 8) != 0) {
+                width += thickness;
+            }
+            if ((style & 4) != 0) {
+                height += thickness;
+            }
+        }
+        result = Buffer::init(width, height, 0, 0);
+        if (result == 0) {
+            Buffer::sync_to_palette(PaletteActive);
+            result = 0;
+        }
+    }
+    return result;
+}
+
+
 
 /*
 // ORIGINAL: 0x005D6310 ?on_mouse_move@GraphicWin@@QAEXHHIH@Z 0x005D6310-0x005D632C BYTE_EXACT

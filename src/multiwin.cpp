@@ -43,6 +43,42 @@ extern uint32_t MultiWinState7FFF7C;
 
 static_assert(offsetof(PlayerData, time_bonus_count) == 0x2054,
               "MultiWin time-bonus source offset");
+static const char CaretSeparator[] = "^";  // original string at 0x006867C0
+
+// MultiWin::draw_time_bonus_markers, original 0x00479270. Add the supplied
+// rectangle to the time-bonus hotspot and render its caret markers.
+// The source header now declares the measured original member on its genuine owner.
+/*
+Purpose: Register the multiplayer time-bonus hotspot and draw its caret markers.
+// ORIGINAL: 0x00479270 ?UNK1@MultiWin@@QAEXPAURECT@@@Z 0x00479270-0x0047932C FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned 0x00479270-0x0047932C is the original thiscall member ?UNK1@MultiWin@@QAEXPAURECT@@@Z; decoded body adds Spot position 3/type 2 before reading the local faction and writing centered text.", "Current MultiWin owns Spot as spot_ at +0x28AC; its GraphicWin base has the source-owned Buffer secondary base at +0x444. The original write_cent_l receiver adjustment is therefore static_cast<Buffer *>(this).", "PlayerData::time_bonus_count is the existing typed member at +0x2054 (asserted in multiwin.cpp); faction.h documents the time-control extra seconds, and faction/game/netdaemon sources produce and update it.", "The text uses source-owned StringTemp and BufferJoinSpace (0x00682820); the single caret byte at 0x006867C0 is only a strcat source, so the owner defines the same immutable character without relying on that image address."], "reason": "Move the original MultiWin member into its genuine class owner and replace raw object offsets with its existing Spot, Buffer base and PlayerData time-bonus members. Preserve the measured branch/order and historical match obligation."}
+// symbol    ?draw_time_bonus_markers@MultiWin@@QAEXPAUtagRECT@@@Z
+// SUPERSEDED_BINDING_HISTORY: v1 {"evidence": ["Original479270..47932C; retired seed git:117282ee:src/unrecovered/00479270.cpp records the same identity and spans.", "The receiver's Spot subobject at +0x28AC (spot.h's own add/3,2 overload) and the +0x444 Buffer (write_cent_l is buffer.h's own) carry the walk; the difficulty table is the 0x833-dword PlayerData stride faction.h pins, read at the +0x2054 record offset through the local-faction slot 0x00939284.", "The caret row is built into strings.h's StringTemp (0x009B86A0) from the one-space and caret .rdata strings exactly as the seed strcat-walks them."], "reason": "Coverage transcription of the multiplayer spot label with the receiver spelled explicitly because MultiWin has no header declaration yet."}
+Status: Coverage transcription - unclaimed body
+*/
+void MultiWin::draw_time_bonus_markers(RECT *rect) {
+    const int top = rect->top;
+    const int height = rect->bottom - top;
+    const int left = rect->left;
+    const int width = rect->right - left;
+    spot_.add(3, 2, left, top, width, height);
+
+    const int time_bonus = PlayersData[ConsoleGlobal.faction_id_].time_bonus_count;
+    if (time_bonus >= 0) {
+        int carets = (time_bonus > 3) ? 3 : time_bonus;
+        if (carets != 0) {
+            StringTemp[0] = 0;
+            strcat(StringTemp, BufferJoinSpace);
+            for (; carets != 0; --carets) {
+                strcat(StringTemp, CaretSeparator);
+            }
+            const unsigned int len = strlen(StringTemp);
+            static_cast<Buffer *>(this)->write_cent_l(StringTemp, rect, len);
+        }
+    }
+}
+
+
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00479900 ?UNK2@MultiWin@@QAEXXZ 0x00479900-0x00479964 BYTE_EXACT

@@ -28,6 +28,7 @@ class MultiWin : public GraphicWin {
   ~MultiWin();
 
   void draw(int draw_type);
+  void draw_time_bonus_markers(RECT *rect);
   void draw_player(int faction_id, int row, RECT *bounds);
   void draw_time(RECT *bounds, int draw_type);
   void on_mouse_move(int x, int y);
