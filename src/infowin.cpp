@@ -793,6 +793,11 @@ void InfoWin::draw_text(int pane) {
     Buffer &buffer = MainInterfaceGlobal;
     buffer.set_font(&font_, 0, 0, 0);
     int row = 0;
+    // The pin's [EBP-0xC] slot is function-scoped: 0x4586E4/0x458729 assign it,
+    // while the zero-budget path skips those stores and reloads it at 0x4587FE.
+    // Exact exhaustion lets the next row reuse the prior partial row's x; an
+    // entry-zero path with no prior assignment remains uninitialized.
+    int x;
     int first = pane == -1 ? 0 : pane;
     int end = pane == -1 ? 2 : pane + 1;
     for (int column = first; column < end; ++column) {
@@ -826,28 +831,33 @@ void InfoWin::draw_text(int pane) {
                     if (ranked) buffer.write_right_l(text, 2, y, right - left - 4, strlen(text));
                     else buffer.write_l(text, row_x_[column][row], y, strlen(text));
                 } else {
-                    // A zero budget displays no character. In particular, do
-                    // not form the seed's row[-1] pointer or use its uninitialized x.
+                    // The original only skips the first, `remaining - 1`
+                    // prefix write at zero. It still copies/terminates the
+                    // prefix and reaches the final-character path below,
+                    // where `prefix + remaining - 1` is invalid. The persistent
+                    // x is reused from an earlier partial row if present; it is
+                    // uninitialized only when a zero budget is the first use.
+                    // Preserve that path rather than normalizing it.
+                    char prefix[80];
                     if (remaining > 0) {
-                        char prefix[80];
                         strcpy(prefix, text);
                         prefix[remaining - 1] = 0;
-                        int x = ranked ? right - left - buffer.text_width(text) - 2
-                                       : row_x_[column][row];
+                        x = ranked ? right - left - buffer.text_width(text) - 2
+                                   : row_x_[column][row];
                         x = buffer.write_l(prefix, x, y, strlen(prefix));
-                        strcpy(prefix, text);
-                        prefix[remaining] = 0;
-                        if (!ranked) {
-                            if (!color) {
-                                buffer.set_text_color(InfoTextColors[1][0], InfoTextColors[0][1], 1, 1);
-                                buffer.set_text_color2(InfoTextColors[3][0], InfoTextColors[3][1], 1, 1);
-                            } else {
-                                buffer.set_text_color(row_reveal_color_[column][row], -1, 1, 1);
-                            }
-                        }
-                        char *last = prefix + remaining - 1;
-                        buffer.write_l(last, x, y, strlen(last));
                     }
+                    strcpy(prefix, text);
+                    prefix[remaining] = 0;
+                    if (!ranked) {
+                        if (!color) {
+                            buffer.set_text_color(InfoTextColors[1][0], InfoTextColors[0][1], 1, 1);
+                            buffer.set_text_color2(InfoTextColors[3][0], InfoTextColors[3][1], 1, 1);
+                        } else {
+                            buffer.set_text_color(row_reveal_color_[column][row], -1, 1, 1);
+                        }
+                    }
+                    char *last = prefix + remaining - 1;
+                    buffer.write_l(last, x, y, strlen(last));
                     buffer.reset_text_state();
                 }
             }
@@ -983,15 +993,16 @@ int InfoWin::state_valid(int state) {
 
 // Select a valid presentation state for the active pane, reset its display
 // budget, and redraw it. The original's final `this + 0x88 != 0` is an
-// address check and is always true for a valid object; consequently the
-// visible-character counters are always reset regardless of a2.
+// address check and is always true for a valid object. Argument a2 selects
+// transient counter values before box_sprite; the post-call address check
+// then resets both counters regardless of a2.
 // TRIED (seed): 0.986 mnemonic similarity, one instruction off (`jns` vs
 // `jge`) on the sign test after masking; VC6 emitted a fresh compare rather
 // than reusing the AND flags. The seed's other two divergences were fixed by
 // emitting the a2==0 ternary arms else-first.
 // ORIGINAL: 0x00458F10 ?set_state@InfoWin@@QAEXHH@Z 0x00458F10-0x00458FEA FILE
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00458f10.cpp", "source:src/infowin.h", "source:src/infowin.cpp:state_valid"], "reason": "Replace the offset-based seed with the InfoWin's active-pane and presentation-state members and its existing eligibility method."}
-void InfoWin::set_state(int state, int) {
+void InfoWin::set_state(int state, int a2) {
     if (state < 0) state = 0;
     int &pane_state = pane_states_[active_pane_];
     pane_state = state;
@@ -1002,11 +1013,15 @@ void InfoWin::set_state(int state, int) {
         pane_state = next;
     }
     field_94_ = 0;
-    visible_characters_[0] = 0;
-    visible_characters_[1] = 0;
+    visible_characters_[0] = a2 != 0 ? 0 : text_lengths_[0] + 1;
+    visible_characters_[1] = a2 != 0 ? 0 : text_lengths_[1] + 1;
     field_A8_ = 0;
     MainInterfaceGlobal.box_sprite(&pane_rects_[active_pane_],
                                    &InterfaceBoxStyles[18]);
+    // The original tests the address of the pane-state array, which is always
+    // non-null for a valid object, then clears both values it just assigned.
+    visible_characters_[0] = 0;
+    visible_characters_[1] = 0;
     setup_text();
     draw_text(active_pane_);
 }
