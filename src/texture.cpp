@@ -1243,7 +1243,6 @@ void Texture::draw_coast(Buffer * a1, Vert * a2, int * a3, Texture * a4, unsigne
 
 
 int __cdecl Texture::setup_edge_gouraud(EdgeScan * a1, int a2) {
-  char *self = reinterpret_cast<char *>(a1);
   int b = a2;
 
   if (b == *blit_max_y_index) {
@@ -1252,7 +1251,7 @@ int __cdecl Texture::setup_edge_gouraud(EdgeScan * a1, int a2) {
 
   int c;
   for (;;) {
-    c = *reinterpret_cast<int *>(self + 0) + b;
+    c = a1->f0 + b;
     if (*blit_vertex_count - 1 < c) {
       c = 0;
     } else if (c < 0) {
@@ -1261,48 +1260,48 @@ int __cdecl Texture::setup_edge_gouraud(EdgeScan * a1, int a2) {
 
     int *arrF4 = *blit_edge_uvs_b;
     int height = arrF4[c * 2 + 1] - arrF4[b * 2 + 1];
-    *reinterpret_cast<int *>(self + 4) = height;
+    a1->counter = height;
 
     if (height != 0) {
       if (height < 1) {
         return 0;
       }
-      *reinterpret_cast<int *>(self + 8) = c;
+      a1->id = c;
       int scaled = height * 0x10000;
 
       int *arr90 = *blit_edge_uvs_a;
       int x0 = arr90[b * 2] * 0x10000 + 0x8000;
-      *reinterpret_cast<int *>(self + 0xc) = x0;
+      a1->accumA = x0;
       int x1 = arr90[b * 2 + 1] * 0x10000 + 0x8000;
-      *reinterpret_cast<int *>(self + 0x10) = x1;
+      a1->accumB = x1;
 
       int dxdy0 = fixed_div(arr90[c * 2] * 0x10000 - x0, scaled);
-      *reinterpret_cast<int *>(self + 0x14) = dxdy0;
+      a1->deltaA = dxdy0;
       int dxdy1 = fixed_div(arr90[c * 2 + 1] * 0x10000 - x1, scaled);
-      *reinterpret_cast<int *>(self + 0x18) = dxdy1;
+      a1->deltaB = dxdy1;
 
       int z0 = arrF4[b * 2];
-      *reinterpret_cast<int *>(self + 0x1c) = z0;
+      a1->accumC = z0;
       int zdiff = arrF4[c * 2] - z0;
-      *reinterpret_cast<int *>(self + 0x20) = zdiff / height;
+      a1->deltaC = zdiff / height;
 
       int absz = zdiff;
       if (zdiff < 0) {
         absz = -zdiff;
-        *reinterpret_cast<int *>(self + 0x24) = -1;
-        *reinterpret_cast<int *>(self + 0x28) = 1 - height;
+        a1->extraDeltaC = -1;
+        a1->fracAccum = 1 - height;
       } else {
-        *reinterpret_cast<int *>(self + 0x24) = 1;
-        *reinterpret_cast<int *>(self + 0x28) = 0;
+        a1->extraDeltaC = 1;
+        a1->fracAccum = 0;
       }
-      *reinterpret_cast<int *>(self + 0x30) = height;
-      *reinterpret_cast<int *>(self + 0x2c) = absz % height;
+      a1->fracSub = height;
+      a1->fracDelta = absz % height;
 
       int *arrFC = *blit_z_values;
       int base2 = arrFC[b];
-      *reinterpret_cast<int *>(self + 0x34) = base2 * 0x10000;
+      a1->accumD = base2 * 0x10000;
       int dz2 = fixed_div(arrFC[c] * 0x10000 - base2 * 0x10000, scaled);
-      *reinterpret_cast<int *>(self + 0x38) = dz2;
+      a1->deltaD = dz2;
       return 1;
     }
 
@@ -1330,11 +1329,10 @@ int __cdecl Texture::setup_edge_gouraud(EdgeScan * a1, int a2) {
 
 
 int __cdecl Texture::setup_edge(EdgeScan *a1, int a2) {
-  char *e = (char *)a1;
   if (a2 == *blit_max_y_index) {
     return 0;
   }
-  int base0 = *(int *)a1;
+  int base0 = a1->f0;
   for (;;) {
     int iVar3 = base0 + a2;
     if (*blit_vertex_count - 1 < iVar3) {
@@ -1344,36 +1342,36 @@ int __cdecl Texture::setup_edge(EdgeScan *a1, int a2) {
     }
     int *arr4f4 = *blit_edge_uvs_b;
     int iVar1 = arr4f4[iVar3 * 2 + 1] - arr4f4[a2 * 2 + 1];
-    *(int *)(e + 4) = iVar1;
+    a1->counter = iVar1;
     if (iVar1 != 0) {
       if (iVar1 <= 0) {
         return 0;
       }
-      *(int *)(e + 8) = iVar3;
+      a1->id = iVar3;
       int *arr490 = *blit_edge_uvs_a;
       int scaled = iVar1 << 0x10;
-      *(int *)(e + 0xc) = arr490[a2 * 2] << 0x10;
-      *(int *)(e + 0x10) = arr490[a2 * 2 + 1] << 0x10;
-      *(int *)(e + 0x14) =
-          fixed_div((arr490[iVar3 * 2] << 0x10) - *(int *)(e + 0xc), scaled);
-      *(int *)(e + 0x18) = fixed_div(
-          (arr490[iVar3 * 2 + 1] << 0x10) - *(int *)(e + 0x10), scaled);
-      *(int *)(e + 0x1c) = arr4f4[a2 * 2];
+      a1->accumA = arr490[a2 * 2] << 0x10;
+      a1->accumB = arr490[a2 * 2 + 1] << 0x10;
+      a1->deltaA =
+          fixed_div((arr490[iVar3 * 2] << 0x10) - a1->accumA, scaled);
+      a1->deltaB = fixed_div(
+          (arr490[iVar3 * 2 + 1] << 0x10) - a1->accumB, scaled);
+      a1->accumC = arr4f4[a2 * 2];
       int diff = arr4f4[iVar3 * 2] - arr4f4[a2 * 2];
       int quotient;
       if (diff < 0) {
         diff = -diff;
-        *(int *)(e + 0x28) = 1 - *(int *)(e + 4);
-        *(int *)(e + 0x24) = -1;
-        quotient = -(diff / *(int *)(e + 4));
+        a1->fracAccum = 1 - a1->counter;
+        a1->extraDeltaC = -1;
+        quotient = -(diff / a1->counter);
       } else {
-        *(int *)(e + 0x24) = 1;
-        quotient = diff / *(int *)(e + 4);
-        *(int *)(e + 0x28) = 0;
+        a1->extraDeltaC = 1;
+        quotient = diff / a1->counter;
+        a1->fracAccum = 0;
       }
-      *(int *)(e + 0x20) = quotient;
-      *(int *)(e + 0x30) = *(int *)(e + 4);
-      *(int *)(e + 0x2c) = diff % *(int *)(e + 4);
+      a1->deltaC = quotient;
+      a1->fracSub = a1->counter;
+      a1->fracDelta = diff % a1->counter;
       return 1;
     }
     a2 = iVar3;
