@@ -301,13 +301,11 @@ class BaseWin : public GraphicWin, public SubInterface {
   // was a delegation_thunks redirect before the derivation; it is a member
   // here now, and the redirect is gone.
   void on_iface_scrolling(int a1, int a2);               // slot 2  0x0041DCB0
-  // Slot 0 - 0x0041DAD0, 431 bytes, unrecovered. The interface-mode entry
-  // point: mode selects which of the base screen's panels the status bar
-  // paints. Defined out of line in basewin.cpp as a forwarder to the image.
+  // Slot 0 - 0x0041DAD0. The interface-mode entry point selects the panel and
+  // visibility sequence implemented through BaseWin's owned members.
   void on_status(int mode);                              // slot 0  0x0041DAD0
-  // Slots 8 and 9 - 0x0041DF50 (1164 bytes) and 0x0041E3E0 (224 bytes), both
-  // unrecovered and both forwarders in basewin.cpp. They override PURE slots,
-  // so BaseWin cannot leave them undeclared the way an abstract class could.
+  // Slots 8 and 9 - pointer movement and leave handling. They override PURE
+  // slots and use the BaseWin entry subobject and its typed state.
   void on_iface_mouse_move(int xCoord, int yCoord);      // slot 8  0x0041DF50
   void on_iface_mouse_leave(int a1, int a2);             // slot 9  0x0041E3E0
   // Slot 13 - 0x0041E510, 29 bytes, no direct caller anywhere in .text: it is

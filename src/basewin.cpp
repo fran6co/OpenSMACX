@@ -4321,13 +4321,8 @@ void BaseWin::on_iface_button_clicked(int button_id) {
 }
 
 // HANDOFF (basewin, added by the win.h slot-44/45 rename, 2026-09-06): Win's
-//        slot 44 is now spelled `on_button_clicked`, so BaseWin's own
-//        0x0041D500 - which the image's front table 0x66A4BC holds in that
-//        slot - IS the override of it, and VC6 needs its address for the
-//        vtable it emits. 1388 bytes, unrecovered; the artefact at
-//        git:a538e0a3:src/recovered/units/0041d500.cpp is the transcription to home here.
-//        This forwarder is the on_status idiom and nothing more.
-// PENDING 0x0041D500 ?on_button_clicked@BaseWin@@QAEXH@Z 0x0041D500-0x0041DA6C
+//        slot 44 is spelled `on_button_clicked`, so this implementation is
+//        the front table's override as well as the mapped original body.
 // symbol    ?on_button_clicked@BaseWin@@UAEXH@Z
 //           Q->U 2026-09-06, Win's slot 44 taking the image's name: the body
 //           is now an override of Win's slot, so VC6 mangles it virtual and
@@ -4649,20 +4644,11 @@ void BaseWin::on_iface_left_up(int xCoord, int yCoord) {
 
 
 /*
-Purpose: The interface's mode change. Mode selects which of the base screen's
-         panels the status line paints. Unrecovered - the body is 431 bytes
-         and dispatches its own table's slot 1 and the front's slot 45 among
-         a great many named helpers, so it forwards to the image until it is
-         transcribed.
-// PENDING 0x0041DAD0 ?on_status@BaseWin@@QAEXH@Z 0x0041DAD0-0x0041DC7F
+Purpose: Switch BaseWin panel visibility and audio state for an interface
+         mode change using the owner's actual members and window lifecycle.
+         Original receiver evidence: entry copies `this` into EDI, and the
+         front GraphicWin subobject is addressed as `[EDI - 0xA14]`.
 // symbol    ?on_status@BaseWin@@UAEXH@Z
-// PENDING BODY - the receiver is solved (the artefact at
-//   git:a538e0a3:src/recovered/units/0041dad0.cpp reads `mov edi, ecx` and then steps to
-//   the front with `lea ebx, [edi - 0xa14]`, which is the entry receiver the
-//   derivation supplies) and the mode switch is transcribable, but its arms
-//   reach draw_pop, draw_queue, update_gov_buttons and a dozen more bodies
-//   that are themselves unhomed, so the transcription would forward to the
-//   image at nearly every step. Nothing is gained by homing it before them.
 // size      431 bytes
 // prototype void (__thiscall ?on_status@BaseWin@@QAEXH@Z)(BaseWin* this, int)
 // callers   1   call targets   6
@@ -4760,15 +4746,11 @@ void BaseWin::on_iface_button_toggled(int a1, int a2) {
 }
 
 /*
-Purpose: The interface's mouse-move report. Unrecovered - 1164 bytes of spot
-         hit-testing, queue-panel drag and tool-tip work.
-// PENDING 0x0041DF50 ?on_iface_mouse_move@BaseWin@@QAEXHH@Z 0x0041DF50-0x0041E3DC
+Purpose: Handle pointer movement over BaseWin, including queue hover, drag
+         previews, citizen cursors, production hover and multiplayer updates.
+         Original receiver evidence: at `0x0041DF5B`, the body computes the
+         front subobject with `lea ebx, [esi - 0xA14]`.
 // symbol    ?on_iface_mouse_move@BaseWin@@UAEXHH@Z
-// PENDING BODY - the receiver is solved (`lea ebx, [esi - 0xa14]` at
-//   0x0041DF5B is the front, esi the entry, so `spot1_` and `is_visible()`
-//   both spell directly now) but the body is a long branch-heavy walk over
-//   the queue panel and the artifact it was transcribed from is NOT_MATCHING
-//   on its own terms. Left to the pass that homes it.
 // size      1164 bytes
 // prototype void (__thiscall ?on_iface_mouse_move@BaseWin@@QAEXHH@Z)(BaseWin* this, int, int)
 // callers   0   call targets   9
