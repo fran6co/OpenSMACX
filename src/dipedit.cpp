@@ -17,6 +17,7 @@
  */
 #include "stdafx.h"
 #include "dipedit.h"
+#include "palette.h"
 #include "statuswin.h"
 #include "worldwin.h"
 #include "checkbox.h"
@@ -718,8 +719,8 @@ ListBox vbtable to find the base at +0xA60 and calls 0x00609470 through it),
 and the four FlatButtons that get BaseButton::init. flat_button2_ is the one
 control init does NOT touch.
 
-The two globals 0x008C6E2C/0x008C6E30 are the title text colours, declared in
-buffer.h; shared InterfaceBoxStyles[9]/[0] supply the frame and title-field
+The title text colours at 0x008C6E2C/0x008C6E30 are TextColourTable[180]/[181],
+initialized by textcolor_init; shared InterfaceBoxStyles[9]/[0] supply the frame and title-field
 records originally at 0x78D690/0x78D528.
 
 // LEVER: every control reached as a named member - `list_box_.Dialog::init`
@@ -785,7 +786,7 @@ void DipEdit::init(int faction_index) {
     box_sprite(&rect, &InterfaceBoxStyles[0]);
 
     set_font(find_font(0x10, 0), 0, 0, 0);
-    set_text_color(TextColourTitleMain, TextColourTitleShadow, 1, 1);
+    set_text_color(TextColourTable[180], TextColourTable[181], 1, 1);
 
     if (StringTemp) {
         write_cent_l(StringTemp, &rect, strlen(StringTemp));

@@ -514,7 +514,6 @@ int __cdecl zoc_veh(int x, int y, int faction_id);
 int __cdecl zoc_sea(int x, int y, int faction_id);
 int __cdecl zoc_move(int x, int y, int faction_id);
 int __cdecl mandate_color(int mandate);
-uint32_t *const MandateColors = (uint32_t *)0x008C6DE4;
 
 // Shared source-owned terrain tables; original starts and evidence live at
 // their definitions in map.cpp. Bonus source windows are 113 bytes, not a

@@ -997,15 +997,6 @@ void draw_dest_unk1(Buffer *, int, int, int, int, unsigned char *);
 
 static_assert(sizeof(Buffer) == 0x588, "Buffer layout must match the original executable");
 
-// 0x008C6E2C and 0x008C6E30, the two .bss text colours the centred-title
-// writers hand to set_text_color's first two slots (DipEdit::init and
-// ReplayWin::on_redraw both pass the pair, with 1 and 1 in the last two).
-// Uninitialised storage the preferences write at run time, and the IDB has no
-// name for either, so the storage here is our own - zero like the image's,
-// and the accesses stay direct rather than pointer-bound.
-extern int TextColourTitleMain;
-extern int TextColourTitleShadow;
-
 // 0x00696C58 / 0x00696C60 / 0x00696C68, and 0x00696C70 / 0x00696C78 behind
 // them - the per-language graphics-file extensions `load_tga` and `load_bmp`
 // append to a stem the caller gave with none. Language 1 gets `.tgf`,

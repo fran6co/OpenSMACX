@@ -84,7 +84,8 @@ def corrupted_bodies(body: str):
     # callback reload, and reciprocal-treaty index listed by the task.
     changes = {
         "role swap (FACTION instead of OTHER governor)": (
-            "if (other == GovernorFaction)", "if (faction == GovernorFaction)"),
+            "if (other == GameDataStateStorage.fields_.governor_faction_)",
+            "if (faction == GameDataStateStorage.fields_.governor_faction_)"),
         "extra Popup close before modal return": (
             "if (menu_result <= 0) {\n                return;",
             "if (menu_result <= 0) {\n                popup.close();\n                return;"),
@@ -95,7 +96,7 @@ def corrupted_bodies(body: str):
             "                    const int player_votes = council_votes(player);"),
         "stale technology turn scale": (
             "int value = tech_val(DiploScratchFA18, other, 1);\n"
-            "                turn_rounded = diplo_add(TurnCurrentNum, 7);",
+            "                turn_rounded = diplo_add(GameDataStateStorage.fields_.turn_current_num_, 7);",
             "int value = tech_val(DiploScratchFA18, other, 1);\n"
             "                turn_rounded = diplo_add(8, 7);"),
         "wrong reciprocal treaty row": (

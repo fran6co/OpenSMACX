@@ -20,6 +20,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "src/picktech.cpp"
 HEADER = ROOT / "src/picktech.h"
+MAP_SOURCE = ROOT / "src/map.cpp"
 FIXTURE = Path(__file__).with_name("picktech_host_fixture.inc")
 
 # Consume complete comments and quoted literals before observing brace tokens.
@@ -143,6 +144,10 @@ def projected_unit(damage=None) -> str:
     if damage is not None:
         methods = damage_statements(methods, damage)
     fixture = FIXTURE.read_text()
+    fixture = replace_once(
+        fixture, "int mandate_color(int category){return category;}",
+        extract_braced(MAP_SOURCE.read_text(), "int __cdecl mandate_color("),
+    )
     assert "class PickTech :" not in fixture
     assert "PickTech::" not in fixture
     for marker in ("/* PICKTECH_PRODUCT_DECLARATION */",

@@ -8,6 +8,7 @@
 // kind      game
 #include "stdafx.h"
 #include "picktech.h"
+#include "palette.h"
 #include "technology.h"
 #include "strings.h"
 #include "stringstruct.h"
@@ -383,7 +384,7 @@ int PickTech::draw_tech(int tech, RECT *rect, int) {
             icon_width = MapWinCaptionScale * 0xD7 / MapWinCaptionDivisor;
         }
         const int icon_category = tech_category(tech);
-        const int icon_color = static_cast<int>(MandateColors[icon_category * 2]);
+        const int icon_color = TextColourTable[162 + icon_category * 2];
         const int icon_x = (page_width_ - icon_width) / 2 + rect->left;
         const int transparent = g_TECH_ICON_SPRITES[tech].transparent_index();
         g_TECH_ICON_SPRITES[tech].draw_mono(canvas, transparent, icon_x,

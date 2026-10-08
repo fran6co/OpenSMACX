@@ -38,6 +38,7 @@
 #include "mapwin.h"
 #include "worldwin.h"
 #include "xpops.h"
+#include "palette.h"
 
 // Shared renderer corner coordinates, formerly duplicated by map.h in each TU.
 // Original get_alt reads signed dwords at (corner - 1) * 16 + neighbor * 4;
@@ -6079,7 +6080,7 @@ void __cdecl alt_put_detail_call(int x, int y, int detail) {
 
 // Homed from src/map_color.cpp (2026-09-02): its leaf-test isolation
 // rationale died with the leaf suite, the same retirement that freed
-// basepop_font.cpp. MandateColors (map.h) is the table it reads.
+// basepop_font.cpp. The mandate row belongs to TextColourTable[162..168].
 /*
 Purpose: Return the display colour for a mandate selector. Selectors 0, 1, and 2
          map to the first three table entries; any other value returns the
@@ -6097,16 +6098,15 @@ Return Value: Colour dword from the mandate colour table
 Status: Complete
 */
 int __cdecl mandate_color(int mandate) {
-    const uint32_t *const table = MandateColors;
     switch (mandate) {
     case 0:
-        return static_cast<int>(table[0x00 / 4]);
+        return TextColourTable[162];
     case 1:
-        return static_cast<int>(table[0x08 / 4]);
+        return TextColourTable[164];
     case 2:
-        return static_cast<int>(table[0x10 / 4]);
+        return TextColourTable[166];
     default:
-        return static_cast<int>(table[0x18 / 4]);
+        return TextColourTable[168];
     }
 }
 

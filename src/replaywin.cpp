@@ -17,6 +17,7 @@
  */
 #include "stdafx.h"
 #include "replaywin.h"
+#include "palette.h"
 #include "worldwin.h"
 #include "basebutton.h"
 #include "menu.h"
@@ -170,7 +171,7 @@ void ReplayWin::on_redraw() {
     title.top += 3;
     title.bottom -= 3;
     canvas->set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
-    canvas->set_text_color(TextColourTitleMain, TextColourTitleShadow, 1, 1);
+    canvas->set_text_color(TextColourTable[180], TextColourTable[181], 1, 1);
     canvas->write_cent_l(year_label_, &title, strlen(year_label_));
 
     make_bases();

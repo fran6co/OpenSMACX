@@ -2,6 +2,7 @@
 // PickTech declarations and bodies are injected from current product source.
 // This does not model native ABI, layout, real callees or game runtime.
 #include <cassert>
+#include <climits>
 #include <cstdint>
 #include <cstring>
 #include <cstdlib>
@@ -107,12 +108,13 @@ struct VehPrototype {char veh_name[32]={};int flags=0,preq_tech=-100;};VehProtot
 struct RulesSocialCategory {LPSTR name[4]={};int preq_tech[4]={-100,-100,-100,-100};};
 RulesSocialCategory SocialCategories[4];
 struct RulesMandate {LPSTR name_caps=nullptr;};RulesMandate Mandate[4];
-LPSTR Triad[3]={}; int MandateColors[8]={};
+LPSTR Triad[3]={}; int TextColourTable[195]={};
+int last_draw_mono_color=-1;
 struct RulesBasic {int tech_three_energy_sqr=-100,tech_three_minerals_sqr=-100,tech_three_nutrients_sqr=-100;}Rules;
 struct PlayerData {int tech_ranking=0,theory_of_everything=0;};PlayerData PlayersData[8];
 struct Console {int faction_id_=1;void set_tech(int){++console_tech_calls;}}ConsoleGlobal;
 struct FX {void play(int){++fx_calls;}}g_FX;
-struct Sprite {int transparent_index(){return 0;}void draw_mono(Buffer*,int,int,int,int){++draw_calls;}};
+struct Sprite {int transparent_index(){return 0;}void draw_mono(Buffer*,int,int,int,int color){last_draw_mono_color=color;++draw_calls;}};
 Sprite g_TECH_ICON_SPRITES[89];
 int string_get_calls=0, label_get_calls=0;
 std::vector<std::string> lookup_events;
@@ -169,6 +171,7 @@ static void reset_state() {
     popup_ctor=popup_dtor=ai_calls=random_calls=modal_calls=draw_calls=0;
     fx_calls=tutorial_calls=console_tech_calls=0;
     list_ctor=list_dtor=0;displayed.clear();candidate_captions.clear();
+    last_draw_mono_color=-1;
     GameRules=GamePreferences=LockEnableMask=0;TurnCurrentNum=20;
     GameDataStateStorage.fields_.game_rules_=GameRules;
     GameDataStateStorage.fields_.game_preferences_=GamePreferences;
@@ -198,6 +201,21 @@ static void initialize_draw(PickTech &p) {
     p.faction_id_=1;p.column_count_=1;p.row_count_=1;
 }
 int main() {
+    reset_state();
+    TextColourTable[162]=101; TextColourTable[164]=-1;
+    TextColourTable[166]=303; TextColourTable[168]=-404;
+    assert(mandate_color(0)==101 && mandate_color(1)==-1 &&
+           mandate_color(2)==303 && mandate_color(3)==-404 &&
+           mandate_color(-1)==-404 && mandate_color(INT_MIN)==-404 &&
+           mandate_color(INT_MAX)==-404);
+    for(int category=0;category<4;++category) {
+        reset_state();
+        TextColourTable[162+2*category]=501+category;
+        category_id[5]=category;
+        PickTech p; initialize_draw(p); RECT rect={0,0,240,300};
+        assert(p.draw_tech(5,&rect,0)==1);
+        assert(last_draw_mono_color==501+category);
+    }
     reset_state();
     {
         PickTech p;

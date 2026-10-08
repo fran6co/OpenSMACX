@@ -126,6 +126,16 @@ int MultiWindowOpen;
 uint32_t MapBaseDisplayOverride, ExitTurnLoop, GameRestartQueued;
 uint32_t GameRules, GameState, GamePreferences, GameMorePreferences;
 uint32_t StatusFlags, LockEnableMask;
+// Named-storage API double. References keep the control inputs/assertions
+// on the same words read and written by the extracted current owner bodies.
+struct HostLockMasks { uint32_t &enable_mask_; };
+struct HostGameFields {
+  uint32_t &game_rules_, &game_state_, &game_preferences_, &game_more_preferences_;
+  HostLockMasks lock_masks_;
+};
+struct HostGameStorage { HostGameFields fields_; } GameDataStateStorage = {
+  {GameRules, GameState, GamePreferences, GameMorePreferences, {LockEnableMask}}
+};
 int PopupWriteCheckState;
 char *ScriptPopupFile;
 PlayerData PlayersData[8];

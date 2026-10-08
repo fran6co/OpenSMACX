@@ -48,6 +48,12 @@ static constexpr int MaxPlayerNum = 8;
 Player Players[8]; Data PlayersData[8];
 int PopupDialogFactionID, TurnRedrawPending = 1, PluralityDefault, GenderDefault;
 int IsMultiplayerNet, GovernorFaction = 1, TurnCurrentNum = 8;
+// External named-storage double; callbacks and assertions share these words
+// with the actual extracted faction body, including its live turn reloads.
+struct HostCouncilGameFields { int &governor_faction_, &turn_current_num_; };
+struct HostCouncilGameStorage { HostCouncilGameFields fields_; } GameDataStateStorage = {
+    {GovernorFaction, TurnCurrentNum}
+};
 int ExpansionEnabled = 0;
 int DiploScratchFA98, DiploScratchFAA8 = -1, DiploScratchFA18 = -1, DiploScratchFA1C = -1, DiploScratchFA28 = -1;
 int DiploScratchFA1C_unused;

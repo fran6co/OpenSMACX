@@ -4489,11 +4489,6 @@ BufferSpecialTextArrayOwner BufferSpecialTextsOwner;
 // RECOVERY_OBJECT: v2 0x009B3A50 0x009B3A7C ?g_BUFFER_SPRITE@@3VSprite@@A 0x005D8290
 Sprite g_BUFFER_SPRITE;
 
-// 0x008C6E2C and 0x008C6E30 - see the declaration in buffer.h. Zero here as
-// the image's .bss is; the preferences write them before any window is drawn.
-int TextColourTitleMain;
-int TextColourTitleShadow;
-
 // See the declaration in buffer.h. Copied verbatim out of the image's .rdata,
 // four characters plus a NUL each, so the loader families append exactly what
 // the shipped build appends.

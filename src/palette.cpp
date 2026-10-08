@@ -2179,12 +2179,11 @@ Palette &Palette::copy_from(Palette *src) {
 // text.pcx: 0x008C6B5C through 0x008C6E68, 195 ints. The walk writes
 // p[-1] before it writes p[0], so the run starts one int below the lowest
 // table base the image names (0x008C6B60) and that lower edge is part of it.
-// Nothing else in the tree owns the run, and the two slots the centred-title
-// writers pass by name - TextColourTitleMain and TextColourTitleShadow at
-// 0x008C6E2C and 0x008C6E30, buffer.cpp - are its [180] and [181]: they were
-// homed before this run had a name, so both spellings point at the same image
-// storage and the build carries the two words twice. map.h's MandateColors,
-// the mandate row at 0x008C6DE4, is its [162] and is reached by address there.
+// The centred-title writers read [180] and [181], original 0x008C6E2C
+// and 0x008C6E30. These are initialized here, not independent Buffer globals.
+// The mandate row begins
+// at [162] (original 0x008C6DE4), shared by map and PickTech consumers.
+// RECOVERY_OBJECT: v1 0x008C6B5C ?TextColourTable@@3PAHA
 int TextColourTable[195];
 
 /*
