@@ -1446,7 +1446,7 @@ void MapWin::draw_bases(int tile_x, int tile_y, int pixel_x, int pixel_y,
 Status: Complete
 */
 void MapWin::on_redraw() {
-    if (*reinterpret_cast<int *>(reinterpret_cast<char *>(this) + 4)) {
+    if (owned_ != 0) {
         draw_map(1);
     }
 }
@@ -6802,9 +6802,7 @@ void MapWin::draw_tile(int a1, int a2, int a3) {
 // calls     0x005D4510 0x00644EF2
 
 void MapWin::init_dummy() {
-    unsigned char *base;
     int count;
-    int offset;
     int i;
     int j;
 
@@ -6816,24 +6814,18 @@ void MapWin::init_dummy() {
     owned_ = static_cast<TerrainCacheEntry *>(mem_get((MapArea + MapArea * 2) << 2));
     count = MapArea;
     if (count > 0) {
-        offset = 0;
         i = 0;
         do {
             for (j = 1; j <= 4; j++) {
-                base = (unsigned char *)owned_;
-                base[offset + j - 1] = 0xFF;
+                owned_[i].brightness[j - 1] = 0xFF;
             }
             for (j = 1; j <= 5; j++) {
-                base = (unsigned char *)owned_;
-                base[offset + j + 3] = 0xFF;
+                owned_[i].altitude[j - 1] = static_cast<signed char>(0xFF);
             }
-            base = (unsigned char *)owned_;
-            base[offset + 9] = 0;
-            base = (unsigned char *)owned_;
-            base[offset + 9] |= (*(unsigned char *)*map_tiles) & 0xD0;
-            offset += 0xC;
+            owned_[i].terrain_bits = 0;
+            owned_[i].terrain_bits |= map_tiles()[0].climate & 0xD0;
             i++;
-        } while (i < MapArea);
+        } while (i < static_cast<int32_t>(MapArea));
     }
 }
 
@@ -6862,34 +6854,36 @@ int MapWin::get_alt(int a1, int a2, int a3) {
     if (a2 < 0 || MapLatitudeBounds <= a2 || a1 < 0 || MapLongitudeBounds <= a1) {
         return 0;
     }
-    unsigned char * tile = (unsigned char *)(*map_tiles + (*MapRowStride * a2 + (a1 >> 1)) * 0x2c);
-    unsigned char terrain = *tile;
+    Map *tile = &map_tiles()[static_cast<int>(MapLongitude) * a2 + (a1 >> 1)];
+    unsigned char terrain = tile->climate;
     if ((terrain & 0xe0) < 0x60) {
         return 0;
     }
     if (this->owned_ == 0) {
         return 0;
     }
-    char * rec = (char *)this->owned_ + ((MapLongitudeBounds >> 1) * a2 + (a1 >> 1)) * 0xc;
-    signed char cached = *(signed char *)(rec + 4 + a3);
+    TerrainCacheEntry *rec = this->owned_ + ((MapLongitudeBounds >> 1) * a2 + (a1 >> 1));
+    signed char cached = rec->altitude[a3];
     if (cached != -1) {
         return (int)cached;
     }
 
-    unsigned int flags = *(unsigned int *)(tile + 0xc);
+    unsigned int flags = tile->bit2;
     int bonus = 0;
     int dirVal = (int)flags >> 0x18;
     unsigned char byteVal = AltDirectionTable[dirIndex + dirVal * 5];
+    // Original 0x0046FF47 zero-extends Arid; the other four table loads
+    // sign-extend their bytes. Preserve that distinction in the shared storage.
     if ((flags & 2) != 0) {
         bonus = (int)AltBonusArid[byteVal];
     } else if ((flags & 1) != 0) {
-        bonus = (int)AltBonusMoist[byteVal];
+        bonus = static_cast<signed char>(AltBonusMoist[byteVal]);
     } else if ((flags & 0x200) != 0) {
-        bonus = (int)AltBonusRainy[byteVal];
+        bonus = static_cast<signed char>(AltBonusRainy[byteVal]);
     } else if ((flags & 0x100) != 0) {
-        bonus = (int)AltBonusFlat[byteVal];
+        bonus = static_cast<signed char>(AltBonusFlat[byteVal]);
     } else if ((flags & 0x800) != 0) {
-        bonus = (int)AltBonusOcean[byteVal];
+        bonus = static_cast<signed char>(AltBonusOcean[byteVal]);
     }
 
     if (dirIndex == 0) {
@@ -6915,7 +6909,7 @@ int MapWin::get_alt(int a1, int a2, int a3) {
         if (clamped > 0x7e) {
             clamped = 0x7f;
         }
-        rec[4] = (char)clamped;
+        rec->altitude[0] = static_cast<signed char>(clamped);
         return val;
     }
 
@@ -6936,12 +6930,12 @@ int MapWin::get_alt(int a1, int a2, int a3) {
         }
         int ny = *(int32_t *)((char *)AltStepY + iVar6) + a2;
         if (ny < 0 || MapLatitudeBounds <= ny || nx < 0 || MapLongitudeBounds <= nx ||
-            (*(unsigned char *)(*map_tiles + (*MapRowStride * ny + (nx >> 1)) * 0x2c) & 0xe0) < 0x60) {
+            (map_tiles()[static_cast<int>(MapLongitude) * ny + (nx >> 1)].climate & 0xe0) < 0x60) {
             break;
         }
         int sub = this->get_alt(nx, ny, 0);
         local_c = local_c + sub;
-        local_10 = local_10 + (*(unsigned char *)(*map_tiles + (*MapRowStride * ny + (nx >> 1)) * 0x2c) >> 5);
+        local_10 = local_10 + (map_tiles()[static_cast<int>(MapLongitude) * ny + (nx >> 1)].climate >> 5);
         local_14 = local_14 + 1;
         iVar6 = iVar6 + 4;
         if (local_14 > 3) {
@@ -6993,27 +6987,25 @@ merge:
                     if (local_c > 0x7e) {
                         stored = 0x7f;
                     }
-                    *((char *)this->owned_ + (dirIndex & 3) + 5 + ((width >> 1) * ny + nx) * 0xc) = (char)stored;
+                    this->owned_[(width >> 1) * ny + nx].altitude[(dirIndex & 3) + 1] = static_cast<signed char>(stored);
                 }
                 width = MapLongitudeBounds;
                 if (useAltMode) {
                     int slot = (dirIndex & 3) + 1;
                     if (this->owned_ != 0 && slot != 0) {
                         int shift = slot * 4 - 4;
-                        char * cell = (char *)this->owned_ + ((MapLongitudeBounds >> 1) * ny + nx) * 0xc;
-                        unsigned short * dst = (unsigned short *)(cell + 10);
-                        *dst = (unsigned short)((~(0xf << (shift & 0x1f)) & *dst) | (4 << (shift & 0x1f)));
+                        unsigned short &dst = this->owned_[(MapLongitudeBounds >> 1) * ny + nx].altitude_detail;
+                        dst = static_cast<unsigned short>((~(0xf << (shift & 0x1f)) & dst) | (4 << (shift & 0x1f)));
                         width = MapLongitudeBounds;
                     }
                 } else {
                     int slot = (dirIndex & 3) + 1;
                     if (this->owned_ != 0 && slot != 0) {
                         int shift = slot * 4 - 4;
-                        char * cell = (char *)this->owned_ + ((MapLongitudeBounds >> 1) * ny + nx) * 0xc;
-                        unsigned short * dst = (unsigned short *)(cell + 10);
-                        unsigned char t = *(unsigned char *)(*map_tiles + (*MapRowStride * ny + nx) * 0x2c);
+                        TerrainCacheEntry &cell = this->owned_[(MapLongitudeBounds >> 1) * ny + nx];
+                        unsigned char t = map_tiles()[static_cast<int>(MapLongitude) * ny + nx].climate;
                         int v = ((local_10 - ((t >> 3) & 0xfffffffc)) + 4) & 0xf;
-                        *dst = (unsigned short)((~(0xf << (shift & 0x1f)) & *dst) | (v << (shift & 0x1f)));
+                        cell.altitude_detail = static_cast<unsigned short>((~(0xf << (shift & 0x1f)) & cell.altitude_detail) | (v << (shift & 0x1f)));
                         width = MapLongitudeBounds;
                     }
                 }
@@ -7556,9 +7548,7 @@ int MapWin::get_point_light(int x, int y, int corner) {
     int total = 0;
     int localLight = 0;
 
-    unsigned int rec =
-        *reinterpret_cast<const unsigned int *>(reinterpret_cast<const uint8_t *>(*map_tiles) +
-            (*MapRowStride * y + (x >> 1)) * 0x2c + 0xc);
+    unsigned int rec = map_tiles()[static_cast<int>(MapLongitude) * y + (x >> 1)].bit2;
     int shade = static_cast<int>(rec) >> 0x18;
 
     if ((rec & 1) == 0) {

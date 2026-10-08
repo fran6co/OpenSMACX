@@ -61,3 +61,22 @@ def test_actual_altitude_flat_conditions(tmp_path):
     subprocess.run([compiler, "-std=c++11", "-Werror", "-Wint-to-pointer-cast",
                     str(fixture), "-o", str(executable)], check=True, capture_output=True)
     subprocess.run([str(executable)], check=True, capture_output=True)
+
+
+def test_original_altitude_bonus_extension_contract():
+    path = ROOT / ".opensmacx/game/terranx_original.exe"
+    if not path.is_file():
+        pytest.skip("pinned game unavailable")
+    capstone = pytest.importorskip("capstone")
+    data = path.read_bytes()
+    assert sha256(data).hexdigest() == PIN
+    decoder = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_32)
+    # Decode from the proven function entry, never from a guessed interior.
+    instructions = list(decoder.disasm(
+        PeImage(data, PIN).read(Span(0x46FE70, 0x470414)), 0x46FE70))
+    by_address = {i.address: (i.mnemonic, i.op_str) for i in instructions}
+    assert by_address[0x46FF45] == ("xor", "eax, eax")
+    assert by_address[0x46FF47] == ("mov", "al, byte ptr [edx + 0x7d3b74]")
+    for address, table in ((0x46FF60, 0x7F65D0), (0x46FF7A, 0x7F655C),
+                           (0x46FF94, 0x7D3A78), (0x46FFAE, 0x7F64E8)):
+        assert by_address[address] == ("movsx", f"eax, byte ptr [edx + {table:#x}]")
