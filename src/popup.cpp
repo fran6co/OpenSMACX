@@ -381,10 +381,7 @@ char *PopupStartAltFile1 = PopupAlienScriptName;    // 0x00691B20
 // RECOVERY_OBJECT: v1 0x00691B24 ?PopupStartAltFile2@@3PADA
 char *PopupStartAltFile2 = PopupAlienOtherScriptName;    // 0x00691B24
 
-// The separator between the unit-history entries, the same image .data string
-// buffer.cpp and socialwin.cpp bind as SpaceText - it reads " ". Static, so
-// each TU folds its own copy to the immediate the way theirs do.
-static int *const SpaceText = (int *)0x00682820;
+// Unit-history entries use the existing BufferJoinSpace source owner.
 
 // 0x006A721C, the modal-popup flag every popup driver parks 6 in while its
 // popup runs and clears the moment exec comes back. See the note in popup.h.
@@ -2010,7 +2007,7 @@ int Popup::on_exec() {
 
     for (int i = 0; i < total; i++) {
         if (i != 0) {
-            strcat(StringTemp, reinterpret_cast<const char *>(SpaceText));
+            strcat(StringTemp, BufferJoinSpace);
         }
 
         const uint32_t head = reinterpret_cast<uint32_t>(unit_ids_.head_);

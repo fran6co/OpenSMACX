@@ -5370,7 +5370,7 @@ int Buffer::wrap_height_flying(char * a1) {
                     field_14_ = 0;
                 }
             } while (true);
-            char *prompt = (char *)0x00696CD8;
+            char *prompt = const_cast<char *>(BufferMeasureSpace);
             if (prompt != 0) {
                 unsigned int len = strlen(prompt);
                 int width = text_width(prompt, (int)len);

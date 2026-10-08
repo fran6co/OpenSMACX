@@ -688,8 +688,8 @@ int __cdecl pop_wait();
 int __cdecl tut_check2(int flag);
 // The alpha(x).txt keys and panel sprites the editor popups raise (popp's
 // label argument is an alpha.txt key, not display text; the `alunit_sm.pcx`
-// forms are the alien-faction variants). SpaceText's convention applies:
-// the image's .data carries the literal, the address is what the code holds.
+// forms are the alien-faction variants). The following names bind the original
+// NUL-terminated .data literals directly.
 static char *const EditorNamePopupLabel = (char *)0x00683604;   // INTRINSICNAME
 static char *const EditorNamePopupAlienLabel = (char *)0x006835E8;
 static char *const EditorNamePopupSprite = (char *)0x006835F8;  // unit_sm.pcx
@@ -707,11 +707,9 @@ static char *const EditorOverwritePopupAlienLabel = (char *)0x0068369C;
 static char *const EditorOverwritePopupSprite = (char *)0x006836AC;
 static char *const EditorOverwritePopupAlienSprite = (char *)0x0068368C;
 
-// Stack-panel string fragments the image holds beside SpaceText: "(", ")",
+// Stack-panel fragments; BufferJoinSpace supplies the shared separator. "(", ")",
 // ". ", ": " and "#".
 static char *const EditorOpenParen = (char *)0x00682E9C;
-static char *const SpaceText = (char *)0x00682820;   // " " - the same binding
-    // buffer.cpp, popup.cpp and socialwin.cpp carry under this name.
 static char *const EditorCloseParen = (char *)0x00682E98;
 static char *const EditorDotSpace = (char *)0x00683920;
 static char *const EditorColonSpace = (char *)0x00682E90;
@@ -2880,7 +2878,7 @@ void DesignWin::draw_chassis(int redraw) {
     const unsigned char triad = Chassis[chassis].triad;
     strcat(StringTemp, StringTable.get(static_cast<int>(
         reinterpret_cast<intptr_t>(Triad[triad]))));
-    strcat(StringTemp, SpaceText);
+    strcat(StringTemp, BufferJoinSpace);
     char speed[80];
     _itoa(static_cast<int>(Chassis[chassis].speed), speed, 10);
     strcat(StringTemp, speed);
@@ -4182,7 +4180,7 @@ void DesignWin::draw_stack() {
                 canvas->set_text_color(0xF8 + ((-(seen != 0)) & 7), -1, 1, 1);
                 strcat(StringTemp, StringTable.get((int)reinterpret_cast<LPSTR *>(
                     Labels.strings_ptr)[0x390]));
-                strcat(StringTemp, SpaceText);
+                strcat(StringTemp, BufferJoinSpace);
                 strcat(StringTemp, EditorOpenParen);
                 char digits[0x20];
                 _itoa(proto_id % 64 + 1, digits, 10);
@@ -4227,7 +4225,7 @@ void DesignWin::draw_stack() {
                                                          + unit_id * 0x34));
             if ((*InterfaceFlagByte & 0x40) != 0
                 && (*InterfaceFlagTail & 0x10) != 0) {
-                strcat(StringTemp, SpaceText);
+                strcat(StringTemp, BufferJoinSpace);
                 strcat(StringTemp, EditorOpenParen);
                 char digits[0x20];
                 _itoa(proto_id, digits, 10);
@@ -4248,7 +4246,7 @@ void DesignWin::draw_stack() {
             // Slot 0x6E of the same label block: the "undesigned" caption.
             strcat(StringTemp, StringTable.get((int)reinterpret_cast<LPSTR *>(
                 Labels.strings_ptr)[0x6E]));
-            strcat(StringTemp, SpaceText);
+            strcat(StringTemp, BufferJoinSpace);
             strcat(StringTemp, EditorHashSign);
             char digits[0x20];
             _itoa(proto_id % 64 + 1, digits, 10);
@@ -4648,7 +4646,7 @@ void DesignWin::draw_flash() {
             StringTemp[0] = '\0';
             _itoa(PlayersData[factionID_].proto_id_active[shown], digits, 10);
             strcat(StringTemp, digits);
-            strcat(StringTemp, SpaceText);
+            strcat(StringTemp, BufferJoinSpace);
             strcat(StringTemp,
                    StringTable.get((int)reinterpret_cast<LPSTR *>(
                        Labels.strings_ptr)[0x3A0]));
@@ -4658,7 +4656,7 @@ void DesignWin::draw_flash() {
             StringTemp[0] = '\0';
             _itoa(PlayersData[factionID_].proto_id_queue[shown], digits, 10);
             strcat(StringTemp, digits);
-            strcat(StringTemp, SpaceText);
+            strcat(StringTemp, BufferJoinSpace);
             strcat(StringTemp,
                    StringTable.get((int)reinterpret_cast<LPSTR *>(
                        Labels.strings_ptr)[0x3A1]));
@@ -4846,7 +4844,7 @@ void DesignWin::select_special(int which) {
                 char digits[0x20];
                 _itoa(ability, digits, 10);
                 strcat(StringTemp, digits);
-                strcat(StringTemp, SpaceText);
+                strcat(StringTemp, BufferJoinSpace);
                 strcat(StringTemp, EditorOpenParen);
             }
         } else if (kind >= -7) {
@@ -4869,7 +4867,7 @@ void DesignWin::select_special(int which) {
                 }
                 _itoa(ratio, digits, 10);
                 strcat(StringTemp, digits);
-                strcat(StringTemp, SpaceText);
+                strcat(StringTemp, BufferJoinSpace);
                 strcat(StringTemp, EditorOpenParen);
                 strcat(StringTemp, StringTable.get((int)labels[0x1F0]));
                 strcat(StringTemp, SpecialSlashSign);
@@ -4880,7 +4878,7 @@ void DesignWin::select_special(int which) {
             case 5:
                 _itoa(static_cast<int>(weapon_cost) - 1, digits, 10);
                 strcat(StringTemp, digits);
-                strcat(StringTemp, SpaceText);
+                strcat(StringTemp, BufferJoinSpace);
                 strcat(StringTemp, EditorOpenParen);
                 strcat(StringTemp, StringTable.get((int)labels[0x1F0]));
                 strcat(StringTemp, SpecialMinusOneText);
@@ -4889,7 +4887,7 @@ void DesignWin::select_special(int which) {
             case 4:
                 _itoa(static_cast<int>(armor_cost) - 1, digits, 10);
                 strcat(StringTemp, digits);
-                strcat(StringTemp, SpaceText);
+                strcat(StringTemp, BufferJoinSpace);
                 strcat(StringTemp, EditorOpenParen);
                 strcat(StringTemp, StringTable.get((int)labels[0x154]));
                 strcat(StringTemp, SpecialMinusOneText);
@@ -4898,7 +4896,7 @@ void DesignWin::select_special(int which) {
             case 3:
                 _itoa(static_cast<int>(chassis_speed) - 1, digits, 10);
                 strcat(StringTemp, digits);
-                strcat(StringTemp, SpaceText);
+                strcat(StringTemp, BufferJoinSpace);
                 strcat(StringTemp, EditorOpenParen);
                 strcat(StringTemp, StringTable.get((int)labels[0xB14]));
                 strcat(StringTemp, SpecialMinusOneText);
@@ -4908,7 +4906,7 @@ void DesignWin::select_special(int which) {
                 _itoa(static_cast<int>(armor_cost + weapon_cost) - 2, digits,
                       10);
                 strcat(StringTemp, digits);
-                strcat(StringTemp, SpaceText);
+                strcat(StringTemp, BufferJoinSpace);
                 strcat(StringTemp, EditorOpenParen);
                 strcat(StringTemp, StringTable.get((int)labels[0x1F0]));
                 strcat(StringTemp, SpecialPlusSignText);
@@ -4920,7 +4918,7 @@ void DesignWin::select_special(int which) {
                 _itoa(static_cast<int>(chassis_speed + weapon_cost) - 2,
                       digits, 10);
                 strcat(StringTemp, digits);
-                strcat(StringTemp, SpaceText);
+                strcat(StringTemp, BufferJoinSpace);
                 strcat(StringTemp, EditorOpenParen);
                 strcat(StringTemp, StringTable.get((int)labels[0x1F0]));
                 strcat(StringTemp, SpecialPlusSignText);
@@ -4932,7 +4930,7 @@ void DesignWin::select_special(int which) {
                 _itoa(static_cast<int>(chassis_speed + armor_cost) - 2, digits,
                       10);
                 strcat(StringTemp, digits);
-                strcat(StringTemp, SpaceText);
+                strcat(StringTemp, BufferJoinSpace);
                 strcat(StringTemp, EditorOpenParen);
                 strcat(StringTemp, StringTable.get((int)labels[0x154]));
                 strcat(StringTemp, SpecialPlusSignText);
