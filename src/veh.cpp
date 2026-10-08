@@ -926,16 +926,16 @@ tail:
 }
 
 // ORIGINAL: 0x0055A150 ?veh_scoot@@YAXHHHHH@Z 0x0055A150-0x0055AF11;0x0065FF70-0x0065FFC7
-// RECOVERY_BINDING: v1 {"evidence": ["Original55A175..55A1D9 constructs Buffer[8],Vector[8],singleton Vector,Vector[8], with reverse normal teardown55AEA7..55AEFB and EH65FF70..65FFC7. Use genuine value subtraction, mutating scale and compound operations. Preserve flags1 turn-only cleanup, flags4000 immediate redraw, fresh MapWinTable receivers and preference reads, source/destination copy direction, wrap and timing. Zero-initialized active flags explicitly make null slots inactive rather than preserving original uninitialized reads.", "Preserve existing seed identity and complete original spans. Source binding is not a measured matching or runtime claim."], "reason": "Recover real movement animation with automatic Buffer and Vector lifetime rather than raw stack/return-slot scaffolding."}
+// RECOVERY_BINDING: v1 {"evidence": ["Original55A175..55A1D9 constructs Buffer[8],Vector[8],singleton Vector,Vector[8], with reverse normal teardown55AEA7..55AEFB and EH65FF70..65FFC7. Use genuine value subtraction, mutating scale and compound operations. Preserve flags1 turn-only cleanup, flags4000 immediate redraw, fresh MapWinTable receivers and preference reads, source/destination copy direction, wrap and timing. Original55A29D/55A65C skips active-slot zeroing for null MapWinTable entries; later reads55AA60/55AC10/55AE26 retain the indeterminate-stack quirk. Buffer array [EBP-2EF8,EBP-2B8) is disjoint from active flags [EBP-B0,EBP-90). Null-slot runtime effects remain unverified, not normalized to inactive.", "Preserve existing seed identity and complete original spans. Source binding is not a measured matching or runtime claim."], "reason": "Recover real movement animation with automatic Buffer and Vector lifetime rather than raw stack/return-slot scaffolding."}
 void __cdecl veh_scoot(int veh_id, int tile_x, int tile_y, int direction, int flags) {
     Buffer saved[8];
     Vector position[8];
     Vector destination;
     Vector increment[8];
-    // Original skips the flag store for null slots. Startup normally fills
-    // all eight slots; explicitly treating null slots as inactive is a
-    // coordinator-authorized safety correction to that undefined case.
-    int active[8] = {0};
+    // Pinned scans initialize active[i] only for non-null MapWinTable[i].
+    // Retain the original indeterminate-read quirk for null slots; do not
+    // substitute a deterministic inactive value for that unverified path.
+    int active[8];
     int start_x[8], start_y[8], end_x[8], end_y[8];
     int margin_x[8], margin_y[8];
     RECT area[8];

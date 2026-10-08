@@ -326,14 +326,16 @@ void clock_wrap() {
     times={0xFFFFFFFCu,0xFFFFFFFDu,3u,4u,20u,36u,52u};run();
     require(time_index==7 && select("pump").size()==6);
 }
-void no_windows() {
-    MapWinTable[0]=nullptr;run();
+void no_visible_windows() {
+    // All slots are live, so flags are initialized; primary misses both tiles.
+    // This is not an oracle for the original indeterminate null-slot path.
+    views[0].field_1DDA4_=1000;views[0].field_1DDA8_=1000;run();
     require(select("tile").empty() && select("draw").empty() && select("capture").empty());
     require(select("scoot_start").size()==1 && select("undo").size()==8);
 }
 void multiple_windows() {
     MapWinTable[1]=&views[1];views[1].field_1DD74_=0;
-    MapWinTable[2]=&views[2];
+    MapWinTable[2]=&views[2];views[2].field_1DD74_=1;
     // Primary view remains eligible regardless of its own secondary enable flag.
     views[0].field_1DD74_=0;
     run();
@@ -355,8 +357,11 @@ void exception_case(int phase) {
 }
 int main(int argc,char **argv) {
     require(argc==2);
-    for(int i=0;i<8;++i)views[i].view_id=i;
-    MapWinTable[0]=&views[0];
+    for(int i=0;i<8;++i) {
+        views[i].view_id=i;
+        MapWinTable[i]=&views[i];
+        if(i!=0)views[i].field_1DD74_=0;
+    }
     std::string s=argv[1];
     if(s=="geometry")geometry();
     else if(s=="flag1")flags_case(false);
@@ -370,7 +375,7 @@ int main(int argc,char **argv) {
     else if(s=="foreign_net")network(true);
     else if(s=="reject")rejection();
     else if(s=="clock")clock_wrap();
-    else if(s=="null")no_windows();
+    else if(s=="no_visible")no_visible_windows();
     else if(s=="multiple")multiple_windows();
     else if(s=="throw_play")exception_case(1);
     else if(s=="throw_init")exception_case(2);
@@ -395,6 +400,12 @@ def compile_host(tmp_path, source):
     return executable
 
 
+def test_original_active_flags_have_no_array_initializer():
+    # A source-fidelity witness only: runtime tests below use initialized slots.
+    # Host C++ cannot establish the original null-slot stack contents.
+    assert "int active[8];" in actual_source()
+
+
 @pytest.fixture(scope="module")
 def actual_executable(tmp_path_factory):
     return compile_host(tmp_path_factory.mktemp("vehicle-scoot"), actual_source())
@@ -402,7 +413,7 @@ def actual_executable(tmp_path_factory):
 
 @pytest.mark.parametrize("scenario", [
     "geometry", "flag1", "immediate", "wrap", "flat", "retain", "callbacks",
-    "preference", "local_net", "foreign_net", "reject", "clock", "null",
+    "preference", "local_net", "foreign_net", "reject", "clock", "no_visible",
     "multiple", "throw_play", "throw_init", "throw_update",
 ])
 def test_actual_vehicle_scoot(actual_executable, scenario):
