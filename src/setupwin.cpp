@@ -534,6 +534,30 @@ SetupWin::SetupWin() {
     field_A18_ = WinScreenHeight;
 }
 
+// SetupWin::close, 0x004AD9C0. The setup owner clears its per-window fields,
+// closes its Buffer and Spot members, then drains the embedded StringList.
+/*
+Purpose: Clear SetupWin state and release its Buffer, Spot and embedded list.
+// ORIGINAL: 0x004AD9C0 ?close@SetupWin@@QAEXXZ 0x004AD9C0-0x004ADA7B FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original 0x004AD9C0..0x004ADA7A is ?close@SetupWin@@QAEXXZ; inspect --callers finds 13 direct incoming calls in mapped newgame.cpp spans.", "Current source already has seven `setup.close()` call sites in newgame.cpp on genuine SetupWin locals. With the derived declaration, ordinary lookup selects the original SetupWin member rather than inherited GraphicWin::close.", "Pinned operation order is selected_row, row_count, field_A14, field_A18, Buffer::close at +0xA44, Spot::shutdown at +0xFD4, embedded list cleanup at +0xFE0, and unconditional cursor reset at +0xFF4. These are existing SetupWin members.", "The +0xFE0 record is the declared embedded StringList field_FE0_; StringStructEntry/payload types and StringList::on_remove/remove_all are source-owned. `StringStruct::remove_all` uses the same head/next/payload callback and deleting sequence as the pinned loop, with a live entry_count_ reload each iteration.", "SetupWin::~SetupWin already uses field_FE0_.remove_all() after the same state/Buffer/Spot cleanup. This migration does not broaden SetupWin extent or invent the unused item_texts_ pointer as the list owner."], "reason": "Move the original SetupWin thiscall from the foreign fastcall shim into its genuine class owner, use its existing fields and inherited StringList cleanup, and let existing newgame SetupWin locals bind to the correct member. Keep the original branch, cleanup and caller-resolution obligations; grant no match claim."}
+// symbol    ?close@SetupWin@@QAEXXZ
+*/
+void SetupWin::close() {
+    selected_row_ = 0;
+    row_count_ = 0;
+    field_A14_ = 0;
+    field_A18_ = 0;
+    buffer_.close();
+    spot_.shutdown();
+
+    if (field_FE0_.head_ != 0) {
+        field_FE0_.remove_all();
+    }
+    field_FE0_.current_position_ = 0;
+}
+
+
+
 // ORIGINAL: 0x004AE790 ??1SetupWin@@QAE@XZ 0x004AE790-0x004AE99E;0x006596A0-0x006596F5
 // RECOVERY_BINDING: v1 {"reason":"Recover the complete body in its genuine C++ owner, with real embedded members, shared virtual bases, lifecycle and parent operations. Compiler-generated overrides/adjustors replace executable-address or vbtable stand-ins; no current matching claim is granted.","evidence":["git:de91fffe:src/recovered/units/004ae790.cpp","image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","recovery/tasks/ui-eight-owner-coverage.json","Original entry 0x004ae790; physical VC6 COFF emitted symbol ??1SetupWin@@UAE@XZ."]}
 // symbol    ??1SetupWin@@UAE@XZ

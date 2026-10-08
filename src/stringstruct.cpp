@@ -655,7 +655,6 @@ char *__cdecl get_he_she(int faction_id, int sentence_form) {
 #include "pulldown.h"   // PullDown - the menu handlers are defined in this wave
 #include "reportwin.h"  // ReportWin - on_redraw is defined in this wave
 #include "diplopop.h"   // DiploPop - on_redraw is defined in this wave
-#include "setupwin.h"   // SetupWin - close is defined in this wave
 #include "mapwin.h"    // MapWin + MainInterfaceGlobal (0x007AE820)
 #include "map.h"       // MapIsFlat / MapLongitudeBounds - the cursor wrap
 #include "maininterface.h"  // MainInterface::restore_back - DiploPop's opener
@@ -702,12 +701,6 @@ union ReturnSlotShim {
     int (ReturnSlotObj::*fn)();
     void *raw;
 };
-class ArgSlotObj { public: void slot(int); };
-union ArgSlotShim {
-    void (ArgSlotObj::*fn)(int);
-    void *raw;
-};
-class ModeReleaseObj { public: void release(void *); };
 }
 
 // ---------------------------------------------------------------------------
@@ -953,77 +946,6 @@ extern "C" void __fastcall sub_447d20(void *self_raw, void *) {
 
 
 // ---------------------------------------------------------------------------
-// SetupWin::close, 0x004AD9C0. The setup window's teardown: clear the
-// per-window state words, close the owned buffer, shut the hotspot array
-// down, then walk the interface-mode list releasing every entry's payload
-// before clearing the list head. The member is undeclared in setupwin.h, so
-// the receiver travels explicitly; the original is a __thiscall member.
-/*
-Purpose: Tear the setup window down: clear state, close the owned buffer,
-         release the hotspot array and drain the interface-mode list.
-// ORIGINAL: 0x004AD9C0 ?close@SetupWin@@QAEXXZ 0x004AD9C0-0x004ADA7B FILE
-// RECOVERY_BINDING: v1 {"evidence": ["Original4AD9C0..4ADA7B; retired seed git:117282ee:src/unrecovered/004ad9c0.cpp records the same identity and spans with its adjustor-thunk TRIED note kept below.", "The storage is setupwin.h's own model: state words 0xA14/0xA18, the Buffer at 0xA44 and Spot at 0xFD4 are declared members, and the interface-mode manager block sits at 0xFE0 with its head/count/cursor at +8/+0xC/+0x10.", "The list payload release and the deleting-destructor dispatch run through member-fn-pointer unions because the payload's class is unnamed; the adjusted-receiver dispatch is the seed's vtbl+4 walk."], "reason": "Coverage transcription of the setup teardown on the typed SetupWin storage with the mode-list walk kept at the seed's shape."}
-Status: Coverage transcription - unclaimed body
-*/
-extern "C" void __fastcall SetupWin_close(SetupWin *self, void *) {
-    char *const base = reinterpret_cast<char *>(self);
-    self->selected_row_ = 0;
-    self->row_count_ = 0;
-    self->field_A14_ = 0;
-    self->field_A18_ = 0;
-    self->buffer_.close();
-    self->spot_.shutdown();
-
-    char *const mgr = base + 0xFE0;
-    if (*reinterpret_cast<int *>(mgr + 8) != 0) {
-        // The mode list's slot-1 release takes the entry payload.
-        typedef void (ModeReleaseObj::*ModeReleaseFn)(void *);
-        union ModeReleaseShim {
-            ModeReleaseFn fn;
-            void *raw;
-        };
-        ModeReleaseShim release;
-        release.raw = (*reinterpret_cast<void ***>(mgr))[1];
-        int i;
-        for (i = 0; i < *reinterpret_cast<int *>(mgr + 0x10); ++i) {
-            char *const item = *reinterpret_cast<char **>(mgr + 8);
-            *reinterpret_cast<int *>(mgr + 0xC) =
-                *reinterpret_cast<int *>(item + 0xC);
-            void *const payload = *reinterpret_cast<void **>(item + 8);
-            (reinterpret_cast<ModeReleaseObj *>(mgr)->*release.fn)(payload);
-            if (payload != 0) {
-                // The payload's deleting destructor enters through its own
-                // adjusted receiver (vtbl slot 1 displacement).
-                const int displacement =
-                    *reinterpret_cast<int *>(*reinterpret_cast<char **>(payload) + 4);
-                ArgSlotShim delete_payload;
-                delete_payload.raw =
-                    (*reinterpret_cast<void ***>(payload))[0];
-                char *const adjusted =
-                    reinterpret_cast<char *>(payload) + displacement;
-                (reinterpret_cast<ArgSlotObj *>(adjusted)->*delete_payload.fn)(1);
-            }
-            *reinterpret_cast<int *>(
-                *reinterpret_cast<char **>(mgr + 8) + 8) = 0;
-            char *const item2 = *reinterpret_cast<char **>(mgr + 8);
-            if (item2 != 0) {
-                const int displacement2 =
-                    *reinterpret_cast<int *>(*reinterpret_cast<char **>(item2) + 4);
-                ArgSlotShim delete_item;
-                delete_item.raw =
-                    (*reinterpret_cast<void ***>(item2))[0];
-                char *const adjusted2 = item2 + displacement2;
-                (reinterpret_cast<ArgSlotObj *>(adjusted2)->*delete_item.fn)(1);
-            }
-            *reinterpret_cast<int *>(mgr + 8) = *reinterpret_cast<int *>(mgr + 0xC);
-        }
-        *reinterpret_cast<int *>(mgr + 8) = 0;
-        *reinterpret_cast<int *>(mgr + 0x14) = 0;
-        *reinterpret_cast<int *>(mgr + 0x10) = 0;
-    }
-    *reinterpret_cast<int *>(base + 0xFF4) = 0;
-}
-
 // ---------------------------------------------------------------------------
 // MapWin::draw_cursor, 0x0046AD60. The map's terrain cursor repaint: fetch
 // the current cursor tile from the parallel x/y tables, clip it against the

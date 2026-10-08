@@ -890,6 +890,7 @@ Purpose: Load the MIDI from a caller-supplied filename. With no wrapped
 // rather than anything source-form can steer - the same class of thing the
 // scheduler notes above describe for `lea`/`push` ordering.
 // ORIGINAL: 0x004C7D80 ?load@Midi@@QAEHPBD@Z 0x004C7D80-0x004C7DCD
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned 0x4C7DB8 loads filename stack word into EAX; 0x4C7DBB tests it and only a nonzero word bypasses Sound::load at0x4C7DC2.", "Pinned 0x4C7D86 checks receiver device at+3C. Missing device uses the guarded factory with mode2; factory failure remains its returned integer.", "Existing Midi and Sound declarations own this virtual override and device field. The free factory and qualified base call retain their existing ABI; pointer-to-int narrowing is the configured 32-bit target interpretation."], "reason": "Preserve the original pointer-valued integer status on the already-wrapped MIDI path; a null filename must still reach the qualified Sound loader."}
 // symbol    ?load@Midi@@UAEHPBD@Z
 // size      78 bytes
 // prototype int (__thiscall ?load@Midi@@QAEHPBD@Z)(Midi* this, int8*)
@@ -902,12 +903,12 @@ Purpose: Load the MIDI from a caller-supplied filename. With no wrapped
 //        product spelling (the task's one genuinely unmeasured body).
 //        The Sound::load call is QUALIFIED because Midi::load(const
 //        char*) overrides the same virtual - unqualified would recurse.
-// BUG IN THE ORIGINAL, not reproduced: with a sequencer already wrapped
-//        the image returns the FNAME POINTER (`mov eax,[ebp+8]`) as the
-//        status word; this tree returns 1. Both are nonzero - callers
-//        treat the busy path as an error either way - but a pointer
-//        reinterpreted as status is not a spelling any honest int has.
-//        The unreproduced bug is also the residual byte diagnostic: the
+// Original ABI quirk: with a sequencer already wrapped, the image returns
+//        the filename pointer bits as its integer status. A null filename
+//        instead reaches Sound::load(nullptr); do not normalize either path
+//        to a constant error code. Pointer-to-int narrowing below follows
+//        the configured 32-bit VC6 target, not a portable pointer-width claim.
+// Historical pre-restoration compiler diagnostic:
 //        image hoists `lea eax,[esi+0x3C]` before the null test and caches
 //        the argument in edi, so its guard and Sound::load sit at offsets
 //        22 and 67 where this spelling puts them at 19 and 62. The
@@ -915,8 +916,9 @@ Purpose: Load the MIDI from a caller-supplied filename. With no wrapped
 //        (measured 2026-09-18) through the SoundDllProcs table - the
 //        include note above explains why the fixed-address accessor
 //        cannot.
-Return Value: 0 on success, 1 with a dead creation hook, the creation
-              error, or the base loader's answer
+Return Value: filename pointer bits when already wrapped and non-null;
+              otherwise 1 with a dead creation hook, the creation error,
+              or the base loader's answer
 Status: Complete
 */
 int Midi::load(const char *a1) {
@@ -928,8 +930,7 @@ int Midi::load(const char *a1) {
         result = (*reinterpret_cast<func_wave_device_create **>(
             &SoundDllProcs[0]))(&device_, a1, 2);
     } else {
-        result = 1;  // the image returns the fname pointer here; see the
-                     // BUG note above
+        result = static_cast<int>(reinterpret_cast<uintptr_t>(a1));
     }
     if (result != 0) {
         return result;
