@@ -90,6 +90,7 @@ RECT initial_clip;
 struct Font {
     int height_;
     Font():height_(17){events.push_back("font-create");}
+    int pixel_height() const{return height_;}
     int init(const char *face,int height,int flags){require(face==DefaultFontFace && height==12 && flags==1);events.push_back("font-init");height_=11;return 0;}
     ~Font();
 };

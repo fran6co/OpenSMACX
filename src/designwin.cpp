@@ -2814,7 +2814,7 @@ void DesignWin::draw_chassis(int redraw) {
     rect2.right = rect.right;
 
     const int title_height = designwin_panel_font_height(
-        font2_.unk_1_, font2_.line_height_, font2_.height_);
+        font2_.unk_1_, font2_.line_height(), font2_.pixel_height());
     rect.top = designwin_panel_add(rect.top, title_height);
     // Native initializes only left/right/top here; rect2.bottom remains the
     // original stack value passed through the Buffer call.
@@ -2832,7 +2832,7 @@ void DesignWin::draw_chassis(int redraw) {
     const int model_bottom = designwin_panel_subtract(
         rect.bottom,
         designwin_panel_add(
-            designwin_panel_signed(static_cast<uint32_t>(font1_.height_) * 2u),
+            designwin_panel_signed(static_cast<uint32_t>(font1_.pixel_height()) * 2u),
             5));
     rect.bottom = model_bottom;
     vehdraw_construct_chassis(static_cast<int>(factionID_), chassis,
@@ -2846,7 +2846,7 @@ void DesignWin::draw_chassis(int redraw) {
 
     canvas->set_font(&font1_, 0, 0, 0);
     rect2.top = rect.bottom;
-    rect.bottom = designwin_panel_add(rect.bottom, font1_.height_);
+    rect.bottom = designwin_panel_add(rect.bottom, font1_.pixel_height());
     canvas->set_text_color(TextColourTable[158], TextColourTable[159], 1, 1);
 
     StringTemp[0] = '\0';
@@ -2858,7 +2858,7 @@ void DesignWin::draw_chassis(int redraw) {
     const int required_width = font1_.width(StringTemp);
     if (available_width < required_width) {
         const int line_height = designwin_panel_font_height(
-            font2_.unk_1_, font2_.line_height_, font2_.height_);
+            font2_.unk_1_, font2_.line_height(), font2_.pixel_height());
         rect.bottom = designwin_panel_subtract(rect.bottom, line_height);
         rect2.top = designwin_panel_subtract(rect2.top, line_height);
         canvas->wrap_cent(StringTemp, &rect);
@@ -2869,7 +2869,7 @@ void DesignWin::draw_chassis(int redraw) {
                              static_cast<int>(strlen(StringTemp)));
     }
 
-    const int detail_advance = designwin_panel_add(font1_.height_, 3);
+    const int detail_advance = designwin_panel_add(font1_.pixel_height(), 3);
     rect2.top = designwin_panel_add(rect2.top, detail_advance);
     rect.bottom = designwin_panel_add(rect.bottom, detail_advance);
     canvas->set_text_color(TextColourTable[160], TextColourTable[161], 1, 1);
@@ -2931,7 +2931,7 @@ void DesignWin::draw_weapon(int redraw) {
     buffer_.copy(canvas, &area);
 
     const int title_height = designwin_panel_font_height(
-        font2_.unk_1_, font2_.line_height_, font2_.height_);
+        font2_.unk_1_, font2_.line_height(), font2_.pixel_height());
     RECT title = area;
     title.bottom = designwin_panel_add(title.top, title_height);
     StringTemp[0] = '\0';
@@ -2944,7 +2944,7 @@ void DesignWin::draw_weapon(int redraw) {
 
     const int name_top = designwin_panel_subtract(
         designwin_panel_subtract(area.bottom,
-            designwin_panel_add(font1_.height_, font1_.height_)), 5);
+            designwin_panel_add(font1_.pixel_height(), font1_.pixel_height())), 5);
     caviar_.reset_objects();
     const int weapon_id = static_cast<int>(protoWeaponType_);
     if (weapon_id == 0) {
@@ -2969,7 +2969,7 @@ void DesignWin::draw_weapon(int redraw) {
     canvas->set_font(&font1_, 0, 0, 0);
     RECT name_line = area;
     name_line.top = name_top;
-    name_line.bottom = designwin_panel_add(name_line.top, font1_.height_);
+    name_line.bottom = designwin_panel_add(name_line.top, font1_.pixel_height());
     canvas->set_text_color(TextColourTable[158], TextColourTable[159], 1, 1);
     StringTemp[0] = '\0';
     strcat(StringTemp, StringTable.get(static_cast<int>(
@@ -2977,12 +2977,12 @@ void DesignWin::draw_weapon(int redraw) {
     CharUpperA(StringTemp);
     if (font1_.width(StringTemp) > designwin_panel_subtract(area.right, area.left)) {
         const int wrap_height = designwin_panel_font_height(
-            font1_.unk_1_, font1_.line_height_, font1_.height_);
+            font1_.unk_1_, font1_.line_height(), font1_.pixel_height());
         name_line.top = designwin_panel_subtract(name_line.top, wrap_height);
         name_line.bottom = designwin_panel_subtract(name_line.bottom, wrap_height);
         canvas->wrap_cent(StringTemp, &name_line);
         const int restored_height = designwin_panel_font_height(
-            font1_.unk_1_, font1_.line_height_, font1_.height_);
+            font1_.unk_1_, font1_.line_height(), font1_.pixel_height());
         name_line.top = designwin_panel_add(name_line.top, restored_height);
         name_line.bottom = designwin_panel_add(name_line.bottom, restored_height);
     } else {
@@ -2991,7 +2991,7 @@ void DesignWin::draw_weapon(int redraw) {
     }
 
     RECT detail = name_line;
-    const int advance = designwin_panel_add(font1_.height_, 3);
+    const int advance = designwin_panel_add(font1_.pixel_height(), 3);
     detail.top = designwin_panel_add(detail.top, advance);
     detail.bottom = designwin_panel_add(detail.bottom, advance);
     canvas->set_text_color(TextColourTable[160], TextColourTable[161], 1, 1);
@@ -3027,7 +3027,7 @@ void DesignWin::draw_armor(int redraw) {
 
     RECT title = area;
     title.bottom = designwin_panel_add(title.top, designwin_panel_font_height(
-        font2_.unk_1_, font2_.line_height_, font2_.height_));
+        font2_.unk_1_, font2_.line_height(), font2_.pixel_height()));
     area.top = title.bottom;
     StringTemp[0] = '\0';
     designwin_panel_append_label(StringTemp, 0x1F8);
@@ -3037,7 +3037,7 @@ void DesignWin::draw_armor(int redraw) {
                          static_cast<int>(strlen(StringTemp)));
 
     area.bottom = designwin_panel_subtract(designwin_panel_subtract(
-        area.bottom, designwin_panel_add(font1_.height_, font1_.height_)), 5);
+        area.bottom, designwin_panel_add(font1_.pixel_height(), font1_.pixel_height())), 5);
     if (protoArmorType_ != 0) {
         caviar_.reset_objects();
         vehdraw_construct_armor(ConsoleGlobal.faction_id_,
@@ -3058,7 +3058,7 @@ void DesignWin::draw_armor(int redraw) {
 
     canvas->set_font(&font1_, 0, 0, 0);
     area.top = area.bottom;
-    area.bottom = designwin_panel_add(area.top, font1_.height_);
+    area.bottom = designwin_panel_add(area.top, font1_.pixel_height());
     canvas->set_text_color(TextColourTable[158], TextColourTable[159], 1, 1);
     StringTemp[0] = '\0';
     if (protoArmorType_ == 0)
@@ -3069,12 +3069,12 @@ void DesignWin::draw_armor(int redraw) {
     CharUpperA(StringTemp);
     if (font1_.width(StringTemp) > designwin_panel_subtract(area.right, area.left)) {
         const int advance = designwin_panel_font_height(
-            font1_.unk_1_, font1_.line_height_, font1_.height_);
+        font1_.unk_1_, font1_.line_height(), font1_.pixel_height());
         area.top = designwin_panel_subtract(area.top, advance);
         area.bottom = designwin_panel_subtract(area.bottom, advance);
         canvas->wrap_cent(StringTemp, &area);
         const int restored_advance = designwin_panel_font_height(
-            font1_.unk_1_, font1_.line_height_, font1_.height_);
+        font1_.unk_1_, font1_.line_height(), font1_.pixel_height());
         area.top = designwin_panel_add(area.top, restored_advance);
         area.bottom = designwin_panel_add(area.bottom, restored_advance);
     } else {
@@ -3082,7 +3082,7 @@ void DesignWin::draw_armor(int redraw) {
                              static_cast<int>(strlen(StringTemp)));
     }
 
-    const int advance = designwin_panel_add(font1_.height_, 3);
+    const int advance = designwin_panel_add(font1_.pixel_height(), 3);
     area.top = designwin_panel_add(area.top, advance);
     area.bottom = designwin_panel_add(area.bottom, advance);
     canvas->set_text_color(TextColourTable[160], TextColourTable[161], 1, 1);
@@ -3112,7 +3112,7 @@ void DesignWin::draw_reactor(int redraw) {
 
     RECT title = area;
     title.bottom = designwin_panel_add(title.top, designwin_panel_font_height(
-        font2_.unk_1_, font2_.line_height_, font2_.height_));
+        font2_.unk_1_, font2_.line_height(), font2_.pixel_height()));
     area.top = title.bottom;
     StringTemp[0] = '\0';
     designwin_panel_append_label(StringTemp, 0x13C);
@@ -3133,7 +3133,7 @@ void DesignWin::draw_reactor(int redraw) {
     const int description_height = canvas->wrap_height(
         StringTemp, designwin_panel_subtract(area.right, area.left));
     area.bottom = designwin_panel_subtract(designwin_panel_subtract(
-        designwin_panel_subtract(area.bottom, 5), description_height), font1_.height_);
+        designwin_panel_subtract(area.bottom, 5), description_height), font1_.pixel_height());
 
     caviar_.reset_objects();
     vehdraw_construct_reactor(ConsoleGlobal.faction_id_,
@@ -3146,10 +3146,10 @@ void DesignWin::draw_reactor(int redraw) {
                    designwin_panel_add(area.top, area.bottom) / 2, 6);
 
     area.top = area.bottom;
-    area.bottom = designwin_panel_add(area.top, font1_.height_);
+    area.bottom = designwin_panel_add(area.top, font1_.pixel_height());
     canvas->set_text_color(TextColourTable[158], TextColourTable[159], 1, 1);
     area.top = canvas->wrap_cent(StringTemp, &area);
-    area.bottom = designwin_panel_add(area.top, font1_.height_);
+    area.bottom = designwin_panel_add(area.top, font1_.pixel_height());
     canvas->set_text_color(TextColourTable[160], TextColourTable[161], 1, 1);
     StringTemp[0] = '\0';
     designwin_panel_append_label(StringTemp, 0x1E4);
@@ -3170,7 +3170,7 @@ void DesignWin::draw_special_1(int redraw) {
     buffer_.copy(canvas, &area);
 
     const int title_height = font2_.unk_1_ < 0
-        ? font2_.line_height_ : font2_.height_ + font2_.unk_1_;
+        ? font2_.line_height() : font2_.pixel_height() + font2_.unk_1_;
     RECT title = area;
     title.bottom = title.top + title_height;
     canvas->set_text_color(0xE0, -1, 1, 1);
@@ -3218,7 +3218,7 @@ void DesignWin::draw_special_2(int redraw) {
     buffer_.copy(canvas, &area);
 
     const int title_height = font2_.unk_1_ < 0
-        ? font2_.line_height_ : font2_.height_ + font2_.unk_1_;
+        ? font2_.line_height() : font2_.pixel_height() + font2_.unk_1_;
     RECT title = area;
     title.bottom = title.top + title_height;
     canvas->set_text_color(0xE0, -1, 1, 1);
@@ -3332,7 +3332,7 @@ void DesignWin::draw_vehicle(int redraw) {
 
     RECT dest;
     int adv = cur_font->unk_1_ < 0
-        ? cur_font->line_height_ : cur_font->height_ + cur_font->unk_1_;
+        ? cur_font->line_height() : cur_font->pixel_height() + cur_font->unk_1_;
     dest.top = src.top + adv;
     dest.bottom = src.top + adv + adv * 2;
     dest.left = src.left + 0x2d;
@@ -3370,7 +3370,7 @@ void DesignWin::draw_vehicle(int redraw) {
     dest.right = src.right;
     dest.left = src.left;
     adv = cur_font->unk_1_ < 0
-        ? cur_font->line_height_ : cur_font->height_ + cur_font->unk_1_;
+        ? cur_font->line_height() : cur_font->pixel_height() + cur_font->unk_1_;
     dest.bottom = (src.bottom - adv) + adv * -3;
     dest.top = src.bottom + adv * -3;
 
@@ -3397,8 +3397,8 @@ void DesignWin::draw_vehicle(int redraw) {
     field_B48_ = dest.bottom;
 
     if (Weapon[weapon_id].mode == 7) {
-        adv = ((cur_font->unk_1_ < 0 ? cur_font->line_height_
-                : cur_font->height_ + cur_font->unk_1_) * 3) / 2;
+        adv = ((cur_font->unk_1_ < 0 ? cur_font->line_height()
+                : cur_font->pixel_height() + cur_font->unk_1_) * 3) / 2;
         dest.bottom += adv;
         dest.top += adv;
         screen->set_font(&font2_, 0, 0, 0);
@@ -3415,8 +3415,8 @@ void DesignWin::draw_vehicle(int redraw) {
         && Chassis[chassis_id].speed == 1
         && Rules.combat_pct_infantry_vs_base != 0
         && (abilities & 0x8000) == 0) {
-        adv = ((cur_font->unk_1_ < 0 ? cur_font->line_height_
-                : cur_font->height_ + cur_font->unk_1_) * 3) / 2;
+        adv = ((cur_font->unk_1_ < 0 ? cur_font->line_height()
+                : cur_font->pixel_height() + cur_font->unk_1_) * 3) / 2;
         dest.top += adv;
         dest.bottom += adv;
         screen->set_font(&font2_, 0, 0, 0);
@@ -3434,8 +3434,8 @@ void DesignWin::draw_vehicle(int redraw) {
         && Chassis[chassis_id].speed > 1
         && Rules.combat_pct_mobile_open_ground != 0
         && (abilities & 0x8000) != 0) {
-        adv = ((cur_font->unk_1_ < 0 ? cur_font->line_height_
-                : cur_font->height_ + cur_font->unk_1_) * 3) / 2;
+        adv = ((cur_font->unk_1_ < 0 ? cur_font->line_height()
+                : cur_font->pixel_height() + cur_font->unk_1_) * 3) / 2;
         dest.bottom += adv;
         dest.top += adv;
         screen->set_font(&font2_, 0, 0, 0);
@@ -3456,7 +3456,7 @@ void DesignWin::draw_vehicle(int redraw) {
     dest.right = src.right;
     dest.top = src.top;
     adv = cur_font->unk_1_ < 0
-        ? cur_font->line_height_ : cur_font->height_ + cur_font->unk_1_;
+        ? cur_font->line_height() : cur_font->pixel_height() + cur_font->unk_1_;
     dest.bottom = src.top + adv;
 
     const int proto_price = static_cast<int>(proto_cost(
@@ -3604,8 +3604,8 @@ void DesignWin::draw_vehicle(int redraw) {
         }
     }
     if (!skip_to_name) {
-        adv = font2_.unk_1_ < 0 ? font2_.line_height_
-            : font2_.height_ + font2_.unk_1_;
+        adv = font2_.unk_1_ < 0 ? font2_.line_height()
+            : font2_.pixel_height() + font2_.unk_1_;
         src.top += adv;
         src.bottom += adv;
     }
@@ -3613,8 +3613,8 @@ void DesignWin::draw_vehicle(int redraw) {
     screen->set_text_color2(0xde, -1, 1, 1);
     screen->set_text_color(TextColourTable[150], TextColourTable[151], 1, 1);
     const int y = src.left + 0x14;
-    adv = font2_.unk_1_ < 0 ? font2_.line_height_
-        : font2_.height_ + font2_.unk_1_;
+    adv = font2_.unk_1_ < 0 ? font2_.line_height()
+        : font2_.pixel_height() + font2_.unk_1_;
     char *veh_name = preset_names_[6];
     int cap_x = (vehicle_panel_rect_.bottom + vehicle_panel_rect_.top) / 2
         + adv * -4;
@@ -3623,8 +3623,8 @@ void DesignWin::draw_vehicle(int redraw) {
         const unsigned int slen = static_cast<unsigned int>(strlen(veh_name));
         screen->write_l(&font2_, veh_name, y, cap_x, static_cast<int>(slen));
     }
-    adv = font2_.unk_1_ < 0 ? font2_.line_height_
-        : font2_.height_ + font2_.unk_1_;
+    adv = font2_.unk_1_ < 0 ? font2_.line_height()
+        : font2_.pixel_height() + font2_.unk_1_;
     cap_x += adv;
 
     screen->set_text_color2(TextColourTable[152], TextColourTable[153], 1, 1);
@@ -3656,8 +3656,8 @@ void DesignWin::draw_vehicle(int redraw) {
     }
     unsigned int slen = static_cast<unsigned int>(strlen(StringTemp));
     screen->write_l(StringTemp, y, cap_x, static_cast<int>(slen));
-    adv = font2_.unk_1_ < 0 ? font2_.line_height_
-        : font2_.height_ + font2_.unk_1_;
+        adv = font2_.unk_1_ < 0 ? font2_.line_height()
+            : font2_.pixel_height() + font2_.unk_1_;
     cap_x += adv;
 
     StringTemp[0] = 0;
@@ -3676,8 +3676,8 @@ void DesignWin::draw_vehicle(int redraw) {
         slen = static_cast<unsigned int>(strlen(StringTemp));
         screen->write_l(StringTemp, y, cap_x, static_cast<int>(slen));
     }
-    adv = font2_.unk_1_ < 0 ? font2_.line_height_
-        : font2_.height_ + font2_.unk_1_;
+        adv = font2_.unk_1_ < 0 ? font2_.line_height()
+            : font2_.pixel_height() + font2_.unk_1_;
     cap_x += adv;
 
     StringTemp[0] = 0;
@@ -3694,8 +3694,8 @@ void DesignWin::draw_vehicle(int redraw) {
     strcat(StringTemp, numbuf7);
     slen = static_cast<unsigned int>(strlen(StringTemp));
     screen->write_l(StringTemp, y, cap_x, static_cast<int>(slen));
-    adv = font2_.unk_1_ < 0 ? font2_.line_height_
-        : font2_.height_ + font2_.unk_1_;
+        adv = font2_.unk_1_ < 0 ? font2_.line_height()
+            : font2_.pixel_height() + font2_.unk_1_;
     cap_x += adv;
 
     StringTemp[0] = 0;
@@ -3708,8 +3708,8 @@ void DesignWin::draw_vehicle(int redraw) {
     strcat(StringTemp, numbuf8);
     slen = static_cast<unsigned int>(strlen(StringTemp));
     screen->write_l(StringTemp, y, cap_x, static_cast<int>(slen));
-    adv = font2_.unk_1_ < 0 ? font2_.line_height_
-        : font2_.height_ + font2_.unk_1_;
+    adv = font2_.unk_1_ < 0 ? font2_.line_height()
+        : font2_.pixel_height() + font2_.unk_1_;
     cap_x += adv;
 
     StringTemp[0] = 0;
@@ -3733,8 +3733,8 @@ void DesignWin::draw_vehicle(int redraw) {
     }
     slen = static_cast<unsigned int>(strlen(StringTemp));
     screen->write_l(StringTemp, y, cap_x, static_cast<int>(slen));
-    adv = font2_.unk_1_ < 0 ? font2_.line_height_
-        : font2_.height_ + font2_.unk_1_;
+    adv = font2_.unk_1_ < 0 ? font2_.line_height()
+        : font2_.pixel_height() + font2_.unk_1_;
 
     StringTemp[0] = 0;
     strcat(StringTemp, "{");

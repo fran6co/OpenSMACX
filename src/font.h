@@ -122,14 +122,6 @@ class Font {
   // 0x00603A50). Compile-time access only: no offset moves and no emitted
   // byte changes, the same edit this header made for unk_1_.
   friend class BasePop;
-  // `BaseWin`'s draw_* family reads an on-screen font's line_height_,
-  // height_ and unk_1_ directly to get its own row pitch - the same
-  // read `Win::flip` makes for the bubble. Compile-time access only:
-  // no offset moves and no emitted byte changes.
-  friend class BaseWin;
-  // DesignWin panel drawing reads the same font height and line advance
-  // words to size its caption and preview regions.
-  friend class DesignWin;
 
  public:
   // PUBLIC because the image writes it from outside: StatusWin sets

@@ -67,6 +67,8 @@ struct TraceState {
 } trace;
 struct Font {
   int unk_1_ = -1, line_height_ = 14, height_ = 10;
+  int line_height() const { return line_height_; }
+  int pixel_height() const { return height_; }
   int width(char *text) { trace.events.push_back("width:" + std::string(text)); return trace.width_result; }
 };
 struct Buffer {
@@ -110,6 +112,7 @@ inline char *Triad[5]{}; // fifth sentinel observes the original unchecked byte 
 inline int TextColourTable[195]{};
 inline char StringTemp[1032]{};
 inline char SpaceText[] = " ";
+inline const char BufferJoinSpace[] = " ";
 struct StringTableDouble {
   char *get(int address) {
     trace.events.push_back("get:" + std::to_string(address));
@@ -238,3 +241,15 @@ def test_design_it_and_preview_use_source_owned_vehicle_apis():
             "0x0057E040", "0x0057F1D0", "0x0057F4B0"))
     assert not any(token in design_it for token in (
         "diplo_lock_seam", "diplo_unlock_seam", "0x00539820", "0x005398C0"))
+
+
+def test_basewin_and_designwin_use_font_metric_accessors_without_friendship():
+    root = _root()
+    font_header = (root / "src/font.h").read_text(encoding="utf-8")
+    assert "friend class BaseWin;" not in font_header
+    assert "friend class DesignWin;" not in font_header
+    for owner in ("basewin.cpp", "designwin.cpp"):
+        source = (root / "src" / owner).read_text(encoding="utf-8")
+        # Ignore preserved historical notes; check only compiled source text.
+        source = re.sub(r"//[^\n]*|/\*.*?\*/", "", source, flags=re.S)
+        assert not re.search(r"(?:\.|->)(?:height_|line_height_)\b", source)

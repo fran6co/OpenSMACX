@@ -1386,7 +1386,7 @@ void BaseWin::draw_psych() {
     MapWinCaptionScale = 30;
     MapWinCaptionDivisor = 38;
     canvas->set_font(&font, 0, 0, 0);
-    const int text_offset = psych_display_sub(row_pitch / 2, font.height_ / 2);
+    const int text_offset = psych_display_sub(row_pitch / 2, font.pixel_height() / 2);
     int y = psych_display_add(top, 2);
     int stage = 0;
     for (int row = 0; row < 5; ++row) {
