@@ -20,6 +20,7 @@
 // symbol    ??_GBaseWin@@UAEPAXI@Z
 // kind      game
 #include "stdafx.h"
+#include "interface_fonts.h"
 #include "wave.h"
 #include "original_seam.h"
 #include "basewin.h"
@@ -3894,7 +3895,7 @@ void BaseWin::draw_energy_alloc(int a1) {
 // computed capacity. The pinned body does not load a scroll-position field.
 // LEVER: 0x40C2C is one RECT, not the four unnamed dwords the IDB records -
 //  set_clip takes it whole and the tile/frame sizing reads its fields.
-//  0x00691B2C is font.h's DefaultFontFace, passed as the pointer it is; the
+//  0x00691B2C is interface_fonts.h's DefaultFontFace, passed as the pointer it is; the
 //  artifact's `*DefaultFontFace` through a pointer-to-pointer is two loads
 //  where the image has one.
 // 0x004104E6-0x004104F9 scales the column pitch by 100, not 20 as the

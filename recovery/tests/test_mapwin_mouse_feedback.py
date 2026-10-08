@@ -36,7 +36,7 @@ def braced(source, signature):
 
 def actual_source():
     h = {name: (ROOT / "src" / (name + ".h")).read_text() for name in
-         ("win", "graphicwin", "mapwin", "console", "buffer", "veh", "base", "alpha", "map", "strings", "font")}
+         ("win", "graphicwin", "mapwin", "console", "buffer", "veh", "base", "alpha", "map", "strings", "interface_fonts")}
     source = (ROOT / "src/mapwin.cpp").read_text()
     parts = {}
     for unit, cls in (("win", "Win"), ("graphicwin", "GraphicWin"),
@@ -77,7 +77,7 @@ def actual_source():
         for name in names:
             declaration, = re.findall(r"^extern (?:int|uint32_t|char) " + name + r"(?:\[\d+\])?;", h[unit], re.M)
             declarations.append(declaration.removeprefix("extern "))
-    for unit, name in (("font", "find_font"), ("veh", "say_loc"), ("alpha", "label_get")):
+    for unit, name in (("interface_fonts", "find_font"), ("veh", "say_loc"), ("alpha", "label_get")):
         declaration, = re.findall(r"^(?:Font \*|void |LPSTR )__cdecl " + name + r"\([^;{}]*\);", h[unit], re.M)
         declarations.append(declaration)
     parts["GLOBALS"] = "\n".join(declarations)

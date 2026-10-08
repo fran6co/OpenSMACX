@@ -20,6 +20,7 @@
 // symbol    ??_GNewTechWin@@UAEPAXI@Z
 // kind      game
 #include "stdafx.h"
+#include "interface_fonts.h"
 #include "newtechwin.h"
 #include "game.h"
 #include "alpha.h"

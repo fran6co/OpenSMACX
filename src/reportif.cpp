@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include "interface_fonts.h"
 #include "reportif.h"
 #include "base.h"    // BaseCurrentCount bounds the report's fixed sort workspace
 #include "general.h" // swap for the original reversed-bound normalization

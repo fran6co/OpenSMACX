@@ -20,6 +20,7 @@
 // symbol    ??_GDesignWin@@UAEPAXI@Z
 // kind      game
 #include "stdafx.h"
+#include "interface_fonts.h"
 #include "map.h"
 #include "wave.h"
 #include "designwin.h"

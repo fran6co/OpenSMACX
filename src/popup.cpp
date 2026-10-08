@@ -20,6 +20,7 @@
 // symbol    ??_GPopup@@UAEPAXI@Z
 // kind      game
 #include "stdafx.h"
+#include "interface_fonts.h"
 #include <shellapi.h>
 #include <mmsystem.h>
 #include <cstring>

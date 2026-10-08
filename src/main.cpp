@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include "interface_fonts.h"
 #include "main.h"
 #include "alpha.h"          // prefs_get, prefs_put
 #include "caviar.h"

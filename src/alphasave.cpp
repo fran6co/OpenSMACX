@@ -16,6 +16,7 @@
 // symbol    ??_GAlphaSave@@UAEPAXI@Z
 // kind      game
 #include "stdafx.h"
+#include "interface_fonts.h"
 #include "alphasave.h"
 #include "console.h"
 #include "alpha.h"

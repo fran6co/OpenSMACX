@@ -20,6 +20,7 @@
 // symbol    ??_GMainInterface@@UAEPAXI@Z
 // kind      game
 #include "stdafx.h"
+#include "interface_fonts.h"
 #include "maininterface.h"
 #include "messagewin.h"
 #include "worldwin.h"

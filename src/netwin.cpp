@@ -20,6 +20,7 @@
 // symbol    ??_GNetWin@@UAEPAXI@Z
 // kind      game
 #include "stdafx.h"
+#include "interface_fonts.h"
 #include "netwin.h"
 #include <cstring>
 

@@ -20,6 +20,7 @@
 // symbol    ??_GProdPicker@@UAEPAXI@Z
 // kind      game
 #include "stdafx.h"
+#include "interface_fonts.h"
 #include "basepop.h"
 #include "stringstruct.h"  // StringAllocationHeap; the staged vbtable constants
 #include "prodpicker.h"

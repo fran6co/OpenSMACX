@@ -20,6 +20,7 @@
 // symbol    ??_GCouncWin@@UAEPAXI@Z
 // kind      game
 #include "stdafx.h"
+#include "interface_fonts.h"
 #include "councwin.h"
 #include "mapwin.h"   // MainInterfaceGlobal - the interface owner on_status drives
 #include "subinterface.h"

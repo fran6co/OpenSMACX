@@ -34,7 +34,7 @@
  * the first 0x26000 bytes of it, so:
  *
  *     below 0x006A8000   the image holds the bytes. Read them and write the
- *                        value into the source - `DefaultFontFace` in font.h
+ *                        value into the source - `DefaultFontFace` in interface_fonts.h
  *                        is 0x00691B2C holding 0x00691BD4, which is "Arial",
  *                        and `DialogDefaultStyle` below is a stored 3.
  *     at or above        zero-fill. No bytes exist in the file, so C++

@@ -20,6 +20,7 @@
 // LEVER: thiscall shim - a synthetic class exposes close() as a member so "call close(); ret" folds into the original's bare 5-byte jmp
 // body      src/caviar.h
 #include "stdafx.h"
+#include "interface_fonts.h"
 #include "base.h"
 #include "battlewin.h"
 #include "map.h"
@@ -1695,7 +1696,7 @@ void StatusWin::UNK1() {
 }
 
 // Fixed-slot bindings carried from 004b8890.cpp. All of them already have
-// names in the tree - DefaultFontFace and WinScreenWidth in font.h/win.h, the
+// names in the tree - DefaultFontFace and WinScreenWidth in interface_fonts.h/win.h, the
 // three redraw RECTs in statuswin.h, MainInterfaceGlobal in mapwin.h - so the
 // carried lines are dropped and the uses read those instead.
 

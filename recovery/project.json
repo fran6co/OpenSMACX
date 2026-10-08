@@ -141,7 +141,8 @@
     "unit_flag_sets": {
       "src/jackal/jackal.cpp": [0],
       "src/jackal/palette.cpp": [0],
-      "src/interface_palette.cpp": [1]
+      "src/interface_palette.cpp": [1],
+      "src/interface_fonts.cpp": [1]
     },
     "flag_sets": [
       [

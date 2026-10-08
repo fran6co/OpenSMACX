@@ -32,7 +32,7 @@ def braced(text, signature):
 def actual_source():
     header = (ROOT / "src/font_queue.h").read_text()
     source = (ROOT / "src/font_queue.cpp").read_text()
-    font = (ROOT / "src/font.cpp").read_text()
+    font = (ROOT / "src/interface_fonts.cpp").read_text()
     mapwin = (ROOT / "src/mapwin.cpp").read_text()
     globals_ = []
     for text, pattern in (

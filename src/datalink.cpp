@@ -20,6 +20,7 @@
 // symbol    ??_GDatalink@@UAEPAXI@Z
 // kind      game
 #include "stdafx.h"
+#include "interface_fonts.h"
 #include "game.h"  // shared state-window owner
 #include "original_seam.h"
 #include "datalink.h"

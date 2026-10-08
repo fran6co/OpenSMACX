@@ -7,6 +7,7 @@
 // symbol    ??_GPickTech@@UAEPAXI@Z
 // kind      game
 #include "stdafx.h"
+#include "interface_fonts.h"
 #include "picktech.h"
 #include "palette.h"
 #include "interface_palette.h"

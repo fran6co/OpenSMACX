@@ -20,6 +20,7 @@
 // symbol    ??_GDiploWin@@UAEPAXI@Z
 // kind      game
 #include "stdafx.h"
+#include "interface_fonts.h"
 #include "diplowin.h"
 #include "vtable_shim.h"
 #include "netdaemon.h"

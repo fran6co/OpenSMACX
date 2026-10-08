@@ -154,6 +154,7 @@ set(OPENSMACX_SOURCES
     src/flatbutton.cpp
     src/flic.cpp
     src/font.cpp
+    src/interface_fonts.cpp
     src/font_queue.cpp
     src/game.cpp
     src/newgame.cpp
@@ -322,9 +323,10 @@ endif()
 # subsystems remain direct application inputs until their membership is
 # established. This is not a claim of complete JACKAL.LIB recovery.
 add_subdirectory(src/jackal)
-# Original interface palette initialization retains a frame pointer;
-# the generic Palette methods use Jackal's ordinary optimized profile.
-set_source_files_properties(src/interface_palette.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")
+# Original interface palette initialization and font lookup retain a frame
+# pointer; generic library bodies have independently measured profiles.
+set_source_files_properties(src/interface_palette.cpp src/interface_fonts.cpp
+    PROPERTIES COMPILE_OPTIONS "/Oy-")
 add_executable(OpenSMACX ${OPENSMACX_SOURCES})
 
 # Terrain, media decoder and GraphicWin lookup data remain local derivatives of

@@ -16,6 +16,7 @@
 // symbol    ??_GPrefWin@@UAEPAXI@Z
 // kind      game
 #include "stdafx.h"
+#include "interface_fonts.h"
 #include "prefwin.h"
 
 #include <string.h>

@@ -7,6 +7,7 @@
 // symbol    ??_GMultiWin@@UAEPAXI@Z
 // kind      game
 #include "stdafx.h"
+#include "interface_fonts.h"
 #include "multiwin.h"
 
 #include "netdaemon.h"

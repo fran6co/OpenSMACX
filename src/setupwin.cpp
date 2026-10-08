@@ -20,6 +20,7 @@
 // symbol    ??_GSetupWin@@UAEPAXI@Z
 // kind      game
 #include "stdafx.h"
+#include "interface_fonts.h"
 #include "setupwin.h"
 #include "filewin.h"
 #include "game.h"

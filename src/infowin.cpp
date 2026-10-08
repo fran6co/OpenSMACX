@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include "interface_fonts.h"
 #include "original_seam.h"
 #include "infowin.h"
 #include "basewin.h"

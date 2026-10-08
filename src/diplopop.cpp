@@ -20,6 +20,7 @@
 // symbol    ??_GDiploPop@@UAEPAXI@Z
 // kind      game
 #include "stdafx.h"
+#include "interface_fonts.h"
 #include "diplopop.h"
 #include "basepop.h"
 #include "mapwin.h"  // MainInterfaceGlobal - the modal owner at 0x007AE820

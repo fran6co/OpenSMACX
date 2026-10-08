@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include "interface_fonts.h"
 #include "selectpartwin.h"
 #include "technology.h"
 #include "general.h"

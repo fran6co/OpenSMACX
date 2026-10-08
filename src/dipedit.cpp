@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include "interface_fonts.h"
 #include "dipedit.h"
 #include "palette.h"
 #include "interface_palette.h"
