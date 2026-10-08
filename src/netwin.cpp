@@ -1791,7 +1791,6 @@ static_assert(sizeof(NetWinSessionOptionsPacket) == 0x28,
 static void pick_send_state() {
     NetDaemonNet.pid_2_idx(NetWinPlayerId);
     NetWinSessionOptionsPacket packet;
-    memset(&packet, 0, sizeof(packet));
     packet.opcode_ = 0x2F02;
     packet.options_ = NetWinSessionOptions;
     NetDaemonNet.send(&packet, sizeof(packet), NetWinOtherPlayerId, 1);
@@ -1811,8 +1810,10 @@ static int pick_answer(NetWin &self, PopMenu &pop_menu) {
 /*
 Purpose: Dispatch a lobby spot click to the map/options/faction/player action
          represented by that spot. Rule toggles update the typed session state
-         and send the zero-initialized 0x2F02 state packet.
+         and send the opcode/options-only 0x2F02 state packet. The original
+         leaves the intervening header bytes uninitialized.
 // ORIGINAL: 0x0047B760 ?on_left_click@NetWin@@QAEXHH@Z 0x0047B760-0x0047BAF6
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned47B9C7/47B9D7/47B9DD: copy six option dwords to packet+10, write opcode word2F02, send28. Shared pick_send_state preserves these writes; header+2..F remains unspecified."], "reason": "Recover the original options packet through genuine NetWin state and typed packet storage."}
 // symbol    ?on_left_click@NetWin@@UAEXHH@Z
 */
 void NetWin::on_left_click(int x, int y) {
@@ -1976,7 +1977,7 @@ void NetWin::pick_player() {
 }
 
 // ORIGINAL: 0x0047C530 ?pick_faction@NetWin@@QAEXH@Z 0x0047C530-0x0047C965;0x006568F9-0x006569C4
-// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/recovered/units/0047c530.cpp:NetWin::pick_faction", "src/netwin.h:NetWinFactionRecord and NetWinLobbyRow", "src/netwin.cpp:NetWin::pick_pass and NetWinLobbySinglePacket"], "reason": "Recover faction selection through the typed faction records, lobby rows, popup dialog and single-row packet."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/recovered/units/0047c530.cpp:NetWin::pick_faction", "src/netwin.h:NetWinFactionRecord and NetWinLobbyRow", "src/netwin.cpp:NetWin::pick_pass and NetWinLobbySinglePacket", "Pinned47C819 clears EAX;47C854 stores it to [EBP-1A4], packet+8 relative to sent [EBP-1AC] at47C88A/47C89D. Opcode word/slot/row+10 are written; +2..3/+C..F remain untouched."], "reason": "Recover faction selection through the typed faction records, lobby rows, popup dialog and single-row packet."}
 void NetWin::pick_faction(int slot) {
     PopMenu pop_menu;
     pop_menu.init();
@@ -2023,10 +2024,10 @@ void NetWin::pick_faction(int slot) {
 
     if (slot >= 1) {
         NetWinLobbySinglePacket packet;
-        memset(&packet, 0, sizeof(packet));
         packet.header_.opcode_ = 0x04;
         packet.header_.flags_ = 0x2F;
         packet.header_.slot_ = slot;
+        packet.header_.field_8_ = 0;
         packet.row_ = NetWinLobbyRows[slot];
         packet.row_.faction_or_color_ =
             static_cast<int8_t>(chosen_faction);
@@ -2035,7 +2036,7 @@ void NetWin::pick_faction(int slot) {
 }
 
 // ORIGINAL: 0x0047CF40 ?pick_diff@NetWin@@QAEXH@Z 0x0047CF40-0x0047D2F4;0x00656AED-0x00656BC5
-// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/recovered/units/0047cf40.cpp:NetWin::pick_diff", "src/netwin.cpp:pick_global_diff and sibling pickers", "src/netwin.cpp:NetWinLobbySinglePacket and NetWin::on_button_clicked"], "reason": "Recover the per-slot difficulty picker using the established popup objects, difficulty text table, typed lobby row and typed single-row packet."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/recovered/units/0047cf40.cpp:NetWin::pick_diff", "src/netwin.cpp:pick_global_diff and sibling pickers", "src/netwin.cpp:NetWinLobbySinglePacket and NetWin::on_button_clicked", "Pinned47D0C7/47D0D0/47D0D6: opcode word, slot dword and +8 zero; copied row+10 and send18C. +2..3/+C..F are untouched."], "reason": "Recover the per-slot difficulty picker using the established popup objects, difficulty text table, typed lobby row and typed single-row packet."}
 void NetWin::pick_diff(int slot) {
     PopMenu pop_menu;
     pop_menu.init();
@@ -2054,17 +2055,17 @@ void NetWin::pick_diff(int slot) {
 
     if (slot >= 1) {
         NetWinLobbySinglePacket packet;
-        memset(&packet, 0, sizeof(packet));
         packet.header_.opcode_ = 0x04;
         packet.header_.flags_ = 0x2F;
         packet.header_.slot_ = slot;
+        packet.header_.field_8_ = 0;
         packet.row_ = row;
         NetDaemonNet.Net::send(&packet, sizeof(packet), NetWinOtherPlayerId, 1);
     }
 }
 
 // ORIGINAL: 0x0047D300 ?pick_map@NetWin@@QAEXXZ 0x0047D300-0x0047E003;0x00656BC5-0x00656D9D
-// RECOVERY_BINDING: v1 {"evidence": ["git:0db4f0dc:src/unrecovered/0047d300.cpp", "source:src/netwin.h", "source:recovery/tests/test_netwin_pick_map_behavior.py"], "reason": "Retain the typed map/game picker with its complete original primary/exceptional mapping. The retired unannotated scaffold omitted the host session population, used an unconstructed scratch Dialogs receiver, and approximated the local widget aggregate. Its useful lifetime observation is that nested Popup/Scroll/FlatButton cleanup belongs to genuine member destruction, not independent manually staged objects; complete native cleanup fidelity remains an obligation."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:0db4f0dc:src/unrecovered/0047d300.cpp", "source:src/netwin.h", "source:recovery/tests/test_netwin_pick_map_behavior.py", "Pinned47DC27..47DC79: full packet opcode word/slot=-1/+8 zero and A64 row bytes;47DC99..47DCC5: session168 bytes at+10 and opcode word only;47DCDC..47DCEF: leave opcode word only. Unwritten packet bytes remain unspecified."], "reason": "Retain the typed map/game picker with its complete original primary/exceptional mapping. The retired unannotated scaffold omitted the host session population, used an unconstructed scratch Dialogs receiver, and approximated the local widget aggregate. Its useful lifetime observation is that nested Popup/Scroll/FlatButton cleanup belongs to genuine member destruction, not independent manually staged objects; complete native cleanup fidelity remains an obligation."}
 // TRIED: the popup and load-map/game dispatch are transcribed; the scenario
 // host guard now uses LockEnableMask's live-faction byte. Choice zero still
 // lacks the original session-record population and is explicitly unfinished.
@@ -2249,7 +2250,6 @@ void NetWin::pick_map() {
         uint8_t trailing_[0x10];
     };
     PickMapLobbyFullPacket assigned_packet;
-    memset(&assigned_packet, 0, sizeof(assigned_packet));
     for (int packet_row = 0; packet_row < 7; ++packet_row) {
         assigned_packet.rows_[packet_row] = NetWinLobbyRows[packet_row + 1];
     }
@@ -2267,7 +2267,6 @@ void NetWin::pick_map() {
         NetWinLobbyPacketHeader header_;
         NetWinSessionBlock session_;
     } session_packet;
-    memset(&session_packet, 0, sizeof(session_packet));
     session_packet.header_.opcode_ = 0x03;
     session_packet.header_.flags_ = 0x2F;
     session_packet.session_ = NetWinSessionData;
@@ -2276,7 +2275,6 @@ void NetWin::pick_map() {
 
     if (field_7728_ != 0) {
         PickMapLobbyLeavePacket leave_packet;
-        memset(&leave_packet, 0, sizeof(leave_packet));
         leave_packet.header_.opcode_ = 0x0E;
         leave_packet.header_.flags_ = 0x2F;
         NetDaemonNet.Net::send(&leave_packet, sizeof(leave_packet),
@@ -2289,6 +2287,7 @@ Purpose: The cloud-cover picker: a popup titled from the string table with
          the two cloud options, the answer stored in the ninth slot's cloud
          byte and sent to the peer.
 // ORIGINAL: 0x0047F5F0 ?pick_clouds@NetWin@@QAEXXZ 0x0047F5F0-0x0047F91C;0x00657385-0x0065745D FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned47F721/47F735/47F73B: copy six option dwords to packet+10, write opcode word2F02, send28. Shared pick_send_state preserves these writes; header+2..F remains unspecified."], "reason": "Recover the original options packet through genuine NetWin state and typed packet storage."}
 // size      1028 bytes
 // prototype void (__thiscall ?pick_clouds@NetWin@@QAEXXZ)(NetWin* this)
 // callers   1   call targets   25
@@ -2325,6 +2324,7 @@ void NetWin::pick_clouds() {
 Purpose: The ocean-coverage picker: the same popup walk with the three ocean
          options; the answer lands in the ninth slot's ocean byte.
 // ORIGINAL: 0x0047EC60 ?pick_ocean@NetWin@@QAEXXZ 0x0047EC60-0x0047EF8C;0x006570FD-0x006571D5 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned47ED91/47EDA5/47EDAB: copy six option dwords to packet+10, write opcode word2F02, send28. Shared pick_send_state preserves these writes; header+2..F remains unspecified."], "reason": "Recover the original options packet through genuine NetWin state and typed packet storage."}
 // size      1028 bytes
 // prototype void (__thiscall ?pick_ocean@NetWin@@QAEXXZ)(NetWin* this)
 // callers   1   call targets   26
@@ -2361,6 +2361,7 @@ void NetWin::pick_ocean() {
 Purpose: The erosion picker: the same popup walk with the three erosion
          options; the answer lands in the ninth slot's erosion byte.
 // ORIGINAL: 0x0047EF90 ?pick_erosion@NetWin@@QAEXXZ 0x0047EF90-0x0047F2BC;0x006571D5-0x006572AD FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned47F0C1/47F0D5/47F0DB: copy six option dwords to packet+10, write opcode word2F02, send28. Shared pick_send_state preserves these writes; header+2..F remains unspecified."], "reason": "Recover the original options packet through genuine NetWin state and typed packet storage."}
 // size      1028 bytes
 // prototype void (__thiscall ?pick_erosion@NetWin@@QAEXXZ)(NetWin* this)
 // callers   1   call targets   26
@@ -2397,6 +2398,7 @@ void NetWin::pick_erosion() {
 Purpose: The native-life picker: the same popup walk with the three fungal
          options; the answer lands in the ninth slot's native byte.
 // ORIGINAL: 0x0047F2C0 ?pick_native@NetWin@@QAEXXZ 0x0047F2C0-0x0047F5EC;0x006572AD-0x00657385 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned47F3F1/47F405/47F40B: copy six option dwords to packet+10, write opcode word2F02, send28. Shared pick_send_state preserves these writes; header+2..F remains unspecified."], "reason": "Recover the original options packet through genuine NetWin state and typed packet storage."}
 // size      1028 bytes
 // prototype void (__thiscall ?pick_native@NetWin@@QAEXXZ)(NetWin* this)
 // callers   1   call targets   26
@@ -2434,6 +2436,7 @@ Purpose: The planet-size picker: a popup with the title and one entry per
          name in the 0x80-stride name block at 0x6614, counted by the word at
          0x80A6F0; the answer lands in the ninth slot's planet byte.
 // ORIGINAL: 0x0047E930 ?pick_planet_size@NetWin@@QAEXXZ 0x0047E930-0x0047EC60;0x00657025-0x006570FD FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned47EA6D/47EA7A/47EA80: copy six option dwords to packet+10, write opcode word2F02, send28. Shared pick_send_state preserves these writes; header+2..F remains unspecified."], "reason": "Recover the original options packet through genuine NetWin state and typed packet storage."}
 // size      1032 bytes
 // prototype void (__thiscall ?pick_planet_size@NetWin@@QAEXXZ)(NetWin* this)
 // callers   1   call targets   26
@@ -2469,6 +2472,7 @@ Purpose: The player-count picker: entries numbered max(2, lobby count) to 7,
          the entry itself the answer; the ninth slot's player byte stores
          count - 1.
 // ORIGINAL: 0x0047E010 ?pick_num_players@NetWin@@QAEXXZ 0x0047E010-0x0047E33B;0x00656D9D-0x00656E75 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned47E15D/47E16A/47E170: copy six option dwords to packet+10, write opcode word2F02, send28. Shared pick_send_state preserves these writes; header+2..F remains unspecified."], "reason": "Recover the original options packet through genuine NetWin state and typed packet storage."}
 // size      1027 bytes
 // prototype void (__thiscall ?pick_num_players@NetWin@@QAEXXZ)(NetWin* this)
 // callers   1   call targets   26
@@ -2730,6 +2734,7 @@ Purpose: The global-difficulty picker: a popup with the title and the six
          difficulty names off alpha's table; the ninth slot's global byte
          stores the answer.
 // ORIGINAL: 0x0047E340 ?pick_global_diff@NetWin@@QAEXXZ 0x0047E340-0x0047E640;0x00656E75-0x00656F4D FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned47E445/47E459/47E45F: copy six option dwords to packet+10, write opcode word2F02, send28. Shared pick_send_state preserves these writes; header+2..F remains unspecified."], "reason": "Recover the original options packet through genuine NetWin state and typed packet storage."}
 // size      984 bytes
 // prototype void (__thiscall ?pick_global_diff@NetWin@@QAEXXZ)(NetWin* this)
 // callers   1   call targets   26
@@ -2766,6 +2771,7 @@ Purpose: The time-control picker: the popup is filled by the source-owned
          time-control list builder, then the same
          modal walk; the ninth slot's time byte stores the answer.
 // ORIGINAL: 0x0047E640 ?pick_time@NetWin@@QAEXXZ 0x0047E640-0x0047E924;0x00656F4D-0x00657025 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned47E72A/47E73E/47E744: copy six option dwords to packet+10, write opcode word2F02, send28. Shared pick_send_state preserves these writes; header+2..F remains unspecified."], "reason": "Recover the original options packet through genuine NetWin state and typed packet storage."}
 // size      956 bytes
 // prototype void (__thiscall ?pick_time@NetWin@@QAEXXZ)(NetWin* this)
 // callers   1   call targets   25
@@ -3023,7 +3029,7 @@ void NetWin::UNK4() {
 // automatic lifetime; the native explicit close calls in the archived seed
 // are not duplicated over the recovered destructor chain.
 // ORIGINAL: 0x0047C970 ?pick_pass@NetWin@@QAEHH@Z 0x0047C970-0x0047CF32;0x006569C4-0x00656AED
-// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/0047c970.cpp", "recovery/tasks/netwin-owner-coverage.json"], "reason": "Recover full password dialog using genuine Popup lifecycle, input override text and shared parse output, faction validation and native sixteen-byte-header/full-row wire layout. Only otherwise unspecified outgoing packet bytes are zero-initialized under user approval. No exactness or game acceptance claim."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/0047c970.cpp", "recovery/tasks/netwin-owner-coverage.json", "Pinned47CEB9/47CED2/47CEDB..47CF03: slot dword, opcode word, explicit +8 zero, row at +10 of size17C; send18C. The opcode does not write +2..3 and +C..F is untouched."], "reason": "Recover full password dialog using genuine Popup lifecycle, input override text and shared parse output, faction validation and native sixteen-byte-header/full-row wire layout. No exactness or game acceptance claim."}
 // TRIED: MISMATCH #10 'push' vs 'mov' (framed build). SEH-frame password dialog: local `Popup popup;` is a real automatic object (BasePop fully laid out in the scaffold: embedded FlatButton x2 and Sprite, plus Popup's own `Scroll scroll_` which itself embeds two more FlatButtons at offsets 0xAAC/0x15F8 - matches the trailer thunks in the disassembly exactly), so ctor/dtor calls are emitted by the language rather than hand-modelled. Explicit popup.close()/ popup.scroll_.close() only where the disassembly names them, not at every scope exit. Did not attempt to reproduce the compiler's own SEH funclet layout - accepted as an "omitted as unreachable" divergence per the precedent in dialog.cpp/graphicwin.cpp.
 int NetWin::pick_pass(int payload) {
     Popup popup;
@@ -3102,17 +3108,11 @@ int NetWin::pick_pass(int payload) {
 
     row.owner_ = entered_hash;
     if (slot >= 1) {
-        struct PasswordPacket {
-            uint32_t opcode_;
-            uint32_t slot_;
-            uint32_t reserved_8_;
-            uint32_t reserved_C_;
-            NetWinLobbyRow row_;
-        } packet;
-        memset(&packet, 0, sizeof(packet));
-        packet.opcode_ = 0x2F04;
-        packet.slot_ = static_cast<uint32_t>(slot);
-        packet.reserved_8_ = 0;
+        NetWinLobbySinglePacket packet;
+        packet.header_.opcode_ = 0x04;
+        packet.header_.flags_ = 0x2F;
+        packet.header_.slot_ = slot;
+        packet.header_.field_8_ = 0;
         memcpy(&packet.row_, &row, 0x17C);
         NetDaemonNet.Net::send(&packet, sizeof(packet), NetWinOtherPlayerId, 1);
     }
@@ -3328,11 +3328,12 @@ Purpose: Answer the multiplayer setup dialog's button click. Id -2 hangs up
          bytes including its header) or the single-slot 0x2f04 packet
          (0x18c bytes, when the local slot is at least one).
 
-The coordinator explicitly approved zero-initialized lobby packet buffers;
-the original packet layouts include reserved fields which remain zero here.
+The original writes only the opcode and each path's selected header/payload
+fields. Reserved header bytes and the leave-packet tail remain uninitialized;
+do not replace those unspecified bytes with a deterministic zero fill.
 */
 // ORIGINAL: 0x0047B450 ?on_button_clicked@NetWin@@QAEXH@Z 0x0047B450-0x0047B746 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["The original NetWin constructor installs primary vtable 0x0066CCEC; inherited Win slot 44 at 0x0066CD9C targets 0x0047B450.", "NetDaemon::on_player_deleted directly calls 0x0047B450 with NetWinDialog as receiver and -2 as argument; retired seed git:7eb4d2e7:src/unrecovered/0047b450.cpp records the historical body."], "reason": "NetWin owns the lobby button handler as its inherited Win callback and shares the typed lobby rows and session storage with its network senders."}
+// RECOVERY_BINDING: v1 {"evidence": ["The original NetWin constructor installs primary vtable 0x0066CCEC; inherited Win slot 44 at 0x0066CD9C targets 0x0047B450.", "NetDaemon::on_player_deleted directly calls 0x0047B450 with NetWinDialog as receiver and -2 as argument; retired seed git:7eb4d2e7:src/unrecovered/0047b450.cpp records the historical body.", "Pinned47B5FD..47B639/47B664..47B675/47B701..47B738: full and single packets write opcode word, slot and +8 zero then copied rows; leave writes only opcode word. +2..3/+C..F and leave tail are untouched."], "reason": "NetWin owns the lobby button handler as its inherited Win callback and shares the typed lobby rows and session storage with its network senders."}
 // symbol    ?on_button_clicked@NetWin@@UAEXH@Z
 // TRIED: no SEH frame here (plain `sub esp,0xd9c`, no fs:[0] chain), so this is a direct disassembly transcription rather than a lever candidate. Used one flat byte buffer plus raw `base - N` stores/memcpy matching each `ebp - N` write and each record's 0x17c-byte stride, rather than named locals, since the frame mixes several differently-shaped record buffers with no natural C struct boundary between them.
 // size      758 bytes
@@ -3402,7 +3403,6 @@ void NetWin::on_button_clicked(int clicked_id) {
                         x_pop_caption_label((char *)*ClimatePopupTitle,
                                             "PASSWORDSNOTVALIDATED", 0);
                         NetWinLobbyLeavePacket packet;
-                        memset(&packet, 0, sizeof(packet));
                         packet.header_.opcode_ = 0x0E;
                         packet.header_.flags_ = 0x2F;
                         NetDaemonNet.Net::send(&packet, sizeof(packet),
@@ -3421,10 +3421,10 @@ void NetWin::on_button_clicked(int clicked_id) {
             return;
         }
         NetWinLobbyFullPacket packet;
-        memset(&packet, 0, sizeof(packet));
         packet.header_.opcode_ = 0x04;
         packet.header_.flags_ = 0x4F;
         packet.header_.slot_ = -1;
+        packet.header_.field_8_ = 0;
         memcpy(packet.rows_, &NetWinLobbyRows[1], sizeof(packet.rows_));
         NetDaemonNet.Net::send(&packet, sizeof(packet), 0, 1);
     } else {
@@ -3432,10 +3432,10 @@ void NetWin::on_button_clicked(int clicked_id) {
         row.ready_or_occupied_ = row.ready_or_occupied_ == 0 ? 1 : 0;
         if (local_slot >= 1) {
             NetWinLobbySinglePacket packet;
-            memset(&packet, 0, sizeof(packet));
             packet.header_.opcode_ = 0x04;
             packet.header_.flags_ = 0x2F;
             packet.header_.slot_ = local_slot;
+            packet.header_.field_8_ = 0;
             packet.row_ = row;
             NetDaemonNet.Net::send(&packet, sizeof(packet),
                                    NetWinOtherPlayerId, 1);

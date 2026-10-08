@@ -571,10 +571,12 @@ int main() {
     assert(NetDaemonNet.target == 22 && NetDaemonNet.channel == 1);
     assert(NetWinLobbyRows[2].owner_ == checksum_password("secret"));
     assert(NetDaemonNet.packet[0] == 0x04 &&
-           NetDaemonNet.packet[1] == 0x2f &&
-           NetDaemonNet.packet[2] == 0 && NetDaemonNet.packet[3] == 0);
-    assert(NetDaemonNet.packet[4] == 2 && NetDaemonNet.packet[8] == 0 &&
-           NetDaemonNet.packet[12] == 0);
+           NetDaemonNet.packet[1] == 0x2f);
+    uint32_t packet_slot, packet_zero;
+    memcpy(&packet_slot, NetDaemonNet.packet + 4, sizeof(packet_slot));
+    memcpy(&packet_zero, NetDaemonNet.packet + 8, sizeof(packet_zero));
+    assert(packet_slot == 2 && packet_zero == 0);
+    // Header +2..3 and +0xC..F are untouched by the original.
     assert(memcmp(NetDaemonNet.packet + 16, &NetWinLobbyRows[2], 0x17c) == 0);
     assert(Scroll::close_calls == 2 && BasePop::close_calls == 2);
     assert_popup_lifetime();

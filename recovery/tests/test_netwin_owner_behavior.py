@@ -87,6 +87,12 @@ def test_netwin_method_body(compiler_name, kind, signature, flags, tmp_path):
 
     source = SOURCE_FILE.read_text()
     body = extract_function(source, signature)
+    if kind == 3:
+        # Reuse the actual shared packet declarations, not a fixture-only layout.
+        body = "\n".join(
+            extract_function(source, name) + ";"
+            for name in ("struct NetWinLobbyPacketHeader", "struct NetWinLobbySinglePacket")
+        ) + "\n" + body
     fixture = FIXTURE.read_text()
     marker = "/* NETWIN_BODY_INSERTION */"
     assert fixture.count(marker) == 3

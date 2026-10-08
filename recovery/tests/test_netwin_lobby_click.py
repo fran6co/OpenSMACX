@@ -1,4 +1,8 @@
-"""Host execution of the actual recovered lobby-click body with small seams."""
+"""Actual lobby-click controls for original-defined packet fields and payloads.
+
+Untouched header/tail bytes are copied as object representation, never assigned
+an expected value. These host doubles do not prove native ABI or stack contents.
+"""
 
 import subprocess
 from pathlib import Path
@@ -86,8 +90,8 @@ struct Net {
     std::vector<uint8_t> sent;
     int recipient = -1;
     int send(const void *message, int length, int target, int) {
-        sent.assign(static_cast<const uint8_t *>(message),
-                    static_cast<const uint8_t *>(message) + length);
+        sent.resize(length);
+        std::memcpy(sent.data(), message, length);
         recipient = target;
         return length;
     }
@@ -104,6 +108,11 @@ struct NetWin {
 };
 """ + body + r"""
 int main() {
+    auto packet_word = [](int offset) {
+        uint32_t value;
+        std::memcpy(&value, NetDaemonNet.sent.data() + offset, sizeof(value));
+        return value;
+    };
     NetWin win;
     win.on_button_clicked(-2);
     assert(win.field_7614_ == -1);
@@ -119,8 +128,11 @@ int main() {
     assert(NetDaemonNet.sent[0] == 4 && NetDaemonNet.sent[1] == 0x2F);
     assert(NetDaemonNet.sent[0x11] == 1);
     assert(NetDaemonNet.sent[0x13] == 3);
-    assert(NetDaemonNet.sent[2] == 0 && NetDaemonNet.sent[3] == 0);
-    for (int i = 12; i < 16; ++i) assert(NetDaemonNet.sent[i] == 0);
+    assert(packet_word(4) == 1 && packet_word(8) == 0);
+    NetWinLobbyRow expected_row = NetWinLobbyRows[1];
+    expected_row.ready_or_occupied_ = 1;
+    assert(std::memcmp(NetDaemonNet.sent.data() + 0x10,
+                       &expected_row, sizeof(expected_row)) == 0);
     assert(NetWinLobbyRows[1].ready_or_occupied_ == 0);
     assert(NetDaemonNet.recipient == NetWinOtherPlayerId);
 
@@ -130,8 +142,9 @@ int main() {
     assert(NetDaemonNet.sent.size() == 0xA74);
     assert(NetDaemonNet.sent[0] == 4 && NetDaemonNet.sent[1] == 0x4F);
     assert(NetDaemonNet.sent[0x13] == 3);
-    assert(NetDaemonNet.sent[2] == 0 && NetDaemonNet.sent[3] == 0);
-    for (int i = 12; i < 16; ++i) assert(NetDaemonNet.sent[i] == 0);
+    assert(packet_word(4) == 0xFFFFFFFFu && packet_word(8) == 0);
+    assert(std::memcmp(NetDaemonNet.sent.data() + 0x10,
+                       &NetWinLobbyRows[1], 7 * sizeof(NetWinLobbyRow)) == 0);
     assert(NetDaemonNet.recipient == 0);
 
     uint8_t claims[8 * 0x190] = {};
@@ -142,7 +155,7 @@ int main() {
     assert(popup_calls == 1);
     assert(NetDaemonNet.sent.size() == 0x20);
     assert(NetDaemonNet.sent[0] == 0x0E && NetDaemonNet.sent[1] == 0x2F);
-    for (int i = 2; i < 0x20; ++i) assert(NetDaemonNet.sent[i] == 0);
+    // The original does not write the remaining leave-packet bytes.
 }
 """
     source = tmp_path / "lobby.cpp"
