@@ -387,8 +387,9 @@ Status: Complete
 */
 int SpriteBox::init(RECT* group_id, int flags) {
     close();
-    return reinterpret_cast<Dialog *>(reinterpret_cast<char *>(this)
-        + *reinterpret_cast<int *>(*reinterpret_cast<char **>(this) + 8))->init(group_id, flags);
+    // Original 0x610480 loads vbtable[2] after close, then calls the
+    // Dialog RECT/int overload at 0x609470. C++ owns that base adjustment.
+    return Dialog::init(group_id, flags);
 }
 
 /*
@@ -977,8 +978,9 @@ Status: Complete
 */
 int SpriteBox::init(int file_name) {
     close();
-    return reinterpret_cast<Dialog *>(reinterpret_cast<char *>(this)
-        + *reinterpret_cast<int *>(*reinterpret_cast<char **>(this) + 8))->init(file_name);
+    // Original 0x610420 selects virtual Dialog via vbtable[2] and calls
+    // its integer overload at 0x6095F0 after close.
+    return Dialog::init(file_name);
 }
 
 // ORIGINAL: 0x00610440 ?init@SpriteBox@@QAEHHHHHH@Z 0x00610440-0x00610471 BYTE_EXACT
@@ -1001,10 +1003,11 @@ int SpriteBox::init(RECT *rect, Heap *heap) {
 // symbol    ?init@SpriteBox@@QAEHPAVHeap@@@Z
 // LEVER: already BYTE_EXACT 11/11 - re-measured 2026-08-22 at
 //        `/c /O2 /Gy /GR- /GX`, unchanged, no lever left to pull. The
-//        spelling that reproduces is the one below: close() by name, then
-//        `return`ing the vbtable-relative Dialog::init as the TAIL of the
-//        function, reading the virtual-base displacement out of `*this + 8`
-//        at the use rather than caching it in a local.
+//        historical spelling used close() by name followed by a raw
+//        vbtable-relative Dialog::init tail call, reading `*this + 8`
+//        at the use rather than caching it. The current qualified base
+//        call preserves that relationship through real C++ inheritance;
+//        the historical claim remains a restoration obligation.
 // size      29 bytes
 // prototype int (__thiscall ?init@SpriteBox@@QAEHPAUHeap@@@Z)(SpriteBox* this, Heap*)
 // callers   1   call targets   2
@@ -1015,8 +1018,9 @@ Status: Complete
 */
 int SpriteBox::init(Heap *file_name) {
     close();
-    return reinterpret_cast<Dialog *>(reinterpret_cast<char *>(this)
-        + *reinterpret_cast<int *>(*reinterpret_cast<char **>(this) + 8))->init(file_name);
+    // Original 0x6104B0 calls Dialog::init(Heap*) at 0x6098D0 through
+    // virtual-base displacement vbtable[2], reloaded after close.
+    return Dialog::init(file_name);
 }
 
 
@@ -1034,9 +1038,9 @@ Status: Complete
 */
 int SpriteBox::init(int a1, int a2, int a3, int a4, Heap * a5) {
     close();
-    return reinterpret_cast<Dialog *>(reinterpret_cast<char *>(this)
-        + *reinterpret_cast<int *>(*reinterpret_cast<char **>(this) + 8))
-        ->init(a1, a2, a3, a4, a5);
+    // Original 0x6104D0 forwards all five arguments to 0x609730 through
+    // the virtual Dialog base; close still precedes receiver adjustment.
+    return Dialog::init(a1, a2, a3, a4, a5);
 }
 
 /*
