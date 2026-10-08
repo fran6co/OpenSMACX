@@ -3883,15 +3883,14 @@ void BaseWin::draw_energy_alloc(int a1) {
 // Garrison frames use style3. Original 0x410485 loads style9's mask pointer
 // from 0x78D6B0; that address is a member slot, not a Buffer object itself.
 // ORIGINAL: 0x004103B0 ?draw_garrison@BaseWin@@QAEXH@Z 0x004103B0-0x00410868;0x00651B0D-0x00651B22 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x004104DD-0x004107F9 typed stack links, column layout, vehicle drawing and hit regions", "image:0x00410573-0x004105E5 controls at 0x007B5080/5BCC/6718 are MainInterfaceGlobal.flat_button_[8..10] by 0xB4C stride", "image:0x004105A7-0x004105CD overflow bounds use adjacent MainInterface rectangles", "src/veh.h:Vehs and veh_at", "src/veh.cpp:say_stats_3 and veh_draw", "src/basewin.h:BaseWin garrison_rect_ and spot1_", "src/maininterface.h:MainInterfaceGlobal"], "reason": "Render the current base's real vehicle stack through owned state, drawing APIs and typed MainInterface buttons and adjacent panel rectangles. Scroll-position behavior remains a restoration obligation."}
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x004104DD-0x004107F9 starts from the veh_at result, counts from the previous-link head, invokes overflow buttons, then walks previous links again before rendering; no scroll offset is loaded", "image:0x00410573-0x004105E5 controls at 0x007B5080/5BCC/6718 are MainInterfaceGlobal.flat_button_[8..10] by 0xB4C stride", "image:0x004105A7-0x004105CD overflow bounds use adjacent MainInterface rectangles", "image:0x004104E2-0x004104FB and 0x0041074A-0x00410768 fall back only for nonpositive scale and otherwise divide by divisor", "image:0x0041056A-0x00410571 divides by spacing+5 after counting a present stack; overflow 0x004105BD-0x004105C0 divides by capacity without a guard", "image:0x0041074A-0x00410768 rereads pitch after text-color calls for write width; 0x004107FF-0x00410846 clips to Buffer::rect2_, updates, then restores saved clip", "src/veh.h:Vehs and veh_at", "src/veh.cpp:say_stats_3 and veh_draw", "src/basewin.h:BaseWin garrison_rect_ and spot1_", "src/maininterface.h:MainInterfaceGlobal"], "reason": "Preserve the pinned stack traversal, callback-visible rereads, unchecked signed divisions, Font/clip/update ordering and source-owned receivers. The original body has no independent scroll-offset read."}
 // size      1208 bytes
 // prototype void (__thiscall ?draw_garrison@BaseWin@@QAEXH@Z)(BaseWin* this, int)
 // callers   0   call targets   3
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
-// The body walks Vehs' typed stack links and renders visible vehicles. The
-// original's scroll-position behavior still needs recovery; this currently
-// starts with the first vehicle even when more than one row is available.
+// The body walks Vehs' typed stack links from the head and renders at most the
+// computed capacity. The pinned body does not load a scroll-position field.
 // LEVER: 0x40C2C is one RECT, not the four unnamed dwords the IDB records -
 //  set_clip takes it whole and the tile/frame sizing reads its fields.
 //  0x00691B2C is font.h's DefaultFontFace, passed as the pointer it is; the
@@ -3901,13 +3900,13 @@ void BaseWin::draw_energy_alloc(int a1) {
 // earlier partial transcription did. The stack starts at veh_at(base.x,y),
 // climbs prev_veh_id_stack and then walks next_veh_id_stack.
 void BaseWin::draw_garrison(int update_mode) {
+    Font font;
     Buffer *canvas = static_cast<Buffer *>(&MainInterfaceGlobal);
 
     RECT saved_clip = canvas->rect1_;
     RECT clip_rect = garrison_rect_;
     canvas->set_clip(&clip_rect);
 
-    Font font;
     font.init(DefaultFontFace, 0xc, 0);
 
     // The row pitch every garrison line uses: `height_ + unk_1_` when the
@@ -3941,26 +3940,26 @@ void BaseWin::draw_garrison(int update_mode) {
     spot1_.kill_type(6);
 
     int spacing;
-    if (MapWinCaptionScale > 0 && MapWinCaptionDivisor != 0) {
+    if (MapWinCaptionScale > 0) {
         spacing = (MapWinCaptionScale * 100) / MapWinCaptionDivisor;
     } else {
         spacing = 0x38;
     }
 
-    int vehicle = veh_at(BaseCurrent->x, BaseCurrent->y);
+    int initial_vehicle = veh_at(BaseCurrent->x, BaseCurrent->y);
+    int vehicle = initial_vehicle;
+    int capacity;
     if (vehicle >= 0) {
         while (Vehs[vehicle].prev_veh_id_stack >= 0) {
             vehicle = Vehs[vehicle].prev_veh_id_stack;
         }
-    }
-
-    const int capacity = spacing + 5 > 0
-        ? (frame_rect.right - frame_rect.left) / (spacing + 5) : 0;
-    if (vehicle >= 0) {
         int stack_count = 0;
         for (int at = vehicle; at >= 0; at = Vehs[at].next_veh_id_stack) {
             ++stack_count;
         }
+        // Original 0x410571 divides without guarding zero/negative pitch.
+        // An absent stack skips this division entirely (0x41051C).
+        capacity = (frame_rect.right - frame_rect.left) / (spacing + 5);
         MainInterfaceGlobal.flat_button_[8].hide();
         if (stack_count <= capacity) {
             MainInterfaceGlobal.flat_button_[9].hide();
@@ -3968,11 +3967,18 @@ void BaseWin::draw_garrison(int update_mode) {
         } else {
             frame_rect.left = MainInterfaceGlobal.adjacent_panel_left_rect_.right + 1;
             frame_rect.right = MainInterfaceGlobal.adjacent_panel_right_rect_.left - 1;
-            if (capacity > 0) {
-                spacing = (frame_rect.right - frame_rect.left) / capacity - 5;
-            }
+            spacing = (frame_rect.right - frame_rect.left) / capacity - 5;
             MainInterfaceGlobal.flat_button_[9].show(0);
             MainInterfaceGlobal.flat_button_[10].show(0);
+        }
+    }
+
+    // Keep the veh_at result across the button callbacks, then find the head
+    // again: the original rereads previous links at 0x4105F6..0x410626.
+    vehicle = initial_vehicle;
+    if (vehicle >= 0) {
+        while (Vehs[vehicle].prev_veh_id_stack >= 0) {
+            vehicle = Vehs[vehicle].prev_veh_id_stack;
         }
     }
 
@@ -3988,15 +3994,24 @@ void BaseWin::draw_garrison(int update_mode) {
         say_stats_3(StringTemp, Vehs[vehicle].proto_id);
         if ((GameDataStateStorage.fields_.game_state_ & 0x1040) == 0x1040) {
             char number[80];
-            strcat(StringTemp, " (");
+            strcat(StringTemp, " ");
+            strcat(StringTemp, "(");
             _itoa(vehicle, number, 10);
             strcat(StringTemp, number);
             strcat(StringTemp, ")");
         }
         canvas->set_font(&font, nullptr, nullptr, nullptr);
         canvas->set_text_color(TextColourTable[112], TextColourTable[113], 1, 1);
+        // Text width is recomputed after the calls above, independently of
+        // overflow-adjusted column spacing (0x41074A..0x41079D).
+        int text_spacing;
+        if (MapWinCaptionScale > 0) {
+            text_spacing = (MapWinCaptionScale * 100) / MapWinCaptionDivisor;
+        } else {
+            text_spacing = 0x38;
+        }
         canvas->write_cent_l(StringTemp, column_left,
-                             frame_rect.bottom - line_height + 6, spacing,
+                             frame_rect.bottom - line_height + 6, text_spacing,
                              strlen(StringTemp));
         spot1_.add(vehicle, 6, column_left, frame_rect.top,
                    spacing + 5, frame_rect.bottom - frame_rect.top);
@@ -4005,7 +4020,7 @@ void BaseWin::draw_garrison(int update_mode) {
         ++column;
     }
 
-    canvas->set_clip(&clip_rect);
+    canvas->set_clip(&canvas->rect2_);
     if (update_mode != 0) MainInterfaceGlobal.update(&garrison_rect_, nullptr);
     else MainInterfaceGlobal.soft_update(&garrison_rect_);
     canvas->set_clip(&saved_clip);
