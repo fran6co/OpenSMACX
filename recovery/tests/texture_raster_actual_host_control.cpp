@@ -10,6 +10,11 @@ struct EdgeScan {
     int f0, counter, id, accumA, accumB, deltaA, deltaB, accumC, deltaC,
         extraDeltaC, fracAccum, fracDelta, fracSub, accumD, deltaD;
 };
+struct TextureStore {
+    unsigned int flags_;
+    int next_record_;
+    EdgeScan edges_[10];
+};
 class Buffer {
 public:
     RECT rect1_;
@@ -30,7 +35,7 @@ public:
     int setup_edge_gouraud(EdgeScan *, int);
     int setup_edge(EdgeScan *, int);
     void sub_61b780(Buffer *, int *, int, int);
-    void sub_620a10(Buffer *, int, int, int, int *);
+    void sub_620a10(Buffer *, int, int, int, TextureStore *);
     void sub_61d090(Buffer *, int *, int *, unsigned int);
 };
 
@@ -60,8 +65,8 @@ static unsigned int TextureRasterKey = 0;
 unsigned char *Buffer::active_data_ = 0;
 static int fpu_resets;
 static int edge_helper_calls;
-static int edge_cache_sentinel[8];
-static int *expected_edge_cache;
+static TextureStore edge_cache_sentinel = {};
+static TextureStore *expected_edge_cache;
 static unsigned int edge_directions;
 static int edge_helper_period = 4;
 static int edge_helper_fail_at;
@@ -73,11 +78,10 @@ static int texture_span_step(int delta, int width) { return delta / width; }
 static unsigned short texture_light_step(int delta, int width) {
     return static_cast<unsigned short>(delta / width);
 }
-static int sub_624eb0(int *raw_edge, int top_index, unsigned char *cache) {
-    assert(raw_edge != 0);
+static int sub_624eb0(EdgeScan *edge, int top_index, TextureStore *cache) {
+    assert(edge != 0);
     assert(cache != 0);
-    assert(cache == reinterpret_cast<unsigned char *>(expected_edge_cache));
-    EdgeScan *edge = reinterpret_cast<EdgeScan *>(raw_edge);
+    assert(cache == expected_edge_cache);
     assert(edge->f0 == -1 || edge->f0 == 1);
     assert(top_index == 0);
     edge_directions |= edge->f0 < 0 ? 1u : 2u;
@@ -231,7 +235,7 @@ int main() {
     texture.iWidth_ = 4;
     texture.iHeight_ = 4;
     texture.borrowed_ = 0;
-    expected_edge_cache = edge_cache_sentinel;
+    expected_edge_cache = &edge_cache_sentinel;
     int points[8] = {0, 0, 4, 0, 4, 3, 0, 3};
     int shade[4] = {1, 1, 1, 1};
 
@@ -288,17 +292,18 @@ int main() {
 
     memset(surface, 77, 16);
     buffer.frees_ = 0;
-    int out_flags[256] = {0};
-    out_flags[1] = 9;
-    expected_edge_cache = out_flags;
+    TextureStore out_cache = {};
+    out_cache.flags_ = 0xA5A5A5A5u;
+    out_cache.next_record_ = 9;
+    expected_edge_cache = &out_cache;
     int *points_low = static_cast<int *>(
         mmap(0, 4096, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_32BIT, -1, 0));
     assert(points_low != MAP_FAILED);
     memcpy(points_low, points, sizeof(points));
     texture.sub_620a10(&buffer, static_cast<int>(reinterpret_cast<intptr_t>(points_low)), 4,
-                       static_cast<int>(reinterpret_cast<intptr_t>(points_low)), out_flags);
+                       static_cast<int>(reinterpret_cast<intptr_t>(points_low)), &out_cache);
     assert(buffer.frees_ == 1 && fpu_resets == 10);
-    assert(out_flags[1] == 0);
+    assert(out_cache.next_record_ == 0 && out_cache.flags_ == 1);
     for (int y = 0; y < 3; ++y) {
         assert(surface[y * 4] == 77); // 0x620a10 keys in owned and borrowed modes
         assert(surface[y * 4 + 1] == 5 + y * 10);
@@ -315,7 +320,7 @@ int main() {
     texture.borrowed_ = 1;
     texture.pixels_ = borrowed_source;
     texture.sub_620a10(&buffer, static_cast<int>(reinterpret_cast<intptr_t>(points_low)), 4,
-                       static_cast<int>(reinterpret_cast<intptr_t>(points_low)), out_flags);
+                       static_cast<int>(reinterpret_cast<intptr_t>(points_low)), &out_cache);
     assert(buffer.frees_ == 1 && fpu_resets == 12);
     assert(edge_helper_calls == 4);
     for (int y = 0; y < 3; ++y) {
@@ -334,7 +339,7 @@ int main() {
     edge_helper_period = 2;
     edge_helper_fail_at = 3;
     texture.sub_620a10(&buffer, static_cast<int>(reinterpret_cast<intptr_t>(points_low)), 4,
-                       static_cast<int>(reinterpret_cast<intptr_t>(points_low)), out_flags);
+                       static_cast<int>(reinterpret_cast<intptr_t>(points_low)), &out_cache);
     assert(buffer.frees_ == 1 && edge_helper_calls == 3 && fpu_resets == 14);
     assert(edge_helper_direction[0] == -1 && edge_helper_direction[1] == 1 &&
            edge_helper_direction[2] == -1);

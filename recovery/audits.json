@@ -109,9 +109,9 @@
         "orphan redirect": 59,
         "pointer-as-int": 0,
         "undocumented trivial body": 0,
-        "raw self-access": 58,
-        "pointer-parameter as int": 39,
-        "scaffold name": 3168
+        "raw self-access": 57,
+        "pointer-parameter as int": 25,
+        "scaffold name": 3116
       },
       "counters": []
     }

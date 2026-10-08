@@ -3410,7 +3410,7 @@ int __cdecl sub_625080(EdgeScan *edge, int index, TextureStore *cache) {
 // Fixed-slot bindings carried from 00620100.cpp
 
 // ORIGINAL: 0x00620100 sub_620100 0x00620100-0x00620254 FILE
-// symbol    ?sub_620100@@YAHPAHH@Z
+// symbol    ?sub_620100@@YAHPAUEdgeScan@@H@Z
 // TRIED: IDA/Ghidra guessed a nullary/void signature; the disassembly proves 2 explicit int args (int*, int) with no `this`. The 0x9BB490/0x9BB4F4/0x9BB4FC globals hold POINTERS (double indirection: `mov ecx,[addr]` then index off ecx), not raw table bases - a plain load, not an indexed-base address. First divergence #0 mov/push, not chased further.
 // size      340 bytes
 // prototype 
@@ -3420,6 +3420,8 @@ int __cdecl sub_625080(EdgeScan *edge, int index, TextureStore *cache) {
 // calls     0x00628AD0
 // placeholder - not yet decompiled
 // To start: tools/decomp_status.py --work 0x00620100
+
+// The fifteen indexed DWORDs are the established EdgeScan fields in order.
 
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
@@ -3436,13 +3438,13 @@ int __cdecl sub_625080(EdgeScan *edge, int index, TextureStore *cache) {
 // context from the first token rather than behind a file read. This
 // emitter computes declarations; it does not carry lessons.
 
-int __cdecl sub_620100(int *a1, int a2) {
-    if (a2 == *blit_max_y_index) {
+int __cdecl sub_620100(EdgeScan *edge, int vertex_index) {
+    if (vertex_index == *blit_max_y_index) {
         return 0;
     }
-    int base = a1[0];
+    int base = edge->f0;
     for (;;) {
-        int idx = base + a2;
+        int idx = base + vertex_index;
         int bound = *blit_vertex_count - 1;
         if (idx > bound) {
             idx = 0;
@@ -3450,46 +3452,46 @@ int __cdecl sub_620100(int *a1, int a2) {
             idx = bound;
         }
         int *tbl4f4 = *g2_009bb4f4;
-        int diff = tbl4f4[idx * 2 + 1] - tbl4f4[a2 * 2 + 1];
-        a1[1] = diff;
+        int diff = tbl4f4[idx * 2 + 1] - tbl4f4[vertex_index * 2 + 1];
+        edge->counter = diff;
         if (diff != 0) {
             if (diff <= 0) {
                 return 0;
             }
-            a1[2] = idx;
+            edge->id = idx;
             int scale = diff * 0x10000;
             int *tbl490 = *g2_009bb490;
-            a1[3] = tbl490[a2 * 2] << 0x10;
-            a1[4] = tbl490[a2 * 2 + 1] << 0x10;
+            edge->accumA = tbl490[vertex_index * 2] << 0x10;
+            edge->accumB = tbl490[vertex_index * 2 + 1] << 0x10;
             tbl490 = *g2_009bb490;
-            a1[5] = fixed_div((tbl490[idx * 2] << 0x10) - a1[3], scale);
+            edge->deltaA = fixed_div((tbl490[idx * 2] << 0x10) - edge->accumA, scale);
             tbl490 = *g2_009bb490;
-            a1[6] = fixed_div((tbl490[idx * 2 + 1] << 0x10) - a1[4], scale);
+            edge->deltaB = fixed_div((tbl490[idx * 2 + 1] << 0x10) - edge->accumB, scale);
             tbl4f4 = *g2_009bb4f4;
-            a1[7] = tbl4f4[a2 * 2];
+            edge->accumC = tbl4f4[vertex_index * 2];
             tbl4f4 = *g2_009bb4f4;
-            int deltaY = tbl4f4[idx * 2] - tbl4f4[a2 * 2];
+            int deltaY = tbl4f4[idx * 2] - tbl4f4[vertex_index * 2];
             if (deltaY < 0) {
                 int absDelta = -deltaY;
-                a1[10] = 1 - a1[1];
-                a1[9] = -1;
-                a1[8] = -(absDelta / a1[1]);
-                a1[0xb] = absDelta % a1[1];
+                edge->fracAccum = 1 - edge->counter;
+                edge->extraDeltaC = -1;
+                edge->deltaC = -(absDelta / edge->counter);
+                edge->fracDelta = absDelta % edge->counter;
             } else {
-                a1[9] = 1;
-                a1[8] = deltaY / a1[1];
-                a1[10] = 0;
-                a1[0xb] = deltaY % a1[1];
+                edge->extraDeltaC = 1;
+                edge->deltaC = deltaY / edge->counter;
+                edge->fracAccum = 0;
+                edge->fracDelta = deltaY % edge->counter;
             }
-            a1[0xc] = a1[1];
+            edge->fracSub = edge->counter;
             int *tbl4fc = *g2_009bb4fc;
-            int base4fc = tbl4fc[a2];
-            a1[0xd] = base4fc * 0x10000;
+            int base4fc = tbl4fc[vertex_index];
+            edge->accumD = base4fc * 0x10000;
             tbl4fc = *g2_009bb4fc;
-            a1[0xe] = fixed_div(tbl4fc[idx] * 0x10000 - base4fc * 0x10000, scale);
+            edge->deltaD = fixed_div(tbl4fc[idx] * 0x10000 - base4fc * 0x10000, scale);
             return 1;
         }
-        a2 = idx;
+        vertex_index = idx;
         if (idx == *blit_max_y_index) {
             return 0;
         }
@@ -3497,7 +3499,7 @@ int __cdecl sub_620100(int *a1, int a2) {
 }
 
 // ORIGINAL: 0x00620260 sub_620260 0x00620260-0x006202D8 FILE
-// symbol    ?sub_620260@@YAHH@Z
+// symbol    ?sub_620260@@YAHPAUEdgeScan@@@Z
 // working copy - scaffold materialised by --work
 // size      120 bytes
 // prototype 
@@ -3520,32 +3522,28 @@ int __cdecl sub_620100(int *a1, int a2) {
 // context from the first token rather than behind a file read. This
 // emitter computes declarations; it does not carry lessons.
 
-int __cdecl sub_620260(int a1) {
-    char *self = reinterpret_cast<char *>(a1);
-    int *pField4 = reinterpret_cast<int *>(self + 4);
-    int remaining = *pField4 - 1;
-    *pField4 = remaining;
+int __cdecl sub_620260(EdgeScan *edge) {
+    int remaining = edge->counter - 1;
+    edge->counter = remaining;
     if (remaining == 0) {
-        typedef int (__cdecl *Fn2)(int, int);
-        int r = reinterpret_cast<Fn2>(sub_620100)(a1, *reinterpret_cast<int *>(self + 8));
-        return r != 0;
+        return sub_620100(edge, edge->id) != 0;
     }
-    *reinterpret_cast<int *>(self + 0x10) += *reinterpret_cast<int *>(self + 0x18);
-    int sum1c = *reinterpret_cast<int *>(self + 0x1c) + *reinterpret_cast<int *>(self + 0x20);
-    *reinterpret_cast<int *>(self + 0xc) += *reinterpret_cast<int *>(self + 0x14);
-    *reinterpret_cast<int *>(self + 0x1c) = sum1c;
-    *reinterpret_cast<int *>(self + 0x34) += *reinterpret_cast<int *>(self + 0x38);
-    int sum28 = *reinterpret_cast<int *>(self + 0x28) + *reinterpret_cast<int *>(self + 0x2c);
-    *reinterpret_cast<int *>(self + 0x28) = sum28;
+    edge->accumB += edge->deltaB;
+    int sum1c = edge->accumC + edge->deltaC;
+    edge->accumA += edge->deltaA;
+    edge->accumC = sum1c;
+    edge->accumD += edge->deltaD;
+    int sum28 = edge->fracAccum + edge->fracDelta;
+    edge->fracAccum = sum28;
     if (sum28 > 0) {
-        *reinterpret_cast<int *>(self + 0x1c) = *reinterpret_cast<int *>(self + 0x24) + sum1c;
-        *reinterpret_cast<int *>(self + 0x28) = sum28 - *reinterpret_cast<int *>(self + 0x30);
+        edge->accumC = edge->extraDeltaC + sum1c;
+        edge->fracAccum = sum28 - edge->fracSub;
     }
     return 1;
 }
 
 // ORIGINAL: 0x00624EB0 sub_624eb0 0x00624EB0-0x00625075
-// symbol    ?sub_624eb0@@YAHPAHHPAE@Z
+// symbol    ?sub_624eb0@@YAHPAUEdgeScan@@HPAVTextureStore@@@Z
 // TRIED: the two fixed-point globals at 0x9BB490/0x9BB4F4 hold POINTERS (dereferenced then indexed *8), not plain scalars, so they are declared `int **const` and dereferenced once. Landing the direct transcription; the extra locals needed push the prologue to a spilled form the original's tighter register allocation does not use (divergence starts at instruction #0).
 // size      453 bytes
 // prototype
@@ -3560,7 +3558,11 @@ int __cdecl sub_620260(int a1) {
 //           the 4-register prologue), matching IDA's/Ghidra's 3-argument
 //           guess and cdecl (no `ret N`).
 
-int __cdecl sub_624eb0(int *param_1, int param_2, unsigned char *param_3) {
+// Historical prototype notes above retain the old guessed pointer spellings.
+// The typed records below are established by EdgeScan's 0x3c layout and the
+// TextureStore cursor/flags plus its ten embedded EdgeScan records.
+
+int __cdecl sub_624eb0(EdgeScan *param_1, int param_2, TextureStore *param_3) {
   int idx;
   int delta;
   int slotBase;
@@ -3572,7 +3574,7 @@ int __cdecl sub_624eb0(int *param_1, int param_2, unsigned char *param_3) {
   }
 
   do {
-    idx = param_1[0] + param_2;
+    idx = param_1->f0 + param_2;
     if (*blit_vertex_count - 1 < idx) {
       idx = 0;
     } else if (idx < 0) {
@@ -3581,76 +3583,73 @@ int __cdecl sub_624eb0(int *param_1, int param_2, unsigned char *param_3) {
 
     delta = reinterpret_cast<EdgePoint *>(*blit_edge_uvs_b)[idx].b -
             reinterpret_cast<EdgePoint *>(*blit_edge_uvs_b)[param_2].b;
-    param_1[1] = delta;
+    param_1->counter = delta;
     if (delta != 0) {
       if (delta < 1) {
         return 0;
       }
 
-      slotIndex = *reinterpret_cast<int *>(param_3 + 4);
+      slotIndex = param_3->next_record_;
       slotBase = slotIndex + 1;
-      *reinterpret_cast<int *>(param_3 + 4) = slotBase;
-      slotIndex = slotIndex * 0x3c;
+      param_3->next_record_ = slotBase;
       if (slotBase == 10) {
-        param_3[4] = 0;
-        param_3[5] = 0;
-        param_3[6] = 0;
-        param_3[7] = 0;
+        param_3->next_record_ = 0;
       }
 
-      param_1[2] = idx;
-      range = param_1[1];
-      param_1[3] = reinterpret_cast<EdgePoint *>(*blit_edge_uvs_a)[param_2].a << 0x10;
-      param_1[4] = reinterpret_cast<EdgePoint *>(*blit_edge_uvs_a)[param_2].b << 0x10;
-      if ((*param_3 & 2) == 0) {
-        param_1[5] = *reinterpret_cast<int *>(param_3 + slotIndex + 0x1c);
-        param_1[6] = *reinterpret_cast<int *>(param_3 + slotIndex + 0x20);
+      EdgeScan &cached = param_3->edges_[slotIndex];
+      param_1->id = idx;
+      range = param_1->counter;
+      param_1->accumA = reinterpret_cast<EdgePoint *>(*blit_edge_uvs_a)[param_2].a << 0x10;
+      param_1->accumB = reinterpret_cast<EdgePoint *>(*blit_edge_uvs_a)[param_2].b << 0x10;
+      if ((param_3->flags_ & 2) == 0) {
+        param_1->deltaA = cached.deltaA;
+        param_1->deltaB = cached.deltaB;
       } else {
         int fx = fixed_div(
-            reinterpret_cast<EdgePoint *>(*blit_edge_uvs_a)[idx].a * 0x10000 - param_1[3],
+            reinterpret_cast<EdgePoint *>(*blit_edge_uvs_a)[idx].a * 0x10000 - param_1->accumA,
             range << 0x10);
-        *reinterpret_cast<int *>(param_3 + slotIndex + 0x1c) = fx;
-        param_1[5] = fx;
-        range = param_1[1];
+        cached.deltaA = fx;
+        param_1->deltaA = fx;
+        range = param_1->counter;
         int fy = fixed_div(
-            reinterpret_cast<EdgePoint *>(*blit_edge_uvs_a)[idx].b * 0x10000 - param_1[4],
+            reinterpret_cast<EdgePoint *>(*blit_edge_uvs_a)[idx].b * 0x10000 - param_1->accumB,
             range << 0x10);
-        *reinterpret_cast<int *>(param_3 + slotIndex + 0x20) = fy;
-        param_1[6] = fy;
+        cached.deltaB = fy;
+        param_1->deltaB = fy;
       }
 
-      param_1[7] = reinterpret_cast<EdgePoint *>(*blit_edge_uvs_b)[param_2].a;
+      param_1->accumC = reinterpret_cast<EdgePoint *>(*blit_edge_uvs_b)[param_2].a;
       idx = reinterpret_cast<EdgePoint *>(*blit_edge_uvs_b)[idx].a -
             reinterpret_cast<EdgePoint *>(*blit_edge_uvs_b)[param_2].a;
-      if ((*param_3 & 2) != 0) {
-        range = param_1[1];
-        *reinterpret_cast<int *>(param_3 + slotIndex + 0x28) = idx / range;
-        param_1[8] = idx / range;
+      if ((param_3->flags_ & 2) != 0) {
+        range = param_1->counter;
+        cached.deltaC = idx / range;
+        param_1->deltaC = idx / range;
         if (idx < 0) {
           idx = -idx;
-          param_1[9] = -1;
-          param_1[10] = 1 - param_1[1];
+          param_1->extraDeltaC = -1;
+          param_1->fracAccum = 1 - param_1->counter;
         } else {
-          param_1[9] = 1;
-          param_1[10] = 0;
+          param_1->extraDeltaC = 1;
+          param_1->fracAccum = 0;
         }
-        range = param_1[1];
-        *reinterpret_cast<int *>(param_3 + slotIndex + 0x34) = idx % range;
-        param_1[0xb] = idx % range;
-        param_1[0xc] = param_1[1];
+        range = param_1->counter;
+        cached.fracDelta = idx % range;
+        param_1->fracDelta = idx % range;
+        param_1->fracSub = param_1->counter;
         return 1;
       }
 
-      param_1[8] = *reinterpret_cast<int *>(param_3 + slotIndex + 0x28);
+      param_1->deltaC = cached.deltaC;
       if (idx < 0) {
-        param_1[9] = -1;
-        param_1[10] = 1 - param_1[1];
+        param_1->extraDeltaC = -1;
+        param_1->fracAccum = 1 - param_1->counter;
       } else {
-        param_1[9] = 1;
-        param_1[10] = 0;
+        param_1->extraDeltaC = 1;
+        param_1->fracAccum = 0;
       }
-      param_1[0xb] = *reinterpret_cast<int *>(param_3 + slotIndex + 0x34);
-      param_1[0xc] = param_1[1];
+      param_1->fracDelta = cached.fracDelta;
+      param_1->fracSub = param_1->counter;
       return 1;
     }
 
@@ -5367,10 +5366,9 @@ static int texture_raster_step_gouraud(EdgeScan &edge, Texture *texture) {
     return 1;
 }
 
-static int texture_raster_step_plain(EdgeScan &edge, int *edge_cache) {
+static int texture_raster_step_plain(EdgeScan &edge, TextureStore *edge_cache) {
     if (--edge.counter == 0) {
-        return sub_624eb0(reinterpret_cast<int *>(&edge), edge.id,
-                          reinterpret_cast<unsigned char *>(edge_cache));
+        return sub_624eb0(&edge, edge.id, edge_cache);
     }
     edge.accumA = static_cast<int>(static_cast<unsigned int>(edge.accumA) + edge.deltaA);
     edge.accumB = static_cast<int>(static_cast<unsigned int>(edge.accumB) + edge.deltaB);
@@ -5423,14 +5421,12 @@ static void texture_raster_plain_rows(Texture *texture, Buffer *buffer,
                                       int first_y, int last_y, int top_index,
                                       const unsigned char *pixels, int pitch,
                                       int keyed, int borrowed,
-                                      int *edge_cache) {
+                                      TextureStore *edge_cache) {
     EdgeScan left, right;
     left.f0 = -1;
     right.f0 = 1;
-    if (!sub_624eb0(reinterpret_cast<int *>(&left), top_index,
-                    reinterpret_cast<unsigned char *>(edge_cache))) return;
-    if (!sub_624eb0(reinterpret_cast<int *>(&right), top_index,
-                    reinterpret_cast<unsigned char *>(edge_cache))) return;
+    if (!sub_624eb0(&left, top_index, edge_cache)) return;
+    if (!sub_624eb0(&right, top_index, edge_cache)) return;
     const RECT clip = buffer->current_clip();
     const int stride = buffer->stride_;
     unsigned char *destination = reinterpret_cast<unsigned char *>(*blit_pixel_base);
@@ -5521,7 +5517,7 @@ void Texture::sub_61b780(Buffer *buffer, int *vertices, int zvals, int mode) {
 // ORIGINAL: 0x00620A10 sub_620a10 0x00620A10-0x006212A4 FILE
 // CURRENT BODY STATUS: multirow keyed affine pixel traversal restored;
 // exact x87 status/packed carry equivalence remains restoration debt.
-// symbol    ?sub_620a10@Texture@@QAEXPAVBuffer@@HHHPAH@Z
+// symbol    ?sub_620a10@Texture@@QAEXPAVBuffer@@HHHPAVTextureStore@@@Z
 // TRIED (partial): this is a fixed-point/FPU-dual-mode affine
 //   texture-mapping scanline rasterizer. The two inner pixel loops
 //   (0x620EA1-0x620ECA and 0x621102-0x621197) pack a running fixed-point
@@ -5561,9 +5557,9 @@ void Texture::sub_61b780(Buffer *buffer, int *vertices, int zvals, int mode) {
 // emitter computes declarations; it does not carry lessons.
 
 void Texture::sub_620a10(Buffer *buffer, int vertices_arg, int count,
-                         int edge_vertices_arg, int *out_flag) {
+                         int edge_vertices_arg, TextureStore *cache) {
     int v80 = 1;
-    out_flag[1] = 0;
+    cache->next_record_ = 0;
     int *vertices = reinterpret_cast<int *>(vertices_arg);
     int data = buffer->get_data();
     texture_reset_fpu();
@@ -5601,10 +5597,10 @@ void Texture::sub_620a10(Buffer *buffer, int vertices_arg, int count,
         texture_raster_plain_rows(this, buffer, min_y, max_y, top,
             static_cast<const unsigned char *>(pixels_),
             borrowed_ ? 256 : TextureRowPitchScratch,
-            1, borrowed_ != 0, out_flag);
+            1, borrowed_ != 0, cache);
     }
     if (buffer != 0) buffer->free_data(1);
-    if (v80 == 0) out_flag[0] = 1;
+    if (v80 == 0) cache->flags_ = 1;
     texture_reset_fpu();
 }
 
@@ -7133,7 +7129,7 @@ void Texture::sub_61f0d0(Buffer *param_2, int param_3, int param_4, int param_5,
                   }
                   edge1.counter = edge1.counter + -1;
                   if (edge1.counter == 0) {
-                    iVar10 = sub_620100(reinterpret_cast<int *>(&edge1), edge1.id);
+                    iVar10 = sub_620100(&edge1, edge1.id);
                     if (iVar10 == 0) break;
                   }
                   else {
@@ -7149,7 +7145,7 @@ void Texture::sub_61f0d0(Buffer *param_2, int param_3, int param_4, int param_5,
                   }
                   edge2.counter = edge2.counter + -1;
                   if (edge2.counter == 0) {
-                    iVar10 = sub_620100(reinterpret_cast<int *>(&edge2), edge2.id);
+                    iVar10 = sub_620100(&edge2, edge2.id);
                     if (iVar10 == 0) break;
                   }
                   else {
@@ -7343,7 +7339,7 @@ void Texture::sub_623f50(Buffer *a1, int *a2, Texture *a3, uint8_t *a4,
 }
 
 // ORIGINAL: 0x00624CA0 sub_624ca0 0x00624CA0-0x00624CC8 BYTE_EXACT
-// symbol    ?sub_624ca0@Texture@@QAEXPAVBuffer@@HHHPAHH@Z
+// symbol    ?sub_624ca0@Texture@@QAEXPAVBuffer@@HHHPAVTextureStore@@H@Z
 // symbol    ?invoke@Subject@@QAEXHHHHHH@Z
 // size      40 bytes
 // prototype 
@@ -7360,7 +7356,7 @@ void Texture::sub_623f50(Buffer *a1, int *a2, Texture *a3, uint8_t *a4,
 
 // ---- callees, declared and never defined (a definition would be inlined) ----
 
-void Texture::sub_624ca0(Buffer *a1, int a2, int a3, int a4, int *a5,
+void Texture::sub_624ca0(Buffer *a1, int a2, int a3, int a4, TextureStore *a5,
                          int a6) {
     // 0x00624CA0, 40 bytes, `ret 0x18`. The sixth int is the -1 sentinel, the
     // same idiom `draw2` and `sub_623f50` carry: when it is -1 the first five

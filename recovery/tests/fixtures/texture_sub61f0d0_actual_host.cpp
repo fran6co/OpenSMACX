@@ -120,7 +120,7 @@ static int setup_selected_uv;
 static int setup_edge_result;
 static int forward_calls;
 static Buffer *active_buffer;
-static int sub_620100(int *, int) { return 0; }
+static int sub_620100(EdgeScan *, int) { return 0; }
 
 int Texture::setup_edge_gouraud(EdgeScan *, int index) {
     ++setup_calls;

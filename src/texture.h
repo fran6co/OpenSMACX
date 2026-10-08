@@ -206,8 +206,10 @@ class Texture {
                  Vert *uv, int threshold, unsigned char *palette);
   void sub_61f0d0(Buffer *param_2, int param_3, int param_4, int param_5,
                   int param_6, uint32_t param_7, int param_8);
+  // The final pointer is the shared ten-record cache consumed by sub_624eb0;
+  // flags_ selects geometry-cache replay/fill and next_record_ is its cursor.
   void sub_620a10(Buffer *bufParam, int vertsParam, int countParam,
-                  int edgeVerts, int *outFlag);
+                  int edgeVerts, TextureStore *cache);
   // 0x0061D090: receiver loads and RET 0x10 establish Texture this + four
   // stack arguments; this replaces the old free-function catalogue shape.
   void sub_61d090(Buffer *buffer, int *vertices, int *zvals, unsigned int flag);
@@ -219,10 +221,11 @@ class Texture {
   void sub_623f50(Buffer *buffer, int *verts, Texture *texB,
                   uint8_t *shadeTable, int vertCount, int unusedIn,
                   int sentinel);
-  // 0x00624CA0. Six ints, fifth-arg -1 sentinel, forward into the affine
-  // rasteriser.
+  // 0x00624CA0. Six stack arguments, with the fifth a TextureStore* and the
+  // sixth the -1 sentinel; the historical int* guess is retained in the
+  // source annotation comments beside the body.
   void sub_624ca0(Buffer *buffer, int verts, int count, int a4,
-                  int *outFlag, int sentinel);
+                  TextureStore *cache, int sentinel);
   void sub_6212b0(Buffer *buf, Vert *verts, int *zvals, int count,
                   Vert *edgeVerts, TextureStore *cache);                       // 0x006212B0
   void sub_622810(Buffer *buf, Vert *verts, int *zvals, int count,
