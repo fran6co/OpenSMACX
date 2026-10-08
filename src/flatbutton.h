@@ -49,6 +49,7 @@ class FlatButton : public BaseButton {
   FlatButton *destroy();
   void on_redraw() override;
   void on_mouse_move(int, int);
+  void on_mouse_leave(int, int) override;
   // ReportIf::report writes the per-page state at FlatButton+0xAB8 before
   // redrawing its seven category controls (original 0x004A3950).
   void set_report_page_state(int state) {

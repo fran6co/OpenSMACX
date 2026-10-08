@@ -1545,65 +1545,7 @@ extern "C" void __fastcall PullDown_on_left_up(PullDown *self, void *, int x,
 }
 
 // ---------------------------------------------------------------------------
-// FlatButton::on_mouse_leave, 0x00608660. Leaving a flat button releases its
-// pressed look and bubble: skip when this button is the tracked hover pair,
-// otherwise stop the hold timer, clear the bubble, notify the buddy control
-// and redraw. The member is undeclared in flatbutton.h, so the receiver
-// travels explicitly; the original is a __thiscall member.
-/*
-Purpose: Release a flat button's pressed look and bubble text when the
-         mouse leaves it.
-// ORIGINAL: 0x00608660 ?on_mouse_leave@FlatButton@@QAEXHH@Z 0x00608660-0x006086EC FILE
-// RECOVERY_BINDING: v1 {"evidence": ["Original608660..6086EC; retired seed git:117282ee:src/unrecovered/00608660.cpp records the same identity and spans.", "The pressed/hover state is basebutton.h's own model: time1_ at 0xA1C (time.h's own stop), field_A74_/field_A78_, bubble_text_ at 0xA80, plus the hover-pair slots 0x009B7ACC/0x9B7AD0/0x9B7AD4 and the buddy pointer at +0xC4 in GraphicWin's region.", "The press repaint, buddy notification and redraw run through the receiver's slots 17/40/62 (the last is Win's own redraw) via member-fn-pointer unions; Win::clear_bubble_text is win.h's own static."], "reason": "Coverage transcription of the flat-button leave handler on the typed BaseButton storage."}
-Status: Coverage transcription - unclaimed body
-*/
-extern "C" void __fastcall FlatButton_on_mouse_leave(BaseButton *self, void *,
-                                                     int x, int y) {
-    int active = *reinterpret_cast<int *>(0x009B7ACC);
-    if (active == 0) {
-        active = *reinterpret_cast<int *>(0x009B7AD0);
-    }
-    if (active == reinterpret_cast<int>(self)
-        && *reinterpret_cast<int *>(0x009B7AD4) == 1) {
-        void *const *vtable = *reinterpret_cast<void ***>(self);
-        // The hover pair keeps the press: slot 17 re-enters the press paint.
-        typedef void (Int2SlotObj::*Int2Fn)(int, int);
-        union Int2Shim {
-            Int2Fn fn;
-            void *raw;
-        };
-        Int2Shim repaint;
-        repaint.raw = vtable[17];
-        (reinterpret_cast<Int2SlotObj *>(self)->*repaint.fn)(x, y);
-        return;
-    }
-    char *const base = reinterpret_cast<char *>(self);
-    if (*reinterpret_cast<int *>(base + 0xA74) == 1) {
-        // The hold timer is BaseButton's time1_ at 0xA1C (time.h's own stop).
-        reinterpret_cast<Time *>(base + 0xA1C)->stop();
-        if (*reinterpret_cast<char **>(base + 0xA80) != 0) {
-            Win::clear_bubble_text();
-        }
-        *reinterpret_cast<int *>(base + 0xA74) = 0;
-        void *const buddy = *reinterpret_cast<void **>(
-            reinterpret_cast<char *>(self) + 0xC4);
-        if (buddy != 0) {
-            void *const *buddy_vtable = *reinterpret_cast<void ***>(buddy);
-            typedef void (Int2SlotObj::*NotifyFn)(int, int);
-            union NotifyShim {
-                NotifyFn fn;
-                void *raw;
-            };
-            NotifyShim notify;
-            notify.raw = buddy_vtable[40];
-            (reinterpret_cast<Int2SlotObj *>(buddy)->*notify.fn)(
-                *reinterpret_cast<int *>(base + 0xA78), 0);
-        }
-        NullSlotShim redraw;
-        redraw.raw = (*reinterpret_cast<void ***>(self))[62];
-        (reinterpret_cast<NullSlotObj *>(self)->*redraw.fn)();
-    }
-}
+
 
 // These original initializers call CRT functions rather than intrinsic copies.
 #pragma function(memset, strlen, strcpy)
