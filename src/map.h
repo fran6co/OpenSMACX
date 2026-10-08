@@ -295,18 +295,8 @@ const uint32_t ElevDetail[] = { 0, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200 
  * between 004700DA and 004708E2, so the name has to serve the renderer rather
  * than just the one function.
  */
-const int CornerOffsetX[4][4] = {
-    { -2, -1,  0, -1 },
-    { -1,  0,  1,  0 },
-    {  0,  1,  2,  1 },
-    { -1,  0,  1,  0 },
-};
-const int CornerOffsetY[4][4] = {
-    {  0, -1,  0,  1 },
-    { -1, -2, -1,  0 },
-    {  0, -1,  0,  1 },
-    {  1,  0,  1,  2 },
-};
+extern const int CornerOffsetX[4][4];
+extern const int CornerOffsetY[4][4];
 
 extern int MapLongitudeBounds; // x
 extern int MapLatitudeBounds; // y
@@ -535,7 +525,6 @@ extern unsigned char AltBonusMoist[113];
 extern unsigned char AltBonusRainy[113];
 extern unsigned char AltBonusFlat[113];
 extern unsigned char AltBonusOcean[113];
-const unsigned char *const AltStepX = (const unsigned char *)0x00685EA0;
 
 MEASURED inline BOOL __cdecl on_map(int x, int y) {
     return y >= 0 && y < (int)MapLatitudeBounds && x >= 0 && x < (int)MapLongitudeBounds;

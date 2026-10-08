@@ -2817,10 +2817,10 @@ static __forceinline signed char corner_light_value(int biased_index) {
 // `get_alt` walks. 0x00685684 is the direction table (five bytes a direction,
 // the first naming it and the four after it the neighbours it fans out to);
 // the other five are the per-terrain bonus rows that direction's byte is
-// indexed into. These tables remain fixed-address data bindings; no
-// typed storage owner for them is established here.
-// 0x00685EA0 / 0x00685EE0 - the two coordinate-stride tables the same walk
-// adds to a tile's x and y as it steps outward, indexed by byte offset.
+// indexed into. map.cpp owns the direction and bonus storage; the bonus
+// objects retain start-only bindings where original allocation bounds are unknown.
+// CornerOffsetX/Y in map.cpp own the coordinate tables at 0x00685EA0 / 0x00685EE0;
+// each corner row supplies four signed neighbor offsets to the same walk.
 // THE VIRTUAL-BASE DISPLACEMENT the compiler lays MapWin down with: the
 // vbtable it emits holds {0, 0x21A6C} (mapwin.h), so every handler the
 // image enters on the GraphicWin base walks `entered - 0x21A6C` to get to
@@ -2845,7 +2845,6 @@ static char *entered_receiver(MapWin *window) {
 int MapWinCaptionScale = -1;
 // RECOVERY_OBJECT: v2 0x00691E70 0x00691E74 ?MapWinCaptionDivisor@@3HA 0x005592D0
 int MapWinCaptionDivisor = -1;
-static const unsigned char *const AltStepY = (const unsigned char *)0x00685EE0;
 
 // GetAsyncKeyState is intentionally snapshotted once in MapWin's input path;
 // keep that load site and reuse timing. GetKeyState is sampled only once at
@@ -6908,14 +6907,17 @@ int MapWin::get_alt(int a1, int a2, int a3) {
         return val;
     }
 
-    int iVar9 = dirIndex * 0x10 - 0x10;
+    // The original byte offset (a3 - 1) * 16 selects a four-dword row.
+    // Keep its unchecked corner domain: the earlier cache read is unchecked too.
+    const int cornerRow = dirIndex - 1;
+    int iVar9 = 0;
     bool useAltMode = false;
     int local_c = 0;
     int local_10 = 0;
     int local_14 = 0;
     int iVar6 = iVar9;
     for (;;) {
-        int nx = *(int32_t *)((char *)AltStepX + iVar6) + a1;
+        int nx = CornerOffsetX[cornerRow][iVar6] + a1;
         if ((MapIsFlat & 1) == 0) {
             if (nx < 0) {
                 nx = MapLongitudeBounds + nx;
@@ -6923,7 +6925,7 @@ int MapWin::get_alt(int a1, int a2, int a3) {
                 nx = nx - MapLongitudeBounds;
             }
         }
-        int ny = *(int32_t *)((char *)AltStepY + iVar6) + a2;
+        int ny = CornerOffsetY[cornerRow][iVar6] + a2;
         if (ny < 0 || MapLatitudeBounds <= ny || nx < 0 || MapLongitudeBounds <= nx ||
             (map_tiles()[static_cast<int>(MapLongitude) * ny + (nx >> 1)].climate & 0xe0) < 0x60) {
             break;
@@ -6932,7 +6934,7 @@ int MapWin::get_alt(int a1, int a2, int a3) {
         local_c = local_c + sub;
         local_10 = local_10 + (map_tiles()[static_cast<int>(MapLongitude) * ny + (nx >> 1)].climate >> 5);
         local_14 = local_14 + 1;
-        iVar6 = iVar6 + 4;
+        iVar6 = iVar6 + 1;
         if (local_14 > 3) {
             goto merge;
         }
@@ -6966,7 +6968,7 @@ merge:
         int width = MapLongitudeBounds;
         int loopCheck;
         do {
-            int nx = *(int32_t *)((char *)AltStepX + iVar9) + a1;
+            int nx = CornerOffsetX[cornerRow][iVar9] + a1;
             if ((MapIsFlat & 1) == 0) {
                 if (nx < 0) {
                     nx = nx + width;
@@ -6974,7 +6976,7 @@ merge:
                     nx = nx - width;
                 }
             }
-            int ny = *(int32_t *)((char *)AltStepY + iVar9) + a2;
+            int ny = CornerOffsetY[cornerRow][iVar9] + a2;
             if (ny >= 0 && ny < MapLatitudeBounds && nx >= 0 && nx < width) {
                 nx = nx >> 1;
                 if (this->owned_ != 0) {
@@ -7005,7 +7007,7 @@ merge:
                     }
                 }
             }
-            iVar9 = iVar9 + 4;
+            iVar9 = iVar9 + 1;
             loopCheck = dirIndex + 3;
             dirIndex = dirIndex + 1;
         } while (loopCheck < 4);

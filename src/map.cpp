@@ -39,6 +39,24 @@
 #include "worldwin.h"
 #include "xpops.h"
 
+// Shared renderer corner coordinates, formerly duplicated by map.h in each TU.
+// Original get_alt reads signed dwords at (corner - 1) * 16 + neighbor * 4;
+// alt_get_ocean_detail and the polygon renderer use the same four-by-four rows.
+// RECOVERY_OBJECT: v1 0x00685EA0 ?CornerOffsetX@@3QAY03$$CBHA
+const int CornerOffsetX[4][4] = {
+    { -2, -1,  0, -1 },
+    { -1,  0,  1,  0 },
+    {  0,  1,  2,  1 },
+    { -1,  0,  1,  0 },
+};
+// RECOVERY_OBJECT: v1 0x00685EE0 ?CornerOffsetY@@3QAY03$$CBHA
+const int CornerOffsetY[4][4] = {
+    {  0, -1,  0,  1 },
+    { -1, -2, -1,  0 },
+    {  0, -1,  0,  1 },
+    {  1,  0,  1,  2 },
+};
+
 // Single shared storage for the parallel radius offsets and ring limits.
 // Pinned neighboring starts delimit 289 signed dwords per offset axis;
 // the nine ring limits are independently read by MapWin::UNK6.

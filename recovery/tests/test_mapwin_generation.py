@@ -689,8 +689,6 @@ Map *Tiles_pointer = Tiles_storage;
 inline Map *&map_tiles() { return Tiles_pointer; }
 int MapLongitudeBounds = 8, MapLatitudeBounds = 8, MapIsFlat = 1;
 unsigned int MapLongitude = 4;
-int MapRowStride_storage = 4;
-int *const MapRowStride = &MapRowStride_storage;
 const int RadiusBaseX[8] = {1, 2, 1, 0, -1, -2, -1, 0};
 const int RadiusBaseY[8] = {-1, 0, 1, 2, 1, 0, -1, -2};
 const int RiverStepX[4] = {1, 1, -1, -1};
@@ -705,7 +703,14 @@ struct PlayerData {
 };
 PlayerData PlayersData_storage[8];
 PlayerData *const PlayersData = PlayersData_storage;
-unsigned int GameState, GamePreferences, GameMorePreferences, GameRules;
+struct GameDataStateWindowFields {
+    unsigned int game_preferences_;
+    unsigned int game_more_preferences_;
+    unsigned int game_rules_;
+    unsigned int game_state_;
+};
+struct GameDataStateWindow { GameDataStateWindowFields fields_; };
+GameDataStateWindow GameDataStateStorage;
 BOOL ExpansionEnabled;
 int InfoFactionTextColors_storage[8];
 int *const InfoFactionTextColors = InfoFactionTextColors_storage;
@@ -864,7 +869,10 @@ void treset() {
     VehDrawPositionVehicle = 0;
     for (RulesChassis &chassis : Chassis) chassis.triad = 2;
     PlayersData_storage[1].flags = 0x200;  // map revealed: no wireframe exit
-    GameState = GamePreferences = GameMorePreferences = GameRules = 0;
+    GameDataStateStorage.fields_.game_state_ = 0;
+    GameDataStateStorage.fields_.game_preferences_ = 0;
+    GameDataStateStorage.fields_.game_more_preferences_ = 0;
+    GameDataStateStorage.fields_.game_rules_ = 0;
     ExpansionEnabled = 0;
     MapLongitudeBounds = MapLatitudeBounds = 8; MapIsFlat = 1;
     MapWinCaptionScale = -1; MapWinCaptionDivisor = -1;
@@ -903,7 +911,7 @@ void treset() {
     Line_calls = Draw2_calls = 0;
     lines.clear();
     hits.clear();
-    GameMorePreferences = 0;   // worked = 1 through the fast gate
+    GameDataStateStorage.fields_.game_more_preferences_ = 0; // worked = 1 through the fast gate
 }
 
 int drawn(Texture *arr, Texture *unit, int n) {
@@ -917,7 +925,7 @@ int drawn(Texture *arr, Texture *unit, int n) {
 
 void scan_setup(int faction, int radius_slot, int owner) {
     treset();
-    GameMorePreferences = 1;
+    GameDataStateStorage.fields_.game_more_preferences_ = 1;
     for (int f = 0; f < 8; ++f) PlayersData[f].flags = 0x200;
     ConsoleGlobal.faction_id_ = faction;
     Tiles_storage[0].climate = 0x40;
@@ -1042,8 +1050,8 @@ int main() {
         tile->val2 = visible ? 0 : 2;
         PlayersData[1].flags = omniscient ? 0x200 : 0;
         PlayersData[1].diplo_treaties[0] = omniscient ? 0 : 2;
-        GamePreferences = preference ? 0x100 : 0;
-        GameRules = rules ? 0x100 : 0;
+        GameDataStateStorage.fields_.game_preferences_ = preference ? 0x100 : 0;
+        GameDataStateStorage.fields_.game_rules_ = rules ? 0x100 : 0;
         gen_terrain_poly(&buffer, &window, 5, 1, 0, 1, 0, 0, 100, 100);
         const bool fog = rules && !visible && !omniscient;
         const bool wireframe = !rules && !visible && !omniscient;
@@ -1057,7 +1065,7 @@ int main() {
     for (int value = 0; value < 4; ++value) {
         treset();
         tile->climate = 0x40;
-        GameRules = 0x100;
+        GameDataStateStorage.fields_.game_rules_ = 0x100;
         Vehs[1895].x = value * 0x100;
         PlayersData[1].flags = (value & 2) ? 0 : 0x200;
         gen_terrain_poly(&buffer, &window, 5, -1, 0, 1, 0, 0, 100, 100);
@@ -1085,7 +1093,7 @@ int main() {
     // ---- sensor borders follow four diagonal neighbours, not radius[0:4] ----
     for (int axis = 0; axis < 2; ++axis) {
         treset();
-        GamePreferences = 0x200;
+        GameDataStateStorage.fields_.game_preferences_ = 0x200;
         MapFocusX = axis == 0 ? 1 : 4;
         MapFocusY = axis == 0 ? 4 : 1;
         gen_terrain_poly(&buffer, &window, 5, 1, 0, 1, 4, 4, 100, 100);
@@ -1268,7 +1276,7 @@ int main() {
         treset();
         tile->climate = 0x40;
         // An empty work-radius scan selects unworked shading.
-        GameMorePreferences = worked ? 0 : 1;
+        GameDataStateStorage.fields_.game_more_preferences_ = worked ? 0 : 1;
         gen_terrain_poly(&buffer, &window, 5, 1, 0, 1, 0, 0, 100, 100);
         check(g_OCEAN_TEXTURES[1].draw5 == (worked ? 4 : 0));
         check(g_OCEAN_TEXTURES[1].draw6 == (worked ? 0 : 4));
@@ -1405,7 +1413,7 @@ int main() {
             check(draws.size() == 4u + expected_draws);
         }
         treset(); tile->bit2 = (static_cast<unsigned>(sequence) << 24) | 0x103;
-        GameRules = 0x100; PlayersData[1].flags = 0; tile->visibility = 0;
+        GameDataStateStorage.fields_.game_rules_ = 0x100; PlayersData[1].flags = 0; tile->visibility = 0;
         gen_terrain_poly(&buffer, &window, 5, 1, 0, 1, 0, 0, 100, 100);
         check(draws.size() == 4); // fog suppresses all three families
     }
@@ -1939,7 +1947,8 @@ def test_actual_land_fan_tables():
     ('a4 == 0 ? tile->bit2', 'a4 == 0 ? tile->bit'),
     ('PlayersData[a4].flags & 0x200', 'PlayersData[a4].flags & 2'),
     ('Vehs[1895].x & 0x200', 'Vehs[1895].morale & 0x200'),
-    ('GameRules & 0x100', 'GamePreferences & 0x100'),
+    ('GameDataStateStorage.fields_.game_rules_ & 0x100',
+     'GameDataStateStorage.fields_.game_preferences_ & 0x100'),
     ('].territory ==', '].val3 =='),
     ('RiverStepX[local_30b - 1]', 'RadiusBaseX[local_30b - 1]'),
     ('RiverStepY[local_30b - 1]', 'RadiusBaseY[local_30b - 1]'),

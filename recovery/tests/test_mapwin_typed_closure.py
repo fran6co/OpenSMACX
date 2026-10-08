@@ -34,6 +34,9 @@ def actual_inputs() -> tuple[str, str, str]:
     map_h = MAP_H.read_text()
     cache = extract(mapwin_h, "struct TerrainCacheEntry") + ";"
     map_pod = extract(map_h, "struct Map") + ";"
+    map_source = (ROOT / "src/map.cpp").read_text()
+    tables = "\n".join(extract(map_source, "const int " + name + "[4][4]") + ";"
+                       for name in ("CornerOffsetX", "CornerOffsetY"))
     bodies = "\n\n".join(
         extract(candidate, signature)
         for signature in (
@@ -44,7 +47,7 @@ def actual_inputs() -> tuple[str, str, str]:
             "int MapWin::get_point_light(int x, int y, int corner)",
         )
     )
-    return cache, map_pod, bodies
+    return cache, map_pod, tables + "\n" + bodies
 
 
 HARNESS = r"""
@@ -57,24 +60,16 @@ HARNESS = r"""
 ACTUAL_CACHE
 ACTUAL_MAP
 
-int MapLongitudeBounds=8, MapLatitudeBounds=4;
-uint32_t MapLongitude=4, MapArea=16;
+int MapLongitudeBounds=8, MapLatitudeBounds=6;
+uint32_t MapLongitude=4, MapArea=24;
 int MapIsFlat=1;
 Map *MapTiles=0;
 inline Map *&map_tiles() { return MapTiles; }
 int MapWinCaptionScale=0, MapWinCaptionDivisor=1;
-int32_t AltStepX[16]={2,0,-2,0};
-int32_t AltStepY[16]={0,1,0,-1};
 unsigned char AltDirectionTable[256]={};
 unsigned char AltBonusArid[256]={}, AltBonusMoist[256]={};
 unsigned char AltBonusRainy[256]={}, AltBonusFlat[256]={}, AltBonusOcean[256]={};
 signed char AltLightBit1[256]={}, AltLightBit2[256]={}, AltLightBit200[256]={};
-const int CornerOffsetX[4][4] = {
-    {-2,-1,0,-1}, {-1,0,1,0}, {0,1,2,1}, {-1,0,1,0}
-};
-const int CornerOffsetY[4][4] = {
-    {0,-1,0,1}, {-1,-2,-1,0}, {0,-1,0,1}, {1,0,1,2}
-};
 static int allocation_size=-1;
 void *mem_get(int bytes) {
     allocation_size=bytes;
@@ -119,13 +114,13 @@ static_assert(offsetof(TerrainCacheEntry,terrain_bits)==9,"cache flags");
 static_assert(offsetof(TerrainCacheEntry,altitude_detail)==10,"cache details");
 static_assert(offsetof(MapWin,owned_)==4,"fixture owner word position");
 
-static Map tile_storage[16];
-static TerrainCacheEntry cache[16];
+static Map tile_storage[24];
+static TerrainCacheEntry cache[24];
 static int tile_index(int x,int y) { return int(MapLongitude)*y+(x>>1); }
 static int cache_index(int x,int y) { return (MapLongitudeBounds>>1)*y+(x>>1); }
 static void reset_cache() {
     memset(cache,0,sizeof(cache));
-    for (int i=0;i<16;++i) {
+    for (int i=0;i<24;++i) {
         for (int slot=0;slot<5;++slot) cache[i].altitude[slot]=-1;
         cache[i].altitude_detail=0xA5A5;
     }
@@ -133,7 +128,7 @@ static void reset_cache() {
 
 int main() {
     MapTiles=tile_storage;
-    for (int i=0;i<16;++i) tile_storage[i].climate=0x80;
+    for (int i=0;i<24;++i) tile_storage[i].climate=0x80;
 
     // Redraw is gated by the real owned_ pointer member at the measured +4.
     MapWin w;
@@ -163,7 +158,7 @@ int main() {
     assert(allocation_size==0); // allocation expression wraps before signed compare
     free(w.owned_);
     w.owned_=0;
-    MapArea=16;
+    MapArea=24;
 
     // Base direction writes signed altitude slot zero and returns the
     // unclamped integer result, while preserving other cache slots.
@@ -176,18 +171,22 @@ int main() {
 
     // Nonzero direction reaches the four neighbors recursively, stores each
     // neighbor's selected signed altitude slot, and writes its detail nibble.
-    reset_cache();
-    for (int i=0;i<16;++i) tile_storage[i].climate=0x80;
-    assert(w.get_alt(4,1,1)==25);
-    const int nx[4]={6,4,2,4}, ny[4]={1,2,1,0};
+    for (int i=0;i<24;++i) tile_storage[i].climate=0x80;
+    // Diamond geometry supplies an independent coordinate oracle for all
+    // four corners, rather than a second alias/mock table for get_alt.
+    const int nx[4][4]={{2,3,4,3},{3,4,5,4},{4,5,6,5},{3,4,5,4}};
+    const int ny[4][4]={{2,1,2,3},{1,0,1,2},{2,1,2,3},{3,2,3,4}};
     const int cache_slot[4]={3,4,1,2};
     const int detail_shift[4]={8,12,0,4};
-    for (int i=0;i<4;++i) {
-        int entry=cache_index(nx[i],ny[i]);
-        assert(cache[entry].altitude[cache_slot[i]]==25);
-        assert(((cache[entry].altitude_detail>>detail_shift[i])&0xF)==4);
+    for (int corner=1;corner<=4;++corner) {
+        reset_cache();
+        assert(w.get_alt(4,2,corner)==25);
+        for (int i=0;i<4;++i) {
+            int entry=cache_index(nx[corner-1][i],ny[corner-1][i]);
+            assert(cache[entry].altitude[cache_slot[i]]==25);
+            assert(((cache[entry].altitude_detail>>detail_shift[i])&0xF)==4);
+        }
     }
-    assert(cache[cache_index(4,1)].altitude[1]==-1); // center wasn't a neighbor
 
     // get_point_light reads the named Map::bit2 word and preserves the
     // corner-zero brighting callback order and result.
