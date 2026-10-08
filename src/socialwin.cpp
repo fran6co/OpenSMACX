@@ -1407,14 +1407,6 @@ void __cdecl energy_compute(int faction_id, int recompute_bases) {
     }
 }
 
-// Fixed-slot bindings carried from the 004aebf0 work, named from the roles
-// their stores fill. The report totals above now have genuine storage.
-// PlayerSocialCategoryBlock 0x0096CC08 / PlayerSocialEffectBlock 0x0096CC2C -
-// the per-faction social blocks social_calc consumes, reached through
-// PlayersData's own 0x20CC stride (0x96C9E0 + 0x228 / + 0x24C). No catalogue
-// names; the parameter types come from social_calc's own signature.
-static SocialCategory *const PlayerSocialCategoryBlock = (SocialCategory *)0x0096CC08;
-static SocialEffect *const PlayerSocialEffectBlock = (SocialEffect *)0x0096CC2C;
 
 static int social_category_value(const SocialCategory &category, int index) {
     switch (index) {
@@ -1442,11 +1434,12 @@ static int social_effect_value(const SocialEffect &effect, int index) {
 /*
  * Purpose: Recompute the social model for one category. Stores the chosen
  *          model in the category slot, redraws it, snapshots the working
- *          effect block as the undo copy, recalculates the player's pending
- *          and stored effect rows, then recomputes energy from the new model.
- *          The category itself stays 0 for the player-block walks; the faction
- *          index selects them.
+ *          effect block as the undo copy, recalculates working and pending
+ *          effects, recomputes energy, then refreshes the pending player row.
+ *          The faction index selects the player rows; both calculation flags
+ *          remain zero.
 // ORIGINAL: 0x004AEBF0 ?UNK1@SocialWin@@QAEXHH@Z 0x004AEBF0-0x004AECD2 FILE
+// RECOVERY_BINDING: v1 {"reason":"Recompute the selected faction's pending social model through its existing PlayerData members. Keep each row lookup at the original call site and retain global rereads after energy_compute. The final social_calc call has five arguments, not an omitted stack-residue argument.","evidence":["source:PlayersData begins at 0x0096C9E0 with PlayerData stride 0x20CC; pending category/effect members +0x228/+0x24C resolve to original 0x0096CC08/0x0096CC2C","pinned:0x004AEC65 addresses the pending effect row;0x004AECB6/0x004AECBC address pending effect/category after energy_compute","pinned:third social_calc arguments are pushed at 0x004AEC86,0x004AECA2,0x004AECA9,0x004AECC2 and0x004AECC3; both trailing flags are zero;0x004AECC9 cleans the complete deferred 0x44-byte call-argument area"]}
 // size      226 bytes
 // prototype void (__thiscall ?UNK1@SocialWin@@QAEXHH@Z)(SocialWin* this, int, int)
 // callers   2   call targets   3
@@ -1459,16 +1452,13 @@ void SocialWin::UNK1(int soc_category, int soc_model) {
     set_social_category_value(socCategory_, soc_category, soc_model);
     draw_social(soc_category);
 
-    // The original hand-copies the 11-int effect block with a dec/jne loop;
-    // a plain loop or block copy compiles to `rep movsd` instead. Keeping the
-    // counter `volatile` blocks that recognition without spilling the cursor.
+    // Snapshot the eleven-word working effect block as the undo copy.
+    // Original 0x004AEC21-0x004AEC2A uses a scalar dec/jne copy loop;
+    // the assignment preserves the value without asserting its code generation.
     socEffectOrig_ = socEffect_;
 
     social_calc(&socCategory_, &socEffect_, factionID_, 0, 0);
-    social_calc(&socCategory_,
-                reinterpret_cast<SocialEffect *>(
-                    reinterpret_cast<char *>(PlayerSocialEffectBlock)
-                    + factionID_ * sizeof(PlayerData)),
+    social_calc(&socCategory_, &PlayersData[factionID_].soc_effect_pending,
                 factionID_, 0, 0);
 
     energy_compute(factionID_, 1);
@@ -1476,16 +1466,9 @@ void SocialWin::UNK1(int soc_category, int soc_model) {
     breakthroughTurns_ = BreakthroughTurnsGlobal;
     netIncome_ = NetIncomeGlobal;
 
-    social_calc(reinterpret_cast<SocialCategory *>(
-                    reinterpret_cast<char *>(PlayerSocialCategoryBlock)
-                    + factionID_ * sizeof(PlayerData)),
-                reinterpret_cast<SocialEffect *>(
-                    reinterpret_cast<char *>(PlayerSocialEffectBlock)
-                    + factionID_ * sizeof(PlayerData)),
+    social_calc(&PlayersData[factionID_].soc_category_pending,
+                &PlayersData[factionID_].soc_effect_pending,
                 factionID_, 0, 0);
-    // The image's third social_calc call pushes only four arguments - the
-    // fifth slot is left to stack residue, which no C spelling can
-    // reproduce; this call passes 0 where the image reads garbage.
 }
 
 /*
@@ -1962,6 +1945,7 @@ void SocialWin::on_mouse_move(int a1, int a2) {
  *          from the faction's stored value. Invoked for the effect column's
  *          buttons only (0x11..0x1a), with the separator slot skipped.
 // ORIGINAL: 0x004B17A0 ?on_button_text_draw@SocialWin@@QAEHPAUGraphicWin@@PADH@Z 0x004B17A0-0x004B1991 FILE
+// RECOVERY_BINDING: v1 {"reason":"Compare the displayed effect against the selected faction's pending SocialEffect member rather than an original-address word view. Keep the existing selector and unchecked index behavior.","evidence":["pinned:0x004B18DA reads [edx*4+0x0096CC2C] with the selected faction's 2099-dword PlayerData stride and effect index","source:PlayersData base 0x0096C9E0,PlayerData stride 0x20CC,soc_effect_pending+0x24C,SocialEffect::values_+0x0"]}
 // symbol    ?on_button_text_draw@SocialWin@@QAEHPAVGraphicWin@@PADH@Z
 // TRIED: strlen/strcat named plainly get inlined by /O2 (fixed via the nullary
 //        _strlen/_strcat function-pointer lever, sim 0.71->0.90); remaining
@@ -2017,8 +2001,7 @@ int SocialWin::on_button_text_draw(GraphicWin *window, char *text, int button_id
     }
 
     int current = reinterpret_cast<const int *>(&socEffect_)[effect];
-    int stored = reinterpret_cast<const int *>(PlayerSocialEffectBlock)
-        [2099 * factionID_ + effect];
+    int stored = PlayersData[factionID_].soc_effect_pending.values_[effect];
     if (current > stored) {
         win_buffer->set_text_color(0xfa, -1, 1, 1);
     } else if (current < stored) {

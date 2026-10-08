@@ -90,7 +90,9 @@ static_assert(__builtin_offsetof(SocialWin, effectIcons_) - 0x13CC == 51*0x84,
 
 int energy_limit(int) { return 12; }
 static SocialWin panel;
-static int PlayerSocialEffectBlock[2099*2];
+struct PendingPlayerEffect { int values_[11]; };
+struct PlayerData { PendingPlayerEffect soc_effect_pending; };
+static PlayerData PlayersData[8];
 static char StringTemp[128];
 static char PlusText[]="+";
 static int _itoa(int v, char *s, int) { return std::sprintf(s,"%d",v); }
