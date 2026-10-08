@@ -2714,6 +2714,7 @@ static int *const EditorBrushButtonGroupSelection = (int *)0x007CD2D8;
 // the BaseWin methods have typed source-owned implementations.
 
 // ORIGINAL: 0x004DBB40 ?editor_reset_faction@Console@@QAEXXZ 0x004DBB40-0x004DBC32 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned4DBB70..4DBC25 and faction.h PlayerData stride0x20CC: +324/+328 se_alloc_psych/labs; +228/+238 pending/active models; +1D8 then+1D4 major_atrocities then atrocities; +124 integrity_blemishes.", "Pinned4DBBC7..4DBBE3 reads Base faction byte+4, masks governor+38 and clears queue_size+4C, not queue items. Pinned4DBBF4..4DBC0E reads Veh faction+E, clears order+11 and masks state+4.", "Pinned4DBB8D/90 alternates active then pending category stores. Base count is sampled after social_upkeep; vehicle count is sampled once after base traversal. Seven faction iterations retain TectonicDetonationCount words1..7 and every original mask."], "reason": "Reset faction editor state through existing PlayerData, SocialCategory, Base and Veh owners instead of raw interior-pointer walks; preserve dialog, modifier/upkeep calls and subsequent count snapshots."}
 // TRIED: nothing yet - MISMATCH #16 mov/push (94% mnemonic sim), a push/store reordering around the `compute_faction_modifiers` call; not chased further. `this` is unused throughout (thiscall receiver never touched).
 // size      242 bytes
 // prototype void (__thiscall ?editor_reset_faction@Console@@QAEXXZ)(Console* this)
@@ -2721,94 +2722,69 @@ static int *const EditorBrushButtonGroupSelection = (int *)0x007CD2D8;
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x005B0D70 0x005B44D0 0x005BF310
-// placeholder - not yet decompiled
-// To start: tools/decomp_status.py --work 0x004DBB40
-// GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?editor_reset_faction@Console@@QAEXXZ  at 0x004DBB40  (242 bytes)
-//
-// A VERIFICATION ARTIFACT, not product source: classes are opaque and
-// globals are bound to fixed addresses, because both are byte-visible
-// and both differ from the style src/ is written in.
-//
-// The VC6 dialect limits and the source-form rules used to live here.
-// They are knowledge, not scaffolding, so they now live in the agent
-// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
-// where they can be edited without regenerating anything and are in
-// context from the first token rather than behind a file read. This
-// emitter computes declarations; it does not carry lessons.
-
-
 void Console::editor_reset_faction() {
-    // THE WALKER. `faction_state` starts at PlayerData[1] + 0x324 and steps
-    // one whole PlayerData (0x833 dwords == 0x20CC bytes, the stride
-    // faction.h pins) per faction, so the raw offsets below are all relative
-    // to that one fixed point inside the record. Spelled against the real
-    // array rather than an anonymous 0x0096EDD0 base: the stride and the
-    // start-at-faction-1 are what prove the identity.
-    int *faction_state = reinterpret_cast<int *>(&PlayersData[1]) + 0xC9;
     if (X_pop(StrResetAllFac, (NullCallback)0) != 0) {
+        PlayerData *faction = &PlayersData[1];
         unsigned int factionId = 1;
         uint32_t *rules_flag = TectonicDetonationCount + 1;
         do {
-            faction_state[1] = 5;
-            *faction_state = 0;
+            faction->se_alloc_labs = 5;
+            faction->se_alloc_psych = 0;
             compute_faction_modifiers(factionId);
 
-            int *puVar2 = faction_state - 0x3f;
+            uint32_t *pending_model = faction->soc_category_pending.models_;
+            uint32_t *active_model = faction->soc_category_active.models_;
             int i = 4;
             do {
-                puVar2[4] = 0;
-                *puVar2 = 0;
-                ++puVar2;
+                *active_model = 0;
+                *pending_model = 0;
+                ++active_model;
+                ++pending_model;
                 --i;
             } while (i != 0);
 
             social_upkeep(factionId);
             int count = GameDataStateStorage.fields_.base_current_count_;
-            faction_state[-0x53] = 0;
-            faction_state[-0x54] = 0;
+            faction->major_atrocities = 0;
+            faction->atrocities = 0;
             *rules_flag = 0;
-            faction_state[-0x80] = 0;
+            faction->integrity_blemishes = 0;
 
-            // Bases owned by this faction lose their governor flag and their
-            // production queue. &Bases[0].governor is 0x0097D078; the faction
-            // byte is Base::faction_id_current at 0x4, i.e. governor - 0x34.
             if (count > 0) {
-                int *base_governor = reinterpret_cast<int *>(&Bases[0].governor);
+                Base *base = Bases;
                 int n = count;
                 do {
-                    if ((unsigned char)base_governor[-0xd] == factionId) {
-                        *base_governor &= 0x7fffffff;
-                        base_governor[5] = 0;
+                    if (base->faction_id_current == factionId) {
+                        base->governor &= 0x7fffffff;
+                        base->queue_size = 0;
                     }
-                    base_governor += 0x4d;
+                    ++base;
                     --n;
                 } while (n != 0);
             }
-            // Vehs owned by this faction are emptied. &Vehs[0].state is
-            // 0x0095282C (see clear_group's note in console.h) and the
-            // 0xd-dword step is the 0x34-byte Veh stride.
-            if (GameDataStateStorage.fields_.vehicle_current_count_ > 0) {
-                int *veh_state = reinterpret_cast<int *>(&Vehs[0].state);
-                int n = GameDataStateStorage.fields_.vehicle_current_count_;
+            int vehicle_count = GameDataStateStorage.fields_.vehicle_current_count_;
+            if (vehicle_count > 0) {
+                Veh *vehicle = Vehs;
+                int n = vehicle_count;
                 do {
-                    if (*((unsigned char *)veh_state + 0xA) == factionId) {
-                        *((unsigned char *)veh_state + 0xD) = 0;
-                        *veh_state &= 0xfcffbdff;
+                    if (vehicle->faction_id == factionId) {
+                        vehicle->order = 0;
+                        vehicle->state &= 0xfcffbdff;
                     }
-                    veh_state += 0xd;
+                    ++vehicle;
                     --n;
                 } while (n != 0);
             }
             ++factionId;
             ++rules_flag;
-            faction_state += 0x833;
+            ++faction;
         } while (rules_flag < TectonicDetonationCount + 8);
     }
 }
 
 
 // ORIGINAL: 0x004E1300 ?editor_clear_vehicles@Console@@QAEXXZ 0x004E1300-0x004E137F FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned4E1300..4E137F reads MapArea then MapTiles after auto_undo and before resetting editor globals. Initial JLE and loop-end JL compare signed32-bit tile counts; the loop reloads MapArea.", "Pinned4E1343..4E1366 identifies Map record+8 bit maskedFFFFFFFC, seven copies from bit to+10..+28 bit_visible, and stride2C; bit2 at+C is not changed. map.h declares these members and map_init allocates MapArea*sizeof(Map)."], "reason": "Use the genuine Map allocation and bit/visibility members for the editor reset, preserving original signed count checks and callback/reset/redraw order."}
 // working copy - scaffold materialised by --work
 // size      127 bytes
 // prototype void (__thiscall ?editor_clear_vehicles@Console@@QAEXXZ)(Console* this)
@@ -2819,24 +2795,23 @@ void Console::editor_reset_faction() {
 
 void Console::editor_clear_vehicles() {
     auto_undo();
+    const int initial_area = static_cast<int>(MapArea);
+    Map *tile = MapTiles;
     GameDataStateStorage.fields_.game_state_ |= 4;
     int count = 0;
     GameDataStateStorage.fields_.vehicle_current_count_ = 0;
     GameDataStateStorage.fields_.base_current_count_ = 0;
     ConsoleGlobal.cursor_active_ = 0;
     ConsoleGlobal.selected_vehicle_ = -1;
-    if (MapArea > 0) {
-        unsigned int *rec = reinterpret_cast<unsigned int *>(map_tile_bytes() + 8);
+    if (initial_area > 0) {
         do {
-            rec[0] &= 0xfffffffc;
-            unsigned int val = rec[0];
-            unsigned int *dst = rec + 2;
-            for (int i = 0; i < 7; i++) {
-                dst[i] = val;
+            tile->bit &= 0xfffffffcU;
+            for (int i = 0; i < 7; ++i) {
+                tile->bit_visible[i] = tile->bit;
             }
-            count++;
-            rec += 0xb;
-        } while (count < MapArea);
+            ++count;
+            ++tile;
+        } while (count < static_cast<int>(MapArea));
     }
     reset_territory();
     ::draw_map(1);

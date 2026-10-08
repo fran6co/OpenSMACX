@@ -142,8 +142,22 @@ def _quit_harness(route_10051: str, case_20051: str, tail: str, *, pbem: bool) -
     return r'''
 #include <assert.h>
 #include <string.h>
-int IsMultiplayerNet, IsMultiplayerPBEM, GameRules, ExitTurnLoop;
-unsigned int LockEnableMask;
+#include <stdint.h>
+int IsMultiplayerNet, IsMultiplayerPBEM, ExitTurnLoop;
+struct HostGameDataLockMaskBytes {
+    uint8_t human_mask_, alive_mask_, unassigned_[2];
+};
+union GameDataLockMaskView {
+    uint32_t enable_mask_;
+    HostGameDataLockMaskBytes bytes_;
+};
+struct HostGameDataFields {
+    uint32_t game_rules_;
+    uint32_t game_state_;
+    GameDataLockMaskView lock_masks_;
+};
+struct HostGameDataState { HostGameDataFields fields_; };
+HostGameDataState GameDataStateStorage = {};
 int hang_calls, reset_calls, save_calls, auto_save_calls, retire_calls, pop_calls, log_calls;
 struct ConsoleState { int faction_id_; } ConsoleGlobal;
 struct NetState {
@@ -171,14 +185,15 @@ TAIL
 int main() {
     ConsoleGlobal.faction_id_ = 2;
     IsMultiplayerPBEM = PBEM_VALUE;
-    LockEnableMask = 0xFF;
-    GameRules = 0x400;
+    GameDataStateStorage.fields_.lock_masks_.enable_mask_ = 0xFF;
+    GameDataStateStorage.fields_.game_rules_ = 0x400;
     dispatch_quit(0x20051);
     assert(retire_calls == 0);
     assert(ExitTurnLoop == 1 && log_calls == 1);
     assert(pop_calls == 1 && strcmp(prompt, PBEM_VALUE ? "REALLYWIMPOUT" : "REALLYQUIT") == 0);
     if (PBEM_VALUE) {
-        assert(save_calls == 1 && (LockEnableMask & (1u<<2)) == 0);
+        assert(save_calls == 1 &&
+               (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u<<2)) == 0);
         assert(auto_save_calls == 0 && hang_calls == 0 && reset_calls == 0);
     } else {
         assert(save_calls == 0 && auto_save_calls == 1);
@@ -247,7 +262,10 @@ def _y_join_harness(route: str) -> str:
     return r'''
 #include <assert.h>
 int scenario_tail_calls, command_dispatch_calls;
-unsigned int GameState;
+#include <stdint.h>
+struct HostGameDataFields { uint32_t game_state_; };
+struct HostGameDataState { HostGameDataFields fields_; };
+HostGameDataState GameDataStateStorage = {};
 const unsigned STATE_SCENARIO_EDITOR = 0x1000u;
 const unsigned STATE_OMNISCIENT_VIEW = 0x80u;
 const unsigned STATE_DEBUG_MODE = 0x40u;
@@ -262,7 +280,7 @@ void draw_map(int) {}
 void desktop_update() {}
 int dispatch(int normalized_character, unsigned state,
              int native_command_consumed) {
-    GameState = state;
+    GameDataStateStorage.fields_.game_state_ = state;
     if (normalized_character == -1) goto native_scenario_tail;
     if (normalized_character == -2) goto native_editor_command_dispatch;
 ROUTE
@@ -274,7 +292,8 @@ native_editor_command_dispatch:
 }
 int main() {
     dispatch('y', 0x1000u, 0);
-    assert(scenario_tail_calls == 0 && command_dispatch_calls == 1);
+    assert(GameDataStateStorage.fields_.game_state_ == 0x1080u &&
+           scenario_tail_calls == 0 && command_dispatch_calls == 1);
     return 0;
 }
 '''.replace("ROUTE", route)
