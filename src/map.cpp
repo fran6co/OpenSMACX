@@ -943,6 +943,7 @@ void __cdecl climate_set(int x, int y, int rainfall) {
 /*
 Purpose: Calculate the elevation of the specified tile.
 // ORIGINAL: 0x005919C0 ?elev_at@@YAHHH@Z 0x005919C0-0x00591A77
+// RECOVERY_BINDING: v1 {"reason":"Read the genuine shared contour target table rather than a header-local copy of its initial values.","evidence":["Pinned5919D6 loads68FB2C, AltContour[3];591A13 compares against68FB20+4*(climate>>5) with signed591A1A JLE.","src/map.cpp owns AltContour at68FB20..68FB4C; the former ElevDetail header array was duplicate storage, not an independent original object."]}
 // LEVER: two fixes got this from 37/67 to 57/67 (0.985 similar). (1) A
 //        shared `Map *tile` read once for both `contour` and `climate`,
 //        instead of calling `alt_detail_at`/`alt_at` as separate accessors
@@ -975,8 +976,8 @@ Status: Complete
 int __cdecl elev_at(int x, int y) {
     Map *const tile = map_loc(x, y);
     int contour = tile->contour;
-    int elev = 50 * (contour - ElevDetail[3] - MapSeaLevel);
-    if (contour > (int)ElevDetail[tile->climate >> 5]) {
+    int elev = 50 * (contour - AltContour[3] - MapSeaLevel);
+    if (contour > (int)AltContour[tile->climate >> 5]) {
         elev += (x * 113 + y * 217 + MapSeaLevel * 301) % 50;
     } else {
         elev += 10;
@@ -4359,6 +4360,7 @@ void __cdecl world_polar_caps() {
 /*
 Purpose: Set up the world contours.
 // ORIGINAL: 0x005C5AE0 ?world_linearize_contours@@YAXXZ 0x005C5AE0-0x005C5BC3
+// RECOVERY_BINDING: v1 {"reason":"Linearize tile contours from the default input intervals into the real contour target table, preserving the original signed division and final table publication.","evidence":["Pinned5C5B35/4F/58 loadAltContour at68FB20/24/30;5C5B3E/62 loadAltNaturalDefault at68FAF4/68FAF8;CMP6/JGE selects the +4 target.","Pinned5C5B73 IMUL retains low32bits, followed by CDQ/IDIV at5C5B78/79 and wrappedADD at5C5B7B;5C5B80 passes the full result to the byte-writing alt_put_detail owner.","Pinned5C5B98 calls do_all_non_input after each row;5C5BB1..5C5BBB copies11dwords fromAltContour68FB20 toAltNatural68FB4C only after all rows."]}
 // LEVER: BUG IN THIS RECOVERY (not the original): `alt_nat +
 //        (alt_nat >= ALT_3_LEVELS_ABOVE_SEA) ? 4 : 1` - `+` binds tighter
 //        than `?:`, so this parsed as `(alt_nat + (alt_nat >= ...)) ? 4 :
@@ -4384,20 +4386,30 @@ Status: Complete - testing
 void __cdecl world_linearize_contours() {
     for (int y = 0; y < MapLatitudeBounds; y++) {
         for (int x = y & 1; x < MapLongitudeBounds; x += 2) {
-            uint32_t alt_nat = alt_natural(x, y);
-            alt_put_detail(x, y, (uint8_t)((((ElevDetail[alt_nat
-                + ((alt_nat >= ALT_3_LEVELS_ABOVE_SEA) ? 4 : 1)] - ElevDetail[alt_nat])
-                * (alt_detail_at(x, y) - AltNatural[alt_nat]))
-                / (AltNatural[alt_nat + 1] - AltNatural[alt_nat])) + ElevDetail[alt_nat]));
+            const int band = alt_natural(x, y);
+            const uint32_t detail = static_cast<uint32_t>(alt_detail_at(x, y));
+            const uint32_t contour = AltContour[band];
+            const uint32_t input_floor = AltNaturalDefault[band];
+            const uint32_t target = AltContour[band
+                + ((band >= ALT_3_LEVELS_ABOVE_SEA) ? 4 : 1)];
+            const int32_t denominator = static_cast<int32_t>(
+                AltNaturalDefault[band + 1] - input_floor);
+            // IMUL wraps before CDQ/IDIV interprets the numerator as signed.
+            // Preserve the original divide faults; there is no zero guard.
+            const int32_t numerator = static_cast<int32_t>(
+                (target - contour) * (detail - input_floor));
+            const uint32_t result = contour
+                + static_cast<uint32_t>(numerator / denominator);
+            alt_put_detail(x, y, static_cast<int32_t>(result));
         }
         do_all_non_input();
     }
     // `memcpy`, and the ARRAYS, not their addresses. The image ends with
     // `mov ecx, 0xb; mov esi, 0x68fb20; mov edi, 0x68fb4c; rep movsd` - the
-    // intrinsic, copying ElevDetail over AltNatural. `memcpy_s` emits a call
+    // intrinsic, copying AltContour over AltNatural. `memcpy_s` emits a call
     // with four arguments, and `&AltNatural` wrote over the POINTER rather
     // than the array it names.
-    memcpy(AltNatural, ElevDetail, sizeof(uint32_t) * 11);
+    memcpy(AltNatural, AltContour, sizeof(AltContour));
 }
 
 /*

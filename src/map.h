@@ -279,7 +279,6 @@ extern const int RiverStepY[4];
 
 extern const int RadiusOffsetX[289];
 extern const int RadiusOffsetY[289];
-const uint32_t ElevDetail[] = { 0, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200 };
 
 /*
  * The four map tiles that meet at each corner of a tile's rendered diamond,
@@ -350,10 +349,9 @@ extern uint32_t AltNatural[11];
 // any altitude band is computed. Shipped values { 0, 20, 40, 60, 80, 100,
 // 120, 140, 160, 180, 200 } - the nominal contour of each altitude band.
 extern uint32_t AltNaturalDefault[11];
-// The one reader is world_rivers, lowering a tile a river is carving through:
-// it indexes this by the tile's altitude band (`climate >> 5`) to pick the
-// contour to drop the tile to, then clamps that to one below the tile it came
-// from (0x005C3F4C).
+// Shared contour targets: world_rivers selects a tile's river contour,
+// elev_at compares the climate band, and world_linearize_contours maps the
+// AltNaturalDefault intervals into this table before copying it to AltNatural.
 extern uint32_t AltContour[11];
 
 // `int` throughout, matching both the definition in src/map.cpp and the
