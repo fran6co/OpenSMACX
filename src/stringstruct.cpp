@@ -947,48 +947,6 @@ extern "C" void __fastcall sub_447d20(void *self_raw, void *) {
 
 // ---------------------------------------------------------------------------
 // ---------------------------------------------------------------------------
-// MapWin::draw_cursor, 0x0046AD60. The map's terrain cursor repaint: fetch
-// the current cursor tile from the parallel x/y tables, clip it against the
-// view window (with the cylindrical wrap when the map is round), and hand
-// the tile to draw_radius as a radius-0 repaint. mapwin.h declares the
-// member; its forwarder retires from pending_bodies.cpp in this change.
-/*
-Purpose: Repaint the map tile under the terrain cursor.
-// ORIGINAL: 0x0046AD60 ?draw_cursor@MapWin@@QAEXXZ 0x0046AD60-0x0046ADF1 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["Original46AD60..46ADF1; retired seed git:117282ee:src/unrecovered/0046ad60.cpp records the same identity and spans with its table-addressing TRIED note kept below.", "The receiver is mapwin.h's own window: the view fields 0x1DDA4..0x1DDD8 are declared members and draw_radius is declared beside them; 0x0094988C is map.cpp's MapIsFlat and 0x00949870 its MapLongitudeBounds.", "The cursor index and parallel x/y arrays at 0x009392B8/0x009392C0/0x00939340 are ConsoleGlobal members, as declared in console.h."], "reason": "Coverage transcription of terrain cursor repaint on the typed MapWin receiver using the Console owner for cursor history."}
-Status: Coverage transcription - unclaimed body
-*/
-void MapWin::draw_cursor() {
-    const int index = ConsoleGlobal.cursor_history_index_;
-    const int x = ConsoleGlobal.cursor_history_x_[index];
-    const int y = ConsoleGlobal.cursor_history_y_[index];
-
-    if (y < field_1DDA8_) {
-        return;
-    }
-    if (y >= field_1DDD8_ + field_1DDD0_ + field_1DDA8_) {
-        return;
-    }
-
-    int adjusted_x = x;
-    if ((MapIsFlat & 1) == 0) {
-        if (x < field_1DDA4_) {
-            adjusted_x = MapLongitudeBounds + x;
-        }
-        if (adjusted_x >= field_1DDD4_ + field_1DDCC_ + field_1DDA4_) {
-            adjusted_x = adjusted_x - MapLongitudeBounds;
-        }
-    }
-
-    if (adjusted_x < field_1DDA4_) {
-        return;
-    }
-    if (adjusted_x >= field_1DDD4_ + field_1DDCC_ + field_1DDA4_) {
-        return;
-    }
-
-    draw_radius(x, y, 0, 2);
-}
 
 // ---------------------------------------------------------------------------
 // DeletionList::convert, 0x0052DDC0. Multiplayer id conversion: remap a
@@ -1088,62 +1046,6 @@ int DeletionList::add_deletion(int veh_id) {
 
 
 // ---------------------------------------------------------------------------
-// PrevWndFunc, 0x005D5C50. The shared window-procedure pre-filter: route the
-// two messages the owner handles itself (the scroll range and the mouse
-// move) into the object stored in the window's userdata, and hand every
-// other message to Win::window_proc through CallWindowProcA.
-/*
-Purpose: Pre-filter the owner window's messages before the shared window
-         procedure sees them.
-// ORIGINAL: 0x005D5C50 PrevWndFunc 0x005D5C50-0x005D5CEA FILE
-// RECOVERY_BINDING: v1 {"evidence": ["Original5D5C50..5D5CEA; retired seed git:117282ee:src/unrecovered/005d5c50.cpp records the same identity and spans.", "The userdata slot is GetWindowLongA(hwnd, GWL_USERDATA) exactly as win.cpp's adjust_menus reads it; the two dispatches are vtable slots 71 (the scroll, message 5) and 85 (the mouse move, message 0x20), and the default path hands the message to win.h's own static Win::window_proc through CallWindowProcA.", "The dispatches run through member-fn-pointer unions because the object's class is unnamed in the catalogue."], "reason": "Coverage transcription of the message pre-filter with the two handled messages dispatched at their measured slots."}
-Status: Coverage transcription - unclaimed body
-*/
-namespace {
-class ScrollSlotObj { public: void slot(int, short, short); };
-union ScrollSlotShim {
-    void (ScrollSlotObj::*fn)(int, short, short);
-    void *raw;
-};
-class MouseMoveSlotObj { public: int slot(int, unsigned short, unsigned short); };
-union MouseMoveSlotShim {
-    int (MouseMoveSlotObj::*fn)(int, unsigned short, unsigned short);
-    void *raw;
-};
-}
-
-extern "C" int __stdcall PrevWndFunc(int window, int message, int wparam,
-                                     int lparam) {
-    if (message == 5) {
-        void *const owner =
-            reinterpret_cast<void *>(GetWindowLongA((HWND)window, -0x15));
-        if (owner != 0) {
-            void *const *vtable = *reinterpret_cast<void ***>(owner);
-            ScrollSlotShim scroll;
-            scroll.raw = vtable[71];
-            (reinterpret_cast<ScrollSlotObj *>(owner)->*scroll.fn)(
-                wparam, static_cast<short>(lparam),
-                static_cast<short>(lparam >> 16));
-        }
-        return 0;
-    } else if (message == 0x20) {  // WM_SETCURSOR family move message
-        void *const owner =
-            reinterpret_cast<void *>(GetWindowLongA((HWND)window, -0x15));
-        if (owner != 0) {
-            void *const *vtable = *reinterpret_cast<void ***>(owner);
-            MouseMoveSlotShim move;
-            move.raw = vtable[85];
-            return (reinterpret_cast<MouseMoveSlotObj *>(owner)->*move.fn)(
-                wparam, static_cast<unsigned short>(lparam),
-                static_cast<unsigned short>(
-                    static_cast<unsigned int>(lparam) >> 16));
-        }
-        return 0;
-    }
-    return CallWindowProcA(reinterpret_cast<WNDPROC>(&Win::window_proc),
-                           (HWND)window, (UINT)message, (WPARAM)wparam,
-                           (LPARAM)lparam);
-}
 
 // Interlude members and compiler-generated lifetime code are owned by interlude.cpp.
 

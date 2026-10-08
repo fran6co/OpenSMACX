@@ -13270,3 +13270,43 @@ int __cdecl Win::display_action(int action) {
  * [ARCHIVE] // calls     0x005D8000 0x005DA860 0x005DAC70 0x005DACB0 0x005DCF40 0x005DD130 0x005DD450 0x005DFB50 0x005E3203 0x006453E0
  * [ARCHIVE] // indirect  0x005F2E85 0x005F30E4 0x005F319C 0x005F332B 0x005F33D3 0x005F3544 0x005F35FC 0x005F37AA
  */
+
+// PrevWndFunc, 0x005D5C50. The shared window-procedure pre-filter: route the
+// two messages the owner handles itself (window size and cursor
+// selection) into the object stored in the window's userdata, and hand every
+// other message to Win::window_proc through CallWindowProcA.
+/*
+Purpose: Pre-filter the owner window's messages before the shared window
+         procedure sees them.
+// ORIGINAL: 0x005D5C50 PrevWndFunc 0x005D5C50-0x005D5CEA FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Historical seed git:117282ee:src/unrecovered/005d5c50.cpp retains original identity/spans.", "Pinned 5D5C50..5D5CEA handles WM_SIZE at Win virtual slot71 with signed low/high16-bit dimensions; WM_SETCURSOR uses slot85 with zero-extended words and returns its result.", "Win::on_size(unsigned int,int,int) and on_set_cursor(void*,unsigned int,unsigned int) are existing source-owned virtual slots71/85; Dialog::UNK2 calls this free WNDPROC through CallWindowProcA.", "GWL_USERDATA is the same genuine Win view used by the typed message adapters in win.cpp. Keep message-specific userdata lookup, null returns, original integer stdcall boundary, and Win::window_proc fallback."], "reason": "Recover the window pre-filter as a genuine free Win-owned Windows callback, using existing virtual methods instead of fabricated slot receiver types. Preserve original payload transforms, guards and result/fallback behavior; no new match claim."}
+// symbol    _PrevWndFunc@16
+Status: Coverage transcription - unclaimed body
+*/
+extern "C" int __stdcall PrevWndFunc(int window, int message, int wparam,
+                                     int lparam) {
+    if (message == 5) {
+        Win *const owner = reinterpret_cast<Win *>(
+            GetWindowLongA((HWND)window, GWL_USERDATA));
+        if (owner != 0) {
+            owner->on_size(static_cast<unsigned int>(wparam),
+                           static_cast<short>(lparam),
+                           static_cast<short>(lparam >> 16));
+        }
+        return 0;
+    } else if (message == 0x20) {  // WM_SETCURSOR
+        Win *const owner = reinterpret_cast<Win *>(
+            GetWindowLongA((HWND)window, GWL_USERDATA));
+        if (owner != 0) {
+            return owner->on_set_cursor(
+                reinterpret_cast<void *>(wparam),
+                static_cast<unsigned short>(lparam),
+                static_cast<unsigned short>(
+                    static_cast<unsigned int>(lparam) >> 16));
+        }
+        return 0;
+    }
+    return CallWindowProcA(reinterpret_cast<WNDPROC>(&Win::window_proc),
+                           (HWND)window, (UINT)message, (WPARAM)wparam,
+                           (LPARAM)lparam);
+}

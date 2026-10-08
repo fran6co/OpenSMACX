@@ -998,9 +998,10 @@ void MapWin::on_button_clicked(int button) {
 
 /*
 Purpose: Report a left click on the map, but only when map input is enabled.
-         Reached through the GraphicWin virtual base, so `this` points there
-         and is adjusted back 0x21A6C to the MapWin before dispatching.
+         The VC6 override ABI enters through the GraphicWin virtual base;
+         ordinary typed member calls perform the receiver adjustment.
 // ORIGINAL: 0x0046EBA0 ?on_left_click@MapWin@@QAEXHH@Z 0x0046EBA0-0x0046EBC5 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned callback enters its GraphicWin view and subtracts 21A6C once before MapWin::click; distinct incoming adjustors retain their source mappings.", "Fresh VC6 private comparison: previous raw-this spelling emits ECX-434D8, twice the MapWin virtual-base offset; direct typed click emits ECX-21A6C as pinned.", "Existing MapWin virtual GraphicWin hierarchy and typed override generate the receiver conversion; left/right forward the original two integers and button0/1 without changing callers or view tables."], "reason": "Recover MapWin click dispatch with compiler-owned virtual-base adjustment, not a second raw source receiver subtraction. Preserve input gate, original arguments, button selector and historical matching obligation."}
 // symbol    ?on_left_click@MapWin@@UAEXHH@Z
 // size      37 bytes
 // prototype void (__thiscall ?on_left_click@MapWin@@QAEXHH@Z)(MapWin* this, int, int)
@@ -1015,15 +1016,14 @@ void MapWin::on_left_click(int a1, int a2) {
     if (MapInputEnabled == 0) {
         return;
     }
-    MapWin *const base = reinterpret_cast<MapWin *>(
-        reinterpret_cast<uint8_t *>(this) - 0x21A6C);
-    base->click(a1, a2, 0);
+    click(a1, a2, 0);
 }
 
 /*
 Purpose: Report a right click on the map, but only when map input is enabled.
-         Same virtual-base adjustment as the left click.
+         Same compiler-owned virtual-base adjustment as the left click.
 // ORIGINAL: 0x0046EBE0 ?on_right_click@MapWin@@QAEXHH@Z 0x0046EBE0-0x0046EC05 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned callback enters its GraphicWin view and subtracts 21A6C once before MapWin::click; distinct incoming adjustors retain their source mappings.", "Fresh VC6 private comparison: previous raw-this spelling emits ECX-434D8, twice the MapWin virtual-base offset; direct typed click emits ECX-21A6C as pinned.", "Existing MapWin virtual GraphicWin hierarchy and typed override generate the receiver conversion; left/right forward the original two integers and button0/1 without changing callers or view tables."], "reason": "Recover MapWin click dispatch with compiler-owned virtual-base adjustment, not a second raw source receiver subtraction. Preserve input gate, original arguments, button selector and historical matching obligation."}
 // symbol    ?on_right_click@MapWin@@UAEXHH@Z
 // size      37 bytes
 // prototype void (__thiscall ?on_right_click@MapWin@@QAEXHH@Z)(MapWin* this, int, int)
@@ -1038,9 +1038,7 @@ void MapWin::on_right_click(int a, int b) {
     if (MapInputEnabled == 0) {
         return;
     }
-    MapWin *const base = reinterpret_cast<MapWin *>(
-        reinterpret_cast<uint8_t *>(this) - 0x21A6C);
-    base->click(a, b, 1);
+    click(a, b, 1);
 }
 
 
@@ -7952,6 +7950,49 @@ int MapWin::pixel_to_tile(int x_pixel, int y_pixel, int *out_tile_x,
         }
     }
     return 1;
+}
+
+// MapWin::draw_cursor, 0x0046AD60. The map's terrain cursor repaint: fetch
+// the current cursor tile from the parallel x/y tables, clip it against the
+// view window (with the cylindrical wrap when the map is round), and hand
+// the tile to draw_radius as a radius-0 repaint. mapwin.h declares the
+// member; the distinct free cursor remains a separate operation.
+/*
+Purpose: Repaint the map tile under the terrain cursor.
+// ORIGINAL: 0x0046AD60 ?draw_cursor@MapWin@@QAEXXZ 0x0046AD60-0x0046ADF1 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Original46AD60..46ADF1; retired seed git:117282ee:src/unrecovered/0046ad60.cpp records the same identity and spans with its table-addressing TRIED note kept below.", "The receiver is mapwin.h's own window: the view fields 0x1DDA4..0x1DDD8 are declared members and draw_radius is declared beside them; 0x0094988C is map.cpp's MapIsFlat and 0x00949870 its MapLongitudeBounds.", "The cursor index and parallel x/y arrays at 0x009392B8/0x009392C0/0x00939340 are ConsoleGlobal members, as declared in console.h."], "reason": "Coverage transcription of terrain cursor repaint on the typed MapWin receiver using the Console owner for cursor history."}
+Status: Coverage transcription - unclaimed body
+*/
+void MapWin::draw_cursor() {
+    const int index = ConsoleGlobal.cursor_history_index_;
+    const int x = ConsoleGlobal.cursor_history_x_[index];
+    const int y = ConsoleGlobal.cursor_history_y_[index];
+
+    if (y < field_1DDA8_) {
+        return;
+    }
+    if (y >= field_1DDD8_ + field_1DDD0_ + field_1DDA8_) {
+        return;
+    }
+
+    int adjusted_x = x;
+    if ((MapIsFlat & 1) == 0) {
+        if (x < field_1DDA4_) {
+            adjusted_x = MapLongitudeBounds + x;
+        }
+        if (adjusted_x >= field_1DDD4_ + field_1DDCC_ + field_1DDA4_) {
+            adjusted_x = adjusted_x - MapLongitudeBounds;
+        }
+    }
+
+    if (adjusted_x < field_1DDA4_) {
+        return;
+    }
+    if (adjusted_x >= field_1DDD4_ + field_1DDCC_ + field_1DDA4_) {
+        return;
+    }
+
+    draw_radius(x, y, 0, 2);
 }
 
 /*
