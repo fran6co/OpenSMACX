@@ -63,6 +63,7 @@ struct Dialogs {
 
 struct BasePop {
   Dialogs dialogs_;
+  Dialogs &dialogs() { return dialogs_; }
   int start_result;
   int selection;
   int start_calls;

@@ -5,6 +5,7 @@ it is a host behavior fixture, not proof of the game UI or native ABI.
 """
 from pathlib import Path
 from match_recovery.source import read_file
+from current_game_storage_fixture import current_game_storage_fixture
 import os
 import shutil
 import subprocess
@@ -81,6 +82,7 @@ const char *last_popup_label="";
 struct Dialogs { int item(char *,int index) { effects.push_back("item:"+std::to_string(index)); return 0; } };
 struct Popup {
     Dialogs dialogs_;
+    Dialogs &dialogs() { return dialogs_; }
     Popup() { effects.push_back("ctor"); }
     void close() {
         effects.push_back("popup.close");
@@ -211,6 +213,12 @@ void test_draw_tile_native_argument_order_and_liveness(){
 }
 int main(){test_returns();test_mode2_live_range();test_global_cursor_owner();test_defaults_and_order();test_flags_and_owner();test_draw_tile_native_argument_order_and_liveness();}
 '''
+
+# The product now owns the count in its real game-state object. Keep existing
+# scenario controls writing that same cell rather than a disconnected global.
+HARNESS = current_game_storage_fixture() + '\n' + HARNESS.replace(
+    'int BaseCurrentCount,',
+    'int &BaseCurrentCount = GameDataStateStorage.fields_.base_current_count_;\nint ')
 
 
 @pytest.mark.parametrize("damage", [None, "extra_close", "draw_order", "wrong_faction", "signed_range", "wrong_range_owner", "wrong_cursor_receiver"])

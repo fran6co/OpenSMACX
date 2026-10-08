@@ -269,6 +269,7 @@ GraphicWin TutWinBaseWindow;
 struct Dialogs { void item(char*,int id) { events.push_back("item:"+std::to_string(id)); } };
 struct StringList { void sort(int key) { assert(key==0); events.push_back("sort"); } };
 struct Popup { Dialogs list; StringList item_ids_;
+  void sort_item_ids(int mode) { item_ids_.sort(mode); }
   Popup(){events.push_back("construct");} ~Popup(){events.push_back("destroy");}
   int start(char*,const char*,int,char*,int){events.push_back("start");return 0;}
   void set_cancel_text(char*){events.push_back("cancel-text");}

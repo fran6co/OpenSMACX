@@ -1,0 +1,25 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "b29c503c608b0874eca80c5b4a979f21f256a794",
+  "editable_files": [
+    "src/basepop.cpp",
+    "recovery/tests/test_basepop_owned_close_actual_source.py"
+  ],
+  "evidence": [
+    "Coordinator-authorized isolated structural draft for BasePop::close at original600F00; existing source declares real Dialogs, Sprite, GraphicWin and Heap ownership and named reset/default fields. Compile/link and scoped matching verification are required before manual integration; no game acceptance is claimed.",
+    "Only the complete close body and a focused host control may change. Preserve original spans, historical claims, seed discoveries, reset/call order, unsafe/error behavior and the inconsistent external-window branch. Outside-owner type, lifetime or ABI findings require central expansion.",
+    "Worker checkout recovery/basepop-owned-close-oct8 is based on this immutable revision. Root alone mutates Git, prepares compiler recipes, measures, reviews and integrates; the worker may not touch the main source or compiler leases.",
+    "Source matching regressions do not justify discarding evidence-backed structure; preserve obligations and request coordinator review. Existing explicit Heap teardown remains a separate lifetime-review obligation, not proof of final C++ lifetime correctness."
+  ],
+  "intent": "Recover BasePop's generic close/reset operation through declared C++ members and actual inherited subobjects instead of executable-style raw self offsets; preserve original quirks and all historical recovery obligations.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6295296,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "basepop-owned-close-oct8"
+}

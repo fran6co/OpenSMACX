@@ -353,7 +353,7 @@ void Console::editor_edit_veh(int vehicle_id) {
                 (Weapon[listed_prototype.weapon_id].offense_rating < 0 || vehicle.proto_id == 0x0F)) {
                 name = Morale[morale_id].name_lifecycle;
             }
-            popup.dialogs_.item(StringTable.get(
+            popup.dialogs().item(StringTable.get(
                 static_cast<int>(reinterpret_cast<uintptr_t>(name))), morale_id);
             if (morale_veh(vehicle_id, 1, 0) == morale_id) {
                 popup.set_value(morale_id);
@@ -438,7 +438,7 @@ void Console::editor_edit_veh(int vehicle_id) {
             StringTemp[0] = '\0';
             ::strcat(StringTemp, Players[faction_id].noun_faction);
             GenderDefault = Players[faction_id].noun_gender;
-            popup.dialogs_.item(StringTemp, faction_id);
+            popup.dialogs().item(StringTemp, faction_id);
         }
         popup.set_value(vehicle.faction_id);
         const int faction = popup.exec(0, nullptr);
@@ -455,10 +455,10 @@ void Console::editor_edit_veh(int vehicle_id) {
         popup.start(PopupStartCaption, "EDITVEHHOME", -1, nullptr, 0x42, nullptr);
         StringTemp[0] = '\0';
         ::strcat(StringTemp, label_get(25));
-        popup.dialogs_.item(StringTemp, 9999);
+        popup.dialogs().item(StringTemp, 9999);
         for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
             if (Bases[base_id].faction_id_current == vehicle.faction_id) {
-                popup.dialogs_.item(Bases[base_id].name_string, base_id);
+                popup.dialogs().item(Bases[base_id].name_string, base_id);
             }
         }
         popup.set_value(vehicle.home_base_id < 0 ? 9999 : vehicle.home_base_id);
@@ -5926,7 +5926,7 @@ void Console::editor_tech() {
             strcat(StringTemp, label_get(status));
             popup.dialogs().item(StringTemp, tech_id);
         }
-        popup.item_ids_.sort(0);
+        popup.sort_item_ids(0);
         if (ScenarioTechSelection >= 0) {
             popup.set_value(ScenarioTechSelection);
         }
@@ -7840,7 +7840,7 @@ void Console::show_movies() { // 0x00515F70
                     reinterpret_cast<intptr_t>(Facility[facility_id].name))));
             popup.dialogs().item(StringTemp, project_id);
         }
-        popup.item_ids_.sort(0);
+        popup.sort_item_ids(0);
 
         const int selected_project = popup.exec(0, nullptr);
         if (selected_project < 0) {

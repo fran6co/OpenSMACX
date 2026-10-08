@@ -12,6 +12,65 @@ import pytest
 ROOT = Path(__file__).resolve().parents[2]
 
 
+def test_application_clients_use_owned_state_without_class_friendship(tmp_path):
+    header = (ROOT / 'src/basepop.h').read_text()
+    for name in ('AlphaNet', 'TutWin', 'Console'):
+        assert 'friend class ' + name + ';' not in header
+    accessor = _definition(header, 'Dialogs &dialogs()')
+    sorter = _definition(header, 'void sort_item_ids(int mode)')
+    width = _definition(header, 'uint32_t layout_width() const')
+    height = _definition(header, 'uint32_t layout_height() const')
+    for member in ('field_30BC_', 'field_30C0_'):
+        assert 'uint32_t ' + member + ';' in header
+    compiler = shutil.which('g++')
+    if compiler is None:
+        pytest.skip('g++ is unavailable')
+    fixture = '''#include <cassert>
+#include <stdint.h>
+struct Dialogs { int value; };
+struct StringList {
+    int calls, mode;
+    StringList(): calls(0), mode(-1) {}
+    virtual void sort(int key) { ++calls; mode=key; }
+};
+class BasePop {
+    Dialogs dialogs_;
+    StringList item_ids_;
+    uint32_t field_30BC_, field_30C0_;
+public:
+    BasePop() { dialogs_.value=19; field_30BC_=0x80000001u; field_30C0_=0xffffffffu; }
+    ACCESSOR
+    SORTER
+    WIDTH
+    HEIGHT
+    int sort_calls() const { return item_ids_.calls; }
+    int sort_mode() const { return item_ids_.mode; }
+};
+int main() {
+    BasePop popup;
+    Dialogs &first=popup.dialogs();
+    assert(&first==&popup.dialogs());
+    assert(first.value==19);
+    first.value=31;
+    assert(popup.dialogs().value==31);
+    popup.sort_item_ids(0);
+    assert(popup.sort_calls()==1 && popup.sort_mode()==0);
+    popup.sort_item_ids(7);
+    assert(popup.sort_calls()==2 && popup.sort_mode()==7);
+    assert(popup.layout_width()==0x80000001u);
+    assert(popup.layout_height()==0xffffffffu);
+}
+'''.replace('ACCESSOR', accessor).replace('SORTER', sorter).replace(
+        'WIDTH', width).replace('HEIGHT', height)
+    source = tmp_path / 'owned-state.cpp'
+    executable = tmp_path / 'owned-state'
+    source.write_text(fixture)
+    subprocess.run([compiler, '-std=c++98', '-Wall', '-Wextra', '-Werror',
+                    str(source), '-o', str(executable)],
+                   check=True, capture_output=True, text=True)
+    subprocess.run([str(executable)], check=True, capture_output=True, text=True)
+
+
 def _definition(source: str, signature: str) -> str:
     start = source.index(signature)
     opening = source.index("{", start)

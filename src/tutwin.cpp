@@ -375,18 +375,18 @@ int TutWin::tut_win(GraphicWin *owner, const char *text, int x, int y,
 
     if (picture != 0) {
         set_caller_picture(picture_enabled() ? 0 : picture);
-        dialogs_.SpriteBox::sprite(picture, 0, 0);
+        dialogs().SpriteBox::sprite(picture, 0, 0);
     } else if (field_53AC_ >= 0) {
         set_caller_picture(picture_enabled() ? 0 : &g_VEH_SPRITES[0]);
-        dialogs_.SpriteBox::sprite(&g_VEH_SPRITES[0], 0, 0);
+        dialogs().SpriteBox::sprite(&g_VEH_SPRITES[0], 0, 0);
         set_redraw_callback(tut_veh_draw);
     } else if (field_53AC_ >= -1) {
         set_caller_picture(picture_enabled() ? 0 : &g_VEH_SPRITES[0]);
-        dialogs_.SpriteBox::sprite(&g_VEH_SPRITES[0], 0, 0);
+        dialogs().SpriteBox::sprite(&g_VEH_SPRITES[0], 0, 0);
         set_redraw_callback(TutWin::base_draw);
     } else if (field_537C_ >= 0) {
         set_caller_picture(picture_enabled() ? 0 : &g_TER1_TUT_BLANK_SPRITE);
-        dialogs_.SpriteBox::sprite(&g_TER1_TUT_BLANK_SPRITE, 0, 0);
+        dialogs().SpriteBox::sprite(&g_TER1_TUT_BLANK_SPRITE, 0, 0);
         set_redraw_callback(tut_terrain_draw);
     }
 
@@ -409,23 +409,23 @@ int TutWin::tut_win(GraphicWin *owner, const char *text, int x, int y,
     }
 
     if (y > vertical_anchor) {
-        placement_y = screen_height - static_cast<int>(field_30C0_) - 8;
+        placement_y = screen_height - static_cast<int>(layout_height()) - 8;
         y = placement_y;
         field_5390_ = placement_y;
     } else {
         placement_y = (static_cast<int>(field_5388_) +
                        (static_cast<int>(field_5388_) < 0 ? 7 : 0)) >> 3;
         y = placement_y;
-        field_5390_ = placement_y + field_30C0_;
+        field_5390_ = placement_y + layout_height();
     }
 
     if (x > horizontal_anchor) {
-        placement_x = (static_cast<int>(field_30BC_) +
-                       (static_cast<int>(field_30BC_) < 0 ? -1 : 0)) >> 1;
+        placement_x = (static_cast<int>(layout_width()) +
+                       (static_cast<int>(layout_width()) < 0 ? -1 : 0)) >> 1;
         field_538C_ = placement_x + 5;
         x = 5;
     } else {
-        const int dimension = static_cast<int>(field_30BC_);
+        const int dimension = static_cast<int>(layout_width());
         const int half = (dimension - (dimension < 0 ? -1 : 0)) >> 1;
         field_538C_ = screen_width - half - 5;
         x = screen_width - dimension - 5;
@@ -462,20 +462,20 @@ int TutWin::tut_win(GraphicWin *owner, const char *text, int x, int y,
 
     if (picture != 0) {
         set_caller_picture(picture_enabled() ? 0 : picture);
-        dialogs_.SpriteBox::sprite(picture, 0, 0);
+        dialogs().SpriteBox::sprite(picture, 0, 0);
     } else if (field_53AC_ >= 0) {
         set_caller_picture(picture_enabled() ? 0 : &local_sprite);
-        dialogs_.SpriteBox::sprite(&local_sprite, 0,
+        dialogs().SpriteBox::sprite(&local_sprite, 0,
                                    static_cast<int>(field_53AC_));
         set_redraw_callback(tut_veh_draw);
     } else if (field_53AC_ >= -1) {
         set_caller_picture(picture_enabled() ? 0 : &local_sprite);
-        dialogs_.SpriteBox::sprite(&local_sprite, 0,
+        dialogs().SpriteBox::sprite(&local_sprite, 0,
                                    static_cast<int>(field_53AC_));
         set_redraw_callback(TutWin::base_draw);
     } else if (field_537C_ >= 0) {
         set_caller_picture(picture_enabled() ? 0 : &local_sprite);
-        dialogs_.SpriteBox::sprite(&local_sprite, 0, 0);
+        dialogs().SpriteBox::sprite(&local_sprite, 0, 0);
         set_redraw_callback(tut_terrain_draw);
     }
 

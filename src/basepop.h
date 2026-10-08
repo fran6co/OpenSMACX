@@ -67,13 +67,6 @@ extern char PopupStartCaption[256];
   * BasePop class
   */
 class BasePop : public GraphicWin {
-  friend class AlphaNet;
-  // Tutorial callouts configure this owned popup's callback and dialog state.
-  friend class TutWin;
-  // Console::editor_tech sorts the popup's existing item-id list before exec,
-  // matching the original direct StringList virtual call without adding an
-  // accessor or changing BasePop storage.
-  friend class Console;
  public:
   // homed from 00605130.cpp
   void on_left_down(int x, int y);
@@ -539,6 +532,15 @@ class BasePop : public GraphicWin {
   Dialogs &dialogs() {
     return dialogs_;
   }
+  // Application pickers sort this same owned list before executing the
+  // dialog. Keep the original StringList virtual operation and receiver.
+  void sort_item_ids(int mode) { item_ids_.sort(mode); }
+  // Calculated popup dimensions at original +0x30BC/+0x30C0. BasePop uses
+  // these for GraphicWin::init; tutorial placement reads the same values.
+  // Return the stored type so existing signed casts and unsigned additions
+  // at each call site retain their original behavior.
+  uint32_t layout_width() const { return field_30BC_; }
+  uint32_t layout_height() const { return field_30C0_; }
   // Satellite target selection initializes the owned picture, then selects
   // that same member only after Sprite::init succeeds (4A067F..4A0694).
   Sprite &owned_picture() { return sprite_; }

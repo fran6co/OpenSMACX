@@ -1764,6 +1764,7 @@ struct StringList { int sorts=0; void sort(int key) { assert(key==0); ++sorts; E
 int ExecCalls=0,StartCalls=0,DestroyCalls=0;
 struct Popup {
   Dialogs dialogs_; StringList item_ids_;
+  void sort_item_ids(int mode) { item_ids_.sort(mode); }
   void start(char *caption,const char *label,int value,char *text,int flags,void *parent) {
     assert(std::strcmp(caption,"POPUPCAP")==0 && std::strcmp(label,"SHOWMOVIES")==0);
     assert(value==-1&&text==nullptr&&flags==0x42&&parent==nullptr);

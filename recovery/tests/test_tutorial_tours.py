@@ -5,6 +5,7 @@ import shutil
 import subprocess
 
 import pytest
+from current_game_storage_fixture import current_game_storage_fixture
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -62,6 +63,10 @@ int main(){std::strcpy(base.name_string,"Complete base name");TutWin w;
  w.tour6();assert(parsed==1&&calls==1);}
 '''
     candidate = body("void TutWin::tour6() {")
+    harness = current_game_storage_fixture() + '\n' + harness.replace(
+        'int BaseCurrentCount=2;', '').replace(
+        'int main(){',
+        'int main(){GameDataStateStorage.fields_.base_current_count_=2;', 1)
     assert execute(tmp_path, harness, candidate, "name") == 0
     damaged = candidate.replace("BaseCurrent->name_string,",
                                 "BaseCurrent->name_string + 0x13,")

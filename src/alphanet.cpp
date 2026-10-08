@@ -659,9 +659,9 @@ int AlphaNet::pick_service(int *allow_pbem) {
                 // Original inconsistent-list path dereferences null+4 here.
                 name = payload->name_;
             }
-            popup->dialogs_.Dialogs::item(name, row);
+            popup->dialogs().Dialogs::item(name, row);
         }
-        if (allow_pbem != 0) popup->dialogs_.Dialogs::item(label_get(0x1128 / 4), 9999);
+        if (allow_pbem != 0) popup->dialogs().Dialogs::item(label_get(0x1128 / 4), 9999);
         const int selected = popup->exec(0, 0);
         if (selected == -1) result = 1;
         else if (selected == 9999) {
@@ -741,7 +741,7 @@ int AlphaNet::join() {
                 NetAllocationNode *payload = ledger_.head_ == 0 ? 0 : ledger_.current_->payload_;
                 name = payload->session_name_;
             }
-            popup.dialogs_.Dialogs::item(name, row);
+            popup.dialogs().Dialogs::item(name, row);
         }
         selected = popup.exec(0, 0);
         if (selected < 0) break;
