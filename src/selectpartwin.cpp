@@ -11,13 +11,11 @@
 #include "win.h"
 #include <cstring>
 
-// These image-owned tables have not yet been given C++ data owners. Their use
-// here is limited to the picker background, renderer origin, and colour data
-// established by the retained exec seed at 0x00433F70.
+// The picker background tile and its colour remain image-owned aliases.
 static Sprite *const SelectPartTile = (Sprite *)0x006B33F8;
 static const unsigned char *const SelectPartTileColour =
     (const unsigned char *)0x006B3400;
-static VOX_Vect *const SelectPartCameraOrigin = (VOX_Vect *)0x00687AD8;
+// Renderer origin is the existing veh.cpp object VehLightDirMap.
 
 void __cdecl scroll_show(GraphicWin *window, Scroll *scroll);
 void __cdecl scroll_hide(GraphicWin *window, Scroll *scroll);
@@ -63,8 +61,8 @@ int SelectPartWin::exec(int x, int y, int value0, int kind, int selected,
     union { uint32_t bits; float value; } scene_angle;
     scene_angle.bits = 0x3f05f92d;
     caviar_.set_scene_rotation(scene_angle.value, 0.0f, 0.0f);
-    caviar_.light_vector() = *SelectPartCameraOrigin;
-    caviar_.shadow_vector() = *SelectPartCameraOrigin;
+    caviar_.light_vector() = VehLightDirMap;
+    caviar_.shadow_vector() = VehLightDirMap;
 
     field_2B74_ = 0;
     switch (kind) {
@@ -494,26 +492,12 @@ void SelectPartWin::on_scrolled(int, int row) {
     redraw();
 }
 
-// The design-parts rendering data is still bound in its first product reader.
-// Its tables are independent of the window object and require separate owners.
+// The picker consumes the existing vehicle rules owners. Independent UI
+// label-color slots still require storage ownership evidence.
 
-// SelectPartWin draw family, owned by the genuine window class.
-
-// SelectPartWin::draw_chassis's own slots: the 9-record chassis table the
-// part lists walk (0x0094A3BE, 0x90-byte records, signed-short enabled flag
-// at [record]), its end marker (0x0094A8CE), the record's string id and
-// count bytes (0x0094A330/0x0094A378/0x0094A379 bases, record-strided), the
-// per-record string id table those bytes index (0x0094F1A8), and the four
-// text-colour words the label halves alternate between (0x008C6DD4..E0).
-// Nothing else in the tree names these addresses yet, so they travel beside
-// their first recovered reader, the UV2PlayerActive idiom.
-// The chassis record's trailing enable word (Chassis[0]+0x8E) and the two
-// per-record label bytes (0x0094A378/0x0094A379) have no carved names yet;
-// the name and label id reads go through the real Chassis[]/Triad[] arrays.
-static short *const ChassisEnableTable = (short *)0x0094A3BE;
-static char *const ChassisTableEnd = (char *)0x0094A8CE;
-static unsigned char *const ChassisCountByteTable = (unsigned char *)0x0094A378;
-static unsigned char *const ChassisOrderByteTable = (unsigned char *)0x0094A379;
+// Existing RulesChassis[] owns the picker records: preq_tech is at +0x8E,
+// speed at +0x48, triad at +0x49, and the ordinary picker range is nine
+// records (MaxChassisNum). The independent label-color slots remain raw.
 static int *const PartLabelColorA1 = (int *)0x008C6DD4;
 static int *const PartLabelColorA2 = (int *)0x008C6DD8;
 static int *const PartLabelColorB1 = (int *)0x008C6DDC;
@@ -634,17 +618,17 @@ Status: Coverage transcription - unclaimed body; historical seed at
 */
 int SelectPartWin::draw_chassis(int a1, RECT *a2, int a3) {
 
-    // The 9-record, 0x90-byte-stride chassis table: walk the records whose
-    // first signed short is an enabled slot (>= -1) until the a1'th one.
-    short *entry = ChassisEnableTable;
+    // Walk the nine ordinary chassis records whose signed prerequisite
+    // is eligible (>= -1) until the a1'th entry.
+    const RulesChassis *entry = Chassis;
     int idx = 0;
     int slot = 0;
     int has_all_tech_flag = 0;
 
     for (;;) {
-        if (*entry >= -1) {
+        if (entry->preq_tech >= -1) {
             if (idx == a1) {
-                const int tech_id = *entry;
+                const int tech_id = entry->preq_tech;
                 if (has_tech(tech_id,
                              field_2B68_) == 0) {
                     has_all_tech_flag = 1;
@@ -653,10 +637,9 @@ int SelectPartWin::draw_chassis(int a1, RECT *a2, int a3) {
             }
             idx++;
         }
-        entry += 0x48;
+        ++entry;
         slot++;
-        if (!(reinterpret_cast<char *>(entry) <
-              reinterpret_cast<char *>(ChassisTableEnd))) {
+        if (!(entry < Chassis + MaxChassisNum)) {
             break;
         }
     }
@@ -686,7 +669,6 @@ int SelectPartWin::draw_chassis(int a1, RECT *a2, int a3) {
 
     Font *const font1 = &font1_;
     Font *const font2 = &font2_;
-    const int rec_off = slot * 0x90;
     RECT temp;
 
     temp.left = a2->left;
@@ -711,14 +693,14 @@ int SelectPartWin::draw_chassis(int a1, RECT *a2, int a3) {
     StringTemp[0] = 0;
     strcat(StringTemp,
            StringTable.get(*reinterpret_cast<const int *>(
-               &Triad[ChassisOrderByteTable[rec_off]])));
+               &Triad[Chassis[slot].triad])));
 
     buf->set_font(font1, 0, 0, 0);
     buf->write_l(StringTemp, &temp,
                  static_cast<int>(strlen(StringTemp)));
 
     char itoa_buf[80];
-    _itoa(ChassisCountByteTable[rec_off], itoa_buf, 10);
+    _itoa(Chassis[slot].speed, itoa_buf, 10);
     StringTemp[0] = 0;
     strcat(StringTemp, itoa_buf);
 
@@ -844,18 +826,12 @@ int SelectPartWin::draw_reactor(int a1, RECT *a2, int a3) {
     return has_tech_failed == 0;
 }
 
-// SelectPartWin::draw_armor's own slots: the per-chassis armor flag byte
-// (0x0094A3BD+4, record-strided) and the armor walk's end marker
-// (0x0094F364). The walked table is veh.h's Armor[] itself - the walk starts
-// on Armor[0].preq_tech and steps one 0x10 record at a time - and the name,
-// label and level reads go through Armor[slot]'s own members.
-static unsigned char *const ArmorChassisFlagTable =
-    (unsigned char *)0x0094A37D;
-static char *const ArmorTableEnd = (char *)0x0094F364;
+// Armor availability is RulesChassis::missile. The armor prerequisite walk
+// uses the existing 14-record Armor[] owner and its preq_tech member.
 
 /*
-Purpose: Draw one armor entry of the design parts list: reject chassis zero
-         outright, find the a1'th enabled armor record otherwise, build the
+Purpose: Draw one armor entry of the design parts list: missile chassis select
+         armor zero; otherwise find the a1'th enabled armor record. Build the
          armor into the window's Caviar renderer (the fifth slot through the
          multi-table destination renderer, the rest plainly, greyed when the
          faction lacks the tech), then write the record's upper-cased name
@@ -884,7 +860,7 @@ int SelectPartWin::draw_armor(int a1, RECT *a2, int a3) {
     RECT rectScratch;
 
     const int chassis = field_2B88_;
-    const unsigned char flagByte = ArmorChassisFlagTable[chassis * 0x90];
+    const unsigned char flagByte = Chassis[chassis].missile;
 
     if (flagByte != 0) {
         slot = 0;
@@ -892,13 +868,13 @@ int SelectPartWin::draw_armor(int a1, RECT *a2, int a3) {
         const int target = a1;
         int idx = 0;
         int activeCount = 0;
-        const int16_t *entry = &Armor[0].preq_tech;
+        const RulesArmor *entry = Armor;
         bool matched = false;
         for (;;) {
-            if (*entry > -2) {
+            if (entry->preq_tech > -2) {
                 if (activeCount == target) {
                     slot = idx;
-                    const short techShort = *entry;
+                    const short techShort = entry->preq_tech;
                     if (has_tech(techShort,
                                  field_2B68_) ==
                         0) {
@@ -909,9 +885,9 @@ int SelectPartWin::draw_armor(int a1, RECT *a2, int a3) {
                 }
                 activeCount++;
             }
-            entry += 8;
+            ++entry;
             idx++;
-            if (reinterpret_cast<const char *>(entry) >= ArmorTableEnd) {
+            if (entry >= Armor + MaxArmorNum) {
                 break;
             }
         }
