@@ -5205,13 +5205,12 @@ int Buffer::wrap_cent(Font * a1, char * a2, int a3, int a4, int a5) {
 // calls     0x005DC410 0x005DD020 0x006453E0
 
 int Buffer::wrap_cent(Font *a1, char *a2, int a3, int a4, int a5, int a6) {
-        Font **const fontSlot = &font1_;
     Font *savedFont = font1_;
     Font *savedA = font2_;
     Font *savedB = font3_;
 
     if (a1 != 0 && a1->font_obj_ != 0) {
-        *fontSlot = a1;
+        font1_ = a1;
         font2_ = 0;
         font3_ = 0;
     }
@@ -5539,8 +5538,7 @@ int Buffer::wrap_flying(char * a1) {
 //        through a type that is not there.
 
 int Buffer::write_l(Font * font, char * text, int x, int y, int maxLen) {
-    BufferFontTriple *const fonts = reinterpret_cast<BufferFontTriple *>(&font1_);
-    BufferFontTriple savedFonts = *fonts;
+    BufferFontTriple savedFonts = {font1_, font2_, font3_};
     int result;
     if (font != 0 && font->font_obj_ != 0) {
         font1_ = font;
@@ -5551,7 +5549,7 @@ int Buffer::write_l(Font * font, char * text, int x, int y, int maxLen) {
 
     if (text == 0) {
         result = x;
-    } else if (fonts->primary == 0 || fonts->primary->font_obj_ == 0) {
+    } else if (font1_ == 0 || font1_->font_obj_ == 0) {
         result = 3;
     } else {
         if (((int)strlen(text) < len ? (int)strlen(text) : len) < 0) {
@@ -5568,7 +5566,9 @@ nothing_drawn:
         }
     }
 
-    *fonts = savedFonts;
+    font1_ = savedFonts.primary;
+    font2_ = savedFonts.second;
+    font3_ = savedFonts.third;
     return result;
 }
 
@@ -5583,19 +5583,18 @@ nothing_drawn:
 // calls     0x005DDBB0
 
 int Buffer::wrap_right(Font * a1, char * a2, int a3, int a4, int a5) {
-        int *const triple = reinterpret_cast<int *>(&font1_);
-    int saved0 = triple[0];
-    int saved1 = triple[1];
-    int saved2 = triple[2];
+    Font *saved0 = font1_;
+    Font *saved1 = font2_;
+    Font *saved2 = font3_;
     if (a1 != 0 && a1->font_obj_ != 0) {
-        triple[0] = reinterpret_cast<int>(a1);
-        triple[1] = 0;
-        triple[2] = 0;
+        font1_ = a1;
+        font2_ = 0;
+        font3_ = 0;
     }
     int result = wrap_right(a2, a3, a4, a5);
-    triple[0] = saved0;
-    triple[1] = saved1;
-    triple[2] = saved2;
+    font1_ = saved0;
+    font2_ = saved1;
+    font3_ = saved2;
     return result;
 }
 
@@ -5914,19 +5913,18 @@ int Buffer::write_l(Font *a1, char *a2, RECT *a3, int a4) {
 //    near miss from a wrong body.
 
 int Buffer::write_cent_l(Font* a1, char * a2, RECT* a3, int a4) {
-    Font **p = reinterpret_cast<Font **>(reinterpret_cast<char *>(this) + 0x52c);
-    Font *old0 = p[0];
-    Font *old1 = p[1];
-    Font *old2 = p[2];
+    Font *old0 = font1_;
+    Font *old1 = font2_;
+    Font *old2 = font3_;
     if (a1 != 0 && a1->font_obj_ != 0) {
-        p[0] = a1;
-        p[1] = 0;
-        p[2] = 0;
+        font1_ = a1;
+        font2_ = 0;
+        font3_ = 0;
     }
     int result = write_cent_l(a2, a3, a4);
-    p[0] = old0;
-    p[1] = old1;
-    p[2] = old2;
+    font1_ = old0;
+    font2_ = old1;
+    font3_ = old2;
     return result;
 }
 
@@ -6051,17 +6049,16 @@ int Buffer::wrap_cent(Font* a1, char * a2, RECT* a3) {
 // emitter computes declarations; it does not carry lessons.
 
 int Buffer::wrap(Font *a1, char *a2, RECT *a3) {
-    Font **p = &font1_;
-    Font *saved0 = *p;
+    Font *saved0 = font1_;
     Font *saved1 = font2_;
     Font *saved2 = font3_;
     if (a1 && a1->font_obj_) {
-        *p = a1;
+        font1_ = a1;
         font2_ = 0;
         font3_ = 0;
     }
     int result = wrap(a2, a3);
-    *p = saved0;
+    font1_ = saved0;
     font2_ = saved1;
     font3_ = saved2;
     return result;
