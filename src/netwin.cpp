@@ -2467,22 +2467,6 @@ void NetWin::pick_planet_size() {
     }
 }
 
-/*
-Purpose: The player-count picker: entries numbered max(2, lobby count) to 7,
-         the entry itself the answer; the ninth slot's player byte stores
-         count - 1.
-// ORIGINAL: 0x0047E010 ?pick_num_players@NetWin@@QAEXXZ 0x0047E010-0x0047E33B;0x00656D9D-0x00656E75 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned47E15D/47E16A/47E170: copy six option dwords to packet+10, write opcode word2F02, send28. Shared pick_send_state preserves these writes; header+2..F remains unspecified."], "reason": "Recover the original options packet through genuine NetWin state and typed packet storage."}
-// size      1027 bytes
-// prototype void (__thiscall ?pick_num_players@NetWin@@QAEXXZ)(NetWin* this)
-// callers   1   call targets   26
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x004048A0 0x00404900 0x004066C0 0x00406820 0x00406880 0x00406910 0x004E25E0 0x0059D250 0x0059D3A0 0x005D45B0 0x005D4DD0 0x005E3820 0x005EC8A0 0x005ED240 0x005F8800 0x005F88A0 0x005FA870 0x00600F00 0x00605370 0x00607040 0x00607DA0 0x00608E10 0x00612A70 0x006169A0 0x00630080 0x00645550 0x0064FC88
-// Homed from src/recovered/units/0047e010.cpp.
-Return Value: n/a
-Status: Coverage transcription - unclaimed body
-*/
 static void netwin_set_rect(RECT *rect, int left, int top, int right, int bottom) {
     rect->left = left;
     rect->top = top;
@@ -2706,6 +2690,22 @@ int NetWin::exec() {
     return field_7614_;
 }
 
+/*
+Purpose: The player-count picker: entries numbered max(2, lobby count) to 7,
+         the entry itself the answer; the ninth slot's player byte stores
+         count - 1.
+// ORIGINAL: 0x0047E010 ?pick_num_players@NetWin@@QAEXXZ 0x0047E010-0x0047E33B;0x00656D9D-0x00656E75 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned47E15D/47E16A/47E170: copy six option dwords to packet+10, write opcode word2F02, send28. Shared pick_send_state preserves these writes; header+2..F remains unspecified."], "reason": "Recover the original options packet through genuine NetWin state and typed packet storage."}
+// size      1027 bytes
+// prototype void (__thiscall ?pick_num_players@NetWin@@QAEXXZ)(NetWin* this)
+// callers   1   call targets   26
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004048A0 0x00404900 0x004066C0 0x00406820 0x00406880 0x00406910 0x004E25E0 0x0059D250 0x0059D3A0 0x005D45B0 0x005D4DD0 0x005E3820 0x005EC8A0 0x005ED240 0x005F8800 0x005F88A0 0x005FA870 0x00600F00 0x00605370 0x00607040 0x00607DA0 0x00608E10 0x00612A70 0x006169A0 0x00630080 0x00645550 0x0064FC88
+// Homed from src/recovered/units/0047e010.cpp.
+Return Value: n/a
+Status: Coverage transcription - unclaimed body
+*/
 void NetWin::pick_num_players() {
     PopMenu pop_menu;
     PullDown pull_down;
