@@ -207,7 +207,7 @@ Status: Complete
 */
 int StringStruct::current_id() {
     if (head_) {
-        return reinterpret_cast<int *>(current_)[1];
+        return current_->id;
     }
     return 0;
 }
@@ -275,12 +275,11 @@ int StringStruct::seek_id(int id) {
         current_position_ = 0;
         current_ = head_;
         for (int traversed = 0; traversed < entry_count_; traversed++) {
-            int *entry = reinterpret_cast<int*>(current_);
-            if (entry[1] == id) {
+            if (current_->id == id) {
                 return 1;
             }
             current_position_++;
-            current_ = reinterpret_cast<StringStructEntry*>(entry[3]);
+            current_ = current_->next;
         }
     }
     return 0;

@@ -363,7 +363,7 @@ MEASURED inline int StringStruct::seek_pos(int a1) {
         if (i > 0) {
             do {
                 i--;
-                current_ = reinterpret_cast<StringStructEntry *>(reinterpret_cast<int *>(current_)[4]);
+                current_ = current_->previous;
             } while (i != 0);
         }
         current_position_ = a1 + entry_count_;
@@ -373,7 +373,7 @@ MEASURED inline int StringStruct::seek_pos(int a1) {
             int i = a1;
             do {
                 i--;
-                current_ = reinterpret_cast<StringStructEntry *>(reinterpret_cast<int *>(current_)[3]);
+                current_ = current_->next;
             } while (i != 0);
         }
         current_position_ = a1;
