@@ -99,11 +99,11 @@ SpriteBox::SpriteBox() {
     field_68_ = 0;
     left_down_callback_ = 0;
     left_up_callback_ = 0;
-    field_74_ = 0;
-    field_78_ = 0;
-    field_7C_ = 0;
+    right_click_callback_ = 0;
+    right_down_callback_ = 0;
+    right_up_callback_ = 0;
     double_click_callback_ = 0;
-    field_84_ = 0;
+    right_double_click_callback_ = 0;
 
     field_8_ = SpriteBoxDefaultField8;
 
@@ -265,34 +265,28 @@ Return Value: the resulting position, which is also left at 0x38
 Status: Complete
 */
 uint32_t SpriteBox::id_to_pos(int id) {
-    uint8_t *const self = reinterpret_cast<uint8_t *>(this);
-    uint32_t *const head = reinterpret_cast<uint32_t *>(self + 0x2C);
-    uint32_t *const cursor = reinterpret_cast<uint32_t *>(self + 0x30);
-    int32_t *const count = reinterpret_cast<int32_t *>(self + 0x34);
-    uint32_t *const position = reinterpret_cast<uint32_t *>(self + 0x38);
-
-    if (*head == 0) {
-        return *position;
+    if (list_.head_ == 0) {
+        return static_cast<uint32_t>(list_.current_position_);
     }
-    *position = 0;
-    *cursor = *head;
-    if (*count <= 0) {
-        return *position;
+    list_.current_position_ = 0;
+    list_.current_ = list_.head_;
+    if (list_.entry_count_ <= 0) {
+        return static_cast<uint32_t>(list_.current_position_);
     }
     int32_t examined = 0;
     for (;;) {
-        const uint8_t *const entry = reinterpret_cast<const uint8_t *>(*cursor);
-        if (*reinterpret_cast<const int32_t *>(entry + 4) == id) {
+        StringStructEntry *const entry = list_.current_;
+        if (entry->id == id) {
             break;
         }
-        *position = *position + 1;
+        list_.current_position_ = list_.current_position_ + 1;
         ++examined;
-        *cursor = *reinterpret_cast<const uint32_t *>(entry + 0xC);
-        if (examined >= *count) {
+        list_.current_ = entry->next;
+        if (examined >= list_.entry_count_) {
             break;
         }
     }
-    return *position;
+    return static_cast<uint32_t>(list_.current_position_);
 }
 
 
@@ -709,11 +703,11 @@ void SpriteBox::close() {
     field_68_ = 0;
     left_down_callback_ = 0;
     left_up_callback_ = 0;
-    field_74_ = 0;
-    field_78_ = 0;
-    field_7C_ = 0;
+    right_click_callback_ = 0;
+    right_down_callback_ = 0;
+    right_up_callback_ = 0;
     double_click_callback_ = 0;
-    field_84_ = 0;
+    right_double_click_callback_ = 0;
 
     if (list_.head_ != 0) {
         int index = 0;
@@ -779,13 +773,10 @@ Return Value: n/a
 Status: Complete
 */
 void SpriteBox::on_right_down(int x_coord, int y_coord) {
-    char *const self = reinterpret_cast<char *>(this);
-    Spot *const spot = reinterpret_cast<Spot *>(self - 0x7c);
-    if (spot->check(x_coord, y_coord, &y_coord, 0) == -1) {
+    if (spots_.check(x_coord, y_coord, &y_coord, 0) == -1) {
         return;
     }
-    typedef int(__cdecl *ClickHandler)(int);
-    ClickHandler const handler = *reinterpret_cast<ClickHandler *>(self - 0x14);
+    ClickCallback const handler = right_down_callback_;
     if (!handler) {
         return;
     }
@@ -840,12 +831,8 @@ Return Value: n/a
 Status: Complete
 */
 void SpriteBox::on_right_click(int x_coord, int y_coord) {
-    char *const self = reinterpret_cast<char *>(this);
-    Spot *const spot = reinterpret_cast<Spot *>(self - 0x7c);
-    if (spot->check(x_coord, y_coord, &y_coord, 0) != -1) {
-        typedef int(__cdecl *ClickHandler)(int);
-        ClickHandler const handler =
-            *reinterpret_cast<ClickHandler *>(self - 0x18);
+    if (spots_.check(x_coord, y_coord, &y_coord, 0) != -1) {
+        ClickCallback const handler = right_click_callback_;
         if (handler != 0) {
             if (handler(y_coord) != 0) {
                 PostMessageA(HandleMain, WM_KEYDOWN, VK_RETURN, 0);
@@ -922,12 +909,8 @@ Return Value: n/a
 Status: Complete
 */
 void SpriteBox::on_right_up(int x_coord, int y_coord) {
-    char *const self = reinterpret_cast<char *>(this);
-    Spot *const spot = reinterpret_cast<Spot *>(self - 0x7c);
-    if (spot->check(x_coord, y_coord, &y_coord, 0) != -1) {
-        typedef int(__cdecl *ClickHandler)(int);
-        ClickHandler const handler =
-            *reinterpret_cast<ClickHandler *>(self - 0x10);
+    if (spots_.check(x_coord, y_coord, &y_coord, 0) != -1) {
+        ClickCallback const handler = right_up_callback_;
         if (handler != 0) {
             if (handler(y_coord) != 0) {
                 PostMessageA(HandleMain, WM_KEYDOWN, VK_RETURN, 0);
@@ -952,12 +935,8 @@ Return Value: n/a
 Status: Complete
 */
 void SpriteBox::on_right_double_click(int x_coord, int y_coord) {
-    char *const self = reinterpret_cast<char *>(this);
-    Spot *const spot = reinterpret_cast<Spot *>(self - 0x7c);
-    if (spot->check(x_coord, y_coord, &y_coord, 0) != -1) {
-        typedef int(__cdecl *ClickHandler)(int);
-        ClickHandler const handler =
-            *reinterpret_cast<ClickHandler *>(self - 8);
+    if (spots_.check(x_coord, y_coord, &y_coord, 0) != -1) {
+        ClickCallback const handler = right_double_click_callback_;
         if (handler != 0) {
             if (handler(y_coord) != 0) {
                 PostMessageA(HandleMain, WM_KEYDOWN, VK_RETURN, 0);

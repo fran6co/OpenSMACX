@@ -201,16 +201,16 @@ class SpriteBox : public virtual GraphicWin, public virtual Dialog {
   // -0x20 and -0x1C respectively, identifying these complete-object slots.
   ClickCallback left_down_callback_;  // 0x6C
   ClickCallback left_up_callback_;  // 0x70
-  uint32_t field_74_;  // 0x74
-  uint32_t field_78_;  // 0x78
-  uint32_t field_7C_;  // 0x7C
+  ClickCallback right_click_callback_;  // 0x74
+  ClickCallback right_down_callback_;  // 0x78
+  ClickCallback right_up_callback_;  // 0x7C
  public:
   // 0x00611301 loads this slot; caller cleanup follows its one argument,
   // and the returned int decides whether to post the Enter-key message.
   // RECOVERY_MEMBER: v1 SpriteBox double_click_callback_ 0x80 0x006112E0
   ClickCallback double_click_callback_;  // 0x80
  private:
-  uint32_t field_84_;  // 0x84
+  ClickCallback right_double_click_callback_;  // 0x84
   // 0x88 IS GRAPHICWIN'S VTORDISP, not a field. The compiler emits it because
   // this class overrides GraphicWin's on_dialog_focus and on_mouse_leave;
   // declaring it as well put the base at 0x90 where the image has it at 0x8C,
