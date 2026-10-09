@@ -667,11 +667,6 @@ static int *const StackTextColorShadow = (int *)0x008C6B98;
 static unsigned char *const WeaponClassRows = (unsigned char *)0x0094AE68;
     // weapon_id-strided class rows technology.cpp's note describes; the row's
     // first byte is negative for weapons the editor cannot offer.
-static char *const ProtoAbilityIdBase = (char *)0x00952832;
-    // Per-prototype 0x34-stride shorts just past ReactorPickTable (the
-    // 4x12-byte picker table at 0x00952800 draw_reactor scans): the ability
-    // prototype id the stack/stat views quote for prototype proto. The same
-    // table console.cpp reaches as `0x952832 + id * 0x34`.
 static unsigned char *const PlayerFlagBlocks = (unsigned char *)0x00946F58;
     // Per-faction byte blocks at sizeof(Player) stride; bit 0x80 of the first
     // byte selects the alien-faction popup set. The Player array front is
@@ -4047,6 +4042,10 @@ void DesignWin::select_reactor() {
 // the background, frame it, then walk the ranked prototype list drawing up to
 // ten entries (box style 2 = the edited prototype, 1 = the highlighted one),
 // registering each spot for on_left_click.
+// The original word at 0x00952832 is Vehs[0].proto_id: Vehs starts at
+// 0x00952828, proto_id is the signed short at +0x0A, and Veh has a 0x34 stride.
+// Keep the original index at each consumer: unit_id for the stack row, shown
+// for each of the two preview reads.
 void DesignWin::draw_stack() {
     Font font;
     RECT area = field_B0C_rect_;
@@ -4188,9 +4187,7 @@ void DesignWin::draw_stack() {
             RECT stats_rect = rc;
             stats_rect.top = rc.bottom - font.line_advance();
             StringTemp[0] = '\0';
-            say_stats_3(StringTemp,
-                        *reinterpret_cast<const short *>(ProtoAbilityIdBase
-                                                         + unit_id * 0x34));
+            say_stats_3(StringTemp, Vehs[unit_id].proto_id);
             if ((*InterfaceFlagByte & 0x40) != 0
                 && (*InterfaceFlagTail & 0x10) != 0) {
                 strcat(StringTemp, BufferJoinSpace);
@@ -4565,9 +4562,8 @@ void DesignWin::draw_flash() {
                 strcat(StringTemp, name);
             }
         } else {
-            int ability_id = *reinterpret_cast<const short *>(
-                ProtoAbilityIdBase + shown * 0x34);
-            strcat(StringTemp, VehPrototypes[ability_id].veh_name);
+            int prototype_id = Vehs[shown].proto_id;
+            strcat(StringTemp, VehPrototypes[prototype_id].veh_name);
         }
         CharUpperA(StringTemp);
 
@@ -4590,13 +4586,12 @@ void DesignWin::draw_flash() {
 
         StringTemp[0] = '\0';
         strcat(StringTemp, "(");
-        int ability_id = *reinterpret_cast<const short *>(
-            ProtoAbilityIdBase + shown * 0x34);
-        say_stats_3(StringTemp, ability_id);
+        int prototype_id = Vehs[shown].proto_id;
+        say_stats_3(StringTemp, prototype_id);
         int ability_bit = 0;
         for (int *label = AbilityLabelIds; label < AbilityLabelIdsEnd;
              ++label, ++ability_bit) {
-            if (VehPrototypes[ability_id].ability_flags & (1 << ability_bit)) {
+            if (VehPrototypes[prototype_id].ability_flags & (1 << ability_bit)) {
                 if (strlen(StringTable.get(*label)) != 0) {
                     strcat(StringTemp, ", ");
                     strcat(StringTemp, StringTable.get(*label));
