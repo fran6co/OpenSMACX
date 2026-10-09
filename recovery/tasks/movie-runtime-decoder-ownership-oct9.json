@@ -1,0 +1,64 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "2896ace2313fc74104fa15cbe0253dad0f6e1608",
+  "schema_version": 1,
+  "target": "opensmacx",
+  "task_id": "movie-runtime-decoder-ownership-oct9",
+  "intent": "Recover the movie runtime decoder and allocation closure through genuine MediaRuntime/MediaDescriptor members and typed compressed/frame/table pointers, rather than integer-encoded pointers and raw self offsets.",
+  "editable_files": [
+    "src/general.cpp",
+    "src/general.h",
+    "src/movie_media.cpp",
+    "src/movie_media.h",
+    "recovery/tests/test_movie_runtime_decoder_ownership_actual_source_oct9.py",
+    "recovery/tests/test_movie_media_case3_dispatch_source.py",
+    "recovery/tests/test_movie_media_last_six_bodies.py",
+    "recovery/tests/test_movie_media_behavior.py"
+  ],
+  "subjects": [
+    {
+      "address": 6080832,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6109568,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6110704,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6111056,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6111264,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6112159,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6112328,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "evidence": [
+    "Current 5CC940 owns MediaRuntime* but casts it to int* for 5D3980,5D3DF0,5D3F50 and passes pointer-as-int payload/stack arguments. Those actual helpers index the same runtime slots, descriptor fields, palette and existing owned_heap_638/63c/640/644/648/64c/650 pointers. Keep free fastcall/C-linkage contracts, not invented class methods or virtuals. Coordinate all current declarations/callers/current emitted symbol hints; preserve ORIGINAL/history/claims.",
+    "Use already modeled descriptor/pixel-format and runtime owners. Decode all accesses to +620..637 before replacing byte reservation with exact-width scalar fields; offset-based names are acceptable without semantic evidence. Preserve ambiguous unresolved_word_61c interpretation. Converted palette producer5D3F50 writes256 DWORDs at descriptor+3B0 consumed by5D4020; retain trailing+7B0..7B3 untouched, do not infer complete original allocation from accessed windows. Native size/offset/ABI proof remains coordinator work.",
+    "Pinned5D3980 first instructions independently decoded: swap owned buffers63C/638, then four unaligned DWORD loads at payload-2/+0/+2/+4 shifted16, stores620/624/628/62C. Retain four-byte read windows and their order, signed capacity comparisons630/634, all allocate/free/write timing and partial failure states. Do not substitute narrower ushort reads or sanitize packets. Preserve original packet unpacking, snapshot timing and later descriptor reloads.",
+    "5D3DF0 frees638,63C,644,640 in that order, performs all four allocations in observed order, and then checks joint success. Keep partial-allocation leaks and original zero/unchecked dimension behavior. Convert payload to genuine pointer and call existing three-argument5D427C directly through its actual typed contract rather than cast the function pointer. Its body/register-preservation restoration remains unchanged and unproven.",
+    "Include downstream5D439F and5D4448 to eliminate pointer-as-int signatures end-to-end. 5D439F compressed source is a pointer, with original masked shifts/rotations for counts0/31/32 and unchecked reads. 5D4448 previous/current frame, block and motion-table arguments are pointers; retain flat modulo32 address calculations for unrelated allocations and signed unchecked indices. Do not use undefined cross-allocation pointer subtraction, add bounds checks, clamp sizes/indices, initialize unwritten state, or accidentally widen original scalar arithmetic. Casts required for original packed byte views/flat address semantics may remain with evidence.",
+    "Actual-source host controls must exercise complete six helper bodies where feasible plus clearly bounded current caller dispatch using typed fixtures and live allocations above4GiB, allocator/free logs and failures, frame-buffer swap timing, zero/nonzero count paths, palette byte/word/dword modes, repeated growth/shrink, masked shift counts and supported block/motion cases. Explicitly qualify invalid/uninitialized paths not executable safely; no copied expected algorithm. Preserve existing controls, update narrowly only when actual contract changes require it; request scope expansion for anything else.",
+    "Worker edits only eight listed files, no Git/native compiler/Wine. Coordinator owns preparation, independent original/source review, native member/symbol/body/impacted caller measurements, source/claim history continuity, relevant regression checks and fresh whole application build/link. Justified temporary matching regression authorized only for reviewed structure, with every claim/restoration obligation retained. No original bug fix, demotion/new claim, baseline reset or automatic/full-game/complete allocation/lifetime proof."
+  ]
+}
