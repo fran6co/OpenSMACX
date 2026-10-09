@@ -353,6 +353,10 @@ class Net {
   // Original MultiDebug paint 0x005C9920 displays these session/player fields.
   friend class MultiDebug;
  public:
+  // Borrowed view of the existing session node; ownership and layout remain
+  // with Net.
+  const NetAllocationNode &allocation_node() const { return allocation_node_; }
+
   // Original construction publishes the primary table at 0x0066EB04.
   // Six slots: original drop_player calls primary slot 5 at 0x00632612.
   // NetDaemon's same primary chain ends at 0x0066EF24 (a nonrelocated,

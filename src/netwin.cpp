@@ -576,15 +576,6 @@ static unsigned char *const NetWinScenarioText = &NetWinSessionData.state_[0x20]
 static unsigned char *const NetWinNinthSlot =
     reinterpret_cast<unsigned char *>(&NetWinSessionOptions);
 
-// 0x0093D4B0 - the colour byte beside the player-id slots; the ninth slot's
-// prefix is seeded from it.
-static unsigned char *const NetWinConfigColor = (unsigned char *)0x0093D4B0;
-
-// 0x00947020 - the default faction records the seven base slots are seeded
-// from: one 0x59C-byte Player-shaped record each, the same stride the
-// Players array walks. config_players copies the name and leader text out.
-static char *const NetWinFactionTemplate = (char *)0x00947020;
-
 /*
 Purpose: Seed the seven base faction records of the static faction table.
          Each record's colour/mode prefix is rewritten - 0xFF, 0, 2, 0xFF, 2,
@@ -607,7 +598,8 @@ Return Value: n/a
 Status: Coverage transcription - unclaimed body
 */
 void NetWin::config_players() {
-    unsigned char color = *NetWinConfigColor;
+    unsigned char color = reinterpret_cast<const unsigned char *>(
+        &NetDaemonNet.allocation_node().max_players_)[0];
     *NetWinEighthSlotWord = 0;
     *NetWinScenarioText = 0;
     NetWinSessionOptions.status_ = 0xFF;
@@ -623,25 +615,26 @@ void NetWin::config_players() {
     NetWinSessionOptions.cloud_cover_ = 2;
 
     NetWinLobbyRow *row = &NetWinLobbyRows[1];
-    char *template_record = NetWinFactionTemplate;
+    Player *player = &Players[1];
     do {
         row->owner_ = 0;
         row->prefix_ = 0xFF;
         row->ready_or_occupied_ = 0;
-        row->field_2_ = 2;
+        row->field_2_ = NetWinSessionOptions.difficulty_;
         row->faction_or_color_ = static_cast<int8_t>(0xFF);
         row->field_4_ = 2;
-        strcpy(row->leader_name_, template_record);
-        strcpy(row->formal_faction_name_, template_record + 0x350);
+        strcpy(row->leader_name_, player->name_leader);
+        strcpy(row->formal_faction_name_, player->formal_name_faction);
         strcpy(row->noun_faction_,
                StringTable.get(
                    *reinterpret_cast<int *>(Labels.strings_ptr + 0xFE4)));
-        strcpy(row->adjective_faction_, template_record + 0x31C);
-        strcpy(row->leader_title_, template_record + 0x18);
-        strcpy(row->adjective_leader_, template_record + 0x30);
-        row->tail_[0] = static_cast<uint8_t>(template_record[0xC]);
+        strcpy(row->adjective_faction_, player->adj_name_faction);
+        strcpy(row->leader_title_, player->title_leader);
+        strcpy(row->adjective_leader_, player->adj_leader);
+        row->tail_[0] = reinterpret_cast<const uint8_t *>(
+            &player->is_leader_female)[0];
         ++row;
-        template_record += 0x59C;
+        ++player;
     } while (row < &NetWinLobbyRows[8]);
 }
 
@@ -866,11 +859,6 @@ void NetWin::on_redraw() {
     soft_update();
 }
 
-// 0x0096C85C - alpha.cpp's file-local Difficulty[] name-index table (its own
-// static binding, not extern): draw_diffs indexes it with the record's mode
-// byte and reads the string-table index it holds.
-static char **const NetWinDifficultyNames = (char **)0x0096C85C;
-
 // 0x0090E8EC / 0x0090E8F0 - the custom-rules bit fields the eighteen
 // draw_custom_rules rows read their checkbox state from (the ability and
 // allowed-unit bits); 0x0090E8F4 carries the free-tech bit the standing
@@ -884,19 +872,6 @@ static unsigned int *const NetWinRuleBitsC = &NetWinSessionOptions.rule_bits_c_;
 // refer to the same storage as TurnsAssigned; it is not a separate global.
 static unsigned int *const NetWinRulesGate =
     &NetDaemonNet.lock_state_[0].leading_words_[1];
-
-// 0x0078DCA8 - the ready/check panel descriptors the player rows draw their
-// slot state from (element [2*ready] of a 0x28-stride BoxSpriteParams
-// array); its storage has no RECOVERY_OBJECT binding yet, so the pointer
-// names the image's block and the object admission is still the
-// coordinator's.
-static BoxSpriteParams *const NetWinReadyPanels =
-    (BoxSpriteParams *)0x0078DCA8;
-
-
-// 0x0093D494 - the char * slot the joined session's name is read from for
-// the session-info title (empty until a session names itself).
-static char **const NetWinSessionName = (char **)0x0093D494;
 
 // 0x0080A6F0 - the planet-size name count beside the fixed dialog (the
 // names occupy world_size_labels_: 32 rows at native 0x80-byte stride.
@@ -941,8 +916,8 @@ void NetWin::draw_session_info() {
     buffer->box_sprite(title_rect, &InterfaceBoxStyles[2]);
 
     StringTemp[0] = 0;
-    if (*NetWinSessionName != 0) {
-        strcat(StringTemp, *NetWinSessionName);
+    if (NetDaemonNet.allocation_node().session_name_ != 0) {
+        strcat(StringTemp, NetDaemonNet.allocation_node().session_name_);
     }
     CharUpperA(StringTemp);
     buffer->set_font(find_font(0xE, 1), 0, 0, 0);
@@ -992,7 +967,7 @@ void NetWin::draw_session_info() {
         }
         strcat(StringTemp,
                StringTable.get(
-                   reinterpret_cast<int>(NetWinDifficultyNames[difficulty])));
+                   reinterpret_cast<int>(Difficulty[difficulty])));
     }
     {
         int written = buffer->write_l(StringTemp, col, row,
@@ -1298,7 +1273,7 @@ void NetWin::draw_player_names() {
         // The ready glyph: element 2 when the record block's leading byte
         // says the slot holds a player.
         int ready = lobby_row->ready_or_occupied_ != 0 ? 2 : 0;
-        buffer->box_sprite(row_rect, &NetWinReadyPanels[ready]);
+        buffer->box_sprite(row_rect, &InterfaceBoxStyles[48 + ready]);
 
         if (*NetWinEighthSlotWord == 3 && lobby_row->prefix_ == 0xFF) {
             continue;
@@ -1636,7 +1611,7 @@ void NetWin::draw_diffs() {
         field.right -= 4;
         buffer->set_clip(&field);
         char *name = StringTable.get(
-            reinterpret_cast<int>(NetWinDifficultyNames[row->field_2_]));
+            reinterpret_cast<int>(Difficulty[row->field_2_]));
         if (name != 0) {
             buffer->write_l(name, &field, strlen(name));
         }
@@ -2016,7 +1991,7 @@ void NetWin::pick_diff(int slot) {
 
     for (int index = 0; index < 6; ++index) {
         const int string_id =
-            reinterpret_cast<int>(NetWinDifficultyNames[index]);
+            reinterpret_cast<int>(Difficulty[index]);
         pop_menu.dialogs().item(StringTable.get(string_id), index);
     }
 
@@ -2729,7 +2704,7 @@ void NetWin::pick_global_diff() {
                  0);
     for (int index = 0; index < 6; ++index) {
         dialogs.item(StringTable.get(reinterpret_cast<int>(
-                         NetWinDifficultyNames[index])),
+                         Difficulty[index])),
                      index + 1);
     }
     int answer = pick_answer(*this, pop_menu);
