@@ -1,0 +1,27 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "2c0290370f115b569500efb429fe73cc44f23d7e",
+  "editable_files": [
+    "src/sprite.cpp",
+    "recovery/tests/test_sprite_class_path_owner_actual_source_oct9.py"
+  ],
+  "evidence": [
+    "Current Sprite::init_class original63CE20 spans63CE20..63CEE7 and663998..6639AD has historicalBYTE_EXACT. Static constchar*JackalPcxPath directlypoints698CAC; fresh11-byte pinnedread proves 'jackal.pcx' plusNUL. Replace with genuine named constchararrayusedbyload_pcx. Coordinator adds unboundedstart-onlybinding after actualsymbolverification; no fullpool/allocation claim.",
+    "Preserve real automatic Buffer, blank_sprite existing storage/lifecycle, load_pcx(path,0,10,EC), failedload create_blank(16,16,9), success extract(&buf,9,1,18,16,16,0), both original nonzero and zero return paths and destructor timing. Do not rewrite BlankSpriteStorageOwner, startup/atexit generated mappings/guards or change initialization counts.",
+    "Historical note above JackalPcxPath references obsolete TeardownObject/guarded_teardowns naming; qualify historical wording, retaining actual evidence/history instead of treating it as current implementation. Existing genuine current lifetime bindings are authoritative. Do not delete usefulLEVER/TRIED or alter ORIGINAL tokens.",
+    "Coordinator reviewed current full compiled owner bodies and freshly read short NUL-terminated original strings through pinned PeImage. Replace executable-address backing with genuine source-owned semantic string storage; no machine bytes/padding blobs, fabricated allocation bounds or measurement-only globals.",
+    "Preserve all original identities/spans/claims, LEVER/TRIED/useful discoveries and original unchecked behavior; no new claim, demotion, baseline reset, bug fix, broad flag changes or structural invention. Current short-string identity proves neither original full allocation nor retained linked selection.",
+    "Worker edits declared files only, no Git/native/Wine/delegation. Actual-source host controls must execute complete selected bodies with typed owner projections/call spies, relevant paths and meaningful one-at-a-time mutants. Coordinator owns isolated preparation, fresh actual symbols/start-only source bindings, TU comparisons, pinned data controls, independent review, full compile/link and manual integration. Temporary reviewed structural matching regressions authorized with restoration obligations retained; no full-game/native automatic acceptance."
+  ],
+  "intent": "Recover Sprite class initialization file-path storage while preserving its existing real Buffer/Sprite lifetimes and original success/failure branches.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6540832,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "sprite-class-path-owner-oct9"
+}

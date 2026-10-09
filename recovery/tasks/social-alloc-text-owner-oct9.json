@@ -1,0 +1,37 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "2c0290370f115b569500efb429fe73cc44f23d7e",
+  "editable_files": [
+    "src/socialwin.cpp",
+    "recovery/tests/test_social_alloc_text_owner_actual_source_oct9.py"
+  ],
+  "evidence": [
+    "Current SocialWin::draw_psych_alloc4B0D50/578bytes,draw_economy_alloc4B08A0/594bytes,draw_labs_alloc4B0B00/578bytes dereference static int* PercentText at682EA0 then cast to char*. Pin-backed2-byte read proves '%' plus NUL. Define genuine named percent char string storage used by all3consumers; coordinator adds start-only mapping after fresh actual native symbol verification, not a claimed original allocation size.",
+    "All3functions cast existing _itoa to exactly its CRT signature char*__cdecl(int,char*,int). Confirm current declaration/calling convention and original calls; replace those3redundant casts with direct _itoa only if evidence agrees. Other functions still use ItoaFn; keep typedef and untouched calls. Do not modify broader SocialWin virtual API/layout/members or SoundHook casts.",
+    "Preserve StringTemp clearing and label/space/decimal/percent append order, category-specific allocation/remaining expressions including signed arithmetic, CharUpperA ordering, existing real Buffer rendering/font/color calls, rectangles/sliders/icon work, callback-time global reads and effects. Do not factor combined routines, hoist getters/callbacks, add bounds/clamps or fix error paths.",
+    "Coordinator reviewed current full compiled owner bodies and freshly read short NUL-terminated original strings through pinned PeImage. Replace executable-address backing with genuine source-owned semantic string storage; no machine bytes/padding blobs, fabricated allocation bounds or measurement-only globals.",
+    "Preserve all original identities/spans/claims, LEVER/TRIED/useful discoveries and original unchecked behavior; no new claim, demotion, baseline reset, bug fix, broad flag changes or structural invention. Current short-string identity proves neither original full allocation nor retained linked selection.",
+    "Worker edits declared files only, no Git/native/Wine/delegation. Actual-source host controls must execute complete selected bodies with typed owner projections/call spies, relevant paths and meaningful one-at-a-time mutants. Coordinator owns isolated preparation, fresh actual symbols/start-only source bindings, TU comparisons, pinned data controls, independent review, full compile/link and manual integration. Temporary reviewed structural matching regressions authorized with restoration obligations retained; no full-game/native automatic acceptance."
+  ],
+  "intent": "Recover SocialWin allocation labels through source-owned percent text and correctly typed existing CRT calls, without changing allocation rendering behavior.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4918608,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4917408,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4918016,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "social-alloc-text-owner-oct9"
+}
