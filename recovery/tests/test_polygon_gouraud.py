@@ -181,8 +181,8 @@ unsigned _control87(unsigned value,unsigned mask){
 }
 struct Buffer {
     ACTUAL_FIELDS
-    intptr_t get_data(){acquire_observer();rect1_=live_clip;stride_=live_pitch;
-        return fail_lock ? 0 : reinterpret_cast<intptr_t>(origin);}
+    void *get_data(){acquire_observer();rect1_=live_clip;stride_=live_pitch;
+        return fail_lock ? nullptr : origin;}
     void free_data(int n){release_observer(n);}
 } buffer;
 ACTUAL_SOURCE

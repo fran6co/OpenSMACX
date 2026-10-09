@@ -64,7 +64,7 @@ RECT original_expected, clipped_expected;
 unsigned char input[4096], output[1024], expected[1024], remap[256];
 struct Buffer {
     RECT rect1_; uint32_t stride_; void *locked_bits_;
-    int get_data() { events+='L'; return lock_result; }
+    void *get_data() { events+='L'; return lock_result ? locked_bits_ : nullptr; }
     void free_data(int n) { check(n==1); events+='U'; }
     int load_pcx(const char *name, void *palette, int start, int count);
     void close() { events+='C'; }

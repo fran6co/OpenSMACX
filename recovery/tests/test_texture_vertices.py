@@ -256,12 +256,12 @@ def raster_harness(methods):
         struct Buffer {
             RECT rect1_;
             uint32_t stride_;
-            intptr_t get_data() {
+            void *get_data() {
                 require(events.empty()); events.push_back(1);
                 // The lock publishes current clip, stride and key. All are
                 // different from the stale values the fixture starts with.
                 rect1_ = lock_clip; stride_ = lock_stride; TextureRasterKey = lock_key;
-                return reinterpret_cast<intptr_t>(output + 16);
+                return output + 16;
             }
             void free_data(int count) {
                 require(count == 1 && events.size() >= 3);
@@ -861,8 +861,7 @@ def keyed_harness(methods, wide=False, main_body=KEYED_MAIN):
         common = common.replace(
             "static unsigned char output[16 * 14], expected[16 * 14], pixels[8 * 8];",
             "static unsigned char output[74000 * 3], expected[74000 * 3], pixels[8 * 8];")
-        common = common.replace("reinterpret_cast<intptr_t>(output + 16)",
-                                "reinterpret_cast<intptr_t>(output + 74000)")
+        common = common.replace("return output + 16;", "return output + 74000;")
     return common + r'''
         void start() {
             events.clear();
@@ -1098,8 +1097,7 @@ def alternating_harness(methods, forward_observer=False, main_body=ALTERNATING_M
     common = common.replace(
         "static unsigned char output[16 * 14], expected[16 * 14], pixels[8 * 8];",
         "static unsigned char output[16 * 16], expected[16 * 16], pixels[8 * 8];")
-    common = common.replace("reinterpret_cast<intptr_t>(output + 16)",
-                            "reinterpret_cast<intptr_t>(output + 8 * 16)")
+    common = common.replace("return output + 16;", "return output + 8 * 16;")
     return common + r'''
         int forward_calls; Buffer *forwarded_buffer; Vert *forwarded_verts;
         int forwarded_count; Vert *forwarded_uv;
@@ -1229,8 +1227,7 @@ def shaded_rows_harness(methods):
         "void draw_below_cutoff(Buffer *b, Vert *v, int *z, int n, Vert *uv, int cutoff) {\n"
         "    require(events.empty() && b == &buffer && v && z && uv);\n"
         "    require(n == 4 && cutoff == 17); ++forward_calls;\n}")
-    common = common.replace("reinterpret_cast<intptr_t>(output + 16)",
-                            "reinterpret_cast<intptr_t>(output + 7 * 16)")
+    common = common.replace("return output + 16;", "return output + 7 * 16;")
     cases = []
     for width in (1, 2, 3, 7, 31, 255, 32767):
         for delta in (0, 1, -1, 65536, -65536, 8388607, 8388608,
@@ -1364,8 +1361,8 @@ def cutoff_harness(methods):
         "void draw_below_cutoff(Buffer *, Vert *, int *, int, Vert *, int);")
     common = common.replace("unsigned lock_key, lock_stride;",
                             "unsigned lock_key, lock_stride; bool null_lock;")
-    common = common.replace("reinterpret_cast<intptr_t>(output + 16)",
-                            "null_lock ? 0 : reinterpret_cast<intptr_t>(output + 112)")
+    common = common.replace("return output + 16;",
+                            "return null_lock ? nullptr : output + 112;")
     return common + r'''
         void start() {
             events.clear(); null_lock=false;

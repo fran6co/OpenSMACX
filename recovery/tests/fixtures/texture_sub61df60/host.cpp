@@ -24,30 +24,31 @@ static unsigned char remap_data[256];
 static Vert test_vertices[5];
 static Vert test_uv[5];
 static int test_light[5];
-static int slot_pixel_base, slot560, slot564;
-static int slot_remap, slot_pixels, slot_height, slot_count;
-static int slot_stride, slot_width, slot_shade, slot_clip_right, slot_clip_left;
+static void *slot_pixel_base, *slot_pixels, *slot_shade;
+static int slot560, slot564, slot_height, slot_count;
+static uintptr_t slot_remap;
+static int slot_stride, slot_width, slot_clip_right, slot_clip_left;
 static int slot_clip_bottom, slot_clip_top, slot_max_y, slot_row, slot_4c4;
 static int slot_4f8, slot_530, slot_53c, slot_span_right, slot_span_left;
 static int slot_4e4, slot_4c8, slot_498;
 static int TextureRowPitchScratch;
 static int reset_calls, control_calls, free_calls, setup_calls;
-static int *blit_pixel_base = &slot_pixel_base;
+static void **blit_pixel_base = &slot_pixel_base;
 static int *blit_slot_560 = &slot560;
 static int *blit_slot_564 = &slot564;
 static int *edge_uvs_b_cell = 0;
 static int **blit_edge_uvs_b = &edge_uvs_b_cell;
 static int *z_values_cell = 0;
 static int **blit_z_values = &z_values_cell;
-static int *blit_remap_table = &slot_remap;
-static int *blit_texture_pixels = &slot_pixels;
+static uintptr_t *blit_remap_table = &slot_remap;
+static void **blit_texture_pixels = &slot_pixels;
 static int *blit_texture_height = &slot_height;
 static int *edge_uvs_a_cell = 0;
 static int **blit_edge_uvs_a = &edge_uvs_a_cell;
 static int *blit_vertex_count = &slot_count;
 static int *blit_buffer_stride = &slot_stride;
 static int *blit_texture_width = &slot_width;
-static int *blit_shade_table = &slot_shade;
+static void **blit_shade_table = &slot_shade;
 static int *blit_clip_right = &slot_clip_right;
 static int *blit_clip_left = &slot_clip_left;
 static int *blit_clip_bottom = &slot_clip_bottom;
@@ -69,6 +70,9 @@ static unsigned short *blit_light_pack_a = &light_pack_words[0];
 enum { _PC_24 = 1, _RC_CHOP = 2, _MCW_PC = 4, _MCW_RC = 8 };
 static int _control87(int, int) { ++control_calls; return 0; }
 static void texture_reset_fpu() { ++reset_calls; }
+static uintptr_t texture_pointer_address(const void *pointer) {
+    return reinterpret_cast<uintptr_t>(pointer);
+}
 static int fixed_div(int numerator, int denominator) {
     return static_cast<int>((static_cast<int64_t>(numerator) << 16) /
                             denominator);
@@ -82,9 +86,7 @@ struct Buffer {
     Buffer() : stride_(16) {
         rect1_.left = 0; rect1_.top = 0; rect1_.right = 8; rect1_.bottom = 4;
     }
-    int get_data() {
-        return static_cast<int>(reinterpret_cast<intptr_t>(destination));
-    }
+    void *get_data() { return destination; }
     void free_data(int value) { assert(value == 1); ++free_calls; }
 };
 

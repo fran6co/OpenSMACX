@@ -180,7 +180,7 @@ int __cdecl polygon(Buffer *buffer, Vert *vertices, int count, int color) {
     if (vertices == 0 || buffer == 0) {
         return 16;
     }
-    PolygonPixels = reinterpret_cast<unsigned char *>(buffer->get_data());
+    PolygonPixels = static_cast<unsigned char *>(buffer->get_data());
     if (PolygonPixels != 0) {
         PolygonVertices = vertices;
         PolygonColor = color;
@@ -270,7 +270,7 @@ int __cdecl polygon_dest(Buffer *buffer, Vert *vertices, int count, unsigned cha
     if (vertices == 0 || buffer == 0) {
         return 16;
     }
-    PolygonPixels = reinterpret_cast<unsigned char *>(buffer->get_data());
+    PolygonPixels = static_cast<unsigned char *>(buffer->get_data());
     if (PolygonPixels != 0) {
         PolygonVertices = vertices;
         PolygonRemap = remap;
@@ -426,7 +426,7 @@ int __cdecl polygon_gouraud(Buffer *buffer, Vert *vertices, int *lights) {
     if (vertices == 0 || lights == 0) {
         return 16;
     }
-    PolygonPixels = reinterpret_cast<unsigned char *>(buffer->get_data());
+    PolygonPixels = static_cast<unsigned char *>(buffer->get_data());
     if (PolygonPixels != 0) {
         polygon_reset_fpu();
         PolygonVertices = vertices;

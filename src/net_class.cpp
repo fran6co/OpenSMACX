@@ -1619,7 +1619,7 @@ int Net::send_group(void *data, int size, long group_id, int flags) {
 Purpose: Poll the embedded NetFifo for a message, when net play is enabled
          and a destination is given.
 // ORIGINAL: 0x00630A00 ?get@Net@@QAEHPAKPAK@Z 0x00630A00-0x00630A3A BYTE_EXACT
-// symbol    ?get@Net@@QAEHPAK0@Z
+// symbol    ?get@Net@@QAEPAXPAK0@Z
 // size      58 bytes
 // prototype int (__thiscall ?get@Net@@QAEHPAKPAK@Z)(Net* this, unsigned int*, unsigned int*)
 // callers   18   call targets   1
@@ -1629,13 +1629,13 @@ Purpose: Poll the embedded NetFifo for a message, when net play is enabled
 Return Value: NetGetScratch's address when a message was fetched, else 0
 Status: Complete
 */
-int Net::get(unsigned long *a, unsigned long *b) {
+void *Net::get(unsigned long *a, unsigned long *b) {
     if (NetDirectPlay != 0) {
         if (a != 0) {
             int result = queue_10c_.get(NetGetScratch,
                                    reinterpret_cast<unsigned int *>(a), 0,
                                    reinterpret_cast<unsigned int *>(b));
-            return result ? reinterpret_cast<int>(NetGetScratch) : 0;
+            return result ? NetGetScratch : 0;
         }
     }
     return 0;

@@ -17,7 +17,7 @@ public:
     RECT rect1_;
     unsigned int stride_;
     int frees;
-    int get_data() { return static_cast<int>(reinterpret_cast<intptr_t>(surface)); }
+    void *get_data() { return surface; }
     void free_data(int value) { assert(value == 1); ++frees; }
 };
 
@@ -47,7 +47,8 @@ static int *blit_span_right = &slots[10];
 static int *blit_clip_left = &slots[11];
 static int *blit_clip_top = &slots[12];
 static int *blit_slot_4e4 = &slots[13];
-static int *blit_pixel_base = &slots[14];
+static void *pixel_base_cell;
+static void **blit_pixel_base = &pixel_base_cell;
 static int *blit_span_left = &slots[15];
 static int *edge_uvs_b_cell = 0;
 static int **blit_edge_uvs_b = &edge_uvs_b_cell;
@@ -63,8 +64,10 @@ static TextureRasterRelocatedRowCell TextureRasterAlternateRowNext = { &alternat
 static int *blit_slot_528 = &slots[23];
 static int *blit_clip_right = &slots[24];
 static int *blit_clip_bottom = &slots[25];
-static int *blit_texture_pixels = &slots[26];
-static int *blit_remap_table = &slots[27];
+static void *texture_pixels_cell;
+static void **blit_texture_pixels = &texture_pixels_cell;
+static uintptr_t remap_table_cell;
+static uintptr_t *blit_remap_table = &remap_table_cell;
 static int *blit_slot_530 = &slots[28];
 static int *blit_slot_534 = &slots[29];
 static int *blit_slot_538 = &slots[30];
@@ -178,6 +181,9 @@ int Texture::setup_edge_gouraud(EdgeScan *edge, int index) {
 
 static void reset_case_state() {
     memset(slots, 0, sizeof(slots));
+    pixel_base_cell = 0;
+    texture_pixels_cell = 0;
+    remap_table_cell = 0;
     z_values_cell = ambient_z;
     edge_setup_calls = 0;
     edge_refreshes = 0;

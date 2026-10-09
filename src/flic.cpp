@@ -393,7 +393,7 @@ int Flic::decode_frame(int x, int y) {
     if (!(field_5B4_ & 1)) {
         return 7;
     }
-    int (Buffer::*get_data)() = &Buffer::get_data;
+    void *(Buffer::*get_data)() = &Buffer::get_data;
     if ((buffer2_->*get_data)() == 0) {
         return 0x10;
     }
@@ -447,7 +447,7 @@ int Flic::UNK1(int x, int y) {
         field_5B4_ &= ~2;
         return 7;
     }
-    int (Buffer::*get_data)() = &Buffer::get_data;
+    void *(Buffer::*get_data)() = &Buffer::get_data;
     if ((buffer2_->*get_data)() == 0) {
         field_5B4_ &= ~2;
         return 0x10;
@@ -559,7 +559,7 @@ Return Value: 0
 Status: Complete
 */
 int Flic::UNK3(int target_frame) {
-    int (Buffer::*get_data)() = &Buffer::get_data;
+    void *(Buffer::*get_data)() = &Buffer::get_data;
     int target = target_frame % header_.frames_;
 
     if (target < static_cast<int>(frame_) && (field_5B4_ & 1)) {
@@ -1299,10 +1299,10 @@ void Flic::decode_byte_run_trans() {
     rect->right = x + width;
     rect->bottom = y + height;
 
-    int (Buffer::*get_data)() = &Buffer::get_data;
+    void *(Buffer::*get_data)() = &Buffer::get_data;
     uint8_t *row_dst = reinterpret_cast<uint8_t *>(
         buffer2_->get_data(field_5AC_, field_5B0_));
-    uint8_t *row_src = reinterpret_cast<uint8_t *>((buffer_.*get_data)());
+    uint8_t *row_src = static_cast<uint8_t *>((buffer_.*get_data)());
 
     uint8_t value;
     int row = 0;
@@ -1403,8 +1403,8 @@ void Flic::decode_delta_flc_trans() {
     uint16_t opcode;
     uint8_t *dst = reinterpret_cast<uint8_t *>(
         buffer2_->get_data(field_5AC_, field_5B0_));
-    int (Buffer::*get_data)() = &Buffer::get_data;
-    uint8_t *src = reinterpret_cast<uint8_t *>((buffer_.*get_data)());
+    void *(Buffer::*get_data)() = &Buffer::get_data;
+    uint8_t *src = static_cast<uint8_t *>((buffer_.*get_data)());
     int row;
     uint16_t word;
     int packet;
@@ -1599,10 +1599,10 @@ void Flic::decode_fli_copy_trans() {
     rect->right = x + width;
     rect->bottom = y + height;
 
-    int (Buffer::*get_data)() = &Buffer::get_data;
+    void *(Buffer::*get_data)() = &Buffer::get_data;
     uint8_t *dst = reinterpret_cast<uint8_t *>(
         buffer2_->get_data(field_5AC_, field_5B0_));
-    uint8_t *src = reinterpret_cast<uint8_t *>((buffer_.*get_data)());
+    uint8_t *src = static_cast<uint8_t *>((buffer_.*get_data)());
 
     for (int row = 0; row < static_cast<int>(field_5A0_); row++) {
         for (int i = 0; i < static_cast<int>(field_59C_); i++) {

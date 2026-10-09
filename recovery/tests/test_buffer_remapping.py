@@ -81,7 +81,7 @@ int IntersectRect(RECT *out,const RECT *a,const RECT *b){
 }
 struct Buffer {
     ACTUAL_FIELDS
-    intptr_t get_data();void free_data(int);
+    void *get_data();void free_data(int);
     int map_colors(int,int,int,int,unsigned char *);
     int map_colors(RECT *,unsigned char *);
     int fill(RECT *,int);
@@ -93,12 +93,12 @@ int get_calls,unlock_calls,blt_calls,mode,published_pitch;
 bool publish_pitch;
 unsigned char *published_pixels;
 RECT blt_rect;int blt_color;
-intptr_t Buffer::get_data(){
+void *Buffer::get_data(){
     require(this==&buffer);++get_calls;
-    if(mode==2)return 0; // acquisition refused: no publication/count change
+    if(mode==2)return nullptr; // acquisition refused: no publication/count change
     if(publish_pitch)stride_=published_pitch;
-    if(mode==3){locked_bits_=nullptr;++surface_lock_count_;return 0;}
-    locked_bits_=published_pixels;++surface_lock_count_;return reinterpret_cast<intptr_t>(published_pixels);
+    if(mode==3){locked_bits_=nullptr;++surface_lock_count_;return nullptr;}
+    locked_bits_=published_pixels;++surface_lock_count_;return published_pixels;
 }
 int IDirectDrawSurface::Unlock(void *p){
     require(this==&surface && p==published_pixels);++unlock_calls;return 37;

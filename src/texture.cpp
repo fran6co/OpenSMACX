@@ -891,7 +891,7 @@ static TextureRasterDwordHighWordView TextureRasterScratch4E4;
 // RECOVERY_OBJECT: v1 0x009BB4E8 _TextureRasterSignedPitch
 static int TextureRasterSignedPitch;
 // RECOVERY_OBJECT: v1 0x009BB4EC _TextureRasterPixelBase
-static int TextureRasterPixelBase;
+static void *TextureRasterPixelBase;
 // RECOVERY_OBJECT: v1 0x009BB4F0 _TextureRasterSpanLeft
 static int TextureRasterSpanLeft; // Legacy spelling; original RIGHT x.
 // RECOVERY_OBJECT: v1 0x009BB4F4 _TextureRasterEdgeVerticesB
@@ -927,12 +927,12 @@ static int TextureRasterClipBottom;
 // RECOVERY_OBJECT: v1 0x009BB53C _TextureRasterVAccumulator
 static TextureRasterDwordHighWordView TextureRasterVAccumulator;
 // RECOVERY_OBJECT: v1 0x009BB544 _TextureRasterScratch544
-static int TextureRasterScratch544;
+static void *TextureRasterScratch544;
 // 0x9BB548..54C remains the existing TextureRasterKey object.
 // RECOVERY_OBJECT: v1 0x009BB550 _TextureRasterScratch550
-static int TextureRasterScratch550;
+static uintptr_t TextureRasterScratch550;
 // RECOVERY_OBJECT: v1 0x009BB554 _TextureRasterScratch554
-static int TextureRasterScratch554;
+static void *TextureRasterScratch554;
 // RECOVERY_OBJECT: v1 0x009BB558 _TextureRasterShadeCursor
 static int TextureRasterShadeCursor;
 // RECOVERY_OBJECT: v1 0x009BB55C _TextureRasterScratch55C
@@ -941,6 +941,25 @@ static int TextureRasterScratch55C;
 static int TextureRasterScratch560;
 // RECOVERY_OBJECT: v1 0x009BB564 _TextureRasterPalette
 static int TextureRasterPalette;
+
+// These mapped cells are pointer-sized on the original 32-bit target. Keep
+// address arithmetic in an integer domain so raster offsets do not perform
+// undefined subtraction between unrelated allocations.
+static uintptr_t texture_pointer_address(const void *pointer) {
+    return reinterpret_cast<uintptr_t>(pointer);
+}
+
+static uintptr_t texture_pointer_offset(const void *base, uint32_t offset) {
+    // Preserve the target's 32-bit ADD wrap while allowing host fixtures to
+    // use real allocations above 4 GiB. A wrapped high-bit offset is the same
+    // signed displacement the x86 pointer ADD applies.
+    return texture_pointer_address(base) +
+        static_cast<intptr_t>(static_cast<int32_t>(offset));
+}
+
+static void *texture_pointer_from_address(uintptr_t address) {
+    return reinterpret_cast<void *>(address);
+}
 
 static const float *const blit_scale_65536f = &TextureRasterScale65536;
 static const float *const blit_scale_256f = &TextureRasterScale256;
@@ -963,7 +982,7 @@ static int *const blit_clip_left = &TextureRasterClipLeft;
 static int *const blit_clip_top = &TextureRasterClipTop;
 static int *const blit_slot_4e4 = &TextureRasterScratch4E4.dword;
 static int *const blit_slot_4e8 = &TextureRasterSignedPitch;
-static int *const blit_pixel_base = &TextureRasterPixelBase;
+static void **const blit_pixel_base = &TextureRasterPixelBase;
 static int *const blit_span_left = &TextureRasterSpanLeft;
 static int *const blit_slot_4f8 = &TextureRasterUAccumulator.dword;
 static unsigned short *const blit_slot_4fa =
@@ -982,9 +1001,9 @@ static int *const blit_clip_bottom = &TextureRasterClipBottom;
 static int *const blit_slot_53c = &TextureRasterVAccumulator.dword;
 static unsigned short *const blit_slot_53e =
     &TextureRasterVAccumulator.words.high_word;
-static int *const blit_texture_pixels = &TextureRasterScratch544;
-static int *const blit_remap_table = &TextureRasterScratch550;
-static int *const blit_shade_table = &TextureRasterScratch554;
+static void **const blit_texture_pixels = &TextureRasterScratch544;
+static uintptr_t *const blit_remap_table = &TextureRasterScratch550;
+static void **const blit_shade_table = &TextureRasterScratch554;
 static int *const blit_slot_558 = &TextureRasterShadeCursor;
 static int *const blit_slot_55c = &TextureRasterScratch55C;
 static int *const blit_slot_560 = &TextureRasterScratch560;
@@ -1045,16 +1064,16 @@ void Texture::draw_coast(Buffer * a1, Vert * a2, int * a3, Texture * a4, unsigne
     texture_reset_fpu();
     *blit_edge_uvs_b = reinterpret_cast<int *>(a2);
     *blit_z_values = reinterpret_cast<int *>(a3);
-    blit_remap_table[0] = static_cast<int>(reinterpret_cast<intptr_t>(a5));
-    blit_texture_pixels[0] = static_cast<int>(reinterpret_cast<intptr_t>(pixels_));
+    blit_remap_table[0] = reinterpret_cast<uintptr_t>(a5);
+    blit_texture_pixels[0] = pixels_;
     TextureRowPitchScratch = static_cast<int>(iWidth_);
     blit_texture_height[0] = static_cast<int>(iHeight_);
     blit_vertex_count[0] = a6;
     *blit_edge_uvs_a = reinterpret_cast<int *>(a7);
     blit_buffer_stride[0] = static_cast<int>(a1->stride_);
     blit_texture_width[0] = static_cast<int>(iWidth_);
-    blit_shade_table[0] = static_cast<int>(reinterpret_cast<intptr_t>(a4->pixels_));
-    if (*blit_shade_table == 0) break;
+    blit_shade_table[0] = a4->pixels_;
+    if (texture_pointer_address(*blit_shade_table) == 0) break;
 
     RECT *clip = &a1->rect1_;
     blit_clip_right[0] = clip->right;
@@ -1078,7 +1097,7 @@ void Texture::draw_coast(Buffer * a1, Vert * a2, int * a3, Texture * a4, unsigne
     if (min_y >= max_y) break;
 
     const int stride = blit_buffer_stride[0];
-    const int destination_base = blit_pixel_base[0];
+    const uintptr_t destination_base = texture_pointer_address(blit_pixel_base[0]);
     blit_row_offset[0] = static_cast<int>(static_cast<unsigned int>(stride) *
                                            static_cast<unsigned int>(min_y) +
                                            static_cast<unsigned int>(destination_base));
@@ -1180,18 +1199,18 @@ void Texture::draw_coast(Buffer * a1, Vert * a2, int * a3, Texture * a4, unsigne
             const unsigned int row_source_offset = texture_draw_source_index(
                 blit_texture_width[0], u, v);
             *blit_slot_504 = static_cast<int>(
-                static_cast<unsigned int>(blit_texture_pixels[0]) + row_source_offset);
+                static_cast<unsigned int>(texture_pointer_address(blit_texture_pixels[0])) + row_source_offset);
             *blit_slot_558 = static_cast<int>(
-                static_cast<unsigned int>(*blit_shade_table) + row_source_offset);
+                static_cast<unsigned int>(texture_pointer_address(*blit_shade_table)) + row_source_offset);
             TextureDrawSpanResult span_result;
             span_result.packed_uv_sink = blit_slot_4a4;
             span_result.preload_pixels = reinterpret_cast<volatile const unsigned char *>(
-                static_cast<intptr_t>(blit_texture_pixels[0]));
+                static_cast<intptr_t>(texture_pointer_address(blit_texture_pixels[0])));
             span_result.prefetched_source =
                 span_result.preload_pixels[row_source_offset];
             texture_draw_coast_span(out, reinterpret_cast<const unsigned char *>(
-                static_cast<intptr_t>(blit_texture_pixels[0])),
-                reinterpret_cast<const unsigned char *>(static_cast<intptr_t>(*blit_shade_table)),
+                static_cast<intptr_t>(texture_pointer_address(blit_texture_pixels[0]))),
+                reinterpret_cast<const unsigned char *>(static_cast<intptr_t>(texture_pointer_address(*blit_shade_table))),
                 reinterpret_cast<const unsigned char *>(static_cast<intptr_t>(*blit_remap_table)),
                 blit_texture_width[0], u, v, du, dv, light, light_step,
                 static_cast<int>(pixel_count), &span_result);
@@ -1406,7 +1425,7 @@ int __cdecl Texture::setup_edge(EdgeScan *a1, int a2) {
 // Manually misaligned borrowed textures and shared-scratch/FP status observed
 // by callbacks remain unverified. No original-address storage is used here.
 void Texture::draw_trans(Buffer *buffer, Vert *vertices, int count, Vert *uv) {
-    unsigned char *destination = reinterpret_cast<unsigned char *>(buffer->get_data());
+    unsigned char *destination = static_cast<unsigned char *>(buffer->get_data());
     texture_reset_fpu();
     const unsigned char *pixels = static_cast<const unsigned char *>(pixels_);
     TextureRowPitchScratch = static_cast<int>(iWidth_);
@@ -1512,7 +1531,7 @@ unsigned int TextureRasterKey;
 // Oversized spans can reuse preceding calls' shared slopes in the executable;
 // those exceptional-input and callback-status behaviors remain unverified.
 void Texture::draw_trans(Buffer *buffer, Vert *vertices, int use_eight_vertices) {
-    unsigned char *destination = reinterpret_cast<unsigned char *>(buffer->get_data());
+    unsigned char *destination = static_cast<unsigned char *>(buffer->get_data());
     texture_reset_fpu();
     const EdgePoint *uv = use_eight_vertices ? cornersAndMids_ : corners_;
     const int count = use_eight_vertices ? 8 : 4;
@@ -1630,7 +1649,7 @@ void Texture::draw_trans(Buffer *buffer, Vert *vertices, int use_eight_vertices)
 // preloads the next texel at 0x0061ABF6 before testing the counter and this
 // C++ loop omits that unused final read.
 void Texture::draw_color_key(Buffer *buffer, Vert *vertices, int count, Vert *uv) {
-    unsigned char *destination = reinterpret_cast<unsigned char *>(buffer->get_data());
+    unsigned char *destination = static_cast<unsigned char *>(buffer->get_data());
     texture_reset_fpu();
     const unsigned char *pixels = static_cast<const unsigned char *>(pixels_);
     const int width = static_cast<int>(iWidth_);
@@ -1740,7 +1759,7 @@ void Texture::draw(Buffer *a1, Vert *a2, int *a3, int a4, Vert *a5) {
     *blit_edge_uvs_b = reinterpret_cast<int *>(a2);
     *blit_vertex_count = a4;
     *blit_z_values = reinterpret_cast<int *>(a3);
-    *blit_texture_pixels = static_cast<int>(reinterpret_cast<intptr_t>(pixels_));
+    *blit_texture_pixels = pixels_;
     *blit_buffer_stride = a1->stride_;
     *blit_texture_width = static_cast<int>(iWidth_);
 
@@ -1791,9 +1810,9 @@ void Texture::draw(Buffer *a1, Vert *a2, int *a3, int a4, Vert *a5) {
             }
 
             if (minY < maxY) {
-                *blit_row_offset = *blit_buffer_stride * minY + *blit_pixel_base;
-                *blit_clip_bottom = *blit_clip_bottom * (*blit_buffer_stride) + *blit_pixel_base;
-                *blit_clip_top = *blit_clip_top * (*blit_buffer_stride) + *blit_pixel_base;
+                *blit_row_offset = *blit_buffer_stride * minY + texture_pointer_address(*blit_pixel_base);
+                *blit_clip_bottom = *blit_clip_bottom * (*blit_buffer_stride) + texture_pointer_address(*blit_pixel_base);
+                *blit_clip_top = *blit_clip_top * (*blit_buffer_stride) + texture_pointer_address(*blit_pixel_base);
 
                 unsigned char edgeA[0x7c];
                 unsigned char edgeB[0x7c];
@@ -1824,7 +1843,7 @@ void Texture::draw(Buffer *a1, Vert *a2, int *a3, int a4, Vert *a5) {
                                 int spanEnd = rightX < *blit_clip_right ? rightX : *blit_clip_right;
                                 (void)spanEnd;
                                 int y = *blit_row_offset;
-                                char *dst = reinterpret_cast<char *>(*blit_pixel_base) + y * (*blit_buffer_stride);
+                                char *dst = reinterpret_cast<char *>(texture_pointer_address(*blit_pixel_base)) + y * (*blit_buffer_stride);
                                 for (int x = leftX; x < spanEnd; ++x) {
                                     dst[x] = dst[x];
                                 }
@@ -1890,16 +1909,16 @@ void Texture::draw(Buffer *a1, Vert *a2, int *a3, int a4, Vert *a5) {
 
 void Texture::draw_trans(Buffer *buffer, Vert *vertices, int *zvals,
                          int count, Vert *uv) {
-    unsigned char *destination = reinterpret_cast<unsigned char *>(buffer->get_data());
+    unsigned char *destination = static_cast<unsigned char *>(buffer->get_data());
     texture_reset_fpu();
 
-    *blit_pixel_base = static_cast<int>(reinterpret_cast<intptr_t>(destination));
+    *blit_pixel_base = destination;
     *blit_light_threshold = *blit_light_threshold_2;
     *blit_edge_uvs_a = reinterpret_cast<int *>(uv);
     *blit_edge_uvs_b = reinterpret_cast<int *>(vertices);
     *blit_vertex_count = count;
     *blit_z_values = reinterpret_cast<int *>(zvals);
-    *blit_texture_pixels = static_cast<int>(reinterpret_cast<intptr_t>(pixels_));
+    *blit_texture_pixels = pixels_;
     *blit_buffer_stride = static_cast<int>(buffer->stride_);
     *blit_texture_width = static_cast<int>(iWidth_);
 
@@ -1944,15 +1963,15 @@ void Texture::draw_trans(Buffer *buffer, Vert *vertices, int *zvals,
             *blit_row_offset = static_cast<int>(
                 static_cast<unsigned int>(*blit_buffer_stride) *
                     static_cast<unsigned int>(min_y) +
-                static_cast<unsigned int>(*blit_pixel_base));
+                static_cast<unsigned int>(texture_pointer_address(*blit_pixel_base)));
             *blit_clip_bottom = static_cast<int>(
                 static_cast<unsigned int>(*blit_clip_bottom) *
                     static_cast<unsigned int>(*blit_buffer_stride) +
-                static_cast<unsigned int>(*blit_pixel_base));
+                static_cast<unsigned int>(texture_pointer_address(*blit_pixel_base)));
             *blit_clip_top = static_cast<int>(
                 static_cast<unsigned int>(*blit_clip_top) *
                     static_cast<unsigned int>(*blit_buffer_stride) +
-                static_cast<unsigned int>(*blit_pixel_base));
+                static_cast<unsigned int>(texture_pointer_address(*blit_pixel_base)));
 
             EdgeScan left_edge;
             EdgeScan right_edge;
@@ -2172,8 +2191,8 @@ void Texture::draw_mask_dest(Buffer *buffer, Vert *vertices,
         *blit_pixel_base = buffer->get_data();
         texture_reset_fpu();
         *blit_edge_uvs_b = reinterpret_cast<int *>(vertices);
-        *blit_remap_table = static_cast<int>(reinterpret_cast<intptr_t>(remap));
-        *blit_texture_pixels = static_cast<int>(reinterpret_cast<intptr_t>(pixels_));
+        *blit_remap_table = reinterpret_cast<uintptr_t>(remap);
+        *blit_texture_pixels = pixels_;
         TextureRowPitchScratch = static_cast<int>(iWidth_);
         *blit_texture_height = static_cast<int>(iHeight_);
         *blit_edge_uvs_a = reinterpret_cast<int *>(uv);
@@ -2220,15 +2239,15 @@ void Texture::draw_mask_dest(Buffer *buffer, Vert *vertices,
                     *blit_row_offset = static_cast<int>(
                         static_cast<unsigned int>(*blit_buffer_stride) *
                             static_cast<unsigned int>(min_y) +
-                        static_cast<unsigned int>(*blit_pixel_base));
+                        static_cast<unsigned int>(texture_pointer_address(*blit_pixel_base)));
                     *blit_clip_bottom = static_cast<int>(
                         static_cast<unsigned int>(*blit_clip_bottom) *
                             static_cast<unsigned int>(*blit_buffer_stride) +
-                        static_cast<unsigned int>(*blit_pixel_base));
+                        static_cast<unsigned int>(texture_pointer_address(*blit_pixel_base)));
                     *blit_clip_top = static_cast<int>(
                         static_cast<unsigned int>(*blit_clip_top) *
                             static_cast<unsigned int>(*blit_buffer_stride) +
-                        static_cast<unsigned int>(*blit_pixel_base));
+                        static_cast<unsigned int>(texture_pointer_address(*blit_pixel_base)));
 
                     EdgeScan left_edge;
                     EdgeScan right_edge;
@@ -2373,9 +2392,8 @@ void Texture::draw_mask_dest(Buffer *buffer, Vert *vertices,
                                             static_cast<unsigned int>(*blit_slot_53c >> 16) +
                                         static_cast<unsigned int>(*blit_slot_4f8 >> 16);
                                     unsigned char *source = reinterpret_cast<unsigned char *>(
-                                        static_cast<uintptr_t>(
-                                            static_cast<unsigned int>(*blit_texture_pixels) +
-                                            source_offset));
+                                            texture_pointer_offset(*blit_texture_pixels,
+                                                source_offset));
                                     unsigned char *destination = reinterpret_cast<unsigned char *>(
                                         static_cast<uintptr_t>(
                                             static_cast<unsigned int>(*blit_span_right) +
@@ -2480,8 +2498,8 @@ void Texture::draw(Buffer *buffer, Vert *vertices, int *zvals, int count,
         return;
     }
 
-    unsigned char *destination = reinterpret_cast<unsigned char *>(buffer->get_data());
-    *blit_pixel_base = static_cast<int>(reinterpret_cast<intptr_t>(destination));
+    unsigned char *destination = static_cast<unsigned char *>(buffer->get_data());
+    *blit_pixel_base = destination;
     *blit_light_threshold = *blit_light_threshold_2;
     *reinterpret_cast<unsigned char *>(blit_slot_494) =
         static_cast<unsigned char>(fill_color);
@@ -2490,7 +2508,7 @@ void Texture::draw(Buffer *buffer, Vert *vertices, int *zvals, int count,
     *blit_edge_uvs_a = reinterpret_cast<int *>(edge_vertices);
     *blit_vertex_count = count;
     *blit_z_values = reinterpret_cast<int *>(zvals);
-    *blit_texture_pixels = static_cast<int>(reinterpret_cast<intptr_t>(pixels_));
+    *blit_texture_pixels = pixels_;
     *blit_buffer_stride = static_cast<int>(buffer->stride_);
     *blit_texture_width = static_cast<int>(iWidth_);
 
@@ -2528,13 +2546,13 @@ void Texture::draw(Buffer *buffer, Vert *vertices, int *zvals, int count,
         int y = min_y;
         *blit_row_offset = static_cast<int>(
             static_cast<unsigned int>(stride) * static_cast<unsigned int>(min_y) +
-            static_cast<unsigned int>(*blit_pixel_base));
+            static_cast<unsigned int>(texture_pointer_address(*blit_pixel_base)));
         *blit_clip_top = static_cast<int>(
             static_cast<unsigned int>(stride) * static_cast<unsigned int>(clip.top) +
-            static_cast<unsigned int>(*blit_pixel_base));
+            static_cast<unsigned int>(texture_pointer_address(*blit_pixel_base)));
         *blit_clip_bottom = static_cast<int>(
             static_cast<unsigned int>(stride) * static_cast<unsigned int>(clip.bottom) +
-            static_cast<unsigned int>(*blit_pixel_base));
+            static_cast<unsigned int>(texture_pointer_address(*blit_pixel_base)));
 
         EdgeScan left = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
         EdgeScan right = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
@@ -2659,17 +2677,17 @@ void Texture::draw_coast(Buffer * a1, Vert * a2, int * a3, Texture * a4, unsigne
         *reinterpret_cast<char *>(blit_slot_494) = static_cast<char>(a8);
         *blit_edge_uvs_b = reinterpret_cast<int *>(a2);
         *blit_z_values = reinterpret_cast<int *>(a3);
-        *blit_remap_table = reinterpret_cast<int>(a5);
-        *blit_texture_pixels = static_cast<int>(reinterpret_cast<intptr_t>(pixels_));
+        *blit_remap_table = reinterpret_cast<uintptr_t>(a5);
+        *blit_texture_pixels = pixels_;
         TextureRowPitchScratch = static_cast<int>(iWidth_);
         *blit_texture_height = static_cast<int>(iHeight_);
         *blit_vertex_count = a6;
         *blit_edge_uvs_a = reinterpret_cast<int *>(a7);
         *blit_buffer_stride = a1->stride_;
         *blit_texture_width = static_cast<int>(iWidth_);
-        *blit_shade_table = static_cast<int>(reinterpret_cast<intptr_t>(a4->pixels_));
+        *blit_shade_table = a4->pixels_;
 
-        if (*blit_shade_table != 0) {
+        if (texture_pointer_address(*blit_shade_table) != 0) {
             *blit_clip_right = a1->rect1_.right;
             *blit_clip_left = a1->rect1_.left;
             *blit_clip_bottom = a1->rect1_.bottom;
@@ -2703,10 +2721,10 @@ void Texture::draw_coast(Buffer * a1, Vert * a2, int * a3, Texture * a4, unsigne
                 } while (idx < a6);
 
                 if (minY < maxY) {
-                    *blit_clip_top = *blit_clip_top * *blit_buffer_stride + *blit_pixel_base;
-                    *blit_row_offset = *blit_buffer_stride * minY + *blit_pixel_base;
+                    *blit_clip_top = *blit_clip_top * *blit_buffer_stride + texture_pointer_address(*blit_pixel_base);
+                    *blit_row_offset = *blit_buffer_stride * minY + texture_pointer_address(*blit_pixel_base);
                     *blit_dither = minY & 1;
-                    *blit_clip_bottom = *blit_clip_bottom * *blit_buffer_stride + *blit_pixel_base;
+                    *blit_clip_bottom = *blit_clip_bottom * *blit_buffer_stride + texture_pointer_address(*blit_pixel_base);
 
                     // Two complete EdgeScan records: f0 is traversal direction, followed by
                     // counter/id and the stepped A/B/C/D channels.
@@ -2814,11 +2832,10 @@ void Texture::draw_coast(Buffer * a1, Vert * a2, int * a3, Texture * a4, unsigne
                                             *blit_texture_width, *blit_slot_4f8,
                                             *blit_slot_53c);
                                         char *src = reinterpret_cast<char *>(
-                                            static_cast<uintptr_t>(
-                                                static_cast<unsigned int>(*blit_texture_pixels) +
+                                            texture_pointer_offset(*blit_texture_pixels,
                                                 base_source_offset));
                                         *blit_slot_504 = reinterpret_cast<int>(src);
-                                        *blit_slot_558 = reinterpret_cast<int>(src) + (*blit_shade_table - *blit_texture_pixels);
+                                        *blit_slot_558 = reinterpret_cast<int>(src) + (texture_pointer_address(*blit_shade_table) - texture_pointer_address(*blit_texture_pixels));
                                         char *dst = reinterpret_cast<char *>(*blit_span_right + *blit_row_offset);
                                         const int row_light = *blit_slot_498;
                                         *blit_slot_498 = row_light >> 8;
@@ -2835,13 +2852,13 @@ void Texture::draw_coast(Buffer * a1, Vert * a2, int * a3, Texture * a4, unsigne
                                         span_result.preload_pixels =
                                             reinterpret_cast<volatile const unsigned char *>(
                                                 static_cast<uintptr_t>(
-                                                    static_cast<unsigned int>(*blit_texture_pixels)));
+                                                    static_cast<unsigned int>(texture_pointer_address(*blit_texture_pixels))));
                                         span_result.prefetched_source =
                                             span_result.preload_pixels[base_source_offset];
                                         if ((*blit_dither & 1) == 0) {
                                             texture_draw_keyed_coast_fill_span(
                                                 reinterpret_cast<unsigned char *>(dst),
-                                                reinterpret_cast<const unsigned char *>(*blit_shade_table),
+                                                reinterpret_cast<const unsigned char *>(texture_pointer_address(*blit_shade_table)),
                                                 reinterpret_cast<const unsigned char *>(*blit_remap_table),
                                                 *blit_texture_width, *blit_slot_4f8, *blit_slot_53c,
                                                 *blit_slot_4e4, *blit_slot_4c8,
@@ -2850,8 +2867,8 @@ void Texture::draw_coast(Buffer * a1, Vert * a2, int * a3, Texture * a4, unsigne
                                         } else {
                                             texture_draw_coast_span(
                                                 reinterpret_cast<unsigned char *>(dst),
-                                                reinterpret_cast<const unsigned char *>(*blit_texture_pixels),
-                                                reinterpret_cast<const unsigned char *>(*blit_shade_table),
+                                                reinterpret_cast<const unsigned char *>(texture_pointer_address(*blit_texture_pixels)),
+                                                reinterpret_cast<const unsigned char *>(texture_pointer_address(*blit_shade_table)),
                                                 reinterpret_cast<const unsigned char *>(*blit_remap_table),
                                                 *blit_texture_width, *blit_slot_4f8, *blit_slot_53c,
                                                 *blit_slot_4e4, *blit_slot_4c8, row_light,
@@ -2912,7 +2929,7 @@ struct EdgeLocal {
 int Texture::draw_trans2(Buffer *a1, int *a2, int a3) {
     *blit_pixel_base = a1->get_data();
     *blit_edge_uvs_b = reinterpret_cast<int *>(a2);
-    *blit_texture_pixels = static_cast<int>(reinterpret_cast<intptr_t>(pixels_));
+    *blit_texture_pixels = pixels_;
     TextureRowPitchScratch = static_cast<int>(iWidth_);
     *blit_texture_height = static_cast<int>(iHeight_);
 
@@ -2964,9 +2981,9 @@ int Texture::draw_trans2(Buffer *a1, int *a2, int a3) {
             } while (idx < *blit_vertex_count);
 
             if (minY < maxY) {
-                *blit_row_offset = (*blit_buffer_stride) * minY + (*blit_pixel_base);
-                *blit_clip_bottom = (*blit_clip_bottom) * (*blit_buffer_stride) + (*blit_pixel_base);
-                *blit_clip_top = (*blit_clip_top) * (*blit_buffer_stride) + (*blit_pixel_base);
+                *blit_row_offset = (*blit_buffer_stride) * minY + (texture_pointer_address(*blit_pixel_base));
+                *blit_clip_bottom = (*blit_clip_bottom) * (*blit_buffer_stride) + (texture_pointer_address(*blit_pixel_base));
+                *blit_clip_top = (*blit_clip_top) * (*blit_buffer_stride) + (texture_pointer_address(*blit_pixel_base));
 
                 EdgeLocal leftEdge;
                 leftEdge.setupSentinel = -1;
@@ -3059,7 +3076,7 @@ int Texture::draw_trans2(Buffer *a1, int *a2, int a3) {
 
                                     int spanCount = rowRight - *blit_span_right;
 
-                                    unsigned int ebxReg = static_cast<unsigned int>(*blit_texture_pixels);
+                                    unsigned int ebxReg = static_cast<unsigned int>(texture_pointer_address(*blit_texture_pixels));
                                     ebxReg = (ebxReg & 0xffff00ffu) | (static_cast<unsigned int>(*reinterpret_cast<unsigned char *>(blit_slot_53e)) << 8);
                                     ebxReg = (ebxReg & 0xffffff00u) | ((ebxReg + *reinterpret_cast<unsigned char *>(blit_slot_4fa)) & 0xffu);
 
@@ -3143,7 +3160,7 @@ int Texture::draw_trans_3(Buffer *a1, Vert *a2, int *a3, int a4, Vert *a5, int a
     *blit_edge_uvs_b = reinterpret_cast<int *>(a2);
     *blit_edge_uvs_a = reinterpret_cast<int *>(a5);
     *blit_z_values = reinterpret_cast<int *>(a3);
-    *blit_texture_pixels = static_cast<int>(reinterpret_cast<intptr_t>(pixels_));
+    *blit_texture_pixels = pixels_;
     *blit_buffer_stride = a1->stride_;
     *blit_texture_width = iWidth_;
 
@@ -3182,7 +3199,7 @@ int Texture::draw_trans_3(Buffer *a1, Vert *a2, int *a3, int a4, Vert *a5, int a
 
             if (minY < maxY) {
                 int pitch = *blit_buffer_stride;
-                int base = *blit_pixel_base;
+                uintptr_t base = texture_pointer_address(*blit_pixel_base);
                 *blit_row_offset = pitch * minY + base;
                 *blit_clip_top = pitch * (*blit_clip_top) + base;
                 *blit_dither = minY & 1;
@@ -3264,7 +3281,7 @@ int Texture::draw_trans_3(Buffer *a1, Vert *a2, int *a3, int a4, Vert *a5, int a
                                 int xEnd = *blit_span_left < *blit_clip_right ? *blit_span_left : *blit_clip_right;
                                 unsigned char *dst = reinterpret_cast<unsigned char *>(
                                     *blit_row_offset + *blit_span_right);
-                                unsigned char *src = reinterpret_cast<unsigned char *>(*blit_texture_pixels);
+                                unsigned char *src = reinterpret_cast<unsigned char *>(texture_pointer_address(*blit_texture_pixels));
                                 if ((dither & 1) == 0) {
                                     for (int x = *blit_span_right; x < xEnd; ++x) {
                                         unsigned char s = src[x];
@@ -3705,29 +3722,25 @@ void Texture::sub_61df60(Buffer *buffer, Vert *vertices, int *zvals,
     if (palette == 0) goto cleanup;
 
     {
-        unsigned char *destination = reinterpret_cast<unsigned char *>(
-            static_cast<intptr_t>(buffer->get_data()));
-        *blit_pixel_base = static_cast<int>(
-            reinterpret_cast<intptr_t>(destination));
+        unsigned char *destination = static_cast<unsigned char *>(buffer->get_data());
+        *blit_pixel_base = destination;
         texture_reset_fpu();
         *reinterpret_cast<unsigned char *>(blit_slot_560) =
             static_cast<unsigned char>(threshold);
         *blit_slot_564 = static_cast<int>(reinterpret_cast<intptr_t>(palette));
         *blit_edge_uvs_b = reinterpret_cast<int *>(vertices);
         *blit_z_values = reinterpret_cast<int *>(zvals);
-        *blit_remap_table = static_cast<int>(reinterpret_cast<intptr_t>(remap));
-        *blit_texture_pixels = static_cast<int>(
-            reinterpret_cast<intptr_t>(pixels_));
+        *blit_remap_table = reinterpret_cast<uintptr_t>(remap);
+        *blit_texture_pixels = pixels_;
         TextureRowPitchScratch = static_cast<int>(iWidth_);
         *blit_texture_height = static_cast<int>(iHeight_);
         *blit_edge_uvs_a = reinterpret_cast<int *>(uv);
         *blit_vertex_count = count;
         *blit_buffer_stride = static_cast<int>(buffer->stride_);
         *blit_texture_width = static_cast<int>(iWidth_);
-        *blit_shade_table = static_cast<int>(
-            reinterpret_cast<intptr_t>(mask_texture->pixels_));
+        *blit_shade_table = mask_texture->pixels_;
 
-        if (*blit_shade_table == 0) goto cleanup;
+        if (texture_pointer_address(*blit_shade_table) == 0) goto cleanup;
         *blit_clip_right = buffer->rect1_.right;
         *blit_clip_left = buffer->rect1_.left;
         *blit_clip_bottom = buffer->rect1_.bottom;
@@ -3760,7 +3773,7 @@ void Texture::sub_61df60(Buffer *buffer, Vert *vertices, int *zvals,
         if (min_y >= max_y) goto cleanup;
 
         const int stride = *blit_buffer_stride;
-        const unsigned int base = static_cast<unsigned int>(*blit_pixel_base);
+        const uintptr_t base = texture_pointer_address(*blit_pixel_base);
         *blit_row_offset = static_cast<int>(
             static_cast<unsigned int>(stride) * static_cast<unsigned int>(min_y) +
             base);
@@ -4020,7 +4033,7 @@ static unsigned short texture_light_step(int delta, int width);
 
 void Texture::draw_below_cutoff(Buffer *buffer, Vert *vertices, int *zvals, int count,
                                 Vert *uv, int cutoff) {
-    unsigned char *destination = reinterpret_cast<unsigned char *>(buffer->get_data());
+    unsigned char *destination = static_cast<unsigned char *>(buffer->get_data());
     texture_reset_fpu();
     const unsigned char *pixels = static_cast<const unsigned char *>(pixels_);
     const int stride = static_cast<int>(buffer->stride_);
@@ -4150,7 +4163,7 @@ void Texture::sub_6212b0(Buffer *buf, Vert *verts, int *zvals, int count,
     *blit_edge_uvs_b = reinterpret_cast<int *>(verts);
     *blit_vertex_count = count;
     *blit_z_values = reinterpret_cast<int *>(zvals);
-    *blit_texture_pixels = (int)(long)pixels_;
+    *blit_texture_pixels = pixels_;
     *blit_buffer_stride = (int)buf->stride_;
     *blit_texture_width = (int)iWidth_;
 
@@ -4183,15 +4196,15 @@ void Texture::sub_6212b0(Buffer *buf, Vert *verts, int *zvals, int count,
                 if (max_x < x) max_x = x;
             }
             if (min_y < max_y) {
-                *blit_row_offset = *blit_buffer_stride * min_y + *blit_pixel_base;
+                *blit_row_offset = *blit_buffer_stride * min_y + texture_pointer_address(*blit_pixel_base);
                 if (min_x < *blit_clip_left || min_y < *blit_clip_top || *blit_clip_right < max_x ||
                     *blit_clip_bottom < max_y) {
                     clip_flag = 1;
                 } else {
                     clip_flag = 0;
                 }
-                *blit_clip_bottom = *blit_clip_bottom * *blit_buffer_stride + *blit_pixel_base;
-                *blit_clip_top = *blit_clip_top * *blit_buffer_stride + *blit_pixel_base;
+                *blit_clip_bottom = *blit_clip_bottom * *blit_buffer_stride + texture_pointer_address(*blit_pixel_base);
+                *blit_clip_top = *blit_clip_top * *blit_buffer_stride + texture_pointer_address(*blit_pixel_base);
 
                 EdgeScan e1, e2;
                 e1.f0 = -1;
@@ -4265,7 +4278,9 @@ void Texture::sub_6212b0(Buffer *buf, Vert *verts, int *zvals, int count,
                                     *blit_span_right = *blit_clip_left;
                                 }
 
-                                unsigned char *tex_row = (unsigned char *)(*blit_texture_pixels + *blit_texture_width * (*blit_slot_53c >> 16) + (*blit_slot_4f8 >> 16));
+                                unsigned char *tex_row = reinterpret_cast<unsigned char *>(
+                                    texture_pointer_offset(*blit_texture_pixels,
+                                        static_cast<uint32_t>(*blit_texture_width * (*blit_slot_53c >> 16) + (*blit_slot_4f8 >> 16))));
                                 char *dest = (char *)(long)(*blit_span_right + *blit_row_offset - 1);
                                 TextureRasterAlternateRowNext.value = ((*blit_slot_4c8 >> 16) * *blit_texture_width + (*blit_slot_4e4 >> 16));
                                 TextureRasterAlternateRowBase.value = TextureRasterAlternateRowNext.value + *blit_texture_width;
@@ -4353,7 +4368,7 @@ void Texture::sub_622810(Buffer *buf, Vert *verts, int *zvals, int count,
     *blit_edge_uvs_b = reinterpret_cast<int *>(verts);
     *blit_vertex_count = count;
     *blit_z_values = reinterpret_cast<int *>(zvals);
-    *blit_texture_pixels = (int)(long)pixels_;
+    *blit_texture_pixels = pixels_;
     *blit_buffer_stride = (int)buf->stride_;
     *blit_texture_width = (int)iWidth_;
 
@@ -4384,15 +4399,15 @@ void Texture::sub_622810(Buffer *buf, Vert *verts, int *zvals, int count,
                 if (max_x < x) max_x = x;
             }
             if (min_y < max_y) {
-                *blit_row_offset = *blit_buffer_stride * min_y + *blit_pixel_base;
+                *blit_row_offset = *blit_buffer_stride * min_y + texture_pointer_address(*blit_pixel_base);
                 if (min_x < *blit_clip_left || min_y < *blit_clip_top || *blit_clip_right < max_x ||
                     *blit_clip_bottom < max_y) {
                     clip_flag = 1;
                 } else {
                     clip_flag = 0;
                 }
-                *blit_clip_bottom = *blit_clip_bottom * *blit_buffer_stride + *blit_pixel_base;
-                *blit_clip_top = *blit_clip_top * *blit_buffer_stride + *blit_pixel_base;
+                *blit_clip_bottom = *blit_clip_bottom * *blit_buffer_stride + texture_pointer_address(*blit_pixel_base);
+                *blit_clip_top = *blit_clip_top * *blit_buffer_stride + texture_pointer_address(*blit_pixel_base);
 
                 EdgeScan e1, e2;
                 e1.f0 = -1;
@@ -4466,7 +4481,9 @@ void Texture::sub_622810(Buffer *buf, Vert *verts, int *zvals, int count,
                                     *blit_span_right = *blit_clip_left;
                                 }
 
-                                unsigned char *tex_row = (unsigned char *)(*blit_texture_pixels + *blit_texture_width * (*blit_slot_53c >> 16) + (*blit_slot_4f8 >> 16));
+                                unsigned char *tex_row = reinterpret_cast<unsigned char *>(
+                                    texture_pointer_offset(*blit_texture_pixels,
+                                        static_cast<uint32_t>(*blit_texture_width * (*blit_slot_53c >> 16) + (*blit_slot_4f8 >> 16))));
                                 char *dest = (char *)(long)(*blit_span_right + *blit_row_offset - 1);
                                 TextureRasterAlternateRowNext.value = ((*blit_slot_4c8 >> 16) * *blit_texture_width + (*blit_slot_4e4 >> 16));
                                 TextureRasterAlternateRowBase.value = TextureRasterAlternateRowNext.value + *blit_texture_width;
@@ -4542,8 +4559,8 @@ void Texture::sub_622200(Buffer *a2, Vert *a3, int *a4, Texture *a5,
             texture_reset_fpu();
             *blit_z_values = a4;
             *blit_edge_uvs_b = reinterpret_cast<int *>(a3);
-            *blit_remap_table = static_cast<int>(reinterpret_cast<intptr_t>(a6));
-            *blit_texture_pixels = static_cast<int>(reinterpret_cast<intptr_t>(pixels_));
+            *blit_remap_table = reinterpret_cast<uintptr_t>(a6);
+            *blit_texture_pixels = pixels_;
             TextureRowPitchScratch = static_cast<int>(iWidth_);
             *blit_texture_height = static_cast<int>(iHeight_);
             *blit_vertex_count = a7;
@@ -4552,10 +4569,9 @@ void Texture::sub_622200(Buffer *a2, Vert *a3, int *a4, Texture *a5,
             *blit_buffer_stride = buffer->stride_;
             *blit_texture_width = static_cast<int>(iWidth_);
             Texture *shade_texture = a5;
-            *blit_shade_table = static_cast<int>(reinterpret_cast<intptr_t>(
-                shade_texture->pixels_));
+            *blit_shade_table = shade_texture->pixels_;
             RECT *clip = &buffer->rect1_;
-            if (*blit_shade_table != 0 && clip != 0) {
+            if (texture_pointer_address(*blit_shade_table) != 0 && clip != 0) {
                 *blit_clip_right = clip->right;
                 int minY = 0x7fff;
                 *blit_clip_left = clip->left;
@@ -4587,13 +4603,13 @@ void Texture::sub_622200(Buffer *a2, Vert *a3, int *a4, Texture *a5,
                     } while (idx < a7);
 
                     if (minY < maxY) {
-                        *blit_row_offset = *blit_buffer_stride * minY + *blit_pixel_base;
+                        *blit_row_offset = *blit_buffer_stride * minY + texture_pointer_address(*blit_pixel_base);
                         local_8 = (minX < *blit_clip_left || minY < *blit_clip_top ||
                                    *blit_clip_right < maxX || *blit_clip_bottom < maxY)
                                       ? 1
                                       : 0;
-                        *blit_clip_bottom = *blit_clip_bottom * *blit_buffer_stride + *blit_pixel_base;
-                        *blit_clip_top = *blit_clip_top * *blit_buffer_stride + *blit_pixel_base;
+                        *blit_clip_bottom = *blit_clip_bottom * *blit_buffer_stride + texture_pointer_address(*blit_pixel_base);
+                        *blit_clip_top = *blit_clip_top * *blit_buffer_stride + texture_pointer_address(*blit_pixel_base);
 
                         EdgeScan left;
                         left.f0 = -1;
@@ -4706,12 +4722,12 @@ void Texture::sub_622200(Buffer *a2, Vert *a3, int *a4, Texture *a5,
                                                 static_cast<unsigned int>(concat31(
                                                     static_cast<unsigned int>(concat22(
                                                         static_cast<unsigned short>(
-                                                            static_cast<unsigned int>(*blit_texture_pixels) >> 16),
+                                                            static_cast<unsigned int>(texture_pointer_address(*blit_texture_pixels)) >> 16),
                                                         concat11(byte_at(*blit_slot_53c, 2),
-                                                                 static_cast<unsigned char>(*blit_texture_pixels)))) >>
+                                                                 static_cast<unsigned char>(texture_pointer_address(*blit_texture_pixels))))) >>
                                                         8,
                                                     static_cast<unsigned char>(
-                                                        static_cast<unsigned char>(*blit_texture_pixels) +
+                                                        static_cast<unsigned char>(texture_pointer_address(*blit_texture_pixels)) +
                                                         byte_at(*blit_slot_4f8, 2)))));
                                             char *pcVar15 = reinterpret_cast<char *>(*blit_row_offset + *blit_span_right);
                                             int shade = *blit_slot_498 >> 8;
@@ -4743,7 +4759,7 @@ void Texture::sub_622200(Buffer *a2, Vert *a3, int *a4, Texture *a5,
                                                 unsigned char texel = *reinterpret_cast<unsigned char *>(
                                                     static_cast<unsigned int>(concat22(
                                                         static_cast<unsigned short>(
-                                                            static_cast<unsigned int>(*blit_shade_table) >> 16),
+                                                            static_cast<unsigned int>(texture_pointer_address(*blit_shade_table)) >> 16),
                                                         static_cast<unsigned short>(
                                                             reinterpret_cast<unsigned int>(puVar11)))) +
                                                     *blit_remap_table);
@@ -4844,19 +4860,18 @@ void Texture::sub_61c630(Buffer * bufIn, int * verts, Texture * texB, unsigned c
 
     if (pixels_ != 0 && shadeTable != 0 && texB != 0) {
         *blit_pixel_base = bufIn->get_data();
-        *blit_remap_table = reinterpret_cast<int>(shadeTable);
+        *blit_remap_table = reinterpret_cast<uintptr_t>(shadeTable);
         *blit_edge_uvs_b = reinterpret_cast<int *>(verts);
-        *blit_texture_pixels = reinterpret_cast<int>(pixels_);
+        *blit_texture_pixels = pixels_;
         TextureRowPitchScratch = static_cast<int>(iWidth_);
         *blit_texture_height = static_cast<int>(iHeight_);
         *blit_vertex_count = vertCount;
         *blit_edge_uvs_a = reinterpret_cast<int *>(unusedIn);
         *blit_buffer_stride = static_cast<int>(bufIn->stride_);
         *blit_texture_width = static_cast<int>(iWidth_);
-        *blit_shade_table = static_cast<int>(reinterpret_cast<intptr_t>(
-            texB->pixels_));
+        *blit_shade_table = texB->pixels_;
 
-        if (*blit_shade_table != 0) {
+        if (texture_pointer_address(*blit_shade_table) != 0) {
             *blit_clip_right = bufIn->rect1_.right;
             *blit_clip_left = bufIn->rect1_.left;
             *blit_clip_bottom = bufIn->rect1_.bottom;
@@ -4879,7 +4894,7 @@ void Texture::sub_61c630(Buffer * bufIn, int * verts, Texture * texB, unsigned c
 
                 if (minY < maxY) {
                     int stride = *blit_buffer_stride;
-                    int destBase = *blit_pixel_base;
+                    uintptr_t destBase = texture_pointer_address(*blit_pixel_base);
                     *blit_row_offset = destBase + stride * minY;
                     *blit_clip_bottom = destBase + stride * (*blit_clip_bottom);
                     *blit_clip_top = destBase + stride * (*blit_clip_top);
@@ -4984,9 +4999,9 @@ void Texture::sub_61c630(Buffer * bufIn, int * verts, Texture * texB, unsigned c
                                             unsigned int duStep = static_cast<unsigned int>(*blit_slot_4e4);
                                             unsigned int dvStep = static_cast<unsigned int>(*blit_slot_4c8);
                                             unsigned char *texBase =
-                                                reinterpret_cast<unsigned char *>(*blit_texture_pixels);
+                                                reinterpret_cast<unsigned char *>(texture_pointer_address(*blit_texture_pixels));
                                             unsigned char *tex2Base =
-                                                reinterpret_cast<unsigned char *>(*blit_shade_table);
+                                                reinterpret_cast<unsigned char *>(texture_pointer_address(*blit_shade_table));
                                             unsigned char *table =
                                                 reinterpret_cast<unsigned char *>(*blit_remap_table);
 
@@ -5130,16 +5145,15 @@ void Texture::sub_61d990(Buffer *buffer, int *vertices, int *zvals,
     texture_reset_fpu();
     *blit_z_values = reinterpret_cast<int *>(zvals);
     *blit_edge_uvs_b = reinterpret_cast<int *>(vertices);
-    *blit_remap_table = static_cast<int>(reinterpret_cast<intptr_t>(remap));
-    *blit_texture_pixels = static_cast<int>(reinterpret_cast<intptr_t>(pixels_));
+    *blit_remap_table = reinterpret_cast<uintptr_t>(remap);
+    *blit_texture_pixels = pixels_;
     TextureRowPitchScratch = static_cast<int>(iWidth_);
     *blit_texture_height = static_cast<int>(iHeight_);
     *blit_texture_width = static_cast<int>(iWidth_);
     *blit_edge_uvs_a = reinterpret_cast<int *>(wide_flag != 0 ? cornersAndMids_ : corners_);
     *blit_vertex_count = wide_flag != 0 ? 8 : 4;
     *blit_buffer_stride = static_cast<int>(buffer->stride_);
-    *blit_shade_table = static_cast<int>(reinterpret_cast<intptr_t>(
-        shade_texture->pixels_));
+    *blit_shade_table = shade_texture->pixels_;
 
     if (shade_texture->pixels_ != 0) {
         const RECT &clip = buffer->rect1_;
@@ -5173,7 +5187,7 @@ void Texture::sub_61d990(Buffer *buffer, int *vertices, int *zvals,
 
         if (min_y < max_y) {
             const int stride = buffer->stride_;
-            const int base = *blit_pixel_base;
+            const uintptr_t base = texture_pointer_address(*blit_pixel_base);
             *blit_row_offset = stride * min_y + base;
             *blit_clip_bottom = stride * *blit_clip_bottom + base;
             *blit_clip_top = stride * *blit_clip_top + base;
@@ -5393,7 +5407,7 @@ static void texture_raster_gouraud_rows(Texture *texture, Buffer *buffer,
 
     const RECT clip = buffer->current_clip();
     const int stride = buffer->stride_;
-    unsigned char *destination = reinterpret_cast<unsigned char *>(*blit_pixel_base);
+    unsigned char *destination = reinterpret_cast<unsigned char *>(texture_pointer_address(*blit_pixel_base));
     const unsigned char key = static_cast<unsigned char>(*blit_light_threshold);
     int y = first_y;
     while (y < last_y && y < clip.bottom) {
@@ -5429,7 +5443,7 @@ static void texture_raster_plain_rows(Texture *texture, Buffer *buffer,
     if (!sub_624eb0(&right, top_index, edge_cache)) return;
     const RECT clip = buffer->current_clip();
     const int stride = buffer->stride_;
-    unsigned char *destination = reinterpret_cast<unsigned char *>(*blit_pixel_base);
+    unsigned char *destination = reinterpret_cast<unsigned char *>(texture_pointer_address(*blit_pixel_base));
     const unsigned char key = static_cast<unsigned char>(*blit_light_threshold);
     int y = first_y;
     while (y < last_y && y < clip.bottom) {
@@ -5480,15 +5494,15 @@ void Texture::sub_61b780(Buffer *buffer, int *vertices, int zvals, int mode) {
     int min_y = 0x7fff, max_y = -0x7ffd;
     int min_x = 0x7fff, max_x = -0x7ffd;
     int top = 0;
-    unsigned char *destination = reinterpret_cast<unsigned char *>(buffer->get_data());
+    unsigned char *destination = static_cast<unsigned char *>(buffer->get_data());
     texture_reset_fpu();
-    *blit_pixel_base = static_cast<int>(reinterpret_cast<intptr_t>(destination));
+    *blit_pixel_base = destination;
     *blit_light_threshold = *blit_light_threshold_2;
     *blit_edge_uvs_b = reinterpret_cast<int *>(vertices);
     *blit_edge_uvs_a = reinterpret_cast<int *>(mode == 0 ? corners_ : cornersAndMids_);
     *blit_vertex_count = count;
     *blit_z_values = reinterpret_cast<int *>(zvals);
-    *blit_texture_pixels = static_cast<int>(reinterpret_cast<intptr_t>(pixels_));
+    *blit_texture_pixels = pixels_;
     *blit_buffer_stride = buffer->stride_;
     *blit_texture_width = iWidth_;
     *blit_clip_right = buffer->rect1_.right;
@@ -5561,11 +5575,11 @@ void Texture::sub_620a10(Buffer *buffer, int vertices_arg, int count,
     int v80 = 1;
     cache->next_record_ = 0;
     int *vertices = reinterpret_cast<int *>(vertices_arg);
-    int data = buffer->get_data();
+    void *data = buffer->get_data();
     texture_reset_fpu();
     *blit_pixel_base = data;
     *blit_edge_uvs_b = reinterpret_cast<int *>(vertices_arg);
-    *blit_texture_pixels = static_cast<int>(reinterpret_cast<intptr_t>(pixels_));
+    *blit_texture_pixels = pixels_;
     TextureRowPitchScratch = iWidth_;
     *blit_texture_height = iHeight_;
     *blit_edge_uvs_a = reinterpret_cast<int *>(edge_vertices_arg);
@@ -5589,7 +5603,11 @@ void Texture::sub_620a10(Buffer *buffer, int vertices_arg, int count,
         if (x > max_x) max_x = x;
     }
     if (min_y < max_y) {
-        *blit_row_offset = data + *blit_buffer_stride * min_y;
+        const uint32_t row_displacement =
+            static_cast<uint32_t>(*blit_buffer_stride) *
+            static_cast<uint32_t>(min_y);
+        *blit_row_offset = static_cast<int>(static_cast<uint32_t>(
+            texture_pointer_offset(data, row_displacement)));
         if (min_x >= *blit_clip_left && min_y >= *blit_clip_top &&
             max_x <= *blit_clip_right && max_y <= *blit_clip_bottom) {
             v80 = 0;
@@ -5629,14 +5647,13 @@ void Texture::sub_61d090(Buffer *buffer, int *vertices, int *zvals,
     int min_y = 0x7fff, max_y = -0x7ffd;
     int min_x = 0x7fff, max_x = -0x7ffd;
     int top = 0;
-    *blit_pixel_base = static_cast<int>(reinterpret_cast<intptr_t>(
-        reinterpret_cast<unsigned char *>(buffer->get_data())));
+    *blit_pixel_base = buffer->get_data();
     texture_reset_fpu();
     *blit_edge_uvs_b = reinterpret_cast<int *>(vertices);
     *blit_edge_uvs_a = reinterpret_cast<int *>(flag == 0 ? corners_ : cornersAndMids_);
     *blit_vertex_count = count;
     *blit_z_values = reinterpret_cast<int *>(zvals);
-    *blit_texture_pixels = static_cast<int>(reinterpret_cast<intptr_t>(pixels_));
+    *blit_texture_pixels = pixels_;
     *blit_buffer_stride = buffer->stride_;
     *blit_texture_width = iWidth_;
     *blit_clip_right = buffer->rect1_.right;
@@ -5804,8 +5821,9 @@ void __cdecl sub_61f800(void *param_1, void *param_2) {
     int acc_x_hi16 = acc_x >> 16;
     int src_row_index = acc_y_hi16 + (unsigned short)(short)((short)acc_x_hi16 * (short)TextureRowPitchScratch);
 
-    unsigned char *src = reinterpret_cast<unsigned char *>(src_row_index + *blit_texture_pixels);
-    int out_seed = (*blit_row_offset) * (*blit_buffer_stride) + start_row + (*blit_pixel_base);
+    unsigned char *src = reinterpret_cast<unsigned char *>(
+        texture_pointer_offset(*blit_texture_pixels, static_cast<uint32_t>(src_row_index)));
+    uintptr_t out_seed = (*blit_row_offset) * (*blit_buffer_stride) + start_row + texture_pointer_address(*blit_pixel_base);
 
     int row_stride = (dc_step_adj >> 16) + cross_term;
 
@@ -6019,11 +6037,11 @@ static void texture_draw_keyed_edge_span(EdgeScan *left, EdgeScan *right,
 // symbol    ?sub_61fa30@@YAXPAUEdgeScan@@0@Z
 void __cdecl sub_61fa30(EdgeScan *left, EdgeScan *right) {
     TextureKeyedEdgeSpanState state;
-    const unsigned int destination = static_cast<unsigned int>(*blit_pixel_base) +
+    const uintptr_t destination = texture_pointer_address(*blit_pixel_base) +
         static_cast<unsigned int>(*blit_row_offset) *
         static_cast<unsigned int>(*blit_buffer_stride);
     state.destination_row = reinterpret_cast<unsigned char *>(destination);
-    state.pixels = reinterpret_cast<const unsigned char *>(*blit_texture_pixels);
+    state.pixels = reinterpret_cast<const unsigned char *>(texture_pointer_address(*blit_texture_pixels));
     state.pitch = TextureRowPitchScratch;
     state.clip_left = *blit_clip_left;
     state.clip_right = *blit_clip_right;
@@ -6098,9 +6116,9 @@ void Texture::sub_61cb50(Buffer *buffer, Vert *vertices, Texture *shade,
         *blit_pixel_base = buffer->get_data();
         texture_reset_fpu();
 
-        *blit_remap_table = static_cast<int>(reinterpret_cast<intptr_t>(remap));
+        *blit_remap_table = reinterpret_cast<uintptr_t>(remap);
         *blit_edge_uvs_b = reinterpret_cast<int *>(vertices);
-        *blit_texture_pixels = static_cast<int>(reinterpret_cast<intptr_t>(pixels_));
+        *blit_texture_pixels = pixels_;
         TextureRowPitchScratch = static_cast<int>(iWidth_);
         *blit_texture_height = static_cast<int>(iHeight_);
         if (use_eight_vertices != 0) {
@@ -6114,7 +6132,7 @@ void Texture::sub_61cb50(Buffer *buffer, Vert *vertices, Texture *shade,
         *blit_texture_width = static_cast<int>(iWidth_);
         const unsigned char *shade_pixels =
             static_cast<const unsigned char *>(shade->pixels_);
-        *blit_shade_table = static_cast<int>(reinterpret_cast<intptr_t>(shade_pixels));
+        *blit_shade_table = shade->pixels_;
         if (shade_pixels == 0) goto cleanup;
 
         *blit_clip_right = buffer->rect1_.right;
@@ -6142,7 +6160,7 @@ void Texture::sub_61cb50(Buffer *buffer, Vert *vertices, Texture *shade,
         *blit_max_y_index = max_y_index;
         if (min_y >= max_y) goto cleanup;
 
-        const int base = *blit_pixel_base;
+        const uintptr_t base = texture_pointer_address(*blit_pixel_base);
         const int stride = *blit_buffer_stride;
         *blit_row_offset = static_cast<int>(static_cast<unsigned int>(base) +
             static_cast<unsigned int>(stride) * static_cast<unsigned int>(min_y));
@@ -6391,10 +6409,11 @@ void __cdecl sub_6202e0(void *param_1, void *param_2) {
     int acc_x_hi16 = acc_x >> 16;
     int out_row_index = acc_y_hi16 + (unsigned short)(short)((short)acc_x_hi16 * (short)TextureRowPitchScratch);
 
-    unsigned char *src = reinterpret_cast<unsigned char *>(out_row_index + *blit_texture_pixels);
-    *blit_slot_558 = out_row_index + *blit_shade_table;
+    unsigned char *src = reinterpret_cast<unsigned char *>(
+        texture_pointer_offset(*blit_texture_pixels, static_cast<uint32_t>(out_row_index)));
+    *blit_slot_558 = out_row_index + static_cast<int>(texture_pointer_address(*blit_shade_table));
 
-    int out_seed = (*blit_row_offset) * (*blit_buffer_stride) + start_row + (*blit_pixel_base);
+    uintptr_t out_seed = (*blit_row_offset) * (*blit_buffer_stride) + start_row + texture_pointer_address(*blit_pixel_base);
 
     int row_stride = (dc_step_adj >> 16) + cross_term;
 
@@ -6586,7 +6605,7 @@ void __cdecl sub_61fe70(int p1, int p2) {
         short prod16 = (short)((short)yHi * (short)(TextureRowPitchScratch & 0xffff));
         unsigned short xHi = (unsigned short)((unsigned int)xAccum >> 16);
         int srcAccum = (int)xHi + (unsigned short)prod16;
-        srcAccum += *blit_texture_pixels;
+        srcAccum += texture_pointer_address(*blit_texture_pixels);
 
         int dst = *blit_row_offset + p1;
 
@@ -6755,11 +6774,13 @@ void __cdecl sub_620640(int param_1, int param_2) {
 
     int rowOffset = static_cast<int>(xAcc >> 0x10) +
                      static_cast<unsigned short>(static_cast<short>(zAcc >> 16) * static_cast<short>(TextureRowPitchScratch));
-    unsigned char *srcPtr = reinterpret_cast<unsigned char *>(rowOffset + *blit_texture_pixels);
+    unsigned char *srcPtr = reinterpret_cast<unsigned char *>(
+        texture_pointer_offset(*blit_texture_pixels, static_cast<uint32_t>(rowOffset)));
     *reinterpret_cast<unsigned char **>(blit_slot_558) =
-        reinterpret_cast<unsigned char *>(rowOffset + *blit_shade_table);
+        reinterpret_cast<unsigned char *>(
+            texture_pointer_offset(*blit_shade_table, static_cast<uint32_t>(rowOffset)));
 
-    int destBase = (*blit_row_offset) * (*blit_buffer_stride) + yStart + (*blit_pixel_base);
+    uintptr_t destBase = (*blit_row_offset) * (*blit_buffer_stride) + yStart + texture_pointer_address(*blit_pixel_base);
     unsigned char *destPtr = reinterpret_cast<unsigned char *>(destBase);
 
     if (*blit_slot_4e8 < 0) {
@@ -6921,7 +6942,7 @@ void Texture::sub_61f0d0(Buffer *param_2, int param_3, int param_4, int param_5,
        ((*blit_pixel_base) = param_2->get_data(), (*blit_pixel_base) != 0)) {
       *blit_z_values = reinterpret_cast<int *>(param_4);
       *blit_edge_uvs_b = reinterpret_cast<int *>(param_3);
-      (*blit_texture_pixels) = static_cast<int>(reinterpret_cast<intptr_t>(pixels_));
+      (*blit_texture_pixels) = pixels_;
       (TextureRowPitchScratch) = static_cast<int>(iWidth_);
       (*blit_texture_height) = static_cast<int>(iHeight_);
       if (param_8 == 0) {
@@ -6938,9 +6959,10 @@ void Texture::sub_61f0d0(Buffer *param_2, int param_3, int param_4, int param_5,
       (*blit_texture_width) = static_cast<int>(iWidth_);
       (*blit_slot_55c) = param_7;
       (*blit_remap_table) = param_6;
-      (*blit_shade_table) = *(int32_t *)param_5;
+      (*blit_shade_table) = reinterpret_cast<void *>(
+          static_cast<uintptr_t>(*reinterpret_cast<int32_t *>(param_5)));
       RECT *clip = &param_2->rect1_;
-      if (((*blit_shade_table) != 0) && (clip != 0)) {
+      if (((texture_pointer_address(*blit_shade_table)) != 0) && (clip != 0)) {
         (*blit_clip_right) = clip->right;
         iVar13 = -0x7ffd;
         (*blit_clip_left) = clip->left;
@@ -7023,9 +7045,9 @@ void Texture::sub_61f0d0(Buffer *param_2, int param_3, int param_4, int param_5,
                       iVar3 = iVar3 - iVar14;
                       iVar13 = ((uint)param_5 >> 0x10) +
                                (uint)(ushort)((ushort)(param_7 >> 16) * (short)(TextureRowPitchScratch));
-                      pbVar12 = (byte *)(iVar13 + (*blit_texture_pixels));
-                      (*blit_slot_558) = iVar13 + (*blit_shade_table);
-                      iVar13 = (*blit_row_offset) * (*blit_buffer_stride) + iVar14 + (*blit_pixel_base);
+                      pbVar12 = (byte *)(iVar13 + (texture_pointer_address(*blit_texture_pixels)));
+                      (*blit_slot_558) = iVar13 + (texture_pointer_address(*blit_shade_table));
+                      iVar13 = (*blit_row_offset) * (*blit_buffer_stride) + iVar14 + (texture_pointer_address(*blit_pixel_base));
                       if ((*blit_slot_4e8) < 0) {
                         local_88 = -local_88;
                         param_7 = ~param_7;
@@ -7203,7 +7225,7 @@ void Texture::draw_color_key(Buffer *buffer, Vert *vertices, int count, Vert *uv
         draw_color_key(buffer, vertices, count, uv);
         return;
     }
-    unsigned char *destination = reinterpret_cast<unsigned char *>(buffer->get_data());
+    unsigned char *destination = static_cast<unsigned char *>(buffer->get_data());
     texture_reset_fpu();
     const unsigned char alternate = static_cast<unsigned char>(color);
     const unsigned char *pixels = static_cast<const unsigned char *>(pixels_);
@@ -7598,7 +7620,7 @@ void Texture::draw2(Buffer *buffer, Vert *vertices, int *zvals, int count,
         return;
     }
 
-    unsigned char *destination = reinterpret_cast<unsigned char *>(buffer->get_data());
+    unsigned char *destination = static_cast<unsigned char *>(buffer->get_data());
     texture_reset_fpu();
     const unsigned char *pixels = static_cast<const unsigned char *>(pixels_);
     const int stride = static_cast<int>(buffer->stride_);
@@ -7725,7 +7747,7 @@ void Texture::draw2(Buffer *buffer, Vert *vertices, int *zvals, int count,
 void Texture::draw_cached_lit(Buffer *buffer, Vert *vertices, int *light,
                               int count, Vert *uv, TextureStore *cache) {
     cache->next_record_ = 0;
-    unsigned char *destination = reinterpret_cast<unsigned char *>(buffer->get_data());
+    unsigned char *destination = static_cast<unsigned char *>(buffer->get_data());
     const unsigned char key = static_cast<unsigned char>(TextureRasterKey);
     texture_reset_fpu();
     const unsigned char *pixels = static_cast<const unsigned char *>(pixels_);

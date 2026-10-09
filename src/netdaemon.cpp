@@ -604,11 +604,11 @@ always sets both before this reads them on the taken path.
 int NetDaemon::receive() {
     unsigned long first;
     unsigned long second;
-    const int result = NetDaemonNet.Net::get(&first, &second);
+    void *result = NetDaemonNet.Net::get(&first, &second);
     if (result == 0) {
         return 0;
     }
-    process_message(reinterpret_cast<char *>(result), second, static_cast<int>(first));
+    process_message(static_cast<char *>(result), second, static_cast<int>(first));
     return 1;
 }
 
@@ -1140,34 +1140,34 @@ void NetDaemon::send_game() {
     unsigned long a, b;
     unsigned long c, d;
     unsigned long e, f;
-    unsigned long id;
+    void *id;
 
     synch(0, 0, 0, 0, 0, 1, 0x2101);
     for (;;) {
         id = NetDaemonNet.Net::get(&a, &b);
         if (id == 0) break;
-        process_message((char *)id, b, a);
+        process_message(static_cast<char *>(id), b, a);
     }
 
     synch(2, 0, 0, 0, 0, 1, 0x2101);
     for (;;) {
         id = NetDaemonNet.Net::get(&a, &b);
         if (id == 0) break;
-        process_message((char *)id, b, a);
+        process_message(static_cast<char *>(id), b, a);
     }
 
     synch(4, 0, 0, 0, 0, 1, 0x2101);
     for (;;) {
         id = NetDaemonNet.Net::get(&a, &b);
         if (id == 0) break;
-        process_message((char *)id, b, a);
+        process_message(static_cast<char *>(id), b, a);
     }
 
     synch(5, 0, 0, 0, 0, 1, 0x2101);
     for (;;) {
         id = NetDaemonNet.Net::get(&a, &b);
         if (id == 0) break;
-        process_message((char *)id, b, a);
+        process_message(static_cast<char *>(id), b, a);
     }
 
     int i = 0;
@@ -1177,21 +1177,21 @@ void NetDaemon::send_game() {
         for (;;) {
             id = NetDaemonNet.Net::get(&c, &d);
             if (id == 0) break;
-            process_message((char *)id, d, c);
+            process_message(static_cast<char *>(id), d, c);
         }
 
         synch(7, i, 0, 0, 0, 1, 0x2101);
         for (;;) {
             id = NetDaemonNet.Net::get(&e, &f);
             if (id == 0) break;
-            process_message((char *)id, f, e);
+            process_message(static_cast<char *>(id), f, e);
         }
 
         synch(0xf, off, 0x40, 0, 0, 1, 0x2101);
         for (;;) {
             id = NetDaemonNet.Net::get(&e, &f);
             if (id == 0) break;
-            process_message((char *)id, f, e);
+            process_message(static_cast<char *>(id), f, e);
         }
 
         off += 0x40;
@@ -1202,28 +1202,28 @@ void NetDaemon::send_game() {
     for (;;) {
         id = NetDaemonNet.Net::get(&e, &f);
         if (id == 0) break;
-        process_message((char *)id, f, e);
+        process_message(static_cast<char *>(id), f, e);
     }
 
     synch(0x12, 0, 0, 0, 0, 1, 0x2101);
     for (;;) {
         id = NetDaemonNet.Net::get(&e, &f);
         if (id == 0) break;
-        process_message((char *)id, f, e);
+        process_message(static_cast<char *>(id), f, e);
     }
 
     synch(0x14, 0, 0, 0, 0, 1, 0x2101);
     for (;;) {
         id = NetDaemonNet.Net::get(&e, &f);
         if (id == 0) break;
-        process_message((char *)id, f, e);
+        process_message(static_cast<char *>(id), f, e);
     }
 
     synch(0x19, 0, 0, 0, 0, 1, 0x2101);
     for (;;) {
         id = NetDaemonNet.Net::get(&e, &f);
         if (id == 0) break;
-        process_message((char *)id, f, e);
+        process_message(static_cast<char *>(id), f, e);
     }
 
     if (GameDataStateStorage.fields_.turn_current_num_ != 0) {
@@ -1231,7 +1231,7 @@ void NetDaemon::send_game() {
         for (;;) {
             id = NetDaemonNet.Net::get(&e, &f);
             if (id == 0) break;
-            process_message((char *)id, f, e);
+            process_message(static_cast<char *>(id), f, e);
         }
     }
 
@@ -1239,7 +1239,7 @@ void NetDaemon::send_game() {
     for (;;) {
         id = NetDaemonNet.Net::get(&e, &f);
         if (id == 0) break;
-        process_message((char *)id, f, e);
+        process_message(static_cast<char *>(id), f, e);
     }
 
     if (ReplayEventBytes != 0) {
@@ -1247,7 +1247,7 @@ void NetDaemon::send_game() {
         for (;;) {
             id = NetDaemonNet.Net::get(&e, &f);
             if (id == 0) break;
-            process_message((char *)id, f, e);
+            process_message(static_cast<char *>(id), f, e);
         }
     }
 
@@ -1255,14 +1255,14 @@ void NetDaemon::send_game() {
     for (;;) {
         id = NetDaemonNet.Net::get(&e, &f);
         if (id == 0) break;
-        process_message((char *)id, f, e);
+        process_message(static_cast<char *>(id), f, e);
     }
 
     synch(0x15, 0, 0, 0, 0, 1, 0x2101);
     for (;;) {
         id = NetDaemonNet.Net::get(&e, &f);
         if (id == 0) break;
-        process_message((char *)id, f, e);
+        process_message(static_cast<char *>(id), f, e);
     }
 }
 
@@ -1310,73 +1310,73 @@ void NetDaemon::send_rules() {
     unsigned long v4, v8;
 
     synch(0x80, 0, 0, 0, 0, 1, 0x2101);
-    while (int result = NetDaemonNet.Net::get(&v4, &v8)) {
-        process_message(reinterpret_cast<char *>(result), v8, v4);
+    while (void *result = NetDaemonNet.Net::get(&v4, &v8)) {
+        process_message(static_cast<char *>(result), v8, v4);
     }
 
     synch(0x81, 0, 0, 0, 0, 1, 0x2101);
-    while (int result = NetDaemonNet.Net::get(&v4, &v8)) {
-        process_message(reinterpret_cast<char *>(result), v8, v4);
+    while (void *result = NetDaemonNet.Net::get(&v4, &v8)) {
+        process_message(static_cast<char *>(result), v8, v4);
     }
 
     synch(0x82, 0, 0, 0, 0, 1, 0x2101);
-    while (int result = NetDaemonNet.Net::get(&v4, &v8)) {
-        process_message(reinterpret_cast<char *>(result), v8, v4);
+    while (void *result = NetDaemonNet.Net::get(&v4, &v8)) {
+        process_message(static_cast<char *>(result), v8, v4);
     }
 
     synch(0x83, 0, 0, 0, 0, 1, 0x2101);
-    while (int result = NetDaemonNet.Net::get(&v4, &v8)) {
-        process_message(reinterpret_cast<char *>(result), v8, v4);
+    while (void *result = NetDaemonNet.Net::get(&v4, &v8)) {
+        process_message(static_cast<char *>(result), v8, v4);
     }
 
     synch(0x84, 0, 0, 0, 0, 1, 0x2101);
-    while (int result = NetDaemonNet.Net::get(&v4, &v8)) {
-        process_message(reinterpret_cast<char *>(result), v8, v4);
+    while (void *result = NetDaemonNet.Net::get(&v4, &v8)) {
+        process_message(static_cast<char *>(result), v8, v4);
     }
 
     synch(0x85, 0, 0, 0, 0, 1, 0x2101);
-    while (int result = NetDaemonNet.Net::get(&v4, &v8)) {
-        process_message(reinterpret_cast<char *>(result), v8, v4);
+    while (void *result = NetDaemonNet.Net::get(&v4, &v8)) {
+        process_message(static_cast<char *>(result), v8, v4);
     }
 
     synch(0x86, 0, 0, 0, 0, 1, 0x2101);
-    while (int result = NetDaemonNet.Net::get(&v4, &v8)) {
-        process_message(reinterpret_cast<char *>(result), v8, v4);
+    while (void *result = NetDaemonNet.Net::get(&v4, &v8)) {
+        process_message(static_cast<char *>(result), v8, v4);
     }
 
     synch(0x87, 0, 0, 0, 0, 1, 0x2101);
-    while (int result = NetDaemonNet.Net::get(&v4, &v8)) {
-        process_message(reinterpret_cast<char *>(result), v8, v4);
+    while (void *result = NetDaemonNet.Net::get(&v4, &v8)) {
+        process_message(static_cast<char *>(result), v8, v4);
     }
 
     synch(0x88, 0, 0, 0, 0, 1, 0x2101);
-    while (int result = NetDaemonNet.Net::get(&v4, &v8)) {
-        process_message(reinterpret_cast<char *>(result), v8, v4);
+    while (void *result = NetDaemonNet.Net::get(&v4, &v8)) {
+        process_message(static_cast<char *>(result), v8, v4);
     }
 
     synch(0x89, 0, 0, 0, 0, 1, 0x2101);
-    while (int result = NetDaemonNet.Net::get(&v4, &v8)) {
-        process_message(reinterpret_cast<char *>(result), v8, v4);
+    while (void *result = NetDaemonNet.Net::get(&v4, &v8)) {
+        process_message(static_cast<char *>(result), v8, v4);
     }
 
     synch(0x8a, 0, 0, 0, 0, 1, 0x2101);
-    while (int result = NetDaemonNet.Net::get(&v4, &v8)) {
-        process_message(reinterpret_cast<char *>(result), v8, v4);
+    while (void *result = NetDaemonNet.Net::get(&v4, &v8)) {
+        process_message(static_cast<char *>(result), v8, v4);
     }
 
     synch(0x8b, 0, 0, 0, 0, 1, 0x2101);
-    while (int result = NetDaemonNet.Net::get(&v4, &v8)) {
-        process_message(reinterpret_cast<char *>(result), v8, v4);
+    while (void *result = NetDaemonNet.Net::get(&v4, &v8)) {
+        process_message(static_cast<char *>(result), v8, v4);
     }
 
     synch(0x8c, 0, 0, 0, 0, 1, 0x2101);
-    while (int result = NetDaemonNet.Net::get(&v4, &v8)) {
-        process_message(reinterpret_cast<char *>(result), v8, v4);
+    while (void *result = NetDaemonNet.Net::get(&v4, &v8)) {
+        process_message(static_cast<char *>(result), v8, v4);
     }
 
     synch(0x8d, 0, 0, 0, 0, 1, 0x2101);
-    while (int result = NetDaemonNet.Net::get(&v4, &v8)) {
-        process_message(reinterpret_cast<char *>(result), v8, v4);
+    while (void *result = NetDaemonNet.Net::get(&v4, &v8)) {
+        process_message(static_cast<char *>(result), v8, v4);
     }
 }
 
@@ -2312,9 +2312,9 @@ int NetDaemon::automated_lock(int *veh_id, int target) {
                     wait_task();
                     unsigned long first;
                     unsigned long second;
-                    const int message = NetDaemonNet.Net::get(&first, &second);
+                    void *message = NetDaemonNet.Net::get(&first, &second);
                     if (message != 0) {
-                        process_message(reinterpret_cast<char *>(message),
+                        process_message(static_cast<char *>(message),
                                         second, static_cast<int>(first));
                     }
                     locks_.check_global();
@@ -2427,9 +2427,9 @@ int NetDaemon::wait(char * message, int * state, int value, int timeout) {
         }
         wait_task();
         unsigned long outVar;
-        int result = NetDaemonNet.Net::get(reinterpret_cast<unsigned long *>(&message), &outVar);
+        void *result = NetDaemonNet.Net::get(reinterpret_cast<unsigned long *>(&message), &outVar);
         if (result != 0) {
-            process_message(reinterpret_cast<char *>(result), outVar, reinterpret_cast<int>(message));
+            process_message(static_cast<char *>(result), outVar, reinterpret_cast<int>(message));
         }
         locks_.check_global();
         check_spock();
@@ -2492,9 +2492,9 @@ int NetDaemon::open_channel(int payload_10, int payload_14) {
       wait_task();
 
       unsigned long local4;
-      int gotten = NetDaemonNet.Net::get(reinterpret_cast<unsigned long *>(&payload_10), &local4);
+      void *gotten = NetDaemonNet.Net::get(reinterpret_cast<unsigned long *>(&payload_10), &local4);
       if (gotten != 0) {
-        process_message(reinterpret_cast<char *>(gotten), local4, payload_10);
+        process_message(static_cast<char *>(gotten), local4, payload_10);
       }
       locks_.check_global();
       check_spock();
@@ -2570,9 +2570,9 @@ int NetDaemon::lock(int target, int x, int y, int payload_18, int payload_1C, in
                 }
             }
             wait_task();
-            int got = NetDaemonNet.Net::get((unsigned long *)&y, (unsigned long *)&x);
+            void *got = NetDaemonNet.Net::get((unsigned long *)&y, (unsigned long *)&x);
             if (got != 0) {
-                this->process_message((char *)got, (unsigned long)x, y);
+                this->process_message(static_cast<char *>(got), (unsigned long)x, y);
             }
             locks_.check_global();
             check_spock();
@@ -2606,9 +2606,9 @@ int NetDaemon::lock(int target, int x, int y, int payload_18, int payload_1C, in
                         }
                     }
                     wait_task();
-                    int got2 = NetDaemonNet.Net::get((unsigned long *)&y, (unsigned long *)&x);
+                    void *got2 = NetDaemonNet.Net::get((unsigned long *)&y, (unsigned long *)&x);
                     if (got2 != 0) {
-                        this->process_message((char *)got2, (unsigned long)x, y);
+                        this->process_message(static_cast<char *>(got2), (unsigned long)x, y);
                     }
                     locks_.check_global();
                     check_spock();
@@ -2684,10 +2684,10 @@ int NetDaemon::add_lock(int target, int x, int y) {
                 }
             }
             wait_task();
-            unsigned long msgResult = NetDaemonNet.Net::get(reinterpret_cast<unsigned long *>(&x),
+            void *msgResult = NetDaemonNet.Net::get(reinterpret_cast<unsigned long *>(&x),
                                                 reinterpret_cast<unsigned long *>(&target));
             if (msgResult != 0) {
-                process_message(reinterpret_cast<char *>(msgResult),
+                process_message(static_cast<char *>(msgResult),
                                  static_cast<unsigned long>(target), x);
             }
             lock.check_global();
@@ -2746,9 +2746,9 @@ int NetDaemon::add_global() {
             }
             wait_task();
             unsigned long out_id, out_len;
-            int result = NetDaemonNet.Net::get(&out_id, &out_len);
+            void *result = NetDaemonNet.Net::get(&out_id, &out_len);
             if (result != 0) {
-                process_message(reinterpret_cast<char *>(result), out_len, static_cast<int>(out_id));
+                process_message(static_cast<char *>(result), out_len, static_cast<int>(out_id));
             }
             locks_.check_global();
             check_spock();
@@ -2775,9 +2775,9 @@ int NetDaemon::add_global() {
                 }
                 wait_task();
                 unsigned long out_id2, out_len2;
-                int result2 = NetDaemonNet.Net::get(&out_id2, &out_len2);
+                void *result2 = NetDaemonNet.Net::get(&out_id2, &out_len2);
                 if (result2 != 0) {
-                    process_message(reinterpret_cast<char *>(result2), out_len2, static_cast<int>(out_id2));
+                    process_message(static_cast<char *>(result2), out_len2, static_cast<int>(out_id2));
                 }
                 locks_.check_global();
                 check_spock();
@@ -2886,9 +2886,9 @@ void NetDaemon::unlock_base(int base_id) {
                     }
                     wait_task();
                     unsigned long p1, p2;
-                    int r = NetDaemonNet.Net::get(&p1, &p2);
+                    void *r = NetDaemonNet.Net::get(&p1, &p2);
                     if (r != 0) {
-                        process_message(reinterpret_cast<char *>(r), p2, p1);
+                        process_message(static_cast<char *>(r), p2, p1);
                     }
                     locks_.check_global();
                     check_spock();
@@ -2987,9 +2987,9 @@ void NetDaemon::await_exec(int opcode) {
             }
             wait_task();
             unsigned long p1, p2;
-            int r = NetDaemonNet.Net::get(&p1, &p2);
+            void *r = NetDaemonNet.Net::get(&p1, &p2);
             if (r != 0) {
-                process_message(reinterpret_cast<char *>(r), p2, p1);
+                process_message(static_cast<char *>(r), p2, p1);
             }
             locks_.check_global();
             check_spock();
@@ -3089,9 +3089,9 @@ void NetDaemon::await_synch() {
                 }
                 wait_task();
                 unsigned long v1, v2;
-                int r = NetDaemonNet.Net::get(&v1, &v2);
+                void *r = NetDaemonNet.Net::get(&v1, &v2);
                 if (r != 0) {
-                    process_message(reinterpret_cast<char *>(r), v2,
+                    process_message(static_cast<char *>(r), v2,
                                     static_cast<int>(v1));
                 }
                 locks_.check_global();
@@ -3179,9 +3179,9 @@ void NetDaemon::await_diplo(int opcode) {
                 wait_task();
                 unsigned long v_at_4;
                 unsigned long v_at_8;
-                int result = NetDaemonNet.Net::get(&v_at_4, &v_at_8);
+                void *result = NetDaemonNet.Net::get(&v_at_4, &v_at_8);
                 if (result != 0) {
-                    process_message(reinterpret_cast<char *>(result), v_at_8, v_at_4);
+                    process_message(static_cast<char *>(result), v_at_8, v_at_4);
                 }
                 locks_.check_global();
                 check_spock();
@@ -3988,9 +3988,9 @@ int NetDaemon::send_files() {
     if (lock_state_[0].leading_words_[1] == 0) {
         while (NetDaemonFileTransferMode != 1) {
             unsigned long sender, channel;
-            const int packet = NetDaemonNet.Net::get(&sender, &channel);
+            void *packet = NetDaemonNet.Net::get(&sender, &channel);
             if (packet != 0)
-                process_message(reinterpret_cast<char *>(packet), channel,
+                process_message(static_cast<char *>(packet), channel,
                                 static_cast<int>(sender));
         }
 
@@ -4027,9 +4027,9 @@ int NetDaemon::send_files() {
         if (send_mask != 0) {
             do {
                 unsigned long sender, channel;
-                const int packet = NetDaemonNet.Net::get(&sender, &channel);
+                void *packet = NetDaemonNet.Net::get(&sender, &channel);
                 if (packet != 0)
-                    process_message(reinterpret_cast<char *>(packet), channel,
+                    process_message(static_cast<char *>(packet), channel,
                                     static_cast<int>(sender));
             } while (NetDaemonFileTransferAckMask != send_mask);
         }
@@ -4050,9 +4050,9 @@ int NetDaemon::send_files() {
             if ((GetAsyncKeyState(VK_ESCAPE) & 0x8000) != 0) break;
             do_draw();
             unsigned long sender, channel;
-            const int packet = NetDaemonNet.Net::get(&sender, &channel);
+            void *packet = NetDaemonNet.Net::get(&sender, &channel);
             if (packet != 0)
-                process_message(reinterpret_cast<char *>(packet), channel,
+                process_message(static_cast<char *>(packet), channel,
                                 static_cast<int>(sender));
         }
         lock_state_[2].trailing_words_[9] = 1;
@@ -4091,9 +4091,9 @@ int NetDaemon::send_files() {
         for (;;) {
             do_draw();
             unsigned long sender, channel;
-            const int packet = NetDaemonNet.Net::get(&sender, &channel);
+            void *packet = NetDaemonNet.Net::get(&sender, &channel);
             if (packet != 0)
-                process_message(reinterpret_cast<char *>(packet), channel,
+                process_message(static_cast<char *>(packet), channel,
                                 static_cast<int>(sender));
             if (NetDaemonNet.player_count_ < 1) break;
             bool all_present = true;
@@ -4181,9 +4181,9 @@ int NetDaemon::send_files() {
         for (;;) {
             if ((GetAsyncKeyState(VK_ESCAPE) & 0x8000) != 0) break;
             unsigned long sender, channel;
-            const int packet = NetDaemonNet.Net::get(&sender, &channel);
+            void *packet = NetDaemonNet.Net::get(&sender, &channel);
             if (packet != 0)
-                process_message(reinterpret_cast<char *>(packet), channel,
+                process_message(static_cast<char *>(packet), channel,
                                 static_cast<int>(sender));
             do_draw();
             if (NetDaemonNet.player_count_ < 1) break;
@@ -4255,9 +4255,9 @@ static void netdaemon_process_sync_request(NetDaemon *daemon,
     while (pending != 0) {
         unsigned long packet_sender;
         unsigned long packet_size;
-        const int packet = NetDaemonNet.Net::get(&packet_sender, &packet_size);
+        void *packet = NetDaemonNet.Net::get(&packet_sender, &packet_size);
         if (packet != 0) {
-            daemon->process_message(reinterpret_cast<char *>(packet),
+            daemon->process_message(static_cast<char *>(packet),
                                     packet_size,
                                     static_cast<int>(packet_sender));
         }
@@ -6375,9 +6375,9 @@ void NetDaemon::net_tasks() {
   wait_task();
   unsigned long sender;
   unsigned long channel;
-  int result = NetDaemonNet.Net::get(&sender, &channel);
+  void *result = NetDaemonNet.Net::get(&sender, &channel);
   if (result != 0) {
-    process_message(reinterpret_cast<char *>(result), channel,
+    process_message(static_cast<char *>(result), channel,
                     static_cast<int>(sender));
   }
   locks_.check_global();
@@ -6605,9 +6605,9 @@ int NetDaemon::action(int veh_id, int mode) {
                     }
                     wait_task();
                     unsigned long first, second;
-                    const int message = NetDaemonNet.Net::get(&first, &second);
+                    void *message = NetDaemonNet.Net::get(&first, &second);
                     if (message != 0)
-                        process_message(reinterpret_cast<char *>(message),
+                        process_message(static_cast<char *>(message),
                                         second, static_cast<int>(first));
                     locks_.check_global();
                     check_spock();
@@ -6784,9 +6784,9 @@ send_move:
             do {
                 do_all_non_input();
                 unsigned long first, second;
-                const int message = NetDaemonNet.Net::get(&first, &second);
+                void *message = NetDaemonNet.Net::get(&first, &second);
                 if (message != 0)
-                    process_message(reinterpret_cast<char *>(message), second,
+                    process_message(static_cast<char *>(message), second,
                                     static_cast<int>(first));
                 locks_.check_global();
                 if (ExitTurnLoop != 0) break;

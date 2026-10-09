@@ -653,7 +653,7 @@ int Video::decode_frame(int destination_index) {
       decompress.lpbiSrc = &source_dib_.bmiHeader;
       decompress.lpSrc = const_cast<unsigned char *>(frame_data);
       decompress.lpbiDst = &output_buffer_.dib_.bmiHeader;
-      decompress.lpDst = reinterpret_cast<LPVOID>(output_buffer_.get_data());
+      decompress.lpDst = output_buffer_.get_data();
       decompress.xDst = viewport_x_;
       decompress.yDst = -(output_buffer_.dib_.bmiHeader.biHeight +
                           viewport_y_ + height);

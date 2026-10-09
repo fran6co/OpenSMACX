@@ -428,7 +428,11 @@ class Net {
   // peer packets the session thread receives, dispatching lost sessions,
   // name changes, player cuts and the join-list refresh.
   void handle_sys_msg();
-  int get(unsigned long *a, unsigned long *b);
+  // Pinned 630A00 returns shared scratch 9BC4BC when the FIFO result is
+  // nonzero; callers pass that address to packet processing. Pointer-valued
+  // semantics are observed, not proof of the stripped original prototype.
+  // Reads may overwrite the same storage, including on a zero-result node.
+  void *get(unsigned long *a, unsigned long *b);
   // 0x0062EDB0 and 0x0062EDD0, homed into net_class.cpp: the DirectPlay
   // group calls. add_to_group's two ids travel in this order; the catalogue
   // does not say which is the group and which the member.

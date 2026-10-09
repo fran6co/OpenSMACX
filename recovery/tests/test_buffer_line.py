@@ -84,28 +84,26 @@ struct Buffer {
     void line(int, int, int, int, int);
     void hline(int, int, int, int);
     void vline(int, int, int, int);
-    // The target returns its 32-bit pointer in int; this host double returns
-    // intptr_t because the callers observe only its zero/nonzero value.
-    intptr_t get_data() {
+    void *get_data() {
         events += 'G';
         if (!surface_) {
             locked_bits_ = dib_bits_;
             if (locked_bits_) ++surface_lock_count_;
-            return reinterpret_cast<intptr_t>(locked_bits_);
+            return locked_bits_;
         }
         if (locked_bits_) {
             ++surface_lock_count_;
-            return reinterpret_cast<intptr_t>(locked_bits_);
+            return locked_bits_;
         }
         events += 'L';
-        if (surface_->failure) return 0;
+        if (surface_->failure) return nullptr;
         ++surface_lock_count_;
         locked_bits_ = surface_->null_bits ? nullptr : pixels;
         if (surface_->change_state) {
             rect1_ = {12, 13, 24, 29};
             stride_ = 64;
         }
-        return reinterpret_cast<intptr_t>(locked_bits_);
+        return locked_bits_;
     }
     void free_data(int count) {
         require(count == 1);

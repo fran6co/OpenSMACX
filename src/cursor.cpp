@@ -213,7 +213,7 @@ int Cursor::init(Sprite *sprite, int hotspot_x, int hotspot_y) {
     SelectObject(mono_dc, mono_bitmap);
     SetDIBColorTable(mono_dc, 0, 2, mono_info.colors);
     SetDIBits(mono_dc, mono_bitmap, 0, CursorHeight,
-        reinterpret_cast<void *>(static_cast<uintptr_t>(mono.get_data())),
+        mono.get_data(),
         reinterpret_cast<BITMAPINFO *>(&mono_info), DIB_RGB_COLORS);
 
     HDC display_dc = CreateDCA("DISPLAY", nullptr, nullptr, nullptr);

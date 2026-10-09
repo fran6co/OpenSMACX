@@ -26,7 +26,7 @@ struct EdgeScan {
 };
 class Buffer {
 public:
-  uintptr_t get_data() { return reinterpret_cast<uintptr_t>(storage); }
+  void *get_data() { return storage; }
   void free_data(int) { ++free_calls; }
   unsigned char storage[128] = {};
   unsigned int stride_ = 16;
@@ -45,13 +45,14 @@ enum { _PC_24 = 1, _RC_CHOP = 2, _MCW_PC = 4, _MCW_RC = 8 };
 int _control87(int, int) { return 0; }
 const int TextureLightCeiling = 255;
 const int TextureLightFloor = 0;
-static int slot_pixel_base, slot_threshold, slot_threshold_2, slot_494;
-static int slot_count, slot_pixels, slot_stride;
+static void *slot_pixel_base, *slot_pixels;
+static int slot_threshold, slot_threshold_2, slot_494;
+static int slot_count, slot_stride;
 static int slot_width, slot_clip_right, slot_clip_left, slot_clip_bottom;
 static int slot_clip_top, slot_max_y, slot_row, slot_4e4, slot_4c8;
 static int slot_498, slot_4f8, slot_53c, slot_4c4, slot_530;
 static int slot_span_right, slot_span_left, slot_dither;
-static int *blit_pixel_base = &slot_pixel_base;
+static void **blit_pixel_base = &slot_pixel_base;
 static int *blit_light_threshold = &slot_threshold;
 static int *blit_light_threshold_2 = &slot_threshold_2;
 static int *blit_slot_494 = &slot_494;
@@ -62,7 +63,7 @@ static int **blit_edge_uvs_a = &edge_uva_cell;
 static int *blit_vertex_count = &slot_count;
 static int *z_cell = 0;
 static int **blit_z_values = &z_cell;
-static int *blit_texture_pixels = &slot_pixels;
+static void **blit_texture_pixels = &slot_pixels;
 static int *blit_buffer_stride = &slot_stride;
 static int *blit_texture_width = &slot_width;
 static int *blit_clip_right = &slot_clip_right;
@@ -85,6 +86,9 @@ static int *blit_span_left = &slot_span_left;
 static int *blit_dither = &slot_dither;
 static int reset_calls = 0;
 static void texture_reset_fpu() { ++reset_calls; }
+static uintptr_t texture_pointer_address(const void *pointer) {
+  return reinterpret_cast<uintptr_t>(pointer);
+}
 static int texture_fixed(int value) {
   return static_cast<int>(static_cast<unsigned int>(value) << 16);
 }

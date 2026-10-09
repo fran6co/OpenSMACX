@@ -16,7 +16,7 @@ public:
     RECT rect1_;
     unsigned int stride_;
     int frees;
-    int get_data() { return static_cast<int>(reinterpret_cast<intptr_t>(surface)); }
+    void *get_data() { return surface; }
     void free_data(int value) { assert(value == 1); ++frees; }
 };
 
@@ -30,7 +30,8 @@ public:
 };
 
 static int slots[64];
-static int *blit_pixel_base = &slots[0];
+static void *pixel_base_cell;
+static void **blit_pixel_base = &pixel_base_cell;
 static int *uv_a_cell = 0;
 static int **blit_edge_uvs_a = &uv_a_cell;
 static int *uv_b_cell = 0;
@@ -38,7 +39,8 @@ static int **blit_edge_uvs_b = &uv_b_cell;
 static int *blit_vertex_count = &slots[3];
 static int *z_values_cell = 0;
 static int **blit_z_values = &z_values_cell;
-static int *blit_texture_pixels = &slots[5];
+static void *texture_pixels_cell;
+static void **blit_texture_pixels = &texture_pixels_cell;
 static int *blit_buffer_stride = &slots[6];
 static int *blit_texture_width = &slots[7];
 static int *blit_clip_right = &slots[8];
@@ -87,6 +89,9 @@ static void edge_step(EdgeScan &edge) {
     edge.accumD += edge.deltaD;
 }
 static void texture_reset_fpu() { ++fpu_resets; }
+static uintptr_t texture_pointer_address(const void *pointer) {
+    return reinterpret_cast<uintptr_t>(pointer);
+}
 #define _PC_24 0x00020000
 #define _RC_CHOP 0x00000300
 #define _MCW_PC 0x00030000

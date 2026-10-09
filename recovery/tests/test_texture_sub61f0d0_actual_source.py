@@ -94,7 +94,7 @@ def test_actual_source_setup_bindings_and_release_control(compiler: str) -> None
     # The raw source must retain the redundant non-null RECT pointer test and
     # short-circuit order (shade table first, then rectangle pointer).
     assert "RECT *clip = &param_2->rect1_;" in body
-    assert "if (((*blit_shade_table) != 0) && (clip != 0))" in body
+    assert "if (((texture_pointer_address(*blit_shade_table)) != 0) && (clip != 0))" in body
     assert body.index("param_3 != 0") < body.index("param_2 == 0")
     build_and_run(translation_unit(body), compiler, expect_success=True)
 

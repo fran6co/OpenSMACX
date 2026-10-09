@@ -75,7 +75,7 @@ def _contract(body: str) -> None:
         "span_result.preload_pixels =",
         "span_result.prefetched_source =\n                                            span_result.preload_pixels[base_source_offset];",
         "*blit_slot_504 = reinterpret_cast<int>(src);",
-        "*blit_slot_558 = reinterpret_cast<int>(src) + (*blit_shade_table - *blit_texture_pixels);",
+        "*blit_slot_558 = reinterpret_cast<int>(src) + (texture_pointer_address(*blit_shade_table) - texture_pointer_address(*blit_texture_pixels));",
         "texture_span_pixels(static_cast<short>(rightX) -",
         "_control87(_PC_24 | _RC_CHOP, _MCW_PC | _MCW_RC);",
         "if ((*blit_dither & 1) == 0)",
@@ -94,7 +94,7 @@ def _contract(body: str) -> None:
     assert "a3 != 0 && a5 != 0 && a4 != 0" not in body
     assert "if (pixels_ != 0 && a3 != 0 && a5 != 0)" in body
     assert "reinterpret_cast<int *>(this)" not in body
-    assert "reinterpret_cast<intptr_t>(a4->pixels_)" in body
+    assert "*blit_shade_table = a4->pixels_;" in body
     assert body.count("edge2.accumC - edge1.accumC") == 2
     assert body.count("edge2.accumA - edge1.accumA") == 2
     assert body.count("edge2.accumB - edge1.accumB") == 2
@@ -234,10 +234,8 @@ def _translation_unit(
     helpers = "\n\n".join(helpers_by_name[name] for name in HELPER_NAMES)
     result_struct = _struct_definition(source, "TextureDrawSpanResult")
     owner = _body(source) if body is None else body
-    # The fixture is 64-bit hosted while the product ABI is 32-bit. Make only
-    # the existing pointer-to-fixed-slot conversions explicit for this host.
-    owner = owner.replace("*blit_pixel_base = a1->get_data();",
-                          "*blit_pixel_base = ptr32(a1->get_data());")
+    # Actual pointer-valued cells keep host pointers intact. Existing integer
+    # scratch slots retain their explicit 32-bit bridge in this fixture.
     owner = re.sub(r"reinterpret_cast<int>\((a[2357]|src)\)",
                    r"ptr32(\1)", owner)
     return (fixture.replace("// ACTUAL_RESULT_STRUCT", result_struct, 1)

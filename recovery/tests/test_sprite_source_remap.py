@@ -68,7 +68,7 @@ using LPVOID=void*;
 void require_at(bool value,int line){if(!value){fprintf(stderr,"assertion line %d\n",line);std::_Exit(99);}}
 #define require(x) require_at((x),__LINE__)
 struct RECT {int32_t left,top,right,bottom;};
-struct Buffer {BUFFER_FIELDS int get_data();void free_data(int);};
+struct Buffer {BUFFER_FIELDS void *get_data();void free_data(int);};
 struct Sprite {FIELDS METHODS};
 GLOBALS
 unsigned char memory[131072],expected[131072];
@@ -79,7 +79,7 @@ struct Axis {int source_skip,destination_skip,source_count,destination_count,ste
 RECT expected_original,expected_clipped;bool check_original;
 bool equal(RECT a,RECT b){return a.left==b.left&&a.top==b.top&&a.right==b.right&&a.bottom==b.bottom;}
 void event(char c){events+=c;if(callback)callback(c);}
-int Buffer::get_data(){require(this==&buffer);event('L');return locks;}
+void *Buffer::get_data(){require(this==&buffer);event('L');buffer.locked_bits_=locks?memory+OUTPUT:nullptr;return buffer.locked_bits_;}
 void Buffer::free_data(int n){require(this==&buffer&&n==1);++unlocks;event('U');}
 void Sprite::fill_scaling_table(){require(this==&sprite);event('F');}
 int IntersectRect(RECT*out,const RECT*a,const RECT*b){

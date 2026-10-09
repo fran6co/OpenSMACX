@@ -28,12 +28,15 @@ struct Buffer {
     RECT rect2_;
     unsigned char *data_;
     std::vector<int> events_;
-    int get_data() {
+    void *get_data() {
         events_.push_back(1);
-        return static_cast<int>(reinterpret_cast<uintptr_t>(data_));
+        return data_;
     }
     void free_data(int mode) { assert(mode == 1); events_.push_back(3); }
 };
+static uintptr_t texture_pointer_address(const void *pointer) {
+    return reinterpret_cast<uintptr_t>(pointer);
+}
 
 class Texture {
 public:
@@ -57,14 +60,16 @@ public:
 static int TextureRowPitchScratch;
 static int cell_buffer_stride, cell_clip_bottom, cell_clip_left, cell_clip_right,
     cell_clip_top, cell_colour_step, cell_light_accum_b, cell_light_pack_a,
-    cell_light_step_b, cell_max_y, cell_pixel_base, cell_remap_table,
-    cell_row_offset, cell_shade_table, cell_slot_4d8, cell_slot_4e8,
-    cell_slot_558, cell_slot_55c, cell_texture_height, cell_texture_pixels,
+    cell_light_step_b, cell_max_y,
+    cell_row_offset, cell_slot_4d8, cell_slot_4e8,
+    cell_slot_558, cell_slot_55c, cell_texture_height,
     cell_texture_width, cell_vertex_count, cell_light_threshold, cell_span_left,
     cell_span_right, cell_slot_4c4, cell_slot_4c8, cell_slot_4ca,
     cell_slot_494, cell_slot_498, cell_slot_4e4, cell_slot_4e6, cell_slot_4f8, cell_slot_4fa,
     cell_slot_530, cell_slot_53c, cell_slot_53e, cell_dither,
     cell_z_key;
+static void *cell_pixel_base, *cell_shade_table, *cell_texture_pixels;
+static uintptr_t cell_remap_table;
 static int *cell_z_values;
 static int *cell_edge_a;
 static int *cell_edge_b;
@@ -78,16 +83,16 @@ static int *blit_light_accum_b = &cell_light_accum_b;
 static unsigned short *blit_light_pack_a = reinterpret_cast<unsigned short *>(&cell_light_pack_a);
 static int *blit_light_step_b = &cell_light_step_b;
 static int *blit_max_y_index = &cell_max_y;
-static int *blit_pixel_base = &cell_pixel_base;
-static int *blit_remap_table = &cell_remap_table;
+static void **blit_pixel_base = &cell_pixel_base;
+static uintptr_t *blit_remap_table = &cell_remap_table;
 static int *blit_row_offset = &cell_row_offset;
-static int *blit_shade_table = &cell_shade_table;
+static void **blit_shade_table = &cell_shade_table;
 static int *blit_slot_4d8 = &cell_slot_4d8;
 static int *blit_slot_4e8 = &cell_slot_4e8;
 static int *blit_slot_558 = &cell_slot_558;
 static int *blit_slot_55c = &cell_slot_55c;
 static int *blit_texture_height = &cell_texture_height;
-static int *blit_texture_pixels = &cell_texture_pixels;
+static void **blit_texture_pixels = &cell_texture_pixels;
 static int *blit_texture_width = &cell_texture_width;
 static int *blit_vertex_count = &cell_vertex_count;
 static int **blit_z_values = &cell_z_values;
@@ -197,7 +202,8 @@ static void reset_case() {
     }
     input_vertices[2].y = -3;
     input_vertices[5].y = 80;
-    cell_pixel_base = cell_clip_bottom = cell_clip_left = cell_clip_right = cell_clip_top = 0;
+    cell_pixel_base = 0;
+    cell_clip_bottom = cell_clip_left = cell_clip_right = cell_clip_top = 0;
     cell_edge_a = cell_edge_b = cell_z_values = 0;
     cell_texture_pixels = 0;
     cell_vertex_count = cell_texture_width = cell_texture_height = cell_buffer_stride = 0;
@@ -217,11 +223,11 @@ static void test_four_and_eight_vertex_member_bindings() {
     assert(setup_calls == 1 && setup_index == 2);
     assert(setup_selected_uv == as_int(texture.corners_));
     assert(cell_vertex_count == 4);
-    assert(cell_texture_pixels == as_int(texture.pixels_));
+    assert(cell_texture_pixels == texture.pixels_);
     assert(TextureRowPitchScratch == 31 && cell_texture_width == 31 && cell_texture_height == 47);
     assert(cell_edge_b == reinterpret_cast<int *>(input_vertices));
     assert(cell_z_values == z_values);
-    assert(cell_remap_table == as_int(remap_words));
+    assert(cell_remap_table == reinterpret_cast<uintptr_t>(remap_words));
     assert(cell_buffer_stride == 73);
     assert(cell_clip_left == 11 && cell_clip_top == 12 && cell_clip_right == 113 && cell_clip_bottom == 114);
     assert(buffer.events_.size() == 3 && buffer.events_[0] == 1 &&
@@ -282,7 +288,7 @@ static void test_draw_trans2_member_setup_without_raster() {
         assert(result == 0 && setup_edge_calls == 0);
         assert(cell_edge_a == reinterpret_cast<int *>(mode == 0 ? texture.corners_ : texture.cornersAndMids_));
         assert(cell_edge_b == input_xy && cell_vertex_count == (mode == 0 ? 4 : 8));
-        assert(cell_texture_pixels == as_int(texture.pixels_));
+        assert(cell_texture_pixels == texture.pixels_);
         assert(TextureRowPitchScratch == 31 && cell_texture_width == 31 && cell_texture_height == 47);
         assert(cell_buffer_stride == 73);
         assert(cell_clip_left == 11 && cell_clip_top == 12 && cell_clip_right == 113 && cell_clip_bottom == 114);
@@ -304,11 +310,11 @@ static void test_draw_trans3_light_clamp_setup_and_sentinel() {
     assert(cell_edge_a == reinterpret_cast<int *>(input_uv));
     assert(cell_edge_b == reinterpret_cast<int *>(input_vertices));
     assert(cell_z_values == input_z && cell_vertex_count == 3);
-    assert(cell_texture_pixels == as_int(texture.pixels_) && cell_texture_width == 31);
+    assert(cell_texture_pixels == texture.pixels_ && cell_texture_width == 31);
     assert(cell_buffer_stride == 73);
     assert(cell_clip_left == 11 && cell_clip_right == 113);
-    assert(cell_clip_top == 12 * 73 + cell_pixel_base &&
-           cell_clip_bottom == 114 * 73 + cell_pixel_base);
+    assert(cell_clip_top == 12 * 73 + static_cast<int>(texture_pointer_address(cell_pixel_base)) &&
+           cell_clip_bottom == 114 * 73 + static_cast<int>(texture_pointer_address(cell_pixel_base)));
     assert(buffer.events_.size() == 3 && buffer.events_[0] == 1 &&
            buffer.events_[1] == 2 && buffer.events_[2] == 3);
 

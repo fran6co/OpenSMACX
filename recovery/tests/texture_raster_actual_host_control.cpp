@@ -21,7 +21,7 @@ public:
     const RECT &current_clip() const { return rect1_; }
     int stride_;
     int frees_;
-    int get_data() { return static_cast<int>(reinterpret_cast<intptr_t>(active_data_)); }
+    void *get_data() { return active_data_; }
     void free_data(int) { ++frees_; }
     static unsigned char *active_data_;
 };
@@ -40,7 +40,8 @@ public:
 };
 
 static int slots[64];
-static int *blit_pixel_base = &slots[0];
+static void *pixel_base_cell;
+static void **blit_pixel_base = &pixel_base_cell;
 static int *blit_light_threshold = &slots[1];
 static int *blit_light_threshold_2 = &slots[2];
 static int *edge_uvs_b_cell = 0;
@@ -50,7 +51,8 @@ static int **blit_edge_uvs_a = &edge_uvs_a_cell;
 static int *blit_vertex_count = &slots[5];
 static int *z_values_cell = 0;
 static int **blit_z_values = &z_values_cell;
-static int *blit_texture_pixels = &slots[7];
+static void *texture_pixels_cell;
+static void **blit_texture_pixels = &texture_pixels_cell;
 static int *blit_buffer_stride = &slots[8];
 static int *blit_texture_width = &slots[9];
 static int *blit_texture_height = &slots[10];
@@ -63,6 +65,9 @@ static int *blit_max_y_index = &slots[16];
 static int TextureRowPitchScratch = 4;
 static unsigned int TextureRasterKey = 0;
 unsigned char *Buffer::active_data_ = 0;
+static uintptr_t texture_pointer_address(const void *pointer) {
+    return reinterpret_cast<uintptr_t>(pointer);
+}
 static int fpu_resets;
 static int edge_helper_calls;
 static TextureStore edge_cache_sentinel = {};

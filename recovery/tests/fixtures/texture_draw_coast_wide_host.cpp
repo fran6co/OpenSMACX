@@ -26,7 +26,7 @@ struct EdgeScan {
 };
 static_assert(sizeof(EdgeScan) == 0x3c, "native EdgeScan width");
 
-static int pixel_base;
+static void *pixel_base;
 static int slot494;
 static int edge_uvs_a;
 static int slot498;
@@ -46,9 +46,9 @@ static int z_values_address;
 static int slot4f8, slot530;
 static int row_offset;
 static int slot528, light_pack_a, slot53c;
-static int texture_pixels;
-static int remap_table;
-static int shade_table;
+static void *texture_pixels;
+static uintptr_t remap_table;
+static void *shade_table;
 static int slot558;
 union TextureRasterRelocatedRowCell { int *initial_target; int value; };
 static int alternate_row_520, alternate_row_524;
@@ -59,7 +59,7 @@ static float scale_65536 = 65536.0f;
 static float scale_256 = 256.0f;
 static int TextureRowPitchScratch;
 
-static int *const blit_pixel_base = &pixel_base;
+static void **const blit_pixel_base = &pixel_base;
 static int *const blit_slot_494 = &slot494;
 static int *edge_uvs_a_cell = 0;
 static int **const blit_edge_uvs_a = &edge_uvs_a_cell;
@@ -89,9 +89,9 @@ static int *const blit_slot_528 = &slot528;
 static unsigned short light_pack_words[2] = {};
 static unsigned short *const blit_light_pack_a = &light_pack_words[0];
 static int *const blit_slot_53c = &slot53c;
-static int *const blit_texture_pixels = &texture_pixels;
-static int *const blit_remap_table = &remap_table;
-static int *const blit_shade_table = &shade_table;
+static void **const blit_texture_pixels = &texture_pixels;
+static uintptr_t *const blit_remap_table = &remap_table;
+static void **const blit_shade_table = &shade_table;
 static int *const blit_slot_558 = &slot558;
 static int *const blit_slot_4a4 = &slot4a4;
 static int *const blit_slot_504 = &slot504;
@@ -111,6 +111,14 @@ struct Buffer {
     unsigned char *get_data() { return pixels; }
     void free_data(int) { ++freed; }
 };
+
+static uintptr_t texture_pointer_address(const void *pointer) {
+    return reinterpret_cast<uintptr_t>(pointer);
+}
+static uintptr_t texture_pointer_offset(const void *base, uint32_t offset) {
+    return texture_pointer_address(base) +
+        static_cast<intptr_t>(static_cast<int32_t>(offset));
+}
 
 static int setup_calls;
 static int setup_selectors[16];
@@ -163,11 +171,13 @@ int Texture::setup_edge_gouraud(EdgeScan *edge, int selector) {
 // ACTUAL_METHOD
 
 static void reset_slots() {
-    pixel_base = slot494 = edge_uvs_a = slot498 = buffer_stride = texture_width = 0;
+    pixel_base = 0;
+    slot494 = edge_uvs_a = slot498 = buffer_stride = texture_width = 0;
     texture_height = max_y_index = vertex_count = clip_left = clip_top = 0;
     clip_right = clip_bottom = slot4c4 = slot4c8 = span_right = slot4e4 = 0;
     span_left = edge_uvs_b = z_values_address = slot4f8 = slot530 = row_offset = slot528 = 0;
-    light_pack_a = slot53c = texture_pixels = remap_table = shade_table = 0;
+    light_pack_a = slot53c = remap_table = 0;
+    texture_pixels = shade_table = 0;
     slot558 = slot4a4 = slot504 = dither = TextureRowPitchScratch = 0;
     setup_calls = 0;
     std::memset(setup_selectors, 0, sizeof setup_selectors);

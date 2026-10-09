@@ -98,7 +98,7 @@ unsigned _control87(unsigned value,unsigned mask){
   return 0;
 }
 struct Buffer{BUFFER
-  intptr_t get_data();void free_data(int);
+  void *get_data();void free_data(int);
 };
 struct Texture{TEXTURE};
 METHODS
@@ -219,7 +219,7 @@ unsigned published_key;
 bool null_lock,alias_pixels,mutate_release;
 int seen_cursor,release_cursor;
 unsigned release_flags;
-intptr_t Buffer::get_data(){
+void *Buffer::get_data(){
   require(events.empty());events.push_back(1);
   require(cache.next_record_==0);seen_cursor=cache.next_record_;
   rect1_=published_clip;stride_=published_pitch;
@@ -227,8 +227,8 @@ intptr_t Buffer::get_data(){
   TextureRowPitchScratch=published_shared_pitch;
   texture.pixels_=page;texture.borrowed_=published_mode;
   texture.iWidth_=17;texture.iHeight_=256; // distinct from shared pitch and packed page
-  if(null_lock)return 0;
-  return reinterpret_cast<intptr_t>(alias_pixels?page:output+256);
+  if(null_lock)return nullptr;
+  return alias_pixels?page:output+256;
 }
 void Buffer::free_data(int count){
   require(count==1&&events.front()==1);events.push_back(5);

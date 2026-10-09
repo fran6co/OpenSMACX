@@ -307,7 +307,11 @@ void draw_dest_unk1(Buffer *, int, int, int, int, unsigned char *);
   // that touches the pixels - `hline`, `vline`, `fill`, `copy` - and VC6
   // inlines only what it can see here. Each still emits its own COMDAT, so
   // each keeps the claim beside its marker in buffer.cpp.
-  MEASURED int get_data() {   // 005E3373
+  // Pointer-valued source contract: original 5E3380/5E3396/5E33DE returns
+  // dib_bits_, locked_bits_, or DirectDraw lpSurface. The stripped image
+  // does not establish the original declared return type; void* preserves
+  // that observed storage identity without asserting an original prototype.
+  MEASURED void *get_data() {   // 005E3373
       // ONE `return 0` FOR EVERY FAILURE, at the end: the image's `je` at
       // 0x005E3388 jumps the whole length of the body to 0x005E33E5, where the
       // Lock failure lands too. Written as an early `return 0` inside the first
@@ -322,11 +326,11 @@ void draw_dest_unk1(Buffer *, int, int, int, int, unsigned char *);
           if (dib_bits_ != nullptr) {
               ++surface_lock_count_;
           }
-          return reinterpret_cast<int>(dib_bits_);
+          return dib_bits_;
       }
       if (locked_bits_ != nullptr) {
           ++surface_lock_count_;
-          return reinterpret_cast<int>(locked_bits_);
+          return locked_bits_;
       }
       {
           // THE DESCRIPTOR IS UNINITIALISED APART FROM ITS SIZE, which is what
@@ -343,7 +347,7 @@ void draw_dest_unk1(Buffer *, int, int, int, int, unsigned char *);
           ++surface_lock_count_;
           stride_ = description.lPitch;
           locked_bits_ = description.lpSurface;
-          return reinterpret_cast<int>(description.lpSurface);
+          return description.lpSurface;
       }
       return 0;
   }

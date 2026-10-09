@@ -87,11 +87,11 @@ static int texture_raster_step_gouraud(EdgeScan &, class Texture *);
 struct Buffer {
     RECT rect1_;
     int stride_;
-    int data_;
+    void *data_;
     int get_count;
     int free_count;
     Buffer() : rect1_(), stride_(4), data_(0), get_count(0), free_count(0) {}
-    int get_data() { ++get_count; return data_; }
+    void *get_data() { ++get_count; return data_; }
     void free_data(int) { ++free_count; }
 };
 class Texture {
@@ -109,13 +109,20 @@ static int *z_values_cell = 0;
 static int **blit_z_values = &z_values_cell;
 static int *edge_uvs_b_cell = 0;
 static int **blit_edge_uvs_b = &edge_uvs_b_cell;
-SLOT(blit_pixel_base, 0);
-SLOT(blit_remap_table, 3); SLOT(blit_texture_pixels, 4); SLOT(blit_texture_height, 5);
+static void *pixel_base_cell;
+static void **blit_pixel_base = &pixel_base_cell;
+SLOT(blit_remap_table, 3);
+static void *texture_pixels_cell;
+static void **blit_texture_pixels = &texture_pixels_cell;
+SLOT(blit_texture_height, 5);
 SLOT(blit_texture_width, 6);
 static int *edge_uvs_a_cell = 0;
 static int **blit_edge_uvs_a = &edge_uvs_a_cell;
 SLOT(blit_vertex_count, 8);
-SLOT(blit_buffer_stride, 9); SLOT(blit_shade_table, 10); SLOT(blit_clip_right, 11);
+SLOT(blit_buffer_stride, 9);
+static void *shade_table_cell;
+static void **blit_shade_table = &shade_table_cell;
+SLOT(blit_clip_right, 11);
 SLOT(blit_clip_left, 12); SLOT(blit_clip_bottom, 13); SLOT(blit_clip_top, 14);
 SLOT(blit_max_y_index, 15); SLOT(blit_row_offset, 16); SLOT(blit_slot_4c4, 17);
 SLOT(blit_slot_530, 18); SLOT(blit_span_left, 19); SLOT(blit_slot_4f8, 20);
@@ -131,6 +138,9 @@ static int texture_difference(int a, int b) {
 }
 static int texture_span_step(int difference, int span) {
     return static_cast<int>((static_cast<int64_t>(difference) << 16) / span);
+}
+static uintptr_t texture_pointer_address(const void *pointer) {
+    return reinterpret_cast<uintptr_t>(pointer);
 }
 static unsigned short texture_light_step(int difference, int span) {
     return static_cast<unsigned short>((static_cast<int64_t>(difference) << 8) / span);
@@ -194,7 +204,7 @@ int main() {
     owner.pixels_ = owner_pixels;
     shade.pixels_ = shade_pixels;
     Buffer visible;
-    visible.data_ = static_cast<int>(reinterpret_cast<intptr_t>(output_page));
+    visible.data_ = output_page;
     visible.rect1_.left = 1;
     visible.rect1_.top = 1;
     visible.rect1_.right = 2;

@@ -502,6 +502,7 @@ static const size_t SurfaceDescriptorData = 0x24;
 Purpose: Acquire the buffer's pixel data, locking the DirectDraw surface on the
          first reference and counting every acquisition.
 // ORIGINAL: 0x005E3373 ?get_data@Buffer@@QAEHXZ 0x005E3373-0x005E33EA BYTE_EXACT
+// symbol    ?get_data@Buffer@@QAEPAXXZ
 // size      119 bytes
 // prototype int (__thiscall ?get_data@Buffer@@QAEHXZ)(Buffer* this)
 // callers   48   call targets   0
@@ -765,7 +766,7 @@ int Buffer::load_pcx(BYTE *data, DWORD size, Palette *palette,
         return 3;
     }
 
-    uint8_t *pixels = reinterpret_cast<uint8_t *>(get_data());
+    uint8_t *pixels = static_cast<uint8_t *>(get_data());
     if (pixels == nullptr) {
         return 7;
     }
@@ -1251,7 +1252,7 @@ int Buffer::fill(int color) {
     // `get_data` BY NAME, now that it is in-class and VC6 can fold it in.
     // The protocol was written out here, which is the same instructions in a
     // different order and its own DDSURFACEDESC in a different slot.
-    void *const pixels = reinterpret_cast<void *>(get_data());
+    void *const pixels = get_data();
 
     // The colour in all four bytes, one dword per pixel-quad, rows of
     // `(width + 3) / 4` dwords.

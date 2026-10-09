@@ -70,9 +70,31 @@ def _continuity(record):
 
 def _actual_tu(source):
     definition = _definition(source, SIGNATURE)
+    helpers = "\n\n".join(
+        _definition(source, signature)
+        for signature in (
+            "static uintptr_t texture_pointer_address(",
+            "static uintptr_t texture_pointer_offset(",
+            "static void *texture_pointer_from_address(",
+        )
+    )
     fixture = FIXTURE.read_text(encoding="utf-8")
     assert fixture.count(INSERTION) == 1
-    return fixture.replace(INSERTION, definition, 1), definition
+    return fixture.replace(INSERTION, helpers + "\n\n" + definition, 1), definition
+
+
+def _actual_method_fixture(source, definition):
+    helpers = "\n\n".join(
+        _definition(source, signature)
+        for signature in (
+            "static uintptr_t texture_pointer_address(",
+            "static uintptr_t texture_pointer_offset(",
+            "static void *texture_pointer_from_address(",
+        )
+    )
+    fixture = FIXTURE.read_text(encoding="utf-8")
+    assert fixture.count(INSERTION) == 1
+    return fixture.replace(INSERTION, helpers + "\n\n" + definition, 1)
 
 
 def test_identity_spans_claims_and_legacy_history_are_preserved():
@@ -129,9 +151,7 @@ def test_actual_method_remap_zero_mutant_fails_pixel_control(compiler, tmp_path)
     definition = _definition(source, SIGNATURE)
     mutant = definition.replace("if (mapped != 0)", "if (true)", 1)
     assert mutant != definition
-    fixture = FIXTURE.read_text(encoding="utf-8")
-    assert fixture.count(INSERTION) == 1
-    translation_unit = fixture.replace(INSERTION, mutant, 1)
+    translation_unit = _actual_method_fixture(source, mutant)
     cpp = tmp_path / "texture_draw_mask_mutant.cpp"
     binary = tmp_path / "texture_draw_mask_mutant"
     cpp.write_text(translation_unit, encoding="utf-8")
@@ -173,9 +193,7 @@ def test_actual_method_phase_mutants_fail_source_controls(compiler, mutation,
         replacement = "static_cast<unsigned int>(right_x - *blit_span_right)"
     mutant = definition.replace(wrong, replacement, 1)
     assert mutant != definition
-    fixture = FIXTURE.read_text(encoding="utf-8")
-    assert fixture.count(INSERTION) == 1
-    translation_unit = fixture.replace(INSERTION, mutant, 1)
+    translation_unit = _actual_method_fixture(source, mutant)
     cpp = tmp_path / f"texture_draw_mask_{mutation}_mutant.cpp"
     binary = tmp_path / f"texture_draw_mask_{mutation}_mutant"
     cpp.write_text(translation_unit, encoding="utf-8")

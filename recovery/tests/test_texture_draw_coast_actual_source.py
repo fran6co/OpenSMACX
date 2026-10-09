@@ -68,27 +68,27 @@ struct Texture {
 struct Buffer {
     int stride_;
     RECT rect1_;
-    int data;
+    void *data;
     int free_calls;
-    int get_data() { return data; }
+    void *get_data() { return data; }
     void free_data(int n) { assert(n == 1); ++free_calls; }
 };
 
-static int pixel_base_value, remap_value;
-static int texture_pixels_value, vertex_count_value;
+static void *pixel_base_value, *texture_pixels_value, *coast_pixels_value;
+static int remap_value, vertex_count_value;
 static int buffer_stride_value, texture_width_value, max_y_index_value;
 static int row_offset_value, clip_left_value, clip_top_value, clip_right_value, clip_bottom_value;
-static int step_u_value, step_v_value, coast_pixels_value;
+static int step_u_value, step_v_value;
 static int slot_498_value, slot_4f8_value, slot_4c4_value, slot_530_value;
 static int slot_4a4_value, slot_504_value, slot_558_value;
 static int slot_53c_value, span_left_value, span_right_value;
-static int *blit_pixel_base = &pixel_base_value;
+static void **blit_pixel_base = &pixel_base_value;
 static int *uv_vertices_cell = 0;
 static int **blit_edge_uvs_b = &uv_vertices_cell;
 static int *z_values_cell = 0;
 static int **blit_z_values = &z_values_cell;
 static int *blit_remap_table = &remap_value;
-static int *blit_texture_pixels = &texture_pixels_value;
+static void **blit_texture_pixels = &texture_pixels_value;
 static int TextureRowPitchScratch;
 static int texture_height_value, *blit_texture_height = &texture_height_value;
 static int *blit_vertex_count = &vertex_count_value;
@@ -96,7 +96,7 @@ static int *uv_edge_cell = 0;
 static int **blit_edge_uvs_a = &uv_edge_cell;
 static int *blit_buffer_stride = &buffer_stride_value;
 static int *blit_texture_width = &texture_width_value;
-static int *blit_shade_table = &coast_pixels_value;
+static void **blit_shade_table = &coast_pixels_value;
 static int *blit_max_y_index = &max_y_index_value;
 static int *blit_row_offset = &row_offset_value;
 static int *blit_clip_left = &clip_left_value, *blit_clip_top = &clip_top_value;
@@ -113,6 +113,9 @@ static int read_packed_uv_sink_for_mutation_control() { return *blit_slot_4a4; }
 static int *blit_span_left = &span_left_value, *blit_span_right = &span_right_value;
 static int reset_calls;
 static int setup_calls;
+static uintptr_t texture_pointer_address(const void *pointer) {
+    return reinterpret_cast<uintptr_t>(pointer);
+}
 static unsigned int control_calls, control_value, control_mask;
 static void texture_reset_fpu() { ++reset_calls; }
 static void _control87(unsigned value, unsigned mask) {
@@ -166,7 +169,7 @@ static void render_case(unsigned char mapped, unsigned char expected) {
     coast.pixels_ = coast_pixels; coast.iWidth_ = 8; coast.iHeight_ = 8;
     Buffer buffer;
     buffer.stride_ = 8; buffer.rect1_ = RECT{2, 2, 5, 4};
-    buffer.data = static_cast<int>(reinterpret_cast<intptr_t>(canvas));
+    buffer.data = canvas;
     buffer.free_calls = 0; reset_calls = 0; control_calls = 0;
     slot_4a4_value = 0x13572468; slot_504_value = 0; slot_558_value = 0;
     texture.draw_coast(&buffer, vertices, light, &coast, remap, 3, uv);
@@ -211,7 +214,7 @@ static void render_phase_case() {
     coast.pixels_ = coast_pixels; coast.iWidth_ = 8; coast.iHeight_ = 8;
     Buffer buffer;
     buffer.stride_ = 8; buffer.rect1_ = RECT{0, 0, 8, 4};
-    buffer.data = static_cast<int>(reinterpret_cast<intptr_t>(canvas));
+    buffer.data = canvas;
     buffer.free_calls = 0; reset_calls = 0; control_calls = 0;
     slot_4a4_value = 0x13572468; slot_504_value = 0; slot_558_value = 0;
     texture.draw_coast(&buffer, vertices, light, &coast, remap, 4, uv);
@@ -252,7 +255,7 @@ static void render_initially_clipped_case() {
     coast.pixels_ = coast_pixels; coast.iWidth_ = 8; coast.iHeight_ = 8;
     Buffer buffer;
     buffer.stride_ = 8; buffer.rect1_ = RECT{0, 0, 8, 4};
-    buffer.data = static_cast<int>(reinterpret_cast<intptr_t>(canvas));
+    buffer.data = canvas;
     buffer.free_calls = 0; reset_calls = 0; setup_calls = 0; control_calls = 0;
     slot_4a4_value = 0x13572468; slot_504_value = 0x24681357; slot_558_value = 0x35792468;
     slot_4c4_value = 0x12345678; slot_4f8_value = 0x23456789;

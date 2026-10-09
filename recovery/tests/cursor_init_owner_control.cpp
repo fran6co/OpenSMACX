@@ -43,7 +43,7 @@ public:
     void init(int w,int h,int,int) { events.push_back("init:"+number(w)+","+number(h)); dib_.bmiHeader.biWidth=w; dib_.bmiHeader.biHeight=-h; if (++buffer_inits==2) { expected_color_palette=dib_.bmiColors; observed_color=this; } }
     int sync_to_palette(Palette *) { events.push_back("palette"); return 0; }
     int fill(int c) { events.push_back("fill:"+number(c)); return 0; }
-    int get_data() { return reinterpret_cast<intptr_t>(bits); }
+    void *get_data() { return bits; }
     HDC get_hdc() { events.push_back("source-hdc"); if(mutate_callbacks) { dib_.bmiHeader.biWidth=7; dib_.bmiHeader.biHeight=-5; } return reinterpret_cast<HDC>(bits); }
     int pixel_width() const { return dib_.bmiHeader.biWidth; }
     int pixel_height() const { return -dib_.bmiHeader.biHeight; }

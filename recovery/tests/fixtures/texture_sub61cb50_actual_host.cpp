@@ -14,24 +14,26 @@ struct EdgeScan {
 };
 
 static unsigned char destination_bytes[256];
-static int slot_pixel_base, slot_remap, slot_pixels, slot_height, slot_count;
-static int slot_stride, slot_width, slot_shade, slot_clip_right, slot_clip_left;
+static void *slot_pixel_base, *slot_pixels, *slot_shade;
+static uintptr_t slot_remap;
+static int slot_height, slot_count;
+static int slot_stride, slot_width, slot_clip_right, slot_clip_left;
 static int slot_clip_bottom, slot_clip_top, slot_max_y, slot_row, slot_du, slot_dv;
 static int slot_498, slot_4c4, slot_530, slot_4f8, slot_53c;
 static int slot_span_left, slot_span_right;
 
-static int *blit_pixel_base = &slot_pixel_base;
-static int *blit_remap_table = &slot_remap;
+static void **blit_pixel_base = &slot_pixel_base;
+static uintptr_t *blit_remap_table = &slot_remap;
 static int *uv_b_cell = 0;
 static int **blit_edge_uvs_b = &uv_b_cell;
-static int *blit_texture_pixels = &slot_pixels;
+static void **blit_texture_pixels = &slot_pixels;
 static int *blit_texture_height = &slot_height;
 static int *blit_vertex_count = &slot_count;
 static int *uv_a_cell = 0;
 static int **blit_edge_uvs_a = &uv_a_cell;
 static int *blit_buffer_stride = &slot_stride;
 static int *blit_texture_width = &slot_width;
-static int *blit_shade_table = &slot_shade;
+static void **blit_shade_table = &slot_shade;
 static int *blit_clip_right = &slot_clip_right;
 static int *blit_clip_left = &slot_clip_left;
 static int *blit_clip_bottom = &slot_clip_bottom;
@@ -49,6 +51,9 @@ static int *blit_span_left = &slot_span_left;
 static int *blit_span_right = &slot_span_right;
 static int TextureRowPitchScratch;
 static int reset_calls, control_calls, fixed_div_calls;
+static uintptr_t texture_pointer_address(const void *pointer) {
+    return reinterpret_cast<uintptr_t>(pointer);
+}
 
 static void texture_reset_fpu() { ++reset_calls; }
 enum { _PC_24 = 1, _RC_CHOP = 2, _MCW_PC = 4, _MCW_RC = 8 };
@@ -69,9 +74,7 @@ struct Buffer {
     Buffer() : stride_(16), free_calls(0) {
         rect1_.left = 0; rect1_.top = 0; rect1_.right = 8; rect1_.bottom = 4;
     }
-    int get_data() {
-        return static_cast<int>(reinterpret_cast<intptr_t>(destination_bytes));
-    }
+    void *get_data() { return destination_bytes; }
     void free_data(int n) { assert(n == 1); ++free_calls; }
 };
 
