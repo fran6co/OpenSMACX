@@ -1,0 +1,22 @@
+{
+  "event_id": "a0e356276b85f699e9a803d379b99d1afe1d55f29c59bdfb1d44ec020d90eabf",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_basebutton_callable_slots_oct9.py",
+      "recovery/tests/test_timer_callback_actual_source.py",
+      "recovery/tests/test_ui_owner_behavior.py",
+      "recovery/tests/timer_callback_host.cpp"
+    ],
+    "evidence": [
+      "Actual interface recovery renames the original callback entries and uses common borrowed void* context. Existing focused fixtures hard-code the removed spellings and pointer-int ABI; update actual-source extraction and test-only declarations/calls without adding compatibility production wrappers, weakening assertions, or changing unrelated behavior. Preserve and distinguish pre-existing fixture failures using the unchanged task baseline."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "time-context-test-interface-oct10",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:time-callback-context-owner-oct10"
+}

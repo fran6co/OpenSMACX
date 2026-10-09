@@ -88,13 +88,11 @@ void DiploPop::start(int faction_id) {
                 return;
             }
         }
-        time2_.init(reinterpret_cast<void(__cdecl *)(int, int)>(timer_callback_daemon2),
-                    0, reinterpret_cast<int>(this), 2000, 5);
+        time2_.init(diplo_portrait_timer_callback, 0, this, 2000, 5);
         uint32_t interval = flic2_.header_interval();
         if (interval > 5) {
             if (interval == 0) interval = 100;
-            time1_.init(reinterpret_cast<void(__cdecl *)(int, int)>(timer_callback_daemon),
-                        0, reinterpret_cast<int>(this), interval, 5);
+            time1_.init(diplo_bioscan_timer_callback, 0, this, interval, 5);
         }
     } else {
         set_iface_mode();
@@ -882,16 +880,18 @@ void DiploPop::bioscan_anim() {
 // ORIGINAL: 0x0043F200 ?timer_callback_daemon@DiploPop@@QAAXHH@Z 0x0043F200-0x0043F245 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Disassembly reads the popup pointer from the second cdecl stack argument ([ebp+0xC]); it does not use ECX as a hidden DiploPop receiver.", "The callback's Flic2 decode, animation counter increment, and update rectangle are exactly the work owned by DiploPop::bioscan_anim.", "git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/0043f200.cpp"], "reason": "Keep the timer entry a real two-argument cdecl callback and route its explicit popup parameter into the typed owner method. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
 // kind      game
-// symbol    ?timer_callback_daemon@@YAXHPAVDiploPop@@@Z
-void __cdecl timer_callback_daemon(int, DiploPop *popup) {
-    popup->bioscan_anim();
+// symbol    ?diplo_bioscan_timer_callback@@YAXHPAX@Z
+void __cdecl diplo_bioscan_timer_callback(int, void *context) {
+    if (!context) return;
+    static_cast<DiploPop *>(context)->bioscan_anim();
 }
 
 // ORIGINAL: 0x0043F250 ?timer_callback_daemon2@DiploPop@@QAAXHH@Z 0x0043F250-0x0043F288 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["Disassembly reads the popup pointer from the second cdecl stack argument ([ebp+0xC]); this is a free callback, not a DiploPop member entry despite the historical catalog symbol spelling.", "The callback's Flic1 decode and update rectangle are the work owned by DiploPop::portrait_anim."], "reason": "Preserve the timer callback's actual cdecl stack ABI and use the typed portrait animation implementation."}
-// symbol    ?timer_callback_daemon2@@YAXHPAVDiploPop@@@Z
-void __cdecl timer_callback_daemon2(int, DiploPop *popup) {
-    popup->portrait_anim();
+// symbol    ?diplo_portrait_timer_callback@@YAXHPAX@Z
+void __cdecl diplo_portrait_timer_callback(int, void *context) {
+    if (!context) return;
+    static_cast<DiploPop *>(context)->portrait_anim();
 }
 
 // Original interface table 0x0066B424 slot 1 targets this shared complete body.

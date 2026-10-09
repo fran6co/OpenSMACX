@@ -21,6 +21,10 @@
 
 class ButtonGroup; // forward declaration
 class Scroll; // forward declaration
+class BaseButton;
+
+// Shared borrowed-owner callback used by BaseButton and FlatButton timers.
+void __cdecl base_button_timer_callback(int stage, void *context);
 
  /*
   * BaseButton class
@@ -43,10 +47,8 @@ class BaseButton : public GraphicWin {
   void on_mouse_move(int x, int y);
   void on_right_click(int a, int b) override;
   // 0x00607B30  ?timer_callback@BaseButton@@QAEXH@Z - public, __thiscall,
-  // void(int). Public is load-bearing: the non-member daemon fn_00607b10
-  // reaches it through a BaseButton * it was handed.
-  // BaseWin::timer_callback's `(int key, int context)` is a different arity
-  // on a different class and is not evidence for this callback's argument.
+  // void(int). The free timer callback receives this button as borrowed
+  // void* context and dispatches its stage here.
   void timer_callback(int a1);
   // These return `int`, not `void`. Each body is `xor eax, eax; ret N`, and
   // the sibling class BasePop declares the same three handlers `int`. The

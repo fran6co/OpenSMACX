@@ -3400,7 +3400,7 @@ void BaseWin::on_left_double_click(int xCoord, int yCoord) {
 Purpose: Interface timer tick; the legacy implementation ignores it and
          returns.
 // ORIGINAL: 0x0041AF40 ?timer_callback@BaseWin@@QAAXHH@Z 0x0041AF40-0x0041AF41 BYTE_EXACT
-// symbol    ?timer_callback@BaseWin@@SAXHH@Z
+// symbol    ?timer_callback@BaseWin@@SAXHPAX@Z
 // size      1 bytes
 // prototype
 // callers   0   call targets   0
@@ -3410,7 +3410,7 @@ Purpose: Interface timer tick; the legacy implementation ignores it and
 Return Value: n/a
 Status: Complete
 */
-void BaseWin::timer_callback(int, int) {
+void BaseWin::timer_callback(int, void *) {
 }
 
 
@@ -7390,7 +7390,7 @@ void BaseWin::init() {
     caviar_.light_vector().values[0] = 0.0f;
     caviar_.light_vector().values[1] = 0.0f;
     caviar_.light_vector().values[2] = 1.0f;
-    time_.init(BaseWin::timer_callback, 0, reinterpret_cast<int>(this), 50, 5);
+    time_.init(BaseWin::timer_callback, 0, this, 50, 5);
     GraphicWin::init((WinScreenWidth - 726) / 2,
         WinScreenHeight - MainInterfaceGlobal.field_D7C_ - window_height,
         758, window_height, 0, 0x05000000,

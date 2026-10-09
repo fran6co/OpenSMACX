@@ -47,6 +47,48 @@ def binding(unit, address):
                            record.symbol or record.name, unit)
 
 
+def replace_editbox_close_with_stop(source: bytes, record) -> bytes:
+    """Damage only the mapped 0x614F30 body, not other EditBox close calls."""
+    old_call = b"time_.close();"
+    signature = b"void EditBox::close() {"
+    assert record.address == 0x614F30
+    assert record.region.count(old_call.decode("ascii")) == 1
+    assert source.count(signature) == 1
+    start = source.index(signature)
+    opening = source.index(b"{", start)
+    depth = 0
+    end = -1
+    for offset in range(opening, len(source)):
+        if source[offset] == ord("{"):
+            depth += 1
+        elif source[offset] == ord("}"):
+            depth -= 1
+            if depth == 0:
+                end = offset + 1
+                break
+    assert end > start
+    body = source[start:end]
+    assert body.count(old_call) == 1
+    original_close_count = source.count(old_call)
+    assert original_close_count >= 2
+    damaged_body = body.replace(old_call, b"time_.stop();")
+    damaged = source[:start] + damaged_body + source[end:]
+    assert damaged.count(old_call) == original_close_count - 1
+    assert damaged[:start] == source[:start]
+    assert damaged[start:start + len(damaged_body)] == damaged_body
+    assert damaged[start + len(damaged_body):] == source[end:]
+    return damaged
+
+
+def test_editbox_damage_rewrite_is_limited_to_mapped_close_body():
+    source = ROOT / "src/editbox.cpp"
+    before = source.read_bytes()
+    record, = (row for row in read_file(source) if row.address == 0x614F30)
+    damaged = replace_editbox_close_with_stop(before, record)
+    assert damaged != before
+    assert damaged.count(b"time_.close();") == before.count(b"time_.close();") - 1
+
+
 @pytest.mark.parametrize("unit,address", [("src/editbox.cpp", 0x614F30),
     ("src/flatbutton.cpp", 0x607DA0), ("src/netmsg.cpp", 0x47A7D0),
     ("src/console.cpp", 0x51D7D0)])
@@ -89,7 +131,7 @@ def test_editbox_strict_call_target_rejects_calling_stop_instead_of_close(timer_
     image = original_image()
     source = ROOT / "src/editbox.cpp"
     before = source.read_bytes()
-    assert before.count(b"time_.close();") == 1
+    editbox_close, = (row for row in read_file(source) if row.address == 0x614F30)
     for trial, flags in enumerate(settings.flag_sets):
         units = {unit: trials[trial] for unit, trials in objects.items()}
         targets, _ = object_targets(read_objects(ROOT, image_pin(ROOT)), units)
@@ -105,8 +147,9 @@ def test_editbox_strict_call_target_rejects_calling_stop_instead_of_close(timer_
         begin = damaged_header.index(b"  MEASURED void stop()")
         end = damaged_header.index(b"  void close();", begin)
         damaged_header = damaged_header[:begin] + b"  void stop();\n" + damaged_header[end:]
+        damaged_source = replace_editbox_close_with_stop(before, editbox_close)
         units["src/editbox.cpp"] = Coff(compiler.overlay(source, {
-            "src/editbox.cpp": before.replace(b"time_.close();", b"time_.stop();"),
+            "src/editbox.cpp": damaged_source,
             "src/time.h": damaged_header}, (), flags + settings.layout_flags))
         bad = verify()
         assert bad["boundary"] == "pass"

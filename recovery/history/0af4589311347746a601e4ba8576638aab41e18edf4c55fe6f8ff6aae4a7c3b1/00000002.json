@@ -1,0 +1,20 @@
+{
+  "event_id": "413ec40f469fad4d33489f2cfe54e1140e7e4e462b6c66211ccee816eb544a30",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_palette_cycle_lifetime.py",
+      "recovery/tests/timer_close_harness.cpp"
+    ],
+    "evidence": [
+      "Independent review identified existing lifecycle fixture declarations still using Palette* or integer callback/context types. Update only these test interfaces to the recovered borrowed void* contract, retain lifecycle behavior assertions and actual-source controls; do not add production compatibility wrappers or remove tests. Wine-gated fixture setup requires coordinator native verification and sandbox SIGSYS is not a product failure."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "a0e356276b85f699e9a803d379b99d1afe1d55f29c59bdfb1d44ec020d90eabf",
+  "request_id": "time-context-lifecycle-fixtures-oct10",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:time-callback-context-owner-oct10"
+}

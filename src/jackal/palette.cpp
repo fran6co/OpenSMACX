@@ -1309,7 +1309,7 @@ int Palette::map_to_palette(Palette *dest, int start, int count) {
 }
 
 // ORIGINAL: 0x005FEAD0 ?timer_callback@Palette@@QAAXHH@Z 0x005FEAD0-0x005FEBA8 FILE
-// symbol    ?timer_callback@Palette@@SAXHH@Z
+// symbol    ?timer_callback@Palette@@SAXHPAX@Z
 // TRIED: 228 vs 216 bytes; the extra named locals (idx/found/entries/ iStartIndex/cEntries/i) push more callee-saved registers before the first `mov ebp,a2`, where the original loads a2 into ebp before any other push. Did not try collapsing to fewer locals given budget.
 // TRIED: 2026-08-24, collapsing WAS tried and it is not the lever - it makes
 //   things worse. Re-measured: current body 2/72, 0.886 similar (best of all
@@ -1333,20 +1333,12 @@ int Palette::map_to_palette(Palette *dest, int start, int count) {
 // indirect  0x005FEB91
 
 
-void __cdecl Palette::timer_callback(int key, int context) {
-    if (context == 0 || PaletteUsesSystemColours != 0) {
+void __cdecl Palette::timer_callback(int key, void *context) {
+    if (context == nullptr || PaletteUsesSystemColours != 0) {
         return;
     }
 
-    // `context` IS a Palette* - init_cycle passes `this` - but this
-    // function's own mangled name (`?timer_callback@Palette@@QAAXHH@Z`,
-    // both `H` = int) proves the PUBLIC wire format at the Time/callback
-    // boundary is `int`, so the parameter stays `int` and this cast is
-    // still where the pointer is recovered. `Time`'s PRIVATE storage
-    // (`cb_param2_`, `time.h`) is now typed `Palette *` throughout -
-    // the Time/Win pass's retype - with the matching cast moved to where
-    // `Time::init`/`start`/`pulse` STORE the incoming `int param2` into it.
-    Palette *self = reinterpret_cast<Palette *>(context);
+    Palette *self = static_cast<Palette *>(context);
     int idx = 0;
     do {
         int slot_key = self->internal_[idx].key;
@@ -1560,10 +1552,7 @@ int Palette::init_cycle(int key, int first, int count, unsigned long interval) {
         return 4;
     }
 
-    // Time's existing callback ABI carries a target-32-bit pointer in int.
-    // Make the narrowing explicit; this is not a host-width callback ABI.
-    t->init(Palette::timer_callback, key,
-            static_cast<int>(reinterpret_cast<intptr_t>(this)),
+    t->init(Palette::timer_callback, key, this,
             static_cast<uint32_t>(interval), 5);
     return 0;
 }

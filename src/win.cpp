@@ -2727,7 +2727,7 @@ LRESULT __stdcall Win::window_proc(HWND window, UINT message, WPARAM wparam,
                 //   [esi + 0x1C]  tick_posted_     cleared on every tick
                 //   [esi]         oneshot_state_   `test al,1`, `test al,2`
                 //   [esi + 0x08]  callback1_       void(int)
-                //   [esi + 0x0C]  callback2_       void(int, int)
+                //   [esi + 0x0C]  callback2_       void(int, void*)
                 //   [esi + 0x14]  cb_param1_       pushed last, so it is first
                 //   [esi + 0x10]  cb_param2_
                 //

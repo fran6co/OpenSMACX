@@ -13,7 +13,7 @@ BUILD_TMP = Path(__file__).with_name("tmp")
 
 
 def extract_callback(source):
-    signature = "void __cdecl timer_callback_daemon(int a1, int a2)"
+    signature = "void __cdecl main_interface_timer_callback(int a1, void *context)"
     start = source.find(signature)
     assert start >= 0, "current free callback definition missing"
     brace = source.find("{", start + len(signature))

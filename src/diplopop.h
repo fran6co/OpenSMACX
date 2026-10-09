@@ -151,7 +151,6 @@ static_assert(sizeof(DiploPop) == 0x433C,
 
 extern DiploPop DiplomacyPopup;
 
-// Time invokes these as plain two-argument __cdecl callbacks. The second
-// stack argument is the DiploPop receiver; neither callback has hidden this.
-void __cdecl timer_callback_daemon(int unused, DiploPop *popup);
-void __cdecl timer_callback_daemon2(int unused, DiploPop *popup);
+// Time invokes these as plain cdecl callbacks with a borrowed owner context.
+void __cdecl diplo_bioscan_timer_callback(int unused, void *context);
+void __cdecl diplo_portrait_timer_callback(int unused, void *context);

@@ -330,13 +330,13 @@ struct Win { int parent_events,state,redraws; Win():parent_events(0),state(-1),r
   static int cleared; static void clear_bubble_text(){++cleared;} }; int Win::cleared=0;
 struct GraphicWin:Win,Buffer{};
 struct Time {int stops,inits,pulses;Time():stops(0),inits(0),pulses(0){}
-  void stop(){++stops;} void init(void (__cdecl *)(int,int),int,int,unsigned,unsigned){++inits;} void pulse(){++pulses;} };
+  void stop(){++stops;} void init(void (__cdecl *)(int,void*),int,void*,unsigned,unsigned){++inits;} void pulse(){++pulses;} };
 struct BaseButton:GraphicWin {void *bubble_text_;uint32_t field_A74_,field_A78_;Time time1_;Win *win_parent_;int base_moves;
   BaseButton():bubble_text_(0),field_A74_(0),field_A78_(7),win_parent_(0),base_moves(0){}
   void on_mouse_move(int,int){++base_moves;} };
 struct FlatButton:BaseButton {void on_mouse_move(int,int);void set_rect(int l,int t,int r,int b){rect1_.left=l;rect1_.top=t;rect1_.right=r;rect1_.bottom=b;}};
 Win *WinPointerOwner1=0,*WinPointerOwner2=0; void (__cdecl *WinButtonHoverHook)()=0;
-void __cdecl fn_00607b10(int,int){}
+void __cdecl base_button_timer_callback(int,void*){}
 int in_box(int x,int y,const RECT *r){return x>=r->left&&x<r->right&&y>=r->top&&y<r->bottom;}
 // INSERT_FLATBUTTON_MOVE
 int main(){FlatButton b;Win p;b.set_rect(4,8,24,18);b.win_parent_=&p;b.bubble_text_=(void *)1;

@@ -2,7 +2,6 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <string.h>
-#include <sys/mman.h>
 
 #define __cdecl
 struct RECT { int left, top, right, bottom; };
@@ -66,49 +65,42 @@ int UnionRect(RECT *out, const RECT *left, const RECT *right) {
   return 1;
 }
 
-void __cdecl timer_callback_daemon(int, int);
+void __cdecl main_interface_timer_callback(int, void*);
 
 /* CALLBACK_SOURCE */
 
-static MainInterface *make_low_instance() {
-  void *storage = mmap(0, sizeof(MainInterface), PROT_READ | PROT_WRITE,
-                       MAP_PRIVATE | MAP_ANONYMOUS | MAP_32BIT, -1, 0);
-  assert(storage != MAP_FAILED);
-  assert(reinterpret_cast<uintptr_t>(storage) <= 0x7fffffffu);
-  memset(storage, 0, sizeof(MainInterface));
-  return static_cast<MainInterface *>(storage);
-}
-
 int main() {
-  MainInterface *owner = make_low_instance();
-  MainInterface *other = make_low_instance();
+  static MainInterface owner_storage;
+  static MainInterface other_storage;
+  MainInterface *owner = &owner_storage;
+  MainInterface *other = &other_storage;
   owner->menu_animation_bounds_ = RECT{10, 20, 40, 50};
   owner->multiplayer_animation_bounds_ = RECT{5, 25, 60, 45};
   other->menu_animation_bounds_ = RECT{100, 100, 110, 110};
   other->multiplayer_animation_bounds_ = RECT{101, 101, 111, 111};
 
-  timer_callback_daemon(0, 0);
+  main_interface_timer_callback(0, nullptr);
   assert(time_stops == 0 && update_calls == 0 && union_calls == 0);
 
-  const int owner_context = static_cast<int>(reinterpret_cast<uintptr_t>(owner));
-  const int other_context = static_cast<int>(reinterpret_cast<uintptr_t>(other));
-  timer_callback_daemon(9, owner_context);
+  void *owner_context = owner;
+  void *other_context = other;
+  main_interface_timer_callback(9, owner_context);
   assert(time_stops == 0 && update_calls == 0 && union_calls == 0);
 
-  timer_callback_daemon(0, owner_context);
+  main_interface_timer_callback(0, owner_context);
   assert(owner->time1_.stop_count == 1 && owner->time2_.stop_count == 0);
   assert(other->time1_.stop_count == 0 && time_stops == 1);
   assert(last_stopped == &owner->time1_);
   assert(update_calls == 0 && union_calls == 0);
 
   owner->alert_ = 0xffffffffu;
-  timer_callback_daemon(1, owner_context);
+  main_interface_timer_callback(1, owner_context);
   assert(owner->time2_.stop_count == 1 && owner->alert_ == 0xffffffffu);
   assert(time_stops == 2 && last_stopped == &owner->time2_);
   assert(update_calls == 0 && union_calls == 0);
 
   owner->alert_ = 7;
-  timer_callback_daemon(1, other_context);
+  main_interface_timer_callback(1, other_context);
   assert(other->alert_ == 1 && owner->alert_ == 7);
   assert(update_calls == 1 && union_calls == 1);
   assert(union_left.left == other->menu_animation_bounds_.left);
@@ -118,11 +110,9 @@ int main() {
   assert(last_update_rect.right == 111 && last_update_rect.bottom == 111);
 
   other->alert_ = 0xfffffffeu;
-  timer_callback_daemon(1, other_context);
+  main_interface_timer_callback(1, other_context);
   assert(other->alert_ == 0xffffffffu);
   assert(update_calls == 2 && union_calls == 2);
 
-  munmap(owner, sizeof(MainInterface));
-  munmap(other, sizeof(MainInterface));
   return 0;
 }

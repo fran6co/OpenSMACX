@@ -82,7 +82,7 @@ class Palette {
 
  public:
   // homed from 005fead0.cpp
-  static void __cdecl timer_callback(int key, int context);
+  static void __cdecl timer_callback(int key, void *context);
 
  public:
   // homed from 005ff220.cpp

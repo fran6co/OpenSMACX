@@ -59,13 +59,14 @@ struct Win {
 };
 struct ButtonGroup { int result=1; int button_click(int id){log_id("group-click",id);return result;} };
 struct BaseButton;
+void __cdecl base_button_timer_callback(int, void*);
 BaseButton *WinPointerOwner3=0, *WinPointerOwner4=0;
 Win *WinCallbackWindow=0;
 void (*WinOkHook)()=0, (*WinCancelHook)()=0;
-void __cdecl fn_00607b10(int, BaseButton*);
 struct Time {
-  void pulse(void (__cdecl *callback)(int,int), int a, int b, uint32_t c, int d) {
-    CHECK(callback!=0 && a==1 && c==20 && d==5); events.push_back("pulse");
+  void pulse(void (__cdecl *callback)(int,void*), int a, void* context, uint32_t c, int d) {
+    CHECK(callback==base_button_timer_callback && a==1 && context!=0 && c==20 && d==5);
+    events.push_back("pulse");
   }
 };
 uint32_t timeGetTime(){events.push_back("time");return 100;}
@@ -84,7 +85,7 @@ struct BaseButton : Win {
   void on_left_click(int,int);
   void on_left_down(int,int);
 };
-void __cdecl fn_00607b10(int, BaseButton*) {}
+void __cdecl base_button_timer_callback(int, void*) {}
 // ACTUAL BODIES
 int main(){
   Win parent; BaseButton b; b.win_parent_=&parent; b.field_A78_=static_cast<uint32_t>(-2);
@@ -122,12 +123,7 @@ def run(tmp_path, click=CLICK, down=DOWN):
     compiler = shutil.which('clang++') or shutil.which('g++')
     if not compiler:
         pytest.skip('host C++ compiler unavailable')
-    # Product pointers are four bytes; the host fixture uses uintptr_t so the
-    # extracted timer-service argument remains representable on 64-bit hosts.
-    click = click.replace('reinterpret_cast<int>(this)',
-                          'static_cast<int>(reinterpret_cast<uintptr_t>(this))')
-    down = down.replace('reinterpret_cast<int>(this)',
-                        'static_cast<int>(reinterpret_cast<uintptr_t>(this))')
+    # Host fixtures keep the borrowed owner pointer genuine at native width.
     code = HARNESS.replace('// ACTUAL BODIES', click + '\n' + down)
     cpp, exe = tmp_path / 'callbacks.cpp', tmp_path / 'callbacks'
     cpp.write_text(code)

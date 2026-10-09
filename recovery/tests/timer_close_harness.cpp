@@ -8,7 +8,6 @@ typedef unsigned int UINT_PTR;
 typedef unsigned int DWORD_PTR;
 typedef unsigned long DWORD;
 typedef void *HWND;
-class Palette;
 #define CALLBACK __stdcall
 #define MEASURED
 #define UNUSED(name)
@@ -31,7 +30,7 @@ static Time *active;
 static int calls[8], count;
 static int expected_flush;
 void callback1(int) {}
-void callback2(int, Palette *) {}
+void callback2(int, void *) {}
 unsigned int timeKillEvent(unsigned int id) {
     assert(active->id_event_ == 17 && id == 17);
     calls[count++] = 1;
@@ -66,7 +65,8 @@ int main() {
                 timer.count_ = mode == 1 ? 49 : mode == 3 ? 0x80000000U : 50;
                 timer.callback1_ = callback1;
                 timer.callback2_ = callback2;
-                timer.cb_param2_ = (Palette *)0x1234;
+                int callback_context = 0;
+                timer.cb_param2_ = &callback_context;
                 timer.unk_2_ = -1;
                 timer.resolution_ = 71;
                 timer.tick_posted_ = 19;

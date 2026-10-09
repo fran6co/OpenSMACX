@@ -237,7 +237,7 @@ void Time::init(void(__cdecl *callback)(int), int param, uint32_t cnt, uint32_t 
 /*
 Purpose: Initialize an instance of the class with a two parameter callback.
 // ORIGINAL: 0x006162D0 ?init@Time@@QAEXP6AXHH@ZHHHH@Z 0x006162D0-0x00616342 BYTE_EXACT
-// symbol    ?init@Time@@QAEXP6AXHH@ZHHII@Z
+// symbol    ?init@Time@@QAEXP6AXHPAX@ZH0II@Z
 // size      114 bytes
 // prototype void (__thiscall ?init@Time@@QAEXP6AXHH@ZHHHH@Z)(Time* this, void (__cdecl *)(int this, int), int, int, int, int)
 // callers   5   call targets   1
@@ -248,13 +248,13 @@ Purpose: Initialize an instance of the class with a two parameter callback.
 Return Value: n/a
 Status: Complete
 */
-void Time::init(void(__cdecl *callback)(int, int), int param, int param2, uint32_t cnt, 
+void Time::init(void(__cdecl *callback)(int, void *), int param, void *param2, uint32_t cnt,
                 uint32_t res) {
     // IN THE IMAGE'S STORE ORDER at 0x0061631A, which is not the one-argument
     // overload's: the two callback fields come first here.
     stop();
-    callback2_ = reinterpret_cast<void(__cdecl *)(int, Palette *)>(callback);
-    cb_param2_ = reinterpret_cast<Palette *>(param2);
+    callback2_ = callback;
+    cb_param2_ = param2;
     oneshot_state_ = 0;
     tick_posted_ = 0;
     unk_2_ = 0;
@@ -330,7 +330,7 @@ uint32_t Time::start(void(__cdecl *callback)(int), int param, uint32_t cnt, uint
 /*
 Purpose: Start an instance of the class with a two parameter callback.
 // ORIGINAL: 0x00616410 ?start@Time@@QAEXP6AXHH@ZHHHH@Z 0x00616410-0x006164CA BYTE_EXACT
-// symbol    ?start@Time@@QAEIP6AXHH@ZHHII@Z
+// symbol    ?start@Time@@QAEIP6AXHPAX@ZH0II@Z
 // size      186 bytes
 // prototype void (__thiscall ?start@Time@@QAEXP6AXHH@ZHHHH@Z)(Time* this, void (__cdecl *)(int this, int), int, int, int, int)
 // callers   2   call targets   1
@@ -359,7 +359,7 @@ Purpose: Start an instance of the class with a two parameter callback.
 Return Value: Zero on success, non-zero on error
 Status: Complete
 */
-uint32_t Time::start(void(__cdecl *callback)(int, int), int param, int param2, uint32_t cnt,
+uint32_t Time::start(void(__cdecl *callback)(int, void *), int param, void *param2, uint32_t cnt,
                      uint32_t res) {
     // init() (the two-parameter-callback overload, BYTE_EXACT as its own
     // out-of-line function) is hand-inlined here: the image writes its whole
@@ -371,8 +371,8 @@ uint32_t Time::start(void(__cdecl *callback)(int, int), int param, int param2, u
     tick_posted_ = 0;
     unk_2_ = 0;
     callback1_ = 0;
-    callback2_ = reinterpret_cast<void(__cdecl *)(int, Palette *)>(callback);
-    cb_param2_ = reinterpret_cast<Palette *>(param2);
+    callback2_ = callback;
+    cb_param2_ = param2;
     cb_param1_ = param;
     count_ = cnt;
     resolution_ = res;
@@ -458,7 +458,7 @@ uint32_t Time::pulse(void(__cdecl *callback)(int), int param, uint32_t cnt, uint
 /*
 Purpose: Start a pulse instance of the class with a two parameter callback.
 // ORIGINAL: 0x00616590 ?pulse@Time@@QAEXP6AXHH@ZHHHH@Z 0x00616590-0x0061664D BYTE_EXACT
-// symbol    ?pulse@Time@@QAEIP6AXHH@ZHHII@Z
+// symbol    ?pulse@Time@@QAEIP6AXHPAX@ZH0II@Z
 // size      189 bytes
 // prototype void (__thiscall ?pulse@Time@@QAEXP6AXHH@ZHHHH@Z)(Time* this, void (__cdecl *)(int this, int), int, int, int, int)
 // callers   1   call targets   1
@@ -483,7 +483,7 @@ Purpose: Start a pulse instance of the class with a two parameter callback.
 Return Value: Zero on success, non-zero on error
 Status: Complete
 */
-uint32_t Time::pulse(void(__cdecl *callback)(int, int), int param, int param2, uint32_t cnt,
+uint32_t Time::pulse(void(__cdecl *callback)(int, void *), int param, void *param2, uint32_t cnt,
                      uint32_t res) {
     // init() (the two-parameter-callback overload, BYTE_EXACT as its own
     // out-of-line function) is hand-inlined here: the image writes its whole
@@ -493,8 +493,8 @@ uint32_t Time::pulse(void(__cdecl *callback)(int, int), int param, int param2, u
     tick_posted_ = 0;
     unk_2_ = 0;
     callback1_ = 0;
-    callback2_ = reinterpret_cast<void(__cdecl *)(int, Palette *)>(callback);
-    cb_param2_ = reinterpret_cast<Palette *>(param2);
+    callback2_ = callback;
+    cb_param2_ = param2;
     cb_param1_ = param;
     count_ = cnt;
     resolution_ = res;

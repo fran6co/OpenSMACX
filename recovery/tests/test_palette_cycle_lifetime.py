@@ -88,13 +88,13 @@ struct Time {
     static void operator delete(void *p) noexcept {::operator delete(p);}
     Time() {event('C');++constructor_calls;if(throw_ctor)throw 123;}
     ~Time() {event('T');++destructor_calls;observe_destructor();}
-    void init(void (*)(int,int),int,int,uint32_t,uint32_t);
+    void init(void (*)(int,void*),int,void*,uint32_t,uint32_t);
 };
 struct PALETTEENTRY {uint8_t red,green,blue,flags;};
 static_assert(sizeof(PALETTEENTRY)==4,"target palette entry byte width");
 struct Palette {
     ACTUAL_FIELDS
-    static void timer_callback(int,int) {}
+    static void timer_callback(int,void*) {}
     int init_cycle(int,int,int,unsigned long);
 } palette;
 void *PaletteInitialized;
@@ -103,9 +103,9 @@ void observe_destructor() {
     if(recording && check_teardown)
         require(target->key==old_key && target->first==old_first && target->count==old_count);
 }
-void Time::init(void (*callback)(int,int),int key,int context,uint32_t interval,uint32_t resolution) {
+void Time::init(void (*callback)(int,void*),int key,void *context,uint32_t interval,uint32_t resolution) {
     event('I');require(callback==Palette::timer_callback && key==expected_key);
-    require(context==static_cast<int>(reinterpret_cast<intptr_t>(&palette)));
+    require(context==&palette);
     require(interval==expected_interval && resolution==5);
     require(target->time==this);
 }

@@ -1,0 +1,19 @@
+{
+  "event_id": "4617cea4fe84f01325a70968a1074cef3efa85c320ae62eb083c74e0a8124ef8",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_timer_close_recovery.py"
+    ],
+    "evidence": [
+      "Fresh isolated native lifecycle tests pass seven cases but existing EditBox damage control assumes exactly one time_.close() in the whole translation unit; unchanged task-baseline EditBox already has two. Restrict mutant replacement to actual source-mapped intended EditBox callback 0x614F30, retain successful baseline strict reference proof and wrong-callee rejection. Do not mutate unrelated EditBox method or weaken assertions. This is fixture maintenance for the same timer lifecycle verification closure, not production authorization."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "413ec40f469fad4d33489f2cfe54e1140e7e4e462b6c66211ccee816eb544a30",
+  "request_id": "time-close-targeted-damage-control-oct10",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:time-callback-context-owner-oct10"
+}

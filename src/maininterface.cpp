@@ -186,7 +186,7 @@ MainInterface::MainInterface() {
 }
 
 extern Wave g_MAININTERFACE_WAVE;
-void __cdecl timer_callback_daemon(int, int);
+void __cdecl main_interface_timer_callback(int, void *);
 
 // ORIGINAL: 0x00459680 ?init@MainInterface@@QAEHH@Z 0x00459680-0x0045B500;0x00655730-0x00655745 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/maininterface.h", "git:b4601390:recovery/tasks/maininterface-owner-coverage.json", "git:f7bbce35:src/unrecovered/00459680.cpp"], "reason": "Original owner calls, secondary interface receiver and ordinary embedded-member lifecycle identify this MainInterface operation; compatible historical seed spans are retained, without a matching claim."}
@@ -458,8 +458,8 @@ int MainInterface::init(int) {
     editor_text_rect_ = editor_tools_rect_;
     editor_text_rect_.left = editor_tools_rect_.right + 3;
     editor_text_rect_.right = scroll_down_rect_.left - 3;
-    time1_.init(::timer_callback_daemon, 0, reinterpret_cast<int>(this), 4000, 5);
-    time2_.init(::timer_callback_daemon, 1, reinterpret_cast<int>(this), 100, 5);
+    time1_.init(::main_interface_timer_callback, 0, this, 4000, 5);
+    time2_.init(::main_interface_timer_callback, 1, this, 100, 5);
     g_MAININTERFACE_WAVE.init("fx\\main menu.wav", 4);
     g_MAININTERFACE_WAVE.set_volume(35);
     return 0;
@@ -2487,8 +2487,8 @@ void MainInterface::on_scrolled(int a1, int a2) {
 
 /*
 // ORIGINAL: 0x0045C200 ?timer_callback_daemon@MainInterface@@QAAXHH@Z 0x0045C200-0x0045C273
-// RECOVERY_BINDING: v1 {"evidence":["pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: 0x45C200 reads callback parameters from [ebp+8]/[ebp+0xC], branches on mode 0/1, and accesses context+0x216F0,+0x25040,+0x25068,+0xDE0,+0xDF0","src/maininterface.h declares MainInterface at the exact receiver layout, with alert_ at +0x216F0, time1_ at +0x25040, time2_ at +0x25068, and the corresponding RECT members at +0xDE0/+0xDF0","MainInterface::init registers this exact free callback with context (int)this for both embedded Time instances; mode 0/1 selects time1_/time2_","neighboring mapped MainInterface::timer_callback_daemon(int) and set_alert(int) access the same genuine members; the callback remains a free two-argument __cdecl entry to preserve Time::init ABI"],"reason":"Keep the exact free callback ABI registered with Time, but express its context as the existing MainInterface owner and use that owner's fields. The friend declaration grants only this callback access; it does not turn it into a member or alter registration/lifetime."}
-// symbol    ?timer_callback_daemon@@YAXHH@Z
+// RECOVERY_BINDING: v1 {"evidence": ["pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: 0x45C200 reads callback parameters from [ebp+8]/[ebp+0xC], branches on mode 0/1, and accesses context+0x216F0,+0x25040,+0x25068,+0xDE0,+0xDF0", "src/maininterface.h declares MainInterface at the exact receiver layout, with alert_ at +0x216F0, time1_ at +0x25040, time2_ at +0x25068, and the corresponding RECT members at +0xDE0/+0xDF0", "MainInterface::init registers the free callback with borrowed this context for both embedded Time instances; mode 0/1 selects time1_/time2_", "neighboring mapped MainInterface::timer_callback_daemon(int) and set_alert(int) access the same genuine members; the callback remains a free two-argument __cdecl entry"], "reason": "Keep the exact free callback entry, express the borrowed context as the existing MainInterface owner, and use that owner's fields. The friend declaration grants only this callback access; it does not turn it into a member or alter registration/lifetime. The stripped catalogue spelling is not proof of the intended source type."}
+// symbol    ?main_interface_timer_callback@@YAXHPAX@Z
 // TRIED: both stack parameters are read directly ([ebp+8], [ebp+0xc]) with no
 //        `this` anywhere, so the scaffold's MainInterface member cannot be
 //        defined out-of-line - that adds an implicit `this` ahead of them and
@@ -2498,10 +2498,10 @@ void MainInterface::on_scrolled(int a1, int a2) {
 //        inline it, and VC6 has no noinline. Demoted rather than mismatched
 //        forever; split `stop` in time.h and both bodies re-earn.
 */
-void __cdecl timer_callback_daemon(int a1, int a2) {
-    if (a2 == 0) return;
+void __cdecl main_interface_timer_callback(int a1, void *context) {
+    if (context == nullptr) return;
 
-    MainInterface *self = reinterpret_cast<MainInterface *>(a2);
+    MainInterface *self = static_cast<MainInterface *>(context);
     switch (a1) {
     case 0:
         self->time1_.stop();

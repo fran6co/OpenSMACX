@@ -18,10 +18,6 @@
 #pragma once
 #include <mmsystem.h>
 
-// `palette.h` includes THIS header, so it cannot be included back - forward
-// declared for the one pointer-typed field below.
-class Palette;
-
 // The two bits of `Time::oneshot_state_`. See the member for what forces
 // them to exist: `SetTimer` cannot do one-shot, so it is emulated.
 // WHAT THE IN-CLASS BODIES BELOW REACH FOR. `flush_timer` is declared at
@@ -51,21 +47,20 @@ class Time {
   Time(); // 006161D0
   ~Time(); // 00616200
   
-  // THE INT PAYLOADS ARE THE IMAGE'S OWN ABI. `param2` carries pointers in
-  // practice (Palette::timer_callback's Palette*, win.cpp sub_63c4e0's
-  // Win*) and cb_param2_ below models it as one - but every Time symbol the
-  // shipped binary emits spells these H (int): P6AXH@ZHII across init/
-  // start/pulse. Typing a parameter here would emit PAV and detach this
-  // class from its recorded names; the storage side keeps the pointer
-  // truth instead.
+  // The two-argument owner callbacks share a cdecl(int, void*) interface.
+  // Registrations pass borrowed owner pointers as context. The stripped
+  // image's catalogue spelling `int` does not establish the intended source
+  // type; current callback and storage declarations use the evidence-backed
+  // pointer model without transferring lifetime ownership to Time.
   void init(void(__cdecl *callback)(int), int param, uint32_t cnt, uint32_t res);
-  void init(void(__cdecl *callback)(int, int), int param, int param2, uint32_t cnt, uint32_t res);
+  void init(void(__cdecl *callback)(int, void *), int param, void *param2,
+            uint32_t cnt, uint32_t res);
   uint32_t start(void(__cdecl *callback)(int), int param, uint32_t cnt, uint32_t res);
-  uint32_t start(void(__cdecl *callback)(int, int), int param, int param2, uint32_t cnt, 
-                 uint32_t res);
+  uint32_t start(void(__cdecl *callback)(int, void *), int param, void *param2,
+                 uint32_t cnt, uint32_t res);
   uint32_t pulse(void(__cdecl *callback)(int), int param, uint32_t cnt, uint32_t res);
-  uint32_t pulse(void(__cdecl *callback)(int, int), int param, int param2, uint32_t cnt, 
-                 uint32_t res);
+  uint32_t pulse(void(__cdecl *callback)(int, void *), int param, void *param2,
+                 uint32_t cnt, uint32_t res);
   // Timer identifier at +4 is the native active predicate (0x00517966).
   bool has_timer() const { return id_event_ != 0; }
   uint32_t start();
@@ -130,20 +125,9 @@ class Time {
   int oneshot_state_;  // 0x0000
   UINT_PTR id_event_;
   void(__cdecl *callback1_)(int);
-  // PRIVATE STORAGE ONLY - the PUBLIC two-parameter `init`/`start`/`pulse`
-  // overloads below keep `void(__cdecl *)(int, int)` and `int param2`,
-  // because that is what the image's own mangled names
-  // (`?init@Time@@QAEXP6AXHH@ZHHHH@Z` and siblings) prove Time's wire
-  // format to be. But `Palette::timer_callback` (0x005FEAD0, the only
-  // caller of the two-parameter overload) documents that the value
-  // actually carried is a `Palette *` - `t->init(Palette::timer_callback,
-  // key, this, ...)` passes `this` where the public signature reads
-  // `int param2`. Typing the STORAGE this way, with an explicit cast where
-  // each public overload stores into it, records what the bytes cannot:
-  // the same four bytes either way, since a pointer and an `int` are both
-  // one word here.
-  void(__cdecl *callback2_)(int, Palette *);
-  Palette *cb_param2_; // callback 2nd parameter
+  // Borrowed context for the common two-argument callback interface.
+  void(__cdecl *callback2_)(int, void *);
+  void *cb_param2_;
   int cb_param1_; // callback 1st parameter
   uint32_t count_; // either delay (timeSetEvent) or elapsed (SetTimer) value
   // A TICK IS ALREADY IN FLIGHT. `TimerProc` and `MultimediaProc` are the

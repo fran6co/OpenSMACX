@@ -26,7 +26,6 @@
 
 #include "sprite.h"
 #include <cstring>
-extern void __cdecl fn_00607b10(int, BaseButton*);
 
 // The nine-group defaults table read by both the constructor and close():
 // runtime defaults that load_interface (0x00455610) publishes into the
@@ -348,10 +347,8 @@ void FlatButton::on_mouse_move(int x, int y) {
             win_parent_->vslot_40(static_cast<int>(field_A78_), 1);
         }
         if (bubble_text_ != 0) {
-            time1_.init(
-                reinterpret_cast<void (__cdecl *)(int, int)>(&fn_00607b10),
-                0, static_cast<int>(reinterpret_cast<unsigned long>(this)),
-                1000, 5);
+            time1_.init(base_button_timer_callback, 0,
+                        static_cast<BaseButton *>(this), 1000, 5);
             time1_.pulse();
         }
         redraw();

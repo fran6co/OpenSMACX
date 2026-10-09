@@ -315,7 +315,7 @@ class BaseWin : public GraphicWin, public SubInterface {
   // interface-delegates-to-front pair slot 15 shows.
   void on_iface_button_clicked(int button_id);          // slot13 0x0041E510
 
-  static void timer_callback(int key, int context);
+  static void timer_callback(int key, void *context);
   void on_left_click(int xCoord, int yCoord) override;
   void on_right_click(int xCoord, int yCoord) override;
   void on_left_double_click(int xCoord, int yCoord);

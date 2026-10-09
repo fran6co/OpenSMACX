@@ -90,7 +90,7 @@ BaseButton *BaseButton::construct() {
     return new (this) BaseButton();
 }
 
-void __cdecl fn_00607b10(int stage, BaseButton *button);
+void __cdecl base_button_timer_callback(int stage, void *context);
 
 /*
 Purpose: Close the GraphicWin base, reset BaseButton-owned state from the
@@ -754,8 +754,7 @@ void BaseButton::on_left_down(int, int) {
         parent->vslot_43(static_cast<int>(field_A78_));
         redraw();
         if (field_A44_ != 0xFFFFFFFFU) {
-            time2_.pulse(reinterpret_cast<void (__cdecl *)(int, int)>(fn_00607b10),
-                         1, reinterpret_cast<int>(this), field_A44_, 5);
+            time2_.pulse(base_button_timer_callback, 1, this, field_A44_, 5);
         }
         return;
     }
@@ -769,8 +768,7 @@ void BaseButton::on_left_down(int, int) {
         }
         const int accepted = parent->vslot_41(static_cast<int>(field_A78_));
         if (accepted != 0 && field_A44_ != 0xFFFFFFFFU) {
-            time2_.pulse(reinterpret_cast<void (__cdecl *)(int, int)>(fn_00607b10),
-                         1, reinterpret_cast<int>(this), field_A44_, 5);
+            time2_.pulse(base_button_timer_callback, 1, this, field_A44_, 5);
         }
     }
     if (field_AB4_ != 0) {
@@ -891,8 +889,7 @@ void BaseButton::on_mouse_move(int x, int y) {
     if (inside != 0) {
         if (field_A9C_ == 0) {
             if (field_A44_ != 0xFFFFFFFFU) {
-                time1_.start(reinterpret_cast<void (__cdecl *)(int, int)>(fn_00607b10),
-                              1, reinterpret_cast<int>(this), field_A44_, 5);
+                time1_.start(base_button_timer_callback, 1, this, field_A44_, 5);
             }
             field_A9C_ = 1;
             Sound *const owner = win_parent_->legacy_sound_30();
@@ -907,7 +904,7 @@ void BaseButton::on_mouse_move(int x, int y) {
 
 /*
 // ORIGINAL: 0x00607B10 ?timer_callback_daemon@BaseButton@@QAAXHH@Z 0x00607B10-0x00607B23 BYTE_EXACT
-// symbol    ?fn_00607b10@@YAXHPAVBaseButton@@@Z
+// symbol    ?base_button_timer_callback@@YAXHPAX@Z
 // size      19 bytes
 // prototype 
 // callers   0   call targets   1
@@ -916,12 +913,10 @@ void BaseButton::on_mouse_move(int x, int y) {
 // calls     0x00607B30
 Status: Complete
 */
-// `button` is named from the body's own use - a null test then a dispatch on
-// a BaseButton *. The int stays scaffold: it is forwarded to a timer_callback
-// this tree does not recover, so nothing here says what it carries.
-void __cdecl fn_00607b10(int a1, BaseButton* button) {
-    if (button) {
-        button->timer_callback(a1);
+// The context is borrowed from the owning button's live timer registration.
+void __cdecl base_button_timer_callback(int stage, void *context) {
+    if (context) {
+        static_cast<BaseButton *>(context)->timer_callback(stage);
     }
 }
 
@@ -952,9 +947,7 @@ void BaseButton::timer_callback(int stage) {
     } else if (stage == 1) {
         const uint32_t interval = static_cast<int>(field_A48_) > 0
                                       ? field_A48_ : field_A44_;
-        // Time's recorded ABI carries its pointer payload as an int.
-        time2_.start(reinterpret_cast<void (__cdecl *)(int, int)>(fn_00607b10),
-                     2, reinterpret_cast<int>(this), interval, 5);
+        time2_.start(base_button_timer_callback, 2, this, interval, 5);
     } else {
         on_left_down(0, 0);
     }
