@@ -1663,12 +1663,11 @@ Purpose: Destroy the popup infrastructure: close the window, then the
 */
 
 /*
-Purpose: The BasePop constructor. The base GraphicWin and the Heap, two
-         FlatButtons and Sprite members come up implicitly, in declaration
-         order, which is the image's own order; the Dialogs slab at +0x21d0
-         and the Spot at +0x3098 are constructed MID-BODY by the image
-         (explicit constructor calls, SEH states 6 and 7) and are NOT spelled
-         here - see the STRUCTURE notes. Everything else is the field-store
+Purpose: The BasePop constructor. The base GraphicWin and declared members,
+         including Dialogs and Spot, use C++ member construction. Their
+         declaration order matches the pinned constructor's observed order;
+         older STRUCTURE/TRIED notes below preserve superseded hypotheses.
+         The body then performs the field-store
          sequence: two popup-list link insertions (the nodes are static
          objects of the image's .data), the default fonts/colours copied
          from the class defaults, and the state resets.
@@ -2136,20 +2135,24 @@ BasePop::BasePop() {
     dialog_height_ = BasePopDefaultDialogSize[1];
 
     if (external_window_ != 0) {
-        // The image's tail here walks the Dialogs subobject at +0x21d0 (see
-        // the STRUCTURE note under the marker): [dialogs+8] selects two
-        // slots that receive dialog_width_/dialog_height_ (the latter grown 3/2 for
-        // wide screens), and default_loc_a_/default_loc_b_ overwrite loc_a_/loc_b_
-        // unless they equal 0x2000. Not spelled: this body neither constructs
-        // the Dialogs subobject nor may take a fresh raw pointer to it (the
-        // raw self-access ratchet sits at its ceiling), so the reads would
-        // consume garbage. Absent on purpose.
+        // Dialogs is already a compiler-constructed member in the observed
+        // base/member order above; the old omission rationale is superseded.
+        dialogs_.Dialog::field_2C_ = dialog_width_;
+
+        int height = static_cast<int>(dialog_height_);
+        if (external_window_ == 0 && (field_30A8_ & 0x400) == 0 &&
+            WinScreenWidth >= 0x400) {
+            height = (height * 3) / 2;
+        }
+        dialogs_.Dialog::field_30_ = height;
+
         if (default_loc_a_ != 0x2000) {
             loc_a_ = default_loc_a_;
         }
         if (default_loc_b_ != 0x2000) {
             loc_b_ = default_loc_b_;
         }
+        dialogs_.Dialog::field_20_ |= 3;
     }
 
 }

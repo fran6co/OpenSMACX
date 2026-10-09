@@ -306,9 +306,10 @@ int Dialogs::get_num_items() {
 
 /*
 Purpose: Forward on right down to the embedded widget, but only when the
-         active dialog is the sprite-box kind (8). `this` arrives at the interface subobject, so
-         the discriminator sits 8 bytes before it and the target is reached by
-         adjusting back 0x8C.
+         active dialog is the sprite-box kind (8). The original interface
+         receiver reads kind at -8 and adjusts by -0x8C for SpriteBox.
+         Source uses kind_ and the genuine SpriteBox base; compiler-owned
+         adjustors retain responsibility for the original interface view.
 // ORIGINAL: 0x00612ED0 ?on_right_down@Dialogs@@QAEXHH@Z 0x00612ED0-0x00612EEE BYTE_EXACT
 // symbol    ?on_right_down@Dialogs@@UAEXHH@Z
 // size      30 bytes
@@ -321,19 +322,17 @@ Return Value: n/a
 Status: Complete
 */
 void Dialogs::on_right_down(int a, int b) {
-    uint8_t *const bytes = reinterpret_cast<uint8_t *>(this);
-    int discriminator;
-    std::memcpy(&discriminator, bytes - 8, sizeof(discriminator));
-    if (discriminator == 8) {
-        reinterpret_cast<SpriteBox *>(bytes - 0x8C)->on_right_down(a, b);
+    if (kind_ == 8) {
+        sprite_box_view().SpriteBox::on_right_down(a, b);
     }
 }
 
 /*
 Purpose: Forward on right double click to the embedded widget, but only when the
-         active dialog is the sprite-box kind (8). `this` arrives at the interface subobject, so
-         the discriminator sits 8 bytes before it and the target is reached by
-         adjusting back 0x8C.
+         active dialog is the sprite-box kind (8). The original interface
+         receiver reads kind at -8 and adjusts by -0x8C for SpriteBox.
+         Source uses kind_ and the genuine SpriteBox base; compiler-owned
+         adjustors retain responsibility for the original interface view.
 // ORIGINAL: 0x00612EF0 ?on_right_double_click@Dialogs@@QAEXHH@Z 0x00612EF0-0x00612F0E BYTE_EXACT
 // symbol    ?on_right_double_click@Dialogs@@UAEXHH@Z
 // size      30 bytes
@@ -346,11 +345,8 @@ Return Value: n/a
 Status: Complete
 */
 void Dialogs::on_right_double_click(int a, int b) {
-    uint8_t *const bytes = reinterpret_cast<uint8_t *>(this);
-    int discriminator;
-    std::memcpy(&discriminator, bytes - 8, sizeof(discriminator));
-    if (discriminator == 8) {
-        reinterpret_cast<SpriteBox *>(bytes - 0x8C)->on_right_double_click(a, b);
+    if (kind_ == 8) {
+        sprite_box_view().SpriteBox::on_right_double_click(a, b);
     }
 }
 
@@ -388,9 +384,10 @@ void Dialogs::on_left_up(int a, int b) {
 
 /*
 Purpose: Forward on right up to the embedded widget, but only when the
-         active dialog is the sprite-box kind (8). `this` arrives at the interface subobject, so
-         the discriminator sits 8 bytes before it and the target is reached by
-         adjusting back 0x8C.
+         active dialog is the sprite-box kind (8). The original interface
+         receiver reads kind at -8 and adjusts by -0x8C for SpriteBox.
+         Source uses kind_ and the genuine SpriteBox base; compiler-owned
+         adjustors retain responsibility for the original interface view.
 // ORIGINAL: 0x00612F40 ?on_right_up@Dialogs@@QAEXHH@Z 0x00612F40-0x00612F5E BYTE_EXACT
 // symbol    ?on_right_up@Dialogs@@UAEXHH@Z
 // size      30 bytes
@@ -403,19 +400,17 @@ Return Value: n/a
 Status: Complete
 */
 void Dialogs::on_right_up(int a, int b) {
-    uint8_t *const bytes = reinterpret_cast<uint8_t *>(this);
-    int discriminator;
-    std::memcpy(&discriminator, bytes - 8, sizeof(discriminator));
-    if (discriminator == 8) {
-        reinterpret_cast<SpriteBox *>(bytes - 0x8C)->on_right_up(a, b);
+    if (kind_ == 8) {
+        sprite_box_view().SpriteBox::on_right_up(a, b);
     }
 }
 
 /*
 Purpose: Forward on right click to the embedded widget, but only when the
-         active dialog is the sprite-box kind (8). `this` arrives at the interface subobject, so
-         the discriminator sits 8 bytes before it and the target is reached by
-         adjusting back 0x8C.
+         active dialog is the sprite-box kind (8). The original interface
+         receiver reads kind at -8 and adjusts by -0x8C for SpriteBox.
+         Source uses kind_ and the genuine SpriteBox base; compiler-owned
+         adjustors retain responsibility for the original interface view.
 // ORIGINAL: 0x00612F60 ?on_right_click@Dialogs@@QAEXHH@Z 0x00612F60-0x00612F7E BYTE_EXACT
 // symbol    ?on_right_click@Dialogs@@UAEXHH@Z
 // size      30 bytes
@@ -428,11 +423,8 @@ Return Value: n/a
 Status: Complete
 */
 void Dialogs::on_right_click(int a, int b) {
-    uint8_t *const bytes = reinterpret_cast<uint8_t *>(this);
-    int discriminator;
-    std::memcpy(&discriminator, bytes - 8, sizeof(discriminator));
-    if (discriminator == 8) {
-        reinterpret_cast<SpriteBox *>(bytes - 0x8C)->on_right_click(a, b);
+    if (kind_ == 8) {
+        sprite_box_view().SpriteBox::on_right_click(a, b);
     }
 }
 
