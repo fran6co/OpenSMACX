@@ -217,13 +217,6 @@ int Dialogs::init(Heap *heap) {
 namespace {
 
 
-// Where the Dialog subobject is, according to this object's own vbtable.
-__forceinline Dialog *dialog_of(void *self) {
-    uint8_t *const bytes = reinterpret_cast<uint8_t *>(self);
-    const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(bytes);
-    return reinterpret_cast<Dialog *>(bytes + vbtable[2]);
-}
-
 }  // namespace
 
 /*
@@ -253,16 +246,12 @@ Status: Complete
 int Dialogs::item(char *text, int index) {
     switch (kind_) {
         case 2:
-            // THE RECEIVER IS THIS OBJECT, reinterpreted: the image calls
-            // ListBox::item with the Dialogs pointer unchanged, and
-            // `class Dialogs : ListBox` cannot be spelled here - see the
-            // measured sizes in dialogs.h.
-            return reinterpret_cast<ListBox *>(this)->item(text, index);
+            return list_box_view().ListBox::item(text, index);
         case 1:
         case 4:
         case 8:
         case 16:
-            return dialog_of(this)->item(text, index);
+            return static_cast<Dialog &>(*this).Dialog::item(text, index);
         default:
             return 0;
     }
@@ -273,6 +262,7 @@ Purpose: Count the items this kind of dialog holds.
 // ORIGINAL: 0x00613740 ?get_num_items@Dialogs@@QAEHXZ 0x00613740-0x00613772 BYTE_EXACT
 // LEVER: `dialog_of` marked `__forceinline` - the image has zero call
 //        targets here, so its vbtable lookup is inlined, not called.
+// The original count read is the shared Dialog::item_list_ entry_count_.
 // size      50 bytes
 // prototype int (__thiscall ?get_num_items@Dialogs@@QAEHXZ)(Dialogs* this)
 // callers   4   call targets   0
@@ -288,11 +278,7 @@ int Dialogs::get_num_items() {
         case 2:
         case 4:
         case 16: {
-            int32_t count;
-            std::memcpy(&count,
-                        reinterpret_cast<uint8_t *>(dialog_of(this)) + 0xCC,
-                        sizeof(count));
-            return count;
+            return Dialog::item_list_.entry_count_;
         }
         case 8:
             return SpriteBox::list_.entry_count_;
@@ -480,9 +466,9 @@ void Dialogs::on_scrolling(int a, int b) {
 
 /*
 Purpose: Forward on mousewheel to the embedded widget, but only when the
-         active dialog is the list-box kind (2). `this` arrives at the interface subobject, so
-         the discriminator sits 8 bytes before it and the target is reached by
-         adjusting back 0x140.
+         active dialog is the list-box kind (2). The pinned receiver is the
+         interface view; this complete-object method reads kind_ and calls
+         the actual ListBox base handler.
 // ORIGINAL: 0x00612FC0 ?on_mousewheel@Dialogs@@QAEXH@Z 0x00612FC0-0x00612FDB BYTE_EXACT
 // symbol    ?on_mousewheel@Dialogs@@UAEXH@Z
 // size      27 bytes
@@ -495,15 +481,9 @@ Return Value: n/a
 Status: Complete
 */
 void Dialogs::on_mousewheel(int a) {
-    uint8_t *const bytes = reinterpret_cast<uint8_t *>(this);
-    int discriminator;
-    std::memcpy(&discriminator, bytes - 8, sizeof(discriminator));
-    // A SWITCH, NOT AN `if`: the image is `sub eax, 2; jne`, which is
-    // what VC6 emits for a one-case switch. An equality test compiles
-    // `cmp dword ptr [ecx-8], 2` and reads the field a second time.
-    switch (discriminator) {
+    switch (kind_) {
         case 2:
-            reinterpret_cast<ListBox *>(bytes - 0x140)->on_mousewheel(a);
+            list_box_view().ListBox::on_mousewheel(a);
             break;
         default:
             break;
@@ -613,33 +593,14 @@ void Dialogs::on_mouse_move(int a1, int a2) {
 // Window-event handlers, promoted out of the artifact archives
 // ====================
 
-namespace {
-// A LOCAL SHIM, not vtable_shim.h's VCall: only DECLARATION ORDER decides a
-// slot, and the image's call site (vtable slot 0x24/4 = 9) takes one pointer
-// as an int and returns int, where the shared VCall's slot009 is nullary.
-class ScrollVCall { public:
-    virtual void slot000();
-    virtual void slot001();
-    virtual void slot002();
-    virtual void slot003();
-    virtual void slot004();
-    virtual void slot005();
-    virtual void slot006();
-    virtual void slot007();
-    virtual void slot008();
-    virtual int slot009(int);  // <-- used
-};
-}  // namespace
-
 /*
 Purpose: Hand a closing scroll control to the list box: only when the active
          dialog is the list-box kind (2) and the scroll's flags byte has bit
          0x40 set does the scroll's own vtable slot 9 take it, and its return
          is this function's return; otherwise the argument passes back
-         unchanged. Entered on the interface subobject (the GraphicWin virtual
-         base at +0x188 in a most-derived Dialogs), so the discriminator sits
-         8 bytes below `this` and the ListBox's vbtable names where its
-         scroll machinery sits.
+         unchanged. The pinned receiver walk reaches the shared GraphicWin/Win
+         state; `iFlags_` and `win_parent_` name the recovered flag and slot-9
+         receiver directly.
 // ORIGINAL: 0x00613260 ?on_scroll_delete@Dialogs@@QAEHPAUScroll@@@Z 0x00613260-0x0061329F BYTE_EXACT
 // symbol    ?on_scroll_delete@Dialogs@@UAEHPAVScroll@@@Z
 // size      63 bytes
@@ -648,45 +609,32 @@ Purpose: Hand a closing scroll control to the list box: only when the active
 // kind      game
 // indirect  0x00613292
 //
-// PROMOTED out of the archived verification unit for this address, which proved the body
-// against the same shim shape under its own name. The pointer parameter
-// travels as the int the vtable slot takes; the header spells it void *
-// and the catalogued name spells it Scroll * - the bytes are the same.
+// PROMOTED from the archived verification unit. Its slot-9 dispatch and
+// pointer pass-back agree with the pinned span; the current owner calls the
+// declared Win slot through the recovered parent pointer. The original
+// 32-bit pointer/int return bridge remains explicit below.
 Return Value: the scroll, or the slot's answer
 Status: Complete
 */
 int Dialogs::on_scroll_delete(Scroll *scroll) {
-    char *self = reinterpret_cast<char *>(this);
-    // A SWITCH, NOT AN `if`: the image is `sub eax, 2; jne`, which is what
-    // VC6 emits for a one-case switch; an equality test folds to a fused
-    // `cmp [mem], imm` instead.
-    switch (*reinterpret_cast<int *>(self - 8)) {
+    switch (kind_) {
     case 2: {
-        char *base = *reinterpret_cast<char **>(self - 0x188);
-        int off = *reinterpret_cast<int *>(base + 4);
-        char *mid = self + off - 0x140;
-        unsigned char flags = *reinterpret_cast<unsigned char *>(mid + 0x50);
-        if (flags & 0x40) {
-            // The scroll is a Win-family object: slot 9 is the declared
-            // vslot_09(int), whose default returns its argument - which is
-            // exactly this body's documented pass-back behaviour.
-            Scroll *scroll_box = *reinterpret_cast<Scroll **>(mid + 0x7c);
-            if (scroll_box != 0) {
-                return reinterpret_cast<int>(scroll_box->vslot_09(scroll));
+        if (iFlags_ & 0x40) {
+            Win *parent = win_parent_;
+            if (parent != 0) {
+                return static_cast<int>(reinterpret_cast<intptr_t>(
+                    parent->vslot_09(scroll)));
             }
         }
     }
     }
-    return reinterpret_cast<int>(scroll);
+    return static_cast<int>(reinterpret_cast<intptr_t>(scroll));
 }
 
 /*
 Purpose: Forward a left click to the embedded sprite box for every dialog
-         kind except the list box (0), the text kinds (8's neighbours at 0)
-         and the unused 8 - the same sixteen-way discrimination the sibling
-         on_right_down makes with a single compare. Entered on the interface
-         subobject, so the discriminator sits 8 bytes below `this` and the
-         sprite box is reached by adjusting back 0x8C.
+         kind in the pinned case map (1 through 7 and 9 through 16), to the
+         SpriteBox base.
 // ORIGINAL: 0x00612E80 ?on_left_click@Dialogs@@QAEXHH@Z 0x00612E80-0x00612EB0 SEMANTIC
 // symbol    ?on_left_click@Dialogs@@UAEXHH@Z
 // size      48 bytes
@@ -708,11 +656,10 @@ Return Value: n/a
 Status: Complete
 */
 void Dialogs::on_left_click(int a, int b) {
-    char *const self = reinterpret_cast<char *>(this);
-    switch (*reinterpret_cast<int *>(self - 8)) {
+    switch (kind_) {
     case 1: case 2: case 3: case 4: case 5: case 6: case 7:
     case 9: case 10: case 11: case 12: case 13: case 14: case 15: case 16:
-        reinterpret_cast<SpriteBox *>(self - 0x8C)->on_left_click(a, b);
+        sprite_box_view().SpriteBox::on_left_click(a, b);
         break;
     }
 }
