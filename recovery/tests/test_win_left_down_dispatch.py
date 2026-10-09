@@ -42,6 +42,7 @@ using std::vector;
 static vector<string> events;
 using Callback = void (*)(int, int);
 using FnCallback = void (*)(int, int);
+using WinMouseEventCallback = void (*)(int, int);
 static Callback WinLeftDownHook = nullptr;
 static void *WinCallbackWindow = nullptr;
 static void callback(int x, int y) {
@@ -58,9 +59,9 @@ struct Sound {
 struct Win {
   uint32_t iFlags_ = 0;
   uint8_t iSomeFlag_ = 0;
-  uintptr_t field_418_ = 0;
-  intptr_t val_9_ = 0;
-  intptr_t val_21_ = 0;
+  FnCallback field_418_ = nullptr;
+  Sound *val_9_ = nullptr;
+  Sound *val_21_ = nullptr;
   virtual void on_left_down(int, int) { events.push_back("left"); }
   virtual void on_nc_left_down(int, int) { events.push_back("nc"); }
   void left_down_event(int, int, int);
@@ -86,9 +87,9 @@ static bool check(const vector<string>& want) {
 int main() {
   ProbeWin win;
   Sound sound{1};
-  win.field_418_ = reinterpret_cast<uintptr_t>(&callback);
-  win.val_9_ = reinterpret_cast<intptr_t>(&sound);
-  win.val_21_ = reinterpret_cast<intptr_t>(&sound);
+  win.field_418_ = callback;
+  win.val_9_ = &sound;
+  win.val_21_ = &sound;
   WinLeftDownHook = hook;
 
   win.left_down_event(7, 9, 1);

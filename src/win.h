@@ -74,6 +74,12 @@ typedef void (__cdecl *WinNotificationCallback)(int selected_id);
 // resize_event's installable width/height callback, stored in Win::field_400_.
 typedef void (__cdecl *WinResizeCallback)(int width, int height);
 typedef int (__cdecl *WinKeyHookFn)(int key);
+// Conservative callback views for the remaining Win event words. The image
+// proves these call shapes and observed return use, but not the declarations
+// originally used by their installers (which remain outside this source).
+typedef void (__cdecl *WinNullaryEventCallback)();
+typedef void (__cdecl *WinMouseEventCallback)(int x, int y);
+typedef int (__cdecl *WinKeyClickCallback)(int key, int flags);
 // The hook's EAX value becomes display_action's result when no child sound
 // follows; this is a register-return contract, not a semantic hook result.
 typedef int (__cdecl *WinDisplayActionHookFn)();
@@ -518,23 +524,29 @@ class Win : public AutoSound {
   // makes the callback interface explicit, like mouse_move_hook_ above.
   // RECOVERY_MEMBER: v1 Win field_400_ 0x400 0x005EE330
   WinResizeCallback field_400_;
-  uint32_t field_404_;
+  // Pinned call sites at +0x404 and +0x40c..+0x428 establish these
+  // callable views; coordinate callers clean eight bytes and ignore EAX.
+  // The zero-argument +0x404 caller also ignores EAX, so its exact original
+  // declaration is not observable. No nonzero installer is recovered here.
+  WinNullaryEventCallback field_404_;
   // 0x408. A CALLBACK, not storage: `on_mouse_move` calls it with the
   // position when the move is not from a parent. Was `uint32_t field_408_`.
   WinMouseMoveHookFn mouse_move_hook_;
-  uint32_t field_40C_;
-  uint32_t field_410_;
-  uint32_t field_414_;
-  uint32_t field_418_;
-  uint32_t field_41C_;
-  uint32_t field_420_;
-  uint32_t field_424_;
-  uint32_t field_428_;
-  uint32_t field_42C_;
+  WinMouseEventCallback field_40C_;
+  WinMouseEventCallback field_410_;
+  WinMouseEventCallback field_414_;
+  WinMouseEventCallback field_418_;
+  WinMouseEventCallback field_41C_;
+  WinMouseEventCallback field_420_;
+  WinMouseEventCallback field_424_;
+  WinMouseEventCallback field_428_;
+  WinKeyClickCallback field_42C_;
   // 0x430. A CALLBACK, not storage: `key_down_event` calls it with the
   // virtual key and keeps its return. Was `uint32_t field_430_`.
   WinKeyHookFn key_hook_;
-  uint32_t field_434_;
+  // +0x434 returns an int from key-up aggregation; on_key ignores that same
+  // result. Constructor and close clear the slot; its installer is unknown.
+  WinKeyHookFn field_434_;
   // RECOVERY_MEMBER: v1 Win field_438_ 0x438 0x005F2830
   WinDisplayActionHookFn field_438_;
   // Borrowed nonclient scrollbars; resize_event reloads them after callbacks.
@@ -1117,7 +1129,7 @@ extern void(__cdecl *WinKeyHook)(WPARAM key);
 // not a `Win` member. Its body was homed from src/recovered/005f86a0.cpp
 // into win.cpp and measures BYTE_EXACT there.
 // 0x005F86A0, homed into win.cpp.
-void __stdcall sub_5f86a0(int window);
+void __stdcall sub_5f86a0(Sound *sound);
 
 
 // The cursor refresh this setter triggers is a 2528-byte body with six call

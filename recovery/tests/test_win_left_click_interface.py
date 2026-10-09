@@ -33,13 +33,15 @@ def test_actual_left_click_virtual_dispatch(tmp_path, compiler_name, damage):
 #include <cassert>
 #include <cstdint>
 #define __cdecl
+using WinMouseEventCallback = void (*)(int, int);
 class Win;
 Win *WinCallbackWindow;
 class Sound { public: int is_playing() { return 0; } void play() {} };
 class Win {
  public:
     unsigned int iFlags_=0, iSomeFlag_=0;
-    uintptr_t field_414_=0, flags_=0, val_20_=0;
+    void (*field_414_)(int,int)=nullptr;
+    uintptr_t flags_=0, val_20_=0;
     __DECLARATION__
     virtual int vslot_23() { return 0; }
     virtual void vslot_07() {}

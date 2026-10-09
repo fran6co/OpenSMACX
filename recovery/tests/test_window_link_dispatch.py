@@ -71,6 +71,8 @@ HARNESS = r'''
 #include <cstring>
 #include <string>
 #include <vector>
+#define __cdecl
+typedef void (__cdecl *WinMouseEventCallback)(int, int);
 #include <functional>
 typedef char *LPSTR;typedef int BOOL;
 void check(bool ok,int line){if(!ok){std::fprintf(stderr,"assertion %d\n",line);std::_Exit(109);}}
@@ -258,7 +260,7 @@ def actual_parts():
     source = (ROOT/'src/win.cpp').read_text()
     parts['WHOLE_BODY'] = braced(source, 'void Win::on_l_button_down(')
     parts['WHOLE_DECL'], = re.findall(r'^  virtual void on_l_button_down\([^;]+;', header, re.M)
-    parts['WINDOW_FIELDS'] = '\n'.join(re.findall(r'^  uint32_t (?:iFlags_|iSomeFlag_|field_40C_);', header, re.M))
+    parts['WINDOW_FIELDS'] = '\n'.join(re.findall(r'^  (?:uint32_t (?:iFlags_|iSomeFlag_)|WinMouseEventCallback field_40C_);', header, re.M))
     assert len(parts['WINDOW_FIELDS'].splitlines()) == 3
     parts['RELATED_FIELDS'] = '\n'.join(re.findall(r'^  Sound \*val_(?:17|26)_;', autosound, re.M))
     assert len(parts['RELATED_FIELDS'].splitlines()) == 2
@@ -298,7 +300,7 @@ WHOLE_BODY
 std::function<void(int,int)> hook_action;
 void hook(int x,int y){require(WinCallbackWindow!=nullptr);events.push_back({100,WinCallbackWindow->tag,x,y});if(hook_action)hook_action(x,y);}
 void reset(Win&w){
- events.clear();hook_action=nullptr;w.iFlags_=0;w.iSomeFlag_=0;w.field_40C_=0;w.val_17_=w.val_26_=0;
+ events.clear();hook_action=nullptr;w.iFlags_=0;w.iSomeFlag_=0;w.field_40C_=nullptr;w.val_17_=w.val_26_=0;
  w.tag=10;w.win_parent_=nullptr;w.fallback_count=0;
  w.top_action=nullptr;w.focus_action=nullptr;w.order_action=nullptr;w.double_action=nullptr;w.other_action=nullptr;
  WinRootCount=0;for(auto&p:WinRootWindows)p=nullptr;WinPointerOwner1=WinPointerOwner2=WinCallbackWindow=nullptr;WinSizingFlag=-9;
@@ -339,9 +341,9 @@ void root_and_parent_cases(){
 void hook_cases(){
  auto address=reinterpret_cast<uintptr_t>(&hook);require(address<=INT32_MAX);
  for(int parent:{0,1}){
-  Win w;reset(w);w.iFlags_=0x2000000;w.field_40C_=static_cast<uint32_t>(address);
+  Win w;reset(w);w.iFlags_=0x2000000;w.field_40C_=hook;
   hook_action=[&](int x,int y){require(x==17&&y==-4&&WinCallbackWindow==&w&&WinPointerOwner1==&w&&WinSizingFlag==1);
-    w.iFlags_|=0x200;w.iSomeFlag_|=8;w.field_40C_=0;};
+    w.iFlags_|=0x200;w.iSomeFlag_|=8;w.field_40C_=nullptr;};
   call(w,1,17,-4,7,parent);
   if(parent==0)require(events==std::vector<Event>({{100,10,17,-4},{28,10,17,-4}}));
   else require(events==std::vector<Event>({{38,10,17,-4}}));
@@ -415,7 +417,7 @@ WHOLE_MUTATIONS = {
  'missing_flag_bit': ('iFlags_ & 0x200200', 'iFlags_ & 0x200'),
  'wrong_state_bit': ('iSomeFlag_ & 8', 'iSomeFlag_ & 4'),
  'no_callback_owner': ('WinCallbackWindow = this;', '/* missing publication */'),
- 'no_callback': ('reinterpret_cast<void(__cdecl *)(int, int)>(fp)(x, y);', '/* missing callback */'),
+ 'no_callback': ('callback(x, y);', '/* missing callback */'),
  'regate_after_callback': ('this->on_left_double_click(x, y);', 'if ((iFlags_ & 0x200200)==0) this->on_left_double_click(x, y);'),
 }
 

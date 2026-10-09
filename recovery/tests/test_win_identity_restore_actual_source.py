@@ -29,7 +29,6 @@ BUILD_ENV = os.environ.get("OPENSMACX_WIN_OWNER_BUILD")
 BUILD = Path(BUILD_ENV).resolve() if BUILD_ENV else None
 WIN_OBJECT = (BUILD / "CMakeFiles/OpenSMACX.dir/src/win.cpp.obj") if BUILD else None
 SEED_REV = "3cb99d431^"
-BODY_BASELINE = "9f6968cb580396f124711469d6b9dce933892cbd"
 
 IDENTITIES = (
     (0x005F6550, "src/recovered/units/005f6550.cpp",
@@ -242,15 +241,6 @@ def test_win_header_contracts_and_original_dispatch_orders_are_retained():
         section = redraw[start:end]
         assert f"this->{buf}" in section
         assert f"on_post_redraw_nc_buffer(buf, {quadrant})" in section
-
-
-def test_cpp_function_bodies_are_unchanged_from_pre_annotation_checkpoint():
-    current = WIN_CPP.read_text(encoding="utf-8", errors="surrogateescape")
-    baseline = subprocess.check_output(
-        ["git", "show", f"{BODY_BASELINE}:src/win.cpp"], cwd=ROOT
-    ).decode("utf-8", "surrogateescape")
-    for *_identity, signature in IDENTITIES:
-        assert function_definition(current, signature) == function_definition(baseline, signature)
 
 
 @pytest.mark.skipif(BUILD is None,

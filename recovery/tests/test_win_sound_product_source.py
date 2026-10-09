@@ -46,6 +46,7 @@ HOST = r'''#include <stdint.h>
 #include <vector>
 
 #define __cdecl
+typedef void (__cdecl *WinMouseEventCallback)(int, int);
 
 struct Sound {
     explicit Sound(std::vector<std::string> *trace, const char *tag, int active = 0)
@@ -73,7 +74,7 @@ static void __cdecl record_callback(int x, int y) {
 
 class Win {
 public:
-    Win() : iFlags_(0), iSomeFlag_(0), field_424_(0), field_428_(0),
+    Win() : iFlags_(0), iSomeFlag_(0), field_424_(nullptr), field_428_(nullptr),
             val_12_(0), val_13_(0), val_24_(0), val_25_(0) {}
     void dispatch_23(int, int, int);
     void dispatch_24(int, int, int);
@@ -94,8 +95,8 @@ public:
     }
     unsigned int iFlags_;
     unsigned int iSomeFlag_;
-    uintptr_t field_424_;
-    uintptr_t field_428_;
+    void (*field_424_)(int, int);
+    void (*field_428_)(int, int);
     void *val_12_;
     void *val_13_;
     void *val_24_;
@@ -105,9 +106,6 @@ public:
 __BODY_23__
 __BODY_24__
 
-static uintptr_t callback_bits() {
-    return reinterpret_cast<uintptr_t>(&record_callback);
-}
 static int check(int condition, const char *name) {
     if (!condition) std::fprintf(stderr, "FAIL: %s\n", name);
     return condition ? 0 : 1;
@@ -120,8 +118,8 @@ int main(int argc, char **argv) {
     Win win;
     Sound first(&trace, "first");
     Sound second(&trace, "second");
-    win.field_424_ = callback_bits();
-    win.field_428_ = callback_bits();
+    win.field_424_ = record_callback;
+    win.field_428_ = record_callback;
     win.val_12_ = &first;
     win.val_13_ = &first;
     win.val_24_ = &second;

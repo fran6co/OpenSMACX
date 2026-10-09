@@ -2624,13 +2624,13 @@ LRESULT __stdcall Win::window_proc(HWND window, UINT message, WPARAM wparam,
                         // as.
                         typedef void(__cdecl * func_win_closed)();
                         func_win_closed closed =
-                            reinterpret_cast<func_win_closed>(owner->field_404_);
+                            owner->field_404_;
                         if (closed != nullptr) {
                             closed();
                         }
                     }
                     owner->on_sys_close();
-                    sub_5f86a0(reinterpret_cast<int>(owner->val_6_));
+                    sub_5f86a0(owner->val_6_);
                     return 0;
                 }
                 case WM_MOUSEMOVE: {
@@ -4165,22 +4165,19 @@ void __cdecl restore_flip_sprite(int do_flip) {
 
 
 /*
-Purpose: Close one window through its vtable, but only when it reports it
-         is not already closing. HOMED from src/recovered/005f86a0.cpp on
-         2026-08-25; the artifact needed a `GateVCall` shim class because
-         win.h declared no virtuals, and slots 23 and 7 are ordinary
-         declared members now.
+Purpose: Play the supplied Sound only when it is not already playing.
+         HOMED from src/recovered/005f86a0.cpp on 2026-08-25; its former
+         integer/Win receiver reconstruction obscured the actual Sound* API.
 */
 // ORIGINAL: 0x005F86A0 sub_5f86a0 0x005F86A0-0x005F86BF BYTE_EXACT
-// symbol    ?sub_5f86a0@@YGXH@Z
+// symbol    ?sub_5f86a0@@YGXPAVSound@@@Z
 // size      32 bytes
 // kind      game
 // flags     hidden;sp_ready;purged_ok
-void __stdcall sub_5f86a0(int window) {
-    Win *const self = reinterpret_cast<Win *>(window);
-    if (self != 0) {
-        if (reinterpret_cast<Sound *>(self)->is_playing() == 0) {
-            reinterpret_cast<Sound *>(self)->play();
+void __stdcall sub_5f86a0(Sound *sound) {
+    if (sound != 0) {
+        if (sound->is_playing() == 0) {
+            sound->play();
         }
     }
 }
@@ -6409,9 +6406,9 @@ void Win::on_l_button_down(long double_click, int x, int y, unsigned int, int fr
         Sound *related;
         if (from_parent == 0) {
             WinCallbackWindow = this;
-            int32_t fp = field_40C_;
-            if (fp != 0) {
-                reinterpret_cast<void(__cdecl *)(int, int)>(fp)(x, y);
+            WinMouseEventCallback callback = field_40C_;
+            if (callback != 0) {
+                callback(x, y);
             }
             this->on_left_double_click(x, y);
             related = val_17_;
@@ -6466,8 +6463,7 @@ void Win::on_l_button_up(int x, int y, unsigned int keys, int dbl) {
             (*reinterpret_cast<uint8_t *>(&iSomeFlag_) & 8) == 0) {
             if (dbl == 0) {
                 WinCallbackWindow = this;
-                void(__cdecl * cb)(int, int) =
-                    reinterpret_cast<void(__cdecl *)(int, int)>(field_414_);
+                WinMouseEventCallback cb = field_414_;
                 if (cb != 0) {
                     cb(x, y);
                 }
@@ -6495,8 +6491,7 @@ void Win::on_l_button_up(int x, int y, unsigned int keys, int dbl) {
             (*reinterpret_cast<uint8_t *>(&iSomeFlag_) & 8) == 0) {
             if (dbl == 0) {
                 WinCallbackWindow = this;
-                void(__cdecl * cb)(int, int) =
-                    reinterpret_cast<void(__cdecl *)(int, int)>(field_41C_);
+                WinMouseEventCallback cb = field_41C_;
                 if (cb != 0) {
                     cb(x, y);
                 }
@@ -7503,9 +7498,9 @@ void Win::on_r_button_up(int x, int y, unsigned int keys, int dbl) {
                     Sound *related;
                     if (dbl == 0) {
                         WinCallbackWindow = this;
-                        int32_t fp = field_420_;
-                        if (fp != 0) {
-                            reinterpret_cast<void(__cdecl *)(int, int)>(fp)(x, y);
+                        WinMouseEventCallback callback = field_420_;
+                        if (callback != 0) {
+                            callback(x, y);
                         }
                         this->on_right_click(x, y);
                         related = reinterpret_cast<Sound *>(val_11_);
@@ -7526,9 +7521,9 @@ void Win::on_r_button_up(int x, int y, unsigned int keys, int dbl) {
     Sound *related2;
         if (dbl == 0) {
             WinCallbackWindow = this;
-            int32_t fp = field_428_;
-            if (fp != 0) {
-                reinterpret_cast<void(__cdecl *)(int, int)>(fp)(x, y);
+            WinMouseEventCallback callback = field_428_;
+            if (callback != 0) {
+                callback(x, y);
             }
             this->on_right_up(x, y);
             related2 = reinterpret_cast<Sound *>(val_13_);
@@ -8040,9 +8035,9 @@ int Win::key_up_event(int key) {
         }
     }
     WinCallbackWindow = this;
-    int callback = field_434_;
+    WinKeyHookFn callback = field_434_;
     if (callback != 0) {
-        result = reinterpret_cast<int (__cdecl *)(int)>(callback)(key);
+        result = callback(key);
     }
     result += this->vslot_27(key);
     Sound *child = val_16_;
@@ -8700,8 +8695,6 @@ int Win::center_on_parent() {
 }
 
 // ===== homed from src/unrecovered/005ee750.cpp =====
-typedef void (__cdecl *FnCallback)(int, int);
-
 // ORIGINAL: 0x005EE750 ?left_down_event@Win@@QAEXHHH@Z 0x005EE750-0x005EE802 FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
 // size      178 bytes
@@ -8719,7 +8712,7 @@ void Win::left_down_event(int x, int y, int from_parent) {
 
     if (from_parent == 0) {
         WinCallbackWindow = this;
-        FnCallback cb = reinterpret_cast<FnCallback>(field_418_);
+        WinMouseEventCallback cb = field_418_;
         if (cb != 0) {
             cb(x, y);
         }
@@ -9402,7 +9395,6 @@ void Win::nonclient_to_screen(int * x, int * y) {
 typedef void (__stdcall *VCall2Fn)(void *, int, char *, int);
 // RETURNS int: the body assigns `result = callback(a1, a2)`, which the
 // artifact's `void` spelling could not have compiled.
-typedef int (__cdecl *Callback2)(int, int);
 typedef void (OriginalObject::*VCall0)();
 typedef void (OriginalObject::*VCall1)(int);
 
@@ -9444,7 +9436,7 @@ int Win::key_click_event(int key, int flags) {
 
     int result = 0;
     WinCallbackWindow = self;
-    Callback2 callback = reinterpret_cast<Callback2>(field_42C_);
+    WinKeyClickCallback callback = field_42C_;
     if (callback != 0) {
         result = callback(key, flags);
     }
@@ -10065,8 +10057,7 @@ void Win::on_key(unsigned int key, long flags, int repeat, unsigned int scan) {
         }
 
         WinCallbackWindow = this;
-        typedef void(__cdecl * OnKeyCb)(unsigned int);
-        OnKeyCb cb = reinterpret_cast<OnKeyCb>(field_434_);
+        WinKeyHookFn cb = field_434_;
         if (cb != 0) {
             cb(with_modifiers);
         }
@@ -10106,7 +10097,6 @@ void Win::on_key(unsigned int key, long flags, int repeat, unsigned int scan) {
 // DUPLICATE `Win::resize_event` removed: two artifacts carried the same body.
 
 // ===== homed from src/unrecovered/005f2680.cpp =====
-typedef void (__cdecl *Callback404)();
 // ORIGINAL: 0x005F2680 ?OnSysCommand@Win@@QAAHPAXIHH@Z 0x005F2680-0x005F26FF FILE
 // symbol    ?OnSysCommand@Win@@QAAHPAUHWND__@@IHH@Z
 // provenance (retired seed): git:3cb99d43^:src/unrecovered/005f2680.cpp
@@ -10124,7 +10114,7 @@ int __cdecl Win::OnSysCommand(HWND hwnd, unsigned int command, int x,
                 | static_cast<unsigned short>(x));
     }
     WinCallbackWindow = self;
-    Callback404 cb = reinterpret_cast<Callback404>(self->field_404_);
+    WinNullaryEventCallback cb = self->field_404_;
     if (cb != 0) {
         cb();
     }
@@ -10307,8 +10297,6 @@ void Win::update_window_to_buffer(Buffer * buffer) {
 // RECOVERY_BINDING: v1 {"evidence": ["git show 3cb99d43^:src/recovered/units/005f6710.cpp preserves this identity and span. The body remains in win.cpp beneath its original homing heading. Its parentless path calls the receiver-free root-order helper at0x5F672A; declaration repair changes that ABI without rewriting the handler body."], "reason": "Restore the unclaimed original mapping omitted during homing of the existing right-button handler. This binding is not a matching or behavioral claim."}
 // symbol    ?on_r_button_down@Win@@UAEXJHHIH@Z
 void Win::on_r_button_down(long flags, int x, int y, unsigned int keys, int dbl) {
-    typedef void(__cdecl *RawHandler)(int, int);
-
     Win *parent = win_parent_;
     if (parent != 0) {
         parent->bring_child_to_top(this);
@@ -10335,7 +10323,7 @@ void Win::on_r_button_down(long flags, int x, int y, unsigned int keys, int dbl)
         (iSomeFlag_ & 8) == 0) {
         if (dbl == 0) {
             WinCallbackWindow = this;
-            RawHandler fn = reinterpret_cast<RawHandler>(field_410_);
+            WinMouseEventCallback fn = field_410_;
             if (fn != 0) {
                 fn(x, y);
             }
@@ -10363,7 +10351,7 @@ void Win::on_r_button_down(long flags, int x, int y, unsigned int keys, int dbl)
         (iSomeFlag_ & 8) == 0) {
         if (dbl == 0) {
             WinCallbackWindow = this;
-            RawHandler fn = reinterpret_cast<RawHandler>(field_424_);
+            WinMouseEventCallback fn = field_424_;
             if (fn != 0) {
                 fn(x, y);
             }
@@ -11862,8 +11850,7 @@ void Win::send_to_window(int value, int which) {
 // for Sound receivers in the other dispatchers. Installation remains unknown.
 void Win::publish_callback_window() {
     WinCallbackWindow = this;
-    typedef void(__cdecl * NullaryCb)();
-    NullaryCb callback = reinterpret_cast<NullaryCb>(field_404_);
+    WinNullaryEventCallback callback = field_404_;
     if (callback != 0) {
         callback();
     }
@@ -11944,8 +11931,7 @@ void Win::dispatch_28(int a, int b, int alternate) {
     }
     if (alternate == 0) {
         WinCallbackWindow = this;
-        typedef void(__cdecl * TwoArgCb)(int, int);
-        TwoArgCb hook = reinterpret_cast<TwoArgCb>(field_40C_);
+        WinMouseEventCallback hook = field_40C_;
         if (hook != 0) {
             hook(a, b);
         }
@@ -11993,8 +11979,7 @@ void Win::dispatch_29(int a, int b, int alternate) {
     }
     if (alternate == 0) {
         WinCallbackWindow = this;
-        typedef void(__cdecl * TwoArgCb)(int, int);
-        TwoArgCb hook = reinterpret_cast<TwoArgCb>(field_410_);
+        WinMouseEventCallback hook = field_410_;
         if (hook != 0) {
             hook(a, b);
         }
@@ -12049,8 +12034,7 @@ void Win::dispatch_19(int a, int b, int alternate) {
     }
     if (alternate == 0) {
         WinCallbackWindow = this;
-        typedef void(__cdecl * TwoArgCb)(int, int);
-        TwoArgCb hook = reinterpret_cast<TwoArgCb>(field_414_);
+        WinMouseEventCallback hook = field_414_;
         if (hook != 0) {
             hook(a, b);
         }
@@ -12095,8 +12079,7 @@ void Win::dispatch_21(int a, int b, int alternate) {
     }
     if (alternate == 0) {
         WinCallbackWindow = this;
-        typedef void(__cdecl * TwoArgCb)(int, int);
-        TwoArgCb hook = reinterpret_cast<TwoArgCb>(field_41C_);
+        WinMouseEventCallback hook = field_41C_;
         if (hook != 0) {
             hook(a, b);
         }
@@ -12142,8 +12125,7 @@ void Win::dispatch_22(int a, int b, int alternate) {
     }
     if (alternate == 0) {
         WinCallbackWindow = this;
-        typedef void(__cdecl * TwoArgCb)(int, int);
-        TwoArgCb hook = reinterpret_cast<TwoArgCb>(field_420_);
+        WinMouseEventCallback hook = field_420_;
         if (hook != 0) {
             hook(a, b);
         }
@@ -12181,8 +12163,7 @@ void Win::dispatch_23(int x, int y, int alternate) {
 
     if (alternate == 0) {
         WinCallbackWindow = this;
-        typedef void(__cdecl *MouseCallback)(int, int);
-        MouseCallback callback = reinterpret_cast<MouseCallback>(field_424_);
+        WinMouseEventCallback callback = field_424_;
         if (callback != 0) {
             callback(x, y);
         }
@@ -12213,8 +12194,7 @@ void Win::dispatch_24(int x, int y, int alternate) {
 
     if (alternate == 0) {
         WinCallbackWindow = this;
-        typedef void(__cdecl *MouseCallback)(int, int);
-        MouseCallback callback = reinterpret_cast<MouseCallback>(field_428_);
+        WinMouseEventCallback callback = field_428_;
         if (callback != 0) {
             callback(x, y);
         }

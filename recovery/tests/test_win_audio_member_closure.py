@@ -24,7 +24,7 @@ HARNESS = r'''
 #include <cstdint>
 #include <vector>
 #define __cdecl
-typedef void (__cdecl *Callback404)();
+typedef void (__cdecl *WinNullaryEventCallback)();
 using HWND = void *;
 using LONG = intptr_t;
 std::vector<char> events;
@@ -35,7 +35,7 @@ struct Sound {
 };
 struct AutoSound { protected: Sound *val_6_; };
 struct Win : AutoSound {
-    uint32_t field_404_;
+    void (*field_404_)();
     int close_calls;
     void set_sound(Sound *sound) { val_6_ = sound; }
     void on_sys_close() { ++close_calls; events.push_back('c'); }
@@ -53,7 +53,7 @@ int main() {
     Win win = {};
     Sound sound = {0};
     win.set_sound(&sound);
-    win.field_404_ = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(&hook));
+    win.field_404_ = hook;
     lookup = &win;
     events.clear();
     assert(Win::OnSysCommand(nullptr, 0xf060, 11, 12) == 0);
@@ -92,8 +92,8 @@ def test_actual_body_uses_proved_owner_members():
     assert "Sound *child = self->val_6_;" in BODY
     assert "reinterpret_cast<char *>(self)" not in BODY
     source = (ROOT / "src/win.cpp").read_text()
-    assert "reinterpret_cast<func_win_closed>(owner->field_404_)" in source
-    assert "reinterpret_cast<int>(owner->val_6_)" in source
+    assert "owner->field_404_;" in source
+    assert "sub_5f86a0(owner->val_6_);" in source
     assert "w->iSomeFlag_ & 1" in source
     assert "win_parent_->outer_rect_.left" in source
     assert "win_parent_->outer_rect_.top" in source
