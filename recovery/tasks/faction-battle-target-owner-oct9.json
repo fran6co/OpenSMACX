@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "task_id": "faction-battle-target-owner-oct9",
+  "target": "opensmacx",
+  "author": "framework-coordinator",
+  "intent": "Restore battle_plans selected-target state ordering and original tile-region comparison using existing PlayerData, Map and Veh owners.",
+  "base_revision": "c371eb974a60b0c6abd8bb52b01e8ba3531c4e9d",
+  "subjects": [{"image_sha256":"01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","address_space":"pe:va","address":5550528}],
+  "editable_files": ["src/faction.cpp", "recovery/tests/test_faction_battle_target_owner_oct9.py"],
+  "evidence": [
+    "Pinned54B978-54BA24 uses PlayersData base96C9E0 stride20CC, existing x_target3F0/y_target3F4/base_id_atk_target468/unk_711074/unk_721078. Map record stride2C, original54B9B1-C5 loads byte3 (region), not climate0. Existing map_loc implements signed x>>1+y*MapLongitude; Veh stride34 state4/factionE already typed. Do not add speculative globals, members or safe guards.",
+    "Original stores selected base before selection popup, then rereads planned coordinates and performs region/vehicle cleanup afterward. Current helper compares climate and combines target assignment with post-popup effects. Verify full native path and preserve callback-visible state ordering, original error paths and all historical annotations. Coordinator-reviewed manual recovery, native whole-TU comparison, source integrity and fresh combined build/link precede integration; not full-game acceptance or new function coverage."
+  ]
+}
