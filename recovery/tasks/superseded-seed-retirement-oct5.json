@@ -322,7 +322,7 @@
       "address": 6362848
     }
   ],
-  "files": [
+  "editable_files": [
     "recovery/WORKFLOW.md",
     "recovery/tests/test_setup_dependencies_behavior.py",
     "src/alphamenu.cpp",

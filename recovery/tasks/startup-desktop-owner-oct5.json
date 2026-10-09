@@ -22,7 +22,7 @@
       "address": 4560320
     }
   ],
-  "files": [
+  "editable_files": [
     "recovery/tests/startup_owner_host.cpp",
     "recovery/tests/test_startup_actual_source.py",
     "src/console.h",

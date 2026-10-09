@@ -12,7 +12,7 @@
       "address": 5955872
     }
   ],
-  "files": [
+  "editable_files": [
     "src/newgame.cpp",
     "src/unrecovered/005ae120.cpp",
     "recovery/tests/test_crash_landing_actual_source.py"

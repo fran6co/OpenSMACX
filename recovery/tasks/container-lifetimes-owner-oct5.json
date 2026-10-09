@@ -22,7 +22,7 @@
       "address": 4221584
     }
   ],
-  "files": [
+  "editable_files": [
     "src/radiobutton.h",
     "src/radiobutton.cpp",
     "src/net_class.cpp",

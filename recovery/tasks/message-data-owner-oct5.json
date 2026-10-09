@@ -17,7 +17,7 @@
       "address": 5450048
     }
   ],
-  "files": [
+  "editable_files": [
     "recovery/tests/message_data_owner_host.cpp",
     "recovery/tests/test_message_data_actual_source.py",
     "src/netdaemon.cpp",

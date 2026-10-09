@@ -17,7 +17,7 @@
       "address": 5886896
     }
   ],
-  "files": [
+  "editable_files": [
     "src/popup.cpp",
     "src/popmenu.cpp",
     "src/popmenu.h",

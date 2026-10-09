@@ -17,7 +17,7 @@
       "address": 5365680
     }
   ],
-  "files": [
+  "editable_files": [
     "src/messagewin.cpp",
     "recovery/tests/test_messagewin_newtech_startup_arrays.py",
     "src/recovered/units/0051df80.cpp",

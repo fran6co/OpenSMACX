@@ -32,7 +32,7 @@
       "address": 6260192
     }
   ],
-  "files": [
+  "editable_files": [
     "src/win.cpp",
     "src/win.h",
     "src/graphicwin.h",

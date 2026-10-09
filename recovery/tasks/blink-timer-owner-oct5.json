@@ -17,7 +17,7 @@
       "address": 4766752
     }
   ],
-  "files": [
+  "editable_files": [
     "recovery/tests/test_blink_timer_actual_source.py",
     "src/console.h",
     "src/maininterface.h",

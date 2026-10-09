@@ -62,7 +62,7 @@
       "address": 5938608
     }
   ],
-  "files": [
+  "editable_files": [
     "src/game.cpp",
     "src/game.h",
     "src/filebox.cpp",

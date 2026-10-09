@@ -12,7 +12,7 @@
       "address": 4252512
     }
   ],
-  "files": [
+  "editable_files": [
     "src/basewin.cpp",
     "src/palette.h",
     "src/unrecovered/0040e360.cpp",

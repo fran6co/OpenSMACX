@@ -17,7 +17,7 @@
       "address": 5955872
     }
   ],
-  "files": [
+  "editable_files": [
     "recovery/tests/test_control_turn_actual_source.py",
     "src/console.h",
     "src/game.cpp",

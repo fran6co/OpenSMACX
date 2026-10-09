@@ -57,7 +57,7 @@
       "address": 6368976
     }
   ],
-  "files": [
+  "editable_files": [
     "recovery/tests/test_win_sound_product_source.py",
     "src/autosound.cpp",
     "src/autosound.h",

@@ -12,7 +12,7 @@
       "address": 5936368
     }
   ],
-  "files": [
+  "editable_files": [
     "recovery/tests/save_daemon_host.cpp",
     "recovery/tests/test_save_daemon_actual_source.py",
     "src/game.cpp",

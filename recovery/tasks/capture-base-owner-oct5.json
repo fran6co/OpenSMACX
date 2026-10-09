@@ -17,7 +17,7 @@
       "address": 5030752
     }
   ],
-  "files": [
+  "editable_files": [
     "recovery/tests/capture_base_host.cpp",
     "recovery/tests/capture_base_host.hpp",
     "recovery/tests/test_capture_base_source.py",

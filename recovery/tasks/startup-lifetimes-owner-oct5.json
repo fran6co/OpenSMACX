@@ -42,7 +42,7 @@
       "address": 4477104
     }
   ],
-  "files": [
+  "editable_files": [
     "recovery/tests/test_startup_lifecycle_controls.py",
     "src/time.cpp",
     "src/path.h",

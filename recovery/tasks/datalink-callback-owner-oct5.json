@@ -9,7 +9,7 @@
     {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 5835984},
     {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 5836016}
   ],
-  "files": [
+  "editable_files": [
     "src/datalink.cpp", "src/datalink.h",
     "src/recovered/00590cd0.cpp", "src/recovered/00590cf0.cpp",
     "recovery/tests/test_datalink_callback_owner.py",

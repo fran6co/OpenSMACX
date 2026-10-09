@@ -12,7 +12,7 @@
       "address": 4932576
     }
   ],
-  "files": [
+  "editable_files": [
     "recovery/tests/say_orders_host.cpp",
     "recovery/tests/test_say_orders_actual_source.py",
     "src/alpha.cpp",
