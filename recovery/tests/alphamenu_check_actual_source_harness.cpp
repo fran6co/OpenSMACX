@@ -50,7 +50,10 @@ struct ScenarioSaveState {
 static ScenarioSaveState ScenarioSave = {};
 static int &ObjectiveReqVictory = ScenarioSave.objective_req_victory;
 static uint32_t &ObjectivesSuddenDeathVictory = ScenarioSave.objectives_sudden_death_victory;
-static int IsMultiplayerNet, IsMultiplayerPBEM, ConsoleFactionsWaitingMask;
+static int IsMultiplayerNet, IsMultiplayerPBEM;
+struct WaitMaskDaemon { uint32_t lock_state_[1][10]{}; uint32_t &factions_waiting_mask() { return lock_state_[0][7]; } };
+static WaitMaskDaemon NetDaemonNet;
+static uint32_t &ConsoleFactionsWaitingMask = NetDaemonNet.factions_waiting_mask();
 struct ConsoleState { int cursor_active_; int faction_id_; } ConsoleGlobal;
 static const uint32_t BSC_SPORE_LAUNCHER = 15;
 static const uint32_t ABL_DROP_POD = 0x10, ABL_CARRIER = 0x80;

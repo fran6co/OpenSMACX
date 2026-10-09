@@ -50,14 +50,17 @@ struct LockStateEntry {
     struct { uint32_t flags = 0; } payload_;
     uint32_t trailing_words_[10]{};
 };
-struct NetDaemon { LockStateEntry lock_state_[3]; };
+struct NetDaemon {
+    LockStateEntry lock_state_[3];
+    uint32_t &factions_waiting_mask() { return lock_state_[0].trailing_words_[7]; }
+};
 NetDaemon NetDaemonNet;
 struct GameFields { uint32_t net_turn_flags_ = 0; };
 struct GameData { GameFields fields_; };
 GameData GameDataStateStorage;
 int IsMultiplayerNet = 0;
 int ConsoleControlTurnActive = 0;
-int ConsoleFactionsWaitingMask = 0;
+uint32_t &ConsoleFactionsWaitingMask = NetDaemonNet.factions_waiting_mask();
 
 struct ConsoleGlobalState {
     int cursor_active_ = 1;

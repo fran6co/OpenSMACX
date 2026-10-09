@@ -897,6 +897,8 @@ uint32_t NetDaemon::unlock_veh() {
 // dynamic initializer at 0x0052DB00 constructs it at the fixed address
 // before WinMain; the recovered NetDaemon constructor here runs through this
 // build's own startup instead.
+// RECOVERY_OBJECT: v3 0x0093E8EC ?ConsoleFactionsWaitingMask@@3HA member ?NetDaemonNet@@3VNetDaemon@@A lock_state_[0].trailing_words_[7]
+// RECOVERY_OBJECT: v3 0x0093E964 0x0093E968 ?MessageWinNetworkMessageCount@@3HA 0x004713B0 member ?NetDaemonNet@@3VNetDaemon@@A lock_state_[2].trailing_words_[7]
 NetDaemon NetDaemonNet;  // 0x0093CD90
 
 
@@ -4578,13 +4580,16 @@ static void netdaemon_handle_withdraw_end_turn(NetDaemon *daemon,
     const int sender = daemon->AlphaNet::pid_2_who(
         static_cast<uint32_t>(sender_id));
     const uint32_t sender_bit = static_cast<uint32_t>(1) << (sender & 0x1F);
-    const uint32_t waiting = static_cast<uint32_t>(ConsoleFactionsWaitingMask);
     log_say("From Client: WITHDRAW END-OF-TURN", sender, 0, 0);
+
+    // The native handler reloads the shared mask after log_say; the callback
+    // may change it, so do not carry a pre-callback snapshot into the test.
+    const uint32_t waiting = NetDaemonNet.factions_waiting_mask();
 
     if (waiting != 0xFF && (waiting & sender_bit) != 0 &&
         *reinterpret_cast<int *>(message + 0x10) ==
             GameDataStateStorage.fields_.turn_current_num_) {
-        ConsoleFactionsWaitingMask = static_cast<int>(waiting & ~sender_bit);
+        NetDaemonNet.factions_waiting_mask() = waiting & ~sender_bit;
         message_data(0x1302, sender,
                      GameDataStateStorage.fields_.turn_current_num_, 0, 0, 0);
         for (int slot = 1; slot <= daemon->player_count_; ++slot) {
@@ -4607,15 +4612,15 @@ static void netdaemon_complete_local_turn_wait(NetDaemon *daemon,
         static_cast<uint32_t>(1) << (faction & 0x1F);
 
     const uint32_t state = GameDataStateStorage.fields_.game_state_;
-    const uint32_t waiting = static_cast<uint32_t>(ConsoleFactionsWaitingMask);
+    const uint32_t waiting = NetDaemonNet.factions_waiting_mask();
     const uint32_t assigned =
-        daemon->lock_state_[0].leading_words_[1]; // 0x93E8C0, existing shared word
+        NetDaemonNet.lock_state_[0].leading_words_[1];
     if ((state & 2u) != 0 && waiting != 0xFF &&
         (((waiting & faction_bit) != 0) || assigned != 0) &&
         *reinterpret_cast<int *>(message + 0x10) ==
             GameDataStateStorage.fields_.turn_current_num_) {
-        ConsoleFactionsWaitingMask = static_cast<int>(waiting & ~faction_bit);
-        daemon->lock_state_[1].leading_words_[0] &= ~faction_bit;
+        NetDaemonNet.factions_waiting_mask() = waiting & ~faction_bit;
+        NetDaemonNet.lock_state_[1].leading_words_[0] &= ~faction_bit;
         GameDataStateStorage.fields_.game_state_ = state & ~2u;
     }
     MultiWindow.draw(0);
@@ -4846,7 +4851,6 @@ static bool netdaemon_process_table_e(NetDaemon &daemon,
 // Pinned process_message table F (0x4304..0x4309). This helper is source
 // material for the real process_message owner; it is not an original identity.
 // The caller retains the common marker-tail and normal C++ scope cleanup.
-extern int MessageWinNetworkMessageCount;
 
 static bool netdaemon_handle_table_f(NetDaemon *daemon, unsigned short type,
                                      unsigned char *message, int sender_id) {
@@ -4859,8 +4863,8 @@ static bool netdaemon_handle_table_f(NetDaemon *daemon, unsigned short type,
     case 0x4305: {
         const int incoming = *reinterpret_cast<int *>(message + 0x10);
         log_say("From Server: MSG_EVENTS", 0, incoming, 0);
-        if (MessageWinNetworkMessageCount <= incoming)
-            MessageWinNetworkMessageCount = incoming;
+        if (static_cast<int32_t>(NetDaemonNet.network_message_count()) <= incoming)
+            NetDaemonNet.network_message_count() = static_cast<uint32_t>(incoming);
         return true;
     }
 

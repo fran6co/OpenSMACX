@@ -239,6 +239,23 @@ class NetDaemon : public AlphaNet {
     return lock_state_[1].payload_.vehicle_selection_follow;
   }
 
+  // Shared faction wait mask, at NetDaemon+0x1B5C (entry 0 trailing dword 7).
+  // The original address is also read by callers outside this class; keeping
+  // the accessor on the genuine owner avoids a second scalar storage object.
+  uint32_t &factions_waiting_mask() {
+    return lock_state_[0].trailing_words_[7];
+  }
+  const uint32_t &factions_waiting_mask() const {
+    return lock_state_[0].trailing_words_[7];
+  }
+  // MessageWin's network message count shares entry 2, trailing dword 7.
+  uint32_t &network_message_count() {
+    return lock_state_[2].trailing_words_[7];
+  }
+  const uint32_t &network_message_count() const {
+    return lock_state_[2].trailing_words_[7];
+  }
+
  public:
   // 0x005328C0, homed from 005328c0.cpp. faction_id names the event's owner;
   // turn_value is stored into the lock state when no turn is already marked.

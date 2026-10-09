@@ -193,7 +193,7 @@ void Console::set_move(int force_update) {
         }
         if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10u) == 0) {
             const int faction_bit = 1 << faction_id_;
-            if ((ConsoleFactionsWaitingMask & faction_bit) != 0) {
+            if ((NetDaemonNet.factions_waiting_mask() & faction_bit) != 0) {
                 return;
             }
             if (NetDaemonNet.lock_state_[0].trailing_words_[4] != 0) {
@@ -10590,11 +10590,6 @@ void Console::veh_key(int key, int character, int command) {
     }
 }
 
-// Faction-bit turn waiting state shared with net_not_my_turn. Original
-// scalar accesses prove the role, not an exact allocation extent.
-// RECOVERY_OBJECT: v1 0x0093E8EC ?ConsoleFactionsWaitingMask@@3HA
-int ConsoleFactionsWaitingMask;
-
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0050FE70 ?on_nc_left_up@Console@@QAEXHH@Z 0x0050FE70-0x0051010A
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0050fe70.cpp: retained complete original identity/spans and seed evidence", "recovery/tasks/console-scenario-owner-wave.json; native scope expansions through sequence27", "Source owner interpretation preserves mapped original accesses, lifetime calls and branch roles; source-bound members and globals replace the seed offsets/address aliases. Historical seeds and claims remain independent restoration obligations."], "reason": "Recover splitter release into the genuine Console owner using source Win capture owners, real Win inheritance, embedded Sprite geometry and named splitter members. Preserve signed sentinel ordering and the original update operations; no fixed executable calls or self-offset access."}
@@ -10694,8 +10689,8 @@ void Console::end_my_turn() {
         }
         if ((game_flags & 2) != 0 && (GameDataStateStorage.fields_.net_turn_flags_ & 0x10) == 0) {
             const int faction_bit = 1 << ConsoleGlobal.faction_id_;
-            if ((ConsoleFactionsWaitingMask & faction_bit) != 0 &&
-                ConsoleFactionsWaitingMask != 0xFF) {
+            if ((NetDaemonNet.factions_waiting_mask() & faction_bit) != 0 &&
+                NetDaemonNet.factions_waiting_mask() != 0xFF) {
                 NetMsgPrimary.pop("ATTEMPTTOCANCEL", 0x1388, 0, nullptr);
                 message_data(0x2302, 0, GameDataStateStorage.fields_.turn_current_num_, 0, 0, 0);
                 return;

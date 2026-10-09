@@ -764,7 +764,6 @@ extern int TimeControlsSelection;
 // 4782 bytes) is implemented on the genuine AlphaMenu member declared in
 // alphamenu.h; no MainMenu source type or forwarding seam is required.
 
-extern int ConsoleFactionsWaitingMask;
 
 // Supply dialog implemented by the Console translation unit.
 int __cdecl supply_options(int veh_id, int base_id);

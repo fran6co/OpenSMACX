@@ -10583,7 +10583,6 @@ extern DeletionList VehDeletionList; // veh.cpp, original93E31C
 extern int SpockHelpActive; // netdaemon.cpp, original93F674
 extern int SpockNotifyPending; // netdaemon.cpp, original93F670
 extern int NetDaemonWaitTicks; // netdaemon.cpp, original93A960
-extern int MessageWinNetworkMessageCount; // messagewin.cpp, original93E964
 
 // RECOVERY_OBJECT: v2 0x0068BBE4 0x0068BBFA _NetUpkeepSkippingUpkeepSynch 0x005290A0
 static const char NetUpkeepSkippingUpkeepSynch[] = "Skipping upkeep synch";
@@ -10787,7 +10786,8 @@ void __cdecl net_upkeep() {
 
     if (net_upkeep_phase(NetUpkeepPhase) != 0) return;
     ++NetUpkeepPhase;
-    message_data(0x2305, 0, MessageWinNetworkMessageCount,
+    message_data(0x2305, 0,
+                 static_cast<int32_t>(NetDaemonNet.network_message_count()),
                  0, 0, 0);
 
     if (NetDaemonNet.lock_state_[0].trailing_words_[9] != 0) {
@@ -11096,7 +11096,8 @@ void __cdecl net_end_of_turn() {
         }
     }
 
-    log_say(NetEndTurnEnterEndTurnLog, ConsoleFactionsWaitingMask,
+    log_say(NetEndTurnEnterEndTurnLog,
+            static_cast<int>(NetDaemonNet.factions_waiting_mask()),
             NetDaemonNet.lock_state_[1].leading_words_[0],
             GameDataStateStorage.fields_.game_state_ & 2u);
     g_FX.play(0x22);
@@ -11106,7 +11107,7 @@ void __cdecl net_end_of_turn() {
 
     const int local_faction = ConsoleGlobal.faction_id_;
     if (NetDaemonNet.lock_state_[0].leading_words_[1] == 0) {
-        ConsoleFactionsWaitingMask |= 1u << local_faction;
+        NetDaemonNet.factions_waiting_mask() |= 1u << local_faction;
     }
     NetDaemonNet.lock_state_[0].leading_words_[3] |= 1u << local_faction;
     MultiWindow.draw(0);
@@ -11122,7 +11123,7 @@ void __cdecl net_end_of_turn() {
         for (;;) {
             const unsigned int enabled_factions = GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFu;
             const bool masks_incomplete =
-                (enabled_factions & ConsoleFactionsWaitingMask) !=
+                (enabled_factions & NetDaemonNet.factions_waiting_mask()) !=
                     enabled_factions ||
                 (NetDaemonNet.lock_state_[0].trailing_words_[4] &
                  enabled_factions) != 0;
@@ -11150,7 +11151,7 @@ void __cdecl net_end_of_turn() {
     if ((GameDataStateStorage.fields_.game_state_ & 2u) != 0) {
         if (NetDaemonNet.lock_state_[0].leading_words_[1] == 0) {
             log_say(NetEndTurnReadyToProceedLog,
-                    ConsoleFactionsWaitingMask,
+                    static_cast<int>(NetDaemonNet.factions_waiting_mask()),
                     GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFu, 0);
         } else {
             goto handle_93e8c0;
@@ -11295,7 +11296,7 @@ void __cdecl net_control_turn() {
         NetDaemonNet.lock_state_[0].trailing_words_[7] = 0;
         NetDaemonNet.lock_state_[1].leading_words_[0] = 0;
         NetDaemonNet.lock_state_[0].trailing_words_[1] = 1;
-        MessageWinNetworkMessageCount = 0;
+        NetDaemonNet.network_message_count() = 0;
         // The adjacent 0x93E968 store is distinct from the message count.
         NetDaemonNet.lock_state_[2].trailing_words_[8] = 0;
         NextTurnReady = 0;
@@ -11332,7 +11333,7 @@ void __cdecl net_control_turn() {
                 NetDaemonNet.lock_state_[0].trailing_words_[4] = 0;
                 NetDaemonNet.lock_state_[0].trailing_words_[5] = 0;
                 NetDaemonNet.lock_state_[0].trailing_words_[6] = 0;
-                ConsoleFactionsWaitingMask = 0;
+                NetDaemonNet.factions_waiting_mask() = 0;
                 NetDaemonNet.lock_state_[0].trailing_words_[8] = 0;
                 NetDaemonNet.lock_state_[0].trailing_words_[9] = 0;
                 NetDaemonNet.lock_state_[1].leading_words_[0] = 0;
@@ -11355,7 +11356,7 @@ void __cdecl net_control_turn() {
                 NetDaemonNet.lock_state_[2].trailing_words_[4] = 0;
                 NetDaemonNet.lock_state_[2].trailing_words_[5] = 0;
                 NetDaemonNet.lock_state_[2].trailing_words_[6] = 0xFF;
-                MessageWinNetworkMessageCount = 0;
+                NetDaemonNet.network_message_count() = 0;
                 NetDaemonNet.lock_state_[2].trailing_words_[8] = 0;
                 NetDaemonNet.lock_state_[2].trailing_words_[9] = 0;
                 NetDaemonNet.locks_.clear();
@@ -11427,7 +11428,7 @@ void __cdecl net_control_turn() {
                         NetDaemonWaitTicks = static_cast<int>(GameDataStateStorage.fields_.turn_control_duration_milliseconds_);
                         GameDataStateStorage.fields_.game_state_ &= 0xFFFFF7FFu;
                         TurnControlWord93A954 = 0;
-                        ConsoleFactionsWaitingMask &=
+                        NetDaemonNet.factions_waiting_mask() &=
                             ~(1u << (ConsoleGlobal.faction_id_ & 0x1F));
                     }
                     if (!skip_human) {
@@ -11460,7 +11461,7 @@ void __cdecl net_control_turn() {
                     ConsoleGlobal.field_23BE8_ = 1;
                     ConsoleGlobal.set_view(0);
                     MultiWindow.draw(0);
-                    ConsoleFactionsWaitingMask |=
+                    NetDaemonNet.factions_waiting_mask() |=
                         1u << (ConsoleGlobal.faction_id_ & 0x1F);
                     while (ExitTurnLoop == 0 && NextTurnReady == 0 &&
                            GameDataStateStorage.fields_.net_turn_faction_ != ConsoleGlobal.faction_id_) {
@@ -11538,7 +11539,6 @@ void __cdecl load_sprites() {
 // established; these bodies live with the current game/turn source owner.
 void __cdecl show_replay();
 void __cdecl quayle(int faction_id);
-extern int MessageWinNetworkMessageCount;
 
 
 namespace {
@@ -11598,7 +11598,7 @@ void clear_multiplayer_endgame_state() {
     NetDaemonNet.lock_state_[2].payload_.flags = 0;
     NetDaemonNet.lock_state_[0].trailing_words_[0] = 0;
     NetDaemonNet.lock_state_[0].trailing_words_[1] = 0;
-    MessageWinNetworkMessageCount = 0;
+    NetDaemonNet.network_message_count() = 0;
     NetDaemonNet.lock_state_[2].trailing_words_[8] = 0;
     NetDaemonNet.lock_state_[2].trailing_words_[7] = 0;
     NetDaemonNet.lock_state_[0].trailing_words_[2] = 0;

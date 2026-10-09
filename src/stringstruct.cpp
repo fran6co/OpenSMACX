@@ -1113,7 +1113,8 @@ void __cdecl net_not_my_turn() {
     ConsoleGlobal.field_23BE8_ = 1;
     ConsoleGlobal.set_view(0);
     MultiWindow.draw(0);
-    ConsoleFactionsWaitingMask |= (1u << (ConsoleGlobal.faction_id_ & 31));
+    NetDaemonNet.factions_waiting_mask() |=
+        (1u << (ConsoleGlobal.faction_id_ & 31));
     while (ExitTurnLoop == 0 && NextTurnReady == 0
            && GameDataStateStorage.fields_.net_turn_faction_ != ConsoleGlobal.faction_id_) {
         ConsoleGlobal.field_23BE4_ = 1;

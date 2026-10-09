@@ -60,6 +60,7 @@ struct NetDaemon : AlphaNet {
     LockCollection locks_;
     int hangs;
     NetDaemon() : hangs(0) { memset(lock_state_, 0, sizeof(lock_state_)); }
+    uint32_t &network_message_count() { return lock_state_[2].trailing_words_[7]; }
     void hang_up() { ++hangs; }
 };
 
@@ -77,7 +78,6 @@ int ConsoleFaction = 1;
 struct ConsoleFixture { int faction_id_; } ConsoleGlobal = {1};
 
 int Language;
-int MessageWinNetworkMessageCount;
 int GenderDefault;
 int PluralityDefault;
 char StringTemp[1032];
@@ -142,7 +142,8 @@ static void reset_fixture() {
     ExitTurnLoop = IsMultiplayerNet = 0;
     ConsoleGlobal.faction_id_ = 1;
     GameDataStateStorage.fields_.turn_current_num_ = 1; Language = 0;
-    MessageWinNetworkMessageCount = GenderDefault = PluralityDefault = 0;
+    NetDaemonNet.network_message_count() = 0;
+    GenderDefault = PluralityDefault = 0;
     memset(StringTemp, 0, sizeof(StringTemp));
     popup_calls = xpopup_calls = parse_calls = credits_calls = score_calls = 0;
     hall_calls = replay_calls = quayle_calls = interlude_calls = movie_calls = 0;

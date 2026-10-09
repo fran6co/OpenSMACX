@@ -302,7 +302,7 @@ void MultiWin::draw_time(RECT *bounds, int draw_type) {
     const uint32_t local_faction_bit =
         1u << (ConsoleGlobal.faction_id_ & 0x1f);
     if (countdown_ms == 0 &&
-        (ConsoleFactionsWaitingMask & local_faction_bit) == 0 &&
+        (NetDaemonNet.factions_waiting_mask() & local_faction_bit) == 0 &&
         MultiWinState7FFF78 != 0) {
       GameDataStateStorage.fields_.game_state_ |= 0x800;
       if (local_10 != 0) wave_it(0x21);
@@ -310,7 +310,7 @@ void MultiWin::draw_time(RECT *bounds, int draw_type) {
     if (minutes == 0 && local_c != 0 && local_c < 0x10 &&
         local_c != MultiWinState7FFF78 && ConsoleControlTurnActive == 0 &&
         (GameDataStateStorage.fields_.game_state_ & 0x800) == 0 &&
-        (ConsoleFactionsWaitingMask & local_faction_bit) == 0) {
+        (NetDaemonNet.factions_waiting_mask() & local_faction_bit) == 0) {
       if (local_c == 0x0f) {
         NetMsgPrimary.pop("TIMEWARNING", -5000, 0, 0);
       }

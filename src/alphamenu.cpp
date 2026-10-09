@@ -18,6 +18,7 @@
 #include "stdafx.h"
 #include "popup_fonts.h"
 #include "alphamenu.h"
+#include "netdaemon.h"
 #include "alpha.h"
 #include "strings.h"
 #include "text.h"
@@ -128,7 +129,8 @@ expansion_gate:
     }
 
     if (IsMultiplayerNet && (GameDataStateStorage.fields_.game_state_ & 2u) != 0 &&
-        ConsoleFactionsWaitingMask != 0 && ConsoleFactionsWaitingMask != 0xFF) {
+        NetDaemonNet.factions_waiting_mask() != 0 &&
+        NetDaemonNet.factions_waiting_mask() != 0xFF) {
         hide_menu_item(8, 0x807);
         show_menu_item(8, 0x808);
     } else {

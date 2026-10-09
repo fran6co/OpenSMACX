@@ -18,6 +18,7 @@
 #include "stdafx.h"
 #include "interface_fonts.h"
 #include "messagewin.h"
+#include "netdaemon.h"
 #include "buttongroup.h"
 #include "base.h"
 #include "console.h"
@@ -35,8 +36,6 @@
 MessageWin InterfaceMessageWin;  // 0x007F67F8
 // RECOVERY_OBJECT: v2 0x009393D0 0x009393D4 ?MessageWinMessageCount@@3HA 0x00471530
 int MessageWinMessageCount;  // 0x009393D0; initial storage passed both VC6 trials.
-// RECOVERY_OBJECT: v2 0x0093E964 0x0093E968 ?MessageWinNetworkMessageCount@@3HA 0x004713B0
-int MessageWinNetworkMessageCount; // 0x0093E964; initial storage passed both trials.
 // RECOVERY_OBJECT: v2 0x007F9F54 0x007F9F58 ?MessageWinMenuBusy@@3HA 0x004718C0
 int MessageWinMenuBusy;  // 0x007F9F54; initial storage passed both trials.
 // 0x0093A7B0 is eight faction-indexed StringList records. The independent
@@ -313,7 +312,7 @@ void MessageWin::add_base(int base_id, char *text, Sprite *source) {
         }
     }
     if (IsMultiplayerNet) {
-        ++MessageWinNetworkMessageCount;
+        ++NetDaemonNet.network_message_count();
     }
     ++MessageWinMessageCount;
     listBox_.item(text, base_id | 0x40000000);

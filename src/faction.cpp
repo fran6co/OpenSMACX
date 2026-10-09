@@ -15042,7 +15042,7 @@ void __cdecl wait_loop() {
         NetDaemonNet.net_tasks();
         int faction = ConsoleGlobal.faction_id_;
         if (UnkGlobal0093A934 == 0 && ConsoleControlTurnActive == 0 &&
-            (ConsoleFactionsWaitingMask & (1u << faction)) == 0) {
+            (NetDaemonNet.factions_waiting_mask() & (1u << faction)) == 0) {
             for (int other = 1; other < MaxPlayerNum; ++other) {
                 faction = ConsoleGlobal.faction_id_;
                 if (other != faction &&
@@ -15742,7 +15742,7 @@ int __cdecl commlink_attempter(int faction_id, int contact_flags) {
 
     const int local_faction = ConsoleGlobal.faction_id_;
     if (IsMultiplayerNet != 0 && (GameDataStateStorage.fields_.net_turn_flags_ & 0x10u) == 0 &&
-        (ConsoleFactionsWaitingMask & (1u << (local_faction & 31))) != 0) {
+        (NetDaemonNet.factions_waiting_mask() & (1u << (local_faction & 31))) != 0) {
         NetMsgPrimary.pop("ALREADYDONE", 5000, 0, NULL);
         return 1;
     }

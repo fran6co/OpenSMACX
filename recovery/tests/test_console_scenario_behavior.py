@@ -71,7 +71,7 @@ int &NetTurnFaction=GameDataStateStorage.fields_.net_turn_faction_;
 int &TurnCurrentNum=GameDataStateStorage.fields_.turn_current_num_;
 uint32_t ConsoleDragLineX=20,ConsoleDragLineY=30;
 int ConsoleControlTurnActive=0,IsMultiplayerNet=0;
-int GenderDefault=0,PluralityDefault=0,ConsoleFactionsWaitingMask=0;
+int GenderDefault=0,PluralityDefault=0;
 struct InfoWin { int field_A8_=9,redraw_phase=7;
   void clear_pending_timer() { field_A8_=0; events.push_back(1); }
 } ConsoleInfoWin;
@@ -85,7 +85,10 @@ struct Player { int is_leader_female=2,noun_gender=3,is_noun_plural=1;
 } Players[8];
 struct NetDaemon { int who_2_pid(int n) { assert(n==2); return 11; }
   char *get_player_name(int n) { assert(n==11); return Players[2].name_leader; }
-} NetDaemonNet;
+      uint32_t lock_state_[1][10]{};
+      uint32_t &factions_waiting_mask() { return lock_state_[0][7]; }
+    } NetDaemonNet;
+    uint32_t &ConsoleFactionsWaitingMask=NetDaemonNet.factions_waiting_mask();
 const char *popup_caption=0;
 struct NetMsg { void pop(const char *s,int n,int m,const char*) {
   assert(n==5000 && m==0); popup_caption=s;

@@ -25,7 +25,6 @@ void event(const char *s) { Events += s; Events += '|'; }
 char StringTemp[64];
 int IsMultiplayerNet;
 int ConsoleControlTurnActive;
-int ConsoleFactionsWaitingMask;
 int UnkGlobal0093A934;
 uint32_t LockEnableMask;
 int FactionAfterFirstLog;
@@ -45,6 +44,8 @@ uint8_t factions_status_byte(int byte) {
 
 struct NetDaemon {
     int OpenResult;
+    uint32_t lock_state_[1][10];
+    uint32_t &factions_waiting_mask() { return lock_state_[0][7]; }
     void net_tasks() { event("net_tasks"); }
     int open_channel(int a, int b) {
         OpenFactions.push_back(a); OpenOthers.push_back(b);
@@ -56,6 +57,7 @@ struct NetDaemon {
         return OpenResult;
     }
 } NetDaemonNet;
+uint32_t &ConsoleFactionsWaitingMask = NetDaemonNet.factions_waiting_mask();
 void wait_task() { event("wait_task"); }
 void communicate(int a, int b, int mode) {
     CommunicatedFactions.push_back(a); CommunicatedOthers.push_back(b);

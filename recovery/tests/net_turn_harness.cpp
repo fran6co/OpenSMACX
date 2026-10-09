@@ -54,6 +54,8 @@ struct NetDaemonProjection : AlphaNet {
     LockEntry lock_state_[3]; LockProjection locks_; int player_count_;
     int clear_playerlock_on_receive;
     NetDaemonProjection() : player_count_(1), clear_playerlock_on_receive(0) {}
+    uint32_t &factions_waiting_mask() { return lock_state_[0].trailing_words_[7]; }
+    uint32_t &network_message_count() { return lock_state_[2].trailing_words_[7]; }
     void net_tasks() { event("net_tasks"); }
     void hang_up() { event("hang_up"); }
     int receive_value;
@@ -138,11 +140,11 @@ static char NetUpkeepVehiclesChecksum[]="Failed VEHICLES checksum - resynch";
 static char NetUpkeepBasesChecksum[]="Failed BASES checksum - resynch";
 static char NetUpkeepMapSectionChecksum[]="Failed MAP section chcksum - resynch";
 static char NetUpkeepSkippingUpkeepPhase[]="Skipping upkeep phase";
-static int NetTurnFlags, NetTurnFaction, NextTurnReady, NetUpkeepPhase, TurnUpkeepPhase;
-static int TurnCurrentNum, TurnControlDurationMilliseconds, GameState, GamePreferences, GameRules, GameMorePreferences;
-static int ConsoleControlTurnActive, ConsoleFactionsWaitingMask, ControlTurnPhase, MapBaseDisplayOverride;
-static int BaseCurrentCount, VehCurrentCount, ExitTurnLoop, IsMultiplayerNet, MessageWinNetworkMessageCount;
-static int NetDaemonWaitTicks, LockEnableMask, MapRandSeed, MapLatitudeBounds=256, MapLongitudeBounds=256;
+static int NextTurnReady, NetUpkeepPhase, TurnUpkeepPhase;
+static int ConsoleControlTurnActive, ControlTurnPhase, MapBaseDisplayOverride;
+static uint32_t &ConsoleFactionsWaitingMask = NetDaemonNet.factions_waiting_mask();
+static int ExitTurnLoop, IsMultiplayerNet;
+static int NetDaemonWaitTicks, MapRandSeed, MapLatitudeBounds=256, MapLongitudeBounds=256;
 static int BaseAtDebugPopupFlag, CommlinkPending, SpockHelpActive, SpockNotifyPending;
 static int DiploDefaultFlag93A968;
 static int TurnControlWord93A954;
@@ -150,6 +152,28 @@ static uint32_t UpgradePromptAnswered;
 static int TurnRedrawPending, CouncilPendingMessageArgs[3]={-1,-1,-1};
 static int NetTurnChecksums[NetTurnChecksumWords];
 static int NetPeerTurnChecksums[MaxPlayerNum][NetTurnChecksumWords];
+struct GameLockMasks {
+    union { uint32_t enable_mask_; struct { unsigned char human_mask_, alive_mask_, pad_[2]; } bytes_; };
+    GameLockMasks() : enable_mask_(0) {}
+};
+struct GameFields {
+    uint32_t game_state_, net_turn_flags_, game_preferences_, game_rules_, game_more_preferences_;
+    int net_turn_faction_, turn_current_num_, turn_control_duration_milliseconds_;
+    int base_current_count_, vehicle_current_count_;
+    GameLockMasks lock_masks_;
+};
+static struct { GameFields fields_; } GameDataStateStorage;
+static uint32_t &NetTurnFlags=GameDataStateStorage.fields_.net_turn_flags_;
+static int &NetTurnFaction=GameDataStateStorage.fields_.net_turn_faction_;
+static int &TurnCurrentNum=GameDataStateStorage.fields_.turn_current_num_;
+static int &TurnControlDurationMilliseconds=GameDataStateStorage.fields_.turn_control_duration_milliseconds_;
+static uint32_t &GameState=GameDataStateStorage.fields_.game_state_;
+static uint32_t &GamePreferences=GameDataStateStorage.fields_.game_preferences_;
+static uint32_t &GameRules=GameDataStateStorage.fields_.game_rules_;
+static uint32_t &GameMorePreferences=GameDataStateStorage.fields_.game_more_preferences_;
+static int &BaseCurrentCount=GameDataStateStorage.fields_.base_current_count_;
+static int &VehCurrentCount=GameDataStateStorage.fields_.vehicle_current_count_;
+static uint32_t &LockEnableMask=GameDataStateStorage.fields_.lock_masks_.enable_mask_;
 static int g_time_ms;
 static uint32_t timeGetTime() { return (uint32_t)g_time_ms; }
 static int _itoa(int n,char *b,int) { return sprintf(b,"%d",n); }

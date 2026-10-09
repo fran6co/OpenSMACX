@@ -98,7 +98,6 @@ unsigned int NetDaemonProgressInterval;
 int MultiWinState7FFF78;
 uint32_t MultiWinState7FFF7C;
 int ConsoleControlTurnActive, NetUpkeepPhase, TurnControlWord93A954;
-int ConsoleFactionsWaitingMask;
 int CouncilDialogActive;
 struct Console { int faction_id_; } ConsoleGlobal;
 struct GameDataFields {
@@ -113,9 +112,11 @@ struct Council {
 struct LockState { uint32_t lead_[4], payload_, trailing_words_[10]; };
 struct Network {
   LockState lock_state_[1];
+  uint32_t &factions_waiting_mask() { return lock_state_[0].trailing_words_[7]; }
   int who_2_pid(int identity) { return identity + 40; }
   char *get_player_name(unsigned long id) { static char name[32]; sprintf(name, "Player%lu", id); return name; }
 } NetDaemonNet;
+uint32_t &ConsoleFactionsWaitingMask = NetDaemonNet.factions_waiting_mask();
 char StringTemp[1032];
 char *label_get(int id) { static char labels[1200][32]; sprintf(labels[id], "L%d", id); return labels[id]; }
 char *CharUpperA(char *s) { for (char *p=s; *p; ++p) *p=(char)toupper((unsigned char)*p); return s; }
