@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "task_id": "designwin-special-text-literals-oct9",
+  "target": "opensmacx",
+  "author": "framework-coordinator",
+  "intent": "Complete original DesignWin special-ability row text and recover immutable popup/drawing literals as real C++ across the editor ownership group.",
+  "base_revision": "f9d5739df3ede19d8951c9dd2d067aa243792831",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4445456
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4447568
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4422640
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4435056
+    }
+  ],
+  "editable_files": [
+    "src/designwin.cpp",
+    "recovery/tests/test_designwin_special_text_literals_oct9.py"
+  ],
+  "evidence": [
+    "Coordinator independently inspected pinned43AFE5..43B071: after existing eligibility gates, original clears StringTemp, appends StringTable.get(Ability name), colon-space682E94, StringTable.get(description), pipe6838C8, label loaded from Labels.strings_ptr+160 BYTE OFFSET (32-bit entry index58), colon-space, then existing cost suffix. Current body omits this prefix. Use existing RulesAbility fields and StringTable/label_get APIs; preserve original lookup/call/store order and unsafe existing paths.",
+    "Read-only owner audit verifies current old-image popup/drawing aliases are immutable strings rather than already-owned globals. Four authorized bodies use popup keys INTRINSICNAME/INTRINSICTYPE/OVERWRITEPROTO/TWOSPECIAL/MISSILESPECIAL/UNITSPECIAL, original spritepaths and punctuation. Replace fixed-address string aliases with ordinary inline C++ literals at original sites, verify contents from pinned backed initial data.682E90 is comma-space, NOT colon-space;682E94 is distinct colon-space. BufferJoinSpace remains its own existing source-owned object.",
+    "Original select_special repeats distinct same-content -1,+,-2 storage at6838D0/D4/D8,6838DC/E4/EC,6838E0/E8/F0; slash6838CC and pipe6838C8 are distinct. Native literal-source COMDAT bindings require separately observed complete emitted extents and independent correspondence. Coordinator owns native observation/annotation; if pooling makes reference bindings unsupported, retain explicit evidence/restoration obligations, do not invent symbol bindings, extra globals, change flags or block complete semantic body for byte spelling.",
+    "Audit all Labels cost-suffix loads in select_special against full pinned trace; distinguish BYTE OFFSETS from C++ indices, correcting only evidenced discrepancies within authorized body. Report RulesAbility LPSTR-as-StringTable-handle and Labels representation discoveries for dependent scope coordination, do not change veh/alpha headers outside task.",
+    "Preserve all original identities/spans, historical claims and useful findings. Focus prompt semantic completeness for all four bodies; no long byte search or deliberate fixes. Actual-source controls for prefix/lookup/order/gates/suffix, popup keys/sprite selection, drawing punctuation; wholeDesignWin native baseline/current, source identity continuity, relevant existing regressions and fresh build/link before independent coordinator-reviewed integration. Existing tests may require separately authorized test-only migration; no silent test weakening."
+  ]
+}
