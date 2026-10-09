@@ -2916,10 +2916,12 @@ static_assert(sizeof(LandmarkTextureChoice) == 2, "landmark pair stride");
 // Overlapping row 48 is reachable, so Mount's sentinel tail must remain.
 // Monsoon overlap can retain these flags while publishing higher codes:
 // row 49 reaches the old alignment bytes, and row 119 another data owner.
-// Deliberate, user-approved behavior change: negative or out-of-table codes
-// skip only that landmark overlay. Never read a neighboring object, clamp
-// to a different row, or omit the remaining terrain work. This is not an
-// original-byte equivalence claim for those overlapping/loaded/edited codes.
+// The pinned renderer keeps native lower-bound checks but has no 49-row upper
+// bound at the landmark accesses (0x00464795..0x00464B62). Preserve the
+// negative-index skips and each pair's texture == -1 suppression. The source
+// tables retain their measured 49-row extents; behavior when larger native
+// indices reach adjacent storage remains unresolved and is not established by
+// these bounded source objects.
 // No direct writers or pointer escapes were found for these data ranges.
 // Irregular pair initializers are materialized only in ignored build context.
 // RECOVERY_OBJECT: v2 0x00685A98 0x00685AFA _MountPlanetTable 0x004632D0
@@ -3963,7 +3965,6 @@ landmark_chain:;
     iVar5 = local_94;
     if (local_18 == 0 || local_20 == 0) {
         if (local_70 == 0 && (local_34 & 2) != 0 && -1 < local_94 &&
-            local_94 < static_cast<int>(sizeof(MountPlanetTable) / sizeof(MountPlanetTable[0])) &&
             MountPlanetTable[local_94].texture != -1) {
             uVar12 = (uint32_t)MountPlanetTable[local_94].rotation;
             {
@@ -4007,7 +4008,6 @@ landmark_chain:;
             }
         }
         if ((local_34 & 0x100) != 0 && local_70 == 0 && -1 < iVar5 &&
-            iVar5 < static_cast<int>(sizeof(SunnyMesaTable) / sizeof(SunnyMesaTable[0])) &&
             SunnyMesaTable[iVar5].texture != -1) {
             uVar12 = (uint32_t)SunnyMesaTable[iVar5].rotation;
             {
@@ -4043,7 +4043,6 @@ landmark_chain:;
             }
         }
         if ((local_34 & 1) != 0 && local_70 == 0 && -1 < iVar5 &&
-            iVar5 < static_cast<int>(sizeof(GarlandCraterTable) / sizeof(GarlandCraterTable[0])) &&
             GarlandCraterTable[iVar5].texture != -1) {
             uVar12 = (uint32_t)GarlandCraterTable[iVar5].rotation;
             {

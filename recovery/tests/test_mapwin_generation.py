@@ -1369,8 +1369,9 @@ int main() {
     // All49 codes are legitimate with overlapping editor-created flags;
     // Mount's normal producer alone uses only0..8. Explicit Monsoon overlap
     // can retain these flags while publishing unsupported codes beyond48.
-    // The user-approved hardening below skips only those landmark overlays;
-    // it deliberately differs from the original unchecked out-of-bounds read.
+    // Compare only accesses within the measured 49-row source objects. The
+    // original has no upper-bound branch; larger codes may reach adjacent
+    // storage, which this bounded fixture cannot model as original behavior.
     Texture *families[] = {g_MOUNT_PLANET_TEXTURES, g_SUNNY_MESA_TEXTURES,
                           g_GARLAND_CRATER_TEXTURES};
     const int family_sizes[] = {3, 8, 3};
@@ -1421,10 +1422,10 @@ int main() {
         gen_terrain_poly(&buffer, &window, 5, 1, 0, 1, 0, 0, 100, 100);
         check(draws.size() == 4); // fog suppresses all three families
     }
-    // Every unsupported positive byte49..127 and negative signed byte128..255,
-    // with every family combination, leaves the base fan and later condenser
-    // rendering intact. These actual const arrays have no artificial padding.
-    for (unsigned sequence = 49; sequence < 256; ++sequence) {
+    // Negative signed-byte codes are within the native negative-index skip
+    // path. Exercise these safely; unlike positive codes >=49, they do not
+    // reach any of the bounded source arrays.
+    for (unsigned sequence = 128; sequence < 256; ++sequence) {
         for (int enabled = 0; enabled < 8; ++enabled) {
             treset(); tile->bit2 = sequence << 24; tile->bit = 0x400000;
             for (int family = 0; family < 3; ++family)
@@ -1436,7 +1437,6 @@ int main() {
             check(TextureLightFloor == -256 && TextureLightCeiling == 256);
         }
     }
-
     // ---- the fungus row: 8-neighbour mask; worked land is NOT +15 ----
     {
         treset();
@@ -1791,37 +1791,6 @@ def test_landmark_control_and_geometry_damage_is_observed(tmp_path, old, new):
     source_text = terrain_source()
     assert old in source_text
     result = terrain_run(tmp_path, terrain_harness(source_text.replace(old, new)))
-    assert result.returncode == 91 and 'assertion at' in result.stderr, result.stderr
-
-
-@pytest.mark.parametrize('family', ['MountPlanetTable', 'SunnyMesaTable', 'GarlandCraterTable'])
-@pytest.mark.parametrize('damage', ['missing_guard', 'inclusive_end'])
-def test_landmark_out_of_bounds_damage_is_sanitized(tmp_path, family, damage):
-    """Unlike behavior mutants, these deliberately restore a real invalid read.
-
-    A compiled ASan/UBSan bounds diagnosis is required, not an arbitrary crash
-    or a padded fake table that conceals the newly guarded object boundary.
-    The original's higher-code behavior is not claimed as a valid oracle.
-    """
-    actual = terrain_source()
-    index = 'local_94' if family == 'MountPlanetTable' else 'iVar5'
-    guard = f'{index} < static_cast<int>(sizeof({family}) / sizeof({family}[0]))'
-    assert actual.count(guard) == 1
-    replacement = 'true' if damage == 'missing_guard' else guard.replace(' < ', ' <= ')
-    result = terrain_run(tmp_path, terrain_harness(actual.replace(guard, replacement)))
-    assert result.returncode not in (0, 91), result.stderr
-    diagnosed = ('runtime error: index 49 out of bounds' in result.stderr and
-                 'LandmarkTextureChoice' in result.stderr)
-    diagnosed |= 'AddressSanitizer: global-buffer-overflow' in result.stderr
-    assert diagnosed, result.stderr
-
-
-def test_landmark_unsupported_code_does_not_return_early(tmp_path):
-    actual = terrain_source()
-    before = 'landmark_chain:;'
-    assert actual.count(before) == 1
-    actual = actual.replace(before, before + '\n    if (local_94 >= 49) return 1;')
-    result = terrain_run(tmp_path, terrain_harness(actual))
     assert result.returncode == 91 and 'assertion at' in result.stderr, result.stderr
 
 
