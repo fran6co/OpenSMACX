@@ -232,7 +232,7 @@ See the package README for the permission schema and fresh verification boundary
 For provisioned local prefixes, set `OPENSMACX_COMPILER_POOL` to the canonical
 absolute shared prefix directory and add `--resources recovery/resources.json`
 to `run`, `start`, `prepare`, `worktree prepare` or `integrate publish`. The current eight-slot configuration
-selects one of `worker-6` through `worker-13` and exports its `VC6_PREFIX` for the entire run.
+selects one of `worker-15` through `worker-22` and exports its `VC6_PREFIX` for the entire run.
 All cooperating worktrees must use the same pool path; an isolated checkout's own
 relative `.opensmacx/` is not the shared pool. Missing prefixes refuse; no copying,
 installation or increased compiler concurrency is implicit. Standalone commands
@@ -245,6 +245,11 @@ Old quarantined prefixes are not selected by this configuration and are not
 implicitly reclaimed. Provisioned prefixes use independent copies, never
 hardlinks: Wine rewrites registry files in place. Successful native matching
 controls qualify compiler interaction, not eight simultaneous accepted recoveries.
+Each currently selected prefix passed a fresh native positive control in an
+eight-process parallel launch. Do not exit a coordinator's Python process inside
+`resource_environment`: return from the context first, then propagate the child
+exit status. An in-context `SystemExit`, even with status zero, intentionally
+retains quarantine rather than proving descendants have terminated.
 For a bounded parallel batch, the coordinator can now use `uv run recover dispatch
 --plan <batch-plan>` with explicitly authorized tasks in already prepared
 worktrees. The batch schema and refusal rules are in the package README. Supply

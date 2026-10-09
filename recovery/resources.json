@@ -2,57 +2,57 @@
  "schema_version": 1,
  "slots": [
   {
-   "name": "worker-8",
-   "directory": "{env:OPENSMACX_COMPILER_POOL}/worker-8",
+   "name": "worker-15",
+   "directory": "{env:OPENSMACX_COMPILER_POOL}/worker-15",
    "environment": {
     "VC6_PREFIX": "{resource}"
    }
   },
   {
-   "name": "worker-9",
-   "directory": "{env:OPENSMACX_COMPILER_POOL}/worker-9",
+   "name": "worker-16",
+   "directory": "{env:OPENSMACX_COMPILER_POOL}/worker-16",
    "environment": {
     "VC6_PREFIX": "{resource}"
    }
   },
   {
-   "name": "worker-10",
+   "name": "worker-17",
    "environment": {
     "VC6_PREFIX": "{resource}"
    },
-   "directory": "{env:OPENSMACX_COMPILER_POOL}/worker-10"
+   "directory": "{env:OPENSMACX_COMPILER_POOL}/worker-17"
   },
   {
-   "name": "worker-11",
+   "name": "worker-18",
    "environment": {
     "VC6_PREFIX": "{resource}"
    },
-   "directory": "{env:OPENSMACX_COMPILER_POOL}/worker-11"
+   "directory": "{env:OPENSMACX_COMPILER_POOL}/worker-18"
   },
   {
-   "name": "worker-12",
-   "directory": "{env:OPENSMACX_COMPILER_POOL}/worker-12",
+   "name": "worker-19",
+   "directory": "{env:OPENSMACX_COMPILER_POOL}/worker-19",
    "environment": {
     "VC6_PREFIX": "{resource}"
    }
   },
   {
-   "name": "worker-13",
-   "directory": "{env:OPENSMACX_COMPILER_POOL}/worker-13",
+   "name": "worker-20",
+   "directory": "{env:OPENSMACX_COMPILER_POOL}/worker-20",
    "environment": {
     "VC6_PREFIX": "{resource}"
    }
   },
   {
-   "name": "worker-6",
-   "directory": "{env:OPENSMACX_COMPILER_POOL}/worker-6",
+   "name": "worker-21",
+   "directory": "{env:OPENSMACX_COMPILER_POOL}/worker-21",
    "environment": {
     "VC6_PREFIX": "{resource}"
    }
   },
   {
-   "name": "worker-7",
-   "directory": "{env:OPENSMACX_COMPILER_POOL}/worker-7",
+   "name": "worker-22",
+   "directory": "{env:OPENSMACX_COMPILER_POOL}/worker-22",
    "environment": {
     "VC6_PREFIX": "{resource}"
    }
